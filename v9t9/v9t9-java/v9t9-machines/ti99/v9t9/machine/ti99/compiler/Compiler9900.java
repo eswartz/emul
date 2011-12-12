@@ -100,7 +100,7 @@ public class Compiler9900 extends CompilerBase {
     		"CompilerDumpModuleRomInstructions", new Boolean(false));
 
     public Compiler9900(Cpu9900 cpu) {
-    	super(cpu, InstructionFactory9900.INSTANCE);
+    	super(cpu.getState(), InstructionFactory9900.INSTANCE);
     	this.cpu = cpu;
     	this.settings = Settings.getSettings(cpu);
         

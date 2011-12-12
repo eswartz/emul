@@ -83,50 +83,34 @@ public class MemoryService extends BaseServiceImpl {
 	 * @return
 	 * @throws ErrorReport
 	 */
-	protected Object[] doSet(Object[] args) throws ErrorReport {
-		// args: 0:contextId 1:addr 2:word_size 3:size 4:mode 5:content
-		// ret: content error ranges
+	protected Object[] doGetContext(Object[] args) throws ErrorReport {
+		// args: contextId
+		// args: object of attributes
 		
 		IMemoryDomain domain = getDomainOrError(args[0]);
-		int word_size = ((Number) args[2]).intValue();
-		if (word_size < 0 || (word_size & (word_size - 1)) != 0)
-			throw new ErrorReport("Bad word size " + word_size, 
-					IErrorReport.TCF_ERROR_INV_DATA_SIZE);
+		Map<String, Object> context = createContext(null, domain);
+		return new Object[] { null, context };
+	}
 
-		int mode = ((Number) args[4]).intValue();
-		int addr = ((Number) args[1]).intValue();
-		int size = ((Number) args[3]).intValue();
-		if (size < 0 || size != ((size + word_size - 1) & ~(word_size - 1)))
-			throw new ErrorReport("Bad size of " + size + " @ " + word_size, 
-					IErrorReport.TCF_ERROR_INV_DATA_SIZE);
-
-		if (addr < 0 || addr != ((addr) & ~(word_size - 1)))
-			throw new ErrorReport("Bad alignment of " + addr + " @ " + word_size, 
-					IErrorReport.TCF_ERROR_INV_ADDRESS);
-
-		byte[] buf;
-		if (args[5] instanceof List) {
-			@SuppressWarnings("unchecked")
-			List<Number> list = (List<Number>) args[5];
-			buf = new byte[list.size()];
-			for (int i = 0; i < buf.length; i++)
-				buf[i] = ((Number) list.get(i)).byteValue();
-		} else {
-			buf = JSON.toByteArray(args[5]);
-		}
-
-		if ((mode & IMemoryV2.MODE_FLAT) != 0) {
-			for (int i = 0; i < size; i++) {
-				domain.flatWriteByte(addr + i, buf[i]);
+	/**
+	 * @param args
+	 * @return
+	 * @throws ErrorReport
+	 */
+	protected Object[] doGetChildren(Object[] args) throws ErrorReport {
+		// args: contextId
+		// ret: list of contextIds
+		String id = args[0] != null ? args[0].toString() : null;
+		if (id == null || id.length() == 0 || "root".equals(id)) {
+			// get domain IDs
+			id = "";
+			List<String> contextIds = new ArrayList<String>();
+			for (IMemoryDomain domain : machine.getMemory().getDomains()) {
+				contextIds.add(domain.getIdentifier());
 			}
-		} else {
-			for (int i = 0; i < size; i++) {
-				domain.writeByte(addr + i, buf[i]);
-			}
+			return new Object[] { null, contextIds };
 		}
-
-		
-		return new Object[] { null, null };
+		throw new ErrorReport("Unknown context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);
 	}
 
 	/**
@@ -179,37 +163,50 @@ public class MemoryService extends BaseServiceImpl {
 	 * @return
 	 * @throws ErrorReport
 	 */
-	protected Object[] doGetContext(Object[] args) throws ErrorReport {
-		// args: contextId
-		// args: object of attributes
+	protected Object[] doSet(Object[] args) throws ErrorReport {
+		// args: 0:contextId 1:addr 2:word_size 3:size 4:mode 5:content
+		// ret: content error ranges
 		
 		IMemoryDomain domain = getDomainOrError(args[0]);
-		Map<String, Object> context = createContext(null, domain);
-		if (context != null)
-			return new Object[] { null, context };
-		
-		throw new ErrorReport("Unknown context " + args[0], IErrorReport.TCF_ERROR_INV_CONTEXT);
-	}
-
-	/**
-	 * @param args
-	 * @return
-	 * @throws ErrorReport
-	 */
-	protected Object[] doGetChildren(Object[] args) throws ErrorReport {
-		// args: contextId
-		// ret: list of contextIds
-		String id = args[0] != null ? args[0].toString() : null;
-		if (id == null || id.length() == 0 || "root".equals(id)) {
-			// get domain IDs
-			id = "";
-			List<String> contextIds = new ArrayList<String>();
-			for (IMemoryDomain domain : machine.getMemory().getDomains()) {
-				contextIds.add(domain.getIdentifier());
-			}
-			return new Object[] { null, contextIds };
+		int word_size = ((Number) args[2]).intValue();
+		if (word_size < 0 || (word_size & (word_size - 1)) != 0)
+			throw new ErrorReport("Bad word size " + word_size, 
+					IErrorReport.TCF_ERROR_INV_DATA_SIZE);
+	
+		int mode = ((Number) args[4]).intValue();
+		int addr = ((Number) args[1]).intValue();
+		int size = ((Number) args[3]).intValue();
+		if (size < 0 || size != ((size + word_size - 1) & ~(word_size - 1)))
+			throw new ErrorReport("Bad size of " + size + " @ " + word_size, 
+					IErrorReport.TCF_ERROR_INV_DATA_SIZE);
+	
+		if (addr < 0 || addr != ((addr) & ~(word_size - 1)))
+			throw new ErrorReport("Bad alignment of " + addr + " @ " + word_size, 
+					IErrorReport.TCF_ERROR_INV_ADDRESS);
+	
+		byte[] buf;
+		if (args[5] instanceof List) {
+			@SuppressWarnings("unchecked")
+			List<Number> list = (List<Number>) args[5];
+			buf = new byte[list.size()];
+			for (int i = 0; i < buf.length; i++)
+				buf[i] = ((Number) list.get(i)).byteValue();
+		} else {
+			buf = JSON.toByteArray(args[5]);
 		}
-		throw new ErrorReport("Unknown context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);
+	
+		if ((mode & IMemoryV2.MODE_FLAT) != 0) {
+			for (int i = 0; i < size; i++) {
+				domain.flatWriteByte(addr + i, buf[i]);
+			}
+		} else {
+			for (int i = 0; i < size; i++) {
+				domain.writeByte(addr + i, buf[i]);
+			}
+		}
+	
+		
+		return new Object[] { null, null };
 	}
 
 	/**

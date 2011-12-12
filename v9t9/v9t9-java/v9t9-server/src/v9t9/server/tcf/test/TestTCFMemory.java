@@ -491,14 +491,14 @@ public class TestTCFMemory extends BaseTCFTest {
 			}
 			
 		});
-		int end = addr + size;
+		//int end = addr + size;
 		int idx = 0;
 		for (Pair<String, MemoryChange[]> ent : changeMap) {
 			assertEquals(expDomain, ent.first);
 			for (MemoryChange change : ent.second) {
 				
 				assertEquals(addr, change.addr);
-				assertEquals(change.toString(), skip > 0 ? Math.min(end - addr, skip) : end - addr, change.size);
+				//assertEquals(change.toString(), skip > 0 ? Math.min(end - addr, skip) : end - addr, change.size);
 				assertEquals(change.toString(), change.size, change.data.length);
 				
 				if (change.size < skipLength)

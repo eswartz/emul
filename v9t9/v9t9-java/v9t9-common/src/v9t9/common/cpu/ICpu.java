@@ -6,9 +6,10 @@ import v9t9.base.properties.IProperty;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.SettingSchema;
 
-public interface ICpu extends IPersistable, ICpuState {
+public interface ICpu extends IPersistable {
 	static public final SettingSchema settingDumpInstructions = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"DumpInstructions", new Boolean(false));
@@ -41,6 +42,8 @@ public interface ICpu extends IPersistable, ICpuState {
 	 */
 	IBaseMachine getMachine();
 
+
+	IMemoryDomain getConsole();
 	/**
 	 * Poll the interrupt controller to see if any interrupts are pending.
 	 * @throws AbortedException if interrupt waiting

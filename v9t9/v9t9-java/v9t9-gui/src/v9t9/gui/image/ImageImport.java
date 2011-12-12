@@ -485,7 +485,7 @@ public class ImageImport {
 		IPaletteMapper mapColor;
 
 		if (ditherMono) {
-			int reg = vdp.readVdpReg(7);
+			int reg = vdp.getRegister(7);
 			mapColor = new MonoMapColor((reg >> 4) & 0xf, reg & 0xf, midLum);
 			firstColor = 0;
 		} else if (format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_4x4) {
@@ -1549,19 +1549,21 @@ public class ImageImport {
 				// ensure palette is valid: higher bit depth may have
 				// been guessed during palette optimization
 				for (int c = 0; c < ncols; c++) {
-					colorMgr.setRGB333(c, thePalette[c]);
+					vdp.setRegister(IVdpChip.REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
+					//colorMgr.setRGB333(c, thePalette[c]);
 				}
 			} else {
 				// ensure palette is valid: higher bit depth may have
 				// been guessed during palette optimization
 				for (int c = 0; c < ncols; c++) {
-					colorMgr.setRGB(c, thePalette[c]);
+					vdp.setRegister(IVdpChip.REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
+					//colorMgr.setRGB(c, thePalette[c]);
 				}
 				
 			}
 			
 			if (ditherMono) {
-				byte reg = vdp.readVdpReg(7);
+				byte reg = (byte) vdp.getRegister(7);
 				paletteToIndex.put(0x0, (reg >> 4) & 0xf);
 				paletteToIndex.put(0xffffff, (reg >> 0) & 0xf);
 			} else {
@@ -1886,7 +1888,7 @@ public class ImageImport {
 		}
 		
 		int ystep = vdp.isInterlacedEvenOdd() ? 2 : 1;
-		int my =  (vdp.readVdpReg(9) & 0x80) != 0 ? 212 : 192;
+		int my =  (vdp.getRegister(9) & 0x80) != 0 ? 212 : 192;
 		int mx = vdp.getCanvas().getVisibleWidth();
 		int graphicsPageSize = vdp.getGraphicsPageSize();
 		
@@ -1929,7 +1931,7 @@ public class ImageImport {
 
 		byte b = 0;
 		
-		byte cb = (byte) vdp.readVdpReg(7);
+		byte cb = (byte) vdp.getRegister(7);
 		cb = (byte) ((cb & 0xf) | 0x10);
 		
 		b = (byte) ((cb >> 0) & 0xf);
@@ -1984,8 +1986,8 @@ public class ImageImport {
 		byte f = 0, b = 0;
 		
 		if (isMono) {
-			f = (byte) ((vdp.readVdpReg(7) >> 4) & 0xf);
-			b = (byte) ((vdp.readVdpReg(7) >> 0) & 0xf);
+			f = (byte) ((vdp.getRegister(7) >> 4) & 0xf);
+			b = (byte) ((vdp.getRegister(7) >> 0) & 0xf);
 		}
 
 		for (int y = 0; y < 192; y++) {

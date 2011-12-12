@@ -57,8 +57,8 @@ public class Vdp9938Mmio extends Vdp9918AMmio {
 	protected void autoIncrementAddr() {
 		vdpaddr = vdpaddr+1 & 0x3fff;
 		if (vdpaddr == 0 && v9938.isEnhancedMode()) {
-			byte vdpbank = v9938.readVdpReg(14);
-			v9938.writeVdpReg(14, (byte) ((vdpbank + 1) & 0x7));
+			byte vdpbank = (byte) v9938.getRegister(14);
+			v9938.setRegister(14, (byte) ((vdpbank + 1) & 0x7));
 		}
 	}
 	

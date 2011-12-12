@@ -9,17 +9,19 @@ package v9t9.engine.video.tms9918a;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
-
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.Logging;
 import v9t9.base.utils.HexUtils;
+import v9t9.base.utils.ListenerList;
+import v9t9.base.utils.ListenerList.IFire;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.Settings;
@@ -79,8 +81,8 @@ public class VdpTMS9918A implements IVdpChip {
 	protected VdpRedrawInfo vdpRedrawInfo;
 	
 	protected int modeNumber;
-	public static final int REG_ST = 0;
-	private static final int REG_COUNT = 8 + 1;
+	public static final int REG_ST = -1;
+	private static final int REG_COUNT = 8 /* base */ + 1 /* status */;
 
 	/** The circular counter for VDP interrupt timing. */
 	private int vdpInterruptFrac;
@@ -99,6 +101,8 @@ public class VdpTMS9918A implements IVdpChip {
 	protected IProperty dumpFullInstructions;
 	private IProperty throttleInterrupts;
 
+	protected ListenerList<IVdpListener> listeners = new ListenerList<IVdpChip.IVdpListener>();
+	
 	public VdpTMS9918A(IMachine machine) {
 		this.machine = machine;
 		
@@ -190,7 +194,7 @@ public class VdpTMS9918A implements IVdpChip {
     /* (non-Javadoc)
      * @see v9t9.handlers.VdpHandler#writeVdpReg(byte, byte, byte)
      */
-    final synchronized public void writeVdpReg(int reg, byte val) {
+    final synchronized protected void writeVdpReg(final int reg, byte val) {
     	if (reg >= vdpregs.length)
     		return;
     	
@@ -199,6 +203,20 @@ public class VdpTMS9918A implements IVdpChip {
     	
     	if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
     		log("register " + reg + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(val));
+    	
+    	if (!listeners.isEmpty()) {
+	    	listeners.fire(new IFire<IVdpChip.IVdpListener>() {
+				@Override
+				public void fire(IVdpListener listener) {
+					listener.vdpRegisterChanged(reg);
+				}
+	
+				@Override
+				public void threw(IVdpListener listener, Throwable t) {
+					t.printStackTrace();
+				}
+			});
+    	}
     	
     	int         redraw = doWriteVdpReg(reg, old, val);
 
@@ -791,7 +809,7 @@ public class VdpTMS9918A implements IVdpChip {
 	 * @param val
 	 */
 	protected void loadVdpReg(int num, byte val) {
-		writeVdpReg(num, val);
+		setRegister(num, val);
 	}
 
 	
@@ -799,13 +817,33 @@ public class VdpTMS9918A implements IVdpChip {
 		vdpInterruptFrac += cycles;
 	}
 	
-	/**
-	 * @return the vdpModeRedrawHandler
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip#addListener(v9t9.common.hardware.IVdpChip.IVdpListener)
 	 */
-	public IVdpModeRedrawHandler getVdpModeRedrawHandler() {
-		return vdpModeRedrawHandler;
+	@Override
+	public void addListener(IVdpListener listener) {
+		listeners.add(listener);
 	}
-
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip#removeListener(v9t9.common.hardware.IVdpChip.IVdpListener)
+	 */
+	@Override
+	public void removeListener(IVdpListener listener) {
+		listeners.remove(listener);
+	}
+	
+    public String getGroupName() {
+    	return "VDP TMS9918A Registers";
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.common.machine.IRegisterAccess#getFirstRegister()
+     */
+    @Override
+    public int getFirstRegister() {
+    	return REG_ST;
+    }
 	/* (non-Javadoc)
 	 * @see v9t9.engine.VdpHandler#getRegisterCount()
 	 */
@@ -818,21 +856,73 @@ public class VdpTMS9918A implements IVdpChip {
 	 * @see v9t9.engine.VdpHandler#getRegister(int)
 	 */
 	@Override
-	public byte getRegister(int reg) {
-		return reg == REG_ST ? vdpStatus : vdpregs[reg - 1] ;
-	}
-	/* (non-Javadoc)
-	 * @see v9t9.engine.VdpHandler#getRegisterName(int)
-	 */
-	@Override
-	public String getRegisterName(int reg) {
-		return reg == REG_ST ? "ST" : "VR" + (reg - 1);
+	public int getRegister(int reg) {
+		return (reg == REG_ST ? vdpStatus : vdpregs[reg]) & 0xff;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#getRegisterInfo(int)
+	 */
+	@Override
+	public RegisterInfo getRegisterInfo(int reg) {
+		String id = getRegisterId(reg);
+		if (id == null)
+			return null;
+		return new RegisterInfo(id, 
+				getRegisterFlags(reg),
+				getRegisterSize(reg),
+				getRegisterName(reg));
+				
+	}
+	
+	/**
+	 * @param reg
+	 * @return
+	 */
+	protected int getRegisterSize(int reg) {
+		return 1;
+	}
+
+	protected int getRegisterFlags(int reg) {
+		return IRegisterAccess.FLAG_ROLE_GENERAL +
+			(reg == REG_ST ? IRegisterAccess.FLAG_VOLATILE : 0);
+	}
+
+	protected String getRegisterId(int reg) {
+		return reg == REG_ST ? "ST" : "VR" + (reg);
+	}
+	
+	protected String getRegisterName(int reg) {
+		switch (reg) {
+		case REG_ST:
+			return "Status";
+		}
+		switch (reg) {
+		case 0:
+			return "Mode Reg 0";
+		case 1:
+			return "Mode Reg 1";
+		case 2: 
+			return "Screen Offset";
+		case 3: 
+			return "Color Table";
+		case 4: 
+			return "Pattern Table";
+		case 5: 
+			return "Sprite Table";
+		case 6: 
+			return "Sprite Patterns";
+		case 7: 
+			return "Backdrop/Text Colors";
+		}
+		return null;
+	}
+	
+
 	protected String yOrN(String label, int i) {
 		return i != 0 ? label : "";
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.engine.VdpHandler#getRegisterTooltip(int)
 	 */
@@ -840,9 +930,8 @@ public class VdpTMS9918A implements IVdpChip {
 	public String getRegisterTooltip(int reg) {
 		switch (reg) {
 		case REG_ST:
-			return "Status: " + getStatusString(vdpStatus);
+			return getStatusString(vdpStatus);
 		}
-		reg--;
 		byte val = vdpregs[reg];
 		switch (reg) {
 		case 0:
@@ -907,11 +996,17 @@ public class VdpTMS9918A implements IVdpChip {
 	 * @see v9t9.engine.VdpHandler#setRegister(int, byte)
 	 */
 	@Override
-	public void setRegister(int reg, byte value) {
-		if (reg == REG_ST)
-			vdpStatus = value;
-		else
-			writeVdpReg(reg - 1, value);
+	public int setRegister(int reg, int value) {
+		int old;
+		if (reg == REG_ST) {
+			old = vdpStatus & 0xff;
+			vdpStatus = (byte) value;
+		}
+		else {
+			old = vdpregs[reg] & 0xff;
+			writeVdpReg(reg, (byte) value);
+		}
+		return old;
 	}
 
 	/**
@@ -950,4 +1045,6 @@ public class VdpTMS9918A implements IVdpChip {
 	public int getGraphicsPageSize() {
 		return 0;
 	}
+	
+	
 }

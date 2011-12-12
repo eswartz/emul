@@ -45,13 +45,10 @@ public class RegisterViewer extends Composite {
 
 	class RegisterLabelProvider extends BaseLabelProvider implements ITableLabelProvider {
 
-		private final int numDigits;
-
 		/**
-		 * @param numDigits
+		 * @param regProvider
 		 */
-		public RegisterLabelProvider(int numDigits) {
-			this.numDigits = numDigits;
+		public RegisterLabelProvider() {
 		}
 
 		/* (non-Javadoc)
@@ -69,10 +66,11 @@ public class RegisterViewer extends Composite {
 		public String getColumnText(Object element, int columnIndex) {
 			IRegister reg = (IRegister)element;
 			if (columnIndex == 0)
-				return reg.getName();
+				return reg.getInfo().id;
 
 			int val = reg.getValue();
-			return (numDigits == 2) ? HexUtils.toHex2(val) : HexUtils.toHex4(val);
+			int size = reg.getInfo().size;
+			return (size == 1) ? HexUtils.toHex2(val) : HexUtils.toHex4(val);
 		}
 		
 	}
@@ -178,7 +176,7 @@ public class RegisterViewer extends Composite {
 			}
 		});
 		
-		regViewer.setLabelProvider(new RegisterLabelProvider(regProvider.getNumDigits()));
+		regViewer.setLabelProvider(new RegisterLabelProvider());
 		
 		final Table table = regViewer.getTable();
 		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(table);
@@ -227,7 +225,16 @@ public class RegisterViewer extends Composite {
 						Rectangle bounds = item.getTextBounds(i);
 						if (e.x >= bounds.x && e.x < bounds.x + bounds.width) {
 							IRegister reg = (IRegister) item.getData();
-							table.setToolTipText(reg != null ? reg.getTooltip() : null);
+							if (reg == null) {
+								table.setToolTipText(null);
+							} else {
+								String tooltip = reg.getTooltip();
+								String id = reg.getInfo().id;
+								String descr = reg.getInfo().description;
+								table.setToolTipText((descr == null ? id : descr) +
+										(tooltip != null && tooltip.length() > 0 ? ": " + tooltip : "")
+										);
+							}
 							return;
 						}
 					}

@@ -193,7 +193,7 @@ public class ImageImportOptions {
 		if (vdp.getRegisterCount() > 10) {
 			// hack: graphics mode 2 allows setting the palette too, 
 			// but for comparison shopping, pretend we can't.
-			if (format == VdpFormat.COLOR16_8x1 && (vdp.readVdpReg(0) & 0x6) == 0x2) {
+			if (format == VdpFormat.COLOR16_8x1 && (vdp.getRegister(0) & 0x6) == 0x2) {
 				canSetPalette = false;
 			} else {
 				canSetPalette = format != VdpFormat.COLOR256_1x1;

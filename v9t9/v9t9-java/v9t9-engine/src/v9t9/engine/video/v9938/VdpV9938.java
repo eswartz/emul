@@ -7,9 +7,11 @@ package v9t9.engine.video.v9938;
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
+import v9t9.base.utils.ListenerList.IFire;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.common.video.VdpColorManager;
@@ -46,6 +48,7 @@ import v9t9.engine.video.tms9918a.VdpTMS9918A;
  */
 public class VdpV9938 extends VdpTMS9918A {
 
+	private short[] palette = new short[16];
 	private boolean palettelatched;
 	private byte palettelatch;
 	private int statusidx;
@@ -177,7 +180,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	
 	public void writeRegisterIndirect(byte val) {
 		if (indreg != 17) {
-			writeVdpReg(indreg, val);
+			setRegister(indreg, val);
 		}
 		if (indinc) {
 			indreg = (indreg + 1) & 0x3f;
@@ -286,8 +289,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	final public static int S8_BOR_HI = 8;
 	final public static int S9_BOR_LO = 9;
 	
-	private static final int REG_SR0 = 48;
-	private static final int REG_COUNT = 48 + 9;
+	private static final int REG_COUNT = 1 + 48 /* base */ + 9 /* status */ + 16 /* palette */;
 	
 	@Override
 	protected int doWriteVdpReg(int reg, byte old, byte val) {
@@ -449,7 +451,7 @@ public class VdpV9938 extends VdpTMS9918A {
 
 	protected void loadVdpReg(int num, byte val) {
 		if (num != 44 && num != 46) {
-			writeVdpReg(num, val);
+			setRegister(num, val);
 		}
 		else {
 			vdpregs[num] = val;
@@ -483,20 +485,42 @@ public class VdpV9938 extends VdpTMS9918A {
 			palettelatched = true;
 		} else {
 			// first byte: red red/blue, second: green
-			int r = (palettelatch >> 4) & 0x7;
-			int b = palettelatch & 0x7;
-			int g = val & 0x7;
-			//System.out.println("palette " + paletteidx + ": " + g +"|"+ r + "|"+ b);
-			vdpCanvas.getColorMgr().setGRB333(vdpregs[16] & 0xf, g, r, b);
-			dirtyAll();
+			final int col = vdpregs[16] & 0xf;
+			palette[col] = (short) ((palettelatch << 8) | (val & 0xff));
+			
+			if (!listeners.isEmpty()) {
+		    	listeners.fire(new IFire<IVdpChip.IVdpListener>() {
+					@Override
+					public void fire(IVdpListener listener) {
+						listener.paletteColorChanged(col);
+					}
+		
+					@Override
+					public void threw(IVdpListener listener, Throwable t) {
+						t.printStackTrace();
+					}
+				});
+	    	}
+			setPaletteColor(col);
 			
 			vdpregs[16] = (byte) ((vdpregs[16]+1)&0xf);
 			palettelatched = false;
 		}
 	}
 
-	
+	/**
+	 * @param col
+	 */
+	protected void setPaletteColor(final int col) {
+		int r = (palette[col] >> 12) & 0x7;
+		int b = (palette[col] >> 8) & 0x7;
+		int g = (palette[col]) & 0x7;
+		//System.out.println("palette " + paletteidx + ": " + g +"|"+ r + "|"+ b);
+		vdpCanvas.getColorMgr().setGRB333(col, g, r, b);
+		dirtyAll();
+	}
 
+	
 	/* (non-Javadoc)
      * @see v9t9.handlers.VdpHandler#readVdpStatus()
      */
@@ -1263,7 +1287,11 @@ public class VdpV9938 extends VdpTMS9918A {
 		blinkOn = true;
 	}
 
+    public String getGroupName() {
+    	return "VDP V9938 Registers";
+    }
 
+    
 	/* (non-Javadoc)
 	 * @see v9t9.engine.VdpHandler#getRegisterCount()
 	 */
@@ -1276,8 +1304,10 @@ public class VdpV9938 extends VdpTMS9918A {
 	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#getRegister(int)
 	 */
 	@Override
-	public byte getRegister(int reg) {
-		if (reg > REG_SR0)
+	public int getRegister(int reg) {
+		if (reg >= REG_PAL0)
+			return palette[reg - REG_PAL0];
+		else if (reg >= REG_SR0)
 			return statusvec[reg - REG_SR0];
 		else
 			return super.getRegister(reg);
@@ -1287,11 +1317,19 @@ public class VdpV9938 extends VdpTMS9918A {
 	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#setRegister(int, byte)
 	 */
 	@Override
-	public void setRegister(int reg, byte value) {
-		if (reg > REG_SR0)
-			statusvec[reg - REG_SR0] = value;
-		else
-			super.setRegister(reg, value);
+	public int setRegister(int reg, int value) {
+		if (reg >= REG_PAL0) {
+			int old = palette[reg - REG_PAL0] & 0xffff;
+			palette[reg - REG_PAL0] = (short) value;
+			setPaletteColor(reg - REG_PAL0);
+			return old;
+		} if (reg >= REG_SR0) {
+			int old = statusvec[reg - REG_SR0] & 0xff;
+			statusvec[reg - REG_SR0] = (byte) value;
+			return old;
+		} else {
+			return super.setRegister(reg, value);
+		}
 	}
 	
 	
@@ -1307,12 +1345,124 @@ public class VdpV9938 extends VdpTMS9918A {
 	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#getRegisterName(int)
 	 */
 	@Override
-	public String getRegisterName(int reg) {
-		if (reg >= REG_SR0)
+	protected String getRegisterId(int reg) {
+		if (reg >= REG_PAL0)
+			return "PAL" + (reg - REG_PAL0);
+		else if (reg >= REG_SR0)
 			return "SR" + (reg - REG_SR0);
 		else
-			return super.getRegisterName(reg);
+			return super.getRegisterId(reg);
 	}
+	
+
+	@Override
+	protected String getRegisterName(int reg) {
+		switch (reg) {
+		case 10:
+			return "Color Table High";
+		case 11:
+			return "Sprite Table High";
+		case 12:
+			return "Blink Color";
+		case 13:
+			return "Blink Period";
+		case 14:
+			return "Page Base";
+		case 15:
+			return "Status Register #";
+		case 16:
+			return "Color Palette Address";
+		case 17:
+			return "Control Register Pointer";
+		case 18:
+			return "Display Adjust";
+		case 19:
+			return "Interrupt line";
+		case 23:
+			return "Display offset";
+		case 20:
+			return "Color burst 1";
+		case 21:
+			return "Color burst 2";
+		case 22:
+			return "Color burst 3";
+		case 32:
+			return "Command Source X Low";
+		case 33:
+			return "Command Source X High";
+		case 34:
+			return "Command Source Y Low";
+		case 35:
+			return "Command Source Y High";
+		case 36:
+			return "Command Dest X Low";
+		case 37:
+			return "Command Dest X High";
+		case 38:
+			return "Command Dest Y Low";
+		case 39:
+			return "Command Dest Y High";
+		case 40:
+			return "Command # Dots X Low";
+		case 41:
+			return "Command # Dots X High";
+		case 42:
+			return "Command # Dots Y Low";
+		case 43:
+			return "Command # Dots Y High";
+		case 44:
+			return "Command Color";
+		case 45:
+			return "Command Arguments";
+			
+		case 46:
+			return "Command";
+			
+		case REG_SR0: 
+			return "Status Register 0";
+		case REG_SR0 + 1:
+			return "Status Register 1";
+		case REG_SR0 + 2:
+			return "Status Register 2";
+		case REG_SR0 + 3:
+			return "Column Register Low";
+		case REG_SR0 + 4:
+			return "Column Register High";
+		case REG_SR0 + 5:
+			return "Row Register Low";
+		case REG_SR0 + 6:
+			return "Row Register High";
+		case REG_SR0 + 7:
+			return "Color Register";
+		case REG_SR0 + 8:
+			return "Border X Register Low";
+		case REG_SR0 + 9:
+			return "Border X Register High";
+		}
+
+		if (reg >= REG_PAL0) {
+			return "Palette Color " + (reg - REG_PAL0);
+		}
+		if (reg >= 8)
+			return null;
+		
+		return super.getRegisterName(reg);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#getRegisterFlags(int)
+	 */
+	@Override
+	protected int getRegisterFlags(int reg) {
+		if (reg >= REG_SR0 || (reg >= 32 && reg <= 45))
+			return IRegisterAccess.FLAG_VOLATILE + IRegisterAccess.FLAG_ROLE_GENERAL;
+		return super.getRegisterFlags(reg);
+	}
+
+	protected int getRegisterSize(int reg) {
+		return reg >= REG_PAL0 ? 2 : super.getRegisterSize(reg);
+	}
+
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#getRegisterTooltip(int)
@@ -1321,11 +1471,13 @@ public class VdpV9938 extends VdpTMS9918A {
 	public String getRegisterTooltip(int reg) {
 		if (reg == REG_ST)
 			return getStatusString(vdpStatus);
-		byte val = 0;
-		if (reg < REG_SR0) {
-			val = vdpregs[reg - 1];
-		} else {
+		short val = 0;
+		if (reg >= REG_PAL0) {
+			val = palette[reg - REG_PAL0];
+		} else if (reg >= REG_SR0) {
 			val = statusvec[reg - REG_SR0];
+		} else {
+			val = vdpregs[reg];
 		}
 		switch (reg < REG_SR0 ? reg - 1 : reg) {
 		case 0:
@@ -1357,56 +1509,39 @@ public class VdpV9938 extends VdpTMS9918A {
 		case 11:
 			return super.getRegisterTooltip(6);
 		case 12:
-			return "Blink Color BG: " + HexUtils.toHex2(val & 0x7) 
+			return "BG: " + HexUtils.toHex2(val & 0x7) 
 			+ " | FG: " + HexUtils.toHex2((val & 0xf0) >> 4);
 		case 13:
-			return "Blink period on: " + blinkOnPeriod + " ms"
+			return "On: " + blinkOnPeriod + " ms"
 			+ " | Off: " + blinkOffPeriod + " ms";
 		case 14:
-			return "Page base: " + HexUtils.toHex4(val << 14);
+			return HexUtils.toHex4(val << 14);
 		case 15:
-			return "Status register #";
+			return null;
 		case 16:
-			return "Color palette address";
+			return null;
 		case 17:
-			return caten("Control register pointer: " + (val & 0x7f), yOrN("AutoInc", val & 0x80));
+			return yOrN("AutoInc", val & 0x80);
 		case 18:
-			return "Display adjust Vert: " + ((val & 0xf0) >> 4)
+			return "Vert: " + ((val & 0xf0) >> 4)
 			+ " | Horiz: " + (val & 0xf);
 		case 19:
-			return "Interrupt line";
 		case 23:
-			return "Display offset";
 		case 20:
-			return "Color burst 1";
 		case 21:
-			return "Color burst 2";
 		case 22:
-			return "Color burst 3";
-		case 32:
-			return "Source X Low";
 		case 33:
-			return "Source X High";
 		case 34:
-			return "Source Y Low";
 		case 35:
-			return "Source Y High";
 		case 36:
-			return "Dest X Low";
 		case 37:
-			return "Dest X High";
 		case 38:
-			return "Dest Y Low";
 		case 39:
-			return "Dest Y High";
 		case 40:
-			return "# Dots X Low";
 		case 41:
-			return "# Dots X High";
 		case 42:
-			return "# Dots Y Low";
 		case 43:
-			return "# Dots Y High";
+			return null;
 		case 44:
 			return "Color High: " + ((val & 0xf0) >> 4) + " | Low: " + (val & 0xf);
 		case 45:
@@ -1420,38 +1555,22 @@ public class VdpV9938 extends VdpTMS9918A {
 					yOrN("MAJ", val & R45_MAJ));
 		case 46:
 			return "Command: " + ((val & 0xf0) >> 4) + " | Lo: " + (val & 0xf);
-			
-		case REG_SR0: // already handled
-			return null;
+
+		case REG_SR0:
+			return getStatusString(vdpStatus);
 		case REG_SR0 + 1:
-			return "Status register 1: " + 
-			caten(yOrN("FL", val & 0x80),
+			return caten(yOrN("FL", val & 0x80),
 					yOrN("LPS", val & 0x40),
 					"ID: " + ((val & 0x3e) >> 1),
 					yOrN("FH", val & 0x01));
 		case REG_SR0 + 2:
-			return "Status register 2: " + 
-			caten(yOrN("TransRdy", val & 0x80),
+			return caten(yOrN("TransRdy", val & 0x80),
 					yOrN("VertScan", val & 0x40),
 					yOrN("HorizScan", val & 0x20),
 					yOrN("BoundDetect", val & 0x10),
 					yOrN("EvenOdd", val & 0x02),
 					yOrN("CmdExec", val & 0x01)
 					);
-		case REG_SR0 + 3:
-			return "Column register low";
-		case REG_SR0 + 4:
-			return "Column register high";
-		case REG_SR0 + 5:
-			return "Row register low";
-		case REG_SR0 + 6:
-			return "Row register high";
-		case REG_SR0 + 7:
-			return "Color register";
-		case REG_SR0 + 8:
-			return "Border X register low";
-		case REG_SR0 + 9:
-			return "Border X register high";
 		}
 		
 		if (reg >= REG_SR0)

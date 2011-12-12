@@ -168,7 +168,7 @@ public class Vdp9918AMmio extends VdpMmio {
 
 	protected void writeRegister(byte reg, byte regVal) {
 		if (vdpHandler != null)
-			vdpHandler.writeVdpReg(reg, regVal);
+			vdpHandler.setRegister(reg, regVal);
 	}
     
     public void setAddr(int addr) {

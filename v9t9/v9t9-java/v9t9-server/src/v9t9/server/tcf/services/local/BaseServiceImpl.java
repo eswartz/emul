@@ -100,7 +100,7 @@ public abstract class BaseServiceImpl implements IService, IChannel.ICommandServ
             }
 			Object[] result = handleCommand(name, args);
 			
-            if (args.length != inOut.first) {
+            if (result.length != inOut.second) {
             	throw new IllegalStateException("Expected " + inOut.second + " results");
             }
 

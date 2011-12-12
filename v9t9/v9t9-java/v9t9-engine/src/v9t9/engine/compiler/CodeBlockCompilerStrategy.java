@@ -56,11 +56,12 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	}
 	public synchronized ICompiledCode getCompiledCode() {
 		ICpu cpu = executor.getCpu();
-		if (cpu.shouldDebugCompiledCode(cpu.getPC())) {
+		short pc = cpu.getState().getPC();
+		if (cpu.shouldDebugCompiledCode(pc)) {
 			Settings.get(cpu, ICpu.settingDumpInstructions).setBoolean(true);
 			Settings.get(cpu, ICpu.settingDumpFullInstructions).setBoolean(true);
 		}
-        CodeBlock cb = getCodeBlock(cpu.getPC());
+        CodeBlock cb = getCodeBlock(pc);
 		return cb;
 	}
 	

@@ -92,13 +92,14 @@ public class BaseF99bTest extends BaseForthCompTest {
 	@Override
 	protected void doInterpret(int pc) {
 		((CpuF99b) cpu).rpush((short) 0);
-		cpu.setPC((short) pc);
+		CpuStateF99b state = (CpuStateF99b) cpu.getState();
+		state.setPC((short) pc);
 		((InterpreterF99b) interp).setShowSymbol();
-		while (cpu.getPC() != 0)
+		while (state.getPC() != 0)
 			((InterpreterF99b) interp).execute();
 		
-		assertTrue(((CpuStateF99b) cpu.getState()).getSP() <= ((CpuStateF99b) cpu.getState()).getBaseSP());
-		assertTrue(((CpuStateF99b) cpu.getState()).getRP() <= ((CpuStateF99b) cpu.getState()).getBaseRP());
+		assertTrue(state.getSP() <= state.getBaseSP());
+		assertTrue(state.getRP() <= state.getBaseRP());
 		
 	}
 	

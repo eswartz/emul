@@ -7,6 +7,7 @@ package v9t9.machine.f99b.cpu;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
+import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.machine.f99b.asm.StatusF99b;
 
@@ -50,25 +51,18 @@ public class CpuStateF99b implements ICpuState {
 	public void setPC(short pc) {
 		setRegister(CpuF99b.PC, pc);
 	}
-
-	public int getRegister(int reg) {
-	    return regs[reg];
-	}
-
-	@Override
-	public void setRegister(int reg, int val) {
-		// always aligned
-		if (((1 << reg) & ALIGNED_REGMASK) != 0) {	
-			val &= ~1;
-		}
-		regs[reg] = (short) val;
-		if (reg == CpuF99b.SR) {
-			getStatus().expand(regs[reg]);
-		}
-		
-	}
 	
+    public String getGroupName() {
+    	return "F99b Registers";
+    }
 
+    /* (non-Javadoc)
+     * @see v9t9.common.machine.IRegisterAccess#getFirstRegister()
+     */
+    @Override
+    public int getFirstRegister() {
+    	return 0;
+    }
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterCount()
 	 */
@@ -77,11 +71,28 @@ public class CpuStateF99b implements ICpuState {
 		return CpuF99b.REG_COUNT;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterName(int)
-	 */
+	public int getRegister(int reg) {
+	    return regs[reg];
+	}
+
 	@Override
-	public String getRegisterName(int reg) {
+	public int setRegister(int reg, int val) {
+		int old;
+		
+		// always aligned
+		if (((1 << reg) & ALIGNED_REGMASK) != 0) {	
+			val &= ~1;
+		}
+		old = regs[reg];
+		regs[reg] = (short) val;
+		if (reg == CpuF99b.SR) {
+			getStatus().expand(regs[reg]);
+		}
+		return old & 0xffff;
+		
+	}
+	
+	protected String getRegisterId(int reg) {
 		switch (reg) {
 		case CpuF99b.PC: return "PC";
 		case CpuF99b.SP: return "SP";
@@ -96,11 +107,8 @@ public class CpuStateF99b implements ICpuState {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterTooltip(int)
-	 */
-	@Override
-	public String getRegisterTooltip(int reg) {
+
+	protected String getRegisterDescription(int reg) {
 		switch (reg) {
 		case CpuF99b.PC:
 			return "Program Counter";
@@ -117,9 +125,54 @@ public class CpuStateF99b implements ICpuState {
 		case CpuF99b.UP:
 			return "User Base";
 		case CpuF99b.SR:
-			return "Status Register: " + getStatus().toString();
+			return "Status Register";
 		case CpuF99b.LP:
 			return "Locals Pointer";
+		}
+		return null;
+	}
+	
+	protected int getRegisterFlags(int reg) {
+		switch (reg) {
+		case CpuF99b.PC:
+			return IRegisterAccess.FLAG_ROLE_PC;
+		case CpuF99b.SP:
+			return IRegisterAccess.FLAG_ROLE_SP;
+		case CpuF99b.SP0:
+		case CpuF99b.RP:
+		case CpuF99b.RP0:
+		case CpuF99b.UP0:
+		case CpuF99b.UP:
+			return IRegisterAccess.FLAG_ROLE_GENERAL;
+		case CpuF99b.SR:
+			return IRegisterAccess.FLAG_ROLE_ST;
+		case CpuF99b.LP:
+			return IRegisterAccess.FLAG_ROLE_FP;
+		}
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#getRegisterDescription(int)
+	 */
+	@Override
+	public RegisterInfo getRegisterInfo(int reg) {
+		String id = getRegisterId(reg);
+		if (id == null)
+			return null;
+		
+		return new RegisterInfo(id, getRegisterFlags(reg),
+				2, getRegisterDescription(reg));
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterTooltip(int)
+	 */
+	@Override
+	public String getRegisterTooltip(int reg) {
+		switch (reg) {
+		case CpuF99b.SR:
+			return getStatus().toString();
 		}
 		return null;
 	}

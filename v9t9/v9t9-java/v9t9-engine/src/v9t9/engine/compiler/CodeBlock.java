@@ -201,7 +201,7 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
 	        
 	        if (abort == null && !ret) {
         		// target the PC later
-        		int pc = exec.getCpu().getPC() & 0xffff;
+        		int pc = exec.getCpu().getState().getPC() & 0xffff;
         		IHighLevelInstruction inst = highLevel.getLLInstructions().get(pc);
         		if (inst != null && inst.getInst().getInst() != InstTableCommon.Idata) {
         			if ((inst.getFlags() & IHighLevelInstruction.fStartsBlock) == 0) {

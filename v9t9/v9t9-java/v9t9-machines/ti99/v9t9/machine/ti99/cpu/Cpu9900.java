@@ -11,7 +11,6 @@ import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
-import v9t9.common.cpu.IStatus;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
@@ -233,8 +232,8 @@ public class Cpu9900 extends CpuBase {
 	@Override
 	public String getCurrentStateString() {
 		return "WP=>" 
-		+ HexUtils.toHex4(getWP())
-		+ "\t\tST=" +getStatus();
+		+ HexUtils.toHex4(((CpuState9900) state).getWP())
+		+ "\t\tST=" +state.getStatus();
 	}
 
 	/* (non-Javadoc)
@@ -275,33 +274,15 @@ public class Cpu9900 extends CpuBase {
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#createStatus()
-	 */
-	@Override
-	public IStatus createStatus() {
-		return state.createStatus();
-	}
-
-	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getPC()
 	 */
-	@Override
 	public short getPC() {
 		return state.getPC();
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegister(int)
-	 */
-	@Override
-	public int getRegister(int reg) {
-		return state.getRegister(reg);
-	}
-
-	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getST()
 	 */
-	@Override
 	public short getST() {
 		return state.getST();
 	}
@@ -309,23 +290,13 @@ public class Cpu9900 extends CpuBase {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.CpuState#setPC(short)
 	 */
-	@Override
 	public void setPC(short pc) {
 		state.setPC(pc);
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#setRegister(int, int)
-	 */
-	@Override
-	public void setRegister(int reg, int val) {
-		state.setRegister(reg, val);
-	}
-
-	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.CpuState#setST(short)
 	 */
-	@Override
 	public void setST(short st) {
 		state.setST(st);
 	}

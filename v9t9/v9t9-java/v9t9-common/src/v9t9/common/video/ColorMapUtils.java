@@ -480,4 +480,14 @@ public class ColorMapUtils {
 		rgb[2] = Math.min(255, ((rgb[2] & 0xf8) * 0xff / 0xf8));
 	}
 
+	/**
+	 * @param bs
+	 * @return
+	 */
+	public static int rgb8ToRgbRBXG(byte[] rgb) {
+		return (((rgb[0] >> 5) & 0x7) << 12) | 
+				(((rgb[2] >> 5) & 0x7) << 8) |
+				(((rgb[1] >> 5) & 0x7) << 0);
+	}
+
 }

@@ -33,6 +33,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
@@ -438,12 +439,13 @@ public class CpuViewer extends Composite implements IInstructionListener {
 			refreshRunnable = new Runnable() {
 				public void run() {
 					if (!instTableViewer.getTable().isDisposed()) {
+						ICpuState state = machine.getCpu().getState();
 						RawInstruction inst = machine.getInstructionFactory().decodeInstruction(
-								machine.getCpu().getPC(), machine.getConsole());
+								state.getPC(), machine.getConsole());
 						
-						InstructionWorkBlock before = new InstructionWorkBlock(machine.getCpu());
+						InstructionWorkBlock before = new InstructionWorkBlock(state);
 						before.inst = inst;
-						before.pc = (short) (machine.getCpu().getPC() + inst.getSize());
+						before.pc = (short) (state.getPC() + inst.getSize());
 						
 						InstRow row = new InstRow(before, before);
 						if (partialInst != null) {

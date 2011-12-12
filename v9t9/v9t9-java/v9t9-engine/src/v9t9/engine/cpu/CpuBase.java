@@ -10,7 +10,6 @@ import v9t9.base.settings.ISettingSection;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
-import v9t9.common.cpu.IStatus;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryAccessListener;
@@ -157,15 +156,6 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	}
 
 
-    public IStatus getStatus() {
-        return state.getStatus();
-    }
-
-    public void setStatus(IStatus status) {
-        state.setStatus(status);
-    }
-
-    
 	public synchronized void addCycles(int cycles) {
 		if (cycles != 0) {
 			this.currentcycles += cycles; 
@@ -301,27 +291,4 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
     	}
     }
 	
-	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterCount()
-	 */
-	@Override
-	public int getRegisterCount() {
-		return state.getRegisterCount();
-	}
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterName(int)
-	 */
-	@Override
-	public String getRegisterName(int reg) {
-		return state.getRegisterName(reg);
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterTooltip(int)
-	 */
-	@Override
-	public String getRegisterTooltip(int reg) {
-		return state.getRegisterTooltip(reg);
-	}
 }

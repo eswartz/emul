@@ -55,8 +55,8 @@ public class Interpreter9900 implements IInterpreter {
         this.memory = machine.getCpu().getConsole();
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
         parsedInstructions = new HashMap<IMemoryArea, Instruction9900[]>();
-        iblock = new InstructionWorkBlock9900(cpu);
-        status = (Status9900) cpu.createStatus();
+        iblock = new InstructionWorkBlock9900(cpu.getState());
+        status = (Status9900) cpu.getState().createStatus();
      }
 
     /* (non-Javadoc)
@@ -281,7 +281,7 @@ public class Interpreter9900 implements IInterpreter {
         }
 
         if ((ins.getInfo().writes & InstInfo.INST_RSRC_ST) != 0) {
-			cpu.setStatus(status);
+			cpu.getState().setStatus(status);
 		}
 
         /* do this after flushing status */

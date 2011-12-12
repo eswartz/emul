@@ -10,7 +10,6 @@ import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
-import v9t9.common.cpu.IStatus;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
@@ -101,7 +100,6 @@ public class CpuF99b extends CpuBase {
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Cpu#getPC()
 	 */
-    @Override
 	public short getPC() {
         return state.getPC();
     }
@@ -109,7 +107,6 @@ public class CpuF99b extends CpuBase {
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Cpu#setPC(short)
 	 */
-    @Override
 	public void setPC(short pc) {
        	state.setPC(pc);
     }
@@ -152,7 +149,7 @@ public class CpuF99b extends CpuBase {
 	    	cruAccess.pollForPins(this);
 	    	if (cruAccess.isInterruptWaiting()) {
 	    		ic = cruAccess.getInterruptLevel(); 
-	    		int mask = getStatus().getIntMask();
+	    		int mask = state.getStatus().getIntMask();
     			if (mask >= ic) {
 	    			pins |= PIN_INTREQ;
 	    			return true;    		
@@ -203,7 +200,7 @@ public class CpuF99b extends CpuBase {
             //noIntCount = 10000;
             
             machine.getExecutor().interpretOneInstruction();
-        } else if ((pins & PIN_INTREQ) != 0 && getStatus().getIntMask() >= ic) {	// already checked int mask in status
+        } else if ((pins & PIN_INTREQ) != 0 && state.getStatus().getIntMask() >= ic) {	// already checked int mask in status
             // maskable
         	pins &= ~PIN_INTREQ;
         	
@@ -217,15 +214,6 @@ public class CpuF99b extends CpuBase {
             // for now, we need to do this, otherwise the compiled code may check intlevel and immediately ... oh, I dunno
             machine.getExecutor().interpretOneInstruction();
         }
-    }
-
-   
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#getRegister(int)
-	 */
-	@Override
-	public int getRegister(int reg) {
-        return state.getRegister(reg);
     }
 
 	@Override
@@ -260,14 +248,9 @@ public class CpuF99b extends CpuBase {
 	}
 
 	@Override
-	public IStatus createStatus() {
-		return new StatusF99b();
-	}
-	
-	@Override
 	public String getCurrentStateString() {
 		return "SP=" + HexUtils.toHex4(state.getRegister(CpuF99b.SP)) 
-		+ "\t\tSR=" + getStatus().toString();
+		+ "\t\tSR=" + state.getStatus().toString();
 	}
 	
 	/* (non-Javadoc)
@@ -277,7 +260,7 @@ public class CpuF99b extends CpuBase {
 	public void reset() {
 		noIntCount += 1000;
 		
-        getStatus().expand((short) 0);
+		state.getStatus().expand((short) 0);
         
         // ROM should set these!
 		getState().setSP((short) 0xff80);
@@ -338,7 +321,7 @@ public class CpuF99b extends CpuBase {
 		throw new AbortedException();
 	}
 
-	public CpuStateF99b getState() {
+	public final CpuStateF99b getState() {
 		return (CpuStateF99b) state;
 	}
 	@Override
@@ -346,26 +329,10 @@ public class CpuF99b extends CpuBase {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#getST()
-	 */
-	@Override
 	public short getST() {
 		return state.getST();
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#setRegister(int, int)
-	 */
-	@Override
-	public void setRegister(int reg, int val) {
-		state.setRegister(reg, val);
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#setST(short)
-	 */
-	@Override
 	public void setST(short st) {
 		state.setST(st);
 	}
@@ -405,9 +372,9 @@ public class CpuF99b extends CpuBase {
 	 * @param pc2
 	 */
 	public void contextSwitch(short vec) {
-		rpush(getPC());
+		rpush(state.getPC());
 		short addr = machine.getConsole().readWord(vec);
-		setPC(addr);
+		state.setPC(addr);
 	}
 
 	/**
@@ -416,9 +383,9 @@ public class CpuF99b extends CpuBase {
 	public void triggerInterrupt(int intr) {
 		idle = false;
 		rpush(getST());
-		((StatusF99b)getStatus()).setIntMask(0);
-		((StatusF99b)getStatus()).setCurrentInt(intr);
-		setRegister(SR, getStatus().flatten());		// TODO: why?
+		((StatusF99b)state.getStatus()).setIntMask(0);
+		((StatusF99b)state.getStatus()).setCurrentInt(intr);
+		state.setRegister(SR, state.getStatus().flatten());		// TODO: why?
 		short addr = getIntVecAddr(intr);
 		contextSwitch(addr);
 	}

@@ -135,6 +135,7 @@ public class InterpreterF99b implements IInterpreter {
     InstructionWorkBlockF99b iblock;
 
 	private CpuF99b cpu;
+	private CpuStateF99b cpuState;
 
 	//private TreeMap<Integer, InstructionF99b> cachedInstrs = new TreeMap<Integer, InstructionF99b>();
 	private InstructionF99b[] cachedInstrs = new InstructionF99b[65536];
@@ -150,7 +151,8 @@ public class InterpreterF99b implements IInterpreter {
         this.cpu = (CpuF99b) machine.getCpu();
         this.memory = machine.getCpu().getConsole();
         instructionFactory = machine.getInstructionFactory();
-        iblock = new InstructionWorkBlockF99b(cpu.getState());
+        cpuState = (CpuStateF99b)cpu.getState();
+		iblock = new InstructionWorkBlockF99b(cpuState);
         iblock.showSymbol = true;
         
         instrMap = new BitSet();
@@ -220,10 +222,10 @@ public class InterpreterF99b implements IInterpreter {
 		
 		iblock.pc = cpu.getPC();
 		iblock.st = cpu.getST();
-		iblock.sp = ((CpuStateF99b)cpu.getState()).getSP();
-		iblock.rp = ((CpuStateF99b)cpu.getState()).getRP();
-		iblock.up = ((CpuStateF99b)cpu.getState()).getUP();
-		iblock.lp = ((CpuStateF99b)cpu.getState()).getLP();
+		iblock.sp = cpuState.getSP();
+		iblock.rp = cpuState.getRP();
+		iblock.up = cpuState.getUP();
+		iblock.lp = cpuState.getLP();
 		iblock.inst = ins;
 		
 		InstructionWorkBlockF99b block = null;
@@ -252,7 +254,7 @@ public class InterpreterF99b implements IInterpreter {
 					iblock.inReturnStack[i] = iblock.getReturnStackEntry(rpused - i - 1);
 			}
 			
-			block = new InstructionWorkBlockF99b(cpu);
+			block = new InstructionWorkBlockF99b(cpuState);
 		    this.iblock.copyTo(block);
 		}
 		
@@ -263,10 +265,10 @@ public class InterpreterF99b implements IInterpreter {
 		if (instructionListeners != null) {
 		    iblock.pc = cpu.getPC();
 		    iblock.st = cpu.getST();
-		    iblock.sp = ((CpuStateF99b)cpu.getState()).getSP();
-		    iblock.rp = ((CpuStateF99b)cpu.getState()).getRP();
-		    iblock.up = ((CpuStateF99b)cpu.getState()).getUP();
-		    iblock.lp = ((CpuStateF99b)cpu.getState()).getLP();
+		    iblock.sp = cpuState.getSP();
+		    iblock.rp = cpuState.getRP();
+		    iblock.up = cpuState.getUP();
+		    iblock.lp = cpuState.getLP();
 		
 			iblock.cycles = cpu.getCurrentCycleCount();
 			for (IInstructionListener listener : instructionListeners) {
@@ -693,39 +695,39 @@ public class InterpreterF99b implements IInterpreter {
         	cpu.push((short) -1);
         	cpu.push((short) -1);
         	doCmove();
-        	((CpuStateF99b)cpu.getState()).setSP((short) (iblock.sp + mop1.immed * 2));
-        	((CpuStateF99b)cpu.getState()).setRP((short) (iblock.rp - mop1.immed * 2));
+        	cpuState.setSP((short) (iblock.sp + mop1.immed * 2));
+        	cpuState.setRP((short) (iblock.rp - mop1.immed * 2));
         	break;
         }
 
         case IcontextFrom:
         	switch (mop1.immed) {
         	case CTX_INT:
-        		cpu.push((short) cpu.getStatus().getIntMask());
+        		cpu.push((short) cpuState.getStatus().getIntMask());
         		break;
         	case CTX_SP:
-        		cpu.push(((CpuStateF99b)cpu.getState()).getSP());
+        		cpu.push(cpuState.getSP());
         		break;
         	case CTX_SP0:
-        		cpu.push(((CpuStateF99b)cpu.getState()).getBaseSP());
+        		cpu.push(cpuState.getBaseSP());
         		break;
         	case CTX_RP:
-        		cpu.push(((CpuStateF99b)cpu.getState()).getRP());
+        		cpu.push(cpuState.getRP());
         		break;
         	case CTX_RP0:
-        		cpu.push(((CpuStateF99b)cpu.getState()).getBaseRP());
+        		cpu.push(cpuState.getBaseRP());
         		break;
         	case CTX_UP:
-        		cpu.push(((CpuStateF99b)cpu.getState()).getUP());
+        		cpu.push(cpuState.getUP());
         		break;
         	case CTX_LP:
-        		cpu.push(((CpuStateF99b)cpu.getState()).getLP());
+        		cpu.push(cpuState.getLP());
         		break;
         	case CTX_PC:
         		cpu.push(cpu.getPC());
         		break;
         	case CTX_SR:
-        		cpu.push(cpu.getStatus().flatten());
+        		cpu.push(cpuState.getStatus().flatten());
         		break;
     		default:
     			cpu.push((short) -1);
@@ -736,38 +738,38 @@ public class InterpreterF99b implements IInterpreter {
         case ItoContext:
         	switch (mop1.immed) {
         	case CTX_INT:
-        		((StatusF99b) ((CpuStateF99b)cpu.getState()).getStatus()).setIntMask(cpu.pop());
+        		((StatusF99b) cpuState.getStatus()).setIntMask(cpu.pop());
         		break;
         	case CTX_SP:
-        		((CpuStateF99b)cpu.getState()).setSP(cpu.pop());
+        		cpuState.setSP(cpu.pop());
         		break;
         	case CTX_SP0: {
         		short sp0 = cpu.pop();
-        		((CpuStateF99b)cpu.getState()).setBaseSP(sp0);
-        		((CpuStateF99b)cpu.getState()).setSP(sp0);
+        		cpuState.setBaseSP(sp0);
+        		cpuState.setSP(sp0);
         		break;
         	}
         	case CTX_RP:
-        		((CpuStateF99b)cpu.getState()).setRP(cpu.pop());
+        		cpuState.setRP(cpu.pop());
         		break;
         	case CTX_RP0: {
         		short rp0 = cpu.pop();
-        		((CpuStateF99b)cpu.getState()).setBaseRP(rp0);
-        		((CpuStateF99b)cpu.getState()).setRP(rp0);
+        		cpuState.setBaseRP(rp0);
+        		cpuState.setRP(rp0);
         		break;
         	}
         	case CTX_UP:
-        		((CpuStateF99b)cpu.getState()).setUP(cpu.pop());
+        		cpuState.setUP(cpu.pop());
         		break;
         	case CTX_LP:
-        		((CpuStateF99b)cpu.getState()).setLP(cpu.pop());
+        		cpuState.setLP(cpu.pop());
         		break;
         	case CTX_PC:
-        		((CpuStateF99b)cpu.getState()).setPC(cpu.pop());
+        		cpuState.setPC(cpu.pop());
         		return true;
         	case CTX_SR:
-        		cpu.getState().setST(cpu.pop());
-        		//((StatusF99b) ((CpuStateF99b)cpu.getState()).getStatus()).expand(cpu.pop());
+        		cpuState.setST(cpu.pop());
+        		//((StatusF99b) cpuState.getStatus()).expand(cpu.pop());
         		break;
         	default:
         		cpu.pop();
@@ -1278,15 +1280,15 @@ public class InterpreterF99b implements IInterpreter {
         case ItoLocals & 0xff: {
         	// LP@  	RP@ LP! ; \\ caller pushes R> 
         	short curLP = iblock.lp;
-        	((CpuStateF99b)cpu.getState()).setLP((short) (iblock.rp - 2));
+        	cpuState.setLP((short) (iblock.rp - 2));
         	cpu.rpush(curLP);
         	break;
         }
         case IfromLocals & 0xff: {
         	//  R>  LP@ RP!   R>  LP!  >R
-        	((CpuStateF99b)cpu.getState()).setRP((short) (iblock.lp));
+        	cpuState.setRP((short) (iblock.lp));
         	short oldLP = cpu.rpop();
-        	((CpuStateF99b)cpu.getState()).setLP(oldLP);
+        	cpuState.setLP(oldLP);
         	break;
         }
         	
