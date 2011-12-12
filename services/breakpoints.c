@@ -888,9 +888,14 @@ static void free_bp(BreakpointInfo * bp) {
     loc_free(bp);
 }
 
+static void send_event_context_removed(BreakpointInfo * bp);
+
 static void notify_breakpoints_status(void) {
     LINK * l = NULL;
+    assert(list_is_empty(&evaluations_posted));
+    assert(list_is_empty(&evaluations_active));
     assert(generation_done == generation_active);
+    assert(generation_done == generation_posted);
     for (l = breakpoints.next; l != &breakpoints;) {
         BreakpointInfo * bp = link_all2bp(l);
         l = l->next;
@@ -929,7 +934,10 @@ static void notify_breakpoints_status(void) {
         }
 #endif
         if (bp->client_cnt == 0) {
-            if (bp->instruction_cnt == 0) free_bp(bp);
+            if (bp->instruction_cnt == 0) {
+                send_event_context_removed(bp);
+                free_bp(bp);
+            }
         }
         else if (bp->status_changed) {
             if (*bp->id) send_event_breakpoint_status(NULL, bp);
@@ -1773,9 +1781,9 @@ static void remove_ref(Channel * c, BreakpointRef * br) {
     list_remove(&br->link_bp);
     loc_free(br);
     if (list_is_empty(&bp->link_clients)) {
-        send_event_context_removed(bp);
         assert(bp->client_cnt == 0);
         replant_breakpoint(bp);
+        if (generation_done == generation_posted) notify_breakpoints_status();
     }
 }
 
@@ -2495,7 +2503,7 @@ static void event_code_unmapped(Context * ctx, ContextAddress addr, ContextAddre
         addr += sz;
         size -= sz;
     }
-    if (cnt > 0 && generation_done == generation_active) notify_breakpoints_status();
+    if (cnt > 0 && generation_done == generation_posted) notify_breakpoints_status();
 }
 #endif
 
