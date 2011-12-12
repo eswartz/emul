@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.debug.internal.ui.viewers.model.ITreeModelContentProviderTarget;
 import org.eclipse.debug.internal.ui.viewers.model.ITreeModelViewer;
+import org.eclipse.debug.internal.ui.viewers.model.InternalTreeModelViewer;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
@@ -43,7 +43,6 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  * fires deltas to notify listeners of changes in the model.
  * Model proxy listeners are debuggers views.
  */
-@SuppressWarnings("restriction")
 public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Runnable {
 
     private static final TCFNode[] EMPTY_NODE_ARRAY = new TCFNode[0];
@@ -427,7 +426,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 asyncExec(new Runnable() {
                     boolean found;
                     public void run() {
-                        found = ((ITreeModelContentProviderTarget)getViewer()).findElementIndex(TreePath.EMPTY, launch) >= 0;
+                        found = ((InternalTreeModelViewer)getViewer()).findElementIndex(TreePath.EMPTY, launch) >= 0;
                         Protocol.invokeLater(new Runnable() {
                             public void run() {
                                 if (disposed) return;
