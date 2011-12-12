@@ -41,8 +41,8 @@
 	  <module>plugins/org.eclipse.tm.tcf</module>
 	  <module>plugins/org.eclipse.tm.tcf.core</module>
 	  <module>plugins/org.eclipse.tm.tcf.debug</module>
-	  <module>plugins/org.eclipse.tm.tcf.debug.ui</module>
-	  <module>plugins/org.eclipse.tm.tcf.cdt.ui</module>
+	  <!-- module>plugins/org.eclipse.tm.tcf.debug.ui</module -->
+	  <!-- module>plugins/org.eclipse.tm.tcf.cdt.ui</module -->
 	  <module>plugins/org.eclipse.tm.tcf.rse</module>
 
 	  <module>features/org.eclipse.tm.tcf.feature</module>
