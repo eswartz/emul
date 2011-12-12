@@ -3,6 +3,9 @@
  */
 package v9t9.machine.ti99.cpu;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.machine.IRegisterAccess;
@@ -14,6 +17,22 @@ import v9t9.common.memory.IMemoryDomain;
  */
 public class CpuState9900 implements ICpuState {
 
+	private final static Map<Integer, String> regNames = new HashMap<Integer, String>();
+	private final static Map<String, Integer> regIds = new HashMap<String, Integer>();
+	private static void register(int reg, String id) {
+		regNames.put(reg, id);
+		regIds.put(id, reg);
+	}
+	
+	static {
+		for (int i = 0; i < 16; i++) {
+			register(i, "R" + (i < 10 ? "0" : "") + i);
+		}
+		register(Cpu9900.REG_PC, "PC");
+		register(Cpu9900.REG_ST, "SP");
+		register(Cpu9900.REG_WP, "WP");
+	}
+	
 	/** program counter */
 	protected short PC;
 	/** workspace pointer */
@@ -61,9 +80,22 @@ public class CpuState9900 implements ICpuState {
 		return 16 + 3;
 	}
 	protected String getRegisterId(int reg) {
-		return reg < 16 ? "R" + reg : (reg == Cpu9900.REG_PC ? "PC" : reg == Cpu9900.REG_ST ? "ST" : 
-			reg == Cpu9900.REG_WP ? "WP" : null);
+		return regNames.get(reg);
 	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#getRegisterNumber(java.lang.String)
+	 */
+	@Override
+	public int getRegisterNumber(String id) {
+		Integer num = regIds.get(id);
+		if (num == null)
+			return Integer.MIN_VALUE;
+		return num;
+
+	}
+
 	
 	protected String getRegisterName(int reg) {
 		switch (reg) {
@@ -111,7 +143,14 @@ public class CpuState9900 implements ICpuState {
 		String id = getRegisterId(reg);
 		if (id == null)
 			return null;
-		return new RegisterInfo(id, getRegisterFlags(reg), 2, getRegisterName(reg));
+		RegisterInfo info = new RegisterInfo(id, 
+				getRegisterFlags(reg), 2, getRegisterName(reg));
+		if (reg < 16) {
+			info.domain = console;
+			info.addr = getWP() & 0xffff;
+			// TODO: need notification of this change
+		}
+		return info;
 	}
 	
 	public int getRegister(int reg) {
@@ -150,7 +189,7 @@ public class CpuState9900 implements ICpuState {
 		}
 		return old & 0xffff;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterTooltip(int)
 	 */

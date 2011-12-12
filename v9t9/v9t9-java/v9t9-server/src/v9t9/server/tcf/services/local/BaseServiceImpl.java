@@ -5,6 +5,7 @@ package v9t9.server.tcf.services.local;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.core.ErrorReport;
@@ -126,4 +127,22 @@ public abstract class BaseServiceImpl implements IService, IChannel.ICommandServ
 	 */
 	protected abstract Object[] handleCommand(String name, Object[] args) throws ErrorReport, Exception;
 
+
+	/**
+	 * @param object
+	 * @return
+	 */
+	protected byte[] toByteArray(Object object) {
+		byte[] buf;
+		if (object instanceof List) {
+			@SuppressWarnings("unchecked")
+			List<Number> list = (List<Number>) object;
+			buf = new byte[list.size()];
+			for (int i = 0; i < buf.length; i++)
+				buf[i] = ((Number) list.get(i)).byteValue();
+		} else {
+			buf = JSON.toByteArray(object);
+		}
+		return buf;
+	}
 }

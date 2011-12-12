@@ -11,6 +11,7 @@ import java.util.Map;
 import org.eclipse.tm.tcf.core.ErrorReport;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IRegisters;
 
 import v9t9.common.machine.IMachine;
@@ -32,14 +33,13 @@ public class RegisterService extends BaseServiceImpl {
 	private static final String GET_CHILDREN = "getChildren";
 	private static final String GET_CONTEXT = "getContext";
 
-	public RegisterService(IMachine machine, IChannel channel,
-			String serviceName) {
-		super(machine, channel, serviceName);
+	public RegisterService(IMachine machine, IChannel channel) {
+		super(machine, channel, IRegisters.NAME);
 		
 		registerCommand(GET_CONTEXT, 1, 2);
 		registerCommand(GET_CHILDREN, 1, 2);
 		registerCommand(GET, 1, 2);
-		registerCommand(SET, 2, 2);
+		registerCommand(SET, 2, 1);
 	}
 
 	/* (non-Javadoc)
@@ -70,21 +70,71 @@ public class RegisterService extends BaseServiceImpl {
 		// args: contextId
 		// args: object of attributes
 		
-		IRegisterAccess access = getAccessOrError(args[0]);
+		String id = null;
+		if (args[0] != null)
+			id = args[0].toString();
+
+		String group = getGroupContext(id);
+		IRegisterAccess access = getAccessOrError(group);
 		Map<String, Object> context = null;
 		if (access != null) {
-			context = createContext(null, args[0].toString(), access);
+			if (group == null || group.equals(id))
+				context = createGroupContext(group, access);
+			else
+				context = createRegisterContext(group, id.substring(group.length() + 1), access);
 		}
 		return new Object[] { null, context };
 	}
 
-	protected Map<String, Object> createContext(String parent,
+	protected Map<String, Object> createGroupContext(
 			String id,
 			IRegisterAccess access) {
 		Map<String, Object> ctx = new HashMap<String, Object>();
 		ctx.put(IRegisters.PROP_ID, id);
-		ctx.put(IRegisters.PROP_PARENT_ID, parent);
 		ctx.put(IRegisters.PROP_NAME, access.getGroupName());
+		return ctx;
+	}
+	
+	protected Map<String, Object> createRegisterContext(String parent,
+			String id,
+			IRegisterAccess access) throws ErrorReport {
+		Map<String, Object> ctx = new HashMap<String, Object>();
+		ctx.put(IRegisters.PROP_ID, id);
+		ctx.put(IRegisters.PROP_PARENT_ID, parent);
+		
+		int reg = access.getRegisterNumber(id);
+		if (reg == Integer.MIN_VALUE) {
+			throw new ErrorReport("Unknown context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);		
+		}
+		IRegisterAccess.RegisterInfo info = access.getRegisterInfo(reg);
+		ctx.put(IRegisters.PROP_NAME, info.description);
+		ctx.put(IRegisters.PROP_BIG_ENDIAN, true);
+		ctx.put(IRegisters.PROP_SIZE, info.size);
+		
+		String role = IRegisters.ROLE_CORE;
+		
+		int roleNum = info.flags & IRegisterAccess.FLAG_ROLE_MASK;
+		switch (roleNum) {
+		case IRegisterAccess.FLAG_ROLE_FP:
+			role = IRegisters.ROLE_FP;
+			break;
+		case IRegisterAccess.FLAG_ROLE_PC:
+			role = IRegisters.ROLE_PC;
+			break;
+		case IRegisterAccess.FLAG_ROLE_RET:
+			role = IRegisters.ROLE_RET;
+			break;
+		case IRegisterAccess.FLAG_ROLE_SP:
+			role = IRegisters.ROLE_SP;
+			break;
+		}
+		ctx.put(IRegisters.PROP_ROLE, role);
+		
+		if (info.domain != null) {
+			ctx.put(IRegisters.PROP_MEMORY_CONTEXT, info.domain.getIdentifier());
+			ctx.put(IRegisters.PROP_MEMORY_ADDRESS, info.addr);
+			
+		}
 		return ctx;
 	}
 
@@ -92,10 +142,7 @@ public class RegisterService extends BaseServiceImpl {
 	 * @param object
 	 * @return
 	 */
-	protected IRegisterAccess getAccessOrError(Object object) throws ErrorReport {
-		if (object == null)
-			return null;
-		String id = object.toString();
+	protected IRegisterAccess getAccessOrError(String id) throws ErrorReport {
 		if (id.length() == 0 || id.equals(ROOT))
 			return null;
 		
@@ -115,11 +162,22 @@ public class RegisterService extends BaseServiceImpl {
 	private Object[] doGetChildren(Object[] args) throws Exception {
 		// args:  context
 		// ret: list
-		IRegisterAccess access = getAccessOrError(args[0]);
-		
+		String id = null;
+		if (args[0] != null)
+			id = args[0].toString();
+
+		if (id == null || id.length() == 0 || id.equals(ROOT)) {
+			return new Object[] { null, 
+					new String[] { IMemoryDomain.NAME_CPU, IMemoryDomain.NAME_VIDEO } };
+		}
+		IRegisterAccess access = getAccessOrError(id);
+		if (access == null)
+			throw new ErrorReport("Unknown context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);		
+			
+		String pfx = args[0].toString() + ".";
 		List<String> kids = new ArrayList<String>();
 		for (int i = 0; i < access.getRegisterCount(); i++)
-			kids.add(access.getRegisterInfo(i).id);
+			kids.add(pfx + access.getRegisterInfo(i + access.getFirstRegister()).id);
 		return new Object[] { null, kids };
 	}
 
@@ -127,7 +185,33 @@ public class RegisterService extends BaseServiceImpl {
 	 * @param args
 	 */
 	private Object[] doGet(Object[] args) throws Exception {
-		// TODO Auto-generated method stub
+		String id = null;
+		if (args[0] != null)
+			id = args[0].toString();
+
+		String[] parts = id.split("\\.");
+		if (parts.length != 2)
+			throw new ErrorReport("Bad context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);
+		
+		IRegisterAccess access = getAccessOrError(parts[0]);
+		if (access == null)
+			throw new ErrorReport("Unknown group context " + parts[0], IErrorReport.TCF_ERROR_INV_CONTEXT);		
+		
+		int num = access.getRegisterNumber(parts[1]);
+		if (num == Integer.MIN_VALUE)
+			throw new ErrorReport("Unknown context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);		
+
+		int value = access.getRegister(num);
+		
+		int size = access.getRegisterInfo(num).size;
+		byte[] data = new byte[size];
+		
+		for (int i = 0; i < size; i++) {
+			data[size - i - 1] = (byte) value;
+			value >>= 8;
+		}
+		return new Object[] { null, new JSON.Binary(data, 0, size) };
+		
 		
 	}
 
@@ -136,8 +220,38 @@ public class RegisterService extends BaseServiceImpl {
 	 * @return 
 	 */
 	private Object[] doSet(Object[] args) throws Exception {
-		// TODO Auto-generated method stub
+		String id = null;
+		if (args[0] != null)
+			id = args[0].toString();
+
+		String[] parts = id.split("\\.");
+		if (parts.length != 2)
+			throw new ErrorReport("Unknown context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);
+
+		IRegisterAccess access = getAccessOrError(parts[0]);
+		if (access == null)
+			throw new ErrorReport("Unknown group context " + parts[0], IErrorReport.TCF_ERROR_INV_CONTEXT);
+
+		int num = access.getRegisterNumber(parts[1]);
+		if (num == Integer.MIN_VALUE)
+			throw new ErrorReport("Unknown context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);		
+
+		byte[] data = toByteArray(args[1]);
+		int value = 0;
+		for (int i = 0; i < data.length; i++)
+			value = (value << 8) | (data[i] & 0xff);
 		
+		access.setRegister(num, value);
+		
+		return new Object[] { null };
+		
+	}
+
+	protected String getGroupContext(String id) {
+		int idx = id.indexOf('.');
+		if (idx < 0)
+			return id;
+		return id.substring(0, idx);
 	}
 
 }

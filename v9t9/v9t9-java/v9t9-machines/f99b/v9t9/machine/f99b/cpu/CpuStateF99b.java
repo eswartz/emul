@@ -4,6 +4,9 @@
 package v9t9.machine.f99b.cpu;
 
 
+import java.util.HashMap;
+import java.util.Map;
+
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
@@ -24,6 +27,25 @@ public class CpuStateF99b implements ICpuState {
 							| (1 << CpuF99b.RP) | (1 << CpuF99b.RP0)
 							| (1 << CpuF99b.UP) | (1 << CpuF99b.UP0)
 							| (1 << CpuF99b.LP));
+
+	private final static Map<Integer, String> regNames = new HashMap<Integer, String>();
+	private final static Map<String, Integer> regIds = new HashMap<String, Integer>();
+	private static void register(int reg, String id) {
+		regNames.put(reg, id);
+		regIds.put(id, reg);
+	}
+	
+	static {
+		register(CpuF99b.PC, "PC");
+		register(CpuF99b.SP, "SP");
+		register(CpuF99b.SP0, "SP0");
+		register(CpuF99b.RP, "RP");
+		register(CpuF99b.RP0, "RP0");
+		register(CpuF99b.UP, "UP");
+		register(CpuF99b.UP0, "UP0");
+		register(CpuF99b.SR, "SR");
+		register(CpuF99b.LP, "LP");
+	}
 	
 	private final IMemoryDomain console;
 	private IStatus status;
@@ -93,20 +115,18 @@ public class CpuStateF99b implements ICpuState {
 	}
 	
 	protected String getRegisterId(int reg) {
-		switch (reg) {
-		case CpuF99b.PC: return "PC";
-		case CpuF99b.SP: return "SP";
-		case CpuF99b.SP0: return "SP0";
-		case CpuF99b.RP: return "RP";
-		case CpuF99b.RP0: return "RP0";
-		case CpuF99b.UP: return "UP";
-		case CpuF99b.UP0: return "UP0";
-		case CpuF99b.SR: return "SR";
-		case CpuF99b.LP: return "LP";
-		default: return null;
-		}
+		return regNames.get(reg);
 	}
-	
+
+	@Override
+	public int getRegisterNumber(String id) {
+		Integer num = regIds.get(id);
+		if (num == null)
+			return Integer.MIN_VALUE;
+		return num;
+	}
+
+
 
 	protected String getRegisterDescription(int reg) {
 		switch (reg) {

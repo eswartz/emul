@@ -11,7 +11,6 @@ import java.util.Map;
 import org.eclipse.tm.tcf.core.ErrorReport;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
-import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.JSON.Binary;
 import org.eclipse.tm.tcf.services.IMemory;
 
@@ -184,16 +183,7 @@ public class MemoryService extends BaseServiceImpl {
 			throw new ErrorReport("Bad alignment of " + addr + " @ " + word_size, 
 					IErrorReport.TCF_ERROR_INV_ADDRESS);
 	
-		byte[] buf;
-		if (args[5] instanceof List) {
-			@SuppressWarnings("unchecked")
-			List<Number> list = (List<Number>) args[5];
-			buf = new byte[list.size()];
-			for (int i = 0; i < buf.length; i++)
-				buf[i] = ((Number) list.get(i)).byteValue();
-		} else {
-			buf = JSON.toByteArray(args[5]);
-		}
+		byte[] buf = toByteArray(args[5]);
 	
 		if ((mode & IMemoryV2.MODE_FLAT) != 0) {
 			for (int i = 0; i < size; i++) {
@@ -208,6 +198,7 @@ public class MemoryService extends BaseServiceImpl {
 		
 		return new Object[] { null, null };
 	}
+
 
 	/**
 	 * @param object

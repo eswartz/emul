@@ -3,6 +3,8 @@
  */
 package v9t9.common.machine;
 
+import v9t9.common.memory.IMemoryDomain;
+
 /**
  * This interface encapsulates any aspect of the emulator
  * which uses registers.
@@ -18,12 +20,15 @@ public interface IRegisterAccess {
 	int FLAG_ROLE_SP = 3;
 	int FLAG_ROLE_FP = 4;
 	int FLAG_ROLE_RET = 5;
+	int FLAG_ROLE_MASK = 0x7;
 	
 	class RegisterInfo {
 		public final String id;
 		public final int flags;
 		public final int size;
 		public final String description;
+		public IMemoryDomain domain;
+		public int addr;
 		
 		public RegisterInfo(String id, int flags, int size,
 				String description) {
@@ -43,4 +48,6 @@ public interface IRegisterAccess {
 	int getRegister(int reg);
 	int setRegister(int reg, int newValue);
 	String getRegisterTooltip(int reg);
+	
+	int getRegisterNumber(String id);
 }

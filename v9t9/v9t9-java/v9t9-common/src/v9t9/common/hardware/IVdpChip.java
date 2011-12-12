@@ -59,7 +59,7 @@ public interface IVdpChip extends IPersistable, IRegisterAccess {
 	int MODE_GRAPHICS6 = 20;
 	int MODE_GRAPHICS7 = 28;
 	
-
+	int REG_ST = -1;
 	int REG_SR0 = 48;
 	int REG_PAL0 = 48 + 9;
 	

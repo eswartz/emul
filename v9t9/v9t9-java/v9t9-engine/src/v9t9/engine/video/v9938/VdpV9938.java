@@ -4,6 +4,9 @@
 package v9t9.engine.video.v9938;
 
 
+import java.util.HashMap;
+import java.util.Map;
+
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
@@ -47,12 +50,37 @@ import v9t9.engine.video.tms9918a.VdpTMS9918A;
  *
  */
 public class VdpV9938 extends VdpTMS9918A {
+	private static final int REG_COUNT = 1 + 48 /* base */ + 9 /* status */ + 16 /* palette */;
+	
+
+	private final static Map<Integer, String> regNames9938 = new HashMap<Integer, String>();
+	private final static Map<String, Integer> regIds9938 = new HashMap<String, Integer>();
+	
+	private static void register(int reg, String id) {
+		System.out.println(reg + " = " + id);
+		regNames9938.put(reg, id);
+		regIds9938.put(id, reg);
+	}
+	
+	static {
+		register(REG_ST, "ST");
+		
+		for (int i = 0; i < 48; i++) {
+			register(i, "VR" + (i < 10 ? "0" : "") + i);
+		}
+		for (int i = 0; i < 9; i++) {
+			register(i + REG_SR0, "SR" + i);
+		}
+		for (int i = 0; i < 16; i++) {
+			register(i + REG_PAL0, "PAL" + (i < 10 ? "0" : "") + i);
+		}
+	}
 
 	private short[] palette = new short[16];
 	private boolean palettelatched;
 	private byte palettelatch;
 	private int statusidx;
-	private byte[] statusvec = new byte[16];
+	private byte[] statusvec = new byte[9];
 	private int indreg;
 	private boolean indinc;
 	/** ms */
@@ -288,8 +316,6 @@ public class VdpV9938 extends VdpTMS9918A {
 	final public static int S7_CLR = 7;
 	final public static int S8_BOR_HI = 8;
 	final public static int S9_BOR_LO = 9;
-	
-	private static final int REG_COUNT = 1 + 48 /* base */ + 9 /* status */ + 16 /* palette */;
 	
 	@Override
 	protected int doWriteVdpReg(int reg, byte old, byte val) {
@@ -1300,6 +1326,20 @@ public class VdpV9938 extends VdpTMS9918A {
 		return REG_COUNT;
 	}
 
+
+	protected String getRegisterId(int reg) {
+		return regNames9938.get(reg);
+	}
+
+	@Override
+	public int getRegisterNumber(String id) {
+		Integer num = regIds9938.get(id);
+		if (num == null)
+			return Integer.MIN_VALUE;
+		return num;
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#getRegister(int)
 	 */
@@ -1341,20 +1381,6 @@ public class VdpV9938 extends VdpTMS9918A {
 				+ " | 9th: " + (s & 0x1f);
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#getRegisterName(int)
-	 */
-	@Override
-	protected String getRegisterId(int reg) {
-		if (reg >= REG_PAL0)
-			return "PAL" + (reg - REG_PAL0);
-		else if (reg >= REG_SR0)
-			return "SR" + (reg - REG_SR0);
-		else
-			return super.getRegisterId(reg);
-	}
-	
-
 	@Override
 	protected String getRegisterName(int reg) {
 		switch (reg) {
@@ -1454,7 +1480,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	 */
 	@Override
 	protected int getRegisterFlags(int reg) {
-		if (reg >= REG_SR0 || (reg >= 32 && reg <= 45))
+		if ((reg >= REG_SR0 && reg < REG_SR0 + 9) || (reg >= 32 && reg <= 45))
 			return IRegisterAccess.FLAG_VOLATILE + IRegisterAccess.FLAG_ROLE_GENERAL;
 		return super.getRegisterFlags(reg);
 	}

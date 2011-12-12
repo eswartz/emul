@@ -18,6 +18,7 @@ import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.JSON.ObjectWriter;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IRegisters;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IMachine;
@@ -26,6 +27,7 @@ import v9t9.server.tcf.services.IMemoryV2;
 import v9t9.server.tcf.services.ISettings;
 import v9t9.server.tcf.services.local.MemoryService;
 import v9t9.server.tcf.services.local.MemoryServiceV2;
+import v9t9.server.tcf.services.local.RegisterService;
 import v9t9.server.tcf.services.local.SettingsService;
 import v9t9.server.tcf.services.remote.SettingsProxy;
 
@@ -69,6 +71,7 @@ public class EmulatorTCFServiceProvider implements IServiceProvider {
 		registerService(ISettings.NAME, SettingsService.class);
         registerService(IMemory.NAME, MemoryService.class);
         registerService(IMemoryV2.NAME, MemoryServiceV2.class);
+        registerService(IRegisters.NAME, RegisterService.class);
 	}
 	
 	public void registerService(String name, Class<? extends IService> serviceKlass) {

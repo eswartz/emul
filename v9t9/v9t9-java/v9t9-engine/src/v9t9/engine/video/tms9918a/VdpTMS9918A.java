@@ -8,6 +8,8 @@ package v9t9.engine.video.tms9918a;
 
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
@@ -55,6 +57,24 @@ import v9t9.engine.video.VdpRedrawInfo;
  * @author ejs
  */
 public class VdpTMS9918A implements IVdpChip {
+	private static final int REG_COUNT = 8 /* base */ + 1 /* status */;
+
+	private final static Map<Integer, String> regNames = new HashMap<Integer, String>();
+	private final static Map<String, Integer> regIds = new HashMap<String, Integer>();
+	
+	private static void register(int reg, String id) {
+		regNames.put(reg, id);
+		regIds.put(id, reg);
+	}
+	
+	static {
+		for (int i = 0; i < 8; i++) {
+			register(i, "VR" + i);
+		}
+		register(REG_ST, "ST");
+	}
+	
+	
 	private RedrawBlock[] blocks;
 	protected IMemoryDomain vdpMemory;
 
@@ -81,8 +101,6 @@ public class VdpTMS9918A implements IVdpChip {
 	protected VdpRedrawInfo vdpRedrawInfo;
 	
 	protected int modeNumber;
-	public static final int REG_ST = -1;
-	private static final int REG_COUNT = 8 /* base */ + 1 /* status */;
 
 	/** The circular counter for VDP interrupt timing. */
 	private int vdpInterruptFrac;
@@ -888,8 +906,14 @@ public class VdpTMS9918A implements IVdpChip {
 			(reg == REG_ST ? IRegisterAccess.FLAG_VOLATILE : 0);
 	}
 
+
 	protected String getRegisterId(int reg) {
-		return reg == REG_ST ? "ST" : "VR" + (reg);
+		return regNames.get(reg);
+	}
+
+	@Override
+	public int getRegisterNumber(String id) {
+		return regIds.get(id);
 	}
 	
 	protected String getRegisterName(int reg) {
