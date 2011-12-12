@@ -30,8 +30,6 @@ public interface ISwtVideoRenderer extends IVideoRenderer {
     /** Get the basic canvas, before rendering */
 	IVdpCanvas getCanvas();
 	
-	void setCanvas(IVdpCanvas vdpCanvas);
-
 	void setFocus();
 
 	IVdpChip getVdpHandler();

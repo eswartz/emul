@@ -4,6 +4,9 @@
 package v9t9.engine.video.v9938;
 
 
+import static v9t9.common.hardware.VdpTMS9918AConsts.*;
+import static v9t9.common.hardware.VdpV9938Consts.*;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,45 +16,22 @@ import v9t9.base.utils.HexUtils;
 import v9t9.base.utils.ListenerList.IFire;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
-import v9t9.common.video.VdpColorManager;
-import v9t9.common.video.VdpFormat;
-import v9t9.common.video.VdpModeInfo;
+import v9t9.common.video.ColorMapUtils;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 
 /**
  * V9938 video chip support.  This functions as a superset of the TMS9918A.
- * <p>
- * Mode bits:
- * <p>
- * R0:	M3 @ 1, M4 @ 2, M5 @ 3
- * R1:	M1 @ 4, M2 @ 3 
- * <p>
- * <pre>
- *                   M1  M2  M3  M4  M5     Mode #
- * Text 1 mode:      1   0   0   0   0		= 1		>81F0, >8000
- * Text 2 mode:      1   0   0   1   0		= 9		>81F0, >8004
- * Multicolor:       0   1   0   0   0		= 2		>81C0, >8000
- * Graphics 1 mode:  0   0   0   0   0		= 0		>81E0, >8000
- * Graphics 2 mode:  0   0   1   0   0		= 4		>81E0, >8002
- * Graphics 3 mode:  0   0   0   1   0		= 8		>81E0, >8004 (bitmap + new sprites)
- * Graphics 4 mode:  0   0   1   1   0		= 12	>81E0, >8006 (bitmap 256x192x16)
- * Graphics 5 mode:  0   0   0   0   1		= 16	>81E0, >8008 (bitmap 512x192x4)
- * Graphics 6 mode:  0   0   1   0   1		= 20	>81E0, >800A (bitmap 512x192x16)
- * Graphics 7 mode:  0   0   1   1   1		= 28	>81E0, >800E (bitmap 256x192x256)
- * </pre>
- * TODO: toying with row masking
  * TODO: acceleration: YMMV, SRCH, test HMMM and LMMM; set registers to expected values when done
  * @author ejs  
  *
  */
-public class VdpV9938 extends VdpTMS9918A {
-	private static final int REG_COUNT = 1 + 48 /* base */ + 9 /* status */ + 16 /* palette */;
-	
+public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 
 	private final static Map<Integer, String> regNames9938 = new HashMap<Integer, String>();
 	private final static Map<String, Integer> regIds9938 = new HashMap<String, Integer>();
@@ -75,20 +55,33 @@ public class VdpV9938 extends VdpTMS9918A {
 			register(i + REG_PAL0, "PAL" + (i < 10 ? "0" : "") + i);
 		}
 	}
+	
+	static final byte[][] defaultPalette = {
+		{ 0, 0, 0 }, 
+		{ 0, 0, 0 }, 
+		{ 6, 1, 1 }, 
+		{ 7, 3, 3 }, 
+		{ 1, 1, 7 }, 
+		{ 3, 2, 7 }, 
+		{ 1, 5, 1 }, 
+		{ 6, 2, 7 }, 
+		{ 1, 7, 1 }, 
+		{ 3, 7, 3 }, 
+		{ 6, 6, 1 }, 
+		{ 6, 6, 4 }, 
+		{ 4, 4, 1 }, 
+		{ 2, 6, 5 }, 
+		{ 5, 5, 5 }, 
+		{ 7, 7, 7 },
+	};
 
-	private short[] palette = new short[16];
+	private short[] palette;
 	private boolean palettelatched;
 	private byte palettelatch;
 	private int statusidx;
 	private byte[] statusvec = new byte[9];
 	private int indreg;
 	private boolean indinc;
-	/** ms */
-	private int blinkPeriod;
-	/** ms */
-	private int blinkOnPeriod;
-	/** ms */
-	private int blinkOffPeriod;
 	boolean blinkOn;
 	private boolean isEnhancedMode;
 	
@@ -141,8 +134,6 @@ public class VdpV9938 extends VdpTMS9918A {
     		"MsxClockDivisor", new Integer(6));
 
 	private int currentcycles = 0; // current cycles left
-	private int pageOffset;
-	private int pageSize;
 	private IProperty msxClockDivisor;
 	
 	/* from mame and blueMSX:
@@ -181,24 +172,17 @@ public class VdpV9938 extends VdpTMS9918A {
 		return new byte[48];
 	}
 	
-	public void resetPalette() {
-		VdpColorManager cm = vdpCanvas.getColorMgr();
-		cm.setGRB333(0, 0, 0, 0); 
-		cm.setGRB333(1, 0, 0, 0); 
-		cm.setGRB333(2, 6, 1, 1); 
-		cm.setGRB333(3, 7, 3, 3); 
-		cm.setGRB333(4, 1, 1, 7); 
-		cm.setGRB333(5, 3, 2, 7); 
-		cm.setGRB333(6, 1, 5, 1); 
-		cm.setGRB333(7, 6, 2, 7); 
-		cm.setGRB333(8, 1, 7, 1); 
-		cm.setGRB333(9, 3, 7, 3); 
-		cm.setGRB333(10, 6, 6, 1); 
-		cm.setGRB333(11, 6, 6, 4); 
-		cm.setGRB333(12, 4, 4, 1); 
-		cm.setGRB333(13, 2, 6, 5); 
-		cm.setGRB333(14, 5, 5, 5); 
-		cm.setGRB333(15, 7, 7, 7);
+	@Override
+	public void initRegisters() {
+		super.initRegisters();
+		
+		this.palette = new short[16];
+
+		for (int i = 0; i < 16; i++) {
+			byte[] p = defaultPalette[i];
+			palette[i] = ColorMapUtils.rgb8ToRgbRBXG(ColorMapUtils.getGRB333(
+					p[0], p[1], p[2]));
+		}
 		
 		// color burst regs(pg 149)
 		vdpregs[20] = 0;
@@ -215,271 +199,12 @@ public class VdpV9938 extends VdpTMS9918A {
 		}
 	}
 
-	/** 1: color bus in input mode, enable mouse */
-	//final public public static int R8_MS = 0x80;
-	/** 1: enable light pen */
-	//final static int R8_LP = 0x40;
-	/** 1: color 0 is from palette; 0: clear */
-	final public static int R8_TP = 0x20;
-	/** 1: color bus in input mode, 0: output mode */
-	//final public static int R8_CB = 0x10;
-	/** 1: video RAM type: 64k, 0: 16k */
-	final public static int R8_VR = 0x08;
-	/** 1: sprites off */
-	final public static int R8_SPD = 0x02;
-	/** 1: black & white, 0: color */
-	final public static int R8_BW = 0x01;
-
-	
-	final public static int R0_M4 = 0x4;
-	final public static int R0_M5 = 0x8;
-
-	
-	/** 1: 212, 0: 192 lines */
-	final public static int R9_LN = 0x80;
-	/** 1: simultaneous mode */
-	//final public static int R9_S1 = 0x20;
-	/** 1: simultaneous mode */
-	//final public static int R9_S0 = 0x10;
-	/** 1: interlace */
-	final public static int R9_IL = 0x8;
-	/** 1: interlace two screens on the even/odd field */
-	final public static int R9_EO = 0x4;
-	/** 1: PAL, 0: NTSC */
-	//final public static int R9_NT = 0x2;
-	/** 1: *DLCLK in input mode, else output */
-	//final public static int R9_DC = 0x1;
-	
-	/** 1: expansion RAM, 0: video RAM */
-	final public static int R45_MXC = 0x40;
-	final public static int R45_MXD = 0x20;
-	final public static int R45_MXS = 0x10;
-	final public static int R45_DIY = 0x8;
-	final public static int R45_DIX = 0x4;
-	final public static int R45_EQ = 0x2;
-	/** 0=X long, 1=Y long */
-	final public static int R45_MAJ = 0x1;
-	
-	final public static int R32_SX_LO = 32;	// 0x20 1
-	final public static int R33_SX_HI = 33;	// 0x21
-	final public static int R34_SY_LO = 34;	// 0x22 2
-	final public static int R35_SY_HI = 35;	// 0x23
-	final public static int R36_DX_LO = 36;	// 0x24 1
-	final public static int R37_DX_HI = 37;	// 0x25
-	final public static int R38_DY_LO = 38;	// 0x26 2
-	final public static int R39_DY_HI = 39;	// 0x27
-	final public static int R40_NX_LO = 40;	// 0x28 1
-	final public static int R41_NX_HI = 41;	// 0x29
-	final public static int R42_NY_LO = 42;	// 0x2A 2
-	final public static int R43_NY_HI = 43;	// 0x2B
-	final public static int R44_CLR = 44;	// 0x2C
-	final public static int R45_ARG = 45;	// 0x2D
-	
-	final public static int R46_CMD = 46;	// 0x2E
-	final public static int R46_CMD_MASK = 0xf0;
-	final public static byte R46_CMD_HMMC = (byte) 0xf0;
-	final public static byte R46_CMD_YMMM = (byte) 0xe0;
-	final public static byte R46_CMD_HMMM = (byte) 0xd0;
-	final public static byte R46_CMD_HMMV = (byte) 0xc0;
-	final public static byte R46_CMD_LMMC = (byte) 0xb0;
-	final public static byte R46_CMD_LMCM = (byte) 0xa0;
-	final public static byte R46_CMD_LMMM = (byte) 0x90;
-	final public static byte R46_CMD_LMMV = (byte) 0x80;
-	final public static byte R46_CMD_LINE = 0x70;
-	final public static byte R46_CMD_SRCH = 0x60;
-	final public static byte R46_CMD_PSET = 0x50;
-	final public static byte R46_CMD_POINT = 0x40;
-	final public static byte R46_CMD_STOP = 0x00;
-	
-	final public static int R46_LOGOP_MASK = 0xf;
-	final public static int R46_LOGOP_INP = 0x0;
-	final public static int R46_LOGOP_AND = 0x1;
-	final public static int R46_LOGOP_OR  = 0x2;
-	final public static int R46_LOGOP_EOR = 0x3;
-	final public static int R46_LOGOP_NOT = 0x4;
-	final public static int R46_LOGOP_TIMF = 0x8;
-	final public static int R46_LOGOP_TAND = 0x9;
-	final public static int R46_LOGOP_TOR  = 0xA;
-	final public static int R46_LOGOP_TEOR = 0xB;
-	final public static int R46_LOGOP_TNOT = 0xC;
-	
-	
-	final public static int S2_TR = 0x80;
-	final public static int S2_BD = 0x10;
-	final public static int S2_EO = 0x2;
-	final public static int S2_CE = 0x1;
-	
-	final public static int S3_COL_LO = 3;
-	final public static int S4_COL_HI = 4;
-	final public static int S5_ROW_LO = 5;
-	final public static int S6_ROW_HI = 6;
-	final public static int S7_CLR = 7;
-	final public static int S8_BOR_HI = 8;
-	final public static int S9_BOR_LO = 9;
-	
-	@Override
-	protected int doWriteVdpReg(int reg, byte old, byte val) {
-		//System.out.println(Utils.toHex2(reg) + " = " + Utils.toHex2(val));
-		int redraw = super.doWriteVdpReg(reg, old, val);
-		
-		if (reg != 16 && reg != 17 && reg < 32 && old == val)
-			return redraw;
-		
-		switch (reg) {
-		case 0:
-			if (CHANGED(old, val, R0_M4 + R0_M5)) {
-				redraw |= REDRAW_MODE;
-			}
-			break;
-		case 2:
-			// page
-			if (CHANGED(old, val, 0x60)) {
-				redraw |= REDRAW_MODE;
-			}
-			break;
-		case 8:
-			// memory, input bus, display mode, line count
-			if (CHANGED(old, val, R8_VR)) {
-				switchBank();
-				redraw |= REDRAW_MODE;
-			}
-			if (CHANGED(old, val, R8_BW)) {
-				vdpCanvas.getColorMgr().setGreyscale((val & R8_BW) != 0);
-				redraw |= REDRAW_PALETTE;
-			}
-			if (CHANGED(old, val, R8_SPD)) {
-				drawSprites = (val & R8_SPD) == 0;
-				redraw |= REDRAW_SPRITES;
-			}
-			if (CHANGED(old, val, R8_TP)) {
-				vdpCanvas.getColorMgr().setClearFromPalette((val & R8_TP) != 0);
-				redraw |= REDRAW_PALETTE + REDRAW_SPRITES;
-			}
-			break;
-		case 9:
-			// lines and stuff
-			if (CHANGED(old, val, R9_LN)) {
-				//vdpCanvas.setSize(256, (val & R9_LN) != 0 ? 212 : 192);
-				redraw |= REDRAW_MODE;
-			}
-			if (CHANGED(old, val, R9_EO + R9_IL)) {
-				redraw |= REDRAW_MODE;
-			}
-			break;
-		case 10:
-		case 11:
-			// color, sprite table high byte
-			redraw |= REDRAW_MODE;
-			break;
-		case 12:
-			// text 2 blinky (pg 6)
-			redraw |= REDRAW_PALETTE;
-			break;
-			
-		case 13:
-			// blinking period (pg 6)
-			blinkOnPeriod = ((val >> 4) & 0xf) * 1000 / 6;
-			blinkOffPeriod = (val & 0xf) * 1000 / 6;
-			blinkPeriod = blinkOnPeriod + blinkOffPeriod;
-			blinkOn = false;
-			redraw |= REDRAW_PALETTE;
-			// no redraw right now
-			break;
-			
-			
-		case 14:
-			// memory bank 
-			switchBank();
-			break;
-		case 15:
-			// status register pointer
-			statusidx = val & 0xf;
-			break;
-		case 16:
-			// palette #
-			palettelatched = false;
-			break;
-		case 17:
-			// indirect register access: sets the next register whose value
-			// can be set through port 3 (though, reg 17 itself will not be modified)
-			indreg = val & 0x3f;
-			indinc = (val & 0x80) == 0;
-			break;
-		case 18: {
-			// display adjust register (pg 6) / pan
-			updateOffset();
-			break;
-		}
-		case 19:
-			// set to the line # on which to generate an interrupt (?)
-			// R0 bit 4 enables
-			// http://map.tni.nl/articles/split_guide.php
-			break;
-		case 20:
-		case 21:
-		case 22:
-			// color burst registers
-			break;
-		case 23: {
-			updateOffset();
-			break;
-		}
-		case 32: // sx lo
-		case 33: // sx hi (2)
-		case 34: // sx lo	   or sy lo
-		case 35: // sx hi (2)  or sy hi (1)
-		case 36: // dx lo
-		case 37: // dx hi (2)
-		case 38: // dy lo
-		case 39: // dy hi (1)
-		case 40: // nx lo
-		case 41: // nx hi (2)
-		case 42: // ny lo
-		case 43: // ny hi (1)
-			break;
-		case 44: // CLR (data to transfer)
-			if (accelActive() && cmdState.isDataMoveCommand) {
-				// got the next byte
-				statusvec[2] &= ~S2_TR;
-				work();
-			}
-			break;
-		case 45: // ARG
-			if (CHANGED(old, val, R45_MXC)) {
-				// doesn't affect video rendering
-				switchBank();
-			}
-			break;
-		case 46: // CMD
-			if ((statusvec[2] & S2_CE) == 0 && pixperbyte != 0) {
-				setupCommand();
-				setAccelActive(true);
-				work();
-			}
-			//}
-			break;
-		}
-		return redraw;
-	}
-
-	/**
-	 * 
-	 */
-	private void updateOffset() {
-		int xoffs = (byte)(vdpregs[18] << 4) >> 4;
-		int yoffs = ((vdpregs[18] & 0xf0) >> 4) + (vdpregs[23]);
-		vdpCanvas.setOffset(xoffs, yoffs);
-		// V9990 reference says:
-		// (P1 and B1 by 1 pixel unit, P2, B2 and B3 by 2-pixel unit, B4, B5 and B6 by 4-pixel unit) 
-		dirtyAll();
-		
-	}
-
 	protected void loadVdpReg(int num, byte val) {
 		if (num != 44 && num != 46) {
 			setRegister(num, val);
 		}
 		else {
+			// don't fire
 			vdpregs[num] = val;
 		}
 	}
@@ -518,7 +243,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		    	listeners.fire(new IFire<IVdpChip.IVdpListener>() {
 					@Override
 					public void fire(IVdpListener listener) {
-						listener.paletteColorChanged(col);
+						listener.paletteColorChanged(col, palette[col]);
 					}
 		
 					@Override
@@ -527,23 +252,12 @@ public class VdpV9938 extends VdpTMS9918A {
 					}
 				});
 	    	}
-			setPaletteColor(col);
 			
 			vdpregs[16] = (byte) ((vdpregs[16]+1)&0xf);
+			fireRegisterChanged(16, vdpregs[16]);
+			
 			palettelatched = false;
 		}
-	}
-
-	/**
-	 * @param col
-	 */
-	protected void setPaletteColor(final int col) {
-		int r = (palette[col] >> 12) & 0x7;
-		int b = (palette[col] >> 8) & 0x7;
-		int g = (palette[col]) & 0x7;
-		//System.out.println("palette " + paletteidx + ": " + g +"|"+ r + "|"+ b);
-		vdpCanvas.getColorMgr().setGRB333(col, g, r, b);
-		dirtyAll();
 	}
 
 	
@@ -562,268 +276,6 @@ public class VdpV9938 extends VdpTMS9918A {
 		return isEnhancedMode;
 	}
 
-	/**
-	 * Yields one of the MODE_xxx enums based on the current vdpregs[]
-	 * @return
-	 */
-	public int calculateModeNumber() {
-		int reg0 = vdpregs[0] & IVdpChip.R0_M3 + R0_M4 + R0_M5;
-		int reg1 = vdpregs[1] & IVdpChip.R1_M1 + IVdpChip.R1_M2;
-		
-		if (reg1 == 0) {
-			if (reg0 == R0_M4)
-				return IVdpChip.MODE_GRAPHICS3;
-			if (reg0 == IVdpChip.R0_M3 + R0_M4)
-				return IVdpChip.MODE_GRAPHICS4;
-			if (reg0 == R0_M5)
-				return IVdpChip.MODE_GRAPHICS5;
-			if (reg0 == IVdpChip.R0_M3 + R0_M5)
-				return IVdpChip.MODE_GRAPHICS6;
-			if (reg0 == IVdpChip.R0_M3 + R0_M4 + R0_M5)
-				return IVdpChip.MODE_GRAPHICS7;
-		} else if (reg1 == IVdpChip.R1_M1 && reg0 == R0_M4) {
-			return IVdpChip.MODE_TEXT2;
-		}
-		return super.calculateModeNumber();
-	}
-	
-	public String getModeName() {
-		switch (modeNumber) {
-		case IVdpChip.MODE_GRAPHICS3: return "Graphics 3";
-		case IVdpChip.MODE_GRAPHICS4: return "Graphics 4";
-		case IVdpChip.MODE_GRAPHICS5: return "Graphics 5";
-		case IVdpChip.MODE_GRAPHICS6: return "Graphics 6";
-		case IVdpChip.MODE_GRAPHICS7: return "Graphics 7";
-		case IVdpChip.MODE_TEXT2: return "Text 2";
-		}
-		return super.getModeName();
-	}
-	
-	@Override
-	protected void establishVideoMode() {
-		modeNumber = calculateModeNumber();
-		isEnhancedMode = true;
-		pageSize = 0x8000;
-		switch (modeNumber) {
-		case IVdpChip.MODE_TEXT2:
-			setText2Mode();
-			dirtyAll();	// for border
-			break;
-		case IVdpChip.MODE_GRAPHICS3:
-			setGraphics3Mode();
-			break;
-		case IVdpChip.MODE_GRAPHICS4:
-			setGraphics4Mode();
-			break;
-		case IVdpChip.MODE_GRAPHICS5:
-			setGraphics5Mode();
-			break;
-		case IVdpChip.MODE_GRAPHICS6:
-			setGraphics6Mode();
-			pageSize = 0x10000;
-			break;
-		case IVdpChip.MODE_GRAPHICS7:
-			setGraphics7Mode();
-			pageSize = 0x10000;
-			break;
-		default:
-			isEnhancedMode = false;
-			super.establishVideoMode();
-			break;
-		}
-	}
-	
-	@Override
-	protected void setupBackdrop() {
-		if (modeNumber == IVdpChip.MODE_GRAPHICS5) {
-			// even-odd tiling function
-			vdpCanvas.getColorMgr().setClearColor((vdpbg >> 2) & 0x3);
-			vdpCanvas.getColorMgr().setClearColor1((vdpbg) & 0x3);
-			vdpCanvas.clearToEvenOddClearColors();
-		} else if (modeNumber == IVdpChip.MODE_GRAPHICS7) {
-			vdpCanvas.getColorMgr().setClearColor(vdpregs[7] & 0xff);
-			vdpCanvas.clear();
-		} else {
-			super.setupBackdrop();
-		}
-	}
-	@Override
-	protected int getMaxRedrawblocks() {
-		return 80 * 27;
-	}
-	
-	protected VdpModeInfo createBitmapModeInfo() {
-		VdpModeInfo vdpModeInfo = super.createBitmapModeInfo(); 
-		int ramsize = getModeAddressMask();
-
-		vdpModeInfo.color.base = (vdpModeInfo.color.base | ((vdpregs[10] & 0x7) * 0x4000)) & ramsize;
-		vdpModeInfo.patt.base = (vdpModeInfo.patt.base | ((vdpregs[4] & 0x38) * 0x800)) & ramsize;
-		
-		return vdpModeInfo;
-	}
-
-	
-	protected void setText2Mode() {
-		vdpCanvas.setFormat(VdpFormat.TEXT);
-		vdpCanvas.setSize(512, getVideoHeight());
-		vdpModeInfo = createText2ModeInfo();
-		vdpModeRedrawHandler = new Text2ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
-		spriteRedrawHandler = null;
-		vdpMmio.setMemoryAccessCycles(1);
-		initUpdateBlocks(6);
-	}
-
-	protected VdpModeInfo createText2ModeInfo() {
-		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
-		int ramsize = getModeAddressMask();
-		
-		vdpModeInfo.screen.base = ((vdpregs[2] & 0x7c) * 0x400) & ramsize;
-		vdpModeInfo.screen.size = 80 * 27;	// last 2.5 rows only visible in 212-line mode
-		vdpModeInfo.patt.base = getPatternTableBase();
-		vdpModeInfo.patt.size = 2048;
-		vdpModeInfo.color.base = (((vdpregs[10] << 8) | (vdpregs[3] & 0xf8)) << 6) & ramsize;
-		vdpModeInfo.color.size = 2160 / 8;
-		return vdpModeInfo;
-	}
-	
-	protected int getPatternTableBase() {
-		return ((vdpregs[4] & 0xff) * 0x800) & getModeAddressMask();
-	}
-
-
-	@Override
-	protected void setBitmapMode() {
-		super.setBitmapMode();
-		vdpMmio.setMemoryAccessCycles(2);
-		
-	}
-	protected void setGraphics3Mode() {
-		super.setBitmapMode();
-		spriteRedrawHandler = createSprite2RedrawHandler(false);
-		vdpMmio.setMemoryAccessCycles(2);
-	}
-
-	private Sprite2RedrawHandler createSprite2RedrawHandler(boolean wide) {
-		
-		return new Sprite2RedrawHandler(vdpRedrawInfo, createSpriteModeInfo());
-	}
-	
-	protected void setGraphics4Mode() {
-		vdpCanvas.setFormat(VdpFormat.COLOR16_1x1);
-		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
-		vdpModeInfo = createGraphics45ModeInfo();
-		vdpModeRedrawHandler = new Graphics4ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
-		spriteRedrawHandler = createSprite2RedrawHandler(false);
-		vdpMmio.setMemoryAccessCycles(4);
-		rowstride = 256 / 2;
-		pixperbyte = 2;
-		pixshift = 4;
-		pixmask = 0xf;
-		initUpdateBlocks(8);
-	}
-
-	
-	protected VdpModeInfo createGraphics45ModeInfo() {
-		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
-		int ramsize = getModeAddressMask();
-		
-		vdpModeInfo.screen.base = 0;
-		vdpModeInfo.screen.size = 0;
-		vdpModeInfo.color.base = 0;
-		vdpModeInfo.color.size = 0;
-		
-		// paging! (A15, A16)
-		vdpModeInfo.patt.base = ((vdpregs[2] & 0x60) << 10) & ramsize;
-		vdpModeInfo.patt.size = 27136;
-		
-		vdpModeInfo.sprite.base = getSpriteTableBase() & ramsize;
-		vdpModeInfo.sprite.size = 128;
-		vdpModeInfo.sprpat.base = (vdpregs[6] * 0x800) & ramsize;
-		vdpModeInfo.sprpat.size = 2048;
-		return vdpModeInfo;
-	}
-	
-	protected void setGraphics5Mode() {
-		vdpCanvas.setFormat(VdpFormat.COLOR4_1x1);
-		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
-		vdpModeInfo = createGraphics45ModeInfo();
-		vdpModeRedrawHandler = new Graphics5ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
-		spriteRedrawHandler = createSprite2RedrawHandler(true);
-		rowstride = 512 / 4;
-		pixperbyte = 4;
-		pixshift = 2;
-		pixmask = 0x3;
-		vdpMmio.setMemoryAccessCycles(4);
-		initUpdateBlocks(8);
-	}
-
-	protected void setGraphics6Mode() {
-		vdpCanvas.setFormat(VdpFormat.COLOR16_1x1);
-		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
-		vdpModeInfo = createGraphics67ModeInfo();
-		vdpModeRedrawHandler = new Graphics6ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
-		spriteRedrawHandler = createSprite2RedrawHandler(true);
-		rowstride = 512 / 2;
-		pixperbyte = 2;
-		pixshift = 4;
-		pixmask = 0xf;
-		vdpMmio.setMemoryAccessCycles(8);
-		initUpdateBlocks(8);
-	}
-
-	protected VdpModeInfo createGraphics67ModeInfo() {
-		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
-		int ramsize = getModeAddressMask();
-		
-		vdpModeInfo.screen.base = 0;
-		vdpModeInfo.screen.size = 0;
-		vdpModeInfo.color.base = 0;
-		vdpModeInfo.color.size = 0;
-		
-		// paging!  (A16)
-		vdpModeInfo.patt.base = ((vdpregs[2] & 0x20) << 11) & ramsize;
-		vdpModeInfo.patt.size = 54272;
-		
-		vdpModeInfo.sprite.base = getSpriteTableBase() & ramsize;
-		vdpModeInfo.sprite.size = 128;
-		vdpModeInfo.sprpat.base = (vdpregs[6] * 0x800) & ramsize;
-		vdpModeInfo.sprpat.size = 2048;
-		
-		return vdpModeInfo;
-	}
-	
-	protected void setGraphics7Mode() {
-		vdpCanvas.setFormat(VdpFormat.COLOR256_1x1);
-		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
-		vdpModeInfo = createGraphics67ModeInfo();
-		vdpModeRedrawHandler = new Graphics7ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
-		spriteRedrawHandler = createSprite2RedrawHandler(false);
-		rowstride = 256;
-		pixperbyte = 1;
-		pixshift = 8;
-		pixmask = 0xff;
-		vdpMmio.setMemoryAccessCycles(8);
-		initUpdateBlocks(8);
-	}
-
-	
-	/** For the V9938, only the on-board 128K is used for display.
-	 * Also, when the graphics mode is a standard 9918A mode, the
-	 * old masking applies. */
-	@Override
-	protected int getModeAddressMask() {
-		return isEnhancedMode() || (vdpregs[8] & R8_VR) != 0 ? 0x1ffff : 0x3fff;
-	}
-	@Override
-	protected int getSpriteTableBase() {
-		return ((((vdpregs[11] & 0x3) << 8) | (vdpregs[5] & 0xff)) << 7) & getModeAddressMask(); 
-	}
-	
-	@Override
-	protected int getColorTableBase() {
-		return ((((vdpregs[10] & 0x7) << 8) | (vdpregs[3] & 0xff)) << 6) & getModeAddressMask();
-	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#doTick()
 	 */
@@ -831,37 +283,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	protected void doTick() {
 		super.doTick();
 		
-		// The "blink" controls either the r7/r12 selection for text mode
-		// or the page selection for graphics 4-7 modes.
-		
-		// We don't redraw for interlacing; we just detect changes on both
-		// pages and draw them into an interleaved image.  There's not
-		// enough speed in this implementation to allow redrawing at 60 fps.
-		int prevPageOffset = pageOffset;
-		pageOffset = 0;
-		if (isEnhancedMode && vdpregs[13] != 0) {
-			boolean isBlinking = modeNumber == IVdpChip.MODE_TEXT2;
-			boolean isPageFlipping = (vdpregs[2] & 0x20) != 0 && !isBlinking;
-			
-			boolean isAltMode = System.currentTimeMillis() % blinkPeriod >= blinkOffPeriod;
-			if (isPageFlipping) {
-				pageOffset = isAltMode ? pageSize : 0;
-				if (prevPageOffset != pageOffset) {
-					//System.out.println("dirtying " + pageOffset);
-					vdpModeInfo.patt.base = getPatternTableBase() ^ pageOffset;
-					dirtyAll();
-				}
-			} else if (isBlinking) {
-				boolean wasOn = blinkOn;
-				blinkOn = isAltMode;
-				if (blinkOn != wasOn) {
-					if (vdpModeRedrawHandler instanceof Text2ModeRedrawHandler) {
-						((Text2ModeRedrawHandler) vdpModeRedrawHandler).updateForBlink();
-					}
-				}
-			}
-			
-		}
+		// TODO: fire blink / page flip event ... ?
 		
 		int targetRate = CLOCK_RATE / msxClockDivisor.getInt() / vdpInterruptRate.getInt();
 		
@@ -1239,20 +661,6 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 
 
-	@Override
-	protected int getVideoHeight() {
-		int baseHeight = ((vdpregs[9] & R9_LN) != 0 ? 212 : 192);
-		//return ((vdpregs[9] & R9_IL) != 0) ? baseHeight * 2 : baseHeight;
-		return baseHeight;
-	}
-
-	public synchronized int getGraphicsPageOffset() {
-		return pageOffset;
-	}
-	public int getGraphicsPageSize() {
-		return pageSize;
-	}
-
 	/**
 	 * Tell whether interlacing is active.
 	 * 
@@ -1359,19 +767,113 @@ public class VdpV9938 extends VdpTMS9918A {
 	@Override
 	public int setRegister(int reg, int value) {
 		if (reg >= REG_PAL0) {
-			int old = palette[reg - REG_PAL0] & 0xffff;
-			palette[reg - REG_PAL0] = (short) value;
-			setPaletteColor(reg - REG_PAL0);
+			final int color = reg - REG_PAL0;
+			int old = palette[color] & 0xffff;
+			palette[color] = (short) value;
+			
+			if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
+				log("palette register " + color + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(value));
+
+			if (!listeners.isEmpty()) {
+				listeners.fire(new IFire<IVdpListener>() {
+
+					@Override
+					public void fire(IVdpListener listener) {
+						listener.paletteColorChanged(color, palette[color]);
+					}
+
+					@Override
+					public void threw(IVdpListener listener, Throwable t) {
+						t.printStackTrace();
+					}
+				});
+			}
 			return old;
 		} if (reg >= REG_SR0) {
 			int old = statusvec[reg - REG_SR0] & 0xff;
 			statusvec[reg - REG_SR0] = (byte) value;
+		
+			fireRegisterChanged(reg, (byte) value);
+			
 			return old;
 		} else {
 			return super.setRegister(reg, value);
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#doSetVdpReg(int, byte, byte)
+	 */
+	@Override
+	protected void doSetVdpReg(int reg, byte old, byte value) {
+		switch (reg) {
+		case 8:
+			switchBank();
+			break;
+		case 14:
+			switchBank();
+			break;
+		case 15:
+			// status register pointer
+			statusidx = value & 0xf;
+			break;
+		case 16:
+			// palette #
+			palettelatched = false;
+			break;
+		case 17:
+			// indirect register access: sets the next register whose value
+			// can be set through port 3 (though, reg 17 itself will not be modified)
+			indreg = value & 0x3f;
+			indinc = (value & 0x80) == 0;
+			break;
+			
+		case 19:
+			// set to the line # on which to generate an interrupt (?)
+			// R0 bit 4 enables
+			// http://map.tni.nl/articles/split_guide.php
+			break;
+			
+		case 32: // sx lo
+		case 33: // sx hi (2)
+		case 34: // sx lo	   or sy lo
+		case 35: // sx hi (2)  or sy hi (1)
+		case 36: // dx lo
+		case 37: // dx hi (2)
+		case 38: // dy lo
+		case 39: // dy hi (1)
+		case 40: // nx lo
+		case 41: // nx hi (2)
+		case 42: // ny lo
+		case 43: // ny hi (1)
+			break;
+		case 44: // CLR (data to transfer)
+			if (accelActive() && cmdState.isDataMoveCommand) {
+				// got the next byte
+				statusvec[2] &= ~S2_TR;
+				work();
+			}
+			break;
+		case 45: // ARG
+			if (((old ^ value) & R45_MXC) != 0) {
+				// doesn't affect video rendering
+				switchBank();
+			}
+			break;
+		case 46: // CMD
+			if ((statusvec[2] & S2_CE) == 0 && pixperbyte != 0) {
+				setupCommand();
+				setAccelActive(true);
+				work();
+			}
+			//}
+			break;
+		default:
+			super.doSetVdpReg(reg, old, value);
+			break;
+		}
+		
+	}
 	
 
 	protected String getStatusString(byte s) {
@@ -1489,6 +991,19 @@ public class VdpV9938 extends VdpTMS9918A {
 		return reg >= REG_PAL0 ? 2 : super.getRegisterSize(reg);
 	}
 
+	public String getModeName() {
+		switch (getModeNumber()) {
+		case MODE_GRAPHICS3: return "Graphics 3";
+		case MODE_GRAPHICS4: return "Graphics 4";
+		case MODE_GRAPHICS5: return "Graphics 5";
+		case MODE_GRAPHICS6: return "Graphics 6";
+		case MODE_GRAPHICS7: return "Graphics 7";
+		case MODE_TEXT2: return "Text 2";
+		}
+		return super.getModeName();
+	}
+	
+
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#getRegisterTooltip(int)
@@ -1509,13 +1024,13 @@ public class VdpV9938 extends VdpTMS9918A {
 		case 0:
 			return caten(yOrN("DG", val & 0x40), yOrN("IE2", val & 0x40),
 					yOrN("IE1", val & 0x20), yOrN("M5", val & R0_M5),
-					yOrN("M4", val & R0_M4), yOrN("M3", val & IVdpChip.R0_M3))
+					yOrN("M4", val & R0_M4), yOrN("M3", val & R0_M3))
 					+ " (" + getModeName() + ")";
 		case 1:
-			return caten((val & IVdpChip.R1_NOBLANK) != 0 ? "Show" : "Blank",
-					yOrN("IE0", val & IVdpChip.R1_INT), yOrN("M1", val & IVdpChip.R1_M1),
-					yOrN("M2", val & IVdpChip.R1_M2),
-					yOrN("Size 4", val & IVdpChip.R1_SPR4), yOrN("Mag", val & IVdpChip.R1_SPRMAG))
+			return caten((val & R1_NOBLANK) != 0 ? "Show" : "Blank",
+					yOrN("IE0", val & R1_INT), yOrN("M1", val & R1_M1),
+					yOrN("M2", val & R1_M2),
+					yOrN("Size 4", val & R1_SPR4), yOrN("Mag", val & R1_SPRMAG))
 					+ " (" + getModeName() + ")";
 		case 8:
 			return caten(yOrN("Mouse", val & 0x80), yOrN("Light Pen", val & 0x40),
@@ -1538,8 +1053,8 @@ public class VdpV9938 extends VdpTMS9918A {
 			return "BG: " + HexUtils.toHex2(val & 0x7) 
 			+ " | FG: " + HexUtils.toHex2((val & 0xf0) >> 4);
 		case 13:
-			return "On: " + blinkOnPeriod + " ms"
-			+ " | Off: " + blinkOffPeriod + " ms";
+			return "On: " + getBlinkOnPeriod() + " ms"
+			+ " | Off: " + getBlinkOffPeriod() + " ms";
 		case 14:
 			return HexUtils.toHex4(val << 14);
 		case 15:
@@ -1604,5 +1119,219 @@ public class VdpV9938 extends VdpTMS9918A {
 		
 		return super.getRegisterTooltip(reg);
 	}
+
+
+	/**
+	 * Yields one of the MODE_xxx enums based on the current vdpregs[]
+	 * @return
+	 */
+	public int calculateModeNumber() {
+		int reg0 = vdpregs[0] & R0_M3 + R0_M4 + R0_M5;
+		int reg1 = vdpregs[1] & R1_M1 + R1_M2;
+		
+		if (reg1 == 0) {
+			if (reg0 == R0_M4)
+				return MODE_GRAPHICS3;
+			if (reg0 == R0_M3 + R0_M4)
+				return MODE_GRAPHICS4;
+			if (reg0 == R0_M5)
+				return MODE_GRAPHICS5;
+			if (reg0 == R0_M3 + R0_M5)
+				return MODE_GRAPHICS6;
+			if (reg0 == R0_M3 + R0_M4 + R0_M5)
+				return MODE_GRAPHICS7;
+		} else if (reg1 == R1_M1 && reg0 == R0_M4) {
+			return MODE_TEXT2;
+		}
+		return super.calculateModeNumber();
+	}
+
+	/** For the V9938, only the on-board 128K is used for display.
+	 * Also, when the graphics mode is a standard 9918A mode, the
+	 * old masking applies. */
+	@Override
+	protected int getModeAddressMask() {
+		return isEnhancedMode() || (vdpregs[8] & R8_VR) != 0 ? 0x1ffff : 0x3fff;
+	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#getScreenTableBase()
+	 */
+	@Override
+	public int getScreenTableBase() {
+		switch (getModeNumber()) {
+		case MODE_TEXT2:
+			return ((vdpregs[2] & 0x7c) * 0x400) & getModeAddressMask();
+		case MODE_GRAPHICS4:
+		case MODE_GRAPHICS5:
+		case MODE_GRAPHICS6:
+		case MODE_GRAPHICS7:
+			return 0;
+		default:
+			return super.getScreenTableBase();
+		}
+	}
+	
+	 @Override
+    public int getScreenTableSize() {
+		switch (getModeNumber()) {
+		case MODE_TEXT2:
+			return 80 * 27; // last 2.5 rows only visible in 212-line mode
+		case MODE_GRAPHICS4:
+		case MODE_GRAPHICS5:
+		case MODE_GRAPHICS6:
+		case MODE_GRAPHICS7:
+			return 0;
+		default:
+			return super.getScreenTableSize();
+		}
+    }
+	    
+	
+	@Override
+	public int getSpriteTableBase() {
+		return ((((vdpregs[11] & 0x3) << 8) | (vdpregs[5] & 0xff)) << 7) & getModeAddressMask(); 
+	}
+	
+	@Override
+	public int getColorTableBase() {
+		switch (getModeNumber()) {
+		case MODE_BITMAP:
+			return (super.getColorTableBase() | ((vdpregs[10] & 0x7) * 0x4000)) & getModeAddressMask();
+		case MODE_TEXT2:
+			return (((vdpregs[10] << 8) | (vdpregs[3] & 0xf8)) << 6) & getModeAddressMask();
+		case MODE_GRAPHICS4:
+		case MODE_GRAPHICS5:
+		case MODE_GRAPHICS6:
+		case MODE_GRAPHICS7:
+			return 0;
+		default:
+			return ((((vdpregs[10] & 0x7) << 8) | (vdpregs[3] & 0xff)) << 6) & getModeAddressMask();
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#getColorTableSize()
+	 */
+	@Override
+	public int getColorTableSize() {
+		switch (getModeNumber()) {
+		case MODE_TEXT2:
+			return 2160 / 8;
+		case MODE_GRAPHICS4:
+		case MODE_GRAPHICS5:
+		case MODE_GRAPHICS6:
+		case MODE_GRAPHICS7:
+			return 0;
+		default:
+			return super.getColorTableSize();
+		}
+	}
+	
+	@Override
+	public int getPatternTableBase() {
+		switch (getModeNumber()) {
+		case MODE_BITMAP:
+			return (super.getPatternTableBase() | ((vdpregs[4] & 0x38) * 0x800)) & getModeAddressMask();
+		case MODE_GRAPHICS4:
+		case MODE_GRAPHICS5:
+			// paging! (A15, A16)
+			return ((vdpregs[2] & 0x60) << 10) & getModeAddressMask();
+		case MODE_GRAPHICS6:
+		case MODE_GRAPHICS7:
+			 return ((vdpregs[2] & 0x20) << 11) & getModeAddressMask();
+		}
+		return super.getPatternTableBase();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#getPatternTableSize()
+	 */
+	@Override
+	public int getPatternTableSize() {
+		switch (getModeNumber()) {
+		case MODE_GRAPHICS4:
+		case MODE_GRAPHICS5:
+			return 27136;
+		case MODE_GRAPHICS6:
+		case MODE_GRAPHICS7:
+			return 54272;
+		default:
+			return super.getPatternTableSize();
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpV9938#getBlinkOffPeriod()
+	 */
+	@Override
+	public int getBlinkOffPeriod() {
+		return (vdpregs[13] & 0xf) * 1000 / 6;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpV9938#getBlinkOnPeriod()
+	 */
+	@Override
+	public int getBlinkOnPeriod() {
+		return ((vdpregs[13] >> 4) & 0xf) * 1000 / 6;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpV9938#getBlinkPeriod()
+	 */
+	@Override
+	public int getBlinkPeriod() {
+		return getBlinkOffPeriod() + getBlinkOnPeriod();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#updateMemoryAccessCycles(int)
+	 */
+	@Override
+	protected void updateForMode() {
+		switch (modeNumber) {
+		case MODE_TEXT2:
+			vdpMmio.setMemoryAccessCycles(1);
+			break;
+		case MODE_BITMAP:
+			vdpMmio.setMemoryAccessCycles(2);
+			break;
+		case MODE_GRAPHICS3:
+			vdpMmio.setMemoryAccessCycles(2);
+			break;
+		case MODE_GRAPHICS4:
+			rowstride = 256 / 2;
+			pixperbyte = 2;
+			pixshift = 4;
+			pixmask = 0xf;
+			
+			vdpMmio.setMemoryAccessCycles(4);
+			break;
+		case MODE_GRAPHICS5:
+			rowstride = 512 / 4;
+			pixperbyte = 4;
+			pixshift = 2;
+			pixmask = 0x3;
+			
+			vdpMmio.setMemoryAccessCycles(4);
+			break;
+		case MODE_GRAPHICS6:
+			rowstride = 512 / 2;
+			pixperbyte = 2;
+			pixshift = 4;
+			pixmask = 0xf;
+			
+			vdpMmio.setMemoryAccessCycles(8);
+			break;
+		case MODE_GRAPHICS7:
+			rowstride = 256;
+			pixperbyte = 1;
+			pixshift = 8;
+			pixmask = 0xff;
+			
+			vdpMmio.setMemoryAccessCycles(8);
+			break;
+		default:
+			super.updateForMode();
+		}
+	}
 }

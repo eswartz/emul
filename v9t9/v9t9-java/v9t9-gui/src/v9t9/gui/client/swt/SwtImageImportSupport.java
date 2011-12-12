@@ -10,11 +10,11 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
+import v9t9.canvas.video.ImageDataCanvas;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.gui.image.ImageImport;
-import v9t9.gui.video.ImageDataCanvas;
 
 /**
  * @author ejs

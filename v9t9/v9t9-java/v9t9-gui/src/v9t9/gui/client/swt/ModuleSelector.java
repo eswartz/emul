@@ -235,8 +235,7 @@ public class ModuleSelector extends Composite {
 
 			getShell().dispose();
 		} catch (NotifyException e) {
-			machine.getClient().getEventNotifier().notifyEvent(
-					selectedModule, Level.ERROR,
+			machine.notifyEvent(Level.ERROR,
 					MessageFormat.format("Failed to load all the entries from the module ''{0}''\n\n{1}",
 							selectedModule.getName(), e.getMessage()));
 		} catch (Throwable e) {

@@ -6,8 +6,9 @@
  */
 package v9t9.engine.video.tms9918a;
 
+import static v9t9.common.hardware.VdpTMS9918AConsts.*;
+
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,22 +23,14 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.Settings;
-import v9t9.common.video.IVdpCanvas;
-import v9t9.common.video.RedrawBlock;
-import v9t9.common.video.VdpChanges;
-import v9t9.common.video.VdpFormat;
-import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.memory.VdpMmio;
-import v9t9.engine.video.BlankModeRedrawHandler;
-import v9t9.engine.video.MemoryCanvas;
-import v9t9.engine.video.IVdpModeRedrawHandler;
-import v9t9.engine.video.VdpRedrawInfo;
 
 /**
  * This is the 99/4A VDP chip.
@@ -56,7 +49,7 @@ import v9t9.engine.video.VdpRedrawInfo;
  * </pre>
  * @author ejs
  */
-public class VdpTMS9918A implements IVdpChip {
+public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	private static final int REG_COUNT = 8 /* base */ + 1 /* status */;
 
 	private final static Map<Integer, String> regNames = new HashMap<Integer, String>();
@@ -75,32 +68,13 @@ public class VdpTMS9918A implements IVdpChip {
 	}
 	
 	
-	private RedrawBlock[] blocks;
 	protected IMemoryDomain vdpMemory;
 
 	protected byte vdpregs[];
-	protected byte vdpbg;
-	protected byte vdpfg;
-	protected boolean drawSprites = true;
-	//private final static int REDRAW_NOW = 1		;	/* same-mode change */
-	protected final static int REDRAW_SPRITES = 2	;	/* sprites change */
-	protected final static int REDRAW_MODE = 4		;	/* mode change */
-	protected final static int REDRAW_BLANK = 8		;	/* make blank */
-	protected final static int REDRAW_PALETTE = 16;
-	protected boolean vdpchanged;
 
-	protected IVdpCanvas vdpCanvas;
-	protected IVdpModeRedrawHandler vdpModeRedrawHandler;
-	protected SpriteRedrawHandler spriteRedrawHandler;
-	protected final VdpChanges vdpChanges = new VdpChanges(getMaxRedrawblocks());
 	protected byte vdpStatus;
 	
 	protected VdpMmio vdpMmio;
-	protected BlankModeRedrawHandler blankModeRedrawHandler;
-	protected VdpModeInfo vdpModeInfo;
-	protected VdpRedrawInfo vdpRedrawInfo;
-	
-	protected int modeNumber;
 
 	/** The circular counter for VDP interrupt timing. */
 	private int vdpInterruptFrac;
@@ -120,7 +94,9 @@ public class VdpTMS9918A implements IVdpChip {
 	private IProperty throttleInterrupts;
 
 	protected ListenerList<IVdpListener> listeners = new ListenerList<IVdpChip.IVdpListener>();
-	
+
+	protected int modeNumber;
+
 	public VdpTMS9918A(IMachine machine) {
 		this.machine = machine;
 		
@@ -134,7 +110,7 @@ public class VdpTMS9918A implements IVdpChip {
 		dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
 		dumpVdpAccess = settings.get(settingDumpVdpAccess);
 		
-		vdpStatus = (byte) IVdpChip.VDP_INTERRUPT;
+		vdpStatus = (byte) VDP_INTERRUPT;
 		
 		vdpInterruptRate.addListener(new IPropertyListener() {
 
@@ -159,18 +135,13 @@ public class VdpTMS9918A implements IVdpChip {
 		});
 		
 		this.vdpMemory = machine.getMemory().getDomain(IMemoryDomain.NAME_VIDEO);
-		this.vdpCanvas = new MemoryCanvas();	 // placeholder
 		this.vdpregs = allocVdpRegs();
-		vdpCanvas.setSize(256, 192);
 		
-		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, this, vdpChanges, vdpCanvas);
-		blankModeRedrawHandler = new BlankModeRedrawHandler(vdpRedrawInfo, createBlankModeInfo());
-		
-		resetPalette();
+		initRegisters();
 	}
 
-	public void resetPalette() {
-		// nothing
+	public void initRegisters() {
+		// zeroes are fine
 	}
 
 	protected void recalcInterruptTiming() {
@@ -207,26 +178,16 @@ public class VdpTMS9918A implements IVdpChip {
 		return vdpregs[reg];
 	}
 	
-	protected final boolean CHANGED(byte old,byte val, int v) { return (old&(v))!=(val&(v)); }
-
-    /* (non-Javadoc)
-     * @see v9t9.handlers.VdpHandler#writeVdpReg(byte, byte, byte)
-     */
-    final synchronized protected void writeVdpReg(final int reg, byte val) {
-    	if (reg >= vdpregs.length)
-    		return;
-    	
-    	byte old = vdpregs[reg];
-    	vdpregs[reg] = val;
-    	
-    	if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
-    		log("register " + reg + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(val));
-    	
-    	if (!listeners.isEmpty()) {
+	/**
+	 * @param reg
+	 * @param value TODO
+	 */
+	protected void fireRegisterChanged(final int reg, final byte value) {
+		if (!listeners.isEmpty()) {
 	    	listeners.fire(new IFire<IVdpChip.IVdpListener>() {
 				@Override
 				public void fire(IVdpListener listener) {
-					listener.vdpRegisterChanged(reg);
+					listener.vdpRegisterChanged(reg, value);
 				}
 	
 				@Override
@@ -235,365 +196,6 @@ public class VdpTMS9918A implements IVdpChip {
 				}
 			});
     	}
-    	
-    	int         redraw = doWriteVdpReg(reg, old, val);
-
-    	//synchronized (vdpCanvas) {
-			
-	    	/*  This flag must be checked first because
-		 	   it affects the meaning of the following 
-		 	   calls and checks. */
-		 	if ((redraw & REDRAW_MODE) != 0) {
-		 		setVideoMode();
-		 		setupBackdrop();
-		 		dirtyAll();
-		 	}
-		
-		 	if ((redraw & REDRAW_SPRITES) != 0) {
-				dirtySprites();
-			}
-	
-		 	if ((redraw & REDRAW_PALETTE) != 0) {
-		 		setupBackdrop();
-		 		dirtyAll();
-		 	}
-		
-		 	if ((redraw & REDRAW_BLANK) != 0) {
-		 		if ((vdpregs[1] & IVdpChip.R1_NOBLANK) == 0) {
-		 			vdpCanvas.setBlank(true);
-		 			dirtyAll();
-		 			//update();
-		 		} else {
-		 			vdpCanvas.setBlank(false);
-		 			dirtyAll();
-		 			//update();
-		 		}
-		 	}
-		//}
-
-    }
-    
-    /** Set the backdrop based on the mode */
-    protected void setupBackdrop() {
-    	vdpCanvas.setClearColor(vdpbg & 0xf);
-	}
-
-	protected int doWriteVdpReg(int reg, byte old, byte val) {
-    	int redraw = 0;
-    	
-    	vdpregs[reg] = val;
-    	if (old == val)
-    		return redraw;
-    	
- 
-    	switch (reg) {
-    	case 0:					/* bitmap/video-in */
-    		if (CHANGED(old, val, IVdpChip.R0_M3+IVdpChip.R0_EXTERNAL)) {
-    			redraw |= REDRAW_MODE;
-    		}
-    		break;
-
-    	case 1:					/* various modes, sprite stuff */
-    		if (CHANGED(old, val, IVdpChip.R1_NOBLANK)) {
-    			redraw |= REDRAW_BLANK | REDRAW_MODE;
-    		}
-
-    		if (CHANGED(old, val, IVdpChip.R1_SPRMAG + IVdpChip.R1_SPR4)) {
-    			redraw |= REDRAW_SPRITES;
-    		}
-
-    		if (CHANGED(old, val, IVdpChip.R1_M1 | IVdpChip.R1_M2)) {
-    			redraw |= REDRAW_MODE;
-    		}
-
-    		/* if interrupts enabled, and interrupt was pending, trigger it */
-    		if ((val & IVdpChip.R1_INT) != 0 
-    		&& 	(old & IVdpChip.R1_INT) == 0 
-    		&&	(vdpStatus & IVdpChip.VDP_INTERRUPT) != 0) 
-    		{
-    			
-    			//trigger9901int( M_INT_VDP);	// TODO
-    		}
-
-    		break;
-
-    	case 2:					/* screen image table */
-    	case 3:					/* color table */
-    	case 4:					/* pattern table */
-    	case 5:					/* sprite table */
-    	case 6:					/* sprite pattern table */
-    		redraw |= REDRAW_MODE;
-    		break;
-
-    	case 7:					/* foreground/background color */
-			vdpfg = (byte) ((val >> 4) & 0xf);
-			vdpbg = (byte) (val & 0xf);
-			redraw |= REDRAW_PALETTE;
-    		break;
-
-    	default:
-
-    	}
-
-    	return redraw;
-    }
-
-    /** Tell if the registers indicate a blank screen. */
-    protected boolean isBlank() {
-    	return (vdpregs[1] & IVdpChip.R1_NOBLANK) == 0;
-    }
-    
-    public int calculateModeNumber() {
-		int reg0 = vdpregs[0] & IVdpChip.R0_M3;
-		int reg1 = vdpregs[1] & IVdpChip.R1_M1 + IVdpChip.R1_M2;
-    	
-    	if (reg0 == IVdpChip.R0_M3) {
-    		// can support multi+bitmap or text+bitmap modes too... but not now
-    		return IVdpChip.MODE_BITMAP;
-    	}
-    	if (reg1 == IVdpChip.R1_M2)
-    		return IVdpChip.MODE_MULTI;
-    	if (reg1 == IVdpChip.R1_M1)
-    		return IVdpChip.MODE_TEXT;
-    	return IVdpChip.MODE_GRAPHICS;
-	}
-    
-    /**
-     * Set up the vdpModeRedrawHandler, spriteRedrawHandler, and memory access
-     * times for the mode defined by the vdp registers.
-     */
-    protected final void setVideoMode() {
-    	/* Is the screen really blank? */
-		if (isBlank()) {
-			// clear the canvas first
-			if (vdpModeRedrawHandler != null)
-				vdpModeRedrawHandler.clear();
-			
-			// now, ignore any changes or redraw requests
-			setBlankMode();
-			vdpModeRedrawHandler = blankModeRedrawHandler;
-		}
-		
-		/* Set up actual mode stuff too */
-		establishVideoMode();
-    }
-    
-    protected void establishVideoMode() {
-    	modeNumber = calculateModeNumber();
-		switch (modeNumber) {
-		case IVdpChip.MODE_TEXT:
-			setTextMode();
-			dirtyAll();	// for border
-			break;
-		case IVdpChip.MODE_MULTI:
-			setMultiMode();
-			break;
-		case IVdpChip.MODE_BITMAP:
-			setBitmapMode();
-			break;
-		case IVdpChip.MODE_GRAPHICS:
-		default:
-			setGraphicsMode();
-			break;
-		}
-	}
-
-    /**
-     * Get the address a table will take given the mode and memory size
-     * @return
-     */
-    protected int getModeAddressMask() {
-    	return vdpMmio.getMemorySize() - 1;
-    }
-    
-    protected VdpModeInfo createSpriteModeInfo() {
-		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
-		int ramsize = getModeAddressMask();
-
-		vdpModeInfo.sprite.base = getSpriteTableBase() & ramsize;
-		vdpModeInfo.sprite.size = 128;
-		vdpModeInfo.sprpat.base = getSpritePatternTableBase(ramsize);
-		vdpModeInfo.sprpat.size = 2048;
-		return vdpModeInfo;
-	}
-
-	protected int getSpriteTableBase() {
-		return (vdpregs[5] * 0x80) & getModeAddressMask();
-	}
-
-	protected void setGraphicsMode() {
-		vdpCanvas.setFormat(VdpFormat.COLOR16_8x8);
-		vdpCanvas.setSize(256, 192);
-		vdpModeInfo = createGraphicsModeInfo();
-		vdpModeRedrawHandler = new GraphicsModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
-		spriteRedrawHandler = createSpriteRedrawHandler();
-		vdpMmio.setMemoryAccessCycles(8);
-		initUpdateBlocks(8);
-	}
-
-	protected SpriteRedrawHandler createSpriteRedrawHandler() {
-		return new SpriteRedrawHandler(vdpRedrawInfo, createSpriteModeInfo());
-	}
-
-	
-	protected VdpModeInfo createGraphicsModeInfo() {
-		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
-		int ramsize = getModeAddressMask();
-		vdpModeInfo.screen.base = getScreenTableBase(ramsize);
-		vdpModeInfo.screen.size = 768;
-		vdpModeInfo.color.base = getColorTableBase();
-		vdpModeInfo.color.size = 32;
-		vdpModeInfo.patt.base = getPatternTableBase();
-		vdpModeInfo.patt.size = 2048;
-		vdpModeInfo.sprite.base = getSpriteTableBase();
-		vdpModeInfo.sprite.size = 128;
-		vdpModeInfo.sprpat.base = getSpritePatternTableBase(ramsize);
-		vdpModeInfo.sprpat.size = 2048;
-		return vdpModeInfo;
-	}
-
-	protected int getPatternTableBase() {
-		return ((vdpregs[4] & 0xff) * 0x800) & getModeAddressMask();
-	}
-
-	protected int getColorTableBase() {
-		return ((vdpregs[3] & 0xff) * 0x40) & getModeAddressMask();
-	}
-
-	protected void setMultiMode() {
-		vdpCanvas.setFormat(VdpFormat.COLOR16_4x4);
-		vdpCanvas.setSize(256, 192);
-		vdpModeInfo = createMultiModeInfo();
-		vdpModeRedrawHandler = new MulticolorModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
-		spriteRedrawHandler = createSpriteRedrawHandler();
-		vdpMmio.setMemoryAccessCycles(2);
-		initUpdateBlocks(8);
-	}
-
-	protected VdpModeInfo createMultiModeInfo() {
-		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
-		int ramsize = getModeAddressMask();
-		
-		vdpModeInfo.screen.base = getScreenTableBase(ramsize);
-		vdpModeInfo.screen.size = 768;
-		vdpModeInfo.color.base = 0;
-		vdpModeInfo.color.size = 0;
-		vdpModeInfo.patt.base = getPatternTableBase();
-		vdpModeInfo.patt.size = 1536;
-		vdpModeInfo.sprite.base = getSpriteTableBase();
-		vdpModeInfo.sprite.size = 128;
-		
-		return vdpModeInfo;
-	}
-
-	protected void setTextMode() {
-		vdpCanvas.setFormat(VdpFormat.TEXT);
-		vdpCanvas.setSize(256, 192);
-		vdpModeInfo = createTextModeInfo();
-		vdpModeRedrawHandler = new TextModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
-		spriteRedrawHandler = null;
-		vdpMmio.setMemoryAccessCycles(1);
-		initUpdateBlocks(6);
-	}
-
-	protected VdpModeInfo createTextModeInfo() {
-		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
-		int ramsize = getModeAddressMask();
-		
-		vdpModeInfo.screen.base = getScreenTableBase(ramsize);
-		vdpModeInfo.screen.size = 960;
-		vdpModeInfo.color.base = getColorTableBase();
-		vdpModeInfo.color.size = 0;
-		vdpModeInfo.patt.base = getPatternTableBase();
-		vdpModeInfo.patt.size = 2048;
-		vdpModeInfo.sprite.base = getSpriteTableBase();
-		vdpModeInfo.sprite.size = 0;
-		vdpModeInfo.sprpat.base = getSpritePatternTableBase(ramsize);
-		vdpModeInfo.sprpat.size = 0;
-		return vdpModeInfo;
-	}
-
-	protected void setBitmapMode() {
-		vdpCanvas.setFormat(VdpFormat.COLOR16_8x1);
-		vdpCanvas.setSize(256, 192);
-		vdpModeInfo = createBitmapModeInfo();
-		vdpModeRedrawHandler = new BitmapModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
-		vdpCanvas.setMono(((BitmapModeRedrawHandler) vdpModeRedrawHandler).isMono());
-		spriteRedrawHandler = createSpriteRedrawHandler();
-		vdpMmio.setMemoryAccessCycles(8);
-		initUpdateBlocks(8);
-	}
-
-	protected VdpModeInfo createBitmapModeInfo() {
-		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
-		int ramsize = getModeAddressMask();
-
-		vdpModeInfo.screen.base = getScreenTableBase(ramsize);
-		vdpModeInfo.screen.size = 768;
-		vdpModeInfo.sprite.base = getSpriteTableBase();
-		vdpModeInfo.sprite.size = 128;
-		vdpModeInfo.sprpat.base = getSpritePatternTableBase(ramsize);
-		vdpModeInfo.sprpat.size = 2048;
-
-		vdpModeInfo.color.base = (vdpregs[3] & 0x80) * 0x40;
-		vdpModeInfo.color.size = 6144;
-		
-		vdpModeInfo.patt.base = (vdpregs[4] & 0x04) * 0x800;
-		vdpModeInfo.patt.size = 6144;
-		
-		return vdpModeInfo;
-	}
-
-	private int getScreenTableBase(int ramsize) {
-		return (vdpregs[2] * 0x400) & ramsize;
-	}
-
-	private int getSpritePatternTableBase(int ramsize) {
-		return (vdpregs[6] * 0x800) & ramsize;
-	}
-
-	protected void setBlankMode() {
-		vdpCanvas.setSize(256, vdpCanvas.getHeight());
-		spriteRedrawHandler = null;
-		vdpMmio.setMemoryAccessCycles(0);
-		initUpdateBlocks(8);
-	}
-
-    protected VdpModeInfo createBlankModeInfo() {
-    	VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
-    	vdpModeInfo.screen.base = 0;
-		vdpModeInfo.screen.size = 0;
-		vdpModeInfo.color.base = 0;
-		vdpModeInfo.color.size = 0;
-		vdpModeInfo.patt.base = 0;
-		vdpModeInfo.patt.size = 0;
-		vdpModeInfo.sprite.base = 0;
-		vdpModeInfo.sprite.size = 0;
-		vdpModeInfo.sprpat.base = 0;
-		vdpModeInfo.sprpat.size = 0;	
-		return vdpModeInfo;
-	}
-
-	/** preinitialize the update blocks with the sizes for this mode */
-	protected void initUpdateBlocks(int blockWidth) {
-		int w = blockWidth;
-    	int h = 8;
-		if (blocks == null) {
-			blocks = new RedrawBlock[getMaxRedrawblocks()];
-			for (int i = 0; i < blocks.length; i++) {
-				blocks[i] = new RedrawBlock();
-			}
-		}
-		if (blocks[0].w != blockWidth) {
-			for (int i = 0; i < blocks.length; i++) {
-				blocks[i].w = w;
-				blocks[i].h = h;
-			}
-		}
-	}
-
-	protected int getMaxRedrawblocks() {
-		return 1024;
 	}
 
 	/* (non-Javadoc)
@@ -602,24 +204,14 @@ public class VdpTMS9918A implements IVdpChip {
     public byte readVdpStatus() {
 		/* >8802, status read and acknowledge interrupt */
     	byte ret = vdpStatus;
-		vdpStatus &= ~IVdpChip.VDP_INTERRUPT;
+		vdpStatus &= ~VDP_INTERRUPT;
 		// TODO machine.getCpu().reset9901int(v9t9.cpu.Cpu.M_INT_VDP);
 
         return ret;
     }
 
     public synchronized void touchAbsoluteVdpMemory(int vdpaddr) {
-    	try {
-    		vdpMemory.writeMemory(vdpaddr & 0x3fff);
-			if (vdpModeRedrawHandler != null) {
-				vdpChanges.changed |= vdpModeRedrawHandler.touch(vdpaddr);
-		    	if (spriteRedrawHandler != null) {
-		    		vdpChanges.changed |= spriteRedrawHandler.touch(vdpaddr);
-		    	}
-			}
-    	} catch (NullPointerException e) {
-    		// XXX: sprite.touch is null sometimes???
-    	}
+    	vdpMemory.touchMemory(vdpaddr & 0x3fff);
     }
     
     public byte readAbsoluteVdpMemory(int vdpaddr) {
@@ -634,74 +226,6 @@ public class VdpTMS9918A implements IVdpChip {
 		return vdpMmio.getByteReadMemoryAccess(addr);
 	}
 	
-	protected void dirtySprites() {
-		vdpChanges.sprite = -1;
-		Arrays.fill(vdpChanges.sprpat, 0, vdpChanges.sprpat.length, (byte)1);
-		vdpChanges.changed = true;
-	}
-
-
-	protected void dirtyAll() {
-		vdpChanges.changed = true;
-		vdpChanges.fullRedraw = true;
-	}
-	
-	public synchronized boolean update() {
-		if (!vdpChanges.changed)
-			return false;
-		//System.out.println(System.currentTimeMillis());
-		if (vdpModeRedrawHandler != null) {
-			//long start = System.currentTimeMillis();
-			
-			int count = 0;
-			
-			// don't let video rendering happen in middle of updating
-			synchronized (vdpCanvas) {
-				vdpCanvas.syncColors();
-				
-				vdpModeRedrawHandler.prepareUpdate();
-				
-				if (vdpChanges.fullRedraw) {
-					// clear for the actual mode (not blank mode)
-					vdpModeRedrawHandler.clear();
-					vdpCanvas.markDirty();
-				}
-				
-				if (!isBlank()) {
-					if (spriteRedrawHandler != null && drawSprites) {
-						vdpStatus = spriteRedrawHandler.updateSpriteCoverage(vdpStatus, vdpChanges.fullRedraw);
-					}
-					count = vdpModeRedrawHandler.updateCanvas(blocks, vdpChanges.fullRedraw);
-					if (spriteRedrawHandler != null && drawSprites) {
-						spriteRedrawHandler.updateCanvas(vdpChanges.fullRedraw);
-					}
-				}
-			}
-
-			vdpCanvas.markDirty(blocks, count);
-			
-			Arrays.fill(vdpChanges.screen, (byte) 0);
-			Arrays.fill(vdpChanges.patt, (byte) 0);
-			Arrays.fill(vdpChanges.color, (byte) 0);
-			
-			if (drawSprites) {
-				Arrays.fill(vdpChanges.sprpat, (byte) 0);
-				vdpChanges.sprite = 0;
-			}
-			
-			vdpChanges.fullRedraw = false;
-			
-			//System.out.println("elapsed: " + (System.currentTimeMillis() - start));
-		}
-		
-		vdpchanged = false;
-		return true;
-	}
-
-	public synchronized IVdpCanvas getCanvas() {
-		return vdpCanvas;
-	}
-
 	public void tick() {
 		 if (cpuSynchedVdpInterrupt.getBoolean())
 			 return;
@@ -751,9 +275,9 @@ public class VdpTMS9918A implements IVdpChip {
     		}
     		
     		// a real interrupt only occurs if wanted
-    		if ((readVdpReg(1) & IVdpChip.R1_INT) != 0) {
-    			if ((vdpStatus & IVdpChip.VDP_INTERRUPT) == 0) {
-    				vdpStatus |= IVdpChip.VDP_INTERRUPT;
+    		if ((readVdpReg(1) & R1_INT) != 0) {
+    			if ((vdpStatus & VDP_INTERRUPT) == 0) {
+    				vdpStatus |= VDP_INTERRUPT;
     				machine.getExecutor().vdpInterrupt();
     			}
     			
@@ -776,23 +300,6 @@ public class VdpTMS9918A implements IVdpChip {
 		
 	}
 
-	public void setCanvas(IVdpCanvas canvas) {
-		this.vdpCanvas = canvas;
-		vdpCanvas.markDirty();
-		
-		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, this, vdpChanges, vdpCanvas);
-		blankModeRedrawHandler = new BlankModeRedrawHandler(vdpRedrawInfo, createBlankModeInfo());
-
-	}
-	
-	protected int getVideoHeight() {
-		return 192;
-	}
-	
-	public int getModeNumber() {
-		return modeNumber;
-	}
-
 	public void saveState(ISettingSection section) {
 		String[] regState = new String[vdpregs.length];
 		for (int i = 0; i < vdpregs.length; i++) {
@@ -811,7 +318,6 @@ public class VdpTMS9918A implements IVdpChip {
 		if (regState != null) {
 			for (int i = 0; i < regState.length; i++) {
 				byte val = (byte) Integer.parseInt(regState[i], 16);
-				//vdpregs[i] = val;
 				loadVdpReg(i, val);
 			}
 		}
@@ -822,10 +328,6 @@ public class VdpTMS9918A implements IVdpChip {
 	}
 	
 	
-	/**
-	 * @param i
-	 * @param val
-	 */
 	protected void loadVdpReg(int num, byte val) {
 		setRegister(num, val);
 	}
@@ -837,14 +339,14 @@ public class VdpTMS9918A implements IVdpChip {
 	
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip#addListener(v9t9.common.hardware.IVdpChip.IVdpListener)
+	 * @see v9t9.common.hardware.IVdpChip#addListener(v9t9.common.hardware.IVdpTMS9918A.IVdpListener)
 	 */
 	@Override
 	public void addListener(IVdpListener listener) {
 		listeners.add(listener);
 	}
 	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip#removeListener(v9t9.common.hardware.IVdpChip.IVdpListener)
+	 * @see v9t9.common.hardware.IVdpChip#removeListener(v9t9.common.hardware.IVdpTMS9918A.IVdpListener)
 	 */
 	@Override
 	public void removeListener(IVdpListener listener) {
@@ -968,21 +470,21 @@ public class VdpTMS9918A implements IVdpChip {
 					yOrN("Size 4", val & 0x02), yOrN("Mag", val & 0x01))
 				+ " (" + getModeName() + ")";
 		case 2: 
-			return "Screen: " + HexUtils.toHex4(vdpModeInfo.screen.base);
+			return "Screen: " + HexUtils.toHex4(getScreenTableBase());
 		case 3: 
-			return "Colors: " + HexUtils.toHex4(vdpModeInfo.color.base)
-			+ (vdpModeRedrawHandler instanceof BitmapModeRedrawHandler ?
-					" | Mask: " + HexUtils.toHex4(((BitmapModeRedrawHandler) vdpModeRedrawHandler).bitcolormask) 
+			return "Colors: " + HexUtils.toHex4(getColorTableBase())
+			+ (getModeNumber() == MODE_BITMAP ?
+					" | Mask: " + HexUtils.toHex4(getBitmapModeColorMask()) 
 							: "");
 		case 4: 
-			return "Patterns: " + HexUtils.toHex4(vdpModeInfo.patt.base)
-			+ (vdpModeRedrawHandler instanceof BitmapModeRedrawHandler ?
-					" | Mask: " + HexUtils.toHex4(((BitmapModeRedrawHandler) vdpModeRedrawHandler).bitpattmask) 
+			return "Patterns: " + HexUtils.toHex4(getPatternTableBase())
+			+ (getModeNumber() == MODE_BITMAP ?
+					" | Mask: " + HexUtils.toHex4(getBitmapModePatternMask()) 
 					: "");
 		case 5: 
-			return "Sprites: " + HexUtils.toHex4(vdpModeInfo.sprite.base);
+			return "Sprites: " + HexUtils.toHex4(getSpriteTableBase());
 		case 6: 
-			return "Sprite patterns: " + HexUtils.toHex4(vdpModeInfo.sprpat.base);
+			return "Sprite patterns: " + HexUtils.toHex4(getSpritePatternTableBase());
 		case 7: 
 			return "Color BG: " + HexUtils.toHex2(val & 0x7) 
 			+ " | FG: " + HexUtils.toHex2((val & 0xf0) >> 4);
@@ -1027,31 +529,77 @@ public class VdpTMS9918A implements IVdpChip {
 			vdpStatus = (byte) value;
 		}
 		else {
+			if (reg >= vdpregs.length)
+				return 0;
+			
 			old = vdpregs[reg] & 0xff;
-			writeVdpReg(reg, (byte) value);
+			vdpregs[reg] = (byte) value;
+			
+			doSetVdpReg(reg, (byte) old, (byte) value);
+    		
+			modeNumber = calculateModeNumber();
+    		updateForMode();
 		}
+		
+		if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
+			log("register " + reg + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(value));
+		
+		fireRegisterChanged(reg, (byte) value);
 		return old;
+	}
+
+	/**
+	 * @param reg
+	 * @param b
+	 * @param value
+	 */
+	protected void doSetVdpReg(int reg, byte old, byte value) {
+		/* if interrupts enabled, and interrupt was pending, trigger it */
+		if ((value & R1_INT) != 0 
+		&& 	(old & R1_INT) == 0 
+		&&	(vdpStatus & VDP_INTERRUPT) != 0) 
+		{
+			//trigger9901int( M_INT_VDP);	// TODO
+		}
+
+	}
+
+	/**
+	 * @param modeNumber
+	 */
+	protected void updateForMode() {
+		if ((vdpregs[1] & R1_NOBLANK) == 0) {
+			vdpMmio.setMemoryAccessCycles(0);
+			return;
+		}
+
+		switch (modeNumber) {
+		case MODE_GRAPHICS:
+			vdpMmio.setMemoryAccessCycles(8);
+			break;
+		case MODE_MULTI:
+			vdpMmio.setMemoryAccessCycles(2);
+			break;
+		case MODE_TEXT:
+			vdpMmio.setMemoryAccessCycles(1);
+			break;
+		case MODE_BITMAP:
+			vdpMmio.setMemoryAccessCycles(8);
+			break;
+		}
 	}
 
 	/**
 	 * @return
 	 */
 	public String getModeName() {
-		switch (modeNumber) {
-		case IVdpChip.MODE_BITMAP: return "Bitmap";
-		case IVdpChip.MODE_GRAPHICS: return "Graphics";
-		case IVdpChip.MODE_MULTI: return "MultiColor";
-		case IVdpChip.MODE_TEXT: return "Text";
+		switch (getModeNumber()) {
+		case MODE_BITMAP: return "Bitmap";
+		case MODE_GRAPHICS: return "Graphics";
+		case MODE_MULTI: return "MultiColor";
+		case MODE_TEXT: return "Text";
 		}
 		return null;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip#getModeInfo()
-	 */
-	@Override
-	public VdpModeInfo getModeInfo() {
-		return vdpModeInfo;
 	}
 	
 	/* (non-Javadoc)
@@ -1070,5 +618,128 @@ public class VdpTMS9918A implements IVdpChip {
 		return 0;
 	}
 	
+
+    /**
+     * Get the address a table will take given the mode and memory size
+     * @return
+     */
+    protected int getModeAddressMask() {
+    	return vdpMmio.getMemorySize() - 1;
+    }
+    
+
+    @Override
+	public int getScreenTableBase() {
+		return (vdpregs[2] * 0x400) & getModeAddressMask();
+	}
+
+    /* (non-Javadoc)
+     * @see v9t9.common.hardware.IVdpTMS9918A#getScreenTableSize()
+     */
+    @Override
+    public int getScreenTableSize() {
+    	return getModeNumber() == MODE_TEXT ? 960 : 768;
+    }
+    
+    @Override
+	public int getSpritePatternTableBase() {
+		return (vdpregs[6] * 0x800) & getModeAddressMask();
+	}
+
+    /* (non-Javadoc)
+     * @see v9t9.common.hardware.IVdpTMS9918A#getSpritePatternTableSize()
+     */
+    @Override
+    public int getSpritePatternTableSize() {
+    	return 2048;
+    }
 	
+	@Override
+	public int getSpriteTableBase() {
+		return (vdpregs[5] * 0x80) & getModeAddressMask();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpTMS9918A#getSpriteTableSize()
+	 */
+	@Override
+	public int getSpriteTableSize() {
+		return 128;
+	}
+
+	@Override
+	public int getPatternTableBase() {
+		if (modeNumber == MODE_BITMAP)
+			return (vdpregs[4] & 0x04) * 0x800;
+		else
+			return ((vdpregs[4] & 0xff) * 0x800) & getModeAddressMask();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpTMS9918A#getPatternTableSize()
+	 */
+	@Override
+	public int getPatternTableSize() {
+		return modeNumber == MODE_BITMAP ? 0x1800 : 0x800;
+	}
+
+	@Override
+	public int getColorTableBase() {
+		return modeNumber == MODE_BITMAP ? (vdpregs[3] & 0x80) * 0x40
+				: ((vdpregs[3] & 0xff) * 0x40) & getModeAddressMask();
+	}
+
+	@Override
+	public int getColorTableSize() {
+		return modeNumber == MODE_BITMAP ? 0x1800 : 32;
+	}
+	
+	final public int getModeNumber() {
+		return modeNumber;
+	}
+	protected int calculateModeNumber() {
+		int reg0 = vdpregs[0] & R0_M3;
+		int reg1 = vdpregs[1] & R1_M1 + R1_M2;
+    	
+    	if (reg0 == R0_M3) {
+    		// can support multi+bitmap or text+bitmap modes too... but not now
+    		return MODE_BITMAP;
+    	}
+    	if (reg1 == R1_M2)
+    		return MODE_MULTI;
+    	if (reg1 == R1_M1)
+    		return MODE_TEXT;
+    	return MODE_GRAPHICS;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpTMS9918A#getBitmapModeColorMask()
+	 */
+	@Override
+	public int getBitmapModeColorMask() {
+		return (short) (vdpregs[3] & 0x7f) << 6 | 0x3f;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpTMS9918A#getBitmapModePatternMask()
+	 */
+	@Override
+	public int getBitmapModePatternMask() {
+		// thanks, Thierry!
+		// in "bitmap text" mode, the full pattern table is always addressed,
+		// otherwise, the color bits are used in the pattern masking
+		if ((vdpregs[1] & 0x10) != 0)
+			return (vdpregs[4] & 0x03) << 11 | 0x7ff;
+		else
+			return (vdpregs[4] & 0x03) << 11 | getBitmapModeColorMask() & 0x7ff;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpTMS9918A#isBitmapMonoMode()
+	 */
+	@Override
+	public boolean isBitmapMonoMode() {
+		boolean isMono = getBitmapModeColorMask() != 0x1fff;
+		return isMono;
+	}
 }

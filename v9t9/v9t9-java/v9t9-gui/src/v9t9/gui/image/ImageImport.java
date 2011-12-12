@@ -23,15 +23,17 @@ import javax.imageio.ImageIO;
 import org.eclipse.swt.graphics.ImageData;
 
 import v9t9.base.utils.Pair;
+import v9t9.canvas.video.ImageDataCanvas;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ColorMapUtils;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
-import v9t9.common.video.VdpModeInfo;
 import v9t9.gui.image.ColorOctree.LeafNode;
 import v9t9.gui.image.ImageImportOptions.Dither;
-import v9t9.gui.video.ImageDataCanvas;
+
+import static v9t9.common.hardware.VdpV9938Consts.*;
 
 /**
  * This class handles converting arbitrary external images and 
@@ -1549,14 +1551,14 @@ public class ImageImport {
 				// ensure palette is valid: higher bit depth may have
 				// been guessed during palette optimization
 				for (int c = 0; c < ncols; c++) {
-					vdp.setRegister(IVdpChip.REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
+					vdp.setRegister(REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
 					//colorMgr.setRGB333(c, thePalette[c]);
 				}
 			} else {
 				// ensure palette is valid: higher bit depth may have
 				// been guessed during palette optimization
 				for (int c = 0; c < ncols; c++) {
-					vdp.setRegister(IVdpChip.REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
+					vdp.setRegister(REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
 					//colorMgr.setRGB(c, thePalette[c]);
 				}
 				
@@ -1736,26 +1738,28 @@ public class ImageImport {
 	 * 
 	 */
 	private void setVideoMemory() {
-		VdpModeInfo modeInfo = vdp.getModeInfo();
-		if (format == VdpFormat.COLOR16_8x1) {
-			setVideoMemoryBitmapMode(modeInfo);
-		} 
-		else if (format == VdpFormat.COLOR16_8x8) {
-			setVideoMemoryGraphicsMode(modeInfo);
-		}
-		else if (format == VdpFormat.COLOR16_1x1) {
-			setVideoMemoryV9938BitmapMode(modeInfo);
-		}
-		else if (format== VdpFormat.COLOR16_4x4) {
-			setVideoMemoryMulticolorMode(modeInfo);
+		if (vdp instanceof IVdpTMS9918A) {
+			IVdpTMS9918A vdp99 = (IVdpTMS9918A) vdp;
+			if (format == VdpFormat.COLOR16_8x1) {
+				setVideoMemoryBitmapMode(vdp99);
+			} 
+			else if (format == VdpFormat.COLOR16_8x8) {
+				setVideoMemoryGraphicsMode(vdp99);
+			}
+			else if (format == VdpFormat.COLOR16_1x1) {
+				setVideoMemoryV9938BitmapMode(vdp99);
+			}
+			else if (format== VdpFormat.COLOR16_4x4) {
+				setVideoMemoryMulticolorMode(vdp99);
+			}
 		}
 	}
 
 	/**
-	 * @param modeInfo
+	 * @param vdp99
 	 */
-	private void setVideoMemoryMulticolorMode(VdpModeInfo modeInfo) {
-		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(modeInfo.patt.base);
+	private void setVideoMemoryMulticolorMode(IVdpTMS9918A vdp99) {
+		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdp99.getPatternTableBase());
 		
 		for (int y = 0; y < 48; y++) {
 			for (int x = 0; x < 64; x += 2) {
@@ -1866,22 +1870,27 @@ public class ImageImport {
 		
 	}
 	/**
-	 * @param modeInfo
+	 * @param vdp99
 	 */
-	private void setVideoMemoryV9938BitmapMode(VdpModeInfo modeInfo) {
+	private void setVideoMemoryV9938BitmapMode(IVdpTMS9918A vdp99) {
 		IBitmapModeImportHandler handler;
+		int mx;
 		switch (vdp.getModeNumber()) {
-		case IVdpChip.MODE_GRAPHICS4:
+		case MODE_GRAPHICS4:
 			handler = new GraphicsMode4ImportHandler();
+			mx = 256;
 			break;
-		case IVdpChip.MODE_GRAPHICS5:
+		case MODE_GRAPHICS5:
 			handler = new GraphicsMode5ImportHandler();
+			mx = 512;
 			break;
-		case IVdpChip.MODE_GRAPHICS6:
+		case MODE_GRAPHICS6:
 			handler = new GraphicsMode6ImportHandler();
+			mx = 512;
 			break;
-		case IVdpChip.MODE_GRAPHICS7:
+		case MODE_GRAPHICS7:
 			handler = new GraphicsMode7ImportHandler();
+			mx = 256;
 			break;
 		default:
 			throw new IllegalStateException();	
@@ -1889,14 +1898,13 @@ public class ImageImport {
 		
 		int ystep = vdp.isInterlacedEvenOdd() ? 2 : 1;
 		int my =  (vdp.getRegister(9) & 0x80) != 0 ? 212 : 192;
-		int mx = vdp.getCanvas().getVisibleWidth();
 		int graphicsPageSize = vdp.getGraphicsPageSize();
 		
 		int colstride = handler.getColumnStride();
 		int rowstride = handler.getRowStride();
 		
 		for (int eo = 0; eo < ystep; eo++) {
-			ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(modeInfo.patt.base 
+			ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdp99.getPatternTableBase()
 					^ (eo != 0 ? graphicsPageSize : 0));
 			for (int y = 0; y < my; y++) {
 				int row = y * ystep + eo;
@@ -1913,12 +1921,12 @@ public class ImageImport {
 		
 	}
 	/**
-	 * @param modeInfo
+	 * @param vdp99
 	 */
-	private void setVideoMemoryGraphicsMode(VdpModeInfo modeInfo) {
-		ByteMemoryAccess screen = vdp.getByteReadMemoryAccess(modeInfo.screen.base);
-		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(modeInfo.patt.base);
-		ByteMemoryAccess color = vdp.getByteReadMemoryAccess(modeInfo.color.base);
+	private void setVideoMemoryGraphicsMode(IVdpTMS9918A vdp99) {
+		ByteMemoryAccess screen = vdp.getByteReadMemoryAccess(vdp99.getScreenTableBase());
+		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdp99.getPatternTableBase());
+		ByteMemoryAccess color = vdp.getByteReadMemoryAccess(vdp99.getColorTableBase());
 		
 		// assume char 255 is not used
 		Arrays.fill(screen.memory, screen.offset, screen.offset + 768, (byte) 0xff);
@@ -1974,14 +1982,14 @@ public class ImageImport {
 	}
 
 	/**
-	 * @param modeInfo
+	 * @param vdp99
 	 */
-	private void setVideoMemoryBitmapMode(VdpModeInfo modeInfo) {
-		boolean isMono = vdp.getCanvas().isMono();
+	private void setVideoMemoryBitmapMode(IVdpTMS9918A vdp99) {
+		boolean isMono = vdp instanceof IVdpTMS9918A ? ((IVdpTMS9918A) vdp).isBitmapMonoMode() : false;
 		
-		ByteMemoryAccess screen = vdp.getByteReadMemoryAccess(modeInfo.screen.base);
-		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(modeInfo.patt.base);
-		ByteMemoryAccess color = vdp.getByteReadMemoryAccess(modeInfo.color.base);
+		ByteMemoryAccess screen = vdp.getByteReadMemoryAccess(vdp99.getScreenTableBase());
+		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdp99.getPatternTableBase());
+		ByteMemoryAccess color = vdp.getByteReadMemoryAccess(vdp99.getColorTableBase());
 		
 		byte f = 0, b = 0;
 		

@@ -5,7 +5,6 @@
 package v9t9.gui.client.swt;
 
 import v9t9.common.client.IClient;
-import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IMachine;
 
 /**
@@ -14,8 +13,8 @@ import v9t9.common.machine.IMachine;
 public class SwtLwjglJavaClient extends BaseSwtJavaClient implements IClient {
 	public static String ID = "SWTLWJGL";
 	
-    public SwtLwjglJavaClient(ISettingsHandler settingsHandler, IMachine machine) {
-    	super(settingsHandler, machine);
+    public SwtLwjglJavaClient(IMachine machine) {
+    	super(machine);
     }
 
     @Override

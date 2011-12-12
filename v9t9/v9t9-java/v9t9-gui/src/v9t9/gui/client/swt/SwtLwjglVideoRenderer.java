@@ -78,19 +78,18 @@ import org.lwjgl.util.glu.GLU;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
+import v9t9.canvas.video.ImageDataCanvas24Bit;
+import v9t9.canvas.video.VdpCanvasFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.ICanvas;
-import v9t9.common.video.IVdpCanvas;
 import v9t9.gui.client.swt.gl.MonitorEffect;
 import v9t9.gui.client.swt.gl.MonitorParams;
 import v9t9.gui.client.swt.gl.SimpleCurvedCrtMonitorRender;
 import v9t9.gui.client.swt.gl.StandardMonitorRender;
 import v9t9.gui.client.swt.gl.TextureLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
-import v9t9.gui.video.ImageDataCanvas;
-import v9t9.gui.video.ImageDataCanvas24Bit;
 
 /**
  * Render video into an OpenGL canvas in an SWT window
@@ -127,7 +126,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	
 	// pfft, lwjgl doesn't handle all our modes
 	//private MemoryCanvas memoryCanvas;
-	private ImageDataCanvas imageCanvas;
 	private int imageCanvasFormat;
 	private int imageCanvasType;
 
@@ -153,12 +151,12 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		monitorDrawing = settings.get(BaseEmulatorWindow.settingMonitorDrawing);
 	}
 
-	protected IVdpCanvas createVdpCanvas() {
-		imageCanvas = new ImageDataCanvas24Bit();
-		vdpCanvasBuffer = ByteBuffer.allocateDirect(imageCanvas.getImageData().bytesPerLine * imageCanvas.getImageData().height);
+	protected void createVdpCanvasHandler() {
+		vdpCanvas = new ImageDataCanvas24Bit();
+		vdpCanvasHandler = VdpCanvasFactory.createCanvasHandler(getVdpHandler(), vdpCanvas);
+		vdpCanvasBuffer = ByteBuffer.allocateDirect(vdpCanvas.getImageData().bytesPerLine * vdpCanvas.getImageData().height);
 		imageCanvasFormat = GL_RGB; 
 		imageCanvasType = GL_UNSIGNED_BYTE; 
-		return imageCanvas;
 	}
 
 	/* (non-Javadoc)
@@ -433,8 +431,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		}
 		
 		if (VERBOSE) System.out.printf("Texture size: %d x %d%n", 
-				imageCanvas.getVisibleWidth(),
-				imageCanvas.getVisibleHeight());
+				vdpCanvas.getVisibleWidth(),
+				vdpCanvas.getVisibleHeight());
 
 	}
 
@@ -500,14 +498,14 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glBindTexture(GL_TEXTURE_2D, vdpCanvasTexture);
 		
 		// copy current bitmap to texture (EXPENSIVE ON SLOW CARDS!)
-		vdpCanvasBuffer = imageCanvas.copy(vdpCanvasBuffer);
+		vdpCanvasBuffer = vdpCanvas.copy(vdpCanvasBuffer);
 		
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		
 		glTexImage2D(GL_TEXTURE_2D, 0, 
 				GL_RGB,
-				imageCanvas.getVisibleWidth(),
-				imageCanvas.getVisibleHeight(),
+				vdpCanvas.getVisibleWidth(),
+				vdpCanvas.getVisibleHeight(),
 				0, 
 				imageCanvasFormat,
 				imageCanvasType, 

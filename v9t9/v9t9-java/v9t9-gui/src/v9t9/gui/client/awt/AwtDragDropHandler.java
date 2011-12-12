@@ -37,11 +37,11 @@ import javax.imageio.ImageIO;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.graphics.ImageData;
 
+import v9t9.canvas.video.ImageDataCanvas;
 import v9t9.common.video.ICanvas;
 import v9t9.gui.image.AwtImageUtils;
 import v9t9.gui.image.ImageImport;
 import v9t9.gui.image.ImageImportOptions;
-import v9t9.gui.video.ImageDataCanvas;
 
 /**
  * Handle images copied in or out of the screen.

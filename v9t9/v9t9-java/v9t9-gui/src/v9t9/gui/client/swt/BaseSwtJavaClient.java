@@ -14,11 +14,11 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.common.client.IClient;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.TerminatedException;
+import v9t9.common.settings.Settings;
 import v9t9.gui.client.awt.AwtKeyboardHandler;
 import v9t9.gui.sound.JavaSoundHandler;
 
@@ -49,8 +49,8 @@ public abstract class BaseSwtJavaClient implements IClient {
 	 * @param machine 
 	 * 
 	 */
-	public BaseSwtJavaClient(ISettingsHandler settingsHandler, final IMachine machine) {
-		this.settingsHandler = settingsHandler;
+	public BaseSwtJavaClient(final IMachine machine) {
+		this.settingsHandler = Settings.getSettings(machine);
 		this.display = Display.getDefault();
     	this.video = machine.getVdp();
     	this.machine = machine;
@@ -68,7 +68,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 
         expectedUpdateTime = QUANTUM;
         
-        video.setCanvas(videoRenderer.getCanvas());
+        //video.setCanvas(videoRenderer.getCanvas());
 
         Shell shell = window.getShell();
 		shell.addShellListener(new ShellAdapter() {
@@ -86,14 +86,6 @@ public abstract class BaseSwtJavaClient implements IClient {
         	((ISwtKeyboardHandler) keyboardHandler).init(((ISwtVideoRenderer) videoRenderer).getControl());
 	}
 	
-
-    /* (non-Javadoc)
-     * @see v9t9.common.client.IClient#getSettings()
-     */
-    @Override
-    public ISettingsHandler getSettingsHandler() {
-    	return settingsHandler;
-    }
 
 	abstract protected void setupRenderer();
 
@@ -155,14 +147,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 			videoRenderer.dispose();
 	}
 
-	public v9t9.common.hardware.IVdpChip getVideoHandler() {
-	    return video;
-	}
-
-	public void setVideoHandler(v9t9.common.hardware.IVdpChip video) {
-	    this.video = video;
-	}
-
 	@Override
 	protected void finalize() throws Throwable {
 		close();
@@ -176,13 +160,15 @@ public abstract class BaseSwtJavaClient implements IClient {
 
 	public void updateVideo() {
 		//long start = System.currentTimeMillis();
-		if (videoRenderer.isIdle() && videoRenderer.isVisible()) { 
+		if (videoRenderer.isIdle() && videoRenderer.isVisible()) {
+			/*
 			try {
 				if (!video.update())
 					return;
 			} catch (Throwable t) {
 				t.printStackTrace();
 			}
+			*/
 			videoRenderer.redraw();
 			// compensate for slow frames
 	    	long elapsed = videoRenderer.getLastUpdateTime() * 4;
@@ -233,9 +219,4 @@ public abstract class BaseSwtJavaClient implements IClient {
 		return !display.isDisposed();
 	}
 	
-	@Override
-	public IVideoRenderer getVideoRenderer() {
-		return videoRenderer;
-	}
-
 }

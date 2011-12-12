@@ -168,7 +168,6 @@ public class Emulator {
 		
 		IClient client = null;
 		client = ClientFactory.createClient(clientId, 
-				server.getSettingsHandler(),
 				server.getMachine());
 
 		if (client == null) {

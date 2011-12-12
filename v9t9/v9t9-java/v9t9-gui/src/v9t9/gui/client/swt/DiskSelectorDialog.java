@@ -223,8 +223,7 @@ public class DiskSelectorDialog extends Composite {
 							catalog = fileHandler.createCatalog(setting, isDiskImage());
 							showCatalogDialog(setting, catalog);
 						} catch (IOException e1) {
-							machine.getClient().getEventNotifier().notifyEvent(
-									setting, IEventNotifier.Level.ERROR,
+							machine.notifyEvent(IEventNotifier.Level.ERROR,
 									MessageFormat.format("Could not read catalog for disk image ''{0}''\n\n{1}",
 											setting.getString(), e1.getMessage()));
 						}
@@ -310,11 +309,11 @@ public class DiskSelectorDialog extends Composite {
 
 
 	private String[] getHistory(String name) {
-		return machine.getClient().getSettingsHandler().getInstanceSettings().
+		return machine.getSettings().getInstanceSettings().
 			getHistorySettings().getArray("DiskSelector." + name);
 	}
 	private void setHistory(String name, String[] history) {
-		machine.getClient().getSettingsHandler().getInstanceSettings().
+		machine.getSettings().getInstanceSettings().
 			getHistorySettings().put("DiskSelector." + name, history);
 		//EmulatorSettings.INSTANCE.save();
 	}

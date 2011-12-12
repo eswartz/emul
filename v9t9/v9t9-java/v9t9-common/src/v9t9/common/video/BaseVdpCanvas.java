@@ -141,5 +141,4 @@ public abstract class BaseVdpCanvas implements ICanvas {
 		markDirty();
 	}
 
-
 }

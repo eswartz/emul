@@ -516,7 +516,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	 * @see v9t9.common.memory.IMemoryDomain#writeMemory(int)
 	 */
 	@Override
-	public void writeMemory(int addr) {
+	public void touchMemory(int addr) {
 		if (!writeListeners.isEmpty())
 			fireWriteEvent(getEntryAt(addr), addr, true);
 	}

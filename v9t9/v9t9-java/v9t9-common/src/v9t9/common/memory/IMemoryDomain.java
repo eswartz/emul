@@ -133,7 +133,7 @@ public interface IMemoryDomain {
 	 */
 	IMemoryEntry[] getFlattenedMemoryEntries();
 
-	void writeMemory(int addr);
+	void touchMemory(int addr);
 
 	String getIdentifier();
 	String getName();

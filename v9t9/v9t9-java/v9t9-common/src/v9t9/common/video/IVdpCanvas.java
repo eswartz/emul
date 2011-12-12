@@ -103,81 +103,26 @@ public interface IVdpCanvas extends ICanvas {
 
 	abstract public void clearToEvenOddClearColors();
 
-	/**
-	 * @return
-	 */
 	int getBlockCount();
 
-	/**
-	 * @return
-	 */
-	boolean isMono();
-
-	/**
-	 * @param color168x8
-	 */
 	void setFormat(VdpFormat color168x8);
 
-	/**
-	 * @param mono
-	 */
-	void setMono(boolean mono);
-
-	/**
-	 * @param b
-	 */
 	void setBlank(boolean b);
 
-	/**
-	 * 
-	 */
 	void syncColors();
 
-	/**
-	 * 
-	 */
 	void markDirty();
 
-	/**
-	 * @param blocks
-	 * @param count
-	 */
 	void markDirty(RedrawBlock[] blocks, int count);
 
-	/**
-	 * @param xoffs
-	 * @param yoffs
-	 */
 	void setOffset(int xoffs, int yoffs);
 
-	/**
-	 * @param width
-	 * @param videoHeight
-	 * @param interlacedEvenOdd
-	 */
 	void setSize(int width, int height, boolean interlacedEvenOdd);
 
-	/**
-	 * @param i
-	 * @param j
-	 * @return
-	 */
 	int getBitmapOffset(int i, int j);
 
-	/**
-	 * @param spriteCanvas
-	 * @param i
-	 * @param j
-	 * @param blockMag
-	 */
 	void blitSpriteBlock(ISpriteVdpCanvas spriteCanvas, int i, int j, int blockMag);
 
-	/**
-	 * @param spriteCanvas
-	 * @param i
-	 * @param j
-	 * @param blockMag
-	 */
 	void blitFourColorSpriteBlock(ISpriteVdpCanvas spriteCanvas, int i, int j,
 			int blockMag);
 

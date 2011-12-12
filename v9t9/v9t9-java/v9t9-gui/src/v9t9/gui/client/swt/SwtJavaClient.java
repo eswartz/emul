@@ -18,7 +18,7 @@ public class SwtJavaClient extends BaseSwtJavaClient implements IClient {
 	public static String ID = "SWT";
 	
     public SwtJavaClient(ISettingsHandler settingsHandler, final IMachine machine) {
-    	super(settingsHandler, machine);
+    	super(machine);
     }
 
     @Override

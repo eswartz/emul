@@ -229,7 +229,7 @@ final class CatalogDialog extends Dialog {
 						filePath = entry.fileName;
 					else
 						filePath = setting.getName() + "." + entry.fileName;
-					machine.getClient().getEventNotifier().notifyEvent(entry, 
+					machine.notifyEvent( 
 							Level.INFO, "Pasting '" + filePath + "'");
 							
 					machine.getKeyboardState().pasteText(filePath);

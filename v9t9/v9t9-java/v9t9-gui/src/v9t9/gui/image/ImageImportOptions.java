@@ -14,6 +14,7 @@ import v9t9.base.properties.FieldProperty;
 import v9t9.base.properties.IPropertySource;
 import v9t9.base.properties.PropertySource;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
@@ -218,7 +219,7 @@ public class ImageImportOptions {
 		setOptimizePalette(canSetPalette);
 		
 		/////
-		boolean isMonoMode = canvas.isMono();
+		boolean isMonoMode = vdp instanceof IVdpTMS9918A && ((IVdpTMS9918A) vdp).isBitmapMonoMode();
 		
 		setDitherMono(isMonoMode);
 		setDitherType(format == VdpFormat.COLOR16_8x1 && !canSetPalette ? Dither.ORDERED : Dither.FS);

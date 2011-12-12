@@ -21,7 +21,7 @@ public interface IClient {
 	
     void close();
     
-    ISettingsHandler getSettingsHandler();
+    //ISettingsHandler getSettingsHandler();
     
     /**
      * Handle one timer tick (nominally 1/60 second).  
@@ -35,9 +35,9 @@ public interface IClient {
 
 	void updateVideo();
 
-	IVideoRenderer getVideoRenderer();
+	//IVideoRenderer getVideoRenderer();
 	
-	IKeyboardHandler getKeyboardHandler();
+	//IKeyboardHandler getKeyboardHandler();
 	
 	IEventNotifier getEventNotifier();
 

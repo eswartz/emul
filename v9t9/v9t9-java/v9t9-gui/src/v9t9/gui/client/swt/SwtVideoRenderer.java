@@ -26,14 +26,16 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.canvas.video.IVdpCanvasHandler;
+import v9t9.canvas.video.ImageDataCanvas;
+import v9t9.canvas.video.ImageDataCanvas24Bit;
+import v9t9.canvas.video.VdpCanvasFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.ICanvasListener;
 import v9t9.common.video.IVdpCanvas;
-import v9t9.gui.video.ImageDataCanvas;
-import v9t9.gui.video.ImageDataCanvas24Bit;
 
 /**
  * Render video into an SWT window
@@ -56,6 +58,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	protected FixedAspectLayout fixedAspectLayout;
 	private final IVdpChip vdp;
 	protected final ISettingsHandler settings;
+	protected IVdpCanvasHandler vdpCanvasHandler;
 	
 	public SwtVideoRenderer(ISettingsHandler settings, IVdpChip vdp) {
 		this.settings = settings;
@@ -88,7 +91,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		this.canvas = createCanvasControl(parent, flags);
 		canvas.setLayout(fixedAspectLayout);	
 		
-		setCanvas(createVdpCanvas());
+		createVdpCanvasHandler();
 		
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
@@ -144,8 +147,12 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		return SWT.NO_BACKGROUND;
 	}
 
-	protected IVdpCanvas createVdpCanvas() {
-		return new ImageDataCanvas24Bit();
+	protected void createVdpCanvasHandler() {
+		vdpCanvas = new ImageDataCanvas24Bit();
+		vdpCanvasHandler = VdpCanvasFactory.createCanvasHandler(vdp, vdpCanvas);
+		
+		vdpCanvas.setListener(this);
+		updateWidgetSizeForMode();
 	}
 
 	protected void initWidgets() {
@@ -323,17 +330,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		return vdpCanvas;
 	}
 	
-
-	public void setCanvas(IVdpCanvas vdpCanvas) {
-		if (!(vdpCanvas instanceof ImageDataCanvas))
-			throw new IllegalArgumentException();
-		
-		this.vdpCanvas = (ImageDataCanvas) vdpCanvas;
-		this.vdpCanvas.setListener(this);
-		updateWidgetSizeForMode();
-	}
-	
-
 
 	public void canvasDirtied(ICanvas canvas) {
 		//redraw();

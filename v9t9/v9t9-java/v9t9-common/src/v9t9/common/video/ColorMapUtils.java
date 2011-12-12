@@ -484,10 +484,10 @@ public class ColorMapUtils {
 	 * @param bs
 	 * @return
 	 */
-	public static int rgb8ToRgbRBXG(byte[] rgb) {
-		return (((rgb[0] >> 5) & 0x7) << 12) | 
+	public static short rgb8ToRgbRBXG(byte[] rgb) {
+		return (short) ((((rgb[0] >> 5) & 0x7) << 12) | 
 				(((rgb[2] >> 5) & 0x7) << 8) |
-				(((rgb[1] >> 5) & 0x7) << 0);
+				(((rgb[1] >> 5) & 0x7) << 0));
 	}
 
 }

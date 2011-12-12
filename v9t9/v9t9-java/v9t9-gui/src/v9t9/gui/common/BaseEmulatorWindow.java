@@ -86,8 +86,7 @@ public abstract class BaseEmulatorWindow {
 		IProperty configVar = Settings.get(machine, configVarSchema);
 		
 		boolean isUndefined = false;
-		IStoredSettings workspace = machine.getClient().getSettingsHandler().
-			getWorkspaceSettings();
+		IStoredSettings workspace = machine.getSettings().getWorkspaceSettings();
 		ISettingSection settings = workspace.getSettings();
 		configVar.loadState(settings);
 		String configPath = configVar.getString();
@@ -115,8 +114,7 @@ public abstract class BaseEmulatorWindow {
 	protected String selectDirectory(String title, IProperty configVar, String defaultSubdir,
 			boolean ifUndefined) {
 		boolean isUndefined = false;
-		IStoredSettings workspace = machine.getClient().getSettingsHandler().
-			getWorkspaceSettings();
+		IStoredSettings workspace = machine.getSettings().getWorkspaceSettings();
 		ISettingSection settings = workspace.getSettings();
 		configVar.loadState(settings);
 		String configDir = configVar.getString();
@@ -190,8 +188,7 @@ public abstract class BaseEmulatorWindow {
 								Settings.getSettings(machine).getWorkspaceSettings(), 
 								origWorkspace);
 					} catch (IOException e) {
-						machine.getClient().getEventNotifier().notifyEvent(
-								machine,
+						machine.notifyEvent(
 								Level.WARNING, 
 								MessageFormat.format(
 										"Could not find the workspace ''{0}'' referenced in the saved state",
@@ -206,7 +203,7 @@ public abstract class BaseEmulatorWindow {
 				
 				machine.loadState(settings);
 			} catch (Throwable e1) {
-				machine.getClient().getEventNotifier().notifyEvent(null, Level.ERROR, 
+				machine.notifyEvent(Level.ERROR, 
 						"Failed to load machine state:\n\n" + e1.getMessage());
 			
 			} finally {
@@ -262,10 +259,9 @@ public abstract class BaseEmulatorWindow {
 		if (filenameBase != null) {
 			File saveFile = getUniqueFile(filenameBase);
 			if (saveFile == null) {
-				machine.getClient().getEventNotifier().notifyEvent(null, Level.ERROR, 
+				machine.notifyEvent(Level.ERROR, 
 						"Too many screenshots here!");
-				machine.getClient().getSettingsHandler().
-					getInstanceSettings().clearConfigVar("ScreenShotsBase");
+				machine.getSettings().getInstanceSettings().clearConfigVar("ScreenShotsBase");
 				return screenshot();
 			} else {
 				try {
