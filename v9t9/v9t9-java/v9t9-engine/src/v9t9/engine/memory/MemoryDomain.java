@@ -217,7 +217,11 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 
     private void fireWriteEvent(final IMemoryEntry entry, final int addr, final boolean isByte) {
     	for (Object listenerObj : writeListeners.toArray()) {
-    		((IMemoryWriteListener) listenerObj).changed(entry, addr, isByte);
+    		try {
+    			((IMemoryWriteListener) listenerObj).changed(entry, addr, isByte);
+    		} catch (Throwable t) {
+    			t.printStackTrace();
+    		}
     	}
 	}
 

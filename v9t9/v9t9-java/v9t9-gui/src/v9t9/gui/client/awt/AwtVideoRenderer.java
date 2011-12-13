@@ -25,6 +25,7 @@ import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.canvas.video.ImageDataCanvas;
 import v9t9.canvas.video.ImageDataCanvas24Bit;
+import v9t9.canvas.video.VdpCanvasFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
@@ -33,6 +34,7 @@ import v9t9.common.settings.Settings;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.ICanvasListener;
 import v9t9.common.video.IVdpCanvas;
+import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.gui.jna.V9t9Render;
 import v9t9.gui.jna.V9t9Render.AnalogTV;
@@ -49,7 +51,8 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	private static final boolean USE_ANALOGTV = false;
 
 	private ImageDataCanvas vdpCanvas;
-
+	private IVdpCanvasRenderer vdpCanvasRenderer;
+	
 	// global zoom
 	protected float zoom = 3;
 	// zoom based on the resolution
@@ -92,7 +95,12 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 		V9t9Render.INSTANCE.hashCode();
 		
 		updateRect = new Rectangle(0, 0, 0, 0);
-		setCanvas(new ImageDataCanvas24Bit());
+		
+		createVdpCanvasHandler();
+
+		vdpCanvas.setListener(this);
+		//updateWidgetSizeForMode();		
+		
 		//desiredWidth = (int)(zoomx * 256);
 		//desiredHeight = (int)(zoomy * 192);
 		this.canvas = new AwtCanvas(this);
@@ -126,6 +134,15 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 			
 		};
 		monitorDrawing.addListener(monitorSettingListener);
+	}
+
+
+	/**
+	 * 
+	 */
+	protected void createVdpCanvasHandler() {
+		vdpCanvas = new ImageDataCanvas24Bit();
+		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(vdp, vdpCanvas);
 	}
 
 
@@ -175,13 +192,6 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 		return vdpCanvas;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#setCanvas(v9t9.emulator.clients.builtin.video.VdpCanvas)
-	 */
-	public void setCanvas(IVdpCanvas vdpCanvas) {
-		this.vdpCanvas = (ImageDataCanvas) vdpCanvas;
-		this.vdpCanvas.setListener(this);
-	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#getLastUpdateTime()
 	 */
@@ -235,6 +245,9 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 		
 		synchronized (vdpCanvas) {
 			org.eclipse.swt.graphics.Rectangle dirtyRect = vdpCanvas.getDirtyRect(); 
+			if (dirtyRect == null)
+				return;
+			
 			Rectangle redrawRect_ = new Rectangle(dirtyRect.x, dirtyRect.y, dirtyRect.width, dirtyRect.height);
 			
 			final Rectangle redrawRect = redrawRect_;
@@ -551,4 +564,14 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 			ImageIO.write(saveImage, "png", file);
 		}
 	}
+	
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.ISwtVideoRenderer#getCanvasHandler()
+	 */
+	@Override
+	public IVdpCanvasRenderer getCanvasHandler() {
+		return vdpCanvasRenderer;
+	}
+
 }

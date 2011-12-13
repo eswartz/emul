@@ -9,6 +9,10 @@ package v9t9.common.client;
 import java.io.File;
 import java.io.IOException;
 
+import v9t9.common.hardware.IVdpChip;
+import v9t9.common.video.IVdpCanvas;
+import v9t9.common.video.IVdpCanvasRenderer;
+
 /**
  * This interface is implemented to handle blitting a VdpCanvas bitmap to a real
  * hardware device. 
@@ -35,5 +39,11 @@ public interface IVideoRenderer {
 	 * 
 	 */
 	void dispose();
+
+	/** Get the basic canvas, before rendering */
+	IVdpCanvas getCanvas();
+	IVdpChip getVdpHandler();
+
+	IVdpCanvasRenderer getCanvasHandler();
 
 }

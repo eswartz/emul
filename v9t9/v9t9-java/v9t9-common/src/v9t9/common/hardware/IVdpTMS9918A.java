@@ -8,6 +8,7 @@ package v9t9.common.hardware;
  *
  */
 public interface IVdpTMS9918A extends IVdpChip {
+	int getVdpRegisterCount();
 
 	int getScreenTableBase();
 	int getScreenTableSize();

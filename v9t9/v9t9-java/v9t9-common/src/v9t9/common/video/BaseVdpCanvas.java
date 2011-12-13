@@ -22,6 +22,11 @@ public abstract class BaseVdpCanvas implements ICanvas {
 	protected ICanvasListener listener;
 	private VdpColorManager colorMgr;
 	
+	public void setListener(ICanvasListener listener) {
+		this.listener = listener;
+	}
+	
+
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.ICanvas#setSize(int, int)
 	 */
@@ -50,7 +55,8 @@ public abstract class BaseVdpCanvas implements ICanvas {
 	public void markDirty(RedrawBlock[] blocks, int count) {
 		if (dx1 == 0 && dy1 == 0 && dx2 == width && dy2 == height) {
 			// already dirty
-			listener.canvasDirtied(this);
+			if (listener != null)
+				listener.canvasDirtied(this);
 		} else {
 			for (int i = 0; i < count; i++) {
 				RedrawBlock block = blocks[i];

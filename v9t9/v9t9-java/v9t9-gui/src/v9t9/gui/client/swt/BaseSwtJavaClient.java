@@ -169,6 +169,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 				t.printStackTrace();
 			}
 			*/
+			videoRenderer.getCanvasHandler().update();
 			videoRenderer.redraw();
 			// compensate for slow frames
 	    	long elapsed = videoRenderer.getLastUpdateTime() * 4;

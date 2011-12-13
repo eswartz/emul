@@ -9,6 +9,7 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.video.IVdpCanvas;
+import v9t9.common.video.IVdpCanvasRenderer;
 
 /**
  * @author ejs
@@ -22,7 +23,7 @@ public class VdpCanvasFactory {
 	 * @param canvas 
 	 * @return
 	 */
-	public static IVdpCanvasHandler createCanvasHandler(IVdpChip vdp, IVdpCanvas canvas) {
+	public static IVdpCanvasRenderer createCanvasHandler(IVdpChip vdp, IVdpCanvas canvas) {
 		if (vdp instanceof IVdpV9938)
 			return new VdpV9938CanvasRenderer((IVdpV9938) vdp, canvas);
 		else if (vdp instanceof IVdpTMS9918A)

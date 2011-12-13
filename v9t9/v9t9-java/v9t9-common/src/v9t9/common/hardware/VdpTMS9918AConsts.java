@@ -31,7 +31,5 @@ public class VdpTMS9918AConsts {
 	public final static int MODE_BITMAP = 4;
 	
 	public final static int REG_ST = -1;
-	public final static int REG_SR0 = 48;
-	public final static int REG_PAL0 = 48 + 9;
 
 }

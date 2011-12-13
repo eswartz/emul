@@ -10,7 +10,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import v9t9.common.client.IClient;
-import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
@@ -30,7 +29,7 @@ public class AwtJavaClient implements IClient {
 	private AwtVideoRenderer videoRenderer;
 	private AwtWindow window;
 
-    public AwtJavaClient(ISettingsHandler settingsHandler, IMachine machine) {
+    public AwtJavaClient(IMachine machine) {
 		this.machine = machine;
         video = machine.getVdp();
         

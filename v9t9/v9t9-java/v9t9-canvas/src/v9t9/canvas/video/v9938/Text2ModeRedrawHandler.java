@@ -7,6 +7,7 @@ import v9t9.canvas.video.BaseRedrawHandler;
 import v9t9.canvas.video.IVdpModeRedrawHandler;
 import v9t9.canvas.video.VdpRedrawInfo;
 import v9t9.canvas.video.VdpTouchHandler;
+import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpChanges;
@@ -80,7 +81,7 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		bbg = (byte) (info.vdpregs[12] & 0xf);
 		bfg = (byte) ((info.vdpregs[12] >> 4) & 0xf);
 
-		boolean blinkOn = ((VdpV9938CanvasRenderer)info.vdp).blinkOn;
+		boolean blinkOn = ((IVdpV9938) info.vdp).isBlinkOn();
 		for (int i = 0; i < size; i++) {
 			if (force 
 					|| info.changes.screen[i] != VdpChanges.SC_UNTOUCHED			/* this screen pos updated? */

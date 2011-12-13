@@ -7,6 +7,7 @@ import v9t9.canvas.video.BaseRedrawHandler;
 import v9t9.canvas.video.IVdpModeRedrawHandler;
 import v9t9.canvas.video.VdpRedrawInfo;
 import v9t9.canvas.video.VdpTouchHandler;
+import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpModeInfo;
 
@@ -49,8 +50,8 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	@Override
 	public boolean touch(int addr) {
 		boolean visible = false;
-		if (((VdpV9938CanvasRenderer)info.vdp).isInterlacedEvenOdd()) {
-			int pageSize = ((VdpV9938CanvasRenderer) info.vdp).getGraphicsPageSize();
+		if (info.vdp.isInterlacedEvenOdd()) {
+			int pageSize = info.vdp.getGraphicsPageSize();
 			int pattBase = modeInfo.patt.base ^ pageSize;
 			if (pattBase <= addr && addr < pattBase + modeInfo.patt.size) {
 	    		info.touch.patt.modify(addr - pattBase);
@@ -66,10 +67,10 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	
 	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
 		/*  Redraw 8x8 blocks where pixels changed */
-		VdpV9938CanvasRenderer vdpV9938 = (VdpV9938CanvasRenderer)info.vdp;
-		int pageOffset = vdpV9938.getGraphicsPageOffset();
-		boolean interlacedEvenOdd = vdpV9938.isInterlacedEvenOdd();
-		int graphicsPageSize = vdpV9938.getGraphicsPageSize();
+		IVdpV9938 vdp9938 = (IVdpV9938)info.vdp;
+		int pageOffset = vdp9938.getGraphicsPageOffset();
+		boolean interlacedEvenOdd = vdp9938.isInterlacedEvenOdd();
+		int graphicsPageSize = vdp9938.getGraphicsPageSize();
 		
 		//System.out.println(pageOffset);
 		int count = 0;

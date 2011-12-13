@@ -17,6 +17,7 @@ import v9t9.base.utils.ListenerList.IFire;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpV9938;
+import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.settings.SettingSchema;
@@ -49,10 +50,10 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			register(i, "VR" + (i < 10 ? "0" : "") + i);
 		}
 		for (int i = 0; i < 9; i++) {
-			register(i + REG_SR0, "SR" + i);
+			register(i + VdpV9938Consts.REG_SR0, "SR" + i);
 		}
 		for (int i = 0; i < 16; i++) {
-			register(i + REG_PAL0, "PAL" + (i < 10 ? "0" : "") + i);
+			register(i + VdpV9938Consts.REG_PAL0, "PAL" + (i < 10 ? "0" : "") + i);
 		}
 	}
 	
@@ -84,6 +85,13 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	private boolean indinc;
 	boolean blinkOn;
 	private boolean isEnhancedMode;
+
+	/** ms */
+	private int blinkPeriod;
+	/** ms */
+	private int blinkOnPeriod;
+	/** ms */
+	private int blinkOffPeriod;
 	
 	private int rowstride;	// stride in bytes from row to row in modes 4-7
 	private int pixperbyte;	// pixels per byte
@@ -135,6 +143,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 
 	private int currentcycles = 0; // current cycles left
 	private IProperty msxClockDivisor;
+	private int pageOffset;
 	
 	/* from mame and blueMSX:
 	 * 
@@ -282,8 +291,64 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	@Override
 	protected void doTick() {
 		super.doTick();
+
+		// The "blink" controls either the r7/r12 selection for text mode
+		// or the page selection for graphics 4-7 modes.
 		
-		// TODO: fire blink / page flip event ... ?
+		// We don't redraw for interlacing; we just detect changes on both
+		// pages and draw them into an interleaved image.  There's not
+		// enough speed in this implementation to allow redrawing at 60 fps.
+		int prevPageOffset = pageOffset;
+		pageOffset = 0;
+		if ((modeNumber == MODE_TEXT2 || (modeNumber >= MODE_GRAPHICS4 && modeNumber <= MODE_GRAPHICS7))
+				&& vdpregs[13] != 0) {
+			boolean isBlinking = modeNumber == MODE_TEXT2;
+			boolean isPageFlipping = (vdpregs[2] & 0x20) != 0 && !isBlinking;
+			
+			boolean isAltMode = System.currentTimeMillis() % blinkPeriod >= blinkOffPeriod;
+			if (isPageFlipping) {
+				pageOffset = isAltMode ? getGraphicsPageSize() : 0;
+				if (prevPageOffset != pageOffset) {
+					
+					if (!listeners.isEmpty()) {
+						listeners.fire(new IFire<IVdpChip.IVdpListener>() {
+
+							@Override
+							public void fire(IVdpListener listener) {
+								listener.pageOffsetChanged(pageOffset);
+							}
+
+							@Override
+							public void threw(IVdpListener listener, Throwable t) {
+								t.printStackTrace();
+							}
+							
+						});
+					}
+				}
+			} else if (isBlinking) {
+				boolean wasOn = blinkOn;
+				blinkOn = isAltMode;
+				if (blinkOn != wasOn) {
+					if (!listeners.isEmpty()) {
+						listeners.fire(new IFire<IVdpChip.IVdpListener>() {
+
+							@Override
+							public void fire(IVdpListener listener) {
+								listener.blinkStatusChanged(blinkOn);
+							}
+
+							@Override
+							public void threw(IVdpListener listener, Throwable t) {
+								t.printStackTrace();
+							}
+							
+						});
+					}
+				}
+			}
+			
+		}
 		
 		int targetRate = CLOCK_RATE / msxClockDivisor.getInt() / vdpInterruptRate.getInt();
 		
@@ -753,10 +818,10 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	 */
 	@Override
 	public int getRegister(int reg) {
-		if (reg >= REG_PAL0)
-			return palette[reg - REG_PAL0];
-		else if (reg >= REG_SR0)
-			return statusvec[reg - REG_SR0];
+		if (reg >= VdpV9938Consts.REG_PAL0)
+			return palette[reg - VdpV9938Consts.REG_PAL0];
+		else if (reg >= VdpV9938Consts.REG_SR0)
+			return statusvec[reg - VdpV9938Consts.REG_SR0];
 		else
 			return super.getRegister(reg);
 	}
@@ -766,8 +831,8 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	 */
 	@Override
 	public int setRegister(int reg, int value) {
-		if (reg >= REG_PAL0) {
-			final int color = reg - REG_PAL0;
+		if (reg >= VdpV9938Consts.REG_PAL0) {
+			final int color = reg - VdpV9938Consts.REG_PAL0;
 			int old = palette[color] & 0xffff;
 			palette[color] = (short) value;
 			
@@ -789,9 +854,9 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 				});
 			}
 			return old;
-		} if (reg >= REG_SR0) {
-			int old = statusvec[reg - REG_SR0] & 0xff;
-			statusvec[reg - REG_SR0] = (byte) value;
+		} if (reg >= VdpV9938Consts.REG_SR0) {
+			int old = statusvec[reg - VdpV9938Consts.REG_SR0] & 0xff;
+			statusvec[reg - VdpV9938Consts.REG_SR0] = (byte) value;
 		
 			fireRegisterChanged(reg, (byte) value);
 			
@@ -805,17 +870,24 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#doSetVdpReg(int, byte, byte)
 	 */
 	@Override
-	protected void doSetVdpReg(int reg, byte old, byte value) {
+	protected void doSetVdpReg(int reg, byte old, byte val) {
 		switch (reg) {
 		case 8:
 			switchBank();
+			break;
+		case 13:
+			// blinking period (pg 6)
+			blinkOnPeriod = ((val >> 4) & 0xf) * 1000 / 6;
+			blinkOffPeriod = (val & 0xf) * 1000 / 6;
+			blinkPeriod = blinkOnPeriod + blinkOffPeriod;
+			blinkOn = false;
 			break;
 		case 14:
 			switchBank();
 			break;
 		case 15:
 			// status register pointer
-			statusidx = value & 0xf;
+			statusidx = val & 0xf;
 			break;
 		case 16:
 			// palette #
@@ -824,8 +896,8 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		case 17:
 			// indirect register access: sets the next register whose value
 			// can be set through port 3 (though, reg 17 itself will not be modified)
-			indreg = value & 0x3f;
-			indinc = (value & 0x80) == 0;
+			indreg = val & 0x3f;
+			indinc = (val & 0x80) == 0;
 			break;
 			
 		case 19:
@@ -855,7 +927,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			}
 			break;
 		case 45: // ARG
-			if (((old ^ value) & R45_MXC) != 0) {
+			if (((old ^ val) & R45_MXC) != 0) {
 				// doesn't affect video rendering
 				switchBank();
 			}
@@ -869,7 +941,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			//}
 			break;
 		default:
-			super.doSetVdpReg(reg, old, value);
+			super.doSetVdpReg(reg, old, val);
 			break;
 		}
 		
@@ -946,30 +1018,30 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		case 46:
 			return "Command";
 			
-		case REG_SR0: 
+		case VdpV9938Consts.REG_SR0: 
 			return "Status Register 0";
-		case REG_SR0 + 1:
+		case VdpV9938Consts.REG_SR0 + 1:
 			return "Status Register 1";
-		case REG_SR0 + 2:
+		case VdpV9938Consts.REG_SR0 + 2:
 			return "Status Register 2";
-		case REG_SR0 + 3:
+		case VdpV9938Consts.REG_SR0 + 3:
 			return "Column Register Low";
-		case REG_SR0 + 4:
+		case VdpV9938Consts.REG_SR0 + 4:
 			return "Column Register High";
-		case REG_SR0 + 5:
+		case VdpV9938Consts.REG_SR0 + 5:
 			return "Row Register Low";
-		case REG_SR0 + 6:
+		case VdpV9938Consts.REG_SR0 + 6:
 			return "Row Register High";
-		case REG_SR0 + 7:
+		case VdpV9938Consts.REG_SR0 + 7:
 			return "Color Register";
-		case REG_SR0 + 8:
+		case VdpV9938Consts.REG_SR0 + 8:
 			return "Border X Register Low";
-		case REG_SR0 + 9:
+		case VdpV9938Consts.REG_SR0 + 9:
 			return "Border X Register High";
 		}
 
-		if (reg >= REG_PAL0) {
-			return "Palette Color " + (reg - REG_PAL0);
+		if (reg >= VdpV9938Consts.REG_PAL0) {
+			return "Palette Color " + (reg - VdpV9938Consts.REG_PAL0);
 		}
 		if (reg >= 8)
 			return null;
@@ -982,13 +1054,13 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	 */
 	@Override
 	protected int getRegisterFlags(int reg) {
-		if ((reg >= REG_SR0 && reg < REG_SR0 + 9) || (reg >= 32 && reg <= 45))
+		if ((reg >= VdpV9938Consts.REG_SR0 && reg < VdpV9938Consts.REG_SR0 + 9) || (reg >= 32 && reg <= 45))
 			return IRegisterAccess.FLAG_VOLATILE + IRegisterAccess.FLAG_ROLE_GENERAL;
 		return super.getRegisterFlags(reg);
 	}
 
 	protected int getRegisterSize(int reg) {
-		return reg >= REG_PAL0 ? 2 : super.getRegisterSize(reg);
+		return reg >= VdpV9938Consts.REG_PAL0 ? 2 : super.getRegisterSize(reg);
 	}
 
 	public String getModeName() {
@@ -1013,14 +1085,14 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		if (reg == REG_ST)
 			return getStatusString(vdpStatus);
 		short val = 0;
-		if (reg >= REG_PAL0) {
-			val = palette[reg - REG_PAL0];
-		} else if (reg >= REG_SR0) {
-			val = statusvec[reg - REG_SR0];
+		if (reg >= VdpV9938Consts.REG_PAL0) {
+			val = palette[reg - VdpV9938Consts.REG_PAL0];
+		} else if (reg >= VdpV9938Consts.REG_SR0) {
+			val = statusvec[reg - VdpV9938Consts.REG_SR0];
 		} else {
 			val = vdpregs[reg];
 		}
-		switch (reg < REG_SR0 ? reg - 1 : reg) {
+		switch (reg < VdpV9938Consts.REG_SR0 ? reg - 1 : reg) {
 		case 0:
 			return caten(yOrN("DG", val & 0x40), yOrN("IE2", val & 0x40),
 					yOrN("IE1", val & 0x20), yOrN("M5", val & R0_M5),
@@ -1097,14 +1169,14 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		case 46:
 			return "Command: " + ((val & 0xf0) >> 4) + " | Lo: " + (val & 0xf);
 
-		case REG_SR0:
+		case VdpV9938Consts.REG_SR0:
 			return getStatusString(vdpStatus);
-		case REG_SR0 + 1:
+		case VdpV9938Consts.REG_SR0 + 1:
 			return caten(yOrN("FL", val & 0x80),
 					yOrN("LPS", val & 0x40),
 					"ID: " + ((val & 0x3e) >> 1),
 					yOrN("FH", val & 0x01));
-		case REG_SR0 + 2:
+		case VdpV9938Consts.REG_SR0 + 2:
 			return caten(yOrN("TransRdy", val & 0x80),
 					yOrN("VertScan", val & 0x40),
 					yOrN("HorizScan", val & 0x20),
@@ -1114,7 +1186,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 					);
 		}
 		
-		if (reg >= REG_SR0)
+		if (reg >= VdpV9938Consts.REG_SR0)
 			return null;
 		
 		return super.getRegisterTooltip(reg);
@@ -1146,6 +1218,14 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		return super.calculateModeNumber();
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#isBitmapMode()
+	 */
+	@Override
+	protected boolean isBitmapMode() {
+		return super.isBitmapMode() || (modeNumber == MODE_GRAPHICS3);
+	}
+	
 	/** For the V9938, only the on-board 128K is used for display.
 	 * Also, when the graphics mode is a standard 9918A mode, the
 	 * old masking applies. */
@@ -1197,6 +1277,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	public int getColorTableBase() {
 		switch (getModeNumber()) {
 		case MODE_BITMAP:
+		case MODE_GRAPHICS3:
 			return (super.getColorTableBase() | ((vdpregs[10] & 0x7) * 0x4000)) & getModeAddressMask();
 		case MODE_TEXT2:
 			return (((vdpregs[10] << 8) | (vdpregs[3] & 0xf8)) << 6) & getModeAddressMask();
@@ -1232,6 +1313,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	public int getPatternTableBase() {
 		switch (getModeNumber()) {
 		case MODE_BITMAP:
+		case MODE_GRAPHICS3:
 			return (super.getPatternTableBase() | ((vdpregs[4] & 0x38) * 0x800)) & getModeAddressMask();
 		case MODE_GRAPHICS4:
 		case MODE_GRAPHICS5:
@@ -1266,21 +1348,34 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	 */
 	@Override
 	public int getBlinkOffPeriod() {
-		return (vdpregs[13] & 0xf) * 1000 / 6;
+		return blinkOffPeriod;
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.hardware.IVdpV9938#getBlinkOnPeriod()
 	 */
 	@Override
 	public int getBlinkOnPeriod() {
-		return ((vdpregs[13] >> 4) & 0xf) * 1000 / 6;
+		return blinkOnPeriod;
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.hardware.IVdpV9938#getBlinkPeriod()
 	 */
 	@Override
 	public int getBlinkPeriod() {
-		return getBlinkOffPeriod() + getBlinkOnPeriod();
+		return blinkPeriod;
+	}
+
+	@Override
+	public boolean isBlinkOn() {
+		return blinkOn;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpV9938#getGraphicsPageOffset()
+	 */
+	@Override
+	public int getGraphicsPageOffset() {
+		return pageOffset;
 	}
 
 	/* (non-Javadoc)
@@ -1293,8 +1388,6 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			vdpMmio.setMemoryAccessCycles(1);
 			break;
 		case MODE_BITMAP:
-			vdpMmio.setMemoryAccessCycles(2);
-			break;
 		case MODE_GRAPHICS3:
 			vdpMmio.setMemoryAccessCycles(2);
 			break;
@@ -1334,4 +1427,30 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			super.updateForMode();
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#getVdpRegisterCount()
+	 */
+	@Override
+	public int getVdpRegisterCount() {
+		return 48;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#getGraphicsPageSize()
+	 */
+	@Override
+	public int getGraphicsPageSize() {
+		switch (getModeNumber()) {
+		case MODE_GRAPHICS4:
+		case MODE_GRAPHICS5:
+			return 0x8000;
+		case MODE_GRAPHICS6:
+		case MODE_GRAPHICS7:
+			return 0x10000;
+		default:
+			return super.getGraphicsPageSize();
+		}
+	}
+	
 }

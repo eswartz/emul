@@ -473,12 +473,12 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 			return "Screen: " + HexUtils.toHex4(getScreenTableBase());
 		case 3: 
 			return "Colors: " + HexUtils.toHex4(getColorTableBase())
-			+ (getModeNumber() == MODE_BITMAP ?
+			+ (isBitmapMode() ?
 					" | Mask: " + HexUtils.toHex4(getBitmapModeColorMask()) 
 							: "");
 		case 4: 
 			return "Patterns: " + HexUtils.toHex4(getPatternTableBase())
-			+ (getModeNumber() == MODE_BITMAP ?
+			+ (isBitmapMode() ?
 					" | Mask: " + HexUtils.toHex4(getBitmapModePatternMask()) 
 					: "");
 		case 5: 
@@ -551,11 +551,11 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	/**
 	 * @param reg
 	 * @param b
-	 * @param value
+	 * @param val
 	 */
-	protected void doSetVdpReg(int reg, byte old, byte value) {
+	protected void doSetVdpReg(int reg, byte old, byte val) {
 		/* if interrupts enabled, and interrupt was pending, trigger it */
-		if ((value & R1_INT) != 0 
+		if ((val & R1_INT) != 0 
 		&& 	(old & R1_INT) == 0 
 		&&	(vdpStatus & VDP_INTERRUPT) != 0) 
 		{
@@ -667,9 +667,13 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		return 128;
 	}
 
+	protected boolean isBitmapMode() {
+		return modeNumber == MODE_BITMAP;
+	}
+	
 	@Override
 	public int getPatternTableBase() {
-		if (modeNumber == MODE_BITMAP)
+		if (isBitmapMode())
 			return (vdpregs[4] & 0x04) * 0x800;
 		else
 			return ((vdpregs[4] & 0xff) * 0x800) & getModeAddressMask();
@@ -680,18 +684,18 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	 */
 	@Override
 	public int getPatternTableSize() {
-		return modeNumber == MODE_BITMAP ? 0x1800 : 0x800;
+		return isBitmapMode() ? 0x1800 : 0x800;
 	}
 
 	@Override
 	public int getColorTableBase() {
-		return modeNumber == MODE_BITMAP ? (vdpregs[3] & 0x80) * 0x40
+		return isBitmapMode() ? (vdpregs[3] & 0x80) * 0x40
 				: ((vdpregs[3] & 0xff) * 0x40) & getModeAddressMask();
 	}
 
 	@Override
 	public int getColorTableSize() {
-		return modeNumber == MODE_BITMAP ? 0x1800 : 32;
+		return isBitmapMode() ? 0x1800 : 32;
 	}
 	
 	final public int getModeNumber() {
@@ -739,7 +743,15 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	 */
 	@Override
 	public boolean isBitmapMonoMode() {
-		boolean isMono = getBitmapModeColorMask() != 0x1fff;
+		boolean isMono = isBitmapMode() && getBitmapModeColorMask() != 0x1fff;
 		return isMono;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpTMS9918A#getVdpRegisterCount()
+	 */
+	@Override
+	public int getVdpRegisterCount() {
+		return 8;
 	}
 }

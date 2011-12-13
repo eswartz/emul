@@ -11,11 +11,14 @@ import static v9t9.common.hardware.VdpTMS9918AConsts.*;
 import java.util.Arrays;
 
 import v9t9.canvas.video.BlankModeRedrawHandler;
-import v9t9.canvas.video.IVdpCanvasHandler;
 import v9t9.canvas.video.IVdpModeRedrawHandler;
 import v9t9.canvas.video.VdpRedrawInfo;
+import v9t9.common.hardware.IVdpChip.IVdpListener;
 import v9t9.common.hardware.IVdpTMS9918A;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryWriteListener;
 import v9t9.common.video.IVdpCanvas;
+import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpChanges;
 import v9t9.common.video.VdpFormat;
@@ -26,7 +29,7 @@ import v9t9.common.video.VdpModeInfo;
  * 
  * @author ejs
  */
-public class VdpTMS9918ACanvasRenderer implements IVdpCanvasHandler {
+public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IVdpListener, IMemoryWriteListener {
 	private RedrawBlock[] blocks;
 
 	protected byte vdpbg;
@@ -59,13 +62,16 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasHandler {
 		this.vdpCanvas = vdpCanvas;
 		vdpCanvas.setSize(256, 192);
 		
+		setupRegisters();
+		
 		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, vdpChip, vdpChanges, vdpCanvas);
 		blankModeRedrawHandler = new BlankModeRedrawHandler(vdpRedrawInfo, createBlankModeInfo());
 		
-		setupRegisters();
+		vdpChip.getVideoMemory().addWriteListener(this);
+		vdpChip.addListener(this);
 	}
 
-	public void setupRegisters() {
+	protected void setupRegisters() {
 		// copy of registers in IVdpChip
 		vdpregs = new byte[8];
 	}
@@ -464,27 +470,54 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasHandler {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip#isInterlacedEvenOdd()
-	 */
-	@Override
-	public boolean isInterlacedEvenOdd() {
-		return false;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip#getGraphicsPageSize()
-	 */
-	@Override
-	public int getGraphicsPageSize() {
-		return 0;
-	}
-
-	/* (non-Javadoc)
 	 * @see v9t9.canvas.video.IVdpCanvasHandler#getCanvas()
 	 */
 	@Override
 	public IVdpCanvas getCanvas() {
 		return vdpCanvas;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip.IVdpListener#vdpRegisterChanged(int, byte)
+	 */
+	@Override
+	public void vdpRegisterChanged(int reg, byte value) {
+		if (reg >= 0 && reg < vdpChip.getVdpRegisterCount())
+			writeVdpReg(reg, value);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip.IVdpListener#paletteColorChanged(int, short)
+	 */
+	@Override
+	public void paletteColorChanged(int color, short value) {
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip.IVdpListener#pageOffsetChanged(int)
+	 */
+	@Override
+	public void pageOffsetChanged(int pageOffset) {
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip.IVdpListener#blinkStatusChanged(boolean)
+	 */
+	@Override
+	public void blinkStatusChanged(boolean blinkOn) {
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryWriteListener#changed(v9t9.common.memory.IMemoryEntry, int, boolean)
+	 */
+	@Override
+	public void changed(IMemoryEntry entry, int addr, boolean isByte) {
+		touchAbsoluteVdpMemory(addr);
+		if (!isByte)
+			touchAbsoluteVdpMemory(addr + 1);
 	}
 	
 }

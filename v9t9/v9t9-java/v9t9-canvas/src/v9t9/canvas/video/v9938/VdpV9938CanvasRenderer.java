@@ -4,13 +4,12 @@
 package v9t9.canvas.video.v9938;
 
 
-import static v9t9.common.hardware.VdpTMS9918AConsts.MODE_BITMAP;
-import static v9t9.common.hardware.VdpTMS9918AConsts.REG_PAL0;
 import static v9t9.common.hardware.VdpV9938Consts.*;
-import v9t9.canvas.video.IVdpCanvasHandler;
 import v9t9.canvas.video.tms9918a.VdpTMS9918ACanvasRenderer;
 import v9t9.common.hardware.IVdpV9938;
+import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.video.IVdpCanvas;
+import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
 import v9t9.common.video.VdpModeInfo;
@@ -42,32 +41,22 @@ import v9t9.common.video.VdpModeInfo;
  * @author ejs  
  *
  */
-public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements IVdpCanvasHandler {
-	/** ms */
-	private int blinkPeriod;
-	/** ms */
-	private int blinkOnPeriod;
-	/** ms */
-	private int blinkOffPeriod;
+public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer {
 	boolean blinkOn;
 	
-	private int pageOffset;
-	private int pageSize;
-	
-	// TODO: update
 	private short[] palette = new short[16];
 
 	public VdpV9938CanvasRenderer(IVdpV9938 vdp, IVdpCanvas vdpCanvas) {
 		super(vdp, vdpCanvas);
 	}
 	
-	public void setupRegisters() {
+	protected void setupRegisters() {
 		vdpregs = new byte[48];
 		
 		VdpColorManager cm = vdpCanvas.getColorMgr();
 		
 		for (int i = 0; i < 16; i++) {
-			int value = vdpChip.getRegister(REG_PAL0 + i);
+			int value = vdpChip.getRegister(VdpV9938Consts.REG_PAL0 + i);
 			cm.setGRB333(i, (value >> 12) & 0x7, (value >> 8) & 0x7, (value ) & 0x7); 
 		}
 	}
@@ -131,13 +120,8 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 			break;
 			
 		case 13:
-			// blinking period (pg 6)
-			blinkOnPeriod = ((val >> 4) & 0xf) * 1000 / 6;
-			blinkOffPeriod = (val & 0xf) * 1000 / 6;
-			blinkPeriod = blinkOnPeriod + blinkOffPeriod;
-			blinkOn = false;
+			
 			redraw |= REDRAW_PALETTE;
-			// no redraw right now
 			break;
 			
 			
@@ -189,7 +173,6 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 	@Override
 	protected void establishVideoMode() {
 		modeNumber = vdpChip.getModeNumber();
-		pageSize = 0x8000;
 		switch (modeNumber) {
 		case MODE_TEXT2:
 			setText2Mode();
@@ -206,11 +189,9 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 			break;
 		case MODE_GRAPHICS6:
 			setGraphics6Mode();
-			pageSize = 0x10000;
 			break;
 		case MODE_GRAPHICS7:
 			setGraphics7Mode();
-			pageSize = 0x10000;
 			break;
 		default:
 			super.establishVideoMode();
@@ -355,55 +336,11 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 	}
 
 	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#doTick()
-	 */
-	// TODO
-	protected void doTick() {
-		// The "blink" controls either the r7/r12 selection for text mode
-		// or the page selection for graphics 4-7 modes.
-		
-		// We don't redraw for interlacing; we just detect changes on both
-		// pages and draw them into an interleaved image.  There's not
-		// enough speed in this implementation to allow redrawing at 60 fps.
-		int prevPageOffset = pageOffset;
-		pageOffset = 0;
-		if (modeNumber > MODE_BITMAP && vdpregs[13] != 0) {
-			boolean isBlinking = modeNumber == MODE_TEXT2;
-			boolean isPageFlipping = (vdpregs[2] & 0x20) != 0 && !isBlinking;
-			
-			boolean isAltMode = System.currentTimeMillis() % blinkPeriod >= blinkOffPeriod;
-			if (isPageFlipping) {
-				pageOffset = isAltMode ? pageSize : 0;
-				if (prevPageOffset != pageOffset) {
-					//System.out.println("dirtying " + pageOffset);
-					vdpModeInfo.patt.base = vdpChip.getPatternTableBase() ^ pageOffset;
-					dirtyAll();
-				}
-			} else if (isBlinking) {
-				boolean wasOn = blinkOn;
-				blinkOn = isAltMode;
-				if (blinkOn != wasOn) {
-					if (vdpModeRedrawHandler instanceof Text2ModeRedrawHandler) {
-						((Text2ModeRedrawHandler) vdpModeRedrawHandler).updateForBlink();
-					}
-				}
-			}
-			
-		}
-	}
 
 	protected int getVideoHeight() {
 		int baseHeight = ((vdpregs[9] & R9_LN) != 0 ? 212 : 192);
 		//return ((vdpregs[9] & R9_IL) != 0) ? baseHeight * 2 : baseHeight;
 		return baseHeight;
-	}
-
-	public synchronized int getGraphicsPageOffset() {
-		return pageOffset;
-	}
-	public int getGraphicsPageSize() {
-		return pageSize;
 	}
 
 	/**
@@ -421,6 +358,35 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 			&& (vdpregs[2] & 0x20) != 0;
 
 	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.canvas.video.tms9918a.VdpTMS9918ACanvasRenderer#paletteColorChanged(int, short)
+	 */
+	@Override
+	public void paletteColorChanged(int color, short value) {
+		palette[color] = value;
+		setPaletteColor(color);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.canvas.video.tms9918a.VdpTMS9918ACanvasRenderer#pageOffsetChanged(int)
+	 */
+	@Override
+	public void pageOffsetChanged(int pageOffset) {
+		//System.out.println("dirtying " + pageOffset);
+		vdpModeInfo.patt.base = vdpChip.getPatternTableBase() ^ pageOffset;
+		dirtyAll();
+	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.canvas.video.tms9918a.VdpTMS9918ACanvasRenderer#blinkStatusChanged(boolean)
+	 */
+	@Override
+	public void blinkStatusChanged(boolean blinkOn) {
+		this.blinkOn = blinkOn;
+		if (vdpModeRedrawHandler instanceof Text2ModeRedrawHandler) {
+			((Text2ModeRedrawHandler) vdpModeRedrawHandler).updateForBlink();
+		}
+	}
 	
 }

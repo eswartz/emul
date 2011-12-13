@@ -8,6 +8,9 @@ package v9t9.common.hardware;
  *
  */
 public class VdpV9938Consts extends VdpTMS9918AConsts {
+	public final static int REG_SR0 = 48;
+	public final static int REG_PAL0 = 48 + 9;
+
 	protected VdpV9938Consts() {}
 	
 	public final static int MODE_TEXT2 = 9;

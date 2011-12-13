@@ -7,6 +7,7 @@ import v9t9.canvas.video.BaseRedrawHandler;
 import v9t9.canvas.video.IVdpModeRedrawHandler;
 import v9t9.canvas.video.VdpRedrawInfo;
 import v9t9.canvas.video.VdpTouchHandler;
+import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpChanges;
 import v9t9.common.video.VdpModeInfo;
@@ -18,8 +19,6 @@ import v9t9.common.video.VdpModeInfo;
 public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 		IVdpModeRedrawHandler {
 
-	short bitpattmask;
-	short bitcolormask;
 	protected VdpTouchHandler modify_color_bitmap = new VdpTouchHandler() {
 	
 		public void modify(int offs) {
@@ -36,6 +35,8 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 		}
 		
 	};
+	private int bitcolormask;
+	private int bitpattmask;
 
 	public BitmapModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
 		super(info, modeInfo);
@@ -44,6 +45,7 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 		info.touch.color = modify_color_bitmap;
 		info.touch.patt = modify_patt_bitmap;
 
+		/*
 		bitcolormask = (short) ((((short) (info.vdpregs[3] & 0x7f)) << 6) | 0x3f);
 
 		// thanks, Thierry!
@@ -54,7 +56,7 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 		else
 			bitpattmask =
 				(short) ((((short) (info.vdpregs[4] & 0x03) << 11)) | (bitcolormask & 0x7ff));
-
+		 */
 	}
 
 	/* (non-Javadoc)
@@ -62,7 +64,10 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 	 */
 	public void prepareUpdate() {
 		/*  Set pattern or color changes in chars */
-		
+
+		bitcolormask = ((IVdpTMS9918A) info.vdp).getBitmapModeColorMask();
+		bitpattmask = ((IVdpTMS9918A) info.vdp).getBitmapModePatternMask();
+
 		int bpm = bitpattmask >> 3;
 		int bcm = bitcolormask >> 3;
 		for (int i = 0; i < 768; i++) {

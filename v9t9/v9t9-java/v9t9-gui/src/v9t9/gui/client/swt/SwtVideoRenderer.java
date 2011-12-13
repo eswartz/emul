@@ -8,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
@@ -19,6 +21,7 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
@@ -26,16 +29,20 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.canvas.video.IVdpCanvasHandler;
+import v9t9.base.properties.IProperty;
+import v9t9.base.properties.IPropertyListener;
 import v9t9.canvas.video.ImageDataCanvas;
 import v9t9.canvas.video.ImageDataCanvas24Bit;
 import v9t9.canvas.video.VdpCanvasFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.settings.Settings;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.ICanvasListener;
 import v9t9.common.video.IVdpCanvas;
+import v9t9.common.video.IVdpCanvasRenderer;
+import v9t9.gui.common.BaseEmulatorWindow;
 
 /**
  * Render video into an SWT window
@@ -58,12 +65,16 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	protected FixedAspectLayout fixedAspectLayout;
 	private final IVdpChip vdp;
 	protected final ISettingsHandler settings;
-	protected IVdpCanvasHandler vdpCanvasHandler;
+	protected IVdpCanvasRenderer vdpCanvasRenderer;
+	private float zoomy;
+	private float zoomx;
+	private IProperty fullScreen;
 	
 	public SwtVideoRenderer(ISettingsHandler settings, IVdpChip vdp) {
 		this.settings = settings;
 		this.vdp = vdp;
 		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
+		zoomx = zoomy = 0.0f;
 	}
 
 	/* (non-Javadoc)
@@ -92,10 +103,12 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		canvas.setLayout(fixedAspectLayout);	
 		
 		createVdpCanvasHandler();
-		
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
+		vdpCanvas.setListener(this);
+		
 		initWidgets();
+		updateWidgetSizeForMode();
 		
 		// the canvas collects update regions in a big rect
 		this.canvas.addPaintListener(new PaintListener() {
@@ -128,6 +141,26 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 				canvas.setFocus();
 			}
 		});
+		
+		canvas.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlResized(ControlEvent e) {
+				Point size = ((Control)e.widget).getSize();
+				System.out.println("Control resized to: " + size.x + "/" + size.y);
+
+				updateWidgetOnResize();
+			}
+		});
+		
+		fullScreen = settings.get(BaseEmulatorWindow.settingFullScreen);
+		fullScreen.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				fixedAspectLayout.setFullScreen(property.getBoolean());
+			}
+		});
+		
 		setupCanvas();
 		return canvas;
 	}
@@ -149,17 +182,17 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 
 	protected void createVdpCanvasHandler() {
 		vdpCanvas = new ImageDataCanvas24Bit();
-		vdpCanvasHandler = VdpCanvasFactory.createCanvasHandler(vdp, vdpCanvas);
-		
-		vdpCanvas.setListener(this);
-		updateWidgetSizeForMode();
+		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(vdp, vdpCanvas);
 	}
 
 	protected void initWidgets() {
 		
 	}
+	
+	/*
 	protected Rectangle logicalToPhysical(Rectangle logical) {
-		return logicalToPhysical(logical.x /*- vdpCanvas.getXOffset()*/, logical.y, logical.width, logical.height);
+		return logicalToPhysical(logical.x // - vdpCanvas.getXOffset()
+					, logical.y, logical.width, logical.height);
 	}
 	
 	protected Rectangle logicalToPhysical(int x, int y, int w, int h) {
@@ -173,12 +206,30 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		double zoomx = fixedAspectLayout.getZoomX();
 		double zoomy = fixedAspectLayout.getZoomY();
 		//System.out.printf("zoom: %g x %g%n", zoomx, zoomy);
-		return new Rectangle((int)(physical.x / zoomx) /*+ vdpCanvas.getXOffset()*/, 
-				(int)(physical.y / zoomy), 
+		return new Rectangle((int)(physical.x / zoomx) //+ vdpCanvas.getXOffset() 
+				, (int)(physical.y / zoomy), 
 				(int)((physical.width + zoomx - .1) / zoomx), 
 				(int)((physical.height + zoomy - .1) / zoomy));
 	}
+*/
 
+
+	protected Rectangle logicalToPhysical(Rectangle logical) {
+		return logicalToPhysical(logical.x, logical.y, logical.width, logical.height);
+	}
+	
+	protected Rectangle logicalToPhysical(int x, int y, int w, int h) {
+		return new Rectangle((int)((x - vdpCanvas.getXOffset()) * zoomx), (int)(y * zoomy), 
+				Math.round(w * zoomx), Math.round(h * zoomy));
+	}
+	
+	protected Rectangle physicalToLogical(Rectangle physical) {
+		int x = (int)(physical.x / zoomx);
+		int y = (int)(physical.y / zoomy);
+		int ex = (int)((physical.x + physical.width + zoomx - .5) / zoomx);
+		int ey = (int)((physical.y + physical.height + zoomy - .5) / zoomy);
+		return new Rectangle(x + vdpCanvas.getXOffset(), y, ex - x, ey - y ); 
+	}
 
 	public void redraw() {
 		if (!isDirty || canvas == null)
@@ -234,16 +285,44 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 * window.
 	 */
 	protected void updateWidgetSizeForMode() {
+		/*
 		int visibleWidth = getCanvas().getVisibleWidth();
 		int visibleHeight = getCanvas().getVisibleHeight();
+
+		fixedAspectLayout.setSize(visibleWidth, visibleHeight);
+		if (visibleWidth > 256)
+			visibleWidth /= 2;
+		if (getCanvas().isInterlacedEvenOdd())
+			visibleHeight /= 2;
 		fixedAspectLayout.setAspect((double) visibleWidth / visibleHeight);
+		
+		
+		//System.out.println("zoomx = " + zoomx + "; zoomy = " + zoomy);
+		
+		updateWidgetOnResize();
+		*/
+		int visibleWidth = getCanvas().getVisibleWidth();
+		int visibleHeight = getCanvas().getVisibleHeight();
+		fixedAspectLayout.setSize(visibleWidth, visibleHeight);
 		if (visibleWidth > 256)
 			visibleWidth /= 2;
 		if (vdpCanvas.isInterlacedEvenOdd())
 			visibleHeight /= 2;
-		fixedAspectLayout.setSize(visibleWidth, visibleHeight);
-		if (canvas != null)
-			canvas.getParent().layout(true);
+		fixedAspectLayout.setAspect((double) visibleWidth / visibleHeight);
+
+		updateWidgetOnResize();
+	}
+
+	/**
+	 * 
+	 */
+	protected void updateWidgetOnResize() {
+		if (canvas != null) {
+			canvas.getParent().layout(true, true);
+			zoomx = (float) fixedAspectLayout.getZoomX();
+			zoomy = (float) fixedAspectLayout.getZoomY();
+		}
+		
 	}
 
 	protected boolean zoomWithin(int physsize, float zoom, int logSize) {
@@ -251,6 +330,11 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	}
 	
 	public void canvasResized(ICanvas canvas) {
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				updateWidgetSizeForMode();
+			}
+		});
 	}
 	public void sync() {
 		if (canvas == null)
@@ -408,5 +492,13 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 			}
 		});
 		return visible[0];
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.ISwtVideoRenderer#getCanvasHandler()
+	 */
+	@Override
+	public IVdpCanvasRenderer getCanvasHandler() {
+		return vdpCanvasRenderer;
 	}
 }

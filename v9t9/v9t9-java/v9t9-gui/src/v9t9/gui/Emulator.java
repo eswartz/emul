@@ -39,7 +39,7 @@ public class Emulator {
 	static {
 		ClientFactory.register(SwtJavaClient.ID, SwtJavaClient.class);
 		ClientFactory.register(SwtAwtJavaClient.ID, SwtAwtJavaClient.class);
-		ClientFactory.register(AwtJavaClient.ID, AwtJavaClient.class);
+		//ClientFactory.register(AwtJavaClient.ID, AwtJavaClient.class);
 		ClientFactory.register(SwtLwjglJavaClient.ID, SwtLwjglJavaClient.class);
 	}
 	
@@ -198,7 +198,7 @@ public class Emulator {
         if (findArgument(args, "--awt")) {
         	clientID = AwtJavaClient.ID;
 		} 
-        else if (findArgument(args, "--awt")) {
+        else if (findArgument(args, "--swt")) {
         	clientID = SwtJavaClient.ID;
 		} 
         else if (findArgument(args, "--swtawt")) {

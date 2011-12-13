@@ -255,6 +255,10 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	protected boolean updateWidgetSizeForMode() {
 		boolean changed = false;
 		
+		// TODO
+		if (fixedAspectLayout == null)
+			return false;
+		
 		int visibleWidth = getCanvas().getVisibleWidth();
 		int visibleHeight = getCanvas().getVisibleHeight();
 		if (visibleWidth != fixedAspectLayout.getWidth()) {

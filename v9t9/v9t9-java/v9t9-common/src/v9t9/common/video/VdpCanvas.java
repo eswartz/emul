@@ -100,14 +100,6 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements IVdpCanvas, ISp
 	abstract public void blitFourColorSpriteBlock(ISpriteVdpCanvas spriteCanvas, int x,
 			int y, int blockMag);
 
-	public void setListener(ICanvasListener listener) {
-		this.listener = listener;
-	}
-	
-	public void setInterlacedEvenOdd(boolean isInterlacedEvenOdd) {
-		this.isInterlacedEvenOdd = isInterlacedEvenOdd;
-	}
-
 	/* (non-Javadoc)
 	 * @see v9t9.engine.video.IVdpCanvas#isInterlacedEvenOdd()
 	 */

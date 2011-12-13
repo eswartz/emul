@@ -7,7 +7,6 @@
 package v9t9.gui.client.swt;
 
 import v9t9.common.client.IClient;
-import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IMachine;
 
 /**
@@ -17,7 +16,7 @@ import v9t9.common.machine.IMachine;
 public class SwtJavaClient extends BaseSwtJavaClient implements IClient {
 	public static String ID = "SWT";
 	
-    public SwtJavaClient(ISettingsHandler settingsHandler, final IMachine machine) {
+    public SwtJavaClient(final IMachine machine) {
     	super(machine);
     }
 

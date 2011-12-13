@@ -26,6 +26,7 @@ import v9t9.base.utils.Pair;
 import v9t9.canvas.video.ImageDataCanvas;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
+import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ColorMapUtils;
 import v9t9.common.video.VdpColorManager;
@@ -1551,14 +1552,14 @@ public class ImageImport {
 				// ensure palette is valid: higher bit depth may have
 				// been guessed during palette optimization
 				for (int c = 0; c < ncols; c++) {
-					vdp.setRegister(REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
+					vdp.setRegister(VdpV9938Consts.REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
 					//colorMgr.setRGB333(c, thePalette[c]);
 				}
 			} else {
 				// ensure palette is valid: higher bit depth may have
 				// been guessed during palette optimization
 				for (int c = 0; c < ncols; c++) {
-					vdp.setRegister(REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
+					vdp.setRegister(VdpV9938Consts.REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
 					//colorMgr.setRGB(c, thePalette[c]);
 				}
 				
