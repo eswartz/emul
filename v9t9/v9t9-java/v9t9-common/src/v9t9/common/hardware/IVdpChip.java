@@ -61,14 +61,6 @@ public interface IVdpChip extends IPersistable, IRegisterAccess {
 		 * @param color the affected color  
 		 * @param value */
 		void paletteColorChanged(int color, short value);
-		/**
-		 * @param pageOffset
-		 */
-		void pageOffsetChanged(int pageOffset);
-		/**
-		 * @param blinkOn
-		 */
-		void blinkStatusChanged(boolean blinkOn);
 	}
 	
 	void addListener(IVdpListener listener);

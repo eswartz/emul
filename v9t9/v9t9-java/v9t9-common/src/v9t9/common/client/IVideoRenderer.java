@@ -9,6 +9,7 @@ package v9t9.common.client;
 import java.io.File;
 import java.io.IOException;
 
+import v9t9.base.timer.FastTimer;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
@@ -45,5 +46,12 @@ public interface IVideoRenderer {
 	IVdpChip getVdpHandler();
 
 	IVdpCanvasRenderer getCanvasHandler();
+
+	/**
+	 * A renderer should provide a timer for video update
+	 * activities
+	 * @return
+	 */
+	FastTimer getFastTimer();
 
 }

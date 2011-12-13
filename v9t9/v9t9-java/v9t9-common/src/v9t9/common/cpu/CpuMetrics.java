@@ -71,12 +71,11 @@ public class CpuMetrics implements ICpuMetrics {
 
 			@Override
 			public void fire(IMetricsListener listener) {
-				listener.metricsChanged();
-			}
-
-			@Override
-			public void threw(IMetricsListener listener, Throwable t) {
-				
+				try {
+					listener.metricsChanged();
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
 			}
 		});
 	}

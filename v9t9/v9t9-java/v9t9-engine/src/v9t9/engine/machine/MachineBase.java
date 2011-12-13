@@ -133,7 +133,7 @@ abstract public class MachineBase implements IMachine {
     	this.console = memoryModel.getConsole();
     	
     	timer = new Timer();
-    	fastTimer = new FastTimer();
+    	fastTimer = new FastTimer("Machine");
 
     	
     	init(machineModel);

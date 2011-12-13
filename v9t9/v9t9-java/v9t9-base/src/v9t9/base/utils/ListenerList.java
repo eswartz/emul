@@ -17,7 +17,6 @@ public class ListenerList<T> implements Iterable<T> {
 
 	public interface IFire<T> {
 		void fire(T listener);
-		void threw(T listener, Throwable t);
 	}
 	
 	private static final Object[] NO_LISTENERS = new Object[0];
@@ -58,7 +57,7 @@ public class ListenerList<T> implements Iterable<T> {
 			try {
 				fire.fire(listener);
 			} catch (Throwable t) {
-				fire.threw(listener, t);
+				t.printStackTrace();
 			}
 		}
 	}

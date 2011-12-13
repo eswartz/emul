@@ -10,6 +10,8 @@ package v9t9.common.video;
  */
 public interface IVdpCanvasRenderer {
 
+	void dispose();
+	
 	boolean update();
 	
 	VdpModeInfo getModeInfo();

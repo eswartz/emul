@@ -76,6 +76,17 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		{ 7, 7, 7 },
 	};
 
+
+	// the MSX 2 speed is 21 MHz (21477270 hz)
+	
+	static public final int CLOCK_RATE = 21477270;
+	
+	// cycles for commands execute in 3579545 Hz (from blueMSX)
+	/* 3579545 / 60 target # cycles to be executed per tick */
+    static public final SettingSchema settingMsxClockDivisor = new SettingSchema(
+    		ISettingsHandler.INSTANCE,
+    		"MsxClockDivisor", new Integer(6));
+    
 	private short[] palette;
 	private boolean palettelatched;
 	private byte palettelatch;
@@ -83,7 +94,6 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	private byte[] statusvec = new byte[9];
 	private int indreg;
 	private boolean indinc;
-	boolean blinkOn;
 	private boolean isEnhancedMode;
 
 	/** ms */
@@ -97,6 +107,12 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	private int pixperbyte;	// pixels per byte
 	private int pixshift;	// shift in bits from an X coord to the colors for that bit
 	private int pixmask;	// mask from a byte to a color
+	
+
+
+	private int currentcycles = 0; // current cycles left
+	private IProperty msxClockDivisor;
+
 	
 	/** Working variables for command execution */
 	class CommandVars {
@@ -130,21 +146,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	}
 	
 	private CommandVars cmdState = new CommandVars();
-	
-	// the MSX 2 speed is 21 MHz (21477270 hz)
-	
-	static public final int CLOCK_RATE = 21477270;
-	
-	// cycles for commands execute in 3579545 Hz (from blueMSX)
-	/* 3579545 / 60 target # cycles to be executed per tick */
-    static public final SettingSchema settingMsxClockDivisor = new SettingSchema(
-    		ISettingsHandler.INSTANCE,
-    		"MsxClockDivisor", new Integer(6));
-
-	private int currentcycles = 0; // current cycles left
-	private IProperty msxClockDivisor;
-	private int pageOffset;
-	
+		
 	/* from mame and blueMSX:
 	 * 
      */
@@ -252,12 +254,11 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		    	listeners.fire(new IFire<IVdpChip.IVdpListener>() {
 					@Override
 					public void fire(IVdpListener listener) {
-						listener.paletteColorChanged(col, palette[col]);
-					}
-		
-					@Override
-					public void threw(IVdpListener listener, Throwable t) {
-						t.printStackTrace();
+						try {
+							listener.paletteColorChanged(col, palette[col]);
+						} catch (Throwable t) {
+							t.printStackTrace();
+						}
 					}
 				});
 	    	}
@@ -292,64 +293,6 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	protected void doTick() {
 		super.doTick();
 
-		// The "blink" controls either the r7/r12 selection for text mode
-		// or the page selection for graphics 4-7 modes.
-		
-		// We don't redraw for interlacing; we just detect changes on both
-		// pages and draw them into an interleaved image.  There's not
-		// enough speed in this implementation to allow redrawing at 60 fps.
-		int prevPageOffset = pageOffset;
-		pageOffset = 0;
-		if ((modeNumber == MODE_TEXT2 || (modeNumber >= MODE_GRAPHICS4 && modeNumber <= MODE_GRAPHICS7))
-				&& vdpregs[13] != 0) {
-			boolean isBlinking = modeNumber == MODE_TEXT2;
-			boolean isPageFlipping = (vdpregs[2] & 0x20) != 0 && !isBlinking;
-			
-			boolean isAltMode = System.currentTimeMillis() % blinkPeriod >= blinkOffPeriod;
-			if (isPageFlipping) {
-				pageOffset = isAltMode ? getGraphicsPageSize() : 0;
-				if (prevPageOffset != pageOffset) {
-					
-					if (!listeners.isEmpty()) {
-						listeners.fire(new IFire<IVdpChip.IVdpListener>() {
-
-							@Override
-							public void fire(IVdpListener listener) {
-								listener.pageOffsetChanged(pageOffset);
-							}
-
-							@Override
-							public void threw(IVdpListener listener, Throwable t) {
-								t.printStackTrace();
-							}
-							
-						});
-					}
-				}
-			} else if (isBlinking) {
-				boolean wasOn = blinkOn;
-				blinkOn = isAltMode;
-				if (blinkOn != wasOn) {
-					if (!listeners.isEmpty()) {
-						listeners.fire(new IFire<IVdpChip.IVdpListener>() {
-
-							@Override
-							public void fire(IVdpListener listener) {
-								listener.blinkStatusChanged(blinkOn);
-							}
-
-							@Override
-							public void threw(IVdpListener listener, Throwable t) {
-								t.printStackTrace();
-							}
-							
-						});
-					}
-				}
-			}
-			
-		}
-		
 		int targetRate = CLOCK_RATE / msxClockDivisor.getInt() / vdpInterruptRate.getInt();
 		
 		if (/*!Cpu.settingRealTime.getBoolean() ||*/ currentcycles < 0)
@@ -782,8 +725,6 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 				}
 			}
 		}
-		
-		blinkOn = true;
 	}
 
     public String getGroupName() {
@@ -844,12 +785,11 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 
 					@Override
 					public void fire(IVdpListener listener) {
-						listener.paletteColorChanged(color, palette[color]);
-					}
-
-					@Override
-					public void threw(IVdpListener listener, Throwable t) {
-						t.printStackTrace();
+						try {
+							listener.paletteColorChanged(color, palette[color]);
+						} catch (Throwable t) {
+							t.printStackTrace();
+						}
 					}
 				});
 			}
@@ -880,7 +820,6 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			blinkOnPeriod = ((val >> 4) & 0xf) * 1000 / 6;
 			blinkOffPeriod = (val & 0xf) * 1000 / 6;
 			blinkPeriod = blinkOnPeriod + blinkOffPeriod;
-			blinkOn = false;
 			break;
 		case 14:
 			switchBank();
@@ -1365,18 +1304,6 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		return blinkPeriod;
 	}
 
-	@Override
-	public boolean isBlinkOn() {
-		return blinkOn;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpV9938#getGraphicsPageOffset()
-	 */
-	@Override
-	public int getGraphicsPageOffset() {
-		return pageOffset;
-	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#updateMemoryAccessCycles(int)

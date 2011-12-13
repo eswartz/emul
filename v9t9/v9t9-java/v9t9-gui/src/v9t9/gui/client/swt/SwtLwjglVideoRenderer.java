@@ -80,9 +80,8 @@ import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.canvas.video.ImageDataCanvas24Bit;
 import v9t9.canvas.video.VdpCanvasFactory;
-import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
-import v9t9.common.hardware.IVdpChip;
+import v9t9.common.machine.IMachine;
 import v9t9.common.video.ICanvas;
 import v9t9.gui.client.swt.gl.MonitorEffect;
 import v9t9.gui.client.swt.gl.MonitorParams;
@@ -146,14 +145,14 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 	private IProperty monitorDrawing;
 
-	public SwtLwjglVideoRenderer(ISettingsHandler settings, IVdpChip vdp) {
-		super(settings, vdp);
+	public SwtLwjglVideoRenderer(IMachine machine) {
+		super(machine);
 		monitorDrawing = settings.get(BaseEmulatorWindow.settingMonitorDrawing);
 	}
 
 	protected void createVdpCanvasHandler() {
 		vdpCanvas = new ImageDataCanvas24Bit();
-		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(getVdpHandler(), vdpCanvas);
+		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(settings, this);
 		vdpCanvasBuffer = ByteBuffer.allocateDirect(vdpCanvas.getImageData().bytesPerLine * vdpCanvas.getImageData().height);
 		imageCanvasFormat = GL_RGB; 
 		imageCanvasType = GL_UNSIGNED_BYTE; 

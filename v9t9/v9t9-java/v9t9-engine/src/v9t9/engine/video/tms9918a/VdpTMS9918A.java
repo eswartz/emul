@@ -187,12 +187,11 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	    	listeners.fire(new IFire<IVdpChip.IVdpListener>() {
 				@Override
 				public void fire(IVdpListener listener) {
-					listener.vdpRegisterChanged(reg, value);
-				}
-	
-				@Override
-				public void threw(IVdpListener listener, Throwable t) {
-					t.printStackTrace();
+					try {
+						listener.vdpRegisterChanged(reg, value);
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
 				}
 			});
     	}

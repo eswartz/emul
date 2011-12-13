@@ -4,7 +4,6 @@
 package v9t9.base.timer;
 
 import v9t9.base.utils.ListenerList;
-import v9t9.base.utils.ListenerList.IFire;
 
 import com.vladium.utils.timing.HRTimer;
 import com.vladium.utils.timing.ITimer;
@@ -24,6 +23,7 @@ public class FastTimer {
 	private ListenerList<RunnableInfo> taskinfos;
 	private Object controlLock;
 	private Thread timerThread;
+	private String name;
 	private static int gCnt;
 	
 	class RunnableInfo {
@@ -39,10 +39,18 @@ public class FastTimer {
 		/** ns */
 		long delay;
 	}
-	public FastTimer() {
+	public FastTimer(String name) {
+		this.name = name;
 		taskinfos = new ListenerList<RunnableInfo>();
 		timer = TimerFactory.newTimer();
 		controlLock = new Object();
+	}
+	
+	/**
+	 * 
+	 */
+	public FastTimer() {
+		this("" + gCnt++);
 	}
 	
 	/**
@@ -64,7 +72,7 @@ public class FastTimer {
 	}
 
 	private void startTimer() {
-		timerThread = new Thread("FastTimer-"+gCnt++) {
+		timerThread = new Thread("FastTimer [" + name + "]") {
 			@Override
 			public void run() {
 				if (timer instanceof HRTimer) {
@@ -88,10 +96,10 @@ public class FastTimer {
 							//long elapsed = now - prev;
 							//System.out.print(elapsed + ",");
 	
-							taskinfos.fire(new IFire<FastTimer.RunnableInfo>() {
-
-								@Override
-								public void fire(RunnableInfo info) {
+							Object[] infos = taskinfos.toArray();
+							for (Object infoObj : infos) {
+								FastTimer.RunnableInfo info = (FastTimer.RunnableInfo) infoObj;
+								try {
 									if (now >= info.deadline) {
 										//System.out.println("moving from " + info.deadline + " by " + info.delay + " to " + (info.delay + info.deadline));
 										if (now - info.deadline > info.delay * 10) {
@@ -110,15 +118,11 @@ public class FastTimer {
 										info.deadline = now + info.delay;
 										info.task.run();
 									}									
-								}
-
-								@Override
-								public void threw(RunnableInfo info,
-										Throwable t) {
+								} catch (Throwable t) {
 									t.printStackTrace();
 									info.deadline = -1;
 								}
-							});
+							}
 							//prev = now;
 						}
 					}
@@ -129,6 +133,7 @@ public class FastTimer {
 				}
 			}
 		};
+		timerThread.setDaemon(true);
 		timerThread.setPriority(Thread.MAX_PRIORITY);
 		timerThread.start();		
 	}
@@ -141,5 +146,17 @@ public class FastTimer {
 				timerThread = null;
 			}
 		}
+	}
+
+	public void cancelTask(Runnable runnable) {
+		synchronized (controlLock) {
+			Object[] infos = taskinfos.toArray();
+			for (int i = 0; i < infos.length; i++) {
+				if (((RunnableInfo) infos[i]).task == runnable) {
+					taskinfos.remove((RunnableInfo) infos[i]);
+					break;
+				}
+			}
+		}		
 	}
 }

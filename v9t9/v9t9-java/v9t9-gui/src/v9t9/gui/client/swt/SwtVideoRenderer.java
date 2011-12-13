@@ -31,13 +31,14 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
+import v9t9.base.timer.FastTimer;
 import v9t9.canvas.video.ImageDataCanvas;
 import v9t9.canvas.video.ImageDataCanvas24Bit;
 import v9t9.canvas.video.VdpCanvasFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
-import v9t9.common.settings.Settings;
+import v9t9.common.machine.IMachine;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.ICanvasListener;
 import v9t9.common.video.IVdpCanvas;
@@ -69,12 +70,14 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	private float zoomy;
 	private float zoomx;
 	private IProperty fullScreen;
+	private FastTimer fastTimer;
 	
-	public SwtVideoRenderer(ISettingsHandler settings, IVdpChip vdp) {
-		this.settings = settings;
-		this.vdp = vdp;
+	public SwtVideoRenderer(IMachine machine) {
+		this.settings = machine.getSettings();
+		this.vdp = machine.getVdp();
 		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
 		zoomx = zoomy = 0.0f;
+		fastTimer = new FastTimer("Video Renderer");
 	}
 
 	/* (non-Javadoc)
@@ -90,7 +93,8 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 */
 	@Override
 	public void dispose() {
-		
+		if (vdpCanvasRenderer != null)
+			vdpCanvasRenderer.dispose();
 	}
 	/**
 	 * Create the control, and set it up with GridData.
@@ -182,7 +186,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 
 	protected void createVdpCanvasHandler() {
 		vdpCanvas = new ImageDataCanvas24Bit();
-		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(vdp, vdpCanvas);
+		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(settings, this);
 	}
 
 	protected void initWidgets() {
@@ -500,5 +504,13 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	@Override
 	public IVdpCanvasRenderer getCanvasHandler() {
 		return vdpCanvasRenderer;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IVideoRenderer#getTimer()
+	 */
+	@Override
+	public FastTimer getFastTimer() {
+		return fastTimer;
 	}
 }

@@ -13,6 +13,8 @@ import java.util.Arrays;
 import v9t9.canvas.video.BlankModeRedrawHandler;
 import v9t9.canvas.video.IVdpModeRedrawHandler;
 import v9t9.canvas.video.VdpRedrawInfo;
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip.IVdpListener;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.memory.IMemoryEntry;
@@ -56,19 +58,30 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IVdpListen
 
 	protected int modeNumber;
 
-	public VdpTMS9918ACanvasRenderer(IVdpTMS9918A vdpChip, IVdpCanvas vdpCanvas) {
-		this.vdpChip = vdpChip;
+	protected final IVideoRenderer renderer;
 
-		this.vdpCanvas = vdpCanvas;
+	public VdpTMS9918ACanvasRenderer(ISettingsHandler settings, IVideoRenderer renderer) {
+		this.renderer = renderer;
+		this.vdpChip = (IVdpTMS9918A) renderer.getVdpHandler();
+
+		this.vdpCanvas = renderer.getCanvas();
 		vdpCanvas.setSize(256, 192);
 		
 		setupRegisters();
 		
-		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, vdpChip, vdpChanges, vdpCanvas);
+		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, vdpChip, this, vdpChanges, vdpCanvas);
 		blankModeRedrawHandler = new BlankModeRedrawHandler(vdpRedrawInfo, createBlankModeInfo());
 		
 		vdpChip.getVideoMemory().addWriteListener(this);
 		vdpChip.addListener(this);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvasRenderer#dispose()
+	 */
+	@Override
+	public void dispose() {
+		
 	}
 
 	protected void setupRegisters() {
@@ -494,22 +507,6 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IVdpListen
 		
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip.IVdpListener#pageOffsetChanged(int)
-	 */
-	@Override
-	public void pageOffsetChanged(int pageOffset) {
-		
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip.IVdpListener#blinkStatusChanged(boolean)
-	 */
-	@Override
-	public void blinkStatusChanged(boolean blinkOn) {
-		
-	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryWriteListener#changed(v9t9.common.memory.IMemoryEntry, int, boolean)
 	 */

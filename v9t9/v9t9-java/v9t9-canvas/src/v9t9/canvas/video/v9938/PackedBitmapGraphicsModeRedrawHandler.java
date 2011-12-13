@@ -68,7 +68,7 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
 		/*  Redraw 8x8 blocks where pixels changed */
 		IVdpV9938 vdp9938 = (IVdpV9938)info.vdp;
-		int pageOffset = vdp9938.getGraphicsPageOffset();
+		int pageOffset = ((VdpV9938CanvasRenderer) info.renderer).getGraphicsPageOffset();
 		boolean interlacedEvenOdd = vdp9938.isInterlacedEvenOdd();
 		int graphicsPageSize = vdp9938.getGraphicsPageSize();
 		

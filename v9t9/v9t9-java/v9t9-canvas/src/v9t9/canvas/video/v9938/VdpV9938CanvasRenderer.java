@@ -6,9 +6,11 @@ package v9t9.canvas.video.v9938;
 
 import static v9t9.common.hardware.VdpV9938Consts.*;
 import v9t9.canvas.video.tms9918a.VdpTMS9918ACanvasRenderer;
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.client.IVideoRenderer;
+import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.hardware.VdpV9938Consts;
-import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
@@ -43,13 +45,31 @@ import v9t9.common.video.VdpModeInfo;
  */
 public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer {
 	boolean blinkOn;
-	
-	private short[] palette = new short[16];
+	private int pageOffset;
 
-	public VdpV9938CanvasRenderer(IVdpV9938 vdp, IVdpCanvas vdpCanvas) {
-		super(vdp, vdpCanvas);
+	private short[] palette = new short[16];
+	private Runnable timerRunnable;
+
+	public VdpV9938CanvasRenderer(ISettingsHandler settings, IVideoRenderer renderer) {
+		super(settings, renderer);
+		
+		timerRunnable = new Runnable() {
+			public void run() {
+				doTick();
+			}
+		};
+		renderer.getFastTimer().scheduleTask(
+				timerRunnable, settings.get(IVdpChip.settingVdpInterruptRate).getInt());
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.canvas.video.tms9918a.VdpTMS9918ACanvasRenderer#dispose()
+	 */
+	@Override
+	public void dispose() {
+		renderer.getFastTimer().cancelTask(timerRunnable);
+	}
+
 	protected void setupRegisters() {
 		vdpregs = new byte[48];
 		
@@ -368,25 +388,53 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		setPaletteColor(color);
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.canvas.video.tms9918a.VdpTMS9918ACanvasRenderer#pageOffsetChanged(int)
-	 */
-	@Override
-	public void pageOffsetChanged(int pageOffset) {
-		//System.out.println("dirtying " + pageOffset);
-		vdpModeInfo.patt.base = vdpChip.getPatternTableBase() ^ pageOffset;
-		dirtyAll();
+
+	public boolean isBlinkOn() {
+		return blinkOn;
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.canvas.video.tms9918a.VdpTMS9918ACanvasRenderer#blinkStatusChanged(boolean)
+	public int getGraphicsPageOffset() {
+		return pageOffset;
+	}
+	/**
+	 * 
 	 */
-	@Override
-	public void blinkStatusChanged(boolean blinkOn) {
-		this.blinkOn = blinkOn;
-		if (vdpModeRedrawHandler instanceof Text2ModeRedrawHandler) {
-			((Text2ModeRedrawHandler) vdpModeRedrawHandler).updateForBlink();
+	protected void doTick() {
+
+		// The "blink" controls either the r7/r12 selection for text mode
+		// or the page selection for graphics 4-7 modes.
+		
+		// We don't redraw for interlacing; we just detect changes on both
+		// pages and draw them into an interleaved image.  There's not
+		// enough speed in this implementation to allow redrawing at 60 fps.
+		int prevPageOffset = pageOffset;
+		pageOffset = 0;
+		if ((modeNumber == MODE_TEXT2 || (modeNumber >= MODE_GRAPHICS4 && modeNumber <= MODE_GRAPHICS7))
+				&& vdpregs[13] != 0) {
+			boolean isBlinking = modeNumber == MODE_TEXT2;
+			boolean isPageFlipping = (vdpregs[2] & 0x20) != 0 && !isBlinking;
+			
+			int blinkPeriod = ((IVdpV9938) vdpChip).getBlinkPeriod();
+			int blinkOffPeriod = ((IVdpV9938) vdpChip).getBlinkOffPeriod();
+			boolean isAltMode = System.currentTimeMillis() % blinkPeriod >= blinkOffPeriod;
+			
+			if (isPageFlipping) {
+				pageOffset = isAltMode ? vdpChip.getGraphicsPageSize() : 0;
+				if (prevPageOffset != pageOffset) {
+					//System.out.println("dirtying " + pageOffset);
+					vdpModeInfo.patt.base = vdpChip.getPatternTableBase() ^ pageOffset;
+					dirtyAll();
+				}
+			} else if (isBlinking) {
+				boolean wasOn = blinkOn;
+				blinkOn = isAltMode;
+				if (blinkOn != wasOn) {
+					if (vdpModeRedrawHandler instanceof Text2ModeRedrawHandler) {
+						((Text2ModeRedrawHandler) vdpModeRedrawHandler).updateForBlink();
+					}
+				}
+			}
 		}
 	}
-	
+
 }

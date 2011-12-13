@@ -25,7 +25,7 @@ public class SwtLwjglJavaClient extends BaseSwtJavaClient implements IClient {
 	 * 
 	 */
 	protected void setupRenderer() {
-		videoRenderer = new SwtLwjglVideoRenderer(settingsHandler, machine.getVdp());
+		videoRenderer = new SwtLwjglVideoRenderer(machine);
 	
 		keyboardHandler = new SwtLwjglKeyboardHandler(
 				machine.getKeyboardState(), machine);

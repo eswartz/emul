@@ -23,6 +23,7 @@ import javax.imageio.ImageIO;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
+import v9t9.base.timer.FastTimer;
 import v9t9.canvas.video.ImageDataCanvas;
 import v9t9.canvas.video.ImageDataCanvas24Bit;
 import v9t9.canvas.video.VdpCanvasFactory;
@@ -83,11 +84,15 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	protected final IMachine machine;
 
 	private IProperty monitorDrawing;
+
+	private FastTimer fastTimer;
 	
 	public AwtVideoRenderer(IMachine machine) {
 		this.machine = machine;
 		this.settings = machine.getSettings();
 		this.vdp = machine.getVdp();
+		
+		fastTimer = new FastTimer("Video Renderer");
 		
 		monitorDrawing = Settings.get(machine, BaseEmulatorWindow.settingMonitorDrawing);
 
@@ -142,7 +147,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	 */
 	protected void createVdpCanvasHandler() {
 		vdpCanvas = new ImageDataCanvas24Bit();
-		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(vdp, vdpCanvas);
+		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(settings, this);
 	}
 
 
@@ -156,6 +161,8 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	@Override
 	public void dispose() {
 		monitorDrawing.removeListener(monitorSettingListener);
+		if (vdpCanvasRenderer != null)
+			vdpCanvasRenderer.dispose();
 	}
 	private void doResizeToFit()  {
 		
@@ -574,4 +581,11 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 		return vdpCanvasRenderer;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IVideoRenderer#getTimer()
+	 */
+	@Override
+	public FastTimer getFastTimer() {
+		return fastTimer;
+	}
 }
