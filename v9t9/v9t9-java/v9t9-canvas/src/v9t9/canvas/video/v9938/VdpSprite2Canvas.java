@@ -109,22 +109,31 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		
 		int pixy = 0;
 		for (int yy = 0; yy < 8; yy++) {
-			if (y >= canvas.getHeight())
+			if (y >= canvas.getHeight()) {
+				pixy++;
+				y = (y + 1) & 0xff;
 				continue;
+			}
 			
 			byte attrb = attr.memory[attr.offset + yy];
 			int shift = EARLY && (attrb & 0x80) != 0 ? -32 : 0 ;
 			byte color = (byte) (attrb & 0xf);
-			if (color == 0 && !colorMgr.isClearFromPalette())
+			if (color == 0 && !colorMgr.isClearFromPalette()) {
+				pixy++;
+				y = (y + 1) & 0xff;
 				continue;
+			}
 			
 			byte bitmask = -1;
-			if (x + shift + 8 <= 0)
+			if (x + shift + 8 <= 0) {
+				pixy++;
+				y = (y + 1) & 0xff;
 				continue;
+			}
 			if (x + shift < 0) {
 				bitmask &= 0xff >> -(x + shift);
 			} else if (x + shift + 8 > 256) {
-				bitmask &= 0xff << ((x + shift + 8) - 256);
+				//bitmask &= 0xff << ((x + shift + 8) - 256);
 			}
 			
 			boolean isLogicalOr = OR && (attrb & 0x40) != 0;
@@ -167,22 +176,32 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		
 		int pixy = 0;
 		for (int yy = 0; yy < 8; yy++) {
-			if (y >= canvas.getHeight())
+			if (y >= canvas.getHeight()) {
+				pixy += 2;
+				y = (y + 2) & 0xff;
 				continue;
+			}
 			
 			byte attrb = attr.memory[attr.offset + yy];
 			int shift = EARLY && (attrb & 0x80) != 0 ? -32 : 0;
 			byte color = (byte) (attrb & 0xf);
-			if (color == 0 && !colorMgr.isClearFromPalette())
+			if (color == 0 && !colorMgr.isClearFromPalette()) {
+				pixy += 2;
+				y = (y + 2) & 0xff;
 				continue;
+			}
 			
 			short bitmask = -1;
-			if (x + shift + 16 <= 0)
+			if (x + shift + 16 <= 0) {
+				pixy += 2;
+				y = (y + 2) & 0xff;
 				continue;
+			}
+			
 			if (x + shift < 0) {
 				bitmask &= 0xffff >> -(x + shift);
 			} else if (x + shift + 16 > 256) {
-				bitmask &= 0xffff << ((x + shift + 16) - 256);
+				//bitmask &= 0xffff << ((x + shift + 16) - 256);
 			}
 			
 			boolean isLogicalOr = OR && (attrb & 0x40) != 0;

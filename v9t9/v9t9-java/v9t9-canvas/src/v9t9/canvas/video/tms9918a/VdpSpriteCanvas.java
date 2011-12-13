@@ -303,7 +303,7 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		if (x + shift < 0) {
 			bitmask &= 0xff >> -(x + shift);
 		} else if (x + shift + 8 > 256) {
-			bitmask &= 0xffff << ((x + shift + 8) - 256);
+			//bitmask &= 0xffff << ((x + shift + 8) - 256);
 		}
 		
 		x += shift;
@@ -340,7 +340,7 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		if (x + shift < 0) {
 			bitmask &= 0xffff >> -(x + shift);
 		} else if (x + shift + 16 > 256) {
-			bitmask &= 0xffff << ((x + shift + 16) - 256);
+			//bitmask &= 0xffff << ((x + shift + 16) - 256);
 		}
 		
 		x += shift;

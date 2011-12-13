@@ -141,6 +141,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 
 	public void drawEightSpritePixels(int x, int y, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
+		int endOffs = getBitmapOffset(256, y);
 		byte[] fgRGB = colorRGBMap[fg];
 		for (int i = 0; i < 8; i++) {
 			if ((mem & bitmask & 0x80) != 0) {
@@ -151,11 +152,14 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			bitmask <<= 1;
 			mem <<= 1;
 			offs += 3;
+			if (offs >= endOffs)
+				offs = getBitmapOffset(0, y);
 		}
 	}
 
 	public void drawEightMagnifiedSpritePixels(int x, int y, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
+		int endOffs = getBitmapOffset(256, y);
 		byte[] fgRGB = colorRGBMap[fg];
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
@@ -166,6 +170,8 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			}
 			bitmask <<= 1;
 			offs += 3;
+			if (offs >= endOffs)
+				offs = getBitmapOffset(0, y);
 			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fgRGB[0];
 				imageData.data[offs + 1] = fgRGB[1];
@@ -173,12 +179,15 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			}
 			bitmask <<= 1;
 			offs += 3;
+			if (offs >= endOffs)
+				offs = getBitmapOffset(0, y);
 			mem <<= 1;
 		}
 	}
 
 	public void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
+		int endOffs = getBitmapOffset(256, y);
 		byte[] fgRGB = colorRGBMap[fg];
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
@@ -192,6 +201,8 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			}
 			bitmask <<= 1;
 			offs += 6;
+			if (offs >= endOffs)
+				offs = getBitmapOffset(0, y);
 			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fgRGB[0];
 				imageData.data[offs + 1] = fgRGB[1];
@@ -202,6 +213,8 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			}
 			bitmask <<= 1;
 			offs += 6;
+			if (offs >= endOffs)
+				offs = getBitmapOffset(0, y);
 			mem <<= 1;
 		}
 	}

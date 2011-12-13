@@ -75,11 +75,14 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 	
 	public void drawEightSpritePixels(int x, int y, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
+		int endOffs = getBitmapOffset(256, y);
 		for (int i = 0; i < 8; i++) {
 			if ((mem & bitmask & 0x80) != 0) {
 				imageData.data[offs] = fg;
 			}
 			offs++;
+			if (offs >= endOffs)
+				offs = getBitmapOffset(0, y);
 			bitmask <<= 1;
 			mem <<= 1;
 		}
@@ -87,23 +90,29 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 
 	public void drawEightMagnifiedSpritePixels(int x, int y, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
+		int endOffs = getBitmapOffset(256, y);
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
 			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fg;
 			}
 			offs++;
+			if (offs >= endOffs)
+				offs = getBitmapOffset(0, y);
 			bitmask <<= 1;
 			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fg;
 			}
 			offs++;
+			if (offs >= endOffs)
+				offs = getBitmapOffset(0, y);
 			bitmask <<= 1;
 			mem <<= 1;
 		}
 	}
 	public void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
+		int endOffs = getBitmapOffset(256, y);
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
 			if ((mem & bitmask & 0x8000) != 0) {
@@ -111,12 +120,16 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 				imageData.data[offs + 1] = fg;
 			}
 			offs+=2;
+			if (offs >= endOffs)
+				offs = getBitmapOffset(0, y);
 			bitmask <<= 1;
 			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fg;
 				imageData.data[offs + 1] = fg;
 			}
 			offs+=2;
+			if (offs >= endOffs)
+				offs = getBitmapOffset(0, y);
 			bitmask <<= 1;
 			mem <<= 1;
 		}
