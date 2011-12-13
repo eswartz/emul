@@ -33,13 +33,17 @@ public class RegisterService extends BaseServiceImpl {
 	private static final String GET_CHILDREN = "getChildren";
 	private static final String GET_CONTEXT = "getContext";
 
-	public RegisterService(IMachine machine, IChannel channel) {
-		super(machine, channel, IRegisters.NAME);
+	protected RegisterService(IMachine machine, IChannel channel, String name) {
+		super(machine, channel, name);
 		
 		registerCommand(GET_CONTEXT, 1, 2);
 		registerCommand(GET_CHILDREN, 1, 2);
 		registerCommand(GET, 1, 2);
 		registerCommand(SET, 2, 1);
+	}
+	
+	public RegisterService(IMachine machine, IChannel channel) {
+		this(machine, channel, IRegisters.NAME);
 	}
 
 	/* (non-Javadoc)
@@ -99,7 +103,7 @@ public class RegisterService extends BaseServiceImpl {
 			String id,
 			IRegisterAccess access) throws ErrorReport {
 		Map<String, Object> ctx = new HashMap<String, Object>();
-		ctx.put(IRegisters.PROP_ID, id);
+		ctx.put(IRegisters.PROP_ID, parent + "." + id);
 		ctx.put(IRegisters.PROP_PARENT_ID, parent);
 		
 		int reg = access.getRegisterNumber(id);
@@ -143,8 +147,8 @@ public class RegisterService extends BaseServiceImpl {
 	 * @return
 	 */
 	protected IRegisterAccess getAccessOrError(String id) throws ErrorReport {
-		if (id.length() == 0 || id.equals(ROOT))
-			return null;
+		if (id == null || id.length() == 0 || id.equals(ROOT))
+			throw new ErrorReport("Invalid context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);
 		
 		if (IMemoryDomain.NAME_CPU.equals(id)) {
 			return machine.getCpu().getState();
@@ -248,6 +252,8 @@ public class RegisterService extends BaseServiceImpl {
 	}
 
 	protected String getGroupContext(String id) {
+		if (id == null)
+			return null;
 		int idx = id.indexOf('.');
 		if (idx < 0)
 			return id;

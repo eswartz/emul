@@ -13,13 +13,15 @@ import v9t9.common.memory.IMemoryWriteListener;
  */
 public class MemoryWriteTracker {
 	final IMemoryDomain domain;
-	final byte[] mirror;
 	BitSet changedMemory = new BitSet();
 	private IMemoryWriteListener memoryWriteListener;
+	private final int addr;
+	private final int size;
 	
-	public MemoryWriteTracker(IMemoryDomain domain) {
+	public MemoryWriteTracker(IMemoryDomain domain, int addr, int size) {
 		this.domain = domain;
-		mirror = new byte[65536];
+		this.addr = addr;
+		this.size = size;
 	}
 	public void addMemoryListener() {
 		if (memoryWriteListener == null) {
@@ -28,11 +30,12 @@ public class MemoryWriteTracker {
 				public void changed(IMemoryEntry entry, int addr, final boolean isByte) {
 					synchronized (MemoryWriteTracker.this) {
 						synchronized (changedMemory) {
-							changedMemory.set(addr);
-							mirror[addr] = entry.flatReadByte(addr);
-							if (!isByte) {
-								changedMemory.set(addr + 1);
-								mirror[addr + 1] = entry.flatReadByte(addr);
+							if (addr >= MemoryWriteTracker.this.addr 
+									&& addr < MemoryWriteTracker.this.addr + size) {
+								changedMemory.set(addr);
+								if (!isByte) {
+									changedMemory.set(addr + 1);
+								}
 							}
 						}
 					}

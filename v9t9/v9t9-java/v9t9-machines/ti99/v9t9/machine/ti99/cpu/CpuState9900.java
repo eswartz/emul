@@ -26,7 +26,7 @@ public class CpuState9900 implements ICpuState {
 	
 	static {
 		for (int i = 0; i < 16; i++) {
-			register(i, "R" + (i < 10 ? "0" : "") + i);
+			register(i, "R" + i);
 		}
 		register(Cpu9900.REG_PC, "PC");
 		register(Cpu9900.REG_ST, "SP");

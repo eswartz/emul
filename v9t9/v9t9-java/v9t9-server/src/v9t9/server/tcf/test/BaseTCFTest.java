@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.core.AbstractPeer;
+import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -25,6 +26,7 @@ import org.junit.BeforeClass;
 
 import v9t9.server.tcf.EmulatorTCFQueue;
 import v9t9.server.tcf.EmulatorTCFServiceProvider;
+import v9t9.server.tcf.services.ISettings;
 import static org.junit.Assert.*;
 
 /**
@@ -40,6 +42,7 @@ public class BaseTCFTest {
 	protected static IChannel channel;
 	private static EmulatorTCFQueue queue;
 	private static IServiceProvider serviceProvider;
+	private static boolean connected;
 	protected Map<String, IService> cachedServices = new HashMap<String, IService>();
 	protected Map<IService, IChannel.IEventListener> serviceListeners = new HashMap<IService, IChannel.IEventListener>();
 
@@ -138,7 +141,17 @@ public class BaseTCFTest {
 	}
 
 	@BeforeClass
-	public static void connectEmulator() {
+	public static void setupEmulator() throws Throwable {
+		System.out.println("setupEmulator()");
+		if (!connected)
+			connectEmulator();
+		
+		
+		pauseMachine();
+	}
+	
+	protected static void connectEmulator() {
+		
 		System.out.println("connectEmulator()");
 		queue = new EmulatorTCFQueue();
 		Protocol.setEventQueue(queue);
@@ -225,27 +238,91 @@ public class BaseTCFTest {
 
 		if (errors[0] != null)
 			fail(errors[0].toString());
+		
+		connected = true;
 	}
+	
+	protected static void pauseMachine() throws Throwable {
+		if (channel == null)
+			return;
 
+		new TCFCommandWrapper() {
+			
+			@Override
+			public IToken run() throws Exception {
+				IService settings = channel.getRemoteService(ISettings.NAME);
+				return new Command(channel, settings, "set", new Object[] { "PauseMachine", Boolean.TRUE }) {
+					@Override
+					public void done(Exception error, Object[] args) {
+						try {
+							assertNull(error);
+						} catch (Throwable t) {
+							excs[0] = t;
+						} finally {
+							tcfDone();
+						}
+					}
+					
+				}.token;
+			}
+		};
+	}
+	
 	@Before
 	public void assertConnected() {
 		if (peer == null || channel == null)
 			fail("not connected");
 	}
 
-	@AfterClass
-	public static void disconnectEmulator() {
-		System.out.println("disconnectEmulator()");
-		Protocol.invokeAndWait(new Runnable() {
-			public void run() {
-				if (channel != null)
-					channel.close();
+	public static void resumeMachine() throws Throwable {
+		if (channel == null)
+			return;
+			
+		new TCFCommandWrapper() {
+			
+			@Override
+			public IToken run() throws Exception {
+				IService settings = channel.getRemoteService(ISettings.NAME);
+				return new Command(channel, settings, "set", new Object[] { "PauseMachine", Boolean.FALSE }) {
+					@Override
+					public void done(Exception error, Object[] args) {
+						try {
+							assertNull(error);
+						} catch (Throwable t) {
+							excs[0] = t;
+						} finally {
+							tcfDone();
+						}
+					}
+					
+				}.token;
 			}
-		});
+		};
+	}
+	
+	@AfterClass
+	public static void teardownEmulator() throws Throwable {
+		resumeMachine();
 		
-		Protocol.removeServiceProvider(serviceProvider);
-		
-		queue.shutdown();
+		disconnectEmulator();
+	}
+	
+	protected static void disconnectEmulator() {
+	
+		// thanks, TCF, for not having a way to shut down and restart
+		if (false) {
+			System.out.println("disconnectEmulator()");
+			Protocol.invokeAndWait(new Runnable() {
+				public void run() {
+					if (channel != null)
+						channel.close();
+				}
+			});
+			
+			Protocol.removeServiceProvider(serviceProvider);
+			
+			queue.shutdown();
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -281,7 +358,7 @@ public class BaseTCFTest {
 	 * @author ejs
 	 * 
 	 */
-	public abstract class TCFCommandWrapper {
+	public static abstract class TCFCommandWrapper {
 
 		protected Throwable[] excs = { null };
 		private volatile boolean done;

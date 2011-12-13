@@ -34,10 +34,12 @@ public class MemoryServiceV2 extends MemoryService {
  
 	class ListenerInfo {
 		private final IMemoryDomain domain;
+		private final String id;
 
-		public ListenerInfo(final IMemoryDomain domain, int delay, int granularity) {
+		public ListenerInfo(String id, final IMemoryDomain domain, int delay, int granularity, int addr, int size) {
+			this.id = id;
 			this.domain = domain;
-			tracker = new MemoryWriteTracker(domain);
+			tracker = new MemoryWriteTracker(domain, addr, size);
 			period = delay;
 			this.granularity = granularity;
 		}
@@ -74,7 +76,7 @@ public class MemoryServiceV2 extends MemoryService {
 				System.out.println(System.currentTimeMillis());
 				BitSet bs = tracker.getChangedMemory();
 				if (!bs.isEmpty()) {
-					sendMemoryChangedEvent(domain, bs, granularity);
+					sendMemoryChangedEvent(id, domain, bs, granularity);
 				}
 				bs.clear();
 			}
@@ -100,13 +102,16 @@ public class MemoryServiceV2 extends MemoryService {
 			timer.purge();
 		}
 
-		public synchronized void updateInfo(int delay, int granularity) {
+		public synchronized void updateInfo(int delay, int granularity, int addr, int size) {
 			stopTask();
 			period = delay;
 			this.granularity = granularity;
+			tracker = new MemoryWriteTracker(domain, addr, size);
 			startTask();
 		}
 	}
+	
+	/** map of notifyId to info */
 	private Map<String, ListenerInfo> listeners;
 	private Timer timer;
 
@@ -121,7 +126,8 @@ public class MemoryServiceV2 extends MemoryService {
 		listeners = new HashMap<String, ListenerInfo>();
 		timer = new Timer(true);
 		
-		registerCommand(IMemoryV2.COMMAND_START_CHANGE_NOTIFY, 3, 1);
+		registerCommand(IMemoryV2.COMMAND_START_CHANGE_NOTIFY, 6, 1);
+		registerCommand(IMemoryV2.COMMAND_UPDATE_CHANGE_NOTIFY, 4, 1);
 		registerCommand(IMemoryV2.COMMAND_STOP_CHANGE_NOTIFY, 1, 1);
 		
 		channel.addChannelListener(new IChannelListener() {
@@ -152,26 +158,91 @@ public class MemoryServiceV2 extends MemoryService {
 			throws ErrorReport, Exception {
 		if (IMemoryV2.COMMAND_START_CHANGE_NOTIFY.equals(name)) {
 			return doStartNotify(args);
+		} else if (IMemoryV2.COMMAND_UPDATE_CHANGE_NOTIFY.equals(name)) {
+			return doUpdateNotify(args);
 		} else if (IMemoryV2.COMMAND_STOP_CHANGE_NOTIFY.equals(name)) {
 			return doStopNotify(args);
 		}
-		return null;
+		return super.handleCommand(name, args);
 	}
+
 
 	/**
 	 * @param args
 	 * @return
 	 * @throws ErrorReport
 	 */
-	protected Object[] doStopNotify(Object[] args) throws ErrorReport {
-		// args: 0:contextID  
-		IMemoryDomain domain = getDomainOrError(args[0]);
-		
+	protected Object[] doStartNotify(Object[] args) throws ErrorReport {
+		// args: 0:notifyID 1:contextID  2:ms 3:gap 4:addr 5:size
+		String id = args[0].toString();
+		IMemoryDomain domain = getDomainOrError(args[1]);
+		int delay = ((Number) args[2]).intValue();
+		int granularity = ((Number) args[3]).intValue();
+		int addr = ((Number) args[4]).intValue();
+		int size = ((Number) args[5]).intValue();
+
+		if (addr < 0)
+			throw new ErrorReport("Bad address", 
+					IErrorReport.TCF_ERROR_INV_ADDRESS);
+		if (size < 0)
+			throw new ErrorReport("Bad size", 
+					IErrorReport.TCF_ERROR_INV_NUMBER);
+
+		if (delay <= 0)
+			throw new ErrorReport("Bad rate", 
+					IErrorReport.TCF_ERROR_INV_NUMBER);
+		if (granularity < 0 || (granularity & (granularity - 1)) != 0)
+			throw new ErrorReport("Bad granularity", 
+					IErrorReport.TCF_ERROR_INV_NUMBER);
+			
 		ListenerInfo listener = listeners.get(domain.getIdentifier());
 		if (listener != null) {
-			listener.stop();
-			listeners.remove(domain.getIdentifier());
+			throw new ErrorReport("Listener " + id + " already registered", 
+					IErrorReport.TCF_ERROR_ALREADY_ATTACHED);
 		}
+		
+		listener = new ListenerInfo(id, domain, delay, granularity, addr, size);
+		listeners.put(id, listener);
+		listener.start();
+		
+		return new Object[] { null };
+	}
+
+	
+
+	/**
+	 * @param args
+	 * @return
+	 * @throws ErrorReport
+	 */
+	protected Object[] doUpdateNotify(Object[] args) throws ErrorReport {
+		// args: 0:notifyID  1:ms 2:gap
+		String id = args[0].toString();
+		int delay = ((Number) args[1]).intValue();
+		int granularity = ((Number) args[2]).intValue();
+		int addr = ((Number) args[3]).intValue();
+		int size = ((Number) args[4]).intValue();
+
+		if (addr < 0)
+			throw new ErrorReport("Bad address", 
+					IErrorReport.TCF_ERROR_INV_ADDRESS);
+		if (size < 0)
+			throw new ErrorReport("Bad size", 
+					IErrorReport.TCF_ERROR_INV_NUMBER);
+
+		if (delay <= 0)
+			throw new ErrorReport("Bad rate", 
+					IErrorReport.TCF_ERROR_INV_NUMBER);
+		if (granularity < 0 || (granularity & (granularity - 1)) != 0)
+			throw new ErrorReport("Bad granularity", 
+					IErrorReport.TCF_ERROR_INV_NUMBER);
+			
+		ListenerInfo listener = listeners.get(id);
+		if (listener == null) {
+			throw new ErrorReport("Listener " + id + " not registered", 
+					IErrorReport.TCF_ERROR_INV_CONTEXT);
+		}
+		listener.updateInfo(delay, granularity, addr, size);
 		
 		return new Object[] { null };
 	}
@@ -181,26 +252,14 @@ public class MemoryServiceV2 extends MemoryService {
 	 * @return
 	 * @throws ErrorReport
 	 */
-	protected Object[] doStartNotify(Object[] args) throws ErrorReport {
-		// args: 0:contextID  1:ms 2:gap
-		IMemoryDomain domain = getDomainOrError(args[0]);
-		int delay = ((Number) args[1]).intValue();
-		int granularity = ((Number) args[2]).intValue();
+	protected Object[] doStopNotify(Object[] args) throws ErrorReport {
+		// args: 0:notifyID  
+		String id = args[0].toString();
 		
-		if (delay <= 0)
-			throw new ErrorReport("Bad rate", 
-					IErrorReport.TCF_ERROR_INV_NUMBER);
-		if (granularity < 0 || (granularity & (granularity - 1)) != 0)
-			throw new ErrorReport("Bad granularity", 
-					IErrorReport.TCF_ERROR_INV_NUMBER);
-			
-		ListenerInfo listener = listeners.get(domain.getIdentifier());
-		if (listener == null) {
-			listener = new ListenerInfo(domain, delay, granularity);
-			listeners.put(domain.getIdentifier(), listener);
-			listener.start();
-		} else {
-			listener.updateInfo(delay, granularity);
+		ListenerInfo listener = listeners.get(id);
+		if (listener != null) {
+			listener.stop();
+			listeners.remove(id);
 		}
 		
 		return new Object[] { null };
@@ -213,7 +272,8 @@ public class MemoryServiceV2 extends MemoryService {
 	 * @param data 
 	 * @param granularity 
 	 */
-	protected void sendMemoryChangedEvent(final IMemoryDomain domain, BitSet bs, int granularity) {
+	protected void sendMemoryChangedEvent(final String id, 
+			final IMemoryDomain domain, BitSet bs, int granularity) {
 		final List<Map<String, Object>> ranges = new ArrayList<Map<String,Object>>();
 		
 		if (granularity < 1)
@@ -252,7 +312,7 @@ public class MemoryServiceV2 extends MemoryService {
 			public void run() {
 				try {
 					Protocol.sendEvent(IMemoryV2.NAME, IMemoryV2.EVENT_CONTENT_CHANGED, 
-							JSON.toJSONSequence(new Object[] { domain.getIdentifier(), ranges }, true));
+							JSON.toJSONSequence(new Object[] { id, ranges }, true));
 				} catch (IOException e) {
 					Protocol.log("Failed to send event", e);
 				}

@@ -414,7 +414,8 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 
 	@Override
 	public int getRegisterNumber(String id) {
-		return regIds.get(id);
+		Integer num = regIds.get(id);
+		return num != null ? num : Integer.MIN_VALUE;
 	}
 	
 	protected String getRegisterName(int reg) {

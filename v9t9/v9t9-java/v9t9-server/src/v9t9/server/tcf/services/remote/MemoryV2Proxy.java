@@ -39,9 +39,13 @@ public class MemoryV2Proxy extends MemoryProxy implements IMemoryV2 {
 		return IMemoryV2.NAME;
 	}
 	
-	public IToken startChangeNotify(String contextId, int msDelay, int granularity, final DoneCommand done) {
+	public IToken startChangeNotify(String notifyId, String contextId, 
+			int msDelay, int granularity, 
+			int addr, int size, final DoneCommand done) {
 		return new Command(channel, this, COMMAND_START_CHANGE_NOTIFY, 
-				new Object[] { contextId, msDelay, granularity }) {
+				new Object[] { notifyId, contextId, 
+				msDelay, granularity,
+				addr, size }) {
 			@Override
 			public void done(Exception error, Object[] args) {
 				if (error == null) {
@@ -54,9 +58,27 @@ public class MemoryV2Proxy extends MemoryProxy implements IMemoryV2 {
 	}
 	
 
-	public IToken stopChangeNotify(String contextId, final DoneCommand done) {
+	public IToken updateChangeNotify(String notifyId, 
+			int msDelay, int granularity,
+			int addr, int size,
+			final DoneCommand done) {
+		return new Command(channel, this, COMMAND_UPDATE_CHANGE_NOTIFY, 
+				new Object[] { notifyId, msDelay, granularity, addr, size }) {
+			@Override
+			public void done(Exception error, Object[] args) {
+				if (error == null) {
+                    assert args.length == 1;
+                    error = toError(args[0]);
+                }
+				done.done(error);
+			}
+		}.token;
+	}
+	
+
+	public IToken stopChangeNotify(String notifyId, final DoneCommand done) {
 		return new Command(channel, this, COMMAND_STOP_CHANGE_NOTIFY, 
-				new Object[] { contextId }) {
+				new Object[] { notifyId }) {
 			@Override
 			public void done(Exception error, Object[] args) {
 				if (error == null) {

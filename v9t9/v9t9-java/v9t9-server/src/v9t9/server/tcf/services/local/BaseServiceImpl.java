@@ -4,6 +4,7 @@
 package v9t9.server.tcf.services.local;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,8 @@ import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
+
+import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 
 import v9t9.base.utils.Pair;
 import v9t9.common.machine.IMachine;
@@ -115,6 +118,11 @@ public abstract class BaseServiceImpl implements IService, IChannel.ICommandServ
 
         } catch (Throwable x) {
         	Protocol.log("Failed to handle command " + serviceName + "#" + name, x);
+        	ByteOutputStream bos = new ByteOutputStream();
+        	PrintWriter pw = new PrintWriter(bos);
+        	x.printStackTrace(pw);
+        	channel.sendResult(token, JSON.toJSONSequence(new Object[] { 
+        			new ErrorReport("internal error: " + bos.toString(), IErrorReport.TCF_ERROR_OTHER) }));
         }
 	}
 

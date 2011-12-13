@@ -47,7 +47,8 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		register(REG_ST, "ST");
 		
 		for (int i = 0; i < 48; i++) {
-			register(i, "VR" + (i < 10 ? "0" : "") + i);
+			register(i, "VR" + i);		// consistent naming with TMS9918A, 
+										// even though there is a change from 1 to 2 digits 
 		}
 		for (int i = 0; i < 9; i++) {
 			register(i + VdpV9938Consts.REG_SR0, "SR" + i);
@@ -748,9 +749,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	@Override
 	public int getRegisterNumber(String id) {
 		Integer num = regIds9938.get(id);
-		if (num == null)
-			return Integer.MIN_VALUE;
-		return num;
+		return num != null ? num : Integer.MIN_VALUE;
 	}
 	
 	
