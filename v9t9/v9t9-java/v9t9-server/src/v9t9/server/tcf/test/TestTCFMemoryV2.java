@@ -44,30 +44,31 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 	}
 	
 
+	static class MemListener implements IMemoryV2.MemoryContentChangeListener {
+		final List<Pair<String, MemoryChange[]>> changeMap = new ArrayList<Pair<String, MemoryChange[]>>();
+		@Override
+		public void contentChanged(String notifyId, MemoryChange[] change) {
+			changeMap.add(new Pair<String, MemoryChange[]>(notifyId,
+					change));
+		}
+	};
+
+	
 	@Test
 	public void testMemoryNotifySimple() throws Throwable {
 		// start...
 		final int DELAY = 100;
 		int memMode = 0;
-		final List<Pair<String, MemoryChange[]>> changeMap = new ArrayList<Pair<String, MemoryChange[]>>();
-		final IMemoryV2.MemoryContentChangeListener listener = new IMemoryV2.MemoryContentChangeListener() {
-
-			@Override
-			public void contentChanged(String contextId, MemoryChange[] change) {
-				changeMap.add(new Pair<String, MemoryChange[]>(contextId,
-						change));
-			}
-		};
-
+		final MemListener listener = new MemListener();
 		doVideoMemWrite(memMode, DELAY, "hello", listener, "HELLO");
 		
-		assertTrue("expected event", !changeMap.isEmpty());
+		assertTrue("expected event", !listener.changeMap.isEmpty());
 		
 		// expect only one change and one range
-		assertEquals(1, changeMap.size());
-		assertEquals("hello", changeMap.get(0).first);
+		assertEquals(1, listener.changeMap.size());
+		assertEquals("hello", listener.changeMap.get(0).first);
 		
-		MemoryChange[] changes = changeMap.get(0).second;
+		MemoryChange[] changes = listener.changeMap.get(0).second;
 		assertNotNull(changes);
 		assertEquals(1, changes.length);
 		
@@ -83,25 +84,15 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 		final int DELAY = 100;
 		final int memMode = IMemoryV2.MODE_FLAT;		// no events should be generated
 
-		final List<Pair<String, MemoryChange[]>> changeMap = new ArrayList<Pair<String, MemoryChange[]>>();
-		final IMemoryV2.MemoryContentChangeListener listener = new IMemoryV2.MemoryContentChangeListener() {
-
-			@Override
-			public void contentChanged(String notifyId, MemoryChange[] change) {
-				changeMap.add(new Pair<String, MemoryChange[]>(notifyId,
-						change));
-			}
-		};
-
-		
+		final MemListener listener = new MemListener();		
 		doVideoMemWrite(memMode, DELAY, "none", listener, "blargh");
 		
-		assertTrue("expected no events: " + changeMap, changeMap.isEmpty());
+		assertTrue("expected no events: " + listener.changeMap, listener.changeMap.isEmpty());
 	}
 
 	protected void doVideoMemWrite(final int memMode, final int delay,
 			final String notifyId,
-			final IMemoryV2.MemoryContentChangeListener listener,
+			final MemListener listener,
 			final String data)
 			throws Throwable {
 		doVideoMemWrite(memMode, notifyId, delay, 1, listener, data.getBytes(), 0, data.length(), 0, 0);	
@@ -118,7 +109,7 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 	 */
 	protected void doVideoMemWrite(final int memMode, 
 			final String notifyId, final int delay, final int granularity, 
-			final IMemoryV2.MemoryContentChangeListener listener, final byte[] data,
+			final MemListener listener, final byte[] data,
 			final int addr_, final int size, final int skip, final int skipLength)
 			throws Throwable {
 		
@@ -132,8 +123,8 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 			new TCFCommandWrapper() {
 				public IToken run() throws Exception {
 					return memV2.startChangeNotify(
-							notifyId, IMemoryDomain.NAME_VIDEO, delay, granularity,
-							addr_, size,
+							notifyId, IMemoryDomain.NAME_VIDEO, addr_, size,
+							delay, granularity,
 						new IMemoryV2.DoneCommand() {
 							
 							@Override
@@ -149,7 +140,11 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 					});
 				}		
 			};
+
+			// we should get one initial contentChanged report for the full range
+			validateInitialContentChanged(notifyId, addr_, size, granularity, listener.changeMap);
 			
+
 			final IMemory.MemoryContext[] videos = { null };
 			new TCFCommandWrapper() {
 				public IToken run() throws Exception {
@@ -170,6 +165,7 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 				}		
 			};
 			
+			// this set tracks outstanding Memory#set events
 			final boolean[] finished = { true };
 			final Set<IToken> waiting = new HashSet<IToken>();
 			
@@ -310,6 +306,34 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 	 * @param i
 	 * @param j
 	 */
+	private void validateInitialContentChanged(String expId,
+			int addr, int size, int granularity,
+			List<Pair<String, MemoryChange[]>> changeMap) {
+
+		assertEquals("initial change", 1, changeMap.size());
+		Pair<String, MemoryChange[]> ent = changeMap.get(0);
+		assertEquals(expId, ent.first);
+		assertEquals("initial change", 1, ent.second.length);
+		for (MemoryChange change : ent.second) {
+			
+			int alignedAddr = addr & -granularity;
+			int alignedSize = (addr + size) - alignedAddr;
+			alignedSize = (alignedSize + granularity - 1) & -granularity;
+			
+			assertEquals("initial change", alignedAddr, change.addr);
+			assertEquals("initial change", alignedSize, change.size);
+			assertEquals(change.toString(), change.size, change.data.length);
+		}
+		
+		changeMap.clear();
+	}
+
+
+	/**
+	 * @param changeMap
+	 * @param i
+	 * @param j
+	 */
 	private void validateRanges(String expId,
 			byte[] data, int addr, int size,
 			int skip, int skipLength, 
@@ -365,42 +389,34 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 		// start...
 		final int DELAY = 100;
 		int memMode = 0;
-		final List<Pair<String, MemoryChange[]>> changeMap = new ArrayList<Pair<String, MemoryChange[]>>();
-		final IMemoryV2.MemoryContentChangeListener listener = new IMemoryV2.MemoryContentChangeListener() {
-
-			@Override
-			public void contentChanged(String notifyId, MemoryChange[] change) {
-				changeMap.add(new Pair<String, MemoryChange[]>(notifyId,
-						change));
-			}
-		};
-
+		final MemListener listener = new MemListener();
+		
 		byte[] data = { 42, 43, 44, 45, 46, 47, 48, 49, 50, 51 };
 		
 		// write 377 to 768 by 2
 		doVideoMemWrite(memMode, "scatter1", DELAY, 1, listener, data, 377, 768 - 377, 2, 1);
 		
-		assertTrue("expected event", !changeMap.isEmpty());
+		assertTrue("expected event", !listener.changeMap.isEmpty());
 		
 		validateRanges("scatter1", 
-				data, 377, 768 - 377, 2, 1, changeMap);
+				data, 377, 768 - 377, 2, 1, listener.changeMap);
 		
 		
 		// write 377 to 768 by 2, no gaps
 		doVideoMemWrite(memMode, "scatter2", DELAY, 2, listener, data, 377, 768 - 377, 2, 1);
 		
-		assertTrue("expected event", !changeMap.isEmpty());
+		assertTrue("expected event", !listener.changeMap.isEmpty());
 		
 		validateRanges("scatter2", 
-				data, 376, 768 - 376, 0, 0, changeMap);
+				data, 376, 768 - 376, 0, 0, listener.changeMap);
 		
 		// huge chunk
 		doVideoMemWrite(memMode, "scatter3", DELAY, 1024, listener, data, 123, 15, 2, 7);
 		
-		assertTrue("expected event", !changeMap.isEmpty());
+		assertTrue("expected event", !listener.changeMap.isEmpty());
 		
 		validateRanges("scatter3", 
-				data, 0, 1024, 0, 0, changeMap);
+				data, 0, 1024, 0, 0, listener.changeMap);
 	}
 	
 

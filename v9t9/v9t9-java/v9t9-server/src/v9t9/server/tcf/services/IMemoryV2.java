@@ -55,13 +55,12 @@ public interface IMemoryV2 extends IMemory {
 	}
 	
 	interface MemoryContentChangeListener {
-		void contentChanged(String contextId, MemoryChange[] memChanges);
+		void contentChanged(String notifyId, MemoryChange[] memChanges);
 	}
 	
 	String NAME = "MemoryV2";
 	
 	String COMMAND_START_CHANGE_NOTIFY = "startChangeNotify";
-	String COMMAND_UPDATE_CHANGE_NOTIFY = "updateChangeNotify";
 	String COMMAND_STOP_CHANGE_NOTIFY = "stopChangeNotify";
 
 	String EVENT_CONTENT_CHANGED = "contentChanged";
@@ -88,38 +87,24 @@ public interface IMemoryV2 extends IMemory {
 	 * context ID.  Fires contentChanged events on change each 
 	 * "msDelay" milliseconds.
 	 * 
+	 * Once registered, this command will spawn a contentChanged
+	 * event that covers all the memory spanned, so the client
+	 * will know exactly where it is starting from.
+	 * 
 	 * @param notifyId ID used to track this notifier
 	 * @param contextId ID for a memory domain
+	 * @param addr address to start monitoring  
+	 * @param size size in bytes to start monitoring  
 	 * @param msDelay delay in ms between events
 	 * @param granularity minimum gap in bytes reported changed, to minimize
 	 * size of delta information. E.g., if this 2, and bytes 0 and 2 change,
 	 * then the memoryChanged event will report that bytes 0-3 changed.
-	 * @param addr address to start monitoring  
-	 * @param size size in bytes to start monitoring  
 	 * @param done
 	 * @return
 	 */
 	IToken startChangeNotify(String notifyId, String contextId,
-			int msDelay, int granularity, 
 			int addr, int size, 
-			DoneCommand done);
-
-	/**
-	 * Update the notification delay or gap.
-	 * 
-	 * @param notifyId previously registered ID
-	 * @param msDelay delay in ms between events
-	 * @param granularity minimum gap in bytes reported changed, to minimize
-	 * size of delta information. E.g., if this 2, and bytes 0 and 2 change,
-	 * then the memoryChanged event will report that bytes 0-3 changed.  
-	 * @param addr address to start monitoring  
-	 * @param size size in bytes to start monitoring  
-	 * @param done
-	 * @return
-	 */
-	IToken updateChangeNotify(String notifyId, 
-			int msDelay, int granularity,
-			int addr, int size,
+			int msDelay, int granularity, 
 			DoneCommand done);
 
 	/**

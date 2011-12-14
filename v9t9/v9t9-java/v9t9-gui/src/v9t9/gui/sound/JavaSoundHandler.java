@@ -181,10 +181,11 @@ public class JavaSoundHandler implements ISoundHandler {
 
 	public synchronized void flushAudio() {
 		int currentCycleCount = machine.getCpu().getCurrentCycleCount();
-		if (output != null && machine.getSound() != null && currentCycleCount > 0) {
+		int currentTargetCycleCount = machine.getCpu().getCurrentTargetCycleCount();
+		if (output != null && machine.getSound() != null && currentTargetCycleCount > 0) {
 			updateSoundGenerator(lastUpdatedPos, soundFramesPerTick, 
 					currentCycleCount * (soundFramesPerTick - lastUpdatedPos) /
-					machine.getCpu().getCurrentTargetCycleCount());
+					currentTargetCycleCount);
 			
 			lastUpdatedPos = 0;
 	

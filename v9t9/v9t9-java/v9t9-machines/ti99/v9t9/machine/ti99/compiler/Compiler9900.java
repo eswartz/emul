@@ -67,6 +67,7 @@ import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.machine.ti99.asm.InstructionFactory9900;
 import v9t9.machine.ti99.cpu.Cpu9900;
+import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.InstTable9900;
 import v9t9.machine.ti99.cpu.Instruction9900;
@@ -623,8 +624,8 @@ public class Compiler9900 extends CompilerBase {
 
             /* save status */
             ilist.append(InstructionConstants.THIS);
-            ilist.append(new GETFIELD(info.cpuIndex));
-    	    ilist.append(info.ifact.createCheckCast(new ObjectType(Cpu9900.class.getName())));
+            ilist.append(new GETFIELD(info.cpuStateIndex));
+    	    ilist.append(info.ifact.createCheckCast(new ObjectType(CpuState9900.class.getName())));
     	    
             ilist.append(new ALOAD(info.localStatus));
             ilist.append(info.ifact.createInvoke(v9t9.common.cpu.ICpuState.class.getName(),
@@ -634,11 +635,11 @@ public class Compiler9900 extends CompilerBase {
 
             /* update PC first */
             ilist.append(InstructionConstants.THIS);
-            ilist.append(new GETFIELD(info.cpuIndex));
-    	    ilist.append(info.ifact.createCheckCast(new ObjectType(Cpu9900.class.getName())));
+            ilist.append(new GETFIELD(info.cpuStateIndex));
+    	    ilist.append(info.ifact.createCheckCast(new ObjectType(CpuState9900.class.getName())));
 
             ilist.append(new PUSH(info.pgen, ins.pc + ins.getSize())); // old value
-            ilist.append(info.ifact.createInvoke(v9t9.machine.ti99.cpu.Cpu9900.class.getName(),
+            ilist.append(info.ifact.createInvoke(v9t9.machine.ti99.cpu.CpuState9900.class.getName(),
                     "setPC", Type.VOID, new Type[] { Type.SHORT },
                     Constants.INVOKEVIRTUAL));
 
@@ -874,9 +875,11 @@ public class Compiler9900 extends CompilerBase {
 
         info.cpuIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
                 "cpu", Utility.getSignature(v9t9.common.cpu.ICpu.class.getName()));
+        info.cpuStateIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
+        		"cpuState", Utility.getSignature(v9t9.common.cpu.ICpuState.class.getName()));
         info.memoryIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
                 "memory", Utility.getSignature(v9t9.common.memory.IMemoryDomain.class.getName()));
-        info.cruIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
+        info.cruIndex = pgen.addFieldref(CompiledCode9900.class.getName(), // className,
                 "cru", Utility.getSignature(v9t9.engine.hardware.ICruHandler.class.getName()));
         info.nInstructionsIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
                 "nInstructions", Utility.getSignature("int"));
@@ -945,8 +948,8 @@ public class Compiler9900 extends CompilerBase {
 			InstructionList ilist, CompileInfo info) {
 		// init code: read current info into locals
 	    ilist.append(InstructionConstants.THIS);
-	    ilist.append(new GETFIELD(info.cpuIndex));
-	    ilist.append(info.ifact.createCheckCast(new ObjectType(Cpu9900.class.getName())));
+	    ilist.append(new GETFIELD(info.cpuStateIndex));
+	    ilist.append(info.ifact.createCheckCast(new ObjectType(CpuState9900.class.getName())));
 
 	    ilist.append(InstructionConstants.DUP);
 	    ilist.append(ifact.createInvoke(v9t9.common.cpu.ICpuState.class.getName(),
@@ -955,10 +958,9 @@ public class Compiler9900 extends CompilerBase {
 	    ilist.append(new ISTORE(info.localPc));
 	
 	    ilist.append(InstructionConstants.DUP);
-	    ilist.append(ifact.createInvoke(v9t9.machine.ti99.cpu.Cpu9900.class.getName(),
-	                    "getWP", Type.INT, Type.NO_ARGS,
+	    ilist.append(ifact.createInvoke(v9t9.machine.ti99.cpu.CpuState9900.class.getName(),
+	                    "getWP", Type.SHORT, Type.NO_ARGS,
 	                    Constants.INVOKEVIRTUAL));
-	    ilist.append(InstructionConstants.I2S);
 	    ilist.append(new ISTORE(info.localWp));
 	
 	    ilist.append(InstructionConstants.DUP);
@@ -1011,8 +1013,8 @@ public class Compiler9900 extends CompilerBase {
 	    // finish code: write locals into cpu
 	    first = ilist.append(InstructionConstants.THIS);
 	    
-	    ilist.append(new GETFIELD(info.cpuIndex));
-	    ilist.append(info.ifact.createCheckCast(new ObjectType(Cpu9900.class.getName())));
+	    ilist.append(new GETFIELD(info.cpuStateIndex));
+	    ilist.append(info.ifact.createCheckCast(new ObjectType(CpuState9900.class.getName())));
 
 	    ilist.append(InstructionConstants.DUP);
 	    ilist.append(new ILOAD(info.localPc));
@@ -1021,7 +1023,7 @@ public class Compiler9900 extends CompilerBase {
 	
 	    ilist.append(InstructionConstants.DUP);
 	    ilist.append(new ILOAD(info.localWp));
-	    ilist.append(ifact.createInvoke(v9t9.machine.ti99.cpu.Cpu9900.class.getName(), "setWP",
+	    ilist.append(ifact.createInvoke(v9t9.machine.ti99.cpu.CpuState9900.class.getName(), "setWP",
 	            Type.VOID, new Type[] { Type.SHORT }, Constants.INVOKEVIRTUAL));
 	
 	    ilist.append(InstructionConstants.DUP);

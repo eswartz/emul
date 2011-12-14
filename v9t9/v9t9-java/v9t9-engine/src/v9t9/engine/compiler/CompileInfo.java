@@ -42,7 +42,7 @@ public class CompileInfo {
 	public ConstantPoolGen pgen;
     
     // indexes of useful variables in generated class
-    public int memoryIndex, cpuIndex, nInstructionsIndex, nCyclesIndex;
+    public int memoryIndex, cpuIndex, cpuStateIndex, nInstructionsIndex, nCyclesIndex;
     public int cruIndex;
     public int vdpIndex, gplIndex;
     public int executionTokenIndex;

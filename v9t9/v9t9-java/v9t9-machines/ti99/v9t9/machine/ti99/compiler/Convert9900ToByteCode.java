@@ -31,7 +31,7 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.compiler.CompileInfo;
 import v9t9.engine.compiler.CompiledCode;
 import v9t9.engine.memory.WordMemoryArea;
-import v9t9.machine.ti99.cpu.Cpu9900;
+import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.Instruction9900;
 import v9t9.machine.ti99.cpu.Status9900;
@@ -616,11 +616,11 @@ public class Convert9900ToByteCode {
 	        InstructionList ilist, CompileInfo info) {
         /* update WP */
         ilist.append(InstructionConstants.THIS);
-        ilist.append(new GETFIELD(info.cpuIndex));
-	    ilist.append(info.ifact.createCheckCast(new ObjectType(Cpu9900.class.getName())));
+        ilist.append(new GETFIELD(info.cpuStateIndex));
+	    ilist.append(info.ifact.createCheckCast(new ObjectType(CpuState9900.class.getName())));
 
         ilist.append(new ILOAD(info.localWp));
-        ilist.append(info.ifact.createInvoke(v9t9.machine.ti99.cpu.Cpu9900.class.getName(),
+        ilist.append(info.ifact.createInvoke(v9t9.machine.ti99.cpu.CpuState9900.class.getName(),
                 "setWP", Type.VOID, new Type[] { Type.SHORT },
                 Constants.INVOKEVIRTUAL));
 

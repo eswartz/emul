@@ -22,7 +22,7 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.server.tcf.MemoryWriteTracker;
+import v9t9.common.memory.MemoryWriteTracker;
 import v9t9.server.tcf.services.IMemoryV2;
 
 /**
@@ -30,13 +30,13 @@ import v9t9.server.tcf.services.IMemoryV2;
  * @author ejs
  *
  */
-public class MemoryServiceV2 extends MemoryService {
+public class MemoryV2Service extends MemoryService {
  
 	class ListenerInfo {
 		private final IMemoryDomain domain;
 		private final String id;
 
-		public ListenerInfo(String id, final IMemoryDomain domain, int delay, int granularity, int addr, int size) {
+		public ListenerInfo(String id, final IMemoryDomain domain, int addr, int size, int delay, int granularity) {
 			this.id = id;
 			this.domain = domain;
 			tracker = new MemoryWriteTracker(domain, addr, size);
@@ -120,14 +120,13 @@ public class MemoryServiceV2 extends MemoryService {
 	 * @param channel
 	 * @param serviceName
 	 */
-	public MemoryServiceV2(IMachine machine, IChannel channel) {
+	public MemoryV2Service(IMachine machine, IChannel channel) {
 		super(machine, channel, IMemoryV2.NAME);
 		
 		listeners = new HashMap<String, ListenerInfo>();
 		timer = new Timer(true);
 		
 		registerCommand(IMemoryV2.COMMAND_START_CHANGE_NOTIFY, 6, 1);
-		registerCommand(IMemoryV2.COMMAND_UPDATE_CHANGE_NOTIFY, 4, 1);
 		registerCommand(IMemoryV2.COMMAND_STOP_CHANGE_NOTIFY, 1, 1);
 		
 		channel.addChannelListener(new IChannelListener() {
@@ -158,8 +157,6 @@ public class MemoryServiceV2 extends MemoryService {
 			throws ErrorReport, Exception {
 		if (IMemoryV2.COMMAND_START_CHANGE_NOTIFY.equals(name)) {
 			return doStartNotify(args);
-		} else if (IMemoryV2.COMMAND_UPDATE_CHANGE_NOTIFY.equals(name)) {
-			return doUpdateNotify(args);
 		} else if (IMemoryV2.COMMAND_STOP_CHANGE_NOTIFY.equals(name)) {
 			return doStopNotify(args);
 		}
@@ -173,55 +170,13 @@ public class MemoryServiceV2 extends MemoryService {
 	 * @throws ErrorReport
 	 */
 	protected Object[] doStartNotify(Object[] args) throws ErrorReport {
-		// args: 0:notifyID 1:contextID  2:ms 3:gap 4:addr 5:size
+		// args: 0:notifyID 1:contextID  2:addr 3:size  4:ms 5:gap 
 		String id = args[0].toString();
 		IMemoryDomain domain = getDomainOrError(args[1]);
-		int delay = ((Number) args[2]).intValue();
-		int granularity = ((Number) args[3]).intValue();
-		int addr = ((Number) args[4]).intValue();
-		int size = ((Number) args[5]).intValue();
-
-		if (addr < 0)
-			throw new ErrorReport("Bad address", 
-					IErrorReport.TCF_ERROR_INV_ADDRESS);
-		if (size < 0)
-			throw new ErrorReport("Bad size", 
-					IErrorReport.TCF_ERROR_INV_NUMBER);
-
-		if (delay <= 0)
-			throw new ErrorReport("Bad rate", 
-					IErrorReport.TCF_ERROR_INV_NUMBER);
-		if (granularity < 0 || (granularity & (granularity - 1)) != 0)
-			throw new ErrorReport("Bad granularity", 
-					IErrorReport.TCF_ERROR_INV_NUMBER);
-			
-		ListenerInfo listener = listeners.get(domain.getIdentifier());
-		if (listener != null) {
-			throw new ErrorReport("Listener " + id + " already registered", 
-					IErrorReport.TCF_ERROR_ALREADY_ATTACHED);
-		}
-		
-		listener = new ListenerInfo(id, domain, delay, granularity, addr, size);
-		listeners.put(id, listener);
-		listener.start();
-		
-		return new Object[] { null };
-	}
-
-	
-
-	/**
-	 * @param args
-	 * @return
-	 * @throws ErrorReport
-	 */
-	protected Object[] doUpdateNotify(Object[] args) throws ErrorReport {
-		// args: 0:notifyID  1:ms 2:gap
-		String id = args[0].toString();
-		int delay = ((Number) args[1]).intValue();
-		int granularity = ((Number) args[2]).intValue();
-		int addr = ((Number) args[3]).intValue();
-		int size = ((Number) args[4]).intValue();
+		int addr = ((Number) args[2]).intValue();
+		int size = ((Number) args[3]).intValue();
+		int delay = ((Number) args[4]).intValue();
+		int granularity = ((Number) args[5]).intValue();
 
 		if (addr < 0)
 			throw new ErrorReport("Bad address", 
@@ -238,15 +193,31 @@ public class MemoryServiceV2 extends MemoryService {
 					IErrorReport.TCF_ERROR_INV_NUMBER);
 			
 		ListenerInfo listener = listeners.get(id);
-		if (listener == null) {
-			throw new ErrorReport("Listener " + id + " not registered", 
-					IErrorReport.TCF_ERROR_INV_CONTEXT);
+		if (listener != null) {
+			throw new ErrorReport("Listener " + id + " already registered", 
+					IErrorReport.TCF_ERROR_ALREADY_ATTACHED);
 		}
-		listener.updateInfo(delay, granularity, addr, size);
+		
+		listener = new ListenerInfo(id, domain, addr, size, delay, granularity);
+		listeners.put(id, listener);
+		synchronized (listener) {
+			synchronized (listener.tracker) {
+				listener.start();
+				
+				// on listener attach, send full memory block
+				BitSet fullSet = new BitSet();
+				fullSet.set(addr, addr + size);
+				
+				sendMemoryChangedEvent(id, domain, fullSet, granularity);
+			}
+		}
+		
+		
 		
 		return new Object[] { null };
 	}
 
+	
 	/**
 	 * @param args
 	 * @return
@@ -260,6 +231,9 @@ public class MemoryServiceV2 extends MemoryService {
 		if (listener != null) {
 			listener.stop();
 			listeners.remove(id);
+		} else {
+			throw new ErrorReport("Unknown listener " + id, 
+					IErrorReport.TCF_ERROR_SYM_NOT_FOUND);
 		}
 		
 		return new Object[] { null };

@@ -17,6 +17,7 @@ import org.eclipse.tm.tcf.services.IRegisters;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.server.tcf.services.IRegistersV2;
 
 /**
  * @author ejs
@@ -137,8 +138,11 @@ public class RegisterService extends BaseServiceImpl {
 		if (info.domain != null) {
 			ctx.put(IRegisters.PROP_MEMORY_CONTEXT, info.domain.getIdentifier());
 			ctx.put(IRegisters.PROP_MEMORY_ADDRESS, info.addr);
-			
 		}
+		
+		// IRegistersV2 special
+		ctx.put(IRegistersV2.PROP_NUMBER, reg);
+		
 		return ctx;
 	}
 

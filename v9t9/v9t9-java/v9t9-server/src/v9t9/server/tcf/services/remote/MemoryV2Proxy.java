@@ -13,6 +13,7 @@ import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
+import org.eclipse.tm.tcf.protocol.Protocol;
 
 import v9t9.server.tcf.services.IMemoryV2;
 
@@ -40,12 +41,13 @@ public class MemoryV2Proxy extends MemoryProxy implements IMemoryV2 {
 	}
 	
 	public IToken startChangeNotify(String notifyId, String contextId, 
-			int msDelay, int granularity, 
-			int addr, int size, final DoneCommand done) {
+			int addr, int size, 
+			int msDelay, int granularity, final DoneCommand done) {
 		return new Command(channel, this, COMMAND_START_CHANGE_NOTIFY, 
 				new Object[] { notifyId, contextId, 
-				msDelay, granularity,
-				addr, size }) {
+				addr, size,
+				msDelay, granularity 
+				}) {
 			@Override
 			public void done(Exception error, Object[] args) {
 				if (error == null) {
@@ -57,25 +59,6 @@ public class MemoryV2Proxy extends MemoryProxy implements IMemoryV2 {
 		}.token;
 	}
 	
-
-	public IToken updateChangeNotify(String notifyId, 
-			int msDelay, int granularity,
-			int addr, int size,
-			final DoneCommand done) {
-		return new Command(channel, this, COMMAND_UPDATE_CHANGE_NOTIFY, 
-				new Object[] { notifyId, msDelay, granularity, addr, size }) {
-			@Override
-			public void done(Exception error, Object[] args) {
-				if (error == null) {
-                    assert args.length == 1;
-                    error = toError(args[0]);
-                }
-				done.done(error);
-			}
-		}.token;
-	}
-	
-
 	public IToken stopChangeNotify(String notifyId, final DoneCommand done) {
 		return new Command(channel, this, COMMAND_STOP_CHANGE_NOTIFY, 
 				new Object[] { notifyId }) {
@@ -116,7 +99,8 @@ public class MemoryV2Proxy extends MemoryProxy implements IMemoryV2 {
                     }
                 }
                 catch (Throwable x) {
-                    channel.terminate(x);
+                	Protocol.log("internal error in MemoryV2Proxy#handleEvent", x);
+                	x.printStackTrace();
                 }
             }
         };

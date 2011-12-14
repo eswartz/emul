@@ -380,12 +380,21 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.canvas.video.tms9918a.VdpTMS9918ACanvasRenderer#paletteColorChanged(int, short)
+	 * @see v9t9.canvas.video.tms9918a.VdpTMS9918ACanvasRenderer#registerChanged(int, int)
 	 */
 	@Override
-	public void paletteColorChanged(int color, short value) {
-		palette[color] = value;
-		setPaletteColor(color);
+	public void registerChanged(int reg, int value) {
+		if (reg >= REG_PAL0 && reg < REG_PAL0 + 16) {
+			int color = reg - REG_PAL0;
+			palette[color] = (short) value;
+			setPaletteColor(color);
+		}
+		else {
+			if (reg == 13 || reg == 12) {
+				blinkOn = false;
+			}
+			super.registerChanged(reg, value);
+		}
 	}
 
 

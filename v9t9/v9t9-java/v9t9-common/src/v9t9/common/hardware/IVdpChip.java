@@ -52,19 +52,6 @@ public interface IVdpChip extends IPersistable, IRegisterAccess {
 
 	/** Inform the VDP of the given number of cycles invoked on CPU side. */
 	void addCpuCycles(int cycles);
-	
-	interface IVdpListener {
-		/** Report that a VDP register changed 
-		 * @param value new value*/
-		void vdpRegisterChanged(int reg, byte value);
-		/** Report that a palette register changed
-		 * @param color the affected color  
-		 * @param value */
-		void paletteColorChanged(int color, short value);
-	}
-	
-	void addListener(IVdpListener listener);
-	void removeListener(IVdpListener listener);
 
 	/**
 	 * Tell whether interlacing is active.

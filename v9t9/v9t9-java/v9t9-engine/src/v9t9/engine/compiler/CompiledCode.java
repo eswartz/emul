@@ -14,26 +14,23 @@ import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.hardware.ICruHandler;
 
 /** This is the interface to the runtime-generated class. */
 abstract public class CompiledCode {
-    protected ICpu cpu;
-    protected IMemoryDomain memory;
-    protected IExecutor exec;
-    protected ICruHandler cru;
+    protected final ICpu cpu;
+    protected final ICpuState cpuState;
+    protected final IMemoryDomain memory;
+    protected final IExecutor exec;
     protected int nInstructions, nCycles;
-    
-    public CompiledCode() {
-        
-    }
     
     public CompiledCode(IExecutor exec) {
         this.exec = exec;
         this.cpu = exec.getCpu();
+        this.cpuState = exec.getCpu().getState();
         this.memory = exec.getCpu().getConsole();
     }
 

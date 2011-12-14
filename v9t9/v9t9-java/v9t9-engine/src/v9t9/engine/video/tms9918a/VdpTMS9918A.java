@@ -18,7 +18,6 @@ import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.Logging;
 import v9t9.base.utils.HexUtils;
 import v9t9.base.utils.ListenerList;
-import v9t9.base.utils.ListenerList.IFire;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.ICruChip;
@@ -93,7 +92,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	protected IProperty dumpFullInstructions;
 	private IProperty throttleInterrupts;
 
-	protected ListenerList<IVdpListener> listeners = new ListenerList<IVdpChip.IVdpListener>();
+	protected ListenerList<IRegisterWriteListener> listeners = new ListenerList<IRegisterWriteListener>();
 
 	protected int modeNumber;
 
@@ -182,18 +181,15 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	 * @param reg
 	 * @param value TODO
 	 */
-	protected void fireRegisterChanged(final int reg, final byte value) {
+	protected void fireRegisterChanged(final int reg, final int value) {
 		if (!listeners.isEmpty()) {
-	    	listeners.fire(new IFire<IVdpChip.IVdpListener>() {
-				@Override
-				public void fire(IVdpListener listener) {
-					try {
-						listener.vdpRegisterChanged(reg, value);
-					} catch (Throwable t) {
-						t.printStackTrace();
-					}
+			for (IRegisterWriteListener listener : listeners) {
+				try {
+					listener.registerChanged(reg, value);
+				} catch (Throwable t) {
+					t.printStackTrace();
 				}
-			});
+			}
     	}
 	}
 
@@ -336,19 +332,12 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		vdpInterruptFrac += cycles;
 	}
 	
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip#addListener(v9t9.common.hardware.IVdpTMS9918A.IVdpListener)
-	 */
 	@Override
-	public void addListener(IVdpListener listener) {
+	public synchronized void addWriteListener(IRegisterWriteListener listener) {
 		listeners.add(listener);
 	}
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip#removeListener(v9t9.common.hardware.IVdpTMS9918A.IVdpListener)
-	 */
 	@Override
-	public void removeListener(IVdpListener listener) {
+	public synchronized void removeWriteListener(IRegisterWriteListener listener) {
 		listeners.remove(listener);
 	}
 	

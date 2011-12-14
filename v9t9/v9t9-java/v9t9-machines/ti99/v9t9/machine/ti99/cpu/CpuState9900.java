@@ -6,6 +6,7 @@ package v9t9.machine.ti99.cpu;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.base.utils.ListenerList;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.machine.IRegisterAccess;
@@ -39,18 +40,31 @@ public class CpuState9900 implements ICpuState {
 	protected short WP;
 	private IMemoryDomain console;
 	private IStatus status;
+	private ListenerList<IRegisterWriteListener> listeners = new ListenerList<IRegisterAccess.IRegisterWriteListener>();
 
 	public CpuState9900(IMemoryDomain console) {
 		this.console = console;
 		this.status = createStatus();
 	}
 
+	protected final void fireRegisterChanged(int reg, int value) {
+		if (!listeners.isEmpty()) {
+			for (IRegisterWriteListener listener : listeners) {
+				try {
+					listener.registerChanged(reg, value);
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
+			}
+		}
+	}
 	public short getPC() {
 	    return PC;
 	}
 
 	public void setPC(short pc) {
 	    PC = pc;
+	    fireRegisterChanged(Cpu9900.REG_PC, PC);
 	}
 
 	public short getWP() {
@@ -60,6 +74,7 @@ public class CpuState9900 implements ICpuState {
 	public void setWP(short i) {
 	    // TODO: verify
 	    WP = i;
+	    fireRegisterChanged(Cpu9900.REG_WP, WP);
 	}
 	
     public String getGroupName() {
@@ -187,6 +202,7 @@ public class CpuState9900 implements ICpuState {
 				old = 0;
 			}
 		}
+		fireRegisterChanged(reg, val);
 		return old & 0xffff;
 	}
 	
@@ -251,4 +267,20 @@ public class CpuState9900 implements ICpuState {
 	public void setST(short st) {
 		getStatus().expand(st);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#addWriteListener(v9t9.common.machine.IRegisterAccess.IRegisterWriteListener)
+	 */
+	@Override
+	public synchronized void addWriteListener(IRegisterWriteListener listener) {
+		listeners.add(listener);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#removeWriteListener(v9t9.common.machine.IRegisterAccess.IRegisterWriteListener)
+	 */
+	@Override
+	public synchronized void removeWriteListener(IRegisterWriteListener listener) {
+		listeners.remove(listener);
+	}
+
 }

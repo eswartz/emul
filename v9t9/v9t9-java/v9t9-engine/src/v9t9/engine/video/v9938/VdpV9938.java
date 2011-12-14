@@ -13,9 +13,7 @@ import java.util.Map;
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
-import v9t9.base.utils.ListenerList.IFire;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.machine.IMachine;
@@ -251,18 +249,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			final int col = vdpregs[16] & 0xf;
 			palette[col] = (short) ((palettelatch << 8) | (val & 0xff));
 			
-			if (!listeners.isEmpty()) {
-		    	listeners.fire(new IFire<IVdpChip.IVdpListener>() {
-					@Override
-					public void fire(IVdpListener listener) {
-						try {
-							listener.paletteColorChanged(col, palette[col]);
-						} catch (Throwable t) {
-							t.printStackTrace();
-						}
-					}
-				});
-	    	}
+			fireRegisterChanged(col + REG_PAL0, palette[col]);
 			
 			vdpregs[16] = (byte) ((vdpregs[16]+1)&0xf);
 			fireRegisterChanged(16, vdpregs[16]);
@@ -779,19 +766,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
 				log("palette register " + color + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(value));
 
-			if (!listeners.isEmpty()) {
-				listeners.fire(new IFire<IVdpListener>() {
-
-					@Override
-					public void fire(IVdpListener listener) {
-						try {
-							listener.paletteColorChanged(color, palette[color]);
-						} catch (Throwable t) {
-							t.printStackTrace();
-						}
-					}
-				});
-			}
+			fireRegisterChanged(reg, value);
 			return old;
 		} if (reg >= VdpV9938Consts.REG_SR0) {
 			int old = statusvec[reg - VdpV9938Consts.REG_SR0] & 0xff;

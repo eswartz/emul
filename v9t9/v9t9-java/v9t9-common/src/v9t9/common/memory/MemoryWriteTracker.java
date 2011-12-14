@@ -1,10 +1,7 @@
-package v9t9.server.tcf;
+package v9t9.common.memory;
 
 import java.util.BitSet;
 
-import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.memory.IMemoryWriteListener;
 
 /**
  * Track a series of changes to a memory domain

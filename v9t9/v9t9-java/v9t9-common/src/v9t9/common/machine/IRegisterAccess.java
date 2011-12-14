@@ -50,4 +50,12 @@ public interface IRegisterAccess {
 	String getRegisterTooltip(int reg);
 	
 	int getRegisterNumber(String id);
+	
+	interface IRegisterWriteListener {
+		void registerChanged(int reg, int value);
+	}
+	
+	void addWriteListener(IRegisterWriteListener listener);
+	void removeWriteListener(IRegisterWriteListener listener);
+
 }

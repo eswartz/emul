@@ -15,8 +15,8 @@ import v9t9.canvas.video.IVdpModeRedrawHandler;
 import v9t9.canvas.video.VdpRedrawInfo;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
-import v9t9.common.hardware.IVdpChip.IVdpListener;
 import v9t9.common.hardware.IVdpTMS9918A;
+import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
 import v9t9.common.video.IVdpCanvas;
@@ -31,7 +31,7 @@ import v9t9.common.video.VdpModeInfo;
  * 
  * @author ejs
  */
-public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IVdpListener, IMemoryWriteListener {
+public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWriteListener, IRegisterWriteListener {
 	private RedrawBlock[] blocks;
 
 	protected byte vdpbg;
@@ -73,7 +73,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IVdpListen
 		blankModeRedrawHandler = new BlankModeRedrawHandler(vdpRedrawInfo, createBlankModeInfo());
 		
 		vdpChip.getVideoMemory().addWriteListener(this);
-		vdpChip.addListener(this);
+		vdpChip.addWriteListener(this);
 	}
 	
 	/* (non-Javadoc)
@@ -396,7 +396,6 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IVdpListen
 		return 1024;
 	}
 
-	// TODO: 
     public synchronized void touchAbsoluteVdpMemory(int vdpaddr) {
     	try {
 			if (vdpModeRedrawHandler != null) {
@@ -494,17 +493,9 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IVdpListen
 	 * @see v9t9.common.hardware.IVdpChip.IVdpListener#vdpRegisterChanged(int, byte)
 	 */
 	@Override
-	public void vdpRegisterChanged(int reg, byte value) {
+	public void registerChanged(int reg, int value) {
 		if (reg >= 0 && reg < vdpChip.getVdpRegisterCount())
-			writeVdpReg(reg, value);
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip.IVdpListener#paletteColorChanged(int, short)
-	 */
-	@Override
-	public void paletteColorChanged(int color, short value) {
-		
+			writeVdpReg(reg, (byte) value);
 	}
 
 	/* (non-Javadoc)

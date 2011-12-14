@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.base.utils.HexUtils;
+import v9t9.base.utils.ListenerList;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.machine.IRegisterAccess;
@@ -51,6 +52,8 @@ public class CpuStateF99b implements ICpuState {
 	private IStatus status;
 
 	private short regs[] = new short[16];
+
+	private ListenerList<IRegisterWriteListener> listeners = new ListenerList<IRegisterAccess.IRegisterWriteListener>();
 	
 	public CpuStateF99b(IMemoryDomain console) {
 		this.console = console;
@@ -110,6 +113,9 @@ public class CpuStateF99b implements ICpuState {
 		if (reg == CpuF99b.SR) {
 			getStatus().expand(regs[reg]);
 		}
+		
+		fireRegisterChanged(reg, val);
+		
 		return old & 0xffff;
 		
 	}
@@ -342,5 +348,30 @@ public class CpuStateF99b implements ICpuState {
 		return val;
 	}
 
+	protected final void fireRegisterChanged(int reg, int value) {
+		if (!listeners.isEmpty()) {
+			for (IRegisterWriteListener listener : listeners) {
+				try {
+					listener.registerChanged(reg, value);
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
+			}
+		}
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#addWriteListener(v9t9.common.machine.IRegisterAccess.IRegisterWriteListener)
+	 */
+	@Override
+	public synchronized void addWriteListener(IRegisterWriteListener listener) {
+		listeners.add(listener);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#removeWriteListener(v9t9.common.machine.IRegisterAccess.IRegisterWriteListener)
+	 */
+	@Override
+	public synchronized void removeWriteListener(IRegisterWriteListener listener) {
+		listeners.remove(listener);
+	}
 
 }

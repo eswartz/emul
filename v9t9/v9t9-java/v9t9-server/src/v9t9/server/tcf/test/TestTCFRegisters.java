@@ -158,8 +158,8 @@ public class TestTCFRegisters extends BaseTCFTest {
 
 	@Test
 	public void testGetGroupChildren() throws Throwable {
-		final RegistersContext cpu = getGroupContext(IMemoryDomain.NAME_CPU);
-		final RegistersContext video = getGroupContext(IMemoryDomain.NAME_VIDEO);
+		final RegistersContext cpu = getRegistersContext(reg, IMemoryDomain.NAME_CPU);
+		final RegistersContext video = getRegistersContext(reg, IMemoryDomain.NAME_VIDEO);
 		
 		for (final String contextId : new String[] { IMemoryDomain.NAME_CPU, IMemoryDomain.NAME_VIDEO }) {
 			new TCFCommandWrapper() {
@@ -271,41 +271,10 @@ public class TestTCFRegisters extends BaseTCFTest {
 		
 	}
 	
-	
-	/**
-	 * @return
-	 * @throws Throwable 
-	 */
-	private RegistersContext getGroupContext(final String contextId) throws Throwable {
-		final RegistersContext[] ctxs = { null };
-
-		new TCFCommandWrapper() {
-			public IToken run() throws Exception {
-				return reg.getContext(contextId, new IRegisters.DoneGetContext() {
-					
-					@Override
-					public void doneGetContext(IToken token, Exception error,
-							RegistersContext context) {
-						try {
-							assertNull(error);
-							ctxs[0] = context;
-						} catch (Throwable t) {
-							excs[0] = t;
-						} finally {
-							tcfDone();
-						}
-					}
-
-				});
-			}
-		};
-		return ctxs[0];
-	}
-	
 
 	@Test
 	public void testGetCpuRegisterContexts() throws Throwable {
-		final RegistersContext cpu = getGroupContext(IMemoryDomain.NAME_CPU);
+		final RegistersContext cpu = getRegistersContext(reg, IMemoryDomain.NAME_CPU);
 
 		new TCFCommandWrapper() {
 			public IToken run() throws Exception {
@@ -426,7 +395,7 @@ public class TestTCFRegisters extends BaseTCFTest {
 
 	@Test
 	public void testGetSetCpuRegisters() throws Throwable {
-		final RegistersContext cpuPC = getGroupContext(IMemoryDomain.NAME_CPU + ".PC");
+		final RegistersContext cpuPC = getRegistersContext(reg, IMemoryDomain.NAME_CPU + ".PC");
 
 		final byte[][] saved = { null };
 		

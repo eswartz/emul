@@ -25,4 +25,5 @@ public interface IVdpTMS9918A extends IVdpChip {
 	int getBitmapModePatternMask();
 	
 	boolean isBitmapMonoMode();
+
 }
