@@ -363,14 +363,14 @@ public class CpuStateF99b implements ICpuState {
 	 * @see v9t9.common.machine.IRegisterAccess#addWriteListener(v9t9.common.machine.IRegisterAccess.IRegisterWriteListener)
 	 */
 	@Override
-	public synchronized void addWriteListener(IRegisterWriteListener listener) {
+	public void addWriteListener(IRegisterWriteListener listener) {
 		listeners.add(listener);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IRegisterAccess#removeWriteListener(v9t9.common.machine.IRegisterAccess.IRegisterWriteListener)
 	 */
 	@Override
-	public synchronized void removeWriteListener(IRegisterWriteListener listener) {
+	public void removeWriteListener(IRegisterWriteListener listener) {
 		listeners.remove(listener);
 	}
 

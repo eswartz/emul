@@ -333,11 +333,11 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	}
 	
 	@Override
-	public synchronized void addWriteListener(IRegisterWriteListener listener) {
+	public void addWriteListener(IRegisterWriteListener listener) {
 		listeners.add(listener);
 	}
 	@Override
-	public synchronized void removeWriteListener(IRegisterWriteListener listener) {
+	public void removeWriteListener(IRegisterWriteListener listener) {
 		listeners.remove(listener);
 	}
 	
