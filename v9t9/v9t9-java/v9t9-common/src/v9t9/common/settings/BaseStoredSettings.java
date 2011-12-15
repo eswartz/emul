@@ -276,8 +276,10 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 			if (schema != null) {
 				Object cur = setting.getValue();
 				Object def = schema.getDefaultValue();
-				if (cur == def || (cur != null && cur.equals(def)))
+				if ((cur == null && def == null) || (cur != null && (cur != def) && cur.equals(def))) {
+					settings.put(setting.getName(), (Object)null);
 					continue;
+				}
 			} else {
 				if (DEBUG) System.out.println("*** No schema for " + context + "::" + setting.getName());
 			}
