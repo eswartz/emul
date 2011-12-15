@@ -55,7 +55,7 @@ public class MemoryService extends BaseServiceImpl {
 		registerCommand(GET_CHILDREN, 1, 2);
 		registerCommand(GET_CONTEXT, 1, 2);
 		registerCommand(SET, 6, 2);
-		registerCommand(GET, 5, 2);
+		registerCommand(GET, 5, 3);
 	}
 	
 	/* (non-Javadoc)
@@ -135,7 +135,7 @@ public class MemoryService extends BaseServiceImpl {
 				throw new ErrorReport("Bad size of " + size + " @ " + word_size, 
 						IErrorReport.TCF_ERROR_INV_DATA_SIZE);
 
-			if (addr < 0 || addr != ((addr) & ~(word_size - 1)))
+			if (addr != ((addr) & ~(word_size - 1)))
 				throw new ErrorReport("Bad alignment of " + addr + " @ " + word_size, 
 						IErrorReport.TCF_ERROR_INV_ADDRESS);
 
@@ -154,6 +154,9 @@ public class MemoryService extends BaseServiceImpl {
 			return new Object[] { new Binary(buf, 0, buf.length), null, null };
 		} catch (ErrorReport e) {
 			return new Object[] { null, e, null };
+		} catch (Throwable e) {
+			return new Object[] { null, new ErrorReport("internal error", -1), null };
+			
 		}
 	}
 
@@ -179,7 +182,7 @@ public class MemoryService extends BaseServiceImpl {
 			throw new ErrorReport("Bad size of " + size + " @ " + word_size, 
 					IErrorReport.TCF_ERROR_INV_DATA_SIZE);
 	
-		if (addr < 0 || addr != ((addr) & ~(word_size - 1)))
+		if (addr != ((addr) & ~(word_size - 1)))
 			throw new ErrorReport("Bad alignment of " + addr + " @ " + word_size, 
 					IErrorReport.TCF_ERROR_INV_ADDRESS);
 	

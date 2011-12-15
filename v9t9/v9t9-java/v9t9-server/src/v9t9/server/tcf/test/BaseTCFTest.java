@@ -22,7 +22,10 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILocator;
+import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRegisters;
+import org.eclipse.tm.tcf.services.IMemory.DoneGetContext;
+import org.eclipse.tm.tcf.services.IMemory.MemoryContext;
 import org.eclipse.tm.tcf.services.IRegisters.RegistersContext;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -627,5 +630,30 @@ public class BaseTCFTest {
 			if (regNumberToIdMap != null)
 				regNumberToIdMap.put(reg, kid);
 		}
+	}
+	
+	protected IMemory.MemoryContext getMemoryContext(final IMemory mem, final String contextId) throws Throwable {
+
+		final IMemory.MemoryContext[] ctxs = { null };
+		new TCFCommandWrapper() {
+			public IToken run() throws Exception {
+				return mem.getContext(contextId, new DoneGetContext() {
+					@Override
+					public void doneGetContext(IToken token, Exception error,
+						MemoryContext context) {
+						try {
+							assertNoError(error);
+							ctxs[0] = context;
+						} catch (Throwable t) {
+							excs[0] = t;
+						} finally {
+							tcfDone();
+						}								
+					}
+				});
+			}		
+		};
+		return ctxs[0];
+		
 	}
 }

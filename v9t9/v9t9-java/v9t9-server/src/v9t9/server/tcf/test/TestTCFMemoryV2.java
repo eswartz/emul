@@ -19,8 +19,6 @@ import java.util.Set;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
-import org.eclipse.tm.tcf.services.IMemory.DoneGetContext;
-import org.eclipse.tm.tcf.services.IMemory.MemoryContext;
 import org.eclipse.tm.tcf.services.IMemory.MemoryError;
 import org.junit.Before;
 import org.junit.Test;
@@ -118,6 +116,31 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 				memV2.addListener(listener);
 			}
 		});
+
+		
+		final IMemory.MemoryContext video = getMemoryContext(memV2, IMemoryDomain.NAME_VIDEO);
+
+		// save...
+		final byte[] orig = new byte[size + 4];
+		new TCFCommandWrapper() {
+			public IToken run() throws Exception {
+				return video.get((Integer) (addr_ - 2), 1, orig, 0, size + 4, 0,  
+					new IMemoryV2.DoneMemory() {
+
+						@Override
+						public void doneMemory(IToken token, MemoryError error) {
+							try {
+								assertNoError(error);
+							} catch (Throwable t) {
+								excs[0] = t;
+							} finally {
+								tcfDone();
+							}								
+						}
+				});
+			}		
+		};
+
 		
 		try {
 			new TCFCommandWrapper() {
@@ -143,27 +166,6 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 
 			// we should get one initial contentChanged report for the full range
 			validateInitialContentChanged(notifyId, addr_, size, granularity, listener.changeMap);
-			
-
-			final IMemory.MemoryContext[] videos = { null };
-			new TCFCommandWrapper() {
-				public IToken run() throws Exception {
-					return memV2.getContext(IMemoryDomain.NAME_VIDEO, new DoneGetContext() {
-						@Override
-						public void doneGetContext(IToken token, Exception error,
-							MemoryContext context) {
-							try {
-								assertNoError(error);
-								videos[0] = context;
-							} catch (Throwable t) {
-								excs[0] = t;
-							} finally {
-								tcfDone();
-							}								
-						}
-					});
-				}		
-			};
 			
 			// this set tracks outstanding Memory#set events
 			final boolean[] finished = { true };
@@ -204,7 +206,7 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 				new TCFCommandWrapper() {
 					public IToken run() throws Exception {
 						try {
-							IToken token = videos[0].set(Integer.valueOf(theAddr), 1, data, theIdx, toUse_, memMode, done);
+							IToken token = video.set(Integer.valueOf(theAddr), 1, data, theIdx, toUse_, memMode, done);
 							synchronized (waiting) {
 								waiting.add(token);
 							}
@@ -235,7 +237,7 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 				new TCFCommandWrapper() {
 					public IToken run() throws Exception {
 						try {
-							IToken token = videos[0].set(Integer.valueOf(addr_ - 2), 1, 
+							IToken token = video.set(Integer.valueOf(addr_ - 2), 1, 
 									new byte[] { '?', '!' }, 0, 2, memMode, done);
 							synchronized (waiting) {
 								waiting.add(token);
@@ -250,7 +252,7 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 			new TCFCommandWrapper() {
 				public IToken run() throws Exception {
 					try {
-						IToken token = videos[0].set(Integer.valueOf(addr_ + size), 1, 
+						IToken token = video.set(Integer.valueOf(addr_ + size), 1, 
 								new byte[] { '?', '!' }, 0, 2, memMode, done);
 						synchronized (waiting) {
 							waiting.add(token);
@@ -297,6 +299,27 @@ public class TestTCFMemoryV2 extends BaseTCFTest {
 					memV2.removeListener(listener);
 				}
 			});
+			
+			// restore...
+			new TCFCommandWrapper() {
+				public IToken run() throws Exception {
+					return video.set((Integer) (addr_ - 2), 1, orig, 0, (size + 4), 0,  
+						new IMemoryV2.DoneMemory() {
+
+							@Override
+							public void doneMemory(IToken token, MemoryError error) {
+								try {
+									assertNoError(error);
+								} catch (Throwable t) {
+									excs[0] = t;
+								} finally {
+									tcfDone();
+								}								
+							}
+					});
+				}		
+			};
+
 		}
 	}
 	
