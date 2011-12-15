@@ -6,14 +6,17 @@
  */
 package v9t9.machine.ti99.cpu;
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.IRawInstructionFactory;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.engine.compiler.CodeBlockCompilerStrategy;
 import v9t9.engine.cpu.CpuBase;
@@ -30,11 +33,37 @@ import v9t9.machine.ti99.machine.TI99Machine;
  * @author ejs
  */
 public class Cpu9900 extends CpuBase {
-    public static final int TMS_9900_BASE_CYCLES_PER_SEC = 3000000;
+	
+	public static final SettingSchema settingForceAllIntsToLevel1 = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
+			"ForceAllIntsToLevel1",
+			Boolean.TRUE);
+	
+    public static final int PIN_INTREQ = 1 << 31;
+    public static final int PIN_LOAD = 1 << 3;
+    public static final int PIN_RESET = 1 << 5;
+    
+    /** When intreq, the interrupt level (IC* bits on the TMS9900). */
+    private byte ic;
+	public static final int REG_PC = 16;
+	public static final int REG_ST = 17;
+	public static final int REG_WP = 18;
+  
+
+	
+	public static final int TMS_9900_BASE_CYCLES_PER_SEC = 3000000;
 	/* interrupt pins */
 	public static final int INTLEVEL_RESET = 0;
 	public static final int INTLEVEL_LOAD = 1;
 	public static final int INTLEVEL_INTREQ = 2;
+	
+
+    /** 
+     * When set, implement TI-99/4A behavior where all interrupts
+     * are perceived as level 1.
+     */
+    private IProperty forceIcTo1;
+    
 	private final IVdpChip vdp;
 	private Dumper dumper;
 	
@@ -44,6 +73,8 @@ public class Cpu9900 extends CpuBase {
     	
 		this.dumper = new Dumper(Settings.getSettings(machine),
 			settingDumpInstructions, settingDumpFullInstructions);
+		
+		forceIcTo1 = Settings.get(machine, settingForceAllIntsToLevel1);
 		
         cyclesPerSecond.setInt(TMS_9900_BASE_CYCLES_PER_SEC);
 
@@ -69,26 +100,9 @@ public class Cpu9900 extends CpuBase {
 	 */
     public void setInterruptRequest(byte level) {
     	pins |= PIN_INTREQ;
-    	ic = forceIcTo1 ? 1 : level;
+    	ic = forceIcTo1.getBoolean() ? 1 : level;
     }
     
-    /** 
-     * When set, implement TI-99/4A behavior where all interrupts
-     * are perceived as level 1.
-     */
-    private boolean forceIcTo1 = true;
-    
-    public static final int PIN_INTREQ = 1 << 31;
-    public static final int PIN_LOAD = 1 << 3;
-    public static final int PIN_RESET = 1 << 5;
-    
-    /** When intreq, the interrupt level (IC* bits on the TMS9900). */
-    private byte ic;
-	public static final int REG_PC = 16;
-	public static final int REG_ST = 17;
-	public static final int REG_WP = 18;
-  
-
     /**
      * 
      */
@@ -138,7 +152,7 @@ public class Cpu9900 extends CpuBase {
 	    	//pins &= ~PIN_INTREQ;
 	    	cruAccess.pollForPins(this);
 	    	if (cruAccess.isInterruptWaiting()) {
-	    		ic = forceIcTo1 ? 1 : cruAccess.getInterruptLevel(); 
+	    		ic = forceIcTo1.getBoolean() ? 1 : cruAccess.getInterruptLevel(); 
 	    		if (state.getStatus().getIntMask() >= ic) {
 	    			//System.out.println("Triggering interrupt... "+ic);
 	    			pins |= PIN_INTREQ;
@@ -212,7 +226,6 @@ public class Cpu9900 extends CpuBase {
 		section.put("PC", state.getPC());
 		section.put("WP", ((CpuState9900) state).getWP());
 		section.put("status", state.getStatus().flatten());
-		section.put("ForceAllIntsLevel1", forceIcTo1);
 	}
 
 	public void loadState(ISettingSection section) {
@@ -224,7 +237,6 @@ public class Cpu9900 extends CpuBase {
 		state.setPC((short) section.getInt("PC"));
 		((CpuState9900) state).setWP((short) section.getInt("WP"));
 		state.getStatus().expand((short) section.getInt("status"));
-		forceIcTo1 = section.getBoolean("ForceAllIntsLevel1");
 		super.loadState(section);
 		
 	}
