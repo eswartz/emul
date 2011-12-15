@@ -461,7 +461,6 @@ public class RegistersV2Service extends RegisterService {
 		if (changes.isEmpty())
 			return;
 		
-		assert changes.size() <= 256;
 		assert regSize < 256;
 		
 		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
