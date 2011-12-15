@@ -10,12 +10,14 @@ import static v9t9.common.hardware.VdpTMS9918AConsts.*;
 
 import java.util.Arrays;
 
+import v9t9.base.properties.IProperty;
 import v9t9.canvas.video.BlankModeRedrawHandler;
 import v9t9.canvas.video.IVdpModeRedrawHandler;
 import v9t9.canvas.video.VdpRedrawInfo;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpTMS9918A;
+import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
@@ -60,6 +62,8 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 
 	protected final IVideoRenderer renderer;
 
+	private IProperty pauseMachine;
+
 	public VdpTMS9918ACanvasRenderer(ISettingsHandler settings, IVideoRenderer renderer) {
 		this.renderer = renderer;
 		this.vdpChip = (IVdpTMS9918A) renderer.getVdpHandler();
@@ -71,6 +75,8 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		
 		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, vdpChip, this, vdpChanges, vdpCanvas);
 		blankModeRedrawHandler = new BlankModeRedrawHandler(vdpRedrawInfo, createBlankModeInfo());
+		
+		pauseMachine = settings.get(IMachine.settingPauseMachine);
 		
 		vdpChip.getVideoMemory().addWriteListener(this);
 		vdpChip.addWriteListener(this);
@@ -447,7 +453,8 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 						byte vdpStatus = (byte) vdpChip.getRegister(REG_ST);
 						vdpStatus = spriteRedrawHandler.updateSpriteCoverage(
 								vdpStatus, vdpChanges.fullRedraw);
-						vdpChip.setRegister(REG_ST, vdpStatus);
+						if (!pauseMachine.getBoolean())
+							vdpChip.setRegister(REG_ST, vdpStatus);
 					}
 					count = vdpModeRedrawHandler.updateCanvas(blocks, vdpChanges.fullRedraw);
 					if (spriteRedrawHandler != null && drawSprites) {
