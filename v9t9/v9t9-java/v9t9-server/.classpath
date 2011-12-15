@@ -7,7 +7,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-engine"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-machines"/>
 	<classpathentry kind="lib" path="/v9t9-base/libs/junit/junit-4.8.1.jar" sourcepath="/v9t9-base/libs/junit/junit-4.8.1-source.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.eclipse.tm.tcf"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.eclipse.tm.tcf.core"/>
+	<classpathentry kind="lib" path="/v9t9-base/libs/org.eclipse.tm.tcf.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
