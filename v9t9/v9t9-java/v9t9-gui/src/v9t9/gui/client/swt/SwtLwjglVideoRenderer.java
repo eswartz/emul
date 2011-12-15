@@ -173,7 +173,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	 */
 	@Override
 	public void propertyChanged(IProperty property) {
-		if (property == BaseEmulatorWindow.settingMonitorDrawing) {
+		if (property == monitorDrawing) {
 			updateShaders();
 		}
 	}
