@@ -3,6 +3,7 @@
  */
 package v9t9.server.tcf.services.local;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,8 @@ public class RegisterService extends BaseServiceImpl {
 	private static final String ROOT = "root";
 	private static final String SET = "set";
 	private static final String GET = "get";
+	private static final String SETM = "setm";
+	private static final String GETM = "getm";
 	private static final String GET_CHILDREN = "getChildren";
 	private static final String GET_CONTEXT = "getContext";
 
@@ -41,6 +44,8 @@ public class RegisterService extends BaseServiceImpl {
 		registerCommand(GET_CHILDREN, 1, 2);
 		registerCommand(GET, 1, 2);
 		registerCommand(SET, 2, 1);
+		registerCommand(GETM, 1, 2);
+		registerCommand(SETM, 2, 1);
 	}
 	
 	public RegisterService(IMachine machine, IChannel channel) {
@@ -64,6 +69,12 @@ public class RegisterService extends BaseServiceImpl {
 		}
 		else if (SET.equals(name)) {
 			return doSet(args);
+		}
+		else if (GETM.equals(name)) {
+			return doGetm(args);
+		}
+		else if (SETM.equals(name)) {
+			return doSetm(args);
 		}
 		return null;
 	}
@@ -197,6 +208,23 @@ public class RegisterService extends BaseServiceImpl {
 		if (args[0] != null)
 			id = args[0].toString();
 
+		ByteArrayOutputStream bos = new ByteArrayOutputStream(4);
+		
+		doGetReg(id, 0, 0, bos);
+		
+		return new Object[] { null, new JSON.Binary(bos.toByteArray(), 0, bos.size()) };
+		
+		
+	}
+
+	/**
+	 * @param id
+	 * @param bos
+	 * @return
+	 * @throws ErrorReport
+	 */
+	protected void doGetReg(String id, int offs, int size, ByteArrayOutputStream bos)
+			throws ErrorReport {
 		String[] parts = id.split("\\.");
 		if (parts.length != 2)
 			throw new ErrorReport("Bad context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);
@@ -211,27 +239,39 @@ public class RegisterService extends BaseServiceImpl {
 
 		int value = access.getRegister(num);
 		
-		int size = access.getRegisterInfo(num).size;
-		byte[] data = new byte[size];
+		if (size == 0)
+			size = access.getRegisterInfo(num).size;
 		
-		for (int i = 0; i < size; i++) {
-			data[size - i - 1] = (byte) value;
-			value >>= 8;
+		for (int i = offs; i < size; i++) {
+			bos.write(value >> (8 * (size - i - 1)));
 		}
-		return new Object[] { null, new JSON.Binary(data, 0, size) };
-		
-		
 	}
 
-	/**
-	 * @param args
-	 * @return 
-	 */
 	private Object[] doSet(Object[] args) throws Exception {
 		String id = null;
 		if (args[0] != null)
 			id = args[0].toString();
 
+		byte[] data = toByteArray(args[1]);
+		int size = data.length;
+		
+		int idx = 0;
+		
+		doSetReg(id, data, idx, 0, size);
+		
+		return new Object[] { null };
+		
+	}
+
+	/**
+	 * @param id
+	 * @param data
+	 * @param idx
+	 * @param size
+	 * @throws ErrorReport
+	 */
+	protected int doSetReg(String id, byte[] data, int idx, int offs, int size)
+			throws ErrorReport {
 		String[] parts = id.split("\\.");
 		if (parts.length != 2)
 			throw new ErrorReport("Unknown context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);
@@ -244,15 +284,60 @@ public class RegisterService extends BaseServiceImpl {
 		if (num == Integer.MIN_VALUE)
 			throw new ErrorReport("Unknown context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);		
 
-		byte[] data = toByteArray(args[1]);
 		int value = 0;
-		for (int i = 0; i < data.length; i++)
-			value = (value << 8) | (data[i] & 0xff);
+		for (int i = offs; i < size; i++) {
+			value |= (data[idx++] & 0xff) << (8 * (size - i - 1));
+		}
 		
 		access.setRegister(num, value);
 		
-		return new Object[] { null };
+		return idx;
+	}
+
+
+	private Object[] doGetm(Object[] args) throws Exception {
+		@SuppressWarnings("unchecked")
+		List<List<Object>> locMap = (List<List<Object>>) args[0];
+
+		ByteArrayOutputStream bos = new ByteArrayOutputStream(4 * locMap.size());
+
+		for (List<Object> loc : locMap) {
+			if (loc.size() != 3) {
+				throw new ErrorReport("Invalid location object", IErrorReport.TCF_ERROR_INV_FORMAT);
+				
+			}
+			String id = (String) loc.get(0);
+			int offs = ((Number) loc.get(1)).intValue();
+			int size = ((Number) loc.get(2)).intValue();
+			
+			doGetReg(id, offs, size, bos);
+		}
 		
+		return new Object[] { null, new JSON.Binary(bos.toByteArray(), 0, bos.size()) };
+	}
+
+	private Object[] doSetm(Object[] args) throws Exception {
+		@SuppressWarnings("unchecked")
+		List<List<Object>> locMap = (List<List<Object>>) args[0];
+		byte[] data = JSON.toByteArray(args[1]);
+
+		int idx = 0;
+		for (List<Object> loc : locMap) {
+			if (loc.size() != 3) {
+				throw new ErrorReport("Invalid location object", IErrorReport.TCF_ERROR_INV_FORMAT);
+				
+			}
+			String id = (String) loc.get(0);
+			int offs = ((Number) loc.get(1)).intValue();
+			int size = ((Number) loc.get(2)).intValue();
+			
+			idx = doSetReg(id, data, idx, offs, size);
+		}
+		
+		if (idx != data.length)
+			throw new ErrorReport("Did not consume all register data", IErrorReport.TCF_ERROR_INV_FORMAT);
+			
+		return new Object[] { null };
 	}
 
 	protected String getGroupContext(String id) {

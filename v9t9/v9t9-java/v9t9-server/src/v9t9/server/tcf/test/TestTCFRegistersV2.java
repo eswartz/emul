@@ -8,6 +8,7 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -18,6 +19,7 @@ import java.util.Set;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IRegisters;
+import org.eclipse.tm.tcf.services.IRegisters.Location;
 import org.eclipse.tm.tcf.services.IRegisters.RegistersContext;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,7 +57,9 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		
 		final Set<Integer> expRegs = new HashSet<Integer>();
 		private boolean isListening;
-		private Map<String,Integer> origRegVals;
+		//private Map<String,Integer> origRegVals;
+		private byte[][] origRegVals = new byte[1][];
+		private Location[] origRegLocs;
 		
 		public RegRunner(final String notifyId, final String contextId, 
 				final Collection<Integer> regNums,
@@ -249,10 +253,81 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		}
 
 		/**
+		 * @throws Throwable 
+		 * 
+		 */
+		public void saveRegs() throws Throwable {
+			
+			Integer[] regs = regNums.toArray(new Integer[regNums.size()]);
+			
+			// remember and restore WP first (if it exists)
+			Arrays.sort(regs, new Comparator<Integer>() {
+
+				@Override
+				public int compare(Integer o1, Integer o2) {
+					if (regNumContexts.get(o1).equals("CPU.WP"))
+						return -1;
+					if (regNumContexts.get(o2).equals("CPU.WP"))
+						return 1;
+					return o1 - o2;
+				}
+				
+			});
+			
+			final Location[] locs = new Location[regs.length];
+			for (int i = 0; i < regs.length; i++) {
+				locs[i] = new Location(regNumContexts.get(regs[i]), 0, 4);
+			}
+			origRegLocs = locs;
+			
+			new TCFCommandWrapper() {
+				@Override
+				public IToken run() throws Exception {
+					return regV2.getm(locs,new IRegisters.DoneGet() {
+
+						@Override
+						public void doneGet(IToken token, Exception error,
+								byte[] value) {
+							excs[0] = error;
+							origRegVals[0] = value;
+							tcfDone();
+						}
+					});
+				}
+			};
+			
+			/*
+			origRegVals = new HashMap<String, Integer>();
+			
+			// save off
+			for (Integer regNum : regNums) {
+				String id = regNumContexts.get(regNum);
+				origRegVals.put(id, getReg(id));
+			}
+			*/
+			
+		}
+
+		/**
 		 * @param origRegVals
 		 * @throws Throwable 
 		 */
 		public void restoreRegs() throws Throwable {
+			new TCFCommandWrapper() {
+				@Override
+				public IToken run() throws Exception {
+					return regV2.setm(origRegLocs, origRegVals[0], new IRegisters.DoneSet() {
+
+						@Override
+						public void doneSet(IToken token, Exception error) {
+							excs[0] = error;
+							tcfDone();
+						}
+					});
+				}
+			};
+			
+			/*
 			if (origRegVals.containsKey("CPU.WP")) {
 				// set this first since it affects the others!
 				setReg("CPU.WP", origRegVals.get("CPU.WP"));
@@ -264,22 +339,28 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 				int value = getReg(id);
 				assertEquals("restoring " + id, origRegVals.get(id), (Integer) value);
 			}
+			*/
 			
-		}
+			final byte[][] copy = { null };
+			
 
-		/**
-		 * @throws Throwable 
-		 * 
-		 */
-		public void saveRegs() throws Throwable {
-			origRegVals = new HashMap<String, Integer>();
+			new TCFCommandWrapper() {
+				@Override
+				public IToken run() throws Exception {
+					return regV2.getm(origRegLocs, new IRegisters.DoneGet() {
+
+						@Override
+						public void doneGet(IToken token, Exception error,
+								byte[] value) {
+							excs[0] = error;
+							copy[0] = value;
+							tcfDone();
+						}
+					});
+				}
+			};
 			
-			// save off
-			for (Integer regNum : regNums) {
-				String id = regNumContexts.get(regNum);
-				origRegVals.put(id, getReg(id));
-			}
-			
+			assertTrue("reg copying", Arrays.equals(origRegVals[0], copy[0]));
 		}
 		
 	};
