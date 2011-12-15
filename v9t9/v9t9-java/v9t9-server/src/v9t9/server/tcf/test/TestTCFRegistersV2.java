@@ -213,7 +213,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		 * each change in values[] should be detected.
 		 * This assumes the caller knows exactly which events will
 		 * come through and not be coalesced */
-		public void validateRegChanges(int regNum, int[] values) {
+		public void validateRegChanges(int regNum, int mask, int[] values) {
 		
 			synchronized (changeMap) {
 				int valIdx = 0;
@@ -223,7 +223,8 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 							if (change.regNum == regNum) {
 								if (valIdx >= values.length)
 									fail("too many changes reported");
-								assertEquals("reg " + regNum + " at " + valIdx, values[valIdx], change.value);
+								assertEquals("reg " + regNum + " at " + valIdx, 
+										(values[valIdx] & mask), (change.value & mask))  ;
 								valIdx++;
 							}
 						}
@@ -481,7 +482,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		// get only a single report per cycle
 		RegRunner runner = new RegRunner("test1", IMemoryDomain.NAME_CPU, 
 				Arrays.asList(new Integer[] { pcReg }),
-				QUANTUM, -1);
+				QUANTUM, 0);
 		
 		runner.saveRegs();
 		try {
@@ -499,7 +500,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			runner.stopListening();
 			
 			runner.validateChanges();
-			runner.validateRegChanges(pcReg, new int[] { 100, 120 });
+			runner.validateRegChanges(pcReg, 0xffff, new int[] { 100, 120 });
 			runner.resetChanges();
 		} finally {
 			runner.stopListening();
@@ -520,7 +521,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		
 		// get only a single report per cycle
 		RegRunner runner = new RegRunner("test1", IMemoryDomain.NAME_CPU, 
-				regIdToNumMap.values(), QUANTUM, -1);
+				regIdToNumMap.values(), QUANTUM, 0);
 		
 		runner.saveRegs();
 		
@@ -551,7 +552,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			
 			cnt = 0;
 			for (int val : regIdToNumMap.values()) {
-				runner.validateRegChanges(val, new int[] { cnt, cnt + 128 });
+				runner.validateRegChanges(val, 0xffff, new int[] { cnt, cnt + 128 });
 				cnt += 2;
 			}
 			
@@ -562,4 +563,64 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		}
 				
 	}
+	
+
+	@Test
+	public void testContinuousAllRegChange() throws Throwable {
+		Map<String, RegistersContext> regContexts = new LinkedHashMap<String, IRegisters.RegistersContext>();
+		Map<String, Integer> regIdToNumMap = new LinkedHashMap<String, Integer>();
+		
+		gatherRegisterContexts(regV2, IMemoryDomain.NAME_VIDEO, regContexts, regIdToNumMap, null);
+		
+		final int QUANTUM = 1000;
+		
+		// get continuous reports of changes
+		RegRunner runner = new RegRunner("testV", IMemoryDomain.NAME_VIDEO, 
+				regIdToNumMap.values(), QUANTUM, -1);
+		
+		runner.saveRegs();
+		
+		try {
+			runner.startListening();
+			
+			int cnt = 0;
+			
+			for (String id : regIdToNumMap.keySet()) {
+				runner.setReg(id, cnt);
+				runner.setReg(id, -cnt);
+				cnt += 2;
+			}
+
+			// no delay
+			
+			cnt = 0;
+			for (String id : regIdToNumMap.keySet()) {
+				runner.setReg(id, cnt + 128);
+				runner.setReg(id, -(cnt + 128));
+				cnt += 2;
+			}
+			
+			// no delay
+			
+			
+			// flush events
+			runner.stopListening();
+			
+			runner.validateChanges();
+			
+			cnt = 0;
+			for (int val : regIdToNumMap.values()) {
+				runner.validateRegChanges(val, 0xff, new int[] { cnt, -cnt, cnt + 128, -(cnt + 128) });
+				cnt += 2;
+			}
+			
+			runner.resetChanges();
+		} finally {
+			runner.stopListening();
+			runner.restoreRegs();
+		}
+				
+	}
+
 }
+

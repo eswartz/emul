@@ -358,7 +358,7 @@ public class RegistersV2Service extends RegisterService {
 					IErrorReport.TCF_ERROR_ALREADY_ATTACHED);
 		}
 		
-		if (granularity >= 0)
+		if (granularity < 0)
 			listener = new ContinuousListenerInfo(id, access, trackedRegs, delay, granularity);
 		else
 			listener = new StandardListenerInfo(id, access, trackedRegs, delay, granularity);
