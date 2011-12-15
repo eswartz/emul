@@ -329,7 +329,12 @@ static char * map_file_name(Context * ctx, PathMap * m, char * fnm, int mode) {
         src = canonic_path_map_file_name(r->src);
         k = strlen(src);
         if (strncmp(src, fnm, k)) continue;
-        if (fnm[k] != 0 && fnm[k] != '/' && fnm[k] != '\\') continue;
+        if (fnm[k] != 0 && fnm[k] != '/' && fnm[k] != '\\') {
+            /* skip this rule only if it's not re-rooting the file-system */
+            if ((k != 1) || (src[0] != '/'))
+                continue;
+            k = 0;
+        }
         j = strlen(r->dst) - 1;
         if (fnm[k] != 0 && (r->dst[j] == '/' || r->dst[j] == '\\')) k++;
         snprintf(buf, sizeof(buf), "%s%s", r->dst, fnm + k);
