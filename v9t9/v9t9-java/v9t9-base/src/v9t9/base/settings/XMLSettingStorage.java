@@ -100,7 +100,7 @@ public class XMLSettingStorage implements ISettingStorage {
 					} catch (NumberFormatException e) {
 					}
 				} else if (type.equals(Type.Boolean.getXmlName())) {
-					value = Boolean.getBoolean(valueStr);
+					value = Boolean.valueOf(valueStr);
 				} else if (type.equals(Type.Object.getXmlName())) {
 					if (objectHandler != null)
 						value = objectHandler.decodeObject(valueStr);
