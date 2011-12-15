@@ -401,6 +401,7 @@ public class RegistersV2Service extends RegisterService {
 		if (changes.isEmpty())
 			return;
 		
+		assert changes.size() < 256;
 		assert regSize < 256;
 		
 		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -477,6 +478,7 @@ public class RegistersV2Service extends RegisterService {
 			}
 			
 			// # regs
+			assert changeGroup.second.size() < 256;
 			bos.write(changeGroup.second.size());
 			
 			for (RegisterChange change : changeGroup.second) {

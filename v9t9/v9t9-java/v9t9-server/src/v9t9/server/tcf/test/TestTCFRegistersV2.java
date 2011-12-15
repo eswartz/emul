@@ -606,7 +606,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			runner.startListening();
 			
 			final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			final IRegisters.Location[] locs = new IRegisters.Location[regIdToNumMap.size() * 2];
+			final IRegisters.Location[] locs = new IRegisters.Location[regIdToNumMap.size() * 4];
 			
 			int idx = 0;
 			int cnt = 0;
@@ -619,11 +619,6 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 				cnt += 2;
 			}
 
-			runner.setRegs(locs, bos.toByteArray());
-			
-			
-			bos.reset();
-			idx = 0;
 			cnt = 0;
 			for (String id : regIdToNumMap.keySet()) {
 				locs[idx++] = new Location(id, 0, 1);
