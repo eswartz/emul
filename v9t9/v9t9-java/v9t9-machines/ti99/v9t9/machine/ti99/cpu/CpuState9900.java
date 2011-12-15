@@ -30,7 +30,7 @@ public class CpuState9900 implements ICpuState {
 			register(i, "R" + i);
 		}
 		register(Cpu9900.REG_PC, "PC");
-		register(Cpu9900.REG_ST, "SP");
+		register(Cpu9900.REG_ST, "ST");
 		register(Cpu9900.REG_WP, "WP");
 	}
 	
@@ -138,7 +138,7 @@ public class CpuState9900 implements ICpuState {
 		case Cpu9900.REG_ST:
 			return IRegisterAccess.FLAG_ROLE_ST;
 		case Cpu9900.REG_WP:
-			return IRegisterAccess.FLAG_ROLE_FP;
+			return IRegisterAccess.FLAG_ROLE_FP + IRegisterAccess.FLAG_SIDE_EFFECTS;
 		case Cpu9900.REG_PC:
 			return IRegisterAccess.FLAG_ROLE_PC;
 		case 11:

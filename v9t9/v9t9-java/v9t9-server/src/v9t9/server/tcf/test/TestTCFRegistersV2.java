@@ -54,8 +54,9 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		private final int granularity;
 		
 		final List<List<Pair<Integer, RegisterChange[]>>> changeMap = new ArrayList<List<Pair<Integer, RegisterChange[]>>>();
-		final Map<Integer, String> regNumContexts = new HashMap<Integer, String>();
+		final Map<Integer, String> regNumContextIds = new HashMap<Integer, String>();
 		final Map<String, Integer> regNameIds = new HashMap<String, Integer>();
+		private Map<String, RegistersContext> regContexts = new HashMap<String, IRegisters.RegistersContext>(); 
 		
 		final Set<Integer> expRegs = new HashSet<Integer>();
 		private boolean isListening;
@@ -73,8 +74,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			this.regNums = regNums;
 			this.msDelay = msDelay;
 			this.granularity = granularity;
-
-			gatherRegisterContexts(regV2, contextId, null, regNameIds, regNumContexts);
+			gatherRegisterContexts(regV2, contextId, regContexts, regNameIds, regNumContextIds);
 		}
 		
 		public void startListening() throws Throwable {
@@ -263,14 +263,14 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			
 			Integer[] regs = regNums.toArray(new Integer[regNums.size()]);
 			
-			// remember and restore WP first (if it exists)
+			// move side effect regs first
 			Arrays.sort(regs, new Comparator<Integer>() {
 
 				@Override
 				public int compare(Integer o1, Integer o2) {
-					if (regNumContexts.get(o1).equals("CPU.WP"))
+					if (regContexts.get(regNumContextIds.get(o1)).hasSideEffects())
 						return -1;
-					if (regNumContexts.get(o2).equals("CPU.WP"))
+					if (regContexts.get(regNumContextIds.get(o2)).hasSideEffects())
 						return 1;
 					return o1 - o2;
 				}
@@ -279,7 +279,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			
 			final Location[] locs = new Location[regs.length];
 			for (int i = 0; i < regs.length; i++) {
-				locs[i] = new Location(regNumContexts.get(regs[i]), 0, 4);
+				locs[i] = new Location(regNumContextIds.get(regs[i]), 0, 4);
 			}
 			origRegLocs = locs;
 			
@@ -623,6 +623,10 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			for (String id : regIdToNumMap.keySet()) {
 				locs[idx++] = new Location(id, 0, 1);
 				bos.write(cnt + 128);
+				cnt += 2;
+			}
+			cnt = 0;
+			for (String id : regIdToNumMap.keySet()) {
 				locs[idx++] = new Location(id, 0, 1);
 				bos.write(-(cnt + 128));
 				cnt += 2;

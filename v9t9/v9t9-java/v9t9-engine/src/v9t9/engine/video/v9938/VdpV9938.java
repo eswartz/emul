@@ -145,6 +145,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	}
 	
 	private CommandVars cmdState = new CommandVars();
+	private IProperty pauseMachine;
 		
 	/* from mame and blueMSX:
 	 * 
@@ -176,6 +177,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		super(machine);
 		
 		msxClockDivisor = Settings.get(machine, settingMsxClockDivisor); 
+		pauseMachine = Settings.get(machine, IMachine.settingPauseMachine);
 	}
 
 	protected byte[] allocVdpRegs() {
@@ -291,7 +293,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	
 	@Override
 	public boolean isThrottled() {
-		return !accelActive() || (currentcycles <= 0);
+		return !accelActive() || (currentcycles <= 0) || pauseMachine.getBoolean();
 	}
 	
 	@Override
@@ -969,6 +971,8 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	protected int getRegisterFlags(int reg) {
 		if ((reg >= VdpV9938Consts.REG_SR0 && reg < VdpV9938Consts.REG_SR0 + 9) || (reg >= 32 && reg <= 45))
 			return IRegisterAccess.FLAG_VOLATILE + IRegisterAccess.FLAG_ROLE_GENERAL;
+		if (reg == 46 || reg == 16 || reg == 17)
+			return IRegisterAccess.FLAG_SIDE_EFFECTS + IRegisterAccess.FLAG_ROLE_GENERAL;
 		return super.getRegisterFlags(reg);
 	}
 
@@ -1005,7 +1009,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		} else {
 			val = vdpregs[reg];
 		}
-		switch (reg < VdpV9938Consts.REG_SR0 ? reg - 1 : reg) {
+		switch (reg) {
 		case 0:
 			return caten(yOrN("DG", val & 0x40), yOrN("IE2", val & 0x40),
 					yOrN("IE1", val & 0x20), yOrN("M5", val & R0_M5),

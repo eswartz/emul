@@ -151,6 +151,13 @@ public class RegisterService extends BaseServiceImpl {
 			ctx.put(IRegisters.PROP_MEMORY_ADDRESS, info.addr);
 		}
 		
+		if ((info.flags & IRegisterAccess.FLAG_VOLATILE) != 0) {
+			ctx.put(IRegisters.PROP_VOLATILE, true);
+		}
+		if ((info.flags & IRegisterAccess.FLAG_SIDE_EFFECTS) != 0) {
+			ctx.put(IRegisters.PROP_SIDE_EFFECTS, true);
+		}
+		
 		// IRegistersV2 special
 		ctx.put(IRegistersV2.PROP_NUMBER, reg);
 		
