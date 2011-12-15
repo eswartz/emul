@@ -167,9 +167,11 @@ public class EmulatorButtonBar extends EmulatorBar  {
 
 			});
 		
-		createToggleStateButton(BaseEmulatorWindow.settingMonitorDrawing, 9,  
-				0, "Apply monitor effect to video");
-
+		if (window.getVideoRenderer().supportsMonitorEffect()) {
+			createToggleStateButton(BaseEmulatorWindow.settingMonitorDrawing, 9,  
+					0, "Apply monitor effect to video");
+		}
+		
 		createButton(10, "Take screenshot",
 				new SelectionAdapter() {
 					@Override

@@ -54,4 +54,6 @@ public interface IVideoRenderer {
 	 */
 	FastTimer getFastTimer();
 
+	boolean supportsMonitorEffect();
+
 }

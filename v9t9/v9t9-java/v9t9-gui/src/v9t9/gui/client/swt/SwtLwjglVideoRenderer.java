@@ -564,4 +564,12 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			compileLinkShaders();
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.SwtVideoRenderer#supportsMonitorEffect()
+	 */
+	@Override
+	public boolean supportsMonitorEffect() {
+		return true;
+	}
 }

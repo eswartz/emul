@@ -513,4 +513,12 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	public FastTimer getFastTimer() {
 		return fastTimer;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IVideoRenderer#supportsMonitorEffect()
+	 */
+	@Override
+	public boolean supportsMonitorEffect() {
+		return false;
+	}
 }
