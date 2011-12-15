@@ -5,6 +5,7 @@ package v9t9.server.tcf.test;
 
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,6 +20,7 @@ import java.util.Set;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IRegisters;
+import org.eclipse.tm.tcf.services.IRegisters.DoneSet;
 import org.eclipse.tm.tcf.services.IRegisters.Location;
 import org.eclipse.tm.tcf.services.IRegisters.RegistersContext;
 import org.junit.Before;
@@ -363,6 +365,26 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			
 			assertTrue("reg copying", Arrays.equals(origRegVals[0], copy[0]));
 		}
+
+		public void setRegs(final Location[] locs, final byte[] data) throws Throwable {
+			for (Location loc : locs) {
+				expRegs.add(regNameIds.get(loc.id));
+			}
+			new TCFCommandWrapper() {
+				
+				@Override
+				public IToken run() throws Exception {
+					return regV2.setm(locs, data, new DoneSet() {
+						
+						@Override
+						public void doneSet(IToken token, Exception error) {
+							excs[0] = error;
+							tcfDone();
+						}
+					});
+				}
+			};			
+		}
 		
 	};
 
@@ -583,24 +605,35 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		try {
 			runner.startListening();
 			
+			final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			final IRegisters.Location[] locs = new IRegisters.Location[regIdToNumMap.size() * 2];
+			
+			int idx = 0;
 			int cnt = 0;
 			
 			for (String id : regIdToNumMap.keySet()) {
-				runner.setReg(id, cnt);
-				runner.setReg(id, -cnt);
+				locs[idx++] = new Location(id, 0, 1);
+				bos.write(cnt);
+				locs[idx++] = new Location(id, 0, 1);
+				bos.write(-cnt);
 				cnt += 2;
 			}
 
-			// no delay
+			runner.setRegs(locs, bos.toByteArray());
 			
+			
+			bos.reset();
+			idx = 0;
 			cnt = 0;
 			for (String id : regIdToNumMap.keySet()) {
-				runner.setReg(id, cnt + 128);
-				runner.setReg(id, -(cnt + 128));
+				locs[idx++] = new Location(id, 0, 1);
+				bos.write(cnt + 128);
+				locs[idx++] = new Location(id, 0, 1);
+				bos.write(-(cnt + 128));
 				cnt += 2;
 			}
-			
-			// no delay
+
+			runner.setRegs(locs, bos.toByteArray());
 			
 			
 			// flush events
