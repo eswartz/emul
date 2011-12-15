@@ -111,20 +111,6 @@ abstract public class MachineBase implements IMachine {
     	realTime = settings.get(ICpu.settingRealTime);
     	moduleList = settings.get(settingModuleList);
     	
-    	pauseListener = new IPropertyListener() {
-    		
-    		public void propertyChanged(IProperty setting) {
-    			synchronized (executionLock) {
-    				executor.interruptExecution();
-    				cpu.resetCycleCounts();
-    				bExecuting = !setting.getBoolean();
-    				executionLock.notifyAll();
-    			}
-    		}
-    		
-    	};
-		settings.get(settingPauseMachine).addListener(pauseListener);
-    	
     	this.machineModel = machineModel;
     	
     	runnableList = Collections.synchronizedList(new LinkedList<Runnable>());
@@ -145,6 +131,20 @@ abstract public class MachineBase implements IMachine {
     	
     	fileHandler = new FileHandler(settings);
     	
+
+    	pauseListener = new IPropertyListener() {
+    		
+    		public void propertyChanged(IProperty setting) {
+    			synchronized (executionLock) {
+    				executor.interruptExecution();
+    				cpu.resetCycleCounts();
+    				bExecuting = !setting.getBoolean();
+    				executionLock.notifyAll();
+    			}
+    		}
+    		
+    	};
+		settings.get(settingPauseMachine).addListenerAndFire(pauseListener);
     	//executor.addInstructionListener(new DebugConditionListener(cpu));
     	//executor.addInstructionListener(new DebugConditionListenerF99b(cpu));
 
@@ -399,7 +399,7 @@ abstract public class MachineBase implements IMachine {
         videoRunner.start();
         
         synchronized (executionLock) {
-			bExecuting = true;
+			bExecuting = !pauseMachine.getBoolean();
 			executionLock.notifyAll();
 		}
     }
@@ -545,7 +545,9 @@ abstract public class MachineBase implements IMachine {
 	 */
 	@Override
 	public synchronized void saveState(ISettingSection settings) {
+		boolean wasExecuting;
 		synchronized (executionLock) {
+			wasExecuting = bExecuting;
 			bExecuting = false;
 			executionLock.notifyAll();
 		}
@@ -561,7 +563,7 @@ abstract public class MachineBase implements IMachine {
 		//WorkspaceSettings.CURRENT.saveState(settings);
 		
 		synchronized (executionLock) {
-			bExecuting = true;
+			bExecuting = wasExecuting;
 			executionLock.notifyAll();
 		}
 	}
@@ -597,8 +599,11 @@ abstract public class MachineBase implements IMachine {
 		cpuTimer.cancel();
 		videoTimer.cancel();
 		*/
-		bExecuting = false;
+		
+		boolean wasExecuting;
 		synchronized (executionLock) {
+			wasExecuting = bExecuting;
+			bExecuting = false;
 			executionLock.notifyAll();
 		}
 		
@@ -611,7 +616,7 @@ abstract public class MachineBase implements IMachine {
 		//start();
 		
 		synchronized (executionLock) {
-			bExecuting = true;
+			bExecuting = wasExecuting;
 			executionLock.notifyAll();
 		}
 	}

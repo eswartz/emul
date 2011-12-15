@@ -118,14 +118,15 @@ public class Executor implements IExecutor {
 			}
         	
         });
-        /*
-        Machine.settingPauseMachine.addListener(new IPropertyListener() {
+        
+        pauseMachine.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				interruptExecution = Boolean.TRUE;
 			}
         	
-        });*/
+        });
+        
         singleStep.addListener(new IPropertyListener() {
         	
         	public void propertyChanged(IProperty setting) {

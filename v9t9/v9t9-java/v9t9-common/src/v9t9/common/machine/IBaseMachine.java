@@ -27,7 +27,7 @@ import v9t9.common.settings.SettingSchema;
 public interface IBaseMachine {
 
 	static public final SettingSchema settingPauseMachine = new SettingSchema(
-			ISettingsHandler.INSTANCE,
+			ISettingsHandler.TRANSIENT,
 			"PauseMachine", new Boolean(false));
 	static public final SettingSchema settingThrottleInterrupts = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
