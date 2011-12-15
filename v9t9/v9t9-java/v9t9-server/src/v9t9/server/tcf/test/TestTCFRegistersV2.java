@@ -533,24 +533,43 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 	
 
 	@Test
-	public void testSimpleAllRegChange() throws Throwable {
+	public void testSimpleAllCpuRegChange() throws Throwable {
+		doSimpleRegTestCycle(IMemoryDomain.NAME_CPU, 0xfffe);
+				
+	}
+	
+	@Test
+	public void testSimpleAllVideoRegChange() throws Throwable {
+		doSimpleRegTestCycle(IMemoryDomain.NAME_VIDEO, 0xff);
+		
+	}
+
+	/**
+	 * @throws Throwable
+	 * @throws InterruptedException
+	 */
+	protected void doSimpleRegTestCycle(String domain, int mask) throws Throwable,
+			InterruptedException {
 		Map<String, RegistersContext> regContexts = new LinkedHashMap<String, IRegisters.RegistersContext>();
 		Map<String, Integer> regIdToNumMap = new LinkedHashMap<String, Integer>();
 		
-		gatherRegisterContexts(regV2, IMemoryDomain.NAME_CPU, regContexts, regIdToNumMap, null);
+		gatherRegisterContexts(regV2, domain, regContexts, regIdToNumMap, null);
 		
 		final int QUANTUM = 50;
 		
 		// get only a single report per cycle
-		RegRunner runner = new RegRunner("test1", IMemoryDomain.NAME_CPU, 
+		RegRunner runner = new RegRunner("test1", domain, 
 				regIdToNumMap.values(), QUANTUM, 0);
 		
 		runner.saveRegs();
 		
+		final int START = 0;
+		final int OFFS = 0x1F3;
+
 		try {
 			runner.startListening();
 			
-			int cnt = 0;
+			int cnt = START;
 			
 			for (String id : regIdToNumMap.keySet()) {
 				runner.setReg(id, cnt);
@@ -559,9 +578,9 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			
 			Thread.sleep(QUANTUM * 2);
 
-			cnt = 0;
+			cnt = START;
 			for (String id : regIdToNumMap.keySet()) {
-				runner.setReg(id, cnt + 128);
+				runner.setReg(id, cnt + OFFS);
 				cnt += 2;
 			}
 			
@@ -572,9 +591,9 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			
 			runner.validateChanges();
 			
-			cnt = 0;
+			cnt = START;
 			for (int val : regIdToNumMap.values()) {
-				runner.validateRegChanges(val, 0xffff, new int[] { cnt, cnt + 128 });
+				runner.validateRegChanges(val, mask, new int[] { cnt, cnt + OFFS });
 				cnt += 2;
 			}
 			
@@ -583,7 +602,6 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			runner.stopListening();
 			runner.restoreRegs();
 		}
-				
 	}
 	
 
