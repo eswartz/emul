@@ -50,10 +50,12 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		private final int granularity;
 		
 		final List<List<Pair<Integer, RegisterChange[]>>> changeMap = new ArrayList<List<Pair<Integer, RegisterChange[]>>>();
+		final Map<Integer, String> regNumContexts = new HashMap<Integer, String>();
 		final Map<String, Integer> regNameIds = new HashMap<String, Integer>();
 		
 		final Set<Integer> expRegs = new HashSet<Integer>();
 		private boolean isListening;
+		private Map<String,Integer> origRegVals;
 		
 		public RegRunner(final String notifyId, final String contextId, 
 				final Collection<Integer> regNums,
@@ -66,7 +68,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			this.msDelay = msDelay;
 			this.granularity = granularity;
 
-			gatherRegisterContexts(regV2, contextId, null, regNameIds, null);
+			gatherRegisterContexts(regV2, contextId, null, regNameIds, regNumContexts);
 		}
 		
 		public void startListening() throws Throwable {
@@ -245,6 +247,40 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 				expRegs.add(regNameIds.get(contextId));
 			}
 		}
+
+		/**
+		 * @param origRegVals
+		 * @throws Throwable 
+		 */
+		public void restoreRegs() throws Throwable {
+			if (origRegVals.containsKey("CPU.WP")) {
+				// set this first since it affects the others!
+				setReg("CPU.WP", origRegVals.get("CPU.WP"));
+			}
+			for (String id : origRegVals.keySet()) {
+				setReg(id, origRegVals.get(id));
+			}
+			for (String id : origRegVals.keySet()) {
+				int value = getReg(id);
+				assertEquals("restoring " + id, origRegVals.get(id), (Integer) value);
+			}
+			
+		}
+
+		/**
+		 * @throws Throwable 
+		 * 
+		 */
+		public void saveRegs() throws Throwable {
+			origRegVals = new HashMap<String, Integer>();
+			
+			// save off
+			for (Integer regNum : regNums) {
+				String id = regNumContexts.get(regNum);
+				origRegVals.put(id, getReg(id));
+			}
+			
+		}
 		
 	};
 
@@ -366,10 +402,9 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 				Arrays.asList(new Integer[] { pcReg }),
 				QUANTUM, -1);
 		
-		int origPc = runner.getReg(pcId);
-		
-		runner.startListening();
+		runner.saveRegs();
 		try {
+			runner.startListening();
 			
 			runner.setReg(pcId, 100);
 			
@@ -379,6 +414,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			
 			Thread.sleep(QUANTUM * 2);
 			
+			// flush events
 			runner.stopListening();
 			
 			runner.validateChanges();
@@ -386,7 +422,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			runner.resetChanges();
 		} finally {
 			runner.stopListening();
-			runner.setReg(pcId, origPc);
+			runner.restoreRegs();
 		}
 				
 	}
@@ -405,15 +441,11 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		RegRunner runner = new RegRunner("test1", IMemoryDomain.NAME_CPU, 
 				regIdToNumMap.values(), QUANTUM, -1);
 		
-		Map<String, Integer> origRegVals = new HashMap<String, Integer>();
+		runner.saveRegs();
 		
-		// save off
-		for (String id : regIdToNumMap.keySet()) {
-			origRegVals.put(id, runner.getReg(id));
-		}
-		
-		runner.startListening();
 		try {
+			runner.startListening();
+			
 			int cnt = 0;
 			
 			for (String id : regIdToNumMap.keySet()) {
@@ -431,7 +463,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			
 			Thread.sleep(QUANTUM * 2);
 			
-			// flush
+			// flush events
 			runner.stopListening();
 			
 			runner.validateChanges();
@@ -445,9 +477,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			runner.resetChanges();
 		} finally {
 			runner.stopListening();
-			for (String id : regIdToNumMap.keySet()) {
-				runner.setReg(id, origRegVals.get(id));
-			}
+			runner.restoreRegs();
 		}
 				
 	}

@@ -451,25 +451,23 @@ public class BaseTCFTest {
 	protected void setReg(final IRegisters reg, final String regContextId, final int value) throws Throwable {
 		new TCFCommandWrapper() {
 			public IToken run() throws Exception {
-				try {
-					return new Command(channel, reg, "set", new Object[] { 
-							regContextId,
-							toBigEndianArray(value)
-					}) {
-						/* (non-Javadoc)
-						 * @see org.eclipse.tm.tcf.core.Command#done(java.lang.Exception, java.lang.Object[])
-						 */
-						@Override
-						public void done(Exception error, Object[] args) {
-							if (error == null) {
-								assert args.length == 1;
-								error = toError(args[0]);
-							}
+				return new Command(channel, reg, "set", new Object[] { 
+						regContextId,
+						toBigEndianArray(value)
+				}) {
+					/* (non-Javadoc)
+					 * @see org.eclipse.tm.tcf.core.Command#done(java.lang.Exception, java.lang.Object[])
+					 */
+					@Override
+					public void done(Exception error, Object[] args) {
+						if (error == null) {
+							assert args.length == 1;
+							error = toError(args[0]);
 						}
-					}.token;
-				} finally {
-					tcfDone();
-				}
+						excs[0] = error;
+						tcfDone();
+					}
+				}.token;
 			}		
 		};
 		
@@ -481,25 +479,23 @@ public class BaseTCFTest {
 		final int[] values = { 0 };
 		new TCFCommandWrapper() {
 			public IToken run() throws Exception {
-				try {
-					return new Command(channel, reg, "get", new Object[] { 
-							regContextId
-					}) {
-						/* (non-Javadoc)
-						 * @see org.eclipse.tm.tcf.core.Command#done(java.lang.Exception, java.lang.Object[])
-						 */
-						@Override
-						public void done(Exception error, Object[] args) {
-							if (error == null) {
-								assert args.length == 2;
-								error = toError(args[0]);
-								values[0] = fromBigEndianArray(JSON.toByteArray(args[1]));
-							}
+				return new Command(channel, reg, "get", new Object[] { 
+						regContextId
+				}) {
+					/* (non-Javadoc)
+					 * @see org.eclipse.tm.tcf.core.Command#done(java.lang.Exception, java.lang.Object[])
+					 */
+					@Override
+					public void done(Exception error, Object[] args) {
+						if (error == null) {
+							assert args.length == 2;
+							error = toError(args[0]);
+							values[0] = fromBigEndianArray(JSON.toByteArray(args[1]));
 						}
-					}.token;
-				} finally {
-					tcfDone();
-				}
+						excs[0] = error;
+						tcfDone();
+					}
+				}.token;
 			}		
 		};
 		return values[0];
@@ -510,8 +506,7 @@ public class BaseTCFTest {
 		byte[] data = new byte[size];
 		
 		for (int i = 0; i < size; i++) {
-			data[size - i - 1] = (byte) value;
-			value >>= 8;
+			data[i] = (byte) (value >> (8 * (size - i - 1)));
 		}
 
 		return new JSON.Binary(data, 0, size);
@@ -525,7 +520,7 @@ public class BaseTCFTest {
 
 		int value = 0;
 		for (int i = 0; i < size; i++) {
-			value |= data[size - i - 1] << (8 * i);
+			value |= (data[size - i - 1] & 0xff) << (8 * i);
 		}
 		
 		return value;

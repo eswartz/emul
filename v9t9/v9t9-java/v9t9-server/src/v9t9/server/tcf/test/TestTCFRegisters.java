@@ -422,7 +422,7 @@ public class TestTCFRegisters extends BaseTCFTest {
 		};
 		
 		// change...
-		final byte[] newValue = new byte[] { (byte) 0xaa, (byte) 0xaa };
+		final byte[] newValue = new byte[] { (byte) 0xff, (byte) 0xaa };
 		new TCFCommandWrapper() {
 			public IToken run() throws Exception {
 				return cpuPC.set(newValue, new IRegisters.DoneSet() {
