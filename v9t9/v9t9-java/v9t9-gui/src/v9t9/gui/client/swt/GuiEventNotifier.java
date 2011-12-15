@@ -62,7 +62,7 @@ public final class GuiEventNotifier extends BaseEventNotifier {
 					status = SWT.ICON_ERROR;
 				
 				ToolTip tip = new ToolTip(swtWindow.shell, SWT.BALLOON | status);
-				tip.setText(event.message);
+				tip.setText(event.message != null ? event.message : "");
 				tip.setAutoHide(true);
 				if (event.context instanceof Event) {
 					Event e = (Event)event.context;
