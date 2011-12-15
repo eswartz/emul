@@ -3,6 +3,7 @@
  */
 package v9t9.machine.common.dsr.pcode;
 
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.hardware.ICruWriter;
@@ -20,7 +21,7 @@ public class PCodeDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 
 	public PCodeDsrRomBankedMemoryEntry() {
 	}
-	public PCodeDsrRomBankedMemoryEntry(IMemory memory, String name,
+	public PCodeDsrRomBankedMemoryEntry(ISettingsHandler settings, IMemory memory, String name,
 			IMemoryEntry[] banks) {
 		super(memory, name, banks);
 		
