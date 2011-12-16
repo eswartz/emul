@@ -3,6 +3,9 @@
  */
 package v9t9.base.settings;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import v9t9.base.properties.AbstractProperty;
 import v9t9.base.properties.PropertyUtils;
 
@@ -69,6 +72,15 @@ public class SettingProperty extends AbstractProperty implements ISettingPropert
 	 */
 	public void setValue(Object value) {
 		boolean incompatible = value != null && !type.isAssignableFrom(value.getClass());
+		if (incompatible && Collection.class.isAssignableFrom(defaultValue.getClass())) {
+			// make collection
+			try {
+				Collection<?> coll = Arrays.asList((Object[]) value);
+				value = coll;
+				incompatible = false;
+			} catch (ClassCastException e) {
+			}
+		}
 		if (value != null && !incompatible) {
 			if (this.value == null || !this.value.equals(value)) {
 				this.value = value;
