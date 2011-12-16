@@ -68,5 +68,8 @@ v9t9/v9t9-java/v9t9-gui/bin
 v9t9/v9t9-java/v9t9-base/bin
 v9t9/v9t9-java/v9t9-machines/bin
 v9t9/v9t9-java/v9t9-tools/bin
+v9t9/v9t9-java/v9t9-video/bin
+v9t9/v9t9-java/v9t9-audio/bin
+base/ejs-base/bin
 *.class
 
