@@ -7,8 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-import v9t9.base.properties.IPersistable;
-import v9t9.base.utils.Pair;
+import ejs.base.properties.IPersistable;
+import ejs.base.utils.Pair;
+
 
 /**
  * @author ejs

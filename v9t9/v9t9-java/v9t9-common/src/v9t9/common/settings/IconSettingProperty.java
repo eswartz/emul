@@ -7,7 +7,8 @@ import java.net.URL;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 
-import v9t9.base.settings.SettingProperty;
+import ejs.base.settings.SettingProperty;
+
 
 /**
  * @author ejs

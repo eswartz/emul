@@ -5,7 +5,8 @@ package v9t9.common.memory;
 
 import java.io.IOException;
 
-import v9t9.base.settings.ISettingSection;
+import ejs.base.settings.ISettingSection;
+
 
 /**
  * @author ejs

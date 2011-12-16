@@ -12,8 +12,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;

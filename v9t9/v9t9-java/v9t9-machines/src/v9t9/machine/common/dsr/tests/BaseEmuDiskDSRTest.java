@@ -14,8 +14,9 @@ import java.util.Arrays;
 
 import org.junit.BeforeClass;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.utils.HexUtils;
+import ejs.base.properties.IProperty;
+import ejs.base.utils.HexUtils;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IMemoryTransfer;

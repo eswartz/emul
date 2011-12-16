@@ -6,8 +6,9 @@ package v9t9.common.settings;
 import java.io.IOException;
 import java.util.Map;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.settings.ISettingSection;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
+
 import v9t9.common.client.ISettingsHandler;
 
 /**

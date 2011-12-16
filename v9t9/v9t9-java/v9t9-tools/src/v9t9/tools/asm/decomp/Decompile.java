@@ -6,6 +6,7 @@
  */
 package v9t9.tools.asm.decomp;
 
+import ejs.base.utils.HexUtils;
 import gnu.getopt.Getopt;
 
 import java.io.File;
@@ -15,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-import v9t9.base.utils.HexUtils;
 import v9t9.machine.ti99.asm.Phase;
 
 public class Decompile {

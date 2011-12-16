@@ -10,11 +10,12 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import ejs.base.properties.IPersistable;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
+import ejs.base.settings.SettingProperty;
 
-import v9t9.base.properties.IPersistable;
-import v9t9.base.properties.IProperty;
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.SettingProperty;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.files.Catalog;

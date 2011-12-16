@@ -10,7 +10,8 @@ package v9t9.gui.client.swt;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.graphics.Rectangle;
 
-import v9t9.base.utils.HexUtils;
+import ejs.base.utils.HexUtils;
+
 
 
 

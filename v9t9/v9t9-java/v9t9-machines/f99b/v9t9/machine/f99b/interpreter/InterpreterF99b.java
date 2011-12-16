@@ -101,9 +101,10 @@ import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Set;
 
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
 
-import v9t9.base.utils.HexUtils;
-import v9t9.base.utils.Pair;
+
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;

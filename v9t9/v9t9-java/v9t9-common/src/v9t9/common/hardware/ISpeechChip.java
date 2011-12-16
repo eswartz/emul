@@ -3,8 +3,8 @@
  */
 package v9t9.common.hardware;
 
-import v9t9.base.properties.IPersistable;
-import v9t9.base.sound.ISoundVoice;
+import ejs.base.properties.IPersistable;
+import ejs.base.sound.ISoundVoice;
 
 /**
  * @author ejs

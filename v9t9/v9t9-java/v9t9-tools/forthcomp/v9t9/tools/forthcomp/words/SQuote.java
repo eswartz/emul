@@ -3,7 +3,7 @@
  */
 package v9t9.tools.forthcomp.words;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;

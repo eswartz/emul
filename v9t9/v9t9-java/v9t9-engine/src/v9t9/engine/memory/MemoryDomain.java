@@ -12,9 +12,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
-import v9t9.base.properties.IPersistable;
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.utils.ListenerList;
+import ejs.base.properties.IPersistable;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.ListenerList;
+
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryAccess;
 import v9t9.common.memory.IMemoryAccessListener;

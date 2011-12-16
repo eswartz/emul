@@ -6,8 +6,9 @@ package v9t9.engine.files.image;
 import java.io.PrintWriter;
 import java.text.MessageFormat;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.settings.Logging;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.Logging;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.SettingSchema;
 

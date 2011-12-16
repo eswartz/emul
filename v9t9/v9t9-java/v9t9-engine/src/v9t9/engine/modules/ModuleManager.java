@@ -10,10 +10,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ejs.base.properties.IPersistable;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
 
-import v9t9.base.properties.IPersistable;
-import v9t9.base.properties.IProperty;
-import v9t9.base.settings.ISettingSection;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.events.IEventNotifier;

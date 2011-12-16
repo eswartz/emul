@@ -1,7 +1,7 @@
 package v9t9.video.imageimport;
 
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
 import v9t9.common.video.ColorMapUtils;
 
 class TI16MapColor extends BasePaletteMapper {

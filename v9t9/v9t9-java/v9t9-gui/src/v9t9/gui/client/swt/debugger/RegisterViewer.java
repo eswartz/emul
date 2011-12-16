@@ -33,7 +33,8 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
-import v9t9.base.utils.HexUtils;
+import ejs.base.utils.HexUtils;
+
 import v9t9.common.machine.IMachine;
 import v9t9.gui.client.swt.FontUtils;
 

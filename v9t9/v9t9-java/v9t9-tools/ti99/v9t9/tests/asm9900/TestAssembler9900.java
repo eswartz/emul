@@ -6,8 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.RawInstruction;

@@ -14,8 +14,9 @@ import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyProvider;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyProvider;
+
 
 /**
  * @author ejs

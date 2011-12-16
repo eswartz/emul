@@ -9,7 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 
 /**
  * FORTH-99b processor opcodes

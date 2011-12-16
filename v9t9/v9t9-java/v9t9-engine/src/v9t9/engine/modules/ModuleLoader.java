@@ -9,9 +9,10 @@ import java.util.List;
 
 import org.w3c.dom.Element;
 
-import v9t9.base.utils.FileXMLStorage;
-import v9t9.base.utils.StorageException;
-import v9t9.base.utils.XMLUtils;
+import ejs.base.utils.FileXMLStorage;
+import ejs.base.utils.StorageException;
+import ejs.base.utils.XMLUtils;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;

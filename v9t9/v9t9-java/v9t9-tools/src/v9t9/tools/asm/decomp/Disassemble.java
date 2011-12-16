@@ -4,6 +4,7 @@
  */
 package v9t9.tools.asm.decomp;
 
+import ejs.base.utils.HexUtils;
 import gnu.getopt.Getopt;
 
 import java.io.File;
@@ -12,7 +13,6 @@ import java.io.PrintStream;
 import java.util.Collection;
 
 
-import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.MemoryRange;
 import v9t9.machine.ti99.asm.TopDownPhase;
 

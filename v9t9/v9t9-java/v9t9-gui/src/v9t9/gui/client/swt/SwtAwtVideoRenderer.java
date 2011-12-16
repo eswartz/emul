@@ -24,8 +24,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.client.awt.AwtVideoRenderer;

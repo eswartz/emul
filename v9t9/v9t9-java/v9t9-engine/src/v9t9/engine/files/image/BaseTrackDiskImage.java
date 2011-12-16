@@ -8,7 +8,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.base.utils.HexUtils;
+import ejs.base.utils.HexUtils;
+
 import v9t9.common.client.ISettingsHandler;
 
 

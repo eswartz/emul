@@ -45,8 +45,9 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;

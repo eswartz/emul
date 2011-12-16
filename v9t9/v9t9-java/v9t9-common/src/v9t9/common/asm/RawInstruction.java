@@ -1,6 +1,6 @@
 package v9t9.common.asm;
 
-import v9t9.base.utils.HexUtils;
+import ejs.base.utils.HexUtils;
 
 public class RawInstruction extends BaseInstruction implements Comparable<RawInstruction>, ICpuInstruction {
 

@@ -2,11 +2,12 @@ package v9t9.engine.cpu;
 
 import java.util.concurrent.Semaphore;
 
+import ejs.base.properties.IPersistable;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingSection;
 
-import v9t9.base.properties.IPersistable;
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
-import v9t9.base.settings.ISettingSection;
+
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;

@@ -11,8 +11,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
+import ejs.base.settings.ISettingSection;
 
-import v9t9.base.settings.ISettingSection;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
 import v9t9.common.memory.IMemory;

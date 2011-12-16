@@ -6,7 +6,7 @@
  */
 package v9t9.engine.memory;
 
-import v9t9.base.utils.Check;
+import ejs.base.utils.Check;
 import v9t9.common.hardware.ISoundChip;
 
 /** Sound chip entry

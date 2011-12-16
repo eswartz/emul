@@ -4,7 +4,7 @@
 package v9t9.tools.asm.assembler;
 
 
-import v9t9.base.utils.HexUtils;
+import ejs.base.utils.HexUtils;
 import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.ResolveException;

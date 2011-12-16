@@ -6,8 +6,9 @@ package v9t9.common.machine;
 import java.io.IOException;
 import java.util.Timer;
 
+import ejs.base.settings.ISettingSection;
 
-import v9t9.base.settings.ISettingSection;
+
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;

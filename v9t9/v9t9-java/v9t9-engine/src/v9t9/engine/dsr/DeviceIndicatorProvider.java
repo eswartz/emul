@@ -4,7 +4,7 @@
 package v9t9.engine.dsr;
 
 
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IProperty;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 
 /**

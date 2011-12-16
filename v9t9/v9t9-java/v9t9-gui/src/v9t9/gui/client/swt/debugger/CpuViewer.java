@@ -30,8 +30,9 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;

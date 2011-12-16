@@ -6,7 +6,8 @@ package v9t9.common.dsr;
 import java.util.Collection;
 import java.util.Map;
 
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IProperty;
+
 
 /**
  * @author ejs

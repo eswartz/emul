@@ -31,8 +31,9 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.base.properties.IClassPropertyFactory;
-import v9t9.base.properties.ListFieldProperty;
+import ejs.base.properties.IClassPropertyFactory;
+import ejs.base.properties.ListFieldProperty;
+
 import v9t9.gui.client.swt.FontUtils;
 
 /**

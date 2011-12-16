@@ -17,7 +17,8 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 import v9t9.server.tcf.services.IRegistersV2;
 
 /**

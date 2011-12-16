@@ -22,7 +22,8 @@ import javax.imageio.ImageIO;
 
 import org.eclipse.swt.graphics.ImageData;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.hardware.VdpV9938Consts;

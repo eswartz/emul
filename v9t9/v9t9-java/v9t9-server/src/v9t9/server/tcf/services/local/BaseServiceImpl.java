@@ -19,7 +19,8 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 
 import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 import v9t9.common.machine.IMachine;
 
 /**

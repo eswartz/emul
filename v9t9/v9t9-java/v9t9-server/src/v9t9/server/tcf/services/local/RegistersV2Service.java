@@ -22,7 +22,8 @@ import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.protocol.IChannel.IChannelListener;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.machine.RegisterWriteTracker;

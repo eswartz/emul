@@ -11,7 +11,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.ITargetWord;

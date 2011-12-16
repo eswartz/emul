@@ -6,7 +6,8 @@ package v9t9.common.settings;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IProperty;
+
 import v9t9.common.client.ISettingsHandler;
 
 /**

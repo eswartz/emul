@@ -7,7 +7,7 @@
 package v9t9.common.asm;
 
 
-import v9t9.base.utils.Check;
+import ejs.base.utils.Check;
 
 public class LabelOperand implements IOperand {
 

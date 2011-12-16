@@ -50,8 +50,9 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
-import v9t9.base.utils.HexUtils;
-import v9t9.base.utils.Pair;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
+
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;

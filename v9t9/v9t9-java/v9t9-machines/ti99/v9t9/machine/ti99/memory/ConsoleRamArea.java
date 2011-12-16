@@ -4,7 +4,7 @@
 package v9t9.machine.ti99.memory;
 
 
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.SettingSchema;

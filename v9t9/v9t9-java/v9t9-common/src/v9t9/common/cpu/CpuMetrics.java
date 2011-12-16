@@ -6,8 +6,9 @@ package v9t9.common.cpu;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.base.utils.ListenerList;
-import v9t9.base.utils.ListenerList.IFire;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
+
 
 /**
  * Track the metrics of the CPU

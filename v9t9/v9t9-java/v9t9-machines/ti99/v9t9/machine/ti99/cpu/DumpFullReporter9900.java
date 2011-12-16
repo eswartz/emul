@@ -5,10 +5,11 @@ package v9t9.machine.ti99.cpu;
 
 import java.io.PrintWriter;
 
+import ejs.base.properties.IProperty;
+import ejs.base.settings.Logging;
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.settings.Logging;
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.RawInstruction;

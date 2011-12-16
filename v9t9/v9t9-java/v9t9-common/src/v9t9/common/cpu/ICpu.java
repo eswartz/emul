@@ -1,8 +1,8 @@
 package v9t9.common.cpu;
 
 
-import v9t9.base.properties.IPersistable;
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IPersistable;
+import ejs.base.properties.IProperty;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IBaseMachine;

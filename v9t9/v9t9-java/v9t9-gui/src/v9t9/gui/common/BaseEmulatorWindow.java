@@ -11,12 +11,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.MessageFormat;
 
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
+import ejs.base.settings.ISettingStorage;
+import ejs.base.settings.SettingsSection;
+import ejs.base.settings.XMLSettingStorage;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.ISettingStorage;
-import v9t9.base.settings.SettingsSection;
-import v9t9.base.settings.XMLSettingStorage;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier.Level;

@@ -5,7 +5,8 @@ package v9t9.engine.speech;
 
 import java.util.Arrays;
 
-import v9t9.base.settings.Logging;
+import ejs.base.settings.Logging;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.SettingSchema;
 

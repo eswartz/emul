@@ -7,7 +7,7 @@
 package v9t9.machine.ti99.cpu;
 
 
-import v9t9.base.utils.Check;
+import ejs.base.utils.Check;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;

@@ -76,8 +76,9 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.util.glu.GLU;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IMachine;
 import v9t9.common.video.ICanvas;

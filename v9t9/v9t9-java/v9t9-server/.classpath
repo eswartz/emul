@@ -2,11 +2,11 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-base"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ejs-base"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-engine"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-machines"/>
-	<classpathentry kind="lib" path="/v9t9-base/libs/junit/junit-4.8.1.jar" sourcepath="/v9t9-base/libs/junit/junit-4.8.1-source.jar"/>
-	<classpathentry kind="lib" path="/v9t9-base/libs/org.eclipse.tm.tcf.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/junit/junit-4.8.1.jar" sourcepath="/ejs-base/libs/junit/junit-4.8.1-source.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/org.eclipse.tm.tcf.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

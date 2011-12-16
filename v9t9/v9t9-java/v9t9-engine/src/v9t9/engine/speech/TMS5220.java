@@ -6,13 +6,14 @@ package v9t9.engine.speech;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
+import ejs.base.settings.Logging;
+import ejs.base.sound.ISoundVoice;
+import ejs.base.utils.BinaryUtils;
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.Logging;
-import v9t9.base.sound.ISoundVoice;
-import v9t9.base.utils.BinaryUtils;
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;

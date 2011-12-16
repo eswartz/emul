@@ -12,7 +12,8 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
-import v9t9.base.properties.FieldProperty;
+import ejs.base.properties.FieldProperty;
+
 
 /**
  * @author ejs

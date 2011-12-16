@@ -6,7 +6,8 @@ package v9t9.machine.ti99.cpu;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.base.utils.ListenerList;
+import ejs.base.utils.ListenerList;
+
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.machine.IRegisterAccess;

@@ -5,9 +5,9 @@ package v9t9.machine.f99b.asm;
 
 import static v9t9.machine.f99b.asm.InstF99b.ctxStrings;
 import static v9t9.machine.f99b.asm.InstF99b.syscallStrings;
+import ejs.base.utils.Check;
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.utils.Check;
-import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;

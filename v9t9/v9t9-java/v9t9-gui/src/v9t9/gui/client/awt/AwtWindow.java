@@ -39,9 +39,10 @@ import javax.swing.JFileChooser;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
 
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
+
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.BaseEventNotifier;
 import v9t9.common.events.IEventNotifier;

@@ -3,8 +3,8 @@
  */
 package v9t9.gui.properties;
 
-import v9t9.base.properties.FieldProperty;
-import v9t9.base.properties.PropertyUtils;
+import ejs.base.properties.FieldProperty;
+import ejs.base.properties.PropertyUtils;
 
 
 /**

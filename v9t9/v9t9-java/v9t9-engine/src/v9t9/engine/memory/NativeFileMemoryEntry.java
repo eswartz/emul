@@ -8,8 +8,9 @@ package v9t9.engine.memory;
 
 import java.io.IOException;
 
+import ejs.base.utils.Check;
 
-import v9t9.base.utils.Check;
+
 import v9t9.common.files.NativeFile;
 import v9t9.common.memory.IMemoryDomain;
 

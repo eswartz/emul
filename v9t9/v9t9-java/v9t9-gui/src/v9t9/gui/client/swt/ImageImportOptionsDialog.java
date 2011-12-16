@@ -17,9 +17,10 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
-import v9t9.base.properties.IPropertySource;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.properties.IPropertySource;
+
 import v9t9.gui.properties.EditGroup;
 import v9t9.gui.properties.FieldPropertyEditorProvider;
 import v9t9.gui.properties.PropertySourceEditor;

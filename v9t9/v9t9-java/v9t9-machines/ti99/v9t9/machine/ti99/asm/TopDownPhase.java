@@ -16,8 +16,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import ejs.base.utils.Check;
 
-import v9t9.base.utils.Check;
+
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.Block;
 import v9t9.common.asm.DataWordListOperand;

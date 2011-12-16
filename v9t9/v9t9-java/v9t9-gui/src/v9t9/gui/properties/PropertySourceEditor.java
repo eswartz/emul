@@ -7,8 +7,9 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertySource;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertySource;
+
 
 /**
  * @author ejs

@@ -4,7 +4,7 @@
 package v9t9.common.asm;
 
 
-import v9t9.base.utils.HexUtils;
+import ejs.base.utils.HexUtils;
 
 /**
  * @author ejs

@@ -3,7 +3,7 @@
  */
 package v9t9.common.settings;
 
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.machine.IBaseMachine;

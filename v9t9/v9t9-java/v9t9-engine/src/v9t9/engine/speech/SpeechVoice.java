@@ -3,7 +3,7 @@
  */
 package v9t9.engine.speech;
 
-import v9t9.base.sound.ISoundVoice;
+import ejs.base.sound.ISoundVoice;
 
 public class SpeechVoice implements ISoundVoice {
 	

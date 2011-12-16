@@ -2,10 +2,11 @@ package v9t9.machine.f99b.cpu;
 
 import java.io.PrintWriter;
 
+import ejs.base.settings.ISettingSection;
+import ejs.base.settings.Logging;
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.Logging;
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpuMetrics;

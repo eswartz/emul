@@ -3,7 +3,7 @@
  */
 package v9t9.gui.properties;
 
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IProperty;
 
 
 

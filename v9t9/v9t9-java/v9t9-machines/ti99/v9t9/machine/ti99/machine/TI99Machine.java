@@ -1,7 +1,7 @@
 package v9t9.machine.ti99.machine;
 
 
-import v9t9.base.settings.ISettingSection;
+import ejs.base.settings.ISettingSection;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDsrManager;
 import v9t9.common.machine.IMachineModel;

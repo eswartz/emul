@@ -10,7 +10,8 @@ import java.util.Iterator;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import v9t9.base.utils.Check;
+import ejs.base.utils.Check;
+
 
 /**
  * Management of ranges of memory partitioned into types

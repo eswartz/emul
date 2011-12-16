@@ -10,7 +10,8 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 
 
 /**

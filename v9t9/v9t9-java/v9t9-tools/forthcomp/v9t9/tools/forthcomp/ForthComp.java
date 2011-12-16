@@ -3,6 +3,7 @@
  */
 package v9t9.tools.forthcomp;
 
+import ejs.base.utils.HexUtils;
 import gnu.getopt.Getopt;
 
 import java.io.File;
@@ -15,7 +16,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import v9t9.base.utils.HexUtils;
 import v9t9.common.files.DataFiles;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;

@@ -40,10 +40,11 @@ import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.TABLESWITCH;
 import org.apache.bcel.generic.Type;
 
-import v9t9.base.launch.CommandLauncher;
-import v9t9.base.launch.ProcessClosure;
-import v9t9.base.properties.IProperty;
-import v9t9.base.utils.HexUtils;
+import ejs.base.launch.CommandLauncher;
+import ejs.base.launch.ProcessClosure;
+import ejs.base.properties.IProperty;
+import ejs.base.utils.HexUtils;
+
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IMachineOperand;

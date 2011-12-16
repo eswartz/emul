@@ -10,9 +10,10 @@ import static v9t9.common.hardware.VdpV9938Consts.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.utils.HexUtils;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.HexUtils;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.hardware.VdpV9938Consts;

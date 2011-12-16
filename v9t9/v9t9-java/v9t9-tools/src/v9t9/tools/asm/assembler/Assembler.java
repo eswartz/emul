@@ -18,8 +18,9 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.MemoryRanges;
 import v9t9.common.asm.RawInstruction;

@@ -3,7 +3,7 @@
  */
 package v9t9.engine.sound;
 
-import v9t9.base.settings.ISettingSection;
+import ejs.base.settings.ISettingSection;
 
 public class ToneGeneratorVoice extends ClockedSoundVoice
 {

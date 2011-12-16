@@ -15,9 +15,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import ejs.base.utils.Check;
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.utils.Check;
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.asm.Block;
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IHighLevelInstruction;

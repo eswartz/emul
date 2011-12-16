@@ -5,13 +5,14 @@ package v9t9.gui.sound;
 
 import javax.sound.sampled.AudioFormat;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
-import v9t9.base.sound.AlsaSoundListener;
-import v9t9.base.sound.ISoundListener;
-import v9t9.base.sound.ISoundOutput;
-import v9t9.base.sound.ISoundVoice;
-import v9t9.base.sound.SoundFactory;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.sound.AlsaSoundListener;
+import ejs.base.sound.ISoundListener;
+import ejs.base.sound.ISoundOutput;
+import ejs.base.sound.ISoundVoice;
+import ejs.base.sound.SoundFactory;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISpeechChip;

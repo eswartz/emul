@@ -9,7 +9,8 @@ package v9t9.common.files;
 import java.io.File;
 import java.io.IOException;
 
-import v9t9.base.utils.HexUtils;
+import ejs.base.utils.HexUtils;
+
 
 
 /**

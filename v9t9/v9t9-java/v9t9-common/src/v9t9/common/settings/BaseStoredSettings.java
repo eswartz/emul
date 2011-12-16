@@ -14,13 +14,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.base.properties.AbstractProperty;
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.ISettingStorage;
-import v9t9.base.settings.SettingsSection;
-import v9t9.base.settings.XMLSettingStorage;
+import ejs.base.properties.AbstractProperty;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingSection;
+import ejs.base.settings.ISettingStorage;
+import ejs.base.settings.SettingsSection;
+import ejs.base.settings.XMLSettingStorage;
+
 import v9t9.common.client.ISettingsHandler;
 
 /**

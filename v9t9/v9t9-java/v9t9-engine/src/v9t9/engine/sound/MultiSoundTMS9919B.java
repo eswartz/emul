@@ -4,8 +4,8 @@
 package v9t9.engine.sound;
 
 
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.sound.ISoundVoice;
+import ejs.base.settings.ISettingSection;
+import ejs.base.sound.ISoundVoice;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;

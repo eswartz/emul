@@ -13,7 +13,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IProperty;
+
 
 /**
  * @author ejs

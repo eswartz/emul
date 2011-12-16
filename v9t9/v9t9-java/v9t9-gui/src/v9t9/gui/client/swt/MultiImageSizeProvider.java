@@ -10,7 +10,8 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 
 
 /**

@@ -7,7 +7,8 @@ import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.widgets.Item;
 
-import v9t9.base.utils.HexUtils;
+import ejs.base.utils.HexUtils;
+
 
 class ByteMemoryCellModifier implements ICellModifier {
 	private StructuredViewer viewer;

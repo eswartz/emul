@@ -20,10 +20,11 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.timer.FastTimer;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
-import v9t9.base.timer.FastTimer;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;

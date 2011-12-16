@@ -14,11 +14,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimerTask;
 
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;

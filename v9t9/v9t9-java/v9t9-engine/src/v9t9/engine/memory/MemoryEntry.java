@@ -15,10 +15,11 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import v9t9.base.properties.IPersistable;
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.utils.HexUtils;
-import v9t9.base.utils.Pair;
+import ejs.base.properties.IPersistable;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
+
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;

@@ -3,9 +3,10 @@ package v9t9.engine.compiler;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import ejs.base.properties.IProperty;
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IHighLevelInstruction;
 import v9t9.common.asm.InstTableCommon;

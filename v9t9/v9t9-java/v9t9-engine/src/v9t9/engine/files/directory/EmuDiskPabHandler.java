@@ -8,8 +8,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.FDR;
 import v9t9.common.files.NativeFDRFile;

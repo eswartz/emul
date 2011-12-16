@@ -12,8 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import v9t9.base.utils.HexUtils;
-import v9t9.base.utils.Pair;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
+
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryDomain;

@@ -26,7 +26,8 @@ import org.eclipse.tm.tcf.services.IRegisters.RegistersContext;
 import org.junit.Before;
 import org.junit.Test;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.ti99.cpu.Cpu9900;

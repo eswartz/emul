@@ -2,8 +2,9 @@ package v9t9.common.dsr;
 
 import java.util.List;
 
+import ejs.base.settings.ISettingSection;
 
-import v9t9.base.settings.ISettingSection;
+
 import v9t9.common.cpu.InstructionWorkBlock;
 
 public interface IDsrManager {

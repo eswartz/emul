@@ -6,9 +6,9 @@
  */
 package v9t9.engine.memory;
 
+import ejs.base.settings.ISettingSection;
 import net.iHarder.Base64;
 
-import v9t9.base.settings.ISettingSection;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryEntry;
 

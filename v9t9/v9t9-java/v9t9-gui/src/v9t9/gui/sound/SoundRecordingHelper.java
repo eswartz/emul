@@ -17,10 +17,11 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
-import v9t9.base.sound.ISoundOutput;
-import v9t9.base.sound.SoundFileListener;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.sound.ISoundOutput;
+import ejs.base.sound.SoundFileListener;
+
 
 /**
  * This class provides a useful way of recording sound to a file, with a helper

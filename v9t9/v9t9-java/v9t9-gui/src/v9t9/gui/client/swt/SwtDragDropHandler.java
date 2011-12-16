@@ -38,8 +38,9 @@ import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
 
-import v9t9.base.properties.IPropertyListener;
-import v9t9.base.utils.Pair;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.utils.Pair;
+
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.video.ICanvas;

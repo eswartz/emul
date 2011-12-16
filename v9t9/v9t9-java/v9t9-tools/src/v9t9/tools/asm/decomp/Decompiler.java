@@ -8,8 +8,9 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.asm.ICodeProvider;
 import v9t9.common.asm.IInstructionFactory;
 import v9t9.common.cpu.ICpuState;

@@ -9,8 +9,9 @@ import java.util.Map;
 
 import org.w3c.dom.Element;
 
-import v9t9.base.utils.HexUtils;
-import v9t9.base.utils.XMLUtils;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.XMLUtils;
+
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.MemoryEntryInfo;

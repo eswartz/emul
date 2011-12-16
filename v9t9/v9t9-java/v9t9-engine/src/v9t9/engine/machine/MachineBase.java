@@ -13,10 +13,11 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.timer.FastTimer;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingSection;
+import ejs.base.timer.FastTimer;
+
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;

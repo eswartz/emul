@@ -7,7 +7,8 @@ import java.io.IOException;
 
 import org.eclipse.tm.tcf.protocol.Protocol;
 
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IProperty;
+
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;

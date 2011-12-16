@@ -16,10 +16,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.CompatUtils;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.utils.CompatUtils;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.SettingSchema;

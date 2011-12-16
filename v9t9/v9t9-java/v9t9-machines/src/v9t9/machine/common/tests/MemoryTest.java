@@ -8,8 +8,9 @@ package v9t9.machine.common.tests;
 
 import java.util.Random;
 
+import ejs.base.properties.IProperty;
+
 import junit.framework.TestCase;
-import v9t9.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.machine.ti99.machine.TI994A;

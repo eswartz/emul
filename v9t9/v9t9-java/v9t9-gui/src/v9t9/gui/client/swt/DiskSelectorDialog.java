@@ -38,9 +38,10 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
-import v9t9.base.settings.ISettingProperty;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingProperty;
+
 import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.Catalog;

@@ -3,7 +3,7 @@
  */
 package v9t9.engine.memory;
 
-import v9t9.base.settings.ISettingSection;
+import ejs.base.settings.ISettingSection;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryEntry;
 

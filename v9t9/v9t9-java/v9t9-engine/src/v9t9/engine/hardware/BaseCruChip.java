@@ -5,7 +5,7 @@
 package v9t9.engine.hardware;
 
 
-import v9t9.base.settings.ISettingSection;
+import ejs.base.settings.ISettingSection;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.keyboard.IKeyboardState;

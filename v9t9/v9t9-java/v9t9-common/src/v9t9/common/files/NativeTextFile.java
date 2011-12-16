@@ -11,8 +11,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import v9t9.base.utils.Check;
-import v9t9.base.utils.CompatUtils;
+import ejs.base.utils.Check;
+import ejs.base.utils.CompatUtils;
+
 
 public class NativeTextFile implements NativeFile {
 

@@ -3,7 +3,7 @@
  */
 package v9t9.common.memory;
 
-import v9t9.base.properties.IPersistable;
+import ejs.base.properties.IPersistable;
 
 /**
  * @author ejs

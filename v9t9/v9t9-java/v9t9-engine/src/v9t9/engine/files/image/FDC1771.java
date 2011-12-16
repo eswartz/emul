@@ -8,8 +8,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import v9t9.base.properties.IPersistable;
-import v9t9.base.settings.ISettingSection;
+import ejs.base.properties.IPersistable;
+import ejs.base.settings.ISettingSection;
+
 
 
 public class FDC1771 implements IPersistable {

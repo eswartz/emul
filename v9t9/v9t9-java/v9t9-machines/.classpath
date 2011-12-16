@@ -4,14 +4,14 @@
 	<classpathentry kind="src" path="ti99"/>
 	<classpathentry kind="src" path="f99b"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-base"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ejs-base"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-engine"/>
-	<classpathentry kind="lib" path="/v9t9-base/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar" sourcepath="/v9t9-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
-	<classpathentry kind="lib" path="/v9t9-base/libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar"/>
-	<classpathentry kind="lib" path="/v9t9-base/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
-	<classpathentry kind="lib" path="/v9t9-base/libs/bcel-5.2.jar"/>
-	<classpathentry kind="lib" path="/v9t9-base/libs/gnu-getopt-1.0.11.jar"/>
-	<classpathentry kind="lib" path="/v9t9-base/libs/junit/junit-4.8.1.jar" sourcepath="/v9t9-base/libs/junit/junit-4.8.1-source.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar" sourcepath="/ejs-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/bcel-5.2.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/gnu-getopt-1.0.11.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/junit/junit-4.8.1.jar" sourcepath="/ejs-base/libs/junit/junit-4.8.1-source.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

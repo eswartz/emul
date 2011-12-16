@@ -8,8 +8,9 @@ package v9t9.machine.ti99.asm;
 
 import java.util.Iterator;
 
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.Block;
 import v9t9.common.asm.IDecompileInfo;

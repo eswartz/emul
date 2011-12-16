@@ -14,7 +14,8 @@ import java.util.TimerTask;
 
 import org.eclipse.swt.graphics.Rectangle;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 
 /**
  * This "canvas" contains information about icons that should

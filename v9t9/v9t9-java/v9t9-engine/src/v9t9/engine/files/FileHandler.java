@@ -6,7 +6,8 @@ package v9t9.engine.files;
 import java.io.File;
 import java.io.IOException;
 
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IProperty;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.IFileHandler;

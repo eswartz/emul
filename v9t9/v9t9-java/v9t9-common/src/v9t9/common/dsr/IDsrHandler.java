@@ -5,8 +5,9 @@ package v9t9.common.dsr;
 
 import java.util.List;
 
+import ejs.base.properties.IPersistable;
 
-import v9t9.base.properties.IPersistable;
+
 
 /**
  * Java code that handles the work of a DSR through the Idsr instruction.

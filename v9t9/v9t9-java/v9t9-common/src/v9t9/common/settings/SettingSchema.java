@@ -3,8 +3,8 @@
  */
 package v9t9.common.settings;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.settings.SettingProperty;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.SettingProperty;
 
 /**
  * @author ejs

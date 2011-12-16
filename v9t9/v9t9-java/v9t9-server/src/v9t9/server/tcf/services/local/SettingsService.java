@@ -12,7 +12,8 @@ import org.eclipse.tm.tcf.core.ErrorReport;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IProperty;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.IStoredSettings;

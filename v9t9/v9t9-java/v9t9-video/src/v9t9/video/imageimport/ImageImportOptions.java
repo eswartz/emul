@@ -9,10 +9,11 @@ import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
 import java.util.Arrays;
 
+import ejs.base.properties.FieldProperty;
+import ejs.base.properties.IPropertySource;
+import ejs.base.properties.PropertySource;
 
-import v9t9.base.properties.FieldProperty;
-import v9t9.base.properties.IPropertySource;
-import v9t9.base.properties.PropertySource;
+
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.video.IVdpCanvas;

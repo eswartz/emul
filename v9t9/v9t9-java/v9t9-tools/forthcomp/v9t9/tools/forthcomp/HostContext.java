@@ -9,7 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import v9t9.base.utils.HexUtils;
+import ejs.base.utils.HexUtils;
+
 import v9t9.tools.forthcomp.words.AbortQuote;
 import v9t9.tools.forthcomp.words.Again;
 import v9t9.tools.forthcomp.words.Allot;

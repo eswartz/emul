@@ -5,8 +5,9 @@ package v9t9.engine.sound;
 
 import java.text.MessageFormat;
 
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.utils.HexUtils;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.HexUtils;
+
 
 public abstract class ClockedSoundVoice extends SoundVoice
 {

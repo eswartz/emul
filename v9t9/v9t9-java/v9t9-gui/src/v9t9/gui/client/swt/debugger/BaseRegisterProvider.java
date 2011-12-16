@@ -5,8 +5,9 @@ package v9t9.gui.client.swt.debugger;
 
 import java.util.ArrayList;
 
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.machine.IRegisterAccess.RegisterInfo;

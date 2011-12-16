@@ -7,8 +7,9 @@ package v9t9.machine.f99b.cpu;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.base.utils.HexUtils;
-import v9t9.base.utils.ListenerList;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.ListenerList;
+
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.machine.IRegisterAccess;

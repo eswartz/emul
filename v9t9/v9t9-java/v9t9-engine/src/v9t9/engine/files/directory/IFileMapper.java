@@ -2,8 +2,9 @@ package v9t9.engine.files.directory;
 
 import java.io.File;
 
-import v9t9.base.properties.IPersistable;
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IPersistable;
+import ejs.base.properties.IProperty;
+
 
 /**
  * This maps DSR device+filenames back and forth to disk ones

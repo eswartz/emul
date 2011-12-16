@@ -8,9 +8,10 @@ package v9t9.engine.compiler;
 
 import java.io.PrintWriter;
 
+import ejs.base.settings.Logging;
+import ejs.base.utils.HexUtils;
 
-import v9t9.base.settings.Logging;
-import v9t9.base.utils.HexUtils;
+
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.cpu.ICpu;

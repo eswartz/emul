@@ -10,7 +10,8 @@ import static v9t9.common.hardware.VdpTMS9918AConsts.*;
 
 import java.util.Arrays;
 
-import v9t9.base.properties.IProperty;
+import ejs.base.properties.IProperty;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpTMS9918A;

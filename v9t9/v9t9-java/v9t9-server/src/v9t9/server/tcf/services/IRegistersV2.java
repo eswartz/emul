@@ -10,7 +10,8 @@ import java.util.List;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRegisters;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 
 /**
  * This extension to the IRegisters service allows for

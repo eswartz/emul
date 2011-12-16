@@ -5,8 +5,9 @@ package v9t9.engine.sound;
 
 import java.util.Arrays;
 
-import v9t9.base.settings.ISettingSection;
-import v9t9.base.sound.IFlushableSoundVoice;
+import ejs.base.settings.ISettingSection;
+import ejs.base.sound.IFlushableSoundVoice;
+
 import v9t9.common.machine.IMachine;
 
 public class AudioGateVoice extends SoundVoice implements IFlushableSoundVoice {

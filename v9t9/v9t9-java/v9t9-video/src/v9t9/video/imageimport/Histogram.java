@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 
 class Histogram {
 	private final BufferedImage img;

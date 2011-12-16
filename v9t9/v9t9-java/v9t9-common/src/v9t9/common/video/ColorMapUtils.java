@@ -3,7 +3,8 @@ package v9t9.common.video;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import v9t9.base.utils.Pair;
+import ejs.base.utils.Pair;
+
 
 
 public class ColorMapUtils {
