@@ -1,0 +1,202 @@
+#!/bin/sh
+
+# For Redhat or Wind River Linux systems
+#
+# chkconfig: 345 29 71
+# processname: /usr/sbin/tcf-agent
+# description: Target Communication Framework
+
+# For openSUSE system
+#
+### BEGIN INIT INFO
+# Provides:          tcf-agent
+# Required-Start:    $syslog $remote_fs
+# Required-Stop:     $syslog $remote_fs
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 6
+# Short-Description: Target Communication Framework agent
+# Description: Target Communication Framework agent
+### END INIT INFO
+
+#
+# Location of the TCF daemon and the init directory
+#
+DAEMON_PATH=/usr/sbin/tcf-agent
+DAEMON_NAME=`basename $DAEMON_PATH`
+DAEMON_ARGS="-d -L- -l0 -s SSL:"
+
+#
+# Determine which kind of configuration we're using
+#
+system=unknown
+if [ -f /etc/redhat-release -o -f /etc/fedora-release ]; then
+    system=redhat
+fi
+
+if [ -f /etc/wrs-release ]; then
+    system=wrlinux
+fi
+
+if [ -f /etc/SuSE-release ]; then
+    system=suse
+fi
+
+if [ $system = unknown ]; then
+    echo "$0: Unknown system, please port and contact tcf-dev@eclipse.org" 1>&2
+    exit 1
+fi
+
+if [ $system = redhat ]; then
+    . /etc/init.d/functions
+fi
+
+if [ $system = wrlinux ]; then
+    . /etc/rc.d/init.d/functions
+    DAEMON_PATH=/usr/bin/tcf-agent
+    DAEMON_ARGS="-d -L- -l0"
+fi
+
+if [ $system = suse ]; then
+    . /etc/rc.status
+    rc_reset
+fi
+
+test -e $DAEMON_PATH || exit 0
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+export PATH
+
+# Redhat start/stop function.
+#
+function redhat()
+{
+
+#
+# See how we were called.
+#
+case "$1" in
+  start)
+    echo -n $"Starting $DAEMON_NAME:"
+    $DAEMON_PATH $DAEMON_ARGS
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ] ; then
+      success "$DAEMON_NAME startup"
+    else
+      failure "$DAEMON_NAME startup"
+    fi
+    [ $RETVAL = 0 ] && touch /var/lock/subsys/$DAEMON_NAME
+    echo
+    ;;
+  stop)
+    echo -n $"Stopping $DAEMON_NAME:"
+    count=0
+    while [ -n "`/sbin/pidof $DAEMON_PATH`" -a $count -lt 10 ] ; do
+      killproc $DAEMON_PATH -USR2 >& /dev/null
+      sleep 1
+      RETVAL=$?
+      if [ $RETVAL != 0 -o -n "`/sbin/pidof $DAEMON_PATH`" ] ; then
+        sleep 3
+      fi
+      count=`expr $count + 1`
+    done
+    rm -f /var/lock/subsys/$DAEMON_NAME
+    if [ -n "`/sbin/pidof $DAEMON_PATH`" ] ; then
+      failure "$DAEMON_NAME shutdown"
+    else
+      success "$DAEMON_NAME shutdown"
+    fi
+    echo
+    ;;
+  restart)
+    redhat stop
+    redhat start
+    ;;
+  status)
+    if [ -n "`/sbin/pidof $DAEMON_PATH`" ] ; then
+      echo "$DAEMON_NAME is running"
+    else
+      echo "$DAEMON_NAME is not running"
+    fi
+    ;;
+  condrestart)
+    [ -f /var/lock/subsys/$DAEMON_NAME ] && redhat restart
+    ;;
+  *)
+  echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+esac
+}
+
+# SuSE start/stop function.
+#
+function suse()
+{
+
+#
+# See how we were called.
+#
+case "$1" in
+    start)
+    echo -n "Starting TCF agent "
+    /sbin/startproc -l /var/log/rctcfagent.log $DAEMON_PATH $DAEMON_ARGS
+    rc_status -v
+    ;;
+    stop)
+    echo -n "Shutting down TCF agent "
+    /sbin/killproc -TERM $DAEMON_PATH
+    rc_status -v
+    ;;
+    try-restart|condrestart)
+    ## Do a restart only if the service was active before.
+    ## Note: try-restart is now part of LSB (as of 1.9).
+    ## RH has a similar command named condrestart.
+    if test "$1" = "condrestart"; then
+        echo "${attn} Use try-restart ${done}(LSB)${attn} rather than condrestart ${warn}(RH)${norm}"
+    fi
+    suse status
+    if test $? = 0; then
+        suse restart
+    else
+        rc_reset    # Not running is not a failure.
+    fi
+
+    rc_status
+    ;;
+    restart)
+    suse stop
+    suse start
+    rc_status
+    ;;
+    force-reload)
+    echo -n "Reload service TCF agent "
+    /sbin/killproc -HUP $DAEMON_PATH
+    rc_status -v
+    ;;
+    reload)
+    echo -n "Reload service TCF agent "
+    /sbin/killproc -HUP $DAEMON_PATH
+    rc_status -v
+    ;;
+    status)
+    echo -n "Checking for service TCF agent "
+    /sbin/checkproc $DAEMON_PATH
+    rc_status -v
+    ;;
+    *)
+    echo "Usage: $0 {start|stop|status|try-restart|restart|force-reload|reload}"
+    exit 1
+    ;;
+esac
+}
+
+if [ $system = suse ]; then
+  suse "$@"
+  rc_exit
+fi
+
+RETVAL=0
+
+if [ $system = redhat -o $system = wrlinux  ]; then
+  redhat "$@"
+fi
+
+exit $RETVAL

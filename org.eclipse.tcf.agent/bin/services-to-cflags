@@ -1,0 +1,18 @@
+#!/bin/sh
+
+for PREFIX in SERVICE_ ENABLE_
+do
+  NAMES=`sed -n "s/.*#if *\!defined *( *$PREFIX\([^ ]*\) *).*/\1/p" <config.h`
+  for NAME in $NAMES
+  do
+    VALUE=0
+    for ARG in $*
+    do
+      if [ $NAME = $ARG ]
+	  then
+	    VALUE=1
+	  fi
+    done
+    echo -D$PREFIX$NAME=$VALUE
+  done
+done

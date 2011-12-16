@@ -1,0 +1,19 @@
+#!/bin/sh
+
+OPSYS=`uname -o 2>/dev/null || uname -s`
+
+if [ $OPSYS = Cygwin ] ; then
+  echo cygwin
+elif [ $OPSYS = GNU/Linux ] ; then
+  if [ -e /etc/fedora-release ] ; then
+    echo fc`rpm -q --queryformat='%{VERSION}\n' fedora-release 2>/dev/null`
+  elif [ -e /etc/redhat-release ] ; then
+    echo rh`sed -e 's/^.*release //' -e 's/ .*$//' -e 's/\\./_/g' </etc/redhat-release`
+  elif [ -e /etc/mandrake-release ] ; then
+    echo mdk
+  elif [ -e /etc/SuSE-release ] ; then
+    echo suse
+  fi
+fi
+
+

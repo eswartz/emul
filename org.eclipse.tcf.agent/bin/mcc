@@ -1,0 +1,100 @@
+#!/bin/bash
+
+# This script invokes Microsoft Visual Studio C compiler from CygWin shell.
+# The script command line parameters format is similar to GCC command line.
+# Command line options:
+#  -c   compile only
+#  -g   generate debug info
+#  -O   enable optimizations
+#  -o<file>  output file name
+#  -D<name>  macro definition
+#  -I<dir>   include directory
+#  -p<file>  PDB file name
+
+. `dirname $0`/mcc-env
+
+declare -a cmd
+cmdpos=0
+
+cflag=0
+gflag=0
+Oflag=0
+language=
+oval=
+
+while getopts co:D:I:gOp:x: name
+do
+    case $name in
+    c)
+        cmd[cmdpos]="/c"
+        cmdpos=`expr $cmdpos + 1`
+        cflag=1
+        ;;
+    g)
+        gflag=1
+        ;;
+    O)
+        Oflag=1
+        ;;
+    o)
+        oval="$OPTARG"
+        ;;
+    D)
+        cmd[cmdpos]="/D$OPTARG"
+        cmdpos=`expr $cmdpos + 1`
+        ;;
+    I)
+        cmd[cmdpos]="/I`cygpath -m "$OPTARG"`"
+        cmdpos=`expr $cmdpos + 1`
+        ;;
+    p)
+        cmd[cmdpos]="/Fd`cygpath -m "$OPTARG"`"
+        cmdpos=`expr $cmdpos + 1`
+        ;;
+    x)
+        language="$OPTARG"
+        ;;
+    *)
+        echo Invalid option $name
+        exit 2
+        ;;
+    esac
+done
+
+if [ $cflag != 0 ] ; then
+  if [ "$language" = "" -o "$language" = "c" ] ; then
+    cmd[cmdpos]="/TC"
+    cmdpos=`expr $cmdpos + 1`
+  elif [ "$language" = "c++" ] ; then
+    cmd[cmdpos]="/TP"
+    cmdpos=`expr $cmdpos + 1`
+  else
+    echo "Invalid value of -x"
+    exit 1
+  fi
+fi
+
+shift `expr $OPTIND - 1`
+
+if [ ! -z "$oval" ] ; then
+    if [ $cflag = 0 ] ; then
+        cmd[cmdpos]="/Fe$oval"
+    else
+        cmd[cmdpos]="/Fo$oval"
+    fi
+    cmdpos=`expr $cmdpos + 1`
+fi
+
+if [ $gflag = 1 ] ; then
+    CFLAGS1="/D_DEBUG /Zi /MTd"
+else
+    CFLAGS1="/DNDEBUG /GF /Gy /FD /MT"
+fi
+if [ $Oflag = 0 ] ; then
+    CFLAGS2="/Od"
+else
+    CFLAGS2="/O2 /Ob1"
+fi
+CFLAGS3="/Oy- /DWIN32 /D_CONSOLE /D_VC80_UPGRADE=0x0600 /D_MBCS /W4"
+
+cl.exe /nologo $CFLAGS1 $CFLAGS2 $CFLAGS3 "${cmd[@]}" "$@" || exit 1

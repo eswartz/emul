@@ -1,0 +1,47 @@
+#!/bin/sh
+
+OpenSSL=$1
+OPSYS=$2
+MACHINE=$3
+CONF=$4
+
+BINDIR=`pwd`/obj/$OPSYS/$MACHINE/$CONF
+
+if [ "$OPSYS" = Windows ] ; then
+  . `dirname $0`/mcc-env
+fi
+
+cd $OpenSSL || exit 1
+
+if [ "$OPSYS" = Windows ] ; then
+
+  SSLCONF=VC-WIN32
+
+  if [ "$CONF" = Debug ] ; then
+    SSLCONF=debug-VC-WIN32
+  fi
+
+  rm -rf inc32 out32 out32.dbg || exit 1
+  perl Configure $SSLCONF || exit 1
+  cmd /c nmake -f ms\\nt.mak clean || exit 1
+  cmd /c ms\\do_nasm.bat || exit 1
+  cmd /c nmake -f ms\\nt.mak || exit 1
+
+elif [ "$OPSYS" = Cygwin ] ; then
+
+  ./config enable-static-engine no-dso || exit 1
+  make clean || exit 1
+  make build_libs || exit 1
+
+elif [ "$OPSYS" = MinGW -o "$OPSYS" = Msys ] ; then
+
+  ./Configure mingw enable-static-engine no-dso || exit 1
+  make clean || exit 1
+  make build_libs || exit 1
+
+else
+
+  echo "Invalid OPSYS: $OPSYS"
+  exit 1
+
+fi
