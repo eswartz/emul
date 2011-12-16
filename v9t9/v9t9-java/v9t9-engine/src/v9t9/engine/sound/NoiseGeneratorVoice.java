@@ -4,6 +4,7 @@
 package v9t9.engine.sound;
 
 import ejs.base.settings.ISettingSection;
+import static v9t9.common.sound.TMS9919Consts.*;
 
 public class NoiseGeneratorVoice extends ClockedSoundVoice
 {
@@ -20,13 +21,13 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 		int periodtype = getOperationNoisePeriod();
 		boolean prevType = isWhite;
 		boolean wasSilent = getVolume() == 0;
-		isWhite = getOperationNoiseType() == SoundTMS9919.NOISE_WHITE;
+		isWhite = getOperationNoiseType() == NOISE_WHITE;
 		
 		
 		setVolume((byte) (0xf - getOperationAttenuation()));
-		if (periodtype != SoundTMS9919.NOISE_PERIOD_VARIABLE) {
-			period16 = SoundTMS9919.noise_period[periodtype] * soundClock;
-			hertz = SoundTMS9919.period16ToHertz(period16);
+		if (periodtype != NOISE_PERIOD_VARIABLE) {
+			period16 = noise_period[periodtype] * soundClock;
+			hertz = period16ToHertz(period16);
 		} else {
 			period16 = pairedVoice2.period16;
 			hertz = pairedVoice2.hertz;

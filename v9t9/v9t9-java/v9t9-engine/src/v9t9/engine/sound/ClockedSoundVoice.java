@@ -8,6 +8,7 @@ import java.text.MessageFormat;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
 
+import static v9t9.common.sound.TMS9919Consts.*;
 
 public abstract class ClockedSoundVoice extends SoundVoice
 {
@@ -45,20 +46,20 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		return super.toString() + "; hertz="+hertz;
 	}
 	protected int getOperationNoiseType() {
-		return ( operation[SoundTMS9919.OPERATION_CONTROL] & 0x4 );
+		return ( operation[OPERATION_CONTROL] & 0x4 );
 	}
 
 	protected int getOperationNoisePeriod()  {
-		return ( operation[SoundTMS9919.OPERATION_CONTROL] & 0x3 );
+		return ( operation[OPERATION_CONTROL] & 0x3 );
 	}
 	
 	protected byte getOperationAttenuation() {
-		return (byte) ( operation[SoundTMS9919.OPERATION_ATTENUATION] & 0xf );
+		return (byte) ( operation[OPERATION_ATTENUATION] & 0xf );
 	}
 	
 	protected int getOperationPeriod() {
-		int period = ( (operation[SoundTMS9919.OPERATION_FREQUENCY_LO] & 0xf) |
-		( (operation[SoundTMS9919.OPERATION_FREQUENCY_HI] & 0x3f) << 4 ) );
+		int period = ( (operation[OPERATION_FREQUENCY_LO] & 0xf) |
+		( (operation[OPERATION_FREQUENCY_HI] & 0x3f) << 4 ) );
 		return period;
 	}
 	
@@ -71,8 +72,8 @@ public abstract class ClockedSoundVoice extends SoundVoice
 			else
 				System.out.println(MessageFormat.format(
 					"voice_cache_values[{5}]: lo=>{0}, hi=>{1}, period=>{2}, hertz={3}, volume={4}",
-				   HexUtils.toHex4(operation[SoundTMS9919.OPERATION_FREQUENCY_LO]), 
-				   HexUtils.toHex4(operation[SoundTMS9919.OPERATION_FREQUENCY_HI]),
+				   HexUtils.toHex4(operation[OPERATION_FREQUENCY_LO]), 
+				   HexUtils.toHex4(operation[OPERATION_FREQUENCY_HI]),
 				   HexUtils.toHex4((period16 / 65536)),
 				   hertz,
 				   getVolume(),

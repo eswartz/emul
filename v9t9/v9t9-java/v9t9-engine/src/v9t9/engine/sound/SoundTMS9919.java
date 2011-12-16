@@ -12,6 +12,8 @@ import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 
+import static v9t9.common.sound.TMS9919Consts.*;
+
 /**
  * Controller for the TMS9919 sound chip
  * <p>
@@ -20,13 +22,6 @@ import v9t9.common.settings.Settings;
  *
  */
 public class SoundTMS9919 implements ISoundChip {
-
-	/* These are used as an index into the operation[] field */
-	final static int OPERATION_FREQUENCY_LO = 0,		/* low 4 bits [1vv0yyyy] */
-		OPERATION_CONTROL = 0,			/* for noise  [11100xyy] */
-		OPERATION_FREQUENCY_HI = 1,		/* hi 6 bits  [00yyyyyy] */
-		OPERATION_ATTENUATION = 2		/* low 4 bits [1vv1yyyy] */
-	;
 
 	final public static int 
 		VOICE_TONE_0 = 0, 
@@ -39,35 +34,6 @@ public class SoundTMS9919 implements ISoundChip {
 
 	protected static int getOperationVoice(int op) {
 		return ( ((op) & 0x60) >> 5);
-	}
-
-	/*
-	 *	Masks for the OPERATION_CONTROL byte for VOICE_NOISE
-	 */
-	protected final static int NOISE_PERIODIC = 0,
-		NOISE_WHITE = 0x4
-	;
-	
-	protected final static int NOISE_PERIOD_FIXED_0 = 0,
-		NOISE_PERIOD_FIXED_1 = 1,
-		NOISE_PERIOD_FIXED_2 = 2,
-		NOISE_PERIOD_VARIABLE = 3;
-	;
-
-	protected static final int  noise_period[] = 
-	{
-		16,
-		32, 
-		64, 
-		0 						/* determined by VOICE_TONE_2 */
-	};
-
-
-	protected static int periodToHertz(int p) {
-		return ((p) > 1 ? (111860 / (p)) : 55930);
-	}
-	protected static int period16ToHertz(int p) {
-		return (int) ((p) > 1 ? ((long)111860 * 55930 / (p)) : 55930 * 55930);
 	}
 
 	protected int	cvoice;

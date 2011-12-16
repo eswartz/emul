@@ -20,6 +20,8 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.DiskMemoryEntry;
 
+import static v9t9.common.speech.TMS5220Consts.*;
+
 /**
  * @author ejs
  *
@@ -29,25 +31,9 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	private final int SPEECH_TIMEOUT = 25+9;
 	
 	private int status;		/* as returned via read-status */
-	/** talk status */
-	final int SS_TS	= 0x80;
-	
-	/** buffer low */
-	final int SS_BL	= 0x40;
-	/** buffer empty */
-	final int SS_BE	= 0x20;	
-	/** internal flag */
-	final int SS_SPEAKING = 1;	
 
 	private int	gate;		/* how do we route Writes and Reads? */
-	/** write -> command */
-	final int GT_WCMD	= 0x1;		
-	/** write -> speech external data */
-	final int GT_WDAT	= 0x2;		
-	/** read -> status */
-	final int GT_RSTAT  = 0x4;	
-	/** read -> data */
-	final int GT_RDAT	= 0x8;			
+		
 
 	private	int addr;		/* address -- 20 bits */
 

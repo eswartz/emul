@@ -14,7 +14,7 @@ import java.net.URL;
  */
 public class EmulatorData {
 
-	private static final boolean sIsDevBuild;
+	static final boolean sIsDevBuild;
 	private static final URL sBaseV9t9URL;
 	private static final URL sBaseDataURL;
 

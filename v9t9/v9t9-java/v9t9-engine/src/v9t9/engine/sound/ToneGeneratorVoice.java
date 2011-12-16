@@ -4,6 +4,7 @@
 package v9t9.engine.sound;
 
 import ejs.base.settings.ISettingSection;
+import static v9t9.common.sound.TMS9919Consts.*;
 
 public class ToneGeneratorVoice extends ClockedSoundVoice
 {
@@ -18,7 +19,7 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 		setVolume((byte) (0xf - getOperationAttenuation()));
 		//int lastPeriod = period;
 		period16 = getOperationPeriod() * soundClock;
-		hertz = SoundTMS9919.period16ToHertz(period16);
+		hertz = period16ToHertz(period16);
 		
 		if (hertz * 2 < 55930) {
 			incr = hertz * 2;

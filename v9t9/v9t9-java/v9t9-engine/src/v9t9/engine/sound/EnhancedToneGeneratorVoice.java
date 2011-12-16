@@ -3,6 +3,8 @@
  */
 package v9t9.engine.sound;
 
+import static v9t9.common.sound.TMS9919Consts.*;
+
 /**
  * Tone generator 
  * @author ejs
@@ -18,8 +20,8 @@ public class EnhancedToneGeneratorVoice extends ToneGeneratorVoice implements En
 	}
 
 	protected int getOperationPeriod() {
-		return ( (operation[SoundTMS9919.OPERATION_FREQUENCY_LO] & 0xf) |
-		( (operation[SoundTMS9919.OPERATION_FREQUENCY_HI] & 0x7f) << 4 ) );
+		return ( (operation[OPERATION_FREQUENCY_LO] & 0xf) |
+		( (operation[OPERATION_FREQUENCY_HI] & 0x7f) << 4 ) );
 	}
 	
 	public EffectsController getEffectsController() {
