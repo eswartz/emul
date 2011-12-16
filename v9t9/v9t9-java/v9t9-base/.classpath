@@ -5,7 +5,7 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="HRTimer"/>
 	<classpathentry excluding="api/" kind="src" path="Base64-2.2.2"/>
-	<classpathentry kind="lib" path="libs/jna.jar"/>
+	<classpathentry kind="lib" path="libs/jna.jar" sourcepath="libs/jna-src.zip"/>
 	<classpathentry kind="lib" path="libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
 	<classpathentry kind="lib" path="libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
 	<classpathentry kind="lib" path="libs/swt/org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
