@@ -30,7 +30,7 @@ public class SoundOutput implements ISoundOutput {
 	protected volatile int lastUpdatedPos;
 	private boolean anyChanged;
 
-	List<ISoundListener> listeners;
+	private List<ISoundListener> listeners;
 	// samples * channels
 	private final int bufferSize;
 	private ISoundListener[] listenerArray;
