@@ -78,8 +78,6 @@ import org.lwjgl.util.glu.GLU;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.canvas.video.ImageDataCanvas24Bit;
-import v9t9.canvas.video.VdpCanvasFactory;
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IMachine;
 import v9t9.common.video.ICanvas;
@@ -89,6 +87,8 @@ import v9t9.gui.client.swt.gl.SimpleCurvedCrtMonitorRender;
 import v9t9.gui.client.swt.gl.StandardMonitorRender;
 import v9t9.gui.client.swt.gl.TextureLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
+import v9t9.video.ImageDataCanvas24Bit;
+import v9t9.video.VdpCanvasFactory;
 
 /**
  * Render video into an OpenGL canvas in an SWT window

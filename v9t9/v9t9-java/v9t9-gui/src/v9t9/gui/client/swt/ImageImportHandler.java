@@ -1,9 +1,9 @@
 package v9t9.gui.client.swt;
 
-import v9t9.canvas.video.ImageDataCanvas;
 import v9t9.common.hardware.IVdpChip;
-import v9t9.gui.image.ImageImport;
-import v9t9.gui.image.ImageImportOptions;
+import v9t9.video.ImageDataCanvas;
+import v9t9.video.imageimport.ImageImport;
+import v9t9.video.imageimport.ImageImportOptions;
 
 public abstract class ImageImportHandler implements IImageImportHandler {
 

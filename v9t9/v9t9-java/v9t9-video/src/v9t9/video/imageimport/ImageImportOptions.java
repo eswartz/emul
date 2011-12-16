@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.gui.image;
+package v9t9.video.imageimport;
 
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;

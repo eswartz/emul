@@ -32,9 +32,6 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.timer.FastTimer;
-import v9t9.canvas.video.ImageDataCanvas;
-import v9t9.canvas.video.ImageDataCanvas24Bit;
-import v9t9.canvas.video.VdpCanvasFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
@@ -44,6 +41,9 @@ import v9t9.common.video.ICanvasListener;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.gui.common.BaseEmulatorWindow;
+import v9t9.video.ImageDataCanvas;
+import v9t9.video.ImageDataCanvas24Bit;
+import v9t9.video.VdpCanvasFactory;
 
 /**
  * Render video into an SWT window

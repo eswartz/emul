@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.gui.image;
+package v9t9.video.imageimport;
 
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -23,7 +23,6 @@ import javax.imageio.ImageIO;
 import org.eclipse.swt.graphics.ImageData;
 
 import v9t9.base.utils.Pair;
-import v9t9.canvas.video.ImageDataCanvas;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.hardware.VdpV9938Consts;
@@ -31,8 +30,9 @@ import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ColorMapUtils;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
-import v9t9.gui.image.ColorOctree.LeafNode;
-import v9t9.gui.image.ImageImportOptions.Dither;
+import v9t9.video.ImageDataCanvas;
+import v9t9.video.imageimport.ColorOctree.LeafNode;
+import v9t9.video.imageimport.ImageImportOptions.Dither;
 
 import static v9t9.common.hardware.VdpV9938Consts.*;
 

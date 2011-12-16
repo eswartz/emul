@@ -3,8 +3,8 @@
  */
 package v9t9.gui.client.swt;
 
-import v9t9.gui.image.ImageImport;
-import v9t9.gui.image.ImageImportOptions;
+import v9t9.video.imageimport.ImageImport;
+import v9t9.video.imageimport.ImageImportOptions;
 
 /**
  * @author ejs

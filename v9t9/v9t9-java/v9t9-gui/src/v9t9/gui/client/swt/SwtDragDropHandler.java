@@ -40,13 +40,13 @@ import org.eclipse.swt.widgets.Control;
 
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.utils.Pair;
-import v9t9.canvas.video.ImageDataCanvas;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.VdpFormat;
-import v9t9.gui.image.ImageImport;
-import v9t9.gui.image.ImageImportOptions;
+import v9t9.video.ImageDataCanvas;
+import v9t9.video.imageimport.ImageImport;
+import v9t9.video.imageimport.ImageImportOptions;
 
 /**
  * Support dragging image out of window, or into window (and VDP buffer)

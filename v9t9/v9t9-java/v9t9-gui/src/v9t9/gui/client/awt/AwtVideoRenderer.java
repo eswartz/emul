@@ -24,9 +24,6 @@ import javax.imageio.ImageIO;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.timer.FastTimer;
-import v9t9.canvas.video.ImageDataCanvas;
-import v9t9.canvas.video.ImageDataCanvas24Bit;
-import v9t9.canvas.video.VdpCanvasFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
@@ -40,6 +37,9 @@ import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.gui.jna.V9t9Render;
 import v9t9.gui.jna.V9t9Render.AnalogTV;
 import v9t9.gui.jna.V9t9Render.AnalogTVData;
+import v9t9.video.ImageDataCanvas;
+import v9t9.video.ImageDataCanvas24Bit;
+import v9t9.video.VdpCanvasFactory;
 
 /**
  * AWT has nice accelerated blit routines, which are superior to SWT on Linux/GTK and Windows.

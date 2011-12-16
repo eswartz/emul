@@ -18,7 +18,7 @@ import org.eclipse.swt.graphics.Region;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.gui.image.ImageImportOptions;
+import v9t9.video.imageimport.ImageImportOptions;
 
 /**
  * Decorator that supports adding an overlay clip rectangle to an ImageLabel and

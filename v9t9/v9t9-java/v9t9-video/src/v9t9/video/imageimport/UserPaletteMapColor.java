@@ -1,4 +1,4 @@
-package v9t9.gui.image;
+package v9t9.video.imageimport;
 
 
 import v9t9.base.utils.Pair;
