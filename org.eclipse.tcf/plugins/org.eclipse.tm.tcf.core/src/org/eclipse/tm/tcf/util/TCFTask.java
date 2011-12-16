@@ -39,9 +39,9 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 public abstract class TCFTask<V> implements Runnable, Future<V> {
 
     private V result;
-    private boolean done;
+    private volatile boolean done;
     private Throwable error;
-    private boolean canceled;
+    private volatile boolean canceled;
     private IChannel channel;
     private IChannel.IChannelListener channel_listener;
 

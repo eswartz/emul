@@ -41,7 +41,7 @@ public class AbstractPeer extends TransientPeer {
         if (peers.get(id) instanceof RemotePeer) {
             ((RemotePeer)peers.get(id)).dispose();
         }
-        assert peers.get(id) == null;
+        //assert peers.get(id) == null;
         peers.put(id, this);
         sendPeerAddedEvent();
     }
@@ -51,7 +51,7 @@ public class AbstractPeer extends TransientPeer {
         String id = getID();
         assert id != null;
         Map<String,IPeer> peers = LocatorService.getLocator().getPeers();
-        assert peers.get(id) == this;
+        //assert peers.get(id) == this;
         peers.remove(id);
         sendPeerRemovedEvent();
     }

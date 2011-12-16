@@ -24,7 +24,7 @@ import org.eclipse.tm.tcf.services.IRegisters;
 
 public class RegistersProxy implements IRegisters {
 
-    private final IChannel channel;
+    protected final IChannel channel;
     private final Map<RegistersListener,IChannel.IEventListener> listeners =
         new HashMap<RegistersListener,IChannel.IEventListener>();
 

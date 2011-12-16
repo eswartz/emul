@@ -28,15 +28,15 @@ import org.eclipse.tm.tcf.services.IMemory;
 
 public class MemoryProxy implements IMemory {
 
-    private final IChannel channel;
-    private final Map<MemoryListener,IChannel.IEventListener> listeners =
+    protected final IChannel channel;
+    protected final Map<MemoryListener,IChannel.IEventListener> listeners =
         new HashMap<MemoryListener,IChannel.IEventListener>();
 
-    private static class Range implements Comparable<Range> {
-        int offs;
-        int size;
-        int stat;
-        String msg;
+    protected static class Range implements Comparable<Range> {
+        protected int offs;
+        protected int size;
+        protected int stat;
+        protected String msg;
 
         public int compareTo(Range o) {
             if (offs < o.offs) return -1;
@@ -45,14 +45,14 @@ public class MemoryProxy implements IMemory {
         }
     }
 
-    private class MemoryErrorReport extends MemoryError implements ErrorOffset, IErrorReport {
+    protected class MemoryErrorReport extends MemoryError implements ErrorOffset, IErrorReport {
 
-        private static final long serialVersionUID = 796525409870265390L;
-        private final Map<String,Object> attrs;
-        private final Range[] ranges;
+        protected static final long serialVersionUID = 796525409870265390L;
+        protected final Map<String,Object> attrs;
+        protected final Range[] ranges;
 
         @SuppressWarnings("unchecked")
-        MemoryErrorReport(String msg, Map<String,Object> attrs, Number addr, Object ranges) {
+        protected MemoryErrorReport(String msg, Map<String,Object> attrs, Number addr, Object ranges) {
             super(msg);
             this.attrs = attrs;
             Collection<Map<String,Object>> c = (Collection<Map<String,Object>>)ranges;
@@ -137,11 +137,11 @@ public class MemoryProxy implements IMemory {
         }
     }
 
-    private class MemContext implements MemoryContext {
+    protected class MemContext implements MemoryContext {
 
-        private final Map<String,Object> props;
+        protected final Map<String,Object> props;
 
-        MemContext(Map<String,Object> props) {
+        public MemContext(Map<String,Object> props) {
             this.props = props;
         }
 
@@ -334,7 +334,7 @@ public class MemoryProxy implements IMemory {
         return NAME;
     }
 
-    private abstract class MemoryCommand extends Command {
+    protected abstract class MemoryCommand extends Command {
 
         MemoryCommand(String cmd, Object[] args) {
             super(channel, MemoryProxy.this, cmd, args);
@@ -358,7 +358,7 @@ public class MemoryProxy implements IMemory {
     }
 
     @SuppressWarnings("unchecked")
-    private MemoryContext[] toContextArray(Object o) {
+    protected MemoryContext[] toContextArray(Object o) {
         Collection<Map<String,Object>> c = (Collection<Map<String,Object>>)o;
         if (c == null) return new MemoryContext[0];
         int n = 0;
@@ -370,7 +370,7 @@ public class MemoryProxy implements IMemory {
     }
 
     @SuppressWarnings("unchecked")
-    private long[] toSizeArray(Object o) {
+    protected long[] toSizeArray(Object o) {
         Collection<Map<String,Object>> c = (Collection<Map<String,Object>>)o;
         if (c == null) return null;
         long[] a = new long[c.size()];
@@ -383,7 +383,7 @@ public class MemoryProxy implements IMemory {
     }
 
     @SuppressWarnings("unchecked")
-    private Number[] toAddrArray(Object o) {
+    protected Number[] toAddrArray(Object o) {
         Collection<Map<String,Object>> c = (Collection<Map<String,Object>>)o;
         if (c == null) return null;
         Number[] a = new Number[c.size()];
@@ -395,7 +395,7 @@ public class MemoryProxy implements IMemory {
     }
 
     @SuppressWarnings("unchecked")
-    private String[] toStringArray(Object o) {
+    protected String[] toStringArray(Object o) {
         if (o == null) return null;
         Collection<String> c = (Collection<String>)o;
         return (String[])c.toArray(new String[c.size()]);

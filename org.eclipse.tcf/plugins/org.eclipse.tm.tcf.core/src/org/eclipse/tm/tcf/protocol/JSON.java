@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -510,6 +511,9 @@ public final class JSON {
                 write(Integer.toString(b.size));
                 write(')');
                 write((char)1);
+                if (bin_buf_pos >= bin_buf.length) {
+                    bin_buf = Arrays.copyOf(bin_buf, bin_buf_pos * 2); 
+                }
                 bin_buf[bin_buf_pos++] = b;
             }
             else {

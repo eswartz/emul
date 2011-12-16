@@ -90,6 +90,7 @@ public class TCFBreakpointsModel {
         IBreakpoints.DoneCommand done;
         Map<String,Object> tcf_attrs;
 
+        @SuppressWarnings("unchecked")
         BreakpointUpdate(IBreakpoint breakpoint, boolean removed) throws CoreException, IOException {
             this.breakpoint = breakpoint;
             this.removed = removed;
@@ -154,6 +155,7 @@ public class TCFBreakpointsModel {
             }
         }
 
+        @SuppressWarnings("unchecked")
         private Set<String> calcMarkerDeltaKeys(IMarker marker, IMarkerDelta delta) throws CoreException {
             Set<String> keys = new HashSet<String>();
             if (delta == null) return keys;
@@ -345,6 +347,7 @@ public class TCFBreakpointsModel {
      * @return true if the marker is owned by local instance of Eclipse.
      * Return false if the marker represents a breakpoint created by some other TCF client.
      */
+    @SuppressWarnings("unchecked")
     public boolean isLocal(IMarker marker) {
         try {
             Map<String,Object> marker_attrs = marker.getAttributes();

@@ -35,6 +35,7 @@ public interface IRegisters extends IService {
         PROP_DESCRIPTION = "Description",       /** String, context description */
         PROP_SIZE = "Size",                     /** Number, context size in bytes. Byte arrays in get/set commands should be same size */
         PROP_READBLE = "Readable",              /** Boolean, true if context value can be read */
+        PROP_READABLE = "Readable",              /** Boolean, true if context value can be read */
         PROP_READ_ONCE = "ReadOnce",            /** Boolean, true if reading the context (register) destroys its current value */
         PROP_WRITEABLE = "Writeable",           /** Boolean, true if context value can be written */
         PROP_WRITE_ONCE = "WriteOnce",          /** Boolean, true if register value can not be overwritten - every write counts */
@@ -44,6 +45,7 @@ public interface IRegisters extends IService {
         PROP_BIG_ENDIAN = "BigEndian",          /** Boolean, true if big endian */
         PROP_LEFT_TO_RIGHT = "LeftToRight",     /** Boolean, true if the lowest numbered bit should be shown to user as the left-most bit */
         PROP_FIST_BIT = "FirstBit",             /** Number, bit numbering base (0 or 1) to use when showing bits to user */
+        PROP_FIRST_BIT = "FirstBit",             /** Number, bit numbering base (0 or 1) to use when showing bits to user */
         PROP_BITS = "Bits",                     /** Number, if context is a bit field, contains the field bit numbers in the parent context */
         PROP_VALUES = "Values",                 /** Array of Map, predefined names (mnemonics) for some of context values */
         PROP_MEMORY_ADDRESS = "MemoryAddress",  /** Number, the address of a memory mapped register */
@@ -71,7 +73,7 @@ public interface IRegisters extends IService {
     /**
      * Retrieve context info for given context ID.
      *
-     * @param id – context ID.
+     * @param id ï¿½ context ID.
      * @param done - call back interface called when operation is completed.
      */
     IToken getContext(String id, DoneGetContext done);
@@ -83,8 +85,8 @@ public interface IRegisters extends IService {
         /**
          * Called when context data retrieval is done.
          * @param token - command handle
-         * @param error – error description if operation failed, null if succeeded.
-         * @param context – context data.
+         * @param error ï¿½ error description if operation failed, null if succeeded.
+         * @param context ï¿½ context data.
          */
         void doneGetContext(IToken token, Exception error, RegistersContext context);
     }
@@ -99,7 +101,7 @@ public interface IRegisters extends IService {
      * with same IDs, however, each service accesses its own subset of context's
      * attributes and functionality, which is relevant to that service.
      *
-     * @param parent_context_id – parent context ID. Can be null –
+     * @param parent_context_id ï¿½ parent context ID. Can be null ï¿½
      * to retrieve top level of the hierarchy, or one of context IDs retrieved
      * by previous getChildren commands.
      * @param done - call back interface called when operation is completed.
@@ -113,8 +115,8 @@ public interface IRegisters extends IService {
         /**
          * Called when context list retrieval is done.
          * @param token - command handle
-         * @param error – error description if operation failed, null if succeeded.
-         * @param context_ids – array of available context IDs.
+         * @param error ï¿½ error description if operation failed, null if succeeded.
+         * @param context_ids ï¿½ array of available context IDs.
          */
         void doneGetChildren(IToken token, Exception error, String[] context_ids);
     }
@@ -365,8 +367,8 @@ public interface IRegisters extends IService {
         /**
          * Called when value retrieval is done.
          * @param token - command handle
-         * @param error – error description if operation failed, null if succeeded.
-         * @param value – context value as array of bytes.
+         * @param error ï¿½ error description if operation failed, null if succeeded.
+         * @param value ï¿½ context value as array of bytes.
          */
         void doneGet(IToken token, Exception error, byte[] value);
     }
@@ -378,7 +380,7 @@ public interface IRegisters extends IService {
         /**
          * Called when value setting is done.
          * @param token - command handle.
-         * @param error – error description if operation failed, null if succeeded.
+         * @param error ï¿½ error description if operation failed, null if succeeded.
          */
         void doneSet(IToken token, Exception error);
     }
@@ -390,7 +392,7 @@ public interface IRegisters extends IService {
         /**
          * Called when context search is done.
          * @param token - command handle.
-         * @param error – error description if operation failed, null if succeeded.
+         * @param error ï¿½ error description if operation failed, null if succeeded.
          * @param paths - array of paths to each context with properties matching the filter
          */
         void doneSearch(IToken token, Exception error, String[][] paths);
