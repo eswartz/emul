@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Eclipse product contributions -->
+   <extension id="TargetExplorer" point="org.eclipse.core.runtime.products">
+      <product
+            application="org.eclipse.tm.te.rcp.TargetExplorer"
+            description="%productBlurb"
+            name="%productName">
+          <property name="aboutText" value="%productBlurb"/>
+          <property name="appName" value="%productName"/>
+          <property 
+          		name="preferenceCustomization" 
+          		value="plugin_customization.ini"/>
+          <property
+                name="startupForegroundColor"
+                value="000000"/>
+          <property
+                name="startupMessageRect"
+                value="5,214,157,15"/>
+          <property
+                name="startupProgressRect"
+                value="0,232,315,10"/> 
+          <property
+          		name="introTitle"
+          		value="%productIntroTitle"/>
+          <property
+          		name="introBrandingImageText"
+          		value="%productIntroBrandingText"/>
+      </product>
+   </extension>
+
+<!-- Bind our product to the universal intro for now -->
+   <extension
+		point="org.eclipse.ui.intro">
+      <introProductBinding
+            introId="org.eclipse.ui.intro.universal"
+            productId="org.eclipse.tm.te.rcp.TargetExplorer">
+      </introProductBinding>
+   </extension> -->
+
+<!-- Application contribution -->
+   <extension id="TargetExplorer" point="org.eclipse.core.runtime.applications">
+      <application
+            cardinality="singleton-global"
+            thread="main"
+            visible="true">
+         <run class="org.eclipse.tm.te.rcp.application.Application"/>
+      </application>
+   </extension>
+
+</plugin>

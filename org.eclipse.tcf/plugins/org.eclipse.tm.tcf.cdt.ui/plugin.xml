@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?><!--
+    Copyright (c) 2010 Wind River Systems, Inc. and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License v1.0
+    which accompanies this distribution, and is available at
+    http://www.eclipse.org/legal/epl-v10.html
+
+    Contributors:
+        Wind River Systems - initial API and implementation
+ -->
+
+<plugin>
+
+  	<extension point="org.eclipse.tm.tcf.debug.ui.launch_context">
+   		<class name="org.eclipse.tm.internal.tcf.cdt.ui.TCFLaunchContext" />
+   	</extension>
+   	
+    <extension
+         point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode"
+            class="org.eclipse.tm.internal.tcf.cdt.ui.TCFNodeAdapterFactory">
+         <adapter type="org.eclipse.cdt.debug.internal.ui.disassembly.dsf.IDisassemblyBackend"/>
+         <adapter type="org.eclipse.cdt.debug.core.model.ISteppingModeTarget"/>
+         <adapter type="org.eclipse.debug.core.model.ISuspendResume"/>
+         <adapter type="org.eclipse.cdt.ui.text.c.hover.ICEditorTextHover"/>
+         <adapter type="org.eclipse.cdt.debug.core.model.IReverseToggleHandler"/>
+         <adapter type="org.eclipse.cdt.debug.core.model.IReverseStepIntoHandler"/>
+         <adapter type="org.eclipse.cdt.debug.core.model.IReverseStepOverHandler"/>
+         <adapter type="org.eclipse.cdt.debug.core.model.IReverseResumeHandler"/>
+         <adapter type="org.eclipse.cdt.debug.core.model.IUncallHandler"/>
+         <adapter type="org.eclipse.cdt.debug.ui.IPinProvider"/>
+         <adapter type="org.eclipse.cdt.debug.internal.core.ICWatchpointTarget"/>
+         <adapter type="org.eclipse.tm.internal.tcf.debug.ui.model.ISourceNotFoundPresentation"/>
+      </factory>
+    </extension>
+
+    <extension
+          point="org.eclipse.core.expressions.propertyTesters">
+       <propertyTester
+             class="org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseDebuggingPropertyTester"
+             id="org.eclipse.tcf.cdt.ui.ReverseDebuggingTester"
+             namespace="org.eclipse.cdt.debug.ui"
+             properties="isReverseDebuggingEnabled"
+             type="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
+       </propertyTester>
+    </extension>
+
+    <extension
+          point="org.eclipse.debug.ui.debugModelContextBindings">
+       <modelContextBinding
+             contextId="org.eclipse.cdt.debug.ui.debugging"
+             debugModelId="org.eclipse.tm.tcf.debug">
+       </modelContextBinding>
+       <modelContextBinding
+             contextId="org.eclipse.cdt.debug.ui.reverseDebuggingActionSet"
+             debugModelId="org.eclipse.tm.tcf.debug">
+       </modelContextBinding>
+    </extension>
+
+    <extension
+          point="org.eclipse.cdt.debug.core.BreakpointExtension">
+       <breakpointExtension
+             class="org.eclipse.tm.internal.tcf.cdt.ui.breakpoints.TCFBreakpointScopeExtension"
+             debugModelId="org.eclipse.tm.tcf.debug"
+             id="org.eclipse.tm.tcf.cdt.ui.breakpointExtension"
+             markerType="org.eclipse.cdt.debug.core.cBreakpointMarker">
+       </breakpointExtension>
+    </extension>
+
+   <extension point="org.eclipse.ui.propertyPages">
+      <page class="org.eclipse.tm.internal.tcf.cdt.ui.breakpoints.TCFBreakpointThreadFilterPage"
+            id="org.eclipse.tm.tcf.breakpoint.filtering"
+            name="%breakpoints.filterPage.name">
+         <filter name="debugModelId" value="org.eclipse.tm.tcf.debug"/>
+         <enabledWhen>
+            <and>
+               <adapt type="org.eclipse.cdt.debug.core.model.ICBreakpoint"/>
+               <not>
+                  <adapt type="org.eclipse.cdt.debug.core.model.ICTracepoint"/>
+               </not>
+            </and>
+         </enabledWhen>
+      </page>
+      <page class="org.eclipse.tm.internal.tcf.cdt.ui.breakpoints.TCFBreakpointStatusPage"
+            id="org.eclipse.tm.tcf.breakpoint.status"
+            name="%breakpoints.statusPage.name">
+         <filter name="debugModelId" value="org.eclipse.tm.tcf.debug"/>
+         <enabledWhen>
+            <and>
+               <adapt type="org.eclipse.cdt.debug.core.model.ICBreakpoint"/>
+               <not>
+                  <adapt type="org.eclipse.cdt.debug.core.model.ICTracepoint"/>
+               </not>
+            </and>
+         </enabledWhen>
+      </page>
+   </extension>
+
+    <!-- Remote Application Launch config type -->
+    <!-- TODO: Move to common CDT plugin? -->
+    <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            public="true"
+            sourcePathComputerId="org.eclipse.cdt.debug.core.sourcePathComputer"
+            name="%launchConfigType.remoteApplication.name"
+            id="org.eclipse.tcf.cdt.launch.remoteApplicationLaunchType"
+            modes="debug,run">
+      </launchConfigurationType>
+    </extension>
+
+    <extension point="org.eclipse.debug.core.launchDelegates">
+      <launchDelegate
+            id="org.eclipse.tcf.cdt.launch.localCLaunch"
+            type="org.eclipse.cdt.launch.applicationLaunchType"
+            modes="debug"
+            delegate="org.eclipse.tm.internal.tcf.cdt.launch.TCFCDTLaunchDelegate"
+            name="%launchDelegate.localApplication.name"
+            delegateDescription="%launchDelegate.localApplication.description"
+            sourceLocatorId="org.eclipse.tm.tcf.debug.SourceLocator"
+            sourcePathComputerId="org.eclipse.cdt.debug.core.sourcePathComputer">
+      </launchDelegate>
+      <launchDelegate
+            id="org.eclipse.tcf.cdt.launch.attachCLaunch"
+            type="org.eclipse.cdt.launch.attachLaunchType"
+            modes="debug"
+            delegate="org.eclipse.tm.internal.tcf.cdt.launch.TCFCDTLaunchDelegate"
+            name="%launchDelegate.attach.name"
+            delegateDescription="%launchDelegate.attach.description"
+            sourceLocatorId="org.eclipse.tm.tcf.debug.SourceLocator"
+            sourcePathComputerId="org.eclipse.cdt.debug.core.sourcePathComputer">
+      </launchDelegate>
+      <launchDelegate
+            id="org.eclipse.tcf.cdt.launch.remoteCLaunch"
+            type="org.eclipse.tcf.cdt.launch.remoteApplicationLaunchType"
+            modes="debug"
+            delegate="org.eclipse.tm.internal.tcf.cdt.launch.TCFCDTLaunchDelegate"
+            name="%launchDelegate.remoteApplication.name"
+            delegateDescription="%launchDelegate.remoteApplication.description"
+            sourceLocatorId="org.eclipse.tm.tcf.debug.SourceLocator"
+            sourcePathComputerId="org.eclipse.cdt.debug.core.sourcePathComputer">
+      </launchDelegate>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabs">
+      <!-- Local application launch tabs-->
+      <tab id="org.eclipse.tcf.cdt.launch.mainTab"
+            group="org.eclipse.cdt.launch.applicationLaunchTabGroup"
+            name="%launchTab.main.name"
+            class="org.eclipse.cdt.launch.ui.CMainTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.localCLaunch"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.argumentsTab"
+            group="org.eclipse.cdt.launch.applicationLaunchTabGroup"
+            name="%launchTab.arguments.name"
+            class="org.eclipse.cdt.launch.ui.CArgumentsTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.localCLaunch"/>
+        <placement after="org.eclipse.cdt.cdi.launch.mainTab"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.environmentTab"
+            group="org.eclipse.cdt.launch.applicationLaunchTabGroup"
+            name="%launchTab.environment.name"
+            class="org.eclipse.debug.ui.EnvironmentTab">
+         <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.localCLaunch"/>
+         <placement after="org.eclipse.cdt.cdi.launch.argumentsTab"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.pathMapTab"
+            group="org.eclipse.cdt.launch.applicationLaunchTabGroup"
+            name="%launchTab.pathMap.name"
+            class="org.eclipse.tm.internal.tcf.debug.ui.launch.TCFPathMapTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.localCLaunch"/>
+        <placement after="org.eclipse.debug.ui.environmentTab"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.sourceLookupTab"
+            group="org.eclipse.cdt.launch.applicationLaunchTabGroup"
+            name="%launchTab.sourceLookup.name"
+            class="org.eclipse.debug.ui.sourcelookup.SourceLookupTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.localCLaunch"/>
+        <placement after="org.eclipse.tm.tcf.launch.pathMapTab"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.commonTab"
+            group="org.eclipse.cdt.launch.applicationLaunchTabGroup"
+            name="%launchTab.common.name"
+            class="org.eclipse.debug.ui.CommonTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.localCLaunch"/>
+        <placement after="org.eclipse.debug.ui.sourceLookupTab"/>
+      </tab>
+
+      <!-- Attach launch tabs-->
+      <tab id="org.eclipse.tcf.cdt.launch.attach.pathMapTab"
+            group="org.eclipse.cdt.launch.attachLaunchTabGroup"
+            name="%launchTab.pathMap.name"
+            class="org.eclipse.tm.internal.tcf.debug.ui.launch.TCFPathMapTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.attachCLaunch"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.attach.sourceLookupTab"
+            group="org.eclipse.cdt.launch.attachLaunchTabGroup"
+            name="%launchTab.sourceLookup.name"
+            class="org.eclipse.debug.ui.sourcelookup.SourceLookupTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.attachCLaunch"/>
+        <placement after="org.eclipse.tm.tcf.launch.pathMapTab"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.attach.commonTab"
+            group="org.eclipse.cdt.launch.attachLaunchTabGroup"
+            name="%launchTab.common.name"
+            class="org.eclipse.debug.ui.CommonTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.attachCLaunch"/>
+        <placement after="org.eclipse.debug.ui.sourceLookupTab"/>
+      </tab>
+
+      <!-- Remote application launch tabs -->
+      <tab id="org.eclipse.tcf.cdt.launch.remote.mainTab"
+            group="org.eclipse.tm.tcf.cdt.ui.remoteApplicationLaunchTabGroup"
+            name="%launchTab.main.name"
+            class="org.eclipse.tm.internal.tcf.cdt.ui.launch.RemoteCMainTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.remoteCLaunch"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.remote.argumentsTab"
+            group="org.eclipse.tm.tcf.cdt.ui.remoteApplicationLaunchTabGroup"
+            name="%launchTab.arguments.name"
+            class="org.eclipse.cdt.launch.ui.CArgumentsTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.remoteCLaunch"/>
+        <placement after="org.eclipse.cdt.cdi.launch.mainTab"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.remote.environmentTab"
+            group="org.eclipse.tm.tcf.cdt.ui.remoteApplicationLaunchTabGroup"
+            name="%launchTab.environment.name"
+            class="org.eclipse.debug.ui.EnvironmentTab">
+         <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.remoteCLaunch"/>
+         <placement after="org.eclipse.cdt.cdi.launch.argumentsTab"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.remote.pathMapTab"
+            group="org.eclipse.tm.tcf.cdt.ui.remoteApplicationLaunchTabGroup"
+            name="%launchTab.pathMap.name"
+            class="org.eclipse.tm.internal.tcf.debug.ui.launch.TCFPathMapTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.remoteCLaunch"/>
+        <placement after="org.eclipse.cdt.cdi.launch.argumentsTab"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.remote.sourceLookupTab"
+            group="org.eclipse.tm.tcf.cdt.ui.remoteApplicationLaunchTabGroup"
+            name="%launchTab.sourceLookup.name"
+            class="org.eclipse.debug.ui.sourcelookup.SourceLookupTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.remoteCLaunch"/>
+        <placement after="org.eclipse.tm.tcf.launch.pathMapTab"/>
+      </tab>
+      <tab id="org.eclipse.tcf.cdt.launch.remote.commonTab"
+            group="org.eclipse.tm.tcf.cdt.ui.remoteApplicationLaunchTabGroup"
+            name="%launchTab.common.name"
+            class="org.eclipse.debug.ui.CommonTab">
+        <associatedDelegate delegate="org.eclipse.tcf.cdt.launch.remoteCLaunch"/>
+        <placement after="org.eclipse.debug.ui.sourceLookupTab"/>
+      </tab>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="org.eclipse.cdt.debug.internal.ui.launch.PlaceHolderLaunchConfigurationTabGroup"
+            id="org.eclipse.tm.tcf.cdt.ui.remoteApplicationLaunchTabGroup"
+            type="org.eclipse.tcf.cdt.launch.remoteApplicationLaunchType">
+      </launchConfigurationTabGroup>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+     <launchConfigurationTypeImage
+            icon="icons/obj16/c_app.gif"
+            configTypeID="org.eclipse.tcf.cdt.launch.remoteApplicationLaunchType"
+            id="org.eclipse.tcf.cdt.ui.remoteApplicationLaunchType.image">
+      </launchConfigurationTypeImage>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.core.statusHandlers">
+      <statusHandler
+            class="org.eclipse.tm.internal.tcf.cdt.ui.launch.ProcessPrompter"
+            code="100"
+            id="org.eclipse.tm.tcf.cdt.ui.processPrompter"
+            plugin="org.eclipse.tm.tcf.cdt.core">
+      </statusHandler>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            categoryId="org.eclipse.debug.ui.category.run"
+            defaultHandler="org.eclipse.tm.internal.tcf.cdt.ui.commands.AddFunctionBreakointHandler"
+            description="%command.addFunctionBreakpoint.desc"
+            id="org.eclipse.tm.tcf.cdt.ui.add_function_breakpoint"
+            name="%command.addFunctionBreakpoint.name">
+      </command>
+      <command
+            categoryId="org.eclipse.debug.ui.category.run"
+            defaultHandler="org.eclipse.tm.internal.tcf.cdt.ui.commands.AddWatchpointHandler"
+            description="%command.addWatchpoint.desc"
+            id="org.eclipse.tm.tcf.cdt.ui.add_watchpoint"
+            name="%command.addWatchpoint.name">
+      </command>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="menu:org.eclipse.debug.ui.BreakpointView?after=additions">
+         <command
+               commandId="org.eclipse.tm.tcf.cdt.ui.add_function_breakpoint"
+               icon="platform:/plugin/org.eclipse.cdt.debug.ui/icons/obj16/funbrkp_obj.gif"
+               id="org.eclipse.tm.tcf.cdt.ui.add_function_breakpoint"
+               label="%item.addFunctionBreakpoint.name"
+               style="push">
+         </command>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:#CEditorContext?after=group.debug">
+         <command
+               commandId="org.eclipse.tm.tcf.cdt.ui.add_watchpoint"
+               icon="platform:/plugin/org.eclipse.cdt.debug.ui/icons/elcl16/watchpoint_co.gif"
+               id="org.eclipse.tm.tcf.cdt.ui.add_watchpoint.editor"
+               label="%item.addWatchpoint.name"
+               style="push">
+            <visibleWhen checkEnabled="false">
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+   </extension>
+
+   <extension point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            objectClass="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExpression"
+            id="org.eclipse.tcf.cdt.ui.WatchpointActions">
+         <action
+               class="org.eclipse.cdt.debug.internal.ui.actions.AddWatchpointOnVariableActionDelegate"
+               enablesFor="1"
+               icon="platform:/plugin/org.eclipse.cdt.debug.ui/icons/elcl16/watchpoint_co.gif"
+               id="org.eclipse.tcf.cdt.ui.actions.AddWatchpointOnVariable"
+               label="%action.addWatchpoint.label"
+               menubarPath="additions"/>
+      </objectContribution>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="org.eclipse.tm.internal.tcf.cdt.ui.sourcelookup.TCFCSourceNotFoundEditor"
+            default="false"
+            icon="icons/obj16/c_app.gif"
+            id="org.eclipse.tm.tcf.cdt.ui.source_not_found_editor"
+            name="%editor.sourceNotFound.name">
+      </editor>
+   </extension>
+</plugin>

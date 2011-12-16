@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Preference contributions -->
+   <extension point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="org.eclipse.tm.te.tcf.locator.internal.preferences.PreferencesInitializer"/>
+   </extension>
+
+<!-- Eclipse core expressions property tester -->
+   <extension point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="org.eclipse.tm.te.tcf.locator.internal.MyPropertyTester"
+            id="org.eclipse.tm.te.tcf.locator.LocatorModelPropertyTester"
+            namespace="org.eclipse.tm.te.tcf.locator"
+            properties="name,hasLocalService,hasRemoteService,isStaticPeer"
+            type="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel">
+      </propertyTester>
+   </extension>
+
+<!-- Persistence delegate contributions -->
+   <extension point="org.eclipse.tm.te.runtime.persistence.delegates">
+      <delegate 
+            id="org.eclipse.tm.te.tcf.locator.persistence"
+            class="org.eclipse.tm.te.tcf.locator.internal.PeersPersistenceDelegate">
+      </delegate>
+   </extension>
+
+<!-- Adapter factory contributions -->
+   <extension point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="java.util.Map"
+            class="org.eclipse.tm.te.tcf.locator.internal.adapters.AdapterFactory">
+         <adapter type="org.eclipse.tm.te.runtime.persistence.interfaces.IPersistable"/>
+      </factory>
+      
+      <factory
+            adaptableType="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"
+            class="org.eclipse.tm.te.tcf.locator.internal.adapters.AdapterFactory">
+         <adapter type="org.eclipse.tm.te.runtime.persistence.interfaces.IPersistable"/>
+      </factory>
+   </extension>
+</plugin>

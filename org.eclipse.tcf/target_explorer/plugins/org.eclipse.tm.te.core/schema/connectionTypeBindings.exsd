@@ -1,0 +1,144 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.tm.te.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.tm.te.core" id="connectionTypeBindings" name="Connection Type Bindings"/>
+      </appinfo>
+      <documentation>
+         This extension point is used to contribute connection types bindings.
+      </documentation>
+   </annotation>
+
+   <include schemaLocation="schema://org.eclipse.core.expressions/schema/expressionLanguage.exsd"/>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="connectionTypeBinding" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+               
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="connectionTypeBinding">
+      <annotation>
+         <documentation>
+            Declares a connection type binding.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="connectStrategy" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="enablement" minOccurs="0" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="connectionTypeId" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The full qualified id of the connection type contribution.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="connectStrategy">
+      <annotation>
+         <documentation>
+            The connect strategy to bind to the connection type.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The full qualified id of the connect strategy contribution.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.tm.te.core.connectStrategies/connectStrategy/@id"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="overwrite" type="string">
+            <annotation>
+               <documentation>
+                  The full qualified id of the connect strategy contribution to overwrite by this contribution.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.tm.te.core.connectStrategies/connectStrategy/@id"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         Target Explorer 1.0.0
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         This is an example of the extension point usage:
+&lt;p&gt;
+&lt;pre&gt;
+      &lt;connectionTypeBinding connectionTypeId=&quot;org.eclipse.tm.te.core.connection.ssh&quot;&gt;
+         &lt;enablement&gt;
+         ...
+         &lt;/enablement&gt;
+         ...
+      &lt;/connectionTypeBinding&gt;
+&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+
+
+   <annotation>
+      <appinfo>
+         <meta.section type="copyright"/>
+      </appinfo>
+      <documentation>
+         Copyright (c) 2011 Wind River Systems, Inc. and others.
+
+All rights reserved.
+
+This program and the accompanying materials are made available under the terms
+of the Eclipse Public License v1.0 which accompanies this distribution, and is
+available at http://www.eclipse.org/legal/epl-v10.html.
+      </documentation>
+   </annotation>
+
+</schema>

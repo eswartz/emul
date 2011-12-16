@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Target Explorer Details Editor page contributions -->
+   <extension point="org.eclipse.tm.te.ui.views.editorPages">
+      <editorPage
+            class="org.eclipse.tm.te.tcf.processes.ui.internal.explorer.ProcessExplorerEditorPage"
+            name="%ProcessExplorerEditorPage.name"
+            id="org.eclipse.tm.te.tcf.processes.ui.ProcessExplorerEditorPage">
+      </editorPage>
+   </extension>
+
+<!-- Target Explorer Details Editor page binding contributions -->
+   <extension point="org.eclipse.tm.te.ui.views.editorPageBindings">
+      <editorPageBinding
+            id="org.eclipse.tm.te.tcf.processes.ui.binding.ProcessExplorerEditorPage"
+            pageId="org.eclipse.tm.te.tcf.processes.ui.ProcessExplorerEditorPage">
+         <enablement>
+            <with variable="activeEditorInput">
+               <and>
+                  <adapt type="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel">
+                     <test property="org.eclipse.tm.te.tcf.locator.hasRemoteService" value="Processes"/>
+                  </adapt>
+               </and>
+            </with>
+         </enablement>
+      </editorPageBinding>
+   </extension>
+
+<!-- Processes menu contributions -->
+   <extension point="org.eclipse.ui.menus">
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.launch">
+         <command
+               commandId="org.eclipse.tm.te.tcf.processes.ui.command.launch"
+               helpContextId="org.eclipse.tm.te.tcf.processes.ui.command_Launch"
+               icon="platform:/plugin/org.eclipse.debug.ui/icons/full/obj16/lrun_obj.gif"
+               id="org.eclipse.tm.te.tcf.processes.ui.commands.launch"
+               label="%Processes.command.launch.label"
+               style="push"
+               tooltip="%Processes.command.launch.tooltip">
+               <visibleWhen checkEnabled="false">
+                  <and>
+                     <with variable="selection">
+                        <count value="1"/>
+                        <iterate operator="and" ifEmpty="false">
+                           <adapt type="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel">
+                              <test
+                                    property="org.eclipse.tm.te.tcf.locator.hasRemoteService"
+                                    value="Processes">
+                              </test>
+                           </adapt>
+                        </iterate>
+                     </with>
+                  </and>
+               </visibleWhen>
+         </command>
+      </menuContribution>
+   </extension>
+
+<!-- Processes command contributions -->
+   <extension point="org.eclipse.ui.commands">
+      <command
+            categoryId="org.eclipse.tm.te.tcf.ui.commands.category"
+            helpContextId="org.eclipse.tm.te.tcf.processes.ui.command_Launch"
+            id="org.eclipse.tm.te.tcf.processes.ui.command.launch"
+            name="%Processes.command.launch.name">
+      </command>
+   </extension>
+
+<!-- Processes handler contributions -->
+   <extension point="org.eclipse.ui.handlers">
+      <handler
+            class="org.eclipse.tm.te.tcf.processes.ui.internal.handler.LaunchProcessesCommandHandler"
+            commandId="org.eclipse.tm.te.tcf.processes.ui.command.launch">
+      </handler>
+   </extension>
+
+</plugin>

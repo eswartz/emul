@@ -1,0 +1,368 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+    <title>Target Communication Framework: Getting Started</title>
+</head>
+
+<body lang='EN-US'>
+
+<h1>Target Communication Framework: Getting Started</h1>
+
+<p>Copyright (c) 2007, 2008 Wind River Systems, Inc. Made available under the EPL v1.0
+<p>Direct comments, questions to the <a href="https://dev.eclipse.org/mailman/listinfo/tcf-dev">tcf-dev@eclipse.org</a> mailing list
+
+<h2>Table of Contents</h2>
+<ul>
+    <li><a href='#Workspace'>Creating Eclipse Workspace</a>
+    <li><a href='#Plugins'>TCF Plugins</a>
+    <li><a href='#Agent'>Building TCF Agent</a>
+    <li><a href='#TcfLua'>TCF Integration with Lua</a>
+    <li><a href='#Browsing'>Browsing Agent Source Code in CDT</a>
+    <li><a href='#RSE'>Using TCF With Remote System Explorer</a>
+    <li><a href='#Debugger'>Using TCF With Eclipse Debugger</a>
+</ul>
+
+<h2><a name='Workspace'>Creating Eclipse Workspace</a></h2>
+
+<p>Eclipse can be used for developing clients for TCF in Java.
+TCF host side code is organized into several Eclipse plug-in projects,
+below are steps to create and populate Eclipse workspace with TCF projects:</p>
+
+<ul>
+   <li>Install JDK 1.5.0 or later, recommended 1.6.0
+   <li>Install <b>Eclipse SDK 3.6</b>, last tested with 3.6.1, recommended 3.6.1<br>
+       <a href='http://download.eclipse.org/eclipse/downloads/'>http://download.eclipse.org/eclipse/downloads/</a>
+   <li><b>Optional</b> dependencies for TCF/CDT and TCF/RSE integration: these are not required by
+       TCF itself or TCF based debugger.
+       <ul>
+       <li><b>CDT (C/C++ Development Tools) SDK 7.0</b> or later, last tested with 7.0.0, recommended 7.0.0<br>
+       <a href='http://www.eclipse.org/cdt/downloads.php'>http://www.eclipse.org/cdt/downloads.php</a>
+       <li><b>RSE (Remote System Explorer) SDK 3.2</b> or later, last tested with 3.2.1, recommended 3.2.1<br>
+       <a href='http://download.eclipse.org/tm/downloads/'>http://download.eclipse.org/tm/downloads/</a>
+       </ul>
+   <li>Checkout TCF code from <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk'>Eclipse SVN repository</a>:
+       <pre>svn co svn://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk tcf</pre>
+   <li>Run Eclipse:
+      <pre>eclipse.exe -vm &lt;JDK path&gt;/bin/javaw.exe -data &lt;Workspace path&gt; -vmargs -Xmx400M</pre>
+   <li>Open "Java" perspective.
+   <li>In "Package Explorer" view: do right click and then select "Import...".
+   <li>Select "General/Existing Projects into Workspace" and click "Next".
+   <li>Select root directory: &lt;TCF Root&gt;\plugins, and click "Next".
+       <ul>
+       <li>If CDT is not installed, don't import the following plugins into your workspace:
+           <ul>
+           <li>org.eclipse.tm.tcf.cdt.ui
+           </ul>
+       <li>If RSE is not installed, don't import the following plugins into your workspace:
+           <ul>
+           <li>org.eclipse.tm.tcf.rse
+           </ul>
+       </ul>
+</ul>
+
+<h2><a name='Plugins'>TCF Plugins</a></h2>
+
+<p>TCF plugins source code is stored in <code>&lt;TCF Root&gt;\plugins</code> directory.<br>
+Examples source code is stored in <code>&lt;TCF Root&gt;\examples</code> directory.
+
+<dl>
+    <dt><b>org.eclipse.tm.tcf</b>
+    <dd>This is the main TCF plugin. It contains Eclipse integration code for the framework.
+    It is the only TCF plugin, which (together with its fragments) should be required by a TCF client. The rest of TCF plugins are
+    clients developed as a reference implementation or for demonstration purposes.
+    <p>
+    <dt><b>org.eclipse.tm.tcf.core</b>
+        <dd>This is a fragment of <b>org.eclipse.tm.tcf</b> plugin. It contains the framework itself and interfaces for standard services.
+        The Java code in the fragment does not have any Eclipse dependencies and can be used outside Eclipse.
+        <p>
+    <dt><b>org.eclipse.tm.tcf.debug, org.eclipse.tm.tcf.debug.ui</b>
+    <dd>This code connects Eclipse Debug Framework and Target Communication Framework.
+    It allows to launch Eclipse debug session by connecting to a target running TCF agent,
+    and then perform basic debugging tasks, like resuming, suspending, single-stepping, setting/removing breakpoints, etc.
+    The code can be used as a reference for developing new TCF clients.
+    <p>
+    <dt><b>org.eclipse.tm.tcf.rse</b>
+    <dd>This optional plugin allows Remote System Explorer (RSE) to connect to remote machines using TCF as communication protocol.
+    It includes implementation of RSE services as TCF clients.
+    <p>
+    <dt><b>org.eclipse.tm.tcf.cdt.ui</b>
+    <dd>This optional plugin improves integration between CDT and TCF debugger.
+    It helps to search for CDT projects and executable files when creating TCF launch configuration.
+    <p>
+    <dt><b>org.eclipse.tm.tcf.examples.daytime</b>
+    <dd>This is an example plugin.
+    The Example shows how TCF/Java binding can be extended for a new, user defined service.
+    The plugin provides Java binding for DayTime service.
+    Also, see directory <code>&lt;TCF Root&gt;/examples/org.eclipse.tm.tcf.examples.daytime.agent</code>
+    for example code of a customized TCF agent, which implements DayTime service.
+</dl>
+
+<h2><a name='Agent'>Building TCF Agent</a></h2>
+
+<p><b>CDT</b> can be used to build TCF agent.
+CDT .project file is located in <code>&lt;TCF Root&gt;/agent</code> directory.
+
+<p><b>Linux</b>: To build the agent:
+<ul>
+   <li>Check that SSL and UUID libraries are installed. Fedora package names are: openssl, openssl-devel, libuuid, libuuid-devel.
+   <li>Run <code>make</code> command in <code>&lt;TCF Root&gt;/agent</code> directory.
+   <li>Start agent: <pre>obj/GNU/Linux/i686/Debug/agent -L- -l0</pre>
+       Use other -l option values to increase agent log details level.
+</ul>
+
+<p><b>Windows</b>: For building the agent, there are two possibilities:<ul>
+<li>Building with gcc (freely available from <a href="http://wascana.sourceforge.net/">Wascana</a>,
+<a href="http://www.cygwin.com">Cygwin</a> or the
+<a href="http://www.mingw.org/">MinGW32 project</a>): run
+<pre>make</pre> or <pre>make SYSOP=Msys</pre>
+in the agent directory.</li>
+
+<li>Building with Microsoft Visual C++:
+open workspace file <code>&lt;TCF Root&gt;/agent/agent.sln</code>
+and then build and run the agent using Development Studio commands. If getting an error about
+<tt>IPHlpApi.h</tt> missing, you'll need to install the latest
+<a href="http://www.microsoft.com/downloads/details.aspx?FamilyId=0BAF2B35-C656-4969-ACE8-E4C0C0716ADB&displaylang=en">MS Platform SDK</a>.
+For the free <a href="http://www.microsoft.com/express/vc/">Visual C++ Express Edition</a>, the
+following changes in settings may be necessary:<ul>
+  <li>Project &gt; Properties &gt; C/C++ &gt; Preprocessor &gt; Preprocessor Definitions:
+       add <tt>_CRT_SECURE_NO_DEPRECATE</tt></li>
+  <li>Project &gt; Properties &gt; Linker &gt; Input &gt; Additional Dependencies :
+       add <tt>shell32.lib</tt></li>
+</ul></li>
+</ul></p>
+
+<p>On <b>VxWorks</b>, line number mapping and the SysMonitor service (needed for RSE Processes
+Demo) are not yet implemented.<br/>
+To build the agent: Use Wind River Workbench 3.0 or 3.1, and VxWorks 6.6 or 6.7 to create a Kernel Module
+project out of source code in <code>&lt;TCF Root&gt;/agent</code> directory. Use Workbench
+commands to build and run the agent. To run the agent on VxWorks Simulator
+you will need to setup a simulated network - see Networking with the VxWorks Simulator chapter
+in Wind River VxWorks Simulator user's guide for details.</p>
+
+<h2><a name='TcfLua'>TCF Integration with Lua</a></h2>
+
+<p>The TCF integration with Lua allows writing TCF client and server programs in the Lua programming lanugage.  The integration is done so the main loop is the TCF event dispatch loop.  At startup a Lua program is invoked to allow an initial setup after which it should return to enter the TCF dispatch loop.</p>
+
+<p>TCF functions are accessible from the Lua table named "tcf".  Accessible functions are:</p>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Function
+        <th>Callback
+        <th>Description
+    <tr>
+        <td><code>read_command(read_command_callback)
+        <td><code>read_command_callback(string)
+        <td>Reads one line from stdin or if the -s command line option is specified from the specified file.
+    <tr>
+        <td><code>peer = peer_server_find(peer_name)
+        <td>NA
+        <td>Looks up peer object with the specified name.  Returns <code>nil</code> if not found.
+    <tr>
+        <td><code>peers = peer_server_list()
+        <td>NA
+        <td>Returns a table of discovered peer objects.
+    <tr>
+        <td><code>peer = peer_server_from_url(peer_url)
+        <td>NA
+        <td>Creates a peer object from the specified URL.
+    <tr>
+        <td><code>protocol = protocol_alloc()
+        <td>NA
+        <td>Created a new protocol object.
+    <tr>
+        <td><code>channel_connect(peer, protocol, connect_callback)
+        <td><code>connect_callback(channel, errorString)
+        <td>Creates connection to specified peer.
+    <tr>
+        <td><code>event = post_event(post_event_callback, micro_seconds)
+        <td><code>post_event_callback()
+        <td>The <code>micro_seconds</code> argument is optional.  Then not present the callback function will be invoked after currently pending event have been processed.
+</table>
+
+<p>Protocol object functions:</p>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Function
+        <th>Callback
+        <th>Description
+    <tr>
+        <td><code>command_handler(protocol, service, name, command_callback)
+        <td><code>command_callback(token, data)
+        <td>Register command handler for <code>service</code> and <code>name</code> with <code>protocol</code>.  The <code>command_callback</code> function will be called each time a command of the specified name and service is received on a channel associated with the protocol object.
+</table>
+
+<p>Channel object functions:</p>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Function
+        <th>Callback
+        <th>Description
+    <tr>
+        <td><code>close(channel)
+        <td>NA
+        <td>Disconnects the specified channel.
+    <tr>
+        <td><code>connecting_handler(channel, connecting_callback)
+        <td><code>connecting_callback()
+        <td>Register callback function which is called when the channel enters connecting state.
+    <tr>
+        <td><code>connected_handler(channel, connected_callback)
+        <td><code>connected_callback()
+        <td>Register callback function which is called when the channel enters connected state.
+    <tr>
+        <td><code>receive_handler(channel, receive_callback)
+        <td><code>receive_callback()
+        <td>Register callback function which is called when the channel receives a message.
+    <tr>
+        <td><code>disconnected_handler(channel, disconnected_callback)
+        <td><code>disconnected_callback()
+        <td>Register callback function which is called when the channel is disconnected.
+    <tr>
+        <td><code>event_handler(channel, service, name, event_callback)
+        <td><code>event_callback(data)
+        <td>Register callback function which is called when an event for <code>service</code> and <code>name</code> is received.
+    <tr>
+        <td><code>start(channel)
+        <td>NA
+        <td>Starts communication on channel.
+    <tr>
+        <td><code>send_command(channel, service, name, data, replay_callback)
+        <td><code>replay_callback(data, error)
+        <td>Send a command to channel and register callback when reply is received.
+    <tr>
+        <td><code>services = get_services(channel)
+        <td>NA
+        <td>Create a table of service names supported by remote peer.
+</table>
+
+<p>Peer object functions:</p>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Function
+        <th>Callback
+        <th>Description
+    <tr>
+        <td><code>id = getid(peer)
+        <td>NA
+        <td>Return ID of peer.
+    <tr>
+        <td><code>getnames(peer)
+        <td>NA
+        <td>Return table of peer propery names.
+    <tr>
+        <td><code>getvalue(peer, name)
+        <td>NA
+        <td>Return value of propery <code>name</code>.
+    <tr>
+        <td><code>setvalue(peer, name, value)
+        <td>NA
+        <td>Set value of propery <code>name</code>.
+    <tr>
+        <td><code>getflags(peer)
+        <td>NA
+        <td>Return table of flags for peer.
+    <tr>
+        <td><code>setflags(peer, flags)
+        <td>NA
+        <td>Set flags for peer.
+</table>
+
+<p>Event object functions:</p>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Function
+        <th>Callback
+        <th>Description
+    <tr>
+        <td><code>cancel(event)
+        <td>NA
+        <td>Cancel event created by <code>post_event()</code>.
+</table>
+
+<h3>Download and Build</h3>
+
+The integration has only been tested on Linux at this point.
+
+<p><code>cd &lt;<i>luadir</i>&gt;
+<br>curl -O http://www.lua.org/ftp/lua-5.1.4.tar.gz
+<br>tar zxf lua-5.1.4.tar.gz
+<br>cd lua-5.1.4
+<br>make linux
+<br>make local
+<br>cd &lt;<i>tcfdir</i>&gt;/agent
+<br>make LUADIR=&lt;<i>luadir</i>&gt;/lua-5.1.4
+</code>
+
+<p><code>./obj/GNU/Linux/i686/Debug/tcflua tcf_example.lua
+</code>
+
+<h2><a name='Browsing'>Browsing Agent Source Code in CDT</a></h2>
+On Linux, the default configuration from the CDT .project file included in TCF
+should be fine for correctly browsing the agent source code.
+<p>
+On Windows, open Project Properties of the agent project, and under C/C++ General &gt;
+Indexer switch the configuration to "Win32 - Cygwin" or "Win32 - DevStudio"
+as needed.
+<p>
+For VxWorks, browsing should be configured automatically through the WR Workbench
+Kernel Module Project.
+
+<h2><a name='RSE'>Using TCF With Remote System Explorer</a></h2>
+
+<p>Remote System Explorer is an Eclipse based component that allows users to create connections to remote machines and
+explore their file systems, see list of processes and access some other resources, like remote shells.
+Remote System Explorer has been designed as a flexible, extensible framework to which Eclipse plug-in developers can
+contribute their own system definitions, actions, etc.</p>
+
+<p>Plugin <b>org.eclipse.tm.tcf.rse</b> enables use of Processes and Files subsystems of Remote System Explorer over TCF.
+It also extends Processes subsystem to include CPU utilization data and some other process attributes in RSE views.</p>
+
+<p>To connect a remote machine over TCF:</p>
+<ul>
+   <li>Make sure TCF agent is running on remote machine.
+   <li>Run Eclipse with RSE and TCF plugins installed.
+   <li>In Eclipse, do "Window/Open Perspective/Remote System Explorer" command.
+   <li>In "Remote Systems" view: do right click and select "New/Connection..."
+   <li>In "New Connection" dialog box: select TCF and press "Next" button.
+   <li>Enter "Host name" - IP host name ot the target machine, and "Connection name" - arbitrary string to name new connection.
+   Press "Finish" button.
+   <li>New connection should appear in "Remote Systems" view and it is ready to be explored.
+</ul>
+
+<p>RSE features supported by TCF connection:
+<ul>
+    <li>File Subsystem: full support, i.e. browse, upload, download, copy, move, delete
+    <li>Processes: browse, including parent/child relationship
+</ul>
+
+<h2><a name='Debugger'>Using TCF With Eclipse Debugger</a></h2>
+
+<p>Plugins <b>org.eclipse.tm.tcf.debug</b> and <b>org.eclipse.tm.tcf.debug.ui</b> allow to start a debug session
+by connecting to a machine runnning TCF agent.
+
+<p>To start a debug session over TCF:</p>
+<ul>
+   <li>Make sure TCF agent is running on remote machine.
+   <li>Run Eclipse with TCF plugins installed.
+   <li>In Eclipse, do "Window/Open Perspective/Debug" command.
+   <li>Do "Run/Debug Configurations..." command.
+   <li>In "Debug Configurations" dialog box: select "Target Comminucation Framework" configuration type and press "New" button.
+   <li>Enter a name for the configuration.
+   <li>On "Target" page, uncheck "Run instance of..." and "Use local host...".
+   <li>Select a target machine in "Available targtes" list. The list shows targets autodetected on local network.
+   <li>Press "Run Diagnostics" button to test connectivity for selected target.
+   <li>On "Main" page, enter a program name to run in debug session, for example "/bin/ls".
+   <li>Press "Debug" to start the debugger.
+</ul>
+
+<p>In TCF debug session "Debug", "Breakpoints", "Registers", "Variables" and "Expressions" views are populated.
+Source level debugging is fully supported.
+</p>
+
+</body>
+</html>

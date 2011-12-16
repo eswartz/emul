@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/org.eclipse.tm.tcf.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.feature" version="0.0.0">
+      <category name="org.eclipse.tcf"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.tcf.sdk.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.sdk.feature" version="0.0.0">
+      <category name="org.eclipse.tcf"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.tcf.cdt.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.cdt.feature" version="0.0.0">
+      <category name="org.eclipse.tcf"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.tcf.cdt.sdk.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.cdt.feature" version="0.0.0">
+      <category name="org.eclipse.tcf"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.tcf.rse.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.rse.feature" version="0.0.0">
+      <category name="org.eclipse.tcf"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.tcf.rse.sdk.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.rse.feature" version="0.0.0">
+      <category name="org.eclipse.tcf"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.te.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.te.feature" version="0.0.0">
+      <category name="org.eclipse.tm.te"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.te.sdk.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.te.sdk.feature" version="0.0.0">
+      <category name="org.eclipse.tm.te"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.te.tcf.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.te.tcf.feature" version="0.0.0">
+      <category name="org.eclipse.tm.te"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.te.tcf.sdk.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.te.tcf.sdk.feature" version="0.0.0">
+      <category name="org.eclipse.tm.te"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.tcf.cdt.sdk.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.cdt.sdk.feature" version="0.0.0">
+      <category name="org.eclipse.tcf"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.tcf.rse.sdk.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.rse.sdk.feature" version="0.0.0">
+      <category name="org.eclipse.tcf"/>
+   </feature>
+   <category-def name="org.eclipse.tcf" label="Target Communication Framework">
+      <description>
+         Target Communication Framework
+      </description>
+   </category-def>
+   <category-def name="org.eclipse.tm.te" label="Target Explorer">
+      <description>
+         Target Explorer to manage TCF targets.
+      </description>
+   </category-def>
+</site>

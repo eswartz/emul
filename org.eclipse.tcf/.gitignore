@@ -1,0 +1,152 @@
+# ignore various emacs droppings
+*~
+\#*\#
+
+# .
+workspace
+debug-workspace
+sync
+
+# examples/org.eclipse.tm.tcf.examples.daytime/
+examples/org.eclipse.tm.tcf.examples.daytime/bin
+
+# examples/org.eclipse.tm.tcf.examples.daytime.agent/
+examples/org.eclipse.tm.tcf.examples.daytime.agent/obj
+
+# features/
+features/build-directory
+features/build-workspace
+
+# features/org.eclipse.tm.tcf.cdt.feature/
+features/org.eclipse.tm.tcf.cdt.feature/target
+
+# features/org.eclipse.tm.tcf.feature/
+features/org.eclipse.tm.tcf.feature/target
+
+# features/org.eclipse.tm.tcf.headless.build/
+features/org.eclipse.tm.tcf.headless.build/build-directory
+features/org.eclipse.tm.tcf.headless.build/workspace
+
+# features/org.eclipse.tm.tcf.repo/
+features/org.eclipse.tm.tcf.repo/target
+
+# features/org.eclipse.tm.tcf.rse.feature/
+features/org.eclipse.tm.tcf.rse.feature/target
+
+# features/org.eclipse.tm.tcf.site/
+features/org.eclipse.tm.tcf.site/features
+features/org.eclipse.tm.tcf.site/plugins
+features/org.eclipse.tm.tcf.site/artifacts.xml
+features/org.eclipse.tm.tcf.site/content.xml
+
+# plugins/org.eclipse.tm.tcf/
+plugins/org.eclipse.tm.tcf/target
+plugins/org.eclipse.tm.tcf/bin
+
+# plugins/org.eclipse.tm.tcf.cdt.ui/
+plugins/org.eclipse.tm.tcf.cdt.ui/target
+plugins/org.eclipse.tm.tcf.cdt.ui/bin
+
+# plugins/org.eclipse.tm.tcf.core/
+plugins/org.eclipse.tm.tcf.core/target
+plugins/org.eclipse.tm.tcf.core/bin
+
+# plugins/org.eclipse.tm.tcf.debug/
+plugins/org.eclipse.tm.tcf.debug/target
+plugins/org.eclipse.tm.tcf.debug/bin
+
+# plugins/org.eclipse.tm.tcf.debug.ui/
+plugins/org.eclipse.tm.tcf.debug.ui/target
+plugins/org.eclipse.tm.tcf.debug.ui/bin
+
+# plugins/org.eclipse.tm.tcf.rse/
+plugins/org.eclipse.tm.tcf.rse/target
+plugins/org.eclipse.tm.tcf.rse/bin
+
+# tests/mem-leaks/
+tests/mem-leaks/obj
+tests/mem-leaks/*.ncb
+tests/mem-leaks/*.suo
+tests/mem-leaks/*.user
+tests/mem-leaks/enc_temp_folder
+
+# tests/test-dwarf/
+tests/test-dwarf/obj
+tests/test-dwarf/files
+tests/test-dwarf/*.user
+tests/test-dwarf/*.suo
+tests/test-dwarf/*.ncb
+
+# target explorer
+/target_explorer/plugins/org.eclipse.tm.te.core/target
+/target_explorer/plugins/org.eclipse.tm.te.core/bin
+/target_explorer/plugins/org.eclipse.tm.te.rcp/target
+/target_explorer/plugins/org.eclipse.tm.te.rcp/bin
+/target_explorer/plugins/org.eclipse.tm.te.rcp.application/target
+/target_explorer/plugins/org.eclipse.tm.te.rcp.application/bin
+/target_explorer/plugins/org.eclipse.tm.te.runtime/target
+/target_explorer/plugins/org.eclipse.tm.te.runtime/bin
+/target_explorer/plugins/org.eclipse.tm.te.runtime.concurrent/target
+/target_explorer/plugins/org.eclipse.tm.te.runtime.concurrent/bin
+/target_explorer/plugins/org.eclipse.tm.te.runtime.model/target
+/target_explorer/plugins/org.eclipse.tm.te.runtime.model/bin
+/target_explorer/plugins/org.eclipse.tm.te.runtime.persistence/target
+/target_explorer/plugins/org.eclipse.tm.te.runtime.persistence/bin
+/target_explorer/plugins/org.eclipse.tm.te.runtime.services/target
+/target_explorer/plugins/org.eclipse.tm.te.runtime.services/bin
+/target_explorer/plugins/org.eclipse.tm.te.runtime.statushandler/target
+/target_explorer/plugins/org.eclipse.tm.te.runtime.statushandler/bin
+/target_explorer/plugins/org.eclipse.tm.te.runtime.stepper/target
+/target_explorer/plugins/org.eclipse.tm.te.runtime.stepper/bin
+/target_explorer/plugins/org.eclipse.tm.te.tcf.core/target
+/target_explorer/plugins/org.eclipse.tm.te.tcf.core/bin
+/target_explorer/plugins/org.eclipse.tm.te.tcf.filesystem/target
+/target_explorer/plugins/org.eclipse.tm.te.tcf.filesystem/bin
+/target_explorer/plugins/org.eclipse.tm.te.tcf.locator/target
+/target_explorer/plugins/org.eclipse.tm.te.tcf.locator/bin
+/target_explorer/plugins/org.eclipse.tm.te.tcf.log.core/target
+/target_explorer/plugins/org.eclipse.tm.te.tcf.log.core/bin
+/target_explorer/plugins/org.eclipse.tm.te.tcf.processes.core/target
+/target_explorer/plugins/org.eclipse.tm.te.tcf.processes.core/bin
+/target_explorer/plugins/org.eclipse.tm.te.tcf.processes.ui/target
+/target_explorer/plugins/org.eclipse.tm.te.tcf.processes.ui/bin
+/target_explorer/plugins/org.eclipse.tm.te.tcf.terminals.core/target
+/target_explorer/plugins/org.eclipse.tm.te.tcf.terminals.core/bin
+/target_explorer/plugins/org.eclipse.tm.te.tcf.terminals.ui/target
+/target_explorer/plugins/org.eclipse.tm.te.tcf.terminals.ui/bin
+/target_explorer/plugins/org.eclipse.tm.te.tcf.ui/target
+/target_explorer/plugins/org.eclipse.tm.te.tcf.ui/bin
+/target_explorer/plugins/org.eclipse.tm.te.tests/target
+/target_explorer/plugins/org.eclipse.tm.te.tests/bin
+/target_explorer/plugins/org.eclipse.tm.te.ui/target
+/target_explorer/plugins/org.eclipse.tm.te.ui/bin
+/target_explorer/plugins/org.eclipse.tm.te.ui.controls/target
+/target_explorer/plugins/org.eclipse.tm.te.ui.controls/bin
+/target_explorer/plugins/org.eclipse.tm.te.ui.forms/target
+/target_explorer/plugins/org.eclipse.tm.te.ui.forms/bin
+/target_explorer/plugins/org.eclipse.tm.te.ui.swt/target
+/target_explorer/plugins/org.eclipse.tm.te.ui.swt/bin
+/target_explorer/plugins/org.eclipse.tm.te.ui.terminals/target
+/target_explorer/plugins/org.eclipse.tm.te.ui.terminals/bin
+/target_explorer/plugins/org.eclipse.tm.te.ui.terminals.process/target
+/target_explorer/plugins/org.eclipse.tm.te.ui.terminals.process/bin
+/target_explorer/plugins/org.eclipse.tm.te.ui.terminals.ssh/target
+/target_explorer/plugins/org.eclipse.tm.te.ui.terminals.ssh/bin
+/target_explorer/plugins/org.eclipse.tm.te.ui.views/target
+/target_explorer/plugins/org.eclipse.tm.te.ui.views/bin
+/target_explorer/features/org.eclipse.tm.te.feature/target
+/target_explorer/features/org.eclipse.tm.te.feature/bin
+/target_explorer/features/org.eclipse.tm.te.cdt.feature/target
+/target_explorer/features/org.eclipse.tm.te.cdt.feature/bin
+/target_explorer/features/org.eclipse.tm.te.rcp.feature/target
+/target_explorer/features/org.eclipse.tm.te.rcp.feature/bin
+/target_explorer/features/org.eclipse.tm.te.sdk.feature/target
+/target_explorer/features/org.eclipse.tm.te.sdk.feature/bin
+/target_explorer/features/org.eclipse.tm.te.cdt.sdk.feature/target
+/target_explorer/features/org.eclipse.tm.te.cdt.sdk.feature/bin
+/target_explorer/features/org.eclipse.tm.te.tcf.feature/target
+/target_explorer/features/org.eclipse.tm.te.tcf.feature/bin
+/target_explorer/features/org.eclipse.tm.te.tcf.rcp.feature/target
+/target_explorer/features/org.eclipse.tm.te.tcf.rcp.feature/bin
+/target_explorer/features/org.eclipse.tm.te.tcf.sdk.feature/target
+/target_explorer/features/org.eclipse.tm.te.tcf.sdk.feature/bin

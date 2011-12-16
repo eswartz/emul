@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Test status handler contributions -->
+   <extension point="org.eclipse.tm.te.runtime.statushandler.handlers">
+      <handler
+            id="org.eclipse.tm.te.tests.handler1"
+            class="org.eclipse.tm.te.tests.statushandler.TestStatusHandler">
+      </handler>
+
+      <handler
+            id="org.eclipse.tm.te.tests.handler2"
+            class="org.eclipse.tm.te.tests.statushandler.TestStatusHandler">
+      </handler>
+   </extension>
+
+   <extension point="org.eclipse.tm.te.runtime.statushandler.bindings">
+      <binding
+            handlerId="org.eclipse.tm.te.tests.handler1"
+            id="org.eclipse.tm.te.tests.binding1">
+            <enablement>
+               <instanceof value="org.eclipse.tm.te.tests.CoreTestCase"/>
+            </enablement>
+      </binding>
+      
+      <binding
+            handlerId="org.eclipse.tm.te.tests.handler2"
+            id="org.eclipse.tm.te.tests.binding2">
+            <enablement>
+               <instanceof value="org.eclipse.tm.te.tests.interfaces.IInterruptCondition"/>
+            </enablement>
+      </binding>
+   </extension>
+</plugin>

@@ -1,0 +1,1601 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+    <title>Target Communication Framework Specification</title>
+</head>
+<body lang='EN-US'>
+
+<h1>Target Communication Framework Specification</h1>
+
+<p>Copyright (c) 2007, 2008 Wind River Systems, Inc. Made available under the EPL v1.0
+<p>Direct comments, questions to the <a href="https://dev.eclipse.org/mailman/listinfo/tcf-dev">tcf-dev@eclipse.org</a> mailing list
+
+<h1>Table of Contents</h1>
+
+<ul>
+    <li><a href='#VersionHistory'>Version History</a>
+    <li><a href='#Overview'>Overview</a>
+    <ul>
+        <li><a href='#Goals'>Goals</a>
+        <li><a href='#Definitions'>Definitions</a>
+        <li><a href='#Requirements'>Requirements</a>
+        <li><a href='#Syntax'>Syntax Rules Notation</a>
+    </ul>
+    <li><a href='#Design'>Framework Software Design Considerations</a>
+    <ul>
+        <li><a href='#Concurrency'>Concurrency</a>
+        <li><a href='#Reflection'>Reflection</a>
+        <li><a href='#Ordering'>Message ordering</a>
+    </ul>
+    <li><a href='#Transport'>Transport Layer</a>
+    <li><a href='#Protocol'>Communication Protocol</a>
+    <ul>
+        <li><a href='#ProtocolCommands'>Commands</a>
+        <li><a href='#ProtocolResults'>Results</a>
+        <li><a href='#ProtocolEvents'>Events</a>
+        <li><a href='#ProtocolFlowControl'>Flow Control</a>
+        <li><a href='#ProtocolExamples'>Examples</a>
+    </ul>
+    <li><a href='#API'>API</a>
+    <li><a href='#JSON'>JSON - Preferred Marshaling</a>
+    <ul>
+        <li><a href='#JSONExamples'>JSON - Examples</a>
+    </ul>
+    <li><a href='#Locator'>Locator Service</a>
+    <ul>
+        <li><a href='#LocatorPeer'>Peer Attributes</a>
+        <li><a href='#LocatorCommands'>Locator Service Commands</a>
+        <li><a href='#LocatorEvents'>Locator Service Events</a>
+        <li><a href='#LocatorAPI'>Locator Service API</a>
+    </ul>
+</ul>
+
+<h2><a name='VersionHistory'>Version History</a></h2>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Version
+        <th>Date
+        <th>Change
+    <tr>
+        <td>0.1
+        <td>2008-01-10
+        <td>Initial contribution
+    <tr>
+        <td>1.0
+        <td>2008-05-06
+        <td>Approved
+    <tr>
+        <td>1.1
+        <td>2009-03-04
+        <td>Added N message
+</table>
+
+<h1><a name='Overview'>Overview</a></h1>
+
+<p>Today almost every device software development tool on the market has its own method
+of communication with target system. Communication methods often require individual setup,
+configuration and maintenance, and impose unnecessary limitations.
+The goal of the Target Communication Framework is to establish a common ground in
+the area of communication protocols between development tools and embedded devices.</p>
+
+<p>The goal is a single protocol used to communicate between all tools and targets:</p>
+<p><img src='TCF Specification Image1.png'></p>
+
+<h2><a name='Goals'>Goals</a></h2>
+
+<ul type='disc'>
+    <li>A universal, simple, lightweight, vendor agnostic framework for tools and targets
+    to communicate for the purpose of debugging, profiling, code patching and other device
+    software development needs.
+
+    <li>A single configuration per target (not per tool per target as today in most cases),
+    or no configuration when possible.
+
+    <li>Minimal overhead and footprint on the target side.
+</ul>
+
+<h2><a name='Definitions'>Definitions</a></h2>
+
+<dl>
+<dt><b>Peer:</b> <dd>a communication endpoint. Both hosts and targets are called peers. A
+peer can act as a client or a server depending on the services it implements.
+
+<dt><b>Service:</b> <dd>a group of related commands, events and their semantics define a service.
+A service can be discovered, added or removed as a group at a communication endpoint.
+
+<dt><b>Message:</b> <dd>a packet of data, formatted according to the framework specification
+and transmitted over a communication channel.
+
+<dt><b>Channel:</b> <dd>a communication link connecting two endpoints (peers).  A single
+channel may be used to communicate with multiple services.  Multiple channels may
+be used to connect the same peers, however no command or event ordering is guaranteed
+across channels.
+
+<dt><b>Command:</b> <dd>a message sent to a remote peer in order to request some
+predefined action there.
+
+<dt><b>Result:</b> <dd>a message sent as a response to a command.
+
+<dt><b>Event:</b> <dd>a message sent to all interested parties in order to notify
+them about state changes.
+</dl>
+
+<h2><a name='Requirements'>Requirements</a></h2>
+
+<ul type='disc'>
+    <li>A simple and extensible protocol.
+
+    <li>Small footprint on the target.
+
+    <li>Fully asynchronous, message based communication.
+
+    <li>Two ways of message routing:
+
+    <ul>
+        <li>Point to point request/response (command/result) communication.
+
+        <li>Subscription based broadcast of notifications (events).
+    </ul>
+
+    <li>Full duplex, symmetric communication: both host and target should be able to send
+    commands and events at same time, though ability to establish a communication channel
+    can be limited to host only.
+
+    <li>For each communication channel between two peers, the framework should preserve
+    the order of commands, results and events.
+
+    <li>Support for slow and high latency connections.
+
+    <li>Transport protocol agnostic. The framework should work well, at least, on top
+    of: TCP/IP, UDP, USB, RS232 and JTAG.
+
+    <li>The framework should support multiplexing, that is, single target device shared
+    between multiple tools at same time. To reduce footprint on the target, multiplexing
+    can be implemented on the host if needed.
+
+    <li>Dynamic discovery of participating targets and hosts. No configuration when possible.
+
+    <li>Dynamic discovery of available services (high level protocols, command sets).
+    Clients can query for available services.
+
+    <li>Services can be added and removed dynamically.
+
+    <li>The framework should define a set of common high level interfaces (services).  For
+    example: flow control, memory access, registers access, up-load mechanism, kernel
+    awareness, run control, target file system, console, flash programming. Implementation
+    of these interfaces is optional, but if provided it will support much wider compatibility
+    with various tools.
+
+    <li>The framework should be layered in such a way so it is possible to use different transport
+    medias (e.g. TCP/IP, RS232, USB, etc) without any changes to individual services.
+    In other words, transport implementation should be services agnostic, and services
+    implementation should be transport agnostic.
+
+    <li>Each service defines how marshalling is done for command, result and event arguments.
+    This allows existing target agents to remain unchanged.
+
+    <li>The framework should define a preferred marshalling mechanism that new services can
+    use.
+
+    <li>The definition of services (groups of related commands and events) is separate
+    from the definition of the framework itself.  The framework provides unified communication
+    mechanism, while services use it to communicate with its clients.
+
+    <li>Anybody (including 3rd parties) can add services without having to modify the
+    communication protocol or framework software.
+
+    <li>The framework should support tunneling through a proxy. Proxy may be used, for
+    example:
+
+    <ul type='circle'>
+        <li>to bridge different transport protocols, like TCP and RS232;
+
+        <li>to make a RS232 or USB target connection accessible from multiple hosts;
+
+        <li>to access targets behind firewalls or otherwise not directly accessible
+    </ul>
+
+    <li>A proxy should be able to provide services in addition to those implemented by
+    a target. Such distribution of services allows target services to be implemented on
+    a host, thereby reducing the footprint on the target. For example, debug information,
+    stack back trace or OS awareness can be implemented by a proxy on a host. To provide
+    this functionality, proxy services would typically use low-level target services,
+    like memory access.
+
+    <li>Support of concurrent requests. Maximum number of concurrent requests (window
+    size) can be limited on target side. Simple agents only have to support window size
+    of 1. Framework should maintain a queue of additional requests, so tools don't need
+    to know the window size. This may only be relevant for certain transport protocols
+    e.g. UDP.
+
+    <li>Events can be broadcasted at any time, i.e. no polling should be required.
+
+    <li>The protocol should support a standard mechanism of sending data larger than MTU.
+</ul>
+
+<h2><a name='Syntax'>Syntax Rules Notation</a></h2>
+
+<p>The protocol message format is defined by syntax rules. The syntax is described
+using a simple variant of Backus-Naur Form. In particular:</p>
+
+<ul type='disc'>
+    <li>Italic lower case words in a courier font, enclosed into angular brackets, are
+    used to denote syntactic categories, for example: <b><i><font face="Courier New" size=2 color=#333399>&lt;token&gt;.
+    </font></i></b>Category name can be followed by colon and a text, which explains the semantics
+    of the category, for example: <b><i><font face="Courier New" size=2 color=#333399>&lt;int:
+    error code&gt;</font></i></b> has same meaning as <b><i><font face="Courier New" size=2 color=#333399>&lt;int&gt;</font></i></b>,
+    but denotes that the integer number is used to indicate an &ldquo;error code&rdquo;.
+
+    <li>A syntax rule consists of a category designation followed by one or more syntax
+    definitions for the category. The category name and each definition are placed on
+    separate lines, bullets are used to denote definitions, for example:
+        <pre><b><font face="Courier New" size=2 color=#333399>
+        <i>&lt;chars&gt;</i>
+            &rArr; <i>&lt;char&gt;</i>
+            &rArr; <i>&lt;chars&gt; &lt;char&gt;</i>
+        </font></b></pre>
+
+    <li>Spaces are added for readability only and they are not part of the syntax.
+
+    <li>All text in the category definition, other then categories and spaces, is UTF-8
+    based representation of message bytes.
+
+    <li>The symbol &lsquo;&bull;&rsquo; designates a zero byte.
+</ul>
+
+<h1><a name='Design'>Framework Software Design Considerations</a></h1>
+
+<p>The framework will be packaged, distributed and installed on a host as separate
+product. It should be installed as system service and require no configuration for
+most common case &ndash; target connected over TCP or UDP on a local network. For more complicated
+setup, framework should have easily accessible and user friendly GUI with all relevant
+configuration options.</p>
+
+<p>The framework should use a dynamic discovery protocol to locate targets and other hosts
+running instances of the framework when possible, and maintain a dynamic list of available
+communication endpoints, as well as lists of services available at each endpoint.
+Host discovery is needed to locate hosts able to proxy communications for targets,
+which are not accessible otherwise - for example, targets connected with RS232 or
+JTAG to a remote host. It should also be possible to add target configuration manually.
+Development tools will access this data through the Locator Service API and use it,
+for example, to present a user a list of available targets that have capabilities
+needed by a particular tool.</p>
+
+<p>The framework should provide software libraries to be used by tools and target agents
+developers. The libraries should be available at least for ANSI C and Java. On the host
+side, at least Windows, Solaris and Linux must be supported. Libraries will provide
+APIs for low-level communication protocol, Locator Service, preferred marshaling and
+predefined common services.</p>
+
+<p>The proposed target communication protocol is text-based. It allows extensions,
+which define messages with blocks of binary data, but it is not a recommended data
+formatting, and its usage is supposed to be limited. Text-based protocols have both
+advantages and disadvantages in compare with binary protocols.</p>
+
+<p>Advantages:</p>
+
+<ul type='disc'>
+    <li>The software for text-based protocols is easier to develop and debug since they
+    use a relatively human-friendly communication.
+
+    <li>It is possible to use huge selection of existing tools and library routines to
+    view, edit, validate, and transform text-based data.
+
+    <li>Text based definition is in line with current trend in Internet protocols: most
+    popular protocols such as SMTP and HTTP are text-based.
+</ul>
+
+<p>Disadvantages:</p>
+
+<ul type='disc'>
+    <li>Text-based protocols usually need more bytes to store numerical data than binary
+    protocols do.
+
+    <li>Parsing of text-based data is not efficient compared to parsing of binary data
+    since text-based data is usually not stored in a way similar to how it is stored in
+    computer memory.
+
+    <li>It is seldom possible to read only part of a text-based message since the exact
+    byte offset to a data item is generally not known.
+</ul>
+
+<p>A possible alternative to consider is binary, variable length encoding like BaseStream.</p>
+
+<h2><a name='Concurrency'>Concurrency</a></h2>
+
+<p>Concurrent asynchronous communication is much faster then synchronous, because
+it alleviates communication channel latency and allows better bandwidth utilization.
+But it also requires proper design of framework software. Concurrency, in general,
+implies multithreading. However, systems developed with global multithreading, are
+often unreliable and prone to different kinds of thread synchronization problems,
+which are often very difficult to locate and resolve. We therefore strongly recommend
+that the software is designed to follow the compartment threading model, which simplifies
+thread synchronization and promotes reliable software design. In this model each thread
+execution path is strictly contained in predefined subset of code (compartment), and
+no code, except for reentrant libraries, is executed by multiple threads. Each compartment
+has a message queue and other threads communicate with the compartment thread by posting
+messages to the queue.</p>
+
+<p>The framework APIs are designed to be compatible with the compartment threading model.
+Hence the API functions do not contain any thread synchronization primitives to protect
+against multiple threads using the functions. All framework APIs belong to a single
+compartment and should be used by a single thread. The same thread is used to dispatch
+events and command results. Concurrency is achieved by declaring API functions to
+be asynchronous. Asynchronous functions do not have any return value, and returns
+immediately, most of the time before the intended job is done. They take additional
+arguments to specify a callback function and callback data. In object-oriented languages
+such as Java, this is typically done by a single callback object argument containing
+both the data and the function.  The result listener is called asynchronously when
+the job is done. This approach is commonly known as asynchronous<b>, </b>event-driven<b>
+</b>or<b> </b>callback-based<b> </b>programming<b>.</b></p>
+
+<p>One important characteristic of an asynchronous code is that the methods defined
+by the user will often be called from within the framework itself, rather than from
+the user's application code. The framework often plays the role of the main program
+in coordinating and sequencing application activity. This phenomenon is called Inversion
+of Control (also known as the Hollywood Principle - &ldquo;Don't call us, we'll call you&rdquo;).</p>
+
+<h2><a name='Reflection'>Reflection</a></h2>
+
+<p>Communication between development tools and embedded devices must allow a host
+to collect target side data and build a reflection of target state. Reflection is
+usually incomplete &ndash; a subset of all remote data. Reflection is always delayed &ndash; it
+represents a remote peer state in the past. Reflection can be updated by polling for
+data changes or by listening to events (event is communication message that is sent
+asynchronously by a peer to notify others about state change). Reflection is correct
+if it represents a state that actually did happen on remote peer.</p>
+
+<p>Reflection is coherent if it is exactly equal to a subset of the peer state at a single
+moment of time and that moment of time is not too far in the past. Non-coherent reflection
+can have parts of data representing peer state at different moments of time. Coherent
+reflection is more valuable for a user, because non-coherent reflection can have logically
+conflicting data if that data was collected at different time.</p>
+
+<p>Traditionally, debuggers would ensure coherence of state reflection by collecting
+data only while target is suspended, and flushing all (or most) reflection data (reducing
+observed subset to zero) when target is resumed. This approach does not work well
+for multithreaded, multicore or real time targets. Maintaining correctness and coherence
+of a non-empty reflection while target is running requires additional support from
+target agent, communication software and debugger itself.</p>
+
+<p>Since remote peer state is changing over time, coherent reflection can be built
+only if:</p>
+
+<ul type='disc'>
+    <li>The observed subset of state is properly selected and dynamically re-selected. Observing
+    too much can overflow communication channel. Observing too little has little value
+    for a user.
+
+    <li>The observer is listening to all relevant events.
+
+    <li>Events are coming in exactly same order as corresponding changes happen.
+
+    <li>Events are properly ordered relative to other messages that carry state data.
+
+    <li>All changes in observed subset of peer state are reported by events.
+
+    <li>All event messages must either contain a complete description of a change or they
+    all should not contain any state data at all. If client is getting some data from
+    events and required to retrieve new values of other changed data by using other means
+    (commands), the reflection will not be coherent at least until such retrieval is complete.
+    And if such periods of data retrieval overlap, the reflection will never be coherent.
+    Sending deltas with events is usually more efficient then using data retrieval commands
+    to update reflection.
+</ul>
+
+<h2><a name='Ordering'>Message ordering</a></h2>
+
+<p>The transmission order of commands, results and events is important, it conveys
+valuable information about target state transitions and it should be preserved when
+possible. Consider an example:</p>
+
+<p>Client transmits: </p>
+
+<pre>
+    Command X=2
+</pre>
+
+<p>Then, as result of some activity of another client or the target itself, X is assigned
+value 3.</p>
+
+<p>Target transmits:</p>
+
+<pre>
+    Event X=3
+    Result X=2
+</pre>
+
+<p>Now the client has to show the value of X to a user. If the order of messages is preserved,
+the client will know that command was executed <i>after</i> X was assigned 3, the
+last message contains the last known value of X and 2 is the correct value to show. If
+the target is allowed to transmit events and results in arbitrary order, the client
+will have no clue what to show &ndash; 2 or 3. In fact, the client will have to make a tough
+decision about each message it receives: either trust the message data as the correct last
+known target state, or assume the message came in out-of-order and ignore it, or re-request
+the information from the target.</p>
+
+<p>Note that re-requesting data from the target, in general, does not solve the problem
+of interpretation of messages when order is not preserved. For example, after sending
+a request to read value of X, X could change at about the same time, and client could
+receive:</p>
+
+<pre>
+    Event X=2
+    Result X=3
+    Event X=4
+</pre>
+
+<p>If order is not preserved, it is still impossible to tell which value of X is the
+last one. A client could assume value of X unknown every time it receives a notification
+of X change, and then re-request the data again. But this is expensive and, if events
+coming in frequently, client can end up in infinite loop re-requesting the data again
+and again, and it will never have trustworthy data about current target state.</p>
+
+<p>Developers should be careful when using multithreading or multiple queues in software
+design &ndash; it can easily cause message reordering.</p>
+
+<p>The framework itself is required to preserve message order. However, if for whatever
+reason a target agent cannot preserve message order, the result will be that clients
+of the service can receive messages in the wrong order. When this is the case it should
+be well documented, so tools developers are aware and can make the best of the situation.
+In most cases it will not cause any trouble, but there is no perfect way to restore
+the actual sequence of events and maintain data coherency after ordering was lost, and
+in some cases it can severely impact tool functionality and user experience.</p>
+
+<h1><a name='Transport'>Transport Layer</a></h1>
+
+
+<p>Tools are required to be transport protocol agnostic, so most of the layer functionality
+is used internally by framework and is not exposed to clients. This layer maintains
+a collection of transport protocol handlers. Each handler is designed to provide:</p>
+
+<ul type='disc'>
+    <li>Enumeration of available peers, including both automatically discovered and manually
+    configured peers. The handler fires notification events when peers are added or removed.
+    Enumeration can be implemented by scanning JTAG chain, by broadcasting special UDP
+    packet and waiting for responses, by communicating with ICE hardware, or by any other
+    suitable means.
+
+    <li>Bidirectional point-to-point communication of data packets. Packets are byte arrays
+    of arbitrary size.
+    The transport handler and the underlying protocol are responsible for adding all necessary
+    control data, headers, error checking bits, addresses, fragmentation/defragmentation,
+    flow control, transmission retries and whatever necessary to ensure lossless, order-preserving
+    delivery of packets.
+
+    <li>Thr configuration UI should allow user to inspect and modify properties of both manually
+    configured and automatically discovered peers, setup new peers, view connections status
+    and statistics.
+</ul>
+
+<p>Existing service discovery protocols can be used together with the framework, for
+example:</p>
+
+<ul type='disc'>
+    <li>Zero Configuration Networking (Zeroconf), see <a href='http://www.zeroconf.org/'>http://www.zeroconf.org</a>;
+
+    <li>Service Location Protocol (SLP), developed by the IETF;
+
+    <li>Jini, which is Sun's Java-base approach to service discovery, see <a href='http://www.sun.com/jini'>http://www.sun.com/jini</a>;
+
+    <li>Salutation, developed by an open industry consortium, called the Salutation Consortium;
+
+    <li>Microsoft's Universal Plug and Play (UPnP), see <a href='http://www.upnp.org/'>http://www.upnp.org</a>;
+
+    <li>Bluetooth Service Discovery Protocol (SDP).
+</ul>
+
+<p>Service discovery protocols, as well as transport protocols, will be supported by
+framework plug-ins, they are not part of the framework code itself, and they can be developed
+by 3rd parties. Note that existing discovery protocols define term &ldquo;service&rdquo; differently
+- as an independent communication endpoint (usually a TCP/IP port). In this document
+it is called &ldquo;peer&rdquo; (host, target, communication endpoint), and a peer can provide
+multiple services over single communication channel.</p>
+
+<p>Use of standard discovery protocols should be optional, because it can potentially
+cause conflict or interference between development tools and application being developed
+over a use of same standard protocol &ndash; device software often includes implementation
+of service discovery protocols as part of the application code to support their main functions.
+</p>
+
+<h1><a name='Protocol'>Communication Protocol</a></h1>
+
+<p>The communication protocol defines data packet properties and roles common for
+all services. The communication protocol API provides functions for opening and closing
+the communication channel for a particular peer, and for sending and receiving
+data packets. The protocol defines contents of a part of a packet, the rest of the
+packet is treated as array of bytes at this level. The communication protocol implementation
+also provides:</p>
+
+<ul type='disc'>
+    <li>Multiplexing &ndash; opening multiple channels per peer.
+
+    <li>Proxy &ndash; packet forwarding in behalf of other hosts.
+</ul>
+
+<p>The protocol defines three packet types: commands (requests), results (responses),
+and events. Each packet consists of several protocol defined control fields followed
+by a byte array of data. Binary representation of control fields is a sequence of
+zero-terminated ASCII strings. The format of the data depends on the service. We recommend
+using the framework preferred marshaling for data formatting.</p>
+
+<p>Syntax:</p>
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;message&gt;</i>
+    &rArr; <i>&lt;command&gt;</i>
+    &rArr; <i>&lt;result&gt;</i>
+    &rArr; <i>&lt;event&gt;</i>
+    &rArr; <i>&lt;flow control message&gt;</i>
+</font></b></pre>
+
+<h2><a name='ProtocolCommands'>Commands</a></h2>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;command&gt;</i>
+    &rArr; C &bull; <i>&lt;token&gt; </i>&bull; <i>&lt;service name&gt; </i>&bull; <i>&lt;command name&gt; </i>&bull; <i>&lt;byte array: arguments&gt;</i>
+</font></b></pre>
+
+<p>Command packets start with the string &ldquo;C&rdquo;.</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;token&gt;</i>
+    &rArr; <i>&lt;chars&gt;</i>
+</font></b></pre>
+
+<p>A token is a unique string generated by the framework for each command. It is used to match
+results to commands.</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;service name&gt;</i>
+    &rArr; <i>&lt;chars&gt;</i>
+</font></b></pre>
+
+<p>A service name is used to identify a service that handles the command. It is the same
+string as that returned by Service.getName().</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;command name&gt;</i>
+    &rArr; <i>&lt;chars&gt;</i>
+</font></b></pre>
+
+<p>The interpretation of the command name depends on the service.</p>
+
+<p>A command should always be answered with result packed. The result does not have to
+be positive &ndash; it can include an error code, or it can be special "N" result that indicates that command was not recognized,
+but there always must be one. Since the client
+cannot detect that a response is missing, if for some reason the peer is not able to
+answer a command, it should consider such situation a fatal communication error and
+it must shutdown the communication channel. It is not necessary to wait for a result
+before sending the next command. In fact, sending multiple commands in a burst can greatly
+improve performance, especially when the connection has a high latency. At the same time,
+clients should be carefully designed to avoid flooding the communication channel with
+unlimited number of requests, since this will use resources in forms of memory to
+store the requests and time to process them.</p>
+
+<h2><a name='ProtocolResults'>Results</a></h2>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;result&gt;</i>
+    &rArr; N &bull; <i>&lt;token&gt;</i> &bull;
+    &rArr; R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;byte array: result data&gt;</i>
+    &rArr; P &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;byte array: progress data&gt;</i>
+</font></b></pre>
+
+<p>Result packets start with the string &ldquo;P&rdquo; for intermediate result, &ldquo;R&rdquo; for final
+result, and &ldquo;N&rdquo; if the command is not recognized. Receiving a &ldquo;R&rdquo; or &ldquo;N&rdquo; result concludes execution of corresponding command.
+There should be exactly one &ldquo;R&rdquo; or &ldquo;N&rdquo; result for each command. In addition, command execution can produce any number of
+intermediate &ldquo;P&rdquo; results. &ldquo;P&rdquo; results can be sent before &ldquo;R&rdquo;, and it can serve, for
+example, as command execution progress report when execution takes long time.</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;token&gt;</i>
+    &rArr; <i>&lt;chars&gt;</i>
+</font></b></pre>
+
+<p>The token should match the token field of one of the pending commands that produced the result.</p>
+
+<h2><a name='ProtocolEvents'>Events</a></h2>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;event&gt;</i>
+    &rArr; E &bull; <i>&lt;service name&gt;</i> &bull; <i>&lt;event name&gt;</i> &bull; <i>&lt;byte array: event data&gt;</i>
+</font></b></pre>
+
+<p>Event packets start with string &ldquo;E&rdquo;.</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;service name&gt;</i>
+    &rArr; <i>&lt;chars&gt;</i>
+</font></b></pre>
+
+<p>The service name identifies the service that fired the event. It is the same
+string as that returned by Service.getName().</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;event name&gt;</i>
+    &rArr; <i>&lt;chars&gt;</i>
+</font></b></pre>
+
+<p>The interpretation of the event name depends on the service.</p>
+
+<p>Events are used to notify clients about changes in peer state. Services should
+provide sufficient variety of events for clients to track remote peer state without
+too much of polling. Clients, interested in a particular aspect of the target state,
+should have a &ldquo;reflection&rdquo; (or &ldquo;model&rdquo;) of that state and update the reflection by
+listening for relevant events. If a service implements a command that changes a particular
+aspect of peers state, then, normally, it should also generate notification events
+when that same part of the state changes and it should provide a command to retrieve
+the current value of the state &ndash; to be used by clients to initialize the reflection. Service
+events are defined statically, together with commands. The framework does not do any
+event processing besides delivering them to clients, however a service can define
+additional event-related functionality if necessary, for example commands for event
+filtering, enabling, disabling, registration, etc. Care should be taken when designing
+events for a service &ndash; if events are sent too frequently, they will cause flooding
+of the communication channels and degrade performance. However, too few events will
+force clients to poll for changes and can also degrade performance. A balanced approach
+is the best.</p>
+
+<h2><a name='ProtocolFlowControl'>Flow Control</a> </h2>
+
+<p>It often happens that one side of communication channel produces messages faster
+then they can be transmitted over the channel or can be consumed by another side.
+This will cause channel traffic congestion (flooding). The framework will deal with the
+problem and slow down transmitting side by blocking execution inside sendEvent(),
+sendCommand() and sendResult() functions when message buffers are full. However, in
+many cases, it is not the best way to handle congestion. For example, it can make
+a tool UI appear locked for prolonged time or it can break target software if it is
+designed to work in real time. Clients can use flow control events to implement advanced
+techniques to handle traffic congestion, for example, message coalescing, switching
+to less detailed messages, etc.</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;flow control message&gt;</i>
+    &rArr; F &bull; <i>&lt;int: traffic congestion level&gt;</i> &bull;
+</font></b></pre>
+
+<p>The traffic congestion level value is in the range -100..100, where -100 means no pending
+messages (no traffic), 0 means optimal load, and positive numbers
+indicate level of congestion. When a peer receives flow control message with congestion level > 0
+it should try to reduce its transmition speed.</p>
+
+<h2><a name='ProtocolExamples'>Message Examples</a></h2>
+
+<p>These examples use simplified command arguments and result data. See the service description
+for the actual data formats.</p>
+
+<p>Executing <b><i>suspend</i></b> command from <b><i>RunControl</i></b> service:</p>
+
+<p>&nbsp;</p>
+
+<pre>
+Send   :      C 1 RunControl suspend &ldquo;Thread1&rdquo;
+Receive:      E RunControl suspended &ldquo;Thread1&rdquo;
+Receive:      R 1 &ldquo;Success&rdquo;
+</pre>
+
+<p>Same command, but target was already suspended:</p>
+
+<pre>
+Receive:      E RunControl suspended &ldquo;Thread1&rdquo;
+&hellip;
+Send   :      C 2 RunControl suspend &ldquo;Thread1&rdquo;
+Receive:      R 2 &ldquo;Already suspended&rdquo;
+</pre>
+
+<p>Same command, but target was suspended (by another client) after sending the command,
+but before command was executed: </p>
+
+<pre>
+Receive:      E RunControl running &ldquo;Thread1&rdquo;
+&hellip;
+Send   :      C 3 RunControl suspend &ldquo;Thread1&rdquo;
+Receive:      E RunControl suspended &ldquo;Thread1&rdquo;
+Receive:      R 3 &ldquo;Already suspended&rdquo;
+</pre>
+
+<h2><a name='API'>Framework API</a></h2>
+
+<pre>
+<font color=#3F5FBF>/**
+ *
+ * Class Protocol provides static methods to access Target Communication Framework root objects:
+ * 1. the framework event queue and dispatch thread;
+ * 2. local instance of Locator service, which maintains a list of available targets;
+ * 3. list of open communication channels.
+ */</font>
+<font color=#7F0055>public class</font> Protocol {
+
+    <font color=#7F0055>private static</font> IEventQueue <i>event_queue</i>;
+
+    <font color=#3F5FBF>/**
+     * Before TCF can be used it should be given an object implementing IEventQueue interface.
+     * The implementation maintains a queue of objects implementing Runnable interface and
+     * executes <code>run</code> methods of that objects in a sequence by a single thread.
+     * The thread in referred as TCF event dispatch thread. Objects in the queue are called TCF events.
+     * Executing <code>run</code> method of an event is also called dispatching of event.
+     *
+     * Only few methods in TCF APIs are thread safe - can be invoked from any thread.
+     * If a method description does not say "can be invoked from any thread" explicitly -
+     * the method must be invoked from TCF event dispatch thread. All TCF listeners are
+     * invoked from the dispatch thread.
+     *
+     * <font color=#7F9FBF>@param</font> event_queue - IEventQueue implementation.
+     */</font>
+    <font color=#7F0055>public static void</font> setEventQueue(IEventQueue event_queue);
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> instance of IEventQueue that should be used for TCF events.
+     */</font>
+    <font color=#7F0055>public static</font> IEventQueue getEventQueue();
+
+    <font color=#3F5FBF>/**
+     * Returns true if the calling thread is TCF dispatch thread.
+     * Use this call to ensure that a given task is being executed (or not being)
+     * on dispatch thread.
+     * This method is thread-safe.
+     *
+     * <font color=#7F9FBF>@return</font> true if running on the dispatch thread.
+     */</font>
+    <font color=#7F0055>public static boolean</font> isDispatchThread();
+
+    <font color=#3F5FBF>/**
+     * Causes runnable to have its run
+     * method called in the dispatch thread of the framework.
+     * Runnables are dispatched in same order as queued.
+     * If invokeLater is called from the dispatching thread
+     * the <i>runnable.run()</i> will still be deferred until
+     * all pending events have been processed.
+     *
+     * This method can be invoked from any thread.
+     *
+     * <font color=#7F9FBF>@param runnable</font> the Runnable whose run
+     * method should be executed asynchronously.</font>
+     */</font>
+    <font color=#7F0055>public static void</font> invokeLater(Runnable runnable);
+
+    <font color=#3F5FBF>/**
+     * Causes runnable to have its run
+     * method called in the dispatch thread of the framework.
+     * Calling thread is suspended util the method is executed.
+     * This method is thread-safe.
+     *
+     * <font color=#7F9FBF>@param runnable</font> the Runnable whose run
+     * method should be executed on dispatch thread.
+     */</font>
+    <font color=#7F0055>public static void</font> invokeAndWait(Runnable runnable)
+        <font color=#7F0055>throws</font> InterruptedException;
+
+    <font color=#3F5FBF>/**
+     * Get instance of the framework locator service.
+     * The service can be used to discover available remote peers.
+     *
+     * @return instance of ILocator.
+     */</font>
+    <font color=#7F0055>public static</font> ILocator getLocator();
+
+    <font color=#3F5FBF>/**
+     * Return an array of all open channels.
+     * @return an array of IChannel
+     */</font>
+    <font color=#7F0055>public static</font> IChannel[] getOpenChannels();
+
+    <font color=#3F5FBF>/**
+     * Interface to be implemented by clients willing to be notified when
+     * new TCF communication channel is opened.
+     */</font>
+    <font color=#7F0055>public interface</font> ChannelOpenListener {
+        <font color=#7F0055>public void</font> onChannelOpen(IChannel channel);
+    }
+
+    <font color=#3F5FBF>/**
+     * Add a listener that will be notified when new channel is opened.
+     * @param listener
+     */</font>
+    <font color=#7F0055>public static void</font> addChannelOpenListener(ChannelOpenListener listener);
+
+    <font color=#3F5FBF>/**
+     * Remove channel opening listener.
+     * @param listener
+     */</font>
+    <font color=#7F0055>public static void</font> removeChannelOpenListener(ChannelOpenListener listener);
+
+    <font color=#3F5FBF>/**
+     * Transmit TCF event message.
+     * The message is sent to all open communication channels &ndash; broadcasted.
+     */</font>
+    <font color=#7F0055>public static void</font> sendEvent(String service, String name, byte[] data);
+
+    <font color=#3F5FBF>/**
+     * Call back after TCF messages sent by this host up to this moment are delivered
+     * to their intended target. This method is intended for synchronization of messages
+     * across multiple channels.
+     *
+     * Note: Cross channel synchronization can reduce performance and throughput.
+     * Most clients don't need cross channel synchronization and should not call this method.
+     *
+     * @param done will be executed by dispatch thread after communication
+     * messages are delivered to corresponding targets.
+     */</font>
+    <font color=#7F0055>public static void</font> sync(Runnable done);
+}
+
+<font color=#3F5FBF>/**
+ * IChannel represents communication link connecting two endpoints (peers).
+ * The channel asynchroniously transmits messages: commands, results and events.
+ * A single channel may be used to communicate with multiple services.
+ * Multiple channels may be used to connect the same peers, however no command or event
+ * ordering is guaranteed across channels.
+ */</font>
+<font color=#7F0055>public interface</font> IChannel {
+
+    <font color=#3F5FBF>/**
+     * Channel state IDs
+     */</font>
+    <font color=#7F0055>static final</font> int
+        <i><font color=#0000C0>STATE_OPENNING</font></i> = 0,
+        <i><font color=#0000C0>STATE_OPEN</font></i> = 1,
+        <i><font color=#0000C0>STATE_CLOSED</font></i> = 2;
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> channel current state, see STATE_*
+     */</font>
+    int getState();
+
+    <font color=#3F5FBF>/**
+     * Send command message to remote peer for execution. Commands can be queued
+     * locally before transmission. Sending commands too fast can fill up
+     * communication channel buffers. Calling thread will be blocked until
+     * enough buffer space is freed up by transmitting pending messages.
+     * <font color=#7F9FBF>@param</font> service - a remote service that will be sent the command
+     * <font color=#7F9FBF>@param</font> name - command name
+     * <font color=#7F9FBF>@param</font> args - command arguments encoded into array of bytes
+     * <font color=#7F9FBF>@param</font> done - call back object
+     * <font color=#7F9FBF>@return</font> pending command handle
+     */</font>
+    IToken sendCommand(IService service, String name, <font color=#7F0055>byte</font>[] args,
+        ICommandListener done);
+
+    <font color=#3F5FBF>/**
+     * Command listener interface. Clients implement this interface
+     * to receive command results.
+     */</font>
+    <font color=#7F0055>interface</font> ICommandListener {
+
+        <font color=#3F5FBF>/**
+         * Called when progress message (intermediate result) is received
+         * from remote peer.
+         * <font color=#7F9FBF>@param</font> token - command handle
+         * <font color=#7F9FBF>@param</font> data - progress message arguments encoded into array of bytes
+         */</font>
+        <font color=#7F0055>void</font> progress(<font color=#7F0055>byte</font>[] data);
+
+        <font color=#3F5FBF>/**
+         * Called when command result received from remote peer.
+         * <font color=#7F9FBF>@param</font> token - command handle
+         * <font color=#7F9FBF>@param</font> data - command result message arguments encoded into array of bytes
+         */</font>
+        <font color=#7F0055>void</font> result(<font color=#7F0055>byte</font>[] data);
+
+        <font color=#3F5FBF>/**
+         * Called when communication channel was closed while command was waiting for result.
+         * <font color=#7F9FBF>@param</font> token - command handle
+         * <font color=#7F9FBF>@param</font> error - exception that forced the channel to close
+         */</font>
+        <font color=#7F0055>void</font> terminated(IToken token, Exception error);
+    }
+
+    <font color=#3F5FBF>/**
+     * Send result message to remote peer. Messages can be queued locally before
+     * transmission. Sending messages too fast can fill up communication channel
+     * buffers. Calling thread will be blocked until enough buffer space is
+     * freed up by transmitting pending messages.
+     * <font color=#7F9FBF>@param</font> token - command handle
+     * <font color=#7F9FBF>@param</font> results - result message arguments encoded into array of bytes
+     */</font>
+    <font color=#7F0055>void</font> sendResult(IToken token, <font color=#7F0055>byte</font>[] results);
+
+    <font color=#3F5FBF>/**
+     * Get current level of outbound traffic congestion.
+     *
+     * <font color=#7F9FBF>@return</font> integer value in range &ndash;100..100, where &ndash;100 means no pending
+     * messages (no traffic), 0 means optimal load, and positive numbers
+     * indicate level of congestion.
+     *
+     * Note: in-bound traffic congestion is detected by framework and reported to
+     * remote peer without client needed to be involved. Clients willing to provide
+     * additional data about local congestion should register itself using
+     * Protocol.addCongestionMonitor().
+     */</font>
+    int getCongestion();
+
+    <font color=#3F5FBF>/**
+     * Channel listener interface.
+     */</font>
+    <font color=#7F0055>interface</font> IChannelListener {
+
+        <font color=#3F5FBF>/**
+         * Called when a channel is opened.
+         */</font>
+        <font color=#7F0055>void</font> onChannelOpened();
+
+        <font color=#3F5FBF>/**
+         * Called when channel closed. If it is closed because of an error,
+         * ‘error’ parameter will describe the error. ‘error’ is null if channel
+         * is closed normally by calling Channel.close().
+         * <font color=#7F9FBF>@param</font> error - channel exception or null
+         */</font>
+        <font color=#7F0055>void</font> onChannelClosed(Throwable error);
+
+        <font color=#3F5FBF>/**
+         * Notifies listeners about congestion level changes. When level &gt; 0
+         * client should delay sending more messages.
+         * <font color=#7F9FBF>@param</font> level - current congestion level
+         */</font>
+        <font color=#7F0055>void</font> congestionLevel(int level);
+    }
+
+    <font color=#3F5FBF>/**
+     * Subscribe a channel listener. The listener will be notified about changes of
+     * outbound traffic congestion level.
+     * <font color=#7F9FBF>@param</font> listener - channel listener implementation
+     */</font>
+    <font color=#7F0055>void</font> addChannelListener(IChannelListener listener);
+
+    <font color=#3F5FBF>/**
+     * Remove a channel listener.
+     * <font color=#7F9FBF>@param</font> listener - channel listener implementation
+     */</font>
+    <font color=#7F0055>void</font> removeChannelListener(IChannelListener listener);
+
+    <font color=#3F5FBF>/**
+     * Command server interface.
+     * This interface is to be implemented by service providers.
+     */</font>
+    <font color=#7F0055>interface</font> ICommandServer {
+
+        <font color=#3F5FBF>/**
+         * Called every time a command is received from remote peer.
+         * <font color=#7F9FBF>@param</font> token - command handle
+         * <font color=#7F9FBF>@param</font> name - command name
+         * <font color=#7F9FBF>@param</font> data - command arguments encoded into array of bytes
+         */</font>
+        <font color=#7F0055>void</font> command(IToken token, String name, <font color=#7F0055>byte</font>[] data);
+    }
+
+    <font color=#3F5FBF>/**
+     * Subscribe a command server. The server will be notified about command
+     * messages received through this channel for given service.
+     * <font color=#7F9FBF>@param</font> service - local service implementation
+     * <font color=#7F9FBF>@param</font> server - implementation of service commands listener
+     */</font>
+    <font color=#7F0055>void</font> addCommandServer(IService service, ICommandServer listener);
+
+    <font color=#3F5FBF>/**
+     * Remove a command server.
+     * <font color=#7F9FBF>@param</font> service - local service implementation
+     * <font color=#7F9FBF>@param</font> server - implementation of service commands listener
+     */</font>
+    <font color=#7F0055>void</font> removeCommandServer(IService service, ICommandServer listener);
+
+    <font color=#3F5FBF>/**
+     * A generic interface for service event listener.
+     * Services usually define a service specific event listener interface,
+     * which is implemented using this generic listener.
+     * Service clients should use service specific listener interface,
+     * unless no such interface is defined.
+     */</font>
+    <font color=#7F0055>interface</font> IEventListener {
+        <font color=#3F5FBF>/**
+         * Called when service event message is received
+         * <font color=#7F9FBF>@param</font> name - event name
+         * <font color=#7F9FBF>@param</font> data - event arguments encode as array of bytes
+         */</font>
+        <font color=#7F0055>void</font> event(String name, <font color=#7F0055>byte</font>[] data);
+    }
+
+    <font color=#3F5FBF>/**
+     * Subscribe an event message listener for given service.
+     * <font color=#7F9FBF>@param</font> service - remote service proxy
+     * <font color=#7F9FBF>@param</font> server - implementation of service event listener
+     */</font>
+    <font color=#7F0055>void</font> addEventListener(IService service, IEventListener listener);
+
+    <font color=#3F5FBF>/**
+     * Unsubscribe an event message listener for given service.
+     * <font color=#7F9FBF>@param</font> service - remote service proxy
+     * <font color=#7F9FBF>@param</font> server - implementation of service event listener
+     */</font>
+    <font color=#7F0055>void</font> removeEventListener(IService service, IEventListener listener);
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> IPeer object representing local endpoint of communication channel.
+     */</font>
+    IPeer getLocalPeer();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> IPeer object representing remote endpoint of communication channel.
+     */</font>
+    IPeer getRemotePeer();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> collection of services available on local peer.
+     */</font>
+    Collection&lt;String> getLocalServices();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> an object representing a service from local peer.
+     * Return null if the service is not available.
+     */</font>
+    IService getLocalService(String service_name);
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> an object representing a service from local peer.
+     * Service object should implement given interface.
+     * Return null if implementation of the interface is not available.
+     */</font>
+    &lt;V <font color=#7F0055>extends</font> IService> V getLocalService(Class&lt;V> service_interface);
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> collection of services available on remote peer.
+     */</font>
+    Collection&lt;String> getRemoteServices();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> an object (proxy) representing a service from remote peer.
+     * Return null if the service is not available.
+     * Return an instance of GenericProxy if 'service_name' is not a standard TCF service.
+     */</font>
+    IService getRemoteService(String service_name);
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> an object (proxy) representing a service from remote peer,
+     * which implements given interface.
+     * Return null if implementation of the interface is not available.
+     */</font>
+    &lt;V <font color=#7F0055>extends</font> IService> V getRemoteService(Class&lt;V> service_interface);
+
+    <font color=#3F5FBF>/**
+     * Install a service proxy object on this channel.
+     * This method can be called only from channel open call-back.
+     * It allows a client to extends TCF by adding proxy objects for non-standard services.
+     * Client, wishing to become service proxy provider, should register itself
+     * using either Protocol.addChannelOpenListener() or IChannel.addChannelListener().
+     * It is not allowed to register more then one proxy for a given service interface.
+     */</font>
+    &lt;V <font color=#7F0055>extends</font> IService&gt; <font color=#7F0055>void</font> setServiceProxy(Class&lt;V&gt; service_interface, IService service_proxy);
+
+    <font color=#3F5FBF>/**
+     * Close communication channel.
+     */</font>
+    <font color=#7F0055>void</font> close();
+
+    <font color=#3F5FBF>/**
+     * Close channel in case of communication error.
+     * <font color=#7F9FBF>@param error</font> - cause of channel termination
+     */</font>
+    <font color=#7F0055>void</font> terminate(Throwable error);
+
+    <font color=#3F5FBF>/**
+     * Redirect this channel to given peer using this channel remote peer locator service as a proxy.
+     * <font color=#7F9FBF>@param peer_</font> - peer that will become new remote communication endpoint of this channel
+     */</font>
+    <font color=#7F0055>void</font> redirect(IPeer peer);
+}
+
+
+<font color=#3F5FBF>/**
+ * Object implemeting IToken interface is created by framework for every
+ * command sent over communication channel. It is used to match command to its
+ * results, and also can be used to cancel commands.
+ */</font>
+<font color=#7F0055>public</font> interface IToken {
+
+    <font color=#3F5FBF>/**
+     * Try to cancel a command associated with given token. A command can be
+     * canceled by this method only if it was not transmitted yet to remote peer
+     * for execution. Successfully canceled command does not produce any result
+     * messages.
+     *
+     * <font color=#7F9FBF>@return</font> true if successful.
+     */</font>
+    <font color=#7F0055>boolean</font> cancel();
+}
+
+</pre>
+
+<h1><a name='JSON'>Preferred Marshaling</a></h1>
+
+<p>The TCF message data format is service specific. Since service specifications are
+separate from the protocol specification, a service designer can choose any data format that
+suits the service requirements best. However, to promote better compatibility and to
+simplify service design and implementation, we recommend using <b>JSON</b> for data formatting.</p>
+
+<p><b>JSON</b> (pronounced like the
+English given name <i>Jason</i>), which stands for "<b>J</b>ava<b>S</b>cript <b>O</b>bject
+<b>N</b>otation", is a lightweight, text-based, language-independent computer data
+interchange format. <b>JSON</b> is a subset of the object literal notation of JavaScript
+but its use does not require JavaScript.</p>
+
+<p><b>JSON</b> represents data with the same basic types that programming languages
+use. <b>JSON</b>'s basic types are:</p>
+
+<ul type='disc'>
+    <li>Number (integer, real, or floating-point)
+
+    <li>String (double-quoted with backslash escapement)
+
+    <li>Boolean (<code>true</code> and <code>false</code>)
+
+    <li>Array (an ordered sequence of values)
+
+    <li>Object (collection of key/value pairs)
+
+    <li><code>null</code>
+ </ul>
+
+<p>The structures used in most programming languages easily map directly onto JSON's
+structures, and back again.</p>
+
+<p>JSON maps data onto Unicode string. Then the string is mapped onto array of bytes
+using UTF-8 encoding.</p>
+
+<p>JSON specification:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;object&gt;</i>
+    &rArr; {}
+    &rArr; { <i>&lt;members&gt;</i> }
+
+<i>&lt;members&gt;</i>
+    &rArr; <i>&lt;string&gt;</i> : <i>&lt;value&gt;</i>
+    &rArr; <i>&lt;members&gt;</i> , <i>&lt;string&gt;</i> : <i>&lt;value&gt;</i>
+
+<i>&lt;array&gt;</i>
+    &rArr; []
+    &rArr; [ <i>&lt;elements&gt;</i> ]
+
+<i>&lt;elements&gt;</i>
+    &rArr; <i>&lt;value&gt;</i>
+    &rArr; <i>&lt;elements</i>&gt; , <i>&lt;value&gt;</i>
+
+<i>&lt;value&gt;</i>
+    &rArr; <i>&lt;string&gt;</i>
+    &rArr; <i>&lt;number&gt;</i>
+    &rArr; <i>&lt;object&gt;</i>
+    &rArr; <i>&lt;array&gt;</i>
+    &rArr; <i>&lt;boolean&gt;</i>
+    &rArr; null
+
+<i>&lt;boolean&gt;</i>
+    &rArr; true
+    &rArr; false
+
+<i>&lt;string&gt;</i>
+    &rArr; ""
+    &rArr; " <i>&lt;chars&gt;</i> "
+
+<i>&lt;chars&gt;</i>
+    &rArr; <i>&lt;char&gt;</i>
+    &rArr; <i>&lt;chars&gt; &lt;char&gt;</i>
+
+<i>&lt;char</i>&gt;
+    &rArr; <i>&lt;any Unicode except " or \ or control&gt;</i>
+    &rArr; \"<i></i>
+    &rArr; \\<i></i>
+    &rArr; \/<i></i>
+    &rArr; \b<i></i>
+    &rArr; \f<i></i>
+    &rArr; \n<i></i>
+    &rArr; \r<i></i>
+    &rArr; \t<i></i>
+    &rArr; \u <i>&lt;four-hex-digits&gt;</i>
+
+<i>&lt;number</i>&gt;
+    &rArr; <i>&lt;int&gt;</i>
+    &rArr; &lt;<i>int&gt; &lt;fraction&gt;</i>
+    &rArr; &lt;<i>int&gt; &lt;exponent&gt;</i>
+    &rArr; &lt;<i>int&gt; &lt;fraction&gt; &lt;exponent&gt;</i>
+
+<i>&lt;int&gt;</i>
+    &rArr; <i>&lt;digit&gt;</i>
+    &rArr; &lt;<i>digit 1-9&gt; &lt;digits&gt;</i>
+    &rArr; - &lt;<i>digit&gt;</i>
+    &rArr; - &lt;<i>digit 1-9&gt; &lt;digits</i>&gt;
+
+<i>&lt;fraction&gt;</i>
+    &rArr; . <i>&lt;digits&gt;</i>
+
+<i>&lt;exponent&gt;</i>
+    &rArr; <i>&lt;e&gt;</i> <i>&lt;digits&gt;</i>
+
+<i>&lt;digits&gt;</i>
+    &rArr; <i>&lt;digit&gt;</i>
+    &rArr; &lt;<i>digits&gt;</i> &lt;<i>digit&gt;</i>
+
+<i>&lt;e&gt;</i>
+    &rArr; e
+    &rArr; e+
+    &rArr; e-
+    &rArr; E
+    &rArr; E+
+    &rArr; E-
+
+</font></b></pre>
+
+<p>See <a href='http://www.json.org/'>www.json.org</a> for more details.</p>
+
+<h2><a name='JSONExamples'>Examples</a></h2>
+
+<p>This is a JSON array containing two objects:</p>
+
+<pre>
+   [
+       {
+          "Precision": "zip",
+          "Latitude":  37.7668,
+          "Longitude": -122.3959,
+          "City":      "SAN FRANCISCO",
+          "State":     "CA",
+          "Zip":       "94107",
+          "Country":   "US"
+       },
+       {
+          "Precision": "zip",
+          "Latitude":  37.371991,
+          "Longitude": -122.026020,
+          "City":      "SUNNYVALE",
+          "State":     "CA",
+          "Zip":       "94085",
+          "Country":   "US"
+       }
+   ]
+</pre>
+
+<h1><a name='Locator'>Locator Service</a></h1>
+
+<p>The Locator service uses the transport layer to search for peers and to collect data about
+the peer's attributes and capabilities (services).  The discovery mechanism depends on the transport
+protocol and is part of that protocol handler. Targets, known by other hosts, are
+added to local list of peers. <font color=red>Security? </font>Automatically discovered
+targets require no further configuration. Additional targets can be configured manually.</p>
+
+<p>All TCF peers must implement Locator service. The implementation is part of the framework itself.
+It is the only required service, all other services are optional and, formally, not part of the framework.</p>
+
+<h2><a name='LocatorPeer'>Peer Attributes</a></h2>
+
+<p><i>&lt;object: peer data&gt;</i> is collection of peer attributes. It should, at least, contain member
+<b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string&gt;</i></font></b>.
+It can also contain a number of components describing peer properties and capabilities.
+Predefined attributes are:</p>
+
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string&gt;</i></font></b></code>
+    - unique ID of the peer.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ServiceManagerID" : <i>&lt;string&gt;</i></font></b></code>
+    - unique ID of service manager that is represented by this peer.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"AgentID" : <i>&lt;string&gt;</i></font></b></code>
+    - agent unique ID.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Name" : <i>&lt;string&gt;</i></font></b></code>
+    - human readable peer name.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"OSName" : <i>&lt;string&gt;</i></font></b></code>
+    - peer OS name, if applicable.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"TransportName" : <i>&lt;string&gt;</i></font></b></code>
+    - name of a trasport protocol to use to connect to this peer, for example: TCP.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Host" : <i>&lt;string&gt;</i></font></b></code>
+    - peer host name, if transport is TCP or UDP.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Aliases" : <i>&lt;string&gt;</i></font></b></code>
+    - peer host name aliases, if transport is TCP or UDP.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Addresses" : <i>&lt;string&gt;</i></font></b></code>
+    - peer IP addresses, if transport is TCP or UDP.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Port" : <i>&lt;string&gt;</i></font></b></code>
+    - peer port number, if transport is TCP or UDP.
+</ul>
+
+<p>Most clients do not need to know any peer attributes other than ID and Name. Clients are expected to call the IPeer.openChannel()
+method and let the framework check peer attributes and create appropriate communication channel that is best suited for
+communication with the peer. After a channel is established, a client can learn the peer capabilities by looking
+at what services it implements (use IChannel.getRemoteServices() method to get a map of services).</p>
+
+<h2><a name='LocatorCommands'>Locator Service Commands</a></h2>
+
+<h3><a name='LocatorCommandRedirect'>redirect</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Locator &bull; redirect &bull; <i>&lt;peer&gt;</i> &bull;
+
+<i>&lt;peer&gt;</i>
+    &rArr; <i>&lt;string: peer ID&gt;</i>
+    &rArr; <i>&lt;object: peer data&gt;</i>
+</font></b></pre>
+
+<p>The command redirects the channel to become connected to the given peer.
+The Locator service starts acting as a proxy.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
+</font></b></pre>
+
+<h3><a name='LocatorCommandSync'>sync</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Locator &bull; sync &bull;
+</font></b></pre>
+
+<p>The sync command does nothing and simply returns back an empty result. The command is used for
+cross channel synchronization. Since commands are executed in order they were issued, by waiting
+for sync result a client makes sure that all commands, that were issued before sync, are fully processed.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull;
+</font></b></pre>
+
+<h2><a name='LocatorEvents'>Locator Service Events</a></h2>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+E &bull; Locator &bull; Hello &bull; <i>&lt;array: service names&gt;</i> &bull;
+E &bull; Locator &bull; peerAdded &bull; <i>&lt;object: peer data&gt;</i> &bull;
+E &bull; Locator &bull; peerChanged &bull; <i>&lt;object: peer data&gt;</i> &bull;
+E &bull; Locator &bull; peerRemoved &bull; <i>&lt;string: peer ID&gt;</i> &bull;
+E &bull; Locator &bull; peerHeartBeat &bull; <i>&lt;string: peer ID&gt;</i> &bull;
+</font></b></pre>
+
+<dl>
+    <dt><b>Hello</b>
+        <dd>is the first message sent by the framework after establishing a communication channel.
+        The message lets other side of the channel know capabilities of this peer.
+        Message data consists of an array of service names that are provided by the peer.
+        The service name list is a complete and unambiguous declaration of peer's capabilities.
+        To avoid ambiguity, different services (even slightly different, like versions of same service)
+        must have different names. Framework delays all other communications between peers until exchange
+        of Hello messages is complete.
+    <dt><b>peerAdded</b>
+        <dd>is sent when the service discovers a new peer.
+    <dt><b>peerChanged</b>
+        <dd>is sent when peer attributes change.
+    <dt><b>peerRemoved</b>
+        <dd>is sent when the service deletes information about a peer.
+    <dt><b>peerHeartBeat</b>
+        <dd>is sent periodically when the service receives a communication from the peer
+                that confirms that the peer is still alive.
+</dl>
+
+<h2><a name='LocatorAPI'>Locator Service API</a></h2>
+
+<pre>
+<font color=#3F5FBF>/**
+ * Base interface for all service interfaces. A client can get list of available services
+ * by calling IChannel.getLocalServices() and IChannel.getRemoteServices().
+ *
+ * Remote services are represented by a proxy objects that implement service interfaces by
+ * translating method calls to TCF messages and sending them to a remote peer.
+ * When communication channel is open, TCF automatically creates proxies for standard services.
+ * TCF clients can provides addition proxies for non-standard services by calling IChannel.setServiceProxy().
+ */</font>
+<font color=#7F0055>public</font> interface IService {
+
+    <font color=#3F5FBF>/**
+     * Get unique name of this service.
+     */</font>
+    String getName();
+}
+
+<font color=#3F5FBF>/**
+ * Both hosts and targets are represented by objects
+ * implementing IPeer interface. A peer can act as host or
+ * target depending on services it implements.
+ * List of currently known peers can be retrieved by
+ * calling ILocator.getPeers()
+ *
+ * A TCF agent houses one or more service managers. A service manager has a one or more
+ * services to expose to the world. The service manager creates one or more peers
+ * to represent itself, one for every access path the agent is
+ * reachable by. For example, in agents accessible via TCP/IP, the
+ * service manger would create a peer for every subnet it wants to participate in.
+ * All peers of particular service manager represent identical sets of services.
+ *
+ * @noimplement This interface is not intended to be implemented by clients.
+ * Client can extends the abstract IPeer implementation: AbstractPeer.
+ */</font>
+<font color=#7F0055>public interface</font> IPeer {
+
+    <font color=#3F5FBF>/**
+     * Peer property names. Implementation can define additional properties.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        <font color=#3F5FBF>/** Peer unique ID */</font>
+        <i><font color=#0000C0>ATTR_ID</font></i> = <font color=#2A00FF>"ID"</font>,
+
+        <font color=#3F5FBF>/** Unique ID of service manager that is represented by this peer */</font>
+        <i><font color=#0000C0>ATTR_SERVICE_MANGER_ID</font></i> = <font color=#2A00FF>"ServiceManagerID"</font>,
+
+        <font color=#3F5FBF>/** Agent unique ID */</font>
+        <i><font color=#0000C0>ATTR_AGENT_ID</font></i> = <font color=#2A00FF>"AgentID"</font>,
+
+        <font color=#3F5FBF>/** Peer name */</font>
+        <i><font color=#0000C0>ATTR_NAME</font></i> = <font color=#2A00FF>"Name"</font>,
+
+        <font color=#3F5FBF>/** Name of the peer operating system */</font>
+        <i><font color=#0000C0>ATTR_OS_NAME</font></i> = <font color=#2A00FF>"OSName"</font>,
+
+        <font color=#3F5FBF>/** Transport name, for example TCP, SSL */</font>
+        <i><font color=#0000C0>ATTR_TRANSPORT_NAME</font></i> = <font color=#2A00FF>"TransportName"</font>,
+
+        <font color=#3F5FBF>/** If present, indicates that the peer can forward traffic to other peers */</font>
+        <i><font color=#0000C0>ATTR_PROXY</font></i> = <font color=#2A00FF>"Proxy"</font>,
+
+        <font color=#3F5FBF>/** Host DNS name or IP address */</font>
+        <i><font color=#0000C0>ATTR_IP_HOST</font></i> = <font color=#2A00FF>"Host"</font>,
+
+        <font color=#3F5FBF>/** Optional list of host aliases */</font>
+        <i><font color=#0000C0>ATTR_IP_ALIASES</font></i> = <font color=#2A00FF>"Aliases"</font>,
+
+        <font color=#3F5FBF>/** Optional list of host addresses */</font>
+        <i><font color=#0000C0>ATTR_IP_ADDRESSES</font></i> = <font color=#2A00FF>"Addresses"</font>,
+
+        <font color=#3F5FBF>/** IP port number, must be decimal number */</font>
+        <i><font color=#0000C0>ATTR_IP_PORT</font></i> = <font color=#2A00FF>"Port"</font>;
+
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> map of peer attributes
+     */</font>
+    Map&lt;String, String&gt; getAttributes();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> peer unique ID, same as getAttributes().get(ATTR_ID)
+     */</font>
+    String getID();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> service manager unique ID, same as getAttributes().get(ATTR_SERVICE_MANAGER_ID)
+     */</font>
+    String getServiceManagerID();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> agent unique ID, same as getAttributes().get(ATTR_AGENT_ID)
+     */</font>
+    String getAgentID();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> peer name, same as getAttributes().get(ATTR_NAME)
+     */</font>
+    String getName();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> agent OS name, same as getAttributes().get(ATTR_OS_NAME)
+     */</font>
+    String getOSName();
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> transport name, same as getAttributes().get(ATTR_TRANSPORT_NAME)
+     */</font>
+    String getTransportName();
+
+    <font color=#3F5FBF>/**
+     * Open channel to communicate with this peer.
+     * Note: the channel is not fully open yet when this method returns.
+     * It's state is IChannel.STATE_OPENNING.
+     * Protocol.Listener will be called when the channel will be opened or closed.
+     */</font>
+    IChannel openChannel() <font color=#7F0055>throws</font> IOException;
+}
+
+<font color=#3F5FBF>/**
+ * ILocator service uses transport layer to search for peers and to collect data about
+ * peers attributes and capabilities (services). Discovery mechanism depends on transport protocol
+ * and is part of that protocol handler. Targets, known to other hosts, can be found through
+ * remote instances of ILocator service. Automatically discovered targets require no further
+ * configuration. Additional targets can be configured manually.
+ *
+ * Clients should use Protocol.getLocator() to obtain local instance of ILocator,
+ * then ILocator.getPeers() can be used to get list of available peers (hosts and targets).
+ */</font>
+<font color=#7F0055>public interface</font> ILocator <font color=#7F0055>extends</font> IService {
+
+    <font color=#7F0055>static final</font> String <i><font color=#0000C0>NAME</font></i> = <font color=#2A00FF>"Locator"</font>;
+
+    <font color=#3F5FBF>/**
+     * Auto-configuration command and response codes.
+     */</font>
+    <font color=#7F0055>static final int</font>
+        <i><font color=#0000C0>CONF_REQ_INFO</font></i> = 1,
+        <i><font color=#0000C0>CONF_PEER_INFO</font></i> = 2,
+        <i><font color=#0000C0>CONF_REQ_SLAVES</font></i> = 3,
+        <i><font color=#0000C0>CONF_SLAVES_INFO</font></i> = 4;
+
+    <font color=#3F5FBF>/**
+     * <font color=#7F9FBF>@return</font> Locator service name: "Locator"
+     */</font>
+    String getName();
+
+    <font color=#3F5FBF>/**
+     * Get map (ID -> IPeer) of available peers (hosts and targets).
+     * The method return cached (currently known to the framework) list of peers.
+     * The list is updated according to event received from transport layer
+     */</font>
+    Map&lt;String,IPeer&gt; getPeers();
+
+    <font color=#3F5FBF>/**
+     * Redirect this service channel to given peer using this service as a proxy.
+     * @param peer_id - Peer ID.
+     */</font>
+    IToken redirect(String peer_id, DoneRedirect done);
+
+    <font color=#7F0055>interface</font> DoneRedirect {
+        <font color=#7F0055>void</font> doneRedirect(IToken token, Exception error);
+    }
+
+    <font color=#3F5FBF>/**
+     * Call back after TCF messages sent to this target up to this moment are delivered.
+     * This method is intended for synchronization of messages
+     * across multiple channels.
+     *
+     * Note: Cross channel synchronization can reduce performance and throughput.
+     * Most clients don't need channel synchronization and should not call this method.
+     *
+     * @param done will be executed by dispatch thread after communication
+     * messages are delivered to corresponding targets.
+     *
+     * This is internal API, TCF clients should use {@code org.eclipse.tm.tcf.protocol.Protocol}.
+     */</font>
+    IToken sync(DoneSync done);
+
+    <font color=#7F0055>interface</font> DoneSync {
+        <font color=#7F0055>void</font> doneSync(IToken token);
+    }
+
+    <font color=#3F5FBF>/**
+     * Add a listener for locator service events.
+     */</font>
+    <font color=#7F0055>void</font> addListener(Listener listener);
+
+    <font color=#3F5FBF>/**
+     * Remove a listener for locator service events.
+     */</font>
+    <font color=#7F0055>void</font> removeListener(Listener listener);
+
+    <font color=#7F0055>interface</font> Listener {
+        <font color=#3F5FBF>/**
+         * A new peer is added into locator peer table.
+         * @param peer
+         */</font>
+        <font color=#7F0055>void</font> peerAdded(IPeer peer);
+
+        <font color=#3F5FBF>/**
+         * Peer attributes have changed.
+         * @param peer
+         */</font>
+        <font color=#7F0055>void</font> peerChanged(IPeer peer);
+
+        <font color=#3F5FBF>/**
+         * A peer is removed from locator peer table.
+         * @param id - peer ID
+         */</font>
+        <font color=#7F0055>void</font> peerRemoved(String id);
+
+        <font color=#3F5FBF>/**
+         * Peer heart beat detected.
+         * @param id - peer ID
+         */</font>
+        <font color=#7F0055>void</font> peerHeartBeat(String id);
+    }
+}
+</pre>
+
+</body>
+</html>

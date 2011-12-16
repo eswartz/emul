@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="newWizards" name="New Target Wizards" schema="schema/newWizards.exsd"/>
+
+<!-- New target wizard contributions -->
+
+   <extension point="org.eclipse.tm.te.ui.newWizards">
+      <category
+            id="org.eclipse.tm.te.ui.newWizards.category.general"
+            name="%NewWizards.category.name">
+      </category>
+   </extension>
+
+<!-- Command contributions -->
+   <extension point="org.eclipse.ui.commands">
+      <category
+            id="org.eclipse.tm.te.ui.commands.category"
+            name="%Command.category.name">
+      </category>
+
+      <command
+            categoryId="org.eclipse.tm.te.ui.commands.category"
+            defaultHandler="org.eclipse.tm.te.ui.wizards.newWizard.NewWizardCommandHandler"
+            description="%Command.newWizards.description"
+            helpContextId="org.eclipse.tm.te.ui.command.newWizards"
+            id="org.eclipse.tm.te.ui.command.newWizards"
+            name="%Command.newWizards.name">
+      </command>
+   </extension>
+   
+<!-- Command image contributions -->   
+   <extension point="org.eclipse.ui.commandImages">
+      <image
+            commandId="org.eclipse.tm.te.ui.command.newWizards"
+            disabledIcon="icons/dlcl16/newtarget_wiz.gif"
+            icon="icons/elcl16/newtarget_wiz.gif">
+      </image>
+   </extension>
+   
+<!-- Context and binding contributions -->
+   <extension point="org.eclipse.ui.contexts">
+      <context
+            description="%context.targetexplorer.description"
+            id="org.eclipse.tm.te.ui.views.TargetExplorer"
+            name="%context.targetexplorer.name"
+            parentId="org.eclipse.ui.contexts.window">
+      </context>
+   </extension>
+
+   <extension point="org.eclipse.ui.bindings">
+      <key
+            commandId="org.eclipse.tm.te.ui.command.newWizards"
+            contextId="org.eclipse.tm.te.ui.views.TargetExplorer"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+N">
+      </key>
+   </extension>
+
+<!-- Status handler contributions -->
+   <extension point="org.eclipse.tm.te.runtime.statushandler.handlers">
+      <handler
+            class="org.eclipse.tm.te.ui.statushandler.DefaultStatusHandler"
+            id="org.eclipse.tm.te.statushandler.default"
+            label="%DefaultStatusHandler.label">
+      </handler>
+   </extension>
+
+<!-- Executor service contributions -->
+   <extension point="org.eclipse.tm.te.runtime.concurrent.executorServices">
+      <executorService
+            id="org.eclipse.tm.te.ui.executors.SWTDisplay"
+            label="Eclipse Platform Display Executor"
+            class="org.eclipse.tm.te.ui.internal.executors.SWTDisplayExecutor">
+      </executorService>
+   </extension>
+   
+<!-- Executor utility delegate contributions -->
+   <extension point="org.eclipse.tm.te.runtime.concurrent.executorUtilDelegates">
+      <executorUtilDelegate
+      		class="org.eclipse.tm.te.ui.internal.executors.SWTDisplayExecutorUtilDelegate"
+            id="org.eclipse.tm.te.ui.executors.delegate.SWTDisplay"
+            label="%SWTDisplayExecutorUtilDelegate.label">
+      </executorUtilDelegate>
+   </extension>
+   
+</plugin>

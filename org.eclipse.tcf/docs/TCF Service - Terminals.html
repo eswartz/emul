@@ -1,0 +1,428 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Target Communication Framework Services - Processes</title>
+</head>
+
+<body lang="EN-US">
+
+<h1>Target Communication Framework Services - Terminals</h1>
+
+<ul>
+    <li><a href="#VersionHistory">Version History</a>
+    </li><li><a href="#Overview">Overview</a>
+    </li><li><a href="#Cmds">Commands</a>
+    <ul>
+        <li><a href="#CmdGetContext">Get Context</a>
+        </li><li><a href="#CmdExit">Exit</a>
+        </li><li><a href="#CmdSetWinSize">SetWinSize</a>
+        </li><li><a href="#CmdLaunch">Launch</a>
+        </li></ul>
+    </li><li><a href="#Events">Events</a>
+    </li><li><a href="#API">API</a>
+</li></ul>
+
+<h1>Processes Service</h1>
+
+<h2><a name="VersionHistory">Version History</a></h2>
+
+<table border="1" cellpadding="8">
+    <tbody><tr>
+        <th>Version
+        </th><th>Date
+        </th><th>Change
+    </th></tr><tr>
+        <td>0.1
+        </td><td>2010-09-29
+        </td><td>Initial contribution
+    </td></tr></tbody></table>
+
+<h2><a name="Overview">Overview</a></h2>
+
+<p>Terminals service provides access to the target OS's termianl login, allows to start and exit a terminal login, and allows
+to set the terminal's window size. <br>
+</p>
+
+<p>If a terminal is laucnhed by this service, its standard input/output streams are
+available for client to read/write using <a href="TCF Service - Streams.html">Streams Service</a>. Stream type of such
+streams is set to "Terminals".</p>
+
+<p>Command and event parameters are encoded
+as zero terminated <a href="TCF Specification.html#JSON">JSON</a> strings.</p>
+
+<p>The service uses standard format for error reports,
+see <a href="TCF Services.html#ErrorFormat">Error Report Format</a>.</p>
+
+<h2><a name="Cmds">Commands</a></h2>
+
+<h3><a name="CmdGetContext">Get Context</a></h3>
+
+<pre><b><font color="#333399" face="Courier New" size="2">
+C &#8226; &lt;token&gt; &#8226; Terminals &#8226; getContext &#8226; &lt;string: context ID&gt; &#8226;<br></font></b></pre>
+
+<p>The command retrieves context info for given context ID. A context
+corresponds to an connected active terminal. Context IDs are valid
+across TCF services, so it is allowed to issue 'Terminals.getContext'
+command with a context that was obtained, for example, from Memory
+service. However, 'Terminals.getContext' is supposed to return only
+process specific data. If the ID is not a process ID,
+'Terminals.getContext' may not return any useful information.
+</p>
+
+<p>Reply:</p>
+
+<pre><b><font color="#333399" face="Courier New" size="2">
+R &#8226; &lt;token&gt; &#8226; &lt;error report&gt; &#8226; &lt;context data&gt; &#8226;<br><br><i>&lt;context data&gt;</i>
+    &#8658; null
+    &#8658; <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p>Context data object should, at least, contain member
+<b><font color="#333399" face="Courier New" size="2">"ID" : <i>&lt;string&gt;.</i></font></b>
+</p>
+
+<p>Predefined process context properties are:</p>
+<ul>
+    <li><code><b><font color="#333399" face="Courier New" size="2">"ID" : <i>&lt;string&gt;</i></font></b></code>
+    - ID of the context, same as getContext command argument.
+
+    <li><code><b><font color="#333399" face="Courier New" size="2">"ProcessID" : <i>&lt;string&gt;</i></font></b></code>
+    - the process ID of the login process of the terminal.
+
+    </li><li><code><b><font color="#333399" face="Courier New" size="2">"PtyType" : <i>&lt;string&gt;</i></font></b></code>
+    - terminal type.
+
+    </li><li><code><b><font color="#333399" face="Courier New" size="2">"Encoding" : <i>&lt;string&gt;</i></font></b></code>
+    - encoding.
+
+    </li><li><code><b><font color="#333399" face="Courier New" size="2">"Width" : <i>&lt;integer&gt;</i></font></b></code>
+    - width of the terminal.
+
+    </li><li><code><b><font color="#333399" face="Courier New" size="2">"Height" : <i>&lt;integer&gt;</i></font></b></code>
+    - height of the terminal.
+
+    </li><li><code><b><font color="#333399" face="Courier New" size="2">"StdInID" : <i>&lt;string&gt;</i></font></b></code>
+    - terminal standard input stream ID.
+
+    </li><li><code><b><font color="#333399" face="Courier New" size="2">"StdOutID" : <i>&lt;string&gt;</i></font></b></code>
+    - terminal standard output stream ID.
+
+    </li><li><code><b><font color="#333399" face="Courier New" size="2">"StdErrID" : <i>&lt;string&gt;</i></font></b></code>
+    - terminal standard error stream ID.
+</li></ul>
+
+<h3><a name="CmdExit">Exit</a></h3>
+
+<pre><b><font color="#333399" face="Courier New" size="2">
+C &#8226; &lt;token&gt; &#8226; Terminals &#8226; exit&#8226; &lt;string: context ID&gt; &#8226;<br></font></b></pre>The command exits the shell and closes the terminal connection.
+
+<p>Reply:</p>
+
+<pre><b><font color="#333399" face="Courier New" size="2">
+<span style="font-style: italic;">R &#8226; &lt;token&gt; &#8226; &lt;error report&gt; &#8226;</span><i></i>
+</font></b></pre>
+
+<h3><a name="CmdSetWinSize">SetWinSize</a></h3>
+
+<pre><b><font color="#333399" face="Courier New" size="2">
+C &#8226; &lt;token&gt; &#8226; Terminals &#8226; setWinSize &#8226; &lt;string: context ID&gt; &#8226; &lt;integer: newWidth&gt; &#8226; &lt;integer: newHeight&gt; &#8226;<br></font></b></pre>
+
+<p>The command sets the remote terminal windows size.</p>
+
+<p>Reply:</p>
+
+<pre><b><font color="#333399" face="Courier New" size="2">
+R &#8226; <i>&lt;token&gt;</i> &#8226; <i>&lt;error report&gt;</i> &#8226;<br></font></b></pre>
+
+<h3><a name="CmdLaunch">Launch</a></h3>
+
+<pre><b><font color="#333399" face="Courier New" size="2"><br>C &#8226; &lt;token&gt; &#8226; Terminals &#8226; launch&#8226; &lt;string: pty type&gt; &#8226; &lt;string: encoding&gt; &#8226; &lt;string array: environment variables&gt; &#8226;<br></font></b><b><i><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(51, 51, 153);" lang="EN-US"><br>&lt;string array&gt;</span></i><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(51, 51, 153);" lang="EN-US"><br><span style="">&nbsp;&nbsp;&nbsp; </span></span><span style="font-size: 10pt; font-family: &quot;MS Gothic&quot;; color: rgb(51, 51, 153);">&#8658;</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(51, 51, 153);" lang="EN-US"> null<br><span style="">&nbsp;&nbsp;&nbsp; </span></span><span style="font-size: 10pt; font-family: &quot;MS Gothic&quot;; color: rgb(51, 51, 153);">&#8658;</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(51, 51, 153);" lang="EN-US"> [ ]<br><span style="">&nbsp;&nbsp;&nbsp; </span></span><span style="font-size: 10pt; font-family: &quot;MS Gothic&quot;; color: rgb(51, 51, 153);">&#8658;</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(51, 51, 153);" lang="EN-US"> [ <i>&lt;string list&gt;</i> ]</span></b><br></pre>
+<p class="MsoNormal" style="text-align: left;" align="left"><b><i><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(51, 51, 153);" lang="EN-US">&lt;string list&gt;</span></i></b><b><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(51, 51, 153);" lang="EN-US"><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span></span></b><b><span style="font-size: 10pt; font-family: &quot;MS Gothic&quot;; color: rgb(51, 51, 153);">&#8658;</span></b><b><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(51, 51, 153);"> <i><span lang="EN-US">&lt;string&gt;</span></i><span lang="EN-US"><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span></span></span></b><b><span style="font-size: 10pt; font-family: &quot;MS Gothic&quot;; color: rgb(51, 51, 153);">&#8658;</span></b><b><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(51, 51, 153);"> <i><span lang="EN-US">&lt;string list&gt;</span></i><span lang="EN-US"> , <i>&lt;string&gt;</i></span></span></b><b><span style="font-size: 10pt; font-family: &#23435;&#20307;; color: rgb(51, 51, 153);" lang="EN-US"><o:p></o:p></span></b></p>
+
+
+
+
+<p>The command launches a new terminal connection to the remote machine.
+</p><ul>
+        <li><i>&lt;string: pty type&gt;</i> - requested terminal type for the new terminal.
+        </li><li><i>&lt;string: encoding&gt;</i> - requested terminal type for the new terminal.
+        </li><li><i>&lt;string array: environment variables&gt;</i> - list of environment variables for the terminal.
+        </li></ul>
+
+<p>Reply:</p>
+
+<pre><b><font color="#333399" face="Courier New" size="2">
+R &#8226; <i>&lt;token&gt;</i> &#8226; <i>&lt;error report&gt;</i> &#8226; <i>&lt;context data&gt;</i> &#8226;<br></font></b></pre>
+
+<p>On success the command returns context data for created terminal. Context data has same format as Get Context result.</p>
+
+<h2><a name="Events">Events</a></h2>
+
+<p>Terminals service broadcasts notification event when a terminal
+exits, or the terminal window size is changed. Only terminals that were
+launched by the service will get the events.</p>
+
+<pre></pre>
+<p><b><font color="#333399" face="Courier New" size="2">
+E &#8226; Terminals &#8226; exited &#8226; &lt;string: terminal ID&gt; &#8226; &lt;int: exit code&gt; &#8226;</font></b></p>
+Sent when a terminal is exited. "terminal ID" is the ID of the terminal. "exit code" is the terminal exit code.<br>
+<br>
+<p><b><font color="#333399" face="Courier New" size="2">E &#8226; Terminals &#8226; winSizeChanged &#8226; &lt;string: terminal ID&gt; &#8226; &lt;int: newWidth&gt; &#8226; &lt;int: newHeight&gt; &#8226;</font></b></p>
+Sent when a terminal's window size is changed. "terminal ID" is the ID
+of the terminal. "newWidth" is the new width of the terminal,
+"newHight" is the new height of the terminal.<br>
+<h2><a name="API">API</a></h2>
+
+<p class="MsoNormal" style="text-align: left;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(127, 0, 85);" lang="EN-US">public interface</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"> ITerminals <span style="color: rgb(127, 0, 85);">extends</span> IService {<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">static
+final</span> String NAME = "Terminals";<o:p></o:p></span></p>
+
+
+<p class="MsoNormal" style="text-align: left;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Retrieve context info for given
+context ID.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* A context corresponds to an
+terminal.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Context IDs are valid across TCF
+services, so it is allowed to issue<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* 'ITerminals.getContext' command
+with a context that was obtained,<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* for example, from Memory service.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* However, 'ITerminals.getContext'
+is supposed to return only terminal specific data,<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* If the ID is not a terminal ID, 'ITerminals.getContext'
+may not return any<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* useful information<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>*<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> id &#8211; context ID.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> done - call back interface called when operation is
+completed.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span>IToken getContext(String id,
+DoneGetContext done);<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Client call back interface for
+getContext().<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">interface</span>
+DoneGetContext {<br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="">&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* Called when contexts data
+retrieval is done.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> error &#8211; error description if
+operation failed, null if succeeded.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> context &#8211; context data.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">void</span>
+doneGetContext(IToken token, Exception error, TerminalContext context);<br>
+<span style="">&nbsp;&nbsp;&nbsp; </span>}<o:p></o:p></span></p>
+
+
+<p class="MsoNormal" style="text-align: left; text-indent: 21pt;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Context property names.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">static final</span> String<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**
+The TCF context ID */</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>PROP_ID = "ID",<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**
+The process ID of the login process of the terminal */</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>PROP_PROCESS_ID = "ProcessID",<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**
+The PTY type */</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>PROP_PTY_TYPE = "PtyType",<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**
+terminal encoding */</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>PROP_ENCODING = "Encoding",<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**
+window width size */</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>PROP_WIDTH = "Width",<o:p></o:p></span></p>
+
+<p class="MsoNormal" style="text-align: left;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>/** window
+height size */</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>PROP_WIDTH = "Height",<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**
+Process standard input stream ID */</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>PROP_STDIN_ID = "StdInID",<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**
+Process standard output stream ID */</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>PROP_STDOUT_ID =
+"StdOutID",<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**
+Process standard error stream ID */</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>PROP_STDERR_ID =
+"StdErrID";<o:p></o:p></span></p>
+
+<p class="MsoNormal" style="text-align: left;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(127, 0, 85);" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp; </span>interface</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"> TerminalContext {<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* Get context ID.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="">&nbsp;&nbsp;&nbsp;</span>* Same as getProperties().get(&#8220;ID&#8221;)<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>String getID();<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* Get terminal type.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* Same as getProperties().get(&#8220;</span><span style="color: rgb(51, 51, 153);">PtyType</span><span style="color: rgb(63, 95, 191);">&#8221;)<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>String getPtyType();<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* Get encoding.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="">&nbsp;</span>* Same as getProperties().get(&#8220;</span><span style="color: rgb(51, 51, 153);">Encoding</span><span style="color: rgb(63, 95, 191);">&#8221;)<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>String getEncoding();<o:p></o:p></span></p>
+
+<p class="MsoNormal" style="text-align: left;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* Get width.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* Same as getProperties().get(&#8220;</span><span style="color: rgb(51, 51, 153);">Width</span><span style="color: rgb(63, 95, 191);">&#8221;)<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>int getWidth();<o:p></o:p></span></p>
+
+<p class="MsoNormal" style="text-align: left;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* Get height.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="">&nbsp;&nbsp;&nbsp;</span>* Same as getProperties().get(&#8220;</span><span style="color: rgb(51, 51, 153);">Height</span><span style="color: rgb(63, 95, 191);">&#8221;)<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>int getHeight();<o:p></o:p><br>
+<span style=""></span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* Get all available context
+properties.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@return</span><span style="color: rgb(63, 95, 191);"> Map 'property name' -&gt;
+'property value'<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Map&lt;String, Object&gt;
+getProperties();<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* Exit the terminal.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> done - call back interface
+called when operation is completed.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@return</span><span style="color: rgb(63, 95, 191);"> pending command handle, can
+be used to cancel the command.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>IToken exit(DoneCommand done);<o:p></o:p></span></p>
+
+<p class="MsoNormal" style="text-align: left;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp; </span>}<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">interface</span>
+DoneCommand {<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">void</span>
+doneCommand(IToken token, Exception error);<br>
+<span style="">&nbsp;&nbsp;&nbsp; </span>}</span></p>
+
+<p class="MsoNormal" style="text-align: left;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp; </span>/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Launch a new terminal to remote machine.<o:p></o:p><br>
+<span style="">&nbsp;&nbsp; &nbsp; </span>* </span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(127, 159, 191);" lang="EN-US">@param</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"> type - requested
+terminal type for the new terminal.</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><o:p></o:p></span><br>
+<span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(127, 159, 191);" lang="EN-US">@param</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"> encoding -
+requested encoding for the new terminal.</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><o:p></o:p></span><br>
+<span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(127, 159, 191);" lang="EN-US">@param</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"> environment -
+Array of environment variable strings.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* if null then default set of
+environment variables will be used.</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><o:p></o:p></span><br>
+<span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(127, 159, 191);" lang="EN-US">@param</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"> done - call back
+interface called when operation is completed.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(127, 159, 191);" lang="EN-US">@return</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"> pending command handle, can be used to
+cancel the command.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span>IToken launch(String type, String
+encoding, String[] environment, DoneLaunch done);<o:p></o:p></span></p>
+
+<p class="MsoNormal" style="text-align: left;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Call-back interface to be called
+when "start" command is complete.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">interface</span>
+DoneLaunch {<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">void</span>
+doneLaunch(IToken token, Exception error, TerminalContext terminal);<br>
+<span style="">&nbsp;&nbsp;&nbsp; </span>}<o:p></o:p></span></p>
+
+
+<p class="MsoNormal" style="text-align: left;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Set the terminal widows size<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> context_id - context ID.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> signal - signal code.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> done - call back interface called when operation is
+completed.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@return</span><span style="color: rgb(63, 95, 191);"> pending command handle, can be used to cancel the
+command.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span>IToken setWinSize(String context_id,
+int newWidth, int newHeight, DoneCommand done);<o:p></o:p></span></p>
+
+<p class="MsoNormal" style="text-align: left;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Exit a terminal.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> context_id - context ID.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> done - call back interface called when operation is completed.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@return</span><span style="color: rgb(63, 95, 191);"> pending command handle, can be used to cancel the command.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span>IToken exit(String context_id, DoneCommand done);<o:p></o:p></span></p>
+
+
+<p class="MsoNormal" style="text-align: left; text-indent: 19.5pt;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Add terminals service event
+listener.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(127, 159, 191);" lang="EN-US">@param</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"> listener - event listener implementation.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">void</span>
+addListener(TerminalsListener listener);<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Remove terminals service event
+listener.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> listener - event listener implementation.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">void</span>
+removeListener(TerminalsListener listener);<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Process event listener is notified
+when a terminal exits.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>* Event are reported only for
+terminals that were started by 'launch' command.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">interface</span>
+TerminalsListener {<br>
+<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(63, 95, 191);">/**<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* Called when a terminal exits.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> terminal_id - terminal
+context ID<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="color: rgb(127, 159, 191);">@param</span><span style="color: rgb(63, 95, 191);"> exit_code - terminal exit
+code<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">void</span>
+exited(String terminal_id, <span style="color: rgb(127, 0, 85);">int</span> exit_code);<o:p></o:p></span></p>
+<p class="MsoNormal" style="margin-left: 19.55pt; text-align: left; text-indent: 45pt;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"><br>
+&nbsp;&nbsp;&nbsp;&nbsp; /**<br>
+<span style="">&nbsp; </span><span style="">&nbsp;&nbsp;&nbsp; </span>* Called when a terminal exits.<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(127, 159, 191);" lang="EN-US">@param</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"> terminal_id - terminal context ID<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>* </span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(127, 159, 191);" lang="EN-US">@param</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"> newWidth &#8211; new terminal width<o:p></o:p><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * </span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(127, 159, 191);" lang="EN-US">@param</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(63, 95, 191);" lang="EN-US"> newHeight &#8211; new terminal height<br>
+<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>*/</span><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US"><br>
+<span style="">&nbsp;&nbsp;&nbsp; </span><span style="color: rgb(127, 0, 85);">void</span>
+winSizeChanged (String terminal_id, <span style="color: rgb(127, 0, 85);">int</span>
+newWidth, int newHeight);<o:p></o:p></span></p>
+<p class="MsoNormal" style="text-align: left; text-indent: 15pt;" align="left"><span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US">}<o:p></o:p></span></p>
+
+
+<span style="font-size: 10pt; font-family: &quot;Courier New&quot;;" lang="EN-US">}</span>
+
+
+
+</body></html>

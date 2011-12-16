@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Terminal connector contributions -->
+   <extension point="org.eclipse.tm.terminal.terminalConnectors">
+      <connector 
+                 name="%TerminalConnector.terminals"
+                 id="org.eclipse.tm.te.tcf.terminals.ui.TerminalsConnector"
+                 hidden="true"
+                 class="org.eclipse.tm.te.tcf.terminals.ui.connector.TerminalsConnector"/>
+   </extension>
+
+<!-- Terminal connector type contributions -->
+   <extension point="org.eclipse.tm.te.ui.terminals.connectorTypes">
+      <connectorType
+            class="org.eclipse.tm.te.tcf.terminals.ui.connector.TerminalsConnectorType"
+            id="org.eclipse.tm.te.ui.terminals.type.terminals"
+            label="%TerminalsConnectorType.label">
+      </connectorType>
+   </extension>
+
+<!-- Terminals launcher delegate contributions -->
+   <extension point="org.eclipse.tm.te.ui.terminals.launcherDelegates">
+      <delegate
+            class="org.eclipse.tm.te.tcf.terminals.ui.launcher.LauncherDelegate"
+            id="org.eclipse.tm.te.ui.terminals.launcher.tcf"
+            label="%launcherDelegate.label">
+            <enablement>
+               <with variable="selection">
+                  <count value="1"/>
+                  <iterate operator="and" ifEmpty="false">
+                     <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+                  </iterate>
+               </with>
+            </enablement>
+      </delegate>
+   </extension>
+
+</plugin>

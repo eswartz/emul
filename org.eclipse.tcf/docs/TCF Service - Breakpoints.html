@@ -1,0 +1,886 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+    <title>Target Communication Framework Services - Breakpoints</title>
+</head>
+
+<body lang='EN-US'>
+
+<h1>Target Communication Framework Services - Breakpoints</h1>
+
+<ul>
+    <li><a href='#VersionHistory'>Version History</a>
+    <li><a href='#Overview'>Overview</a>
+    <li><a href='#Cmds'>Commands</a>
+    <ul>
+        <li><a href='#CmdSet'>Set</a>
+        <li><a href='#CmdAdd'>Add</a>
+        <li><a href='#CmdChange'>Change</a>
+        <li><a href='#CmdEnable'>Enable</a>
+        <li><a href='#CmdDisable'>Disable</a>
+        <li><a href='#CmdRemove'>Remove</a>
+        <li><a href='#CmdGetIDs'>Get IDs</a>
+        <li><a href='#CmdGetProperties'>Get Properties</a>
+        <li><a href='#CmdGetStatus'>Get Status</a>
+        <li><a href='#CmdGetCapabilities'>Get Capabilities</a>
+    </ul>
+    <li><a href='#Events'>Events</a>
+    <li><a href='#API'>API</a>
+</ul>
+
+<h1>Breakpoints Service</h1>
+
+<h2><a name='VersionHistory'>Version History</a></h2>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Version
+        <th>Date
+        <th>Change
+    <tr>
+        <td>0.1
+        <td>2008-01-10
+        <td>Initial contribution
+    <tr>
+        <td>0.2
+        <td>2008-04-25
+        <td>Added getCapabilities
+    <tr>
+        <td>1.0
+        <td>2008-05-06
+        <td>Approved
+</table>
+
+<h2><a name='Overview'>Overview</a></h2>
+
+<p>A breakpoint is represented by a unique identifier and set of properties.
+A breakpoint identifier (String id) needs to be unique across all hosts and targets.</p>
+
+<p>A breakpoint's property set is an extensible collection of named attributes,
+which define the breakpoint's location, the conditions that trigger the breakpoint, and the actions
+executed as a result. As such, breakpoint properties are separated into three broad categories:
+<ul><b>
+    <li>Location properties
+    <li>Condition properties
+    <li>Action properties
+</b></ul>
+<p>The Location and Condition properties dictate how a breakpoint is installed and whether it should be triggered.
+The Action properties dictate the effect of the breakpoint if it is triggered.
+
+<p>The split of Location and Condition properties is subjective and is
+not meant to describe how it is implemented.  Often, the Location
+properties dictate how a breakpoint is installed, and Condition
+properties dictate whether the breakpoint should be triggered.
+However, it is perfectly possible for an implementation to use
+Condition properties to control breakpoint installation and use
+Location properties each time the breakpoint is encountered to check
+if it should be triggered.
+
+<p>Unless stated otherwise, all Location and Condition properties have
+an implied "and" relationship.  Conceptually, a breakpoint without any
+Location or Condition properties would be triggered by any state
+change in any of the attached contexts.  Adding properties reduces the
+(sub)set of state changes that triggers the breakpoint.
+
+<p>The <b>Location properties category</b> contains the following properties:
+<p>Context defining properties specifying which context a breakpoint applies to are provided through the <a href='#propContextIds'>ContextIds</a>,
+<a href='#propContextNames'>ContextNames </a> or the <a href='#propExecPaths'>ExecutablePaths</a> properties.
+
+<p>The presence of certain properties defines what kind of breakpoint is installed.
+<ul>
+<li>Line Breakpoints, which are configured using the <a href='#propFile'>File</a>,
+<a href='#propLine'>Line</a> and <a href='#propColumn'>Column</a> properties
+
+<li>Address breakpoints and watchpoints are configured using the <a href='#propLocation'>Location</a>,
+<a href='#propAccessMode'>AccessMode</a>, <a href='#propSize'>Size</a>,
+<a href='#propMaskValue'>MaskValue </a>and <a href='#propMask'>Mask</a> properties.
+
+<li>Temporal breakpoints which are located on a time scale are configured using the <a href='#propTime'>Time</a>,
+<a href='#propTimeScale'>TimeScale</a>, and <a href='#propTimeUnits'> TimeUnits</a> properties.
+</ul>
+
+<p>The <a href='#propType'>Type</a> property configures whether the breakpoint should be installed as hardware or a software breakpoint.
+
+<p><b>Condition properties</b> contain the <a href='#propEnabled'>Enabled</a> property, the <a href='#propCondition'>Condition</a> and <a href='#propIgnoreCount'>IgnoreCount</a> properties.
+
+<p><b>Action properties</b> contain the <a href='#propStopGroup'>StopGroup</a> and <a href='#propTemporary'>Temporary</a> properties.
+
+<p>For each breakpoint a target agent maintains another extensible collection of named attributes:
+breakpoint status. While breakpoint properties are persistent and represent user input,
+breakpoint status reflects dynamic target agent reports about breakpoint current state,
+like actual addresses where breakpoint is installed or installation errors.
+
+<p>Every breakpoint is associated with a communication channel and when the channel is closed
+the target agent removes all corresponding breakpoints.
+Target agent should maintain separate breakpoint tables for each communication channel.
+It is allowed to set the same breakpoint (same ID) through multiple
+channels, target agent should treat it as single breakpoint with multiple references. Such a breakpoint
+is removed when all referring channels are closed.
+
+<p>The service uses standard format for error reports,
+see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
+
+<h2><a name='Cmds'>Commands</a></h2>
+
+<h3><a name='CmdSet'>Set</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; set &bull; <i>&lt;array of breakpoints&gt;</i> &bull;
+
+<i>&lt;array of breakpoints&gt;</i>
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;breakpoints list&gt;</i> ]
+
+<i>&lt;breakpoints list&gt;</i>
+    &rArr; <i>&lt;breakpoint data&gt;</i>
+    &rArr; <i>&lt;breakpoints list&gt;</i>, <i>&lt;breakpoint data&gt;</i>
+
+<i>&lt;breakpoint data&gt;</i>
+    &rArr; <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p> The command downloads breakpoint data to a target agent.
+The command is intended to be used only to initialize the target's breakpoint table
+when communication channel is open. After that, host should
+notify the target about (incremental) changes in breakpoints data by sending
+Add, Change and Remove commands.<p>
+
+<p>Breakpoint data consists of a list of breakpoint properties. All properties are optional, except ID.
+Tools and targets can define additional properties. All provided properties need to be true for a breakpoint to be installed/hit.<br>
+A breakpoint service implementation may not change the properties set by the client.</p>
+
+<p>Predefined properties are:</p>
+<dl>
+<ul>
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propID'>"ID"</a> : <i>&lt;string&gt;</i></font></b></code>
+    <dd>Breakpoint ID. This is the only required property.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propeEnabled'>"Enabled"</a> : <i>&lt;boolean&gt;</i></font></b></code>
+    <dd>If true, the breakpoint is enabled.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propType'>"Type"</a> : <i>&lt;string&gt;</i></font></b></code>
+    <dd>The breakpoint type
+    <dl>
+    <ul>
+        <li><dt><code><b>"Software"</b></code> <dd> Software breakpoint.</li>
+        <li><dt><code><b>"Hardware"</b></code> <dd> Hardware breakpoint.</li>
+        <li><dt><code><b>"Auto"</b></code> <dd> Installed breakpoint type (software/hardware) deferred to agent's discretion. This is the default breakpoint type.
+        The actual type of each breakpoint instance consequently installed is received as a status event.</li>
+    </ul>
+    </dl>
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propContextIDs'>"ContextIds"</a> : <i>&lt;string&gt;</i></font></b></code>
+    <dd>This property contains an array of TCF context identifiers for which this breakpoint should be installed.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propContextNames'>"ContextNames"</a> : <i>&lt;string&gt;</i></font></b></code>
+    <dd>This property contains an array of contexts names (such as a process/thread name) for which this breakpoint should be installed.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propExecPaths'>"ExecutablePaths"</a> : <i>&lt;string&gt;</i></font></b></code>
+    <dd>This property contains all the target executable paths for which this breakpoint should be installed.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propLocation'> "Location" </a> : <i>&lt;string&gt;</i></font></b></code>
+    <dd>If preset, defines location of the breakpoint. The expression evaluates either to a memory address
+    or a register location.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propAccessMode'>"AccessMode"</a> : <i>&lt;int&gt;</i></font></b></code>
+    <dd>The access mode that will trigger the breakpoint. Access mode can be a bitwise OR of the values below:
+    <dl>
+    <ul>
+        <li><dt><code><b>READ = 0x01</b></code> <dd>Triggered by a read from the breakpoint location.</li>
+        <li><dt><code><b>WRITE = 0x02</b></code> <dd>Triggered by a write to the breakpoint location.</li>
+        <li><dt><code><b>EXECUTE = 0x04</b></code> <dd>Triggered by an instruction execution at the breakpoint location. Whether the breakpoint is
+                  triggered before or after the instruction execution depends on the target support for this mode. This is the default for Line and Address breakpoints.</li>
+        <li><dt><code><b>CHANGE = 0x08</b></code> <dd>Triggered by a data change (not an explicit write) at the breakpoint location.</li>
+    </ul>
+    </dl>
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propSize'>"Size"</a> : <i>&lt;int&gt;</i></font></b></code>
+    <dd>The number of bytes starting at address given by the location expression.
+            AccessMode applies to accesses within the range [location .. location+size-1].
+                The MaskValue and Mask applies to the bytes within the range, i.e. the breakpoint triggers when (valueof[location .. location+size-1] & Mask) == (MaskValue & Mask).
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propFile'>"File"</a> : <i>&lt;string&gt;</i></font></b></code>
+    <dd>Source code file name of breakpoint location.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propLine'>"Line"</a> : <i>&lt;int&gt;</i></font></b></code>
+    <dd>Source code line number of breakpoint location.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propColumn'>"Column"</a> : <i>&lt;int&gt;</i></font></b></code>
+    <dd>Source code column number of breakpoint location.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propMaskValue'>"MaskValue"</a> : <i>&lt;int&gt;</i></font></b></code>
+    <dd>A breakpoint can be qualified with a mask value which may be further refined with a mask.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propMask'>"Mask"</a> : <i>&lt;int&gt;</i></font></b></code>
+    <dd>A mask which is bitwise ANDed with the value accessed.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propTime'>"Time"</a> : <i>&lt;number&gt;</i></font></b></code>
+    <dd>The time value in the execution of the program at which to set the breakpoint
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propTimeScale'>"TimeScale"</a> : <i>&lt;string&gt;</i></font></b></code>
+    <dd>The scale for the time value
+    <dl>
+    <ul>
+       <li><dt><code><b>"Relative"</b></code> <dd> Time value in the relative time scale. This is the default value for this property.
+        In the relative time scale, the Time property may have a negative value.</li>
+       <li><dt><code><b>"Absolute"</b></code> <dd> Time value in the absolute time scale.</li>
+     </ul>
+    </dl>
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propTimeUnits'>"TimeUnits"</a> : <i>&lt;string&gt;</i></font></b></code>
+    <dd>The units for the time value
+    <dl>
+    <ul>
+        <li><dt><code><b>"CycleCount"</b></code> <dd> Time value in cycles. This is the default type.</li>
+        <li><dt><code><b>"NanoSeconds"</b></code> <dd> Time value in nano seconds.</li>
+        <li><dt><code><b>"InstructionCount"</b></code> <dd> Time value in instructions.</li>
+    </ul>
+    </dl>
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propCondition'>"Condition"</a> : <i>&lt;string&gt;</i></font></b></code>
+    <dd>Expression that must evaluate to true before the breakpoint is triggered.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propIgnoreCount'>"IgnoreCount"</a>: <i>&lt;int&gt;</i></font></b></code>
+    <dd>The number of times this breakpoint is to be ignored before it is triggered. The ignore count is tested after all other Location and Condition properties are validated.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name = 'propStopGroup'>"StopGroup"</a> : <i>&lt;string&gt;</i></font></b></code>
+    <dd>An array of TCF Context identifiers representing contexts to be stopped when this breakpoint is triggered.
+    This is an "Action" property that is used to stop contexts in addition to the one that triggered the breakpoint.
+    </li>
+
+    <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propTemporary'>"Temporary"</a> : <i>&lt;boolean&gt;</i></font></b></code>
+    <dd>If set, results in the breakpoint being removed after it is triggered once. The default value for this property is false.
+    </li>
+</ul>
+</dl>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
+</font></b></pre>
+
+<p><b>Examples:</b></p>
+
+<p>The following properties install a hardware breakpoint at address <code>0x1000</code> for all attached contexts:</p>
+<ul>
+    <li><code>ID = "1"</code>
+    <li><code>Type = "Hardware"</code>
+    <li><code>Location = "0x1000"</code>
+</ul>
+<p>
+The following additional property limits the number of contexts for which the breakpoint by providing the ContextIDs property:<br>
+<ul>
+    <li><code>ContextIds = ["core0", "core1"]</code>
+</ul>
+<p>
+The following additional property stops the specified contexts when breakpoint 1 is hit:<br>
+<ul>
+    <li><code>StopGroup = ["core3", "core5"]</code>
+</ul>
+<p>
+The following properties set a watchpoint that stops <code>core0</code> when variable <code>fooVar</code> is read from or written to by <code>Core5</code>:
+<ul>
+    <li><code>ID = "2"</code>
+    <li><code>Type = "Hardware"</code>
+    <li><code>Location = "&fooVar"</code>
+    <li><code>Size = 4</code>
+    <li><code>AccessMode = 0x01 | 0x02</code>
+    <li><code>ContextIDs = ["core5"]</code>
+    <li><code>StopGroup = ["core0"]</code>
+</ul>
+<p>
+The following additional properties further restrict the watchpoint to trigger only if an odd value is read from or written to the location.
+<ul>
+    <li><code>MaskValue = 0x00000001</code>
+    <li><code>Mask = 0x00000001</code>
+</ul>
+<p>
+The following properties set a temporal breakpoint that stops <code>core0</code> at the specified absolute time.
+<ul>
+    <li><code>ID = "3"</code>
+    <li><code>ContextIDs = ["core0"]</code>
+    <li><code>Time = 245</code>
+    <li><code>TimeUnits = "NanoSeconds"</code>
+    <li><code>TimeScale = "Absolute"</code>
+</ul>
+
+<h3><a name='CmdAdd'>Add</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; add &bull; <i>&lt;breakpoint data&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command adds a breakpoint to the target agent breakpoint table. The host should send this command when the user creates a new breakpoint</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
+</font></b></pre>
+
+<h3><a name='CmdChange'>Change</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; change &bull; <i>&lt;breakpoint data&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command updates the breakpoint data in the target agent breakpoint table. The host should send this command when the user modifies a breakpoint</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
+</font></b></pre>
+
+<h3><a name='CmdEnable'>Enable</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; enable &bull; <i>&lt;array of breakpoint IDs&gt;</i> &bull;
+
+<i>&lt;array of breakpoint IDs&gt;</i>
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;breakpoint IDs list&gt;</i> ]
+
+<i>&lt;breakpoint IDs list&gt;</i>
+    &rArr; <i>&lt;breakpoint ID&gt;</i>
+    &rArr; <i>&lt;breakpoint IDs list&gt;</i>, <i>&lt;breakpoint ID&gt;</i>
+
+<i>&lt;breakpoint ID&gt;</i>
+    &rArr; <i>&lt;string&gt;</i>
+</font></b></pre>
+
+<p>The command enables a list of breakpoints - sets breakpoint property "Enabled" to true.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
+</font></b></pre>
+
+<h3><a name='CmdDisable'>Disable</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; disable &bull; <i>&lt;array of breakpoint IDs&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command disables a list of breakpoints - sets breakpoint property "Enabled" to false.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
+</font></b></pre>
+
+<h3><a name='CmdRemove'>Remove</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; remove &bull; <i>&lt;array of breakpoint IDs&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command removes a list of breakpoints. Host should send this command when user deletes breakpoints.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
+</font></b></pre>
+
+<h3><a name='CmdGetIDs'>Get IDs</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; getIDs &bull;
+</font></b></pre>
+
+<p>The command uploads IDs of breakpoints known to target agent,
+including breakpoints that are set through different communication
+channels.  It is up to the client to keep track of which breakpoints
+it has set such that it can know which breakpoint are set by other
+channels.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of breakpoint IDs&gt;</i> &bull;
+</font></b></pre>
+
+<h3><a name='CmdGetProperties'>Get Properties</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; getProperties &bull; <i>&lt;string: breakpoint ID&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command uploads the properties of the given breakpoint from the target agent breakpoint table.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;breakpoint data&gt;</i> &bull;
+</font></b></pre>
+
+<h3><a name='CmdGetStatus'>Get Status</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; getStatus &bull; <i>&lt;string: breakpoint ID&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command uploads the status of given the breakpoint from the target agent.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;breakpoint status&gt;</i> &bull;
+
+<i>&lt;breakpoint status&gt;</i>
+    &rArr; <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p>Breakpoint status consists of a list of status properties. All properties are optional.
+Tools and targets can define additional properties.
+Setting any properties that are not supported by or unknown to the service implementation will yield an error,
+which is reported in the Error property of the breakpoint status object.</p>
+
+<p>Predefined properties are:</p>
+
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Instances" : <i>&lt;array of instance status data&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Error" : <i>&lt;string&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"File" : <i>&lt;string&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Line" : <i>&lt;int&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Column" : <i>&lt;int&gt;</i></font></b></code>
+</ul>
+
+
+A breakpoint installation can lead to zero or more installed instances of the breakpoints. Properties associated with each
+of those installed instances (or error information in case there was a failure installing an instance) are provided
+in a list of instance status data objects
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;array of instance status data&gt;</i>
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;Instance status data list&gt;</i> ]
+
+<i>&lt;Instance status data list&gt;</i>
+    &rArr; <i>&lt;Instance status data&gt;</i>
+    &rArr; <i>&lt;Instance staus data list&gt;</i>, <i>&lt;Instance status data&gt;</i>
+
+<i>&lt;Instance status data&gt;</i>
+    &rArr; <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p>Instance status data consists of a list of properties pertaining to each installed instance of the breakpoint.
+
+<p>Predefined properties are:
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Error" : <i>&lt;string&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"BreakpointType" : <i>&lt;string&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"LocationContext" : <i>&lt;string&gt;</i></font></b></code>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Address" : <i>&lt;string&gt;</i></font></b></code>
+</ul>
+
+<h3><a name='CmdGetCapabilities'>Get Capabilities</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Breakpoints &bull; getCapabilities &bull; <i>&lt;string: context ID&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command reports breakpoint service capabilities to clients so they
+can adjust to different implementations of the service.
+When called with a null ("") context ID the global capabilities are returned,
+otherwise context specific capabilities are returned.  A special capability
+property is used to indicate that all child contexts have the same
+capabilities.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;service capabilities&gt;</i> &bull;
+
+<i>&lt;service capabilities&gt;</i>
+    &rArr; <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p>Service capabilities consist of a list of properties. All properties are optional.
+Tools and targets can define additional properties. Predefined properties are:</p>
+
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string: context ID&gt;</i></font></b></code>
+    - ID of a context that was used to query capabilities
+    <li><code><b><font face="Courier New" size=2 color=#333399>"HasChildren" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, children of the context can have different capabilities
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Location" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "Location" breakpoint property is supported
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Condition" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "Condition" breakpoint property is supported
+    <li><code><b><font face="Courier New" size=2 color=#333399>"FileLine" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "File", "Line" and "Column" breakpoint properties are supported
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ContextIds" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "ContextIds" breakpoint property is supported
+    <li><code><b><font face="Courier New" size=2 color=#333399>"StopGroup" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "StopGroup" breakpoint property is supported
+    <li><code><b><font face="Courier New" size=2 color=#333399>"IgnoreCount" : <i>&lt;boolean&gt;</i></font></b></code>
+    - if true, "IgnoreCount" breakpoint property is supported
+</ul>
+
+<h2><a name='Events'>Events</a></h2>
+
+<p>Breakpoints service events are sent to notify clients about breakpoint properties and status changes.
+Note that contextAdded, contextChanged and contextRemoved events carry exactly same set
+of breakpoint properties that was sent by a client to a target. The purpose of these events is to
+let all clients know about breakpoints that were created by other clients.</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+E &bull; Breakpoints &bull; status &bull; <i>&lt;string: breakpoint ID&gt;</i> &bull; <i>&lt;breakpoint status&gt;</i> &bull;
+E &bull; Breakpoints &bull; contextAdded &bull; <i>&lt;array of breakpoints&gt;</i> &bull;
+E &bull; Breakpoints &bull; contextChanged &bull; <i>&lt;array of breakpoints&gt;</i> &bull;
+E &bull; Breakpoints &bull; contextRemoved &bull; <i>&lt;array of breakpoint IDs&gt;</i> &bull;
+</font></b></pre>
+
+<dl>
+    <dt><b>status</b>
+        <dd>Is sent when breakpoint status changes.
+    <dt><b>contextAdded</b>
+        <dd>Is sent when a new breakpoints are added.
+    <dt><b>contextChanged</b>
+        <dd>Is sent when breakpoint properties change.
+    <dt><b>contextRemoved</b>
+        <dd>Is sent when breakpoints are removed.
+</dl>
+
+<h2><a name='API'>API</a></h2>
+
+<pre>
+<font color=#3F5FBF>/**
+ * Breakpoint is represented by unique identifier and set of properties.
+ * Breakpoint identifier (String id) needs to be unique across all hosts and targets.
+ *
+ * Breakpoint properties (Map&lt;String,Object>) is extensible collection of named attributes,
+ * which define breakpoint location and behavior. This module defines some common
+ * attribute names (see PROP_*), host tools and target agents may support additional attributes.
+ *
+ * For each breakpoint a target agent maintains another extensible collection of named attributes:
+ * breakpoint status (Map&lt;String,Object>, see STATUS_*). While breakpoint properties are
+ * persistent and represent user input, breakpoint status reflects dynamic target agent reports
+ * about breakpoint current state, like actual addresses where breakpoint is installed or installation errors.
+ */</font>
+<font color=#7F0055>public interface</font> IBreakpoints <font color=#7F0055>extends</font> IService {
+
+    <font color=#3F5FBF>/**
+     * Service name.
+     */</font>
+    <font color=#7F0055>static final</font> String NAME = "Breakpoints";
+
+    <font color=#3F5FBF>/**
+     * Breakpoint property names.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        PROP_ID = "ID",                           // String
+        PROP_ENABLED = "Enabled",                 // Boolean
+        PROP_TYPE = "BreakpointType",             // String
+        PROP_CONTEXTNAMES = "ContextNames",       // Array
+        PROP_CONTEXTIDS = "ContextIds",           // Array
+        PROP_EXECUTABLEPATHS = "ExecPaths",       // Array
+        PROP_LOCATION = "Location",               // String
+        PROP_SIZE = "Size",                       // Number
+        PROP_ACCESSMODE = "AccessMode",           // Number
+        PROP_FILE = "File",                       // String
+        PROP_LINE = "Line",                       // Number
+        PROP_COLUMN = "Column",                   // Number
+        PROP_PATTERN = "MaskValue",               // Number
+        PROP_MASK = "Mask",                       // Number
+        PROP_STOP_GROUP = "StopGroup",            // Array
+        PROP_IGNORECOUNT = "IgnoreCount",         // Number
+        PROP_TIME = "Time",                       // Number
+        PROP_SCALE = "TimeScale",                 // String
+        PROP_UNITS = "TimeUnits",                 // String
+        PROP_CONDITION = "Condition",             // String
+        PROP_TEMPORARY = "Temporary";             // Boolean
+
+    <font color=#3F5FBF>/**
+     * BreakpointType values
+     */</font>
+    <font color=#7F0055>static final</font> String
+        TYPE_SOFTWARE = "Software",
+        TYPE_HARDWARE = "Hardware",
+        TYPE_AUTO = "Auto";
+
+    <font color=#3F5FBF>/**
+     * AccessMode values
+     */ </font>
+    <font color=#7F0055>static final</font> int
+        ACCESSMODE_READ    = 0x01,
+        ACCESSMODE_WRITE   = 0x02,
+        ACCESSMODE_EXECUTE = 0x04,
+        ACCESSMODE_CHANGE  = 0x08;
+
+    <font color=#3F5FBF>/**
+     * TimeScale values
+     */</font>
+    <font color=#7F0055>static final</font> String
+        TIMESCALE_RELATIVE = "Relative",
+        TIMESCALE_ABSOLUTE = "Absolute";
+
+    <font color=#3F5FBF>/**
+     * TimeUnits values
+     */</font>
+    <font color=#7F0055>static final</font> String
+        TIMEUNIT_NSECS = "Nanoseconds",
+        TIMEUNIT_CYCLE_COUNT = "CycleCount",
+        TIMEUNIT_INSTRUCTION_COUNT = "InstructionCount";
+
+    <font color=#3F5FBF>/**
+     * Breakpoint status field names.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        STATUS_INSTANCES = "Instances", // Array of Map&lt;String,Object>
+        STATUS_ERROR = "Error",         // String
+        STATUS_FILE = "File",           // String
+        STATUS_LINE = "Line",           // Number
+        STATUS_COLUMN = "Column";       // Number
+
+    <font color=#3F5FBF>/**
+     * Breakpoint instance field names.
+     */</font>
+    static final String
+        INSTANCE_ERROR = "Error",       // String
+        INSTANCE_CONTEXT = "LocationContext", // String
+        INSTANCE_ADDRESS = "Address";   // Number
+
+    <font color=#3F5FBF>/**
+     * Breakpoint service capabilities.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        CAPABILITY_CONTEXT_ID = "ID",                   // String
+        CAPABILITY_HAS_CHILDREN = "HasChildren",        // Boolean
+        CAPABILITY_LOCATION = "Location",               // Boolean
+        CAPABILITY_CONDITION = "Condition",             // Boolean
+        CAPABILITY_FILE_LINE = "FileLine",              // Boolean
+        CAPABILITY_CONTEXTIDS = "ContextIds",           // Boolean
+        CAPABILITY_STOP_GROUP = "StopGroup",            // Boolean
+        CAPABILITY_IGNORECOUNT = "IgnoreCount";         // Boolean
+
+    <font color=#3F5FBF>/**
+     * Call back interface for breakpoint service commands.
+     */</font>
+    <font color=#7F0055>interface</font> DoneCommand {
+        <font color=#3F5FBF>/**
+         * Called when command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         */</font>
+        <font color=#7F0055>void</font> doneCommand(IToken token, Exception error);
+    }
+
+    <font color=#3F5FBF>/**
+     * Download breakpoints data to target agent.
+     * The command is intended to be used only to initialize target breakpoints table
+     * when communication channel is open. After that, host should
+     * notify target about (incremental) changes in breakpoint data by sending
+     * add, change and remove commands.
+     *
+     * @param properties - array of breakpoints.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */</font>
+    IToken set(Map&lt;String,Object&gt;[] properties, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Called when breakpoint is added into breakpoints table.
+     * @param properties - breakpoint properties.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */</font>
+    IToken add(Map&lt;String,Object&gt; properties, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Called when breakpoint properties are changed.
+     * @param properties - breakpoint properties.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */</font>
+    IToken change(Map&lt;String,Object&gt; properties, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Tell target to change (only) PROP_ENABLED breakpoint property 'true'.
+     * @param ids - array of enabled breakpoint identifiers.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */</font>
+    IToken enable(String[] ids, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Tell target to change (only) PROP_ENABLED breakpoint property to 'false'.
+     * @param ids - array of disabled breakpoint identifiers.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */</font>
+    IToken disable(String[] ids, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Tell target to remove breakpoint.
+     * @param id - unique breakpoint identifier.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */</font>
+    IToken remove(String[] ids, DoneCommand done);
+
+    <font color=#3F5FBF>/**
+     * Upload IDs of breakpoints known to target agent.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */</font>
+    IToken getIDs(DoneGetIDs done);
+
+    <font color=#3F5FBF>/**
+     * Call back interface for 'getIDs' command.
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetIDs {
+        <font color=#3F5FBF>/**
+         * Called when 'getIDs' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param ids - IDs of breakpoints known to target agent.
+         */</font>
+        <font color=#7F0055>void</font> doneGetIDs(IToken token, Exception error, String[] ids);
+    }
+
+    <font color=#3F5FBF>/**
+     * Upload properties of given breakpoint from target agent breakpoint table.
+     * @param id - unique breakpoint identifier.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */</font>
+    IToken getProperties(String id, DoneGetProperties done);
+
+    <font color=#3F5FBF>/**
+     * Call back interface for 'getProperties' command.
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetProperties {
+        <font color=#3F5FBF>/**
+         * Called when 'getProperties' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param properties - properties of the breakpoint.
+         */</font>
+        <font color=#7F0055>void</font> doneGetProperties(IToken token, Exception error, Map&lt;String,Object&gt; properties);
+    }
+
+    <font color=#3F5FBF>/**
+     * Upload status of given breakpoint from target agent.
+     * @param id - unique breakpoint identifier.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */</font>
+    IToken getStatus(String id, DoneGetStatus done);
+
+    <font color=#3F5FBF>/**
+     * Call back interface for 'getStatus' command.
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetStatus {
+        <font color=#3F5FBF>/**
+         * Called when 'getStatus' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param status - status of the breakpoint.
+         */</font>
+        <font color=#7F0055>void</font> doneGetStatus(IToken token, Exception error, Map&lt;String,Object&gt; status);
+    }
+
+    <font color=#3F5FBF>/**
+     * Report breakpoint service capabilities to clients so they
+     * can adjust to different implementations of the service.
+     * When called with a null ("") context ID the global capabilities are returned,
+     * otherwise context specific capabilities are returned.  A special capability
+     * property is used to indicate that all child contexts have the same
+     * capabilities.
+     * @param id - a context ID or null.
+     * @param done - command result call back object.
+     * @return - pending command handle.
+     */</font>
+    IToken getCapabilities(String id, DoneGetCapabilities done);
+
+    <font color=#3F5FBF>/**
+     * Call back interface for 'getCapabilities' command.
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetCapabilities {
+        <font color=#3F5FBF>/**
+         * Called when 'getCapabilities' command is done.
+         * @param token - command handle.
+         * @param error - error object or null.
+         * @param capabilities - breakpoints service capabilities description.
+         */</font>
+        void</font> doneGetCapabilities(IToken token, Exception error, Map&lt;String,Object&gt; capabilities);
+    }
+
+    <font color=#3F5FBF>/**
+     * Breakpoints service events listener.
+     * Note that contextAdded, contextChanged and contextRemoved events carry exactly same set
+     * of breakpoint properties that was sent by a client to a target. The purpose of these events is to
+     * let all clients know about breakpoints that were created by other clients.
+     */</font>
+    <font color=#7F0055>interface</font> BreakpointsListener {
+
+        <font color=#3F5FBF>/**
+         * Called when breakpoint status changes.
+         * @param id - unique breakpoint identifier.
+         * @param status - breakpoint status.
+         */</font>
+        <font color=#7F0055>void</font> breakpointStatusChanged(String id, Map&lt;String,Object&gt; status);
+
+        <font color=#3F5FBF>/**
+         * Called when a new breakpoints are added.
+         * @param bps - array of breakpoints.
+         */</font>
+        <font color=#7F0055>void</font> contextAdded(Map&lt;String,Object&gt;[] bps);
+
+        <font color=#3F5FBF>/**
+         * Called when breakpoint properties change.
+         * @param bps - array of breakpoints.
+         */</font>
+        <font color=#7F0055>void</font> contextChanged(Map&lt;String,Object&gt;[] bps);
+
+        <font color=#3F5FBF>/**
+         * Called when breakpoints are removed.
+         * @param ids - array of breakpoint IDs.
+         */</font>
+        <font color=#7F0055>void</font> contextRemoved(String[] ids);
+    }
+
+    <font color=#3F5FBF>/**
+     * Add breakpoints service event listener.
+     * @param listener - object that implements BreakpointsListener interface.
+     */</font>
+    <font color=#7F0055>void</font> addListener(BreakpointsListener listener);
+
+    <font color=#3F5FBF>/**
+     * Remove breakpoints service event listener.
+     * @param listener - object that implements BreakpointsListener interface.
+     */</font>
+    <font color=#7F0055>void</font> removeListener(BreakpointsListener listener);
+}
+</pre>
+
+</body>
+</html>

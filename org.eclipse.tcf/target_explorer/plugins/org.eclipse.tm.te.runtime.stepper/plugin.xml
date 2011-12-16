@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension-point id="steppers" name="Steppers" schema="schema/steppers.exsd"/>
+   <extension-point id="steps" name="Steps" schema="schema/steps.exsd"/>
+   <extension-point id="stepGroups" name="Step Groups" schema="schema/stepGroups.exsd"/>
+
+</plugin>

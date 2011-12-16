@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Terminal connector contributions -->
+   <extension point="org.eclipse.tm.terminal.terminalConnectors">
+      <connector
+            class="org.eclipse.tm.te.ui.terminals.process.ProcessConnector"
+            hidden="true"
+            id="org.eclipse.tm.te.ui.terminals.ProcessConnector"
+            name="%TerminalConnector.process"/>
+   </extension>
+
+<!-- Terminal connector type contributions -->
+   <extension point="org.eclipse.tm.te.ui.terminals.connectorTypes">
+      <connectorType
+            class="org.eclipse.tm.te.ui.terminals.process.ProcessConnectorType"
+            id="org.eclipse.tm.te.ui.terminals.type.process"
+            label="%ProcessConnectorType.label">
+      </connectorType>
+   </extension>
+   
+</plugin>

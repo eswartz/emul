@@ -1,0 +1,257 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+        <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1251">
+        <TITLE>TCF Context Identifier Explanation</TITLE>
+        <META NAME="GENERATOR" CONTENT="OpenOffice.org 2.2  (Win32)">
+        <META NAME="CREATED" CONTENT="20070830;12134342">
+        <META NAME="CHANGEDBY" CONTENT="Eugene Tarassov">
+        <META NAME="CHANGED" CONTENT="20070830;12351368">
+        <STYLE TYPE="text/css">
+        <!--
+                H1 { color: #000000 }
+                P { color: #000000 }
+                P.western { font-size: 13pt }
+                H2 { color: #000000 }
+        -->
+        </STYLE>
+</HEAD>
+<BODY LANG="en-US" TEXT="#000000" DIR="LTR">
+<P CLASS="western" STYLE="border-top: none; border-bottom: 1.00pt solid #4f81bd; border-left: none; border-right: none; padding-top: 0in; padding-bottom: 0.06in; padding-left: 0in; padding-right: 0in">
+<FONT COLOR="#17365d"><FONT FACE="Cambria"><FONT SIZE=6 STYLE="font-size: 26pt">TCF
+Context Identifier Explanation</FONT></FONT></FONT></P>
+<P CLASS="western"><FONT COLOR="#4f81bd"><FONT FACE="Cambria"><FONT SIZE=3><I>Felix
+Burton, Wind River, Version 2</I></FONT></FONT></FONT></P>
+<H1><FONT COLOR="#365f91"><FONT FACE="Cambria"><FONT SIZE=4><B>Introduction</B></FONT></FONT></FONT></H1>
+<P CLASS="western">Most if not all TCF services functions need some
+way to identify what entity e.g. process, thread, task, semaphore,
+breakpoint, flash device, device on JTAG scan chain, etc they should
+operate on. To do this TCF uses a context identifier (aka ContextId).
+This document is attempting to explain how ContextIds are intended to
+be used. This is document does not define actual services or exact
+context hierarchies, but for the purpose of making things more
+concrete examples may be used.</P>
+<H2 LANG="en-GB" STYLE="margin-top: 0in; margin-bottom: 0.04in"><FONT COLOR="#4f81bd"><FONT FACE="Cambria"><FONT SIZE=3 STYLE="font-size: 13pt"><B>Why
+a single ContextId?</B></FONT></FONT></FONT></H2>
+<P CLASS="western">A prudent question to ask is why use a single
+ContextId instead of having separate IDs for each notion e.g. a
+ProcessId, ThreadId, BreakpointId, JTAGDeviceId, etc. Having separate
+IDs is used in many existing debug APIs and protocols and may seem
+intuitive. However, there are several issues with this approach:</P>
+<P CLASS="western">1. It is inflexible in that it requires each
+function to upfront know how many levels are needed and what type of
+context each level represent.</P>
+<P CLASS="western">2. This in turn makes it difficult to use the same
+API for different environments since they often have different types
+of IDs and has different number of levels. For example Linux have
+processes and threads while OCD have cores.</P>
+<H1 LANG="en-GB"><FONT COLOR="#365f91"><FONT FACE="Cambria"><FONT SIZE=4><B>Context
+identifier</B></FONT></FONT></FONT></H1>
+<P CLASS="western">ContextIds are opaque handles that only have
+meaning to the service that created them or its peer services. They
+are created for clients, by service implementations to identify some
+entity handled by the services. Clients can use contextIds in the
+following ways:</P>
+<P CLASS="western">1. Pass to the originating service or peer
+services</P>
+<P CLASS="western">2. Compare for equality with other contextIds
+retrieved from the originating service or peer services.</P>
+<P CLASS="western">More specifically, clients should not try to
+decode or extract information from the contextId, instead they should
+make requests to the originating service or peer services using the
+contextId for information or action.</P>
+<P CLASS="western">As can be seen from the above, contextIds created
+by one service can be used by its peer services. The service should
+either to do something useful or to give an error indicating that the
+contextId is not relevant to that particular service. To guarantee
+that a contextId created by service A and passed to service B is not
+misinterpreted to be something other that what service A intended,
+there must be a global naming scheme for contextId within a target.</P>
+<P CLASS="western">This allows two or more services to create the
+same contextId when they operate on the same entity. It means that a
+single contextId can have multiple aspects that are handled by
+different services, thereby allowing decoupling of service
+interfaces.</P>
+<H1 LANG="en-GB"><FONT COLOR="#365f91"><FONT FACE="Cambria"><FONT SIZE=4><B>Context
+hierarchies</B></FONT></FONT></FONT></H1>
+<P CLASS="western">Entities represented by contextIds typically
+relate to similar entities in a list or parent/child relationship.
+Examples, 1) Linux processes have children threads, 2) a suspended
+thread has a list of stack frames, and 3) threads have register
+groups which have registers which can have fields. These
+relationships form context hierarchies.</P>
+<P CLASS="western">Depending on the system there may be several
+different context hierarchies. For example contexts available for
+JTAG debugging include:</P>
+<P CLASS="western">1. debugging</P>
+<P CLASS="western">2. memory access</P>
+<P CLASS="western">3. register access</P>
+<P CLASS="western">4. JTAG access</P>
+<P CLASS="western">Interestingly there may also be relations between
+the different hierarchies. For example contexts available for
+debugging may correspond with contexts available for memory access. A
+typical example of this is Linux where a contextId representing a
+process can be used for debugging as well as memory access, open file
+table access, memory map access, etc. In such cases, the same
+contextId should be used in all hierarchies. This allows clients to
+detect when hierarchies come together or split apart so the client
+can represent the relationships properly to the user for example in a
+GUI.</P>
+<H1 LANG="en-GB"><FONT COLOR="#365f91"><FONT FACE="Cambria"><FONT SIZE=4><B>Accessing
+context information</B></FONT></FONT></FONT></H1>
+<P CLASS="western">Information associated with a contextId can be
+sufficiently large to make it impractical to transfer all associated
+information to the client in a single request. To reduce the amount
+of information transferred while still allowing the implementation to
+be relatively simple; the information is categorized as follows:</P>
+<P CLASS="western">1. Child context references per service</P>
+<P CLASS="western">2. Slow changing properties per service, a.k.a.
+properties</P>
+<P CLASS="western">3. Fast changing properties per service, a.k.a.
+state or status
+</P>
+<P CLASS="western">Category 1 provides a simple way to express
+unbounded lists of related contextIds. If such a list becomes too
+large the service can split the list into a list of lists, list of
+lists or lists, etc as needed.</P>
+<P CLASS="western">Category 2 and 3 provides a simple way to express
+arbitrary information about the context in the form of a key/value
+pair. Properties may also contain contextId references for example
+for the parent context.</P>
+<P CLASS="western">The split between category 2 and 3 allows the
+service to handle fast changing information in a more optimal way and
+allows it to handle slow changing information in a more simple way.
+It is up to the service to define what information is slow vs. fast
+changing.</P>
+<H1 LANG="en-GB"><FONT COLOR="#365f91"><FONT FACE="Cambria"><FONT SIZE=4><B>ContextId
+formatting</B></FONT></FONT></FONT></H1>
+<P CLASS="western">The ContextId is represented as string between
+clients and services. The formatting of the string with one exception
+is completely up to the implementation that created the contextId.
+The exception is the ContextId prefix explained below. The remainder
+of the string can be formatted in any way that the service descries.
+Two typical ways comes to mind:</P>
+<P CLASS="western">1. Hierarchical list where each level is spelled
+out. For example on Linux:</P>
+<P CLASS="western" STYLE="margin-left: 0.79in">a. A process could be
+identified by &ldquo;ppid&rdquo; and a thread by &ldquo;ppid,ttid&rdquo;</P>
+<P CLASS="western" STYLE="margin-left: 0.79in">b. A register set by
+&ldquo;ppid,ttid,rset&rdquo;</P>
+<P CLASS="western" STYLE="margin-left: 0.79in">c. A stack frame by
+&ldquo;ppid,ttid,slevel&rdquo;</P>
+<P CLASS="western" STYLE="margin-left: 0.79in">d. A local variable on
+a specific stack level by &ldquo;ppid,ttid,slevel,vname&rdquo;</P>
+<P CLASS="western">2. Flat ID that the generating service used to do
+table lookup for more information. For example</P>
+<P CLASS="western" STYLE="margin-left: 0.79in">a. Index into an array
+&ldquo;tableIndex,generationNumber&rdquo;</P>
+<P CLASS="western" STYLE="margin-left: 0.79in">b. Key used for hash
+lookup &ldquo;sequentialNumber&rdquo;</P>
+<H1 LANG="en-GB"><FONT COLOR="#365f91"><FONT FACE="Cambria"><FONT SIZE=4><B>ContextId
+prefix</B></FONT></FONT></FONT></H1>
+<P CLASS="western">When information from more than one channel is
+joined together to when value-adding services between the two
+endpoints create contextIds it must be possible to for every service
+to determine if a contextId was created by it or a foreign entity. To
+do this, each service manager is assigned a unique contextId prefix
+that all its generated contextIds should be prefixed with followed by
+the colon (:) character. For example imagine that GDB was designed to
+be a value-adding service, contextIds created on this level could be
+prefixed by &ldquo;gdb:&rdquo; to guarantee that the target would be
+able to return error if such contextId was given to it instead of to
+the services in GDB.</P>
+<P CLASS="western">The prefix used by a service manager is
+dynamically assigned by the client initiating the connection. A
+limited TCF endpoint implementation is not required to support
+contextId prefixing. However, in such case it is only be possible to
+have value-adding services if they intercept all services on the
+endpoint.</P>
+<H1 LANG="en-GB"><FONT COLOR="#365f91"><FONT FACE="Cambria"><FONT SIZE=4><B>Context
+information caching</B></FONT></FONT></FONT></H1>
+<P CLASS="western">Clients will most likely need to cache context
+information in order to keep the amount of information transferred to
+a minimum. Such caching should be based on the contextId, service
+name, and type of data i.e. children contextIds, properties or state.</P>
+<P CLASS="western">The suggested implementation is to use a two stage
+cache lookup, where the first stage is using only the contextId and
+the second stage using the service name and the type of data. The
+reason for the two stage approach is to allow easy flushing of the
+cached information when contextIds are removed.</P>
+<P CLASS="western">Services support caching in clients by sending
+events for any changes to the information. The following events are
+expected to be generated by services when needed:</P>
+<P CLASS="western">1. Children added. The event includes the parent
+contextId, service name and list of contextIds and their properties
+to be added to the cache. Clients that have not populated the cache
+for the specified parent contextId should ignore this event.</P>
+<P CLASS="western">2. Children removed. The event includes the parent
+contextId, service name and list of contextIds to be removed from the
+list. When received, clients should update cache by removing all
+listed contextIds for the specified parent contextId and service
+name.</P>
+<P CLASS="western">3. Children changed. The event includes the parent
+contextId and service name. This event does not include the updated
+list of contextIds; instead clients are expected to reread the list
+of children if they need it. When received, clients should invalidate
+the list of children contextIds for the specified parent contextId
+and service name.</P>
+<P CLASS="western">4. Properties changed. This event includes a list
+of contextId, service name and properties. When received, clients
+should update cache with the new properties.</P>
+<P CLASS="western">5. State or status changed. This event includes
+contextId, service name and state or status. When received, clients
+should update cache with the new state or status.</P>
+<P CLASS="western">Invalidating or removing entries from the list of
+children contextIds should also result in recursively invalidating
+all cache entries for the removed contextIds. This is necessary to
+avoid stale cache entries to linger when a removed contextId is
+reused for a new context.</P>
+<H1 LANG="en-GB"><FONT COLOR="#365f91"><FONT FACE="Cambria"><FONT SIZE=4><B>Relationship
+between services</B></FONT></FONT></FONT></H1>
+<P CLASS="western">Even though service interfaces should not have any
+direct dependencies, they can have context hierarchy relationships.</P>
+<P CLASS="western">A good example of such relationship is between the
+&ldquo;run control&rdquo; service and the &ldquo;memory&rdquo;
+service. It seems to make sense to specify that the run control
+hierarchy is &ldquo;rooted&rdquo; in the memory hierarchy since it is
+hard to imagine executing instructions without a memory that stores
+the instructions.</P>
+<P CLASS="western">Another example is for run control, register and
+stack trace services where it seems logical to define registers and
+stack frame hierarchies to be &ldquo;rooted&rdquo; in the run control
+hierarchy.</P>
+<P CLASS="western">By &ldquo;rooted&rdquo; we mean that roots for one
+hierarchy can be found in another hierarchy.</P>
+<P CLASS="western">Usually clients need only one particular hierarchy
+at the time, however some clients, for example in Eclipse the Debug
+View is designed to be provide selection for run control, memory
+view, locals view, registers view, etc in one place, so it needs to
+merge memory, run control and stack trace hierarchies in order to
+provide single tree for selection.</P>
+<P CLASS="western">The services interface specification should define
+the rooting of its context hierarchy, if any. As mentioned in the
+example above, run control service is rooted in the memory hierarchy,
+and register and stack trace services are rooted in the run control
+hierarchy.</P>
+<P CLASS="western">It may be possible to a service context hierarchy
+to be rooted in multiple hierarchies.</P>
+<P CLASS="western">Which context hierarchies are merged is up to the
+implementer of the client.</P>
+<H1 LANG="en-GB"><FONT COLOR="#365f91"><FONT FACE="Cambria"><FONT SIZE=4><B>Context
+hierarchy roots</B></FONT></FONT></FONT></H1>
+<P CLASS="western">For some services it is possible to use &ldquo;null&rdquo;
+as a special parent contextId to the &ldquo;get children&rdquo;
+command to retrieve a list of root contextIds. The service interface
+definition should specify if retrieval of roots is supported by the
+service.</P>
+<P CLASS="western">Example services that would support the &ldquo;null&rdquo;
+parent contextId are JTAG access and kernel awareness services since
+this is global information in the target.</P>
+<P CLASS="western">Example services that would not support the &ldquo;null&rdquo;
+parent contextId are register and stack trace services since parent
+contextId for registers and stack frames is usual obtained through
+run control service.</P>
+<P CLASS="western"><BR><BR>
+</P>
+</BODY>
+</HTML>

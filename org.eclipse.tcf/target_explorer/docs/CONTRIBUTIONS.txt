@@ -1,0 +1,29 @@
+Target Explorer (Eclipse.org) Contributions
+===========================================
+
+1. Update the copyright header of modified source files and submit new files only with a valid copyright header.
+
+2. Format the contributions source files using the "Target Explorer Java STD" formatter profile. The formatter
+   profile can be imported from org.eclipse.tm.te.docs/team/CodeFormatterSettings.xml.
+
+3. Keep the javadoc comments up-to-date.
+	a) At minimum, classes, interfaces and all their public and protected members must be fully documented.
+	b) If modifying the signature of a method, or if the implementation changes to what has been documented,
+	   update the javadoc comment to reflect the current signature and/or implementation.
+
+4. Strict UI / core separation is a "must have".
+	a) The Target Explorer must be usable in headless environments.
+	b) SWT/JFace dependencies are seen as UI dependencies and are not welcome in core plug-in's.
+
+5. "org.eclipse.core.resources" is a discouraged dependency.
+	a) The Target Explorer must be usable in workspace less RCP environments (-data @none).
+	b) Contributions must be written in a way to not depend on the existence of a
+	   workspace.
+	c) Contributions depending either mandatory or optionally on "org.eclipse.core.resources"
+	   should come as separate plug-in's.
+
+6. Avoid sub component cross dependencies
+	a) The Target Explorer must stay highly modular.
+	b) Product builder shall be able to pick only what they really need.
+	c) If unavoidable, weak dependencies like adapters and extension points are
+	   preferred over hard dependencies.

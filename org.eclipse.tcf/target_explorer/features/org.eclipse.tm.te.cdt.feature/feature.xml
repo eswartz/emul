@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.eclipse.tm.te.cdt.feature"
+      label="%featureName"
+      version="1.0.0.qualifier"
+      provider-name="%featureProvider">
+
+   <description>
+      %description
+   </description>
+
+   <copyright>
+      %copyright
+   </copyright>
+
+   <license url="%licenseURL">
+      %license
+   </license>
+
+   <requires>
+      <import plugin="org.eclipse.core.runtime" version="3.7.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ui" version="3.7.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.tm.terminal" version="3.1.1" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.cdt.core" version="5.3.1" match="greaterOrEqual"/>
+      <import feature="org.eclipse.tm.tcf.feature" version="0.5.0" match="greaterOrEqual"/>
+   </requires>
+
+   <plugin
+         id="org.eclipse.tm.te.ui.terminals.process"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>

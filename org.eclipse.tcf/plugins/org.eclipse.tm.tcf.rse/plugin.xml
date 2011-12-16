@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?><!--
+    Copyright (c) 2010 Wind River Systems, Inc. and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License v1.0
+    which accompanies this distribution, and is available at
+    http://www.eclipse.org/legal/epl-v10.html
+
+    Contributors:
+        Wind River Systems      - initial API and implementation
+        Liping Ke (Intel Corp.) - Add terminal/shell services
+ -->
+
+<plugin>
+   <extension
+         point="org.eclipse.rse.core.systemTypes">
+      <systemType
+            description="Connects using Target Communication Framework"
+            icon="icons/tcf.gif"
+            iconLive="icons/tcf.gif"
+            id="org.eclipse.tm.tcf.rse.systemType"
+            label="TCF"
+            name="TCF">
+      </systemType>
+   </extension>
+   <extension
+         point="org.eclipse.rse.core.subsystemConfigurations">
+      <configuration
+            category="processes"
+            class="org.eclipse.tm.internal.tcf.rse.processes.TCFProcessSubSystemConfiguration"
+            description="Processes"
+            icon="icons/system-processes.gif"
+            iconlive="icons/system-processes-live.gif"
+            id="org.eclipse.tm.tcf.rse.Processes"
+            name="Processes"
+            priority="200"
+            systemTypeIds="org.eclipse.tm.tcf.rse.systemType"
+            vendor="Wind River">
+      </configuration>
+      </extension>
+	<extension
+		point="org.eclipse.rse.core.subsystemConfigurations">
+		<configuration
+        category="shells"
+        class="org.eclipse.tm.internal.tcf.rse.shells.TCFShellSubSystemConfiguration"
+        description="Shells"
+        icon="icons/systemshell.gif"
+        iconlive="icons/systemshelllive.gif"
+        id="org.eclipse.tm.tcf.rse.Shells"
+        name="Shells"
+        priority="200"
+        systemTypeIds="org.eclipse.tm.tcf.rse.systemType"
+        vendor="Eclipse.org">
+		</configuration>
+	</extension>
+   <extension
+         point="org.eclipse.rse.core.subsystemConfigurations">
+      <configuration
+            category="files"
+            class="org.eclipse.tm.internal.tcf.rse.files.TCFFileSubSystemConfiguration"
+            description="Files"
+            icon="icons/system-files.gif"
+            iconlive="icons/system-files-live.gif"
+            id="org.eclipse.tm.tcf.rse.Files"
+            name="Files"
+            priority="200"
+            systemTypeIds="org.eclipse.tm.tcf.rse.systemType"
+            vendor="Wind River">
+      </configuration>
+   </extension>
+    <extension
+        point="org.eclipse.rse.core.subsystemConfigurations">
+        <configuration
+        category="terminals"
+        class="org.eclipse.tm.internal.tcf.rse.terminals.TCFTerminalServiceSubSystemConfiguration"
+        description="TCF Terminal Service Description"
+        id="org.eclipse.tm.tcf.rse.Terminals"
+        name="Terminals"
+        priority="200"
+        systemTypeIds="org.eclipse.tm.tcf.rse.systemType"
+        vendor="Eclipse.org">
+        </configuration>
+    </extension>
+   <extension point="org.eclipse.core.runtime.adapters">
+      <factory
+            class="org.eclipse.tm.internal.tcf.rse.processes.TCFSystemViewProcessAdapterFactory"
+            adaptableType="org.eclipse.tm.internal.tcf.rse.processes.TCFRemoteProcess">
+            <adapter type="org.eclipse.rse.ui.view.ISystemViewElementAdapter"/>
+            <adapter type="org.eclipse.rse.core.subsystems.ISystemDragDropAdapter"/>
+            <adapter type="org.eclipse.rse.ui.view.ISystemRemoteElementAdapter"/>
+            <adapter type="org.eclipse.ui.views.properties.IPropertySource"/>
+            <adapter type="org.eclipse.ui.model.IWorkbenchAdapter"/>
+            <adapter type="org.eclipse.ui.IActionFilter"/>
+            <adapter type="org.eclipse.ui.progress.IDeferredWorkbenchAdapter"/>
+            <adapter type="org.eclipse.rse.core.subsystems.IRemoteObjectIdentifier"/>
+      </factory>
+   </extension>
+</plugin>

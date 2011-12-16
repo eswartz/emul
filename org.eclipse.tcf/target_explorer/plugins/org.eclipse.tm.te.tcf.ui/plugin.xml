@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Common navigator contributions -->
+   <extension point="org.eclipse.ui.navigator.viewer">
+      <viewerContentBinding viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
+         <includes>
+            <contentExtension
+                  isRoot="true"
+                  pattern="org.eclipse.tm.te.tcf.ui.navigator.*"/>
+         </includes>
+      </viewerContentBinding>
+   </extension>
+   
+   <extension point="org.eclipse.ui.navigator.navigatorContent">
+      <navigatorContent
+            activeByDefault="true"
+            contentProvider="org.eclipse.tm.te.tcf.ui.internal.navigator.ContentProviderDelegate"
+            icon="icons/obj16/rootNode_obj.gif"
+            id="org.eclipse.tm.te.tcf.ui.navigator.content"
+            labelProvider="org.eclipse.tm.te.tcf.ui.internal.navigator.LabelProvider"
+            name="Dynamic Target Discovery (TCF)"
+            priority="normal">
+            <enablement>
+               <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+            </enablement>
+            <commonSorter
+                  class="org.eclipse.tm.te.ui.trees.TreeViewerSorter"
+                  id="org.eclipse.tm.te.tcf.ui.navigator.sorter"/>
+            <commonWizard
+                  type="new"
+                  wizardId="org.eclipse.tm.te.tcf.ui.wizards.NewTargetWizard">
+               <enablement>
+                  <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+               </enablement>
+            </commonWizard>
+      </navigatorContent>
+      <commonFilter
+            activeByDefault="false"
+            class="org.eclipse.tm.te.tcf.ui.internal.filter.UnreachablePeersFilter"
+            id="org.eclipse.tm.te.tcf.ui.navigator.UnreachablePeersFilter"
+            name="%UnreachablePeersFilter.name"
+            visibleInUI="true">
+      </commonFilter>
+   </extension>
+
+<!-- New target wizard contributions -->
+
+   <extension point="org.eclipse.tm.te.ui.newWizards">
+      <category
+            id="org.eclipse.tm.te.tcf.ui.newWizards.category"
+            name="%NewWizards.category.name">
+      </category>
+      <wizard
+            category="org.eclipse.tm.te.tcf.ui.newWizards.category"
+            class="org.eclipse.tm.te.tcf.ui.wizards.NewTargetWizard"
+            icon="icons/elcl16/newTarget_wiz.gif"
+            id="org.eclipse.tm.te.tcf.ui.wizards.NewTargetWizard"
+            name="%NewTargetWizard.name">
+            <description>
+               %NewTargetWizard.description
+            </description>
+      </wizard>
+   </extension>
+   
+<!-- Target Explorer Details Editor page contributions -->
+   <extension point="org.eclipse.tm.te.ui.views.editorPages">
+      <editorPage
+            class="org.eclipse.tm.te.tcf.ui.internal.editor.pages.NodePropertiesEditorPage"
+            name="%NodePropertiesEditorPage.name"
+            id="org.eclipse.tm.te.tcf.ui.NodePropertiesEditorPage">
+      </editorPage>
+   </extension>
+
+<!-- Target Explorer Details Editor page binding contributions -->
+   <extension point="org.eclipse.tm.te.ui.views.editorPageBindings">
+      <editorPageBinding
+            id="org.eclipse.tm.te.tcf.ui.binding.NodePropertiesEditorPage"
+            pageId="org.eclipse.tm.te.tcf.ui.NodePropertiesEditorPage"
+            insertBefore="first">
+         <enablement>
+            <with variable="activeEditorInput">
+               <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+            </with>
+         </enablement>
+      </editorPageBinding>
+   </extension>
+
+<!-- Target Explorer menu contributions -->
+   <extension point="org.eclipse.ui.menus">
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.refresh">
+         <command
+               commandId="org.eclipse.tm.te.tcf.ui.command.refresh"
+               disabledIcon="platform:/plugin/org.eclipse.ui/icons/full/dlcl16/refresh_nav.gif"
+               helpContextId="org.eclipse.tm.te.tcf.ui.command_Refresh"
+               icon="platform:/plugin/org.eclipse.ui/icons/full/elcl16/refresh_nav.gif"
+               id="org.eclipse.tm.te.tcf.ui.commands.refresh"
+               label="%command.refresh.label"
+               style="push"
+               tooltip="%command.refresh.tooltip">
+            <visibleWhen checkEnabled="false">
+               <with variable="selection">
+                  <count value="+"/>
+                  <iterate operator="and" ifEmpty="false">
+                     <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+         <separator name="operationsGroupMarker" visible="true"/>
+      </menuContribution>
+
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.delete">
+         <command
+               commandId="org.eclipse.ui.edit.delete"
+               disabledIcon="platform:/plugin/org.eclipse.ui/icons/full/dtool16/delete.gif"
+               helpContextId="org.eclipse.tm.te.tcf.ui.command_Delete"
+               icon="platform:/plugin/org.eclipse.ui/icons/full/etool16/delete.gif"
+               id="org.eclipse.tm.te.tcf.ui.commands.delete"
+               label="%command.delete.label"
+               style="push"
+               tooltip="%command.delete.tooltip">
+            <visibleWhen checkEnabled="false">
+               <with variable="selection">
+                  <count value="+"/>
+                  <iterate operator="and" ifEmpty="false">
+                     <and>
+                        <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+                        <test property="org.eclipse.tm.te.tcf.locator.isStaticPeer" value="true"/>
+                     </and>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+   </extension>
+
+<!-- Target Explorer command contributions -->
+   <extension point="org.eclipse.ui.commands">
+      <category
+            id="org.eclipse.tm.te.tcf.ui.commands.category"
+            name="%command.category.name">
+      </category>
+      <command
+            categoryId="org.eclipse.tm.te.tcf.ui.commands.category"
+            helpContextId="org.eclipse.tm.te.tcf.ui.command_Refresh"
+            id="org.eclipse.tm.te.tcf.ui.command.refresh"
+            name="%command.refresh.name">
+      </command>
+   </extension>
+
+<!-- Target Explorer handler contributions -->
+   <extension point="org.eclipse.ui.handlers">
+      <handler
+            class="org.eclipse.tm.te.tcf.ui.internal.handler.RefreshCommandHandler"
+            commandId="org.eclipse.tm.te.tcf.ui.command.refresh">
+            <activeWhen>
+               <reference definitionId="te.expressions.tcf.peerModel.handlerActivation"/>
+            </activeWhen>
+      </handler>
+      
+      <handler
+            class="org.eclipse.tm.te.tcf.ui.internal.handler.DeleteCommandHandler"
+            commandId="org.eclipse.ui.edit.delete">
+            <activeWhen>
+               <reference definitionId="te.expressions.tcf.peerModel.handlerActivation"/>
+            </activeWhen>
+      </handler>
+   </extension>
+
+<!-- Reusable core expression fragments -->   
+   <extension point="org.eclipse.core.expressions.definitions">
+   
+      <!-- Expression to test if the active part is the Target Explorer and
+           the selection contains only elements of type IPeerModel.
+           
+           This expression is for use in the handlers activeWhen markup.  
+      -->
+      <definition id="te.expressions.tcf.peerModel.handlerActivation">
+         <and>
+            <with variable="activePartId">
+               <equals value="org.eclipse.tm.te.ui.views.TargetExplorer"/>
+            </with>
+            <with variable="selection">
+               <count value="+"/>
+               <iterate operator="and" ifEmpty="false">
+                  <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+               </iterate>
+            </with>
+         </and>
+      </definition>
+   </extension>
+</plugin>

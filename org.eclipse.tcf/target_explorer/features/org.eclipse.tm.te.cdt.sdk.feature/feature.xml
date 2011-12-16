@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="org.eclipse.tm.te.cdt.sdk.feature"
+      label="%featureName"
+      version="1.0.0.qualifier"
+      provider-name="%featureProvider">
+
+   <description>
+      %description
+   </description>
+
+   <copyright>
+      %copyright
+   </copyright>
+
+   <license url="%licenseURL">
+      %license
+   </license>
+
+   <requires>
+      <import feature="org.eclipse.tm.te.sdk.feature" version="1.0.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.tm.te.cdt.feature" version="1.0.0" match="greaterOrEqual"/>
+   </requires>
+
+   <plugin
+         id="org.eclipse.tm.te.ui.terminals.process.source"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>

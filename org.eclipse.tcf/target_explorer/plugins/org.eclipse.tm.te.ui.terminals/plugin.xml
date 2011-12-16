@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Extension points -->
+   <extension-point id="connectorTypes" name="Terminal Connector Types" schema="schema/connectorTypes.exsd"/>
+   <extension-point id="launcherDelegates" name="Terminal Launcher Delegates" schema="schema/launcherDelegates.exsd"/>
+
+<!-- View contributions -->
+   <extension point="org.eclipse.ui.views">
+      <view
+            category="org.eclipse.tm.te.ui.views.category"
+            class="org.eclipse.tm.te.ui.terminals.view.TerminalsView"
+            icon="platform:/plugin/org.eclipse.ui.console/icons/full/eview16/console_view.gif"
+            id="org.eclipse.tm.te.ui.terminals.TerminalsView"
+            name="%TerminalsView.name">
+      </view>
+    </extension>
+    
+<!-- Perspective extension contributions -->    
+   <extension point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension targetID="*">
+         <view
+               id="org.eclipse.tm.te.ui.terminals.TerminalsView"
+               minimized="false"
+               relationship="stack"
+               relative="org.eclipse.ui.views.TaskList"
+               visible="false">
+         </view>
+      </perspectiveExtension>
+      
+      <perspectiveExtension targetID="org.eclipse.tm.te.ui.perspective">
+		 <!-- Register the view shortcuts  -->
+         <viewShortcut id="org.eclipse.tm.te.ui.terminals.TerminalsView"/>
+      </perspectiveExtension>
+   </extension>
+
+<!-- Terminal connector contributions -->
+   <extension point="org.eclipse.tm.terminal.terminalConnectors">
+      <connector 
+                 name="%TerminalConnector.streams"
+                 id="org.eclipse.tm.te.ui.terminals.StreamsConnector"
+                 hidden="true"
+                 class="org.eclipse.tm.te.ui.terminals.streams.StreamsConnector"/>
+   </extension>
+   
+<!-- Preferences contributions -->
+   <extension point="org.eclipse.core.runtime.preferences">
+      <initializer class="org.eclipse.tm.te.ui.terminals.internal.PreferenceInitializer"/>
+   </extension>
+
+<!-- Eclipse core expressions property tester -->
+   <extension point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="org.eclipse.tm.te.ui.terminals.internal.PropertyTester"
+            id="org.eclipse.tm.te.ui.terminals.PropertyTester"
+            namespace="org.eclipse.tm.te.ui.terminals"
+            properties="hasApplicableLauncherDelegates"
+            type="java.lang.Object">
+      </propertyTester>
+   </extension>
+
+<!-- Service contributions -->
+   <extension point="org.eclipse.tm.te.runtime.services.services">
+      <genericServices>
+         <service class="org.eclipse.tm.te.ui.terminals.services.TerminalService">
+            <serviceType class="org.eclipse.tm.te.runtime.services.interfaces.ITerminalService"/>
+         </service>
+      </genericServices>
+   </extension>
+   
+<!-- Terminal connector type contributions -->
+   <extension point="org.eclipse.tm.te.ui.terminals.connectorTypes">
+      <connectorType
+            class="org.eclipse.tm.te.ui.terminals.types.TelnetConnectorType"
+            id="org.eclipse.tm.te.ui.terminals.type.telnet"
+            label="%TelnetConnectorType.label">
+      </connectorType>
+
+      <connectorType
+            class="org.eclipse.tm.te.ui.terminals.types.StreamsConnectorType"
+            id="org.eclipse.tm.te.ui.terminals.type.streams"
+            label="%StreamsConnectorType.label">
+      </connectorType>
+   </extension>
+
+<!-- Menu contributions -->
+   <extension point="org.eclipse.ui.menus">
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.launch">
+         <command
+               commandId="org.eclipse.tm.te.ui.terminals.command.launch"
+               helpContextId="org.eclipse.tm.te.ui.terminals.command_Launch"
+               icon="platform:/plugin/org.eclipse.ui.console/icons/full/eview16/console_view.gif"
+               id="org.eclipse.tm.te.ui.terminals.commands.launch"
+               label="%command.launch.label"
+               style="push"
+               tooltip="%command.launch.tooltip">
+               <visibleWhen checkEnabled="false">
+                  <with variable="selection">
+                     <test property="org.eclipse.tm.te.ui.terminals.hasApplicableLauncherDelegates" value="true"/>
+                  </with>
+               </visibleWhen>
+         </command>
+      </menuContribution>
+   </extension>
+
+<!-- Command contributions -->
+   <extension point="org.eclipse.ui.commands">
+      <command
+            categoryId="org.eclipse.tm.te.ui.commands.category"
+            helpContextId="org.eclipse.tm.te.ui.terminals.command_Launch"
+            id="org.eclipse.tm.te.ui.terminals.command.launch"
+            name="%command.launch.name">
+      </command>
+   </extension>
+
+<!-- Handler contributions -->
+   <extension point="org.eclipse.ui.handlers">
+      <handler
+            class="org.eclipse.tm.te.ui.terminals.internal.handler.LaunchTerminalCommandHandler"
+            commandId="org.eclipse.tm.te.ui.terminals.command.launch">
+      </handler>
+   </extension>
+
+</plugin>

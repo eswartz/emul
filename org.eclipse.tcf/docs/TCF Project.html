@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd">
+<HTML lang=en-us>
+<HEAD>
+<TITLE>Target Communication Framework</TITLE>
+</HEAD>
+
+<BODY>
+
+<H1>Target Communication Framework project</H1>
+
+<P>
+<H2><A name='Index'></A>Index</H2>
+
+<UL>
+  <LI><A href="#Summary">Summary</A>
+  <LI><A href="#Goals">Goals</A>
+  <LI><A href="#Features">Features</A>
+  <LI><A href="#Agent">Reference implementation of a target agent</A>
+  <LI><A href="#Debugger">Prototype of a debugger based on Eclipse Debug Framework and TCF</A>
+  <LI><A href="#RSE">Prototype of a system monitor and remote file access based on Remote System Explorer and TCF</A>
+</UL>
+
+<P>
+<H2><A name='Summary'></A>Summary </H2>
+
+<P>Today almost every device software development tool on the market has its own
+method of communication with target system. Communication methods often conflict
+with each other, require individual setup, configuration and maintenance, impose
+all kinds of unnecessary limitations. Target Communication Framework is designed
+to establish common ground in the area of communication protocols between
+development tools and embedded devices.
+
+<P>
+<H2><A name='Goals'></A>Goals </H2>
+<P>
+<UL>
+  <LI>Universal, extensible, simple, lightweight, vendor agnostic framework for
+  tools and targets to communicate for purpose of debugging, profiling, code
+  patching and other device software development needs.
+  <LI>Single configuration per target (not per tool per target as today in most
+  cases), or no configuration when possible.
+  <LI>Small overhead and footprint on target side. </LI></UL>
+<P>
+
+<H2><A name='Features'></A>Features </H2>
+<P><A href="TCF Specification.html">Target Communication Framework Specification</A> is a document
+describing design goals, requirements and format of TCF communication protocol,
+as well as framework API and software design considerations.
+<P>TCF communication model is based on the idea of services. A service is a group
+of related commands, events and semantics. A service can be discovered,
+added or removed as a group at communication endpoint. Service definitions are
+not part of the framework specification, and new services are expected to be
+defined by developers of tools and target agents. However, standardization of
+common services is needed to achieve certain level of compatibility of
+tools/targets, see <A href="TCF Services.html">TCF Services Specification</A>
+as starting point of this work.
+
+<H2><A name='Agent'></A>Reference implementation of a target agent</H2>
+
+<P>Current reference implementation of TCF target agents is fully functional,
+can run on Windows, Linux and VxWorks.  On Linux it is implemented
+using PTRACE, on VxWorks is uses vxdbgLib, on Windows it uses Debug API and dbghelp.dll.
+The agent provides the following services:
+<UL>
+    <LI>Run Control - provides threads and processes run control functionality.
+
+    <LI>Breakpoints - provides debugger breakpoints support.
+
+    <LI>Registers - allows inspection and modification of CPU registers.
+
+    <LI>Stack Trace - thread stack back-tracing.
+
+    <LI>Memory - program memory access.
+
+        <LI>Expressions - expression evaluation on remote target.
+
+        <LI>Memory Map - information about executable modules (files) mapped (loaded) into target memory.
+
+        <LI>Path Map - manages file path translation across systems.
+
+        <LI>Symbols - debugger symbols information.
+
+    <LI>Processes - provides access to the target OS's process
+    information, allows starting new and terminating existing processes,
+    and allows attaching and detaching processes for debugging.
+
+    <LI>Line Numbers - provides mapping between locations in the source files
+    and corresponding machine instruction addresses in the executable object.
+    Implemented for Linux and Windows, not supported on VxWorks.
+
+    <LI>Sys Monitor - provides list of processes, process attributes and
+    CPU/memory utilization data. On Linux it is implemented using /proc file
+    system, on Windows and VxWorks it is not currently supported.
+
+    <LI>File System - provides access to remote file system.
+
+    <LI>Streams - a generic service to support streaming of data between host and target.
+
+    <LI>Diagnostics - allows testing of communication channel and agent
+    functionality.
+</UL>
+
+<P>The agent code is designed to be easily extensible by adding new command
+handler implementations. The code separates machine dependences, common TCF
+logic and service implementations, which allows easy porting to a new OS or a
+target and reconfiguring of the agent for specific needs. The code is written in
+ANSI C. See <A href="TCF Linux Agent Prototype.html">TCF Linux Agent Prototype</A>
+for more details about the agent code.
+
+<H2><A name='Debugger'></A>Prototype of a debugger based on Eclipse Debug Framework and TCF</H2>
+
+<P>The prototype code connects Eclipse Debug Framework and Target Communication
+Framework. It allows to launch Eclipse debug session by connecting to a target
+running TCF agent, and then perform basic debugging tasks, like resuming,
+suspending, single-stepping, setting/removing breakpoints, etc.
+<P>The prototype launch configuration autodetects TCF targets on a local network
+and allows a user to connect to a target by simply selecting it from a list
+without a need for any further configuration or setup. TCF launch configuration
+dialog also offers controls to run a built-in diagnostics on a selecting target,
+which perform stress testing of communication channel, agent and target itself:
+<P><IMG alt="TCF launch configuration dialog" src="TCF_Launch_Dialog.jpg">
+
+<P>The prototype makes use of flexible debug model element hierarchy support,
+which is available in Eclipse debug framework since Eclipse 3.2. The flexible
+hierarchy allows debugger views to be "data driven" or, in other words, dynamically
+adapt to a given targets capabilities and structure, without a need to modify
+debugger code to support a new target.
+
+<H2><A name='RSE'></A>Prototype of a system monitor and remote file access based on Remote System Explorer and TCF</H2>
+
+<P>Remote System Explorer is an Eclipse based component that allows users to
+create connections to remote machines and explore their file systems, see list
+of processes and access some other resources, like remote shells. Remote System
+Explorer has been designed as a flexible, extensible framework to which Eclipse
+plug-in developers can contribute their own system definitions, actions, etc.
+<P>The prototype enables use of Processes and Files subsystems of Remote System
+Explorer over TCF. It also extends Processes subsystem to include CPU
+utilization data and some other process attributes in RSE views:
+<P><IMG alt="Remote System Explorer: Files subsystem over TCF" src="TCF_RSE_Files.jpg">
+<P><IMG alt="Remote System Explorer: Processes subsystem over TCF" src="TCF_RSE_Processes.jpg">
+
+</BODY>
+</HTML>

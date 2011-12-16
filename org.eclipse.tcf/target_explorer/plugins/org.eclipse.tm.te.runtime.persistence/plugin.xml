@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Extension points -->
+   <extension-point id="delegates" name="%ExtensionPoint.delegates.name" schema="schema/delegates.exsd"/>
+   
+<!-- Persistence delegate contributions -->
+   <extension point="org.eclipse.tm.te.runtime.persistence.delegates">
+      <delegate
+            class="org.eclipse.tm.te.runtime.persistence.properties.PropertiesFilePersistenceDelegate"
+            id="org.eclipse.tm.te.runtime.persistence.properties"
+            label="%PropertiesFilePersistenceDelegate.label">
+      </delegate>
+   </extension>
+
+<!-- Service contributions -->
+   <extension point="org.eclipse.tm.te.runtime.services.services">
+      <genericServices>
+         <service class="org.eclipse.tm.te.runtime.persistence.services.PersistenceService">
+            <serviceType class="org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceService"/>
+         </service>
+      </genericServices>
+   </extension>
+
+</plugin>

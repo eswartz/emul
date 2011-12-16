@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?><!--
+    Copyright (c) 2010 Wind River Systems, Inc. and others.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License v1.0
+    which accompanies this distribution, and is available at
+    http://www.eclipse.org/legal/epl-v10.html
+
+    Contributors:
+        Wind River Systems - initial API and implementation
+ -->
+
+<plugin>
+
+   <extension
+         point="org.eclipse.debug.core.breakpoints">
+      <breakpoint
+            markerType="org.eclipse.tm.tcf.debug.breakpoint.marker"
+            class="org.eclipse.tm.internal.tcf.debug.model.TCFBreakpoint"
+            id="org.eclipse.tm.tcf.debug.breakpoint"
+            name="TCF Breakpoint">
+      </breakpoint>
+   </extension>
+
+   <extension
+         id="org.eclipse.tm.tcf.debug.breakpoint.marker"
+         point="org.eclipse.core.resources.markers">
+      <super type="org.eclipse.debug.core.breakpointMarker"/>
+      <persistent value="true"/>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            sourceLocatorId="org.eclipse.tm.tcf.debug.SourceLocator"
+            name="Target Communication Framework"
+            sourcePathComputerId="org.eclipse.tm.tcf.debug.SourcePathComputer"
+            delegate="org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate"
+            modes="run, debug"
+            id="org.eclipse.tm.tcf.debug.LaunchConfigurationType">
+      </launchConfigurationType>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.core.sourceLocators">
+      <sourceLocator
+            name="TCF Source Lookup Director"
+            class="org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupDirector"
+            id="org.eclipse.tm.tcf.debug.SourceLocator">
+      </sourceLocator>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.core.sourcePathComputers">
+      <sourcePathComputer
+            class="org.eclipse.tm.internal.tcf.debug.launch.TCFSourcePathComputerDelegate"
+            id="org.eclipse.tm.tcf.debug.SourcePathComputer">
+      </sourcePathComputer>
+   </extension>
+</plugin>

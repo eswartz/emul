@@ -1,0 +1,543 @@
+#!/bin/bash
+
+cd `dirname $0` || exit 1
+cd ../.. || exit 1
+
+REPOS=`pwd`
+
+cd .. || exit 1
+
+BUILD=`pwd`
+
+if [ -z "$VBOXUSER" ]
+then
+  echo "VBOXUSER is not defined"
+  exit 1
+fi
+
+if [ -z "$DISPLAY" ]
+then
+  echo "DISPLAY is not defined"
+  exit 1
+fi
+
+VBOXHOST=192.168.155.1
+
+rm -rf java-bin || exit 1
+mkdir java-bin || exit 1
+SRCPATH=$REPOS/org.eclipse.tcf/plugins/org.eclipse.tm.tcf
+DSTPATH=$BUILD/java-bin
+javac -g -nowarn \
+  -sourcepath $SRCPATH.core/src:$SRCPATH.debug/src \
+  -d $DSTPATH \
+  "$SRCPATH.debug/src/org/eclipse/tm/internal/tcf/debug/tests/Main.java" \
+  || exit 1
+
+pushd "$SRCPATH.core/src/org/eclipse/tm/internal/tcf/services/remote" >/dev/null || exit 1
+for FILE in `ls *.java`
+do
+  javac -g -nowarn \
+    -classpath $DSTPATH \
+    -sourcepath "$SRCPATH.core/src" \
+    -d $DSTPATH \
+    "$SRCPATH.core/src/org/eclipse/tm/internal/tcf/services/remote/$FILE" \
+    || exit 1
+done
+popd >/dev/null
+
+if ps ax | grep -q VirtualBox
+then
+  true
+else
+  VirtualBox &
+fi
+
+rm -rf logs || exit 1
+mkdir logs || exit 1
+
+VMS_ALL=`VBoxManage --nologo list vms | sed -e "s/.*{\\(.*\\)}/\\1/"`
+
+HTML=logs/index.html
+echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">" >$HTML
+echo "<html>" >>$HTML
+echo "<head><title>TCF Nightly Build Status</title></head>" >>$HTML
+echo "<body>" >>$HTML
+echo "<h1>TCF Nightly Build Status</h1>" >>$HTML
+
+echo "<p>Host: `hostname`</p>" >>$HTML
+echo "<p>Date: `date`</p>" >>$HTML
+echo "<p>VirtualBox version: `VBoxManage --version`</p>" >>$HTML
+
+echo "<table border=1 cellpadding=8>" >>$HTML
+echo "<tr>" >>$HTML
+echo "<th>" >>$HTML
+echo "IP Addr" >>$HTML
+echo "<th>" >>$HTML
+echo "Name" >>$HTML
+echo "<th>" >>$HTML
+echo "Start" >>$HTML
+echo "<th>" >>$HTML
+echo "Ping" >>$HTML
+echo "<th>" >>$HTML
+echo "OS" >>$HTML
+echo "<th>" >>$HTML
+echo "CPU" >>$HTML
+echo "<th>" >>$HTML
+echo "Build<br>Debug<br>C" >>$HTML
+echo "<th>" >>$HTML
+echo "Build<br>Debug<br>C++" >>$HTML
+echo "<th>" >>$HTML
+echo "Build<br>Release<br>C" >>$HTML
+echo "<th>" >>$HTML
+echo "Build<br>Release<br>C++" >>$HTML
+echo "<th>" >>$HTML
+echo "Build<br>RPM" >>$HTML
+echo "<th>" >>$HTML
+echo "Stop" >>$HTML
+
+function start_vm()
+{
+  local LOGFILE=$HOST-Start.txt
+  echo "<td>" >>$HTML
+  echo "<a href=\"$LOGFILE\">" >>$HTML
+  echo Starting $VM >logs/$LOGFILE
+  if VBoxManage --nologo list runningvms | sed -e "s/.*{\\(.*\\)}/\\1/" | grep -q $VM >>logs/$LOGFILE 2>&1 ; then
+    echo $VM is already running >>logs/$LOGFILE
+    echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+  elif VBoxManage --nologo startvm $VM >>logs/$LOGFILE 2>&1 ; then
+    echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+  else
+    echo "<img src=\"../icons/cross.png\" title=\"Error\"/>" >>$HTML
+    SKIP=1
+  fi
+  echo "</a>" >>$HTML
+}
+
+function ping_vm()
+{
+  local LOGFILE=$HOST-Ping.txt
+  echo "<td>" >>$HTML
+  echo "<a href=\"$LOGFILE\">" >>$HTML
+  echo Ping $VM >logs/$LOGFILE
+  sleep 4
+  if ping -c 30 $HOST >>logs/$LOGFILE 2>&1 || \
+     ping -c 30 $HOST >>logs/$LOGFILE 2>&1
+  then
+    echo >>logs/$LOGFILE
+    if $SSH "ping $PING_FLAG 30 $VBOXHOST" >>logs/$LOGFILE 2>&1 || \
+       $SSH "ping $PING_FLAG 30 $VBOXHOST" >>logs/$LOGFILE 2>&1
+    then
+      if [ "$SET_CLOCK" = 2 ] ; then
+        DATE=`date +%m%d%H%M.%S`
+        $SSH "/bin/date $DATE" >>logs/$LOGFILE 2>&1
+      elif [ ! -z "$SET_CLOCK" ] ; then
+        DATE=`date +%m%d%H%M.%S`
+        $SSH -tt "sudo /bin/date $DATE" >>logs/$LOGFILE 2>&1
+      fi
+      if $SSH "cd $AGENT" >>logs/$LOGFILE 2>&1 ; then
+        echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+      else
+        echo "<img src=\"../icons/cross.png\" title=\"SSH cd failed\"/>" >>$HTML
+        SKIP=1
+      fi
+    else
+      echo "<img src=\"../icons/cross.png\" title=\"SSH ping failed\"/>" >>$HTML
+      SKIP=1
+    fi
+  else
+    echo "<img src=\"../icons/cross.png\" title=\"Ping failed\"/>" >>$HTML
+    SKIP=1
+  fi
+  echo "</a>" >>$HTML
+}
+
+function stop_vm()
+{
+  echo "<td>" >>$HTML
+  echo "<a href=\"$HOST-Stop.txt\">" >>$HTML
+  echo "Stop $VM" >logs/$HOST-Stop.txt
+  if [ -z "$STOP_VM" ] ; then
+    echo "VM does not need to be stopped" >>logs/$HOST-Stop.txt
+    echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+  elif VBoxManage --nologo list runningvms | sed -e "s/.*{\\(.*\\)}/\\1/" | grep -q $VM ; then
+    if VBoxManage --nologo controlvm $VM savestate >>logs/$HOST-Stop.txt 2>&1 ; then
+      echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+    else
+      echo "<img src=\"../icons/cross.png\" title=\"Failed\"/>" >>$HTML
+    fi
+  else
+    echo $VM is already stopped >>logs/$HOST-Stop.txt 2>&1
+    echo "<img src=\"../icons/error.png\" title=\"Already stopped\"/>" >>$HTML
+  fi
+  echo "</a>" >>$HTML
+}
+
+function get_make_options()
+{
+  # Currently we cannot test login feature of Terminals service
+  case $CC in
+  gcc)
+    OPTS="CC=gcc 'CFLAGS=-Werror -DTERMINALS_NO_LOGIN=1 $CFLAGS'"
+    ;;
+  g++)
+    OPTS="CC=g++ 'CFLAGS=-Werror -DTERMINALS_NO_LOGIN=1 $CFLAGS'"
+    ;;
+  msvc++)
+    OPTS="'CFLAGS=-x c++ $CFLAGS'"
+    ;;
+  *)
+    OPTS="'CFLAGS=$CFLAGS'"
+    ;;
+  esac
+  echo "OPSYS=$OPSYS CONF=$CONF $OPTS"
+}
+
+function build_and_start_server()
+{
+  echo "<td>" >>$HTML
+  local LOGFILE=$HOST-$CONF-$CC-Server.txt
+  echo "<a href=\"$LOGFILE\">" >>$HTML
+  date >logs/$LOGFILE
+  echo "$CONF build on $HOST $VM $VMNAME" >>logs/$LOGFILE
+  echo "Compiler: $CC" >>logs/$LOGFILE
+  echo "Options: `get_make_options`" >>logs/$LOGFILE
+  echo >>logs/$LOGFILE
+  if $SSH "cd $AGENT/server; $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
+  then
+    echo "<img src=\"../icons/accept.png\" title=\"Server OK\"/>" >>$HTML
+    local SERVER_LFILE=$VMBUILD/logs/server-$HOST.txt
+    if [ $OPSYS = Windows ] ; then
+      local SERVER_LFILE=`$SSH "cygpath -m $SERVER_LFILE"`
+    fi
+    $SSH -f "$AGENT/server/obj/$OPSYS/$MACHINE/$CONF/server -s TCP::1535 -L$SERVER_LFILE -l0x800" >>logs/$LOGFILE 2>&1
+  else
+    echo "<img src=\"../icons/cross.png\" title=\"Server build failed\"/>" >>$HTML
+  fi
+  echo "</a>" >>$HTML
+}
+
+function stop_server()
+{
+  local LOGFILE=$HOST-$CONF-$CC-Server.txt
+  $SSH "killall server" >>logs/$LOGFILE 2>&1
+  if [ -r logs/server-$HOST.txt ] ; then
+    echo >>logs/$LOGFILE
+    echo "Server log:" >>logs/$LOGFILE
+    cat logs/server-$HOST.txt >>logs/$LOGFILE
+    rm logs/server-$HOST.txt
+    echo "End of server log" >>logs/$LOGFILE
+  fi
+}
+
+function build_and_test_agent()
+{
+  local LOGFILE=$HOST-$CONF-$CC-Agent-$SEQ.txt
+  date >logs/$LOGFILE
+  echo "Build on $HOST $VM $VMNAME" >>logs/$LOGFILE
+  echo "Compiler: $CC" >>logs/$LOGFILE
+  echo "Options: `get_make_options`" >>logs/$LOGFILE
+  echo >>logs/$LOGFILE
+  local BUILD_ERROR=
+  local TEST_ERROR=
+  local TEST_WARNING=
+  if $SSH "cd $AGENT; time -p $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
+  then
+    if [ $SEQ = 1 ] ; then
+      $SSH "$AGENT/obj/$OPSYS/$MACHINE/$CONF/agent -c" >>logs/$LOGFILE 2>&1
+    fi
+    if [ $OPSYS = Windows ] ; then
+      local AGENT_L_OPT=-L`$SSH "cygpath -m $VMBUILD/logs/agent-$HOST.txt"`
+    else
+      local AGENT_L_OPT=-L$VMBUILD/logs/agent-$HOST.txt
+    fi
+    $SSH -f "$AGENT/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1
+    sleep 15
+    TESTURL1=TransportName=TCP:Host=$HOST:Port=1534
+    TESTURL2=TransportName=TCP:Host=$HOST:Port=1535
+
+    echo >>logs/$LOGFILE
+    echo "Starting tests, target: $TESTURL1" >>logs/$LOGFILE
+    if time -p java -ea \
+      -classpath java-bin \
+      org.eclipse.tm.internal.tcf.debug.tests.Main \
+      $TESTURL1 \
+      >>logs/$LOGFILE 2>&1
+    then
+      if [ -s logs/agent-$HOST.txt ] ; then
+        TEST_WARNING=1
+      fi
+    else
+      TEST_ERROR=1
+    fi
+    $SSH "killall agent" >>logs/$LOGFILE 2>&1
+    if [ -r logs/agent-$HOST.txt ] ; then
+      echo >>logs/$LOGFILE
+      echo "Agent log:" >>logs/$LOGFILE
+      cat logs/agent-$HOST.txt >>logs/$LOGFILE
+      rm logs/agent-$HOST.txt
+      echo "End of agent log" >>logs/$LOGFILE
+    fi
+
+    if [ "$OPSYS" = Windows -a $SEQ != 1 ] ; then
+      # TCF server does not support PE object files
+      echo "Skipping server tests." >>logs/$LOGFILE
+    else
+      # Test server with different channel trasports
+      for PROTO in TCP SSL PIPE UNIX
+      do
+        case $PROTO in
+        PIPE)
+          if [ "$OPSYS" != Windows ] ; then
+            continue
+          fi
+          local AGENT_S_OPT=PIPE:
+          TESTURL1=TransportName=PIPE
+          ;;
+        UNIX)
+          if [ "$OPSYS" != GNU/Linux ] ; then
+            continue;
+          fi
+          local AGENT_S_OPT=UNIX:/tmp/tcf
+          TESTURL1=TransportName=UNIX:Host=/tmp/tcf
+          ;;
+        SSL)
+          if [ "$OPSYS" != GNU/Linux ] ; then
+            continue;
+          fi
+          local AGENT_S_OPT=SSL::1534
+          TESTURL1=TransportName=SSL:Host=localhost:Port=1534
+          ;;
+        *)
+          local AGENT_S_OPT=TCP::1534
+          TESTURL1=TransportName=TCP:Host=localhost:Port=1534
+          ;;
+        esac
+        $SSH -f "$AGENT/obj/$OPSYS/$MACHINE/$CONF/agent -s $AGENT_S_OPT $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1
+        sleep 25
+        echo >>logs/$LOGFILE
+        echo "Starting tests, target: $TESTURL2 $TESTURL1" >>logs/$LOGFILE
+        if time -p java -ea \
+          -classpath java-bin \
+          org.eclipse.tm.internal.tcf.debug.tests.Main \
+          $TESTURL2 $TESTURL1 \
+          >>logs/$LOGFILE 2>&1
+        then
+          if [ -s logs/agent-$HOST.txt ] ; then
+            TEST_WARNING=1
+          fi
+        else
+          TEST_ERROR=1
+        fi
+        $SSH "killall agent" >>logs/$LOGFILE 2>&1
+        if [ -r logs/agent-$HOST.txt ] ; then
+          echo >>logs/$LOGFILE
+          echo "Agent log:" >>logs/$LOGFILE
+          cat logs/agent-$HOST.txt >>logs/$LOGFILE
+          rm logs/agent-$HOST.txt
+          echo "End of agent log" >>logs/$LOGFILE
+        fi
+      done
+    fi
+
+  else
+    BUILD_ERROR=1
+  fi
+
+  echo "<a href=\"$LOGFILE\">" >>$HTML
+  if [ ! -z "$BUILD_ERROR" ] ; then
+    echo "<img src=\"../icons/cross.png\" title=\"Build failed\"/>" >>$HTML
+  elif [ ! -z "$TEST_ERROR" ] ; then
+    echo "<img src=\"../icons/cancel.png\" title=\"Test failed\"/>" >>$HTML
+  elif [ ! -z "$TEST_WARNING" ] ; then
+    echo "<img src=\"../icons/error.png\" title=\"Agent log is not empty\"/>" >>$HTML
+  else
+    echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+  fi
+  echo "</a>" >>$HTML
+
+  sleep 5
+  $SSH "cd $AGENT; rm -rf obj" >>logs/$LOGFILE 2>&1
+}
+
+function test_one_conf()
+{
+  CFLAGS=
+  build_and_start_server
+
+  local CFLAGS1="\
+    -DMEM_USAGE_FACTOR=1"
+
+  local CFLAGS2="\
+   -DENABLE_SymbolsProxy=1 \
+   -DENABLE_LineNumbersProxy=1"
+
+  local CFLAGS3="\
+   -DSERVICE_RunControl=0 \
+   -DSERVICE_Breakpoints=0 \
+   -DSERVICE_Memory=0 \
+   -DSERVICE_Registers=0 \
+   -DSERVICE_MemoryMap=0 \
+   -DSERVICE_StackTrace=0 \
+   -DSERVICE_Symbols=0 \
+   -DSERVICE_LineNumbers=0 \
+   -DSERVICE_Expressions=0"
+
+  local CFLAGS4="\
+    -DENABLE_DebugContext=0 \
+    -DENABLE_ELF=0 \
+    -DSERVICE_StackTrace=0 \
+    -DSERVICE_Breakpoints=0 \
+    -DSERVICE_Memory=0 \
+    -DSERVICE_Registers=0 \
+    -DSERVICE_RunControl=0 \
+    -DSERVICE_LineNumbers=0 \
+    -DSERVICE_Processes=0 \
+    -DSERVICE_Expressions=0 \
+    -DSERVICE_MemoryMap=0"
+
+  SEQ=1
+  for CFLAGS in "" "$CFLAGS1" "$CFLAGS2" "$CFLAGS3" "$CFLAGS4"
+  do
+    build_and_test_agent
+    SEQ=`expr $SEQ + 1`
+  done
+
+  stop_server
+
+  sleep 5
+}
+
+function test_one_opsys()
+{
+  echo "<td>" >>$HTML
+  echo "$OPSYS" >>$HTML
+  echo "<td>" >>$HTML
+  echo "$MACHINE" >>$HTML
+
+  for CONF in Debug Release
+  do
+    for CC in $CC_LIST
+    do
+      test_one_conf
+    done
+  done
+}
+
+function build_rpm()
+{
+  echo "<td>" >>$HTML
+  echo "<a href=\"$HOST-RPM.txt\">" >>$HTML
+  echo RPM build on $VM >logs/$HOST-RPM.txt
+  if [ -z "$BUILD_RPM" ] ; then
+    echo "<img src=\"../icons/error.png\" title=\"Not supported\"/>" >>$HTML
+  elif $SSH "cd $AGENT; $MAKE clean rpm" >>logs/$HOST-RPM.txt 2>&1 ; then
+    echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
+  else
+    echo "<img src=\"../icons/cross.png\" title=\"Failed\"/>" >>$HTML
+  fi
+  echo "</a>" >>$HTML
+}
+
+for VM in $VMS_ALL
+do
+  echo "<tr>" >>$HTML
+  if grep -q $VM vms.lst ; then
+    SKIP=
+    HOST=`grep $VM vms.lst | sed -e "s/.*:\\(.*\\)/\\1/"`
+    VMNAME=`VBoxManage --nologo showvminfo $VM --machinereadable | grep name= | sed -e "s/name=\"\(.*\)\"/\1/"`
+    SSH="ssh -o TCPKeepAlive=yes $VBOXUSER@$HOST"
+
+    echo "<th>" >>$HTML
+    echo "$HOST" >>$HTML
+    echo "<td>" >>$HTML
+    echo "$VMNAME" >>$HTML
+
+    start_vm
+    if [ ! -z "$SKIP" ] ; then
+      continue
+    fi
+
+    VMBUILD=/net/$VBOXHOST$BUILD
+    AGENT=/net/$VBOXHOST$REPOS/org.eclipse.tcf.agent
+    MAKE=make
+    PING_FLAG=-c
+    OPSYS_FLAG=-o
+    BUILD_RPM=
+    STOP_VM=
+    SET_CLOCK=
+
+    case $HOST in
+    192.168.155.4)
+      # Ubuntu
+      STOP_VM=1
+      SET_CLOCK=
+      ;;
+    192.168.155.5)
+      # Free BSD
+      MAKE=gmake
+      OPSYS_FLAG=-s
+      STOP_VM=1
+      ;;
+    192.168.155.10)
+      # Windows 7 32
+      PING_FLAG=-n
+      SET_CLOCK=2
+      ;;
+    192.168.155.11)
+      # Windows 7 64
+      PING_FLAG=-n
+      SET_CLOCK=2
+      ;;
+    *)
+      # Linux
+      STOP_VM=1
+      SET_CLOCK=1
+      ;;
+    esac
+
+    ping_vm
+    if [ ! -z "$SKIP" ] ; then
+      continue
+    fi
+
+    OPSYS=`$SSH "uname $OPSYS_FLAG"` || exit 1
+    MACHINE=`$SSH "uname -m"` || exit 1
+    CC_LIST="gcc g++"
+
+    $SSH "killall server" >/dev/null 2>&1
+    $SSH "killall agent" >/dev/null 2>&1
+
+    if [ "$OPSYS" = Cygwin ] ; then
+      if false # cygwin tests are disabled for now
+      then
+        test_one_opsys
+        echo "<tr>" >>$HTML
+        echo "<td colspan=\"4\">" >>$HTML
+      fi
+      OPSYS=Windows
+      CC_LIST="msvc msvc++"
+    fi
+
+    test_one_opsys
+
+    build_rpm
+
+    $SSH "sync" || exit 1
+    sleep 5
+    stop_vm
+  else
+    echo "<th>" >>$HTML
+    echo "Not in vms.lst" >>$HTML
+    echo "<td>" >>$HTML
+    echo "$VM"  >>$HTML
+  fi
+
+done
+
+#killall VirtualBox || exit 1
+
+
+echo "</table>" >>$HTML
+echo "<p>Finished at: `date`</p>" >>$HTML
+echo "</body>" >>$HTML
+echo "</html>" >>$HTML

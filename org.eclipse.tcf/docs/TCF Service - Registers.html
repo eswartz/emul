@@ -1,0 +1,832 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+    <title>Target Communication Framework Services - Registers</title>
+</head>
+
+<body lang='EN-US'>
+
+<h1>Target Communication Framework Services - Registers</h1>
+
+<ul>
+    <li><a href='#VersionHistory'>Version History</a>
+    <li><a href='#Overview'>Overview</a>
+    <li><a href='#Cmds'>Commands</a>
+    <ul>
+        <li><a href='#CmdGetContext'>Get Context</a>
+        <li><a href='#CmdGetChildren'>Get Children</a>
+        <li><a href='#CmdSetRegister'>Set Register</a>
+        <li><a href='#CmdGetRegister'>Get Register</a>
+        <li><a href='#CmdSetMultiple'>Set Multiple Registers</a>
+        <li><a href='#CmdGetMultiple'>Get Multiple Registers</a>
+        <li><a href='#CmdSearch'>Search for Registers</a>
+    </ul>
+    <li><a href='#Events'>Events</a>
+    <li><a href='#API'>API</a>
+</ul>
+
+<h1>Registers Service</h1>
+
+<h2><a name='VersionHistory'>Version History</a></h2>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Version
+        <th>Date
+        <th>Change
+    <tr>
+        <td>0.1
+        <td>2008-01-10
+        <td>Initial contribution
+    <tr>
+        <td>0.2
+        <td>2008-04-23
+        <td>Added get/set multiple
+    <tr>
+        <td>1.0
+        <td>2008-05-06
+        <td>Approved
+    <tr>
+        <td>1.1
+        <td>2009-03-16
+        <td>Added search command and several context properties
+</table>
+
+<h2><a name='Overview'>Overview</a></h2>
+
+<p>The service provides basic operations to read/write CPU and hardware registers. Command
+and event parameters are encoded as zero terminated <a href='TCF Specification.html#JSON'>JSON</a> strings.</p>
+
+<p>The service uses standard format for error reports,
+see <a href='TCF Services.html#ErrorFormat'>Error Report Format</a>.</p>
+
+In addition to commands that can set/get individual register context values, the service defines commands to set/get values at
+multiple locations. This allows:
+<ol>
+    <li> to get/set multiple register contexts in one command
+    <li> to specify offset and size for get/set on large register groups
+    <li> to get/set truncated register values, e.g. only the low 32 bits of a 64-bit register
+</ol>
+
+<h2><a name='Cmds'>Commands</a></h2>
+
+<h3><a name='CmdGetContext'>Get Context</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Registers &bull; getContext &bull; <i>&lt;string: context ID&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command retrieves context info for given context ID. A context corresponds to an
+register, register group, register bit field, etc. Exact meaning of a context depends on the target.
+Target agent should define contexts hierarchy that is:</p>
+
+<ul type='disc'>
+    <li>Adequately reflects target hardware registers layout;
+    <li>Consistent with the lingo/terminology of the processor manuals;
+    <li>Intuitive to a user.
+</ul>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;context data&gt;</i> &bull;
+
+<i>&lt;context data&gt;</i>
+    &rArr; null
+    &rArr; <i>&lt;object&gt;</i>
+</font></b></pre>
+
+<p>Context data object should, at least, contain member
+<b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string&gt;.</i></font></b>
+Context data is expected to be cached by clients.
+Service sends contextChanged event to notify changes in context data.</p>
+
+<p>Predefined register context properties are:</p>
+<ul>
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ID" : <i>&lt;string&gt;</i></font></b></code>
+    - ID of the context, same as getContext command argument.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ParentID" : <i>&lt;string&gt;</i></font></b></code>
+    - ID of a parent context.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ProcessID" : <i>&lt;string&gt;</i></font></b></code>
+    - process ID.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Name" : <i>&lt;string&gt;</i></font></b></code>
+    - context name.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Description" : <i>&lt;string&gt;</i></font></b></code>
+    - context description.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Size" : <i>&lt;int&gt;</i></font></b></code>
+    - context size in bytes. Byte arrays in get/set commands should be same size.
+    Hardware register can be smaller then this size, for example in case
+    when register size is not an even number of bytes. In such case implementation
+    should add/remove padding that consists of necessary number of zero bits.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Readable" : <i>&lt;boolean&gt;</i></font></b></code>
+    - true if context value can be read.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"ReadOnce" : <i>&lt;boolean&gt;</i></font></b></code>
+    - true if reading the context (register) destroys its current value - it can be read only once.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Writeable" : <i>&lt;boolean&gt;</i></font></b></code>
+    - true if context value can be written.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"WriteOnce" : <i>&lt;boolean&gt;</i></font></b></code>
+    - true if register value can not be overwritten - every write counts.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"SideEffects" : <i>&lt;boolean&gt;</i></font></b></code>
+    - true if writing the context can change values of other registers.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Volatile" : <i>&lt;boolean&gt;</i></font></b></code>
+    - true if the register value can change even when target is stopped.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Float" : <i>&lt;boolean&gt;</i></font></b></code>
+    - true if the register value is a floating-point value.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"BigEndian" : <i>&lt;boolean&gt;</i></font></b></code>
+    - true if big endian, which means decreasing numeric significance with increasing bit number.
+    If absent default if false, which implies little endianess. The endianess is used to encode and decode values of get, getm, set and setm commands.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"LeftToRight" : <i>&lt;boolean&gt;</i></font></b></code>
+    - true if the lowest numbered bit (i.e. bit #0 or bit #1, depending on "FirstBit" value) should be shown to user as the left-most bit.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"FirstBit" : <i>&lt;int&gt;</i></font></b></code>
+    - 0 or 1. If the context has bit field children, bit positions of the fields can be zero-based or 1-based.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Bits" : <i>&lt;array of int&gt;</i></font></b></code>
+    - if context is a bit field, contains the field bit numbers in the parent context.
+
+    <li><code><b><font face="Courier New" size=2 color=#333399>"Values" : <i>&lt;array of named values&gt;</i></font></b></code>
+    - predefined names (mnemonics) for some of context values.
+        <pre><b><font face="Courier New" size=2 color=#333399>
+        <i>&lt;array of named values&gt;</i>
+                &rArr; null
+                &rArr; [ ]
+                &rArr; [ <i>&lt;named values list&gt;</i> ]
+
+        <i>&lt;named values list&gt;</i>
+                &rArr; <i>&lt;object: named value properties&gt;</i>
+                &rArr; <i>&lt;named values list&gt;</i> , <i>&lt;object: named value properties&gt;</i>
+        </font></b></pre>
+    Named value properties are:
+    <ul>
+        <li><code><b><font face="Courier New" size="2" color="#333399">"Name"</font></b></code>
+        - Name (menemonic) of the value.
+        <li><code><b><font face="Courier New" size="2" color="#333399">"Value"</font></b></code>
+        - BASE64 encoded binary bits of the value.
+        <li><code><b><font face="Courier New" size="2" color="#333399">"Description"</font></b></code>
+        - Short, human readable description of the value.
+        </ul>
+        <p>
+
+    <li><code><b><font face="Courier New" size="2" color="#333399">"MemoryAddress" : <i>&lt;int&gt;</i></font></b></code>
+    - The address of a memory mapped register. If MemoryContext is provided, the address is referring into that context.
+
+    <li><code><b><font face="Courier New" size="2" color="#333399">"MemoryContext" : <i>&lt;string&gt;</i></font></b></code>
+    - The context ID of a memory context in which a memory mapped register is located. Used together with MemoryAddress to inform where in memory memory mapped registers are located.
+      If absent and MemoryAddress is defined, the context ID of this context is used as default.
+
+    <li><code><b><font face="Courier New" size="2" color="#333399">"CanSearch" : <i>&lt;array of strings&gt;</i></font></b></code>
+    - A list of attribute names which can be searched for starting on this context.
+      If absent the context does not support search.
+
+    <li><code><b><font face="Courier New" size="2" color="#333399">"Role" : <i>&lt;string&gt;</i></font></b></code>
+    - The role the register plays in a program execution.
+
+    <p>Predefined register role strings are:</p>
+    <ul>
+        <li><code><b><font face="Courier New" size="2" color="#333399">"PC"</font></b></code>
+        - Program counter. Defines instruction to execute next.
+
+        <li><code><b><font face="Courier New" size="2" color="#333399">"SP"</font></b></code>
+        - Register defining the current stack pointer location.
+
+        <li><code><b><font face="Courier New" size="2" color="#333399">"FP"</font></b></code>
+        - Register defining the current frame pointer location.
+
+        <li><code><b><font face="Courier New" size="2" color="#333399">"RET"</font></b></code>
+        - Register used to store the return address for calls.
+
+        <li><code><b><font face="Courier New" size="2" color="#333399">"CORE"</font></b></code>
+        - Indicates register or register groups which belong to the core state.
+          Commonly set for general purpose registers,
+          condition code and other registers which are of special
+          interest for determining the state.
+   </ul>
+</ul>
+
+<h3><a name='CmdGetChildren'>Get Children</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; <i>&lt;token&gt;</i> &bull; Registers &bull; getChildren &bull; <i>&lt;string: parent context ID&gt;</i> &bull;
+</font></b></pre>
+
+<p>The command requests a list of contexts available for registers access commands.</p>
+
+<p>Parent context ID is usually a thread ID retrieved through Run Control Service or one
+of context IDs retrieved by previous getChildren commands.
+Contexts hierarchy can be simple plain list of registers, or it can form a tree of register groups, registers and bit fields.
+It is up to target agent developers to choose layout that is most descriptive for a given target.</p>
+
+<p>Reply:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of context IDs&gt;</i> &bull;<i></i>
+
+<i>&lt;array of context IDs&gt;</i>
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;context ID list&gt;</i> ]
+
+<i>&lt;context ID list&gt;</i>
+    &rArr; <i>&lt;string: context ID&gt;</i>
+    &rArr; <i>&lt;context ID list&gt;</i> , <i>&lt;string: context ID&gt;</i>
+
+</font></b></pre>
+
+<h3><a name='CmdSetRegister'>Set Register</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; &lt;token&gt; &bull; Registers &bull; set &bull; <i>&lt;string: context ID&gt;</i> &bull; <i>&lt;string: value&gt;</i> &bull;
+</font></b></pre>
+
+<p>Writes value into given register context. Context ID must be one returned by getContexts.
+Value is BASE64 encoded byte array of binary data. Array size should match the size of the register.</p>
+
+<p>Result message:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
+</font></b></pre>
+
+<p>Error report provides integer error code and a short, human readable explanation
+of error.</p>
+
+<h3><a name='CmdGetRegister'>Get Register</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; &lt;token&gt; &bull; Registers &bull; get &bull; <i>&lt;string: context ID&gt;</i> &bull;
+</font></b></pre>
+
+<p>Reads register value from given register context. Context ID must be one returned by getContexts.
+</p>
+
+<p>Result message:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;string: value&gt;</i> &bull;
+</font></b></pre>
+
+<p>Error report provides integer error code and a short, human readable explanation
+of error. Value is BASE64 encoded byte array of binary data. Array size should match the size of the register.</p>
+
+<h3><a name='CmdSetMultiple'>Set Multiple Registers</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; &lt;token&gt; &bull; Registers &bull; setm &bull; <i>&lt;array of locations&gt;</i> &bull; <i>&lt;string: value&gt;</i> &bull;
+
+<i>&lt;array of locations&gt;</i>
+    &rArr; [ <i>&lt;location list&gt;</i> ]
+
+<i>&lt;location list&gt;</i>
+    &rArr; <i>&lt;location&gt;</i>
+    &rArr; <i>&lt;location list&gt;</i> , <i>&lt;location&gt;</i>
+
+<i>&lt;location&gt;</i>
+    &rArr; [ <i>&lt;string: register context ID&gt;</i> , <i>&lt;int: offset in bytes&gt;</i> , <i>&lt;int: size in bytes&gt;</i> ]
+</font></b></pre>
+
+<p>Writes value into given list of locations in registers. Each location is represented by 3-element array that consists of
+context ID, offset in the context in bytes and value size in bytes.
+Value is BASE64 encoded byte array of binary data. Byte array size should match the sum of location sizes.</p>
+
+<p>Result message:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
+</font></b></pre>
+
+<p>Error report provides integer error code and a short, human readable explanation
+of error.</p>
+
+<h3><a name='CmdGetMultiple'>Get Multiple Registers</a></h3>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+C &bull; &lt;token&gt; &bull; Registers &bull; getm &bull; <i>&lt;array of locations&gt;</i> &bull;
+
+<i>&lt;array of locations&gt;</i>
+    &rArr; [ <i>&lt;location list&gt;</i> ]
+
+<i>&lt;location list&gt;</i>
+    &rArr; <i>&lt;location&gt;</i>
+    &rArr; <i>&lt;location list&gt;</i> , <i>&lt;location&gt;</i>
+
+<i>&lt;location&gt;</i>
+    &rArr; [ <i>&lt;string: register context ID&gt;</i> , <i>&lt;int: offset in bytes&gt;</i> , <i>&lt;int: size in bytes&gt;</i> ]
+</font></b></pre>
+
+<p>Reads register values from given list of locations in registers. Each location is represented by 3-element array that consists of
+context ID, offset in the context in bytes and value size in bytes.
+</p>
+
+<p>Result message:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;string: value&gt;</i> &bull;
+</font></b></pre>
+
+<p>Error report provides integer error code and a short, human readable explanation
+of error. Value is BASE64 encoded byte array of binary data. Byte array size should match the sum of location sizes.</p>
+
+<h3><a name='CmdSearch'>Search for Registers</a></h3>
+
+<pre><b><font face="Courier New" size="2" color="#333399">
+C &bull; &lt;token&gt; &bull; Registers &bull; search &bull; <i>&lt;string: start context ID&gt; &bull; &lt;object:filter properties&gt;</i> &bull;
+</font></b></pre>
+
+<p>Search returns a path to each context with properties matching the filter. A path consists of a list of
+    context ids starting with a direct child of the start context up to the found context.
+    Search is only supported for properties listed in the CanSearch property.
+
+<p>Predefined filter object properties are:</p>
+<ul>
+    <li><code><b><font face="Courier New" size="2" color="#333399">"Name" : <i>&lt;string&gt;</i></font></b></code>
+    - The name of the property this filter applies to. Must be one of the names listed in the CanSearch property.
+        </li>
+    <li><code><b><font face="Courier New" size="2" color="#333399">"EqualValue" : <i>&lt;string&gt;</i></font></b></code>
+    - The value which is searched for.
+        </li>
+</ul>
+</p>
+
+<p>Result message:</p>
+
+<pre><b><font face="Courier New" size="2" color="#333399">
+R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull; <i>&lt;array of context Paths&gt;</i> &bull;
+
+<i>&lt;array of context Paths&gt;</i>
+    &rArr; null
+    &rArr; [ ]
+    &rArr; [ <i>&lt;context Path list&gt;</i> ]
+
+<i>&lt;context Path list&gt;</i>
+    &rArr; <i>&lt;array of context IDs&gt;</i>
+    &rArr; <i>&lt;context Path list&gt;</i> , <i>&lt;array of context IDs&gt;</i>
+
+</font></b></pre>
+
+<p>Error report provides integer error code and a short, human readable explanation of error.
+In the result, each matching context is provided with the path of parents starting with the direct
+children of the starting node up to the matching node.
+Multiple found entries are returned as an array of those paths.
+</p>
+Example Assume the following context hierarchy:
+
+<pre><b><font face="Courier New" size="2">
+{"Name" : "Core", "ID":"ID_C"}
+        {"Name" : "Group0", "ID":"ID_G0", "Role":"CORE"}
+                {"Name" : "PC", "ID":"ID_PC", "Role":"PC"}
+                {"Name" : "SP", "ID":"ID_SP", "Role":"SP"}
+        {"Name" : "Group1", "ID":"ID_G1"}
+                {"Name" : "R0", "ID":"ID_R0"}
+</font></b></pre>
+
+With this setup, the following commands and responses could take place:
+
+<pre><b><font face="Courier New" size="2">
+C &bull; "1234" &bull; Registers &bull; search &bull; "ID_C" &bull; {"Name":"Name", "EqualValue":"PC"} &bull;
+R &bull; "1234" &bull; [["ID_G0", "ID_PC"]] &bull;
+
+C &bull; "1235" &bull; Registers &bull; search &bull; "ID_C" &bull; {"Name":"Role", "EqualValue":"CORE"} &bull;
+R &bull; "1235" &bull; [["ID_G0"]] &bull;
+</font></b></pre>
+
+<h2><a name='Events'>Events</a></h2>
+
+<p>Registers service broadcasts notification events when registers contexts are changed, and when
+a register content is altered by "set" commands.</p>
+
+<pre><b><font face="Courier New" size="2" color="#333399">
+E &bull; Registers &bull; contextChanged &bull;
+E &bull; Registers &bull; registerChanged &bull; <i>&lt;string: context ID&gt;</i> &bull;
+</font></b></pre>
+
+<h2><a name='API'>API</a></h2>
+
+<pre>
+<font color=#3F5FBF>/**
+ * IRegisters service provides access to target CPU register values and properties.
+ */</font>
+<font color=#7F0055>public interface</font> IRegisters <font color=#7F0055>extends</font> IService {
+
+    <font color=#7F0055>static final</font> String NAME = "Registers";
+
+    <font color=#3F5FBF>/**
+     * Context property names.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        PROP_ID = "ID",                         <font color=#3F5FBF>/** String, ID of the context */</font>
+        PROP_PARENT_ID = "ParentID",            <font color=#3F5FBF>/** String, ID of a parent context */</font>
+        PROP_PROCESS_ID = "ProcessID",          <font color=#3F5FBF>/** String, process ID */</font>
+        PROP_NAME = "Name",                     <font color=#3F5FBF>/** String, context name */</font>
+        PROP_DESCRIPTION = "Description",       <font color=#3F5FBF>/** String, context description */</font>
+        PROP_SIZE = "Size",                     <font color=#3F5FBF>/** Number, context size in bytes. Byte arrays in get/set commands should be same size */</font>
+        PROP_READBLE = "Readable",              <font color=#3F5FBF>/** Boolean, true if context value can be read */</font>
+        PROP_READ_ONCE = "ReadOnce",            <font color=#3F5FBF>/** Boolean, true if reading the context (register) destroys its current value */</font>
+        PROP_WRITEABLE = "Writeable",           <font color=#3F5FBF>/** Boolean, true if context value can be written */</font>
+        PROP_WRITE_ONCE = "WriteOnce",          <font color=#3F5FBF>/** Boolean, true if register value can not be overwritten - every write counts */</font>
+        PROP_SIDE_EFFECTS = "SideEffects",      <font color=#3F5FBF>/** Boolean, true if writing the context can change values of other registers */</font>
+        PROP_VOLATILE = "Volatile",             <font color=#3F5FBF>/** Boolean, true if the register value can change even when target is stopped */</font>
+        PROP_FLOAT = "Float",                   <font color=#3F5FBF>/** Boolean, true if the register value is a floating-point value */</font>
+        PROP_BIG_ENDIAN = "BigEndian",          <font color=#3F5FBF>/** Boolean, true if big endian */</font>
+        PROP_LEFT_TO_RIGHT = "LeftToRight",     <font color=#3F5FBF>/** Boolean, true if the lowest numbered bit should be shown to user as the left-most bit */</font>
+        PROP_FIST_BIT = "FirstBit",             <font color=#3F5FBF>/** Number, bit numbering base (0 or 1) to use when showing bits to user */</font>
+        PROP_BITS = "Bits",                     <font color=#3F5FBF>/** Number, if context is a bit field, contains the field bit numbers in the parent context */</font>
+        PROP_VALUES = "Values",                 <font color=#3F5FBF>/** Array of Map, predefined names (mnemonics) for some of context values */</font>
+        PROP_MEMORY_ADDRESS = "MemoryAddress",  <font color=#3F5FBF>/** Number, the address of a memory mapped register */</font>
+        PROP_MEMORY_CONTEXT = "MemoryContext",  <font color=#3F5FBF>/** String, the context ID of a memory context in which a memory mapped register is located */</font>
+        PROP_CAN_SEARCH = "CanSearch",          <font color=#3F5FBF>/** Array of String, a list of attribute names which can be searched for starting on this context */</font>
+        PROP_ROLE = "Role";                     <font color=#3F5FBF>/** String, the role the register plays in a program execution */</font>
+
+    <font color=#3F5FBF>/**
+     * Role property names.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        ROLE_PC = "PC",                         <font color=#3F5FBF>/** Program counter. Defines instruction to execute next */</font>
+        ROLE_SP = "SP",                         <font color=#3F5FBF>/** Register defining the current stack pointer location */</font>
+        ROLE_FP = "FP",                         <font color=#3F5FBF>/** Register defining the current frame pointer location */</font>
+        ROLE_RET = "RET",                       <font color=#3F5FBF>/** Register used to store the return address for calls */</font>
+        ROLE_CORE = "CORE";                     <font color=#3F5FBF>/** Indicates register or register groups which belong to the core state */</font>
+
+    <font color=#3F5FBF>/**
+     * Filter property names.
+     */</font>
+    <font color=#7F0055>static final</font> String
+        SEARCH_NAME = "Name",                   <font color=#3F5FBF>/** The name of the property this filter applies too */</font>
+        SEARCH_EQUAL_VALUE = "EqualValue";      <font color=#3F5FBF>/** The value which is searched for */</font>
+
+
+    <font color=#3F5FBF>/**
+     * Retrieve context info for given context ID.
+     *
+     * <font color=#7F9FBF>@param</font> id &ndash; context ID.
+     * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+     */</font>
+    IToken getContext(String id, DoneGetContext done);
+
+    <font color=#3F5FBF>/**
+     * Client call back interface for getContext().
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetContext {
+        <font color=#3F5FBF>/**
+         * Called when contexts data retrieval is done.
+         * <font color=#7F9FBF>@param</font> error &ndash; error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context &ndash; context data.
+         */</font>
+        <font color=#7F0055>void</font> doneGetContext(IToken token, Exception error, RegistersContext context);
+    }
+
+    <font color=#3F5FBF>/**
+     * Retrieve contexts available for registers commands.
+     * A context corresponds to an execution thread, stack frame, registers group, etc.
+     * A context can belong to a parent context. Contexts hierarchy can be simple
+     * plain list or it can form a tree. It is up to target agent developers to choose
+     * layout that is most descriptive for a given target. Context IDs are valid across
+     * all services. In other words, all services access same hierarchy of contexts,
+     * with same IDs, however, each service accesses its own subset of context's
+     * attributes and functionality, which is relevant to that service.
+     *
+     * <font color=#7F9FBF>@param</font> parent_context_id &ndash; parent context ID. Can be null &ndash;
+     * to retrieve top level of the hierarchy, or one of context IDs retrieved
+     * by previous getChildren commands.
+     * <font color=#7F9FBF>@param</font> done - call back interface called when operation is completed.
+     */</font>
+    IToken getChildren(String parent_context_id, DoneGetChildren done);
+
+    <font color=#3F5FBF>/**
+     * Client call back interface for getChildren().
+     */</font>
+    <font color=#7F0055>interface</font> DoneGetChildren {
+        <font color=#3F5FBF>/**
+         * Called when contexts data retrieval is done.
+         * <font color=#7F9FBF>@param</font> error &ndash; error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> context_ids &ndash; array of available context IDs.
+         */</font>
+        <font color=#7F0055>void</font> doneGetChildren(IToken token, Exception error, String[] context_ids);
+    }
+
+    <font color=#3F5FBF>/**
+     * RegistersContext objects represent register groups, registers and bit fields.
+     */</font>
+    <font color=#7F0055>interface</font> RegistersContext {
+        <font color=#3F5FBF>/**
+         * Get Context ID.
+         * <font color=#7F9FBF>@return</font> context ID.
+         */</font>
+        String getID();
+
+        <font color=#3F5FBF>/**
+         * Get parent context ID.
+         * <font color=#7F9FBF>@return</font> parent context ID.
+         */</font>
+        String getParentID();
+
+        <font color=#3F5FBF>/**
+         * Get context (register, register group, bit field) name.
+         * <font color=#7F9FBF>@return</font> context name.
+         */</font>
+        String getName();
+
+        <font color=#3F5FBF>/**
+         * Get context description.
+         * <font color=#7F9FBF>@return</font> context description.
+         */</font>
+        String getDescription();
+
+        <font color=#3F5FBF>/**
+         * Get context size in bytes.
+         * Byte arrays in get()/set() methods should be same size.
+         * Hardware register can be smaller then this size, for example in case
+         * when register size is not an even number of bytes. In such case implementation
+         * should add/remove padding that consists of necessary number of zero bits.
+         * @return context size in bytes.
+         */</font>
+        <font color=#7F0055>int</font> getSize();
+
+        <font color=#3F5FBF>/**
+         * Check if context value can be read.
+         * <font color=#7F9FBF>@return</font> true if can read value of the context.
+         */</font>
+        <font color=#7F0055>boolean</font> isReadable();
+
+        <font color=#3F5FBF>/**
+         * Check if reading the context (register) destroys its current value -
+         * it can be read only once.
+         * <font color=#7F9FBF>@return</font> true if read-once register.
+         */</font>
+        <font color=#7F0055>boolean</font> isReadOnce();
+
+        <font color=#3F5FBF>/**
+         * Check if context value can be written.
+         * <font color=#7F9FBF>@return</font> true if can write value of the context.
+         */</font>
+        <font color=#7F0055>boolean</font> isWriteable();
+
+        <font color=#3F5FBF>/**
+         * Check if register value can not be overwritten - every write counts.
+         * <font color=#7F9FBF>@return</font> true if write-once register.
+         */</font>
+        <font color=#7F0055>boolean</font> isWriteOnce();
+
+        <font color=#3F5FBF>/**
+         * Check if writing the context can change values of other registers.
+         * <font color=#7F9FBF>@return</font> true if has side effects.
+         */</font>
+        <font color=#7F0055>boolean</font> hasSideEffects();
+
+        <font color=#3F5FBF>/**
+         * Check if the register value can change even when target is stopped.
+         * <font color=#7F9FBF>@return</font> true if the register value can change at any time.
+         */</font>
+        <font color=#7F0055>boolean</font> isVolatile();
+
+        <font color=#3F5FBF>/**
+         * Check if the register value is a floating-point value.
+         * <font color=#7F9FBF>@return</font> true if a floating-point register.
+         */</font>
+        <font color=#7F0055>boolean</font> isFloat();
+
+        <font color=#3F5FBF>/**
+         * Check endianess of the context.
+         * Big endian means decreasing numeric significance with increasing bit number.
+         * <font color=#7F9FBF>@return</font> true if big endian.
+         */</font>
+        <font color=#7F0055>boolean</font> isBigEndian();
+
+        <font color=#3F5FBF>/**
+         * Check if the lowest numbered bit (i.e. bit #0 or bit #1 depending on
+         * getFirstBitNumber() value) should be shown to user as the left-most bit or
+         * the right-most bit.
+         * <font color=#7F9FBF>@return</font> true if the first bit is left-most bit.
+         */</font>
+        <font color=#7F0055>boolean</font> isLeftToRight();
+
+        <font color=#3F5FBF>/**
+         * If the context has bit field children, bit positions of the fields
+         * can be zero-based or 1-based.
+         * <font color=#7F9FBF>@return</font> first bit position - 0 or 1.
+         */</font>
+        <font color=#7F0055>int</font> getFirstBitNumber();
+
+        <font color=#3F5FBF>/**
+         * If context is a bit field, get the field bit numbers in parent context.
+         * <font color=#7F9FBF>@return</font> array of bit numbers.
+         */</font>
+        <font color=#7F0055>int</font>[] getBitNumbers();
+
+        <font color=#3F5FBF>/**
+         * A context can have predefined names (mnemonics) for some its values.
+         * This method returns a list of such named values.
+         * <font color=#7F9FBF>@return</font> array of named values or null.
+         */</font>
+        NamedValue[] getNamedValues();
+
+        <font color=#3F5FBF>/**
+         * Get the address of a memory mapped register.
+         * <font color=#7F9FBF>@return</font> address.
+         */</font>
+        Number getMemoryAddress();
+
+        <font color=#3F5FBF>/**
+         * Get the context ID of a memory context in which a memory mapped register is located.
+         * <font color=#7F9FBF>@return</font> memory context ID.
+         */</font>
+        String getMemoryContext();
+
+        <font color=#3F5FBF>/**
+         * Get a list of property names which can be searched for starting on this context
+         * <font color=#7F9FBF>@return</font> collection of property names.
+         */</font>
+        Collection<String> canSearch();
+
+        <font color=#3F5FBF>/**
+         * Get the role the register plays in a program execution.
+         * <font color=#7F9FBF>@return</font> role name.
+         */</font>
+        String getRole();
+
+        <font color=#3F5FBF>/**
+         * Get complete map of context properties.
+         * <font color=#7F9FBF>@return</font> map of all available context properties.
+         */</font>
+        Map<String,Object> getProperties();
+
+        <font color=#3F5FBF>/**
+         * Read value of the context.
+         * <font color=#7F9FBF>@param</font> done - call back object.
+         * <font color=#7F9FBF>@return</font> - pending command handle.
+         */</font>
+        IToken get(DoneGet done);
+
+        <font color=#3F5FBF>/**
+         * Set value of the context.
+         * <font color=#7F9FBF>@param</font> value - value to write into the context.
+         * <font color=#7F9FBF>@param</font> done - call back object.
+         * <font color=#7F9FBF>@return</font> - pending command handle.
+         */</font>
+        IToken set(byte[] value, DoneSet done);
+
+       <font color=#3F5FBF>/**
+         * Search register contexts that passes given search filter.
+         * Search is only supported for properties listed in the "CanSearch" property.
+         * <font color=#7F9FBF>@param</font> filter - properties bag that defines search filter.
+         * <font color=#7F9FBF>@param</font> done - call back object.
+         * <font color=#7F9FBF>@return</font> - pending command handle.
+         */</font>
+         IToken search(Map&lt;String,Object&gt; filter, DoneSearch done);
+    }
+
+    <font color=#3F5FBF>/**
+     * A register context can have predefined names (mnemonics) for some its values.
+     * NamedValue objects represent such values.
+     */</font>
+    <font color=#7F0055>interface</font> NamedValue {
+        <font color=#3F5FBF>/**
+         * Get value associated with the name.
+         * <font color=#7F9FBF>@return</font> the value as an array of bytes.
+         */</font>
+        byte[] getValue();
+
+        <font color=#3F5FBF>/**
+         * Get name (mnemonic) of the value.
+         * <font color=#7F9FBF>@return</font> value name.
+         */</font>
+        String getName();
+
+        <font color=#3F5FBF>/**
+         * Get human readable description of the value.
+         * <font color=#7F9FBF>@return</font> value description.
+         */</font>
+        String getDescription();
+    }
+
+    <font color=#3F5FBF>/**
+     * Read values of multiple locations in registers.
+     * <font color=#7F9FBF>@param</font> locs - array of data locations.
+     * <font color=#7F9FBF>@param</font> done - call back object.
+     * <font color=#7F9FBF>@return</font> - pending command handle.
+     */</font>
+    IToken getm(Location[] locs, DoneGet done);
+
+    <font color=#3F5FBF>/**
+     * Set values of multiple locations in registers.
+     * <font color=#7F9FBF>@param</font> locs - array of data locations.
+     * <font color=#7F9FBF>@param</font> value - value to write into the context.
+     * <font color=#7F9FBF>@param</font> done - call back object.
+     * <font color=#7F9FBF>@return</font> - pending command handle.
+     */</font>
+    IToken setm(Location[] locs, byte[] value, DoneSet done);
+
+    <font color=#3F5FBF>/**
+     * Class Location represents value location in register context
+     */</font>
+    <font color=#7F0055>final class</font> Location {
+        <font color=#3F5FBF>/** Register context ID */</font>
+        <font color=#7F0055>public final</font> String id;
+
+        <font color=#3F5FBF>/** offset in the context, in bytes */</font>
+        <font color=#7F0055>public final int</font> offs;
+
+        <font color=#3F5FBF>/** value size in bytes */</font>
+        <font color=#7F0055>public final int</font> size;
+
+        <font color=#7F0055>public</font> Location(String id, <font color=#7F0055>int</font> offs, <font color=#7F0055>int</font> size) {
+            <font color=#7F0055>this</font>.id = id;
+            <font color=#7F0055>this</font>.offs = offs;
+            <font color=#7F0055>this</font>.size = size;
+        }
+    }
+
+    <font color=#3F5FBF>/**
+     * 'get' command call back interface.
+     */</font>
+    <font color=#7F0055>interface</font> DoneGet {
+        <font color=#3F5FBF>/**
+         * Called when value retrieval is done.
+         * <font color=#7F9FBF>@param</font> token - command handle
+         * <font color=#7F9FBF>@param</font> error - error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> value - context value as array of bytes.
+         */</font>
+        <font color=#7F0055>void</font> doneGet(IToken token, Exception error, byte[] value);
+    }
+
+    <font color=#3F5FBF>/**
+     * 'set' command call back interface.
+     */</font>
+    <font color=#7F0055>interface</font> DoneSet {
+        <font color=#3F5FBF>/**
+         * Called when value setting is done.
+         * <font color=#7F9FBF>@param</font> token - command handle.
+         * <font color=#7F9FBF>@param</font> error - error description if operation failed, null if succeeded.
+         */</font>
+        <font color=#7F0055>void</font> doneSet(IToken token, Exception error);
+    }
+
+    <font color=#3F5FBF>/**
+     * 'search' command call back interface.
+     */</font>
+    <font color=#7F0055>interface</font> DoneSearch {
+        <font color=#3F5FBF>/**
+         * Called when context search is done.
+         * <font color=#7F9FBF>@param</font> token - command handle.
+         * <font color=#7F9FBF>@param</font> error - error description if operation failed, null if succeeded.
+         * <font color=#7F9FBF>@param</font> paths - array of paths to each context with properties matching the filter
+         */</font>
+        <font color=#7F0055>void</font> doneSearch(IToken token, String[][] paths);
+    }
+
+    <font color=#3F5FBF>/**
+     * Add registers service event listener.
+     * <font color=#7F9FBF>@param</font> listener - event listener implementation.
+     */</font>
+    <font color=#7F0055>void</font> addListener(RegistersListener listener);
+
+    <font color=#3F5FBF>/**
+     * Remove registers service event listener.
+     * <font color=#7F9FBF>@param</font> listener - event listener implementation.
+     */</font>
+    <font color=#7F0055>void</font> removeListener(RegistersListener listener);
+
+    <font color=#3F5FBF>/**
+     * Registers event listener is notified when registers context hierarchy
+     * changes, and when a register is modified by the service commands.
+     */</font>
+    <font color=#7F0055>interface</font> RegistersListener {
+
+        <font color=#3F5FBF>/**
+         * Called when register context properties changed.
+         * Most targets have static set of registers and register properties.
+         * Such targets never generate this event. However, some targets,
+         * for example, JTAG probes, allow user to modify register definitions.
+         * Clients should flush all cached register context data.
+         */</font>
+        <font color=#7F0055>void</font> contextChanged();
+
+        <font color=#3F5FBF>/**
+         * Called when register content was changed and clients
+         * need to update themselves. Clients, at least, should invalidate
+         * corresponding cached registers data.
+         * Not every change is notified - it is not possible,
+         * only those, which are not caused by normal execution of the debuggee.
+         * At least, changes caused by "set" command should be notified.
+         * <font color=#7F9FBF>@param</font> id - register context ID.
+         */</font>
+        <font color=#7F0055>void</font> registerChanged(String context_id);
+    }
+}
+</pre>
+
+</body>
+</html>

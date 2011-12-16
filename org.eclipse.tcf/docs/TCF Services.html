@@ -1,0 +1,211 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+    <title>Target Communication Framework Services</title>
+</head>
+
+<body lang='EN-US'>
+
+<h1>Target Communication Framework Services</h1>
+
+<p>Copyright (c) 2007 Wind River Systems, Inc. Made available under the EPL v1.0
+<p>Direct comments, questions to the <a href="https://dev.eclipse.org/mailman/listinfo/tcf-dev">tcf-dev@eclipse.org</a> mailing list
+
+<h2>Table of Contents</h2>
+<ul>
+    <li><a href='#VersionHistory'>Version History</a>
+    <li><a href='#Overview'>Overview</a>
+    <li><a href='#Syntax'>Syntax Rules Notation</a>
+    <li><a href='#ErrorFormat'>Error Report Format</a>
+    <li><a href='#Services'>Services</a>
+</ul>
+
+<h2><a name='VersionHistory'>Version History</a></h2>
+
+<table border=1 cellpadding=8>
+    <tr>
+        <th>Version
+        <th>Date
+        <th>Change
+    <tr>
+        <td>0.1
+        <td>2008-01-10
+        <td>Initial contribution
+    <tr>
+        <td>1.0
+        <td>2008-05-06
+        <td>Approved
+    <tr>
+        <td>1.1
+        <td>2008-06-25
+        <td>Enhanced error reporting format, see <a href='http://bugs.eclipse.org/bugs/show_bug.cgi?id=232410'>Bug 232410</a>
+</table>
+
+<h2><a name='Overview'>Overview</a></h2>
+
+TCF communication model is based on the idea of services. A service is a group of related commands, events and semantics.
+For example, <a href='TCF Service - Memory.html'>Memory Service</a> defines group of command and events for
+reading and writing target memory.
+Service definitions are not part of the <a href='TCF Specification.html'>framework specification</a>, and new services
+are expected to be defined by developers of tools and target agents.
+Defenitions of standard services are provided to achieve certain level of compatibility between tools and targets.
+
+<h2><a name='Syntax'>Syntax Rules Notation</a></h2>
+
+<p>Format of the protocol messages is defined by syntax rules. Syntax is described
+using a simple variant of Backus-Naur Form. In particular:</p>
+
+<ul type='disc'>
+    <li>Italic lower case words in a courier font, enclosed into angular brackets, are
+    used to denote syntactic categories, for example:&nbsp;<b><i><font face="Courier New" size=2 color=#333399>&lt;token&gt;.
+    </font></i></b>Category name can be followed by colon and a text, which explains semantics
+    of the category, for example: <b><i><font face="Courier New" size=2 color=#333399>&lt;int:
+    error code&gt;</font></i></b> has same meaning as <b><i><font face="Courier New" size=2 color=#333399>&lt;int&gt;</font></i></b>,
+    but denotes that the integer number used to indicate an "error code".
+
+    <li>A syntax rule consists of a category designation followed by one or more syntax
+    definitions for the category. The category name and each definition are placed on
+    separate lines, bullets are used to denote definitions, for example:
+</ul>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;chars&gt;</i>
+    &rArr; <i>&lt;char&gt;</i>
+    &rArr; <i>&lt;chars&gt; &lt;char&gt;</i>
+</font></b></pre>
+
+<ul type='disc'>
+    <li>Spaces are added for readability only and they are not part of the syntax.
+
+    <li>All text in the category definition, other than categories and spaces, is UTF-8
+    based representation of a message bytes.
+
+    <li>The symbol &lsquo;&bull;&rsquo; designates a zero byte.
+</ul>
+
+<h2><a name='ErrorFormat'>Error Report Format</a></h2>
+
+<p>Most of TCF standard services use same format for error reporting:</p>
+
+<pre><b><font face="Courier New" size=2 color=#333399>
+<i>&lt;error report&gt;</i>
+    &rArr;
+    &rArr; null
+    &rArr; <i>&lt;object: error description&gt;</i>
+</font></b></pre>
+
+<p>Empty or null error report means success. Error description provides error details, including
+error code and a short, localizable, human readable explanation of the error.</p>
+
+<p>Error description properties are:</p>
+<dl>
+    <dt><b><font face="Courier New" size=2 color=#333399>"Code" : <i>&lt;integer&gt;</i></font></b>
+    <dd>Error code. Can belong to one of predefined ranges:
+        <ul>
+        <li> 0x0-0xffff Standard TCF codes, includes a limited subset of POSIX errors, and OTHER error code, which
+             can be used together with "AltCode"
+        <li> 0x10000-0x1ffff Service specific codes
+        <li> 0x20000-0x2ffff Reserved codes - will never be used by the TCF standard
+        </ul>
+
+    <dt><b><font face="Courier New" size=2 color=#333399>"Time" : <i>&lt;integer&gt;</i></font></b>
+    <dd> Error timestamp, in milliseconds since midnight, January 1, 1970 UTC
+
+    <dt><b><font face="Courier New" size=2 color=#333399>"Service" : <i>&lt;string&gt;</i></font></b>
+    <dd> Name of the service that reported the error. Required when "Code" is service specific code.
+
+    <dt><b><font face="Courier New" size=2 color=#333399>"Format" : <i>&lt;string&gt;</i></font></b>
+    <dd> Error description format supports separation between constant and variable parts
+        of error message ("Format" and "Params"). This is done to support localization.
+        Format string is expected to allow translation into foreign languages by means of string table lookup.
+        The format string syntax is defined in the Java language library
+        <b><font face="Courier New" size=2>java.text.MessageFormat</font></b>.
+        In order to simplify clients written in other languages, only a subset of the syntax is supported:
+         <ul>
+         <li> Supported format types: (none), number
+         <li> Supported format styles:
+             <ul>
+             <li> number: (none), "integer", "percent"
+             </ul>
+         </ul>
+
+    <dt><b><font face="Courier New" size=2 color=#333399>"Params" : <i>&lt;array&gt;</i></font></b>
+    <dd> An array of values to be used together with "Format" to create the error message.
+
+    <dt><b><font face="Courier New" size=2 color=#333399>"Severity" : <i>&lt;integer&gt;</i></font></b>
+    <dd> Predefined severity values:
+        <ul>
+        <li>0 - error (default)
+        <li>1 - warning
+        <li>2 - fatal
+        </ul>
+
+    <dt><b><font face="Courier New" size=2 color=#333399>"AltCode" : <i>&lt;integer&gt;</i></font></b>
+    <dd> Alternative error code.  This can be used to represent,
+    for example, OS, POSIX, or other vendor specific error codes
+
+    <dt><b><font face="Courier New" size=2 color=#333399>"AltOrg" : <i>&lt;string&gt;</i></font></b>
+    <dd> ID of organization defining "AltCode", for example "Linux", "VxWorks", "Wind River", etc
+
+    <dt><b><font face="Courier New" size=2 color=#333399>"CausedBy" : <i>&lt;object: error description&gt;</i></font></b>
+    <dd> A nested error description. Can be used to describe a root cause of this error.
+</dl>
+
+<p>All fields except "Code" are optional.</p>
+
+<p>Standard error codes:
+<pre><code>
+    OTHER               = 1
+    JSON_SYNTAX         = 2
+    PROTOCOL            = 3
+    BUFFER_OVERFLOW     = 4
+    CHANNEL_CLOSED      = 5
+    COMMAND_CANCELLED   = 6
+    UNKNOWN_PEER        = 7
+    BASE64              = 8
+    EOF                 = 9
+    ALREADY_STOPPED     = 10
+    ALREADY_EXITED      = 11
+    ALREADY_RUNNING     = 12
+    ALREADY_ATTACHED    = 13
+    IS_RUNNING          = 14
+    INV_DATA_SIZE       = 15
+    INV_CONTEXT         = 16
+    INV_ADDRESS         = 17
+    INV_EXPRESSION      = 18
+    INV_FORMAT          = 19
+    INV_NUMBER          = 20
+    INV_DWARF           = 21
+    SYM_NOT_FOUND       = 22
+    UNSUPPORTED         = 23
+    INV_DATA_TYPE       = 24
+    INV_COMMAND         = 25
+</code></pre>
+</p>
+
+<p>Service specific error code definitions, if any, are part of service specfications.
+Standard and service specific error codes can be extended over time.  A
+client that does not recognize a specific error code should treat it in the
+same way as "OTHER".</p>
+
+<p>For encoding of <b><i><font face="Courier New" size=2 color=#333399>&lt;object&gt;</font></i></b>,
+<b><i><font face="Courier New" size=2 color=#333399>&lt;string&gt;</font></i></b>, etc., see
+<a href='TCF Specification.html#JSON'>JSON - Preferred Marshaling</a>.
+
+<h2><a name='Services'>Services</h2>
+<ul>
+    <li><a href='TCF Specification.html#Locator'>Locator Service</a>
+    <li><a href='TCF Service - Memory.html'>Memory Service</a>
+    <li><a href='TCF Service - Processes.html'>Processes Service</a>
+    <li><a href='TCF Service - Run Control.html'>Run Control Service</a>
+    <li><a href='TCF Service - Registers.html'>Registers Service</a>
+    <li><a href='TCF Service - Stack Trace.html'>Stack Trace Service</a>
+    <li><a href='TCF Service - Breakpoints.html'>Breakpoints Service</a>
+    <li><a href='TCF Service - File System.html'>File System Service</a>
+    <li><a href='TCF Service - System Monitor.html'>System Monitor Service</a>
+    <li><a href='TCF Service - Terminals.html'>Terminals Service</a>
+    <li><a href='TCF Service - Streams.html'>Streams Service</a>
+</ul>
+
+</body>
+</html>
