@@ -173,6 +173,8 @@ public class VdpColorManager {
 	public byte[] getRGB(int idx) {
 		if (idx == 0 && !clearFromPalette)
 			idx = clearColor;
+		if (idx >= thePalette.length)
+			return null;
 		return thePalette[idx];
 	}
 
@@ -180,6 +182,8 @@ public class VdpColorManager {
 	public byte[] getSpriteRGB(int idx) {
 		if (idx == 0 && !clearFromPalette)
 			idx = clearColor;
+		if (idx >= thePalette.length)
+			return null;
 		return theSpritePalette[idx];
 	}
 
