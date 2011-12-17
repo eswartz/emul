@@ -1251,11 +1251,13 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	public int getPatternTableSize() {
 		switch (getModeNumber()) {
 		case MODE_GRAPHICS4:
+			return 256 * 212 / 2;
 		case MODE_GRAPHICS5:
-			return 27136;
+			return 512 * 212 / 4;
 		case MODE_GRAPHICS6:
+			return 512 * 212 / 2;
 		case MODE_GRAPHICS7:
-			return 54272;
+			return 256 * 212;
 		default:
 			return super.getPatternTableSize();
 		}
@@ -1358,5 +1360,5 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			return super.getGraphicsPageSize();
 		}
 	}
-	
+
 }
