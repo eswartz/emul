@@ -120,4 +120,10 @@ public class TMS9919BConsts extends TMS9919Consts {
 		CMD_BALANCE = 9,
 		CMD_RELEASE = 15;
 	
+	public static final int
+		OPERATION_EFFECT_CONTROL = 3,
+		OPERATION_EFFECT_ATTRIBUTE = 4
+	;
+	
+	public static final int REG_VOICE_GROUP_SIZE = 5;
 }

@@ -5,11 +5,16 @@ package v9t9.engine.sound;
 
 
 
+import java.util.HashMap;
+import java.util.Map;
+
 import ejs.base.settings.ISettingSection;
 import ejs.base.sound.ISoundVoice;
+import ejs.base.utils.ListenerList;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.settings.Settings;
 
 import static v9t9.common.sound.TMS9919Consts.*;
@@ -23,6 +28,39 @@ import static v9t9.common.sound.TMS9919Consts.*;
  */
 public class SoundTMS9919 implements ISoundChip {
 
+	/** Control + Audio Gate */
+	private final static int REG_COUNT = 2;
+	
+	private final static Map<Integer, String> regNames = new HashMap<Integer, String>();
+	private final static Map<Integer, String> regDescs = new HashMap<Integer, String>();
+	private final static Map<String, Integer> regIds = new HashMap<String, Integer>();
+	
+	protected static void register(int reg, String id, String desc) {
+		regNames.put(reg, id);
+		regDescs.put(reg, desc);
+		regIds.put(id, reg);
+	}
+	
+	static int registerRegisters(int base, boolean audioGate) {
+		register(base, "Ctrl", "Sound Control");
+		
+		if (audioGate) {
+			register(base + 1, 
+					"AudioGate",
+					"Audio Gate");
+			
+			return 2;
+		}
+		
+		return 1;
+	}
+	
+	static {
+		registerRegisters(0, true);
+	}
+
+	private byte[] registers;
+	
 	final public static int 
 		VOICE_TONE_0 = 0, 
 		VOICE_TONE_1 = 1, 
@@ -45,9 +83,17 @@ public class SoundTMS9919 implements ISoundChip {
 
 	protected final IMachine machine;
 
-	public SoundTMS9919(IMachine machine, String name) {
+	private ListenerList<IRegisterWriteListener> listeners;
+
+	protected SoundTMS9919(IMachine machine, String name, int regCount) {
 		this.machine = machine;
 		init(name);
+		listeners = new ListenerList<IRegisterWriteListener>();
+		registers = new byte[regCount];
+	}
+	
+	public SoundTMS9919(IMachine machine, String name) {
+		this(machine, name, 2);
 	}
 	
 	protected void init(String name) {
@@ -62,6 +108,9 @@ public class SoundTMS9919 implements ISoundChip {
 	 * @see v9t9.engine.SoundHandler#writeSound(byte)
 	 */
 	public void writeSound(int addr, byte val) {
+		setRegister(0, val);
+		
+		
 		ClockedSoundVoice v;
 		/*  handle command byte */
 		//System.out.println("sound byte: " + Utils.toHex2(val));
@@ -83,7 +132,7 @@ public class SoundTMS9919 implements ISoundChip {
 				v.operation[OPERATION_ATTENUATION] = val;
 				break;
 			case 6:				/* noise ctl */
-				v.operation[OPERATION_CONTROL] = val;
+				v.operation[OPERATION_NOISE_CONTROL] = val;
 				break;
 			case 7:				/* noise vol */
 				v.operation[OPERATION_ATTENUATION] = val;
@@ -179,4 +228,107 @@ public class SoundTMS9919 implements ISoundChip {
 			soundHandler.flushAudio();
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#getGroupName()
+	 */
+	@Override
+	public String getGroupName() {
+		return "TMS 9919";
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#getFirstRegister()
+	 */
+	@Override
+	public int getFirstRegister() {
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#getRegisterCount()
+	 */
+	@Override
+	public int getRegisterCount() {
+		return REG_COUNT;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#getRegisterNumber(java.lang.String)
+	 */
+	@Override
+	public int getRegisterNumber(String id) {
+		Integer val = regIds.get(id);
+		return val != null ? val : Integer.MIN_VALUE;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#getRegisterInfo(int)
+	 */
+	@Override
+	public RegisterInfo getRegisterInfo(int reg) {
+		RegisterInfo info = new RegisterInfo(regNames.get(reg), 
+				IRegisterAccess.FLAG_ROLE_GENERAL,
+				1,
+				regDescs.get(reg));
+				
+		return info;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#getRegister(int)
+	 */
+	@Override
+	public int getRegister(int reg) {
+		return registers[reg];
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#setRegister(int, int)
+	 */
+	@Override
+	public int setRegister(int reg, int newValue) {
+		int oldValue = registers[reg];
+		if (registers[reg] != newValue) {
+			registers[reg] = (byte) newValue;
+			fireRegisterChanged(reg, newValue);
+		}
+		return oldValue;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#getRegisterTooltip(int)
+	 */
+	@Override
+	public String getRegisterTooltip(int reg) {
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#addWriteListener(v9t9.common.machine.IRegisterAccess.IRegisterWriteListener)
+	 */
+	@Override
+	public void addWriteListener(IRegisterWriteListener listener) {
+		listeners.add(listener);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#removeWriteListener(v9t9.common.machine.IRegisterAccess.IRegisterWriteListener)
+	 */
+	@Override
+	public void removeWriteListener(IRegisterWriteListener listener) {
+		listeners.remove(listener);
+		
+	}
+
+	protected void fireRegisterChanged(int reg, int newValue) {
+		if (!listeners.isEmpty()) {
+			for (Object listenerObj : listeners.toArray()) {
+				((IRegisterWriteListener) listenerObj).registerChanged(reg, newValue);
+			}
+		}
+	}
+
+	
 }

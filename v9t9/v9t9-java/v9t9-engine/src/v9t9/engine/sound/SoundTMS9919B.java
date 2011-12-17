@@ -15,6 +15,17 @@ import static v9t9.common.sound.TMS9919BConsts.*;
  */
 public class SoundTMS9919B extends SoundTMS9919 {
 
+	/** Control, Audio Gate, Effect Control, Effect Value */
+	private static final int REG_COUNT = 4;
+
+	static {
+		register(2, "FX", "Effects");
+		
+		register(3, 
+				"FXVal",
+				"Effects Value");
+	}
+	
 	protected int lastCommand;
 
 	private int cmdVoice;
@@ -135,10 +146,22 @@ public class SoundTMS9919B extends SoundTMS9919 {
 	@Override
 	public void tick() {
 		super.tick();
-		/*
-		for (int idx = VOICE_TONE_0; idx <= VOICE_NOISE; idx++) {
-			((EnhancedVoice) sound_voices[idx]).getEffectsController().tick();
-		}*/
+	}
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IRegisterAccess#getGroupName()
+	 */
+	@Override
+	public String getGroupName() {
+		return "TMS 9919B";
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.sound.SoundTMS9919#getRegisterCount()
+	 */
+	@Override
+	public int getRegisterCount() {
+		return REG_COUNT;
+	}
 }

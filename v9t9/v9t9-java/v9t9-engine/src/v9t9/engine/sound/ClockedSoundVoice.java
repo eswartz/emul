@@ -46,11 +46,11 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		return super.toString() + "; hertz="+hertz;
 	}
 	protected int getOperationNoiseType() {
-		return ( operation[OPERATION_CONTROL] & 0x4 );
+		return ( operation[OPERATION_NOISE_CONTROL] & 0x4 );
 	}
 
 	protected int getOperationNoisePeriod()  {
-		return ( operation[OPERATION_CONTROL] & 0x3 );
+		return ( operation[OPERATION_NOISE_CONTROL] & 0x3 );
 	}
 	
 	protected byte getOperationAttenuation() {
