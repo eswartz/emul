@@ -260,7 +260,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		int blockStride = canvas.getVisibleWidth() / 8;
 		// 1 or 2 if 256 or 512 mode
 		int blockMag = blockStride / 32;
-		int blockCount = canvas.getHeight() / 8;
+		int blockCount = (canvas.getHeight() + 7) / 8;
 		int screenOffs = 0;
 		for (int yblock = 0; yblock < blockCount; yblock++) {
 			for (int xblock = 0; xblock < 32; xblock++) {
