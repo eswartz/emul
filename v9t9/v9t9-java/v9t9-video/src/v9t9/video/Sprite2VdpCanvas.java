@@ -22,7 +22,7 @@ public class Sprite2VdpCanvas extends BaseVdpCanvas implements ISpriteVdpCanvas 
 	private final int UPDPTR(int y,int x) { return ((y)*UPDATEBLOCK_ROW_STRIDE)+(x)+32; }
 
     public Sprite2VdpCanvas() {
-    	setSize(256, 192);
+    	setSize(256, 212);
     	setClearColor(0);
     }
 
