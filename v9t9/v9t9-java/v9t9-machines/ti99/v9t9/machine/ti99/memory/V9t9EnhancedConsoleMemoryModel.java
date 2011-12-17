@@ -59,9 +59,9 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 			}
 		}
 		
-		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("../../tools/Forth/disk1"));
-		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK2", new File("../../tools/Forth/disk2"));
-		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK3", new File("../../tools/Forth/disk3"));
+		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK1", new File("../../v9t9-c/tools/Forth/disk1"));
+		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK2", new File("../../v9t9-c/tools/Forth/disk2"));
+		DiskDirectoryMapper.INSTANCE.setDiskPath("DSK3", new File("../../v9t9-c/tools/Forth/disk3"));
 		
 	}
 	
