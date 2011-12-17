@@ -207,7 +207,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
     }
 
     public synchronized void touchAbsoluteVdpMemory(int vdpaddr) {
-    	vdpMemory.touchMemory(vdpaddr & 0x3fff);
+    	vdpMemory.touchMemory(vdpaddr & getModeAddressMask());
     }
     
     public byte readAbsoluteVdpMemory(int vdpaddr) {
