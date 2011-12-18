@@ -144,6 +144,8 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		int endOffs = getBitmapOffset(256, y);
 		byte[] fgRGB = colorRGBMap[fg];
 		for (int i = 0; i < 8; i++) {
+			if (offs >= endOffs)
+				break;
 			if ((mem & bitmask & 0x80) != 0) {
 				imageData.data[offs] = fgRGB[0];
 				imageData.data[offs + 1] = fgRGB[1];
@@ -152,8 +154,6 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			bitmask <<= 1;
 			mem <<= 1;
 			offs += 3;
-			if (offs >= endOffs)
-				offs = getBitmapOffset(0, y);
 		}
 	}
 
@@ -163,6 +163,8 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		byte[] fgRGB = colorRGBMap[fg];
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
+			if (offs >= endOffs)
+				break;
 			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fgRGB[0];
 				imageData.data[offs + 1] = fgRGB[1];
@@ -171,7 +173,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			bitmask <<= 1;
 			offs += 3;
 			if (offs >= endOffs)
-				offs = getBitmapOffset(0, y);
+				break;
 			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fgRGB[0];
 				imageData.data[offs + 1] = fgRGB[1];
@@ -179,8 +181,6 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			}
 			bitmask <<= 1;
 			offs += 3;
-			if (offs >= endOffs)
-				offs = getBitmapOffset(0, y);
 			mem <<= 1;
 		}
 	}
@@ -191,10 +191,14 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		byte[] fgRGB = colorRGBMap[fg];
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
+			if (offs >= endOffs)
+				break;
 			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fgRGB[0];
 				imageData.data[offs + 1] = fgRGB[1];
 				imageData.data[offs + 2] = fgRGB[2];
+				if (offs + 3 >= endOffs)
+					return;
 				imageData.data[offs + 3] = fgRGB[0];
 				imageData.data[offs + 4] = fgRGB[1];
 				imageData.data[offs + 5] = fgRGB[2];
@@ -202,19 +206,19 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			bitmask <<= 1;
 			offs += 6;
 			if (offs >= endOffs)
-				offs = getBitmapOffset(0, y);
+				break;
 			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fgRGB[0];
 				imageData.data[offs + 1] = fgRGB[1];
 				imageData.data[offs + 2] = fgRGB[2];
+				if (offs + 3 >= endOffs)
+					return;
 				imageData.data[offs + 3] = fgRGB[0];
 				imageData.data[offs + 4] = fgRGB[1];
 				imageData.data[offs + 5] = fgRGB[2];
 			}
 			bitmask <<= 1;
 			offs += 6;
-			if (offs >= endOffs)
-				offs = getBitmapOffset(0, y);
 			mem <<= 1;
 		}
 	}

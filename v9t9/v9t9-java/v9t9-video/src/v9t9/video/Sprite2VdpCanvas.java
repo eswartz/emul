@@ -66,14 +66,14 @@ public class Sprite2VdpCanvas extends BaseVdpCanvas implements ISpriteVdpCanvas 
 	@Override
 	public void drawEightMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
-		for (int i = 0; i < 8; i++) {
+		for (int i = 0; i < 16; i += 2) {
 			if ((mem & 0x80) != 0) {
 				if (isLogicalOr) {
-					bitmap[offs + i * 2] |= fg;
-					bitmap[offs + i * 2 + 1] |= fg;
+					bitmap[offs + i] |= fg;
+					bitmap[offs + i + 1] |= fg;
 				} else {
-					bitmap[offs + i * 2] = fg;
-					bitmap[offs + i * 2 + 1] = fg;
+					bitmap[offs + i] = fg;
+					bitmap[offs + i + 1] = fg;
 				}
 			}
 			mem <<= 1;
@@ -85,18 +85,18 @@ public class Sprite2VdpCanvas extends BaseVdpCanvas implements ISpriteVdpCanvas 
 	@Override
 	public void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
-		for (int i = 0; i < 8; i++) {
+		for (int i = 0; i < 32; i += 4) {
 			if ((mem & 0x80) != 0) {
 				if (isLogicalOr) {
-					bitmap[offs + i * 4] |= fg;
-					bitmap[offs + i * 4 + 1] |= fg;
-					bitmap[offs + i * 4 + 2] |= fg;
-					bitmap[offs + i * 4 + 3] |= fg;
+					bitmap[offs + i] |= fg;
+					bitmap[offs + i + 1] |= fg;
+					bitmap[offs + i + 2] |= fg;
+					bitmap[offs + i + 3] |= fg;
 				} else {
-					bitmap[offs + i * 4] = fg;
-					bitmap[offs + i * 4 + 1] = fg;
-					bitmap[offs + i * 4 + 2] = fg;
-					bitmap[offs + i * 4 + 3] = fg;
+					bitmap[offs + i] = fg;
+					bitmap[offs + i + 1] = fg;
+					bitmap[offs + i + 2] = fg;
+					bitmap[offs + i + 3] = fg;
 				}
 			}
 			mem <<= 1;

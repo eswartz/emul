@@ -57,6 +57,8 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 		int offs = getBitmapOffset(x, y);
 		if (isLogicalOr) {
 			for (int i = 0; i < 8; i++) {
+				if (x + i >= 256)
+					break;
 				if ((mem & 0x80) != 0) {
 					bitmap[offs + i] |= fg;
 				}
@@ -64,6 +66,8 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 			}
 		} else {
 			for (int i = 0; i < 8; i++) {
+				if (x + i >= 256)
+					break;
 				if ((mem & 0x80) != 0) {
 					bitmap[offs + i] = fg;
 				}
@@ -76,11 +80,17 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 		int offs = getBitmapOffset(x, y);
 		for (int i = 0; i < 8; i++) {
 			if ((mem & 0x80) != 0) {
+				if (x + i*2 >= 256)
+					break;
 				if (isLogicalOr) {
 					bitmap[offs + i * 2] |= fg;
+					if (x + i*2 >= 256)
+						break;
 					bitmap[offs + i * 2 + 1] |= fg;
 				} else {
 					bitmap[offs + i * 2] = fg;
+					if (x + i*2 + 1 >= 256)
+						break;
 					bitmap[offs + i * 2 + 1] = fg;
 				}
 			}
@@ -90,16 +100,33 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 	public void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
 		for (int i = 0; i < 8; i++) {
+			if (x + i*4 >= 256)
+				break;
+
 			if ((mem & 0x80) != 0) {
 				if (isLogicalOr) {
 					bitmap[offs + i * 4] |= fg;
+					if (x + i*4 >= 256)
+						break;
 					bitmap[offs + i * 4 + 1] |= fg;
+					if (x + i*4 + 1 >= 256)
+						break;
 					bitmap[offs + i * 4 + 2] |= fg;
+					if (x + i*4 + 2 >= 256)
+						break;
+					if (x + i*4 + 3 >= 256)
+						break;
 					bitmap[offs + i * 4 + 3] |= fg;
 				} else {
 					bitmap[offs + i * 4] = fg;
+					if (x + i*4 + 1 >= 256)
+						break;
 					bitmap[offs + i * 4 + 1] = fg;
+					if (x + i*4 + 2 >= 256)
+						break;
 					bitmap[offs + i * 4 + 2] = fg;
+					if (x + i*4 + 3 >= 256)
+						break;
 					bitmap[offs + i * 4 + 3] = fg;
 				}
 			}

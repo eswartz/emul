@@ -82,7 +82,7 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			}
 			offs++;
 			if (offs >= endOffs)
-				offs = getBitmapOffset(0, y);
+				break;
 			bitmask <<= 1;
 			mem <<= 1;
 		}
@@ -98,14 +98,14 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			}
 			offs++;
 			if (offs >= endOffs)
-				offs = getBitmapOffset(0, y);
+				break;
 			bitmask <<= 1;
 			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fg;
 			}
 			offs++;
 			if (offs >= endOffs)
-				offs = getBitmapOffset(0, y);
+				break;
 			bitmask <<= 1;
 			mem <<= 1;
 		}
@@ -121,7 +121,7 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			}
 			offs+=2;
 			if (offs >= endOffs)
-				offs = getBitmapOffset(0, y);
+				break;
 			bitmask <<= 1;
 			if ((mem & bitmask & 0x8000) != 0) {
 				imageData.data[offs] = fg;
@@ -129,7 +129,7 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			}
 			offs+=2;
 			if (offs >= endOffs)
-				offs = getBitmapOffset(0, y);
+				break;
 			bitmask <<= 1;
 			mem <<= 1;
 		}

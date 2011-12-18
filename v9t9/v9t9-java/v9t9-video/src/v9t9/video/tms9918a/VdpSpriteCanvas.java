@@ -332,10 +332,10 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 	 */
 	protected void drawMagnifiedSpriteChar(ISpriteDrawingCanvas canvas, int y, int x, int shift, byte color, 
 			int rowbitmap, ByteMemoryAccess pattern) {
-		x &= 0xff;
-		if (x + shift + 32 <= 0 || x + shift >= 256)
+		if (x + shift + 16 <= 0 || x + shift >= 256)
 			return;
 
+		x &= 0xff;
 		short bitmask = -1;
 		if (x + shift < 0) {
 			bitmask &= 0xffff >> -(x + shift);
@@ -374,6 +374,8 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		for (int c = 0; c < numSpriteChars; c++) {
 			int rowshift = charshifts[c*2];
 			int colshift = charshifts[c*2+1];
+			if (x + colshift + shift >= 256)
+				continue;
 			if (!isMagnified)
 				drawUnmagnifiedSpriteChar(canvas, y + rowshift, x + colshift, 
 						shift, color, sprrowbitmap >> rowshift, tmpPattern);
