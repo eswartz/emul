@@ -41,6 +41,7 @@ import javax.swing.PopupFactory;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.timer.FastTimer;
 
 
 import v9t9.common.cpu.ICpu;
@@ -70,7 +71,7 @@ public class AwtWindow extends BaseEmulatorWindow implements
 	private GridBagLayout controlsLayout;
 	private IEventNotifier eventNotifier;
 
-	public AwtWindow(final IMachine machine) {
+	public AwtWindow(final IMachine machine, FastTimer timer) {
 		super(machine);
 
 		GraphicsEnvironment env = GraphicsEnvironment
@@ -79,7 +80,7 @@ public class AwtWindow extends BaseEmulatorWindow implements
 		GraphicsConfiguration gc = device.getDefaultConfiguration();
 		frame = new Frame(gc);
 
-		AwtVideoRenderer renderer = new AwtVideoRenderer(machine);
+		AwtVideoRenderer renderer = new AwtVideoRenderer(machine, timer);
 		setVideoRenderer(renderer);
 
 		// frame.setIgnoreRepaint(true);

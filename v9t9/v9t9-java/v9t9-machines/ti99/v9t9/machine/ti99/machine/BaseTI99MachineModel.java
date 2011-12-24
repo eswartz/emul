@@ -6,7 +6,6 @@ package v9t9.machine.ti99.machine;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.common.client.ISoundHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDsrHandler;
@@ -17,8 +16,6 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.Settings;
-import v9t9.engine.speech.ISpeechDataSender;
-import v9t9.engine.speech.SpeechVoice;
 import v9t9.engine.speech.TMS5220;
 import v9t9.machine.ti99.cpu.Cpu9900;
 
@@ -76,20 +73,6 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 		if (domain == null)
 			return null;
 		final TMS5220 speech = new TMS5220(machine, Settings.getSettings(machine), domain);
-		
-		speech.setSender(new ISpeechDataSender() {
-
-			private ISoundHandler soundHandler;
-
-			public void send(short val, int pos, int length) {
-				((SpeechVoice) speech.getSpeechVoices()[0]).setSample(val);
-				
-				if (soundHandler == null)
-					soundHandler = machine.getSound().getSoundHandler();
-				if (soundHandler != null)
-					soundHandler.speech();
-			}
-		});
 		return speech;
 	}
 }

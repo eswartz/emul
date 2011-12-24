@@ -3,15 +3,15 @@
  */
 package v9t9.common.hardware;
 
+import v9t9.common.speech.ISpeechDataSender;
 import ejs.base.properties.IPersistable;
-import ejs.base.sound.ISoundVoice;
 
 /**
  * @author ejs
  *
  */
 public interface ISpeechChip extends IPersistable {
-	ISoundVoice[] getSpeechVoices();
+	//ISoundVoice[] getSpeechVoices();
 
 	void generateSpeech();
 	
@@ -29,4 +29,6 @@ public interface ISpeechChip extends IPersistable {
 	 * @return
 	 */
 	int getGenerateRate();
+	
+	void setSender(ISpeechDataSender sender);
 }

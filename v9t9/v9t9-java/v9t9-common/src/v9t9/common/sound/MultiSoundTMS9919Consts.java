@@ -8,4 +8,5 @@ package v9t9.common.sound;
  *
  */
 public class MultiSoundTMS9919Consts extends TMS9919Consts {
+	public static String GROUP_NAME = "Multi TMS 9919";
 }

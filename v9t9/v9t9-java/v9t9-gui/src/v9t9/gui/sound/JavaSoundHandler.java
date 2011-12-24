@@ -19,6 +19,9 @@ import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
+import v9t9.common.sound.ISoundGenerator;
+import v9t9.common.speech.ISpeechDataSender;
+import v9t9.common.speech.ISpeechGenerator;
 
 /**
  * Handle sound generation for output with Java APIs
@@ -48,9 +51,15 @@ public class JavaSoundHandler implements ISoundHandler {
 	private IProperty soundVolume;
 	private IProperty playSound;
 	
-	public JavaSoundHandler(final IMachine machine) {
+	private ISoundGenerator soundGenerator;
+	private final ISpeechGenerator speechGenerator;
+	
+	public JavaSoundHandler(final IMachine machine, final ISoundGenerator soundGenerator,
+			final ISpeechGenerator speechGenerator) {
 
 		this.machine = machine;
+		this.soundGenerator = soundGenerator;
+		this.speechGenerator = speechGenerator;
 		
 		soundVolume = Settings.get(machine, ISoundHandler.settingSoundVolume);
 		playSound = Settings.get(machine, ISoundHandler.settingPlaySound);
@@ -71,6 +80,16 @@ public class JavaSoundHandler implements ISoundHandler {
 		speechAudio = SoundFactory.createAudioListener();
 		output.addListener(audio);
 		speechOutput.addListener(speechAudio);
+
+		final ISpeechChip speech = machine.getSpeech();
+		if (speech != null) {
+			speech.setSender(new ISpeechDataSender() {
+				public void send(short val, int pos, int length) {
+					speechGenerator.getSpeechVoices()[0].setSample(val);
+					speech();
+				}
+			});
+		}		
 		
 		soundVolume.addListenerAndFire(new IPropertyListener() {
 			
@@ -163,7 +182,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		if (from >= to)
 			return;
 
-		ISoundVoice[] vs = machine.getSound().getSoundVoices();
+		ISoundVoice[] vs = soundGenerator.getSoundVoices();
 
 		output.generate(vs, to - from);
 	}
@@ -173,7 +192,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		if (speech == null)
 			return;
 
-		ISoundVoice[] vs = speech.getSpeechVoices();
+		ISoundVoice[] vs = speechGenerator.getSpeechVoices();
 		
 		int samples = speechFramesPerTick * speechFormat.getChannels();
 
@@ -190,12 +209,12 @@ public class JavaSoundHandler implements ISoundHandler {
 			
 			lastUpdatedPos = 0;
 	
-			ISoundVoice[] vs = machine.getSound().getSoundVoices();
+			ISoundVoice[] vs = soundGenerator.getSoundVoices();
 			output.flushAudio(vs, currentCycleCount);
 		}
 		
 		if (speechOutput != null && machine.getSpeech() != null) {
-			speechOutput.flushAudio(machine.getSpeech().getSpeechVoices(),
+			speechOutput.flushAudio(speechGenerator.getSpeechVoices(),
 					(int)(speechFormat.getSampleRate() / speechFramesPerTick));
 		}
 	}

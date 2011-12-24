@@ -107,6 +107,8 @@ package v9t9.common.sound;
  * @author ejs */
 public class TMS9919BConsts extends TMS9919Consts {
 
+	public static String GROUP_NAME = "TMS 9919B";
+	
 	public static final int 
 		CMD_RESET = 0,
 		CMD_ENVELOPE = 1,
@@ -118,12 +120,11 @@ public class TMS9919BConsts extends TMS9919Consts {
 		CMD_SWEEP_PROPORTION = 7,
 		CMD_SWEEP_TIME = 8,
 		CMD_BALANCE = 9,
-		CMD_RELEASE = 15;
+		CMD_RELEASE = 15,
+		CMD_NUM_EFFECTS = 16;
 	
-	public static final int
-		OPERATION_EFFECT_CONTROL = 3,
-		OPERATION_EFFECT_ATTRIBUTE = 4
-	;
-	
-	public static final int REG_VOICE_GROUP_SIZE = 5;
+	public final static int OP_ATTACK = 0,
+		OP_DECAY = 1,
+		OP_HOLD = 2,
+		OP_RELEASE = 3;
 }

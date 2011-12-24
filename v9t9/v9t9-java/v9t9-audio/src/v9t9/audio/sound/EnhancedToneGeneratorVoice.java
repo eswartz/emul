@@ -1,9 +1,7 @@
 /**
  * 
  */
-package v9t9.engine.sound;
-
-import static v9t9.common.sound.TMS9919Consts.*;
+package v9t9.audio.sound;
 
 /**
  * Tone generator 
@@ -19,9 +17,9 @@ public class EnhancedToneGeneratorVoice extends ToneGeneratorVoice implements En
 		effectsController = new EffectsController(this);
 	}
 
-	protected int getOperationPeriod() {
-		return ( (operation[OPERATION_FREQUENCY_LO] & 0xf) |
-		( (operation[OPERATION_FREQUENCY_HI] & 0x7f) << 4 ) );
+
+	public void setOperationPeriod(int period) {
+		this.period = (short) (period & 0x7ff);
 	}
 	
 	public EffectsController getEffectsController() {

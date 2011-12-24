@@ -27,13 +27,13 @@ public interface IClient {
      * Handle one timer tick (nominally 1/60 second).  
      *
      */
-    void timerInterrupt();
+    //void timerInterrupt();
 
 	boolean isAlive();
 
 	void handleEvents();
 
-	void updateVideo();
+	//void updateVideo();
 
 	//IVideoRenderer getVideoRenderer();
 	

@@ -26,6 +26,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.timer.FastTimer;
 
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
@@ -49,8 +50,8 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private FixedAspectLayout fixedAspectLayout;
 	private IProperty fullScreen;
 	
-	public SwtAwtVideoRenderer(IMachine machine) {
-		super(machine);
+	public SwtAwtVideoRenderer(IMachine machine, FastTimer timer) {
+		super(machine, timer);
 	}
 	
 	/* (non-Javadoc)

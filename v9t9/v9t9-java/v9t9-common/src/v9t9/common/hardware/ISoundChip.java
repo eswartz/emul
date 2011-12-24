@@ -5,7 +5,6 @@ package v9t9.common.hardware;
 
 
 import ejs.base.properties.IPersistable;
-import ejs.base.sound.ISoundVoice;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.machine.IRegisterAccess;
 
@@ -16,15 +15,15 @@ import v9t9.common.machine.IRegisterAccess;
  */
 public interface ISoundChip extends IPersistable, IRegisterAccess {
 	/** Get all the existing sound voices. */
-	ISoundVoice[] getSoundVoices();
+	//ISoundVoice[] getSoundVoices();
 
 	/** Write a byte to the sound chip(s) */
 	void writeSound(int addr, byte val);
 
-	ISoundHandler getSoundHandler();
-	void setSoundHandler(ISoundHandler soundHandler);
+	//ISoundHandler getSoundHandler();
+	//void setSoundHandler(ISoundHandler soundHandler);
 
 	void setAudioGate(int addr, boolean b);
 
-	void tick();
+	//void tick();
 }

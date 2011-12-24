@@ -43,5 +43,6 @@
 	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.w3c.dom.svg_1.1.0.v201011041433.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-server"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-video"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-audio"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

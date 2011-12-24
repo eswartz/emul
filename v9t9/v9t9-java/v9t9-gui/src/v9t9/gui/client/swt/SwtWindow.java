@@ -47,9 +47,9 @@ import org.eclipse.swt.widgets.Shell;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
-
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.client.ISoundHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.events.IEventNotifier;
@@ -165,7 +165,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 	}
 	
-	public SwtWindow(Display display, final IMachine machine, final ISwtVideoRenderer videoRenderer, final ISettingsHandler settingsHandler) {
+	public SwtWindow(Display display, final IMachine machine, 
+			final ISwtVideoRenderer videoRenderer, final ISettingsHandler settingsHandler,
+			final ISoundHandler soundHandler) {
 		super(machine);
 		
 		fullScreen = Settings.get(machine, settingFullScreen);
@@ -268,6 +270,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		setVideoRenderer(videoRenderer);
 		
 		buttons = new EmulatorButtonBar(this, buttonImageProvider, mainComposite, machine,
+				soundHandler,
 				new int[] { SWT.COLOR_BLACK, SWT.COLOR_GRAY, SWT.COLOR_DARK_GRAY },
 				0.75f,
 				isHorizontal);

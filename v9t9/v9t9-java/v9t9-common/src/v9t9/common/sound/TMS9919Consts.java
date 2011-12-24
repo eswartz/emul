@@ -8,20 +8,36 @@ package v9t9.common.sound;
  *
  */
 public class TMS9919Consts {
+	public static final String GROUP_NAME = "TMS 9919";
 
-	/** These are used as an index into the registers for each REG_BASE_VOICE_xxx group */
-	final public static int 
-		OPERATION_FREQUENCY_LO = 0		/* low 4 bits [1vv0yyyy] */
-	;
-	/** These are used as an index into the registers for the REG_BASE_NOISE group */
-	final public static int 
-		OPERATION_NOISE_CONTROL = 0		/* for noise  [11100xyy] */
-	;
-	/** These are used as an index into the registers for each REG_BASE_VOICE_xxx and the REG_BASE_NOISE group */
-	final public static int 
-		OPERATION_FREQUENCY_HI = 1,		/* hi 6 bits  [00yyyyyy] */
-		OPERATION_ATTENUATION = 2		/* low 4 bits [1vv1yyyy] */
-	;
+//	/** low 4 bits [1vv0yyyy] */
+//	final public static int OPERATION_FREQUENCY_LO = 0;
+//	/** for noise  [11100xyy] */
+//	final public static int OPERATION_NOISE_CONTROL = 0;
+//	/** These are used as an index into the registers for each REG_BASE_VOICE_xxx and the REG_BASE_VOICE_NOISE group */
+//	final public static int 
+//		OPERATION_FREQUENCY_HI = 1,		/* hi 6 bits  [00yyyyyy] */
+//		OPERATION_ATTENUATION = 2		/* low 4 bits [1vv1yyyy] */
+//	;
+//	/** These are used as an index into the registers for each REG_BASE_VOICE_xxx and the REG_BASE_VOICE_NOISE group */
+//	final public static int 
+//		OPERATION_FREQUENCY_HI = 1,		/* hi 6 bits  [00yyyyyy] */
+//		OPERATION_ATTENUATION = 2		/* low 4 bits [1vv1yyyy] */
+//	;
+
+	/** Tone voice frequency in Hz */
+	final public static int REG_OFFS_PERIOD = 0;
+	/** Voice attenuation: 0=loudest, 15=silent/off */
+	final public static int REG_OFFS_ATTENUATION = 1;
+	/** Noise control for noise voice: (xyy); x=0 for periodic, 1 for white noise; y=0-2 for fixed freq */
+	final public static int REG_OFFS_NOISE_CONTROL = 2;
+	
+	/** State of audio gate (0=off, 1=on) */
+	final public static int REG_OFFS_AUDIO_GATE = 0;
+	
+	final public static int REG_COUNT_TONE = 2;
+	final public static int REG_COUNT_NOISE = 3;
+	final public static int REG_COUNT_AUDIO_GATE = 1;
 
 	/**
 	 *	Masks for the OPERATION_CONTROL byte for VOICE_NOISE

@@ -1,13 +1,15 @@
 /**
  * 
  */
-package v9t9.engine.sound;
+package v9t9.audio.sound;
 
 import ejs.base.settings.ISettingSection;
 import static v9t9.common.sound.TMS9919Consts.*;
 
 public class NoiseGeneratorVoice extends ClockedSoundVoice
 {
+	private byte		noiseControl;		
+	
 	boolean isWhite;
 	volatile int ns1;
 	private final ClockedSoundVoice pairedVoice2;
@@ -16,7 +18,23 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 		super((name != null ? name + " " : "") + "Noise");
 		this.pairedVoice2 = pairedVoice2;
 	}
-	protected void setupVoice()
+	
+	/**
+	 * @param noiseControl the noiseControl to set
+	 */
+	public void setOperationNoiseControl(int noiseControl) {
+		this.noiseControl = (byte) noiseControl;
+	}
+	protected int getOperationNoiseType() {
+		return noiseControl & 0x4;
+	}
+
+	protected int getOperationNoisePeriod()  {
+		return noiseControl & 0x3;
+	}
+
+	
+	public void setupVoice()
 	{
 		int periodtype = getOperationNoisePeriod();
 		boolean prevType = isWhite;
@@ -35,7 +53,7 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 	
 		incr = hertz;
 		if (prevType != isWhite || (wasSilent && getVolume() != 0) || (isWhite && ns1 == 0)) {
-			ns1 = (short) 0x8000;		// TODO: this should reset when the type of noise or sound changes only
+			ns1 = (short) 0x8000;
 			accum = 0;
 		}
 		

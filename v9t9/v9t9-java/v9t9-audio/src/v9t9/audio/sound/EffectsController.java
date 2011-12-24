@@ -1,9 +1,10 @@
 /**
  * 
  */
-package v9t9.engine.sound;
+package v9t9.audio.sound;
 
 import java.util.Arrays;
+import static v9t9.common.sound.TMS9919BConsts.*;
 
 /**
  * @author ejs
@@ -18,10 +19,6 @@ public class EffectsController {
 	private static final int VOL_TO_SAMPLE = (VOL_SHIFT - 23) + 4;
 	//private static final int VOL_TO_SAMPLE_BIAS = ~(~0 << (VOL_TO_SAMPLE - 1));
 	
-	final static int OP_ATTACK = 0,
-		OP_DECAY = 1,
-		OP_HOLD = 2,
-		OP_RELEASE = 3;
 	final static int tickTimes[] = {
 		0, 5, 10, 15,
 		20, 30, 40, 50,

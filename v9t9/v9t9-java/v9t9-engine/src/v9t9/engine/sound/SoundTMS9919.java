@@ -9,18 +9,28 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ejs.base.settings.ISettingSection;
-import ejs.base.sound.ISoundVoice;
 import ejs.base.utils.ListenerList;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.settings.Settings;
-
-import static v9t9.common.sound.TMS9919Consts.*;
+import v9t9.common.sound.TMS9919Consts;
 
 /**
  * Controller for the TMS9919 sound chip
+ * <p>
+ * Receives commands:
+ * <pre>
+ * [1vv0yyyy] 	to set low frequency period for voice vv (0-2)
+ * [11100xyy] 	to set type and period of noise voice; 
+ * 				x=0 for periodic, 1 for white noise; 
+ * 				y=0-2 for fixed period (16, 32, 64)
+ * [00yyyyyy] 	to set high frequency period of voice (last set via 1vv0yyyy command)
+ * [1vv1yyyy] 	to set attenuation for voice vv (0-3)
+ * </pre>
+ * <p>
+ * Frequency in Hz is sound clock / 32 divided by period.
  * <p>
  * 3579545 Hz divided by 32 = 111860.78125 / 2 = 55930 Hz maximum frequency
  * @author ejs
@@ -28,120 +38,108 @@ import static v9t9.common.sound.TMS9919Consts.*;
  */
 public class SoundTMS9919 implements ISoundChip {
 
-	/** Control + Audio Gate */
-	private final static int REG_COUNT = 2;
+	protected final Map<Integer, String> regNames;
+	protected final Map<Integer, String> regDescs;
+	protected final Map<String, Integer> regIds;
 	
-	protected final static Map<Integer, String> regNames = new HashMap<Integer, String>();
-	protected final static Map<Integer, String> regDescs = new HashMap<Integer, String>();
-	protected final static Map<String, Integer> regIds = new HashMap<String, Integer>();
+	protected final Map<Integer, IVoice> regIdToVoice;
 	
-	protected static void register(Map<Integer, String> regNames, Map<Integer, String> regDescs, Map<String, Integer> regIds,
-			int reg, String id, String desc) {
-		regNames.put(reg, id);
-		regDescs.put(reg, desc);
-		regIds.put(id, reg);
-	}
-	
-	static int registerRegisters(Map<Integer, String> regNames, Map<Integer, String> regDescs, Map<String, Integer> regIds,
-			int base, boolean audioGate) {
-		register(regNames, regDescs, regIds, base, "Ctrl", "Sound Control");
-		
-		if (audioGate) {
-			register(regNames, regDescs, regIds, 
-					base + 1, 
-					"AudioGate",
-					"Audio Gate");
-			
-			return 2;
-		}
-		
-		return 1;
-	}
-	
-	static {
-		registerRegisters(regNames, regDescs, regIds, 0, true);
-	}
-
-	private byte[] registers;
-	
-	final public static int 
-		VOICE_TONE_0 = 0, 
-		VOICE_TONE_1 = 1, 
-		VOICE_TONE_2 = 2, 
-		VOICE_NOISE = 3,
-		VOICE_AUDIO = 4;
-
-	protected SoundVoice sound_voices[] = new SoundVoice[5];
-
 	protected static int getOperationVoice(int op) {
 		return ( ((op) & 0x60) >> 5);
 	}
 
-	protected int	cvoice;
-
-	protected ISoundHandler soundHandler;
-
-
-	protected int active;
+	/** current voice (for freq hi command) */
+	protected int cvoice;
 
 	protected final IMachine machine;
 
-	private ListenerList<IRegisterWriteListener> listeners;
+	protected final ListenerList<IRegisterWriteListener> listeners;
 
-	protected final int regBase;
+	protected int[] periodLatches = new int[4];
+	
+	protected int regBase;
+	protected IClockedVoice[] voices = new IClockedVoice[4];
+	protected AudioGateVoice audioGateVoice;
 
-	protected SoundTMS9919(IMachine machine, String name, int regCount, int regBase) {
+	public SoundTMS9919(IMachine machine, String id, String name, int regBase) {
 		this.machine = machine;
-		this.regBase = regBase;
-		init(name);
 		listeners = new ListenerList<IRegisterWriteListener>();
-		registers = new byte[regCount];
+		
+		this.regBase = regBase;
+		
+		regNames = new HashMap<Integer, String>();
+		regDescs = new HashMap<Integer, String>();
+		regIds = new HashMap<String, Integer>();
+		
+		regIdToVoice = new HashMap<Integer, IVoice>();
+		
+		initRegisters(id, name, regBase);
 	}
 	
-	public SoundTMS9919(IMachine machine, String name) {
-		this(machine, name, 2, 0);
+	public SoundTMS9919(IMachine machine) {
+		this(machine, "", "Sound", 0);
 	}
 	
-	protected void init(String name) {
+	/** Initialize registers and return new regBase */
+	public int initRegisters(String id, String name, int regBase) {
+		int count;
 		for (int i = 0; i < 3; i++) {
-			sound_voices[i] = new ToneGeneratorVoice(name, i);
+			voices[i] = new ToneVoice(id + "V" + i, name + " Voice " + i, listeners);
+			count = ((BaseVoice) voices[i]).initRegisters(regNames, regDescs, regIds, regBase);
+			mapRegisters(regBase, count, voices[i]);
+			regBase += count;
 		}
-		sound_voices[VOICE_NOISE] = new NoiseGeneratorVoice(name, (ClockedSoundVoice) sound_voices[VOICE_TONE_2]);
-		sound_voices[VOICE_AUDIO] = new AudioGateVoice(name);
+		
+		voices[3] = new NoiseVoice(id + "N", name + " Noise", listeners);
+		count = ((BaseVoice) voices[3]).initRegisters(regNames, regDescs, regIds, regBase);
+		mapRegisters(regBase, count, voices[3]);
+		regBase += count;
+		
+		audioGateVoice = new AudioGateVoice(id + "A", name + " Audio Gate", listeners);
+		count = ((BaseVoice) audioGateVoice).initRegisters(regNames, regDescs, regIds, regBase);
+		mapRegisters(regBase, count, audioGateVoice);
+		regBase += count;
+		
+		return regBase;
+	}
+
+	/**
+	 * @param regBase2
+	 * @param count
+	 * @param audioGateVoice2
+	 */
+	protected void mapRegisters(int regBase, int count, IVoice voice) {
+		while (count-- > 0)
+			regIdToVoice.put(regBase++, voice);
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.engine.SoundHandler#writeSound(byte)
 	 */
 	public void writeSound(int addr, byte val) {
-		setRegister(regBase, val);
-		
-		
-		ClockedSoundVoice v;
+		IClockedVoice v;
 		/*  handle command byte */
 		//System.out.println("sound byte: " + Utils.toHex2(val));
 		int vn;
 		if ((val & 0x80) != 0) {
 			vn = getOperationVoice(val);
 			cvoice = vn;
-			v = (ClockedSoundVoice) sound_voices[vn];
+			v = (IClockedVoice) voices[vn];
 			switch ((val & 0x70) >> 4) 
 			{
 			case 0:				/* T1 FRQ */
 			case 2:				/* T2 FRQ */
 			case 4:				/* T3 FRQ */
-				v.operation[OPERATION_FREQUENCY_LO] = val;
+				periodLatches[cvoice] = (val & 0xf);
 				return;		// nothing changes til second byte
 			case 1:				/* T1 ATT */
 			case 3:				/* T2 ATT */
 			case 5:				/* T3 ATT */
-				v.operation[OPERATION_ATTENUATION] = val;
+			case 7:				/* noise vol */
+				v.setAttenuation(val & 0xf);
 				break;
 			case 6:				/* noise ctl */
-				v.operation[OPERATION_NOISE_CONTROL] = val;
-				break;
-			case 7:				/* noise vol */
-				v.operation[OPERATION_ATTENUATION] = val;
+				((INoiseVoice) voices[3]).setControl(val & 0xf);
 				break;
 			default:
 				return;
@@ -149,61 +147,24 @@ public class SoundTMS9919 implements ISoundChip {
 		}
 		/*  second frequency byte */
 		else {
-			vn = cvoice;
-			v = (ClockedSoundVoice) sound_voices[vn];
-			v.operation[OPERATION_FREQUENCY_HI] = val;
+			v = voices[cvoice];
+			v.setPeriod(getFullPeriod(val));
 		}
-		
-		updateVoice(v, val);
-		
-		if (soundHandler != null)
-			soundHandler.generateSound();
 	}
 
 	/**
-	 * @param v
 	 * @param val
+	 * @return
 	 */
-	protected void updateVoice(ClockedSoundVoice v, byte val) {
-		v.setupVoice();
-		updateNoise();
+	protected int getFullPeriod(byte val) {
+		int period = periodLatches[cvoice] | ((val & 0x3f) << 4);
+		return period;
 	}
 
-	void
-	updateNoise()
-	{
-		ClockedSoundVoice v = (ClockedSoundVoice) sound_voices[VOICE_NOISE];
-		
-		if ((cvoice == VOICE_TONE_2 && v.getOperationNoisePeriod() == NOISE_PERIOD_VARIABLE)
-			 || cvoice == VOICE_NOISE)
-		{
-			updateNoiseVoice(v);
-		}
-	}
-
-
-	protected void updateNoiseVoice(ClockedSoundVoice v) {
-		v.setupVoice();
-	}
-
-	public ISoundHandler getSoundHandler() {
-		return soundHandler;
-	}
-
-
-	public void setSoundHandler(ISoundHandler soundHandler) {
-		this.soundHandler = soundHandler;
-	}
-
-
-	public ISoundVoice[] getSoundVoices() {
-		return sound_voices;
-	}
-	
 	public void saveState(ISettingSection settings) {
 		Settings.get(machine, ISoundHandler.settingPlaySound).saveState(settings);
-		for (int vn = 0; vn < sound_voices.length; vn++) {
-			SoundVoice v = sound_voices[vn];
+		for (int vn = 0; vn < voices.length; vn++) {
+			IVoice v = voices[vn];
 			v.saveState(settings.addSection(v.getName()));
 			
 		}
@@ -211,36 +172,23 @@ public class SoundTMS9919 implements ISoundChip {
 	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
 		Settings.get(machine, ISoundHandler.settingPlaySound).loadState(settings);
-		for (int vn = 0; vn < sound_voices.length; vn++) {
-			SoundVoice v = sound_voices[vn];
+		for (int vn = 0; vn < voices.length; vn++) {
+			IVoice v = voices[vn];
 			String name = v.getName();
 			v.loadState(settings.getSection(name));
-			v.setupVoice();
 		}
 	}
 
 	public void setAudioGate(int addr, boolean b) {
-		if (soundHandler != null) {
-			AudioGateVoice v = (AudioGateVoice) sound_voices[VOICE_AUDIO];
-			v.setState(machine, b);
-			v.setupVoice();
-			soundHandler.generateSound();
-		}
-
+		audioGateVoice.setGate(b);
 	}
 	
-	public void tick() {
-		if (soundHandler != null) {
-			soundHandler.flushAudio();
-		}
-	}
-
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IRegisterAccess#getGroupName()
 	 */
 	@Override
 	public String getGroupName() {
-		return "TMS 9919";
+		return TMS9919Consts.GROUP_NAME;
 	}
 
 	/* (non-Javadoc)
@@ -248,7 +196,7 @@ public class SoundTMS9919 implements ISoundChip {
 	 */
 	@Override
 	public int getFirstRegister() {
-		return 0;
+		return regBase;
 	}
 
 	/* (non-Javadoc)
@@ -256,9 +204,8 @@ public class SoundTMS9919 implements ISoundChip {
 	 */
 	@Override
 	public int getRegisterCount() {
-		return REG_COUNT;
+		return regIds.size();
 	}
-
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IRegisterAccess#getRegisterNumber(java.lang.String)
@@ -278,7 +225,6 @@ public class SoundTMS9919 implements ISoundChip {
 				IRegisterAccess.FLAG_ROLE_GENERAL,
 				1,
 				regDescs.get(reg));
-				
 		return info;
 	}
 
@@ -287,7 +233,10 @@ public class SoundTMS9919 implements ISoundChip {
 	 */
 	@Override
 	public int getRegister(int reg) {
-		return registers[reg];
+		IVoice voice = regIdToVoice.get(reg);
+		if (voice == null)
+			return 0;
+		return voice.getRegister(reg - voice.getBaseRegister());
 	}
 
 	/* (non-Javadoc)
@@ -295,10 +244,12 @@ public class SoundTMS9919 implements ISoundChip {
 	 */
 	@Override
 	public int setRegister(int reg, int newValue) {
-		int oldValue = registers[reg - regBase];
-		registers[reg - regBase] = (byte) newValue;
-		fireRegisterChanged(reg, newValue);
-		return oldValue;
+		IVoice voice = regIdToVoice.get(reg);
+		if (voice == null)
+			return 0;
+		int old = voice.getRegister(reg);
+		voice.setRegister(reg - voice.getBaseRegister(), newValue);
+		return old;
 	}
 
 	/* (non-Javadoc)
@@ -325,14 +276,4 @@ public class SoundTMS9919 implements ISoundChip {
 		listeners.remove(listener);
 		
 	}
-
-	protected void fireRegisterChanged(int reg, int newValue) {
-		if (!listeners.isEmpty()) {
-			for (Object listenerObj : listeners.toArray()) {
-				((IRegisterWriteListener) listenerObj).registerChanged(reg, newValue);
-			}
-		}
-	}
-
-	
 }

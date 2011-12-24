@@ -15,9 +15,9 @@ import javax.sound.sampled.SourceDataLine;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.speech.ISpeechDataSender;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.speech.LPCSpeech;
-import v9t9.engine.speech.ISpeechDataSender;
 import v9t9.engine.speech.TMS5220;
 
 /**

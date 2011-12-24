@@ -1,21 +1,19 @@
 /**
  * 
  */
-package v9t9.engine.sound;
+package v9t9.audio.sound;
 
 import java.text.MessageFormat;
 
-import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
-
-import static v9t9.common.sound.TMS9919Consts.*;
 
 public abstract class ClockedSoundVoice extends SoundVoice
 {
 	protected static final int		CLOCKSTEP = 55930;		// clock stepper, balancing desired clock of 55930 by actual generated frequency
 	protected int		soundClock;			// the driving clock
 
-	protected byte	operation[] = { 0, 0, 0 };	// operation bytes
+	private byte		atten;		
+	protected short 		period;
 	
 	protected int		period16;		// from operation, scaled by 55930
 	protected int		hertz;			// calculated from OPERATION_FREQUENCY_xxx
@@ -45,21 +43,20 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	public String toString() {
 		return super.toString() + "; hertz="+hertz;
 	}
-	protected int getOperationNoiseType() {
-		return ( operation[OPERATION_NOISE_CONTROL] & 0x4 );
-	}
-
-	protected int getOperationNoisePeriod()  {
-		return ( operation[OPERATION_NOISE_CONTROL] & 0x3 );
+	
+	public void setOperationAttenuation(int atten) {
+		this.atten = (byte) atten;
 	}
 	
 	protected byte getOperationAttenuation() {
-		return (byte) ( operation[OPERATION_ATTENUATION] & 0xf );
+		return (byte) atten;
+	}
+
+	public void setOperationPeriod(int period) {
+		this.period = (short) (period & 0x3ff);
 	}
 	
 	protected int getOperationPeriod() {
-		int period = ( (operation[OPERATION_FREQUENCY_LO] & 0xf) |
-		( (operation[OPERATION_FREQUENCY_HI] & 0x3f) << 4 ) );
 		return period;
 	}
 	
@@ -71,10 +68,9 @@ public abstract class ClockedSoundVoice extends SoundVoice
 						getName(), hertz));
 			else
 				System.out.println(MessageFormat.format(
-					"voice_cache_values[{5}]: lo=>{0}, hi=>{1}, period=>{2}, hertz={3}, volume={4}",
-				   HexUtils.toHex4(operation[OPERATION_FREQUENCY_LO]), 
-				   HexUtils.toHex4(operation[OPERATION_FREQUENCY_HI]),
-				   HexUtils.toHex4((period16 / 65536)),
+					"voice_cache_values[{5}]: freq=>{0}, period=>{1}, hertz={2}, volume={3}",
+				   HexUtils.toHex4(period16), 
+				   HexUtils.toHex4(hertz),
 				   hertz,
 				   getVolume(),
 				   getName()));
@@ -92,27 +88,6 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	protected void updateEffect() {
 	}
 	
-	@Override
-	public void loadState(ISettingSection settings) {
-		if (settings == null) return;
-		super.loadState(settings);
-		operation[0] = (byte) settings.getInt("Op1");
-		operation[1] = (byte) settings.getInt("Op2");
-		operation[2] = (byte) settings.getInt("Op3");
-		accum = settings.getInt("Accumulator");
-		clock = settings.getInt("Clock");
-	}
-	
-	@Override
-	public void saveState(ISettingSection settings) {
-		super.saveState(settings);
-		settings.put("Op1", operation[0]);
-		settings.put("Op2", operation[1]);
-		settings.put("Op3", operation[2]);
-		settings.put("Accumulator", accum);
-		settings.put("Clock", clock);
-	}
-
 	public int getClock() {
 		return clock;
 	}

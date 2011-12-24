@@ -88,12 +88,12 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 
 	private FastTimer fastTimer;
 	
-	public AwtVideoRenderer(IMachine machine) {
+	public AwtVideoRenderer(IMachine machine, FastTimer timer) {
 		this.machine = machine;
 		this.settings = machine.getSettings();
 		this.vdp = machine.getVdp();
 		
-		fastTimer = new FastTimer("Video Renderer");
+		fastTimer = timer;
 		
 		monitorDrawing = Settings.get(machine, BaseEmulatorWindow.settingMonitorDrawing);
 

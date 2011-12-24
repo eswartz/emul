@@ -1,11 +1,11 @@
 /**
  * 
  */
-package v9t9.engine.speech;
+package v9t9.audio.speech;
 
-import ejs.base.sound.ISoundVoice;
+import v9t9.common.speech.ISpeechSoundVoice;
 
-public class SpeechVoice implements ISoundVoice {
+public class SpeechVoice implements ISpeechSoundVoice {
 	
 	private short lastSample;
 	private short sample;
@@ -47,6 +47,10 @@ public class SpeechVoice implements ISoundVoice {
 		return true;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.audio.speech.ISpeechVoice#setSample(short)
+	 */
+	@Override
 	public void setSample(short sample) {
 		this.sample = sample;
 	}

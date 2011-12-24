@@ -1,9 +1,7 @@
 /**
  * 
  */
-package v9t9.engine.sound;
-
-import static v9t9.common.sound.TMS9919Consts.*;
+package v9t9.audio.sound;
 
 /**
  * TMS9919(B) noise generator.
@@ -24,10 +22,9 @@ public class EnhancedNoiseGeneratorVoice extends NoiseGeneratorVoice implements 
 		return effectsController;
 	}
 	
-	protected int getOperationPeriod() {
-		byte mask = 0x7f;
-		return ( (operation[OPERATION_FREQUENCY_LO] & 0xf) |
-		( (operation[OPERATION_FREQUENCY_HI] & mask) << 4 ) );
+
+	public void setOperationPeriod(int period) {
+		this.period = (short) (period & 0x7ff);
 	}
 	
 	@Override

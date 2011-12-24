@@ -25,7 +25,6 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
 import ejs.base.properties.IProperty;
-
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier.Level;
@@ -50,8 +49,9 @@ public class EmulatorButtonBar extends EmulatorBar  {
 	 * @param focusRestorer
 	 * @param smoothResize
 	 */
-	public EmulatorButtonBar(SwtWindow window, ImageProvider imageProvider, Composite parent, 
-			final IMachine machine, 
+	public EmulatorButtonBar(final SwtWindow window, ImageProvider imageProvider, Composite parent, 
+			final IMachine machine,
+			final ISoundHandler soundHandler,
 			int[] colors, float midPoint, boolean isHorizontal) {
 		super(window, imageProvider, parent, machine, colors, midPoint, isHorizontal);
 		
@@ -247,8 +247,8 @@ public class EmulatorButtonBar extends EmulatorBar  {
 			public void menuDetected(MenuDetectEvent e) {
 				Control button = (Control) e.widget;
 				Menu menu = new Menu(button);
-				if (machine.getSound().getSoundHandler() instanceof JavaSoundHandler) {
-					JavaSoundHandler javaSoundHandler = (JavaSoundHandler) machine.getSound().getSoundHandler();
+				if (soundHandler instanceof JavaSoundHandler) {
+					JavaSoundHandler javaSoundHandler = (JavaSoundHandler) soundHandler;
 					javaSoundHandler.getSoundRecordingHelper().populateSoundMenu(menu);
 					javaSoundHandler.getSpeechRecordingHelper().populateSoundMenu(menu);
 				}

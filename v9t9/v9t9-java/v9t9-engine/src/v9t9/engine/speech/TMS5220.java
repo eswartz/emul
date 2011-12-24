@@ -9,7 +9,6 @@ import java.io.PrintWriter;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 import ejs.base.settings.Logging;
-import ejs.base.sound.ISoundVoice;
 import ejs.base.utils.BinaryUtils;
 import ejs.base.utils.HexUtils;
 
@@ -18,6 +17,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.speech.ISpeechDataSender;
 import v9t9.engine.memory.DiskMemoryEntry;
 
 import static v9t9.common.speech.TMS5220Consts.*;
@@ -59,16 +59,11 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	
 	private ISpeechDataSender sender;
 
-	private SpeechVoice[] speechVoices;
-
 	private boolean speechOn;
 
 	private IProperty logSpeech;
 	
 	public TMS5220(IMachine machine, final ISettingsHandler settings, final IMemoryDomain speech) {
-		speechVoices = new SpeechVoice[1];
-		speechVoices[0] = new SpeechVoice();
-		
 		logSpeech = settings.get(LPCSpeech.settingLogSpeech);
 		Logging.registerLog(logSpeech, 
 				new PrintWriter(System.out, true));
@@ -98,14 +93,6 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 		reset();
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.engine.hardware.ISpeechChip#getSpeechVoices()
-	 */
-	@Override
-	public ISoundVoice[] getSpeechVoices() {
-		return speechVoices;
-	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.engine.hardware.ISpeechChip#getGenerateRate()
 	 */
@@ -535,7 +522,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	@Override
 	public void send(short val, int pos, int length) {
 		if (sender != null) {
-			speechVoices[0].setSample(val);
+			//speechVoices[0].setSample(val);
 			sender.send(val, pos, length);
 		}
 	}

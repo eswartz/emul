@@ -9,6 +9,7 @@ import ejs.base.settings.Logging;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.SettingSchema;
+import v9t9.common.speech.ISpeechDataSender;
 
 
 /**

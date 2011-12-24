@@ -8,12 +8,19 @@ package v9t9.gui.client.awt;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.TimerTask;
 
+import ejs.base.timer.FastTimer;
+
+import v9t9.audio.sound.SoundGeneratorFactory;
+import v9t9.audio.speech.SpeechGeneratorFactory;
 import v9t9.common.client.IClient;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.TerminatedException;
+import v9t9.common.sound.ISoundGenerator;
+import v9t9.common.speech.ISpeechGenerator;
 import v9t9.gui.sound.JavaSoundHandler;
 
 /**
@@ -23,14 +30,26 @@ import v9t9.gui.sound.JavaSoundHandler;
 public class AwtJavaClient implements IClient {
 	public static String ID = "AWT";
 	
+    protected final int soundUpdateTick = 100;
+    protected final int clientTick = 100;
+    protected final int videoUpdateTick = 30;
+    
     IVdpChip video;
     private IMachine machine;
 	private AwtKeyboardHandler keyboardHandler;
 	private AwtVideoRenderer videoRenderer;
 	private AwtWindow window;
 
+	protected FastTimer timer;
+
+	private ISoundGenerator soundGenerator;
+
+	private ISpeechGenerator speechGenerator;
+	private JavaSoundHandler soundHandler;
+
     public AwtJavaClient(IMachine machine) {
 		this.machine = machine;
+		timer = new FastTimer();
         video = machine.getVdp();
         
         init();
@@ -42,7 +61,7 @@ public class AwtJavaClient implements IClient {
     }
     
     protected void init() {
-    	window = new AwtWindow( machine);
+    	window = new AwtWindow( machine, timer);
 		
 		videoRenderer = window.getVideoRenderer();
     	
@@ -54,13 +73,50 @@ public class AwtJavaClient implements IClient {
 		});
         
         //video.setCanvas(videoRenderer.getCanvas());
-
-        machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
+		soundGenerator = SoundGeneratorFactory.createSoundGenerator(machine);
+		speechGenerator = SpeechGeneratorFactory.createSpeechGenerator(machine);
+        soundHandler = new JavaSoundHandler(machine, soundGenerator, speechGenerator);
         
         keyboardHandler = new AwtKeyboardHandler(
         		videoRenderer.getAwtCanvas(),
         		machine.getKeyboardState(), machine);
         keyboardHandler.setEventNotifier(window.getEventNotifier());
+        
+
+        // the client's interrupt task, which lets it monitor
+        // other less expensive devices like the keyboard, sound,
+        // etc.
+        TimerTask clientTask = new TimerTask() {
+        	
+        	@Override
+        	public void run() {
+        		keyboardHandler.scan(machine.getKeyboardState());
+        	}
+        };
+        timer.scheduleTask(clientTask, clientTick);
+        
+        // the potentially expensive task of blitting the screen to the
+        // physical screen -- not scheduled at a fixed rate to avoid
+        // overloading the CPU with pending redraw requests
+        TimerTask videoUpdateTask = new TimerTask() {
+
+            @Override
+			public void run() {
+            	if (videoRenderer.isIdle()) { 
+            		videoRenderer.redraw();
+            	}
+            }
+        };
+        timer.scheduleTask(videoUpdateTask, videoUpdateTick);
+        
+        TimerTask soundUpdateTask = new TimerTask() {
+
+            @Override
+			public void run() {
+            	soundHandler.flushAudio();
+            }
+        };
+        timer.scheduleTask(soundUpdateTask, soundUpdateTick);
     }
     
     @Override
@@ -110,30 +166,7 @@ public class AwtJavaClient implements IClient {
     	close();
     	super.finalize();
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see v9t9.Client#timerTick()
-     */
-    public void timerInterrupt() {
-    	keyboardHandler.scan(machine.getKeyboardState());
-    }
     
-    public void updateVideo() {
-    	if (videoRenderer.isIdle()) { 
-    		/*
-			try {
-				if (!video.update())
-					return;
-			} catch (Throwable t) {
-				t.printStackTrace();
-			}
-			*/
-    		videoRenderer.redraw();
-    	}
-    }
-
     public void handleEvents() {
     	
     }

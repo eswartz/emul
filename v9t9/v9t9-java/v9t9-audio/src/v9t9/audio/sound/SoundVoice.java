@@ -1,13 +1,12 @@
 /**
  * 
  */
-package v9t9.engine.sound;
+package v9t9.audio.sound;
 
-import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
 import ejs.base.sound.ISoundVoice;
 
-public abstract class SoundVoice implements ISoundVoice, IPersistable
+public abstract class SoundVoice implements ISoundVoice
 {
 	/** volume, 0 == off, 0xf == loudest */
 	private byte	volume;			
@@ -57,7 +56,7 @@ public abstract class SoundVoice implements ISoundVoice, IPersistable
 		this.balance = balance;
 	}
 
-	protected abstract void setupVoice();
+	public abstract void setupVoice();
 	//public abstract int generate(int soundClock, int sample);
 	public String getName() {
 		return name;

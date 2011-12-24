@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.engine.sound;
+package v9t9.audio.sound;
 
 import ejs.base.settings.ISettingSection;
 import static v9t9.common.sound.TMS9919Consts.*;
@@ -13,7 +13,7 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 		super((name != null ? name + " " : "") + "Voice " + number);
 	}
 	
-	protected void setupVoice()
+	public void setupVoice()
 	{
 		byte lastVolume = getVolume();
 		setVolume((byte) (0xf - getOperationAttenuation()));
@@ -24,6 +24,7 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 		if (hertz * 2 < 55930) {
 			incr = hertz * 2;
 		} else {
+			// will alias, just silence
 			incr = 0;
 		}
 		
@@ -81,16 +82,6 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 				
 				soundGeneratorWorkBuffer[from++] += sampleL;
 				soundGeneratorWorkBuffer[from++] += sampleR;
-				
-				/*
-				if (!out) {
-					soundGeneratorWorkBuffer[from++] += sampleL;
-					soundGeneratorWorkBuffer[from++] += sampleR;
-				} else {
-					soundGeneratorWorkBuffer[from++] -= sampleL;
-					soundGeneratorWorkBuffer[from++] -= sampleR;
-				}
-				*/
 			} else {
 				from += 2;
 			}

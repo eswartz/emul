@@ -23,5 +23,6 @@ package v9t9.common.sound;
  *
  */
 public class MultiSoundTMS9919BConsts extends TMS9919BConsts {
+	public static String GROUP_NAME = "Multi TMS 9919B";
 
 }

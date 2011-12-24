@@ -70,8 +70,6 @@ abstract public class MachineBase implements IMachine {
     protected long upTime = 0;
     
     protected boolean allowInterrupts;
-    protected final int clientTick = 1000 / 100;
-    protected final int videoUpdateTick = 1000 / 30;
     protected final int cpuTicksPerSec = 100;
     //protected long now;
     //private TimerTask vdpInterruptTask;
@@ -263,8 +261,8 @@ abstract public class MachineBase implements IMachine {
 	    				//vdpInterruptDelta = 0;
 	    			}
 	    			
-	    			if (sound != null)
-	    				sound.tick();
+	    			//if (sound != null)
+	    			//	sound.tick();
 	    			
 	    			cpu.tick();
 	
@@ -308,32 +306,6 @@ abstract public class MachineBase implements IMachine {
         		}
         	}
         };
-        
-        
-        // the potentially expensive task of blitting the screen to the
-        // physical screen -- not scheduled at a fixed rate to avoid
-        // overloading the CPU with pending redraw requests
-        videoUpdateTask = new TimerTask() {
-
-            @Override
-			public void run() {
-            	if (client != null) client.updateVideo();
-            }
-        };
-        //videoTimer.schedule(videoUpdateTask, 0, videoUpdateTick);
-        timer.schedule(videoUpdateTask, 0, videoUpdateTick);
-        
-        // the client's interrupt task, which lets it monitor
-        // other less expensive devices like the keyboard, sound,
-        // etc.
-        clientTask = new TimerTask() {
-        	
-        	@Override
-        	public void run() {
-        		if (client != null) client.timerInterrupt();
-        	}
-        };
-        timer.scheduleAtFixedRate(clientTask, 0, clientTick);
         
         memorySaverTask = new TimerTask() {
         	@Override
@@ -436,7 +408,7 @@ abstract public class MachineBase implements IMachine {
 		}
 		
 		memory.save();        
-        getSound().getSoundHandler().dispose();
+        //getSound().getSoundHandler().dispose();
 	}
     
 	/* (non-Javadoc)
