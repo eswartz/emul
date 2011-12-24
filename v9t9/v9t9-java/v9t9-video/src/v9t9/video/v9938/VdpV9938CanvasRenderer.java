@@ -390,8 +390,10 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 			setPaletteColor(color);
 		}
 		else {
-			if (reg == 13 || reg == 12) {
+			if (reg == 12) {
 				blinkOn = false;
+			} else if (reg == 13) {
+				blinkOn = value != 0 && (value & 0xf) == 0x0;
 			}
 			super.registerChanged(reg, value);
 		}
