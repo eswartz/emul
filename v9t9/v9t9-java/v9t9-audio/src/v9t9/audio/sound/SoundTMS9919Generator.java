@@ -27,14 +27,8 @@ import ejs.base.sound.ISoundVoice;
 public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.IRegisterWriteListener {
 	protected final Map<Integer, SoundVoice> regIdToVoices = 
 		new HashMap<Integer, SoundVoice>();
-	protected final Map<Integer, ClockedSoundVoice> regIdToVoicePeriod = 
-		new HashMap<Integer, ClockedSoundVoice>();
-	protected final Map<Integer, ClockedSoundVoice> regIdToVoiceAtten = 
-		new HashMap<Integer, ClockedSoundVoice>();
-	protected final Map<Integer, NoiseGeneratorVoice> regIdToVoiceControl = 
-		new HashMap<Integer, NoiseGeneratorVoice>();
-	protected final Map<Integer, AudioGateSoundVoice> regIdToVoiceAudio = 
-		new HashMap<Integer, AudioGateSoundVoice>();
+	protected final Map<Integer, IRegisterAccess.IRegisterWriteListener> regIdToListener = 
+		new HashMap<Integer, IRegisterAccess.IRegisterWriteListener>();
 
 	final public static int 
 		VOICE_TONE_0 = 0, 
@@ -65,11 +59,6 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 	
 	protected int init(String name, int regBase) {
 		regBase = doInitVoices(name, regBase);
-		
-		regIdToVoices.putAll(regIdToVoicePeriod);
-		regIdToVoices.putAll(regIdToVoiceAtten);
-		regIdToVoices.putAll(regIdToVoiceControl);
-		regIdToVoices.putAll(regIdToVoiceAudio);
 		
 		soundVoices = soundVoicesList.toArray(new SoundVoice[soundVoicesList.size()]);
 		return regBase;
@@ -102,11 +91,22 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 	/**
 	 * @param regBase
 	 */
-	protected int setupAudioGateVoice(int regBase, AudioGateSoundVoice voice) {
+	protected int setupAudioGateVoice(int regBase, final AudioGateSoundVoice voice) {
 		RegisterInfo info;
 		info = soundChip.getRegisterInfo(regBase);
 		assert info != null && info.id.endsWith("A:G");
-		regIdToVoiceAudio.put(regBase + TMS9919Consts.REG_COUNT_AUDIO_GATE, voice);
+		
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_AUDIO_GATE, voice);
+
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_AUDIO_GATE,
+			new IRegisterAccess.IRegisterWriteListener() {
+				
+				@Override
+				public void registerChanged(int reg, int value) {
+					voice.setState(machine, value != 0);
+				}
+			});
+				
 		return TMS9919Consts.REG_COUNT_AUDIO_GATE;
 	}
 
@@ -115,16 +115,47 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 	 * @param voice 
 	 * @return
 	 */
-	protected int setupNoiseVoice(int regBase, NoiseGeneratorVoice voice) {
+	protected int setupNoiseVoice(int regBase, final NoiseGeneratorVoice voice) {
 		RegisterInfo info;
 		info = soundChip.getRegisterInfo(regBase);
 		assert info != null && info.id.endsWith("N:P");
-		regIdToVoicePeriod.put(regBase + TMS9919Consts.REG_OFFS_PERIOD, 
-				voice);
-		regIdToVoiceAtten.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION, 
-				voice);
-		regIdToVoiceControl.put(regBase + TMS9919Consts.REG_OFFS_NOISE_CONTROL, 
-				voice);
+
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_PERIOD, voice);
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION, voice);
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_NOISE_CONTROL, voice);
+
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_PERIOD,
+			new IRegisterAccess.IRegisterWriteListener() {
+				
+				@Override
+				public void registerChanged(int reg, int value) {
+					voice.setOperationPeriod(value);
+				}
+			}
+		);
+		
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION,
+				new IRegisterAccess.IRegisterWriteListener() {
+			
+				@Override
+				public void registerChanged(int reg, int value) {
+					voice.setOperationAttenuation(value);
+				}
+			}
+		);
+			
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_NOISE_CONTROL,
+				new IRegisterAccess.IRegisterWriteListener() {
+					
+					@Override
+					public void registerChanged(int reg, int value) {
+						voice.setOperationNoiseControl(value);
+					}
+				}
+		);
+					
+
+
 		return TMS9919Consts.REG_COUNT_NOISE;
 	}
 
@@ -133,14 +164,35 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 	 * @param i
 	 * @return
 	 */
-	protected int setupToneVoice(int regBase, int num, ClockedSoundVoice voice) {
+	protected int setupToneVoice(int regBase, int num, final ClockedSoundVoice voice) {
 		RegisterInfo info;
 		info = soundChip.getRegisterInfo(regBase);
 		assert info != null && info.id.contains(num + ":P");
-		regIdToVoicePeriod.put(regBase + TMS9919Consts.REG_OFFS_PERIOD, 
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_PERIOD, 
 				voice);
-		regIdToVoiceAtten.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION, 
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION, 
 				voice);
+		
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_PERIOD,
+			new IRegisterAccess.IRegisterWriteListener() {
+				
+				@Override
+				public void registerChanged(int reg, int value) {
+					voice.setOperationPeriod(value);
+				}
+			}
+		);
+
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION,
+			new IRegisterAccess.IRegisterWriteListener() {
+				
+				@Override
+				public void registerChanged(int reg, int value) {
+					voice.setOperationAttenuation(value);
+				}
+			}
+		);
+
 		return TMS9919Consts.REG_COUNT_TONE;
 	}
 
@@ -153,31 +205,11 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		SoundVoice v = regIdToVoices.get(reg);
 		if (v == null)
 			throw new IllegalStateException();
+		IRegisterAccess.IRegisterWriteListener listener = regIdToListener.get(reg);
+		if (listener == null)
+			throw new IllegalStateException();
 		
-		ClockedSoundVoice cv = regIdToVoicePeriod.get(reg);
-		if (cv != null) {
-			cv.setOperationPeriod(value);
-		}
-		else {
-			cv = regIdToVoiceAtten.get(reg);
-			if (cv != null) {
-				cv.setOperationAttenuation(value);
-			}
-			else {
-				NoiseGeneratorVoice nv = regIdToVoiceControl.get(reg);
-				if (nv != null) {
-					nv.setOperationNoiseControl(value);
-				}
-				else {
-					AudioGateSoundVoice av = regIdToVoiceAudio.get(reg);
-					if (av != null) {
-						av.setState(machine, value != 0);
-					} 
-					else
-						throw new IllegalStateException();
-				}
-			}
-		}
+		listener.registerChanged(reg, value);
 		
 		v.setupVoice();
 		

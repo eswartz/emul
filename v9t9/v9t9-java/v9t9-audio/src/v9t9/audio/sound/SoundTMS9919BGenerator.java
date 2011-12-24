@@ -7,7 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.sound.TMS9919BConsts;
+import v9t9.common.sound.TMS9919Consts;
 import static v9t9.common.sound.TMS9919BConsts.*;
 
 /**
@@ -18,7 +20,6 @@ import static v9t9.common.sound.TMS9919BConsts.*;
  */
 public class SoundTMS9919BGenerator extends SoundTMS9919Generator {
 
-	protected Map<Integer, EnhancedVoice> regIdToVoiceEffects; 
 	protected Map<Integer, Integer> regIdEffectId; 
 	
 	public SoundTMS9919BGenerator(IMachine machine, String name, int regBase) {
@@ -31,7 +32,6 @@ public class SoundTMS9919BGenerator extends SoundTMS9919Generator {
 	@Override
 	protected int doInitVoices(String name, int regBase) {
 
-		regIdToVoiceEffects = new HashMap<Integer, EnhancedVoice>();
 		regIdEffectId = new HashMap<Integer, Integer>();
 		
 		for (int i = VOICE_TONE_0; i <= VOICE_TONE_2; i++) {
@@ -53,109 +53,142 @@ public class SoundTMS9919BGenerator extends SoundTMS9919Generator {
 	}
 	
 
-	protected int setupEnhancedToneVoice(int regBase, int num, EnhancedToneGeneratorVoice voice) {
+	protected int setupEnhancedToneVoice(int regBase, int num, final EnhancedToneGeneratorVoice voice) {
 		int cnt = super.setupToneVoice(regBase, num, voice);
+
+		updateAttenuationListener(regBase, voice);
 		
 		for (int e = 0; e < TMS9919BConsts.CMD_NUM_EFFECTS; e++) {
 			int rnum = regBase + TMS9919BConsts.REG_COUNT_TONE + e;
-			regIdToVoiceEffects.put(rnum, voice);
+
+			regIdToVoices.put(rnum, voice);
+			
+			regIdToListener.put(rnum,
+				new IRegisterAccess.IRegisterWriteListener() {
+					
+					@Override
+					public void registerChanged(int reg, int value) {
+						setEffect(voice, reg, value);
+					}
+				}
+			);
 			regIdEffectId.put(rnum, e);
 		}
 
 		return cnt + TMS9919BConsts.CMD_NUM_EFFECTS;
 	}
 
-	protected int setupEnhancedNoiseVoice(int regBase, EnhancedNoiseGeneratorVoice voice) {
+
+	protected int setupEnhancedNoiseVoice(int regBase, final EnhancedNoiseGeneratorVoice voice) {
 		int cnt = super.setupNoiseVoice(regBase, voice);
+
+		updateAttenuationListener(regBase, voice);
 		
 		for (int e = 0; e < TMS9919BConsts.CMD_NUM_EFFECTS; e++) {
 			int rnum = regBase + TMS9919BConsts.REG_COUNT_NOISE + e;
-			regIdToVoiceEffects.put(rnum, voice);
+
+			regIdToVoices.put(rnum, voice);
+			regIdToListener.put(rnum,
+				new IRegisterAccess.IRegisterWriteListener() {
+					
+					@Override
+					public void registerChanged(int reg, int value) {
+						setEffect(voice, reg, value);
+					}
+				}
+			);
 			regIdEffectId.put(rnum, e);
 		}
 
 		return cnt + TMS9919BConsts.CMD_NUM_EFFECTS;
 	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.machine.IRegisterAccess.IRegisterWriteListener#registerChanged(int, int)
+	
+	/**
+	 * @param regBase
+	 * @param voice
 	 */
-	@Override
-	public void registerChanged(int reg, int val) {
+	private void updateAttenuationListener(int regBase, final EnhancedVoice voice) {
+		final IRegisterAccess.IRegisterWriteListener attListener = regIdToListener.get(regBase + 
+				TMS9919Consts.REG_OFFS_ATTENUATION);
 		
-		EnhancedVoice ev = regIdToVoiceEffects.get(reg);
-		if (ev != null) {
-			int eff = regIdEffectId.get(reg);
-			switch (eff) {
-			case CMD_RESET:
-				ev.getEffectsController().reset();
-				break;
-			case CMD_RELEASE:
-				ev.getEffectsController().startRelease();
-				break;
-			case CMD_ENVELOPE:
-				ev.getEffectsController().setSustain(val & 0xf);
-				break;
-			case CMD_ENV_ATTACK_DECAY:
-				ev.getEffectsController().setADSR(
-						OP_ATTACK, (val >> 4) & 0xf);
-				ev.getEffectsController().setADSR(
-						OP_DECAY, val & 0xf);
-				break;
-			case CMD_ENV_HOLD_RELEASE:
-				ev.getEffectsController().setADSR(
-						OP_HOLD, (val >> 4) & 0xf);
-				ev.getEffectsController().setADSR(
-						OP_RELEASE, val & 0xf);
-				break;
-			case CMD_VIBRATO:
-				ev.getEffectsController().setVibrato(
-						(val >> 4) & 0xf, val & 0xf);
-				break;
-			case CMD_TREMOLO:
-				ev.getEffectsController().setTremolo(
-						(val >> 4) & 0xf, val & 0xf);
-				break;
-			case CMD_WAVEFORM:
-				ev.getEffectsController().setWaveform(val & 0xf);
-				break;
-			case CMD_SWEEP_PROPORTION: {
-				int target = ((ClockedSoundVoice) ev).getClock();
-				if (val > 0)
-					target += (target * val / 127);
-				else
-					target -= (target * -val / 128);
-				ev.getEffectsController().setSweepTarget(target);
-				break;
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION,
+				new IRegisterAccess.IRegisterWriteListener() {
+					
+					@Override
+					public void registerChanged(int reg, int value) {
+						attListener.registerChanged(reg, value);
+						updateEnvelope(voice, value);
+					}
 			}
-			case CMD_SWEEP_TIME: {
-				int clocks = (val & 0xff) * ((ClockedSoundVoice)ev).soundClock * 64 / 255;
-				ev.getEffectsController().setSweepTime(clocks);
-				break;
-			}
-			case CMD_BALANCE:
-				((SoundVoice)ev).setBalance((byte) val);
-				break;
-			}
-			
-			if (soundHandler != null)
-				soundHandler.generateSound();
+		);
+		
+	}
 
-		} else {
-			super.registerChanged(reg, val);
+	/**
+	 * @param voice
+	 */
+	protected void updateEnvelope(EnhancedVoice voice, int val) {
+		byte vol = ((ClockedSoundVoice) voice).getVolume();
+		if (vol == 0 || (val & 0x90) == 0x80)
+			voice.getEffectsController().stopEnvelope();
+		else
+			voice.getEffectsController().updateVoice();
+	}
 
-			ClockedSoundVoice cv = regIdToVoiceAtten.get(reg);
-			if (cv instanceof EnhancedVoice) {
-				ev = (EnhancedVoice) cv;
-				if ((val & 0x80) == 0x80) { 
-					byte vol = cv.getVolume();
-					if (vol == 0 || (val & 0x90) == 0x80)
-						ev.getEffectsController().stopEnvelope();
-					else
-						ev.getEffectsController().updateVoice();
-				}
-			}
 
+	protected void setEffect(EnhancedVoice ev, int reg, int val) {
+		int eff = regIdEffectId.get(reg);
+		switch (eff) {
+		case CMD_RESET:
+			ev.getEffectsController().reset();
+			break;
+		case CMD_RELEASE:
+			ev.getEffectsController().startRelease();
+			break;
+		case CMD_ENVELOPE:
+			ev.getEffectsController().setSustain(val & 0xf);
+			break;
+		case CMD_ENV_ATTACK_DECAY:
+			ev.getEffectsController().setADSR(
+					OP_ATTACK, (val >> 4) & 0xf);
+			ev.getEffectsController().setADSR(
+					OP_DECAY, val & 0xf);
+			break;
+		case CMD_ENV_HOLD_RELEASE:
+			ev.getEffectsController().setADSR(
+					OP_HOLD, (val >> 4) & 0xf);
+			ev.getEffectsController().setADSR(
+					OP_RELEASE, val & 0xf);
+			break;
+		case CMD_VIBRATO:
+			ev.getEffectsController().setVibrato(
+					(val >> 4) & 0xf, val & 0xf);
+			break;
+		case CMD_TREMOLO:
+			ev.getEffectsController().setTremolo(
+					(val >> 4) & 0xf, val & 0xf);
+			break;
+		case CMD_WAVEFORM:
+			ev.getEffectsController().setWaveform(val & 0xf);
+			break;
+		case CMD_SWEEP_PROPORTION: {
+			int target = ((ClockedSoundVoice) ev).getClock();
+			if (val > 0)
+				target += (target * val / 127);
+			else
+				target -= (target * -val / 128);
+			ev.getEffectsController().setSweepTarget(target);
+			break;
+		}
+		case CMD_SWEEP_TIME: {
+			int clocks = (val & 0xff) * ((ClockedSoundVoice)ev).soundClock * 64 / 255;
+			ev.getEffectsController().setSweepTime(clocks);
+			break;
+		}
+		case CMD_BALANCE:
+			((SoundVoice)ev).setBalance((byte) val);
+			break;
 		}
 	}
+
 }
