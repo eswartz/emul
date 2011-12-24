@@ -38,7 +38,7 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		this.spritebitmap = new int[vdpCanvas.getBlockCount()];
 		this.sprites = new VdpSprite[NUMSPRITES];
 		for (int n = 0; n < NUMSPRITES; n++) {
-			sprites[n] = new VdpSprite();
+			sprites[n] = new VdpSprite(n);
 		}
 		this.rowcount = new int[vdpCanvas.getHeight()];
 		this.knowndirty = 0;
@@ -77,7 +77,7 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		}
 		
 		// see where the screen changed and forces new sprite redraws
-		updateSpriteBitmapForScreenChanges(screenCanvas, screenChanges);
+		updateSpriteBitmapForScreenChanges(screenCanvas, screenChanges, oldspritebitmap);
 		
 		// see where the current sprites mark the screen
 		maximal = getSpriteCoverage();
@@ -87,6 +87,8 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		
 		// mark changed positions in screen so it will be redrawn before sprites
 		updateScreenBitmapForSpriteChanges(screenCanvas, screenChanges);
+
+		updateSpriteBitmapForScreenChanges(screenCanvas, screenChanges, spritebitmap);
 		
 		int[] tmp = oldspritebitmap;
 		oldspritebitmap = spritebitmap;
@@ -102,7 +104,8 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 	 * @param screenCanvas the screen's canvas, used for resolution matching
 	 */
 	protected void updateSpriteBitmapForScreenChanges(ICanvas screenCanvas,
-			BitSet screenChanges) {
+			BitSet screenChanges,
+			int[] bitmap) {
 		int blockStride = screenCanvas.getVisibleWidth() / 8;
 		// 512-wide modes draw double-width sprites
 		int blockMag = blockStride / 32;
@@ -115,7 +118,7 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 				if (blockMag > 1)
 					screenChanged |= screenChanges.get(screenOffs + j * blockMag + 1);
 				if (screenChanged) {
-					int oldsprites = oldspritebitmap[i + j] & ~knowndirty;
+					int oldsprites = bitmap[i + j] & ~knowndirty;
 					if (oldsprites != 0) {
 						for (int n = 0; n < NUMSPRITES; n++) {
 							if ((oldsprites & (1 << n)) != 0) {
@@ -157,8 +160,9 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 					int bmrowoffs = (((oy+sprite.getY()) & 0xff)/8) * 32;
 					if (bmrowoffs < spritebitmap.length) {
 						for (int ox = 0; ox < xcols; ox += 8) {
-							int bmcol = ((ox+sprite.getX()+sprite.getShift()) & 0xff) /8;
-							spritebitmap[bmrowoffs + bmcol] |= 1 << n;
+							int bmcol = (ox+sprite.getX()+sprite.getShift()) / 8;
+							if (bmcol >= 0 && bmcol < 32)
+								spritebitmap[bmrowoffs + bmcol] |= 1 << n;
 						}
 					}
 				}
@@ -251,7 +255,7 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		int blockCount = 32 * screenCanvas.getHeight() / 8;
 		int screenOffs = 0;
 		
-		int touched= 0;
+		int touched = 0;
 		for (int i = 0; i < blockCount; i += 32) {
 			for (int j = 0; j < 32; j++) {
 				if (((spritebitmap[i + j] | oldspritebitmap[i + j]) & knowndirty) != 0) {
@@ -362,6 +366,8 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		// color 0 is transparent and always invisible
 		if (sprite.getColor() == 0)
 			return;
+		
+		System.out.println("Drawing " + sprite);
 		
 		int x = sprite.getX();
 		int y = sprite.getY();

@@ -69,7 +69,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	
 	@Override
 	protected void updateSpriteBitmapForScreenChanges(ICanvas screenCanvas,
-			BitSet screenChanges) {
+			BitSet screenChanges, int[] bitmap) {
 		screenSpriteChanges = screenChanges;
 		// no changes to screen can affect sprites here
 	}

@@ -10,8 +10,10 @@ public class VdpSprite extends SpriteBase {
 	private ByteMemoryAccess pattern;
 	
 	private ByteMemoryAccess colorStripe;
+	private final int n;
 	
-	public VdpSprite() {
+	public VdpSprite(int n) {
+		this.n = n;
 	}
 	
 	/* (non-Javadoc)
@@ -20,9 +22,9 @@ public class VdpSprite extends SpriteBase {
 	@Override
 	public String toString() {
 		if (color == 0 && colorStripe == null)
-			return "VdpSprite";
+			return "VdpSprite #" + n;
 		else
-			return super.toString();
+			return super.toString() + " #" + n;
 	}
 	
 	public byte getColor() {
