@@ -74,8 +74,11 @@ public class MultiSoundTMS9919 implements ISoundChip {
 		// borks the intended use of stereo on the other chips.
 		// So we ignore it.
 		this.chips = new SoundTMS9919[5];
+		int regBase = 0;
 		for (int i = 0; i < 5; i++) {
-			chips[i] = new SoundTMS9919(machine, "Chip #" + i);
+			
+			chips[i] = new SoundTMS9919(machine, "Chip #" + i, 2, regBase);
+			regBase += 2;
 			
 			/*byte balance = (byte) (i == 0 ? 0 : ((i & 1) != 0 ? -128 : 128)); 
 			for (SoundVoice voice : chips[i].getSoundVoices()) {

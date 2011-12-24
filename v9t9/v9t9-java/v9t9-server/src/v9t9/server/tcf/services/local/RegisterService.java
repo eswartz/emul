@@ -17,7 +17,7 @@ import org.eclipse.tm.tcf.services.IRegisters;
 
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
-import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.machine.IRegisterAccess.RegisterInfo;
 import v9t9.server.tcf.services.IRegistersV2;
 
 /**
@@ -172,10 +172,12 @@ public class RegisterService extends BaseServiceImpl {
 		if (id == null || id.length() == 0 || id.equals(ROOT))
 			throw new ErrorReport("Invalid context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);
 		
-		if (IMemoryDomain.NAME_CPU.equals(id)) {
+		if (IRegisterAccess.ID_CPU.equals(id)) {
 			return machine.getCpu().getState();
-		} else if (IMemoryDomain.NAME_VIDEO.equals(id)) {
+		} else if (IRegisterAccess.ID_VIDEO.equals(id)) {
 			return machine.getVdp();
+		} else if (IRegisterAccess.ID_SOUND.equals(id)) {
+			return machine.getSound();
 		}
 		
 		throw new ErrorReport("Unknown context " + id, IErrorReport.TCF_ERROR_INV_CONTEXT);		
@@ -194,7 +196,12 @@ public class RegisterService extends BaseServiceImpl {
 
 		if (id == null || id.length() == 0 || id.equals(ROOT)) {
 			return new Object[] { null, 
-					new String[] { IMemoryDomain.NAME_CPU, IMemoryDomain.NAME_VIDEO } };
+					new String[] { 
+					IRegisterAccess.ID_CPU, 
+					IRegisterAccess.ID_VIDEO,
+					IRegisterAccess.ID_SOUND 
+				} 
+			};
 		}
 		IRegisterAccess access = getAccessOrError(id);
 		if (access == null)
@@ -202,8 +209,11 @@ public class RegisterService extends BaseServiceImpl {
 			
 		String pfx = args[0].toString() + ".";
 		List<String> kids = new ArrayList<String>();
-		for (int i = 0; i < access.getRegisterCount(); i++)
-			kids.add(pfx + access.getRegisterInfo(i + access.getFirstRegister()).id);
+		for (int i = 0; i < access.getRegisterCount(); i++) {
+			RegisterInfo registerInfo = access.getRegisterInfo(i + access.getFirstRegister());
+			assert registerInfo != null && registerInfo.id != null;
+			kids.add(pfx + registerInfo.id);
+		}
 		return new Object[] { null, kids };
 	}
 

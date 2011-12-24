@@ -31,21 +31,24 @@ public class SoundTMS9919 implements ISoundChip {
 	/** Control + Audio Gate */
 	private final static int REG_COUNT = 2;
 	
-	private final static Map<Integer, String> regNames = new HashMap<Integer, String>();
-	private final static Map<Integer, String> regDescs = new HashMap<Integer, String>();
-	private final static Map<String, Integer> regIds = new HashMap<String, Integer>();
+	protected final static Map<Integer, String> regNames = new HashMap<Integer, String>();
+	protected final static Map<Integer, String> regDescs = new HashMap<Integer, String>();
+	protected final static Map<String, Integer> regIds = new HashMap<String, Integer>();
 	
-	protected static void register(int reg, String id, String desc) {
+	protected static void register(Map<Integer, String> regNames, Map<Integer, String> regDescs, Map<String, Integer> regIds,
+			int reg, String id, String desc) {
 		regNames.put(reg, id);
 		regDescs.put(reg, desc);
 		regIds.put(id, reg);
 	}
 	
-	static int registerRegisters(int base, boolean audioGate) {
-		register(base, "Ctrl", "Sound Control");
+	static int registerRegisters(Map<Integer, String> regNames, Map<Integer, String> regDescs, Map<String, Integer> regIds,
+			int base, boolean audioGate) {
+		register(regNames, regDescs, regIds, base, "Ctrl", "Sound Control");
 		
 		if (audioGate) {
-			register(base + 1, 
+			register(regNames, regDescs, regIds, 
+					base + 1, 
 					"AudioGate",
 					"Audio Gate");
 			
@@ -56,7 +59,7 @@ public class SoundTMS9919 implements ISoundChip {
 	}
 	
 	static {
-		registerRegisters(0, true);
+		registerRegisters(regNames, regDescs, regIds, 0, true);
 	}
 
 	private byte[] registers;
@@ -85,15 +88,18 @@ public class SoundTMS9919 implements ISoundChip {
 
 	private ListenerList<IRegisterWriteListener> listeners;
 
-	protected SoundTMS9919(IMachine machine, String name, int regCount) {
+	protected final int regBase;
+
+	protected SoundTMS9919(IMachine machine, String name, int regCount, int regBase) {
 		this.machine = machine;
+		this.regBase = regBase;
 		init(name);
 		listeners = new ListenerList<IRegisterWriteListener>();
 		registers = new byte[regCount];
 	}
 	
 	public SoundTMS9919(IMachine machine, String name) {
-		this(machine, name, 2);
+		this(machine, name, 2, 0);
 	}
 	
 	protected void init(String name) {
@@ -108,7 +114,7 @@ public class SoundTMS9919 implements ISoundChip {
 	 * @see v9t9.engine.SoundHandler#writeSound(byte)
 	 */
 	public void writeSound(int addr, byte val) {
-		setRegister(0, val);
+		setRegister(regBase, val);
 		
 		
 		ClockedSoundVoice v;
@@ -289,11 +295,9 @@ public class SoundTMS9919 implements ISoundChip {
 	 */
 	@Override
 	public int setRegister(int reg, int newValue) {
-		int oldValue = registers[reg];
-		if (registers[reg] != newValue) {
-			registers[reg] = (byte) newValue;
-			fireRegisterChanged(reg, newValue);
-		}
+		int oldValue = registers[reg - regBase];
+		registers[reg - regBase] = (byte) newValue;
+		fireRegisterChanged(reg, newValue);
 		return oldValue;
 	}
 

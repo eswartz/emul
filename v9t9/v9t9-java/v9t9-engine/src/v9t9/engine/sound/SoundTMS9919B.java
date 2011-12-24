@@ -19,9 +19,11 @@ public class SoundTMS9919B extends SoundTMS9919 {
 	private static final int REG_COUNT = 4;
 
 	static {
-		register(2, "FX", "Effects");
+		register(regNames, regDescs, regIds, 
+				2, "FX", "Effects");
 		
-		register(3, 
+		register(regNames, regDescs, regIds, 
+				3, 
 				"FXVal",
 				"Effects Value");
 	}
@@ -30,8 +32,8 @@ public class SoundTMS9919B extends SoundTMS9919 {
 
 	private int cmdVoice;
 	
-	public SoundTMS9919B(IMachine machine, String name) {
-		super(machine, name);
+	public SoundTMS9919B(IMachine machine, String name, int regBase) {
+		super(machine, name, REG_COUNT, regBase);
 	}
 	
 	protected void init(String name) {
@@ -50,6 +52,8 @@ public class SoundTMS9919B extends SoundTMS9919 {
 	public void writeSound(int addr, byte val) {
 		//System.out.println("Writing " + Utils.toHex2(addr & 0x6) + " := " + Utils.toHex2(val));
 		if ((addr & 0x6) == 0x2) {
+			setRegister(regBase + 2, val);
+			
 			// command byte
 			if ((val & 0x80) != 0) {
 				cmdVoice = getOperationVoice(val);
@@ -70,6 +74,8 @@ public class SoundTMS9919B extends SoundTMS9919 {
 				}
 			}
 		} else if ((addr & 0x6) == 0x4) {
+			setRegister(regBase + 3, val);
+			
 			// data 
 			if (!(sound_voices[cmdVoice] instanceof EnhancedVoice))
 				return;

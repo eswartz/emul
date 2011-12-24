@@ -12,6 +12,10 @@ import v9t9.common.memory.IMemoryDomain;
  *
  */
 public interface IRegisterAccess {
+	String ID_CPU = "CPU";
+	String ID_VIDEO = "VIDEO";
+	String ID_SOUND = "SOUND";
+	
 	
 	int FLAG_ROLE_GENERAL = 0;
 	int FLAG_ROLE_PC = 1;
@@ -22,6 +26,8 @@ public interface IRegisterAccess {
 	int FLAG_ROLE_MASK = 0x7;
 	int FLAG_VOLATILE = 1 << 3;
 	int FLAG_SIDE_EFFECTS = 1 << 4;
+
+
 	
 	class RegisterInfo {
 		public final String id;

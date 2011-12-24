@@ -29,7 +29,7 @@ public interface ICompiler {
 			"CompilerOptmizeCallsWithData", new Boolean(false));
 	static public final SettingSchema settingDebugInstructions = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"DebugInstructions", new Boolean(false));
+			"DebugInstructions", new Boolean(true));
 	static public final SettingSchema settingCompileFunctions = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"CompilerCompileFunctions", new Boolean(false));

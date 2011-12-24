@@ -25,40 +25,38 @@ import ejs.base.utils.ListenerList;
  */
 public class MultiSoundTMS9919B implements ISoundChip {
 
-	private static final int REG_COUNT = 2 + 3 * 4 + 1;
+	private static final int REG_COUNT = 1 + 3 * 4 + 1;
 	
 	private final static Map<Integer, String> regNames = new HashMap<Integer, String>();
 	private final static Map<Integer, String> regDescs = new HashMap<Integer, String>();
 	private final static Map<String, Integer> regIds = new HashMap<String, Integer>();
 	
-	private static void register(int reg, String id, String desc) {
-		regNames.put(reg, id);
-		regDescs.put(reg, desc);
-		regIds.put(id, reg);
-	}
-	
 	static {
 		// base TMS9919
-		int offs = SoundTMS9919.registerRegisters(0, false);
+		int offs = SoundTMS9919.registerRegisters(regNames, regDescs, regIds, 0, false);
 		
 		// now, four TMS9919Bs
 		for (int chip = 0; chip < 4; chip++) {
 			int regBase = offs + 3 * chip;
 			
-			register(regBase, 
+			SoundTMS9919.register(regNames, regDescs, regIds,
+					regBase, 
 					"Ctrl" + chip,
 					"Sound Control #" + chip);
 			
-			register(regBase + 1, 
+			SoundTMS9919.register(regNames, regDescs, regIds,
+					regBase + 1, 
 					"FX" + chip,
 					"Effects #" + chip);
 			
-			register(regBase + 2, 
+			SoundTMS9919.register(regNames, regDescs, regIds,
+					regBase + 2, 
 					"FXVal" + chip,
 					"Effects Value #" + chip);
 		}
 
-		register(REG_COUNT - 1, 
+		SoundTMS9919.register(regNames, regDescs, regIds,
+				REG_COUNT - 1, 
 				"AudioGate",
 				"Audio Gate");
 	}
@@ -78,9 +76,12 @@ public class MultiSoundTMS9919B implements ISoundChip {
 		this.machine = machine;
 		this.chips = new SoundTMS9919[5];
 		chips[0] = new SoundTMS9919(machine, "Console Chip");
+		
+		int regBase = ((SoundTMS9919) chips[0]).getRegisterCount();
 		//chips[0] = new SoundTMS9919B(machine, "Console Chip");
 		for (int i = 0; i < 4; i++) {
-			chips[i + 1] = new SoundTMS9919B(machine, "Chip #" + i);
+			chips[i + 1] = new SoundTMS9919B(machine, "Chip #" + i, regBase);
+			regBase += ((SoundTMS9919B) chips[i + 1]).getRegisterCount();
 			
 			/*byte balance = (byte) ((i & 1) == 0 ? -128 : 127); 
 			for (SoundVoice voice : chips[i + 1].getSoundVoices()) {
@@ -88,6 +89,8 @@ public class MultiSoundTMS9919B implements ISoundChip {
 			}*/
 		}
 		voices = null;
+		
+		listeners = new ListenerList<IRegisterAccess.IRegisterWriteListener>();
 	}
 
 	public synchronized ISoundVoice[] getSoundVoices() {
@@ -240,10 +243,8 @@ public class MultiSoundTMS9919B implements ISoundChip {
 	@Override
 	public int setRegister(int reg, int newValue) {
 		int oldValue = registers[reg];
-		if (registers[reg] != newValue) {
-			registers[reg] = (byte) newValue;
-			fireRegisterChanged(reg, newValue);
-		}
+		registers[reg] = (byte) newValue;
+		fireRegisterChanged(reg, newValue);
 		return oldValue;
 	}
 

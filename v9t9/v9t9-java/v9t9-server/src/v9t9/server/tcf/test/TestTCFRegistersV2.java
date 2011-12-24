@@ -28,7 +28,7 @@ import org.junit.Test;
 
 import ejs.base.utils.Pair;
 
-import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.machine.IRegisterAccess;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.server.tcf.services.IRegistersV2;
@@ -394,7 +394,11 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 	/** Make sure each register publishes the PROP_NUMBER attribute */
 	@Test
 	public void testGetRegisterContextNumbers() throws Throwable {
-		for (final String contextId : new String[] { IMemoryDomain.NAME_CPU, IMemoryDomain.NAME_VIDEO }) {
+		for (final String contextId : new String[] { 
+				IRegisterAccess.ID_CPU, 
+				IRegisterAccess.ID_VIDEO, 
+				IRegisterAccess.ID_SOUND, 
+			}) {
 			final String[][] kidsArr = { null };
 
 			new TCFCommandWrapper() {
@@ -493,8 +497,8 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 	}
 
 	@Test
-	public void testSimpleChange() throws Throwable {
-		RegistersContext cpu = getRegistersContext(regV2, IMemoryDomain.NAME_CPU);
+	public void testCpuSimpleChange() throws Throwable {
+		RegistersContext cpu = getRegistersContext(regV2, IRegisterAccess.ID_CPU);
 		String pcId = cpu.getID() + ".PC";
 		int pcReg = cpu.getName().contains("9900") ? Cpu9900.REG_PC :
 			cpu.getName().contains("F99b") ? CpuF99b.PC : -1;
@@ -503,7 +507,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		final int QUANTUM = 50;
 		
 		// get only a single report per cycle
-		RegRunner runner = new RegRunner("test1", IMemoryDomain.NAME_CPU, 
+		RegRunner runner = new RegRunner("test1", IRegisterAccess.ID_CPU, 
 				Arrays.asList(new Integer[] { pcReg }),
 				QUANTUM, 0);
 		
@@ -535,13 +539,13 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 
 	@Test
 	public void testSimpleAllCpuRegChange() throws Throwable {
-		doSimpleRegTestCycle(IMemoryDomain.NAME_CPU, 0xfffe);
+		doSimpleRegTestCycle(IRegisterAccess.ID_CPU, 0xfffe);
 				
 	}
 	
 	@Test
 	public void testSimpleAllVideoRegChange() throws Throwable {
-		doSimpleRegTestCycle(IMemoryDomain.NAME_VIDEO, 0xff);
+		doSimpleRegTestCycle(IRegisterAccess.ID_VIDEO, 0xff);
 		
 	}
 
@@ -607,18 +611,48 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 	
 
 	@Test
-	public void testContinuousAllRegChange() throws Throwable {
+	public void testContinuousVideoAllRegChange() throws Throwable {
 		Map<String, RegistersContext> regContexts = new LinkedHashMap<String, IRegisters.RegistersContext>();
 		Map<String, Integer> regIdToNumMap = new LinkedHashMap<String, Integer>();
 		
-		gatherRegisterContexts(regV2, IMemoryDomain.NAME_VIDEO, regContexts, regIdToNumMap, null);
+		gatherRegisterContexts(regV2, IRegisterAccess.ID_VIDEO, regContexts, regIdToNumMap, null);
 		
 		final int QUANTUM = 1000;
 		
 		// get continuous reports of changes
-		RegRunner runner = new RegRunner("testV", IMemoryDomain.NAME_VIDEO, 
+		RegRunner runner = new RegRunner("testV", IRegisterAccess.ID_VIDEO, 
 				regIdToNumMap.values(), QUANTUM, -1);
 		
+		doContinuousAllRegChanges(regIdToNumMap, runner);
+				
+	}
+
+
+	@Test
+	public void testContinuousSoundAllRegChange() throws Throwable {
+		Map<String, RegistersContext> regContexts = new LinkedHashMap<String, IRegisters.RegistersContext>();
+		Map<String, Integer> regIdToNumMap = new LinkedHashMap<String, Integer>();
+		
+		gatherRegisterContexts(regV2, IRegisterAccess.ID_SOUND, regContexts, regIdToNumMap, null);
+		
+		final int QUANTUM = 1000;
+		
+		// get continuous reports of changes
+		RegRunner runner = new RegRunner("testS", IRegisterAccess.ID_SOUND, 
+				regIdToNumMap.values(), QUANTUM, -1);
+		
+		doContinuousAllRegChanges(regIdToNumMap, runner);
+				
+	}
+
+	/**
+	 * @param regIdToNumMap
+	 * @param runner
+	 * @throws Throwable
+	 */
+	protected void doContinuousAllRegChanges(
+			Map<String, Integer> regIdToNumMap, RegRunner runner)
+			throws Throwable {
 		runner.saveRegs();
 		
 		try {
@@ -670,7 +704,6 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			runner.stopListening();
 			runner.restoreRegs();
 		}
-				
 	}
 
 }
