@@ -367,7 +367,7 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		if (sprite.getColor() == 0)
 			return;
 		
-		System.out.println("Drawing " + sprite);
+		//System.out.println("Drawing " + sprite);
 		
 		int x = sprite.getX();
 		int y = sprite.getY();
