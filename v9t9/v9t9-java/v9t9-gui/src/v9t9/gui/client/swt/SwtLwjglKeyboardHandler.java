@@ -21,6 +21,8 @@ import v9t9.common.machine.IMachine;
  */
 public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHandler {
 
+	private static boolean DEBUG = false;
+	
 	/**
 	 * Handle lwjgl input controllers
 	 * @author ejs
@@ -42,8 +44,10 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 		 */
 		public StupidControllerHandler(Controller controller) {
 			this.controller = controller;
-			for (Component c : controller.getComponents())
-				System.out.println(c);
+			if (DEBUG) {
+				for (Component c : controller.getComponents())
+					System.out.println(c);
+			}
 			leftXAxis = controller.getComponent(Identifier.Axis.X);
 			rightXAxis = controller.getComponent(Identifier.Axis.RX);
 			leftYAxis = controller.getComponent(Identifier.Axis.Y);
@@ -97,7 +101,8 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 					if (isButtonFor(button, joy)) {
 						fire = button.getPollData() != 0;
 						if (fire) {
-							System.out.println(button.getIdentifier());
+							if (DEBUG)
+								System.out.println(button.getIdentifier());
 							break;
 						}
 					}
