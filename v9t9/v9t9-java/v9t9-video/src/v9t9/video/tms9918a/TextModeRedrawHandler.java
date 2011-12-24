@@ -4,7 +4,6 @@
 package v9t9.video.tms9918a;
 
 import v9t9.common.video.RedrawBlock;
-import v9t9.common.video.VdpChanges;
 import v9t9.common.video.VdpModeInfo;
 import v9t9.video.BaseRedrawHandler;
 import v9t9.video.IVdpModeRedrawHandler;
@@ -33,7 +32,7 @@ public class TextModeRedrawHandler extends BaseRedrawHandler implements
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#updateCanvas(v9t9.emulator.clients.builtin.VdpCanvas, v9t9.emulator.clients.builtin.InternalVdp.RedrawBlock[])
 	 */
-	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
+	public int updateCanvas(RedrawBlock[] blocks) {
 		/*  Redraw changed chars  */
 
 		int count = 0;
@@ -45,21 +44,22 @@ public class TextModeRedrawHandler extends BaseRedrawHandler implements
 		bg = (byte) (info.vdpregs[7] & 0xf);
 		fg = (byte) ((info.vdpregs[7] >> 4) & 0xf);
 
-		for (int i = 0; i < 960; i++) {
-			if (force || info.changes.screen[i] != VdpChanges.SC_UNTOUCHED) {			/* this screen pos updated? */
-				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+		for (int i = info.changes.screen.nextSetBit(0); 
+			i >= 0 && i < modeInfo.screen.size; 
+			i = info.changes.screen.nextSetBit(i+1)) 
+		{
 
-				RedrawBlock block = blocks[count++];
-				
-				block.r = (i / 40) << 3;	
-				block.c = (i % 40) * 6 + (256 - 240) / 2;
+			int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
 
-				int pattOffs = pattBase + (currchar << 3);
-				info.canvas.draw8x6TwoColorBlock(block.r, block.c, 
-						info.vdp.getByteReadMemoryAccess(pattOffs), fg, bg);
-			}
+			RedrawBlock block = blocks[count++];
+			
+			block.r = (i / 40) << 3;	
+			block.c = (i % 40) * 6 + (256 - 240) / 2;
+
+			int pattOffs = pattBase + (currchar << 3);
+			info.canvas.draw8x6TwoColorBlock(block.r, block.c, 
+					info.vdp.getByteReadMemoryAccess(pattOffs), fg, bg);
 		}
-
 
 		return count;
 	}

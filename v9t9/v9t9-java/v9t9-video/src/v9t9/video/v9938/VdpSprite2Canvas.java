@@ -3,6 +3,8 @@
  */
 package v9t9.video.v9938;
 
+import java.util.BitSet;
+
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.ISpriteDrawingCanvas;
@@ -54,7 +56,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	
 	private Sprite2VdpCanvas spriteCanvas;
 	/** which screen changes there were, requiring sprite reblits */
-	private byte[] screenSpriteChanges;
+	private BitSet screenSpriteChanges;
 	private final boolean evenOddColors;
 
 	public VdpSprite2Canvas(IVdpCanvas canvas, int maxPerLine, boolean evenOddColors) {
@@ -67,25 +69,25 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	
 	@Override
 	protected void updateSpriteBitmapForScreenChanges(ICanvas screenCanvas,
-			byte[] screenChanges) {
+			BitSet screenChanges) {
 		screenSpriteChanges = screenChanges;
 		// no changes to screen can affect sprites here
 	}
 
 	@Override
-	public void drawSprites(ISpriteDrawingCanvas canvas) {
+	public void drawSprites(ISpriteDrawingCanvas canvas, boolean force) {
 		//spriteCanvas.clear(null);
 		// clear the blocks where the sprites are moving
 		//int cleared = 0;
 		for (int i = 0; i < spritebitmap.length; i++) {
-			if ((spritebitmap[i] & knowndirty) != 0) {
+			if (force || (spritebitmap[i] & knowndirty) != 0) {
 				int offset = spriteCanvas.getBitmapOffset(i % 32 * 8, i / 32 * 8);
 				spriteCanvas.clear8x8Block(offset);
 				//cleared++;
 			}
 		}
 		//System.out.print(cleared +" cleared; ");
-		super.drawSprites((ISpriteDrawingCanvas) spriteCanvas);
+		super.drawSprites((ISpriteDrawingCanvas) spriteCanvas, force);
 		
 		blitSpriteCanvas((IVdpCanvas) canvas, evenOddColors);
 	}
@@ -264,8 +266,8 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		int screenOffs = 0;
 		for (int yblock = 0; yblock < blockCount; yblock++) {
 			for (int xblock = 0; xblock < 32; xblock++) {
-				if (screenSpriteChanges[screenOffs + xblock * blockMag] != 0 
-					|| (blockMag > 1 && screenSpriteChanges[screenOffs + xblock * blockMag + 1] != 0)) {
+				if (screenSpriteChanges.get(screenOffs + xblock * blockMag) 
+					|| (blockMag > 1 && screenSpriteChanges.get(screenOffs + xblock * blockMag + 1))) {
 					
 					if (!fourColorMode)
 						canvas.blitSpriteBlock(spriteCanvas, xblock * 8, yblock * 8, blockMag);

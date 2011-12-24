@@ -40,36 +40,31 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements IVdp
 		propagatePatternTouches();
 	}
 	
-	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
+	public int updateCanvas(RedrawBlock[] blocks) {
 		/*  Redraw changed chars  */
 		int count = 0;
 		int screenBase = modeInfo.screen.base;
-		for (int i = 0; i < 768; i++) {
-			byte changes = info.changes.screen[i];
-			if (force || changes != 0) {			/* this screen pos updated? */
-				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
+		
+		for (int i = info.changes.screen.nextSetBit(0); 
+			i >= 0 && i < modeInfo.screen.size; 
+			i = info.changes.screen.nextSetBit(i+1)) 
+		{
+			int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
 
-				RedrawBlock block = blocks[count++];
-				
-				block.r = (i >> 5) << 3;	/* for graphics mode */
-				block.c = (i & 31) << 3;
+			RedrawBlock block = blocks[count++];
+			
+			block.r = (i >> 5) << 3;	/* for graphics mode */
+			block.c = (i & 31) << 3;
+			byte color = (byte) info.vdp.readAbsoluteVdpMemory(modeInfo.color.base + (currchar >> 3));
 
-				redraw_graphics_block(
-						block,
-						modeInfo.patt.base + (currchar << 3),
-						(byte) info.vdp.readAbsoluteVdpMemory(modeInfo.color.base + (currchar >> 3))); 
-			}
+			byte fg, bg;
+			
+			bg = (byte) (color & 0xf);
+			fg = (byte) ((color >> 4) & 0xf);
+			
+			info.canvas.draw8x8TwoColorBlock(block.r, block.c, info.vdp.getByteReadMemoryAccess((modeInfo.patt.base + (currchar << 3))), fg, bg); 
 		}
 		return count;
-	}
-
-	private void redraw_graphics_block(RedrawBlock block, int pattOffs, byte color) {
-		byte fg, bg;
-		
-		bg = (byte) (color & 0xf);
-		fg = (byte) ((color >> 4) & 0xf);
-		
-		info.canvas.draw8x8TwoColorBlock(block.r, block.c, info.vdp.getByteReadMemoryAccess(pattOffs), fg, bg);
 	}
 
 }

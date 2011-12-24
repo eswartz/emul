@@ -231,7 +231,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	 * @param force
 	 */
 	public void updateCanvas(boolean force) {
-		spriteCanvas.drawSprites((ISpriteDrawingCanvas) info.canvas);
+		spriteCanvas.drawSprites((ISpriteDrawingCanvas) info.canvas, force);
 	}
 
 	public void redrawCanvas() {
@@ -247,7 +247,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	}
 
 	/* not done for sprites */
-	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
+	public int updateCanvas(RedrawBlock[] blocks) {
 		return 0;
 	}
 	

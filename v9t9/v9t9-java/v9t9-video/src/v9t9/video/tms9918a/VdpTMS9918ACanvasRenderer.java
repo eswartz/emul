@@ -457,7 +457,12 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 						if (!pauseMachine.getBoolean())
 							vdpChip.setRegister(REG_ST, vdpStatus);
 					}
-					count = vdpModeRedrawHandler.updateCanvas(blocks, vdpChanges.fullRedraw);
+					
+					if (vdpChanges.fullRedraw) {
+						vdpChanges.screen.set(0, getMaxRedrawblocks());
+					}
+					
+					count = vdpModeRedrawHandler.updateCanvas(blocks);
 					if (spriteRedrawHandler != null && drawSprites) {
 						spriteRedrawHandler.updateCanvas(vdpChanges.fullRedraw);
 					}
@@ -466,7 +471,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 
 			vdpCanvas.markDirty(blocks, count);
 			
-			Arrays.fill(vdpChanges.screen, (byte) 0);
+			vdpChanges.screen.clear();
 			Arrays.fill(vdpChanges.patt, (byte) 0);
 			Arrays.fill(vdpChanges.color, (byte) 0);
 			

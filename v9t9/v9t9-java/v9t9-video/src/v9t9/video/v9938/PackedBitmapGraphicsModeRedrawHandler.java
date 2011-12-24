@@ -32,7 +32,7 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		public void modify(int offs) {
 			int row = (offs / rowstride) >> 3;
 			int col = (offs % rowstride) >> blockshift;
-			info.changes.screen[row * blockstride + col] = 1;
+			info.changes.screen.set(row * blockstride + col);
 			info.changes.changed = true;
 		}
 		
@@ -65,7 +65,7 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		// we directly detect screen changes already
 	}
 	
-	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
+	public int updateCanvas(RedrawBlock[] blocks) {
 		/*  Redraw 8x8 blocks where pixels changed */
 		IVdpV9938 vdp9938 = (IVdpV9938)info.vdp;
 		int pageOffset = ((VdpV9938CanvasRenderer) info.renderer).getGraphicsPageOffset();
@@ -75,22 +75,21 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		//System.out.println(pageOffset);
 		int count = 0;
 		int screenSize = blockcount;
-		for (int i = 0; i < screenSize; i++) {
-			byte changes = info.changes.screen[i];
-			if (force || changes != 0) {		
-				RedrawBlock block = blocks[count++];
-				
-				block.r = (i / blockstride) << 3;
-				block.c = (i % blockstride) << 3;
+		for (int i = info.changes.screen.nextSetBit(0); 
+			i >= 0 && i < screenSize; 
+			i = info.changes.screen.nextSetBit(i+1)) 
+		{
+			RedrawBlock block = blocks[count++];
+			
+			block.r = (i / blockstride) << 3;
+			block.c = (i % blockstride) << 3;
 
-				drawBlock(block, 0, false);
-				
-				// when interlacing, each row is technically twice as wide
-				// and the interlaced rows are on the "right" side of the bitmap
-				if (interlacedEvenOdd) {
-					drawBlock(block, pageOffset ^ graphicsPageSize, true);
-				}
-					
+			drawBlock(block, 0, false);
+			
+			// when interlacing, each row is technically twice as wide
+			// and the interlaced rows are on the "right" side of the bitmap
+			if (interlacedEvenOdd) {
+				drawBlock(block, pageOffset ^ graphicsPageSize, true);
 			}
 		}
 		return count;

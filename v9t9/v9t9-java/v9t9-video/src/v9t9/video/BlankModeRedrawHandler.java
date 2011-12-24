@@ -34,7 +34,7 @@ public class BlankModeRedrawHandler extends BaseRedrawHandler implements
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#updateCanvas(v9t9.emulator.clients.builtin.VdpCanvas, v9t9.emulator.clients.builtin.InternalVdp.RedrawBlock[])
 	 */
-	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
+	public int updateCanvas(RedrawBlock[] blocks) {
 		/*if (force) {
 			for (int i = 0; i < 768; i++) {
 				blocks[i].r = (i / 32) * 8;

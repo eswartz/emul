@@ -5,7 +5,6 @@ package v9t9.video.tms9918a;
 
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.video.RedrawBlock;
-import v9t9.common.video.VdpChanges;
 import v9t9.common.video.VdpModeInfo;
 import v9t9.video.BaseRedrawHandler;
 import v9t9.video.IVdpModeRedrawHandler;
@@ -75,7 +74,7 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 			int currchar = info.vdp.readAbsoluteVdpMemory(modeInfo.screen.base + i) & 0xff;	/* char # to update */
 			if (info.changes.patt[(currchar + sector) & bpm] != 0
 					|| info.changes.color[(currchar + sector) & bcm] != 0) { /* if color or pattern changed */
-				info.changes.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
+				info.changes.screen.set(i);	/* then this char changed */
 			}
 		}
 		
@@ -85,7 +84,7 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#updateCanvas(v9t9.emulator.clients.builtin.info.vdpCanvas, v9t9.emulator.clients.builtin.InternalVdp.RedrawBlock[])
 	 */
-	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
+	public int updateCanvas(RedrawBlock[] blocks) {
 		/*  Redraw changed chars  */
 
 		int count = 0;
@@ -93,25 +92,27 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 		int pattBase = modeInfo.patt.base;
 		int colorBase = modeInfo.color.base;
 
-		for (int i = 0; i < 768; i++) {
-			if (force || info.changes.screen[i] != VdpChanges.SC_UNTOUCHED) {			/* this screen pos updated? */
-				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+		for (int i = info.changes.screen.nextSetBit(0); 
+			i >= 0 && i < modeInfo.screen.size; 
+			i = info.changes.screen.nextSetBit(i+1)) 
+		{
 
-				RedrawBlock block = blocks[count++];
-				
-				block.r = (i >> 5) << 3;
-				block.c = (i & 31) << 3;
+			int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
 
-				int pp, cp;
-				
-				pp = cp = (currchar + (i & 0x300)) << 3;
-				pp &= bitpattmask;
-				cp &= bitcolormask;
-				
-				info.canvas.draw8x8MultiColorBlock(block.r, block.c, 
-						info.vdp.getByteReadMemoryAccess(pattBase + pp),
-						info.vdp.getByteReadMemoryAccess(colorBase + cp));
-			}
+			RedrawBlock block = blocks[count++];
+			
+			block.r = (i >> 5) << 3;
+			block.c = (i & 31) << 3;
+
+			int pp, cp;
+			
+			pp = cp = (currchar + (i & 0x300)) << 3;
+			pp &= bitpattmask;
+			cp &= bitcolormask;
+			
+			info.canvas.draw8x8MultiColorBlock(block.r, block.c, 
+					info.vdp.getByteReadMemoryAccess(pattBase + pp),
+					info.vdp.getByteReadMemoryAccess(colorBase + cp));
 		}
 
 		return count;

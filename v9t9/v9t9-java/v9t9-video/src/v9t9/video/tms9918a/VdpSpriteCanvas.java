@@ -4,6 +4,7 @@
 package v9t9.video.tms9918a;
 
 import java.util.Arrays;
+import java.util.BitSet;
 
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ICanvas;
@@ -58,12 +59,9 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 	 * @param forceRedraw if true, force full redraw
 	 * @return maximal sprite, if detected
 	 */
-	public int updateSpriteCoverage(ICanvas screenCanvas,  byte[] screenChanges, boolean forceRedraw) {
+	public int updateSpriteCoverage(ICanvas screenCanvas,  BitSet screenChanges, boolean forceRedraw) {
 		int maximal = -1;
 		
-		if (screenChanges.length < spritebitmap.length)
-			throw new IllegalArgumentException();
-
 		if (forceRedraw) {
 			for (VdpSprite sprite : getSprites()) {
 				sprite.setBitmapDirty(true);
@@ -104,7 +102,7 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 	 * @param screenCanvas the screen's canvas, used for resolution matching
 	 */
 	protected void updateSpriteBitmapForScreenChanges(ICanvas screenCanvas,
-			byte[] screenChanges) {
+			BitSet screenChanges) {
 		int blockStride = screenCanvas.getVisibleWidth() / 8;
 		// 512-wide modes draw double-width sprites
 		int blockMag = blockStride / 32;
@@ -113,9 +111,9 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		
 		for (int i = 0; i < blockCount; i += 32) {
 			for (int j = 0; j < 32; j++) {
-				boolean screenChanged = screenChanges[screenOffs + j * blockMag] != 0;
+				boolean screenChanged = screenChanges.get(screenOffs + j * blockMag);
 				if (blockMag > 1)
-					screenChanged |= screenChanges[screenOffs + j * blockMag + 1] != 0;
+					screenChanged |= screenChanges.get(screenOffs + j * blockMag + 1);
 				if (screenChanged) {
 					int oldsprites = oldspritebitmap[i + j] & ~knowndirty;
 					if (oldsprites != 0) {
@@ -246,7 +244,7 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 	 * @param screenChanges
 	 */
 	protected void updateScreenBitmapForSpriteChanges(ICanvas screenCanvas,
-			byte[] screenChanges) {
+			BitSet screenChanges) {
 		int blockStride = screenCanvas.getVisibleWidth() / 8;
 		// 512-wide modes draw double-width sprites
 		int blockMag = blockStride / 32;
@@ -257,9 +255,9 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		for (int i = 0; i < blockCount; i += 32) {
 			for (int j = 0; j < 32; j++) {
 				if (((spritebitmap[i + j] | oldspritebitmap[i + j]) & knowndirty) != 0) {
-					screenChanges[screenOffs + j * blockMag] = 1;
+					screenChanges.set(screenOffs + j * blockMag);
 					if (blockMag > 1) {
-						screenChanges[screenOffs + j * blockMag + 1] = 1;
+						screenChanges.set(screenOffs + j * blockMag + 1);
 					} 
 					touched++;
 				}
@@ -273,10 +271,10 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 	 * Draw sprites, after any modified screen blocks have been restored.
 	 * @param canvas the canvas to modify
 	 */
-	public void drawSprites(ISpriteDrawingCanvas canvas) {
+	public void drawSprites(ISpriteDrawingCanvas canvas, boolean force) {
 		for (int n = sprites.length; --n >= 0; ) {
 			VdpSprite sprite = sprites[n];
-			if (sprite.isBitmapDirty() && !sprite.isDeleted() && sprrowbitmaps[n] != 0) {
+			if ((force || sprite.isBitmapDirty()) && !sprite.isDeleted() && sprrowbitmaps[n] != 0) {
 				drawSprite(canvas, sprite, sprrowbitmaps[n]);
 			}
 			sprite.finishDraw();

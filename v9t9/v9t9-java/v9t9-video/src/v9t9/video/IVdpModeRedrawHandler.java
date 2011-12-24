@@ -44,10 +44,9 @@ public interface IVdpModeRedrawHandler {
 	 * generate the redraw blocks representing the changed bits of the bitmap,
 	 * and return the number of blocks updated.
 	 * @param blocks array of at most 1024 blocks
-	 * @param force force redraw of everything 
 	 * @return number of blocks changed
 	 */
-	int updateCanvas(RedrawBlock[] blocks, boolean force);
+	int updateCanvas(RedrawBlock[] blocks);
 
 	/**
 	 * Clear the canvas

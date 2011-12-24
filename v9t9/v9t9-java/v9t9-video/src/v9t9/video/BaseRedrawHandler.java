@@ -3,7 +3,6 @@
  */
 package v9t9.video;
 
-import v9t9.common.video.VdpChanges;
 import v9t9.common.video.VdpModeInfo;
 
 
@@ -46,7 +45,7 @@ public abstract class BaseRedrawHandler implements IVdpModeRedrawHandler {
 	protected VdpTouchHandler modify_screen_default = new VdpTouchHandler() {
 
 		public void modify(int offs) {
-			info.changes.screen[offs] = VdpChanges.SC_BACKGROUND;
+			info.changes.screen.set(offs);
 			info.changes.changed = true;
 		}
 		
@@ -93,7 +92,7 @@ public abstract class BaseRedrawHandler implements IVdpModeRedrawHandler {
 		for (int i = 0; i < size; i++) {
 			int currchar = info.vdp.readAbsoluteVdpMemory(modeInfo.screen.base + i) & 0xff;	/* char # to update */
 			if (info.changes.patt[currchar] != 0)	/* this pattern changed? */
-				info.changes.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
+				info.changes.screen.set(i);	/* then this char changed */
 		}
 		
 	}

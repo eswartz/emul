@@ -5,7 +5,6 @@ package v9t9.video.v9938;
 
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.RedrawBlock;
-import v9t9.common.video.VdpChanges;
 import v9t9.common.video.VdpModeInfo;
 import v9t9.video.BaseRedrawHandler;
 import v9t9.video.IVdpModeRedrawHandler;
@@ -48,7 +47,7 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		int size = modeInfo.screen.size;
 		for (int i = 0; i < size; i++) {
 			if ((info.changes.color[i >> 3]) != 0) { 	/* this position changed? */
-				info.changes.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
+				info.changes.screen.set(i);	/* then this char changed */
 			}
 		}
 		
@@ -57,7 +56,7 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#updateCanvas(v9t9.emulator.clients.builtin.VdpCanvas, v9t9.emulator.clients.builtin.InternalVdp.RedrawBlock[])
 	 */
-	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
+	public int updateCanvas(RedrawBlock[] blocks) {
 		/*  Redraw changed chars  */
 
 		int count = 0;
@@ -81,34 +80,33 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		bfg = (byte) ((info.vdpregs[12] >> 4) & 0xf);
 
 		boolean blinkOn = ((VdpV9938CanvasRenderer) info.renderer).isBlinkOn();
-		for (int i = 0; i < size; i++) {
-			if (force 
-					|| info.changes.screen[i] != VdpChanges.SC_UNTOUCHED			/* this screen pos updated? */
-					|| info.changes.color[i >> 3] != 0) 
-			{
-				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+		
+		for (int i = info.changes.screen.nextSetBit(0); 
+			i >= 0 && i < size; 
+			i = info.changes.screen.nextSetBit(i+1)) 
+		{
+			int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
 
-				RedrawBlock block = blocks[count++];
+			RedrawBlock block = blocks[count++];
+			
+			block.r = (i / 80) << 3;	
+			block.c = (i % 80) * 6 + (512 - 480) / 2;
+
+			int pattOffs = pattBase + (currchar << 3);
+			
+			byte fg, bg;
+			fg = tfg; bg = tbg;
+
+			if (blinkOn) {
+				byte blinkMap = info.vdp.readAbsoluteVdpMemory(colorBase + (i >> 3));
 				
-				block.r = (i / 80) << 3;	
-				block.c = (i % 80) * 6 + (512 - 480) / 2;
-
-				int pattOffs = pattBase + (currchar << 3);
-				
-				byte fg, bg;
-				fg = tfg; bg = tbg;
-
-				if (blinkOn) {
-					byte blinkMap = info.vdp.readAbsoluteVdpMemory(colorBase + (i >> 3));
-					
-					if ((blinkMap & (0x80 >> (i & 7))) != 0) {
-						fg = bfg; bg = bbg;
-					}
+				if ((blinkMap & (0x80 >> (i & 7))) != 0) {
+					fg = bfg; bg = bbg;
 				}
-				info.canvas.draw8x6TwoColorBlock(block.r, block.c, 
-						info.vdp.getByteReadMemoryAccess(pattOffs), 
-						fg, bg);
 			}
+			info.canvas.draw8x6TwoColorBlock(block.r, block.c, 
+					info.vdp.getByteReadMemoryAccess(pattOffs), 
+					fg, bg);
 		}
 
 
