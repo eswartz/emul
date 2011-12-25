@@ -76,8 +76,9 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		VdpColorManager cm = vdpCanvas.getColorMgr();
 		
 		for (int i = 0; i < 16; i++) {
+			// RBxG format
 			int value = vdpChip.getRegister(VdpV9938Consts.REG_PAL0 + i);
-			cm.setGRB333(i, (value >> 12) & 0x7, (value >> 8) & 0x7, (value ) & 0x7); 
+			cm.setGRB333(i, (value >> 0) & 0x7, (value >> 12) & 0x7, (value >> 8) & 0x7); 
 		}
 	}
 	
