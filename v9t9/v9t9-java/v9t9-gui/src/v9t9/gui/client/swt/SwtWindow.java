@@ -215,6 +215,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 				String boundsPref = PrefUtils.writeBoundsString(shell.getBounds());
 				settingsHandler.get(settingEmulatorWindowBounds).setString(boundsPref);
 				dispose();
+				
+				machine.getClient().close();
 			}
 			
 		});

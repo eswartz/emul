@@ -190,6 +190,9 @@ public abstract class BaseSwtJavaClient implements IClient {
 	}
 
 	public void close() {
+		if (soundHandler != null)
+			soundHandler.dispose();
+		
 		timer.cancel();
 		try {
 			machine.stop();

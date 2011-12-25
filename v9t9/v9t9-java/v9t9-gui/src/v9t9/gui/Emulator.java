@@ -12,7 +12,6 @@ import java.util.Collection;
 
 import v9t9.common.client.IClient;
 import v9t9.gui.client.ClientFactory;
-import v9t9.gui.client.awt.AwtJavaClient;
 import v9t9.gui.client.swt.SwtAwtJavaClient;
 import v9t9.gui.client.swt.SwtJavaClient;
 import v9t9.gui.client.swt.SwtLwjglJavaClient;
@@ -39,7 +38,6 @@ public class Emulator {
 	static {
 		ClientFactory.register(SwtJavaClient.ID, SwtJavaClient.class);
 		ClientFactory.register(SwtAwtJavaClient.ID, SwtAwtJavaClient.class);
-		//ClientFactory.register(AwtJavaClient.ID, AwtJavaClient.class);
 		ClientFactory.register(SwtLwjglJavaClient.ID, SwtLwjglJavaClient.class);
 	}
 	
@@ -195,10 +193,12 @@ public class Emulator {
 	 */
 	private static String getClientId(String[] args) {
 		String clientID = SwtLwjglJavaClient.ID;
-        if (findArgument(args, "--awt")) {
+        /*if (findArgument(args, "--awt")) {
         	clientID = AwtJavaClient.ID;
 		} 
-        else if (findArgument(args, "--swt")) {
+        else 
+        */
+		if (findArgument(args, "--swt")) {
         	clientID = SwtJavaClient.ID;
 		} 
         else if (findArgument(args, "--swtawt")) {
