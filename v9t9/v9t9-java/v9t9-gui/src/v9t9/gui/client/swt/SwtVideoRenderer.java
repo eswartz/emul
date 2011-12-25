@@ -21,7 +21,6 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
@@ -150,7 +149,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		canvas.addControlListener(new ControlAdapter() {
 			@Override
 			public void controlResized(ControlEvent e) {
-				Point size = ((Control)e.widget).getSize();
+				//Point size = ((Control)e.widget).getSize();
 				//System.out.println("Control resized to: " + size.x + "/" + size.y);
 
 				updateWidgetOnResize();
