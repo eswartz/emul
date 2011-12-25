@@ -16,6 +16,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
@@ -49,6 +51,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private List<org.eclipse.swt.events.MouseMoveListener> mouseMoveListeners = new ArrayList<org.eclipse.swt.events.MouseMoveListener>();
 	private FixedAspectLayout fixedAspectLayout;
 	private IProperty fullScreen;
+	private boolean isVisible;
 	
 	public SwtAwtVideoRenderer(IMachine machine, FastTimer timer) {
 		super(machine, timer);
@@ -60,6 +63,21 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	public Control createControl(Composite parent, int flags) {
 		shell = parent.getShell();
 		
+		isVisible = true;
+		shell.addShellListener(new ShellAdapter() {
+			@Override
+			public void shellClosed(ShellEvent e) {
+				isVisible = false;
+			}
+			@Override
+			public void shellDeiconified(ShellEvent e) {
+				isVisible = true;
+			}
+			@Override
+			public void shellIconified(ShellEvent e) {
+				isVisible = false;
+			}
+		});
 		awtContainer = new Canvas(parent, flags | SWT.EMBEDDED | SWT.NO_MERGE_PAINTS | SWT.NO_BACKGROUND | SWT.NO_REDRAW_RESIZE);
 		frame = SWT_AWT.new_Frame(awtContainer);
 		frame.add(getAwtCanvas());
@@ -317,13 +335,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	public boolean isVisible() {
 		if (Display.getDefault().isDisposed())
 			return false;
-		final boolean[] visible = { false };
-		Display.getDefault().syncExec(new Runnable() {
-			public void run() {
-				visible[0] = !shell.isDisposed() && shell.isVisible() && !shell.getMinimized();
-			}
-		});
-		return visible[0];
+		return isVisible;
 	}
 	
 	/* (non-Javadoc)

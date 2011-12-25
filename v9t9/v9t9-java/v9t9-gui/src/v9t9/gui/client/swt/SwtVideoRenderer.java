@@ -14,6 +14,8 @@ import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
@@ -71,6 +73,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	private float zoomx;
 	private IProperty fullScreen;
 	private FastTimer fastTimer;
+	private boolean isVisible;
 	
 	public SwtVideoRenderer(IMachine machine) {
 		this.settings = machine.getSettings();
@@ -105,6 +108,22 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		this.shell = parent.getShell();
 		this.canvas = createCanvasControl(parent, flags);
 		canvas.setLayout(fixedAspectLayout);	
+		
+		isVisible = true;
+		shell.addShellListener(new ShellAdapter() {
+			@Override
+			public void shellClosed(ShellEvent e) {
+				isVisible = false;
+			}
+			@Override
+			public void shellDeiconified(ShellEvent e) {
+				isVisible = true;
+			}
+			@Override
+			public void shellIconified(ShellEvent e) {
+				isVisible = false;
+			}
+		});
 		
 		createVdpCanvasHandler();
 		this.updateRect = new Rectangle(0, 0, 0, 0);
@@ -489,13 +508,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	public boolean isVisible() {
 		if (Display.getDefault().isDisposed())
 			return false;
-		final boolean[] visible = { false };
-		Display.getDefault().syncExec(new Runnable() {
-			public void run() {
-				visible[0] = !shell.isDisposed() && shell.isVisible() && !shell.getMinimized();
-			}
-		});
-		return visible[0];
+		return isVisible;
 	}
 	
 	/* (non-Javadoc)
