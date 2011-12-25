@@ -20,6 +20,8 @@ import ejs.base.utils.Pair;
  */
 public class SVGImageProvider extends MultiImageSizeProvider {
 
+	private static boolean DEBUG = false;
+	
 	private final ISVGLoader svgLoader;
 	private Thread loadIconThread;
 	
@@ -85,7 +87,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 		else {
 			int min = iconMap.values().iterator().next().getBounds().width;
 			double ratio = (double) scaledImage.getBounds().width / min;
-			//System.out.println("Using svg image " + scaledImage.getBounds() + " at " +ratio);
+			if (DEBUG) System.out.println("Using svg image " + scaledImage.getBounds() + " at " +ratio);
 			return new Pair<Double, Image>(ratio, scaledImage);
 		}
 		
@@ -111,7 +113,8 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 			
 			scaledImageData = svgLoader.getImageData(scaledSize);
 			long end = System.currentTimeMillis();
-			System.out.println("Loaded " + svgLoader.getURI() + " @ " + scaledSize + ": " + (end - start) + " ms");
+			if (DEBUG)
+				System.out.println("Loaded " + svgLoader.getURI() + " @ " + scaledSize + ": " + (end - start) + " ms");
 			svgFailed = false;
 			
 			final Composite composite = imageBar.getComposite();
@@ -121,7 +124,8 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 					public void run() {
 						if (!composite.isDisposed()) {
 							scaledImage = new Image(composite.getDisplay(), scaledImageData);
-							System.out.println("Got image " + scaledImage.getBounds());
+							if (DEBUG)
+								System.out.println("Got image " + scaledImage.getBounds());
 							imageBar.redrawAll();
 						}
 					}

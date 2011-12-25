@@ -151,7 +151,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 			@Override
 			public void controlResized(ControlEvent e) {
 				Point size = ((Control)e.widget).getSize();
-				System.out.println("Control resized to: " + size.x + "/" + size.y);
+				//System.out.println("Control resized to: " + size.x + "/" + size.y);
 
 				updateWidgetOnResize();
 			}

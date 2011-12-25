@@ -37,7 +37,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	private final static Map<String, Integer> regIds9938 = new HashMap<String, Integer>();
 	
 	private static void register(int reg, String id) {
-		System.out.println(reg + " = " + id);
+		//System.out.println(reg + " = " + id);
 		regNames9938.put(reg, id);
 		regIds9938.put(id, reg);
 	}
