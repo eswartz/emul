@@ -41,7 +41,6 @@ import v9t9.common.video.ICanvas;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.AwtImageUtils;
 import v9t9.video.imageimport.ImageImport;
-import v9t9.video.imageimport.ImageImportOptions;
 
 /**
  * Handle images copied in or out of the screen.
@@ -199,10 +198,13 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 						Object data = transferable.getTransferData(flavor);
 						if (data instanceof List<?>) {
 							url = ((File)((List<?>)data).get(0)).toURI().toURL();
+							imageImportSupport.getHistory().add(url.toString());
+							break;
 						}
 						else if (data instanceof String) {
 							String uriStr = data.toString().split("\n")[0].trim();
 							url = new URL(uriStr);
+							imageImportSupport.getHistory().add(uriStr);
 							break;
 						}
 					} catch (IOException e) {
@@ -247,10 +249,9 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 					(ImageDataCanvas) renderer.getCanvas(), renderer.getVdpHandler());
 			imageImportSupport.resetOptions();
 		}
-		ImageImport importer = imageImportSupport.createImageImport();
 		
-		ImageImportOptions options = imageImportSupport.getImageImportOptions();
-		options.updateFrom(image);
-		importer.importImage();
+		imageImportSupport.importImage(image, true);
+		
+		renderer.setFocus();
 	}
 }

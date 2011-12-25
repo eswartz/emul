@@ -3,7 +3,9 @@
  */
 package v9t9.gui.client.swt;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Collection;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
@@ -25,6 +27,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
 import ejs.base.properties.IProperty;
+import ejs.base.utils.Pair;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier.Level;
@@ -186,7 +189,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 	
 
 		final SwtImageImportSupport imageSupport = new SwtImageImportSupport(swtWindow.getEventNotifier(), swtWindow.getVideoRenderer());
-		/*BasicButton imageImportButton =*/ createButton(17, "Import image",
+		BasicButton imageImportButton = createButton(17, "Import image",
 			new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -214,6 +217,66 @@ public class EmulatorButtonBar extends EmulatorBar  {
 		//imageSupport.setImageImportDnDControl(imageImportButton);
 		imageSupport.setImageImportDnDControl(((ISwtVideoRenderer) window.getVideoRenderer()).getControl());
 		
+
+		final Collection<String> fileHistory = imageSupport.getHistory(); 
+		
+		imageImportButton.setMenuOverlayBounds(imageProvider.imageIndexToBounds(15));
+		imageImportButton.addMenuDetectListener(new MenuDetectListener() {
+
+			public void menuDetected(MenuDetectEvent e) {
+				Control button = (Control) e.widget;
+				Menu menu = new Menu(button);
+				MenuItem vitem = new MenuItem(menu, SWT.NONE);
+				vitem.setText("Load file...");
+				
+				vitem.addSelectionListener(new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						String file = window.openFileSelectionDialog("Open Image", null, null, false, 
+								new String[] { ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".tga" });
+						if (file != null) {
+							Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(window.getEventNotifier(), file);
+							
+							if (info != null) {
+								imageSupport.importImage(info.first, !info.second);
+								((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
+								
+								fileHistory.add(file);
+							}
+						}
+					}
+				});
+				
+				// not persistent
+				if (!fileHistory.isEmpty()) {
+					new MenuItem(menu, SWT.SEPARATOR);
+					
+					int index = 0;
+					for (final String file : fileHistory) {
+						MenuItem hitem = new MenuItem(menu, SWT.NONE);
+						hitem.setText((index < 10 ? "&" + index + " " : "")
+							+ file);
+						index++;
+						
+						hitem.addSelectionListener(new SelectionAdapter() {
+							@Override
+							public void widgetSelected(SelectionEvent e) {
+								Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(window.getEventNotifier(), file);
+								
+								if (info != null) {
+									imageSupport.importImage(info.first, !info.second);
+									((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
+								}
+							}
+						});
+					}
+				}
+				
+				swtWindow.showMenu(menu, button, e.x, e.y);
+			}
+		});
+
+		
 		/*
 		createButton(buttonBar, 11,
 				"Zoom the screen", new SelectionAdapter() {
@@ -233,14 +296,6 @@ public class EmulatorButtonBar extends EmulatorBar  {
 				true, 
 				null, 13,
 				14, true, "Sound options");
-	/*	soundButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				Control button = (Control) e.widget;
-				Point size = button.getSize();
-				showMenu(createSoundMenu(button), button, size.x / 2, size.y / 2);
-			}
-		});*/
 		
 		soundButton.setMenuOverlayBounds(imageProvider.imageIndexToBounds(15));
 		soundButton.addMenuDetectListener(new MenuDetectListener() {

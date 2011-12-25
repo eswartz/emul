@@ -47,7 +47,6 @@ import v9t9.common.video.ICanvas;
 import v9t9.common.video.VdpFormat;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageImport;
-import v9t9.video.imageimport.ImageImportOptions;
 
 /**
  * Support dragging image out of window, or into window (and VDP buffer)
@@ -311,8 +310,10 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			
 			if (FileTransfer.getInstance().isSupportedType(event.currentDataType)) {
 				String[] files = (String[]) event.data;
-				if (files != null)
-					info = loadImageFromFile(files[0]);
+				if (files != null) {
+					info = loadImageFromFile(notifier, files[0]);
+					importHandler.getHistory().add(files[0]);
+				}
 			}
 			if (info == null && ImageTransfer.getInstance().isSupportedType(event.currentDataType)) {
 				info = convertImage((ImageData) event.data);
@@ -323,6 +324,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				String trimmed = null;
 				for (String entry : entries) {
 					trimmed = entry.replaceAll("\u00A0", "").trim();
+					importHandler.getHistory().add(trimmed);
 					break;
 				}
 				
@@ -339,17 +341,14 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 						temp.delete();
 					}
 				}
-				if (lastURLFile != null)
-					info = loadImageFromFile(lastURLFile.getAbsolutePath());
+				if (lastURLFile != null) {
+					info = loadImageFromFile(notifier, lastURLFile.getAbsolutePath());
+				}
 			}
 			
 			if (info != null) {
 
-				ImageImport importer = importHandler.createImageImport();
-				ImageImportOptions imageImportOptions = importHandler.getImageImportOptions();
-				imageImportOptions.updateFrom(info.first);
-				imageImportOptions.setScaleSmooth(!info.second);
-				importer.importImage();
+				importHandler.importImage(info.first, info.second);
 				
 				renderer.setFocus();
 			}
@@ -400,7 +399,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		return temp;
 	}
 
-	private Pair<BufferedImage, Boolean> loadImageFromFile(String file) {
+	public static Pair<BufferedImage, Boolean> loadImageFromFile(IEventNotifier notifier, String file) {
 		Pair<BufferedImage, Boolean> info = null;
 		try {
 			ImageLoader imgLoader = new ImageLoader();
@@ -433,7 +432,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	/**
 	 * @param data
 	 */
-	private Pair<BufferedImage, Boolean> convertImage(ImageData data) {
+	private static Pair<BufferedImage, Boolean> convertImage(ImageData data) {
 
 		// convert to AWT image -- don't scale with SWT, which is lame
 		BufferedImage img = new BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_ARGB);

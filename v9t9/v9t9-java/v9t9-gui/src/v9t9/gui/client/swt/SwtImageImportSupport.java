@@ -105,3 +105,4 @@ public class SwtImageImportSupport extends ImageImportHandler {
 		return vdp;
 	}
 }
+
