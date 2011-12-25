@@ -271,19 +271,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 		setVideoRenderer(videoRenderer);
 		
-		buttons = new EmulatorButtonBar(this, buttonImageProvider, mainComposite, machine,
-				soundHandler,
-				new int[] { SWT.COLOR_BLACK, SWT.COLOR_GRAY, SWT.COLOR_DARK_GRAY },
-				0.75f,
-				isHorizontal);
-		
-		if (buttonImageProvider instanceof SVGImageProvider) {
-			((SVGImageProvider) buttonImageProvider).setImageBar(buttons.getButtonBar());
-		}
-		if (statusImageProvider instanceof SVGImageProvider) {
-			((SVGImageProvider) statusImageProvider).setImageBar(statusBar.getButtonBar());
-		}
-		
+
 		this.videoControl = videoRenderer.createControl(videoRendererComposite, SWT.NONE);
 		
 		GridDataFactory.swtDefaults()
@@ -313,6 +301,20 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 
 		});
+
+		
+		buttons = new EmulatorButtonBar(this, buttonImageProvider, mainComposite, machine,
+				soundHandler,
+				new int[] { SWT.COLOR_BLACK, SWT.COLOR_GRAY, SWT.COLOR_DARK_GRAY },
+				0.75f,
+				isHorizontal);
+		
+		if (buttonImageProvider instanceof SVGImageProvider) {
+			((SVGImageProvider) buttonImageProvider).setImageBar(buttons.getButtonBar());
+		}
+		if (statusImageProvider instanceof SVGImageProvider) {
+			((SVGImageProvider) statusImageProvider).setImageBar(statusBar.getButtonBar());
+		}
 
 		
 		String boundsPref = settingsHandler.get(settingEmulatorWindowBounds).getString();
