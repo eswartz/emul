@@ -126,6 +126,7 @@ public class JavaSoundListener implements ISoundListener {
 			
 
 		}, "Sound Writing");
+		soundWritingThread.setDaemon(true);
 		soundWritingThread.start();
 
 		soundGeneratorLine.start();

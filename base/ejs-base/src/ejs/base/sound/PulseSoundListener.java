@@ -152,6 +152,7 @@ public class PulseSoundListener implements ISoundListener {
 			
 
 		}, "Sound Writing");
+		soundWritingThread.setDaemon(true);
 		soundWritingThread.start();
 
 		//soundGeneratorLine.start();

@@ -228,6 +228,7 @@ public class Win32SoundListener implements ISoundListener {
 			System.err.println("Could not restart sound: " + getError(res));
 		}
 
+		soundWritingThread.setDaemon(true);
 		soundWritingThread.start();
 
 

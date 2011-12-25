@@ -91,38 +91,39 @@ public class FastTimer {
 						} catch (InterruptedException e) {
 							return;
 						}
+						final long now = timer.getTimeNs();
+						Object[] infos;
 						synchronized (controlLock) {
-							final long now = timer.getTimeNs();
 							//System.out.println(now);
 							//long elapsed = now - prev;
 							//System.out.print(elapsed + ",");
 	
-							Object[] infos = taskinfos.toArray();
-							for (Object infoObj : infos) {
-								FastTimer.RunnableInfo info = (FastTimer.RunnableInfo) infoObj;
-								try {
-									if (now >= info.deadline) {
-										//System.out.println("moving from " + info.deadline + " by " + info.delay + " to " + (info.delay + info.deadline));
-										if (now - info.deadline > info.delay * 10) {
-											// too much delay (suspended process, etc)
-											info.deadline = now + info.delay;
-											info.task.run();
-										} else {
-											while (now >= info.deadline) {
-												info.deadline += info.delay;
-												info.task.run();
-											}
-										}
-									}
-									else if ((now ^ info.deadline) < 0) {
-										// clock overflowed
+							infos = taskinfos.toArray();
+						}
+						for (Object infoObj : infos) {
+							FastTimer.RunnableInfo info = (FastTimer.RunnableInfo) infoObj;
+							try {
+								if (now >= info.deadline) {
+									//System.out.println("moving from " + info.deadline + " by " + info.delay + " to " + (info.delay + info.deadline));
+									if (now - info.deadline > info.delay * 10) {
+										// too much delay (suspended process, etc)
 										info.deadline = now + info.delay;
 										info.task.run();
-									}									
-								} catch (Throwable t) {
-									t.printStackTrace();
-									info.deadline = -1;
+									} else {
+										while (now >= info.deadline) {
+											info.deadline += info.delay;
+											info.task.run();
+										}
+									}
 								}
+								else if ((now ^ info.deadline) < 0) {
+									// clock overflowed
+									info.deadline = now + info.delay;
+									info.task.run();
+								}									
+							} catch (Throwable t) {
+								t.printStackTrace();
+								info.deadline = -1;
 							}
 							//prev = now;
 						}

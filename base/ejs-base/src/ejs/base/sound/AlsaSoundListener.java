@@ -259,6 +259,7 @@ public class AlsaSoundListener implements ISoundListener {
 		
 		stopped = false;
 		
+		soundWritingThread.setDaemon(true);
 		soundWritingThread.start();
 
 		//soundGeneratorLine.start();
