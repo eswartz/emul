@@ -167,8 +167,8 @@ public abstract class EmulatorClientBase {
 	        loadState();
 		}
 		
-		machine.reset();
         machine.start();
+        machine.reset();
         
         server.run();
         
@@ -180,7 +180,7 @@ public abstract class EmulatorClientBase {
 	    	
 	    	// don't eat up CPU
 	    	try {
-				Thread.sleep(10);
+				Thread.sleep(50);
 			} catch (InterruptedException e) {
 			}
         }

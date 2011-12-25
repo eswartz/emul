@@ -253,7 +253,8 @@ public class Cpu9900 extends CpuBase {
 	 */
 	@Override
 	public void reset() {
-		contextSwitch(0);		
+		//contextSwitch(0);
+		setPin(PIN_RESET);
 	}
 	
 	/* (non-Javadoc)
