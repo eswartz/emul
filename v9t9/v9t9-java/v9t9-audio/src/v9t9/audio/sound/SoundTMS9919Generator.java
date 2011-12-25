@@ -204,7 +204,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		
 		SoundVoice v = regIdToVoices.get(reg);
 		if (v == null)
-			throw new IllegalStateException();
+			return;
 		IRegisterAccess.IRegisterWriteListener listener = regIdToListener.get(reg);
 		if (listener == null)
 			throw new IllegalStateException();

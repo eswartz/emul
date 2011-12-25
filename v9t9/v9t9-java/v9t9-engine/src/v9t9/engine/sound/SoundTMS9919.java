@@ -236,7 +236,7 @@ public class SoundTMS9919 implements ISoundChip {
 		IVoice voice = regIdToVoice.get(reg);
 		if (voice == null)
 			return 0;
-		return voice.getRegister(reg - voice.getBaseRegister());
+		return voice.getRegister(reg);
 	}
 
 	/* (non-Javadoc)
@@ -248,7 +248,7 @@ public class SoundTMS9919 implements ISoundChip {
 		if (voice == null)
 			return 0;
 		int old = voice.getRegister(reg);
-		voice.setRegister(reg - voice.getBaseRegister(), newValue);
+		voice.setRegister(reg, newValue);
 		return old;
 	}
 

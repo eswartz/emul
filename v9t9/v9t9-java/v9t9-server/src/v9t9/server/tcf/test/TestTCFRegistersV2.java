@@ -144,7 +144,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		}
 		
 		private void validateInitialContentChanged() {
-			long limit = System.currentTimeMillis() + 5 * 1000;
+			long limit = System.currentTimeMillis() + 15 * 1000;
 			while (true) {
 				synchronized (changeMap) {
 					if (!changeMap.isEmpty())
@@ -226,8 +226,16 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 							if (change.regNum == regNum) {
 								if (valIdx >= values.length)
 									fail("too many changes reported");
-								assertEquals("reg " + regNum + " at " + valIdx, 
-										(values[valIdx] & mask), (change.value & mask))  ;
+								if ((values[valIdx] & mask) != (change.value & mask)) {
+									// maybe the register has a lower resolution -- read it
+									try {
+										int cur = getReg(regNumContextIds.get(change.regNum));
+										assertEquals("real reg " + regNum + " at " + valIdx, 
+												(cur & mask), (change.value & mask))  ;
+									} catch (Throwable e) {
+										fail(e.toString());
+									}
+								}
 								valIdx++;
 							}
 						}
@@ -623,7 +631,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		RegRunner runner = new RegRunner("testV", IRegisterAccess.ID_VIDEO, 
 				regIdToNumMap.values(), QUANTUM, -1);
 		
-		doContinuousAllRegChanges(regIdToNumMap, runner);
+		doContinuousAllRegChanges(regIdToNumMap, runner, 0xff);
 				
 	}
 
@@ -641,7 +649,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 		RegRunner runner = new RegRunner("testS", IRegisterAccess.ID_SOUND, 
 				regIdToNumMap.values(), QUANTUM, -1);
 		
-		doContinuousAllRegChanges(regIdToNumMap, runner);
+		doContinuousAllRegChanges(regIdToNumMap, runner, 0xff);
 				
 	}
 
@@ -651,7 +659,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 	 * @throws Throwable
 	 */
 	protected void doContinuousAllRegChanges(
-			Map<String, Integer> regIdToNumMap, RegRunner runner)
+			Map<String, Integer> regIdToNumMap, RegRunner runner, int mask)
 			throws Throwable {
 		runner.saveRegs();
 		
@@ -695,7 +703,7 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 			
 			cnt = 0;
 			for (int val : regIdToNumMap.values()) {
-				runner.validateRegChanges(val, 0xff, new int[] { cnt, -cnt, cnt + 128, -(cnt + 128) });
+				runner.validateRegChanges(val, mask, new int[] { cnt, -cnt, cnt + 128, -(cnt + 128) });
 				cnt += 2;
 			}
 			

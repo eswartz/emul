@@ -28,7 +28,7 @@ public class MultiSoundTMS9919 extends BaseMultiSound {
 
 		this.chips = new SoundTMS9919[5];
 		int regBase = 0;
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < chips.length; i++) {
 			chips[i] = new SoundTMS9919(machine, "S" + i, "Chip #" + i, regBase);
 			regBase = registerChip(chips[i], regBase);
 		}

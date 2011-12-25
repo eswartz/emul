@@ -106,8 +106,8 @@ public class RegistersV2Service extends RegisterService {
 			this.period = delay;
 			this.granularity = granularity;
 			
-			if (access.getRegisterCount() >= 128)
-				throw new UnsupportedOperationException("too many registers for byte-based encoding");
+			if (access.getRegisterCount() >= 32768)
+				throw new UnsupportedOperationException("too many registers for -based encoding");
 			
 			baseReg = access.getFirstRegister();
 			
@@ -320,6 +320,11 @@ public class RegistersV2Service extends RegisterService {
 		}
 	}
 
+	protected void writeReg(ByteArrayOutputStream bos, int reg) {
+		bos.write(reg >> 8);
+		bos.write(reg & 0xff);
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.server.tcf.services.local.BaseServiceImpl#handleCommand(java.lang.String, java.lang.Object[])
 	 */
@@ -402,13 +407,13 @@ public class RegistersV2Service extends RegisterService {
 		if (changes.isEmpty())
 			return;
 		
-		assert changes.size() < 256;
+		assert changes.size() < 65536;
 		assert regSize < 256;
 		
 		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
 		// base & size
-		bos.write(baseReg);
+		writeReg(bos, baseReg);
 		bos.write(regSize);
 		
 		//[[ one group
@@ -420,14 +425,14 @@ public class RegistersV2Service extends RegisterService {
 		}
 
 		// # regs
-		bos.write(changes.size());
+		writeReg(bos, changes.size());
 		
 		// reg info
 		for (Map.Entry<Integer, Integer> change : changes.entrySet()) {
 			int regnum = change.getKey();
 			
 			// reg #
-			bos.write(regnum - baseReg);
+			writeReg(bos, regnum - baseReg);
 			
 			// value, big-endian
 			int value = change.getValue();
@@ -468,7 +473,7 @@ public class RegistersV2Service extends RegisterService {
 		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
 		// base & reg size
-		bos.write(baseReg);
+		writeReg(bos, baseReg);
 		bos.write(regSize);
 		
 		for (Pair<Integer, Collection<RegisterChange>> changeGroup : changes) {
@@ -479,12 +484,12 @@ public class RegistersV2Service extends RegisterService {
 			}
 			
 			// # regs
-			assert changeGroup.second.size() < 256;
-			bos.write(changeGroup.second.size());
+			assert changeGroup.second.size() < 65536;
+			writeReg(bos, changeGroup.second.size());
 			
 			for (RegisterChange change : changeGroup.second) {
 				// reg #
-				bos.write(change.regNum - baseReg);
+				writeReg(bos, change.regNum - baseReg);
 				
 				// value, big-endian
 				for (int s = 0; s < regSize; s++) {

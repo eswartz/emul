@@ -23,11 +23,8 @@ public class AudioGateVoice extends BaseVoice {
 	}
 
 	public void setGate(boolean gate) {
-		if (this.gate != gate) {
-			this.gate = gate;
-			fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_AUDIO_GATE, 
-					gate ? 1 : 0);
-		}
+		this.gate = gate;
+		fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_AUDIO_GATE, gate ? 1 : 0);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.engine.sound.BaseVoice#loadState(ejs.base.settings.ISettingSection)
@@ -35,7 +32,7 @@ public class AudioGateVoice extends BaseVoice {
 	@Override
 	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
-		gate = settings.getBoolean("Gate");
+		setGate(settings.getBoolean("Gate"));
 	}
 
 	/* (non-Javadoc)
@@ -62,7 +59,7 @@ public class AudioGateVoice extends BaseVoice {
 	 */
 	@Override
 	public int getRegister(int reg) {
-		if (reg == TMS9919Consts.REG_OFFS_AUDIO_GATE) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_AUDIO_GATE) {
 			return gate ? 1 : 0;
 		}
 		return 0;
@@ -73,7 +70,7 @@ public class AudioGateVoice extends BaseVoice {
 	 */
 	@Override
 	public void setRegister(int reg, int newValue) {
-		if (reg == TMS9919Consts.REG_OFFS_AUDIO_GATE) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_AUDIO_GATE) {
 			setGate(newValue != 0);
 		}
 	}

@@ -95,20 +95,22 @@ public class RegistersV2Proxy extends RegistersProxy implements IRegistersV2 {
                         List<Pair<Integer, RegisterChange[]>> regChangeList = new ArrayList<Pair<Integer,RegisterChange[]>>();
                         
                         int regIdx = 0;
-                    	int baseReg = regData[regIdx++];   // signed
+                    	int baseReg = readShort(regData, regIdx);   // signed
+                    	regIdx += 2;
                     	int regSize = regData[regIdx++] & 0xff;
 
                         while (regIdx < regData.length) {
-                        	int timestampOffs = 0;
-                        	for (int s = 0; s < 4; s++)
-                        		timestampOffs |= (regData[regIdx++] & 0xff) << (8 * (4 - s - 1));
+                        	int timestampOffs = readInt(regData, regIdx);
+                        	regIdx += 4;
                         	
-                        	int count = regData[regIdx++] & 0xff;
+                        	int count = readShort(regData, regIdx);
+                        	regIdx += 2;
                         	
 	                        RegisterChange[] regChanges = new RegisterChange[count];
 	                        for (int idx = 0; idx < count; idx++) {
 	                        	// number
-	                        	int regNum = regData[regIdx++] & 0xff;
+	                        	int regNum = readShort(regData, regIdx);
+	                        	regIdx += 2;
 	                        	
 	                        	// value, big-endian
 	                        	int value = 0;
@@ -133,6 +135,21 @@ public class RegistersV2Proxy extends RegistersProxy implements IRegistersV2 {
                     x.printStackTrace();
                 }
             }
+
+			protected int readInt(byte[] regData, int regIdx) {
+				int val = 0;
+				for (int s = 0; s < 4; s++)
+					val |= (regData[regIdx + s] & 0xff) << (8 * (4 - s - 1));
+				return val;
+			}
+			
+
+			protected int readShort(byte[] regData, int regIdx) {
+				short val = 0;
+				for (int s = 0; s < 2; s++)
+					val |= (regData[regIdx + s] & 0xff) << (8 * (2 - s - 1));
+				return val;
+			}
         };
         channel.addEventListener(this, l);
         changeListeners.put(listener, l);		
@@ -143,6 +160,6 @@ public class RegistersV2Proxy extends RegistersProxy implements IRegistersV2 {
 	@Override
 	public void removeListener(RegisterContentChangeListener listener) {
 		 IChannel.IEventListener l = changeListeners.remove(listener);
-	        if (l != null) channel.removeEventListener(this, l);		
+		 if (l != null) channel.removeEventListener(this, l);		
 	}
 }

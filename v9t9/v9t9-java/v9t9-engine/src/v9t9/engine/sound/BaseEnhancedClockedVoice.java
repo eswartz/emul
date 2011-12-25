@@ -5,7 +5,6 @@ package v9t9.engine.sound;
 
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import ejs.base.settings.ISettingSection;
-import ejs.base.utils.HexUtils;
 import ejs.base.utils.ListenerList;
 
 /**
@@ -33,10 +32,9 @@ public abstract class BaseEnhancedClockedVoice extends BaseClockedVoice implemen
 	protected int doInitEffectRegisters(int baseReg) {
 		baseEffectReg = baseReg;
 		for (int i = 0; i < numEffects; i++) {
-			String regStr = "#" + (numEffects < 16 ? "" + Integer.toHexString(i) : HexUtils.toHex2(i));
 			register(baseEffectReg + i,
-					getId() + ":E" + regStr,
-					getName() + " " + regStr);
+					getId() + ":E" + i,
+					getName() + " Effect #" + i);
 		}
 		return numEffects;
 	}

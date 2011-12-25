@@ -45,11 +45,14 @@ public abstract class BaseMultiSound implements ISoundChip, IMultiSoundChip {
 	 * @param regBase
 	 * @return
 	 */
-	protected int registerChip(ISoundChip chip, int regBase) {
+	protected int registerChip(final ISoundChip chip, int regBase) {
 		int cnt = chip.getRegisterCount();
-		for (int j = 0; j < cnt; j++)
+		for (int j = 0; j < cnt; j++) {
 			regIdToChip.put(regBase + j, chip);
+			regNameToChip.put(chip.getRegisterInfo(regBase + j).id, chip);
+		}
 		regBase += cnt;
+		regCount += cnt;
 		return regBase;
 	}
 	
@@ -148,7 +151,9 @@ public abstract class BaseMultiSound implements ISoundChip, IMultiSoundChip {
 	 */
 	@Override
 	public void addWriteListener(IRegisterWriteListener listener) {
-		listeners.add(listener);
+		for (ISoundChip chip : chips) {
+			chip.addWriteListener(listener);
+		}
 	}
 
 	/* (non-Javadoc)
@@ -156,7 +161,9 @@ public abstract class BaseMultiSound implements ISoundChip, IMultiSoundChip {
 	 */
 	@Override
 	public void removeWriteListener(IRegisterWriteListener listener) {
-		listeners.remove(listener);
+		for (ISoundChip chip : chips) {
+			chip.removeWriteListener(listener);
+		}
 	}
 	
 	/* (non-Javadoc)
