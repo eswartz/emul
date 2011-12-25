@@ -105,7 +105,8 @@ public class Sprite2VdpCanvas extends BaseVdpCanvas implements ISpriteVdpCanvas 
 
 	public void clear8x8Block(int offset) {
 		for (int i = 0; i < 8; i++) {
-			Arrays.fill(bitmap, offset, offset + 8, (byte) 0);
+			if (offset < bitmap.length)
+				Arrays.fill(bitmap, offset, offset + 8, (byte) 0);
 			offset += getLineStride();
 		}
 	}
