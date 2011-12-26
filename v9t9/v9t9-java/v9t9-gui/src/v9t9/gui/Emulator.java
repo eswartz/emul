@@ -10,6 +10,9 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 
+import org.eclipse.swt.graphics.Device;
+import org.eclipse.swt.graphics.Image;
+
 import v9t9.common.client.IClient;
 import v9t9.gui.client.ClientFactory;
 import v9t9.gui.client.swt.SwtAwtJavaClient;
@@ -227,4 +230,16 @@ public class Emulator {
         return server.getMachineModelFactory().getDefaultModel();
 	}
 
+	public static Image loadImage(Device device, String path) {
+		URL iconFile = Emulator.getDataURL(path);
+		if (iconFile != null) {
+			try {
+				Image icon = new Image(device, iconFile.openStream());
+				return icon;
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		}
+		return new Image(device, 1, 1);
+	}
 }

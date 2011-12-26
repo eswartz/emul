@@ -3,7 +3,6 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
-import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -94,12 +93,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		GridDataFactory.swtDefaults().grab(true, false).align(SWT.RIGHT, SWT.CENTER).applyTo(buttonBar);
 		GridLayoutFactory.swtDefaults().numColumns(10).applyTo(buttonBar);
 
-		Image icons;
-		try {
-			icons = new Image(getDisplay(), Emulator.getDataURL("icons/cpu.png").openStream());
-		} catch (IOException e1) {
-			icons = new Image(getDisplay(), 1, 1);
-		} 
+		Image icons = Emulator.loadImage(getDisplay(), "icons/cpu.png");
 
 		/////
 		

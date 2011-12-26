@@ -4,6 +4,8 @@
 package v9t9.gui.client.swt.shells;
 
 import java.text.MessageFormat;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -20,11 +22,14 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
@@ -32,10 +37,14 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.swt.widgets.Text;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.events.IEventNotifier.Level;
@@ -43,6 +52,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.gui.Emulator;
 import v9t9.gui.common.FontUtils;
 
 /**
@@ -51,15 +61,24 @@ import v9t9.gui.common.FontUtils;
  */
 public class ModuleSelector extends Composite {
 
+	static final int IMAGE_COLUMN = 0;
+	static final int NAME_COLUMN = 1;
+	static final int FILE_COLUMN = 2;
+	
 	private TableViewer viewer;
+	private TableColumn imageColumn;
 	private TableColumn nameColumn;
 	private IModule selectedModule;
 	private Composite buttonBar;
 	private final IMachine machine;
 	private Button switchButton;
-	private TableColumn fileColumn;
 	private Font tableFont;
 	private final IModuleManager moduleManager;
+	private Button scanButton;
+	private Text filterText;
+	protected int visibleCount;
+	protected Set<Object> visibleItems = new HashSet<Object>();
+	private static String lastFilter;
 
 	/**
 	 * 
@@ -74,12 +93,167 @@ public class ModuleSelector extends Composite {
 		
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
-		Label label = new Label(this, SWT.WRAP);
-		label.setText("Select a module:");
-		GridDataFactory.swtDefaults().grab(true, false).applyTo(label);
+		//Label label = new Label(this, SWT.WRAP);
+		//label.setText("Select a module:");
+		//GridDataFactory.swtDefaults().grab(true, false).applyTo(label);
 		
-		viewer = new TableViewer(this, SWT.READ_ONLY | SWT.BORDER);
+		createSearchFilter();
+		
+		
+		viewer = createTable();
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(viewer.getControl());
+		
+		buttonBar = new Composite(this, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(3).equalWidth(false).applyTo(buttonBar);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(buttonBar);
+		
+
+		scanButton = new Button(buttonBar, SWT.PUSH);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).hint(128, -1).applyTo(scanButton);
+		scanButton.setText("Scan...");
+		scanButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+			}
+		});
+		scanButton.setEnabled(false);
+
+		
+		Label filler = new Label(buttonBar, SWT.NONE);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).applyTo(filler);
+
+		
+		switchButton = new Button(buttonBar, SWT.PUSH);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).hint(128, -1).applyTo(switchButton);
+		
+		switchButton.setText("Switch module");
+		switchButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				switchModule((e.stateMask & SWT.SHIFT) != 0);
+			}
+		});
+		switchButton.setEnabled(false);
+		
+		
+
+		hookActions();
+
+		initFilter(lastFilter);
+
+	}
+
+	/**
+	 * 
+	 */
+	private void createSearchFilter() {
+		
+		Composite comp = new Composite(this, SWT.NONE);
+		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(2).equalWidth(false).applyTo(comp);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(comp);
+
+		filterText = new Text(comp, SWT.BORDER);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, false).applyTo(filterText);
+		
+		filterText.addKeyListener(new KeyAdapter() {
+			public void keyPressed(KeyEvent e) {
+				if (lastFilter == null) {
+					filterText.setForeground(null);
+					lastFilter = "";
+					if (e.keyCode == e.character) {
+						filterText.setText("");
+					}
+				}
+				
+				if (e.keyCode == SWT.ARROW_DOWN) {
+					viewer.getTable().setFocus();
+				}
+				
+				if (e.keyCode == '\r') {
+					viewer.getTable().setFocus();
+					e.doit = false;
+					
+					if (visibleItems.size() == 1) {
+						switchModule(false);
+					}
+				}
+			}
+		});
+
+		filterText.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				updateFilter(filterText.getText());
+			}
+		});
+		
+		final Button clearButton = new Button(comp, SWT.PUSH | SWT.NO_FOCUS);
+		clearButton.setImage(Emulator.loadImage(getDisplay(), "icons/icon_search_clear.png"));
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(clearButton);
+
+		clearButton.addSelectionListener(new SelectionAdapter() {
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+			 */
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				initFilter(null);
+			}
+		});
+	}
+
+	protected void initFilter(String text) {
+		if (text == null || text.length() == 0) {
+			filterText.setText("Search...");
+			filterText.setForeground(getDisplay().getSystemColor(SWT.COLOR_TITLE_INACTIVE_FOREGROUND));
+		}  else {
+			filterText.setText(text);
+			filterText.selectAll();
+			filterText.setForeground(null);
+		}
+		
+		updateFilter(text);
+		
+
+		getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				nameColumn.pack();
+			}
+		});
+
+	}
+
+	/**
+	 * @param text
+	 */
+	protected void updateFilter(final String text) {
+		visibleItems.clear();
+		
+		if (text == null || text.isEmpty()) {
+			lastFilter = null;
+			viewer.resetFilters();
+		} else {
+			lastFilter = text;
+			viewer.setFilters(new ViewerFilter[] { 
+					new ViewerFilter() {
+						
+						@Override
+						public boolean select(Viewer viewer, Object parentElement, Object element) {
+							return element instanceof IModule && ((IModule) element).getName().toLowerCase().contains(
+									text.toLowerCase());
+						}
+					}
+				}
+			);
+		}
+	}
+
+	/**
+	 * @param moduleManager
+	 */
+	protected TableViewer createTable() {
+		final TableViewer viewer = new TableViewer(this, SWT.READ_ONLY | SWT.BORDER | SWT.VIRTUAL);
 		
 		Table table = viewer.getTable();
 		table.setHeaderVisible(true);
@@ -87,12 +261,18 @@ public class ModuleSelector extends Composite {
 		
 		GridDataFactory.fillDefaults().grab(true,true).applyTo(table);
 		
+		/*
 		if (table.getFont().getFontData()[0].getHeight() < 12) {
 			FontDescriptor desc = FontUtils.getFontDescriptor(JFaceResources.getDefaultFont());
 			tableFont = desc.setHeight(12).createFont(getDisplay()); 
 			table.setFont(tableFont);
 		}
-		
+		*/
+
+		FontDescriptor desc = FontUtils.getFontDescriptor(JFaceResources.getBannerFont());
+		tableFont = desc.createFont(getDisplay()); 
+		table.setFont(tableFont);
+
 		addDisposeListener(new DisposeListener() {
 			
 			@Override
@@ -102,11 +282,11 @@ public class ModuleSelector extends Composite {
 			}
 		});
 		
+		imageColumn = new TableColumn(table, SWT.LEFT);
+		imageColumn.setText("");
+		
 		nameColumn = new TableColumn(table, SWT.LEFT);
 		nameColumn.setText("Name");
-
-		fileColumn = new TableColumn(table, SWT.LEFT);
-		fileColumn.setText("File");
 
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ModuleTableLabelProvider());
@@ -114,6 +294,88 @@ public class ModuleSelector extends Composite {
 		selectedModule = null;
 		final IModule[] realModules = moduleManager.getModules();
 		
+		if (realModules.length > 0) {
+			addIterativeSearch(viewer, table, realModules);
+		}
+		
+		Object[] modulesPlusEmpty = new Object[realModules.length + 1];
+		modulesPlusEmpty[0] = "<No module>";
+		System.arraycopy(realModules, 0, modulesPlusEmpty, 1, realModules.length);
+		viewer.setInput(modulesPlusEmpty);
+		final IModule[] loadedModules = moduleManager.getLoadedModules();
+		viewer.setSelection(new StructuredSelection(loadedModules));
+		if (loadedModules.length > 0) {
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					viewer.reveal(loadedModules[0]);
+				}
+			});
+		}
+
+		table.addKeyListener(new KeyAdapter() {
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.KeyAdapter#keyPressed(org.eclipse.swt.events.KeyEvent)
+			 */
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.keyCode == '\r' || e.keyCode == '\n') {
+					switchModule(false);
+					e.doit = false;
+				}
+			}
+		});
+		
+		return viewer;
+	}
+
+	/**
+	 * @param viewer
+	 * @param table
+	 * @param realModules
+	 */
+	protected void addIterativeSearch(final TableViewer viewer, Table table,
+			final IModule[] realModules) {
+		table.addKeyListener(new KeyAdapter() {
+			StringBuilder search = new StringBuilder();
+			int index = 0;
+			
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.keyCode == '\b') {
+					search.setLength(0);
+					index = 0;
+					e.doit = false;
+				}
+				else if (e.character >= 32 && e.character < 127) {
+					search.append(e.character);
+					e.doit = false;
+				}
+				else {
+					return;
+				}
+				
+				if (search.length() > 0) {
+					updateFilter(search.toString());
+					int end = (index + realModules.length - 1) % realModules.length;
+					for (int i = index; i != end; i = (i + 1) % realModules.length) {
+						IModule m = realModules[i];
+						if (m.getName().toLowerCase().contains(search.toString().toLowerCase())) {
+							viewer.setSelection(new StructuredSelection(m));
+							viewer.reveal(m);
+							index = i;
+							break;
+						}
+					}
+				}
+			}
+		});
+	}
+
+
+	/**
+	 * 
+	 */
+	protected void hookActions() {
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			
 			public void selectionChanged(SelectionChangedEvent event) {
@@ -148,78 +410,18 @@ public class ModuleSelector extends Composite {
 			}
 		});
 		
-		buttonBar = new Composite(this, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(buttonBar);
-		
-		switchButton = new Button(buttonBar, SWT.PUSH);
-		switchButton.setText("Switch module");
-		switchButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				switchModule((e.stateMask & SWT.SHIFT) != 0);
+		// this only works with virtual tables
+		viewer.getTable().addListener(SWT.SetData, new Listener() {
+			/*
+			 * (non-Javadoc)
+			 * 
+			 * @see org.eclipse.swt.widgets.Listener#handleEvent(org.eclipse.swt.widgets.Event)
+			 */
+			public void handleEvent(Event event) {
+				TableItem item = (TableItem) event.item;
+				visibleItems.add(item.getData());
 			}
 		});
-		switchButton.setEnabled(false);
-		
-
-		if (realModules.length > 0) {
-			table.addKeyListener(new KeyAdapter() {
-				StringBuilder search = new StringBuilder();
-				int index = 0;
-				
-				@Override
-				public void keyPressed(KeyEvent e) {
-					if (e.keyCode == '\b') {
-						search.setLength(0);
-						index = 0;
-						e.doit = false;
-					}
-					else if (e.character >= 32 && e.character < 127) {
-						search.append(e.character);
-						e.doit = false;
-					}
-					else if (e.keyCode == '\r' || e.keyCode == '\n') {
-						switchModule(false);
-						e.doit = false;
-						return;
-					}
-					else {
-						return;
-					}
-					
-					if (search.length() > 0) {
-						int end = (index + realModules.length - 1) % realModules.length;
-						for (int i = index; i != end; i = (i + 1) % realModules.length) {
-							IModule m = realModules[i];
-							if (m.getName().toLowerCase().contains(search.toString().toLowerCase())) {
-								viewer.setSelection(new StructuredSelection(m));
-								viewer.reveal(m);
-								index = i;
-								break;
-							}
-						}
-					}
-				}
-			});
-		}
-		
-		
-		Object[] modulesPlusEmpty = new Object[realModules.length + 1];
-		modulesPlusEmpty[0] = "<No module>";
-		System.arraycopy(realModules, 0, modulesPlusEmpty, 1, realModules.length);
-		viewer.setInput(modulesPlusEmpty);
-		final IModule[] loadedModules = moduleManager.getLoadedModules();
-		viewer.setSelection(new StructuredSelection(loadedModules));
-		if (loadedModules.length > 0) {
-			Display.getDefault().asyncExec(new Runnable() {
-				public void run() {
-					viewer.reveal(loadedModules[0]);
-				}
-			});
-		}
-
-		nameColumn.pack();
-		fileColumn.pack();
 	}
 
 	/**
@@ -278,8 +480,9 @@ public class ModuleSelector extends Composite {
 			}
 			IModule module = (IModule) element;
 			switch (columnIndex) {
-			case 0: return module.getName();
-			case 1: {
+			case IMAGE_COLUMN: return null;
+			case NAME_COLUMN: return module.getName();
+			case FILE_COLUMN: {
 				for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
 					Object v = info.getProperties().get(MemoryEntryInfo.FILENAME);
 					if (v != null)

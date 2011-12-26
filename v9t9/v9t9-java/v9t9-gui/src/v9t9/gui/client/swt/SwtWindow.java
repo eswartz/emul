@@ -4,8 +4,6 @@
 package v9t9.gui.client.swt;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -186,28 +184,17 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 		List<Image> icons = new ArrayList<Image>();
 		for (int siz : new int[] { 128, 64, 32 }) {
-			URL iconFile = Emulator.getDataURL("icons/v9t9_" + siz + ".png");
-			if (iconFile != null) {
-				try {
-					Image icon = new Image(shell.getDisplay(), iconFile.openStream());
-					icons.add(icon);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			}
+			Image icon = Emulator.loadImage(shell.getDisplay(), "icons/v9t9_" + siz + ".png");
+			if (icon != null)
+				icons.add(icon);
 		}
 		shell.setImages(icons.toArray(new Image[icons.size()]));
 
 		TreeMap<Integer, Image> mainIcons = new TreeMap<Integer, Image>();
 		for (int size : new int[] { 16, 32, 64, 128 }) {
-			URL iconsFile = Emulator.getDataURL("icons/icons_" + size + ".png");
-			if (iconsFile != null) {
-				try {
-					mainIcons.put(size, new Image(getShell().getDisplay(), 
-							iconsFile.openStream()));
-				} catch (Exception e1) {
-					e1.printStackTrace();
-				}
+			Image iconsImage = Emulator.loadImage(shell.getDisplay(), "icons/icons_" + size + ".png");
+			if (iconsImage != null) {
+				mainIcons.put(size, iconsImage);
 			}
 		}
 		

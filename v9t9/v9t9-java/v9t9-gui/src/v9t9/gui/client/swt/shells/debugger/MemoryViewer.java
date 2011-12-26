@@ -3,7 +3,6 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +34,6 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
@@ -217,11 +215,7 @@ public class MemoryViewer extends Composite {
 		buttonBar.setLayout(new RowLayout(SWT.HORIZONTAL));
 		
 		filterButton = new Button(buttonBar, SWT.TOGGLE);
-		try {
-			filterButton.setImage(new Image(getDisplay(), Emulator.getDataURL("icons/filter.png").openStream()));
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
+		filterButton.setImage(Emulator.loadImage(getDisplay(), "icons/filter.png"));
 		filterButton.setSize(24, 24);
 		filterMemory = true;
 		filterButton.setSelection(true);
@@ -236,11 +230,7 @@ public class MemoryViewer extends Composite {
 
 		
 		refreshButton = new Button(buttonBar, SWT.TOGGLE);
-		try {
-			refreshButton.setImage(new Image(getDisplay(), Emulator.getDataURL("icons/refresh.png").openStream()));
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
+		refreshButton.setImage(Emulator.loadImage(getDisplay(), "icons/refresh.png"));
 		refreshButton.setSize(24, 24);
 		autoRefresh = true;
 		refreshButton.setSelection(true);
@@ -253,11 +243,7 @@ public class MemoryViewer extends Composite {
 		});
 		
 		pinButton = new Button(buttonBar, SWT.TOGGLE);
-		try {
-			pinButton.setImage(new Image(getDisplay(), Emulator.getDataURL("icons/pin.png").openStream()));
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
+		pinButton.setImage(Emulator.loadImage(getDisplay(), "icons/pin.png"));
 		pinButton.setSize(24, 24);
 		pinMemory = false;
 		pinButton.setSelection(false);
