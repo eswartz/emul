@@ -164,7 +164,6 @@ public abstract class BaseEmulatorBar {
 	 * 
 	 */
 	public void dispose() {
-		// TODO Auto-generated method stub
 		
 	}
 

@@ -24,7 +24,6 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
-import org.eclipse.swt.widgets.Shell;
 
 import ejs.base.properties.IProperty;
 import ejs.base.utils.Pair;
@@ -37,7 +36,6 @@ import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtDragDropHandler;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
-import v9t9.gui.client.swt.shells.IToolShellFactory;
 import v9t9.gui.client.swt.shells.ImageImportOptionsDialog;
 import v9t9.gui.client.swt.shells.debugger.DebuggerWindow;
 import v9t9.gui.common.BaseEmulatorWindow;
@@ -48,8 +46,6 @@ import v9t9.gui.sound.JavaSoundHandler;
  *
  */
 public class EmulatorButtonBar extends BaseEmulatorBar  {
-	protected static final String DEBUGGER_TOOL_ID = "debugger";
-	protected static final String IMAGE_IMPORTER_ID = "swt.image.importer";
 	/**
 	 * @param parent 
 	 * @param isHorizontal 
@@ -127,20 +123,8 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 				"Create debugger window", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						swtWindow.toggleToolShell(EmulatorButtonBar.DEBUGGER_TOOL_ID, new IToolShellFactory() {
-							Behavior behavior = new Behavior();
-							{
-								behavior.boundsPref = "DebuggerWindowBounds";
-								behavior.dismissOnClickOutside = false;
-								behavior.centerOverControl = buttonBar;
-							}
-							public Control createContents(Shell shell) {
-								return new DebuggerWindow(shell, SWT.NONE, machine, swtWindow.getToolUiTimer());
-							}
-							public Behavior getBehavior() {
-								return behavior;
-							}
-						});
+						swtWindow.toggleToolShell(DebuggerWindow.DEBUGGER_TOOL_ID, 
+								DebuggerWindow.getToolShellFactory(machine, buttonBar, swtWindow.getToolUiTimer()));
 					}
 			}
 		);
@@ -187,24 +171,8 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 			new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					swtWindow.toggleToolShell(EmulatorButtonBar.IMAGE_IMPORTER_ID, new IToolShellFactory() {
-						Behavior behavior = new Behavior();
-						{
-							behavior.boundsPref = "ImageImporterBounds";
-							behavior.centering = Centering.OUTSIDE;
-							behavior.centerOverControl = swtWindow.getShell();
-							behavior.dismissOnClickOutside = true;
-						}
-						public Control createContents(Shell shell) {
-							ImageImportOptionsDialog dialog = imageSupport.createImageImportDialog(shell);
-							imageSupport.addImageImportDnDControl(dialog);
-							return dialog;
-						}
-						@Override
-						public Behavior getBehavior() {
-							return behavior;
-						}
-					});
+					swtWindow.toggleToolShell(ImageImportOptionsDialog.IMAGE_IMPORTER_ID, 
+							ImageImportOptionsDialog.getToolShellFactory(buttonBar, imageSupport));
 				}
 			}
 		);

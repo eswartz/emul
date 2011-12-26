@@ -15,16 +15,19 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.properties.IPropertySource;
 
+import v9t9.gui.client.swt.bars.ImageBar;
 import v9t9.gui.client.swt.imageimport.IImageImportHandler;
 import v9t9.gui.client.swt.imageimport.ImageClipDecorator;
 import v9t9.gui.client.swt.imageimport.ImageLabel;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
+import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
 import v9t9.gui.properties.EditGroup;
 import v9t9.gui.properties.FieldPropertyEditorProvider;
 import v9t9.gui.properties.PropertySourceEditor;
@@ -80,6 +83,7 @@ public class ImageImportOptionsDialog extends Composite {
 	}
 
 	private IPropertySource propertySource;
+	public static final String IMAGE_IMPORTER_ID = "swt.image.importer";
 
 	/**
 	 * @param shell
@@ -173,5 +177,30 @@ public class ImageImportOptionsDialog extends Composite {
 				}
 			}
 		});
+	}
+
+	/**
+	 * @param buttonBar
+	 * @return
+	 */
+	public static IToolShellFactory getToolShellFactory(final ImageBar buttonBar, final SwtImageImportSupport imageSupport) {
+		return new IToolShellFactory() {
+			Behavior behavior = new Behavior();
+			{
+				behavior.boundsPref = "ImageImporterBounds";
+				behavior.centering = Centering.OUTSIDE;
+				behavior.centerOverControl = buttonBar.getShell();
+				behavior.dismissOnClickOutside = true;
+			}
+			public Control createContents(Shell shell) {
+				ImageImportOptionsDialog dialog = imageSupport.createImageImportDialog(shell);
+				imageSupport.addImageImportDnDControl(dialog);
+				return dialog;
+			}
+			@Override
+			public Behavior getBehavior() {
+				return behavior;
+			}
+		};
 	}
 }

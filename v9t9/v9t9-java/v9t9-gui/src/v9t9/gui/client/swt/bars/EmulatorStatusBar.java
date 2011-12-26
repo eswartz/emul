@@ -31,7 +31,6 @@ import v9t9.gui.Emulator;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.shells.CpuMetricsCanvas;
 import v9t9.gui.client.swt.shells.DiskSelectorDialog;
-import v9t9.gui.client.swt.shells.IToolShellFactory;
 import v9t9.gui.client.swt.shells.ModuleSelector;
 
 /**
@@ -46,8 +45,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	private IProperty realTime;
 	private IProperty compile;
 	private IProperty cyclesPerSecond;
-	protected static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
-	protected static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
 	/**
 	 * @param swtWindow
 	 * @param mainComposite
@@ -71,21 +68,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				"Switch module", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						swtWindow.toggleToolShell(EmulatorStatusBar.MODULE_SELECTOR_TOOL_ID, new IToolShellFactory() {
-							Behavior behavior = new Behavior();
-							{
-								behavior.boundsPref = "ModuleWindowBounds";
-								behavior.centering = Centering.INSIDE;
-								behavior.centerOverControl = buttonBar;
-								behavior.dismissOnClickOutside = true;
-							}
-							public Control createContents(Shell shell) {
-								return new ModuleSelector(shell, machine, machine.getModuleManager());
-							}
-							public Behavior getBehavior() {
-								return behavior;
-							}
-						});
+						swtWindow.toggleToolShell(ModuleSelector.MODULE_SELECTOR_TOOL_ID,
+								ModuleSelector.getToolShellFactory(machine, buttonBar));
 					}
 				}
 			);
@@ -96,21 +80,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			"Setup disks", new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					swtWindow.toggleToolShell(EmulatorStatusBar.DISK_SELECTOR_TOOL_ID, new IToolShellFactory() {
-						Behavior behavior = new Behavior();
-						{
-							behavior.boundsPref = "DiskWindowBounds";
-							behavior.centering = Centering.INSIDE;
-							behavior.centerOverControl = buttonBar;
-							behavior.dismissOnClickOutside = true;
-						}
-						public Control createContents(Shell shell) {
-							return new DiskSelectorDialog(shell, machine);
-						}
-						public Behavior getBehavior() {
-							return behavior;
-						}
-					});
+					swtWindow.toggleToolShell(DiskSelectorDialog.DISK_SELECTOR_TOOL_ID, 
+							DiskSelectorDialog.getToolShellFactory(machine, buttonBar));
 				}
 			}
 		);		

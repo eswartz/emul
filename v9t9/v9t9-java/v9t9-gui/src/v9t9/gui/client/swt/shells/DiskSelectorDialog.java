@@ -32,6 +32,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
@@ -50,6 +51,7 @@ import v9t9.common.files.IFileHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.ISettingDecorator;
 import v9t9.common.settings.IconSettingProperty;
+import v9t9.gui.client.swt.bars.ImageBar;
 
 /**
  * Select and set up disks
@@ -58,6 +60,27 @@ import v9t9.common.settings.IconSettingProperty;
  */
 public class DiskSelectorDialog extends Composite {
 
+	public static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
+
+	public static IToolShellFactory getToolShellFactory(final IMachine machine, final ImageBar buttonBar) {
+		return new IToolShellFactory() {
+			Behavior behavior = new Behavior();
+			{
+				behavior.boundsPref = "DiskWindowBounds";
+				behavior.centering = Centering.INSIDE;
+				behavior.centerOverControl = buttonBar;
+				behavior.dismissOnClickOutside = true;
+			}
+			public Control createContents(Shell shell) {
+				return new DiskSelectorDialog(shell, machine);
+			}
+			public Behavior getBehavior() {
+				return behavior;
+			}
+		};
+	}
+
+	
 	private final IMachine machine;
 	
 	abstract class SettingEntry extends Composite {

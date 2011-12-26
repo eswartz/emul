@@ -10,9 +10,12 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.machine.IMachine;
+import v9t9.gui.client.swt.bars.ImageBar;
+import v9t9.gui.client.swt.shells.IToolShellFactory;
 
 /**
  * @author Ed
@@ -25,6 +28,7 @@ public class DebuggerWindow extends Composite {
 	/*private*/ CpuViewer cpuViewer;
 	private SashForm vertSash;
 	private RegisterViews regViewer;
+	public static final String DEBUGGER_TOOL_ID = "debugger";
 
 	public DebuggerWindow(Shell parent, int style, IMachine machine, Timer timer) {
 		super(parent, style);
@@ -52,5 +56,29 @@ public class DebuggerWindow extends Composite {
 		new MemoryViewer(vertSash, SWT.BORDER, machine.getMemory(), timer);
 		new MemoryViewer(vertSash, SWT.BORDER, machine.getMemory(), timer);
 		new MemoryViewer(vertSash, SWT.BORDER, machine.getMemory(), timer);
+	}
+
+	/**
+	 * @param machine2
+	 * @param buttonBar
+	 * @param timer 
+	 * @return
+	 */
+	public static IToolShellFactory getToolShellFactory(final IMachine machine,
+			final ImageBar buttonBar, final Timer timer) {
+		return new IToolShellFactory() {
+			Behavior behavior = new Behavior();
+			{
+				behavior.boundsPref = "DebuggerWindowBounds";
+				behavior.dismissOnClickOutside = false;
+				behavior.centerOverControl = buttonBar;
+			}
+			public Control createContents(Shell shell) {
+				return new DebuggerWindow(shell, SWT.NONE, machine, timer);
+			}
+			public Behavior getBehavior() {
+				return behavior;
+			}
+		};
 	}
 }

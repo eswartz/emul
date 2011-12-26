@@ -36,6 +36,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
@@ -53,6 +54,7 @@ import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.gui.Emulator;
+import v9t9.gui.client.swt.bars.ImageBar;
 import v9t9.gui.common.FontUtils;
 
 /**
@@ -78,6 +80,7 @@ public class ModuleSelector extends Composite {
 	private Text filterText;
 	protected int visibleCount;
 	protected Set<Object> visibleItems = new HashSet<Object>();
+	public static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 	private static String lastFilter;
 
 	/**
@@ -492,5 +495,29 @@ public class ModuleSelector extends Composite {
 			return null;
 		}
 		
+	}
+
+	/**
+	 * @param machine2
+	 * @param buttonBar2
+	 * @return
+	 */
+	public static IToolShellFactory getToolShellFactory(final IMachine machine,
+			final ImageBar buttonBar) {
+		 return new IToolShellFactory() {
+			Behavior behavior = new Behavior();
+			{
+				behavior.boundsPref = "ModuleWindowBounds";
+				behavior.centering = Centering.INSIDE;
+				behavior.centerOverControl = buttonBar;
+				behavior.dismissOnClickOutside = true;
+			}
+			public Control createContents(Shell shell) {
+				return new ModuleSelector(shell, machine, machine.getModuleManager());
+			}
+			public Behavior getBehavior() {
+				return behavior;
+			}
+		};
 	}
 }
