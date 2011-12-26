@@ -1,5 +1,8 @@
 package v9t9.gui.client.swt;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Control;
@@ -17,10 +20,12 @@ import v9t9.common.events.NotifyEvent;
 public final class GuiEventNotifier extends BaseEventNotifier {
 	ToolTip lastTooltip = null;
 	private final SwtWindow swtWindow;
+	private Timer timer;
 	
 	public GuiEventNotifier(SwtWindow swtWindow) 
 	{
 		this.swtWindow = swtWindow;
+		timer = new Timer();
 		startConsumerThread();
 	}
 
@@ -61,9 +66,28 @@ public final class GuiEventNotifier extends BaseEventNotifier {
 				else
 					status = SWT.ICON_ERROR;
 				
-				ToolTip tip = new ToolTip(swtWindow.shell, SWT.BALLOON | status);
-				tip.setText(event.message != null ? event.message : "");
-				tip.setAutoHide(true);
+				final ToolTip tip = new ToolTip(swtWindow.shell, SWT.BALLOON | status);
+				String text = event.message != null ? event.message : "";
+				tip.setText(text);
+				
+				long delay = Math.min(10000, Math.max(1000, text.length() * 100));
+				System.out.println("tooltip delay: " + delay);
+				tip.setAutoHide(false);
+				
+				timer.schedule(new TimerTask() {
+
+					@Override
+					public void run() {
+						Display.getDefault().asyncExec(new Runnable() {
+							public void run() {
+								if (!tip.isDisposed())
+									tip.dispose();
+							}
+						});
+					}
+					
+				}, delay);
+				
 				if (event.context instanceof Event) {
 					Event e = (Event)event.context;
 					Control b = (Control) e.widget;
