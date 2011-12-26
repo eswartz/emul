@@ -9,11 +9,11 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
-import v9t9.engine.EmulatorData;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.machine.EmulatorMachinesData;
 
 
 /**
@@ -42,7 +42,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 		// enhanced model can only load FORTH for now
 		DiskMemoryEntry entry;
 		
-		URL dataURL = EmulatorData.getDataURL("../../../build/forth");
+		URL dataURL = EmulatorMachinesData.getDataURL("../../../build/forth");
 		DataFiles.addSearchPath(settings, dataURL.getPath());
 		
 		loadEnhancedBankedConsoleRom(eventNotifier, "nforthA.rom", "nforthB.rom");

@@ -4,22 +4,20 @@
 package v9t9.engine.modules;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
-import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
-import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
@@ -36,7 +34,7 @@ import v9t9.engine.memory.DiskMemoryEntry;
  * @author ejs
  *
  */
-public class ModuleManager implements IPersistable, IModuleManager {
+public class ModuleManager implements IModuleManager {
 	private List<IModule> modules;
 	private final IMachine machine;
 	
@@ -48,45 +46,42 @@ public class ModuleManager implements IPersistable, IModuleManager {
 	
 	private Map<IMemoryEntry, IModule> memoryEntryModules = new HashMap<IMemoryEntry, IModule>();
 	private IProperty lastLoadedModule;
+	private final URL stockModuleDatabase;
 	
-	public ModuleManager(IMachine machine) {
+	public ModuleManager(IMachine machine, URL stockModuleDatabase) {
 		this.machine = machine;
-		this.modules = Collections.emptyList();
+		this.stockModuleDatabase = stockModuleDatabase;
+		this.modules = new ArrayList<IModule>();
 		
 		lastLoadedModule = Settings.get(machine, settingLastLoadedModule);
 	}
 	
-
-    /* (non-Javadoc)
-	 * @see v9t9.engine.modules.IModuleManager#loadModules(java.lang.String[], v9t9.common.events.IEventNotifier)
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#getStockDatabaseURL()
 	 */
-    @Override
-	public void loadModules(String[] files, IEventNotifier notifier) {
-    	ISettingsHandler settings = Settings.getSettings(machine);
-    	if (modules.isEmpty()) {
+	@Override
+	public URL getStockDatabaseURL() {
+		return stockModuleDatabase;
+	}
 
-			for (String dbName : files) {
-				boolean anyErrors = false;
-	    		try {
-					List<IModule> modList = ModuleLoader.loadModuleList(settings, dbName);
-					if (modules == null || modules.isEmpty())
-						modules = modList;
-					else
-						modules.addAll(modList);
-	    		} catch (NotifyException e) {
-	    			notifier.notifyEvent(e.getEvent());
-				}
-	    		if (anyErrors) {
-	    			notifier.notifyEvent(this, IEventNotifier.Level.ERROR,
-	    					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
-							+ settings.getWorkspaceSettings().getConfigFilePath());
-	    			if (modules == null) {
-	    				modules = Collections.emptyList();
-	    			}
-	    		}
-    		}
-    	}
-    }
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#clearModules()
+	 */
+	@Override
+	public void clearModules() {
+		modules.clear();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#addModules(java.util.Collection)
+	 */
+	@Override
+	public void addModules(Collection<IModule> modList) {
+		for (IModule module : modList) {
+			if (!modules.contains(module))
+				modules.add(module);
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.engine.modules.IModuleManager#getModules()
@@ -130,16 +125,10 @@ public class ModuleManager implements IPersistable, IModuleManager {
 			if (loadedModules.contains(module))
 				return;
 			
-			List<IMemoryEntry> entries = new ArrayList<IMemoryEntry>();
-			IMemory memory = machine.getMemory();
-			for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-				IMemoryEntry entry = createMemoryEntry(info, memory);
-				if (entry != null)
-					entries.add(entry);
-			}
+			Collection<IMemoryEntry> entries = getModuleMemoryEntries(module);
 			for (IMemoryEntry entry : entries) {
 				try {
-					memory.addAndMap(entry);
+					machine.getMemory().addAndMap(entry);
 				} catch (AbortedException e) {
 					// ignore
 				}
@@ -289,5 +278,21 @@ public class ModuleManager implements IPersistable, IModuleManager {
 			String filename = info.getString(MemoryEntryInfo.FILENAME); 
 			throw new NotifyException(null, "Failed to load file '" + filename + "' for '" + info.getString(MemoryEntryInfo.NAME) +"'", e);
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#getModuleMemoryEntries(v9t9.common.modules.IModule)
+	 */
+	@Override
+	public Collection<IMemoryEntry> getModuleMemoryEntries(IModule module)
+			throws NotifyException {
+		List<IMemoryEntry> entries = new ArrayList<IMemoryEntry>();
+		IMemory memory = machine.getMemory();
+		for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
+			IMemoryEntry entry = createMemoryEntry(info, memory);
+			if (entry != null)
+				entries.add(entry);
+		}
+		return entries;
 	}
 }

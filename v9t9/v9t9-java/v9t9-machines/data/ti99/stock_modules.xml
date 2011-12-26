@@ -1,0 +1,475 @@
+<!-- This is a list of all known modules ported to V9t9 -->
+<modules>
+	<module name="TI Logo II">
+		<moduleEntries><!-- "TI Logo II",LOGO,ROM,GROM -->
+			<romModuleEntry fileName="logoc.bin" />
+			<gromModuleEntry fileName="logog.bin" />
+		</moduleEntries>
+	</module>
+	<module name="TI Extended BASIC">
+		<moduleEntries><!-- "TI Extended BASIC",TIEXT,ROM1,ROM2,GROM -->
+			<bankedModuleEntry fileName="tiextc.bin" fileName2="tiextd.bin" />
+			<gromModuleEntry fileName="tiextg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Jungle Hunt">
+		<moduleEntries><!-- "Jungle Hunt",JUNGLE,BANKED -->
+			<bankedModuleEntry fileName="junglec.bin"
+				fileName2="jungled.bin" />
+		</moduleEntries>
+	</module>
+	<module name="A-Maze-Ing">
+		<moduleEntries><!-- "A-Maze-Ing",AMAZEIN,GROM -->
+			<gromModuleEntry fileName="amazeing.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Hunt the Wumpus">
+		<moduleEntries><!-- "Hunt the Wumpus",WUMPUS,GROM -->
+			<gromModuleEntry fileName="wumpusg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="The Attack">
+		<moduleEntries><!-- "The Attack",ATTACK,GROM -->
+			<gromModuleEntry fileName="attackg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Household Budget Management">
+		<moduleEntries><!-- "Household Budget Management",BUDGET,GROM -->
+			<gromModuleEntry fileName="budgetg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Car Wars">
+		<moduleEntries><!-- "Carwars",CARWARS,GROM -->
+			<gromModuleEntry fileName="carwarsg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Editor/Assembler">
+		<moduleEntries><!-- "Editor/Assembler",EA,GROM -->
+			<gromModuleEntry fileName="eag.bin" />
+		</moduleEntries>
+	</module>
+	<module name="TI Invaders">
+		<moduleEntries><!-- "TI Invaders",INVADER,GROM,ROM -->
+			<gromModuleEntry fileName="invaderg.bin" />
+			<romModuleEntry fileName="invaderc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Munchman">
+		<moduleEntries><!-- "Munchman",MNCHMAN,GROM,ROM -->
+			<gromModuleEntry fileName="mnchmang.bin" />
+			<romModuleEntry fileName="mnchmanc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Music Maker">
+		<moduleEntries><!-- "Music Maker",MUSICM,GROM -->
+			<gromModuleEntry fileName="musicmg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Parsec">
+		<moduleEntries><!-- "Parsec",PARSEC,GROM,ROM -->
+			<gromModuleEntry fileName="parsecg.bin" />
+			<romModuleEntry fileName="parsecc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Indoor Soccer">
+		<moduleEntries><!-- "Indoor Soccer",SOCCER,GROM -->
+			<gromModuleEntry fileName="soccerg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Personal Record Keeping">
+		<moduleEntries><!-- "Personal Record Keeping",PRK,GROM -->
+			<gromModuleEntry fileName="prkg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="TI Writer">
+		<moduleEntries><!-- "TI Writer",TIWRITE,GROM -->
+			<gromModuleEntry fileName="tiwriteg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Tombstone City">
+		<moduleEntries><!-- "Tombstone City",TOMB,GROM,ROM -->
+			<gromModuleEntry fileName="tombg.bin" />
+			<romModuleEntry fileName="tombc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Touch Typing Tutor">
+		<moduleEntries><!-- "Touch Typing Tutor",TTYPIN,GROM -->
+			<gromModuleEntry fileName="ttyping.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Tunnels of Doom">
+		<moduleEntries><!-- "Tunnels of Doom",TUNNELS,GROM -->
+			<gromModuleEntry fileName="tunnelsg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Yahtzee">
+		<moduleEntries><!-- "Yahtzee",YAHTZEE,GROM -->
+			<gromModuleEntry fileName="yahtzeeg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Mini Memory">
+		<moduleEntries><!-- "Mini Memory",MINI,GROM,ROM,MMRAM -->
+			<gromModuleEntry fileName="minig.bin" />
+			<romModuleEntry fileName="minic.bin" />
+			<moduleEntry address="0x7000" domain="CPU" fileName="minir.bin"
+				size="0x1000" stored="true" />
+		</moduleEntries>
+	</module>
+	<module name="TI Demonstration Module">
+		<moduleEntries><!-- "TI Demonstration Module",DEMO,GROM -->
+			<gromModuleEntry fileName="demog.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Jawbreaker II">
+		<moduleEntries><!-- "Jawbreaker II",JWBREAK,GROM,ROM -->
+			<gromModuleEntry fileName="jwbreakg.bin" />
+			<romModuleEntry fileName="jwbreakc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Scott Adam&apos;s Adventure">
+		<moduleEntries><!-- "Scott Adam's Adventure",ADV,GROM -->
+			<gromModuleEntry fileName="advg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Multiplan">
+		<moduleEntries><!-- "Multiplan",MULTI,GROM -->
+			<gromModuleEntry fileName="multig.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Blackjack">
+		<moduleEntries><!-- "Blackjack",BLKJK,GROM -->
+			<gromModuleEntry fileName="blkjkg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Editor Assembler #2">
+		<moduleEntries><!-- "Editor Assembler #2",EAW,GROM -->
+			<gromModuleEntry fileName="eawg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Moon Patrol">
+		<moduleEntries><!-- "Moon Patrol",MOON,BANKED -->
+			<bankedModuleEntry fileName="moonc.bin" fileName2="moond.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Donkey Kong">
+		<moduleEntries><!-- "Donkey Kong",DONKEY,ROM -->
+			<romModuleEntry fileName="donkeyc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Popeye">
+		<moduleEntries><!-- "Popeye",POPEYE,GROM,ROM -->
+			<gromModuleEntry fileName="popeyeg.bin" />
+			<romModuleEntry fileName="popeyec.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Video Chess">
+		<moduleEntries><!-- "Video Chess",VCHESS,GROM,ROM -->
+			<gromModuleEntry fileName="vchessg.bin" />
+			<romModuleEntry fileName="vchessc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="TI Logo">
+		<moduleEntries><!-- "TI Logo",TILOGO1,GROM -->
+			<gromModuleEntry fileName="tilogo1g.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Diagnostic Tests">
+		<moduleEntries><!-- "Diagnostic Tests",diags,GROM -->
+			<gromModuleEntry fileName="diagsg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Speech Editor">
+		<moduleEntries><!-- "Speech Editor",SPEDIT,GROM -->
+			<gromModuleEntry fileName="speditg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Home Finance">
+		<moduleEntries><!-- "Home Finance",HMFINA,GROM -->
+			<gromModuleEntry fileName="hmfinag.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Demon Attack">
+		<moduleEntries><!-- "Demon Attack",DEMATT,GROM,ROM -->
+			<gromModuleEntry fileName="demattg.bin" />
+			<romModuleEntry fileName="demattc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Meteor Belt">
+		<moduleEntries><!-- "Meteor Belt",METBEL,GROM,ROM -->
+			<gromModuleEntry fileName="metbelg.bin" />
+			<romModuleEntry fileName="metbelc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Tax Records">
+		<moduleEntries><!-- "Tax Records",TAXREC,GROM -->
+			<gromModuleEntry fileName="taxrecg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Connect Four">
+		<moduleEntries><!-- "Connect Four",CONN4,GROM -->
+			<gromModuleEntry fileName="conn4g.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Securities Analysis">
+		<moduleEntries><!-- "Securities Analysis",SECANA,GROM -->
+			<gromModuleEntry fileName="secanag.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Number Magic">
+		<moduleEntries><!-- "Number Magic",NUMMAG,GROM -->
+			<gromModuleEntry fileName="nummagg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Mind Challengers 2">
+		<moduleEntries><!-- "Mind Challengers 2",MINDCHA,GROM -->
+			<gromModuleEntry fileName="mindchag.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Reading Flight">
+		<moduleEntries><!-- "Reading Flight",REAFLIg,GROM -->
+			<gromModuleEntry fileName="reafligg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Video-Graphs">
+		<moduleEntries><!-- "Video-Graphs",VIDGRAF,GROM -->
+			<gromModuleEntry fileName="vidgrafg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Statistics">
+		<moduleEntries><!-- "Statistics",STAT,GROM -->
+			<gromModuleEntry fileName="statg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Early Learning">
+		<moduleEntries><!-- "Early Learning",EARLRNG,GROM -->
+			<gromModuleEntry fileName="earlrngg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Early Reading">
+		<moduleEntries><!-- "Early Reading",EARREAD,GROM -->
+			<gromModuleEntry fileName="earreadg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Alpiner">
+		<moduleEntries><!-- "Alpiner",ALPINER,GROM,ROM -->
+			<gromModuleEntry fileName="alpinerg.bin" />
+			<romModuleEntry fileName="alpinerc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Picnic Paranoia">
+		<moduleEntries><!-- "Picnic Paranoia",PICNIC,BANKED -->
+			<bankedModuleEntry fileName="picnicc.bin"
+				fileName2="picnicd.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Terminal Emulator II">
+		<moduleEntries><!-- "Terminal Emulator II",TEII,GROM,ROM -->
+			<gromModuleEntry fileName="teiig.bin" />
+			<romModuleEntry fileName="teiic.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Treasure Island">
+		<moduleEntries><!-- "Treasure Island",TRSURE,GROM,ROM -->
+			<gromModuleEntry fileName="trsureg.bin" />
+			<romModuleEntry fileName="trsurec.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Addition and Subtraction #1">
+		<moduleEntries><!-- "Addition and Subtraction #1",ADDSUB1,GROM -->
+			<gromModuleEntry fileName="addsub1g.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Addition and Subtraction #2">
+		<moduleEntries><!-- "Addition and Subtraction #2",ADDSUB2,GROM -->
+			<gromModuleEntry fileName="addsub2g.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Addition and Subtraction #3">
+		<moduleEntries><!-- "Addition and Subtraction #3",ADDSUB3,GROM -->
+			<gromModuleEntry fileName="addsub3g.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Disk Manager">
+		<moduleEntries><!-- "Disk Manager ][",DISKMAN,GROM -->
+			<gromModuleEntry fileName="diskmang.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Burger Time">
+		<moduleEntries><!-- "Burger Time",BURGER,ROM,GROM -->
+			<romModuleEntry fileName="burgerc.bin" />
+			<gromModuleEntry fileName="burgerg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Donkey Kong">
+		<moduleEntries><!-- "Donkey Kong",KONG,BANKED,GROM -->
+			<bankedModuleEntry fileName="kongc.bin" fileName2="kongd.bin" />
+			<gromModuleEntry fileName="kongg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Anteater">
+		<moduleEntries><!-- "Anteater",ANTEATE,ROM -->
+			<romModuleEntry fileName="anteatec.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Buck Rogers">
+		<moduleEntries><!-- "Buck Rogers",BUCKROG,ROM,GROM -->
+			<romModuleEntry fileName="buckrogc.bin" />
+			<gromModuleEntry fileName="buckrogg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Centipede">
+		<moduleEntries><!-- "Centipede",CENTIPE,ROM -->
+			<romModuleEntry fileName="centipec.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Comp War">
+		<moduleEntries><!-- "Comp War",COMPWAR,BANKED -->
+			<bankedModuleEntry fileName="compwarc.bin"
+				fileName2="compward.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Congo Bongo">
+		<moduleEntries><!-- "Congo Bongo",CONGOBO,ROM,GROM -->
+			<romModuleEntry fileName="congoboc.bin" />
+			<gromModuleEntry fileName="congobog.bin" />
+		</moduleEntries>
+	</module>
+	<module name="DBMS">
+		<moduleEntries><!-- "DBMS",DBMS,ROM -->
+			<romModuleEntry fileName="dbmsc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Disk Fixer">
+		<moduleEntries><!-- "Disk Fixer",DISKFIX,ROM -->
+			<romModuleEntry fileName="diskfixc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Dig Dug">
+		<moduleEntries><!-- "Dig Dug",DIGDUG,BANKED -->
+			<bankedModuleEntry fileName="digdugc.bin"
+				fileName2="digdugd.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Driving Demon">
+		<moduleEntries><!-- "Driving Demon",DRIVEDE,ROM -->
+			<romModuleEntry fileName="drivedec.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Frogger">
+		<moduleEntries><!-- "Frogger",FROGGER,ROM,GROM -->
+			<romModuleEntry fileName="froggerc.bin" />
+			<gromModuleEntry fileName="froggerg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Video Games 1">
+		<moduleEntries><!-- "Games",GAMES1,GROM -->
+			<gromModuleEntry fileName="games1g.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Hustle">
+		<moduleEntries><!-- "Hustle",HUSTLE,GROM -->
+			<gromModuleEntry fileName="hustleg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Hopper">
+		<moduleEntries><!-- "Hopper",HOPPER,ROM,GROM -->
+			<romModuleEntry fileName="hopperc.bin" />
+			<gromModuleEntry fileName="hopperg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Moon Sweeper">
+		<moduleEntries><!-- "Moon Sweeper",MOONSWE,ROM,GROM -->
+			<romModuleEntry fileName="moonswec.bin" />
+			<gromModuleEntry fileName="moonsweg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Munch Mobile">
+		<moduleEntries><!-- "Munch Mobile",MUNCHMO,ROM,GROM -->
+			<romModuleEntry fileName="munchmoc.bin" />
+			<gromModuleEntry fileName="munchmog.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Othello">
+		<moduleEntries><!-- "Othello",OTHELLO,ROM,GROM -->
+			<romModuleEntry fileName="othelloc.bin" />
+			<gromModuleEntry fileName="othellog.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Prince Frog?">
+		<moduleEntries><!-- "Prince Frog?",PRINCSF,ROM -->
+			<romModuleEntry fileName="princsfc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Q*Bert">
+		<moduleEntries><!-- &quot;Q*Bert&quot;,Q&#170;BERT,ROM,GROM -->
+			<romModuleEntry fileName="qbertc.bin" />
+			<gromModuleEntry fileName="qbertg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Report Generator">
+		<moduleEntries><!-- "Report Generator",REPTGEN,GROM -->
+			<gromModuleEntry fileName="reptgeng.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Report Generator">
+		<moduleEntries><!-- "Report Generator",REPTGEN,GROM -->
+			<gromModuleEntry fileName="reptgeng.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Rotor Raid">
+		<moduleEntries><!-- "Rotor Raid",ROTORRA,ROM -->
+			<romModuleEntry fileName="rotorrac.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Securities Analysis">
+		<moduleEntries><!-- "Securities Analysis",SECURIT,GROM -->
+			<gromModuleEntry fileName="securitg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Star Trek">
+		<moduleEntries><!-- "Star Trek",STARTRE,ROM,GROM -->
+			<romModuleEntry fileName="startrec.bin" />
+			<gromModuleEntry fileName="startreg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Weight Control and Nutrition">
+		<moduleEntries><!-- "Weight Control and Nutrition",WEIGHT,GROM -->
+			<gromModuleEntry fileName="weightg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Console Writer">
+		<moduleEntries><!-- "CNSLWRT",CNSLWRT,ROM -->
+			<romModuleEntry fileName="cnslwrtc.bin" />
+		</moduleEntries>
+	</module>
+	<module name="M*A*S*H">
+		<moduleEntries><!-- "M*A*S*H",MASH,ROM,GROM -->
+			<romModuleEntry fileName="mashc.bin" />
+			<gromModuleEntry fileName="mashg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Micro Surgeon">
+		<moduleEntries><!-- "Micro Surgeon",MICROSU,ROM,GROM -->
+			<romModuleEntry fileName="microsuc.bin" />
+			<gromModuleEntry fileName="microsug.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Return to Pirate&apos;s Isle">
+		<moduleEntries><!-- "Return to Pirate's Isle",RTPIRAT,ROM,GROM -->
+			<romModuleEntry fileName="rtpiratc.bin" />
+			<gromModuleEntry fileName="rtpiratg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Story Machine">
+		<moduleEntries>
+			<romModuleEntry fileName="strymacc.bin" />
+			<gromModuleEntry fileName="strymacg.bin" />
+		</moduleEntries>
+	</module>
+	<module name="Pole Position">
+		<moduleEntries>
+			<romModuleEntry fileName="poleposc.bin" />
+			<gromModuleEntry fileName="poleposg.bin" />
+		</moduleEntries>
+	</module>
+</modules>

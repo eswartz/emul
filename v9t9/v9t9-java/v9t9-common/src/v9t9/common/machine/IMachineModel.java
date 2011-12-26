@@ -13,6 +13,7 @@ import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.modules.IModuleManager;
 import v9t9.common.machine.IMachine;
 
 /**
@@ -40,5 +41,7 @@ public interface IMachineModel {
 	List<IDeviceSettings> getDeviceSettings(IMachine machine);
 
 	List<IDeviceIndicatorProvider> getDeviceIndicatorProviders(IMachine machine);
+
+	IModuleManager createModuleManager(IMachine machine);
 
 }

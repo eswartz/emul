@@ -4,8 +4,6 @@
 package v9t9.gui.client.swt.shells;
 
 import java.text.MessageFormat;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -38,22 +36,19 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
-import v9t9.common.events.NotifyException;
 import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.MemoryEntryInfo;
-import v9t9.gui.Emulator;
+import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.bars.ImageBar;
 import v9t9.gui.common.FontUtils;
 
@@ -62,6 +57,8 @@ import v9t9.gui.common.FontUtils;
  *
  */
 public class ModuleSelector extends Composite {
+	public static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
+	private static String lastFilter;
 
 	static final int IMAGE_COLUMN = 0;
 	static final int NAME_COLUMN = 1;
@@ -79,9 +76,52 @@ public class ModuleSelector extends Composite {
 	private Button scanButton;
 	private Text filterText;
 	protected int visibleCount;
-	protected Set<Object> visibleItems = new HashSet<Object>();
-	public static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
-	private static String lastFilter;
+
+	
+	/**
+	 * This filter only allows through module entries for
+	 * which all the ROM segments exist.
+	 * @author ejs
+	 *
+	 */
+	class ExistingModulesFilter extends ViewerFilter {
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ViewerFilter#select(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
+		 */
+		@Override
+		public boolean select(Viewer viewer, Object parentElement,
+				Object element) {
+			if (!(element instanceof IModule))
+				return true;
+			
+			IModule module = (IModule) element;
+			try {
+				moduleManager.getModuleMemoryEntries(module);
+				return true;
+			} catch (NotifyException e) {
+				System.out.println(e.toString());
+				return false;
+			}
+		}
+		
+	}
+	
+	private ViewerFilter existingModulesFilter = new ExistingModulesFilter();
+	
+	class FilteredSearchFilter extends ViewerFilter {
+		@Override
+		public boolean select(Viewer viewer, Object parentElement, Object element) {
+			if (lastFilter != null) {
+				// note: instanceof excludes "<No module>" entry too
+				return element instanceof IModule && ((IModule) element).getName().toLowerCase().contains(
+						lastFilter.toLowerCase());
+			}
+			return true;
+		}
+	}
+	
+	private ViewerFilter filteredSearchFilter = new FilteredSearchFilter();
 
 	/**
 	 * 
@@ -107,7 +147,7 @@ public class ModuleSelector extends Composite {
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(viewer.getControl());
 		
 		buttonBar = new Composite(this, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(3).equalWidth(false).applyTo(buttonBar);
+		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(3).equalWidth(false).applyTo(buttonBar);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(buttonBar);
 		
 
@@ -176,7 +216,8 @@ public class ModuleSelector extends Composite {
 					viewer.getTable().setFocus();
 					e.doit = false;
 					
-					if (visibleItems.size() == 1) {
+					if (viewer.getTable().getItemCount() == 1) {
+						selectedModule = (IModule) viewer.getTable().getItems()[0].getData();
 						switchModule(false);
 					}
 				}
@@ -192,7 +233,7 @@ public class ModuleSelector extends Composite {
 		});
 		
 		final Button clearButton = new Button(comp, SWT.PUSH | SWT.NO_FOCUS);
-		clearButton.setImage(Emulator.loadImage(getDisplay(), "icons/icon_search_clear.png"));
+		clearButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/icon_search_clear.png"));
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(clearButton);
 
 		clearButton.addSelectionListener(new SelectionAdapter() {
@@ -216,6 +257,12 @@ public class ModuleSelector extends Composite {
 			filterText.setForeground(null);
 		}
 		
+		viewer.setFilters(new ViewerFilter[] { 
+				existingModulesFilter,
+				filteredSearchFilter
+			}
+		);
+
 		updateFilter(text);
 		
 
@@ -231,32 +278,19 @@ public class ModuleSelector extends Composite {
 	 * @param text
 	 */
 	protected void updateFilter(final String text) {
-		visibleItems.clear();
-		
 		if (text == null || text.isEmpty()) {
 			lastFilter = null;
-			viewer.resetFilters();
 		} else {
 			lastFilter = text;
-			viewer.setFilters(new ViewerFilter[] { 
-					new ViewerFilter() {
-						
-						@Override
-						public boolean select(Viewer viewer, Object parentElement, Object element) {
-							return element instanceof IModule && ((IModule) element).getName().toLowerCase().contains(
-									text.toLowerCase());
-						}
-					}
-				}
-			);
 		}
+		viewer.refresh();
 	}
 
 	/**
 	 * @param moduleManager
 	 */
 	protected TableViewer createTable() {
-		final TableViewer viewer = new TableViewer(this, SWT.READ_ONLY | SWT.BORDER | SWT.VIRTUAL);
+		final TableViewer viewer = new TableViewer(this, SWT.READ_ONLY | SWT.BORDER);
 		
 		Table table = viewer.getTable();
 		table.setHeaderVisible(true);
@@ -409,19 +443,6 @@ public class ModuleSelector extends Composite {
 				} else {
 					switchButton.setEnabled(false);
 				}
-			}
-		});
-		
-		// this only works with virtual tables
-		viewer.getTable().addListener(SWT.SetData, new Listener() {
-			/*
-			 * (non-Javadoc)
-			 * 
-			 * @see org.eclipse.swt.widgets.Listener#handleEvent(org.eclipse.swt.widgets.Event)
-			 */
-			public void handleEvent(Event event) {
-				TableItem item = (TableItem) event.item;
-				visibleItems.add(item.getData());
 			}
 		});
 	}

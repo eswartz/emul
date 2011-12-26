@@ -53,7 +53,7 @@ import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
-import v9t9.gui.Emulator;
+import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.bars.BaseEmulatorBar;
 import v9t9.gui.client.swt.bars.EmulatorButtonBar;
 import v9t9.gui.client.swt.bars.EmulatorStatusBar;
@@ -184,7 +184,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 		List<Image> icons = new ArrayList<Image>();
 		for (int siz : new int[] { 128, 64, 32 }) {
-			Image icon = Emulator.loadImage(shell.getDisplay(), "icons/v9t9_" + siz + ".png");
+			Image icon = EmulatorGuiData.loadImage(shell.getDisplay(), "icons/v9t9_" + siz + ".png");
 			if (icon != null)
 				icons.add(icon);
 		}
@@ -192,7 +192,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 		TreeMap<Integer, Image> mainIcons = new TreeMap<Integer, Image>();
 		for (int size : new int[] { 16, 32, 64, 128 }) {
-			Image iconsImage = Emulator.loadImage(shell.getDisplay(), "icons/icons_" + size + ".png");
+			Image iconsImage = EmulatorGuiData.loadImage(shell.getDisplay(), "icons/icons_" + size + ".png");
 			if (iconsImage != null) {
 				mainIcons.put(size, iconsImage);
 			}
@@ -224,7 +224,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		}
 		
 		if (true) {
-			ISVGLoader svgIconLoader = new SVGSalamanderLoader(Emulator.getDataURL("icons/icons.svg"));
+			ISVGLoader svgIconLoader = new SVGSalamanderLoader(EmulatorGuiData.getDataURL("icons/icons.svg"));
 			buttonImageProvider = new SVGImageProvider(mainIcons, svgIconLoader);
 			statusImageProvider = new SVGImageProvider(mainIcons, svgIconLoader);
 		} else {

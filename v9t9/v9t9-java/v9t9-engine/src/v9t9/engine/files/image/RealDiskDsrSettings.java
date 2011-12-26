@@ -9,7 +9,7 @@ import java.net.URL;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.IconSettingSchema;
 import v9t9.common.settings.SettingSchema;
-import v9t9.engine.EmulatorData;
+import v9t9.engine.EmulatorEngineData;
 
 /**
  * @author ejs
@@ -33,7 +33,7 @@ public class RealDiskDsrSettings {
 			Boolean.TRUE
 			);
 	
-	public static final URL diskImageIconPath = EmulatorData.getDataURL("icons/disk_image.png");
+	public static final URL diskImageIconPath = EmulatorEngineData.getDataURL("icons/disk_image.png");
 	public static final SettingSchema diskImageDsrEnabled = new IconSettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"DiskImageDSREnabled",

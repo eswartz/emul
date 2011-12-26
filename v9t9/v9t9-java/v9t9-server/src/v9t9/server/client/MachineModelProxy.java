@@ -15,6 +15,7 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.modules.IModuleManager;
 
 /**
  * @author ejs
@@ -120,4 +121,12 @@ public class MachineModelProxy implements IMachineModel {
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#createModuleManager(v9t9.common.machine.IMachine)
+	 */
+	@Override
+	public IModuleManager createModuleManager(IMachine machine) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

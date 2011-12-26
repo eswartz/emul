@@ -39,7 +39,7 @@ import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
-import v9t9.gui.Emulator;
+import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.common.FontUtils;
 
 /**
@@ -93,7 +93,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		GridDataFactory.swtDefaults().grab(true, false).align(SWT.RIGHT, SWT.CENTER).applyTo(buttonBar);
 		GridLayoutFactory.swtDefaults().numColumns(10).applyTo(buttonBar);
 
-		Image icons = Emulator.loadImage(getDisplay(), "icons/cpu.png");
+		Image icons = EmulatorGuiData.loadImage(getDisplay(), "icons/cpu.png");
 
 		/////
 		

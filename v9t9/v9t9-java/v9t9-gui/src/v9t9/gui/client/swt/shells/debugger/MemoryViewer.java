@@ -55,7 +55,7 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryListener;
-import v9t9.gui.Emulator;
+import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.common.FontUtils;
 
 /**
@@ -215,7 +215,7 @@ public class MemoryViewer extends Composite {
 		buttonBar.setLayout(new RowLayout(SWT.HORIZONTAL));
 		
 		filterButton = new Button(buttonBar, SWT.TOGGLE);
-		filterButton.setImage(Emulator.loadImage(getDisplay(), "icons/filter.png"));
+		filterButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/filter.png"));
 		filterButton.setSize(24, 24);
 		filterMemory = true;
 		filterButton.setSelection(true);
@@ -230,7 +230,7 @@ public class MemoryViewer extends Composite {
 
 		
 		refreshButton = new Button(buttonBar, SWT.TOGGLE);
-		refreshButton.setImage(Emulator.loadImage(getDisplay(), "icons/refresh.png"));
+		refreshButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/refresh.png"));
 		refreshButton.setSize(24, 24);
 		autoRefresh = true;
 		refreshButton.setSelection(true);
@@ -243,7 +243,7 @@ public class MemoryViewer extends Composite {
 		});
 		
 		pinButton = new Button(buttonBar, SWT.TOGGLE);
-		pinButton.setImage(Emulator.loadImage(getDisplay(), "icons/pin.png"));
+		pinButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/pin.png"));
 		pinButton.setSize(24, 24);
 		pinMemory = false;
 		pinButton.setSelection(false);

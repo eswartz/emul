@@ -3,15 +3,11 @@
  */
 package v9t9.gui;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 
-import org.eclipse.swt.graphics.Device;
-import org.eclipse.swt.graphics.Image;
 
 import v9t9.common.client.IClient;
 import v9t9.gui.client.ClientFactory;
@@ -51,66 +47,7 @@ public class Emulator {
 		return false;
 	}
  	
-	static final boolean sIsDevBuild;
-	
-	private static final URL sBaseDataURL;
-	private static final URL sBaseV9t9URL;
-	static {
-		URL url = Emulator.class.getClassLoader().getResource(".");
-		URL burl = Emulator.class.getClassLoader().getResource(
-				Emulator.class.getName().replace(".", "/") + ".class");
-		System.out.println("\n\n\n\n");
-		System.out.println("/ URL = " + url);
-		System.out.println("Emulator.class URL = " + burl);
-		System.out.flush();
-		if (url != null) {
-			// "." will be under "bin", go to parent of tree
-			try {
-				url = new URL(url, "..");
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			}
-			
-		}
-		else {
-			try {
-				// get out of sources to build dir
-				File cwdParentParent = new File(System.getProperty("user.dir"), "/../..");
-				url = new URL("file", null, cwdParentParent.getAbsolutePath());
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-				try {
-					url = URI.create(".").toURL();
-				} catch (MalformedURLException e1) {
-					e1.printStackTrace();
-					System.exit(123);
-				}
-			}
-		}
-		
-		if (burl != null) {
-			// "." will be under "bin", go to parent of tree
-			try {
-				String burlString = burl.toString();
-				if (!burlString.contains("!/")) {
-					burl = new URL(burlString.substring(0, burlString.indexOf("bin/v9t9")));
-					burl = new URL(burl, "data/");
-				} else {
-					burl = new URL(burlString.substring(0, burlString.indexOf(Emulator.class.getName().replace(".", "/"))));
-				}
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			}
-			
-		}
-		sBaseV9t9URL = url;
-		sBaseDataURL = burl;
-		System.out.println("sBaseV9t9URL = " + sBaseV9t9URL);
-		System.out.println("sBaseBuildURL = " + sBaseDataURL);
-		
-		sIsDevBuild = sBaseV9t9URL != null && sBaseV9t9URL.getProtocol().equals("file");
-	}
-	
+
 	static {
 		if (System.getProperty("jna.library.path") == null) {
 			if (sIsWebStarted) {
@@ -122,7 +59,7 @@ public class Emulator {
 			else {
 				String path;
 				try {
-					path = new URL(sBaseV9t9URL, "../libv9t9render").getPath();
+					path = new URL(EmulatorGuiData.sBaseV9t9URL, "../libv9t9render").getPath();
 					System.out.println("Native libs at " + path);
 					if (path != null)
 						System.setProperty("jna.library.path", path);
@@ -132,16 +69,6 @@ public class Emulator {
 			}
 		}
 	}
-	
-	public static URL getDataURL(String string) {
-		try {
-			return new URL(sBaseDataURL, string);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
 	
 	/**
 	 * @param args
@@ -228,18 +155,5 @@ public class Emulator {
 		}
         
         return server.getMachineModelFactory().getDefaultModel();
-	}
-
-	public static Image loadImage(Device device, String path) {
-		URL iconFile = Emulator.getDataURL(path);
-		if (iconFile != null) {
-			try {
-				Image icon = new Image(device, iconFile.openStream());
-				return icon;
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-		}
-		return new Image(device, 1, 1);
 	}
 }

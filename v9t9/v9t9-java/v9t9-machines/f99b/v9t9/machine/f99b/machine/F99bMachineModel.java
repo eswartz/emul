@@ -18,6 +18,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.Settings;
 import v9t9.engine.dsr.realdisk.MemoryDiskImageDsr;
 import v9t9.engine.sound.MultiSoundTMS9919B;
@@ -182,4 +183,12 @@ public class F99bMachineModel implements IMachineModel {
 		machine.getCruManager().add(0x1408, 1, bankSelector);
 	}
 	*/
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#createModuleManager(v9t9.common.machine.IMachine)
+	 */
+	@Override
+	public IModuleManager createModuleManager(IMachine machine) {
+		return null;
+	}
 }

@@ -3,7 +3,12 @@
  */
 package v9t9.server.client;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
 
 import org.eclipse.tm.tcf.protocol.Protocol;
 
@@ -19,7 +24,11 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.modules.IModule;
+import v9t9.common.settings.IStoredSettings;
+import v9t9.common.settings.Settings;
 import v9t9.engine.memory.GplMmio;
+import v9t9.engine.modules.ModuleLoader;
 import v9t9.engine.modules.ModuleManager;
 import v9t9.server.settings.SettingsHandler;
 import v9t9.server.settings.WorkspaceSettings;
@@ -67,6 +76,39 @@ public abstract class EmulatorClientBase {
     	
     }
     
+	protected void registerModules(URL url) {
+		if (url == null)
+			return;
+		
+    	ISettingsHandler settings = Settings.getSettings(machine);
+		//boolean anyErrors = false;
+		InputStream is = null;
+		try {
+			is = url.openStream();
+			List<IModule> modList = ModuleLoader.loadModuleList(settings, is);
+			machine.getModuleManager().addModules(modList);
+		} catch (NotifyException e) {
+			machine.getClient().getEventNotifier().notifyEvent(e.getEvent());
+			//anyErrors = true;
+		} catch (IOException e) {
+			machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
+					"Could not load module list: " + e.getMessage());
+
+		} finally {
+			if (is != null) {
+				try { is.close(); } catch (IOException e) { }
+			}
+		}
+		
+		/*
+		if (anyErrors) {
+			machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
+					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
+					+ settings.findSettingStorage(DataFiles.settingBootRomsPath.getName()).getConfigFilePath());
+		}
+		*/
+	}
+	
 	protected void loadState() {
 		IProperty lastLoadedModule = settings.get(ModuleManager.settingLastLoadedModule);
 		IProperty moduleList = settings.get(IMachine.settingModuleList);
@@ -75,26 +117,42 @@ public abstract class EmulatorClientBase {
 		memoryModel.loadMemory(client.getEventNotifier());
 		
 		if (machine.getModuleManager() != null) {
-			try {
-				String dbNameList = moduleList.getString();
-	    		if (dbNameList.length() > 0) {
-	    			String[] dbNames = dbNameList.split(";");
-	    			machine.getModuleManager().loadModules(dbNames, client.getEventNotifier());
-	    		}
+			// first, get stock module database
+			registerModules(machine.getModuleManager().getStockDatabaseURL());
+			
+			// then load any user entries
+			String dbNameList = moduleList.getString();
+    		if (dbNameList.length() > 0) {
+    			String[] dbNames = dbNameList.split(";");
+    			for (String dbName : dbNames) {
+    				File file = DataFiles.resolveFile(settings, dbName);
+    				if (file != null && file.exists()) {
+						try {
+							registerModules(file.toURI().toURL());
+						} catch (MalformedURLException e) {
+							machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
+									"Could not resolve module list from " + moduleList.getName() + ": " + e.getMessage());
+						}
+					}
+						
+    			}
+    		}
+    		
+    		// reset state
+    		try {
 				if (lastLoadedModule.getString().length() > 0)
 	        		machine.getModuleManager().switchModule(
 	        				lastLoadedModule.getString());
-	        	
-	        } catch (NotifyException e) {
-	        	machine.notifyEvent(e.getEvent());
-	        }
-	        
+    		} catch (NotifyException e) {
+				machine.notifyEvent(e.getEvent());
+			}
 		}
 		
 		if (client.getEventNotifier().getErrorCount() > barrier) {
+			IStoredSettings storedSettings = settings.findSettingStorage(bootRomsPath.getName()); 
 			machine.notifyEvent(IEventNotifier.Level.ERROR,
-					"Failed to load startup ROMs; please edit your " + bootRomsPath.getName() + " in the file "
-					+ settings.getWorkspaceSettings().getConfigFilePath());
+					"Failed to load startup ROMs; please edit your " + bootRomsPath.getName() + " in '"
+					+ storedSettings.getConfigFilePath() + "'");
 			//EmulatorSettings.INSTANCE.save();
 		}
 	}

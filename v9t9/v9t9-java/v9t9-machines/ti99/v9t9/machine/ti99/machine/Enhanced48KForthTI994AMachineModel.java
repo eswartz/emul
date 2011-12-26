@@ -9,6 +9,7 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.Settings;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.hardware.ICruWriter;
@@ -137,5 +138,13 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 		machine.getCruManager().add(0x1404, 1, bankSelector);
 		machine.getCruManager().add(0x1406, 1, bankSelector);
 		machine.getCruManager().add(0x1408, 1, bankSelector);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#createModuleManager(v9t9.common.machine.IMachine)
+	 */
+	@Override
+	public IModuleManager createModuleManager(IMachine machine) {
+		return null;
 	}
 }

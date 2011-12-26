@@ -25,7 +25,7 @@ public final class GuiEventNotifier extends BaseEventNotifier {
 	public GuiEventNotifier(SwtWindow swtWindow) 
 	{
 		this.swtWindow = swtWindow;
-		timer = new Timer();
+		timer = new Timer(true);
 		startConsumerThread();
 	}
 

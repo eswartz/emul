@@ -24,13 +24,13 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.IconSettingSchema;
 import v9t9.common.settings.Settings;
-import v9t9.engine.EmulatorData;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.ti99.dsr.IDsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import v9t9.machine.ti99.memory.mmio.ConsoleGramWriteArea;
@@ -41,7 +41,7 @@ import v9t9.machine.ti99.memory.mmio.ConsoleGromReadArea;
  *
  */
 public class PCodeDsr implements IDsrHandler9900 {
-	private static URL pcodeIconPath = EmulatorData.getDataURL("icons/pcode_system.png");
+	private static URL pcodeIconPath = EmulatorMachinesData.getDataURL("icons/pcode_system.png");
 
 	static public final IconSettingSchema settingPcodeCardEnabled = new IconSettingSchema(
 			ISettingsHandler.WORKSPACE,

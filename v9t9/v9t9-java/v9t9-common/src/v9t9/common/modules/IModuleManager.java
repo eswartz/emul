@@ -3,16 +3,26 @@
  */
 package v9t9.common.modules;
 
-import v9t9.common.events.IEventNotifier;
+import java.net.URL;
+import java.util.Collection;
+
+import ejs.base.properties.IPersistable;
+
 import v9t9.common.events.NotifyException;
+import v9t9.common.memory.IMemoryEntry;
 
 /**
  * @author ejs
  *
  */
-public interface IModuleManager {
+public interface IModuleManager extends IPersistable {
 
-	void loadModules(String[] files, IEventNotifier notifier);
+	URL getStockDatabaseURL();
+	
+	void clearModules();
+	void addModules(Collection<IModule> modList);
+
+	//void loadModuleDatabases(String[] files, IEventNotifier notifier);
 
 	IModule[] getModules();
 
@@ -32,5 +42,13 @@ public interface IModuleManager {
 	 * @return
 	 */
 	IModule[] getLoadedModules();
+
+	/**
+	 * Get the memory entries for the module segments
+	 * @param module
+	 * @return collection of entries
+	 * @throws NotifyException if any segment cannot be loaded
+	 */
+	Collection<IMemoryEntry> getModuleMemoryEntries(IModule module) throws NotifyException;
 
 }

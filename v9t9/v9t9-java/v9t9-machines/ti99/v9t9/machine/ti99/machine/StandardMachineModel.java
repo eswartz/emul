@@ -10,10 +10,13 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.Settings;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
+import v9t9.engine.modules.ModuleManager;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
+import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
 import v9t9.machine.ti99.dsr.realdisk.RealDiskImageDsr;
@@ -80,5 +83,13 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 
 	public ISoundChip createSoundChip(IMachine machine) {
 		return new SoundTMS9919(machine);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#createModuleManager(v9t9.common.machine.IMachine)
+	 */
+	@Override
+	public IModuleManager createModuleManager(IMachine machine) {
+		return new ModuleManager(machine, EmulatorMachinesData.getDataURL("ti99/stock_modules.xml"));
 	}
 }

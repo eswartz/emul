@@ -3,20 +3,18 @@
  */
 package v9t9.engine.modules;
 
-import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.w3c.dom.Element;
 
-import ejs.base.utils.FileXMLStorage;
-import ejs.base.utils.StorageException;
-import ejs.base.utils.XMLUtils;
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.NotifyException;
-import v9t9.common.files.DataFiles;
 import v9t9.common.modules.IModule;
+import ejs.base.utils.StorageException;
+import ejs.base.utils.StreamXMLStorage;
+import ejs.base.utils.XMLUtils;
 
 /**
  * @author ejs
@@ -27,26 +25,17 @@ public class ModuleLoader {
 	/**
 	 * @return
 	 */
-	public static List<IModule> loadModuleList(ISettingsHandler settings, String name) throws NotifyException {
+	public static List<IModule> loadModuleList(ISettingsHandler settings, InputStream is) throws NotifyException {
 		
-		
-		File file;
-		
-		file = DataFiles.resolveFileAtPath(settings.getInstanceSettings().getConfigDirectory(), name);
-		if (file == null) {
-			file = DataFiles.resolveFile(settings, name);
-			if (file == null)
-				throw new NotifyException(null, "Cannot locate module list " + name);
-		}
-		
+		StreamXMLStorage storage = new StreamXMLStorage();
+		storage.setInputStream(is);
 		List<IModule> modules = new ArrayList<IModule>();
-		FileXMLStorage storage = new FileXMLStorage(file);
 		try {
 			storage.load("modules");
 		} catch (StorageException e) {
 			if (e.getCause() instanceof StorageException)
-				throw new NotifyException(null, "Error loading module list " + name, e.getCause());
-			throw new NotifyException(null, "Error parsing module list " + name, e);
+				throw new NotifyException(null, "Error loading module database", e.getCause());
+			throw new NotifyException(null, "Error parsing module database", e);
 		}
 		for (Element el : XMLUtils.getChildElementsNamed(storage.getDocumentElement(), "module")) {
 			Module module = new Module(

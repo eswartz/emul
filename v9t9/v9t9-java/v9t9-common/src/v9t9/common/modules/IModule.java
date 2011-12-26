@@ -12,5 +12,4 @@ public interface IModule {
 	String getName();
 	
 	MemoryEntryInfo[] getMemoryEntryInfos();
-	
 }

@@ -27,7 +27,7 @@ import v9t9.common.cpu.IExecutor;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
-import v9t9.gui.Emulator;
+import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.shells.CpuMetricsCanvas;
 import v9t9.gui.client.swt.shells.DiskSelectorDialog;
@@ -190,7 +190,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 
 		TreeMap<Integer, Image> mainIcons = new TreeMap<Integer, Image>();
 		for (int size : new int[] { 16, 32, 64, 128 }) {
-			Image icons = Emulator.loadImage(shell.getDisplay(), "icons/dev_icons_" + size + ".png");
+			Image icons = EmulatorGuiData.loadImage(shell.getDisplay(), "icons/dev_icons_" + size + ".png");
 			mainIcons.put(size, icons);
 		}
 

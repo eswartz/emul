@@ -46,7 +46,6 @@ import v9t9.common.modules.IModuleManager;
 import v9t9.engine.events.RecordingEventNotifier;
 import v9t9.engine.files.FileHandler;
 import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.modules.ModuleManager;
 
 /** Encapsulate all the information about a running emulated machine.
  * @author ejs
@@ -89,7 +88,7 @@ abstract public class MachineBase implements IMachine {
 	private ICpuMetrics cpuMetrics;
 	
 	protected  TimerTask memorySaverTask;
-	protected  ModuleManager moduleManager;
+	protected IModuleManager moduleManager;
 	
 	private ICruChip cru;
 	
@@ -162,9 +161,7 @@ abstract public class MachineBase implements IMachine {
     	speech = machineModel.createSpeechChip(this);
     	memoryModel.initMemory(this);
     	
-    	if (!moduleList.getString().isEmpty()) {
-    		moduleManager = new ModuleManager(this);
-    	}
+    	moduleManager = machineModel.createModuleManager(this);
     	
     	cpu = machineModel.createCPU(this); 
 		keyboardState = new KeyboardState(this);

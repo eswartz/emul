@@ -9,7 +9,7 @@ import java.net.URL;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.IconSettingSchema;
 import v9t9.common.settings.SettingSchema;
-import v9t9.engine.EmulatorData;
+import v9t9.engine.EmulatorEngineData;
 
 /**
  * @author ejs
@@ -17,7 +17,7 @@ import v9t9.engine.EmulatorData;
  */
 public class EmuDiskSettings {
 
-	public static URL diskDirectoryIconPath = EmulatorData.getDataURL("icons/disk_directory.png");
+	public static URL diskDirectoryIconPath = EmulatorEngineData.getDataURL("icons/disk_directory.png");
 	public static final SettingSchema emuDiskDsrEnabled = new IconSettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"EmuDiskDSREnabled", 
