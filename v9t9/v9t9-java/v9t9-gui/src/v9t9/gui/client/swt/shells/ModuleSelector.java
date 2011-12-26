@@ -341,10 +341,10 @@ public class ModuleSelector extends Composite {
 			
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if (e.keyCode == '\b') {
+				if (e.keyCode == '\b' || e.keyCode == SWT.ARROW_DOWN || e.keyCode == SWT.ARROW_UP) {
 					search.setLength(0);
 					index = 0;
-					e.doit = false;
+					e.doit = e.keyCode != '\b';
 				}
 				else if (e.character >= 32 && e.character < 127) {
 					search.append(e.character);
@@ -355,7 +355,6 @@ public class ModuleSelector extends Composite {
 				}
 				
 				if (search.length() > 0) {
-					updateFilter(search.toString());
 					int end = (index + realModules.length - 1) % realModules.length;
 					for (int i = index; i != end; i = (i + 1) % realModules.length) {
 						IModule m = realModules[i];
