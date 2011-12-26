@@ -23,20 +23,11 @@ import ejs.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.gui.client.swt.IFocusRestorer;
 import v9t9.gui.client.swt.SwtWindow;
+import v9t9.gui.client.swt.shells.IToolShellFactory.Behavior;
+import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
 import v9t9.gui.common.PrefUtils;
 
 public class ToolShell {
-	public enum Centering {
-		INSIDE,
-		OUTSIDE,
-	}
-	public static class Behavior {
-		public Centering centering;
-		public boolean dismissOnClickOutside;
-		public String boundsPref;
-		public Control centerOverControl;
-	}
-
 	private Point desiredLocation; 
 	private Shell shell;
 	private final IFocusRestorer focusRestorer;

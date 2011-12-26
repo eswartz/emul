@@ -39,9 +39,6 @@ import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
 import v9t9.gui.client.swt.shells.ImageImportOptionsDialog;
-import v9t9.gui.client.swt.shells.ToolShell;
-import v9t9.gui.client.swt.shells.ToolShell.Behavior;
-import v9t9.gui.client.swt.shells.ToolShell.Centering;
 import v9t9.gui.client.swt.shells.debugger.DebuggerWindow;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.gui.sound.JavaSoundHandler;
@@ -131,7 +128,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
 						swtWindow.toggleToolShell(EmulatorButtonBar.DEBUGGER_TOOL_ID, new IToolShellFactory() {
-							ToolShell.Behavior behavior = new ToolShell.Behavior();
+							Behavior behavior = new Behavior();
 							{
 								behavior.boundsPref = "DebuggerWindowBounds";
 								behavior.dismissOnClickOutside = false;

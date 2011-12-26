@@ -33,9 +33,6 @@ import v9t9.gui.client.swt.shells.CpuMetricsCanvas;
 import v9t9.gui.client.swt.shells.DiskSelectorDialog;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
 import v9t9.gui.client.swt.shells.ModuleSelector;
-import v9t9.gui.client.swt.shells.ToolShell;
-import v9t9.gui.client.swt.shells.ToolShell.Behavior;
-import v9t9.gui.client.swt.shells.ToolShell.Centering;
 
 /**
  * @author ejs
@@ -75,7 +72,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
 						swtWindow.toggleToolShell(EmulatorStatusBar.MODULE_SELECTOR_TOOL_ID, new IToolShellFactory() {
-							ToolShell.Behavior behavior = new ToolShell.Behavior();
+							Behavior behavior = new Behavior();
 							{
 								behavior.boundsPref = "ModuleWindowBounds";
 								behavior.centering = Centering.INSIDE;
@@ -100,7 +97,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					swtWindow.toggleToolShell(EmulatorStatusBar.DISK_SELECTOR_TOOL_ID, new IToolShellFactory() {
-						ToolShell.Behavior behavior = new ToolShell.Behavior();
+						Behavior behavior = new Behavior();
 						{
 							behavior.boundsPref = "DiskWindowBounds";
 							behavior.centering = Centering.INSIDE;
