@@ -180,61 +180,11 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		imageSupport.setImageImportDnDControl(((ISwtVideoRenderer) window.getVideoRenderer()).getControl());
 		
 
-		final Collection<String> fileHistory = imageSupport.getHistory(); 
-		
 		imageImportButton.setMenuOverlayBounds(imageProvider.imageIndexToBounds(IconConsts.MENU_OVERLAY));
 		imageImportButton.addMenuDetectListener(new MenuDetectListener() {
 
 			public void menuDetected(MenuDetectEvent e) {
-				Control button = (Control) e.widget;
-				Menu menu = new Menu(button);
-				MenuItem vitem = new MenuItem(menu, SWT.NONE);
-				vitem.setText("Load file...");
-				
-				vitem.addSelectionListener(new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						String file = window.openFileSelectionDialog("Open Image", null, null, false, 
-								new String[] { ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".tga" });
-						if (file != null) {
-							Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(window.getEventNotifier(), file);
-							
-							if (info != null) {
-								imageSupport.importImage(info.first, !info.second);
-								((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
-								
-								fileHistory.add(file);
-							}
-						}
-					}
-				});
-				
-				// not persistent
-				if (!fileHistory.isEmpty()) {
-					new MenuItem(menu, SWT.SEPARATOR);
-					
-					int index = 0;
-					for (final String file : fileHistory) {
-						MenuItem hitem = new MenuItem(menu, SWT.NONE);
-						hitem.setText((index < 10 ? "&" + index + " " : "")
-							+ file);
-						index++;
-						
-						hitem.addSelectionListener(new SelectionAdapter() {
-							@Override
-							public void widgetSelected(SelectionEvent e) {
-								Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(window.getEventNotifier(), file);
-								
-								if (info != null) {
-									imageSupport.importImage(info.first, !info.second);
-									((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
-								}
-							}
-						});
-					}
-				}
-				
-				swtWindow.showMenu(menu, button, e.x, e.y);
+				createImageImportMenu(window, imageSupport, e);
 			}
 		});
 
@@ -263,36 +213,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		soundButton.addMenuDetectListener(new MenuDetectListener() {
 
 			public void menuDetected(MenuDetectEvent e) {
-				Control button = (Control) e.widget;
-				Menu menu = new Menu(button);
-				if (soundHandler instanceof JavaSoundHandler) {
-					JavaSoundHandler javaSoundHandler = (JavaSoundHandler) soundHandler;
-					javaSoundHandler.getSoundRecordingHelper().populateSoundMenu(menu);
-					javaSoundHandler.getSpeechRecordingHelper().populateSoundMenu(menu);
-				}
-				MenuItem vitem = new MenuItem(menu, SWT.CASCADE);
-				vitem.setText("Volume");
-				
-				final Menu volumeMenu = new Menu(vitem);
-
-				final IProperty soundVolume = Settings.get(machine, ISoundHandler.settingSoundVolume);
-				int curVol = soundVolume.getInt();
-				int[] vols = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-				for (final int vol : vols) {
-					MenuItem item = new MenuItem(volumeMenu, SWT.RADIO);
-					item.setText("" + vol);
-					if (vol == curVol)
-						item.setSelection(true);
-					item.addSelectionListener(new SelectionAdapter() {
-						@Override
-						public void widgetSelected(SelectionEvent e) {
-							soundVolume.setInt(vol);
-						}
-
-					});
-				}
-				vitem.setMenu(volumeMenu);
-				swtWindow.showMenu(menu, button, e.x, e.y);
+				createSoundVolumeMenu(machine, soundHandler, e);
 			}
 		});
 
@@ -334,4 +255,103 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		return swtWindow.populateFileMenu(menu, false);
 	}
 
+
+	/**
+	 * @param window
+	 * @param imageSupport
+	 * @param e
+	 */
+	private void createImageImportMenu(final SwtWindow window,
+			final SwtImageImportSupport imageSupport, MenuDetectEvent e) {
+		final Collection<String> fileHistory = imageSupport.getHistory();
+		
+		Control button = (Control) e.widget;
+		Menu menu = new Menu(button);
+		MenuItem vitem = new MenuItem(menu, SWT.NONE);
+		vitem.setText("Load file...");
+		
+		vitem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				String file = window.openFileSelectionDialog("Open Image", null, null, false, 
+						new String[] { ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".tga" });
+				if (file != null) {
+					Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(window.getEventNotifier(), file);
+					
+					if (info != null) {
+						imageSupport.importImage(info.first, !info.second);
+						((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
+						
+						fileHistory.add(file);
+					}
+				}
+			}
+		});
+		
+		// not persistent
+		if (!fileHistory.isEmpty()) {
+			new MenuItem(menu, SWT.SEPARATOR);
+			
+			int index = 0;
+			for (final String file : fileHistory) {
+				MenuItem hitem = new MenuItem(menu, SWT.NONE);
+				hitem.setText((index < 10 ? "&" + index + " " : "")
+					+ file);
+				index++;
+				
+				hitem.addSelectionListener(new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(window.getEventNotifier(), file);
+						
+						if (info != null) {
+							imageSupport.importImage(info.first, !info.second);
+							((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
+						}
+					}
+				});
+			}
+		}
+		
+		window.showMenu(menu, button, e.x, e.y);
+	}
+
+	/**
+	 * @param machine
+	 * @param soundHandler
+	 * @param e
+	 */
+	private void createSoundVolumeMenu(final IMachine machine,
+			final ISoundHandler soundHandler, MenuDetectEvent e) {
+		Control button = (Control) e.widget;
+		Menu menu = new Menu(button);
+		if (soundHandler instanceof JavaSoundHandler) {
+			JavaSoundHandler javaSoundHandler = (JavaSoundHandler) soundHandler;
+			javaSoundHandler.getSoundRecordingHelper().populateSoundMenu(menu);
+			javaSoundHandler.getSpeechRecordingHelper().populateSoundMenu(menu);
+		}
+		MenuItem vitem = new MenuItem(menu, SWT.CASCADE);
+		vitem.setText("Volume");
+		
+		final Menu volumeMenu = new Menu(vitem);
+
+		final IProperty soundVolume = Settings.get(machine, ISoundHandler.settingSoundVolume);
+		int curVol = soundVolume.getInt();
+		int[] vols = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+		for (final int vol : vols) {
+			MenuItem item = new MenuItem(volumeMenu, SWT.RADIO);
+			item.setText("" + vol);
+			if (vol == curVol)
+				item.setSelection(true);
+			item.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					soundVolume.setInt(vol);
+				}
+
+			});
+		}
+		vitem.setMenu(volumeMenu);
+		swtWindow.showMenu(menu, button, e.x, e.y);
+	}
 }

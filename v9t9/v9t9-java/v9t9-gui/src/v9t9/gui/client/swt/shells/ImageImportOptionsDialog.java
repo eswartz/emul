@@ -18,10 +18,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.properties.IPropertySource;
-
 import v9t9.gui.client.swt.bars.ImageBar;
 import v9t9.gui.client.swt.imageimport.IImageImportHandler;
 import v9t9.gui.client.swt.imageimport.ImageClipDecorator;
@@ -31,6 +27,9 @@ import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
 import v9t9.gui.properties.EditGroup;
 import v9t9.gui.properties.FieldPropertyEditorProvider;
 import v9t9.gui.properties.PropertySourceEditor;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.properties.IPropertySource;
 
 /**
  * Control the options used for importing images
