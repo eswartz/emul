@@ -470,6 +470,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
 						shell.setVisible(false);
+						focusRestorer.restoreFocus();
 					}
 				});
 			}
@@ -495,6 +496,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		toolShell.getShell().addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
 				toolShells.remove(toolId);
+				focusRestorer.restoreFocus();
 			}
 		});
 	}
@@ -506,8 +508,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 	public void handleClickOutsideToolWindow(final Point pt) {
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
-				ToolShell[] toolShellArr = (ToolShell[]) toolShells.values().toArray(new ToolShell[toolShells.values().size()]);
-				for (ToolShell toolShell : toolShellArr) {
+				@SuppressWarnings("unchecked")
+				Map.Entry<String, ToolShell>[] toolShellArr =
+					(Map.Entry[]) toolShells.entrySet().toArray(new Map.Entry[toolShells.entrySet().size()]);
+				for (Map.Entry<String, ToolShell> ent : toolShellArr) {
+					ToolShell toolShell = ent.getValue();
 					Shell shell = toolShell.getShell();
 					if (toolShell.isDismissOnClickOutside() && !shell.isDisposed() && shell.isVisible()
 							&& System.currentTimeMillis() > toolShell.getClickOutsideCheckTime()) {
@@ -515,7 +520,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 						//System.out.println(pt + "/"+ bounds);
 						if (pt.x < bounds.x - 16 || pt.y < bounds.y - 16 
 								|| pt.x > bounds.x + bounds.width + 16 || pt.y > bounds.y + bounds.height + 16) {
-							shell.dispose();
+							closeToolShell(ent.getKey());
 						}
 					}
 				}
