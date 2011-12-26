@@ -299,6 +299,10 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	 */
 	@Override
 	public void dropAccept(DropTargetEvent event) {
+		if (dragSourceInProgress) {
+			event.detail = DND.DROP_NONE;
+			dragSourceInProgress = false;
+		}
 	}
 
 	/* (non-Javadoc)
