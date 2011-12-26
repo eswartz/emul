@@ -45,6 +45,7 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.VdpFormat;
+import v9t9.gui.client.swt.imageimport.IImageImportHandler;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageImport;
 

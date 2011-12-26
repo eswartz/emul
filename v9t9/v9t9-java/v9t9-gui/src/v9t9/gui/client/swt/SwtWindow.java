@@ -50,15 +50,24 @@ import ejs.base.properties.IPropertyListener;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
-import v9t9.common.cpu.ICpu;
-import v9t9.common.cpu.IExecutor;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.gui.Emulator;
+import v9t9.gui.client.swt.bars.BaseEmulatorBar;
+import v9t9.gui.client.swt.bars.EmulatorButtonBar;
+import v9t9.gui.client.swt.bars.EmulatorStatusBar;
+import v9t9.gui.client.swt.bars.ImageProvider;
+import v9t9.gui.client.swt.bars.MultiImageSizeProvider;
+import v9t9.gui.client.swt.shells.IToolShellFactory;
+import v9t9.gui.client.swt.shells.ToolShell;
+import v9t9.gui.client.swt.svg.ISVGLoader;
+import v9t9.gui.client.swt.svg.SVGImageProvider;
+import v9t9.gui.client.swt.svg.SVGSalamanderLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
+import v9t9.gui.common.PrefUtils;
 
 /**
  * Provide the emulator in an SWT window
@@ -77,7 +86,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private IFocusRestorer focusRestorer;
 	private final IEventNotifier eventNotifier;
 	private Composite videoRendererComposite;
-	EmulatorBar buttons;
+	BaseEmulatorBar buttons;
 	private EmulatorStatusBar statusBar;
 
 	private IPropertyListener fullScreenListener;
@@ -87,9 +96,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private ImageProvider statusImageProvider;
 
 	private IProperty fullScreen;
-	private IProperty realTime;
-	private IProperty compile;
-	private IProperty cyclesPerSecond;
 
 	class EmulatorWindowLayout extends Layout {
 
@@ -171,10 +177,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 		super(machine);
 		
 		fullScreen = Settings.get(machine, settingFullScreen);
-		realTime = Settings.get(machine, ICpu.settingRealTime);
-		compile = Settings.get(machine, IExecutor.settingCompile);
-		cyclesPerSecond = Settings.get(machine, ICpu.settingCyclesPerSecond);
-		
 		
 		toolShells = new HashMap<String, ToolShell>();
 		toolUiTimer = new Timer(true);
@@ -423,7 +425,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	 * @param iToolShellFactory
 	 * @return 
 	 */
-	protected ToolShell toggleToolShell(String toolId, IToolShellFactory toolShellFactory) {
+	public ToolShell toggleToolShell(String toolId, IToolShellFactory toolShellFactory) {
 		ToolShell toolShell = toolShells.get(toolId);
 		if (toolShell != null) {
 			toolShell.toggle();
@@ -457,7 +459,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		return focusRestorer;
 	}
 
-	protected void recenterToolShells() {
+	public void recenterToolShells() {
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
 				for (ToolShell shell : toolShells.values()) {
@@ -514,7 +516,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	 * Take down any transient tool windows when clicking outside them
 	 * @param pt display click location
 	 */
-	protected void handleClickOutsideToolWindow(final Point pt) {
+	public void handleClickOutsideToolWindow(final Point pt) {
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
 				ToolShell[] toolShellArr = (ToolShell[]) toolShells.values().toArray(new ToolShell[toolShells.values().size()]);
@@ -642,7 +644,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 
 	@Override
-	protected String openFileSelectionDialog(String title, String directory,
+	public String openFileSelectionDialog(String title, String directory,
 			String fileName, boolean isSave, String[] extensions) {
 		FileDialog dialog = new FileDialog(getShell(), isSave ? SWT.SAVE : SWT.OPEN);
 		dialog.setText(title);
@@ -715,7 +717,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	}
 	
 
-	Menu populateFileMenu(final Menu menu, boolean withExit) {
+	public Menu populateFileMenu(final Menu menu, boolean withExit) {
 		MenuItem open = new MenuItem(menu, SWT.NONE);
 		open.setText("&Open machine state");
 		open.addSelectionListener(new SelectionAdapter() {
@@ -761,70 +763,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	}
 	
 
-	Menu populateAccelMenu(final Menu menu) {
-		for (int mult = 1; mult <= 10; mult++) {
-			createAccelMenuItem(menu, mult, mult + "x");
-		}
-
-		new MenuItem(menu, SWT.SEPARATOR);
-		
-		MenuItem item = new MenuItem(menu, SWT.CHECK);
-		item.setText("Unbounded");
-		if (!realTime.getBoolean()) {
-			item.setSelection(true);
-		}
-		item.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				boolean setting = false;
-				realTime.setBoolean(setting);
-			}
-		});
-
-		new MenuItem(menu, SWT.SEPARATOR);
-		
-		for (int div = 2; div <= 5; div++) {
-			createAccelMenuItem(menu, 1.0 / div, "1/" + div);
-		}
-		
-		if (machine.getExecutor().getCompilerStrategy().canCompile()) {	
-			new MenuItem(menu, SWT.SEPARATOR);
-			item = new MenuItem(menu, SWT.CHECK);
-			item.setText("Compile to Bytecode");
-			if (compile.getBoolean()) {
-				item.setSelection(true);
-			}
-			item.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					compile.setBoolean(!compile.getBoolean());
-				}
-			});
-		}
-
-		return menu;
-	}
-
-	private void createAccelMenuItem(final Menu menu, double factor, String label) {
-		boolean isRealTime = realTime.getBoolean();
-		int curCycles = cyclesPerSecond.getInt();
-		MenuItem item = new MenuItem(menu, SWT.RADIO);
-		final int cycles = (int) (machine.getCpu().getBaseCyclesPerSec() * factor);
-		item.setText(((factor >= 1 && factor < 10) ? "&" : "") + label + " (" + cycles + ")");
-		if (isRealTime && cycles == curCycles) {
-			item.setSelection(true);
-		}
-		item.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				realTime.setBoolean(true);
-				cyclesPerSecond.setInt(cycles);
-			}
-		});
-	}
-	
-
-	protected void pasteClipboardToKeyboard() {
+	public void pasteClipboardToKeyboard() {
 		Clipboard clip = new Clipboard(getShell().getDisplay());
 		String contents = (String) clip.getContents(TextTransfer.getInstance());
 		if (contents == null) {

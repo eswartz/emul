@@ -34,7 +34,7 @@ import org.eclipse.swt.widgets.Shell;
 import ejs.base.properties.IClassPropertyFactory;
 import ejs.base.properties.ListFieldProperty;
 
-import v9t9.gui.client.swt.FontUtils;
+import v9t9.gui.common.FontUtils;
 
 /**
  * @author ejs
