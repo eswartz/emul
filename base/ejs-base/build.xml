@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. -->
+<project basedir="." default="build" name="ejs-base">
+    <property environment="env"/>
+    <property name="v9t9-audio.location" value="../../v9t9/v9t9-java/v9t9-audio"/>
+    <property name="v9t9-common.location" value="../../v9t9/v9t9-java/v9t9-common"/>
+    <property name="v9t9-engine.location" value="../../v9t9/v9t9-java/v9t9-engine"/>
+    <property name="v9t9-gui.location" value="../../v9t9/v9t9-java/v9t9-gui"/>
+    <property name="v9t9-machines.location" value="../../v9t9/v9t9-java/v9t9-machines"/>
+    <property name="v9t9-server.location" value="../../v9t9/v9t9-java/v9t9-server"/>
+    <property name="v9t9-tools.location" value="../../v9t9/v9t9-java/v9t9-tools"/>
+    <property name="v9t9-video.location" value="../../v9t9/v9t9-java/v9t9-video"/>
+    <property name="ECLIPSE_HOME" value="../../../orbit/plugins"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.6"/>
+    <property name="source" value="1.6"/>
+    <path id="Plug-in Dependencies.libraryclasspath"/>
+    <path id="ejs-base.classpath">
+        <path refid="Plug-in Dependencies.libraryclasspath"/>
+        <pathelement location="bin"/>
+        <pathelement location="libs/jna.jar"/>
+        <pathelement location="libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
+        <pathelement location="libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
+        <pathelement location="libs/swt/org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
+        <pathelement location="libs/swt/org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
+        <pathelement location="libs/google-gson-2.0/gson-2.0.jar"/>
+        <pathelement location="libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
+    </path>
+    <target name="init">
+        <mkdir dir="bin"/>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="src">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="HRTimer">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="Base64-2.2.2">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+                <exclude name="api/"/>
+            </fileset>
+        </copy>
+    </target>
+    <target name="clean">
+        <delete dir="bin"/>
+    </target>
+    <target depends="clean" name="cleanall"/>
+    <target depends="build-subprojects,build-project" name="build"/>
+    <target name="build-subprojects"/>
+    <target depends="init" name="build-project">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="HRTimer"/>
+            <classpath refid="ejs-base.classpath"/>
+        </javac>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="Base64-2.2.2"/>
+            <exclude name="api/"/>
+            <classpath refid="ejs-base.classpath"/>
+        </javac>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="src"/>
+            <classpath refid="ejs-base.classpath"/>
+        </javac>
+    </target>
+    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects">
+        <ant antfile="build.xml" dir="${v9t9-audio.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-audio.location}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${v9t9-common.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-common.location}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${v9t9-engine.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-engine.location}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${v9t9-gui.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-gui.location}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${v9t9-machines.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-machines.location}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${v9t9-server.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-server.location}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${v9t9-tools.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-tools.location}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${v9t9-video.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-video.location}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+    </target>
+    <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
+        <copy todir="${ant.library.dir}">
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </copy>
+        <unzip dest="${ant.library.dir}">
+            <patternset includes="jdtCompilerAdapter.jar"/>
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </unzip>
+    </target>
+    <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
+        <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
+        <antcall target="build"/>
+    </target>
+</project>

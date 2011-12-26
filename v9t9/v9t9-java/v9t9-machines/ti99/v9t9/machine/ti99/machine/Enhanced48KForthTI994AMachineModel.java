@@ -17,7 +17,7 @@ import v9t9.engine.memory.VdpMmio;
 import v9t9.engine.memory.WindowBankedMemoryEntry;
 import v9t9.engine.sound.MultiSoundTMS9919B;
 import v9t9.engine.video.v9938.VdpV9938;
-import v9t9.machine.common.dsr.emudisk.EmuDiskDsr;
+import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 import v9t9.machine.ti99.memory.V9t9EnhancedConsoleMemoryModel;
 

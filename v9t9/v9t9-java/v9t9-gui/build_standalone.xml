@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project v9t9-java with Jar-in-Jar Loader">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <property name="base"        value=".."/>
+    <property name="base.v9t9"   value="."/>
+    <property name="base.base"   value="../../../base/ejs-base"/>
+    <property name="build.dir"   value="${base}/../build"/>
+    <property name="bin.v9t9.dir"     value="${build.dir}/bin/v9t9"/>
+    <property name="base.tcf"     value="../../../org.eclipse.tcf"/>
+    <property name="base.tcf.agent" value="../../../org.eclipse.tcf.agent"/>
+	
+	<!-- override this! -->
+    <property name="v9t9.host"     value="http://192.168.24.9:8080"/>
+    <property name="v9t9.root"     value="v9t9"/>
+	
+    <!-- 
+    <property name="batik"     value="true"/>
+    <property name="svg.libs"     value="libs/org.apache.batik.bridge_1.7.0.v201011041433.jar libs/org.apache.batik.bridge.source_1.7.0.v201011041433.jar libs/org.apache.batik.css_1.7.0.v201011041433.jar libs/org.apache.batik.css.source_1.7.0.v201011041433.jar libs/org.apache.batik.dom_1.7.0.v201011041433.jar libs/org.apache.batik.dom.source_1.7.0.v201011041433.jar libs/org.apache.batik.dom.svg_1.7.0.v201011041433.jar libs/org.apache.batik.dom.svg.source_1.7.0.v201011041433.jar libs/org.apache.batik.ext.awt_1.7.0.v201011041433.jar libs/org.apache.batik.ext.awt.source_1.7.0.v201011041433.jar libs/org.apache.batik.extension_1.7.0.v201011041433.jar libs/org.apache.batik.extension.source_1.7.0.v201011041433.jar libs/org.apache.batik.parser_1.7.0.v201011041433.jar libs/org.apache.batik.parser.source_1.7.0.v201011041433.jar libs/org.apache.batik.svggen_1.7.0.v201011041433.jar libs/org.apache.batik.svggen.source_1.7.0.v201011041433.jar libs/org.apache.batik.swing_1.7.0.v201011041433.jar libs/org.apache.batik.swing.source_1.7.0.v201011041433.jar libs/org.apache.batik.transcoder_1.7.0.v201011041433.jar libs/org.apache.batik.transcoder.source_1.7.0.v201011041433.jar libs/org.apache.batik.util_1.7.0.v201011041433.jar libs/org.apache.batik.util.gui_1.7.0.v200903091627.jar libs/org.apache.batik.util.gui.source_1.7.0.v200903091627.jar libs/org.apache.batik.util.source_1.7.0.v201011041433.jar libs/org.apache.batik.xml_1.7.0.v201011041433.jar libs/org.apache.batik.xml.source_1.7.0.v201011041433.jar"/>
+    <property name="svg.libs.jnlp"     value="
+	&lt;jar href=&quot;libs/org.apache.batik.bridge_1.7.0.v201011041433.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.css_1.7.0.v201011041433.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.dom_1.7.0.v201011041433.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.dom.svg_1.7.0.v201011041433.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.ext.awt_1.7.0.v201011041433.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.extension_1.7.0.v201011041433.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.parser_1.7.0.v201011041433.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.svggen_1.7.0.v201011041433.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.swing_1.7.0.v201011041433.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.transcoder_1.7.0.v201011041433.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.util_1.7.0.v201011041433.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.util.gui_1.7.0.v200903091627.jar&quot;/&gt;
+	&lt;jar href=&quot;libs/org.apache.batik.xml_1.7.0.v201011041433.jar&quot;/&gt;		
+    "/>
+	-->
+    <property name="svgSalamander"     value="true"/>
+    <property name="svg.libs"     value="libs/svgSalamander.jar" />
+    <property name="svg.libs.jnlp"     value="
+	&lt;jar href=&quot;libs/svgSalamander.jar&quot;/&gt;    	
+		"/>
+    <target name="build-subprojects">
+        <ant antfile="build.xml" dir="${base.v9t9}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+	</target>
+	
+	<target name="clean" >
+		 <ant antfile="build.xml" dir="${base.v9t9}" inheritAll="false" target="cleanall">
+        </ant>
+    	<delete dir="${bin.v9t9.dir}" /> 
+	</target>
+		
+    <target name="create_run_jar" depends="build-subprojects" >
+
+    	<mkdir dir="${bin.v9t9.dir}" />
+    	<mkdir dir="${bin.v9t9.dir}/libs" />
+    	
+        <jar destfile="${bin.v9t9.dir}/v9t9j.jar">
+            <manifest>
+                <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
+                <attribute name="Rsrc-Main-Class" value="v9t9.gui.Emulator"/>
+                <attribute name="Class-Path" value="."/>
+                <attribute name="Rsrc-Class-Path" value="
+                	./ 
+                	libs/jna.jar 
+                	libs/org.eclipse.swt.jar 
+                	libs/org.eclipse.jface_3.6.2.M20110210-1200.jar 
+                	libs/org.eclipse.core.commands_3.6.0.I20100512-1500.jar 
+                	libs/org.eclipse.core.runtime_3.6.0.v20100505.jar 
+                	libs/org.eclipse.equinox.common_3.6.0.v20100503.jar 
+                	libs/junit.jar libs/gnu-getopt-1.0.11.jar 
+                	libs/jinput.jar 
+                	libs/lwjgl_util.jar 
+                	libs/lwjgl.jar 
+                	libs/antlr-runtime-3.2.jar 
+                	libs/antlr-3.2.jar 
+                	libs/bcel-5.2.jar 
+                	libs/org.eclipse.tm.tcf.jar 
+                	${svg.libs}
+                	"/>
+            </manifest>
+        	
+            <zipfileset src="jar-in-jar-loader.zip"/>
+        	
+        	<!-- subprojects -->
+            <fileset dir="${base.base}/bin"/>
+            <fileset dir="${base.v9t9}/bin" excludes="release icons shaders" />
+            <fileset dir="../v9t9-audio/bin"/>
+            <fileset dir="../v9t9-video/bin"/>
+            <fileset dir="../v9t9-common/bin"/>
+            <fileset dir="../v9t9-engine/bin"/>
+            <fileset dir="../v9t9-machines/bin"/>
+            <fileset dir="../v9t9-server/bin"/>
+        </jar>
+
+    	<copy todir="${bin.v9t9.dir}/libs">
+    		<fileset dir="${base.base}/libs">
+    	      <include name="jna.jar"/>
+              <include name="bcel-5.2.jar"/>
+              <include name="org.eclipse.tm.tcf.jar"/>
+              <include name="gnu-getopt-1.0.11.jar"/>
+    	    </fileset>
+    		<fileset dir="${base.base}/libs/swt">
+              <include name="org.eclipse.swt.jar"/>
+              <include name="org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
+              <include name="org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
+              <include name="org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
+              <include name="org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
+    	    </fileset>
+    		<fileset dir="${base.v9t9}/libs/lwjgl">
+              <include name="jinput.jar"/>
+              <include name="lwjgl_util.jar"/>
+              <include name="lwjgl.jar"/>
+    	    </fileset>
+
+    		<fileset dir="${base.base}/libs/orbit/plugins">
+              <include if="batik" name="org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.css_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.dom_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.dom.svg_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.ext.awt_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.extension_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.parser_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.svggen_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.swing_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.transcoder_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.util_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
+              <include if="batik" name="org.apache.batik.xml_1.7.0.v201011041433.jar"/>
+    	    </fileset>
+    		<fileset dir="${base.v9t9}/libs">
+              <include if="svgSalamander" name="svgSalamander.jar"/>
+    	    </fileset>
+      	</copy>
+
+	<!--      		
+    	<copy file="${base.v9t9}/data/release/v9t9.bat" tofile="${bin.v9t9.dir}/v9t9.bat"/>
+    	<copy file="${base.v9t9}/data/release/v9t9.sh" tofile="${bin.v9t9.dir}/v9t9.sh"/>
+	-->
+    	<copy file="${base.v9t9}/data/release/v9t9.html" tofile="${bin.v9t9.dir}/v9t9.html"/>
+    	
+    	<copy file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-local.jnlp"/>
+    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$HOST" value="" />
+    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$ROOT" value="" />
+    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$TARGET" value="local" />
+    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$SVGLIBS" value="${svg.libs.jnlp}" />
+    	
+    	<copy file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-remote.jnlp"/>
+    	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$HOST" value="${v9t9.host}" />
+    	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$ROOT" value="/${v9t9.root}" />
+    	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$TARGET" value="remote" />
+    	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$SVGLIBS" value="${svg.libs.jnlp}" />
+    		
+    	<copy file="${base.v9t9}/data/release/test-httpd.py" tofile="${bin.v9t9.dir}/test-httpd.py"/>
+    	<replace file="${bin.v9t9.dir}/test-httpd.py" token="$v9t9.root" value="${v9t9.root}" />
+    	
+    	<!--
+    	Create jarfiles with native libraries
+    	for each supported operating system.
+    	
+    	"Supported" means: lwjgl and swt ports exist and libv9t9render
+    	has been built for it.  No other inherent limitations.
+    	-->
+
+        <jar destfile="${bin.v9t9.dir}/v9t9j-natives-linux-x86.jar">
+            <manifest>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+        	<fileset dir="${base.v9t9}/libs/lwjgl/native/linux">
+    	       <include name="**"/>
+    	    </fileset>
+    	    <fileset dir="${base}/libv9t9render">
+    	      <include name="libv9t9render32.so"/>
+    	    </fileset>
+  	    </jar>
+
+        <jar destfile="${bin.v9t9.dir}/v9t9j-natives-linux-x86_64.jar">
+            <manifest>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+        	<fileset dir="${base.v9t9}/libs/lwjgl/native/linux">
+    	       <include name="**"/>
+    	    </fileset>
+    	    <fileset dir="${base}/libv9t9render">
+    	      <include name="libv9t9render64.so"/>
+    	    </fileset>
+  	    </jar>
+    	
+        <jar destfile="${bin.v9t9.dir}/v9t9j-natives-win32-x86.jar">
+            <manifest>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+        	<fileset dir="${base.v9t9}/libs/lwjgl/native/win32">
+    	       <include name="**"/>
+    	    </fileset>
+    	    <fileset dir="${base}/libv9t9render">
+    	      <include name="v9t9render32.dll"/>
+    	    </fileset>
+  	    </jar>    	
+    	
+
+        <jar destfile="${bin.v9t9.dir}/v9t9j-natives-win32-x86_64.jar">
+            <manifest>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+        	<fileset dir="${base.v9t9}/libs/lwjgl/native/win32">
+    	       <include name="**"/>
+    	    </fileset>
+    	    <fileset dir="${base}/libv9t9render">
+    	      <include name="v9t9render64.dll"/>
+    	    </fileset>
+  	    </jar>    
+
+		<copy todir="${bin.v9t9.dir}/libs" preservelastmodified="yes">
+			<fileset dir="${base.base}/libs/swt">
+				<include name="**/org.eclipse.swt.**.jar"/>
+				<exclude name="**/*source*.jar"/>
+			</fileset>
+		</copy>    	
+    	<signjar
+    	    alias="v9t9" 
+    		keystore="${keystore}"
+    	    storepass="${storepass}"
+    	    lazy="true"
+    	    >
+    	  <path>
+    	    <fileset dir="${bin.v9t9.dir}" includes="**.jar" />
+    	    <fileset dir="${bin.v9t9.dir}/libs" includes="**.jar" />
+    	  </path>
+    	</signjar>
+    </target>
+</project>

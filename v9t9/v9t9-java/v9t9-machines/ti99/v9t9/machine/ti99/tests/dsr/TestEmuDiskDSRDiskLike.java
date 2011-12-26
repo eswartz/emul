@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.machine.common.dsr.tests;
+package v9t9.machine.ti99.tests.dsr;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

@@ -14,9 +14,9 @@ import v9t9.common.settings.Settings;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
-import v9t9.machine.common.dsr.emudisk.EmuDiskDsr;
-import v9t9.machine.common.dsr.pcode.PCodeDsr;
-import v9t9.machine.common.dsr.realdisk.RealDiskImageDsr;
+import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
+import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
+import v9t9.machine.ti99.dsr.realdisk.RealDiskImageDsr;
 import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 
 /**

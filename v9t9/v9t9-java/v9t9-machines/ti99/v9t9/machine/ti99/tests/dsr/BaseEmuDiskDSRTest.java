@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.machine.common.dsr.tests;
+package v9t9.machine.ti99.tests.dsr;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -31,7 +31,7 @@ import v9t9.engine.files.directory.EmuDiskSettings;
 import v9t9.engine.files.directory.EmuDiskPabHandler;
 import v9t9.engine.files.image.Dumper;
 import v9t9.engine.files.image.RealDiskDsrSettings;
-import v9t9.machine.common.dsr.emudisk.EmuDiskDsr;
+import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 
 /**
  * @author ejs

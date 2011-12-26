@@ -29,4 +29,4 @@ echo $SWT
 echo $JAVA
 
 cd "$BASEDIR"
-"$JAVA" -Djava.library.path=lwjgl/$OS -cp $SWT -Xmx256M -jar v9t9j.jar --swtgl
+"$JAVA" -Djava.library.path=lwjgl/$OS -cp $SWT -Xmx256M -jar v9t9j.jar

@@ -1,4 +1,4 @@
-package v9t9.machine.common.tests;
+package v9t9.machine.ti99.tests;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -15,7 +15,9 @@ public class AllTests {
 	public static Test suite() {
 		TestSuite suite = new TestSuite("Test for v9t9");
 		//$JUnit-BEGIN$
-		suite.addTestSuite(TestMemoryRanges.class);
+		suite.addTestSuite(DiskMemoryEntryTest.class);
+		suite.addTestSuite(MemoryTest.class);
+		suite.addTestSuite(MemoryEntryTest.class);
 		//$JUnit-END$
 		return suite;
 	}

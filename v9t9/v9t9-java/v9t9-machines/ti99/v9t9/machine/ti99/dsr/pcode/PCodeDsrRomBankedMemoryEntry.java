@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.machine.common.dsr.pcode;
+package v9t9.machine.ti99.dsr.pcode;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemory;

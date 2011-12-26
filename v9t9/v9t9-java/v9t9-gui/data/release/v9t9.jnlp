@@ -27,20 +27,8 @@
 		<jar href="libs/jinput.jar"/>
 		<jar href="libs/lwjgl_util.jar"/>
 		<jar href="libs/lwjgl.jar"/>
-		<jar href="libs/org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
-		<jar href="libs/org.apache.batik.css_1.7.0.v201011041433.jar"/>
-		<jar href="libs/org.apache.batik.dom_1.7.0.v201011041433.jar"/>
-		<jar href="libs/org.apache.batik.dom.svg_1.7.0.v201011041433.jar"/>
-		<jar href="libs/org.apache.batik.ext.awt_1.7.0.v201011041433.jar"/>
-		<jar href="libs/org.apache.batik.extension_1.7.0.v201011041433.jar"/>
-		<jar href="libs/org.apache.batik.parser_1.7.0.v201011041433.jar"/>
-		<jar href="libs/org.apache.batik.svggen_1.7.0.v201011041433.jar"/>
-		<jar href="libs/org.apache.batik.swing_1.7.0.v201011041433.jar"/>
-		<jar href="libs/org.apache.batik.transcoder_1.7.0.v201011041433.jar"/>
-		<jar href="libs/org.apache.batik.util_1.7.0.v201011041433.jar"/>
-		<jar href="libs/org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
-		<jar href="libs/org.apache.batik.xml_1.7.0.v201011041433.jar"/>		
-		<jar href="libs/svgSalamander.jar"/>
+		$SVGLIBS
+		<jar href="libs/org.eclipse.tm.tcf.jar"/>
 	</resources>
 
 	<resources>
@@ -80,8 +68,7 @@
 	</resources>
 
 	<application-desc 
-		main-class="v9t9.emulator.Emulator">
-		<argument>--swtgl</argument>
+		main-class="v9t9.gui.Emulator">
     </application-desc>
     
 </jnlp>

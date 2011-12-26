@@ -4,7 +4,7 @@
  * Created on Dec 16, 2004
  *
  */
-package v9t9.machine.common.tests;
+package v9t9.machine.ti99.tests;
 
 import ejs.base.properties.IProperty;
 import junit.framework.TestCase;
@@ -16,6 +16,7 @@ import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.ZeroWordMemoryArea;
+import v9t9.machine.common.tests.TestSettingsHandler;
 import v9t9.machine.ti99.memory.ConsoleRamArea;
 
 

@@ -16,18 +16,29 @@ Then enter the same keystore password when invoking the launch config for "build
 If running via ant, pass '-Dstorepass=...' with the password, and also supply 
 '-Dkeystore=$HOME/.keystore.v9t9'.  
 
-Two versions of the v9t9.jnlp are deployed, v9t9-local.jnlp for testing locally
-(e.g. "javaws path/to/v9t9-local.jnlp") and v9t9-remote.jnlp for using on a web server.
+Two versions of the v9t9.jnlp are deployed, v9t9-local.jnlp for testing locally 
+and v9t9-remote.jnlp for using on a web server.
 
-Pass a new 'v9t9.host' and 'v9t9.root' property to override the URL encoded into 
-v9t9-remote.jnlp and used by the test web server (next).
+The remote launcher uses a hardcoded IP address for testing.  Pass a new 'v9t9.host' and 
+'v9t9.root' property to override the URL encoded into v9t9-remote.jnlp (next) and used by the
+test web server.
 
+A full command example:
+
+ant -Dkeystore=\$HOME/.keystore.v9t9 -Dstorepass=...thepassword... \
+	-Dv9t9.host=mycomputer.mydomain -Dv9t9.root=/path/to/my/v9t9 \
+	-f build_standalone.xml 
  
 TESTING
 =========
 
-The 'test-httpd.py' will publish a web server on localhost:8080 providing ${v9t9.root}/v9t9.html
-for testing the web launcher.
+To test locally, use "javaws path/to/v9t9-local.jnlp". 
+
+To test the remote deployer, use 'test-httpd.py' to publish a web server on localhost:8080.
+Launch a browser that supports Java 6 and open ${v9t9.root}/v9t9.html and click "Launch".
+
+Note: on some browsers, the Launch button will simply trigger a download of the .jnlp
+file -- you may have to manually launch the .jnlp from the Downloads folder.
 
 DOCS
 =====
