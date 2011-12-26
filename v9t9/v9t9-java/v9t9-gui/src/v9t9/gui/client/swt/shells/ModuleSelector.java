@@ -4,6 +4,8 @@
 package v9t9.gui.client.swt.shells;
 
 import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -73,7 +75,6 @@ public class ModuleSelector extends Composite {
 	private Button switchButton;
 	private Font tableFont;
 	private final IModuleManager moduleManager;
-	private Button scanButton;
 	private Text filterText;
 	protected int visibleCount;
 
@@ -85,6 +86,7 @@ public class ModuleSelector extends Composite {
 	 *
 	 */
 	class ExistingModulesFilter extends ViewerFilter {
+		private Map<IModule, Boolean> knownStates = new HashMap<IModule, Boolean>();
 
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.viewers.ViewerFilter#select(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
@@ -96,11 +98,18 @@ public class ModuleSelector extends Composite {
 				return true;
 			
 			IModule module = (IModule) element;
+			Boolean known = knownStates.get(module);
+			if (known != null)
+				return known;
+			
+			// in case user added new modules...
 			try {
 				moduleManager.getModuleMemoryEntries(module);
+				knownStates.put(module, Boolean.TRUE);
 				return true;
 			} catch (NotifyException e) {
 				System.out.println(e.toString());
+				knownStates.put(module, Boolean.FALSE);
 				return false;
 			}
 		}
@@ -150,7 +159,7 @@ public class ModuleSelector extends Composite {
 		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(3).equalWidth(false).applyTo(buttonBar);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(buttonBar);
 		
-
+		/*
 		scanButton = new Button(buttonBar, SWT.PUSH);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).hint(128, -1).applyTo(scanButton);
 		scanButton.setText("Scan...");
@@ -160,7 +169,7 @@ public class ModuleSelector extends Composite {
 			}
 		});
 		scanButton.setEnabled(false);
-
+		*/
 		
 		Label filler = new Label(buttonBar, SWT.NONE);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).applyTo(filler);
