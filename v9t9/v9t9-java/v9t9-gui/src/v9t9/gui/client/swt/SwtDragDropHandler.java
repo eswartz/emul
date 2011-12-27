@@ -79,27 +79,29 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		this.renderer = renderer;
 		this.notifier = notifier;
 		
-		source = new DragSource(control, DND.DROP_COPY | DND.DROP_DEFAULT);
-		source.addDragListener(this);
+		//source = new DragSource(control, DND.DROP_COPY | DND.DROP_DEFAULT);
+		//source.addDragListener(this);
 		target = new DropTarget(control, DND.DROP_COPY | DND.DROP_DEFAULT);
 		target.addDropListener(this);
 		
 		if (System.getProperty("os.name").equals("Linux")) {
-			source.setTransfer(new Transfer[] { 
-					FileTransfer.getInstance(), 
-					ImageTransfer.getInstance(),
-					URLTransfer.getInstance(), 
-			});
+			if (source != null)
+				source.setTransfer(new Transfer[] { 
+						FileTransfer.getInstance(), 
+						ImageTransfer.getInstance(),
+						URLTransfer.getInstance(), 
+				});
 			target.setTransfer(new Transfer[] {
 					FileTransfer.getInstance(), 
 					URLTransfer.getInstance(),
 			});
 		} else {
-			source.setTransfer(new Transfer[] { 
-					ImageTransfer.getInstance(), 
-					FileTransfer.getInstance(), 
-					URLTransfer.getInstance(), 
-			});
+			if (source != null)
+				source.setTransfer(new Transfer[] { 
+						ImageTransfer.getInstance(), 
+						FileTransfer.getInstance(), 
+						URLTransfer.getInstance(), 
+				});
 			target.setTransfer(new Transfer[] { 
 					ImageTransfer.getInstance(),
 					FileTransfer.getInstance(), 
@@ -126,7 +128,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			tempSourceFile.delete();
 			tempSourceFile = null;
 		}
-		if (!source.isDisposed()) {
+		if (source != null && !source.isDisposed()) {
 			source.removeDragListener(this);
 			source.dispose();
 		}
