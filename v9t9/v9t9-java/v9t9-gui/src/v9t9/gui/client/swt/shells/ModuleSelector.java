@@ -908,7 +908,9 @@ public class ModuleSelector extends Composite {
 			}
 		}
 
-		Image image = loadedImages.get(imageURL.toString());
+		String imageKey = imageURL.toString() + (module == null || isModuleLoadable(module) ? "" : "?grey");
+		
+		Image image = loadedImages.get(imageKey);
 		if (image == null) {
 			InputStream is = null;
 			try {
@@ -921,34 +923,20 @@ public class ModuleSelector extends Composite {
 				final int MAX = 64;
 				if (sz > MAX) {
 					sz = MAX;
-					
-					/*
-					Image scaled = new Image(getDisplay(), MAX, MAX);
-					Point scaledSize = ImageUtils.scaleSizeToSize(new Point(bounds.width, bounds.height),
-							new Point(MAX, MAX));
-					
-					GC gc = new GC(scaled);
-					gc.setAntialias(SWT.ON);
-					gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
-					gc.fillRectangle(scaled.getBounds());
-					gc.drawImage(image, 0, 0, bounds.width, bounds.height, 
-							 (MAX - scaledSize.x) / 2, (MAX - scaledSize.y) / 2, scaledSize.x, scaledSize.y);
-					gc.dispose();
-					
-					image.dispose();
-					
-					ImageData scaledData = scaled.getImageData();
-					scaledData.transparentPixel = scaledData.palette.getPixel(getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY).getRGB());
-					image = new Image(getDisplay(), scaledData);
-					scaled.dispose();
-					*/
-					
+
 					Image scaled = ImageUtils.scaleImage(getDisplay(), image, new Point(MAX, MAX), true, true);
 					image.dispose();
+					
+					if (module != null && !isModuleLoadable(module)) {
+						Image grey = ImageUtils.convertToGreyscale(getDisplay(), scaled);
+						scaled.dispose();
+						scaled = grey;
+					}
+						
 					image = scaled;
 				}
 				
-				loadedImages.put(imageURL.toString(), image);
+				loadedImages.put(imageKey, image);
 			} catch (IOException e) {
 				e.printStackTrace();
 			} finally {
@@ -967,6 +955,9 @@ public class ModuleSelector extends Composite {
 	 * @return
 	 */
 	protected boolean isModuleLoadable(IModule module) {
+		if (module == null)
+			return false;
+		
 		Boolean known = knownStates.get(module);
 		if (known != null)
 			return known;
