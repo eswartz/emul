@@ -96,7 +96,7 @@ public class ModuleSelector extends Composite {
 	public static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 	private static String lastFilter;
 
-	private static boolean allowRecordImages = false;
+	private static boolean allowRecordImages = true;
 	
 	static final int NAME_COLUMN = 0;
 	static final int FILE_COLUMN = 1;
