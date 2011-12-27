@@ -24,7 +24,6 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 
 import v9t9.common.client.ISoundHandler;
-import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
@@ -32,12 +31,14 @@ import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
 import v9t9.gui.client.swt.shells.ImageImportOptionsDialog;
-import v9t9.gui.client.swt.shells.debugger.DebuggerWindow;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.gui.sound.JavaSoundHandler;
 import ejs.base.properties.IProperty;
 
 /**
+ * This is the bar of command buttons on the right-hand side of the main emulator window.
+ * This has the main controls for the emulator's state, video, and sound settings.
+ * 
  * @author ejs
  *
  */
@@ -53,8 +54,8 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 	public EmulatorButtonBar(final SwtWindow window, ImageProvider imageProvider, Composite parent, 
 			final IMachine machine,
 			final ISoundHandler soundHandler,
-			int[] colors, float midPoint, boolean isHorizontal) {
-		super(window, imageProvider, parent, machine, colors, midPoint, isHorizontal);
+			int[] colors, float[] points, boolean isHorizontal) {
+		super(window, imageProvider, parent, machine, colors, points, isHorizontal);
 		
 		if (isHorizontal) {
 			GridData gd = ((GridData) buttonBar.getLayoutData());
@@ -85,14 +86,6 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		});
 		
 
-		createButton(IconConsts.INTERRUPT, "Send a non-maskable interrupt",
-				new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						machine.getCpu().nmi();
-					}
-				});
-
 		BasicButton reset = createButton(IconConsts.RESET, "Reset the computer",
 				new SelectionAdapter() {
 					@Override
@@ -107,23 +100,10 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 			}
 		});
 
-		createToggleStateButton(ICpu.settingDumpFullInstructions,
-				IconConsts.CPU_LOGGING, 
-				IconConsts.CHECKMARK_OVERLAY, "Toggle CPU logging");
-
 		createToggleStateButton(IMachine.settingPauseMachine, 
 				IconConsts.PAUSE,
 				IconConsts.CHECKMARK_OVERLAY, "Pause machine");
 
-		createButton(IconConsts.DEBUGGER,
-				"Create debugger window", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						swtWindow.toggleToolShell(DebuggerWindow.DEBUGGER_TOOL_ID, 
-								DebuggerWindow.getToolShellFactory(machine, buttonBar, swtWindow.getToolUiTimer()));
-					}
-			}
-		);
 		
 		createButton(IconConsts.PASTE_KEYBOARD, "Paste into keyboard",
 				new SelectionAdapter() {
@@ -185,17 +165,6 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		});
 
 		
-		/*
-		createButton(buttonBar, 11,
-				"Zoom the screen", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						Control button = (Control) e.widget;
-						Point size = button.getSize();
-						showMenu(createZoomMenu(button), button, size.x / 2, size.y / 2);
-					}
-				});
-		*/
 		createToggleStateButton(BaseEmulatorWindow.settingFullScreen, 
 				IconConsts.FULLSCREEN, IconConsts.CHECKMARK_OVERLAY, "Toggle fullscreen");
 

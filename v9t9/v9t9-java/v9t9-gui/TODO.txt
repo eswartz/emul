@@ -7,8 +7,6 @@
 
 -- unify logging
 
--- make RnD toolbar and move absurd commands there
-
 ================
 
 

@@ -32,6 +32,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Decorations;
@@ -56,6 +57,7 @@ import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.bars.BaseEmulatorBar;
 import v9t9.gui.client.swt.bars.EmulatorButtonBar;
+import v9t9.gui.client.swt.bars.EmulatorRnDBar;
 import v9t9.gui.client.swt.bars.EmulatorStatusBar;
 import v9t9.gui.client.swt.bars.ImageProvider;
 import v9t9.gui.client.swt.bars.MultiImageSizeProvider;
@@ -84,7 +86,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private IFocusRestorer focusRestorer;
 	private final IEventNotifier eventNotifier;
 	private Composite videoRendererComposite;
-	BaseEmulatorBar buttons;
+	BaseEmulatorBar buttonBar;
 	private EmulatorStatusBar statusBar;
 
 	private IPropertyListener fullScreenListener;
@@ -92,8 +94,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 	private ImageProvider buttonImageProvider;
 	private ImageProvider statusImageProvider;
+	private ImageProvider rndImageProvider;
 
 	private IProperty fullScreen;
+
+	private EmulatorRnDBar rndBar;
+
+	private IProperty showRnDBar;
+
 
 	class EmulatorWindowLayout extends Layout {
 
@@ -124,14 +132,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 				if (sbSz == null)
 					sbSz = statusBar.getButtonBar().computeSize(SWT.DEFAULT, cur.height); 
 				if (bbSz == null)
-					bbSz = buttons.getButtonBar().computeSize(SWT.DEFAULT, cur.height);
+					bbSz = buttonBar.getButtonBar().computeSize(SWT.DEFAULT, cur.height);
 				
 				return new Point(sbSz.x + bbSz.x + vidSz.x, cur.height);
 			} else {
 				if (sbSz == null)
 					sbSz = statusBar.getButtonBar().computeSize(cur.width, SWT.DEFAULT); 
 				if (bbSz == null)
-					bbSz = buttons.getButtonBar().computeSize(cur.width, SWT.DEFAULT);
+					bbSz = buttonBar.getButtonBar().computeSize(cur.width, SWT.DEFAULT);
 				
 				return new Point(cur.width, sbSz.y + bbSz.y + vidSz.y);
 			}
@@ -156,13 +164,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 				int left = cur.width - barSz * 2;
 				statusBar.getButtonBar().setBounds(0, 0, barSz, cur.height);
 				videoRendererComposite.setBounds(barSz, 0, left, cur.height);
-				buttons.getButtonBar().setBounds(barSz + left, 0, barSz, cur.height);
+				buttonBar.getButtonBar().setBounds(barSz + left, 0, barSz, cur.height);
 			} else {
 				int barSz = Math.min(sbSz.y, bbSz.y);
 				int left = cur.height - barSz * 2;
 				statusBar.getButtonBar().setBounds(0, 0, cur.width, barSz);
 				videoRendererComposite.setBounds(0, barSz, cur.width, left);
-				buttons.getButtonBar().setBounds(0, barSz + left, cur.width, barSz);
+				buttonBar.getButtonBar().setBounds(0, barSz + left, cur.width, barSz);
 				
 			}
 		}
@@ -227,14 +235,23 @@ public class SwtWindow extends BaseEmulatorWindow {
 			ISVGLoader svgIconLoader = new SVGSalamanderLoader(EmulatorGuiData.getDataURL("icons/icons.svg"));
 			buttonImageProvider = new SVGImageProvider(mainIcons, svgIconLoader);
 			statusImageProvider = new SVGImageProvider(mainIcons, svgIconLoader);
+			rndImageProvider = new SVGImageProvider(mainIcons, svgIconLoader);
 		} else {
 			buttonImageProvider = new MultiImageSizeProvider(mainIcons);
 			statusImageProvider = buttonImageProvider;
+			rndImageProvider = buttonImageProvider;
 		}
 		
 		isHorizontal = false;
 
-		Composite mainComposite = shell;
+		Composite fullWindow = shell;
+		GridLayoutFactory.fillDefaults().numColumns(1).spacing(0, 0).margins(0, 0).applyTo(fullWindow);
+		
+		
+		
+		Composite mainComposite = new Composite(fullWindow, SWT.NONE);
+
+		GridLayoutFactory.fillDefaults().numColumns(1).margins(0, 0).applyTo(mainComposite);
 		
 		mainComposite.setLayout(new EmulatorWindowLayout());
 		
@@ -242,9 +259,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 		statusBar = new EmulatorStatusBar(this, statusImageProvider, mainComposite, machine, 
 				new int[] { SWT.COLOR_DARK_GRAY, SWT.COLOR_GRAY, SWT.COLOR_BLACK },
-				0.25f,
+				new float[] { 0.25f, 0.75f },
 				isHorizontal);
-		
+
+		//Composite videoAndBarComposite = new Composite(mainComposite, SWT.NONE);
+		//GridLayoutFactory.fillDefaults().margins(0, 0).applyTo(videoAndBarComposite);
+		//GridDataFactory.fillDefaults().grab(true, true).applyTo(videoAndBarComposite);
+
 		videoRendererComposite = new Composite(mainComposite, SWT.NONE);
 		videoRendererComposite.setBackground(videoRendererComposite.getDisplay().getSystemColor(SWT.COLOR_BLACK));
 		GridLayoutFactory.fillDefaults().margins(0, 0).applyTo(videoRendererComposite);
@@ -292,17 +313,46 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 
 		
-		buttons = new EmulatorButtonBar(this, buttonImageProvider, mainComposite, machine,
+		buttonBar = new EmulatorButtonBar(this, buttonImageProvider, mainComposite, machine,
 				soundHandler,
 				new int[] { SWT.COLOR_BLACK, SWT.COLOR_GRAY, SWT.COLOR_DARK_GRAY },
-				0.75f,
+				new float[] { 0.75f, 0.25f },
 				isHorizontal);
 		
+		
+
+		rndBar = new EmulatorRnDBar(this, rndImageProvider, videoRendererComposite, machine,
+				new int[] { SWT.COLOR_BLACK, SWT.COLOR_BLACK, SWT.COLOR_BLACK  },
+				new float[] { 0.5f, 0.5f },
+				!isHorizontal);
+		
+		showRnDBar = settingsHandler.get(settingShowRnDBar);
+		showRnDBar.addListenerAndFire(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(final IProperty property) {
+				if (shell.isDisposed())
+					return;
+				shell.getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						((GridData) rndBar.getButtonBar().getLayoutData()).exclude = !property.getBoolean();
+						rndBar.getButtonBar().setVisible(property.getBoolean());
+						shell.layout(true, true);
+					}
+				});
+			}
+		});
+		
+		
+		
 		if (buttonImageProvider instanceof SVGImageProvider) {
-			((SVGImageProvider) buttonImageProvider).setImageBar(buttons.getButtonBar());
+			((SVGImageProvider) buttonImageProvider).setImageBar(buttonBar.getButtonBar());
 		}
 		if (statusImageProvider instanceof SVGImageProvider) {
 			((SVGImageProvider) statusImageProvider).setImageBar(statusBar.getButtonBar());
+		}
+		if (rndImageProvider instanceof SVGImageProvider) {
+			((SVGImageProvider) rndImageProvider).setImageBar(rndBar.getButtonBar());
 		}
 
 		
@@ -603,13 +653,23 @@ public class SwtWindow extends BaseEmulatorWindow {
 		accel.setMenu(accelMenu);
 		*/
 		
+		final MenuItem showRnDI = new MenuItem(viewMenu, SWT.CHECK);
+		showRnDI.setSelection(showRnDBar.getBoolean());
+		showRnDI.setText("Show &RnD Commands");
+		showRnDI.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				showRnDBar.setBoolean(showRnDI.getSelection());
+			}
+		});
+		
 		return appMenu;
 	}
 	
 	@Override
 	public void dispose() {
 		
-		buttons.dispose();
+		buttonBar.dispose();
 		
 		statusBar.dispose();
 		
@@ -789,5 +849,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 	 */
 	public ImageProvider getImageProvider() {
 		return buttonImageProvider;
+	}
+
+	/**
+	 * @return
+	 */
+	public BaseEmulatorBar getButtonBar() {
+		return buttonBar;
 	}
 }

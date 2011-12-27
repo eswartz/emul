@@ -35,6 +35,9 @@ import v9t9.gui.client.swt.shells.DiskSelectorDialog;
 import v9t9.gui.client.swt.shells.ModuleSelector;
 
 /**
+ * This is the bar of buttons and status icons on the left-hand side of
+ * the emulator window.  It contains the main configuration controls
+ * and information about disk/device activity. 
  * @author ejs
  *
  */
@@ -55,9 +58,9 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	public EmulatorStatusBar(final SwtWindow swtWindow, 
 			ImageProvider iconImageProvider,
 			Composite mainComposite, final IMachine machine,
-			int[] colors, float midPoint, boolean isHorizontal) {
+			int[] colors, float[] points, boolean isHorizontal) {
 		super(swtWindow, iconImageProvider, 
-				mainComposite, machine, colors, midPoint, isHorizontal);
+				mainComposite, machine, colors, points, isHorizontal);
 		
 		realTime = Settings.get(machine, ICpu.settingRealTime);
 		compile = Settings.get(machine, IExecutor.settingCompile);

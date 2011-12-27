@@ -41,14 +41,15 @@ public abstract class BaseEmulatorBar {
 	 * @param window 
 	 * 
 	 */
-	public BaseEmulatorBar(SwtWindow window, ImageProvider imageProvider, Composite parent, IMachine machine, int[] colors, float midPoint, boolean isHorizontal) {
+	public BaseEmulatorBar(SwtWindow window, ImageProvider imageProvider, Composite parent, 
+			IMachine machine, int[] colors, float[] points, boolean isHorizontal) {
 		this.swtWindow = window;
 		this.imageProvider = imageProvider;
 		this.machine = machine;
 		
 		buttonBar = new ImageBar(parent, 
 				isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL,
-				new Gradient(!isHorizontal, colors, new float[] { midPoint, 1 - midPoint }),
+				new Gradient(!isHorizontal, colors, points),
 				swtWindow.getFocusRestorer(), true);
 		
 	}

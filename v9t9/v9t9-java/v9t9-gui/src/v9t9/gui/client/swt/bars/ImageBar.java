@@ -29,6 +29,8 @@ public class ImageBar extends Composite implements IImageBar {
 	private final IFocusRestorer focusRestorer;
 	private final boolean smoothResize;
 	private Gradient gradient;
+	private int minIconSize = MIN_ICON_SIZE;
+	private int maxIconSize = MAX_ICON_SIZE;
 
 	/**
 	 * Create a button bar with the given orientation.  This must be in a parent with a GridLayout.
@@ -87,6 +89,27 @@ public class ImageBar extends Composite implements IImageBar {
 		});
 	}
 	
+	
+	public int getMinIconSize() {
+		return minIconSize;
+	}
+
+
+	public void setMinIconSize(int minIconSize) {
+		this.minIconSize = minIconSize;
+	}
+
+
+	public int getMaxIconSize() {
+		return maxIconSize;
+	}
+
+
+	public void setMaxIconSize(int maxIconSize) {
+		this.maxIconSize = maxIconSize;
+	}
+
+
 	public IFocusRestorer getFocusRestorer() {
 		return focusRestorer;
 	}
@@ -118,9 +141,9 @@ public class ImageBar extends Composite implements IImageBar {
 				size = axis / num;
 				if (isHorizontal) {
 					w = axis;
-					h = Math.min(MAX_ICON_SIZE, Math.max(MIN_ICON_SIZE, size));
+					h = Math.min(maxIconSize, Math.max(minIconSize, size));
 				} else {
-					w = Math.min(MAX_ICON_SIZE, Math.max(MIN_ICON_SIZE, size));
+					w = Math.min(maxIconSize, Math.max(minIconSize, size));
 					h = axis;
 				}
 			} else {
@@ -171,19 +194,19 @@ public class ImageBar extends Composite implements IImageBar {
 			
 			if (isHorizontal) {
 				axisSize = Math.min(curSize.y, curSize.x / num);
-				if (axisSize < MIN_ICON_SIZE)
-					size = MIN_ICON_SIZE;
-				else if (axisSize > MAX_ICON_SIZE)
-					size = MAX_ICON_SIZE;
+				if (axisSize < minIconSize)
+					size = minIconSize;
+				else if (axisSize > maxIconSize)
+					size = maxIconSize;
 				else
 					size = axisSize;
 				x = (curSize.x - size * num) / 2;
 			} else {
 				axisSize = Math.min(curSize.x, curSize.y / num);
-				if (axisSize < MIN_ICON_SIZE)
-					size = MIN_ICON_SIZE;
-				else if (axisSize > MAX_ICON_SIZE)
-					size = MAX_ICON_SIZE;
+				if (axisSize < minIconSize)
+					size = minIconSize;
+				else if (axisSize > maxIconSize)
+					size = maxIconSize;
 				else
 					size = axisSize;
 				y = (curSize.y - size * num) / 2;

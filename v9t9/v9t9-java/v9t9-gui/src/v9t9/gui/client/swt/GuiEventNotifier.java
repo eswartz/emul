@@ -93,7 +93,7 @@ public final class GuiEventNotifier extends BaseEventNotifier {
 					Control b = (Control) e.widget;
 					tip.setLocation(b.toDisplay(e.x, e.y + b.getSize().y));
 				} else {
-					Point pt = swtWindow.buttons.getTooltipLocation();
+					Point pt = swtWindow.getButtonBar().getTooltipLocation();
 					tip.setLocation(pt);
 				}
 				tip.setVisible(true);

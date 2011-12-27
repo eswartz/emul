@@ -4,10 +4,12 @@
 package v9t9.engine.dsr.realdisk;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 
 import v9t9.common.dsr.IDeviceIndicatorProvider;
@@ -47,7 +49,6 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	private final int baseAddr;
 
 	private byte flags;
-	private ArrayList<IDeviceIndicatorProvider> memoryDeviceIndicatorProviderList;
 	
 	/**
 	 * 
@@ -56,6 +57,15 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 		super(machine);
 		this.baseAddr = baseAddr;
 		flags = 0;
+		
+		settingDsrEnabled.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				settings.get(IDeviceIndicatorProvider.settingDevicesChanged).firePropertyChange();
+			}
+		});
+
 	}
 
 	/* (non-Javadoc)
@@ -140,28 +150,28 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	 */
 	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
 
-		if (memoryDeviceIndicatorProviderList == null) {
-			memoryDeviceIndicatorProviderList = new ArrayList<IDeviceIndicatorProvider>();
+		if (!settingDsrEnabled.getBoolean())
+			return Collections.emptyList();
 		
-			if (diskSettingsMap.isEmpty())
-				return memoryDeviceIndicatorProviderList;
+		if (diskSettingsMap.isEmpty())
+			return Collections.emptyList();
 			
-			/*
-			// one inactive icon for DSR
-			DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
-					diskImageDsrEnabled, 
-					"Disk image activity",
-					IDevIcons.DISK_IMAGE, IDevIcons.DISK_IMAGE);
-			memoryDeviceIndicatorProviderList.add(deviceIndicatorProvider);
-			 */
+		List<IDeviceIndicatorProvider> list = new ArrayList<IDeviceIndicatorProvider>();
+		/*
+		// one inactive icon for DSR
+		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
+				diskImageDsrEnabled, 
+				"Disk image activity",
+				IDevIcons.DISK_IMAGE, IDevIcons.DISK_IMAGE);
+		list(deviceIndicatorProvider);
+		 */
 			
-			for (Map.Entry<String, IProperty> entry : diskSettingsMap.entrySet()) {
-				BaseDiskImage image = getDiskImage(entry.getValue().getName());
-				DiskImageDeviceIndicatorProvider provider = new DiskImageDeviceIndicatorProvider(image);
-				memoryDeviceIndicatorProviderList.add(provider);
-			}
+		for (Map.Entry<String, IProperty> entry : diskSettingsMap.entrySet()) {
+			BaseDiskImage image = getDiskImage(entry.getValue().getName());
+			DiskImageDeviceIndicatorProvider provider = new DiskImageDeviceIndicatorProvider(image);
+			list.add(provider);
 		}
-		return memoryDeviceIndicatorProviderList;
+		return list;
 	}
 
 }

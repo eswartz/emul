@@ -306,6 +306,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 	public void handleEvents() {
 		try {
 			while (display.readAndDispatch()) ;
+			display.sleep();
 		} catch (SWTException e) {
 			e.printStackTrace();
 		} catch (SWTError e) {

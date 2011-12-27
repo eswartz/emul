@@ -27,7 +27,7 @@ import v9t9.common.settings.IStoredSettings;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.gui.Emulator;
-import v9t9.server.EmulatorServer;
+import v9t9.server.EmulatorLocalServer;
 import v9t9.server.settings.WorkspaceSettings;
 
 public abstract class BaseEmulatorWindow {
@@ -51,6 +51,10 @@ public abstract class BaseEmulatorWindow {
 	static public final SettingSchema settingFullScreen = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"FullScreen", new Boolean(false));
+
+	static public final SettingSchema settingShowRnDBar = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
+			"ShowRnDBar", new Boolean(false));
 
 	// not persisted
 	static public final SettingSchema settingMachineStatePath = new SettingSchema(
@@ -175,7 +179,7 @@ public abstract class BaseEmulatorWindow {
 			        		t.printStackTrace();
 			        	}
 			        	
-			        	Emulator.createAndRun(new EmulatorServer(), modelId, clientId);
+			        	Emulator.createAndRun(new EmulatorLocalServer(), modelId, clientId);
 
 			        	// $NOTREACHED$
 			        	return;
