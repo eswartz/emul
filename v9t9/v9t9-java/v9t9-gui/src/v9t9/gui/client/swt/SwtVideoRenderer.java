@@ -468,27 +468,22 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	}
 
 	public void saveScreenShot(File file) throws IOException {
-		ImageLoader imageLoader = new ImageLoader();
-		ImageData data = getScreenshotImageData();
-		if (data == null)
-			throw new IOException("Sorry, this renderer has no image to save");
-		imageLoader.data = new ImageData[] { data };
-		imageLoader.save(new FileOutputStream(file), SWT.IMAGE_PNG);
+		synchronized (vdpCanvas) {
+			ImageLoader imageLoader = new ImageLoader();
+			ImageData data = getScreenshotImageData();
+			if (data == null)
+				throw new IOException("Sorry, this renderer has no image to save");
+			imageLoader.data = new ImageData[] { data };
+			imageLoader.save(new FileOutputStream(file), SWT.IMAGE_PNG);
+		}
 	}
 
 	/**
 	 * @return
 	 */
-	protected ImageData getScreenshotImageData() {
-		if (image == null && vdpCanvas instanceof ImageDataCanvas) {
-			ImageData imageData = ((ImageDataCanvas) vdpCanvas).getImageData();
-			if (imageData != null) {
-				image = new Image(shell.getDisplay(), imageData);
-			}
-		}
-		if (image == null)
-			return null;
-		return image.getImageData();
+	public ImageData getScreenshotImageData() {
+		ImageData imageData = ((ImageDataCanvas) vdpCanvas).getImageData();
+		return imageData;
 	}
 
 	public void addMouseEventListener(MouseListener listener) {

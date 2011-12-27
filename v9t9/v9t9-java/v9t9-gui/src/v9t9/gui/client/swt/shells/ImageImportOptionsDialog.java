@@ -4,20 +4,29 @@
 package v9t9.gui.client.swt.shells;
 
 import java.awt.image.BufferedImage;
+import java.util.Collection;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.gui.client.swt.ISwtVideoRenderer;
+import v9t9.gui.client.swt.SwtDragDropHandler;
+import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageBar;
 import v9t9.gui.client.swt.imageimport.IImageImportHandler;
 import v9t9.gui.client.swt.imageimport.ImageClipDecorator;
@@ -30,6 +39,7 @@ import v9t9.gui.properties.PropertySourceEditor;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.properties.IPropertySource;
+import ejs.base.utils.Pair;
 
 /**
  * Control the options used for importing images
@@ -86,13 +96,14 @@ public class ImageImportOptionsDialog extends Composite {
 
 	/**
 	 * @param shell
+	 * @param window 
 	 * @param imageDragDropHandler 
 	 * @param imageImportHandler 
 	 * @param none
 	 * @param importer
 	 */
 	public ImageImportOptionsDialog(final Shell shell, int style, 
-			final IImageImportHandler imageImportHandler, final IPropertyListener listener) {
+			final SwtWindow window, final IImageImportHandler imageImportHandler, final IPropertyListener listener) {
 		super(shell, style);
 		
 		shell.setText("Image Importer");
@@ -114,7 +125,9 @@ public class ImageImportOptionsDialog extends Composite {
 
 		final ImageLabel imageLabel = new ImageLabel(editGroup.getContainer(), SWT.BORDER);
 		/*final ImageClipDecorator clipDecorator = */ new ImageClipDecorator(
-				imageLabel, imageImportHandler.getImageImportOptions(), listener);
+				imageLabel, 
+				imageImportHandler.getImageImportOptions().createPropertySource().getProperty("clip"),
+				listener);
 		
 		final ImagePropertyListener imagePropertyListener = 
 			new ImagePropertyListener(imageProperty, imageLabel);
@@ -157,6 +170,13 @@ public class ImageImportOptionsDialog extends Composite {
 		});
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.BOTTOM).applyTo(button);
 		
+		imageLabel.addMenuDetectListener(new MenuDetectListener() {
+			
+			@Override
+			public void menuDetected(MenuDetectEvent e) {
+				createImageImportMenu(window, imageImportHandler, e);
+			}
+		});
 		
 		this.pack();
 		
@@ -182,7 +202,8 @@ public class ImageImportOptionsDialog extends Composite {
 	 * @param buttonBar
 	 * @return
 	 */
-	public static IToolShellFactory getToolShellFactory(final ImageBar buttonBar, final SwtImageImportSupport imageSupport) {
+	public static IToolShellFactory getToolShellFactory(final ImageBar buttonBar, final SwtImageImportSupport imageSupport,
+			final SwtWindow window) {
 		return new IToolShellFactory() {
 			Behavior behavior = new Behavior();
 			{
@@ -192,7 +213,7 @@ public class ImageImportOptionsDialog extends Composite {
 				behavior.dismissOnClickOutside = true;
 			}
 			public Control createContents(Shell shell) {
-				ImageImportOptionsDialog dialog = imageSupport.createImageImportDialog(shell);
+				ImageImportOptionsDialog dialog = imageSupport.createImageImportDialog(shell, window);
 				imageSupport.addImageImportDnDControl(dialog);
 				return dialog;
 			}
@@ -202,4 +223,68 @@ public class ImageImportOptionsDialog extends Composite {
 			}
 		};
 	}
+
+
+	/**
+	 * @param window
+	 * @param imageSupport
+	 * @param e
+	 */
+	public static void createImageImportMenu(final SwtWindow window,
+			final IImageImportHandler imageSupport, MenuDetectEvent e) {
+		final Collection<String> fileHistory = imageSupport.getHistory();
+		
+		Control control = (Control) e.widget;
+		Menu menu = new Menu(control);
+		MenuItem vitem = new MenuItem(menu, SWT.NONE);
+		vitem.setText("Load file...");
+		
+		vitem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				String file = window.openFileSelectionDialog("Open Image", null, null, false, 
+						new String[] { ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".tga" });
+				if (file != null) {
+					Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(
+							window.getEventNotifier(), file);
+					
+					if (info != null) {
+						imageSupport.importImage(info.first, !info.second);
+						((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
+						
+						fileHistory.add(file);
+					}
+				}
+			}
+		});
+		
+		// not persistent
+		if (!fileHistory.isEmpty()) {
+			new MenuItem(menu, SWT.SEPARATOR);
+			
+			int index = 0;
+			for (final String file : fileHistory) {
+				MenuItem hitem = new MenuItem(menu, SWT.NONE);
+				hitem.setText((index < 10 ? "&" + index + " " : "")
+					+ file);
+				index++;
+				
+				hitem.addSelectionListener(new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(window.getEventNotifier(), file);
+						
+						if (info != null) {
+							imageSupport.importImage(info.first, !info.second);
+							((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
+						}
+					}
+				});
+			}
+		}
+		
+		Point pt = control.toControl(e.x, e.y);
+		window.showMenu(menu, control, pt.x, pt.y);
+	}
+
 }

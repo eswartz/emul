@@ -3,6 +3,7 @@
  */
 package v9t9.machine.f99b.machine;
 
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,6 +25,7 @@ import v9t9.engine.dsr.realdisk.MemoryDiskImageDsr;
 import v9t9.engine.sound.MultiSoundTMS9919B;
 import v9t9.engine.speech.TMS5220;
 import v9t9.engine.video.v9938.VdpV9938;
+import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.memory.F99bMemoryModel;
 
@@ -190,5 +192,12 @@ public class F99bMachineModel implements IMachineModel {
 	@Override
 	public IModuleManager createModuleManager(IMachine machine) {
 		return null;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#getDataURL()
+	 */
+	@Override
+	public URL getDataURL() {
+		return EmulatorMachinesData.getDataURL("f99b/");
 	}
 }

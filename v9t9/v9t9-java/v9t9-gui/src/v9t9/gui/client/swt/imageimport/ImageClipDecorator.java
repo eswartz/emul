@@ -19,8 +19,6 @@ import org.eclipse.swt.graphics.Region;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 
-import v9t9.video.imageimport.ImageImportOptions;
-
 /**
  * Decorator that supports adding an overlay clip rectangle to an ImageLabel and
  * reporting changes to a property.
@@ -30,24 +28,34 @@ import v9t9.video.imageimport.ImageImportOptions;
  */
 public class ImageClipDecorator implements PaintListener {
 
+	/**
+	 * Update the user-specified rectangle.
+	 *
+	 */
+	public interface IBoundsUpdater {
+		Rectangle update(Rectangle physClip);
+
+	}
+
 	private boolean dragging;
 	private Rectangle physClip;
 	private Point origDrag;
 	private final ImageLabel imageLabel;
-	private final ImageImportOptions importOptions;
 	private final IPropertyListener clipListener;
-	private IProperty clipProperty;
 	private IPropertyListener clipPropertyListener;
+	private final IProperty clipProperty;
+	private final IBoundsUpdater boundsUpdater;
 
 	/**
 	 * @param parent
 	 * @param style
 	 */
-	public ImageClipDecorator(ImageLabel imageLabel_,
-			final ImageImportOptions importOptions, IPropertyListener clipListener) {
+	public ImageClipDecorator(ImageLabel imageLabel_, IProperty clipProperty_,
+			IPropertyListener clipListener, IBoundsUpdater boundsUpdater) {
 		this.imageLabel = imageLabel_;
-		this.importOptions = importOptions;
+		this.clipProperty = clipProperty_;
 		this.clipListener = clipListener;
+		this.boundsUpdater = boundsUpdater;
 		dragging = false;
 
 		imageLabel.addMouseListener(new MouseListener() {
@@ -94,16 +102,16 @@ public class ImageClipDecorator implements PaintListener {
 
 		imageLabel.addPaintListener(this);
 		
-		clipProperty = importOptions.createPropertySource().getProperty("clip");
+		//clipProperty = importOptions.createPropertySource().getProperty("clip");
 		clipPropertyListener = new IPropertyListener() {
 			
 			@Override
 			public void propertyChanged(IProperty property) {
-				java.awt.Rectangle curClip = importOptions.getClip();
+				java.awt.Rectangle curClip = (java.awt.Rectangle) property.getValue();
 				if (curClip == null)
 					setClip(null);
 				else
-					setClip(new Rectangle(curClip.x, curClip.y, curClip.width, curClip.height));
+					setClip(getDestClip(new Rectangle(curClip.x, curClip.y, curClip.width, curClip.height)));
 				imageLabel.redraw();
 			}
 		};
@@ -116,6 +124,17 @@ public class ImageClipDecorator implements PaintListener {
 				clipProperty.removeListener(clipPropertyListener);
 			}
 		});
+	}
+
+	/**
+	 * @param imageLabel2
+	 * @param clipProperty2
+	 * @param iPropertyListener
+	 * @param iBoundsUpdater
+	 */
+	public ImageClipDecorator(ImageLabel imageLabel_, IProperty clipProperty_,
+			IPropertyListener iPropertyListener) {
+		this(imageLabel_, clipProperty_, iPropertyListener, null);
 	}
 
 	protected Rectangle updateClip(int mx, int my) {
@@ -139,6 +158,9 @@ public class ImageClipDecorator implements PaintListener {
 				sy = origDrag.y - y;
 			}
 			physClip = new Rectangle(x, y, sx, sy);
+			
+			if (boundsUpdater != null)
+				physClip = boundsUpdater.update(physClip);
 		}
 
 		return setClip(physClip);
@@ -147,15 +169,18 @@ public class ImageClipDecorator implements PaintListener {
 	protected void publishClip(Rectangle clip) {
 		if (clip == null) {
 			//System.out.println("Publishing clip: " + clip);
-			importOptions.setClip(null);
+			//importOptions.setClip(null);
+			clipProperty.setString(null);
 		} else {
 			Rectangle clipScaled = getSourceClip(clip);
 			//System.out.println("Publishing clip: " + clipScaled);
-			importOptions.setClip(new java.awt.Rectangle(clipScaled.x,
+			clipProperty.setValue(new java.awt.Rectangle(clipScaled.x,
 					clipScaled.y, clipScaled.width, clipScaled.height));
 		}
 
-		clipListener.propertyChanged(null);
+		// is hidden property
+		if (clipListener != null)
+			clipListener.propertyChanged(null);
 
 	}
 
@@ -202,6 +227,38 @@ public class ImageClipDecorator implements PaintListener {
 			scaled.width = imageBounds.width - scaled.x;
 		if (scaled.height + scaled.y > imageBounds.height)
 			scaled.height = imageBounds.height - scaled.y;
+		
+		return scaled;
+	}
+
+
+	/**
+	 * Get the physical clip area in the widget from the given image-relative clip
+	 */
+	public Rectangle getDestClip(Rectangle clip) {
+		Image image = imageLabel.getImage();
+		
+		if (image == null)
+			return null;
+		
+		Rectangle imageBounds = image.getBounds();
+		if (clip == null || imageBounds.isEmpty())
+			return null;
+
+		Rectangle imageClientArea = imageLabel.getBounds();
+		
+		Rectangle scaled = ImageUtils.scaleRectToSize(clip, 
+				new Point(imageClientArea.width, imageClientArea.height),
+				new Point(imageBounds.width, imageBounds.height)
+		);
+		if (scaled.x < 0)
+			scaled.x = 0;
+		if (scaled.y < 0)
+			scaled.y = 0;
+		if (scaled.width + scaled.x > imageClientArea.width)
+			scaled.width = imageClientArea.width - scaled.x;
+		if (scaled.height + scaled.y > imageClientArea.height)
+			scaled.height = imageClientArea.height - scaled.y;
 		
 		return scaled;
 	}

@@ -4,6 +4,8 @@
 package v9t9.machine.ti99.machine;
 
 
+import java.net.URL;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.IVdpChip;
@@ -90,6 +92,14 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	 */
 	@Override
 	public IModuleManager createModuleManager(IMachine machine) {
-		return new ModuleManager(machine, EmulatorMachinesData.getDataURL("ti99/stock_modules.xml"));
+		return new ModuleManager(machine, "stock_modules.xml");
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#getDataURL()
+	 */
+	@Override
+	public URL getDataURL() {
+		return EmulatorMachinesData.getDataURL("ti99/");
 	}
 }

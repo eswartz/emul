@@ -1,5 +1,6 @@
 package v9t9.gui.client.swt.imageimport;
 
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
 import org.eclipse.swt.SWT;
@@ -14,6 +15,10 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
+
+import v9t9.video.imageimport.AwtImageUtils;
+
+import ejs.base.utils.Pair;
 
 /**
  * Image utilities
@@ -378,8 +383,12 @@ public abstract class ImageUtils {
 		
 		if (!(scaledSize.x > 0 && scaledSize.y > 0))
 			throw new IllegalArgumentException("Invalid scaled size: " + scaledSize + " from " + newSize); //$NON-NLS-1$
-    	
-		ImageData scaledImageData = source.scaledTo(scaledSize.x, scaledSize.y);
+		
+		BufferedImage img = convertToBufferedImage(source).first;
+		img = AwtImageUtils.getScaledInstance(img, scaledSize.x, scaledSize.y, RenderingHints.VALUE_INTERPOLATION_BICUBIC, true);
+		//ImageData scaledImageData = source.scaledTo(scaledSize.x, scaledSize.y);
+		ImageData scaledImageData = convertAwtImageData(img);
+		
         if (padToSize && !newSize.equals(scaledSize)) {
         	ImageData paddedImageData = new ImageData(newSize.x, newSize.y,
         			scaledImageData.depth,
@@ -553,22 +562,25 @@ public abstract class ImageUtils {
         int iw, ih;
         
         if (size.x > size.y) {
-            iw = inrect.width * size.y / insize.y;
+            int offs = insize.y / 2 - 1;
+			iw = (inrect.width * size.y + offs) / insize.y;
             if (iw == 0)
             	iw = 1;
-            ih = inrect.height * size.y / insize.y;
-            ix = inrect.x * size.y / insize.y;
-            iy = inrect.y * size.y / insize.y;
+            ih = (inrect.height * size.y + offs) / insize.y;
+            ix = (inrect.x * size.y + offs) / insize.y;
+            iy = (inrect.y * size.y + offs) / insize.y;
         } else {
-            iw = inrect.width * size.x / insize.x;
-            ih = inrect.height * size.x / insize.x;
+            int offs = insize.x / 2 - 1;
+			iw = (inrect.width * size.x + offs) / insize.x;
+            ih = (inrect.height * size.x + offs) / insize.x;
             if (ih == 0)
             	ih = 1;
-            ix = inrect.x * size.x / insize.x;
-            iy = inrect.y * size.x / insize.x;
+            ix = (inrect.x * size.x + offs) / insize.x;
+            iy = (inrect.y * size.x + offs) / insize.x;
         }
         
-        return new Rectangle(ix, iy, iw, ih);
+        Rectangle scaled = new Rectangle(ix, iy, iw, ih);
+        return scaled;
 	}
 
 	/**
@@ -998,6 +1010,61 @@ public abstract class ImageUtils {
 			alphaSupportValidated = true;
 		}
 		return alphaSupported;
+	}
+
+
+	/**
+	 * @param data
+	 */
+	public static Pair<BufferedImage, Boolean> convertToBufferedImage(ImageData data) {
+
+		// convert to AWT image -- don't scale with SWT, which is lame
+		BufferedImage img = new BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_ARGB);
+		int[] pix = new int[data.width * data.height];
+
+		for (int y = 0; y < data.height; y++) {
+			int offs = data.width * y;
+			data.getPixels(0, y, data.width, pix, offs);
+		}
+		if (!data.palette.isDirect) {
+			// apply palette..
+			for (int i = 0; i < pix.length; i++) {
+				RGB rgb = data.palette.colors[pix[i]]; 
+				pix[i] = (rgb.red << 16) | (rgb.green << 8) | (rgb.blue);
+			}
+		}
+		else if (data.palette.blueShift != 0) {
+			// assume it was BGR
+			for (int i = 0; i < pix.length; i++) {
+				int p = pix[i];
+				int r = p & 0xff0000;
+				int b = p & 0xff;
+				pix[i] = (p & 0xff00) | (r >> 16) | (b << 16);
+			}
+		}
+		
+		// apply alpha
+		for (int y = 0; y < data.height; y++) {
+			int offs = data.width * y;
+			
+			if (data.alphaData != null) {
+				for (int x = 0; x < data.width; x++)
+					pix[offs + x] |= ((data.alphaData[offs + x] & 0xff) << 24);
+			} else {
+				int alpha = data.alpha != -1 ? data.alpha << 24 : 0xff000000;
+				for (int x = 0; x < data.width; x++) {
+					if (data.transparentPixel != -1 && data.transparentPixel == data.getPixel(x,y))
+						pix[offs + x] = 0;
+					else
+						pix[offs + x] |= alpha;
+				}
+			}
+		}
+		
+		img.setRGB(0, 0, data.width, data.height, pix, 0, pix.length / data.height);
+
+		return new Pair<BufferedImage, Boolean>(img, !data.palette.isDirect);
+		
 	}
 
 

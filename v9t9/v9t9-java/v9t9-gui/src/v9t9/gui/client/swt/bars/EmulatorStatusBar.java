@@ -69,7 +69,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
 						swtWindow.toggleToolShell(ModuleSelector.MODULE_SELECTOR_TOOL_ID,
-								ModuleSelector.getToolShellFactory(machine, buttonBar));
+								ModuleSelector.getToolShellFactory(machine, buttonBar, swtWindow));
 					}
 				}
 			);

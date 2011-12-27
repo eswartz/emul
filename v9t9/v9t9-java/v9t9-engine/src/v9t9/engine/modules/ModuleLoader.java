@@ -9,8 +9,8 @@ import java.util.List;
 
 import org.w3c.dom.Element;
 
-import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.NotifyException;
+import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
 import ejs.base.utils.StorageException;
 import ejs.base.utils.StreamXMLStorage;
@@ -25,7 +25,7 @@ public class ModuleLoader {
 	/**
 	 * @return
 	 */
-	public static List<IModule> loadModuleList(ISettingsHandler settings, InputStream is) throws NotifyException {
+	public static List<IModule> loadModuleList(IMachine machine, InputStream is) throws NotifyException {
 		
 		StreamXMLStorage storage = new StreamXMLStorage();
 		storage.setInputStream(is);
@@ -40,7 +40,7 @@ public class ModuleLoader {
 		for (Element el : XMLUtils.getChildElementsNamed(storage.getDocumentElement(), "module")) {
 			Module module = new Module(
 					el.getAttribute("name"));
-			module.loadFrom(el);
+			module.loadFrom(machine, el);
 			modules.add(module);
 		}
 		return modules;

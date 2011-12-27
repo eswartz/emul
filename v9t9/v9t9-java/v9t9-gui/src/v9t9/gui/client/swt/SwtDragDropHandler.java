@@ -35,7 +35,6 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
-import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
 
 import ejs.base.properties.IPropertyListener;
@@ -46,6 +45,7 @@ import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.VdpFormat;
 import v9t9.gui.client.swt.imageimport.IImageImportHandler;
+import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageImport;
 
@@ -321,7 +321,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				}
 			}
 			if (info == null && ImageTransfer.getInstance().isSupportedType(event.currentDataType)) {
-				info = convertImage((ImageData) event.data);
+				info = ImageUtils.convertToBufferedImage((ImageData) event.data);
 			}
 			if (info == null && URLTransfer.getInstance().isSupportedType(event.currentDataType)) {
 				
@@ -410,7 +410,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			ImageLoader imgLoader = new ImageLoader();
 			ImageData[] datas = imgLoader.load(file);
 			if (datas.length > 0) {
-				info = convertImage(datas[0]);
+				info = ImageUtils.convertToBufferedImage(datas[0]);
 			}
 		} catch (SWTException e) {
 			BufferedImage img;
@@ -433,60 +433,5 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 
 		return info;
 	}
-
-	/**
-	 * @param data
-	 */
-	private static Pair<BufferedImage, Boolean> convertImage(ImageData data) {
-
-		// convert to AWT image -- don't scale with SWT, which is lame
-		BufferedImage img = new BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_ARGB);
-		int[] pix = new int[data.width * data.height];
-
-		for (int y = 0; y < data.height; y++) {
-			int offs = data.width * y;
-			data.getPixels(0, y, data.width, pix, offs);
-		}
-		if (!data.palette.isDirect) {
-			// apply palette..
-			for (int i = 0; i < pix.length; i++) {
-				RGB rgb = data.palette.colors[pix[i]]; 
-				pix[i] = (rgb.red << 16) | (rgb.green << 8) | (rgb.blue);
-			}
-		}
-		else if (data.palette.blueShift != 0) {
-			// assume it was BGR
-			for (int i = 0; i < pix.length; i++) {
-				int p = pix[i];
-				int r = p & 0xff0000;
-				int b = p & 0xff;
-				pix[i] = (p & 0xff00) | (r >> 16) | (b << 16);
-			}
-		}
-		
-		// apply alpha
-		for (int y = 0; y < data.height; y++) {
-			int offs = data.width * y;
-			
-			if (data.alphaData != null) {
-				for (int x = 0; x < data.width; x++)
-					pix[offs + x] |= ((data.alphaData[offs + x] & 0xff) << 24);
-			} else {
-				int alpha = data.alpha != -1 ? data.alpha << 24 : 0xff000000;
-				for (int x = 0; x < data.width; x++) {
-					if (data.transparentPixel != -1 && data.transparentPixel == data.getPixel(x,y))
-						pix[offs + x] = 0;
-					else
-						pix[offs + x] |= alpha;
-				}
-			}
-		}
-		
-		img.setRGB(0, 0, data.width, data.height, pix, 0, pix.length / data.height);
-
-		return new Pair<BufferedImage, Boolean>(img, !data.palette.isDirect);
-		
-	}
-
 
 }

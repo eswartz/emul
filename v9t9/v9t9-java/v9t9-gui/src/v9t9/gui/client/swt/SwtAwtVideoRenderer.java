@@ -18,6 +18,7 @@ import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
@@ -34,6 +35,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.client.awt.AwtVideoRenderer;
 import v9t9.gui.common.BaseEmulatorWindow;
+import v9t9.video.ImageDataCanvas;
 
 /**
  * AWT blitting is much faster than SWT's. 
@@ -349,4 +351,16 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 			}
 		});
 	}
+	
+	/**
+	 * @return
+	 */
+	public ImageData getScreenshotImageData() {
+		if (getCanvas() instanceof ImageDataCanvas) {
+			ImageData imageData = ((ImageDataCanvas) getCanvas()).getImageData();
+			return imageData;
+		}
+		return null;
+	}
+
 }

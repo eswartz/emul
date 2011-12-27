@@ -3,6 +3,8 @@
  */
 package v9t9.machine.ti99.machine;
 
+import java.net.URL;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.IVdpChip;
@@ -18,6 +20,7 @@ import v9t9.engine.memory.VdpMmio;
 import v9t9.engine.memory.WindowBankedMemoryEntry;
 import v9t9.engine.sound.MultiSoundTMS9919B;
 import v9t9.engine.video.v9938.VdpV9938;
+import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 import v9t9.machine.ti99.memory.V9t9EnhancedConsoleMemoryModel;
@@ -146,5 +149,13 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 	@Override
 	public IModuleManager createModuleManager(IMachine machine) {
 		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#getDataURL()
+	 */
+	@Override
+	public URL getDataURL() {
+		return EmulatorMachinesData.getDataURL("enhanced/");
 	}
 }

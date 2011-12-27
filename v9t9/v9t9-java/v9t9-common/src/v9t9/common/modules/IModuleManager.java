@@ -51,4 +51,14 @@ public interface IModuleManager extends IPersistable {
 	 */
 	Collection<IMemoryEntry> getModuleMemoryEntries(IModule module) throws NotifyException;
 
+	/**
+	 * @param stockDatabaseURL
+	 */
+	void registerModules(URL databaseURL);
+
+	/**
+	 * 
+	 */
+	void reload();
+
 }

@@ -3,6 +3,9 @@
  */
 package v9t9.engine.modules;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +15,7 @@ import org.w3c.dom.Element;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.XMLUtils;
 
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.MemoryEntryInfo;
@@ -27,16 +31,12 @@ public class Module implements IModule {
 
 	private List<MemoryEntryInfo> entries = new ArrayList<MemoryEntryInfo>();
 	private String name;
+	private String image;
+	private URL imageURL;
 	
 	public Module(String name) {
 		this.name = name;
 	}
-	public Module(String name, List<MemoryEntryInfo> entries) {
-		this.name = name;
-		this.entries = entries;
-	}
-	
-	
 
 	@Override
 	public int hashCode() {
@@ -67,24 +67,65 @@ public class Module implements IModule {
 			return false;
 		return true;
 	}
+	
 	/* (non-Javadoc)
-	 * @see v9t9.engine.modules.IModule#getEntries()
+	 * @see java.lang.Object#toString()
 	 */
-	public MemoryEntryInfo[] getMemoryEntryInfos() {
-		return (MemoryEntryInfo[]) entries.toArray(new MemoryEntryInfo[entries.size()]);
+	@Override
+	public String toString() {
+		return "Module: " + name;
 	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.engine.modules.IModule#getName()
 	 */
 	public String getName() {
 		return name;
 	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModule#getImageURL()
+	 */
+	@Override
+	public String getImagePath() {
+		return image;
+	}
 	
-	public void loadFrom(Element module) {
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModule#getImageURL()
+	 */
+	@Override
+	public URL getImageURL() {
+		return imageURL;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.modules.IModule#getEntries()
+	 */
+	public MemoryEntryInfo[] getMemoryEntryInfos() {
+		return (MemoryEntryInfo[]) entries.toArray(new MemoryEntryInfo[entries.size()]);
+	}
+	
+	public void loadFrom(IMachine machine, Element module) {
 		String name = module.getAttribute("name");
 		this.name = name;
+
+		Element[] entries;
 		
-		Element[] entries = XMLUtils.getChildElementsNamed(module, "moduleEntries");
+		entries = XMLUtils.getChildElementsNamed(module, "image");
+		for (Element el : entries) {
+			image = el.getTextContent().trim();
+			try {
+				URL url = new URL(machine.getModel().getDataURL(), image);
+				url.openStream().close();
+				imageURL = url;
+				break;
+			} catch (MalformedURLException e) {
+			} catch (IOException e) {
+			}
+		}
+		
+		entries = XMLUtils.getChildElementsNamed(module, "moduleEntries");
 		for (Element entry : entries) {
 			for (Element el : XMLUtils.getChildElements(entry)) {
 				MemoryEntryInfo info = new MemoryEntryInfo();
@@ -99,12 +140,12 @@ public class Module implements IModule {
 					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
 					properties.put(MemoryEntryInfo.SIZE, 0x2000);
 				}
-				if (el.getNodeName().equals("gromModuleEntry")) {
+				else if (el.getNodeName().equals("gromModuleEntry")) {
 					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_GRAPHICS);
 					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
 					properties.put(MemoryEntryInfo.SIZE, 0x0);
 				}
-				if (el.getNodeName().equals("bankedModuleEntry")) {
+				else if (el.getNodeName().equals("bankedModuleEntry")) {
 					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_CPU);
 					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
 					
@@ -114,7 +155,10 @@ public class Module implements IModule {
 						properties.put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
 					}
 				}
-				
+				else if (!el.getNodeName().equals("moduleEntry")) {
+					System.err.println("Unknown entry: " + el.getNodeName());
+					continue;
+				}
 				
 				getStringAttribute(el, MemoryEntryInfo.FILENAME, info);
 				getStringAttribute(el, MemoryEntryInfo.FILENAME2, info);

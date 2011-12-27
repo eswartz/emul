@@ -5,6 +5,7 @@ package v9t9.gui.client.swt;
 
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
@@ -34,4 +35,5 @@ public interface ISwtVideoRenderer extends IVideoRenderer {
 	 */
 	void reblit();
 
+	ImageData getScreenshotImageData();
 }

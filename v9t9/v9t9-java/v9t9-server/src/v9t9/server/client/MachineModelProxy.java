@@ -3,6 +3,7 @@
  */
 package v9t9.server.client;
 
+import java.net.URL;
 import java.util.List;
 
 import v9t9.common.client.ISettingsHandler;
@@ -126,6 +127,15 @@ public class MachineModelProxy implements IMachineModel {
 	 */
 	@Override
 	public IModuleManager createModuleManager(IMachine machine) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#getDataURL()
+	 */
+	@Override
+	public URL getDataURL() {
 		// TODO Auto-generated method stub
 		return null;
 	}

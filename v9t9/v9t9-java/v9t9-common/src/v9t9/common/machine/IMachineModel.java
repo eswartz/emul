@@ -3,6 +3,7 @@
  */
 package v9t9.common.machine;
 
+import java.net.URL;
 import java.util.List;
 
 import v9t9.common.client.ISettingsHandler;
@@ -43,5 +44,11 @@ public interface IMachineModel {
 	List<IDeviceIndicatorProvider> getDeviceIndicatorProviders(IMachine machine);
 
 	IModuleManager createModuleManager(IMachine machine);
+
+	/**
+	 * Get the base data URL for this machine
+	 * @return
+	 */
+	URL getDataURL();
 
 }

@@ -3,7 +3,10 @@
  */
 package v9t9.engine.modules;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,7 +20,9 @@ import ejs.base.settings.ISettingSection;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
+import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
@@ -46,9 +51,9 @@ public class ModuleManager implements IModuleManager {
 	
 	private Map<IMemoryEntry, IModule> memoryEntryModules = new HashMap<IMemoryEntry, IModule>();
 	private IProperty lastLoadedModule;
-	private final URL stockModuleDatabase;
+	private final String stockModuleDatabase;
 	
-	public ModuleManager(IMachine machine, URL stockModuleDatabase) {
+	public ModuleManager(IMachine machine, String stockModuleDatabase) {
 		this.machine = machine;
 		this.stockModuleDatabase = stockModuleDatabase;
 		this.modules = new ArrayList<IModule>();
@@ -61,7 +66,11 @@ public class ModuleManager implements IModuleManager {
 	 */
 	@Override
 	public URL getStockDatabaseURL() {
-		return stockModuleDatabase;
+		try {
+			return new URL(machine.getModel().getDataURL(), stockModuleDatabase);
+		} catch (MalformedURLException e) {
+			return null;
+		}
 	}
 
 	/* (non-Javadoc)
@@ -294,5 +303,78 @@ public class ModuleManager implements IModuleManager {
 				entries.add(entry);
 		}
 		return entries;
+	}
+	
+
+	public void registerModules(URL url) {
+		if (url == null)
+			return;
+		
+		//boolean anyErrors = false;
+		InputStream is = null;
+		try {
+			is = url.openStream();
+			List<IModule> modList = ModuleLoader.loadModuleList(machine, is);
+			addModules(modList);
+		} catch (NotifyException e) {
+			machine.getClient().getEventNotifier().notifyEvent(e.getEvent());
+			//anyErrors = true;
+		} catch (IOException e) {
+			machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
+					"Could not load module list: " + e.getMessage());
+
+		} finally {
+			if (is != null) {
+				try { is.close(); } catch (IOException e) { }
+			}
+		}
+		
+		/*
+		if (anyErrors) {
+			machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
+					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
+					+ settings.findSettingStorage(DataFiles.settingBootRomsPath.getName()).getConfigFilePath());
+		}
+		*/
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#reload()
+	 */
+	@Override
+	public void reload() {
+		IProperty lastLoadedModule = Settings.get(machine, ModuleManager.settingLastLoadedModule);
+		IProperty moduleList = Settings.get(machine, IMachine.settingModuleList);
+		
+		// first, get stock module database
+		machine.getModuleManager().clearModules();
+		machine.getModuleManager().registerModules(machine.getModuleManager().getStockDatabaseURL());
+		
+		// then load any user entries
+		String dbNameList = moduleList.getString();
+		if (dbNameList.length() > 0) {
+			String[] dbNames = dbNameList.split(";");
+			for (String dbName : dbNames) {
+				File file = DataFiles.resolveFile(Settings.getSettings(machine), dbName);
+				if (file != null && file.exists()) {
+					try {
+						machine.getModuleManager().registerModules(file.toURI().toURL());
+					} catch (MalformedURLException e) {
+						machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
+								"Could not resolve module list from " + moduleList.getName() + ": " + e.getMessage());
+					}
+				}
+					
+			}
+		}
+		
+		// reset state
+		try {
+			if (lastLoadedModule.getString().length() > 0)
+        		machine.getModuleManager().switchModule(
+        				lastLoadedModule.getString());
+		} catch (NotifyException e) {
+			machine.notifyEvent(e.getEvent());
+		}		
 	}
 }
