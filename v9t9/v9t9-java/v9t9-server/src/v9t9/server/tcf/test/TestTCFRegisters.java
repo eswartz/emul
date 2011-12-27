@@ -14,6 +14,7 @@ import org.eclipse.tm.tcf.services.IRegisters.RegistersContext;
 import org.junit.Before;
 import org.junit.Test;
 
+import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.memory.IMemoryDomain;
 
 /**
@@ -45,10 +46,11 @@ public class TestTCFRegisters extends BaseTCFTest {
 							try {
 								assertNoError(error);
 								
-								assertEquals(2, context_ids.length);
+								assertEquals(3, context_ids.length);
 								List<String> kids = Arrays.asList(context_ids);
-								assertTrue(kids.contains(IMemoryDomain.NAME_CPU));
-								assertTrue(kids.contains(IMemoryDomain.NAME_VIDEO));
+								assertTrue(kids.contains(IRegisterAccess.ID_CPU));
+								assertTrue(kids.contains(IRegisterAccess.ID_VIDEO));
+								assertTrue(kids.contains(IRegisterAccess.ID_SOUND));
 							} catch (Throwable t) {
 								excs[0] = t;
 							} finally {
