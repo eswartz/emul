@@ -47,10 +47,14 @@ public class PulseSoundListener implements ISoundListener {
 		
 		if (soundWritingThread != null) {
 			soundWritingThread.interrupt();
-			try {
-				soundWritingThread.join();
-			} catch (InterruptedException e) {
-				
+			long timeout= System.currentTimeMillis();
+			while (System.currentTimeMillis() < timeout) {
+				try {
+					soundWritingThread.join(1000);
+					break;
+				} catch (InterruptedException e) {
+					
+				}
 			}
 			soundWritingThread = null;
 		}
@@ -138,13 +142,15 @@ public class PulseSoundListener implements ISoundListener {
 					}
 					 */
 					
-					if (simple == null)
-						return;
-					
-					if (chunk.soundData != null) {
-						//System.out.println("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
-						PulseAudioLibrary.INSTANCE.pa_simple_write(
-								simple, chunk.soundData, chunk.soundData.length, error);
+					synchronized (PulseSoundListener.this) {
+						if (simple == null)
+							return;
+						
+						if (chunk.soundData != null) {
+							//System.out.println("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
+							PulseAudioLibrary.INSTANCE.pa_simple_write(
+									simple, chunk.soundData, chunk.soundData.length, error);
+						}
 					}
 				}
 			}
