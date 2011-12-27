@@ -3,6 +3,9 @@
  */
 package v9t9.gui;
 
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -14,7 +17,9 @@ import v9t9.gui.client.ClientFactory;
 import v9t9.gui.client.swt.SwtAwtJavaClient;
 import v9t9.gui.client.swt.SwtJavaClient;
 import v9t9.gui.client.swt.SwtLwjglJavaClient;
-import v9t9.server.EmulatorServer;
+import v9t9.remote.EmulatorRemoteServer;
+import v9t9.server.EmulatorLocalServer;
+import v9t9.server.client.EmulatorServerBase;
 
 import com.sun.jna.Native;
 
@@ -74,7 +79,32 @@ public class Emulator {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		EmulatorServer server = new EmulatorServer();
+		String remote = null;
+		
+		Getopt getopt = new Getopt(Emulator.class.getName(), args, 
+				"r:",
+				new LongOpt[] {
+					new LongOpt("remote", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), 'r')
+				}
+		);
+		
+		int opt;
+		while ((opt = getopt.getopt()) != -1)
+		{
+			if (opt == 0) {
+				if (getopt.getLongind() == 0) {
+					opt = 'r';
+				}
+			}
+			
+			if (opt == 'r') {
+				remote = getopt.getOptarg();
+			}
+		}
+		
+		EmulatorServerBase server = remote != null 
+			? new EmulatorRemoteServer(remote)
+			: new EmulatorLocalServer();
 		
 		String modelId = getModelId(server, args);
 		String clientId = getClientId(args);
@@ -84,7 +114,7 @@ public class Emulator {
 	}
 
 
-	public static void createAndRun(EmulatorServer server, String modelId, String clientId) {
+	public static void createAndRun(EmulatorServerBase server, String modelId, String clientId) {
 		try {
 			server.init(modelId);
 		} catch (IOException e) {
@@ -146,7 +176,7 @@ public class Emulator {
 	 * @param args
 	 * @return
 	 */
-	private static String getModelId(EmulatorServer server, String[] args) {
+	private static String getModelId(EmulatorServerBase server, String[] args) {
 
 		Collection<String> models = server.getMachineModelFactory().getRegisteredModels();
 		for (String arg : args) {

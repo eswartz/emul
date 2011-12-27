@@ -18,6 +18,11 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.settings.IStoredSettings;
 import v9t9.engine.memory.GplMmio;
+import v9t9.machine.f99b.machine.F99bMachineModel;
+import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
+import v9t9.machine.ti99.machine.EnhancedTI994AMachineModel;
+import v9t9.machine.ti99.machine.StandardMachineModel;
+import v9t9.server.MachineModelFactory;
 import v9t9.server.settings.SettingsHandler;
 import v9t9.server.settings.WorkspaceSettings;
 import v9t9.server.tcf.EmulatorTCFServer;
@@ -27,7 +32,18 @@ import ejs.base.properties.IProperty;
  * @author ejs
  *
  */
-public abstract class EmulatorClientBase {
+public abstract class EmulatorServerBase {
+
+	static {
+		MachineModelFactory.INSTANCE.register(
+				StandardMachineModel.ID, StandardMachineModel.class);
+		MachineModelFactory.INSTANCE.register(
+				EnhancedTI994AMachineModel.ID, EnhancedTI994AMachineModel.class);
+		MachineModelFactory.INSTANCE.register(
+				Enhanced48KForthTI994AMachineModel.ID, Enhanced48KForthTI994AMachineModel.class);
+		MachineModelFactory.INSTANCE.register(
+				F99bMachineModel.ID, F99bMachineModel.class);
+	}
 	
 	private IMemory memory;
 	private IMachine machine;
@@ -39,7 +55,7 @@ public abstract class EmulatorClientBase {
 	private IProperty storedRamPath;
 	private EmulatorTCFServer server;
 
-    public EmulatorClientBase() {
+    public EmulatorServerBase() {
     	settings = new SettingsHandler(WorkspaceSettings.currentWorkspace.getString()); 
 		
     	settings.get(IVdpChip.settingDumpVdpAccess).setBoolean(true);
@@ -67,6 +83,8 @@ public abstract class EmulatorClientBase {
     
 	protected void loadState() {
 		int barrier = client.getEventNotifier().getErrorCount();
+		
+		
 		memoryModel.loadMemory(client.getEventNotifier());
 		
 		if (machine.getModuleManager() != null) {
@@ -78,20 +96,13 @@ public abstract class EmulatorClientBase {
 			machine.notifyEvent(IEventNotifier.Level.ERROR,
 					"Failed to load startup ROMs; please edit your " + bootRomsPath.getName() + " in '"
 					+ storedSettings.getConfigFilePath() + "'");
-			//EmulatorSettings.INSTANCE.save();
 		}
 	}
 	
     public void init(String modelId) throws IOException {
-    	
-
-		//WorkspaceSettings.CURRENT.register(ModuleManager.settingLastLoadedModule);
-
-    	//settingsHandler.getInstanceSettings().findOrCreate(
     	if (bootRomsPath.getList().isEmpty())
     		bootRomsPath.getList().add(
     			settings.getInstanceSettings().getConfigDirectory() + "roms");
-    	//settingsHandler.getInstanceSettings().findOrCreate(
     	if (".".equals(storedRamPath.getString()))
     		storedRamPath.setString(
 				settings.getInstanceSettings().getConfigDirectory() + "module_ram");
@@ -182,5 +193,12 @@ public abstract class EmulatorClientBase {
 		return settings;
 	}
 
+
+	/**
+	 * @return
+	 */
+	public MachineModelFactory getMachineModelFactory() {
+		return MachineModelFactory.INSTANCE;
+	}
 
 }

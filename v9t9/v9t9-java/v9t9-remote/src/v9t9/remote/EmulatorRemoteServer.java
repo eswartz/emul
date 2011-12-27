@@ -1,17 +1,21 @@
 /**
  * 
  */
-package v9t9.server.client;
+package v9t9.remote;
 
 import v9t9.common.machine.IMachineModel;
+import v9t9.server.client.EmulatorServerBase;
 
 /**
  * @author ejs
  *
  */
-public class EmulatorClient extends EmulatorClientBase {
+public class EmulatorRemoteServer extends EmulatorServerBase {
 
-	public EmulatorClient() {
+	final String addr;
+
+	public EmulatorRemoteServer(String addr) {
+		this.addr = addr;
 	}
 
 	/* (non-Javadoc)
@@ -19,7 +23,7 @@ public class EmulatorClient extends EmulatorClientBase {
 	 */
 	@Override
 	protected IMachineModel createModel(String modelId) {
-		return new MachineModelProxy(modelId);
+		return null;
 	}
 
 }
