@@ -22,7 +22,7 @@
 		<jar href="libs/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
 		<jar href="libs/org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
 		<jar href="libs/org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
-		<jar href="libs/gnu-getopt-1.0.11.jar"/>
+		<jar href="libs/gnu-getopt-1.0.13.jar"/>
 		<jar href="libs/bcel-5.2.jar"/>
 		<jar href="libs/jinput.jar"/>
 		<jar href="libs/lwjgl_util.jar"/>

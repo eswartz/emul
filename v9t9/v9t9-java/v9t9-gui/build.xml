@@ -67,7 +67,7 @@
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar"/>
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
         <pathelement location="${ejs-base.location}/libs/bcel-5.2.jar"/>
-        <pathelement location="${ejs-base.location}/libs/gnu-getopt-1.0.11.jar"/>
+        <pathelement location="${ejs-base.location}/libs/gnu-getopt-1.0.13.jar"/>
         <pathelement location="${ejs-base.location}/libs/junit/junit-4.8.1.jar"/>
     </path>
     <path id="v9t9-server.classpath">
