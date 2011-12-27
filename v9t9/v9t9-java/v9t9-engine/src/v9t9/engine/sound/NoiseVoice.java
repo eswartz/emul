@@ -91,6 +91,8 @@ public class NoiseVoice extends BaseClockedVoice implements INoiseVoice {
 	 * @see v9t9.engine.sound.BaseVoice#loadState(ejs.base.settings.ISettingSection)
 	 */
 	public void loadState(ISettingSection settings) {
+		if (settings == null)
+			return;
 		super.loadState(settings);
 		control = settings.getInt("Control");
 	}

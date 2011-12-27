@@ -200,7 +200,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 	 * @see v9t9.common.machine.IRegisterAccess.IRegisterWriteListener#registerChanged(int, int)
 	 */
 	@Override
-	public void registerChanged(int reg, int value) {
+	public synchronized void registerChanged(int reg, int value) {
 		
 		SoundVoice v = regIdToVoices.get(reg);
 		if (v == null)
@@ -212,20 +212,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		listener.registerChanged(reg, value);
 		
 		v.setupVoice();
-		
-		if (soundHandler != null)
-			soundHandler.generateSound();
 	}
-	
-	public ISoundHandler getSoundHandler() {
-		return soundHandler;
-	}
-
-
-	public void setSoundHandler(ISoundHandler soundHandler) {
-		this.soundHandler = soundHandler;
-	}
-
 
 	public ISoundVoice[] getSoundVoices() {
 		return soundVoices;

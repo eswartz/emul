@@ -11,7 +11,12 @@ import ejs.base.sound.ISoundVoice;
  */
 public interface ISpeechSoundVoice extends ISoundVoice {
 
-	/** Set one sample; this should be updated e.g. 8000 times a second */
-	void setSample(short sample);
+	/** Remember one sample; this should be updated e.g. 8000 times a second */
+	void addSample(short sample);
+
+	/**
+	 * @return
+	 */
+	int getSampleCount();
 
 }

@@ -60,7 +60,7 @@ public abstract class BaseMultiSoundGenerator implements ISoundGenerator {
 	 * @see v9t9.common.machine.IRegisterAccess.IRegisterWriteListener#registerChanged(int, int)
 	 */
 	@Override
-	public void registerChanged(int reg, int value) {
+	public synchronized void registerChanged(int reg, int value) {
 		Map.Entry<Integer, ISoundGenerator> generatorMap = regIdToGenerator.floorEntry(reg);
 		if (generatorMap == null)
 			throw new IllegalArgumentException();

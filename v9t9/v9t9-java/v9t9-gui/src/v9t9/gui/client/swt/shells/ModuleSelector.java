@@ -15,6 +15,7 @@ import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITableColorProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.OpenEvent;
@@ -22,6 +23,7 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
@@ -32,6 +34,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
@@ -76,8 +79,11 @@ public class ModuleSelector extends Composite {
 	private Font tableFont;
 	private final IModuleManager moduleManager;
 	private Text filterText;
-	protected int visibleCount;
 
+	private Map<IModule, Boolean> knownStates = new HashMap<IModule, Boolean>();
+	private boolean showMissingModules;
+	protected boolean sortModules;
+	protected int sortDirection;
 	
 	/**
 	 * This filter only allows through module entries for
@@ -86,7 +92,6 @@ public class ModuleSelector extends Composite {
 	 *
 	 */
 	class ExistingModulesFilter extends ViewerFilter {
-		private Map<IModule, Boolean> knownStates = new HashMap<IModule, Boolean>();
 
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.viewers.ViewerFilter#select(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
@@ -94,24 +99,11 @@ public class ModuleSelector extends Composite {
 		@Override
 		public boolean select(Viewer viewer, Object parentElement,
 				Object element) {
-			if (!(element instanceof IModule))
+			if (showMissingModules || !(element instanceof IModule))
 				return true;
 			
 			IModule module = (IModule) element;
-			Boolean known = knownStates.get(module);
-			if (known != null)
-				return known;
-			
-			// in case user added new modules...
-			try {
-				moduleManager.getModuleMemoryEntries(module);
-				knownStates.put(module, Boolean.TRUE);
-				return true;
-			} catch (NotifyException e) {
-				System.out.println(e.toString());
-				knownStates.put(module, Boolean.FALSE);
-				return false;
-			}
+			return isModuleLoadable(module);
 		}
 		
 	}
@@ -155,6 +147,18 @@ public class ModuleSelector extends Composite {
 		viewer = createTable();
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(viewer.getControl());
 		
+		final Button showUnloadable = new Button(this, SWT.CHECK);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(showUnloadable);
+		
+		showUnloadable.setText("Show missing modules");
+		showUnloadable.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				showMissingModules = showUnloadable.getSelection();
+				viewer.refresh();
+			}
+		});
+		
 		buttonBar = new Composite(this, SWT.NONE);
 		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(3).equalWidth(false).applyTo(buttonBar);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(buttonBar);
@@ -195,6 +199,7 @@ public class ModuleSelector extends Composite {
 
 	}
 
+
 	/**
 	 * 
 	 */
@@ -225,8 +230,7 @@ public class ModuleSelector extends Composite {
 					viewer.getTable().setFocus();
 					e.doit = false;
 					
-					if (viewer.getTable().getItemCount() == 1) {
-						selectedModule = (IModule) viewer.getTable().getItems()[0].getData();
+					if (viewer.getTable().getItemCount() > 0 && selectedModule != null) {
 						switchModule(false);
 					}
 				}
@@ -293,6 +297,11 @@ public class ModuleSelector extends Composite {
 			lastFilter = text;
 		}
 		viewer.refresh();
+		
+		if (viewer.getTable().getItemCount() > 0) {
+			viewer.setSelection(new StructuredSelection(viewer.getTable().getItems()[0].getData()), true);
+		}
+
 	}
 
 	/**
@@ -336,6 +345,31 @@ public class ModuleSelector extends Composite {
 
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ModuleTableLabelProvider());
+		
+		viewer.setComparator(new ViewerComparator() {
+			@Override
+			public int compare(Viewer viewer, Object e1, Object e2) {
+				if (!sortModules)
+					return 0;
+				
+				if (e1 instanceof IModule && e2 instanceof IModule) {
+					IModule mod1 = (IModule) e1;
+					IModule mod2 = (IModule) e2;
+					boolean l1 = isModuleLoadable(mod1);
+					boolean l2 = isModuleLoadable(mod2);
+					if (l1 == l2)
+						return sortDirection * mod1.getName().compareTo(mod2.getName());
+					else if (l1)
+						return -1;
+					else
+						return 1;
+				} else if (e1 instanceof IModule) {
+					return 1;
+				} /* else if (e2 instanceof IModule) */ {
+					return -1;
+				}
+			}	
+		});
 		
 		selectedModule = null;
 		final IModule[] realModules = moduleManager.getModules();
@@ -421,6 +455,21 @@ public class ModuleSelector extends Composite {
 	 * 
 	 */
 	protected void hookActions() {
+		nameColumn.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (!sortModules) {
+					sortModules = true;
+					sortDirection = 1;
+				} else {
+					if (sortDirection == 1)
+						sortDirection = -1;
+					else
+						sortModules = false;
+				}
+				viewer.refresh();
+			}
+		});
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			
 			public void selectionChanged(SelectionChangedEvent event) {
@@ -492,7 +541,8 @@ public class ModuleSelector extends Composite {
 		return selectedModule;
 	}
 	
-	static class ModuleTableLabelProvider extends LabelProvider implements ITableLabelProvider {
+	class ModuleTableLabelProvider extends LabelProvider implements ITableLabelProvider,
+		ITableColorProvider {
 
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
@@ -524,6 +574,29 @@ public class ModuleSelector extends Composite {
 			}
 			return null;
 		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableColorProvider#getForeground(java.lang.Object, int)
+		 */
+		@Override
+		public Color getForeground(Object element, int columnIndex) {
+			if (!(element instanceof IModule))
+				return null;
+			
+			IModule module = (IModule) element;
+			if (!isModuleLoadable(module))
+				return getDisplay().getSystemColor(SWT.COLOR_TITLE_INACTIVE_FOREGROUND);
+			
+			return null;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableColorProvider#getBackground(java.lang.Object, int)
+		 */
+		@Override
+		public Color getBackground(Object element, int columnIndex) {
+			return null;
+		}
 		
 	}
 
@@ -550,4 +623,26 @@ public class ModuleSelector extends Composite {
 			}
 		};
 	}
+	
+	/**
+	 * @param module
+	 * @return
+	 */
+	protected boolean isModuleLoadable(IModule module) {
+		Boolean known = knownStates.get(module);
+		if (known != null)
+			return known;
+		
+		// in case user added new modules...
+		try {
+			moduleManager.getModuleMemoryEntries(module);
+			knownStates.put(module, Boolean.TRUE);
+			return true;
+		} catch (NotifyException e) {
+			System.out.println(e.toString());
+			knownStates.put(module, Boolean.FALSE);
+			return false;
+		}
+	}
+
 }

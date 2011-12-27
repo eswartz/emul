@@ -63,8 +63,8 @@ public class TMS9919Consts {
 	public static int periodToHertz(int p) {
 		return ((p) > 1 ? (111860 / (p)) : 55930);
 	}
-	public static int period16ToHertz(int p) {
-		return (int) ((p) > 1 ? ((long)111860 * 55930 / (p)) : 55930 * 55930);
+	public static int period16ToHertz(long p) {
+		return (int) ((p) > 1 ? ((long)111860 * 55930 / (p)) : 55930);
 	}
 
 }

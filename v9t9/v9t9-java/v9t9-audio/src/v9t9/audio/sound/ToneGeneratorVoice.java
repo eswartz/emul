@@ -18,10 +18,10 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 		byte lastVolume = getVolume();
 		setVolume((byte) (0xf - getOperationAttenuation()));
 		//int lastPeriod = period;
-		period16 = getOperationPeriod() * soundClock;
+		period16 = getOperationPeriod() * CLOCKSTEP;
 		hertz = period16ToHertz(period16);
 		
-		if (hertz * 2 < 55930) {
+		if (hertz * 2 < soundClock) {
 			incr = hertz * 2;
 		} else {
 			// will alias, just silence

@@ -20,8 +20,8 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.common.sound.ISoundGenerator;
-import v9t9.common.speech.ISpeechDataSender;
 import v9t9.common.speech.ISpeechGenerator;
+import v9t9.common.speech.ISpeechSoundVoice;
 
 /**
  * Handle sound generation for output with Java APIs
@@ -42,7 +42,6 @@ public class JavaSoundHandler implements ISoundHandler {
 	private ISoundOutput output;
 	private int lastUpdatedPos;
 	private int soundFramesPerTick;
-	private int speechFramesPerTick;
 	private AudioFormat speechFormat;
 	private ISoundOutput speechOutput;
 	private ISoundListener audio;
@@ -53,6 +52,7 @@ public class JavaSoundHandler implements ISoundHandler {
 	
 	private ISoundGenerator soundGenerator;
 	private final ISpeechGenerator speechGenerator;
+	private int lastSpeechUpdatedPos;
 	
 	public JavaSoundHandler(final IMachine machine, final ISoundGenerator soundGenerator,
 			final ISpeechGenerator speechGenerator) {
@@ -66,9 +66,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		
 		soundFormat = new AudioFormat(55930, 16, 2, true, false);
 		
-		speechFramesPerTick = 6;
-
-		speechFormat = new AudioFormat(speechFramesPerTick * 8000, 16, 1, true, false);
+		speechFormat = new AudioFormat(8000 * 6, 16, 1, true, false);
 		
 		output = SoundFactory.createSoundOutput(soundFormat, machine.getCpuTicksPerSec());
 		speechOutput = SoundFactory.createSoundOutput(speechFormat, machine.getCpuTicksPerSec());
@@ -81,21 +79,12 @@ public class JavaSoundHandler implements ISoundHandler {
 		output.addListener(audio);
 		speechOutput.addListener(speechAudio);
 
-		final ISpeechChip speech = machine.getSpeech();
-		if (speech != null) {
-			speech.setSender(new ISpeechDataSender() {
-				public void send(short val, int pos, int length) {
-					speechGenerator.getSpeechVoices()[0].setSample(val);
-					speech();
-				}
-			});
-		}		
-		
 		soundVolume.addListenerAndFire(new IPropertyListener() {
 			
 			@Override
 			public void propertyChanged(IProperty setting) {
 				output.setVolume(setting.getInt() / 10.0);
+				speechOutput.setVolume(setting.getInt() / 10.0);
 			}
 		});
 
@@ -111,9 +100,6 @@ public class JavaSoundHandler implements ISoundHandler {
 		//		+ machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
 		soundFramesPerTick = output.getSamples((1000 + machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
 		
-
-		
-		
 		playSound.addListenerAndFire(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
@@ -121,6 +107,19 @@ public class JavaSoundHandler implements ISoundHandler {
 			}
 			
 		});
+		
+		if (soundGenerator != null) {
+			for (ISoundVoice voice : soundGenerator.getSoundVoices()) {
+				voice.setSoundClock((int) soundFormat.getFrameRate());
+			}
+		}
+		if (speechGenerator != null) {
+			for (ISpeechSoundVoice voice : speechGenerator.getSpeechVoices()) {
+				voice.setSoundClock((int) speechFormat.getFrameRate());
+			}
+		}
+		
+
 	}
 	
 
@@ -158,25 +157,26 @@ public class JavaSoundHandler implements ISoundHandler {
 	}
 
 	public synchronized void generateSound() {
-		if (machine.getSound() == null)
-			return;
-
-		int pos = machine.getCpu().getCurrentCycleCount();
-		int total = machine.getCpu().getCurrentTargetCycleCount();
-		
-		if (total == 0)
-			return;
-		
-		int totalCount = pos;
-		
-		int currentPos = (int) ((long) (pos * soundFramesPerTick * soundFormat.getChannels() + total - 1 ) / total);
-		if (currentPos < 0)
-			currentPos = 0;
-		updateSoundGenerator(lastUpdatedPos, currentPos, totalCount);
-		lastUpdatedPos = currentPos;
+		if (soundGenerator != null) {
+			 {
+				int pos = machine.getCpu().getCurrentCycleCount();
+				int total = machine.getCpu().getCurrentTargetCycleCount();
+				
+				if (total == 0)
+					return;
+				
+				int totalCount = pos;
+				
+				int currentPos = (int) ((long) (pos * soundFramesPerTick * soundFormat.getChannels() + total - 1 ) / total);
+				if (currentPos < 0)
+					currentPos = 0;
+				updateSoundGenerator(lastUpdatedPos, currentPos, totalCount);
+				lastUpdatedPos = currentPos;
+			}
+		}
 	}
 
-	protected synchronized void updateSoundGenerator(int from, int to, int totalCount) {
+	protected void updateSoundGenerator(int from, int to, int totalCount) {
 		if (to > soundFramesPerTick)
 			to = soundFramesPerTick;
 		if (from >= to)
@@ -187,35 +187,46 @@ public class JavaSoundHandler implements ISoundHandler {
 		output.generate(vs, to - from);
 	}
 
-	public synchronized void speech() {
-		ISpeechChip speech = machine.getSpeech();
-		if (speech == null)
-			return;
+	public void speech() {
+		synchronized (speechGenerator) {
+			ISpeechChip speech = machine.getSpeech();
+			if (speech == null)
+				return;
+	
+			ISpeechSoundVoice[] vs = speechGenerator.getSpeechVoices();
+			
+			//int samples = speechFramesPerTick * speechFormat.getChannels();
 
-		ISoundVoice[] vs = speechGenerator.getSpeechVoices();
-		
-		int samples = speechFramesPerTick * speechFormat.getChannels();
-
-		speechOutput.generate(vs, samples);
+			int count = vs[0].getSampleCount();
+			if (count == 0)
+				return;
+	
+			int total = (int) (count * speechFormat.getFrameRate() / 8000.f);
+			speechOutput.generate(vs, total);
+			lastSpeechUpdatedPos += total;
+		}
 	}
 
 	public synchronized void flushAudio() {
 		int currentCycleCount = machine.getCpu().getCurrentCycleCount();
 		int currentTargetCycleCount = machine.getCpu().getCurrentTargetCycleCount();
 		if (output != null && machine.getSound() != null && currentTargetCycleCount > 0) {
-			updateSoundGenerator(lastUpdatedPos, soundFramesPerTick, 
-					currentCycleCount * (soundFramesPerTick - lastUpdatedPos) /
-					currentTargetCycleCount);
-			
-			lastUpdatedPos = 0;
-	
-			ISoundVoice[] vs = soundGenerator.getSoundVoices();
-			output.flushAudio(vs, currentCycleCount);
+			 {
+				updateSoundGenerator(lastUpdatedPos, soundFramesPerTick, 
+						currentCycleCount * (soundFramesPerTick - lastUpdatedPos) /
+						currentTargetCycleCount);
+				
+				lastUpdatedPos = 0;
+		
+				ISoundVoice[] vs = soundGenerator.getSoundVoices();
+				output.flushAudio(vs, currentCycleCount);
+			}
 		}
 		
 		if (speechOutput != null && machine.getSpeech() != null) {
-			speechOutput.flushAudio(speechGenerator.getSpeechVoices(),
-					(int)(speechFormat.getSampleRate() / speechFramesPerTick));
+			int count = speechGenerator.getSpeechVoices()[0].getSampleCount();
+			speechOutput.generate(speechGenerator.getSpeechVoices(), (int) (count * speechFormat.getSampleRate() / 8000.f)); 
+			lastSpeechUpdatedPos = 0;
 		}
 	}
 

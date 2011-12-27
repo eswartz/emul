@@ -352,7 +352,9 @@ final static int FL_last	= 8;		/* stop frame seen */
 			//if (samp > 511 || samp < -512)
 			//	System.err.println("samp["+pos+"]="+samp);
 
-			sender.send(LPC_TO_PCM(samp), pos, length);
+			if (sender != null)
+				sender.sendSample(LPC_TO_PCM(samp), pos, length);
+			
 			pos++;
 		}
 	}

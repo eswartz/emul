@@ -13,18 +13,17 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	protected int		soundClock;			// the driving clock
 
 	private byte		atten;		
-	protected short 		period;
+	protected int 		period;
 	
-	protected int		period16;		// from operation, scaled by 55930
+	protected long		period16;		// from operation, scaled by 55930
 	protected int		hertz;			// calculated from OPERATION_FREQUENCY_xxx
 	
 	protected int		clock;			// clock, stepping from 0 to period16 by clockstep
 	protected int		accum;			// current accumulator, tracking the clock
-	protected int		incr;			// amount to add to the accum per clock
+	protected long		incr;			// amount to add to the accum per clock
 
 	public ClockedSoundVoice(String name) {
 		super(name);
-		this.soundClock = 55930;
 	}
 	
 	/* (non-Javadoc)
@@ -53,7 +52,7 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	}
 
 	public void setOperationPeriod(int period) {
-		this.period = (short) (period & 0x3ff);
+		this.period = (period & 0x3ff);
 	}
 	
 	protected int getOperationPeriod() {
@@ -69,7 +68,7 @@ public abstract class ClockedSoundVoice extends SoundVoice
 			else
 				System.out.println(MessageFormat.format(
 					"voice_cache_values[{5}]: freq=>{0}, period=>{1}, hertz={2}, volume={3}",
-				   HexUtils.toHex4(period16), 
+				   Long.toHexString(period16), 
 				   HexUtils.toHex4(hertz),
 				   hertz,
 				   getVolume(),
@@ -80,7 +79,7 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	protected void updateAccumulator() {
 		accum += incr;
 		if (period16 > 0)
-			clock = (clock + CLOCKSTEP) % period16;
+			clock = (int) ((clock + CLOCKSTEP) % period16);
 		else
 			clock = 0;
 	}

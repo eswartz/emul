@@ -69,7 +69,7 @@ public class ManualTestSpeech {
 		
 		ISpeechDataSender sender = new ISpeechDataSender() {
 
-			public void send(short val, int pos, int length) {
+			public void sendSample(short val, int pos, int length) {
 				
 				//val ^= 0x8000;
 				if (speechIdx >= speechWaveForm.length) {
@@ -89,9 +89,17 @@ public class ManualTestSpeech {
 				System.out.print(val + " ");
 			}
 			
+			/* (non-Javadoc)
+			 * @see v9t9.common.speech.ISpeechDataSender#speechDone()
+			 */
+			@Override
+			public void speechDone() {
+				System.out.println("\n// done");
+			}
+			
 		};
 		
-		tms5220.setSender(sender);
+		tms5220.addSpeechListener(sender);
 		
 		tms5220.command((byte) 0x70);
 		tms5220.command((byte) 0x10);

@@ -21,6 +21,7 @@ import ejs.base.utils.ListenerList;
  */
 public class FastTimer {
 	private ITimer timer;
+	private ListenerList<Runnable> invokes;
 	private ListenerList<RunnableInfo> taskinfos;
 	private Object controlLock;
 	private Thread timerThread;
@@ -43,6 +44,7 @@ public class FastTimer {
 	public FastTimer(String name) {
 		this.name = name;
 		taskinfos = new ListenerList<RunnableInfo>();
+		invokes = new ListenerList<Runnable>();
 		timer = TimerFactory.newTimer();
 		controlLock = new Object();
 	}
@@ -64,11 +66,8 @@ public class FastTimer {
 			RunnableInfo info = new RunnableInfo(task, 1000000000L / perSecond);
 			taskinfos.add(info);
 			
-			//System.out.println("Adding task @ " + info.delay + " ns");
-			if (taskinfos.iterator().hasNext()) {
-				if (timerThread == null)
-					startTimer();
-			}
+			if (timerThread == null)
+				startTimer();
 		}
 	}
 
@@ -91,8 +90,25 @@ public class FastTimer {
 						} catch (InterruptedException e) {
 							return;
 						}
-						final long now = timer.getTimeNs();
+						
 						Object[] infos;
+						synchronized (controlLock) {
+							//System.out.println(now);
+							//long elapsed = now - prev;
+							//System.out.print(elapsed + ",");
+	
+							infos = invokes.toArray();
+							invokes.clear();
+						}
+						for (Object info : infos) {
+							try {
+								((Runnable) info).run();
+							} catch (Throwable t) {
+								t.printStackTrace();
+							}
+						}
+						
+						final long now = timer.getTimeNs();
 						synchronized (controlLock) {
 							//System.out.println(now);
 							//long elapsed = now - prev;
@@ -160,5 +176,18 @@ public class FastTimer {
 				}
 			}
 		}		
+	}
+
+	/**
+	 * Invoke a runnable as soon as possible
+	 * @param runnable
+	 */
+	public void invoke(Runnable runnable) {
+		synchronized (controlLock) {
+			invokes.add(runnable);
+			if (timerThread == null)
+				startTimer();
+		}
+		
 	}
 }

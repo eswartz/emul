@@ -270,7 +270,7 @@ public class EffectsController {
 		voice.accum += voice.incr + vib;
 		
 		if (voice.period16 > 0)
-			voice.clock = (voice.clock + ClockedSoundVoice.CLOCKSTEP) % voice.period16;
+			voice.clock = (int) ((voice.clock + ClockedSoundVoice.CLOCKSTEP) % voice.period16);
 		else
 			voice.clock = 0;
 		//while (voice.div < 0)
@@ -294,7 +294,7 @@ public class EffectsController {
 		}
 		
 		if (voice.period16 > 0 && voice instanceof ToneGeneratorVoice) {
-			int half = (voice.period16 / 2);
+			int half = (int) (voice.period16 / 2);
 			//int quarter = (voice.period / 4);
 			
 			int ang = (int) ((long)voice.clock * sines.length / voice.period16);

@@ -11,6 +11,8 @@ import ejs.base.settings.ISettingSection;
 import ejs.base.settings.Logging;
 import ejs.base.utils.BinaryUtils;
 import ejs.base.utils.HexUtils;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 
 
 import v9t9.common.client.ISettingsHandler;
@@ -57,7 +59,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 	private LPCSpeech lpc;
 	
-	private ISpeechDataSender sender;
+	private ListenerList<ISpeechDataSender> senderList;
 
 	private boolean speechOn;
 
@@ -90,6 +92,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 		
 		fifo = new byte[16];
 		lpc = new LPCSpeech(settings);
+		senderList = new ListenerList<ISpeechDataSender>();
 		reset();
 	}
 
@@ -422,7 +425,16 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 			//SPEECHPLAY(vms_Speech, speech_data, speech_length, speech_hertz);	
 			if (last) {
-				send((short) 0, speech_length, speech_length);
+				//send((short) 0, speech_length, speech_length);
+				senderList.fire(new IFire<ISpeechDataSender>() {
+					/* (non-Javadoc)
+					 * @see ejs.base.utils.ListenerList.IFire#fire(java.lang.Object)
+					 */
+					@Override
+					public void fire(ISpeechDataSender listener) {
+						listener.speechDone();
+					}
+				});
 				SpeechDone();
 			}
 		}
@@ -493,11 +505,37 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 		return cur;
 	}
 
-	public void setSender(ISpeechDataSender sender) {
-		this.sender = sender;
-		
+	public void addSpeechListener(ISpeechDataSender sender) {
+		senderList.add(sender);
 	}
 	
+	public void removeSpeechListener(ISpeechDataSender sender) {
+		senderList.remove(sender);
+	}
+	
+	public void sendSample(final short val, final int pos, final int length) {
+		senderList.fire(new IFire<ISpeechDataSender>() {
+
+			@Override
+			public void fire(ISpeechDataSender listener) {
+				listener.sendSample(val, pos, length);
+			}
+		});
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.speech.ISpeechDataSender#speechDone()
+	 */
+	@Override
+	public void speechDone() {
+		senderList.fire(new IFire<ISpeechDataSender>() {
+
+			@Override
+			public void fire(ISpeechDataSender listener) {
+				listener.speechDone();
+			}
+		});
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.base.properties.IPersistable#loadState(v9t9.base.settings.ISettingSection)
 	 */
@@ -514,16 +552,5 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	public void saveState(ISettingSection section) {
 		// TODO Auto-generated method stub
 		
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.engine.speech.ISpeechDataSender#send(short, int, int)
-	 */
-	@Override
-	public void send(short val, int pos, int length) {
-		if (sender != null) {
-			//speechVoices[0].setSample(val);
-			sender.send(val, pos, length);
-		}
 	}
 }

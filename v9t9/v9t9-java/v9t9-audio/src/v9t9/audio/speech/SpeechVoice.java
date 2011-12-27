@@ -3,47 +3,78 @@
  */
 package v9t9.audio.speech;
 
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import v9t9.common.speech.ISpeechSoundVoice;
 
 public class SpeechVoice implements ISpeechSoundVoice {
 	
+	/**
+	 * 
+	 */
+	private static final boolean SMOOTH = true;
+	
+	private Queue<Short> samples = new LinkedBlockingQueue<Short>();
+
 	private short lastSample;
-	private short sample;
+
+	private int soundClock;
 
 	public void setSoundClock(int soundClock) {
+		this.soundClock = soundClock;
 	}
 	
 	public void reset() {
-		sample = 0;
 		lastSample = 0;
+		synchronized (samples) { 
+			samples.clear();
+		}
 	}
 	
 	public boolean isActive() {
 		return true;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.speech.ISpeechSoundVoice#getSampleCount()
+	 */
+	@Override
+	public int getSampleCount() {
+		return samples.size();
+	}
 	public boolean generate(float[] soundGeneratorWorkBuffer, int from, int to) {
-		if (sample == 0 && lastSample == 0)
+
+		if (samples.isEmpty())
 			return false;
 		
-		if (true) {
-			// smoothly alter voltage
-			float delta = (sample - lastSample) / 32768.f / (to - from);
-			float samp = lastSample / 32768.f;
+		float ptr = from;
+		while (ptr < to) {
+			Short sample = samples.poll();
+			if (sample == null)
+				return true;
 			
-			while (from < to) {
-				soundGeneratorWorkBuffer[from++] += samp;
-				samp += delta;
+			float next = Math.min(to, ptr + soundClock / 8000.f);
+			if (SMOOTH) {
+				// smoothly alter voltage
+				float delta = (sample - lastSample) / 32768.f / (next - ptr);
+				float samp = lastSample / 32768.f;
+				
+				while (ptr < next) {
+					soundGeneratorWorkBuffer[(int) ptr++] += samp;
+					samp += delta;
+				}
+			} else {
+				float delta = sample / 32768.f;
+				
+				while (ptr < next) {
+					soundGeneratorWorkBuffer[(int) ptr++] += delta;
+				}
 			}
-		} else {
-			float delta = sample / 32768.f;
 			
-			while (from < to) {
-				soundGeneratorWorkBuffer[from++] += delta;
-			}
+			this.lastSample = sample;
 		}
 		
-		this.lastSample = this.sample;
 		return true;
 	}
 	
@@ -51,7 +82,7 @@ public class SpeechVoice implements ISpeechSoundVoice {
 	 * @see v9t9.audio.speech.ISpeechVoice#setSample(short)
 	 */
 	@Override
-	public void setSample(short sample) {
-		this.sample = sample;
+	public void addSample(short sample) {
+		samples.add(sample);
 	}
 }

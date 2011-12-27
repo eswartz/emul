@@ -4,7 +4,6 @@
 package v9t9.audio.speech;
 
 import v9t9.common.hardware.ISpeechChip;
-import v9t9.common.speech.ISpeechDataSender;
 import v9t9.common.speech.ISpeechGenerator;
 import v9t9.common.speech.ISpeechSoundVoice;
 
@@ -12,7 +11,7 @@ import v9t9.common.speech.ISpeechSoundVoice;
  * @author ejs
  *
  */
-public class SpeechTMS5220Generator implements ISpeechGenerator, ISpeechDataSender {
+public class SpeechTMS5220Generator implements ISpeechGenerator {
 	private SpeechVoice[] speechVoices;
 
 	/**
@@ -22,7 +21,7 @@ public class SpeechTMS5220Generator implements ISpeechGenerator, ISpeechDataSend
 		speechVoices = new SpeechVoice[1];
 		speechVoices[0] = new SpeechVoice();
 		
-		speech.setSender(this);
+		speech.addSpeechListener(this);
 	}
 
 	/* (non-Javadoc)
@@ -37,8 +36,16 @@ public class SpeechTMS5220Generator implements ISpeechGenerator, ISpeechDataSend
 	 * @see v9t9.common.speech.ISpeechDataSender#send(short, int, int)
 	 */
 	@Override
-	public void send(short val, int pos, int length) {
-		speechVoices[0].setSample(val);
+	public synchronized void sendSample(short val, int pos, int length) {
+		speechVoices[0].addSample(val);
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.speech.ISpeechDataSender#speechDone()
+	 */
+	@Override
+	public void speechDone() {
+		
+	}
 }
+

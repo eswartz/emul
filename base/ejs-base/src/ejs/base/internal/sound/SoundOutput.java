@@ -144,11 +144,11 @@ public class SoundOutput implements ISoundOutput {
 		if (samples <= 0)
 			return;
 		
-		// ensure stereo-safe
-		int mask = ~(format.getChannels() - 1);
-		samples = (samples + format.getChannels() - 1) & mask;
-		while (samples > 0) {
-			synchronized (this) {
+		synchronized (this) {
+			// ensure stereo-safe
+			int mask = ~(format.getChannels() - 1);
+			samples = (samples + format.getChannels() - 1) & mask;
+			while (samples > 0) {
 				int endPos = lastUpdatedPos + samples;
 				endPos &= mask;
 				int to = endPos;
@@ -169,10 +169,11 @@ public class SoundOutput implements ISoundOutput {
 				int generated = to - lastUpdatedPos;
 				samples -= generated;
 				lastUpdatedPos += generated;
+				
+				//System.out.println(generated);
+				if (samples > 0)
+					flushAudio(voices, 0);
 			}
-			//System.out.println(generated);
-			if (samples > 0)
-				flushAudio(voices, 0);
 		}
 	}
 

@@ -24,9 +24,11 @@ import v9t9.common.client.ISoundHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.machine.TerminatedException;
 import v9t9.common.settings.Settings;
 import v9t9.common.sound.ISoundGenerator;
+import v9t9.common.speech.ISpeechDataSender;
 import v9t9.common.speech.ISpeechGenerator;
 import v9t9.gui.client.awt.AwtKeyboardHandler;
 import v9t9.gui.sound.JavaSoundHandler;
@@ -61,7 +63,8 @@ public abstract class BaseSwtJavaClient implements IClient {
 	protected ISoundGenerator soundGenerator;
 	protected ISpeechGenerator speechGenerator;
 	protected ISoundHandler soundHandler;
-	protected FastTimer timer;
+	protected FastTimer videoTimer;
+	private FastTimer soundTimer;
 
 	/**
 	 * @param machine 
@@ -73,7 +76,8 @@ public abstract class BaseSwtJavaClient implements IClient {
     	this.video = machine.getVdp();
     	this.machine = machine;
     	
-    	this.timer = new FastTimer("Client Timer");
+    	this.videoTimer = new FastTimer("Video Timer");
+    	this.soundTimer = new FastTimer("Sound Timer");
     	
     	setupRenderer();
 
@@ -117,7 +121,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 				keyboardHandler.scan(machine.getKeyboardState());
         	}
         };
-        timer.scheduleTask(clientTask, clientTick);
+        videoTimer.scheduleTask(clientTask, clientTick);
         
         TimerTask videoUpdateTask = new TimerTask() {
 
@@ -126,7 +130,7 @@ public abstract class BaseSwtJavaClient implements IClient {
             	updateVideo();
             }
         };
-        timer.scheduleTask(videoUpdateTask, videoUpdateTick);
+        videoTimer.scheduleTask(videoUpdateTask, videoUpdateTick);
         
         TimerTask soundUpdateTask = new TimerTask() {
         	
@@ -135,7 +139,48 @@ public abstract class BaseSwtJavaClient implements IClient {
         		soundHandler.flushAudio();
         	}
         };
-        timer.scheduleTask(soundUpdateTask, soundTick);
+        soundTimer.scheduleTask(soundUpdateTask, soundTick);
+        
+        // update sound as often as possible
+        final TimerTask soundGenerateTask = new TimerTask() {
+			@Override
+			public void run() {
+				soundHandler.generateSound();
+			}
+		};
+        machine.getSound().addWriteListener(new IRegisterWriteListener() {
+			
+			@Override
+			public void registerChanged(int reg, int value) {
+				soundTimer.invoke(soundGenerateTask);
+			}
+		});
+        
+        // update speech as soon as possible
+        final TimerTask speechGenerateTask = new TimerTask() {
+			@Override
+			public void run() {
+				soundHandler.speech();
+			}
+		};
+		final TimerTask speechDoneTask = new TimerTask() {
+			@Override
+			public void run() {
+				soundHandler.flushAudio();
+			}
+		};
+        machine.getSpeech().addSpeechListener(new ISpeechDataSender() {
+			
+			@Override
+			public void sendSample(short val, int pos, int length) {
+				soundTimer.invoke(speechGenerateTask);
+			}
+			
+			@Override
+			public void speechDone() {
+				soundTimer.invoke(speechDoneTask);
+			}
+		});
 	}
 	
 
@@ -190,10 +235,11 @@ public abstract class BaseSwtJavaClient implements IClient {
 	}
 
 	public void close() {
+		soundTimer.cancel();
 		if (soundHandler != null)
 			soundHandler.dispose();
 		
-		timer.cancel();
+		videoTimer.cancel();
 		try {
 			machine.stop();
 		} catch (TerminatedException e) {
