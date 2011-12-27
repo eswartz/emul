@@ -6,6 +6,7 @@ package v9t9.gui;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -80,25 +81,26 @@ public class Emulator {
 	 */
 	public static void main(String[] args) {
 		String remote = null;
+		String configdir = null;
+		boolean clean = false;
 		
 		Getopt getopt = new Getopt(Emulator.class.getName(), args, 
-				"r:",
+				"r:Cc:",
 				new LongOpt[] {
-					new LongOpt("remote", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), 'r')
+					//new LongOpt("remote", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), 'r'),
+					new LongOpt("clean", LongOpt.NO_ARGUMENT, null, 'C'),
+					new LongOpt("configdir", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
 				}
 		);
 		
 		int opt;
 		while ((opt = getopt.getopt()) != -1)
 		{
-			if (opt == 0) {
-				if (getopt.getLongind() == 0) {
-					opt = 'r';
-				}
+			if (opt == 'C') {
+				clean = true;
 			}
-			
-			if (opt == 'r') {
-				remote = getopt.getOptarg();
+			else if (opt == 'c') {
+				configdir = getopt.getOptarg();
 			}
 		}
 		
@@ -106,11 +108,33 @@ public class Emulator {
 			? new EmulatorRemoteServer(remote)
 			: new EmulatorLocalServer();
 		
+		if (configdir != null) {
+			server.setConfigDir(configdir);
+			if (clean) {
+				File top = new File(server.getSettingsHandler().getInstanceSettings().getConfigDirectory());
+				deleteDirectory(top);
+			}
+		}
+		
 		String modelId = getModelId(server, args);
 		String clientId = getClientId(args);
 		
 
 		createAndRun(server, modelId, clientId);
+	}
+
+
+	/**
+	 * @param top
+	 */
+	private static void deleteDirectory(File top) {
+		File[] entries = top.listFiles();
+		if (entries != null) {
+			for (File entry : entries) {
+				deleteDirectory(entry);
+			}
+			top.delete();
+		}
 	}
 
 

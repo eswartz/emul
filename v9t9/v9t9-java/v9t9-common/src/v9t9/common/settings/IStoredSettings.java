@@ -41,6 +41,10 @@ public interface IStoredSettings {
 
 	ISettingSection getSettings();
 
+	/** Set (override) directory for saving the file,
+	 * pass <code>null</code> to reset */
+	void setConfigDirectory(String configdir);
+
 	/** Get directory for saving the file */
 	String getConfigDirectory();
 	

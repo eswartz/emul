@@ -48,7 +48,6 @@
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
         <path refid="v9t9-common.classpath"/>
         <pathelement location="${ejs-base.location}/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
-        <pathelement location="${ejs-base.location}/libs/gnu-getopt-1.0.11.jar"/>
         <pathelement location="${ejs-base.location}/libs/bcel-5.2.jar"/>
         <path refid="SWT.userclasspath"/>
         <pathelement location="${ejs-base.location}/libs/junit/junit-4.8.1.jar"/>

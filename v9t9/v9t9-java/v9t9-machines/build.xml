@@ -48,7 +48,6 @@
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
         <path refid="v9t9-common.classpath"/>
         <pathelement location="${ejs-base.location}/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
-        <pathelement location="${ejs-base.location}/libs/gnu-getopt-1.0.11.jar"/>
         <pathelement location="${ejs-base.location}/libs/bcel-5.2.jar"/>
         <path refid="SWT.userclasspath"/>
         <pathelement location="${ejs-base.location}/libs/junit/junit-4.8.1.jar"/>
@@ -62,7 +61,6 @@
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar"/>
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
         <pathelement location="${ejs-base.location}/libs/bcel-5.2.jar"/>
-        <pathelement location="${ejs-base.location}/libs/gnu-getopt-1.0.11.jar"/>
         <pathelement location="${ejs-base.location}/libs/junit/junit-4.8.1.jar"/>
     </path>
     <target name="init">
@@ -81,6 +79,12 @@
         </copy>
         <copy includeemptydirs="false" todir="bin">
             <fileset dir="f99b">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="data">
                 <exclude name="**/*.launch"/>
                 <exclude name="**/*.java"/>
             </fileset>
@@ -124,6 +128,10 @@
         </javac>
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="f99b"/>
+            <classpath refid="v9t9-machines.classpath"/>
+        </javac>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="data"/>
             <classpath refid="v9t9-machines.classpath"/>
         </javac>
     </target>

@@ -201,4 +201,12 @@ public abstract class EmulatorServerBase {
 		return MachineModelFactory.INSTANCE;
 	}
 
+	/**
+	 * @param configdir
+	 */
+	public void setConfigDir(String configdir) {
+		settings.getInstanceSettings().setConfigDirectory(configdir);
+		settings.getWorkspaceSettings().setConfigDirectory(configdir);
+	}
+
 }

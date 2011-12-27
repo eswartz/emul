@@ -11,6 +11,7 @@
     <property name="v9t9-engine.location" value="../v9t9-engine"/>
     <property name="v9t9-gui.location" value="../v9t9-gui"/>
     <property name="v9t9-machines.location" value="../v9t9-machines"/>
+    <property name="v9t9-remote.location" value="../v9t9-remote"/>
     <property name="v9t9-server.location" value="../v9t9-server"/>
     <property name="v9t9-tools.location" value="../v9t9-tools"/>
     <property name="v9t9-video.location" value="../v9t9-video"/>
@@ -87,6 +88,12 @@
         </ant>
         <ant antfile="build.xml" dir="${v9t9-machines.location}" inheritAll="false" target="clean"/>
         <ant antfile="build.xml" dir="${v9t9-machines.location}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${v9t9-remote.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-remote.location}" inheritAll="false" target="build">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>

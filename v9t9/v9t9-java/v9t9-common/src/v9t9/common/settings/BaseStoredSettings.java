@@ -76,7 +76,11 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	private final String context;
 	private ISettingsHandler owner;
 
+	private String configDir;
+
 	public BaseStoredSettings(String context) {
+		setConfigDirectory(null);
+		
 		this.context = context;
 		section = new SettingsSection(null);
 		syntheticSettings = new HashMap<String, SyntheticProperty>();
@@ -380,8 +384,24 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		return section;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.settings.IStoredSettings#setConfigDirectory(java.lang.String)
+	 */
+	@Override
+	public void setConfigDirectory(String configdir) {
+		String oldDir = configDir;
+		if (configdir == null) {
+			configDir = System.getProperty("user.home") + File.separatorChar + ".v9t9j" + File.separatorChar;
+		} else {
+			configDir = configdir;
+			if (!configDir.endsWith("" +  + File.separatorChar))
+				configDir += File.separatorChar;
+		}
+		setDirty(oldDir != null && !configDir.equals(oldDir));
+	}
+	
 	public String getConfigDirectory() {
-		return System.getProperty("user.home") + File.separatorChar + ".v9t9j" + File.separatorChar;
+		return configDir;
 	}
 	
 	public String getConfigFilePath() {

@@ -8,6 +8,7 @@
     <property environment="env"/>
     <property name="ejs-base.location" value="../../../base/ejs-base"/>
     <property name="v9t9-gui.location" value="../v9t9-gui"/>
+    <property name="v9t9-remote.location" value="../v9t9-remote"/>
     <property name="ECLIPSE_HOME" value="../../../../orbit/plugins"/>
     <property name="junit.output.dir" value="junit"/>
     <property name="v9t9-common.location" value="../v9t9-common"/>
@@ -49,7 +50,6 @@
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
         <path refid="v9t9-common.classpath"/>
         <pathelement location="${ejs-base.location}/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
-        <pathelement location="${ejs-base.location}/libs/gnu-getopt-1.0.11.jar"/>
         <pathelement location="${ejs-base.location}/libs/bcel-5.2.jar"/>
         <path refid="SWT.userclasspath"/>
         <pathelement location="${ejs-base.location}/libs/junit/junit-4.8.1.jar"/>
@@ -63,7 +63,6 @@
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar"/>
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
         <pathelement location="${ejs-base.location}/libs/bcel-5.2.jar"/>
-        <pathelement location="${ejs-base.location}/libs/gnu-getopt-1.0.11.jar"/>
         <pathelement location="${ejs-base.location}/libs/junit/junit-4.8.1.jar"/>
     </path>
     <path id="v9t9-server.classpath">
@@ -130,6 +129,12 @@
                 <propertyref name="build.compiler"/>
             </propertyset>
         </ant>
+        <ant antfile="build.xml" dir="${v9t9-remote.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-remote.location}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
     </target>
     <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
         <copy todir="${ant.library.dir}">
@@ -148,6 +153,17 @@
         <mkdir dir="${junit.output.dir}"/>
         <junit fork="yes" printsummary="withOutAndErr">
             <formatter type="xml"/>
+            <test name="v9t9.server.tcf.test.TestTCFRegistersV2" todir="${junit.output.dir}"/>
+            <classpath refid="v9t9-server.classpath"/>
+        </junit>
+    </target>
+    <target name="v9t9.server.tcf.test">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="v9t9.server.tcf.test.TestTCFMemory" todir="${junit.output.dir}"/>
+            <test name="v9t9.server.tcf.test.TestTCFMemoryV2" todir="${junit.output.dir}"/>
+            <test name="v9t9.server.tcf.test.TestTCFRegisters" todir="${junit.output.dir}"/>
             <test name="v9t9.server.tcf.test.TestTCFRegistersV2" todir="${junit.output.dir}"/>
             <classpath refid="v9t9-server.classpath"/>
         </junit>

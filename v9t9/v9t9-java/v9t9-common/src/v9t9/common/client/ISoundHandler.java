@@ -22,7 +22,7 @@ public interface ISoundHandler {
 			"PlaySound", new Boolean(true));
 	SettingSchema settingSoundVolume = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"SoundVolume", new Integer(10));
+			"SoundVolume", new Integer(5));
 
 
 	/**

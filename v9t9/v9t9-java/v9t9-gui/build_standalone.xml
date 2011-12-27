@@ -93,6 +93,7 @@
             <fileset dir="../v9t9-engine/bin"/>
             <fileset dir="../v9t9-machines/bin"/>
             <fileset dir="../v9t9-server/bin"/>
+            <fileset dir="../v9t9-remote/bin"/>
         </jar>
 
     	<copy todir="${bin.v9t9.dir}/libs">
