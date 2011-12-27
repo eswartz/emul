@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IExecutor;
@@ -45,6 +46,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	private IProperty realTime;
 	private IProperty compile;
 	private IProperty cyclesPerSecond;
+	private IProperty devicesChanged;
+	private BlankIcon indicatorsBlank;
 	/**
 	 * @param swtWindow
 	 * @param mainComposite
@@ -85,13 +88,36 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				}
 			}
 		);		
+		
+		devicesChanged = Settings.get(machine, IDeviceIndicatorProvider.settingDevicesChanged);
+
 		indicators = new ArrayList<ImageDeviceIndicator>();
+		
+		indicatorsBlank = new BlankIcon(buttonBar, SWT.NONE);
 		
 		for (IDeviceIndicatorProvider provider : machine.getModel().getDeviceIndicatorProviders(machine))
 			addDeviceIndicatorProvider(provider);
 
-		new BlankIcon(buttonBar, SWT.NONE);
 
+		devicesChanged.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				buttonBar.getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						for (ImageDeviceIndicator indic : indicators) {
+							indic.dispose();
+						}
+						indicators.clear();
+
+						for (IDeviceIndicatorProvider provider : machine.getModel().getDeviceIndicatorProviders(machine))
+							addDeviceIndicatorProvider(provider);
+						
+						buttonBar.layout(true, true);
+					}
+				});
+			}
+		});
 
 		createButton(IconConsts.CPU_ACCELERATE, "Accelerate execution",
 				new SelectionAdapter() {
@@ -207,7 +233,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	public void addDeviceIndicatorProvider(IDeviceIndicatorProvider provider) {
 		ImageDeviceIndicator indic = new ImageDeviceIndicator(buttonBar, SWT.NONE, 
 				deviceImageProvider, provider);
-		//GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.FILL).grab(false, false).applyTo(indic);
+		indic.moveAbove(indicatorsBlank);
 		indicators.add(indic);
 	}
 

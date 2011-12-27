@@ -5,6 +5,8 @@ package v9t9.gui.client.swt.bars;
 
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
@@ -44,7 +46,7 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 		provider.getActiveProperty().addListener(listener);
 		
 
-		getParent().addControlListener(new ControlListener() {
+		final ControlListener resizeListener = new ControlListener() {
 
 			public void controlMoved(ControlEvent e) {
 			}
@@ -58,6 +60,15 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 				setBounds(metrics);				
 			}
 			
+		};
+		getParent().addControlListener(resizeListener);
+
+		addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				getParent().removeControlListener(resizeListener);
+			}
 		});
 	}
 

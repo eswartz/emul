@@ -4,9 +4,11 @@
 package v9t9.machine.ti99.dsr.realdisk;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.SettingProperty;
 
 
@@ -130,33 +132,25 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 	private short base;
 
 
-	private List<IDeviceIndicatorProvider> deviceIndicatorProviders;
-	
-	
 	public RealDiskImageDsr(TI99Machine machine, short base) {
 		super(machine);
 		this.base = base;
 
-		deviceIndicatorProviders = new ArrayList<IDeviceIndicatorProvider>();
-		
 		if (!diskSettingsMap.isEmpty()) {
 			
 			// one setting for entire DSR
 			realDiskDsrActiveSetting = new SettingProperty(getName(), Boolean.FALSE);
 			realDiskDsrActiveSetting.addEnablementDependency(settingDsrEnabled);
-			DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
-					realDiskDsrActiveSetting, 
-					"Disk image activity",
-					IDevIcons.DSR_DISK_IMAGE, IDevIcons.DSR_LIGHT);
-			deviceIndicatorProviders.add(deviceIndicatorProvider);
 			
-			/*
-			for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
-				BaseDiskImage image = getDiskImage(entry.getValue().getName());
-				DiskImageDeviceIndicatorProvider provider = new DiskImageDeviceIndicatorProvider(image);
-				list.add(provider);
-			}
-			*/
+			
+			settingDsrEnabled.addListener(new IPropertyListener() {
+				
+				@Override
+				public void propertyChanged(IProperty property) {
+					settings.get(IDeviceIndicatorProvider.settingDevicesChanged).firePropertyChange();
+				}
+			});
+
 		}
 		
 		CruManager cruManager = machine.getCruManager();
@@ -328,6 +322,14 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 	 */
 	@Override
 	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
-		return deviceIndicatorProviders;
+		
+		if (!settingDsrEnabled.getBoolean())
+			return Collections.emptyList();
+		
+		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
+				realDiskDsrActiveSetting, 
+				"Disk image activity",
+				IDevIcons.DSR_DISK_IMAGE, IDevIcons.DSR_LIGHT);
+		return Collections.<IDeviceIndicatorProvider>singletonList(deviceIndicatorProvider);
 	}
 }

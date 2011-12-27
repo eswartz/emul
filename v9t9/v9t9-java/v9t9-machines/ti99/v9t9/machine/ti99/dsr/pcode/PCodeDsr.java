@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
 import ejs.base.settings.SettingProperty;
 
@@ -64,11 +65,20 @@ public class PCodeDsr implements IDsrHandler9900 {
 	/**
 	 * @param machine
 	 */
-	public PCodeDsr(TI99Machine machine) {
-		this.machine = machine;
+	public PCodeDsr(TI99Machine machine_) {
+		this.machine = machine_;
 		pcodeActive = new SettingProperty("pcodeActive", Boolean.FALSE);
 		pcodeCardEnabled = Settings.get(machine, settingPcodeCardEnabled);
 		pcodeActive.addEnablementDependency(pcodeCardEnabled);
+		
+		pcodeCardEnabled.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				Settings.get(machine, IDeviceIndicatorProvider.settingDevicesChanged).firePropertyChange();
+			}
+		});
+		
 	}
 
 	/* (non-Javadoc)
@@ -237,6 +247,9 @@ public class PCodeDsr implements IDsrHandler9900 {
 	 */
 	@Override
 	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
+		if (!Settings.get(machine, settingPcodeCardEnabled).getBoolean())
+			return Collections.emptyList();
+		
 		IDeviceIndicatorProvider provider= new DeviceIndicatorProvider(
 				pcodeActive, "USCD P-System Activity", 
 				IDevIcons.DSR_USCD, IDevIcons.DSR_LIGHT);

@@ -8,12 +8,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
 import ejs.base.settings.SettingProperty;
 
@@ -52,7 +54,6 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 	private final IFileMapper mapper;
 
 	private Map<String, IProperty> diskActivitySettings;
-	private List<IDeviceIndicatorProvider> deviceIndicatorProviders;
 
 	private IProperty emuDiskDsrActiveSetting;
 	private IProperty settingDsrEnabled;
@@ -60,11 +61,20 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 	private Dumper dumper;
 	private final ISettingsHandler settings;
 
-	public EmuDiskDsr(ISettingsHandler settings, IFileMapper mapper) {
-		this.settings = settings;
+	public EmuDiskDsr(ISettingsHandler settings_, IFileMapper mapper) {
+		this.settings = settings_;
 		//emuDiskDsrEnabled.setBoolean(true);
 		settingDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
 		settingRealDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
+		
+		settingDsrEnabled.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				settings.get(IDeviceIndicatorProvider.settingDevicesChanged).firePropertyChange();
+			}
+		});
+
 		
 		this.dumper = new Dumper(settings, RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
 		
@@ -76,18 +86,11 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
     	File dskdefault = new File(diskRootDir, "default");
     	dskdefault.mkdirs();
     	
-    	deviceIndicatorProviders = new ArrayList<IDeviceIndicatorProvider>();
     	diskActivitySettings = new HashMap<String, IProperty>();
 
     	// one setting for entire DSR
 		emuDiskDsrActiveSetting = new SettingProperty(getName(), Boolean.FALSE);
 		emuDiskDsrActiveSetting.addEnablementDependency(settingDsrEnabled);
-		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
-				emuDiskDsrActiveSetting, 
-				"Disk directory activity",
-				IDevIcons.DSR_DISK_DIR, IDevIcons.DSR_LIGHT);
-		deviceIndicatorProviders.add(deviceIndicatorProvider);
-
 		
     	for (int dev = 1; dev <= 5; dev++) {
     		String devname = EmuDiskSettings.getEmuDiskSetting(dev);
@@ -400,6 +403,13 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 	 */
 	@Override
 	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
-		return deviceIndicatorProviders;
+		if (!settingDsrEnabled.getBoolean())
+			return Collections.emptyList();
+		
+		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
+				emuDiskDsrActiveSetting, 
+				"Disk directory activity",
+				IDevIcons.DSR_DISK_DIR, IDevIcons.DSR_LIGHT);
+		return Collections.<IDeviceIndicatorProvider>singletonList(deviceIndicatorProvider);
 	}
 }
