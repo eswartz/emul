@@ -1,0 +1,273 @@
+/**
+ * 
+ */
+package v9t9.common.tests;
+
+import static org.junit.Assert.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+
+import org.junit.Test;
+
+import v9t9.common.files.PathFileLocator;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.SettingProperty;
+
+/**
+ * This test assumes a file '994arom.bin' really exists under /usr/local/src/v9t9-data/roms,
+ * a file 'wumpusg.bin' really exists under /usr/local/src/v9t9-data/modules,
+ * and that the hosts 12.168.24.100 and 12.168.24.101 are unreachable.
+ * @author ejs
+ *
+ */
+public class ManualTestPathFileLocator {
+	
+	private static final String FAKE_HOST = "12.168.24.100";
+	private static final String FAKE_HOST2 = "12.168.24.101";
+	private static final String ROM_PATH = "/usr/local/src/v9t9-data/roms";
+	private static final String MODULE_PATH = "/usr/local/src/v9t9-data/modules";
+	
+
+	@Test
+	public void testPathLists() throws URISyntaxException {
+
+		PathFileLocator locator = new PathFileLocator();
+		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+
+		assertEquals(0, locator.getSearchURIs().length);
+
+		locator.addReadOnlyPathProperty(bootRoms);
+		
+		assertEquals(0, locator.getSearchURIs().length);
+		
+		bootRoms.getList().add("/tmp/foo");
+
+		assertEquals(1, locator.getSearchURIs().length);
+
+		bootRoms.getList().add("/tmp/foo/bar");
+
+		assertEquals(2, locator.getSearchURIs().length);
+
+		IProperty rwPath = new SettingProperty("RamPath", "file://tmp");
+		locator.setReadWritePathProperty(rwPath);
+		
+		assertEquals(3, locator.getSearchURIs().length);
+		
+		// should correct paths
+		assertEquals(new URI("file://tmp/"), locator.getSearchURIs()[0]);
+		
+		
+	}
+	
+	@Test
+	public void testLookups() {
+		
+		PathFileLocator locator = new PathFileLocator();
+		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		
+		locator.addReadOnlyPathProperty(bootRoms);
+		
+		URI uri;
+		
+		uri = locator.findFile("994arom.bin");
+		assertNull(uri);
+		
+		bootRoms.getList().add("/tmp/foo");
+
+		uri = locator.findFile("994arom.bin");
+		assertNull(uri);
+
+		bootRoms.getList().add("/tmp/foo/bar");
+
+		uri = locator.findFile("994arom.bin");
+		assertNull(uri);
+
+		IProperty rwPath = new SettingProperty("RamPath", "/tmp");
+		locator.setReadWritePathProperty(rwPath);
+
+		uri = locator.findFile("994arom.bin");
+		assertNull(uri);
+
+		bootRoms.getList().add("file://" + ROM_PATH);
+		
+		uri = locator.findFile("994arom.bin");
+		assertNotNull(uri);
+		uri = locator.findFile("wumpusg.bin");
+		assertNull(uri);
+		
+		bootRoms.getList().add(MODULE_PATH);
+		
+		uri = locator.findFile("994arom.bin");
+		assertNotNull(uri);
+		uri = locator.findFile("wumpusg.bin");
+		assertNotNull(uri);
+
+	}
+	
+
+	@Test
+	public void testWritePaths() throws MalformedURLException, IOException {
+		
+		PathFileLocator locator = new PathFileLocator();
+		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		
+		locator.addReadOnlyPathProperty(bootRoms);
+		
+		URI uri;
+		
+		bootRoms.getList().add(ROM_PATH);
+		bootRoms.getList().add(MODULE_PATH);
+
+		uri = locator.findFile("994arom.bin");
+		assertNotNull(uri);
+
+		// new file should not exist yet... if not, test area needs cleaning
+		String TESTFILE = "__testfile.bin";
+		uri = locator.findFile(TESTFILE);
+		assertNull(uri);
+		
+		URI writeURI;
+		
+		// no writeable paths registered
+		writeURI = locator.getWriteURI(TESTFILE);
+		assertNull(writeURI);
+
+		File desired = new File("/tmp/" + TESTFILE);
+		desired.delete();
+		assertFalse(desired.exists());
+		
+		IProperty rwPath = new SettingProperty("RamPath", "/tmp");
+		locator.setReadWritePathProperty(rwPath);
+		
+		writeURI = locator.getWriteURI(TESTFILE);
+		assertNotNull(writeURI);
+		assertEquals(desired.getAbsolutePath(), writeURI.getPath());
+
+		// searching should not have written anything yet
+		uri = locator.findFile(TESTFILE);
+		assertNull(uri);
+
+		assertFalse(desired.exists());
+		
+		OutputStream os = locator.createOutputStream(writeURI);
+		os.write("foo bar.\n".getBytes());
+		os.close();
+		
+		// any URI queried by #getWriteURI() will be checked every time
+		uri = locator.findFile(TESTFILE);
+		assertNotNull(uri);
+
+		assertEquals(desired.getAbsolutePath(), uri.getPath());
+		
+		writeURI = locator.getWriteURI(TESTFILE);
+		assertNotNull(writeURI);
+		assertEquals(desired.getAbsolutePath(), writeURI.getPath());
+		
+	}
+
+	@Test
+	public void testTroublesomeLookups() {
+		
+		PathFileLocator locator = new PathFileLocator();
+		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		
+		locator.addReadOnlyPathProperty(bootRoms);
+		
+		URI uri;
+		
+		/// PHASE ONE
+		
+		bootRoms.getList().add("http://" + FAKE_HOST + "/fake/path/to/check");
+		
+		locator.setConnectionTimeout(1000);
+		
+		long start, end;
+		
+		start = System.currentTimeMillis();
+		uri = locator.findFile("file.bin");
+		assertNull(uri);
+		end = System.currentTimeMillis();
+		
+		long orig = end - start;
+		
+		System.out.println("first search: " + orig);
+		
+		assertTrue(orig < 1000 + 100);
+
+		// second search for the same content should fail quickly
+		start = System.currentTimeMillis();
+		uri = locator.findFile("file.bin");
+		assertNull(uri);
+		end = System.currentTimeMillis();
+
+		long second = end - start;
+		
+		System.out.println("second search: " + second);
+		
+		assertTrue(second * 100 < orig);
+		
+
+		// search for the totally different content on the bad URI should fail quickly too
+		start = System.currentTimeMillis();
+		uri = locator.findFile("file2.bin");
+		assertNull(uri);
+		end = System.currentTimeMillis();
+
+		long third = end - start;
+		
+		System.out.println("third search: " + third);
+		
+		assertTrue(third * 100 < orig);
+		
+
+		///////////////
+		
+
+		bootRoms.getList().add("http://" + FAKE_HOST2 + "/fake/path/to/check?query=foo");
+		
+		locator.setConnectionTimeout(2500);
+		
+		start = System.currentTimeMillis();
+		uri = locator.findFile("file.bin");
+		assertNull(uri);
+		end = System.currentTimeMillis();
+		
+		orig = end - start;
+		
+		System.out.println("first search: " + orig);
+		
+		// re-caches and re-checks
+		assertTrue(orig < 2500 * 2 + 100);
+
+		// second search for the same content should fail quickly
+		start = System.currentTimeMillis();
+		uri = locator.findFile("file.bin");
+		assertNull(uri);
+		end = System.currentTimeMillis();
+
+		second = end - start;
+		
+		System.out.println("second search: " + second);
+		
+		assertTrue(second * 100 < orig);
+		
+
+		// search for the totally different content on the bad URI should fail quickly too
+		start = System.currentTimeMillis();
+		uri = locator.findFile("file.bin");
+		assertNull(uri);
+		end = System.currentTimeMillis();
+
+		third = end - start;
+		
+		System.out.println("third search: " + third);
+		
+		assertTrue(third * 100 < orig);
+	}
+}

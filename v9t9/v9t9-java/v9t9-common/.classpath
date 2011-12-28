@@ -5,5 +5,6 @@
 	<classpathentry kind="lib" path="/ejs-base/libs/jna.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ejs-base"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar" sourcepath="/ejs-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

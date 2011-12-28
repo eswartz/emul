@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.machine.common.tests;
+package v9t9.common.tests;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.BaseSettingsHandler;
