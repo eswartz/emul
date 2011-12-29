@@ -235,54 +235,6 @@ public class ModuleManager implements IModuleManager {
 		try {
 
 			IMemoryEntry entry = null;
-			/*
-			ISettingsHandler settings = Settings.getSettings(machine);
-			String base = settings.getInstanceSettings().getConfigDirectory();
-			Map<String, Object> properties = info.getProperties();
-			if (properties.containsKey(MemoryEntryInfo.FILENAME2)) {
-				try {
-					entry = DiskMemoryEntry.newBankedWordMemoryFromFile(
-							settings,
-							(Class<BankedMemoryEntry>) properties.get(MemoryEntryInfo.CLASS),
-							info.getAddress(),
-							info.getSize(),
-							memory,
-							info.getName(),
-							info.getDomain(memory),
-							info.getFilePath(settings, base, info.getFilename(), info.isStored()),
-							info.getOffset(),
-							info.getFilePath(settings, base, info.getFilename2(), info.isStored()),
-							info.getOffset2());
-				} catch (IOException e) {
-					String filename = info.getString(MemoryEntryInfo.FILENAME); 
-					String filename2 = info.getString(MemoryEntryInfo.FILENAME2); 
-					if (filename2 == null)
-					throw new NotifyException(null, 
-							"Failed to load file(s) '" + filename + "' and/or '"+ filename2 + "' for '" + info.getString(MemoryEntryInfo.NAME) + "'",
-							e);
-				}
-			} else if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))) {
-				entry = DiskMemoryEntry.newWordMemoryFromFile(
-						settings,
-						info.getAddress(),
-						info.getSize(),
-						info.getName(),
-						info.getDomain(memory),
-						info.getFilePath(settings, base, info.getFilename(), info.isStored()),
-						info.getOffset(),
-						info.isStored());
-			} else {
-				entry = DiskMemoryEntry.newByteMemoryFromFile(
-						settings,
-						info.getAddress(),
-						info.getSize(),
-						info.getName(),
-						info.getDomain(memory),
-						info.getFilePath(settings, base, info.getFilename(), info.isStored()),
-						info.getOffset(),
-						info.isStored());
-			}
-			*/
 			entry = machine.getMemoryEntryFactory().newMemoryEntry(info);
 			return entry;
 		} catch (IOException e) {
