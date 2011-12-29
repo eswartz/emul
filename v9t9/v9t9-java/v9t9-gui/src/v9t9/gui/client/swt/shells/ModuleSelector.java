@@ -14,9 +14,11 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -143,12 +145,21 @@ public class ModuleSelector extends Composite {
 	private Text filterText;
 
 	private Map<IModule, Boolean> knownStates = new HashMap<IModule, Boolean>();
+	private Set<IModule> currentFetches = new HashSet<IModule>();
 	private boolean showMissingModules;
 	protected boolean sortModules;
 	protected int sortDirection;
 	
 	private static Map<String, Image> loadedImages = new HashMap<String, Image>();
-	
+
+	private ViewerFilter filteredSearchFilter = new FilteredSearchFilter();
+	private final SwtWindow window;
+	private IProperty pauseProperty;
+	private boolean wasPaused;
+	private PathFileLocator pathFileLocator;
+	private ExecutorService executor;
+	private ViewerUpdater viewerUpdater;
+
 	/**
 	 * Not used -- UI is too complex 
 	 * @author ejs
@@ -367,7 +378,7 @@ public class ModuleSelector extends Composite {
 					});
 				}
 				
-				// dleay to gather more changes at once
+				// delay to gather more changes at once
 				try {
 					Thread.sleep(750);
 				} catch (InterruptedException e) {
@@ -376,13 +387,6 @@ public class ModuleSelector extends Composite {
 			}
 		}
 	}
-	private ViewerFilter filteredSearchFilter = new FilteredSearchFilter();
-	private final SwtWindow window;
-	private IProperty pauseProperty;
-	private boolean wasPaused;
-	private PathFileLocator pathFileLocator;
-	private ExecutorService executor;
-	private ViewerUpdater viewerUpdater;
 
 	/**
 	 * @param window 
@@ -1115,33 +1119,43 @@ public class ModuleSelector extends Composite {
 			return known;
 		
 		// this can take a long time
-		Runnable runnable = new Runnable() {
-			
-			@Override
-			public void run() {
-				Boolean state;
+		synchronized (currentFetches) {
+			if (currentFetches.contains(module))
+				return false;
+			currentFetches.add(module);
+		
+			Runnable runnable = new Runnable() {
 				
-				state = knownStates.get(module);
-				if (state == null) {
-					try {
-						moduleManager.getModuleMemoryEntries(module);
-						synchronized (knownStates) {
-							knownStates.put(module, Boolean.TRUE);
+				@Override
+				public void run() {
+					Boolean state;
+					
+					state = knownStates.get(module);
+					if (state == null) {
+						try {
+							moduleManager.getModuleMemoryEntries(module);
+							synchronized (knownStates) {
+								knownStates.put(module, Boolean.TRUE);
+							}
+						} catch (NotifyException e) {
+							//System.out.println(e.toString());
+							synchronized (knownStates) {
+								knownStates.put(module, Boolean.FALSE);
+							}
 						}
-					} catch (NotifyException e) {
-						System.out.println(e.toString());
-						synchronized (knownStates) {
-							knownStates.put(module, Boolean.FALSE);
+						synchronized (currentFetches) {
+							currentFetches.remove(module);
 						}
 					}
+					
+					// notify viewer of change (label or content)
+					viewerUpdater.post(module);
 				}
-				
-				// notify viewer of change (label or content)
-				viewerUpdater.post(module);
-			}
-		};
+			};
+			
+			executor.submit(runnable);
+		}
 		
-		executor.submit(runnable);
 		return false;
 	}
 
