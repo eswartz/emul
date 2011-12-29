@@ -30,6 +30,7 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.files.DataFiles;
 import v9t9.common.files.IFileHandler;
+import v9t9.common.files.PathFileLocator;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
@@ -41,11 +42,13 @@ import v9t9.common.machine.TerminatedException;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
 import v9t9.engine.events.RecordingEventNotifier;
 import v9t9.engine.files.FileHandler;
 import v9t9.engine.keyboard.KeyboardState;
+import v9t9.engine.memory.MemoryEntryFactory;
 
 /** Encapsulate all the information about a running emulated machine.
  * @author ejs
@@ -102,6 +105,8 @@ abstract public class MachineBase implements IMachine {
 	protected IProperty moduleList;
 	protected IProperty realTime;
 	private final ISettingsHandler settings;
+	private IMemoryEntryFactory memoryEntryFactory;
+	private PathFileLocator locator;
 	
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -115,11 +120,17 @@ abstract public class MachineBase implements IMachine {
     	this.memoryModel = machineModel.createMemoryModel(this);
     	this.memory = memoryModel.getMemory();
     	this.console = memoryModel.getConsole();
-    	
+
+    	locator = new PathFileLocator();
+    	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingBootRomsPath));
+		locator.addReadOnlyPathProperty(settings.get(DataFiles.settingUserRomsPath));
+		locator.setReadWritePathProperty(settings.get(DataFiles.settingStoredRamPath));
+
+    	memoryEntryFactory = new MemoryEntryFactory(settings, memory, locator);
+
     	timer = new Timer();
     	fastTimer = new FastTimer("Machine");
 
-    	
     	init(machineModel);
 
     	machineModel.defineDevices(this);
@@ -746,6 +757,14 @@ abstract public class MachineBase implements IMachine {
 	
 	public void setFileHandler(IFileHandler fileHandler) {
 		this.fileHandler = fileHandler;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getMemoryEntryFactory()
+	 */
+	@Override
+	public IMemoryEntryFactory getMemoryEntryFactory() {
+		return memoryEntryFactory;
 	}
 }
 

@@ -148,7 +148,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		awtContainer.setLayout(fixedAspectLayout);
 		
 		fullScreen = Settings.get(machine, BaseEmulatorWindow.settingFullScreen);
-		fullScreen.addListener(new IPropertyListener() {
+		fullScreen.addListenerAndFire(new IPropertyListener() {
 			
 			@Override
 			public void propertyChanged(IProperty property) {

@@ -9,13 +9,13 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
-import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.machine.EmulatorMachinesData;
 
 
@@ -27,7 +27,7 @@ import v9t9.machine.EmulatorMachinesData;
  */
 public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryModel {
 
-	public V9t9EnhancedConsoleMemoryModel(IBaseMachine machine) {
+	public V9t9EnhancedConsoleMemoryModel(IMachine machine) {
 		super(machine);
 	}
 
@@ -82,7 +82,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 				.withFilename2(filename2)
 				.create("CPU ROM (enhanced)");
 		
-    		cpuRomEntry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(info);	
+    		cpuRomEntry = machine.getMemoryEntryFactory().newMemoryEntry(info);	
     	} catch (IOException e) {
     		reportLoadError(eventNotifier, filename1 + " or " + filename2, e);
     		return null;

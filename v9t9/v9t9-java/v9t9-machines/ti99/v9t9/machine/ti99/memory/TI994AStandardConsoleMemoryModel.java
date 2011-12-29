@@ -11,6 +11,7 @@ package v9t9.machine.ti99.memory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
@@ -32,7 +33,7 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
     		ISettingsHandler.WORKSPACE,
     		"MemoryExpansion32K", new Boolean(false));
 
-    public TI994AStandardConsoleMemoryModel(IBaseMachine machine) {
+    public TI994AStandardConsoleMemoryModel(IMachine machine) {
     	super(machine);
     }
     

@@ -15,14 +15,15 @@ import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
 import v9t9.common.asm.Routine;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.IMemoryModel;
 import v9t9.common.tests.TestSettingsHandler;
+import v9t9.engine.memory.Memory;
+import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.StockMemoryModel;
 import v9t9.engine.memory.StockRamArea;
-import v9t9.engine.memory.StoredMemoryEntryFactory;
+import v9t9.engine.memory.MemoryEntryFactory;
 import v9t9.machine.ti99.asm.HighLevelInstruction;
 import v9t9.machine.ti99.cpu.InstTable9900;
 import v9t9.machine.ti99.cpu.Instruction9900;
@@ -41,12 +42,12 @@ public abstract class BaseTest9900 extends TestCase {
 	 
 	protected IMemoryDomain CPU;
 	protected IMemory memory;
-	private IMemoryModel memoryModel;
-
 
 	protected StandardInstructionParserStage9900 stdInstStage = new StandardInstructionParserStage9900();
 	protected DirectiveInstructionParserStage dtveStage = new DirectiveInstructionParserStage(stdInstStage.getOperandParser());
 	protected Assembler9900 stdAssembler = new Assembler9900();
+
+	protected MemoryEntryFactory memoryEntryFactory;
 
 	public BaseTest9900() {
 		super();
@@ -64,17 +65,16 @@ public abstract class BaseTest9900 extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		setupAssembler();
-		memoryModel = new StockMemoryModel();
-		memory = memoryModel.getMemory();
-        CPU = memoryModel.getConsole();
+		memory = new Memory();
+        CPU = new MemoryDomain(IMemoryDomain.NAME_CPU);
         memory.addDomain(IMemoryDomain.NAME_CPU, CPU);
         memory.addAndMap(new MemoryEntry("test ROM",
         		CPU,
         		0,
         		8192,
         		new StockRamArea(8192)));
-        
-		StoredMemoryEntryFactory.setupInstance(settings, memory);
+
+        memoryEntryFactory = new MemoryEntryFactory(settings, memory, new PathFileLocator()	);
 	}
 	
 

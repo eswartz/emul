@@ -28,7 +28,7 @@ public class Memory implements IMemory {
 
     private List<IMemoryListener> listeners;
 
-	private final IMemoryModel model;
+	private IMemoryModel model;
 
 	private Map<String, IMemoryDomain> domains = new HashMap<String, IMemoryDomain>();
 
@@ -111,11 +111,13 @@ public class Memory implements IMemory {
     	notifyListenersOfPhysicalChange(entry);
     }
     
-    public Memory(IMemoryModel model) {
-        this.model = model;
+    public Memory() {
 		listeners = new java.util.ArrayList<IMemoryListener>();
     }
 
+    public void setModel(IMemoryModel model) {
+    	this.model = model;
+    }
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemory#getModel()
 	 */

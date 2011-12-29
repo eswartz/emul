@@ -25,9 +25,11 @@ import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.MemoryRanges;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
+import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StockRamArea;
@@ -85,6 +87,7 @@ public abstract class Assembler implements IAssembler {
 	private ConstPool constPool = new ConstPool(this);
 	protected IAsmInstructionFactory instructionFactory;
 	protected int basicSize;
+	private Memory memory;
 	private static final Pattern INCL_LINE = Pattern.compile(
 				"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
 	private static final Pattern ASM_LINE = Pattern.compile("(?:((?:[A-Za-z_][A-Za-z0-9_]*)|(?:\\$[0-9])):?(?:\\s*)(.*))|(?:\\s+(.*))");
@@ -239,6 +242,9 @@ public abstract class Assembler implements IAssembler {
 	 */
 	public Assembler() {
 		super();
+		
+		memory = new Memory();
+		memory.addDomain(IMemoryDomain.NAME_CPU, new MemoryDomain(IMemoryDomain.NAME_CPU));
 	}
 
 	private void assembleInst(List<IInstruction> asmInsts, String line_, String filename,
@@ -679,5 +685,10 @@ public abstract class Assembler implements IAssembler {
 	public int getBasicAlignment() {
 		return basicSize;
 	}
+	
+	public IMemory getMemory() {
+		return memory;
+	}
+
 
 }

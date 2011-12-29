@@ -76,7 +76,7 @@ public class DsrManager implements IPersistable, IDsrManager {
 			public int write(int addr, int data, int num) {
 				if (data == 1) {
 					try {
-						dsr.activate(machine.getConsole());
+						dsr.activate(machine.getConsole(), machine.getMemoryEntryFactory());
 						activeDsr = dsr;
 					} catch (IOException e) {
 						System.err.println("Could not active DSR " + dsr.getName() + ": " + e.getMessage());

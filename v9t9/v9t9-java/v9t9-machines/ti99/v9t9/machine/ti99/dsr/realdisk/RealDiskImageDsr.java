@@ -15,6 +15,7 @@ import ejs.base.settings.SettingProperty;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
@@ -24,7 +25,6 @@ import v9t9.engine.hardware.ICruReader;
 import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
-import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.machine.ti99.dsr.IDsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
@@ -295,14 +295,14 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		.standardDsrRom("disk.bin")
 		.create("TI Disk DSR ROM");
 
-	public void activate(IMemoryDomain console) throws IOException {
+	public void activate(IMemoryDomain console, IMemoryEntryFactory memoryEntryFactory) throws IOException {
 		if (!settingDsrEnabled.getBoolean())
 			return;
 		
 		realDiskDsrActiveSetting.setBoolean(true);
 		
 		if (romMemoryEntry == null)
-			this.romMemoryEntry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+			this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(
 					realDiskDsrMemoryEntryInfo);
 		if (ioMemoryEntry == null) {
 			ioArea = new DiskMMIOMemoryArea();

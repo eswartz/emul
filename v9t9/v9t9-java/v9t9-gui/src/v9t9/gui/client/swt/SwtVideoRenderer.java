@@ -176,7 +176,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		});
 		
 		fullScreen = settings.get(BaseEmulatorWindow.settingFullScreen);
-		fullScreen.addListener(new IPropertyListener() {
+		fullScreen.addListenerAndFire(new IPropertyListener() {
 			
 			@Override
 			public void propertyChanged(IProperty property) {
@@ -184,7 +184,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 			}
 		});
 		
-		setupCanvas();
 		return canvas;
 	}
 
@@ -194,9 +193,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 
 	public Control getControl() {
 		return canvas;
-	}
-	protected void setupCanvas() {
-		
 	}
 
 	protected int getStyleBits() {

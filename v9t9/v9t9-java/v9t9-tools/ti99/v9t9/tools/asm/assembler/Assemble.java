@@ -6,21 +6,24 @@
  */
 package v9t9.tools.asm.assembler;
 
+import ejs.base.settings.SettingProperty;
 import gnu.getopt.Getopt;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
-import v9t9.engine.memory.StoredMemoryEntryFactory;
+import v9t9.engine.memory.MemoryEntryFactory;
 import v9t9.tools.asm.assembler.inst9900.Assembler9900;
 
 public class Assemble {
 
     private static final String PROGNAME = Assemble.class.getName();
+	private static MemoryEntryFactory memoryEntryFactory;
     
     /**
      * @param args
@@ -29,6 +32,9 @@ public class Assemble {
         Assembler9900 assembler = new Assembler9900();
         
         assembler.setList(null);
+        
+        memoryEntryFactory = new MemoryEntryFactory(null, assembler.getMemory(), new PathFileLocator());
+        memoryEntryFactory.getPathFileLocator().setReadWritePathProperty(new SettingProperty("Output", "."));
         
         boolean selectedProcessor = false;
         int romStart = 0, romSize = 0x2000;
@@ -48,25 +54,22 @@ public class Assemble {
             		size = Integer.parseInt(file.substring(idx+1));
             		file = file.substring(0, idx);
             	}
-            	assembler.addMemoryEntry(createMemoryEntry(assembler, romStart, size, "CPU ROM", file));
+            	assembler.addMemoryEntry(createMemoryEntry(romStart, size, "CPU ROM", file));
             	break;
             }
             case 'e': {
             	assembler.addMemoryEntry(
-            			createMemoryEntry(assembler, romStart, romSize * 2, "CPU ROM", 
-            			getopt.getOptarg()));
+            			createMemoryEntry(romStart, romSize * 2, "CPU ROM", getopt.getOptarg()));
             	break;
             }
             case 'm': {
             	assembler.addMemoryEntry(
-            			createMemoryEntry(assembler, 0x6000, 0x2000, "Module ROM", 
-            					getopt.getOptarg()));
+            			createMemoryEntry(0x6000, 0x2000, "Module ROM", getopt.getOptarg()));
             	break;
             }
             case 'd': {
             	assembler.addMemoryEntry(
-            			createMemoryEntry(assembler, 0x4000, 0x2000, "DSR ROM",
-            					getopt.getOptarg()));
+            			createMemoryEntry(0x4000, 0x2000, "DSR ROM", getopt.getOptarg()));
             	break;  
             }
             case 'g': {
@@ -78,7 +81,7 @@ public class Assemble {
             		file = file.substring(0, idx);
             	}
             	assembler.addMemoryEntry(
-            			createMemoryEntry(assembler, 0x0000, size, "GROM", file));
+            			createMemoryEntry(0x0000, size, "GROM", file));
             	break; 
             }
             case 'l':
@@ -141,22 +144,13 @@ public class Assemble {
         }
     }
 
-    /**
-	 * @param assembler
-	 * @param romStart
-	 * @param size
-	 * @param string
-	 * @param file
-	 * @return
-     * @throws IOException 
-	 */
-	private static IMemoryEntry createMemoryEntry(Assembler9900 assembler,
-			int romStart, int size, String string, String file) throws IOException {
+	private static IMemoryEntry createMemoryEntry(int romStart,
+			int size, String string, String file) throws IOException {
 		MemoryEntryInfo info = MemoryEntryInfoBuilder.wordMemoryEntry()
 			.withAddress(romStart).withSize(size).withFilename(file).
 			setStored(true).create(string);
 
-		return StoredMemoryEntryFactory.getInstance().newMemoryEntry(info);
+		return memoryEntryFactory.newMemoryEntry(info);
 	}
 
 	private static void help() {

@@ -18,7 +18,6 @@ import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.NativeFileMemoryEntry;
 import v9t9.machine.ti99.asm.HighLevelCodeInfo;
@@ -31,7 +30,6 @@ import v9t9.machine.ti99.asm.TopDownPhase;
  */
 public class Decompiler implements ICodeProvider {
 
-	protected IMemoryModel model;
 	protected IMemory memory;
 	protected IMemoryDomain consoleMemory;
 	protected DecompileOptions options;
@@ -41,13 +39,12 @@ public class Decompiler implements ICodeProvider {
 	/**
 	 * 
 	 */
-	public Decompiler(IMemoryModel model, IInstructionFactory instructionFactory, ICpuState state) {
+	public Decompiler(IMemory memory, IInstructionFactory instructionFactory, ICpuState state) {
 		super();
-		this.model = model;
 		this.state = state;
 		
-		memory = model.getMemory();
-		consoleMemory = model.getConsole();
+		this.memory = memory; 
+		consoleMemory = memory.getDomain(IMemoryDomain.NAME_CPU);
 		highLevel = new HighLevelCodeInfo(state, instructionFactory);
 	}
 

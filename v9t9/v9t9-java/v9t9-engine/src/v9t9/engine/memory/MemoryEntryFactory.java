@@ -8,50 +8,33 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.memory.StoredMemoryEntryInfo;
 import v9t9.common.modules.MemoryEntryInfo;
 
 /**
+ * This factory assists in creating {@link IMemoryEntry} instances.
  * @author ejs
  *
  */
-public class StoredMemoryEntryFactory {
-
-	private static StoredMemoryEntryFactory INSTANCE;
-	public static void setupInstance(ISettingsHandler settings, IMemory memory) {
-		PathFileLocator.setupInstance(settings);
-		INSTANCE = new StoredMemoryEntryFactory(settings, memory);
-	}
-	
-	public static StoredMemoryEntryFactory getInstance() {
-		return INSTANCE;
-	}
+public class MemoryEntryFactory implements IMemoryEntryFactory {
 	
 	private PathFileLocator locator;
 	private final IMemory memory;
 	private final ISettingsHandler settings;
 
-	public StoredMemoryEntryFactory(ISettingsHandler settings, IMemory memory) {
+	public MemoryEntryFactory(ISettingsHandler settings, IMemory memory, PathFileLocator locator) {
 		this.settings = settings;
 		this.memory = memory;
-		this.locator = PathFileLocator.getInstance();
+		this.locator = locator;
 	}
 	
 
-    /**
-     * Read memory and create a memory entry with CPU byte ordering.
-     * @param addr
-     * @param size	the expected size of the entry (a maximum if != 0, else for 0, the
-     * actual size is used)
-     * @param name
-     * @param domain
-     * @param filepath
-     * @param fileoffs
-     * @param isStored if true, this is a RAM entry which can be rewritten
-     * @return new entry
-     * @throws IOException if file cannot be read, and is not stored
-     */
-    public IMemoryEntry newMemoryEntry(MemoryEntryInfo info) throws IOException {
+    /* (non-Javadoc)
+	 * @see v9t9.engine.memory.IMemoryEntryFactory#newMemoryEntry(v9t9.common.modules.MemoryEntryInfo)
+	 */
+    @Override
+	public IMemoryEntry newMemoryEntry(MemoryEntryInfo info) throws IOException {
     	if (!info.isBanked())
     		return newSimpleMemoryEntry(info);
     	else
@@ -157,6 +140,10 @@ public class StoredMemoryEntryFactory {
     	return entry;
     }
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.IMemoryEntryFactory#resolveMemoryEntry(v9t9.common.modules.MemoryEntryInfo, java.lang.String, java.lang.String, int)
+	 */
+	@Override
 	public StoredMemoryEntryInfo resolveMemoryEntry(
 			MemoryEntryInfo info,
 			String name,
@@ -166,6 +153,14 @@ public class StoredMemoryEntryFactory {
 		return StoredMemoryEntryInfo.resolveStoredMemoryEntryInfo(
 				locator, settings, memory, 
 				info, name, filename, fileoffs);
+	}
+
+
+	/**
+	 * 
+	 */
+	public PathFileLocator getPathFileLocator() {
+		return locator;
 	}
     
 

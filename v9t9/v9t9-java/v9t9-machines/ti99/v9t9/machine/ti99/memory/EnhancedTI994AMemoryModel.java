@@ -4,7 +4,7 @@
 package v9t9.machine.ti99.memory;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.machine.IBaseMachine;
+import v9t9.common.machine.IMachine;
 
 /**
  * @author ejs
@@ -14,7 +14,7 @@ public class EnhancedTI994AMemoryModel extends TI994AStandardConsoleMemoryModel 
 	/**
 	 * @param machine
 	 */
-	public EnhancedTI994AMemoryModel(IBaseMachine machine) {
+	public EnhancedTI994AMemoryModel(IMachine machine) {
 		super(machine);
 	}
 

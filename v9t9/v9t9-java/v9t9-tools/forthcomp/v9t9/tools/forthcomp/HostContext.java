@@ -696,7 +696,7 @@ public class HostContext extends Context {
 	 * @param dp
 	 */
 	public void markFixup(int dp) {
-		assert hostDp > 0 && hostWords.get(hostDp - 1) instanceof BaseHostBranch;
+		//assert hostDp > 0 && hostWords.get(hostDp - 1) instanceof BaseHostBranch;
 		
 		fixupMap.put(dp, hostDp - 1);
 	}

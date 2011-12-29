@@ -14,6 +14,7 @@ import java.util.Collection;
 
 
 import v9t9.common.client.IClient;
+import v9t9.common.cpu.ICpu;
 import v9t9.gui.client.ClientFactory;
 import v9t9.gui.client.swt.SwtAwtJavaClient;
 import v9t9.gui.client.swt.SwtJavaClient;
@@ -30,6 +31,7 @@ import com.sun.jna.Native;
  */
 public class Emulator {
 	private static final boolean sIsWebStarted = System.getProperty("javawebstart.version") != null;
+	private static boolean debug;
 
 	static {
 		if (sIsWebStarted && System.getProperty("jna.library.path") == null) {
@@ -90,6 +92,7 @@ public class Emulator {
 					//new LongOpt("remote", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), 'r'),
 					new LongOpt("clean", LongOpt.NO_ARGUMENT, null, 'C'),
 					new LongOpt("configdir", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
+					new LongOpt("debug", LongOpt.NO_ARGUMENT, null, 'd'),
 				}
 		);
 		
@@ -101,6 +104,9 @@ public class Emulator {
 			}
 			else if (opt == 'c') {
 				configdir = getopt.getOptarg();
+			}
+			else if (opt == 'd') {
+				debug = true;
 			}
 		}
 		
@@ -152,6 +158,9 @@ public class Emulator {
 		client = ClientFactory.createClient(clientId, 
 				server.getMachine());
 
+		if (debug)
+			server.getMachine().getSettings().get(ICpu.settingDumpFullInstructions).setBoolean(true);
+		
 		if (client == null) {
 			System.err.println("Failed to contact or create client: " + clientId);
 			System.exit(23);

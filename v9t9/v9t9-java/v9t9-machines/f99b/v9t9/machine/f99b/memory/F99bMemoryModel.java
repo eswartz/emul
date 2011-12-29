@@ -15,7 +15,6 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
-import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 
@@ -52,10 +51,14 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	
 	private static MemoryEntryInfo f99bRomMemoryEntryInfo = MemoryEntryInfoBuilder
 		.byteMemoryEntry()
+		.withFilename("f99brom.bin")
 		.withOffset(0x400)
 		.withAddress(0x400)
 		.create("CPU ROM");
-	
+
+	private static String FORTH_GROM = "forth99.grm";
+	private static String GROM_DICT = "f99bgromdict.bin";
+
 	private static MemoryEntryInfo f99bGramMemoryEntryInfo = MemoryEntryInfoBuilder
 		.byteMemoryEntry()
 		.withDomain(IMemoryDomain.NAME_GRAPHICS)
@@ -78,9 +81,8 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	@Override
 	public void loadMemory(IEventNotifier eventNotifier) {
 		IMemoryEntry cpuRomEntry;
-		String filename = "f99brom.bin";
     	try {
-			cpuRomEntry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+			cpuRomEntry = machine.getMemoryEntryFactory().newMemoryEntry(
 					f99bRomMemoryEntryInfo);
 			cpuRomEntry.load();
 			cpuRomEntry.copySymbols(CPU);
@@ -95,12 +97,10 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 			
 			memory.addAndMap(cpuRomEntry);
     	} catch (IOException e) {
-    		reportLoadError(eventNotifier, filename, e);
+    		reportLoadError(eventNotifier, f99bRomMemoryEntryInfo.getFilename(), e);
     	}
     	
     	// see if we need to merge the GROM dictionary
-    	String FORTH_GROM = "forth99.grm";
-    	String GROM_DICT = "f99bgromdict.bin";
     	File dictFile = null;
 
     	File gromFile = DataFiles.resolveFile(settings, FORTH_GROM);
@@ -144,10 +144,10 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
     	// GROM consists of ROM for 16k
 		loadConsoleGrom(eventNotifier, FORTH_GROM);
 		
-		// then 16k of volatile GRAM for new dictionary
+		// then 16k of GRAM for new dictionary
 		IMemoryEntry gramDictEntry;
 		try {
-			gramDictEntry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+			gramDictEntry = machine.getMemoryEntryFactory().newMemoryEntry(
 					f99bGramMemoryEntryInfo);
 			gramDictEntry.getArea().setLatency(0);
 			memory.addAndMap(gramDictEntry);
@@ -158,7 +158,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		
 		// then 32k of GRAM storage
 		try {
-			IMemoryEntry entry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+			IMemoryEntry entry = machine.getMemoryEntryFactory().newMemoryEntry(
 					f99bDiskGramMemoryEntryInfo);
 			memory.addAndMap(entry);
 		} catch (IOException e) {

@@ -23,6 +23,7 @@ import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.common.settings.IconSettingSchema;
 import v9t9.common.settings.Settings;
@@ -32,7 +33,6 @@ import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
-import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.ti99.dsr.IDsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
@@ -95,7 +95,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#activate(v9t9.engine.memory.MemoryDomain)
 	 */
 	@Override
-	public void activate(IMemoryDomain console) throws IOException {
+	public void activate(IMemoryDomain console, IMemoryEntryFactory memoryEntryFactory) throws IOException {
 		// DSR ROM
 		if (!pcodeCardEnabled.getBoolean())
 			return;
@@ -104,7 +104,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 		
 		IMemory memory = console.getMemory();
 
-		ensureSetup();
+		ensureSetup(memoryEntryFactory);
 		
 		// pCode GROMs are accessed specially
 		memory.addAndMap(dsrMemoryEntry);
@@ -131,7 +131,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 		.withFilename("pCodeGroms.bin")
 		.create("P-Code GROM");
 	
-	private void ensureSetup() throws IOException {
+	private void ensureSetup(IMemoryEntryFactory memoryEntryFactory) throws IOException {
 		IMemory memory = machine.getMemory();
 		IMemoryDomain console = machine.getConsole();
 
@@ -140,7 +140,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 		
 		if (dsrMemoryEntry == null) {
 			this.dsrMemoryEntry = (PCodeDsrRomBankedMemoryEntry) 
-				StoredMemoryEntryFactory.getInstance().newMemoryEntry(pcodeDsrRomMemoryEntryInfo);
+				memoryEntryFactory.newMemoryEntry(pcodeDsrRomMemoryEntryInfo);
 		}
 		pcodeDomain = memory.getDomain(PCODE);
 		if (pcodeDomain == null) {
@@ -150,7 +150,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 			memory.addDomain(PCODE, pcodeDomain);
 		}
 		if (gromMemoryEntry == null) {
-			gromMemoryEntry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+			gromMemoryEntry = memoryEntryFactory.newMemoryEntry(
 					pcodeGromMemoryEntryInfo);
 		}
 		
@@ -236,7 +236,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 		pcodeCardEnabled.loadState(sub);
 		
 		try {
-			ensureSetup();
+			ensureSetup(machine.getMemoryEntryFactory());
 		} catch (IOException e) {
 			machine.notifyEvent(Level.ERROR, e.getMessage());
 		}

@@ -8,11 +8,12 @@ package v9t9.machine.ti99.tests;
 
 import junit.framework.TestCase;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.tests.TestSettingsHandler;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
-import v9t9.engine.memory.StoredMemoryEntryFactory;
+import v9t9.engine.memory.MemoryEntryFactory;
 import v9t9.machine.ti99.machine.TI994A;
 
 /**
@@ -24,6 +25,7 @@ public class DiskMemoryEntryTest extends TestCase {
     
     String basedir = "/usr/local/src/v9t9-data/roms/";
 	private ISettingsHandler settings;
+	private MemoryEntryFactory memoryEntryFactory;
 
     public static void main(String[] args) {
         junit.textui.TestRunner.run(DiskMemoryEntryTest.class);
@@ -37,14 +39,14 @@ public class DiskMemoryEntryTest extends TestCase {
 	    super.setUp();
 	    settings = new TestSettingsHandler();
 	    machine = new TI994A(settings);
-	    StoredMemoryEntryFactory.setupInstance(settings, machine.getMemory());
+	    memoryEntryFactory = new MemoryEntryFactory(settings, machine.getMemory(), new PathFileLocator());
         CPU = machine.getConsole();
 	    CPU.zero();
 	}
  
 
     public void testNewFromFile() throws Exception {
-        DiskMemoryEntry ent = (DiskMemoryEntry) StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+        DiskMemoryEntry ent = (DiskMemoryEntry) memoryEntryFactory.newMemoryEntry(
         		MemoryEntryInfoBuilder.standardConsoleRom(basedir+"994arom.bin").create("rom"));
         assertTrue(ent != null);
         assertEquals(ent.getSize(), 8192);

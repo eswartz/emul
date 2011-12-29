@@ -27,6 +27,8 @@ public interface IMemory extends IPersistable {
 
 	void removeAndUnmap(IMemoryEntry entry);
 
+	void setModel(IMemoryModel model);
+	
 	IMemoryModel getModel();
 
 	IMemoryDomain[] getDomains();

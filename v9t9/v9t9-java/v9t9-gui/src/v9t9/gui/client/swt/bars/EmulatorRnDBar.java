@@ -65,6 +65,8 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 			public void handleEvent(Event event) {
 				if (!(event.widget instanceof Control))
 					return;
+				if (((Control) event.widget).getShell() != swtWindow.getShell())
+					return;
 				if (event.button == 1) {
 					Point pt = ((Control)event.widget).toDisplay(event.x, event.y);
 					swtWindow.handleClickOutsideToolWindow(pt);

@@ -16,7 +16,6 @@ import v9t9.common.asm.LabelListOperand;
 import v9t9.common.asm.Routine;
 import v9t9.common.asm.RoutineOperand;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
-import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.machine.ti99.asm.ContextSwitchRoutine;
 import v9t9.machine.ti99.asm.HighLevelInstruction;
 import v9t9.machine.ti99.asm.LinkedRoutine;
@@ -718,7 +717,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
 
 	public void test994ARom_0() throws Exception {
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
-    	this.memory.addAndMap(StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+    	this.memory.addAndMap(memoryEntryFactory.newMemoryEntry(
     			MemoryEntryInfoBuilder.standardConsoleRom(path).create("CPU ROM")));
     	phase.disassemble();
     	phase.addStandardROMRoutines();
@@ -734,7 +733,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
     
     public void test994ARom_BlockCrazy() throws Exception {
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
-    	this.memory.addAndMap(StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+    	this.memory.addAndMap(memoryEntryFactory.newMemoryEntry(
     			MemoryEntryInfoBuilder.standardConsoleRom(path).create("CPU ROM")));
     	phase.disassemble();
     	phase.addStandardROMRoutines();
@@ -758,7 +757,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
     
     public void test994ARom_1() throws Exception {
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
-    	this.memory.addAndMap(StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+    	this.memory.addAndMap(memoryEntryFactory.newMemoryEntry(
     			MemoryEntryInfoBuilder.standardConsoleRom(path).create("CPU ROM")));
     	phase.decompileInfo.getMemoryRanges().clear();
     	phase.decompileInfo.getMemoryRanges().addRange(0x800, 0x800, true);

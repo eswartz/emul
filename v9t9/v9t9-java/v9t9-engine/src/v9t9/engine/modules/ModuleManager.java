@@ -34,7 +34,6 @@ import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
-import v9t9.engine.memory.StoredMemoryEntryFactory;
 
 /**
  * @author ejs
@@ -284,7 +283,7 @@ public class ModuleManager implements IModuleManager {
 						info.isStored());
 			}
 			*/
-			entry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(info);
+			entry = machine.getMemoryEntryFactory().newMemoryEntry(info);
 			return entry;
 		} catch (IOException e) {
 			String filename = info.getString(MemoryEntryInfo.FILENAME); 

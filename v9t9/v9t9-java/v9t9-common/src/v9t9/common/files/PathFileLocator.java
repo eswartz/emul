@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import v9t9.common.client.ISettingsHandler;
-
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 
@@ -40,18 +38,6 @@ import ejs.base.properties.IPropertyListener;
  */
 public class PathFileLocator {
 
-	private static PathFileLocator INSTANCE;
-	public static void setupInstance(ISettingsHandler settings) {
-		INSTANCE = new PathFileLocator();
-		INSTANCE.addReadOnlyPathProperty(settings.get(DataFiles.settingBootRomsPath));
-		INSTANCE.addReadOnlyPathProperty(settings.get(DataFiles.settingUserRomsPath));
-		INSTANCE.setReadWritePathProperty(settings.get(DataFiles.settingStoredRamPath));
-	}
-	
-	public static PathFileLocator getInstance() {
-		return INSTANCE;
-	}
-	
 	private List<IProperty> roPathProperties = new ArrayList<IProperty>();
 	private IProperty rwPathProperty = null;
 	private IPropertyListener pathListChangedListener;
@@ -135,11 +121,8 @@ public class PathFileLocator {
 		
 		cachedWriteURI = null;
 		if (rwPathProperty != null) {
-			String path = rwPathProperty.getValue().toString();
-			if (!path.endsWith("/"))
-				path += "/";
 			try {
-				cachedWriteURI = new URI("file", path, null);
+				cachedWriteURI = createURI(rwPathProperty.getValue().toString());
 			} catch (URISyntaxException e) {
 				e.printStackTrace();
 			}

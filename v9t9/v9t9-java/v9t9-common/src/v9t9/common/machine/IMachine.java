@@ -10,6 +10,7 @@ import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardState;
+import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.modules.IModuleManager;
 
 /**
@@ -50,4 +51,6 @@ public interface IMachine extends IBaseMachine {
 	void setCru(ICruChip cru);
 
 	IFileHandler getFileHandler();
+
+	IMemoryEntryFactory getMemoryEntryFactory();
 }

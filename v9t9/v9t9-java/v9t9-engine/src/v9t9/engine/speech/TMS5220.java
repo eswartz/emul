@@ -23,8 +23,6 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.common.speech.ISpeechDataSender;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
-import v9t9.engine.memory.StoredMemoryEntryFactory;
-
 import static v9t9.common.speech.TMS5220Consts.*;
 
 /**
@@ -76,7 +74,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 			.withSize(0x8000)
 			.create("Speech ROM");
 	
-	public TMS5220(IMachine machine, final ISettingsHandler settings, final IMemoryDomain speech) {
+	public TMS5220(final IMachine machine, final ISettingsHandler settings, final IMemoryDomain speech) {
 		logSpeech = settings.get(LPCSpeech.settingLogSpeech);
 		Logging.registerLog(logSpeech, 
 				new PrintWriter(System.out, true));
@@ -84,7 +82,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 		Runnable runnable = new Runnable() {
 			public void run() {
 				try {
-					speechRom = StoredMemoryEntryFactory.getInstance().newMemoryEntry(speechMemoryEntryInfo);
+					speechRom = machine.getMemoryEntryFactory().newMemoryEntry(speechMemoryEntryInfo);
 					speechRom.load();
 					speechRom.getDomain().mapEntry(speechRom);
 				} catch (IOException e) {

@@ -318,6 +318,7 @@ public class ModuleSelector extends Composite {
 	private final SwtWindow window;
 	private IProperty pauseProperty;
 	private boolean wasPaused;
+	private PathFileLocator pathFileLocator;
 
 	/**
 	 * @param window 
@@ -333,6 +334,8 @@ public class ModuleSelector extends Composite {
 		shell.setText("Module Selector");
 		
 		this.machine = machine;
+		
+		pathFileLocator = machine.getMemoryEntryFactory().getPathFileLocator();
 		
 		pauseProperty = Settings.get(machine, IMachine.settingPauseMachine);
 		wasPaused = pauseProperty.getBoolean();
@@ -1149,9 +1152,13 @@ public class ModuleSelector extends Composite {
 		 */
 		@Override
 		public Font getFont(Object element, int columnIndex) {
-			return columnIndex == 0 && element instanceof InfoTreeNode 
-				? JFaceResources.getFontRegistry().getItalic(JFaceResources.DEFAULT_FONT) 
-				: null;
+			if (columnIndex == 0 && element instanceof InfoTreeNode) 
+				return JFaceResources.getFontRegistry().getItalic(JFaceResources.DEFAULT_FONT);
+			
+			if (columnIndex == 1 && ((TreeNode) element).getValue() instanceof IProperty)
+				return JFaceResources.getTextFont();
+			
+			return null;
 		}
 		
 		
@@ -1308,7 +1315,7 @@ public class ModuleSelector extends Composite {
 			memInfoNode.setChildren(memNodes.toArray(new TreeNode[memNodes.size()]));
 			kids.add(memInfoNode);
 
-			for (IProperty prop : PathFileLocator.getInstance().getSearchPathProperties()) {
+			for (IProperty prop : pathFileLocator.getSearchPathProperties()) {
 				kids.add(makeTreeNode(prop));
 			}
 			
@@ -1322,7 +1329,7 @@ public class ModuleSelector extends Composite {
 			StoredMemoryEntryInfo storedInfo;
 			try {
 				storedInfo = StoredMemoryEntryInfo.resolveStoredMemoryEntryInfo(
-						PathFileLocator.getInstance(), getMachine().getSettings(), 
+						pathFileLocator, getMachine().getSettings(), 
 						getMachine().getMemory(), info, 
 						name, filename, offset);
 				memNodes.add(makeTreeNode(storedInfo));
@@ -1401,9 +1408,8 @@ public class ModuleSelector extends Composite {
 		 */
 		protected TreeNode createPathNode(Object path) {
 			try {
-				URI uri = PathFileLocator.getInstance().createURI(path.toString());
-				return PathFileLocator.getInstance().exists(uri) ? 
-						new TreeNode(uri) : new ErrorTreeNode(uri);
+				URI uri = pathFileLocator.createURI(path.toString());
+				return pathFileLocator.exists(uri) ? new TreeNode(uri) : new ErrorTreeNode(uri);
 			} catch (URISyntaxException e) {
 				return new ErrorTreeNode(new Pair<String, String>(path.toString(), e.getMessage()));
 			}

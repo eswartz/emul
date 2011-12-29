@@ -69,9 +69,15 @@ public class StoredMemoryEntryInfo {
         
 		int filesize;
 		
+		// note: if stored, this finds the user's copy first or the original template
 		URI uri = locator.findFile(filename);
-		if (uri == null)
-			throw new FileNotFoundException(filename);
+		if (uri == null) {
+			if (info.isStored()) {
+				uri = locator.getWriteURI(filename);
+			}
+			if (uri == null)
+				throw new FileNotFoundException(filename);
+		}
 
 		try {
 	        filesize = locator.getContentLength(uri);

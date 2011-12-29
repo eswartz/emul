@@ -5,6 +5,7 @@ import java.io.IOException;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntryFactory;
 
 public interface IDsrHandler9900 extends IDsrHandler {
 
@@ -21,8 +22,9 @@ public interface IDsrHandler9900 extends IDsrHandler {
 
 	/** Activate the DSR (should be called when the ROM memory entry is mapped) 
 	 * @param console
+	 * @param memoryEntryFactory TODO
 	 * @throws IOException */
-	void activate(IMemoryDomain console) throws IOException;
+	void activate(IMemoryDomain console, IMemoryEntryFactory memoryEntryFactory) throws IOException;
 	/** Dectivate the DSR (should be called when the ROM memory entry is unmapped) 
 	 * @param console */
 	void deactivate(IMemoryDomain console);
