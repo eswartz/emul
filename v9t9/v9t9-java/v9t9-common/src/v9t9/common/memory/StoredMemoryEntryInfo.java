@@ -3,6 +3,7 @@
  */
 package v9t9.common.memory;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
@@ -80,7 +81,11 @@ public class StoredMemoryEntryInfo {
 		}
 
 		try {
-	        filesize = locator.getContentLength(uri);
+			try {
+				filesize = (int) new File(uri).length();
+			} catch (IllegalArgumentException e) {
+				filesize = locator.getContentLength(uri);
+			}
 	        
 			/* for large files selected, e.g., by accident */
 			if (size > 0 && filesize > size) {
