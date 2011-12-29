@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for 9900 Assembler">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+	
+    <property name="base"        value="."/>
+    <property name="ejs.base.dir"   value="${base}/../../../base/ejs-base"/>
+    <property name="build.dir"   value="${base}/../../build"/>
+
+    <property name="bin.dir"     value="${base}/bin"/>
+    <property name="common.bin.dir"     value="${base}/../v9t9-common/bin"/>
+    <property name="engine.bin.dir"     value="${base}/../v9t9-engine/bin"/>
+    <property name="machines.bin.dir"     value="${base}/../v9t9-machines/bin"/>
+	
+    <target name="create_run_jar">
+        <jar destfile="${build.dir}/bin/99asm.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="v9t9.tools.asm.assembler.Assemble"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="${bin.dir}" includes="v9t9/tools/asm/**/*.class"/>
+            <fileset dir="${common.bin.dir}" includes="v9t9/common/asm/*.class"/>
+            <fileset dir="${common.bin.dir}" includes="v9t9/common/asm/assembler/**/*.class"/>
+            <fileset dir="${common.bin.dir}" includes="v9t9/common/files/PathFileLocator*.class"/>
+            <fileset dir="${common.bin.dir}" includes="v9t9/common/memory/**/*.class"/>
+            <fileset dir="${engine.bin.dir}" includes="v9t9/engine/cpu/**/Cpu*.class"/>
+            <fileset dir="${engine.bin.dir}" includes="v9t9/engine/memory/**/Memory*.class"/>
+            <fileset dir="${engine.bin.dir}" includes="v9t9/engine/memory/**/*Area*.class"/>
+            <fileset dir="${machines.bin.dir}" includes="v9t9/common/memory/**/*.class"/>
+            <fileset dir="${machines.bin.dir}" includes="v9t9/engine/cpu/**/*.class"/>
+            <fileset dir="${machines.bin.dir}" includes="v9t9/machine/ti99/asm/**/*.class"/>
+            <fileset dir="${machines.bin.dir}" includes="v9t9/machine/ti99/cpu/Inst*.class"/>
+            <fileset dir="${machines.bin.dir}" includes="v9t9/machine/ti99/cpu/*Operand*.class"/>
+            <fileset dir="${ejs.base.dir}/bin" includes="ejs/base/settings/**/*.class"/>
+            <fileset dir="${ejs.base.dir}/bin" includes="ejs/base/properties/**/*.class"/>
+            <fileset dir="${ejs.base.dir}/bin" includes="ejs/base/utils/**/*.class"/>
+            <zipfileset excludes="META-INF/*.SF" src="${ejs.base.dir}/libs/gnu-getopt-1.0.13.jar"/>
+        </jar>
+    </target>
+</project>
