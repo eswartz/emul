@@ -23,7 +23,7 @@ public class PCodeDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 	}
 	public PCodeDsrRomBankedMemoryEntry(ISettingsHandler settings, IMemory memory, String name,
 			IMemoryEntry[] banks) {
-		super(memory, name, banks);
+		super(settings, memory, name, banks);
 		
 
 	}

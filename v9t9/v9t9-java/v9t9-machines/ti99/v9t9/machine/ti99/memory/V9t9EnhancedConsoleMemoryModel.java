@@ -16,6 +16,7 @@ import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.MultiBankedMemoryEntry;
 import v9t9.machine.EmulatorMachinesData;
 
 
@@ -80,6 +81,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 				.withSize(0x4000)
 				.withFilename(filename1)
 				.withFilename2(filename2)
+				.withBankClass(MultiBankedMemoryEntry.class)
 				.create("CPU ROM (enhanced)");
 		
     		cpuRomEntry = machine.getMemoryEntryFactory().newMemoryEntry(info);	

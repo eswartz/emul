@@ -4,6 +4,7 @@
 package v9t9.engine.memory;
 
 import ejs.base.settings.ISettingSection;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryEntry;
 
@@ -26,7 +27,7 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	 */
 	public MultiBankedMemoryEntry() {
 	}
-	public MultiBankedMemoryEntry(IMemory memory,
+	public MultiBankedMemoryEntry(ISettingsHandler settings, IMemory memory,
 			String name, IMemoryEntry[] banks) {
 		super(memory, name, banks[0].getDomain(), banks[0].getAddr(), banks[0].getSize(), banks.length);
 		

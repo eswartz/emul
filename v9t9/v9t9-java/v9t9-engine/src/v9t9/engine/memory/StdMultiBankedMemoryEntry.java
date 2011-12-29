@@ -32,7 +32,7 @@ public class StdMultiBankedMemoryEntry extends
 	 */
 	public StdMultiBankedMemoryEntry(ISettingsHandler settings, IMemory memory, String name,
 			IMemoryEntry[] banks) {
-		super(memory, name, banks);
+		super(settings, memory, name, banks);
 		dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
 	}
 
