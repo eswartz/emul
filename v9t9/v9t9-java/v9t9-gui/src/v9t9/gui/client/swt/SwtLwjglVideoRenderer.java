@@ -53,6 +53,7 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -315,10 +316,17 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 		if (VERBOSE) System.out.println("Compiling " + url + " to " +shaderObj);
 		String text;
+		InputStream is = null;
 		try {
-			text = DataFiles.readInputStreamText(url.openStream());
+			is = url.openStream();
+			text = DataFiles.readInputStreamText(is);
 		} catch (IOException e) {
 			throw new GLShaderException(filename, "Cannot read file " + url, e);
+		} finally {
+			try {
+				is.close();
+			} catch (IOException e) {
+			}
 		}
 		ARBShaderObjects.glShaderSourceARB(shaderObj, text);
 		ARBShaderObjects.glCompileShaderARB(shaderObj);
