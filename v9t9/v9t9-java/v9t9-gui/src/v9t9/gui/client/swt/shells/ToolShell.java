@@ -25,7 +25,7 @@ import v9t9.gui.client.swt.IFocusRestorer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.shells.IToolShellFactory.Behavior;
 import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
-import v9t9.gui.common.PrefUtils;
+import v9t9.gui.common.SwtPrefUtils;
 
 public class ToolShell {
 	private Point desiredLocation; 
@@ -71,7 +71,7 @@ public class ToolShell {
 
 		String boundsStr = boundsPref.getString();
 		if (boundsStr != null) {
-			final Rectangle savedBounds = PrefUtils.readBoundsString(boundsStr);
+			final Rectangle savedBounds = SwtPrefUtils.readBoundsString(boundsStr);
 			if (savedBounds != null) {
 				if (behavior.centering != null && behavior.centerOverControl != null)
 					shell.setSize(savedBounds.width, savedBounds.height);
@@ -137,7 +137,7 @@ public class ToolShell {
 		shell.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
 				Rectangle bounds = shell.getBounds();
-				String boundsStr = PrefUtils.writeBoundsString(bounds);
+				String boundsStr = SwtPrefUtils.writeBoundsString(bounds);
 				boundsPref.setString(boundsStr);
 			}
 		});

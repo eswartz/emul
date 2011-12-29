@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import v9t9.common.client.ISettingsHandler;
+
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 
@@ -37,17 +39,26 @@ import ejs.base.properties.IPropertyListener;
  *
  */
 public class PathFileLocator {
+
+	private static PathFileLocator INSTANCE;
+	public static void setupInstance(ISettingsHandler settings) {
+		INSTANCE = new PathFileLocator();
+		INSTANCE.addReadOnlyPathProperty(settings.get(DataFiles.settingBootRomsPath));
+		INSTANCE.addReadOnlyPathProperty(settings.get(DataFiles.settingUserRomsPath));
+		INSTANCE.setReadWritePathProperty(settings.get(DataFiles.settingStoredRamPath));
+	}
+	
+	public static PathFileLocator getInstance() {
+		return INSTANCE;
+	}
 	
 	private List<IProperty> roPathProperties = new ArrayList<IProperty>();
 	private IProperty rwPathProperty = null;
 	private IPropertyListener pathListChangedListener;
 
-	private static final URI MISSING = URI.create("missing:/");
-
 	private Set<String> potentiallyWriteableFiles = new HashSet<String>();
 	
 	private int lastCachedHash;
-	private Map<String, URI> cachedLookups = new HashMap<String, URI>();
 	private Set<URI> cachedSlowURIs = new HashSet<URI>();
 	private URI[] cachedURIs = new URI[0];
 	private URI cachedWriteURI = null;
@@ -66,7 +77,6 @@ public class PathFileLocator {
 			@Override
 			public void propertyChanged(IProperty property) {
 				synchronized (PathFileLocator.this) {
-					cachedLookups.clear();
 					cachePaths();
 				}
 			}
@@ -102,7 +112,6 @@ public class PathFileLocator {
 		
 		lastCachedHash = 0;
 		cachedSlowURIs.clear();
-		cachedLookups.clear();
 		cachedListings.clear();
 		cachedListingTime.clear();
 		
@@ -110,15 +119,8 @@ public class PathFileLocator {
 
 			@Override
 			public void handle(String path) {
-				// ensure all act like directories
-				if (!path.endsWith("/"))
-					path += "/";
-				
 				try {
-					URI uri = new URI(path);
-					if (!uri.isAbsolute()) {
-						uri = new URI("file", path, null);
-					}
+					URI uri = createURI(path);
 					uris.add(uri);
 				} catch (URISyntaxException e) {
 					e.printStackTrace();
@@ -144,6 +146,27 @@ public class PathFileLocator {
 		}
 	}
 	
+	/**
+	 * @param path
+	 * @return
+	 * @throws URISyntaxException 
+	 */
+	public URI createURI(String path) throws URISyntaxException {
+		// ensure all act like directories
+		if (!path.contains(":/") || path.indexOf(":/") == 1) {
+			path = new File(path).getAbsolutePath();
+		}
+		if (!path.endsWith("/"))
+			path += "/";
+		
+		URI uri = new URI(path);
+		if (!uri.isAbsolute()) {
+			uri = new URI("file", path, null);
+		}
+
+		return uri;
+	}
+
 	/**
 	 * @param iPathIterator
 	 */
@@ -221,18 +244,13 @@ public class PathFileLocator {
 	 * @throws IllegalArgumentException if file contributes invalid URI segment
 	 */
 	public synchronized URI findFile(String file) {
+		File localFile = new File(file);
+		if (localFile.isAbsolute())
+			return localFile.toURI();
+		
 		URI[] searchURIs = getSearchURIs();
 		
 		URI uri = null;
-		
-		if (!potentiallyWriteableFiles.contains(file)) { 
-			uri = cachedLookups.get(file);
-			if (uri == MISSING)
-				return null;
-		}
-		
-		if (uri != null)
-			return uri;
 		
 		for (URI baseUri : searchURIs) {
 			if (cachedSlowURIs.contains(baseUri))
@@ -250,7 +268,6 @@ public class PathFileLocator {
 			}
 		}
 		
-		cachedLookups.put(file, MISSING);
 		return null;
 	}
 	
@@ -381,7 +398,6 @@ public class PathFileLocator {
 			return null;
 
 		// assume the user will create it
-		cachedLookups.remove(file);
 		potentiallyWriteableFiles.add(file);
 		
 		return cachedWriteURI.resolve(file);
@@ -456,6 +472,39 @@ public class PathFileLocator {
 			os = new FileOutputStream(file);
 		}
 		return os;
+	}
+
+	/**
+	 * @param uri
+	 * @return
+	 */
+	public boolean exists(URI uri) {
+		InputStream is = null;
+		try {
+			is = createInputStream(uri);
+			return true;
+		} catch (IOException e) {
+			return false;
+		} finally {
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	/**
+	 * @return
+	 */
+	public IProperty[] getSearchPathProperties() {
+		List<IProperty> props = new ArrayList<IProperty>();
+		if (rwPathProperty != null)
+			props.add(rwPathProperty);
+		props.addAll(roPathProperties);
+		return (IProperty[]) props.toArray(new IProperty[props.size()]);
 	}
 
 }

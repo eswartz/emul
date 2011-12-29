@@ -67,7 +67,7 @@ import v9t9.gui.client.swt.svg.ISVGLoader;
 import v9t9.gui.client.swt.svg.SVGImageProvider;
 import v9t9.gui.client.swt.svg.SVGSalamanderLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
-import v9t9.gui.common.PrefUtils;
+import v9t9.gui.common.SwtPrefUtils;
 
 /**
  * Provide the emulator in an SWT window
@@ -209,7 +209,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell.addDisposeListener(new DisposeListener() {
 
 			public void widgetDisposed(DisposeEvent e) {
-				String boundsPref = PrefUtils.writeBoundsString(shell.getBounds());
+				String boundsPref = SwtPrefUtils.writeBoundsString(shell.getBounds());
 				settingsHandler.get(settingEmulatorWindowBounds).setString(boundsPref);
 				dispose();
 				
@@ -355,18 +355,21 @@ public class SwtWindow extends BaseEmulatorWindow {
 			((SVGImageProvider) rndImageProvider).setImageBar(rndBar.getButtonBar());
 		}
 
-		
+		// restore original window geometry
 		String boundsPref = settingsHandler.get(settingEmulatorWindowBounds).getString();
-		final Rectangle rect = PrefUtils.readBoundsString(boundsPref);
+		final Rectangle rect = SwtPrefUtils.readBoundsString(boundsPref);
 		if (rect != null) {
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {
-					adjustRectVisibility(shell, rect);
-					shell.setBounds(rect);
+					if (!fullScreen.getBoolean()) {
+						adjustRectVisibility(shell, rect);
+						shell.setBounds(rect);
+					} else {
+						shell.setFullScreen(true);
+					}
 				}
 			});
 		}
-		
 
 		fullScreenListener = new IPropertyListener() {
 

@@ -4,6 +4,7 @@
 package v9t9.engine.modules;
 
 import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,9 +24,10 @@ import ejs.base.utils.XMLUtils;
 public class ModuleLoader {
 
 	/**
+	 * @param databaseURI 
 	 * @return
 	 */
-	public static List<IModule> loadModuleList(IMachine machine, InputStream is) throws NotifyException {
+	public static List<IModule> loadModuleList(IMachine machine, InputStream is, URI databaseURI) throws NotifyException {
 		
 		StreamXMLStorage storage = new StreamXMLStorage();
 		storage.setInputStream(is);
@@ -38,8 +40,7 @@ public class ModuleLoader {
 			throw new NotifyException(null, "Error parsing module database", e);
 		}
 		for (Element el : XMLUtils.getChildElementsNamed(storage.getDocumentElement(), "module")) {
-			Module module = new Module(
-					el.getAttribute("name"));
+			Module module = new Module(databaseURI, el.getAttribute("name"));
 			module.loadFrom(machine, el);
 			modules.add(module);
 		}

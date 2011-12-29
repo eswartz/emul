@@ -12,7 +12,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.tools.asm.assembler.inst9900.Assembler9900;
 
 public class Assemble {
@@ -45,47 +48,25 @@ public class Assemble {
             		size = Integer.parseInt(file.substring(idx+1));
             		file = file.substring(0, idx);
             	}
-            	assembler.addMemoryEntry(
-            			DiskMemoryEntry.newWordMemoryFromFile(
-            					null,
-            					romStart, size, "CPU ROM",
-            					assembler.getWritableConsole(),
-            					file,
-            					0x0,
-            					true));
+            	assembler.addMemoryEntry(createMemoryEntry(assembler, romStart, size, "CPU ROM", file));
             	break;
             }
             case 'e': {
             	assembler.addMemoryEntry(
-            			DiskMemoryEntry.newWordMemoryFromFile(
-            					null,
-            					romStart, romSize * 2, "CPU ROM",
-            					assembler.getWritableConsole(),
-            					getopt.getOptarg(),
-            					0x0,
-            					true));
+            			createMemoryEntry(assembler, romStart, romSize * 2, "CPU ROM", 
+            			getopt.getOptarg()));
             	break;
             }
             case 'm': {
             	assembler.addMemoryEntry(
-            			DiskMemoryEntry.newWordMemoryFromFile(
-            					null,
-            					0x6000, 0x2000, "Module ROM", 
-            					assembler.getWritableConsole(),
-            					getopt.getOptarg(),
-            					0x0,
-            					true));
+            			createMemoryEntry(assembler, 0x6000, 0x2000, "Module ROM", 
+            					getopt.getOptarg()));
             	break;
             }
             case 'd': {
             	assembler.addMemoryEntry(
-            			DiskMemoryEntry.newWordMemoryFromFile(
-            					null,
-            					0x4000, 0x2000, "DSR ROM", 
-            					assembler.getWritableConsole(),
-            					getopt.getOptarg(),
-            					0x0,
-            					true));
+            			createMemoryEntry(assembler, 0x4000, 0x2000, "DSR ROM",
+            					getopt.getOptarg()));
             	break;  
             }
             case 'g': {
@@ -97,13 +78,7 @@ public class Assemble {
             		file = file.substring(0, idx);
             	}
             	assembler.addMemoryEntry(
-            			DiskMemoryEntry.newWordMemoryFromFile(
-            					null,
-            					0x0000, size, "GROM", 
-            					assembler.getWritableConsole(),
-            					file,
-            					0x0,
-            					true));
+            			createMemoryEntry(assembler, 0x0000, size, "GROM", file));
             	break; 
             }
             case 'l':
@@ -166,7 +141,25 @@ public class Assemble {
         }
     }
 
-    private static void help() {
+    /**
+	 * @param assembler
+	 * @param romStart
+	 * @param size
+	 * @param string
+	 * @param file
+	 * @return
+     * @throws IOException 
+	 */
+	private static IMemoryEntry createMemoryEntry(Assembler9900 assembler,
+			int romStart, int size, String string, String file) throws IOException {
+		MemoryEntryInfo info = MemoryEntryInfoBuilder.wordMemoryEntry()
+			.withAddress(romStart).withSize(size).withFilename(file).
+			setStored(true).create(string);
+
+		return StoredMemoryEntryFactory.getInstance().newMemoryEntry(info);
+	}
+
+	private static void help() {
         System.out
                 .println("\n"
                         + "tiasm 9900 Assembler v2.0\n"

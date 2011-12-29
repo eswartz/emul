@@ -19,8 +19,11 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.common.speech.ISpeechDataSender;
-import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.StoredMemoryEntryFactory;
 
 import static v9t9.common.speech.TMS5220Consts.*;
 
@@ -52,7 +55,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 	private int addr_pos;	/* for debugger: position of address (0=complete) */
 
-	private DiskMemoryEntry speechRom;
+	private IMemoryEntry speechRom;
 
 	final int speech_hertz = 8000;
 	final int speech_length = speech_hertz / 40;
@@ -65,6 +68,14 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 	private IProperty logSpeech;
 	
+	private final static MemoryEntryInfo speechMemoryEntryInfo = 
+		MemoryEntryInfoBuilder
+			.byteMemoryEntry()
+			.withDomain(IMemoryDomain.NAME_SPEECH)
+			.withFilename("spchrom.bin")
+			.withSize(0x8000)
+			.create("Speech ROM");
+	
 	public TMS5220(IMachine machine, final ISettingsHandler settings, final IMemoryDomain speech) {
 		logSpeech = settings.get(LPCSpeech.settingLogSpeech);
 		Logging.registerLog(logSpeech, 
@@ -73,10 +84,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 		Runnable runnable = new Runnable() {
 			public void run() {
 				try {
-					speechRom = DiskMemoryEntry.newByteMemoryFromFile(
-							settings,
-							0, 0x8000, "Speech ROM",
-							speech, "spchrom.bin", 0, false);
+					speechRom = StoredMemoryEntryFactory.getInstance().newMemoryEntry(speechMemoryEntryInfo);
 					speechRom.load();
 					speechRom.getDomain().mapEntry(speechRom);
 				} catch (IOException e) {

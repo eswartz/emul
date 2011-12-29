@@ -55,6 +55,8 @@ public interface IStoredSettings {
 	String getConfigFileName();
 
 	/**
+	 * Storage for UI preferences, not necessarily tied to the
+	 * state of the machine or emulator
 	 * @return
 	 */
 	ISettingSection getHistorySettings();

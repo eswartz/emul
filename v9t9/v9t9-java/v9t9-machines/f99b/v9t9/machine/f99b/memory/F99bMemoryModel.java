@@ -10,9 +10,12 @@ import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.memory.ByteMemoryArea;
-import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 
@@ -47,20 +50,38 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
                 new F99bConsoleMmioArea((IMachine) machine)));
 	}
 	
+	private static MemoryEntryInfo f99bRomMemoryEntryInfo = MemoryEntryInfoBuilder
+		.byteMemoryEntry()
+		.withOffset(0x400)
+		.withAddress(0x400)
+		.create("CPU ROM");
+	
+	private static MemoryEntryInfo f99bGramMemoryEntryInfo = MemoryEntryInfoBuilder
+		.byteMemoryEntry()
+		.withDomain(IMemoryDomain.NAME_GRAPHICS)
+		.withAddress(0x4000)
+		.withSize(0x4000)
+		.create("16K GRAM Dictionary");
+	
+	private static MemoryEntryInfo f99bDiskGramMemoryEntryInfo = MemoryEntryInfoBuilder
+		.byteMemoryEntry()
+		.withFilename("f99bgram.bin")
+		.withDomain(IMemoryDomain.NAME_GRAPHICS)
+		.withAddress(0x8000)
+		.withSize(0x8000)
+		.setStored(true)
+		.create("GRAM");
+
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.memory.StandardConsoleMemoryModel#loadMemory()
 	 */
 	@Override
 	public void loadMemory(IEventNotifier eventNotifier) {
-		DiskMemoryEntry cpuRomEntry;
+		IMemoryEntry cpuRomEntry;
 		String filename = "f99brom.bin";
     	try {
-			cpuRomEntry = DiskMemoryEntry.newByteMemoryFromFile(
-					settings,
-	    			0x400, 0, "CPU ROM",
-	        		CPU,
-	                filename, 
-	                0x400, false);
+			cpuRomEntry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+					f99bRomMemoryEntryInfo);
 			cpuRomEntry.load();
 			cpuRomEntry.copySymbols(CPU);
 			
@@ -113,7 +134,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 				
 				eventNotifier.notifyEvent(null, Level.INFO, "Merged dictionary into GROM, changed " + gromFile);
 			} catch (IOException e) {
-				reportLoadError(eventNotifier, filename, 
+				reportLoadError(eventNotifier, FORTH_GROM, 
 						(IOException) new IOException("Failed to merge dictionary into GROM").initCause(e));
 				
 			}
@@ -124,23 +145,24 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		loadConsoleGrom(eventNotifier, FORTH_GROM);
 		
 		// then 16k of volatile GRAM for new dictionary
-		MemoryEntry gramDictEntry = new MemoryEntry("16K GRAM Dictionary", GRAPHICS, 
-				0x4000, 0x4000, new ByteMemoryArea(0, new byte[0x4000]));
-		gramDictEntry.getArea().setLatency(0);
-		memory.addAndMap(gramDictEntry);
+		IMemoryEntry gramDictEntry;
+		try {
+			gramDictEntry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+					f99bGramMemoryEntryInfo);
+			gramDictEntry.getArea().setLatency(0);
+			memory.addAndMap(gramDictEntry);
+		} catch (IOException e1) {
+			// should not happen
+			reportLoadError(eventNotifier, f99bGramMemoryEntryInfo.getFilename(), e1);
+		}
 		
 		// then 32k of GRAM storage
 		try {
-			DiskMemoryEntry entry = DiskMemoryEntry.newByteMemoryFromFile(
-					settings,
-	    			0x8000, 0x8000, "GRAM", 
-	    			GRAPHICS,
-	    			// use full path so changes are saved 
-	    			DataFiles.resolveFile(settings, "f99bgram.bin").getAbsolutePath(), 
-	    			0x0, true);
+			IMemoryEntry entry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+					f99bDiskGramMemoryEntryInfo);
 			memory.addAndMap(entry);
 		} catch (IOException e) {
-			reportLoadError(eventNotifier, filename, e);
+			reportLoadError(eventNotifier, f99bDiskGramMemoryEntryInfo.getFilename(), e);
 		}
 	}
 	

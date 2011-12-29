@@ -5,6 +5,7 @@ package v9t9.engine.modules;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,8 +34,10 @@ public class Module implements IModule {
 	private String name;
 	private String image;
 	private URL imageURL;
+	private URI uri;
 	
-	public Module(String name) {
+	public Module(URI uri, String name) {
+		this.uri = uri;
 		this.name = name;
 	}
 
@@ -55,6 +58,11 @@ public class Module implements IModule {
 		if (getClass() != obj.getClass())
 			return false;
 		Module other = (Module) obj;
+		if (uri == null) {
+			if (other.uri != null)
+				return false;
+		} else if (!uri.equals(other.uri))
+			return false;
 		if (entries == null) {
 			if (other.entries != null)
 				return false;
@@ -74,6 +82,14 @@ public class Module implements IModule {
 	@Override
 	public String toString() {
 		return "Module: " + name;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModule#getDatabaseURI()
+	 */
+	@Override
+	public URI getDatabaseURI() {
+		return uri;
 	}
 	
 	/* (non-Javadoc)

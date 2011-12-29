@@ -26,6 +26,7 @@ import v9t9.common.asm.MemoryRanges;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -68,7 +69,7 @@ public abstract class Assembler implements IAssembler {
 	protected MemoryDomain CPUFullRAM = new MemoryDomain(IMemoryDomain.NAME_CPU, "CPU Write");
 	protected MemoryEntry CPUFullRAMEntry = new MemoryEntry("Assembler RAM",
 	    		CPUFullRAM, 0, 0x10000, new StockRamArea(0x10000));
-	private List<DiskMemoryEntry> memoryEntries = new ArrayList<DiskMemoryEntry>();
+	private List<IMemoryEntry> memoryEntries = new ArrayList<IMemoryEntry>();
 	private PrintStream log = System.out;
 	private PrintStream errlog = System.err;
 	private MemoryRanges memoryRanges = new MemoryRanges();
@@ -606,19 +607,22 @@ public abstract class Assembler implements IAssembler {
 		return CPUFullRAM;
 	}
 
-	public void addMemoryEntry(DiskMemoryEntry entry) {
+	public void addMemoryEntry(IMemoryEntry entry) {
 		memoryRanges.addRange(entry.getAddr(), entry.getSize(), true);
 		memoryEntries.add(entry);
 		getWritableConsole().mapEntry(entry);
 	}
 
 	private void saveMemory() {
-		for (DiskMemoryEntry entry : memoryEntries) {
+		for (IMemoryEntry entry : memoryEntries) {
 			try {
-				entry.setDirty(true);
-				entry.save();
-				
-				writeSymbolTable(entry);
+				if (entry instanceof DiskMemoryEntry) {
+					DiskMemoryEntry diskEntry = (DiskMemoryEntry) entry;
+					diskEntry.setDirty(true);
+					diskEntry.save();
+					
+					writeSymbolTable(diskEntry);
+				}
 			} catch (IOException e) {
 				errlog.println("Failed to save: " + e.getMessage());
 			}

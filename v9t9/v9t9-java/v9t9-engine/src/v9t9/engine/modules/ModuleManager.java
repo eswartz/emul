@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,8 +34,7 @@ import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
-import v9t9.engine.memory.BankedMemoryEntry;
-import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.memory.StoredMemoryEntryFactory;
 
 /**
  * @author ejs
@@ -231,28 +232,28 @@ public class ModuleManager implements IModuleManager {
 	}
 
 
-	@SuppressWarnings("unchecked")
 	public IMemoryEntry createMemoryEntry(MemoryEntryInfo info, IMemory memory) throws NotifyException {
 		try {
-			ISettingsHandler settings = Settings.getSettings(machine);
-			String base = settings.getInstanceSettings().getConfigDirectory();
 
 			IMemoryEntry entry = null;
+			/*
+			ISettingsHandler settings = Settings.getSettings(machine);
+			String base = settings.getInstanceSettings().getConfigDirectory();
 			Map<String, Object> properties = info.getProperties();
 			if (properties.containsKey(MemoryEntryInfo.FILENAME2)) {
 				try {
 					entry = DiskMemoryEntry.newBankedWordMemoryFromFile(
 							settings,
 							(Class<BankedMemoryEntry>) properties.get(MemoryEntryInfo.CLASS),
-							info.getInt(MemoryEntryInfo.ADDRESS),
-							info.getInt(MemoryEntryInfo.SIZE),
+							info.getAddress(),
+							info.getSize(),
 							memory,
-							info.getString(MemoryEntryInfo.NAME),
-							memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
-							info.getFilePath(settings, base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
-							info.getInt(MemoryEntryInfo.OFFSET),
-							info.getFilePath(settings, base, info.getString(MemoryEntryInfo.FILENAME2), info.getBool(MemoryEntryInfo.STORED)),
-							info.getInt(MemoryEntryInfo.OFFSET2));
+							info.getName(),
+							info.getDomain(memory),
+							info.getFilePath(settings, base, info.getFilename(), info.isStored()),
+							info.getOffset(),
+							info.getFilePath(settings, base, info.getFilename2(), info.isStored()),
+							info.getOffset2());
 				} catch (IOException e) {
 					String filename = info.getString(MemoryEntryInfo.FILENAME); 
 					String filename2 = info.getString(MemoryEntryInfo.FILENAME2); 
@@ -264,24 +265,26 @@ public class ModuleManager implements IModuleManager {
 			} else if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))) {
 				entry = DiskMemoryEntry.newWordMemoryFromFile(
 						settings,
-						info.getInt(MemoryEntryInfo.ADDRESS),
-						info.getInt(MemoryEntryInfo.SIZE),
-						info.getString(MemoryEntryInfo.NAME),
-						memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
-						info.getFilePath(settings, base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
-						info.getInt(MemoryEntryInfo.OFFSET),
-						info.getBool(MemoryEntryInfo.STORED));
+						info.getAddress(),
+						info.getSize(),
+						info.getName(),
+						info.getDomain(memory),
+						info.getFilePath(settings, base, info.getFilename(), info.isStored()),
+						info.getOffset(),
+						info.isStored());
 			} else {
 				entry = DiskMemoryEntry.newByteMemoryFromFile(
 						settings,
-						info.getInt(MemoryEntryInfo.ADDRESS),
-						info.getInt(MemoryEntryInfo.SIZE),
-						info.getString(MemoryEntryInfo.NAME),
-						memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
-						info.getFilePath(settings, base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
-						info.getInt(MemoryEntryInfo.OFFSET),
-						info.getBool(MemoryEntryInfo.STORED));
+						info.getAddress(),
+						info.getSize(),
+						info.getName(),
+						info.getDomain(memory),
+						info.getFilePath(settings, base, info.getFilename(), info.isStored()),
+						info.getOffset(),
+						info.isStored());
 			}
+			*/
+			entry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(info);
 			return entry;
 		} catch (IOException e) {
 			String filename = info.getString(MemoryEntryInfo.FILENAME); 
@@ -313,8 +316,9 @@ public class ModuleManager implements IModuleManager {
 		//boolean anyErrors = false;
 		InputStream is = null;
 		try {
+			URI uri = url.toURI();
 			is = url.openStream();
-			List<IModule> modList = ModuleLoader.loadModuleList(machine, is);
+			List<IModule> modList = ModuleLoader.loadModuleList(machine, is, uri);
 			addModules(modList);
 		} catch (NotifyException e) {
 			machine.getClient().getEventNotifier().notifyEvent(e.getEvent());
@@ -323,6 +327,10 @@ public class ModuleManager implements IModuleManager {
 			machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
 					"Could not load module list: " + e.getMessage());
 
+		} catch (URISyntaxException e) {
+			machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
+					"Could not load module list: " + e.getMessage());
+			e.printStackTrace();
 		} finally {
 			if (is != null) {
 				try { is.close(); } catch (IOException e) { }

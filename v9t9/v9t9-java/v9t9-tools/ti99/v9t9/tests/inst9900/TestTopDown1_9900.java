@@ -15,9 +15,8 @@ import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.LabelListOperand;
 import v9t9.common.asm.Routine;
 import v9t9.common.asm.RoutineOperand;
-import v9t9.common.client.ISettingsHandler;
-import v9t9.common.tests.TestSettingsHandler;
-import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.machine.ti99.asm.ContextSwitchRoutine;
 import v9t9.machine.ti99.asm.HighLevelInstruction;
 import v9t9.machine.ti99.asm.LinkedRoutine;
@@ -28,9 +27,7 @@ import v9t9.tools.asm.assembler.ParseException;
 
 public class TestTopDown1_9900 extends BaseTopDownTest9900
 {
-	ISettingsHandler settings = new TestSettingsHandler();
-    
-    public void testDanglingBlock() throws Exception {
+   public void testDanglingBlock() throws Exception {
         // no return
         Routine routine = parseRoutine(0x100, "ENTRY", new LinkedRoutine(), new String[] {
            "li r1,100"     
@@ -721,8 +718,8 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
 
 	public void test994ARom_0() throws Exception {
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
-    	this.memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(
-    			settings, 0x0, 0x2000, "CPU ROM", CPU, path, 0, false));
+    	this.memory.addAndMap(StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+    			MemoryEntryInfoBuilder.standardConsoleRom(path).create("CPU ROM")));
     	phase.disassemble();
     	phase.addStandardROMRoutines();
     	phase.run();
@@ -737,8 +734,8 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
     
     public void test994ARom_BlockCrazy() throws Exception {
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
-    	this.memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(
-    			settings, 0x0, 0x2000, "CPU ROM", CPU, path, 0, false));
+    	this.memory.addAndMap(StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+    			MemoryEntryInfoBuilder.standardConsoleRom(path).create("CPU ROM")));
     	phase.disassemble();
     	phase.addStandardROMRoutines();
     	// add label at every instruction just to be sure it doesn't explode
@@ -761,8 +758,8 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
     
     public void test994ARom_1() throws Exception {
     	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
-    	this.memory.addAndMap(DiskMemoryEntry.newWordMemoryFromFile(
-    			settings, 0x800, 0x800, "CPU ROM", CPU, path, 0x800, false));
+    	this.memory.addAndMap(StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+    			MemoryEntryInfoBuilder.standardConsoleRom(path).create("CPU ROM")));
     	phase.decompileInfo.getMemoryRanges().clear();
     	phase.decompileInfo.getMemoryRanges().addRange(0x800, 0x800, true);
     	phase.disassemble();

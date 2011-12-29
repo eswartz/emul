@@ -4,38 +4,50 @@
 package v9t9.gui.client.swt.shells;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 
 import javax.imageio.ImageIO;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.BaseLabelProvider;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableColorProvider;
+import org.eclipse.jface.viewers.ITableFontProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TreeNode;
+import org.eclipse.jface.viewers.TreeNodeContentProvider;
+import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
@@ -56,6 +68,7 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
@@ -64,16 +77,24 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeColumn;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.DialogSettingsWrapper;
+import ejs.base.settings.ISettingSection;
 import ejs.base.settings.SettingProperty;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
 
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
+import v9t9.common.files.PathFileLocator;
 import v9t9.common.machine.IMachine;
+import v9t9.common.memory.StoredMemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.MemoryEntryInfo;
@@ -101,6 +122,9 @@ public class ModuleSelector extends Composite {
 	static final int NAME_COLUMN = 0;
 	static final int FILE_COLUMN = 1;
 	
+
+	private ISettingSection dialogSettings; 
+
 	private TableViewer viewer;
 	private TableColumn nameColumn;
 	private IModule selectedModule;
@@ -119,6 +143,7 @@ public class ModuleSelector extends Composite {
 	private static Map<String, Image> loadedImages = new HashMap<String, Image>();
 	
 	/**
+	 * Not used -- UI is too complex 
 	 * @author ejs
 	 *
 	 */
@@ -144,6 +169,14 @@ public class ModuleSelector extends Composite {
 			super.setShellStyle(newShellStyle | SWT.RESIZE);
 		}
 
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.dialogs.Dialog#getDialogBoundsSettings()
+		 */
+		@Override
+		protected IDialogSettings getDialogBoundsSettings() {
+			return new DialogSettingsWrapper(dialogSettings.findOrAddSection("ScreenShots"));
+		}
+		
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
 		 */
@@ -295,6 +328,8 @@ public class ModuleSelector extends Composite {
 		this.moduleManager = moduleManager;
 		this.window = window;
 		
+		dialogSettings = machine.getSettings().getWorkspaceSettings().getHistorySettings().findOrAddSection("ModuleSelector");
+		
 		shell.setText("Module Selector");
 		
 		this.machine = machine;
@@ -307,9 +342,6 @@ public class ModuleSelector extends Composite {
 		
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
-		//Label label = new Label(this, SWT.WRAP);
-		//label.setText("Select a module:");
-		//GridDataFactory.swtDefaults().grab(true, false).applyTo(label);
 		
 		createSearchFilter();
 		
@@ -326,8 +358,12 @@ public class ModuleSelector extends Composite {
 			public void widgetSelected(SelectionEvent e) {
 				showMissingModules = showUnloadable.getSelection();
 				viewer.refresh();
+				dialogSettings.put("ShowMissingModules", showMissingModules);
 			}
 		});
+		
+		showMissingModules = dialogSettings.getBoolean("ShowMissingModules");
+		showUnloadable.setSelection(showMissingModules);
 		
 		buttonBar = new Composite(this, SWT.NONE);
 		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(3).equalWidth(false).applyTo(buttonBar);
@@ -656,6 +692,7 @@ public class ModuleSelector extends Composite {
 				if (obj instanceof String) {
 					selectedModule = null;
 					switchButton.setEnabled(true);
+					switchModule(false);
 				}
 				else if (obj instanceof IModule) {
 					selectedModule = (IModule) obj;
@@ -690,7 +727,18 @@ public class ModuleSelector extends Composite {
 
 						});
 					}
+
+					final MenuItem ditem;
+					ditem = new MenuItem(menu, SWT.NONE);
+					ditem.setText("Module details...");
 					
+					ditem.addSelectionListener(new SelectionAdapter() {
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							showModuleDetails((IModule) item.getData());
+						}
+					});
+
 					if (menu.getItemCount() == 0) {
 						menu.dispose();
 						return;
@@ -793,13 +841,13 @@ public class ModuleSelector extends Composite {
 		public Image getColumnImage(Object element, int columnIndex) {
 			if (!(element instanceof IModule)) {
 				if (columnIndex == NAME_COLUMN)
-					return getOrLoadImage(null, null, null); 
+					return getOrLoadModuleImage(null, null, null); 
 			}
 			IModule module = (IModule) element;
 			switch (columnIndex) {
 			case NAME_COLUMN: 
 				{
-					return getOrLoadImage(module, module.getImageURL(), module.getImagePath());
+					return getOrLoadModuleImage(module, module.getImageURL(), module.getImagePath());
 				}
 			default:
 				return null;
@@ -851,7 +899,6 @@ public class ModuleSelector extends Composite {
 		public Color getBackground(Object element, int columnIndex) {
 			return null;
 		}
-		
 	}
 
 	/**
@@ -884,7 +931,7 @@ public class ModuleSelector extends Composite {
 	 * @param imagePath
 	 * @return
 	 */
-	public Image getOrLoadImage(IModule module, URL imageURL, String imagePath) {
+	public Image getOrLoadModuleImage(IModule module, URL imageURL, String imagePath) {
 		if (imageURL == null) {
 			if (imagePath != null) {
 				File file = DataFiles.resolveFile(Settings.getSettings(machine), imagePath);
@@ -962,7 +1009,6 @@ public class ModuleSelector extends Composite {
 		if (known != null)
 			return known;
 		
-		// in case user added new modules...
 		try {
 			moduleManager.getModuleMemoryEntries(module);
 			knownStates.put(module, Boolean.TRUE);
@@ -995,5 +1041,388 @@ public class ModuleSelector extends Composite {
 			}
 		}
 	}
+
+	static class ErrorTreeNode extends TreeNode {
+
+		public ErrorTreeNode(Object value) {
+			super(value);
+		}
+		
+	}
+	static class InfoTreeNode extends TreeNode {
+		
+		public InfoTreeNode(Object value) {
+			super(value);
+		}
+		
+	}
+	static class ModuleInfoTreeLabelProvider extends BaseLabelProvider implements ITableLabelProvider,
+		ITableColorProvider, ITableFontProvider {
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
+		 */
+		@Override
+		public Image getColumnImage(Object element, int columnIndex) {
+			return null;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
+		 */
+		@Override
+		public String getColumnText(Object nodeElement, int columnIndex) {
+			TreeNode treeNode = (TreeNode) nodeElement;
+			Object element = treeNode.getValue();
+			switch (columnIndex) {
+			case 0:
+				if (element instanceof IProperty)
+					return "Search Path Property";
+				if (element instanceof IModule)
+					return "Module Entries";
+				if (element instanceof MemoryEntryInfo)
+					return "Expected Properties";
+				if (element instanceof StoredMemoryEntryInfo)
+					return split(((StoredMemoryEntryInfo) element).uri.getPath()).second;
+				if (element instanceof Map.Entry)
+					return ((Map.Entry<?, ?>) element).getKey().toString();
+				if (element instanceof Pair)
+					return ((Pair<?, ?>) element).first.toString();
+				if (element instanceof URI)
+					return ((URI) element).toString();
+				return element.toString();
+			case 1:
+				if (element instanceof IProperty)
+					return ((IProperty) element).getName();
+				if (element instanceof IModule)
+					return null;
+				if (element instanceof String)
+					return element.toString();
+				if (element instanceof MemoryEntryInfo)
+					return null;
+				if (element instanceof StoredMemoryEntryInfo)
+					return split(((StoredMemoryEntryInfo) element).uri.getPath()).first;
+				if (element instanceof Map.Entry)
+					return ((Map.Entry<?, ?>) element).getValue().toString();
+				if (element instanceof Pair)
+					return ((Pair<?, ?>) element).second.toString();
+				if (element instanceof URI) {
+					return treeNode instanceof ErrorTreeNode ? "missing" : "present";
+				}
+				return null;
+			}
+			return null;
+		}
+
+		/**
+		 * @param path
+		 * @return
+		 */
+		private Pair<String, String> split(String path) {
+			int idx = path.lastIndexOf('/');
+			if (idx >= 0)
+				return new Pair<String, String>(path.substring(0, idx), path.substring(idx+1));
+			else
+				return new Pair<String, String>("", path);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableColorProvider#getForeground(java.lang.Object, int)
+		 */
+		@Override
+		public Color getForeground(Object element, int columnIndex) {
+			return element instanceof ErrorTreeNode 
+			? Display.getDefault().getSystemColor(SWT.COLOR_RED) : null;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableColorProvider#getBackground(java.lang.Object, int)
+		 */
+		@Override
+		public Color getBackground(Object element, int columnIndex) {
+			return null;
+		}
+		
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableFontProvider#getFont(java.lang.Object, int)
+		 */
+		@Override
+		public Font getFont(Object element, int columnIndex) {
+			return columnIndex == 0 && element instanceof InfoTreeNode 
+				? JFaceResources.getFontRegistry().getItalic(JFaceResources.DEFAULT_FONT) 
+				: null;
+		}
+		
+		
+	}
+	
+	final class ModuleInfoDialog extends Dialog {
+		private final IModule module;
+
+		private ModuleInfoDialog(Shell parentShell, IModule module) {
+			super(parentShell);
+			this.module = module;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.window.Window#setShellStyle(int)
+		 */
+		@Override
+		protected void setShellStyle(int newShellStyle) {
+			super.setShellStyle(newShellStyle | SWT.RESIZE | SWT.TOOL | SWT.CLOSE);
+		}
+		
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.dialogs.Dialog#createButtonsForButtonBar(org.eclipse.swt.widgets.Composite)
+		 */
+		@Override
+		protected void createButtonsForButtonBar(Composite parent) {
+			createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL,
+					true);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
+		 */
+		@Override
+		protected void configureShell(Shell newShell) {
+			super.configureShell(newShell);
+		}
+
+		protected IDialogSettings getDialogBoundsSettings() {
+			return new DialogSettingsWrapper(dialogSettings.findOrAddSection("ModuleInfo"));
+		}
+		
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
+		 */
+		@Override
+		protected Point getInitialSize() {
+			return super.getInitialSize();
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
+		 */
+		@Override
+		protected Control createDialogArea(Composite parent) {
+			Composite composite = (Composite) super.createDialogArea(parent);
+
+			///////////
+			
+			CLabel title = new CLabel(composite, SWT.NONE);
+			title.setText(module.getName());
+			title.setFont(JFaceResources.getHeaderFont());
+			
+			title.setImage(getOrLoadModuleImage(module, module.getImageURL(), module.getImagePath()));
+			
+			GridDataFactory.fillDefaults().grab(true, false).applyTo(title);
+			
+			///////////
+			Label sep = new Label(composite, SWT.HORIZONTAL);
+			GridDataFactory.fillDefaults().grab(true, false).applyTo(sep);
+
+			///////////
+			
+			CLabel summary = new CLabel(composite, SWT.WRAP);
+			if (isModuleLoadable(module)) {
+				summary.setText("All module files resolved");
+				summary.setImage(getShell().getDisplay().getSystemImage(SWT.ICON_INFORMATION));
+			} else {
+				summary.setText("One or more module files are missing");
+				summary.setImage(getShell().getDisplay().getSystemImage(SWT.ICON_ERROR));
+			}
+			GridDataFactory.fillDefaults().grab(true, false).applyTo(summary);
+
+			///////////
+			
+			final TreeViewer viewer = new TreeViewer(composite, SWT.BORDER);
+			
+			Tree tree = viewer.getTree();
+			tree.setHeaderVisible(true);
+			tree.setLinesVisible(true);
+			
+			GridDataFactory.fillDefaults().grab(true,true).applyTo(tree);
+
+			final TreeColumn nameColumn = new TreeColumn(tree, SWT.RIGHT);
+			final TreeColumn infoColumn = new TreeColumn(tree, SWT.LEFT);
+
+			TreeNodeContentProvider contentProvider = new TreeNodeContentProvider();
+			viewer.setContentProvider(contentProvider);
+			viewer.setLabelProvider(new ModuleInfoTreeLabelProvider());
+			
+			viewer.setInput(createModuleContent());
+			
+			composite.getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					viewer.expandToLevel(2);
+					nameColumn.pack();
+					infoColumn.pack();
+				}
+			});
+			
+			composite.addDisposeListener(new DisposeListener() {
+				
+				@Override
+				public void widgetDisposed(DisposeEvent e) {
+				}
+			});
+			
+			return composite;
+		}
+
+		/**
+		 * @param module2
+		 * @return
+		 */
+		private Object createModuleContent() {
+			List<TreeNode> kids = new ArrayList<TreeNode>();
+
+			
+			TreeNode moduleDatabase = new TreeNode(new Pair<String, String>(
+					"Module Defined By", module.getDatabaseURI().toString()));
+			
+			kids.add(moduleDatabase);
+
+			TreeNode memInfoNode = new TreeNode(module);
+			MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
+			
+			List<TreeNode> memNodes = new ArrayList<TreeNode>();
+			for (MemoryEntryInfo info : infos) {
+				if (!info.isBanked()) {
+					addMemoryInfoNode(memNodes, info,
+							info.getName(), info.getFilename(), info.getOffset());
+				} else {
+					addMemoryInfoNode(memNodes, info, 
+							info.getName() + " (bank 0)", 
+							info.getFilename(), 
+							info.getOffset());
+
+					addMemoryInfoNode(memNodes, info, 
+							info.getName() + " (bank 1)", 
+							info.getFilename2(), 
+							info.getOffset2());
+				}
+			}
+			memInfoNode.setChildren(memNodes.toArray(new TreeNode[memNodes.size()]));
+			kids.add(memInfoNode);
+
+			for (IProperty prop : PathFileLocator.getInstance().getSearchPathProperties()) {
+				kids.add(makeTreeNode(prop));
+			}
+			
+
+			return (TreeNode[]) kids.toArray(new TreeNode[kids.size()]);
+		}
+
+		protected void addMemoryInfoNode(
+				List<TreeNode> memNodes, MemoryEntryInfo info,
+				String name, String filename, int offset) {
+			StoredMemoryEntryInfo storedInfo;
+			try {
+				storedInfo = StoredMemoryEntryInfo.resolveStoredMemoryEntryInfo(
+						PathFileLocator.getInstance(), getMachine().getSettings(), 
+						getMachine().getMemory(), info, 
+						name, filename, offset);
+				memNodes.add(makeTreeNode(storedInfo));
+			} catch (IOException e) {
+				TreeNode errorNode = new ErrorTreeNode(new Pair<String, String>(filename,
+						e instanceof FileNotFoundException ? "File not found on search paths" : e.getMessage()));
+				TreeNode[] kids = new TreeNode[] {
+						makeTreeNode(info),
+						};
+				errorNode.setChildren(kids);
+				memNodes.add(errorNode);
+			}
+		}
+		
+
+		private TreeNode makeTreeNode(StoredMemoryEntryInfo info) {
+			TreeNode node = new TreeNode(info);
+			TreeNode[] kids = new TreeNode[3];
+			kids[0] = new TreeNode(new Pair<String, String>("Location", info.uri.toString()));
+			kids[1] = new TreeNode(new Pair<String, String>("File Size", ""+info.filesize));
+			kids[2] = makeTreeNode(info.info);
+			node.setChildren(kids);
+			return node;
+		}
+
+
+		private TreeNode makeTreeNode(MemoryEntryInfo info) {
+			TreeNode node = new TreeNode(info);
+			Map<String, Object> props = info.getProperties();
+			List<TreeNode> kids = new ArrayList<TreeNode>();
+			for (Map.Entry<String, Object> entry : props.entrySet()) {
+				if (entry.getKey().equals(MemoryEntryInfo.CLASS))
+					continue;
+				if (entry.getKey().equals(MemoryEntryInfo.ADDRESS) 
+						|| entry.getKey().equals(MemoryEntryInfo.OFFSET)
+						|| entry.getKey().equals(MemoryEntryInfo.OFFSET2)
+						)
+					kids.add(new TreeNode(new Pair<String, String>(entry.getKey(), 
+							">" + HexUtils.toHex4(((Number) entry.getValue()).intValue()))));
+				else if (entry.getKey().equals(MemoryEntryInfo.SIZE)) {
+					int size = ((Number) entry.getValue()).intValue();
+					kids.add(new TreeNode(new Pair<String, String>(entry.getKey(),
+								size == 0 ? "any size" : 
+									(size < 0 ? "at most " : "") + ">" + HexUtils.toHex4(size))  ));
+				}
+				else
+					kids.add(new TreeNode(entry));
+			}
+			node.setChildren(kids.toArray(new TreeNode[kids.size()]));
+			return node;
+		}
+
+		private TreeNode makeTreeNode(IProperty pathProperty) {
+			TreeNode node = new TreeNode(pathProperty);
+			List<TreeNode> kids = new ArrayList<TreeNode>();
+			if (pathProperty.getValue() instanceof List) {
+				if (!pathProperty.getList().isEmpty()) {
+					for (Object path : pathProperty.getList()) {
+						kids.add(createPathNode(path));
+					}
+				} else {
+					kids.add(new InfoTreeNode(new Pair<String, String>("Empty", "")));				
+				}
+			} else {
+				kids.add(createPathNode(pathProperty.getValue()));
+			}
+			node.setChildren((TreeNode[]) kids.toArray(new TreeNode[kids.size()]));
+			return node;
+		}
+
+		/**
+		 * @param kids
+		 * @param idx
+		 * @param path
+		 * @return
+		 */
+		protected TreeNode createPathNode(Object path) {
+			try {
+				URI uri = PathFileLocator.getInstance().createURI(path.toString());
+				return PathFileLocator.getInstance().exists(uri) ? 
+						new TreeNode(uri) : new ErrorTreeNode(uri);
+			} catch (URISyntaxException e) {
+				return new ErrorTreeNode(new Pair<String, String>(path.toString(), e.getMessage()));
+			}
+		}
+	}
+	
+	private void showModuleDetails(IModule module) {
+		ModuleInfoDialog dialog = new ModuleInfoDialog(getShell(), module);
+		
+		dialog.open();
+	}
+
+
+	/**
+	 * @return the machine
+	 */
+	public IMachine getMachine() {
+		return machine;
+	}
+
 
 }

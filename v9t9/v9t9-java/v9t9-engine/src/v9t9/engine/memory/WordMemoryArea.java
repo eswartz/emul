@@ -24,6 +24,13 @@ public class WordMemoryArea extends MemoryArea {
     	super(latency);
 	}
     
+	public WordMemoryArea(int latency, short[] memory) {
+		super(latency);
+		this.memory = memory;
+		this.read = memory;
+		this.write = memory;
+	}
+
 	public boolean bWordAccess = true;
 
 	/* actual memory for area, except for empty mem */

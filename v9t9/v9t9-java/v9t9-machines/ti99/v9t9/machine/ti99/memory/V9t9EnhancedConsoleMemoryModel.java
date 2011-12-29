@@ -9,10 +9,13 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
-import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.machine.EmulatorMachinesData;
 
 
@@ -40,7 +43,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 	public void loadMemory(IEventNotifier eventNotifier) {
 
 		// enhanced model can only load FORTH for now
-		DiskMemoryEntry entry;
+		IMemoryEntry entry;
 		
 		URL dataURL = EmulatorMachinesData.getDataURL("../../../build/forth");
 		DataFiles.addSearchPath(settings, dataURL.getPath());
@@ -53,7 +56,8 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 			// the high-GROM code is copied into RAM here
 			try {
 	    		CPU.getEntryAt(0x6000).loadSymbols(
-	    				new FileInputStream(DataFiles.resolveFile(settings, entry.getSymbolFilepath())));
+	    				new FileInputStream(DataFiles.resolveFile(settings, 
+	    						((DiskMemoryEntry) entry).getSymbolFilepath())));
 			} catch (IOException e) {
 				
 			}
@@ -66,16 +70,19 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 	}
 	
 
-    protected BankedMemoryEntry loadEnhancedBankedConsoleRom(IEventNotifier eventNotifier, String filename1, String filename2) {
+    protected IMemoryEntry loadEnhancedBankedConsoleRom(IEventNotifier eventNotifier, String filename1, String filename2) {
     	// not toggled based on writes to the ROM, but MMIO
-    	BankedMemoryEntry cpuRomEntry;
+    	IMemoryEntry cpuRomEntry;
     	try {
-			cpuRomEntry = DiskMemoryEntry.newBankedWordMemoryFromFile(
-	    			settings,
-	    			0x0000,
-	    			0x4000,
-	    			memory, "CPU ROM (enhanced)",
-	    			CPU, filename1, 0x0, filename2, 0x0);
+    		MemoryEntryInfo info = MemoryEntryInfoBuilder
+				.wordMemoryEntry()
+				.withAddress(0)
+				.withSize(0x4000)
+				.withFilename(filename1)
+				.withFilename2(filename2)
+				.create("CPU ROM (enhanced)");
+		
+    		cpuRomEntry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(info);	
     	} catch (IOException e) {
     		reportLoadError(eventNotifier, filename1 + " or " + filename2, e);
     		return null;

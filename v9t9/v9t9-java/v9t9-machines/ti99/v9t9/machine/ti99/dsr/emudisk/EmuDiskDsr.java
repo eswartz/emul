@@ -26,6 +26,8 @@ import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.IDevIcons;
@@ -38,7 +40,8 @@ import v9t9.engine.files.directory.IFileMapper;
 import v9t9.engine.files.directory.PabInfoBlock;
 import v9t9.engine.files.image.Dumper;
 import v9t9.engine.files.image.RealDiskDsrSettings;
-import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.machine.ti99.dsr.IDsrHandler9900;
 
 /**
@@ -49,7 +52,7 @@ import v9t9.machine.ti99.dsr.IDsrHandler9900;
  *
  */
 public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
-	private DiskMemoryEntry memoryEntry;
+	private IMemoryEntry memoryEntry;
 	private short vdpNameCompareBuffer;
 	private final IFileMapper mapper;
 
@@ -129,6 +132,11 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 	public short getCruBase() {
 		return 0x1000;
 	}
+	
+	private static MemoryEntryInfo emuDiskDsrMemoryEntryInfo = MemoryEntryInfoBuilder
+		.standardDsrRom("emudisk.bin")
+		.create("File Stream DSR ROM");
+	
 	public void activate(IMemoryDomain console) throws IOException {
 		if (!settingDsrEnabled.getBoolean())
 			return;
@@ -136,11 +144,8 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 		emuDiskDsrActiveSetting.setBoolean(true);
 
 		if (memoryEntry == null)
-			this.memoryEntry = DiskMemoryEntry.newWordMemoryFromFile(
-					settings,
-					0x4000, 0x2000, "File Stream DSR ROM", console,
-					"emudisk.bin", 0, false);
-		
+			this.memoryEntry = StoredMemoryEntryFactory.getInstance().
+					newMemoryEntry(emuDiskDsrMemoryEntryInfo);
 		console.mapEntry(memoryEntry);
 	}
 	

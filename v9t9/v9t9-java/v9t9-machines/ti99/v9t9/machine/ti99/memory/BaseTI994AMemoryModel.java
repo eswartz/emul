@@ -12,13 +12,16 @@ import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.common.settings.Settings;
-import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.memory.SoundMmio;
 import v9t9.engine.memory.SpeechMmio;
+import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.engine.memory.Vdp9918AMmio;
 import v9t9.engine.memory.Vdp9938Mmio;
@@ -102,14 +105,14 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 	
 	}
 
-	protected DiskMemoryEntry loadConsoleRom(IEventNotifier eventNotifier, String filename) {
-		DiskMemoryEntry cpuRomEntry;
+	protected IMemoryEntry loadConsoleRom(IEventNotifier eventNotifier, String filename) {
+		IMemoryEntry cpuRomEntry;
 		try {
-			cpuRomEntry = DiskMemoryEntry.newWordMemoryFromFile(
-					settings,
-	    			0x0, 0x2000, "CPU ROM",
-	        		CPU,
-	                filename, 0x0, false);
+			MemoryEntryInfo info = MemoryEntryInfoBuilder
+				.standardConsoleRom(filename)
+				.create("CPU ROM");
+			
+			cpuRomEntry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(info);
 		} catch (IOException e) {
 			reportLoadError(eventNotifier, filename, e);
 			return null;
@@ -119,14 +122,14 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 		return cpuRomEntry;
 	}
 
-	protected DiskMemoryEntry loadConsoleGrom(IEventNotifier eventNotifier, String filename) {
-		DiskMemoryEntry entry;
+	protected IMemoryEntry loadConsoleGrom(IEventNotifier eventNotifier, String filename) {
+		IMemoryEntry entry;
 		try {
-			entry = DiskMemoryEntry.newByteMemoryFromFile(
-					settings,
-	    			0x0, 0x6000, "CPU GROM", 
-	    			GRAPHICS,
-	    			filename, 0x0, false);
+			MemoryEntryInfo info = MemoryEntryInfoBuilder
+				.standardConsoleGrom(filename)
+				.create("CPU GROM");
+			
+			entry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(info);
 		} catch (IOException e) {
 			reportLoadError(eventNotifier, filename, e);
 			return null;
@@ -135,14 +138,14 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 		return entry;
 	}
 
-	protected DiskMemoryEntry loadModuleGrom(IEventNotifier eventNotifier, String name, String filename) {
-		DiskMemoryEntry entry;
+	protected IMemoryEntry loadModuleGrom(IEventNotifier eventNotifier, String name, String filename) {
+		IMemoryEntry entry;
 		try {
-			entry = DiskMemoryEntry.newByteMemoryFromFile(
-					settings,
-	    			0x6000, 0, name, 
-	    			GRAPHICS,
-	    			filename, 0x0, false);
+			MemoryEntryInfo info = MemoryEntryInfoBuilder
+				.standardModuleGrom(filename)
+				.create(name);
+		
+			entry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(info);
 		} catch (IOException e) {
 			reportLoadError(eventNotifier, filename, e);
 			return null;

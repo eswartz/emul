@@ -62,4 +62,14 @@ public interface ISettingSection extends Iterable<ISettingSection.SettingEntry> 
 	void put(String name, double value);
 	void put(String name, String[] array);
 	void put(String name, Object value);
+
+	/**
+	 * @param entry
+	 */
+	void addEntry(SettingEntry entry);
+
+	/**
+	 * @param value
+	 */
+	void mergeFrom(ISettingSection other);
 }

@@ -9,6 +9,8 @@ import java.util.Map;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
 
 /**
  * @author ejs
@@ -42,6 +44,9 @@ public class MemoryEntryInfo {
 	public final static String LATENCY = "latency";
 	/** Boolean */
 	public final static String STORED = "stored";
+	
+	/** Int */
+	public static final String UNIT_SIZE = "unitSize";
 
 	private Map<String, Object> properties;
 	
@@ -121,5 +126,61 @@ public class MemoryEntryInfo {
 			return false;
 		return s.booleanValue();
 	}
-	
+
+
+	public boolean isStored() {
+		return getBool(MemoryEntryInfo.STORED);
+	}
+
+
+	public String getFilename() {
+		return getString(MemoryEntryInfo.FILENAME);
+	}
+
+
+	public IMemoryDomain getDomain(IMemory memory) {
+		return memory.getDomain(getString(MemoryEntryInfo.DOMAIN));
+	}
+
+
+	public String getName() {
+		return getString(MemoryEntryInfo.NAME);
+	}
+
+
+	public int getSize() {
+		return getInt(MemoryEntryInfo.SIZE);
+	}
+
+
+	public int getAddress() {
+		return getInt(MemoryEntryInfo.ADDRESS);
+	}
+
+	public String getFilename2() {
+		return getString(MemoryEntryInfo.FILENAME2);
+	}
+
+	public int getOffset() {
+		return getInt(MemoryEntryInfo.OFFSET);
+	}
+
+	public int getOffset2() {
+		return getInt(MemoryEntryInfo.OFFSET2);
+	}
+
+	public boolean isBanked() { 
+		return getFilename().length() > 0 && getFilename2().length() > 0
+		&& !getFilename().equals(getFilename2());
+	}
+
+
+	public boolean isByteSized() {
+		return getInt(MemoryEntryInfo.UNIT_SIZE) == 1;
+	}
+
+
+	public Class<?> getBankedClass() {
+		return (Class<?>) properties.get(CLASS);
+	}
 }

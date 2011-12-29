@@ -15,14 +15,16 @@ import ejs.base.settings.SettingProperty;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.dsr.realdisk.BaseDiskImageDsr;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruReader;
 import v9t9.engine.hardware.ICruWriter;
-import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.machine.ti99.dsr.IDsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
@@ -34,7 +36,7 @@ import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
  *
  */
 public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 {
-	private DiskMemoryEntry romMemoryEntry;
+	private IMemoryEntry romMemoryEntry;
 	
 
 	static final int 
@@ -56,7 +58,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		}
 	};
 
-	private MemoryEntry ioMemoryEntry;
+	private IMemoryEntry ioMemoryEntry;
 	private DiskMMIOMemoryArea ioArea;	
 	
 	private ICruWriter cruwRealDiskHold = new ICruWriter() {
@@ -289,6 +291,10 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 	}
 
 
+	private static MemoryEntryInfo realDiskDsrMemoryEntryInfo = MemoryEntryInfoBuilder
+		.standardDsrRom("disk.bin")
+		.create("TI Disk DSR ROM");
+
 	public void activate(IMemoryDomain console) throws IOException {
 		if (!settingDsrEnabled.getBoolean())
 			return;
@@ -296,10 +302,8 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		realDiskDsrActiveSetting.setBoolean(true);
 		
 		if (romMemoryEntry == null)
-			this.romMemoryEntry = DiskMemoryEntry.newWordMemoryFromFile(
-					settings,
-					0x4000, 0x2000, "TI Disk DSR ROM", console,
-					"disk.bin", 0, false);
+			this.romMemoryEntry = StoredMemoryEntryFactory.getInstance().newMemoryEntry(
+					realDiskDsrMemoryEntryInfo);
 		if (ioMemoryEntry == null) {
 			ioArea = new DiskMMIOMemoryArea();
 			ioMemoryEntry = new MemoryEntry("TI Disk DSR ROM MMIO", console, 0x5C00, 0x400, ioArea);

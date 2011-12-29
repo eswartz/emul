@@ -213,7 +213,7 @@ public class ManualTestPathFileLocator {
 		assertTrue(second * 100 < orig);
 		
 
-		// search for the totally different content on the bad URI should fail quickly too
+		// search for totally different content on the bad URI should fail quickly too
 		start = System.currentTimeMillis();
 		uri = locator.findFile("file2.bin");
 		assertNull(uri);
@@ -229,7 +229,7 @@ public class ManualTestPathFileLocator {
 		///////////////
 		
 
-		bootRoms.getList().add("http://" + FAKE_HOST2 + "/fake/path/to/check?query=foo");
+		bootRoms.getList().add("http://" + FAKE_HOST2 + "/fake/path/to/check");
 		
 		locator.setConnectionTimeout(2500);
 		
@@ -260,7 +260,7 @@ public class ManualTestPathFileLocator {
 
 		// search for the totally different content on the bad URI should fail quickly too
 		start = System.currentTimeMillis();
-		uri = locator.findFile("file.bin");
+		uri = locator.findFile("file2.bin");
 		assertNull(uri);
 		end = System.currentTimeMillis();
 

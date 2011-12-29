@@ -18,6 +18,7 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.settings.IStoredSettings;
 import v9t9.engine.memory.GplMmio;
+import v9t9.engine.memory.StoredMemoryEntryFactory;
 import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
 import v9t9.machine.ti99.machine.EnhancedTI994AMachineModel;
@@ -129,6 +130,9 @@ public abstract class EmulatorServerBase {
     	}
     	
     	this.memory = machine.getMemory();
+    	
+    	StoredMemoryEntryFactory.setupInstance(settings, memory);
+    	
     	this.memoryModel = memory.getModel();
 
     	this.server = new EmulatorTCFServer(machine);

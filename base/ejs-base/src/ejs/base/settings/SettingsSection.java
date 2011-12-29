@@ -152,7 +152,7 @@ public class SettingsSection implements ISettingSection {
 			return ((Number) val).doubleValue();
 		
 		try {
-			return Integer.parseInt(val.toString());
+			return Double.parseDouble(val.toString());
 		} catch (NumberFormatException e) {
 			return 0;
 		}
@@ -263,5 +263,26 @@ public class SettingsSection implements ISettingSection {
 			}
 			
 		};
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.settings.ISettingSection#addEntry(ejs.base.settings.ISettingSection.SettingEntry)
+	 */
+	@Override
+	public void addEntry(SettingEntry entry) {
+		if (entry.value instanceof ISettingSection)
+			addSection(entry.name).mergeFrom((ISettingSection) entry.value);
+		else
+			put(entry.name, entry.value);
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.settings.ISettingSection#mergeFrom(ejs.base.settings.ISettingSection)
+	 */
+	@Override
+	public void mergeFrom(ISettingSection other) {
+		for (SettingEntry entry : other) {
+			addEntry(entry);
+		}		
 	}
 }

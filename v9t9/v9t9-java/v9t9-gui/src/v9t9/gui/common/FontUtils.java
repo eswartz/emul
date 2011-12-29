@@ -6,38 +6,22 @@
  */
 package v9t9.gui.common;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-
 import org.eclipse.jface.resource.FontDescriptor;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Point;
 
 
 
-/** Global settings for the emulator as a whole.
+/** 
  * @author ejs
  */
 public class FontUtils  {
-
-	/**
-	 * Overcome egregious buggy surprising behavior in {@link InputStream#skip(long)}
-	 * @param in
-	 * @param nBytes
-	 * @throws IOException
-	 */
-	public static void skipFully(InputStream in, long nBytes) throws IOException {
-    	long remaining = nBytes;
-    	while (remaining > 0) {
-    		long skipped = in.skip(remaining);
-    		if (skipped == 0)
-    			throw new EOFException();
-    		remaining -= skipped;
-    	}
-    }
 	
-
+	/** Overcome bug in SWT */
 	public static FontDescriptor getFontDescriptor(Font font) {
 		// hmmm... FontRegister.createFont() is busted
 		FontData[] fontData = font.getFontData();
@@ -50,6 +34,13 @@ public class FontUtils  {
 		
 		FontDescriptor fontDescriptor = FontDescriptor.createFrom(fontData2);
 		return fontDescriptor;
+	}
+	
+	public static Point measureText(Device device, Font font, String text) {
+		GC gc = new GC(device);
+		Point extent = gc.textExtent(text, SWT.DRAW_DELIMITER);
+		gc.dispose();
+		return extent;
 	}
 	
 }
