@@ -12,7 +12,7 @@
     <property name="engine.bin.dir"     value="${base}/../v9t9-engine/bin"/>
     <property name="machines.bin.dir"     value="${base}/../v9t9-machines/bin"/>
 	
-    <target name="create_run_jar">
+    <target name="create_run_jar" depends="build-subprojects">
         <jar destfile="${build.dir}/bin/99asm.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="v9t9.tools.asm.assembler.Assemble"/>
@@ -37,4 +37,12 @@
             <zipfileset excludes="META-INF/*.SF" src="${ejs.base.dir}/libs/gnu-getopt-1.0.13.jar"/>
         </jar>
     </target>
+
+    <target name="clean">
+        <ant antfile="build.xml" dir="${base}" inheritAll="false" target="clean"/>
+    </target>
+    <target name="build-subprojects">
+        <ant antfile="build.xml" dir="${base}" inheritAll="false" target="build">
+        </ant>
+	</target>
 </project>

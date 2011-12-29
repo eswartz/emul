@@ -36,6 +36,7 @@
         <pathelement location="${ejs-base.location}/libs/jna.jar"/>
         <path refid="ejs-base.classpath"/>
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
+        <pathelement location="${ejs-base.location}/libs/junit/junit-4.8.1.jar"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>
