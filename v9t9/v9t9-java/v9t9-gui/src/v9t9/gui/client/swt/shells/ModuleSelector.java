@@ -16,7 +16,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import javax.imageio.ImageIO;
 
@@ -117,6 +121,9 @@ public class ModuleSelector extends Composite {
 	public static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 	private static String lastFilter;
 
+	private static final String SECTION_MODULE_SELECTOR = "ModuleSelector";
+	private static final String SHOW_MISSING_MODULES = "ShowMissingModules";
+	
 	private static boolean allowRecordImages = true;
 	
 	static final int NAME_COLUMN = 0;
@@ -148,15 +155,13 @@ public class ModuleSelector extends Composite {
 	 *
 	 */
 	final class ScreenshotSelectorDialog extends Dialog {
+		private static final String SECTION_SCREEN_SHOTS = "ScreenShots";
 		private ImageLabel imageLabel;
 		private IProperty clipProperty = new SettingProperty("clip", new java.awt.Rectangle());
 		private Image screenshot;
 		private ImageLabel renderedImageLabel;
 		private Image renderedImage;
 
-		/**
-		 * @param parentShell
-		 */
 		private ScreenshotSelectorDialog(Shell parentShell) {
 			super(parentShell);
 		}
@@ -174,7 +179,7 @@ public class ModuleSelector extends Composite {
 		 */
 		@Override
 		protected IDialogSettings getDialogBoundsSettings() {
-			return new DialogSettingsWrapper(dialogSettings.findOrAddSection("ScreenShots"));
+			return new DialogSettingsWrapper(dialogSettings.findOrAddSection(SECTION_SCREEN_SHOTS));
 		}
 		
 		/* (non-Javadoc)
@@ -314,11 +319,70 @@ public class ModuleSelector extends Composite {
 		}
 	}
 	
+	class ViewerUpdater extends Thread { 
+
+		private Queue<Object> elements = new LinkedBlockingDeque<Object>();
+		
+		public void post(Object element) {
+			elements.add(element);
+		}
+		
+		/* (non-Javadoc)
+		 * @see java.lang.Thread#run()
+		 */
+		@Override
+		public void run() {
+			final List<Object> avail = new ArrayList<Object>();
+			while (true) {
+
+				while (!elements.isEmpty()) {
+					final Object element = elements.poll();
+					avail.add(element);
+				}
+				if (!avail.isEmpty() && !getDisplay().isDisposed()) {
+					getDisplay().asyncExec(new Runnable() {
+						private boolean firstRefresh = true;
+
+						public void run() {
+							if (!viewer.getControl().isDisposed()) {
+								viewer.update(avail.toArray(), null);
+								// the node may have been filtered out
+								viewer.setFilters(new ViewerFilter[] { 
+										existingModulesFilter,
+										filteredSearchFilter
+									}
+								);
+								
+								if (firstRefresh) {
+									firstRefresh = false;
+									
+									initFilter(lastFilter);
+	
+									hookActions();
+								}								
+								
+								avail.clear();
+							}
+						}
+					});
+				}
+				
+				// dleay to gather more changes at once
+				try {
+					Thread.sleep(750);
+				} catch (InterruptedException e) {
+					return;
+				}
+			}
+		}
+	}
 	private ViewerFilter filteredSearchFilter = new FilteredSearchFilter();
 	private final SwtWindow window;
 	private IProperty pauseProperty;
 	private boolean wasPaused;
 	private PathFileLocator pathFileLocator;
+	private ExecutorService executor;
+	private ViewerUpdater viewerUpdater;
 
 	/**
 	 * @param window 
@@ -329,7 +393,11 @@ public class ModuleSelector extends Composite {
 		this.moduleManager = moduleManager;
 		this.window = window;
 		
-		dialogSettings = machine.getSettings().getWorkspaceSettings().getHistorySettings().findOrAddSection("ModuleSelector");
+		executor = Executors.newFixedThreadPool(8);
+		
+		viewerUpdater = new ViewerUpdater();
+		
+		dialogSettings = machine.getSettings().getWorkspaceSettings().getHistorySettings().findOrAddSection(SECTION_MODULE_SELECTOR);
 		
 		shell.setText("Module Selector");
 		
@@ -361,11 +429,11 @@ public class ModuleSelector extends Composite {
 			public void widgetSelected(SelectionEvent e) {
 				showMissingModules = showUnloadable.getSelection();
 				viewer.refresh();
-				dialogSettings.put("ShowMissingModules", showMissingModules);
+				dialogSettings.put(SHOW_MISSING_MODULES, showMissingModules);
 			}
 		});
 		
-		showMissingModules = dialogSettings.getBoolean("ShowMissingModules");
+		showMissingModules = dialogSettings.getBoolean(SHOW_MISSING_MODULES);
 		showUnloadable.setSelection(showMissingModules);
 		
 		buttonBar = new Composite(this, SWT.NONE);
@@ -400,10 +468,20 @@ public class ModuleSelector extends Composite {
 		});
 		switchButton.setEnabled(false);
 		
-		initFilter(lastFilter);
-
-		hookActions();
+		viewerUpdater.start();
 		
+		addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				executor.shutdownNow();
+				viewerUpdater.interrupt();
+				try {
+					viewerUpdater.join();
+				} catch (InterruptedException e1) {
+				}
+			}
+		});
 		
 	}
 
@@ -496,7 +574,7 @@ public class ModuleSelector extends Composite {
 						});
 					}
 				};
-				machine.getMachineTimer().scheduleAtFixedRate(task, 0, 100);
+				machine.getMachineTimer().scheduleAtFixedRate(task, 0, 500);
 			}
 		});
 
@@ -694,15 +772,18 @@ public class ModuleSelector extends Composite {
 				Object obj = ((IStructuredSelection) event.getSelection()).getFirstElement();
 				if (obj instanceof String) {
 					selectedModule = null;
-					switchButton.setEnabled(true);
+					if (!switchButton.isDisposed())
+						switchButton.setEnabled(true);
 					switchModule(false);
 				}
 				else if (obj instanceof IModule) {
 					selectedModule = (IModule) obj;
-					switchButton.setEnabled(true);
+					if (!switchButton.isDisposed())
+						switchButton.setEnabled(true);
 					switchModule(false);
 				} else {
-					switchButton.setEnabled(false);
+					if (!switchButton.isDisposed())
+						switchButton.setEnabled(false);
 				}
 			}
 		});
@@ -844,13 +925,13 @@ public class ModuleSelector extends Composite {
 		public Image getColumnImage(Object element, int columnIndex) {
 			if (!(element instanceof IModule)) {
 				if (columnIndex == NAME_COLUMN)
-					return getOrLoadModuleImage(null, null, null); 
+					return getOrLoadModuleImage(element, null, null, null); 
 			}
 			IModule module = (IModule) element;
 			switch (columnIndex) {
 			case NAME_COLUMN: 
 				{
-					return getOrLoadModuleImage(module, module.getImageURL(), module.getImagePath());
+					return getOrLoadModuleImage(element, module, module.getImageURL(), module.getImagePath());
 				}
 			default:
 				return null;
@@ -929,12 +1010,7 @@ public class ModuleSelector extends Composite {
 		};
 	}
 	
-	/**
-	 * @param imageURL
-	 * @param imagePath
-	 * @return
-	 */
-	public Image getOrLoadModuleImage(IModule module, URL imageURL, String imagePath) {
+	private Image getOrLoadModuleImage(final Object element, final IModule module, URL imageURL, String imagePath) {
 		if (imageURL == null) {
 			if (imagePath != null) {
 				File file = DataFiles.resolveFile(Settings.getSettings(machine), imagePath);
@@ -958,44 +1034,70 @@ public class ModuleSelector extends Composite {
 			}
 		}
 
-		String imageKey = imageURL.toString() + (module == null || isModuleLoadable(module) ? "" : "?grey");
+		final String imageKey = imageURL.toString() + (module == null || isModuleLoadable(module) ? "" : "?grey");
 		
-		Image image = loadedImages.get(imageKey);
-		if (image == null) {
-			InputStream is = null;
-			try {
-				is = imageURL.openStream();
-				image = new Image(getDisplay(), is);
-				
-				Rectangle bounds = image.getBounds();
-				int sz = Math.max(bounds.width, bounds.height);
-				
-				final int MAX = 64;
-				if (sz > MAX) {
-					sz = MAX;
-
-					Image scaled = ImageUtils.scaleImage(getDisplay(), image, new Point(MAX, MAX), true, true);
-					image.dispose();
+		Image image;
+		synchronized (loadedImages) {
+			
+			final URL theImageURL = imageURL;
+			image = loadedImages.get(imageKey);
+			if (image == null) {
+				Runnable runnable = new Runnable() {
 					
-					if (module != null && !isModuleLoadable(module)) {
-						Image grey = ImageUtils.convertToGreyscale(getDisplay(), scaled);
-						scaled.dispose();
-						scaled = grey;
+					@Override
+					public void run() {
+
+						//long start = System.currentTimeMillis(); 
+						Image image = null;
+						InputStream is = null;
+						try {
+							is = theImageURL.openStream();
+							image = new Image(getDisplay(), is);
+							
+							Rectangle bounds = image.getBounds();
+							int sz = Math.max(bounds.width, bounds.height);
+							
+							final int MAX = 64;
+							if (sz > MAX) {
+								sz = MAX;
+
+								Image scaled = ImageUtils.scaleImage(getDisplay(), image, new Point(MAX, MAX), true, true);
+								image.dispose();
+								
+								if (module != null && !isModuleLoadable(module)) {
+									Image grey = ImageUtils.convertToGreyscale(getDisplay(), scaled);
+									scaled.dispose();
+									scaled = grey;
+								}
+									
+								image = scaled;
+							}
+							
+							synchronized (loadedImages) {
+								loadedImages.put(imageKey, image);
+
+								viewerUpdater.post(element);
+							}
+							
+						} catch (IOException e) {
+							e.printStackTrace();
+						} finally {
+							try {
+								is.close();
+							} catch (IOException e) {
+							}
+							//long end = System.currentTimeMillis();
+							//System.out.println("... image load+scale took " + (end - start));
+						}
 					}
-						
-					image = scaled;
-				}
+				};
 				
-				loadedImages.put(imageKey, image);
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
-				try {
-					is.close();
-				} catch (IOException e) {
-				}
+				executor.submit(runnable);
+				
 			}
 		}
+		
+		//System.out.println(System.currentTimeMillis() + "... " + module + ": " + image);
 		return image;
 	}
 
@@ -1004,7 +1106,7 @@ public class ModuleSelector extends Composite {
 	 * @param module
 	 * @return
 	 */
-	protected boolean isModuleLoadable(IModule module) {
+	protected boolean isModuleLoadable(final IModule module) {
 		if (module == null)
 			return false;
 		
@@ -1012,15 +1114,35 @@ public class ModuleSelector extends Composite {
 		if (known != null)
 			return known;
 		
-		try {
-			moduleManager.getModuleMemoryEntries(module);
-			knownStates.put(module, Boolean.TRUE);
-			return true;
-		} catch (NotifyException e) {
-			System.out.println(e.toString());
-			knownStates.put(module, Boolean.FALSE);
-			return false;
-		}
+		// this can take a long time
+		Runnable runnable = new Runnable() {
+			
+			@Override
+			public void run() {
+				Boolean state;
+				
+				state = knownStates.get(module);
+				if (state == null) {
+					try {
+						moduleManager.getModuleMemoryEntries(module);
+						synchronized (knownStates) {
+							knownStates.put(module, Boolean.TRUE);
+						}
+					} catch (NotifyException e) {
+						System.out.println(e.toString());
+						synchronized (knownStates) {
+							knownStates.put(module, Boolean.FALSE);
+						}
+					}
+				}
+				
+				// notify viewer of change (label or content)
+				viewerUpdater.post(module);
+			}
+		};
+		
+		executor.submit(runnable);
+		return false;
 	}
 
 	private void assignModuleImage(IModule module) {
@@ -1222,7 +1344,7 @@ public class ModuleSelector extends Composite {
 			title.setText(module.getName());
 			title.setFont(JFaceResources.getHeaderFont());
 			
-			title.setImage(getOrLoadModuleImage(module, module.getImageURL(), module.getImagePath()));
+			title.setImage(getOrLoadModuleImage(null, module, module.getImageURL(), module.getImagePath()));
 			
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(title);
 			
