@@ -156,7 +156,7 @@ public class Assemble {
 	private static void help() {
         System.out
                 .println("\n"
-                        + "tiasm 9900 Assembler v2.0\n"
+                        + "9900 Assembler v2.0\n"
                         + "\n" 
                         +
                         PROGNAME + " <input file> [-r|e <console ROM output>[#size]] [-m <module ROM output>]\n" +
