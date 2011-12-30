@@ -49,8 +49,9 @@ public class PathFileLocator implements IPathFileLocator {
 	private URI[] cachedURIs = new URI[0];
 	private URI cachedWriteURI = null;
 	
-	private Map<URI, List<String>> cachedListings = new HashMap<URI, List<String>>();
+	private Map<URI, Collection<String>> cachedListings = new HashMap<URI, Collection<String>>();
 	private Map<URI, Long> cachedListingTime = new HashMap<URI, Long>();
+	private Map<URI, Long> cachedListingModifiedTime = new HashMap<URI, Long>();
 	
 	private int timeoutMs = 30 * 1000;
 	
@@ -108,6 +109,7 @@ public class PathFileLocator implements IPathFileLocator {
 		cachedSlowURIs.clear();
 		cachedListings.clear();
 		cachedListingTime.clear();
+		cachedListingModifiedTime.clear();
 		
 		iteratePaths(new IPathIterator() {
 
@@ -250,7 +252,7 @@ public class PathFileLocator implements IPathFileLocator {
 			
 			uri = baseUri.resolve(file);
 		
-			List<String> listing;
+			Collection<String> listing;
 			try {
 				listing = getDirectoryListing(uri);
 				if (listing.contains(file)) {
@@ -268,13 +270,22 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @see v9t9.common.files.IPathFileLocator#getDirectoryListing(java.net.URI)
 	 */
 	@Override
-	public List<String> getDirectoryListing(URI uri) throws IOException {
-		
-		URI directory = uri.resolve(".");
-		List<String> cachedListing = cachedListings.get(directory);
+	public synchronized Collection<String> getDirectoryListing(URI uri) throws IOException {
 		
 		// read from directory, not file
-		URLConnection connection;
+		URI directory = uri.resolve(".");
+		
+		Collection<String> cachedListing = cachedListings.get(directory);
+		
+		// don't update anything more than once a second
+		if (cachedListing != null && !directory.equals(rwPathProperty) 
+				&& cachedListingTime.get(directory) + 1 * 1000 > System.currentTimeMillis()) {
+			return cachedListing;
+		}
+		
+		// do the hard work
+		long time;
+		URLConnection connection = null;
 		try {
 			connection = connect(directory, false);
 		} catch (SocketTimeoutException e) {
@@ -285,15 +296,16 @@ public class PathFileLocator implements IPathFileLocator {
 		if (!connection.getContentType().equals("text/plain")) {
 			throw new IOException("unexpected content at " + directory);
 		}
-			
-		long time = connection.getLastModified();
+		
+		// only re-read if the directory changed
+		time = connection.getLastModified();
 
-		if (cachedListing == null || directory.equals(cachedWriteURI) || time != cachedListingTime.get(directory)) {
+		if (cachedListing == null || directory.equals(cachedWriteURI) || time != cachedListingModifiedTime.get(directory)) {
+			String[] entries;
 			InputStream is = connection.getInputStream();
 			try {
 				String content = DataFiles.readInputStreamText(is);
-				String[] entries = content.split("\r\n|\n");
-				cachedListing = Arrays.asList(entries);
+				entries = content.split("\r\n|\n");
 			} finally {
 				if (is != null) { 
 					try { is.close(); } catch (IOException e) {} 
@@ -302,10 +314,13 @@ public class PathFileLocator implements IPathFileLocator {
 			
 			time = connection.getLastModified();
 			
+			cachedListing = new HashSet<String>(Arrays.asList(entries));
+			
 			cachedListings.put(directory, cachedListing);
-			cachedListingTime.put(directory, time);
+			cachedListingModifiedTime.put(directory, time);
 		} 
 
+		cachedListingTime.put(directory, System.currentTimeMillis());
 		
 		return cachedListing;
 	}
@@ -438,7 +453,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @see v9t9.common.files.IPathFileLocator#createOutputStream(java.net.URI)
 	 */
 	@Override
-	public OutputStream createOutputStream(URI uri) throws IOException {
+	public synchronized OutputStream createOutputStream(URI uri) throws IOException {
 		URLConnection conn = uri.toURL().openConnection();
 		OutputStream os;
 		try {
@@ -451,6 +466,8 @@ public class PathFileLocator implements IPathFileLocator {
 			File file = new File(uri);
 			os = new FileOutputStream(file);
 		}
+		
+		cachedListings.remove(uri.resolve("."));
 		return os;
 	}
 

@@ -9,7 +9,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
-import java.util.List;
+import java.util.Collection;
 
 import ejs.base.properties.IProperty;
 
@@ -57,7 +57,7 @@ public interface IPathFileLocator {
 	 * @param uri
 	 * @return list of filenames
 	 */
-	List<String> getDirectoryListing(URI uri) throws IOException;
+	Collection<String> getDirectoryListing(URI uri) throws IOException;
 
 	/**
 	 * Open a (new) input stream to the URI
