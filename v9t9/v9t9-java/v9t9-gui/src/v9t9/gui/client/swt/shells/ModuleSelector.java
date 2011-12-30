@@ -414,7 +414,9 @@ public class ModuleSelector extends Composite {
 								if (isDisposed() || loadedModules.length == 0) {
 									cancel = true;
 								}
-								if (loadedModules.length > 0 && viewer.getTable().getItem(0).getBounds().height > 0) {
+								if (loadedModules.length > 0 && 
+										viewer.getTable().getItemCount() > 0 &&
+										viewer.getTable().getItem(0).getBounds().height > 0) {
 									viewer.reveal(loadedModules[0]);
 									cancel = true;
 								}
