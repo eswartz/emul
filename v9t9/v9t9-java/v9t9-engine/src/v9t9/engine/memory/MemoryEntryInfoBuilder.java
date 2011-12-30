@@ -6,7 +6,7 @@ package v9t9.engine.memory;
 import java.util.Map;
 
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.common.memory.MemoryEntryInfo;
 
 /**
  * @author ejs

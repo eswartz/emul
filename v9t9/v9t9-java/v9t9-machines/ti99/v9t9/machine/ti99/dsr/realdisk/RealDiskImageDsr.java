@@ -16,7 +16,7 @@ import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
-import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.dsr.realdisk.BaseDiskImageDsr;

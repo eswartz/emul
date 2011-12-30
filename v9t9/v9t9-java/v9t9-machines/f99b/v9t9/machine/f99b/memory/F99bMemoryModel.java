@@ -12,7 +12,7 @@ import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.machine.EmulatorMachinesData;

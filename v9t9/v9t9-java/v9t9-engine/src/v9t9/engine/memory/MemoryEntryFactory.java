@@ -4,13 +4,23 @@
 package v9t9.engine.memory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.w3c.dom.Element;
+
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.XMLUtils;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.files.PathFileLocator;
+import v9t9.common.files.IPathFileLocator;
 import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.memory.StoredMemoryEntryInfo;
-import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.engine.modules.ModuleLoader;
 
 /**
  * This factory assists in creating {@link IMemoryEntry} instances.
@@ -19,11 +29,11 @@ import v9t9.common.modules.MemoryEntryInfo;
  */
 public class MemoryEntryFactory implements IMemoryEntryFactory {
 	
-	private PathFileLocator locator;
+	private IPathFileLocator locator;
 	private final IMemory memory;
 	private final ISettingsHandler settings;
 
-	public MemoryEntryFactory(ISettingsHandler settings, IMemory memory, PathFileLocator locator) {
+	public MemoryEntryFactory(ISettingsHandler settings, IMemory memory, IPathFileLocator locator) {
 		this.settings = settings;
 		this.memory = memory;
 		this.locator = locator;
@@ -156,12 +166,109 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 	}
 
 
-	/**
-	 * 
-	 */
-	public PathFileLocator getPathFileLocator() {
+	public IPathFileLocator getPathFileLocator() {
 		return locator;
 	}
     
 
+
+	public List<MemoryEntryInfo> loadEntriesFrom(String name, Element root) {
+
+		List<MemoryEntryInfo> memoryEntries = new ArrayList<MemoryEntryInfo>();
+		
+		Element[] entries;
+		
+		entries = XMLUtils.getChildElementsNamed(root, "memoryEntries");
+		for (Element entry : entries) {
+			for (Element el : XMLUtils.getChildElements(entry)) {
+				MemoryEntryInfo info = new MemoryEntryInfo();
+				Map<String, Object> properties = info.getProperties();
+				
+				properties.put(MemoryEntryInfo.NAME, name);
+				
+				// helpers
+				if (el.getNodeName().equals("romModuleEntry")) {
+					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_CPU);
+					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
+					properties.put(MemoryEntryInfo.SIZE, 0x2000);
+				}
+				else if (el.getNodeName().equals("gromModuleEntry")) {
+					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_GRAPHICS);
+					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
+					properties.put(MemoryEntryInfo.SIZE, 0x0);
+				}
+				else if (el.getNodeName().equals("bankedModuleEntry")) {
+					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_CPU);
+					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
+					
+					if ("true".equals(el.getAttribute("custom"))) {
+						properties.put(MemoryEntryInfo.CLASS, BankedMemoryEntry.class);
+					} else {
+						properties.put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
+					}
+				}
+				else if (!el.getNodeName().equals("memoryEntry")) {
+					System.err.println("Unknown entry: " + el.getNodeName());
+					continue;
+				}
+				
+				getStringAttribute(el, MemoryEntryInfo.FILENAME, info);
+				getStringAttribute(el, MemoryEntryInfo.FILENAME2, info);
+				getStringAttribute(el, MemoryEntryInfo.DOMAIN, info);
+				getIntAttribute(el, MemoryEntryInfo.ADDRESS, info);
+				getIntAttribute(el, MemoryEntryInfo.SIZE, info);
+				getIntAttribute(el, MemoryEntryInfo.OFFSET, info);
+				getBooleanAttribute(el, MemoryEntryInfo.STORED, info);
+				getClassAttribute(el, MemoryEntryInfo.CLASS, MemoryEntry.class, info);
+
+				memoryEntries.add(info);
+			}
+		}
+		
+		return memoryEntries;
+	}
+	
+	/**
+	 * @param el
+	 * @param class1
+	 * @param info
+	 */
+	private void getClassAttribute(Element el, String name, Class<?> baseKlass,
+			MemoryEntryInfo info) {
+
+		if (el.hasAttribute(name)) {
+			Class<?> klass;
+			
+			String klassName = el.getAttribute(name);
+			try {
+				klass = ModuleLoader.class.getClassLoader().loadClass(klassName);
+				if (!baseKlass.isAssignableFrom(klass)) {
+					System.err.println("Illegal class: wanted instance of " + baseKlass + " but got " + klass);
+				} else {
+					info.getProperties().put(name, klass);
+				}
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	public void getStringAttribute(Element el, String name, MemoryEntryInfo info) {
+		if (el.hasAttribute(name)) {
+			String attr = el.getAttribute(name);
+			info.getProperties().put(name, attr);
+		}
+	}
+	public void getIntAttribute(Element el, String name, MemoryEntryInfo info) {
+		if (el.hasAttribute(name)) {
+			String attr = el.getAttribute(name);
+			info.getProperties().put(name, HexUtils.parseInt(attr));
+		}
+	}
+	public void getBooleanAttribute(Element el, String name, MemoryEntryInfo info) {
+		if (el.hasAttribute(name)) {
+			String attr = el.getAttribute(name);
+			info.getProperties().put(name, "true".equals(attr));
+		}
+	}
+	
 }

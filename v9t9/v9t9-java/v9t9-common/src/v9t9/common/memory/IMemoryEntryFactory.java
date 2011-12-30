@@ -4,9 +4,10 @@
 package v9t9.common.memory;
 
 import java.io.IOException;
+import java.util.List;
 
-import v9t9.common.files.PathFileLocator;
-import v9t9.common.modules.MemoryEntryInfo;
+import org.w3c.dom.Element;
+
 
 /**
  * @author ejs
@@ -32,6 +33,5 @@ public interface IMemoryEntryFactory {
 	StoredMemoryEntryInfo resolveMemoryEntry(MemoryEntryInfo info, String name,
 			String filename, int fileoffs) throws IOException;
 	
-	PathFileLocator getPathFileLocator();
-
+	List<MemoryEntryInfo> loadEntriesFrom(String name, Element root);
 }

@@ -20,7 +20,7 @@ import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.speech.ISpeechDataSender;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import static v9t9.common.speech.TMS5220Consts.*;

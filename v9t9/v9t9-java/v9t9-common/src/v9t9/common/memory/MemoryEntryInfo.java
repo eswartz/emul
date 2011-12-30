@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.common.modules;
+package v9t9.common.memory;
 
 import java.io.File;
 import java.util.HashMap;
@@ -9,8 +9,6 @@ import java.util.Map;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
-import v9t9.common.memory.IMemory;
-import v9t9.common.memory.IMemoryDomain;
 
 /**
  * @author ejs

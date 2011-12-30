@@ -4,13 +4,10 @@
 package v9t9.gui.client.swt.shells;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,12 +31,10 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.BaseLabelProvider;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableColorProvider;
-import org.eclipse.jface.viewers.ITableFontProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.OpenEvent;
@@ -47,7 +42,6 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TreeNode;
-import org.eclipse.jface.viewers.TreeNodeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
@@ -66,7 +60,6 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
@@ -74,7 +67,6 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
@@ -87,31 +79,20 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 
 import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.DialogSettingsWrapper;
 import ejs.base.settings.ISettingSection;
-import ejs.base.settings.SettingProperty;
-import ejs.base.utils.HexUtils;
-import ejs.base.utils.Pair;
 
-import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyException;
-import v9t9.common.files.DataFiles;
-import v9t9.common.files.PathFileLocator;
 import v9t9.common.machine.IMachine;
-import v9t9.common.memory.StoredMemoryEntryInfo;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
-import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.common.settings.Settings;
-import v9t9.common.video.IVdpCanvas;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageBar;
-import v9t9.gui.client.swt.imageimport.ImageClipDecorator;
-import v9t9.gui.client.swt.imageimport.ImageLabel;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.common.FontUtils;
 
@@ -156,142 +137,8 @@ public class ModuleSelector extends Composite {
 	private final SwtWindow window;
 	private IProperty pauseProperty;
 	private boolean wasPaused;
-	private PathFileLocator pathFileLocator;
 	private ExecutorService executor;
 	private ViewerUpdater viewerUpdater;
-
-	/**
-	 * Not used -- UI is too complex 
-	 * @author ejs
-	 *
-	 */
-	final class ScreenshotSelectorDialog extends Dialog {
-		private static final String SECTION_SCREEN_SHOTS = "ScreenShots";
-		private ImageLabel imageLabel;
-		private IProperty clipProperty = new SettingProperty("clip", new java.awt.Rectangle());
-		private Image screenshot;
-		private ImageLabel renderedImageLabel;
-		private Image renderedImage;
-
-		private ScreenshotSelectorDialog(Shell parentShell) {
-			super(parentShell);
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.window.Window#setShellStyle(int)
-		 */
-		@Override
-		protected void setShellStyle(int newShellStyle) {
-			super.setShellStyle(newShellStyle | SWT.RESIZE);
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.dialogs.Dialog#getDialogBoundsSettings()
-		 */
-		@Override
-		protected IDialogSettings getDialogBoundsSettings() {
-			return new DialogSettingsWrapper(dialogSettings.findOrAddSection(SECTION_SCREEN_SHOTS));
-		}
-		
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
-		 */
-		@Override
-		protected void configureShell(Shell newShell) {
-			super.configureShell(newShell);
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
-		 */
-		@Override
-		protected Point getInitialSize() {
-			return new Point(400, 300);
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
-		 */
-		@Override
-		protected Control createDialogArea(Composite parent) {
-			Composite composite = (Composite) super.createDialogArea(parent);
-			
-			Composite sideBySide = new Composite(composite, SWT.NONE);
-			GridLayoutFactory.fillDefaults().numColumns(3).applyTo(sideBySide);
-			GridDataFactory.fillDefaults().grab(true, true).applyTo(sideBySide);
-			
-			imageLabel = new ImageLabel(sideBySide, SWT.BORDER);
-			IVideoRenderer renderer = window.getVideoRenderer();
-			IVdpCanvas canvas = renderer.getCanvas();
-			GridDataFactory.fillDefaults().grab(true, true)
-						.hint(canvas.getVisibleWidth(), canvas.getVisibleHeight())
-						.applyTo(imageLabel);
-
-			Label sep = new Label(sideBySide, SWT.VERTICAL | SWT.SHADOW_IN);
-			GridDataFactory.fillDefaults().grab(false, true).applyTo(sep);
-			
-			renderedImageLabel = new ImageLabel(sideBySide, SWT.BORDER);
-			GridDataFactory.swtDefaults().align(SWT.CENTER, SWT.CENTER)
-				.grab(false, false)
-				.minSize(32, 32).hint(32, 32)
-				.applyTo(renderedImageLabel);
-			
-			renderedImage = new Image(getDisplay(), 32, 32);
-			renderedImageLabel.setImage(renderedImage);
-			
-			screenshot = new Image(getDisplay(), ((ISwtVideoRenderer) renderer).getScreenshotImageData());
-			imageLabel.setImage(screenshot);
-			
-			updateRenderedImage();
-			
-			new ImageClipDecorator(imageLabel, clipProperty, new IPropertyListener() {
-				
-				@Override
-				public void propertyChanged(IProperty property) {
-					updateRenderedImage();						
-				}
-			}, new ImageClipDecorator.IBoundsUpdater() {
-				public Rectangle update(Rectangle rect) {
-					int sz = Math.max(rect.width, rect.height);
-					// make power-of-two
-					while ((sz & (sz - 1)) != 0)
-						sz &= (sz - 1);
-					rect.width = rect.height = sz;
-					
-					return rect;
-				}
-			});
-			
-			addDisposeListener(new DisposeListener() {
-				
-				@Override
-				public void widgetDisposed(DisposeEvent e) {
-					screenshot.dispose();
-				}
-			});
-			
-			Label message = new Label(composite, SWT.NONE | SWT.WRAP);
-			message.setText("Select a portion of the screenshot to use as the module icon.");
-			GridDataFactory.fillDefaults().grab(true, false).applyTo(message);
-			
-			return composite;
-		}
-
-		private void updateRenderedImage() {
-			java.awt.Rectangle rect = (java.awt.Rectangle) clipProperty.getValue();
-			if (rect == null || rect.isEmpty()) {
-				Rectangle bounds = screenshot.getBounds();
-				rect = new java.awt.Rectangle(0, 0, bounds.width, bounds.height);
-			}
-			
-			GC gc = new GC(renderedImage);
-			Rectangle rbounds = renderedImage.getBounds();
-			gc.drawImage(screenshot, rect.x, rect.y, rect.width, rect.height, 0, 0, rbounds.width, rbounds.height);
-			gc.dispose();
-			
-			renderedImageLabel.redraw();
-		}
-	}
 
 	/**
 	 * This filter only allows through module entries for
@@ -357,12 +204,9 @@ public class ModuleSelector extends Composite {
 						public void run() {
 							if (!viewer.getControl().isDisposed()) {
 								viewer.update(avail.toArray(), null);
+								
 								// the node may have been filtered out
-								viewer.setFilters(new ViewerFilter[] { 
-										existingModulesFilter,
-										filteredSearchFilter
-									}
-								);
+								refreshFilters();
 								
 								if (firstRefresh) {
 									firstRefresh = false;
@@ -380,12 +224,13 @@ public class ModuleSelector extends Composite {
 				
 				// delay to gather more changes at once
 				try {
-					Thread.sleep(750);
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					return;
 				}
 			}
 		}
+
 	}
 
 	/**
@@ -406,8 +251,6 @@ public class ModuleSelector extends Composite {
 		shell.setText("Module Selector");
 		
 		this.machine = machine;
-		
-		pathFileLocator = machine.getMemoryEntryFactory().getPathFileLocator();
 		
 		pauseProperty = Settings.get(machine, IMachine.settingPauseMachine);
 		wasPaused = pauseProperty.getBoolean();
@@ -521,6 +364,14 @@ public class ModuleSelector extends Composite {
 		});
 	}
 
+	protected void refreshFilters() {
+		viewer.setFilters(new ViewerFilter[] { 
+				existingModulesFilter,
+				filteredSearchFilter
+			}
+		);
+	}
+
 	protected void initFilter(String text) {
 		if (text == null || text.length() == 0) {
 			filterText.setText("Search...");
@@ -531,11 +382,7 @@ public class ModuleSelector extends Composite {
 			filterText.setForeground(null);
 		}
 		
-		viewer.setFilters(new ViewerFilter[] { 
-				existingModulesFilter,
-				filteredSearchFilter
-			}
-		);
+		refreshFilters();
 
 		updateFilter(text);
 		
@@ -896,7 +743,8 @@ public class ModuleSelector extends Composite {
 			else
 				machine.reset();
 
-			getShell().dispose();
+			if (!getShell().isDisposed())
+				getShell().dispose();
 		} catch (NotifyException e) {
 			machine.notifyEvent(Level.ERROR,
 					MessageFormat.format("Failed to load all the entries from the module ''{0}''\n\n{1}",
@@ -929,13 +777,13 @@ public class ModuleSelector extends Composite {
 		public Image getColumnImage(Object element, int columnIndex) {
 			if (!(element instanceof IModule)) {
 				if (columnIndex == NAME_COLUMN)
-					return getOrLoadModuleImage(element, null, null, null); 
+					return getOrLoadModuleImage(element, null, null); 
 			}
 			IModule module = (IModule) element;
 			switch (columnIndex) {
 			case NAME_COLUMN: 
 				{
-					return getOrLoadModuleImage(element, module, module.getImageURL(), module.getImagePath());
+					return getOrLoadModuleImage(element, module, module.getImagePath());
 				}
 			default:
 				return null;
@@ -1014,36 +862,41 @@ public class ModuleSelector extends Composite {
 		};
 	}
 	
-	private Image getOrLoadModuleImage(final Object element, final IModule module, URL imageURL, String imagePath) {
-		if (imageURL == null) {
-			if (imagePath != null) {
-				File file = DataFiles.resolveFile(Settings.getSettings(machine), imagePath);
-				if (file != null && file.exists()) {
-					try {
-						imageURL = file.toURI().toURL();
-					} catch (MalformedURLException e) {
-						e.printStackTrace();
-					}
-				}
+	private Image getOrLoadModuleImage(final Object element, final IModule module, String imagePath) {
+		URI imageURI = null;
+		
+		// see if user has an entry
+		if (imagePath != null) {
+			imageURI = machine.getPathFileLocator().findFile(imagePath);
+		
+			if (imageURI == null) {
+				// look inside distribution
+				try {
+					imageURI = machine.getModel().getDataURL().toURI().resolve("images/" + imagePath);
+					if (!machine.getPathFileLocator().exists(imageURI))
+						imageURI = null;
+				} catch (URISyntaxException e) {
+					e.printStackTrace();
+				} 
 			}
 		}
-		if (imageURL == null) {
+		if (imageURI == null) {
 			try {
-				imageURL = new URL(machine.getModel().getDataURL(), 
+				imageURI = machine.getModel().getDataURL().toURI().resolve( 
 						module != null ? 
 								(isModuleLoadable(module) ? "images/stock_module.png" : "images/stock_module_missing.png")
 								: "images/stock_no_module.png");
-			} catch (MalformedURLException e) {
+			} catch (URISyntaxException e) {
 				e.printStackTrace();
 			}
 		}
 
-		final String imageKey = imageURL.toString() + (module == null || isModuleLoadable(module) ? "" : "?grey");
+		final String imageKey = imageURI.toString() + (module == null || isModuleLoadable(module) ? "" : "?grey");
 		
 		Image image;
 		synchronized (loadedImages) {
 			
-			final URL theImageURL = imageURL;
+			final URI theImageURI = imageURI;
 			image = loadedImages.get(imageKey);
 			if (image == null) {
 				Runnable runnable = new Runnable() {
@@ -1055,7 +908,7 @@ public class ModuleSelector extends Composite {
 						Image image = null;
 						InputStream is = null;
 						try {
-							is = theImageURL.openStream();
+							is = theImageURI.toURL().openStream();
 							image = new Image(getDisplay(), is);
 							
 							Rectangle bounds = image.getBounds();
@@ -1087,7 +940,7 @@ public class ModuleSelector extends Composite {
 							e.printStackTrace();
 						} finally {
 							try {
-								is.close();
+								if (is != null) is.close();
 							} catch (IOException e) {
 							}
 							//long end = System.currentTimeMillis();
@@ -1195,111 +1048,6 @@ public class ModuleSelector extends Composite {
 		}
 		
 	}
-	static class ModuleInfoTreeLabelProvider extends BaseLabelProvider implements ITableLabelProvider,
-		ITableColorProvider, ITableFontProvider {
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
-		 */
-		@Override
-		public Image getColumnImage(Object element, int columnIndex) {
-			return null;
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
-		 */
-		@Override
-		public String getColumnText(Object nodeElement, int columnIndex) {
-			TreeNode treeNode = (TreeNode) nodeElement;
-			Object element = treeNode.getValue();
-			switch (columnIndex) {
-			case 0:
-				if (element instanceof IProperty)
-					return "Search Path Property";
-				if (element instanceof IModule)
-					return "Module Entries";
-				if (element instanceof MemoryEntryInfo)
-					return "Expected Properties";
-				if (element instanceof StoredMemoryEntryInfo)
-					return split(((StoredMemoryEntryInfo) element).uri.getPath()).second;
-				if (element instanceof Map.Entry)
-					return ((Map.Entry<?, ?>) element).getKey().toString();
-				if (element instanceof Pair)
-					return ((Pair<?, ?>) element).first.toString();
-				if (element instanceof URI)
-					return ((URI) element).toString();
-				return element.toString();
-			case 1:
-				if (element instanceof IProperty)
-					return ((IProperty) element).getName();
-				if (element instanceof IModule)
-					return null;
-				if (element instanceof String)
-					return element.toString();
-				if (element instanceof MemoryEntryInfo)
-					return null;
-				if (element instanceof StoredMemoryEntryInfo)
-					return split(((StoredMemoryEntryInfo) element).uri.getPath()).first;
-				if (element instanceof Map.Entry)
-					return ((Map.Entry<?, ?>) element).getValue().toString();
-				if (element instanceof Pair)
-					return ((Pair<?, ?>) element).second.toString();
-				if (element instanceof URI) {
-					return treeNode instanceof ErrorTreeNode ? "missing" : "present";
-				}
-				return null;
-			}
-			return null;
-		}
-
-		/**
-		 * @param path
-		 * @return
-		 */
-		private Pair<String, String> split(String path) {
-			int idx = path.lastIndexOf('/');
-			if (idx >= 0)
-				return new Pair<String, String>(path.substring(0, idx), path.substring(idx+1));
-			else
-				return new Pair<String, String>("", path);
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableColorProvider#getForeground(java.lang.Object, int)
-		 */
-		@Override
-		public Color getForeground(Object element, int columnIndex) {
-			return element instanceof ErrorTreeNode 
-			? Display.getDefault().getSystemColor(SWT.COLOR_RED) : null;
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableColorProvider#getBackground(java.lang.Object, int)
-		 */
-		@Override
-		public Color getBackground(Object element, int columnIndex) {
-			return null;
-		}
-		
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableFontProvider#getFont(java.lang.Object, int)
-		 */
-		@Override
-		public Font getFont(Object element, int columnIndex) {
-			if (columnIndex == 0 && element instanceof InfoTreeNode) 
-				return JFaceResources.getFontRegistry().getItalic(JFaceResources.DEFAULT_FONT);
-			
-			if (columnIndex == 1 && ((TreeNode) element).getValue() instanceof IProperty)
-				return JFaceResources.getTextFont();
-			
-			return null;
-		}
-		
-		
-	}
-	
 	final class ModuleInfoDialog extends Dialog {
 		private final IModule module;
 
@@ -1358,7 +1106,7 @@ public class ModuleSelector extends Composite {
 			title.setText(module.getName());
 			title.setFont(JFaceResources.getHeaderFont());
 			
-			title.setImage(getOrLoadModuleImage(null, module, module.getImageURL(), module.getImagePath()));
+			title.setImage(getOrLoadModuleImage(null, module, module.getImagePath()));
 			
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(title);
 			
@@ -1391,11 +1139,11 @@ public class ModuleSelector extends Composite {
 			final TreeColumn nameColumn = new TreeColumn(tree, SWT.RIGHT);
 			final TreeColumn infoColumn = new TreeColumn(tree, SWT.LEFT);
 
-			TreeNodeContentProvider contentProvider = new TreeNodeContentProvider();
+			ModuleContentProvider contentProvider = new ModuleContentProvider(machine);
 			viewer.setContentProvider(contentProvider);
 			viewer.setLabelProvider(new ModuleInfoTreeLabelProvider());
 			
-			viewer.setInput(createModuleContent());
+			viewer.setInput(contentProvider.createModuleContent(module));
 			
 			composite.getDisplay().asyncExec(new Runnable() {
 				public void run() {
@@ -1415,141 +1163,6 @@ public class ModuleSelector extends Composite {
 			return composite;
 		}
 
-		/**
-		 * @param module2
-		 * @return
-		 */
-		private Object createModuleContent() {
-			List<TreeNode> kids = new ArrayList<TreeNode>();
-
-			
-			TreeNode moduleDatabase = new TreeNode(new Pair<String, String>(
-					"Module Defined By", module.getDatabaseURI().toString()));
-			
-			kids.add(moduleDatabase);
-
-			TreeNode memInfoNode = new TreeNode(module);
-			MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
-			
-			List<TreeNode> memNodes = new ArrayList<TreeNode>();
-			for (MemoryEntryInfo info : infos) {
-				if (!info.isBanked()) {
-					addMemoryInfoNode(memNodes, info,
-							info.getName(), info.getFilename(), info.getOffset());
-				} else {
-					addMemoryInfoNode(memNodes, info, 
-							info.getName() + " (bank 0)", 
-							info.getFilename(), 
-							info.getOffset());
-
-					addMemoryInfoNode(memNodes, info, 
-							info.getName() + " (bank 1)", 
-							info.getFilename2(), 
-							info.getOffset2());
-				}
-			}
-			memInfoNode.setChildren(memNodes.toArray(new TreeNode[memNodes.size()]));
-			kids.add(memInfoNode);
-
-			for (IProperty prop : pathFileLocator.getSearchPathProperties()) {
-				kids.add(makeTreeNode(prop));
-			}
-			
-
-			return (TreeNode[]) kids.toArray(new TreeNode[kids.size()]);
-		}
-
-		protected void addMemoryInfoNode(
-				List<TreeNode> memNodes, MemoryEntryInfo info,
-				String name, String filename, int offset) {
-			StoredMemoryEntryInfo storedInfo;
-			try {
-				storedInfo = StoredMemoryEntryInfo.resolveStoredMemoryEntryInfo(
-						pathFileLocator, getMachine().getSettings(), 
-						getMachine().getMemory(), info, 
-						name, filename, offset);
-				memNodes.add(makeTreeNode(storedInfo));
-			} catch (IOException e) {
-				TreeNode errorNode = new ErrorTreeNode(new Pair<String, String>(filename,
-						e instanceof FileNotFoundException ? "File not found on search paths" : e.getMessage()));
-				TreeNode[] kids = new TreeNode[] {
-						makeTreeNode(info),
-						};
-				errorNode.setChildren(kids);
-				memNodes.add(errorNode);
-			}
-		}
-		
-
-		private TreeNode makeTreeNode(StoredMemoryEntryInfo info) {
-			TreeNode node = new TreeNode(info);
-			TreeNode[] kids = new TreeNode[3];
-			kids[0] = new TreeNode(new Pair<String, String>("Location", info.uri.toString()));
-			kids[1] = new TreeNode(new Pair<String, String>("File Size", ""+info.filesize));
-			kids[2] = makeTreeNode(info.info);
-			node.setChildren(kids);
-			return node;
-		}
-
-
-		private TreeNode makeTreeNode(MemoryEntryInfo info) {
-			TreeNode node = new TreeNode(info);
-			Map<String, Object> props = info.getProperties();
-			List<TreeNode> kids = new ArrayList<TreeNode>();
-			for (Map.Entry<String, Object> entry : props.entrySet()) {
-				if (entry.getKey().equals(MemoryEntryInfo.CLASS))
-					continue;
-				if (entry.getKey().equals(MemoryEntryInfo.ADDRESS) 
-						|| entry.getKey().equals(MemoryEntryInfo.OFFSET)
-						|| entry.getKey().equals(MemoryEntryInfo.OFFSET2)
-						)
-					kids.add(new TreeNode(new Pair<String, String>(entry.getKey(), 
-							">" + HexUtils.toHex4(((Number) entry.getValue()).intValue()))));
-				else if (entry.getKey().equals(MemoryEntryInfo.SIZE)) {
-					int size = ((Number) entry.getValue()).intValue();
-					kids.add(new TreeNode(new Pair<String, String>(entry.getKey(),
-								size == 0 ? "any size" : 
-									(size < 0 ? "at most " : "") + ">" + HexUtils.toHex4(size))  ));
-				}
-				else
-					kids.add(new TreeNode(entry));
-			}
-			node.setChildren(kids.toArray(new TreeNode[kids.size()]));
-			return node;
-		}
-
-		private TreeNode makeTreeNode(IProperty pathProperty) {
-			TreeNode node = new TreeNode(pathProperty);
-			List<TreeNode> kids = new ArrayList<TreeNode>();
-			if (pathProperty.getValue() instanceof List) {
-				if (!pathProperty.getList().isEmpty()) {
-					for (Object path : pathProperty.getList()) {
-						kids.add(createPathNode(path));
-					}
-				} else {
-					kids.add(new InfoTreeNode(new Pair<String, String>("Empty", "")));				
-				}
-			} else {
-				kids.add(createPathNode(pathProperty.getValue()));
-			}
-			node.setChildren((TreeNode[]) kids.toArray(new TreeNode[kids.size()]));
-			return node;
-		}
-
-		/**
-		 * @param kids
-		 * @param idx
-		 * @param path
-		 * @return
-		 */
-		protected TreeNode createPathNode(Object path) {
-			try {
-				URI uri = pathFileLocator.createURI(path.toString());
-				return pathFileLocator.exists(uri) ? new TreeNode(uri) : new ErrorTreeNode(uri);
-			} catch (URISyntaxException e) {
-				return new ErrorTreeNode(new Pair<String, String>(path.toString(), e.getMessage()));
-			}
-		}
 	}
 	
 	private void showModuleDetails(IModule module) {

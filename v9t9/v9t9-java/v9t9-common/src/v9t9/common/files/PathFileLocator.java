@@ -36,7 +36,7 @@ import ejs.base.properties.IPropertyListener;
  * @author Ed
  *
  */
-public class PathFileLocator {
+public class PathFileLocator implements IPathFileLocator {
 
 	private List<IProperty> roPathProperties = new ArrayList<IProperty>();
 	private IProperty rwPathProperty = null;
@@ -69,12 +69,20 @@ public class PathFileLocator {
 		};
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#addReadOnlyPathProperty(ejs.base.properties.IProperty)
+	 */
+	@Override
 	public synchronized void addReadOnlyPathProperty(IProperty property) {
 		roPathProperties.add(property);
 		
 		property.addListenerAndFire(pathListChangedListener);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#setReadWritePathProperty(ejs.base.properties.IProperty)
+	 */
+	@Override
 	public synchronized void setReadWritePathProperty(IProperty property) {
 		if (rwPathProperty == property)
 			return;
@@ -129,11 +137,10 @@ public class PathFileLocator {
 		}
 	}
 	
-	/**
-	 * @param path
-	 * @return
-	 * @throws URISyntaxException 
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#createURI(java.lang.String)
 	 */
+	@Override
 	public URI createURI(String path) throws URISyntaxException {
 		// ensure all act like directories
 		if (!path.contains(":/") || path.indexOf(":/") == 1) {
@@ -196,11 +203,10 @@ public class PathFileLocator {
 		return code[0];
 	}
 
-	/**
-	 * Get all the active paths along the read-write and read-only
-	 * path properties, with the read-write path (if any) first.
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#getSearchURIs()
 	 */
+	@Override
 	public synchronized URI[] getSearchURIs() {
 		// lists do not maintain inner listeners
 		if (calculateCachedHash() != lastCachedHash) {
@@ -209,23 +215,26 @@ public class PathFileLocator {
 		return cachedURIs;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#setConnectionTimeout(int)
+	 */
+	@Override
 	public void setConnectionTimeout(int timeoutMs) {
 		this.timeoutMs = timeoutMs;
 	}
 	
-	/**
-	 * @return the timeoutMs
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#getTimeoutMs()
 	 */
+	@Override
 	public int getTimeoutMs() {
 		return timeoutMs;
 	}
 	
-	/**
-	 * Find an existing file along the search paths
-	 * @param file
-	 * @return <code>null</code> if no match is found
-	 * @throws IllegalArgumentException if file contributes invalid URI segment
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#findFile(java.lang.String)
 	 */
+	@Override
 	public synchronized URI findFile(String file) {
 		File localFile = new File(file);
 		if (localFile.isAbsolute())
@@ -255,11 +264,10 @@ public class PathFileLocator {
 	}
 	
 	
-	/**
-	 * Get the listing of entries in this URI 
-	 * @param uri
-	 * @return list of filenames
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#getDirectoryListing(java.net.URI)
 	 */
+	@Override
 	public List<String> getDirectoryListing(URI uri) throws IOException {
 		
 		URI directory = uri.resolve(".");
@@ -316,12 +324,10 @@ public class PathFileLocator {
 		return connection;
 	}
 
-	/**
-	 * Open a (new) input stream to the URI
-	 * @param uri
-	 * @return
-	 * @throws IOException
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#createInputStream(java.net.URI)
 	 */
+	@Override
 	public InputStream createInputStream(URI uri) throws IOException {
 
 		InputStream is = null; 
@@ -333,12 +339,10 @@ public class PathFileLocator {
 
 	
 
-	/**
-	 * Get the size of the content at the URI
-	 * @param uri
-	 * @return size in bytes
-	 * @throws IOException
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#getContentLength(java.net.URI)
 	 */
+	@Override
 	public int getContentLength(URI uri) throws IOException {
 		URLConnection connection = connect(uri);
 		return connection.getContentLength();
@@ -353,11 +357,10 @@ public class PathFileLocator {
 		connection.setUseCaches(useCache);
 	}
 
-	/**
-	 * Attempt to open a file existing at the given URI 
-	 * @param uri
-	 * @return connection or <code>null</code>
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#openConnection(java.net.URI)
 	 */
+	@Override
 	public URLConnection openConnection(URI uri) {
 		try {
 			return uri.toURL().openConnection();
@@ -369,13 +372,10 @@ public class PathFileLocator {
 	}
 
 
-	/**
-	 * Get a URI which supports writing the file.  This relies only on 
-	 * the read/write path property.
-	 * 
-	 * @param file
-	 * @return URI for file or <code>null</code> if none can be found
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#getWriteURI(java.lang.String)
 	 */
+	@Override
 	public URI getWriteURI(String file) {
 		if (cachedWriteURI == null)
 			return null;
@@ -434,13 +434,10 @@ public class PathFileLocator {
 		}
 	}
 
-	/**
-	 * Create an output stream for the given URI.
-	 * Unlike a direct use of {@link URLConnection#getOutputStream()}, this
-	 * will handle file: schemas.
-	 * @param uri
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#createOutputStream(java.net.URI)
 	 */
+	@Override
 	public OutputStream createOutputStream(URI uri) throws IOException {
 		URLConnection conn = uri.toURL().openConnection();
 		OutputStream os;
@@ -457,10 +454,10 @@ public class PathFileLocator {
 		return os;
 	}
 
-	/**
-	 * @param uri
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#exists(java.net.URI)
 	 */
+	@Override
 	public boolean exists(URI uri) {
 		InputStream is = null;
 		try {
@@ -479,9 +476,10 @@ public class PathFileLocator {
 		}
 	}
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#getSearchPathProperties()
 	 */
+	@Override
 	public IProperty[] getSearchPathProperties() {
 		List<IProperty> props = new ArrayList<IProperty>();
 		if (rwPathProperty != null)

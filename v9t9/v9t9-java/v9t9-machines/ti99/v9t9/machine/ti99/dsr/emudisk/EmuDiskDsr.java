@@ -28,7 +28,7 @@ import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
-import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.IDevIcons;

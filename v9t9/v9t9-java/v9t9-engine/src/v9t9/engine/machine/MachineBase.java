@@ -30,6 +30,7 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.files.DataFiles;
 import v9t9.common.files.IFileHandler;
+import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
@@ -106,7 +107,7 @@ abstract public class MachineBase implements IMachine {
 	protected IProperty realTime;
 	private final ISettingsHandler settings;
 	private IMemoryEntryFactory memoryEntryFactory;
-	private PathFileLocator locator;
+	private IPathFileLocator locator;
 	
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -765,6 +766,14 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public IMemoryEntryFactory getMemoryEntryFactory() {
 		return memoryEntryFactory;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getPathFileLocator()
+	 */
+	@Override
+	public IPathFileLocator getPathFileLocator() {
+		return locator;
 	}
 }
 

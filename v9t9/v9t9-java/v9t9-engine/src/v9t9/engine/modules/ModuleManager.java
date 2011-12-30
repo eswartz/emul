@@ -29,9 +29,9 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
-import v9t9.common.modules.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 

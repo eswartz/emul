@@ -11,7 +11,7 @@ import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntry;

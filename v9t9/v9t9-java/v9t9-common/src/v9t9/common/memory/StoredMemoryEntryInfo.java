@@ -9,8 +9,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.files.PathFileLocator;
-import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.common.files.IPathFileLocator;
 
 /**
  * @author ejs
@@ -18,7 +17,7 @@ import v9t9.common.modules.MemoryEntryInfo;
  */
 public class StoredMemoryEntryInfo {
 	public final MemoryEntryInfo info;
-	public final PathFileLocator locator;
+	public final IPathFileLocator locator;
 	public final URI uri;
 	public final String name;
 	public final int fileoffs;
@@ -28,7 +27,7 @@ public class StoredMemoryEntryInfo {
 	public final ISettingsHandler settings;
 	
 	public StoredMemoryEntryInfo(MemoryEntryInfo info, ISettingsHandler settings, IMemory memory,
-			PathFileLocator locator, URI uri, String name, int fileoffs, int filesize, int size) {
+			IPathFileLocator locator, URI uri, String name, int fileoffs, int filesize, int size) {
 		this.info = info;
 		this.settings = settings;
 		this.memory = memory;
@@ -51,7 +50,7 @@ public class StoredMemoryEntryInfo {
 	 * @throws IOException
 	 */
 	public static StoredMemoryEntryInfo resolveStoredMemoryEntryInfo(
-			PathFileLocator locator, ISettingsHandler settings, IMemory memory,
+			IPathFileLocator locator, ISettingsHandler settings, IMemory memory,
 			MemoryEntryInfo info,
 			String name,
 			String filename,

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 import org.junit.Test;
 
+import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.SettingProperty;
@@ -37,7 +38,7 @@ public class ManualTestPathFileLocator {
 	@Test
 	public void testPathLists() throws URISyntaxException {
 
-		PathFileLocator locator = new PathFileLocator();
+		IPathFileLocator locator = new PathFileLocator();
 		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
 
 		assertEquals(0, locator.getSearchURIs().length);
@@ -68,7 +69,7 @@ public class ManualTestPathFileLocator {
 	@Test
 	public void testLookups() {
 		
-		PathFileLocator locator = new PathFileLocator();
+		IPathFileLocator locator = new PathFileLocator();
 		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
 		
 		locator.addReadOnlyPathProperty(bootRoms);
@@ -114,7 +115,7 @@ public class ManualTestPathFileLocator {
 	@Test
 	public void testWritePaths() throws MalformedURLException, IOException {
 		
-		PathFileLocator locator = new PathFileLocator();
+		IPathFileLocator locator = new PathFileLocator();
 		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
 		
 		locator.addReadOnlyPathProperty(bootRoms);
@@ -174,7 +175,7 @@ public class ManualTestPathFileLocator {
 	@Test
 	public void testTroublesomeLookups() {
 		
-		PathFileLocator locator = new PathFileLocator();
+		IPathFileLocator locator = new PathFileLocator();
 		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
 		
 		locator.addReadOnlyPathProperty(bootRoms);

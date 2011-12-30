@@ -24,7 +24,7 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
-import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.IconSettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.engine.dsr.DeviceIndicatorProvider;

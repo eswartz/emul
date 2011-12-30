@@ -15,7 +15,7 @@ import java.io.PrintStream;
 
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.memory.MemoryEntryFactory;
 import v9t9.tools.asm.assembler.inst9900.Assembler9900;
@@ -33,8 +33,9 @@ public class Assemble {
         
         assembler.setList(null);
         
-        memoryEntryFactory = new MemoryEntryFactory(null, assembler.getMemory(), new PathFileLocator());
-        memoryEntryFactory.getPathFileLocator().setReadWritePathProperty(new SettingProperty("Output", "."));
+        PathFileLocator locator = new PathFileLocator();
+		memoryEntryFactory = new MemoryEntryFactory(null, assembler.getMemory(), locator);
+        locator.setReadWritePathProperty(new SettingProperty("Output", "."));
         
         boolean selectedProcessor = false;
         int romStart = 0, romSize = 0x2000;

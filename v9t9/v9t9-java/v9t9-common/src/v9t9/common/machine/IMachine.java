@@ -5,6 +5,7 @@ package v9t9.common.machine;
 
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.files.IFileHandler;
+import v9t9.common.files.IPathFileLocator;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
@@ -53,4 +54,6 @@ public interface IMachine extends IBaseMachine {
 	IFileHandler getFileHandler();
 
 	IMemoryEntryFactory getMemoryEntryFactory();
+	
+	IPathFileLocator getPathFileLocator();
 }
