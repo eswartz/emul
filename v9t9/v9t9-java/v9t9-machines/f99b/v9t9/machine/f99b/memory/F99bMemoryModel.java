@@ -54,6 +54,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		.withFilename("f99brom.bin")
 		.withOffset(0x400)
 		.withAddress(0x400)
+		.withSize(-(0x10000 - 0x400))
 		.create("CPU ROM");
 
 	private static String FORTH_GROM = "forth99.grm";
@@ -72,7 +73,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		.withDomain(IMemoryDomain.NAME_GRAPHICS)
 		.withAddress(0x8000)
 		.withSize(0x8000)
-		.setStored(true)
+		.storable(true)
 		.create("GRAM");
 
 	/* (non-Javadoc)
@@ -82,7 +83,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	public void loadMemory(IEventNotifier eventNotifier) {
 		IMemoryEntry cpuRomEntry;
     	try {
-			cpuRomEntry = machine.getMemoryEntryFactory().newMemoryEntry(
+			cpuRomEntry = memory.getMemoryEntryFactory().newMemoryEntry(
 					f99bRomMemoryEntryInfo);
 			cpuRomEntry.load();
 			cpuRomEntry.copySymbols(CPU);
@@ -107,20 +108,20 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
     	dictFile = DataFiles.resolveFile(settings, GROM_DICT);
     	if (gromFile.exists() && dictFile.exists() && dictFile.lastModified() > gromFile.lastModified()) {
 
-    		byte[] grom = new byte[(int) gromFile.length()];
+    		int gromFileSize = (int) gromFile.length();
+    		byte[] grom;
     		
 			int gromDictSize = (int) dictFile.length();
 
 			try {
-				DataFiles.readMemoryImage(settings, FORTH_GROM, 0, grom.length, grom);
+				grom = DataFiles.readMemoryImage(settings, FORTH_GROM, 0, gromFileSize);
 				int gromDictBase = (grom[2] << 8) | (grom[3] & 0xff);
 				
 				if (gromDictSize + gromDictBase > 16 * 1024) {
 					reportLoadError(eventNotifier, GROM_DICT, new IOException("GROM dictionary too big!  GROM plus dictionary maxes out at 16k."));
 				}
 				
-				byte[] gromDict = new byte[gromDictSize];
-				DataFiles.readMemoryImage(settings, GROM_DICT, 0, gromDictSize, gromDict);
+				byte[] gromDict = DataFiles.readMemoryImage(settings, GROM_DICT, 0, gromDictSize);
 				
 				for (int i = 0; i < gromDictSize; i++) {
 					grom[i + gromDictBase] = gromDict[i];
@@ -141,13 +142,24 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
     	}
     	
     	
-    	// GROM consists of ROM for 16k
-		loadConsoleGrom(eventNotifier, FORTH_GROM);
+    	// GROM consists of ROM up to 16k
+		IMemoryEntry gromEntry;
+		try {
+			MemoryEntryInfo info = MemoryEntryInfoBuilder
+				.standardConsoleGrom(FORTH_GROM)
+				.withSize(-0x4000)
+				.create("CPU GROM");
+			
+			gromEntry = memory.getMemoryEntryFactory().newMemoryEntry(info);
+			memory.addAndMap(gromEntry);
+		} catch (IOException e) {
+			reportLoadError(eventNotifier, FORTH_GROM, e);
+		}
 		
 		// then 16k of GRAM for new dictionary
 		IMemoryEntry gramDictEntry;
 		try {
-			gramDictEntry = machine.getMemoryEntryFactory().newMemoryEntry(
+			gramDictEntry = memory.getMemoryEntryFactory().newMemoryEntry(
 					f99bGramMemoryEntryInfo);
 			gramDictEntry.getArea().setLatency(0);
 			memory.addAndMap(gramDictEntry);
@@ -158,7 +170,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		
 		// then 32k of GRAM storage
 		try {
-			IMemoryEntry entry = machine.getMemoryEntryFactory().newMemoryEntry(
+			IMemoryEntry entry = memory.getMemoryEntryFactory().newMemoryEntry(
 					f99bDiskGramMemoryEntryInfo);
 			memory.addAndMap(entry);
 		} catch (IOException e) {

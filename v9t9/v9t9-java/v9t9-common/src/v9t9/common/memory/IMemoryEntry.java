@@ -42,7 +42,7 @@ public interface IMemoryEntry extends IMemoryAccess, Comparable<IMemoryEntry>, I
 	 * &lt;addr&gt; &lt;name&gt;
 	 * @throws IOException 
 	 */
-	void loadSymbols(InputStream is) throws IOException;
+	void loadSymbolsAndClose(InputStream is) throws IOException;
 
 	/**
 	 * @param fos

@@ -238,6 +238,9 @@ public class PathFileLocator implements IPathFileLocator {
 	 */
 	@Override
 	public synchronized URI findFile(String file) {
+		if (file == null)
+			return null;
+		
 		File localFile = new File(file);
 		if (localFile.isAbsolute())
 			return localFile.toURI();
@@ -304,7 +307,7 @@ public class PathFileLocator implements IPathFileLocator {
 			String[] entries;
 			InputStream is = connection.getInputStream();
 			try {
-				String content = DataFiles.readInputStreamText(is);
+				String content = DataFiles.readInputStreamTextAndClose(is);
 				entries = content.split("\r\n|\n");
 			} finally {
 				if (is != null) { 
@@ -442,7 +445,7 @@ public class PathFileLocator implements IPathFileLocator {
 			System.out.println(connection.getContentType());
 			System.out.println(connection.getContentLength());
 			InputStream is = connection.getInputStream();
-			System.out.println(DataFiles.readInputStreamText(is));
+			System.out.println(DataFiles.readInputStreamTextAndClose(is));
 			is.close();
 		} catch (IOException e) {
 			e.printStackTrace();

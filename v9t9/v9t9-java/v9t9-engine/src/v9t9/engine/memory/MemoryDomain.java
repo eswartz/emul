@@ -53,7 +53,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     private Stack<IMemoryEntry> mappedEntries = new Stack<IMemoryEntry>();
 	private IMemoryEntry zeroMemoryEntry;
 	private final String name;
-	public IMemory memory;
+	private IMemory memory;
 
 	private final String id;
     
@@ -439,7 +439,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 			if (entry != null) {
 				entry.loadState(entryStore);
 			} else {
-				entry = MemoryEntry.createEntry(this, entryStore);
+				entry = getMemory().getMemoryEntryFactory().createEntry(this, entryStore);
 				if (entry != null)
 					mapEntry(entry);
 				else
@@ -562,5 +562,12 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	@Override
 	public IMemory getMemory() {
 		return memory;
+	}
+
+	/**
+	 * @param memory2
+	 */
+	public void setMemory(IMemory memory) {
+		this.memory = memory;
 	}
 }

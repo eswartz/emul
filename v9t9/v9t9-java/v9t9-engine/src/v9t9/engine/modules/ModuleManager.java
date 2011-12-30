@@ -235,7 +235,7 @@ public class ModuleManager implements IModuleManager {
 		try {
 
 			IMemoryEntry entry = null;
-			entry = machine.getMemoryEntryFactory().newMemoryEntry(info);
+			entry = memory.getMemoryEntryFactory().newMemoryEntry(info);
 			return entry;
 		} catch (IOException e) {
 			String filename = info.getString(MemoryEntryInfo.FILENAME); 
@@ -269,7 +269,7 @@ public class ModuleManager implements IModuleManager {
 		try {
 			URI uri = url.toURI();
 			is = url.openStream();
-			List<IModule> modList = ModuleLoader.loadModuleList(machine, is, uri);
+			List<IModule> modList = ModuleLoader.loadModuleList(machine.getMemory(), is, uri);
 			addModules(modList);
 		} catch (NotifyException e) {
 			machine.getClient().getEventNotifier().notifyEvent(e.getEvent());

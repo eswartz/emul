@@ -236,7 +236,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 		pcodeCardEnabled.loadState(sub);
 		
 		try {
-			ensureSetup(machine.getMemoryEntryFactory());
+			ensureSetup(machine.getMemory().getMemoryEntryFactory());
 		} catch (IOException e) {
 			machine.notifyEvent(Level.ERROR, e.getMessage());
 		}

@@ -3,6 +3,7 @@
  */
 package v9t9.machine.ti99.memory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import v9t9.common.client.ISettingsHandler;
@@ -18,6 +19,7 @@ import v9t9.common.settings.Settings;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntryFactory;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.memory.SoundMmio;
 import v9t9.engine.memory.SpeechMmio;
@@ -67,6 +69,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
     	if (memory == null) {
 	    	this.memory = new Memory();
 	    	memory.setModel(this);
+	    	memory.setMemoryEntryFactory(new MemoryEntryFactory(settings, memory, machine.getPathFileLocator()));
 	    	
 	        CPU = new MemoryDomain(IMemoryDomain.NAME_CPU, "Console", 4);
 	        GRAPHICS = new MemoryDomain(IMemoryDomain.NAME_GRAPHICS, "GROM/GRAM");
@@ -103,7 +106,8 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 
 	protected void reportLoadError(IEventNotifier eventNotifier, String file, IOException e) {
 		eventNotifier.notifyEvent(this, IEventNotifier.Level.ERROR, 
-				"Failed to find image '" + file +"' which is needed to start"); 
+				e instanceof FileNotFoundException ?
+				"Failed to find image '" + file +"' which is needed to start" : e.getMessage()); 
 	
 	}
 
@@ -114,7 +118,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 				.standardConsoleRom(filename)
 				.create("CPU ROM");
 			
-			cpuRomEntry = machine.getMemoryEntryFactory().newMemoryEntry(info);
+			cpuRomEntry = memory.getMemoryEntryFactory().newMemoryEntry(info);
 		} catch (IOException e) {
 			reportLoadError(eventNotifier, filename, e);
 			return null;
@@ -131,7 +135,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 				.standardConsoleGrom(filename)
 				.create("CPU GROM");
 			
-			entry = machine.getMemoryEntryFactory().newMemoryEntry(info);
+			entry = memory.getMemoryEntryFactory().newMemoryEntry(info);
 		} catch (IOException e) {
 			reportLoadError(eventNotifier, filename, e);
 			return null;
@@ -147,7 +151,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 				.standardModuleGrom(filename)
 				.create(name);
 		
-			entry = machine.getMemoryEntryFactory().newMemoryEntry(info);
+			entry = memory.getMemoryEntryFactory().newMemoryEntry(info);
 		} catch (IOException e) {
 			reportLoadError(eventNotifier, filename, e);
 			return null;

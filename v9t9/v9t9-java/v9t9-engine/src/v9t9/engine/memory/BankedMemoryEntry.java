@@ -35,7 +35,7 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 			int size,
 			int bankCount) {
 		super(name, domain, addr, size, null);
-		
+
 		this.memory = memory;
 		this.currentBankIndex = -1;
 		this.bankCount = bankCount;

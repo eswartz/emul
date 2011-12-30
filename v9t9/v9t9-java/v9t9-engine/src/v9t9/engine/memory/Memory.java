@@ -15,9 +15,11 @@ import java.util.Set;
 
 import ejs.base.settings.ISettingSection;
 
+import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.memory.IMemoryListener;
 import v9t9.common.memory.IMemoryModel;
 
@@ -32,7 +34,14 @@ public class Memory implements IMemory {
 
 	private Map<String, IMemoryDomain> domains = new HashMap<String, IMemoryDomain>();
 
-    /* (non-Javadoc)
+	private IMemoryEntryFactory factory;
+
+    public Memory() {
+    	factory = new MemoryEntryFactory(null, this, new PathFileLocator());
+		listeners = new java.util.ArrayList<IMemoryListener>();
+	}
+
+	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemory#addListener(v9t9.common.memory.MemoryListener)
 	 */
     @Override
@@ -82,7 +91,7 @@ public class Memory implements IMemory {
 	@Override
 	public void addDomain(String key, IMemoryDomain domain) {
 		this.domains.put(key, domain);
-		((MemoryDomain) domain).memory = this;
+		((MemoryDomain) domain).setMemory(this);
 	}
 	
 	/* (non-Javadoc)
@@ -111,10 +120,6 @@ public class Memory implements IMemory {
     	notifyListenersOfPhysicalChange(entry);
     }
     
-    public Memory() {
-		listeners = new java.util.ArrayList<IMemoryListener>();
-    }
-
     public void setModel(IMemoryModel model) {
     	this.model = model;
     }
@@ -194,5 +199,16 @@ public class Memory implements IMemory {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemory#getMemoryEntryFactory()
+	 */
+	@Override
+	public IMemoryEntryFactory getMemoryEntryFactory() {
+		return factory;
+	}
+	
+	public void setMemoryEntryFactory(IMemoryEntryFactory factory) {
+		this.factory = factory;
+	}
 }
 

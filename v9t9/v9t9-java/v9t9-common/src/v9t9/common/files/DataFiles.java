@@ -13,6 +13,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,7 +118,7 @@ public class DataFiles {
      * @return File located
      * @throws FileNotFoundException
      */
-    public static File readMemoryImage(ISettingsHandler settings, String filepath, int offset, int size, byte[] result) 
+    public static byte[] readMemoryImage(ISettingsHandler settings, String filepath, int offset, int size) 
     	throws FileNotFoundException, IOException 
 	{
         File file = resolveFile(settings, filepath);
@@ -138,12 +139,13 @@ public class DataFiles {
         }
      
         /* read the chunk */
+        byte[] result = new byte[sz];
         FileInputStream stream = new FileInputStream(file);
         CompatUtils.skipFully(stream, offset);
-        stream.read(result, 0, Math.min(size, result.length));
+        stream.read(result, 0, size);
         stream.close();
         
-        return file;
+        return result;
     }
 
     /**
@@ -214,20 +216,31 @@ public class DataFiles {
 		
 	}
 
-	public static String readInputStreamText(InputStream is) throws IOException {
+	public static String readInputStreamTextAndClose(InputStream is) throws IOException {
+		return new String(readInputStreamContentsAndClose(is));
+	}
+	
+	
+	public static byte[] readInputStreamContentsAndClose(InputStream is) throws IOException {
+		return readInputStreamContentsAndClose(is, Integer.MAX_VALUE);
+	}
+	
+	
+	public static byte[] readInputStreamContentsAndClose(InputStream is, int maxsize) throws IOException {
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		byte[] result = new byte[1024];
-        try {
-        	int len;
-        	while ((len = is.read(result)) >= 0) {
-        		bos.write(result, 0, len);
-        	}
-        } catch (IOException e) {
-        	if (is != null)
-        		is.close();
-        	throw e;
-        }
-		return new String(bos.toByteArray());
+		try {
+			int len;
+			int left = maxsize;
+			while (left > 0  && (len = is.read(result)) >= 0) {
+				bos.write(result, 0, Math.min(len, left));
+			}
+		} catch (IOException e) {
+			if (is != null)
+				is.close();
+			throw e;
+		}
+		return bos.toByteArray();
 	}
 	
 	public static String readFileText(File file) throws IOException {
@@ -246,6 +259,18 @@ public class DataFiles {
 		return new String(result);
 	}
 
+
+    /**
+
+     */
+    public static void writeOutputStreamContentsAndClose(OutputStream os, byte[] memory, int size) throws IOException 
+	{
+    	try {
+    		os.write(memory, 0, size);
+    	} finally {
+    		os.close();
+    	}
+    }
 
 
 }

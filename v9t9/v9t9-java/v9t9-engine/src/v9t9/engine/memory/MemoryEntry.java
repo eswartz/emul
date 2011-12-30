@@ -20,6 +20,7 @@ import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
 
+import v9t9.common.files.IPathFileLocator;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
@@ -69,6 +70,8 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	protected IMemory memory;
 
 	private boolean isVolatile;
+
+	protected IPathFileLocator locator;
 	
     public MemoryEntry(String name, IMemoryDomain domain, int addr,
             int size, MemoryArea area) {
@@ -251,7 +254,7 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	 * @see v9t9.common.memory.IMemoryEntry#loadSymbols(java.io.InputStream)
 	 */
     @Override
-	public void loadSymbols(InputStream is) throws IOException {
+	public void loadSymbolsAndClose(InputStream is) throws IOException {
     	try {
     		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
     		String line;
@@ -534,37 +537,6 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 		return addr >= this.addr + this.addrOffset && addr < this.addr + this.addrOffset + this.size;
 	}
 
-
-	/**
-	 * @param entryStore
-	 * @return
-	 */
-	public static MemoryEntry createEntry(MemoryDomain domain, ISettingSection entryStore) {
-		MemoryEntry entry = null;
-		String klazzName = entryStore.get("Class");
-		if (klazzName != null) {
-			try {
-				Class<?> klass = Class.forName(klazzName);
-				
-				entry = (MemoryEntry) klass.newInstance();
-				entry.domain = domain;
-				entry.bWordAccess = domain.getName().equals("Console");	// TODO
-				int latency = domain.getLatency(entryStore.getInt("Address"));
-				if (entry.bWordAccess)
-					entry.area = new WordMemoryArea(latency);
-				else
-					entry.area = new ByteMemoryArea(latency);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
-			}
-			
-			entry.memory = domain.memory;
-			entry.loadState(entryStore);
-		}
-		return entry;
-	}
-
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryEntry#getMemory()
 	 */
@@ -604,6 +576,38 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	@Override
 	final public int getAddrOffset() {
 		return addrOffset;
+	}
+
+
+	/**
+	 * @param domain2
+	 */
+	public void setDomain(IMemoryDomain domain) {
+		this.domain = domain;
+	}
+
+
+	/**
+	 * @param isWordAccess
+	 */
+	public void setWordAccess(boolean isWordAccess) {
+		this.bWordAccess = isWordAccess;
+	}
+
+
+	/**
+	 * @param memory2
+	 */
+	public void setMemory(IMemory memory) {
+		this.memory = memory;
+	}
+
+
+	/**
+	 * @param locator
+	 */
+	public void setLocator(IPathFileLocator locator) {
+		this.locator = locator;
 	}
 
 }

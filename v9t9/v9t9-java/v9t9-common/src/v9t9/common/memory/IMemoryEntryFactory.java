@@ -8,6 +8,8 @@ import java.util.List;
 
 import org.w3c.dom.Element;
 
+import ejs.base.settings.ISettingSection;
+
 
 /**
  * @author ejs
@@ -34,4 +36,11 @@ public interface IMemoryEntryFactory {
 			String filename, int fileoffs) throws IOException;
 	
 	List<MemoryEntryInfo> loadEntriesFrom(String name, Element root);
+	
+	/**
+	 * Create a memory entry from storage
+	 * @param entryStore
+	 * @return
+	 */
+	IMemoryEntry createEntry(IMemoryDomain domain, ISettingSection entryStore);
 }

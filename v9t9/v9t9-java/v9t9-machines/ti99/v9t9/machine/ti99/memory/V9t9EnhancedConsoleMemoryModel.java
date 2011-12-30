@@ -56,9 +56,9 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 		if (entry != null) {
 			// the high-GROM code is copied into RAM here
 			try {
-	    		CPU.getEntryAt(0x6000).loadSymbols(
+	    		CPU.getEntryAt(0x6000).loadSymbolsAndClose(
 	    				new FileInputStream(DataFiles.resolveFile(settings, 
-	    						((DiskMemoryEntry) entry).getSymbolFilepath())));
+	    						((DiskMemoryEntry) entry).getSymbolFileName())));
 			} catch (IOException e) {
 				
 			}
@@ -84,7 +84,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 				.withBankClass(MultiBankedMemoryEntry.class)
 				.create("CPU ROM (enhanced)");
 		
-    		cpuRomEntry = machine.getMemoryEntryFactory().newMemoryEntry(info);	
+    		cpuRomEntry = memory.getMemoryEntryFactory().newMemoryEntry(info);	
     	} catch (IOException e) {
     		reportLoadError(eventNotifier, filename1 + " or " + filename2, e);
     		return null;

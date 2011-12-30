@@ -19,7 +19,7 @@ import v9t9.common.memory.IMemoryEntry;
  */
 public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	
-	private MemoryEntry banks[];
+	private IMemoryEntry banks[];
 	private IMemoryEntry currentBank;
 
 	/**
@@ -65,7 +65,7 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	@Override
 	protected void doSaveBankEntries(ISettingSection section) {
 		for (int idx = 0; idx < banks.length; idx++) {
-			MemoryEntry entry = banks[idx];
+			IMemoryEntry entry = banks[idx];
 			entry.saveState(section.addSection("" + idx));
 		}		
 	}
@@ -79,11 +79,12 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 		}
 		for (int idx = 0; idx < banks.length; idx++) {
 			ISettingSection entryStore = section.getSection("" + idx);
-			MemoryEntry entry = banks[idx];
+			IMemoryEntry entry = banks[idx];
 			if (entry != null) {
+				((MemoryEntry) entry).setMemory(memory);
 				entry.loadState(entryStore);
 			} else {
-				entry = MemoryEntry.createEntry((MemoryDomain) getDomain(), entryStore);
+				entry = memory.getMemoryEntryFactory().createEntry(getDomain(), entryStore);
 				banks[idx] = entry;
 			}
 		}		
@@ -94,7 +95,7 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 		return currentBank != null ? currentBank.getUniqueName() : super.getUniqueName();
 	}
 	
-	public MemoryEntry[] getBanks() {
+	public IMemoryEntry[] getBanks() {
 		return banks;
 	}
 }

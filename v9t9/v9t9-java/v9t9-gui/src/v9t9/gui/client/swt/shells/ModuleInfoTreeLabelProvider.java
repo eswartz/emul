@@ -19,7 +19,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 
 import v9t9.common.memory.MemoryEntryInfo;
-import v9t9.common.memory.StoredMemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.gui.client.swt.shells.ModuleSelector.ErrorTreeNode;
 import v9t9.gui.client.swt.shells.ModuleSelector.InfoTreeNode;
@@ -52,8 +51,8 @@ class ModuleInfoTreeLabelProvider extends BaseLabelProvider implements ITableLab
 				return "Memory Entries";
 			if (element instanceof MemoryEntryInfo)
 				return "Expected Properties";
-			if (element instanceof StoredMemoryEntryInfo)
-				return split(((StoredMemoryEntryInfo) element).uri.getPath()).second;
+			//if (element instanceof StoredMemoryEntryInfo)
+			//	return split(((StoredMemoryEntryInfo) element).uri.getPath()).second;
 			if (element instanceof Map.Entry)
 				return ((Map.Entry<?, ?>) element).getKey().toString();
 			if (element instanceof Pair)
@@ -70,8 +69,8 @@ class ModuleInfoTreeLabelProvider extends BaseLabelProvider implements ITableLab
 				return element.toString();
 			if (element instanceof MemoryEntryInfo)
 				return null;
-			if (element instanceof StoredMemoryEntryInfo)
-				return split(((StoredMemoryEntryInfo) element).uri.getPath()).first;
+			//if (element instanceof StoredMemoryEntryInfo)
+			//	return split(((StoredMemoryEntryInfo) element).uri.getPath()).first;
 			if (element instanceof Map.Entry)
 				return ((Map.Entry<?, ?>) element).getValue().toString();
 			if (element instanceof Pair)
@@ -82,18 +81,6 @@ class ModuleInfoTreeLabelProvider extends BaseLabelProvider implements ITableLab
 			return null;
 		}
 		return null;
-	}
-
-	/**
-	 * @param path
-	 * @return
-	 */
-	private Pair<String, String> split(String path) {
-		int idx = path.lastIndexOf('/');
-		if (idx >= 0)
-			return new Pair<String, String>(path.substring(0, idx), path.substring(idx+1));
-		else
-			return new Pair<String, String>("", path);
 	}
 
 	/* (non-Javadoc)

@@ -319,7 +319,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		InputStream is = null;
 		try {
 			is = url.openStream();
-			text = DataFiles.readInputStreamText(is);
+			text = DataFiles.readInputStreamTextAndClose(is);
 		} catch (IOException e) {
 			throw new GLShaderException(filename, "Cannot read file " + url, e);
 		} finally {

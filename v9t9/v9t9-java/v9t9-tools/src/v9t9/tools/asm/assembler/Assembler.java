@@ -636,7 +636,7 @@ public abstract class Assembler implements IAssembler {
 	}
 
 	private void writeSymbolTable(DiskMemoryEntry entry) throws IOException {
-		FileOutputStream fos = new FileOutputStream(entry.getSymbolFilepath());
+		FileOutputStream fos = new FileOutputStream(entry.getSymbolFileName());
 		PrintStream ps = new PrintStream(fos);
 		for (Symbol symbol : getSymbolTable().getSymbols()) {
 			ps.println(HexUtils.toHex4(symbol.getAddr()) + " " + symbol.getName());

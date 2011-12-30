@@ -82,7 +82,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 		Runnable runnable = new Runnable() {
 			public void run() {
 				try {
-					speechRom = machine.getMemoryEntryFactory().newMemoryEntry(speechMemoryEntryInfo);
+					speechRom = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(speechMemoryEntryInfo);
 					speechRom.load();
 					speechRom.getDomain().mapEntry(speechRom);
 				} catch (IOException e) {

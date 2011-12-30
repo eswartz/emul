@@ -78,7 +78,7 @@ public class MemoryEntryInfoBuilder {
 		return this;
 	}
 	
-	public MemoryEntryInfoBuilder setStored(boolean b) {
+	public MemoryEntryInfoBuilder storable(boolean b) {
 		this.isStored = b;
 		return this;
 	}

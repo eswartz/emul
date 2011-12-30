@@ -38,7 +38,7 @@ public class MemoryAreaFactory {
 		if (memory != null)
 			area.setLatency(info.getDomain(memory).getLatency(info.getAddress()));
 		
-		area.memory = new byte[info.getSize()];
+		area.memory = new byte[Math.abs(info.getSize())];
 		area.read = area.memory;
 		if (info.isStored())
 			area.write = area.memory;
@@ -65,7 +65,7 @@ public class MemoryAreaFactory {
     		};
 		}
         area.setLatency(info.getDomain(memory).getLatency(info.getAddress()));
-        area.memory = new short[info.getSize() / 2];
+        area.memory = new short[Math.abs(info.getSize()) / 2];
         area.read = area.memory;
         if (info.isStored())
         	area.write = area.memory;

@@ -7,14 +7,14 @@
 package v9t9.engine.memory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.util.Arrays;
 
 import ejs.base.settings.ISettingSection;
 
-
-import v9t9.common.client.ISettingsHandler;
+import v9t9.common.FileUtils;
 import v9t9.common.files.DataFiles;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.memory.StoredMemoryEntryInfo;
@@ -25,24 +25,13 @@ import v9t9.common.memory.StoredMemoryEntryInfo;
 public class DiskMemoryEntry extends MemoryEntry {
 
     /**	file path */
-    private String filepath;
+    private String filename;
     
-    /**	file offset in bytes */
-    private int fileoffs;
-    
-    /**	actual size of file */
-    private int filesize;
-    
-    /**	is this nonvolatile RAM which should be saved back to disk? */
-    private boolean bStorable;
-
     /**	is the file loaded yet? */
     private boolean bLoaded;
     
     /**	is the data dirty? */
     private boolean bDirty;
-
-	private ISettingsHandler settings;
 
 	private StoredMemoryEntryInfo storedInfo;
 
@@ -53,21 +42,17 @@ public class DiskMemoryEntry extends MemoryEntry {
     	super();
     }
     DiskMemoryEntry(MemoryEntryInfo info, String name, MemoryArea area, StoredMemoryEntryInfo storedInfo) {
-    	super(name, info.getDomain(storedInfo.memory), info.getAddress(), storedInfo.size, area);
+    	super(name, info.getDomain(storedInfo.memory), info.getAddress(), storedInfo.size - storedInfo.fileoffs, area);
 		this.info = info;
 		this.storedInfo = storedInfo;
-    	this.settings = storedInfo.settings;
+		this.locator = storedInfo.locator;
     	
     	/* this should be set up already */
     	if (area == null) {
     		throw new AssertionError();
     	}
     	
-    	// TODO
-    	this.filepath = storedInfo.uri.getPath();
-    	this.fileoffs = storedInfo.fileoffs;
-    	this.filesize = storedInfo.filesize;
-    	this.bStorable = info.isStored();
+    	this.filename = storedInfo.fileName;
     	this.bDirty = false;
     	this.area = area;
     }
@@ -89,26 +74,83 @@ public class DiskMemoryEntry extends MemoryEntry {
         super.load();
         if (!bLoaded) {
             try {
-                byte[] data = new byte[filesize];
-                DataFiles.readMemoryImage(settings, filepath, fileoffs, filesize, data);
+        		// note: if stored, this finds the user's copy first or the original template
+        		URI uri = locator.findFile(filename);
+        		if (uri == null) {
+        			if (info.isStored()) {
+        				uri = locator.getWriteURI(filename);
+        			}
+        		}
+            	if (uri == null) {
+                    // TODO: send alert
+            		return;
+            	}
+            	
+            	int filesize = locator.getContentLength(uri);
+            	
+            	filesize = fixupFileSize(uri, filesize);
+            	
+                InputStream is = locator.createInputStream(uri);
+                FileUtils.skipFully(is, storedInfo.fileoffs);
+				byte[] data = DataFiles.readInputStreamContentsAndClose(is, filesize - storedInfo.fileoffs);
                 area.copyFromBytes(data);
-               
+
+            	bLoaded = true;
                 
                 // see if it has symbols
-                String symbolfilepath = getSymbolFilepath();
-                File symfile = DataFiles.resolveFile(settings, symbolfilepath);
-            	if (symfile.exists()) {
-            		loadSymbols(new FileInputStream(symfile));
+                String symbolFileName = getSymbolFileName();
+                URI symfile = locator.findFile(symbolFileName);
+            	if (symfile != null) {
+            		try {
+            			loadSymbolsAndClose(locator.createInputStream(symfile));
+            		} catch (IOException e) {
+            			// TODO: send alert
+            		}
             	}
             } catch (java.io.IOException e) {
                 // TODO: send alert
-            } finally {
-            	bLoaded = true;
             }
         }
     }
 
-    public void setDirty(boolean dirty) {
+    /**
+	 * @param uri
+	 * @param filesize
+	 * @return
+     * @throws IOException 
+	 */
+	private int fixupFileSize(URI uri, int filesize) throws IOException {
+
+		int size = storedInfo.size;
+		
+		try {
+			try {
+				filesize = (int) new File(uri).length();
+			} catch (IllegalArgumentException e) {
+				filesize = locator.getContentLength(uri);
+			}
+	        
+			// for large files selected, e.g., by accident 
+			if (size > 0 && filesize > size) {
+				filesize = size;
+			} else if (size < 0 && filesize > -size) {
+				filesize = -size;
+			} else if (filesize + info.getAddress() > 0x10000) {
+				filesize = 0x10000 - info.getAddress();
+			}
+            
+        } catch (IOException e) {		// TODO
+            if (info.isStored()) {
+				filesize = size;	// not created yet
+			} else {
+				throw e;
+			}
+        }
+        
+        return filesize;
+	}
+	
+	public void setDirty(boolean dirty) {
     	bDirty = dirty;
     }
     
@@ -117,28 +159,47 @@ public class DiskMemoryEntry extends MemoryEntry {
      */
     @Override
 	public void save() throws IOException {
-        if (bStorable && bDirty) {
-            byte[] data = new byte[filesize];
+        if (info.isStored() && bDirty) {
+            byte[] data = new byte[getSize()];
             area.copyToBytes(data);
-            File old = DataFiles.resolveFile(settings, filepath);
-            File backup = DataFiles.resolveFile(settings, filepath + "~");
+            
+            URI uri = locator.getWriteURI(filename);
+            URI backup = URI.create(uri.toString() + "~");
+            
+            // only make backup if the current backup differs from the new contents
             boolean isNew = true;
-            if (old.exists()) {
-            	if (backup.exists()) {
-            		byte[] origData = new byte[(int) backup.length()];
+            byte[] origData = null;
+            if (locator.exists(uri)) {
+            	if (locator.exists(backup)) {
             		try {
-            			DataFiles.readMemoryImage(settings, backup.getAbsolutePath(), 0, filesize, origData);
+            			origData = DataFiles.readInputStreamContentsAndClose(
+            					locator.createInputStream(backup), getSize());
             			isNew = !Arrays.equals(data, origData);
+            		} catch (IOException e) {
+            			// ignore
+            		}
+            	} else {
+            		try {
+            			origData = DataFiles.readInputStreamContentsAndClose(
+            					locator.createInputStream(uri), getSize());
             		} catch (IOException e) {
             			// ignore
             		}
             	}
             }
             if (isNew) {
-            	backup.delete();
-            	old.renameTo(backup);
+            	if (origData != null) {
+            		try {
+            			DataFiles.writeOutputStreamContentsAndClose(
+            					locator.createOutputStream(backup), origData, getSize());
+            		} catch (IOException e) {
+            			e.printStackTrace();
+            			// ignore
+            		}
+            	}
             }
-            DataFiles.writeMemoryImage(settings, filepath, filesize, data);
+            DataFiles.writeOutputStreamContentsAndClose(
+            		locator.createOutputStream(uri), data, getSize());
             bDirty = false;
         }
         super.save();
@@ -151,25 +212,27 @@ public class DiskMemoryEntry extends MemoryEntry {
     }
 
 	public String getFilepath() {
-		return filepath;
+		return filename;
 	}
 	
-	public String getSymbolFilepath() {
-		int idx = filepath.lastIndexOf('.');
+	public String getSymbolFileName() {
+		int idx = filename.lastIndexOf('.');
         if (idx >= 0) {
-        	return filepath.substring(0, idx) + ".sym";
+        	return filename.substring(0, idx) + ".sym";
         } else {
-        	return filepath + ".sym";
+        	return filename + ".sym";
         }
 	}
 	
 	@Override
 	public void saveState(ISettingSection section) {
 		super.saveState(section);
-		section.put("FilePath", filepath);
-		section.put("FileOffs", fileoffs);
-		section.put("FileSize", filesize);
-		section.put("Storable", bStorable);
+		section.put("FileName", filename);
+		if (storedInfo == null)
+			return;
+		section.put("FileOffs", storedInfo.fileoffs);
+		//section.put("FileSize", storedInfo.filesize);
+		section.put("Storable", storedInfo.info.isStored());
 	}
 	
 	/* (non-Javadoc)
@@ -178,10 +241,20 @@ public class DiskMemoryEntry extends MemoryEntry {
 	@Override
 	protected void loadFields(ISettingSection section) {
 		super.loadFields(section);
-		filepath = section.get("FilePath");
-		fileoffs = section.getInt("FileOffs");
-		filesize = section.getInt("FileSize");
-		bStorable = section.getBoolean("Storable");
+		info = (isWordAccess() ? MemoryEntryInfoBuilder.wordMemoryEntry() : MemoryEntryInfoBuilder.byteMemoryEntry())
+			.withFilename(section.get("FileName") != null ? section.get("FileName") : section.get("FilePath"))
+			.withOffset(section.getInt("FileOffs"))
+			.withSize(section.getInt("Size"))
+			.withAddress(getAddr())
+			.withDomain(getDomain().getIdentifier())
+			.storable(section.getBoolean("Storable")).create(getName());
+		
+		try {
+			storedInfo = memory.getMemoryEntryFactory().resolveMemoryEntry(info, 
+					info.getName(), info.getFilename(), info.getOffset());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -199,29 +272,23 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 */
 	protected void loadMemoryContents(ISettingSection section) {
 		if (isWordAccess())
-			area = MemoryAreaFactory.createWordMemoryArea(storedInfo.memory, info);
+			area = MemoryAreaFactory.createWordMemoryArea(memory, info);
 		else
-			area = MemoryAreaFactory.createByteMemoryArea(storedInfo.memory, info);
+			area = MemoryAreaFactory.createByteMemoryArea(memory, info);
 		
 		bLoaded = false;
 		load();
 	}
 	@Override
 	public String getUniqueName() {
-		return filepath;
+		return filename;
 	}
 	
 	/**
 	 * @return the fileoffs
 	 */
 	public int getFileOffs() {
-		return fileoffs;
-	}
-	/**
-	 * @return the filesize
-	 */
-	public int getFileSize() {
-		return filesize;
+		return storedInfo.fileoffs;
 	}
 	/**
 	 * @return the bLoaded
@@ -233,7 +300,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 * @return the bStorable
 	 */
 	public boolean isStorable() {
-		return bStorable;
+		return storedInfo.info.isStored();
 	}
 }
 

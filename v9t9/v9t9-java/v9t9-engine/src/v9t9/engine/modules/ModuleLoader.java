@@ -11,7 +11,7 @@ import java.util.List;
 import org.w3c.dom.Element;
 
 import v9t9.common.events.NotifyException;
-import v9t9.common.machine.IMachine;
+import v9t9.common.memory.IMemory;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import ejs.base.utils.StorageException;
@@ -24,7 +24,7 @@ import ejs.base.utils.XMLUtils;
  */
 public class ModuleLoader {
 
-	public static List<IModule> loadModuleList(IMachine machine, InputStream is, URI databaseURI) throws NotifyException {
+	public static List<IModule> loadModuleList(IMemory memory, InputStream is, URI databaseURI) throws NotifyException {
 		
 		StreamXMLStorage storage = new StreamXMLStorage();
 		storage.setInputStream(is);
@@ -50,7 +50,7 @@ public class ModuleLoader {
 			}
 
 			// memory entries
-			List<MemoryEntryInfo> memoryEntries = machine.getMemoryEntryFactory().loadEntriesFrom(
+			List<MemoryEntryInfo> memoryEntries = memory.getMemoryEntryFactory().loadEntriesFrom(
 					name, moduleElement);
 			module.setMemoryEntryInfos(memoryEntries);
 			

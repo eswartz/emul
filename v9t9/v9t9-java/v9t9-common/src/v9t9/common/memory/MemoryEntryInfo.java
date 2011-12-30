@@ -113,8 +113,6 @@ public class MemoryEntryInfo {
 	
 	public String getString(String name) {
 		String s = (String) properties.get(name);
-		if (s == null)
-			return "";
 		return s;
 	}
 	
@@ -168,7 +166,7 @@ public class MemoryEntryInfo {
 	}
 
 	public boolean isBanked() { 
-		return getFilename().length() > 0 && getFilename2().length() > 0
+		return getFilename() != null && getFilename2() != null
 		&& !getFilename().equals(getFilename2());
 	}
 

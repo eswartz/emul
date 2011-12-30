@@ -89,14 +89,15 @@ public class ModuleContentProvider extends TreeNodeContentProvider {
 			String name, String filename, int offset) {
 		StoredMemoryEntryInfo storedInfo;
 		try {
-			storedInfo = StoredMemoryEntryInfo.resolveStoredMemoryEntryInfo(
+			storedInfo = StoredMemoryEntryInfo.createStoredMemoryEntryInfo(
 					pathFileLocator, machine.getSettings(), 
 					machine.getMemory(), info, 
 					name, filename, offset);
 			memNodes.add(makeTreeNode(storedInfo));
 		} catch (IOException e) {
 			TreeNode errorNode = new ErrorTreeNode(new Pair<String, String>(filename,
-					e instanceof FileNotFoundException ? "File not found on search paths" : e.getMessage()));
+					e instanceof FileNotFoundException ? 
+					"File not found on search paths" : e.getMessage()));
 			TreeNode[] kids = new TreeNode[] {
 					makeTreeNode(info),
 					};
@@ -105,12 +106,27 @@ public class ModuleContentProvider extends TreeNodeContentProvider {
 		}
 	}
 	
+	private Pair<String, String> split(String path) {
+		int idx = path.lastIndexOf('/');
+		if (idx >= 0)
+			return new Pair<String, String>(path.substring(0, idx), path.substring(idx+1));
+		else
+			return new Pair<String, String>("", path);
+	}
+
 
 	private TreeNode makeTreeNode(StoredMemoryEntryInfo info) {
-		TreeNode node = new TreeNode(info);
+		URI uri = info.uri;
+		
+		Pair<String, String> pathAndName = split(uri.toString());
+		TreeNode node = new TreeNode(new Pair<String, String>(pathAndName.second, ""));
 		TreeNode[] kids = new TreeNode[3];
-		kids[0] = new TreeNode(new Pair<String, String>("Location", info.uri.toString()));
-		kids[1] = new TreeNode(new Pair<String, String>("File Size", ""+info.filesize));
+		kids[0] = new TreeNode(new Pair<String, String>("Location", uri.toString()));
+		try {
+			kids[1] = new TreeNode(new Pair<String, String>("File Size", ""+ pathFileLocator.getContentLength(uri)));
+		} catch (IOException e) {
+			kids[1] = new ErrorTreeNode(new Pair<String, String>("File Size", "cannot read: " + e.toString()));
+		}
 		kids[2] = makeTreeNode(info.info);
 		node.setChildren(kids);
 		return node;

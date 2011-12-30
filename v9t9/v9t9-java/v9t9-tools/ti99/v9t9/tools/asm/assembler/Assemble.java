@@ -149,7 +149,7 @@ public class Assemble {
 			int size, String string, String file) throws IOException {
 		MemoryEntryInfo info = MemoryEntryInfoBuilder.wordMemoryEntry()
 			.withAddress(romStart).withSize(size).withFilename(file).
-			setStored(true).create(string);
+			storable(true).create(string);
 
 		return memoryEntryFactory.newMemoryEntry(info);
 	}
