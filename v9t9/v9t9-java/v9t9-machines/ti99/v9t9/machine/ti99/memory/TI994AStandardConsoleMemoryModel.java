@@ -29,7 +29,14 @@ import v9t9.machine.ti99.memory.mmio.ConsoleVdpWriteArea;
  * @author ejs
  */
 public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
-    static public final SettingSchema settingExpRam = new SettingSchema(
+    static public final SettingSchema settingRomFileName = new SettingSchema(
+    		ISettingsHandler.WORKSPACE,
+    		"RomFileName", "994arom.bin");
+    static public final SettingSchema settingGromFileName = new SettingSchema(
+    		ISettingsHandler.WORKSPACE,
+    		"GromFileName", "994agrom.bin");
+
+	static public final SettingSchema settingExpRam = new SettingSchema(
     		ISettingsHandler.WORKSPACE,
     		"MemoryExpansion32K", new Boolean(false));
 
@@ -43,8 +50,8 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
      */
 	@Override
     public void loadMemory(IEventNotifier eventNotifier) {
-    	loadConsoleRom(eventNotifier, "994arom.bin");
-    	loadConsoleGrom(eventNotifier, "994agrom.bin");    	
+    	loadConsoleRom(eventNotifier, Settings.get(machine, settingRomFileName).getString());
+    	loadConsoleGrom(eventNotifier, Settings.get(machine, settingGromFileName).getString());    	
     }
     
     /* (non-Javadoc)
