@@ -743,7 +743,7 @@ public class ModuleSelector extends Composite {
 			else
 				machine.reset();
 
-			if (!getShell().isDisposed())
+			if (!isDisposed())
 				getShell().dispose();
 		} catch (NotifyException e) {
 			machine.notifyEvent(Level.ERROR,
