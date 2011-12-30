@@ -175,10 +175,8 @@ public class PulseSoundListener implements ISoundListener {
 	 */
 	public synchronized void played(SoundChunk chunk) {
 		try {
-			if (soundWritingThread == null) {
-				if (soundQueue.remainingCapacity() == 0)
-					soundQueue.remove();
-			}
+			if (soundQueue.remainingCapacity() == 0)
+				soundQueue.remove();
 			// will block if sound is too fast
 			AudioChunk o = new AudioChunk(chunk, volume);
 			//if (o.isEmpty())
