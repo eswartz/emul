@@ -298,4 +298,30 @@ public class ManualTestPathFileLocator {
 		
 
 	}
+	
+
+	@Test
+	public void testJarHttp() throws URISyntaxException, IOException {
+
+		IPathFileLocator locator = new PathFileLocator();
+		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		String jarPath = "jar:http://192.168.24.9:8080/v9t9/v9t9j.jar!/ti99/";
+		bootRoms.getList().add(jarPath);
+		locator.addReadOnlyPathProperty(bootRoms);		
+		
+		URI jarURI = locator.createURI(jarPath);
+		assertNotNull(jarURI);
+		assertTrue(jarURI.isOpaque());
+		assertTrue(jarURI.isAbsolute());
+		
+		Collection<String> listing = locator.getDirectoryListing(jarURI);
+		assertNotNull(listing);
+		
+		URI moduleXML = locator.resolveInsideURI(jarURI, "stock_modules.xml");
+		assertTrue(moduleXML.toString().endsWith("!/ti99/stock_modules.xml"));
+		InputStream is = locator.createInputStream(moduleXML);
+		assertNotNull(is);
+		
+
+	}
 }

@@ -43,6 +43,8 @@ import ejs.base.properties.IPropertyListener;
  */
 public class PathFileLocator implements IPathFileLocator {
 
+	private static boolean DEBUG = false;
+	
 	private List<IProperty> roPathProperties = new ArrayList<IProperty>();
 	private IProperty rwPathProperty = null;
 	private IPropertyListener pathListChangedListener;
@@ -58,7 +60,7 @@ public class PathFileLocator implements IPathFileLocator {
 	private Map<URI, Long> cachedListingTime = new HashMap<URI, Long>();
 	private Map<URI, Long> cachedListingModifiedTime = new HashMap<URI, Long>();
 	
-	private Map<URI, Map<String, Collection<String>>> cachedJarListings = new HashMap<URI, Map<String,Collection<String>>>();
+	private Map<URL, Map<String, Collection<String>>> cachedJarListings = new HashMap<URL, Map<String,Collection<String>>>();
 	
 	private int timeoutMs = 30 * 1000;
 	
@@ -327,18 +329,18 @@ public class PathFileLocator implements IPathFileLocator {
 
 		// JAR?
 		if (connection instanceof JarURLConnection) {
-			try {
-				cachedListing = getJarDirectoryListing(((JarURLConnection) connection).getJarFileURL().toURI(),
-						directory.getSchemeSpecificPart().substring(directory.getSchemeSpecificPart().lastIndexOf('!') + 1));
+			cachedListing = getJarDirectoryListing(uri.toURL(),
+					directory.getSchemeSpecificPart().substring(directory.getSchemeSpecificPart().lastIndexOf('!') + 1));
 
-				cachedListings.put(directory, cachedListing);
-				cachedListingModifiedTime.put(directory, connection.getLastModified());
-			} catch (URISyntaxException e) {
-				throw new IOException("failed to read inside JAR", e);
-			}
+			cachedListings.put(directory, cachedListing);
+			cachedListingModifiedTime.put(directory, connection.getLastModified());
 		}
 		else  {
 			if (!connection.getContentType().equals("text/plain")) {
+				if (DEBUG)
+					System.err.println("!!! Unexpected directory content at " + directory + ":  " +
+							connection.getContentType());
+
 				throw new IOException("unexpected content at " + directory);
 			}
 		
@@ -382,13 +384,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @param substring
 	 * @return
 	 */
-	private Collection<String> getJarDirectoryListing(URI jar, String dir) throws IOException {
-		File file;
-		try {
-			file = new File(jar);
-		} catch (IllegalArgumentException e) {
-			throw new IOException(e);
-		}
+	private Collection<String> getJarDirectoryListing(URL jar, String dir) throws IOException {
 		
 		if (dir.startsWith("/"))
 			dir = dir.substring(1);
@@ -399,6 +395,31 @@ public class PathFileLocator implements IPathFileLocator {
 		
 		if (subdirs == null) {
 			subdirs = new TreeMap<String, Collection<String>>();
+
+			URL localJar = resolveToOwningJarFile(jar);
+			
+			boolean delete = false;
+			File file;
+			try {
+				file = new File(localJar.toURI());
+			} catch (IllegalArgumentException e) {
+				// okay, not a file... urgh... download it?
+				if (DEBUG)
+					System.out.println("Getting local copy of jar at " + jar + " for listing");
+
+				// TODO: sigh... if it's http://, we must have already downloaded it via Java Web Start -- how to find the cache?
+				File tmpFile = File.createTempFile("jar", ".jar");
+
+				InputStream is = jar.openStream();
+				byte[] content = DataFiles.readInputStreamContentsAndClose(is);
+				OutputStream os = new FileOutputStream(tmpFile);
+				DataFiles.writeOutputStreamContentsAndClose(os, content, content.length);
+				
+				file = tmpFile;
+				delete = true;
+			} catch (URISyntaxException e) {
+				throw new IOException(e);
+			}
 			
 			ZipFile zf = new ZipFile(file);
 			for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
@@ -420,10 +441,52 @@ public class PathFileLocator implements IPathFileLocator {
 			}
 			zf.close();
 			
+			if (delete)
+				file.delete();
+			
 			cachedJarListings.put(jar, subdirs);
 		}
 		
 		return subdirs.get(dir);
+	}
+
+	/**
+	 * Get the local jar file that provides the given URL
+	 * @param jar
+	 * @return
+	 */
+	private URL resolveToOwningJarFile(URL jar) {
+		String baseURL = jar.toExternalForm();
+		int idx = baseURL.lastIndexOf('!');
+		if (idx >= 0)
+			baseURL = baseURL.substring(0, idx) + "!/";
+		try {
+			URL localJar = resolveToLocalJarFile(new URL(baseURL));
+			// remove "jar:" prefix
+			String filePrefix = localJar.toExternalForm().substring(4);
+			// and suffix
+			int idx2 = filePrefix.lastIndexOf('!');
+			if (idx2 >= 0)
+				filePrefix = filePrefix.substring(0, idx2);
+			return new URL(filePrefix);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			return jar;
+		}
+
+	}
+
+	/**
+	 * 
+	 * from <a href="http://www.objectdefinitions.com/odblog/2008/workaround-for-bug-id-6753651-find-path-to-jar-in-cache-under-webstart/">this post</a>
+	 * @param jar
+	 * @return
+	 */
+	private URL resolveToLocalJarFile(URL jar) {
+		URL url = JarUtils.convertToJarFileURL(jar);
+		if (DEBUG)
+			System.out.println("Resolved " + jar + " to " + url);
+		return url;
 	}
 
 	/**
@@ -447,6 +510,16 @@ public class PathFileLocator implements IPathFileLocator {
 				}
 				resolved = createURI(ssp).resolve(string);
 				resolved = new URI(uri.getScheme(), resolved.toString(), uri.getFragment());
+				
+				if ("jar".equals(resolved.getScheme())) {
+					try {
+						resolved = resolveToLocalJarFile(resolved.toURL()).toURI();
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+					}
+				}
+				if (DEBUG)
+					System.out.println("Resolved " + uri + " + " + string + " ==> " + resolved);
 			} catch (URISyntaxException e) {
 				e.printStackTrace();
 			}
@@ -608,6 +681,8 @@ public class PathFileLocator implements IPathFileLocator {
 	public boolean exists(URI uri) {
 		InputStream is = null;
 		try {
+			if (DEBUG) 
+				System.out.println("exists? " + uri);
 			is = createInputStream(uri);
 			return true;
 		} catch (IllegalArgumentException e) {
