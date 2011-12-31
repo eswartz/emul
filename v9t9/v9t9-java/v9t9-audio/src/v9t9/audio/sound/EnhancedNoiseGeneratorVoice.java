@@ -12,7 +12,7 @@ public class EnhancedNoiseGeneratorVoice extends NoiseGeneratorVoice implements 
 
 	private EffectsController effectsController;
 
-	public EnhancedNoiseGeneratorVoice(String name, ClockedSoundVoice pairedVoice2) {
+	public EnhancedNoiseGeneratorVoice(String name) {
 		super(name);
 		effectsController = new EffectsController(this);
 	}

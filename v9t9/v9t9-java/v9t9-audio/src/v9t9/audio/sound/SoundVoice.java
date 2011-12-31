@@ -6,6 +6,12 @@ package v9t9.audio.sound;
 import ejs.base.settings.ISettingSection;
 import ejs.base.sound.ISoundVoice;
 
+/**
+ * The base class for sounds.  This assumes 255 distinct volume settings
+ * versus the TMS9919's 15, for possible future expansion.
+ * @author ejs
+ *
+ */
 public abstract class SoundVoice implements ISoundVoice
 {
 	protected static final int MAX_VOLUME = 255;
@@ -22,11 +28,18 @@ public abstract class SoundVoice implements ISoundVoice
 	
 	static {
 		volumeToMagnitude = new float[MAX_VOLUME + 1];
-		for (int x = 0; x < MAX_VOLUME + 1; x++) {
-			double y = (Math.exp((x/(double) MAX_VOLUME)*Math.log(1023))-1.0)/1023;
-			//System.out.println(y);
-			volumeToMagnitude[x] = (float) y;
+		double val = 1.0;
+		
+		// dB power falls by 10^(dB/20).
+		// With 15 steps of 2 dB, the ratio is 10^-0.1
+		// With 255 steps of 1/8 dB, the ratio is 10^-0.1
+		double mult = Math.pow(10, -(30. / MAX_VOLUME / 20.));
+		for (int x = MAX_VOLUME; x > 0; x--) {
+			volumeToMagnitude[x] = (float) val;
+			//System.out.println(val);
+			val *= mult; 
 		}
+		volumeToMagnitude[0] = 0.0f;
 	}
 	public SoundVoice(String name) {
 		this.name = name;

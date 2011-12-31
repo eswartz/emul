@@ -6,6 +6,14 @@ package v9t9.audio.sound;
 import v9t9.common.sound.TMS9919Consts;
 import ejs.base.settings.ISettingSection;
 
+/**
+ * Help from http://www.smspower.org/Development/SN76489
+ * and thanks to John Kortink (http://web.inter.nl.net/users/J.Kortink/home/articles/sn76489/)
+ * for the exact white-noise algorithm!
+ *
+ * @author ejs
+ *
+ */
 public class NoiseGeneratorVoice extends ClockedSoundVoice
 {
 	private boolean isWhite;
@@ -14,6 +22,14 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 	
 	public NoiseGeneratorVoice(String name) {
 		super((name != null ? name + " " : "") + "Noise");
+	}
+	
+	@Override
+	public void setSoundClock(int clock) {
+		// Noise works on effectively double the clock of tones,
+		// because tones split the clock for the up and down parts of
+		// one cycle, whereas noise works on every cycle.
+		super.setSoundClock(clock * 2);
 	}
 	
 	/**
@@ -29,7 +45,7 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 		case 0:
 		case 1:
 		case 2:
-			setPeriod(TMS9919Consts.NOISE_DIVISORS[ps] / (3579545 / refClock));
+			setPeriod(TMS9919Consts.NOISE_DIVISORS[ps]);
 			break;
 		default:
 			// will be updated next
@@ -39,7 +55,7 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 		
 		this.isWhite = (control & TMS9919Consts.NOISE_FEEDBACK_MASK) != 0;
 		
-		if (oldControl != control) {
+		if (oldControl != control || ns1 == 0) {
 			ns1 = (short) 0x8000;
 			accum = 0;
 		}
@@ -74,8 +90,6 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 						soundGeneratorWorkBuffer[from+1] += sampleR;
 					}
 					
-					// thanks to John Kortink (http://web.inter.nl.net/users/J.Kortink/home/articles/sn76489/)
-					// for the exact algorithm here!
 					if (toggled) {
 						short rx = (short) ((ns1 ^ ((ns1 >>> 1) & 0x7fff) ));
 						rx = (short) (0x4000 & (rx << 14));

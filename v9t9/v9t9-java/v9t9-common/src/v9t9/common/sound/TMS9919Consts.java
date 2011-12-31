@@ -62,9 +62,9 @@ public class TMS9919Consts {
 
 	public static final int NOISE_DIVISORS[] = 
 	{
-		512,
-		1024, 
-		2048, 
+		16,
+		32, 
+		64, 
 		0 						/* determined by VOICE_TONE_2 */
 	};
 

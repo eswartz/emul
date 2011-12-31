@@ -272,9 +272,9 @@ public class EffectsController {
 		int vib = 0;
 		if (vibratoAmount != 0) {
 			vib = (int) ((long) sines[vibratoClock * sines.length / sclock] * vibratoAmount * 55930 / 16 / sclock);
-			vibratoClock += vibratoIncr;
-			while (vibratoClock >= sclock)
-				vibratoClock -= sclock;
+			vibratoClock -= vibratoIncr;
+			while (vibratoClock < 0)
+				vibratoClock += sclock;
 		}
 		
 		return voice.updateAccumulator(voice.incr + vib);
@@ -414,9 +414,9 @@ public class EffectsController {
 		}
 		if (tremoloAmount != 0) {
 			if (volume > 0) {
-				tremoloClock += tremoloIncr;
-				while (tremoloClock >= sclock)
-					tremoloClock -= sclock;
+				tremoloClock -= tremoloIncr;
+				while (tremoloClock < 0)
+					tremoloClock += sclock;
 			}
 		}
 		if (sweepClocks-- > 0) {

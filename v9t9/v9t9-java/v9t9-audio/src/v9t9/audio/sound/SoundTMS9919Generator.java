@@ -137,7 +137,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 					public void registerChanged(int reg, int value) {
 						voice.setNoiseControl(value);
 						if (isNoiseTrackingTone2()) {
-							voice.setPeriod(((ClockedSoundVoice) soundVoices[VOICE_TONE_2]).getPeriod());
+							updateNoisePeriod();
 						}
 					}
 				}
@@ -156,6 +156,14 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 
 
 		return TMS9919Consts.REG_COUNT_NOISE;
+	}
+
+	/**
+	 * 
+	 */
+	protected void updateNoisePeriod() {
+		((ClockedSoundVoice) soundVoices[VOICE_NOISE]).setPeriod(
+				((ClockedSoundVoice) soundVoices[VOICE_TONE_2]).getPeriod());		
 	}
 
 	/**
@@ -187,7 +195,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 				public void registerChanged(int reg, int value) {
 					voice.setPeriod(value);
 					if (reg == regBase + 2 && isNoiseTrackingTone2()) {
-						((NoiseGeneratorVoice)soundVoices[VOICE_NOISE]).setPeriod(value);
+						updateNoisePeriod();
 					}
 				}
 			}

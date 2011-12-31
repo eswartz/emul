@@ -41,7 +41,7 @@ public class SoundTMS9919BGenerator extends SoundTMS9919Generator {
 		}
 		
 		EnhancedNoiseGeneratorVoice nv = new EnhancedNoiseGeneratorVoice(
-				name, (ClockedSoundVoice) soundVoicesList.get(soundVoicesList.size() - 1));
+				name);
 		soundVoicesList.add(nv);
 		regBase += setupEnhancedNoiseVoice(regBase, nv);
 		
