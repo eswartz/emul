@@ -20,6 +20,7 @@ sc = service.IServiceCollection(application)
 i = internet.TCPServer(8080, site)
 i.setServiceParent(sc)
 
+print "Connect to localhost:8080/$v9t9.root/v9t9.html"
 reactor.listenTCP(8080, server.Site(root))
 reactor.run()
 
