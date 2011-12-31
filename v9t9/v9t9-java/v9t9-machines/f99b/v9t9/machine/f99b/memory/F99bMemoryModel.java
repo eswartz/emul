@@ -1,12 +1,10 @@
 package v9t9.machine.f99b.memory;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
-import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
@@ -57,8 +55,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		.withSize(-(0x10000 - 0x400))
 		.create("CPU ROM");
 
-	private static String FORTH_GROM = "forth99.grm";
-	private static String GROM_DICT = "f99bgromdict.bin";
+	private static String FORTH_GROM = "f99bgrom.bin";
 
 	private static MemoryEntryInfo f99bGramMemoryEntryInfo = MemoryEntryInfoBuilder
 		.byteMemoryEntry()
@@ -100,47 +97,6 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
     	} catch (IOException e) {
     		reportLoadError(eventNotifier, f99bRomMemoryEntryInfo.getFilename(), e);
     	}
-    	
-    	// see if we need to merge the GROM dictionary
-    	File dictFile = null;
-
-    	File gromFile = DataFiles.resolveFile(settings, FORTH_GROM);
-    	dictFile = DataFiles.resolveFile(settings, GROM_DICT);
-    	if (gromFile.exists() && dictFile.exists() && dictFile.lastModified() > gromFile.lastModified()) {
-
-    		int gromFileSize = (int) gromFile.length();
-    		byte[] grom;
-    		
-			int gromDictSize = (int) dictFile.length();
-
-			try {
-				grom = DataFiles.readMemoryImage(settings, FORTH_GROM, 0, gromFileSize);
-				int gromDictBase = (grom[2] << 8) | (grom[3] & 0xff);
-				
-				if (gromDictSize + gromDictBase > 16 * 1024) {
-					reportLoadError(eventNotifier, GROM_DICT, new IOException("GROM dictionary too big!  GROM plus dictionary maxes out at 16k."));
-				}
-				
-				byte[] gromDict = DataFiles.readMemoryImage(settings, GROM_DICT, 0, gromDictSize);
-				
-				for (int i = 0; i < gromDictSize; i++) {
-					grom[i + gromDictBase] = gromDict[i];
-				}
-				
-				int end = gromDictSize + gromDictBase;
-				grom[4] = (byte) (end >> 8);
-				grom[5] = (byte) (end & 0xff);
-				
-				DataFiles.writeMemoryImage(settings, gromFile.getAbsolutePath(), grom.length, grom);
-				
-				eventNotifier.notifyEvent(null, Level.INFO, "Merged dictionary into GROM, changed " + gromFile);
-			} catch (IOException e) {
-				reportLoadError(eventNotifier, FORTH_GROM, 
-						(IOException) new IOException("Failed to merge dictionary into GROM").initCause(e));
-				
-			}
-    	}
-    	
     	
     	// GROM consists of ROM up to 16k
 		IMemoryEntry gromEntry;

@@ -44,11 +44,12 @@ public class ForthComp {
 		TargetContext targetContext = null;
 		
 		String consoleOutFile = null;
+		String gromDictFile = null;
 		String gromOutFile = null;
 		PrintStream logfile = System.out;
 		boolean doHistogram = false;
 		
-        Getopt getopt = new Getopt(PROGNAME, args, "?c:l:bhg:");
+        Getopt getopt = new Getopt(PROGNAME, args, "?c:l:bhg:d:");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -57,6 +58,9 @@ public class ForthComp {
                 break;
             case 'c':
             	consoleOutFile = getopt.getOptarg();
+            	break;
+            case 'd':
+            	gromDictFile = getopt.getOptarg();
             	break;
             case 'g':
             	gromOutFile = getopt.getOptarg();
@@ -105,7 +109,7 @@ public class ForthComp {
         	System.exit(1);
         } 
         
-        if (gromOutFile != null) {
+        if (gromDictFile != null) {
         	targetContext.define("grom-dictionary", new TargetConstant("grom-dictionary", 1, targetContext.getCellSize()));
         }
         
@@ -121,7 +125,7 @@ public class ForthComp {
     	}
 //    	logfile.println("DP = " + HexUtils.toHex4(comp.getTargetContext().getDP()));
 //    	logfile.println("UP = " + HexUtils.toHex4(comp.getTargetContext().getUP()));
-    	if (gromOutFile != null)
+    	if (gromDictFile != null)
     		logfile.println("GDP = " + HexUtils.toHex4(((F99bTargetContext)comp.getTargetContext()).getGP()));
 	
     	comp.finish();
@@ -132,7 +136,7 @@ public class ForthComp {
     	}
         
     	comp.getTargetContext().alignDP();
-    	comp.saveMemory(consoleOutFile, gromOutFile);
+    	comp.saveMemory(consoleOutFile, gromDictFile);
     	
     	if (doHistogram) {
 	    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getTargetDictionary().values());
@@ -180,6 +184,10 @@ public class ForthComp {
 	    	
 	    	targetContext.dumpStubs(logfile);
     	}
+    	
+    	if (gromOutFile != null && gromDictFile != null)
+    		comp.mergeGromDictionary(gromDictFile, gromOutFile);
+
 	}
 
 	private PrintStream logfile;
@@ -392,9 +400,9 @@ public class ForthComp {
 		if (consoleOutFile != null) {
 			System.out.println("Writing " + consoleOutFile);
 			
-			DataFiles.writeMemoryImage(null, 
-					new File(consoleOutFile).getAbsolutePath(), 0, 
-					targetContext.getDP(), console);
+			DataFiles.writeMemoryImage(new File(consoleOutFile).getAbsolutePath(), 
+					0, targetContext.getDP(), 
+					console);
 			
 			File symfile;
 			int didx = consoleOutFile.lastIndexOf('.');
@@ -416,9 +424,9 @@ public class ForthComp {
 			
 			System.out.println("Writing " + gromOutFile);
 			
-			DataFiles.writeMemoryImage(null, 
-					new File(gromOutFile).getAbsolutePath(), 0, 
-					f99bCtx.getGP(), gromMemory);
+			DataFiles.writeMemoryImage(new File(gromOutFile).getAbsolutePath(), 
+					0, f99bCtx.getGP(), 
+					gromMemory);
 
 		}
 	}
@@ -444,5 +452,43 @@ public class ForthComp {
 	 */
 	public int getErrors() {
 		return errors;
+	}
+	
+	protected void mergeGromDictionary(String gromDictPath, String gromFilePath) throws IOException {
+
+    	// see if we need to merge the GROM dictionary
+    	File dictFile = null;
+
+    	File gromFile = new File(gromFilePath);
+    	dictFile = new File(gromDictPath);
+    	if (gromFile.exists() && dictFile.exists() && dictFile.lastModified() > gromFile.lastModified()) {
+
+    		int gromFileSize = (int) gromFile.length();
+    		byte[] grom;
+    		
+			int gromDictSize = (int) dictFile.length();
+
+			grom = DataFiles.readMemoryImage(gromFilePath, 0, gromFileSize);
+			int gromDictBase = (grom[2] << 8) | (grom[3] & 0xff);
+			
+			if (gromDictSize + gromDictBase > 16 * 1024) {
+				System.err.println("GROM dictionary too big!  GROM plus dictionary maxes out at 16k.");
+			}
+			
+			byte[] gromDict = DataFiles.readMemoryImage(gromDictPath, 0, gromDictSize);
+			
+			for (int i = 0; i < gromDictSize; i++) {
+				grom[i + gromDictBase] = gromDict[i];
+			}
+			
+			int end = gromDictSize + gromDictBase;
+			grom[4] = (byte) (end >> 8);
+			grom[5] = (byte) (end & 0xff);
+			
+			DataFiles.writeMemoryImage(gromFile.getAbsolutePath(), grom.length, grom);
+			
+			System.out.println("Merged dictionary into GROM, changed " + gromFile);
+    	}
+    	
 	}
 }

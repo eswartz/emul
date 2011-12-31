@@ -544,7 +544,7 @@ abstract public class MachineBase implements IMachine {
 		
 		doSaveState(settings);
 		
-		DataFiles.saveState(this.settings, settings);
+		this.settings.get(DataFiles.settingUserRomsPath).saveState(settings);
 		
 		ISettingSection workspace = settings.addSection("Workspace");
 		this.settings.getWorkspaceSettings().save(workspace);
@@ -595,7 +595,7 @@ abstract public class MachineBase implements IMachine {
 			executionLock.notifyAll();
 		}
 		
-		DataFiles.loadState(settings, section);
+		settings.get(DataFiles.settingUserRomsPath).loadState(section);
 		
 		doLoadState(section);
 		

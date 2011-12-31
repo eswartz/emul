@@ -9,15 +9,4 @@
 
 ================
 
-Modules:
-
--- size of 0 is not allowed
--- realize filesize at load time; use memory size at save time
--- realize URI at load/save time
--- remove DataFiles usage
-
-================
-
 Remote launcher & Windows & console output -- again, need logging to a file
-
-Remote launcher & stock_modules.xml

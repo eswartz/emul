@@ -1,8 +1,8 @@
 package v9t9.machine.ti99.memory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 
 import v9t9.common.client.ISettingsHandler;
@@ -43,7 +43,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 	@Override
 	public void loadMemory(IEventNotifier eventNotifier) {
 
-		// enhanced model can only load FORTH for now
+		// enhanced model loads FORTH
 		IMemoryEntry entry;
 		
 		URL dataURL = EmulatorMachinesData.getDataURL("../../../build/forth");
@@ -56,9 +56,12 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 		if (entry != null) {
 			// the high-GROM code is copied into RAM here
 			try {
-	    		CPU.getEntryAt(0x6000).loadSymbolsAndClose(
-	    				new FileInputStream(DataFiles.resolveFile(settings, 
-	    						((DiskMemoryEntry) entry).getSymbolFileName())));
+				URI symFile = machine.getPathFileLocator().findFile(
+						((DiskMemoryEntry) entry).getSymbolFileName());
+				if (symFile != null) {
+		    		CPU.getEntryAt(0x6000).loadSymbolsAndClose(
+		    				machine.getPathFileLocator().createInputStream(symFile));
+				}
 			} catch (IOException e) {
 				
 			}

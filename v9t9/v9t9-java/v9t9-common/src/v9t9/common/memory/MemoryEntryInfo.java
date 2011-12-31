@@ -3,12 +3,8 @@
  */
 package v9t9.common.memory;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-
-import v9t9.common.client.ISettingsHandler;
-import v9t9.common.files.DataFiles;
 
 /**
  * @author ejs
@@ -83,25 +79,6 @@ public class MemoryEntryInfo {
 
 	public Map<String, Object> getProperties() {
 		return properties;
-	}
-
-	/**
-	 * @param settings TODO
-	 * @param filename
-	 * @return
-	 */
-	public String getFilePath(ISettingsHandler settings, String baseStoredDir, String filename, boolean isStored) {
-		if (isStored) {
-			File existing = DataFiles.resolveFile(settings, filename);
-			if (existing != null && existing.exists())
-				return existing.getAbsolutePath();
-			
-			File storedMemory = new File(new File(baseStoredDir), "module_ram");
-			storedMemory.mkdirs();
-		
-			return new File(storedMemory, filename).getAbsolutePath();
-		}
-		return filename;
 	}
 
 	public int getInt(String name) {
