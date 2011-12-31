@@ -312,7 +312,7 @@ public class ModuleManager implements IModuleManager {
 					registerModules(databaseURI);
 				} else {
 					machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
-							"Could not find module list " + databaseURI);
+							"Could not find module list " + dbName);
 				}
 					
 			}

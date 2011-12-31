@@ -8,6 +8,7 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolTip;
 
 import v9t9.common.events.BaseEventNotifier;
@@ -66,12 +67,15 @@ public final class GuiEventNotifier extends BaseEventNotifier {
 				else
 					status = SWT.ICON_ERROR;
 				
-				final ToolTip tip = new ToolTip(swtWindow.shell, SWT.BALLOON | status);
+				Shell shell = Display.getDefault().getActiveShell();
+				if (shell == null)
+					shell = swtWindow.getShell();
+				final ToolTip tip = new ToolTip(shell, SWT.BALLOON | SWT.WRAP | status);
 				String text = event.message != null ? event.message : "";
 				tip.setText(text);
 				
 				long delay = Math.min(10000, Math.max(1000, text.length() * 100));
-				System.out.println("tooltip delay: " + delay);
+				//System.out.println("tooltip delay: " + delay);
 				tip.setAutoHide(false);
 				
 				timer.schedule(new TimerTask() {

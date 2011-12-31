@@ -119,9 +119,7 @@ public class BaseEventNotifier implements IEventNotifier {
 	@Override
 	public final void notifyEvent(Object context, Level level, String message) {
 		NotifyEvent event = new NotifyEvent(System.currentTimeMillis(), context, level, message);
-		if (level == Level.ERROR)
-			errorCount++;
-		pendingEvents.put(event);
+		notifyEvent(event);
 	}
 	
 	/* (non-Javadoc)

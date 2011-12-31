@@ -52,7 +52,6 @@ import org.eclipse.jface.viewers.TreeNode;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
-import org.eclipse.jface.viewers.ViewerColumn;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
@@ -252,7 +251,7 @@ public class ModuleSelector extends Composite {
 		this.moduleManager = moduleManager;
 		this.window = window;
 		
-		executor = Executors.newFixedThreadPool(8);
+		executor = Executors.newFixedThreadPool(4);
 		
 		viewerUpdater = new ViewerUpdater();
 		
@@ -400,7 +399,7 @@ public class ModuleSelector extends Composite {
 		getDisplay().asyncExec(new Runnable() {
 			public void run() {
 				if (!nameColumn.isDisposed())
-					nameColumn.pack();
+					nameColumn.setWidth(viewer.getTable().getSize().x);
 				
 				final IModule[] loadedModules = moduleManager.getLoadedModules();
 				viewer.setSelection(new StructuredSelection(loadedModules));

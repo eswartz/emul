@@ -158,14 +158,22 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @see v9t9.common.files.IPathFileLocator#createURI(java.lang.String)
 	 */
 	@Override
-	public URI createURI(final String path_) throws URISyntaxException {
+	public URI createURI(String path) throws URISyntaxException {
 		// convert slashes
-		String path = path_.replace('\\', '/');
-		
+		path = path.replace('\\', '/');
+
 		// ensure all act like directories
 		if (!path.contains(":/") || path.indexOf(":/") == 1) {
-			path = new File(path).getAbsolutePath();
+			File file = new File(path);
+			path = file.getAbsolutePath();
+			// convert slashes
+			path = path.replace('\\', '/');
+			
+			// windows
+			if (file.isAbsolute() && !path.startsWith("/"))
+				path = "/" + path;
 		}
+		
 		if (!path.endsWith("/"))
 			path += "/";
 		
