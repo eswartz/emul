@@ -16,3 +16,8 @@ Modules:
 -- realize URI at load/save time
 -- remove DataFiles usage
 
+================
+
+Remote launcher & Windows & console output -- again, need logging to a file
+
+Remote launcher & stock_modules.xml
