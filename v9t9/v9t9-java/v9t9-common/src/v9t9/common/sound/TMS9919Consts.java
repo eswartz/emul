@@ -10,61 +10,63 @@ package v9t9.common.sound;
 public class TMS9919Consts {
 	public static final String GROUP_NAME = "TMS 9919";
 
-//	/** low 4 bits [1vv0yyyy] */
-//	final public static int OPERATION_FREQUENCY_LO = 0;
-//	/** for noise  [11100xyy] */
-//	final public static int OPERATION_NOISE_CONTROL = 0;
-//	/** These are used as an index into the registers for each REG_BASE_VOICE_xxx and the REG_BASE_VOICE_NOISE group */
-//	final public static int 
-//		OPERATION_FREQUENCY_HI = 1,		/* hi 6 bits  [00yyyyyy] */
-//		OPERATION_ATTENUATION = 2		/* low 4 bits [1vv1yyyy] */
-//	;
-//	/** These are used as an index into the registers for each REG_BASE_VOICE_xxx and the REG_BASE_VOICE_NOISE group */
-//	final public static int 
-//		OPERATION_FREQUENCY_HI = 1,		/* hi 6 bits  [00yyyyyy] */
-//		OPERATION_ATTENUATION = 2		/* low 4 bits [1vv1yyyy] */
-//	;
-
-	/** Tone voice frequency in Hz */
-	final public static int REG_OFFS_PERIOD = 0;
-	/** Voice attenuation: 0=loudest, 15=silent/off */
-	final public static int REG_OFFS_ATTENUATION = 1;
-	/** Noise control for noise voice: (xyy); x=0 for periodic, 1 for white noise; y=0-2 for fixed freq */
-	final public static int REG_OFFS_NOISE_CONTROL = 2;
+	/** 
+	 * This is the offset in a tone or noise register bank for
+	 * the frequency period of the voice (inversely related
+	 * to the actual frequency by 3.579545 MHz / 32 / period).
+	 */
+	final public static int REG_OFFS_FREQUENCY_PERIOD = 0;
+	/** 
+	 * This is the offset in a tone or noise register bank for
+	 * the attenuation of the voice, which affects volume in 
+	 * that 15 = silence and 0 = loudest.
+	 * 
+	 */
+	final public static int REG_OFFS_ATTENTUATION = 1;
+	/** 
+	 * This is the offset in a noise register bank that
+	 * controls its type (NOISE_FEEDBACK_MASK) and its frequency
+	 * (NOISE_PERIOD_MASK).
+	 * 
+	 */
+	final public static int REG_OFFS_NOISE_CONTROL = 0;
 	
-	/** State of audio gate (0=off, 1=on) */
+	/** 
+	 * This is the offset in the audio gate register bank for
+	 * the state of the audio gate (0=off, 1=on) 
+	 */
 	final public static int REG_OFFS_AUDIO_GATE = 0;
 	
 	final public static int REG_COUNT_TONE = 2;
-	final public static int REG_COUNT_NOISE = 3;
+	final public static int REG_COUNT_NOISE = 2;
 	final public static int REG_COUNT_AUDIO_GATE = 1;
 
 	/**
-	 *	Masks for the OPERATION_CONTROL byte for VOICE_NOISE
+	 *	Masks for the noise control register
 	 */
-	public final static int NOISE_PERIODIC = 0,
-		NOISE_WHITE = 0x4
+	public final static int NOISE_FEEDBACK_PERIODIC = 0,
+		NOISE_FEEDBACK_WHITE = 0x4,
+		NOISE_FEEDBACK_MASK = 0x4
 	;
-	
+
+	/**
+	 *	Masks for the noise control register
+	 **/
 	public final static int NOISE_PERIOD_FIXED_0 = 0,
 		NOISE_PERIOD_FIXED_1 = 1,
 		NOISE_PERIOD_FIXED_2 = 2,
-		NOISE_PERIOD_VARIABLE = 3;
+		NOISE_PERIOD_VARIABLE = 3,
+		NOISE_PERIOD_MASK = 0x3;
 	;
+	
 
-	public static final int  noise_period[] = 
+	public static final int NOISE_DIVISORS[] = 
 	{
-		16,
-		32, 
-		64, 
+		512,
+		1024, 
+		2048, 
 		0 						/* determined by VOICE_TONE_2 */
 	};
 
-	public static int periodToHertz(int p) {
-		return ((p) > 1 ? (111860 / (p)) : 55930);
-	}
-	public static int period16ToHertz(long p) {
-		return (int) ((p) > 1 ? ((long)111860 * 55930 / (p)) : 55930);
-	}
-
+	public static final int CHIP_CLOCK = 3579545;
 }

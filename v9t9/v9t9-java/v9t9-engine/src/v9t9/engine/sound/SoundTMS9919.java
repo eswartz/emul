@@ -15,7 +15,7 @@ import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.settings.Settings;
-import v9t9.common.sound.TMS9919Consts;
+import static v9t9.common.sound.TMS9919Consts.*;
 
 /**
  * Controller for the TMS9919 sound chip
@@ -30,13 +30,14 @@ import v9t9.common.sound.TMS9919Consts;
  * [1vv1yyyy] 	to set attenuation for voice vv (0-3)
  * </pre>
  * <p>
- * Frequency in Hz is sound clock / 32 divided by period.
+ * Frequency in Hz is sound clock / (32 * period).
  * <p>
  * 3579545 Hz divided by 32 = 111860.78125 / 2 = 55930 Hz maximum frequency
  * @author ejs
  *
  */
 public class SoundTMS9919 implements ISoundChip {
+
 
 	protected final Map<Integer, String> regNames;
 	protected final Map<Integer, String> regDescs;
@@ -136,7 +137,7 @@ public class SoundTMS9919 implements ISoundChip {
 			case 3:				/* T2 ATT */
 			case 5:				/* T3 ATT */
 			case 7:				/* noise vol */
-				v.setAttenuation(val & 0xf);
+				v.setAttenuation(val);
 				break;
 			case 6:				/* noise ctl */
 				((INoiseVoice) voices[3]).setControl(val & 0xf);
@@ -152,10 +153,6 @@ public class SoundTMS9919 implements ISoundChip {
 		}
 	}
 
-	/**
-	 * @param val
-	 * @return
-	 */
 	protected int getFullPeriod(byte val) {
 		int period = periodLatches[cvoice] | ((val & 0x3f) << 4);
 		return period;
@@ -188,7 +185,7 @@ public class SoundTMS9919 implements ISoundChip {
 	 */
 	@Override
 	public String getGroupName() {
-		return TMS9919Consts.GROUP_NAME;
+		return GROUP_NAME;
 	}
 
 	/* (non-Javadoc)

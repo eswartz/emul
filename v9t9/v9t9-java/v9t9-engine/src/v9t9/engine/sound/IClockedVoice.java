@@ -10,14 +10,14 @@ package v9t9.engine.sound;
  *
  */
 public interface IClockedVoice extends IVoice {
-	/** Set the voice period */
-	void setPeriod(int period);
-	/** Get the voice period */
+	/** Set the voice frequency */
+	void setPeriod(int hz);
+	/** Get the voice frequency */
 	int getPeriod();
 	
-	/** Set the voice attenuation (0-15) */
+	/** Set the voice volume (0=silent, 255=max) */
 	void setAttenuation(int vol);
-	/** Get the voice attenuation (0-15) */
+	/** Get the voice attenuation (0=silent, 255=max) */
 	int getAttenuation();
 
 }

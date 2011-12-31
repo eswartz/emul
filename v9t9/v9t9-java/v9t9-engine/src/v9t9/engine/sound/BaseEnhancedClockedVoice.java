@@ -33,7 +33,7 @@ public abstract class BaseEnhancedClockedVoice extends BaseClockedVoice implemen
 		baseEffectReg = baseReg;
 		for (int i = 0; i < numEffects; i++) {
 			register(baseEffectReg + i,
-					getId() + ":E" + i,
+					getId() + ":Eff" + i,
 					getName() + " Effect #" + i);
 		}
 		return numEffects;
@@ -65,7 +65,7 @@ public abstract class BaseEnhancedClockedVoice extends BaseClockedVoice implemen
 		super.loadState(settings);
 		
 		for (int i = 0; i < numEffects; i++) {
-			effectValues[i] = (byte) settings.getInt("Effect" + i);
+			setEffect(i, (byte) settings.getInt("Effect" + i));
 		}
 	}
 	

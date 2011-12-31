@@ -29,11 +29,11 @@ public class EnhancedToneVoice extends BaseEnhancedClockedVoice {
 	 */
 	@Override
 	public int doInitRegisters() {
-		register(baseReg + TMS9919Consts.REG_OFFS_PERIOD,
-				getId() + ":P",
+		register(baseReg + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD,
+				getId() + ":Per",
 				getName());
-		register(baseReg + TMS9919Consts.REG_OFFS_ATTENUATION,
-				getId() + ":A",
+		register(baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION,
+				getId() + ":Att",
 				getName());
 
 		int effectRegCount = doInitEffectRegisters(baseReg + TMS9919Consts.REG_COUNT_TONE);
@@ -47,10 +47,10 @@ public class EnhancedToneVoice extends BaseEnhancedClockedVoice {
 	 */
 	@Override
 	public int getRegister(int reg) {
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_PERIOD) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD) {
 			return getPeriod();
 		}
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
 			return getAttenuation();
 		}
 
@@ -67,10 +67,10 @@ public class EnhancedToneVoice extends BaseEnhancedClockedVoice {
 	 */
 	@Override
 	public void setRegister(int reg, int newValue) {
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_PERIOD) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD) {
 			setPeriod(newValue);
 		}
-		else if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
+		else if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
 			setAttenuation(newValue);
 		}
 		else if (reg >= baseEffectReg && reg < baseEffectReg + numEffects) {

@@ -16,7 +16,7 @@ import ejs.base.utils.ListenerList;
 public abstract class BaseClockedVoice extends BaseVoice implements IClockedVoice {
 
 	private int period;
-	private int atten;
+	private int att;
 
 	
 	
@@ -28,7 +28,7 @@ public abstract class BaseClockedVoice extends BaseVoice implements IClockedVoic
 	@Override
 	public void setPeriod(int hz) {
 		this.period = hz;
-		fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_PERIOD, period); 
+		fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD, period); 
 	}
 
 	@Override
@@ -37,14 +37,14 @@ public abstract class BaseClockedVoice extends BaseVoice implements IClockedVoic
 	}
 
 	@Override
-	public void setAttenuation(int atten) {
-		this.atten = atten;
-		fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_ATTENUATION, atten); 
+	public void setAttenuation(int att) {
+		this.att = att;
+		fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION, att); 
 	}
 
 	@Override
 	public int getAttenuation() {
-		return atten;
+		return att;
 	}
 
 	/* (non-Javadoc)
@@ -53,7 +53,7 @@ public abstract class BaseClockedVoice extends BaseVoice implements IClockedVoic
 	@Override
 	public void saveState(ISettingSection settings) {
 		settings.put("Period", period);
-		settings.put("Attenuation", atten);
+		settings.put("Attenuation", att);
 	}
 
 	/* (non-Javadoc)
@@ -62,7 +62,7 @@ public abstract class BaseClockedVoice extends BaseVoice implements IClockedVoic
 	@Override
 	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
-		period = settings.getInt("Period");
-		atten = settings.getInt("Attenuation");
+		setPeriod(settings.getInt("Period"));
+		setAttenuation(settings.getInt("Attenuation"));
 	}
 }

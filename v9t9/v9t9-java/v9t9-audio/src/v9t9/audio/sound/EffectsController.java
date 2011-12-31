@@ -13,12 +13,13 @@ import static v9t9.common.sound.TMS9919BConsts.*;
 public class EffectsController {
 	public boolean DUMP = false;
 
-	private static final int VOL_SHIFT = 24;
+	private static final int VOL_SHIFT = 16;
 	private static final int VOL_SCALE = (1 << VOL_SHIFT);
 	private static final int VOL_MASK = (VOL_SCALE - 1);
-	private static final int VOL_TO_SAMPLE = (VOL_SHIFT - 23) + 4;
+	private static final int VOL_TO_SAMPLE = 4;
 	//private static final int VOL_TO_SAMPLE_BIAS = ~(~0 << (VOL_TO_SAMPLE - 1));
 	
+	/** Milliseconds for ADHR values to take effect */
 	final static int tickTimes[] = {
 		0, 5, 10, 15,
 		20, 30, 40, 50,
@@ -78,11 +79,12 @@ public class EffectsController {
 	private int timeout;
 	private final ClockedSoundVoice voice;
 	private int voldelta;
+	/** 24 bits */
 	private int volume;
 
 	private int sustainVolume;
 
-	private byte fullVolume;
+	private int fullVolume;
 	private int vibratoAmount;
 	private int vibratoIncr;
 	private int vibratoClock;
@@ -92,6 +94,7 @@ public class EffectsController {
 
 	private int waveform;
 
+	private boolean sweepStarting;
 	private int sweepClocks;
 
 	private int sweepRate;
@@ -99,7 +102,11 @@ public class EffectsController {
 	private int sweepCounter;
 
 	private int sweepDelta;
-	
+
+	private int periodFixed16_16;
+
+	private int sclock;
+
 	public EffectsController(ClockedSoundVoice voice) {
 		this.voice = voice;
 		reset();
@@ -127,6 +134,7 @@ public class EffectsController {
 		index = -1;
 	}
 
+	/** Set voice sustain (volume) in range of 0 ... {@value SoundVoice#MAX_VOLUME} */
 	public void setSustain(int sustain) {
 		this.sustain = sustain; 
 	}
@@ -146,6 +154,7 @@ public class EffectsController {
 		voldelta = 0;
 	}
 	
+	
 	/**
 	 * Call when a voice's volume is set to non-zero.
 	 */
@@ -154,12 +163,12 @@ public class EffectsController {
 		volume = voice.getVolume() << VOL_SHIFT;
 		vibratoClock = 0;
 		tremoloClock = 0;
-		
+		sclock = (int) ((long) getSoundClock() * 65536 / 55930);
 		if (isEnvelopeSet()) {
 			index = OP_ATTACK;
-			sustainVolume = (fullVolume * sustain + 15) / 16;
+			sustainVolume = (fullVolume * sustain + SoundVoice.MAX_VOLUME - 1) / SoundVoice.MAX_VOLUME;
 			volume = 0;
-			voice.setVolume((byte) 0);
+			//voice.setVolume((byte) 0);
 			nextADHR();
 		} else {
 			volume = fullVolume << VOL_SHIFT;
@@ -258,23 +267,17 @@ public class EffectsController {
 	public void tick() {
 	}
 
-	public void updateDivisor() {
+	public boolean updateDivisor() {
+		
 		int vib = 0;
 		if (vibratoAmount != 0) {
-			int sclock = getSoundClock() * 16;
-			vib = sines[vibratoClock * sines.length / sclock] * vibratoAmount / 65536;
+			vib = (int) ((long) sines[vibratoClock * sines.length / sclock] * vibratoAmount * 55930 / 16 / sclock);
 			vibratoClock += vibratoIncr;
 			while (vibratoClock >= sclock)
 				vibratoClock -= sclock;
 		}
-		voice.accum += voice.incr + vib;
 		
-		if (voice.period16 > 0)
-			voice.clock = (int) ((voice.clock + ClockedSoundVoice.CLOCKSTEP) % voice.period16);
-		else
-			voice.clock = 0;
-		//while (voice.div < 0)
-		//	voice.div += soundClock;
+		return voice.updateAccumulator(voice.incr + vib);
 	}
 
 	public int getCurrentSample() {
@@ -284,7 +287,7 @@ public class EffectsController {
 		
 		if (tremoloAmount != 0) {
 			if (volume > 0) {
-				int sin = sines[tremoloClock * sines.length / getSoundClock()];
+				int sin = sines[tremoloClock * sines.length / sclock];
 				int delta = tremoloAmount * sin;
 				
 				// reduce magnitude by maximum tremolo
@@ -293,14 +296,14 @@ public class EffectsController {
 			}
 		}
 		
-		if (voice.period16 > 0 && voice instanceof ToneGeneratorVoice) {
-			int half = (int) (voice.period16 / 2);
-			//int quarter = (voice.period / 4);
+		if (periodFixed16_16 > 0 && voice instanceof ToneGeneratorVoice) {
+			int half = (int) (periodFixed16_16 / 2);
+			//int quarter = (periodFixed16_16 / 4);
 			
-			int ang = (int) ((long)voice.clock * sines.length / voice.period16);
-			if (ang < 0) ang += sines.length; else if (ang >= sines.length) ang %= sines.length;
-			int wang = (int) ((long)voice.clock * WAVELENGTH / voice.period16);
-			if (wang < 0) wang += WAVELENGTH; else if (wang >= WAVELENGTH) wang %= WAVELENGTH;
+			int ang = (int) ((long)voice.accum * sines.length / periodFixed16_16);
+			ang = clamp(ang, sines.length);
+			int wang = (int) ((long)voice.accum * WAVELENGTH / periodFixed16_16);
+			wang = clamp(wang, WAVELENGTH);
 			
 			switch (waveform) {
 			case 0:
@@ -312,7 +315,7 @@ public class EffectsController {
 			}
 			case 1: {
 				// sawtooth
-				//basic = (int) (((long)basic * voice.clock ) / voice.period - basic / 2 ) * 2;
+				//basic = (int) (((long)basic * voice.clock ) / periodFixed16_16 - basic / 2 ) * 2;
 				basic = (int) (((long) basic * sawtooth[wang] / 32768));
 				break;
 			}
@@ -322,7 +325,7 @@ public class EffectsController {
 				if (voice.clock <= half)
 					basic = (int) ((long)basic * voice.clock / quarter - basic);
 				else
-					basic = (int) ((long)basic * (voice.period - voice.clock) / quarter - basic);
+					basic = (int) ((long)basic * (periodFixed16_16 - voice.clock) / quarter - basic);
 					*/
 				basic = (int) (((long) basic * triangle[wang] / 32768));
 				break;
@@ -335,7 +338,7 @@ public class EffectsController {
 			}
 			case 4:
 				// half saw
-				if (voice.clock <= half)
+				if (voice.accum >= half)
 					//basic = (int) (((long)basic * voice.clock ) / half - basic / 2 ) * 2;
 					basic = (int) (((long) basic * sawtooth[wang] / 32768));
 				else
@@ -353,11 +356,11 @@ public class EffectsController {
 			case 6:
 				// half triangle
 				//if (voice.clock >= quarter && voice.clock < quarter + half) {
-				if (voice.clock <= half) {
+				if (voice.accum >= half) {
 					//if (voice.clock <= half)
 					//	basic = (int) ((long)basic * voice.clock / quarter- basic);
 					//else
-					//	basic = (int) ((long)basic * (voice.period - voice.clock) / quarter - basic);
+					//	basic = (int) ((long)basic * (periodFixed16_16 - voice.clock) / quarter - basic);
 					basic = (int) (((long) basic * triangle[wang] / 32768));
 				}
 				else
@@ -377,6 +380,19 @@ public class EffectsController {
 		
 		//System.out.println(voice.getName() + ": " + basic);
 		return basic;
+	}
+
+	/**
+	 * @param ang
+	 * @param length
+	 * @return
+	 */
+	private  final int clamp(int v, int length) {
+		if (v >= length)
+			return v % length;
+		if (v < 0)
+			v = ((v % length) + length) % length;
+		return v;
 	}
 
 	public synchronized void updateEffect() {
@@ -399,23 +415,17 @@ public class EffectsController {
 		if (tremoloAmount != 0) {
 			if (volume > 0) {
 				tremoloClock += tremoloIncr;
-				while (tremoloClock >= getSoundClock())
-					tremoloClock -= getSoundClock();
+				while (tremoloClock >= sclock)
+					tremoloClock -= sclock;
 			}
 		}
-		if (sweepClocks > 0) {
-			sweepCounter += sweepRate;
-			if (sweepRate > 0) {
-				while (sweepCounter >= 65536) {
-					voice.clock += ClockedSoundVoice.CLOCKSTEP;
-					sweepCounter -= 65536;
-				}
-			} else if (sweepRate < 0) {
-				while (sweepCounter < 0) {
-					voice.clock -= ClockedSoundVoice.CLOCKSTEP;
-					sweepCounter += 65536;
-				}
+		if (sweepClocks-- > 0) {
+			if (sweepStarting) {
+				sweepCounter = voice.getPeriod() << 16;
+				sweepStarting = false;
 			}
+			sweepCounter += sweepRate;
+			voice.setPeriod(sweepCounter >> 16);
 		}
 	}
 	
@@ -424,12 +434,14 @@ public class EffectsController {
 		//return volume != 0;
 	}
 
+	/** Amount: 0-15, rate: 0-15 */
 	public void setVibrato(int amount, int rate) {
-		vibratoAmount = amount * 8;
-		vibratoIncr = rate * 16;
+		vibratoAmount = amount;
+		vibratoIncr = rate;
 		vibratoClock = 0;
 	}
 
+	/** Amount: 0-15, rate: 0-15 */
 	public void setTremolo(int amount, int rate) {
 		tremoloAmount = amount;
 		tremoloIncr = rate;
@@ -441,15 +453,21 @@ public class EffectsController {
 		this.waveform = i;
 	}
 
-	public void setSweepTarget(int target) {
-		sweepDelta = (target - voice.clock / 55930);
+	public void setSweepTarget(int targetPeriod) {
+		sweepDelta = targetPeriod - voice.getPeriod();
 	}
 
-	public void setSweepTime(int clocks) {
-		sweepClocks = clocks;
+	/** Set time to complete in ms */
+	public void setSweepTime(int ms) {
+		sweepClocks = ms * sclock / 1000;
 		if (sweepClocks != 0 && sweepDelta != 0) {
-			sweepRate = sweepDelta * 65536 / sweepClocks;
+			sweepRate = (int) ((long) sweepDelta * 65536 / sweepClocks);
 			sweepCounter = 0;
+			sweepStarting = true;
 		}
+	}
+
+	public void updateFrequency() {
+		periodFixed16_16 = voice.period * 65536;
 	}
 }

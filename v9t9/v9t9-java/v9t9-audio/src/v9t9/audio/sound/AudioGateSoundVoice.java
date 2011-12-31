@@ -24,7 +24,7 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	
 	@Override
 	public void setupVoice() {
-		setVolume((byte) (state ? 15 : 0));
+		setVolume((byte) (state ? MAX_VOLUME : 0));
 		wasSet = true;
 	}
 
@@ -132,7 +132,7 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
 		super.loadState(settings);
-		setVolume((byte) (settings.getBoolean("State") ? 15 : 0));
+		setVolume((byte) (settings.getBoolean("State") ? MAX_VOLUME : 0));
 	}
 	
 	@Override

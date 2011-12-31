@@ -109,6 +109,9 @@ public class TMS9919BConsts extends TMS9919Consts {
 
 	public static String GROUP_NAME = "TMS 9919B";
 	
+	/**
+	 * The effect number (and also the register number) 
+	 */
 	public static final int 
 		CMD_RESET = 0,
 		CMD_ENVELOPE = 1,

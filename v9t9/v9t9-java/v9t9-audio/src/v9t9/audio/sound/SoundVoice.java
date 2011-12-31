@@ -8,38 +8,24 @@ import ejs.base.sound.ISoundVoice;
 
 public abstract class SoundVoice implements ISoundVoice
 {
-	/** volume, 0 == off, 0xf == loudest */
-	private byte	volume;			
+	protected static final int MAX_VOLUME = 255;
+	
+	/** volume, 0 == off, 0xff == loudest */
+	private int	volume;			
 
 	private final String name;
 	
 	/** how the left/right channels are balanced; -128 for all left to 127 for all right */
 	protected byte balance;
 
-	static public final int volumeToMagntiude24[] = {
-		0x00000000,
-		0x0000a396,
-		0x00017b71,
-		0x00029844,
-		0x00041018,
-		0x0005ffff,
-		0x00088e5a,
-		0x000bedc6,
-		0x00106111,
-		0x00164060,
-		0x001dffff,
-		0x00283968,
-		0x0035b719,
-		0x00478446,
-		0x005f0180,
-		0x007fffff,
-
-		};
+	static final float[] volumeToMagnitude;
 	
-	public static void main(String[] args) {
-		for (int x = 0; x < 16; x++) {
-			double y = (Math.exp((x/15.)*Math.log(64))-1.0)/64;
-			System.out.printf("\t0x%08x,\n", (int)(y * 0x800000));
+	static {
+		volumeToMagnitude = new float[MAX_VOLUME + 1];
+		for (int x = 0; x < MAX_VOLUME + 1; x++) {
+			double y = (Math.exp((x/(double) MAX_VOLUME)*Math.log(1023))-1.0)/1023;
+			//System.out.println(y);
+			volumeToMagnitude[x] = (float) y;
 		}
 	}
 	public SoundVoice(String name) {
@@ -57,7 +43,6 @@ public abstract class SoundVoice implements ISoundVoice
 	}
 
 	public abstract void setupVoice();
-	//public abstract int generate(int soundClock, int sample);
 	public String getName() {
 		return name;
 	}
@@ -69,16 +54,18 @@ public abstract class SoundVoice implements ISoundVoice
 		// derived
 		//volume = (byte) Utils.readSavedInt(section, "Volume");
 	}
-	public void setVolume(byte volume) {
-		this.volume = volume;
+	/** Set volume in range 0 (silence) to {@value #MAX_VOLUME} (maximum) */
+	public void setVolume(int volume) {
+		this.volume = volume & MAX_VOLUME;
 	}
-	public float getCurrentMagnitude() {
-		return (float) volumeToMagntiude24[volume & 0xf] / 0x007FFFFF;
-	}
-	public byte getVolume() {
+	/** Set volume in range 0 (silence) to {@value #MAX_VOLUME} */
+	public int getVolume() {
 		return volume;
 	}
+	public float getCurrentMagnitude() {
+		return volumeToMagnitude[volume];
+	}
 	public boolean isActive() {
-		return volume > 0;
+		return volume != 0;
 	}
 }

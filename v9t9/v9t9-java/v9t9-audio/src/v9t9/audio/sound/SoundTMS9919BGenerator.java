@@ -9,7 +9,6 @@ import java.util.Map;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.sound.TMS9919BConsts;
-import v9t9.common.sound.TMS9919Consts;
 import static v9t9.common.sound.TMS9919BConsts.*;
 
 /**
@@ -35,13 +34,14 @@ public class SoundTMS9919BGenerator extends SoundTMS9919Generator {
 		regIdEffectId = new HashMap<Integer, Integer>();
 		
 		for (int i = VOICE_TONE_0; i <= VOICE_TONE_2; i++) {
-			EnhancedToneGeneratorVoice ev = new EnhancedToneGeneratorVoice(name, i);
+			EnhancedToneGeneratorVoice ev = new EnhancedToneGeneratorVoice(
+					name, i);
 			soundVoicesList.add(ev);
 			regBase += setupEnhancedToneVoice(regBase, i, ev);
 		}
 		
-		EnhancedNoiseGeneratorVoice nv = new EnhancedNoiseGeneratorVoice(name,
-				(ClockedSoundVoice) soundVoicesList.get(soundVoicesList.size() - 1));
+		EnhancedNoiseGeneratorVoice nv = new EnhancedNoiseGeneratorVoice(
+				name, (ClockedSoundVoice) soundVoicesList.get(soundVoicesList.size() - 1));
 		soundVoicesList.add(nv);
 		regBase += setupEnhancedNoiseVoice(regBase, nv);
 		
@@ -56,8 +56,6 @@ public class SoundTMS9919BGenerator extends SoundTMS9919Generator {
 	protected int setupEnhancedToneVoice(int regBase, int num, final EnhancedToneGeneratorVoice voice) {
 		int cnt = super.setupToneVoice(regBase, num, voice);
 
-		updateAttenuationListener(regBase, voice);
-		
 		for (int e = 0; e < TMS9919BConsts.CMD_NUM_EFFECTS; e++) {
 			int rnum = regBase + TMS9919BConsts.REG_COUNT_TONE + e;
 
@@ -82,8 +80,6 @@ public class SoundTMS9919BGenerator extends SoundTMS9919Generator {
 	protected int setupEnhancedNoiseVoice(int regBase, final EnhancedNoiseGeneratorVoice voice) {
 		int cnt = super.setupNoiseVoice(regBase, voice);
 
-		updateAttenuationListener(regBase, voice);
-		
 		for (int e = 0; e < TMS9919BConsts.CMD_NUM_EFFECTS; e++) {
 			int rnum = regBase + TMS9919BConsts.REG_COUNT_NOISE + e;
 
@@ -103,39 +99,6 @@ public class SoundTMS9919BGenerator extends SoundTMS9919Generator {
 		return cnt + TMS9919BConsts.CMD_NUM_EFFECTS;
 	}
 	
-	/**
-	 * @param regBase
-	 * @param voice
-	 */
-	private void updateAttenuationListener(int regBase, final EnhancedVoice voice) {
-		final IRegisterAccess.IRegisterWriteListener attListener = regIdToListener.get(regBase + 
-				TMS9919Consts.REG_OFFS_ATTENUATION);
-		
-		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION,
-				new IRegisterAccess.IRegisterWriteListener() {
-					
-					@Override
-					public void registerChanged(int reg, int value) {
-						attListener.registerChanged(reg, value);
-						updateEnvelope(voice, value);
-					}
-			}
-		);
-		
-	}
-
-	/**
-	 * @param voice
-	 */
-	protected void updateEnvelope(EnhancedVoice voice, int val) {
-		byte vol = ((ClockedSoundVoice) voice).getVolume();
-		if (vol == 0 || (val & 0x90) == 0x80)
-			voice.getEffectsController().stopEnvelope();
-		else
-			voice.getEffectsController().updateVoice();
-	}
-
-
 	protected void setEffect(EnhancedVoice ev, int reg, int val) {
 		int eff = regIdEffectId.get(reg);
 		switch (eff) {
@@ -172,7 +135,7 @@ public class SoundTMS9919BGenerator extends SoundTMS9919Generator {
 			ev.getEffectsController().setWaveform(val & 0xf);
 			break;
 		case CMD_SWEEP_PROPORTION: {
-			int target = ((ClockedSoundVoice) ev).getClock();
+			int target = ((ClockedSoundVoice) ev).getPeriod();
 			if (val > 0)
 				target += (target * val / 127);
 			else
@@ -181,7 +144,7 @@ public class SoundTMS9919BGenerator extends SoundTMS9919Generator {
 			break;
 		}
 		case CMD_SWEEP_TIME: {
-			int clocks = (val & 0xff) * ((ClockedSoundVoice)ev).soundClock * 64 / 255;
+			int clocks = (val & 0xff) * ((ClockedSoundVoice)ev).getSoundClock() / 64;
 			ev.getEffectsController().setSweepTime(clocks);
 			break;
 		}

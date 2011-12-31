@@ -10,6 +10,14 @@ import ejs.base.utils.ListenerList;
 
 /**
  * This is the periodic/white "noise" voice.
+ * 
+ * The register set for noise only adds the periodic/white noise selector
+ * while maintaining a seemingly independent frequency register.  This 
+ * reduces complexity on the client side.
+ * 
+ * Internally, we still track the full noise control nybble (type + freq)
+ * so we can send the frequency register change events when the control
+ * register changes or the voice 2 frequency changes.  
  * @author ejs
  *
  */
@@ -27,14 +35,11 @@ public class NoiseVoice extends BaseClockedVoice implements INoiseVoice {
 	 */
 	@Override
 	public int doInitRegisters() {
-		register(baseReg + TMS9919Consts.REG_OFFS_PERIOD,
-				getId() + ":P",
-				getName());
-		register(baseReg + TMS9919Consts.REG_OFFS_ATTENUATION,
-				getId() + ":A",
-				getName());
 		register(baseReg + TMS9919Consts.REG_OFFS_NOISE_CONTROL,
-				getId() + ":C",
+				getId() + ":Ctl",
+				getName());
+		register(baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION,
+				getId() + ":Att",
 				getName());
 		
 		return TMS9919Consts.REG_COUNT_NOISE;
@@ -45,10 +50,7 @@ public class NoiseVoice extends BaseClockedVoice implements INoiseVoice {
 	 */
 	@Override
 	public int getRegister(int reg) {
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_PERIOD) {
-			return getPeriod();
-		}
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
 			return getAttenuation();
 		}
 		if (reg == baseReg + TMS9919Consts.REG_OFFS_NOISE_CONTROL) {
@@ -62,19 +64,13 @@ public class NoiseVoice extends BaseClockedVoice implements INoiseVoice {
 	 */
 	@Override
 	public void setRegister(int reg, int newValue) {
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_PERIOD) {
-			setPeriod(newValue);
-		}
-		else if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
 			setAttenuation(newValue);
 		}
 		else if (reg == baseReg + TMS9919Consts.REG_OFFS_NOISE_CONTROL) {
 			setControl(newValue);
 		}
 	}
-
-	
-
 
 	public int getControl() {
 		return control;
@@ -94,7 +90,7 @@ public class NoiseVoice extends BaseClockedVoice implements INoiseVoice {
 		if (settings == null)
 			return;
 		super.loadState(settings);
-		control = settings.getInt("Control");
+		setControl(settings.getInt("Control"));
 	}
 
 

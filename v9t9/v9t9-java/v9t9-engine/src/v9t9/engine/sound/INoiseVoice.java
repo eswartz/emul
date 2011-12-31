@@ -9,8 +9,8 @@ package v9t9.engine.sound;
  *
  */
 public interface INoiseVoice extends IClockedVoice {
-	/** @see TMS9919Constants#REG_OFFS_NOISE_CONTROL */
+	/** The control nybble for the noise generator (xyy where x is 0=periodic, 1=noise and yy is freq selector) */
 	void setControl(int value);
-	/** @see TMS9919Constants#REG_OFFS_NOISE_CONTROL */
+	/** The control nybble for the noise generator (xyy where x is 0=periodic, 1=noise and yy is freq selector)  */
 	int getControl();
 }

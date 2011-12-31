@@ -25,6 +25,7 @@ import ejs.base.sound.ISoundVoice;
  *
  */
 public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.IRegisterWriteListener {
+
 	protected final Map<Integer, SoundVoice> regIdToVoices = 
 		new HashMap<Integer, SoundVoice>();
 	protected final Map<Integer, IRegisterAccess.IRegisterWriteListener> regIdToListener = 
@@ -61,6 +62,12 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		regBase = doInitVoices(name, regBase);
 		
 		soundVoices = soundVoicesList.toArray(new SoundVoice[soundVoicesList.size()]);
+		
+		for (SoundVoice voice : soundVoices) {
+			if (voice instanceof ClockedSoundVoice) {
+				((ClockedSoundVoice) voice).setReferenceClock(TMS9919Consts.CHIP_CLOCK / 16);
+			}
+		}
 		return regBase;
 	}
 
@@ -76,8 +83,8 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 			regBase += setupToneVoice(regBase, i, v);
 		}
 		
-		NoiseGeneratorVoice nv = new NoiseGeneratorVoice(name, 
-				(ClockedSoundVoice) soundVoicesList.get(soundVoicesList.size() - 1));
+		NoiseGeneratorVoice nv = new NoiseGeneratorVoice(
+				name);
 		soundVoicesList.add(nv);
 		regBase += setupNoiseVoice(regBase, nv);
 		
@@ -118,45 +125,45 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 	protected int setupNoiseVoice(int regBase, final NoiseGeneratorVoice voice) {
 		RegisterInfo info;
 		info = soundChip.getRegisterInfo(regBase);
-		assert info != null && info.id.endsWith("N:P");
+		assert info != null && info.id.endsWith("N:Ctl");
 
-		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_PERIOD, voice);
-		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION, voice);
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_ATTENTUATION, voice);
 		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_NOISE_CONTROL, voice);
 
-		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_PERIOD,
-			new IRegisterAccess.IRegisterWriteListener() {
-				
-				@Override
-				public void registerChanged(int reg, int value) {
-					voice.setOperationPeriod(value);
-				}
-			}
-		);
-		
-		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION,
-				new IRegisterAccess.IRegisterWriteListener() {
-			
-				@Override
-				public void registerChanged(int reg, int value) {
-					voice.setOperationAttenuation(value);
-				}
-			}
-		);
-			
 		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_NOISE_CONTROL,
 				new IRegisterAccess.IRegisterWriteListener() {
 					
 					@Override
 					public void registerChanged(int reg, int value) {
-						voice.setOperationNoiseControl(value);
+						voice.setNoiseControl(value);
+						if (isNoiseTrackingTone2()) {
+							voice.setPeriod(((ClockedSoundVoice) soundVoices[VOICE_TONE_2]).getPeriod());
+						}
 					}
 				}
 		);
-					
+		
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENTUATION,
+				new IRegisterAccess.IRegisterWriteListener() {
+			
+				@Override
+				public void registerChanged(int reg, int value) {
+					voice.setVolume(getVolume(value));
+				}
+			}
+		);
+			
 
 
 		return TMS9919Consts.REG_COUNT_NOISE;
+	}
+
+	/**
+	 * @param value
+	 * @return
+	 */
+	protected int getVolume(int value) {
+		return 0xff - ((value & 0xf) * 0xff / 0xf);
 	}
 
 	/**
@@ -164,36 +171,47 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 	 * @param i
 	 * @return
 	 */
-	protected int setupToneVoice(int regBase, int num, final ClockedSoundVoice voice) {
+	protected int setupToneVoice(final int regBase, int num, final ClockedSoundVoice voice) {
 		RegisterInfo info;
 		info = soundChip.getRegisterInfo(regBase);
-		assert info != null && info.id.contains(num + ":P");
-		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_PERIOD, 
+		assert info != null && info.id.contains(num + ":Per");
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD, 
 				voice);
-		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION, 
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_ATTENTUATION, 
 				voice);
 		
-		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_PERIOD,
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD,
 			new IRegisterAccess.IRegisterWriteListener() {
 				
 				@Override
 				public void registerChanged(int reg, int value) {
-					voice.setOperationPeriod(value);
+					voice.setPeriod(value);
+					if (reg == regBase + 2 && isNoiseTrackingTone2()) {
+						((NoiseGeneratorVoice)soundVoices[VOICE_NOISE]).setPeriod(value);
+					}
 				}
 			}
 		);
 
-		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION,
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENTUATION,
 			new IRegisterAccess.IRegisterWriteListener() {
 				
 				@Override
 				public void registerChanged(int reg, int value) {
-					voice.setOperationAttenuation(value);
+					voice.setVolume(getVolume(value));
 				}
 			}
 		);
 
 		return TMS9919Consts.REG_COUNT_TONE;
+	}
+
+	/**
+	 * @return
+	 */
+	protected boolean isNoiseTrackingTone2() {
+		return (((NoiseGeneratorVoice) soundVoices[VOICE_NOISE]).getNoiseControl() & TMS9919Consts.NOISE_PERIOD_MASK)
+			== TMS9919Consts.NOISE_PERIOD_VARIABLE;
 	}
 
 	/* (non-Javadoc)
@@ -210,8 +228,6 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 			throw new IllegalStateException();
 		
 		listener.registerChanged(reg, value);
-		
-		v.setupVoice();
 	}
 
 	public ISoundVoice[] getSoundVoices() {
