@@ -696,6 +696,9 @@ public class ModuleSelector extends Composite {
 
 		filterText.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent e) {
+				if (viewer.getTable().isDisposed())
+					return;
+				
 				if (lastFilter == null) {
 					filterText.setForeground(null);
 					lastFilter = "";
