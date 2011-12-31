@@ -610,6 +610,9 @@ public class PathFileLocator implements IPathFileLocator {
 		try {
 			is = createInputStream(uri);
 			return true;
+		} catch (IllegalArgumentException e) {
+			System.err.println("illegal URI: " + uri);
+			return false;
 		} catch (IOException e) {
 			return false;
 		} finally {

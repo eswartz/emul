@@ -932,7 +932,9 @@ public class ModuleSelector extends Composite {
 			if (imageURI == null) {
 				// look inside distribution
 				try {
-					imageURI = machine.getModel().getDataURL().toURI().resolve("images/" + imagePath);
+					imageURI = machine.getPathFileLocator().resolveInsideURI(
+							machine.getModel().getDataURL().toURI(),
+							"images/" + imagePath);
 					if (!machine.getPathFileLocator().exists(imageURI))
 						imageURI = null;
 				} catch (URISyntaxException e) {
@@ -942,7 +944,8 @@ public class ModuleSelector extends Composite {
 		}
 		if (imageURI == null) {
 			try {
-				imageURI = machine.getModel().getDataURL().toURI().resolve( 
+				imageURI = machine.getPathFileLocator().resolveInsideURI(
+						machine.getModel().getDataURL().toURI(), 
 						module != null ? 
 								(isModuleLoadable(module) ? "images/stock_module.png" : "images/stock_module_missing.png")
 								: "images/stock_no_module.png");
