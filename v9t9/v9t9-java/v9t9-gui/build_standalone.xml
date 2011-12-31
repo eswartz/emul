@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="create_run_jar" name="Create Runnable Jar for Project v9t9-java with Jar-in-Jar Loader">
+<project default="buildall" name="Create Runnable Jar for Project v9t9-java with Jar-in-Jar Loader">
     <!--this file was created by Eclipse Runnable JAR Export Wizard-->
     <!--ANT 1.7 is required                                        -->
     <property name="base"        value=".."/>
@@ -51,7 +51,16 @@
         </ant>
     	<delete dir="${bin.v9t9.dir}" /> 
 	</target>
-		
+
+	<uptodate property="natives.notrequired" targetfile="${bin.v9t9.dir}/v9t9j-natives-linux-x86.jar" >
+	    <srcfiles dir="${base.v9t9}/libs/lwjgl/native/linux" includes="**"/>
+	    <srcfiles dir="${base}/libv9t9render" includes="*.so"/>
+	 </uptodate>
+
+	
+    <target name="buildall" depends="build-subprojects,create_run_jar,build-natives,sign-jars" >
+	</target>
+	
     <target name="create_run_jar" depends="build-subprojects" >
 
     	<mkdir dir="${bin.v9t9.dir}" />
@@ -157,6 +166,17 @@
     	<copy file="${base.v9t9}/data/release/test-httpd.py" tofile="${bin.v9t9.dir}/test-httpd.py"/>
     	<replace file="${bin.v9t9.dir}/test-httpd.py" token="$v9t9.root" value="${v9t9.root}" />
     	
+
+		<copy todir="${bin.v9t9.dir}/libs" preservelastmodified="yes">
+			<fileset dir="${base.base}/libs/swt">
+				<include name="**/org.eclipse.swt.**.jar"/>
+				<exclude name="**/*source*.jar"/>
+			</fileset>
+		</copy>    	
+
+	</target>
+		
+    <target name="build-natives" unless="natives.notrequired">
     	<!--
     	Create jarfiles with native libraries
     	for each supported operating system.
@@ -165,6 +185,7 @@
     	has been built for it.  No other inherent limitations.
     	-->
 
+    	
         <jar destfile="${bin.v9t9.dir}/v9t9j-natives-linux-x86.jar">
             <manifest>
                 <attribute name="Class-Path" value="."/>
@@ -213,13 +234,9 @@
     	      <include name="v9t9render64.dll"/>
     	    </fileset>
   	    </jar>    
+	</target>
 
-		<copy todir="${bin.v9t9.dir}/libs" preservelastmodified="yes">
-			<fileset dir="${base.base}/libs/swt">
-				<include name="**/org.eclipse.swt.**.jar"/>
-				<exclude name="**/*source*.jar"/>
-			</fileset>
-		</copy>    	
+    <target name="sign-jars" >
     	<signjar
     	    alias="v9t9" 
     		keystore="${keystore}"
