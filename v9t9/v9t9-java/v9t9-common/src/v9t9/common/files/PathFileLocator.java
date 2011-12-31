@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -18,12 +19,16 @@ import java.net.UnknownServiceException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
@@ -42,7 +47,7 @@ public class PathFileLocator implements IPathFileLocator {
 	private IProperty rwPathProperty = null;
 	private IPropertyListener pathListChangedListener;
 
-	private Set<String> potentiallyWriteableFiles = new HashSet<String>();
+	private Set<String> potentiallyWriteableFiles = new HashSet<String>(2);
 	
 	private int lastCachedHash;
 	private Set<URI> cachedSlowURIs = new HashSet<URI>();
@@ -52,6 +57,8 @@ public class PathFileLocator implements IPathFileLocator {
 	private Map<URI, Collection<String>> cachedListings = new HashMap<URI, Collection<String>>();
 	private Map<URI, Long> cachedListingTime = new HashMap<URI, Long>();
 	private Map<URI, Long> cachedListingModifiedTime = new HashMap<URI, Long>();
+	
+	private Map<URI, Map<String, Collection<String>>> cachedJarListings = new HashMap<URI, Map<String,Collection<String>>>();
 	
 	private int timeoutMs = 30 * 1000;
 	
@@ -99,7 +106,7 @@ public class PathFileLocator implements IPathFileLocator {
 	}
 	
 	interface IPathIterator {
-		void handle(String path);
+		void handle(IProperty property, String path);
 	}
 	
 	protected void cachePaths() {
@@ -114,9 +121,13 @@ public class PathFileLocator implements IPathFileLocator {
 		iteratePaths(new IPathIterator() {
 
 			@Override
-			public void handle(String path) {
+			public void handle(IProperty property, String path) {
 				try {
+					if (path == null || path.length() == 0)
+						return;
 					URI uri = createURI(path);
+					if (!uri.isAbsolute())
+						return;
 					uris.add(uri);
 				} catch (URISyntaxException e) {
 					e.printStackTrace();
@@ -132,7 +143,11 @@ public class PathFileLocator implements IPathFileLocator {
 		cachedWriteURI = null;
 		if (rwPathProperty != null) {
 			try {
-				cachedWriteURI = createURI(rwPathProperty.getValue().toString());
+				String path = rwPathProperty.getValue().toString();
+				cachedWriteURI = createURI(path);
+				if (!cachedWriteURI.isAbsolute()) {
+					cachedWriteURI = null;
+				}
 			} catch (URISyntaxException e) {
 				e.printStackTrace();
 			}
@@ -143,7 +158,10 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @see v9t9.common.files.IPathFileLocator#createURI(java.lang.String)
 	 */
 	@Override
-	public URI createURI(String path) throws URISyntaxException {
+	public URI createURI(final String path_) throws URISyntaxException {
+		// convert slashes
+		String path = path_.replace('\\', '/');
+		
 		// ensure all act like directories
 		if (!path.contains(":/") || path.indexOf(":/") == 1) {
 			path = new File(path).getAbsolutePath();
@@ -152,7 +170,7 @@ public class PathFileLocator implements IPathFileLocator {
 			path += "/";
 		
 		URI uri = new URI(path);
-		if (!uri.isAbsolute()) {
+		if (uri.getScheme() == null) {
 			uri = new URI("file", path, null);
 		}
 
@@ -167,7 +185,7 @@ public class PathFileLocator implements IPathFileLocator {
 		if (rwPathProperty != null) {
 			Object val = rwPathProperty.getValue();
 			if (val != null)
-				iterator.handle(val.toString());
+				iterator.handle(rwPathProperty, val.toString());
 		}
 		
 		for (IProperty prop : roPathProperties) {
@@ -175,7 +193,7 @@ public class PathFileLocator implements IPathFileLocator {
 			
 			for (Object propPath : propPaths) {
 				if (propPath != null)
-					iterator.handle(propPath.toString());
+					iterator.handle(prop, propPath.toString());
 			}
 		}
 				
@@ -195,7 +213,7 @@ public class PathFileLocator implements IPathFileLocator {
 		iteratePaths(new IPathIterator() {
 
 			@Override
-			public void handle(String path) {
+			public void handle(IProperty property, String path) {
 				code[0] ^= path.hashCode();
 				code[0] += 1000;
 			}
@@ -253,7 +271,7 @@ public class PathFileLocator implements IPathFileLocator {
 			if (cachedSlowURIs.contains(baseUri))
 				continue;
 			
-			uri = baseUri.resolve(file);
+			uri = resolveInsideURI(baseUri, file);
 		
 			Collection<String> listing;
 			try {
@@ -276,13 +294,16 @@ public class PathFileLocator implements IPathFileLocator {
 	public synchronized Collection<String> getDirectoryListing(URI uri) throws IOException {
 		
 		// read from directory, not file
-		URI directory = uri.resolve(".");
+		URI directory = resolveInsideURI(uri, ".");
+		if (directory == null)
+			throw new IOException("cannot read directory in " + uri);
 		
 		Collection<String> cachedListing = cachedListings.get(directory);
 		
 		// don't update anything more than once a second
 		if (cachedListing != null && !directory.equals(rwPathProperty) 
-				&& cachedListingTime.get(directory) + 1 * 1000 > System.currentTimeMillis()) {
+				&& (!"jar".equals(directory.getScheme())
+						&& cachedListingTime.get(directory) + 1 * 1000 > System.currentTimeMillis())) {
 			return cachedListing;
 		}
 		
@@ -295,39 +316,137 @@ public class PathFileLocator implements IPathFileLocator {
 			cachedSlowURIs.add(directory);
 			throw e;
 		}
+
+		// JAR?
+		if (connection instanceof JarURLConnection) {
+			try {
+				cachedListing = getJarDirectoryListing(((JarURLConnection) connection).getJarFileURL().toURI(),
+						directory.getSchemeSpecificPart().substring(directory.getSchemeSpecificPart().lastIndexOf('!') + 1));
+
+				cachedListings.put(directory, cachedListing);
+				cachedListingModifiedTime.put(directory, connection.getLastModified());
+			} catch (URISyntaxException e) {
+				throw new IOException("failed to read inside JAR", e);
+			}
+		}
+		else  {
+			if (!connection.getContentType().equals("text/plain")) {
+				throw new IOException("unexpected content at " + directory);
+			}
 		
-		if (!connection.getContentType().equals("text/plain")) {
-			throw new IOException("unexpected content at " + directory);
+			// only re-read if the directory changed
+			time = connection.getLastModified();
+	
+			if (cachedListing == null || directory.equals(cachedWriteURI) || time != cachedListingModifiedTime.get(directory)) {
+				String[] entries;
+				InputStream is = connection.getInputStream();
+				try {
+					String content = DataFiles.readInputStreamTextAndClose(is);
+					entries = content.split("\r\n|\n");
+				} catch (IOException e) {
+					throw e;
+				} finally {
+					if (is != null) { 
+						try { is.close(); } catch (IOException e) {} 
+					}
+				}
+				
+				time = connection.getLastModified();
+				
+				cachedListing = new HashSet<String>(Arrays.asList(entries));
+				
+				cachedListings.put(directory, cachedListing);
+				cachedListingModifiedTime.put(directory, time);
+			} 
 		}
 		
-		// only re-read if the directory changed
-		time = connection.getLastModified();
-
-		if (cachedListing == null || directory.equals(cachedWriteURI) || time != cachedListingModifiedTime.get(directory)) {
-			String[] entries;
-			InputStream is = connection.getInputStream();
-			try {
-				String content = DataFiles.readInputStreamTextAndClose(is);
-				entries = content.split("\r\n|\n");
-			} finally {
-				if (is != null) { 
-					try { is.close(); } catch (IOException e) {} 
-				}
-			}
-			
-			time = connection.getLastModified();
-			
-			cachedListing = new HashSet<String>(Arrays.asList(entries));
-			
-			cachedListings.put(directory, cachedListing);
-			cachedListingModifiedTime.put(directory, time);
-		} 
 
 		cachedListingTime.put(directory, System.currentTimeMillis());
 		
 		return cachedListing;
 	}
 	
+
+	/**
+	 * Fetch a directory listing from a JAR (ZIP) file and cache all the
+	 * directories underneath, and give them infinite timeouts (since JARs are read-only) 
+	 * @param jar
+	 * @param substring
+	 * @return
+	 */
+	private Collection<String> getJarDirectoryListing(URI jar, String dir) throws IOException {
+		File file;
+		try {
+			file = new File(jar);
+		} catch (IllegalArgumentException e) {
+			throw new IOException(e);
+		}
+		
+		if (dir.startsWith("/"))
+			dir = dir.substring(1);
+		if (dir.endsWith("/"))
+			dir = dir.substring(0, dir.length() - 1);
+		
+		Map<String, Collection<String>> subdirs = cachedJarListings.get(jar);
+		
+		if (subdirs == null) {
+			subdirs = new TreeMap<String, Collection<String>>();
+			
+			ZipFile zf = new ZipFile(file);
+			for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
+				ZipEntry ent = e.nextElement();
+				
+				File entFile = new File(ent.getName());
+				String entDir = entFile.getParent();
+				if (entDir == null)
+					entDir = "";
+				Collection<String> directory = subdirs.get(entDir);
+				if (directory == null) {
+					directory = new ArrayList<String>();
+					subdirs.put(entDir, directory);
+				}
+				
+				// ignore class files
+				if (!entFile.getName().endsWith(".class"))
+					directory.add(entFile.getName());
+			}
+			zf.close();
+			
+			cachedJarListings.put(jar, subdirs);
+		}
+		
+		return subdirs.get(dir);
+	}
+
+	/**
+	 * @param uri
+	 * @param string
+	 * @return URI or <code>null</code>
+	 */
+	public URI resolveInsideURI(URI uri, String string) {
+		URI resolved = null;
+		if (!uri.isOpaque()) {
+			resolved = uri.resolve(string);
+		} else {
+			try {
+				// urgh, resolving inside these kinds of URLs does not strip the non-directory suffix
+				// automagically; do it manually
+				String ssp = uri.getSchemeSpecificPart();
+				if (!ssp.endsWith("/")) {
+					int idx = ssp.lastIndexOf("/");
+					if (idx >= 0)
+						ssp = ssp.substring(0, idx + 1);
+				}
+				resolved = createURI(ssp).resolve(string);
+				resolved = new URI(uri.getScheme(), resolved.toString(), uri.getFragment());
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
+		}
+		
+
+		return resolved;
+	}
 
 	protected URLConnection connect(URI uri) throws IOException,
 			MalformedURLException {
@@ -401,7 +520,7 @@ public class PathFileLocator implements IPathFileLocator {
 		// assume the user will create it
 		potentiallyWriteableFiles.add(file);
 		
-		return cachedWriteURI.resolve(file);
+		return resolveInsideURI(cachedWriteURI, file);
 	}
 	
 	public static void main(String[] args) throws URISyntaxException, IOException {

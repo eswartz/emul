@@ -110,5 +110,8 @@ public interface IPathFileLocator {
 	 * @return
 	 */
 	IProperty[] getSearchPathProperties();
+	
+	URI resolveInsideURI(URI uri, String string); 
+
 
 }
