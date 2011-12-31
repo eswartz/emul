@@ -10,6 +10,7 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
@@ -18,6 +19,7 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.settings.IStoredSettings;
 import v9t9.engine.memory.GplMmio;
+import v9t9.engine.modules.ModuleManager;
 import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
 import v9t9.machine.ti99.machine.EnhancedTI994AMachineModel;
@@ -89,6 +91,15 @@ public abstract class EmulatorServerBase {
 		
 		if (machine.getModuleManager() != null) {
 			machine.getModuleManager().reload();
+			
+			// reset state
+			try {
+				String lastModule = settings.get(ModuleManager.settingLastLoadedModule).getString();
+				if (lastModule.length() > 0)
+					machine.getModuleManager().switchModule(lastModule);
+			} catch (NotifyException e) {
+				machine.notifyEvent(e.getEvent());
+			}		
 		}
 		
 		if (client.getEventNotifier().getErrorCount() > barrier) {

@@ -86,6 +86,7 @@ public class Vdp9918AMmio extends VdpMmio {
 	}
 
 	protected byte readStatus() {
+		vdpaddrflag = false;
 		byte ret = vdpHandler.readVdpStatus();
 		return ret;
 	}

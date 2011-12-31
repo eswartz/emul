@@ -5,6 +5,7 @@ package v9t9.engine.memory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +22,7 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.memory.StoredMemoryEntryInfo;
-import v9t9.engine.modules.ModuleLoader;
+import v9t9.common.modules.ModuleDatabase;
 
 /**
  * This factory assists in creating {@link IMemoryEntry} instances.
@@ -167,6 +168,55 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				info, name, filename, fileoffs);
 	}
 
+
+
+	/**
+	 * Create a memory entry from storage
+	 * @param entryStore
+	 * @return
+	 */
+	public IMemoryEntry createEntry(IMemoryDomain domain, ISettingSection entryStore) {
+		MemoryEntry entry = null;
+		String klazzName = entryStore.get("Class");
+		if (klazzName != null) {
+			Class<?> klass;
+			try {
+				klass = Class.forName(klazzName);
+				
+				entry = (MemoryEntry) klass.newInstance();
+			} catch (Exception e) {
+				// in case packages change...
+				if (klazzName.endsWith(".DiskMemoryEntry")) {
+					klass = DiskMemoryEntry.class;
+				} else if (klazzName.endsWith(".MemoryEntry")) {
+					klass = MemoryEntry.class;
+				} else if (klazzName.endsWith(".MultiBankedMemoryEntry")) {
+					klass = MultiBankedMemoryEntry.class;
+				} else if (klazzName.endsWith(".WindowBankedMemoryEntry")) {
+					klass = WindowBankedMemoryEntry.class;
+				} else {
+					e.printStackTrace();
+					return null;
+				}
+			}
+			
+			entry.setLocator(locator);
+			entry.setDomain(domain);
+			entry.setWordAccess(domain.getIdentifier().equals(IMemoryDomain.NAME_CPU));	// TODO
+			int latency = domain.getLatency(entryStore.getInt("Address"));
+			if (entry.isWordAccess())
+				entry.setArea(new WordMemoryArea(latency));
+			else
+				entry.setArea(new ByteMemoryArea(latency));
+			
+			entry.setMemory(domain.getMemory());
+			
+			entry.loadState(entryStore);
+		}
+		return entry;
+	}
+
+	
 	public List<MemoryEntryInfo> loadEntriesFrom(String name, Element root) {
 
 		List<MemoryEntryInfo> memoryEntries = new ArrayList<MemoryEntryInfo>();
@@ -224,6 +274,70 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 		return memoryEntries;
 	}
 	
+
+	public void saveEntriesTo(Collection<MemoryEntryInfo> memoryEntries, Element root) {
+		Element memoryEntriesEl = root.getOwnerDocument().createElement("memoryEntries");
+		root.appendChild(memoryEntriesEl);
+		
+		for (MemoryEntryInfo info : memoryEntries) {
+			
+			Map<String, Object> properties = info.getProperties();
+			Element entry = null;
+			
+			// helpers
+			boolean needAddress = true;
+			boolean needSize = true;
+			boolean needDomain = true;
+			if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))
+					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000
+					&& (Integer) properties.get(MemoryEntryInfo.SIZE) == 0x2000) {
+				entry = root.getOwnerDocument().createElement("romModuleEntry");
+				needAddress = needSize = needDomain = false;
+			}
+			else if (IMemoryDomain.NAME_GRAPHICS.equals(properties.get(MemoryEntryInfo.DOMAIN))
+					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000) {
+				entry = root.getOwnerDocument().createElement("gromModuleEntry");
+				needAddress = needSize = needDomain = false;
+			}
+			else if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))
+					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000
+					&& BankedMemoryEntry.class.isAssignableFrom((Class<?>)properties.get(MemoryEntryInfo.CLASS))) {
+				entry = root.getOwnerDocument().createElement("bankedModuleEntry");
+				needAddress = needSize = needDomain = false;
+				
+				if (BankedMemoryEntry.class.equals((Class<?>)properties.get(MemoryEntryInfo.CLASS)))
+					entry.setAttribute("custom", "true");
+			}
+			else {
+				entry = root.getOwnerDocument().createElement("memoryEntry");
+			}
+
+			if (needDomain) {
+				entry.setAttribute(MemoryEntryInfo.DOMAIN, ""+properties.get(MemoryEntryInfo.DOMAIN));
+			}
+			if (needAddress) {
+				entry.setAttribute(MemoryEntryInfo.ADDRESS, 
+						HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.ADDRESS)).intValue()));
+			}
+			if (needSize) {
+				entry.setAttribute(MemoryEntryInfo.SIZE, 
+						HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.SIZE)).intValue()));
+			}
+			entry.setAttribute(MemoryEntryInfo.FILENAME, properties.get(MemoryEntryInfo.FILENAME).toString());
+			
+			if (properties.containsKey(MemoryEntryInfo.FILENAME2))
+				entry.setAttribute(MemoryEntryInfo.FILENAME2, properties.get(MemoryEntryInfo.FILENAME2).toString());
+			
+			if (properties.containsKey(MemoryEntryInfo.OFFSET) && ((Number) properties.get(MemoryEntryInfo.OFFSET)).intValue() != 0)
+				entry.setAttribute(MemoryEntryInfo.OFFSET, 
+						HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.OFFSET)).intValue()));
+			if (info.isStored())
+				entry.setAttribute(MemoryEntryInfo.STORED, "true");
+
+			memoryEntriesEl.appendChild(entry);
+		}
+	}
+
 	private void getClassAttribute(Element el, String name, Class<?> baseKlass,
 			MemoryEntryInfo info) {
 
@@ -232,7 +346,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			
 			String klassName = el.getAttribute(name);
 			try {
-				klass = ModuleLoader.class.getClassLoader().loadClass(klassName);
+				klass = ModuleDatabase.class.getClassLoader().loadClass(klassName);
 				if (!baseKlass.isAssignableFrom(klass)) {
 					throw new AssertionError("Illegal class: wanted instance of " + baseKlass + " but got " + klass);
 				} else {
@@ -263,51 +377,4 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 	}
 	
 	
-
-	/**
-	 * Create a memory entry from storage
-	 * @param entryStore
-	 * @return
-	 */
-	public IMemoryEntry createEntry(IMemoryDomain domain, ISettingSection entryStore) {
-		MemoryEntry entry = null;
-		String klazzName = entryStore.get("Class");
-		if (klazzName != null) {
-			Class<?> klass;
-			try {
-				klass = Class.forName(klazzName);
-				
-				entry = (MemoryEntry) klass.newInstance();
-			} catch (Exception e) {
-				// in case packages change...
-				if (klazzName.endsWith(".DiskMemoryEntry")) {
-					klass = DiskMemoryEntry.class;
-				} else if (klazzName.endsWith(".MemoryEntry")) {
-					klass = MemoryEntry.class;
-				} else if (klazzName.endsWith(".MultiBankedMemoryEntry")) {
-					klass = MultiBankedMemoryEntry.class;
-				} else if (klazzName.endsWith(".WindowBankedMemoryEntry")) {
-					klass = WindowBankedMemoryEntry.class;
-				} else {
-					e.printStackTrace();
-					return null;
-				}
-			}
-			
-			entry.setLocator(locator);
-			entry.setDomain(domain);
-			entry.setWordAccess(domain.getIdentifier().equals(IMemoryDomain.NAME_CPU));	// TODO
-			int latency = domain.getLatency(entryStore.getInt("Address"));
-			if (entry.isWordAccess())
-				entry.setArea(new WordMemoryArea(latency));
-			else
-				entry.setArea(new ByteMemoryArea(latency));
-			
-			entry.setMemory(domain.getMemory());
-			
-			entry.loadState(entryStore);
-		}
-		return entry;
-	}
-
 }

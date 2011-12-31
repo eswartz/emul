@@ -3,6 +3,7 @@
  */
 package v9t9.common.modules;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 
@@ -54,7 +55,7 @@ public interface IModuleManager extends IPersistable {
 	/**
 	 * @param stockDatabaseURL
 	 */
-	void registerModules(URL databaseURL);
+	void registerModules(URI databaseURI);
 
 	/**
 	 * 

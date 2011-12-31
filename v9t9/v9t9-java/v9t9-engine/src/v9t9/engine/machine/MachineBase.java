@@ -7,6 +7,7 @@
 package v9t9.engine.machine;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.TimerTask;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
+import ejs.base.settings.SettingProperty;
 import ejs.base.timer.FastTimer;
 
 import v9t9.common.asm.IRawInstructionFactory;
@@ -115,9 +117,18 @@ abstract public class MachineBase implements IMachine {
     	this.machineModel = machineModel;
     	
     	locator = new PathFileLocator();
+    	locator.setReadWritePathProperty(settings.get(DataFiles.settingStoredRamPath));
     	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingBootRomsPath));
     	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingUserRomsPath));
-    	locator.setReadWritePathProperty(settings.get(DataFiles.settingStoredRamPath));
+    	try {
+    		//if (false) throw new URISyntaxException(null, null);
+			locator.addReadOnlyPathProperty(new SettingProperty("BuiltinPath", Collections.singletonList(
+					//"jar:file:/home/ejs/devel/emul/v9t9/build/bin/v9t9/v9t9j.jar!/ti99/"
+					getModel().getDataURL().toURI().toString()
+					)));
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
     	
     	runnableList = Collections.synchronizedList(new LinkedList<Runnable>());
     	this.memoryModel = machineModel.createMemoryModel(this);

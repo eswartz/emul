@@ -3,12 +3,10 @@
  */
 package v9t9.engine.modules;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,7 +22,6 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
-import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
@@ -32,6 +29,7 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
+import v9t9.common.modules.ModuleDatabase;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 
@@ -260,16 +258,15 @@ public class ModuleManager implements IModuleManager {
 	}
 	
 
-	public void registerModules(URL url) {
-		if (url == null)
+	public void registerModules(URI uri) {
+		if (uri == null)
 			return;
 		
 		//boolean anyErrors = false;
 		InputStream is = null;
 		try {
-			URI uri = url.toURI();
-			is = url.openStream();
-			List<IModule> modList = ModuleLoader.loadModuleList(machine.getMemory(), is, uri);
+			is = machine.getPathFileLocator().createInputStream(uri);
+			List<IModule> modList = ModuleDatabase.loadModuleListAndClose(machine.getMemory(), is, uri);
 			addModules(modList);
 		} catch (NotifyException e) {
 			machine.getClient().getEventNotifier().notifyEvent(e.getEvent());
@@ -277,15 +274,6 @@ public class ModuleManager implements IModuleManager {
 		} catch (IOException e) {
 			machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
 					"Could not load module list: " + e.getMessage());
-
-		} catch (URISyntaxException e) {
-			machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
-					"Could not load module list: " + e.getMessage());
-			e.printStackTrace();
-		} finally {
-			if (is != null) {
-				try { is.close(); } catch (IOException e) { }
-			}
 		}
 		
 		/*
@@ -302,38 +290,32 @@ public class ModuleManager implements IModuleManager {
 	 */
 	@Override
 	public void reload() {
-		IProperty lastLoadedModule = Settings.get(machine, ModuleManager.settingLastLoadedModule);
 		IProperty moduleList = Settings.get(machine, IMachine.settingModuleList);
+		URI databaseURI;
 		
 		// first, get stock module database
 		machine.getModuleManager().clearModules();
-		machine.getModuleManager().registerModules(machine.getModuleManager().getStockDatabaseURL());
+		databaseURI = machine.getPathFileLocator().findFile("stock_modules.xml");
+		if (databaseURI != null) {
+			registerModules(databaseURI);
+		} else {
+			throw new AssertionError("missing stock_modules.xml");
+		}
 		
 		// then load any user entries
 		String dbNameList = moduleList.getString();
 		if (dbNameList.length() > 0) {
 			String[] dbNames = dbNameList.split(";");
 			for (String dbName : dbNames) {
-				File file = DataFiles.resolveFile(Settings.getSettings(machine), dbName);
-				if (file != null && file.exists()) {
-					try {
-						machine.getModuleManager().registerModules(file.toURI().toURL());
-					} catch (MalformedURLException e) {
-						machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
-								"Could not resolve module list from " + moduleList.getName() + ": " + e.getMessage());
-					}
+				databaseURI = machine.getPathFileLocator().findFile(dbName);
+				if (databaseURI != null) {
+					registerModules(databaseURI);
+				} else {
+					machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
+							"Could not find module list " + databaseURI);
 				}
 					
 			}
 		}
-		
-		// reset state
-		try {
-			if (lastLoadedModule.getString().length() > 0)
-        		machine.getModuleManager().switchModule(
-        				lastLoadedModule.getString());
-		} catch (NotifyException e) {
-			machine.notifyEvent(e.getEvent());
-		}		
 	}
 }

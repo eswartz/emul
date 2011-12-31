@@ -4,6 +4,7 @@
 package v9t9.common.memory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 import org.w3c.dom.Element;
@@ -36,6 +37,7 @@ public interface IMemoryEntryFactory {
 			String filename, int fileoffs) throws IOException;
 	
 	List<MemoryEntryInfo> loadEntriesFrom(String name, Element root);
+	void saveEntriesTo(Collection<MemoryEntryInfo> memoryEntries, Element root);
 	
 	/**
 	 * Create a memory entry from storage
@@ -43,4 +45,5 @@ public interface IMemoryEntryFactory {
 	 * @return
 	 */
 	IMemoryEntry createEntry(IMemoryDomain domain, ISettingSection entryStore);
+
 }

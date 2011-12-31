@@ -7,11 +7,13 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import org.junit.Test;
 
@@ -270,5 +272,30 @@ public class ManualTestPathFileLocator {
 		System.out.println("third search: " + third);
 		
 		assertTrue(third * 100 < orig);
+	}
+	
+	@Test
+	public void testJarFile() throws URISyntaxException, IOException {
+
+		IPathFileLocator locator = new PathFileLocator();
+		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		String jarPath = "jar:file:/home/ejs/devel/emul/v9t9/build/bin/v9t9/v9t9j.jar!/ti99/";
+		bootRoms.getList().add(jarPath);
+		locator.addReadOnlyPathProperty(bootRoms);		
+		
+		URI jarURI = locator.createURI(jarPath);
+		assertNotNull(jarURI);
+		assertTrue(jarURI.isOpaque());
+		assertTrue(jarURI.isAbsolute());
+		
+		Collection<String> listing = locator.getDirectoryListing(jarURI);
+		assertNotNull(listing);
+		
+		URI moduleXML = locator.resolveInsideURI(jarURI, "stock_modules.xml");
+		assertTrue(moduleXML.toString().endsWith("!/ti99/stock_modules.xml"));
+		InputStream is = locator.createInputStream(moduleXML);
+		assertNotNull(is);
+		
+
 	}
 }

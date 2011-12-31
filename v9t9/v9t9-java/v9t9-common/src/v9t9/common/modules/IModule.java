@@ -15,9 +15,12 @@ public interface IModule {
 	URI getDatabaseURI();
 	
 	String getName();
+	void setName(String name);
 	
 	/** Get filename or path to associated image, or <code>null</code> */
 	String getImagePath();
+	void setImagePath(String imagePath);
 	
 	MemoryEntryInfo[] getMemoryEntryInfos();
+
 }

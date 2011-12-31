@@ -1,14 +1,13 @@
 /**
  * 
  */
-package v9t9.engine.modules;
+package v9t9.common.modules;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 import v9t9.common.memory.MemoryEntryInfo;
-import v9t9.common.modules.IModule;
 
 /**
  * @author ejs
@@ -84,6 +83,13 @@ public class Module implements IModule {
 		return name;
 	}
 
+	/**
+	 * @param name the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.modules.IModule#getImageURL()
 	 */

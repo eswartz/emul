@@ -6,10 +6,12 @@ package v9t9.gui.client.swt.shells;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +33,9 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.CellEditor;
+import org.eclipse.jface.viewers.CellLabelProvider;
+import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -41,9 +46,13 @@ import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.TreeNode;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerCell;
+import org.eclipse.jface.viewers.ViewerColumn;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
@@ -88,6 +97,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
+import v9t9.common.modules.ModuleDatabase;
 import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
@@ -107,7 +117,7 @@ public class ModuleSelector extends Composite {
 	private static final String SECTION_MODULE_SELECTOR = "ModuleSelector";
 	private static final String SHOW_MISSING_MODULES = "ShowMissingModules";
 	
-	private static boolean allowRecordImages = true;
+	private static boolean allowEditing = true;
 	
 	static final int NAME_COLUMN = 0;
 	static final int FILE_COLUMN = 1;
@@ -449,21 +459,13 @@ public class ModuleSelector extends Composite {
 	 * @param moduleManager
 	 */
 	protected TableViewer createTable() {
-		final TableViewer viewer = new TableViewer(this, SWT.READ_ONLY | SWT.BORDER);
+		final TableViewer viewer = new TableViewer(this, SWT.READ_ONLY | SWT.BORDER | SWT.FULL_SELECTION);
 		
 		Table table = viewer.getTable();
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		
 		GridDataFactory.fillDefaults().grab(true,true).applyTo(table);
-		
-		/*
-		if (table.getFont().getFontData()[0].getHeight() < 12) {
-			FontDescriptor desc = FontUtils.getFontDescriptor(JFaceResources.getDefaultFont());
-			tableFont = desc.setHeight(12).createFont(getDisplay()); 
-			table.setFont(tableFont);
-		}
-		*/
 
 		FontDescriptor desc = FontUtils.getFontDescriptor(JFaceResources.getBannerFont());
 		tableFont = desc.createFont(getDisplay()); 
@@ -537,6 +539,60 @@ public class ModuleSelector extends Composite {
 				}
 			}
 		});
+		
+		TableViewerColumn nameViewerColumn = new TableViewerColumn(viewer, nameColumn);
+		nameViewerColumn.setLabelProvider(new CellLabelProvider() {
+			
+			@Override
+			public void update(ViewerCell cell) {
+				if (cell.getElement()  instanceof String) {
+					String string = (String) cell.getElement();
+					cell.setText(string);
+				} else {
+					IModule module = (IModule) cell.getElement();
+					cell.setText(module.getName());
+					cell.setImage(getOrLoadModuleImage(module, module, module.getImagePath()));
+				}
+			}
+		});
+		
+		EditingSupport editingSupport = new EditingSupport(viewer) {
+			
+			@Override
+			protected void setValue(Object element, Object value) {
+				if (element instanceof IModule) {
+					IModule module = (IModule) element;
+					if (!value.toString().equals(module.getName())) {
+						module.setName(value.toString());
+						saveModules(module);
+						viewer.refresh(module);
+					}
+				}
+			}
+			
+			@Override
+			protected Object getValue(Object element) {
+				if (element instanceof IModule)
+					return ((IModule) element).getName();
+				return null;
+			}
+			
+			@Override
+			protected CellEditor getCellEditor(Object element) {
+				if (element instanceof IModule)
+					return new TextCellEditor(viewer.getTable());
+
+				return null;
+			}
+			
+			@Override
+			protected boolean canEdit(Object element) {
+				return allowEditing;
+			}
+			
+			
+		};
+		nameViewerColumn.setEditingSupport(editingSupport);
 		
 		return viewer;
 	}
@@ -652,7 +708,7 @@ public class ModuleSelector extends Composite {
 					Menu menu = new Menu(viewer.getTable());
 					
 					final MenuItem mitem;
-					if (allowRecordImages && window.getVideoRenderer() instanceof ISwtVideoRenderer) {
+					if (allowEditing && window.getVideoRenderer() instanceof ISwtVideoRenderer) {
 						mitem = new MenuItem(menu, SWT.NONE);
 						mitem.setText("Assign module image from screenshot...");
 						
@@ -1024,19 +1080,43 @@ public class ModuleSelector extends Composite {
 		} catch (URISyntaxException e) {
 			
 		}
+		String imagePath = module.getName().toLowerCase().replace(' ', '_');
 		String targFile = window.openFileSelectionDialog("Save screenshot...", 
 				defDir,
-				"images/" + module.getName().toLowerCase().replace(' ', '_') + ".png",
+				"images/" + imagePath + ".png",
 				true,
 				new String[] { ".png|PNG" });
 		if (targFile != null) {
 			ImageData data = ((ISwtVideoRenderer) window.getVideoRenderer()).getScreenshotImageData();
 			try {
 				ImageIO.write(ImageUtils.convertToBufferedImage(data).first, "png", new File(targFile));
+				
+				module.setImagePath(targFile.substring(targFile.lastIndexOf(File.separatorChar) + 1));
+				viewer.refresh(module);
+
+				saveModules(module);
 			} catch (IOException e) {
 				window.getEventNotifier().notifyEvent(null, Level.ERROR, "Failed to save image: " + e.getMessage());
 			}
 		}
+	}
+
+	/**
+	 * @param module
+	 */
+	private void saveModules(IModule module) {
+		try {
+			OutputStream os = machine.getPathFileLocator().createOutputStream(module.getDatabaseURI());
+			try {
+				ModuleDatabase.saveModuleListAndClose(machine.getMemory(), os, 
+						module.getDatabaseURI(), Arrays.asList(moduleManager.getModules()));
+			} catch (NotifyException e) {
+				window.getEventNotifier().notifyEvent(e.getEvent());
+			}
+		} catch (IOException e) {
+			window.getEventNotifier().notifyEvent(null, Level.ERROR, "Failed to save module database: " + e.getMessage());
+		}
+		
 	}
 
 	static class ErrorTreeNode extends TreeNode {
