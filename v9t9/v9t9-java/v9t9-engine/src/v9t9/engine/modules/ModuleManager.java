@@ -162,7 +162,7 @@ public class ModuleManager implements IModuleManager {
 		
 		for (IMemoryDomain domain : memory.getDomains())
 			for (IMemoryEntry entry : domain.getMemoryEntries()) {
-				if (memoryEntryModules.get(entry) == loaded) {
+				if (loaded.equals(memoryEntryModules.get(entry))) {
 					domain.unmapEntry(entry);
 					memoryEntryModules.remove(entry);
 				}
@@ -317,5 +317,13 @@ public class ModuleManager implements IModuleManager {
 					
 			}
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#removeModule(v9t9.common.modules.IModule)
+	 */
+	@Override
+	public void removeModule(IModule module) {
+		modules.remove(module);
 	}
 }

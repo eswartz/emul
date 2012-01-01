@@ -17,7 +17,7 @@ public class Module implements IModule {
 
 	private List<MemoryEntryInfo> entries = new ArrayList<MemoryEntryInfo>();
 	private String name;
-	private String image;
+	private String imagePath;
 	private URI databaseURI;
 	
 	public Module(URI uri, String name) {
@@ -29,6 +29,7 @@ public class Module implements IModule {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((databaseURI == null) ? 0 : databaseURI.hashCode());
 		result = prime * result + ((entries == null) ? 0 : entries.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
@@ -95,7 +96,7 @@ public class Module implements IModule {
 	 */
 	@Override
 	public String getImagePath() {
-		return image;
+		return imagePath;
 	}
 	
 	/* (non-Javadoc)
@@ -110,6 +111,6 @@ public class Module implements IModule {
 	}
 
 	public void setImagePath(String image) {
-		this.image = image;
+		this.imagePath = image;
 	}
 }

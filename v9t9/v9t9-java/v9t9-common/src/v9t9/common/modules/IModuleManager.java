@@ -62,4 +62,9 @@ public interface IModuleManager extends IPersistable {
 	 */
 	void reload();
 
+	/**
+	 * @param module
+	 */
+	void removeModule(IModule module);
+
 }

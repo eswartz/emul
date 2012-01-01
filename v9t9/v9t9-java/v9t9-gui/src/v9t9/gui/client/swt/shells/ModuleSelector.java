@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +29,7 @@ import javax.imageio.ImageIO;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.FontDescriptor;
@@ -36,6 +38,7 @@ import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.EditingSupport;
+import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -58,6 +61,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MenuDetectEvent;
@@ -115,9 +120,13 @@ public class ModuleSelector extends Composite {
 
 	private static final String SECTION_MODULE_SELECTOR = "ModuleSelector";
 	private static final String SHOW_MISSING_MODULES = "ShowMissingModules";
+	private static final String SORT_ENABLED = "SortEnabled";
+	private static final String SORT_DIRECTION = "SortDirection";
 	
 	private static boolean allowEditing = true;
 	
+	private static String NAME_PROPERTY = "name";
+	private static String[] NAME_PROPERTY_ARRAY = { NAME_PROPERTY };
 	static final int NAME_COLUMN = 0;
 	static final int FILE_COLUMN = 1;
 	
@@ -158,6 +167,13 @@ public class ModuleSelector extends Composite {
 	class ExistingModulesFilter extends ViewerFilter {
 
 		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ViewerFilter#isFilterProperty(java.lang.Object, java.lang.String)
+		 */
+		@Override
+		public boolean isFilterProperty(Object element, String property) {
+			return true;
+		}
+		/* (non-Javadoc)
 		 * @see org.eclipse.jface.viewers.ViewerFilter#select(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
 		 */
 		@Override
@@ -173,8 +189,20 @@ public class ModuleSelector extends Composite {
 	}
 	
 	private ViewerFilter existingModulesFilter = new ExistingModulesFilter();
+	protected boolean isEditing;
+	protected Collection<URI> dirtyModuleLists = new HashSet<URI>();
+	private List<Object> moduleList;
 	
 	class FilteredSearchFilter extends ViewerFilter {
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ViewerFilter#isFilterProperty(java.lang.Object, java.lang.String)
+		 */
+		@Override
+		public boolean isFilterProperty(Object element, String property) {
+			return NAME_PROPERTY.equals(property);
+		}
+		
 		@Override
 		public boolean select(Viewer viewer, Object parentElement, Object element) {
 			if (lastFilter != null) {
@@ -207,15 +235,15 @@ public class ModuleSelector extends Composite {
 					avail.add(element);
 				}
 				if (!avail.isEmpty() && !getDisplay().isDisposed()) {
-					getDisplay().asyncExec(new Runnable() {
+					getDisplay().syncExec(new Runnable() {
 						private boolean firstRefresh = true;
 
 						public void run() {
 							if (!viewer.getControl().isDisposed()) {
-								viewer.update(avail.toArray(), null);
+								viewer.update(avail.toArray(), NAME_PROPERTY_ARRAY);
 								
 								// the node may have been filtered out
-								refreshFilters();
+								//refreshFilters();
 								
 								if (firstRefresh) {
 									firstRefresh = false;
@@ -291,6 +319,24 @@ public class ModuleSelector extends Composite {
 		
 		showMissingModules = dialogSettings.getBoolean(SHOW_MISSING_MODULES);
 		showUnloadable.setSelection(showMissingModules);
+
+
+		if (allowEditing) {
+			final Button enableEdit = new Button(this, SWT.CHECK);
+			GridDataFactory.fillDefaults().grab(true, false).applyTo(enableEdit);
+			
+			enableEdit.setText("Edit module list");
+			enableEdit.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					if (isEditing) {
+						promptSave();
+					}
+					isEditing = enableEdit.getSelection();
+					viewer.refresh();
+				}
+			});
+		}
 		
 		buttonBar = new Composite(this, SWT.NONE);
 		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(3).equalWidth(false).applyTo(buttonBar);
@@ -333,13 +379,56 @@ public class ModuleSelector extends Composite {
 				executor.shutdownNow();
 				viewerUpdater.interrupt();
 				try {
-					viewerUpdater.join();
+					viewerUpdater.join(1000);
 				} catch (InterruptedException e1) {
 				}
 			}
 		});
+	
+		if (allowEditing) {
+			addDisposeListener(new DisposeListener() {
+				
+				@Override
+				public void widgetDisposed(DisposeEvent e) {
+					if (isEditing)
+						saveModules();
+				}
+			});
+		}
 		
 	}
+
+	
+
+	/**
+	 * 
+	 */
+	protected void promptSave() {
+		if (!dirtyModuleLists.isEmpty()) {
+			
+			boolean doSave = MessageDialog.openConfirm(getShell(), "Module Changes", 
+					"Save changes to module list(s)?");
+			if (doSave) {
+				saveModules();
+			} else {
+				moduleManager.reload();
+			}
+		}
+		
+	}
+
+
+
+	/**
+	 * 
+	 */
+	protected void saveModules() {
+		for (URI modDbUri : dirtyModuleLists ) {
+			saveModules(modDbUri);
+		}
+		dirtyModuleLists.clear();
+	}
+
 
 
 	/**
@@ -353,6 +442,19 @@ public class ModuleSelector extends Composite {
 
 		filterText = new Text(comp, SWT.BORDER);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, false).applyTo(filterText);
+		
+		filterText.addFocusListener(new FocusListener() {
+			
+			@Override
+			public void focusLost(FocusEvent e) {
+				filterText.selectAll();				
+			}
+			
+			@Override
+			public void focusGained(FocusEvent e) {
+				filterText.selectAll();				
+			}
+		});
 		
 		final Button clearButton = new Button(comp, SWT.PUSH | SWT.NO_FOCUS);
 		clearButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/icon_search_clear.png"));
@@ -402,7 +504,7 @@ public class ModuleSelector extends Composite {
 					nameColumn.setWidth(viewer.getTable().getSize().x);
 				
 				final IModule[] loadedModules = moduleManager.getLoadedModules();
-				viewer.setSelection(new StructuredSelection(loadedModules));
+				viewer.setSelection(new StructuredSelection(loadedModules), true);
 				
 				// workaround: GTK does not realize the elements for a while
 				final TimerTask task = new TimerTask() {
@@ -427,6 +529,7 @@ public class ModuleSelector extends Composite {
 										viewer.getTable().getItemCount() > 0 &&
 										viewer.getTable().getItem(0).getBounds().height > 0) {
 									viewer.reveal(loadedModules[0]);
+
 									cancel = true;
 								}
 								if (cancel) {
@@ -460,6 +563,19 @@ public class ModuleSelector extends Composite {
 	protected TableViewer createTable() {
 		final TableViewer viewer = new TableViewer(this, SWT.READ_ONLY | SWT.BORDER | SWT.FULL_SELECTION);
 		
+		viewer.setComparer(new IElementComparer() {
+			
+			@Override
+			public int hashCode(Object element) {
+				return System.identityHashCode(element);
+			}
+			
+			@Override
+			public boolean equals(Object a, Object b) {
+				return a == b || a.equals(b);
+			}
+		});
+		
 		Table table = viewer.getTable();
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
@@ -488,8 +604,17 @@ public class ModuleSelector extends Composite {
 
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ModuleTableLabelProvider());
+
+		viewer.setColumnProperties(NAME_PROPERTY_ARRAY);
 		
 		viewer.setComparator(new ViewerComparator() {
+			/* (non-Javadoc)
+			 * @see org.eclipse.jface.viewers.ViewerComparator#isSorterProperty(java.lang.Object, java.lang.String)
+			 */
+			@Override
+			public boolean isSorterProperty(Object element, String property) {
+				return "name".equals(property);
+			}
 			@Override
 			public int compare(Viewer viewer, Object e1, Object e2) {
 				if (!sortModules)
@@ -501,7 +626,7 @@ public class ModuleSelector extends Composite {
 					boolean l1 = isModuleLoadable(mod1);
 					boolean l2 = isModuleLoadable(mod2);
 					if (l1 == l2)
-						return sortDirection * mod1.getName().compareTo(mod2.getName());
+						return sortDirection * mod1.getName().toLowerCase().compareTo(mod2.getName().toLowerCase());
 					else if (l1)
 						return -1;
 					else
@@ -515,17 +640,18 @@ public class ModuleSelector extends Composite {
 		});
 		
 		selectedModule = null;
-		final IModule[] realModules = moduleManager.getModules();
 		
-		if (realModules.length > 0) {
-			addIterativeSearch(viewer, table, realModules);
-		}
+		addIterativeSearch(viewer, table);
+
+		sortModules = dialogSettings.getBoolean(SORT_ENABLED);
+		sortDirection = dialogSettings.getInt(SORT_DIRECTION);
 		
-		Object[] modulesPlusEmpty = new Object[realModules.length + 1];
-		modulesPlusEmpty[0] = "<No module>";
-		System.arraycopy(realModules, 0, modulesPlusEmpty, 1, realModules.length);
-		viewer.setInput(modulesPlusEmpty);
+		moduleList = new ArrayList<Object>(Arrays.asList(moduleManager.getModules()));
+		moduleList.add(0, "<No module>");
+		viewer.setInput(moduleList);
 		
+		viewer.setSelection(new StructuredSelection(moduleManager.getLoadedModules()), true);
+
 		table.addKeyListener(new KeyAdapter() {
 			/* (non-Javadoc)
 			 * @see org.eclipse.swt.events.KeyAdapter#keyPressed(org.eclipse.swt.events.KeyEvent)
@@ -563,8 +689,9 @@ public class ModuleSelector extends Composite {
 					IModule module = (IModule) element;
 					if (!value.toString().equals(module.getName())) {
 						module.setName(value.toString());
-						saveModules(module);
+						dirtyModuleLists.add(module.getDatabaseURI());
 						viewer.refresh(module);
+						//viewer.setSelection(new StructuredSelection(module), true);
 					}
 				}
 			}
@@ -586,7 +713,7 @@ public class ModuleSelector extends Composite {
 			
 			@Override
 			protected boolean canEdit(Object element) {
-				return allowEditing;
+				return isEditing;
 			}
 			
 			
@@ -601,18 +728,30 @@ public class ModuleSelector extends Composite {
 	 * @param table
 	 * @param realModules
 	 */
-	protected void addIterativeSearch(final TableViewer viewer, Table table,
-			final IModule[] realModules) {
+	protected void addIterativeSearch(final TableViewer viewer, Table table) {
 		table.addKeyListener(new KeyAdapter() {
 			StringBuilder search = new StringBuilder();
 			int index = 0;
+			IModule[] modules;
 			
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if (e.keyCode == '\b' || e.keyCode == SWT.ARROW_DOWN || e.keyCode == SWT.ARROW_UP) {
+				if (modules == null) {
+					modules = moduleManager.getModules();
+				}
+				if (e.keyCode == '\b') {
 					search.setLength(0);
 					index = 0;
 					e.doit = e.keyCode != '\b';
+					modules = moduleManager.getModules();
+				}
+				else if (e.keyCode == SWT.ARROW_DOWN) {
+					index++;
+					e.doit = false;
+				}
+				else if (e.keyCode == SWT.ARROW_UP) {
+					index--;
+					e.doit = false;
 				}
 				else if (e.character >= 32 && e.character < 127) {
 					search.append(e.character);
@@ -623,12 +762,11 @@ public class ModuleSelector extends Composite {
 				}
 				
 				if (search.length() > 0) {
-					int end = (index + realModules.length - 1) % realModules.length;
-					for (int i = index; i != end; i = (i + 1) % realModules.length) {
-						IModule m = realModules[i];
+					int end = (index + modules.length - 1) % modules.length;
+					for (int i = index; i != end; i = (i + 1) % modules.length) {
+						IModule m = modules[i];
 						if (m.getName().toLowerCase().contains(search.toString().toLowerCase())) {
 							viewer.setSelection(new StructuredSelection(m), true);
-							viewer.reveal(m);
 							index = i;
 							break;
 						}
@@ -646,6 +784,7 @@ public class ModuleSelector extends Composite {
 		nameColumn.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				e.doit = false;
 				if (!sortModules) {
 					sortModules = true;
 					sortDirection = 1;
@@ -655,9 +794,12 @@ public class ModuleSelector extends Composite {
 					else
 						sortModules = false;
 				}
+				dialogSettings.put(SORT_ENABLED, sortModules);
+				dialogSettings.put(SORT_DIRECTION, sortDirection);
 				viewer.refresh();
 			}
 		});
+		
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			
 			public void selectionChanged(SelectionChangedEvent event) {
@@ -704,22 +846,41 @@ public class ModuleSelector extends Composite {
 						viewer.getTable().toControl(new Point(e.x, e.y))
 						);
 				if (item != null && item.getData() instanceof IModule) {
+					final IModule module = (IModule) item.getData();
+
 					Menu menu = new Menu(viewer.getTable());
 					
-					final MenuItem mitem;
-					if (allowEditing && window.getVideoRenderer() instanceof ISwtVideoRenderer) {
+					if (isEditing && window.getVideoRenderer() instanceof ISwtVideoRenderer) {
+						final MenuItem mitem;
 						mitem = new MenuItem(menu, SWT.NONE);
 						mitem.setText("Assign module image from screenshot...");
 						
 						mitem.addSelectionListener(new SelectionAdapter() {
 							@Override
 							public void widgetSelected(SelectionEvent e) {
-								assignModuleImage((IModule) item.getData());
+								assignModuleImage(module);
 							}
 
 						});
 					}
 
+					if (isEditing) {
+						final MenuItem dlitem;
+						dlitem = new MenuItem(menu, SWT.NONE);
+						dlitem.setText("Delete entry");
+						
+						dlitem.addSelectionListener(new SelectionAdapter() {
+							@Override
+							public void widgetSelected(SelectionEvent e) {
+								dirtyModuleLists.add(module.getDatabaseURI());
+								moduleManager.removeModule(module);
+								moduleList.remove(module);
+								viewer.remove(module);
+							}
+							
+						});
+					}
+					
 					final MenuItem ditem;
 					ditem = new MenuItem(menu, SWT.NONE);
 					ditem.setText("Module details...");
@@ -727,7 +888,7 @@ public class ModuleSelector extends Composite {
 					ditem.addSelectionListener(new SelectionAdapter() {
 						@Override
 						public void widgetSelected(SelectionEvent e) {
-							showModuleDetails((IModule) item.getData());
+							showModuleDetails(module);
 						}
 					});
 
@@ -748,18 +909,15 @@ public class ModuleSelector extends Composite {
 			}
 		});
 		
-
 		filterText.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent e) {
 				if (viewer.getTable().isDisposed())
 					return;
-				
+
 				if (lastFilter == null) {
 					filterText.setForeground(null);
 					lastFilter = "";
-					if (e.keyCode == e.character) {
-						filterText.setText("");
-					}
+					filterText.setText("");
 				}
 				
 				if (e.keyCode == SWT.ARROW_DOWN) {
@@ -1072,7 +1230,7 @@ public class ModuleSelector extends Composite {
 			executor.submit(runnable);
 		}
 		
-		return false;
+		return true;
 	}
 
 	private void assignModuleImage(IModule module) {
@@ -1094,9 +1252,9 @@ public class ModuleSelector extends Composite {
 				ImageIO.write(ImageUtils.convertToBufferedImage(data).first, "png", new File(targFile));
 				
 				module.setImagePath(targFile.substring(targFile.lastIndexOf(File.separatorChar) + 1));
-				viewer.refresh(module);
+				viewer.update(module, NAME_PROPERTY_ARRAY);
 
-				saveModules(module);
+				dirtyModuleLists.add(module.getDatabaseURI());
 			} catch (IOException e) {
 				window.getEventNotifier().notifyEvent(null, Level.ERROR, "Failed to save image: " + e.getMessage());
 			}
@@ -1106,12 +1264,12 @@ public class ModuleSelector extends Composite {
 	/**
 	 * @param module
 	 */
-	private void saveModules(IModule module) {
+	private void saveModules(URI moduleList) {
 		try {
-			OutputStream os = machine.getPathFileLocator().createOutputStream(module.getDatabaseURI());
+			OutputStream os = machine.getPathFileLocator().createOutputStream(moduleList);
 			try {
 				ModuleDatabase.saveModuleListAndClose(machine.getMemory(), os, 
-						module.getDatabaseURI(), Arrays.asList(moduleManager.getModules()));
+						moduleList, Arrays.asList(moduleManager.getModules()));
 			} catch (NotifyException e) {
 				window.getEventNotifier().notifyEvent(e.getEvent());
 			}
@@ -1237,13 +1395,6 @@ public class ModuleSelector extends Composite {
 					viewer.expandToLevel(2);
 					nameColumn.pack();
 					infoColumn.pack();
-				}
-			});
-			
-			composite.addDisposeListener(new DisposeListener() {
-				
-				@Override
-				public void widgetDisposed(DisposeEvent e) {
 				}
 			});
 			
