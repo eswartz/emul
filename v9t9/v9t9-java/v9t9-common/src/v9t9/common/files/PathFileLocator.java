@@ -33,6 +33,7 @@ import java.util.zip.ZipFile;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.utils.Pair;
 
 /**
  * This class assists in locating files along paths (which are {@link IProperty} instances
@@ -802,5 +803,19 @@ public class PathFileLocator implements IPathFileLocator {
 		}
 		return null;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#splitFileName(java.net.URI)
+	 */
+	@Override
+	public Pair<String, String> splitFileName(URI uri) {
+		String path = uri.toString();
+		int idx = path.lastIndexOf('/');
+		if (idx == path.length() - 1)
+			return new Pair<String, String>(path.substring(0, idx), "");
+		else if (idx >= 0)
+			return new Pair<String, String>(path.substring(0, idx), path.substring(idx + 1));
+		else
+			return new Pair<String, String>("", path);
+	}
 }

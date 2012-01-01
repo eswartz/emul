@@ -108,19 +108,10 @@ public class ModuleContentProvider extends TreeNodeContentProvider {
 		}
 	}
 	
-	private Pair<String, String> split(String path) {
-		int idx = path.lastIndexOf('/');
-		if (idx >= 0)
-			return new Pair<String, String>(path.substring(0, idx), path.substring(idx+1));
-		else
-			return new Pair<String, String>("", path);
-	}
-
-
 	private TreeNode makeTreeNode(StoredMemoryEntryInfo info) {
 		URI uri = info.uri;
 		
-		Pair<String, String> pathAndName = split(uri.toString());
+		Pair<String, String> pathAndName = pathFileLocator.splitFileName(uri);
 		TreeNode node = new TreeNode(new Pair<String, String>(pathAndName.second, ""));
 		TreeNode[] kids = new TreeNode[4];
 		kids[0] = new TreeNode(new Pair<String, String>("Location", uri.toString()));

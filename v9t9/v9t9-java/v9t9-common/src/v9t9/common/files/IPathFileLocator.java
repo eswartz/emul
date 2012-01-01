@@ -12,6 +12,7 @@ import java.net.URLConnection;
 import java.util.Collection;
 
 import ejs.base.properties.IProperty;
+import ejs.base.utils.Pair;
 
 /**
  * @author ejs
@@ -135,6 +136,14 @@ public interface IPathFileLocator {
 	 * @throw {@link IllegalArgumentException} if string is invalid
 	 */
 	URI resolveInsideURI(URI uri, String string);
+
+	/**
+	 * Get the non-filename and filename portion of the URI
+	 * @param uri
+	 * @return pair consisting of the URI up to the filename, 
+	 * and the filename (or empty string if this represents a directory)
+	 */
+	Pair<String, String> splitFileName(URI uri);
 
 
 

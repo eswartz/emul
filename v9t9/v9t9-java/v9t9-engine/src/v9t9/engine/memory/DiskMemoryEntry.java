@@ -80,6 +80,7 @@ public class DiskMemoryEntry extends MemoryEntry {
         		if (storedInfo.md5 != null) {
 					uri = locator.findFileByMD5(storedInfo.md5);
 					System.out.println("*** Found matching entry by MD5: " + uri);
+					filename = locator.splitFileName(uri).second;
 				}
         		
         		if (uri == null && filename != null) {
