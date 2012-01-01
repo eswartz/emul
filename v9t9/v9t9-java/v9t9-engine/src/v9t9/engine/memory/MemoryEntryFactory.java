@@ -317,11 +317,11 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			}
 			if (needAddress) {
 				entry.setAttribute(MemoryEntryInfo.ADDRESS, 
-						HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.ADDRESS)).intValue()));
+						"0x" + HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.ADDRESS)).intValue()));
 			}
 			if (needSize) {
 				entry.setAttribute(MemoryEntryInfo.SIZE, 
-						HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.SIZE)).intValue()));
+						"0x" + HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.SIZE)).intValue()));
 			}
 			entry.setAttribute(MemoryEntryInfo.FILENAME, properties.get(MemoryEntryInfo.FILENAME).toString());
 			
@@ -330,7 +330,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			
 			if (properties.containsKey(MemoryEntryInfo.OFFSET) && ((Number) properties.get(MemoryEntryInfo.OFFSET)).intValue() != 0)
 				entry.setAttribute(MemoryEntryInfo.OFFSET, 
-						HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.OFFSET)).intValue()));
+						"0x" + HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.OFFSET)).intValue()));
 			if (info.isStored())
 				entry.setAttribute(MemoryEntryInfo.STORED, "true");
 
