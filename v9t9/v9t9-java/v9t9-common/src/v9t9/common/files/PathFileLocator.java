@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
@@ -61,6 +62,8 @@ public class PathFileLocator implements IPathFileLocator {
 	private Map<URI, Long> cachedListingModifiedTime = new HashMap<URI, Long>();
 	
 	private Map<URL, Map<String, Collection<String>>> cachedJarListings = new HashMap<URL, Map<String,Collection<String>>>();
+	
+	private Map<URI, Map<URI, String>> cachedMD5Hashes = new HashMap<URI, Map<URI,String>>();
 	
 	private int timeoutMs = 30 * 1000;
 	
@@ -119,6 +122,7 @@ public class PathFileLocator implements IPathFileLocator {
 		cachedListings.clear();
 		cachedListingTime.clear();
 		cachedListingModifiedTime.clear();
+		cachedMD5Hashes.clear();
 		
 		iteratePaths(new IPathIterator() {
 
@@ -497,7 +501,7 @@ public class PathFileLocator implements IPathFileLocator {
 	public URI resolveInsideURI(URI uri, String string) {
 		URI resolved = null;
 		if (!uri.isOpaque()) {
-			resolved = uri.resolve(string);
+			resolved = uri.resolve(encodeURIcomponent(string));
 		} else {
 			try {
 				// urgh, resolving inside these kinds of URLs does not strip the non-directory suffix
@@ -527,6 +531,45 @@ public class PathFileLocator implements IPathFileLocator {
 		
 
 		return resolved;
+	}
+	
+	/** Converts a string into something you can safely insert into a URL. */
+	private String encodeURIcomponent(String s)
+	{
+	    StringBuilder o = new StringBuilder();
+	    for (char ch : s.toCharArray()) {
+	        if (isUnsafe(ch)) {
+	        	if (ch < 0x100) {
+	        		o.append('%');
+		            o.append(toHex((ch >> 4) & 0xf));
+		            o.append(toHex(ch & 0xf));
+	        	} else {
+	        		try {
+						for (byte c : ("" + ch).getBytes("UTF-8")) {
+							o.append('%');
+							o.append(toHex((c >> 4) & 0xf));
+							o.append(toHex(c & 0xf));
+						}
+					} catch (UnsupportedEncodingException e) {
+						throw new IllegalArgumentException(e);
+					}
+	        	}
+	        }
+	        else o.append(ch);
+	    }
+	    return o.toString();
+	}
+
+	private char toHex(int ch)
+	{
+	    return (char)(ch < 10 ? '0' + ch : 'A' + ch - 10);
+	}
+
+	private boolean isUnsafe(char ch)
+	{
+	    if (ch > 128 || ch < 0)
+	        return true;
+	    return " %$&+,/:;=?@<>#%".indexOf(ch) >= 0;
 	}
 
 	protected URLConnection connect(URI uri) throws IOException,
@@ -713,4 +756,51 @@ public class PathFileLocator implements IPathFileLocator {
 		return (IProperty[]) props.toArray(new IProperty[props.size()]);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#getContentMD5(java.net.URI)
+	 */
+	@Override
+	public String getContentMD5(URI uri) throws IOException {
+		URI directory = resolveInsideURI(uri, ".");
+		Map<URI, String> md5Dir = cachedMD5Hashes.get(directory);
+		if (md5Dir == null) {
+			md5Dir = new HashMap<URI, String>();
+			cachedMD5Hashes.put(directory, md5Dir);
+		}
+		String md5 = md5Dir.get(uri);
+		if (md5 == null) {
+			InputStream is = createInputStream(uri);
+			byte[] content = DataFiles.readInputStreamContentsAndClose(is);
+			md5 = DataFiles.getMD5Hash(content);
+			md5Dir.put(uri, md5);
+		}
+		return md5;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#findFileByMD5(java.lang.String)
+	 */
+	@Override
+	public URI findFileByMD5(String md5) {
+		for (URI directory : getSearchURIs()) {
+			try {
+				Collection<String> direct = getDirectoryListing(directory);
+				for (String ent : direct) {
+					try {
+						URI uri = resolveInsideURI(directory, ent);
+						String entMd5 = getContentMD5(uri);
+						if (entMd5.equalsIgnoreCase(md5)) {
+							return uri; 
+						}
+					} catch (Throwable e) {
+						e.printStackTrace();
+					}
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+	
 }

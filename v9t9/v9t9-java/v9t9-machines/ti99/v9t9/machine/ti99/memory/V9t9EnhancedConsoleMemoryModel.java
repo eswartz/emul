@@ -10,6 +10,7 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
@@ -51,7 +52,13 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 		
 		loadEnhancedBankedConsoleRom(eventNotifier, "nforthA.rom", "nforthB.rom");
 		loadConsoleGrom(eventNotifier, "nforth.grm");
-		entry = loadModuleGrom(eventNotifier, "FORTH", "nforthg.bin");
+		
+		MemoryEntryInfo gromInfo = MemoryEntryInfoBuilder.byteMemoryEntry()
+			.withDomain(IMemoryDomain.NAME_GRAPHICS)
+			.withAddress(0x6000)
+			.withFilename("nforthg.bin").create("FORTH");
+		
+		entry = loadMemory(eventNotifier, gromInfo);
 		
 		if (entry != null) {
 			// the high-GROM code is copied into RAM here

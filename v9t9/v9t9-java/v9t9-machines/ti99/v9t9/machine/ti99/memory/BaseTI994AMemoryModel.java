@@ -111,53 +111,41 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 	
 	}
 
-	protected IMemoryEntry loadConsoleRom(IEventNotifier eventNotifier, String filename) {
-		IMemoryEntry cpuRomEntry;
-		try {
-			MemoryEntryInfo info = MemoryEntryInfoBuilder
-				.standardConsoleRom(filename)
-				.create("CPU ROM");
-			
-			cpuRomEntry = memory.getMemoryEntryFactory().newMemoryEntry(info);
-		} catch (IOException e) {
-			reportLoadError(eventNotifier, filename, e);
-			return null;
-		}
-		cpuRomEntry.getArea().setLatency(0);
-		memory.addAndMap(cpuRomEntry);
-		return cpuRomEntry;
-	}
-
-	protected IMemoryEntry loadConsoleGrom(IEventNotifier eventNotifier, String filename) {
+	protected IMemoryEntry loadMemory(IEventNotifier eventNotifier, MemoryEntryInfo info) {
 		IMemoryEntry entry;
 		try {
-			MemoryEntryInfo info = MemoryEntryInfoBuilder
-				.standardConsoleGrom(filename)
-				.create("CPU GROM");
-			
 			entry = memory.getMemoryEntryFactory().newMemoryEntry(info);
 		} catch (IOException e) {
-			reportLoadError(eventNotifier, filename, e);
+			reportLoadError(eventNotifier, info.getFilename(), e);
 			return null;
 		}
 		memory.addAndMap(entry);
 		return entry;
+	}
+
+	protected IMemoryEntry loadConsoleRom(IEventNotifier eventNotifier, String filename) {
+		MemoryEntryInfo info = MemoryEntryInfoBuilder
+			.standardConsoleRom(filename)
+			.create("CPU ROM");
+
+		return loadMemory(eventNotifier, info);
+	}
+	
+
+	protected IMemoryEntry loadConsoleGrom(IEventNotifier eventNotifier, String filename) {
+		MemoryEntryInfo info = MemoryEntryInfoBuilder
+			.standardConsoleGrom(filename)
+			.create("CPU GROM");
+
+		return loadMemory(eventNotifier, info);
 	}
 
 	protected IMemoryEntry loadModuleGrom(IEventNotifier eventNotifier, String name, String filename) {
-		IMemoryEntry entry;
-		try {
-			MemoryEntryInfo info = MemoryEntryInfoBuilder
-				.standardModuleGrom(filename)
-				.create(name);
-		
-			entry = memory.getMemoryEntryFactory().newMemoryEntry(info);
-		} catch (IOException e) {
-			reportLoadError(eventNotifier, filename, e);
-			return null;
-		}
-		memory.addAndMap(entry);
-		return entry;
+		MemoryEntryInfo info = MemoryEntryInfoBuilder
+			.standardModuleGrom(filename)
+			.create(name);
+
+		return loadMemory(eventNotifier, info);
 	}
 
 	public IMemoryDomain getConsole() {

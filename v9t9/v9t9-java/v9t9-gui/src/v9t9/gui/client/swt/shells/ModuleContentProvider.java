@@ -60,16 +60,18 @@ public class ModuleContentProvider extends TreeNodeContentProvider {
 		for (MemoryEntryInfo info : infos) {
 			if (!info.isBanked()) {
 				addMemoryInfoNode(memNodes, info,
-						info.getName(), info.getFilename(), info.getOffset());
+						info.getName(), info.getFilename(), info.getFileMD5(), info.getOffset());
 			} else {
 				addMemoryInfoNode(memNodes, info, 
 						info.getName() + " (bank 0)", 
 						info.getFilename(), 
+						info.getFileMD5(), 
 						info.getOffset());
 
 				addMemoryInfoNode(memNodes, info, 
 						info.getName() + " (bank 1)", 
 						info.getFilename2(), 
+						info.getFile2MD5(), 
 						info.getOffset2());
 			}
 		}
@@ -86,13 +88,13 @@ public class ModuleContentProvider extends TreeNodeContentProvider {
 
 	protected void addMemoryInfoNode(
 			List<TreeNode> memNodes, MemoryEntryInfo info,
-			String name, String filename, int offset) {
+			String name, String filename, String md5, int offset) {
 		StoredMemoryEntryInfo storedInfo;
 		try {
 			storedInfo = StoredMemoryEntryInfo.createStoredMemoryEntryInfo(
 					pathFileLocator, machine.getSettings(), 
 					machine.getMemory(), info, 
-					name, filename, offset);
+					name, filename, md5, offset);
 			memNodes.add(makeTreeNode(storedInfo));
 		} catch (IOException e) {
 			TreeNode errorNode = new ErrorTreeNode(new Pair<String, String>(filename,
@@ -120,14 +122,19 @@ public class ModuleContentProvider extends TreeNodeContentProvider {
 		
 		Pair<String, String> pathAndName = split(uri.toString());
 		TreeNode node = new TreeNode(new Pair<String, String>(pathAndName.second, ""));
-		TreeNode[] kids = new TreeNode[3];
+		TreeNode[] kids = new TreeNode[4];
 		kids[0] = new TreeNode(new Pair<String, String>("Location", uri.toString()));
 		try {
 			kids[1] = new TreeNode(new Pair<String, String>("File Size", ""+ pathFileLocator.getContentLength(uri)));
 		} catch (IOException e) {
 			kids[1] = new ErrorTreeNode(new Pair<String, String>("File Size", "cannot read: " + e.toString()));
 		}
-		kids[2] = makeTreeNode(info.info);
+		try {
+			kids[2] = new TreeNode(new Pair<String, String>("File MD5", ""+ pathFileLocator.getContentMD5(uri)));
+		} catch (IOException e) {
+			kids[2] = new ErrorTreeNode(new Pair<String, String>("File MD5", "cannot read: " + e.toString()));
+		}
+		kids[3] = makeTreeNode(info.info);
 		node.setChildren(kids);
 		return node;
 	}

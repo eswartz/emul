@@ -22,20 +22,23 @@ public class StoredMemoryEntryInfo {
 	public final IPathFileLocator locator;
 	/** current URI -- may be <code>null</code> */
 	public final URI uri;
+	public String md5;
 	public final String fileName;
 	public final String name;
 	public final int fileoffs;
 	public final int size;
 
+
 	
-	public StoredMemoryEntryInfo(MemoryEntryInfo info, ISettingsHandler settings, IMemory memory,
-			IPathFileLocator locator, URI uri, String filePath, String name, int fileoffs, int size) {
+	private StoredMemoryEntryInfo(MemoryEntryInfo info, ISettingsHandler settings, IMemory memory,
+			IPathFileLocator locator, URI uri, String filePath, String md5, String name, int fileoffs, int size) {
 		this.info = info;
 		this.settings = settings;
 		this.memory = memory;
 		this.locator = locator;
 		this.uri = uri;
 		this.fileName = filePath;
+		this.md5 = md5;
 		this.name = name;
 		this.fileoffs = fileoffs;
 		this.size = size;
@@ -46,6 +49,7 @@ public class StoredMemoryEntryInfo {
 			MemoryEntryInfo info,
 			String name,
 			String filename,
+			String md5,
 			int fileoffs) throws IOException {
 		
 		int size = info.getSize();
@@ -88,7 +92,7 @@ public class StoredMemoryEntryInfo {
     	
     	
         return new StoredMemoryEntryInfo(info, settings, memory, locator, 
-        		uri, filename, name, fileoffs, filesize);
+        		uri, filename, md5, name, fileoffs, filesize);
 	}
     
 

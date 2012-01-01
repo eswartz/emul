@@ -24,6 +24,8 @@ public class MemoryEntryInfoBuilder {
 	private int offset2;
 	private boolean isStored;
 	private Class<? extends BankedMemoryEntry> klass;
+	private String fileMD5;
+	private String file2MD5;
 
 
 	public static MemoryEntryInfoBuilder byteMemoryEntry() {
@@ -39,20 +41,28 @@ public class MemoryEntryInfoBuilder {
 	}
 
 
-	/**
-	 * @param string
-	 * @return
-	 */
 	public MemoryEntryInfoBuilder withFilename(String string) {
 		this.filename = string;
 		return this;
 	}
 
+	public MemoryEntryInfoBuilder withFilename2(String string) {
+		this.filename2 = string;
+		return this;
+	}
+	
+	
+	public MemoryEntryInfoBuilder withFileMD5(String string) {
+		this.fileMD5 = string;
+		return this;
+	}
+	
+	public MemoryEntryInfoBuilder withFile2MD5(String string) {
+		this.file2MD5 = string;
+		return this;
+	}
+	
 
-	/**
-	 * @param size
-	 * @return
-	 */
 	public MemoryEntryInfoBuilder withSize(int size) {
 		this.size = size;
 		return this;
@@ -89,8 +99,10 @@ public class MemoryEntryInfoBuilder {
 		props.put(MemoryEntryInfo.NAME, name);
 		props.put(MemoryEntryInfo.DOMAIN, domain);
 		props.put(MemoryEntryInfo.UNIT_SIZE, unitSize);
-		props.put(MemoryEntryInfo.FILENAME, filename);
-		props.put(MemoryEntryInfo.FILENAME2, filename2);
+		if (filename != null) props.put(MemoryEntryInfo.FILENAME, filename);
+		if (filename2 != null) props.put(MemoryEntryInfo.FILENAME2, filename2);
+		if (fileMD5 != null) props.put(MemoryEntryInfo.FILE_MD5, fileMD5);
+		if (file2MD5 != null) props.put(MemoryEntryInfo.FILE2_MD5, file2MD5);
 		props.put(MemoryEntryInfo.ADDRESS, addr);
 		props.put(MemoryEntryInfo.SIZE, size);
 		props.put(MemoryEntryInfo.OFFSET, offset);
@@ -100,18 +112,7 @@ public class MemoryEntryInfoBuilder {
 		
 		return info;
 	}
-	/**
-	 * @param string
-	 * @return
-	 */
-	public MemoryEntryInfoBuilder withFilename2(String string) {
-		this.filename2 = string;
-		return this;
-	}
-	/**
-	 * @param class1
-	 * @return
-	 */
+
 	public MemoryEntryInfoBuilder withBankClass(Class<? extends BankedMemoryEntry> klass) {
 		this.klass = klass;
 		return this;
@@ -121,14 +122,6 @@ public class MemoryEntryInfoBuilder {
 			String filename) {
 		return wordMemoryEntry()
 			.withAddress(0)
-			.withSize(0x2000)
-			.withFilename(filename);
-	}
-	
-	public static MemoryEntryInfoBuilder standardModuleRom(
-			String filename) {
-		return wordMemoryEntry()
-			.withAddress(0x6000)
 			.withSize(0x2000)
 			.withFilename(filename);
 	}

@@ -75,8 +75,17 @@ public class DiskMemoryEntry extends MemoryEntry {
         if (!bLoaded) {
             try {
         		// note: if stored, this finds the user's copy first or the original template
-        		URI uri = locator.findFile(filename);
-        		if (uri == null) {
+        		URI uri = null;
+        		
+        		if (storedInfo.md5 != null) {
+					uri = locator.findFileByMD5(storedInfo.md5);
+				}
+        		
+        		if (uri == null && filename != null) {
+        			uri = locator.findFile(filename);
+        		}
+        			
+        		if (uri == null && filename != null) {
         			if (info.isStored()) {
         				uri = locator.getWriteURI(filename);
         			}
@@ -228,6 +237,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 	public void saveState(ISettingSection section) {
 		super.saveState(section);
 		section.put("FileName", filename);
+		section.put("FileMD5", storedInfo.md5);
 		if (storedInfo == null)
 			return;
 		section.put("FileOffs", storedInfo.fileoffs);
@@ -243,6 +253,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 		super.loadFields(section);
 		info = (isWordAccess() ? MemoryEntryInfoBuilder.wordMemoryEntry() : MemoryEntryInfoBuilder.byteMemoryEntry())
 			.withFilename(section.get("FileName") != null ? section.get("FileName") : section.get("FilePath"))
+			.withFileMD5(section.get("FileMD5"))
 			.withOffset(section.getInt("FileOffs"))
 			.withSize(section.getInt("Size"))
 			.withAddress(getAddr())
@@ -251,7 +262,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 		
 		try {
 			storedInfo = memory.getMemoryEntryFactory().resolveMemoryEntry(info, 
-					info.getName(), info.getFilename(), info.getOffset());
+					info.getName(), info.getFilename(), info.getFileMD5(), info.getOffset());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -20,6 +20,10 @@ public class MemoryEntryInfo {
 	public final static String FILENAME = "fileName";
 	/** String */
 	public final static String FILENAME2 = "fileName2";
+	/** String, hex-encoded */
+	public final static String FILE_MD5 = "fileMd5";
+	/** String, hex-encoded */
+	public final static String FILE2_MD5 = "file2Md5";
 	/** String */
 	public final static String DOMAIN = "domain";
 	/** Integer */
@@ -109,6 +113,10 @@ public class MemoryEntryInfo {
 	public String getFilename() {
 		return getString(MemoryEntryInfo.FILENAME);
 	}
+	
+	public String getFileMD5() {
+		return getString(MemoryEntryInfo.FILE_MD5);
+	}
 
 
 	public IMemoryDomain getDomain(IMemory memory) {
@@ -132,6 +140,9 @@ public class MemoryEntryInfo {
 
 	public String getFilename2() {
 		return getString(MemoryEntryInfo.FILENAME2);
+	}
+	public String getFile2MD5() {
+		return getString(MemoryEntryInfo.FILE2_MD5);
 	}
 
 	public int getOffset() {

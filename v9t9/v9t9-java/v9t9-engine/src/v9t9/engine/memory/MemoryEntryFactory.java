@@ -108,9 +108,11 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 		Class<? extends BankedMemoryEntry> klass = (Class<? extends BankedMemoryEntry>) info.getBankedClass();
 		
 		IMemoryEntry bank0 = newFromFile(info, info.getName() + " (bank 0)", 
-				info.getFilename(), info.getOffset(), MemoryAreaFactory.createMemoryArea(memory, info));
+				info.getFilename(), info.getFileMD5(), info.getOffset(), 
+				MemoryAreaFactory.createMemoryArea(memory, info));
 		IMemoryEntry bank1 = newFromFile(info, info.getName() + " (bank 1)", 
-				info.getFilename2(), info.getOffset2(), MemoryAreaFactory.createMemoryArea(memory, info));
+				info.getFilename2(), info.getFile2MD5(), info.getOffset2(), 
+				MemoryAreaFactory.createMemoryArea(memory, info));
 		
 		IMemoryEntry[] entries = new IMemoryEntry[] { bank0, bank1 };
 		BankedMemoryEntry bankedMemoryEntry;
@@ -133,16 +135,16 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
      * @throws IOException if the memory cannot be read and is not stored
      */
     private DiskMemoryEntry newFromFile(MemoryEntryInfo info, MemoryArea area) throws IOException {
-    	return newFromFile(info, info.getName(), info.getFilename(), info.getOffset(), area);
+    	return newFromFile(info, info.getName(), info.getFilename(), info.getFileMD5(), info.getOffset(), area);
     }
     
-    /** Construct a DiskMemoryEntry based on the file length.
+    /** 
      * @return the entry
      * @throws IOException if the memory cannot be read and is not stored
      */
-    private DiskMemoryEntry newFromFile(MemoryEntryInfo info, String name, String filename, int offset, MemoryArea area) throws IOException {
+    private DiskMemoryEntry newFromFile(MemoryEntryInfo info, String name, String filename, String md5, int offset, MemoryArea area) throws IOException {
     	
-    	StoredMemoryEntryInfo storedInfo = resolveMemoryEntry(info, name, filename, offset);
+    	StoredMemoryEntryInfo storedInfo = resolveMemoryEntry(info, name, filename, md5, offset);
     	
     	DiskMemoryEntry entry = new DiskMemoryEntry(info, name, area, storedInfo);
     	
@@ -161,11 +163,11 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			MemoryEntryInfo info,
 			String name,
 			String filename,
-			int fileoffs) throws IOException {
+			String md5, int fileoffs) throws IOException {
 
 		return StoredMemoryEntryInfo.createStoredMemoryEntryInfo(
 				locator, settings, memory, 
-				info, name, filename, fileoffs);
+				info, name, filename, md5, fileoffs);
 	}
 
 
@@ -260,6 +262,8 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				
 				getStringAttribute(el, MemoryEntryInfo.FILENAME, info);
 				getStringAttribute(el, MemoryEntryInfo.FILENAME2, info);
+				getStringAttribute(el, MemoryEntryInfo.FILE_MD5, info);
+				getStringAttribute(el, MemoryEntryInfo.FILE2_MD5, info);
 				getStringAttribute(el, MemoryEntryInfo.DOMAIN, info);
 				getIntAttribute(el, MemoryEntryInfo.ADDRESS, info);
 				getIntAttribute(el, MemoryEntryInfo.SIZE, info);
@@ -323,10 +327,15 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				entry.setAttribute(MemoryEntryInfo.SIZE, 
 						"0x" + HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.SIZE)).intValue()));
 			}
-			entry.setAttribute(MemoryEntryInfo.FILENAME, properties.get(MemoryEntryInfo.FILENAME).toString());
+			if (properties.containsKey(MemoryEntryInfo.FILENAME))
+				entry.setAttribute(MemoryEntryInfo.FILENAME, properties.get(MemoryEntryInfo.FILENAME).toString());
+			if (properties.containsKey(MemoryEntryInfo.FILE_MD5))
+				entry.setAttribute(MemoryEntryInfo.FILE_MD5, properties.get(MemoryEntryInfo.FILE_MD5).toString());
 			
 			if (properties.containsKey(MemoryEntryInfo.FILENAME2))
 				entry.setAttribute(MemoryEntryInfo.FILENAME2, properties.get(MemoryEntryInfo.FILENAME2).toString());
+			if (properties.containsKey(MemoryEntryInfo.FILE2_MD5))
+				entry.setAttribute(MemoryEntryInfo.FILE2_MD5, properties.get(MemoryEntryInfo.FILE2_MD5).toString());
 			
 			if (properties.containsKey(MemoryEntryInfo.OFFSET) && ((Number) properties.get(MemoryEntryInfo.OFFSET)).intValue() != 0)
 				entry.setAttribute(MemoryEntryInfo.OFFSET, 

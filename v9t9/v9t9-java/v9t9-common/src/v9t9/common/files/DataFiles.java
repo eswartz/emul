@@ -14,10 +14,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
 import ejs.base.utils.CompatUtils;
+import ejs.base.utils.HexUtils;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
@@ -172,5 +175,24 @@ public class DataFiles {
     	}
     }
 
-
+    /**
+     * Get the MD5 hash of the given content as a hex-encoded string.
+     * @return String
+     * @throws NoSuchAlgorithmException 
+     */
+    public static String getMD5Hash(byte[] content) throws IOException {
+    	MessageDigest digest;
+		try {
+			digest = MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e) {
+			throw new IOException(e);
+		}
+    	byte[] md5 = digest.digest(content);
+    	StringBuilder sb = new StringBuilder();
+    	for (byte b : md5) {
+    		sb.append(HexUtils.toHex2(b));
+    	}
+    	return sb.toString();
+    }
+    
 }

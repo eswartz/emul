@@ -53,6 +53,13 @@ public interface IPathFileLocator {
 	URI findFile(String file);
 
 	/**
+	 * Find a file along the search paths with the given MD5 hash.
+	 * @param md5
+	 * @return URI or <code>null</code> if no match is found
+	 */
+	URI findFileByMD5(String md5);
+
+	/**
 	 * Get the listing of entries in this URI 
 	 * @param uri
 	 * @return list of filenames
@@ -74,6 +81,14 @@ public interface IPathFileLocator {
 	 * @throws IOException
 	 */
 	int getContentLength(URI uri) throws IOException;
+
+	/**
+	 * Get the MD5 of the content, as a hex-encoded string
+	 * @param uri
+	 * @return String
+	 */
+	String getContentMD5(URI uri) throws IOException;
+	
 
 	/**
 	 * Attempt to open a file existing at the given URI 
@@ -111,7 +126,16 @@ public interface IPathFileLocator {
 	 */
 	IProperty[] getSearchPathProperties();
 	
-	URI resolveInsideURI(URI uri, String string); 
+	/**
+	 * Resolve string against the scheme-specific part of the URI,
+	 * for example, to descend into a jar file URI.
+	 * @param uri
+	 * @param string
+	 * @return new URI
+	 * @throw {@link IllegalArgumentException} if string is invalid
+	 */
+	URI resolveInsideURI(URI uri, String string);
+
 
 
 }
