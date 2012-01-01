@@ -123,18 +123,20 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 		return entry;
 	}
 
-	protected IMemoryEntry loadConsoleRom(IEventNotifier eventNotifier, String filename) {
+	protected IMemoryEntry loadConsoleRom(IEventNotifier eventNotifier, String filename, String md5) {
 		MemoryEntryInfo info = MemoryEntryInfoBuilder
 			.standardConsoleRom(filename)
+			.withFileMD5(md5)
 			.create("CPU ROM");
 
 		return loadMemory(eventNotifier, info);
 	}
 	
 
-	protected IMemoryEntry loadConsoleGrom(IEventNotifier eventNotifier, String filename) {
+	protected IMemoryEntry loadConsoleGrom(IEventNotifier eventNotifier, String filename, String md5) {
 		MemoryEntryInfo info = MemoryEntryInfoBuilder
 			.standardConsoleGrom(filename)
+			.withFileMD5(md5)
 			.create("CPU GROM");
 
 		return loadMemory(eventNotifier, info);

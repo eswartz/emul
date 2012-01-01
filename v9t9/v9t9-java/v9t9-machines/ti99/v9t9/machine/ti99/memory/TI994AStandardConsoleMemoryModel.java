@@ -50,8 +50,13 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
      */
 	@Override
     public void loadMemory(IEventNotifier eventNotifier) {
-    	loadConsoleRom(eventNotifier, Settings.get(machine, settingRomFileName).getString());
-    	loadConsoleGrom(eventNotifier, Settings.get(machine, settingGromFileName).getString());    	
+    	loadConsoleRom(eventNotifier, 
+    			Settings.get(machine, settingRomFileName).getString(), 
+    			"6CC4BC2B6B3B0C33698E6A03759A4CAB"
+    			);
+    	loadConsoleGrom(eventNotifier, 
+    			Settings.get(machine, settingGromFileName).getString(), 
+    			"ED8FF714542BA850BDEC686840A79217");    	
     }
     
     /* (non-Javadoc)

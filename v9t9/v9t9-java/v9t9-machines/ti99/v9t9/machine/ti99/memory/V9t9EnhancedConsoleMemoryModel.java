@@ -51,7 +51,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 		DataFiles.addSearchPath(settings, dataURL.getPath());
 		
 		loadEnhancedBankedConsoleRom(eventNotifier, "nforthA.rom", "nforthB.rom");
-		loadConsoleGrom(eventNotifier, "nforth.grm");
+		loadConsoleGrom(eventNotifier, "nforth.grm", null);
 		
 		MemoryEntryInfo gromInfo = MemoryEntryInfoBuilder.byteMemoryEntry()
 			.withDomain(IMemoryDomain.NAME_GRAPHICS)
