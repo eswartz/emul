@@ -1,543 +1,1422 @@
-<!-- This is a list of all known modules ported to V9t9 -->
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <modules>
-	<module name="TI Logo II">
-		<image>ti_logo_ii.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="logoc.bin" />
-			<gromModuleEntry fileName="logog.bin" />
-		</memoryEntries>
-	</module>
-	<module name="TI Extended BASIC">
-		<memoryEntries>
-			<bankedModuleEntry fileName="tiextc.bin" fileName2="tiextd.bin" />
-			<gromModuleEntry fileName="tiextg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Jungle Hunt">
-		<image>jungle_hunt.png</image>
-		<memoryEntries>
-			<bankedModuleEntry fileName="junglec.bin"
-				fileName2="jungled.bin" />
-		</memoryEntries>
-	</module>
-	<module name="A-Maze-Ing">
-		<image>a-maze-ing.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="amazeing.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Hunt the Wumpus">
-		<image>hunt_the_wumpus.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="wumpusg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="The Attack">
-		<image>the_attack.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="attackg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Household Budget Management">
-		<image>household_budget_management.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="budgetg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Car Wars">
-		<image>car_wars.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="carwarsg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Editor/Assembler">
-		<image>editor_assembler.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="eag.bin" />
-		</memoryEntries>
-	</module>
-	<module name="TI Invaders">
-		<image>ti_invaders.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="invaderg.bin" />
-			<romModuleEntry fileName="invaderc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Munchman">
-		<image>munchman.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="mnchmang.bin" />
-			<romModuleEntry fileName="mnchmanc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Music Maker">
-		<image>music_maker.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="musicmg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Parsec">
-		<image>parsec.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="parsecg.bin" />
-			<romModuleEntry fileName="parsecc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Indoor Soccer">
-		<image>indoor_soccer.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="soccerg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Personal Record Keeping">
-		<image>personal_record_keeping.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="prkg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="TI Writer">
-		<image>ti_writer.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="tiwriteg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Tombstone City">
-		<image>tombstone_city.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="tombg.bin" />
-			<romModuleEntry fileName="tombc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Touch Typing Tutor">
-		<image>touch_typing_tutor.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="ttyping.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Tunnels of Doom">
-		<image>tunnels_of_doom.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="tunnelsg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Yahtzee">
-		<image>yahtzee.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="yahtzeeg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Mini Memory">
-		<image>mini_memory.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="minig.bin" />
-			<romModuleEntry fileName="minic.bin" />
-			<memoryEntry address="0x7000" domain="CPU" fileName="minir.bin"
-				size="0x1000" stored="true" />
-		</memoryEntries>
-	</module>
-	<module name="Demonstration">
-		<image>demonstration.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="demog.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Jawbreaker">
-		<image>jawbreaker.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="jwbreakg.bin" />
-			<romModuleEntry fileName="jwbreakc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Scott Adam&apos;s Adventure">
-		<image>scott_adam's_adventure.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="advg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Multiplan">
-		<image>multiplan.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="multig.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Blackjack &amp; Poker">
-		<image>blackjack_and_poker.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="blkjkg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Moon Patrol">
-		<image>moon_patrol.png</image>
-		<memoryEntries>
-			<bankedModuleEntry fileName="moonc.bin" fileName2="moond.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Popeye">
-		<image>popeye.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="popeyeg.bin" />
-			<romModuleEntry fileName="popeyec.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Video Chess">
-		<image>video_chess.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="vchessg.bin" />
-			<romModuleEntry fileName="vchessc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="TI Logo">
-		<image>ti_logo.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="tilogo1g.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Diagnostic Tests">
-		<image>diagnostic_tests.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="diagsg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Speech Editor">
-		<image>speech_editor.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="speditg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Home Finance">
-		<image>home_finance.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="hmfinag.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Demon Attack">
-		<image>demon_attack.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="demattg.bin" />
-			<romModuleEntry fileName="demattc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Meteor Belt">
-		<image>meteor_belt.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="metbelg.bin" />
-			<romModuleEntry fileName="metbelc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Tax Records">
-		<image>tax_records.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="taxrecg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Connect Four">
-		<image>connect_four.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="conn4g.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Securities Analysis">
-		<image>securities_analysis.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="secanag.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Number Magic">
-		<image>number_magic.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="nummagg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Mind Challengers">
-		<image>mind_challengers.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="mindchag.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Reading Flight">
-		<image>reading_flight.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="reafligg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Video-Graphs">
-		<image>video-graphs.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="vidgrafg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Statistics">
-		<image>statistics.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="statg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Early Learning">
-		<image>early_learning_fun.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="earlrngg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Early Reading">
-		<image>early_reading.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="earreadg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Alpiner">
-		<image>alpiner.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="alpinerg.bin" />
-			<romModuleEntry fileName="alpinerc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Picnic Paranoia">
-		<image>picnic_paranoia.png</image>
-		<memoryEntries>
-			<bankedModuleEntry fileName="picnicc.bin"
-				fileName2="picnicd.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Terminal Emulator II">
-		<image>terminal_emulator_ii.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="teiig.bin" />
-			<romModuleEntry fileName="teiic.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Treasure Island">
-		<image>treasure_island.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="trsureg.bin" />
-			<romModuleEntry fileName="trsurec.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Addition and Subtraction #1">
-		<image>addition_and_subtraction_1.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="addsub1g.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Addition and Subtraction #2">
-		<image>addition_and_subtraction_2.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="addsub2g.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Addition and Subtraction #3">
-		<image>addition_and_subtraction_3.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="addsub3g.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Disk Manager">
-		<image>disk_manager.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="diskmang.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Burger Time">
-		<image>burger_time.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="burgerc.bin" />
-			<gromModuleEntry fileName="burgerg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Donkey Kong">
-		<image>donkey_kong.png</image>
-		<memoryEntries>
-			<bankedModuleEntry fileName="kongc.bin" fileName2="kongd.bin" />
-			<gromModuleEntry fileName="kongg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Anteater">
-		<image>anteater.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="anteatec.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Buck Rogers">
-		<image>buck_rogers.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="buckrogc.bin" />
-			<gromModuleEntry fileName="buckrogg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Centipede">
-		<image>centipede.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="centipec.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Computer War">
-		<image>computer_war.png</image>
-		<memoryEntries>
-			<bankedModuleEntry fileName="compwarc.bin"
-				fileName2="compward.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Congo Bongo">
-		<image>congo_bongo.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="congoboc.bin" />
-			<gromModuleEntry fileName="congobog.bin" />
-		</memoryEntries>
-	</module>
-	<module name="DBMS">
-		<image>dbms.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="dbmsc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Disk Fixer V2.0">
-		<image>disk_fixer.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="diskfixc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Dig Dug">
-		<image>dig_dug.png</image>
-		<memoryEntries>
-			<bankedModuleEntry fileName="digdugc.bin"
-				fileName2="digdugd.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Driving Demon">
-		<image>driving_demon.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="drivedec.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Frogger">
-		<image>frogger.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="froggerc.bin" />
-			<gromModuleEntry fileName="froggerg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Video Games 1">
-		<image>video_games_1.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="games1g.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Hustle">
-		<image>hustle.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="hustleg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Hopper">
-		<image>hopper.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="hopperc.bin" />
-			<gromModuleEntry fileName="hopperg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Moon Sweeper">
-		<image>moon_sweeper.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="moonswec.bin" />
-			<gromModuleEntry fileName="moonsweg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Munchmobile">
-		<image>munchmobile.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="munchmoc.bin" />
-			<gromModuleEntry fileName="munchmog.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Othello">
-		<image>othello.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="othelloc.bin" />
-			<gromModuleEntry fileName="othellog.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Princess &amp; Frog">
-		<image>princess_and_frog.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="princsfc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Q*Bert">
-		<image>q_bert.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="qbertc.bin" />
-			<gromModuleEntry fileName="qbertg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Report Generator">
-		<image>report_generator.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="reptgeng.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Rotor Raid">
-		<image>rotor_raid.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="rotorrac.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Securities Analysis">
-		<image>securities_analysis.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="securitg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Star Trek">
-		<image>star_trek.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="startrec.bin" />
-			<gromModuleEntry fileName="startreg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Weight Control &amp; Nutrition">
-		<image>weight_control_and_nutrition.png</image>
-		<memoryEntries>
-			<gromModuleEntry fileName="weightg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Console Writer">
-		<image>console_writer.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="cnslwrtc.bin" />
-		</memoryEntries>
-	</module>
-	<module name="M*A*S*H">
-		<image>mash.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="mashc.bin" />
-			<gromModuleEntry fileName="mashg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Imagic Microsurgeon">
-		<image>imagic_microsurgeon.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="microsuc.bin" />
-			<gromModuleEntry fileName="microsug.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Return to Pirate&apos;s Isle">
-		<image>return_to_pirate's_isle.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="rtpiratc.bin" />
-			<gromModuleEntry fileName="rtpiratg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Story Machine">
-		<image>story_machine.png</image>
-		<memoryEntries>
-			<romModuleEntry fileName="strymacc.bin" />
-			<gromModuleEntry fileName="strymacg.bin" />
-		</memoryEntries>
-	</module>
-	<module name="Pole Position">
-		<image>pole_position.png</image>
-		<memoryEntries>
-			<bankedModuleEntry fileName="poleposc.bin" fileName2="poleposd.bin" />
-			<gromModuleEntry fileName="poleposg.bin" />
-		</memoryEntries>
-	</module>
+  <module name="TI Logo II">
+    <image>ti_logo_ii.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="logoc.bin"/>
+      <gromModuleEntry fileName="logog.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="TI Extended BASIC">
+    <memoryEntries>
+      <bankedModuleEntry fileName="tiextc.bin" fileName2="tiextd.bin"/>
+      <gromModuleEntry fileName="tiextg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Jungle Hunt">
+    <image>jungle_hunt.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="junglec.bin" fileName2="jungled.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="A-Maze-Ing">
+    <image>a-maze-ing.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="amazeing.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Hunt the Wumpus">
+    <image>hunt_the_wumpus.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="wumpusg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="The Attack">
+    <image>the_attack.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="attackg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Household Budget Management">
+    <image>household_budget_management.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="budgetg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Car Wars">
+    <image>car_wars.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="carwarsg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Editor/Assembler">
+    <image>editor_assembler.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="eag.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="TI Invaders">
+    <image>ti_invaders.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="invaderg.bin"/>
+      <romModuleEntry fileName="invaderc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Munchman">
+    <image>munchman.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="mnchmang.bin"/>
+      <romModuleEntry fileName="mnchmanc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Music Maker">
+    <image>music_maker.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="musicmg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Parsec">
+    <image>parsec.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="parsecg.bin"/>
+      <romModuleEntry fileName="parsecc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Indoor Soccer">
+    <image>indoor_soccer.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="soccerg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Personal Record Keeping">
+    <image>personal_record_keeping.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="prkg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="TI Writer">
+    <image>ti_writer.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="tiwriteg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Tombstone City">
+    <image>tombstone_city.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="tombg.bin"/>
+      <romModuleEntry fileName="tombc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Touch Typing Tutor">
+    <image>touch_typing_tutor.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="ttyping.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Tunnels of Doom">
+    <image>tunnels_of_doom.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="tunnelsg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Yahtzee">
+    <image>yahtzee.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="yahtzeeg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Mini Memory">
+    <image>mini_memory.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="minig.bin"/>
+      <romModuleEntry fileName="minic.bin"/>
+      <memoryEntry address="0x7000" domain="CPU" fileName="minir.bin" size="0x1000" stored="true"/>
+    </memoryEntries>
+  </module>
+  <module name="Demonstration">
+    <image>demonstration.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="demog.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Jawbreaker">
+    <image>jawbreaker.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="jwbreakg.bin"/>
+      <romModuleEntry fileName="jwbreakc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Scott Adam's Adventure">
+    <image>scott_adam's_adventure.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="advg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Multiplan">
+    <image>multiplan.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="multig.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Blackjack &amp; Poker">
+    <image>blackjack_and_poker.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="blkjkg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Moon Patrol">
+    <image>moon_patrol.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="moonc.bin" fileName2="moond.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Popeye">
+    <image>popeye.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="popeyeg.bin"/>
+      <romModuleEntry fileName="popeyec.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Video Chess">
+    <image>video_chess.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="vchessg.bin"/>
+      <romModuleEntry fileName="vchessc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="TI Logo">
+    <image>ti_logo.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="tilogo1g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Speech Editor">
+    <image>speech_editor.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="speditg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Demon Attack">
+    <image>demon_attack.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="demattg.bin"/>
+      <romModuleEntry fileName="demattc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Tax Records">
+    <image>tax_records.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="taxrecg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Connect Four">
+    <image>connect_four.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="conn4g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Number Magic">
+    <image>number_magic.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="nummagg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Mind Challengers">
+    <image>mind_challengers.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="mindchag.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Reading Flight">
+    <image>reading_flight.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="reafligg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Video-Graphs">
+    <image>video-graphs.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="vidgrafg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Statistics">
+    <image>statistics.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="statg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Early Reading">
+    <image>early_reading.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="earreadg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Alpiner">
+    <image>alpiner.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="alpinerg.bin"/>
+      <romModuleEntry fileName="alpinerc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Picnic Paranoia">
+    <image>picnic_paranoia.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="picnicc.bin" fileName2="picnicd.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Terminal Emulator II">
+    <image>terminal_emulator_ii.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="teiig.bin"/>
+      <romModuleEntry fileName="teiic.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Treasure Island">
+    <image>treasure_island.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="trsureg.bin"/>
+      <romModuleEntry fileName="trsurec.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Addition and Subtraction #1">
+    <image>addition_and_subtraction_1.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="addsub1g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Addition and Subtraction #2">
+    <image>addition_and_subtraction_2.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="addsub2g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Addition and Subtraction #3">
+    <image>addition_and_subtraction_3.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="addsub3g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Disk Manager">
+    <image>disk_manager.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="diskmang.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Burger Time">
+    <image>burger_time.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="burgerc.bin"/>
+      <gromModuleEntry fileName="burgerg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Donkey Kong">
+    <image>donkey_kong.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="kongc.bin" fileName2="kongd.bin"/>
+      <gromModuleEntry fileName="kongg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Anteater">
+    <image>anteater.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="anteatec.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Buck Rogers">
+    <image>buck_rogers.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="buckrogc.bin"/>
+      <gromModuleEntry fileName="buckrogg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Centipede">
+    <image>centipede.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="centipec.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Computer War">
+    <image>computer_war.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="compwarc.bin" fileName2="compward.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Congo Bongo">
+    <image>congo_bongo.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="congoboc.bin"/>
+      <gromModuleEntry fileName="congobog.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="DBMS">
+    <image>dbms.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="dbmsc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Disk Fixer V2.0">
+    <image>disk_fixer.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="diskfixc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Dig Dug">
+    <image>dig_dug.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="digdugc.bin" fileName2="digdugd.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Driving Demon">
+    <image>driving_demon.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="drivedec.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Frogger">
+    <image>frogger.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="froggerc.bin"/>
+      <gromModuleEntry fileName="froggerg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Video Games 1">
+    <image>video_games_1.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="games1g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Hustle">
+    <image>hustle.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="hustleg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Hopper">
+    <image>hopper.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="hopperc.bin"/>
+      <gromModuleEntry fileName="hopperg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Moon Sweeper">
+    <image>moon_sweeper.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="moonswec.bin"/>
+      <gromModuleEntry fileName="moonsweg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Munchmobile">
+    <image>munchmobile.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="munchmoc.bin"/>
+      <gromModuleEntry fileName="munchmog.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Princess &amp; Frog">
+    <image>princess_and_frog.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="princsfc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Q*Bert">
+    <image>q_bert.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="qbertc.bin"/>
+      <gromModuleEntry fileName="qbertg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Report Generator">
+    <image>report_generator.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="reptgeng.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Rotor Raiders">
+    <image>rotor_raid.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="rotorrac.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Securities Analysis">
+    <image>securities_analysis.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="securitg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Star Trek">
+    <image>star_trek.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="startrec.bin"/>
+      <gromModuleEntry fileName="startreg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Weight Control &amp; Nutrition">
+    <image>weight_control_and_nutrition.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="weightg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Console Writer">
+    <image>console_writer.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="cnslwrtc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="M*A*S*H">
+    <image>mash.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="mashc.bin"/>
+      <gromModuleEntry fileName="mashg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Imagic Microsurgeon">
+    <image>imagic_microsurgeon.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="microsuc.bin"/>
+      <gromModuleEntry fileName="microsug.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Return to Pirate's Isle">
+    <image>return_to_pirate's_isle.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="rtpiratc.bin"/>
+      <gromModuleEntry fileName="rtpiratg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Story Machine">
+    <image>story_machine.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="strymacc.bin"/>
+      <gromModuleEntry fileName="strymacg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Pole Position">
+    <image>pole_position.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="poleposc.bin" fileName2="poleposd.bin"/>
+      <gromModuleEntry fileName="poleposg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="4A Flyer">
+    <image>4a_flyer.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="4aflyerc.bin" fileName2="4aflyerd.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Activity Accountant">
+    <image>activity_accountant.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="actvactg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Alien Addition">
+    <image>alien_addition.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="alienadg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Alligator Mix">
+    <image>alligator_mix.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="alligac.bin" fileName2="alligad.bin"/>
+      <gromModuleEntry fileName="alligag.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Ambulance">
+    <image>ambulance.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="ambulncc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Ant Colony 0.5">
+    <image>ant_colony_0.5.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="antc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Barrage">
+    <image>barrage.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="barragec.bin" fileName2="barraged.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Beginning Grammar">
+    <image>beginning_grammar.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="beggramg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Berlin">
+    <image>berlin.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="berlinc.bin" fileName2="berlind.bin"/>
+      <gromModuleEntry fileName="berling.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Beyond Parsec">
+    <image>beyond_parsec.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="beyparsc.bin" fileName2="beyparsd.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Black Hole">
+    <image>black_hole.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="blakholc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Blasto">
+    <image>blasto.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="blastog.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Boxer">
+    <image>boxer.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="boxerc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Break Thru !!">
+    <image>break_thru.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="breakc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Burger Builder">
+    <image>burger_builder.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="burgbldc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Card Sharp">
+    <image>card_sharp.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="cardsg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Video Vegas">
+    <image>video_vegas.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="casinoc.bin" fileName2="casinod.bin"/>
+      <gromModuleEntry fileName="casinog.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Chicken Coop">
+    <image>chicken_coop.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="chicoopc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Chisholm Trail">
+    <image>chisholm_trail.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="chishlmc.bin"/>
+      <gromModuleEntry fileName="chishlmg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Class Data Recorder">
+    <image>class_data_recorder.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="clasdatg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Math Games II">
+    <image>math_games_ii.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="cmath2g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Math Games VI">
+    <image>math_games_vi.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="cmath6g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Course Manager">
+    <image>course_manager.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="crsmang.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Decimal Deli 2">
+    <image>decimal_deli_2.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="decdel2g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Defender">
+    <image>defender.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="defendc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Art of Division 1">
+    <image>art_of_division_1.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="divis1g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Division Sequence">
+    <image>division_sequence.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="divseqg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Dragon Mix">
+    <image>dragon_mix.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="dragonmc.bin"/>
+      <gromModuleEntry fileName="dragonmg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Von Drake's Molecular Mission">
+    <image>von_drake's_molecular_mission.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="drakec.bin"/>
+      <gromModuleEntry fileName="drakeg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="D-Station I">
+    <image>d-station_i.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="dstatn1c.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="D-Station II">
+    <image>d-station_ii.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="dstatn2c.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Early Logo Learning Fun">
+    <image>logo_learning_fun.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="earlyloc.bin"/>
+      <gromModuleEntry fileName="earlylog.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="LETTER WORLD  1.06">
+    <memoryEntries>
+      <romModuleEntry fileName="edupackc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Early Learning Fun">
+    <image>early_learning_fun.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="erlnfung.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Escape">
+    <image>escape.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="escapec.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Espial™">
+    <image>espial.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="espialg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="E.T.">
+    <image>e.t.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="etc.bin" fileName2="etd.bin"/>
+      <gromModuleEntry fileName="etg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Super Disk Manager">
+    <memoryEntries>
+      <bankedModuleEntry fileName="etiwdmc.bin" fileName2="etiwdmd.bin"/>
+      <gromModuleEntry fileName="etiwdmg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="E.T. At Sea">
+    <image>e.t._at_sea.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="etseac.bin"/>
+      <gromModuleEntry fileName="etseag.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Face Maker">
+    <image>face_maker.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="facemkrc.bin"/>
+      <gromModuleEntry fileName="facemkrg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Fantastic Fractions">
+    <image>fantastic_fractions.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="fanfracg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Fantasy">
+    <image>fantasy.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="fantasyc.bin"/>
+      <gromModuleEntry fileName="fantasyg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Fathom">
+    <image>fathom.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="fathomc.bin" fileName2="fathomd.bin"/>
+      <gromModuleEntry fileName="fathomg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Football!">
+    <image>football.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="footbalg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Frog Jump">
+    <image>frog_jump.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="frogjmpg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="FLIPPER MIT HIGHSCORE ">
+    <memoryEntries>
+      <gromModuleEntry fileName="gamesg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Germ Patrol">
+    <image>germ_patrol.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="germptlc.bin"/>
+      <gromModuleEntry fileName="germptlg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Hangman">
+    <image>hangman.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="hangmanc.bin"/>
+      <gromModuleEntry fileName="hangmang.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Home Financial Decisions">
+    <image>home_finance.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="homfdecg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Homework Helper+">
+    <memoryEntries>
+      <romModuleEntry fileName="homhelpc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Jumpy">
+    <image>jumpy.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="jumpyc.bin" fileName2="jumpyd.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Junkman Junior">
+    <image>junkman_junior.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="junkmanc.bin" fileName2="junkmand.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Lasso">
+    <image>lasso.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="lassog.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="LINK V0.99">
+    <memoryEntries>
+      <romModuleEntry fileName="linkc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Lobster Bay">
+    <image>lobster_bay.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="lobsterg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Mancala">
+    <image>mancala.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="mancalac.bin"/>
+      <gromModuleEntry fileName="mancalag.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="MULTIPLAN">
+    <memoryEntries>
+      <gromModuleEntry fileName="micmultg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Midnite Mason">
+    <image>midnite_mason.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="midmasoc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Moon Mine">
+    <image>moon_mine.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="minec.bin"/>
+      <gromModuleEntry fileName="mineg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Miner 2049er">
+    <image>miner_2049er.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="minerg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="MINIWRITER">
+    <memoryEntries>
+      <romModuleEntry fileName="miniwric.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Minus Mission">
+    <image>minus_mission.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="minusmsg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Mighty Multiplication 2">
+    <image>mighty_multiplication_2.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="mitmultg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Mousk-Attack">
+    <image>mousk-attack.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="mosatakc.bin"/>
+      <gromModuleEntry fileName="mosatakg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Ms. Pac-Man">
+    <image>ms._pac-man.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="mspacc.bin" fileName2="mspacd.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Tennis">
+    <image>tennis.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="mtennisc.bin" fileName2="mtennisd.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Magic of Multiplication 1">
+    <image>magic_of_multiplication_1.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="multp-1g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Munchman II">
+    <image>munchman_ii.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="munch2c.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="NUMBER BOWLING">
+    <memoryEntries>
+      <gromModuleEntry fileName="numbowlg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Pac-Man">
+    <image>pacman.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="pacmanc.bin" fileName2="pacmand.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="PAYROLL ASSISTANT     ">
+    <memoryEntries>
+      <gromModuleEntry fileName="payasstg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Diagnostic Tests">
+    <image>diagnostic_tests.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3000g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Disk Manager (1.0)">
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3019g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Personal Real Estate">
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3022g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="ZeroZap">
+    <image>zerozap.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3036g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Reading Roundup">
+    <image>reading_roundup.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3047g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Reading Rally">
+    <image>reading_rally.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3048g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Numeration 2">
+    <image>numeration_2.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3051g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Scholastic Spelling 3">
+    <image>scholastic_spelling.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="phm3059c.bin"/>
+      <gromModuleEntry fileName="phm3059g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Scholastic Spelling 4">
+    <image>scholastic_spelling.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="phm3060c.bin"/>
+      <gromModuleEntry fileName="phm3060g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Scholastic Spelling 5">
+    <image>scholastic_spelling.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="phm3061c.bin" fileName2="phm3061d.bin"/>
+      <gromModuleEntry fileName="phm3061g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Scholastic Spelling 6">
+    <image>scholastic_spelling.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="phm3062c.bin" fileName2="phm3062d.bin"/>
+      <gromModuleEntry fileName="phm3062g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="VAT Accounting">
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3066g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Othello">
+    <image>othello.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="phm3067c.bin"/>
+      <gromModuleEntry fileName="phm3067g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Milliken Addition Sequence">
+    <image>milliken_addition_sequence.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3090g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Milliken Subtraction Sequence">
+    <image>milliken_subtraction_sequence.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3091g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Milliken Multiplication Sequence">
+    <image>milliken_multiplication_sequence.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3092g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Milliken Decimals Sequence">
+    <image>milliken_decimals_sequence.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3096g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Milliken Percents Sequence">
+    <image>milliken_percents_sequence.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3097g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Milliken Number Readiness Sequence">
+    <image>milliken_number_readiness_sequence.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3098g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Milliken Laws of Arithmetic Sequence">
+    <image>milliken_laws_of_arithmetic_sequence.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3099g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Milliken Equations Sequence">
+    <image>milliken_equations_sequence.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3100g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Milliken Measurement Formulas Sequence">
+    <image>milliken_measurement_formulas_sequence.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="phm3101c.bin" fileName2="phm3101d.bin"/>
+      <gromModuleEntry fileName="phm3101g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Meteor Multiplication">
+    <image>meteor_multiplication.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3119g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Verb Viper">
+    <image>verb_viper.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3120g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="phm3126">
+    <memoryEntries>
+      <romModuleEntry fileName="phm3126c.bin"/>
+      <gromModuleEntry fileName="phm3126g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Peter Pan's Space Odyssey">
+    <image>peter_pan's_space_odyssey.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="phm3132c.bin"/>
+      <gromModuleEntry fileName="phm3132g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Pinocchio's Great Escape">
+    <image>pinocchio's_great_escape.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="phm3135c.bin"/>
+      <gromModuleEntry fileName="phm3135g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Sneggit">
+    <image>sneggit.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="phm3145c.bin"/>
+      <gromModuleEntry fileName="phm3145g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Starship Pegasus">
+    <image>starship_pegasus.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="phm3147c.bin"/>
+      <gromModuleEntry fileName="phm3147g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="phm3148">
+    <memoryEntries>
+      <romModuleEntry fileName="phm3148c.bin"/>
+      <gromModuleEntry fileName="phm3148g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="phm3149">
+    <memoryEntries>
+      <romModuleEntry fileName="phm3149c.bin"/>
+      <gromModuleEntry fileName="phm3149g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="phm3155">
+    <memoryEntries>
+      <romModuleEntry fileName="phm3155c.bin"/>
+      <gromModuleEntry fileName="phm3155g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Word Invasion">
+    <image>word_invasion.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="phm3169g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Plant Genetics">
+    <image>plant_genetics.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="phm3173c.bin"/>
+      <gromModuleEntry fileName="phm3173g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Slymoids">
+    <image>slymoids.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="phm3197c.bin"/>
+      <gromModuleEntry fileName="phm3197g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="WingWar">
+    <image>wingwar.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="phm3223c.bin"/>
+      <gromModuleEntry fileName="phm3223g.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Picture Parts">
+    <image>picture_parts.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="picpartg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Micro Pinball II">
+    <image>micro_pinball_ii.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="pinballc.bin" fileName2="pinballd.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="PAINT 'N PRINT GP-700">
+    <memoryEntries>
+      <romModuleEntry fileName="pntprntc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Protector II">
+    <image>protector_ii.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="protectc.bin" fileName2="protectd.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="PRO TYPER">
+    <memoryEntries>
+      <romModuleEntry fileName="protypec.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Pyramid Puzzler">
+    <image>pyramid_puzzler.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="pyramidg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Rabbit Trail">
+    <image>rabbit_trail.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="rabbittc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Reading Cheers">
+    <image>reading_cheers.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="rdcheerg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Reading Power">
+    <image>reading_power.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="rdpowerg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Reading Trail">
+    <image>reading_trail.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="rdtrailg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Reading Wonders">
+    <image>reading_wonders.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="rdwondrg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Reading Adventures">
+    <image>reading_adventures.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="readadvg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Reading Fun">
+    <image>reading_fun.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="readfung.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Reading On">
+    <image>reading_on.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="readong.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="RIVER RESCUE">
+    <memoryEntries>
+      <gromModuleEntry fileName="riverrescueg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="ROMOX DEMO ">
+    <memoryEntries>
+      <romModuleEntry fileName="romoxc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="RXB version 1005 ">
+    <memoryEntries>
+      <bankedModuleEntry fileName="rxbc.bin" fileName2="rxbd.bin"/>
+      <gromModuleEntry fileName="rxbg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Salary Planner">
+    <image>salary_planner.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="salplang.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="School Mailer">
+    <image>school_mailer.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="schmailg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Schnoz-Ola">
+    <image>schnoz-ola.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="schnozc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Sewermania">
+    <image>sewermania.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="sewermac.bin"/>
+      <gromModuleEntry fileName="sewermag.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="STAR GAZER I  ">
+    <memoryEntries>
+      <romModuleEntry fileName="sgaze1c.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="STAR GAZER II ">
+    <memoryEntries>
+      <romModuleEntry fileName="sgaze2c.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="STAR GAZER III">
+    <memoryEntries>
+      <romModuleEntry fileName="sgaze3c.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Shamus">
+    <image>shamus.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="shamusc.bin" fileName2="shamusd.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Simon Says!">
+    <image>simon_says!.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="simong.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="SORGAN II">
+    <memoryEntries>
+      <bankedModuleEntry fileName="sorgan2c.bin" fileName2="sorgan2d.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Space Journey">
+    <image>space_journey.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="spajourg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Speed Reader">
+    <memoryEntries>
+      <romModuleEntry fileName="spdreadc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Springer">
+    <image>springer.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="springerg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Spy's Demise">
+    <image>spies_demise.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="spydemic.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Star Maze">
+    <image>star_maze.png</image>
+    <memoryEntries>
+      <gromModuleEntry fileName="starmazg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Star Runner">
+    <image>star_runner.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="starrunc.bin" fileName2="starrund.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="St. Nick (Funware Cartridge)">
+    <image>st._nick.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="stnickc.bin"/>
+      <gromModuleEntry fileName="stnickg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Strike Three!">
+    <image>strike_three!.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="strike3c.bin" fileName2="strike3d.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Submarine Battle">
+    <memoryEntries>
+      <gromModuleEntry fileName="subbattleg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Submarine Commander">
+    <memoryEntries>
+      <gromModuleEntry fileName="subcomg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Super X-Basic">
+    <memoryEntries>
+      <bankedModuleEntry fileName="superxbc.bin" fileName2="superxbd.bin"/>
+      <gromModuleEntry fileName="superxbg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Super Duper v1.1">
+    <memoryEntries>
+      <romModuleEntry fileName="suprdupc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="TI PLANNER">
+    <image>ti_planner.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="tiplanc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="TI-Toad">
+    <image>ti-toad.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="titoadc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Topper">
+    <image>topper.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="topperc.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Typo II">
+    <image>typo_ii.png</image>
+    <memoryEntries>
+      <romModuleEntry fileName="typoiic.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="UBOAT">
+    <image>uboat.png</image>
+    <memoryEntries>
+      <bankedModuleEntry fileName="u-boatc.bin" fileName2="u-boatd.bin"/>
+      <gromModuleEntry fileName="u-boatg.bin"/>
+    </memoryEntries>
+  </module>
+  <module name="Extended Basic v2.5">
+    <memoryEntries>
+      <bankedModuleEntry fileName="xb25c.bin" fileName2="xb25d.bin"/>
+      <gromModuleEntry fileName="xb25g.bin"/>
+    </memoryEntries>
+  </module>
 </modules>
