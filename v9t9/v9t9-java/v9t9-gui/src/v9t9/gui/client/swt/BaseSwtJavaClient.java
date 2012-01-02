@@ -245,8 +245,13 @@ public abstract class BaseSwtJavaClient implements IClient {
 		} catch (TerminatedException e) {
 			// expected
 		}
-		if (videoRenderer != null)
-			videoRenderer.dispose();
+		
+		display.asyncExec(new Runnable() {
+			public void run() {
+				if (videoRenderer != null)
+					videoRenderer.dispose();
+			}
+		});
 	}
 
 	@Override

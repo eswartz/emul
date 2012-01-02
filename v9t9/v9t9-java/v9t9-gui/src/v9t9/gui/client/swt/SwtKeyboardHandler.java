@@ -180,8 +180,13 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 				}
 				break;
 			case SWT.BREAK:
-				if (pressed)
-					machine.getClient().close();
+				if (pressed) {
+					machine.asyncExec(new Runnable() {
+						public void run() {
+							machine.getClient().close();
+						}
+					});
+				}
 				break;
 				
 			case SWT.NUM_LOCK:
