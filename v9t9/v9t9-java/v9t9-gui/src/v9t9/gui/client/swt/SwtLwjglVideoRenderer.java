@@ -166,7 +166,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	@Override
 	public void dispose() {
 		monitorDrawing.removeListener(this);
-		glCanvas.getParent().removeListener(SWT.Resize, resizeListener);
+		if (!glCanvas.isDisposed())
+			glCanvas.getParent().removeListener(SWT.Resize, resizeListener);
 		super.dispose();
 	}
 	

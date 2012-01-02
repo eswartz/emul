@@ -794,7 +794,7 @@ public class PathFileLocator implements IPathFileLocator {
 							return uri; 
 						}
 					} catch (Throwable e) {
-						System.err.println(e.toString());
+						System.err.println(ent + ": " + e.toString());
 					}
 				}
 			} catch (IOException e) {
