@@ -1384,9 +1384,9 @@ public class ModuleSelector extends Composite {
 			final TreeColumn nameColumn = new TreeColumn(tree, SWT.RIGHT);
 			final TreeColumn infoColumn = new TreeColumn(tree, SWT.LEFT);
 
-			ModuleContentProvider contentProvider = new ModuleContentProvider(machine);
+			ModuleDetailsContentProvider contentProvider = new ModuleDetailsContentProvider(machine);
 			viewer.setContentProvider(contentProvider);
-			viewer.setLabelProvider(new ModuleInfoTreeLabelProvider());
+			viewer.setLabelProvider(new ModuleDetailsTreeLabelProvider());
 			
 			viewer.setInput(contentProvider.createModuleContent(module));
 			

@@ -26,16 +26,17 @@ import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
 
 /**
+ * Populate the "Module Details..." tree.
  * @author ejs
  *
  */
-public class ModuleContentProvider extends TreeNodeContentProvider {
+public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 
 	private final IMachine machine;
 	private final IPathFileLocator pathFileLocator;
 	
 	
-	public ModuleContentProvider(IMachine machine) {
+	public ModuleDetailsContentProvider(IMachine machine) {
 		this.machine = machine;
 		this.pathFileLocator = machine.getPathFileLocator();
 	}

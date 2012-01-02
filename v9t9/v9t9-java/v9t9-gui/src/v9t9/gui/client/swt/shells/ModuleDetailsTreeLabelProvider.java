@@ -25,7 +25,12 @@ import v9t9.gui.client.swt.shells.ModuleSelector.InfoTreeNode;
 import ejs.base.properties.IProperty;
 import ejs.base.utils.Pair;
 
-class ModuleInfoTreeLabelProvider extends BaseLabelProvider implements ITableLabelProvider,
+/**
+ * Provide labels for the "Module Details..." tree.
+ * @author ejs
+ *
+ */
+class ModuleDetailsTreeLabelProvider extends BaseLabelProvider implements ITableLabelProvider,
 	ITableColorProvider, ITableFontProvider {
 
 	/* (non-Javadoc)

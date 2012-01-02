@@ -136,8 +136,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				SWT.BORDER | (isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL), 
 				machine.getCpuMetrics());
 		GridDataFactory.fillDefaults()
-			.align(isHorizontal ? SWT.RIGHT : SWT.FILL, isHorizontal ? SWT.FILL : SWT.BOTTOM)
-			.grab(false, false)
+			//.align(isHorizontal ? SWT.RIGHT : SWT.FILL, isHorizontal ? SWT.FILL : SWT.BOTTOM)
+			//.grab(false, false)
 			.indent(4, 4).exclude(true).applyTo(cpuMetricsCanvas);
 
 	}
