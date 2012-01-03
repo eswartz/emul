@@ -76,6 +76,8 @@ public class NewSetupDialog extends Composite {
 		createPathSelector(Settings.get(machine, DataFiles.settingBootRomsPath));
 		createPathSelector(Settings.get(machine, DataFiles.settingUserRomsPath));
 		
+		updateRomAvailability();
+		
 		addDisposeListener(new DisposeListener() {
 			
 			@Override
@@ -100,7 +102,7 @@ public class NewSetupDialog extends Composite {
 				JFaceResources.getFontRegistry().getBold(JFaceResources.TEXT_FONT),
 				null,
 				null);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(infoLabel);
+		GridDataFactory.fillDefaults().grab(true, false).indent(8, 8).applyTo(infoLabel);
 		setupInfoLabel();
 	}
 
@@ -145,6 +147,7 @@ public class NewSetupDialog extends Composite {
 				style.borderColor = getDisplay().getSystemColor(SWT.COLOR_GREEN);
 			}
 			style.font = JFaceResources.getFontRegistry().getBold(JFaceResources.TEXT_FONT);
+			infoLabel.setStyleRange(style);
 		}
 	}
 

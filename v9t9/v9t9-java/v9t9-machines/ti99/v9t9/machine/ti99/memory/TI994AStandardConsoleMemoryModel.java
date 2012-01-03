@@ -17,7 +17,9 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.speech.TMS5220;
 import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
+import v9t9.machine.ti99.dsr.realdisk.RealDiskImageDsr;
 import v9t9.machine.ti99.memory.mmio.ConsoleGramWriteArea;
 import v9t9.machine.ti99.memory.mmio.ConsoleGromReadArea;
 import v9t9.machine.ti99.memory.mmio.ConsoleSoundArea;
@@ -123,8 +125,11 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 	 */
 	@Override
 	public IProperty[] getRequiredRomProperties() {
-		return new IProperty[] { Settings.get(machine, settingRomFileName),
-				Settings.get(machine, settingGromFileName) };
+		return new IProperty[] { 
+				Settings.get(machine, settingRomFileName),
+				Settings.get(machine, settingGromFileName),
+				Settings.get(machine, TMS5220.settingSpeechRomFileName),
+				};
 	}
 	
 	/* (non-Javadoc)
@@ -133,7 +138,8 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 	@Override
 	public IProperty[] getOptionalRomProperties() {
 		return new IProperty[] { 
-				Settings.get(machine, EmuDiskDsr.settingDsrRomFileName)
+				Settings.get(machine, EmuDiskDsr.settingDsrRomFileName),
+				Settings.get(machine, RealDiskImageDsr.settingDsrRomFileName)
 		};
 	}
 

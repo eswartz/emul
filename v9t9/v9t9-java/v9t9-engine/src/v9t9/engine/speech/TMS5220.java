@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
 import ejs.base.settings.Logging;
 import ejs.base.utils.BinaryUtils;
@@ -21,6 +22,8 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.Settings;
 import v9t9.common.speech.ISpeechDataSender;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import static v9t9.common.speech.TMS5220Consts.*;
@@ -66,35 +69,37 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 	private IProperty logSpeech;
 	
-	private final static MemoryEntryInfo speechMemoryEntryInfo = 
-		MemoryEntryInfoBuilder
-			.byteMemoryEntry()
-			.withDomain(IMemoryDomain.NAME_SPEECH)
-			.withFilename("spchrom.bin")
-			.withSize(0x8000)
-			.create("Speech ROM");
+	public final static SettingSchema settingSpeechRomFileName = 
+		new SettingSchema(ISettingsHandler.WORKSPACE, "SpeechRomFileName", "spchrom.bin");
 	
 	public TMS5220(final IMachine machine, final ISettingsHandler settings, final IMemoryDomain speech) {
 		logSpeech = settings.get(LPCSpeech.settingLogSpeech);
 		Logging.registerLog(logSpeech, 
 				new PrintWriter(System.out, true));
 		
-		Runnable runnable = new Runnable() {
-			public void run() {
+		IPropertyListener speechRomFilenameListener = new IPropertyListener() {
+
+			@Override
+			public void propertyChanged(IProperty property) {
 				try {
+					MemoryEntryInfo speechMemoryEntryInfo = 
+						MemoryEntryInfoBuilder
+						.byteMemoryEntry()
+						.withDomain(IMemoryDomain.NAME_SPEECH)
+						.withFilename(property.getString())
+						.create("Speech ROM");
+					
 					speechRom = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(speechMemoryEntryInfo);
 					speechRom.load();
 					speechRom.getDomain().mapEntry(speechRom);
 				} catch (IOException e) {
 					System.err.println("Failed to load: " + e.getMessage());
 				}
-				
 			}
+			
 		};
-		if (machine != null)
-			machine.asyncExec(runnable);
-		else
-			runnable.run();
+		
+		Settings.get(machine, settingSpeechRomFileName).addListenerAndFire(speechRomFilenameListener);
 		
 		fifo = new byte[16];
 		lpc = new LPCSpeech(settings);

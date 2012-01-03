@@ -138,7 +138,7 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 			"EmuDiskDsrRomFileName", "emudisk.bin");
 	
 	public void activate(IMemoryDomain console, IMemoryEntryFactory memoryEntryFactory) throws IOException {
-		if (!settingDsrEnabled.getBoolean())
+		if (!settingDsrEnabled.getBoolean() || emuDiskDsrActiveSetting.getBoolean())
 			return;
 		
 		emuDiskDsrActiveSetting.setBoolean(true);
