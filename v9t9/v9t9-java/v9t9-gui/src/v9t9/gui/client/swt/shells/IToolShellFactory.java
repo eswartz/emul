@@ -10,6 +10,7 @@ public interface IToolShellFactory {
 	public enum Centering {
 		INSIDE,
 		OUTSIDE,
+		CENTER
 	}
 	public static class Behavior {
 		public Centering centering;

@@ -8,6 +8,7 @@ package v9t9.machine.ti99.memory;
 
 
 
+import ejs.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
@@ -16,6 +17,7 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.memory.mmio.ConsoleGramWriteArea;
 import v9t9.machine.ti99.memory.mmio.ConsoleGromReadArea;
 import v9t9.machine.ti99.memory.mmio.ConsoleSoundArea;
@@ -115,5 +117,24 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
                 new ConsoleGramWriteArea(gplMmio)));
 		
 	}
-  
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryModel#getRequiredRomProperties()
+	 */
+	@Override
+	public IProperty[] getRequiredRomProperties() {
+		return new IProperty[] { Settings.get(machine, settingRomFileName),
+				Settings.get(machine, settingGromFileName) };
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryModel#getOptionalRomProperties()
+	 */
+	@Override
+	public IProperty[] getOptionalRomProperties() {
+		return new IProperty[] { 
+				Settings.get(machine, EmuDiskDsr.settingDsrRomFileName)
+		};
+	}
+
 }

@@ -28,7 +28,7 @@ import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
-import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.settings.SettingSchema;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.IDevIcons;
@@ -133,9 +133,9 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 		return 0x1000;
 	}
 	
-	private static MemoryEntryInfo emuDiskDsrMemoryEntryInfo = MemoryEntryInfoBuilder
-		.standardDsrRom("emudisk.bin")
-		.create("File Stream DSR ROM");
+	public static SettingSchema settingDsrRomFileName = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
+			"EmuDiskDsrRomFileName", "emudisk.bin");
 	
 	public void activate(IMemoryDomain console, IMemoryEntryFactory memoryEntryFactory) throws IOException {
 		if (!settingDsrEnabled.getBoolean())
@@ -143,8 +143,11 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 		
 		emuDiskDsrActiveSetting.setBoolean(true);
 
-		if (memoryEntry == null)
-			this.memoryEntry = memoryEntryFactory.newMemoryEntry(emuDiskDsrMemoryEntryInfo);
+		this.memoryEntry = memoryEntryFactory.newMemoryEntry(
+				MemoryEntryInfoBuilder
+					.standardDsrRom(settings.get(settingDsrRomFileName).getString())
+					.create("File Stream DSR ROM"));
+
 		console.mapEntry(memoryEntry);
 	}
 	

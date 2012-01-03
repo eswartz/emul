@@ -31,6 +31,7 @@ import v9t9.common.sound.ISoundGenerator;
 import v9t9.common.speech.ISpeechDataSender;
 import v9t9.common.speech.ISpeechGenerator;
 import v9t9.gui.client.awt.AwtKeyboardHandler;
+import v9t9.gui.client.swt.shells.NewSetupDialog;
 import v9t9.gui.sound.JavaSoundHandler;
 
 /**
@@ -181,6 +182,12 @@ public abstract class BaseSwtJavaClient implements IClient {
 				soundTimer.invoke(speechDoneTask);
 			}
 		});
+        
+        if (true || settingsHandler.get(settingNewConfiguration).getBoolean()) {
+        	window.toggleToolShell(NewSetupDialog.NEW_SETUP_TOOL_ID, 
+					NewSetupDialog.getToolShellFactory(
+							machine, window));
+        }
 	}
 	
 

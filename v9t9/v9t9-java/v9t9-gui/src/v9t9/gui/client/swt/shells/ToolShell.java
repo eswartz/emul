@@ -194,13 +194,19 @@ public class ToolShell {
 		else
 			pt = new Point(bbounds.x, bbounds.y);
 		
-		if (isHorizontal) {
-			pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
-					pt.y + (behavior.centering == Centering.INSIDE ? -sbounds.height: bbounds.height));
+		if (behavior.centering == Centering.CENTER) {
+			pt = new Point(pt.x + sbounds.width / 2,
+					pt.y + sbounds.height / 2);
+			
+		} else {
+			if (isHorizontal) {
+				pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
+						pt.y + (behavior.centering == Centering.INSIDE ? -sbounds.height: bbounds.height));
+			}
+			else
+				pt = new Point(pt.x + (behavior.centering == Centering.INSIDE ? -sbounds.width: bbounds.width),
+						pt.y + (bbounds.height - sbounds.height) / 2);
 		}
-		else
-			pt = new Point(pt.x + (behavior.centering == Centering.INSIDE ? -sbounds.width: bbounds.width),
-					pt.y + (bbounds.height - sbounds.height) / 2);
 		
 		Rectangle dbounds = shell.getDisplay().getBounds();
 		if (pt.x < 0)

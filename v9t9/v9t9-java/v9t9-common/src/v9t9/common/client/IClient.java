@@ -7,6 +7,7 @@
 package v9t9.common.client;
 
 import v9t9.common.events.IEventNotifier;
+import v9t9.common.settings.SettingSchema;
 
 
 /** The client the emulated machine interacts with.  This could
@@ -17,6 +18,9 @@ import v9t9.common.events.IEventNotifier;
  */
 public interface IClient {
 	
+	SettingSchema settingNewConfiguration = new SettingSchema(
+			ISettingsHandler.TRANSIENT, "NewConfiguration", Boolean.FALSE);
+
 	String getIdentifier();
 	
     void close();

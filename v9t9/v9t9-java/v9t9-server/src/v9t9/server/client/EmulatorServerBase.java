@@ -9,7 +9,6 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.IVdpChip;
@@ -17,7 +16,6 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.common.settings.IStoredSettings;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.modules.ModuleManager;
 import v9t9.machine.f99b.machine.F99bMachineModel;
@@ -103,10 +101,7 @@ public abstract class EmulatorServerBase {
 		}
 		
 		if (client.getEventNotifier().getErrorCount() > barrier) {
-			IStoredSettings storedSettings = settings.findSettingStorage(bootRomsPath.getName()); 
-			machine.notifyEvent(IEventNotifier.Level.ERROR,
-					"Failed to load startup ROMs; please edit your " + bootRomsPath.getName() + " in '"
-					+ storedSettings.getConfigFilePath() + "'");
+			settings.get(IClient.settingNewConfiguration).setValue(true);
 		}
 	}
 	
@@ -130,6 +125,7 @@ public abstract class EmulatorServerBase {
     				
     	} catch (IOException e) {
     		System.err.println("Setting up new configuration");
+    		settings.get(IClient.settingNewConfiguration).setBoolean(true);
     	}
     	
 
