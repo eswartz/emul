@@ -17,6 +17,7 @@ import ejs.base.utils.ListenerList.IFire;
 
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
@@ -87,13 +88,15 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 						.byteMemoryEntry()
 						.withDomain(IMemoryDomain.NAME_SPEECH)
 						.withFilename(property.getString())
+						.withSize(-0x10000)
 						.create("Speech ROM");
 					
 					speechRom = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(speechMemoryEntryInfo);
 					speechRom.load();
 					speechRom.getDomain().mapEntry(speechRom);
 				} catch (IOException e) {
-					System.err.println("Failed to load: " + e.getMessage());
+					machine.notifyEvent(Level.WARNING, 
+							"Did not find Speech ROM: " + property.getValue()+"; speech may not work");
 				}
 			}
 			

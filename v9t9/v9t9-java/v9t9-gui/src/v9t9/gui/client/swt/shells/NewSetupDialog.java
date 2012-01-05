@@ -11,6 +11,8 @@ import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -18,9 +20,11 @@ import org.eclipse.swt.widgets.Shell;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 
+import v9t9.common.InternetDefinitions;
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
+import v9t9.gui.client.swt.BrowserUtils;
 import v9t9.gui.client.swt.SwtWindow;
 
 /**
@@ -46,20 +50,21 @@ public class NewSetupDialog extends Composite {
 
 	private StyledText infoLabel;
 
-	private TextStyle missingStyle;
+	private StyleRange[] reqdRomNameStyleRanges;
 
-	private TextStyle foundStyle;
+	private final IProperty[] optionalRomNames;
 
-	private StyleRange[] romNameStyleRanges; 
+	private StyleRange[] optionalRomNameStyleRanges; 
 
 	public NewSetupDialog(Shell shell, IMachine machine, SwtWindow window,
-			IProperty... requiredRomNames) {
+			IProperty[] requiredRomNames, IProperty[] optionalRomNames) {
 		super(shell, SWT.NONE);
 		
 		setSize(500, 400);
 		
 		this.window = window;
 		this.requiredRomNames = requiredRomNames;
+		this.optionalRomNames = optionalRomNames;
 		
 		shell.setText("New Setup");
 		
@@ -94,14 +99,6 @@ public class NewSetupDialog extends Composite {
 	 */
 	private void createInfoSection() {
 		infoLabel = new StyledText(this, SWT.BORDER | SWT.WRAP);
-		missingStyle = new TextStyle(
-				JFaceResources.getFontRegistry().getItalic(JFaceResources.TEXT_FONT),
-				null, 
-				null);
-		foundStyle = new TextStyle(
-				JFaceResources.getFontRegistry().getBold(JFaceResources.TEXT_FONT),
-				null,
-				null);
 		GridDataFactory.fillDefaults().grab(true, false).indent(8, 8).applyTo(infoLabel);
 		setupInfoLabel();
 	}
@@ -116,9 +113,9 @@ public class NewSetupDialog extends Composite {
 				"In order to emulate the TI-99/4A, you need to configure V9t9 so it can "+
 				"find the necessary ROMs.\n\n"+
 				"V9t9 can detect ROMs by contents or by filename (if you have customizations).\n\n"+
-				"These ROMs are needed:  ");
+				"These ROMs are required:\t");
 
-		romNameStyleRanges = new StyleRange[requiredRomNames.length];
+		reqdRomNameStyleRanges = new StyleRange[requiredRomNames.length];
 		
 		for (int i = 0; i < requiredRomNames.length; i++) {
 			StyleRange range = new StyleRange();
@@ -126,27 +123,85 @@ public class NewSetupDialog extends Composite {
 			infoLabel.append(requiredRomNames[i].getString());
 			range.length = infoLabel.getCharCount() - range.start;
 			infoLabel.append(" ");
-			romNameStyleRanges[i] = range;
+			reqdRomNameStyleRanges[i] = range;
 			infoLabel.setStyleRange(range);
 		}
 		
-		int offset = infoLabel.getCharCount();
-		infoLabel.append("\n\n"+
-			"Note: these ROMs are not distributed with V9t9 itself.");
+		infoLabel.append(
+				"\n\nThese ROMs are optional:\t");
+				
+		optionalRomNameStyleRanges = new StyleRange[optionalRomNames.length];
+
+		for (int i = 0; i < optionalRomNames.length; i++) {
+			StyleRange range = new StyleRange();
+			range.start = infoLabel.getCharCount();
+			infoLabel.append(optionalRomNames[i].getString());
+			range.length = infoLabel.getCharCount() - range.start;
+			infoLabel.append(" ");
+			optionalRomNameStyleRanges[i] = range;
+			infoLabel.setStyleRange(range);
+		}
 		
-		StyleRange italicStyle = new StyleRange(offset, infoLabel.getCharCount() - offset, 
+		int italicOffset = infoLabel.getCharCount();
+		infoLabel.append("\n\n"+
+			"Note: copyrighted ROMs are not distributed with V9t9 itself.  "+
+			"Please see ");
+		
+		int italicRangeLength = infoLabel.getCharCount() - italicOffset;
+		StyleRange italicStyle;
+		
+		italicStyle = new StyleRange(italicOffset, italicRangeLength, 
+				null, null, SWT.ITALIC);
+		infoLabel.setStyleRange(italicStyle);
+		
+		int urlOffset = infoLabel.getCharCount();
+		
+		infoLabel.append(InternetDefinitions.sV9t9WikiURL);
+		int urlLength = infoLabel.getCharCount() - urlOffset;
+		
+		// SWT.UNDERLINE_LINK does not appear to work as promised :p
+		StyleRange urlStyle = new StyleRange(urlOffset, urlLength, 
+				getDisplay().getSystemColor(SWT.COLOR_BLUE), null);
+		urlStyle.font = JFaceResources.getFontRegistry().getItalic(JFaceResources.TEXT_FONT);
+		
+		infoLabel.setStyleRange(urlStyle);
+		infoLabel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseUp(MouseEvent e) {
+				BrowserUtils.openURL(InternetDefinitions.sV9t9WikiURL);
+			}
+		});
+
+		italicOffset = infoLabel.getCharCount();
+		
+		infoLabel.append(" for information on ROMs.");
+		
+		italicRangeLength = infoLabel.getCharCount() - italicOffset;
+		
+		italicStyle = new StyleRange(italicOffset, italicRangeLength, 
 				null, null, SWT.ITALIC);
 		infoLabel.setStyleRange(italicStyle);
 	}
 
 	protected void updateRomAvailability() {
-		for (int i = 0; i < requiredRomNames.length; i++) {
-			StyleRange style = romNameStyleRanges[i];
-			if (isRomAvailable(requiredRomNames[i].getString())) {
+		updateRomLabels(requiredRomNames, reqdRomNameStyleRanges);
+		updateRomLabels(optionalRomNames, optionalRomNameStyleRanges);
+		
+	}
+	
+	private void updateRomLabels(IProperty[] properties, StyleRange[] styleRanges) {
+		for (int i = 0; i < properties.length; i++) {
+			StyleRange style = styleRanges[i];
+			if (isRomAvailable(properties[i].getString())) {
 				style.borderStyle = SWT.BORDER_SOLID;
 				style.borderColor = getDisplay().getSystemColor(SWT.COLOR_GREEN);
+				style.font = JFaceResources.getFontRegistry().getBold(JFaceResources.TEXT_FONT);
+			} else {
+				style.borderStyle = SWT.BORDER_DASH;
+				style.borderColor = getDisplay().getSystemColor(SWT.COLOR_RED);
+				style.font = JFaceResources.getFontRegistry().getItalic(JFaceResources.TEXT_FONT);
+				
 			}
-			style.font = JFaceResources.getFontRegistry().getBold(JFaceResources.TEXT_FONT);
 			infoLabel.setStyleRange(style);
 		}
 	}
@@ -177,7 +232,9 @@ public class NewSetupDialog extends Composite {
 			}
 			public Control createContents(Shell shell) {
 				return new NewSetupDialog(shell, machine, window, 
-						machine.getMemoryModel().getRequiredRomProperties());
+						machine.getMemoryModel().getRequiredRomProperties(),
+						machine.getMemoryModel().getOptionalRomProperties()
+						);
 			}
 			public Behavior getBehavior() {
 				return behavior;

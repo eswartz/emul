@@ -128,7 +128,6 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 		return new IProperty[] { 
 				Settings.get(machine, settingRomFileName),
 				Settings.get(machine, settingGromFileName),
-				Settings.get(machine, TMS5220.settingSpeechRomFileName),
 				};
 	}
 	
@@ -138,6 +137,7 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 	@Override
 	public IProperty[] getOptionalRomProperties() {
 		return new IProperty[] { 
+				Settings.get(machine, TMS5220.settingSpeechRomFileName),
 				Settings.get(machine, EmuDiskDsr.settingDsrRomFileName),
 				Settings.get(machine, RealDiskImageDsr.settingDsrRomFileName)
 		};
