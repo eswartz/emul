@@ -311,8 +311,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		
 		realDiskDsrActiveSetting.setBoolean(true);
 		
-		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(
-					dsrRomInfo);
+		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(dsrRomInfo);
 		
 		if (ioMemoryEntry == null) {
 			ioArea = new DiskMMIOMemoryArea();

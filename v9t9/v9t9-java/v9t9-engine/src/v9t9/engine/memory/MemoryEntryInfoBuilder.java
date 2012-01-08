@@ -102,6 +102,7 @@ public class MemoryEntryInfoBuilder {
 
 
 	public MemoryEntryInfo create(String name) {
+		props.put(MemoryEntryInfo.NAME, name);
 		MemoryEntryInfo info = new MemoryEntryInfo(props);
 		return info;
 	}

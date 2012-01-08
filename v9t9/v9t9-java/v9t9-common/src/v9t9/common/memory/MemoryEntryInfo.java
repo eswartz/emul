@@ -6,6 +6,7 @@ package v9t9.common.memory;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.SettingSchema;
 
 /**
@@ -185,6 +186,14 @@ public class MemoryEntryInfo {
 
 	public Class<?> getBankedClass() {
 		return (Class<?>) properties.get(CLASS);
+	}
+
+
+	public String getResolvedFilename(ISettingsHandler settings) {
+		if (getFilenameProperty() != null)
+			return settings.get(getFilenameProperty()).getString();
+		else
+			return getFilename();
 	}
 
 
