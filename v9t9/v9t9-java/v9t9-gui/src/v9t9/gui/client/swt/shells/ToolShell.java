@@ -42,7 +42,9 @@ public class ToolShell {
 			IFocusRestorer focusRestorer_,
 			boolean isHorizontal,
 			Behavior behavior) {
-		this.boundsPref = settings.get(ISettingsHandler.INSTANCE, new SettingProperty(behavior.boundsPref, ""));
+		this.boundsPref = settings.get(ISettingsHandler.INSTANCE, 
+				new SettingProperty(behavior.boundsPref, SwtPrefUtils.writeBoundsString(behavior.defaultBounds)));
+		
 		this.shell = new Shell(parentShell, SWT.TOOL | SWT.RESIZE | SWT.CLOSE | SWT.TITLE);
 		this.focusRestorer = focusRestorer_;
 		this.behavior = behavior;

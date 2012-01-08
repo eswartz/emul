@@ -39,6 +39,8 @@ public class SwtPrefUtils  {
 	}
 
 	public static String writeBoundsString(Rectangle bounds) {
+		if (bounds == null)
+			return "";
 		String boundsStr = bounds.x + "|" + bounds.y + "|" + bounds.width + "|" + bounds.height;
 		return boundsStr;
 	}
