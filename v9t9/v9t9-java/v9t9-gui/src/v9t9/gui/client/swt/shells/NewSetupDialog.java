@@ -10,6 +10,7 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
@@ -28,7 +29,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
-import ejs.base.settings.ISettingProperty;
 import ejs.base.settings.ISettingSection;
 
 import v9t9.common.InternetDefinitions;
@@ -96,10 +96,15 @@ public class NewSetupDialog extends Composite {
 		
 		scanForRoms();
 
-		createInfoSection();
+		SashForm sash = new SashForm(this, SWT.VERTICAL | SWT.SMOOTH);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(sash);
+		
+		createInfoSection(sash);
 
-		createPathSelector(Settings.get(machine, DataFiles.settingBootRomsPath));
+		createPathSelector(sash, Settings.get(machine, DataFiles.settingBootRomsPath));
 		//createPathSelector(Settings.get(machine, DataFiles.settingUserRomsPath));
+		
+		sash.setWeights(new int[] { 75, 25 });
 		
 		updateRomAvailability();
 		
@@ -127,13 +132,15 @@ public class NewSetupDialog extends Composite {
 
 
 	/**
+	 * @param parent 
 	 * 
 	 */
-	private void createInfoSection() {
-		infoLabel = new StyledText(this, SWT.BORDER | SWT.WRAP);
+	private void createInfoSection(final Composite parent) {
+		infoLabel = new StyledText(parent, SWT.BORDER | SWT.WRAP | SWT.READ_ONLY | SWT.V_SCROLL);
 		styledTextHelper = new StyledTextHelper(infoLabel);
 				
 		GridDataFactory.fillDefaults().grab(true, false).indent(8, 8).applyTo(infoLabel);
+		
 		setupInfoLabel();
 	}
 
@@ -384,8 +391,8 @@ public class NewSetupDialog extends Composite {
 	}
 
 
-	private void createPathSelector(final IProperty property) {
-		PathSelector pathSelector = new PathSelector(this, window, "ROM directory", property);
+	private void createPathSelector(Composite parent, final IProperty property) {
+		PathSelector pathSelector = new PathSelector(parent, window, "ROM directory", property);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(pathSelector);
 
 		final IPropertyListener pathChangeListener = new IPropertyListener() {
