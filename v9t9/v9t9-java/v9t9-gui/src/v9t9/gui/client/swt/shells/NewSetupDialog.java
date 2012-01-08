@@ -18,6 +18,8 @@ import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.graphics.Cursor;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.graphics.TextStyle;
@@ -26,6 +28,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingProperty;
 import ejs.base.settings.ISettingSection;
 
 import v9t9.common.InternetDefinitions;
@@ -38,6 +41,7 @@ import v9t9.gui.client.swt.BrowserUtils;
 import v9t9.gui.client.swt.PathSelector;
 import v9t9.gui.client.swt.StyledTextHelper;
 import v9t9.gui.client.swt.SwtWindow;
+import v9t9.gui.common.FontUtils;
 
 /**
  * This tool shell shows up when a new configuration has
@@ -70,7 +74,9 @@ public class NewSetupDialog extends Composite {
 
 	private StyledTextHelper styledTextHelper;
 
-	public NewSetupDialog(Shell shell, IMachine machine, SwtWindow window,
+	private Font winUnicodeFont;
+
+	public NewSetupDialog(Shell shell, IMachine machine_, SwtWindow window,
 			MemoryEntryInfo[] requiredRoms, MemoryEntryInfo[] optionalRoms) {
 		super(shell, SWT.NONE);
 		
@@ -80,7 +86,7 @@ public class NewSetupDialog extends Composite {
 		
 		shell.setText("New Setup");
 		
-		this.machine = machine;
+		this.machine = machine_;
 		
 		pauseProperty = Settings.get(machine, IMachine.settingPauseMachine);
 		wasPaused = pauseProperty.getBoolean();
@@ -101,7 +107,20 @@ public class NewSetupDialog extends Composite {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
+				//machine.getMemoryModel().initMemory(machine);
+				machine.getMemoryModel().loadMemory(machine.getClient().getEventNotifier());
+				machine.reset();
 				pauseProperty.setBoolean(wasPaused);
+			}
+		});
+		
+
+		addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				if (winUnicodeFont != null)
+					winUnicodeFont.dispose();
 			}
 		});
 	}
@@ -214,11 +233,32 @@ public class NewSetupDialog extends Composite {
 			if (descr != null)
 				infoLabel.append(" (" + descr + ")  ");
 			
-			if (isRomAvailable(infos[i])) {
-				infoLabel.append("\u2714");
+			TextStyle unicodeStyle = new TextStyle();
+			if (SWT.getPlatform().toLowerCase().contains("win")) {
+				if (winUnicodeFont == null) {
+					FontData[] data = getDisplay().getFontList("Wingdings", true);
+					if (data.length > 0) {
+						float height = FontUtils.measureText(getDisplay(), getFont(), "!").y;
+						data[0].setHeight((int) (height * 0.75f));
+						winUnicodeFont = new Font(getDisplay(), data[0]);
+					}
+				}
+				unicodeStyle.font = winUnicodeFont;
+				styledTextHelper.pushStyle(unicodeStyle, SWT.NONE);
+				if (isRomAvailable(infos[i])) {
+					infoLabel.append("\u00FC");	// checkmark
+				} else {
+					infoLabel.append("\u00FB");	// x-mark
+				}
+				styledTextHelper.popStyle();
 			} else {
-				infoLabel.append("\u2715");
+				if (isRomAvailable(infos[i])) {
+					infoLabel.append("\u2714");	// checkmark
+				} else {
+					infoLabel.append("\u2715");	// x-mark
+				}
 			}
+				
 			
 			infoLabel.append(" ");
 			
@@ -232,10 +272,9 @@ public class NewSetupDialog extends Composite {
 	 * @return
 	 */
 	private String filenameFor(MemoryEntryInfo info) {
-		if (info.getFilename() != null)
-			return info.getFilename();
-		if (info.getFilenameProperty() != null)
-			return Settings.get(machine, info.getFilenameProperty()).getString();
+		String filename = info.getResolvedFilename(Settings.getSettings(machine));
+		if (filename != null)
+			return filename;
 		return "<MD5:" + info.getFileMD5() + ">";
 	}
 
@@ -301,10 +340,15 @@ public class NewSetupDialog extends Composite {
 		
 		URI uri = findRom(info);
 		
+		IProperty property = info.getFilenameProperty() != null ? 
+				Settings.get(machine, info.getFilenameProperty()) : null;
 		if (uri != null) {
-			info.getProperties().put(MemoryEntryInfo.FILENAME, machine.getPathFileLocator().splitFileName(uri).second);
-		} else {
-			info.getProperties().remove(MemoryEntryInfo.FILENAME);
+			String filename = machine.getPathFileLocator().splitFileName(uri).second;
+			if (property != null) {
+				property.setValue(filename);
+			} else {
+				info.getProperties().put(MemoryEntryInfo.FILENAME, filename);
+			}
 		}
 	}
 	
