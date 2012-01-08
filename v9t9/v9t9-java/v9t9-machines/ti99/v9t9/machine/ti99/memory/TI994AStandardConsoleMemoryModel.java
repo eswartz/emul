@@ -8,17 +8,17 @@ package v9t9.machine.ti99.memory;
 
 
 
-import ejs.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.speech.TMS5220;
-import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.dsr.realdisk.RealDiskImageDsr;
 import v9t9.machine.ti99.memory.mmio.ConsoleGramWriteArea;
 import v9t9.machine.ti99.memory.mmio.ConsoleGromReadArea;
@@ -44,6 +44,20 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
     		ISettingsHandler.WORKSPACE,
     		"MemoryExpansion32K", new Boolean(false));
 
+	static protected final MemoryEntryInfo cpuRomInfo = MemoryEntryInfoBuilder
+		.standardConsoleRom(null)
+		.withFilenameProperty(settingRomFileName)
+		.withFileMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB")
+		.withDescription("Console ROM for the TI-99/4A")
+		.create("CPU ROM");
+	
+	static protected final MemoryEntryInfo cpuGromInfo = MemoryEntryInfoBuilder
+		.standardConsoleGrom(null)
+		.withFilenameProperty(settingRomFileName)
+		.withFileMD5("ED8FF714542BA850BDEC686840A79217")
+		.withDescription("Console GROM for the TI-99/4A")
+		.create("CPU GROM");
+	
     public TI994AStandardConsoleMemoryModel(IMachine machine) {
     	super(machine);
     }
@@ -54,13 +68,8 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
      */
 	@Override
     public void loadMemory(IEventNotifier eventNotifier) {
-    	loadConsoleRom(eventNotifier, 
-    			Settings.get(machine, settingRomFileName).getString(), 
-    			"6CC4BC2B6B3B0C33698E6A03759A4CAB"
-    			);
-    	loadConsoleGrom(eventNotifier, 
-    			Settings.get(machine, settingGromFileName).getString(), 
-    			"ED8FF714542BA850BDEC686840A79217");    	
+    	loadMemory(eventNotifier, cpuRomInfo); 
+    	loadMemory(eventNotifier, cpuGromInfo); 
     }
     
     /* (non-Javadoc)
@@ -124,10 +133,10 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 	 * @see v9t9.common.memory.IMemoryModel#getRequiredRomProperties()
 	 */
 	@Override
-	public IProperty[] getRequiredRomProperties() {
-		return new IProperty[] { 
-				Settings.get(machine, settingRomFileName),
-				Settings.get(machine, settingGromFileName),
+	public MemoryEntryInfo[] getRequiredRomMemoryEntries() {
+		return new MemoryEntryInfo[] { 
+				cpuRomInfo,
+				cpuGromInfo
 				};
 	}
 	
@@ -135,11 +144,10 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 	 * @see v9t9.common.memory.IMemoryModel#getOptionalRomProperties()
 	 */
 	@Override
-	public IProperty[] getOptionalRomProperties() {
-		return new IProperty[] { 
-				Settings.get(machine, TMS5220.settingSpeechRomFileName),
-				Settings.get(machine, EmuDiskDsr.settingDsrRomFileName),
-				Settings.get(machine, RealDiskImageDsr.settingDsrRomFileName)
+	public MemoryEntryInfo[] getOptionalRomMemoryEntries() {
+		return new MemoryEntryInfo[] { 
+				TMS5220.speechRomInfo,
+				RealDiskImageDsr.dsrRomInfo
 		};
 	}
 

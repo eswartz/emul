@@ -3,8 +3,6 @@ package v9t9.machine.f99b.memory;
 import java.io.IOException;
 import java.net.URL;
 
-import ejs.base.properties.IProperty;
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.DataFiles;
@@ -148,15 +146,15 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	 * @see v9t9.common.memory.IMemoryModel#getRequiredRomProperties()
 	 */
 	@Override
-	public IProperty[] getRequiredRomProperties() {
-		return new IProperty[0];
+	public MemoryEntryInfo[] getRequiredRomMemoryEntries() {
+		return new MemoryEntryInfo[0];
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryModel#getOptionalRomProperties()
 	 */
 	@Override
-	public IProperty[] getOptionalRomProperties() {
-		return new IProperty[0];
+	public MemoryEntryInfo[] getOptionalRomMemoryEntries() {
+		return new MemoryEntryInfo[0];
 	}
 }

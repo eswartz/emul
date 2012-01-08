@@ -45,6 +45,14 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 			"RealDiskDsrFileName",
 			"disk.bin");
 
+	public static MemoryEntryInfo dsrRomInfo = MemoryEntryInfoBuilder
+			.standardDsrRom(null)
+			.withFilenameProperty(settingDsrRomFileName)
+			.withDescription("TI Disk Controller ROM")
+			.withFileMD5("09DAEE0CFBC4C353BE8F2D5D45812F57")
+			.create("TI Disk DSR ROM");
+
+
 	static final int 
 		R_RDSTAT = 0,
 		R_RTADDR = 1,
@@ -303,13 +311,8 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		
 		realDiskDsrActiveSetting.setBoolean(true);
 		
-		MemoryEntryInfo realDiskDsrMemoryEntryInfo = MemoryEntryInfoBuilder
-			.standardDsrRom(settings.get(settingDsrRomFileName).getString())
-			.create("TI Disk DSR ROM");
-
-		
 		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(
-					realDiskDsrMemoryEntryInfo);
+					dsrRomInfo);
 		
 		if (ioMemoryEntry == null) {
 			ioArea = new DiskMMIOMemoryArea();

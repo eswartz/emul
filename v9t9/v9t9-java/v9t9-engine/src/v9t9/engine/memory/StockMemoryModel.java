@@ -4,13 +4,12 @@
 package v9t9.engine.memory;
 
 
-import ejs.base.properties.IProperty;
-
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.memory.MemoryEntryInfo;
 
 /**
  * @author ejs
@@ -74,14 +73,14 @@ public class StockMemoryModel implements IMemoryModel {
 	 * @see v9t9.common.memory.IMemoryModel#getOptionalRomProperties()
 	 */
 	@Override
-	public IProperty[] getOptionalRomProperties() {
-		return null;
+	public MemoryEntryInfo[] getOptionalRomMemoryEntries() {
+		return new MemoryEntryInfo[0];
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryModel#getRequiredRomProperties()
 	 */
 	@Override
-	public IProperty[] getRequiredRomProperties() {
-		return null;
+	public MemoryEntryInfo[] getRequiredRomMemoryEntries() {
+		return new MemoryEntryInfo[0];
 	}
 }

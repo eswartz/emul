@@ -35,6 +35,19 @@ import static v9t9.common.speech.TMS5220Consts.*;
  */
 public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender {
 
+	public final static SettingSchema settingSpeechRomFileName = 
+		new SettingSchema(ISettingsHandler.WORKSPACE, "SpeechRomFileName", "spchrom.bin");
+	
+	public static MemoryEntryInfo speechRomInfo = MemoryEntryInfoBuilder
+		.byteMemoryEntry()
+		.withDomain(IMemoryDomain.NAME_SPEECH)
+		.withFilenameProperty(settingSpeechRomFileName)
+		.withDescription("Speech Synthesizer Vocabulary ROM")
+		.withSize(-0x10000)
+		.withFileMD5("7ADCAF64272248F7A7161CFC02FD5B3F")
+		.create("Speech ROM");
+	
+
 	private final int SPEECH_TIMEOUT = 25+9;
 	
 	private int status;		/* as returned via read-status */
@@ -70,8 +83,6 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 	private IProperty logSpeech;
 	
-	public final static SettingSchema settingSpeechRomFileName = 
-		new SettingSchema(ISettingsHandler.WORKSPACE, "SpeechRomFileName", "spchrom.bin");
 	
 	public TMS5220(final IMachine machine, final ISettingsHandler settings, final IMemoryDomain speech) {
 		logSpeech = settings.get(LPCSpeech.settingLogSpeech);
@@ -83,15 +94,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 			@Override
 			public void propertyChanged(IProperty property) {
 				try {
-					MemoryEntryInfo speechMemoryEntryInfo = 
-						MemoryEntryInfoBuilder
-						.byteMemoryEntry()
-						.withDomain(IMemoryDomain.NAME_SPEECH)
-						.withFilename(property.getString())
-						.withSize(-0x10000)
-						.create("Speech ROM");
-					
-					speechRom = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(speechMemoryEntryInfo);
+					speechRom = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(speechRomInfo);
 					speechRom.load();
 					speechRom.getDomain().mapEntry(speechRom);
 				} catch (IOException e) {

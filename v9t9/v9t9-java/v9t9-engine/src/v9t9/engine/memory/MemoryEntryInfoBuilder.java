@@ -3,29 +3,19 @@
  */
 package v9t9.engine.memory;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.settings.SettingSchema;
 
 /**
  * @author ejs
  *
  */
 public class MemoryEntryInfoBuilder {
-
-	private String domain = IMemoryDomain.NAME_CPU;
-	private int unitSize;
-	private int addr;
-	private int size;
-	private String filename;
-	private String filename2;
-	private int offset;
-	private int offset2;
-	private boolean isStored;
-	private Class<? extends BankedMemoryEntry> klass;
-	private String fileMD5;
-	private String file2MD5;
+	private Map<String, Object> props;
 
 
 	public static MemoryEntryInfoBuilder byteMemoryEntry() {
@@ -37,85 +27,83 @@ public class MemoryEntryInfoBuilder {
 
 
 	public MemoryEntryInfoBuilder(int unitSize) {
-		this.unitSize = unitSize;
+		this.props = new HashMap<String, Object>();
+		props.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_CPU);
+		props.put(MemoryEntryInfo.UNIT_SIZE, unitSize);
 	}
 
 
-	public MemoryEntryInfoBuilder withFilename(String string) {
-		this.filename = string;
+	public MemoryEntryInfoBuilder withFilename(String filename) {
+		if (filename != null) props.put(MemoryEntryInfo.FILENAME, filename);
 		return this;
 	}
 
-	public MemoryEntryInfoBuilder withFilename2(String string) {
-		this.filename2 = string;
+	public MemoryEntryInfoBuilder withFilename2(String filename2) {
+		if (filename2 != null) props.put(MemoryEntryInfo.FILENAME2, filename2);
 		return this;
 	}
 	
 	
-	public MemoryEntryInfoBuilder withFileMD5(String string) {
-		this.fileMD5 = string;
+	public MemoryEntryInfoBuilder withFileMD5(String fileMD5) {
+		if (fileMD5 != null) props.put(MemoryEntryInfo.FILE_MD5, fileMD5);
 		return this;
 	}
 	
-	public MemoryEntryInfoBuilder withFile2MD5(String string) {
-		this.file2MD5 = string;
+	public MemoryEntryInfoBuilder withFile2MD5(String file2MD5) {
+		if (file2MD5 != null) props.put(MemoryEntryInfo.FILE_MD5, file2MD5);
 		return this;
 	}
 	
+	public MemoryEntryInfoBuilder withFilenameProperty(SettingSchema schema) {
+		if (schema != null) props.put(MemoryEntryInfo.FILENAME_PROPERTY, schema);
+		return this;
+	}
+
 
 	public MemoryEntryInfoBuilder withSize(int size) {
-		this.size = size;
+		props.put(MemoryEntryInfo.SIZE, size);
 		return this;
 	}
 
 
 	public MemoryEntryInfoBuilder withOffset(int offset) {
-		this.offset = offset;
+		props.put(MemoryEntryInfo.OFFSET, offset);
 		return this;
 	}
 
 	public MemoryEntryInfoBuilder withOffset2(int offset2) {
-		this.offset2 = offset2;
+		props.put(MemoryEntryInfo.OFFSET2, offset2);
 		return this;
 	}
 	public MemoryEntryInfoBuilder withAddress(int address) {
-		this.addr = address;
+		props.put(MemoryEntryInfo.ADDRESS, address);
 		return this;
 	}
 	
 	public MemoryEntryInfoBuilder withDomain(String domain) {
-		this.domain = domain;
+		props.put(MemoryEntryInfo.DOMAIN, domain);
 		return this;
 	}
 	
-	public MemoryEntryInfoBuilder storable(boolean b) {
-		this.isStored = b;
+	public MemoryEntryInfoBuilder storable(boolean isStored) {
+		props.put(MemoryEntryInfo.STORED, isStored);
 		return this;
 	}
+
+	public MemoryEntryInfoBuilder withDescription(String string) {
+		if (string != null) props.put(MemoryEntryInfo.DESCRIPTION, string);
+		return this;
+	}
+	
+	public MemoryEntryInfoBuilder withBankClass(Class<? extends BankedMemoryEntry> klass) {
+		if (klass != null) props.put(MemoryEntryInfo.CLASS, klass);
+		return this;
+	}
+
 
 	public MemoryEntryInfo create(String name) {
-		MemoryEntryInfo info = new MemoryEntryInfo();
-		Map<String, Object> props = info.getProperties();
-		props.put(MemoryEntryInfo.NAME, name);
-		props.put(MemoryEntryInfo.DOMAIN, domain);
-		props.put(MemoryEntryInfo.UNIT_SIZE, unitSize);
-		if (filename != null) props.put(MemoryEntryInfo.FILENAME, filename);
-		if (filename2 != null) props.put(MemoryEntryInfo.FILENAME2, filename2);
-		if (fileMD5 != null) props.put(MemoryEntryInfo.FILE_MD5, fileMD5);
-		if (file2MD5 != null) props.put(MemoryEntryInfo.FILE2_MD5, file2MD5);
-		props.put(MemoryEntryInfo.ADDRESS, addr);
-		props.put(MemoryEntryInfo.SIZE, size);
-		props.put(MemoryEntryInfo.OFFSET, offset);
-		props.put(MemoryEntryInfo.OFFSET2, offset2);
-		props.put(MemoryEntryInfo.STORED, isStored);
-		props.put(MemoryEntryInfo.CLASS, klass);
-		
+		MemoryEntryInfo info = new MemoryEntryInfo(props);
 		return info;
-	}
-
-	public MemoryEntryInfoBuilder withBankClass(Class<? extends BankedMemoryEntry> klass) {
-		this.klass = klass;
-		return this;
 	}
 
 	public static MemoryEntryInfoBuilder standardConsoleRom(
@@ -151,5 +139,4 @@ public class MemoryEntryInfoBuilder {
 
 	}
 
-	
 }

@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 
+import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 
 import v9t9.common.FileUtils;
@@ -82,6 +83,11 @@ public class DiskMemoryEntry extends MemoryEntry {
 					System.out.println("*** Found matching entry by MD5: " + uri);
 					filename = locator.splitFileName(uri).second;
 				}
+        		
+        		if (uri == null && info.getFilenameProperty() != null) {
+        			IProperty prop = storedInfo.settings.get(info.getFilenameProperty());
+					uri = locator.findFile(prop.getString());
+        		}
         		
         		if (uri == null && filename != null) {
         			uri = locator.findFile(filename);

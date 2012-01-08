@@ -3,7 +3,6 @@
  */
 package v9t9.common.memory;
 
-import ejs.base.properties.IProperty;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
 
@@ -40,18 +39,18 @@ public interface IMemoryModel {
 	void resetMemory();
 
 	/**
-	 * Return an array of properties specifying the names of
-	 * required ROMs (which, perhaps, the user might edit or configure)
+	 * Return an array of entries specifying the characteristics
+	 * of required ROMs
 	 * @return
 	 */
-	IProperty[] getRequiredRomProperties();
+	MemoryEntryInfo[] getRequiredRomMemoryEntries();
 	
 
 	/**
-	 * Return an array of properties specifying the names of
-	 * optional ROMs (which, perhaps, the user might edit or configure)
+	 * Return an array of entries specifying the characteristics
+	 * of optional ROMs
 	 * @return
 	 */
-	IProperty[] getOptionalRomProperties();
+	MemoryEntryInfo[] getOptionalRomMemoryEntries();
 	
 }
