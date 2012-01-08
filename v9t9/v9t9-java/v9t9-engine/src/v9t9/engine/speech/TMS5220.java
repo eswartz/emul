@@ -82,9 +82,12 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	private boolean speechOn;
 
 	private IProperty logSpeech;
+
+	private final IMachine machine;
 	
 	
 	public TMS5220(final IMachine machine, final ISettingsHandler settings, final IMemoryDomain speech) {
+		this.machine = machine;
 		logSpeech = settings.get(LPCSpeech.settingLogSpeech);
 		Logging.registerLog(logSpeech, 
 				new PrintWriter(System.out, true));
@@ -93,19 +96,15 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 			@Override
 			public void propertyChanged(IProperty property) {
-				try {
-					speechRom = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(speechRomInfo);
-					speechRom.load();
-					speechRom.getDomain().mapEntry(speechRom);
-				} catch (IOException e) {
-					machine.notifyEvent(Level.WARNING, 
-							"Did not find Speech ROM: " + property.getValue()+"; speech may not work");
-				}
+				// load later
+				if (speechRom != null)
+					speech.unmapEntry(speechRom);
+				speechRom = null;
 			}
 			
 		};
 		
-		Settings.get(machine, settingSpeechRomFileName).addListenerAndFire(speechRomFilenameListener);
+		Settings.get(machine, settingSpeechRomFileName).addListener(speechRomFilenameListener);
 		
 		fifo = new byte[16];
 		lpc = new LPCSpeech(settings);
@@ -142,6 +141,18 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	}
 
 	public byte read() {
+		if (speechRom == null) {
+			try {
+				speechRom = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(speechRomInfo);
+				speechRom.load();
+				speechRom.getDomain().mapEntry(speechRom);
+			} catch (IOException e) {
+				machine.notifyEvent(Level.WARNING, 
+						"Did not find Speech ROM: " 
+						+ speechRomInfo.getResolvedFilename(Settings.getSettings(machine)) +"; speech may not work");
+			}
+			
+		}
 		byte ret;
 		if ((gate & GT_RSTAT) != 0) {
 			byte stat = (byte) (status | 

@@ -76,7 +76,7 @@ public class StoredMemoryEntryInfo {
     		
     		filesize = locator.getContentLength(uri);
     		if (info.getSize() > 0) {
-    			if (filesize != info.getSize()) {
+    			if (filesize < info.getSize()) {
     				throw new IOException("file '" + filename + "'found for '" + name + "' is not the expected size (" + info.getSize() +" bytes); found " + filesize + " bytes at " + uri);
     			}
     		} else {

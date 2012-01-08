@@ -4,6 +4,7 @@
 package v9t9.common.files;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -770,9 +771,15 @@ public class PathFileLocator implements IPathFileLocator {
 		}
 		String md5 = md5Dir.get(uri);
 		if (md5 == null) {
-			InputStream is = createInputStream(uri);
-			byte[] content = DataFiles.readInputStreamContentsAndClose(is);
-			md5 = DataFiles.getMD5Hash(content);
+			try {
+				InputStream is = createInputStream(uri);
+				byte[] content = DataFiles.readInputStreamContentsAndClose(is);
+				md5 = DataFiles.getMD5Hash(content);
+			} catch (FileNotFoundException e) {
+				// this happens when invalid filenames are located and the
+				// URI was not properly de/en-coded -- TODO
+				md5 = "";
+			}
 			md5Dir.put(uri, md5);
 		}
 		return md5;

@@ -12,7 +12,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 
-import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 
 import v9t9.common.FileUtils;
