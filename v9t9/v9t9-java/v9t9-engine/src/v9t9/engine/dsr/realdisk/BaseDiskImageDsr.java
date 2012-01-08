@@ -339,8 +339,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	}
 	
 	public byte readStatus() {
-		StringBuilder status = new StringBuilder();
-		byte ret = fdc.getStatus().calculate(fdc.getCommand(), status);
+		byte ret = fdc.getStatus().calculate(fdc.getCommand());
 		
 		BaseDiskImage image = getSelectedDiskImage();
 		boolean realTime = settingRealTime.getBoolean();
@@ -350,6 +349,8 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 			ret |= 0x1;
 		
 		if (ret != lastStatus) {
+			StringBuilder status = new StringBuilder();
+			fdc.getStatus().toString(fdc.getCommand());
 			dumper.info(("FDC read status >" + HexUtils.toHex2(ret) + " : " + status));
 		}
 		lastStatus = ret;

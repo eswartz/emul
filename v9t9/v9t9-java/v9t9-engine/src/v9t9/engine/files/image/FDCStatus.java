@@ -36,11 +36,35 @@ public class FDCStatus {
 		values.clear();
 	}
 	
+	public String toString(int command) {
+		StringBuilder status = new StringBuilder();
+		StatusBit[] bits = COMMON_STATUS;
+		switch (command) {
+		case RealDiskConsts.FDC_readIDmarker:
+		case RealDiskConsts.FDC_readsector:
+		case RealDiskConsts.FDC_readtrack:
+			bits = R_STATUS;
+			break;
+		case RealDiskConsts.FDC_writesector:
+		case RealDiskConsts.FDC_writetrack:
+			bits = W_STATUS;
+			break;
+		}
+		
+		for (StatusBit bit : bits) {
+			if (is(bit)) {
+				if (status.length() > 0)
+					status.append(',');
+				status.append(bit);
+			}
+		}
+		return status.toString();
+	}
 	/**
 	 * @param status
 	 * @return
 	 */
-	public byte calculate(int command, StringBuilder status) {
+	public byte calculate(int command) {
 		StatusBit[] bits = COMMON_STATUS;
 		switch (command) {
 		case RealDiskConsts.FDC_readIDmarker:
@@ -57,9 +81,6 @@ public class FDCStatus {
 		byte val = 0;
 		for (StatusBit bit : bits) {
 			if (is(bit)) {
-				if (status.length() > 0)
-					status.append(',');
-				status.append(bit);
 				val |= bit.val;
 			}
 		}
