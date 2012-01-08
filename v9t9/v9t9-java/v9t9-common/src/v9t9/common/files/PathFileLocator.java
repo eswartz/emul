@@ -804,6 +804,8 @@ public class PathFileLocator implements IPathFileLocator {
 						System.err.println(ent + ": " + e.toString());
 					}
 				}
+			} catch (FileNotFoundException e) {
+				
 			} catch (IOException e) {
 				System.err.println(e.toString());
 			}
