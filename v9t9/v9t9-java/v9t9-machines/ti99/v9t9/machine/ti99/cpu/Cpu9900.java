@@ -123,15 +123,6 @@ public class Cpu9900 extends CpuBase {
     public void contextSwitch(int addr) {
     	//idle = false;
         contextSwitch(state.getConsole().readWord(addr), state.getConsole().readWord(addr+2));
-        if (addr == 0) {
-            /*
-             * this mimics the behavior where holding down fctn-quit keeps the
-             * program going
-             */
-            // TODO
-            //trigger9901int(M_INT_VDP);
-            //holdpin(INTPIN_INTREQ);
-        }
     }
 
     /**
