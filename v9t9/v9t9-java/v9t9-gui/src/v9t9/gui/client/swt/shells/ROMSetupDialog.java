@@ -4,6 +4,8 @@
 package v9t9.gui.client.swt.shells;
 
 import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -49,8 +51,8 @@ import v9t9.gui.common.FontUtils;
  * @author ejs
  *
  */
-public class NewSetupDialog extends Composite {
-	public static final String NEW_SETUP_TOOL_ID = "new.setup";
+public class ROMSetupDialog extends Composite {
+	public static final String ROM_SETUP_TOOL_ID = "rom.setup";
 
 	/*private*/ ISettingSection dialogSettings;
 
@@ -76,7 +78,10 @@ public class NewSetupDialog extends Composite {
 
 	private Font winUnicodeFont;
 
-	public NewSetupDialog(Shell shell, IMachine machine_, SwtWindow window,
+	private Set<URI> detectedROMs;
+	private Set<URI> origDetectedROMs;
+
+	public ROMSetupDialog(Shell shell, IMachine machine_, SwtWindow window,
 			MemoryEntryInfo[] requiredRoms, MemoryEntryInfo[] optionalRoms) {
 		super(shell, SWT.NONE);
 		
@@ -84,7 +89,7 @@ public class NewSetupDialog extends Composite {
 		this.requiredRoms = requiredRoms;
 		this.optionalRoms = optionalRoms;
 		
-		shell.setText("New Setup");
+		shell.setText("ROM Setup");
 		
 		this.machine = machine_;
 		
@@ -108,13 +113,17 @@ public class NewSetupDialog extends Composite {
 		
 		updateRomAvailability();
 		
+		origDetectedROMs = new HashSet<URI>(detectedROMs);
+		
 		addDisposeListener(new DisposeListener() {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
-				//machine.getMemoryModel().initMemory(machine);
-				machine.getMemoryModel().loadMemory(machine.getClient().getEventNotifier());
-				machine.reset();
+				if (!origDetectedROMs.equals(detectedROMs)) {
+					//machine.getMemoryModel().initMemory(machine);
+					machine.getMemoryModel().loadMemory(machine.getClient().getEventNotifier());
+					machine.reset();
+				}
 				pauseProperty.setBoolean(wasPaused);
 			}
 		});
@@ -302,9 +311,9 @@ public class NewSetupDialog extends Composite {
 	}
 	
 	protected void scanForRoms() {
+		detectedROMs = new HashSet<URI>();
 		scanForRoms(requiredRoms);
 		scanForRoms(optionalRoms);
-		
 	}
 
 	protected void updateRomAvailability() {
@@ -366,6 +375,9 @@ public class NewSetupDialog extends Composite {
 	private boolean isRomAvailable(MemoryEntryInfo info) {
 		
 		URI uri = findRom(info);
+		if (uri != null)
+			detectedROMs.add(uri);
+		
 		return uri != null;
 	}
 
@@ -433,7 +445,7 @@ public class NewSetupDialog extends Composite {
 				behavior.dismissOnClickOutside = false;
 			}
 			public Control createContents(Shell shell) {
-				return new NewSetupDialog(shell, machine, window, 
+				return new ROMSetupDialog(shell, machine, window, 
 						machine.getMemoryModel().getRequiredRomMemoryEntries(),
 						machine.getMemoryModel().getOptionalRomMemoryEntries()
 						);

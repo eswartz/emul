@@ -6,7 +6,6 @@
  */
 package v9t9.engine.memory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -42,7 +41,8 @@ public class DiskMemoryEntry extends MemoryEntry {
     	super();
     }
     DiskMemoryEntry(MemoryEntryInfo info, String name, MemoryArea area, StoredMemoryEntryInfo storedInfo) {
-    	super(name, info.getDomain(storedInfo.memory), info.getAddress(), storedInfo.size - storedInfo.fileoffs, area);
+    	super(name, info.getDomain(storedInfo.memory), info.getAddress(), 
+    			Math.min(Math.abs(info.getSize()), storedInfo.size) - storedInfo.fileoffs, area);
 		this.info = info;
 		this.storedInfo = storedInfo;
 		this.locator = storedInfo.locator;
@@ -134,11 +134,11 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 */
 	private int fixupFileSize(URI uri, int filesize) throws IOException {
 
-		int size = storedInfo.size;
+		int size = info.getSize();
 		
 		try {
 			try {
-				filesize = (int) new File(uri).length();
+				filesize = storedInfo.locator.getContentLength(uri);
 			} catch (IllegalArgumentException e) {
 				filesize = locator.getContentLength(uri);
 			}
