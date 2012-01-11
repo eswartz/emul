@@ -35,6 +35,8 @@
         <pathelement location="bin"/>
         <path refid="v9t9-common.classpath"/>
         <path refid="ejs-base.classpath"/>
+        <pathelement location="${ejs-base.location}/libs/junit/junit-4.8.1.jar"/>
+  
     </path>
     <target name="init">
         <mkdir dir="bin"/>

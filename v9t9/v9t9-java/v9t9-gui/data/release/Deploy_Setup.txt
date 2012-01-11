@@ -5,16 +5,18 @@ SETUP
 Go into the <yourApplication> folder, execute "keytool -genkey -keystore $HOME/.keystore.v9t9 -alias v9t9", 
 and enter all required information.
 
+If regenerating a key, 
 
 BUILDING
 =========
 
-Invoke "build_standalone.xml" *after* compiling via Eclipse (TODO)
+If you have built from Eclipse before, invoke "ant -f build_standalone.xml clean" to be 
+sure all is well.
 
-Then enter the same keystore password when invoking the launch config for "build_standalone.xml".
+Then invoke "ant -f build_standalone.xml -Dkeystore=$HOME/.keystore.v9t9 -Dstorepass=...".  
 
-If running via ant, pass '-Dstorepass=...' with the password, and also supply 
-'-Dkeystore=$HOME/.keystore.v9t9'.  
+V9t9 is built into its respective project directories and the JARs and shared libraries
+are sent to <v9t9-home>/build/bin .
 
 Two versions of the v9t9.jnlp are deployed, v9t9-local.jnlp for testing locally 
 and v9t9-remote.jnlp for using on a web server.
