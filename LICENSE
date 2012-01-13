@@ -4,7 +4,8 @@ licensing issues.  To be safe, just follow and contribute (if you
 want) to the mainline and do not publish your own version.
 
 The plan for now is that the Java components of this software be
-licensed under EPL v1.0 <http://www.eclipse.org/legal/epl-v10.html>.
+licensed under EPL v1.0 <http://www.eclipse.org/legal/epl-v10.html>,
+with the exception that NO COMMERICAL DISTRIBUTION IS ALLOWED.
 
 The original C code (v9t9/v9t9-c) is marked in sources as being 
 licensed under GNU GPL v2, but as that is not being developed 
