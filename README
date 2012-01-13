@@ -11,11 +11,15 @@ the assembly port which formed the original V9t9, back when it was
 still being sold.
 
 To build standalone, see v9t9/v9t9-java/v9t9-gui/data/release/Deploy_Setup.txt.
-This will make Java web start archives.
+This will make a Java Web Start release in both local and web-hosted
+variants.
 
 To build and develop in Eclipse, which is easier but requires Eclipse 3.6
-(not tested on anything newer), import base/ejs-base and v9t9/v9t9-java/*
-then run v9t9.gui.Emulator.
+(not tested on anything newer), import base/ejs-base and v9t9/v9t9-java/*.
+Afterwards, go to Window > Preferences > Java > Build Path > User Libraries
+and define a library called SWT which points to an SWT .jar file from
+base/ejs-base/libs/swt (e.g. org.eclipse.swt.win32.win32.x86.jar).  
+At this point everything should build properly.  Then run v9t9.gui.Emulator.
 
 -- Ed
 
