@@ -1,0 +1,14 @@
+
+I'm making these sources public but have not ironed out all the
+licensing issues.  To be safe, just follow and contribute (if you
+want) to the mainline and do not publish your own version.
+
+The plan for now is that the Java components of this software be
+licensed under EPL v1.0 <http://www.eclipse.org/legal/epl-v10.html>.
+
+The original C code (v9t9/v9t9-c) is marked in sources as being 
+licensed under GNU GPL v2, but as that is not being developed 
+right now, just ignore it or leave it out if you choose to redistribute 
+sources.
+
+

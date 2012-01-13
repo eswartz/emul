@@ -1,2 +1,21 @@
 
+V9t9 emulates the TI-99/4A (by default) though it can support other
+machines -- only made-up ones for now, using much of the same hardware.
+
+I've been working on this in various forms since 1992.  The Java port
+was quite nastily ported directly from the C port starting 2005.  The C
+port never really saw the light of day (it was a bit way too geeky for
+the average user to understand, and only built against GNU C in Linux
+and Metrowerks Codewarrior in Windows).  The C port was written from 
+the assembly port which formed the original V9t9, back when it was 
+still being sold.
+
+To build standalone, see v9t9/v9t9-java/v9t9-gui/data/release/Deploy_Setup.txt.
+This will make Java web start archives.
+
+To build and develop in Eclipse, which is easier but requires Eclipse 3.6
+(not tested on anything newer), import base/ejs-base and v9t9/v9t9-java/*
+then run v9t9.gui.Emulator.
+
+-- Ed
 
