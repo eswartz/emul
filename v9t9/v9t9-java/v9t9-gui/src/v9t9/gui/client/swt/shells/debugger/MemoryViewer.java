@@ -20,11 +20,15 @@ import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.MouseEvent;
@@ -48,6 +52,8 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
+import ejs.base.properties.IPersistable;
+import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
 
@@ -62,7 +68,7 @@ import v9t9.gui.common.FontUtils;
  * @author Ed
  *
  */
-public class MemoryViewer extends Composite {
+public class MemoryViewer extends Composite implements IPersistable {
 
 	private TableViewer byteTableViewer;
 	private ComboViewer entryViewer;
@@ -126,23 +132,108 @@ public class MemoryViewer extends Composite {
 		});
 	}
 
-	
-	protected void scrollToActiveRegion(int lowRange, int hiRange) {
-		int row = getMemoryRowIndex(lowRange);
-		if (byteTableViewer.getContentProvider() instanceof ILazyContentProvider) {
-			try {
-				((ILazyContentProvider)byteTableViewer.getContentProvider()).updateElement(row);
-			} catch (Exception e) {
-				// can throw if it's not gonna be visible
+	/* (non-Javadoc)
+	 * @see ejs.base.properties.IPersistable#saveState(ejs.base.settings.ISettingSection)
+	 */
+	@Override
+	public void saveState(ISettingSection section) {
+		section.put("Range", currentRange != null ? currentRange.toString() : null);
+		section.put("AutoRefresh", autoRefresh);
+		section.put("PinMemory", pinMemory);
+		section.put("FilterMemory", filterMemory);
+		
+		TableItem item = byteTableViewer.getTable().getItem(new Point(0, 0));
+		if (item != null && item.getData() instanceof MemoryRow) {
+			section.put("FirstRowAddr", ((MemoryRow) item.getData()).getAddress());
+		}
+		// I can't seem to directly query the last row in the visible height of the table,
+		// hence this loop...
+		for (int y = 0; y < 256; y++) {
+			item = byteTableViewer.getTable().getItem(new Point(0, byteTableViewer.getTable().getItemHeight() * y)); 
+			if (item != null && item.getData() instanceof MemoryRow) {
+				section.put("LastRowAddr", ((MemoryRow) item.getData()).getAddress());
+			} else {
+				break;
 			}
 		}
-		Object elementAt = byteTableViewer.getElementAt(row);
-		if (elementAt != null) {
-			byteTableViewer.reveal(elementAt);
+	}
+	/* (non-Javadoc)
+	 * @see ejs.base.properties.IPersistable#loadState(ejs.base.settings.ISettingSection)
+	 */
+	@Override
+	public void loadState(ISettingSection section) {
+		if (section == null)
+			return;
+		String range = section.get("Range");
+		if (range != null)
+			currentRange = MemoryRange.fromString(memory, range);
+		autoRefresh = section.getBoolean("AutoRefresh");
+		pinMemory = section.getBoolean("PinMemory");
+		filterMemory = section.getBoolean("FilterMemory");
+		
+		final int visLoAddr = section.getInt("FirstRowAddr");
+		final int visHiAddr = section.getInt("LastRowAddr");
+		
+		if (entryViewer != null) {
+			final long timeout = System.currentTimeMillis() + 1000;
+			final ControlListener resetRangeListener = new ControlAdapter() {
+				/* (non-Javadoc)
+				 * @see org.eclipse.swt.events.ControlAdapter#controlResized(org.eclipse.swt.events.ControlEvent)
+				 */
+				@Override
+				public void controlResized(ControlEvent e) {
+					if (System.currentTimeMillis() < timeout)
+						scrollToActiveRegion(visLoAddr, visHiAddr);
+					else
+						byteTableViewer.getTable().removeControlListener(this);
+				}
+			}; 
+			
+			getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					refreshButton.setSelection(autoRefresh);
+					pinButton.setSelection(pinMemory);
+					filterButton.setSelection(filterMemory);
+							
+
+					// apply filter
+					entryViewer.refresh();
+					
+					if (currentRange != null) {
+						entryViewer.setSelection(new StructuredSelection(currentRange.getEntry()));
+						changeCurrentRange(currentRange);
+						byteTableViewer.getTable().addControlListener(resetRangeListener);
+					}
+					
+				}
+			});
+			
 		}
+	}
+	
+	
+
+	protected void scrollToActiveRegion(int lowRange, int hiRange) {
+		int row = getMemoryRowIndex(lowRange);
 		int visibleRows = byteTableViewer.getTable().getSize().y 
 			/ byteTableViewer.getTable().getItemHeight();
 		int endRow = getMemoryRowIndex(hiRange);
+		
+		Object elementAt;
+		
+		if (false) {
+			if (byteTableViewer.getContentProvider() instanceof ILazyContentProvider) {
+				try {
+					((ILazyContentProvider)byteTableViewer.getContentProvider()).updateElement(row);
+				} catch (Exception e) {
+					// can throw if it's not gonna be visible
+				}
+			}
+			elementAt = byteTableViewer.getElementAt(row);
+			if (elementAt != null) {
+				byteTableViewer.reveal(elementAt);
+			}
+		}
 		if (visibleRows >= endRow - row) {
 			if (byteTableViewer.getContentProvider() instanceof ILazyContentProvider) {
 				try {
@@ -156,6 +247,7 @@ public class MemoryViewer extends Composite {
 				byteTableViewer.reveal(elementAt);
 			}
 		}
+		
 	}
 
 	protected final int getMemoryRowIndex(int addr) {
@@ -463,7 +555,7 @@ public class MemoryViewer extends Composite {
 			synchronized (currentRange) {
 				lowRange = currentRange.getLowTouchRange();
 				hiRange = currentRange.getHiTouchRange();
-				if (lowRange < hiRange) {
+				if (lowRange <= hiRange) {
 					if (!byteTableViewer.getTable().isDisposed()) {
 						if (pinMemory) {
 							byteTableViewer.setSelection(null);

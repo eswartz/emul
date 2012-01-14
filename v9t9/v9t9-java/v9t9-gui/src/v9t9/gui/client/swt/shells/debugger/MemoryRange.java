@@ -6,6 +6,8 @@ package v9t9.gui.client.swt.shells.debugger;
 import java.util.Set;
 import java.util.TreeSet;
 
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
 
@@ -100,7 +102,7 @@ public class MemoryRange {
 		return hiRange;
 	}
 	public synchronized void clearTouchRange() {
-		lowRange = 0xfffff;
+		lowRange = Integer.MAX_VALUE;
 		hiRange = 0;
 	}
 	public void removeMemoryListener() {
@@ -117,6 +119,38 @@ public class MemoryRange {
 	}
 	public IMemoryEntry getEntry() {
 		return entry;
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return entry.getDomain().getIdentifier() + "|" + addr + "|" + len;
+	}
+	/**
+	 * @param range
+	 * @return
+	 */
+	public static MemoryRange fromString(IMemory memory, String range) {
+		if (range == null)
+			return null;
+		String[] parts = range.split("\\|");
+		if (parts.length != 3)
+			return null;
+		IMemoryDomain domain = memory.getDomain(parts[0]);
+		if (domain == null)
+			return null;
+		try {
+			int addr = Integer.parseInt(parts[1]);
+			int len = Integer.parseInt(parts[2]);
+			IMemoryEntry entry = domain.getEntryAt(addr);
+			if (entry == null)
+				return null;
+			return new MemoryRange(entry, addr, len);
+		} catch (NumberFormatException e) {
+			return null;
+		}
 	}
 	
 }
