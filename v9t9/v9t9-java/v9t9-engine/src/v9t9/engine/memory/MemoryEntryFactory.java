@@ -64,7 +64,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 		MemoryArea area;
 		IMemoryEntry entry;
     	
-    	if (info.getFilename() != null) {
+    	if (info.getResolvedFilename(settings) != null) {
     		if (info.isByteSized())
         		area = new ByteMemoryArea();
         	else
@@ -135,7 +135,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
      * @throws IOException if the memory cannot be read and is not stored
      */
     private DiskMemoryEntry newFromFile(MemoryEntryInfo info, MemoryArea area) throws IOException {
-    	return newFromFile(info, info.getName(), info.getFilename(), info.getFileMD5(), info.getOffset(), area);
+    	return newFromFile(info, info.getName(), info.getResolvedFilename(settings), info.getFileMD5(), info.getOffset(), area);
     }
     
     /** 

@@ -6,7 +6,6 @@
  */
 package v9t9.engine.memory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -42,7 +41,8 @@ public class DiskMemoryEntry extends MemoryEntry {
     	super();
     }
     DiskMemoryEntry(MemoryEntryInfo info, String name, MemoryArea area, StoredMemoryEntryInfo storedInfo) {
-    	super(name, info.getDomain(storedInfo.memory), info.getAddress(), storedInfo.size - storedInfo.fileoffs, area);
+    	super(name, info.getDomain(storedInfo.memory), info.getAddress(), 
+    			Math.min(Math.abs(info.getSize()), storedInfo.size) - storedInfo.fileoffs, area);
 		this.info = info;
 		this.storedInfo = storedInfo;
 		this.locator = storedInfo.locator;
@@ -76,20 +76,22 @@ public class DiskMemoryEntry extends MemoryEntry {
             try {
         		// note: if stored, this finds the user's copy first or the original template
         		URI uri = null;
+
+        		String theFilename = info.getResolvedFilename(storedInfo.settings);
         		
         		if (storedInfo.md5 != null) {
 					uri = locator.findFileByMD5(storedInfo.md5);
 					System.out.println("*** Found matching entry by MD5: " + uri);
-					filename = locator.splitFileName(uri).second;
+					filename = theFilename = locator.splitFileName(uri).second;
 				}
         		
-        		if (uri == null && filename != null) {
-        			uri = locator.findFile(filename);
+        		if (uri == null && theFilename != null) {
+					uri = locator.findFile(theFilename);
         		}
         			
-        		if (uri == null && filename != null) {
+        		if (uri == null && theFilename != null) {
         			if (info.isStored()) {
-        				uri = locator.getWriteURI(filename);
+        				uri = locator.getWriteURI(theFilename);
         			}
         		}
             	if (uri == null) {
@@ -132,11 +134,11 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 */
 	private int fixupFileSize(URI uri, int filesize) throws IOException {
 
-		int size = storedInfo.size;
+		int size = info.getSize();
 		
 		try {
 			try {
-				filesize = (int) new File(uri).length();
+				filesize = storedInfo.locator.getContentLength(uri);
 			} catch (IllegalArgumentException e) {
 				filesize = locator.getContentLength(uri);
 			}

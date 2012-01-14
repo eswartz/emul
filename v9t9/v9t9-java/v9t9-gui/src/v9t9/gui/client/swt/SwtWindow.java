@@ -62,6 +62,7 @@ import v9t9.gui.client.swt.bars.EmulatorStatusBar;
 import v9t9.gui.client.swt.bars.ImageProvider;
 import v9t9.gui.client.swt.bars.MultiImageSizeProvider;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
+import v9t9.gui.client.swt.shells.ROMSetupDialog;
 import v9t9.gui.client.swt.shells.ToolShell;
 import v9t9.gui.client.swt.svg.ISVGLoader;
 import v9t9.gui.client.swt.svg.SVGImageProvider;
@@ -435,13 +436,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 				
 			}
 		});
-		menuShell.getDisplay().syncExec(new Runnable() {
-			public void run() {
-				runMenu(null, 0, 0, menu);
-				menuShell.dispose();		
-			}
-		});
 		
+		runMenu(null, 0, 0, menu);
+		menuShell.dispose();	
+		shell.forceActive();
+		focusRestorer.restoreFocus();
 	}
 
 	/**
@@ -790,6 +789,16 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		});
 
+		MenuItem setup = new MenuItem(menu, SWT.NONE);
+		setup.setText("Setup &ROMs");
+		setup.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				toggleToolShell(ROMSetupDialog.ROM_SETUP_TOOL_ID, 
+						ROMSetupDialog.getToolShellFactory(machine, SwtWindow.this));
+			}
+		});
+		
 		if (withExit) {
 			MenuItem exit = new MenuItem(menu, SWT.NONE);
 			exit.setText("E&xit");

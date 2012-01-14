@@ -10,6 +10,8 @@ import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
@@ -42,12 +44,20 @@ public class ToolShell {
 			IFocusRestorer focusRestorer_,
 			boolean isHorizontal,
 			Behavior behavior) {
-		this.boundsPref = settings.get(ISettingsHandler.INSTANCE, new SettingProperty(behavior.boundsPref, ""));
+		this.boundsPref = settings.get(ISettingsHandler.INSTANCE, 
+				new SettingProperty(behavior.boundsPref, SwtPrefUtils.writeBoundsString(behavior.defaultBounds)));
+		
 		this.shell = new Shell(parentShell, SWT.TOOL | SWT.RESIZE | SWT.CLOSE | SWT.TITLE);
 		this.focusRestorer = focusRestorer_;
 		this.behavior = behavior;
 		this.isHorizontal = isHorizontal;
-		this.clickOutsideCheckTime = System.currentTimeMillis() + 1500;	// let it show up first, so click on the button that created it doesn't kill it
+		
+		shell.addShellListener(new ShellAdapter() {
+			@Override
+			public void shellActivated(ShellEvent e) {
+				clickOutsideCheckTime = System.currentTimeMillis() + 1500;	// let it show up first, so click on the button that created it doesn't kill it
+			}
+		});
 	}
 	
 	public void init(Control tool) {
@@ -194,13 +204,19 @@ public class ToolShell {
 		else
 			pt = new Point(bbounds.x, bbounds.y);
 		
-		if (isHorizontal) {
-			pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
-					pt.y + (behavior.centering == Centering.INSIDE ? -sbounds.height: bbounds.height));
+		if (behavior.centering == Centering.CENTER) {
+			pt = new Point(pt.x + sbounds.width / 2,
+					pt.y + sbounds.height / 2);
+			
+		} else {
+			if (isHorizontal) {
+				pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
+						pt.y + (behavior.centering == Centering.INSIDE ? -sbounds.height: bbounds.height));
+			}
+			else
+				pt = new Point(pt.x + (behavior.centering == Centering.INSIDE ? -sbounds.width: bbounds.width),
+						pt.y + (bbounds.height - sbounds.height) / 2);
 		}
-		else
-			pt = new Point(pt.x + (behavior.centering == Centering.INSIDE ? -sbounds.width: bbounds.width),
-					pt.y + (bbounds.height - sbounds.height) / 2);
 		
 		Rectangle dbounds = shell.getDisplay().getBounds();
 		if (pt.x < 0)

@@ -6,6 +6,9 @@ package v9t9.common.memory;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.settings.SettingSchema;
+
 /**
  * @author ejs
  *
@@ -45,6 +48,10 @@ public class MemoryEntryInfo {
 	
 	/** Int */
 	public static final String UNIT_SIZE = "unitSize";
+	/** String */
+	public static final String DESCRIPTION = "description";
+	/** SettingsSchema */
+	public static final String FILENAME_PROPERTY = "fileProperty";
 
 	private Map<String, Object> properties;
 	
@@ -53,6 +60,14 @@ public class MemoryEntryInfo {
 	}
 
 	
+	/**
+	 * @param props
+	 */
+	public MemoryEntryInfo(Map<String, Object> props) {
+		this.properties = props;
+	}
+
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -114,6 +129,11 @@ public class MemoryEntryInfo {
 		return getString(MemoryEntryInfo.FILENAME);
 	}
 	
+
+	public SettingSchema getFilenameProperty() {
+		return (SettingSchema) properties.get(MemoryEntryInfo.FILENAME_PROPERTY);
+	}
+	
 	public String getFileMD5() {
 		return getString(MemoryEntryInfo.FILE_MD5);
 	}
@@ -167,4 +187,14 @@ public class MemoryEntryInfo {
 	public Class<?> getBankedClass() {
 		return (Class<?>) properties.get(CLASS);
 	}
+
+
+	public String getResolvedFilename(ISettingsHandler settings) {
+		if (getFilenameProperty() != null)
+			return settings.get(getFilenameProperty()).getString();
+		else
+			return getFilename();
+	}
+
+
 }

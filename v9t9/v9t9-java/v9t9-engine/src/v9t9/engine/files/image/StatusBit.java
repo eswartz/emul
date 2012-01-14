@@ -27,4 +27,11 @@ public enum StatusBit {
 	StatusBit(int val) {
 		this.val = val;
 	}
+	
+	/**
+	 * @return the val
+	 */
+	public int getVal() {
+		return val;
+	}
 }

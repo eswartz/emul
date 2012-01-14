@@ -3,15 +3,13 @@
  */
 package v9t9.engine.memory;
 
-import java.util.Collections;
-import java.util.List;
 
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.common.modules.IModule;
+import v9t9.common.memory.MemoryEntryInfo;
 
 /**
  * @author ejs
@@ -70,30 +68,19 @@ public class StockMemoryModel implements IMemoryModel {
 	public void loadMemory(IEventNotifier eventNotifier) {
 		
 	}
-	
-	public GplMmio getGplMmio() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	public SoundMmio getSoundMmio() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	public SpeechMmio getSpeechMmio() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	public VdpMmio getVdpMmio() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
+
 	/* (non-Javadoc)
-	 * @see v9t9.engine.memory.MemoryModel#getModules()
+	 * @see v9t9.common.memory.IMemoryModel#getOptionalRomProperties()
 	 */
-	public List<IModule> getModules() {
-		return Collections.emptyList();
+	@Override
+	public MemoryEntryInfo[] getOptionalRomMemoryEntries() {
+		return new MemoryEntryInfo[0];
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryModel#getRequiredRomProperties()
+	 */
+	@Override
+	public MemoryEntryInfo[] getRequiredRomMemoryEntries() {
+		return new MemoryEntryInfo[0];
 	}
 }

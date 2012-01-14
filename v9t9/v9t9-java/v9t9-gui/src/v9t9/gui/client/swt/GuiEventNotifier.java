@@ -56,6 +56,9 @@ public final class GuiEventNotifier extends BaseEventNotifier {
 	protected void consumeEvent(final NotifyEvent event) {
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
+				if (swtWindow.getShell().isDisposed())
+					return;
+				
 				if (lastTooltip != null)
 					lastTooltip.dispose();
 				

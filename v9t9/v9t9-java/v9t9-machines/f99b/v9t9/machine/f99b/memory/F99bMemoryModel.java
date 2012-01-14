@@ -141,4 +141,20 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	public void resetMemory() {
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryModel#getRequiredRomProperties()
+	 */
+	@Override
+	public MemoryEntryInfo[] getRequiredRomMemoryEntries() {
+		return new MemoryEntryInfo[0];
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryModel#getOptionalRomProperties()
+	 */
+	@Override
+	public MemoryEntryInfo[] getOptionalRomMemoryEntries() {
+		return new MemoryEntryInfo[0];
+	}
 }

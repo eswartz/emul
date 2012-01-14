@@ -139,8 +139,8 @@ public class Emulator {
 			for (File entry : entries) {
 				deleteDirectory(entry);
 			}
-			top.delete();
-		}
+		} 
+		top.delete();
 	}
 
 

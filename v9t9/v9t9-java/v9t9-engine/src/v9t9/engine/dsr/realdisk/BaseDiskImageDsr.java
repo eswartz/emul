@@ -121,7 +121,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	
 	private TimerTask motorTickTask;
 
-	private byte lastStatus;
+	private byte lastStatus = -1;
 
 
 	protected IProperty realDiskDsrActiveSetting;
@@ -339,17 +339,18 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	}
 	
 	public byte readStatus() {
-		StringBuilder status = new StringBuilder();
-		byte ret = fdc.getStatus().calculate(fdc.getCommand(), status);
+		byte ret = fdc.getStatus().calculate(fdc.getCommand());
 		
 		BaseDiskImage image = getSelectedDiskImage();
 		boolean realTime = settingRealTime.getBoolean();
 		if ((image != null && !image.isMotorRunning() && 
 				(!realTime || image.getMotorTimeout() > 0))
 				|| (realTime && fdc.commandBusyExpiration > System.currentTimeMillis()))
-			ret |= 0x1;
+			ret |= StatusBit.BUSY.getVal();
 		
 		if (ret != lastStatus) {
+			StringBuilder status = new StringBuilder();
+			fdc.getStatus().toString(fdc.getCommand());
 			dumper.info(("FDC read status >" + HexUtils.toHex2(ret) + " : " + status));
 		}
 		lastStatus = ret;

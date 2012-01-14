@@ -380,7 +380,8 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 		
 		// TODO: remove from end?
 		mappedEntries.remove(memoryEntry);
-		
+
+		mapEntryAreas(memoryEntry.getAddr(), memoryEntry.getSize(), zeroMemoryEntry);
 		for (IMemoryEntry entry : mappedEntries) {
 			mapEntryAreas(entry.getAddr(), entry.getSize(), entry);
 		}

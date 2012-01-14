@@ -116,9 +116,15 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 		try {
 			entry = memory.getMemoryEntryFactory().newMemoryEntry(info);
 		} catch (IOException e) {
-			reportLoadError(eventNotifier, info.getFilename(), e);
+			reportLoadError(eventNotifier, info.getResolvedFilename(Settings.getSettings(machine)), e);
 			return null;
 		}
+		
+		IMemoryDomain domain = info.getDomain(memory);
+		IMemoryEntry old = domain.getEntryAt(info.getAddress());
+		if (old != null)
+			domain.unmapEntry(old);
+		
 		memory.addAndMap(entry);
 		return entry;
 	}

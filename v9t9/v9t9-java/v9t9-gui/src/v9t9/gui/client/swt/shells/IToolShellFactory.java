@@ -3,6 +3,7 @@
  */
 package v9t9.gui.client.swt.shells;
 
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
@@ -19,6 +20,7 @@ public interface IToolShellFactory {
 	public enum Centering {
 		INSIDE,
 		OUTSIDE,
+		CENTER
 	}
 	
 	/** The behavior of the shell */
@@ -35,6 +37,7 @@ public interface IToolShellFactory {
 		 * it is dismissed.
 		 */
 		public String boundsPref;
+		public Rectangle defaultBounds;
 	}
 	
 	/** Provides the tool shell behavior (queried once when a shell is created) */

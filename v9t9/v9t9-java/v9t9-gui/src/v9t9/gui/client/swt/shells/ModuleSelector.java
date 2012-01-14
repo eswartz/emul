@@ -372,6 +372,15 @@ public class ModuleSelector extends Composite {
 		
 		viewerUpdater.start();
 		
+
+		addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				pauseProperty.setBoolean(wasPaused);
+			}
+		});
+		
 		addDisposeListener(new DisposeListener() {
 			
 			@Override
@@ -586,19 +595,6 @@ public class ModuleSelector extends Composite {
 		tableFont = desc.createFont(getDisplay()); 
 		table.setFont(tableFont);
 
-		addDisposeListener(new DisposeListener() {
-			
-			@Override
-			public void widgetDisposed(DisposeEvent e) {
-				if (tableFont != null)
-					tableFont.dispose();
-				/*for (Image image : loadedImages.values()) {
-					image.dispose();
-				}*/
-				pauseProperty.setBoolean(wasPaused);
-			}
-		});
-		
 		nameColumn = new TableColumn(table, SWT.LEFT);
 		nameColumn.setText("Name");
 
@@ -719,6 +715,19 @@ public class ModuleSelector extends Composite {
 			
 		};
 		nameViewerColumn.setEditingSupport(editingSupport);
+		
+
+		addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				if (tableFont != null)
+					tableFont.dispose();
+				/*for (Image image : loadedImages.values()) {
+					image.dispose();
+				}*/
+			}
+		});
 		
 		return viewer;
 	}

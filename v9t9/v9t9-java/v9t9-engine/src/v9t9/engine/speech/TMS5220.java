@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
 import ejs.base.settings.Logging;
 import ejs.base.utils.BinaryUtils;
@@ -16,11 +17,14 @@ import ejs.base.utils.ListenerList.IFire;
 
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.Settings;
 import v9t9.common.speech.ISpeechDataSender;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import static v9t9.common.speech.TMS5220Consts.*;
@@ -30,6 +34,19 @@ import static v9t9.common.speech.TMS5220Consts.*;
  *
  */
 public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender {
+
+	public final static SettingSchema settingSpeechRomFileName = 
+		new SettingSchema(ISettingsHandler.WORKSPACE, "SpeechRomFileName", "spchrom.bin");
+	
+	public static MemoryEntryInfo speechRomInfo = MemoryEntryInfoBuilder
+		.byteMemoryEntry()
+		.withDomain(IMemoryDomain.NAME_SPEECH)
+		.withFilenameProperty(settingSpeechRomFileName)
+		.withDescription("Speech Synthesizer Vocabulary ROM")
+		.withSize(-0x10000)
+		.withFileMD5("7ADCAF64272248F7A7161CFC02FD5B3F")
+		.create("Speech ROM");
+	
 
 	private final int SPEECH_TIMEOUT = 25+9;
 	
@@ -65,36 +82,29 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	private boolean speechOn;
 
 	private IProperty logSpeech;
+
+	private final IMachine machine;
 	
-	private final static MemoryEntryInfo speechMemoryEntryInfo = 
-		MemoryEntryInfoBuilder
-			.byteMemoryEntry()
-			.withDomain(IMemoryDomain.NAME_SPEECH)
-			.withFilename("spchrom.bin")
-			.withSize(0x8000)
-			.create("Speech ROM");
 	
 	public TMS5220(final IMachine machine, final ISettingsHandler settings, final IMemoryDomain speech) {
+		this.machine = machine;
 		logSpeech = settings.get(LPCSpeech.settingLogSpeech);
 		Logging.registerLog(logSpeech, 
 				new PrintWriter(System.out, true));
 		
-		Runnable runnable = new Runnable() {
-			public void run() {
-				try {
-					speechRom = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(speechMemoryEntryInfo);
-					speechRom.load();
-					speechRom.getDomain().mapEntry(speechRom);
-				} catch (IOException e) {
-					System.err.println("Failed to load: " + e.getMessage());
-				}
-				
+		IPropertyListener speechRomFilenameListener = new IPropertyListener() {
+
+			@Override
+			public void propertyChanged(IProperty property) {
+				// load later
+				if (speechRom != null)
+					speech.unmapEntry(speechRom);
+				speechRom = null;
 			}
+			
 		};
-		if (machine != null)
-			machine.asyncExec(runnable);
-		else
-			runnable.run();
+		
+		Settings.get(machine, settingSpeechRomFileName).addListener(speechRomFilenameListener);
 		
 		fifo = new byte[16];
 		lpc = new LPCSpeech(settings);
@@ -131,6 +141,18 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	}
 
 	public byte read() {
+		if (speechRom == null) {
+			try {
+				speechRom = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(speechRomInfo);
+				speechRom.load();
+				speechRom.getDomain().mapEntry(speechRom);
+			} catch (IOException e) {
+				machine.notifyEvent(Level.WARNING, 
+						"Did not find Speech ROM: " 
+						+ speechRomInfo.getResolvedFilename(Settings.getSettings(machine)) +"; speech may not work");
+			}
+			
+		}
 		byte ret;
 		if ((gate & GT_RSTAT) != 0) {
 			byte stat = (byte) (status | 

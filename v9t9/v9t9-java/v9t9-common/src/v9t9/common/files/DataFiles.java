@@ -138,10 +138,10 @@ public class DataFiles {
 			while (left > 0  && (len = is.read(result)) >= 0) {
 				bos.write(result, 0, Math.min(len, left));
 			}
-		} catch (IOException e) {
-			if (is != null)
-				is.close();
-			throw e;
+		} finally {
+			if (is != null) {
+				try { is.close(); } catch (IOException e) { }
+			}
 		}
 		return bos.toByteArray();
 	}

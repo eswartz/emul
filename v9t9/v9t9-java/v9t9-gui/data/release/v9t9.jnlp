@@ -69,6 +69,9 @@
 
 	<application-desc 
 		main-class="v9t9.gui.Emulator">
+		<!--
+		<argument>-C -c /tmp/v9t9</argument>	
+		-->
     </application-desc>
     
 </jnlp>

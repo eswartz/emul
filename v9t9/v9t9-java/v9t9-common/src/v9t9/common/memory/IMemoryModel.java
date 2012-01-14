@@ -37,5 +37,20 @@ public interface IMemoryModel {
 	 * Reset memory to load-time state
 	 */
 	void resetMemory();
+
+	/**
+	 * Return an array of entries specifying the characteristics
+	 * of required ROMs
+	 * @return
+	 */
+	MemoryEntryInfo[] getRequiredRomMemoryEntries();
+	
+
+	/**
+	 * Return an array of entries specifying the characteristics
+	 * of optional ROMs
+	 * @return
+	 */
+	MemoryEntryInfo[] getOptionalRomMemoryEntries();
 	
 }

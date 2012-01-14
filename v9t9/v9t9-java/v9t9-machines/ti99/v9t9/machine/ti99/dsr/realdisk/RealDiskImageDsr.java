@@ -12,11 +12,13 @@ import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.SettingProperty;
 
 
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.settings.SettingSchema;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.dsr.realdisk.BaseDiskImageDsr;
@@ -38,6 +40,18 @@ import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
 public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 {
 	private IMemoryEntry romMemoryEntry;
 	
+	public static SettingSchema settingDsrRomFileName = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
+			"RealDiskDsrFileName",
+			"disk.bin");
+
+	public static MemoryEntryInfo dsrRomInfo = MemoryEntryInfoBuilder
+			.standardDsrRom(null)
+			.withFilenameProperty(settingDsrRomFileName)
+			.withDescription("TI Disk Controller ROM")
+			.withFileMD5("09DAEE0CFBC4C353BE8F2D5D45812F57")
+			.create("TI Disk DSR ROM");
+
 
 	static final int 
 		R_RDSTAT = 0,
@@ -291,19 +305,14 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 	}
 
 
-	private static MemoryEntryInfo realDiskDsrMemoryEntryInfo = MemoryEntryInfoBuilder
-		.standardDsrRom("disk.bin")
-		.create("TI Disk DSR ROM");
-
 	public void activate(IMemoryDomain console, IMemoryEntryFactory memoryEntryFactory) throws IOException {
-		if (!settingDsrEnabled.getBoolean())
+		if (!settingDsrEnabled.getBoolean() || realDiskDsrActiveSetting.getBoolean())
 			return;
 		
 		realDiskDsrActiveSetting.setBoolean(true);
 		
-		if (romMemoryEntry == null)
-			this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(
-					realDiskDsrMemoryEntryInfo);
+		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(dsrRomInfo);
+		
 		if (ioMemoryEntry == null) {
 			ioArea = new DiskMMIOMemoryArea();
 			ioMemoryEntry = new MemoryEntry("TI Disk DSR ROM MMIO", console, 0x5C00, 0x400, ioArea);
