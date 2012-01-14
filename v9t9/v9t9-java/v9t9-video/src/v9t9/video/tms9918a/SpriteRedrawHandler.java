@@ -187,12 +187,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 			if (deleted) {
 				sprite.setDeleted(true);
 			} else {
-				/*  just trigger dirty by looking at the following stuff
-				if ((info.vdpChanges.sprite & (1 << i)) != 0) {
-					sprite.setBitmapDirty(true);
-				}
-				*/
-				sprite.setDeleted(color == 0);
+				sprite.setDeleted(false);
 				sprite.move(x, (y + 1) & 0xff);
 				sprite.setColor(color);
 				sprite.setShift(shift);
