@@ -311,7 +311,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 		filterButton.setSize(24, 24);
 		filterMemory = true;
 		filterButton.setSelection(true);
-		filterButton.setToolTipText("View only writeable RAM entries");
+		filterButton.setToolTipText("View only RAM entries if set");
 		filterButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
