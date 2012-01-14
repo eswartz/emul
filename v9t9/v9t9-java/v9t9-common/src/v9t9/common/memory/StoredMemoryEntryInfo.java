@@ -69,7 +69,7 @@ public class StoredMemoryEntryInfo {
 		
 		URI uri = null;
     	if (!info.isStored()) {
-    		uri = locator.findFile(filename);
+    		uri = md5 != null && md5.equals(info.getFileMD5()) ? locator.findFile(settings, info) : locator.findFile(filename);
     		if (uri == null) {
     			throw new FileNotFoundException(filename);
     		}
@@ -94,6 +94,4 @@ public class StoredMemoryEntryInfo {
         return new StoredMemoryEntryInfo(info, settings, memory, locator, 
         		uri, filename, md5, name, fileoffs, filesize);
 	}
-    
-
 }

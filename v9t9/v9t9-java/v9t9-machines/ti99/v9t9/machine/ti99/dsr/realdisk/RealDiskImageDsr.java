@@ -43,7 +43,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 	public static SettingSchema settingDsrRomFileName = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"RealDiskDsrFileName",
-			"disk.bin");
+			"tidiskdsr.bin");
 
 	public static MemoryEntryInfo dsrRomInfo = MemoryEntryInfoBuilder
 			.standardDsrRom(null)

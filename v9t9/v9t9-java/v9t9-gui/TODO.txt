@@ -13,7 +13,6 @@ Remote launcher & Windows & console output -- again, need logging to a file
 
 ================
 
-Storage of history (subsections) from tool shells is borked
-
 ToolShell centering is borked -- does not comprehend multiple bars
+(viz: rom setup dialog)
 

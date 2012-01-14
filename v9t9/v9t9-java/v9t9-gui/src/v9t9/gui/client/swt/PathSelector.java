@@ -24,6 +24,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * This composite allows editing of paths by adding,
@@ -39,6 +40,7 @@ public class PathSelector extends Composite {
 	private TableViewer viewer;
 	private Composite buttons;
 	private Button removeButton;
+	private IPropertyListener propertyListener;
 
 	public PathSelector(Composite parent, SwtWindow window, String pathLabel, IProperty property) {
 		super(parent, SWT.BORDER);
@@ -53,6 +55,22 @@ public class PathSelector extends Composite {
 		
 		// right side: buttons
 		createButtons();
+		
+		propertyListener = new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				if (!isDisposed()) {
+					getDisplay().asyncExec(new Runnable() {
+						public void run() {
+							viewer.refresh();
+						}
+					});
+				}
+			}
+		};
+		
+		property.addListener(propertyListener);
 	}
 
 	/**
@@ -97,7 +115,8 @@ public class PathSelector extends Composite {
 					property.getList().add(dir);
 				}
 				viewer.refresh();
-				property.firePropertyChange();
+				
+				firePropertyChangeForOthers();
 			}
 		});
 		
@@ -129,7 +148,8 @@ public class PathSelector extends Composite {
 				property.getList().add(dir);
 				viewer.add(dir);
 				lastDirectory = dir;
-				property.firePropertyChange();
+				
+				firePropertyChangeForOthers();
 			}
 		});
 
@@ -146,7 +166,7 @@ public class PathSelector extends Composite {
 						property.getList().remove(obj);
 						viewer.remove(obj);
 					}
-					property.firePropertyChange();
+					firePropertyChangeForOthers();
 				}
 			}
 		});
@@ -159,6 +179,15 @@ public class PathSelector extends Composite {
 			}
 		});
 
+	}
+
+	/**
+	 * 
+	 */
+	protected void firePropertyChangeForOthers() {
+		property.removeListener(propertyListener);
+		property.firePropertyChange();
+		property.addListener(propertyListener);
 	}
 
 }

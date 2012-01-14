@@ -84,6 +84,8 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	private IProperty logSpeech;
 
 	private final IMachine machine;
+
+	private String complainedMissingFilename;
 	
 	
 	public TMS5220(final IMachine machine, final ISettingsHandler settings, final IMemoryDomain speech) {
@@ -147,9 +149,13 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 				speechRom.load();
 				speechRom.getDomain().mapEntry(speechRom);
 			} catch (IOException e) {
-				machine.notifyEvent(Level.WARNING, 
-						"Did not find Speech ROM: " 
-						+ speechRomInfo.getResolvedFilename(Settings.getSettings(machine)) +"; speech may not work");
+				String filename = speechRomInfo.getResolvedFilename(Settings.getSettings(machine));
+				if (!filename.equals(complainedMissingFilename)) {
+					complainedMissingFilename = filename;
+					machine.notifyEvent(Level.WARNING, 
+							"Did not find Speech ROM: " 
+							+ filename +"; speech may not work");
+				}
 			}
 			
 		}

@@ -32,6 +32,9 @@ import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.memory.MemoryEntryInfo;
+
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.utils.Pair;
@@ -826,5 +829,38 @@ public class PathFileLocator implements IPathFileLocator {
 			return new Pair<String, String>(path.substring(0, idx), path.substring(idx + 1));
 		else
 			return new Pair<String, String>("", path);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#findFile(v9t9.common.memory.MemoryEntryInfo, v9t9.common.memory.StoredMemoryEntryInfo)
+	 */
+	@Override
+	public URI findFile(ISettingsHandler settings, MemoryEntryInfo info) {
+		// note: if stored, this finds the user's copy first or the original template
+		URI uri = null;
+
+		// default is to match by content unless filename is overridden...
+		boolean searchByContent = info.getFileMD5() != null && info.isDefaultFilename(settings);
+			
+		String theFilename = info.getResolvedFilename(settings);
+		
+		if (searchByContent) {
+			uri = findFileByMD5(info.getFileMD5());
+			if (uri != null) {
+				//System.out.println("*** Found matching entry by MD5: " + uri);
+				theFilename = splitFileName(uri).second;
+			}
+		}
+		
+		if (uri == null && theFilename != null) {
+			uri = findFile(theFilename);
+		}
+			
+		if (uri == null && theFilename != null) {
+			if (info.isStored()) {
+				uri = getWriteURI(theFilename);
+			}
+		}
+		return uri;
 	}
 }

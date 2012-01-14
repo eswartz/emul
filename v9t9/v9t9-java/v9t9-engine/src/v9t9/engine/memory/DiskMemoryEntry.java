@@ -74,30 +74,13 @@ public class DiskMemoryEntry extends MemoryEntry {
         super.load();
         if (!bLoaded) {
             try {
-        		// note: if stored, this finds the user's copy first or the original template
-        		URI uri = null;
-
-        		String theFilename = info.getResolvedFilename(storedInfo.settings);
-        		
-        		if (storedInfo.md5 != null) {
-					uri = locator.findFileByMD5(storedInfo.md5);
-					System.out.println("*** Found matching entry by MD5: " + uri);
-					filename = theFilename = locator.splitFileName(uri).second;
-				}
-        		
-        		if (uri == null && theFilename != null) {
-					uri = locator.findFile(theFilename);
-        		}
-        			
-        		if (uri == null && theFilename != null) {
-        			if (info.isStored()) {
-        				uri = locator.getWriteURI(theFilename);
-        			}
-        		}
+            	URI uri = locator.findFile(storedInfo.settings, info);
             	if (uri == null) {
                     // TODO: send alert
             		return;
             	}
+
+            	filename = locator.splitFileName(uri).second;
             	
             	int filesize = locator.getContentLength(uri);
             	

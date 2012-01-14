@@ -11,6 +11,10 @@ import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.util.Collection;
 
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.memory.StoredMemoryEntryInfo;
+
 import ejs.base.properties.IProperty;
 import ejs.base.utils.Pair;
 
@@ -144,6 +148,15 @@ public interface IPathFileLocator {
 	 * and the filename (or empty string if this represents a directory)
 	 */
 	Pair<String, String> splitFileName(URI uri);
+
+	/**
+	 * Find a file according to the default content or user-defined filename
+	 * (only works for main file, not banked file)
+	 * @param info
+	 * @param storedInfo
+	 * @return URI or null
+	 */
+	URI findFile(ISettingsHandler settings, MemoryEntryInfo info);
 
 
 

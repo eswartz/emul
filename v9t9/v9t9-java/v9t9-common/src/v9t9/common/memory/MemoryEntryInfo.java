@@ -188,6 +188,11 @@ public class MemoryEntryInfo {
 		return (Class<?>) properties.get(CLASS);
 	}
 
+	public boolean isDefaultFilename(ISettingsHandler settings) {
+		return getFilenameProperty() != null && 
+				settings.get(getFilenameProperty()).getValue().equals(
+						getFilenameProperty().getDefaultValue());
+	}
 
 	public String getResolvedFilename(ISettingsHandler settings) {
 		if (getFilenameProperty() != null)
@@ -196,5 +201,9 @@ public class MemoryEntryInfo {
 			return getFilename();
 	}
 
+
+	public String getDescription() {
+		return (String) properties.get(DESCRIPTION);
+	}
 
 }
