@@ -230,9 +230,11 @@ public class ModuleSelector extends Composite {
 			final List<Object> avail = new ArrayList<Object>();
 			while (true) {
 
-				while (!elements.isEmpty()) {
-					final Object element = elements.poll();
-					avail.add(element);
+				synchronized (avail) {
+					while (!elements.isEmpty()) {
+						final Object element = elements.poll();
+						avail.add(element);
+					}
 				}
 				if (!avail.isEmpty() && !getDisplay().isDisposed()) {
 					getDisplay().syncExec(new Runnable() {
@@ -240,7 +242,12 @@ public class ModuleSelector extends Composite {
 
 						public void run() {
 							if (!viewer.getControl().isDisposed()) {
-								viewer.update(avail.toArray(), NAME_PROPERTY_ARRAY);
+								Object[] availarray;
+								synchronized (avail) {
+									availarray = avail.toArray();
+									avail.clear();
+								}
+								viewer.update(availarray, NAME_PROPERTY_ARRAY);
 								
 								// the node may have been filtered out
 								//refreshFilters();
@@ -253,7 +260,6 @@ public class ModuleSelector extends Composite {
 									hookActions();
 								}								
 								
-								avail.clear();
 							}
 						}
 					});
@@ -1121,7 +1127,8 @@ public class ModuleSelector extends Composite {
 			}
 		}
 
-		final String imageKey = imageURI.toString() + (module == null || isModuleLoadable(module) ? "" : "?grey");
+		final boolean moduleLoadable = module == null || isModuleLoadable(module);
+		final String imageKey = imageURI.toString() + (moduleLoadable ? "" : "?grey");
 		
 		Image image;
 		synchronized (loadedImages) {
@@ -1151,7 +1158,7 @@ public class ModuleSelector extends Composite {
 								Image scaled = ImageUtils.scaleImage(getDisplay(), image, new Point(MAX, MAX), true, true);
 								image.dispose();
 								
-								if (module != null && !isModuleLoadable(module)) {
+								if (!moduleLoadable) {
 									Image grey = ImageUtils.convertToGreyscale(getDisplay(), scaled);
 									scaled.dispose();
 									scaled = grey;
