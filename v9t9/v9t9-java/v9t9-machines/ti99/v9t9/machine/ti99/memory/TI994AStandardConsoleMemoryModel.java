@@ -48,14 +48,14 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 		.standardConsoleRom(null)
 		.withFilenameProperty(settingRomFileName)
 		.withFileMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB")
-		.withDescription("Console ROM for the TI-99/4A")
+		.withDescription("TI-99/4A Console ROM")
 		.create("CPU ROM");
 	
 	static protected final MemoryEntryInfo cpuGromInfo = MemoryEntryInfoBuilder
 		.standardConsoleGrom(null)
 		.withFilenameProperty(settingGromFileName)
 		.withFileMD5("ED8FF714542BA850BDEC686840A79217")
-		.withDescription("Console GROM for the TI-99/4A")
+		.withDescription("TI-99/4A Console GROM")
 		.create("CPU GROM");
 	
     public TI994AStandardConsoleMemoryModel(IMachine machine) {
