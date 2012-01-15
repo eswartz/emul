@@ -165,7 +165,7 @@ public class ROMSetupDialog extends Dialog {
 	 */
 	@Override
 	protected Point getInitialSize() {
-		return new Point(700, 700);
+		return new Point(700, 800);
 	}
 	
 	/* (non-Javadoc)
