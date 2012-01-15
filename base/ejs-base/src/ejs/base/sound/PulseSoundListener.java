@@ -97,24 +97,6 @@ public class PulseSoundListener implements ISoundListener {
     	
 		//soundFramesPerTick = (int) (soundFormat.getFrameRate() / ticksPerSec);
 		
-		IntByReference error = new IntByReference();
-		simple = PulseAudioLibrary.INSTANCE.pa_simple_new(
-				null,
-				"PulseSoundListener",
-				PulseAudioLibrary.PA_STREAM_PLAYBACK,
-				null, // dev
-				"PulseSoundListener",
-				sampleFormat,
-				null,
-				null, //buffer
-				error);
-		
-		if (simple == null || error.getValue() != 0) {
-			System.err.println("Error contacting pulse: " + 
-					PulseAudioLibrary.INSTANCE.pa_strerror(error.getValue()));
-			simple = null;
-			return;
-		}
 		//soundGeneratorLine.open(soundFormat, soundFramesPerTick * 20 * 4);
 		
 		//System.out.println("Sound format: " + soundFormat);
@@ -123,7 +105,25 @@ public class PulseSoundListener implements ISoundListener {
 
 			public void run() {
 				IntByReference error = new IntByReference();
+
+				simple = PulseAudioLibrary.INSTANCE.pa_simple_new(
+						null,
+						"PulseSoundListener",
+						PulseAudioLibrary.PA_STREAM_PLAYBACK,
+						null, // dev
+						"PulseSoundListener",
+						sampleFormat,
+						null,
+						null, //buffer
+						error);
 				
+				if (simple == null || error.getValue() != 0) {
+					System.err.println("Error contacting pulse: " + 
+							PulseAudioLibrary.INSTANCE.pa_strerror(error.getValue()));
+					simple = null;
+					return;
+				}
+
 				while (true) {
 					AudioChunk chunk = null;
 
