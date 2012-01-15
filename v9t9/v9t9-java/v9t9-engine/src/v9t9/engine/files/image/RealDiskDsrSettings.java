@@ -41,7 +41,7 @@ public class RealDiskDsrSettings {
 			"This implements a drive (like DSK1) in a disk image on your host.\n\n"+
 			"Either sector image or track image disks are supported.\n\n"+
 			"A track image can support copy-protected disks, while a sector image cannot.",
-			Boolean.FALSE, diskImageIconPath
+			Boolean.TRUE, diskImageIconPath
 			);
 	
 	public static File defaultDiskRootDir;
