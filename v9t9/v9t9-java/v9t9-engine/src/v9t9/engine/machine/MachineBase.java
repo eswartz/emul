@@ -773,6 +773,14 @@ abstract public class MachineBase implements IMachine {
 	public IPathFileLocator getPathFileLocator() {
 		return locator;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getEventNotifier()
+	 */
+	@Override
+	public IEventNotifier getEventNotifier() {
+		return client != null ? client.getEventNotifier() : recordingNotifier;
+	}
 }
 
 

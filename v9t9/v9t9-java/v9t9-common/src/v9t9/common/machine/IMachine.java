@@ -4,6 +4,7 @@
 package v9t9.common.machine;
 
 import v9t9.common.cpu.IExecutor;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.IFileHandler;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.hardware.ICruChip;
@@ -53,4 +54,9 @@ public interface IMachine extends IBaseMachine {
 	IFileHandler getFileHandler();
 	
 	IPathFileLocator getPathFileLocator();
+
+	/**
+	 * @return
+	 */
+	IEventNotifier getEventNotifier();
 }
