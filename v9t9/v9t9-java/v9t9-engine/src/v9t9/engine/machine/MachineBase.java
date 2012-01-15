@@ -135,7 +135,7 @@ abstract public class MachineBase implements IMachine {
     	this.memory = memoryModel.getMemory();
     	this.console = memoryModel.getConsole();
 
-    	timer = new Timer();
+    	timer = new Timer(true);
     	fastTimer = new FastTimer("Machine");
 
     	init(machineModel);
@@ -382,6 +382,9 @@ abstract public class MachineBase implements IMachine {
     	        }
         	}
         };
+        
+        if (client != null)
+        	client.start();
         
         machineRunner.start();
         videoRunner.start();

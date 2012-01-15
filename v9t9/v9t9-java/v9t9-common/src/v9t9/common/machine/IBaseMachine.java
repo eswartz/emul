@@ -35,7 +35,7 @@ public interface IBaseMachine {
 			"ThrottleVDPInterrupts", new Boolean(false));
 	static public final SettingSchema settingModuleList = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"ModuleListFile", new String("modules.xml"));
+			"ModuleListFile", "");
 
 	ISettingsHandler getSettings();
 

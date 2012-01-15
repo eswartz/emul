@@ -66,6 +66,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 	protected ISoundHandler soundHandler;
 	protected FastTimer videoTimer;
 	private FastTimer soundTimer;
+	private SwtWindow window;
 
 	/**
 	 * @param machine 
@@ -87,7 +88,7 @@ public abstract class BaseSwtJavaClient implements IClient {
         
         soundHandler = new JavaSoundHandler(machine, soundGenerator, speechGenerator);
         
-        final SwtWindow window = new SwtWindow(display, machine, 
+        window = new SwtWindow(display, machine, 
         		(ISwtVideoRenderer) videoRenderer, settingsHandler,
         		soundHandler);
         eventNotifier = window.getEventNotifier();
@@ -182,11 +183,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 				soundTimer.invoke(speechDoneTask);
 			}
 		});
-        
-        if (settingsHandler.get(settingNewConfiguration).getBoolean()) {
-        	ROMSetupDialog dialog = ROMSetupDialog.createDialog(shell, machine, window);
-        	dialog.open();
-        }
 	}
 	
 
@@ -240,6 +236,17 @@ public abstract class BaseSwtJavaClient implements IClient {
 		return eventNotifier;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IClient#start()
+	 */
+	@Override
+	public void start() {
+        if (settingsHandler.get(settingNewConfiguration).getBoolean()) {
+        	ROMSetupDialog dialog = ROMSetupDialog.createDialog(window.getShell(), machine, window);
+        	dialog.open();
+        }
+	}
+	
 	public void close() {
 		soundTimer.cancel();
 		if (soundHandler != null)

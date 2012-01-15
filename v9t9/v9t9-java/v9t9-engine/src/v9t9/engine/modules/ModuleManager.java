@@ -290,7 +290,6 @@ public class ModuleManager implements IModuleManager {
 	 */
 	@Override
 	public void reload() {
-		IProperty moduleList = Settings.get(machine, IMachine.settingModuleList);
 		URI databaseURI;
 		
 		// first, get stock module database
@@ -303,16 +302,19 @@ public class ModuleManager implements IModuleManager {
 		}
 		
 		// then load any user entries
+		IProperty moduleList = Settings.get(machine, IMachine.settingModuleList);
 		String dbNameList = moduleList.getString();
 		if (dbNameList.length() > 0) {
 			String[] dbNames = dbNameList.split(";");
 			for (String dbName : dbNames) {
-				databaseURI = machine.getPathFileLocator().findFile(dbName);
-				if (databaseURI != null) {
-					registerModules(databaseURI);
-				} else {
-					machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
-							"Could not find module list " + dbName);
+				if (dbName.length() > 0) {
+					databaseURI = machine.getPathFileLocator().findFile(dbName);
+					if (databaseURI != null) {
+						registerModules(databaseURI);
+					} else {
+						machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
+								"Could not find module list " + dbName);
+					}
 				}
 					
 			}

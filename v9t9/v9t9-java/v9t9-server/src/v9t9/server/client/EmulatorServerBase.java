@@ -125,7 +125,6 @@ public abstract class EmulatorServerBase {
     				
     	} catch (IOException e) {
     		System.err.println("Setting up new configuration");
-    		settings.get(IClient.settingNewConfiguration).setBoolean(true);
     	}
     	
 
@@ -133,6 +132,7 @@ public abstract class EmulatorServerBase {
     		settings.getInstanceSettings().load();
     	} catch (IOException e) {
     		System.err.println("Setting up new instance");
+    		settings.get(IClient.settingNewConfiguration).setBoolean(true);
     	}
     	
     	this.memory = machine.getMemory();

@@ -22,7 +22,10 @@ public interface IClient {
 			ISettingsHandler.TRANSIENT, "NewConfiguration", Boolean.FALSE);
 
 	String getIdentifier();
-	
+
+
+	void start();
+
     void close();
     
     //ISettingsHandler getSettingsHandler();
