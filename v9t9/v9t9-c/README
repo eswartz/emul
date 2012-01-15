@@ -1,0 +1,9 @@
+
+This is a legacy version of V9t9 between v6.0 and the Java version.  
+It was originally built against GTK 1.2.  I fixed it so it will build
+and run, a bit, on GTK 2, but it was never bullet-tested.
+
+The only real advantage over the Java version is, it's faster, if
+you want to run insanely fast.  But the architecture is quite poor
+so it cannot be extended easily to do new things.
+
