@@ -13,7 +13,6 @@ import java.util.Collection;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.MemoryEntryInfo;
-import v9t9.common.memory.StoredMemoryEntryInfo;
 
 import ejs.base.properties.IProperty;
 import ejs.base.utils.Pair;
