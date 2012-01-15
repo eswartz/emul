@@ -21,10 +21,10 @@ public class EmuDiskSettings {
 	public static final SettingSchema emuDiskDsrEnabled = new IconSettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"EmuDiskDSREnabled", 
-	"Disk Directory Support",
-	"This implements a drive (like DSK1) in a single directory level on your host.",
-	Boolean.FALSE,
-	diskDirectoryIconPath);
+			"Disk Directory Support",
+			"This implements a drive (like DSK1) in a single directory level on your host.",
+			Boolean.TRUE,
+			diskDirectoryIconPath);
 
 	public static String getEmuDiskSetting(int i) {
 		return "DSK" + i;

@@ -68,6 +68,7 @@ public class StoredMemoryEntryInfo {
 		int filesize = size;
 		
 		URI uri = null;
+		String realMD5 = md5;
     	if (!info.isStored()) {
     		uri = md5 != null && md5.equals(info.getFileMD5()) ? locator.findFile(settings, info) : locator.findFile(filename);
     		if (uri == null) {
@@ -89,9 +90,9 @@ public class StoredMemoryEntryInfo {
     		if (info.getSize() < 0)
     			throw new IOException("negative size not allowed for stored files (in file '" + filename +"' for '" + name + "')");
     	}
-    	
+		realMD5 = locator.getContentMD5(uri);
     	
         return new StoredMemoryEntryInfo(info, settings, memory, locator, 
-        		uri, filename, md5, name, fileoffs, filesize);
+        		uri, filename, realMD5, name, fileoffs, filesize);
 	}
 }

@@ -49,6 +49,11 @@ import ejs.base.utils.Pair;
  */
 public class PathFileLocator implements IPathFileLocator {
 
+	/**
+	 * Files beyond this size are not queried for MD5
+	 */
+	private static final int MAX_FILE_SIZE = 16 * 1024 * 1024;
+
 	private static boolean DEBUG = false;
 	
 	private List<IProperty> roPathProperties = new ArrayList<IProperty>();
@@ -775,9 +780,16 @@ public class PathFileLocator implements IPathFileLocator {
 		String md5 = md5Dir.get(uri);
 		if (md5 == null) {
 			try {
-				InputStream is = createInputStream(uri);
-				byte[] content = DataFiles.readInputStreamContentsAndClose(is);
-				md5 = DataFiles.getMD5Hash(content);
+				int size = getContentLength(uri);
+				if (size < 0 || size > MAX_FILE_SIZE) {
+					// ignore huge files -- probably bogus
+					md5 = "";
+				}
+				else {
+					InputStream is = createInputStream(uri);
+					byte[] content = DataFiles.readInputStreamContentsAndClose(is);
+					md5 = DataFiles.getMD5Hash(content);
+				}
 			} catch (FileNotFoundException e) {
 				// this happens when invalid filenames are located and the
 				// URI was not properly de/en-coded -- TODO
