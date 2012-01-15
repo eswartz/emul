@@ -184,9 +184,8 @@ public abstract class BaseSwtJavaClient implements IClient {
 		});
         
         if (settingsHandler.get(settingNewConfiguration).getBoolean()) {
-        	window.toggleToolShell(ROMSetupDialog.ROM_SETUP_TOOL_ID, 
-					ROMSetupDialog.getToolShellFactory(
-							machine, window));
+        	ROMSetupDialog dialog = ROMSetupDialog.createDialog(shell, machine, window);
+        	dialog.open();
         }
 	}
 	

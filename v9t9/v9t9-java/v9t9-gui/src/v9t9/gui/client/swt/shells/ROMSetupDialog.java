@@ -4,6 +4,7 @@
 package v9t9.gui.client.swt.shells;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -11,11 +12,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
+import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
@@ -25,25 +28,26 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.DialogSettingsWrapper;
 import ejs.base.settings.ISettingSection;
 
 import v9t9.common.InternetDefinitions;
@@ -52,6 +56,7 @@ import v9t9.common.files.DataFiles;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.memory.StoredMemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.gui.client.swt.BrowserUtils;
@@ -66,9 +71,44 @@ import v9t9.gui.common.FontUtils;
  * @author ejs
  *
  */
-public class ROMSetupDialog extends Composite {
+public class ROMSetupDialog extends Dialog {
 	public static final String ROM_SETUP_TOOL_ID = "rom.setup";
 
+	/** User feedback shows this stuff is just confusing */ 
+	private static boolean ADVANCED = false;
+	
+	/*
+	public static IToolShellFactory getToolShellFactory(final IMachine machine,
+			final SwtWindow window) {
+		 return new IToolShellFactory() {
+			Behavior behavior = new Behavior();
+			{
+				behavior.boundsPref = "NewConfigBounds";
+				behavior.defaultBounds = new Rectangle(0, 0, 700, 600);
+				behavior.centering = Centering.CENTER;
+				behavior.centerOverControl = window.getShell();
+				behavior.dismissOnClickOutside = false;
+			}
+			public Control createContents(Shell shell) {
+				return new ROMSetupDialog(shell, machine, window, 
+						machine.getMemoryModel().getRequiredRomMemoryEntries(),
+						machine.getMemoryModel().getOptionalRomMemoryEntries()
+						);
+			}
+			public Behavior getBehavior() {
+				return behavior;
+			}
+		};
+	}
+	*/
+	public static ROMSetupDialog createDialog(Shell shell, final IMachine machine,
+			final SwtWindow window) {
+		 return new ROMSetupDialog(shell, machine, window, 
+						machine.getMemoryModel().getRequiredRomMemoryEntries(),
+						machine.getMemoryModel().getOptionalRomMemoryEntries()
+						);
+	}
+	
 	/*private*/ ISettingSection dialogSettings;
 
 	private SwtWindow window;
@@ -104,7 +144,7 @@ public class ROMSetupDialog extends Composite {
 
 	public ROMSetupDialog(Shell shell, IMachine machine_, SwtWindow window,
 			MemoryEntryInfo[] requiredRoms, MemoryEntryInfo[] optionalRoms) {
-		super(shell, SWT.NONE);
+		super(shell);
 		
 		this.window = window;
 		this.requiredRoms = requiredRoms;
@@ -118,12 +158,33 @@ public class ROMSetupDialog extends Composite {
 		pauseProperty = Settings.get(machine, IMachine.settingPauseMachine);
 		wasPaused = pauseProperty.getBoolean();
 		pauseProperty.setBoolean(true);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
+	 */
+	@Override
+	protected Point getInitialSize() {
+		return new Point(700, 700);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.dialogs.Dialog#getDialogBoundsSettings()
+	 */
+	@Override
+	protected IDialogSettings getDialogBoundsSettings() {
+		return new DialogSettingsWrapper(machine.getSettings().getInstanceSettings()
+				.getHistorySettings().findOrAddSection("ROMSetup"));
+	}
+	
+	protected Control createDialogArea(Composite parent) {
+		Composite composite = (Composite) super.createDialogArea(parent);
 		
-		GridLayoutFactory.fillDefaults().applyTo(this);
+		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(composite);
 		
 		scanForRoms();
 
-		SashForm sash = new SashForm(this, SWT.VERTICAL | SWT.SMOOTH);
+		SashForm sash = new SashForm(composite, SWT.VERTICAL | SWT.SMOOTH);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(sash);
 		
 		createInfoSection(sash);
@@ -138,21 +199,26 @@ public class ROMSetupDialog extends Composite {
 		
 		origDetectedROMs = new HashSet<URI>(detectedROMs);
 		
-		addDisposeListener(new DisposeListener() {
+		composite.addDisposeListener(new DisposeListener() {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
+				if (origDetectedROMs.isEmpty()) {
+					// ... some kind of "raw raw" setup?
+				}
+				
 				if (!origDetectedROMs.equals(detectedROMs)) {
 					//machine.getMemoryModel().initMemory(machine);
-					machine.getMemoryModel().loadMemory(machine.getClient().getEventNotifier());
+					machine.getMemoryModel().loadMemory(machine.getEventNotifier());
 					machine.reset();
 				}
+				
 				pauseProperty.setBoolean(wasPaused);
 			}
 		});
 		
 
-		addDisposeListener(new DisposeListener() {
+		composite.addDisposeListener(new DisposeListener() {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
@@ -160,6 +226,8 @@ public class ROMSetupDialog extends Composite {
 					winUnicodeFont.dispose();
 			}
 		});
+		
+		return composite;
 	}
 
 
@@ -175,6 +243,19 @@ public class ROMSetupDialog extends Composite {
 		GridDataFactory.fillDefaults().grab(true, false).indent(8, 8).applyTo(infoLabel);
 		
 		setupInfoLabel();
+		
+
+		infoLabel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseUp(MouseEvent e) {
+				for (Map.Entry<StyleRange, LinkInfo> entry : linkMap.entrySet().toArray(new Map.Entry[linkMap.size()])) {
+					if (isOverLink(entry.getKey(), e)) {
+						entry.getValue().handler.linkClicked();
+					}
+				}
+			}
+		});
+		
 		
 		infoLabel.addMouseMoveListener(new MouseMoveListener() {
 			Cursor cursor = infoLabel.getCursor();
@@ -198,12 +279,13 @@ public class ROMSetupDialog extends Composite {
 	}
 
 	
+	protected Display getDisplay() {
+		return getShell().getDisplay();
+	}
+
 	private void setupInfoLabel() {
 		// clear
 		infoLabel.replaceTextRange(0, infoLabel.getCharCount(), "");
-		for (Map.Entry<StyleRange, LinkInfo> entry : linkMap.entrySet()) {
-			infoLabel.removeMouseListener(entry.getValue().mouseListener);
-		}
 		linkMap.clear();
 		
 		styledTextHelper.pushStyle(new TextStyle(JFaceResources.getHeaderFont(), 
@@ -217,10 +299,10 @@ public class ROMSetupDialog extends Composite {
 		
 		infoLabel.append(
 				"In order to emulate the TI-99/4A, you need to configure V9t9 so it can "+
-				"find the necessary ROMs.\n\n"+
-				"If you point V9t9 to the appropriate locations (below), it can detect ROMs by content. " +
-				"If you have customizations, though, it will match only by filename.\n\n"+
-				"These ROMs are required:\t");
+				"find the necessary ROMs for the system and for any modules you want to use.\n\n"+
+				"Add new Search Locations (below), and V9t9 will detect ROMs by content. " +
+				(ADVANCED ? "If you have custom ROMs, though, you can select your own file by clicking the links." : "")+
+				"\n\nThese ROMs are required:\t");
 
 		reqdRomNameStyleRanges = emitRomsAndStyles(requiredRoms);
 		
@@ -266,7 +348,7 @@ public class ROMSetupDialog extends Composite {
 
 	}
 	static class LinkInfo {
-		MouseListener mouseListener;
+		ILinkHandler handler;
 	}
 	
 	/**
@@ -275,19 +357,8 @@ public class ROMSetupDialog extends Composite {
 	 */
 	private void registerLink(final StyleRange styleRange, final ILinkHandler handler) {
 		LinkInfo info = new LinkInfo();
+		info.handler = handler;
 		linkMap.put(styleRange, info);
-		
-		info.mouseListener = new MouseAdapter() {
-			@Override
-			public void mouseUp(MouseEvent e) {
-				if (isOverLink(styleRange, e)) {
-					handler.linkClicked();
-				}
-			}
-		};
-		
-		
-		infoLabel.addMouseListener(info.mouseListener);
 	}
 
 
@@ -299,35 +370,90 @@ public class ROMSetupDialog extends Composite {
 		StyleRange[] ranges = new StyleRange[infos.length];
 		
 		for (int i = 0; i < infos.length; i++) {
+			final MemoryEntryInfo info = infos[i];
+			
 			infoLabel.append("\n\t");
 			
 			infoLabel.append("\u2022 ");
 			
 			
-			StyleRange range = styledTextHelper.pushStyle(new TextStyle(), SWT.NONE);
-			
-			range.foreground = getDisplay().getSystemColor(SWT.COLOR_BLUE);
-			range.underline = true;
-			range.underlineColor = getDisplay().getSystemColor(SWT.COLOR_BLUE);
-
-			final MemoryEntryInfo info = infos[i];
-			if (info.getFilenameProperty() != null) {
-				registerLink(range, new ILinkHandler() {
-					
-					@Override
-					public void linkClicked() {
-						editRomFilename(info);
-					}
-				});
-			}
-			
-			infoLabel.append(filenameFor(info));
-			styledTextHelper.popStyle();
-			ranges[i] = range;
-			
+			styledTextHelper.pushStyle(new TextStyle(
+					JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT), null, null), 
+					SWT.NONE);
 			String descr = info.getDescription();
 			if (descr != null)
-				infoLabel.append(" (" + descr + ")  ");
+				infoLabel.append(descr);
+			else
+				infoLabel.append(info.getName());
+
+			styledTextHelper.popStyle();
+
+			if (ADVANCED) {
+				infoLabel.append(" (");
+	
+				if (info.isDefaultFilename(settings)) {
+					infoLabel.append("default filename: ");
+				} else {
+					infoLabel.append("user-specified filename: ");
+				}
+				
+				StyleRange range = styledTextHelper.pushStyle(new TextStyle(), SWT.NONE);
+				
+				range.foreground = getDisplay().getSystemColor(SWT.COLOR_BLUE);
+				range.underline = true;
+				range.underlineColor = getDisplay().getSystemColor(SWT.COLOR_BLUE);
+	
+				if (info.getFilenameProperty() != null) {
+					registerLink(range, new ILinkHandler() {
+						
+						@Override
+						public void linkClicked() {
+							editRomFilename(info);
+						}
+					});
+				}
+				
+				infoLabel.append(info.getResolvedFilename(settings));
+				
+				
+				styledTextHelper.popStyle();
+				ranges[i] = range;
+	
+				infoLabel.append(") ");
+			} else {
+				StyleRange range = styledTextHelper.pushStyle(new TextStyle(), SWT.NONE);
+				styledTextHelper.popStyle();
+				ranges[i] = range;
+				infoLabel.append(" ");
+			}
+
+			StoredMemoryEntryInfo storedInfo = null;
+			try {
+				storedInfo = StoredMemoryEntryInfo.createStoredMemoryEntryInfo(
+						machine.getPathFileLocator(), settings, 
+						machine.getMemory(), info, 
+						info.getName(), info.getResolvedFilename(settings), 
+						info.getFileMD5(), info.getOffset());
+			} catch (IOException e) {
+			}
+			
+
+			int index;
+			Color color;
+			if (storedInfo != null) {
+				if (storedInfo.fileName.equals(info.getFilenameProperty().getDefaultValue()) 
+						|| storedInfo.md5.equals(info.getFileMD5())) {
+					index = 0;
+					color = getDisplay().getSystemColor(SWT.COLOR_GREEN);
+				} else {
+					index = 2;
+					color = getDisplay().getSystemColor(SWT.COLOR_YELLOW);
+				}
+			} else {
+				index = 1;
+				color = getDisplay().getSystemColor(SWT.COLOR_RED);
+			}
+			
 			
 			String[] marks;
 			TextStyle unicodeStyle = new TextStyle();
@@ -336,30 +462,56 @@ public class ROMSetupDialog extends Composite {
 				if (winUnicodeFont == null) {
 					FontData[] data = getDisplay().getFontList("Wingdings", true);
 					if (data.length > 0) {
-						float height = FontUtils.measureText(getDisplay(), getFont(), "!").y;
+						float height = FontUtils.measureText(getDisplay(), getShell().getFont(), "!").y;
 						data[0].setHeight((int) (height * 0.75f));
 						winUnicodeFont = new Font(getDisplay(), data[0]);
 					}
 				}
 				unicodeStyle.font = winUnicodeFont;
-				marks = new String[] { "\u00FC", "\u00FB" };
+				marks = new String[] { "\u00FC", "\u00FB", "\u004C" };
 			} else {
-				marks = new String[] { "\u2714", "\u2715" };
+				marks = new String[] { "\u2714", "\u2718", "\u2639"  };
 			}
 
-			if (isRomAvailable(info)) {
-				unicodeStyle.foreground = getDisplay().getSystemColor(SWT.COLOR_GREEN);
-				styledTextHelper.pushStyle(unicodeStyle, SWT.NONE);
-				infoLabel.append(marks[0]);	// checkmark
-				styledTextHelper.popStyle();
-			} else {
-				unicodeStyle.foreground = getDisplay().getSystemColor(SWT.COLOR_RED);
-				styledTextHelper.pushStyle(unicodeStyle, SWT.NONE);
-				infoLabel.append(marks[1]);	// x-mark
-				styledTextHelper.popStyle();
-			}
+
+			unicodeStyle.foreground = color;
 			
-			infoLabel.append(" ");
+			styledTextHelper.pushStyle(unicodeStyle, SWT.NONE);
+			infoLabel.append(marks[index]);	// icon
+			styledTextHelper.popStyle();
+			
+			infoLabel.append("\n\t\t");
+			
+			if (storedInfo != null) {
+				infoLabel.append(" (found at ");
+				
+				styledTextHelper.pushStyle(new TextStyle(JFaceResources.getTextFont(), null, null), SWT.NONE);
+				try {
+					infoLabel.append(new File(storedInfo.uri).toString());
+				} catch (IllegalArgumentException e) {
+					infoLabel.append(storedInfo.uri.toString());
+				}
+				styledTextHelper.popStyle();
+				infoLabel.append(")");
+				
+				if (index == 2) {
+					TextStyle warningStyle = new TextStyle(JFaceResources.getFontRegistry().getItalic(
+							JFaceResources.DEFAULT_FONT), null, null);
+					styledTextHelper.pushStyle(warningStyle, SWT.NONE);
+					
+					infoLabel.append("\n\t\t(checksum does not match: double-check this entry)");
+					styledTextHelper.popStyle();
+					
+				}
+			} else {
+				if (ADVANCED) {
+					infoLabel.append(" (need size: " + (info.getSize() < 0 ? " up to " + -info.getSize() : info.getSize())
+							+ "; MD5 sum = " + info.getFileMD5() + ")");
+				} else {
+					infoLabel.append(" (not found)");
+				}
+			}
+			//infoLabel.append(filenameFor(info));
 			
 		}
 		return ranges;
@@ -370,24 +522,16 @@ public class ROMSetupDialog extends Composite {
 	 * 
 	 */
 	private void refreshAll() {
-		scanForRoms();
-		setupInfoLabel();
-		updateRomAvailability();
-		
+		BusyIndicator.showWhile(getDisplay(), new Runnable() {
+			public void run() {
+				infoLabel.setRedraw(false);
+				scanForRoms();
+				setupInfoLabel();
+				updateRomAvailability();
+				infoLabel.setRedraw(true);
+			}
+		});
 	}
-
-
-	/**
-	 * @param memoryEntryInfo
-	 * @return
-	 */
-	private String filenameFor(MemoryEntryInfo info) {
-		String filename = info.getResolvedFilename(settings);
-		if (filename != null)
-			return filename;
-		return "<MD5:" + info.getFileMD5() + ">";
-	}
-
 
 	private boolean isOverLink(final StyleRange urlStyle, MouseEvent e) {
 		try {
@@ -487,7 +631,8 @@ public class ROMSetupDialog extends Composite {
 
 
 	private void createPathSelector(Composite parent, final IProperty property) {
-		PathSelector pathSelector = new PathSelector(parent, window, "ROM directory", property);
+		PathSelector pathSelector = new PathSelector(parent, machine.getPathFileLocator(),
+				window, "ROM directory", property);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(pathSelector);
 
 		final IPropertyListener pathChangeListener = new IPropertyListener() {
@@ -496,7 +641,7 @@ public class ROMSetupDialog extends Composite {
 			public void propertyChanged(IProperty property) {
 				getDisplay().asyncExec(new Runnable() {
 					public void run() {
-						if (!isDisposed()) {
+						if (!getShell().isDisposed()) {
 							refreshAll();
 						}
 					}
@@ -505,36 +650,13 @@ public class ROMSetupDialog extends Composite {
 		};
 		property.addListener(pathChangeListener);
 		
-		addDisposeListener(new DisposeListener() {
+		getShell().addDisposeListener(new DisposeListener() {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
 				property.removeListener(pathChangeListener);
 			}
 		});
-	}
-
-	public static IToolShellFactory getToolShellFactory(final IMachine machine,
-			final SwtWindow window) {
-		 return new IToolShellFactory() {
-			Behavior behavior = new Behavior();
-			{
-				behavior.boundsPref = "NewConfigBounds";
-				behavior.defaultBounds = new Rectangle(0, 0, 500, 600);
-				behavior.centering = Centering.CENTER;
-				behavior.centerOverControl = window.getShell();
-				behavior.dismissOnClickOutside = false;
-			}
-			public Control createContents(Shell shell) {
-				return new ROMSetupDialog(shell, machine, window, 
-						machine.getMemoryModel().getRequiredRomMemoryEntries(),
-						machine.getMemoryModel().getOptionalRomMemoryEntries()
-						);
-			}
-			public Behavior getBehavior() {
-				return behavior;
-			}
-		};
 	}
 
 	static class RomEntryEditor extends Dialog {
@@ -589,7 +711,7 @@ public class ROMSetupDialog extends Composite {
 				public void widgetSelected(SelectionEvent e) {
 					String newPath = window.openFileSelectionDialog(
 							"Select ROM", null, text.getText(), false,
-							new String[] { "bin|raw binary" });
+							new String[] { "bin|raw binary (*.bin)", "|all files" });
 					if (newPath != null) {
 						text.setText(newPath);
 					}

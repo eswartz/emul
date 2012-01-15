@@ -794,8 +794,10 @@ public class SwtWindow extends BaseEmulatorWindow {
 		setup.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				toggleToolShell(ROMSetupDialog.ROM_SETUP_TOOL_ID, 
-						ROMSetupDialog.getToolShellFactory(machine, SwtWindow.this));
+				//toggleToolShell(ROMSetupDialog.ROM_SETUP_TOOL_ID, 
+				//		ROMSetupDialog.getToolShellFactory(machine, SwtWindow.this));
+				ROMSetupDialog dialog = ROMSetupDialog.createDialog(shell, machine, SwtWindow.this);
+	        	dialog.open();
 			}
 		});
 		

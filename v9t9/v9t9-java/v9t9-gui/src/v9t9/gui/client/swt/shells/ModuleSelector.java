@@ -267,7 +267,7 @@ public class ModuleSelector extends Composite {
 				
 				// delay to gather more changes at once
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(750);
 				} catch (InterruptedException e) {
 					return;
 				}
@@ -280,10 +280,11 @@ public class ModuleSelector extends Composite {
 	 * @param window 
 	 * 
 	 */
-	public ModuleSelector(Shell shell, IMachine machine, IModuleManager moduleManager, SwtWindow window) {
+	public ModuleSelector(Shell shell, IMachine machine_, IModuleManager moduleManager, SwtWindow window_) {
 		super(shell, SWT.NONE);
 		this.moduleManager = moduleManager;
-		this.window = window;
+		this.window = window_;
+		this.machine = machine_;
 		
 		executor = Executors.newFixedThreadPool(4);
 		
@@ -293,7 +294,6 @@ public class ModuleSelector extends Composite {
 		
 		shell.setText("Module Selector");
 		
-		this.machine = machine;
 		
 		pauseProperty = Settings.get(machine, IMachine.settingPauseMachine);
 		wasPaused = pauseProperty.getBoolean();
@@ -348,17 +348,35 @@ public class ModuleSelector extends Composite {
 		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(3).equalWidth(false).applyTo(buttonBar);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(buttonBar);
 		
-		/*
-		scanButton = new Button(buttonBar, SWT.PUSH);
-		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).hint(128, -1).applyTo(scanButton);
-		scanButton.setText("Scan...");
-		scanButton.addSelectionListener(new SelectionAdapter() {
+		final Button configureButton = new Button(buttonBar, SWT.PUSH | SWT.NO_FOCUS);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).applyTo(configureButton);
+		configureButton.setText("Setup ROMs...");
+		configureButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				/*
+				ToolShell shell = window.toggleToolShell(ROMSetupDialog.ROM_SETUP_TOOL_ID, 
+						ROMSetupDialog.getToolShellFactory(machine, window));
+				shell.getShell().addDisposeListener(new DisposeListener() {
+					
+					@Override
+					public void widgetDisposed(DisposeEvent e) {
+						synchronized (knownStates) {
+							knownStates.clear();
+						}
+						viewer.refresh();
+					}
+				});*/
+				
+				ROMSetupDialog dialog = ROMSetupDialog.createDialog(getShell(), machine, window);
+	        	dialog.open();
+	        	
+	        	synchronized (knownStates) {
+					knownStates.clear();
+				}
+				viewer.refresh();
 			}
 		});
-		scanButton.setEnabled(false);
-		*/
 		
 		Label filler = new Label(buttonBar, SWT.NONE);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).applyTo(filler);
@@ -1204,9 +1222,11 @@ public class ModuleSelector extends Composite {
 		if (module == null)
 			return false;
 		
-		Boolean known = knownStates.get(module);
-		if (known != null)
-			return known;
+		synchronized (knownStates) {
+			Boolean known = knownStates.get(module);
+			if (known != null)
+				return known;
+		}
 		
 		// this can take a long time
 		synchronized (currentFetches) {
@@ -1220,7 +1240,9 @@ public class ModuleSelector extends Composite {
 				public void run() {
 					Boolean state;
 					
-					state = knownStates.get(module);
+					synchronized (knownStates) {
+						state = knownStates.get(module);
+					}
 					if (state == null) {
 						try {
 							moduleManager.getModuleMemoryEntries(module);

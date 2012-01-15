@@ -3,12 +3,17 @@
  */
 package v9t9.gui.client.swt;
 
+import java.net.URISyntaxException;
+
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITableColorProvider;
+import org.eclipse.jface.viewers.ITableFontProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
@@ -18,10 +23,14 @@ import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+
+import v9t9.common.files.IPathFileLocator;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
@@ -41,9 +50,11 @@ public class PathSelector extends Composite {
 	private Composite buttons;
 	private Button removeButton;
 	private IPropertyListener propertyListener;
+	private final IPathFileLocator locator;
 
-	public PathSelector(Composite parent, SwtWindow window, String pathLabel, IProperty property) {
+	public PathSelector(Composite parent, IPathFileLocator locator, SwtWindow window, String pathLabel, IProperty property) {
 		super(parent, SWT.BORDER);
+		this.locator = locator;
 		this.window = window;
 		this.pathLabel = pathLabel;
 		this.property = property;
@@ -73,6 +84,51 @@ public class PathSelector extends Composite {
 		property.addListener(propertyListener);
 	}
 
+	class PathLabelProvider extends LabelProvider implements ITableFontProvider, ITableColorProvider {
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
+		 */
+		@Override
+		public String getText(Object element) {
+			return super.getText(element) + (!pathExists(element) ? " (not found)" : "");
+		}
+		protected boolean pathExists(Object element) {
+			boolean found = true;
+			if (element instanceof String) {
+				try {
+					found = locator.exists(locator.createURI(element.toString()));
+				} catch (URISyntaxException e) {
+					found = false;
+				}
+			}
+			return found;
+		}
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableFontProvider#getFont(java.lang.Object, int)
+		 */
+		@Override
+		public Font getFont(Object element, int columnIndex) {
+			boolean found = pathExists(element);
+			return found ? null : JFaceResources.getFontRegistry().getItalic(JFaceResources.DEFAULT_FONT);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableColorProvider#getBackground(java.lang.Object, int)
+		 */
+		@Override
+		public Color getBackground(Object element, int columnIndex) {
+			return null;
+		}
+		
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableColorProvider#getForeground(java.lang.Object, int)
+		 */
+		@Override
+		public Color getForeground(Object element, int columnIndex) {
+			boolean found = pathExists(element);
+			return found ? null : getDisplay().getSystemColor(SWT.COLOR_TITLE_INACTIVE_FOREGROUND);
+		}
+	}
 	/**
 	 * 
 	 */
@@ -87,7 +143,7 @@ public class PathSelector extends Composite {
 		
 		final TableColumn column = new TableColumn(table, SWT.LEFT);
 		
-		column.setText("Location");
+		column.setText("Search Locations");
 
 
 		addControlListener(new ControlAdapter() {
@@ -120,7 +176,7 @@ public class PathSelector extends Composite {
 			}
 		});
 		
-		viewer.setLabelProvider(new LabelProvider());
+		viewer.setLabelProvider(new PathLabelProvider());
 		viewer.setContentProvider(new ArrayContentProvider());
 		
 		viewer.setInput(property.getList());
@@ -131,7 +187,7 @@ public class PathSelector extends Composite {
 	 */
 	private void createButtons() {
 		buttons = new Composite(this, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(1). applyTo(buttons);
+		GridLayoutFactory.fillDefaults().numColumns(1).margins(3, 3).applyTo(buttons);
 		GridDataFactory.fillDefaults().grab(false, true).applyTo(buttons);
 		
 		final Button add = new Button(buttons, SWT.PUSH);
@@ -170,12 +226,23 @@ public class PathSelector extends Composite {
 				}
 			}
 		});
-		
+
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			
 			@Override
 			public void selectionChanged(SelectionChangedEvent event) {
 				removeButton.setEnabled(!event.getSelection().isEmpty());
+			}
+		});
+
+		final Button refresh = new Button(buttons, SWT.PUSH);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(refresh);
+		refresh.setText("Rescan");
+		
+		refresh.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				property.firePropertyChange();
 			}
 		});
 
