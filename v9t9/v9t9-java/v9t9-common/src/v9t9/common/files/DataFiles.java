@@ -136,7 +136,9 @@ public class DataFiles {
 			int len;
 			int left = maxsize;
 			while (left > 0  && (len = is.read(result)) >= 0) {
-				bos.write(result, 0, Math.min(len, left));
+				int use = Math.min(len, left);
+				bos.write(result, 0, use);
+				left -= use;
 			}
 		} finally {
 			if (is != null) {

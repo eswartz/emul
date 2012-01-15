@@ -25,6 +25,8 @@ public class MemoryEntryInfo {
 	public final static String FILENAME2 = "fileName2";
 	/** String, hex-encoded */
 	public final static String FILE_MD5 = "fileMd5";
+	/** integer */
+	public final static String FILE_MD5_LIMIT = "fileMd5Limit";
 	/** String, hex-encoded */
 	public final static String FILE2_MD5 = "file2Md5";
 	/** String */
@@ -204,6 +206,13 @@ public class MemoryEntryInfo {
 
 	public String getDescription() {
 		return (String) properties.get(DESCRIPTION);
+	}
+	
+	/**
+	 * @return the fileMd5Limit
+	 */
+	public int getFileMd5Limit() {
+		return getInt(FILE_MD5_LIMIT);
 	}
 
 }

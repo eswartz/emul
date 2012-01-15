@@ -49,7 +49,8 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 			.standardDsrRom(null)
 			.withFilenameProperty(settingDsrRomFileName)
 			.withDescription("TI Disk Controller ROM")
-			.withFileMD5("09DAEE0CFBC4C353BE8F2D5D45812F57")
+			.withFileMD5("C9A737D6930F5FD1D96829FD89359CF1")
+			.withFileMD5Limit(0x1FF0)
 			.create("TI Disk DSR ROM");
 
 
