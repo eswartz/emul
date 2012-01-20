@@ -34,7 +34,7 @@ Local
 
 Download the archive below and unzip it somewhere on your system.
 
-[V9t9.zip](http://eswartz.github.com/emul/data/v9t9.zip) 
+[V9t9.zip](data/v9t9.zip) 
 
     $ cd /path/to/v9t9
     $ javaws v9t9-local.jnlp
@@ -44,7 +44,7 @@ Remote
 
 Click on the link below.  
 
-[V9t9 Web Start](http://eswartz.github.com/emul/data/v9t9/v9t9.html)
+[V9t9 Web Start](data/v9t9/v9t9.html)
 
 License
 =======
