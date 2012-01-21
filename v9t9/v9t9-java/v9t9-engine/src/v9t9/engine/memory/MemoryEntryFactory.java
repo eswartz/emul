@@ -148,8 +148,6 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
     	
     	DiskMemoryEntry entry = new DiskMemoryEntry(info, name, area, storedInfo);
     	
-    	//info.getProperties().put(MemoryEntryInfo.SIZE, entry.getSize());
-    	
         entry.setArea(MemoryAreaFactory.createMemoryArea(memory, info)); 
         
     	return entry;
