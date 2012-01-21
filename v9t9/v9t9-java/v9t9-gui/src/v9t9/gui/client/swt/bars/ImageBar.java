@@ -238,7 +238,7 @@ public class ImageBar extends Composite implements IImageBar {
 								size - data.horizontalIndent*2, size - data.verticalIndent*2);
 						x += size;
 					} else {
-						if (data.horizontalAlignment == SWT.LEAD) {
+						if (data.horizontalAlignment == SWT.LEFT) {
 							kid.setBounds(min + data.horizontalIndent, y + data.verticalIndent, 
 									size - data.horizontalIndent*2, size - data.verticalIndent*2);
 							min += size;
@@ -253,6 +253,16 @@ public class ImageBar extends Composite implements IImageBar {
 						kid.setBounds(x + data.horizontalIndent, y + data.verticalIndent, 
 								size - data.horizontalIndent*2, size - data.verticalIndent*2);
 						y += size;
+					} else {
+						if (data.verticalAlignment == SWT.TOP) {
+							kid.setBounds(x + data.horizontalIndent, min + data.verticalIndent, 
+									size - data.horizontalIndent*2, size - data.verticalIndent*2);
+							min += size;
+						} else {
+							kid.setBounds(x + data.horizontalIndent, max - size - data.verticalIndent, 
+									size - data.horizontalIndent*2, size - data.verticalIndent*2);
+							max -= size;
+						}
 					}
 				}
 			}

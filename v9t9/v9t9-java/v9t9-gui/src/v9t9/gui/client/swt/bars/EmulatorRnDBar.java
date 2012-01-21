@@ -110,7 +110,7 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 				SWT.BORDER | (isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL), 
 				machine.getCpuMetrics(), true);
 		GridDataFactory.fillDefaults()
-			.align(isHorizontal ? SWT.LEAD : SWT.FILL, isHorizontal ? SWT.FILL : SWT.TRAIL)
+			.align(isHorizontal ? SWT.LEFT : SWT.FILL, isHorizontal ? SWT.FILL : SWT.BOTTOM)
 			//.grab(false, false)
 			.indent(4, 4).exclude(true).applyTo(cpuMetricsCanvas);
 

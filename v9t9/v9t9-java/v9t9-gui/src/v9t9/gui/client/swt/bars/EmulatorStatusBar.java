@@ -76,7 +76,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					}
 				}
 			);
-			new BlankIcon(buttonBar, SWT.NONE);
+		
+		new BlankIcon(buttonBar, SWT.NONE);
 			
 		if (machine.getModuleManager() != null) {
 			createButton(IconConsts.MODULE_SWITCH,
@@ -141,8 +142,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					}
 				});
 
-
 	}
+
 	private Menu createAccelMenu(final Control parent) {
 		final Menu menu = new Menu(parent);
 		return populateAccelMenu(menu);
