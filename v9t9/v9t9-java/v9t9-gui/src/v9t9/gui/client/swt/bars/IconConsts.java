@@ -28,5 +28,6 @@ public class IconConsts {
 	static final int MENU_OVERLAY = 15;
 	static final int MODULE_SWITCH = 16;
 	static final int IMAGE_IMPORT = 17;
+	static final int ROM_SETUP = 18;
 
 }

@@ -122,9 +122,7 @@ public class ImageBar extends Composite implements IImageBar {
 				boolean flushCache) {
 			int w, h;
 			Control[] kids = composite.getChildren();
-			int num = kids.length;
-			if (num == 0)
-				num = 1;
+			int num = getIncludedKids(kids);
 			
 			int size;
 			int axis;
@@ -172,12 +170,26 @@ public class ImageBar extends Composite implements IImageBar {
 			return prevSize;
 		}
 
+		/**
+		 * @param kids
+		 * @return
+		 */
+		private int getIncludedKids(Control[] kids) {
+			int cnt = 0;
+			for (Control kid : kids) {
+				if (kid.getLayoutData() instanceof GridData) {
+					if (!((GridData) kid.getLayoutData()).exclude) {
+						cnt++;
+					}
+				}
+			}
+			return cnt;
+		}
+
 		@Override
 		protected void layout(Composite composite, boolean flushCache) {
 			Control[] kids = composite.getChildren();
-			int num = kids.length;
-			if (num == 0)
-				num = 1;
+			int num = getIncludedKids(kids);
 			
 			Point curSize;
 			if (!flushCache) {
@@ -212,19 +224,36 @@ public class ImageBar extends Composite implements IImageBar {
 				y = (curSize.y - size * num) / 2;
 			}
 			
+			int min = 0, max = isHorizontal ? curSize.x : curSize.y;
+			
+			GridData empty = GridDataFactory.fillDefaults().create();
 			for (Control kid : kids) {
-				int hIndent = 0, vIndent = 0;
+				GridData data = empty;
 				if (kid.getLayoutData() instanceof GridData) {
-					GridData data = (GridData) kid.getLayoutData();
-					hIndent = data.horizontalIndent;
-					vIndent = data.verticalIndent;
+					data = (GridData) kid.getLayoutData();
 				}
 				if (isHorizontal) {
-					kid.setBounds(x + hIndent, y + vIndent, size - hIndent*2, size - vIndent*2);
-					x += size;
+					if (!data.exclude) {
+						kid.setBounds(x + data.horizontalIndent, y + data.verticalIndent,
+								size - data.horizontalIndent*2, size - data.verticalIndent*2);
+						x += size;
+					} else {
+						if (data.horizontalAlignment == SWT.LEAD) {
+							kid.setBounds(min + data.horizontalIndent, y + data.verticalIndent, 
+									size - data.horizontalIndent*2, size - data.verticalIndent*2);
+							min += size;
+						} else {
+							kid.setBounds(max - size - data.horizontalIndent, y + data.verticalIndent, 
+									size - data.horizontalIndent*2, size - data.verticalIndent*2);
+							max -= size;
+						}
+					}
 				} else {
-					kid.setBounds(x + hIndent, y + vIndent, size - hIndent*2, size - vIndent*2);
-					y += size;
+					if (!data.exclude) {
+						kid.setBounds(x + data.horizontalIndent, y + data.verticalIndent, 
+								size - data.horizontalIndent*2, size - data.verticalIndent*2);
+						y += size;
+					}
 				}
 			}
 			

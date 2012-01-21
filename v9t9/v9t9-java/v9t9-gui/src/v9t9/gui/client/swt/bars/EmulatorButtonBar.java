@@ -219,7 +219,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 	 */
 	private Menu createFilePopupMenu(final Control parent) {
 		final Menu menu = new Menu(parent);
-		return swtWindow.populateFileMenu(menu, false);
+		return swtWindow.populateFileMenu(menu);
 	}
 
 

@@ -161,6 +161,14 @@ public class ROMSetupDialog extends Dialog {
 	}
 	
 	/* (non-Javadoc)
+	 * @see org.eclipse.jface.window.Window#getShellStyle()
+	 */
+	@Override
+	protected int getShellStyle() {
+		return super.getShellStyle() | SWT.RESIZE;
+	}
+	
+	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
 	 */
 	@Override

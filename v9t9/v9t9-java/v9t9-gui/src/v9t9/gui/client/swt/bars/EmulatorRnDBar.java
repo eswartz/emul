@@ -3,6 +3,7 @@
  */
 package v9t9.gui.client.swt.bars;
 
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
@@ -10,6 +11,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
@@ -18,6 +20,7 @@ import org.eclipse.swt.widgets.Listener;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.machine.IMachine;
 import v9t9.gui.client.swt.SwtWindow;
+import v9t9.gui.client.swt.shells.CpuMetricsCanvas;
 import v9t9.gui.client.swt.shells.debugger.DebuggerWindow;
 
 /**
@@ -30,6 +33,9 @@ import v9t9.gui.client.swt.shells.debugger.DebuggerWindow;
  *
  */
 public class EmulatorRnDBar extends BaseEmulatorBar  {
+	private Canvas cpuMetricsCanvas;
+
+	
 	/**
 	 * @param parent 
 	 * @param isHorizontal 
@@ -100,6 +106,26 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 		);
 		
 
+		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar.getComposite(), 
+				SWT.BORDER | (isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL), 
+				machine.getCpuMetrics(), true);
+		GridDataFactory.fillDefaults()
+			.align(isHorizontal ? SWT.LEAD : SWT.FILL, isHorizontal ? SWT.FILL : SWT.TRAIL)
+			//.grab(false, false)
+			.indent(4, 4).exclude(true).applyTo(cpuMetricsCanvas);
+
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.bars.BaseEmulatorBar#dispose()
+	 */
+	@Override
+	public void dispose() {
+		super.dispose();
+		
+		cpuMetricsCanvas.dispose();
+
+		
 	}
 
 }

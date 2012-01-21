@@ -7,13 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
-import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
@@ -30,9 +28,9 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.SwtWindow;
-import v9t9.gui.client.swt.shells.CpuMetricsCanvas;
 import v9t9.gui.client.swt.shells.DiskSelectorDialog;
 import v9t9.gui.client.swt.shells.ModuleSelector;
+import v9t9.gui.client.swt.shells.ROMSetupDialog;
 
 /**
  * This is the bar of buttons and status icons on the left-hand side of
@@ -43,7 +41,6 @@ import v9t9.gui.client.swt.shells.ModuleSelector;
  */
 public class EmulatorStatusBar extends BaseEmulatorBar {
 
-	private Canvas cpuMetricsCanvas;
 	private List<ImageDeviceIndicator> indicators;
 	private ImageProvider deviceImageProvider;
 	private IProperty realTime;
@@ -69,6 +66,18 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		
 		deviceImageProvider = createDeviceImageProvider(swtWindow.getShell());
 
+		createButton(IconConsts.ROM_SETUP,
+				"Setup ROMs", new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						ROMSetupDialog dialog = ROMSetupDialog.createDialog(
+								swtWindow.getShell(), machine, swtWindow);
+			        	dialog.open();
+					}
+				}
+			);
+			new BlankIcon(buttonBar, SWT.NONE);
+			
 		if (machine.getModuleManager() != null) {
 			createButton(IconConsts.MODULE_SWITCH,
 				"Switch module", new SelectionAdapter() {
@@ -132,13 +141,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					}
 				});
 
-		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar.getComposite(), 
-				SWT.BORDER | (isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL), 
-				machine.getCpuMetrics());
-		GridDataFactory.fillDefaults()
-			//.align(isHorizontal ? SWT.RIGHT : SWT.FILL, isHorizontal ? SWT.FILL : SWT.BOTTOM)
-			//.grab(false, false)
-			.indent(4, 4).exclude(true).applyTo(cpuMetricsCanvas);
 
 	}
 	private Menu createAccelMenu(final Control parent) {
@@ -230,7 +232,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		for (ImageDeviceIndicator indic : indicators)
 			indic.dispose();
 		indicators.clear();
-		cpuMetricsCanvas.dispose();
 	}
 
 	public void addDeviceIndicatorProvider(IDeviceIndicatorProvider provider) {

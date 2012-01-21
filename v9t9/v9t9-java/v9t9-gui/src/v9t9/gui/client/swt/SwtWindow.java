@@ -62,7 +62,6 @@ import v9t9.gui.client.swt.bars.EmulatorStatusBar;
 import v9t9.gui.client.swt.bars.ImageProvider;
 import v9t9.gui.client.swt.bars.MultiImageSizeProvider;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
-import v9t9.gui.client.swt.shells.ROMSetupDialog;
 import v9t9.gui.client.swt.shells.ToolShell;
 import v9t9.gui.client.swt.svg.ISVGLoader;
 import v9t9.gui.client.swt.svg.SVGImageProvider;
@@ -595,19 +594,19 @@ public class SwtWindow extends BaseEmulatorWindow {
 		else
 			throw new IllegalArgumentException(parent.toString());
 		
-		MenuItem fileMenuHeader = new MenuItem(appMenu, SWT.CASCADE);
-		fileMenuHeader.setText("&File");
+		MenuItem emuMenuHeader = new MenuItem(appMenu, SWT.CASCADE);
+		emuMenuHeader.setText("E&mulator");
 		
-		Menu fileMenu = new Menu(control, SWT.DROP_DOWN);
-		populateFileMenu(fileMenu, true);
-		fileMenuHeader.setMenu(fileMenu);
+		Menu emuMenu = new Menu(control, SWT.DROP_DOWN);
+		populateFileMenu(emuMenu);
+		emuMenuHeader.setMenu(emuMenu);
 
-		MenuItem editMenuHeader = new MenuItem(appMenu, SWT.CASCADE);
-		editMenuHeader.setText("&Edit");
+		//MenuItem editMenuHeader = new MenuItem(appMenu, SWT.CASCADE);
+		//editMenuHeader.setText("&Edit");
 		
-		Menu editMenu = new Menu(control, SWT.DROP_DOWN);
-		populateEditMenu(editMenu);
-		editMenuHeader.setMenu(editMenu);
+		//Menu editMenu = new Menu(control, SWT.DROP_DOWN);
+		populateEditMenu(emuMenu);
+		//editMenuHeader.setMenu(editMenu);
 
 		Menu viewMenu = appMenu;
 		if (!isPopup) {
@@ -637,6 +636,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		zoom.setMenu(zoomMenu);
 		*/
 		
+		/*
 		Menu emuMenu = appMenu;
 		if (!isPopup) {
 			MenuItem emuMenuHeader = new MenuItem(appMenu, SWT.CASCADE);
@@ -646,7 +646,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 			emuMenuHeader.setMenu(emuMenu);
 		}
 		
-		/*
 		MenuItem accel= new MenuItem(emuMenu, SWT.CASCADE);
 		accel.setText("&Accelerate");
 		
@@ -657,13 +656,15 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		final MenuItem showRnDI = new MenuItem(viewMenu, SWT.CHECK);
 		showRnDI.setSelection(showRnDBar.getBoolean());
-		showRnDI.setText("Show &RnD Commands");
+		showRnDI.setText("Show &Advanced Controls");
 		showRnDI.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				showRnDBar.setBoolean(showRnDI.getSelection());
 			}
 		});
+		
+		addExitMenuItem(emuMenu);
 		
 		return appMenu;
 	}
@@ -769,9 +770,19 @@ public class SwtWindow extends BaseEmulatorWindow {
 		}
 		
 	}
-	
 
-	public Menu populateFileMenu(final Menu menu, boolean withExit) {
+	public void addExitMenuItem(final Menu menu) {
+		MenuItem exit = new MenuItem(menu, SWT.NONE);
+		exit.setText("E&xit");
+		exit.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				machine.getClient().close();
+			}
+		});
+	}
+
+	public Menu populateFileMenu(final Menu menu) {
 		MenuItem open = new MenuItem(menu, SWT.NONE);
 		open.setText("&Open machine state");
 		open.addSelectionListener(new SelectionAdapter() {
@@ -789,6 +800,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		});
 
+		/*
 		MenuItem setup = new MenuItem(menu, SWT.NONE);
 		setup.setText("Setup &ROMs");
 		setup.addSelectionListener(new SelectionAdapter() {
@@ -800,17 +812,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	        	dialog.open();
 			}
 		});
-		
-		if (withExit) {
-			MenuItem exit = new MenuItem(menu, SWT.NONE);
-			exit.setText("E&xit");
-			exit.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					machine.getClient().close();
-				}
-			});
-		}
+		*/
 		
 		return menu;
 	}

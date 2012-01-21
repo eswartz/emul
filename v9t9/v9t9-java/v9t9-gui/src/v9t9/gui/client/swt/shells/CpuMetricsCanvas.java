@@ -6,6 +6,8 @@ package v9t9.gui.client.swt.shells;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackAdapter;
 import org.eclipse.swt.events.PaintEvent;
@@ -39,8 +41,9 @@ public class CpuMetricsCanvas extends Canvas {
 	private IMetricsListener metricsListener;
 	private Color gridcolor;
 	private int horizvert;
+	protected CpuMetricsDialog explodedDialog;
 	
-	public CpuMetricsCanvas(final Composite parent, int style, ICpuMetrics cpuMetrics) {
+	public CpuMetricsCanvas(final Composite parent, int style, ICpuMetrics cpuMetrics, boolean allowExplode) {
 		super(parent, style & ~(SWT.VERTICAL + SWT.HORIZONTAL) | SWT.NO_BACKGROUND);
 		this.horizvert = style & (SWT.VERTICAL | SWT.HORIZONTAL);
 		this.cpuMetrics = cpuMetrics;
@@ -118,6 +121,22 @@ public class CpuMetricsCanvas extends Canvas {
 			}
 		});
 		
+		if (allowExplode) {
+			addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseUp(MouseEvent e) {
+					if (e.button == 1) {
+						if (explodedDialog != null && explodedDialog.getShell() != null && !explodedDialog.getShell().isDisposed()) {
+							explodedDialog.getShell().forceActive();
+						} else {
+							explodedDialog = new CpuMetricsDialog(getShell(), CpuMetricsCanvas.this.cpuMetrics);
+							explodedDialog.open();
+						}
+					}
+				}
+			});
+		}
+		
 		metricsListener = new IMetricsListener() {
 
 			public void metricsChanged() {
@@ -145,11 +164,10 @@ public class CpuMetricsCanvas extends Canvas {
 
 	@Override
 	public void dispose() {
+		if (explodedDialog != null)
+			explodedDialog.close();
+		
 		cpuMetrics.removeListener(metricsListener);
-		bgcolor.dispose();
-		gridcolor.dispose();
-		realCyclesColor.dispose();
-		idealCyclesColor.dispose();
 		super.dispose();
 	}
 	protected void doPaint(PaintEvent e) {
