@@ -72,9 +72,9 @@ body {
 
 h1 {
   font-size: 20px;
-  border-bottom: 1px solid #cccccc;
+  border-bottom: 4px solid #444444;
   padding: .5em 0;
-  margin: 2em 0 1em;
+  margin: 3em 0 1em;
 }
 
 h1:first-child {
@@ -88,7 +88,9 @@ h2 {
 }
 
   body.api .content h2 {
-    background: transparent url(../images/crud-sprite.png) left 2px no-repeat;
+    background: transparent 
+    /* url(../images/crud-sprite.png) */ 
+    left 2px no-repeat;
     padding-left: 22px;
   }
 
@@ -146,6 +148,8 @@ pre {
   background-color: #FAFAFB;
   color: #393939;
   margin: 0px;
+  
+  width:50%;
 }
 
 ul + pre {
@@ -291,8 +295,9 @@ span.bash-output {
    ejs
    ========================================================================== */
 
-blockquote {
-	background-color: #8ee;
+.lookyhere {
+	float:right;
+	text-align:center;
   color: #111;
   -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
@@ -301,26 +306,23 @@ blockquote {
   -webkit-background-clip: padding-box;
   background-clip: padding-box;
   position: relative;
-  padding: 0em 1em;
+  padding: 1em 1em;
   
+  margin: 0em 0.5em;
+
   border-radius: 3px;
   border: 1px solid #292929;
-}
-
-/* Abusing blockquote here... */
-
-blockquote {
+  
 	width : 12em;
-}
-
-blockquote a {
+	
 	width : 200px;
-	font-size: 125%;
 
 }
 
 
-
+hr {
+	background-color:#ccc; color:#ccc; height:4px; border:0px; margin-top: 4em;
+}
 
 
 

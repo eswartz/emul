@@ -6,8 +6,10 @@ layout: wikistyle
 Introduction
 ============
 
-<div style='float:right;'>
-<img alt="V9t9 image" src="/images/v9t9-window.png"></img>
+<div class='lookyhere' style='width:inherit'>
+<a href='images/v9t9-window.png'>
+<img alt="V9t9 image" src="images/v9t9-window_th.png" width='303' height='200'></img>
+</a>
 </div>
 <div style='width:80%;'>
 V9t9 emulates the TI-99/4A (by default) though it can support other
@@ -35,15 +37,22 @@ Setup
 Have Java 6 or newer installed on your system.  (The "Using Web Start" section may 
 assist with this.)
 
-You will need **[ROMs](v9t9-roms.html)** to actually use the emulator.  I don't provide these.
+You will need ROMs to actually use the emulator.  I don't provide these but 
+**[this page](v9t9-roms.html)** will give you some instructions.
 
 
 Installing Locally
 --------------------
 
-Download the archive below and unzip it somewhere on your system.
+<div class='lookyhere'>
+<a href="data/v9t9.zip">V9t9.zip</a>
+<p>
+<i>Download</i>
+</p>
+</div>
 
-> [V9t9.zip](data/v9t9.zip) 
+Download the archive to the right and unzip it somewhere on your system.
+
 
 Then launch it by double-clicking the `v9t9-local.jnlp` file in your favorite operating system 
 (though only Linux and Windows have been tested so far).
@@ -58,16 +67,21 @@ Or, if your Java isn't installed properly, try:
 Using Web Start
 --------------------
 
-Click on the cute button below.  
-
-<div style="margin-left:3em ;">
+<div  class='lookyhere' style=' padding: 0em 1em;'>
 <script type="text/javascript">
     var dir = location.href.substring(0, location.href.lastIndexOf('/')+1);
-    var url = dir + "v9t9-remote.jnlp";
+    var url = dir + "data/v9t9/v9t9-remote.jnlp";
+    deployJava.launchButtonPNG = 'images/v9t9-webstart-button.png';
     deployJava.createWebStartLaunchButton(url, '1.6.0');
 </script>
 <noscript>This page requires JavaScript.</noscript>
+<p>
+<i>Launch</i>
+</p>
 </div>
+
+Click on the button to the right.  This will fetch the most recent V9t9 build each time you use it.
+
 
 License
 =======
