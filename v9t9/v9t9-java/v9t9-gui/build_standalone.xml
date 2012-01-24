@@ -11,8 +11,8 @@
     <property name="base.tcf.agent" value="../../../org.eclipse.tcf.agent"/>
 	
 	<!-- override this! -->
-    <property name="v9t9.host"     value="http://192.168.24.9:8080"/>
-    <property name="v9t9.root"     value="v9t9"/>
+    <property name="v9t9.host"     value="http://eswartz.github.com/emul"/>
+    <property name="v9t9.root"     value="data/v9t9"/>
 	
     <!-- 
     <property name="batik"     value="true"/>
