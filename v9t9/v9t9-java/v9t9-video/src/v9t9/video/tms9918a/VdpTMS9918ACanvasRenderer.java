@@ -403,7 +403,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		return 1024;
 	}
 
-    public synchronized void touchAbsoluteVdpMemory(int vdpaddr) {
+    public void touchAbsoluteVdpMemory(int vdpaddr) {
     	try {
 			if (vdpModeRedrawHandler != null) {
 				vdpChanges.changed |= vdpModeRedrawHandler.touch(vdpaddr);

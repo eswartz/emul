@@ -215,7 +215,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	private ImageData readImage() {
 		ICanvas vc = renderer.getCanvas();
 		ImageDataCanvas idc = (ImageDataCanvas) vc;
-		ImageData data = idc.getImageData();
+		ImageData data = (ImageData) idc.getImageData().clone();
 		
 		// clip to visible size
 		int visWidth = vc.getVisibleWidth();

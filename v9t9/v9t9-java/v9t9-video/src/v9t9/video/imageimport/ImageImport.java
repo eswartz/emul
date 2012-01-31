@@ -1726,14 +1726,14 @@ public class ImageImport {
 		updatePaletteMapping();
 		
 		this.theImage = scaled;
-		
-		setImageData(scaled);
 
-		synchronized (vdp) {
+		setImageData(scaled);
+		
+		synchronized (canvas) {
 			setVideoMemory();
 			canvas.markDirty();
 		}
-
+		
 	}
 
 	/**

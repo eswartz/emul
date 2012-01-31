@@ -68,7 +68,7 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 
 
 	/** Get the dirty rectangle in pixels */
-	public Rectangle getDirtyRect() {
+	public synchronized Rectangle getDirtyRect() {
 		if (dx1 >= dx2 || dy1 >= dy2)
 			return null;
 

@@ -357,7 +357,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	 */
 	public ImageData getScreenshotImageData() {
 		if (getCanvas() instanceof ImageDataCanvas) {
-			ImageData imageData = ((ImageDataCanvas) getCanvas()).getImageData();
+			ImageData imageData = (ImageData) ((ImageDataCanvas) getCanvas()).getImageData().clone();
 			return imageData;
 		}
 		return null;

@@ -478,7 +478,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 * @return
 	 */
 	public ImageData getScreenshotImageData() {
-		ImageData imageData = ((ImageDataCanvas) vdpCanvas).getImageData();
+		ImageData imageData = (ImageData) ((ImageDataCanvas) vdpCanvas).getImageData().clone();
 		return imageData;
 	}
 
