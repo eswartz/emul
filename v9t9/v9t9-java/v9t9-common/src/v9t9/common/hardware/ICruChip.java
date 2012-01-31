@@ -32,6 +32,8 @@ public interface ICruChip extends IPersistable {
 	void triggerInterrupt(int level);
 
 	boolean isInterruptWaiting();
+	
+	void handledInterrupt();
 
 	/**
 	 * 

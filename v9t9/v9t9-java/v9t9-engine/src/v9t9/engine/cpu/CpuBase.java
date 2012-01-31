@@ -221,7 +221,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		return targetcycles;
 	}
 
-	public void acknowledgeInterrupt() {
+	public void acknowledgeInterrupt(int level) {
 		interrupts++;
 	}
 	public int getAndResetInterruptCount() {

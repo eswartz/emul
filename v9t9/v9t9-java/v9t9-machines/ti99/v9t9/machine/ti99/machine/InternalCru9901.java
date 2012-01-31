@@ -161,6 +161,7 @@ public class InternalCru9901 extends BaseCruChip {
 				// if the keyboard is not scanned continuously, this
 				// is a way to trap it in the standard TI ROM
 				keyboardState.resetProbe();
+				//System.out.println("Checking VDP interrupt... "+currentints);
 				return (currentints & (1 << intVdp)) == 0 ? 0 : 1;
 			} else
 				return 0;

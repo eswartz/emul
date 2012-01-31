@@ -77,7 +77,12 @@ public interface ICpu extends IPersistable {
 	/** Get target # cycles to be executed per tick */
 	int getTargetCycleCount();
 
-	void acknowledgeInterrupt();
+	/** 
+	 * Acknowledge the interrupt at the given level, and tell whether
+	 * the interrupt is now acknowledged
+	 * @param level
+	 */
+	void acknowledgeInterrupt(int level);
 	int getAndResetInterruptCount();
 
 	void addAllowedCycles(int i);

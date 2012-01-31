@@ -114,7 +114,6 @@ public class BaseCruChip implements ICruChip {
 		}
 		
 		intreq = false;
-		
 		if ((currentints & enabledIntMask) != 0) {
 			int intlevel;
 			
@@ -132,6 +131,13 @@ public class BaseCruChip implements ICruChip {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.ICruChip#handledInterrupt()
+	 */
+	@Override
+	public void handledInterrupt() {
+		intreq = false;		
+	}
 	/**
 		Trigger an interrupt, via hardware.
 	*/
@@ -140,8 +146,7 @@ public class BaseCruChip implements ICruChip {
 			if ((currentints & (1 << level)) == 0) {
 				currentints |= 1 << level;
 				machine.getCpu().setIdle(false);
-				//System.out.println(
-				//		"Hardware triggered interrupt... "+level+"/"+currentints+"/"+int9901);
+				//System.out.println("Hardware triggered interrupt... "+level+"/"+currentints);
 			}
 		}
 	}
@@ -149,9 +154,7 @@ public class BaseCruChip implements ICruChip {
 	public void acknowledgeInterrupt(int level) {
 		if ((currentints & (1 << level)) != 0) {
 			currentints &= ~(1 << level);
-			machine.getCpu().acknowledgeInterrupt();
-			//System.out.println(
-			//		"Acknowledged interrupt... "+level+"/"+currentints+"/"+int9901);
+			machine.getCpu().acknowledgeInterrupt(level);
 		} else {
 			//System.out.println(
 			//		"??? acknowledged unset interrupt... "+level+"/"+currentints+"/"+int9901);

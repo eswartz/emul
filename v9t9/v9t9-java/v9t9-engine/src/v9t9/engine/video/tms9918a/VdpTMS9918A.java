@@ -206,7 +206,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
         return ret;
     }
 
-    public synchronized void touchAbsoluteVdpMemory(int vdpaddr) {
+    public void touchAbsoluteVdpMemory(int vdpaddr) {
     	vdpMemory.touchMemory(vdpaddr & getModeAddressMask());
     }
     
@@ -272,20 +272,28 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
     		
     		// a real interrupt only occurs if wanted
     		if ((readVdpReg(1) & R1_INT) != 0) {
-    			if ((vdpStatus & VDP_INTERRUPT) == 0) {
-    				vdpStatus |= VDP_INTERRUPT;
-    				machine.getExecutor().vdpInterrupt();
-    			}
-    			
-    			ICruChip cru = machine.getCru();
-				if (cru instanceof BaseCruChip)
-    				cru.triggerInterrupt(((BaseCruChip) cru).intVdp);
-				
+    			triggerInterrupt();
 				//machine.getCpu().setIdle(false);
     		}
 		}
 		//System.out.print('!');
 		
+	}
+
+	/**
+	 * 
+	 */
+	protected void triggerInterrupt() {
+		if ((vdpStatus & VDP_INTERRUPT) == 0) {
+			vdpStatus |= VDP_INTERRUPT;
+			machine.getExecutor().vdpInterrupt();
+		}
+		
+		ICruChip cru = machine.getCru();
+		if (cru instanceof BaseCruChip) {
+			cru.triggerInterrupt(((BaseCruChip) cru).intVdp);
+		}
+				
 	}
 
 	public boolean isThrottled() {
@@ -366,7 +374,11 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	 */
 	@Override
 	public int getRegister(int reg) {
-		return (reg == REG_ST ? vdpStatus : vdpregs[reg]) & 0xff;
+		if (reg == REG_ST) {
+			return vdpStatus;
+		} else {
+			return vdpregs[reg] & 0xff;
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -532,7 +544,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		}
 		
 		if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
-			log("register " + reg + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(value));
+			log("register " + (reg < 0 ? "ST" : ""+reg) + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(value));
 		
 		fireRegisterChanged(reg, (byte) value);
 		return old;
@@ -546,10 +558,9 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	protected void doSetVdpReg(int reg, byte old, byte val) {
 		/* if interrupts enabled, and interrupt was pending, trigger it */
 		if ((val & R1_INT) != 0 
-		&& 	(old & R1_INT) == 0 
-		&&	(vdpStatus & VDP_INTERRUPT) != 0) 
+		&& 	(old & R1_INT) == 0) 
 		{
-			//trigger9901int( M_INT_VDP);	// TODO
+			triggerInterrupt();
 		}
 
 	}

@@ -147,6 +147,7 @@ public class Cpu9900 extends CpuBase {
 	    		if (state.getStatus().getIntMask() >= ic) {
 	    			//System.out.println("Triggering interrupt... "+ic);
 	    			pins |= PIN_INTREQ;
+	    			//cruAccess.handledInterrupt();
 	    			return true;    		
 	    		} else {
 	    			//System.out.print('-');

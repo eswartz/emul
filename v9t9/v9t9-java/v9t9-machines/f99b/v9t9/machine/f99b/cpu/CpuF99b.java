@@ -153,6 +153,7 @@ public class CpuF99b extends CpuBase {
 	    		int mask = state.getStatus().getIntMask();
     			if (mask >= ic) {
 	    			pins |= PIN_INTREQ;
+	    			cruAccess.handledInterrupt();
 	    			return true;    		
 	    		}
 	    	} 
@@ -195,11 +196,24 @@ public class CpuF99b extends CpuBase {
         	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
             
-            reset();
+           // reset();
             
             // ensure the startup code has enough time to clear memory
-            //noIntCount = 10000;
+    		noIntCount += 10000;
+    		
+    		state.setRegister(CpuF99b.SR, 0);
             
+            // ROM should set these!
+    		getState().setSP((short) 0xff80);
+    		getState().setBaseSP((short) 0xff80);
+    		getState().setRP((short) 0xffc0);
+    		getState().setBaseRP((short) 0xffc0);
+    		getState().setUP((short) 0xff00);
+    		
+    		
+    		contextSwitch((short) 0x400);
+    		
+    		machine.getExecutor().breakAfterExecution(0);
             machine.getExecutor().interpretOneInstruction();
         } else if ((pins & PIN_INTREQ) != 0 && state.getStatus().getIntMask() >= ic) {	// already checked int mask in status
             // maskable
@@ -259,18 +273,8 @@ public class CpuF99b extends CpuBase {
 	 */
 	@Override
 	public void reset() {
-		noIntCount += 1000;
-		
-		state.getStatus().expand((short) 0);
-        
-        // ROM should set these!
-		getState().setSP((short) 0xff80);
-		getState().setBaseSP((short) 0xff80);
-		getState().setRP((short) 0xffc0);
-		getState().setBaseRP((short) 0xffc0);
-		getState().setUP((short) 0xff00);
-		
-		contextSwitch((short) 0x400);
+		setPin(PIN_RESET);
+
 	}
 
 	@Override
@@ -290,6 +294,12 @@ public class CpuF99b extends CpuBase {
 	 *	pushed status and PC, on a new stack. 
 	 */
 	public void fault() {
+		if ((pins & PIN_RESET) != 0) {
+			handleInterrupts();
+			pins &= ~PIN_RESET;
+			throw new AbortedException();
+		}
+		
 		int currentInt = ((StatusF99b) stateF99b.getStatus()).getCurrentInt();
 		boolean doubleFault = currentInt == INT_FAULT || currentInt == INT_NMI;
 		
