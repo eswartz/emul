@@ -83,7 +83,7 @@ public abstract class BaseVdpCanvas implements ICanvas {
 			listener.canvasDirtied(this);
 	}
 	
-	public void clearDirty() {
+	public synchronized void clearDirty() {
 		//Arrays.fill(dirtyBlocks, 0, dirtyBlocks.length, false);
 		dx1 = width;
 		dy1 = height; 
