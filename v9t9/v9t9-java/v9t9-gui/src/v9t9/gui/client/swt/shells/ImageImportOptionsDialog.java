@@ -283,8 +283,8 @@ public class ImageImportOptionsDialog extends Composite {
 			}
 		}
 		
-		Point pt = control.toControl(e.x, e.y);
-		window.showMenu(menu, control, pt.x, pt.y);
+		Point pt = control.toDisplay(e.x, e.y);
+		window.showMenu(menu, null, pt.x, pt.y);
 	}
 
 }
