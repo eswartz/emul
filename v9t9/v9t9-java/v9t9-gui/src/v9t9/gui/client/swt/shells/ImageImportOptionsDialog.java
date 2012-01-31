@@ -196,6 +196,10 @@ public class ImageImportOptionsDialog extends Composite {
 				}
 			}
 		});
+		
+		if (imageImportHandler.getImageImportOptions().getImage() == null) {
+			showFileOpenDialog(window, imageImportHandler, imageImportHandler.getHistory());
+		}
 	}
 
 	/**
@@ -242,19 +246,7 @@ public class ImageImportOptionsDialog extends Composite {
 		vitem.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				String file = window.openFileSelectionDialog("Open Image", null, null, false, 
-						new String[] { ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".tga" });
-				if (file != null) {
-					Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(
-							window.getEventNotifier(), file);
-					
-					if (info != null) {
-						imageSupport.importImage(info.first, !info.second);
-						((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
-						
-						fileHistory.add(file);
-					}
-				}
+				showFileOpenDialog(window, imageSupport, fileHistory);
 			}
 		});
 		
@@ -285,6 +277,29 @@ public class ImageImportOptionsDialog extends Composite {
 		
 		Point pt = control.toDisplay(e.x, e.y);
 		window.showMenu(menu, null, pt.x, pt.y);
+	}
+
+	/**
+	 * @param window
+	 * @param imageSupport
+	 * @param fileHistory
+	 */
+	protected static void showFileOpenDialog(final SwtWindow window,
+			final IImageImportHandler imageSupport,
+			final Collection<String> fileHistory) {
+		String file = window.openFileSelectionDialog("Open Image", null, null, false, 
+				new String[] { ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".tga" });
+		if (file != null) {
+			Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(
+					window.getEventNotifier(), file);
+			
+			if (info != null) {
+				imageSupport.importImage(info.first, !info.second);
+				((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
+				
+				fileHistory.add(file);
+			}
+		}
 	}
 
 }

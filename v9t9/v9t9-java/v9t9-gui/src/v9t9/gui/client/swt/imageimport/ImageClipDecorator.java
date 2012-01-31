@@ -173,9 +173,11 @@ public class ImageClipDecorator implements PaintListener {
 			clipProperty.setString(null);
 		} else {
 			Rectangle clipScaled = getSourceClip(clip);
-			//System.out.println("Publishing clip: " + clipScaled);
-			clipProperty.setValue(new java.awt.Rectangle(clipScaled.x,
-					clipScaled.y, clipScaled.width, clipScaled.height));
+			if (clipScaled != null) {
+				//System.out.println("Publishing clip: " + clipScaled);
+				clipProperty.setValue(new java.awt.Rectangle(clipScaled.x,
+						clipScaled.y, clipScaled.width, clipScaled.height));
+			}
 		}
 
 		// is hidden property
