@@ -106,6 +106,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	class EmulatorWindowLayout extends Layout {
 
 		private Point vidSz;
+		private Point rndSz;
 		private Point sbSz;
 		private Point bbSz;
 
@@ -116,13 +117,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 		protected Point computeSize(Composite composite, int wHint, int hHint,
 				boolean flushCache) {
 			
-			if (composite.getChildren().length != 3)
+			int numKids = composite.getChildren().length;
+			if (numKids != 4)
 				throw new IllegalStateException();
 			
 			Rectangle cur = composite.getBounds();
 			
 			if (flushCache) {
-				vidSz = sbSz = bbSz = null;
+				vidSz = sbSz = bbSz = rndSz = null;
 			}
 			
 			if (vidSz == null)
@@ -133,15 +135,23 @@ public class SwtWindow extends BaseEmulatorWindow {
 					sbSz = statusBar.getButtonBar().computeSize(SWT.DEFAULT, cur.height); 
 				if (bbSz == null)
 					bbSz = buttonBar.getButtonBar().computeSize(SWT.DEFAULT, cur.height);
-				
+				if (rndSz == null) {
+					if (((GridData)rndBar.getButtonBar().getLayoutData()).exclude)
+						rndSz = new Point(0, 0);
+					else
+						rndSz = rndBar.getButtonBar().computeSize(cur.width - sbSz.x - bbSz.x, SWT.DEFAULT);
+				}
+
 				return new Point(sbSz.x + bbSz.x + vidSz.x, cur.height);
 			} else {
 				if (sbSz == null)
 					sbSz = statusBar.getButtonBar().computeSize(cur.width, SWT.DEFAULT); 
 				if (bbSz == null)
 					bbSz = buttonBar.getButtonBar().computeSize(cur.width, SWT.DEFAULT);
-				
-				return new Point(cur.width, sbSz.y + bbSz.y + vidSz.y);
+				if (rndSz == null)
+					rndSz = rndBar.getButtonBar().computeSize(cur.width, SWT.DEFAULT);
+
+				return new Point(cur.width, sbSz.y + bbSz.y + rndSz.y + vidSz.y);
 			}
 		}
 
@@ -150,7 +160,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		 */
 		@Override
 		protected void layout(Composite composite, boolean flushCache) {
-			if (composite.getChildren().length != 3)
+			if (composite.getChildren().length != 4)
 				throw new IllegalStateException();
 			
 			Rectangle cur = composite.getClientArea();
@@ -163,14 +173,16 @@ public class SwtWindow extends BaseEmulatorWindow {
 				int barSz = Math.min(sbSz.x, bbSz.x);
 				int left = cur.width - barSz * 2;
 				statusBar.getButtonBar().setBounds(0, 0, barSz, cur.height);
-				videoRendererComposite.setBounds(barSz, 0, left, cur.height);
+				videoRendererComposite.setBounds(barSz, 0, left, cur.height - rndSz.y);
 				buttonBar.getButtonBar().setBounds(barSz + left, 0, barSz, cur.height);
+				rndBar.getButtonBar().setBounds(barSz, cur.height - rndSz.y, rndSz.x, rndSz.y);
 			} else {
 				int barSz = Math.min(sbSz.y, bbSz.y);
-				int left = cur.height - barSz * 2;
+				int left = cur.height - barSz * 3;
 				statusBar.getButtonBar().setBounds(0, 0, cur.width, barSz);
 				videoRendererComposite.setBounds(0, barSz, cur.width, left);
 				buttonBar.getButtonBar().setBounds(0, barSz + left, cur.width, barSz);
+				rndBar.getButtonBar().setBounds(0, barSz * 2 + left, cur.width, barSz);
 				
 			}
 		}
@@ -321,7 +333,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		
 
-		rndBar = new EmulatorRnDBar(this, rndImageProvider, videoRendererComposite, machine,
+		rndBar = new EmulatorRnDBar(this, rndImageProvider, mainComposite, machine,
 				new int[] { SWT.COLOR_BLACK, SWT.COLOR_BLACK, SWT.COLOR_BLACK  },
 				new float[] { 0.5f, 0.5f },
 				!isHorizontal);
