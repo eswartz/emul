@@ -149,7 +149,7 @@ public class KeyboardState implements IKeyboardState {
     };
 	//private final Cpu cpu;
 	//private long lastAbortTime;
-	private static final long TIMEOUT = 50;
+	private static final long TIMEOUT = 500;
 
     /*	This macro tells us whether an ASCII code has a direct mapping
 	to a 9901 keyboard matrix location (stored in latinto9901[]).
@@ -217,7 +217,7 @@ public class KeyboardState implements IKeyboardState {
      * @return true if we could represent it as ASCII
      */
     public synchronized boolean postCharacter(IBaseMachine machine, int realKey, boolean pressed, boolean synthetic, byte shift, char ch, long when) {
-    	if (DEBUG) System.out.println("post: ch=" + ch + "; shift="+ HexUtils.toHex2(shift)+"; pressed="+pressed);
+    	if (DEBUG) System.out.println(when + "==> post: ch=" + ch + "; shift="+ HexUtils.toHex2(shift)+"; pressed="+pressed);
     	if (isAsciiDirectKey(ch)) {
     		setKey(realKey, pressed, synthetic, shift, ch, when);
     		return true;
@@ -500,7 +500,7 @@ public class KeyboardState implements IKeyboardState {
 				} else if (false && oldestTime + 100 < time){
 					return false;
 				} 
-				if (isShift) {
+				if (delta.isShift) {
 					continue;
 				}
 				else if (delta.key != key && delta.onoff && onoff) {
@@ -605,9 +605,13 @@ public class KeyboardState implements IKeyboardState {
 	public synchronized void pushQueuedKey() {
 		long now = System.currentTimeMillis();
 		if (queuedKeys.isEmpty() && currentGroup == null) {
-			if (lastChangeTime + TIMEOUT < now)
+			if (lastChangeTime + TIMEOUT < now) {
+				if (DEBUG) {
+					if ((crukeyboardmap[0]|crukeyboardmap[1]|crukeyboardmap[2]|crukeyboardmap[3]|crukeyboardmap[4]|crukeyboardmap[5]) != 0)
+						System.out.println("dumping matrix");
+				}
 				Arrays.fill(crukeyboardmap, 0, 6, (byte) 0);
-			else
+			} else
 				return;
 		} else {
 			if (currentGroup != null) {
@@ -653,13 +657,13 @@ public class KeyboardState implements IKeyboardState {
 		}
 		*/
 		
-		lastChangeTime = now;
 		System.arraycopy(crukeyboardmap, 0, lastcrukeyboardmap, 0, 8);
 		boolean noKey = !anyKeyPressed();
 		if (!noKey || !prevWasBlank) {
 			if (DEBUG) { for (int i=0;i<8;i++) System.out.print(HexUtils.toHex2(crukeyboardmap[i])+" "); System.out.println(); }
 			prevWasBlank = noKey;
 		}
+		lastChangeTime = now;
 		lastAlphaLock = alphaLock;
 	}
 
@@ -805,6 +809,7 @@ public class KeyboardState implements IKeyboardState {
 	}
     
     private void changeKbdMatrix(byte r, byte c, boolean v) {
+    	if (DEBUG) System.out.println("changeKbdMatrix: " + r+ "/" +c +" = " + v);
         if (v)
             setKbdMatrix(r, c);
         else

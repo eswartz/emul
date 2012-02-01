@@ -420,6 +420,8 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 	
 	
 	private int lastKeyPressedCode = -1;
+	private long initEventTimeMillisDelta;
+	
 	public void init(final Control control) {
 		Shell shell = control.getShell();
 		
@@ -427,6 +429,10 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 
 
 			public void handleEvent(Event event) {
+				if (initEventTimeMillisDelta == 0) {
+					initEventTimeMillisDelta = System.currentTimeMillis() - (event.time & 0xffffffffL);
+				}
+				
 				if (!control.isFocusControl())
 					return;
 				
@@ -454,7 +460,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 
 		        lastKeyPressedCode = event.keyCode;
 
-				recordKey(event, System.currentTimeMillis());
+				recordKey(event, event.time + initEventTimeMillisDelta);
 				event.doit = false;
 				
 			}
@@ -463,7 +469,11 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 		shell.getDisplay().addFilter(SWT.KeyUp, new Listener() {
 
 			public void handleEvent(Event event) {
-				recordKey(event, System.currentTimeMillis());
+				if (initEventTimeMillisDelta == 0) {
+					initEventTimeMillisDelta = System.currentTimeMillis() - (event.time & 0xffffffffL);
+				}
+
+				recordKey(event, event.time + initEventTimeMillisDelta);
 				event.doit = false;
 				lastKeyPressedCode = -1;
 			}
