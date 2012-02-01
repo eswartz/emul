@@ -43,8 +43,8 @@ public class DiskMemoryEntry extends MemoryEntry {
     DiskMemoryEntry(MemoryEntryInfo info, String name, MemoryArea area, StoredMemoryEntryInfo storedInfo) {
     	super(name, info.getDomain(storedInfo.memory), info.getAddress(), 
     			Math.min(Math.abs(info.getSize()), storedInfo.size) - storedInfo.fileoffs, area);
-		this.info = info;
 		this.storedInfo = storedInfo;
+		this.info = storedInfo.createMemoryEntryInfo();
 		this.locator = storedInfo.locator;
     	
     	/* this should be set up already */

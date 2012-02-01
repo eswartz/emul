@@ -6,6 +6,7 @@ package v9t9.common.memory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.IPathFileLocator;
@@ -94,5 +95,18 @@ public class StoredMemoryEntryInfo {
     	
         return new StoredMemoryEntryInfo(info, settings, memory, locator, 
         		uri, filename, realMD5, name, fileoffs, filesize);
+	}
+
+	/**
+	 * Create the memory info reflecting this stored memory
+	 * (overriding bank-ignorant basic MemoryEntryInfo)
+	 * @return
+	 */
+	public MemoryEntryInfo createMemoryEntryInfo() {
+		MemoryEntryInfo info = new MemoryEntryInfo(new HashMap<String, Object>(this.info.getProperties()));
+		info.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
+		info.getProperties().put(MemoryEntryInfo.FILENAME, fileName);
+		info.getProperties().put(MemoryEntryInfo.OFFSET, fileoffs);
+		return info;
 	}
 }
