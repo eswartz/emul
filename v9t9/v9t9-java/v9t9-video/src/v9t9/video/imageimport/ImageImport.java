@@ -1727,9 +1727,9 @@ public class ImageImport {
 		
 		this.theImage = scaled;
 
-		setImageData(scaled);
-		
 		synchronized (canvas) {
+			setImageData(scaled);
+		
 			setVideoMemory();
 			canvas.markDirty();
 		}
