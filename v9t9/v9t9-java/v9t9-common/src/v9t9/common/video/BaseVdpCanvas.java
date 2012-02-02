@@ -46,12 +46,6 @@ public abstract class BaseVdpCanvas implements ICanvas {
 		return x;
 	}
 
-	/** Convert the width in the canvas to the width displayed.  We have 16 extra
-	 * pixels for V9938 panning. */
-	protected int actualToVisibleWidth(int x) {
-		return x;
-	}
-
 	public void markDirty(RedrawBlock[] blocks, int count) {
 		if (count == 0)
 			return;
@@ -110,7 +104,7 @@ public abstract class BaseVdpCanvas implements ICanvas {
 	 */
 	@Override
 	public int getVisibleWidth() {
-		return actualToVisibleWidth(width);
+		return width;
 	}
 
 	/* (non-Javadoc)

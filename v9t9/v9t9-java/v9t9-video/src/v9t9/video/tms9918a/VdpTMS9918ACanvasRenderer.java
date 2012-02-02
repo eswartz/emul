@@ -45,7 +45,6 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	protected final static int REDRAW_MODE = 4		;	/* mode change */
 	protected final static int REDRAW_BLANK = 8		;	/* make blank */
 	protected final static int REDRAW_PALETTE = 16;
-	protected boolean vdpchanged;
 
 	protected IVdpCanvas vdpCanvas;
 	protected IVdpModeRedrawHandler vdpModeRedrawHandler;
@@ -481,13 +480,12 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 				}
 				
 				vdpChanges.fullRedraw = false;
-				
+				vdpChanges.changed = false;
 			}
 
 			//System.out.println("elapsed: " + (System.currentTimeMillis() - start));
 		}
 		
-		vdpchanged = false;
 		return true;
 	}
 
