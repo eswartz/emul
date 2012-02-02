@@ -467,21 +467,23 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 						spriteRedrawHandler.updateCanvas(vdpChanges.fullRedraw);
 					}
 				}
+				
+
+				vdpCanvas.markDirty(blocks, count);
+				
+				vdpChanges.screen.clear();
+				Arrays.fill(vdpChanges.patt, (byte) 0);
+				Arrays.fill(vdpChanges.color, (byte) 0);
+				
+				if (drawSprites) {
+					Arrays.fill(vdpChanges.sprpat, (byte) 0);
+					vdpChanges.sprite = 0;
+				}
+				
+				vdpChanges.fullRedraw = false;
+				
 			}
 
-			vdpCanvas.markDirty(blocks, count);
-			
-			vdpChanges.screen.clear();
-			Arrays.fill(vdpChanges.patt, (byte) 0);
-			Arrays.fill(vdpChanges.color, (byte) 0);
-			
-			if (drawSprites) {
-				Arrays.fill(vdpChanges.sprpat, (byte) 0);
-				vdpChanges.sprite = 0;
-			}
-			
-			vdpChanges.fullRedraw = false;
-			
 			//System.out.println("elapsed: " + (System.currentTimeMillis() - start));
 		}
 		
