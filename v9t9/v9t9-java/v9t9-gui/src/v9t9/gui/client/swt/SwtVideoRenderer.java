@@ -270,6 +270,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 					}
 					
 					isDirty = false;
+					vdpCanvas.clearDirty();
 				}
 			}
 			

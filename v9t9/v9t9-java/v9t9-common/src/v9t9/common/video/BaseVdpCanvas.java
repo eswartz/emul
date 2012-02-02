@@ -53,6 +53,8 @@ public abstract class BaseVdpCanvas implements ICanvas {
 	}
 
 	public void markDirty(RedrawBlock[] blocks, int count) {
+		if (count == 0)
+			return;
 		if (dx1 == 0 && dy1 == 0 && dx2 == width && dy2 == height) {
 			// already dirty
 			if (listener != null)
