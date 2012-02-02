@@ -1774,8 +1774,7 @@ public class ImageImport {
 				
 				int poffs = ((y >> 3) << 8) + (y & 7) + ((x >> 1) << 3);  
 				//System.out.println("("+y+","+x+") = "+ poffs);
-				patt.memory[patt.offset + poffs] = (byte) ((f << 4) | b);
-				vdp.touchAbsoluteVdpMemory(patt.offset + poffs);
+				vdp.writeAbsoluteVdpMemory(patt.offset + poffs, (byte) ((f << 4) | b));
 			}
 		}
 	}
@@ -1918,8 +1917,7 @@ public class ImageImport {
 					byte byt = handler.createImageDataByte(x, row);
 					
 					int poffs = y * rowstride + (x / colstride); 
-					patt.memory[patt.offset + poffs] = byt;
-					vdp.touchAbsoluteVdpMemory(patt.offset + poffs);
+					vdp.writeAbsoluteVdpMemory(patt.offset + poffs, byt);
 				}
 			}
 		}
@@ -1934,13 +1932,11 @@ public class ImageImport {
 		ByteMemoryAccess color = vdp.getByteReadMemoryAccess(vdp99.getColorTableBase());
 		
 		// assume char 255 is not used
-		Arrays.fill(screen.memory, screen.offset, screen.offset + 768, (byte) 0xff);
 		for (int i = 0; i < 768; i++)
-			vdp.touchAbsoluteVdpMemory(screen.offset + i);
+			vdp.writeAbsoluteVdpMemory(screen.offset + i, (byte) 0xff);
 
-		Arrays.fill(patt.memory, patt.offset + 255 * 8, patt.offset + 256 * 8, (byte) 0x0);
 		for (int i = 0; i < 8; i++)
-			vdp.touchAbsoluteVdpMemory(patt.offset + 255*8 + i);
+			vdp.writeAbsoluteVdpMemory(patt.offset + 255*8 + i, (byte) 0x0);
 
 		byte b = 0;
 		
@@ -1949,9 +1945,8 @@ public class ImageImport {
 		
 		b = (byte) ((cb >> 0) & 0xf);
 
-		Arrays.fill(color.memory, color.offset, color.offset + 32, cb);
 		for (int i = 0; i < 32; i++)
-			vdp.touchAbsoluteVdpMemory(color.offset + i);
+			vdp.writeAbsoluteVdpMemory(color.offset + i, cb);
 
 		int width = theImage.getWidth();
 		int height = theImage.getHeight();
@@ -1965,8 +1960,7 @@ public class ImageImport {
 					throw new IllegalStateException();
 				int choffs = (((y + yoffs) >> 3) << 5) + ((x + xoffs) >> 3);
 				
-				screen.memory[screen.offset + choffs] = (byte) ch;
-				vdp.touchAbsoluteVdpMemory(screen.offset + choffs);
+				vdp.writeAbsoluteVdpMemory(screen.offset + choffs, (byte) ch);
 				
 				int poffs = (ch << 3) + (y & 7);
 				
@@ -1979,8 +1973,7 @@ public class ImageImport {
 					}
 				}
 
-				patt.memory[patt.offset + poffs] = p;
-				vdp.touchAbsoluteVdpMemory(patt.offset + poffs);
+				vdp.writeAbsoluteVdpMemory(patt.offset + poffs, p);
 			}
 		}
 		
@@ -1990,7 +1983,7 @@ public class ImageImport {
 	 * @param vdp99
 	 */
 	private void setVideoMemoryBitmapMode(IVdpTMS9918A vdp99) {
-		boolean isMono = vdp instanceof IVdpTMS9918A ? ((IVdpTMS9918A) vdp).isBitmapMonoMode() : false;
+		boolean isMono = vdp99.isBitmapMonoMode();
 		
 		ByteMemoryAccess screen = vdp.getByteReadMemoryAccess(vdp99.getScreenTableBase());
 		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdp99.getPatternTableBase());
@@ -2010,8 +2003,7 @@ public class ImageImport {
 				int ch = choffs & 0xff;
 				
 				if ((y & 7) == 0) {
-					screen.memory[screen.offset + choffs] = (byte) ch;
-					vdp.touchAbsoluteVdpMemory(screen.offset + choffs);
+					vdp.writeAbsoluteVdpMemory(screen.offset + choffs, (byte) ch);
 				}
 
 				int poffs = (y >> 6) * 0x800 + (ch << 3) + (y & 7);
@@ -2044,8 +2036,7 @@ public class ImageImport {
 						}
 					}
 					
-					color.memory[color.offset + poffs] = (byte) ((f << 4) | (b));
-					vdp.touchAbsoluteVdpMemory(color.offset + poffs);
+					vdp.writeAbsoluteVdpMemory(color.offset + poffs, (byte) ((f << 4) | (b)));
 				} else {
 					// in mono mode, mapper has matched with fg and bg from vr7
 					for (int xo = 0; xo < 8; xo++) {
@@ -2056,8 +2047,7 @@ public class ImageImport {
 					}
 				}
 
-				patt.memory[patt.offset + poffs] = p;
-				vdp.touchAbsoluteVdpMemory(patt.offset + poffs);
+				vdp.writeAbsoluteVdpMemory(patt.offset + poffs, p);
 			}
 		}
 	}
