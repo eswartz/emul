@@ -402,17 +402,19 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		return 1024;
 	}
 
-    public void touchAbsoluteVdpMemory(int vdpaddr) {
-    	try {
-			if (vdpModeRedrawHandler != null) {
+    public void touchAbsoluteVdpMemory(int vdpaddr, boolean isByte) {
+		if (vdpModeRedrawHandler != null) {
+			synchronized (vdpCanvas) {
 				vdpChanges.changed |= vdpModeRedrawHandler.touch(vdpaddr);
-		    	if (spriteRedrawHandler != null) {
-		    		vdpChanges.changed |= spriteRedrawHandler.touch(vdpaddr);
-		    	}
+				if (!isByte)
+					vdpChanges.changed |= vdpModeRedrawHandler.touch(vdpaddr + 1);
+				if (spriteRedrawHandler != null) {
+					vdpChanges.changed |= spriteRedrawHandler.touch(vdpaddr);
+					if (!isByte)
+						vdpChanges.changed |= spriteRedrawHandler.touch(vdpaddr + 1);
+				}
 			}
-    	} catch (NullPointerException e) {
-    		// XXX: sprite.touch is null sometimes???
-    	}
+		}
     }
     
 	protected void dirtySprites() {
@@ -516,9 +518,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	 */
 	@Override
 	public void changed(IMemoryEntry entry, int addr, boolean isByte) {
-		touchAbsoluteVdpMemory(addr);
-		if (!isByte)
-			touchAbsoluteVdpMemory(addr + 1);
+		touchAbsoluteVdpMemory(addr, isByte);
 	}
 	
 }
