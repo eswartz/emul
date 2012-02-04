@@ -243,7 +243,7 @@ export>
         >r  $xy  r>  execute
     else
         xy 2>r
-        0 ?do  dup  (emit) dup  advance-cursor  loop  drop
+        0 ?do  dup (emit+)  loop  drop
         2r> at-xy
     then
 ;
