@@ -210,6 +210,7 @@ public class CpuF99b extends CpuBase {
     		getState().setBaseRP((short) 0xffc0);
     		getState().setUP((short) 0xff00);
     		
+    		setIdle(false);
     		
     		contextSwitch((short) 0x400);
     		
@@ -297,6 +298,7 @@ public class CpuF99b extends CpuBase {
 		if ((pins & PIN_RESET) != 0) {
 			handleInterrupts();
 			pins &= ~PIN_RESET;
+			setIdle(false);
 			throw new AbortedException();
 		}
 		
