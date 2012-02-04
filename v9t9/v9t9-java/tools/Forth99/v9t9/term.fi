@@ -325,13 +325,13 @@ export>
     v-data-size t-data-size +
 ;
 
-( save video state: needs buffer of v-data-size size )
+( save video state: needs buffer of #vrs size )
 : vsave  ( buff -- )
     v-data0  over                 v-data-size  cmove 
     t-data0  swap  v-data-size +  t-data-size  cmove 
 ;
 
-( restore video state: needs buffer of v-data-size size )
+( restore video state: needs buffer of #vrs size )
 : vrestore  ( buff -- )
     cursor-off
     
