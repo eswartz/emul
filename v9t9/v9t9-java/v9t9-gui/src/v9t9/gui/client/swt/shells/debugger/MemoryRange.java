@@ -87,7 +87,7 @@ public class MemoryRange {
 	}
 	public void writeByte(int addr, byte byt) {
 		if (addr >= this.addr && addr < this.addr + this.len)
-			entry.flatWriteByte(addr, byt);	
+			entry.writeByte(addr, byt);	
 	}
 	public boolean getAndResetChanged(Integer addr) {
 		synchronized (changedMemory) {
