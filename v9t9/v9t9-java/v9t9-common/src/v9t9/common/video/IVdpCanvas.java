@@ -29,7 +29,7 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param fg foreground; use 16 for the vdpreg[7] fg 
 	 * @param bg background; use 0 for the vdpreg[7] bg
 	 */
-	abstract public void draw8x8TwoColorBlock(int r, int c, ByteMemoryAccess pattern,
+	void draw8x8TwoColorBlock(int r, int c, ByteMemoryAccess pattern,
 			byte fg, byte bg);
 
 	/**
@@ -40,7 +40,7 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param fg foreground; use 16 for the vdpreg[7] fg 
 	 * @param bg background; use 0 for the vdpreg[7] bg
 	 */
-	abstract public void draw8x6TwoColorBlock(int r, int c, ByteMemoryAccess pattern,
+	void draw8x6TwoColorBlock(int r, int c, ByteMemoryAccess pattern,
 			byte fg, byte bg);
 
 	/**
@@ -50,7 +50,7 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param pattern
 	 * @param colors array of 0x&lt;fg&gt;&lt;bg&gt; pixels; bg may be 0 for vdpreg[7] bg
 	 */
-	abstract public void draw8x8MultiColorBlock(int r, int c,
+	void draw8x8MultiColorBlock(int r, int c,
 			ByteMemoryAccess pattern, ByteMemoryAccess colors);
 
 
@@ -62,7 +62,7 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param access
 	 * @param rowstride access stride between rows
 	 */
-	public abstract void draw8x8BitmapTwoColorBlock(
+	void draw8x8BitmapTwoColorBlock(
 			int x, int y,
 			ByteMemoryAccess access,
 			int rowstride);
@@ -74,7 +74,7 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param access
 	 * @param rowstride access stride between rows
 	 */
-	public abstract void draw8x8BitmapFourColorBlock(int x, int y,
+	void draw8x8BitmapFourColorBlock(int x, int y,
 			ByteMemoryAccess access, int rowstride);
 
 	/**
@@ -84,7 +84,7 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param rowstride access stride between rows
 	 * @param access
 	 */
-	public abstract void draw8x8BitmapRGB332ColorBlock(int x, int y,
+	void draw8x8BitmapRGB332ColorBlock(int x, int y,
 			ByteMemoryAccess byteReadMemoryAccess, int rowstride);
 
 
@@ -101,7 +101,7 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param isLogicalOr */
 	void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr);
 
-	abstract public void clearToEvenOddClearColors();
+	void clearToEvenOddClearColors();
 
 	int getBlockCount();
 

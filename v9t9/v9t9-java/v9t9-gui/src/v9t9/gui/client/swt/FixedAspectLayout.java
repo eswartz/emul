@@ -17,6 +17,8 @@ import org.eclipse.swt.widgets.Layout;
  */
 public class FixedAspectLayout extends Layout {
 
+	private static boolean useFullWidth = false;
+	
 	private int w;
 	private int h;
 	private double zoomx;
@@ -25,6 +27,8 @@ public class FixedAspectLayout extends Layout {
 	private final double quantum;
 	private final double maxforquantum;
 	private boolean fullScreen;
+	private Point desired;
+	private Composite composite;
 
 	public FixedAspectLayout(int w, int h, double zoomx, double zoomy, double quantum, double max) {
 		this.w = w;
@@ -86,6 +90,7 @@ public class FixedAspectLayout extends Layout {
 	@Override
 	protected Point computeSize(Composite composite, int wHint, int hHint,
 			boolean flushCache) {
+		this.composite = composite;
 		Rectangle bounds = composite.getParent().getClientArea();
 		//System.out.println("bounds: " +bounds);
 		
@@ -114,11 +119,12 @@ public class FixedAspectLayout extends Layout {
 			neww = (int) (newh * aspect);
 		}
 		
-		Point desired = new Point(neww, newh);
+		desired = new Point(neww, newh);
 		
 		//System.out.println("desired at " + desired);
 		
-		return desired;
+		Point full = useFullWidth ? new Point(bounds.width, desired.y) : desired;
+		return full;
 	}
 
 	private int fixup(int max, int base) {
@@ -137,7 +143,7 @@ public class FixedAspectLayout extends Layout {
 	protected void layout(Composite composite, boolean flushCache) {
 		Rectangle area = composite.getBounds();
 		//System.out.println("layout at " + area);
-		zoomx = (double) area.width / w;
+		zoomx = (double) desired.x / w;
 		if (zoomx < 1)
 			zoomx = 0.5;
 		else
@@ -157,6 +163,21 @@ public class FixedAspectLayout extends Layout {
 	}
 	public void setZoomY(double zoom) {
 		this.zoomy = zoom;
+	}
+	
+	/**
+	 * @return the desired
+	 */
+	public Point getDesired() {
+		return desired;
+	}
+	
+	public int getOffsetX() { 
+		return (composite.getSize().x - desired.x) / 2;
+	}
+	
+	public int getOffsetY() { 
+		return (composite.getSize().y - desired.y) / 2;
 	}
 	
 }

@@ -32,6 +32,15 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 		Arrays.fill(bitmap, (byte) getColorMgr().getClearColor());
 	}
 
+	public void clearToEvenOddClearColors() {
+		byte cc = (byte) getColorMgr().getClearColor();
+		byte cc1 = (byte) getColorMgr().getClearColor1();
+		for (int x = 0; x < bitmap.length; x += 2) {
+			bitmap[x] = cc;
+			bitmap[x+1] = cc1;
+		}
+	}
+
 	@Override
 	public int getLineStride() {
 		return UPDATEBLOCK_ROW_STRIDE;

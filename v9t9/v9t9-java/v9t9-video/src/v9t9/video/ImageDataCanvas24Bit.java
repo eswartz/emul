@@ -36,18 +36,18 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	}
 
 	@Override
-	protected ImageData createImageData() {
+	protected void createImageData() {
 		int allocHeight = height;
 		if ((height & 7) != 0)
 			allocHeight += 8;
 		
-		ImageData data = new ImageData(width, allocHeight * (isInterlacedEvenOdd() ? 2 : 1), 24, getPaletteData());
+		imageData = new ImageData(width, allocHeight * (isInterlacedEvenOdd() ? 2 : 1), 24, getPaletteData());
 		if (isInterlacedEvenOdd())
-			bytesPerLine = data.bytesPerLine * 2;
+			bytesPerLine = imageData.bytesPerLine * 2;
 		else
-			bytesPerLine = data.bytesPerLine;
+			bytesPerLine = imageData.bytesPerLine;
 		
-		return data;
+		pixSize = (imageData.depth >> 3);
 	}
 	
 	/* (non-Javadoc)
@@ -73,20 +73,42 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			Arrays.fill(imageData.alphaData, 0, imageData.alphaData.length, (byte)-1);
 		}
 	}
+	
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#clear()
+	 */
+	@Override
+	public void clearToEvenOddClearColors() {
+		byte cc = (byte) getColorMgr().getClearColor();
+		byte cc1 = (byte) getColorMgr().getClearColor1();
+		
+		byte[] fgRGB = colorRGBMap[cc];
+		byte[] bgRGB = colorRGBMap[cc1];
+		
+		int bpp = imageData.depth >> 3;
+		for (int i = 0; i < imageData.data.length; i += bpp + bpp) {
+			imageData.data[i + 0] = fgRGB[0];
+			imageData.data[i + 1] = fgRGB[1];
+			imageData.data[i + 2] = fgRGB[2];
+			imageData.data[i + 3] = bgRGB[0];
+			imageData.data[i + 4] = bgRGB[1];
+			imageData.data[i + 5] = bgRGB[2];
+		}
+		if (imageData.alphaData != null) {
+			Arrays.fill(imageData.alphaData, 0, imageData.alphaData.length, (byte)-1);
+		}
+	}
+	
+
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#getBitmapOffset(int, int)
 	 */
 	@Override
 	final public int getBitmapOffset(int x, int y) {
-		return getLineStride() * (y) + x * (imageData.depth >> 3);
+		return getLineStride() * (y) + x * pixSize;
 	}
-
-	@Override
-	final public int getPixelStride() {
-		return imageData.depth >> 3;
-	}
-
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#syncColors()

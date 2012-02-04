@@ -39,16 +39,6 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 	/** Get an implementation-defined offset into the bitmap */ 
 	public abstract int getBitmapOffset(int x, int y);
 
-	/** Get the delta for one pixel, in terms of the offset. 
-	 * @see #getBitmapOffset(int, int) 
-	 */ 
-	public abstract int getPixelStride();
-	
-	/** Get the delta for one row, in terms of the offset. 
-	 * @see #getBitmapOffset(int, int) 
-	 */ 
-	public abstract int getLineStride();
-
 	
 	/**
 	 * Blit an 8x8 block defined by a pattern and a foreground/background color to the bitmap
@@ -109,15 +99,4 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 			offs += bytesPerLine;
 		}
 	}
-
-	public void clearToEvenOddClearColors() {
-		byte cc = (byte) getColorMgr().getClearColor();
-		byte cc1 = (byte) getColorMgr().getClearColor1();
-		for (int r = 0; r < height; r++) {
-			for (int c = 0; c < width; c += 8) {
-				drawEightPixels(getBitmapOffset(c, r), (byte)0xaa, cc, cc1);
-			}
-		}
-	}
-
 }

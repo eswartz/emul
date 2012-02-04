@@ -16,7 +16,6 @@ public abstract class BaseVdpCanvas implements ICanvas {
 	protected int dy2;
 	/** width in pixels */
 	protected int width;
-	protected int bytesPerLine;
 	/** height in pixels */
 	protected int height;
 	protected ICanvasListener listener;

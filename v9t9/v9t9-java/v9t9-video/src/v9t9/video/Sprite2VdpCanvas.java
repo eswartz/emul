@@ -37,6 +37,11 @@ public class Sprite2VdpCanvas extends BaseVdpCanvas implements ISpriteVdpCanvas 
 		return UPDATEBLOCK_ROW_STRIDE;
 	}
 	
+	@Override
+	public int getPixelStride() {
+		return 1;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.engine.video.ISprite2Canvas#drawEightSpritePixels(int, int, byte, byte, byte, boolean)
 	 */

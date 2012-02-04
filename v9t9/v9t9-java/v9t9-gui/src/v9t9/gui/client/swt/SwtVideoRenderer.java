@@ -106,6 +106,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 */
 	final public Control createControl(Composite parent, int flags) {
 		this.shell = parent.getShell();
+		
 		this.canvas = createCanvasControl(parent, flags);
 		canvas.setLayout(fixedAspectLayout);	
 		
@@ -168,9 +169,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		canvas.addControlListener(new ControlAdapter() {
 			@Override
 			public void controlResized(ControlEvent e) {
-				//Point size = ((Control)e.widget).getSize();
-				//System.out.println("Control resized to: " + size.x + "/" + size.y);
-
 				updateWidgetOnResize();
 			}
 		});
@@ -238,13 +236,14 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	}
 	
 	protected Rectangle logicalToPhysical(int x, int y, int w, int h) {
-		return new Rectangle((int)((x - vdpCanvas.getXOffset()) * zoomx), (int)(y * zoomy), 
+		return new Rectangle((int)((x - vdpCanvas.getXOffset()) * zoomx) + fixedAspectLayout.getOffsetX(), 
+				(int)(y * zoomy) + fixedAspectLayout.getOffsetY(), 
 				Math.round(w * zoomx), Math.round(h * zoomy));
 	}
 	
 	protected Rectangle physicalToLogical(Rectangle physical) {
-		int x = (int)(physical.x / zoomx);
-		int y = (int)(physical.y / zoomy);
+		int x = (int)((physical.x - fixedAspectLayout.getOffsetX()) / zoomx);
+		int y = (int)((physical.y - fixedAspectLayout.getOffsetY()) / zoomy);
 		int ex = (int)((physical.x + physical.width + zoomx - .5) / zoomx);
 		int ey = (int)((physical.y + physical.height + zoomy - .5) / zoomy);
 		return new Rectangle(x + vdpCanvas.getXOffset(), y, ex - x, ey - y ); 
@@ -260,8 +259,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 				synchronized (vdpCanvas) {
 					if (canvas.isDisposed())
 						return;
-					
-					//updateWidgetSizeForMode();
 					
 					try {
 						doTriggerRedraw();
@@ -305,22 +302,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 * window.
 	 */
 	protected void updateWidgetSizeForMode() {
-		/*
-		int visibleWidth = getCanvas().getVisibleWidth();
-		int visibleHeight = getCanvas().getVisibleHeight();
-
-		fixedAspectLayout.setSize(visibleWidth, visibleHeight);
-		if (visibleWidth > 256)
-			visibleWidth /= 2;
-		if (getCanvas().isInterlacedEvenOdd())
-			visibleHeight /= 2;
-		fixedAspectLayout.setAspect((double) visibleWidth / visibleHeight);
-		
-		
-		//System.out.println("zoomx = " + zoomx + "; zoomy = " + zoomy);
-		
-		updateWidgetOnResize();
-		*/
 		int visibleWidth = getCanvas().getVisibleWidth();
 		int visibleHeight = getCanvas().getVisibleHeight();
 		fixedAspectLayout.setSize(visibleWidth, visibleHeight);

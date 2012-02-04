@@ -23,6 +23,15 @@ public interface ICanvas {
 	int getHeight();
 
 	int getVisibleHeight();
+	
+
+	/** Get the delta for one pixel, in terms of the offset. 
+	 * @see #getBitmapOffset(int, int) 
+	 */ 
+	int getPixelStride();
+	/** Get the delta for one row, in terms of the offset. 
+	 * @see #getBitmapOffset(int, int) 
+	 */ 
 	int getLineStride();
 	
 }

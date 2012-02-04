@@ -11,7 +11,10 @@ import v9t9.common.video.BitmapVdpCanvas;
 public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 
 	protected ImageData imageData;
+	protected int bytesPerLine;
 
+	protected int pixSize;
+	
 	public ImageDataCanvas() {
 		super();
 	}
@@ -25,14 +28,22 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		return bytesPerLine;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.ICanvas#getPixelStride()
+	 */
+	@Override
+	final public int getPixelStride() {
+		return pixSize;
+	}
 
 
 	@Override
 	public void doChangeSize() {
-		imageData = createImageData();
+		createImageData();
 	}
 
-	abstract protected ImageData createImageData();
+	/** Create imageData and set bytesPerLine */
+	abstract protected void createImageData();
 
 	public int getDisplayAdjustOffset() {
 		int displayAdjust = getYOffset() * getLineStride() + getXOffset() * getPixelStride();
