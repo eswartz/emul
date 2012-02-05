@@ -809,7 +809,7 @@ public class KeyboardState implements IKeyboardState {
 	}
     
     private void changeKbdMatrix(byte r, byte c, boolean v) {
-    	if (DEBUG) System.out.println("changeKbdMatrix: " + r+ "/" +c +" = " + v);
+    	//if (DEBUG) System.out.println("changeKbdMatrix: " + r+ "/" +c +" = " + v);
         if (v)
             setKbdMatrix(r, c);
         else
@@ -861,8 +861,21 @@ public class KeyboardState implements IKeyboardState {
 
 
 	//	j=1 or 2
-	final private void changeJoyMatrix(int j,int r, boolean v) {
-		changeKbdMatrix((byte) r, (byte)(JOY1_C+(j)-1), v);
+	final private void changeJoyMatrix(int j,int row, boolean v) {
+		//changeKbdMatrix((byte) r, (byte)(JOY1_C+(j)-1), v);
+		
+		// do joystick immediately
+		byte mask = (byte) (0x80 >> row);
+		byte c = (byte) (JOY1_C+(j)-1);
+		if (v) {
+			crukeyboardmap[c] |= mask;
+			lastcrukeyboardmap[c] |= mask;
+		} else {
+			crukeyboardmap[c] &= ~mask;
+			lastcrukeyboardmap[c] &= ~mask;
+
+		}
+			
 	}
 	
 	/* (non-Javadoc)
