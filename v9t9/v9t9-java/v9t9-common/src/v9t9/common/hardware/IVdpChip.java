@@ -94,4 +94,5 @@ public interface IVdpChip extends IPersistable, IRegisterAccess {
 
 	ByteMemoryAccess getByteReadMemoryAccess(int vdpaddr);
 
+	int getMemorySize();
 }

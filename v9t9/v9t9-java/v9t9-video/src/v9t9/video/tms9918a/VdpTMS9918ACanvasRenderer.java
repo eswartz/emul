@@ -9,6 +9,7 @@ package v9t9.video.tms9918a;
 import static v9t9.common.hardware.VdpTMS9918AConsts.*;
 
 import java.util.Arrays;
+import java.util.BitSet;
 
 import ejs.base.properties.IProperty;
 
@@ -63,6 +64,10 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	protected final IVideoRenderer renderer;
 
 	private IProperty pauseMachine;
+	
+	private BitSet vdpTouches;
+
+	private long nextTouchFlushTime;
 
 	public VdpTMS9918ACanvasRenderer(ISettingsHandler settings, IVideoRenderer renderer) {
 		this.renderer = renderer;
@@ -80,6 +85,8 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		
 		vdpChip.getVideoMemory().addWriteListener(this);
 		vdpChip.addWriteListener(this);
+		
+		vdpTouches = new BitSet(vdpChip.getMemorySize());
 	}
 	
 	/* (non-Javadoc)
@@ -388,7 +395,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 			blocks = new RedrawBlock[getMaxRedrawblocks()];
 			for (int i = 0; i < blocks.length; i++) {
 				blocks[i] = new RedrawBlock();
-			}
+ 			}
 		}
 		if (blocks[0].w != blockWidth) {
 			for (int i = 0; i < blocks.length; i++) {
@@ -402,19 +409,29 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		return 1024;
 	}
 
-    public void touchAbsoluteVdpMemory(int vdpaddr, boolean isByte) {
+	protected synchronized void flushVdpChanges() {
 		if (vdpModeRedrawHandler != null) {
 			synchronized (vdpCanvas) {
-				vdpChanges.changed |= vdpModeRedrawHandler.touch(vdpaddr);
-				if (!isByte)
-					vdpChanges.changed |= vdpModeRedrawHandler.touch(vdpaddr + 1);
-				if (spriteRedrawHandler != null) {
-					vdpChanges.changed |= spriteRedrawHandler.touch(vdpaddr);
-					if (!isByte)
-						vdpChanges.changed |= spriteRedrawHandler.touch(vdpaddr + 1);
+				for (int vdpaddr = vdpTouches.nextSetBit(0); vdpaddr >= 0; vdpaddr = vdpTouches.nextSetBit(vdpaddr + 1)) {
+					vdpChanges.changed |= vdpModeRedrawHandler.touch(vdpaddr);
+					if (spriteRedrawHandler != null) {
+						vdpChanges.changed |= spriteRedrawHandler.touch(vdpaddr);
+					}
 				}
+				vdpTouches.clear();
 			}
 		}
+	}
+	
+    public synchronized void touchAbsoluteVdpMemory(int vdpaddr, boolean isByte) {
+    	vdpTouches.set(vdpaddr);
+    	if (!isByte)
+    		vdpTouches.set(vdpaddr + 1);
+    	//long now = System.currentTimeMillis();
+    	//if (now >= nextTouchFlushTime) {
+    	//	flushVdpChanges();
+    	//	nextTouchFlushTime = now + 1000;
+    	//}
     }
     
 	protected void dirtySprites() {
@@ -430,6 +447,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	}
 	
 	public synchronized boolean update() {
+		flushVdpChanges();
 		if (!vdpChanges.changed)
 			return false;
 		//System.out.println(System.currentTimeMillis());

@@ -755,4 +755,12 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	public int getVdpRegisterCount() {
 		return 8;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip#getMemorySize()
+	 */
+	@Override
+	public int getMemorySize() {
+		return vdpMmio.getMemorySize();
+	}
 }
