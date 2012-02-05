@@ -36,7 +36,7 @@ public class SpeechTMS5220Generator implements ISpeechGenerator {
 	 * @see v9t9.common.speech.ISpeechDataSender#send(short, int, int)
 	 */
 	@Override
-	public synchronized void sendSample(short val, int pos, int length) {
+	public void sendSample(short val, int pos, int length) {
 		speechVoices[0].addSample(val);
 	}
 	
