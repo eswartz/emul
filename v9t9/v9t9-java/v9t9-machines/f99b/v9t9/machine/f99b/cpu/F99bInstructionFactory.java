@@ -202,5 +202,12 @@ public class F99bInstructionFactory implements IRawInstructionFactory {
 		inst.setSize(2);
 		return inst;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.asm.IRawInstructionFactory#getChunkSize()
+	 */
+	@Override
+	public int getChunkSize() {
+		return 1;
+	}
 }

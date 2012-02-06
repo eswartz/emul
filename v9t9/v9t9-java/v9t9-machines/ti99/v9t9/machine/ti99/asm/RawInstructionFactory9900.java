@@ -24,4 +24,11 @@ public class RawInstructionFactory9900 implements IRawInstructionFactory {
 		return InstTable9900.decodeInstruction(domain.flatReadWord(pc), pc, domain);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.asm.IRawInstructionFactory#getChunkSize()
+	 */
+	@Override
+	public int getChunkSize() {
+		return 2;
+	}
 }

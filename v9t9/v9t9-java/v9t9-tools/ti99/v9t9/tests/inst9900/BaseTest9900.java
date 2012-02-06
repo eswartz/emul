@@ -49,6 +49,8 @@ public abstract class BaseTest9900 extends TestCase {
 
 	protected MemoryEntryFactory memoryEntryFactory;
 
+	protected PathFileLocator fileLocator;
+
 	public BaseTest9900() {
 		super();
 	}
@@ -74,7 +76,8 @@ public abstract class BaseTest9900 extends TestCase {
         		8192,
         		new StockRamArea(8192)));
 
-        memoryEntryFactory = new MemoryEntryFactory(settings, memory, new PathFileLocator()	);
+        fileLocator = new PathFileLocator();
+		memoryEntryFactory = new MemoryEntryFactory(settings, memory, fileLocator	);
 	}
 	
 
@@ -184,7 +187,8 @@ public abstract class BaseTest9900 extends TestCase {
 	}
 	protected IHighLevelInstruction createHLInstruction(int pc, int wp, String element) throws ParseException {
 		RawInstruction inst = createInstruction(pc, element);
-		return new HighLevelInstruction(wp, new Instruction9900(inst), Instruction9900.getInstructionFlags(inst));
+		return new HighLevelInstruction(wp, new Instruction9900(inst), 
+				Instruction9900.getInstructionFlags(new Instruction9900(inst)));
 	}
 
 	class InstFollowInfo {

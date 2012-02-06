@@ -79,7 +79,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
     }
 
     public int compareTo(Block o) {
-        return first.getInst().pc - o.first.getInst().pc;
+        return (first != null ? first.getInst().pc : 0) - o.first.getInst().pc;
     }
     
     @Override
@@ -89,7 +89,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 		}
         if (obj instanceof Block) {
             Block b = (Block) obj;
-            return b.first.getInst().pc == first.getInst().pc;
+            return b.first != null && b.first.getInst().pc == first.getInst().pc;
         }
         return false;
     }
@@ -149,7 +149,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 	public void setLast(IHighLevelInstruction last) {
 		
 		if (last != null) {
-			Check.checkArg((last.getBlock() == null || last.getBlock() == this));
+			//Check.checkArg((last.getBlock() == null || last.getBlock() == this));
 			
 			boolean hitOldLast = false;
 			boolean hitNewLast = false;
@@ -163,6 +163,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 				if (inst == this.last) {
 					hitOldLast = true;
 				}
+				//if (inst.getInst().getPc() >= last.getInst().getPc()) {
 				if (inst == last) {
 					hitNewLast = true;
 					break;
@@ -176,6 +177,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 				inst = inst.getNext();
 				while (inst != null) {
 					inst.setBlock(null);
+					//if (inst.getInst().getPc() >= this.last.getInst().getPc()) {
 					if (inst == this.last) {
 						hitOldLast = true;
 						break;
@@ -211,8 +213,8 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 			return this;
 		IHighLevelInstruction oldLast = this.last;
 		Check.checkArg(oldLast);	// can't split unbounded block
-		first.setBlock(null);
 		setLast(first.getPrev());
+		first.setBlock(null);
 		Block split = new Block(first);
 		split.setLast(oldLast);
 		return split;

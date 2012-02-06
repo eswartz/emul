@@ -201,7 +201,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		}
 
 		// wire up instructions to their next real instructions
-		for (IHighLevelInstruction inst = first; inst != null; inst = inst.getNext()) {
+		for (IHighLevelInstruction inst : getLLInstructions().values()) { 
 			if (inst.getInst().getSize() > 2) {
 				inst.setNext(getLLInstructions().get(new Integer(inst.getInst().pc + inst.getInst().getSize())));
 			}
@@ -217,9 +217,6 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 			scanned = true;
 			
 			phase = new TopDownPhase(state, this);
-				
-			phase.addStandardROMRoutines();
-				
 			phase.run();
 		}
 	}

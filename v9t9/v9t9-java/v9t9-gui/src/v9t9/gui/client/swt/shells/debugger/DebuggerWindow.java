@@ -15,11 +15,14 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
-import ejs.base.settings.ISettingSection;
-
 import v9t9.common.machine.IMachine;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.gui.client.swt.bars.ImageBar;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
+import v9t9.gui.common.IMemoryDecoder;
+import v9t9.gui.common.IMemoryDecoderProvider;
+import ejs.base.settings.ISettingSection;
 
 /**
  * @author Ed
@@ -62,9 +65,12 @@ public class DebuggerWindow extends Composite {
 		final ISettingSection history = machine.getSettings().getInstanceSettings()
 			.getHistorySettings().findOrAddSection(DEBUGGER_TOOL_ID);
 		
+		IMemoryDecoderProvider memoryDecoderProvider = createMemoryDecoderProvider();
+		
 		memoryViewers = new MemoryViewer[NUM_MEMORY_VIEWERS];
 		for (int v = 0; v < memoryViewers.length; v++) {
-			memoryViewers[v] = new MemoryViewer(vertSash, SWT.BORDER, machine.getMemory(), timer);
+			memoryViewers[v] = new MemoryViewer(vertSash, SWT.BORDER, machine.getMemory(), 
+					memoryDecoderProvider, timer);
 		}
 		
 
@@ -106,6 +112,26 @@ public class DebuggerWindow extends Composite {
 				history.put("SashDivisions", sweights);
 			}
 		});
+	}
+
+
+	/**
+	 * @param machine2
+	 * @return
+	 */
+	private IMemoryDecoderProvider createMemoryDecoderProvider() {
+		return new IMemoryDecoderProvider() {
+			
+			@Override
+			public IMemoryDecoder getMemoryDecoder(IMemoryEntry entry) {
+				if (entry.getDomain().getIdentifier().equals(IMemoryDomain.NAME_CPU)) {
+					return new DisassemblerDecoder(entry, 
+							machine.getCpu().getInstructionFactory(),
+							machine.getCpu().createDecompiler());
+				}
+				return null;
+			}
+		};
 	}
 
 

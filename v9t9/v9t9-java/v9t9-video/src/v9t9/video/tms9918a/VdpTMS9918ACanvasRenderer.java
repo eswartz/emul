@@ -67,8 +67,6 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	
 	private BitSet vdpTouches;
 
-	private long nextTouchFlushTime;
-
 	public VdpTMS9918ACanvasRenderer(ISettingsHandler settings, IVideoRenderer renderer) {
 		this.renderer = renderer;
 		this.vdpChip = (IVdpTMS9918A) renderer.getVdpHandler();

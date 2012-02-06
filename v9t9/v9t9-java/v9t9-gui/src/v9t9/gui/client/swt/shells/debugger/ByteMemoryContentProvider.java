@@ -7,7 +7,12 @@ import org.eclipse.jface.viewers.ILazyContentProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 
-class MemoryContentProvider implements ILazyContentProvider {
+/**
+ * This provides rows of 16 bytes for each index of the memory viewer.
+ * @author ejs
+ *
+ */
+class ByteMemoryContentProvider implements ILazyContentProvider {
 
 	MemoryRange range;
 	private TableViewer tableViewer;

@@ -57,7 +57,7 @@ public class BaseTopDownTest9900 extends BaseTopDownPhaseTest9900 {
 
 	protected Routine parseRoutine(int pc, int wp, String name,
 			Routine routine, String[] insts) throws ParseException {
-			    parse(CPU, pc, wp, insts);
+	    parse(CPU, pc, wp, insts);
 	    return phase.addRoutine(pc, name, routine);
 	}
 

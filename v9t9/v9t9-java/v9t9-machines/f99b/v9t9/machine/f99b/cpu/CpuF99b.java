@@ -7,6 +7,7 @@ import ejs.base.settings.Logging;
 import ejs.base.utils.HexUtils;
 
 
+import v9t9.common.asm.IDecompilePhase;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpuMetrics;
@@ -452,6 +453,14 @@ public class CpuF99b extends CpuBase {
 				new NullCompilerStrategy(),
 				new DumpFullReporterF99b(this, null), 
 				new DumpReporterF99b(this));
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#createDecompiler()
+	 */
+	@Override
+	public IDecompilePhase createDecompiler() {
+		return null;
 	}
 	
 }

@@ -857,9 +857,6 @@ public class KeyboardState implements IKeyboardState {
     }
 
 
-    private static final long MAX_KEY_DELAY_MS = 100;
-
-
 	//	j=1 or 2
 	final private void changeJoyMatrix(int j,int row, boolean v) {
 		//changeKbdMatrix((byte) r, (byte)(JOY1_C+(j)-1), v);

@@ -15,6 +15,7 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ComboViewer;
+import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILazyContentProvider;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -26,6 +27,7 @@ import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
@@ -52,17 +54,18 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
-import ejs.base.properties.IPersistable;
-import ejs.base.settings.ISettingSection;
-import ejs.base.utils.HexUtils;
-import ejs.base.utils.Pair;
-
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryListener;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.common.FontUtils;
+import v9t9.gui.common.IMemoryDecoder;
+import v9t9.gui.common.IMemoryDecoderProvider;
+import ejs.base.properties.IPersistable;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
 
 /**
  * @author Ed
@@ -70,7 +73,11 @@ import v9t9.gui.common.FontUtils;
  */
 public class MemoryViewer extends Composite implements IPersistable {
 
+	private StackLayout tableLayout;
 	private TableViewer byteTableViewer;
+	private TableViewer decodedTableViewer;
+	
+	
 	private ComboViewer entryViewer;
 	private final IMemory memory;
 	private TimerTask refreshTask;
@@ -79,17 +86,25 @@ public class MemoryViewer extends Composite implements IPersistable {
 	protected boolean autoRefresh;
 	private Button pinButton;
 	private boolean pinMemory;
+	private Button decodeButton;
+	private boolean decodeMemory;
 	private Button filterButton;
 	private boolean filterMemory;
 	private Font tableFont;
+	private IMemoryDecoderProvider memoryDecoderProvider;
+	private ByteMemoryLabelProvider byteMemoryLabelProvider;
+	private IMemoryDecoder memoryDecoder;
 
-	public MemoryViewer(Composite parent, int style, IMemory memory, final Timer timer) {
+	public MemoryViewer(Composite parent, int style, IMemory memory, 
+			IMemoryDecoderProvider decoderProvider,
+			final Timer timer) {
 		super(parent, style);
 		this.memory = memory;
+		memoryDecoderProvider = decoderProvider;
 
 		setLayout(new GridLayout(2, false));
 		
-		createTable();
+		createUI();
 		
 		memory.addListener(new IMemoryListener() {
 
@@ -141,6 +156,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 		section.put("AutoRefresh", autoRefresh);
 		section.put("PinMemory", pinMemory);
 		section.put("FilterMemory", filterMemory);
+		section.put("DecodeMemory", decodeMemory);
 		
 		TableItem item = byteTableViewer.getTable().getItem(new Point(0, 0));
 		if (item != null && item.getData() instanceof MemoryRow) {
@@ -157,6 +173,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 			}
 		}
 	}
+	
 	/* (non-Javadoc)
 	 * @see ejs.base.properties.IPersistable#loadState(ejs.base.settings.ISettingSection)
 	 */
@@ -170,6 +187,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 		autoRefresh = section.getBoolean("AutoRefresh");
 		pinMemory = section.getBoolean("PinMemory");
 		filterMemory = section.getBoolean("FilterMemory");
+		decodeMemory = section.getBoolean("DecodeMemory");
 		
 		final int visLoAddr = section.getInt("FirstRowAddr");
 		final int visHiAddr = section.getInt("LastRowAddr");
@@ -183,7 +201,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 				@Override
 				public void controlResized(ControlEvent e) {
 					if (System.currentTimeMillis() < timeout)
-						scrollToActiveRegion(visLoAddr, visHiAddr);
+						scrollByteViewerToActiveRegion(visLoAddr, visHiAddr);
 					else
 						byteTableViewer.getTable().removeControlListener(this);
 				}
@@ -194,11 +212,12 @@ public class MemoryViewer extends Composite implements IPersistable {
 					refreshButton.setSelection(autoRefresh);
 					pinButton.setSelection(pinMemory);
 					filterButton.setSelection(filterMemory);
-							
+					decodeButton.setSelection(decodeMemory);
 
 					// apply filter
 					entryViewer.refresh();
-					
+
+					tableLayout.topControl = (decodeMemory ? decodedTableViewer : byteTableViewer).getTable();
 					if (currentRange != null) {
 						entryViewer.setSelection(new StructuredSelection(currentRange.getEntry()));
 						changeCurrentRange(currentRange);
@@ -213,7 +232,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 	
 	
 
-	protected void scrollToActiveRegion(int lowRange, int hiRange) {
+	protected void scrollByteViewerToActiveRegion(int lowRange, int hiRange) {
 		int row = getMemoryRowIndex(lowRange);
 		int visibleRows = byteTableViewer.getTable().getSize().y 
 			/ byteTableViewer.getTable().getItemHeight();
@@ -265,7 +284,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 				+ entry.getDomain().getName() + " >" + HexUtils.toHex4((entry.getAddr() + entry.getAddrOffset())) + ")";
 		}
 	}
-	protected void createTable() {
+	protected void createUI() {
 		entryViewer = new ComboViewer(this, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.NO_FOCUS);
 		entryViewer.setContentProvider(new ArrayContentProvider());
 		entryViewer.setLabelProvider(new MemoryEntryLabelProvider());
@@ -334,6 +353,14 @@ public class MemoryViewer extends Composite implements IPersistable {
 			}
 		});
 		
+		decodeButton = new Button(buttonBar, SWT.TOGGLE);
+		decodeButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/decode.png"));
+		decodeButton.setSize(24, 24);
+		decodeMemory = false;
+		decodeButton.setSelection(false);
+		decodeButton.setToolTipText("Decode memory to show underlying structure");
+		
+
 		pinButton = new Button(buttonBar, SWT.TOGGLE);
 		pinButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/pin.png"));
 		pinButton.setSize(24, 24);
@@ -346,19 +373,95 @@ public class MemoryViewer extends Composite implements IPersistable {
 				pinMemory = pinButton.getSelection();
 			}
 		});
-
 		
-		byteTableViewer = new TableViewer(this, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL + SWT.NO_FOCUS + SWT.FULL_SELECTION);
-		byteTableViewer.setContentProvider(new MemoryContentProvider());
-		byteTableViewer.setLabelProvider(new ByteMemoryLabelProvider(
-				new Color(getDisplay(), new RGB(64, 64, 128)),
-				getDisplay().getSystemColor(SWT.COLOR_RED)
-				));
 		
 		refreshEntryCombo();
+
+		FontDescriptor fontDescriptor = FontUtils.getFontDescriptor(JFaceResources.getTextFont());
+		fontDescriptor = fontDescriptor.increaseHeight(-2);
+		tableFont = fontDescriptor.createFont(getDisplay());
+		
+		final Composite tableComposite = new Composite(this, SWT.NONE);
+		tableLayout = new StackLayout();
+		tableComposite.setLayout(tableLayout);
+		
+		GridDataFactory.fillDefaults().grab(true, true).span(2, 1).applyTo(tableComposite);
+		
+		byteMemoryLabelProvider = new ByteMemoryLabelProvider(
+				new Color(getDisplay(), new RGB(64, 64, 128)),
+				getDisplay().getSystemColor(SWT.COLOR_RED)
+				);
+		
+		createByteTableViewer(tableComposite);
+		createDecodedContentTableViewer(tableComposite);
+		
+		tableLayout.topControl = byteTableViewer.getControl();
+		
+		decodeButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				decodeMemory = decodeButton.getSelection();
+				tableLayout.topControl = (decodeMemory ? decodedTableViewer : byteTableViewer).getTable();
+				tableComposite.layout(true);
+			}
+		});
+	}
+
+	protected void createDecodedContentTableViewer(Composite parent) {
+		decodedTableViewer = new TableViewer(parent, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL 
+				+ SWT.NO_FOCUS + SWT.FULL_SELECTION);
+				
+		final Table table = decodedTableViewer.getTable();
+		//GridDataFactory.fillDefaults().grab(true, true).span(2, 1).applyTo(table);
+		
+		String[] props = new String[3];
+		props[0] = "Addr";
+		new TableColumn(table, SWT.LEFT).setText(props[0]);
+		props[1] = "Memory";
+		new TableColumn(table, SWT.LEFT).setText(props[1]);
+		props[2] = "Content";
+		new TableColumn(table, SWT.LEFT).setText(props[2]);
+		
+		GC gc = new GC(table);
+		gc.setFont(tableFont);
+		int width = gc.stringExtent("FFFF").x;
+		gc.dispose();
+		
+		table.getColumn(0).setWidth(width);
+		table.getColumn(1).setWidth(width * 4);
+		
+		table.getColumn(0).pack();
+		table.getColumn(1).pack();
+		
+		table.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlResized(ControlEvent e) {
+				table.getColumn(2).setWidth(table.getSize().x - table.getColumn(0).getWidth() - table.getColumn(1).getWidth());				
+			}
+		});
+		
+		//for (TableColumn column : table.getColumns()) {
+		//	column.pack();
+		//}
+		table.setHeaderVisible(true);
+		table.setLinesVisible(true);
+		
+		decodedTableViewer.setColumnProperties(props);
+		//byteTableViewer.setCellModifier(new ByteMemoryCellModifier(byteTableViewer));
+		//byteTableViewer.setCellEditors(editors);
+		
+	}
+
+	protected void createByteTableViewer(Composite parent) {
+		byteTableViewer = new TableViewer(parent, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL 
+				+ SWT.NO_FOCUS + SWT.FULL_SELECTION);
+		byteTableViewer.setContentProvider(new ByteMemoryContentProvider());
+		
+		byteTableViewer.setLabelProvider(byteMemoryLabelProvider);
+		
 				
 		final Table table = byteTableViewer.getTable();
-		GridDataFactory.fillDefaults().grab(true, true).span(2, 1).applyTo(table);
+		//GridDataFactory.fillDefaults().grab(true, true).span(2, 1).applyTo(table);
 		
 		String[] props = new String[1 + 16 + 1];
 		props[0] = "Addr";
@@ -371,9 +474,6 @@ public class MemoryViewer extends Composite implements IPersistable {
 		props[17] = "0123456789ABCDEF";
 		new TableColumn(table, SWT.CENTER).setText(props[17]);
 		
-		FontDescriptor fontDescriptor = FontUtils.getFontDescriptor(JFaceResources.getTextFont());
-		fontDescriptor = fontDescriptor.increaseHeight(-2);
-		tableFont = fontDescriptor.createFont(getDisplay());
 		table.setFont(tableFont);
 		
 		GC gc = new GC(table);
@@ -529,6 +629,36 @@ public class MemoryViewer extends Composite implements IPersistable {
 		//MemoryViewer.this.getShell().layout(true, true);
 		//MemoryViewer.this.getShell().pack();
 		
+		memoryDecoder = this.memoryDecoderProvider.getMemoryDecoder(range.getEntry());
+		
+		if (memoryDecoder == null) {
+			decodedTableViewer.setLabelProvider(byteMemoryLabelProvider);
+			decodedTableViewer.setContentProvider(new ByteMemoryContentProvider());
+			return;
+
+		}
+		
+		if (decodedTableViewer.getContentProvider() != null)
+			decodedTableViewer.setInput(null);
+		
+		DecodedMemoryContentProvider contentProvider 
+			= new DecodedMemoryContentProvider(memoryDecoder);
+		
+		ILabelProvider contentLabelProvider = memoryDecoder.getLabelProvider();
+		if (contentLabelProvider == null)
+			contentLabelProvider = new LabelProvider() {
+				@Override
+				public String getText(Object element) {
+					return "";
+				}
+		};
+		
+		decodedTableViewer.setLabelProvider(new DecodedTableLabelProvider(
+				contentLabelProvider, memoryDecoder.getChunkSize()));
+		
+		decodedTableViewer.setContentProvider(contentProvider);
+		
+		decodedTableViewer.setInput(range);
 	}
 
 	protected void restrictRange(int addr, int endAddr) {
@@ -573,7 +703,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 						}*/
 						
 						if (!pinMemory) {
-							scrollToActiveRegion(lowRange, hiRange);
+							scrollByteViewerToActiveRegion(lowRange, hiRange);
 						}
 						byteTableViewer.refresh();
 						currentRange.clearTouchRange();

@@ -6,7 +6,11 @@
  */
 package v9t9.tests.inst9900;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+
+import ejs.base.settings.SettingProperty;
 
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.Block;
@@ -26,7 +30,25 @@ import v9t9.tools.asm.assembler.ParseException;
 
 public class TestTopDown1_9900 extends BaseTopDownTest9900
 {
-   public void testDanglingBlock() throws Exception {
+   /**
+	 * 
+	 */
+	private static final String ROM_PATH = "994arom.bin";
+	
+	/* (non-Javadoc)
+		 * @see v9t9.tests.inst9900.BaseTopDownTest9900#setUp()
+		 */
+		@Override
+		protected void setUp() throws Exception {
+			super.setUp();
+			
+			List<String> arr = new ArrayList<String>();
+			arr.add("/home/ejs/devel/v9t9-data/roms");
+			arr.add("/usr/local/src/v9t9-data/roms");
+			fileLocator.addReadOnlyPathProperty(new SettingProperty("foo", arr));
+		}
+
+	public void testDanglingBlock() throws Exception {
         // no return
         Routine routine = parseRoutine(0x100, "ENTRY", new LinkedRoutine(), new String[] {
            "li r1,100"     
@@ -77,7 +99,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
         });
         
         phase.run();
-        assertTrue(routine.getSpannedBlocks().size() == 3);
+        assertEquals(3, routine.getSpannedBlocks().size());
         assertTrue((routine.flags & Routine.fUnknownExit) == 0);
         
         Block block1 = getSingleEntry(routine);
@@ -716,11 +738,10 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
 	}
 
 	public void test994ARom_0() throws Exception {
-    	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
+    	String path = ROM_PATH;
     	this.memory.addAndMap(memoryEntryFactory.newMemoryEntry(
     			MemoryEntryInfoBuilder.standardConsoleRom(path).create("CPU ROM")));
     	phase.disassemble();
-    	phase.addStandardROMRoutines();
     	phase.run();
     	phase.dumpBlocks(System.out);
     	validateBlocks(phase.getBlocks());
@@ -732,11 +753,10 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
     }
     
     public void test994ARom_BlockCrazy() throws Exception {
-    	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
+    	String path = ROM_PATH;
     	this.memory.addAndMap(memoryEntryFactory.newMemoryEntry(
     			MemoryEntryInfoBuilder.standardConsoleRom(path).create("CPU ROM")));
     	phase.disassemble();
-    	phase.addStandardROMRoutines();
     	// add label at every instruction just to be sure it doesn't explode
     	for (IHighLevelInstruction inst : phase.decompileInfo.getLLInstructions().values()) {
     		if (inst.getBlock() == null)
@@ -756,7 +776,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
     }
     
     public void test994ARom_1() throws Exception {
-    	String path = "/usr/local/src/v9t9-data/roms/994arom.bin";
+    	String path = ROM_PATH;
     	this.memory.addAndMap(memoryEntryFactory.newMemoryEntry(
     			MemoryEntryInfoBuilder.standardConsoleRom(path).create("CPU ROM")));
     	phase.decompileInfo.getMemoryRanges().clear();

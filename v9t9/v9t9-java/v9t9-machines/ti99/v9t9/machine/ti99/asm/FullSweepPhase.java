@@ -42,7 +42,6 @@ public class FullSweepPhase extends Phase {
         super(state, info);
     }
     
-
     /**
      * Find labels, i.e. branch/blwp targets
      *

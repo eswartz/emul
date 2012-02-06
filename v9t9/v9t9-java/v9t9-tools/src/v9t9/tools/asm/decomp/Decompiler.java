@@ -12,6 +12,7 @@ import ejs.base.utils.HexUtils;
 
 
 import v9t9.common.asm.ICodeProvider;
+import v9t9.common.asm.IDecompilePhase;
 import v9t9.common.asm.IInstructionFactory;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.files.NativeFile;
@@ -21,7 +22,6 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.NativeFileMemoryEntry;
 import v9t9.machine.ti99.asm.HighLevelCodeInfo;
-import v9t9.machine.ti99.asm.Phase;
 import v9t9.machine.ti99.asm.TopDownPhase;
 
 /**
@@ -43,6 +43,7 @@ public class Decompiler implements ICodeProvider {
 		super();
 		this.state = state;
 		
+		options = new DecompileOptions();
 		this.memory = memory; 
 		consoleMemory = memory.getDomain(IMemoryDomain.NAME_CPU);
 		highLevel = new HighLevelCodeInfo(state, instructionFactory);
@@ -73,12 +74,11 @@ public class Decompiler implements ICodeProvider {
 	    highLevel.getMemoryRanges().addRange(baseAddr, entry.getSize(), true);
 	}
 
-	public Phase decompile() {
+	public IDecompilePhase decompile() {
 		//FullSweepPhase llp = new FullSweepPhase(state, highLevel);
 	    TopDownPhase llp = new TopDownPhase(state, highLevel);
 	    llp.addRefDefTables(getOptions().refDefTables);
 	    llp.disassemble();
-	    llp.addStandardROMRoutines();
 	    llp.run();
 	    return llp;
 	    

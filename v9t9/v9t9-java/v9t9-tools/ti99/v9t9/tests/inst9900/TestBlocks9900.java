@@ -3,6 +3,7 @@
  */
 package v9t9.tests.inst9900;
 
+import junit.framework.AssertionFailedError;
 import v9t9.common.asm.Block;
 import v9t9.common.asm.IHighLevelInstruction;
 
@@ -62,7 +63,12 @@ public class TestBlocks9900 extends BaseTopDownPhaseTest9900 {
 		assertEquals(block, inst1.getBlock());
 		assertNull(inst2.getBlock());
 		block.setLast(null);
-		validateBlock(block);
+		try {
+			validateBlock(block);
+			fail("block is incomplete, should not validate");
+		} catch (AssertionFailedError e) {
+			
+		}
 		assertEquals(block, inst0.getBlock());
 		assertEquals(null, inst1.getBlock());
 		assertNull(inst2.getBlock());

@@ -49,12 +49,28 @@ public class TopDownPhase extends Phase {
 	private List<Block> unresolvedBlocks;
 	private List<Routine> unresolvedRoutines;
 	private TreeSet<IHighLevelInstruction> routineCalls;
+	private TreeSet<Block> flowedBlocks;
 
 	public TopDownPhase(ICpuState state, IDecompileInfo info) {
 		super(state, info);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.asm.IDecompilePhase#reset()
+	 */
+	@Override
+	public void reset() {
+		super.reset();
+		unresolvedBlocks.clear();
+		unresolvedRoutines.clear();
+		routineCalls.clear();
+	}
+	
+	
 	public void run() {
+
+		addStandardROMRoutines();
+			
 		// add blocks for every branch instruction
 		for (IHighLevelInstruction inst : decompileInfo.getLLInstructions().values()) {
 			if (inst.getInst().getInst() == InstTableCommon.Idata) {
@@ -70,6 +86,17 @@ public class TopDownPhase extends Phase {
 					inst.getBlock().setLast(null);
 					addBlock(new Block(inst));
 				}
+			}
+			else {
+				//if (inst.getBlock() == null) {
+					//if (inst.getPrev() == null) {
+					//	addBlock(new Block(inst));
+					//} else {
+					//	if (inst.getPrev().getBlock() == null)
+					//		addBlock(new Block(inst.getPrev()));
+						//inst.getPrev().getBlock().addInst(inst);
+					//}
+				//}
 			}
 		}
 		
@@ -91,6 +118,7 @@ public class TopDownPhase extends Phase {
 				
 			}
 			
+			flowedBlocks = new TreeSet<Block>();
 			while (!unresolvedBlocks.isEmpty()) {
 				changed = true;
 				Block block = unresolvedBlocks.remove(0);
@@ -136,8 +164,10 @@ public class TopDownPhase extends Phase {
 		IHighLevelInstruction inst = block.getFirst();
 
 
-		if (block.isComplete())
+		if (flowedBlocks.contains(block))
 			return;
+		
+		flowedBlocks.add(block);
 		
 		/*
 		if (inst == null) {

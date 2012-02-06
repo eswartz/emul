@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-import v9t9.machine.ti99.asm.Phase;
+import v9t9.common.asm.IDecompilePhase;
 
 public class Decompile {
 
@@ -79,7 +79,7 @@ public class Decompile {
 
         dc.getOptions().refDefTables = refDefTables;
 
-        Phase phase = dc.decompile();
+        IDecompilePhase phase = dc.decompile();
         
         
         PrintStream os = outfilename != null ? new PrintStream(new File(outfilename)) : System.out;

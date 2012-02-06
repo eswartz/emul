@@ -59,4 +59,5 @@ public interface IMachine extends IBaseMachine {
 	 * @return
 	 */
 	IEventNotifier getEventNotifier();
+
 }

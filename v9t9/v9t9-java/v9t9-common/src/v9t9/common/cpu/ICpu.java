@@ -3,6 +3,7 @@ package v9t9.common.cpu;
 
 import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
+import v9t9.common.asm.IDecompilePhase;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IBaseMachine;
@@ -135,5 +136,9 @@ public interface ICpu extends IPersistable {
 	
 
 	IExecutor createExecutor(ICpuMetrics metrics);
+	/**
+	 * @return
+	 */
+	IDecompilePhase createDecompiler();
 
 }
