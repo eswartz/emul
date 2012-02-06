@@ -94,6 +94,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 	private IMemoryDecoderProvider memoryDecoderProvider;
 	private ByteMemoryLabelProvider byteMemoryLabelProvider;
 	private IMemoryDecoder memoryDecoder;
+	private Composite tableComposite;
 
 	public MemoryViewer(Composite parent, int style, IMemory memory, 
 			IMemoryDecoderProvider decoderProvider,
@@ -217,13 +218,14 @@ public class MemoryViewer extends Composite implements IPersistable {
 					// apply filter
 					entryViewer.refresh();
 
-					tableLayout.topControl = (decodeMemory ? decodedTableViewer : byteTableViewer).getTable();
 					if (currentRange != null) {
 						entryViewer.setSelection(new StructuredSelection(currentRange.getEntry()));
 						changeCurrentRange(currentRange);
 						byteTableViewer.getTable().addControlListener(resetRangeListener);
 					}
-					
+					else {
+						tableLayout.topControl = byteTableViewer.getTable();
+					}
 				}
 			});
 			
@@ -381,7 +383,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 		fontDescriptor = fontDescriptor.increaseHeight(-2);
 		tableFont = fontDescriptor.createFont(getDisplay());
 		
-		final Composite tableComposite = new Composite(this, SWT.NONE);
+		tableComposite = new Composite(this, SWT.NONE);
 		tableLayout = new StackLayout();
 		tableComposite.setLayout(tableLayout);
 		
@@ -400,7 +402,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 		decodeButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				decodeMemory = decodeButton.getSelection();
+				decodeMemory = decodeButton.getSelection() && memoryDecoder != null;
 				tableLayout.topControl = (decodeMemory ? decodedTableViewer : byteTableViewer).getTable();
 				tableComposite.layout(true);
 			}
@@ -632,12 +634,20 @@ public class MemoryViewer extends Composite implements IPersistable {
 		memoryDecoder = this.memoryDecoderProvider.getMemoryDecoder(range.getEntry());
 		
 		if (memoryDecoder == null) {
+			decodeButton.setSelection(false);
+			decodeButton.setEnabled(false);
+			decodeMemory = false;
+			tableLayout.topControl = byteTableViewer.getControl();
+			tableComposite.layout();
 			decodedTableViewer.setLabelProvider(byteMemoryLabelProvider);
 			decodedTableViewer.setContentProvider(new ByteMemoryContentProvider());
+			decodedTableViewer.setInput(range);
+			decodedTableViewer.refresh(true);
 			return;
 
 		}
 		
+		decodeButton.setEnabled(true);
 		if (decodedTableViewer.getContentProvider() != null)
 			decodedTableViewer.setInput(null);
 		
