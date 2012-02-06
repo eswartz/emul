@@ -25,7 +25,7 @@ import v9t9.gui.common.IMemoryDecoder;
 public class DisassemblerDecoder implements IMemoryDecoder {
 
 	private final int chunkSize;
-	private final IMemoryEntry entry;
+	final IMemoryEntry entry;
 
 	private int[] indexToAddrMap;
 	private TreeMap<Integer, IHighLevelInstruction> addrToInstrMap = new TreeMap<Integer, IHighLevelInstruction>();
@@ -70,6 +70,9 @@ public class DisassemblerDecoder implements IMemoryDecoder {
 	 */
 	@Override
 	public void initialize(MemoryRange range) {
+		if (decompilePhase == null)
+			return;
+		
 		decompilePhase.getDecompileInfo().getMemoryRanges().clear();
 		addrToInstrMap.clear();
 
@@ -109,7 +112,8 @@ public class DisassemblerDecoder implements IMemoryDecoder {
 	 */
 	@Override
 	public int getItemCount() {
-		
+		if (indexToAddrMap == null)
+			return 0;
 		return indexToAddrMap.length;
 	}
 	
