@@ -15,6 +15,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.common.asm.IDecompilePhase;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
@@ -125,9 +126,12 @@ public class DebuggerWindow extends Composite {
 			@Override
 			public IMemoryDecoder getMemoryDecoder(IMemoryEntry entry) {
 				if (entry.getDomain().getIdentifier().equals(IMemoryDomain.NAME_CPU)) {
-					return new DisassemblerDecoder(entry, 
-							machine.getCpu().getInstructionFactory(),
-							machine.getCpu().createDecompiler());
+					IDecompilePhase decompiler = machine.getCpu().createDecompiler();
+					if (decompiler != null) {
+						return new DisassemblerDecoder(entry, 
+								machine.getCpu().getInstructionFactory(),
+								machine.getCpu().createDecompiler());
+					}
 				}
 				return null;
 			}
