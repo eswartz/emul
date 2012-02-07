@@ -54,14 +54,36 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
     	setLast(last);
 	}
 
-	@Override
-    public String toString() {
+    public String getName() {
         return "block " + id;
     }
 
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+    	StringBuilder sb = new StringBuilder();
+    	for (IHighLevelInstruction s = first;  s != null; s = s.getLogicalNext()) {
+    		sb.append(s);
+    		sb.append('\n');
+    		if (last == null) {
+    			sb.append("<< no last >>");
+    			break;
+    		}
+    		if (s == last)
+    			break;
+    		if (s.getInst().getPc() > last.getInst().getPc()) {
+    			sb.append("<< inconsistent block, expected to end at: " + last + ">>");
+    			break;
+    		}
+    	}
+    	return sb.toString();
+    }
+	
     public String format() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append(this.toString());
+        buffer.append(getName());
         buffer.append(" pred = [");
         for (Object element : pred) {
             Block block = (Block) element;
@@ -101,7 +123,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
             this.inst = getFirst();
         }
         public boolean hasNext() {
-            return inst != null && last != null && last.getNext() != inst;
+            return inst != null && last != null && last.getLogicalNext() != inst;
         }
 
         public IHighLevelInstruction next() {
@@ -109,7 +131,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
             if (inst == last || last == null)
             	inst = null;
             else
-            	inst = inst.getNext();
+            	inst = inst.getLogicalNext();
             return next;
         }
 
@@ -128,7 +150,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
     	int size = 0;
     	while (inst != null) {
     		size++;
-    		inst = inst.getNext();
+    		inst = inst.getLogicalNext();
     	}
         return size; 
     }
@@ -137,7 +159,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
     public IHighLevelInstruction get(int index) {
     	IHighLevelInstruction inst = first;
     	while (index-- > 0) {
-    		inst = inst.getNext();
+    		inst = inst.getLogicalNext();
     	}
         return inst; 
     }
@@ -168,13 +190,13 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 					hitNewLast = true;
 					break;
 				}
-				inst = inst.getNext();
+				inst = inst.getLogicalNext();
 			}
 			Check.checkState(hitNewLast);
 	
 			// reset blocks for insts no longer in block
 			if (!hitOldLast && this.last != null) {
-				inst = inst.getNext();
+				inst = inst.getPhysicalNext();
 				while (inst != null) {
 					inst.setBlock(null);
 					//if (inst.getInst().getPc() >= this.last.getInst().getPc()) {
@@ -182,7 +204,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 						hitOldLast = true;
 						break;
 					}
-					inst = inst.getNext();
+					inst = inst.getPhysicalNext();
 				}
 				
 				if (!hitOldLast) {
@@ -191,13 +213,13 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 			}
 		} else {
 			// clear block for from first.next to current last
-			IHighLevelInstruction inst = first.getNext();
+			IHighLevelInstruction inst = first.getPhysicalNext();
 			while (inst != null) {
 				inst.setBlock(null);
 				if (inst == this.last) {
 					break;
 				}
-				inst = inst.getNext();
+				inst = inst.getPhysicalNext();
 			}
 		}
 		
@@ -213,7 +235,20 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 			return this;
 		IHighLevelInstruction oldLast = this.last;
 		Check.checkArg(oldLast);	// can't split unbounded block
-		setLast(first.getPrev());
+
+		IHighLevelInstruction logPrev = first.getLogicalPrev();
+		if (logPrev == null)
+			return null;
+		boolean found = false;
+		for (IHighLevelInstruction inst : this) {
+			if (inst == logPrev) {
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			return null;
+		setLast(first.getLogicalPrev());
 		first.setBlock(null);
 		Block split = new Block(first);
 		split.setLast(oldLast);
@@ -294,7 +329,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 				break;
 			if (first == last)
 				break;
-			first = first.getNext();
+			first = first.getPhysicalNext();
 		}
 		first = last = null;
 		
@@ -325,7 +360,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 		if (first == null) {
 			first = last = inst;
 		} else {
-			last.setNext(inst);
+			last.setPhysicalNext(inst);
 			last = inst;
 		}
 		inst.setBlock(this);

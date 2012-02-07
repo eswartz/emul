@@ -53,7 +53,8 @@ public class FullSweepPhase extends Phase {
 				continue;
 			}
 
-            for (IHighLevelInstruction inst = (IHighLevelInstruction) range.getCode(); inst != null; inst = inst.getNext()) {
+            for (IHighLevelInstruction inst = (IHighLevelInstruction) range.getCode(); inst != null; 
+            		inst = inst.getPhysicalNext()) {
                 Label label;
 
                 if (inst.getInst().getInst() == Inst9900.Ibl || inst.getInst().getInst() == Inst9900.Ib || inst.getInst().getInst() == Inst9900.Iblwp
@@ -249,10 +250,10 @@ public class FullSweepPhase extends Phase {
 
                 // fallthrough?
                 if ((inst.getFlags() & IHighLevelInstruction.fIsCondBranch) != 0 
-                    || (inst.getFlags() & IHighLevelInstruction.fIsCall+IHighLevelInstruction.fIsCall) == IHighLevelInstruction.fIsCall+IHighLevelInstruction.fIsCall)
+                    || (inst.getFlags() & IHighLevelInstruction.fIsCall) == IHighLevelInstruction.fIsCall)
                 {
-                    if (inst.getNext() != null && inst.getNext().getBlock() != null) {
-						block.addSucc(inst.getNext().getBlock());
+                    if (inst.getLogicalNext() != null && inst.getLogicalNext().getBlock() != null) {
+						block.addSucc(inst.getLogicalNext().getBlock());
 					} else {
 						System.out.printf("??? Ignoring fallthrough after >%04X\n", inst.getInst().pc);
 					}
@@ -260,8 +261,8 @@ public class FullSweepPhase extends Phase {
             }
             else {
                 // normal fall through
-                if (inst.getNext() != null && inst.getNext().getBlock() != null) {
-					block.addSucc(inst.getNext().getBlock());
+                if (inst.getLogicalNext() != null && inst.getLogicalNext().getBlock() != null) {
+					block.addSucc(inst.getLogicalNext().getBlock());
 				} else {
 					System.out.printf("??? Ignoring fallthrough after >%04X\n", inst.getInst().pc);
 				}
@@ -306,7 +307,7 @@ public class FullSweepPhase extends Phase {
 
         block.setFlags(block.getFlags() | Block.fVisited);
 
-        for (IHighLevelInstruction inst = block.getFirst(); inst != null; inst = inst.getNext()) {
+        for (IHighLevelInstruction inst = block.getFirst(); inst != null; inst = inst.getLogicalNext()) {
             // TODO: watch for self-modifying memory!
             if (inst.getInst().getInst() == Inst9900.Ilwpi) {
 				wp = ((BaseMachineOperand)inst.getInst().getOp1()).immed;

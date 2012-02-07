@@ -85,19 +85,23 @@ public abstract class BaseTest9900 extends TestCase {
 		assertNotNull(block);
 		assertTrue(block.isComplete());
 		IHighLevelInstruction inst = block.getFirst();
-		IHighLevelInstruction prev = block.getFirst().getPrev();
+		IHighLevelInstruction prev = block.getFirst().getPhysicalPrev();
 		while (inst != null) {
 			if (inst == block.getLast() || block.getLast() == null)
 				break;
 			
-			// insts may be broken in the middle, so only check this when insts are in the same block
-			if (prev == null || inst.getPrev().getBlock() == block)
-				assertEquals(prev, inst.getPrev());
+			if (inst.getInst().getPc() > block.getLast().getInst().getPc())
+				fail("inst " + inst + " falls outside of logical block " + block);
 			
-			if (inst.getBlock() != block)
+			// insts may be broken in the middle, so only check this when insts are in the same block
+			IHighLevelInstruction prevLog = inst.getLogicalPrev();
+			if (prev == null || (prevLog != null && prevLog.getBlock() == block))
+				assertEquals(prev, prevLog);
+			
+			if (inst.getBlock() != null && inst.getBlock() != block)
 				fail("Inst " + inst + " from another block " + inst.getBlock() + " inside block " +block);
 			prev = inst;
-			inst = inst.getNext();
+			inst = inst.getLogicalNext();
 		}
 		// better have hit 
 		assertNotNull("Did not hit last " + block.getLast() + " in " + block, inst);
@@ -159,7 +163,7 @@ public abstract class BaseTest9900 extends TestCase {
 			pcSet.add(inst.getInst().pc & 0xffff);
 			if (inst == block.getLast())
 				break;
-			inst = inst.getNext();
+			inst = inst.getLogicalNext();
 		}
 		return pcSet;
 	}

@@ -94,25 +94,6 @@ public abstract class BasePhase {
     }
  */
 	
-
-	public void dumpInstructions(PrintStream os) {
-		for (Iterator<MemoryRange> iter = decompileInfo.getMemoryRanges().rangeIterator(); iter
-				.hasNext();) {
-			MemoryRange range = iter.next();
-			for (IHighLevelInstruction inst = (IHighLevelInstruction) range.getCode(); inst != null; inst = inst.getNext()) {
-				dumpInstruction(os, inst);
-			}
-		}
-	}
-
-	public void dumpInstructions(PrintStream os, Collection<MemoryRange> ranges) {
-		for (MemoryRange range : ranges) {
-			for (IHighLevelInstruction inst = range.getCode(); inst != null; inst = inst.getNext()) {
-				dumpInstruction(os, inst);
-			}
-		}
-	}
-
 	public void dumpInstruction(PrintStream os, IHighLevelInstruction inst) {
 		if (inst.getBlock() != null && inst.getBlock().getFirst() == inst) {
 			os.println(inst.getBlock().format());

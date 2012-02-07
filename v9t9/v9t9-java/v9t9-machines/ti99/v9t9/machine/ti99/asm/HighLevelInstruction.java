@@ -112,29 +112,63 @@ public class HighLevelInstruction  implements Comparable<IHighLevelInstruction>,
         return (flags & fIsReturn) != 0;
     }
 
-	public void setNext(IHighLevelInstruction next) {
+	public void setPhysicalNext(IHighLevelInstruction next) {
+		if (next == this.next)
+			return;
+		if (this.next != null)
+			((HighLevelInstruction) this.next).setPhysicalPrev(null);
 		this.next = next;
 		if (next != null) {
-			next.setPrev(this);
+			((HighLevelInstruction) next).setPhysicalPrev(this);
 		}
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.decomp.IHighLevelInstruction#setPrev(v9t9.tools.asm.decomp.IHighLevelInstruction)
 	 */
-	@Override
-	public void setPrev(IHighLevelInstruction prev) {
+	public void setPhysicalPrev(IHighLevelInstruction prev) {
 		this.prev = prev;
 	}
 
-	public IHighLevelInstruction getNext() {
+	public IHighLevelInstruction getPhysicalNext() {
 		return next;
 	}
 	
-	public IHighLevelInstruction getPrev() {
+	public IHighLevelInstruction getPhysicalPrev() {
 		return prev;
 	}
     
+	/* (non-Javadoc)
+	 * @see v9t9.common.asm.IHighLevelInstruction#getLogicalNext()
+	 */
+	@Override
+	public IHighLevelInstruction getLogicalNext() {
+		int target = inst.getPc() + inst.getSize();
+		IHighLevelInstruction inst = next;
+		while (inst != null) {
+			if (inst.getInst().getPc() == target)
+				return inst;
+			inst = inst.getPhysicalNext();
+		}
+		return null;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.asm.IHighLevelInstruction#getLogicalPrev()
+	 */
+	@Override
+	public IHighLevelInstruction getLogicalPrev() {
+		int target = inst.getPc();
+		IHighLevelInstruction inst = prev;
+		IHighLevelInstruction cand = null;
+		while (inst != null) {
+			if (inst.getInst().getPc() + inst.getInst().getSize() < target)
+				break;
+			if (inst.getInst().getPc() + inst.getInst().getSize() == target)
+				cand = inst;
+			inst = inst.getPhysicalPrev();
+		}
+		return cand;
+	}
 	public void setBlock(Block block) {
 		this.block = block;
 	}

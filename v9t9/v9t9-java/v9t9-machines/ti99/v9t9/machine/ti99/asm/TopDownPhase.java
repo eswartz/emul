@@ -76,27 +76,25 @@ public class TopDownPhase extends Phase {
 			if (inst.getInst().getInst() == InstTableCommon.Idata) {
 				continue;
 			}
-			if ((inst.getFlags() & IHighLevelInstruction.fStartsBlock) != 0
-					|| (inst.getPrev() != null && (inst.getPrev().getFlags() & IHighLevelInstruction.fEndsBlock) != 0)) {
+			boolean doAddBlock = false;
+			if ((inst.getFlags() & IHighLevelInstruction.fStartsBlock) != 0) {
+				doAddBlock = true;
+			} else {
+				IHighLevelInstruction logPrev = inst.getLogicalPrev();
+				if (logPrev != null && (logPrev.getFlags() & IHighLevelInstruction.fEndsBlock) != 0) {
+					doAddBlock = true;
+				}
+			}
+			if (doAddBlock) {
 				if (inst.getBlock() == null) {
 					addBlock(new Block(inst));
 				} else if (inst.getBlock().getFirst() != inst) {
 					System.out.println("Splitting block: " + inst.getBlock() + " at " + inst);
-					dumpBlock(System.out, inst.getBlock());
-					inst.getBlock().setLast(null);
-					addBlock(new Block(inst));
+					//dumpBlock(System.out, inst.getBlock());
+					//inst.getBlock().setLast(null);
+					//addBlock(new Block(inst));
+					addBlock(inst.getBlock().split(inst));
 				}
-			}
-			else {
-				//if (inst.getBlock() == null) {
-					//if (inst.getPrev() == null) {
-					//	addBlock(new Block(inst));
-					//} else {
-					//	if (inst.getPrev().getBlock() == null)
-					//		addBlock(new Block(inst.getPrev()));
-						//inst.getPrev().getBlock().addInst(inst);
-					//}
-				//}
 			}
 		}
 		
@@ -113,7 +111,6 @@ public class TopDownPhase extends Phase {
 				changed = true;
 				
 				Routine routine = unresolvedRoutines.remove(0);
-				
 				unresolvedBlocks.addAll(routine.getEntries());
 				
 			}
@@ -133,7 +130,8 @@ public class TopDownPhase extends Phase {
 					Label label = labels.get(block);
 					if (label == null) {
 						Routine routine = addRoutine(block.getFirst().getInst().pc, null, new UnknownRoutine());
-						unresolvedRoutines.add(routine);
+						if (routine != null)
+							unresolvedRoutines.add(routine);
 					}
 				}
 			}
@@ -194,7 +192,8 @@ public class TopDownPhase extends Phase {
 
 			block.setLast(inst);
 
-			if ((inst.getFlags() & IHighLevelInstruction.fEndsBlock) != 0) {
+			if ((inst.getFlags() & IHighLevelInstruction.fEndsBlock + IHighLevelInstruction.fNotFallThrough) 
+					== IHighLevelInstruction.fEndsBlock) {
 				// handle block break
 				Block nextBlock = getLabelKey(inst.getInst().pc + inst.getInst().getSize());
 				if (nextBlock != null) {
@@ -258,7 +257,7 @@ public class TopDownPhase extends Phase {
 				}
 			}
 
-			inst = inst.getNext();
+			inst = inst.getLogicalNext();
 
 			// stop
 			//if (inst != null && getLabel(inst.getInst().pc) != null) {
@@ -357,7 +356,8 @@ public class TopDownPhase extends Phase {
 				if (validCodeAddress(addr)) {
 					inst.setFlags(inst.getFlags() | IHighLevelInstruction.fIsCall);
 					routine = addRoutine(addr, null, new LinkedRoutine());
-					unresolvedRoutines.add(routine);
+					if (routine != null)
+						unresolvedRoutines.add(routine);
 				} else {
 					System.out.println("!!! ignoring invalid code reference: "
 							+ inst);
@@ -429,6 +429,10 @@ public class TopDownPhase extends Phase {
 			block = target.getBlock();
 			if (block.getFirst() != target) {
 				block = block.split(target);
+				if (block == null) {
+					// could not split
+					return null;
+				}
 				addBlock(block);
 				unresolvedBlocks.add(block);
 			}
@@ -559,7 +563,7 @@ public class TopDownPhase extends Phase {
 		
 		int maxInsts = 16;
 		
-		IHighLevelInstruction inst = caller.getPrev();
+		IHighLevelInstruction inst = caller.getLogicalPrev();
 
 		while (inst != null && maxInsts-- > 0) {
 			// DON'T stop... any entry point to the code is valid
@@ -605,7 +609,7 @@ public class TopDownPhase extends Phase {
 				}
 				return null;
 			}
-			inst = inst.getPrev();
+			inst = inst.getLogicalPrev();
 		}
 		
 		return null;
@@ -640,8 +644,8 @@ public class TopDownPhase extends Phase {
 		
 		int reg = fromOp1.val;
 		
-		while (inst.getPrev() != null) {
-			inst = inst.getPrev();
+		while (inst.getLogicalPrev() != null) {
+			inst = inst.getLogicalPrev();
 
 			// stop if we leave the block
 			if (inst.getBlock() != startBlock)
@@ -830,8 +834,9 @@ public class TopDownPhase extends Phase {
 
 				// fallthrough?
 				if (0 == (inst.getFlags() & IHighLevelInstruction.fNotFallThrough)) {
-					if (inst.getNext() != null && inst.getNext().getBlock() != null) {
-						block.addSucc(inst.getNext().getBlock());
+					IHighLevelInstruction logNext = inst.getLogicalNext();
+					if (logNext != null && logNext.getBlock() != null) {
+						block.addSucc(logNext.getBlock());
 					} else {
 						System.out.printf(
 								"??? Ignoring fallthrough after >%04X\n",
@@ -840,8 +845,9 @@ public class TopDownPhase extends Phase {
 				}
 			} else {
 				// normal fall through
-				if (inst.getNext() != null && inst.getNext().getBlock() != null) {
-					block.addSucc(inst.getNext().getBlock());
+				IHighLevelInstruction logNext = inst.getLogicalNext();
+				if (logNext != null && logNext.getBlock() != null) {
+					block.addSucc(logNext.getBlock());
 				} else {
 					System.out.printf("??? Ignoring fallthrough after >%04X\n",
 							inst.getInst().pc);
@@ -966,8 +972,10 @@ public class TopDownPhase extends Phase {
 								callSite.getBlock().setLast(callSite);
 							}
 						}
-						inst = decompileInfo.getLLInstructions().get(pc);
-						callSite.setNext(inst);
+						
+						callSite.getInst().setSize(pc - callSite.getInst().getPc());
+						//inst = decompileInfo.getLLInstructions().get(pc);
+						//callSite.setNext(inst);
 						
 						callSite.getInst().setOp2(new DataWordListOperand(args));
 						//callSite.setNext(decompileInfo.getLLInstructions().get(last));

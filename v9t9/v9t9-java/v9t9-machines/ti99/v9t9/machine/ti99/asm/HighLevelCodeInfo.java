@@ -193,19 +193,21 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 					instructionFactory.getInstructionFlags(rawInst));
 			getLLInstructions().put(new Integer(inst.getInst().pc), inst);
 			if (prev != null) {
-				prev.setNext(inst);
+				prev.setPhysicalNext(inst);
 			} else {
 				first = inst;
 			}
 			prev = inst;
 		}
 
+		/*
 		// wire up instructions to their next real instructions
 		for (IHighLevelInstruction inst : getLLInstructions().values()) { 
 			if (inst.getInst().getSize() > 2) {
-				inst.setNext(getLLInstructions().get(new Integer(inst.getInst().pc + inst.getInst().getSize())));
+				inst.setLogicalNext(getLLInstructions().get(new Integer(inst.getInst().pc + inst.getInst().getSize())));
 			}
 		}
+		*/
 		
 		return first;
 	}

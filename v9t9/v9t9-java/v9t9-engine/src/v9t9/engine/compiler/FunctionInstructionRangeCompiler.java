@@ -71,7 +71,7 @@ public class FunctionInstructionRangeCompiler implements
 		            if (j >= numinsts)
 		            	break;		// if out of the code range but not the block
 		            
-		            inst = inst.getNext();
+		            inst = inst.getLogicalNext();
 		            
 		        }
 		    	

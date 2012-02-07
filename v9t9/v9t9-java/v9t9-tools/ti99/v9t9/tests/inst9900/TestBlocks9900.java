@@ -19,16 +19,16 @@ public class TestBlocks9900 extends BaseTopDownPhaseTest9900 {
 		super.setUp();
 		
 		inst0 = createHLInstruction(0x0, 0x0, "LI R1,1");
-		inst1 = createHLInstruction(0x0, 0x0, "LI R2,1");
-		inst2 = createHLInstruction(0x0, 0x0, "LI R3,1");
-		inst3 = createHLInstruction(0x0, 0x0, "LI R4,1");
-		inst4 = createHLInstruction(0x0, 0x0, "LI R5,1");
-		inst5 = createHLInstruction(0x0, 0x0, "LI R6,1");
-		inst0.setNext(inst1);
-		inst1.setNext(inst2);
-		inst2.setNext(inst3);
-		inst3.setNext(inst4);
-		inst4.setNext(inst5);
+		inst1 = createHLInstruction(0x4, 0x0, "LI R2,1");
+		inst2 = createHLInstruction(0x8, 0x0, "LI R3,1");
+		inst3 = createHLInstruction(0xC, 0x0, "LI R4,1");
+		inst4 = createHLInstruction(0x10, 0x0, "LI R5,1");
+		inst5 = createHLInstruction(0x14, 0x0, "LI R6,1");
+		inst0.setPhysicalNext(inst1);
+		inst1.setPhysicalNext(inst2);
+		inst2.setPhysicalNext(inst3);
+		inst3.setPhysicalNext(inst4);
+		inst4.setPhysicalNext(inst5);
 	}
 	
 	public void testBasic() {
@@ -132,12 +132,7 @@ public class TestBlocks9900 extends BaseTopDownPhaseTest9900 {
 		assertTrue(block.isComplete());
 		assertNull(inst1.getBlock());
 		
-		try {
-			block.split(inst2);
-			fail();
-		} catch (Exception e) {
-			
-		}
+		assertNull(block.split(inst2));
 	}
 	
 	public void testCreateIllegal() {

@@ -7,6 +7,7 @@
 package v9t9.tests.inst9900;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -182,13 +183,14 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
         assertTrue(block2.getFirst().getInst().getInst() == Inst9900.Irtwp);
         assertTrue(block2.getLast().getInst().getInst() == Inst9900.Irtwp);
         
-        assertTrue(block1.getFirst().getNext().getInst().getOp1() instanceof RoutineOperand);
-        Routine routine2 = ((RoutineOperand) block1.getFirst().getNext().getInst().getOp1()).routine;  
+        IHighLevelInstruction inst2 = block1.getFirst().getLogicalNext();
+		assertTrue(inst2.getInst().getOp1() instanceof RoutineOperand);
+        Routine routine2 = ((RoutineOperand) inst2.getInst().getOp1()).routine;  
         assertNotSame(routine, routine2);
         assertTrue(routine2.getSpannedBlocks().size() == 1);
         
         // the NOPs are jumps so they produce a new routine
-        assertEquals(2, phase.getRoutines().size());
+        assertEquals(3, phase.getRoutines().size());
         Block r2block = getSingleEntry(routine2);
         assertEquals(1, r2block.getPred().length);
         checkList(r2block.getSucc(), new Block[] {});
@@ -217,12 +219,14 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
         assertTrue((routine.flags & Routine.fUnknownExit) == 0);
         Block block1 = getSingleEntry(routine);
         assertTrue(block1.getFirst().getInst().getInst() == Inst9900.Ili);
-        assertTrue(block1.getFirst().getNext().getInst().getOp1() instanceof RoutineOperand);
-        assertTrue(block1.getFirst().getNext().getNext().getInst().getOp1() instanceof RoutineOperand);
+        IHighLevelInstruction inst2 = block1.getFirst().getLogicalNext();
+		assertTrue(inst2.getInst().getOp1() instanceof RoutineOperand);
+        IHighLevelInstruction inst3 = inst2.getLogicalNext();
+		assertTrue(inst3.getInst().getOp1() instanceof RoutineOperand);
         assertTrue(block1.getLast().getInst().getInst() == Inst9900.Ibl);
         
-        Routine routine2 = ((RoutineOperand) block1.getFirst().getNext().getInst().getOp1()).routine;  
-        Routine routine2p = ((RoutineOperand) block1.getFirst().getNext().getNext().getInst().getOp1()).routine;
+        Routine routine2 = ((RoutineOperand) inst2.getInst().getOp1()).routine;  
+        Routine routine2p = ((RoutineOperand) inst3.getInst().getOp1()).routine;
         // don't duplicate
         assertTrue(routine2 == routine2p);
         validateBlocks(routine.getSpannedBlocks());
@@ -248,7 +252,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
         assertTrue((routine.flags & Routine.fUnknownExit) == 0);
         Block block1 = getSingleEntry(routine);
         assertTrue(block1.getFirst().getInst().getInst() == Inst9900.Imov);
-        assertTrue(block1.getFirst().getNext().getInst().getOp1() instanceof RoutineOperand);
+        assertTrue(block1.getFirst().getLogicalNext().getInst().getOp1() instanceof RoutineOperand);
         assertTrue(block1.getLast().getInst().getInst() == Inst9900.Ibl);
         Block block2 = block1.succ.get(0);
         assertTrue(block2.getFirst().getInst().getInst() == Inst9900.Imovb);
@@ -300,11 +304,11 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
         });
         
         phase.run();
-        assertTrue(routine.getSpannedBlocks().size() == 2);
+        assertEquals(2, routine.getSpannedBlocks().size());
         
         Block block = getSingleEntry(routine);
         BaseMachineOperand op = (BaseMachineOperand) block.getLast().getInst().getOp1();
-        assertTrue(op.type == MachineOperand9900.OP_ADDR);
+        assertEquals(MachineOperand9900.OP_ADDR, op.type);
         assertEquals(op.val, 0);
         assertEquals(op.immed, (short) 0x83E2);
         validateBlocks(routine.getSpannedBlocks());
@@ -521,11 +525,12 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
     	
         phase.run();
         validateBlocks(routine1.getSpannedBlocks());
-        validateBlocks(routine2.getSpannedBlocks());
+        Collection<Block> r2blocks = routine2.getSpannedBlocks();
+		validateBlocks(r2blocks);
         validateRoutines(phase.getRoutines());
         assertEquals(1, routine1.getSpannedBlocks().size());
         
-        assertEquals(3, routine2.getSpannedBlocks().size());
+        assertEquals(3, r2blocks.size());
         assertEquals(2, routine2.getEntries().size());
         assertTrue((routine1.flags & Routine.fSubroutine) != 0);
         assertTrue((routine2.flags & Routine.fSubroutine) == 0);
@@ -594,7 +599,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
         phase.run();
         assertEquals(2, routine.getSpannedBlocks().size());
 
-        LabelListOperand op = (LabelListOperand) getSingleEntry(routine).getFirst().getNext().getNext().getInst().getOp1();
+        LabelListOperand op = (LabelListOperand) getSingleEntry(routine).getFirst().getLogicalNext().getLogicalNext().getInst().getOp1();
         assertEquals(1, op.operands.size());
         assertEquals(0x10A, op.operands.get(0).label.getAddr());
         validateBlocks(routine.getSpannedBlocks());
@@ -786,7 +791,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
     	while (inst != null) {
     		if (inst.getInst().pc >= 0x800 && inst.getInst().pc < 0x1000 && inst.getBlock() == null)
     			phase.addBlock(new Block(inst));
-    		inst = inst.getNext();
+    		inst = inst.getPhysicalNext();
     	}
     	phase.run();
     	phase.dumpBlocks(System.out);

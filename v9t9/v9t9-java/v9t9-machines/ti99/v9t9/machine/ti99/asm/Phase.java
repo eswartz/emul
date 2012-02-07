@@ -139,7 +139,8 @@ public abstract class Phase implements IDecompilePhase {
 		for (Iterator<MemoryRange> iter = decompileInfo.getMemoryRanges().rangeIterator(); iter
 				.hasNext();) {
 			MemoryRange range = iter.next();
-			for (IHighLevelInstruction inst = (IHighLevelInstruction) range.getCode(); inst != null; inst = inst.getNext()) {
+			for (IHighLevelInstruction inst = (IHighLevelInstruction) range.getCode(); inst != null; 
+					inst = inst.getLogicalNext()) {
 				dumpInstruction(os, inst);
 			}
 		}
@@ -151,7 +152,7 @@ public abstract class Phase implements IDecompilePhase {
 	@Override
 	public void dumpInstructions(PrintStream os, Collection<MemoryRange> ranges) {
 		for (MemoryRange range : ranges) {
-			for (IHighLevelInstruction inst = range.getCode(); inst != null; inst = inst.getNext()) {
+			for (IHighLevelInstruction inst = range.getCode(); inst != null; inst = inst.getLogicalNext()) {
 				dumpInstruction(os, inst);
 			}
 		}
@@ -271,6 +272,11 @@ public abstract class Phase implements IDecompilePhase {
 		Check.checkState(validCodeAddress(addr));
 		
 		Label label = decompileInfo.findOrCreateLabel(addr);
+		if (label.getAddr() != addr) {
+			// instr could be in the middle of valid instructions
+			return null;
+		}
+		
 		if (name != null && label.getName() == null) {
 			label.setName(name);
 		}

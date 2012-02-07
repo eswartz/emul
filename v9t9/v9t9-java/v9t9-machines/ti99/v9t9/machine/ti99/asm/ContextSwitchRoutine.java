@@ -52,7 +52,7 @@ public class ContextSwitchRoutine extends Routine {
 	        	
 	            if (inst == block.getLast())
 	            	break;
-	            inst = inst.getNext();
+	            inst = inst.getLogicalNext();
 	        }
 	        
 	        if (entryDataBytes / 2 > dataWords) {
