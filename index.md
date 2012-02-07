@@ -82,6 +82,14 @@ Using Web Start
 
 Click on the button to the right.  This will fetch the most recent V9t9 build each time you use it.
 
+Contact
+=======
+
+I'm currently in a trial run with this and haven't made the repository hosting V9t9 public.  
+(Mainly, the sources are a bit messy and have no license headers yet.)
+
+If you have questions or issues, please send me a message on github to user 'eswartz'. 
+
 
 License
 =======
