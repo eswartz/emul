@@ -37,6 +37,7 @@ import v9t9.common.memory.MemoryEntryInfo;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.utils.FileUtils;
 import ejs.base.utils.Pair;
 
 /**
@@ -365,7 +366,7 @@ public class PathFileLocator implements IPathFileLocator {
 				String[] entries;
 				InputStream is = connection.getInputStream();
 				try {
-					String content = DataFiles.readInputStreamTextAndClose(is);
+					String content = FileUtils.readInputStreamTextAndClose(is);
 					entries = content.split("\r\n|\n");
 				} catch (IOException e) {
 					throw e;
@@ -425,9 +426,9 @@ public class PathFileLocator implements IPathFileLocator {
 				File tmpFile = File.createTempFile("jar", ".jar");
 
 				InputStream is = jar.openStream();
-				byte[] content = DataFiles.readInputStreamContentsAndClose(is);
+				byte[] content = FileUtils.readInputStreamContentsAndClose(is);
 				OutputStream os = new FileOutputStream(tmpFile);
-				DataFiles.writeOutputStreamContentsAndClose(os, content, content.length);
+				FileUtils.writeOutputStreamContentsAndClose(os, content, content.length);
 				
 				file = tmpFile;
 				delete = true;
@@ -698,7 +699,7 @@ public class PathFileLocator implements IPathFileLocator {
 			System.out.println(connection.getContentType());
 			System.out.println(connection.getContentLength());
 			InputStream is = connection.getInputStream();
-			System.out.println(DataFiles.readInputStreamTextAndClose(is));
+			System.out.println(FileUtils.readInputStreamTextAndClose(is));
 			is.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -788,9 +789,9 @@ public class PathFileLocator implements IPathFileLocator {
 				}
 				else {
 					InputStream is = createInputStream(uri);
-					byte[] content = DataFiles.readInputStreamContentsAndClose(is, 
+					byte[] content = FileUtils.readInputStreamContentsAndClose(is, 
 							length > 0 ? length : size);
-					md5 = DataFiles.getMD5Hash(content);
+					md5 = FileUtils.getMD5Hash(content);
 				}
 			} catch (FileNotFoundException e) {
 				// this happens when invalid filenames are located and the

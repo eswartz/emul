@@ -79,8 +79,8 @@ import org.lwjgl.util.glu.GLU;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.utils.FileUtils;
 
-import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IMachine;
 import v9t9.common.video.ICanvas;
 import v9t9.gui.client.swt.gl.MonitorEffect;
@@ -320,7 +320,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		InputStream is = null;
 		try {
 			is = url.openStream();
-			text = DataFiles.readInputStreamTextAndClose(is);
+			text = FileUtils.readInputStreamTextAndClose(is);
 		} catch (IOException e) {
 			throw new GLShaderException(filename, "Cannot read file " + url, e);
 		} finally {

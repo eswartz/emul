@@ -12,9 +12,8 @@ import java.net.URI;
 import java.util.Arrays;
 
 import ejs.base.settings.ISettingSection;
+import ejs.base.utils.FileUtils;
 
-import v9t9.common.FileUtils;
-import v9t9.common.files.DataFiles;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.memory.StoredMemoryEntryInfo;
 
@@ -88,7 +87,7 @@ public class DiskMemoryEntry extends MemoryEntry {
             	
                 InputStream is = locator.createInputStream(uri);
                 FileUtils.skipFully(is, storedInfo.fileoffs);
-				byte[] data = DataFiles.readInputStreamContentsAndClose(is, filesize - storedInfo.fileoffs);
+				byte[] data = FileUtils.readInputStreamContentsAndClose(is, filesize - storedInfo.fileoffs);
                 area.copyFromBytes(data);
 
             	bLoaded = true;
@@ -168,7 +167,7 @@ public class DiskMemoryEntry extends MemoryEntry {
             if (locator.exists(uri)) {
             	if (locator.exists(backup)) {
             		try {
-            			origData = DataFiles.readInputStreamContentsAndClose(
+            			origData = FileUtils.readInputStreamContentsAndClose(
             					locator.createInputStream(backup), getSize());
             			isNew = !Arrays.equals(data, origData);
             		} catch (IOException e) {
@@ -176,7 +175,7 @@ public class DiskMemoryEntry extends MemoryEntry {
             		}
             	} else {
             		try {
-            			origData = DataFiles.readInputStreamContentsAndClose(
+            			origData = FileUtils.readInputStreamContentsAndClose(
             					locator.createInputStream(uri), getSize());
             		} catch (IOException e) {
             			// ignore
@@ -186,7 +185,7 @@ public class DiskMemoryEntry extends MemoryEntry {
             if (isNew) {
             	if (origData != null) {
             		try {
-            			DataFiles.writeOutputStreamContentsAndClose(
+            			FileUtils.writeOutputStreamContentsAndClose(
             					locator.createOutputStream(backup), origData, getSize());
             		} catch (IOException e) {
             			e.printStackTrace();
@@ -194,7 +193,7 @@ public class DiskMemoryEntry extends MemoryEntry {
             		}
             	}
             }
-            DataFiles.writeOutputStreamContentsAndClose(
+            FileUtils.writeOutputStreamContentsAndClose(
             		locator.createOutputStream(uri), data, getSize());
             bDirty = false;
         }
