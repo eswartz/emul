@@ -48,6 +48,16 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 	public String getIdentifier() {
 		return ID;
 	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#getName()
+	 */
+	@Override
+	public String getName() {
+		return "FORTH (based on TI-99/4A hardware)";
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#createMachine()
 	 */

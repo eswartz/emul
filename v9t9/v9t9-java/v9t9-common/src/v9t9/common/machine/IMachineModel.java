@@ -24,7 +24,10 @@ import v9t9.common.machine.IMachine;
  */
 public interface IMachineModel {
 	String getIdentifier();
-	
+
+	/** User-visible name, with "the" */
+	String getName();
+
 	IMachine createMachine(ISettingsHandler settings);
 
 	IMemoryModel createMemoryModel(IMachine machine);

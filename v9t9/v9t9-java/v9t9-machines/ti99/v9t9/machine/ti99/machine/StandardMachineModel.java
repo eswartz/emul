@@ -42,6 +42,14 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	public String getIdentifier() {
 		return ID;
 	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#getName()
+	 */
+	@Override
+	public String getName() {
+		return "TI-99/4A";
+	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#createMachine()
