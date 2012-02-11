@@ -407,24 +407,30 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		return 1024;
 	}
 
-	protected synchronized void flushVdpChanges() {
+	protected void flushVdpChanges() {
 		if (vdpModeRedrawHandler != null) {
 			synchronized (vdpCanvas) {
-				for (int vdpaddr = vdpTouches.nextSetBit(0); vdpaddr >= 0; vdpaddr = vdpTouches.nextSetBit(vdpaddr + 1)) {
-					vdpChanges.changed |= vdpModeRedrawHandler.touch(vdpaddr);
-					if (spriteRedrawHandler != null) {
-						vdpChanges.changed |= spriteRedrawHandler.touch(vdpaddr);
+				synchronized (this) {
+					for (int vdpaddr = vdpTouches.nextSetBit(0); vdpaddr >= 0; vdpaddr = vdpTouches.nextSetBit(vdpaddr + 1)) {
+						vdpChanges.changed |= vdpModeRedrawHandler.touch(vdpaddr);
+						if (spriteRedrawHandler != null) {
+							vdpChanges.changed |= spriteRedrawHandler.touch(vdpaddr);
+						}
 					}
+					vdpTouches.clear();
 				}
-				vdpTouches.clear();
 			}
 		}
 	}
 	
-    public synchronized void touchAbsoluteVdpMemory(int vdpaddr, boolean isByte) {
-    	vdpTouches.set(vdpaddr);
-    	if (!isByte)
-    		vdpTouches.set(vdpaddr + 1);
+    public void touchAbsoluteVdpMemory(int vdpaddr, boolean isByte) {
+    	synchronized (this.vdpCanvas) {
+    		synchronized (this) {
+		    	vdpTouches.set(vdpaddr);
+		    	if (!isByte)
+		    		vdpTouches.set(vdpaddr + 1);
+    		}
+    	}
     	//long now = System.currentTimeMillis();
     	//if (now >= nextTouchFlushTime) {
     	//	flushVdpChanges();
@@ -444,64 +450,66 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		vdpChanges.fullRedraw = true;
 	}
 	
-	public synchronized boolean update() {
+	public boolean update() {
 		flushVdpChanges();
 		if (!vdpChanges.changed)
 			return false;
 		//System.out.println(System.currentTimeMillis());
 		if (vdpModeRedrawHandler != null) {
 			//long start = System.currentTimeMillis();
-			
-			int count = 0;
-			
 			// don't let video rendering happen in middle of updating
+			
 			synchronized (vdpCanvas) {
-				vdpCanvas.syncColors();
+				synchronized (this) {
+					int count = 0;
 				
-				vdpModeRedrawHandler.prepareUpdate();
-				
-				if (vdpChanges.fullRedraw) {
-					// clear for the actual mode (not blank mode)
-					vdpModeRedrawHandler.clear();
-					vdpCanvas.markDirty();
-				}
-				
-				if (!isBlank()) {
-					if (spriteRedrawHandler != null && drawSprites) {
-						byte vdpStatus = (byte) vdpChip.getRegister(REG_ST);
-						vdpStatus = spriteRedrawHandler.updateSpriteCoverage(
-								vdpStatus, vdpChanges.fullRedraw);
-						if (!pauseMachine.getBoolean())
-							vdpChip.setRegister(REG_ST, vdpStatus);
-					}
+					vdpCanvas.syncColors();
+					
+					vdpModeRedrawHandler.prepareUpdate();
 					
 					if (vdpChanges.fullRedraw) {
-						vdpChanges.screen.set(0, getMaxRedrawblocks());
+						// clear for the actual mode (not blank mode)
+						vdpModeRedrawHandler.clear();
+						vdpCanvas.markDirty();
 					}
 					
-					count = vdpModeRedrawHandler.updateCanvas(blocks);
-					if (spriteRedrawHandler != null && drawSprites) {
-						spriteRedrawHandler.updateCanvas(vdpChanges.fullRedraw);
+					if (!isBlank()) {
+						if (spriteRedrawHandler != null && drawSprites) {
+							byte vdpStatus = (byte) vdpChip.getRegister(REG_ST);
+							vdpStatus = spriteRedrawHandler.updateSpriteCoverage(
+									vdpStatus, vdpChanges.fullRedraw);
+							if (!pauseMachine.getBoolean())
+								vdpChip.setRegister(REG_ST, vdpStatus);
+						}
+						
+						if (vdpChanges.fullRedraw) {
+							vdpChanges.screen.set(0, getMaxRedrawblocks());
+						}
+						
+						count = vdpModeRedrawHandler.updateCanvas(blocks);
+						if (spriteRedrawHandler != null && drawSprites) {
+							spriteRedrawHandler.updateCanvas(vdpChanges.fullRedraw);
+						}
 					}
+					
+	
+					vdpCanvas.markDirty(blocks, count);
+					
+					vdpChanges.screen.clear();
+					Arrays.fill(vdpChanges.patt, (byte) 0);
+					Arrays.fill(vdpChanges.color, (byte) 0);
+					
+					if (drawSprites) {
+						Arrays.fill(vdpChanges.sprpat, (byte) 0);
+						vdpChanges.sprite = 0;
+					}
+					
+					vdpChanges.fullRedraw = false;
+					vdpChanges.changed = false;
 				}
-				
-
-				vdpCanvas.markDirty(blocks, count);
-				
-				vdpChanges.screen.clear();
-				Arrays.fill(vdpChanges.patt, (byte) 0);
-				Arrays.fill(vdpChanges.color, (byte) 0);
-				
-				if (drawSprites) {
-					Arrays.fill(vdpChanges.sprpat, (byte) 0);
-					vdpChanges.sprite = 0;
-				}
-				
-				vdpChanges.fullRedraw = false;
-				vdpChanges.changed = false;
+	
+				//System.out.println("elapsed: " + (System.currentTimeMillis() - start));
 			}
-
-			//System.out.println("elapsed: " + (System.currentTimeMillis() - start));
 		}
 		
 		return true;
