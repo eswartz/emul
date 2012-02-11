@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="buildall" name="Build Data for Website">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <property name="base"        value=".."/>
+    <property name="base.v9t9"   value="."/>
+    <property name="base.base"   value="../../../base/ejs-base"/>
+    <property name="build.dir"   value="${base}/../build"/>
+    <property name="bin.v9t9.dir"     value="${build.dir}/bin/v9t9"/>
+    <property name="base.tcf"     value="../../../org.eclipse.tcf"/>
+    <property name="base.tcf.agent" value="../../../org.eclipse.tcf.agent"/>
+    <property name="web"        value="${base}/../../../emul-web"/>
+	
+
+    <target name="buildall" depends="build-subprojects,build-web" >
+	</target>
+    	
+    <target name="build-subprojects">
+        <ant antfile="build_standalone.xml" dir="${base.v9t9}" inheritAll="false" target="buildall">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+	</target>
+	
+	<target name="clean" >
+		 <ant antfile="build_standalone.xml" dir="${base.v9t9}" inheritAll="false" target="clean">
+        </ant>
+    	<delete dir="${bin.v9t9.dir}" /> 
+	</target>
+	
+    <target name="build-web"  >
+
+    	<mkdir dir="${web}/data" />
+    	<mkdir dir="${web}/data/v9t9" />
+
+    	<copy todir="${web}/data/v9t9" verbose="true" preservelastmodified="yes">
+    		<fileset dir="${bin.v9t9.dir}">
+    	      <include name="**"/>
+    	    </fileset>
+      	</copy>
+    	
+    	<zip destfile="${web}/data/v9t9.zip">
+    		<fileset dir="${web}/data">
+    			<include name="v9t9/**"/>
+    		</fileset>
+    	
+    	</zip>
+
+	</target>
+		
+</project>
