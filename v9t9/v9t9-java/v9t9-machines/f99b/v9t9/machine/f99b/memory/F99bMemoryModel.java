@@ -53,16 +53,22 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		.withOffset(0x400)
 		.withAddress(0x400)
 		.withSize(-(0x10000 - 0x400))
-		.create("CPU ROM");
+		.create("Forth99 CPU ROM");
 
 	private static String FORTH_GROM = "f99bgrom.bin";
+	
+	private static MemoryEntryInfo f99bGromMemoryEntryInfo = MemoryEntryInfoBuilder
+		.standardConsoleGrom(FORTH_GROM)
+		.withSize(-0x4000)
+		.create("Forth99 CPU GROM");
+
 
 	private static MemoryEntryInfo f99bGramMemoryEntryInfo = MemoryEntryInfoBuilder
 		.byteMemoryEntry()
 		.withDomain(IMemoryDomain.NAME_GRAPHICS)
 		.withAddress(0x4000)
 		.withSize(0x4000)
-		.create("16K GRAM Dictionary");
+		.create("Forth99 16K GRAM Dictionary");
 	
 	private static MemoryEntryInfo f99bDiskGramMemoryEntryInfo = MemoryEntryInfoBuilder
 		.byteMemoryEntry()
@@ -71,7 +77,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		.withAddress(0x8000)
 		.withSize(0x8000)
 		.storable(true)
-		.create("GRAM");
+		.create("Forth99 GRAM");
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.memory.StandardConsoleMemoryModel#loadMemory()
@@ -101,12 +107,9 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
     	// GROM consists of ROM up to 16k
 		IMemoryEntry gromEntry;
 		try {
-			MemoryEntryInfo info = MemoryEntryInfoBuilder
-				.standardConsoleGrom(FORTH_GROM)
-				.withSize(-0x4000)
-				.create("CPU GROM");
+			gromEntry = memory.getMemoryEntryFactory().newMemoryEntry(
+					f99bGromMemoryEntryInfo);
 			
-			gromEntry = memory.getMemoryEntryFactory().newMemoryEntry(info);
 			memory.addAndMap(gromEntry);
 		} catch (IOException e) {
 			reportLoadError(eventNotifier, FORTH_GROM, e);
@@ -147,7 +150,11 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	 */
 	@Override
 	public MemoryEntryInfo[] getRequiredRomMemoryEntries() {
-		return new MemoryEntryInfo[0];
+		return new MemoryEntryInfo[] { 
+				f99bRomMemoryEntryInfo,
+				f99bGromMemoryEntryInfo,
+				f99bDiskGramMemoryEntryInfo,
+				};
 	}
 	
 	/* (non-Javadoc)

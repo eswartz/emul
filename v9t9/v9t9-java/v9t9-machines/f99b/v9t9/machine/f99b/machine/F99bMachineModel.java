@@ -50,6 +50,16 @@ public class F99bMachineModel implements IMachineModel {
 	public String getIdentifier() {
 		return ID;
 	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#getName()
+	 */
+	@Override
+	public String getName() {
+		return "FORTH99 Machine";
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#createMachine()
 	 */

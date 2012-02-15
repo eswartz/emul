@@ -306,49 +306,53 @@ public class ROMSetupDialog extends Dialog {
 		styledTextHelper.popStyle();
 		
 		infoLabel.append(
-				"In order to emulate the TI-99/4A, you need to configure V9t9 so it can "+
+				"In order to emulate the " + machine.getModel().getName() + ", you need to configure V9t9 so it can "+
 				"find the necessary ROMs for the system and for any modules you want to use.\n\n"+
 				"Add new Search Locations (below), and V9t9 will detect ROMs by content. " +
-				(ADVANCED ? "If you have custom ROMs, though, you can select your own file by clicking the links." : "")+
-				"\n\nThese ROMs are required:\t");
+				(ADVANCED ? "If you have custom ROMs, though, you can select your own file by clicking the links.\n" : "\n"));
 
-		reqdRomNameStyleRanges = emitRomsAndStyles(requiredRoms);
+		if (requiredRoms.length > 0) {
+			infoLabel.append("\nThese ROMs are required:\t");
+			reqdRomNameStyleRanges = emitRomsAndStyles(requiredRoms);
+		}
 		
-		infoLabel.append(
-				"\n\nThese ROMs are optional:\t");
-				
-		optionalRomNameStyleRanges = emitRomsAndStyles(optionalRoms);
+		if (optionalRoms.length > 0) {
+			infoLabel.append(
+					"\n\nThese ROMs are optional:\t");
+					
+			optionalRomNameStyleRanges = emitRomsAndStyles(optionalRoms);
 		
-		styledTextHelper.pushStyle(new TextStyle(), SWT.ITALIC);
-
-		infoLabel.append("\n\n"+
-			"Note: copyrighted ROMs are not distributed with V9t9 itself.\n\n"+
-			"Please see ");
-		
-		// SWT.UNDERLINE_LINK does not appear to work as promised :p
-		TextStyle urlSt = new TextStyle(
-				JFaceResources.getFontRegistry().getItalic(JFaceResources.TEXT_FONT),
-				getDisplay().getSystemColor(SWT.COLOR_BLUE), null);
-
-		urlSt.underline = true;
-		urlSt.underlineColor = getDisplay().getSystemColor(SWT.COLOR_BLUE);
-
-		final StyleRange urlStyle = styledTextHelper.pushStyle(urlSt, SWT.ITALIC);
-
-		infoLabel.append(InternetDefinitions.sV9t9WikiURL);
-
-		styledTextHelper.popStyle();
-		
-		registerLink(urlStyle, 
-			new ILinkHandler() {
-				public void linkClicked() {
-					BrowserUtils.openURL(InternetDefinitions.sV9t9WikiURL);
-				}
-		});
-		
-		infoLabel.append(" for information on ROMs.");
-		
-		styledTextHelper.popStyle();
+			styledTextHelper.pushStyle(new TextStyle(), SWT.ITALIC);
+	
+			infoLabel.append("\n\n"+
+				"Note: copyrighted ROMs are not distributed with V9t9 itself.\n\n"+
+				"Please see ");
+			
+			// SWT.UNDERLINE_LINK does not appear to work as promised :p
+			TextStyle urlSt = new TextStyle(
+					JFaceResources.getFontRegistry().getItalic(JFaceResources.TEXT_FONT),
+					getDisplay().getSystemColor(SWT.COLOR_BLUE), null);
+	
+			urlSt.underline = true;
+			urlSt.underlineColor = getDisplay().getSystemColor(SWT.COLOR_BLUE);
+	
+			final StyleRange urlStyle = styledTextHelper.pushStyle(urlSt, SWT.ITALIC);
+	
+			infoLabel.append(InternetDefinitions.sV9t9WikiURL);
+	
+			styledTextHelper.popStyle();
+			
+			registerLink(urlStyle, 
+				new ILinkHandler() {
+					public void linkClicked() {
+						BrowserUtils.openURL(InternetDefinitions.sV9t9WikiURL);
+					}
+			});
+			
+			infoLabel.append(" for information on ROMs.");
+			
+			styledTextHelper.popStyle();
+		}
 	}
 
 	private interface ILinkHandler {
@@ -449,8 +453,8 @@ public class ROMSetupDialog extends Dialog {
 			int index;
 			Color color;
 			if (storedInfo != null) {
-				if (storedInfo.fileName.equals(info.getFilenameProperty().getDefaultValue()) 
-						|| storedInfo.md5.equals(info.getFileMD5())) {
+				if ((info.getFilenameProperty() != null && storedInfo.fileName.equals(info.getFilenameProperty().getDefaultValue())) 
+						|| (info.getFileMD5() == null || storedInfo.md5.equals(info.getFileMD5()))) {
 					index = 0;
 					color = getDisplay().getSystemColor(SWT.COLOR_GREEN);
 				} else {

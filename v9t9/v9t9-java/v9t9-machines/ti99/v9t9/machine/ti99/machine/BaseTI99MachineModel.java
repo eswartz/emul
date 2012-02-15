@@ -24,7 +24,6 @@ import v9t9.machine.ti99.cpu.Cpu9900;
  *
  */
 public abstract class BaseTI99MachineModel implements IMachineModel {
-	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getCPU()
 	 */
