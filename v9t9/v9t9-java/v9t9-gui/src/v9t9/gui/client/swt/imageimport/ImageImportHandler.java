@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageImport;
 import v9t9.video.imageimport.ImageImportOptions;
@@ -18,6 +19,7 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 		super();
 	}
 
+	abstract protected IVdpCanvasRenderer getCanvasRenderer() ;
 	abstract protected IVdpChip getVdpHandler() ;
 
 	abstract protected ImageDataCanvas getCanvas();
@@ -25,7 +27,7 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 
 	@Override
 	public ImageImport createImageImport() {
-		return new ImageImport(getCanvas(), getVdpHandler(), getImageImportOptions());
+		return new ImageImport(getCanvasRenderer(), getCanvas(), getVdpHandler(), getImageImportOptions());
 	}
 	
 	@Override

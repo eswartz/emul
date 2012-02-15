@@ -29,6 +29,7 @@ import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ColorMapUtils;
+import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
 import v9t9.video.ImageDataCanvas;
@@ -128,7 +129,10 @@ public class ImageImport {
 		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
 	};
 
-	public ImageImport(ImageDataCanvas canvas, IVdpChip vdp, ImageImportOptions imageImportOptions) {
+	private final IVdpCanvasRenderer renderer;
+
+	public ImageImport(IVdpCanvasRenderer renderer, ImageDataCanvas canvas, IVdpChip vdp, ImageImportOptions imageImportOptions) {
+		this.renderer = renderer;
 		this.canvas = canvas;
 		this.options = imageImportOptions;
 		this.colorMgr = canvas.getColorMgr();
@@ -1727,13 +1731,14 @@ public class ImageImport {
 		
 		this.theImage = scaled;
 
-		synchronized (canvas) {
-			setImageData(scaled);
-		
-			setVideoMemory();
-			canvas.markDirty();
+		synchronized (renderer) {
+			synchronized (canvas) {
+				setImageData(scaled);
+
+				setVideoMemory();
+				canvas.markDirty();
+			}
 		}
-		
 	}
 
 	/**

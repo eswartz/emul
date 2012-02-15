@@ -106,37 +106,39 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
      * @see v9t9.handlers.VdpHandler#writeVdpReg(byte, byte, byte)
      */
     final synchronized protected void writeVdpReg(final int reg, byte val) {
-    	int redraw = doWriteVdpReg(reg, vdpregs[reg], val);
-
-    	/*  This flag must be checked first because
-	 	   it affects the meaning of the following 
-	 	   calls and checks. */
-	 	if ((redraw & REDRAW_MODE) != 0) {
-	 		setVideoMode();
-	 		setupBackdrop();
-	 		dirtyAll();
-	 	}
+    	synchronized (vdpCanvas) {
+	    	int redraw = doWriteVdpReg(reg, vdpregs[reg], val);
 	
-	 	if ((redraw & REDRAW_SPRITES) != 0) {
-			dirtySprites();
-		}
-
-	 	if ((redraw & REDRAW_PALETTE) != 0) {
-	 		setupBackdrop();
-	 		dirtyAll();
-	 	}
+	    	/*  This flag must be checked first because
+		 	   it affects the meaning of the following 
+		 	   calls and checks. */
+		 	if ((redraw & REDRAW_MODE) != 0) {
+		 		setVideoMode();
+		 		setupBackdrop();
+		 		dirtyAll();
+		 	}
+		
+		 	if ((redraw & REDRAW_SPRITES) != 0) {
+				dirtySprites();
+			}
 	
-	 	if ((redraw & REDRAW_BLANK) != 0) {
-	 		if ((vdpregs[1] & R1_NOBLANK) == 0) {
-	 			vdpCanvas.setBlank(true);
-	 			dirtyAll();
-	 			//update();
-	 		} else {
-	 			vdpCanvas.setBlank(false);
-	 			dirtyAll();
-	 			//update();
-	 		}
-	 	}
+		 	if ((redraw & REDRAW_PALETTE) != 0) {
+		 		setupBackdrop();
+		 		dirtyAll();
+		 	}
+		
+		 	if ((redraw & REDRAW_BLANK) != 0) {
+		 		if ((vdpregs[1] & R1_NOBLANK) == 0) {
+		 			vdpCanvas.setBlank(true);
+		 			dirtyAll();
+		 			//update();
+		 		} else {
+		 			vdpCanvas.setBlank(false);
+		 			dirtyAll();
+		 			//update();
+		 		}
+		 	}
+    	}
     }
     
     /** Set the backdrop based on the mode */
@@ -422,14 +424,16 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	}
 	
     public synchronized void touchAbsoluteVdpMemory(int vdpaddr, boolean isByte) {
-    	vdpTouches.set(vdpaddr);
-    	if (!isByte)
-    		vdpTouches.set(vdpaddr + 1);
-    	//long now = System.currentTimeMillis();
-    	//if (now >= nextTouchFlushTime) {
-    	//	flushVdpChanges();
-    	//	nextTouchFlushTime = now + 1000;
-    	//}
+    	synchronized (vdpCanvas) {
+	    	vdpTouches.set(vdpaddr);
+	    	if (!isByte)
+	    		vdpTouches.set(vdpaddr + 1);
+	    	//long now = System.currentTimeMillis();
+	    	//if (now >= nextTouchFlushTime) {
+	    	//	flushVdpChanges();
+	    	//	nextTouchFlushTime = now + 1000;
+	    	//}
+    	}
     }
     
 	protected void dirtySprites() {
@@ -439,7 +443,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	}
 
 
-	protected void dirtyAll() {
+	protected synchronized void dirtyAll() {
 		vdpChanges.changed = true;
 		vdpChanges.fullRedraw = true;
 	}

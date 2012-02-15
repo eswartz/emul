@@ -14,6 +14,7 @@ import ejs.base.properties.IPropertyListener;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtDragDropHandler;
 import v9t9.gui.client.swt.SwtWindow;
@@ -95,6 +96,14 @@ public class SwtImageImportSupport extends ImageImportHandler {
 	 */
 	protected IVideoRenderer getVideoRenderer() {
 		return videoRenderer;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.imageimport.ImageImportHandler#getCanvasRenderer()
+	 */
+	@Override
+	protected IVdpCanvasRenderer getCanvasRenderer() {
+		return videoRenderer.getCanvasHandler();
 	}
 
 	@Override
