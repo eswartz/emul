@@ -66,7 +66,6 @@ final class JavaSystemTimer implements ITimer, ITimerConstants
     }
     
     public double getTimeDouble() {
-    	// TODO Auto-generated method stub
     	return 0;
     }
     
