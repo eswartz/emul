@@ -88,7 +88,8 @@ Contact
 I'm currently in a trial run with this and haven't made the repository hosting V9t9 public.  
 (Mainly, the sources are a bit messy and have no license headers yet.)
 
-If you have questions or issues, please send me a message on github to user 'eswartz'. 
+If you have questions or issues, please contact me at ed.swartz.twofiftyeight@gmail.com, but
+use a number instead of spelling it out like that.
 
 
 License
