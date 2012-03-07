@@ -54,6 +54,7 @@ public abstract class EmulatorServerBase {
 	private IProperty bootRomsPath;
 	private IProperty storedRamPath;
 	private EmulatorTCFServer server;
+	private boolean enableTCF;
 
     public EmulatorServerBase() {
     	settings = new SettingsHandler(WorkspaceSettings.currentWorkspace.getString()); 
@@ -172,7 +173,8 @@ public abstract class EmulatorServerBase {
         machine.start();
         machine.reset();
         
-        server.run();
+        if (enableTCF)
+        	server.run();
         
         while (client.isAlive()) {
         	client.handleEvents();
@@ -215,6 +217,13 @@ public abstract class EmulatorServerBase {
 	public void setConfigDir(String configdir) {
 		settings.getInstanceSettings().setConfigDirectory(configdir);
 		settings.getWorkspaceSettings().setConfigDirectory(configdir);
+	}
+
+	/**
+	 * 
+	 */
+	public void enableTcf() {
+		enableTCF = true;
 	}
 
 }

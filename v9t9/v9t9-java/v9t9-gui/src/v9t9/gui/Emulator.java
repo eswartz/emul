@@ -85,14 +85,16 @@ public class Emulator {
 		String remote = null;
 		String configdir = null;
 		boolean clean = false;
+		boolean tcf = false;
 		
 		Getopt getopt = new Getopt(Emulator.class.getName(), args, 
-				"r:Cc:",
+				"r:Cc:t",
 				new LongOpt[] {
 					//new LongOpt("remote", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), 'r'),
 					new LongOpt("clean", LongOpt.NO_ARGUMENT, null, 'C'),
 					new LongOpt("configdir", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
 					new LongOpt("debug", LongOpt.NO_ARGUMENT, null, 'd'),
+					new LongOpt("tcf", LongOpt.NO_ARGUMENT, null, 't'),
 				}
 		);
 		
@@ -108,11 +110,17 @@ public class Emulator {
 			else if (opt == 'd') {
 				debug = true;
 			}
+			else if (opt == 't') {
+				tcf = true;
+			}
 		}
 		
 		EmulatorServerBase server = remote != null 
 			? new EmulatorRemoteServer(remote)
 			: new EmulatorLocalServer();
+		
+		if (tcf)
+			server.enableTcf();
 		
 		if (configdir != null) {
 			server.setConfigDir(configdir);
