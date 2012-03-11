@@ -185,18 +185,21 @@ public class PathFileLocator implements IPathFileLocator {
 			path = file.getAbsolutePath();
 			// convert slashes
 			path = path.replace('\\', '/');
-			
-			// windows
-			if (file.isAbsolute() && !path.startsWith("/"))
-				path = "/" + path;
 		}
+
+		// windows
+		if (new File(path).isAbsolute() && !path.startsWith("/"))
+			path = "/" + path;
+		
+		// convert bad chars
+		path = path.replace(" ", "%20");
 		
 		if (!path.endsWith("/"))
 			path += "/";
 		
 		URI uri = new URI(path);
 		if (uri.getScheme() == null) {
-			uri = new URI("file", path, null);
+			uri = new URI("file", uri.getPath(), null);
 		}
 
 		return uri;

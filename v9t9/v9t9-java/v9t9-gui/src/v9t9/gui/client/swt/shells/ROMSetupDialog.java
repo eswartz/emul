@@ -34,7 +34,6 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Button;
@@ -150,8 +149,6 @@ public class ROMSetupDialog extends Dialog {
 		this.requiredRoms = requiredRoms;
 		this.optionalRoms = optionalRoms;
 		
-		shell.setText("ROM Setup");
-		
 		this.machine = machine_;
 		this.settings = Settings.getSettings(machine);
 		
@@ -166,6 +163,17 @@ public class ROMSetupDialog extends Dialog {
 	@Override
 	protected int getShellStyle() {
 		return super.getShellStyle() | SWT.RESIZE;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
+	 */
+	@Override
+	protected void configureShell(Shell newShell) {
+		super.configureShell(newShell);
+
+		newShell.setText("ROM Setup");
+		
 	}
 	
 	/* (non-Javadoc)
@@ -249,6 +257,7 @@ public class ROMSetupDialog extends Dialog {
 		linkMap = new IdentityHashMap<StyleRange, LinkInfo>();
 				
 		GridDataFactory.fillDefaults().grab(true, false).indent(8, 8).applyTo(infoLabel);
+		infoLabel.setMargins(6, 6, 6, 6);
 		
 		setupInfoLabel();
 		
@@ -456,7 +465,7 @@ public class ROMSetupDialog extends Dialog {
 				if ((info.getFilenameProperty() != null && storedInfo.fileName.equals(info.getFilenameProperty().getDefaultValue())) 
 						|| (info.getFileMD5() == null || storedInfo.md5.equals(info.getFileMD5()))) {
 					index = 0;
-					color = getDisplay().getSystemColor(SWT.COLOR_GREEN);
+					color = getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN);
 				} else {
 					index = 2;
 					color = getDisplay().getSystemColor(SWT.COLOR_YELLOW);
@@ -472,12 +481,12 @@ public class ROMSetupDialog extends Dialog {
 			
 			if (SWT.getPlatform().toLowerCase().contains("win")) {
 				if (winUnicodeFont == null) {
-					FontData[] data = getDisplay().getFontList("Wingdings", true);
-					if (data.length > 0) {
+					//FontData[] data = getDisplay().getFontList("Wingdings", true);
+					//if (data.length > 0) {
 						float height = FontUtils.measureText(getDisplay(), getShell().getFont(), "!").y;
-						data[0].setHeight((int) (height * 0.75f));
-						winUnicodeFont = new Font(getDisplay(), data[0]);
-					}
+						//data[0].setHeight((int) (height * 0.75f));
+						winUnicodeFont = new Font(getDisplay(), "Wingdings", (int) (height * 0.9f), SWT.BOLD);
+					//}
 				}
 				unicodeStyle.font = winUnicodeFont;
 				marks = new String[] { "\u00FC", "\u00FB", "\u004C" };
