@@ -23,6 +23,9 @@ import ejs.base.winmm.WinMMLibrary;
  * This blocks on {@link #played(SoundChunk)} if data is coming too fast.
  * @author ejs
  * 
+ * TODO: need to use a semaphore to avoid ugly stuttering sound.  We're currently sending samples on a fixed basis,
+ * not when the driver is ready for them.
+ * 
  */
 public class Win32SoundListener implements ISoundListener {
 
@@ -101,7 +104,7 @@ public class Win32SoundListener implements ISoundListener {
 				return;
 			stopped();
 		}
-		soundQueue = new LinkedBlockingQueue<AudioChunk>(20);
+		soundQueue = new LinkedBlockingQueue<AudioChunk>(32);
 
 		soundFormat = format;
 		
@@ -125,8 +128,9 @@ public class Win32SoundListener implements ISoundListener {
 		
 		hdrs = new ArrayList<WAVEHDR>(32);
 		synchronized (hdrs) {
-			for (int i = 0; i < 32; i++)
+			for (int i = 0; i < 32; i++) {
 				hdrs.add(null);
+			}
 		}
 		
 		IntByReference wHandleRef = new IntByReference();
@@ -182,15 +186,7 @@ public class Win32SoundListener implements ISoundListener {
 									hdr = null;
 								}
 							}
-							/*
-							for (WAVEHDR h : hdrs) {
-								if ((h.dwFlags & WinMMLibrary.WHDR_DONE) != 0
-										&& ((Memory)h.lpData).getSize() >= size) {
-									hdr = h;
-									break;
-								}
-							}
-							*/
+							
 							if (hdr == null) {
 								try {
 									hdr = createWaveHeader(size);
@@ -205,7 +201,8 @@ public class Win32SoundListener implements ISoundListener {
 						}
 						
 						hdr.lpData.write(0, chunk.soundData, 0, size);
-						
+
+						//WinMMLibrary.INSTANCE.waveOutPause(wHandle);
 						int res = WinMMLibrary.INSTANCE.waveOutWrite(
 								wHandle, hdr, hdr.size());
 						if (res != WinMMLibrary.MMSYSERR_NOERROR) {
@@ -213,6 +210,7 @@ public class Win32SoundListener implements ISoundListener {
 							WinMMLibrary.INSTANCE.waveOutReset(wHandle);
 							soundQueue.clear();
 						}
+						//WinMMLibrary.INSTANCE.waveOutRestart(wHandle);
 					}
 				}
 			}
@@ -308,7 +306,7 @@ public class Win32SoundListener implements ISoundListener {
 		WAVEHDR hdr;
 		hdr = new WAVEHDR();
 		hdr.lpData = new Memory(size);
-		hdr.dwFlags = WinMMLibrary.WHDR_DONE;
+		hdr.dwFlags = 0; //WinMMLibrary.WHDR_DONE;
 		hdr.dwLoops = 0;
 		hdr.dwBufferLength = size;
 		
