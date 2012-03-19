@@ -12,5 +12,6 @@
 	<classpathentry kind="lib" path="libs/swt/org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
 	<classpathentry kind="lib" path="libs/google-gson-2.0/gson-2.0.jar" sourcepath="libs/google-gson-2.0/gson-2.0-sources.jar"/>
 	<classpathentry kind="lib" path="libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
