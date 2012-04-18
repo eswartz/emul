@@ -3,6 +3,7 @@
  */
 package ejs.base.utils;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -13,7 +14,9 @@ import java.util.Set;
  * @author ejs
  *
  */
-public class ListenerList<T> implements Iterable<T> {
+public class ListenerList<T> implements Iterable<T>, Serializable {
+
+	private static final long serialVersionUID = -4548014975540398630L;
 
 	public interface IFire<T> {
 		void fire(T listener);
