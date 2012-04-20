@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: ejs-base
-Bundle-SymbolicName: ejs-base
+Bundle-SymbolicName: ejs-base;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-ClassPath: ejs-base.jar,
  libs/jna.jar,
@@ -93,3 +93,4 @@ Export-Package: com.google.gson,
  org.objectweb.asm.signature,
  org.objectweb.asm.util
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ActivationPolicy: lazy
