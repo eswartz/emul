@@ -28,6 +28,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.ejs.gui.common.FontUtils;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
@@ -40,7 +41,6 @@ import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
-import v9t9.gui.common.FontUtils;
 
 /**
  * @author ejs

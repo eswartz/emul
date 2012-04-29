@@ -90,6 +90,7 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
+import org.ejs.gui.common.FontUtils;
 
 import ejs.base.properties.IProperty;
 import ejs.base.settings.DialogSettingsWrapper;
@@ -108,7 +109,6 @@ import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageBar;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
-import v9t9.gui.common.FontUtils;
 
 /**
  * @author ejs

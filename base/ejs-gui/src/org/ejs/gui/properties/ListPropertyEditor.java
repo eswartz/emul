@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.gui.properties;
+package org.ejs.gui.properties;
 
 import java.util.List;
 
@@ -30,11 +30,11 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.gui.common.FontUtils;
 
 import ejs.base.properties.IClassPropertyFactory;
 import ejs.base.properties.ListFieldProperty;
 
-import v9t9.gui.common.FontUtils;
 
 /**
  * @author ejs

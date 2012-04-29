@@ -1,8 +1,9 @@
 package v9t9.video.imageimport;
 
 
-import ejs.base.utils.Pair;
 import v9t9.common.video.ColorMapUtils;
+
+import ejs.base.utils.Pair;
 
 class UserPaletteMapColor extends BasePaletteMapper {
 	

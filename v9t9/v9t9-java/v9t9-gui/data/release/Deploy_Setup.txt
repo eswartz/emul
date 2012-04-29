@@ -5,10 +5,13 @@ SETUP
 Go into the <yourApplication> folder, execute "keytool -genkey -keystore $HOME/.keystore.v9t9 -alias v9t9", 
 and enter all required information.
 
-If regenerating a key, 
+If regenerating a key, you'll need to remove the .keystore.v9t9 file first.
+
 
 BUILDING
 =========
+
+Build from the v9t9/v9t9-java/v9t9-gui directory where several build*.xml files live.
 
 If you have built from Eclipse before, invoke "ant -f build_standalone.xml clean" to be 
 sure all is well.
@@ -25,16 +28,18 @@ The remote launcher uses a hardcoded IP address for testing.  Pass a new 'v9t9.h
 'v9t9.root' property to override the URL encoded into v9t9-remote.jnlp (next) and used by the
 test web server.
 
-A full command example:
+A full command example to build and override the web testing variables:
 
 ant -Dkeystore=\$HOME/.keystore.v9t9 -Dstorepass=...thepassword... \
 	-Dv9t9.host=mycomputer.mydomain -Dv9t9.root=/path/to/my/v9t9 \
 	-f build_standalone.xml 
  
+ 
 TESTING
 =========
 
-To test locally, use "javaws path/to/v9t9-local.jnlp". 
+To test locally, use "javaws <path/to>/v9t9-local.jnlp" -- from the "v9t9-gui" directory
+this is in "../../build/bin/v9t9".
 
 To test the remote deployer, use 'test-httpd.py' to publish a web server on localhost:8080.
 Launch a browser that supports Java 6 and open ${v9t9.root}/v9t9.html and click "Launch".
@@ -42,9 +47,11 @@ Launch a browser that supports Java 6 and open ${v9t9.root}/v9t9.html and click 
 Note: on some browsers, the Launch button will simply trigger a download of the .jnlp
 file -- you may have to manually launch the .jnlp from the Downloads folder.
 
+
 DOCS
 =====
 
 http://www.eclipse.org/swt/jws/
 http://download.oracle.com/javase/1.5.0/docs/guide/javaws/developersguide/syntax.html
 http://docs.oracle.com/javase/tutorial/deployment/deploymentInDepth/jnlpFileSyntax.html
+

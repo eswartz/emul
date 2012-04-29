@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.gui.sound;
+package ejs.base.sound;
 
 import java.util.Arrays;
 

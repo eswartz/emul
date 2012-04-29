@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.gui.properties;
+package org.ejs.gui.properties;
 
 import ejs.base.properties.FieldProperty;
 import ejs.base.properties.IProperty;

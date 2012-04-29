@@ -8,9 +8,9 @@ import java.util.Arrays;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
+import v9t9.common.video.ColorMapUtils;
 
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.common.video.ColorMapUtils;
 import v9t9.common.video.ISpriteVdpCanvas;
 
 /**

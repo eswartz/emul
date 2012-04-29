@@ -4,7 +4,7 @@
  * Created on Dec 17, 2004
  *
  */
-package v9t9.gui.common;
+package org.ejs.gui.common;
 
 
 import org.eclipse.swt.graphics.Rectangle;

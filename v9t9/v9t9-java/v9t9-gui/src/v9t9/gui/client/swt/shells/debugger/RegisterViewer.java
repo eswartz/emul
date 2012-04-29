@@ -32,11 +32,11 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.ejs.gui.common.FontUtils;
 
 import ejs.base.utils.HexUtils;
 
 import v9t9.common.machine.IMachine;
-import v9t9.gui.common.FontUtils;
 
 /**
  * @author ejs

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.gui.properties;
+package org.ejs.gui.properties;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;

@@ -1,4 +1,4 @@
-package v9t9.gui.properties;
+package org.ejs.gui.properties;
 
 import org.eclipse.swt.widgets.Control;
 

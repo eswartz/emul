@@ -10,6 +10,8 @@ import static v9t9.common.hardware.VdpV9938Consts.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.video.ColorMapUtils;
+
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
@@ -21,7 +23,6 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
-import v9t9.common.video.ColorMapUtils;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 

@@ -43,6 +43,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.ejs.gui.common.FontUtils;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
@@ -62,7 +63,6 @@ import v9t9.gui.client.swt.BrowserUtils;
 import v9t9.gui.client.swt.PathSelector;
 import v9t9.gui.client.swt.StyledTextHelper;
 import v9t9.gui.client.swt.SwtWindow;
-import v9t9.gui.common.FontUtils;
 
 /**
  * This tool shell shows up when a new configuration has

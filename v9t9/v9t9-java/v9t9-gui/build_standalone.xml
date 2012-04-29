@@ -5,6 +5,7 @@
     <property name="base"        value=".."/>
     <property name="base.v9t9"   value="."/>
     <property name="base.base"   value="../../../base/ejs-base"/>
+    <property name="base.gui"   value="../../../base/ejs-gui"/>
     <property name="build.dir"   value="${base}/../build"/>
     <property name="bin.v9t9.dir"     value="${build.dir}/bin/v9t9"/>
     <property name="base.tcf"     value="../../../org.eclipse.tcf"/>
@@ -95,6 +96,7 @@
         	
         	<!-- subprojects -->
             <fileset dir="${base.base}/bin"/>
+            <fileset dir="${base.gui}/bin"/>
             <fileset dir="${base.v9t9}/bin" excludes="release icons shaders" />
             <fileset dir="../v9t9-audio/bin"/>
             <fileset dir="../v9t9-video/bin"/>

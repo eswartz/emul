@@ -8,6 +8,7 @@
 <project basedir="." default="nothing" name="v9t9-gui">
     <property environment="env"/>
     <property name="ejs-base.location" value="../../../base/ejs-base"/>
+    <property name="ejs-gui.location" value="../../../base/ejs-gui"/>
     <property name="ECLIPSE_HOME" value="../../../../orbit/plugins"/>
     <property name="v9t9-common.location" value="../v9t9-common"/>
     <property name="v9t9-audio.location" value="../v9t9-audio"/>
@@ -30,6 +31,9 @@
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
         <pathelement location="${ejs-base.location}/libs/google-gson-2.0/gson-2.0.jar"/>
         <pathelement location="${ejs-base.location}/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
+    </path>
+    <path id="ejs-gui.classpath">
+        <pathelement location="${ejs-gui.location}/bin"/>
     </path>
     <path id="v9t9-common.classpath">
         <pathelement location="${v9t9-common.location}/bin"/>
@@ -100,6 +104,7 @@
         <path refid="v9t9-common.classpath"/>
         <path refid="SWT.userclasspath"/>
         <path refid="ejs-base.classpath"/>
+        <path refid="ejs-gui.classpath"/>
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.runtime.source_3.6.0.v20100505.jar"/>

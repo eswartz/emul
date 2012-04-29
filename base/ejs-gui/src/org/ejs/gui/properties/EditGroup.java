@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.gui.properties;
+package org.ejs.gui.properties;
 
 import java.util.HashMap;
 import java.util.Map;

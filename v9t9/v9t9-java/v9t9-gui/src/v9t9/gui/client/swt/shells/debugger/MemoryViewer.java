@@ -53,13 +53,13 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.ejs.gui.common.FontUtils;
 
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryListener;
 import v9t9.gui.EmulatorGuiData;
-import v9t9.gui.common.FontUtils;
 import v9t9.gui.common.IMemoryDecoder;
 import v9t9.gui.common.IMemoryDecoderProvider;
 import ejs.base.properties.IPersistable;

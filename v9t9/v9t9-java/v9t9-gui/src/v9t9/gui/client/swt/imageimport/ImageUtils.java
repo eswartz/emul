@@ -15,8 +15,8 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
+import org.ejs.gui.images.AwtImageUtils;
 
-import v9t9.video.imageimport.AwtImageUtils;
 
 import ejs.base.utils.Pair;
 
