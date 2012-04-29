@@ -5,6 +5,8 @@ package v9t9.gui.sound;
 
 import javax.sound.sampled.AudioFormat;
 
+import org.ejs.gui.sound.SoundRecordingHelper;
+
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.sound.AlsaSoundListener;

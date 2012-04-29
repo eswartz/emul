@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.gui.sound;
+package org.ejs.gui.sound;
 
 import java.io.File;
 

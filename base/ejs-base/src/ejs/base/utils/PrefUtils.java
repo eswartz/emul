@@ -4,11 +4,10 @@
  * Created on Dec 17, 2004
  *
  */
-package v9t9.common;
+package ejs.base.utils;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 
-import ejs.base.utils.HexUtils;
 
 
 
