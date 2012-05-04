@@ -168,10 +168,9 @@ public class FastTimer {
 
 	public void cancelTask(Runnable runnable) {
 		synchronized (controlLock) {
-			Object[] infos = taskinfos.toArray();
-			for (int i = 0; i < infos.length; i++) {
-				if (((RunnableInfo) infos[i]).task == runnable) {
-					taskinfos.remove((RunnableInfo) infos[i]);
+			for (Object o : taskinfos.toArray()) {
+				if (((RunnableInfo) o).task == runnable) {
+					taskinfos.remove((RunnableInfo) o);
 					break;
 				}
 			}
