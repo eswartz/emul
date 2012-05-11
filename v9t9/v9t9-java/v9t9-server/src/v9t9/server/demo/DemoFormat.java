@@ -5,23 +5,34 @@ package v9t9.server.demo;
 
 
 /**
- *	The demo file format is very rudimentary.
- *
- *	Header:		'V910' bytes
- *
- *	Followed by a list of sections for various kinds of demo data.
- *	Each section starts with one byte ({@link Event}) and is
- *	followed by nothing (for the timer) or by a buffer length
- *	(little-endian, 16 bits) which is passed to the event handler.
- *
- *	Video has 16-bit little-endian addresses followed (if the
- *	address does not have the 0x8000 bit set, which is a register
- *	write) by a 16-bit little-endian length and data bytes.
- *
- *	Sound has a series of data bytes.
- *
- *	Speech has a series of {@link SpeechEvent} bytes, and the
- *	{@link SpeechEvent#ADDING_BYTE} event is followed by that byte.
+ *	The demo file format is very rudimentary, consisting of
+ *	a series of typed buffers.
+ * <p/>
+ *	Header:		'V910' bytes ('TI60' in TI Emulator v6.0)
+ * <p/>
+ *  The primary organization is by time.  Every 1/60 second,
+ *  at most, all buffers are flushed.  These are separated
+ *  by single bytes ({@link BufferType#TICK}).
+ *  <p/>
+ *  After each tick may appear one to three buffers.
+ *  Each buffer has a type (one byte ({@link BufferType})) and is
+ *  a buffer length (little-endian, 16 bits).  The bytes
+ *  following this buffer are wholly devoted to the
+ *  given type.
+ *<p/>
+ *	For video, the buffer type is {@link BufferType#VIDEO}.
+ *  The contents consists of a series of either register settings
+ *  (16-bit little endian address with 0x8000 mask) or VDP memory
+ *  writes (16-bit little-endian addresses followed an 8-bit length and 
+ *  then constituent data bytes.  <b>NOTE:</b> the data bytes may be in the
+ *  next buffer!
+ *<p/>
+ *	For sound, the buffer type is {@link BufferType#SOUND}.  Its data
+ *  consists entirely of data bytes, each written to the primary sound port.  
+ *<p/>
+ *	For speech, the buffer type is {@link BufferType#SPEECH}.  Speech has a series 
+ *  of {@link SpeechEvent} bytes, where the {@link SpeechEvent#ADDING_BYTE} event is 
+ *  followed by a byte of data.
  */
 public class DemoFormat {
 
@@ -29,7 +40,7 @@ public class DemoFormat {
 	public static final byte[] DEMO_MAGIC_HEADER_V910 = { 'V','9','1','0' };
 	public static final int DEMO_MAGIC_HEADER_LENGTH = 4;
 
-	public enum Event {
+	public enum BufferType {
 		/** wait for emulator tick */
 		TICK(0),
 		/** video addresses and data */
@@ -45,7 +56,7 @@ public class DemoFormat {
 		
 		private int code;
 
-		private Event(int code) {
+		private BufferType(int code) {
 			this.code = code;
 		}
 		

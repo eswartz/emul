@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import v9t9.common.demo.IDemoOutputStream;
-import v9t9.server.demo.DemoFormat.Event;
+import v9t9.server.demo.DemoFormat.BufferType;
 
 public class DemoFormatWriter implements IDemoOutputStream {
 
@@ -73,9 +73,9 @@ public class DemoFormatWriter implements IDemoOutputStream {
 		
 	}
 	static class DemoPacketBuffer extends DemoBuffer {
-		private final Event type;
+		private final BufferType type;
 
-		public DemoPacketBuffer(OutputStream stream, DemoFormat.Event type, int size) {
+		public DemoPacketBuffer(OutputStream stream, DemoFormat.BufferType type, int size) {
 			super(stream, size);
 			this.type = type;
 		}
@@ -88,11 +88,11 @@ public class DemoFormatWriter implements IDemoOutputStream {
 	public DemoFormatWriter(OutputStream os) throws IOException {
 		this.os = os;
 		
-		os.write(DemoFormat.DEMO_MAGIC_HEADER);
+		os.write(DemoFormat.DEMO_MAGIC_HEADER_V910);
 		
-		this.videoBuffer = new DemoPacketBuffer(os, DemoFormat.Event.VIDEO, 1024);
+		this.videoBuffer = new DemoPacketBuffer(os, DemoFormat.BufferType.VIDEO, 1024);
 		this.videoSubBuffer = new VideoSubBuffer(os, 1024);
-		this.soundBuffer = new DemoPacketBuffer(os, DemoFormat.Event.SOUND, 1024);
+		this.soundBuffer = new DemoPacketBuffer(os, DemoFormat.BufferType.SOUND, 1024);
 	}
 	
 	public void close() throws IOException {
@@ -114,7 +114,7 @@ public class DemoFormatWriter implements IDemoOutputStream {
 		if (os == null)
 			return;
 			
-		os.write(DemoFormat.Event.TICK.getCode());
+		os.write(DemoFormat.BufferType.TICK.getCode());
 		videoBuffer.flush();
 		soundBuffer.flush();
 	}

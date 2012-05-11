@@ -12,7 +12,7 @@ import java.util.Queue;
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.events.NotifyException;
-import v9t9.server.demo.DemoFormat.Event;
+import v9t9.server.demo.DemoFormat.BufferType;
 import v9t9.server.demo.events.SoundWriteDataEvent;
 import v9t9.server.demo.events.SpeechEvent;
 import v9t9.server.demo.events.TimerTick;
@@ -31,7 +31,7 @@ public class DemoFormatReader implements IDemoInputStream {
 		private final String label;
 		private int myType;
 		
-		public DemoBuffer(String label, Event myType, int size) {
+		public DemoBuffer(String label, BufferType myType, int size) {
 			this.label = label;
 			this.buffer = new byte[size];
 			this.index = 0;
@@ -121,9 +121,9 @@ public class DemoFormatReader implements IDemoInputStream {
 		
 		// these constants were hardcoded in v9t9 6.0 and
 		// should probably be kept this way
-		videoBuffer = new DemoBuffer("video", Event.VIDEO, 0x2000);
-		soundBuffer = new DemoBuffer("sound", Event.SOUND, 1024);
-		speechBuffer = new DemoBuffer("speech", Event.SPEECH, 512);
+		videoBuffer = new DemoBuffer("video", BufferType.VIDEO, 0x2000);
+		soundBuffer = new DemoBuffer("sound", BufferType.SOUND, 1024);
+		speechBuffer = new DemoBuffer("speech", BufferType.SPEECH, 512);
 	}
 
 	public void close() throws IOException {
@@ -159,16 +159,16 @@ public class DemoFormatReader implements IDemoInputStream {
 		if (kind < 0)
 			return;
 		
-		if (kind == DemoFormat.Event.TICK.getCode()) {
+		if (kind == DemoFormat.BufferType.TICK.getCode()) {
 			queuedEvents.add(new TimerTick());
 		}
-		else if (kind == DemoFormat.Event.VIDEO.getCode()) {
+		else if (kind == DemoFormat.BufferType.VIDEO.getCode()) {
 			queueVideoEvents();
 		}
-		else if (kind == DemoFormat.Event.SOUND.getCode()) {
+		else if (kind == DemoFormat.BufferType.SOUND.getCode()) {
 			queueSoundEvents();
 		}
-		else if (kind == DemoFormat.Event.SPEECH.getCode()) {
+		else if (kind == DemoFormat.BufferType.SPEECH.getCode()) {
 			queueSpeechEvents();
 		}
 		else {
