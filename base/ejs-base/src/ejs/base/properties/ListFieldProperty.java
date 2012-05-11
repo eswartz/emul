@@ -30,7 +30,7 @@ public class ListFieldProperty extends FieldProperty {
 
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.AbstractProperty#saveChildState(org.w3c.dom.Element, java.lang.Object, java.lang.String)
+	 * 
 	 */
 	@Override
 	public void saveChildState(Element element, Object value,
@@ -65,7 +65,7 @@ public class ListFieldProperty extends FieldProperty {
 
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.FieldProperty#doLoadState(java.lang.Object, org.w3c.dom.Element, java.lang.String)
+	 * 
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
@@ -85,7 +85,7 @@ public class ListFieldProperty extends FieldProperty {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.FieldProperty#createEditor()
+	 * 
 	 */
 	/*
 	@Override

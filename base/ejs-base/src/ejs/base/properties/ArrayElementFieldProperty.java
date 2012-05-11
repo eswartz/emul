@@ -20,7 +20,7 @@ public class ArrayElementFieldProperty extends FieldProperty implements
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.FieldProperty#setValueFromString(java.lang.String)
+	 * 
 	 */
 	@Override
 	public void setValueFromString(String txt) {
@@ -29,7 +29,7 @@ public class ArrayElementFieldProperty extends FieldProperty implements
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.FieldProperty#getValue()
+	 * 
 	 */
 	@Override
 	public Object getValue() {
@@ -37,7 +37,7 @@ public class ArrayElementFieldProperty extends FieldProperty implements
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.FieldProperty#setValue(java.lang.Object)
+	 * 
 	 */
 	@Override
 	public void setValue(Object value) {
@@ -46,7 +46,7 @@ public class ArrayElementFieldProperty extends FieldProperty implements
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.FieldProperty#getPersistedName()
+	 * 
 	 */
 	@Override
 	public String getName() {
@@ -61,7 +61,7 @@ public class ArrayElementFieldProperty extends FieldProperty implements
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.FieldProperty#createEditor()
+	 * 
 	 */
 	/*
 	@Override

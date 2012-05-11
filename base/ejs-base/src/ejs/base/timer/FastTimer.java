@@ -41,6 +41,7 @@ public class FastTimer {
 		/** ns */
 		long delay;
 	}
+	
 	public FastTimer(String name) {
 		this.name = name;
 		taskinfos = new ListenerList<RunnableInfo>();
@@ -116,6 +117,7 @@ public class FastTimer {
 	
 							infos = taskinfos.toArray();
 						}
+
 						for (Object infoObj : infos) {
 							FastTimer.RunnableInfo info = (FastTimer.RunnableInfo) infoObj;
 							try {

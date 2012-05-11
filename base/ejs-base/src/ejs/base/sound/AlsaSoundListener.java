@@ -55,7 +55,7 @@ public class AlsaSoundListener implements ISoundListener {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#stopped()
+	 * 
 	 */
 	public synchronized void stopped() {
 		stopped = true;
@@ -78,7 +78,7 @@ public class AlsaSoundListener implements ISoundListener {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#started(javax.sound.sampled.AudioFormat)
+	 * 
 	 */
 	public synchronized void started(AudioFormat format) {
 		if (handle != null) {
@@ -268,7 +268,7 @@ public class AlsaSoundListener implements ISoundListener {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#played(org.ejs.chiprocksynth.AudioChunk)
+	 * 
 	 */
 	public synchronized void played(SoundChunk chunk) {
 		try {

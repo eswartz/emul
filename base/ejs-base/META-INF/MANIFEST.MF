@@ -96,3 +96,4 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7,
  JavaSE-1.6,
  J2SE-1.5
 Bundle-ActivationPolicy: lazy
+Require-Bundle: org.junit

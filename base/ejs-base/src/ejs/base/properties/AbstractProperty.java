@@ -95,7 +95,7 @@ public abstract class AbstractProperty implements IProperty {
 		return true;
 	}
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.IProperty#getType()
+	 * 
 	 */
 	public Class<?> getType() {
 		return type;
@@ -107,13 +107,13 @@ public abstract class AbstractProperty implements IProperty {
 		this.type = type;
 	}
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#getName()
+	 * 
 	 */
 	public String getLabel() {
 		return name;
 	}
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.AbstractProperty#getPersistedName()
+	 * 
 	 */
 	public String getName() {
 		return name;
@@ -170,7 +170,7 @@ public abstract class AbstractProperty implements IProperty {
     }
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#loadState(org.w3c.dom.Element)
+	 * 
 	 */
 	public void loadState(Element element) {
 		if (factory != null) {
@@ -196,7 +196,7 @@ public abstract class AbstractProperty implements IProperty {
 	
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.IPersistable#loadChildState(org.w3c.dom.Element, java.lang.Object, java.lang.String)
+	 * 
 	 */
 	public void loadChildState(Element element, Object obj, String propertyName) {
 		IPropertySource ps = null;
@@ -221,7 +221,7 @@ public abstract class AbstractProperty implements IProperty {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#loadState(org.w3c.dom.Element)
+	 * 
 	 */
 	public void loadState(ISettingSection section) {
 		if (factory != null) {
@@ -243,7 +243,7 @@ public abstract class AbstractProperty implements IProperty {
 
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.IPersistable#loadChildState(org.w3c.dom.Element, java.lang.Object, java.lang.String)
+	 * 
 	 */
 	@SuppressWarnings("unchecked")
 	public void loadChildState(ISettingSection section, Object obj, String propertyName) {
@@ -287,7 +287,7 @@ public abstract class AbstractProperty implements IProperty {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#saveState(org.w3c.dom.Element)
+	 * 
 	 */
 	public void saveState(Element element) {
 		Object value = getValue();
@@ -295,7 +295,7 @@ public abstract class AbstractProperty implements IProperty {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.IPersistable#saveChildState(org.w3c.dom.Element, java.lang.Object, java.lang.String)
+	 * 
 	 */
 	public void saveChildState(Element element, Object value, String propertyName) {
 		IPropertySource ps = null;
@@ -331,7 +331,7 @@ public abstract class AbstractProperty implements IProperty {
 	
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#saveState(org.w3c.dom.Element)
+	 * 
 	 */
 	public void saveState(ISettingSection section) {
 		Object value = getValue();
@@ -339,7 +339,7 @@ public abstract class AbstractProperty implements IProperty {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.IPersistable#saveChildState(org.w3c.dom.Element, java.lang.Object, java.lang.String)
+	 * 
 	 */
 	public void saveChildState(ISettingSection section, Object value, String propertyName) {
 		IPropertySource ps = null;
@@ -382,7 +382,7 @@ public abstract class AbstractProperty implements IProperty {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#createEditor()
+	 * 
 	 */
 	/*
 	public IPropertyEditor createEditor() {
@@ -400,7 +400,7 @@ public abstract class AbstractProperty implements IProperty {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.IProperty#addListener(org.ejs.chiprocksynth.model.IPropertyListener)
+	 * 
 	 */
 	public synchronized void addListener(IPropertyListener listener) {
 		if (!listeners.contains(listener)) {
@@ -419,14 +419,14 @@ public abstract class AbstractProperty implements IProperty {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.IProperty#removeListener(org.ejs.chiprocksynth.model.IPropertyListener)
+	 * 
 	 */
 	public synchronized void removeListener(IPropertyListener listener) {
 		if (listeners.remove(listener))
 			listenerArray = (IPropertyListener[]) listeners.toArray(new IPropertyListener[listeners.size()]);
 	}
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#updateFromPropertyChange()
+	 * 
 	 */
 	public final void firePropertyChange() {
 		if (listenerArray == null)
@@ -436,7 +436,7 @@ public abstract class AbstractProperty implements IProperty {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.IProperty#isHidden()
+	 * 
 	 */
 	public boolean isHidden() {
 		return isHidden;

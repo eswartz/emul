@@ -32,7 +32,7 @@ public class FieldPropertyEditor implements
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.generator.IPropertySource#createEditor(org.eclipse.swt.widgets.Composite, java.lang.String)
+	 * 
 	 */
 	public IPropertyEditorControl createEditor(Composite parent) {
 		if (property == null)

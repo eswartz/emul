@@ -21,7 +21,7 @@ public class ClassProperty extends AbstractProperty {
 	private Object obj;
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#getName()
+	 * 
 	 */
 	public String getLabel() {
 		return name;
@@ -29,7 +29,7 @@ public class ClassProperty extends AbstractProperty {
 
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#getValue()
+	 * 
 	 */
 	public Object getValue() {
 		return obj;
@@ -37,7 +37,7 @@ public class ClassProperty extends AbstractProperty {
 
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#setValue(java.lang.Object)
+	 * 
 	 */
 	public void setValue(Object value) {
 		obj = value;
@@ -46,14 +46,14 @@ public class ClassProperty extends AbstractProperty {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.IProperty#setValueFromString(java.lang.String)
+	 * 
 	 */
 	public void setValueFromString(String value) {
 		throw new UnsupportedOperationException();
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#saveState(org.w3c.dom.Element)
+	 * 
 	 */
 	public void saveState(Element element) {
 		IPropertySource ps = null;
@@ -79,7 +79,7 @@ public class ClassProperty extends AbstractProperty {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#saveState(org.w3c.dom.Element)
+	 * 
 	 */
 	public void saveState(ISettingSection section) {
 		IPropertySource ps = null;
@@ -103,7 +103,7 @@ public class ClassProperty extends AbstractProperty {
 		}
 	}
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#loadState(org.w3c.dom.Element)
+	 * 
 	 */
 	public void loadState(Element element) {
 		Element[] elements = XMLUtils.getChildElementsNamed(element, name);

@@ -32,7 +32,7 @@ public class FileXMLStorage extends XMLStorageBase {
 		this.file = file;
 	}
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.XMLStorageBase#getStorageInputStream()
+	 * 
 	 */
 	@Override
 	protected InputStream getStorageInputStream() throws StorageException {
@@ -46,7 +46,7 @@ public class FileXMLStorage extends XMLStorageBase {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.XMLStorageBase#getStorageOutputStream()
+	 * 
 	 */
 	@Override
 	protected OutputStream getStorageOutputStream() throws StorageException {

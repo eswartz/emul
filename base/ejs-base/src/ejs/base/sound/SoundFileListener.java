@@ -54,7 +54,7 @@ public class SoundFileListener implements ISoundListener {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#stopped()
+	 * 
 	 */
 	public void stopped() {
 		if (soundFos != null && soundFormat != null) {
@@ -66,7 +66,7 @@ public class SoundFileListener implements ISoundListener {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#started(javax.sound.sampled.AudioFormat)
+	 * 
 	 */
 	public void started(AudioFormat format) {
 		this.soundFormat = format;
@@ -76,7 +76,7 @@ public class SoundFileListener implements ISoundListener {
 	
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#played(org.ejs.chiprocksynth.AudioChunk)
+	 * 
 	 */
 	public void played(SoundChunk schunk) {
 		if (soundFos != null) {

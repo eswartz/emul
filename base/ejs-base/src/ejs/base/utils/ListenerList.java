@@ -31,15 +31,25 @@ public class ListenerList<T> implements Iterable<T>, Serializable {
 		listenerArray = NO_LISTENERS;
 	}
 	
+	/**
+	 * Add a listener, ignoring duplicates
+	 * @param listener
+	 */
 	public void add(T listener) {
 		if (listener == null)
 			throw new NullPointerException();
 		synchronized (listeners) {
-			listeners.add(listener);
-			listenerArray = listeners.toArray(new Object[listeners.size()]);
+			if (!listeners.contains(listener)) {
+				listeners.add(listener);
+				listenerArray = listeners.toArray(new Object[listeners.size()]);
+			}
 		}
 	}
 	
+	/**
+	 * Remove a listener, ignoring missing entries
+	 * @param listener
+	 */
 	public void remove(T listener) {
 		synchronized (listeners) {
 			if (listeners.remove(listener)) {
@@ -53,8 +63,8 @@ public class ListenerList<T> implements Iterable<T>, Serializable {
 	}
 	
 	public void fire(IFire<T> fire) {
-		Object[] copy = listenerArray;
-		for (Object obj : copy) {
+		Object[] localArray = listenerArray;
+		for (Object obj : localArray) {
 			@SuppressWarnings("unchecked")
 			T listener = (T) obj;
 			try {
@@ -67,31 +77,34 @@ public class ListenerList<T> implements Iterable<T>, Serializable {
 
 	@Override
 	public Iterator<T> iterator() {
-		return new Iterator<T>() {
-
-			int idx = 0;
-			
-			@Override
-			public boolean hasNext() {
-				return idx < listenerArray.length;
-			}
-
-			@SuppressWarnings("unchecked")
-			@Override
-			public T next() {
-				if (idx >= listenerArray.length)
-					throw new NoSuchElementException();
-				return (T) listenerArray[idx++];
-			}
-
-			@SuppressWarnings("unchecked")
-			@Override
-			public void remove() {
-				if (idx == 0)
-					throw new IllegalStateException();
-				ListenerList.this.remove((T) listenerArray[idx - 1]);
-			}
-		};
+		synchronized (listeners) {
+			return new Iterator<T>() {
+	
+				Object[] localArray = listenerArray;
+				int idx = 0;
+				
+				@Override
+				public boolean hasNext() {
+					return idx < localArray.length;
+				}
+	
+				@SuppressWarnings("unchecked")
+				@Override
+				public T next() {
+					if (idx >= localArray.length)
+						throw new NoSuchElementException();
+					return (T) localArray[idx++];
+				}
+	
+				@SuppressWarnings("unchecked")
+				@Override
+				public void remove() {
+					if (idx == 0)
+						throw new IllegalStateException();
+					ListenerList.this.remove((T) localArray[idx - 1]);
+				}
+			};
+		}
 	}
 	
 	public void clear() {
@@ -108,6 +121,11 @@ public class ListenerList<T> implements Iterable<T>, Serializable {
 		return listenerArray == NO_LISTENERS;
 	}
 
+	/**
+	 * Get the array of listeners (faster than iterating or invoking #fire(), but you must 
+	 * iterate and handle exceptions from each callback yourself)
+	 * @return
+	 */
 	public Object[] toArray() {
 		return listenerArray;
 	}

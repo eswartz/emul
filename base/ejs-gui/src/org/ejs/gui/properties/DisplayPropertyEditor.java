@@ -20,7 +20,7 @@ public class DisplayPropertyEditor implements IPropertyEditor {
 	private final IProperty property;
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.IPropertyEditor#createEditor(org.eclipse.swt.widgets.Composite)
+	 * 
 	 */
 	/**
 	 * @param readOnlyFieldProperty

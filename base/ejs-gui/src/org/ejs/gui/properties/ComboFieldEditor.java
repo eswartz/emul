@@ -33,7 +33,7 @@ public class ComboFieldEditor extends FieldPropertyEditor {
 		
 	}
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.generator.IPropertyEditorProvider#createEditor(org.eclipse.swt.widgets.Composite)
+	 * 
 	 */
 	public IPropertyEditorControl createEditor(Composite parent) {
 		combo = new Combo(parent, SWT.BORDER);

@@ -55,7 +55,7 @@ public class ListPropertyEditor implements IPropertyEditor {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.IPropertyEditor#createEditor(org.eclipse.swt.widgets.Composite)
+	 * 
 	 */
 	public IPropertyEditorControl createEditor(Composite parent) {
 		final Composite composite = new Composite(parent, SWT.BORDER);

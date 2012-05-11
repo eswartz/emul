@@ -19,7 +19,7 @@ public class ListPropertyFactory implements IClassPropertyFactory {
 	private static final String LINKED  = "linkedList";
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IClassPropertyFactory#create(java.lang.String)
+	 * 
 	 */
 	public Object create(String id) {
 		if (LINKED.equals(id) || id.length() == 0)
@@ -30,7 +30,7 @@ public class ListPropertyFactory implements IClassPropertyFactory {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IClassPropertyFactory#getId(java.lang.Object)
+	 * 
 	 */
 	public String getId(Object value) {
 		if (value instanceof ArrayList)
@@ -41,7 +41,7 @@ public class ListPropertyFactory implements IClassPropertyFactory {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IClassPropertyFactory#getIds()
+	 * 
 	 */
 	public String[] getIds() {
 		return new String[] { ARRAY, LINKED };

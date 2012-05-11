@@ -14,14 +14,14 @@ import ejs.base.properties.IProperty;
 public class FieldPropertyEditorProvider implements IPropertyEditorProvider {
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IPropertyEditorProvider#createEditor()
+	 * 
 	 */
 	public IPropertyEditor createEditor(IProperty property) {
 		return new FieldPropertyEditor((FieldProperty) property);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IPropertyEditorProvider#getLabel()
+	 * 
 	 */
 	public String getLabel(IProperty property) {
 		return property.getLabel();

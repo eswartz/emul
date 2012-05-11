@@ -26,21 +26,21 @@ public class PropertySource implements IPropertySource {
 		propertyOrder = new ArrayList<IProperty>();
 	}
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IPropertySource#getProperties()
+	 * 
 	 */
 	public IProperty[] getProperties() {
 		return (IProperty[]) propertyOrder.toArray(new IProperty[propertyOrder.size()]);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IPropertySource#getPropertyNames()
+	 * 
 	 */
 	public String[] getPropertyNames() {
 		return (String[]) propertyMap.keySet().toArray(new String[propertyMap.size()]);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IPropertySource#loadState(org.w3c.dom.Element)
+	 * 
 	 */
 	public void loadState(Element el) {
 		for (IProperty property : propertyMap.values()) {
@@ -49,7 +49,7 @@ public class PropertySource implements IPropertySource {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IPropertySource#saveState()
+	 * 
 	 */
 	public void saveState(Element el) {
 		for (IProperty property : propertyMap.values()) {
@@ -58,7 +58,7 @@ public class PropertySource implements IPropertySource {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IPropertySource#loadState(org.w3c.dom.Element)
+	 * 
 	 */
 	public void loadState(ISettingSection section) {
 		for (IProperty property : propertyMap.values()) {
@@ -67,7 +67,7 @@ public class PropertySource implements IPropertySource {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IPropertySource#saveState()
+	 * 
 	 */
 	public void saveState(ISettingSection section) {
 		for (IProperty property : propertyMap.values()) {
@@ -76,7 +76,7 @@ public class PropertySource implements IPropertySource {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.IPropertySource#getProperty(java.lang.String)
+	 * 
 	 */
 	public IProperty getProperty(String propertyName) {
 		return propertyMap.get(propertyName);

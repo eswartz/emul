@@ -61,7 +61,7 @@ public class Win32SoundListener implements ISoundListener {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#stopped()
+	 * 
 	 */
 	public synchronized void stopped() {
 		stopped = true;
@@ -96,7 +96,7 @@ public class Win32SoundListener implements ISoundListener {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#started(javax.sound.sampled.AudioFormat)
+	 * 
 	 */
 	public synchronized void started(AudioFormat format) {
 		if (wHandle != 0) {
@@ -258,7 +258,7 @@ public class Win32SoundListener implements ISoundListener {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#played(org.ejs.chiprocksynth.AudioChunk)
+	 * 
 	 */
 	public synchronized void played(SoundChunk chunk) {
 		try {

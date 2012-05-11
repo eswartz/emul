@@ -38,7 +38,7 @@ public class JavaSoundListener implements ISoundListener {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#stopped()
+	 * 
 	 */
 	public synchronized void stopped() {
 		waitUntilSilent();
@@ -60,7 +60,7 @@ public class JavaSoundListener implements ISoundListener {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#started(javax.sound.sampled.AudioFormat)
+	 * 
 	 */
 	public void started(AudioFormat format) {
 		if (soundGeneratorLine != null) {
@@ -146,7 +146,7 @@ public class JavaSoundListener implements ISoundListener {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.SoundListener#played(org.ejs.chiprocksynth.AudioChunk)
+	 * 
 	 */
 	public void played(SoundChunk chunk) {
 		try {

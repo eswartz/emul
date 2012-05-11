@@ -29,7 +29,7 @@ public class PropertyEditorHolder  {
 	private final IPropertyEditorProvider propertyEditorProvider;
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IPropertyEditor#createEditor(org.eclipse.swt.widgets.Composite)
+	 * 
 	 */
 	/**
 	 * @param propertyEditorProvider 
@@ -85,7 +85,8 @@ public class PropertyEditorHolder  {
 			theFieldEditorControl = null;
 		}
 		//IPropertyEditor editor = property.createEditor();
-		IPropertyEditor editor = propertyEditorProvider.createEditor(property);
+		IPropertyEditor editor = propertyEditorProvider != null ? 
+				propertyEditorProvider.createEditor(property) : null;
 		if (editor == null) {
 			return null;
 		}

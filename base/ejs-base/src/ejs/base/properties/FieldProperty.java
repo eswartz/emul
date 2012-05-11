@@ -99,7 +99,7 @@ public class FieldProperty extends AbstractProperty {
 
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.model.ICellEditorProvider#createCellEditor(org.eclipse.swt.widgets.Composite)
+	 * 
 	 */
 	/*
 	public CellEditor createCellEditor(Composite composite) {
@@ -110,7 +110,7 @@ public class FieldProperty extends AbstractProperty {
 	protected FieldProperty getProperty() { return this; }
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.AbstractProperty#getPersistedName()
+	 * 
 	 */
 	@Override
 	public String getName() {
@@ -118,7 +118,7 @@ public class FieldProperty extends AbstractProperty {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#getValue()
+	 * 
 	 */
 	public Object getValue() {
 		return FieldUtils.getValue(field, obj);
@@ -126,7 +126,7 @@ public class FieldProperty extends AbstractProperty {
 
 
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.IProperty#setValue(java.lang.Object)
+	 * 
 	 */
 	public void setValue(Object value) {
 		FieldUtils.setValue(field, obj, value);

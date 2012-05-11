@@ -19,7 +19,7 @@ public class ArrayFieldPropertyEditor extends FieldPropertyEditor {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.ejs.chiprocksynth.editor.model.FieldPropertyEditor#setValueFromString(java.lang.String)
+	 * 
 	 */
 	@Override
 	protected void setValueFromString(String txt) {
