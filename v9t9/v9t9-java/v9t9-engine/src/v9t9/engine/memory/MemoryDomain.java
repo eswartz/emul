@@ -280,9 +280,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	 */
     @Override
 	public void zero() {
-        for (int i = 0; i < entries.length; i++) {
-            entries[i] = zeroMemoryEntry;
-        }
+    	Arrays.fill(entries, zeroMemoryEntry);
     }
 
 	/* (non-Javadoc)
@@ -565,9 +563,6 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 		return memory;
 	}
 
-	/**
-	 * @param memory2
-	 */
 	public void setMemory(IMemory memory) {
 		this.memory = memory;
 	}
