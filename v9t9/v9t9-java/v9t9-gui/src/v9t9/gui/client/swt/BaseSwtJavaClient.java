@@ -322,14 +322,18 @@ public abstract class BaseSwtJavaClient implements IClient {
 	}
 
 	public void handleEvents() {
-		try {
-			while (display.readAndDispatch()) ;
-			display.sleep();
-		} catch (SWTException e) {
-			e.printStackTrace();
-		} catch (SWTError e) {
-			e.printStackTrace();
-		}
+		display.syncExec(new Runnable() {
+			public void run() {
+				try {
+					while (display.readAndDispatch()) ;
+					display.sleep();
+				} catch (SWTException e) {
+					e.printStackTrace();
+				} catch (SWTError e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
 	public boolean isAlive() {

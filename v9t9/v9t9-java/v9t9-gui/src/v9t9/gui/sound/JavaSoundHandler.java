@@ -54,7 +54,7 @@ public class JavaSoundHandler implements ISoundHandler {
 	
 	private ISoundGenerator soundGenerator;
 	private final ISpeechGenerator speechGenerator;
-	private int lastSpeechUpdatedPos;
+	/*private*/ int lastSpeechUpdatedPos;
 	
 	public JavaSoundHandler(final IMachine machine, final ISoundGenerator soundGenerator,
 			final ISpeechGenerator speechGenerator) {

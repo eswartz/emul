@@ -271,6 +271,17 @@ public class SoundTMS9919 implements ISoundChip {
 	@Override
 	public void removeWriteListener(IRegisterWriteListener listener) {
 		listeners.remove(listener);
-		
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.ISoundChip#reset()
+	 */
+	@Override
+	public void reset() {
+		for (IVoice v : voices) {
+			v.setRegister(v.getBaseRegister() + REG_OFFS_ATTENTUATION, 0xf);
+		}		
+		audioGateVoice.setGate(false);
+	}
+	
 }

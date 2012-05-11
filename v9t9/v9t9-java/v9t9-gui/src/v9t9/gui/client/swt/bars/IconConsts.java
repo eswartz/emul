@@ -29,5 +29,9 @@ public class IconConsts {
 	static final int MODULE_SWITCH = 16;
 	static final int IMAGE_IMPORT = 17;
 	static final int ROM_SETUP = 18;
+	static final int RECORD_OVERLAY = 19;
+	static final int PLAY_OVERLAY = 20;
+	static final int PAUSE_OVERLAY = 21;
+	static final int DEMO = 22;
 
 }

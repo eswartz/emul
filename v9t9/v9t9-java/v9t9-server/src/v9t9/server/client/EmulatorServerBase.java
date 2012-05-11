@@ -23,6 +23,7 @@ import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
 import v9t9.machine.ti99.machine.EnhancedTI994AMachineModel;
 import v9t9.machine.ti99.machine.StandardMachineModel;
 import v9t9.server.MachineModelFactory;
+import v9t9.server.demo.DemoHandler;
 import v9t9.server.settings.SettingsHandler;
 import v9t9.server.settings.WorkspaceSettings;
 import v9t9.server.tcf.EmulatorTCFServer;
@@ -141,6 +142,9 @@ public abstract class EmulatorServerBase {
     	this.memoryModel = memory.getModel();
 
     	this.server = new EmulatorTCFServer(machine);
+    	
+    	DemoHandler demoHandler = new DemoHandler(machine);
+		machine.setDemoHandler(demoHandler);
     }
 
 	abstract protected IMachineModel createModel(String modelId);
@@ -156,6 +160,7 @@ public abstract class EmulatorServerBase {
 	 * 
 	 */
 	public void dispose() throws IOException {
+		machine.getDemoHandler().dispose();
 		machine.getMemory().save();
 		
 		settings.getWorkspaceSettings().save();        	

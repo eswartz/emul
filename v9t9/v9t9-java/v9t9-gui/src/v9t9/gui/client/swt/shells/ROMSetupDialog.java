@@ -9,6 +9,7 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.eclipse.jface.dialogs.Dialog;
@@ -265,7 +266,9 @@ public class ROMSetupDialog extends Dialog {
 		infoLabel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseUp(MouseEvent e) {
-				for (Map.Entry<StyleRange, LinkInfo> entry : linkMap.entrySet().toArray(new Map.Entry[linkMap.size()])) {
+				@SuppressWarnings("unchecked")
+				Entry<StyleRange, LinkInfo>[] array = linkMap.entrySet().toArray(new Map.Entry[linkMap.size()]);
+				for (Map.Entry<StyleRange, LinkInfo> entry : array) {
 					if (isOverLink(entry.getKey(), e)) {
 						entry.getValue().handler.linkClicked();
 					}

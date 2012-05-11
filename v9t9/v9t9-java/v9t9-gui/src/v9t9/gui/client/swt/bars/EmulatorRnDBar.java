@@ -3,12 +3,18 @@
  */
 package v9t9.gui.client.swt.bars;
 
+import java.io.File;
+import java.net.URI;
+
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
@@ -16,12 +22,21 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.ejs.gui.common.SwtDialogUtils;
 
 import v9t9.common.cpu.ICpu;
+import v9t9.common.demo.IDemoHandler;
+import v9t9.common.demo.IDemoHandler.IDemoListener;
+import v9t9.common.events.NotifyEvent;
+import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.shells.CpuMetricsCanvas;
 import v9t9.gui.client.swt.shells.debugger.DebuggerWindow;
+import ejs.base.properties.IProperty;
 
 /**
  * This is the bar of command buttons and status indicators for
@@ -34,6 +49,7 @@ import v9t9.gui.client.swt.shells.debugger.DebuggerWindow;
  */
 public class EmulatorRnDBar extends BaseEmulatorBar  {
 	private Canvas cpuMetricsCanvas;
+	private IDemoListener demoListener;
 
 	
 	/**
@@ -106,6 +122,12 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 		);
 		
 
+		createDemoButton(IconConsts.DEMO,
+				IconConsts.PLAY_OVERLAY, IconConsts.RECORD_OVERLAY,
+				IconConsts.PAUSE_OVERLAY,
+				"Play or record demo");
+
+
 		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar.getComposite(), 
 				SWT.BORDER | (isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL), 
 				machine.getCpuMetrics(), true);
@@ -116,6 +138,232 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 
 	}
 	
+	/**
+	 * @param iDemoHandler 
+	 * @param demo
+	 * @param playOverlay
+	 * @param recordOverlay
+	 * @param pauseOverlay
+	 * @param string
+	 */
+	private BasicButton createDemoButton( 
+			int demoIconIndex,
+			final int playOverlay, final int recordOverlay,
+			final int pauseOverlay, String tooltip) {
+		
+		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
+				imageProvider, demoIconIndex, tooltip);
+		
+		final IProperty pauseSetting = Settings.get(machine, IDemoHandler.settingDemoPaused);
+		final IProperty recordSetting = Settings.get(machine, IDemoHandler.settingRecordDemo);
+		final IProperty playSetting = Settings.get(machine, IDemoHandler.settingPlayingDemo);
+		
+		addSettingToggleListener(button, recordSetting, demoIconIndex, recordOverlay,
+				true, false);
+		
+		addSettingToggleListener(button, playSetting, demoIconIndex, playOverlay,
+				true, false);
+		
+		// the demo button controls pausing (when something active)
+		// else triggers the menu
+		button.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(final SelectionEvent e) {
+				if (recordSetting.getBoolean() || playSetting.getBoolean()) {
+					if (pauseSetting.getBoolean())
+						button.setOverlayBounds(imageProvider.imageIndexToBounds(
+								recordSetting.getBoolean() ? recordOverlay : playOverlay));
+					else
+						button.setOverlayBounds(imageProvider.imageIndexToBounds(pauseOverlay));
+					
+					pauseSetting.setBoolean(!pauseSetting.getBoolean());
+
+					button.redraw();
+
+				} else {
+					// need to start playing or recording...
+					IDemoHandler demoHandler = machine.getDemoHandler();
+					if (demoHandler != null) {
+						showDemoMenu(demoHandler, e, e.x, e.y,
+								recordSetting, playSetting, pauseSetting);
+					}
+				}
+			}
+		});
+
+		button.setMenuOverlayBounds(imageProvider.imageIndexToBounds(IconConsts.MENU_OVERLAY));
+		button.addMenuDetectListener(new MenuDetectListener() {
+
+			public void menuDetected(MenuDetectEvent e) {
+				final IDemoHandler handler = machine.getDemoHandler();
+				if (handler != null) {
+
+					if (demoListener == null) {
+						demoListener = new IDemoListener() {
+							
+							@Override
+							public void stopped(NotifyEvent event) {
+								try {
+									handler.stopPlayback();
+									handler.stopRecording();
+								} catch (NotifyException ex) {
+									//machine.getEventNotifier().notifyEvent(ex.getEvent());
+								}
+								machine.getEventNotifier().notifyEvent(event);
+							}
+						};
+						
+						handler.addListener(demoListener);
+					}
+					
+					showDemoMenu(handler, e, e.x, e.y, 
+							recordSetting, playSetting, pauseSetting);
+				}
+			}
+		});
+
+
+		// initialize state
+		if (recordSetting.getBoolean() || playSetting.getBoolean()) {
+			if (!pauseSetting.getBoolean()) {
+				button.setOverlayBounds(imageProvider.imageIndexToBounds(
+						recordSetting.getBoolean() ? recordOverlay : playOverlay));
+			} else {
+				button.setOverlayBounds(imageProvider.imageIndexToBounds(pauseOverlay));
+			}
+		}					
+		button.setSelection(pauseSetting.getBoolean());
+		
+		return button;
+		
+	}
+
+	private void showDemoMenu(final IDemoHandler demoHandler, TypedEvent e, int x, int y, 
+			final IProperty recordSetting, final IProperty playSetting,
+			final IProperty pauseSetting) {
+		Control button = (Control) e.widget;
+		final Menu menu = new Menu(button);
+		
+		final IProperty recordPath = Settings.get(machine, IDemoHandler.settingRecordedDemosPath);
+		final IProperty searchPath = Settings.get(machine, IDemoHandler.settingDemosPath);
+		
+		String currentFilename = null;
+		
+		if (playSetting.getBoolean()) {
+			URI uri = demoHandler.getPlaybackURI();
+			currentFilename = String.valueOf(uri);
+		}
+		if (currentFilename != null) {
+			final MenuItem stopItem = new MenuItem(menu, SWT.RADIO);
+			stopItem.setText("Stop playing " + currentFilename);
+			stopItem.setSelection(true);
+			stopItem.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					try {
+						demoHandler.stopPlayback();
+					} catch (NotifyException ex) {
+						machine.getEventNotifier().notifyEvent(ex.getEvent());
+					}
+				}
+
+			});
+		} 
+		
+		final MenuItem playItem = new MenuItem(menu, SWT.RADIO);
+		if (recordSetting.getBoolean())
+			playItem.setEnabled(false);
+		playItem.setSelection(false);
+		playItem.setText("Play demo...");
+		playItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				String filename = SwtDialogUtils.openFileSelectionDialog(
+						menu.getShell(),
+						"Select demo file", 
+						(String) (searchPath.getList().isEmpty() ? "/tmp" : searchPath.getList().get(0)), 
+						null, false,
+						IDemoHandler.DEMO_EXTENSIONS);
+				if (filename != null) {
+					File playFile = new File(filename);
+					String parent = playFile.getParentFile().getAbsolutePath(); 
+					if (!searchPath.getList().contains(parent)) {
+						searchPath.getList().add(parent);
+						searchPath.firePropertyChange();
+					}
+					
+					try {
+						demoHandler.startPlayback(playFile.toURI());
+					} catch (NotifyException ex) {
+						machine.getEventNotifier().notifyEvent(ex.getEvent());
+					}
+				}
+			}
+		});
+		
+		final MenuItem recordItem = new MenuItem(menu, SWT.RADIO);
+		if (recordSetting.getBoolean()) {
+			URI uri = demoHandler.getRecordingURI();
+			currentFilename = String.valueOf(uri);
+		} else {
+			currentFilename = null;
+		}
+		if (currentFilename != null) {
+			recordItem.setText("Stop recording " + currentFilename);
+			recordItem.setSelection(true);
+			recordItem.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					try {
+						demoHandler.stopRecording();
+					} catch (NotifyException ex) {
+						machine.getEventNotifier().notifyEvent(ex.getEvent());
+					}
+				}
+
+			});
+		} else {
+			if (playSetting.getBoolean())
+				recordItem.setEnabled(false);
+			recordItem.setSelection(false);
+			recordItem.setText("Record demo...");
+			recordItem.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					String filenameBase = SwtDialogUtils.openFileSelectionDialog(
+							menu.getShell(),
+							"Record demo file",
+							recordPath.getString(),
+							"demo", true,
+							IDemoHandler.DEMO_EXTENSIONS);
+					File saveFile = null;
+					if (filenameBase != null) {
+						saveFile = SwtDialogUtils.getUniqueFile(filenameBase);
+						if (saveFile == null) {
+							SwtDialogUtils.showErrorMessage(menu.getShell(), "Save error", 
+									"Too many demo files here!");
+							return;
+						}
+						
+						URI parent = saveFile.getParentFile().toURI();
+						recordPath.setString(parent.toString());
+						
+						try {
+							demoHandler.startRecording(saveFile.toURI());
+						} catch (NotifyException ex) {
+							machine.getEventNotifier().notifyEvent(ex.getEvent());
+						}
+					}
+					
+				}
+
+			});
+		}
+		
+		
+		swtWindow.showMenu(menu, button, x, y);
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.gui.client.swt.bars.BaseEmulatorBar#dispose()
 	 */

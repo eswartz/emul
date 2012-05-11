@@ -28,6 +28,7 @@ import v9t9.common.cpu.CpuMetrics;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
+import v9t9.common.demo.IDemoHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.files.DataFiles;
@@ -107,7 +108,9 @@ abstract public class MachineBase implements IMachine {
 	protected IProperty realTime;
 	private final ISettingsHandler settings;
 	private IPathFileLocator locator;
-	
+
+	private IDemoHandler demoHandler;
+
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
 		pauseMachine = settings.get(settingPauseMachine);
@@ -146,7 +149,6 @@ abstract public class MachineBase implements IMachine {
     	executor = cpu.createExecutor(cpuMetrics);
     	
     	fileHandler = new FileHandler(settings);
-    	
 
     	pauseListener = new IPropertyListener() {
     		
@@ -295,8 +297,6 @@ abstract public class MachineBase implements IMachine {
 	
 				@Override
 				public void run() {
-					if (pauseMachine.getBoolean())
-						return;
 					speech.generateSpeech();
 				}
 				
@@ -783,6 +783,20 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public IEventNotifier getEventNotifier() {
 		return client != null ? client.getEventNotifier() : recordingNotifier;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getDemoHandler()
+	 */
+	@Override
+	public IDemoHandler getDemoHandler() {
+		return demoHandler;
+	}
+	/**
+	 * @param demoHandler the demoHandler to set
+	 */
+	public void setDemoHandler(IDemoHandler demoHandler) {
+		this.demoHandler = demoHandler;
 	}
 }
 

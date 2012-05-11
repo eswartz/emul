@@ -31,4 +31,9 @@ public interface ISpeechChip extends IPersistable {
 	int getGenerateRate();
 	
 	void addSpeechListener(ISpeechDataSender sender);
+
+	/**
+	 * 
+	 */
+	void reset();
 }

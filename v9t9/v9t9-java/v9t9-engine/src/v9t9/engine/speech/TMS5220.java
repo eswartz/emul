@@ -380,7 +380,8 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 		out = in = len = 0;
 	}
 
-	private void reset()
+	@Override
+	public void reset()
 	{
 		Logging.writeLogLine(1, logSpeech, "Speech reset");
 		status = SS_BE | SS_BL;

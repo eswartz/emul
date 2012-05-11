@@ -1,0 +1,71 @@
+/**
+ * 
+ */
+package v9t9.common.demo;
+
+import java.net.URI;
+import java.util.ArrayList;
+
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.events.NotifyEvent;
+import v9t9.common.events.NotifyException;
+import v9t9.common.settings.SettingSchema;
+
+/**
+ * @author ejs
+ *
+ */
+public interface IDemoHandler {
+
+	interface IDemoListener {
+		void stopped(NotifyEvent event);
+	}
+	
+	/** This setting is true while a demo is being recorded. */
+	SettingSchema settingRecordDemo = new SettingSchema(
+				ISettingsHandler.TRANSIENT,
+				"RecordDemo", new Boolean(false));
+
+	/** This setting is true while a demo is being played back. */
+	SettingSchema settingPlayingDemo = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"PlayingDemo", new Boolean(false));
+
+	/** This setting is true while a demo is paused:
+	 * 
+	 * -- when recording, nothing is recorded, but changes are tracked to allow a clean
+	 * transition when recording continues.
+	 * 
+	 * -- when playing, machine timer events are ignored.
+	 *  */
+	SettingSchema settingDemoPaused = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"DemoPaused", new Boolean(false));
+
+	/** Array of URIs where demos may be fetched */
+	SettingSchema settingDemosPath = 
+			new SettingSchema(
+					ISettingsHandler.INSTANCE,
+					"DemosPath", String.class, new ArrayList<String>());
+	/** URI where demos will be recorded */
+	SettingSchema settingRecordedDemosPath = 
+		new SettingSchema(
+				ISettingsHandler.INSTANCE,
+				"RecordedDemosPath", ".");
+
+	String[] DEMO_EXTENSIONS = new String[] { "dem|V9t9 demo file", "*|Other demo file" };
+	
+	void dispose();
+
+	void addListener(IDemoListener listener);
+	void removeListener(IDemoListener listener);
+	
+	void startRecording(URI uri) throws NotifyException;
+	void stopRecording() throws NotifyException;
+	URI getRecordingURI();
+	
+	void startPlayback(URI uri) throws NotifyException;
+	void stopPlayback() throws NotifyException;
+	URI getPlaybackURI();
+	
+}

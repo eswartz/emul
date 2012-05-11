@@ -25,5 +25,10 @@ public interface ISoundChip extends IPersistable, IRegisterAccess {
 
 	void setAudioGate(int addr, boolean b);
 
+	/**
+	 * 
+	 */
+	void reset();
+
 	//void tick();
 }

@@ -93,4 +93,19 @@ public class SoundTMS9919B extends SoundTMS9919 {
 	public String getGroupName() {
 		return TMS9919BConsts.GROUP_NAME;
 	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.ISoundChip#reset()
+	 */
+	@Override
+	public void reset() {
+		super.reset();
+		
+		for (IVoice v : voices) {
+			IEnhancedVoice voice = (IEnhancedVoice) v;
+			
+			voice.setEffect(CMD_RESET, (byte) 0);
+		}		
+	}
 }

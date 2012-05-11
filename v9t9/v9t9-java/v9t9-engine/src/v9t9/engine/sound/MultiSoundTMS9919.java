@@ -4,6 +4,7 @@
 package v9t9.engine.sound;
 
 
+import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.sound.MultiSoundTMS9919Consts;
 
@@ -67,5 +68,15 @@ public class MultiSoundTMS9919 extends BaseMultiSound {
 	@Override
 	public String getGroupName() {
 		return MultiSoundTMS9919Consts.GROUP_NAME;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.ISoundChip#reset()
+	 */
+	@Override
+	public void reset() {
+		for (ISoundChip chip : chips) {
+			chip.reset();
+		}
 	}
 }

@@ -62,12 +62,65 @@ public abstract class BaseEmulatorBar {
 	}
 
 	protected BasicButton createStateButton(final SettingSchema schema, final boolean inverted, 
-			final Point noClickCorner,
-			final int iconIndex, final int secondIconIndex, 
-			final boolean isSecondOverlay, String tooltip) {
+			final int iconIndex,
+			final int secondIconIndex, final boolean isSecondOverlay, 
+			String tooltip) {
 		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
 				imageProvider, iconIndex, tooltip);
 		final IProperty setting = Settings.get(machine, schema);
+		addSettingToggleListener(button, setting, iconIndex, secondIconIndex,
+				isSecondOverlay, inverted);
+		
+		addButtonToggleListener(button, setting);
+		
+		if (isSecondOverlay) {
+			if (setting.getBoolean() != inverted) {
+				button.setOverlayBounds(imageProvider.imageIndexToBounds(secondIconIndex));
+				button.setSelection(setting.getBoolean());
+			}
+		} else {
+			if (setting.getBoolean() != inverted) {
+				button.setIconIndex(secondIconIndex);
+				button.setOverlayBounds(new Rectangle(0, 0, 0, 0));
+			} else {
+				button.setIconIndex(iconIndex);
+				button.setOverlayBounds(new Rectangle(0, 0, 0, 0));
+			}
+			button.setSelection(setting.getBoolean());
+		}
+		return button;
+	}
+
+	/**
+	 * @param button
+	 * @param setting
+	 */
+	protected void addButtonToggleListener(final BasicButton button,
+			final IProperty setting) {
+		button.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				machine.asyncExec(new Runnable() {
+					public void run() {
+						setting.setBoolean(!setting.getBoolean());
+					}
+				});
+			}
+		});
+	}
+
+	/**
+	 * @param button
+	 * @param setting
+	 * @param iconIndex
+	 * @param secondIconIndex
+	 * @param isSecondOverlay
+	 * @param inverted
+	 */
+	protected void addSettingToggleListener(final BasicButton button,
+			final IProperty setting, final int iconIndex,
+			final int secondIconIndex, final boolean isSecondOverlay,
+			final boolean inverted) {
 		setting.addListener(new IPropertyListener() {
 	
 			public void propertyChanged(final IProperty setting) {
@@ -98,49 +151,17 @@ public abstract class BaseEmulatorBar {
 			}
 			
 		});
-		
-		button.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if (noClickCorner != null) {
-					if (e.x >= noClickCorner.x || e.y >= noClickCorner.y)
-						return;
-				}
-				machine.asyncExec(new Runnable() {
-					public void run() {
-						setting.setBoolean(!setting.getBoolean());
-					}
-				});
-			}
-		});
-		
-		if (isSecondOverlay) {
-			if (setting.getBoolean() != inverted) {
-				button.setOverlayBounds(imageProvider.imageIndexToBounds(secondIconIndex));
-				button.setSelection(setting.getBoolean());
-			}
-		} else {
-			if (setting.getBoolean() != inverted) {
-				button.setIconIndex(secondIconIndex);
-				button.setOverlayBounds(new Rectangle(0, 0, 0, 0));
-			} else {
-				button.setIconIndex(iconIndex);
-				button.setOverlayBounds(new Rectangle(0, 0, 0, 0));
-			}
-			button.setSelection(setting.getBoolean());
-		}
-		return button;
 	}
 
 	protected BasicButton createToggleStateButton(final SettingSchema schema, int iconIndex, int overlayIndex,
 			String tooltip) {
-		return createStateButton(schema, false, null, iconIndex, overlayIndex, true, tooltip);
+		return createStateButton(schema, false, iconIndex, overlayIndex, true, tooltip);
 	}
 
 
 	protected BasicButton createTwoStateButton(final SettingSchema schema, int iconIndex, int secondIconIndex,
 			String tooltip) {
-		return createStateButton(schema, false, null, iconIndex, secondIconIndex, false, tooltip);
+		return createStateButton(schema, false, iconIndex, secondIconIndex, false, tooltip);
 	}
 
 	/**

@@ -6,6 +6,8 @@ package ejs.base.settings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

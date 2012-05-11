@@ -4,7 +4,6 @@ package v9t9.engine.dsr;
  * Indices into icons/dev_icons.svg
  * @author ejs
  *
- * TODO: make me into indices
  */
 public interface IDevIcons {
 

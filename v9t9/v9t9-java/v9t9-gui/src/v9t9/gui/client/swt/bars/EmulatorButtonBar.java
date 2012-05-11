@@ -173,14 +173,14 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		
 		final BasicButton soundButton = createStateButton(ISoundHandler.settingPlaySound, 
 				true, 
-				null, IconConsts.SOUND_SPEAKER,
-				IconConsts.NO_OVERLAY, true, "Sound options");
+				IconConsts.SOUND_SPEAKER, IconConsts.NO_OVERLAY,
+				true, "Sound options");
 		
 		soundButton.setMenuOverlayBounds(imageProvider.imageIndexToBounds(IconConsts.MENU_OVERLAY));
 		soundButton.addMenuDetectListener(new MenuDetectListener() {
 
 			public void menuDetected(MenuDetectEvent e) {
-				createSoundVolumeMenu(machine, soundHandler, e);
+				createSoundMenu(machine, soundHandler, e);
 			}
 		});
 
@@ -228,7 +228,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 	 * @param soundHandler
 	 * @param e
 	 */
-	private void createSoundVolumeMenu(final IMachine machine,
+	private void createSoundMenu(final IMachine machine,
 			final ISoundHandler soundHandler, MenuDetectEvent e) {
 		Control button = (Control) e.widget;
 		Menu menu = new Menu(button);

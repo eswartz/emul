@@ -1252,11 +1252,11 @@ public class ImageImport {
 		public void useColor(int x, int maxx, int y, List<Pair<Integer,Integer>> sorted) {
 	
 			if (sorted.size() > 2) {
-				int total = 0;
-				for (int i = 0; i < sorted.size(); i++) {
-					Pair<Integer, Integer> ent = sorted.get(i);
-					total += ent.second;
-				}
+//				int total = 0;
+//				for (int i = 0; i < sorted.size(); i++) {
+//					Pair<Integer, Integer> ent = sorted.get(i);
+//					total += ent.second;
+//				}
 				
 				/*
 				if (sorted.get(0).second + sorted.get(1).second < total / 2) {

@@ -3,6 +3,7 @@
  */
 package ejs.base.settings;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -76,8 +77,10 @@ public class SettingProperty extends AbstractProperty implements ISettingPropert
 		if (incompatible && Collection.class.isAssignableFrom(defaultValue.getClass())) {
 			// make collection
 			try {
-				Collection<?> coll = Arrays.asList((Object[]) value);
-				value = coll;
+				if (value.getClass().isArray()) {
+					Collection<?> coll = new ArrayList<Object>(Arrays.asList((Object[]) value));
+					value = coll;
+				}
 				incompatible = false;
 			} catch (ClassCastException e) {
 			}
