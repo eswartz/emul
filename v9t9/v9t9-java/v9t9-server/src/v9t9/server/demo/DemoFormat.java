@@ -25,7 +25,9 @@ package v9t9.server.demo;
  */
 public class DemoFormat {
 
-	public static final byte[] DEMO_MAGIC_HEADER = { 'V','9','1','0' };
+	public static final byte[] DEMO_MAGIC_HEADER_TI60 = { 'T','I','6','0' };
+	public static final byte[] DEMO_MAGIC_HEADER_V910 = { 'V','9','1','0' };
+	public static final int DEMO_MAGIC_HEADER_LENGTH = 4;
 
 	public enum Event {
 		/** wait for emulator tick */

@@ -29,7 +29,6 @@ public class DemoPlayer {
 	private final IDemoInputStream is;
 	private final IMachine machine;
 	private FastTimer timer;
-	private IProperty playSetting;
 	private IProperty pauseSetting;
 	private final ListenerList<IDemoListener> listeners;
 
@@ -37,7 +36,6 @@ public class DemoPlayer {
 		this.machine = machine;
 		this.is = is;
 		this.listeners = listeners;
-		playSetting = machine.getSettings().get(IDemoHandler.settingPlayingDemo);
 		pauseSetting = machine.getSettings().get(IDemoHandler.settingDemoPaused);
 	}
 
@@ -74,7 +72,6 @@ public class DemoPlayer {
 			event = is.readNext();
 			
 			if (event == null) {
-				playSetting.setBoolean(false);
 				throw new NotifyException(new NotifyEvent(System.currentTimeMillis(), null, 
 						Level.INFO, "Demo playback finished"));
 			}

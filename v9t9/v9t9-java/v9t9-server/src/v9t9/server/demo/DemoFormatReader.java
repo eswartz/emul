@@ -55,6 +55,7 @@ public class DemoFormatReader implements IDemoInputStream {
 		}
 		protected void readHeader() throws IOException {
 			startPos = isPos;
+			//System.err.println(Integer.toHexString(isPos)+": " + label + " header");
 			length = (is.read() & 0xff) | ((is.read() & 0xff) << 8);
 		}
 		
@@ -115,8 +116,8 @@ public class DemoFormatReader implements IDemoInputStream {
 		queuedEvents = new LinkedList<IDemoEvent>();
 		
 		// skip header
-		is.read(new byte[DemoFormat.DEMO_MAGIC_HEADER.length]);
-		isPos += DemoFormat.DEMO_MAGIC_HEADER.length;
+		is.read(new byte[DemoFormat.DEMO_MAGIC_HEADER_LENGTH]);
+		isPos += DemoFormat.DEMO_MAGIC_HEADER_LENGTH;
 		
 		// these constants were hardcoded in v9t9 6.0 and
 		// should probably be kept this way
@@ -222,6 +223,10 @@ public class DemoFormatReader implements IDemoInputStream {
 		while (speechBuffer.isAvailable()) {
 			int byt = speechBuffer.read();  
 			if (byt != DemoFormat.SpeechEvent.ADDING_BYTE.getCode()) {
+				if (byt == 255) {
+					// bug in TI Emulator 6.0
+					continue;
+				}
 				try {
 					queuedEvents.add(new SpeechEvent(DemoFormat.SpeechEvent.fromCode(byt), 0));
 				} catch (IllegalArgumentException e) {

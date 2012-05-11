@@ -121,7 +121,8 @@ public class DemoHandler implements IDemoHandler {
 			byte[] header = new byte[4];
 			is.mark(4);
 			is.read(header);
-			if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER)) {
+			if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
+					|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) {
 				is.reset();
 				player = new DemoPlayer(machine, new DemoFormatReader(is), listeners);
 				player.start();
