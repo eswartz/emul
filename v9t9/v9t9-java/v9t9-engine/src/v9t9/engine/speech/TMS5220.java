@@ -548,13 +548,13 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	}
 	
 	public void sendSample(final short val, final int pos, final int length) {
-		senderList.fire(new IFire<ISpeechDataSender>() {
-
-			@Override
-			public void fire(ISpeechDataSender listener) {
-				listener.sendSample(val, pos, length);
+		for (Object obj : senderList.toArray()) {
+			try {
+				((ISpeechDataSender) obj).sendSample(val, pos, length);
+			} catch (Throwable t) {
+				t.printStackTrace();
 			}
-		});
+		};
 	}
 	
 	/* (non-Javadoc)

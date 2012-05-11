@@ -180,13 +180,13 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	
 	/**
 	 * @param reg
-	 * @param value TODO
+	 * @param value new value
 	 */
 	protected void fireRegisterChanged(final int reg, final int value) {
 		if (!listeners.isEmpty()) {
-			for (IRegisterWriteListener listener : listeners) {
+			for (Object listener : listeners.toArray()) {
 				try {
-					listener.registerChanged(reg, value);
+					((IRegisterWriteListener)listener).registerChanged(reg, value);
 				} catch (Throwable t) {
 					t.printStackTrace();
 				}
