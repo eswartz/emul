@@ -762,8 +762,8 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	 */
 	@Override
 	public int setRegister(int reg, int value) {
-		if (reg >= VdpV9938Consts.REG_PAL0) {
-			if (reg >= VdpV9938Consts.REG_PAL0 + palette.length)
+		if (reg >= REG_PAL0) {
+			if (reg >= REG_PAL0 + palette.length)
 				return 0;
 			
 			final int color = reg - VdpV9938Consts.REG_PAL0;
@@ -804,7 +804,8 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			blinkPeriod = blinkOnPeriod + blinkOffPeriod;
 			break;
 		case 14:
-			switchBank();
+			if (old != val)
+				switchBank();
 			break;
 		case 15:
 			// status register pointer
@@ -1124,6 +1125,8 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		int reg0 = vdpregs[0] & R0_M3 + R0_M4 + R0_M5;
 		int reg1 = vdpregs[1] & R1_M1 + R1_M2;
 		
+		isEnhancedMode = true;
+		
 		if (reg1 == 0) {
 			if (reg0 == R0_M4)
 				return MODE_GRAPHICS3;
@@ -1138,6 +1141,8 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		} else if (reg1 == R1_M1 && reg0 == R0_M4) {
 			return MODE_TEXT2;
 		}
+		
+		isEnhancedMode = false;
 		return super.calculateModeNumber();
 	}
 

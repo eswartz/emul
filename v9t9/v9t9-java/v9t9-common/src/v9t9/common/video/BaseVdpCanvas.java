@@ -45,7 +45,7 @@ public abstract class BaseVdpCanvas implements ICanvas {
 		return x;
 	}
 
-	public void markDirty(RedrawBlock[] blocks, int count) {
+	public synchronized void markDirty(RedrawBlock[] blocks, int count) {
 		if (count == 0)
 			return;
 		if (dx1 == 0 && dy1 == 0 && dx2 == width && dy2 == height) {
@@ -69,7 +69,7 @@ public abstract class BaseVdpCanvas implements ICanvas {
 		}
 	}
 	
-	public void markDirty() {
+	public synchronized void markDirty() {
 		//Arrays.fill(dirtyBlocks, 0, dirtyBlocks.length, true);
 		dx1 = dy1 = 0;
 		dx2 = width;

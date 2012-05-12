@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import v9t9.common.hardware.IVdpChip;
+
 
 /**
  * Track a series of changes to a set of registers.
@@ -13,11 +15,17 @@ import java.util.TreeMap;
  *
  */
 public class FullRegisterWriteTracker extends BaseRegisterWriteTracker {
+
 	private List<Long> changes = new ArrayList<Long>(1024); 
 	
 	public FullRegisterWriteTracker(IRegisterAccess access, int baseReg, BitSet regbits) {
 		super(access, baseReg, regbits);
 	}
+	
+	public FullRegisterWriteTracker(IRegisterAccess access) {
+		super(access);
+	}
+
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.BaseRegisterWriteTracker#clearChanges()

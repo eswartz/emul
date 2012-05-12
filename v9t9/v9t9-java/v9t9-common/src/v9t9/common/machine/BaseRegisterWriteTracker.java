@@ -16,10 +16,27 @@ public abstract class BaseRegisterWriteTracker {
 	private final BitSet regbits;
 	private final int baseReg;
 	
+
+	/**
+	 * @param access
+	 * @return
+	 */
+	protected static BitSet getRegSet(IRegisterAccess access) {
+		BitSet bs = new BitSet();
+		bs.set(0, access.getRegisterCount());
+		return bs;
+	}
+	
 	public BaseRegisterWriteTracker(IRegisterAccess access, int baseReg, BitSet regbits) {
 		this.access = access;
 		this.baseReg = baseReg;
 		this.regbits = regbits;
+	}
+
+	public BaseRegisterWriteTracker(IRegisterAccess access) {
+		this.access = access;
+		this.baseReg = access.getFirstRegister();
+		this.regbits = getRegSet(access);
 	}
 	
 	public void addRegisterListener() {

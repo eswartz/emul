@@ -34,4 +34,9 @@ public interface ICanvas {
 	 */ 
 	int getLineStride();
 	
+
+	void markDirty();
+
+	void markDirty(RedrawBlock[] blocks, int count);
+
 }

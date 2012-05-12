@@ -4,20 +4,24 @@
 package v9t9.server.demo;
 
 import java.io.IOException;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
 
-import v9t9.common.demo.IDemoHandler.IDemoListener;
 import v9t9.common.demo.IDemoHandler;
+import v9t9.common.demo.IDemoHandler.IDemoListener;
 import v9t9.common.demo.IDemoOutputStream;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyException;
+import v9t9.common.machine.FullRegisterWriteTracker;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
-import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
+import v9t9.common.machine.SimpleRegisterWriteTracker;
 import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.memory.FullMemoryWriteTracker;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.memory.IMemoryWriteListener;
+import v9t9.common.memory.SimpleMemoryWriteTracker;
 import v9t9.common.settings.Settings;
 import v9t9.common.sound.TMS9919Consts;
 import v9t9.engine.video.v9938.VdpV9938;
@@ -42,13 +46,13 @@ public class DemoRecorder {
 	private FastTimer timer;
 	private Runnable timerTask;
 
-	private IRegisterWriteListener vdpRegisterListener;
+	private SimpleRegisterWriteTracker vdpRegisterListener;
 
-	private IMemoryWriteListener vdpMemoryListener;
+	private SimpleMemoryWriteTracker vdpMemoryListener;
 
 	private IMemoryDomain videoMem;
 
-	private IRegisterWriteListener soundRegisterListener;
+	private FullRegisterWriteTracker soundRegisterListener;
 	private final IMachine machine;
 	
 	private int firstVidAddr;
@@ -57,7 +61,7 @@ public class DemoRecorder {
 	private int videoIdx;
 
 	private boolean useSoundRegisters;
-	private IMemoryWriteListener soundDataListener;
+	private FullMemoryWriteTracker soundDataListener;
 	
 	private int soundMmioAddr;
 	private byte[] soundBytes = new byte[256];
@@ -93,7 +97,7 @@ public class DemoRecorder {
 		for (int addr = 0; addr < memSize; ) {
 			if (machine.getVdp() instanceof VdpV9938) {
 				if ((addr & 0x3fff) == 0) {
-					// set the memory page
+					// set the memory page (note: real regs are written below, to reset)
 					os.writeEvent(new VideoWriteRegisterEvent(
 							14, addr / 0x4000));
 				}
@@ -157,8 +161,7 @@ public class DemoRecorder {
 			public void run() {
 				try {
 					if (os != null) {
-						flushSoundData();
-						flushVideoData();
+						flushData();
 						if (!pauseDemoSetting.getBoolean()) {
 							os.writeEvent(new TimerTick());
 						}
@@ -170,72 +173,83 @@ public class DemoRecorder {
 		};
 		timer.scheduleTask(timerTask, timerRate);
 		
-		vdpRegisterListener = new IRegisterWriteListener() {
-
-			@Override
-			public void registerChanged(int reg, int value) {
-				if (reg >= 0) {
-					try {
-						flushVideoData();
-						os.writeEvent(new VideoWriteRegisterEvent(reg, value));
-					} catch (Exception e) {
-						fail(e);
-					}
-				}
-				
-			}
-			
-		};
-		machine.getVdp().addWriteListener(vdpRegisterListener);
+//		vdpRegisterListener = new IRegisterWriteListener() {
+//
+//			@Override
+//			public void registerChanged(int reg, int value) {
+//				if (reg >= 0) {
+//					try {
+//						flushVideoData();
+//						os.writeEvent(new VideoWriteRegisterEvent(reg, value));
+//					} catch (Exception e) {
+//						fail(e);
+//					}
+//				}
+//				
+//			}
+//			
+//		};
+//		machine.getVdp().addWriteListener(vdpRegisterListener);
+		vdpRegisterListener = new SimpleRegisterWriteTracker(machine.getVdp());
+		vdpRegisterListener.addRegisterListener();
 		
-		vdpMemoryListener = new IMemoryWriteListener() {
-
-			@Override
-			public void changed(IMemoryEntry entry, int addr, Number value) {
-				try {
-					pushSetVideoMemory((short) addr, entry.flatReadByte(addr));
-				} catch (Exception e) {
-					fail(e);
-				}
-			}
-			
-		};
-		videoMem.addWriteListener(vdpMemoryListener);
+//		vdpMemoryListener = new IMemoryWriteListener() {
+//
+//			@Override
+//			public void changed(IMemoryEntry entry, int addr, Number value) {
+//				try {
+//					pushSetVideoMemory((short) addr, entry.flatReadByte(addr));
+//				} catch (Exception e) {
+//					fail(e);
+//				}
+//			}
+//			
+//		};
+//		videoMem.addWriteListener(vdpMemoryListener);
 		
+		vdpMemoryListener = new SimpleMemoryWriteTracker(machine.getVdp().getVideoMemory(), 8);
+		vdpMemoryListener.addMemoryRange(0, machine.getVdp().getMemorySize());
+		vdpMemoryListener.addMemoryListener();
 		
 		if (useSoundRegisters) {
-			soundRegisterListener = new IRegisterWriteListener() {
-				
-				@Override
-				public void registerChanged(int reg, int value) {
-					try {
-						os.writeEvent(new SoundWriteRegisterEvent(reg, value));
-					} catch (Exception e) {
-						fail(e);
-					}
-				}
-				
-			};
-			machine.getSound().addWriteListener(soundRegisterListener);
+//			soundRegisterListener = new IRegisterWriteListener() {
+//				
+//				@Override
+//				public void registerChanged(int reg, int value) {
+//					try {
+//						os.writeEvent(new SoundWriteRegisterEvent(reg, value));
+//					} catch (Exception e) {
+//						fail(e);
+//					}
+//				}
+//				
+//			};
+//			machine.getSound().addWriteListener(soundRegisterListener);
+			soundRegisterListener = new FullRegisterWriteTracker(machine.getSound());
+			soundRegisterListener.addRegisterListener();
 		} else {
-			soundDataListener = new IMemoryWriteListener() {
-
-				@Override
-				public void changed(IMemoryEntry entry, int addr, Number value) {
-					if (addr == soundMmioAddr) {
-						try {
-							if (soundIdx >= soundBytes.length) {
-								flushSoundData();
-							}
-							soundBytes[soundIdx++] = value.byteValue();
-						} catch (Throwable t) {
-							fail(t);
-						}
-					}
-				}
-				
-			};
-			machine.getConsole().addWriteListener(soundDataListener);
+//			soundDataListener = new IMemoryWriteListener() {
+//
+//				@Override
+//				public void changed(IMemoryEntry entry, int addr, Number value) {
+//					if (addr == soundMmioAddr) {
+//						try {
+//							if (soundIdx >= soundBytes.length) {
+//								flushSoundData();
+//							}
+//							soundBytes[soundIdx++] = value.byteValue();
+//						} catch (Throwable t) {
+//							fail(t);
+//						}
+//					}
+//				}
+//				
+//			};
+//			machine.getConsole().addWriteListener(soundDataListener);
+			
+			soundDataListener = new FullMemoryWriteTracker(machine.getConsole(), 0);
+			soundDataListener.addMemoryRange(soundMmioAddr, 1);
+			soundDataListener.addMemoryListener();
 		}
 		
 	}
@@ -245,37 +259,125 @@ public class DemoRecorder {
 	 */
 	private void disconnect() {
 		timer.cancel();
-		machine.getVdp().removeWriteListener(vdpRegisterListener);
-		videoMem.removeWriteListener(vdpMemoryListener);
-		machine.getSound().removeWriteListener(soundRegisterListener);
-		machine.getConsole().removeWriteListener(soundDataListener);
-	}
-	
+		vdpRegisterListener.removeRegisterListener();
+		vdpMemoryListener.removeMemoryListener();
+//		machine.getVdp().removeWriteListener(vdpRegisterListener);
+//		videoMem.removeWriteListener(vdpMemoryListener);
 
-	protected void flushSoundData() throws NotifyException {
-		SoundWriteDataEvent event = new SoundWriteDataEvent(soundMmioAddr, soundBytes, soundIdx);
-		os.writeEvent(event);
-		
-		soundIdx = 0;
+		if (soundRegisterListener != null)
+			soundRegisterListener.removeRegisterListener();
+		if (soundDataListener != null)
+			soundDataListener.removeMemoryListener();
+//		machine.getSound().removeWriteListener(soundRegisterListener);
+//		machine.getConsole().removeWriteListener(soundDataListener);
 	}
-	protected void flushVideoData() throws NotifyException {
-		VideoWriteDataEvent event = new VideoWriteDataEvent(firstVidAddr, videoBytes, videoIdx);
-		os.writeEvent(event);
+
+	protected void flushData() throws NotifyException {
+		flushVideoRegs();
 		
-		firstVidAddr = nextVidAddr;
-		videoIdx = 0;
+		flushVideoMem();
+		
+		if (soundRegisterListener != null) {
+			flushSoundRegs();
+		} else if (soundDataListener != null) {
+			flushSoundData();
+		}
+	}
+
+
+	protected void flushVideoMem() throws NotifyException {
+		synchronized (vdpMemoryListener) {
+			BitSet changes = vdpMemoryListener.getChangedMemory();
+			synchronized (changes) {
+				firstVidAddr = nextVidAddr = 0;
+				videoIdx = 0;
+				for (int idx = changes.nextSetBit(0); idx >= 0; idx = changes.nextSetBit(idx + 1)) { 
+					if (videoIdx >= videoBytes.length || idx != nextVidAddr) {
+						os.writeEvent(new VideoWriteDataEvent(firstVidAddr, videoBytes, videoIdx));
+						firstVidAddr = nextVidAddr = idx;
+						videoIdx = 0;
+					}
+					videoBytes[videoIdx++] = videoMem.flatReadByte(idx);
+					nextVidAddr++;
+				}
+				if (videoIdx > 0) {
+					os.writeEvent(new VideoWriteDataEvent(firstVidAddr, videoBytes, videoIdx));
+				}
+			}
+			vdpMemoryListener.clearChanges();
+		}
 	}
 	
-	public void pushSetVideoMemory(short addr_, byte val) throws NotifyException {
-		int addr = addr_ & 0x3fff;
-		if (videoIdx >= 255 || addr != nextVidAddr) {
-			flushVideoData();
-			firstVidAddr = addr;
-			nextVidAddr = firstVidAddr;
-			videoIdx = 0;
+	protected void flushSoundData() throws NotifyException {
+		synchronized (soundDataListener) {
+			List<Integer> changes = soundDataListener.getChanges();
+			synchronized (changes) {
+				for (Integer chg : changes) { 
+					if (soundIdx >= soundBytes.length) {
+						os.writeEvent(new SoundWriteDataEvent(soundMmioAddr, soundBytes, soundIdx));
+						soundIdx = 0;
+					}
+					soundBytes[soundIdx++] = (byte) (chg & 0xff);
+				}
+				if (soundIdx > 0) {
+					os.writeEvent(new SoundWriteDataEvent(soundMmioAddr, soundBytes, soundIdx));
+				}
+			}
+			soundDataListener.clearChanges();
 		}
-		videoBytes[videoIdx++] = val;
-		nextVidAddr++;
 	}
+
+	protected void flushSoundRegs() throws NotifyException {
+		synchronized (soundRegisterListener) {
+			List<Long> changes = soundRegisterListener.getChanges();
+			synchronized (changes) {
+				for (Long ent : changes) {
+					os.writeEvent(new SoundWriteRegisterEvent(
+							(int) (ent >> 32), (int) (ent & 0xffffffff)));
+				}
+			}
+			soundRegisterListener.clearChanges();
+		}
+	}
+
+	protected void flushVideoRegs() throws NotifyException {
+		synchronized (vdpRegisterListener) {
+			Map<Integer, Integer> changes = vdpRegisterListener.getChanges();
+			synchronized (changes) {
+				for (Map.Entry<Integer, Integer> chg : changes.entrySet()) {
+					if (chg.getKey() >= 0) {
+						os.writeEvent(new VideoWriteRegisterEvent(chg.getKey(), chg.getValue()));
+					}
+				}
+				vdpRegisterListener.clearChanges();
+			}
+		}
+	}
+
+//	protected void flushSoundData() throws NotifyException {
+//		SoundWriteDataEvent event = new SoundWriteDataEvent(soundMmioAddr, soundBytes, soundIdx);
+//		os.writeEvent(event);
+//		
+//		soundIdx = 0;
+//	}
+//	protected void flushVideoData() throws NotifyException {
+//		VideoWriteDataEvent event = new VideoWriteDataEvent(firstVidAddr, videoBytes, videoIdx);
+//		os.writeEvent(event);
+//		
+//		firstVidAddr = nextVidAddr;
+//		videoIdx = 0;
+//	}
+//	
+//	public void pushSetVideoMemory(short addr_, byte val) throws NotifyException {
+//		int addr = addr_ & 0x3fff;
+//		if (videoIdx >= 255 || addr != nextVidAddr) {
+//			flushVideoData();
+//			firstVidAddr = addr;
+//			nextVidAddr = firstVidAddr;
+//			videoIdx = 0;
+//		}
+//		videoBytes[videoIdx++] = val;
+//		nextVidAddr++;
+//	}
 
 }

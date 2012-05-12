@@ -111,10 +111,6 @@ public interface IVdpCanvas extends ICanvas {
 
 	void syncColors();
 
-	void markDirty();
-
-	void markDirty(RedrawBlock[] blocks, int count);
-
 	void setOffset(int xoffs, int yoffs);
 
 	void setSize(int width, int height, boolean interlacedEvenOdd);

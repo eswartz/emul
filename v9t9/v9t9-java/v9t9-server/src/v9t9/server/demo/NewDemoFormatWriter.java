@@ -14,16 +14,19 @@ import v9t9.server.demo.events.VideoWriteDataEvent;
 import v9t9.server.demo.events.VideoWriteRegisterEvent;
 
 /**
- * Writer for TI Emulator v6.0 & V9t9 demo formats
+ * Write demos in new format more amenable to a variable
+ * machine model:  register values are written in a variable-length
+ * encoding to ensure they can be any length, but without making
+ * every register write large.
  * @author ejs
  *
  */
-public class OldDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOutputStream {
+public class NewDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOutputStream {
 
-	public OldDemoFormatWriter(OutputStream os) throws IOException {
+	public NewDemoFormatWriter(OutputStream os) throws IOException {
 		super(os);
 		
-		os.write(DemoFormat.DEMO_MAGIC_HEADER_V910);
+		os.write(DemoFormat.DEMO_MAGIC_HEADER_V9t9);
 	}
 	
 
@@ -45,8 +48,8 @@ public class OldDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 			soundRegsBuffer.flush();
 		}
 		SoundWriteRegisterEvent ev = (SoundWriteRegisterEvent) event;
-		soundRegsBuffer.pushWord(ev.getReg());
-		soundRegsBuffer.pushWord(ev.getVal());
+		soundRegsBuffer.pushVar(ev.getReg());
+		soundRegsBuffer.pushVar(ev.getVal());
 	}
 
 	@Override
@@ -63,11 +66,11 @@ public class OldDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 		int offs = 0;
 		while (len > 0) {
 			int toUse = Math.min(255, len);
-			if (!videoBuffer.isAvailable(toUse + 3)) {
+			videoBuffer.pushVar(we.getAddress() + offs);
+			videoBuffer.push((byte) toUse);
+			if (!videoBuffer.isAvailable(toUse)) {
 				videoBuffer.flush();
 			}
-			videoBuffer.pushWord(we.getAddress() + offs);
-			videoBuffer.push((byte) toUse);
 			videoBuffer.pushData(we.getData(), offs + we.getOffset(), toUse);
 			
 			len -= toUse;
@@ -78,9 +81,12 @@ public class OldDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 	@Override
 	protected void writeVideoRegisterEvent(IDemoEvent event)
 			throws IOException {
-		if (!videoBuffer.isAvailable(2)) {
+		if (!videoBuffer.isAvailable(4)) {
 			videoBuffer.flush();
 		}
-		videoBuffer.pushWord(((VideoWriteRegisterEvent) event).getAddr());
+		VideoWriteRegisterEvent ev = (VideoWriteRegisterEvent) event;
+		videoBuffer.pushVar(ev.getReg());
+		videoBuffer.push((byte) 0);	// this is the cue that it's a register write
+		videoBuffer.pushVar(ev.getVal());
 	}
 }

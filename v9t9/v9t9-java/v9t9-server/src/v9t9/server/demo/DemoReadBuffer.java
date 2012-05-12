@@ -8,7 +8,7 @@ import java.io.IOException;
 import v9t9.common.events.NotifyException;
 import v9t9.server.demo.DemoFormat.BufferType;
 
-class DemoReadBuffer {
+public class DemoReadBuffer {
 	/**
 	 * 
 	 */
@@ -38,10 +38,12 @@ class DemoReadBuffer {
 	public void refill() throws IOException, NotifyException {
 		readHeader();
 		if (length > buffer.length)
-			throw new NotifyException(null, "corrupt demo in " + label + " buffer at " + getEffectivePos() + " expecting " + length);
+			throw new NotifyException(null, "corrupt demo in " + label + " buffer at " + 
+					Integer.toHexString(getEffectivePos()) + " expecting " + length);
 		int read = this.reader.is.read(buffer, 0, length);
 		if (read != length)
-			throw new NotifyException(null, "corrupt demo in " + label + " buffer at " + getEffectivePos());
+			throw new NotifyException(null, "corrupt demo in " + label + " buffer at " + 
+					Integer.toHexString(getEffectivePos()));
 		this.reader.isPos += read;
 		length = read;
 		index = 0;
@@ -93,5 +95,80 @@ class DemoReadBuffer {
 		System.arraycopy(buffer, index, data, 0, chunkLength);
 		index += chunkLength;
 		return data;
+	}
+	
+
+	/**
+	 * Push a variable-length signed integer (UTF-8)
+	 * 
+	 * @param i
+	 * @throws IOException 
+	 * @throws NotifyException 
+	 */
+	public int readVar() throws IOException, NotifyException {
+		boolean neg = false;
+		
+		int byt = read();
+		if (byt == 0xff) {
+			neg = true;
+			byt = read();
+		}
+		
+		int val;
+		if (byt < 0x80) {
+			// 7 bits
+			val = byt;
+		}
+		else if ((byt & 0xe0) == 0xc0) {
+			// 11 bits
+			val = ((byt & 0x1f) << 6) 
+					| (ensureUtf8(read()) << 0);
+		}
+		else if ((byt & 0xf0) == 0xe0) {
+			// 16 bits
+			val = ((byt & 0xf) << 12) 
+					| (ensureUtf8(read()) << 6)
+					| (ensureUtf8(read()) << 0);
+		}
+		else if ((byt & 0xf8) == 0xf0) {
+			// 21 bits
+			val = ((byt & 0x7) << 18) 
+					| (ensureUtf8(read()) << 12)
+					| (ensureUtf8(read()) << 6)
+					| (ensureUtf8(read()) << 0);
+		}
+		else if ((byt & 0xfc) == 0xf8) {
+			// 26 bits
+			val = ((byt & 0x3) << 24) 
+					| (ensureUtf8(read()) << 18)
+					| (ensureUtf8(read()) << 12)
+					| (ensureUtf8(read()) << 6)
+					| (ensureUtf8(read()) << 0);
+		}
+		else if ((byt & 0xfe) == 0xfc) {
+			// 31 bits
+			val = ((byt & 0x1) << 30) 
+					| (ensureUtf8(read()) << 24)
+					| (ensureUtf8(read()) << 18)
+					| (ensureUtf8(read()) << 12)
+					| (ensureUtf8(read()) << 6)
+					| (ensureUtf8(read()) << 0);
+		}
+		else {
+			throw new NotifyException(null, "corrupt demo encoding for " + label + " at " + Integer.toHexString(getEffectivePos()));
+		}
+		
+		return neg ? -val : val;
+	}
+	
+	/**
+	 * @param read
+	 * @return
+	 * @throws NotifyException 
+	 */
+	private int ensureUtf8(int read) throws NotifyException {
+		if ((read & 0xc0) != 0x80)
+			throw new NotifyException(null, "corrupt demo encoding for " + label + " at " + Integer.toHexString(getEffectivePos()));
+		return read & 0x3f;
 	}
 }

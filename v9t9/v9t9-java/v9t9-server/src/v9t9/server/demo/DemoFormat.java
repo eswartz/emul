@@ -38,7 +38,7 @@ public class DemoFormat {
 
 	public static final byte[] DEMO_MAGIC_HEADER_TI60 = { 'T','I','6','0' };
 	public static final byte[] DEMO_MAGIC_HEADER_V910 = { 'V','9','1','0' };
-	public static final byte[] DEMO_MAGIC_HEADER_V970 = { 'V','9','7','0' };
+	public static final byte[] DEMO_MAGIC_HEADER_V9t9 = { 'V','9','7','0' };
 	
 	public static final int DEMO_MAGIC_HEADER_LENGTH = 4;
 

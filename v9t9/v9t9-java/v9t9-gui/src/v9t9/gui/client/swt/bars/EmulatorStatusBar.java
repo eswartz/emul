@@ -301,11 +301,35 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		////
 		
 		Menu playSubMenu = new Menu(playMenuItem);
+
+		IPathFileLocator locator = machine.getPathFileLocator();
 		
 		boolean any = false;
+		
+		final URI lastRecorded = demoHandler.getRecordingURI();
+		if (lastRecorded != null) {
+			final MenuItem lastDemoItem = new MenuItem(playSubMenu, SWT.PUSH);
+			lastDemoItem.setText(lastRecorded.getPath());
+			lastDemoItem.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					try {
+						demoHandler.startPlayback(lastRecorded);
+					} catch (NotifyException ex) {
+						machine.getEventNotifier().notifyEvent(ex.getEvent());
+					}
+				}
+			});
+			any = true;
+		}
+
+		if (any) {
+			new MenuItem(playSubMenu, SWT.SEPARATOR);
+		}
+
+		any = false;
 		if (!searchPath.getList().isEmpty()) {
 			try {
-				IPathFileLocator locator = machine.getPathFileLocator();
 				URI dirURI = locator.createURI(searchPath.getList().get(0).toString());
 				Collection<String> ents = locator.getDirectoryListing(dirURI);
 				for (String ent : ents) {
@@ -331,7 +355,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				// oh well
 			}
 		}
-		
 		
 		if (any) {
 			new MenuItem(playSubMenu, SWT.SEPARATOR);

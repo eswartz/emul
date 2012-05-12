@@ -13,10 +13,10 @@ import v9t9.common.memory.IMemoryDomain;
  *
  */
 public abstract class WriteDataBlock implements IDemoEvent {
-	private int address;
-	private byte[] data;
-	private final int offs;
-	private final int length;
+	protected int address;
+	protected byte[] data;
+	protected final int offs;
+	protected final int length;
 	
 	public WriteDataBlock(int address, byte[] data, int offs, int length) {
 		this.address = address;

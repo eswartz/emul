@@ -49,7 +49,8 @@ public class FullMemoryWriteTracker extends BaseMemoryWriteTracker {
 	
 	/**
 	 * Get a list of changes.  Client may modify but does not own.
-	 * n@return the changes, as <integer24: addr> | <integer8: value>
+	 * 
+	 * @return the changes, as &lt;integer24: addr&gt; | &lt;integer8: value&gt;
 	 */
 	public List<Integer> getChanges() {
 		return changes;
