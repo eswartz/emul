@@ -6,6 +6,7 @@ package v9t9.server.demo;
 import java.io.IOException;
 
 import v9t9.common.demo.IDemoHandler.IDemoListener;
+import v9t9.common.demo.IDemoHandler;
 import v9t9.common.demo.IDemoOutputStream;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyEvent;
@@ -17,6 +18,7 @@ import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
+import v9t9.common.settings.Settings;
 import v9t9.common.sound.TMS9919Consts;
 import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.server.demo.events.SoundWriteDataEvent;
@@ -24,6 +26,7 @@ import v9t9.server.demo.events.SoundWriteRegisterEvent;
 import v9t9.server.demo.events.TimerTick;
 import v9t9.server.demo.events.VideoWriteDataEvent;
 import v9t9.server.demo.events.VideoWriteRegisterEvent;
+import ejs.base.properties.IProperty;
 import ejs.base.timer.FastTimer;
 import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
@@ -146,6 +149,8 @@ public class DemoRecorder {
 	 */
 	private void connect() {
 		timer = new FastTimer("demo");
+		
+		final IProperty pauseDemoSetting = Settings.get(machine, IDemoHandler.settingDemoPaused);
 		timerTask = new Runnable() {
 			
 			@Override
@@ -154,7 +159,9 @@ public class DemoRecorder {
 					if (os != null) {
 						flushSoundData();
 						flushVideoData();
-						os.writeEvent(new TimerTick());
+						if (!pauseDemoSetting.getBoolean()) {
+							os.writeEvent(new TimerTick());
+						}
 					}
 				} catch (final Throwable t) {
 					fail(t);
