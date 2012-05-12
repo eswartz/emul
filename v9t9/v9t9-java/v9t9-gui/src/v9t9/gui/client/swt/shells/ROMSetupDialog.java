@@ -466,8 +466,7 @@ public class ROMSetupDialog extends Dialog {
 			int index;
 			Color color;
 			if (storedInfo != null) {
-				if ((info.getFilenameProperty() != null && storedInfo.fileName.equals(info.getFilenameProperty().getDefaultValue())) 
-						|| (info.getFileMD5() == null || storedInfo.md5.equals(info.getFileMD5()))) {
+				if (info.matches(storedInfo)) {
 					index = 0;
 					color = getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN);
 				} else {

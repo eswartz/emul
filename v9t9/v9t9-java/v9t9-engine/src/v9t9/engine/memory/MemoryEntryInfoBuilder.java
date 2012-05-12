@@ -55,7 +55,7 @@ public class MemoryEntryInfoBuilder {
 	}
 	
 	public MemoryEntryInfoBuilder withFile2MD5(String file2MD5) {
-		if (file2MD5 != null) props.put(MemoryEntryInfo.FILE_MD5, file2MD5);
+		if (file2MD5 != null) props.put(MemoryEntryInfo.FILE2_MD5, file2MD5);
 		return this;
 	}
 	
