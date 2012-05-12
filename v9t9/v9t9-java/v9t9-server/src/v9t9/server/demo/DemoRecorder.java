@@ -20,11 +20,9 @@ import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.machine.SimpleRegisterWriteTracker;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.FullMemoryWriteTracker;
-import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.SimpleMemoryWriteTracker;
 import v9t9.common.settings.Settings;
 import v9t9.common.sound.TMS9919Consts;
-import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.server.demo.events.SoundWriteDataEvent;
 import v9t9.server.demo.events.SoundWriteRegisterEvent;
 import v9t9.server.demo.events.TimerTick;
@@ -49,8 +47,6 @@ public class DemoRecorder {
 	private SimpleRegisterWriteTracker vdpRegisterListener;
 
 	private SimpleMemoryWriteTracker vdpMemoryListener;
-
-	private IMemoryDomain videoMem;
 
 	private FullRegisterWriteTracker soundRegisterListener;
 	private final IMachine machine;
@@ -80,8 +76,6 @@ public class DemoRecorder {
 			soundMmioAddr = 0x8400;
 		}
 		
-		videoMem = machine.getMemory().getDomain(IMemoryDomain.NAME_VIDEO);
-
 		connect();
 		
 		sendSetupInfo();
@@ -95,19 +89,9 @@ public class DemoRecorder {
 		// send VDP data
 		int memSize = machine.getVdp().getMemorySize();
 		for (int addr = 0; addr < memSize; ) {
-			if (machine.getVdp() instanceof VdpV9938) {
-				if ((addr & 0x3fff) == 0) {
-					// set the memory page (note: real regs are written below, to reset)
-					os.writeEvent(new VideoWriteRegisterEvent(
-							14, addr / 0x4000));
-				}
-			}
 			int toUse = Math.min(255, memSize - addr);
-			if ((addr & ~0x3fff) != ((addr + toUse) & ~0x3fff)) {
-				toUse = 0x4000 - (addr & 0x3fff);
-			}
 			ByteMemoryAccess access = machine.getVdp().getByteReadMemoryAccess(addr);
-			os.writeEvent(new VideoWriteDataEvent(addr & 0x3fff, access.memory, access.offset, toUse));
+			os.writeEvent(new VideoWriteDataEvent(addr, access.memory, access.offset, toUse));
 			addr += toUse;
 		}
 
@@ -297,7 +281,7 @@ public class DemoRecorder {
 						firstVidAddr = nextVidAddr = idx;
 						videoIdx = 0;
 					}
-					videoBytes[videoIdx++] = videoMem.flatReadByte(idx);
+					videoBytes[videoIdx++] = machine.getVdp().readAbsoluteVdpMemory(idx);
 					nextVidAddr++;
 				}
 				if (videoIdx > 0) {

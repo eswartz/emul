@@ -1371,4 +1371,8 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		}
 	}
 
+
+    public void touchAbsoluteVdpMemory(int vdpaddr) {
+    	vdpMemory.touchMemory(vdpaddr);
+    }
 }

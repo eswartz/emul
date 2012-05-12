@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import v9t9.common.hardware.IVdpChip;
-
 
 /**
  * Track a series of changes to a set of registers.

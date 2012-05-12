@@ -538,7 +538,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	 */
 	@Override
 	public void changed(IMemoryEntry entry, int addr, Number value) {
-		touchAbsoluteVdpMemory(addr + entry.getAddrOffset(), value);
+		touchAbsoluteVdpMemory(addr, value);
 	}
 	
 }
