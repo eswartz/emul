@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ejs.base.utils.Pair;
+import ejs.base.utils.StringUtils;
 
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.machine.f99b.cpu.CpuF99b;
@@ -277,6 +278,11 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 
 				@Override
 				public int compare(Integer o1, Integer o2) {
+					if (regContexts.get(regNumContextIds.get(o1)).isVolatile())
+						return 1;
+					if (regContexts.get(regNumContextIds.get(o2)).isVolatile())
+						return -1;
+					
 					if (regContexts.get(regNumContextIds.get(o1)).hasSideEffects())
 						return -1;
 					if (regContexts.get(regNumContextIds.get(o2)).hasSideEffects())
@@ -286,16 +292,18 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 				
 			});
 			
-			final Location[] locs = new Location[regs.length];
+			List<Location> locs = new ArrayList<Location>(regs.length);
 			for (int i = 0; i < regs.length; i++) {
-				locs[i] = new Location(regNumContextIds.get(regs[i]), 0, 4);
+				if (regContexts.get(regNumContextIds.get(i)).isVolatile())
+					break;
+				locs.add(new Location(regNumContextIds.get(regs[i]), 0, 4));
 			}
-			origRegLocs = locs;
+			origRegLocs = (Location[]) locs.toArray(new Location[locs.size()]);
 			
 			new TCFCommandWrapper() {
 				@Override
 				public IToken run() throws Exception {
-					return regV2.getm(locs,new IRegisters.DoneGet() {
+					return regV2.getm(origRegLocs,new IRegisters.DoneGet() {
 
 						@Override
 						public void doneGet(IToken token, Exception error,
@@ -372,7 +380,10 @@ public class TestTCFRegistersV2 extends BaseTCFTest {
 				}
 			};
 			
-			assertTrue("reg copying", Arrays.equals(origRegVals[0], copy[0]));
+			if (!Arrays.equals(origRegVals[0], copy[0])) {
+				fail("reg copying:\n" + StringUtils.catenate(origRegVals[0], ":")
+						+"\nvs:\n" + StringUtils.catenate(copy[0], ":"));
+			}
 		}
 
 		public void setRegs(final Location[] locs, final byte[] data) throws Throwable {
