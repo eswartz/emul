@@ -1761,6 +1761,9 @@ public class ImageImport {
 			else if (format == VdpFormat.COLOR256_1x1) {
 				setVideoMemoryV9938BitmapMode(vdp99);
 			}
+			else if (format == VdpFormat.COLOR4_1x1) {
+				setVideoMemoryV9938BitmapMode(vdp99);
+			}
 			else if (format== VdpFormat.COLOR16_4x4) {
 				setVideoMemoryMulticolorMode(vdp99);
 			}

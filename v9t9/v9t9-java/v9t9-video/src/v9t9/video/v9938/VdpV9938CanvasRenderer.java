@@ -411,7 +411,7 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 	/**
 	 * 
 	 */
-	protected void doTick() {
+	protected synchronized void doTick() {
 
 		// The "blink" controls either the r7/r12 selection for text mode
 		// or the page selection for graphics 4-7 modes.
