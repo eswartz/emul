@@ -22,6 +22,15 @@ public class StringUtils {
 		}
 		return sb.toString();
 	}
+	public static String catenate(byte[] items, String sep) {
+		StringBuilder sb = new StringBuilder();
+		for (byte it : items) {
+			if (sb.length() > 0)
+				sb.append(sep);
+			sb.append(HexUtils.toHex2(it));
+		}
+		return sb.toString();
+	}
 	
 
 	public static String catenate(Collection<?> items, String sep) {
@@ -81,5 +90,6 @@ public class StringUtils {
 		}
 		return part;
 	}
+
 
 }

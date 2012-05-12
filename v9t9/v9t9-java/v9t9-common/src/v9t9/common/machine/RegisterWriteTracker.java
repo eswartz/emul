@@ -1,6 +1,8 @@
 package v9t9.common.machine;
 
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -8,13 +10,13 @@ import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 
 
 /**
- * Track a series of changes to a set of registers
+ * Track a series of changes to a set of registers.
  * @author ejs
  *
  */
 public class RegisterWriteTracker {
 	private final IRegisterAccess access;
-	private Map<Integer, Integer> changes = new TreeMap<Integer, Integer>(); 
+	private List<Long> changes = new ArrayList<Long>(1024); 
 	private IRegisterWriteListener registerWriteListener;
 	private final BitSet regbits;
 	private final int baseReg;
@@ -39,7 +41,9 @@ public class RegisterWriteTracker {
 					
 					synchronized (RegisterWriteTracker.this) {
 						synchronized (changes) {
-							changes.put(reg, value);
+							long ent = ((long) reg) << 32;
+							ent |= (value & 0xffffffffL);
+							changes.add(ent);
 						}
 					}
 				}
@@ -54,12 +58,29 @@ public class RegisterWriteTracker {
 	}
 	
 	/**
-	 * Get the changes, sorted by integer key;
-	 * caller may modify
+	 * Get the changes, as they occurred, in order.  Caller may modify
+	 * but cannot own the list.
 	 * @return the changes
 	 */
-	public Map<Integer, Integer> getChanges() {
+	public List<Long> getChanges() {
 		return changes;
+	}
+	
+	/**
+	 * Get the changes, sorted by register key.  Only the last
+	 * change to each register is mentioned.
+	 *  Caller may modify.
+	 * @return the changes
+	 */
+	public synchronized Map<Integer, Integer> getChangeMapAndReset() {
+		synchronized (changes) {
+			Map<Integer, Integer> map = new TreeMap<Integer, Integer>();
+			for (Long ent : changes) {
+				map.put((int) (ent >> 32), (int)(ent & 0xffffffff));
+			}
+			changes.clear();
+			return map;
+		}
 	}
 	
 	public void removeRegisterListener() {

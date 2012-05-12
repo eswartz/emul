@@ -215,14 +215,11 @@ public class RegistersV2Service extends RegisterService {
 		}
 
 		protected synchronized void sendEvent() {
-			synchronized (tracker) {
-				//System.out.println(System.currentTimeMillis());
-				Map<Integer, Integer> changes = tracker.getChanges();
-				if (!changes.isEmpty()) {
-					sendRegisterChangedEvent(id, baseReg, regSize, 
-							(int) (System.currentTimeMillis() - timestamp), changes);
-				}
-				changes.clear();
+			//System.out.println(System.currentTimeMillis());
+			Map<Integer, Integer> changes = tracker.getChangeMapAndReset();
+			if (!changes.isEmpty()) {
+				sendRegisterChangedEvent(id, baseReg, regSize, 
+						(int) (System.currentTimeMillis() - timestamp), changes);
 			}
 		}
 		
