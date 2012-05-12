@@ -24,13 +24,13 @@ public class MemoryWriteTracker {
 		if (memoryWriteListener == null) {
 			memoryWriteListener = new IMemoryWriteListener() {
 	
-				public void changed(IMemoryEntry entry, int addr, final boolean isByte) {
+				public void changed(IMemoryEntry entry, int addr, final Number value) {
 					synchronized (MemoryWriteTracker.this) {
 						synchronized (changedMemory) {
 							if (addr >= MemoryWriteTracker.this.addr 
 									&& addr < MemoryWriteTracker.this.addr + size) {
 								changedMemory.set(addr);
-								if (!isByte) {
+								if (value instanceof Short) {
 									changedMemory.set(addr + 1);
 								}
 							}

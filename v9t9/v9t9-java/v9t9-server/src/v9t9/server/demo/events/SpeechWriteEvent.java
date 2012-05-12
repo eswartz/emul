@@ -11,7 +11,7 @@ import v9t9.server.demo.DemoFormat;
  * @author ejs
  *
  */
-public class SpeechEvent implements IDemoEvent {
+public class SpeechWriteEvent implements IDemoEvent {
 
 	private final DemoFormat.SpeechEvent event;
 	private final int byt;
@@ -20,7 +20,7 @@ public class SpeechEvent implements IDemoEvent {
 	 * @param event
 	 * @param byt
 	 */
-	public SpeechEvent(DemoFormat.SpeechEvent event,
+	public SpeechWriteEvent(DemoFormat.SpeechEvent event,
 			int byt) {
 		this.event = event;
 		this.byt = byt;

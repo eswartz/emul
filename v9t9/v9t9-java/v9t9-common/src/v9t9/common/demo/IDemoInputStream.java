@@ -18,4 +18,10 @@ public interface IDemoInputStream extends Closeable {
 	 * @throws NotifyException 
 	 */
 	IDemoEvent readNext() throws NotifyException;
+
+	/**
+	 * Get number of ticks per second
+	 * @return
+	 */
+	int getTimerRate();
 }

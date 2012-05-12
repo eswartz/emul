@@ -423,10 +423,10 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		}
 	}
 	
-    public synchronized void touchAbsoluteVdpMemory(int vdpaddr, boolean isByte) {
+    public synchronized void touchAbsoluteVdpMemory(int vdpaddr, Number val) {
     	synchronized (vdpCanvas) {
 	    	vdpTouches.set(vdpaddr);
-	    	if (!isByte)
+	    	if (val instanceof Short)
 	    		vdpTouches.set(vdpaddr + 1);
 	    	//long now = System.currentTimeMillis();
 	    	//if (now >= nextTouchFlushTime) {
@@ -537,8 +537,8 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	 * @see v9t9.common.memory.IMemoryWriteListener#changed(v9t9.common.memory.IMemoryEntry, int, boolean)
 	 */
 	@Override
-	public void changed(IMemoryEntry entry, int addr, boolean isByte) {
-		touchAbsoluteVdpMemory(addr, isByte);
+	public void changed(IMemoryEntry entry, int addr, Number value) {
+		touchAbsoluteVdpMemory(addr, value);
 	}
 	
 }

@@ -6,6 +6,7 @@ package v9t9.server.demo;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -14,7 +15,8 @@ import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.events.NotifyException;
 import v9t9.server.demo.DemoFormat.BufferType;
 import v9t9.server.demo.events.SoundWriteDataEvent;
-import v9t9.server.demo.events.SpeechEvent;
+import v9t9.server.demo.events.SoundWriteRegisterEvent;
+import v9t9.server.demo.events.SpeechWriteEvent;
 import v9t9.server.demo.events.TimerTick;
 import v9t9.server.demo.events.VideoWriteDataEvent;
 import v9t9.server.demo.events.VideoWriteRegisterEvent;
@@ -57,6 +59,7 @@ public class DemoFormatReader implements IDemoInputStream {
 			startPos = isPos;
 			//System.err.println(Integer.toHexString(isPos)+": " + label + " header");
 			length = (is.read() & 0xff) | ((is.read() & 0xff) << 8);
+			isPos += 2;
 		}
 		
 		public int getEffectivePos() {
@@ -91,7 +94,7 @@ public class DemoFormatReader implements IDemoInputStream {
 			if (index >= length) {
 				int typ = is.read();
 				if (typ != myType) {
-					throw new NotifyException(null, "corrupt demo buffering for " + label + " at " + getEffectivePos());
+					throw new NotifyException(null, "corrupt demo buffering for " + label + " at " + Integer.toHexString(getEffectivePos()));
 				}
 				refill();
 			}
@@ -111,19 +114,26 @@ public class DemoFormatReader implements IDemoInputStream {
 	
 	private Queue<IDemoEvent> queuedEvents;
 
+	private int rate;
+
 	public DemoFormatReader(InputStream is) throws IOException {
 		this.is = is instanceof BufferedInputStream ? is : new BufferedInputStream(is);
 		queuedEvents = new LinkedList<IDemoEvent>();
 		
 		// skip header
-		is.read(new byte[DemoFormat.DEMO_MAGIC_HEADER_LENGTH]);
+		byte[] header = new byte[DemoFormat.DEMO_MAGIC_HEADER_LENGTH];
+		is.read(header);
+		if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
+				|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) {
+			rate = 60;
+		} else {
+			rate = 100;
+		}
 		isPos += DemoFormat.DEMO_MAGIC_HEADER_LENGTH;
 		
-		// these constants were hardcoded in v9t9 6.0 and
-		// should probably be kept this way
-		videoBuffer = new DemoBuffer("video", BufferType.VIDEO, 0x2000);
-		soundBuffer = new DemoBuffer("sound", BufferType.SOUND, 1024);
-		speechBuffer = new DemoBuffer("speech", BufferType.SPEECH, 512);
+		videoBuffer = new DemoBuffer("video", BufferType.VIDEO, DemoFormat.VIDEO_BUFFER_SIZE);
+		soundBuffer = new DemoBuffer("sound", BufferType.SOUND, Math.max(DemoFormat.SOUND_REGS_BUFFER_SIZE, DemoFormat.SOUND_BUFFER_SIZE));
+		speechBuffer = new DemoBuffer("speech", BufferType.SPEECH, DemoFormat.SPEECH_BUFFER_SIZE);
 	}
 
 	public void close() throws IOException {
@@ -138,15 +148,22 @@ public class DemoFormatReader implements IDemoInputStream {
 	public IDemoEvent readNext() throws NotifyException {
 		try {
 			ensureEvents();
-		} catch (IndexOutOfBoundsException e) {
-			throw new NotifyException(null, "Error reading demo at " + Integer.toHexString(isPos), e);
-		} catch (IOException e) {
+		} catch (NotifyException e) {
+			throw e;
+		} catch (Throwable e) {
 			throw new NotifyException(null, "Error reading demo at " + Integer.toHexString(isPos), e);
 		}
 		
 		return queuedEvents.poll();
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoInputStream#getTimerRate()
+	 */
+	@Override
+	public int getTimerRate() {
+		return rate;
+	}
 	/**
 	 * @throws IOException 
 	 * 
@@ -167,6 +184,9 @@ public class DemoFormatReader implements IDemoInputStream {
 		}
 		else if (kind == DemoFormat.BufferType.SOUND.getCode()) {
 			queueSoundEvents();
+		}
+		else if (kind == DemoFormat.BufferType.SOUND_REGS.getCode()) {
+			queueSoundRegEvents();
 		}
 		else if (kind == DemoFormat.BufferType.SPEECH.getCode()) {
 			queueSpeechEvents();
@@ -228,15 +248,29 @@ public class DemoFormatReader implements IDemoInputStream {
 					continue;
 				}
 				try {
-					queuedEvents.add(new SpeechEvent(DemoFormat.SpeechEvent.fromCode(byt), 0));
+					queuedEvents.add(new SpeechWriteEvent(DemoFormat.SpeechEvent.fromCode(byt), 0));
 				} catch (IllegalArgumentException e) {
 					throw new NotifyException(null, "corrupt speech byte " + Integer.toHexString(byt) + " at " 
 							+ Integer.toHexString(speechBuffer.getEffectivePos()));
 				}
 			} else {
-				byt = speechBuffer.read();  
-				queuedEvents.add(new SpeechEvent(DemoFormat.SpeechEvent.ADDING_BYTE, byt));
+				byt = speechBuffer.read() & 0xff;  
+				queuedEvents.add(new SpeechWriteEvent(DemoFormat.SpeechEvent.ADDING_BYTE, byt));
 			}
+		}
+	}
+	
+	/**
+	 * @throws NotifyException 
+	 */
+	protected void queueSoundRegEvents() throws IOException, NotifyException {
+		soundBuffer.refill();
+		
+		// parse events
+		while (soundBuffer.isAvailable()) {
+			int reg = (short) soundBuffer.readWord();
+			int val = soundBuffer.readWord() & 0xffff;  
+			queuedEvents.add(new SoundWriteRegisterEvent(reg, val));
 		}
 	}
 

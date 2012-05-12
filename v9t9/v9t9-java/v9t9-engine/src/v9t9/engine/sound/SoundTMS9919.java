@@ -279,7 +279,7 @@ public class SoundTMS9919 implements ISoundChip {
 	@Override
 	public void reset() {
 		for (IVoice v : voices) {
-			v.setRegister(v.getBaseRegister() + REG_OFFS_ATTENTUATION, 0xf);
+			v.setRegister(v.getBaseRegister() + REG_OFFS_ATTENUATION, 0xf);
 		}		
 		audioGateVoice.setGate(false);
 	}

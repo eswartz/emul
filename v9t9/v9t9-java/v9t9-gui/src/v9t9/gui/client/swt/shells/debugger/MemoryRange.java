@@ -52,7 +52,7 @@ public class MemoryRange {
 	public void attachMemoryListener() {
 		memoryWriteListener = new IMemoryWriteListener() {
 
-			public void changed(IMemoryEntry entry, int addr, boolean isByte) {
+			public void changed(IMemoryEntry entry, int addr, Number value) {
 				synchronized (MemoryRange.this) {
 					if (contains(entry, addr)) {
 						lowRange = Math.min(lowRange, addr);

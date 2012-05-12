@@ -22,7 +22,7 @@ public class TMS9919Consts {
 	 * that 15 = silence and 0 = loudest.
 	 * 
 	 */
-	final public static int REG_OFFS_ATTENTUATION = 1;
+	final public static int REG_OFFS_ATTENUATION = 1;
 	/** 
 	 * This is the offset in a noise register bank that
 	 * controls its type (NOISE_FEEDBACK_MASK) and its frequency

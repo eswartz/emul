@@ -11,14 +11,10 @@ import v9t9.common.machine.IRegisterAccess;
  * @author ejs
  *
  */
-public class VideoWriteRegisterEvent extends WriteRegister implements
+public class SoundWriteRegisterEvent extends WriteRegister implements
 		IDemoEvent {
 
-	public VideoWriteRegisterEvent(int addr) {
-		super((addr & 0x7f00) >> 8, (addr & 0xff));
-	}
-
-	public VideoWriteRegisterEvent(int reg, int val) {
+	public SoundWriteRegisterEvent(int reg, int val) {
 		super(reg, val);
 	}
 
@@ -27,14 +23,7 @@ public class VideoWriteRegisterEvent extends WriteRegister implements
 	 */
 	@Override
 	protected IRegisterAccess getRegisterAccess(IMachine machine) {
-		return machine.getVdp();
-	}
-
-	/**
-	 * @return
-	 */
-	public int getAddr() {
-		return (getReg() << 8) | 0x8000 | (getVal() & 0xff);
+		return machine.getSound();
 	}
 
 }

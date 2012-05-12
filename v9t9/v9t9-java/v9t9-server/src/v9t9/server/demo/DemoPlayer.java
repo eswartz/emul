@@ -42,28 +42,33 @@ public class DemoPlayer {
 	public void start() {
 		timer = new FastTimer("DemoPlayer");
 		timer.scheduleTask(new Runnable() {
-			
-			@Override
 			public void run() {
-				if (!pauseSetting.getBoolean()) {
-					try {
-						processEvents();
-					} catch (final NotifyException e) {
-						if (e.getEvent().level == Level.ERROR)
-							e.printStackTrace();
-						
-						stop();
-						listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
-
-							@Override
-							public void fire(IDemoListener listener) {
-								listener.stopped(e.getEvent());
-							}
-						});
-					}
-				}
+				stepDemo();
 			}
-		}, 60);
+		}, is.getTimerRate());
+	}
+
+	/**
+	 * @return
+	 */
+	protected void stepDemo() {
+		if (!pauseSetting.getBoolean()) {
+			try {
+				processEvents();
+			} catch (final NotifyException e) {
+				if (e.getEvent().level == Level.ERROR)
+					e.printStackTrace();
+				
+				stop();
+				listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
+
+					@Override
+					public void fire(IDemoListener listener) {
+						listener.stopped(e.getEvent());
+					}
+				});
+			}
+		}
 	}
 	
 	protected void processEvents() throws NotifyException {

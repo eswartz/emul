@@ -13,12 +13,16 @@ import v9t9.common.memory.IMemoryDomain;
  */
 public class VideoWriteDataEvent extends WriteDataBlock implements IDemoEvent {
 
-	/**
-	 * @param address
-	 * @param data
-	 */
+	public VideoWriteDataEvent(int address, byte[] data, int offs, int length) {
+		super(address, data, offs, length);
+	}
+
+	public VideoWriteDataEvent(int address, byte[] data, int length) {
+		super(address, data, 0, length);
+	}
+	
 	public VideoWriteDataEvent(int address, byte[] data) {
-		super(address, data);
+		super(address, data, 0, data.length);
 	}
 
 	/* (non-Javadoc)

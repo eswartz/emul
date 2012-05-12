@@ -39,7 +39,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     
     public IMemoryWriteListener nullMemoryWriteListener = new IMemoryWriteListener() {
 
-		public void changed(IMemoryEntry entry, int addr, boolean isByte) {
+		public void changed(IMemoryEntry entry, int addr, Number value) {
 		}
     	
     };
@@ -213,13 +213,13 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
         accessListener.access(entry);
         entry.writeByte(addr, val);
         if (!writeListeners.isEmpty())
-        	fireWriteEvent(entry, addr & 0xffff, true);
+        	fireWriteEvent(entry, addr & 0xffff, (Byte) val);
     }
 
-    private void fireWriteEvent(final IMemoryEntry entry, final int addr, final boolean isByte) {
+    private void fireWriteEvent(final IMemoryEntry entry, final int addr, Number value) {
     	for (Object listenerObj : writeListeners.toArray()) {
     		try {
-    			((IMemoryWriteListener) listenerObj).changed(entry, addr, isByte);
+    			((IMemoryWriteListener) listenerObj).changed(entry, addr, value);
     		} catch (Throwable t) {
     			t.printStackTrace();
     		}
@@ -235,7 +235,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
         accessListener.access(entry);
         entry.writeWord(addr, val);
         if (!writeListeners.isEmpty())
-        	fireWriteEvent(entry, addr & 0xfffe, false);
+        	fireWriteEvent(entry, addr & 0xfffe, (Short) val);
     }
 
     /* (non-Javadoc)
@@ -522,7 +522,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	@Override
 	public void touchMemory(int addr) {
 		if (!writeListeners.isEmpty())
-			fireWriteEvent(getEntryAt(addr), addr, true);
+			fireWriteEvent(getEntryAt(addr), addr, null);
 	}
 
 	/* (non-Javadoc)

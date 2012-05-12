@@ -39,7 +39,7 @@ public abstract class BaseClockedVoice extends BaseVoice implements IClockedVoic
 	@Override
 	public void setAttenuation(int att) {
 		this.att = att;
-		fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION, att); 
+		fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_ATTENUATION, att); 
 	}
 
 	@Override

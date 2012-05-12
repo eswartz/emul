@@ -14,7 +14,12 @@ import v9t9.common.memory.IMemoryDomain;
 public class SoundWriteDataEvent extends WriteDataToAddr implements IDemoEvent {
 
 	public SoundWriteDataEvent(int address, byte[] data) {
-		super(address, data);
+		super(address, data, data.length);
+	}
+
+	public SoundWriteDataEvent(int addr, byte[] data,
+			int length) {
+		super(addr, data, length);
 	}
 
 	/* (non-Javadoc)

@@ -141,4 +141,7 @@ public interface ICpu extends IPersistable {
 	 */
 	IDecompilePhase createDecompiler();
 
+	void addListener(ICpuListener listener);
+	void removeListener(ICpuListener listener);
+
 }

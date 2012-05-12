@@ -15,10 +15,14 @@ import v9t9.common.memory.IMemoryDomain;
 public abstract class WriteDataBlock implements IDemoEvent {
 	private int address;
 	private byte[] data;
+	private final int offs;
+	private final int length;
 	
-	public WriteDataBlock(int address, byte[] data) {
+	public WriteDataBlock(int address, byte[] data, int offs, int length) {
 		this.address = address;
 		this.data = data;
+		this.offs = offs;
+		this.length = length;
 	}
 	public int getAddress() {
 		return address;
@@ -26,7 +30,12 @@ public abstract class WriteDataBlock implements IDemoEvent {
 	public byte[] getData() {
 		return data;
 	}
-	
+	public int getLength() {
+		return length;
+	}
+	public int getOffset() {
+		return offs;
+	}
 	protected abstract IMemoryDomain getDomain(IMachine machine);
 	
 	/* (non-Javadoc)
@@ -34,8 +43,8 @@ public abstract class WriteDataBlock implements IDemoEvent {
 	 */
 	@Override
 	public void execute(IMachine machine) {
-		for (int i = 0; i < data.length; i++) {
-			getDomain(machine).writeByte(address + i, data[i]);
+		for (int i = 0; i < length; i++) {
+			getDomain(machine).writeByte(address + i, data[i + offs]);
 		}
 	}
 }

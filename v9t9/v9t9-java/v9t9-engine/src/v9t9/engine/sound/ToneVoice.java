@@ -26,7 +26,7 @@ public class ToneVoice extends BaseClockedVoice {
 		register(baseReg + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD,
 				getId() + ":Per",
 				getName());
-		register(baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION,
+		register(baseReg + TMS9919Consts.REG_OFFS_ATTENUATION,
 				getId() + ":Att",
 				getName());
 		
@@ -41,7 +41,7 @@ public class ToneVoice extends BaseClockedVoice {
 		if (reg == baseReg + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD) {
 			return getPeriod();
 		}
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
 			return getAttenuation();
 		}
 		return 0;
@@ -55,8 +55,11 @@ public class ToneVoice extends BaseClockedVoice {
 		if (reg == baseReg + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD) {
 			setPeriod(newValue);
 		}
-		else if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
+		else if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
 			setAttenuation(newValue);
+		}
+		else {
+			System.err.println("unknown sound register " + reg);
 		}
 	}
 

@@ -47,7 +47,7 @@ public class EnhancedNoiseVoice extends BaseEnhancedClockedVoice implements IEnh
 		register(baseReg + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD,
 				getId() + ":Ctl",
 				getName());
-		register(baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION,
+		register(baseReg + TMS9919Consts.REG_OFFS_ATTENUATION,
 				getId() + ":Att",
 				getName());
 
@@ -62,7 +62,7 @@ public class EnhancedNoiseVoice extends BaseEnhancedClockedVoice implements IEnh
 	 */
 	@Override
 	public int getRegister(int reg) {
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
 			return getAttenuation();
 		}
 		if (reg == baseReg + TMS9919Consts.REG_OFFS_NOISE_CONTROL) {
@@ -85,7 +85,7 @@ public class EnhancedNoiseVoice extends BaseEnhancedClockedVoice implements IEnh
 		if (reg == baseReg + TMS9919Consts.REG_OFFS_NOISE_CONTROL) {
 			setControl(newValue);
 		}		
-		else if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
+		else if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
 			setAttenuation(newValue);
 		}
 		else if (reg >= baseEffectReg && reg < baseEffectReg + numEffects) {

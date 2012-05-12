@@ -127,7 +127,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		info = soundChip.getRegisterInfo(regBase);
 		assert info != null && info.id.endsWith("N:Ctl");
 
-		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_ATTENTUATION, voice);
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION, voice);
 		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_NOISE_CONTROL, voice);
 
 		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_NOISE_CONTROL,
@@ -143,7 +143,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 				}
 		);
 		
-		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENTUATION,
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION,
 				new IRegisterAccess.IRegisterWriteListener() {
 			
 				@Override
@@ -185,7 +185,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		assert info != null && info.id.contains(num + ":Per");
 		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD, 
 				voice);
-		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_ATTENTUATION, 
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION, 
 				voice);
 		
 		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD,
@@ -201,7 +201,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 			}
 		);
 
-		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENTUATION,
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_ATTENUATION,
 			new IRegisterAccess.IRegisterWriteListener() {
 				
 				@Override

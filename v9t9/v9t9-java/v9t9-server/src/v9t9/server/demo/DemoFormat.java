@@ -38,6 +38,8 @@ public class DemoFormat {
 
 	public static final byte[] DEMO_MAGIC_HEADER_TI60 = { 'T','I','6','0' };
 	public static final byte[] DEMO_MAGIC_HEADER_V910 = { 'V','9','1','0' };
+	public static final byte[] DEMO_MAGIC_HEADER_V970 = { 'V','9','7','0' };
+	
 	public static final int DEMO_MAGIC_HEADER_LENGTH = 4;
 
 	public enum BufferType {
@@ -45,14 +47,17 @@ public class DemoFormat {
 		TICK(0),
 		/** video addresses and data */
 		VIDEO(1),
-		/** sound bytes */
+		/** sound bytes (old format) */
 		SOUND(2),
 		/** speech commands */
 		SPEECH(3),
 		/** CRU access [live client only] */
 		CRU_WRITE(4),
 		/** CRU access [live client only] */
-		CRU_READ(5);
+		CRU_READ(5),
+		/** sound bytes (new format) */
+		SOUND_REGS(6);
+
 		
 		private int code;
 
@@ -105,4 +110,13 @@ public class DemoFormat {
 			}
 		}
 	}
+	
+	// these constants were hardcoded in v9t9 6.0 and
+	// should probably be kept this way
+
+	public static final int VIDEO_BUFFER_SIZE = 8192;
+	public static final int SOUND_BUFFER_SIZE = 1024;
+	public static final int SPEECH_BUFFER_SIZE = 512;
+	
+	public static final int SOUND_REGS_BUFFER_SIZE = 4096;
 }

@@ -6,10 +6,13 @@ import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 
 
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.cpu.ICpuListener;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
@@ -81,6 +84,8 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	private IProperty dumpInstructions;
 
 	private IProperty dumpFullInstructions;
+
+	private ListenerList<ICpuListener> listeners = new ListenerList<ICpuListener>();
 
 	public CpuBase(IMachine machine, ICpuState state, int interruptTick) {
 		this.machine = machine;
@@ -187,6 +192,15 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		
 		if (isIdle())
 			interruptWaiting.release();
+		
+		if (!listeners.isEmpty()) {
+			listeners.fire(new IFire<ICpuListener>() {
+				@Override
+				public void fire(ICpuListener listener) {
+					listener.ticked(CpuBase.this);
+				}
+			});
+		}
 	}
 
 	public synchronized boolean isThrottled() {
@@ -291,5 +305,21 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
     		handleInterrupts();
     	}
     }
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#addListener(v9t9.common.cpu.ICpuListener)
+	 */
+	@Override
+	public void addListener(ICpuListener listener) {
+		listeners .add(listener);		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#removeListener(v9t9.common.cpu.ICpuListener)
+	 */
+	@Override
+	public void removeListener(ICpuListener listener) {
+		listeners.remove(listener);
+	}
 	
 }

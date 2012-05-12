@@ -69,11 +69,12 @@ public class DemoHandler implements IDemoHandler {
 		
 		lastRecordingURI = uri;
 		try {
-			recorder = new DemoRecorder(new DemoFormatWriter(locator.createOutputStream(uri)), listeners);
+			DemoFormatWriter writer = new DemoFormatWriter(locator.createOutputStream(uri));
+			recorder = new DemoRecorder(machine, writer, listeners);
 			
 			recordSetting.setBoolean(true);
 			demoPauseSetting.setBoolean(false);
-		} catch (IOException e) {
+		} catch (Throwable e) {
 			throw new NotifyException(uri, "Failed to create demo " + uri, e);
 		}
 	}
@@ -91,7 +92,7 @@ public class DemoHandler implements IDemoHandler {
 		
 		try {
 			recorder.stop();
-		} catch (IOException e) {
+		} catch (Throwable e) {
 			throw new NotifyException(lastRecordingURI, "Failed to finish writing demo " + lastRecordingURI, e);
 		}
 		
@@ -122,7 +123,8 @@ public class DemoHandler implements IDemoHandler {
 			is.mark(4);
 			is.read(header);
 			if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
-					|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) {
+					|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)
+					|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V970)) {
 				is.reset();
 				player = new DemoPlayer(machine, new DemoFormatReader(is), listeners);
 				player.start();

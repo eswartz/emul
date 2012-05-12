@@ -32,7 +32,7 @@ public class EnhancedToneVoice extends BaseEnhancedClockedVoice {
 		register(baseReg + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD,
 				getId() + ":Per",
 				getName());
-		register(baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION,
+		register(baseReg + TMS9919Consts.REG_OFFS_ATTENUATION,
 				getId() + ":Att",
 				getName());
 
@@ -50,7 +50,7 @@ public class EnhancedToneVoice extends BaseEnhancedClockedVoice {
 		if (reg == baseReg + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD) {
 			return getPeriod();
 		}
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
 			return getAttenuation();
 		}
 
@@ -70,7 +70,7 @@ public class EnhancedToneVoice extends BaseEnhancedClockedVoice {
 		if (reg == baseReg + TMS9919Consts.REG_OFFS_FREQUENCY_PERIOD) {
 			setPeriod(newValue);
 		}
-		else if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
+		else if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
 			setAttenuation(newValue);
 		}
 		else if (reg >= baseEffectReg && reg < baseEffectReg + numEffects) {

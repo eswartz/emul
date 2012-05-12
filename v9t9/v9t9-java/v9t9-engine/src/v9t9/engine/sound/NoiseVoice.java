@@ -38,7 +38,7 @@ public class NoiseVoice extends BaseClockedVoice implements INoiseVoice {
 		register(baseReg + TMS9919Consts.REG_OFFS_NOISE_CONTROL,
 				getId() + ":Ctl",
 				getName());
-		register(baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION,
+		register(baseReg + TMS9919Consts.REG_OFFS_ATTENUATION,
 				getId() + ":Att",
 				getName());
 		
@@ -50,7 +50,7 @@ public class NoiseVoice extends BaseClockedVoice implements INoiseVoice {
 	 */
 	@Override
 	public int getRegister(int reg) {
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
 			return getAttenuation();
 		}
 		if (reg == baseReg + TMS9919Consts.REG_OFFS_NOISE_CONTROL) {
@@ -64,11 +64,14 @@ public class NoiseVoice extends BaseClockedVoice implements INoiseVoice {
 	 */
 	@Override
 	public void setRegister(int reg, int newValue) {
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENTUATION) {
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_ATTENUATION) {
 			setAttenuation(newValue);
 		}
 		else if (reg == baseReg + TMS9919Consts.REG_OFFS_NOISE_CONTROL) {
 			setControl(newValue);
+		}
+		else {
+			System.err.println("unknown register " + reg);
 		}
 	}
 

@@ -15,16 +15,24 @@ import v9t9.common.memory.IMemoryDomain;
 public abstract class WriteDataToAddr implements IDemoEvent {
 	private int address;
 	private byte[] data;
+	private int length;
 	
-	public WriteDataToAddr(int address, byte[] data) {
+	public WriteDataToAddr(int address, byte[] data, int length) {
 		this.address = address;
 		this.data = data;
+		this.length = length;
 	}
 	public int getAddress() {
 		return address;
 	}
 	public byte[] getData() {
 		return data;
+	}
+	/**
+	 * @return the length
+	 */
+	public int getLength() {
+		return length;
 	}
 	
 
@@ -35,7 +43,7 @@ public abstract class WriteDataToAddr implements IDemoEvent {
 	 */
 	@Override
 	public void execute(IMachine machine) {
-		for (int i = 0; i < data.length; i++) {
+		for (int i = 0; i < length; i++) {
 			getDomain(machine).writeByte(address, data[i]);
 		}
 	}

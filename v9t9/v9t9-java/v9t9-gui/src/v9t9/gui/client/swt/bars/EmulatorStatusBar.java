@@ -32,6 +32,7 @@ import v9t9.common.cpu.IExecutor;
 import v9t9.common.demo.IDemoHandler;
 import v9t9.common.demo.IDemoHandler.IDemoListener;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
@@ -262,7 +263,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			final IProperty pauseSetting) {
 		Control button = (Control) e.widget;
 		final Menu menu = new Menu(button);
-		
+
 		final IProperty recordPath = Settings.get(machine, IDemoHandler.settingRecordedDemosPath);
 		final IProperty searchPath = Settings.get(machine, IDemoHandler.settingDemosPath);
 		
@@ -369,6 +370,9 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 						
 						try {
 							demoHandler.startRecording(saveFile.toURI());
+							machine.getEventNotifier().notifyEvent(
+									null, Level.INFO, 
+									"Recording to " + saveFile);
 						} catch (NotifyException ex) {
 							machine.getEventNotifier().notifyEvent(ex.getEvent());
 						}

@@ -161,7 +161,7 @@ public class InterpreterF99b implements IInterpreter {
         memoryWriteListener = new IMemoryWriteListener() {
 			
 			@Override
-			public void changed(IMemoryEntry entry, int addr, boolean isByte) {
+			public void changed(IMemoryEntry entry, int addr, Number value) {
 				invalidateInstructionCache(addr);
 			}
 		};
