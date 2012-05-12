@@ -119,16 +119,37 @@ public class PCodeDsr implements IDsrHandler9900 {
 		.withAddress(0x4000)
 		.withSize(0x2000)
 		.withFilename("pCodeRomA.bin")
+		.withFileMD5("3A202E35036CD58C76BD49D0F446958D")
 		.withFilename2("pCodeRomB.bin")
+		.withFile2MD5("0D64C8CD01E473933588547D2D7889F2")
 		.withBankClass(PCodeDsrRomBankedMemoryEntry.class)
 		.create("P-Code DSR ROM");
 	
-	private static MemoryEntryInfo pcodeGromMemoryEntryInfo = MemoryEntryInfoBuilder
+	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
+	public static MemoryEntryInfo pcodeDsrRomBankAMemoryEntryInfo = MemoryEntryInfoBuilder
+		.wordMemoryEntry()
+		.withAddress(0x4000)
+		.withSize(0x2000)
+		.withFilename("pCodeRomA.bin")
+		.withFileMD5("3A202E35036CD58C76BD49D0F446958D")
+		.create("P-Code DSR ROM (bank 1)");
+
+	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
+	public static MemoryEntryInfo pcodeDsrRomBankBMemoryEntryInfo = MemoryEntryInfoBuilder
+		.wordMemoryEntry()
+		.withAddress(0x4000)
+		.withSize(0x2000)
+		.withFilename("pCodeRomB.bin")
+		.withFileMD5("0D64C8CD01E473933588547D2D7889F2")
+		.create("P-Code DSR ROM (bank 2)");
+	
+	public static MemoryEntryInfo pcodeGromMemoryEntryInfo = MemoryEntryInfoBuilder
 		.byteMemoryEntry()
-		.withDomain(IMemoryDomain.NAME_GRAPHICS)
+		.withDomain(PCODE)
 		.withAddress(0x0)
 		.withSize(0x10000)
 		.withFilename("pCodeGroms.bin")
+		.withFileMD5("1ABC9091E58B0A1E9300EC214FF89EFE")
 		.create("P-Code GROM");
 	
 	private void ensureSetup(IMemoryEntryFactory memoryEntryFactory) throws IOException {
