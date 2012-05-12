@@ -60,9 +60,14 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 		if (sector == null)
 			throw new IOException(MessageFormat.format("RawTrackDiskImage:  disk image ''{0}'' does not appear to be a raw track image",
 					spec));
-		
+
 		hdr.sides = sector[0x12];
 		hdr.tracks = sector[0x11];
+		
+		if (hdr.tracks == 0 || hdr.sides == 0)
+			throw new IOException(MessageFormat.format("RawTrackDiskImage:  disk image ''{0}'' does not appear to be formatted",
+					spec));
+		
 		hdr.tracksize = (short) (getHandle().length() / hdr.tracks / hdr.sides);
 		if (hdr.sides == 1 && hdr.tracksize > 5000) {
 			hdr.tracksize /= 2;
