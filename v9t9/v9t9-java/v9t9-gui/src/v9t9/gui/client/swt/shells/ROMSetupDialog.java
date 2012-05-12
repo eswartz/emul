@@ -361,7 +361,8 @@ public class ROMSetupDialog extends Dialog {
 					}
 			});
 			
-			infoLabel.append(" for information on ROMs.");
+			infoLabel.append(" for information on ROMs.\n\n");
+			infoLabel.append("Or, exit this dialog and use the 'Play Demo' button to see how V9t9 behaves.");
 			
 			styledTextHelper.popStyle();
 		}

@@ -5,11 +5,6 @@ package v9t9.server.demo;
 
 import java.io.IOException;
 
-import ejs.base.properties.IProperty;
-import ejs.base.timer.FastTimer;
-import ejs.base.utils.ListenerList;
-import ejs.base.utils.ListenerList.IFire;
-
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoHandler;
 import v9t9.common.demo.IDemoHandler.IDemoListener;
@@ -19,6 +14,10 @@ import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.server.demo.events.TimerTick;
+import ejs.base.properties.IProperty;
+import ejs.base.timer.FastTimer;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 
 /**
  * @author ejs
@@ -31,10 +30,13 @@ public class DemoPlayer {
 	private FastTimer timer;
 	private IProperty pauseSetting;
 	private final ListenerList<IDemoListener> listeners;
+	private final int timerRate;
 
-	public DemoPlayer(IMachine machine, IDemoInputStream is, ListenerList<IDemoListener> listeners) {
+	public DemoPlayer(IMachine machine, IDemoInputStream is, int timerRate, 
+			ListenerList<IDemoListener> listeners) {
 		this.machine = machine;
 		this.is = is;
+		this.timerRate = timerRate;
 		this.listeners = listeners;
 		pauseSetting = machine.getSettings().get(IDemoHandler.settingDemoPaused);
 	}
@@ -45,7 +47,7 @@ public class DemoPlayer {
 			public void run() {
 				stepDemo();
 			}
-		}, is.getTimerRate());
+		}, timerRate);
 	}
 
 	/**

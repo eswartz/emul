@@ -5,15 +5,10 @@ package v9t9.server.demo;
 
 import java.io.IOException;
 
-import ejs.base.utils.ListenerList;
-import ejs.base.utils.ListenerList.IFire;
-
-import v9t9.common.cpu.ICpu;
-import v9t9.common.cpu.ICpuListener;
 import v9t9.common.demo.IDemoHandler.IDemoListener;
 import v9t9.common.demo.IDemoOutputStream;
-import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
@@ -23,8 +18,15 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
 import v9t9.common.sound.TMS9919Consts;
-
-import v9t9.server.demo.events.*;
+import v9t9.engine.video.v9938.VdpV9938;
+import v9t9.server.demo.events.SoundWriteDataEvent;
+import v9t9.server.demo.events.SoundWriteRegisterEvent;
+import v9t9.server.demo.events.TimerTick;
+import v9t9.server.demo.events.VideoWriteDataEvent;
+import v9t9.server.demo.events.VideoWriteRegisterEvent;
+import ejs.base.timer.FastTimer;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 /**
  * @author ejs
  *
@@ -34,7 +36,8 @@ public class DemoRecorder {
 	private final ListenerList<IDemoListener> listeners;
 
 
-	private ICpuListener cpuListener;
+	private FastTimer timer;
+	private Runnable timerTask;
 
 	private IRegisterWriteListener vdpRegisterListener;
 
@@ -56,10 +59,13 @@ public class DemoRecorder {
 	private int soundMmioAddr;
 	private byte[] soundBytes = new byte[256];
 	private int soundIdx;
+	private long timerRate;
 	
-	public DemoRecorder(IMachine machine, IDemoOutputStream os, ListenerList<IDemoListener> listeners) throws NotifyException {
+	public DemoRecorder(IMachine machine, IDemoOutputStream os, int timerRate,
+			ListenerList<IDemoListener> listeners) throws NotifyException {
 		this.machine = machine;
 		this.os = os;
+		this.timerRate = timerRate;
 		this.listeners = listeners;
 		
 		useSoundRegisters = ! machine.getSound().getGroupName().equals(TMS9919Consts.GROUP_NAME);
@@ -79,21 +85,32 @@ public class DemoRecorder {
 	 * 
 	 */
 	private void sendSetupInfo() throws NotifyException {
-		// send VDP regs and data
+		// send VDP data
+		int memSize = machine.getVdp().getMemorySize();
+		for (int addr = 0; addr < memSize; ) {
+			if (machine.getVdp() instanceof VdpV9938) {
+				if ((addr & 0x3fff) == 0) {
+					// set the memory page
+					os.writeEvent(new VideoWriteRegisterEvent(
+							14, addr / 0x4000));
+				}
+			}
+			int toUse = Math.min(255, memSize - addr);
+			if ((addr & ~0x3fff) != ((addr + toUse) & ~0x3fff)) {
+				toUse = 0x4000 - (addr & 0x3fff);
+			}
+			ByteMemoryAccess access = machine.getVdp().getByteReadMemoryAccess(addr);
+			os.writeEvent(new VideoWriteDataEvent(addr & 0x3fff, access.memory, access.offset, toUse));
+			addr += toUse;
+		}
+
+		// send video regs
 		IRegisterAccess vra = machine.getVdp();
 		int lastReg = vra.getFirstRegister() + vra.getRegisterCount();
 		for (int i = vra.getFirstRegister(); i < lastReg; i++) {
 			os.writeEvent(new VideoWriteRegisterEvent(i, vra.getRegister(i)));
 		}
-		
-		int memSize = machine.getVdp().getMemorySize();
-		for (int addr = 0; addr < memSize; ) {
-			int toUse = Math.min(255, memSize - addr);
-			ByteMemoryAccess access = machine.getVdp().getByteReadMemoryAccess(addr);
-			os.writeEvent(new VideoWriteDataEvent(addr, access.memory, access.offset, toUse));
-			addr += toUse;
-		}
-		
+
 		// send sound regs 
 		IRegisterAccess sra = machine.getSound();
 		int slastReg = sra.getFirstRegister() + sra.getRegisterCount();
@@ -128,8 +145,11 @@ public class DemoRecorder {
 	 * 
 	 */
 	private void connect() {
-		cpuListener = new ICpuListener() {
-			public void ticked(ICpu cpu) {
+		timer = new FastTimer("demo");
+		timerTask = new Runnable() {
+			
+			@Override
+			public void run() {
 				try {
 					if (os != null) {
 						flushSoundData();
@@ -138,10 +158,10 @@ public class DemoRecorder {
 					}
 				} catch (final Throwable t) {
 					fail(t);
-				}
+				}				
 			}
 		};
-		machine.getCpu().addListener(cpuListener);
+		timer.scheduleTask(timerTask, timerRate);
 		
 		vdpRegisterListener = new IRegisterWriteListener() {
 
@@ -150,7 +170,7 @@ public class DemoRecorder {
 				if (reg >= 0) {
 					try {
 						flushVideoData();
-						os.writeEvent(new VideoWriteRegisterEvent((reg << 8) | 0x8000 | (value & 0xff)));
+						os.writeEvent(new VideoWriteRegisterEvent(reg, value));
 					} catch (Exception e) {
 						fail(e);
 					}
@@ -217,7 +237,7 @@ public class DemoRecorder {
 	 * 
 	 */
 	private void disconnect() {
-		machine.getCpu().removeListener(cpuListener);
+		timer.cancel();
 		machine.getVdp().removeWriteListener(vdpRegisterListener);
 		videoMem.removeWriteListener(vdpMemoryListener);
 		machine.getSound().removeWriteListener(soundRegisterListener);

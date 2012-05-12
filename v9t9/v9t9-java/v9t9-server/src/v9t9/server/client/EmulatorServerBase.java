@@ -4,11 +4,14 @@
 package v9t9.server.client;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 import org.eclipse.tm.tcf.protocol.Protocol;
 
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.demo.IDemoHandler;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.IVdpChip;
@@ -143,8 +146,19 @@ public abstract class EmulatorServerBase {
 
     	this.server = new EmulatorTCFServer(machine);
     	
+    	// demo support
     	DemoHandler demoHandler = new DemoHandler(machine);
 		machine.setDemoHandler(demoHandler);
+		
+		IProperty demoPath = settings.get(IDemoHandler.settingDemosPath); 
+		if (demoPath.getList().isEmpty()) {
+    		try {
+				demoPath.getList().add(new URL(model.getDataURL(), "demos").toURI().toString());
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
+		}
+    	
     }
 
 	abstract protected IMachineModel createModel(String modelId);

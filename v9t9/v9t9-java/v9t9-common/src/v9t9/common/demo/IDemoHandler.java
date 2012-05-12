@@ -21,6 +21,19 @@ public interface IDemoHandler {
 		void stopped(NotifyEvent event);
 	}
 	
+	/** Array of URIs where demos may be fetched */
+	SettingSchema settingDemosPath = 
+			new SettingSchema(
+					ISettingsHandler.INSTANCE,
+					"DemosPath", String.class, new ArrayList<String>());
+	/** URI where demos will be recorded */
+	SettingSchema settingRecordedDemosPath = 
+		new SettingSchema(
+				ISettingsHandler.INSTANCE,
+				"RecordedDemosPath", ".");
+
+	String[] DEMO_EXTENSIONS = new String[] { "dem|V9t9 demo file (*.dem)", "*|Other demo file" };
+	
 	/** This setting is true while a demo is being recorded. */
 	SettingSchema settingRecordDemo = new SettingSchema(
 				ISettingsHandler.TRANSIENT,
@@ -42,18 +55,6 @@ public interface IDemoHandler {
 			ISettingsHandler.TRANSIENT,
 			"DemoPaused", new Boolean(false));
 
-	/** Array of URIs where demos may be fetched */
-	SettingSchema settingDemosPath = 
-			new SettingSchema(
-					ISettingsHandler.INSTANCE,
-					"DemosPath", String.class, new ArrayList<String>());
-	/** URI where demos will be recorded */
-	SettingSchema settingRecordedDemosPath = 
-		new SettingSchema(
-				ISettingsHandler.INSTANCE,
-				"RecordedDemosPath", ".");
-
-	String[] DEMO_EXTENSIONS = new String[] { "dem|V9t9 demo file", "*|Other demo file" };
 	
 	void dispose();
 

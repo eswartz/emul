@@ -6,6 +6,7 @@ package v9t9.gui.client.swt.bars;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -35,6 +36,7 @@ import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyException;
+import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
@@ -290,12 +292,58 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			});
 		} 
 		
-		final MenuItem playItem = new MenuItem(menu, SWT.RADIO);
+		final MenuItem playMenuItem = new MenuItem(menu, SWT.CASCADE);
 		if (recordSetting.getBoolean())
-			playItem.setEnabled(false);
-		playItem.setSelection(false);
-		playItem.setText("Play demo...");
-		playItem.addSelectionListener(new SelectionAdapter() {
+			playMenuItem.setEnabled(false);
+		playMenuItem.setSelection(false);
+		playMenuItem.setText("Play demo");
+		
+		////
+		
+		Menu playSubMenu = new Menu(playMenuItem);
+		
+		boolean any = false;
+		if (!searchPath.getList().isEmpty()) {
+			try {
+				IPathFileLocator locator = machine.getPathFileLocator();
+				URI dirURI = locator.createURI(searchPath.getList().get(0).toString());
+				Collection<String> ents = locator.getDirectoryListing(dirURI);
+				for (String ent : ents) {
+					if (ent.endsWith(".dem")) {
+						final URI demoURI = locator.resolveInsideURI(dirURI, ent);
+						final MenuItem demoItem = new MenuItem(playSubMenu, SWT.PUSH);
+						demoItem.setText(ent);
+						demoItem.addSelectionListener(new SelectionAdapter() {
+							@Override
+							public void widgetSelected(SelectionEvent e) {
+								try {
+									demoHandler.startPlayback(demoURI);
+								} catch (NotifyException ex) {
+									machine.getEventNotifier().notifyEvent(ex.getEvent());
+								}
+							}
+						});
+						any = true;
+					}
+				}
+			} catch (Exception e1) {
+				e1.printStackTrace();
+				// oh well
+			}
+		}
+		
+		
+		if (any) {
+			new MenuItem(playSubMenu, SWT.SEPARATOR);
+		}
+		MenuItem playBrowseItem = new MenuItem(playSubMenu, SWT.PUSH); 
+		playBrowseItem.setText("Browse...");
+		
+		playMenuItem.setMenu(playSubMenu);
+		
+		////
+		
+		playBrowseItem.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				String filename = SwtDialogUtils.openFileSelectionDialog(

@@ -8,14 +8,14 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 
-import ejs.base.properties.IProperty;
-import ejs.base.utils.ListenerList;
-
 import v9t9.common.demo.IDemoHandler;
+import v9t9.common.demo.IDemoOutputStream;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
+import ejs.base.properties.IProperty;
+import ejs.base.utils.ListenerList;
 
 /**
  * @author ejs
@@ -69,8 +69,13 @@ public class DemoHandler implements IDemoHandler {
 		
 		lastRecordingURI = uri;
 		try {
-			DemoFormatWriter writer = new DemoFormatWriter(locator.createOutputStream(uri));
-			recorder = new DemoRecorder(machine, writer, listeners);
+			IDemoOutputStream writer;
+			int rate;
+			
+			writer = new OldDemoFormatWriter(locator.createOutputStream(uri));
+			rate = 60;
+			
+			recorder = new DemoRecorder(machine, writer, rate, listeners);
 			
 			recordSetting.setBoolean(true);
 			demoPauseSetting.setBoolean(false);
@@ -122,11 +127,18 @@ public class DemoHandler implements IDemoHandler {
 			byte[] header = new byte[4];
 			is.mark(4);
 			is.read(header);
-			if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
-					|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)
-					|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V970)) {
+			
+			if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V970)) {
 				is.reset();
-				player = new DemoPlayer(machine, new DemoFormatReader(is), listeners);
+				player = new DemoPlayer(machine, new OldDemoFormatReader(is), 100, listeners);
+			} else if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
+					|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) 
+			{
+				is.reset();
+				player = new DemoPlayer(machine, new OldDemoFormatReader(is), 60, listeners);
+			}
+			
+			if (player != null) {
 				player.start();
 				
 				machinePauseSetting.setBoolean(true);

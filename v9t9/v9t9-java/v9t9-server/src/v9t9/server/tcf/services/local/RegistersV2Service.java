@@ -26,8 +26,8 @@ import ejs.base.utils.Pair;
 
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
-import v9t9.common.machine.RegisterWriteTracker;
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
+import v9t9.common.machine.SimpleRegisterWriteTracker;
 import v9t9.server.tcf.services.IRegistersV2;
 import v9t9.server.tcf.services.IRegistersV2.RegisterChange;
 
@@ -192,7 +192,7 @@ public class RegistersV2Service extends RegisterService {
 
 
 	class StandardListenerInfo extends BaseListenerInfo {
-		private RegisterWriteTracker tracker;
+		private SimpleRegisterWriteTracker tracker;
 		public StandardListenerInfo(String id, final IRegisterAccess access, 
 				Collection<Integer> trackedRegs, int delay, int granularity) {
 			super(id, access, trackedRegs, delay, granularity);
@@ -203,7 +203,7 @@ public class RegistersV2Service extends RegisterService {
 		 */
 		@Override
 		protected void init(IRegisterAccess access, BitSet regbits) {
-			tracker = new RegisterWriteTracker(access, baseReg, regbits);
+			tracker = new SimpleRegisterWriteTracker(access, baseReg, regbits);
 		}
 		
 		/* (non-Javadoc)
@@ -216,11 +216,12 @@ public class RegistersV2Service extends RegisterService {
 
 		protected synchronized void sendEvent() {
 			//System.out.println(System.currentTimeMillis());
-			Map<Integer, Integer> changes = tracker.getChangeMapAndReset();
+			Map<Integer, Integer> changes = tracker.getChanges();
 			if (!changes.isEmpty()) {
 				sendRegisterChangedEvent(id, baseReg, regSize, 
 						(int) (System.currentTimeMillis() - timestamp), changes);
 			}
+			changes.clear();
 		}
 		
 		/* (non-Javadoc)

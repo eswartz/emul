@@ -763,6 +763,9 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	@Override
 	public int setRegister(int reg, int value) {
 		if (reg >= VdpV9938Consts.REG_PAL0) {
+			if (reg >= VdpV9938Consts.REG_PAL0 + palette.length)
+				return 0;
+			
 			final int color = reg - VdpV9938Consts.REG_PAL0;
 			int old = palette[color] & 0xffff;
 			palette[color] = (short) value;
@@ -772,7 +775,8 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 
 			fireRegisterChanged(reg, value);
 			return old;
-		} if (reg >= VdpV9938Consts.REG_SR0) {
+		} 
+		if (reg >= VdpV9938Consts.REG_SR0) {
 			int old = statusvec[reg - VdpV9938Consts.REG_SR0] & 0xff;
 			statusvec[reg - VdpV9938Consts.REG_SR0] = (byte) value;
 		

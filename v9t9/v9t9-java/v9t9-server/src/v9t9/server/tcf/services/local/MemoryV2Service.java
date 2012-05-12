@@ -22,7 +22,7 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.MemoryWriteTracker;
+import v9t9.common.memory.SimpleMemoryWriteTracker;
 import v9t9.server.tcf.services.IMemoryV2;
 
 /**
@@ -39,11 +39,13 @@ public class MemoryV2Service extends MemoryService {
 		public ListenerInfo(String id, final IMemoryDomain domain, int addr, int size, int delay, int granularity) {
 			this.id = id;
 			this.domain = domain;
-			tracker = new MemoryWriteTracker(domain, addr, size);
+			tracker = new SimpleMemoryWriteTracker(domain, 0);
+			tracker.addMemoryRange(addr, size);
 			period = delay;
 			this.granularity = granularity;
 		}
-		private MemoryWriteTracker tracker;
+		
+		private SimpleMemoryWriteTracker tracker;
 		private TimerTask task;
 		private int granularity;
 		private long period;
@@ -106,7 +108,8 @@ public class MemoryV2Service extends MemoryService {
 			stopTask();
 			period = delay;
 			this.granularity = granularity;
-			tracker = new MemoryWriteTracker(domain, addr, size);
+			tracker = new SimpleMemoryWriteTracker(domain, 0);
+			tracker.addMemoryRange(addr, size);
 			startTask();
 		}
 	}
