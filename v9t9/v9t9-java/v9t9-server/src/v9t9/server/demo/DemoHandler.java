@@ -123,16 +123,13 @@ public class DemoHandler implements IDemoHandler {
 		try {
 			InputStream is = locator.createInputStream(uri);
 			byte[] header = new byte[4];
-			is.mark(4);
 			is.read(header);
 			
 			if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V9t9)) {
-				is.reset();
 				player = new DemoPlayer(machine, new NewDemoFormatReader(machine, is), listeners);
 			} else if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
 					|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) 
 			{
-				is.reset();
 				player = new DemoPlayer(machine, new OldDemoFormatReader(is), listeners);
 			}
 			

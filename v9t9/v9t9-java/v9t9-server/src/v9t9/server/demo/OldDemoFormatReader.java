@@ -23,11 +23,6 @@ public class OldDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 
 	public OldDemoFormatReader(InputStream is) throws IOException {
 		super(is);
-
-		// skip header
-		is.read(new byte[DemoFormat.DEMO_MAGIC_HEADER_LENGTH]);
-		isPos += DemoFormat.DEMO_MAGIC_HEADER_LENGTH;
-		
 	}
 
 	/* (non-Javadoc)

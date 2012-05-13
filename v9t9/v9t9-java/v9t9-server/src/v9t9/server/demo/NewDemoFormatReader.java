@@ -24,12 +24,8 @@ import v9t9.server.demo.events.VideoWriteRegisterEvent;
  */
 public class NewDemoFormatReader extends BaseDemoFormatReader implements IDemoInputStream {
 
-	public NewDemoFormatReader(IMachine machine, InputStream is) throws IOException, NotifyException {
-		super(is);
-
-		// skip header
-		is.read(new byte[DemoFormat.DEMO_MAGIC_HEADER_LENGTH]);
-		isPos += DemoFormat.DEMO_MAGIC_HEADER_LENGTH;
+	public NewDemoFormatReader(IMachine machine, InputStream is_) throws IOException, NotifyException {
+		super(is_);
 
 		// expect machine identifier
 		is.mark(1);

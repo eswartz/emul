@@ -47,6 +47,9 @@ public abstract class BaseDemoFormatReader extends BaseReader implements IDemoIn
 	public BaseDemoFormatReader(InputStream is) {
 		super(is);
 		
+		// skipped header
+		isPos += DemoFormat.DEMO_MAGIC_HEADER_LENGTH;
+
 		queuedEvents = new LinkedList<IDemoEvent>();
 		
 		videoBuffer = new DemoReadBuffer(this, "video", BufferType.VIDEO,
