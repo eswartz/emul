@@ -51,8 +51,8 @@ public class DemoReadBuffer {
 	protected void readHeader() throws IOException {
 		startPos = this.reader.isPos;
 		length = (this.reader.is.read() & 0xff) | ((this.reader.is.read() & 0xff) << 8);
-		System.err.println(Integer.toHexString(reader.isPos)+": " + label + " header, length " 
-		+ length + " (to " + Integer.toHexString(reader.isPos + length + 2) + ")");
+//		System.err.println(Integer.toHexString(reader.isPos)+": " + label + " header, length " 
+//				+ length + " (to " + Integer.toHexString(reader.isPos + length + 2) + ")");
 		this.reader.isPos += 2;
 	}
 	

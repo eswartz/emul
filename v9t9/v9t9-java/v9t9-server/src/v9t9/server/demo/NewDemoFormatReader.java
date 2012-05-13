@@ -77,29 +77,27 @@ public class NewDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 		videoBuffer.refill();
 		
 		// parse events
-		int lastAddr = 0;
 		while (videoBuffer.isAvailable()) {
 			int regOrAddr = videoBuffer.readVar(); 
 			int chunkLength = videoBuffer.readVar();
 			if (chunkLength == 0) {
 				// register
 				int regVal = videoBuffer.readVar(); 
-				System.err.println("reg: " + Integer.toHexString(regOrAddr) +" = " + regVal);
+				//System.err.println("reg: " + Integer.toHexString(regOrAddr) +" = " + regVal);
 				queuedEvents.add(new VideoWriteRegisterEvent(regOrAddr, regVal));
 			} else if (chunkLength < 0) {
 				// RLE repeat
 				byte[] chunk = new byte[-chunkLength];
 				int val = videoBuffer.read();
-				System.err.println("RLE: " + Integer.toHexString(regOrAddr) +" @ " + Integer.toHexString(-chunkLength) +  " = " + Integer.toHexString(val));
+				//System.err.println("RLE: " + Integer.toHexString(regOrAddr) +" @ " + Integer.toHexString(-chunkLength) +  " = " + Integer.toHexString(val));
 				Arrays.fill(chunk, (byte) val);
 				queuedEvents.add(new VideoWriteDataEvent(regOrAddr, chunk));
 			} else {
 				// real data
-				System.err.println("Data: " + Integer.toHexString(regOrAddr) +" @ " + Integer.toHexString(chunkLength));
+				//System.err.println("Data: " + Integer.toHexString(regOrAddr) +" @ " + Integer.toHexString(chunkLength));
 				byte[] chunk = videoBuffer.readData(chunkLength);
 				queuedEvents.add(new VideoWriteDataEvent(regOrAddr, chunk));
 			}
-			lastAddr = regOrAddr;
 		}
 	}
 
