@@ -3,6 +3,9 @@
  */
 package v9t9.server.demo.events;
 
+import java.util.Iterator;
+
+import ejs.base.utils.Tuple;
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
@@ -13,6 +16,7 @@ import v9t9.common.memory.IMemoryDomain;
  *
  */
 public abstract class WriteDataBlock implements IDemoEvent {
+
 	protected int address;
 	protected byte[] data;
 	protected final int offs;
@@ -46,5 +50,10 @@ public abstract class WriteDataBlock implements IDemoEvent {
 		for (int i = 0; i < length; i++) {
 			getDomain(machine).writeByte(address + i, data[i + offs]);
 		}
+	}
+	
+	public Iterator<Tuple> rleIterator() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

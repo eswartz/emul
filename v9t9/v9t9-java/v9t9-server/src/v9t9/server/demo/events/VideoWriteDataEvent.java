@@ -3,10 +3,14 @@
  */
 package v9t9.server.demo.events;
 
+import java.util.Iterator;
+
+import ejs.base.utils.Tuple;
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.server.demo.RleSegmenter.Segment;
 
 /**
  * @author ejs

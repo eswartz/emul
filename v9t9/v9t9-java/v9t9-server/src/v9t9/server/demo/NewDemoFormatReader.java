@@ -5,6 +5,7 @@ package v9t9.server.demo;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.events.NotifyException;
@@ -56,12 +57,19 @@ public class NewDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 		// parse events
 		while (videoBuffer.isAvailable()) {
 			int regOrAddr = videoBuffer.readVar(); 
-			int chunkLength = videoBuffer.read() & 0xff;
+			int chunkLength = videoBuffer.readVar();
 			if (chunkLength == 0) {
 				// register
 				int regVal = videoBuffer.readVar(); 
 				queuedEvents.add(new VideoWriteRegisterEvent(regOrAddr, regVal));
+			} else if (chunkLength < 0) {
+				// RLE repeat
+				byte[] chunk = new byte[-chunkLength];
+				int val = videoBuffer.read();
+				Arrays.fill(chunk, (byte) val);
+				queuedEvents.add(new VideoWriteDataEvent(regOrAddr, chunk));
 			} else {
+				// real data
 				byte[] chunk = videoBuffer.readData(chunkLength);
 				queuedEvents.add(new VideoWriteDataEvent(regOrAddr, chunk));
 			}

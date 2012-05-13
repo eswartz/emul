@@ -260,6 +260,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	private void showDemoMenu(final IDemoHandler demoHandler, TypedEvent e, int x, int y, 
 			final IProperty recordSetting, final IProperty playSetting,
 			final IProperty pauseSetting) {
@@ -328,9 +329,9 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		}
 
 		any = false;
-		if (!searchPath.getList().isEmpty()) {
+		for (String search : (List<String>) (List<?>) searchPath.getList()) {
 			try {
-				URI dirURI = locator.createURI(searchPath.getList().get(0).toString());
+				URI dirURI = locator.createURI(search);
 				Collection<String> ents = locator.getDirectoryListing(dirURI);
 				for (String ent : ents) {
 					if (ent.endsWith(".dem")) {
@@ -350,15 +351,17 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 						any = true;
 					}
 				}
+				
+				if (any) {
+					new MenuItem(playSubMenu, SWT.SEPARATOR);
+					any = false;
+				}
 			} catch (Exception e1) {
 				e1.printStackTrace();
 				// oh well
 			}
 		}
 		
-		if (any) {
-			new MenuItem(playSubMenu, SWT.SEPARATOR);
-		}
 		MenuItem playBrowseItem = new MenuItem(playSubMenu, SWT.PUSH); 
 		playBrowseItem.setText("Browse...");
 		
