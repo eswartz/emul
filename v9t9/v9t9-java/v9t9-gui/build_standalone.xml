@@ -11,9 +11,15 @@
     <property name="base.tcf"     value="../../../org.eclipse.tcf"/>
     <property name="base.tcf.agent" value="../../../org.eclipse.tcf.agent"/>
 	
-	<!-- override this! -->
-    <property name="v9t9.host"     value="http://eswartz.github.com/emul"/>
-    <property name="v9t9.root"     value="data/v9t9"/>
+	<condition property="v9t9.host"     value="http://eswartz.github.com/emul">
+		<isset property="release"/>
+	</condition>
+	<condition property="v9t9.root"     value="data/v9t9">
+		<isset property="release"/>
+	</condition>
+	
+    <property name="v9t9.host"     value="http://localhost:8080"/>
+    <property name="v9t9.root"     value="v9t9"/>
 	
     <!-- 
     <property name="batik"     value="true"/>
@@ -153,21 +159,22 @@
 	-->
     	<copy file="${base.v9t9}/data/release/v9t9.html" tofile="${bin.v9t9.dir}/v9t9.html"/>
     	
-    	<copy file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-local.jnlp"/>
+    	<copy overwrite="true" file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-local.jnlp"/>
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$HOST" value="" />
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$ROOT" value="" />
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$TARGET" value="local" />
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$SVGLIBS" value="${svg.libs.jnlp}" />
     	
-    	<copy file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-remote.jnlp"/>
+    	<copy overwrite="true" file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-remote.jnlp"/>
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$HOST" value="${v9t9.host}" />
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$ROOT" value="/${v9t9.root}" />
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$TARGET" value="remote" />
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$SVGLIBS" value="${svg.libs.jnlp}" />
     		
-    	<copy file="${base.v9t9}/data/release/test-httpd.py" tofile="${bin.v9t9.dir}/test-httpd.py"/>
+    
+    	<copy overwrite="true" file="${base.v9t9}/data/release/test-httpd.py" tofile="${bin.v9t9.dir}/test-httpd.py"/>
     	<replace file="${bin.v9t9.dir}/test-httpd.py" token="$v9t9.root" value="${v9t9.root}" />
-    	
+    	<replace file="${bin.v9t9.dir}/test-httpd.py" token="$v9t9.host" value="${v9t9.host}" />
 
 		<copy todir="${bin.v9t9.dir}/libs" preservelastmodified="yes">
 			<fileset dir="${base.base}/libs/swt">
