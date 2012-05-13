@@ -526,9 +526,14 @@ public class PathFileLocator implements IPathFileLocator {
 					if (idx >= 0)
 						ssp = ssp.substring(0, idx + 1);
 				}
-				resolved = createURI(ssp).resolve(string);
-				resolved = new URI(uri.getScheme(), resolved.toString(), uri.getFragment());
-				
+				resolved = createURI(ssp).resolve(encodeURIcomponent(string));
+				resolved = new URI(uri.getScheme() + ":" + resolved.getScheme(),
+						resolved.getUserInfo(),
+						resolved.getHost(),
+						resolved.getPort(),
+						resolved.getPath(),
+						resolved.getQuery(),
+						uri.getFragment());
 				if ("jar".equals(resolved.getScheme())) {
 					try {
 						resolved = resolveToLocalJarFile(resolved.toURL()).toURI();

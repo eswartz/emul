@@ -324,4 +324,25 @@ public class ManualTestPathFileLocator {
 		
 
 	}
+	
+
+	@Test
+	public void testJarLocal() throws URISyntaxException, IOException {
+
+		IPathFileLocator locator = new PathFileLocator();
+		String jarPath = "jar:file:/home/ejs/devel/emul/v9t9/build/bin/v9t9/v9t9j.jar!/ti99/demos/";
+		
+		URI jarURI = locator.createURI(jarPath);
+		assertNotNull(jarURI);
+		assertTrue(jarURI.isOpaque());
+		assertTrue(jarURI.isAbsolute());
+		
+		Collection<String> listing = locator.getDirectoryListing(jarURI);
+		assertNotNull(listing);
+
+		assertEquals(6, listing.size());
+		for (String ent : listing)
+			System.out.println(ent);
+
+	}
 }
