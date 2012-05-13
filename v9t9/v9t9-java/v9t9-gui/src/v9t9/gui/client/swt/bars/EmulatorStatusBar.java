@@ -8,6 +8,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -329,15 +330,47 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			new MenuItem(playSubMenu, SWT.SEPARATOR);
 		}
 
+		boolean anyBrowses = false;
 		any = false;
 		for (String search : (List<String>) (List<?>) searchPath.getList()) {
 			try {
-				URI dirURI = locator.createURI(search);
+				final URI dirURI = locator.createURI(search);
+				
+				if (anyBrowses) {
+					new MenuItem(playSubMenu, SWT.SEPARATOR);
+				}
+				
+				final MenuItem dirItem = new MenuItem(playSubMenu, SWT.NONE);
+				dirItem.setEnabled(false);
+				dirItem.setText("From " + dirURI);
+				
 				Collection<String> ents = locator.getDirectoryListing(dirURI);
 				ents = new ArrayList<String>(ents);
-				Collections.sort((List<String>) ents);
+				if (dirURI.getScheme().equals("file")) {
+					final File dir = new File(dirURI);
+					Collections.sort((List<String>) ents, new Comparator<String>() {
+	
+						@Override
+						public int compare(String o1, String o2) {
+							long t1 = new File(dir, o1).lastModified(); 
+							long t2 = new File(dir, o2).lastModified(); 
+							return (int) Math.signum(t2 - t1);
+						}
+						
+					});
+				} else {
+					Collections.sort((List<String>) ents);
+				}
+				int count = 0;
 				for (String ent : ents) {
 					if (ent.endsWith(".dem")) {
+						if (count >= 5 && dirURI.getScheme().equals("file")) {
+							makeBrowseItem(demoHandler, menu, playSubMenu, dirURI.getPath(), searchPath,
+									"Browse for more...");
+							anyBrowses = true;
+							break;
+						} 
+						
 						final URI demoURI = locator.resolveInsideURI(dirURI, ent);
 						final MenuItem demoItem = new MenuItem(playSubMenu, SWT.PUSH);
 						demoItem.setText(ent);
@@ -352,51 +385,24 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 							}
 						});
 						any = true;
+						count++;
 					}
 				}
 				
-				if (any) {
-					new MenuItem(playSubMenu, SWT.SEPARATOR);
-					any = false;
-				}
 			} catch (Exception e1) {
 				e1.printStackTrace();
 				// oh well
 			}
 		}
 		
-		MenuItem playBrowseItem = new MenuItem(playSubMenu, SWT.PUSH); 
-		playBrowseItem.setText("Browse...");
-		
 		playMenuItem.setMenu(playSubMenu);
 		
 		////
+		final String demoDir = (String) (searchPath.getList().isEmpty() ? "/tmp" : searchPath.getList().get(0));
 		
-		playBrowseItem.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				String filename = SwtDialogUtils.openFileSelectionDialog(
-						menu.getShell(),
-						"Select demo file", 
-						(String) (searchPath.getList().isEmpty() ? "/tmp" : searchPath.getList().get(0)), 
-						null, false,
-						IDemoHandler.DEMO_EXTENSIONS);
-				if (filename != null) {
-					File playFile = new File(filename);
-					String parent = playFile.getParentFile().getAbsolutePath(); 
-					if (!searchPath.getList().contains(parent)) {
-						searchPath.getList().add(parent);
-						searchPath.firePropertyChange();
-					}
-					
-					try {
-						demoHandler.startPlayback(playFile.toURI());
-					} catch (NotifyException ex) {
-						machine.getEventNotifier().notifyEvent(ex.getEvent());
-					}
-				}
-			}
-		});
+		if (!anyBrowses) {
+			makeBrowseItem(demoHandler, menu, playSubMenu, demoDir, searchPath, "Browse...");
+		}
 		
 		final MenuItem recordItem = new MenuItem(menu, SWT.RADIO);
 		if (recordSetting.getBoolean()) {
@@ -462,6 +468,47 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		
 		
 		swtWindow.showMenu(menu, button, x, y);
+	}
+
+
+	/**
+	 * @param demoHandler
+	 * @param menu
+	 * @param playSubMenu
+	 * @param demoDir
+	 * @param searchPath
+	 */
+	protected void makeBrowseItem(final IDemoHandler demoHandler,
+			final Menu menu, Menu playSubMenu, final String demoDir,
+			final IProperty searchPath, String label) {
+		MenuItem playBrowseItem = new MenuItem(playSubMenu, SWT.PUSH); 
+		playBrowseItem.setText(label);
+		
+		playBrowseItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				String filename = SwtDialogUtils.openFileSelectionDialog(
+						menu.getShell(),
+						"Select demo file", 
+						demoDir, 
+						null, false,
+						IDemoHandler.DEMO_EXTENSIONS);
+				if (filename != null) {
+					File playFile = new File(filename);
+					String parent = playFile.getParentFile().getAbsolutePath(); 
+					if (!searchPath.getList().contains(parent)) {
+						searchPath.getList().add(parent);
+						searchPath.firePropertyChange();
+					}
+					
+					try {
+						demoHandler.startPlayback(playFile.toURI());
+					} catch (NotifyException ex) {
+						machine.getEventNotifier().notifyEvent(ex.getEvent());
+					}
+				}
+			}
+		});
 	}
 
 	
