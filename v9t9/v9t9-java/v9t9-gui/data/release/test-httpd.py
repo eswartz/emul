@@ -12,7 +12,10 @@ class MyResource(Resource):
 root = MyResource()
 v9t9 = static.File(os.path.split(os.path.realpath(__file__))[0])
 
-root.putChild("$v9t9.root", v9t9)
+# twisted doesn't like making pathy components without parents;
+# just go to the root name
+childEl = os.path.split("$v9t9.root")[1]
+root.putChild(childEl, v9t9)
 
 application = service.Application('web')
 site = server.Site(root)
@@ -20,7 +23,7 @@ sc = service.IServiceCollection(application)
 i = internet.TCPServer(8080, site)
 i.setServiceParent(sc)
 
-print "Connect to localhost:8080/$v9t9.root/v9t9.html"
+print "Connect to localhost:8080/" + childEl + "/v9t9.html"
 reactor.listenTCP(8080, server.Site(root))
 reactor.run()
 

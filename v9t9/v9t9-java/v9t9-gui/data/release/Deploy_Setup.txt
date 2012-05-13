@@ -2,6 +2,9 @@
 SETUP
 =========
 
+You should have two clones checked out in the same directory:  one named "emul" should be on
+the master branch, and one named "emul-web" should be on the gh-pages branch. 
+
 Go into the <yourApplication> folder, execute "keytool -genkey -keystore $HOME/.keystore.v9t9 -alias v9t9", 
 and enter all required information.
 
@@ -11,7 +14,7 @@ If regenerating a key, you'll need to remove the .keystore.v9t9 file first.
 BUILDING
 =========
 
-Build from the v9t9/v9t9-java/v9t9-gui directory where several build*.xml files live.
+Build from the emul/v9t9/v9t9-java/v9t9-gui directory where several build*.xml files live.
 
 If you have built from Eclipse before, invoke "ant -f build_standalone.xml clean" to be 
 sure all is well.
@@ -41,8 +44,21 @@ TESTING
 To test locally, use "javaws <path/to>/v9t9-local.jnlp" -- from the "v9t9-gui" directory
 this is in "../../build/bin/v9t9".
 
-To test the remote deployer, use 'test-httpd.py' to publish a web server on localhost:8080.
-Launch a browser that supports Java 6 and open ${v9t9.root}/v9t9.html and click "Launch".
+
+To test the remote deployer, build the web release via:
+
+	ant -f build_web.xml <same args as for build_standalone.xml>
+
+Again from the "emul/.../v9t9-gui" directory.  The results are written to the parallel
+"emul-web" repository.
+
+It is especially important to remember the -Dv9t9.host=... and -Dv9t9.root= arguments,
+or else your JNLP will reference the github release.  
+
+Go to the "emul-web/data/v9t9/" directory. 
+
+Launch 'test-httpd.py' to publish a web server on localhost:8080.   Then launch a 
+browser that supports Java 6 and open ${v9t9.root}/v9t9.html and click "Launch".
 
 Note: on some browsers, the Launch button will simply trigger a download of the .jnlp
 file -- you may have to manually launch the .jnlp from the Downloads folder.
