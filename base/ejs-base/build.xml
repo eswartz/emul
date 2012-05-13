@@ -30,6 +30,7 @@
         <pathelement location="libs/swt/org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
         <pathelement location="libs/google-gson-2.0/gson-2.0.jar"/>
         <pathelement location="libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
+        <pathelement location="libs/junit/junit-4.8.1.jar"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>
