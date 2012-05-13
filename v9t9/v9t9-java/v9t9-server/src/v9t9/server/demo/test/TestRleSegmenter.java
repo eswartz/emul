@@ -27,15 +27,20 @@ public class TestRleSegmenter {
 		segmenter = new RleSegmenter(threshold, content, offset, length);
 	}
 	
-	private void validate(int... ranges) {
+	private void validateFrom(int addr, int... ranges) {
 		int idx = 0;
 		for (Segment seg : segmenter) {
 			int expLength = ranges[idx++];
 			assertEquals("at " + seg.getOffset(), Math.abs(expLength), seg.getLength());
+			assertEquals(addr, seg.getOffset());
 			if (expLength < 0) {
 				assertTrue(seg.isRepeat());
 			}
+			addr += Math.abs(expLength);
 		}
+	}
+	private void validate(int... ranges) {
+		validateFrom(0, ranges);
 	}
 	@Test
 	public void testNonRle() {
@@ -62,7 +67,7 @@ public class TestRleSegmenter {
 	public void testRle2Inner() {
 		byte[] content = new byte[] { 0, 1, 2, 3, 4, 4, 4, 4, 8, 8, 8, 8, 12, 13, 14, 15 };
 		encode(4, content, 3, 9);
-		validate(1, -4, -4);
+		validateFrom(3, 1, -4, -4);
 	}
 	@Test
 	public void testRle2b() {

@@ -24,12 +24,14 @@ public class DemoOutBuffer {
 		}
 		buffer[index++] = val;
 	}
-	public void flush() throws IOException {
+	public boolean flush() throws IOException {
 		if (index > 0) {
 			writeHeader();
 			stream.write(buffer, 0, index);
 			index = 0;
+			return true;
 		}
+		return false;
 	}
 	protected void writeHeader() throws IOException {
 		stream.write((byte) (index & 0xff));

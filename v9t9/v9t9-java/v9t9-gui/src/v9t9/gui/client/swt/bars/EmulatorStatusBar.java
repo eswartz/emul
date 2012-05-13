@@ -7,6 +7,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -333,6 +334,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			try {
 				URI dirURI = locator.createURI(search);
 				Collection<String> ents = locator.getDirectoryListing(dirURI);
+				ents = new ArrayList<String>(ents);
+				Collections.sort((List<String>) ents);
 				for (String ent : ents) {
 					if (ent.endsWith(".dem")) {
 						final URI demoURI = locator.resolveInsideURI(dirURI, ent);

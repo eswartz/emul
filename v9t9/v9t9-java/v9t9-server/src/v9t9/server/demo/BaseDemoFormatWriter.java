@@ -23,7 +23,7 @@ import v9t9.server.demo.events.VideoWriteRegisterEvent;
 public abstract class BaseDemoFormatWriter implements IDemoOutputStream {
 
 	protected OutputStream os;
-
+	
 	protected abstract void writeTimerTick() throws IOException;
 
 	protected abstract void writeVideoRegisterEvent(IDemoEvent event)
@@ -66,6 +66,8 @@ public abstract class BaseDemoFormatWriter implements IDemoOutputStream {
 
 	public synchronized void close() throws IOException {
 		flushAll();
+
+		purge();
 		
 		if (os != null) {
 			os.close();
@@ -78,17 +80,28 @@ public abstract class BaseDemoFormatWriter implements IDemoOutputStream {
 	}
 
 	/**
+	 * @throws IOException 
+	 * 
+	 */
+	protected void purge() throws IOException {
+		
+	}
+
+	/**
+	 * @return 
 	 * @throws IOException
 	 */
-	protected void flushAll() throws IOException {
+	protected boolean flushAll() throws IOException {
+		boolean wrote = false;
 		if (videoBuffer != null)
-			videoBuffer.flush();
+			wrote |= videoBuffer.flush();
 		if (soundRegsBuffer != null)
-			soundRegsBuffer.flush();
+			wrote |= soundRegsBuffer.flush();
 		if (soundDataBuffer != null)
-			soundDataBuffer.flush();
+			wrote |= soundDataBuffer.flush();
 		if (speechBuffer != null)
-			speechBuffer.flush();
+			wrote |= speechBuffer.flush();
+		return wrote;
 	}
 
 	@Override
