@@ -70,12 +70,10 @@ public class DemoHandler implements IDemoHandler {
 		lastRecordingURI = uri;
 		try {
 			IDemoOutputStream writer;
-			int rate;
 			
 			writer = new NewDemoFormatWriter(locator.createOutputStream(uri));
-			rate = 60;
 			
-			recorder = new DemoRecorder(machine, writer, rate, listeners);
+			recorder = new DemoRecorder(machine, writer, listeners);
 			
 			recordSetting.setBoolean(true);
 			demoPauseSetting.setBoolean(false);
@@ -130,12 +128,12 @@ public class DemoHandler implements IDemoHandler {
 			
 			if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V9t9)) {
 				is.reset();
-				player = new DemoPlayer(machine, new NewDemoFormatReader(is), 100, listeners);
+				player = new DemoPlayer(machine, new NewDemoFormatReader(is), listeners);
 			} else if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
 					|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) 
 			{
 				is.reset();
-				player = new DemoPlayer(machine, new OldDemoFormatReader(is), 60, listeners);
+				player = new DemoPlayer(machine, new OldDemoFormatReader(is), listeners);
 			}
 			
 			if (player != null) {

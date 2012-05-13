@@ -32,11 +32,11 @@ public class DemoPlayer {
 	private final ListenerList<IDemoListener> listeners;
 	private final int timerRate;
 
-	public DemoPlayer(IMachine machine, IDemoInputStream is, int timerRate, 
+	public DemoPlayer(IMachine machine, IDemoInputStream is,
 			ListenerList<IDemoListener> listeners) {
 		this.machine = machine;
 		this.is = is;
-		this.timerRate = timerRate;
+		this.timerRate = is.getTimerRate();
 		this.listeners = listeners;
 		pauseSetting = machine.getSettings().get(IDemoHandler.settingDemoPaused);
 	}

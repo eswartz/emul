@@ -28,7 +28,14 @@ public class NewDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 		
 		os.write(DemoFormat.DEMO_MAGIC_HEADER_V9t9);
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoOutputStream#getTimerRate()
+	 */
+	@Override
+	public int getTimerRate() {
+		return 100;
+	}
 
 	@Override
 	protected void writeTimerTick() throws IOException {

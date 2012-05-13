@@ -31,6 +31,14 @@ public class OldDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 	}
 
 	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoInputStream#getTimerRate()
+	 */
+	@Override
+	public int getTimerRate() {
+		return 60;
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.server.demo.BaseDemoFormatReader#queueTimerTickEvent()
 	 */
 	@Override

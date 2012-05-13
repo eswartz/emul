@@ -29,6 +29,14 @@ public class NewDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 		isPos += DemoFormat.DEMO_MAGIC_HEADER_LENGTH;
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoInputStream#getTimerRate()
+	 */
+	@Override
+	public int getTimerRate() {
+		return 100;
+	}
 
 	@Override
 	protected void queueTimerTickEvent() throws IOException, NotifyException {

@@ -19,4 +19,10 @@ public interface IDemoOutputStream extends Closeable {
 	 */
 	void writeEvent(IDemoEvent event) throws NotifyException;
 
+	/**
+	 * Get the rate at which timer events occur
+	 * @return Hz
+	 */
+	int getTimerRate();
+
 }

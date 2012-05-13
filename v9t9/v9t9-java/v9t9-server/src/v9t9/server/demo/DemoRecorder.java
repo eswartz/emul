@@ -62,13 +62,12 @@ public class DemoRecorder {
 	private int soundMmioAddr;
 	private byte[] soundBytes = new byte[256];
 	private int soundIdx;
-	private long timerRate;
+	private int timerRate;
 	
-	public DemoRecorder(IMachine machine, IDemoOutputStream os, int timerRate,
-			ListenerList<IDemoListener> listeners) throws NotifyException {
+	public DemoRecorder(IMachine machine, IDemoOutputStream os, ListenerList<IDemoListener> listeners) throws NotifyException {
 		this.machine = machine;
 		this.os = os;
-		this.timerRate = timerRate;
+		this.timerRate = os.getTimerRate();
 		this.listeners = listeners;
 		
 		useSoundRegisters = ! machine.getSound().getGroupName().equals(TMS9919Consts.GROUP_NAME);
