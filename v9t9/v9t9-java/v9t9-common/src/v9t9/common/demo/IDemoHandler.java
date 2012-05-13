@@ -22,10 +22,15 @@ public interface IDemoHandler {
 	}
 	
 	/** Array of URIs where demos may be fetched */
-	SettingSchema settingDemosPath = 
+	SettingSchema settingBootDemosPath = 
 			new SettingSchema(
 					ISettingsHandler.INSTANCE,
-					"DemosPath", String.class, new ArrayList<String>());
+					"BootDemosPath", String.class, new ArrayList<String>());
+	/** Array of URIs where demos may be fetched */
+	SettingSchema settingUserDemosPath = 
+			new SettingSchema(
+					ISettingsHandler.INSTANCE,
+					"UserDemosPath", String.class, new ArrayList<String>());
 	/** URI where demos will be recorded */
 	SettingSchema settingRecordedDemosPath = 
 		new SettingSchema(
@@ -68,5 +73,8 @@ public interface IDemoHandler {
 	void startPlayback(URI uri) throws NotifyException;
 	void stopPlayback() throws NotifyException;
 	URI getPlaybackURI();
+
+	/** Tell if the demo's contents are recognized by this machine */
+	boolean isDemoSupported(URI uri);
 	
 }

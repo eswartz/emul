@@ -1118,15 +1118,15 @@ public class ModuleSelector extends Composite {
 		
 		// see if user has an entry
 		if (imagePath != null) {
-			imageURI = machine.getPathFileLocator().findFile(imagePath);
+			imageURI = machine.getRomPathFileLocator().findFile(imagePath);
 		
 			if (imageURI == null) {
 				// look inside distribution
 				try {
-					imageURI = machine.getPathFileLocator().resolveInsideURI(
+					imageURI = machine.getRomPathFileLocator().resolveInsideURI(
 							machine.getModel().getDataURL().toURI(),
 							"images/" + imagePath);
-					if (!machine.getPathFileLocator().exists(imageURI))
+					if (!machine.getRomPathFileLocator().exists(imageURI))
 						imageURI = null;
 				} catch (URISyntaxException e) {
 					e.printStackTrace();
@@ -1135,7 +1135,7 @@ public class ModuleSelector extends Composite {
 		}
 		if (imageURI == null) {
 			try {
-				imageURI = machine.getPathFileLocator().resolveInsideURI(
+				imageURI = machine.getRomPathFileLocator().resolveInsideURI(
 						machine.getModel().getDataURL().toURI(), 
 						module != null ? 
 								(isModuleLoadable(module) ? "images/stock_module.png" : "images/stock_module_missing.png")
@@ -1304,7 +1304,7 @@ public class ModuleSelector extends Composite {
 	 */
 	private void saveModules(URI moduleList) {
 		try {
-			OutputStream os = machine.getPathFileLocator().createOutputStream(moduleList);
+			OutputStream os = machine.getRomPathFileLocator().createOutputStream(moduleList);
 			try {
 				ModuleDatabase.saveModuleListAndClose(machine.getMemory(), os, 
 						moduleList, Arrays.asList(moduleManager.getModules()));

@@ -265,7 +265,7 @@ public class ModuleManager implements IModuleManager {
 		//boolean anyErrors = false;
 		InputStream is = null;
 		try {
-			is = machine.getPathFileLocator().createInputStream(uri);
+			is = machine.getRomPathFileLocator().createInputStream(uri);
 			List<IModule> modList = ModuleDatabase.loadModuleListAndClose(machine.getMemory(), is, uri);
 			addModules(modList);
 		} catch (NotifyException e) {
@@ -294,7 +294,7 @@ public class ModuleManager implements IModuleManager {
 		
 		// first, get stock module database
 		machine.getModuleManager().clearModules();
-		databaseURI = machine.getPathFileLocator().findFile("stock_modules.xml");
+		databaseURI = machine.getRomPathFileLocator().findFile("stock_modules.xml");
 		if (databaseURI != null) {
 			registerModules(databaseURI);
 		} else {
@@ -308,7 +308,7 @@ public class ModuleManager implements IModuleManager {
 			String[] dbNames = dbNameList.split(";");
 			for (String dbName : dbNames) {
 				if (dbName.length() > 0) {
-					databaseURI = machine.getPathFileLocator().findFile(dbName);
+					databaseURI = machine.getRomPathFileLocator().findFile(dbName);
 					if (databaseURI != null) {
 						registerModules(databaseURI);
 					} else {

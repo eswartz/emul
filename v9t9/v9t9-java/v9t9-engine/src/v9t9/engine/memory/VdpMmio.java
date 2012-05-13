@@ -40,7 +40,8 @@ public abstract class VdpMmio implements IConsoleMmioReader, IConsoleMmioWriter 
 	}
 
 	public void writeFlatMemory(int vdpaddr, byte byt) {
-		fullRamArea.memory[vdpaddr & fullRamMask] = byt;
+		if (vdpaddr > 0 && vdpaddr < fullRamArea.memory.length)
+			fullRamArea.memory[vdpaddr & fullRamMask] = byt;
 		vdpHandler.touchAbsoluteVdpMemory(vdpaddr);
 	}
 

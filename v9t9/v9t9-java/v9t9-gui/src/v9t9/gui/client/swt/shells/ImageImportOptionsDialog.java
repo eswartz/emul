@@ -16,7 +16,6 @@ import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -275,8 +274,7 @@ public class ImageImportOptionsDialog extends Composite {
 			}
 		}
 		
-		Point pt = control.toDisplay(e.x, e.y);
-		window.showMenu(menu, null, pt.x, pt.y);
+		window.showMenu(menu, null, e.x, e.y);
 	}
 
 	/**

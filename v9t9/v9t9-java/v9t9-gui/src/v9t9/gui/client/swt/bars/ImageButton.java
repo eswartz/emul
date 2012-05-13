@@ -54,8 +54,8 @@ public class ImageButton extends ImageIconCanvas {
 						me.item = ImageButton.this;
 						me.stateMask = e.stateMask;
 						me.type = SWT.MenuDetect;
-						me.x = e.x;
-						me.y = e.y;
+						me.x = e.x + getLocation().x;
+						me.y = e.y + getLocation().y;
 						notifyListeners(SWT.MenuDetect, me);
 						return;
 					}

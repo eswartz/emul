@@ -5,6 +5,7 @@ package v9t9.common.machine;
 
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.demo.IDemoHandler;
+import v9t9.common.demo.IDemoManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.IFileHandler;
 import v9t9.common.files.IPathFileLocator;
@@ -54,7 +55,7 @@ public interface IMachine extends IBaseMachine {
 
 	IFileHandler getFileHandler();
 	
-	IPathFileLocator getPathFileLocator();
+	IPathFileLocator getRomPathFileLocator();
 
 	/**
 	 * @return
@@ -63,5 +64,8 @@ public interface IMachine extends IBaseMachine {
 
 	IDemoHandler getDemoHandler();
 	void setDemoHandler(IDemoHandler handler);
+
+	IDemoManager getDemoManager();
+	void setDemoManager(IDemoManager manager);
 
 }

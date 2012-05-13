@@ -364,6 +364,8 @@ public abstract class AbstractProperty implements IProperty {
 					items[idx++] = obj.toString();
 				}
 				section.put(propertyName, items);
+			} else if (value instanceof String[]) {
+				section.put(propertyName, (String[]) value);
 			} else {
 				section.put(propertyName, value.toString());
 			}

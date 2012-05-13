@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 
 import v9t9.common.demo.IDemoInputStream;
-import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.server.demo.events.SoundWriteRegisterEvent;
@@ -36,7 +35,7 @@ public class NewDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 				sb.append((char) ch);
 			}
 			if (!machine.getModel().getIdentifier().equals(sb.toString())) {
-				machine.getEventNotifier().notifyEvent(null, Level.WARNING,
+				throw new NotifyException(null,
 						"Note: this demo is incompatible with the "+
 						"current machine: " + sb + " expected");
 			}

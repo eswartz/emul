@@ -6,15 +6,14 @@ package v9t9.gui.client.swt.bars;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.TreeMap;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TypedEvent;
@@ -27,25 +26,22 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.ejs.gui.common.SwtDialogUtils;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.demo.IDemoHandler;
-import v9t9.common.demo.IDemoHandler.IDemoListener;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.events.IEventNotifier.Level;
-import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyException;
-import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.SwtWindow;
+import v9t9.gui.client.swt.shells.DemoSelector;
 import v9t9.gui.client.swt.shells.DiskSelectorDialog;
 import v9t9.gui.client.swt.shells.ModuleSelector;
 import v9t9.gui.client.swt.shells.ROMSetupDialog;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * This is the bar of buttons and status icons on the left-hand side of
@@ -63,8 +59,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	private IProperty cyclesPerSecond;
 	private IProperty devicesChanged;
 	private BlankIcon indicatorsBlank;
-	
-	private IDemoListener demoListener;
 	
 	/**
 	 * @param swtWindow
@@ -101,7 +95,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				IconConsts.PAUSE_OVERLAY,
 				"Play or record demo");
 
-		
 		new BlankIcon(buttonBar, SWT.NONE);
 			
 		if (machine.getModuleManager() != null) {
@@ -205,12 +198,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					button.redraw();
 
 				} else {
-					// need to start playing or recording...
-					IDemoHandler demoHandler = machine.getDemoHandler();
-					if (demoHandler != null) {
-						showDemoMenu(demoHandler, e, e.x, e.y,
-								recordSetting, playSetting, pauseSetting);
-					}
+					toggleDemoDialog();
 				}
 			}
 		});
@@ -221,31 +209,18 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			public void menuDetected(MenuDetectEvent e) {
 				final IDemoHandler handler = machine.getDemoHandler();
 				if (handler != null) {
-
-					if (demoListener == null) {
-						demoListener = new IDemoListener() {
-							
-							@Override
-							public void stopped(NotifyEvent event) {
-								try {
-									handler.stopPlayback();
-									handler.stopRecording();
-								} catch (NotifyException ex) {
-									//machine.getEventNotifier().notifyEvent(ex.getEvent());
-								}
-								machine.getEventNotifier().notifyEvent(event);
-							}
-						};
-						
-					}
-					
-					handler.addListener(demoListener);
 					showDemoMenu(handler, e, e.x, e.y, 
 							recordSetting, playSetting, pauseSetting);
 				}
 			}
 		});
 
+		button.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDoubleClick(MouseEvent e) {
+				toggleDemoDialog();
+			}
+		});
 
 		// initialize state
 		if (recordSetting.getBoolean() || playSetting.getBoolean()) {
@@ -262,57 +237,64 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		
 	}
 
-	@SuppressWarnings("unchecked")
 	private void showDemoMenu(final IDemoHandler demoHandler, TypedEvent e, int x, int y, 
 			final IProperty recordSetting, final IProperty playSetting,
 			final IProperty pauseSetting) {
 		Control button = (Control) e.widget;
 		final Menu menu = new Menu(button);
 
-		final IProperty recordPath = Settings.get(machine, IDemoHandler.settingRecordedDemosPath);
-		final IProperty searchPath = Settings.get(machine, IDemoHandler.settingDemosPath);
-		
 		String currentFilename = null;
 		
 		if (playSetting.getBoolean()) {
 			URI uri = demoHandler.getPlaybackURI();
 			currentFilename = String.valueOf(uri);
+		} else if (recordSetting.getBoolean()) {
+			URI uri = demoHandler.getRecordingURI();
+			currentFilename = String.valueOf(uri);
 		}
-		if (currentFilename != null) {
-			final MenuItem stopItem = new MenuItem(menu, SWT.RADIO);
-			stopItem.setText("Stop playing " + currentFilename);
-			stopItem.setSelection(true);
-			stopItem.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					try {
-						demoHandler.stopPlayback();
-					} catch (NotifyException ex) {
-						machine.getEventNotifier().notifyEvent(ex.getEvent());
-					}
-				}
-
-			});
-		} 
+		MenuItem recordItem;
 		
-		final MenuItem playMenuItem = new MenuItem(menu, SWT.CASCADE);
-		if (recordSetting.getBoolean())
-			playMenuItem.setEnabled(false);
-		playMenuItem.setSelection(false);
-		playMenuItem.setText("Play demo");
+		if (currentFilename != null) {
+			if (playSetting.getBoolean()) {
+				final MenuItem stopItem = new MenuItem(menu, SWT.RADIO);
+				stopItem.setText("Stop playing " + currentFilename);
+				stopItem.setSelection(true);
+				stopItem.addSelectionListener(new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						try {
+							demoHandler.stopPlayback();
+						} catch (NotifyException ex) {
+							machine.getEventNotifier().notifyEvent(ex.getEvent());
+						}
+					}
+	
+				});
+			} else {
+				recordItem = new MenuItem(menu, SWT.RADIO);
+				
+				recordItem.setText("Stop recording " + currentFilename);
+				recordItem.setSelection(true);
+				recordItem.addSelectionListener(new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						try {
+							demoHandler.stopRecording();
+						} catch (NotifyException ex) {
+							machine.getEventNotifier().notifyEvent(ex.getEvent());
+						}
+					}
+
+				});
+			}
+		} 
 		
 		////
 		
-		Menu playSubMenu = new Menu(playMenuItem);
-
-		IPathFileLocator locator = machine.getPathFileLocator();
-		
-		boolean any = false;
-		
 		final URI lastRecorded = demoHandler.getRecordingURI();
 		if (lastRecorded != null) {
-			final MenuItem lastDemoItem = new MenuItem(playSubMenu, SWT.PUSH);
-			lastDemoItem.setText(lastRecorded.getPath());
+			final MenuItem lastDemoItem = new MenuItem(menu, SWT.PUSH);
+			lastDemoItem.setText("Play " + lastRecorded.getPath());
 			lastDemoItem.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -323,109 +305,19 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					}
 				}
 			});
-			any = true;
 		}
-
-		if (any) {
-			new MenuItem(playSubMenu, SWT.SEPARATOR);
-		}
-
-		boolean anyBrowses = false;
-		any = false;
-		for (String search : (List<String>) (List<?>) searchPath.getList()) {
-			try {
-				final URI dirURI = locator.createURI(search);
-				
-				if (anyBrowses) {
-					new MenuItem(playSubMenu, SWT.SEPARATOR);
-				}
-				
-				final MenuItem dirItem = new MenuItem(playSubMenu, SWT.NONE);
-				dirItem.setEnabled(false);
-				dirItem.setText("From " + dirURI);
-				
-				Collection<String> ents = locator.getDirectoryListing(dirURI);
-				ents = new ArrayList<String>(ents);
-				if (dirURI.getScheme().equals("file")) {
-					final File dir = new File(dirURI);
-					Collections.sort((List<String>) ents, new Comparator<String>() {
-	
-						@Override
-						public int compare(String o1, String o2) {
-							long t1 = new File(dir, o1).lastModified(); 
-							long t2 = new File(dir, o2).lastModified(); 
-							return (int) Math.signum(t2 - t1);
-						}
-						
-					});
-				} else {
-					Collections.sort((List<String>) ents);
-				}
-				int count = 0;
-				for (String ent : ents) {
-					if (ent.endsWith(".dem")) {
-						if (count >= 5 && dirURI.getScheme().equals("file")) {
-							makeBrowseItem(demoHandler, menu, playSubMenu, dirURI.getPath(), searchPath,
-									"Browse for more...");
-							anyBrowses = true;
-							break;
-						} 
-						
-						final URI demoURI = locator.resolveInsideURI(dirURI, ent);
-						final MenuItem demoItem = new MenuItem(playSubMenu, SWT.PUSH);
-						demoItem.setText(ent);
-						demoItem.addSelectionListener(new SelectionAdapter() {
-							@Override
-							public void widgetSelected(SelectionEvent e) {
-								try {
-									demoHandler.startPlayback(demoURI);
-								} catch (NotifyException ex) {
-									machine.getEventNotifier().notifyEvent(ex.getEvent());
-								}
-							}
-						});
-						any = true;
-						count++;
-					}
-				}
-				
-			} catch (Exception e1) {
-				e1.printStackTrace();
-				// oh well
-			}
-		}
-		
-		playMenuItem.setMenu(playSubMenu);
 		
 		////
-		final String demoDir = (String) (searchPath.getList().isEmpty() ? "/tmp" : searchPath.getList().get(0));
+		final IProperty searchPath = Settings.get(machine, IDemoHandler.settingUserDemosPath);
+		final IProperty recordPath = Settings.get(machine, IDemoHandler.settingRecordedDemosPath);
+		final String demoDir = (recordPath.getString() == null || recordPath.getString().isEmpty())
+				? "/tmp" : recordPath.getString();
 		
-		if (!anyBrowses) {
-			makeBrowseItem(demoHandler, menu, playSubMenu, demoDir, searchPath, "Browse...");
-		}
+		makeBrowseItem(demoHandler, menu, menu, demoDir, searchPath, "Browse for demos...");
 		
-		final MenuItem recordItem = new MenuItem(menu, SWT.RADIO);
-		if (recordSetting.getBoolean()) {
-			URI uri = demoHandler.getRecordingURI();
-			currentFilename = String.valueOf(uri);
-		} else {
-			currentFilename = null;
-		}
-		if (currentFilename != null) {
-			recordItem.setText("Stop recording " + currentFilename);
-			recordItem.setSelection(true);
-			recordItem.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					try {
-						demoHandler.stopRecording();
-					} catch (NotifyException ex) {
-						machine.getEventNotifier().notifyEvent(ex.getEvent());
-					}
-				}
+		if (currentFilename == null) {
+			recordItem = new MenuItem(menu, SWT.RADIO);
 
-			});
-		} else {
 			if (playSetting.getBoolean())
 				recordItem.setEnabled(false);
 			recordItem.setSelection(false);
@@ -467,7 +359,17 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		}
 		
 		
-		swtWindow.showMenu(menu, button, x, y);
+		swtWindow.showMenu(menu, null, x, y);
+	}
+
+
+	/**
+	 * 
+	 */
+	protected void toggleDemoDialog() {
+		swtWindow.toggleToolShell(DemoSelector.DEMO_SELECTOR_TOOL_ID,
+				DemoSelector.getToolShellFactory(machine, buttonBar, swtWindow));
+		
 	}
 
 

@@ -1,0 +1,3 @@
+Shows use of the USCD Pascal P-Code System.  (Most of the long startup has been collapsed in this recording.)
+
+You can enable this (assuming you have the ROMs) using the device selector button on the left toolbar.

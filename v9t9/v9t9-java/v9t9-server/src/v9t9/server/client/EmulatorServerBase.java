@@ -150,7 +150,7 @@ public abstract class EmulatorServerBase {
     	DemoHandler demoHandler = new DemoHandler(machine);
 		machine.setDemoHandler(demoHandler);
 		
-		IProperty demoPath = settings.get(IDemoHandler.settingDemosPath); 
+		IProperty demoPath = settings.get(IDemoHandler.settingBootDemosPath); 
 		if (demoPath.getList().isEmpty()) {
     		try {
 				demoPath.getList().add(new URL(model.getDataURL(), "demos").toURI().toString());

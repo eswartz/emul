@@ -135,6 +135,7 @@ public interface IPathFileLocator {
 	boolean exists(URI uri);
 
 	/**
+	 * Get all the properties searched for files
 	 * @return
 	 */
 	IProperty[] getSearchPathProperties();
@@ -166,6 +167,14 @@ public interface IPathFileLocator {
 	 */
 	URI findFile(ISettingsHandler settings, MemoryEntryInfo info);
 
+	/**
+	 * Get the modification date of the content at the URI
+	 * @param uri
+	 * @return timestamp in Java ms
+	 * @throws IOException
+	 */
+	long getLastModified(URI uri) throws IOException;
+	
 
 
 }

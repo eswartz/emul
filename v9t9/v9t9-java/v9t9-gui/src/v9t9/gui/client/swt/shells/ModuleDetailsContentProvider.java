@@ -38,7 +38,7 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 	
 	public ModuleDetailsContentProvider(IMachine machine) {
 		this.machine = machine;
-		this.pathFileLocator = machine.getPathFileLocator();
+		this.pathFileLocator = machine.getRomPathFileLocator();
 	}
 
 	/**

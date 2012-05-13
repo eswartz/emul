@@ -1,0 +1,1 @@
+Shows vocabulary speech using the Speech Editor module.

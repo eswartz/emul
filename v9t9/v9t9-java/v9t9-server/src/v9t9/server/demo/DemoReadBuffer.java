@@ -93,7 +93,11 @@ public class DemoReadBuffer {
 			refill();
 		}
 		byte[] data = new byte[chunkLength];
-		System.arraycopy(buffer, index, data, 0, chunkLength);
+		try {
+			System.arraycopy(buffer, index, data, 0, chunkLength);
+		} catch (ArrayIndexOutOfBoundsException e) {
+			throw new NotifyException(null, "corrupt demo buffering for " + label + " at " + Integer.toHexString(getEffectivePos()));
+		}
 		index += chunkLength;
 		return data;
 	}

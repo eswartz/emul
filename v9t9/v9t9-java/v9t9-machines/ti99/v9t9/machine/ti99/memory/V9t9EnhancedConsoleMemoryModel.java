@@ -63,11 +63,11 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 		if (entry != null) {
 			// the high-GROM code is copied into RAM here
 			try {
-				URI symFile = machine.getPathFileLocator().findFile(
+				URI symFile = machine.getRomPathFileLocator().findFile(
 						((DiskMemoryEntry) entry).getSymbolFileName());
 				if (symFile != null) {
 		    		CPU.getEntryAt(0x6000).loadSymbolsAndClose(
-		    				machine.getPathFileLocator().createInputStream(symFile));
+		    				machine.getRomPathFileLocator().createInputStream(symFile));
 				}
 			} catch (IOException e) {
 				

@@ -29,6 +29,7 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.demo.IDemoHandler;
+import v9t9.common.demo.IDemoManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.files.DataFiles;
@@ -48,6 +49,7 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
+import v9t9.engine.demos.DemoManager;
 import v9t9.engine.events.RecordingEventNotifier;
 import v9t9.engine.files.FileHandler;
 import v9t9.engine.keyboard.KeyboardState;
@@ -110,6 +112,7 @@ abstract public class MachineBase implements IMachine {
 	private IPathFileLocator locator;
 
 	private IDemoHandler demoHandler;
+	private IDemoManager demoManager;
 
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -182,6 +185,7 @@ abstract public class MachineBase implements IMachine {
     	memoryModel.initMemory(this);
     	
     	moduleManager = machineModel.createModuleManager(this);
+    	demoManager = new DemoManager(this);
     	
     	cpu = machineModel.createCPU(this); 
 		keyboardState = new KeyboardState(this);
@@ -773,7 +777,7 @@ abstract public class MachineBase implements IMachine {
 	 * @see v9t9.common.machine.IMachine#getPathFileLocator()
 	 */
 	@Override
-	public IPathFileLocator getPathFileLocator() {
+	public IPathFileLocator getRomPathFileLocator() {
 		return locator;
 	}
 	
@@ -797,6 +801,21 @@ abstract public class MachineBase implements IMachine {
 	 */
 	public void setDemoHandler(IDemoHandler demoHandler) {
 		this.demoHandler = demoHandler;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getDemoManager()
+	 */
+	@Override
+	public IDemoManager getDemoManager() {
+		return demoManager;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#setDemoManager(v9t9.common.demo.IDemoManager)
+	 */
+	@Override
+	public void setDemoManager(IDemoManager manager) {
+		this.demoManager = manager;
 	}
 }
 

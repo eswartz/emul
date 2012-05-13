@@ -9,7 +9,9 @@ import java.net.URI;
 import java.util.Arrays;
 
 import v9t9.common.demo.IDemoHandler;
+import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.demo.IDemoOutputStream;
+import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
@@ -35,18 +37,35 @@ public class DemoHandler implements IDemoHandler {
 	private IProperty recordSetting;
 	private IProperty playSetting;
 	private IProperty machinePauseSetting;
+	private IDemoListener demoListener;
 
 	/**
 	 * 
 	 */
-	public DemoHandler(IMachine machine) {
-		this.machine = machine;
-		this.locator = machine.getPathFileLocator();
+	public DemoHandler(IMachine machine_) {
+		this.machine = machine_;
+		this.locator = machine.getRomPathFileLocator();
 		
 		machinePauseSetting = Settings.get(machine, IMachine.settingPauseMachine);
 		demoPauseSetting = Settings.get(machine, IDemoHandler.settingDemoPaused);
 		recordSetting = Settings.get(machine, IDemoHandler.settingRecordDemo);
 		playSetting = Settings.get(machine, IDemoHandler.settingPlayingDemo);
+		
+		demoListener = new IDemoListener() {
+			
+			@Override
+			public void stopped(NotifyEvent event) {
+				try {
+					machine.getDemoHandler().stopPlayback();
+					machine.getDemoHandler().stopRecording();
+				} catch (NotifyException ex) {
+					//machine.getEventNotifier().notifyEvent(ex.getEvent());
+				}
+				machine.getEventNotifier().notifyEvent(event);
+			}
+		};
+			
+		listeners.add(demoListener);
 	}
 	
 	public void dispose() {
@@ -121,19 +140,9 @@ public class DemoHandler implements IDemoHandler {
 		
 		lastPlaybackURI = uri;
 		try {
-			InputStream is = locator.createInputStream(uri);
-			byte[] header = new byte[4];
-			is.read(header);
-			
-			if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V9t9)) {
-				player = new DemoPlayer(machine, new NewDemoFormatReader(machine, is), listeners);
-			} else if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
-					|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) 
-			{
-				player = new DemoPlayer(machine, new OldDemoFormatReader(is), listeners);
-			}
-			
-			if (player != null) {
+			IDemoInputStream is = createDemoReader(uri);
+			if (is != null) {
+				player = new DemoPlayer(machine, is, listeners);
 				player.start();
 				
 				machinePauseSetting.setBoolean(true);
@@ -185,5 +194,43 @@ public class DemoHandler implements IDemoHandler {
 	@Override
 	public void removeListener(IDemoListener listener) {
 		listeners.remove(listener);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoHandler#isDemoSupported(java.net.URI)
+	 */
+	@Override
+	public boolean isDemoSupported(URI uri) {
+		try {
+			IDemoInputStream is = createDemoReader(uri);
+			is.close();
+			return true;
+		} catch (NotifyException e) {		
+			return false;
+		} catch (IOException e) {		
+			return false;
+		}
+	}
+
+	/**
+	 * @param uri
+	 * @return
+	 * @throws IOException
+	 * @throws NotifyException
+	 */
+	protected IDemoInputStream createDemoReader(URI uri) throws IOException,
+			NotifyException {
+		InputStream is = locator.createInputStream(uri);
+		byte[] header = new byte[4];
+		is.read(header);
+		
+		if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V9t9)) {
+			return new NewDemoFormatReader(machine, is);
+		} else if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
+				|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) {
+			return new OldDemoFormatReader(is);
+		}
+		
+		return null;
 	}
 }

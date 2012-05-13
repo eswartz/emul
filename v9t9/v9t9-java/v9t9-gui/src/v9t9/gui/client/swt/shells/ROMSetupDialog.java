@@ -455,7 +455,7 @@ public class ROMSetupDialog extends Dialog {
 			StoredMemoryEntryInfo storedInfo = null;
 			try {
 				storedInfo = StoredMemoryEntryInfo.createStoredMemoryEntryInfo(
-						machine.getPathFileLocator(), settings, 
+						machine.getRomPathFileLocator(), settings, 
 						machine.getMemory(), info, 
 						info.getName(), info.getResolvedFilename(settings), 
 						info.getFileMD5(), info.getOffset());
@@ -647,7 +647,7 @@ public class ROMSetupDialog extends Dialog {
 	 */
 	private URI findRom(MemoryEntryInfo info) {
 		
-		IPathFileLocator locator = machine.getPathFileLocator();
+		IPathFileLocator locator = machine.getRomPathFileLocator();
 		URI uri = locator.findFile(settings, info); 
 		return uri;
 			
@@ -655,7 +655,7 @@ public class ROMSetupDialog extends Dialog {
 
 
 	private void createPathSelector(Composite parent, final IProperty property) {
-		PathSelector pathSelector = new PathSelector(parent, machine.getPathFileLocator(),
+		PathSelector pathSelector = new PathSelector(parent, machine.getRomPathFileLocator(),
 				window, "ROM directory", property);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(pathSelector);
 

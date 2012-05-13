@@ -628,6 +628,17 @@ public class PathFileLocator implements IPathFileLocator {
 		return connection.getContentLength();
 	}
 	
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#getLastModified(java.net.URI)
+	 */
+	@Override
+	public long getLastModified(URI uri) throws IOException {
+		URLConnection connection = connect(uri);
+		return connection.getLastModified();
+	}
+	
+	
 	/**
 	 * @param connection
 	 * @param useCache 

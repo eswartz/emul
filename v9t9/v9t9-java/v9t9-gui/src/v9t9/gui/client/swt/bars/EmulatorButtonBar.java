@@ -259,6 +259,6 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 			});
 		}
 		vitem.setMenu(volumeMenu);
-		swtWindow.showMenu(menu, button, e.x, e.y);
+		swtWindow.showMenu(menu, null, e.x, e.y);
 	}
 }
