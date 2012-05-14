@@ -36,7 +36,7 @@ public class ConvertDemos {
 
 
 	public static void main(String[] args) {
-		Getopt getopt = new Getopt("ConvertDemos", args, "h?d:sF");
+		Getopt getopt = new Getopt("ConvertDemos", args, "h?d:srF");
 		getopt.setOpterr(true);
 
 		if (args.length == 0) {
@@ -51,6 +51,7 @@ public class ConvertDemos {
 		String newDirPath = ".";
 		int opt;
 		boolean shrink = false;
+		boolean recurse = false;
 		while ((opt = getopt.getopt()) != -1) {
 			if (opt == 'h' || opt == '?') {
 				help();
@@ -61,6 +62,9 @@ public class ConvertDemos {
 			}
 			else if (opt == 's') {
 				shrink = true;
+			}
+			else if (opt == 'r') {
+				recurse = true;
 			}
 			else if (opt == 'F') {
 				model = new F99bMachineModel();
@@ -73,6 +77,8 @@ public class ConvertDemos {
 		
 		cvt = new ConvertDemos(model);
 		cvt.setShrink(shrink);
+		cvt.setRecurse(recurse);
+		
 		File newDir = new File(newDirPath);
 		newDir.mkdirs();
 		
@@ -91,6 +97,27 @@ public class ConvertDemos {
 		}
 		
 	}
+	
+
+	private static void help() {
+		System.out.println("ConvertDemos [files or directories...] [-s] [-r] [-d newdir]");
+		System.out.println();
+		System.out.println("Convert demos from TI Emulator! / V9t9 v6.0 to the current format.");
+		System.out.println();
+		System.out.println("The -r argument will recurse directories.");
+		System.out.println("The -s argument will shrink the demos to remove video memory changes that are not visible.");
+	}
+
+
+	private boolean recurse;
+
+
+	/**
+	 * @param recurse
+	 */
+	private void setRecurse(boolean recurse) {
+		this.recurse = recurse;
+	}
 
 
 	/**
@@ -108,26 +135,18 @@ public class ConvertDemos {
 			convertFile(ent, newDir);
 		}
 
-		File[] dirs = fromDir.listFiles(new FileFilter() {
-			
-			@Override
-			public boolean accept(File pathname) {
-				return !pathname.getName().startsWith(".") && pathname.isDirectory();
+		if (recurse) {
+			File[] dirs = fromDir.listFiles(new FileFilter() {
+				
+				@Override
+				public boolean accept(File pathname) {
+					return !pathname.getName().startsWith(".") && pathname.isDirectory();
+				}
+			});
+			for (File dir : dirs) {
+				convertDirectory(dir, newDir);
 			}
-		});
-		for (File dir : dirs) {
-			convertDirectory(dir, newDir);
 		}
-
-	}
-
-
-	private static void help() {
-		System.out.println("ConvertDemos [files or directories...] [-s] [-d newdir]");
-		System.out.println();
-		System.out.println("Convert demos from TI Emulator! / V9t9 v6.0 to the current format.");
-		System.out.println();
-		System.out.println("The -s argument will shrink the demos to remove video memory changes that are not visible.");
 	}
 
 	private DemoManager manager;
@@ -192,6 +211,13 @@ public class ConvertDemos {
 
 	private void convert(URI from, URI to) throws IOException, NotifyException {
 		IDemoInputStream is = manager.createDemoReader(from);
+		if (is == null) {
+			System.out.flush();
+			System.err.flush();
+			System.err.println("unrecognized file");
+			System.err.flush();
+			return;
+		}
 		
 		IDemoOutputStream os = null;
 		try {
@@ -212,7 +238,8 @@ public class ConvertDemos {
 				is.close();
 			}
 		} finally {
-			os.close();
+			if (os != null)
+				os.close();
 		}
 	}
 
