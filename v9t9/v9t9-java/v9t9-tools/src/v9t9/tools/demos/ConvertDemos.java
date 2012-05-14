@@ -24,6 +24,7 @@ import v9t9.engine.demos.DemoManager;
 import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
+import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.machine.ti99.machine.StandardMachineModel;
 
 /**
@@ -34,7 +35,7 @@ public class ConvertDemos {
 
 
 	public static void main(String[] args) {
-		Getopt getopt = new Getopt("ConvertDemos", args, "h?d:s");
+		Getopt getopt = new Getopt("ConvertDemos", args, "h?d:sF");
 		getopt.setOpterr(true);
 
 		if (args.length == 0) {
@@ -43,10 +44,12 @@ public class ConvertDemos {
 		}
 		
 
-		ConvertDemos cvt = new ConvertDemos(new StandardMachineModel());
+		ConvertDemos cvt = null;
 		
+		IMachineModel model = null;
 		String newDirPath = ".";
 		int opt;
+		boolean shrink = false;
 		while ((opt = getopt.getopt()) != -1) {
 			if (opt == 'h' || opt == '?') {
 				help();
@@ -56,10 +59,19 @@ public class ConvertDemos {
 				newDirPath = getopt.getOptarg();
 			}
 			else if (opt == 's') {
-				cvt.setShrink(true);
+				shrink = true;
+			}
+			else if (opt == 'F') {
+				model = new F99bMachineModel();
 			}
 		}
 		
+		if (model == null) {
+			model = new StandardMachineModel();
+		}
+		
+		cvt = new ConvertDemos(model);
+		cvt.setShrink(shrink);
 		File newDir = new File(newDirPath);
 		newDir.mkdirs();
 		
