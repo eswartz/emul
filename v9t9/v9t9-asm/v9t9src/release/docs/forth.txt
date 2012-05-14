@@ -1,0 +1,340 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ FORTH.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file gives a tutorial for using the FORTH-based ROMs that come
+  free with the emulator.  Since 99/4A ROMs can't be included in widely-
+  distributed fairware, I've made up these ROMs so something useful can be
+  achieved with the emulator until you get the real ROMs.
+
+       If you don't know how to program in FORTH, well, I can't teach you.
+  It's a simple language but the concepts take some getting used to.  The
+  main purpose for writing V9t9 FORTH was to let V9t9 have some semblance
+  of a ROM so people could use it for *something*.  The transfer program
+  is the main purpose for the FORTH in this version -- see TRANSFER.TXT.
+
+
+  ออออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออออออ
+                              ณ BASIC INFO ณ
+  ออออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออออออ
+
+       The FORTH implementation was mainly written with the indispensable
+  "Pocket Guide to FORTH" by Linda Baker and Mitch Derick.  Other books
+  were used to make the PC version of FORTH a few years ago from which I
+  developed this V9t9 version.  I borrowed them from my professor and
+  haven't needed them since.  Anyway, I'm not exactly sure what sort of
+  standard I've managed to implement here, but it's probably better than
+  FORTH-79.
+
+       It's a simple 16-bit system, with no multitasking support.  I
+  figured it wasn't worth it for such a throwaway purpose.  :)  In
+  addition to the basic FORTH kernel is a nice graphics kernel which
+  handles text, graphics, bitmap, and monochrome bitmap modes.  In the
+  bitmap modes, turtle graphics can be used, which are actually faster
+  than TI LOGO.
+
+       Since most of the kernel is stored in the module ROM segment, 24k
+  is available for programs (the low 8k is used for the stacks).
+
+       Most of the support programs are in source form and stored in the
+  provided file "FORTHDSK".
+
+
+  ออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออ
+                ณ RUNNING THE MEAGER FORTH DEMO PROGRAMS ณ
+  ออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออ
+
+       A list of demos that come with V9t9 FORTH will come up when you
+  type in "HELPDEMOS".  You must enter "LOADTURTLE" to use most of the
+  graphics demos.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                 LOADTURTLE
+
+       LOADTURTLE will load up all the turtle graphics routines.  These
+  are based on a line-drawing program and a sine table.  The turtle is
+  always invisible.
+
+       FD   ( n -- )
+       will move the invisible turtle forward "n" pixels.  You cannot use
+  negative numbers; use BK instead.
+
+       BK   ( n -- )       will move the turtle backward "n" pixels.
+
+       RT   ( n -- )
+       will turn the turtle right "n" degrees.
+
+       LT   ( n -- )
+       will turn the turtle left "n" degrees.
+
+       SH   ( n -- )
+       will set the turtle's heading to "n" degrees.
+
+       HEADING ( -- n )
+       returns the turtle's current heading.
+
+       PD   ( n -- )
+       will set the pen down.  (The turtle draws.)
+
+       PU   ( n -- )
+       will set the pen up.  (The turtle only moves.)
+
+       The source for the turtle routines is provided on the disk.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                 LOADSPONGE
+
+       LOADSPONGE will load an implementation of a "sponge" fractal that I
+  found in a computer magazine.  You need to do LOADTURTLE first.  Execute
+  the program as
+       
+       xxx yyy SPONGE
+
+       where xxx is greater than yyy.  243 and 3 are interesting, yet
+  create a very compact shape.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                  LOADSUN
+
+       LOADSUN will load an implementation of the "sun" design from the TI
+  LOGO manual.  You need to do LOADTURTLE first.  Execute the program
+  with:
+       
+       xxx SUN
+
+       where xxx is a number from 1 to 7 or so.  It'll simply draw a sun
+  shape.  Whee.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                LOADSPRITES
+
+       LOADSPRITES will load up a sprite library.  The definitions are
+  provided in source form on the disk.  I haven't yet done anything to
+  demonstrate the sprites, so it's mainly a programmer's playground.  The
+  routines are set up to facilitate intricate control of each aspect of a
+  sprite (position, color, character), as well as easily allowing a full
+  sprite definition.
+
+       SPRITE@ ( x -- vaddr)
+       will return the VDP RAM address of a certain sprite's entry.  Only
+  numbers from 0 to 31 are meaningful.
+
+       Use SPRITE@ before any of the following routines.
+
+       SX! ( vaddr x -- )
+       will set the x-coordinate of the sprite at VADDR to "x".
+
+       SX@ ( vaddr -- x )
+       will return the x-coordinate of the sprite at VADDR.
+
+       The rest of the routines are directly analogous:
+
+       SY!, SY@            (Y-coordinate)
+       SCOLOR!, SCOLOR@    (sprite color)
+       SPATT!, SPATT@      (sprite pattern #)
+
+
+            þ    A sequence for setting the X and Y coordinates
+            of a sprite "zz" could be:
+
+            zz SPRITE@   DUP xx SX!   yy SY!
+
+            þ    Or, to also set the color:
+
+            zz SPRITE@   DUP xx SX!   DUP yy SY!   cc SCOLOR!
+
+
+       MS1x1 ( addr n -- )
+       will set the 8x8 pattern for sprite #n to the eight-byte pattern at
+  addr.  Best way to do this is:
+
+            CREATE PATTERN
+            xx , xx , xx , xx , xx , xx , xx , xx , 
+            PATTERN yy MS1x1
+       
+       which will create an 8-byte entry called "PATTERN" and set sprite
+  "yy" to have that pattern.
+
+       MS2x2 ( addr n -- )
+       will set the 16x16 pattern for sprite #n to the 32-byte pattern at
+  addr.  See above, except use 32 "xx"s.
+
+
+  อออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออ
+                       ณ EXTRAS IN THE DICTIONARY ณ
+  อออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออ
+
+       In hopes of actually writing some entertaining programs under
+  FORTH, I implemented a number of graphics support words into the ROM, in
+  addition to the standard FORTH dictionary.  Later versions of V9t9
+  should have a more useful FORTH implementation.
+
+
+       VC!       ( val addr -- )
+       will write a byte to VDP RAM.
+
+       VC@       ( addr -- val )
+       will read a byte from VDP RAM.
+
+       V!        ( val addr -- )
+       will write a word to VDP RAM.
+
+       V@        ( addr -- val )
+       will read a word from VDP RAM.
+
+       VCMOVE    ( vaddr addr len -- )
+       will move a block of bytes from VDP RAM to CPU RAM.
+
+       CVMOVE    ( addr vaddr len -- )
+       will move a block of bytes from CPU RAM to VDP RAM.
+
+       CMP       ( addr1 addr2 len -- 0|1)
+       will compare the block of memory at addr1 with the block of memory
+  at addr2, and return 0 if they are different, and 1 if they are the
+  same.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       TEXT      ( -- )
+       will set text mode, 40x24.
+
+       GRAPHICS  ( -- )
+       will set graphics mode, 32x24.
+
+       BITMAP    ( -- )
+       will set bitmap mode, 256x192.
+
+       MONO      ( -- )
+       will set up bitmap mode, using only two colors.  This makes           
+       terminal output faster.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+
+       EMIT      ( char -- )
+       will print the character's ASCII code to the screen, with
+  translations for the bell (7), tab (9), and carriage return (13) codes.
+
+       EMIT8     ( char -- )
+       will print the character without any translation
+
+       GOTOXY    ( x y -- )
+       will move the cursor to (x,y).  (0,0) is top-left.
+
+       WINDOW    (x y sx sy -- )
+       will create a text window (but no border will be drawn).  The
+  window starts at (x,y) and extends (sx,sy) characters to the right and
+  down.
+
+       CLS       ( -- )
+       will clear the contents current window.
+
+       FULL      ( -- )
+       will make the window fit the entire screen (useful after switching
+  from graphics to text mode, which leaves the window at 32x24).
+
+       CURSOR    ( -- addr )
+       will return the address of a byte defining the cursor character.
+       
+       FG        ( -- addr )
+       will return the address of a byte defining the foreground color.
+  This is used in terminal output and line drawing.
+
+       BG        ( -- addr )
+       will return the address of a byte defining the background color.
+  This is used in terminal output and line drawing.
+
+       WX        ( -- n )
+       returns the X-position of the cursor within the window.
+
+       WY        ( -- n )
+       returns the Y-position of the cursor within the window.
+
+       WSX       ( -- n )
+       returns the X-size of the window in characters.
+
+       WSY       ( -- n )
+       returns the Y-size of the window in characters.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       LINE      ( x1 y1 x2 y2 -- )
+       draws a line in bitmap or mono mode.  The line is wraps to fit the
+  screen.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       All of these "constants" are set when you change the graphics mode
+  via TEXT, GRAPHICS, BITMAP, or MONO.
+
+       VSCREEN   ( -- vaddr )
+       returns the VDP RAM address of the screen image table.
+
+       VPATTS    ( -- vaddr )
+       returns the VDP RAM address of the pattern descriptor table.
+
+       VCOLORS   ( -- vaddr )
+       returns the VDP RAM address of the color table.  0 if in text mode.
+
+       VSPRITES  ( -- vaddr )
+       returns the VDP RAM address of the sprite table.  0 if in text
+  mode.
+
+       VSPRPAT   ( -- vaddr )
+       returns the VDP RAM address of the sprite pattern table.  0 if in
+  text mode.
+
+       VSPRMOT   ( -- vaddr )
+       returns the VDP RAM address of the sprite motion table.  0 if in
+  text mode.  Sprite motion is unimplemented at present.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       DSRLNK    ( 8|10 pab -- 1 / err)
+                 ( 8|10 pab -- 0 )
+       will call the DSRLNK routine, given the beginning address of the
+  PAB and 8 for a device call or 10 for a subroutine call.  Returns 0 if
+  the call succeeded, otherwise returns 1 and the error code.
+
+
+  อออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออ
+                       ณ V9t9 FORTH PARTICULARITIES ณ
+  อออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออ
+
+       þ  V9t9 FORTH is not case sensitive.
+
+       þ  Under V9t9 FORTH, enter "Ctrl+Shift+Fctn+Space" to abort any
+  executing program.
+
+       þ  There is a non-working line editor on blocks 18-19.  It's meant
+  to allow interactive editing of a specific line in a block.
+
+       þ  V9t9 FORTH uses my own keyboard-handling routines, which should
+  NOT require tweaking-for-speed on any systems, as it is controlled by
+  the timer interrupt.  A 32-byte keyboard buffer is available, as well.
+  When you use the actual 99/4A ROM, you'll notice the keyboard is much
+  less responsive.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

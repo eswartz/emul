@@ -1,0 +1,63 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ DEVLOG.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       Development log.
+
+       Read it.  You'll laugh.  You'll cry.  You'll hurl.
+
+
+  7/95:     Released V9t9 v6.0!
+            Added direct PIO support.
+            Added breakpoints to debugger.
+            Realized LPC speech sounds sorta good on faster systems.
+  6/95:     Wrote a nice FORTH-based ROM to show off the emulator for        
+                 those without ROMs.
+  5/95:     Added v5.01 keyboard emulation option to keyboard to speed
+                 it up.
+            Moved ROM patching into the configuration file
+  4/95:     Inserted my own joystick routines, speedup city.  See            
+                 JOYSTICK.TXT for the gorey details.
+  3/95:     Added LPC speech, which sounds very bad
+            Finally made real speedups in text mode by creating a 386
+                 version of the emulator.
+  2/95:     Sped up video stuff with some tricky tricks
+            Sped up slow rewrite of opcodes, but not enough
+            Added 'cute' instructions-per-second counter
+  1/95:     Added demonstration feature to emulator
+            Added TI disk controller emulation (disk-on-a-disk)
+            Rewrote opcodes, fixing some bugs I didn't know about
+  12/94:    Sped up text mode
+  11/94:    Added CALL COINC(ALL,n) support
+            Added five-sprites-on-a-line check
+            Tried to optimize sprite routines
+  10/94:    Finally got a software license, renewed interest in              
+            programming
+  08/94:    Fixed bug in video unit (blank screen going into text mode)
+            Rewrote keyboard unit yet again
+            Rewrote debugger unit
+  07/94:    Added cassette emulation (output only)
+            Added noise!
+            Prettied up the displays
+            Rewrote keyboard unit to allow CRU access
+            Added status page (Shift+Ctrl+F1)
+            TI says included ROMs are illegal, requested info for license
+  4/29/94:  TIEMUL v5.01 comes out with keyboard LED set removed to 'fix'
+                 bug reports of locking up
+            Sorta-major-bug-that-kept-RS232-routines-at-1200-baud fixed.
+  4/24/94:  TIEMUL v5.0 comes out
+  3/94:     Rewrote files unit completely, abandoned proprietary
+                 v4.0 file format
+            Added sketchy RS232 and PIO routines
+            Fix s**tloads of bugs after getting e-mail about v4.0
+  2/29/94:  TI Emulator v4.0 comes out to the 'Net!  Wackiness ensues.
+            The TIREADME file still says "TI Emulator 386", because this
+            was REALLY just a mock-up of TI Emulator 386.  (SEE!  It's
+            a really long time between all the versions!)
+  6/93:     TI Emulator 386 comes out on a local BBS.  Practically no        
+            response.
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

@@ -1,0 +1,130 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ CONTACT.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       NOTE:
+
+       TI Emulators v4.0 and v5.01 are no longer supported.  Any orders or
+  questions for them will be returned and ignored, respectively.
+
+       NOTE:
+
+       I no longer support V9t9 either.  
+
+
+  อออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออ
+               ณ QUESTIONS/COMMENTS ABOUT THE PROGRAM ณ
+  อออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออ
+
+       I recommend you contact me if you find any bugs in the program that
+  aren't listed in PROBLEMS.TXT or BUGS.TXT.  I know that most users
+  simply assume that a bug is a "feature" and will eventually disappear,
+  but I honestly do not find out about most bugs unless someone tells me.
+  (There was a review of TI Emulator! v5.01 in Micropendium, and I was
+  distressed to see the author refer to problems with "incomplete
+  emulation", when the problems were indeed bugs I hadn't been told
+  about.)
+
+       Some preliminary information:  This program started out as a purely
+  personal project three years ago.  After I showed it to some friends and
+  rewrote it in assembly, I was goaded to unleash it on the Internet.
+  This I did.  Since then, I've received much praise, many bug reports,
+  and lots of suggestions.  Unfortunately, some people don't understand
+  what my purpose for writing this program is.  My intent is to have this
+  program emulate a TI-99/4A computer, along with its memory expansion,
+  disk drive, speech synthesis, joystick, and RS232/PIO units.  Beyond
+  that I cannot emulate much more, since I do not own -- or intend to
+  purchase -- the extra hardware and learn about it.  A base 99/4A system
+  with the listed peripherals is all I ever intend to emulate.  One of the
+  main reasons for not supporting more post-99/4A peripherals is the goal
+  of keeping the size of emulator under 128k (small => fast).  It's now
+  about 100k.
+
+       If you're having few problems but are noticing a lack of features,
+  make sure they're not in this list because I'll ignore them:
+
+       þ  "Will you make a Myarc Geneve emulator?"  Nope.  This computer
+  is NOT a 99/4A, and is simply too complex for me to tackle.
+
+       þ  "What about the 80-column modes and higher resolutions of newer
+  99/4A graphics cards?"  Nope again.  This wasn't a standard 99/4A
+  peripheral.  Also, it's nice to stay in one PC graphics mode.
+
+       þ  "Can you emulate the 128k/512k/64meg memory expansion cards?"
+  Don't have any of those either.  Also, there is no single standard for
+  these, and I'd have to learn too many protocols to make it worth it.
+  Standard 99/4A programs know nothing about such cards.
+
+       þ  "Make it support Gravis!!!  I want Gravis!!!"  Not yet, until I
+  get such a card.  It WOULD make the sound very easy to implement.
+
+       þ  "...P-Code card?..."  No.  I don't have it.
+
+       þ  "I know another programmer... howzabout you and him/her get
+  together and develop..."  Uh, no.  I'm pretty selfish about this
+  project.  Also, the thing that you're asking me to develop is probably
+  on this list already.  :)
+
+       þ  "Will you make it so it can read 99/4A disks in an IBM drive?"  Well, hmm.  I've studied up on this.  It turns out that the 99/4A disk
+  controller uses the "FM", or single-density, format to store data.
+  Documentation for IBM drives, however, only covers "MFM", or double-
+  density.  Apparently they think that anyone cares about single-density
+  anymore.  I intend to dig up the information and have V9t9 support 99/4A
+  disks in a PC drive sometime in the future.  (If you have such
+  information, in the way of direct FDC commands, please contact me!)
+  This emulation may be limited to a system of copying the 99/4A disk into
+  a disk image, and then copying it back to the disk later.
+
+
+  อออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออ
+                   ณ SOMEONE ALTERED THE ARCHIVE!!! ณ
+  อออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออ
+
+       If you read DISTRIB.TXT and found that your archive isn't the
+  vision I had when I originally released it, please tell me, especially
+  if it includes any TI ROM files.  I have a legal obligation not to let
+  unauthorized ROMs be distributed, especially in an archive that appears
+  to have been created by me.
+
+       The previous versions of the emulator (which included illegal ROMs,
+  by the way -- delete them if you obtained one of those versions) have
+  been undergoing quite creative changes unknown to me, which both goes
+  against my wishes and makes me appear to have made them.  Although there
+  are no laws about "the purity of fairware archives", I'd appreciate the
+  archive not being changed around beyond the changes mentioned in
+  DISTRIB.TXT.
+
+
+  อออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออ
+                           ณ HOW TO CONTACT ME ณ
+  อออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออ
+
+       I'd prefer that you send comments/questions/bug reports/fraud
+  reports to one of my e-mail addresses:
+
+       swartze@southwestern.edu           (college address)
+       edswartz@io.com                    
+
+       (Disclaimer:  This project has nothing to do with Southwestern
+  University.  If only academic institutions were this thought-
+  provoking...)
+
+       Please tell me what version of V9t9 you're using so I can give you
+  an accurate reply (this is v6.0).  And PLEASE refer to the emulator as
+  "V9t9", so I don't mistake you for a TI Emulator v4.0 or v5.01 user.
+  Note that I will not wholeheartedly support archives older than four
+  months.  (See DISTRIB.TXT.)
+
+       Feel free to use casual language with me.  I'm 20 and supposedly in
+  the prime of life.  Call me Edward, Ed, Eddie, Eddo, whatever; anything
+  but Ralph.
+
+       Please don't use my home address to send questions about the
+  emulator.  E-mail is infinitely preferable, and it won't take two months
+  to get a reply.
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+

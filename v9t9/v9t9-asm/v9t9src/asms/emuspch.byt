@@ -1,0 +1,22 @@
+
+	.model	tiny
+
+	.data
+
+	org	0
+
+start	db	0AAh				; 0
+uhoh:	db	4				; 1
+	db	'UHOH'
+	dw	0				; prev
+	dw	0				; next
+	db	0,0,offset fill			; addr
+	db	1				; len
+
+tsize	equ	$-offset start
+filler	equ	8000h-tsize
+
+fill:	db	filler dup (0ffh)
+	
+	end
+

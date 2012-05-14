@@ -1,0 +1,134 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ DEMOS.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       I've created a demonstration function to the program to allow you
+  to see the graphics/sound/speech capabilities of the emulator, all
+  without needing any ROMs.  (Unfortunately, though, all you can do is sit
+  and watch.)
+
+       For those of you with ROMs and other assorted 99/4A programs, the
+  demo function can be used to record demonstrations to show to your
+  friends and loved ones.
+
+
+  อออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออ
+             ณ THE DEMONSTRATION (/D) COMMAND-LINE PARAMETER ณ
+  อออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออ
+
+       The demonstration function requires memory that would not usually
+  be used in normal operation of V9t9.  Therefore, a command-line
+  parameter (/D) specifies that you really want to use demo capabilities
+  and the associated memory.
+
+       If you specify the /D switch to V9t9, please specify it as the last
+  parameter.  This switch sets up the emulator to allow demo recording, or
+  to run a demo file already created.  To set up the emulator to record
+  demos only, specify "/D" alone.  To play back a demo and stop, specify
+  "/D" and the filename of the demo to execute:
+
+  þ    V9t9 /D                  sets the emulator up to record demos
+  þ    V9t9 /D xxxx.DEM         runs the demo xxxx.DEM and stops.
+
+
+  อออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออ
+                 ณ OKAY, COOL... WHAT IS A DEMO, REALLY? ณ
+  อออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออ
+
+       A demo file simply consists of copies of the data written to the
+  video, sound, and speech "chips", along with breaks where the 1/60
+  second timer ticks.  When executing the demo, the saved data is written
+  to the respective "chips" again, making it look as if the emulator were
+  operating by itself.  Note that peripheral access (such as to the disk
+  or RS232 or printer) is not recorded in the file.  When playing back a
+  demo, in fact, no external files are needed except for the V9t9.EXE
+  program, the demo, and the V9t9.CNF and MODULES.INF configuration files
+  (they can be empty if necessary).
+
+       At the present time, demo files consist of ALL data written to the
+  video RAM rather than the data that actually controls graphics.  As a
+  result, demos created under games with heavy VDP RAM usage will yield
+  bloated demo files.  Some year I'll make a demonstration file shrinker.
+
+       The demo files know nothing about the video or sound capabilities
+  of the computer they were recorded on, so they are completely portable.
+  (Only the speed of the recording computer matters.  Hee hee.)  You could
+  record your demonstrations on an EGA-based, PC-speaker-only system, with
+  sound turned off and video updates set to once every 4.25 seconds, and
+  they would run perfectly normally (i.e., sounds/looks like a 99/4A) on a
+  faster system with VGA and a Sound Blaster.
+
+
+  ออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออ
+                        ณ USING THE DEMO FUNCTION ณ
+  ออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออ
+       Recording demonstrations requires all the appropriate ROMs and
+  files; a demo is just a "log" of V9t9's execution.
+
+       To start demo recording, press Ctrl/Alt+F10.  If you are only
+  greeted by a beep when you press Ctrl/Alt+F10, this means either (1) the
+  "/D" parameter isn't on the command line, (2) you're running a demo, or
+  (3) you're already recording a demo.
+
+       Otherwise, the emulator will throw up a screen where you can enter
+  the filename for the demonstration.  The location of the recorded file
+  depends on the "RecordedDemosPath" variable.  If the filename you give
+  is relative (i.e., no drive letter or absolute directory), the filename
+  will be prepended by the "RecordedDemosPath" variable.  Some examples:
+
+       If "RecordedDemosPath" is C:\V9t9\DEMOS then:
+
+       þ  Entering "sample.dem" will record to C:\V9T9\DEMOS\SAMPLE.DEM.
+       þ  Entering "d:test.dem" will record to D:TEST.DEM.
+       þ  Entering "sub\1st.dem" will record to C:\V9t9\DEMOS\SUB\1ST.DEM.
+       þ  Entering ".\here.dem" will record to .\HERE.DEM (whereever the
+          current directory is).
+
+       If V9t9 simply beeps after you press <enter>, then there is a
+  problem with the filename.  A demo will not be recorded.  Try it again.
+
+       As the demo is being recorded, there will be a slight slowdown as
+  the bytes going into the sound/speech/video "chips" are saved to disk.
+  Rather than call DOS to write every single byte (thereby slowing down
+  execution almost 99 percent), buffers are used.  Any delays in execution
+  will happen all at once as the buffer is flushed.  At the corresponding
+  spot in the demo file, however, there will be a maximum of a 2/60 second
+  delay, since timing stops during disk writes.
+
+       To stop demo recording, press Shift+Ctrl+F10.  A screen will notify
+  you that the demo recording has stopped.  Press <esc> to acknowledge.
+  Another demo can now be recorded.
+
+       Note that changing modules will halt demo recording.  Pressing
+  Ctrl+Break will also stop the demo recording.  Shelling to DOS will NOT
+  stop demo recording.
+
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+
+       Playing back a demo requires no ROMs or disks to execute, only
+  V9t9.EXE and bare configuration files.
+
+       During the execution of a demo, all of the Ctrl/Alt+Fxx runtime
+  functions are still active.  Of course, many of them are useless (such
+  as changing disk information or centering joysticks), but if doesn't
+  hurt to leave 'em there.
+
+       The functions which are useful are changing the video update speed,
+  and selecting sound devices, and doing a DOS shell (if you want to leave
+  the pretty demo for ANY reason...).  The module-switch function is
+  disabled when executing demos, since ROMs are inherently required.
+
+       If you have no idea if you're watching a demo (hmm), a line in the
+  Shift+Ctrl+F1 screen will tell you.
+
+       After the demo is complete, V9t9 will pause for three seconds to
+  let you look at things, and then stop.
+
+       You can press Ctrl-Break to abort a demo if you wish.
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

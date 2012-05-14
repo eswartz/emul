@@ -1,0 +1,100 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ SPEECH.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file details V9t9's speech synthesis capabilities.
+
+
+  ออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออ
+                        ณ THE EMULATED SPEECH ROM ณ
+  ออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออ
+
+       First of all, the emulated speech ROM file "EMUSPCH.BIN" has no
+  words in it and is practically useless.  It is only meant to allow
+  programs with their own speech to function.  (These programs will not
+  use speech unless they find some sort of speech ROM.)
+
+
+  อออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออ
+                         ณ V9t9 SPEECH SYNTHESIS ณ
+  อออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออ
+
+       In earlier versions of V9t9, a call to the speech synthesizer would
+  either flash a word up on the screen, or "speak" it through a Sound
+  Blaster -- by reading its digitized waveform of disk.  This digitized
+  file took up 1.5 megs, and in hindsight was a very silly thing to do.
+  That file is no longer supported and is obselete.
+
+       LPC speech -- linear predictive coding -- was made exactly for the
+  purpose of storing speech in very low amounts of memory.  The word
+  "HELLO" takes up about 48 bytes of memory, when encoded into LPC
+  equations.  Digitized at 8000 Hz, it takes about 8000 bytes.  So...
+
+
+  อออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออ
+                 ณ SO, LPC IS INFINITELY BETTER, RIGHT? ณ
+  อออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออ
+
+       Theoretically.  I've implemented LPC synthesis into the emulator,
+  doing away with that 1.5 meg file entirely.  However, since I only got
+  it working recently, it's not perfect yet.
+
+       There is a whole table of values in the speech synthesizer that
+  holds the key to my correctly implementing LPC speech, but I know of no
+  way to access it, or how to properly guess at the values contained
+  therein.  So, the speech you hear is off a bit, and there's nothing I
+  can do about it but guess some more.
+
+
+  อออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออ
+                   ณ IT SOUNDS HORRIBLE ON MY COMPUTER. ณ
+  อออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออ
+
+       Same with me.  It may be because your computer is too slow.  After
+  trying for weeks to figure out the reason for the bad results on my
+  system, I ran V9t9 on fast computers and realized that the speech
+  actually sounds pretty good.
+
+       Try running V9t9 off a clean boot.  EMS memory managers really slow
+  down speech.
+
+       This bad-speech-on-slow-computers can be considered a bug.  I took
+  a half-assed approach of setting the interrupt rate to 8000 Hz when
+  generating the speech, though a DMA-based approach would be much faster.
+  I'll fix it in later versions.
+
+  อออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออ
+         ณ WHAT IF I KNOW HOW THE COEFFICIENTS ARE REPRESENTED? ณ
+  อออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออ
+
+       Well, then *stop reading* and e-mail me!  Hee hee.  To avoid
+  confusion, I know exactly how many bits the equations use, and in what
+  order they are, and all that junk.  That's why you can hear something
+  remotely intelligible.
+
+       What I do not know is how the 6/5/4-bit LPC coefficent indices are
+  mapped into the corresponding 10-bit fixed-point coefficients (range
+  negative 1.0 to positive 1.0).  I've tried linear, logarithmic, and
+  exponential transformations but none of these quite cut it.
+
+       The inaccuracies may be due to my incorrect implementation of the
+  inter-frame parameter interpolation, the guessed-at "chirp" sequence, or
+  the guessed-at pitch translation table.  (I'll fix the interpolation in
+  the next version when I'm not afraid to completely break the code for a
+  little while.)  However, I doubt these account for the remarkably bad
+  results I get.
+
+       I think TI used a standard implementation of LPC-10, which was
+  standardized by the Federal Government, some year between 1976 and 1979.
+  Of course, I can't find information on it.
+
+       The contents of the speech synthesizer's "Parameter Look-UP ROM" is
+  exactly what I need.  If you happen to know the values, or how to access
+  them from the speech synthesizer, or you worked for TI, or you actually
+  created the speech ROMs (hee hee), feel free to inform me about this.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

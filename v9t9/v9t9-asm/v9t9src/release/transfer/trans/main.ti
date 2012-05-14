@@ -1,0 +1,493 @@
+*	MAIN
+*
+*	TIFTP main program
+*
+
+*	Initialize STACK.
+*	R15 points to it, and R14 is
+*	like BP.
+
+STKINI LI	SP,>4000
+	RT
+
+*     	Call a routine.
+*     	Address follows.
+*	At the address is a bitmap of
+*	registers to save.
+*
+*	BLWP	@CALL
+*	DATA	ROUT
+*
+*
+*ROUT	DATA	reg bitmap
+*	<CODE>
+*
+*
+*	Stack after call:
+*
+*................	<ret>
+*	<R14>
+*	<reg bitmap>
+*	<saved regs>
+
+CALL  	DATA	SYSWP,CALL+4
+	LIMI	1
+	LIMI	0
+
+	MOV	@30(13),SSP	* stack ptr
+	MOV	*14+,0	* routine
+
+	MOV	*0,1		* reg bitmap
+	ANDI	1,>FFFF-SR15
+	JEQ	CA02
+	MOV	13,2		* wp
+CA00	A	1,1		* bit set?
+	JNC	CA01
+	DECT	SSP		* push reg
+	MOV	*2,*SSP
+CA01  	INCT	2
+	MOV	1,1
+	JNE	CA00
+
+CA02	AI	SSP,-4
+	MOV	*0+,@2(SSP)	* save bmp
+
+	MOV	@28(13),*SSP  	* save R14
+	MOV	14,@28(13)	* give R14 to rout
+
+
+	MOV	SSP,@30(13)	* reset ptr
+	MOV	0,14		* rout addr
+	RTWP
+
+
+*	All routines should BLWP @RET
+*	at the end.
+*
+RET   	DATA	SYSWP,RET+4
+
+	MOV	@30(13),SSP	* stack ptr
+
+	MOV	@28(13),14
+	MOV	*SSP+,@28(13) 	* R14
+	MOV	*SSP+,1    	* reg bmp
+	ANDI	1,>FFFF-SR15
+	JEQ	RE02
+	MOV	13,2
+	AI	2,30		* pt to R15
+RE00	SRL	1,1
+	JNC	RE01
+	MOV	*SSP+,*2
+RE01  	DECT	2
+	MOV	1,1
+	JNE	RE00
+
+RE02  	MOV	SSP,@30(13)
+	RTWP
+
+
+CLR	BLWP 	@VSBW
+	DEC	2
+CLR00	MOVB 	1,@>8C00
+	DEC 	2
+	JGT 	CLR00
+	RT
+
+CLS	DATA	SR0+SR1+SR2+SR11
+	CLR	0
+	LI	1,XOFFS+>2000
+	LI	2,960
+	BL	@CLR
+	BLWP	@RET
+
+
+FLS 	DATA 	>0116
+MON	TEXT	'V9t9 99/4A->PC ROM Transfer\\$'
+	EVEN
+XOFFS	EQU	>6000
+BLOCK	DATA	>FFFF,>FFFF,>FFFF,>FFFF
+
+TRANS	LWPI	PROGWP
+
+	BL	@STKINI
+
+	BLWP	@GPLSET
+
+	LI	1,READIT
+	LI	2,SCODE
+	LI	3,SCLEN
+SPRD	MOV	*2+,*1+
+	DECT	3
+	JGT	SPRD
+
+	LI 	0,OUTPAB
+	LI 	1,FLS
+	LI 	2,2
+	BLWP 	@VMBW
+	MOV 	0,@>8356
+	LI 	0,>100
+	MOVB 	0,@>834C
+	BLWP 	@DSRLNK
+	DATA 	10       	* one file
+
+	LI	1,>100
+	MOVB	1,@CURDSK
+
+	LI	0,>1A0
+	BLWP	@VWTR
+
+	CLR	0
+	CLR	1
+	LI	2,>800
+	BL	@CLR
+
+	LI 	0,>400		* move patterns
+	MOV 	0,@>834A
+	BLWP 	@GPLLNK
+	DATA 	>18
+	LI 	0,>600      	* down to EX-BASIC ville
+	MOV 	0,@>834A
+	BLWP 	@GPLLNK
+	DATA 	>4A
+	LI	0,>400
+	BLWP 	@VWTR		* offset chars by XOFFS
+
+	LI	0,>7F0
+	LI	1,BLOCK
+	LI	2,8
+	BLWP	@VMBW
+
+	BLWP	@CALL
+	DATA	CLS
+
+	LI	0,>1F0
+	BLWP	@VWTR
+	SWPB	0
+	MOVB	0,@>83D4
+	LI	0,>717
+	BLWP	@VWTR
+	SETO	@>83D6
+
+	LI	1,MON
+	BLWP	@CALL
+	DATA	MESS
+
+	B	@GOMENU
+
+
+*	PRINTF
+*	This routine will print output
+*	to the screen using data from
+*	the string and data following
+*	it:
+*
+*	BLWP	@PRINTF
+*	DATA	stringaddress
+*	DATA	<addresses of values>
+*
+*	"$" ends all strings
+*
+*	R0=ADDR, R1=CHAR, R3=COMMAND
+*
+CURS	DATA	0
+TOP	DATA	0
+BOTT	DATA	880
+
+
+PRINTF 	DATA	SR0+SR1+SR3+SR4+SR5+SR6+SR7+SR8+SR9
+
+	MOV	*14+,3	* command
+PFLP	CLR	1
+	MOVB	*3+,1
+	CI	1,'$'*256
+	JNE	PF00
+
+	BLWP	@RET
+
+PF00  	CLR	8		* length
+	CI    	1,'%'*256
+	JEQ	PF01		* else format
+
+PF000 	BLWP	@CALL
+	DATA	PFPR
+	JMP	PFLP
+
+PF01  	MOVB	*3+,1
+	CI	1,>3000
+	JL	PF010
+	CI	1,>39FF
+	JH	PF010
+	MOV	1,8
+	AI	8,->3000
+	SRL	8,8		* # digits
+	JMP	PF01
+
+PF010	CI	1,'%'*256
+	JEQ	PF000
+
+PF05	MOV	*14+,4		* addr of arg
+
+	CI	1,'d'*256	* decimal #
+	JNE	PF02
+	MOV	*4,4		* get #
+	CLR	6		* offs in PFPOW
+	JMP	PF10		* print num
+
+PF02	CI	1,'x'*256	* hex #
+	JNE	PF03
+
+	MOV	*4,4		* get #
+	LI	6,2		* hex divisors
+	JMP	PF10
+
+PF03	CI	1,'c'*256	* char
+	JNE	PF04
+
+	MOVB	*4,1
+	BLWP	@CALL
+	DATA	PFPR
+	JMP	PFLP
+
+PF04	CI	1,'s'*256	* string
+	JNE	PF07
+
+	MOV	4,1
+	BLWP	@CALL
+	DATA	MESS
+
+	JMP	PFLP
+
+PF07	CI	1,'D'*256
+	JNE	PF08
+
+	LI	6,1 		* use actual #
+	JMP	PF10
+
+PF08	B	@PFLP
+
+*	Print number routine
+*	Always print R8 digits
+*	R4=number, R6=power
+*	Uses R4,R5,R6,R7,R8
+
+PFPOW	DATA  	10000,4096,1000,256,100,16,10,1,1,1
+PFBASE 	TEXT	'0123456789ABCDEF'
+	EVEN
+PF10  	LI	7,PFPOW+16	* point to powers
+	A	6,7
+
+	MOV	8,8
+	JNE	PF100
+	LI	8,5
+
+PF100	LI	9,1
+PF101	C	9,8
+	JHE	PF102
+	AI	7,-4
+	INC	9
+	CI	9,5
+	JL	PF101
+
+PF102	MOV	4,5
+PF11	CLR	4
+	DIV	*7+,4  		* div by highest power
+	MOVB	@PFBASE(4),1
+	BLWP	@CALL
+	DATA	PFPR		* print digit
+	INCT	7
+	DEC	9
+	JGT	PF11
+	B	@PFLP
+
+
+*	Print one char
+*
+*	R1=char
+*
+PFPR  	DATA	SR0+SR1
+	MOV	@CURS,0
+	ANDI	1,>FF00
+	CI	1,'\'*256
+	JNE	PFPR0
+
+	BLWP	@CALL
+	DATA	CRLF
+	MOV	@CURS,0
+	JMP	PFPR1
+
+PFPR0	AI	1,XOFFS
+	BLWP	@VSBW
+	INC	0
+PFPR1	C	0,@BOTT
+	JL	PFPRO
+
+	BLWP	@CALL
+	DATA	SCROLL
+
+PFPRO 	MOV	0,@CURS
+	BLWP	@RET
+
+
+*
+*	Print a newline
+*
+*
+CRLF	DATA  	SR0+SR1+SR2+SR3+SR4+SR5
+	MOV	@CURS,0
+	LI	1,>8080
+	MOV	0,4
+	AI	4,ROWDTH
+	LI	5,ROWDTH
+	CLR	3
+	DIV	5,3
+	MPY	5,3
+	MOV	4,2
+	S	0,2
+CRF00	MOV	2,2
+	JEQ	CRF01
+	BLWP	@CALL
+	DATA	PFPR
+	DEC	2
+	JMP	CRF00
+CRF01 	BLWP	@RET
+
+
+*
+*	Scroll the screen one line
+*	Return new cursor pos in R0
+*
+SCROLL 	DATA	SR1+SR2
+	AI	SP,-ROWDTH
+	LI	0,ROWDTH
+	MOV	SP,1
+	LI	2,ROWDTH
+SCR01	BLWP	@VMBR
+	AI	0,-ROWDTH
+	BLWP	@VMBW
+	AI	0,ROWDTH*2
+	C	0,@BOTT
+	JL	SCR01
+
+	AI	0,-ROWDTH
+	LI	1,>2000
+	AI	1,XOFFS
+	LI	2,ROWDTH-1
+	BLWP	@VSBW
+SCR02	MOVB	1,@>8C00
+	DEC	2
+	JGT	SCR02
+
+	AI	SP,ROWDTH
+	BLWP	@RET
+
+
+*
+*	Print a '$' terminated message
+*	to the screen
+*
+*	R1=address
+
+MESS	DATA	0
+	MOV	1,@MES00
+	BLWP	@CALL
+	DATA	PRINTF
+MES00	DATA	0
+	BLWP	@RET
+
+
+*
+*	Get a keypress.
+*       @>8375 is the key.
+*
+
+GETKEY	DATA	SR1
+	CLR	@>8374
+	LI	1,>837C
+	SB	*1,*1
+GK0     LIMI	1
+	LIMI	0
+	BLWP	@KSCAN
+	MOVB	*1,*1
+	JEQ	GK0
+	BLWP	@RET
+
+
+*
+*	Input a string.
+*
+*	Returns INLEN=# chars, INBUF=string
+*
+*	R1=cur char
+*	R3=max chars
+*	R4=cur pos
+*
+
+INLEN	BSS	1
+INBUF	BSS	39
+INBUF$	EQU	INBUF
+
+PRCH	BLWP	@CALL
+	DATA	PFPR
+	RT
+
+INPUT	DATA	SR1+SR3+SR4+SR11
+	CLR	4
+	LI	3,38
+IP0     LI	1,>5F00
+	BL	@PRCH
+	DEC	@CURS
+	BLWP	@CALL
+	DATA	GETKEY
+	LI	1,>2000
+	BL	@PRCH
+	DEC	@CURS
+	CLR	1
+	MOVB	@>8375,1
+	CI	1,>0D00
+	JEQ	IPOUT
+	CI	1,>0800
+	JEQ	IPBK
+	CI	1,>2000
+	JLE	IP0
+	CI      1,>8000
+	JHE	IP0
+	JMP	IPCH
+IPOUT   B	@IPOUT0
+
+IPCH	C	4,3		* ord char
+	JHE	IPE
+	MOVB	1,@INBUF(4)	* not max #
+	INC	4
+	SB	@INBUF(4),@INBUF(4)
+	BL	@PRCH
+	JMP	IP0
+
+IPE  	MOV	1,@INBUF(4)	* max #
+	BL	@PRCH
+	DEC	@CURS		* bksp
+	JMP	IP0
+
+IPBK	MOV	4,4		* bksp
+	JEQ	IP0
+	DEC	4
+	LI	1,>20
+	MOVB	1,@INBUF(4)
+	SWPB	1
+	DEC	@CURS
+	BL	@PRCH
+	DEC	@CURS
+	JMP	IP0
+
+IPOUT0	LI	4,INBUF		* calculate length
+IPOUT1	MOVB	*4+,1
+	JNE	IPOUT1
+	AI	4,-INBUF$
+	DEC	4
+	SWPB	4
+	MOVB	4,@INLEN
+	BLWP	@CALL
+	DATA	CRLF
+
+	BLWP	@RET
+
+

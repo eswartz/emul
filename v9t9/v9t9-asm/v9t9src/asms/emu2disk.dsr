@@ -1,0 +1,125 @@
+
+	.model	tiny
+
+	include strucs.inc
+	include	files.inc
+
+	org	4000h
+
+	.code
+
+
+
+dsrst	equ	offset dskdsr
+
+
+
+DSKPTR	macro	lab
+	dw	lab-dsrst+dsroffs
+	endm
+
+
+	EVEN
+dskdsr:	dw	0aa99h				; id
+	dw	0
+	dw	0				; no init
+	dw	0
+	DSKPTR	ddevtab				; ptr to device table
+	DSKPTR	dsubtab				; ptr to subprograms
+	dw	0
+	dw	0
+
+dsubtab: DSKPTR	dst1
+	DSKPTR	dst10ex
+	dw	0110h
+dst1:	DSKPTR	dst2
+	DSKPTR	dst11ex
+	dw	0111h
+dst2:	DSKPTR	dst3
+	DSKPTR	dst12ex
+	dw	0112h
+dst3:	DSKPTR	dst4
+	DSKPTR	dst13ex
+	dw	0113h
+dst4:	DSKPTR	dst5
+	DSKPTR	dst14ex
+	dw	0114h
+dst5:	DSKPTR	dst6
+	DSKPTR	dst15ex
+	dw	0115h
+dst6:	dw	0				; don't define FILES
+	DSKPTR	dst16ex
+	dw	0116h
+
+
+ddevtab:
+ddt2:	DSKPTR	ddt21
+	DSKPTR	ddtdsk
+	dw	0344h,'SK'
+ddt21:	DSKPTR	ddt3
+	DSKPTR	ddtdsk
+	dw	0364h,'sk'
+
+ddt3:	DSKPTR	ddt32
+	DSKPTR	ddtdsk3
+	dw	0444h,'SK',3300h
+
+
+ddt32:	DSKPTR	ddt33
+	DSKPTR	ddtdsk4
+	dw	0444h,'SK',3400h
+ddt33:	DSKPTR	ddt7
+	DSKPTR	ddtdsk5
+	dw	0444h,'SK',3500h
+
+
+
+ddt7:	DSKPTR	ddt72
+	DSKPTR	ddtdsk3
+	dw	0464h,'sk',3300h
+
+ddt72:	DSKPTR	ddt73
+	DSKPTR	ddtdsk4
+	dw	0464h,'sk',3400h
+ddt73:	dw	0
+	DSKPTR	ddtdsk5
+	dw	0464h,'sk',3500h
+
+
+
+
+	EVEN
+
+
+;	Note that D_INIT, D_xxx can be recycled for a different CRU base.
+
+dskinit: dw	0
+	DSKPTR	dskinitcode
+	dw	0
+
+dskinitcode: dw	DSROP+D_INIT
+
+dst10ex:	dw	DSROP+D_10
+dst11ex:	dw	DSROP+D_11
+dst12ex:	dw	DSROP+D_12
+dst13ex:	dw	DSROP+D_13
+dst14ex:	dw	DSROP+D_14
+dst15ex:	dw	DSROP+D_15
+dst16ex:	dw	DSROP+D_16
+
+
+ddtdsk:		dw	DSROP+D_DSK
+ddtdsk1:	dw	DSROP+D_DSK1
+ddtdsk2:	dw	DSROP+D_DSK2
+ddtdsk3:	dw	DSROP+D_DSK3
+ddtdsk4:	dw	DSROP+D_DSK4
+ddtdsk5:	dw	DSROP+D_DSK5
+
+dsklen	equ	$-dskdsr
+
+slack	equ	2000h-dsklen
+	dw	slack/2 dup (0c00h)
+
+
+	end
+

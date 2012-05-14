@@ -1,0 +1,41 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ FORMATS.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file documents the main file formats used by the emulator.
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  þ    The format of the TIEMUL.CNF configuration file is explained in
+  CONFIG.TXT.
+
+  þ    The format of the MODULES.INF configuration file is explained in
+  MODULES.TXT.
+
+  þ    The 99/4A CPU ROM image is expected to be 8k, in 9900 byte order,
+  and based at >0000.
+
+  þ    The 99/4A GROM image is expected to be 24k, based at G0000.
+
+  þ    CPU ROM module files are expected to be 8k, in 9900 byte order,
+  based at >6000.  Dual-banked modules are stored in two separate files,
+  named *C.HEX and *D.HEX for the low and high banks, respectively.
+
+  þ    GROM module files are expected to be a multiple of 8k, based at
+  G6000.
+
+  þ    DSR ROM dumps are expected to be 8k in length and unbanked.  Any
+  CRU bits accessed outside those defined within the emulator will be
+  ignored.  For DSR ROMs masquerading under the "DiskDSRROMFileName", the
+  memory-mapped FDC ports reside at >5FF0->5FFF, accessible only through
+  byte instructions.
+
+  þ    The format of FIADs and DOADs is described in DISKS.TXT.
+
+  þ    I'm not going to document the demonstration file format yet, since
+  it's prone to change in the next version (i.e., compression).
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

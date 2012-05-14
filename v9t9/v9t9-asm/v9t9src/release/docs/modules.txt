@@ -1,0 +1,218 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ MODULES.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file documents the format of the MODULES.INF file, and
+  documents the MODULES.EXE module-selection utility.
+
+       Please see TRANSFER.TXT for information on using 99/4A module ROMs
+  with V9t9, and ORDERING.TXT for how to order module dumps from me, and
+  BINARIES.TXT for a list of available modules.
+
+
+  อออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออ
+                     ณ MEMORY LAYOUT OF 99/4A MODULES ณ
+  อออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออ
+
+       This is a brief definition of the types of memory that 99/4A
+  modules use, which may better help you understand the layout of the
+  MODULES.INF file.
+
+       The 99/4A can directly access 64k of memory.  In the 99/4A, there
+  is a dedicated 8k area addressable by a plugged-in module, which can be
+  used for ROM or RAM.
+
+       In addition to this, the 99/4A can access a separate type of
+  memory, a 64k-sized area called GROM, through memory-mapped addresses.
+  Programs in GROM are not directly executable, but must be interpreted by
+  the console ROM.  The BASIC interpreter is stored in GROM, as are most
+  early 99/4A cartridges, being was less expensive to manufacture that
+  way.
+
+       Later modules also took advantage of the 8k area in the CPU's
+  address space to store much faster assembly programs.
+
+       This 8k area was too small for many modules, so, following the
+  (modified) standard set by the TI Extended BASIC module, a bank-
+  switching scheme was used whereby two 8k banks could exist in the CPU
+  address range, switched by performing a dummy write into the module ROM.
+
+       So, a fully decked-out module would have a GROM segment and two CPU
+  ROM segments, and a high price tag.  :)  At any rate, V9t9 supports any
+  goofy combination of GROM and banked/unbanked ROM modules.
+
+
+  ออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออ
+                        ณ THE V9t9 MODULE DATABASE ณ
+  ออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออ
+
+       The V9t9 module database, usually named MODULES.INF, contains the
+  list of all the modules you have on your system for use with V9t9.  The
+  database is a text file and may be freely edited, following the same
+  rules in formatting as for V9t9.CNF -- blank lines, whitespace,
+  comments, etc., are legal.
+
+       Each line is formatted as follows:
+
+  "<module title>", <basename> { ,ROM | ,ROM2 | ,BANKED | ,GROM | ,MMRAM }
+
+       The module title, which may not contain quotes and is a maximum of
+  32 characters long, is what appears on the V9t9 module selection screen
+  and in the MODULES utility.
+
+       The base name for the module is a one- to seven-character filename,
+  without a period ('.'), used to form the filenames for all the segments
+  of a V9t9 module.
+
+       The words following the basename are modifiers which tell V9t9 what
+  parts make up the module.  Each of the modifiers has a letter associated
+  with it which creates the filename for a module segment to be loaded.
+  At least one modifier should appear for a sensible module entry.
+
+       The ROM modifier's letter is "C", and refers to cartridge ROM
+  addressed at >6000.  The ROM2 modifier's letter is "D", and refers to
+  the second bank of ROM at the same address, which is used in TI Extended
+  BASIC and most Atarisoft modules.  The BANKED modifier is simply an
+  abbreviation for ROM1 and ROM2.  The GROM modifier's letter is "G", and
+  refers to the entire module GROM segment, starting at address >6000.
+  The MMRAM modifier is only used to tell if the cartridge is Mini-Memory
+  (to allow writes to what is normally ROM), but currently is not
+  associated with any file.
+
+       The extension for the filename is specified in the V9t9
+  configuration file as "DefaultModuleExtension".  The directory where the
+  module segments are located is specified by the "ModulesPath" variable.
+
+       As an example, these variables in V9t9.CNF:
+
+  ...
+  ModulesPath= d:\v9t9\modules
+  ...
+  DefaultModuleExtension = bin
+  ...
+
+       and this entry in MODULES.INF:
+
+  "Donkey Kong",DONKEY,ROM,ROM2,GROM
+
+       will specify a module which consists of these files:
+
+  D:\V9t9\MODULES\DONKEYC.BIN
+  D:\V9t9\MODULES\DONKEYD.BIN
+  D:\V9t9\MODULES\DONKEYG.BIN
+
+
+       This MODULES.INF entry:
+
+  "Spaz",SPAZ,ROM
+
+       specifies a module which consists of the file:
+
+  D:\V9t9\MODULES\SPAZC.BIN
+
+
+       I plan to keep this naming convention for all future versions of
+  V9t9.
+
+
+                             ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       V9t9 only allocates 8k for the "compiled" version of the modules
+  database when it loads.  This restricts the number of modules in
+  MODULES.INF to about 200.  This is not the same thing as the limits for
+  the number of modules on the module selection list, which is 32; all the
+  information in MODULES.INF is always stored in memory.
+
+
+  อออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออ                       ณ THE MODULES SELECTION LIST ณ
+  อออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออ
+
+       When V9t9 starts up, it will present a list of modules that you can
+  load into the emulator's memory.  Only 32 may be on the list at one
+  time.  Which modules appear on the list is specified by the "Modules"
+  variable in V9t9.CNF, as a list of indices into MODULES.INF:
+
+  Modules=7,3,10,1,8
+
+       will present the seventh, third, tenth, first, and eighth entries
+  from MODULES.INF in the selection list.
+
+       The "DefaultModule" variable will tell which NUMBER module in the
+  startup list is the default.  (The arrow will point right to it when you
+  enter the module selection screen.):
+
+  DefaultModule=1
+
+       will make the first item in the list, or the seventh entry in
+  MODULES.INF, the default selection.
+
+
+  อออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออ
+                     ณ THE MODULES.EXE LIST MANAGER ณ
+  อออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออ
+
+
+       MODULES.EXE, located in the V9t9 directory, is the easiest way to
+  set up these variables.  In addition, MODULES can alert you to missing
+  files.
+
+       To run MODULES, simply type it in:
+
+  C:\V9t9> MODULES
+
+       There are optional parameters, "/Cxxx" and "/Mxxx", which specify
+  alternate configuration files and module databases.
+
+       MODULES will read in the MODULES.INF file, and then proceed to
+  check the existence of every module file that could be referenced by an
+  entry.  If MODULES finds *no* files, it will abort with an error and
+  assume that you have made an error.  (Note that an empty MODULES.INF
+  file will also create this error, as there will be no files to find.)
+
+
+                             ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       Otherwise, MODULES will throw up a list of all the modules in
+  MODULES.INF.  Use the arrow keys to scroll around in the list.
+
+       Beside each title are two fields.
+
+       The first will tell you where the module will appear in the startup
+  selection list.  It will be blank if the module is not selected.
+
+       The second is a three-letter field.  Each letter that appears is
+  one of the segments of the module entry.  (In the examples above, Donkey
+  Kong would have "CDG" next to it, and "Spaz" would have "C" next to it.)
+  If the letter is light cyan in color, then the corresponding segment
+  exists.  If it is dark grey, MODULES could not locate the segment.  You
+  will not be able to use the module with V9t9 due to the missing file,
+  but MODULES will let you select it anyway.
+
+
+                             ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       Press <space> to toggle a module in or out of the selection list,
+  and the numbers of the other selected modules will be adjusted to
+  accommodate it.  You may select modules in any order.  All selected
+  modules will appear in white.
+
+       Only 32 modules may be selected.  If you attempt to select a 33rd
+  module, the 32nd will be taken from the list and replaced with the new
+  selection.
+
+       Pressing <F1> will set the "default module", which is what the
+  selection arrow in the V9t9 module selection list will point to each
+  time you select a module.  The currently default module will appear in
+  yellow in the MODULES list.
+
+       Press <Enter> to save the new list, or <Esc> to ignore your
+  changes.
+
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

@@ -1,0 +1,295 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ DISKS.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file documents the disk emulation features of V9t9.
+  Eventually V9t9 should allow the use of 99/4A compatible floppies in a
+  PC drive, but it does not do so at the present time.
+
+
+  อออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออ
+               ณ HOW ARE DISK DRIVES EMULATED UNDER V9t9? ณ
+  อออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออ
+
+       There are two ways.  If you use the emulated disk ROM provided with
+  V9t9, you can use "files-in-a-directory" or FIAD emulation.  If you use
+  the disk ROM from the actual 99/4A disk controller, you can use "disk-
+  on-a-disk" or DOAD emulation.  If you use both ROMs, you can use both
+  FIAD and DOAD at the same time.
+
+       A cute feature is that the disk (and RS232) can have "LEDs" in the
+  lower-left corner of the screen, which will tell you when they are being
+  accessed.  See the "ShowDiskLED" and "ShowEmuDiskLED" variables in
+  CONFIG.TXT.
+
+
+  ออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออ
+                    ณ WHAT IS "FILES-IN-A-DIRECTORY"? ณ
+  ออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออ
+
+       Files-in-a-directory, or "FIAD", is a method of emulating 99/4A
+  disk files by using the DOS filesystem to store them.  Using FIAD means
+  that each 99/4A file exists as one DOS file, in a directory specified by
+  DSKxPathName (see CONFIG.TXT).
+
+       This method of storing files is very fast, since all file-level
+  calls are handled in blazing 80x86 code, rather than in interpreted 9900
+  code.
+
+       Limitations to this sort of file storage are:
+
+  þ    99/4A files, which tend to be small, waste space on DOS disks.  (On
+  the 99/4A, files are broken into 256-byte sectors, while in DOS,
+  depending on the hard drive's cluster size, the granularity may be from
+  512 bytes to 32k!)
+
+  þ    There is no "disk".  Although the hard drive on which the files
+  exist could be treated as a "disk", it is not a 99/4A-compatible one.
+  Sector reads/writes are not implemented, except for the catalog.
+
+  þ    Filename "mangling" happens.  Since the 99/4A allows different
+  kinds of filenames than DOS (i.e., 10 chars instead of 8+3, more ASCII
+  characters, etc.), FIADs must be renamed occasionally.  Characters in
+  filenames which are illegal in DOS will be made legal by adding 128 to
+  their ASCII value.  This will cause weird characters to appear in
+  filenames.  The most common character, '/', is changed to "ฏ" (Alt+175
+  on the numeric keypad).  Note that the utilities provided will accept
+  *99/4A filenames* and automatically change them to access FIADs.
+
+       Note that Microsoft Windows dislikes these mangled filenames, and
+  is not able to access them.
+
+  þ    Upper/lowercase distinctions are lost, since DOS doesn't support
+  it.  TI always advised against using lowercase anyway.
+
+
+       FIADs are stored in a method very similar to the logical layout on
+  a 99/4A system.  The first 128 bytes in the file is a copy of the first
+  half of the File Descriptor Record (FDR) as found in a 99/4A file.
+  Sectors of 256 bytes follow, completely compatible with the 99/4A
+  storage format.  You can convert these files easily to (and from)
+  TIFILES format (used in XMODEM transfers) with the XMDM2TI and TI2XMDM
+  utilities.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       Note that when using FIAD-only disk emulation, the CALL FILES
+  subprogram has no effect.  FIAD disk emulation does not make use of any
+  VDP memory, which CALL FILES is used to adjust.
+
+
+  อออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออ
+                   ณ WHAT THE HELL IS "DISK-ON-A-DISK"? ณ
+  อออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออ
+
+       Why, it's a catch phrase!  It's a method of emulating full TI disks
+  under the DOS filesystem, instead of having directories full of 99/4A
+  files with mangled filenames.  The 99/4A disk DSR ROM is required to use
+  this feature.  (V9t9 does NOT support TI disks in PC drives -- yet.)
+
+       DOAD images are stored on a DOS filesystem.  To access them from
+  V9t9, defined the "DiskImageX" V9t9 configuration file variables.  By
+  default these are DISK0001.DSK, DISK0002.DSK, and DISK0003.DSK in the
+  \DISKS.  The variable "DiskImagePath" gives the directory for the disk
+  images,
+
+       A DOAD consists of a certain number of contiguous 256-byte sectors.
+  How many sectors this is depends on how the disk is "formatted".  A DOAD
+  can be double-sided, but V9t9 does not properly support this yet.
+
+       DOAD images cannot emulate copy-protected disks.  This is because
+  the vast majority of disks are not copy-protected, and the space taken
+  up to store the extra information would otherwise be wasted.  Besides,
+  if you have copy-protected disks, you can't copy them over to the PC
+  anyway!  When direct floppy-drive access becomes available, copy-
+  protection features will be inherently built-in.
+
+       The use of DOAD requires a ROM dump of the 99/4A Diskette DSR.  I
+  am not authorized to distribute this ROM, so you'll have to find a copy
+  somewhere else.
+
+
+  อออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออ
+                   ณ PROS AND CONS OF FIAD AND DOAD ณ
+  อออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออ
+
+       Just some comparisons between those two methods of file emulation:
+
+       (Files-in-a-Directory =  FIAD,
+        Disk-on-a-Disk =        DOAD.)
+
+  FIAD þ  Each 99/4A diskette is represented as a single DOS directory.
+  vs
+  DOAD þ  Each 99/4A diskette is stored as one DOS file.
+
+  FIAD þ  Each 99/4A file is stored as one DOS file.
+  vs
+  DOAD þ  Each 99/4A file is stored inside a disk file.
+
+  FIAD þ  File information (FDR) is stored at the beginning of each file.
+  vs
+  DOAD þ  File information is stored in dedicated sectors in disk file.
+
+  FIAD þ  Really fast -- uses 80x86 coded file access routines.
+  vs
+  DOAD þ  Really slow -- uses "true" TI DSR ROM for "exact" emulation.
+
+  FIAD þ  Debugged.
+  vs
+  DOAD þ  New.
+
+
+  ออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออ
+              ณ WHY USE THE "FILES-IN-A-DIRECTORY" FORMAT? ณ
+  ออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออ
+
+       The advantages to using "FIAD" is the speed of the file access and
+  the ease of transferring files back and forth.  (For example, only the
+  128-byte header differs between FIAD files and TIFILES-format files.)
+
+       However, there are disadvantages in that you can't access sectors
+  but to read some directory information, simply because the emulator
+  doesn't associate physical sectors with files in a DOS directory.
+
+       Still, for most purposes, FIAD is a perfectly fine way to access
+  files.  (Three versions of this program have used it!)
+
+
+  ออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออ
+                  ณ WHY USE THE DISK-ON-A-DISK FORMAT? ณ
+  ออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออ
+
+       "DOAD" was added to eventually allow the use of TI-format floppies
+  in the PC floppy drive.  V9t9 can't do this yet.
+
+       As of now, the support for this format is very basic.  You should
+  only need to use DOADs for programs which depend on direct sector
+  access.  Also, there are bugs in dealing with double-sided disks.
+
+
+  อออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออ
+                           ณ FILENAMES TO AVOID ณ
+  อออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออ
+
+       Although V9t9 allows you to use any legal 99/4A filename in a FIAD
+  or DOAD, you should avoid certain ASCII characters in order to make it
+  easier to use the V9t9 file utilities.  V9t9 utilities allow you to use
+  actual 99/4A filenames on the command line, meaning any character you
+  put into a V9t9 filename may have to appear on the command line later.
+
+       þ  Don't use lowercase in FIADs.  There is no way to differentiate
+  a lowercase and uppercase filename in DOS, and this may lead to
+  problems.
+
+       þ  Don't use the ":" character in filenames.  This is what tells
+  V9t9 utilities that you're accessing a disk image, thereby preventing
+  you from accessing any FIAD with ":" in its name.  Also, this will
+  prevent you from using a DOAD file, because more than two colons in a
+  filename (one for a drive letter, if possible, and one for the disk
+  image prefix) will be an error.
+
+       þ  Avoid using the "<" or ">" characters.  These are DOS
+  redirection operators.  In order for a file with such a character in its
+  name to be properly passed to a V9t9 utility, you need to enclose the
+  whole filename in quotes:
+       TIDIR ">README"
+
+       þ  Avoid using "*" and "?", since these are wildcards for V9t9
+  utilities.
+
+       þ  Don't use ASCII characters in the range 0-31 and 128-255 to name
+  files.  Firstly, you won't be able to create files with control
+  characters in their names, and secondly, FIAD files reserve the 128-255
+  characters to mangle files to work under DOS.
+
+
+  ออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออ
+                        ณ HOW TO SPECIFY DSR ROMS ณ 
+  ออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออ
+
+       The V9t9 archive is distributed with the disk DSRs EMUDISK.BIN and
+  EMU2DISK.BIN in the \ROMS subdirectory.  (They are not TI ROMs.)  These
+  allow access to the FIAD files.  EMU2DISK.BIN is meant to be used to
+  allow simultaneous FIAD and DOAD usage.
+
+       The variable "EmuDiskDSRFilename" tells the filename, relative to
+  the "RomsPath" variable, of the emulated disk DSR ROM.  It is usually
+  EMUDISK.BIN.  "DiskDSRFilename" is usually "DISK.BIN".
+  "SharedDiskDSRFileName" is usually "EMU2DISK.BIN".
+
+       The "DSRCombo" variable tells which DSR ROMs you want to use in
+  V9t9.  It is given as a list of words, given below.  Remember, that no
+  matter which DSR ROMs you activate, you access them the same way through
+  V9t9:  with the DSKx device.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       The word "EmuDisk" tells V9t9 to load the emulated disk DSR ROM,
+  for FIAD-only usage.  It allows access to:
+
+       þ DSK DSK1 DSK2 DSK3 DSK4 DSK5 dsk dsk1 dsk2 dsk3 dsk4 dsk5
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       The word "RealDisk" tells V9t9 to load a real disk ROM, for DOAD
+  usage.  The disk ROM must be compatible with the FDC chip used in the
+  99/4A disk controller, since V9t9 can only currently support the SS/SD
+  DSR ROM at present.  It supports these devices:
+
+       þ DSK DSK1 DSK2 DSK3
+
+       The FDC commands the emulator supports are seek to track, seek
+  home, step in, write track, read ID marker, read sector, write sector
+
+       I'm almost sure there are more commands which I don't know about.
+  (Or that I left out of the list!)
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       In case you will be using the 99/4A Disk DSR ROM in addition to the
+  emulated disk DSR, then use the word "BothDisk".  This allows access to:
+
+       þ DSK DSK1 DSK2 DSK3 DSK4 DSK5 dsk3 dsk4 dsk5
+
+       With this setup, the DSK1, DSK2, and DSK3 devices are ALWAYS DOADs,
+  and the others are FIADs.
+
+       Note that with this setup, using the DSK device will ONLY match
+  FIADs, for some reason.  I don't know why.  I'm hoping to fix it.
+
+
+  อออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออ
+               ณ INTERNAL EFFECTS OF FIAD and DOAD USAGE ณ
+  อออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออ
+
+       When both FIAD and DOAD access are used, there are several
+  potential problems.  TI Emulator! tries to get around them.
+
+       þ  CRU bases.  FIAD access operates from CRU base >1000.  DOAD
+  operates from >1100.  I suppose this is advantageous, since no CRU bits
+  (other than ROM activate) are defined for FIAD access.
+
+       þ  Low-level functions.  When a low-level function is called, the
+  FIAD will first intercept it.  If its "disks" (DSK3-DSK5) are not being
+  referenced, it will signal for the 99/4A ROM will try the next CRU base,
+  the DOAD ROM.
+
+       þ  High-level functions.  This operates the same as for low-level
+  functions, except when the DSK device is accessed.  The DSK device is
+  used with a volumename meant to allow access to the disk drive which
+  contains the disk with that volumename.  This is still buggy when both
+  DSRs are activated.
+
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

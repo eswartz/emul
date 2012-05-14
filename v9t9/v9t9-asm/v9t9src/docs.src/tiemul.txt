@@ -1,0 +1,311 @@
+
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+   V9t9:  TI Emulator! v6.0 Source Code        (c) 1996 Edward Swartz
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ TIEMUL.TXT ออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+     This file describes the internals of the TIEMUL.ASM, EMULATE.INC,
+and MEMORY.INC (and related) assembly files.  See OVERVIEW.TXT for an
+overview of V9t9.
+
+
+ออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออ
+                        ณ MEMORY BUS EMULATION ณ
+ออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออ
+
+     First of all, how is memory handled?  The byte ordering schemes of
+the 9900 and 80x86 are completely opposite, so something had to be done.
+For example, this sequence of bytes on the 9900:
+
+          >0000 = 83 E0 00 24
+
+     when read as words on the 9900 are:
+
+          >0000 = >83E0 >0024
+
+     but when read as words on the 80x86 are:
+
+          >0000 = >E083 >2400
+
+     The most obvious thing to some people would be to simply reverse
+the byte order before and after each word access, but this is also
+deadly slow, since the great majority of 9900 instructions are word
+instructions.
+
+     What I do is to reverse the byte order of the ROM and module ROM
+after they're loaded, and keep all the CPU RAM reversed like this.  So,
+when the above words are read by V9t9, they're the same words the 9900
+would see.
+
+     The only problem is that the bytes are reversed.  This is a much
+simpler problem to handle.  The last bit of the byte address is toggled
+to access the opposite byte, via the operation 80x86_byte_addr :=
+9900_byte_addr XOR 1.  This is all that needs to be done, since only one
+byte is affected.
+
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+     You will notice that some obscenely archaic code (some is in
+TIEMUL.ASM in "doint1" and "dosound") directly accesses bytes in the
+9900 memory space.  You need to mentally XOR those addresses by one to
+see the 99/4A address it's accessing.  The vast majority of code has
+been cleaned up, however.
+
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+     The ROM images on disk are stored in 9900 byte order to make ROM
+transfers straightforward, to conform to what a 99/4A would send.  The
+routine "reversememory" does the job of swapping adjacent bytes after
+ROMs are loaded.
+
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+     Several include files handle the memory bus code.
+
+     þ FASTMEM.INC contains macros to handle very fast reads/writes in
+memory.  The macros expand into big sequences of comparisons to prevent
+illegal reads/writes, then direct reads/writes from ES (which by
+convention points to the 64k CPU ROM/RAM).  These also handle memory-
+mapping, by writing to the memory-mapped register addresses.
+
+     þ SLOWMEM.INC contains macros to do slower reads/writes.  The macro
+expands into calls to routines in MEMORY.INC which themselves check
+addresses and perform the reads/writes.
+
+     þ SUPERMEM.INC contains macros to do reads/writes when the SLOW
+symbol is defined (as in V9t9_SLO).  These macros check the address map
+in FS (a 64k block corresponding to the 64k CPU ROM/RAM) which tell if
+reads/writes are legal and if they're memory-mapped.  A direct
+read/write to memory is performed if the target is RAM.
+
+     þ MEMORY.INC contains routines only of great interest to
+EMULATE.INC.  These macros read/write registers and contain the code
+referenced in SLOWMEM.INC/SUPERMEM.INC to read/write memory.  The latter
+routines simply shift the given address right 13 bits and jump to one of
+8 routines (in MEMCODE.INC) which themselves perform the operation.
+
+     þ MEMCODE.INC contains the physical read/write code for each
+section of memory.  On the 99/4A there is ROM (read-only), RAM (read-
+write), memory-mapped RAM (read/write indirect), banked module ROM
+(readable, writing switches banks), and module RAM (in Mini Memory).
+The above file calls these routines through a jump table.  As you can
+tell, this is a sort of slow way to access one byte.  But it's damned
+accurate, and better than doing several comparisons in macros.
+
+     MEMCODE can only be included in TIEMUL.ASM because it contains
+actual code which shouldn't be defined twice.  Also, it uses some
+internal TIEMUL.ASM variables which I didn't want to make publically
+available.
+
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+     VDP memory is stored directly in the data segment DS at >0.  For
+this reason, linking order is very important -- TIEMUL.OBJ must be
+first.
+
+     GROM is stored in a 64k segment referenced by "gplseg".
+
+     Speech ROM is stored in a 32k segment referenced by "speechseg".
+
+     Although module ROM is stored in a 16k segment called "moduleseg",
+whichever bank is active is copied into the CPU segment at >6000 to
+faciliate fast reads (i.e., no new segment register needs to be loaded,
+etc.).
+
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+     Modules come in many forms.  The most simple TI kind only contained
+GROM.  Then they added ones with module ROM at >6000.  Then Mini Memory
+had 4k of RAM at >7000.  Then they made Extended BASIC, which had two
+banks of 4k at ROM >7000.  Then Atarisoft made ROM modules using two
+banks of 8k.
+
+     ARGH!  Makes it difficult to emulate efficiently, eh?  Yup.  Look
+at "modstruc" in STRUCS.INC.  One field called "memtype" is a bitmap of
+the above features which is checked upon writes to the module ROM/RAM
+area.  "mw_cartmem" and "mb_cartmem" in MEMCODE.INC handle these writes.
+
+                                 * * *
+
+     If you don't know already, the way Atarisoft cartridges and
+Extended BASIC switch their banks is by a byte write to the >6000
+cartridge ROM space.  The write is intercepted and decoded:
+
+     address => 011x xxxx xxxx xxBx
+
+     The "B", if 0, means bank 0; and if 1, means bank 1.
+
+     In Extended BASIC, only the last 4k of the space is banked, but
+this is easily emulated by using two 8k banks with the same first 4k
+blocks.
+
+
+อออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออออ
+                           ณ 9900 EMULATION ณ
+อออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออออ
+
+     V9t9 uses a very straightforward scheme to emulate the 9900
+processor on the 80x86.  Each and every instruction is decoded and
+interpreted directly.  (I've tried in the past to devise caching schemes
+to speed up the process, but they only slow things down -- the fastest
+thing to do is to have linear code that does the job, without AI-like
+interpretation of the opcode stream.)
+
+     The macro NEXT causes a jump into the emulator's core at "execute"
+in EMULATE.INC.  What it does is to read the word at IP, shift it right
+a few bits, then go through a series of jump tables to get to the
+opcode-specific handler.  Right before the last jump, though, the
+address(es) the opcode will require are calculated.
+
+                                 * * *
+
+     The opcode-specific handlers are, unfortunately, quite muddled now
+since I've taken steps to provide three possible optimizations.  But
+they all basically perform the same function:  read their arguments,
+operate on them, and write back the result.
+
+     The slower opcode handlers, and also the most correct, call
+"readword" and "writeword" to retrieve arguments and store results.  As
+mentioned above, these provide extensive checks against erroneous writes
+to ROM, etc.  But it's slow, being a subroutine call.
+
+     The faster opcode handlers, which is correct about 99% of the time,
+perform reads and writes directly from ES (CPU memory).  This is based
+on the assumptions that 99/4A programs are written correctly -- not
+writing to ROM and not referencing memory-mapped registers as words.
+(All memory-mapped registers emulated are byte-wide.)
+
+     An optimization is made for the fast opcode handling -- routines
+which only operate on registers have their own handlers.  This way,
+references can be made to ES:[WP+xxxx], where WP is equated to a
+register which always holds the 9900 workspace pointer.  This also
+assumes that the WP register is correct.  In retrospect, all this saves
+is one add, and is probably slower than without.
+
+                                 * * *
+
+     Another difference between the fast and slow handlers is that the
+fast ones do explicit checks on WP (the workspace pointer) when itchanges to assure that writes to its 32-byte span will always be legal.
+If a program attempts to set an invalid WP, V9t9 will crash with an
+error message.  The slow handler, however, ignores this check, since
+every address is explicitly checked anyway.
+
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+     The STAT (status) register is emulated in a bimodal fashion.  STAT
+(equated to DX) contains only a few the bits that the 9900 ST register
+does, namely C (carry), O (overflow), P (parity), and X (extended
+operation).  The others are emulated via two variables, "lastcmp" and
+"lastval".
+
+     "Lastcmp" and "lastval" are set to the last two values whose
+comparison would set the LAE flags in the status register.  You see,
+nearly every 9900 instruction will compare the result of an instruction
+to 0, and set LAE accordingly.  However, the 80x86 FLAGS register has
+very little to do with the 9900 ST register; setting the LAE flags after
+every instruction takes a lot of work.
+
+     So, "lastcmp" and "lastval" are set to 0 and the answer (or the two
+operands used in a compare instruction); and whenever a jump occurs, the
+two values are simply compared before jumping.  For example, this 9900
+sequence causes the adjacent changes in "lastcmp" and "lastval":
+
+     >83CC= >0100
+     R1   = >0012
+     R3   = >FFFF
+
+     MOV @>83CC,R1       lastcmp=>0000  lastval=>0100
+     JEQ >1000           lastcmp<>lastval, so skip
+     CMP R1,R3           lastcmp=>0100  lastval=>FFFF
+     JGT >1010           lastcmp>lastval, so jump
+
+     Other comparisons, of course, simply check STAT directly:
+
+     JNC >1020           C set in STAT, so jump.
+
+     Instructions that set C or O are relatively straightforward to
+handle in 80x86 code (see CARRY?, OVERFLOW? in EMULATE.INC).  The only
+problem is that OR-ing STAT with the mask for CARRY (ST_C) will reset
+the other bits in the 80x86 FLAGS register.  So a PUSHF/POPF sequence
+needs to occur around such an OR if both conditions will be checked at
+once.
+
+                                 * * *
+
+     Whenever a BLWP or STST instruction comes by, "lastcmp" and
+"lastval" are explicitly compared and the LAE bits in STAT are set.
+Likewise, when RTWP happens, "lastcmp" and "lastval" are set to
+appropriate values which will match the LAE bits ("setstat" and
+"getstat" respectively).
+
+
+อออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออ
+                         ณ UNDOCUMENTED STUFF ณ
+อออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออ
+
+     You will find without any trouble that there is support in
+EMULATE.INC for something called a "compiled ROM".  This was an effort
+by me to speed up ROM emulation by executing a program which contained
+the entire 99/4A ROM compiled into 80x86 code.
+
+     This indeed worked somewhat.  I wrote a program which would read a
+9900 ROM and generate 80x86 assembly code, which came out to about 350k
+and took ten minutes and protected mode to assemble.  It was much
+faster, but there were limitations to how useful it could be.
+
+     Mainly, there was the problem with switching from interpreted mode
+into compiled mode.  Checks at the "B", "BL", "BLWP", "XOP", and "RTWP"
+instructions handled this (to see if we were jumping into ROM).
+Likewise, jumps out of ROM would have to return to interpretation mode.
+Since the protocols for doing this were pretty complex, I simply had
+every "B", "BL", etc., instruction jump to a routine which resumed
+interpretation mode.
+
+     Also, the program was very large, so I had to jump to a different
+segment to execute it.  This meant that it effectively couldn't access
+any other V9t9 routines, since those were all written for a small-code
+model (no far calls).  So for what few routines I needed I wrote large-
+code versions.  Otherwise, it was back to interpretation mode.
+
+     And, some instructions couldn't be compiled at all, such things as
+LDCR and STCR (which are lengthy in themselves and require external
+calls), and LIMI (which can adversely affect execution by causing
+interrupts), so these had to be handled by returning the emulator into
+interpretation mode.
+
+     But once a return to interpretation mode happened, there was no
+feasible way to make the emulator return to the compiled code.  A check
+between every instruction to see if it was in ROM or not would only slow
+down the rest of the emulation.
+
+     Another problem with compiled code was that it didn't execute
+CHECKSTATE!  A locked-up routine in ROM would lock up the whole computer
+(since that's where the Ctrl-Break checking is).  So, this somewhat
+justified frequent jumps back to interpretation mode.
+
+     Evenutally, I found that most of the time was spent interpreting
+anyway.  Not to mention that somewhere there was a bug which would lock
+up the system.  It wasn't a bug in the compiled code, because even when
+every single instruction was fixed to simply jump back to interpretation
+mode, the bug recurred.  Looking back, it's probably caused by a timer
+interrupt and the stack.
+
+     Argh.  I also tried to apply this process to module ROMs, but for
+some reason, that failed altogether.
+
+     Oh well.  That's why it's undocumented and unused.
+
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+

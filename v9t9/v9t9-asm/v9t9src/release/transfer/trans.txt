@@ -1,0 +1,66 @@
+
+
+
+
+
+
+
+
+
+                 The TRANS\ directory contains the 99/4A source code for
+            the TRANS program (which the FORTH ROM transfers to the
+            99/4A).
+
+                 The way to compile the program is very convoluted.  I
+            usually use the Borland C++ IDE to edit the *.TI files,
+            which are 99/4A source files.  Then, the project "compiles"
+            by running TXT2ASM to convert each of the files into a V9t9
+            DV/80 file.  The last command runs the batch file
+            DOEMUL.BAT.
+
+                 DOEMUL.BAT is broken, obviously, since neither the
+            configuration files nor the module ROMs are in this archive.
+            The basic point is that it will run V9t9 with
+            Editor/Assembler as the only module, for efficiency's sake.
+
+                 Once the emulator is going, I run E/A and compile the
+            TRANS program with the "2) Assemble" option.  The source
+            file is DSK2.TRANSS, the object is DSK2.TRANS, the list file
+            (if any) is DSK2.TRANSE, and the options are RC(LS).
+
+                 Then, a nice Ctrl+Break stops the emulator after
+            assembly, and the TRANSE file is converted into TRANS.ERR so
+            I can correct errors.
+
+                 Sheesh!  I know what you're thinking.  I could have
+            just used the same assembler I used to write FORTH with.
+            But I didn't, since I wanted to have an object code file,
+            and not a binary.  Anyway, this is how I did it.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

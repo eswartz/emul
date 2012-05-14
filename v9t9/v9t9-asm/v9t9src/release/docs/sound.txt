@@ -1,0 +1,235 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ SOUND.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+
+       Here ya go, a whole file about how hard it is to emulate the TI's
+  pitifully simple sound chip on a PC.
+
+
+  อออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออ
+           ณ I DON'T UNDERSTAND...  WHAT'S 99/4A SOUND LIKE? ณ
+  อออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออ
+
+       The 99/4A's sound chip provides three voices (square-wave tones)
+  which can have pitches from 109 to 55938 Hz.  There's also a noise
+  register, which either does white noise (hissing) or periodic noise
+  (what you get when silencing 15 out of 16 "squares" in a square wave).
+  Noise can have the same pitch range as the three voices.  All these
+  channels can have 16 levels of volume.
+
+
+  ออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออ
+                    ณ HOW'S THIS EMULATED ON A PC? ณ
+  ออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออ
+
+       *takes a breath*  Not very easily.  With the use of a Sound
+  Blaster, it's possible to get most of the emulation down.  Even then,
+  just how to do it is a puzzle.
+
+       The main point to remember:  while both the PC speaker and the
+  Sound Blaster could be programmed to produce exact digitized samples of
+  99/4A sound (like the way MOD files are played), the calculation time
+  required would completely paralyze the emulator.  Especially on my
+  system.  :)
+
+
+       So, first, the case with the PC speaker only.  The speaker can
+  produce continuous square-wave tones.  There, we've got one voice.
+  Uh...?  That would be pretty pitiful if that were all.  (As in earlier
+  versions of this program!)  The way I've gotten around this is to toggle
+  the current voice eminating from the speaker every 1/60 second.  This
+  results in an arpeggio effect (when more than one voice is playing, of
+  course), which I think is very nice, compared to hearing only one voice
+  out of a favorite 3-voice song.
+
+       Since PC speakers don't have a volume control, I simply programmed
+  the voice not to play if its attenuation (i.e., quietness) goes above
+  the level defined in the configuration variable PCSpeakerSilenceLevel.
+  An attenuation of 15 means the voice is off; 0 is the loudest volume.  A
+  setting of about 12 will serve to blot out those silent background
+  ditties which otherwise would dominate the action.
+
+       With the PC speaker I couldn't get any sort of noise to work, so
+  there's no noise with the PC speaker.
+
+
+       The second device is the FM chips, as are found in the Adlib card
+  and on Sound Blasters.  This device allows, at its minimum, 11 voices.
+  So, I figured this would be the next-simplest way to implement 3-voice
+  sound.  It works pretty well, except for the limitations on its pitch
+  range and precision, and the fact that FM chips use sine waves instead
+  of square waves.
+
+       Above a certain pitch, tones drop off because of the FM chips' 8-
+  octave range.  And, even at the highest pitches before they drop off,
+  they sound as if coming from a combination of several lower octaves, due
+  to the physics of sine waves.
+
+       With FM chips, I was able to emulate periodic noise.  Of course, it
+  doesn't sound exactly like 99/4A periodic noise, but it's something.  If
+  someone out there can help me set up the cymbal instrument, then I could
+  also do one-pitch white noise.
+
+
+       Finally, the third device is the Sound Blaster, using digitized
+  samples, played with DMA (direct memory access).  DMA allows sound to be
+  played in the background independent of program control, which would
+  seem to make it an excellent candidate to emulate the entire 99/4A sound
+  chip.  Because it doesn't require that the emulator be poking data into
+  the Sound Blaster constantly (cf. the worst-case, best-sound scenario
+  above), it would seem to be the best way to go.
+
+       Well, no.  Not right now, at least.  The emulator only uses DMA for
+  noise.  The reasons for this are simple:  (1)  It would still require
+  calculation to come up with the samples of 3-voice sound; although
+  samples can repeat, frequently-changing sound poses the same speed
+  problem.  (2)  I use the CT-VOICE.DRV driver to access DMA, wanting to
+  be compatible with Sound Blaster cards, and also not wanting to delve
+  into the intricacies of direct DMA access.
+
+       So, I only use DMA for noise.  You might be thinking that since
+  noise is sound too, it still needs to be calculated, presenting the
+  exact same speed problems I've been harping on.  Well, that's true.  But
+  noise is only one channel.  The features of the Sound Blaster let me
+  calculate one sample (uh... see below), and change its speed (therefore
+  its pitch) and its volume (through the Sound Blaster mixer).  So the
+  calculation only happens when absolutely necessary.  Most games simulate
+  explosions by fading the volume of white noise.  Under V9t9, the white
+  noise sample is calculated once, and then the mixer chips are changed to
+  change its volume.
+
+       Now, again come into play hardware limitations.  The Sound Blaster
+  (vanilla)'s frequency range is 4000 to 22000 Hz.  99/4A noise can be
+  from 109 to 55938 Hz.  Again, a compromise is made.  What the emulator
+  does is this:  for each type of noise, there are two buffers.
+
+       One holds a fixed sample of noise calculated at 4000 Hz.  When a
+  noise of the range 4000-22000 Hz is played, this sample is played at the
+  appropriate speed.
+
+       The other buffer is used to calculate, on demand, noise samples
+  from 109 to 3999 Hz.  Why not just make this buffer fixed-speed like
+  buffer #1, you ask?  Well, look at the ranges.  4000 Hz is 36 times
+  faster than 109 Hz.  But 22000 Hz is only 5.5 times faster than 4000 Hz
+  (the Sound Blaster's range).  So, rather than allocate YET MORE buffers
+  to cover the middle range(s), the lesser-used noises lower-pitched than
+  4000 Hz are calculated.
+
+       Calculating white noise takes in theory about 15 times longer than
+  periodic noise, due to the fact that periodic noise is mainly silence.
+  At least on my 386-SX/20, I can see the slowdown that low-pitched white
+  noise makes.  Maybe some day when I feel like it, I'll let the emulator
+  allocate 60k more and make the lower ranges fixed-speed.  Who knows.
+
+
+  ออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออ
+        ณ     OKAY.  I READ ALL THAT.  I SYMPATHIZE WITH YOU.   ณ
+        ณ NOW TELL ME HOW TO SELECT WHAT DEVICES I WANT TO USE. ณ
+  ออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออ
+       Okay.  In addition to the 99/4A sound chips, I use the PC speaker
+  or Sound Blaster direct-data for speech.  Just remember that.  (See
+  SPEECH.TXT for more.)
+
+       The PlaySound variable in TIEMUL.CNF allows you to specify what
+  devices you want the emulator to use (or NOT use) when emulating sound.
+  By default, V9t9 tries to use the PC speaker, FM chips, Sound Blaster
+  direct-data, and the Sound Blaster with DMA usage.  All of these
+  devices, except SB DMA, can be detected easily.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+
+       Using DMA access with the Sound Blaster requires the CT-VOICE.DRV
+  driver (usually comes with SB cards).  The SOUND= and BLASTER= DOS
+  environment variables are usually set up by the Sound Blaster
+  installation program to provide setup information for this driver.  The
+  SOUND= variable points to the Sound Blaster software directory on your
+  hard drive.  The DRV\ subdirectory off of that directory is where CT-
+  VOICE.DRV is found.  In AUTOEXEC.BAT:
+
+  SOUND=e:\sbpro      means that e:\sbpro\drv\CT-VOICE.DRV is where it is.
+
+       The BLASTER= variable gives information about the card (T)ype, its
+  base port (A)ddress, its (I)RQ level, and its (D)MA channel.  (Note the
+  emphasized letters correspond to those used in defining the variable.)
+  My AUTOEXEC.BAT's BLASTER= variable is:
+
+  BLASTER=A220 I7 D1 T2    meaning, base port is 220h, IRQ 7, DMA channel    
+                           1, and type 2 (SB Pro).
+
+       Sound Blaster 16 cards have an additional parameter, Hx, which
+  tells what the 16-bit DMA channel is.  V9t9 doesn't use SB Pro or SB-16
+  features.
+
+       DMA usage takes up about 66k-70k of memory, for the CT-VOICE.DRV
+  driver and the sample buffers.  The driver initializes slowly as well.
+  Since the emulator releases sample buffer memory and deinitializes the
+  driver when turning sound on and off (during help screens, even), this
+  delay will slow down certain aspects of the emulator's operation.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+
+       The PlaySound variable consists of sound device names, preceded
+  with '+', '-', or nothing, to tell the emulator whether to use it.  Note
+  that by default, _all_ available devices will be used.  PlaySound is
+  most useful for telling which devices NOT to use.
+
+       Examples:
+
+  þ    PlaySound = Adlib                  means use the FM chips and
+                                          all other devices.
+  þ    PlaySound = -Adlib,+pcspeaker      means don't use the FM chips;
+                                          use everything else.
+  þ    PlaySound = -adlib,-sblaster       means use only the speaker and
+                                          SB DMA, if possible.
+
+       The most significant use of PlaySound is this:
+
+  þ    PlaySound = -sbdma
+
+
+       Specifying "-sbdma" means that SB DMA will NEVER be used during one
+  execution of emulator.  For all the other devices, pressing Ctrl/Alt+F5
+  will let you toggle them on and off.  Only if "-sbdma" is absent will
+  the emulator use SB DMA; Ctrl/Alt+F5 can then toggle it on and off.
+
+       This idiosyncracy is on purpose.  The complexity of allocating
+  memory, initializing the CT-VOICE.DRV driver, setting up the samples,
+  etc., requires that I can't let SB DMA suddenly turn on for the first
+  time inside a running program.  All other devices are controlled on a
+  hardware level, so it's fine to use them, or not, at will.
+
+
+  ออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออ
+                    ณ NOISE IS WAY TOO LOUD/QUIET! ณ
+  ออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออ
+
+       It is, huh?  Since the level of sound produced by the FM chips is
+  not equivalent to that produced by the DSP chips, there will be some
+  discrepancy until you figure out a good value for the NoiseTop
+  configuration variable.
+
+       It's recommended that you have your Sound Blaster mixer set for
+  maximum volume on the FM chips.  Then, you can set NoiseTop
+  independently.
+
+       The value for NoiseTop is directly related to the volume of the 8-
+  bit digitized data as it's represented on the Sound Blaster's DSP chips.
+  128 is silence; 0 and 255 are loudest levels.  So, setting NoiseTop to
+  140 or 116 produces pretty quiet noise; and a setting of 10 or 245
+  produces pretty loud noise.
+
+       The volume for noise is also determined by the attentuation level
+  the 99/4A program gives it.  The mixer channel for "Voice" (DSP) is
+  changed to provide this volume change.  Therefore, trying to change the
+  voice volume outside the program will have no effect on the overall
+  level of noise.
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

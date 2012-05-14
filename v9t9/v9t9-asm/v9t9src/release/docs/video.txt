@@ -1,0 +1,88 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ VIDEO.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file explains the mechanisms used to emulate the 99/4A's video
+  chip, and how to get a nice video update speed for the emulator.
+
+
+  ออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออ
+              ณ WHAT'S THE DEAL WITH "VIDEO UPDATING SPEED"? ณ
+  ออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออ
+
+       The simple fact is, a software program goes slower than a video
+  chip.  (Except for those of you with really fast computers...  growl.)
+  The 9918A chip updates the screen 60 times a second.  It takes advantage
+  of the raster scan technology of computer monitor, which allows it to
+  effectively redraw the screen each time.  Software, however, cannot
+  possibly redraw the entire screen 60 times a second; it's inefficient as
+  well as idiotic.
+
+       Even without redrawing the entire screen, the existence of sprites
+  makes it difficult to get maximum efficiency.  Sprites are pretty slow
+  compared to the rest of the graphics.  The reason for this is that
+  besides sprites, the 8-pixel-aligned graphics of the 9918A chip is very
+  well suited to the EGA graphics mode.  Sprites, however, can go anywhere
+  on the screen, making them a big problem.
+
+       Anyway, the whole point is, video updates slow performance.  So
+  there's an elegant way to handle the timing of video updates.  An
+  algorithm keeps track of how much activity is going on with the video
+  "chip".  If a certain minimum amount of time passes before any video
+  data changes, the screen is updated.  If video data is being written at
+  full speed, then after a maximum amount of time elapses, a video update
+  is forced.
+
+       In the V9t9 configuration file the variables "VideoUpdateSpeed" and
+  "VideoUpdateMaxDelay" allow you to set what these minimum and maximum
+  times are, in a resolution of 1/60 second.  For absolutely stinking fast
+  computers, set them both to 1.  There, real 9918A updating speed.  For
+  the rest of us, like those who use 386SX's, values of, say, 4 and 16 are
+  nice.  This means 1/15 second is the delay required after an absence of
+  video activity before the screen is updated, and 4/15 second is the
+  maximum delay before doing so.
+
+       Please note that on slower computers, the actual screen updating
+  process will most likely take longer than 1/60 second in any case.
+  (I.E., any case meaning any sprites.)
+
+
+  ออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออ
+        ณ HOW DO YOU UPDATE THE SCREEN THAT MAKES SPRITES SO SLOW? ณ
+  ออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออ
+
+       Well, come on now.  It's actually pretty fast.  (Mental note --
+  don't reply to the headers!)  As mentioned before, the only reason it
+  takes any time at all is because it's software emulation of a hardware
+  chip.
+
+       When sprites change in any way, the characters they covered in
+  their old position, and the ones they will cover in their new position,
+  are drawn onto a scratch video page.  Then the sprites are drawn on the
+  scratch page over those characters.  Then all the affected characters
+  are copied directly onto the visible screen.
+
+       Besides sprites and text mode, the EGA video hardware is very well-
+  suited to emulating the 9918A chip.  This is because the 9918A breaks up
+  graphics into 8-pixel-wide units, which corresponds nicely to the byte-
+  oriented planar structure of 16-color EGA modes.  The EGA hardware can
+  be set up so that when two bytes are written to video memory and two
+  hardware instructions are executed, a pattern in two colors appears in 8
+  adjacent pixels on the screen.  Just like the 99/4A, even in bitmapped
+  mode!
+
+       Text mode is a problem.  It has 6-pixel-wide units, which obviously
+  collides with nice 8-pixel-wide structure of EGA memory.  Luckily, I
+  devised a method on a 386 to speed this up, so text mode is now actually
+  faster than graphics mode on those systems.  :)
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+
+
+
+
+

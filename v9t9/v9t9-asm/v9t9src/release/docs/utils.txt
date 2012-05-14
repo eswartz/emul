@@ -1,0 +1,797 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ UTILS.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file documents all the utilities in the V9t9 \UTILS
+  subdirectory.
+
+       For users of TI Emulator! v4.0 or v5.01, note that all the
+  utilities have changed!  The syntax is radically different and actually
+  standardized now.
+
+       It's recommended that you add the V9t9 \UTILS subdirectory to your
+  DOS PATH= listing.
+
+
+  ออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออ
+                    ณ COMMAND-LINE PARAMETER NOTATION ณ
+  ออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออ
+
+       Almost every utility will print a help screen if invoked with the
+  incorrect number of parameters, or the "/?" or "/H" option.  Each usage
+  synopsis follows this standard:
+
+  Usage:    PROGRAM [optional] <required parameter> {repeated parameter}
+            choiceX | choiceY
+
+       PROGRAM is the name of the program, of course, usually located in
+  the \UTILS subdirectory.  Several of the utilities which require access
+  to ROMs or module files must be run from the V9t9 directory -- specify
+  the program under DOS as:
+
+  C:\V9t9> UTILS\PROGRAM  xxxxx
+
+       [] refers to optional parameters.
+       <> refers to required parameters.  Required parameters must appear
+  in the order specified.
+       {} refers to a parameter that may be repeated, usually filenames.
+       xxx | yyy means that you can choose either an "xxx" or a "yyy" as a
+  parameter.
+
+       Usually the options are optional.  :)  Options can appear anywhere
+  on the command-line, and not just right after the program name.
+
+       Each option is one letter long and must be preceded by a dash ("-")
+  or a slash ("/").  When an option has a parameter, it will be specified
+  as "/Oxxxx", where "O" is the letter defining the option, and "xxxx" is
+  the parameter.  THERE MUST BE NO SPACE BETWEEN THE OPTION AND THE VALUE.
+
+       Each option must be specified separately, with spaces between them.
+  (For example, /O /C /T8 /X.)
+
+
+  อออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออ
+                         ณ MISCELLANEOUS UTILITIES ณ
+  อออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออ
+
+                                  RECV.EXE
+
+       This program is used to receive ROM transfers from a 99/4A running
+  TRANS.  See TRANSFER.TXT for full operating instructions.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                  DOCS.EXE
+
+       This program is a nice way to read the documentation (nudge,
+  nudge).  You should run the program from the V9t9 directory:
+
+  C:\V9t9> UTILS\DOCS
+
+       When you're NOT reading a document, you can press F10 to change the
+  screen between 25 and 50 rows.  This will make the document window
+  larger.
+
+       You can print parts of, or all of, the document you're reading.
+  Shift plus arrow keys will select lines of text.  Alt-P will print
+  selected text, or the whole document if nothing is selected.  The "ASCII
+  Only" button will print the file without these wacky IBM ANSI lines and
+  such.  You can tell it's still printing when the screen border is white.
+
+       The search-for-phrase option is very simple-minded, but it works.
+  It will move the cursor to the first line in the first file (in
+  DOCS\*.TXT) in which it finds the phrase you enter.  The "More" button
+  will look for more occurrences of the phrase in the file or files.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                NOHEADER.EXE
+
+       This program is used to strip the header from files.  NO file-type
+  checking is performed before the strip -- the given option only
+  specifies the SIZE of the header.
+
+       NOHEADER <options> <old file> <new file>
+
+       <Old file> and <new file> must refer to different files.
+
+       At least one, and only one, option must be specified:
+
+       /T specifies a TIFILES-sized header.  This is 128 bytes.  The
+  standard V9t9 emulated file header is also 128 bytes.
+
+       /G specifies a GRAM-Kracker header coupled with a TIFILES header.
+  This is 128+6, or 134 bytes.  Since most GRAM-Kracker images are stored
+  in groups of 256 sectors, and most images contain only 8192 bytes of
+  information, the resulting file will usually be 250 bytes too long
+  (resulting in a 8442 byte file).  Use CHOP to adjust the file size.
+       
+       /Cxxx specifies a custom header size, in bytes.  This would be
+  useful for PC-Transfer'ed GRAM-Kracker files, which would have a header
+  of 6 bytes.  (/C6.)
+
+       See TRANSFER.TXT for more information.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                  CHOP.EXE
+
+       This simple program simply truncates a file at a given byte
+  position.  It's generic enough to be a general-purpose utility.
+
+       CHOP <filename> <size>
+
+       <Filename> is the file to chop.  <Size> is the number of bytes to
+  KEEP.
+
+       For example, to fix the size of a TI Emulator! v5.01 TICPU.HEX
+  file, enter this:
+
+       CHOP TICPU.HEX 8192
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                 DECODE.EXE
+
+       This program is used to decode archive packages that I send to you
+  over the Internet, either through e-mail or via FTP.  A keyword that you
+  specify is used to scramble the file, providing some measure of security
+  against the fabled e-mail pirates, and the more prevalent FTP leeches.
+
+       DECODE <input file> <output file> <key>
+
+       <Input file> is the encoded file.  <Output file> is the target,
+  unencoded file.  <Key> is the keyword you gave me when ordering.  It
+  must contain no spaces or quote marks ("), and be longer than 8
+  characters.
+
+       DECODE cannot tell if the keyword you supplied is correct (thereby
+  eliminating the security risk of incorporating it into the file), so be
+  sure to remember it exactly.  Capitalization counts!
+
+       See ORDERING.TXT for use of this program.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                  SWAP.EXE
+
+       SWAP will simply swap every two adjacent bytes in the given file.
+  This is useful for changing the byte-order of a file between 9900 and
+  80x86 order.  This is only useful on word-oriented ROM images, such as
+  the console ROM, and module ROM segments (xxxC.BIN, xxxD.BIN).
+
+       You do NOT need to use this with files transferred directly from
+  the 99/4A or with files created with RECV, but ONLY if you have already
+  used a program to swap the bytes in them.
+
+       SWAP <input file> <output file>
+
+       <Input file> and <output file> must refer to different files.
+
+
+  ออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออ
+                      ณ SPECIFICATIONS FOR FILENAMES ณ
+  ออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออ
+
+                              ** READ THIS! **
+
+       All the following utilities are to be used with V9t9 emulated DSKx
+  files.  Since filenames for 99/4A files do not exactly fit into the DOS
+  filename standard, some filenames are "mangled" by V9t9 and its
+  utilities to allow 99/4A filenames to exist (in a form) on DOS drives.
+  (See DISKS.TXT for exact details.)
+
+       Since many of the filenames generated by V9t9 are often difficult
+  or impossible to type in, like:
+
+       TIญWRITE.R
+
+
+       All V9t9-compatible utilities will let (require) you enter the REAL
+  99/4A filename.  (The one above is really TI-WRITER.)  Use the TIDIR
+  utility to see the real names, if you can't figure it out.
+
+       This means, that in a utility like TI2TXT (which translates 99/4A
+  files into DOS *.TXT format), you can enter this:
+
+       TI2TXT REALLYLONG 07/25/95 [DOCS]/INF c:\text
+
+       instead of changing the names to "REALLYLO.NG", "07ฏ25ฏ95.", and
+  "ÛDOCSÝฏI.NF", which is how the files will be named under DOS.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       V9t9 now supports "disk-on-a-disk" (DOAD) images.  These are
+  monolithic 90k or 180k files which contain all the sectors on a normal
+  99/4A disk, and can only be used with V9t9 if you have transferred the
+  99/4A Disk DSR ROM (see TRANSFER.TXT).
+
+       V9t9 utilities ALSO support accessing files DIRECTLY from disk
+  images.  It is as simple as prepending the name of the disk image to the
+  filename.  For example, if you have a disk image called TIARTIST.DSK
+  located in the current directory, and you want to translate its
+  PRINTER/S file into a DOS text file in the directory E:\TEXT, do this:
+
+       TI2TXT TIARTIST.DSK:PRINTER/S E:\TEXT
+
+       NOTE that V9t9 utilities expect the default extension for disk
+  images to be ".DSK", so the source filename above can be abbreviated
+  into "TIARTIST:PRINTER/S".  (Of course, you can see that using shorter
+  disk image filenames will help out in the long run.)
+
+       When you use a disk image in a filename, the ONLY identifying trait
+  is the colon (":") in the filename.  (This will not interfere with DOS
+  drive letters unless you happen to have disk images called A.DSK, B.DSK,
+  etc.)  So, if you specify a disk image as a destination for a utility,
+  include the colon:
+
+       TICOPY e:* fillme:
+
+       This will copy all the files in the current directory of drive E
+  into the disk image "FILLME.DSK".  (UNLESS the disk image E.DSK exists,
+  in which case this copies all the files from E.DSK into FILLME.DSK.)
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       
+       Most V9t9 utilities allow several files to be specified on the
+  command line (for example, translation utilities and TIDIR).  With these
+  programs, the last parameter given to the program should be the
+  directory or disk image for the destination files:
+
+       TICOPY tomba tombb tombc tombd tombe tombf tombs tomb:
+
+       would say that "tomb.dsk" is the destination disk image.
+
+       NOTE -- the destination directory is ALWAYS required, even if using
+  the current directory.  As shorthand, remember that in DOS, the name for
+  the "current directory" is a period, so this command:
+
+  C:\V9t9\DISK\FILES\TEXT\HUMOR>
+            txt2ti e:\tfiles\humor\*.txt C:\V9t9\DISK\FILES\TEXT\HUMOR
+
+       can be radically shortened with:
+
+  C:\V9t9\DISK\FILES\TEXT\HUMOR> txt2ti e:\tfiles\humor\*.txt .
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       With V9t9 utilities, every time you specify a file specification,
+  it will be treated as a wildcard.  (SO, beware of using the "?" and "*"
+  characters in emulated filenames!)  If a file is not found, you will see
+  the message "No files match xxxxxx, continuing", which is not an error,
+  but may indicate that you mistyped a filename.
+
+       For example, if you wanted to use the TI2XMDM utility on all the
+  files beginning with "A" in a directory and a disk image called
+  "DISKS\DOCS.DSK" into the directory "E:\TIFILES", enter:
+
+       TI2XMDM \V9t9\FILES\A* DISKS\DOCS:A* E:\TIFILES
+
+       If you get errors of "no files match xxxxx", when you know such
+  files DO exist, be aware that you must specify a TI wildcard -- one
+  asterisk "*" -- not "*.*", since no TI filenames contain periods.
+       
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       For your general sense of well-being, you should NEVER mix V9t9
+  files with other DOS files in the same directory.  V9t9 utilities do
+  some amount of checking to ensure they are operating on real V9t9
+  emulated files, but if a DOS file passes through, the results are
+  undefined.
+
+
+  อออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออ
+                         ณ TRANSLATION UTILITIES ณ
+  อออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออ
+
+       The translation utilities provided with V9t9 are:
+
+       þ  GRAM2TI, which will translate GRAM-Kracker module dumps into
+  V9t9 format,
+       þ  XMDM2TI, which will translate TIFILES-type 99/4A files into V9t9
+  format,
+       þ  TI2XMDM, which will translate V9t9 files into TIFILES format,
+       þ  TI2TXT, which will translate V9t9 files into DOS *.TXT format,
+       þ  TXT2TI, which will translate DOS *.TXT files into V9t9 format.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                GRAM2TI.EXE
+
+       This program will take a set of GRAM-Kracker files and create a
+  V9t9 module from them, as well as add an entry to MODULES.INF.  The
+  files must already be on a PC disk, in either TIFILES or V9t9 format.
+
+       GRAM2TI [options] <first GRAM-Kracker segment>
+
+       /Mxxx specifies an alternate modules database (by default,
+  MODULES.INF)
+       /Cxxx specifies an alternate V9t9 configuration file (by default,
+  V9t9.CNF)
+       /Nxxx specifies an alternate module base name (by default,
+  generated from the GRAM-Kracker filename; see MODULES.TXT for standard)
+
+       /B specifies that the GRAM-Kracker files are "bare", or have no
+  128-byte TIFILES or V9t9 header.  This would be used with files on PC-
+  Transfer'ed disks.
+       /O tells GRAM2TI to overwrite existing module files, if a conflict
+  exists.  If not specified, GRAM2TI will ask you for a new base name to
+  avoid the conflict.
+       /V specifies verbose operation.  Recommended.
+
+
+       þ  GRAM-Kracker images residing in disk images should be extracted
+  with TICOPY, for example:
+
+       TICOPY image:* \tempdir
+
+       (See the following section for how to specify disk image and V9t9
+  filenames to utilities.)
+
+
+       þ  As an example, if you had GRAM-Krackered the Parsec module, then
+  you might have these files lying around in \GK:
+
+       PARSEC, PARSEC1, PARSEC2, PARSEC3
+
+       These would represent all the 8k segments of ROM and GROM that
+  Parsec requires.  If you transferred them via XMODEM to your PC, they
+  should each be 8576 bytes long (128 byte header + 8192 bytes data + 6
+  byte GRAM-Kracker header + 250 bytes unused in last sector).
+
+       In the simplest case, you'd execute this to get your Parsec module
+  ready for use with V9t9:
+
+  C:\V9t9> UTILS\GRAM2TI \GK\PARSEC
+
+       GRAM2TI will read all the segments, incorporate them into V9t9
+  module files, ask you for the module's title (as will appear in the
+  module selection list), and then add the entry to MODULES.INF (or the
+  specified modules database file).
+
+
+       If you use GRAM2TI to convert the Mini Memory module, you must
+  manually edit MODULES.INF and add "MMRAM" to the list of words defining
+  the module, so that V9t9 will know that extra RAM exists (see
+  MODULES.TXT).
+
+
+       GRAM2TI also supports console GROM images stored in GRAM-Kracker
+  format.  It will automatically detect such images, and instead of
+  creating a module, will create a GROM image in the \ROMS subdirectory
+  (by default), with a filename derived from the GRAM-Kracker filename.
+  Be sure to rename it to 994AGROM.BIN (or whatever) if you want to use it
+  with V9t9.
+
+
+       Note that GRAM2TI uses several variables from V9t9.CNF (or the
+  specified configuration file) -- "ModulesPath" for the destination
+  module files, "DefaultModuleExtension" for the module files' extension,
+  "RomsPath" for destination console GROM images.
+
+       See TRANSFER.TXT for more information.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                XMDM2TI.EXE
+
+
+       XMDM2TI will translate emulated files which were transferred to the
+  PC via XMODEM or YMODEM into V9t9-compatible files.  These files are
+  expected to have the TIFILES header, except for DIS/FIX 128 files, which
+  have no header.
+
+       All the source files will be copied into new files; the source
+  files will not be changed.
+
+       XMDM2TI [options] { filenames } [ <disk image>: | <directory> ]
+                           (source)             (destination)
+
+       /V specifies verbose operation.
+       /C tells XMDM2TI to ask for confirmation if it's about to overwrite
+  an existing file.
+       /R tells XMDM2TI to keep on chugging if the destination becomes
+  full (in case smaller files follow).  The destination file which caused
+  the disk-full condition will be deleted and processing will continue.
+       /A assumes that headerless files are DIS/FIX 128 rather than being
+  non-99/4A files.
+
+       If you specify that the destination files will go into a directory,
+  the destination directory must not conflict with any of the source
+  files.
+
+       XMDM2TI will not accept files from disk images, since this doesn't
+  make sense.
+
+       Only use /A if you are sure that all your source files are true
+  TIFILES-type files and/or DIS/FIX 128 files.  Specifying /A when DOS
+  files are mixed in with other files will result in the creation of
+  garbage V9t9 files.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                TI2XMDM.EXE
+
+       TI2XMDM will perform the mirror function of XMDM2TI, translating
+  V9t9 files into TIFILES-type files for use with XMODEM/YMODEM.
+
+       None of the source files will be altered by this program.
+
+       TI2XMDM [options] { <filename> }   <directory>
+                            (source)     (destination)
+
+       /C tells TI2XMDM to confirm overwrites of existing files.
+       /V will specify verbose operation.
+
+       Again, the destination directory should not conflict with any of
+  the source files.
+
+       TI2XMDM will not let you write files into a disk image, since this
+  doesn't make sense.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                 TI2TXT.EXE
+
+       TI2TXT will translate almost any V9t9 emulated file into a DOS or
+  UNIX text file.  It does not alter the source files.
+
+       TI2TXT [options] { <filename> } [<directory>]
+                           (source)    (destination)
+
+
+       /I tells TI2TXT to ignore illegal files it comes across when trying
+  to translate.  Such files would be non-V9t9 files.  Without this option,
+  a message will be printed, saying the file is illegal.
+       /Exxx specifies a custom extension for the generated files (default
+  is TXT).
+       /O tells TI2TXT to overwrite existing files without confirmation.
+       /V specifies verbose operation.
+       /U specifies that target files are to be in UNIX format (LF instead
+  of CR/LF).
+       /C tells TI2TXT to chop off extra spaces at the end of lines it
+  reads.
+       /S tells TI2TXT to print output to the screen rather than to files
+  (the destination directory is not required when using this option).
+       /D tells TI2TXT to ONLY allow the translation of xxx/VAR files.  By
+  default, TI2TXT accepts all file types except PROGRAM for translation.
+
+       The process is relatively straightforward.  An exception to the
+  normal V9t9 standards is that all output filenames are usable in DOS
+  (not mangled).  All illegal characters in the filename will be changed
+  to an underscore ("_").  Only the first eight characters of the V9t9
+  filename will be used in the output filename.
+
+       NOTE:  DO NOT use this program to translate xxx/VAR BINARY files
+  into text files.  The program is written in C, under which a string is
+  terminated by a null character (ASCII 0).  Any line in the input file
+  with a null character in it will be translated incorrectly.  This will
+  not affect the READING of the files, only the WRITING, resulting in
+  short output files.  TI2TXT can properly handle binary xxx/FIX files,
+  since they have a fixed number of characters per line, and nulls make no
+  difference.
+
+       For example:
+
+       TI2TXT e:\tidisk\disk\tomb? f:\tomb /ETSM
+
+       will take all the V9t9 "TOMB?" files in "E:\TIDISK\DISK" and
+  translate them into DOS text files in "F:\TOMB" with extensions of
+  ".TSM"  (TI assembly?).
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                 TXT2TI.EXE
+
+       TXT2TI will translate DOS/UNIX *.TXT files into V9t9 DSKx emulated
+  files.  It does not alter the source files.
+
+       TXT2TI [options] { <filename> } [<directory> | <disk image>]
+                           (source)          (destination)
+
+       /I tells TXT2TI to ignore illegal files it comes across.  Otherwise
+  an error message will be printed.
+       /Exxx specifies a custom extension for the filenames of the
+  destination files.  Usually there is no extension.  Use this, for
+  example, to tag text files.  "/E/T" will add "/T" to all the output
+  filenames.
+       /O tells TXT2TI to overwrite existing files.
+       /V specifies verbose operation.
+       /C tells TXT2TI to chop extra spaces off the ends of lines from the
+  input.
+       /T[xxx] tells TXT2TI to convert tabs into spaces in the output.
+  The optional "xxx" parameter is the tabsize in spaces (default 8).
+       /F tells TXT2TI to generate xxx/FIX files (instead of xxx/VAR).
+  All files will be generated with the same file attributes.
+       /N tells TXT2TI to generate INT/xxx files (instead of DIS/xxx).
+  All files generated will have the same file type.       /Rxxx tells TXT2TI to use a maximum record size of xxx bytes.
+  Default is 80 bytes.  All generated files will have the same record
+  length.
+
+       For example:
+
+       TXT2TI e:\dos\tiobject\*.obj testdisk: /F /C /E/O
+
+       will cause all the *.OBJ files in "E:\DOS\TIOBJECT" (in this
+  example, probably TI-style uncompressed object code created with a DOS
+  9900 assembler) to be translated into DIS/FIX 80 files in
+  "testdisk.dsk".  All the filenames will have /O as their extension.
+
+
+  ออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออ
+                  ณ DISK IMAGE MANIPULATION UTILITIES ณ
+  ออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออ
+
+       V9t9 includes a suite of programs that are to be used with disk
+  images.  All of the programs (except TIFORMAT, TICHKDSK, and TIRENAME)
+  can be used with either V9t9 FIAD files or DOAD files, but they are most
+  useful with DOAD images, which cannot otherwise be used by DOS.  (Please
+  see DISKS.TXT if you have no idea what FIAD and DOAD mean.)
+
+       þ  TICHKDSK will check the file structure of emulated files.
+       þ  TIDIR will give a TI-style catalog of a FIAD directory or a DOAD
+  disk.
+       þ  TICOPY will copy files.
+       þ  TIFORMAT will create a DOAD disk image for use with V9t9.
+       þ  TIDEL will delete files.
+       þ  TIRENAME will rename FIAD files.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                TICHKDSK.EXE
+
+       TICHKDSK will perform consistency checks on FIAD and DOAD emulated
+  files (but not the structure of DOAD images).  This program is most
+  useful for those people upgrading from v4.0 or v5.01, since those
+  versions had numerous bugs in files they created.  See 5CHANGES.TXT for
+  information.  Files moved with v5.01's TRANS do not have errors.
+
+       TICHKDSK [options] { file | directory | disk image }
+
+       /V specifies verbose operation.
+       /F tells TICHKDSK to fix errors it finds.
+
+       When using this utility, it is best to run it once without the "/F"
+  parameter, to check for errors.  And, if any exist, re-run it with "/F"
+  to fix the errors.
+
+       It is VERY IMPORTANT to follow the credo "Do not mix DOS files and
+  V9t9 emulated files in the same directory" when using this program!
+  TICHKDSK *can* detect non-V9t9 files, but if it makes a mistake and
+  you're using the "/F" option, the non-V9t9 file will be destroyed!
+
+
+       TICHKDSK will detect the following errors:
+
+       þ  Badly-named files.  While the DOS filename for V9t9 emulated
+  files is supposed to be mangled sometimes, the filename stored inside
+  the file's header should NOT.  V9t9 emulated files should not contain
+  lowercase characters, spaces, periods, or IBM extended ASCII characters
+  (codes 128-255).  (That is, files created within V9t9 should not contain
+  these characters.)  Since extended ASCII characters are used to "mangle"
+  filenames, using such characters in the original filenames will confuse
+  V9t9 and its utilities.
+
+       You will be prompted to enter a correct filename to replace the old
+  filename in the file's header.  The actual DOS filename will not be
+  changed.
+
+
+       þ  xxx/VAR files, xxx/FIX, and PROGRAM files created incorrectly by
+  TI Emulator! v4.0 and v5.01.  (Yes, ALL the files.)  xxx/VAR files
+  incorrectly report that they have twice the sectors they use.  xxx/FIX
+  files report that they use no sectors.  (Perhaps a cut-n-paste error,
+  eh?)  PROGRAM files from v4.0 (I think) have an extra sector stuck to
+  them, but their headers are correct.
+
+       None of these errors has damaged the data in any of the files
+  created, and they can be fixed easily.
+
+
+       þ  Invalid record length in header.  This would be zero in most
+  cases, when it is illegal.  (I.E., DIS/FIX 0 or INT/VAR 0.)  For xxx/FIX
+  files, TICHKDSK will try to guess the record length by examining the
+  length of the file and the number of records used.  For xxx/VAR files,
+  it can only guess.
+
+       In any case, TICHKDSK will ask you to verify the guessed record
+  size.  You can enter the correct size, if you know, or accept the guess.
+
+
+       þ  Incompatible DOADs.  If you transferred a disk image from your
+  99/4A, or created one with TIFORMAT, that V9t9 does not support, you
+  will be told so.
+
+       
+       þ  An error that TICHKDSK cannot detect is a mismatch between the
+  internal and external names of a FIAD file.  The internal filename, when
+  mangled, should exactly match the DOS filename of the given file.  V9t9
+  utilities will assume a file is a non-V9t9 file if these names do not
+  match.
+
+       If you have renamed files using DOS RENAME with older versions of
+  TI Emulator, you will not be able to access them with V9t9 utilities.
+  Use TIMATCH to match the file's internal name with its DOS name, and
+  this will solve your problem.
+
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                 TIDIR.EXE
+
+       TIDIR will simply present a catalog of the specified directory or
+  disk image.  It can also accept individual filenames.
+
+       TIDIR [options] { <file> | <directory> | <disk image>: }
+
+       /L specifies long format.
+       /W specifies wide listings (short format).
+       /O[-]x specifies the sort order to use.  "N" is name, "S" is size,
+  "T" is type. "-" means to sort in descending order.
+
+       In the default settings, TIDIR presents a two-column wide catalog
+  which matches the 99/4A standard listing format.
+
+
+
+       The "/L" will print much more information, including the total size
+  of data in the file in bytes, the number of records in a xxx/FIX file,
+  and the sector on a DOAD where the FDR sector is located.
+
+       The "/W" option will simply print the filename, in a seven-column
+  wude format.
+
+       The "/O" option sorts the files in the list.  The "T" sort type
+  refers to the file attributes (DIS/FIX, INT/VAR, PROGRAM, etc.).
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                 TICOPY.EXE
+
+       TICOPY provides a way to copy V9t9 emulated files around.  It is
+  most useful when either the source or destination, or both, are disk
+  images.
+
+       All the source files will be copied into new files; the source
+  files will not be changed.
+
+       TICOPY [options] { filenames } [ <disk image>: | <directory> ]
+                           (source)             (destination)
+
+       /V specifies verbose operation.
+       /C tells TICOPY to ask for confirmation if it's about to overwrite
+  an existing file.
+       /R tells TICOPY to keep on chugging if the destination becomes full
+  (in case smaller files follow).  The destination file which caused the
+  disk-full condition will be deleted and processing will continue.
+
+       To copy all the files from a disk image FUBAR.DSK into a directory
+  \V9t9\DISK\SNAFU:
+
+       TICOPY fubar:* \v9t9\disk\snafu
+
+       TICOPY does not support the renaming of files via copying.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                 TIDEL.EXE
+
+       TIDEL will simply delete files.
+
+       TIDEL [options] { <filename> }
+
+       /C tells TIDEL to ask for confirmation on each file it attempts to
+  delete.
+       /V specifies verbose operation.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                TIRENAME.EXE
+
+       TIRENAME will rename FIAD files.  (I just wrote this a few hours
+  before finishing up the archive, so I didn't put in disk image support.)
+
+       This utility MUST be used to rename FIAD files, since two copies of
+  the filename appear in a FIAD -- the DOS filename and the filename
+  inside the FIAD header.  V9t9 utilities will assume a file is non-V9t9
+  if the two filenames do not match.
+
+       TIRENAME [options] <file> <new filename>
+
+       /V specifies verbose operation.
+
+       The <file> is the name of the file to change.  In giving <new
+  filename>, ONLY give the filename, not the path.
+
+       Example:
+
+       TIRENAME e:\goofy\example math/quiz!
+
+       If you have renamed files using DOS RENAME with older versions of
+  TI Emulator, you will not be able to access them with V9t9 utilities.
+  Use TIMATCH to match the file's internal name with its DOS name.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                TIMATCH.EXE
+
+       TIMATCH will simply take the given list of FIAD files and make sure
+  their DOS filenames and their internal filenames match up.  Use this is
+  you've accidentally used DOS RENAME to rename a file and V9t9 can no
+  longer detect it.
+
+       TIMATCH [options] { filename }
+
+       /V specifies verbose operation.
+
+       This utility will NOT change the DOS filename of a FIAD file, only
+  the internal name, so no filename conflicts should occur.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                                TIFORMAT.EXE
+
+       TIFORMAT will create a new disk image for use with V9t9 and its
+  utilities.
+
+       TIFORMAT [options] <disk image filename>
+
+       /Fxxx will create a standard disk of size xxx kilobytes.  The only
+  size V9t9 currently supports is 90k, but you can create a 90k, 180k, or
+  360k image with this option.
+
+       /C tells TIFORMAT that you are going to supply CUSTOM SETTINGS to
+  the below options.  Otherwise, TIFORMAT will refuse nonstandard
+  settings.
+       /Txxx tells TIFORMAT the number of tracks.  Standard values are 40
+  and 80.  Custom values can be from 1 to 255.  V9t9 works fine with any
+  number of tracks.
+       /Sxxx tells TIFORMAT the number of sides.  Standard values are 1 or
+  2.  V9t9 can only reliably use 1 side.  Custom values can be anything,
+  but V9t9 will only access two sides in any case.
+       /Nxxx tells TIFORMAT the number of sectors per track.  Standard
+  values are 9, 15, or 18.  V9t9 can dig anything.  Custom values can be
+  from 1 to 255.
+       /Vxxx tells TIFORMAT the volume label.  By default, it is derived
+  from the disk image's filename.
+
+       Do not use mix the "/Fxxx" option with custom settings; "/F" will
+  use the standard tracks/sectors/sides for the specified disk size.
+
+       The maximum allowable size of a disk image is 400k.
+
+
+       TIFORMAT will create a standard 99/4A floppy disk image.  You may
+  indeed wish to put disk images on actual floppy disks.  You can fit 4
+  360k disk images on a 1.44 Meg disk, though the last one must be a few
+  tracks smaller, since DOS takes up some of the space on the floppy.
+
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

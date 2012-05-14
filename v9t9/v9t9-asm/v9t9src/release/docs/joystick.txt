@@ -1,0 +1,189 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ JOYSTICK.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file talks about how the two 99/4A joysticks are emulated with
+  V9t9.
+
+       First of all, about the 99/4A joysticks.  They are digital devices
+  which have output lines representing the four directions and the
+  button's status.  IBM joysticks are analog; TI joysticks cannot be used
+  on a PC.
+
+       The 99/4A joysticks are 'seen' through the CRU (communications
+  register unit), accessed along with the keyboard bits.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       Under V9t9, you can use a combination of IBM analog joysticks, a
+  Microsoft-compatible mouse, and the numeric keypad to emulate joysticks.
+  When the emulator starts up, the available devices are found, and the
+  best combination of devices is automatically chosen:
+
+            þ IBM joystick 1,  IBM joystick 2
+            þ IBM joystick 1,  Microsoft-compatible mouse
+            þ IBM joystick 1,  numeric keypad
+            þ Microsoft mouse, numeric keypad
+            þ Numeric keypad,  none
+
+       This automatic configuration is not set in stone.  The Ctrl/Alt+F6
+  keystroke changes the current device used to emulate joystick #1.
+  (Shift+Ctrl/Alt+F6 changes joystick #2.)  The two devices are not
+  allowed to be the same.  Each use of the function will select another
+  device, going in order down the list below:
+
+            þ IBM joystick #1
+            þ IBM joystick #2
+            þ Microsoft mouse
+            þ Numeric keypad
+            þ None
+
+       You may select any of these devices; the emulator won't try to stop
+  you.  This is in case an existing device was not found upon startup (or
+  if you suddenly decided to plug in joysticks).  But if you select an
+  illegal device, you'll either get no response or a constant movement in
+  some direction. Pressing Shift+Ctrl+F1 will let you see what devices are
+  currently being used.
+
+
+  อออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออ
+                         ณ MY JOYSTICK IS INSANE! ณ
+  อออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออ
+
+       You may need to center your joysticks the first time you use the
+  emulator, or maybe not:  upon startup (when the "Checking joysticks"
+  message is displayed), an automatic centering is performed, assuming
+  you're not holding the joystick in any funny direction.  To recenter
+  joysticks, press Ctrl+F7 to center joystick #1 and Shift+Ctrl+F7 for
+  joystick #2.  This will bring up a prompt for you to do funny things to
+  your joystick.  When it's done, be sure to test out that it works
+  nicely.
+
+       When you've obtained a nice centering, the Shift+Ctrl+F1 page will
+  show what the centered values of the joystick(s) are (the "bounds").  Copy down the values and edit the V9t9.CNF configuration variable(s)
+  "Joystick1Bounds" and "Joystick2Bounds".  The format is like this:
+
+  þ    Joystick1Bounds = 20,20,50
+  or
+  þ    Joystick2Bounds = 100,100,300
+
+       The numbers in the list are completely processor-speed dependent,
+  so when moving the emulator from computer to computer, you'll need to
+  recenter.  (These variables _do_ override the automatically centered
+  values calculated upon startup, so if the startup values work fine, you
+  don't need to define JoystickXBounds.)
+
+       Either of the joystick's buttons can be used as the fire button.
+
+
+  ออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออ
+              ณ      OKAY, BUDDY, I HAVE NO JOYSTICKS.      ณ
+              ณ TELL ME HOW TO USE A MOUSE WITH THIS THING. ณ
+  ออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออ
+
+       A Microsoft-compatible mouse (i.e., uses MOUSE.COM and INT 33h or
+  something similar) can be used to emulate one joystick.  Mice are funny
+  creatures so there are two ways that they can emulate joysticks.
+
+  þ    Positional.  This means that the location of the (invisible) mouse
+  cursor, in relation to the center of the screen, serves as the current
+  direction the "joystick" is pushing.  Since the mouse cursor generally
+  stays in one place when you're not moving it, continued movement in a
+  certain direction is a matter of simply moving the mouse and leaving it
+  there.  The fact that the mouse cursor is invisible may cause some
+  confusion, so there's...
+
+  þ    Motional.  This means that whatever direction the mouse has moved
+  since the last time it was checked serves as the "joystick"'s direction.
+  The mouse resembles a trackball in this mode.
+
+       Which type of emulation you want is selected with the
+  MouseEmulationType configuration variable.  A value of 0 means
+  positional emulation, and 1 means motional.
+
+       With mice, any of the buttons serves as the fire button.
+
+
+  อออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออ
+         ณ I'M A POOR BOY.  I GUESS I'LL USE THE NUMERIC KEYPAD. ณ
+  อออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออ
+
+       Okay.  Using the numeric keypad is the same as using the arrow keys
+  printed on them.  (2 is down, 4 is left, etc.)  But note that since this
+  is meant to emulate joysticks, you can hold down two (or more?) keys at
+  once to get diagonal movements.  The 1/3/7/9 keys are not emulated.
+
+       With the numeric keypad, the NumLock key is the fire button.
+
+       Using the numeric keypad may seem to be the same thing as using the
+  E/S/D/X/Q and I/J/K/M/Y arrow keys, like most programs allow.  Well, the
+  simple fact is, some programs don't read the keyboard (making them
+  impossible to use on a _real_ 99/4A with no joysticks).  So the numeric
+  keypad comes to the rescue.
+
+
+  ออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออ
+              ณ  HOW'D YOU SPEED UP THE JOYSTICK ROUTINES, ณ
+              ณ AND WHY WON'T THEY WORK ON A PENTIUM-2000? ณ
+  ออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออ
+       Well, sensing that the BIOS was a little slow, I decided to delve
+  into some sources some IBMers had sent me, and create joystick routines
+  better suited to the emulator.
+
+       I wondered how much faster the routines would go because of the
+  switch from BIOS, and saw happily that it was about two hundred times
+  faster.  The simple reason for this, I finally realized, was that the
+  BIOS invariably scans for BOTH joysticks no matter how many you have or
+  how many you want to read.  (I develop with one joystick.)
+
+       The reason this is a problem is due to the way analog joysticks
+  work.  You send a command to the game port to reinitialize, and then
+  wait for "X" and "Y" bits to go off.  The amount of time it takes for
+  these bits to go off is directly proportional to the offset of the
+  joystick from its upper-left corner.
+
+       When reading the coordinates, therefore, a typical thing to do is
+  to set up a counter upon resetting the joystick.  And when the bit for
+  "X" or "Y" goes off, the value of the counter is recorded as the
+  respective parameter's coordinate.
+
+       This process of waiting isn't what takes up time.  The problem
+  comes about when a joystick isn't connected, because its bits NEVER go
+  off.  So, on a one-joystick system, the BIOS will eventually time out in
+  waiting for the second joystick to turn off its bits.  The timeout is
+  probably too long, but differing types of joysticks necessitate this.
+
+       My algorithm takes an approach that most modern programmers would
+  despise.  Usually, joystick routines use a dedicated hardware timer to
+  keep track of the time (and correspondingly the joystick's coordinates).
+  Well, I opted for a software timer, one that increments every time it
+  reads the joysticks.  But don't groan, people.  I found quite happily
+  that using a software timer provides very important advantages for this
+  emulator.  First, the dedicated timer I could have used would have
+  either been the timer connected to the PC speaker (forcing me to turn it
+  off and make it click while the joysticks were being scanned), the clock
+  timer (which goes at variable speeds throughout the program), or the DMA
+  refresh bit (which likes to suddenly go two times slower at erratic
+  intervals, at least on my system).  The software timer also enjoys very
+  high precision and coordinates don't vary as much as the BIOS routines'.
+
+       The only problem there would be with this algorithm is that some
+  insanely fast computer might overflow the 16-bit counter I'm using
+  (since the timing depends solely on the processor's and the bus card's
+  speed).  This counter only reaches to 120 on my 386SX/20, but I'm sure
+  some megalomaniac out there will suddenly find that his joysticks don't
+  work (because my routines time out upon reaching 65535).  I'm saying
+  this tongue-in-cheek, of course, but if this does become a problem, then
+  I'll expand it to 32 bits.
+
+       Anyway, the overall advantage of this rewrite is that joysticks are
+  actually fun to use now.  And, the erratic timing of the BIOS routines
+  is gone as well, meaning that every joystick read is accurate, so no
+  more floating joysticks.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

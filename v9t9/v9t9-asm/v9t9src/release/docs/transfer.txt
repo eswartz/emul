@@ -1,0 +1,864 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ TRANSFER.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       If you have some way of using your own 99/4A's ROMs with V9t9, this
+  file ought to help.  This ranges from ROMs lying dormant in the chips of
+  your decked-out 99/4A system to ROMs waiting around on your PC for some
+  more attention.
+
+       All you need to run V9t9 as a 99/4A are the console ROM and GROMs,
+  since emulated ROMs can handle the rest to some degree.
+
+       If you can't find any other way to get the ROMs, see ORDERING.TXT.
+
+
+  อออออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออออออออ
+                               ณ OVERVIEW ณ
+  อออออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออออออออ
+
+       This file assumes you have a working knowledge of data transfers
+  between different computers.  If you don't, or consider yourself
+  "computer illiterate", you're best off either seeking a local computer
+  guru or just ordering the ROMs directly from me.
+
+       Though this file focuses mainly on transferring ROMs, some file
+  transfers are also considered.
+
+       V9t9 includes a program to transfer ROMs, GROMs, cartridges, and
+  disk images to your PC.  See the "V9t9 Transfer" section if you don't
+  already have means to transfer ROMs from your 99/4A.  Even if you do,
+  the V9t9 transfer program is still useful for transferring ALL the
+  supported ROMs, as well as disk images, in one program.
+
+
+                             ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       The formats V9t9 uses to store all ROMs is flat, unsegmented, 9900-
+  order binaries.  Two files represent the console ROM and GROMs,
+  respectively.  The console ROM segment should be 8192 bytes in length,
+  and the GROMs should be in one 24576-byte file.  The speech synthesizer
+  ROM should be 32768 bytes long.  The disk DSR ROM and RS232 DSR ROM
+  segments should be 8192 bytes (although the RS232 only uses 4k, I want
+  the DSR ROMs to be 8k for consistency).      
+
+
+                             ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       If you're wondering how I transferred all my ROMs and files to my
+  PC, I used plain ASCII HEX dumps over the RS232, using BASIC and
+  (eventually) assembly programs, with Procomm Plus on the PC side.  I had
+  no clue of more common methods of transferring files, so it took me a
+  long time.  This hopefully will also explain my utter lack of experience
+  with all this cool PC-Transfer/XMODEM/Gram-Kracker/CSAVE stuff that
+  every other 99/4A user seems to have learned.  (Again, which I know
+  nothing about.)  This sort of do-it-yourself mentality has stuck with
+  me, which is the reason I provided a custom ROM transfer program with
+  V9t9, for other out-of-touch people like me.  :)
+
+
+  ออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออ
+                            ณ X/YMODEM TRANSFERS ณ
+  ออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออ
+       If you're one of those lucky people who use a form of XMODEM or
+  YMODEM on your 99/4A system (I'm not because ONE BIT of my memory is
+  shot, in an important place), then there's good support for transferring
+  stuff to your PC for use with V9t9.
+
+       I'm sorry to say I have NO experience whatsoever with actually
+  performing such transfers, since I can't use XMODEM with my own system.
+  But I've been told that you may need to use YMODEM-G as a receiver for
+  XMODEM under Procomm Plus.  YMODEM transfers under Telco and Procomm
+  works fine.  On older comm programs, remember to set the file type to 8-
+  bit and binary, to prevent DOS mangling of "ASCII" transfers.
+
+       X/YMODEM transfers should yield files on the PC with the "TIFILES"
+  header, an 128-byte record which contains a condensed version of the FDR
+  (file descriptor record).  DIS/FIX 128 files will not usually have this
+  header.
+
+
+  อออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออ
+                 ณ USING PC-TRANSFER FOR ROM TRANSFERS ณ
+  อออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออ
+
+       PC-Transfer will copy 99/4A files to 360k-formatted DOS disks on
+  99/4A systems with Corcomp or Myarc disk controllers.  Again, I haven't
+  used this program either.
+
+       The target files PC-Transfer creates are apparently headerless (no
+  99/4A FDR or TIFILES header), which is a big problem for file transfers,
+  since V9t9 needs a header to define the attributes of the file.  V9t9
+  currently does not include utilities to support file transfers made with
+  PC-Transfer.
+
+       However, GRAM-Kracker files stored on such disks are supported with
+  the "/B" (bare file) option in GRAM2TI.  See below.
+
+       See the next section for instructions on how to use any custom ROM
+  files you made have made.
+
+
+  อออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออ
+             ณ USING VARIOUS ROM DUMPS ALREADY ON YOUR PC ณ
+  อออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออ
+
+       If you have 99/4A ROMs on your PC, then you ought to easily be able
+  to convert them for use with V9t9.
+
+       In their final form, the ROM images should have no external header
+  information (such as an FDR, a TIFILES record, or a GRAM-Kracker
+  header).
+
+       The utility NOHEADER will strip the header from files, used to
+  extract the ROM images from several types of files.  NOHEADER doesn't
+  care what KIND of header you use, only the size.  The "/T" option will
+  specify that a TIFILES-sized header is on the file (128 bytes).  You'd
+  obtain such a file by saving the 8192-byte CPU ROM as a PROGRAM image.
+  The "/G" option specifies that a GRAM-Kracker or standard program header
+  is ALSO on the file (128+6 or 134 bytes total).  The "/Cxxx" option will
+  give a custom bytesize for the header to strip.
+
+
+                             ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       If the files appear to be too long (like in earlier versions of TI
+  Emulator), use the CHOP utility to lose the extra bytes.  Be sure you  don't accidentally NOHEADER these files, or else you'll destroy the
+  ROMs:
+
+  C:\V9t9\ROMS> ren ticpu.hex 994AROM.BIN
+  C:\V9t9\ROMS> ren tigpl.hex 994AGROM.BIN
+  C:\V9t9\ROMS> ..\utils\chop 994AROM.BIN 8192
+  C:\V9t9\ROMS> ..\utils\chop 994AGROM.BIN 24576
+
+
+                             ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       The default V9t9.CNF configuration file expects the ROM segment to
+  be named 994AROM.BIN, the GROM segment 994AGROM.BIN, the speech segment
+  SPCHROM.BIN, the disk DSR segment DISK.BIN, and the RS232 segment
+  RS232.BIN.  (Be sure to check out the "DSRCombo" variable to select
+  which DSR ROMs you want active.)
+
+       If self-transferred ROMs fail unexpectedly, be SURE that you didn't
+  transfer them in ASCII mode.  A sure sign of this is a file with an odd
+  number of bytes (odd either as in not divisible by 2, or not matching
+  the standard sizes).  If you're not sure, do a hex-dump of the file.  If
+  every >0D byte you see is followed by an >0A byte, then probably some
+  mangling was done to be "ASCII-compatible" with DOS.
+
+       If your console or module ROMs were byte-swapped for some reason,
+  you'll need to put it back in 9900-order with the SWAP utility.  (The
+  first two bytes of the 99/4A should be >83 >E0, and the first byte of a
+  module ROM should be >AA.)
+
+
+       See UTILS.TXT for more information on all these programs.
+       
+
+  ออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออ
+                        ณ USING GRAM-KRACKER DUMPS ณ
+  ออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออ
+
+       The GRAM2TI utility will accept GRAM-Kracker dumps (on PC media, of
+  course) and create the proper V9t9 files with a minimum of trouble.
+  GRAM2TI can accept module ROMs and GROMS and the console GROMs, but not
+  the console ROM (at >0000) because the GRAM-Kracker format does not
+  support this.
+       
+       To use GRAM2TI, store your transferred files in a temporary
+  directory (not the V9t9 \MODULES or \ROMS subdirectories, though).
+  Please note that GRAM2TI expects to find the filenames in V9t9 format,
+  where all ten characters in the TI filename are stored using ten of
+  eleven of the possible characters in a DOS filename (8 for filename, 3
+  for extension).  If you used XMODEM to receive the files, most likely
+  the filename will only use 8 characters and end with "$".
+  (DSK1.BURGERTIME may be received as BURGERT$.)  Furthermore, the
+  succeeding segments of the files will be even further mangled.
+  (DSK1.BURGERTIM1 may be BURGER$$.)  To avoid these problems, simply use
+  seven characters or less in naming the GRAM-Kracker files on the 99/4A,
+  or properly rename the files after the transfer.
+
+       V9t9 utilities DO handle filenames in the above ten-character
+  format, however, so if you already have files on your system named in
+  such a way, by all means use them.  GRAM2TI will accept the TI filename
+  for such files, so exclude the period in the extension.  (Enter
+  GRAM2TI BURGERTIME, for example.)
+
+       For example, the files for Burger Time should be stored like this:
+
+  BURGERTI.ME,   BURGERTI.M1,   BURGERTI.M2,   ... etc.
+       or, the files for Parsec ][:
+
+  PARSEC-2,      PARSEC-2.1,    PARSEC-2.2     ..., etc.
+
+       or, the files for Car Wars:
+
+  CARWARS,       CARWARS1,      CARWARS2,      ..., etc.
+       
+
+                             ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       For easiest operation, run GRAM2TI directly from the V9t9
+  directory, giving the first GRAM-Kracker segment as the parameter.
+  (If it's easier to run from a different directory, use the "/Cxxx" and
+  "/Mxxx" options to specify the location of the V9t9 configuration files
+  V9t9.CNF and MODULES.INF.)
+
+  C:\V9t9> GRAM2TI \temp\gram\burgertime /V
+
+       The "/V" option will show a lot of information about what's going
+  on; it's recommended that you use it.
+
+       GRAM2TI will pick the "base name" for a module (see MODULES.TXT for
+  naming conventions) from at most the first seven characters of the given
+  filename, unless you specify it with the "/Nxxx" option.  If any of the
+  files that could be generated using the base name exist, then you will
+  be prompted for a new one, unless the "/O" (overwrite) option is given.
+  The module files are created in the "ModulesPath" directory specified in
+  the V9t9 configuration file, using the extension specified by
+  "DefaultModuleExtension".
+
+       GRAM-Kracker console GROM dumps are named using the base name of
+  the GRAM-Kracker file as well, and are stored in the "ROMsPath"
+  directory specified in the V9t9 configuration file.  V9t9 expects the
+  console GROM image to be named according to the "GPLROMFileName"
+  variable (usually 994AGROM.BIN), so rename it after the transfer.  NOTE:
+  console GROM target files will always be overwritten (checks are only
+  made on module target files), so be sure the target doesn't already
+  exist.  (This only matters when you are using several different console
+  GROMs, which is probably not the case.)
+
+
+  อออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออออออ
+                             ณ V9t9 TRANSFER ณ
+  อออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออออออ
+
+       This section is meant to help a moderately experienced PC user set
+  up the serial connection between a PC and a 99/4A to use the transfer
+  program included in V9t9.  If you consider yourself "computer
+  illiterate", please find help before doing this.
+
+       In order to transfer the ROMs from your 99/4A to your PC, you need
+  to have a 99/4A program which can read them and send them off through
+  the serial port.  V9t9 contains such a program.  You'll need to transfer
+  this program to the 99/4A, which will then send its ROMs to the PC.
+  (This is called, in confusing terms, transferring the transfer program.)
+
+       In case you're wondering why a 99/4A can't DIRECTLY send its ROMs
+  using a simple BASIC program, well, it's because it can't.  Here's an
+  illustration.
+
+       Without assembly programs, you cannot access the memory on the
+  system.  The memory you want to access is console ROMs and GROMs, disk
+  and RS232 ROMs, and speech synthesizer ROMs.
+
+                                 ฺฤฤฤฤฤฤฤฟ
+                                 ณ BASIC ณ
+                                 ภฤฤฤฤฤฤฤู
+
+                               ฺฤฤฤฤฤฤฤฤฤฤฤฤฟ
+                               ณ 80k of ROM ณ
+                               ณinaccessibleณ
+                               ณ with BASIC ณ
+                               ภฤฤฤฤฤฤฤฤฤฤฤฤู
+
+
+       With Editor/Assembler or Extended BASIC, you have access to CALL
+  PEEK -- but it will only access 8k of what we want!
+
+                                ฺฤฤฤฤฤฤฤฤฤฤฟ
+                                ณ Ex-BASIC ณ
+                                ณ or E/A   ณ
+                                ภฤฤฤฤฤฤฤฤฤฤู
+                                  ณ      ณ
+                                 \ณ/    \ณ/
+                               ฺฤฤฤฤฤฤฤฤฤฤฤฤฟ
+                               ณ   8k ROM   ณ
+                               ภฤฤฤฤฤฤฤฤฤฤฤฤู
+
+                               ฺฤฤฤฤฤฤฤฤฤฤฤฤฟ
+                               ณ 72k of ROM ณ
+                               ณ   STILL    ณ
+                               ณinaccessibleณ
+                               ภฤฤฤฤฤฤฤฤฤฤฤฤู
+
+
+       So, a pure assembly program is needed to access all the memory.
+  And a way to get such a program onto your 99/4A is through a serial
+  link.  I *COULD* provide you, in this file, a listing similar to those
+  in COMPUTE! or 99'er magazines of old:
+
+  10 FOR X=0 TO 4834
+  20 READ A
+  30 CALL LOAD(-24576+X,A)
+  40 S=S+A
+  50 NEXT X
+  60 IF S=33958367295 THEN 80
+  70 PRINT "BAD"
+  80 STOP
+  100 DATA 48,57,93,87,1,4,65,98,4,36,59,34,6
+  110 DATA 54,3,104,5,67,98,107,53,6,54,0
+  ...
+  9900 DATA 54,54,3,8,255,9,8,75,36,54
+
+       Trust me, I HAD considered doing this.  But it was going to be VERY
+  VERY tedious.  But with this simple  (I hope) transfer-to-99/4A routine,
+  you'll have the whole program on your 99/4A in about twenty minutes.
+  The TRANS program will be able to access ALL the V9t9-supported memory,
+  AND...
+
+                  ฺฤฤฤฤฤฤฤฤฤฟ
+                  ณ  TRANS  รฤฤฤฤฤฤฤฟ       ฺฤฤฤฤฤฤฤฤฤฤฤฤฟ
+                  ภฤฤฤฤฤฤฤฤฤู       ณ       ณ            ณ
+                   ณ      ณ         ณ       ณ your whole ณ
+                  \ณ/    \ณ/        ณ       ณ  90k disk  ณ
+                  ฺฤฤฤฤฤฤฤฤฤฤฤฟ     ณ       ณ collection ณ
+                  ณ           ณ     ณ   \   ณ (non-copy- ณ
+                  ณ  80k ROM  ณ     ภฤฤฤฤ-> ณ protected) ณ
+                  ณ           ณ         /   ณ            ณ
+                  ภฤฤฤฤฤฤฤฤฤฤฤู             ภฤฤฤฤฤฤฤฤฤฤฤฤู
+
+
+       TRANS will also transfer your collection of diskettes.  It can
+  handle up to 360k disks, but be aware that V9t9 doesn't support either
+  double-sided or double-density disk images yet, only 90k disks.  (V9t9
+  can not read TI disks in a PC drive, either, which is why you have to
+  transfer them.)
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       The rest of this file contains three basic sections:  (1) setting
+  up the serial link, (2) moving the transfer program to the 99/4A via
+  V9t9, and (3) using the transfer program to send ROMs to the PC.
+
+
+  ออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออ
+                        ณ 99/4A SYSTEM REQUIREMENTS ณ
+  ออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออ
+
+       First requirement is that your 99/4A system still works.  You also
+  must have all of the following in your system:
+
+  þ    memory expansion
+  þ    disk drive, and 20k free on a diskette
+  þ    Editor/Assembler, Extended BASIC, or Mini Memory
+  þ    an RS232 device (card or box)
+
+       Optional is a speech synthesizer.
+
+       I'm sorry, but the program will require 4.2k RAM on the 99/4A,
+  which excludes using the Mini Memory's RAM.
+
+
+  อออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออออ
+                         ณ SERIAL REQUIREMENTS ณ
+  อออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออออ
+
+       On your PC, you'll need little other than a free serial port.
+
+       Those experienced in transferring stuff between the 99/4A and PC
+  via serial cable can skip way down to the "V9t9 Transfer" section.
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       To connect the systems, you need a serial cable.  BY DEFAULT, A
+  STANDARD 99/4A RS232 CABLE IS ONE OF THESE.  (Used to connect the RS232
+  to the TI printer, typically.)
+
+       Here's a picture (hopefully your cable is drawn better):
+
+        _____                                              _____
+       |=|   |                                            |   |%|
+       |=|    \_____________________/ /__________________/    |%|
+       |=|     ____________________/ /___________________     |%|
+       |=|    /                   / /                    \    |%|
+       |=|___|                                            |___|%|
+
+       pins                                                pin holes
+                                                    (very technical term)
+
+       This cable is called a male DB-25 to female DB-25 serial cable.
+  The 25 refers to the number of pins/"pin holes" on the connectors.  The  99/4A RS232 typically has a female DB-25 jack (meaning the male DB-25
+  side of the serial cable connects there).
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                           IF YOU HAVE THIS CABLE
+                                     or
+                        IF YOU HAVE A PC MODEM CABLE
+
+       A PC external modem cable (judging by the picture in my manual) is
+  ALSO a 99/4A<-->PC compatible cable.  Use it if you can.
+
+       Usually, PC's will have both a male DB-25 and a male DB-9 serial
+  port on them.  (Ignore the female DB-15 port; that's for joysticks.)  If
+  you can free up the male DB-25, things will be easier for you.  If not,
+  you'll need to dig up a female DB-9 to male DB-25 converter.  I, in
+  fact, got one of these with my mouse.  It'll look like this (again,
+  yours should be drawn better):
+
+
+                                            ____
+        ___                                |   |=|
+       |%| \______________________________/    |=|
+       |%|_/------------------------------\    |=|
+                                           |___|=|
+       pin holes                           pins
+
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                     IF YOU HAVE ANOTHER SORT OF CABLE
+
+
+       If you have a female DB-25 to female DB-25 cable (used to connect
+  two PCs) or a male DB-25 to male DB-25 cable (??? to connect two
+  99/4As?) then you'll need to attach a null-modem device to one end.  A
+  null-modem device is commonly called a "gender-bender", as it changes
+  one end of the cable between male and female.  This will make it work to
+  connect a PC and a 99/4A.
+
+       If your serial port is a DB-9, then you will need the 9-to-25
+  converter shown above in "If you have this cable".
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                      IF YOU HAVE NO CABLE WHATSOEVER
+
+
+       If you don't have one of these cables or gender benders, then
+  you'll either need to find a male DB-25 to female DB-25 cable OR a male
+  DB-25 to female DB-9 cable (depending on your free PC serial port) at
+  your local computer store.  (Note that male or female refers to the
+  actual CABLE, not what they'll connect to.)
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       NOTE:  You shouldn't try to connect the 99/4A and the PC via MODEM
+  with the included programs.  This sort of setup is more difficult than
+  it's worth.  Simply disconnect the modems from both systems, and use a
+  direct serial cable.
+
+
+  ออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออ
+                        ณ TESTING THE CONNECTION ณ
+  ออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออ
+
+       Once you've obtained a serial cable, connect the systems together.
+  It's as simple as plugging the cable into the 99/4A RS232 port and the
+  free PC port.
+
+       Important:  if you disconnected your mouse in order to set up this
+  serial connection, UNLOAD your mouse driver.  (Usually the command
+  "mouse out" will do this.)
+
+       Test the connection first with a terminal program on the PC, such
+  as Telix, Procomm, Telemate, etc.  Configure the port to something like
+  2400-8N1 (2400 baud, 8 bits, no parity, one stop bit).  Be sure to
+  change the port to the one you're using to connect to the 99/4A, if you
+  only use the terminal program with the modem.  You needn't save the
+  changes, since the UTILS\RECV program will handle the actual transfers.
+  This is simply a test.
+
+       Then fire up your 99/4A.  Run BASIC, and enter these lines:
+
+       > OPEN #1:"RS232.BA=2400.DA=8.PA=N",OUTPUT
+       > PRINT #1:"This is a contrived test string"::"Wow"
+
+       If you get nothing at all, be sure you know which PC port you're
+  connected with, and try again.  Also, be sure the RS232 is on, if it's a
+  box.
+
+       If you get garbage characters on the PC, be sure you've set the
+  parameters to 2400-8N1 (as is reflected in the OPEN statement above.)
+  (There is no need to tell the 99/4A to use one stop bit because that's
+  the default.)
+
+       Another problem could be an IRQ conflict.  This happens when two
+  serial devices use the same interrupt line to talk to the PC.  If your
+  system is standard, then this conflict would occur when you have serial
+  devices (including the cable used in this 99/4A<-->PC transfer) on COM1
+  and COM3, or on COM2 and COM4, at the same time.  If you used the port
+  for your mouse to setup this connection, unload your mouse driver.
+
+       If you simply used a free port, be sure your modem isn't also using
+  the same IRQ.  If it is (difficult to tell), try using your mouse's port
+  (and unload the driver...) before giving up.  If it could simply be an
+  IRQ conflict, then contact a computer guru in the vicinity.  This is a
+  common PC problem.  Changing IRQ settings usually involves setting
+  jumpers on your system's I/O card.  Contact a guru.
+
+       If you have further problems, then it may be in the serial cable,
+  the 99/4A RS232 box, or the PC serial connector.  I can't be sure.  All
+  of these sorts of problems would completely annihilate the prospects of
+  performing this ROM transfer in the first place.
+
+
+  อออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออออออ
+                             ณ V9t9 TRANSFER ณ
+  อออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออออออ
+
+       Once you've obtained a sound serial link between your 99/4A and
+  your PC, it's time to configure V9t9 a little.  All you need to do is
+  edit the FORTH.CNF file.  Unless you're planning to connect with your
+  99/4A permanently, you don't need to change the V9t9.CNF file.
+
+       The variable "RS232/1" under "[ Hardware Options ]" needs to be
+  defined to tell V9t9 which PC serial port to use to emulate the RS232
+  device.  (Filename-wise, "RS232" is the same as "RS232/1".)
+
+       The variable is in the form <port #>,<IRQ>.  The port is from 1 to
+  4, representing COM1 through COM4.  The IRQ should be, by default, 4 for
+  COM1 and COM3, and 3 for COM2 and COM4.  This would make the RS232/1
+  variable look like this:
+
+       RS232/1 = 1,4       or   RS232/1 = 2,3       
+  or   RS232/1 = 3,4       or   RS232/1 = 4,3
+
+       If you know anything about PCs, you know that IRQs can be different
+  from this standard, and can conflict with other devices in your system.
+  However, if you were able to verify the connection with the "Testing the
+  connection" section above, you should be all right.  This is because
+  terminal programs also rely on IRQ settings.
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       Here is a program you should enter on your 99/4A in BASIC.  Save it
+  as DSK1.RECEIVER.  This program is required to accept the object code
+  that V9t9 is sending and put it into a file.  The transmitted file will
+  require about 16k on your disk.
+
+  80   REM Receiver for TRANS object code from PC
+  90   REM Legal baud rates: 300, 600, 1200, 2400, 4800, 9600
+  100  INPUT "Enter the baud rate:  ":B
+  110  OPEN #1:"RS232.BA=" & STR$(B) & ".DA=8.PA=N",
+       UPDATE, VARIABLE 81, INTERNAL
+  120  OPEN #2:"DSK1.TRANS", OUTPUT, DISPLAY, FIXED 80
+  130  PRINT "Receiving..."
+  140  INPUT #1:A$
+  150  IF A$="" THEN 200
+  160  PRINT #2:A$
+  170  PRINT ".";
+  180  PRINT #1:"O"
+  190  GOTO 140
+  200  CLOSE #2
+  210  CLOSE #1
+  220  CALL INIT
+  230  CALL LOAD("DSK1.TRANS")
+  240  CALL LINK("TRANS")
+
+       Be sure that you put 81 on line 110.  It isn't a typo.
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       Now, fire up V9t9 by running FORTH.BAT.  The FORTH interpreter is
+  the only "real" ROM included with V9t9.  There are programs written in
+  FORTH provided to move the transfer program to the 99/4A.  If you
+  unfamiliar with FORTH, don't worry.  You don't need to know anything
+  about it to use the transfer-program-transferrer.  Just enter "TRANSFER"
+  at the V9t9 FORTH prompt.
+
+       You will see some final warnings, and the program will be loaded.
+  The program will then tell you to "run the receiver program on the
+  99/4A".  Load up the DSK1.RECEIVER program you typed in and type "RUN".
+
+       (For those of you with Extended BASIC, please use it!  The transfer
+  will go MUCH faster.  Also, the disk drive light won't be going on-and-
+  off 100 times.  But, omit lines 220-240, and use Editor/Assembler to  load DSK1.TRANS once the transfer is finished.  Extended BASIC loads
+  object code too slowly to stand.)
+
+       Enter an appropriate baud rate on the 99/4A side for the transfer.
+  The 99/4A is pretty sluggish in receiving files, so I recommend 2400
+  baud maximum, or else you'll get errors and have to start over.
+       
+       Then, tell V9t9 that you've started the 99/4A program, and press
+  the number corresponding to the baud rate you entered.
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       Things should start moving along, pretty slowly.  You'll see a
+  period appear on both screens for each 80-byte record transferred.
+  There will be about 7 lines full of periods on the 99/4A program before
+  it's finished.
+
+       Warning -- this transfer process is weak!  It breaks easily.  If
+  the 99/4A or V9t9 misses an acknowledgment or a record, it will sit
+  there INDEFINITELY waiting for it.  Most likely, with a 2400 baud
+  connection, things will be fine.  Otherwise, press Fctn-4 on both sides
+  and restart.  Under V9t9 FORTH, the Fctn-4 keystroke will appear as a
+  control character, so press Backspace to erase it.  (To restart quicker
+  under V9t9, enter "DoTrans" instead of "TRANSFER", otherwise you'll see
+  a lot of messages about non-unique names -- these aren't errors.)
+
+       If you get "I/O ERROR" 26 or 36 on the 99/4A, or "6 hardware error"
+  on the V9t9 side, then the baud rates may not be matched up, or the baud
+  rates are so high that one of the systems is losing characters.
+
+       If this process is aggravating, feel reassured that the 99/4A-->PC
+  transfer program actually has error correction.  :)
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       If nothing at all EVER transfers, then recheck the "RS232/1"
+  setting in FORTH.CNF and verify the IRQ setting and serial connection.
+  Also, be sure that the "DSRCombo" variable reads "EMUDisk,EMURS232"
+  (whichever order).  (Modifying V9t9.CNF will NOT affect FORTH since only
+  the FORTH.CNF file is read when you run FORTH.BAT.)
+
+       
+  ออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออ
+              ณ TRANSFERRING ROMS FROM THE 99/4A TO YOUR PC ณ
+  ออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออ
+
+       If the V9t9-->99/4A transfer process works, then the DSK1.TRANS
+  file will be loaded immediately, unless you omitted the lines for
+  Extended BASIC, in which case you should enter BYE, go to
+  Editor/Assembler, and select option 3 to Load/Run DSK1.TRANS.  The
+  program's name is TRANS.
+
+       Enter the full specification for the RS232 device.  Basically all
+  you have to change is the baud rate in the given example.  This process
+  isn't more user-friendly simply to save memory and therefore time for
+  the V9t9-->99/4A transfer.  For TRANS and RECV, you can usually push the
+  envelope and go up to 9600 baud without problems.  Whee.
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       At this time, stop V9t9 with Ctrl-Break, and run UTILS\RECV:
+
+  C:\V9t9> UTILS\RECV
+
+       (Do not change-directory to the UTILS subdirectory; it's easier for
+  RECV to run directly from the V9t9 directory.)
+
+       Enter the serial port you're using to connect to the 99/4A, the IRQ
+  that port uses, and the baud rate you used to set up TRANS.
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       RECV will then sit and wait for TRANS to send something to it.  At
+  any time, even during a transfer, you can press a key to exit RECV.
+  This is just a warning not to idly tap the keys while waiting for the
+  speech ROM to transfer.  :)
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       TRANS presents a list of eight choices.  Choice 0, "Output Device",
+  is used to change the RS232 parameters if the baud rate needs to be
+  changed.
+
+       The next five choices are simply the five ROMs that V9t9 can use.
+  You will need to transfer #1 and #2 to get V9t9 working like a real
+  99/4A, since these are the basic console ROMs.  All the others are
+  simply options, but are nice ones.  :)
+
+       For selection 6, you can transfer the ROMs from the module
+  currently in your 99/4A.  If you have a Navarone Widgit, then you can
+  also transfer any other module you have on hand, simply by turning the
+  knob without pressing the reset button.  If you don't have any cool
+  devices like this, then you can try the method at the end of this
+  document to fix modules so that they won't reset the computer.
+
+       Selection 7 will send a disk image to your PC.  Enter the drive
+  number the disk is in.  Currently V9t9 only supports 90k disks.
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+                            THE ACTUAL TRANSFER
+
+
+       Remember, TRANS is on the 99/4A, and RECV is on the PC.
+
+       Pick one of these choices (1-7) in TRANS, and RECV should wake up.
+  If transferring a ROM, RECV will use the V9t9 default filename for the
+  image it's about to receive.  If this file should happen to exist for
+  some reason, you can rename it, or simply press <Enter> to overwrite the
+  existing file.
+
+       If transferring a module, you will be asked for its title (which
+  you'll see on the startup selection list) and its base name.  The base
+  name simply forms part of the filename for all the parts of the module
+  (see MODULES.TXT).  RECV will automagically add the module's entry to
+  MODULES.INF when the transfer is successfully completed.
+
+       If transferring a disk image, enter the 8-letter filename (.DSK
+  will be added for you).  Remember that V9t9 only supports 90k disks, and
+  other sizes may not work with it.
+
+       In any case, RECV will put the files in the appropriate
+  subdirectories (\ROMS, \MODULES, and \DISKS).  You should follow this
+  standard directory setup so that the utilities will work.
+
+       For each segment of ROM/disk memory sent, a nice transfer bar (and
+  line of periods in RECV) will indicate progress.  When the bar fills the
+  whole screen, the transfer is nearing completion.  NOTE that the module
+  and the disk image transfer will probably send more than one segment, so
+  prepare for more than one bar's worth of waiting.
+
+       If there is an error in transfer, RECV will ask for a retry.  An
+  "r" will appear on the screen for each one.  If there are too many
+  errors, you should press a key to abort.  RECV will then send a bogus
+  code to TRANS, causing TRANS to stop.  This bogus code may clog up the
+  99/4A's RS232, causing the very next transfer to fail immediately.
+  Simply try again and it should work.
+
+
+  อออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออ
+                           ณ WHEN IT'S ALL OVER ณ
+  อออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออ
+
+       When you've transferred the necessary ROMs and anything else you
+  thought of, run MODULES first, to change V9t9's startup selection list.
+  You should at least be able to add Extended BASIC or Editor/Assembler to
+  your list.  Then run V9t9:
+
+  C:\V9t9> V9t9
+
+       Hopefully everything will go well.  RECV and TRANS use error-
+  checking, so if there are any unexpected problems with the 99/4A
+  emulation, it's V9t9's fault.  See PROBLEMS.TXT.
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       After you've verified that things work, look through CONFIG.TXT and
+  DISKS.TXT for ways to use the speech, disk and RS232 ROMs.  You need to
+  replace the "SpeechROMFileName" with "SPCHROM.BIN" so that you can have
+  access to the ROM you just transferred.
+
+       The DISK.BIN and RS232.BIN images in the \ROMS directory are DSR,
+  or device service routine, ROMs.  These provide the file-handling
+  support that users access through BASIC file commands.
+
+       Since the emulated RS232 ROM is limited, I urge that you use the
+  real one.  To do this, change the "EMURS232" parameter in the V9t9.CNF
+  variable "DsrCombo" to "RealRS232".
+
+       The disk DSR provides the support for disks-on-a-disk (or DOADs).
+  You'll need to activate that DSR if you want to use your disk images
+  directly.  (See DISKS.TXT.)  But, since DOAD support is very new and
+  limits disk images to 90k, you may want to use the TICOPY utility to
+  copy the files from the disk images into DOS directories, in FIAD
+  (files-in-a-directory) format.  An example of this is:
+
+  C:\V9t9> utils\ticopy disks\image1:* disk
+
+       That will copy all the files from the disk image "DISKS\IMAGE1.DSK"
+  and place them in the subdirectory \DISK.  See UTILS.TXT for syntactical
+  conventions, and information on the rest of the utilities.
+
+
+                          ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       You may find that the keyboard is either way slower or way faster
+  than it was under V9t9 FORTH.  This is because the routine used to
+  handle the keyboard differs in between my ROM and TI's ROM.  Look
+  through KEYBOARD.TXT for tips.  Most likely, the keyboard support will
+  be fine, because INSTALL created a custom configuration file to match
+  the speed of your system.
+
+
+  อออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออ
+                     ณ DO-IT-YOURSELF MODULE TRANSFER ณ
+  อออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออ
+
+       Modules can also be transferred in this slightly dangerous way.
+  You should have a screwdriver and no static electricity on your fingers.
+  I will not be held responsible for this procedure, should you choose to
+  follow it.  I did use it to transfer all my modules, so it does work,
+  and it is relatively safe.
+
+       Open the cartridge.  On some cartridges you need to remove a screw.
+  On others you have to use a screwdriver to destroy the plastic thingie,
+  where the screw usually is, which is holding the two halves of the
+  casing together.  The cartridge is also held together by two other
+  plastic tabs on the sides.  Use a screwdriver to wedge between the tab
+  and casing, and open the module.
+
+       Then, looking at the breadboard, chip-side-up, you'll see a
+  resistor either on the far right edge, or right above the module's
+  seventeen-pin connector.  (To be sure, trace the circuit from the
+  rightmost pin (or leftmost, when looking at the circuit side).)  This
+  resistor is what resets the 99/4A when you insert a new module.
+
+              ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ  chips
+             \ณ/
+  ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+  ณ    : : :ฺฤฟฺฤฟ: :     ณ
+  ณ-=- : : :ณ ณณ ณ: : -=- ณ  <ฤฤฤฤฤ  this is usually the resistor
+  ณ-=- : : :ภฤูภฤู: :   ณ ณ
+  ณ          ฤฤฤ  ฺ - - ู ณ  <ฤฤฤฤฤ  this circuit is on the other side
+  ภฤฤฤฤฤฤฟ   /ณ\  ณฺฤฤฤฤฤฤู
+   /ณ\   ณณณณ ณ ณณณณ
+    ณ    ภมมม ณ มมมู
+    ณ         ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ  sometimes the resistor is here,
+    ณ                                as a line of solder or a wire
+    ณ
+    ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ   diodes, not resistors
+
+
+       Insert the screwdriver under the resistor, turn a bit, and pull one
+  end from the breadboard.  It may just break, but it won't affect the
+  module.  (Some older modules, however, fail to start up unless that
+  resistor is there, so remove the resistor in such a way that you can
+  replace it easily.)
+
+       If there is no resistor, but only a wire there (physically mounted
+  on the board), then cut it.
+
+       Thoroughly clean off the contacts of the module.  Also do this for
+  Editor/Assembler or Extended Basic (I guess BEFORE you run TRANS).  This
+  will make the next step easier.
+
+       While running TRANS, remove the E/A or Extended BASIC cartridge.
+  This shouldn't affect the program, since it runs from the memory
+  expansion.  (Look at the LEDs on your peripheral box to ensure it
+  doesn't lock up though.)  Then, with a smooth motion, insert the module
+  whose ROMs you want to transfer into the 99/4A.  The computer may well
+  lock up.  In some cases, you can remove the module and try again.
+  Usually you'll just have to reset the computer, re-load TRANS, and try
+  again.  Press "0" to test that if it didn't lock up.  If it's still
+  going, then everything's ready.
+
+       This is just an idea.  You can avoid the hassle and order the
+  modules directly from me.  (See ORDERING.TXT.)  Only thing is, I can't
+  distribute non-TI cartridges, so at least try to transfer Adventure if
+  you have it.
+
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

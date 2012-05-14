@@ -31,15 +31,14 @@ public class CommonDemoFormat {
 		while (speechBuffer.isAvailable()) {
 			int byt = speechBuffer.read();  
 			if (byt != DemoFormat.SpeechEvent.ADDING_BYTE.getCode()) {
-				if (byt == 255) {
-					// bug in TI Emulator 6.0
-					continue;
-				}
 				try {
 					queuedEvents.add(new SpeechWriteEvent(DemoFormat.SpeechEvent.fromCode(byt), 0));
 				} catch (IllegalArgumentException e) {
 					throw speechBuffer.newBufferException("corrupt speech byte " + Integer.toHexString(byt));
 				}
+				
+				// ignore next byte
+				speechBuffer.read();
 			} else {
 				byt = speechBuffer.read() & 0xff;  
 				queuedEvents.add(new SpeechWriteEvent(DemoFormat.SpeechEvent.ADDING_BYTE, byt));
@@ -54,16 +53,14 @@ public class CommonDemoFormat {
 	 */
 	public static void writeSpeechEvent(IDemoEvent event,
 			DemoOutBuffer speechBuffer) throws IOException {
-		if (!speechBuffer.isAvailable(2)) {
+		SpeechWriteEvent ev = (SpeechWriteEvent) event;
+		
+		if (ev.getEvent() != SpeechEvent.ADDING_BYTE || !speechBuffer.isAvailable(2)) {
 			speechBuffer.flush();
 		}
 
-		SpeechWriteEvent ev = (SpeechWriteEvent) event;
 		speechBuffer.push((byte) ev.getEvent().getCode());
-		if (ev.getEvent() == SpeechEvent.ADDING_BYTE) {
-			speechBuffer.push((byte) ev.getAddedByte());
-		}
-		
+		speechBuffer.push((byte) ev.getAddedByte());
 	}
 
 	/**

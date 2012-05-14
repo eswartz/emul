@@ -1,0 +1,37 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ BUGS.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       Of course there are still bugs.  If you come across any of the ones
+  in this list, don't bother to report them.  They ought to be fixed by
+  the next version.
+
+       þ  Sometimes, sound will turn off by itself.  Hmm.  You may be able
+  to fix this by adding the word "-FastInterrupt" to the "ROMPatches"
+  variable in your V9t9 configuration file.
+
+       þ  RS232 emulation is not finished.  Don't bet your life on it.
+
+       þ  LPC speech is interpolated incorrectly (with the encoded values,
+  not the actual represented values).  This makes all speech samples end
+  with rapidly rising pitch, rather than with a falling pitch.
+
+       þ  When using the DSK.volumename.file convention to select an
+  arbitrary drive (named "volumename"), it fails when using both DOADs and
+  FIADs.  It's a "device contention" problem.  I'll try to figger it out.
+
+       þ  The error codes returned from the emulated disk DSR are
+  incomplete.  Most likely you'd see one error message for several types
+  of errors.  You'd see these errors in Disk Manager.
+
+       þ  In disk-on-a-disk, a disk image can only grow in size (i.e.,
+  when reformatting).  The user should simply use the TIFORMAT utility.
+
+       þ  Disk-on-a-disk emulation is clueless about the arrangement of
+  sectors on the second side of a disk.  It is sort of (?) consistent
+  within V9t9, but external disk images are likely to be read incorrectly.
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

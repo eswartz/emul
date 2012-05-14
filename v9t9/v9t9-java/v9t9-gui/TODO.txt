@@ -18,4 +18,6 @@ ToolShell centering is borked -- does not comprehend multiple bars
 
 ================
 
-Demos:  -- save to StoredDemosPath
+Demos:  -- fix speech conversion
+	-- use tagged format instead of buffered
+	 

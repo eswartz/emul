@@ -1,0 +1,69 @@
+
+! 	(value\address -)	Store word.
+
+!CSP 	(-)	Save SP in CSP.
+
+#	(double value -- double quotient)
+	Convert one digit, add backwards to string setup with <#
+
+#>	(double -- addr\count)
+	Finish conversion, leave TYPE-able string addr.
+
+
+#S	(unsigned double -- 0\0)
+	Do all digits.  <# #S #>
+
+'	word ( -- PFA addr)	Lookup word.
+	Comp:  	Add to dict.
+	Exec:	Push on stack.
+
+(ABORT)	Replacing CFA with user-def'd routine allows error trapping.
+
+(DO)	(Limit\Index--)
+
+(FIND)	(string addr\NFA -- PFA\length\true)
+			 -- false)
+	string addr has length byte.
+
+(LINE)	(line #\screen #--beg line addr\line leng)
+
+(NUMBER) (double\string addr -- double\char addr)
+	Convert string of ASCII text at addr+1.
+	DPL is incremented upon decimal.
+	Addr of unconvertible char returned.
+
+*/	(multiplier\multiplicand\divisor -- quotient)
+	(value1*value2/value3)	signed
+
+*/MOD	(multiplier\multiplicand\divisor -- remainder\quotient)
+	signed
+
++!	(value\addr--)
+
++-	(value\sgn -- value)
+
++BUF	(buffer addr--next buf addr\flag)
+	??
+
+-FIND	word 	(--\PFA\length\true)
+		(--false)
+
+-TRAILING (begaddr\count--beg addr\count)
+
+.LINE	(line #\screen #--)
+
+.R	(value\field width--)
+	minimum width specified... may exceed.  no trunc.  no trailing blank
+
+/MOD	(dividend\divisor--remainder\quotient)
+
+;CODE	(immediate)  Like DOES>, but specifies a code proc.
+	Should set ASSEMBLER vocabulary.
+
+<#	(--)
+	HLD := PAD
+
+<BUILDS	SHOULD create the header for the constant 0.
+
+
+

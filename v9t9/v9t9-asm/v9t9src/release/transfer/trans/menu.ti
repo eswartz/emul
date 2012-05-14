@@ -1,0 +1,819 @@
+*	Trans
+*
+*	Menu for ROM transfers.
+*
+
+TMENU	TEXT	' =============\'
+	TEXT	' Transfer Menu\'
+	TEXT	' =============\\'
+	TEXT	' 0) Output device\'
+	TEXT	' 1) Console ROM (required)\'
+	TEXT	' 2) Console GROM (required)\'
+	TEXT	' 3) Speech ROM\'
+	TEXT	' 4) Current module\'
+	TEXT    ' 5) Disk DSR\'
+	TEXT    ' 6) RS232 DSR\'
+	TEXT	' 7) Disk image\\'
+	TEXT    'Your choice? $'
+	EVEN
+
+GOMENU  B	@OUTDEV
+
+MENU    BL	@STKINI
+	BLWP	@CALL
+	DATA	OPEN
+
+	BLWP	@CALL
+	DATA	CLS
+
+	LI	1,TMENU
+	BLWP	@CALL
+	DATA	MESS
+
+MENU0	BLWP	@CALL
+	DATA	GETKEY
+
+	LI	2,>3730
+	CLR	1
+	MOVB	@>8375,1
+	CB	1,2
+	JH	MENU0
+	SWPB	2
+	CB	1,2
+	JL	MENU0
+
+	BLWP	@CALL
+	DATA	PFPR
+	BLWP	@CALL
+	DATA	CRLF
+	BLWP	@CALL
+	DATA	CRLF
+
+	SB	2,1
+	SRL	1,7
+	MOV	@VECT(1),1
+	B	*1
+
+FINISH	BLWP	@CALL
+	DATA	CLOSE
+	JMP	MENU
+
+
+VECT	DATA	OUTDEV,DMPCPU,DMPGRM,DMPSPC,DMPMOD
+	DATA	DMPDDS,DMPRDS,DMPDSK
+*                0123456789012345678901234567890123456789
+OUTMSG	TEXT	'\Enter the output RS232 parameters. You\'
+	TEXT	'must have the .DA=8 attribute in the\'
+	TEXT	'filename. Parity should be PA=N. As for\'
+	TEXT	'baud rate, use your best judgment\'
+	TEXT    'and configure RECV accordingly.\\'
+	TEXT	'Device (ex. RS232.BA=2400.DA=8.PA=N):\\$'
+	EVEN
+
+OPAB	BYTE	>00,>18		* variable, internal, update
+	DATA    OUTDTA
+	BYTE	>51,>00
+	DATA	0
+	BYTE	>80
+	EVEN
+
+
+OUTDEV
+OUTDV0  LI	1,OUTMSG
+	BLWP	@CALL
+	DATA	MESS
+
+	BLWP	@CALL
+	DATA	INPUT
+
+	LI	0,OUTPAB
+	LI	1,OPAB
+	LI	2,9
+	BLWP	@VMBW
+
+	MOVB	@INLEN,2
+	JEQ	OUTDV0
+	SRL	2,8
+	INC	2
+	LI	1,INLEN
+	LI	0,OUTNAM
+	BLWP	@VMBW
+	B	@MENU
+
+
+CLOSE   DATA	SR0+SR1
+	LI	1,>100
+	JMP	OPEN0
+OPEN	DATA	SR0+SR1
+	CLR	1
+OPEN0	LI	0,OUTPAB
+	BLWP	@VSBW
+	LI	0,OUTNAM
+	MOV	0,@>8356
+	BLWP	@DSRLNK
+	DATA	8
+	JNE	OUTDOK
+
+	BL	@DSRERR			* ouch!
+	B	@GOMENU
+
+OUTDOK	BLWP	@RET
+
+
+ERRS	DATA	EDEV,EWPT,EBAD,EILL,EBR,EEOF,EHRD,EFNF,EBR,ELN
+
+EDEV	TEXT	'No such device\$'
+EWPT	TEXT	'Write-protected\$'
+EBAD	TEXT	'Bad attributes\$'
+EILL	TEXT	'Illegal operation\$'
+EEOF	TEXT	'End-of-file\$'
+EHRD	TEXT	'Transmit error or user break\$'
+EFNF	TEXT	'File not found\$'
+EBR	TEXT	'Transmit error from RECV\$'
+ELN	TEXT	'Bad packet length received\$'
+
+PAK	TEXT	'\Press any key...\$'
+	EVEN
+
+DSRERR	CLR	1
+	MOVB	0,1
+	SRL	1,7
+	MOV	@ERRS(1),1
+	BLWP	@CALL
+	DATA	MESS
+	LI	1,PAK
+	BLWP	@CALL
+	DATA	MESS
+	BLWP	@CALL
+	DATA	GETKEY			* wait
+	RT
+
+
+DMPCPU  LI	4,>2000
+	CLR	5
+	LI	6,CBYTE
+	LI      7,'CR'
+	BLWP	@CALL
+	DATA	DUMP
+	B	@FINISH
+
+DMPGRM  LI	4,>6000
+	CLR	5
+	LI	6,GBYTE
+	LI      7,'CG'
+	BLWP	@CALL
+	DATA	DUMP
+	B	@FINISH
+
+DMPSPC  LI	4,>8000
+	CLR	5
+	LI	6,SBYTE
+	LI      7,'SR'
+	BLWP	@CALL
+	DATA	DUMP
+	B	@FINISH
+
+MODMSG	TEXT	'\\Scanning module...$'
+	EVEN
+
+DMPMOD  LI	1,MODMSG
+	BLWP	@CALL
+	DATA	MESS
+
+	BLWP	@CALL
+	DATA	MODST
+
+	LI	5,>E000			* scan backward through
+DMPMG0	BL	@GDAT			* 8K GROM segments
+	MOVB	10,10			* until not empty
+	JNE	DMPMG1
+	AI	5,->2000                * empty
+	CI	5,>6000			* ALL are empty?
+	JL	DMPMC
+	JMP	DMPMG0
+DMPMG1  MOV	5,4			* save start
+	AI	4,>2000			* 8K per segment
+	LI	5,>6000			* start addr
+	S	5,4			* get length
+	LI	6,GBYTE
+	LI      7,'MG'
+	BLWP	@CALL
+	DATA	DUMP
+
+DMPMC	MOV	@>6000,@>6000		* bank 0
+	BL	@CDAT
+	MOV	10,10
+	JEQ	DMPMOU			* none in bank 0 => None at all
+	LI	7,'MC'			* assume ROM
+	LI	1,>7800
+	MOV	*1,0			* save word
+	INV	*1			* change it
+	C	*1,0			* same?
+	JEQ	DMPNMM			* yup, ROM
+	LI	7,'MM'			* maybe Mini-Memory
+	INV	*1			* restore
+DMPNMM	BL	@CSUM			* get checksum in R10
+	LI	4,>2000
+	LI	5,>6000
+	LI	6,CBYTE
+	BLWP	@CALL
+	DATA	DUMP
+
+	MOV	@>6002,@>6002		* try to set bank 1
+	MOV	10,7			* save checksum
+	BL	@CSUM
+	C	10,7
+	JEQ	DMPMOU			* same bank == 1 bank
+
+	LI	4,>2000
+	LI	5,>6000
+	LI	6,CBYTE
+	LI	7,'MD'
+	BLWP	@CALL
+	DATA	DUMP
+
+DMPMOU  BLWP	@CALL
+	DATA	MODEN
+
+	B	@FINISH
+
+GDAT	MOVB	5,@>9C02
+	SWPB	5
+	MOVB	5,@>9C02
+	SWPB	5
+	LI	4,>2000
+	CLR	10
+GDAT0	SOCB	@>9800,10
+	DEC	4
+	JGT	GDAT0
+	RT
+
+
+CDAT    LI	5,>6000
+	CLR	10
+	LI	4,>2000
+CDAT0	SOC	*5+,10
+	DECT	4
+	JGT	CDAT0
+	RT
+
+
+CSUM    LI	5,>6000
+	CLR	10
+	LI	4,>2000
+	CLR	0
+CSUM0	MOV	*5+,9
+	SRC	9,0
+	XOR	9,10
+	DECT	4
+	JGT	CSUM0
+	RT
+
+
+*                0123456789012345678901234567890123456789
+DSKMSG	TEXT	'Press the drive number of the disk\'
+	TEXT	'you want to dump (1-5): $'
+DSKINV	TEXT	'Invalid disk or drive\$'
+DSKPAU	TEXT	'\\Press any key...$'
+DRANGE	TEXT	'15'
+DRIVE	BSS	1
+	EVEN
+SECTOR	BSS	256
+SECNUM	BSS	2
+
+DMPDSE	LI	1,DSKINV
+	BLWP	@CALL
+	DATA	MESS
+DMPDSK  LI	1,DSKMSG
+	BLWP	@CALL
+	DATA	MESS
+DMPDK0	BLWP	@CALL
+	DATA	GETKEY
+	MOVB	@>8375,1
+	CB	1,@DRANGE
+	JL	DMPDK0
+	CB	1,@DRANGE+1
+	JH	DMPDK0
+	BL	@PRCH
+	AI	1,->3000
+	MOVB	1,@DRIVE
+
+	LI	1,DSKPAU
+	BLWP	@CALL
+	DATA	MESS
+	BLWP	@CALL
+	DATA	GETKEY
+
+*	A disk image is much greater than 64k, of course.
+*	What we'll do is, send the disk in 45k increments.
+*	Each segment of the disk is called 'D0'-'D7', where
+*	the number indicates the offset into the disk, *45k.
+*	The size in the header will indeed be >B400.
+*
+*	Let disk errors pass.
+
+	CLR	@SECNUM
+	BLWP	@CALL
+	DATA	RDSEC
+	MOVB	@>8350,0
+	JNE     DMPDSE
+
+	MOV	@SECTOR+10,9
+	CLR	8
+	LI	3,180
+	DIV	3,8			* R8=# SEGMENTS
+	LI	7,'D0'
+DMPDK1  LI      4,>B400
+	CLR	5
+	LI	6,DSKRD
+	BLWP	@CALL
+	DATA	DUMP
+	INC	7
+	DEC	8
+	JGT	DMPDK1
+	B	@FINISH
+
+DSKRD   MOV	5,10
+	ANDI	10,>FF
+	JNE	DSKRD0			* zero means sector
+	BLWP	@CALL			* has not been read
+	DATA	RDSEC
+	INC	@SECNUM
+DSKRD0  MOVB	@SECTOR(10),10
+	ANDI	10,>FF00   		* lo(R10) must be 0
+	RT
+
+
+RDPAB	DATA	>0110
+RDSEC	DATA	SR0+SR1+SR2
+	LI	0,>834C
+	SETO	*0   			* >834D=>FF for read
+	MOVB	@DRIVE,*0		* >834C=drive #
+	INCT	0
+	LI	1,SECBUF
+	MOV	1,*0+			* >834E=vdp addr
+	MOV	@SECNUM,*0		* >8350=sec #
+	LI	0,SECPAB
+	LI	1,RDPAB
+	LI	2,2
+	BLWP	@VMBW
+	MOV	0,@>8356
+	BLWP	@DSRLNK
+	DATA	10
+	LI	0,SECBUF
+	LI	1,SECTOR
+	LI	2,256
+	BLWP	@VMBR
+	BLWP	@RET
+
+
+DMPRDS   LI	7,'RR'
+	LI	12,>1300
+	JMP	DD00
+DMPDDS	LI	7,'DR'
+	LI	12,>1100
+DD00	SBO	0
+	LI	5,>4000
+	CB	*5,@HAA
+	JEQ	DD0
+
+	CLR	0
+	B	@DSRERR
+
+DD0	LI	4,>2000			* copy DSR ROM
+	LI	6,>E000
+DD1	MOV	*5+,*6+
+	DECT	4
+	JGT	DD1
+	SBZ	0
+	LI	4,>2000
+	LI	5,>4000			* virtual addr
+	LI	6,DBYTE
+	BLWP	@CALL
+	DATA	DUMP
+	B	@FINISH
+
+
+*
+*	The dumper routine.  BLWP @CALL
+*
+*	R4=# bytes
+*	R5=start addr
+*	R6=reader routine (BL @, R5=addr, R10=BYTE)
+*	R7=Code (type of block)
+*
+*	Header is this:
+*	#xx#yyyy#
+*	(type, leng)
+*
+*	Each line has this format:
+*	:addr:##:CH:sfgljljsgdfljksljskdlsd;
+*       0123456789ABC
+*
+*	(addr=hex addr, abs)  ##=# bytes represented
+*	CH=checksum of represented bytes
+*	Data is 8-bit raw.
+*
+*	The receiver program will send a string "R" or "O"
+*	meaning "retry" or "okay" for each line, and "E"
+*	for the end of the dump.  "S" means start the dump.
+*
+*	Max 80 bytes a line.
+*	R8=checksum
+*       R2=line len (# bytes)
+*	R1=ptr to linebuf
+*	R12=saved ptr to # bytes field in LNBUF
+*	R0,R13=checksum temp
+*
+
+CBYTE	MOVB	*5,10    		* CPU READ
+	RT
+
+DBYTE	MOVB	@>A000(5),10		* DSR ROM READ
+	RT
+
+GBYTE	MOVB	5,@>9C02		* GROM READ
+	SWPB	5
+	MOVB	5,@>9C02
+	SWPB	5
+	MOVB	@>9800,10
+	RT
+
+SBYTE	BLWP	@CALL			* SPEECH ROM READ
+	DATA	SPBYTE
+	MOVB	@SPDATA,10
+	RT
+
+
+SPCHRD	EQU	>9000
+SPCHWT	EQU	>9400
+
+SCODE	MOVB	@SPCHRD,@SPDATA		* MAIN sets this up
+	NOP				* at READIT
+	NOP
+	NOP
+	RT
+SCLEN	EQU	$-SCODE
+
+SPBYTE 	DATA	SR0+SR1+SR2+SR11
+	MOV	5,0
+	LI	2,4
+SPBYLP	SRC	0,4
+	MOV	0,1
+	SRC	1,4
+	ANDI	1,>0F00
+	ORI	1,>4000
+	MOVB	1,@SPCHWT
+	DEC	2
+	JGT	SPBYLP
+	LI	1,>4000
+	MOVB	1,@SPCHWT
+	LI	2,10
+SPBYL0	DEC	2
+	JGT	SPBYL0
+	MOVB	@H10,@SPCHWT
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	BL	@READIT
+	BLWP	@RET
+
+COLON	BYTE	':'
+SEMI	BYTE	';'
+NMB	BYTE	'#'
+ESC	BYTE	' '
+H10	BYTE	>10
+HAA	BYTE	>AA
+PERC	BYTE	'%'
+
+DMPMSG	TEXT	'\\Dumping...\$'
+
+LNBUF	BSS	80
+LNBUF$	EQU	LNBUF
+
+	EVEN
+
+
+DUMP	DATA	>FFFF
+	LI	1,DMPMSG
+	BLWP	@CALL
+	DATA	MESS
+
+	BLWP	@CALL
+	DATA	CLMET
+
+	BLWP	@CALL
+	DATA	START
+
+	LI	1,LNBUF			* setup header
+	MOVB	@NMB,*1+		* sep
+	MOVB	7,*1+   		* type
+	SWPB	7
+	MOVB	7,*1+
+	MOVB	@NMB,*1+		* sep
+	MOV	4,10
+	BL	@PRHEX4			* len
+	MOVB	@NMB,*1+		* term
+	LI	2,9			* line len
+	BLWP	@CALL
+	DATA	PRLINE
+
+	BLWP	@CALL
+	DATA	HEAD
+
+	MOV	4,@TOTAL		* save total # chars for METER
+
+DUMPL   LI	1,LNBUF			* new line
+	MOVB	@COLON,*1+
+	MOV     5,10
+	BL	@PRHEX4			* addr
+	MOVB	@COLON,*1+		* sep
+	MOV	1,12			* save ptr
+	AI	1,5
+	MOVB	@COLON,*1+		* sep
+
+	CLR	2			* # bytes written (RAW)
+	CLR	0			* offs in dataline (for checksum)
+	CLR	8			* checksum
+
+DUMPC	MOV     4,4			* all bytes sent?
+	JEQ	DUMPD			* dump
+
+	CLR     10
+	BL      *6			* get byte
+	INC	5			* next addr
+
+	MOV	10,13
+	SWPB	13			* move into word
+	SRC	13,0			* VAL ROR (POS&7)
+	A	13,8			* CHK+=VAL...
+
+	MOVB	10,*1+			* put char
+
+	INC     2			* one more byte written
+	INC	0			* next offset
+	DEC	4			* one less byte to read
+
+	CI	1,LNBUF+78
+	JHE	DUMPD			* stop this line
+
+	JMP	DUMPC
+
+DUMPD   MOVB	@SEMI,*1+		* terminator
+	MOV	1,13
+	AI	13,-LNBUF$		* total # chars
+	MOV	12,1			* restore field ptr
+	MOV	2,10
+	BL	@PRHEX2			* # bytes
+	MOVB	@COLON,*1+		* sep
+	MOV	8,10
+	BL	@PRHEX2			* checksum
+
+DUMPR	MOV	13,2			* restore # chars
+	BLWP	@CALL
+	DATA	PRLINE
+	BLWP	@CALL
+	DATA	WAIT
+	DATA	DUMPR
+
+	BLWP	@CALL
+	DATA	METER
+
+	MOV	4,4			* all done?
+	JNE	DUMPL
+
+	BLWP	@CALL
+	DATA	END$
+
+	BLWP	@RET			* done!
+
+
+
+*	Print a line.
+*
+*	R2=# chars
+*	LNBUF=data
+*
+PRLINE	DATA	SR0+SR1+SR2
+	MOV	2,1
+	SWPB	1
+	LI	0,OUTPAB+5
+	BLWP	@VSBW		* # bytes
+	LI	0,OUTDTA
+	LI	1,LNBUF
+	BLWP	@VMBW		* write to vdp
+	LI	0,OUTPAB
+	LI	1,>300
+	BLWP	@VSBW		* write opcode
+	LI	0,OUTNAM
+	MOV	0,@>8356
+	BLWP	@DSRLNK        	* do it
+	DATA	8
+	JNE	PRLOK
+
+	BL	@DSRERR
+	B	@MENU
+
+PRLOK	BLWP	@RET
+
+
+
+
+
+*	Print hex #
+*
+*	R10=byte or word
+*	R9=# digits
+*	R1=OUTPUT
+*
+PRHEX2	LI	9,2
+	SWPB	10
+	BLWP	@CALL
+	DATA	PRHEX
+	SWPB	10
+	RT
+
+PRHEX4	LI	9,4
+	BLWP	@CALL
+	DATA	PRHEX
+	RT
+
+
+HEX	TEXT	'0123456789ABCDEF'
+PRHEX	DATA	SR10+SR11+SR9
+PRH00	MOV	10,11
+	ANDI	11,>F000
+	SRL	11,12
+	MOVB	@HEX(11),*1+
+	SLA	10,4
+	DEC	9
+	JGT	PRH00
+	BLWP	@RET
+
+
+*
+*	Clear the progress meter.
+*
+CLMET	DATA	SR0+SR1+SR2+SR11
+	LI	0,ROWDTH*23
+	LI	1,>2000+XOFFS
+	LI	2,40
+	BL	@CLR
+	BLWP	@RET
+
+
+*
+*	Draw a meter.
+*	R4=bytes printed, R14=total.
+*
+*	>7F0 (char 254) = block
+*	>7F8 (char 255) = meter part
+*
+*	Meter appears on bottom line.
+*
+
+PATS	BYTE	>00,>80,>C0,>E0,>F0,>F8
+TOTAL	DATA	0
+METER	DATA	SR0+SR1+SR2+SR3+SR4+SR5
+	LI	0,240
+	NEG	4
+	A	@TOTAL,4
+	MPY	0,4             * calculate
+	DIV	@TOTAL,4	* DONE*240/total
+	MOV	4,5
+	CLR	4
+	LI	0,6
+	DIV	0,4		* get r4=# blocks and R5=# pixels
+	LI	0,ROWDTH*23
+	LI	3,>8C02
+	ORI	0,>4000
+	SWPB	0
+	MOVB	0,*3
+	SWPB	0
+	MOVB	0,*3
+	DECT	3
+	LI	1,>FE00
+	MOV	4,4
+	JEQ	MET01
+MET00	MOVB	1,*3
+	DEC	4
+	JGT	MET00
+MET01   LI	1,>FF00
+	MOVB	1,*3
+	MOVB	@PATS(5),1
+	LI	2,7
+	LI	0,>7F8
+	BLWP	@VSBW
+MET02	MOVB   	1,*3
+	DEC	2
+	JGT	MET02
+	BLWP	@RET
+
+
+
+*	Signal start of dump.
+*	Receiver should send one-char message "G".
+*
+START	DATA	SR0+SR2+SR3+SR1+SR10+SR11
+	LI	0,'S '
+	LI	3,'GG'
+START0	MOVB	0,@LNBUF
+	LI	2,1
+	BLWP	@CALL
+	DATA	PRLINE
+	BL	@WAITCH
+	BLWP	@RET
+
+
+*	Signal start of module dump.
+*	Receiver should send "N".
+*
+MODST	DATA   	SR0+SR2+SR3+SR1+SR10+SR11
+	LI	0,'M '
+	LI	3,'NN'
+	JMP	START0
+
+*	Signal end of module dump.
+*	Receiver should return "M".
+*
+MODEN	DATA   	SR0+SR2+SR3+SR1+SR10+SR11
+	LI	0,'N '
+	LI	3,'MM'
+	JMP	START0
+
+
+*	Signal end-of-dump.
+*	Send "E", Wait for "F".
+*
+END$	DATA	SR0+SR1+SR2+SR3+SR10+SR11
+	LI	0,'E '
+	LI	3,'FF'
+	JMP	START0
+
+
+*	Wait for response to header.
+*	Receiver should send one-char message "H".
+*
+HEAD	DATA	SR0+SR3+SR1+SR10+SR11
+	LI	3,'HH'
+	BL	@WAITCH
+	BLWP	@RET
+
+
+*	Wait for "O" or "R" to arrive, signalling
+*	okay line or retry.
+*
+*	If "R" received, branch to addr at R14.
+WAIT	DATA	SR3+SR0+SR1+SR10+SR11
+	LI	3,'OR'
+	BL	@WAITCH
+	JEQ	WAITOK          * e=first char received
+	MOV	*14,14
+	JMP	WAITOT
+WAITOK	INCT	14
+WAITOT	BLWP	@RET
+
+
+
+*       Wait to receive a character.
+*
+*       We ONLY expect to receive single characters,
+*	so if we get something else, try to match
+*	it to the wanted input.
+*
+*	Set EQ=1 if second char matched.
+
+WAITCH  MOV	11,10
+	LI	0,OUTPAB
+	LI	1,>0200
+	BLWP	@VSBW
+	LI	0,OUTNAM
+	MOV	0,@>8356
+	BLWP	@DSRLNK
+	DATA	8
+	JEQ	WAITE
+	LI	0,OUTPAB+5
+	CLR	1
+	BLWP	@VSBR
+	CI      1,>100
+	JNE	WAITB
+	LI	0,OUTDTA
+	BLWP	@VSBR
+	CB	1,3
+	JEQ	WAITO
+	SWPB	3
+	CB	1,3
+	JNE	WAITB
+	MOV	3,3
+	JMP	WAITO
+WAITL	LI	0,>900
+	JMP	WAITE
+WAITB   LI	0,959
+	AI	1,XOFFS
+	BLWP	@VSBW
+	LI	0,>800
+WAITE	BL	@DSRERR
+	B	@MENU
+WAITO	B	*10

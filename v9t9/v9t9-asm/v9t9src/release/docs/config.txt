@@ -1,0 +1,474 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ CONFIG.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file describes the text-based main configuration file for V9t9
+  v6.0 (usually V9t9.CNF).  Unless the /C parameter is used to relocate
+  it, the V9t9.CNF must be located in the directory where V9t9.EXE is
+  found when starting the emulator.  It is read in once when the emulator
+  starts, and contains non-default settings for several variables in the
+  program.  (This means that *almost* all the variables default to amiable
+  values.  The exception is the FIAD disk emulation pathnames.)
+
+       The configuration file must be less than 8192 bytes.
+
+       The configuration is line-based; every variable takes one line.  If
+  a line starts with "#", ";", "!", or "[", it is considered a comment and
+  is ignored.  Each line must be less than 160 characters.  A line
+  defining a variable is of the form
+
+  [ws] [variable] [ws] = [ws] [value] {[ws] [comment]}
+
+       where "ws" is whitespace (spaces and/or tabs or NOTHING).
+
+       "Variable" is a well-defined V9t9 variable name (listed below).  It
+  can be capitalized however you wish, but the spelling and punctuation
+  must remain identical.  To speed things up, variable names are hashed
+  into a 16-bit value; a misspelled variable name may (rarely) match
+  another variable, returning incomprehensible error messages (such as
+  "bad number" for a string value).
+
+       "Value" is defined in the descriptions, and is usually a number, a
+  boolean, or a string, or a list of these.
+
+       þ  A decimal number consists of any number of digits 0-9.
+  Overflows are ignored.  Negative numbers (i.e., '-') aren't implemented
+  (or used) and will cause an error.  Depending on the variable, the
+  number is either from 0-255 or 0-65535.  Examples:
+
+       NumberOfFingersI'mHoldingUp     = 1
+            ActualNumberOfVersionsOfTheEmulator=3   ; funny, huh?
+
+       þ  A boolean is a string without quotes.  True values are
+  represented by "TRUE", "YES", or "ON"; while false values are
+  represented by "FALSE", "NO", or "OFF".  Again, you can capitalize it
+  any way you want.  Examples:
+
+       bUgLeSs_vErSiOn = FaLsE
+            fIREwHENrEADY                =off
+
+       þ  A string is a series of characters, non-quoted, and terminated
+  with whitespace or the end-of-line.  Examples:
+
+       Author'sName = Edward_Swartz
+       WhatPeopleStillCallMeBasedOnMyEmailAddress = Ralph_Swartze
+
+       þ  Other special types are defined along with their description.
+
+
+  ออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออ
+                        ณ VARIABLE DESCRIPTIONS ณ
+  ออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออ
+
+       To seek more comprehensive help on the ideas/devices/etc mentioned
+  along with these variables, see the related *.TXT files.
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [  Pathnames ]
+
+  DSK1Path, DSK2Path, DSK3Path, DSK4Path, DSK5Path -- absolute pathnames
+       (must have drive letter) -- ex. C:\DISKS\FIRST
+       These give the directory name where files-in-a-directory (FIAD)
+       DSKx emulated files are to be found.  See DISKS.TXT.  There is no
+       requirement that any of these paths points to a specific "drive".
+       These paths can be changed temporarily via Ctrl+Shift+F9 during
+       execution.
+
+  RomsPath  -- a 'relative' path -- 'Relative' means the drive letter and
+       full path isn't required. -- ex. V6.0\ROMS
+       This is where ROMs -- CPU, GPL, speech ROM, DSR roms -- can be
+       found.  It's best to use absolute pathnames (full specification)
+       for all these paths so that you can run V9t9 from any directory.
+
+  ModulesPath    -- a relative path -- ex. E:MODULES
+       This is where module ROMs are to be found.  ONLY module ROMs are
+       located here -- the MODULES.INF and MODULES.EXE files should reside
+       in the same directory as V9t9.EXE.
+
+  DiskImagePath  -- relative path -- ex. \DISK.IMG\90k
+       This is where disk-on-a-disk images can be found.
+
+  RecordedDemosPath -- relative path -- ex. d:\demos
+       This points to the location for storing demonstration files that
+       you record.  This path will only be used when the given filename
+       doesn't appear to be absolute (i.e., with a drive letter as in
+       "d:\demo.dem" or an absolute directory offset as in "\demos\1.dem"
+       or ".\here.dem").
+
+       When you execute a demo, it always uses the exact filename you
+       specify.
+       
+       See DEMOS.TXT for more information.
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [  ROM Options ]
+
+  CPUROMFileName, GPLROMFileName, SpeechROMFileName -- filenames -- (12
+       chars max) -- ex. FUNNY.GRM
+       These give the filenames (relative to ROMSPath) where the CPU ROM,
+       GROM, and speech ROMs should be located.  By default they're named
+       TICPU.HEX, TIGPL.HEX, and TISPEECH.HEX.  This is to maintain
+       compatibility with v4.0 and v5.01.  With V9t9, I am pushing to name
+       these files 994AROM.BIN, 994AGROM.BIN, and SPCHROM.BIN,
+       respectively.
+
+  ROMPatches -- list of modifiers
+       This variable works as a 99/4A CPU ROM patch applier.  It only
+       modifies the in-memory version of the ROM image.  By default the
+       emulator will "unpatch" all earlier versions of the CPU ROM and
+       applies most of the patches to make execution as fast as possible
+       (except for keyboard speedups).
+
+       These modifiers will replace ROM routines with direct 80x86 code:
+
+       þ  SpriteMotion (or SM)  -- speeds up automatic sprite motion.
+       þ  MemoryMove (or MM)    -- speeds up block memory moves in ROM.
+       þ  FastInterrupt (or FI) -- speeds up the VDP interrupt routine.
+
+       This modifier will make life easier:
+       þ  ShiftReboot (or SR) -- changes the keystroke used to reset the
+       computer from Fctn+Equals to Fctn+Shift+Equals.
+
+       These modifiers affect keyboard emulation:
+
+       þ  DirectKeyboard (or DK)   -- this will intercept the CPU ROM and
+       use a much faster keyboard routine.  See KEYBOARD.TXT.
+       þ  SlowDownKeyboard (or SK) -- this will insert delays in the
+       keyboard to prevent ultra-repeating.  See KEYBOARD.TXT.
+            
+       
+       By default, all the modifiers except the keyboard modifiers are in
+       effect.  To turn off a modifier, specify "-<modifier>" in the list:
+
+       ROMPatches = xxxxx , -FastInterrupt
+
+
+       To turn on other modifiers, add them to the list, optionally with a
+       plus sign:
+
+       ROMPatches = xxxxx, +DirectKeyboard, SlowDownKeyboard
+
+
+       You're encouraged to use a clean 1981 99/4A ROM image with the
+       emulator, and then use this option to patch it.
+
+       NOTE!!    The emulator WILL assume you're using a true 99/4A ROM
+       image unless the last word in the ROM is >ED99 (used for the FORTH
+       ROM).  So, if you're using custom ROMs, set "ROMPatches=-all" to
+       prevent problems.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [  DSR (Device Service Routine) ROMs ]
+
+
+  DiskDSRFileName, EmuDiskDSRFileName -- filenames -- ex. DISK.BIN
+       These specify the filenames relative to ROMSPath of the Disk DSR
+       ROMs.  By default, they are DISK.BIN and EMUDISK.BIN.  EMUDISK.BIN
+       is provided with V9t9 and supports FIAD access.
+
+  SharedDiskDSRFileName -- filename -- ex. BOTHDISK.BIN
+       This specifies the filename (relative to ROMSPath) of the shared
+       disk DSR ROM image.  This is really the emulated disk DSR ROM, but
+       has been altered to allow the "real" disk DSR ROM to coexist with
+       it.  See DISKS.TXT.
+
+  RS232DSRFileName, EmuRS232DSRFileName -- filenames -- ex. RS232.BIN
+       same as above but for RS232 emulation.  Defaults are RS232.BIN and
+       EMURS232.BIN.  The DSR ROM you use can support any type of RS232
+       emulation (which supports the 99/4A RS232 unit), as well as one of
+       the ROMs that can support the PIO.  EMURS232.BIN is provided with
+       the emulator and allows file-based and direct access to the RS232
+       and the PIO, but not the OLD and SAVE commands.
+
+  DSRCombo -- list of specifiers -- ex. EMUDisk,RealRS232
+       This variable tells V9t9 which DSR ROMs to load.  When undefined,
+       no ROMs at all are loaded.  There are five options:
+
+       þ  EMUDisk --  this will load the emulated disk DSR ROM.  This ROM
+                      comes with V9t9 and gives you access to FIAD files.
+       þ  RealDisk -- this will load the 99/4A Disk DSR ROM and allows
+                      access to DOADs, or disk images.  You must transfer
+                      this ROM from your own system.       þ  BothDisk -- this will load both the emulated and the real disk
+                      DSR ROMs.  This allows simultaneous access to FIADs
+                      and DOADs.
+       þ  EMURS232 -- this will load the emulated RS232 DSR ROM.  This ROM
+                      comes with V9t9.  It acts much like the real 99/4A
+                      RS232 ROM, but the OLD and SAVE commands are
+                      unimplemented.
+       þ  RealRS232-- this will load the 99/4A RS232 DSR ROM.  You must
+                      transfer this from your own system.
+                      
+       You cannot specify both the emulated and real RS232 ROMs at the
+       same time.  This is pointless anyway, because unlike the disk
+       emulation, there is only one way to emulate the RS232.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [  Video Options ]
+
+  VideoUpdateSpeed    --  byte, useful values 1 to 8 --
+       minimum delay in 1/60 second before updating screen.  (When the
+       delay after the program writing to the VDP reaches this, the screen
+       will be updated.)  Can be changed with Ctrl+(Shift+)F2.
+
+  VideoUpdateMaxDelay --  byte, useful values 1 to 32 --
+       maximum delay in 1/60 second before redrawing the screen.  This is
+       used when a program is continually writing to the screen, and not
+       delaying long enough (VideoUpdateSpeed) for a redraw to occur
+       otherwise.  When VideoUpdateSpeed is changed by the user during
+       execution, this value is set to VideoUpdateSpeed*4.
+
+  Check5Sprites -- boolean --
+       whether or not to emulate the 9918A's 5-sprites-on-a-line "feature"
+       where parts of the 5th-plus overlapped sprites are erased.  Off by
+       default.  When "on", this feature slows things down.
+
+  CheckSpriteCoinc -- boolean --
+       whether or not to check if sprites are coincident on the screen.
+       This function is only seen in the CALL COINC(ALL,N) statement or by
+       reading the VDP status register.  A ROM routine handles all other
+       coincidence checks.  Off by default.  Slows things down when "on".
+
+  UseVGA -- boolean --
+       forces use or nonuse of VGA features.  This is currently used to
+       select a prettier color palette and a nicer 'flash' when executing
+       functions (Ctrl+Fx) during execution.  The only use for this
+       variable is to set it "False", which allows EGA emulation on a VGA.
+       V9t9 will not attempt to use VGA features if it cannot detect a VGA
+       card.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [  Disk Options ]
+
+  DiskImage1, DiskImage2, DiskImage3 -- filenames -- ex. TIBASE.DSK
+       point to disk-on-a-disk images (to be found under DiskImagePath).
+       The "RealDisk" modifier must appear in "DSRCombo" to have access to
+       them (see DISKS.TXT).  These filenames temporarily be changed with
+       Ctrl+Shift+F9 during emulation.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [ Hardware Options ]
+
+  RS232/1, RS232/2 -- COM port and IRQ -- ex. 1,4
+       These set the port numbers and IRQs of the emulated RS232 devices.
+       When the variable is undefined, no RS232 access takes place.
+       Otherwise, specify the COM port and the IRQ of the port.  For
+       example, to map RS232/1 (aka RS232) to your COM2 port, you'd
+       normally specify "2,3" as the setting.  See RS232.TXT.
+
+  PIO/1, PIO/2 -- LPT port -- ex. 1
+       These set the LPT (parallel) port number for the emulated parallel
+       devices.  For example, to map PIO/1 (aka PIO) to the third parallel
+       port, specify "3" as the setting.  See RS232.TXT for more
+       information.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [  Execution Speed ]
+
+  DelayBetweenInstructions -- integer --
+       arbitrary amount of time to waste between each instruction
+       executed.  Can be changed with Ctrl+(Shift+)F3.
+
+  TimerSpeed -- integer, best values 18-200 --
+       speed, in Hz, of the 99/4A VDP timer interrupt.  Normally 60.  Can
+       go as low as 1.  (Lower==>generally faster execution, but longer
+       sounds and timed delays.)
+
+  MaximumInterruptSpeed -- integer, usually 31250 --
+       maximum user-definable speed that an emulated program can use.
+       This is usually only used in cassette emulation, and doesn't have
+       anything to do with "TimerSpeed".  On slower systems, if you
+       experience problems, lower this value.  Since cassette enulation is
+       write-only, it's generally useless to worry about this variable or
+       cassette emulation.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [  LEDs ]
+
+  SetKeyboardLED -- boolean --
+       whether or not to set the keyboard LEDs.  There is a haunting bug
+       associated with this which locks up the emulator on some systems if
+       set (unless I've fixed it :).
+
+  ShowDISKLED, ShowRS232LED, ShowEMUDISKLED -- boolean --
+       in the lower-left corner a "LED" will flash when the device's ROM
+       is accessed (reminiscent of the Peripheral Expansion Box).  The
+       emulated disk led is green, while the others are yellow.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [  Keyboard, Joystick, And Mouse ]
+
+  MouseEmulationType -- either 0 or 1 --
+       Mice can emulate joysticks two ways.  0 means the position of the
+       (invisible) mouse cursor specifies the push of the 'joystick'.
+       I.E., if the mouse has been moved up, the joystick will go up
+       indefinitely until the mouse is moved back.  1 means the delta
+       motion of the mouse specifies the push of the 'joystick'.  When the
+       mouse stops, so does the 'joystick.'
+
+  ROMKeyboardDelay -- integer --
+       What this does is let you change the ROM-based delay for the
+       "keyboard debounce".  (Delay to wait for the keyboard's circuits to       even out when a key is pressed or released.)  On a computer with a
+       1990's keyboard, there exists no such 'bounce'.  So this variable
+       basically lets you slow down the speed of the keyboard.  This only
+       works with "matrix" mode (the default, see KEYBOARD.TXT).  This
+       value is only written to the ROM if one of the keyboard patches is
+       applied (see above in ROMPatches).  Default in ROM is 1250.
+
+  KeyboardDelay -- byte -- useful values 1-3
+       This defines the keyboard delay when the "+SlowDownKeyboard"
+       modifier appears in the "ROMPatches" variable.  By default there is
+       no delay.  This variable forces the emulator to wait the specified
+       number of 1/60 seconds before passing the key to the 99/4A program.
+       See KEYBOARD.TXT.
+
+  Joystick1Bounds, Joystick2Bounds -- three numbers in a list:
+       a,b,c --or-- a b c
+       which specify the program-calculated joystick bounds.  See Ctrl+F7
+       or Shift+Ctrl+F7 to center joystick #1 or #2, and Shift+Ctrl+F1 to
+       see the bounds it got.  This is generally unnecessary, since the
+       joysticks are automagically centered when V9t9 starts.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [  Module List ]
+
+  Modules -- list of integers -- ex. 6,9,10,3,9,1
+       set usually by MODULES.EXE.  Numbers in list (1-xxx) reference
+       specific entries in MODULES.INF.  See MODULES.TXT.
+
+  DefaultModule -- integer --
+       the number of the default entry in the startup modules list.  Not
+       related to the order in MODULES.INF, but to the order in "Modules".
+       (I.E. if Modules=6,8,9,2,3 then if DefaultModule=1, module #6 will
+       be pointed to upon startup.)  This way you can press <Enter> right
+       when the program starts to load your favorite module.  See
+       MODULES.TXT.
+
+  DefaultModuleExtension -- three-letter extension -- ex. BIN
+       This will set the filename extension for all the module ROM images.
+       In v4.0 and v5.01 of TI Emulator!, this was "HEX", which meant
+       absolutely nothing.  However, this is the default if you don't
+       define it, to maintain compatibility with older versions.  You're
+       encouraged to use "BIN".
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [  Sound ]
+
+  PlaySound -- list of device names (PCSPEAKER, ADLIB, SBLASTER, SBDMA) --
+       a way to wean the emulator away/towards using certain sound
+       devices.  Note that ADLIB is a synonym for FM chips, which are used
+       in Sound Blasters.  (This is how to get three voices.)  SBLASTER is
+       only used for digitized speech.  SBDMA is used for speech and
+       noise.  Putting a minus ('-') in front of a device name will force
+       it to be unused.  All but SBDMA, however, may be toggled on again
+       with Ctrl+F5.  Putting a plus in front of a name is redundant.
+
+       Example:  PlaySound=-pcspeaker,+adlib,-sbdma,+sblaster
+       or        PlaySound=-adlib
+
+  Silence -- boolean --
+       specifies if sound is on or off.  Ctrl+F4 changes this during
+       execution.
+
+  PCSpeakerSilenceLevel -- byte, 0 to 15 --
+       gives the minimum attenuation necessary to turn off a voice.
+       Usually 15.  Since the PC speaker does not have variable volume,
+       all tones have the same volume going through it.  This byte lets
+       you emulate volume by simply turning the voice off once its volume
+       falls below a certain level.  0 represents the maximum volume, and
+       15 is silence.  A value of 12 is recommended.
+
+  NoiseSync -- word, 0 to 500 useful --
+       When using Sound Blaster DMA samples to emulate noise, there is
+       often a delay before the driver can loop the sample.  In order to
+       properly repeat the sample, you need to chop some bytes off the end
+       of the sample to compensate for the delay.  Probably a value of 50
+       is good enough.  You can't really tell unless you are hearing
+       periodic noise.
+
+  NoiseTop -- byte, 0 to 70, or 255 to 180 useful --
+       In calculating noise samples, this variable specifies the maximum
+       volume, as used in the Sound Blaster DSP.  255 and 0 are the
+       loudest levels, and 128 is silence.  If you don't want to change
+       the volume level of the FM synthesizer (using a program like SBP-
+       MIX), you match the volume levels of noise and FM sound with this
+       variable.  See SOUND.TXT.
+
+  SoundBlasterIRQ -- byte --
+       your Sound Blaster card's 8-bit IRQ.  Usually the emulator reads
+       the BLASTER= environment variable which tells this.
+
+  SoundBlasterDMA -- byte --
+       your Sound Blaster card's 8-bit DMA channel.  The emulator normally
+       reads the BLASTER= environment variable to figure this out.
+
+  UseLPCSpeech -- boolean --
+       whether to use v6.0's speech synthesis, or nothing at all.  It's
+       quite goofy-sounding at the moment.  Defaults to NO.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  [ Debug Options ]
+
+  InterruptTracing -- boolean --
+       When set to ON, this variable will allow the built-in debugger to
+       trace through interrupt routines.  Otherwise, interrupts will be
+       inhibited while you debug.  During intermittent debugging,
+       interrupts are always enabled.  Defaults to ON.
+
+  StartupDebugging -- boolean --
+       When set to ON, this will cause the built-in debugger to come up
+       every time you reset V9t9 (loading a new module or forcing a reboot
+       with Ctrl/Alt+F12).  This is really only useful if you want to test
+       new console ROMs.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       For hackers-in-training who want to help make speech sound better:
+
+  DigitizedSpeechFilesPath -- relative path -- ex. G:\TI\LPC
+       used for specifying the location of patch files for LPC speech.
+       The v5.01 "digitized speech file" is obselete and has nothing to do
+       with V9t9.  The files that go here are patch files referenced with
+       "SpeechPitches" or "SpeechExcitation".
+
+  SpeechExcitation -- filename --
+       the filename of a 50-integer binary file relative to
+       "DigitizedSpeechFilesPath" used as a digitized "chirp".  The
+       integers' values should range from -8192 to 8192, representing a
+       signed fixed-point number from -1.0 to 1.0.  The graph of these
+       integers is in the form (sin wx)^7, where the value of "w" is
+       unknown by me.
+
+  SpeechPitches -- filename --
+       the filename of a 64-integer binary file relative to
+       "DigitizedSpeechFilesPath" used as a translation table from pitch
+       value to counter value.  Entries range from 0 to about 127.  (But
+       it's not linear!)  Order goes from lower values to higher values.
+       0 represents whispering.
+
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

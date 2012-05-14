@@ -1,0 +1,919 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ V9t9.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file details V9t9, its use, and its evolution.
+
+       For transferring ROMs and files to your PC, see TRANSFER.TXT.
+       For upgrading from v4.0 or v5.01, see 5CHANGES.TXT.
+       For configuration info, see CONFIG.TXT.
+       For help with common problems, see PROBLEMS.TXT.
+       For catastrophic (and smaller) bugs, see BUGS.TXT.
+       For ordering information, see ORDERING.TXT.
+       For information on distributing this program, see DISTRIB.TXT.
+       For contacting me, see CONTACT.TXT.
+
+
+  อออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออ
+                       ณ CONTENTS OF THIS DOCUMENT ณ
+  อออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออ
+
+       þ    Overview
+       þ    Introduction
+       þ    Features of v6.0
+       þ    Peripheral support
+       þ    Warnings
+       þ    Hardware/Software requirements
+       þ    What kind of a user are you?
+       þ    Operation of the emulator
+       þ    Run-time functions
+       þ    The real-time debugger
+
+
+  อออออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออออออออ
+                               ณ OVERVIEW ณ
+  อออออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออออออออ
+
+       This archive contains executables (V9t9.EXE, V9t9_SLO.EXE, and
+  V9t9_286.EXE) which serve to emulate a TI-99/4A computer with its 32k
+  memory expansion, sound chips, joysticks, a disk system, a speech
+  synthesizer, and a RS232/PIO card.
+       
+       The sound is emulated by using a combination of the PC speaker,
+  Adlib (FM) chips, and Sound Blaster cards.  The joysticks are emulated
+  with PC analog joysticks, the mouse, and the numeric keypad.  The disk
+  system can be emulated by storing 99/4A files as individual MS-DOS files
+  or by using a "disk-on-a-disk" where a single DOS file stores all the
+  sectors in a single 99/4A disk.  Speech synthesis is supported as the TI
+  Speech Synthesizer does, but is currently alpha and sounds pretty bad.
+  The RS232/PIO card is emulated using any available serial port/IRQ
+  combination and parallel port.
+
+       The archive also includes utilities to upgrade the module
+  configuration file from v4.0 and v5.01 of TI Emulator, to manipulate
+  emulated files, and to convert popular 99/4A file formats (file and
+  module) into the emulator's format.
+
+       This archive does not include any 99/4A ROMs, which are
+  copyrighted.  (Some are available from me, see BINARIES.TXT.)  I have
+  written a crude ROM which can run FORTH programs to demonstrate the
+  power of V9t9.  It also provides a means to move the included ROM
+  transfer program to your 99/4A, so that you can copy your 99/4A's ROMs
+  and disks for use with V9t9.
+
+       Several demonstration files are included which are recordings of
+  V9t9 executing popular 99/4A programs.  These provide accurate
+  representations of how the emulator's sound, video, and speech work.
+
+       V9t9 is fairware, meaning it's free to use as long as you want.
+  (But since 99/4A ROMs are copyrighted, you may need to buy them from
+  me.)  If you wish to obtain a lot of module dumps or other utilities
+  from me, then you get to be fair to me and send me some money for my
+  efforts (see ORDERING.TXT).
+
+
+  อออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออออออ
+                             ณ INTRODUCTION ณ
+  อออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออออออ
+
+       The program V9t9.EXE is my attempt to emulate the TI-99/4A
+  computer, released by Texas Instruments in 1981.  I started the project
+  in 1992 on a whim, in Pascal.  (Ack!)  It ran probably three times
+  slower than what you have right now, even though it had gradually
+  evolved into a Pascal shell around tons of inline assembly.  When I
+  tested the program out at my high school on the faster computers, my
+  friends laughed at me.  I ran the program on the high school network
+  server and locked it up several times.  My teacher scoffed at my
+  efforts.  Who the heck wants a *TI* emulator?
+
+       Now, with the help of MANY, MANY kind people, I have been able to
+  upgrade the program significantly (see THANKS.TXT).  Many people in the
+  TI community have seen my program, hundreds of people have used it, and
+  my friends are really jealous now.  :)
+
+
+  ออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออ
+                  ณ FEATURES OF V9t9:  TI Emulator! v6.0 ณ
+  ออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออ
+
+       þ  Comes with the 32k memory expansion unit built in.  :)
+       þ  All standard graphics modes are supported, all in 15 blazing
+  colors.  All 32 sprites are available.
+       þ  Three sound voices and noise are supported.
+       þ  Disk drives are emulated through either files or disk images.
+       þ  Direct RS232 and file-based PIO support are available.
+       þ  Real speech synthesis is now supported.  Beware, though:  it's
+  imperfect.  Sounds like the speaker is sick.
+       þ  The 99/4A keyboard is fully emulated.  As well, analogous PC
+  keystrokes mapped to the 99/4A's 'keyboard'.
+       þ  PC joysticks, mice, and the numeric keypad used to emulate 99/4A
+  joysticks.
+
+       þ  Real-time execution tracer can be used to watch the emulator
+  tick.  See the section of the appropriate name below.
+       þ  Demonstration option available to record the action of the
+  emulator for later replay.
+
+
+  ออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออ
+                            ณ PERIPHERAL SUPPORT ณ
+  ออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออ
+
+       V9t9 can be run with the minimum requirements above, but other
+  devices are supported as well.
+
+       þ  Sound support:
+          þ  PC Speaker support for "three" voices (see below), and
+          speech.
+          þ  Adlib for 3-voice sound, and periodic noise.
+          þ  Sound Blaster for noise and speech.
+       þ  Joystick support:
+          þ  PC-compatible analog joystick support
+          þ  Mouse / keyboard emulation of TI joysticks
+
+       þ  Disk drive emulation:
+          þ  Up to five DSKx drives emulated through MS-DOS directories,
+          OR
+          þ  Three single density disks-on-a-disk are supported,
+          OR
+          þ  Two disks-on-a-disk and three emulated directories can be
+          handled.
+            
+       þ  Direct and file-based RS-232 and parallel port support
+
+
+  อออออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออออออออ
+                               ณ WARNINGS ณ
+  อออออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออออออออ
+
+       This version (v6.0) of V9t9 was released finally after too many
+  months' delay, beause older, inferior, illegal versions have been
+  floating around the Internet and I want people to stop using them.  Much
+  like the first release of this program to the Internet (v4.0), many of
+  the new features in this version are incomplete or buggy.
+
+       These new features are disk-on-a-disk emulation (using the 99/4A
+  disk controller ROM, not included in this archive anyway), speech
+  synthesis, sound chip "noise", and RS232 emulation.  I'm sure these are
+  satisfactory but still imperfect.
+
+       This can be considered a "test release" of V9t9.
+
+
+  ออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออ
+                  ณ HARDWARE AND SOFTWARE REQUIREMENTS ณ
+  ออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออ
+
+       For successful operation, you'll need a 286 AT system or above, an
+  EGA/VGA card, a 101-key AT-compatible keyboard, and MS-/DR-DOS.
+  Anywhere from 160k to 380k is needed to execute, depending on what
+  options you enable.
+
+       You cannot run this program with much degree of success under MS
+  Windows, OS/2, or Linux DOSEMU.  Like any good MS-DOS program, it writes
+  directly to hardware and requires full control of the computer.  Of
+  course, if this program executes under those environments, what you will
+  experience will not be very much like you would under DOS.  ** Note! **
+  This also includes DOS shells from these environments!  If you have any
+  problems with this program while running from one of those environments,
+  please retest the problem under vanilla DOS before reporting it.
+
+       The recommended minimum (which my system itself falls below, please
+  take pity on me) is a 386-DX/33 with VGA.  (VGA is only so that the
+  colors look more realistic.)  (I keep wondering as I write this -- does
+  anyone still use a 286 with EGA?)
+
+       The 386-DX/33 or above processor is recommended for "almost-
+  exactly-TI" speed.  I've obtained this estimate from several users.  I
+  have no clue if this is really accurate, due to the fact that the
+  software-driven video and sound warp the performance.  I develop the
+  program on a 386-SX/20 and find that it runs at a kinda slow but
+  satisfactory speed.
+
+       BUT, in order to conform to current PC software standards, here is
+  the REAL list of requirements:  Pentium-100 (P6 if AT ALL POSSIBLE) with  16k write-back cache RAM, 16 megs, 24-bit VESA local-bus video, Sound
+  Blaster AWE-32 _and_ Gravis Ultrasound cards and 550 megs of hard drive
+  space.
+
+       Uh, that was being sarcastic. :)  Seriously though, if you do have
+  such a system, you will find the emulator runs WAY TOO FAST and will
+  need to set up some bottlenecking.  See CONFIG.TXT under
+  "DelayBetweenInstructions", and KEYBOARD.TXT under the "...way too fast"
+  section.
+
+       It's highly recommended that you have a software disk cache
+  installed (such as Norton Cache, PC-Kwik, or Smartdrive).  Not just for
+  V9t9, but for all DOS programs.  Just letting you know that V9t9 WILL
+  thrash your drive unless a cache is installed.
+
+
+  อออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออ
+                       ณ WHAT KIND OF USER ARE YOU? ณ
+  อออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออ
+
+       This section will help you make more sense of this archive,
+  depending on what kind of user you are, in relation to experience with
+  the 99/4A and this emulator.
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       þ  USER 1:  99/4A GURU, NOW USING MYARC GENEVE 9640
+
+       Useful files:
+            UTILS\GRAM2TI.EXE
+            UTILS\XMDM2TI.EXE
+            TRANSFER.TXT
+            UTILS.TXT
+
+       Hi.  First of all, this is only a 99/4A emulator.  It does not and
+  will not support Myarc features, nor will it support hardware not
+  manufactured by TI for the 99/4A.  (This means hard drives, 80-column
+  video, clocks, RAMdisks, mice, etc., are out.)  I'm sure the Geneve is
+  cool, but remember that it itself emulates the 99/4A.  This is a complex
+  enough program already.  Sorry if this sounds cold, but wanted to get it
+  out of the way.
+
+       A main assumption this section makes is that you've transferred
+  99/4A ROMs before, with CSAVE or using GRAM-Kracker.  Since this archive
+  doesn't include 99/4A ROMs, you probably have experience transferring
+  ROMs, and can jump right in transferring stuff.
+
+       V9t9 includes utilites to translate GRAM-Kracker type module files
+  into V9t9 modules.  (I don't support GRAM-Kracker directly because I
+  didn't know about it when I started the emulator.)  It's called GRAM2TI
+  in the UTILS subdirectory.  Note, that in order for GRAM2TI to convert
+  those files, they must be on your PC.
+
+       XMDM2TI will convert 99/4A files which were transferred to your PC
+  via XMODEM using the TIFILES standard.  See UTILS.TXT for operating
+  information on the two programs mentioned.
+
+       Another route to doing this conversion, if you don't use XMODEM but
+  still have GRAM-Kracker files:  you can move the ROM transfer program
+  over to your PC, and use it to transfer disk images to the PC.  Then,
+  use GRAM2TI after extracting the files in the disk image.
+
+       This is only an overview.  See the appropriate sections in
+  UTILS.TXT and TRANSFER.TXT.
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+       þ  USER 2:  PREVIOUS USERS OF TI EMULATOR! v4.0 or v5.01
+
+       Useful files:
+            5CHANGES.TXT
+            UPGRADE\LST2INF.EXE
+            UTILS\TICHKDSK.EXE
+
+       Several months after TI Emulator! v4.0 and v5.01 were released, TI
+  informed me that the ROMs I had been including were copyrighted, meaning
+  they shouldn't have been freely distributed.  I have tried to eradicate
+  those archives from the Internet, but I'm sure I haven't found them all.
+
+       If you never "registered" for one of those versions, but still used
+  the emulator, you should probably delete the ROMs and use the provided
+  transfer program to legally move the ROMs from your own 99/4A, or send
+  me $15 to cover the license fees that I must pay on distributed ROMs and
+  modules.
+
+       If you did "register", then I've already paid the license fees from
+  the orders I received since I got my license.
+
+       Note the use of the quotes around "register".  In v4.0 and v5.01 I
+  blindly used the word "shareware" and "register" without knowing their
+  exact meanings.  The type of system I had envisioned (which is very very
+  clearly spelled out in this version), is one where you would send a fee
+  ONLY if you wanted the transfer programs and extra module files (and the
+  digitized speech file in v5.01, which is now obselete).  The payment was
+  NOT required.  I certainly disliked it when people sent me money without
+  even having USED the program!  You should otherwise only send money if
+  you feel the program is worth it.
+
+       There was no "registered version" of the emulator -- only the
+  publicly available archive.  There was no intent of "lifetime
+  registration".  The promise of technical support that comes with
+  shareware is ALWAYS my policy.  Anyone who uses the program has the
+  right to technical support, regardless of whether they sent me money.
+
+       Whew.  Now that all of that is out of the way, some good news.
+  V9t9 is still compatible with v4.0 and v5.01, except for improvements to
+  the configuration files.  You can scrap the TIEMUL.CFG (it had very few
+  configuration options anyway) and MODULES.DTA, and use the UTILS\LST2INF
+  program to translate the v4.0/5.01 MODULES.LST file into the new
+  MODULES.INF file.  The program will do some renaming and moving of the
+  module files, so back up your module files first, in case bugs creep in.
+  (Don't move the module files yourself -- see 5CHANGES.TXT.)
+
+       All the emulated DSKx files are still the same format.  However,
+  I've recently found that almost ALL the files created by v4.0 and v5.01
+  are erroneous in some way.  xxx/FIX files appeared to use 0 sectors,
+  xxx/VAR files used twice as many sectors, and PROGRAM files often had an
+  extra sector stuck to them.  (Programs transferred from the 99/4A via
+  the TRANS program are okay, though.)  The UTILS\TICHKDSK program will
+  fix all these files.
+
+       Since v5.01, I've changed the convention for naming the ROM images.
+  You'll need to rename your ROMs after you move them to the V9t9 \ROMS
+  directory.
+
+       See 5CHANGES.TXT for more information about the major changes in
+  V9t9 since v5.01, and the procedure for upgrading all your stuff.  (V4.0
+  users can seek edification there also.)
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       þ  USER 3:  NEW USERS WHO HAVE FULL FUNCTIONING 99/4A SYSTEMS
+
+       Useful files:
+            FORTH.BAT
+            UTILS\RECV.EXE
+            TRANSFER.TXT
+
+       Welcome to V9t9, new user person.  V9t9 cannot be distributed with
+  the 99/4A ROMs, but that doesn't mean you can't make good use of the
+  emulator.  Invoking V9t9 with the FORTH.BAT batch file will bring up the
+  included V9t9 FORTH.  The FORTH programs supplied are meager, at best,
+  but if you have experience with FORTH, it ought to be fun.
+
+       Anyway, the FORTH interpreter and "disk" come with a program which
+  will let you move a ROM transfer program over to your 99/4A.  Then,
+  using that program, you can move your 99/4A's ROMs and modules, and even
+  disk images, over to your PC for use with V9t9.  This whole process
+  maybe takes an hour (if you've got a proper setup).  TRANSFER.TXT
+  contains all the gooey details.
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       þ  USER 4:  NEW USERS WITH FRIED 99/4A SYSTEMS
+
+       Useful files:
+            everything in the \DEMOS subdirectory
+            DEMOS.TXT
+            FORTH.TXT
+            ORDERING.TXT
+            CONTACT.TXT
+
+       You're probably the most common V9t9 user.  In order to emulate
+  actual 99/4A programs on your system, you'll probably have to send me
+  some money to get the ROMs (the money goes right into my software
+  license).
+
+       I extremely dislike this situation, because it denies the purpose
+  of fairware, which is to let you use a program and see its degree of
+  performance without paying for it first.  To combat any suspicion, I've
+  first written a FORTH interpreter that you can use (providing you know
+  FORTH, of course).  See FORTH.TXT for specifics of my setup.
+
+       For those less into programming, I also added a demonstration
+  function to V9t9.  This lets you run demos of V9t9, which run at a speed
+  true to the system on which they were recorded.  You can see the
+  graphics and hear the sound and speech as they actually appeared during
+  recording.  To run a demo, you need no ROMs whatsoever.  I'm hoping that
+  the demos will convince you of the power of V9t9 before you shell out
+  money for ROM images.
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       þ  USER 5:  CASUAL EMULATOR FAN
+
+       Useful files:
+            DEMOS\*.DEM
+            DEMOS.TXT
+
+       In most respects, the profile for "USER 4" applies to you, except
+  that you might not order any ROMs unless you're very interested.  Just
+  run the demos and have fun, or use FORTH if you like it.
+
+
+  ออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออ
+                      ณ OPERATION OF THE EMULATOR ณ
+  ออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออ
+
+       It's assumed you know how to use a TI-99/4A.  But I don't blame you
+  if you're curious.  If you press Ctrl+F1 while the computer is emulating
+  away, the second page shows how the 99/4A names "FCTN" keys and how they
+  translate to the PC.
+
+       First of all, there are THREE versions of the emulator included in
+  this archive.  There are not dependent on each other in any way, but I
+  don't recommend erasing any of them, since they each emulate
+  differently:
+
+  V9t9.EXE:      386 version, compiled to use FAST opcodes.
+  V9t9_SLO.EXE:  386 version, using SLOW opcodes.  SLOW in this case means
+                 about 16% slower than the FAST version, using 64k more
+                 memory as well.
+  V9t9_286.EXE:  286 version, using FAST instructions.  The speech
+                 synthesis is disabled, since it requires a 386 to run at
+                 the required speed.
+
+       The definition of FAST and SLOW lies in the handling of the "memory
+  bus" in the emulator.  Certain sections of the 99/4A address space are
+  ROM or memory-mapped.  The FAST version will ASSUME that certain
+  instructions will never attempt to illegally access these areas of
+  memory (a safe bet), and thereby skip a lot of checking.  The SLOW
+  version will perform much more checking, but will still performs some
+  optimizations to make the emulator speedy.
+
+       If a program doesn't work correctly with the FAST version, and it
+  does on the SLOW version, you can be sure that the program is using
+  nonstandard memory access.  Tell me about the program (see CONTACT.TXT)
+  so I can make it work with the FAST version.
+
+       Note that the FAST version actually goes about 10% slower than TI
+  Emulator! v4.0 and v5.01.  It's unfortunate, but it happened when I
+  rewrote the opcodes.  In the process I also fixed some goofy bugs that
+  certain games like Donkey Kong and Moon Patrol were experiencing under
+  the old versions.  I figured it wasn't worthwhile to use the old faulty
+  opcodes if it would only mean a speed increase.  V9t9 runs too fast on
+  most computers anyway.
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       The 286 version of the emulator is basically identical to the 386
+  versions, except for these things:
+
+       þ  Text mode is much slower
+       þ  The 9901 timer is broken
+       þ  Speech is off
+       
+       Text mode is radically optimized in the 386 version through the 32-
+  bit accumulator, and the 9901 timer requires some 32-bit math that I'd
+  rather not tweak to work with 16 bits.  The 9901 is very rarely used by
+  99/4A programs, anyway.  The speech synthesis, which was poorly
+  implemented, requires too much power to run on a 286 (hell, it barely
+  goes on my system).
+
+       None of the versions of V9t9 use protected mode or EMS/XMS memory
+  in any case, which is why the 286 version is almost exactly like the 386
+  ones.  (For you programmer types, there would be absolutely no gain to
+  writing this emulator in 32 bits, because the 99/4A uses a 16-bit
+  processor anyway.)
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       To run the emulator, simply run "V9t9", "V9t9_286", or "V9t9_SLO".
+  (The documentation assumes you're running V9t9.EXE.)  You might want to
+  put your V9t9 directory in your DOS PATH statement.
+       By default, no matter what directory you run V9t9 from, the
+  configuration files V9t9.CNF and MODULES.INF will be read from the
+  directory where V9t9.EXE is located.  (The default configuration file is
+  always V9t9.CNF, never "V9t9_SLO.CNF" or anything.)  Optional command-
+  line parameters let you specify different configuration files if you
+  like:
+
+  V9t9 [/C configfile] [/M moduledatabase] [/D [demoname]]
+
+       (See DEMOS.TXT for information on the /D option.)
+
+       If you have V9t9 installed in C:\EMUL\9900\DOS\V9t9\6.00\ (for
+  example) and want to run it from the C:\DISKS\NEATO directory, where you
+  have configuration files there named V9t9_22.CNF and MODULES@.INF, you
+  can do this:
+
+  C:\DISKS\NEATO> c:\emul\9900\dos\v9t9\6.00\v9t9 /c v9t9_22.cnf
+                  /m modules@.inf
+
+       Of course, if you add "C:\EMUL\9900\DOS\v9t9\6.00" to your PATH
+  environment variable, and also have the configuration files in
+  C:\EMUL\9900\DOS\V9t9\6.00 named the standard V9t9.CNF and MODULES.INF,
+  it can be as simple as:
+
+  C:\DISKS\NEATO> v9t9
+
+       At any rate, when the program starts (without the /D option),
+  several diagnostic messages will appear on the screen, such as  "Reading
+  configuration files", "Allocating memory," "Reading ROMs", "Probing
+  sound devices," and "Probing joystick and mouse".  I spell them out here
+  because your computer's probably too fast for you to read them.  If the
+  emulator stops after printing a message and doesn't continue, then, why,
+  that may be important.  (See PROBLEMS.TXT.)
+
+       Then, the module selection screen will appear.  Any modules you
+  have installed with MODULES.EXE or will appear on the list.  An pointer
+  will appear on the screen, pointing to the default module (see
+  MODULES.TXT).  You can use the arrow keys and <tab> to move the pointer
+  around the list.  You can also type the number of the module you want.
+  If you make an error typing, <backspace> or <space> will clear the
+  number to allow you to retype the whole thing.  <enter> accepts the
+  current module, and <esc> stops the program.
+
+       The emulation will start, and then the module ROMs will be loaded
+  (or not, if they're nonexistent).  You should see the cyan title screen
+  come up.  If the computer locks up there (and you know your ROM dumps
+  are accurate), press Caps Lock --  if nothing happens to the keyboard
+  LEDs, most likely you need to change the "SetKeyboardLED" flag in
+  V9t9.CNF to "NO".  (This is an ancient, haunting bug.)
+
+
+  ออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออออ
+                          ณ RUN-TIME FUNCTIONS ณ
+  ออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออออ
+
+       While the emulator is running, you can execute several useful
+  functions.  Most of them will temporarily modify the defaults that are
+  set in the configuration file V9t9.CNF (see CONFIG.TXT for full
+  information about the configuration file and the affected settings
+  mentioned below).
+
+       Almost all the functions are specified using the Fxx (F1-F12) keys
+  and Ctrl or Alt.  To avoid possible confusion that the Fxx keys act like
+  "Fctn-xx", pressing Fxx alone will simply bring up help.  You must press
+  some combination of Ctrl and Alt with the Fxx key to activate a  function.  (E.G.  Ctrl+Fxx, Alt+Fxx, or Ctrl+Alt+Fxx.)  There are good
+  reasons for not using F1-F10 as 99/4A keys.  Like, for example, ten more
+  run-time functions in the future.
+
+       Note that whenever you execute a function whose effect isn't
+  obvious, the screen will flash to alert you that it has taken place.
+  When you select a function which requires user input (such as changing
+  the DSKx directories), a text-mode screen will pop up and accept your
+  input.
+
+
+       Press CTRL or ALT plus:
+
+
+        F1: Brief help display.  Basically the same as this list.  There
+  are two pages, so press <enter> for the next page, and <esc> to return.
+
+
+  Shift+F1: Show current settings.  The current values for several
+  variables will be shown (see below).  The state of the sound devices are
+  on the list as well.  The values obtained from centering the joysticks
+  are next on the list.  The last thing on the list is a message telling
+  the current state of emulation:  running a demo, paused, or the average
+  number of instructions executed per second.  See SOUND.TXT and
+  JOYSTICK.TXT for more information.
+
+
+        F2: Increment the delay range between updates of the graphics
+  screen by 1/60 second.  This is necessary when frequent video updating
+  is hampering performance.
+
+       The algorithm used to decide when to update the screen uses a
+  "minimum" and a "maximum" delay time.  This key changes the minimum
+  delay, and automagically sets the maximum delay to four times the
+  minimum.  This may prevent you from obtaining fastest updating speeds
+  (i.e., 1/60 second minimum and maximum delays); it's best to set your
+  favorite values in V9t9.CNF.  See descriptions of "VideoUpdateSpeed" and
+  "VideoUpdateMaxDelay" in CONFIG.TXT.
+
+
+  Shift+F2: Decrement the video update delay range.  The emulator will
+  beep if you try to go below 1/60 second.  Automagically sets the maximum
+  updating delay to four times the new value (see above).
+
+
+        F3: Slow down the emulator a bit.  (Completely subjective amount
+  based on the type of processor you have.)  Useful for unnecessarily fast
+  processors on which games are impossible.
+
+
+  Shift+F3: Un-slow down the emulator.  It will beep if you try to go
+  below "no delay".  (Hmmph.)
+
+
+        F4: Toggle sound and speech on and off.
+
+
+        F5: Enable/disable sound cards/chips/protocols.  Basically, make
+  stuff come outta different places.  By default, the emulator will try to
+  choose the absolute stinkin' best combination of active devices as a
+  default (see SOUND.TXT).  The PLAYSOUND variable (see CONFIG.TXT) can
+  place some limitations on this.  After you press Ctrl/Alt+F5, a screen
+  will pop up showing the current settings and letting you toggle devices,
+  if available.
+
+       Note:  you can't use this function when sound is off (Ctrl/Alt+F4).
+       (The function of all these devices is explained in SOUND.TXT.)
+
+       "P" will toggle the PC speaker.  You can't ever toggle the PC
+  speaker off if it is the only active device; you need to use Ctrl/Alt+F4
+  to silence the sound.  The PC speaker can be used for 3-voice sound and
+  speech, but not noise.
+
+       "A" will toggle the Adlib (FM chips, also found on Sound Blasters)
+  usage.  Note that currently, this device provides the best 3-voice
+  emulation.
+
+       "S" will toggle the use of direct data to the Sound Blaster.  This
+  currently only affects speech.
+
+       "D" will toggle Sound Blaster DMA usage.  This is used for noise.
+  If PlaySound variable in V9t9.CNF explicitly prohibits this kind of
+  access, this option does nothing.  Sound Blaster DMA ONLY works with
+  real Sound Blaster cards, since the SB CT-VOICE.DRV driver is card-
+  specific.
+
+       The DMA usage eats up about 66k to store noise samples.  The memory
+  is released when you toggle it off or at a DOS shell.  If you attempt to
+  turn on DMA usage and there isn't enough memory, the program will
+  terminate with an error.
+
+       Be sure to read SOUND.TXT for information on how DMA is accessed
+  and initialized.
+
+
+        F6 : Change the emulation method for "TI joysticks".  By default,
+  the emulation methods are based on the "two best" peripherals attached
+  to your computer, one of the following combinations:
+
+            þ IBM joystick 1,  IBM joystick 2
+            þ IBM joystick 1,  Microsoft-compatible mouse
+            þ IBM joystick 1,  numeric keypad
+            þ Microsoft mouse, numeric keypad
+            þ Numeric keypad,  none
+
+       Pressing Ctrl/Alt+F6 will bring up a screen whereby you can change
+  the mapping from TI joystick to PC peripheral.  Press "1" to change
+  joystick #1, and "2" for joystick #2.  You cannot set "TI Joystick #1"'s
+  input type to be the same as "TI Joystick #2".  The emulator will make
+  sure they are different.  (Note that if you use this function while a
+  demo is executing, the two devices will indeed be the same, but this is
+  unimportant because demonstrations don't use joysticks.)
+
+       Also, the choices in the list above will _always_ be available,
+  even if you don't have such devices on your system.  (This is in case
+  the emulator was unable to detect the device upon startup.)  So, if you
+  have no mouse but select "TI joystick #1" to be the mouse, the net
+  result will be a constant movement in some direction (due to invalid
+  responses from polling the non-existent mouse driver).  You'll generally
+  be able to tell if you've selected nonexistent devices.  See
+  JOYSTICK.TXT for more information on joystick emulation.
+
+
+        F7: Center joystick #1
+  Shift+F7: Center joystick #2.
+
+       These key combinations let you center a joystick (if it was
+  detected upon startup).  Follow the instructions.  When you've obtained
+  a nice centering, look at the Ctrl/Alt+Shift+F1 page and copy down the
+  settings.  Place them in V9t9.CNF to keep them permanent.  (See
+  Joystick1Bounds and Joystick2Bounds in CONFIG.TXT.)
+       If you accidentally invoke this option and have no joystick
+  installed, press <Esc>.
+
+       If the emulator tells you that you don't have a certain joystick
+  plugged in, but you do, and you're sure it works, then there may be a
+  problem if your computer is way too fast.  If this is so, then it also
+  means that your computer is about 1000 times faster than mine.  If you
+  don't really think it's all that much faster, then glance at the
+  Shift+Ctrl+F1 page and see what the "instructions per second" reading
+  is.  If it's about 50 million, then your computer really is too fast.
+  Go away.  Seriously, though, tell me about it and I'll put in some more
+  bottlenecks.
+
+
+        F8: Select module.  Allows you to change whatever module is "in
+  the computer".  You will be prompted to make sure you really want to do
+  this.  Press <enter> to change the module, or <esc> to abort.  If you
+  press <enter>, you'll be presented with the module selection list.  Note
+  that pressing <esc> at the selection list has the same effect as it did
+  at the beginning of the program -- it terminates the emulator!
+       
+       After pressing <enter>, all the ROMs for the emulator are reloaded.
+  It's usually a good idea, therefore, to use absolute paths in the
+  V9t9.CNF file if you like to change directories under DOS shells, so the
+  ROM files can still be located.
+
+       Changing modules terminates demonstration recording, and modules
+  cannot be switched while running a demo.  (See DEMOS.TXT.)
+
+
+        F9: Shell to DOS.  Fairly obvious.  If there's not enough memory,
+  you'll just see a quick flash.  Or it will lock up.  I'm not sure.
+  (Okay, I just did it... it just flashes.  But sometimes it locks up
+  under DR-DOS and QEMM-386.)
+
+
+  Shift+F9: Change DSKx settings.  Allows you to temporarily change the
+  disk image filenames and/or pathnames for DSK1-5.  Depending on whether
+  or not you are using emulated file (FIAD) or disk image (DOAD) access,
+  you'll edit either a disk image filename or a pathname.  Press "1"-"5"
+  to edit the corresponding paths or filenames for DSK1-5.  Edit the old
+  location and press <enter> to change it, or <esc> to ignore.  If there
+  is an error in the location you give, the change will be ignored.  (See
+  DISKS.TXT for definitions of these types of file emulation.)  A
+  backslash ("\") will automatically be added to pathnames.
+
+
+       F10: Start demo recording, if "/D" was specified on the command-
+  line.  (See DEMOS.TXT.)  You're prompted to enter the filename of the
+  demo.  (Press <Esc> to avoid recording.)  The screen then flashes to
+  signify that recording has started.  If you only hear a beep, some error
+  has occurred; either you didn't specify /D on the command-line, you're
+  running a demo, or a demo is already being recorded.
+
+
+  Shift+F10: Stop demo recording.  A screen pops up to tell you the demo
+  recording has stopped, buffers are flushed, and demo recording is
+  finished.  Press <Esc> to acknowledge.  You can record more demos with
+  Ctrl/Alt+F10 at this time.
+
+
+       F12: Reset V9t9.  This will cause V9t9 to close open files, re-load
+  all its ROMs, and restart emulation.  Use this when a program has locked
+  up, to avoid having to use Ctrl-Break and restart.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       F12 BY ITSELF: This function will kick the emulator in the ass, if
+  it's screwing up somehow.  Rare graphics bugs, not-so-rare keyboard
+  bugs, sound bugs, whatever, are thwarted by using this.  It will redraw
+  the screen, restart sound, and clear the keyboard, among other things.
+
+
+       Pause BY ITSELF (just see what happens when you press Ctrl-Pause!):
+  Press it to pause the system.  Press it again to unpause.  You can use
+  other run-time functions while stuff is paused.  If you can't tell the
+  emulator is paused, check out the Shift+Ctrl+F1 screen and look for the
+  message "Emulation is paused".
+
+
+  อออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออ
+                           ณ REAL-TIME DEBUGGER ณ
+  อออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออ
+
+       When you press Alt-SysRq, the internal debugger comes up.  It is
+  primarily of use to programmers, because it's very cryptic and difficult
+  to use.  :)  ALL the numbers are hexadecimal.  If you are prompted to
+  enter a number and use invalid digits, you'll have to reenter it.
+
+       There are several windows on the screen.  I'll explain them first
+  before anything else.
+
+       þ  Disassembly.  This window shows the last several instructions
+  trapped by the debugger.
+
+       þ  Source & Destination.  The effective addresses and a dump of the
+  word at each address is printed here.  It corresponds to the instruction
+  to the left, before execution.  After an instruction scrolls, the values
+  here are not updated.
+
+       þ  Registers.  The sixteen registers pointed to by the current WP
+  is printed here.
+
+       þ  State.  The values of the Program Counter (PC), the Workspace
+  Pointer (WP), and the Status Register (ST) are updated here.  The
+  letters below the ST register represent the values of the flags in the
+  ST register.  (Logical greater than, Arithmetic greater than, Equals,
+  Carry, oVerflow, odd Parity, and eXtended operation.)  Even though the
+  letters alone would seem to make the numeric value useless, the current
+  interrupt mask is also reflected in the lowest nybble of the number.
+
+       þ  Commands.  A nice reference.
+
+       þ  Watch 1.  A dump of fifty-six bytes at a user-specified CPU
+  address.  After the address and eight hexadecimal bytes, the ASCII
+  values of all the bytes is displayed.
+
+       þ  Watch 2.  Same as above.  Different address.
+
+       þ  VDP Memory.  A dump of 64 bytes hovering around the current VDP
+  address.
+
+       þ  GROM Memory.  A dump of 64 bytes hovering around the current
+  GROM pointer.
+
+       þ  Prompt.  Messages to you will appear here.  You also enter
+  values here if prompted.
+
+
+       The point of the debugger is mainly education and entertainment.
+  You can step through the execution of whatever program the emulator is
+  running.  Contrary to previous versions, you can also let the emulator
+  run (a little slower than) REAL TIME while still following execution.
+
+       When you first press Alt-SysRq, you are in "command mode."  Any key
+  you press is intercepted by the tracer.  Here are the commands you can
+  execute:
+
+       þ  <Esc> will return to normal emulator operation.
+
+       þ  <Enter> will execute exactly one instruction and return to
+  command mode.  The whole screen will be appropriately updated.  Any time
+  the start address and/or values in a window change, they will be
+  highlighted.
+
+       þ  <Space> will go flying through instructions, updating between
+  each instruction.  You're not in command mode anymore; each key you
+  press will go to the emulator.  Press Alt-SysRq to interrupt and return
+  to command mode.  Note that you'll most likely get stuck inside the
+  99/4A's VDP-triggered interrupt if your computer takes more than 1/60
+  second to redraw the screen continously while tracing the instructions.
+  It's best to use this command under programs which have interrupts
+  turned off, or resort to using intermittent mode.
+
+       þ  <Tab> will enter intermittent mode.  This is how you can run the
+  emulator at (near) full speed.  The same rules apply as with the <space>
+  command.  However, under intermittent mode, the execution tracer's
+  screen is only updated every XX sixtieths of a second.  (See "I" for how
+  to change the value of XX.  By default, it is 6, meaning the screen is
+  updated ten times a second.)
+
+       A nice feature is that you can use the run-time functions while
+  using the intermittent mode.  Whee.  It's basically like running V9t9
+  with a different screen.
+
+
+       þ  "I" will allow you to change the update delay of intermittent
+  mode.  Enter a value from 00 to FF hexadecimal.  Lower numbers mean more
+  updates.  Entering zero is the exact same as executing <space>.  Since
+  the number represents xx/60 second delays, the maximum delay you can
+  have is 4.25 seconds (kinda boring).
+
+       þ  "O" will toggle the ASCII offset of the VDP memory dump between
+  normal and BASIC.  If you're running BASIC or Extended BASIC, all the
+  characters are offset by 96, making a garbage memory dump.  Pressing "O"
+  will toggle the method of displaying the ASCII dump.  By default it is
+  set to normal.
+
+       þ  "1" will allow you to change the start address of the "Watch 1"
+  window.  The window only displays CPU memory.  Valid values are 0000-
+  FFFE.  Enter an even number, because the words will be scrambled on odd
+  boundaries.
+
+       þ  "2" will do the same thing as "1", but for the "Watch 2" window.
+
+       þ  "S" will switch the screen to let you see the graphics screen.
+  Press a key to return to the debugger screen.
+
+       þ  "P" will change the PC (Program Counter) address.  It will
+  automatically be made even.
+
+       þ  "W" will change the WP (Workspace Pointer) address.  It will
+  automatically be made even.  Before returning to emulation, the validity
+  of the address will checked.  If it's an invalid WP, the emulator will
+  reset itself.  (This workspace-pointer verification provides the basis
+  for major optimizations.)
+
+       þ  "U" will change the ST (status) register.  Enter the 4-digit hex
+  value.  Look at the letters in the "State" to refresh your memory of the
+  hex values of the conditions.  (L>=>8000, A>=>4000, E=>2000, etc.)
+
+       þ  "B" will let you set a breakpoint.  Press the number of the
+  breakpoint after pressing "B", from 0 to 7.  If a breakpoint already
+  exists, the old one will be erased.  Setting a breakpoint will replace
+  the word in memory with the V9t9 "BRKP" instruction (>E00).  When a
+  breakpoint is encountered, the debugger will come up and the breakpoint
+  will be erased from memory.
+
+       However, since the debugger keeps a list of breakpoints independent
+  of the emulated memory, it will still perform a breakpoint whenever it
+  comes by that address, if tracing execution with the debugger.  This is
+  called a "lingering breakpoint".  Use "D" to erase the breakpoint.
+
+       If an emulated program changes the memory where you set the
+  breakpoint, it will be only be detected when the debugger comes across
+  it, acting like a lingering breakpoint.
+
+       þ  "D" will delete a breakpoint.  The breakpoint will be erased
+  from the list, and won't be trapped again until you specifically re-set
+  it.
+
+       þ  "E" will let you edit memory.  Even ROM (whee!).  It was made
+  klunky on purpose to avoid accidentally messing up the emulator.  (Or, I
+  could be lying and I just wrote it in a hurry.)
+
+       You will be prompted for the type of memory to edit:  ">" or "C"
+  for CPU memory, "V" for VDP memory, or "G" for GROM memory.  If you
+  enter an invalid type, the tracer will beep and abort the edit.
+
+       Next, enter the beginning address to edit.  Valid ranges are 0000-
+  FFFF for CPU and GROM memory, and 0000-3FFF for VDP memory.  The address
+  will be masked to fit the VDP range if necessary.
+
+       Then, enter the number of bytes you want to change (sequentially
+  from the start address).  A maximum of FF bytes will be accepted.  Enter
+  0 if you accidentally got in here, and no changes will be prompted.  The
+  prompt for "Enter a byte" will appear even if you enter 0, so ignore it.
+
+       Lastly, enter the value for each byte, pressing <enter> between
+  each one.  The windows in the execution tracer screen will be updated to
+  reflect your changes.
+
+       Note that when you perform a module switch or do Ctrl+F12 to reset,
+  all changes to memory are lost.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       Note that when you're debugging, the first instruction after a RTWP
+  will not be caught, since no interrupts will happen on a 9900 after a
+  context switch.
+
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+  TI and TI-99/4A are trademarks of Texas Instruments Incorporated.
+  Sound Blaster is a trademarked product of Creative Labs.
+  Adlib (Ad Lib) is a trademarked name.
+  MS-DOS and MS Windows are trademarked products of Microsoft Corporation.
+  DR-DOS is a trademarked product of Digital Research.
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

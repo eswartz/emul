@@ -1,0 +1,132 @@
+
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+   V9t9:  TI Emulator! v6.0 Source Code        (c) 1996 Edward Swartz
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤออออออออออ RELEASE.TXT อออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+     This file describes the source layout of the programs scattered
+around RELEASE.  See OVERVIEW.TXT and TIEMUL.TXT for V9t9.EXE-specific
+information.
+
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+     I retain the copyright to all the programs and source code in the
+RELEASE directory.  No sale of the source or programs is allowed.  They
+are for personal and educational use only.  Of course, the programs are
+freely distributable, but only as part of the V9t9SRC.ZIP archive.
+
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+     The RELEASE\ subdirectory contains the directory structure of the
+V9t9 distribution archive.  It also contains all the ROMs that V9t9 did,
+in case you lost them.  The utility programs are not included since they
+take up so much space and can be recompiled anyway.
+
+     Most the programs were written with Borland C++ 3.1.  A few files
+in there are also Turbo Pascal 6.0 files, but they're very simple for
+the most part.  The exception the source for the DOCS.EXE document
+reader which makes heavy use of Turbo Vision.
+
+     Of course, there was not much call for Borland C++-specific
+features in the relatively generic C programs, so they ought to compile
+on most compilers.  The only problem is the project files (*.PRJ).  So,
+I translated these into *.MAK files (makefiles).  You'll need to make
+changes to those for your compiler.
+
+                            *** NOTICE! ***
+
+     You'll need to change the *.PRJ and *.MAK files if you want to
+recompile anything.  The reason is the directory structure.  Borland
+hardcodes directory information into both types of files so they are
+very machine-dependent.  Just edit the pathnames you see and all should
+be fine.
+
+     Something else that may be a problem in recompiling is that my own
+personal Borland C setup makes changes to the BORLANDC\INCLUDE\_DEFS.H
+file to define the typedefs "byte", "word", and "longint" (as
+unsigneds).  Yours probably hasn't been changed in this way.  Although
+I've tried to go through and make sure all the source now explicitly
+defines its own typedefs, I may have missed some places.
+
+     Errors resulting from the symbols being undefined will be goofy
+things like syntax errors in the middle of function declarations.
+
+
+อออออออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฟออออออออออออออออออออออออออออออ
+                               ณ FORTH ณ
+อออออออออออออออออออออออออออออออภฤฤฤฤฤฤฤูออออออออออออออออออออออออออออออ
+
+     The RELEASE\ROMS\FORTH subdirectory contains the source code for
+the FORTH ROM distributed with V9t9.  The TIASM subdirectory from there
+contains the assembler I wrote to compile it.
+
+     FORTH.TSM is the 99/4A assembly file which compiles at ROM >0000.
+All the *.INC files are various subsections of the ROM.  FORTH.GSM is
+TASM-compatible source code which simply defines some GROM-able tables
+like keyboard->ASCII maps and the font.
+
+     I did get a bit of guidance for the FORTH vocabulary from TI-FORTH
+by reading through the dictionary and decoding the words, so I don't
+claim to have come up with all the definitions by myself.
+
+     Note that FORTH uses an undocumented V9t9 feature, which is to
+allow independent RAM at >8000->83FF.  Usually on the 99/4A, the four
+address ranges >8000->80FF, >8100->81FF, >8200->82FF, >8300->83FF are
+mapped to the same 256 bytes.  In V9t9, for speed purposes, >8000->83FF
+is actually a 1024 byte chunk.  [Actually, though, in the SLOW version
+of V9t9, it all maps to one 256-byte chunk for ultra-compatibility.]
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+     TIASM is a decent assembler, but its output is very specific.  It
+only generates code in the address range >0000->1FFF and >6000->7FFF and
+writes 8k ROM blocks, as pure binaries.  These are, of course, well-
+suited for V9t9 to load.
+
+     Another funny thing about TIASM is that although it allows
+arithmetic expressions, they must be in postfix format.  This little
+quirk (an easy-to-program quirk) made me have to change the
+autoincrement register notation from "*R5+" to "+*R5" to prevent syntax
+errors.
+
+
+อออออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออออออออ
+                             ณ TRANSFER ณ
+อออออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออออออออ
+
+     The TRANSFER directory contains two subdirectories, TRANS and RECV.
+Each one, of course, contains the source for the respective programs.
+
+     TRANS is written in pure 99/4A assembly, and must be compiled under
+V9t9 with Editor/Assembler or something similar.  The TRANS.PRJ (or
+TRANS.MAK) file will take all the *.TI files (the ASCII source code) and
+translate them into V9t9-compatible DV/80 files.  Actually there's a doc
+about this in the TRANSFER directory.
+
+     RECV is written in C, so it ought to be easy to understand.
+There's not much special about it except that it doesn't work reliably.
+
+
+ออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออออ
+                          ณ UTILS AND SOURCE ณ
+ออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออออ
+
+     The UTILS directory contains, first, all the utilities that came
+with V9t9.  The SOURCE directory contains installation programs.  The
+UTILS\SOURCE directory contains the disk/file management programs.  The
+UTILS\SOURCE\LIB directory contains the library source code for
+DOAD/FIAD handling.
+
+     In changing your project files in UTILS\SOURCE, add the LIB
+subdirectory to the list of #include paths.
+
+
+
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+
+
+
+

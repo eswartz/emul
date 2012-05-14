@@ -1,0 +1,419 @@
+
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+   V9t9:  TI Emulator! v6.0 Source Code        (c) 1996 Edward Swartz
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤออออออออออ OVERVIEW.TXT อออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+     Hello!  Welcome to the exciting world of 99/4A emulation!  This
+file gives a general overview of the files in the ASMS\ directory, where
+all the source files for the V9t9.EXE executable reside.
+
+
+ออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออ
+                        ณ DISTRIBUTION POLICY ณ
+ออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออ
+
+     This source code is absolutely public domain and freely
+distributable.  However, I restrict you from creating your a new version
+of V9t9 and calling it your own, renaming it, or selling it.  I no
+longer write or upgrade V9t9 (i.e. no more distributions) so this source
+code is only intended for personal and educational purposes.  Certainly,
+however, I encourage you to copy routines or ideas from the source,
+because that's why it's here.
+
+
+อออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออออ
+                           ณ COMPILING V9t9 ณ
+อออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออออ
+
+     V9t9 was written for Turbo Assembler v3.1.  I am pretty sure it
+doesn't use much of anything specific to this version; I think it can
+also be compiled with v2.0.  As for MASM compatibility, that's a
+different question.
+
+     In the ASMS\ directory there is a Makefile which will do all the
+work of compiling V9t9.  As documented in the Makefile itself, you can
+define some options which will tell which kind of V9t9 to make:
+
+     make [ /Dd286 | /Ddslow ]  [ /Drelease ]  { all | clean }
+     (watch capitals!)
+
+     You must run make from the ASMS\ directory.
+
+     The last parameter is required and tells whether you are generating
+the executable ("all") or deleting old object files ("clean").  The
+"clean" option should be only rarely used -- the Makefile contains
+complete dependency information.
+
+     The "/Dd286" option tells that you want to create a 286-able
+version of V9t9.  Due to the poorly-written speech algorithm (requiring
+timer speeds of 10000 Hz), this option also specifies that there will be
+no speech.
+
+     The "/Ddslow" option will perform complete address checks in opcode
+execution (see TIEMUL.TXT), which necessarily slows down execution.
+However, it catches all illegal address accesses, providing near-perfect
+emulation.
+
+     You cannot specify both /Dd286 and /Ddslow since /Ddslow uses 386
+constructs.
+
+     The "/Drelease" option will compile the files without debugging
+information.
+
+     The executable will be placed in the ..\FINIS\ directory.  Edit the
+Makefile variable "FINIS" to change this location if you wish.
+
+
+อออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออออ
+                           ณ V9t9 STRUCTURE ณ
+อออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออออ
+
+     The V9t9 program is completely written in assembly language.  When
+writing earlier versions of the program, I wasn't thinking about end-
+users seeing the source, so this shows through.  However, for v6.0 I
+made extensive rewrites and hopefully eliminated most of the confusing
+parts.  (FLOPPY.INC is probably the worst organized file remaining.
+Since it emulates the file system and not hardware, hopefully it isn't
+that important to understand.)
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+     V9t9 is divided into 13 main sections ("units"), described as
+follows:
+
+þ TIEMUL  --   the main program; unit initialization, termination,
+               pause, restart coordination; emulator reboot; checkstate
+               (stateflag) handler; memory allocation; high-level
+               interrupt handler; 80x86-ization of some key 99/4A ROM
+               routines
+     þ MEMCODE.INC  ( FASTMEM.INC, SLOWMEM.INC, SUPERMEM.INC)
+                    -- code to handle slow/fast/etc memory access
+     þ EMULATE.INC  -- code to emulate all the opcodes
+
+þ SUPPORT --   support/utility routines, parameter parsing, config file
+               parsing, error handling, ROM loading.
+
+þ SPECIAL --   special keystroke handlers (Ctrl+Fxx), text printing
+               functions, module selection, module loading.
+
+þ KEYBOARD --  99/4A CRU keyboard mapping; IBM keyboard, mouse, and
+               joystick handlers
+
+þ VIDEO --     99/4A VDP emulation, VDP read/write
+     þ GRAPHICS.INC -- EGA drawing routines
+     þ SPRITES.INC  -- EGA sprite routines, drawing, intersection,
+                       80x86-ization of ROM sprite movement routine
+
+þ SOUND --     99/4A sound chip emulation
+     þ PCSPEAK.INC  -- PC speaker routines + speech routines
+     þ ADLIB.INC    -- routines for Adlib
+     þ SBLASTER.INC -- routines for SB noise + speech routines
+
+þ SPEECH --    99/4A speech synthesizer emulation
+     þ LPC.INC     -- LPC decoding and digital output routines
+
+þ HARDWARE --  99/4A CRU hardware bus routines
+     þ RS232.INC   -- 99/4A RS232 emulation, IBM handlers
+
+þ INT --       99/4A interupt handling routines, IBM interrupt handlers
+
+þ FILES --     99/4A DSR emulation for disk, RS232
+     þ FLOPPY.INC  -- file-based (FIAD) disk emulation
+     þ FDC.INC     -- disk-image (DOAD) disk emulation
+     þ SERIAL.INC  -- RS232 file emulation (calls RS232.INC mainly)
+          
+þ DEBUG --     real-time execution tracer
+
+þ RECORD --    demonstrations, undone state-saver
+     þ DEMO.INC  -- demonstration recorder/playback
+     þ STATE.INC -- undone state-saving/restoring routines (the whole
+                    file is commented out)
+
+þ LOG --       logging routines (for tracking bugs), undocumented,
+               underutilized
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+     Each unit exists as its own logical unit, although many routines
+and data are shared between them.  The logical separation is enforced by
+the protocol used to initialize, terminate, pause, and restart units.
+
+     In an ideal world, the emulation would start right upon execution
+and would only stop when you turned off the computer.  However, as we
+both know, several things can interrupt emulation, such as the user
+asking for help, centering joysticks, using the debugger, doing a DOS
+shell, etc.
+
+     99/4A emulation completely takes over the resources of the
+computer, such as the screen and video memory, the sound card, the
+serial ports, etc.  In order to make the process of switching in and out
+of emulation mode as painless and bug-free as possible, each module is
+constructed as a unit with the above-mentioned protocol.  For example,
+the VIDEO unit initializes itself upon program startup by checking to
+see if an EGA/VGA is installed.  When it pauses, it reverts to text
+mode.  When it terminates, it sets text mode and restores the palette.
+
+     The reason for this separation into logical units is obviously
+simplicity.  It's much easier to initialize sound on its own without
+worrying about if it's okay to do so before or after hooking the timer
+interrupt.  Also much easier to terminate sound if you know you had it
+going in the first place.  The main V9t9 routines handle the order of
+operations of all the units' functions.
+
+     (Okay, enough about that.  I was really proud of myself for finally
+doing it in v6.0.  It had become a major pain, especially around DOS
+shells.)
+
+     Anyway, the protocol is actually a little more complex.  Each
+module has exactly these routines:
+
+     þ  UNIT_preconfiginit -- performs one-time startup initializations
+that must take place before the config files V9t9.CNF and MODULES.INF
+are read.  Reasons for using this routine could be to provide defaults
+and bounds for certain variables.  (I.E., the "UseVga" variable is
+meaningless if you only have an EGA.)  [Called by "tiemulator".]
+
+     þ  UNIT_postconfiginit -- performs one-time startup initializations
+that must take place after the config files are read.  Obvious reasons
+are to initialize in accordance with config variables.  [Called by
+"tiemulator".]
+
+     þ  UNIT_restop -- "pauses" a unit one of many times.  This routine
+is used to switch from emulation mode to interactive mode (for example
+to read a help screen).  [Called by "emustop".]
+
+     þ  UNIT_restart -- restarts a unit after being paused, returning to
+emulation mode.  (SOUND makes heavy use of "restop" and "restart", for
+good reason.  Old versions of the emulator used to leave sound going
+during a DOS shell.)  [Called by "emustart".]
+
+     þ  UNIT_shutdown -- shuts down a unit for good before program
+termination.  Returns devices to DOS defaults.  [Called by
+"emushutdown".]
+
+     Some facts about order-of-operations.  After "tiemulator" performs
+the one-time initializations, "emustart" is called.  This is because the
+emulator is effectively in interactive mode when started up from DOS.
+Also, when the emulator is terminated, "die" calls "emustop" and then"emushutdown", to reduce redundancy between emustop's "temporary" and
+emushutdown's "permanent" shutdowns.
+
+     For example, SOUND's "restop" function could turn off sound, but
+its "shutdown" function would release the memory for the Sound Blaster
+driver.  [OR so you'd think!  That's the ideal logical way to go.  But
+since the driver and its associated buffers use so much memory (that
+could be used in a DOS shell), the memory is released in "restop").]
+
+     "emustart" defines a variable called "emustate", which is a bitmap
+of all the modules that successfully started up.  This is a safety
+precaution -- all modules should start up.  However, if one doesn't,
+then "emustate" will tell "emustop" which ones need to be stopped --
+certainly not those that failed, or any that didn't get started.
+
+
+อออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออ
+                         ณ HEADER FILES (*.H) ณ
+อออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออ
+
+     The *.H files contain all the definitions for publically-available
+procedures and data.  One header file functions in two ways, both
+defining external references and resolving them.  This bimodal behavior
+is controlled by the definition of a "_UNIT_" variable where "UNIT" is
+the base name of the header file.
+
+     If "_UNIT_" is defined when header file UNIT.H is included, then
+public symbols are generated.  The object file UNIT.OBJ will therefore
+define the symbols contained in UNIT.H.  Obviously, the referenced
+routines and data must exist in UNIT.OBJ.  Conversely, if "_UNIT_" is
+not defined when UNIT.H is included, then external references are
+generated.
+
+     This allows clean sharing of procedures and data, without violating
+the rules of modern linkers, namely, no duplicate definitions of
+symbols.  As an example:
+
+     The variable "stateflag" is widely used to pass signals to and from
+TIEMUL.ASM (such conditions as timer tick, single-stepping, etc.).  This
+important variable is defined in TIEMUL.ASM.  The beginning of that
+unit's header file reads as follows:
+
+---------------------------------------------------------------------
+
+;========================================
+;       TIEMUL.H
+;
+;       Header file for TIEMUL.ASM
+;========================================
+
+
+IFDEF   _TIEMUL_
+
+        .stack  400h
+
+        .data
+
+        public  stateflag
+        public  vaddr
+          .
+          .
+          .
+
+-----------------------------------------------------------------------
+
+
+     "_TIEMUL_" is defined in TIEMUL.ASM.  TIEMUL.H is included in
+TIEMUL.ASM.  So, whenever this unit is compiled, "_TIEMUL_" is defined,
+and "stateflag" is made public.
+
+     When any other module includes TIEMUL.H, "_TIEMUL_" is not defined,
+so the big conditional block at the beginning of the header file is
+skipped, and this section is compiled:
+
+-----------------------------------------------------------------------
+          .
+          .
+          .
+        public  emustart
+
+ELSE
+
+        .data
+
+        extrn   stateflag:word
+        extrn   vaddr:word
+          .
+          .
+          .
+-----------------------------------------------------------------------
+
+     And an external reference is generated for "stateflag".
+
+     This protocol is used for all the modules.  Although a great number
+of symbols may be inadvertently defined by including a certain header
+file to reference, say, one variable, there are not so many symbols that
+TASM will ever choke.
+
+
+อออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออ
+                     ณ CALLING/NAMING CONVENTIONS ณ
+อออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออ
+
+     Throughout the entire source code, register-only calling
+conventions are used (pointers and values are loaded into registers).
+(One rare exception is "logout" in LOG.ASM.)
+
+     The called routine pushes the registers it modifies (except return
+values) on the stack.  "Main" routines follow this convention;
+subroutines of these may or may not save registers.  In the latter case,
+the called routine saves all the registers its subroutines change, as
+well.  "Main" routines are those that are called externally or are of
+importance.
+
+     Also, most routines return error messages via the C (carry) flag.
+This saves a register (i.e., no error code).  Since many errors are
+fatal, the error is written to "errormessage" via "setuperror" in
+SUPPORT.ASM, and setting Carry propogates back to a call to "die" which
+prints the error.
+
+     In most cases, the names given to routines give no clue to what
+unit they're in.  Simply search the *.H files, which contain the names
+of all the exported routines.  If it's not there, then usually the
+routine is close to its caller.
+
+     Some actual naming standardization happens in two areas.  (1) The
+routines that handle memory-mapped areas of the 99/4A address space are
+always named "handleXXXXX", such as "handlesound", "handlevdp", etc.
+And (2) each unit's initialization/termination/pause/restart routines
+are named as mentioned above under "V9t9 structure".  (3) Also, within
+each routine, the labels are named in the hopes that they will indeed be
+unique.  (Handlekeyboard's labels are all HKBxxxxx, for example.)  Thisalso makes it easy to find a routine by quick-scanning the file (as
+above, look for a lot of HKBxxxx labels, and you've found
+"handlekeyboard").
+
+
+อออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออ
+                 ณ V9t9 GLOBAL VARIABLES / STRUCTURES ณ
+อออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออ
+
+     The absolute most important variable, I think, is "stateflag".
+This is a 16-bit word which is a bitmap describing various important
+events that interrupt the normal flow of opcode execution.  Between each
+instruction, the word is checked to see if any of the bits (actually,
+just _some_ -- see the equate "checkable") are set.  These bits are all
+set by external forces, usually INT.ASM and KEYBOARD.ASM.
+
+     When one or more of the bits is set, "checkstate" is called (in
+TIEMUL.ASM).  "Checkstate" handles any outstanding events and resets the
+bits, then continues emulating.
+
+     The bits are defined in STRUCS.INC (another poorly-named file):
+
+     þ intdebug * -- set when intermittent debugging is taking place
+     þ demoing * -- set when a demo is being recorded.
+     þ romming -- unused, means compiled ROM is executing
+     þ sixtieth -- the 1/60 second timer tick has happened
+     þ happymessage * -- tells "die" not to print an error message
+     þ delaying -- the user wants to slow down execution (when this is
+                   set, it STAYS set until the delay is reset to zero,
+                   providing a heckuva slowdown, in that every single
+                   instruction is interrupted).
+     þ videointoccured -- it's time for the screen to be updated
+     þ specialfunctionrequest -- user pressed Ctrl+Fxx
+     þ interruptoccuring -- some 99/4A hardware interrupt is happening
+     þ debugrequest -- user wants to use execution tracer.  When
+                       intdebug isn't set, this bit stays on to make
+                       each instruction be debugged.
+     þ paused -- user has pressed Pause, and only pressing it again
+                 resets the bit
+     þ reboot -- reset the emulator (hard reboot, not triggered by Fctn-
+                 Equals, but by Shifts+Ctrls+Alts+Equals).
+     þ titick -- 99/4A timer tick has occurred (not necessarily 1/60
+                 second; the V9t9.CNF variable "TimerSpeed" defines how
+                 often)
+     þ ctrlbreakpressed -- user has pressed Ctrl+Break, stop NOW
+
+     (* means this bit does not cause "checkstate" to be called.)
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+     Another interesting variable is "features".  It is a bitmap
+defining which DSR ROMs are loaded, whether a demo is running, and which
+type of speech is being used (ONLY LPC speech works anymore though).
+Again, I want to mention this because it eliminated about thirty other
+miscellaneous variables.  *pat pat*
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+     The 9900 processor's main registers are stored in variables called
+PC, WP, and STAT -- during pauses in emulation.  During actual emulation
+WP is kept in a register, and the status register is divided over
+several byte variables.  See TIEMUL.TXT for the story.
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+     "Cpuseg", "gplseg", "speechseg", and "moduleseg" store the segment
+addresses of the blocks of memory used to emulate the 99/4A.  I've tried
+various schemes along the way to prevent writing into ROM and to save
+memory, but in this version the CPU memory is one contiguous 64k block.
+"moduleseg" is a 16k block used to hold one or both CPU module ROM banks
+and "moduleoffs" is used to point to the current bank.  More info in
+TIEMUL.TXT.
+
+ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+     STRUCS.INC contains a plethora of equates used in random other
+parts of the emulator.  They aren't included in the *.H files simply
+because I didn't want to take the time to do so.
+
+
+ออออออออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออออออออออออ
+                              ณ READ ON ณ
+ออออออออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออออออออออออ
+
+     Go on, I dare you.  I didn't have the energy to create a separate
+file for each of the other 12 units, but the source has its own special
+documentation.
+
+ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+

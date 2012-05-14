@@ -1,0 +1,274 @@
+
+  ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ
+  ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÍÍÍÍÍÍÍÍÍÍÍ PROBLEMS.TXT ÍÍÍÍÍÍÍÍÍÍÍÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ
+
+       This file helps you figure out what to do when stuff goes wrong.
+  If your problem is not mentioned, check out the specific *.TXT file
+  related to the area of the problem.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "I'm trying to move the transfer program with the FORTH transfer
+  program.  Whenever an error happens, and I run TRANSFER again, I get all
+  these error messages about 'xxxx ISN'T UNIQUE'.  What do I do?"
+
+       Don't worry about the messages; they aren't errors.  It's just
+  FORTH telling you that the programs already are in memory.  (TRANSFER
+  loads up the program.)  Simply run "DoTrans" to start over after running
+  "TRANSFER" once.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "I run V9t9 and get error messages like 'ROM image
+  C:\V9t9\ROMS\994AROM.BIN not found or invalid size.'  I look in the
+  directory and it's practically empty.  What gives?"
+
+       You really need to read the documentation.  V9t9 doesn't come with
+  any 99/4A ROMs due to copyright restrictions.  See TRANSFER.TXT and
+  ORDERING.TXT for ways to get them.  In the meantime, run FORTH.BAT to
+  use the provided ROMs, or run the demos (DEMOS.TXT).
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "I get weird errors having to do with configuration files."
+  or   "When I run MODULES, it says 'invalid entry'."
+  or   "My modules selection screen is messed up."
+
+       If your V9t9.CNF or MODULES.INF files are being read incorrectly,
+  or the emulator prints inexplicable error messages, first load up the
+  file under a text editor and be sure it looks normal.  (See CONFIG.TXT
+  and MODULES.INF for a definition of "normal".)
+
+       (V9t9.CNF)     Make sure you're not misspelling a variable name
+  somewhere.  When the file is read, each variable name is turned into a
+  number.  Although each variable has a separate number, a misspelled
+  variable name may match that of a completely different variable.
+
+       If everything is fine, try erasing blank lines.  (This SHOULD NOT
+  be a cause of problems, but if it is, please tell me.)
+
+       Otherwise, please send me a copy of the offending file so I can
+  examine what's wrong.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "I get these errors about CT-VOICE.DRV not being found."
+  or   "I don't hear any noise, and my card is Sound Blaster-compatible."
+
+       This means your SOUND= DOS environment variable is either
+  incorrect, or you don't have a true Sound Blaster.  Noise, which
+  currently requires the CT-VOICE.DRV driver that comes with SB cards,
+  will only work on real Sound Blaster cards, until I figure out how to do
+  DMA processing without the driver.  (The driver, which comes with SB
+  cards, appears to be "fixed" to work with its own cards only.)
+
+       Edit your "PlaySound" variable in V9t9.CNF to stop V9t9 from
+  looking for the driver (and playing noise).  Speech and music, however,
+  should work fine on cards that emulate the Sound Blaster, since they
+  don't require drivers.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "V9t9 just locks up my computer."
+
+       If you find the emulator locking up, then verify that it is indeed
+  a lockup of V9t9.EXE and not of the 99/4A program being emulated.  Some
+  tests are the Ctrl/Alt+Fx functions, F12, CapsLock, Ctrl-Break, etc.  If
+  all of these fail to do anything to your computer whatsoever, then it's
+  a real lockup.  Try to ascertain if the lockup happened because of
+  something you did, or if it appeared to be due to an executing program.
+  (I.E., does it always happen under the same circumstances?)
+
+       If the emulator locks up when you start the program (after
+  selecting a module) then you may be a victim of the infamous keyboard
+  LED setting bug.  Set the V9t9.CNF variable "SetKeyboardLED" to "NO",
+  and try again.  If this fixes the problem, _please_ contact me and tell
+  me so (see CONTACT.TXT); because I was pretty sure I got rid of that
+  bug.
+
+       One idea is to turn off the Sound Blaster DMA usage (see
+  SOUND.TXT).  It's the newest, quirkiest feature, until I get in there
+  and hardcode the DMA routines myself, I have to rely on the stability of
+  the CT-VOICE.DRV driver.
+
+       If the emulator locks up when you are executing a run-time function
+  or using the debugger, then tell me which one, and what you did.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "Sometimes, V9t9 just resets itself while I'm running programs."
+
+       This is because the emulated program was about to lock up.  Rather
+  than terminating V9t9 and printing an error, or ignoring the error, or
+  printing a message on the screen that'll pop up when you least expect it
+  and scare you, V9t9 simply resets itself, which causes all open files to
+  be closed and all the ROMs to be reloaded.  It's the same as pressing
+  Ctrl+F12.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "Speech sounds horrible."
+
+       It's new, sorry.  I had to guess at a lot of it, because it is
+  undocumented.  I'm hoping someone will help me out here (see
+  SPEECH.TXT).
+
+       If your computer is below a 386-DX/33, then one of the reasons for
+  the bad speech is the half-assed speed-hungry way I implemented it.
+  It'll be better next version, but I'm too afraid to completely change it
+  right now before I release this version.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "Speech toasts performance."
+  or   "Speech makes V9t9 go very slowly for a while."
+
+       Sorry.  I implemented speech very badly and the slowdown is
+  inevitable.  It'll be fixed next version.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "I've got this mondo digitized sound player but under V9t9 with the
+  PC speaker, it's just cruddy."
+
+       Programs which attempt to emulate digitized sound, by rapidly
+  alternating tones, may not work as expected when using the PC speaker.
+  This is due to the three-voice "toggling" feature, which only updates
+  the speaker's status every 1/60 second.  With one-voice-only digitizing,
+  it ought to be fine.  Or using the cassette port, it'll be okay.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "Diagonals don't work on the numeric keypad."
+
+       The numeric keypad, when used as a joystick, does not register the
+  1/3/7/9 keys as diagonal keys due to a coding limitation.  However,
+  multiple keys (such as 2 and 4) may be held down to cause a diagonal.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "TIDIR shows a lot of files have 0 sectors, but they're not empty."
+  or   "TIDIR shows that the files have twice as much data as for real."
+
+       This is a problem with files that TI Emulator! v4.0 and v5.01
+  created.  Fix the files with TICHKDSK.  (See 5CHANGES.TXT and
+  UTILS.TXT.)
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "I create a file with the XXXXXX program, and it can't read it in
+  again."
+
+       If you find the emulator creating unreadable files (through DSKx
+  FIAD access), tell me what kind of file it was trying to create
+  (PROGRAM, DIS/FIX 10, etc., if you know), and send a copy of it to me
+  along with your V9t9.CNF configuration file.
+
+       Also verify the file with TICHKDSK:
+
+       TICHKDSK /V <filename>             (/V means verbose, not verify)
+
+       If the file works after using TICHKDSK, but V9t9 repeats the same
+  kind of problematic behavior with NEW files, please notify me.  This is
+  a bug.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "The directory listing is short.  I have about 200 files in this
+  directory, but V9t9 only shows 127."
+
+       This is a 99/4A limitation related to direct catalog reads.  Only
+  127 files may exist in a 99/4A directory at a time.  Better organize
+  your directories.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "I can't save or load anything."
+
+       Be sure your "DSKxPath" variables in V9t9.CNF are actually set up
+  to point to the directory where you want to store files.  (See
+  CONFIG.TXT and DISKS.TXT.)
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "My strange third-party cartridge doesn't work right under V9t9."
+  or   "In this wacky shareware game, the graphics are messed up."
+
+       First thing is to try to run the offending program under V9t9_SLO.
+  The V9t9.EXE program is not very "exact" about emulation in order to
+  achieve better performance.  V9t9_SLO.EXE is much more precise.  (The
+  difference lies in the handling of memory access.)
+
+       Note that any programs which DO run differently under V9t9.EXE are
+  probably poorly written and use nonstandard memory access.  But please
+  inform me of any such programs, so that I can make an effort to make
+  them work with the "fast" V9t9.
+
+       If specific programs do not work at all, tell me what they are, and
+  where they die.  I'm almost sure any 99/4A program will run under V9t9
+  now.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "I'm using my own console ROM image, but it locks up under V9t9."
+
+       If you're not using the real 99/4A console ROM or the provided
+  FORTH ROM, then prevent V9t9 from applying default ROM patches with the
+  "ROMPatches" variable in V9t9.CNF.  (These patches are only for speed
+  purposes -- V9t9 will run any ROM.)  V9t9 will assume that you're using
+  a 99/4A console ROM and patch it if it doesn't see the FORTH ROM.  Since
+  several patches are active by default, you'll have to undefine them all
+  with "ROMPatches=-ALL".  See CONFIG.TXT.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "There are weird graphics in the lower-left corner of the screen."
+
+       Those are just the disk/RS232 "LEDs".  These are meant to emulate
+  the 99/4A's expansion box LEDs (which go on every time the device is
+  accessed).  See the "ShowDiskLED", "ShowEmuDiskLED", and "ShowRS232LED"
+  configuration variables if you want to turn them off.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "I've got a DOAD on DSK1 with the volumename 'MYDISK', but trying
+  to access DSK.MYDISK.FILE doesn't work."
+
+       You should get this problem if you have both the FIAD and DOAD
+  (emulated and real) DSR ROMs loaded.  The FIAD ROM, which comes first
+  CRU-wise (at >1000), will always capture the DSK device.  I don't know
+  how to let the FIAD routines fail properly, so the real DSR ROM at >1100
+  won't capture it either.
+
+       This bug should not occur when you're using FIAD-only or DOAD-only
+  disk emulation.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "When I get into the integrated debugger and start doing
+  intermittent tracing, it goes very slowly."
+
+       Aside from setting the tracing to something like 4.25 seconds (the
+  "I" command), this is probably because a device (such as cassettes or
+  speech) has turned up the timer interrupt to a really high level (like
+  8000hz).   This isn't a bug.  Just wait until the device is finished
+  working and everything will return to normal.
+
+                             ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+  ş    "I'm trying to save to cassettes, but after it starts going, it
+  just locks up.  (But I can still stop V9t9.)"
+
+
+       If this happens to you, your computer's probably too slow.  Like
+  mine.  The cause for this is a timer-dependent routine in the 99/4A
+  console ROM which could -- and does -- get stuck if the processor's too
+  slow.  Change the "MaximumInterruptSpeed" variable in V9t9.CNF to a
+  lower value (lower than 1000, for example).  Note that "cassette" access
+  is write-only and is for entertainment value only anyway.
+
+
+  ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ

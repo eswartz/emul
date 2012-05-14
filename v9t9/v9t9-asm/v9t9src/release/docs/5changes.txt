@@ -1,0 +1,264 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ 5CHANGES.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This program is the next version of TI Emulator!, after v5.01.  The
+  "V9t9" prefix is the most obvious change.  Please refer to this program
+  as "V9t9" from now on.  It's cool.
+
+       The first section is simply a list of changes.  The second section
+  will tell you step-by-step how to upgrade your files from v5.01.
+
+
+  อออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออ
+                     ณ SHINY HAPPY LIST OF CHANGES ณ
+  อออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออ
+
+       Here are the main changes made to the program from TI Emulator!
+  v5.01 (see the appropriate documentation for more information):
+
+       þ  Text-based configuration file.
+       þ  Ability to record and playback demos added.
+       þ  Catalog reads now work on DSKx emulated directories.
+       þ  Main 9900 memory bus emulation improved.  (Mainly this means
+          that certain games like Moon Patrol and Popeye work now.)
+       þ  A relatively complete hardware emulation unit added.  (Emulates
+          the CRU.)
+       þ  The keyboard emulation has been completely rewritten to properly
+          emulate the hardware keyboard.
+       þ  The keyboard LED should now work (CapsLock only).
+       þ  Joystick routines have been entirely rewritten and are quite
+          fast now.
+       þ  The keys to select interprogram functions have been changed from
+          both Ctrl+Alt to be Ctrl OR Alt (or both, if you want).  This
+          now allows cruddy keyboards to register the Ctrl/Alt+Fx
+          functions.
+       þ  An information screen is now available as Shift+Ctrl+F1.
+       þ  Digitized noise now available (whee!) with a Sound Blaster, and
+          fake-o periodic noise is available on an Adlib card.
+       þ  "Toggling" action added to PC speaker sound emulation to allow
+          three voices.
+       þ  Added CALL COINC(ALL,n) support
+       þ  Added optional five-sprites-on-a-line emulation.
+       þ  Disk-on-a-disk support added.
+       þ  Can now reverse slowdown function.
+       þ  Really sped up the text mode on 386 systems.
+       þ  Tons of bug fixes.
+       þ  A more true-to-life TI palette is available with VGA adapters.
+       þ  Internal debugger completely revamped.
+       þ  No more repeating caps lock.
+       þ  Real speech synthesis added.  Note that it's way down here on
+          the list because at the current time, it sounds pretty bad.
+       þ  High-pitched-whining-where-there-should-be-sound bug eliminated.
+
+
+  อออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออ
+               ณ UPGRADING FROM TI EMULATOR! V4.0 OR V5.01 ณ
+  อออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออ
+
+       First of all, there is now a directory structure.  All the ROM
+  files should go into \ROMS.  All the module files should go into
+  \MODULES.  HOWEVER, use LST2INF to move your module files, as it also
+  creates a new module database from the old MODULES.LST.  LST2INF will
+  NOT WORK if you have already moved the module files.  (See later in this
+  document.)
+       To move the ROMs quick-n-easy, do this.  This tutorial assumes you
+  installed TI Emulator! v4.0 or v5.01 in "D:\TIEMUL", and V9t9 in
+  "C:\V9t9":
+
+  C:\V9t9> cd ROMS
+       will move into the \ROMS subdirectory
+  C:\V9t9\ROMS> move D:\TIEMUL\TICPU.HEX .
+  C:\V9t9\ROMS> move D:\TIEMUL\TIGPL.HEX .
+  C:\V9t9\ROMS> move D:\TIEMUL\TISPEECH.HEX .
+       will move all ROMs to their new location
+
+       The console ROM images in v4.0 and v5.01 were patched to get around
+  limitations in emulation.  V9t9 now supports all the 99/4A hardware (in
+  some way or another), but you needn't "unpatch" the ROMs yourself since
+  V9t9 will do so itself.
+
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       From v5.01, I've started a new convention for the naming of ROM
+  images.  The names "TICPU.HEX" and "TIGPL.HEX" are stupid.  ".HEX" means
+  nothing.  "TICPU" is not the CPU, it's the CPU ROM.  "TIGPL" is not the
+  Graphics Programming Language, it's the GROM.  Anyway, here are the new
+  names:
+
+       TICPU.HEX =>   994AROM.BIN         (CPU ROM)
+       TIGPL.HEX =>   994AGROM.BIN        (CPU GROM)
+       TISPEECH.HEX=> SPCHROM.BIN         (speech synthesizer ROM)
+
+       The default configuration file (V9t9.CNF) was set up to use these
+  filenames, so if you want to keep the old stupid names, change the
+  filenames in "[ ROM Options ]" in V9t9.CNF.  Otherwise, do this:
+
+  C:\V9t9\ROMS> ren ticpu.hex 994AROM.bin
+  C:\V9t9\ROMS> ren tigpl.hex 994AGROM.bin
+  C:\V9t9\ROMS> ren tispeech.hex SPCHROM.BIN
+       renames all the files to their new names
+
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       Now I guess would be a good time to fix all the DSKx emulated files
+  that v4.0 and v5.01 created incorrectly.  Back up the files if you wish,
+  but I doubt anything bad will happen.  (If you missed it, v4.0 and v5.01
+  has bugs which messed up the file headers of most emulated files.  V9t9
+  works correctly with the buggy file headers (the reason I didn't
+  discover it for so long), but catalogs will be misleading unless you fix
+  them.)
+
+       To do this, it's easiest to change directories the \UTILS
+  subdirectory where you installed V9t9.  (Most utilities should be run
+  directly from the V9t9 directory, however.)  Make a list of all the
+  directories you used to store DSKx emulated files, and do this (for
+  example):
+
+  C:\V9t9\UTILS> tichkdsk D:\TIEMUL\DSK1 /V
+
+       This will simply scan all the files and tell you which ones have
+  problems.  The /V means to list all the files that are checked.  If
+  they're all fine, well, cool!
+
+       But if you live on Earth, there will be errors in some files.  If
+  you get the error message "Not a V9t9 file or a damaged file" this most  likely means you've stuck a DOS file in the directory.  Move all such
+  files out of DSKx directories, just for common-sense purposes.  If you
+  see a message like "Bad file structure", this may also signal a DOS
+  file.
+
+       If you know that a file is good, but TICHKDSK says "not a V9t9
+  file", you may have used DOS RENAME to change its filename.  If so, then
+  the filename stored inside the file does not match the unmangled DOS
+  name, and an error was assumed.  Use the TIMATCH program to fix such
+  files.
+
+       Most other files will say "TI Emulator! v5.01- probably made this
+  error", which it did.  Back up the erroneous files, if you care that
+  much, and execute:
+
+  C:\V9t9\UTILS> tichkdsk <directory> /V /F
+
+       This will do the same thing as above, except it will fix the files.
+  DOS files lurking in the directory will not be altered, unless they
+  happen to look like V9t9 files.
+
+       (See UTILS.TXT for more general TICHKDSK information.)
+
+       Lastly, you should edit V9t9.CNF and set up the "DSKxPath"
+  variables to point to their old locations, if you want to get started in
+  a familiar setting.
+
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       Next, it's time to run LST2INF.  This utility will convert your
+  MODULES.LST file into the new MODULES.INF file.  This process involves
+  two things:  renaming the module files and moving them into the V9t9
+  \MODULES subdirectory.
+
+       If you want to know all the gorey details about module filenames,
+  please see the MODULES.TXT file.
+
+       The module files will be renamed only if they do not fit the
+  (unwritten) standard I adopted in v5.01:  This basically consists of
+  having a "base name" for the modules' files, with a letter tacked on the
+  end to tell what kind it is.  For example, TI Extended BASIC might have
+  "TIEXT" as its base name, and the "C", "D", and "G" segments, making its
+  files TIEXTC.HEX, TIEXTD.HEX, and TIEXTG.HEX.  So, if your module files
+  already fit this pattern, little renaming will happen.  But if there is
+  renaming, you'll have to intervene and give LST2INF some input.
+
+       Of course, you'll notice, I didn't name the TI Extended BASIC
+  module files the way the example demonstrates (TIEXTC0.HEX, TIEXTC1.HEX,
+  TIEXTG.HEX), so you'll actually get to intervene, and this file isn't
+  for naught.  :)
+
+       LST2INF will also automagically move your module images from your
+  old v5.01- directory into the V9t9 \MODULES subdirectory, as a part of
+  renaming.
+
+                          ฤฤฤฤ!--!--!--!--!--!ฤฤฤฤ
+
+                 VERY IMPORTANT NOTE:  You MUST NOT move the
+            module files yourself and then run LST2INF.  LST2INF
+            renames the files and moves them in the same step;
+            if a file is renamed to itself, the directory
+            structure will be ruined.  (I oughta know, I did it
+            myself.)  Leave your module files and MODULES.LST in
+
+            your old TI Emulator v5.01- directory, and let V9t9
+            move them.
+
+                          ฤฤฤฤ!--!--!--!--!--!ฤฤฤฤ
+
+
+       Before running LST2INF, you might want to back up your module
+  files, just for safety's sake.
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       A VERY good idea for users of TI Emulator v4.0 who did not
+  "register":  edit the old MODULES.LST file and erase all the entries
+  (four lines each, starting with the title) for modules which you don't
+  have.  All the registration modules were listed in that file to make it
+  easier to install them when the time came.  LST2INF doesn't know about
+  this and will assume there are serious problems when it can't find all
+  the files.  It only has a tolerance of 8 nonexistent module files before
+  it terminates.
+
+       This measure is also appropriate if you have added entries to
+  MODULES.LST and know that some files referenced in it do not exist.
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       Here's how to run it:
+
+  C:\V9t9\UTILS> cd ..
+       get back to the correct directory
+  C:\V9t9> upgrade\lst2inf <old v4.0 or v5.01 directory>
+
+       Before actually creating the new MODULES.INF file and moving the
+  module files, a consistency check will be made on MODULES.LST.  LST2INF
+  will NOT proceed if it finds that a module segment file was used in more
+  than one module entry (since each module must have a unique base name).
+  Fix your MODULES.LST file if any errors come up, then run LST2INF again.
+
+       After the MODULES.LST file is found to be consistent, you'll be
+  asked if you want to supply your own base names if renaming needs to
+  occur.  Usually you should select "Y".  Otherwise the base name of the
+  module's first existing segment will be used.
+
+       During the renaming process, you may get a lot of errors if
+  referenced files do not exist anymore.  LST2INF will trudge through the
+  nonexistent files until it finds 8 or more, then it will die, assuming
+  you've made an error in specifying the directory.
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       As a means of making people conform to the new naming standards,
+  LST2INF will change the module files' extensions to *.BIN.  Be sure the
+  "DefaultModuleExtension" variable in V9t9.CNF is set to "BIN".
+
+       After the conversion process is complete, run MODULES to create a
+  new startup list.  (See MODULES.TXT for operating information.)
+       
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       If you did "register" for v4.0 or v5.01, please note that ALL THE
+  UTILITIES HAVE CHANGED.  The syntax, results, and bugs are all
+  different.  See UTILS.TXT for an overview of all the files in the \UTILS
+  subdirectory.
+
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

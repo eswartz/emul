@@ -1,0 +1,9 @@
+
+
+	Hello.  This directory has programs in it which will compile
+	a 99/4A CPU ROM (based at >0000) into a 80x86 assembly file.
+
+	Support for this compiled ROM is lacking and buggy.  This
+	directory is just for fun.  See DOCS\TIEMUL.TXT at the end
+	for more info.
+

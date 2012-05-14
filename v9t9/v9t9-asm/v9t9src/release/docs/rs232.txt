@@ -1,0 +1,124 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ RS232.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file documents the RS232 and PIO emulation in V9t9.  Real
+  RS232 emulation has just been completed, and is not bug-free, so look
+  out.
+
+
+  อออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออ
+                         ณ HOW MUCH IS EMULATED? ณ
+  อออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออ
+
+       Unlike previous versions, V9t9 v6.0 includes REAL hardware support
+  for the RS232 and PIO, and does not resort to using the BIOS.  The RS232
+  interrupts are implemented as well, with a side benefit that V9t9 will
+  buffer incoming serial data even when the 99/4A interrupt isn't active.
+
+       The only things that are not emulated are the interval timer (which
+  I have not seen used yet, but will implement later), and the various
+  "bit detect" CRU bits which are impossible to emulate with the 8250
+  family of serial controllers.
+
+       V9t9's serial support works fine with Terminal Emulator ][ and
+  Fast-Term (if you have a fast computer).
+
+       The emulated RS232 ROM provided supports all the standard opcodes
+  EXCEPT program LOAD and SAVE.  These work with the real RS232 ROM,
+  however.
+
+       The PIO (parallel port) emulation works fine.  It's very simple to
+  implement, anyway.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       Only the first CRU bank is used for RS232 emulation (>1300).
+  Having more than 2 serial ports would most likely cause problems on a PC
+  system anyway, due to IRQ conflicts.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       Under V9t9, the PC serial port is treated like an 8250.  No 16450
+  or 16550A features are used.
+
+
+  อออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออ
+             ณ        SO, YOU'RE SAYING THAT RS232/PIO        ณ
+             ณ EMULATION IS COMPLETELY FINISHED AND DEBUGGED? ณ
+  อออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออ
+
+       No.
+
+       There are known bugs with some buffer routines which will probably
+  cause a sudden death of serial transmission after a certain amount of
+  data has been received.  (If you're a programmer, this has to do the
+  received character interrupt and the RS232 ROM's "feature" of
+  arbitrarily resetting the RS232.)
+
+       However, it works fine with polling operations (like the RS232 ROM
+  uses in file manipulation.)
+       Don't plan on using this in life-or-death situations yet.
+
+       The PIO emulation is fine, but lacks the ability to redirect output
+  to a file.  Just wait for the next version.
+
+
+  ออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออ
+                    ณ HOW DO I SET UP RS232/PIO PORTS? ณ
+  ออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออ
+
+       To set up the mappings for RS232/1 and RS232/2 on your system, edit
+  the V9t9 configuration file variables "RS232/1" and "RS232/2".  These
+  variables are in the form:
+
+       RS232/x = <port #>, <IRQ>
+
+       where <port #> is from 1 to 4, representing COM1 to COM4, and IRQ
+  is the interrupt request line for the port.  Typical IRQs are 4 for COM1
+  and COM3, and 3 for COM2 and COM4.
+
+       If the RS232/1 or RS232/2 variable is not defined, no RS232 access
+  will occur when a V9t9 program accesses the port.
+
+
+                            ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+
+       The PIO (parallel port) variable is called PIO/1, and takes the
+  form:
+
+       PIO/1 = <port #>
+
+       where <port #> is from 1 to 4, representing LPT1 to LPT4.  There is
+  no IRQ needed for V9t9 parallel port emulation.
+
+
+  ออออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออออออ
+                          ณ POTENTIAL PROBLEMS ณ
+  ออออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออออออ
+
+       þ  Be sure your mouse and RS232 device don't conflict.  If you
+  already use other serial ports in DOS, though, you should be fine.
+
+       þ  V9t9 always buffers 1k of all incoming data on the defined RS232
+  ports.  This is, of course, a good thing, since V9t9 won't "drop" any
+  characters (unless you're transferring faster than the buffer can keep
+  up with).  However, there are probably programs out there which will
+  fail because of this.  I haven't done enough testing to know which.
+
+       þ  When transferring program files from the 99/4A to V9t9 using the
+  BASIC "SAVE RS232" and "OLD RS232" commands, I've noticed that it's best
+  to start the 99/4A sending before you start V9t9 receiving.  Since I
+  don't know the protocol for doing this anyway, I can only offer this as
+  a tip.  I'm sure it has something to do with the above-mentioned
+  buffering.
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

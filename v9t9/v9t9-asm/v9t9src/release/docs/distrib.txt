@@ -1,0 +1,114 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ DISTRIB.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This program archive is fairware, meaning you can distribute it and
+  use it like a maniac for no charge.
+
+
+  ออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออ
+                  ณ HOW WILL I DISTRIBUTE THE EMULATOR? ณ
+  ออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออ
+
+       I am planning to release a new version of V9t9 every FOUR MONTHS.
+  Due to problems had in the past with unexpectedly having to change my
+  payment/"registration" policies, I will usually only accept money for
+  the latest version, as well.  So it's a good idea to know if a new
+  version is imminent and be on the lookout for it (considering you want
+  to get stuff from me or send bug reports, that is).
+
+       Because most "real big" upgrades take prolonged months of intense
+  programming to create, look for big changes (like from v6.0 to v7.0)
+  during the summer or after the winter holidays.  However, smaller
+  changes will reflect bug fixes and possible changes in payment policy.
+  Of course, even as I write this, I don't know how to define what makes a
+  "real big" upgrade, so I might even release v7.0 four months from NOW.
+  I doubt it, though.  :)
+
+       I will notify the USENET groups comp.sys.ti and comp.emulators.misc
+  to tell about a new version of V9t9, and where to find it.  I will also
+  ask TI kingpins to spread the word.
+
+       If you can't find a new version, and I haven't posted to
+  comp.sys.ti or comp.emulators.misc telling of a delay or termination of
+  the project, feel free to contact me and I'll e-mail you the latest
+  archive, in uuencoded or MIME format.  Please tell me which you want.
+  If your server doesn't allow "big" messages to be received, I'll point
+  you to an FTP site.
+
+       I DO NOT WANT to snail-mail archives of the emulator, so please
+  don't refer people to my mailing address to get "full copies" of the
+  program.  (This almost always results in someone sending me a lot of
+  money, in essence just to use the program, and that reeks of
+  commercialism.)  See ORDERING.TXT for information on how to get a
+  MINIMAL orders which includes the emulator.
+
+
+  อออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออ
+             ณ HOW WILL YOU DISTRIBUTE THIS ARCHIVE FOR ME? ณ
+  อออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออ
+
+       This archive and program, being fairware, may be freely distributed
+  anywhere.  In fact, I very highly recommend it!  There are certain
+  limitations, though.
+
+       Here's how you can distribute it:
+
+       þ  Stick it on FTP sites around the world.
+       þ  Give copies to your friends, neighbors, bosses, and employees.
+       þ  Put it on BBSes.  Preferably public ones.
+       þ  Mail out copies of this archive on disk, for no more than $3.
+       þ  On a CD-ROM.  (Preferably a free or low-cost one.)  _Please_
+          contact me first, though.  (See CONTACT.TXT.)
+
+
+       Here's what you CAN'T do:
+
+       þ  Change any of these text files or change the program.
+       þ  Fiddle with the 600V9t9.ZIP archive.
+       þ  Put ANY copyrighted ROMS *whatsoever* into the archive.  99/4A
+          ROMs (and others) are protected by copyright, and my license
+          doesn't extend to free mass distribution.
+       
+
+       Here, however, is a change I will allow (and encourage):
+
+       þ  Add your own demos to the accompanying archive 600VDEMS.ZIP.  If
+          you would, include a *.TXT file with the same base name as the
+          demo file (BURGER.TXT for BURGER.DEM, for example) which tells
+          on what the module/program is, and on what type of computer
+          (processor/speed/video card/etc) you recorded the demo.  This
+          will help demonstrate how the emulator actually does act on
+          certain computers (as my estimate of a 386DX/33 matching the
+          speed of a real 99/4A are only two computers' results).
+
+          However, if your contributions will make the total 600VDEMS.ZIP
+          file huge (greater than 2 megs), put it in a separate archive,
+          which you can distribute in the same directory as the other TI
+          Emulator! archives.  Name it 600VDEMx.ZIP (where x is a number)
+          to show its association with other v6.0 files.
+
+          Note that this little idea of mine will probably result in the
+          existence of a whole lot of completely different 600VDEMx.ZIP
+          (and other) archives.  I hope it will work out just that way.
+
+
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+
+       If the 600V9t9.ZIP archive you received seems tampered with,
+       compare its contents with this list:
+
+       þ  600V9t9.TXT      (~1k)
+       þ  INSTALL.EXE      (~20k)
+       þ  V9t9_6.PKG       (~600k)
+       þ  VDEM_6.PKG       (~200k)
+       þ  V9t9.DFL         (~7k)
+
+       If your archive is remarkably different from this list (excluding
+  possible extra text files), please contact me (see CONTACT.TXT), and
+  tell me where you got it, and I'll prepare to flame some ass.
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

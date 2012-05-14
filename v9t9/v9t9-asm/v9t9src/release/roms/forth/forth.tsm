@@ -1,0 +1,2664 @@
+;	V9t9: the TI Emulator! v6.0 Source 
+;	Copyright (c) 1996 by Edward Swartz
+
+;===========================================================================
+;	V9T9 ROM!
+;
+;	This ROM is a FORTH kernel.
+;===========================================================================
+
+	incl	general.inc
+	incl	ram.inc
+
+;==========================================================================
+;	ROM start
+;==========================================================================
+
+	aorg	>0
+
+resetv	dw	mainws,reset		; vector for RESET
+intv	dw	intws,int		; vector for INTERRUPTS
+
+;------------------------------
+
+hunder	byte	"_"
+
+	aorg	>c
+
+	db	>30,>AA
+
+;------------------------------
+
+h1	data	1
+h7	data	7
+h00	byte	0
+h01	byte	1
+hff	byte	>ff
+kbdbufmask db	0 kbdbufsize -
+h40	byte	>40
+h81	byte	>81
+h80	byte	>80
+h20	byte	>20
+haa55	dw	>aa55
+
+;------------------------------		no XOPs!
+
+sinit	li	SP,sysstack sysstacksize +
+
+	clr	@uptime
+	clr	@uptime 2 +
+	clr	@timeout
+	clr	@userint
+	rt
+
+
+	incl	int.inc
+
+	incl	video.inc
+	incl	kbd.inc
+	
+	incl	term.inc
+
+	incl	dev.inc
+
+
+;============================;
+;			     ;
+;	F O R T H !  	     ;
+;			     ;
+;============================;
+
+RP	equ	15			; routine stack pointer
+IP	equ	14			; instruction pointer
+WA	equ	13			; work address
+SP	equ	10			; stack pointer
+NEXT	equ	9			; ptr to "next"
+
+reset   limi	0
+	bl	@sinit			; system init
+	bl	@vinit			; video init
+	bl	@kinit			; keyboard init
+	bl	@tinit			; terminal init
+	bl	@dinit			; device init
+
+	bl	@diskinit		; disk init
+
+boot:	clr	12
+	sbz	0			; Interrupt mode
+	sbo	1			; Enable external interrupts
+	sbo	2			; Enable VDP interrupts
+	sbz	3			; Disable clock interrupts
+
+	c	@>6000,@haa55		; rom loaded?
+	jeq	boot0
+
+ 	li	2,noromerr
+	jmp	dieerr
+
+noromerr db	"No FORTH ROM found!",>ff
+	db	"Be sure you select 'Forth Kernel' from",>ff
+	db	"the startup selection list if you",>ff
+	db	"want to run FORTH.",>ff,>ff
+	db	"(See FORTH.TXT for info.)",>ff,>ff
+	db	"Press Ctrl+Break to halt, or",>ff
+	db	"Ctrl+F8 to load the kernel module.",0
+	even
+
+boot0:	li	WA,C_Cold
+	b	@ExEntry
+
+
+;	Print an error message and die
+;	
+;	R2 = message
+;
+dieerr:	clr	1
+	movb	+*2,1
+	jeq	diehalt
+	cb	1,@hff
+	jeq	dieprcr
+	bl	@printchar
+	jmp	dieerr
+dieprcr bl	@crlf
+	jmp	dieerr
+diehalt jmp	$
+
+
+	aorg 	>1ffe
+	dw 	>ed99
+
+;===========================================================================
+;===========================================================================
+
+	aorg	>6000
+
+	dw	>aa55
+
+break:
+	lwpi	mainws
+	limi	1
+	li	WA,C_Abort
+	b	@ExEntry
+
+
+;
+;	The dictionary starts HERE!
+;
+
+
+@Dict 	equ	$
+
+	dw	0				; beginning of dict
+E_PDD	db	>88,"(DODOES) "
+	nop
+DoDoes	dect	SP			
+	mov	WA,*SP			; push the thread ptr
+	mov	11,WA			; execute at new thread
+
+DoCol	dect	RP
+	mov	IP,*RP			; push IP
+	mov	WA,IP			; start at new thread
+@Next	mov	+*IP,WA			; get new thread ptr
+ExEntry	mov	+*WA,8			; get a CFA ptr
+	b	*8			; go
+
+PushPFA	dect	SP
+	mov	WA,*SP
+	jmp	@Next
+
+_SemiS	mov	+*RP,IP			; return
+	mov	+*IP,WA			; repeat of "next" above
+	mov	+*WA,8			
+	b	*8
+
+DoEnd	li	IP,C_Cold 2+
+	b	*NEXT
+
+
+;-------------------------------------------------------------------------
+
+	dw	E_PDD
+E_Exec	db	>87,"EXECUTE"
+C_Exec	dw	$ 2+
+	mov	+*SP,WA				; execute word on stack
+	jmp	ExEntry
+
+
+	dw	E_Exec
+E_POf	db	>84,"(OF) "
+C_POf	dw	$ 2+
+	c	+*SP,*SP
+	jne	C_POf00
+	inct	SP
+	inct	IP
+	b	*NEXT
+C_POf00	a	*IP,IP
+	b	*NEXT
+
+
+
+	dw	E_POf
+E_PLoop	db	>86,"(LOOP) "			; loop -- increment *RP,
+C_PLoop	dw	$ 2+				; compare to *2(RP)
+	inc	*RP	  			; increment
+	c	*RP,@2(RP)			; done?
+	jlt	C_PLop0				; nope
+	ai	RP,4				; yup... lose loop limits
+	inct	IP				; & skip jump amount
+	b	*NEXT
+C_Plop0	a	*IP,IP
+	b	*NEXT
+
+
+	dw	E_PLoop
+E_PPLop	db	>87,"(+LOOP)"			; loop with given increment
+C_PPLop	dw	$ 2+
+	mov	+*SP,0				; get incrementer
+	a	0,*RP 				; add
+	mov	0,0
+	jlt	C_PP00				
+	c	*RP,@2(RP)			; negative
+	jmp	C_PP01
+C_PP00:
+	c	@2(RP),*RP			; positive
+C_PP01:
+	jlt	C_Plop0				; less than?
+	ai	RP,4				; lose limits
+	inct	IP				; done, skip jump amount
+	b	*NEXT
+
+
+	dw	E_PPLop
+E_PDo	db	>84,"(DO) "			; start a DO
+C_PDo	dw	$ 2+
+	si	RP,4				; make room 
+	mov	+*SP,*RP			; put start
+	mov	+*SP,@2(RP)			; put limit
+	B	*NEXT
+
+	
+	dw	E_PDo
+E_I	db	>81,"I"				; put I on stack
+C_I	dw	$ 2+
+	dect	SP
+	mov	*RP,*SP
+	b	*NEXT
+
+
+	dw	E_I
+E_J	db	>81,"J"				; put J on stack
+C_J	dw	$ 2+
+	dect	SP
+	mov	@4(RP),*SP
+	b	*NEXT
+
+
+	dw	E_J
+E_Digit	db	>85,"DIGIT"			; (b c -- -1 d\ 0)
+C_Digit	dw	$ 2+				; determine if 'c'
+						; is a legal digit in base 'b'
+
+	mov	+*SP,2				; digit
+	mov	*SP,1				; base
+	ci	1,>61				; lowercase a-*
+	jhe	C_Dig0A
+	ci	1,>41				; uppercase A-*
+	jhe	C_Dig0A0
+	ci	1,>3a
+	jhe	C_DigIll
+	ci	1,>30				; 0-9
+	jl	C_DigIll
+
+	si	1,>30
+	jmp	C_Dig00
+C_Dig0A	si	1,>20				; make uppercase
+C_Dig0A0 si	1,>37				; make binary
+C_Dig00	c	1,2				; compare digit to base...
+	jhe	C_DigIll
+
+	mov	1,*SP
+	dect	SP
+	mov	@H1,*SP				; good
+	b	*NEXT
+
+C_DigIll clr	*SP  				; error
+	b	*NEXT
+
+
+	dw	E_Digit
+E_PFind	db	>86,"(FIND) "			
+C_PFind	dw	$ 2+				
+	; find word in dictionary
+	; (wd dc -- 0 \	       		wd=ptr to len/<word>
+	;           1 *nfa pfa)		dc=NFA
+
+	mov	*SP,1				; R1=NFA
+	jeq	C_PF09				; fail
+	mov	@2(SP),2 			; R2=wrd ptr
+
+	movb	+*2,3				; lowercase the compared word
+	andi	3,>1f00				
+	srl	3,8				; R3=length of compared word
+	li	4,>6100				; 'az'
+	li	5,>7a00
+C_PF00	cb	*2,4
+	jl	C_PF01
+	cb	*2,5
+	ja	C_PF01
+	sb	@h20,*2				; uppercase it
+C_PF01	inc	2
+	dec	3
+	jgt	C_PF00
+
+	mov	@2(SP),2			; R2=matched word for search
+	movb	+*2,3				; R3=matched length
+	andi	3,>3f00				; ??? smudge bit ???
+;	srl	3,8
+
+C_PF02	mov	1,6				; R1=NFA
+
+	mov	2,4				; R4=char ptr
+	movb	+*1,5				; get NFA len
+	andi	5,>3f00
+;	srl	5,8
+	cb	3,5				; same len & smudge?
+	jne	C_PF04				; try new word
+C_PF03	cb	+*1,+*4				; compare char
+	jne	C_PF04
+;	dec	5
+	si	5,>100
+	jgt	C_PF03
+
+	clr	*SP
+	movb	*6,@1(SP)			; save NFA id
+	ai	1,3
+	andi	1,>fffe				; =cells
+	mov	1,@2(SP)			; save PFA of dict entry
+	dect	SP
+	mov	@h1,*SP
+	b	*NEXT
+
+C_PF04	mov	@>fffe(6),1			; get LFA to new one...
+	jne	C_PF02				; if not end...
+
+C_PF09	inct	SP				; lose one param
+	clr	*SP				; failed
+	b	*NEXT
+
+	dw	E_PFind
+E_Encls	db	>87,"ENCLOSE"			; enclose text
+C_Encls	dw	$ 2+
+
+	mov	+*SP,1
+	mov	*SP,2
+	swpb	1
+	seto	3
+C_Enc00	inc	3
+	cb	+*2,1
+	jeq	C_Enc00
+	dec	2
+	si	SP,6
+	mov	3,@4(SP)
+	mov	3,*SP
+	inc	3
+	mov	3,@2(SP)
+	movb	*2,4
+	jne	C_Enc01
+       	b	*NEXT
+C_Enc01	inc	2
+C_Enc03	mov	3,@2(SP)
+	movb	*2,4
+	jeq	C_Enc02
+	inc	3
+	cb	+*2,1
+	jne	C_Enc03
+C_Enc02	mov	3,*SP
+	b	*NEXT
+
+
+	dw	E_Encls
+E_Key	db	>83,"KEY"			; get key fom kbd
+C_Key	dw	$ 2+
+C_Key00	bl	@kbdavail			; wait until avail, if necc
+	jeq	C_Key00
+	limi	0
+	bl	@kbdread			; read
+	limi	1
+	dect	SP
+	mov	0,*SP				; save
+	b	*NEXT
+
+
+	dw	E_Key
+E_Emit	db	>84,"EMIT "
+C_Emit	dw	$ 2+
+	mov	+*SP,1	
+	swpb	1
+	andi	1,>ff00
+	limi	0
+	ci	1,>0d00				; enter?
+	jne	C_Em00
+	bl	@crlf
+	jmp	c_Em99
+
+C_Em00	ci	1,>0700				; bell?
+	jne	C_Em01
+	nop
+	jmp	C_Em99
+
+C_Em01	ci	1,>0800				; backspace?
+	jeq	C_Em010
+	ci	1,211 256 *
+	jne	C_Em02
+c_Em010
+	bl	@bksp
+	jmp	C_Em99
+
+C_Em02	ci	1,>0900				; tab?
+	jne	C_Em98
+	bl	@tab
+	jmp	C_Em99
+
+C_Em98	bl	@printchar
+C_Em99	limi	1
+	b	*NEXT
+
+
+	dw	E_Emit
+E_Emit8	db	>85,"EMIT8"
+C_Emit8	dw	$ 2+
+	mov	+*SP,1
+	swpb	1
+	limi	0
+	bl	@printchar
+	limi	1
+	b	*NEXT
+
+
+	dw	E_Emit8
+
+E_CR	db	>82,"CR "			; next line pleez
+C_CR	dw	$ 2+
+	bl	@crlf
+	b	*NEXT
+
+
+	dw	E_CR
+E_QTerm	db	>89,"?TERMINAL"
+C_QTerm	dw	$ 2+
+	limi	0
+	dect	SP
+	clr	*SP
+	bl	@kbdavail
+	jeq	C_QT00
+	inc	*SP		
+C_QT00	limi	1
+	b	*NEXT
+
+
+	dw	E_QTerm
+E_GXY	db	>86,"GOTOXY "
+C_GXY	dw	$ 2+
+	mov	+*SP,1				; X
+	mov	+*SP,0				; Y
+	swpb	1				; X -> high byte
+	movb	1,0				; hi(R0)=x, lo(R0)=y
+	bl	@gotoxy
+	b	*NEXT
+
+
+	dw	E_GXY
+E_CLS	db	>83,"CLS"
+C_CLS	dw	$ 2+
+	mov	@vclear,1
+	blwp	*1
+	b	*NEXT
+
+
+	dw	E_CLS
+E_Wind	db	>86,"WINDOW "			; window
+C_Wind	dw	$ 2+				; (x y sx sy -)
+	mov	+*SP,1
+	mov	+*SP,2
+	sla	2,8
+	movb	2,1
+	mov	+*SP,0
+	mov	+*SP,2
+	sla	2,8
+	movb	2,0
+	bl	@window
+	b	*NEXT
+
+
+	dw	E_Wind
+E_FWin	db	>84,"FULL "
+C_FWin	dw	$ 2+
+	clr	0
+	seto	1
+	bl	@window
+	b	*NEXT
+
+	dw	E_FWin
+E_CMove	db	>85,"CMOVE"
+C_CMove	dw	$ 2+
+C_CM00	mov	+*SP,2				; # bytes
+	mov	+*SP,1				; dst
+	mov	+*SP,0				; src
+	mov	2,2  				; 0 bytes?
+	jeq	C_CM01
+C_CM02	movb	+*0,+*1
+	dec	2
+	jne	C_CM02
+C_CM01	b	*NEXT
+
+
+	dw	E_CMove
+E_Move	db	>84,"MOVE "
+C_Move	dw	$ 2+
+	mov	+*SP,2				; # bytes
+	mov	+*SP,1				; dst
+	mov	+*SP,0				; src
+	mov	2,2  				; 0 bytes?
+	jeq	C_Mv01
+C_Mv02	mov	+*0,+*1
+	dec	2
+	jne	C_Mv02
+C_Mv01	b	*NEXT
+
+
+	dw	E_Move
+E_VCStr db	>83,"VC!"
+	dw	$ 2+
+	mov 	+*SP,0
+	mov	+*SP,1
+	limi	0
+	bl	@vwaddr
+	swpb	1
+	movb	1,@>8c00
+	limi	1
+	b	*NEXT
+
+	dw	E_VCStr
+E_VCAt	db	>83,"VC@"
+	dw	$ 2+
+	mov 	*SP,0
+	limi	0
+	bl	@vraddr
+	movb	@>8800,1
+	limi	1
+	srl	1,8
+	mov	1,*SP
+	b	*NEXT
+
+	dw	E_VCAt
+E_VStr db	>82,"V! "
+	dw	$ 2+
+	mov 	+*SP,0
+	mov	+*SP,1
+	limi	0
+	bl	@vwaddr
+	movb	1,@>8c00
+	swpb	1
+	movb	1,@>8c00
+	limi	1
+	b	*NEXT
+
+	dw	E_VStr
+E_VAt	db	>82,"V@ "
+	dw	$ 2+
+	mov 	*SP,0
+	limi	0
+	bl	@vraddr
+	movb	@>8800,1
+	swpb	1
+	movb	@>8800,1
+	swpb	1
+	limi	1
+	mov	1,*SP
+	b	*NEXT
+
+	dw	E_VAt
+E_VCMove db	>86,"VCMOVE "			; (vdp cpu len)
+	dw	$ 2+
+	mov	+*SP,2				; len
+	jeq	E_VCM01
+	mov	+*SP,1				; cpu
+	mov	+*SP,0				; vdp
+	limi	0
+	bl	@vraddr
+E_VCM00	movb	@>8800,+*1
+	dec	2
+	jgt	E_VCM00
+	limi	1
+E_VCM01	b	*NEXT
+
+
+	dw	E_VCMove
+E_CVMove db	>86,"CVMOVE "			; (cpu vdp len)
+	dw	$ 2+
+	mov	+*SP,1				; len
+	jeq	E_CVM01
+	mov	+*SP,0				; vdp
+	mov	+*SP,2				; cpu
+	limi	0
+	bl	@vwaddr
+E_CVM00	movb	+*2,@>8c00
+	dec	1
+	jgt	E_CVM00
+	limi	1
+E_CVM01	b	*NEXT
+
+
+	dw	E_CVMove
+E_cmp	db	>83,"CMP"			; (addr1 addr2 len -- 0|1)
+C_Cmp	dw	$ 2+
+	mov	+*SP,2
+	mov	+*SP,1
+	mov	*SP,0
+	mov	2,2
+	jeq	C_Cmp1
+C_Cmp0	cb	+*0,+*1
+	jne	c_cmp2
+	dec	2
+	jgt	c_cmp0
+c_cmp1	mov	@h1,*SP
+	b	*NEXT
+c_cmp2	clr	*SP
+	b	*NEXT
+
+
+	dw	E_CMp
+E_Swpb	db	>84,"SWPB "
+C_Swpb	dw	$ 2+
+	swpb	*SP
+	b	*NEXT
+
+@Shift	mov	+*SP,0
+	mov	*SP,1
+	x	2
+	mov	1,*SP
+	b	*NEXT
+
+
+	dw	E_Swpb
+E_Srl	db	>83,"SRL"
+C_Srl	dw	$ 2+
+	li	2,>0901
+	jmp	@Shift
+
+
+	dw	E_Srl
+E_Sla	db	>83,"SLA"
+C_Sla	dw	$ 2+
+	li	2,>0a01
+	jmp	@Shift
+
+
+	dw	E_Sla
+E_Sra	db	>83,"SRA"
+C_Sra	dw	$ 2+
+	li	2,>0801
+	jmp	@Shift
+
+
+	dw	E_Sra
+E_Src	db	>83,"SRC"
+C_Src	dw	$ 2+
+	li	2,>0b01
+	jmp	@Shift
+
+
+	dw	E_Src
+E_UTms	db	>82,"U* "
+C_UTms	dw	$ 2+
+	mov	+*SP,0
+	mpy	*SP,0
+	mov	1,*SP
+	dect	SP
+	mov	0,*SP
+	b	*NEXT
+
+
+	dw	E_UTms
+E_UDiv	db	>82,"U/ "
+C_UDiv	dw	$ 2+
+	mov	+*SP,0				; divisor
+	mov	+*SP,1				; hi
+	mov	*SP,2				; lo
+	div	0,1
+	mov	2,*SP				; remainder
+	dect	SP
+	mov	1,*SP				; quotient
+	b	*NEXT
+
+
+	dw	E_UDiv
+E_And	db	>83,"AND"			; logical and
+C_And	dw	$ 2+
+	inv	*SP
+	szc	+*SP,*SP
+	b	*NEXT
+
+
+	dw	E_And
+E_OR	db	>82,"OR "			; logical or
+C_OR	dw	$ 2+
+	soc	+*SP,*SP
+	b	*NEXT
+
+	
+	dw	E_OR	
+E_Xor	db	>83,"XOR"			; logical xor
+C_Xor	dw	$ 2+
+	mov	+*SP,0
+	xor	*SP,0
+	mov	0,*SP
+	b	*NEXT
+
+
+	dw	E_Xor
+E_SPFet	db	>83,"SP@"			; fetch SP
+C_SPFet	dw	$ 2+
+	mov	SP,@>FFFE(SP)
+	dect	SP
+	b	*NEXT
+
+
+	dw	E_SPFet
+E_RPAt	db	>83,"RP@"
+C_RPAt	dw	$ 2+
+	dect	SP
+	mov	RP,*SP
+	b	*NEXT
+
+
+	dw	E_RPAt
+E_SPSt	db	>83,"SP!"    			; restore SP to S0
+C_SPSt	dw	$ 2+
+	mov	@_S0,SP
+	b	*NEXT
+
+
+	dw	E_SPSt
+E_RPSt	db	>83,"RP!"			; restore RP to R0
+C_RPSt	dw	$ 2+
+	mov	@_R0,RP
+	b	*NEXT
+
+
+	dw	E_RPSt
+E_SemiS	db	>82,59,"S "			; ;S end of definition
+C_SemiS	dw	_SemiS
+
+
+	dw	E_SemiS	
+E_Leave	db	>85,"LEAVE"			; force termination of 
+C_Leave	dw	$ 2+				; DO...LOOP
+	mov	*RP,@2(RP)
+	b	*NEXT
+
+
+	dw	E_Leave
+E_ToR	db	>82,">R "
+C_ToR	dw	$ 2+
+	dect	RP
+	mov	+*SP,*RP
+	b	*NEXT
+
+
+	dw	E_ToR
+E_RFrom	db	>82,"R> "
+C_RFrom	dw	$ 2+
+	dect	SP
+	mov	+*RP,*SP
+	b	*NEXT
+
+
+	dw	E_RFrom
+E_RAt	db	>81,"R"
+C_RAt	dw	$ 2+
+	dect	SP
+	mov	*RP,*SP
+	b	*NEXT
+
+
+	dw	E_RAt
+E_ZEqu	db	>82,"0= "
+C_ZEqu	dw	$ 2+
+	mov	*SP,0
+	clr	*SP
+	jne	C_ZEq00
+	inc	*SP
+C_ZEq00	b	*NEXT
+
+
+	dw	E_ZEqu
+E_ZLess	db	>82,"0< "
+C_ZLess	dw	$ 2+
+	mov	*SP,0
+	clr	*SP
+	jgt	C_ZL00
+	jeq	C_ZL00
+	inc	*SP
+C_ZL00	b	*NEXT
+
+
+	dw	E_ZLess
+E_Plus	db	>81,"+"
+C_Plus	dw	$ 2+
+	a	+*SP,*SP
+	b	*NEXT
+
+
+	dw	E_Plus
+E_DPls	db	>82,"D+ "
+C_DPls	dw	$ 2+
+	a	+*SP,@2(SP)
+	a	+*SP,@2(SP)
+	jnc	C_DPL00
+       	inc	*SP
+C_DPL00	b	*NEXT
+
+
+	dw	E_DPls
+E_Minus	db	>85,"MINUS"
+C_Minus	dw	$ 2+
+	neg	*SP
+	b	*NEXT
+
+
+	dw	E_Minus
+E_DMns	db	>86,"DMINUS "
+C_DMns	dw	$ 2+
+	inv	*SP
+	inv	@2(SP)
+	inc	@2(SP)
+	jnc	C_DM00
+	inc	*SP
+C_DM00	b	*NEXT
+
+
+	dw	E_DMns
+E_PStre	db	>82,"+! "
+C_PStre	dw	$ 2+
+	mov	+*SP,0
+	a	+*SP,*0
+	b	*NEXT
+
+
+	dw	E_PStre
+E_Togg	db	>86,"TOGGLE "
+C_Togg 	dw	$ 2+
+	mov	+*SP,1				; bit mask
+	swpb	1				; move to high byte
+	mov	+*SP,0				; address
+	movb	*0,2
+	xor	1,2
+	movb	2,*0
+	b	*NEXT
+
+
+	dw	E_Togg
+E_At	db	>81,"@"
+C_At	dw	$ 2+
+	mov	*SP,0
+	mov	*0,*SP
+	b	*NEXT
+
+
+	dw	E_At
+E_CAt	db	>82,"C@ "
+C_CAt	dw	$ 2+
+	mov	*SP,0
+	movb	*0,0
+	srl	0,8
+	mov	0,*SP
+	b	*NEXT
+
+
+	dw	E_CAt
+E_Store	db	>81,"!"
+C_Store	dw	$ 2+
+	mov	+*SP,1
+	mov	+*SP,*1
+	b	*NEXT
+
+
+	dw	E_Store
+E_CStre db	>82,"C! "
+C_CStre dw	$ 2+
+	mov	+*SP,1
+	movb	@1(SP),*1
+	inct	SP
+	b	*NEXT
+
+
+	dw	E_CStre
+E_DStre	db	>82,"D! "
+	dw	$ 2+
+	mov	+*SP,1
+	mov	+*SP,+*1
+	mov	+*SP,+*1
+	b	*NEXT
+
+
+	dw	E_DStre
+E_Dat	db	>82,"D@ "
+	dw	$ 2+
+	mov	*SP,1
+	mov	@2(1),*SP
+	dect	SP
+	mov	*1,*SP
+	b	*NEXT
+
+
+	dw	E_DAt
+E_1Pl	db	>82,"1+ "
+C_1Pl	dw	$ 2+
+	inc	*SP
+	b	*NEXT
+
+
+	dw	E_1Pl
+E_2Pl	db	>82,"2+ "
+C_2Pl	dw	$ 2+
+	inct	*SP
+	b	*NEXT
+
+	dw	E_2Pl
+E_2Ti	db	>82,"2* "
+C_2Ti	dw	$ 2+
+	a	*SP,*SP
+	b	*NEXT
+
+	dw	E_2Ti
+E_2Div	db	>82,"2/ "
+C_2Div	dw	$ 2+
+	mov	*SP,0
+	sra	0,1
+	mov	0,*SP
+	b	*NEXT
+
+	dw	E_2Div
+E_1Mi	db	>82,"1- "
+C_1Mi	dw	$ 2+
+	dec	*SP
+	b	*NEXT
+
+
+	dw	E_1Mi
+E_2Mi	db	>82,"2- "
+C_2Mi	dw	$ 2+
+	dect	*SP
+	b	*NEXT
+
+
+	dw	E_2Mi
+E_Sub	db	>81,"-"
+C_Sub	dw	$ 2+
+	s	+*SP,*SP
+	b	*NEXT
+
+
+	dw	E_Sub
+E_EqC	db	>86,"=CELLS "
+C_EqC 	dw	$ 2+
+	inc	*SP
+	szc	@H1,*SP
+	b	*NEXT
+
+
+	dw	E_EqC
+E_S2D	db	>84,"S->D "
+C_S2D	dw	$ 2+
+	seto	1
+	mov	*SP,0
+	jlt	C_S2D0
+	clr	1
+C_S2D0	dect	SP
+	mov	1,*SP
+	b	*NEXT
+
+
+	dw	E_S2D
+E_D2S	db	>84,"D->S "
+C_D2S	dw	$ 2+
+	inct	SP
+	b	*NEXT
+
+
+	dw	E_D2S
+E_Abs	db	>83,"ABS"
+C_Abs	dw	$ 2+
+	abs	*SP
+	b	*NEXT
+
+
+	dw	E_Abs
+E_Min	db	>83,"MIN"
+C_Min	dw	$ 2+
+	c	*SP,@2(SP)			
+	jgt	C_Min00
+	mov	*SP,@2(SP)
+C_Min00	inct	SP
+	b	*NEXT
+
+
+	dw	E_Min
+E_Max	db	>83,"MAX"
+C_Max	dw	$ 2+
+	c	*SP,@2(SP)
+	jlt	C_Max00
+	mov	*SP,@2(SP)
+C_Max00	inct	SP
+	b	*NEXT
+
+
+	dw	E_Max
+E_ULess	db	>82,"U< "
+C_ULess	dw	$ 2+
+	c	+*SP,*SP
+	clr	*SP
+	jle	C_UL00
+	inc	*SP
+C_UL00	b	*NEXT
+
+
+	dw	E_ULess
+E_UGreater db	>82,"U> "
+C_UGreater dw	$ 2+
+	c	+*SP,*SP
+	clr	*SP
+	jhe	C_UG00
+	inc	*SP
+C_UG00	b	*NEXT
+
+;----------------------------
+;	Constants
+;----------------------------
+
+	dw	E_UGreater
+E_0	db	>81,"0"
+C_0	dw	$ 2+
+	clr	0
+C_CPsh	dect	SP
+	mov	0,*SP
+	b	*NEXT
+
+	dw	E_0
+E_1	db	>81,"1"
+C_1	dw	$ 2+
+	li	0,1
+	jmp	C_CPsh
+
+	dw	E_1
+E_2	db	>81,"2"
+C_2	dw	$ 2+
+	li	0,2
+	jmp	C_CPsh
+
+	dw	E_2
+E_3	db	>81,"3"
+C_3	dw	$ 2+
+	li	0,3
+	jmp	C_CPsh
+
+	dw	E_3
+E_BL	db	>82,"BL "
+C_BL	dw	$ 2+
+	li	0,>20
+	jmp	C_CPsh
+
+
+	dw	E_BL
+E_WX	db	>82,"WX "
+C_WX	dw	$ 2+
+	movb	@vx,0
+	srl	0,8
+	jmp	C_CPsh
+
+	dw	E_WX
+E_WY	db	>82,"WY "
+C_WY	dw	$ 2+
+	movb	@vy,0
+	srl	0,8
+	jmp	C_CPsh
+
+	dw	E_WY
+E_WSX	db	>83,"WSX"
+C_WSX	dw	$ 2+
+	movb	@vwxs,0
+	srl	0,8
+	jmp	C_CPsh
+
+	dw	E_WSX
+E_WSY	db	>83,"WSY"
+C_WSY	dw	$ 2+
+	movb	@vwys,0
+	srl	0,8
+	jmp	C_CPsh
+
+	dw	E_WSY
+E_VScrn	db	>87,"VSCREEN"
+	dw	$ 2+
+	mov	@vscreen,0
+	jmp	C_CPsh
+
+	dw	E_VScrn
+E_VPatts db	>86,"VPATTS "
+	dw	$ 2+
+	mov	@Vpatts,0
+	jmp	C_CPsh
+
+	dw	E_VPatts
+E_VColors db	>87,"VCOLORS"
+	dw	$ 2+
+	mov	@vcolors,0
+	jmp	C_CPsh
+
+	dw	E_VColors
+E_VSprites db	>88,"VSPRITES "
+	dw	$ 2+
+	mov	@vsprites,0
+	jmp	C_CPsh
+
+
+	dw	E_VSprites
+E_VSprPat db	>87,"VSPRPAT"
+	dw	$ 2+
+	mov	@vsprpat,0
+	jmp	C_CPsh
+
+	dw	E_Vsprpat
+e_Vsprmot db	>87,"VSPRMOT"
+	dw	$ 2+
+	mov	@Vsprmot,0
+	jmp	C_Cpsh
+
+	dw	E_Vsprmot
+
+
+E_BBUf	db	>85,"B/BUF"
+C_BBuf	dw	$ 2+
+	li	0,1024
+	jmp	C_Push
+
+	dw	E_BBuf
+E_BScr	db	>85,"B/SCR"
+C_BScr	dw	$ 2+
+	li	0,1
+	jmp	C_Push
+
+	dw	E_BScr
+E_First	db	>85,"FIRST"
+C_First	dw	$ 2+
+	li	0,@First
+	jmp	C_Push
+
+	dw	E_First
+E_Limit	db	>85,"LIMIT"
+C_Limit	dw	$ 2+
+	li	0,@Limit
+	jmp	C_Push
+
+;-------------------------------
+;	Variables
+;-------------------------------
+
+C_Push	dect	SP
+	mov	0,*SP
+	b	*NEXT
+
+	dw	E_Limit
+E_S0	db	>82,"S0 "
+C_S0	dw	$ 2+
+	li	0,_S0
+	jmp	C_Push
+
+	dw	E_S0
+E_R0	db	>82,"R0 "
+C_R0	dw	$ 2+
+	li	0,_R0
+	jmp	C_Push
+
+	dw	E_R0
+E_Tib	db	>83,"TIB"
+C_Tib	dw	$ 2+
+	li	0,_Tib
+	jmp	C_Push
+
+	dw	E_Tib
+E_Width	db	>85,"WIDTH"
+C_Width	dw	$ 2+
+	li	0,_Width
+	jmp	C_Push
+
+	dw	E_Width
+E_DP	db	>82,"DP "
+C_DP	dw	$ 2+
+	li	0,_DP
+	jmp	C_Push
+
+	dw	E_DP
+E_Warn	db	>87,"WARNING"
+C_Warn	dw	$ 2+
+	li	0,_Warning
+	jmp	C_Push
+
+	dw	E_Warn
+E_CLS_	db	>84,"C/L$ "
+C_CLS_	dw	$ 2+
+	li	0,_CL
+	jmp	C_Push
+
+	dw	E_CLS_
+E_Fence	db	>85,"FENCE"
+C_Fence	dw	$ 2+
+	li	0,_Fence
+	jmp	C_Push
+
+	dw	E_Fence
+E_In	db	>82,"IN "
+C_In	dw	$ 2+
+	li	0,_In
+	jmp	C_Push
+
+	dw	E_In
+E_Out	db	>83,"OUT"
+C_Out	dw	$ 2+
+	li	0,_Out
+	jmp	C_Push
+
+	dw	E_Out
+E_BLK	db	>83,"BLK"
+c_BLK	dw	$ 2+
+	li	0,_Blk
+	jmp	c_Push
+
+	dw	E_BLK
+E_Scr	db	>83,"SCR"
+C_Scr	dw	$ 2+
+	li	0,_Scr
+	jmp	C_Push
+
+	dw	E_Scr
+E_AtScr db	>84,"@SCR "
+C_AtScr	dw	$ 2+
+	li	0,_AtScr
+C_Push0	dect	SP
+	mov	0,*SP
+	b	*NEXT
+
+	dw	E_AtScr
+E_Cont	db	>87,"CONTEXT"
+C_Cont	dw	$ 2+
+	li	0,_Context
+	jmp	C_Push0
+
+	dw	E_Cont
+E_Curr	db	>87,"CURRENT"
+C_Curr	dw	$ 2+
+	li	0,_Current
+	jmp	C_Push0
+
+	dw	E_Curr
+E_State db	>85,"STATE"
+C_State	dw	$ 2+
+	li	0,_State
+	jmp	C_Push0
+
+	dw	E_State
+E_Base	db	>84,"BASE "
+C_Base	dw	$ 2+
+	li	0,_Base
+	jmp	C_Push0
+
+	dw	E_Base
+E_Dpl	db	>83,"DPL"
+C_Dpl	dw	$ 2+
+	li	0,_Dpl
+	jmp	C_Push0
+
+	dw	E_Dpl
+E_Csp	db	>83,"CSP"
+C_Csp	dw	$ 2+
+	li	0,_Csp
+	jmp	C_Push0
+
+	dw	E_Csp
+E_Hld	db	>83,"HLD"
+C_Hld	dw	$ 2+
+	li	0,_Hld
+	jmp	C_Push0
+
+	dw	E_Hld
+E_Use	db	>83,"USE"
+C_USe	dw	$ 2+
+	li	0,_USe
+	jmp	C_Push0
+
+	dw	E_Use
+E_Prev	db	>84,"PREV "
+C_PRev	dw	$ 2+
+	li	0,_Prev
+	jmp	C_Push0
+
+	dw	E_Prev
+
+;------------------------------------------------------
+
+E_FG	db	>82,"FG "
+C_FG	dw	$ 2+
+	li	0,vfg
+	jmp	C_Push0
+
+	dw	E_FG
+E_BG	db	>82,"BG "
+C_BG	dw	$ 2+
+	li	0,vbg
+	jmp	C_Push0
+
+	dw	E_BG
+E_curs	db	>86,"CURSOR "
+C_curs	dw	$ 2+
+	li	0,vcurschar
+	jmp	C_Push0
+
+	dw	E_Curs
+E_frthlnk db	>8a,"FORTH_LINK "
+C_frthlnk dw	$ 2+
+	li	0,_Forth_Link
+	jmp	C_Push0
+
+	dw	E_frthlnk
+E_voclink db	>88,"VOC-LINK "
+C_voclink dw	$ 2+
+	li	0,_Voc_Link
+	jmp	C_Push0
+
+;--------------------------------------
+;	Words
+;--------------------------------------
+
+	dw	E_Voclink
+E_CL	db	>83,"C/L"
+C_CL	dw	DoCol
+	dw	C_CLS_,C_At,C_SemiS
+
+
+	dw	E_CL
+E_Lit	db	>83,"LIT"
+C_Lit	dw	$ 2+
+	mov	+*IP,0
+	dect	SP
+	mov	0,*SP
+	b	*NEXT
+
+
+	dw	E_Lit
+E_DLit	db	>84,"DLIT "
+C_DLit	dw	$ 2+
+	mov	+*IP,0				; high word
+	mov	+*IP,1				; low word
+	si	SP,4
+	mov	1,@2(SP)
+	mov	0,*SP
+	b	*NEXT
+
+	dw	E_DLit
+E_Mon	db	>83,"MON"
+C_Mon	dw	$ 2+
+	blwp	@0
+
+	dw	E_Mon
+E_Pick	db	>84,"PICK "
+C_Pick	dw	$ 2+
+	mov	*SP,1
+	a	1,1
+	a	SP,1
+	mov	*1,*SP
+	b	*NEXT
+
+	dw	E_Pick
+E_Roll	db	>84,"ROLL "
+C_Roll	dw	$ 2+
+	mov	+*SP,4				; si
+	a	4,4
+	mov	SP,2				; bx
+	a	4,2
+	mov	*2,0				; ax
+C_Roll0	mov	@>fffe(2),3			; cx
+	mov	3,*2
+	dect	2
+	c	2,SP
+	jh	C_Roll0
+
+	mov	0,*SP
+	b	*NEXT
+
+
+	dw	E_Roll
+E_Rot	db	>83,"ROT"
+C_Rot	dw	DoCol
+	dw	C_ToR,C_Swap,C_RFrom,C_Swap,C_SemiS
+
+
+	dw	E_Rot
+E_Space	db	>85,"SPACE"
+C_Space	dw	DoCol
+	dw	C_BL,C_Emit,C_SemiS
+
+
+	dw	E_Space
+E_QDup	db	>84,"-DUP "
+C_QDup	dw	DoCol
+	dw	C_Dup,C_ZBrch,4,C_Dup,C_SemiS
+
+
+	dw	E_QDup
+E_Trvrs	db	>88,"TRAVERSE "
+C_Trvrs	dw	$ 2+
+	mov	@2(SP),1			; addr
+	mov	+*SP,0				; direction
+	jlt	C_Tr00
+
+	movb	*1,2				; length
+	andi	2,>1f00
+	srl	2,8
+	a	2,1
+	ori	1,1				; point to LAST byte
+	mov	1,*SP
+	b	*NEXT
+
+C_Tr00	li	2,>8000
+C_Tr01	dec	1
+	cb	2,*1
+	jhe	C_Tr01
+	mov	1,*SP
+	b	*NEXT
+	
+
+	dw	E_Trvrs
+E_CFA	db	>83,"CFA"
+C_CFA	dw	DoCol
+	dw	C_2Mi,C_SemiS
+
+
+	dw	E_CFA
+E_NFA	db	>83,"NFA"
+C_NFA	dw	DoCol
+	dw	C_3,C_SUB,C_Lit,>ffff,C_Trvrs,C_SemiS
+	
+
+	dw	E_NFA
+E_PFA	db      >83,"PFA"
+C_PFA	dw	DoCol
+	dw	C_1,C_Trvrs,C_3,C_Plus,C_SemiS
+	
+
+	dw	E_PFA
+E_LFA	db	>83,"LFA"
+C_LFA	dw	DoCol
+	dw	C_NFA,C_2Mi,C_SemiS
+
+
+	dw	E_LFA
+E_Lates db	>86,"LATEST "
+C_Lates dw	DoCol
+	dw	C_Curr,C_At,C_At,C_SemiS
+
+
+	dw	E_Lates
+E_XCsp	db	>84,"!CSP "
+C_XCsp	dw	DoCol
+	dw	C_SPFet,C_CSP,C_Store,C_SemiS
+
+
+	dw	E_XCsp
+E_QErr	db	>86,"?ERROR "
+C_QErr	dw	DoCol
+	dw	C_Swap,C_ZBrch,8,C_Error,C_Brch,4,C_Drop,C_SemiS
+
+
+	dw	E_QErr
+E_QExec	db	>85,"?EXEC"
+C_QExec	dw	DoCol
+	dw	C_State,C_At,C_Lit,9,C_QErr,C_SemiS
+
+
+	dw	E_QExec
+E_QCsp	db	>84,"?CSP "
+C_QCSP	dw	DoCol
+	dw	C_SpFet,C_CSP,C_At,C_SUB,C_Lit,19,C_QErr,C_SemiS
+
+
+	dw	E_QCsp
+E_QLoad	db	>88,"?LOADING "
+C_QLoad	dw	DoCol
+	dw	C_BLK,C_At,C_ZEqu,C_Lit,22,C_QErr,C_SemiS
+
+
+	dw	E_QLoad
+E_LBrac	db	>C1,"["
+C_LBrac	dw	DoCol
+	dw	C_0,C_State,C_Store,C_SemiS
+
+
+	dw	E_LBrac
+E_RBrac	db	>81,"]"
+C_RBrac	dw	DoCol
+	dw	C_Lit,192,C_State,C_Store,C_SemiS
+
+
+	dw	E_RBrac
+E_Smudg	db	>86,"SMUDGE "
+C_Smudg	dw	DoCol
+	dw	C_Lates,C_Lit,32,C_Togg,C_SemiS
+
+
+	dw	E_Smudg
+E_Hex	db	>83,"HEX"
+C_Hex	dw	DoCol
+	dw	C_Lit,16,C_Base,C_Store,C_SemiS
+
+
+	dw	E_Hex
+E_Dec	db	>87,"DECIMAL"
+C_Dec	dw	DoCol
+	dw	C_Lit,10,C_Base,C_Store,C_SemiS
+
+
+	dw	E_Dec
+E_Count	db	>85,"COUNT"
+C_Count	dw	DoCol
+	dw	C_Dup,C_1Pl,C_Swap,C_CAt,C_SemiS
+
+
+	dw	E_Count
+E_Type	db	>84,"TYPE "
+C_Type	dw	DoCol
+	dw	C_QDup,C_ZBrch,18,C_0
+	dw	C_PDo,C_Dup,C_CAt,C_Emit,C_1Pl,C_PLoop,>fff6,C_Drop,C_SemiS
+
+
+	dw	E_Type
+E_Trail	db	>89,"-TRAILING"
+C_Trail	dw	DoCol
+	dw	C_Dup,C_0,C_PDo,C_Over,C_Over,C_Plus,C_1Mi,C_CAt
+	dw	C_BL,C_SUB,C_ZBrch,8,C_Leave,C_Brch,4
+	dw	C_1Mi,C_PLoop,>ffe4,C_SemiS
+
+
+	dw	E_Trail
+E_QStck	db	>86,"?STACK "
+C_QStck	dw	DoCol
+	dw	C_S0,C_At,C_SpFet,C_ULess,C_1,C_QErr
+	dw	C_SpFet,C_Lit,>2000,C_ULess,C_Lit,7,C_QErr,C_SemiS
+
+
+	dw	E_QStck
+E_Expec	db	>86,"EXPECT "
+C_Expec	dw	DoCol
+	dw	C_0,C_PDo,C_Key
+	dw	C_Dup,C_Lit,13,C_Equal,C_ZBrch,>e
+	dw		C_Drop,C_Space,C_Leave,C_0,C_Brch,>4e
+	dw	C_Dup,C_Lit,8,C_Equal
+	dw	C_Over,C_Lit,211,C_Equal,C_Or,C_ZBrch,>2c
+	dw		C_Drop,C_I,C_ZEqu,C_ZBrch,>0e
+	dw		C_Lit,7,C_Emit,C_0,C_Brch,>12
+	dw		C_Lit,32,C_OverS
+	dw		C_RFrom,C_1Mi,C_ToR,C_1Mi,C_0,C_Brch,14
+	dw	C_Dup,C_Emit,C_over,C_CStre,C_1Pl,C_1,C_PPLop,>ff98
+	dw	C_0,C_Swap,C_Over,C_Over,C_CStre,C_1Pl,C_CStre
+	dw	C_SemiS
+
+
+	dw	E_Expec
+E_OverS	db	>8a,"OVERSTRIKE "
+C_OverS	dw	DoCol
+	dw	C_Lit,8,C_Emit,C_Emit,C_Lit,8,C_Emit,C_SemiS
+
+
+	dw	E_OverS
+E_Query	db	>85,"QUERY"
+C_Query	dw	DoCol
+	dw	C_TIB,C_At,C_Lit,80,C_Expec,C_0,C_In,C_Store,C_SemiS
+
+
+	dw	E_Query
+E_Fill	db	>84,"FILL "		; (start\count\fill char --)
+C_Fill	dw	$ 2+
+
+	mov	+*SP,2			; fill char
+	swpb	2
+	mov	+*SP,1			; count
+	mov	+*SP,0			; start addr
+	mov	1,1
+	jeq	C_Fl01
+C_Fl00	movb	2,+*0
+	dec	1
+	jne	C_Fl00
+
+C_Fl01	b	*NEXT
+
+;	dw	C_Swap,C_ToR,C_Over,C_CStre,C_Dup,C_1Pl,C_RFrom,C_1Mi
+;	dw	C_CMove,C_SemiS
+
+ 
+
+
+	dw	E_Fill
+E_Erase	db	>85,"ERASE"
+C_Erase	dw	DoCol
+	dw	C_0,C_Fill,C_SemiS
+
+
+	dw	E_Erase
+E_Blnks	db	>86,"BLANKS "
+C_Blnks	dw	DoCol
+	dw	C_BL,C_Fill,C_SemiS
+
+
+	dw	E_Blnks
+E_Hold	db	>84,"HOLD "
+C_Hold	dw	DoCol
+	dw	C_Lit,>ffff,C_HLD,C_PStre,C_HLD,C_At,C_CStre,C_SemiS
+
+
+	dw	E_Hold
+E_Pad	db	>83,"PAD"
+C_Pad	dw	DoCol
+	dw	C_Here,C_Lit,68,C_Plus,C_SemiS
+
+
+	dw	E_Pad
+E_RBlk	db	>84,"RBLK "			; (addr \ block # -- err )
+C_RBlk	dw	$ 2+
+	mov	+*SP,1
+	mov	*SP,2
+	blwp	@rblock
+	srl	0,8
+	mov	0,*SP
+	b	*NEXT
+
+	dw	E_RBlk
+E_WBlk	db	>84,"WBLK "			; (addr \ block # -- err )
+C_WBlk	dw	$ 2+
+	mov	+*SP,1
+	mov	*SP,2
+	blwp	@wblock
+	srl	0,8
+	mov	0,*SP
+	b	*NEXT
+
+	dw	E_wBlk
+E_RW	db	>83,"R/W"
+C_RW	dw	DoCol
+	dw	C_ZBrch,8,C_RBlk,C_Brch,4,C_WBlk,C_Lit,8,C_QErr,C_SemiS
+
+	dw	E_RW
+
+
+
+E_FthDsk db	>89,"FORTHDISK"
+C_FthDsk dw	$ 2+
+	dect	SP
+	li	0,forthdsk
+	mov	0,*SP
+	b	*NEXT
+
+	dw	E_FthDsk
+
+;	Our blocks will reside in GROM only (for now).
+;
+;	  In the GROM so far there is space at >930
+;	to store stuff.  >6000 is the limit.  
+;	  Since we're not using a disk, we have freedom to make
+;	variable-sized blocks.  At >930 we'll store pointers into
+;	the GROM for each block.  BLOCK below will simply read
+;	one such block (length=addr_next-addr_cur) at >10000-length.
+;	Therefore we need no buffers for this.  But we should check
+;	that the buffer won't overwrite the dictionary.
+;
+;	TOS = blk # (1-xxx)
+
+
+E_RGWrd	db	>85,"RGWRD"			; tos = GADDR
+C_RGWrd	dw	$ 2+
+	limi	0
+	mov	*SP,0
+	movb	0,@>9c02
+	swpb	0
+	movb	0,@>9c02
+	movb	@>9800,0
+	swpb	0
+	movb	@>9800,0			; get Intel-order word
+	limi	1
+	mov	0,*SP
+	b	*NEXT
+
+	dw	E_RGWrd
+E_GMove	db	>85,"GMOVE"
+C_GMove	dw	$ 2+				; (gaddr caddr len)
+	limi	0
+	mov	+*SP,3
+	mov	+*SP,2
+	mov	+*SP,1
+	movb	1,@>9c02
+	swpb	1
+	movb	1,@>9c02
+C_GM00	movb	@>9800,+*2
+	dec	3
+	jgt	C_GM00
+	limi	1
+	b	*NEXT
+
+	dw	E_GMove
+E_PBuf	db	>84,"+BUF "
+C_PBuf	dw	DoCol
+	dw	C_BBuf,C_Lit,4,C_Plus,C_Plus,C_Dup,C_Limit,C_Equal,C_ZBrch,6
+	dw	C_Drop,C_First,C_Dup,C_Prev,C_At,C_Sub,C_SemiS
+
+	dw	E_PBuf
+E_Buffr	db	>86,"BUFFER "
+C_Buffr	dw	DoCol
+	dw	C_Use,C_At,C_Dup,C_ToR,C_PBuf,C_ZBrch,>fffc
+	dw	C_Use,C_Store,C_RAt,C_At,C_ZLess,C_ZBrch,>14
+	dw	C_RAt,C_2Pl,C_RAt,C_At,C_Lit,32767,C_And,C_0,C_RW
+	dw	C_Rat,C_Store,C_RAt,C_PRev,C_Store,C_RFrom,C_2Pl,C_SemiS
+
+	dw	E_Buffr
+E_Update db	>86,"UPDATE "
+C_Update dw	DoCol
+	dw	C_PRev,C_At,C_At,C_Lit,32768,C_Or,C_Prev,C_At,C_Store,C_SemiS
+
+	dw	E_Update
+E_Flush	db	>85,"FLUSH"
+C_Flush	dw	DoCol
+	dw	C_Limit,C_First,C_Sub,C_BBuf,C_Lit,4,C_Plus,C_Div
+	dw	C_1Pl,C_0,C_PDo,C_Lit,32767,C_Buffr,C_Drop,C_PLoop,>fff6
+	dw	C_SemiS
+
+	dw	E_Flush
+E_EmpBuf db	>8d,"EMPTY-BUFFERS"
+C_EmpBuf dw	DoCol
+	dw	C_First,C_Limit,C_Over,C_Sub,C_Erase,C_Flush,C_First
+	dw	C_Use,C_Store,C_First,C_Prev,C_Store,C_SemiS
+
+	dw	E_EmpBuf
+E_Clear	db	>85,"CLEAR"
+C_Clear	dw	DoCol
+	dw	C_Dup,C_Scr,C_Store,C_Flush,C_Buffr
+	dw	C_BBuf,C_Blnks,C_Update,C_SemiS
+
+	dw	E_Clear
+E_Block	db	>85,"BLOCK"
+C_Block	dw	DoCol
+	dw	C_ToR,C_Prev,C_At,C_Dup,C_At,C_RAt,C_Sub
+	dw	C_Dup,C_Plus,C_ZBrch,>32
+	dw	C_PBuf,C_ZEqu,C_ZBrch,>12
+	dw	C_Drop,C_Rat,C_Buffr,C_Dup,C_RAt,C_1,C_RW,C_2Mi,C_Dup,C_At
+	dw	C_RAt,C_Sub,C_DUp,C_Plus,C_ZEqu,C_ZBrch,>ffd8
+	dw	C_Dup,C_Prev,C_Store
+	dw	C_RFrom,C_Drop,C_2Pl,C_SemiS
+
+	dw	E_Block
+E_PLine	db	>86,"(LINE) "
+C_PLine	dw	DoCol
+	dw	C_ToR,C_CL,C_BBuf,C_TDMod,C_RFrom,C_Plus,C_Block
+	dw	C_Plus,C_CL,C_SemiS
+
+	dw	E_PLine
+E_PrLine db	>85,".LINE"
+C_PrLine dw	DoCol
+	dw	C_PLine,C_Trail,C_Type,C_SemiS
+
+	dw	E_PrLine
+E_Load	db	>84,"LOAD"
+C_Load	dw	DoCol
+	dw	C_QDup,C_ZEqu,C_Lit,9,C_QErr
+	dw	C_Blk,C_At,C_ToR,C_In,C_At,C_ToR
+	dw	C_0,C_In,C_Store
+	dw	C_Blk,C_Store,C_Inter
+	dw	C_RFrom,C_In,C_Store,C_RFrom,C_Blk,C_Store,C_SemiS
+
+	dw	E_Load
+
+E_AtGrm	db	>84,"@GRM "			; (index -- gaddr)
+C_AtGrm	dw	DoCol
+	dw	C_2Ti,C_Lit,>930,C_Plus,C_RGWrd,C_SemiS
+
+
+	dw	E_AtGrm
+E_Gtblk	db	>85,"GTBLK"				; (start end -- )
+C_Gtblk	dw	DoCol
+	dw	C_Over,C_Sub 				; >a00 >100
+	dw	C_Dup,C_Minus	 	     		; >a00 >100 >ff00
+	dw	C_Dup,C_Here,C_ULess,C_2,C_QErr		; >a00 >100 >ff00
+	dw	C_Dup,C_AtScr,C_Store			; >a00 >100 >ff00
+	dw	C_Swap,C_GMove
+	dw	C_SemiS
+	
+
+	dw	E_Gtblk
+
+;E_Block	db	>85,"BLOCK"			 	; (ind -- addr)
+;C_Block	dw	DoCol
+;	
+;	dw	C_QDup,C_ZBrch,42			; don't allow block 0
+;	dw	C_Dup,C_Scr,C_At,C_Sub,C_ZBrch,24	; already loaded?
+;	dw	C_Dup,C_Scr,C_Store
+;	dw	C_Dup,C_AtGrm,C_Swap,C_1Pl,C_AtGrm 	; >a00 >b00
+;	dw	C_Gtblk,C_Brch,4			; --
+;	dw	C_Drop
+;	dw	C_AtScr,C_At
+;	
+;	dw	C_SemiS
+;
+;	dw	E_Block
+;E_Load	db	>84,"LOAD "
+;C_Load	dw	DoCol
+;	dw	C_QDup,C_ZEqu,C_Lit,12,C_QErr
+;	dw	C_BLK,C_At,C_ToR,C_In,C_At,C_ToR
+;	dw	C_0,C_In,C_Store,C_Blk,C_Store
+;	dw	C_Inter
+;	dw	C_RFrom,C_In,C_Store,C_RFrom,C_Blk,C_Store
+;	dw	C_SemiS
+;
+;	dw	E_Load
+
+
+E_Arrow	db	>C3,"-->"
+C_Arrow	dw	DoCol
+	dw	C_QLoad,C_0,C_In,C_Store,C_1,C_Blk,C_PStre,C_SemiS
+
+
+	dw	E_Arrow
+E_Dsrlnk db	>86,"DSRLNK "			; ( 8|10 / pab -- err? / err)
+C_Dsrlnk dw	$ 2+
+	mov	+*SP,0
+	mov	0,1
+	ai	1,9
+	mov	1,@>8356
+	mov	+*SP,1
+	blwp	@dsrlnk
+	jne	C_Dsr0
+	dect	SP
+	srl	0,8
+	mov	0,*SP
+	li	0,1
+	jmp	C_Dsr1
+C_Dsr0:	clr	0
+C_Dsr1:	dect	SP
+	mov	0,*SP
+	b	*NEXT
+
+
+	dw	E_Dsrlnk
+E_Word	db	>84,"WORD "
+C_Word	dw	DoCol
+	dw	C_BLK,C_At,C_QDup,C_ZBrch,8
+	dw	C_Block,C_Brch,6
+	dw	C_TIB,C_At
+	dw	C_IN,C_At,C_Plus,C_Swap,C_Encls
+	dw	C_Here,C_Lit,34,C_Blnks,C_In,C_PStre,C_Over
+	dw	C_SUB,C_Dup,C_ToR,C_Here,C_CStre,C_Plus
+	dw	C_Here,C_1Pl,C_RFrom,C_CMove,C_SemiS
+
+
+	dw	E_Word
+E_PQuo	db	>84,"(.",34,") "
+C_PQuo	dw	DoCol
+	dw	C_RAt,C_Count,C_Dup,C_1Pl,C_EqC,C_RFrom,C_Plus,C_ToR
+	dw	C_Type,C_SemiS
+
+
+	dw	E_PQuo
+E_Quo	db	>c2,".",34," "
+C_Quo	dw	DoCol
+	dw	C_Lit,34,C_State,C_At,C_ZBrch,22
+	dw	C_Comp,C_PQuo,C_Word,C_Here,C_CAt,C_1Pl,C_EqC
+	dw	C_Allot,C_Brch,10,C_Word,C_Here,C_Count,C_Type,C_SemiS
+
+
+	dw	E_Quo
+E_CQuo	db	>c2,",",34," "
+C_CQuo	dw	DoCol
+	dw	C_Lit,34,C_Word,C_Here,C_CAt,C_1Pl,C_EqC
+	dw	C_Allot,C_SemiS
+
+
+	dw	E_CQuo
+E_PNum	db	>88,"(NUMBER) "
+C_PNum	dw	DoCol
+	dw	C_1Pl,C_Dup,C_ToR,C_CAt,C_Base,C_At,C_Digit,C_ZBrch,>002c
+	dw	C_Swap,C_Base,C_At,C_UTms,C_Drop,C_Rot,C_Base,C_At,C_UTms
+	dw	C_DPls,C_Dpl,C_At,C_1Pl,C_ZBrch,>0008
+	dw	C_1,C_Dpl,C_PStre,C_RFrom,C_Brch,>ffc6
+	dw	C_RFrom,C_SemiS
+
+
+	dw	E_PNum
+E_Num	db	>86,"NUMBER "
+C_Num	dw	DoCol
+	dw	C_0,C_0,C_Rot,C_Dup,C_1Pl,C_CAt,C_Lit,45,C_Equal
+	dw	C_Dup,C_ToR,C_Plus,C_Lit,>ffff
+	dw	C_DPL,C_Store,C_PNum
+	dw	C_Dup,C_Cat,C_BL,C_SUB,C_ZBrch,22
+	dw	C_Dup,C_CAt,C_Lit,46,C_SUB,C_0,C_QErr,C_0,C_Brch,>ffdc
+	dw	C_Drop,C_RFrom,C_ZBrch,4,C_DMns,C_SemiS
+
+
+	dw	E_Num
+E_MFind	db	>85,"-FIND"
+C_MFind	dw	DoCol
+	dw	C_BL,C_Word,C_Here,C_Cont,C_At,C_At,C_PFind,C_Dup
+	dw	C_ZEqu,C_ZBrch,10,C_Drop,C_Here,C_Lates,C_PFind,C_SemiS
+
+
+	dw	E_MFind
+E_PAbor	db	>87,"(ABORT)"
+C_PAbor	dw	DoCol
+	dw	C_Abort,C_SemiS			;; ????????
+
+
+	dw	E_PAbor
+;E_ErrP	db	>87,"_ERRPTR"
+;C_ErrP	dw	$ 2+
+;	li	0,T_Uerrs
+;	dect	SP
+;	mov	0,*SP
+;	b	*NEXT
+
+
+;	dw	E_ErrP
+
+
+E_Error	db	>85,"ERROR"
+C_Error	dw	DoCol
+	dw	C_Warn,C_At,C_ZLess,C_ZBrch,8
+	dw	C_PAbor,C_Brch,12
+	dw	C_Here,C_Count,C_Type
+	dw	C_Mess,C_SPSt,C_In,C_At,C_0,C_Quit,C_SemiS
+
+
+	dw	E_Error
+E_ID	db	>83,"ID."
+C_ID	dw	DoCol
+	dw	C_Pad,C_Lit,32,C_Lit,95,C_Fill,C_Dup,C_1,C_Trvrs
+	dw	C_Over,C_SUB,C_1Pl,C_Pad,C_Swap
+	dw	C_CMove
+	dw	C_Pad,C_Count,C_Lit,31,C_and,C_Type,C_Space,C_SemiS
+
+
+	dw	E_ID
+E_Creat	db	>86,"CREATE "
+C_Creat	dw	DoCol
+	dw	C_Here,C_EqC,C_DP,C_Store,C_Lates,C_Comma,C_MFind
+	dw	C_ZBrch,16,C_Drop,C_NFA,C_ID,C_Lit,4,C_Mess,C_Space
+	dw	C_Here,C_Dup,C_CAt,C_Width,C_At,C_Min,C_1Pl,C_EqC
+	dw	C_Allot
+	dw	C_Dup,C_Lit,>80,C_Togg
+;	dw	C_Curr,C_At,C_Store,C_Here,C_2Pl,C_Comma,C_SemiS
+	dw	C_Curr,C_At,C_Store,C_Lit,PushPFA,C_Comma,C_SemiS
+
+
+	dw	E_Creat
+E_BComp	db	>C9,"[COMPILE]"
+C_BComp	dw	DoCol
+	dw	C_MFind,C_ZEqu,C_0,C_QErr,C_Drop,C_CFA,C_Comma,C_SemiS
+
+
+	dw	E_BComp
+E_Liter	db	>C7,"LITERAL"
+C_Liter	dw	DoCol
+	dw      C_State,C_At,C_ZBrch,8,C_Comp,C_Lit,C_Comma,C_SemiS
+
+
+	dw	E_Liter
+E_DLiter db	>C8,"DLITERAL "
+C_DLiter dw	DoCol
+	dw	C_State,C_At,C_ZBrch,10,C_Comp,C_Dlit,C_Comma,C_Comma,C_SemiS
+
+
+	dw	E_DLiter
+E_Inter	db	>89,"INTERPRET"
+C_Inter	dw	DoCol
+	dw	C_MFind,C_ZBrch,30
+	dw	C_State,C_At,C_Less,C_ZBrch,10
+	dw	C_CFA,C_Comma,C_Brch,6
+	dw	C_CFA,C_Exec,c_qstck,C_Brch,28
+	dw	C_Here,C_Num,C_DPL,C_At,C_1Pl,C_ZBrch,8
+	dw	C_DLiter,C_Brch,6
+	dw	C_Drop,C_Liter
+	dw	C_QStck
+	dw	C_Brch,>ffc2,C_SemiS
+
+
+	dw	E_Inter
+E_Immed	db	>89,"IMMEDIATE"
+C_Immed	dw	DoCol
+	dw	C_Lates,C_Lit,64,C_Togg,C_SemiS
+
+	
+	dw	E_Immed
+E_Paren	db      >C1,"("
+C_Paren	dw	DoCol
+	dw	C_Lit,41,C_Word,C_SemiS
+
+
+	dw	E_Paren
+E_Forth	db	>85,"FORTH"
+C_Forth	dw	DoCol
+	dw	C_Lit,>A000,C_Cont,C_Store,C_SemiS
+
+
+	dw	E_Forth
+E_Defs	db	>8b,"DEFINITIONS"
+C_Defs	dw	DoCol
+	dw	C_Cont,C_At,C_Curr,C_Store,C_SemiS
+
+
+	dw	E_Defs
+E_Quit	db	>84,"QUIT "
+C_Quit	dw	DoCol
+	dw	C_0,C_BLK,C_Store
+	dw	C_LBrac,C_RpSt,C_CR,C_Query
+	dw	C_Inter,C_State
+	dw	C_At,C_ZEqu,C_ZBrch,8,C_PQuo
+	db	3," ok"
+	dw	C_Brch,>ffe6,C_SemiS
+
+
+	dw	E_Quit
+E_Abort	db	>85,"ABORT"
+C_Abort	dw	DoCol
+	dw	C_SPSt,C_Dec,C_CR,C_PQuo
+	db	10,"V9t9 FORTH",0
+	dw	C_Forth,C_Defs
+	dw	C_Quit,C_SemiS
+
+
+	dw	E_Abort
+E_ErrNPr db	>84,"ER#. "
+C_ErrNPr dw	DoCol
+	dw	C_0,C_Lit,10,C_UDiv
+	dw	C_Lit,48,C_Plus,C_Emit,C_Lit,48,C_Plus,C_Emit,C_BL,C_Emit
+	dw	C_SemiS
+
+
+	dw	E_ErrNPr
+E_Mess	db	>87,"MESSAGE"
+C_Mess	dw	DoCol
+	dw	C_Warn,C_At,C_ZBrch,28
+	dw	C_Lit,32,C_UTms,C_Drop,C_0,C_Block,C_Plus
+	dw	C_Lit,31,C_Trail,C_Type
+	dw	C_Brch,16
+	dw	C_PQuo
+	db	9," ? MSG # "
+	dw	C_ErrNPr,C_SemiS
+
+
+	dw	E_Mess
+E_Tick	db	>C1,"'"
+C_Tick	dw	DoCol
+	dw	C_MFind,C_ZEqu,C_0,C_QErr,C_Drop,C_Liter,C_SemiS
+
+
+	dw	E_Tick
+E_Colon	db	>C1,":"
+C_Colon	dw	DoCol
+	dw	C_QExec,C_XCsp,C_Curr,C_At,C_Cont,C_Store
+	dw	C_Creat,C_Smudg,C_RBrac,C_Lit,DoCol,C_Here,C_2Mi,C_Store
+	dw	C_SemiS
+
+
+	dw	E_Colon
+E_SemiC	db	>C1,59
+C_SemiC	dw	DoCol
+	dw	C_QCsp,C_Comp,C_SemiS,C_Smudg,C_LBrac,C_SemiS
+
+;---------------------------------------------------------
+
+	dw	E_SemiC
+E_Text	db	>84,"TEXT "
+C_Text	dw	$ 2+
+	blwp	@vtextsetup
+C_GWin	nop
+	blwp	@vscreenon
+	movb	@vwx,2
+	ab	@vwxs,2
+	cb	2,@vwidth
+	jl	C_GWOk
+	mov	@vwx,0
+	mov	@vwxs,1
+	sb	@vwidth,2
+	sb	2,1
+	bl	@window
+C_GWOk:
+	b	*NEXT
+
+	dw	E_Text
+E_Grphx db	>88,"GRAPHICS "
+C_Grphx	dw	$ 2+
+	blwp	@vgraphsetup
+	jmp	C_GWin
+
+	dw	E_Grphx
+E_Bitmap db	>86,"BITMAP "
+C_Bitmap dw	$ 2+
+	blwp	@vbitmapsetup
+	jmp	C_GWin
+
+	dw	E_Bitmap
+E_Mono	db	>84,"MONO "
+C_Mono	dw	$ 2+
+	blwp	@vmonosetup
+	jmp	C_GWin
+
+	dw	E_Mono
+E_Line	db	>84,"LINE "
+C_Line	dw	$ 2+
+	bl	@vcursoroff
+	mov	+*SP,4
+	mov	+*SP,3
+	mov	+*SP,2
+	mov	+*SP,1
+	blwp	@vbitline
+	b	*NEXT
+
+
+	dw	E_Line
+
+E_Comp	db	>87,"COMPILE"
+C_Comp	dw	DoCol
+	dw	C_QComp,C_RFrom,C_Dup,C_2Pl,C_ToR,C_At,C_Comma,C_SemiS
+
+
+	dw	E_Comp
+E_QComp	db	>85,"?COMP"
+C_QComp	dw	DoCol
+	dw	C_State,C_At,C_ZEqu,C_Lit,17,C_QErr,C_SemiS
+
+
+	dw	E_QComp
+E_QPair	db	>86,"?PAIRS "
+C_QPair	dw	DoCol
+	dw	C_SUB,C_Lit,19,C_QErr,C_SemiS
+
+
+	dw	E_QPair
+E_Back	db	>84,"BACK "
+C_Back	dw	DoCol
+	dw	C_Here,C_Sub,C_Comma,C_SemiS
+
+
+	dw	E_Back
+E_Begin	db	>C5,"BEGIN"
+C_Begin	dw	DoCol
+	dw	C_QComp,C_Here,C_1,C_SemiS
+
+
+	dw	E_Begin
+E_EndIf	db	>C5,"ENDIF"
+C_EndIf	dw	DoCol
+	dw	C_QComp,C_2,C_QPair
+	dw	C_Here,C_Over,C_Sub,C_Swap,C_Store,C_SemiS
+
+
+	dw	E_Endif
+E_Then	db	>C4,"THEN "
+C_Then	dw	DoCol
+	dw	C_EndIf,C_SemiS
+
+
+	dw	E_Then
+E_Do	db	>C2,"DO "
+C_Do	dw	DoCol
+	dw	C_QComp,C_Comp,C_PDo,C_Here,C_3,C_SemiS
+
+
+	dw	E_Do
+E_Loop	db	>C4,"LOOP "
+C_Loop	dw	DoCol
+	dw	C_QComp,C_3,C_QPair,C_Comp,C_PLoop,C_Back,C_SemiS
+
+
+	dw	E_Loop
+E_PlLop	db	>C5,"+LOOP"
+C_PlLop	dw	DoCol
+	dw	C_QComp,C_3,C_QPair,C_Comp,C_PPLop,C_Back,C_Semis
+
+
+	dw	E_PlLop
+E_Until	db	>C5,"UNTIL"
+C_Until	dw	DoCol
+	dw	C_QComp,C_1,C_QPair,C_Comp,C_ZBrch,C_Back,C_SemiS
+
+		  
+	dw	E_Until
+E_End	db	>C3,"END"
+C_End	dw	DoCol
+	dw	C_Until,C_SemiS
+
+
+	dw	E_End
+E_Again	db	>C5,"AGAIN"
+C_Again	dw	DoCol
+	dw	C_QComp,C_1,C_QPair,C_Comp,C_Brch,C_Back,C_SemiS
+
+
+	dw	E_Again
+E_Rep	db	>C6,"REPEAT "
+C_Rep	dw	DoCol
+	dw	C_QComp,C_ToR,C_ToR,C_Again
+	dw	C_RFrom,C_RFrom,C_2Mi,C_Endif,C_SemiS
+
+
+	dw	E_Rep
+E_If	db	>C2,"IF "
+C_If	dw	DoCol
+	dw	C_QComp,C_Comp,C_ZBrch,C_Here,C_0,C_Comma,C_2,C_SemiS
+
+
+	dw	E_If
+E_Else	db	>C4,"ELSE "
+C_Else	dw	DoCol
+	dw	C_QComp,C_2,C_QPair,C_Comp,C_Brch
+	dw	C_Here,C_0,C_Comma,C_Swap,C_2,C_Endif,C_2,C_SemiS
+
+
+	dw	E_Else
+E_While	db	>C5,"WHILE"
+C_While	dw	DoCol
+	dw	C_If,C_2Pl,C_SemiS
+
+
+	dw	E_While
+E_Case	db	>C4,"CASE "
+C_Case	dw	DoCol
+	dw	C_QComp,C_Csp,C_At,C_XCsp,C_Lit,4,C_SemiS
+
+
+	dw	E_Case
+E_Of	db	>C2,"OF "
+C_Of	dw	DoCol
+	dw	C_QComp,C_Lit,4,C_QPair,C_Comp,C_POf
+	dw	C_Here,C_0,C_Comma,C_Lit,5,C_SemiS
+
+
+	dw	E_Of
+E_Endof	db	>C5,"ENDOF"
+C_Endof	dw	DoCol
+	dw	C_QComp,C_Lit,5,C_QPair,C_Comp,C_Brch
+	dw	C_Here,C_0,C_Comma,C_Swap,C_2,C_Endif,C_Lit,4,C_SemiS
+
+
+	dw	E_Endof
+E_EndC	db	>C7,"ENDCASE"
+C_EndC	dw	DoCol
+	dw	C_QComp,C_Lit,4,C_QPair,C_Comp,C_Drop,C_SpFet,C_CSP
+	dw	C_At,C_Equal,C_ZEqu,C_ZBrch,10,C_2,C_Endif
+	dw	C_Brch,>ffec,C_Csp,C_Store,C_SemiS
+
+
+	dw	E_EndC
+E_PM	db	>82,"+- "
+C_PM	dw	DoCol
+	dw	C_ZLess,C_ZBrch,4,C_Minus,C_SemiS
+
+
+	dw	E_PM
+E_DPM	db	>83,"D+-"
+C_DPM	dw	DoCol
+	dw	C_ZLess,C_ZBrch,4,C_DMns,C_SemiS
+
+
+	dw	E_DPM
+E_DABS	db	>84,"DABS "
+C_DABS	dw	DoCol
+	dw	C_Dup,C_DPM,C_SemiS
+
+
+	dw	E_DABS
+E_MTms	db	>82,"M* "
+C_MTms	dw	DoCol
+	dw	C_Over,C_Over,C_Xor,C_ToR,C_Abs,C_Swap,C_Abs
+	dw	C_UTms,C_RFrom,C_DPM,C_SemiS
+
+	
+	dw	E_MTms
+E_MDiv	db      >82,"M/ "
+C_MDiv	dw	DoCol
+	dw	C_Over,C_ToR,C_ToR,C_DAbs,C_RAt,C_Abs,C_UDiv,C_RFrom
+	dw	C_RAt,C_Xor,C_PM,C_Swap,C_RFrom,C_PM,C_Swap,C_Semis
+
+
+	dw	E_MDiv
+E_Tms	db	>81,"*"
+C_Tms	dw	DoCol
+	dw	C_UTms,C_Drop,C_SemiS
+
+
+	dw	E_Tms
+E_DMod	db	>84,"/MOD "
+C_DMod	dw	DoCol
+	dw	C_ToR,C_S2D,C_RFrom,C_MDiv,C_SemiS
+
+
+	dw	E_DMod
+E_Div   db	>81,"/"
+C_Div	dw	DoCol
+	dw	C_DMod,C_Swap,C_Drop,C_SemiS
+
+
+	dw	E_Div
+E_Mod	db	>83,"MOD"
+C_Mod	dw	DoCol
+	dw	C_DMod,C_Drop,C_SemiS
+
+
+	dw	E_Mod
+E_TDMod	db	>85,"*/MOD"
+C_TDMod	dw	DoCol
+	dw	C_ToR,C_MTms,C_RFrom,C_MDiv,C_SemiS
+
+
+	dw	E_TDMod
+E_TD	db	>82,"*/ "
+C_TD	dw	DoCol
+	dw	C_TDMod,C_Swap,C_Drop,C_SemiS
+
+
+	dw	E_TD
+E_MDMod	db	>85,"M/MOD"
+C_MDMod	dw	DoCol
+	dw	C_ToR,C_0,C_RAt,C_UDiv,C_RFrom,C_Swap
+	dw	C_ToR,C_UDiv,C_RFrom,C_SemiS
+
+
+	dw	E_MDMod
+E_Spcs	db	>86,"SPACES "
+C_Spcs	dw	DoCol
+	dw	C_0,C_Max,C_QDup,C_ZBrch,12
+	dw	C_0,C_PDo,C_Space,C_PLoop,>fffc,C_SemiS
+
+
+	dw	E_Spcs
+E_LNum	db	>82,"<# "
+C_LNum	dw	DoCol
+	dw	C_PAD,C_HLD,C_Store,C_SemiS
+
+
+	dw	E_LNum
+E_NumR	db	>82,"#> "
+C_NumR	dw	DoCol
+	dw	C_Drop,C_Drop,C_HLD,C_At,C_Pad,C_Over,C_Sub,C_SemiS
+
+
+	dw	E_NumR
+E_Sign	db	>84,"SIGN "
+C_Sign	dw	DoCol
+	dw	C_Rot,C_ZLess,C_ZBrch,8,C_Lit,45,C_Hold,C_SemiS
+
+
+	dw	E_Sign
+E_NumN	db	>81,"#"
+C_NumN	dw	DoCol
+;	dw	C_Pad,C_Hld,C_At,C_Sub,C_Dpl,C_At,C_Equal,C_ZBrch,8
+;	dw	C_Lit,46,C_Hold
+	dw	C_Base,C_At,C_MDMod,C_Rot,C_Lit,9
+	dw	C_Over,C_Less,C_ZBrch,8
+	dw	C_Lit,7,C_Plus,C_Lit,48,C_Plus,C_Hold,C_SemiS
+
+
+	dw	E_NumN
+E_NumS	db	>82,"#S "
+C_NumS	dw	DoCol
+	dw	C_NumN,C_Over,C_Over,C_Or,C_ZEqu,C_ZBrch,>fff4,C_SemiS
+
+
+	dw	E_NumS
+E_DPrR	db	>83,"D.R"
+C_DPrR	dw	DoCol
+	dw	C_ToR,C_Swap,C_Over,C_Dabs,C_LNum,C_NumS,C_Sign,C_NumR
+	dw	C_RFrom,C_Over,C_Sub,C_Spcs,C_Type,C_SemiS
+
+
+	dw	E_DPrR
+E_DPr	db	>82,"D. "
+C_DPr	dw	DoCol
+	dw	C_0,C_DPrR,C_Space,C_SemiS
+
+
+	dw	E_DPr
+E_PrR	db	>82,".R "
+C_PrR	dw	DoCol
+	dw	C_ToR,C_S2D,C_RFrom,C_DPrR,C_SemiS
+
+
+	dw	E_PrR
+E_Pr	db	>81,"."
+C_Pr	dw	DoCol
+	dw	C_S2D,C_DPr,C_SemiS
+
+
+	dw	E_Pr
+E_Ques	db	>81,"?"
+C_Ques	dw	DoCol
+	dw	C_At,C_Pr,C_SemiS
+
+
+	dw	E_Ques
+E_UDPrR	db	>84,"UD.R "
+C_UDPrR	dw	DoCol
+	dw	C_ToR,C_LNum,C_NumS,C_NumR,C_RFrom,C_Over,C_Sub
+	dw	C_Spcs,C_Type,C_SemiS
+
+
+	dw	E_UDPrR
+E_UDPr	db	>83,"UD."
+C_UDPr	dw	DoCol
+	dw	C_0,C_UDPrR,C_Space,C_SemiS
+
+
+	dw	E_UDPr
+E_UPrR	db	>83,"U.R"
+C_UPrR	dw	DoCol
+	dw	C_ToR,C_0,C_RFrom,C_UDPrR,C_SemiS
+
+
+	dw	E_UprR
+E_UPr	db	>82,"U. "
+C_UPr	dw	DoCol
+	dw	C_0,C_UDPr,C_SemiS
+
+
+	dw	E_UPr
+E_Build	db	>87,"<BUILDS"
+C_Build	dw	DoCol
+	dw	C_Creat,C_Smudg,C_SemiS
+
+
+	dw	E_Build
+E_PDoes	db	>87,"(DOES>)"
+C_PDoes	dw	DoCol
+	dw	C_RFrom,C_Lates,C_PFA,C_CFA,C_Store,C_Smudg,C_SemiS
+
+
+
+	dw	E_PDoes
+E_Does	db	>C5,"DOES>"
+C_Does	dw	DoCol
+	dw	C_Lit,C_PDoes,C_Comma
+	dw	C_Lit,>06a0,C_Comma
+	dw	C_Lit,DoDoes,C_Comma
+	dw	C_SemiS
+
+
+	dw	E_Does
+E_SCode	db	>87,"(",59,"CODE)"
+C_SCode	dw	DoCol
+	dw	C_RFrom,C_Lates,C_PFA,C_CFA,C_Store,C_SemiS
+
+
+	dw	E_SCode
+E_Mysef	db	>C6,"MYSELF "
+C_MySef	dw	DoCol
+	dw      C_Lates,C_PFA,C_CFA,C_Comma,C_SemiS
+
+	dw	E_MySef
+;E_UErrs	db	>87,"_ERRORS"
+;	dw	$ 2+
+;P_UErrs	li	0,T_UErrs
+; 	dect	SP
+;	mov	0,*SP
+;	b	*NEXT
+;
+;		 0123456789ABCDEF.123456789ACDEF.123456789ABCDEF.123456789ABCDEF
+;T_UErrs	
+;	dw	E_UErrs
+
+E_Brch	db	>86,"BRANCH "
+C_Brch	dw	$ 2+
+C_Brch0	a	*IP,IP				; unconditional branch
+	b	*NEXT
+
+
+	dw	E_Brch
+E_ZBrch	db	>87,"0BRANCH"
+C_ZBrch	dw	$ 2+
+	c	+*SP,@@Dict			; jump if stack==0
+	jeq	C_Brch0
+	inct	IP
+	b	*NEXT
+
+
+	dw	E_ZBrch
+E_Over	db	>84,"OVER "
+C_Over	dw	$ 2+
+	dect	SP
+	mov	@4(SP),*SP
+	b	*NEXT
+
+	dw	E_Over
+E_Drop	db	>84,"DROP "
+C_Drop	dw	$ 2+
+	inct	SP
+	b	*NEXT
+
+
+	dw	E_Drop
+E_Swap	db	>84,"SWAP "
+C_Swap	dw	$ 2+
+	mov	*SP,0
+	mov	@2(SP),*SP
+	mov	0,@2(SP)
+	b	*NEXT
+
+
+	dw	E_Swap
+E_Dup	db	>83,"DUP"
+C_Dup	dw	$ 2+
+	dect	SP
+	mov	@2(SP),*SP
+	b	*NEXT
+
+
+	dw	E_Dup
+E_Here	db	>84,"HERE "
+C_Here	dw	$ 2+
+	dect	SP
+	mov	@_DP,*SP
+	b	*NEXT
+
+;	dw	C_DP,C_At,C_SemiS
+
+
+	dw	E_Here
+E_Allot	db	>85,"ALLOT"
+C_Allot	dw	DoCol
+	dw	C_Dup,C_Here,C_Plus,C_Here,C_ULess
+	dw	C_2,C_QErr
+	dw	C_DP,C_PStre,C_SemiS
+
+
+	dw	E_Allot
+E_Comma	db	>81,","
+C_Comma	dw	DoCol
+	dw	C_Here,C_Store,C_2,C_Allot,C_SemiS
+
+
+	dw	E_Comma
+E_CCmma	db	>82,"C, "
+C_CCmma	dw	DoCol
+	dw	C_Here,C_CStre,C_1,C_Allot,C_SemiS
+
+
+	dw	E_CCmma
+E_Equal	db	>81,"="
+C_Equal	dw	$ 2+
+	c	+*SP,*SP
+	clr	*SP
+	jne	C_Eq00
+	inc	*SP
+C_Eq00:
+	b	*NEXT
+
+
+	dw	E_Equal
+E_Less	db	>81,"<"
+C_Less	dw	$ 2+
+	c	+*SP,*SP
+	clr	*SP
+	jeq	C_Ls00
+	jlt	C_Ls00
+	inc	*SP
+C_Ls00	b	*NEXT
+
+	
+	dw	E_Less
+E_Great	db	>81,">"
+C_Great	dw	$ 2+
+	c	+*SP,*SP
+	clr	*SP
+	jeq	C_Gr00
+	jgt	C_Gr00
+	inc	*SP
+C_Gr00	b	*NEXT
+
+
+	dw	E_Great
+E_Cold	db	>84,"COLD "
+C_Cold	dw	DoCol
+	dw	C_PCold
+
+	dw	C_Here,C_Fence,C_Store
+	dw	C_Frthlnk,C_VocLink,C_Store
+
+	dw	C_First,C_Dup,C_Use,C_Store,C_Prev,C_Store
+	dw	C_EmpBuf
+
+	dw	C_Forth,C_Defs
+
+	dw	C_1,C_Load
+
+	dw	C_Abort,C_SemiS
+
+
+	dw	E_Cold
+E_PCold	db	>87," (COLD)"
+C_PCold	dw	$ 2+
+
+	li	0,@TIB
+	mov	0,@_TIB
+	li	0,@S0				; set up basic basic stuff
+	mov	0,@_S0
+	li	0,@R0
+	mov	0,@_R0
+
+	li	0,64
+	mov	0,@_CL
+
+	li	0,31
+	mov	0,@_Width
+	seto	@_Dpl
+	clr	@_Forth_Link
+	li	0,10
+	mov	0,@_Base
+
+	clr	@_Scr
+	clr	@_AtScr
+
+	li	0,>A000				; set up link from RAM
+	li	1,@LastEntry			; to ROM dictionary
+	mov	1,+*0
+	li	1,>81A0
+	mov	1,+*0
+	mov	0,@_DP
+
+	lwpi	mainws
+	limi	1
+
+	mov	@_S0,SP				; set up variables
+	mov	@_R0,RP
+	li	NEXT,@Next
+	b	*NEXT
+
+
+	dw	E_PCold				; last entry pleez
+@LastEntry equ	$
+E_Null	db	>C1,0
+C_Null	dw	DoCol
+	dw	C_BLK,C_At,C_ZBrch,8
+	dw	C_1,C_BLK,C_PStre
+	dw	C_0,C_In,C_Store
+	dw	C_RFrom,C_Drop,C_SemiS
+
+@Bottom	equ	$
+
+
+
+
+
+

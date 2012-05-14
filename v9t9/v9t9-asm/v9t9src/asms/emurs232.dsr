@@ -1,0 +1,92 @@
+
+	.model	tiny
+
+	include	strucs.inc
+	include	files.inc
+
+	org	4000h
+
+	.code
+
+
+
+;**************************
+;** RS232 DSR
+;**************************
+	
+RSPTR	macro	lab
+	dw	lab-offset rs232dsr+dsroffs
+	endm
+
+	public	rs232dsr
+	public	rs232len
+
+	even
+rs232dsr:	dw	0aa02h
+	dw	0
+	RSPTR	rsinit
+	dw	0
+	RSPTR	rsnames
+	dw	0		
+	RSPTR	rsint		
+	dw	0
+
+rsnames:	RSPTR	rsnx1
+	RSPTR	rs232ex
+	dw	0552h,'S2','32'
+	EVEN
+rsnx1:	RSPTR	rsnx2
+	RSPTR	rs2321ex
+	dw	0752h,'S2','32','/1'
+	EVEN
+rsnx2:	RSPTR	rsnx5
+	RSPTR	rs2322ex
+	dw	0752h,'S2','32','/2'
+	EVEN
+rsnx5:	RSPTR	rsnx6
+	RSPTR	pioex
+	dw	0350h,'IO'
+	EVEN
+rsnx6:	RSPTR	rsnx7
+	RSPTR	rs232ex
+	dw	0572h,'s2','32'
+	EVEN
+rsnx7:	RSPTR	rsnx8
+	RSPTR	rs2321ex
+	dw	0772h,'s2','32','/1'
+	EVEN
+rsnx8:	RSPTR	rsnx11
+	RSPTR	rs2322ex
+	dw	0772h,'s2','32','/2'
+	EVEN
+rsnx11:	dw	0
+	RSPTR	pioex
+	dw	0370h,'io'
+	EVEN
+
+
+rs232ex	dw	DSROP+D_RS232
+rs2321ex dw	DSROP+D_RS2321
+rs2322ex dw	DSROP+D_RS2322
+pioex	dw	DSROP+D_PIO
+
+
+rsinit	dw	0
+	RSPTR	rsinit0
+
+rsinit0	dw	0c18ch,022ch,80h,1d1fh,022ch,0ffc0h,1d1fh,0c306h,045bh
+
+rsint	dw	0
+	RSPTR	rsint0
+
+rsint0	dw	DSROP+60h			; interrupt
+
+
+rs232len	equ	$-rs232dsr
+
+slack		equ	8192-rs232len
+
+		dw	slack/2 dup (0c00h)
+
+		end
+

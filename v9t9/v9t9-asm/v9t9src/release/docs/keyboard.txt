@@ -1,0 +1,143 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ KEYBOARD.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file details the methods used to emulate the 99/4A keyboard
+  under V9t9.
+
+
+  อออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออ
+                     ณ THIS IS MAINLY A DISCLAIMER ณ
+  อออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออ
+
+       First of all, be aware that the 99/4A and the PC/AT keyboards are
+  entirely different.
+
+       Second of all, I still do not support foreign keyboards.  Sorry.
+
+
+  ออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออ
+                  ณ THE 99/4A KEYBOARD, IN A PARAGRAPH ณ
+  ออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออ
+
+       The keyboard is accessed through the 99/4A's CRU (communications
+  register unit).  An eight-by-eight bit array is used to tell the state
+  of every key on the keyboard (0=down, 1=up)   (Joysticks inhabit the
+  last 16 bits.)
+
+
+  ออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออออ
+                      ณ AND ON THE PC, THIS IS...? ณ
+  ออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออออ
+
+       The PC keyboard operates by interrupting the running program
+  whenever a key is pressed or released.  A port holds the scancode of
+  that key.  Every key has its own scancode.  Some even have several
+  codes, such as Pause or PrintScreen.
+
+
+  อออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออ
+           ณ SOUNDS LIKE THE DIFFERENCES ARE HUGE AND GAPING. ณ
+  อออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออ
+
+       Why, yes, this is true.
+
+       At the lowest level, this emulator translates the appropriate PC
+  scancodes into a little 8x8 matrix emulating the 99/4A keyboard, which
+  emulated programs can read.  I call this "matrix" emulation.  This works
+  perfectly fine for "true" 99/4A keys (the ones actually appearing on a
+  99/4A):
+
+                      1 2 3 4 5 6 7 8 9 0 =
+                       Q W E R T Y U I O P -
+                        A S D F G H J K L ; enter
+                   shift Z X C V B N M , . shift
+                 alpha ctrl    spacebar    fctn
+
+       Yes, a technologically advanced ~48-key keyboard.
+
+       Of course, PC keyboards have, oh, 53 more keys?  Internally, all
+  the PC keys which appear as "FCTN+x" keys on the 99/4A are emulated by
+  "pressing" the combination which activates it on the 99/4A.  Pressing
+  "~", for example, actually "presses" FCTN+W in the emulated keyboard.
+
+       Note that this type of "faking" keypresses is doomed to bugs,
+  because the ALT (FCTN) key is "floating" at this time (pressed in the
+  matrix but not on the keyboard).  Also, the PC keyboard doesn't send the
+  release scancode for a key until it is actually released.  In the above
+  example, if you pressed "~" and then "w", goofy things might happen,
+  depending on which one you released first.
+
+       I've taken efforts to work around all these strange artifacts of
+  trying to bridge the gap between these two systems.  Unless you're
+  typing very fast, or typing gibberish or something, you oughtn't see any
+  errors.
+
+       If you do see errors, such as some key you never pressed suddenly
+  repeating out-of-control, or funny control characters appearing in
+  alphabetical text, press F12, which, among other things, resets the
+  keyboard.
+
+
+  อออออออออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟออออออออออออออออออออออ
+                         ณ IS THERE A BETTER WAY? ณ
+  อออออออออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูออออออออออออออออออออออ
+
+       Glad you asked.  You see, the method above also has the
+  disadvantage of traipsing through the 99/4A CPU ROM, about two hundred
+  instructions, for each keyscan.  It does go a little slower.
+
+       Another method of emulating the 99/4A is by intercepting the ROM
+  routine, simply translating the latest key pressed on the keyboard into
+  a 99/4A character, and fixing the appropriate memory locations to make
+  it look like nothing unordinary happened.  I call this "direct"
+  emulation.  Earlier versions of this emulator used this technique, but
+  were unable to handle programs which read the keyboard I/O ports
+  directly.
+
+       You have the option of using this simpler and faster method of
+  emulating the keyboard.  If enabled, the ASCII modes (modes 3, 4, and 5)
+  will use "direct" mode and the split keyboard mode (and joysticks) will
+  use the "matrix" mode.  In actuality, the "matrix" emulation is always
+  enabled; the "direct" mode simply works on top of it and does the work
+  of the 99/4A ROM.  To enable it, add the value "+DirectKeyboard" to the
+  "ROMPatches" variable in TIEMUL.CNF:
+
+       ROMPatches= xxxxxx ,+DirectKeyboard
+
+       I don't yet know of any problems with this schizophrenic kind of
+  keyboard emulation, so, use it if you like it better.
+
+       A problem almost bound to happen with the DirectKeyboard word is
+  that the keyboard will go way too fast.
+
+
+  อออออออออออออออออฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟอออออออออออออออออออ
+                   ณ THE KEYBOARD GOES WAY TOO FAST! ณ
+  อออออออออออออออออภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูอออออออออออออออออออ
+
+       I bet!  By default, the keyboard will go as fast as the emulation
+  will let it (a necessary thing on my slow system).  I've heard that on
+  some 486 systems, users can't even type without getting
+  bbbbiiiiiiiggggggg   ooollllddddd rrrreeeeeppppeeeeaaatttiiiinngg!
+
+       The V9t9.CNF variable "ROMPatches", as referenced above, lets you
+  enable keyboard delays.  Add the word "+SlowDownKeyboard" to the list:
+
+       ROMPatches = xxxxxx, +SlowDownKeyboard
+
+       When this option is enabled, a series of 1/60 second delays will
+  elapse before a key can be read (note this works for either matrix or
+  direct emulation).  By default, the delay is 1/60 second.  You can
+  change the value of the "KeyboardDelay" V9t9.CNF variable to alter the
+  delay.  Note that this is a kludge.
+
+       Note that on slower systems, the keyboard is not being read as
+  often as on the 99/4A.  This means that whatever delay you choose will
+  actually be a MINIMUM delay; most likely delays will be longer than what
+  you specify.
+
+  อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

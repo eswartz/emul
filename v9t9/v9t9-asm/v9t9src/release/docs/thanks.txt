@@ -1,0 +1,47 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ THANKS.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       I'd like to thank everyone who has ever used this program and told
+  me about it.  I'm glad to know such a thing as a 99/4A emulator can be
+  moderately popular.  :)
+
+       I want to thank these people personally for their great
+  contributions to the project:
+
+       þ  Jim Reiss, who sent me tons of test files, information about
+  disks, RS232s, file formats, protocols, and provided major suggestions
+  which helped me create v5.01 from the toy-like pieces of v4.0.
+
+       þ  Jeff Lawson, who sent me the (digitized!) articles about the
+  speech synthesizer that gave me the information to emulate speech
+  directly.
+
+       þ  Dan H. Eicher, for sending me Funnelweb to test on the emulator,
+  and a commented disassembly of the console ROM which helped out a WHOLE
+  lot.
+
+       þ  Steve Hayter, for the "V9t9" name, and a nice round of beta-
+  testing.
+
+       þ  Robert Jones, for sending me the TI speech synthesizer manual
+  which cleared up a few things.
+
+       þ  Will Chose, Eric Bray, Charles Good, Tom Wills, Howie Uman,
+  Jesse Slicer, Brian Sedlak, and so many others that this might start to
+  look like an awards ceremony, for their exceptional interest in the
+  program, helpful suggestions, and bug-hunting.
+
+
+       I also thank ALL the people who bug-hunted and gave me suggestions.
+  (This includes everyone in the above list!)  Of course, I'm grateful for
+  the people who sent money too.  ;)  I'm always happy, if sometimes
+  reluctant, to take suggestions.  A lot of what people suggested has made
+  its way into V9t9, and I'm indebted to everyone who has had a part in it
+  so far.
+
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ

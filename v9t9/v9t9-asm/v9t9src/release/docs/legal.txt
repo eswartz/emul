@@ -1,0 +1,37 @@
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+     V9t9:  TI Emulator! v6.0 Documentation      (c) 1995 Edward Swartz
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+  ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤอออออออออออ LEGAL.TXT อออออออออออฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
+
+       This file documents legal and copyright concerns, and applies to
+  all the supplied documentation.
+
+       This software package and all programs within are written and self-
+  copyrighted (c) 1995 by Edward Swartz.  All rights reserved.
+
+       I (Edward Swartz) have a software license from Texas Instruments
+  giving me permission to use, distribute, and sell 99/4A console and TI
+  module ROMs.  There are royalties attached to this license, so any
+  orders made from me reflect the royalties I must pay.
+
+       I make no implied warranties as to the usefulness or suitability to
+  any purpose of this software, and take no responsibility for any adverse
+  effects the software may have on your computer.
+
+       I take no responsibility for alterations to the 600V9t9.ZIP archive
+  made without my permission.
+
+       
+  TI and TI-99/4A are trademarks of Texas Instruments Incorporated.
+
+  Sound Blaster is a trademarked product of Creative Labs.
+
+  Adlib is a trademarked name.
+
+  MS-DOS and MS Windows are trademarked products of Microsoft Corporation.
+
+  DR-DOS is a trademarked product of Digital Research.
+
+  ออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออ
