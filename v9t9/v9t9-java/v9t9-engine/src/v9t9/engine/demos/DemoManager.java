@@ -130,8 +130,7 @@ public class DemoManager implements IDemoManager {
 		
 		if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V9t9)) {
 			return new NewDemoFormatReader(machineModel, is);
-		} else if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
-				|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) {
+		} else if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) {
 			return new OldDemoFormatReader(is);
 		}
 		

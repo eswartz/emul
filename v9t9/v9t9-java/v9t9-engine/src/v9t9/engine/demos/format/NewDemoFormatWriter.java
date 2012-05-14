@@ -11,9 +11,11 @@ import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoOutputStream;
 import v9t9.common.machine.IMachineModel;
 import v9t9.engine.demos.events.SoundWriteRegisterEvent;
+import v9t9.engine.demos.events.SpeechWriteEvent;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
 import v9t9.engine.demos.format.DemoFormat.BufferType;
+import v9t9.engine.demos.format.DemoFormat.SpeechEvent;
 
 /**
  * Write demos in new format more amenable to a variable
@@ -82,7 +84,16 @@ public class NewDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 	
 	@Override
 	protected void writeSpeechEvent(IDemoEvent event) throws IOException {
-		CommonDemoFormat.writeSpeechEvent(event, speechBuffer);
+		SpeechWriteEvent ev = (SpeechWriteEvent) event;
+		
+		if (ev.getEvent() != SpeechEvent.ADDING_BYTE || !speechBuffer.isAvailable(2)) {
+			speechBuffer.flush();
+		}
+		
+		speechBuffer.push((byte) ev.getEvent().getCode());
+		if (ev.getEvent() == SpeechEvent.ADDING_BYTE) {
+			speechBuffer.push((byte) ev.getAddedByte());
+		}
 	}
 
 	@Override

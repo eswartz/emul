@@ -6,6 +6,7 @@ package v9t9.tools.demos;
 import gnu.getopt.Getopt;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URI;
@@ -82,21 +83,42 @@ public class ConvertDemos {
 			File fromFile = new File(file);
 			
 			if (fromFile.isDirectory()) {
-				File[] demos = fromFile.listFiles(new FilenameFilter() {
-					@Override
-					public boolean accept(File dir, String name) {
-						return name.toLowerCase().endsWith(".dem");
-					}
-				});
-				for (File ent : demos) {
-					cvt.convertFile(ent, newDir);
-				}
+				cvt.convertDirectory(fromFile, newDir);
 			}
 			else {
 				cvt.convertFile(fromFile, newDir);
 			}			
 		}
 		
+	}
+
+
+	/**
+	 * @param fromDir
+	 * @param newDir
+	 */
+	private void convertDirectory(File fromDir, File newDir) {
+		File[] demos = fromDir.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				return name.toLowerCase().endsWith(".dem");
+			}
+		});
+		for (File ent : demos) {
+			convertFile(ent, newDir);
+		}
+
+		File[] dirs = fromDir.listFiles(new FileFilter() {
+			
+			@Override
+			public boolean accept(File pathname) {
+				return !pathname.getName().startsWith(".") && pathname.isDirectory();
+			}
+		});
+		for (File dir : dirs) {
+			convertDirectory(dir, newDir);
+		}
+
 	}
 
 
@@ -156,10 +178,12 @@ public class ConvertDemos {
 			System.out.println("done!");
 		} catch (NotifyException e) {
 			System.out.flush();
+			System.err.flush();
 			System.err.print("\n\t");
 			System.err.println(e.getEvent());
 		} catch (IOException e) {
 			System.out.flush();
+			System.err.flush();
 			System.err.print("\n\t");
 			System.err.println(e.getMessage());
 		}

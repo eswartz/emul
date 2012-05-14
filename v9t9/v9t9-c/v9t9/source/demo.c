@@ -847,9 +847,6 @@ int demo_record_event(demo_type type, ...)
 
 		switch (data[0]) 
 		{
-		case demo_speech_starting:
-			break;
-
 		case demo_speech_adding_byte:	
 			/* this event has one byte of info */
 			data[0] = va_arg(va, int);
@@ -857,9 +854,13 @@ int demo_record_event(demo_type type, ...)
 			buffer_write(&buffer_speech, data, 1);
 			break;
 
+		case demo_speech_starting:
 		case demo_speech_terminating:
 		case demo_speech_stopping:
 		case demo_speech_interrupt:
+			// V9t9 6.0 emitted a zero/garbage byte
+			data[0] = 0;		
+			buffer_write(&buffer_speech, data, 1);
 			break;
 		}
 		logger(_L|L_2, "\n");

@@ -9,9 +9,11 @@ import java.io.OutputStream;
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoOutputStream;
 import v9t9.engine.demos.events.SoundWriteRegisterEvent;
+import v9t9.engine.demos.events.SpeechWriteEvent;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
 import v9t9.engine.demos.format.DemoFormat.BufferType;
+import v9t9.engine.demos.format.DemoFormat.SpeechEvent;
 
 /**
  * Writer for TI Emulator v6.0 & V9t9 demo formats
@@ -21,11 +23,16 @@ import v9t9.engine.demos.format.DemoFormat.BufferType;
 public class OldDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOutputStream {
 
 	private int ticks60;
+	private final boolean isTiemulFormat;
 
-	public OldDemoFormatWriter(OutputStream os) throws IOException {
+	public OldDemoFormatWriter(OutputStream os, boolean isTiemulFormat) throws IOException {
 		super(os);
+		this.isTiemulFormat = isTiemulFormat;
 		
-		os.write(DemoFormat.DEMO_MAGIC_HEADER_V910);
+		if (isTiemulFormat)
+			os.write(DemoFormat.DEMO_MAGIC_HEADER_TI60);
+		else
+			os.write(DemoFormat.DEMO_MAGIC_HEADER_V910);
 	}
 	
 	/* (non-Javadoc)
@@ -45,7 +52,16 @@ public class OldDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 	
 	@Override
 	protected void writeSpeechEvent(IDemoEvent event) throws IOException {
-		CommonDemoFormat.writeSpeechEvent(event, speechBuffer);
+		SpeechWriteEvent ev = (SpeechWriteEvent) event;
+		
+		if (ev.getEvent() != SpeechEvent.ADDING_BYTE || !speechBuffer.isAvailable(2)) {
+			speechBuffer.flush();
+		}
+		
+		speechBuffer.push((byte) ev.getEvent().getCode());
+		if (isTiemulFormat || ev.getEvent() == SpeechEvent.ADDING_BYTE) {
+			speechBuffer.push((byte) ev.getAddedByte());
+		}
 	}
 
 	@Override

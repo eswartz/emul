@@ -9,6 +9,7 @@ import java.io.InputStream;
 import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.events.NotifyException;
 import v9t9.engine.demos.events.SoundWriteRegisterEvent;
+import v9t9.engine.demos.events.SpeechWriteEvent;
 import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
@@ -81,7 +82,26 @@ public class OldDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 	 */
 	@Override
 	protected void queueSpeechEvents() throws IOException, NotifyException {
-		CommonDemoFormat.queueSpeechEvents(queuedEvents, speechBuffer);
+		// collection of speech events
+		speechBuffer.refill();
+		
+		// parse events
+		while (speechBuffer.isAvailable()) {
+			int byt = speechBuffer.read();  
+			if (byt != DemoFormat.SpeechEvent.ADDING_BYTE.getCode()) {
+				try {
+					queuedEvents.add(new SpeechWriteEvent(DemoFormat.SpeechEvent.fromCode(byt), 0));
+				} catch (IllegalArgumentException e) {
+					throw speechBuffer.newBufferException("corrupt speech byte " + Integer.toHexString(byt));
+				}
+				
+				// ignore next byte (always emitted in old format)
+				speechBuffer.read();
+			} else {
+				byt = speechBuffer.read() & 0xff;  
+				queuedEvents.add(new SpeechWriteEvent(DemoFormat.SpeechEvent.ADDING_BYTE, byt));
+			}
+		}
 	}
 	
 	/**
