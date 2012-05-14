@@ -7,6 +7,8 @@
 package v9t9.common.hardware;
 
 
+import java.util.BitSet;
+
 import ejs.base.properties.IPersistable;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.ByteMemoryAccess;
@@ -95,4 +97,14 @@ public interface IVdpChip extends IPersistable, IRegisterAccess {
 	ByteMemoryAccess getByteReadMemoryAccess(int vdpaddr);
 
 	int getMemorySize();
+	
+	/**
+	 * Populate and return a bit set whose 'on' bits
+	 * represent areas of video memory that contribute to 
+	 * the visible part of the screen.
+	 * @param granularityShift optional scaling factor, e.g., a value of 8
+	 * will only represent one bit per 256 bytes.
+	 * @return bitset
+	 */
+	BitSet getVisibleMemory(int granularityShift);
 }

@@ -20,6 +20,8 @@ import v9t9.engine.demos.format.DemoFormat.BufferType;
  */
 public class OldDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOutputStream {
 
+	private int ticks60;
+
 	public OldDemoFormatWriter(OutputStream os) throws IOException {
 		super(os);
 		
@@ -38,6 +40,7 @@ public class OldDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 	protected void writeTimerTick() throws IOException {
 		flushAll();
 		os.write(BufferType.TICK.getCode());
+		ticks60++;
 	}
 	
 	@Override
@@ -89,5 +92,13 @@ public class OldDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 			videoBuffer.flush();
 		}
 		videoBuffer.pushWord(((VideoWriteRegisterEvent) event).getAddr());
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoOutputStream#getElapsedTime()
+	 */
+	@Override
+	public long getElapsedTime() {
+		return ticks60 * 1000 / 60;
 	}
 }

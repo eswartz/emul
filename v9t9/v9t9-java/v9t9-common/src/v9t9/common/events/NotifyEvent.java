@@ -3,8 +3,6 @@
  */
 package v9t9.common.events;
 
-import java.io.PrintStream;
-
 import v9t9.common.events.IEventNotifier.Level;
 
 public class NotifyEvent implements Comparable<NotifyEvent> {
@@ -41,8 +39,12 @@ public class NotifyEvent implements Comparable<NotifyEvent> {
 		return diff;
 	}
 
-	public void print(PrintStream out) {
-		out.println(level.getLabel() + ": " + message);
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return level.getLabel() + ": " + message;
 	}
 	
 }

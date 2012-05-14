@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.common.video;
+package v9t9.video.common;
 
 public class VdpModeInfo
 {
@@ -16,6 +16,5 @@ public class VdpModeInfo
 		color = new VdpArea();
 		sprite = new VdpArea();
 		sprpat = new VdpArea();
-		
 	}
 }

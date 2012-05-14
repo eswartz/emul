@@ -18,7 +18,7 @@ import v9t9.engine.demos.format.DemoFormat.BufferType;
  *
  */
 public abstract class BaseDemoFormatReader extends BaseReader implements IDemoInputStream {
-
+	
 	protected DemoReadBuffer videoBuffer;
 
 	protected abstract void queueTimerTickEvent() throws IOException,
@@ -41,14 +41,8 @@ public abstract class BaseDemoFormatReader extends BaseReader implements IDemoIn
 	protected DemoReadBuffer speechBuffer;
 	protected Queue<IDemoEvent> queuedEvents;
 
-	/**
-	 * @param is
-	 */
-	public BaseDemoFormatReader(InputStream is) {
-		super(is);
-		
-		// skipped header
-		isPos += DemoFormat.DEMO_MAGIC_HEADER_LENGTH;
+	public BaseDemoFormatReader(InputStream is_) {
+		super(is_);
 
 		queuedEvents = new LinkedList<IDemoEvent>();
 		
@@ -75,7 +69,8 @@ public abstract class BaseDemoFormatReader extends BaseReader implements IDemoIn
 		} catch (NotifyException e) {
 			throw e;
 		} catch (Throwable e) {
-			throw new NotifyException(null, "Error reading demo at " + Integer.toHexString(isPos), e);
+			throw new NotifyException(null, "Error reading demo at " + 
+					Long.toHexString(getPosition()), e);
 		}
 		
 		return queuedEvents.poll();
@@ -89,7 +84,7 @@ public abstract class BaseDemoFormatReader extends BaseReader implements IDemoIn
 		if (!queuedEvents.isEmpty())
 			return;
 		
-		int kind = is.read();  isPos++;
+		int kind = is.read();  
 		if (kind < 0)
 			return;
 		
@@ -110,9 +105,9 @@ public abstract class BaseDemoFormatReader extends BaseReader implements IDemoIn
 		}
 		else {
 			// urf
-			throw new NotifyException(null, "demo corrupted at " + Integer.toHexString(isPos) + "; byte " + Integer.toHexString(kind));
+			throw new NotifyException(null, "demo corrupted at " 
+					+ Long.toHexString(getPosition()) + "; byte " + Integer.toHexString(kind));
 		}
 		
 	}
-
 }

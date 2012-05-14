@@ -5,11 +5,11 @@ package v9t9.video.tms9918a;
 
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.video.RedrawBlock;
-import v9t9.common.video.VdpModeInfo;
 import v9t9.video.BaseRedrawHandler;
 import v9t9.video.IVdpModeRedrawHandler;
 import v9t9.video.VdpRedrawInfo;
 import v9t9.video.VdpTouchHandler;
+import v9t9.video.common.VdpModeInfo;
 
 /**
  * @author ejs

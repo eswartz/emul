@@ -11,7 +11,7 @@ import junit.framework.TestCase;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.tests.TestSettingsHandler;
+import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
@@ -37,7 +37,7 @@ public class MemoryEntryTest extends TestCase {
     @Override
 	protected void setUp() throws Exception {
         super.setUp();
-        settings = new TestSettingsHandler();
+        settings = new BasicSettingsHandler();
         
         CPU = new MemoryDomain(IMemoryDomain.NAME_CPU);
    }

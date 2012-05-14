@@ -4,8 +4,11 @@
 package org.ejs.gui.common;
 
 import java.io.File;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Control;
@@ -13,6 +16,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.Tree;
 
 /**
  * @author ejs
@@ -97,6 +102,63 @@ public class SwtDialogUtils {
 				display.sleep();
 		}
 		
+	}
+
+	/**
+	 * Sometimes a viewer does not get populated until
+	 * some time after its input is set, making {@link StructuredViewer#reveal(Object)}
+	 * useless.  This routine reveals a selection only after
+	 * the viewer is actually populated.
+	 */
+	public static void revealOncePopulated(final Timer timer,
+			int initialDelayMs,
+			final StructuredViewer viewer,
+			final Object selection) {
+		// workaround: GTK does not realize the elements for a while
+		final Control control = viewer.getControl();
+		final TimerTask task = new TimerTask() {
+			TimerTask xx = this;
+			/* (non-Javadoc)
+			 * @see java.util.TimerTask#run()
+			 */
+			@Override
+			public void run() {
+				if (control.isDisposed()) {
+					xx.cancel();
+					return;
+				}
+					
+				control.getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						boolean cancel = false;
+						if (control.isDisposed()) {
+							cancel = true;
+						}
+						else {
+							boolean populated = false;
+							if (control instanceof Tree &&
+									((Tree) control).getItemCount() > 0 &&
+									((Tree) control).getItem(0).getBounds().height > 0)
+								populated = true;
+							else if (control instanceof Table &&
+									((Table) control).getItemCount() > 0 &&
+									((Table) control).getItem(0).getBounds().height > 0)
+								populated = true;
+							
+							if (populated) {
+								viewer.reveal(selection);
+								cancel = true;
+							}
+						}
+						
+						if (cancel) {
+							xx.cancel();
+						}
+					}
+				});
+			}
+		};
+		timer.scheduleAtFixedRate(task, initialDelayMs, 500);		
 	}
 
 }

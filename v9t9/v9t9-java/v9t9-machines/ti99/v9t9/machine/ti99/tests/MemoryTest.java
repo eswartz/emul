@@ -13,7 +13,7 @@ import ejs.base.properties.IProperty;
 import junit.framework.TestCase;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.tests.TestSettingsHandler;
+import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.machine.ti99.machine.TI994A;
 import v9t9.machine.ti99.memory.ConsoleRamArea;
 import v9t9.machine.ti99.memory.ExpRamArea;
@@ -48,7 +48,7 @@ public class MemoryTest extends TestCase {
     @Override
 	protected void setUp() throws Exception {
         super.setUp();
-        settings = new TestSettingsHandler();
+        settings = new BasicSettingsHandler();
         machine = new TI994A(settings);
         CPU = machine.getConsole();
     }

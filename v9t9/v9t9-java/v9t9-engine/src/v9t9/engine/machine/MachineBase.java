@@ -185,7 +185,7 @@ abstract public class MachineBase implements IMachine {
     	memoryModel.initMemory(this);
     	
     	moduleManager = machineModel.createModuleManager(this);
-    	demoManager = new DemoManager(this);
+    	demoManager = new DemoManager(settings, machineModel);
     	
     	cpu = machineModel.createCPU(this); 
 		keyboardState = new KeyboardState(this);
@@ -225,7 +225,7 @@ abstract public class MachineBase implements IMachine {
     	if (recordingNotifier != null) {
     		NotifyEvent event;
     		while ((event = recordingNotifier.getNextEvent()) != null) {
-    			event.print(System.err);
+    			System.err.println(event);
     		}
     	}
         super.finalize();

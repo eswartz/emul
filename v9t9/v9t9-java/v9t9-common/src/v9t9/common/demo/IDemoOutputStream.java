@@ -25,4 +25,14 @@ public interface IDemoOutputStream extends Closeable {
 	 */
 	int getTimerRate();
 
+	/**
+	 * Get the position of the stream in bytes
+	 */
+	long getPosition();
+	
+	/**
+	 * Get the elapsed time of the demo (after the previous event) in ms.
+	 */
+	long getElapsedTime();
+
 }

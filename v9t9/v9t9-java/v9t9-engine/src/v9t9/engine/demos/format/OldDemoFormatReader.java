@@ -21,6 +21,8 @@ import v9t9.engine.demos.events.VideoWriteRegisterEvent;
  */
 public class OldDemoFormatReader extends BaseDemoFormatReader implements IDemoInputStream {
 
+	private int ticks60;
+
 	public OldDemoFormatReader(InputStream is) throws IOException {
 		super(is);
 	}
@@ -38,7 +40,8 @@ public class OldDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 	 */
 	@Override
 	protected void queueTimerTickEvent() throws IOException, NotifyException {
-		queuedEvents.add(new TimerTick());		
+		ticks60++;
+		queuedEvents.add(new TimerTick(getElapsedTime()));
 	}
 	
 	/**
@@ -96,4 +99,11 @@ public class OldDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoInputStream#getElapsedTime()
+	 */
+	@Override
+	public long getElapsedTime() {
+		return ticks60 * 1000L / 60;
+	}
 }

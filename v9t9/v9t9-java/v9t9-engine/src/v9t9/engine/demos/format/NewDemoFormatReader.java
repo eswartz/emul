@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.events.NotifyException;
-import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IMachineModel;
 import v9t9.engine.demos.events.SoundWriteRegisterEvent;
 import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
@@ -23,7 +23,9 @@ import v9t9.engine.demos.events.VideoWriteRegisterEvent;
  */
 public class NewDemoFormatReader extends BaseDemoFormatReader implements IDemoInputStream {
 
-	public NewDemoFormatReader(IMachine machine, InputStream is_) throws IOException, NotifyException {
+	private int ticks100;
+
+	public NewDemoFormatReader(IMachineModel machineModel, InputStream is_) throws IOException, NotifyException {
 		super(is_);
 
 		// expect machine identifier
@@ -34,7 +36,7 @@ public class NewDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 			while ((ch = is.read()) > 0) {
 				sb.append((char) ch);
 			}
-			if (!machine.getModel().getIdentifier().equals(sb.toString())) {
+			if (!machineModel.getIdentifier().equals(sb.toString())) {
 				throw new NotifyException(null,
 						"Note: this demo is incompatible with the "+
 						"current machine: " + sb + " expected");
@@ -55,9 +57,10 @@ public class NewDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 
 	@Override
 	protected void queueTimerTickEvent() throws IOException, NotifyException {
-		int count = is.read();  isPos++;
+		int count = is.read();  
 		while (count-- > 0) {
-			queuedEvents.add(new TimerTick());
+			ticks100++;
+			queuedEvents.add(new TimerTick(getElapsedTime()));
 		}
 	}
 	
@@ -112,6 +115,14 @@ public class NewDemoFormatReader extends BaseDemoFormatReader implements IDemoIn
 			int val = soundRegsBuffer.readVar();  
 			queuedEvents.add(new SoundWriteRegisterEvent(reg, val));
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoInputStream#getElapsedTime()
+	 */
+	@Override
+	public long getElapsedTime() {
+		return ticks100 * 1000L / 100;
 	}
 
 }

@@ -27,10 +27,14 @@ public class DemoPlayer {
 
 	private final IDemoInputStream is;
 	private final IMachine machine;
+	private boolean isFinished;
 	private FastTimer timer;
 	private IProperty pauseSetting;
 	private final ListenerList<IDemoListener> listeners;
 	private final int timerRate;
+	private double playClock;
+	private double playStepMs;
+	private double rateMultiplier;
 
 	public DemoPlayer(IMachine machine, IDemoInputStream is,
 			ListenerList<IDemoListener> listeners) {
@@ -38,17 +42,40 @@ public class DemoPlayer {
 		this.is = is;
 		this.timerRate = is.getTimerRate();
 		this.listeners = listeners;
+		
 		pauseSetting = machine.getSettings().get(IDemoHandler.settingDemoPaused);
+		
+		setPlaybackRate(1.0);
 	}
 
 	public void start() {
 		timer = new FastTimer("DemoPlayer");
 		timer.scheduleTask(new Runnable() {
 			public void run() {
+				if (isFinished)
+					return;
+				
+				playClock += playStepMs;
 				stepDemo();
 			}
 		}, timerRate);
 	}
+	
+	/**
+	 * @param multiplier the rate, as a multiplier (1.0 = normal, 0.5 = half)
+	 */
+	public void setPlaybackRate(double multiplier) {
+		this.rateMultiplier = multiplier;
+		playStepMs = (1000. * rateMultiplier / is.getTimerRate());
+	}
+	
+	/**
+	 * @return the rate, as a multiplier (1.0 = normal, 0.5 = half)
+	 */
+	public double getPlaybackRate() {
+		return rateMultiplier;
+	}
+
 
 	/**
 	 * @return
@@ -58,6 +85,8 @@ public class DemoPlayer {
 			try {
 				processEvents();
 			} catch (final NotifyException e) {
+				isFinished = true;
+				
 				if (e.getEvent().level == Level.ERROR)
 					e.printStackTrace();
 				
@@ -75,18 +104,28 @@ public class DemoPlayer {
 	
 	protected void processEvents() throws NotifyException {
 		IDemoEvent event;
+		
+		if (playClock < is.getElapsedTime())
+			return;
+		
 		while (true) {
 			event = is.readNext();
 			
 			if (event == null) {
+				isFinished = true;
 				throw new NotifyException(new NotifyEvent(System.currentTimeMillis(), null, 
 						Level.INFO, "Demo playback finished"));
 			}
 			
 			event.execute(machine);
 			
-			if (event instanceof TimerTick)
-				break;
+			if (event instanceof TimerTick) {
+				// synchronize with virtual clock
+				long elapsed = ((TimerTick) event).getElapsedTime();
+				if (elapsed >= playClock) {
+					break;
+				}
+			}
 		}
 		
 	}

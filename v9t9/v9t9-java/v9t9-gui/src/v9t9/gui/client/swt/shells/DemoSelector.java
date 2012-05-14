@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.TimerTask;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -72,6 +71,7 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.Text;
 import org.ejs.gui.common.FontUtils;
+import org.ejs.gui.common.SwtDialogUtils;
 
 import v9t9.common.demo.IDemo;
 import v9t9.common.demo.IDemoHandler;
@@ -346,52 +346,29 @@ public class DemoSelector extends Composite {
 
 		getDisplay().asyncExec(new Runnable() {
 			public void run() {
+				if (viewer.getControl().isDisposed())
+					return;
+				
+				int width = viewer.getControl().getSize().x;
+				
 				if (!nameColumn.isDisposed())
-					nameColumn.setWidth(viewer.getControl().getSize().x / 3);
+					nameColumn.setWidth(width / 3);
 				if (!dateColumn.isDisposed())
-					dateColumn.setWidth(viewer.getControl().getSize().x / 4);
+					dateColumn.setWidth(width / 4);
+				
 				if (!descrColumn.isDisposed()) {
-					descrColumn.setWidth(viewer.getControl().getSize().x / 4);
+					descrColumn.setWidth(width / 4);
 					viewer.refresh();
 				}
 				
-				final IDemo[] loadedModules = demoManager.getDemos();
-				viewer.setSelection(new StructuredSelection(loadedModules), true);
+				final IDemo[] demos = demoManager.getDemos();
+				viewer.setSelection(new StructuredSelection(demos), true);
 				
-				// workaround: GTK does not realize the elements for a while
-				final TimerTask task = new TimerTask() {
-					TimerTask xx = this;
-					/* (non-Javadoc)
-					 * @see java.util.TimerTask#run()
-					 */
-					@Override
-					public void run() {
-						if (isDisposed()) {
-							xx.cancel();
-							return;
-						}
-							
-						getDisplay().asyncExec(new Runnable() {
-							public void run() {
-								boolean cancel = false;
-								if (isDisposed() || loadedModules.length == 0) {
-									cancel = true;
-								}
-								if (loadedModules.length > 0 && 
-										viewer.getTree().getItemCount() > 0 &&
-										viewer.getTree().getItem(0).getBounds().height > 0) {
-									viewer.reveal(loadedModules[0]);
-
-									cancel = true;
-								}
-								if (cancel) {
-									xx.cancel();
-								}
-							}
-						});
-					}
-				};
-				machine.getMachineTimer().scheduleAtFixedRate(task, 0, 500);
+				if (selectedDemo != null) {
+					SwtDialogUtils.revealOncePopulated(
+							machine.getMachineTimer(), 500, 
+							viewer, selectedDemo);
+				}
 			}
 		});
 

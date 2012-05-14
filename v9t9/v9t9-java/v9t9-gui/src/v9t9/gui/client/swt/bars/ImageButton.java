@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackListener;
@@ -18,6 +17,7 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 
 import v9t9.gui.client.swt.IFocusRestorer;
 
@@ -43,9 +43,10 @@ public class ImageButton extends ImageIconCanvas {
 		
 		this.listeners = new ArrayList<SelectionListener>();
 		
-		addMouseListener(new MouseAdapter() {
+		addListener(SWT.MouseDown, new Listener() {
+			
 			@Override
-			public void mouseDown(MouseEvent e) {
+			public void handleEvent(Event e) {
 				if (e.button == 1) {
 					if (menuOverlayBounds != null && isMenuHovering) {
 						Event me = new Event();
@@ -57,17 +58,22 @@ public class ImageButton extends ImageIconCanvas {
 						me.x = e.x + getLocation().x;
 						me.y = e.y + getLocation().y;
 						notifyListeners(SWT.MenuDetect, me);
+						e.doit = false;
 						return;
 					}
 					doClickStart();
 				}
 			}
+		});
+		addListener(SWT.MouseUp, new Listener() {
+			
 			@Override
-			public void mouseUp(MouseEvent e) {
+			public void handleEvent(Event e) {
 				if (e.button == 1)
 					doClickStop(e);
 				if (focusRestorer != null)
 					focusRestorer.restoreFocus();
+		
 			}
 		});
 		
@@ -177,7 +183,7 @@ public class ImageButton extends ImageIconCanvas {
 		redraw();
 	}
 
-	protected void doClickStop(MouseEvent e) {
+	protected void doClickStop(Event e) {
 		if ((getStyle() & SWT.PUSH) != 0)
 			pressed = false;
 		else

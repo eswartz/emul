@@ -10,7 +10,7 @@ import junit.framework.TestCase;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.tests.TestSettingsHandler;
+import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.memory.MemoryEntryFactory;
@@ -37,7 +37,7 @@ public class DiskMemoryEntryTest extends TestCase {
 	protected void setUp() throws Exception {
 	    // TODO Auto-generated method stub
 	    super.setUp();
-	    settings = new TestSettingsHandler();
+	    settings = new BasicSettingsHandler();
 	    machine = new TI994A(settings);
 	    memoryEntryFactory = new MemoryEntryFactory(settings, machine.getMemory(), new PathFileLocator());
         CPU = machine.getConsole();

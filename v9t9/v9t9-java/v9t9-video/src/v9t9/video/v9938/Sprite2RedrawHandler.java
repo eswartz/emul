@@ -6,9 +6,9 @@ package v9t9.video.v9938;
 import java.util.Arrays;
 
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.common.video.VdpModeInfo;
 import v9t9.common.video.VdpSprite;
 import v9t9.video.VdpRedrawInfo;
+import v9t9.video.common.VdpModeInfo;
 import v9t9.video.tms9918a.SpriteRedrawHandler;
 
 import static v9t9.common.hardware.VdpV9938Consts.*;

@@ -9,6 +9,7 @@ package v9t9.engine.video.tms9918a;
 import static v9t9.common.hardware.VdpTMS9918AConsts.*;
 
 import java.io.PrintWriter;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -762,5 +763,42 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	@Override
 	public int getMemorySize() {
 		return vdpMmio.getMemorySize();
+	}
+	
+
+    /** Tell if the registers indicate a blank screen. */
+    protected boolean isBlank() {
+    	return (vdpregs[1] & R1_NOBLANK) == 0;
+    }
+    
+	@Override
+	public BitSet getVisibleMemory(int granularityShift) {
+		BitSet bs = new BitSet();
+		if (isBlank())
+			return bs;
+		
+		populateBits(bs, granularityShift,
+				getScreenTableBase(),
+				getScreenTableSize());
+		populateBits(bs, granularityShift,
+				getPatternTableBase(),
+				getPatternTableSize());
+		populateBits(bs, granularityShift,
+				getColorTableBase(),
+				getColorTableSize());
+		populateBits(bs, granularityShift,
+				getSpriteTableBase(),
+				getSpriteTableSize());
+		populateBits(bs, granularityShift,
+				getSpritePatternTableBase(),
+				getSpritePatternTableSize());
+		return bs;
+	}
+
+	private void populateBits(BitSet bs, int granularityShift,
+			int base, int size) {
+		int round = ~0 >>> (32 - granularityShift);
+		bs.set(base >>> granularityShift, 
+			(base + size + round) >>> granularityShift);
 	}
 }

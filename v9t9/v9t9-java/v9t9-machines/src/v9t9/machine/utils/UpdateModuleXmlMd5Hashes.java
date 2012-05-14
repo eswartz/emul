@@ -18,7 +18,7 @@ import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.ModuleDatabase;
-import v9t9.common.tests.TestSettingsHandler;
+import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryEntryFactory;
 import ejs.base.properties.IProperty;
@@ -37,7 +37,7 @@ public class UpdateModuleXmlMd5Hashes {
 
 	private Memory memory;
 	private PathFileLocator locator;
-	private TestSettingsHandler settings;
+	private BasicSettingsHandler settings;
 	
 	/**
 	 * 
@@ -54,7 +54,7 @@ public class UpdateModuleXmlMd5Hashes {
 		
 		locator.addReadOnlyPathProperty(prop);
 		
-		settings = new TestSettingsHandler();
+		settings = new BasicSettingsHandler();
 		
 		memory.setMemoryEntryFactory(new MemoryEntryFactory(settings, memory, locator));
 	}

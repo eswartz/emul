@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.common.files.PathFileLocator;
-import v9t9.common.tests.TestSettingsHandler;
+import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryEntryFactory;
 import ejs.base.settings.SettingProperty;
@@ -30,7 +30,7 @@ public class FindDuplicateRomFiles {
 
 	private Memory memory;
 	private PathFileLocator locator;
-	private TestSettingsHandler settings;
+	private BasicSettingsHandler settings;
 	private SettingProperty pathProp;
 	
 	/**
@@ -48,7 +48,7 @@ public class FindDuplicateRomFiles {
 		
 		locator.addReadOnlyPathProperty(pathProp);
 		
-		settings = new TestSettingsHandler();
+		settings = new BasicSettingsHandler();
 		
 		memory.setMemoryEntryFactory(new MemoryEntryFactory(settings, memory, locator));
 	}

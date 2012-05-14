@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import v9t9.common.files.PathFileLocator;
-import v9t9.common.tests.TestSettingsHandler;
+import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryEntryFactory;
 
@@ -25,7 +25,7 @@ public class ShowFileMD5 {
 
 	private Memory memory;
 	private PathFileLocator locator;
-	private TestSettingsHandler settings;
+	private BasicSettingsHandler settings;
 	
 	/**
 	 * 
@@ -34,7 +34,7 @@ public class ShowFileMD5 {
 		memory = new Memory();
 		locator = new PathFileLocator();
 		
-		settings = new TestSettingsHandler();
+		settings = new BasicSettingsHandler();
 		
 		memory.setMemoryEntryFactory(new MemoryEntryFactory(settings, memory, locator));
 	}

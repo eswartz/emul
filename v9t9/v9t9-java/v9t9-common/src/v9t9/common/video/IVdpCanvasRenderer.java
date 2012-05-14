@@ -14,8 +14,6 @@ public interface IVdpCanvasRenderer {
 	
 	boolean update();
 	
-	VdpModeInfo getModeInfo();
-	
 
 	/**
 	 * @return

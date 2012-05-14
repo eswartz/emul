@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.common.video;
+package v9t9.video.common;
 
 import ejs.base.utils.HexUtils;
 

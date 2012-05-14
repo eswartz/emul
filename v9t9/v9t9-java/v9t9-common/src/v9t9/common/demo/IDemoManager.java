@@ -3,6 +3,10 @@
  */
 package v9t9.common.demo;
 
+import java.io.IOException;
+import java.net.URI;
+
+import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 
 /**
@@ -27,4 +31,8 @@ public interface IDemoManager {
 	 * remove a demo
 	 */
 	void removeDemo(IDemo demo);
+	
+	IDemoInputStream createDemoReader(URI uri) throws IOException, NotifyException;
+	IDemoOutputStream createDemoWriter(URI uri) throws IOException, NotifyException;
+
 }

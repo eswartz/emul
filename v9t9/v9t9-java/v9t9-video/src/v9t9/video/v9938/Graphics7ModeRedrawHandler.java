@@ -4,8 +4,8 @@
 package v9t9.video.v9938;
 
 import v9t9.common.video.RedrawBlock;
-import v9t9.common.video.VdpModeInfo;
 import v9t9.video.VdpRedrawInfo;
+import v9t9.video.common.VdpModeInfo;
 
 /**
  * Redraw graphics 7 mode content (256x192x256)

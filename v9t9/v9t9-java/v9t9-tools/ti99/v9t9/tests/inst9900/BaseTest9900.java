@@ -18,7 +18,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.tests.TestSettingsHandler;
+import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
@@ -38,7 +38,7 @@ import v9t9.tools.asm.assembler.inst9900.Assembler9900;
 import v9t9.tools.asm.assembler.inst9900.StandardInstructionParserStage9900;
 
 public abstract class BaseTest9900 extends TestCase {
-	protected ISettingsHandler settings = new TestSettingsHandler();
+	protected ISettingsHandler settings = new BasicSettingsHandler();
 	 
 	protected IMemoryDomain CPU;
 	protected IMemory memory;

@@ -25,10 +25,10 @@ import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpChanges;
 import v9t9.common.video.VdpFormat;
-import v9t9.common.video.VdpModeInfo;
 import v9t9.video.BlankModeRedrawHandler;
 import v9t9.video.IVdpModeRedrawHandler;
 import v9t9.video.VdpRedrawInfo;
+import v9t9.video.common.VdpModeInfo;
 
 /**
  * This is a renderer for the TI-99/4A VDP chip which renders to an IVdpCanvas.
@@ -509,11 +509,6 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		}
 		
 		return true;
-	}
-
-	@Override
-	public VdpModeInfo getModeInfo() {
-		return vdpModeInfo;
 	}
 	
 	/* (non-Javadoc)

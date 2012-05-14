@@ -60,6 +60,10 @@ public interface IDemoHandler {
 			ISettingsHandler.TRANSIENT,
 			"DemoPaused", new Boolean(false));
 
+	/** This setting is the playback rate (multiplier) for demo playback. */
+	SettingSchema settingDemoPlaybackRate = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"DemoPlaybackRate", 1.0);
 	
 	void dispose();
 
@@ -76,5 +80,4 @@ public interface IDemoHandler {
 
 	/** Tell if the demo's contents are recognized by this machine */
 	boolean isDemoSupported(URI uri);
-	
 }

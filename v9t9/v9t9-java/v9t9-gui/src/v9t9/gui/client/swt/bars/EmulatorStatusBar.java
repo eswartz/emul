@@ -19,6 +19,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
@@ -174,6 +175,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		final IProperty pauseSetting = Settings.get(machine, IDemoHandler.settingDemoPaused);
 		final IProperty recordSetting = Settings.get(machine, IDemoHandler.settingRecordDemo);
 		final IProperty playSetting = Settings.get(machine, IDemoHandler.settingPlayingDemo);
+		final IProperty playRateSetting = Settings.get(machine, IDemoHandler.settingDemoPlaybackRate);
 		
 		addSettingToggleListener(button, recordSetting, demoIconIndex, recordOverlay,
 				true, false);
@@ -216,6 +218,24 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		});
 
 		button.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) {
+				Rectangle bounds = button.getBounds();
+				if (e.y < bounds.height / 2) {
+					double rate = (Double) playRateSetting.getValue();
+					if (e.x < bounds.width / 3) {
+						rate /= 1.1;
+					}
+					else if (e.x < bounds.width * 2 / 3) {
+						
+					}
+					else {
+						rate *= 1.1;
+					}
+					playRateSetting.setValue(rate);
+				}
+			}
+			
 			@Override
 			public void mouseDoubleClick(MouseEvent e) {
 				toggleDemoDialog();
@@ -358,6 +378,11 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			});
 		}
 		
+		new MenuItem(menu, SWT.SEPARATOR);
+		MenuItem rateItem = new MenuItem(menu, SWT.NONE);
+		rateItem.setText("Playback rate:");
+		rateItem.setEnabled(false);
+		addRateMenuItems(menu);
 		
 		swtWindow.showMenu(menu, null, x, y);
 	}
@@ -413,18 +438,48 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		});
 	}
 
-	
-	private Menu createAccelMenu(final Control parent) {
-		final Menu menu = new Menu(parent);
-		return populateAccelMenu(menu);
+
+	private Menu addRateMenuItems(final Menu menu) {
+		IProperty playbackRate = Settings.get(machine, IDemoHandler.settingDemoPlaybackRate);
+		
+		createRateMenuItem(menu, playbackRate, -1, 1, "1x");
+		createRateMenuItem(menu, playbackRate, -1, 1.5, "1.5x");
+		createRateMenuItem(menu, playbackRate, -1, 2, "2x");
+		createRateMenuItem(menu, playbackRate, -1, 3, "3x");
+		createRateMenuItem(menu, playbackRate, -1, 5, "5x");
+		
+		new MenuItem(menu, SWT.SEPARATOR);
+		
+		createRateMenuItem(menu, playbackRate, -1, 1.0 / 2, "1/2");
+		createRateMenuItem(menu, playbackRate, -1, 1.0 / 3, "1/3");
+		createRateMenuItem(menu, playbackRate, -1, 1.0 / 4, "1/4");
+		createRateMenuItem(menu, playbackRate, -1, 1.0 / 5, "1/5");
+		
+		return menu;
 	}
 	
 
-	private Menu populateAccelMenu(final Menu menu) {
+	private void createRateMenuItem(final Menu menu, final IProperty playbackRate, int index, final double factor, String label) {
+		MenuItem item = new MenuItem(menu, SWT.RADIO);
+		item.setText(((index >= 0 && index < 10) ? "&" : "") + label);
+		if (Math.abs((Double) playbackRate.getValue() - factor) < 0.01) {
+			item.setSelection(true);
+		}
+		item.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				playbackRate.setValue(factor);
+			}
+		});
+	}
+		
+	
+	private Menu createAccelMenu(final Control parent) {
+		final Menu menu = new Menu(parent);
 		for (int mult = 1; mult <= 10; mult++) {
 			createAccelMenuItem(menu, mult, mult + "x");
 		}
-
+		
 		new MenuItem(menu, SWT.SEPARATOR);
 		
 		MenuItem item = new MenuItem(menu, SWT.CHECK);
@@ -439,7 +494,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				realTime.setBoolean(setting);
 			}
 		});
-
+		
 		new MenuItem(menu, SWT.SEPARATOR);
 		
 		for (int div = 2; div <= 5; div++) {
@@ -460,9 +515,10 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				}
 			});
 		}
-
+		
 		return menu;
 	}
+	
 
 	private void createAccelMenuItem(final Menu menu, double factor, String label) {
 		boolean isRealTime = realTime.getBoolean();

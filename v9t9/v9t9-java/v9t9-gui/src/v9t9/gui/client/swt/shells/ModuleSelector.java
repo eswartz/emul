@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -91,6 +90,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.ejs.gui.common.FontUtils;
+import org.ejs.gui.common.SwtDialogUtils;
 
 import ejs.base.properties.IProperty;
 import ejs.base.settings.DialogSettingsWrapper;
@@ -539,40 +539,10 @@ public class ModuleSelector extends Composite {
 				final IModule[] loadedModules = moduleManager.getLoadedModules();
 				viewer.setSelection(new StructuredSelection(loadedModules), true);
 				
-				// workaround: GTK does not realize the elements for a while
-				final TimerTask task = new TimerTask() {
-					TimerTask xx = this;
-					/* (non-Javadoc)
-					 * @see java.util.TimerTask#run()
-					 */
-					@Override
-					public void run() {
-						if (isDisposed()) {
-							xx.cancel();
-							return;
-						}
-							
-						getDisplay().asyncExec(new Runnable() {
-							public void run() {
-								boolean cancel = false;
-								if (isDisposed() || loadedModules.length == 0) {
-									cancel = true;
-								}
-								if (loadedModules.length > 0 && 
-										viewer.getTable().getItemCount() > 0 &&
-										viewer.getTable().getItem(0).getBounds().height > 0) {
-									viewer.reveal(loadedModules[0]);
-
-									cancel = true;
-								}
-								if (cancel) {
-									xx.cancel();
-								}
-							}
-						});
-					}
-				};
-				machine.getMachineTimer().scheduleAtFixedRate(task, 0, 500);
+				if (loadedModules.length > 0) {
+					SwtDialogUtils.revealOncePopulated(machine.getMachineTimer(), 0, 
+							viewer, loadedModules[0]);
+				}
 			}
 		});
 

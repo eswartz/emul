@@ -4,26 +4,20 @@
 package v9t9.engine.demos;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.util.Arrays;
-
 import v9t9.common.demo.IDemoHandler;
 import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.demo.IDemoOutputStream;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyException;
-import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
-import v9t9.engine.demos.format.DemoFormat;
-import v9t9.engine.demos.format.NewDemoFormatReader;
-import v9t9.engine.demos.format.NewDemoFormatWriter;
-import v9t9.engine.demos.format.OldDemoFormatReader;
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 import ejs.base.utils.ListenerList;
 
 /**
+ * Stock implementation of demo handler.
  * @author ejs
  *
  */
@@ -33,27 +27,28 @@ public class DemoHandler implements IDemoHandler {
 	private URI lastPlaybackURI;
 	private DemoRecorder recorder;
 	private DemoPlayer player;
-	private final IPathFileLocator locator;
 	private IMachine machine;
 	
 	private ListenerList<IDemoListener> listeners = new ListenerList<IDemoHandler.IDemoListener>();
 	private IProperty demoPauseSetting;
 	private IProperty recordSetting;
 	private IProperty playSetting;
+	private IProperty playRateSetting;
 	private IProperty machinePauseSetting;
 	private IDemoListener demoListener;
+	private IPropertyListener playbackRatePropertyListener;
 
 	/**
 	 * 
 	 */
 	public DemoHandler(IMachine machine_) {
 		this.machine = machine_;
-		this.locator = machine.getRomPathFileLocator();
 		
 		machinePauseSetting = Settings.get(machine, IMachine.settingPauseMachine);
 		demoPauseSetting = Settings.get(machine, IDemoHandler.settingDemoPaused);
 		recordSetting = Settings.get(machine, IDemoHandler.settingRecordDemo);
 		playSetting = Settings.get(machine, IDemoHandler.settingPlayingDemo);
+		playRateSetting = Settings.get(machine, IDemoHandler.settingDemoPlaybackRate);
 		
 		demoListener = new IDemoListener() {
 			
@@ -94,7 +89,7 @@ public class DemoHandler implements IDemoHandler {
 		try {
 			IDemoOutputStream writer;
 			
-			writer = new NewDemoFormatWriter(machine, locator.createOutputStream(uri));
+			writer = machine.getDemoManager().createDemoWriter(uri);
 			
 			recorder = new DemoRecorder(machine, writer, listeners);
 			
@@ -144,9 +139,19 @@ public class DemoHandler implements IDemoHandler {
 		
 		lastPlaybackURI = uri;
 		try {
-			IDemoInputStream is = createDemoReader(uri);
+			IDemoInputStream is = machine.getDemoManager().createDemoReader(uri);
 			if (is != null) {
 				player = new DemoPlayer(machine, is, listeners);
+				
+				playbackRatePropertyListener = new IPropertyListener() {
+					
+					@Override
+					public void propertyChanged(IProperty property) {
+						player.setPlaybackRate((Double) property.getValue());
+					}
+				};
+				playRateSetting.addListenerAndFire(playbackRatePropertyListener);
+				
 				player.start();
 				
 				machinePauseSetting.setBoolean(true);
@@ -174,6 +179,9 @@ public class DemoHandler implements IDemoHandler {
 			return;
 		
 		player.stop();
+		
+		playRateSetting.removeListener(playbackRatePropertyListener);
+		
 		player = null;
 	}
 	
@@ -206,7 +214,7 @@ public class DemoHandler implements IDemoHandler {
 	@Override
 	public boolean isDemoSupported(URI uri) {
 		try {
-			IDemoInputStream is = createDemoReader(uri);
+			IDemoInputStream is = machine.getDemoManager().createDemoReader(uri);
 			is.close();
 			return true;
 		} catch (NotifyException e) {		
@@ -216,25 +224,4 @@ public class DemoHandler implements IDemoHandler {
 		}
 	}
 
-	/**
-	 * @param uri
-	 * @return
-	 * @throws IOException
-	 * @throws NotifyException
-	 */
-	protected IDemoInputStream createDemoReader(URI uri) throws IOException,
-			NotifyException {
-		InputStream is = locator.createInputStream(uri);
-		byte[] header = new byte[4];
-		is.read(header);
-		
-		if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V9t9)) {
-			return new NewDemoFormatReader(machine, is);
-		} else if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
-				|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) {
-			return new OldDemoFormatReader(is);
-		}
-		
-		return null;
-	}
 }

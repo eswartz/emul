@@ -146,7 +146,7 @@ public class DemoRecorder {
 					if (os != null) {
 						flushData();
 						if (!pauseDemoSetting.getBoolean()) {
-							os.writeEvent(new TimerTick());
+							os.writeEvent(new TimerTick(os.getElapsedTime()));
 						}
 					}
 				} catch (final Throwable t) {

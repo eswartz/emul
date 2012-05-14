@@ -22,7 +22,7 @@ import v9t9.engine.demos.events.VideoWriteRegisterEvent;
  */
 public abstract class BaseDemoFormatWriter implements IDemoOutputStream {
 
-	protected OutputStream os;
+	protected CountingOutputStream os;
 	
 	protected abstract void writeTimerTick() throws IOException;
 
@@ -49,8 +49,8 @@ public abstract class BaseDemoFormatWriter implements IDemoOutputStream {
 	 * @param os 
 	 * 
 	 */
-	public BaseDemoFormatWriter(OutputStream os) {
-		this.os = os;
+	public BaseDemoFormatWriter(OutputStream os_) {
+		this.os = os_ instanceof CountingOutputStream ? (CountingOutputStream) os_ : new CountingOutputStream(os_);
 		
 		this.videoBuffer = new DemoPacketBuffer(os,
 				DemoFormat.BufferType.VIDEO, DemoFormat.VIDEO_BUFFER_SIZE);
@@ -67,7 +67,7 @@ public abstract class BaseDemoFormatWriter implements IDemoOutputStream {
 	public synchronized void close() throws IOException {
 		flushAll();
 
-		purge();
+		preClose();
 		
 		if (os != null) {
 			os.close();
@@ -80,17 +80,27 @@ public abstract class BaseDemoFormatWriter implements IDemoOutputStream {
 	}
 
 	/**
-	 * @throws IOException 
-	 * 
+	 * Called immediately before closing.
+	 * @throws IOException
 	 */
-	protected void purge() throws IOException {
+	protected void preClose() throws IOException {
 		
 	}
 
-	/**
-	 * @return 
-	 * @throws IOException
-	 */
+
+	protected boolean anythingToFlush() {
+		boolean any = false;
+		if (videoBuffer != null)
+			any |= !videoBuffer.isEmpty();
+		if (soundRegsBuffer != null)
+			any |= !soundRegsBuffer.isEmpty();
+		if (soundDataBuffer != null)
+			any |= !soundDataBuffer.isEmpty();
+		if (speechBuffer != null)
+			any |= !speechBuffer.isEmpty();
+		return any;
+	}
+	
 	protected boolean flushAll() throws IOException {
 		boolean wrote = false;
 		if (videoBuffer != null)
@@ -134,4 +144,11 @@ public abstract class BaseDemoFormatWriter implements IDemoOutputStream {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoOutputStream#getPosition()
+	 */
+	@Override
+	public long getPosition() {
+		return os.getPosition();
+	}
 }

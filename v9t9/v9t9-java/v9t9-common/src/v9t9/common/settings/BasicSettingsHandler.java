@@ -1,19 +1,17 @@
 /**
  * 
  */
-package v9t9.common.tests;
+package v9t9.common.settings;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.settings.BaseSettingsHandler;
-import v9t9.common.settings.StaticStoredSettings;
 
 /**
  * @author ejs
  * 
  */
-public class TestSettingsHandler extends BaseSettingsHandler {
+public class BasicSettingsHandler extends BaseSettingsHandler {
 
-	public TestSettingsHandler() {
+	public BasicSettingsHandler() {
 		super(new StaticStoredSettings(
 				ISettingsHandler.WORKSPACE,
 					"workspace"), 

@@ -13,7 +13,7 @@ import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
-import v9t9.common.video.VdpModeInfo;
+import v9t9.video.common.VdpModeInfo;
 import v9t9.video.tms9918a.VdpTMS9918ACanvasRenderer;
 
 /**

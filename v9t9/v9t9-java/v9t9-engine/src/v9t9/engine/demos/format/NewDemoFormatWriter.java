@@ -7,11 +7,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import ejs.base.utils.RleSegmenter;
-import ejs.base.utils.RleSegmenter.Segment;
-
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoOutputStream;
-import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IMachineModel;
 import v9t9.engine.demos.events.SoundWriteRegisterEvent;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
@@ -28,16 +26,17 @@ import v9t9.engine.demos.format.DemoFormat.BufferType;
 public class NewDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOutputStream {
 
 	private int timerTicks;
+	private int ticks100;
 
-	public NewDemoFormatWriter(IMachine machine, OutputStream os) throws IOException {
-		super(os);
+	public NewDemoFormatWriter(IMachineModel machineModel, OutputStream os_) throws IOException {
+		super(os_);
 		
 		os.write(DemoFormat.DEMO_MAGIC_HEADER_V9t9);
 		timerTicks = 0;
 		
 		// machine identifier
 		os.write(0x7f);
-		byte[] id = machine.getModel().getIdentifier().getBytes();
+		byte[] id = machineModel.getIdentifier().getBytes();
 		os.write(id);
 		os.write(0);
 		
@@ -55,8 +54,8 @@ public class NewDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 	 * @see v9t9.server.demo.BaseDemoFormatWriter#purge()
 	 */
 	@Override
-	protected void purge() throws IOException {
-		super.purge();
+	protected void preClose() throws IOException {
+		super.preClose();
 		emitTimerTick();
 	}
 
@@ -73,11 +72,12 @@ public class NewDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 	
 	@Override
 	protected void writeTimerTick() throws IOException {
-		boolean wrote = flushAll();
-		++timerTicks;
-		if (wrote || timerTicks == 255) {
+		if (anythingToFlush() || timerTicks == 255) {
 			emitTimerTick();
+			flushAll();
 		}
+		++timerTicks;
+		ticks100++;
 	}
 	
 	@Override
@@ -112,15 +112,18 @@ public class NewDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 		RleSegmenter segmenter = new RleSegmenter(8, data, we.getOffset(), we.getLength());
 		for (RleSegmenter.Segment segment : segmenter) {
 			int addr = segment.getOffset() - we.getOffset() + we.getAddress();
-			if (!videoBuffer.isAvailable(12)) {
-				videoBuffer.flush();
-			}
 			if (segment.isRepeat()) {
+				if (!videoBuffer.isAvailable(12)) {
+					videoBuffer.flush();
+				}
 				videoBuffer.pushVar(addr);
 				videoBuffer.pushVar(- segment.getLength());
 				videoBuffer.push(data[segment.getOffset()]);
 			}
 			else {
+				if (!videoBuffer.isAvailable(12 + segment.getLength())) {
+					videoBuffer.flush();
+				}
 				videoBuffer.pushVar(addr);
 				videoBuffer.pushVar(segment.getLength());
 				videoBuffer.pushData(data, segment.getOffset(), segment.getLength());
@@ -178,5 +181,13 @@ public class NewDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 		videoBuffer.pushVar(ev.getReg() & 0x7fffffff);
 		videoBuffer.pushVar(0);	// this is the cue that it's a register write
 		videoBuffer.pushVar(ev.getVal() & 0x7fffffff);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoOutputStream#getElapsedTime()
+	 */
+	@Override
+	public long getElapsedTime() {
+		return ticks100 * 1000L / 100;
 	}
 }

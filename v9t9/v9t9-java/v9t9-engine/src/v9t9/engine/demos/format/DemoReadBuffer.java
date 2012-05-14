@@ -17,7 +17,7 @@ public class DemoReadBuffer {
 	private int length;
 	private int index;
 
-	private int startPos;
+	private long startPos;
 	private final String label;
 	private int myType;
 	
@@ -35,28 +35,31 @@ public class DemoReadBuffer {
 		}
 		return buffer[index++] & 0xff; 
 	}
+
+	public NotifyException newBufferException(String string) {
+		return reader.newFormatException(string, getEffectivePos());
+	}
+	
+	
 	public void refill() throws IOException, NotifyException {
 		readHeader();
 		if (length > buffer.length)
-			throw new NotifyException(null, "corrupt demo in " + label + " buffer at " + 
-					Integer.toHexString(getEffectivePos()) + " expecting " + length);
+			throw newBufferException("length longer than max " + label + " buffer");
 		int read = this.reader.is.read(buffer, 0, length);
 		if (read != length)
-			throw new NotifyException(null, "corrupt demo in " + label + " buffer at " + 
-					Integer.toHexString(getEffectivePos()));
-		this.reader.isPos += read;
+			throw newBufferException("short read of " + read + ", expected " + length); 
 		length = read;
 		index = 0;
 	}
+
 	protected void readHeader() throws IOException {
-		startPos = this.reader.isPos;
+		startPos = this.reader.getPosition();
 		length = (this.reader.is.read() & 0xff) | ((this.reader.is.read() & 0xff) << 8);
 //		System.err.println(Integer.toHexString(reader.isPos)+": " + label + " header, length " 
 //				+ length + " (to " + Integer.toHexString(reader.isPos + length + 2) + ")");
-		this.reader.isPos += 2;
 	}
 	
-	public int getEffectivePos() {
+	public long getEffectivePos() {
 		return startPos + index;
 	}
 
@@ -88,7 +91,7 @@ public class DemoReadBuffer {
 		if (index >= length) {
 			int typ = this.reader.is.read();
 			if (typ != myType) {
-				throw new NotifyException(null, "corrupt demo buffering for " + label + " at " + Integer.toHexString(getEffectivePos()));
+				throw newBufferException("expected successive " + label + " blocks"); 
 			}
 			refill();
 		}
@@ -96,7 +99,7 @@ public class DemoReadBuffer {
 		try {
 			System.arraycopy(buffer, index, data, 0, chunkLength);
 		} catch (ArrayIndexOutOfBoundsException e) {
-			throw new NotifyException(null, "corrupt demo buffering for " + label + " at " + Integer.toHexString(getEffectivePos()));
+			throw newBufferException("array overflow for " + label + " ("+index+"+"+chunkLength+" >= " + buffer.length); 
 		}
 		index += chunkLength;
 		return data;
@@ -160,7 +163,7 @@ public class DemoReadBuffer {
 					| (ensureUtf8(read()) << 0);
 		}
 		else {
-			throw new NotifyException(null, "corrupt demo encoding for " + label + " at " + Integer.toHexString(getEffectivePos()));
+			throw newBufferException("bad numeric encoding (bad leader) in " + label);
 		}
 		
 		return neg ? -val : val;
@@ -173,7 +176,7 @@ public class DemoReadBuffer {
 	 */
 	private int ensureUtf8(int read) throws NotifyException {
 		if ((read & 0xc0) != 0x80)
-			throw new NotifyException(null, "corrupt demo encoding for " + label + " at " + Integer.toHexString(getEffectivePos()));
+			throw newBufferException("bad numeric encoding (bad trailer) in " + label);
 		return read & 0x3f;
 	}
 }

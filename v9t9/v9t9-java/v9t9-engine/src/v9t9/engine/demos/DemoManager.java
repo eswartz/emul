@@ -3,19 +3,30 @@
  */
 package v9t9.engine.demos;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.demo.IDemo;
 import v9t9.common.demo.IDemoHandler;
+import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.demo.IDemoManager;
+import v9t9.common.demo.IDemoOutputStream;
+import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
-import v9t9.common.machine.IMachine;
-import v9t9.common.settings.Settings;
+import v9t9.common.machine.IMachineModel;
+import v9t9.engine.demos.format.CountingOutputStream;
+import v9t9.engine.demos.format.DemoFormat;
+import v9t9.engine.demos.format.NewDemoFormatReader;
+import v9t9.engine.demos.format.NewDemoFormatWriter;
+import v9t9.engine.demos.format.OldDemoFormatReader;
 import ejs.base.utils.FileUtils;
 
 /**
@@ -26,16 +37,15 @@ public class DemoManager implements IDemoManager {
 
 	private List<IDemo> demos = new ArrayList<IDemo>();
 	private IPathFileLocator locator;
+	private final IMachineModel machineModel;
 	
-	public DemoManager(IMachine machine) {
+	public DemoManager(ISettingsHandler settings, IMachineModel machineModel) {
+		this.machineModel = machineModel;
 		this.locator = new PathFileLocator();
 		
-		locator.addReadOnlyPathProperty(Settings.get(machine, 
-				IDemoHandler.settingBootDemosPath));
-		locator.addReadOnlyPathProperty(Settings.get(machine, 
-				IDemoHandler.settingUserDemosPath));
-		locator.setReadWritePathProperty(Settings.get(machine, 
-				IDemoHandler.settingRecordedDemosPath));
+		locator.addReadOnlyPathProperty(settings.get(IDemoHandler.settingBootDemosPath));
+		locator.addReadOnlyPathProperty(settings.get(IDemoHandler.settingUserDemosPath));
+		locator.setReadWritePathProperty(settings.get(IDemoHandler.settingRecordedDemosPath));
 	}
 
 	/* (non-Javadoc)
@@ -105,4 +115,36 @@ public class DemoManager implements IDemoManager {
 		demos.remove(demo);
 	}
 
+
+	/**
+	 * @param uri
+	 * @return
+	 * @throws IOException
+	 * @throws NotifyException
+	 */
+	public IDemoInputStream createDemoReader(URI uri) throws IOException,
+			NotifyException {
+		InputStream is = locator.createInputStream(uri);
+		byte[] header = new byte[4];
+		is.read(header);
+		
+		if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V9t9)) {
+			return new NewDemoFormatReader(machineModel, is);
+		} else if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_TI60)
+				|| Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) {
+			return new OldDemoFormatReader(is);
+		}
+		
+		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoHandler#createDemoWriter(java.net.URI)
+	 */
+	@Override
+	public IDemoOutputStream createDemoWriter(URI uri) throws IOException,
+			NotifyException {
+		return new NewDemoFormatWriter(machineModel, 
+				new CountingOutputStream(new BufferedOutputStream(locator.createOutputStream(uri))));
+	}
 }

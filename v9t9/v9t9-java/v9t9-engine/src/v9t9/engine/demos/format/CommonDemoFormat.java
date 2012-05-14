@@ -38,8 +38,7 @@ public class CommonDemoFormat {
 				try {
 					queuedEvents.add(new SpeechWriteEvent(DemoFormat.SpeechEvent.fromCode(byt), 0));
 				} catch (IllegalArgumentException e) {
-					throw new NotifyException(null, "corrupt speech byte " + Integer.toHexString(byt) + " at " 
-							+ Integer.toHexString(speechBuffer.getEffectivePos()));
+					throw speechBuffer.newBufferException("corrupt speech byte " + Integer.toHexString(byt));
 				}
 			} else {
 				byt = speechBuffer.read() & 0xff;  
