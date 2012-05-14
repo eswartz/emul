@@ -1,0 +1,20 @@
+
+ษออัอัอััหออออออออออออออออออออออออออออออออออออออออออออออออออออออออออหััอัอัออป
+บ  ณ ณ ณณบ   V9t9:  TI Emulator! v6.0  by Edward Swartz  (c) 1995   บณณ ณ ณ  บ
+ศออฯอฯอฯฯสออออออออออออออออออออออออออออออออออออออออออออออออออออออออออสฯฯอฯอฯออผ
+
+
+	To install the demos in this archive, be sure you have first
+	installed V9t9 on your system.
+	
+	Then, go to the directory where you installed V9t9's included 
+	demonstration files (usually the \DEMOS subdirectory in the V9t9 
+	directory), and	enter:
+
+	C:\V9t9\DEMOS> PKUNZIP -d 600VDEMS.ZIP
+
+	(Substitute the appropriate filename above.) 
+
+
+ษออัอัอััหออออออออออออออออออออออออออออออออออออออออออออออออออออออออออหััอัอัออป
+ศออฯอฯอฯฯสออออออออออออออออออออออออออออออออออออออออออออออออออออออออออสฯฯอฯอฯออผ

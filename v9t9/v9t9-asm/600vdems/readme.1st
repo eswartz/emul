@@ -1,0 +1,32 @@
+
+	If you didn't install your demos with INSTALL, run:
+
+	C:\V9t9\DEMOS> VDEM_6.EXE -d
+
+	The "-d" will put the demos in their proper subdirectories.
+
+
+                               ----------------------
+
+
+	After the demos are installed, run them like this:
+
+	C:\V9t9> v9t9 /d 386sx20\startup.dem
+
+	or
+
+	C:\V9t9\DEMOS\386SX20> ..\..\v9t9 /d startup.dem
+
+
+                               -----------------------
+
+
+	You'll probably want to add the V9t9 directory to your PATH=
+	setting so that you can enter:
+
+	C:\V9t9\DEMOS\386SX20> v9t9 /d startup.dem
+
+
+	(See DEMOS.TXT for more information.)
+
+
