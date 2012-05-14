@@ -16,3 +16,6 @@ Remote launcher & Windows & console output -- again, need logging to a file
 ToolShell centering is borked -- does not comprehend multiple bars
 (viz: rom setup dialog)
 
+================
+
+Demos:  -- save to StoredDemosPath

@@ -6,9 +6,11 @@
  */
 package v9t9.machine.ti99.memory;
 
+import java.net.URL;
 
-
+import ejs.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.demo.IDemoHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
@@ -92,6 +94,18 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
     protected void initSettings(ISettingsHandler settings) {
 		settings.get(ExpRamArea.settingExpRam).setBoolean(true);
 		settings.get(ConsoleRamArea.settingEnhRam).setBoolean(false);
+		
+		IProperty demoPath = settings.get(IDemoHandler.settingBootDemosPath); 
+		if (demoPath.getList().isEmpty()) {
+    		try {
+				URL demosUrl = new URL(machine.getModel().getDataURL(), "demos/");
+				demoPath.getList().add(new URL(demosUrl, "v9t9j").toURI().toString());
+				demoPath.getList().add(new URL(demosUrl, "tiemul6").toURI().toString());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+    	
 	}
  
 	@Override

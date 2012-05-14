@@ -4,14 +4,11 @@
 package v9t9.server.client;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 
 import org.eclipse.tm.tcf.protocol.Protocol;
 
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.demo.IDemoHandler;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.IVdpChip;
@@ -19,6 +16,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.engine.demos.DemoHandler;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.modules.ModuleManager;
 import v9t9.machine.f99b.machine.F99bMachineModel;
@@ -26,7 +24,6 @@ import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
 import v9t9.machine.ti99.machine.EnhancedTI994AMachineModel;
 import v9t9.machine.ti99.machine.StandardMachineModel;
 import v9t9.server.MachineModelFactory;
-import v9t9.server.demo.DemoHandler;
 import v9t9.server.settings.SettingsHandler;
 import v9t9.server.settings.WorkspaceSettings;
 import v9t9.server.tcf.EmulatorTCFServer;
@@ -149,16 +146,6 @@ public abstract class EmulatorServerBase {
     	// demo support
     	DemoHandler demoHandler = new DemoHandler(machine);
 		machine.setDemoHandler(demoHandler);
-		
-		IProperty demoPath = settings.get(IDemoHandler.settingBootDemosPath); 
-		if (demoPath.getList().isEmpty()) {
-    		try {
-				demoPath.getList().add(new URL(model.getDataURL(), "demos").toURI().toString());
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			}
-		}
-    	
     }
 
 	abstract protected IMachineModel createModel(String modelId);
