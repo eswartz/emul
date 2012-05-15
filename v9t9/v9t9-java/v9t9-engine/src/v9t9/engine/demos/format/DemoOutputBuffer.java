@@ -34,13 +34,22 @@ public class DemoOutputBuffer extends BaseDemoOutputBuffer {
 
 	private ByteArrayOutputStream buffer;
 	private final int code;
+	private final String id;
 
-	public DemoOutputBuffer(OutputStream stream, int code) {
+	public DemoOutputBuffer(OutputStream stream, String id, int code) {
 		super(stream);
+		this.id = id;
 		if (code <= 0 || code >= 256)
 			throw new IllegalArgumentException();
 		this.code = code;
 		this.buffer = new ByteArrayOutputStream();
+	}
+	
+	/**
+	 * @return the id
+	 */
+	public String getIdentifier() {
+		return id;
 	}
 	
 	/* (non-Javadoc)

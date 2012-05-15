@@ -4,9 +4,13 @@
 package v9t9.engine.demos;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
+import v9t9.common.demo.IDemoActor;
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoHandler;
+import v9t9.common.demo.IDemoPlayer;
 import v9t9.common.demo.IDemoHandler.IDemoListener;
 import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.events.IEventNotifier.Level;
@@ -22,7 +26,7 @@ import ejs.base.utils.ListenerList.IFire;
  * @author ejs
  *
  */
-public class DemoPlayer {
+public class DemoPlayer implements IDemoPlayer {
 
 	private final IDemoInputStream is;
 	private final IMachine machine;
@@ -34,6 +38,7 @@ public class DemoPlayer {
 	private double playClock;
 	private double playStepMs;
 	private double rateMultiplier;
+	private Map<String, IDemoActor> eventToActorMap = new HashMap<String, IDemoActor>();
 
 	public DemoPlayer(IMachine machine, IDemoInputStream is,
 			ListenerList<IDemoListener> listeners) {
@@ -45,9 +50,17 @@ public class DemoPlayer {
 		pauseSetting = machine.getSettings().get(IDemoHandler.settingDemoPaused);
 		
 		setPlaybackRate(1.0);
+		
+		for (IDemoActor actor : machine.getDemoManager().getActors()) {
+			eventToActorMap.put(actor.getEventIdentifier(), actor);
+			actor.setup(machine);
+		}
 	}
 
 	public void start() {
+//		Settings.get(machine, IVdpChip.settingDumpVdpAccess).setBoolean(true);
+//		Settings.get(machine, ICpu.settingDumpFullInstructions).setBoolean(true);
+					
 		timer = new FastTimer("DemoPlayer");
 		timer.scheduleTask(new Runnable() {
 			public void run() {
@@ -130,7 +143,7 @@ public class DemoPlayer {
 				break;
 			}
 			
-			event.execute(machine);
+			executeEvent(event);
 			
 			if (event instanceof TimerTick) {
 				// synchronize with virtual clock
@@ -143,6 +156,16 @@ public class DemoPlayer {
 		
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoPlayer#executeEvent(v9t9.common.demo.IDemoEvent)
+	 */
+	@Override
+	public void executeEvent(IDemoEvent event) throws IOException {
+		IDemoActor actor = eventToActorMap.get(event.getIdentifier());
+		if (actor != null)
+			actor.executeEvent(this, event);
+	}
+	
 	public void stop() {
 		timer.cancel();
 		
@@ -153,6 +176,22 @@ public class DemoPlayer {
 			is.close();
 		} catch (IOException e) {
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoPlayer#getMachine()
+	 */
+	@Override
+	public IMachine getMachine() {
+		return machine;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoPlayer#getInputStream()
+	 */
+	@Override
+	public IDemoInputStream getInputStream() {
+		return is;
 	}
 
 }

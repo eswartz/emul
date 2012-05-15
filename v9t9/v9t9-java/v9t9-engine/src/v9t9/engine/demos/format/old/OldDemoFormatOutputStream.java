@@ -7,9 +7,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import v9t9.common.demo.IDemoEvent;
+import v9t9.common.demo.IDemoOutputBuffer;
+import v9t9.common.demo.IDemoOutputEventBuffer;
 import v9t9.common.demo.IDemoOutputStream;
 import v9t9.common.demo.ISpeechEvent;
 import v9t9.engine.demos.events.SoundWriteDataEvent;
+import v9t9.engine.demos.events.SoundWriteRegisterEvent;
+import v9t9.engine.demos.events.SpeechEvent;
+import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
 import v9t9.engine.demos.stream.BaseDemoOutputStream;
@@ -32,18 +37,60 @@ public class OldDemoFormatOutputStream extends BaseDemoOutputStream implements I
 		
 		os.write(OldDemoFormat.DEMO_MAGIC_HEADER_V910);
 		
-		this.videoBuffer = new OldDemoPacketBuffer(os,
-				OldDemoFormat.VIDEO, OldDemoFormat.VIDEO_BUFFER_SIZE);
-		this.soundDataBuffer = new OldDemoPacketBuffer(os,
-				OldDemoFormat.SOUND, OldDemoFormat.SOUND_BUFFER_SIZE);
-		this.speechBuffer = new OldDemoPacketBuffer(os,
-				OldDemoFormat.SPEECH, OldDemoFormat.SPEECH_BUFFER_SIZE);
-
-		buffers.add(videoBuffer);
-		buffers.add(soundDataBuffer);
-		buffers.add(speechBuffer);
-		
+		this.videoBuffer = allocateStandardBuffer(
+				OldDemoFormat.VIDEO, OldDemoFormat.VIDEO_BUFFER_SIZE, 
+				VideoWriteDataEvent.ID, VideoWriteRegisterEvent.ID);
+		this.soundDataBuffer = allocateStandardBuffer(
+				OldDemoFormat.SOUND, OldDemoFormat.SOUND_BUFFER_SIZE, 
+				SoundWriteDataEvent.ID);
+		this.speechBuffer = allocateStandardBuffer(
+				OldDemoFormat.SPEECH, OldDemoFormat.SPEECH_BUFFER_SIZE, 
+				SpeechEvent.ID);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoOutputStream#registerBuffer(v9t9.common.demo.IDemoOutputBuffer, java.lang.Class)
+	 */
+	@Override
+	public void registerBuffer(IDemoOutputEventBuffer buffer,
+			String eventId) throws IOException {
+		if (!buffers.contains(buffer))
+			buffers.add((IDemoOutputBuffer) buffer);
+	}
+	
+	private OldDemoPacketBuffer allocateStandardBuffer(int code, int bufSize, 
+			String... eventIds) 
+			throws IOException {
+		OldDemoPacketBuffer buffer = new OldDemoPacketBuffer(os, code, bufSize) {
+			@Override
+			public void encodeEvent(IDemoEvent event) throws IOException {
+				if (event instanceof VideoWriteRegisterEvent) {
+					writeVideoRegisterEvent(event);
+				}
+				else if (event instanceof VideoWriteDataEvent) {
+					writeVideoDataEvent(event);
+				}
+				else if (event instanceof SoundWriteDataEvent) {
+					writeSoundDataEvent(event);
+				}
+				else if (event instanceof SoundWriteRegisterEvent) {
+					writeSoundRegisterEvent(event);
+				}
+				else if (event instanceof SpeechEvent) {
+					writeSpeechEvent(event);
+				}
+				else {
+					throw new IOException("unknown event type: " + event);
+				}
+			}
+		};
+		
+		for (String eventId : eventIds)
+			registerBuffer(buffer, eventId);
+		
+		return buffer;
+	}
+
 	
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoOutputStream#getTimerRate()
@@ -53,6 +100,32 @@ public class OldDemoFormatOutputStream extends BaseDemoOutputStream implements I
 		return 60;
 	}
 
+
+	@Override
+	public synchronized void writeEvent(IDemoEvent event) throws IOException {
+		if (event instanceof TimerTick) {
+			writeTimerTick();
+		}
+		else if (event instanceof VideoWriteRegisterEvent) {
+			writeVideoRegisterEvent(event);
+		}
+		else if (event instanceof VideoWriteDataEvent) {
+			writeVideoDataEvent(event);
+		}
+		else if (event instanceof SoundWriteDataEvent) {
+			writeSoundDataEvent(event);
+		}
+		else if (event instanceof SoundWriteRegisterEvent) {
+			writeSoundRegisterEvent(event);
+		}
+		else if (event instanceof SpeechEvent) {
+			writeSpeechEvent(event);
+		}
+		else {
+			throw new IOException("unknown event type: " + event);
+		}
+	}
+
 	@Override
 	protected void writeTimerTick() throws IOException {
 		flushAll();
@@ -60,7 +133,6 @@ public class OldDemoFormatOutputStream extends BaseDemoOutputStream implements I
 		ticks60++;
 	}
 	
-	@Override
 	protected void writeSpeechEvent(IDemoEvent event) throws IOException {
 		ISpeechEvent ev = (ISpeechEvent) event;
 		if (ev.getCode() != ISpeechEvent.SPEECH_ADDING_BYTE || !speechBuffer.isAvailable(2)) {
@@ -71,13 +143,11 @@ public class OldDemoFormatOutputStream extends BaseDemoOutputStream implements I
 		speechBuffer.push(ev.getAddedByte());
 	}
 
-	@Override
 	protected void writeSoundRegisterEvent(IDemoEvent event)
 			throws IOException {
 		throw new IOException("this demo format does not support sound registers");
 	}
 
-	@Override
 	protected void writeSoundDataEvent(IDemoEvent event)
 			throws IOException {
 		SoundWriteDataEvent ev = (SoundWriteDataEvent) event;
@@ -85,7 +155,6 @@ public class OldDemoFormatOutputStream extends BaseDemoOutputStream implements I
 		soundDataBuffer.pushData(data, 0, ev.getLength());
 	}
 
-	@Override
 	protected void writeVideoDataEvent(IDemoEvent event)
 			throws IOException {
 		VideoWriteDataEvent we = (VideoWriteDataEvent) event;
@@ -105,7 +174,6 @@ public class OldDemoFormatOutputStream extends BaseDemoOutputStream implements I
 		}
 	}
 
-	@Override
 	protected void writeVideoRegisterEvent(IDemoEvent event)
 			throws IOException {
 		if (!videoBuffer.isAvailable(2)) {

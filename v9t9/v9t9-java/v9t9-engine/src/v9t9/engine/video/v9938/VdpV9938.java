@@ -6,18 +6,18 @@ package v9t9.engine.video.v9938;
 
 import static v9t9.common.hardware.VdpTMS9918AConsts.*;
 import static v9t9.common.hardware.VdpV9938Consts.*;
-
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
-
 import v9t9.common.video.ColorMapUtils;
 
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
+import ejs.base.utils.ListenerList;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.demo.IDemoHandler;
 import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.machine.IMachine;
@@ -88,6 +88,32 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
     static public final SettingSchema settingMsxClockDivisor = new SettingSchema(
     		ISettingsHandler.INSTANCE,
     		"MsxClockDivisor", new Integer(6));
+
+	/* from mame and blueMSX:
+	 * 
+     */
+	final static int command_cycles[][] = {
+			// SRCH x6
+			{ 92, 125, 92, 92 },
+			// LINE x7
+			{ 120, 147, 120, 120 },
+			// LMMV x8
+			{ 98, 137, 98, 124 },
+			// LMMM x9
+			{ 129, 197, 129, 132 },
+			// LMCM xA
+			{ 129, 197, 129, 132 },
+			// LMMC xB
+			{ 129, 197, 129, 132 },
+			// HMMV xC
+			{ 49, 65, 49, 62 },
+			// HMMM xD
+			{ 92, 136, 92, 97 },
+			// YMMM xE
+			{ 65, 125, 65, 68 },
+			// HMMC xF
+			{ 49, 65, 49, 62 },
+	};
     
 	private short[] palette;
 	private boolean palettelatched;
@@ -115,7 +141,6 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	private int currentcycles = 0; // current cycles left
 	private IProperty msxClockDivisor;
 
-	
 	/** Working variables for command execution */
 	class CommandVars {
 		int dx, dy;
@@ -149,38 +174,20 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	
 	private CommandVars cmdState = new CommandVars();
 	private IProperty pauseMachine;
-		
-	/* from mame and blueMSX:
-	 * 
-     */
-	final static int command_cycles[][] = {
-			// SRCH x6
-			{ 92, 125, 92, 92 },
-			// LINE x7
-			{ 120, 147, 120, 120 },
-			// LMMV x8
-			{ 98, 137, 98, 124 },
-			// LMMM x9
-			{ 129, 197, 129, 132 },
-			// LMCM xA
-			{ 129, 197, 129, 132 },
-			// LMMC xB
-			{ 129, 197, 129, 132 },
-			// HMMV xC
-			{ 49, 65, 49, 62 },
-			// HMMM xD
-			{ 92, 136, 92, 97 },
-			// YMMM xE
-			{ 65, 125, 65, 68 },
-			// HMMC xF
-			{ 49, 65, 49, 62 },
-	};
+	private IProperty demoPlaying;
+
+	private ListenerList<IAccelListener> accelListeners = new ListenerList<IVdpV9938.IAccelListener>();
+	
 
 	public VdpV9938(IMachine machine) {
 		super(machine);
 		
 		msxClockDivisor = Settings.get(machine, settingMsxClockDivisor); 
 		pauseMachine = Settings.get(machine, IMachine.settingPauseMachine);
+		demoPlaying = Settings.get(machine, IDemoHandler.settingPlayingDemo);
+		
+//		machine.getDemoManager().registerActor(new VdpV9938DataDemoActor());
+//		machine.getDemoManager().registerActor(new VdpV9938AccelDemoActor());
 	}
 
 	protected byte[] allocVdpRegs() {
@@ -294,29 +301,65 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			currentcycles = targetRate;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpV9938#addAccelListener(v9t9.common.hardware.IVdpV9938.IAccelListener)
+	 */
+	@Override
+	public void addAccelListener(IAccelListener listener) {
+		accelListeners.add(listener);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpV9938#removeAccelListener(v9t9.common.hardware.IVdpV9938.IAccelListener)
+	 */
+	@Override
+	public void removeAccelListener(IAccelListener listener) {
+		accelListeners.remove(listener);
+	}
+
 	@Override
 	public boolean isThrottled() {
-		return !accelActive() || (currentcycles <= 0) || pauseMachine.getBoolean();
+		// this is called by normal execution to ensure the acceleration isn't too fast
+		return !isAccelActive() || (currentcycles <= 0) || (pauseMachine.getBoolean() && !demoPlaying.getBoolean());
 	}
 	
 	@Override
 	public synchronized void work() {
-		if (!isThrottled())
+		if (!isThrottled()) {
+			// this should be called only after validating !isThrottled(), except by demos
+			if (!accelListeners.isEmpty()) {
+				for (Object obj : accelListeners.toArray()) {
+					((IAccelListener) obj).accelCommandWork();
+				}
+			}
 			handleCommand();
+		}
 	}
 
-	private boolean accelActive() {
+	public boolean isAccelActive() {
 		return (statusvec[2] & S2_CE) != 0;
 	}
 	
 	private void setAccelActive(boolean flag) {
 		if (flag) {
 			statusvec[2] |= S2_CE;
+			
+			if (!accelListeners.isEmpty()) {
+				for (Object obj : accelListeners.toArray()) {
+					((IAccelListener) obj).accelCommandStarted();
+				}
+			}
 		} else {
 			statusvec[2] &= ~S2_CE;
 			cmdState.cmd = 0;
 			cmdState.isDataMoveCommand = false;
 			log("MSX command done");
+			
+			if (!accelListeners.isEmpty()) {
+				for (Object obj : accelListeners.toArray()) {
+					((IAccelListener) obj).accelCommandEnded();
+				}
+			}
 		}
 	}
 
@@ -689,7 +732,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		for (int i = 0; i < statusvec.length; i++)
 			statuses.put(HexUtils.toHex2(i), HexUtils.toHex2(statusvec[i]));
 		
-		section.put("AccelActive", accelActive());
+		section.put("AccelActive", isAccelActive());
 		
 	}
 	/* (non-Javadoc)
@@ -703,7 +746,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			return;
 
 		setAccelActive(section.getBoolean("AccelActive"));
-		if (accelActive()) {
+		if (isAccelActive()) {
 			setupCommand();
 		}
 
@@ -843,7 +886,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		case 43: // ny hi (1)
 			break;
 		case 44: // CLR (data to transfer)
-			if (accelActive() && cmdState.isDataMoveCommand) {
+			if (isAccelActive() && cmdState.isDataMoveCommand) {
 				// got the next byte
 				statusvec[2] &= ~S2_TR;
 				work();
@@ -1380,12 +1423,21 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	@Override
 	public BitSet getRecordableRegs() {
 		BitSet bs = new BitSet();
-		// only record mode/memory relevant ones
-		bs.set(0, 19+1);
+		// mode/memory/accel relevant ones
+		bs.set(0, 20);
+		
+		// these affect memory and are handled directly
+		bs.set(8, false);
+		bs.set(14, false);
+		bs.set(15, false);
+		
+		// accel regs
+//		bs.set(20, 48);
+		
 		// and colors
 		bs.set(REG_PAL0, REG_PAL0 + 16);
+		
 		// no status regs
 		return bs;
 	}
-
 }

@@ -38,13 +38,4 @@ public abstract class WriteDataToAddr implements IDemoEvent {
 
 	protected abstract IMemoryDomain getDomain(IMachine machine);
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.demo.IDemoEvent#execute(v9t9.common.machine.IMachine)
-	 */
-	@Override
-	public void execute(IMachine machine) {
-		for (int i = 0; i < length; i++) {
-			getDomain(machine).writeByte(address, data[i]);
-		}
-	}
 }

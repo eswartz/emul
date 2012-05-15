@@ -6,9 +6,6 @@ package v9t9.engine.demos.format;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Queue;
-
-import v9t9.common.demo.IDemoEvent;
 import v9t9.engine.demos.stream.BaseDemoInputBuffer;
 
 /**
@@ -36,7 +33,7 @@ public class DemoInputBuffer extends BaseDemoInputBuffer {
 	
 	public DemoInputBuffer(InputStream is, 
 			int code,
-			String identifier) {
+			String identifier)  {
 		super(is, identifier);
 		this.code = code;
 	}
@@ -50,19 +47,6 @@ public class DemoInputBuffer extends BaseDemoInputBuffer {
 	}
 	
 
-	/* (non-Javadoc)
-	 * @see v9t9.engine.demos.stream.IDemoInputBuffer#getEffectivePos()
-	 */
-	@Override
-	public long getEffectivePos() {
-		return startPos + index;
-	}
-
-	@Override
-	public boolean isAvailable() {
-		return index < length;
-	}
-	
 	@Override
 	public void refill() throws IOException {
 		length = DemoFormat.readVariableLengthNumber(is);
@@ -75,6 +59,21 @@ public class DemoInputBuffer extends BaseDemoInputBuffer {
 			throw newBufferException("short read of " + read + ", expected " + length);
 		
 		index = 0;
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.demos.stream.IDemoInputBuffer#getEffectivePos()
+	 */
+	@Override
+	public long getEffectivePos() {
+		return startPos + index;
+	}
+
+	@Override
+	public boolean isAvailable() {
+		return index < length;
 	}
 
 	@Override
@@ -109,14 +108,5 @@ public class DemoInputBuffer extends BaseDemoInputBuffer {
 	public int readVar() throws IOException {
 		return DemoFormat.readVariableLengthNumber(utf8Is);
 	}
-
-	/**
-	 * Decode events from the buffer
-	 * @param queuedEvents
-	 */
-	public void decodeEvents(Queue<IDemoEvent> queuedEvents) throws IOException {
-		throw new UnsupportedOperationException();
-	}
-
 	
 }

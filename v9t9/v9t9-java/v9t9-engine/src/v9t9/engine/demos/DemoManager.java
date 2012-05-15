@@ -10,10 +10,14 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-import v9t9.common.client.ISettingsHandler;
+import v9t9.common.demo.DemoHeader;
 import v9t9.common.demo.IDemo;
+import v9t9.common.demo.IDemoActor;
+import v9t9.common.demo.IDemoEventFormatter;
 import v9t9.common.demo.IDemoHandler;
 import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.demo.IDemoManager;
@@ -21,10 +25,12 @@ import v9t9.common.demo.IDemoOutputStream;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
-import v9t9.common.machine.IMachineModel;
+import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
+import v9t9.engine.demos.actors.TimerTickActor;
+import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.format.DemoFormat;
 import v9t9.engine.demos.format.DemoFormatInputStream;
-import v9t9.engine.demos.format.DemoFormat.DemoHeader;
 import v9t9.engine.demos.format.DemoFormatOutputStream;
 import v9t9.engine.demos.format.old.OldDemoFormat;
 import v9t9.engine.demos.format.old.OldDemoFormatInputStream;
@@ -40,17 +46,44 @@ public class DemoManager implements IDemoManager {
 
 	private List<IDemo> demos = new ArrayList<IDemo>();
 	private IPathFileLocator locator;
-	private final IMachineModel machineModel;
+	private final IMachine machine;
+	private Map<String, IDemoActor> actors = new LinkedHashMap<String, IDemoActor>();
 	
-	public DemoManager(ISettingsHandler settings, IMachineModel machineModel) {
-		this.machineModel = machineModel;
+	public DemoManager(IMachine machine) {
+		this.machine = machine;
 		this.locator = new PathFileLocator();
 		
-		locator.addReadOnlyPathProperty(settings.get(IDemoHandler.settingBootDemosPath));
-		locator.addReadOnlyPathProperty(settings.get(IDemoHandler.settingUserDemosPath));
-		locator.setReadWritePathProperty(settings.get(IDemoHandler.settingRecordedDemosPath));
+		locator.addReadOnlyPathProperty(Settings.get(machine, IDemoHandler.settingBootDemosPath));
+		locator.addReadOnlyPathProperty(Settings.get(machine, IDemoHandler.settingUserDemosPath));
+		locator.setReadWritePathProperty(Settings.get(machine, IDemoHandler.settingRecordedDemosPath));
+		
+		registerActor(new TimerTickActor());
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoManager#registerContributor(v9t9.common.demo.IDemoContributor)
+	 */
+	@Override
+	public void registerActor(IDemoActor actor) {
+		actors.put(actor.getEventIdentifier(), actor);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoManager#getActors()
+	 */
+	@Override
+	public IDemoActor[] getActors() {
+		return actors.values().toArray(new IDemoActor[actors.size()]);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoManager#findActor(java.lang.String)
+	 */
+	@Override
+	public IDemoActor findActor(String id) {
+		return actors.get(id);
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoManager#getDemoLocator()
 	 */
@@ -132,7 +165,8 @@ public class DemoManager implements IDemoManager {
 		is.read(header);
 		
 		if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V9t9)) {
-			return new DemoFormatInputStream(machineModel, is);
+			DemoFormatInputStream inputStream = new DemoFormatInputStream(machine.getModel(), is);
+			return inputStream;
 		} else if (Arrays.equals(header, OldDemoFormat.DEMO_MAGIC_HEADER_V910)) {
 			return new OldDemoFormatInputStream(is);
 		}
@@ -148,9 +182,22 @@ public class DemoManager implements IDemoManager {
 			NotifyException {
 		if (true) {
 			DemoHeader header = new DemoHeader();
-			header.setMachineModel(machineModel.getIdentifier());
-			return new DemoFormatOutputStream(header, 
+			header.setMachineModel(machine.getModel().getIdentifier());
+			for (IDemoActor actor : actors.values()) {
+				if (actor.getEventIdentifier().equals(TimerTick.ID))
+					continue;
+				
+				IDemoEventFormatter formatter = DemoFormat.FORMATTER_REGISTRY.findFormatterByEvent(
+						actor.getEventIdentifier());
+				if (formatter == null) {
+					throw new IOException("no formatter defined for " + actor.getEventIdentifier());
+				}
+				header.findOrAllocateIdentifier(formatter.getBufferIdentifer());
+			}
+			DemoFormatOutputStream demoStream = new DemoFormatOutputStream(header, 
 					new CountingOutputStream(new BufferedOutputStream(locator.createOutputStream(uri))));
+			
+			return demoStream;
 		} else {
 			return new OldDemoFormatOutputStream( 
 					new CountingOutputStream(new BufferedOutputStream(locator.createOutputStream(uri))));

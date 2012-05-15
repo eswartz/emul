@@ -8,14 +8,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.common.demo.IDemoEvent;
+import v9t9.common.demo.IDemoOutputBuffer;
 import v9t9.common.demo.IDemoOutputStream;
-import v9t9.engine.demos.events.SoundWriteDataEvent;
-import v9t9.engine.demos.events.SoundWriteRegisterEvent;
-import v9t9.engine.demos.events.SpeechEvent;
-import v9t9.engine.demos.events.TimerTick;
-import v9t9.engine.demos.events.VideoWriteDataEvent;
-import v9t9.engine.demos.events.VideoWriteRegisterEvent;
 import ejs.base.utils.CountingOutputStream;
 
 /**
@@ -27,20 +21,6 @@ public abstract class BaseDemoOutputStream implements IDemoOutputStream {
 	protected CountingOutputStream os;
 	
 	protected abstract void writeTimerTick() throws IOException;
-
-	protected abstract void writeVideoRegisterEvent(IDemoEvent event)
-			throws IOException;
-
-	protected abstract void writeVideoDataEvent(IDemoEvent event)
-			throws IOException;
-
-	protected abstract void writeSoundDataEvent(IDemoEvent event)
-			throws IOException;
-
-	protected abstract void writeSoundRegisterEvent(IDemoEvent event)
-			throws IOException;
-
-	protected abstract void writeSpeechEvent(IDemoEvent event) throws IOException;
 
 	protected List<IDemoOutputBuffer> buffers = new ArrayList<IDemoOutputBuffer>(4);
 
@@ -86,31 +66,6 @@ public abstract class BaseDemoOutputStream implements IDemoOutputStream {
 	protected void flushAll() throws IOException {
 		for (IDemoOutputBuffer buffer : buffers) {
 			buffer.flush();
-		}
-	}
-
-	@Override
-	public synchronized void writeEvent(IDemoEvent event) throws IOException {
-		if (event instanceof TimerTick) {
-			writeTimerTick();
-		}
-		else if (event instanceof VideoWriteRegisterEvent) {
-			writeVideoRegisterEvent(event);
-		}
-		else if (event instanceof VideoWriteDataEvent) {
-			writeVideoDataEvent(event);
-		}
-		else if (event instanceof SoundWriteDataEvent) {
-			writeSoundDataEvent(event);
-		}
-		else if (event instanceof SoundWriteRegisterEvent) {
-			writeSoundRegisterEvent(event);
-		}
-		else if (event instanceof SpeechEvent) {
-			writeSpeechEvent(event);
-		}
-		else {
-			throw new IOException("unknown event type: " + event);
 		}
 	}
 

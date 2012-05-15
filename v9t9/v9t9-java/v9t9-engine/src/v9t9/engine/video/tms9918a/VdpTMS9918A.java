@@ -30,6 +30,8 @@ import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.Settings;
+import v9t9.engine.demos.actors.VdpDataDemoActor;
+import v9t9.engine.demos.actors.VdpRegisterDemoActor;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.memory.VdpMmio;
 
@@ -139,6 +141,9 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		this.vdpregs = allocVdpRegs();
 		
 		initRegisters();
+		
+		machine.getDemoManager().registerActor(new VdpDataDemoActor());
+		machine.getDemoManager().registerActor(new VdpRegisterDemoActor());
 	}
 
 	public void initRegisters() {

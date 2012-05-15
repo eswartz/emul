@@ -12,6 +12,14 @@ import java.io.IOException;
  */
 public interface IDemoOutputStream extends Closeable {
 	/**
+	 * Register a custom buffer and event type.
+	 * @param buffer
+	 * @param eventId
+	 * @throws IOException
+	 */
+	void registerBuffer(IDemoOutputEventBuffer buffer, String eventId) throws IOException;
+	
+	/**
 	 * Write new event.
 	 * @return event
 	 * @throws IOException 

@@ -10,6 +10,7 @@ import java.util.Map;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.sound.IMultiSoundChip;
+import v9t9.engine.demos.actors.SoundRegisterDemoActor;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.ListenerList;
 
@@ -33,6 +34,8 @@ public abstract class BaseMultiSound implements ISoundChip, IMultiSoundChip {
 		listeners = new ListenerList<IRegisterWriteListener>();
 		
 		doGenerateChips();
+		
+		machine.getDemoManager().registerActor(new SoundRegisterDemoActor());
 	}
 
 	/**

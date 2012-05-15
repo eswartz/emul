@@ -6,6 +6,8 @@ package v9t9.engine.demos.stream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import v9t9.common.demo.IDemoInputBuffer;
+
 /**
  * @author ejs
  *

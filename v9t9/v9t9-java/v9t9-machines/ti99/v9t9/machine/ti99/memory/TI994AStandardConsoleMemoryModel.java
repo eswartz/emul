@@ -18,6 +18,7 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
+import v9t9.engine.demos.actors.SoundMmioDataDemoActor;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.speech.TMS5220;
@@ -142,6 +143,8 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
         this.memory.addAndMap(new MemoryEntry("GRAM Write MMIO", CPU, 0x9C00, 0x0400,
                 new ConsoleGramWriteArea(gplMmio)));
 		
+		((IMachine) machine).getDemoManager().registerActor(new SoundMmioDataDemoActor(0x8400));
+
 	}
 
 	/* (non-Javadoc)

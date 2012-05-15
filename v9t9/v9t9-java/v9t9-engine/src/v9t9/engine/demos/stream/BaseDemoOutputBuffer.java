@@ -5,6 +5,7 @@ package v9t9.engine.demos.stream;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import v9t9.common.demo.IDemoOutputBuffer;
 
 
 /**
@@ -28,6 +29,5 @@ public abstract class BaseDemoOutputBuffer implements IDemoOutputBuffer {
 	public void pushData(byte[] data) throws IOException {
 		pushData(data, 0, data.length);
 	}
-	
 
 }

@@ -3,12 +3,9 @@
  */
 package v9t9.engine.memory;
 
-import v9t9.common.hardware.IVdpChip;
 import v9t9.common.memory.IMemoryEntry;
 
 public class VdpRamArea extends ByteMemoryArea {
-    private IVdpChip handler;
-
 	public VdpRamArea(int size) {
     	// latency is counted in the CPU side;
     	// side effects are handled on the MMIO side
@@ -18,10 +15,6 @@ public class VdpRamArea extends ByteMemoryArea {
         write = memory;
     }
 	
-	public void setHandler(IVdpChip handler) {
-		this.handler = handler;
-	}
-    
 	/* (non-Javadoc)
 	 * @see v9t9.engine.memory.MemoryArea#flatWriteByte(v9t9.common.memory.IMemoryEntry, int, byte)
 	 */

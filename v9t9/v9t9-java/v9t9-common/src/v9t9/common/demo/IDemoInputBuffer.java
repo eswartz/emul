@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.engine.demos.stream;
+package v9t9.common.demo;
 
 import java.io.IOException;
 
@@ -13,17 +13,17 @@ import java.io.IOException;
  */
 public interface IDemoInputBuffer {
 	/**
-	 * Get position in enclosing stream, for the purpose of reporting errors
-	 * @return
-	 */
-	long getEffectivePos();
-	
-	/**
 	 * Refill the buffer.
 	 * @throws IOException
 	 */
 	void refill() throws IOException;
 
+	/**
+	 * Get position in enclosing stream, for the purpose of reporting errors
+	 * @return
+	 */
+	long getEffectivePos();
+	
 	/**
 	 * Tell if content is available in the buffer
 	 * @return

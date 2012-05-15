@@ -395,7 +395,12 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 									null, Level.INFO, 
 									"Recording to " + saveFile);
 						} catch (NotifyException ex) {
-							machine.getEventNotifier().notifyEvent(ex.getEvent());
+							if (ex.getCause() != null)
+								machine.getEventNotifier().notifyEvent(ex.getEvent().context,
+										ex.getEvent().level, ex.getEvent().message + "\n(" 
+												+ ex.getCause().getMessage() +")");
+							else
+								machine.getEventNotifier().notifyEvent(ex.getEvent());
 						}
 					}
 					

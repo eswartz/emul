@@ -7,10 +7,11 @@ import java.io.IOException;
 
 import ejs.base.utils.CountingInputStream;
 
+import v9t9.common.demo.IDemoInputEventBuffer;
 import v9t9.common.events.NotifyException;
 import v9t9.engine.demos.stream.BaseDemoInputBuffer;
 
-public class OldDemoInputBuffer extends BaseDemoInputBuffer  {
+public abstract class OldDemoInputBuffer extends BaseDemoInputBuffer implements IDemoInputEventBuffer {
 	private final byte[] buffer;
 	private int length;
 	int index;
@@ -91,6 +92,21 @@ public class OldDemoInputBuffer extends BaseDemoInputBuffer  {
 		}
 		index += chunkLength;
 		return data;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getCode() {
+		return myType;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoInputEventBuffer#getIdentifier()
+	 */
+	@Override
+	public String getIdentifier() {
+		return label;
 	}
 	
 

@@ -255,7 +255,7 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		int blockCount = 32 * screenCanvas.getHeight() / 8;
 		int screenOffs = 0;
 		
-		int touched = 0;
+//		int touched = 0;
 		for (int i = 0; i < blockCount; i += 32) {
 			for (int j = 0; j < 32; j++) {
 				if (((spritebitmap[i + j] | oldspritebitmap[i + j]) & knowndirty) != 0) {
@@ -263,12 +263,12 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 					if (blockMag > 1) {
 						screenChanges.set(screenOffs + j * blockMag + 1);
 					} 
-					touched++;
+//					touched++;
 				}
 			}
 			screenOffs += blockStride;
 		}
-		//System.out.println(touched + " dirty from sprites");
+//		System.out.println(touched + " dirty from sprites");
 	}
 
 	/**

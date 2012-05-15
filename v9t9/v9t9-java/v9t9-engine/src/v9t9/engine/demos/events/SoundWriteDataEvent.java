@@ -13,6 +13,8 @@ import v9t9.common.memory.IMemoryDomain;
  */
 public class SoundWriteDataEvent extends WriteDataToAddr implements IDemoEvent {
 
+	public static final String ID = "SoundWriteData";
+
 	public SoundWriteDataEvent(int address, byte[] data) {
 		super(address, data, data.length);
 	}
@@ -20,6 +22,14 @@ public class SoundWriteDataEvent extends WriteDataToAddr implements IDemoEvent {
 	public SoundWriteDataEvent(int addr, byte[] data,
 			int length) {
 		super(addr, data, length);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoEvent#getIdentifier()
+	 */
+	@Override
+	public String getIdentifier() {
+		return ID;
 	}
 
 	/* (non-Javadoc)

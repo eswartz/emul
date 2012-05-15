@@ -3,12 +3,9 @@
  */
 package v9t9.engine.demos.events;
 
-import java.util.Iterator;
-
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
-import ejs.base.utils.Tuple;
 
 /**
  * Write data in successive addresses
@@ -42,18 +39,4 @@ public abstract class WriteDataBlock implements IDemoEvent {
 	}
 	protected abstract IMemoryDomain getDomain(IMachine machine);
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.demo.IDemoEvent#execute(v9t9.common.machine.IMachine)
-	 */
-	@Override
-	public void execute(IMachine machine) {
-		for (int i = 0; i < length; i++) {
-			getDomain(machine).writeByte(address + i, data[i + offs]);
-		}
-	}
-	
-	public Iterator<Tuple> rleIterator() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

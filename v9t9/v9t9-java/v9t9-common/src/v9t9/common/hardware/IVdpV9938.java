@@ -24,4 +24,13 @@ public interface IVdpV9938 extends IVdpTMS9918A {
 	/** Get total time for blink on/off period in ms */
 	int getBlinkPeriod();
 	
+	interface IAccelListener {
+		void accelCommandStarted();
+		void accelCommandWork();
+		void accelCommandEnded();
+	}
+	void addAccelListener(IAccelListener listener);
+	void removeAccelListener(IAccelListener listener);
+	
+	boolean isAccelActive();
 }

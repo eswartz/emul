@@ -42,7 +42,6 @@ public class Vdp9918AMmio extends VdpMmio {
     	dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
     	dumpVdpAccess = settings.get(IVdpChip.settingDumpVdpAccess);
     	
-    	fullRamArea.setHandler(vdp);
 		this.videoMemory = vdp.getVideoMemory();
 		initMemory(memory, memorySize);
 		((VdpTMS9918A) vdp).setVdpMmio(this);

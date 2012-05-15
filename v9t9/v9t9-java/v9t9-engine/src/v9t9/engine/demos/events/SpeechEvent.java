@@ -4,7 +4,6 @@
 package v9t9.engine.demos.events;
 
 import v9t9.common.demo.ISpeechEvent;
-import v9t9.common.machine.IMachine;
 
 /**
  * @author ejs
@@ -12,6 +11,8 @@ import v9t9.common.machine.IMachine;
  */
 public class SpeechEvent implements ISpeechEvent {
 
+	public static final String ID = "SpeechEvent";
+	
 	private final int code;
 	private final int byt;
 	
@@ -27,7 +28,13 @@ public class SpeechEvent implements ISpeechEvent {
 		this.byt = byt;
 	}
 	
-	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoEvent#getIdentifier()
+	 */
+	@Override
+	public String getIdentifier() {
+		return ID;
+	}
 
 
 	@Override
@@ -76,14 +83,6 @@ public class SpeechEvent implements ISpeechEvent {
 	@Override
 	public byte getAddedByte() {
 		return (byte) byt;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.demo.IDemoEvent#execute(v9t9.common.machine.IMachine)
-	 */
-	@Override
-	public void execute(IMachine machine) {
-		
 	}
 
 }

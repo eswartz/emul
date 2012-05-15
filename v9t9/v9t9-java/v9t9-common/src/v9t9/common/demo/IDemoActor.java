@@ -1,0 +1,54 @@
+/**
+ * 
+ */
+package v9t9.common.demo;
+
+import java.io.IOException;
+
+import v9t9.common.machine.IMachine;
+
+/**
+ * This interface is implemented by an actor in the emulator
+ * that wants to contribute and consume events for a demo.
+ * @author ejs
+ *
+ */
+public interface IDemoActor {
+	/**
+	 * Get the identifier for the {@link IDemoEvent#getIdentifier()}
+	 * created and consumed by this actor.
+	 * @return
+	 */
+	String getEventIdentifier();
+	
+	/**
+	 * Set up the actor for this machine
+	 */
+	void setup(IMachine machine);
+
+	/**
+	 * Connect to a machine to record the events relevant to this actor.
+	 * Also, send any initialization events.
+	 * @param machine
+	 * @throws IOException 
+	 */
+	void connectForRecording(IDemoRecorder recorder) throws IOException;
+	
+	/**
+	 * Flush recorded events to buffer (called periodically)
+	 */
+	void flushRecording(IDemoRecorder recorder) throws IOException;
+	
+	/**
+	 * Disconnect from a machine (undo effects of {@link #connectForRecording(IMachine)})
+	 * @param machine
+	 */
+	void disconnectFromRecording(IDemoRecorder recorder);
+
+	/**
+	 * Execute an event during demo playback.
+	 */
+	void executeEvent(IDemoPlayer player, IDemoEvent event) throws IOException;
+
+	
+}

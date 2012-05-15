@@ -4,6 +4,7 @@
 package v9t9.tools.demos;
 
 import ejs.base.utils.CountingOutputStream;
+import ejs.base.utils.ListenerList;
 import gnu.getopt.Getopt;
 
 import java.io.BufferedOutputStream;
@@ -16,14 +17,17 @@ import java.util.BitSet;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.demo.IDemoEvent;
+import v9t9.common.demo.IDemoHandler;
 import v9t9.common.demo.IDemoInputStream;
+import v9t9.common.demo.IDemoManager;
 import v9t9.common.demo.IDemoOutputStream;
+import v9t9.common.demo.IDemoPlayer;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.settings.BasicSettingsHandler;
-import v9t9.engine.demos.DemoManager;
+import v9t9.engine.demos.DemoPlayer;
 import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
@@ -121,7 +125,7 @@ public class ConvertDemos {
 	private boolean recurse;
 	private boolean oldFormat;
 
-	private DemoManager manager;
+	private IDemoManager manager;
 	private boolean shrink;
 	private IMachine machine;
 	
@@ -135,8 +139,8 @@ public class ConvertDemos {
 
 	public ConvertDemos(IMachineModel machineModel) {
 		ISettingsHandler settings = new BasicSettingsHandler();
-		this.manager = new DemoManager(settings, machineModel);
 		this.machine = machineModel.createMachine(settings);
+		this.manager = machine.getDemoManager();
 	}
 	
 
@@ -315,6 +319,8 @@ public class ConvertDemos {
 		
 		int visMemGranularity = 7;
 		
+		IDemoPlayer player = new DemoPlayer(machine, is, new ListenerList<IDemoHandler.IDemoListener>());
+		
 		while ((event = is.readNext()) != null)  {
 			
 			if (event instanceof TimerTick) {
@@ -327,7 +333,7 @@ public class ConvertDemos {
 			else if (event instanceof VideoWriteRegisterEvent) {
 				// When the video mode changes, new video memory
 				// may be exposed.  Execute the event to see.  
-				event.execute(machine);
+				player.executeEvent(event);
 				
 				BitSet newVisibleVideoMemory = machine.getVdp().getVisibleMemory(visMemGranularity);
 				BitSet diff = (BitSet) newVisibleVideoMemory.clone();
@@ -349,7 +355,7 @@ public class ConvertDemos {
 			else if (event instanceof VideoWriteDataEvent) {
 				// Stifle the event if it doesn't affect visible memory.
 				VideoWriteDataEvent vwEvent = (VideoWriteDataEvent) event;
-				event.execute(machine);
+				player.executeEvent(event);
 				
 				for (int i = 0; i < vwEvent.getLength(); i++) {
 					int visAddr = vwEvent.getAddress() + i;

@@ -5,7 +5,11 @@ package v9t9.engine.demos.format.old;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
 
+import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.demo.ISpeechEvent;
 import v9t9.engine.demos.events.SoundWriteDataEvent;
@@ -26,17 +30,57 @@ public class OldDemoFormatInputStream extends BaseDemoInputStream implements IDe
 	protected OldDemoInputBuffer speechBuffer;
 	protected OldDemoInputBuffer videoBuffer;
 
+	private Map<Integer, OldDemoInputBuffer> codeToBufferMap = 
+			new HashMap<Integer, OldDemoInputBuffer>();
 	private int ticks60;
 
 	public OldDemoFormatInputStream(InputStream is_) throws IOException {
 		super(is_);
 
-		videoBuffer = new OldDemoInputBuffer(is, "video", OldDemoFormat.VIDEO,
-				OldDemoFormat.VIDEO_BUFFER_SIZE);
-		soundBuffer = new OldDemoInputBuffer(is, "sound", OldDemoFormat.SOUND,
-						OldDemoFormat.SOUND_BUFFER_SIZE);
-		speechBuffer = new OldDemoInputBuffer(is, "speech", OldDemoFormat.SPEECH,
-				OldDemoFormat.SPEECH_BUFFER_SIZE);
+		videoBuffer = registerStandardBuffer(new OldDemoInputBuffer(
+				is, "video", OldDemoFormat.VIDEO,
+				OldDemoFormat.VIDEO_BUFFER_SIZE) {
+			@Override
+			public void decodeEvents(Queue<IDemoEvent> queuedEvents)
+					throws IOException {
+				queueVideoEvents(queuedEvents);
+			}
+		});
+		soundBuffer = registerStandardBuffer(new OldDemoInputBuffer(
+				is, "sound", OldDemoFormat.SOUND,
+						OldDemoFormat.SOUND_BUFFER_SIZE) {
+			/* (non-Javadoc)
+			 * @see v9t9.common.demo.IDemoInputBuffer#decodeEvents(java.util.Queue)
+			 */
+			@Override
+			public void decodeEvents(
+					Queue<IDemoEvent> queuedEvents)
+					throws IOException {
+				queueSoundEvents(queuedEvents);
+			}
+		});
+		speechBuffer = registerStandardBuffer(new OldDemoInputBuffer(
+				is, "speech", OldDemoFormat.SPEECH,
+				OldDemoFormat.SPEECH_BUFFER_SIZE) {
+			/* (non-Javadoc)
+			 * @see v9t9.common.demo.IDemoInputBuffer#decodeEvents(java.util.Queue)
+			 */
+			@Override
+			public void decodeEvents(Queue<IDemoEvent> queuedEvents)
+					throws IOException {
+				queueSpeechEvents(queuedEvents);
+			}
+		});
+	}
+
+	/**
+	 * @param buffer
+	 * @return
+	 */
+	private OldDemoInputBuffer registerStandardBuffer(
+			OldDemoInputBuffer buffer) {
+		codeToBufferMap.put(buffer.getCode(), buffer);
+		return buffer;
 	}
 
 	/* (non-Javadoc)
@@ -56,20 +100,13 @@ public class OldDemoFormatInputStream extends BaseDemoInputStream implements IDe
 		if (kind == OldDemoFormat.TICK) {
 			queueTimerTickEvent();
 		}
-		else if (kind == OldDemoFormat.VIDEO) {
-			queueVideoEvents();
-		}
-		else if (kind == OldDemoFormat.SOUND) {
-			queueSoundEvents();
-		}
-		else if (kind == OldDemoFormat.SPEECH) {
-			queueSpeechEvents();
-		}
 		else {
-			// urf
-			throw newFormatException("unrecognized buffer type " + Integer.toHexString(kind));
+			OldDemoInputBuffer buffer = codeToBufferMap.get(kind);
+			if (buffer == null)
+				throw newFormatException("unrecognized buffer type " + Integer.toHexString(kind));
+			
+			buffer.decodeEvents(queuedEvents);
 		}
-		
 	}
 
 	protected void queueTimerTickEvent() throws IOException {
@@ -77,7 +114,7 @@ public class OldDemoFormatInputStream extends BaseDemoInputStream implements IDe
 		queuedEvents.add(new TimerTick(getElapsedTime()));
 	}
 	
-	protected void queueSoundEvents() throws IOException {
+	protected void queueSoundEvents(Queue<IDemoEvent> queuedEvents) throws IOException {
 		// collection of sound events
 		soundBuffer.refill();
 		
@@ -85,8 +122,8 @@ public class OldDemoFormatInputStream extends BaseDemoInputStream implements IDe
 		queuedEvents.add(new SoundWriteDataEvent(0x8400, soundBuffer.readRest()));
 	}
 
-	protected void queueVideoEvents() throws IOException {
-		// collection of video events
+	protected void queueVideoEvents(Queue<IDemoEvent> queuedEvents) throws IOException {
+		// collection of video events (register writes and memory sets)
 		videoBuffer.refill();
 		
 		// parse events
@@ -102,7 +139,7 @@ public class OldDemoFormatInputStream extends BaseDemoInputStream implements IDe
 		}
 	}
 
-	protected void queueSpeechEvents() throws IOException {
+	protected void queueSpeechEvents(Queue<IDemoEvent> queuedEvents) throws IOException {
 		// collection of speech events
 		speechBuffer.refill();
 		

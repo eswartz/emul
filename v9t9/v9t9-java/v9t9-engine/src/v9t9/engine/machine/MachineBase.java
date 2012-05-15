@@ -179,13 +179,14 @@ abstract public class MachineBase implements IMachine {
 	}
 
 	protected void init(IMachineModel machineModel) {
+		demoManager = new DemoManager(this);
+		
     	vdp = machineModel.createVdp(this);
     	sound = machineModel.createSoundChip(this);
     	speech = machineModel.createSpeechChip(this);
     	memoryModel.initMemory(this);
     	
     	moduleManager = machineModel.createModuleManager(this);
-    	demoManager = new DemoManager(settings, machineModel);
     	
     	cpu = machineModel.createCPU(this); 
 		keyboardState = new KeyboardState(this);
@@ -321,7 +322,9 @@ abstract public class MachineBase implements IMachine {
 	    					break;
 	    				}
 	    			}
-	    			vdp.work();
+	    			if (!vdp.isThrottled()) {
+	    				vdp.work();
+	    			}
         		}
         	}
         };

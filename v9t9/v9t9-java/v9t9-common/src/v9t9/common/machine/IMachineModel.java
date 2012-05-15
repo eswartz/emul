@@ -48,10 +48,10 @@ public interface IMachineModel {
 
 	IModuleManager createModuleManager(IMachine machine);
 
+	
 	/**
 	 * Get the base data URL for this machine
 	 * @return
 	 */
 	URL getDataURL();
-
 }

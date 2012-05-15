@@ -26,6 +26,7 @@ import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.common.speech.ISpeechDataSender;
+import v9t9.engine.demos.actors.SpeechDemoActor;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import static v9t9.common.speech.TMS5220Consts.*;
 
@@ -111,6 +112,9 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 		fifo = new byte[16];
 		lpc = new LPCSpeech(settings);
 		senderList = new ListenerList<ISpeechDataSender>();
+		
+		machine.getDemoManager().registerActor(new SpeechDemoActor());
+		
 		reset();
 	}
 

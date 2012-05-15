@@ -22,7 +22,7 @@ import v9t9.engine.demos.format.DemoOutputBuffer;
 public class TestNewDemoFormat {
 
 	private ByteArrayOutputStream bos = new ByteArrayOutputStream(256);
-	private DemoOutputBuffer out = new DemoOutputBuffer(bos, 1);
+	private DemoOutputBuffer out = new DemoOutputBuffer(bos, "test", 1);
 	private ByteArrayInputStream bis;
 	private DemoInputBuffer in;
 

@@ -116,6 +116,8 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 	protected void defineMmioMemory(IBaseMachine machine) {
 		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0xFC00, 0x0400,
                 new V9t9EnhancedConsoleMmioArea(machine)));
+		
+		// no MMIO demo actor -- use regs
 	}
 	
 	/* (non-Javadoc)
