@@ -22,11 +22,14 @@ import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.machine.IMachineModel;
-import v9t9.engine.demos.format.CountingOutputStream;
 import v9t9.engine.demos.format.DemoFormat;
-import v9t9.engine.demos.format.NewDemoFormatReader;
-import v9t9.engine.demos.format.NewDemoFormatWriter;
-import v9t9.engine.demos.format.OldDemoFormatReader;
+import v9t9.engine.demos.format.DemoFormatInputStream;
+import v9t9.engine.demos.format.DemoFormat.DemoHeader;
+import v9t9.engine.demos.format.DemoFormatOutputStream;
+import v9t9.engine.demos.format.old.OldDemoFormat;
+import v9t9.engine.demos.format.old.OldDemoFormatInputStream;
+import v9t9.engine.demos.format.old.OldDemoFormatOutputStream;
+import ejs.base.utils.CountingOutputStream;
 import ejs.base.utils.FileUtils;
 
 /**
@@ -129,9 +132,9 @@ public class DemoManager implements IDemoManager {
 		is.read(header);
 		
 		if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V9t9)) {
-			return new NewDemoFormatReader(machineModel, is);
-		} else if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V910)) {
-			return new OldDemoFormatReader(is);
+			return new DemoFormatInputStream(machineModel, is);
+		} else if (Arrays.equals(header, OldDemoFormat.DEMO_MAGIC_HEADER_V910)) {
+			return new OldDemoFormatInputStream(is);
 		}
 		
 		return null;
@@ -143,7 +146,14 @@ public class DemoManager implements IDemoManager {
 	@Override
 	public IDemoOutputStream createDemoWriter(URI uri) throws IOException,
 			NotifyException {
-		return new NewDemoFormatWriter(machineModel, 
-				new CountingOutputStream(new BufferedOutputStream(locator.createOutputStream(uri))));
+		if (true) {
+			DemoHeader header = new DemoHeader();
+			header.setMachineModel(machineModel.getIdentifier());
+			return new DemoFormatOutputStream(header, 
+					new CountingOutputStream(new BufferedOutputStream(locator.createOutputStream(uri))));
+		} else {
+			return new OldDemoFormatOutputStream( 
+					new CountingOutputStream(new BufferedOutputStream(locator.createOutputStream(uri))));
+		}
 	}
 }

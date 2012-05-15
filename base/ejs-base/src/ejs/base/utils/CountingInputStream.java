@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.engine.demos.format;
+package ejs.base.utils;
 
 import java.io.FilterInputStream;
 import java.io.IOException;

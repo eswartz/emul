@@ -3,8 +3,10 @@
  */
 package v9t9.tools.demos;
 
+import ejs.base.utils.CountingOutputStream;
 import gnu.getopt.Getopt;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
@@ -25,6 +27,7 @@ import v9t9.engine.demos.DemoManager;
 import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
+import v9t9.engine.demos.format.old.OldDemoFormatOutputStream;
 import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.machine.ti99.machine.StandardMachineModel;
 
@@ -36,7 +39,7 @@ public class ConvertDemos {
 
 
 	public static void main(String[] args) {
-		Getopt getopt = new Getopt("ConvertDemos", args, "h?d:srF");
+		Getopt getopt = new Getopt("ConvertDemos", args, "h?d:srFO");
 		getopt.setOpterr(true);
 
 		if (args.length == 0) {
@@ -52,6 +55,8 @@ public class ConvertDemos {
 		int opt;
 		boolean shrink = false;
 		boolean recurse = false;
+		boolean oldFormat = false;
+		
 		while ((opt = getopt.getopt()) != -1) {
 			if (opt == 'h' || opt == '?') {
 				help();
@@ -69,6 +74,9 @@ public class ConvertDemos {
 			else if (opt == 'F') {
 				model = new F99bMachineModel();
 			}
+			else if (opt == 'O') {
+				oldFormat = true;
+			}
 		}
 		
 		if (model == null) {
@@ -78,6 +86,7 @@ public class ConvertDemos {
 		cvt = new ConvertDemos(model);
 		cvt.setShrink(shrink);
 		cvt.setRecurse(recurse);
+		cvt.setOldFormat(oldFormat);
 		
 		File newDir = new File(newDirPath);
 		newDir.mkdirs();
@@ -110,6 +119,26 @@ public class ConvertDemos {
 
 
 	private boolean recurse;
+	private boolean oldFormat;
+
+	private DemoManager manager;
+	private boolean shrink;
+	private IMachine machine;
+	
+	/** one bit per byte per address whose contents are known to come from the demo */
+	private BitSet knownVideoMemory;
+	/** one bit per byte for memory whose contents are pending visibility */
+	private BitSet unrecordedVideoMemory;
+	
+	/** one bit per 1<<memGranularity bytes for memory contributing to video tables */
+	private BitSet visibleVideoMemory;
+
+	public ConvertDemos(IMachineModel machineModel) {
+		ISettingsHandler settings = new BasicSettingsHandler();
+		this.manager = new DemoManager(settings, machineModel);
+		this.machine = machineModel.createMachine(settings);
+	}
+	
 
 
 	/**
@@ -119,6 +148,21 @@ public class ConvertDemos {
 		this.recurse = recurse;
 	}
 
+
+	/**
+	 * @param shrink the shrink to set
+	 */
+	public void setShrink(boolean shrink) {
+		this.shrink = shrink;
+	}
+
+
+	/**
+	 * @param oldFormat
+	 */
+	private void setOldFormat(boolean oldFormat) {
+		this.oldFormat = oldFormat;
+	}
 
 	/**
 	 * @param fromDir
@@ -148,32 +192,6 @@ public class ConvertDemos {
 			}
 		}
 	}
-
-	private DemoManager manager;
-	private boolean shrink;
-	private IMachine machine;
-	
-	/** one bit per byte per address whose contents are known to come from the demo */
-	private BitSet knownVideoMemory;
-	/** one bit per byte for memory whose contents are pending visibility */
-	private BitSet unrecordedVideoMemory;
-	
-	/** one bit per 1<<memGranularity bytes for memory contributing to video tables */
-	private BitSet visibleVideoMemory;
-	
-	public ConvertDemos(IMachineModel machineModel) {
-		ISettingsHandler settings = new BasicSettingsHandler();
-		this.manager = new DemoManager(settings, machineModel);
-		this.machine = machineModel.createMachine(settings);
-	}
-	
-	/**
-	 * @param shrink the shrink to set
-	 */
-	public void setShrink(boolean shrink) {
-		this.shrink = shrink;
-	}
-
 
 
 	/**
@@ -221,7 +239,13 @@ public class ConvertDemos {
 		
 		IDemoOutputStream os = null;
 		try {
-			os = manager.createDemoWriter(to);
+			if (oldFormat) {
+				os = new OldDemoFormatOutputStream(
+						new CountingOutputStream(new BufferedOutputStream(
+								manager.getDemoLocator().createOutputStream(to))));
+			} else {
+				os = manager.createDemoWriter(to);
+			}
 			
 			try {
 				if (shrink)
@@ -264,7 +288,7 @@ public class ConvertDemos {
 	 * @throws NotifyException 
 	 */
 	private long updateAndEmitTimerTick(IDemoOutputStream os,
-			IDemoInputStream is, long timer, TimerTick event) throws NotifyException {
+			IDemoInputStream is, long timer, TimerTick event) throws IOException {
 		
 		long newTimer = is.getElapsedTime();
 		
@@ -275,7 +299,7 @@ public class ConvertDemos {
 	}
 
 
-	private void processEventsAndShrink(IDemoInputStream is, IDemoOutputStream os) throws NotifyException {
+	private void processEventsAndShrink(IDemoInputStream is, IDemoOutputStream os) throws IOException {
 		IDemoEvent event;
 
 		long timer = 0;
@@ -354,7 +378,7 @@ public class ConvertDemos {
 	 * @param os 
 	 * @throws NotifyException 
 	 */
-	private void flushVideoEvents(IDemoOutputStream os, BitSet tempVideoWriteSet) throws NotifyException {
+	private void flushVideoEvents(IDemoOutputStream os, BitSet tempVideoWriteSet) throws IOException {
 		// emit the events that do affect visible memory
 		if (!tempVideoWriteSet.isEmpty()) {
 			emitVideoMemoryEvents(os, tempVideoWriteSet);
@@ -371,7 +395,7 @@ public class ConvertDemos {
 	 * @throws NotifyException 
 	 */
 	private void emitVideoMemoryEvents(IDemoOutputStream os,
-			BitSet knownVisibleMemoryChanges) throws NotifyException {
+			BitSet knownVisibleMemoryChanges) throws IOException {
 
 		if (unrecordedVideoMemory.isEmpty())
 			return;
@@ -409,7 +433,7 @@ public class ConvertDemos {
 	 * @throws NotifyException 
 	 */
 	private void emitVideoMemoryEvent(IDemoOutputStream os, int startAddr,
-			int endAddr) throws NotifyException {
+			int endAddr) throws IOException {
 		int length = endAddr - startAddr;
 		ByteMemoryAccess access = machine.getVdp().getByteReadMemoryAccess(startAddr);
 		VideoWriteDataEvent ev =  new VideoWriteDataEvent(startAddr, 
@@ -422,7 +446,7 @@ public class ConvertDemos {
 	}
 
 
-	private void processEvents(IDemoInputStream is, IDemoOutputStream os) throws NotifyException {
+	private void processEvents(IDemoInputStream is, IDemoOutputStream os) throws IOException {
 		IDemoEvent event;
 		
 		long timer = 0;

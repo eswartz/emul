@@ -1,12 +1,13 @@
 /**
  * 
  */
-package v9t9.engine.demos.format;
+package v9t9.engine.demos.stream;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
-import v9t9.common.events.NotifyException;
+import ejs.base.utils.CountingInputStream;
 
 /**
  * @author ejs
@@ -29,14 +30,21 @@ public class BaseReader {
 		return is.getPosition();
 	}
 
-	public NotifyException newFormatException(String string) {
+	public IOException newFormatException(String string) {
 		return newFormatException(string, getPosition());
 	}
 
-	public NotifyException newFormatException(String string, long effectivePos) {
-		return new NotifyException(null, "Demo corrupted at 0x" + 
+	public IOException newFormatException(String string, long effectivePos) {
+		return new IOException("Demo corrupted at 0x" + 
 				Long.toHexString(effectivePos) + ": " + string);
 
+	}
+
+	/**
+	 * @return the is
+	 */
+	public CountingInputStream getInputStream() {
+		return is;
 	}
 
 

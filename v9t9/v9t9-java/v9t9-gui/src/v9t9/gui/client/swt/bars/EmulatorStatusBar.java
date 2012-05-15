@@ -12,14 +12,12 @@ import java.util.TreeMap;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
-import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
@@ -168,14 +166,32 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			int demoIconIndex,
 			final int playOverlay, final int recordOverlay,
 			final int pauseOverlay, String tooltip) {
-		
-		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
-				imageProvider, demoIconIndex, tooltip);
-		
+
 		final IProperty pauseSetting = Settings.get(machine, IDemoHandler.settingDemoPaused);
 		final IProperty recordSetting = Settings.get(machine, IDemoHandler.settingRecordDemo);
 		final IProperty playSetting = Settings.get(machine, IDemoHandler.settingPlayingDemo);
-		final IProperty playRateSetting = Settings.get(machine, IDemoHandler.settingDemoPlaybackRate);
+//		final IProperty playRateSetting = Settings.get(machine, IDemoHandler.settingDemoPlaybackRate);
+		
+		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
+				imageProvider, demoIconIndex, tooltip) {
+			/* (non-Javadoc)
+			 * @see v9t9.gui.client.swt.bars.ImageButton#isEventOverMenu(org.eclipse.swt.events.MouseEvent)
+			 */
+			@Override
+			protected boolean isEventOverMenu(MouseEvent e) {
+				if (super.isEventOverMenu(e))
+					return true;
+				
+				if (recordSetting.getBoolean() || playSetting.getBoolean()) {
+					// upper-left corner toggles these
+					if (isPointOverDemoControlIcon(getSize(), e.x, e.y)) {
+						return true;
+					}
+				}
+				
+				return false;
+			}
+		};
 		
 		addSettingToggleListener(button, recordSetting, demoIconIndex, recordOverlay,
 				true, false);
@@ -188,22 +204,37 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				if (recordSetting.getBoolean() || playSetting.getBoolean()) {
-					if (pauseSetting.getBoolean())
-						button.setOverlayBounds(imageProvider.imageIndexToBounds(
-								recordSetting.getBoolean() ? recordOverlay : playOverlay));
-					else
-						button.setOverlayBounds(imageProvider.imageIndexToBounds(pauseOverlay));
-					
-					pauseSetting.setBoolean(!pauseSetting.getBoolean());
-
-					button.redraw();
-
-				} else {
+				if (!isPointOverDemoControlIcon(button.getSize(), e.x, e.y))
 					toggleDemoDialog();
-				}
 			}
 		});
+		
+//
+//		button.addMouseListener(new MouseAdapter() {
+//			@Override
+//			public void mouseDown(MouseEvent e) {
+//				Rectangle bounds = button.getBounds();
+//				if (e.y < bounds.height / 2) {
+//					double rate = (Double) playRateSetting.getValue();
+//					if (e.x < bounds.width / 3) {
+//						rate /= 1.1;
+//					}
+//					else if (e.x < bounds.width * 2 / 3) {
+//						
+//					}
+//					else {
+//						rate *= 1.1;
+//					}
+//					playRateSetting.setValue(rate);
+//				}
+//			}
+//			
+//			@Override
+//			public void mouseDoubleClick(MouseEvent e) {
+//				toggleDemoDialog();
+//			}
+//		});
+
 
 		button.setMenuOverlayBounds(imageProvider.imageIndexToBounds(IconConsts.MENU_OVERLAY));
 		button.addMenuDetectListener(new MenuDetectListener() {
@@ -211,34 +242,27 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			public void menuDetected(MenuDetectEvent e) {
 				final IDemoHandler handler = machine.getDemoHandler();
 				if (handler != null) {
-					showDemoMenu(handler, e, e.x, e.y, 
-							recordSetting, playSetting, pauseSetting);
-				}
-			}
-		});
-
-		button.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseDown(MouseEvent e) {
-				Rectangle bounds = button.getBounds();
-				if (e.y < bounds.height / 2) {
-					double rate = (Double) playRateSetting.getValue();
-					if (e.x < bounds.width / 3) {
-						rate /= 1.1;
-					}
-					else if (e.x < bounds.width * 2 / 3) {
+					Point menuLoc = button.toControl(((Control) e.widget).toDisplay(e.x, e.y));
+					boolean pointOverDemoControlIcon = isPointOverDemoControlIcon(button.getSize(), menuLoc.x, menuLoc.y); 
+					if ((recordSetting.getBoolean() || playSetting.getBoolean())
+							&& pointOverDemoControlIcon) { 
+						if (pauseSetting.getBoolean())
+							button.setOverlayBounds(imageProvider.imageIndexToBounds(
+									recordSetting.getBoolean() ? recordOverlay : playOverlay));
+						else
+							button.setOverlayBounds(imageProvider.imageIndexToBounds(pauseOverlay));
 						
+						pauseSetting.setBoolean(!pauseSetting.getBoolean());
+
+						button.redraw();
+
+					} else {
+						showDemoMenu(handler, e, e.x, e.y, 
+								recordSetting, playSetting, pauseSetting);
 					}
-					else {
-						rate *= 1.1;
-					}
-					playRateSetting.setValue(rate);
+					
+					e.doit = false;
 				}
-			}
-			
-			@Override
-			public void mouseDoubleClick(MouseEvent e) {
-				toggleDemoDialog();
 			}
 		});
 
@@ -256,6 +280,11 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		return button;
 		
 	}
+
+	protected boolean isPointOverDemoControlIcon(Point size, int x, int y) {
+		return x < size.x / 3 && y < size.y / 3;
+	}
+
 
 	private void showDemoMenu(final IDemoHandler demoHandler, TypedEvent e, int x, int y, 
 			final IProperty recordSetting, final IProperty playSetting,
@@ -328,12 +357,9 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		}
 		
 		////
-		final IProperty searchPath = Settings.get(machine, IDemoHandler.settingUserDemosPath);
 		final IProperty recordPath = Settings.get(machine, IDemoHandler.settingRecordedDemosPath);
 		final String demoDir = (recordPath.getString() == null || recordPath.getString().isEmpty())
 				? "/tmp" : recordPath.getString();
-		
-		makeBrowseItem(demoHandler, menu, menu, demoDir, searchPath, "Browse for demos...");
 		
 		if (currentFilename == null) {
 			recordItem = new MenuItem(menu, SWT.RADIO);
@@ -348,7 +374,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					String filenameBase = SwtDialogUtils.openFileSelectionDialog(
 							menu.getShell(),
 							"Record demo file",
-							recordPath.getString(),
+							demoDir,
 							"demo", true,
 							IDemoHandler.DEMO_EXTENSIONS);
 					File saveFile = null;
@@ -396,48 +422,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				DemoSelector.getToolShellFactory(machine, buttonBar, swtWindow));
 		
 	}
-
-
-	/**
-	 * @param demoHandler
-	 * @param menu
-	 * @param playSubMenu
-	 * @param demoDir
-	 * @param searchPath
-	 */
-	protected void makeBrowseItem(final IDemoHandler demoHandler,
-			final Menu menu, Menu playSubMenu, final String demoDir,
-			final IProperty searchPath, String label) {
-		MenuItem playBrowseItem = new MenuItem(playSubMenu, SWT.PUSH); 
-		playBrowseItem.setText(label);
-		
-		playBrowseItem.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				String filename = SwtDialogUtils.openFileSelectionDialog(
-						menu.getShell(),
-						"Select demo file", 
-						demoDir, 
-						null, false,
-						IDemoHandler.DEMO_EXTENSIONS);
-				if (filename != null) {
-					File playFile = new File(filename);
-					String parent = playFile.getParentFile().getAbsolutePath(); 
-					if (!searchPath.getList().contains(parent)) {
-						searchPath.getList().add(parent);
-						searchPath.firePropertyChange();
-					}
-					
-					try {
-						demoHandler.startPlayback(playFile.toURI());
-					} catch (NotifyException ex) {
-						machine.getEventNotifier().notifyEvent(ex.getEvent());
-					}
-				}
-			}
-		});
-	}
-
 
 	private Menu addRateMenuItems(final Menu menu) {
 		IProperty playbackRate = Settings.get(machine, IDemoHandler.settingDemoPlaybackRate);

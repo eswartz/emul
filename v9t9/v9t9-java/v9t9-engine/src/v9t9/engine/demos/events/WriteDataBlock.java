@@ -5,10 +5,10 @@ package v9t9.engine.demos.events;
 
 import java.util.Iterator;
 
-import ejs.base.utils.Tuple;
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
+import ejs.base.utils.Tuple;
 
 /**
  * Write data in successive addresses

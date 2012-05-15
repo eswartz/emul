@@ -4,8 +4,7 @@
 package v9t9.common.demo;
 
 import java.io.Closeable;
-
-import v9t9.common.events.NotifyException;
+import java.io.IOException;
 
 /**
  * @author ejs
@@ -15,9 +14,9 @@ public interface IDemoOutputStream extends Closeable {
 	/**
 	 * Write new event.
 	 * @return event
-	 * @throws NotifyException 
+	 * @throws IOException 
 	 */
-	void writeEvent(IDemoEvent event) throws NotifyException;
+	void writeEvent(IDemoEvent event) throws IOException;
 
 	/**
 	 * Get the rate at which timer events occur

@@ -7,6 +7,7 @@ package v9t9.engine.video.v9938;
 import static v9t9.common.hardware.VdpTMS9918AConsts.*;
 import static v9t9.common.hardware.VdpV9938Consts.*;
 
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -1375,4 +1376,16 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
     public void touchAbsoluteVdpMemory(int vdpaddr) {
     	vdpMemory.touchMemory(vdpaddr);
     }
+    
+	@Override
+	public BitSet getRecordableRegs() {
+		BitSet bs = new BitSet();
+		// only record mode/memory relevant ones
+		bs.set(0, 19+1);
+		// and colors
+		bs.set(REG_PAL0, REG_PAL0 + 16);
+		// no status regs
+		return bs;
+	}
+
 }

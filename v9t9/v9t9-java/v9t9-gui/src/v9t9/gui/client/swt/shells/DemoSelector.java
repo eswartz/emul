@@ -78,9 +78,11 @@ import v9t9.common.demo.IDemoHandler;
 import v9t9.common.demo.IDemoManager;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageBar;
+import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 
 /**
@@ -187,6 +189,8 @@ public class DemoSelector extends Composite {
 
 	private ISettingSection dialogSettings;
 
+	private Button browseButton;
+
 	public DemoSelector(Shell shell, IMachine machine_, IDemoManager demoManager_, SwtWindow window_) {
 		super(shell, SWT.NONE);
 		this.demoHandler = machine_.getDemoHandler();
@@ -212,6 +216,45 @@ public class DemoSelector extends Composite {
 		buttonBar = new Composite(this, SWT.NONE);
 		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(3).equalWidth(false).applyTo(buttonBar);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(buttonBar);
+
+		browseButton = new Button(buttonBar, SWT.PUSH);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).hint(128, -1).applyTo(browseButton);
+
+		browseButton.setText("Browse...");
+		browseButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				String filename = SwtDialogUtils.openFileSelectionDialog(
+						getShell(),
+						"Select demo file", 
+						selectedDemo != null && selectedDemo.getURI().getScheme().equals("file") ?
+								new File(selectedDemo.getURI()).getParent() : null,
+						null, false,
+						IDemoHandler.DEMO_EXTENSIONS);
+				if (filename != null) {
+					File playFile = new File(filename);
+					String parent = playFile.getParentFile().toURI().toString();
+					IProperty searchPath = Settings.get(machine, IDemoHandler.settingUserDemosPath);
+					if (!searchPath.getList().contains(parent)) {
+						searchPath.getList().add(parent);
+						searchPath.firePropertyChange();
+						
+						demoManager.reload();
+						viewer.refresh();
+					}
+
+					if (!isDisposed())
+						getShell().dispose();
+					
+					try {
+						demoHandler.startPlayback(playFile.toURI());
+					} catch (NotifyException ex) {
+						machine.getEventNotifier().notifyEvent(ex.getEvent());
+					}
+				}
+			}
+		});
+		browseButton.setEnabled(true);
 		
 		
 		Label filler = new Label(buttonBar, SWT.NONE);
@@ -656,19 +699,55 @@ public class DemoSelector extends Composite {
 				final Item item = viewer.getTree().getItem(
 						viewer.getControl().toControl(new Point(e.x, e.y))
 						);
-				if (item != null && item.getData() instanceof IDemo) {
-					final IDemo demo = (IDemo) item.getData();
+				if (item == null)
+					return;
+				
 
-					Menu menu = new Menu(viewer.getControl());
+				Menu menu = new Menu(viewer.getControl());
+
+				if (item.getData() instanceof URI) {
+
+					final URI uri = (URI) item.getData();
+					final String filePathStr = uri.getScheme().equals("file") ? new File(uri.getPath()).getAbsolutePath() : null;
+					
+					final MenuItem dlitem;
+					dlitem = new MenuItem(menu, SWT.NONE);
+					dlitem.setText("Remove directory from search paths");
+					
+					dlitem.addSelectionListener(new SelectionAdapter() {
+						@SuppressWarnings("unchecked")
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							for (IProperty prop : demoManager.getDemoLocator().getSearchPathProperties()) {
+								if (prop.getValue() instanceof List<?>) {
+									List<String> list = (List<String>) prop.getValue();
+									if (list.remove(uri.toString()) || list.remove(filePathStr)) {
+										prop.firePropertyChange();
+										viewer.refresh();
+									}
+								}
+							}
+						}
+						
+					});
+				}
+				else if (item.getData() instanceof IDemo) {
+					final IDemo demo = (IDemo) item.getData();
 
 					if (demo.getURI().getScheme().equals("file")) {
 						final MenuItem dlitem;
 						dlitem = new MenuItem(menu, SWT.NONE);
-						dlitem.setText("Delete entry");
+						dlitem.setText("Delete entry from disk");
 						
 						dlitem.addSelectionListener(new SelectionAdapter() {
 							@Override
 							public void widgetSelected(SelectionEvent e) {
+								boolean ok = MessageDialog.openConfirm(
+										getShell(), "Delete?", "Are you sure you want to delete:\n"
+										+ demo.getURI());
+								if (!ok)
+									return;
+								
 								if (new File(demo.getURI()).delete()) {
 									demoManager.removeDemo(demo);
 									viewer.remove(demo);
@@ -681,19 +760,19 @@ public class DemoSelector extends Composite {
 						});
 					}
 					
-					if (menu.getItemCount() == 0) {
-						menu.dispose();
-						return;
-					}
-					
-					menu.setLocation(e.x, e.y);
-					menu.setVisible(true);
-					
-					while (!menu.isDisposed() && menu.isVisible()) {
-						if (!getDisplay().readAndDispatch())
-							getDisplay().sleep();
-					}
-					
+				}
+
+				if (menu.getItemCount() == 0) {
+					menu.dispose();
+					return;
+				}
+				
+				menu.setLocation(e.x, e.y);
+				menu.setVisible(true);
+				
+				while (!menu.isDisposed() && menu.isVisible()) {
+					if (!getDisplay().readAndDispatch())
+						getDisplay().sleep();
 				}
 			}
 		});

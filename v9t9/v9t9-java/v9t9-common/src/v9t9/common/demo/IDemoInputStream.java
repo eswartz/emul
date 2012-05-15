@@ -4,20 +4,23 @@
 package v9t9.common.demo;
 
 import java.io.Closeable;
-
-import v9t9.common.events.NotifyException;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * @author ejs
  *
  */
 public interface IDemoInputStream extends Closeable {
+	/** Get underlying stream */
+	InputStream getInputStream();
+
 	/**
 	 * Read next event.
 	 * @return event, or <code>null</code> once the stream is exhausted
-	 * @throws NotifyException 
+	 * @throws IOException 
 	 */
-	IDemoEvent readNext() throws NotifyException;
+	IDemoEvent readNext() throws IOException;
 
 	/**
 	 * Get the rate at which the timer ticks.

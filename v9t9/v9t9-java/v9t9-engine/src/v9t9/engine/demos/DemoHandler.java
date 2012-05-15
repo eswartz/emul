@@ -5,6 +5,7 @@ package v9t9.engine.demos;
 
 import java.io.IOException;
 import java.net.URI;
+
 import v9t9.common.demo.IDemoHandler;
 import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.demo.IDemoOutputStream;
@@ -215,6 +216,8 @@ public class DemoHandler implements IDemoHandler {
 	public boolean isDemoSupported(URI uri) {
 		try {
 			IDemoInputStream is = machine.getDemoManager().createDemoReader(uri);
+			if (is == null)
+				return false;
 			is.close();
 			return true;
 		} catch (NotifyException e) {		

@@ -107,4 +107,14 @@ public interface IVdpChip extends IPersistable, IRegisterAccess {
 	 * @return bitset
 	 */
 	BitSet getVisibleMemory(int granularityShift);
+	
+	/**
+	 * Get the registers worth recording in a demo.
+	 * For example, the V9938 acceleration control registers
+	 * are not important (since they need a CPU driving them,
+	 * to fetch status and reset the state) and the commands
+	 * invoke VDP memory read/write commands anyway.
+	 * @return
+	 */
+	BitSet getRecordableRegs();
 }

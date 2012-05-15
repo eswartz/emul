@@ -11,7 +11,6 @@ import v9t9.common.demo.IDemoHandler.IDemoListener;
 import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyEvent;
-import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.demos.events.TimerTick;
 import ejs.base.properties.IProperty;
@@ -55,8 +54,10 @@ public class DemoPlayer {
 				if (isFinished)
 					return;
 				
-				playClock += playStepMs;
-				stepDemo();
+				if (!pauseSetting.getBoolean()) {
+					playClock += playStepMs;
+					stepDemo();
+				}
 			}
 		}, timerRate);
 	}
@@ -81,28 +82,41 @@ public class DemoPlayer {
 	 * @return
 	 */
 	protected void stepDemo() {
-		if (!pauseSetting.getBoolean()) {
-			try {
-				processEvents();
-			} catch (final NotifyException e) {
-				isFinished = true;
-				
-				if (e.getEvent().level == Level.ERROR)
-					e.printStackTrace();
-				
-				stop();
-				listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
+		if (isFinished)
+			return;
+		
+		try {
+			processEvents();
+		} catch (final IOException e) {
+			isFinished = true;
+			
+			e.printStackTrace();
+			
+			listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
 
-					@Override
-					public void fire(IDemoListener listener) {
-						listener.stopped(e.getEvent());
-					}
-				});
-			}
+				@Override
+				public void fire(IDemoListener listener) {
+					listener.stopped(new NotifyEvent(System.currentTimeMillis(), null, 
+								Level.ERROR, e.getMessage()));
+				}
+			});
+
+		}
+	
+		if (isFinished) {
+			stop();
+			listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
+
+				@Override
+				public void fire(IDemoListener listener) {
+					listener.stopped(new NotifyEvent(System.currentTimeMillis(), null, 
+							Level.INFO, "Demo playback finished"));
+				}
+			});
 		}
 	}
 	
-	protected void processEvents() throws NotifyException {
+	protected void processEvents() throws IOException {
 		IDemoEvent event;
 		
 		if (playClock < is.getElapsedTime())
@@ -113,8 +127,7 @@ public class DemoPlayer {
 			
 			if (event == null) {
 				isFinished = true;
-				throw new NotifyException(new NotifyEvent(System.currentTimeMillis(), null, 
-						Level.INFO, "Demo playback finished"));
+				break;
 			}
 			
 			event.execute(machine);

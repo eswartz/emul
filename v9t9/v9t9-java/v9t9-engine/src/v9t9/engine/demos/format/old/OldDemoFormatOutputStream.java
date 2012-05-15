@@ -1,38 +1,48 @@
 /**
  * 
  */
-package v9t9.engine.demos.format;
+package v9t9.engine.demos.format.old;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoOutputStream;
-import v9t9.engine.demos.events.SoundWriteRegisterEvent;
-import v9t9.engine.demos.events.SpeechWriteEvent;
+import v9t9.common.demo.ISpeechEvent;
+import v9t9.engine.demos.events.SoundWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
-import v9t9.engine.demos.format.DemoFormat.BufferType;
-import v9t9.engine.demos.format.DemoFormat.SpeechEvent;
+import v9t9.engine.demos.stream.BaseDemoOutputStream;
 
 /**
  * Writer for TI Emulator v6.0 & V9t9 demo formats
  * @author ejs
  *
  */
-public class OldDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOutputStream {
+public class OldDemoFormatOutputStream extends BaseDemoOutputStream implements IDemoOutputStream {
 
 	private int ticks60;
-	private final boolean isTiemulFormat;
 
-	public OldDemoFormatWriter(OutputStream os, boolean isTiemulFormat) throws IOException {
+	protected OldDemoPacketBuffer videoBuffer;
+	protected OldDemoPacketBuffer soundDataBuffer;
+	protected OldDemoPacketBuffer speechBuffer;
+
+	public OldDemoFormatOutputStream(OutputStream os) throws IOException {
 		super(os);
-		this.isTiemulFormat = isTiemulFormat;
 		
-		if (isTiemulFormat)
-			os.write(DemoFormat.DEMO_MAGIC_HEADER_TI60);
-		else
-			os.write(DemoFormat.DEMO_MAGIC_HEADER_V910);
+		os.write(OldDemoFormat.DEMO_MAGIC_HEADER_V910);
+		
+		this.videoBuffer = new OldDemoPacketBuffer(os,
+				OldDemoFormat.VIDEO, OldDemoFormat.VIDEO_BUFFER_SIZE);
+		this.soundDataBuffer = new OldDemoPacketBuffer(os,
+				OldDemoFormat.SOUND, OldDemoFormat.SOUND_BUFFER_SIZE);
+		this.speechBuffer = new OldDemoPacketBuffer(os,
+				OldDemoFormat.SPEECH, OldDemoFormat.SPEECH_BUFFER_SIZE);
+
+		buffers.add(videoBuffer);
+		buffers.add(soundDataBuffer);
+		buffers.add(speechBuffer);
+		
 	}
 	
 	/* (non-Javadoc)
@@ -46,39 +56,33 @@ public class OldDemoFormatWriter extends BaseDemoFormatWriter implements IDemoOu
 	@Override
 	protected void writeTimerTick() throws IOException {
 		flushAll();
-		os.write(BufferType.TICK.getCode());
+		os.write(OldDemoFormat.TICK);
 		ticks60++;
 	}
 	
 	@Override
 	protected void writeSpeechEvent(IDemoEvent event) throws IOException {
-		SpeechWriteEvent ev = (SpeechWriteEvent) event;
-		
-		if (ev.getEvent() != SpeechEvent.ADDING_BYTE || !speechBuffer.isAvailable(2)) {
+		ISpeechEvent ev = (ISpeechEvent) event;
+		if (ev.getCode() != ISpeechEvent.SPEECH_ADDING_BYTE || !speechBuffer.isAvailable(2)) {
 			speechBuffer.flush();
 		}
-		
-		speechBuffer.push((byte) ev.getEvent().getCode());
-		if (isTiemulFormat || ev.getEvent() == SpeechEvent.ADDING_BYTE) {
-			speechBuffer.push((byte) ev.getAddedByte());
-		}
+
+		speechBuffer.push((byte) ev.getCode());
+		speechBuffer.push(ev.getAddedByte());
 	}
 
 	@Override
 	protected void writeSoundRegisterEvent(IDemoEvent event)
 			throws IOException {
-		if (!soundRegsBuffer.isAvailable(3)) {
-			soundRegsBuffer.flush();
-		}
-		SoundWriteRegisterEvent ev = (SoundWriteRegisterEvent) event;
-		soundRegsBuffer.pushWord(ev.getReg());
-		soundRegsBuffer.pushWord(ev.getVal());
+		throw new IOException("this demo format does not support sound registers");
 	}
 
 	@Override
 	protected void writeSoundDataEvent(IDemoEvent event)
 			throws IOException {
-		CommonDemoFormat.writeSoundDataEvent(event, soundDataBuffer);
+		SoundWriteDataEvent ev = (SoundWriteDataEvent) event;
+		byte[] data = ev.getData();
+		soundDataBuffer.pushData(data, 0, ev.getLength());
 	}
 
 	@Override

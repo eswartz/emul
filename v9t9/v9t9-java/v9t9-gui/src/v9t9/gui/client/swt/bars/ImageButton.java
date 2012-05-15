@@ -55,8 +55,9 @@ public class ImageButton extends ImageIconCanvas {
 						me.item = ImageButton.this;
 						me.stateMask = e.stateMask;
 						me.type = SWT.MenuDetect;
-						me.x = e.x + getLocation().x;
-						me.y = e.y + getLocation().y;
+						me.widget = ImageButton.this;
+						me.x = e.x;
+						me.y = e.y;
 						notifyListeners(SWT.MenuDetect, me);
 						e.doit = false;
 						return;
@@ -198,6 +199,8 @@ public class ImageButton extends ImageIconCanvas {
 		SelectionListener[] array = (SelectionListener[]) listeners.toArray(new SelectionListener[listeners.size()]);
 		Event event = new Event();
 		event.widget = this;
+		event.x = e.x;
+		event.y = e.y;
 		SelectionEvent selEvent = new SelectionEvent(event);
 		for (SelectionListener listener : array) {
 			listener.widgetSelected(selEvent);
@@ -217,11 +220,9 @@ public class ImageButton extends ImageIconCanvas {
 	
 	private void checkMenu(MouseEvent e) {
 		if (menuOverlayBounds != null) {
-			Point corner = getSize();
-			corner.x -= corner.x / 3;
-			corner.y -= corner.y / 3;
-			if (e.x >= corner.x
-					&& e.y >= corner.y) {
+			boolean isOverMenu = isEventOverMenu(e); 
+				
+			if (isOverMenu) {
 				if (!isMenuHovering) {
 					isMenuHovering = true;
 					redraw();
@@ -234,6 +235,20 @@ public class ImageButton extends ImageIconCanvas {
 			}
 		}
 		
+	}
+
+	/**
+	 * @param e
+	 * @return
+	 */
+	protected boolean isEventOverMenu(MouseEvent e) {
+		boolean isOverMenu;
+		Point corner = getSize();
+		corner.x -= corner.x / 3;
+		corner.y -= corner.y / 3;
+		isOverMenu = (e.x >= corner.x
+				&& e.y >= corner.y);
+		return isOverMenu;
 	}
 
 	/**

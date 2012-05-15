@@ -18,6 +18,9 @@ ToolShell centering is borked -- does not comprehend multiple bars
 
 ================
 
-Demos:  -- fix speech conversion
-	-- use tagged format instead of buffered
-	 
+Demos: 
+	
+================
+V9938:	
+	-- editor is broken (high memory writes not tracked?)
+		 

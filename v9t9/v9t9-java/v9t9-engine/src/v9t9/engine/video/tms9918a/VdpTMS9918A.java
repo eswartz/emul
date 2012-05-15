@@ -547,7 +547,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
 			log("register " + (reg < 0 ? "ST" : ""+reg) + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(value));
 		
-		fireRegisterChanged(reg, (byte) value);
+		fireRegisterChanged(reg, value & 0xff);
 		return old;
 	}
 
@@ -800,5 +800,15 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		int round = ~0 >>> (32 - granularityShift);
 		bs.set(base >>> granularityShift, 
 			(base + size + round) >>> granularityShift);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip#getRecordableRegs()
+	 */
+	@Override
+	public BitSet getRecordableRegs() {
+		BitSet bs = new BitSet();
+		bs.set(0, 8);
+		return bs;
 	}
 }
