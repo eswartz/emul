@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Timer;
 
 import ejs.base.settings.ISettingSection;
+import ejs.base.timer.FastTimer;
 
 
 import v9t9.common.asm.IRawInstructionFactory;
@@ -79,10 +80,11 @@ public interface IBaseMachine {
 
 	Object getExecutionLock();
 
-	/**
-	 * @return
-	 */
 	boolean isExecuting();
+	
+	boolean isPaused();
+	/** Change pause state and return previous setting */
+	boolean setPaused(boolean paused);
 
 	void asyncExec(Runnable runnable);
 
@@ -95,6 +97,8 @@ public interface IBaseMachine {
 
 	Timer getMachineTimer();
 
+	FastTimer getFastMachineTimer();
+	
 	/**
 	 * 
 	 */

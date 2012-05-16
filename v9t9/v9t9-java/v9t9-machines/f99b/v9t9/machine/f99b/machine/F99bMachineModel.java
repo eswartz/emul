@@ -23,7 +23,7 @@ import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.Settings;
 import v9t9.engine.dsr.realdisk.MemoryDiskImageDsr;
 import v9t9.engine.sound.MultiSoundTMS9919B;
-import v9t9.engine.speech.TMS5220;
+import v9t9.engine.speech.SpeechTMS5220;
 import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.f99b.cpu.CpuF99b;
@@ -90,7 +90,7 @@ public class F99bMachineModel implements IMachineModel {
 	 */
 	@Override
 	public ISpeechChip createSpeechChip(IMachine machine) {
-		return new TMS5220(machine, Settings.getSettings(machine), 
+		return new SpeechTMS5220(machine, Settings.getSettings(machine), 
 				machine.getMemory().getDomain(IMemoryDomain.NAME_SPEECH));
 	}
 	

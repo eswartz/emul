@@ -64,6 +64,10 @@ public class FastTimer {
 	 */
 	public void scheduleTask(Runnable task, long perSecond) {
 		synchronized (controlLock) {
+			for (RunnableInfo info : taskinfos)
+				if (info.task == task)
+					return;
+			
 			RunnableInfo info = new RunnableInfo(task, 1000000000L / perSecond);
 			taskinfos.add(info);
 			
@@ -173,7 +177,7 @@ public class FastTimer {
 			for (Object o : taskinfos.toArray()) {
 				if (((RunnableInfo) o).task == runnable) {
 					taskinfos.remove((RunnableInfo) o);
-					break;
+					//break;
 				}
 			}
 		}		

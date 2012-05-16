@@ -6,23 +6,19 @@ package v9t9.engine.speech;
 import java.util.Arrays;
 
 import ejs.base.settings.Logging;
+import ejs.base.utils.ListenerList;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.settings.SettingSchema;
+import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.speech.ISpeechDataSender;
 
 
 /**
- * decoder engine
+ * LPC decoder and synthesis engine
  * @author ejs
  *
  */
 public class LPCSpeech {
-	public static final SettingSchema settingLogSpeech = new SettingSchema(
-			ISettingsHandler.TRANSIENT,
-			"LogSpeech",
-			new Integer(0));
-
 	boolean	rpt;				/* repeat */
 	int		pnv,env;			/* pitch, energy new value */
 	int		pbf,ebf;			/* pitch, energy buffer */
@@ -39,9 +35,12 @@ final static int FL_last	= 8;		/* stop frame seen */
 	int		ppctr;			/* pitch counter */
 
 	private final ISettingsHandler settings;
+
+	private final ListenerList<ISpeechDataSender> senderList;
 	
-	public LPCSpeech(ISettingsHandler settings) {
+	public LPCSpeech(ISettingsHandler settings, ListenerList<ISpeechDataSender> senderList) {
 		this.settings = settings;
+		this.senderList = senderList;
 		knv = new int[12];
 		kbf = new int[12];
 		b = new int[12];
@@ -63,7 +62,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 	}
 	
 	public void stop() {
-		
+		decode = FL_first;
 	}
 	
 
@@ -81,31 +80,20 @@ final static int FL_last	= 8;		/* stop frame seen */
 
 	private void clearToSilence()
 	{
-		pnv = 12;
+		//pnv = 12;
 		env = 0;
-		Arrays.fill(knv, 0);
-
-		knv[0] = 0;
-		knv[1] = 0;
-		knv[2] = 0;
-		knv[3] = 0;
-		knv[4] = 0;
-		knv[5] = 0;
-		knv[6] = 0;
-		knv[7] = 0;
-		knv[8] = 0;
-		knv[9] = 0;
+		//Arrays.fill(knv, 0);
 		
 		// if the previous frame was unvoiced,
 		// it would sound bad to interpolate.
 		// just clear it all out.
-		if ((decode & FL_unvoiced) != 0) {
-			pbf = 12;
-			ebf = 0;
-			Arrays.fill(kbf, 0);
-			
-			decode &= ~FL_unvoiced;
-		}
+//		if ((decode & FL_unvoiced) != 0) {
+//			pbf = 12;
+//			ebf = 0;
+//			Arrays.fill(kbf, 0);
+//			
+//			decode &= ~FL_unvoiced;
+//		}
 	}
 	
 	/**
@@ -173,7 +161,8 @@ final static int FL_last	= 8;		/* stop frame seen */
 
 			/*  Get K parameters  */
 
-			if (!rpt) {			/* don't repeat previous frame? */
+			if (!rpt) {			
+				/* don't repeat previous frame */
 				int         tmp;
 
 				tmp = fetcher.fetch(5);
@@ -190,8 +179,8 @@ final static int FL_last	= 8;		/* stop frame seen */
 
 				tmp = fetcher.fetch(4);
 				
-				knv[3] = RomTables.k4table[tmp];
-				//knv[3] = RomTables.k3table[tmp];	// bug in pre-TMS5220, according to MAME... 
+				//knv[3] = RomTables.k4table[tmp];
+				knv[3] = RomTables.k3table[tmp];	// bug in pre-TMS5220, according to MAME... 
 				builder.append("K3: " + tmp + " [" + knv[3] + "] ");
 
 
@@ -241,14 +230,14 @@ final static int FL_last	= 8;		/* stop frame seen */
 			knv[9] = 0;
 		}
 
-		Logging.writeLogLine(2, settings.get(LPCSpeech.settingLogSpeech),
+		Logging.writeLogLine(2, settings.get(ISpeechChip.settingLogSpeech),
 				"Equation: " + builder);
 
-		Logging.writeLogLine(3, settings.get(LPCSpeech.settingLogSpeech),
+		Logging.writeLogLine(3, settings.get(ISpeechChip.settingLogSpeech),
 				"ebf="+ebf+", pbf="+pbf+", env="+env+", pnv="+pnv);
 	}
 
-	/*
+	/**
 	Interpolate "new" values and "buffer" values.
 	*/
 	private void interpolate(int period)
@@ -267,11 +256,13 @@ final static int FL_last	= 8;		/* stop frame seen */
 	}
 
 
-	/*
-	 *	Generate PCM data for one LPC frame.
+	/**
+	 * Generate PCM data for one LPC frame.
+	 * 
+	 * @param length 
 	 *
 	 */
-	private void calc(ISpeechDataSender sender, int length) {
+	private void calcFrameData(int length) {
 		int         frame, framesize;
 		int			stage;
 		int			U;
@@ -352,40 +343,39 @@ final static int FL_last	= 8;		/* stop frame seen */
 			//if (samp > 511 || samp < -512)
 			//	System.err.println("samp["+pos+"]="+samp);
 
-			if (sender != null)
-				sender.sendSample(LPC_TO_PCM(samp), pos, length);
+			if (senderList != null && !senderList.isEmpty()) {
+				for (Object o : senderList.toArray()) {
+					((ISpeechDataSender) o).sendSample(LPC_TO_PCM(samp), pos, length);
+				}
+			}
 			
 			pos++;
 		}
 	}
 	
-
-	/*	
-		One LPC frame consists of decoding one equation (or repeating,
-		or stopping), and calculating a speech waveform and outputting it.
-		
-		This happens during an interrupt.
-		
-		If we're here, we have enough data to form any one equation.
-		@return 1 to continue, 0 if end of frame
-	*/
-	public synchronized boolean frame(ILPCDataFetcher fetcher, ISpeechDataSender sender, int length)
+	/**
+	 * One LPC frame consists of decoding one equation (or repeating, or
+	 * stopping), and calculating a speech waveform and outputting it.
+	 * 
+	 * This happens during an interrupt.
+	 * 
+	 * If we're here, we have enough data to form any one equation.
+	 * 
+	 * @param fetcher the mechanism to fetch the next parameter from an equation
+	 * @param length number of samples
+	 * @return true to continue, false if end of frame
+	 */
+	public synchronized boolean frame(ILPCDataFetcher fetcher, int length)
 	{
-		if ((decode & FL_last) == 0) {
-			readEquation(fetcher, false);
-			if ((decode & (FL_nointerp | FL_first)) != 0)
-				decode &= ~FL_first;
-			
-			ppctr = 0;
-			
-			Arrays.fill(y, 0);
-			Arrays.fill(b, 0);
-			
-			calc(sender, length);
-			return (decode & FL_last) == 0;	/* not last frame */
-		}
-		else
+		if ((decode & FL_last) != 0) 
 			return false;
+					
+		readEquation(fetcher, false);
+		if ((decode & (FL_nointerp | FL_first)) != 0)
+			decode &= ~FL_first;
+		
+		calcFrameData(length);
+		return (decode & FL_last) == 0;	/* not last frame */
 	}
 
 

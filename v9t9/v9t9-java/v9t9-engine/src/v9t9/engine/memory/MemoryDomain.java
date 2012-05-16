@@ -14,6 +14,7 @@ import java.util.Stack;
 
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
+import ejs.base.utils.BinaryUtils;
 import ejs.base.utils.ListenerList;
 
 import v9t9.common.memory.IMemory;
@@ -213,10 +214,11 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
         accessListener.access(entry);
         entry.writeByte(addr, val);
         if (!writeListeners.isEmpty())
-        	fireWriteEvent(entry, (addr + entry.getAddrOffset()) & getAddrMask(), (Byte) val);
+        	fireWriteEvent(entry, (addr + entry.getAddrOffset()), (Byte) val);
     }
 
-    private void fireWriteEvent(final IMemoryEntry entry, final int addr, Number value) {
+    private void fireWriteEvent(final IMemoryEntry entry, final int addr_, Number value) {
+    	final int addr = addr_ & BinaryUtils.getMask(PHYSMEMORYSIZE); 
     	for (Object listenerObj : writeListeners.toArray()) {
     		try {
     			((IMemoryWriteListener) listenerObj).changed(entry, addr, value);
@@ -235,7 +237,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
         accessListener.access(entry);
         entry.writeWord(addr, val);
         if (!writeListeners.isEmpty())
-        	fireWriteEvent(entry, addr & getAddrMask(), (Short) val);
+        	fireWriteEvent(entry, addr, (Short) val);
     }
 
     /* (non-Javadoc)
@@ -523,18 +525,8 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	public void touchMemory(int addr) {
 		if (!writeListeners.isEmpty()) {
 			IMemoryEntry entry = getEntryAt(addr);
-			fireWriteEvent(entry, addr & getAddrMask(), null);
+			fireWriteEvent(entry, addr, null);
 		}
-	}
-
-	/**
-	 * @param size
-	 * @return
-	 */
-	private int getAddrMask() {
-		int mask = PHYSMEMORYSIZE - 1;
-		while (mask != (mask |= (mask >>> 1))) /**/;
-		return mask;
 	}
 
 	/* (non-Javadoc)

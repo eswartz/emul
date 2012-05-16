@@ -16,7 +16,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.Settings;
-import v9t9.engine.speech.TMS5220;
+import v9t9.engine.speech.SpeechTMS5220;
 import v9t9.machine.ti99.cpu.Cpu9900;
 
 /**
@@ -71,7 +71,7 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 		IMemoryDomain domain = machine.getMemory().getDomain(IMemoryDomain.NAME_SPEECH);
 		if (domain == null)
 			return null;
-		final TMS5220 speech = new TMS5220(machine, Settings.getSettings(machine), domain);
+		final SpeechTMS5220 speech = new SpeechTMS5220(machine, Settings.getSettings(machine), domain);
 		return speech;
 	}
 }

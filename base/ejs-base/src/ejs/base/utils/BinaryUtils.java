@@ -17,11 +17,16 @@ public class BinaryUtils {
 		0x3, 0xb, 0x7, 0xf
 	};
 
-	public static      byte
-	swapbits(byte in)
+	public static byte swapBits(byte in)
 	{
 		return (byte) ((swapped_nybbles[in & 0xf] << 4) |
 			(swapped_nybbles[(in & 0xf0) >> 4]));
+	}
+
+	public static int getMask(int size) {
+		int mask = size - 1;
+		while (mask != (mask |= (mask >>> 1))) /**/;
+		return mask;
 	}
 
 }

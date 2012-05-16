@@ -140,6 +140,12 @@ public abstract class AbstractProperty implements IProperty {
     		return ((Number)value).intValue();
     	return 0;
     }
+    public double getDouble() {
+    	Object value = getValue();
+    	if (value instanceof Number)
+    		return ((Number)value).doubleValue();
+    	return 0;
+    }
     public boolean getBoolean() {
     	Object value = getValue();
     	if (value instanceof Boolean)
@@ -158,6 +164,9 @@ public abstract class AbstractProperty implements IProperty {
     }
     public void setInt(int val) {
         setValue(Integer.valueOf(val));
+    }
+    public void setDouble(double val) {
+    	setValue(Double.valueOf(val));
     }
     public void setBoolean(boolean val) {
     	setValue(Boolean.valueOf(val));

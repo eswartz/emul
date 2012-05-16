@@ -86,7 +86,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	private int vdpInterruptDelta;
 
 	private int throttleCount;
-	private final IMachine machine;
+	protected final IMachine machine;
 	private int fixedTimeVdpInterruptDelta;
 	private IProperty cyclesPerSecond;
 	protected IProperty vdpInterruptRate;

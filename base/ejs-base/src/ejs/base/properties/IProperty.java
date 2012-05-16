@@ -29,10 +29,12 @@ public interface IProperty extends IXMLPersistable, IPersistable,
 	// utilities
 	
 	int getInt();
+	double getDouble();
     boolean getBoolean();
     String getString();
 	<T> List<T> getList();
     void setInt(int val);
+    void setDouble(double val);
     void setBoolean(boolean val);
     void setString(String val);
     void setList(List<?> val);

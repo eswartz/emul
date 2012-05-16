@@ -18,7 +18,6 @@ import v9t9.common.events.NotifyEvent;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.demos.events.TimerTick;
 import ejs.base.properties.IProperty;
-import ejs.base.timer.FastTimer;
 import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
 
@@ -31,7 +30,6 @@ public class DemoPlayer implements IDemoPlayer {
 	private final IDemoInputStream is;
 	private final IMachine machine;
 	private boolean isFinished;
-	private FastTimer timer;
 	private IProperty pauseSetting;
 	private final ListenerList<IDemoListener> listeners;
 	private final int timerRate;
@@ -39,6 +37,7 @@ public class DemoPlayer implements IDemoPlayer {
 	private double playStepMs;
 	private double rateMultiplier;
 	private Map<String, IDemoActor> eventToActorMap = new HashMap<String, IDemoActor>();
+	private Runnable demoTask;
 
 	public DemoPlayer(IMachine machine, IDemoInputStream is,
 			ListenerList<IDemoListener> listeners) {
@@ -61,8 +60,7 @@ public class DemoPlayer implements IDemoPlayer {
 //		Settings.get(machine, IVdpChip.settingDumpVdpAccess).setBoolean(true);
 //		Settings.get(machine, ICpu.settingDumpFullInstructions).setBoolean(true);
 					
-		timer = new FastTimer("DemoPlayer");
-		timer.scheduleTask(new Runnable() {
+		demoTask = new Runnable() {
 			public void run() {
 				if (isFinished)
 					return;
@@ -72,7 +70,8 @@ public class DemoPlayer implements IDemoPlayer {
 					stepDemo();
 				}
 			}
-		}, timerRate);
+		};
+		machine.getFastMachineTimer().scheduleTask(demoTask, timerRate);
 	}
 	
 	/**
@@ -167,7 +166,7 @@ public class DemoPlayer implements IDemoPlayer {
 	}
 	
 	public void stop() {
-		timer.cancel();
+		machine.getFastMachineTimer().cancelTask(demoTask);
 		
 		machine.getSound().reset();
 		machine.getSpeech().reset();

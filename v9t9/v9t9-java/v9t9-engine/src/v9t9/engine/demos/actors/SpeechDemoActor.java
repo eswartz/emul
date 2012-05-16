@@ -11,6 +11,7 @@ import v9t9.common.demo.IDemoPlayer;
 import v9t9.common.demo.IDemoRecorder;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.speech.ISpeechPhraseListener;
 import v9t9.engine.demos.events.SpeechEvent;
 
 /**
@@ -20,6 +21,7 @@ import v9t9.engine.demos.events.SpeechEvent;
 public class SpeechDemoActor implements IDemoActor {
 
 	private ISpeechChip speech;
+	private ISpeechPhraseListener phraseListener;
 
 
 	/* (non-Javadoc)
@@ -42,8 +44,53 @@ public class SpeechDemoActor implements IDemoActor {
 	 * @see v9t9.common.demo.IDemoActor#connectForRecording(v9t9.common.demo.IDemoRecorder)
 	 */
 	@Override
-	public void connectForRecording(IDemoRecorder recorder) throws IOException {
+	public void connectForRecording(final IDemoRecorder recorder) throws IOException {
+		this.phraseListener = new ISpeechPhraseListener() {
 
+			@Override
+			public void phraseStarted() {
+				try {
+					recorder.getOutputStream().writeEvent(
+							new SpeechEvent(SpeechEvent.SPEECH_STARTING));
+				} catch (IOException e) {
+					recorder.fail(e);
+				}
+
+			}
+
+			@Override
+			public void phraseByteAdded(byte byt) {
+				try {
+					recorder.getOutputStream().writeEvent(
+							new SpeechEvent(SpeechEvent.SPEECH_ADDING_BYTE, byt));
+				} catch (IOException e) {
+					recorder.fail(e);
+				}
+			}
+
+			@Override
+			public void phraseStopped() {
+				try {
+					recorder.getOutputStream().writeEvent(
+						new SpeechEvent(SpeechEvent.SPEECH_STOPPING));				
+				} catch (IOException e) {
+					recorder.fail(e);
+				}
+			}
+
+			@Override
+			public void phraseTerminated() {
+				try {
+					recorder.getOutputStream().writeEvent(
+							new SpeechEvent(SpeechEvent.SPEECH_TERMINATING));
+				} catch (IOException e) {
+					recorder.fail(e);
+				}
+				
+			}
+			
+		};
+		speech.addPhraseListener(phraseListener);
 	}
 
 	/* (non-Javadoc)
@@ -59,7 +106,7 @@ public class SpeechDemoActor implements IDemoActor {
 	 */
 	@Override
 	public void disconnectFromRecording(IDemoRecorder recorder) {
-
+		speech.removePhraseListener(phraseListener);
 	}
 
 	/* (non-Javadoc)

@@ -35,9 +35,9 @@ public class DemoHandler implements IDemoHandler {
 	private IProperty recordSetting;
 	private IProperty playSetting;
 	private IProperty playRateSetting;
-	private IProperty machinePauseSetting;
 	private IDemoListener demoListener;
 	private IPropertyListener playbackRatePropertyListener;
+	private boolean wasPaused;
 
 	/**
 	 * 
@@ -45,7 +45,6 @@ public class DemoHandler implements IDemoHandler {
 	public DemoHandler(IMachine machine_) {
 		this.machine = machine_;
 		
-		machinePauseSetting = Settings.get(machine, IMachine.settingPauseMachine);
 		demoPauseSetting = Settings.get(machine, IDemoHandler.settingDemoPaused);
 		recordSetting = Settings.get(machine, IDemoHandler.settingRecordDemo);
 		playSetting = Settings.get(machine, IDemoHandler.settingPlayingDemo);
@@ -155,7 +154,7 @@ public class DemoHandler implements IDemoHandler {
 				
 				player.start();
 				
-				machinePauseSetting.setBoolean(true);
+				wasPaused = machine.setPaused(true);
 				playSetting.setBoolean(true);
 				demoPauseSetting.setBoolean(false);
 			} else {
@@ -174,7 +173,7 @@ public class DemoHandler implements IDemoHandler {
 	public void stopPlayback() throws NotifyException {
 		playSetting.setBoolean(false);
 		demoPauseSetting.setBoolean(false);
-		machinePauseSetting.setBoolean(false);
+		machine.setPaused(wasPaused);
 		
 		if (player == null)
 			return;

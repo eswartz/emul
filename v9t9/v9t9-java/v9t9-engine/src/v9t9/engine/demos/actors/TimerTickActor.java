@@ -6,7 +6,6 @@ package v9t9.engine.demos.actors;
 import java.io.IOException;
 
 import ejs.base.properties.IProperty;
-import ejs.base.timer.FastTimer;
 
 import v9t9.common.cpu.ICpu;
 import v9t9.common.demo.IDemoActor;
@@ -26,7 +25,6 @@ import v9t9.engine.demos.events.TimerTick;
  */
 public class TimerTickActor implements IDemoActor {
 
-	private FastTimer timer;
 	private Runnable timerTask;
 	private IProperty pauseDemoSetting;
 	
@@ -51,7 +49,6 @@ public class TimerTickActor implements IDemoActor {
 	 */
 	@Override
 	public void connectForRecording(final IDemoRecorder recorder) throws IOException {
-		timer = new FastTimer("demo");
 		pauseDemoSetting = Settings.get(recorder.getMachine(), 
 				IDemoHandler.settingDemoPaused);
 		
@@ -71,7 +68,9 @@ public class TimerTickActor implements IDemoActor {
 				}				
 			}
 		};
-		timer.scheduleTask(timerTask, recorder.getOutputStream().getTimerRate());
+		
+		recorder.getMachine().getFastMachineTimer().scheduleTask(
+				timerTask, recorder.getOutputStream().getTimerRate());
 	}
 
 	/* (non-Javadoc)
@@ -91,7 +90,8 @@ public class TimerTickActor implements IDemoActor {
 	 */
 	@Override
 	public void disconnectFromRecording(IDemoRecorder recorder) {
-		timer.cancel();
+		recorder.getMachine().getFastMachineTimer().
+			cancelTask(timerTask);
 	}
 
 	/* (non-Javadoc)

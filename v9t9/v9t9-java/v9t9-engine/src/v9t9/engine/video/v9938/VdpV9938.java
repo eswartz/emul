@@ -173,7 +173,6 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	}
 	
 	private CommandVars cmdState = new CommandVars();
-	private IProperty pauseMachine;
 	private IProperty demoPlaying;
 
 	private ListenerList<IAccelListener> accelListeners = new ListenerList<IVdpV9938.IAccelListener>();
@@ -183,7 +182,6 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		super(machine);
 		
 		msxClockDivisor = Settings.get(machine, settingMsxClockDivisor); 
-		pauseMachine = Settings.get(machine, IMachine.settingPauseMachine);
 		demoPlaying = Settings.get(machine, IDemoHandler.settingPlayingDemo);
 		
 //		machine.getDemoManager().registerActor(new VdpV9938DataDemoActor());
@@ -320,7 +318,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	@Override
 	public boolean isThrottled() {
 		// this is called by normal execution to ensure the acceleration isn't too fast
-		return !isAccelActive() || (currentcycles <= 0) || (pauseMachine.getBoolean() && !demoPlaying.getBoolean());
+		return !isAccelActive() || (currentcycles <= 0) || (machine.isPaused() && !demoPlaying.getBoolean());
 	}
 	
 	@Override

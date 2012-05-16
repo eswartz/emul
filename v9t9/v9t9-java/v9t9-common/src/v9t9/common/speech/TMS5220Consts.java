@@ -10,11 +10,11 @@ package v9t9.common.speech;
 public class TMS5220Consts {
 	/** talk status */
 	final public static int SS_TS	= 0x80;
-	
 	/** buffer low */
 	final public static int SS_BL	= 0x40;
 	/** buffer empty */
-	final public static int SS_BE	= 0x20;	
+	final public static int SS_BE	= 0x20;
+	
 	/** internal flag */
 	final public static int SS_SPEAKING = 1;	
 

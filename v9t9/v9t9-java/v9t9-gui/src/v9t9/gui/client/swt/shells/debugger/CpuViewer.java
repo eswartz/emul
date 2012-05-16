@@ -147,8 +147,6 @@ public class CpuViewer extends Composite implements IInstructionListener {
 			}
 			
 		};
-		//Machine.settingPauseMachine.addListener(pauseListener);
-		////
 		
 		stepImage = getSubImage(icons, 48, 0, 24, 24);
 		stepButton = new Button(buttonBar, SWT.PUSH);

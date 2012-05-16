@@ -103,7 +103,6 @@ abstract public class MachineBase implements IMachine {
 	private IRawInstructionFactory instructionFactory;
 	private final IMachineModel machineModel;
 	private IPropertyListener pauseListener;
-	private Runnable speechTimerTask;
 	
 	protected IProperty pauseMachine;
 	protected IProperty moduleList;
@@ -293,21 +292,6 @@ abstract public class MachineBase implements IMachine {
         	}
         };
         fastTimer.scheduleTask(cpuTimingTask, cpuTicksPerSec);
-        
-        if (speech != null) {
-    		int hz;
-
-			hz = speech.getGenerateRate();
-			speechTimerTask = new Runnable() {
-	
-				@Override
-				public void run() {
-					speech.generateSpeech();
-				}
-				
-			};
-			fastTimer.scheduleTask(speechTimerTask, hz);
-        }
         
         videoRunner = new Thread("Video Runner") {
         	@Override
@@ -680,6 +664,24 @@ abstract public class MachineBase implements IMachine {
 	}
 
 	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IBaseMachine#isPaused()
+	 */
+	@Override
+	public boolean isPaused() {
+		return pauseMachine.getBoolean();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IBaseMachine#setPaused(boolean)
+	 */
+	@Override
+	public boolean setPaused(boolean paused) {
+		boolean wasPaused = pauseMachine.getBoolean();
+		pauseMachine.setBoolean(paused);
+		return wasPaused;
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.IMachine#asyncExec(java.lang.Runnable)
 	 */
 	@Override
@@ -819,6 +821,14 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public void setDemoManager(IDemoManager manager) {
 		this.demoManager = manager;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IBaseMachine#getFastMachineTimer()
+	 */
+	@Override
+	public FastTimer getFastMachineTimer() {
+		return fastTimer;
 	}
 }
 

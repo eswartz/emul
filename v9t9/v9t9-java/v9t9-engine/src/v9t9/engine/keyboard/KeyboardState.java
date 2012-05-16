@@ -399,7 +399,7 @@ public class KeyboardState implements IKeyboardState {
 			if (!machine.isAlive())
 				cancelPaste();
 			
-			if (Settings.get(machine, IMachine.settingPauseMachine).getBoolean())
+			if (machine.isPaused())
 				return;
 			
 			if (runDelay > 0) {

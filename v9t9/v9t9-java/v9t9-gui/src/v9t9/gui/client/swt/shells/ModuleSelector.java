@@ -92,7 +92,6 @@ import org.eclipse.swt.widgets.TreeColumn;
 import org.ejs.gui.common.FontUtils;
 import org.ejs.gui.common.SwtDialogUtils;
 
-import ejs.base.properties.IProperty;
 import ejs.base.settings.DialogSettingsWrapper;
 import ejs.base.settings.ISettingSection;
 
@@ -103,7 +102,6 @@ import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
-import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
@@ -153,7 +151,6 @@ public class ModuleSelector extends Composite {
 
 	private ViewerFilter filteredSearchFilter = new FilteredSearchFilter();
 	private final SwtWindow window;
-	private IProperty pauseProperty;
 	private boolean wasPaused;
 	private ExecutorService executor;
 	private ViewerUpdater viewerUpdater;
@@ -294,10 +291,7 @@ public class ModuleSelector extends Composite {
 		
 		shell.setText("Module Selector");
 		
-		
-		pauseProperty = Settings.get(machine, IMachine.settingPauseMachine);
-		wasPaused = pauseProperty.getBoolean();
-		pauseProperty.setBoolean(true);
+		wasPaused = machine.setPaused(true);
 
 		moduleManager.reload();
 		
@@ -401,7 +395,7 @@ public class ModuleSelector extends Composite {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
-				pauseProperty.setBoolean(wasPaused);
+				machine.setPaused(wasPaused);
 			}
 		});
 		

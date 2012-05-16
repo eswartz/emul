@@ -118,8 +118,6 @@ public class ROMSetupDialog extends Dialog {
 	private final MemoryEntryInfo[] requiredRoms;
 	private final MemoryEntryInfo[] optionalRoms;
 
-	private IProperty pauseProperty;
-
 	private boolean wasPaused;
 
 	private StyledText infoLabel;
@@ -153,9 +151,7 @@ public class ROMSetupDialog extends Dialog {
 		this.machine = machine_;
 		this.settings = Settings.getSettings(machine);
 		
-		pauseProperty = Settings.get(machine, IMachine.settingPauseMachine);
-		wasPaused = pauseProperty.getBoolean();
-		pauseProperty.setBoolean(true);
+		wasPaused = machine.setPaused(true);
 	}
 	
 	/* (non-Javadoc)
@@ -230,7 +226,7 @@ public class ROMSetupDialog extends Dialog {
 					machine.reset();
 				}
 				
-				pauseProperty.setBoolean(wasPaused);
+				machine.setPaused(wasPaused);
 			}
 		});
 		
