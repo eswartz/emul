@@ -146,9 +146,9 @@ public class OldDemoFormatInputStream extends BaseDemoInputStream implements IDe
 		// parse events
 		while (speechBuffer.isAvailable()) {
 			int code = speechBuffer.read();
-			int byt = speechBuffer.read() & 0xff;  // dummy byte follows every command
+			byte byt = (byte) speechBuffer.read();  // byte follows every command, even for commands not using it
 			if (code == ISpeechEvent.SPEECH_ADDING_BYTE) {
-				queuedEvents.add(new SpeechEvent(code, byt));
+				queuedEvents.add(new SpeechEvent(byt));
 			} else {
 				ISpeechEvent ev = new SpeechEvent(code);
 				if (ev == null) {

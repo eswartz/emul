@@ -285,6 +285,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		return x < size.x / 3 && y < size.y / 3;
 	}
 
+	private static String lastSelectedRecordPath;
 
 	private void showDemoMenu(final IDemoHandler demoHandler, TypedEvent e, int x, int y, 
 			final IProperty recordSetting, final IProperty playSetting,
@@ -340,15 +341,18 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		
 		////
 		
-		final URI lastRecorded = demoHandler.getRecordingURI();
-		if (lastRecorded != null) {
+		URI last_ = demoHandler.getRecordingURI();
+		if (last_ == null)
+			last_ = demoHandler.getPlaybackURI();
+		final URI last = last_;
+		if (last != null) {
 			final MenuItem lastDemoItem = new MenuItem(menu, SWT.PUSH);
-			lastDemoItem.setText("Play " + lastRecorded.getPath());
+			lastDemoItem.setText("Play " + last.getPath());
 			lastDemoItem.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					try {
-						demoHandler.startPlayback(lastRecorded);
+						demoHandler.startPlayback(last);
 					} catch (NotifyException ex) {
 						machine.getEventNotifier().notifyEvent(ex.getEvent());
 					}
@@ -371,18 +375,28 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			recordItem.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
+					
+					boolean wasPaused = machine.setPaused(true);
+					
+					String name = "demo";
+					if (lastSelectedRecordPath != null) {
+						name = lastSelectedRecordPath;
+					}
+					
 					String filenameBase = SwtDialogUtils.openFileSelectionDialog(
 							menu.getShell(),
 							"Record demo file",
 							demoDir,
-							"demo", true,
+							name, true,
 							IDemoHandler.DEMO_EXTENSIONS);
 					File saveFile = null;
 					if (filenameBase != null) {
+						lastSelectedRecordPath = filenameBase;
 						saveFile = SwtDialogUtils.getUniqueFile(filenameBase);
 						if (saveFile == null) {
 							SwtDialogUtils.showErrorMessage(menu.getShell(), "Save error", 
 									"Too many demo files here!");
+							machine.setPaused(wasPaused);
 							return;
 						}
 						
@@ -403,7 +417,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 								machine.getEventNotifier().notifyEvent(ex.getEvent());
 						}
 					}
-					
+					machine.setPaused(wasPaused);
 				}
 
 			});

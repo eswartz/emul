@@ -6,6 +6,7 @@ package v9t9.common.hardware;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.speech.ISpeechDataSender;
+import v9t9.common.speech.ILPCParametersListener;
 import v9t9.common.speech.ISpeechPhraseListener;
 import ejs.base.properties.IPersistable;
 
@@ -20,10 +21,10 @@ public interface ISpeechChip extends IPersistable {
 			"TalkSpeed",
 			1.0);
 	public static final SettingSchema settingLogSpeech = new SettingSchema(
-	ISettingsHandler.TRANSIENT,
-	"LogSpeech",
-	new Integer(0));
-	
+			ISettingsHandler.TRANSIENT,
+			"LogSpeech",
+			new Integer(0));
+			
 	/**
 	 * Read the next byte from memory 
 	 * @return
@@ -46,4 +47,7 @@ public interface ISpeechChip extends IPersistable {
 
 	void addPhraseListener(ISpeechPhraseListener phraseListener);
 	void removePhraseListener(ISpeechPhraseListener phraseListener);
+	
+	void addParametersListener(ILPCParametersListener listener);
+	void removeParametersListener(ILPCParametersListener listener);
 }

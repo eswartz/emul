@@ -82,6 +82,8 @@ public class DemoRecorder implements IDemoRecorder {
 			actor.flushRecording(this);
 		}
 		
+		if (os.getOutputStream() != null)
+			os.getOutputStream().flush();
 	}
 
 	@Override

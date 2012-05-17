@@ -135,12 +135,18 @@ public class OldDemoFormatOutputStream extends BaseDemoOutputStream implements I
 	
 	protected void writeSpeechEvent(IDemoEvent event) throws IOException {
 		ISpeechEvent ev = (ISpeechEvent) event;
+		if (ev.getCode() == ISpeechEvent.SPEECH_ADDING_EQUATION) {
+			throw new IOException("incorrect setup: cannot record speech equations in this format");
+		}
 		if (ev.getCode() != ISpeechEvent.SPEECH_ADDING_BYTE || !speechBuffer.isAvailable(2)) {
 			speechBuffer.flush();
 		}
 
 		speechBuffer.push((byte) ev.getCode());
-		speechBuffer.push(ev.getAddedByte());
+		if (ev.getCode() == ISpeechEvent.SPEECH_ADDING_BYTE)
+			speechBuffer.push((Byte) ev.getData());
+		else
+			speechBuffer.push((byte) -1);
 	}
 
 	protected void writeSoundRegisterEvent(IDemoEvent event)

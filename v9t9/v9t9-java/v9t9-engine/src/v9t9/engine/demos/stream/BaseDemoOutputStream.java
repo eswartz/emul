@@ -76,4 +76,12 @@ public abstract class BaseDemoOutputStream implements IDemoOutputStream {
 	public long getPosition() {
 		return os.getPosition();
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoOutputStream#getOutputStream()
+	 */
+	@Override
+	public OutputStream getOutputStream() {
+		return os;
+	}
 }

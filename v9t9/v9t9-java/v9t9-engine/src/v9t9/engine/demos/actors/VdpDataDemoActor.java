@@ -6,7 +6,6 @@ package v9t9.engine.demos.actors;
 import java.io.IOException;
 import java.util.BitSet;
 
-import v9t9.common.demo.IDemoActor;
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoPlayer;
 import v9t9.common.demo.IDemoRecorder;
@@ -20,7 +19,7 @@ import v9t9.engine.demos.events.VideoWriteDataEvent;
  * @author ejs
  *
  */
-public class VdpDataDemoActor implements IDemoActor {
+public class VdpDataDemoActor extends BaseDemoActor {
 
 	protected SimpleMemoryWriteTracker vdpMemoryListener;
 	protected IVdpChip vdp;

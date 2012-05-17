@@ -8,7 +8,6 @@ import java.io.IOException;
 import ejs.base.properties.IProperty;
 
 import v9t9.common.cpu.ICpu;
-import v9t9.common.demo.IDemoActor;
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoHandler;
 import v9t9.common.demo.IDemoOutputStream;
@@ -23,7 +22,7 @@ import v9t9.engine.demos.events.TimerTick;
  * @author ejs
  *
  */
-public class TimerTickActor implements IDemoActor {
+public class TimerTickActor extends BaseDemoActor {
 
 	private Runnable timerTask;
 	private IProperty pauseDemoSetting;

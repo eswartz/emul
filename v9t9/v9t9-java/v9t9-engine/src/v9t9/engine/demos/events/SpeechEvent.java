@@ -4,6 +4,7 @@
 package v9t9.engine.demos.events;
 
 import v9t9.common.demo.ISpeechEvent;
+import v9t9.common.speech.ILPCParameters;
 
 /**
  * @author ejs
@@ -14,18 +15,23 @@ public class SpeechEvent implements ISpeechEvent {
 	public static final String ID = "SpeechEvent";
 	
 	private final int code;
-	private final int byt;
+	private final Object data;
 	
 	
 	public SpeechEvent(int code) {
 		if (code == SPEECH_ADDING_BYTE)
 			throw new IllegalArgumentException("SPEECH_ADDING_BYTE must have a byte");
 		this.code = code;
-		this.byt = -1;
+		this.data = null;
 	}
-	public SpeechEvent(int code, int byt) {
-		this.code = code;
-		this.byt = byt;
+	public SpeechEvent(byte byt) {
+		this.code = SPEECH_ADDING_BYTE;
+		this.data = (Byte) byt;
+	}
+	
+	public SpeechEvent(ILPCParameters equ) {
+		this.code = SPEECH_ADDING_EQUATION;
+		this.data = equ;
 	}
 	
 	/* (non-Javadoc)
@@ -36,21 +42,16 @@ public class SpeechEvent implements ISpeechEvent {
 		return ID;
 	}
 
+	
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + code;
-		if (code == SPEECH_ADDING_BYTE) {
-			result = prime * result + byt;
-		}
+		result = prime * result + ((data == null) ? 0 : data.hashCode());
 		return result;
 	}
-
-
-
-
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -62,13 +63,14 @@ public class SpeechEvent implements ISpeechEvent {
 		SpeechEvent other = (SpeechEvent) obj;
 		if (code != other.code)
 			return false;
-		if (code == SPEECH_ADDING_BYTE) {
-			if (byt != other.byt)
+		if (data == null) {
+			if (other.data != null)
 				return false;
-		}
+		} else if (!data.equals(other.data))
+			return false;
 		return true;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see v9t9.engine.demos.events.ISpeechEvent#getCode()
 	 */
@@ -78,11 +80,11 @@ public class SpeechEvent implements ISpeechEvent {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.engine.demos.events.ISpeechEvent#getAddedByte()
+	 * @see v9t9.common.demo.ISpeechEvent#getData()
 	 */
 	@Override
-	public byte getAddedByte() {
-		return (byte) byt;
+	public Object getData() {
+		return data;
 	}
 
 }

@@ -6,7 +6,6 @@ package v9t9.engine.demos.actors;
 import java.io.IOException;
 import java.util.List;
 
-import v9t9.common.demo.IDemoActor;
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoPlayer;
 import v9t9.common.demo.IDemoRecorder;
@@ -20,7 +19,7 @@ import v9t9.engine.demos.events.SoundWriteRegisterEvent;
  * @author ejs
  *
  */
-public class SoundRegisterDemoActor implements IDemoActor {
+public class SoundRegisterDemoActor extends BaseDemoActor {
 	private FullRegisterWriteTracker soundRegisterListener;
 	private ISoundChip sound;
 	
@@ -93,4 +92,13 @@ public class SoundRegisterDemoActor implements IDemoActor {
 		sound.setRegister(ev.getReg(), ev.getVal());
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.demos.actors.BaseDemoActor#cleanupPlayback(v9t9.common.demo.IDemoPlayer)
+	 */
+	@Override
+	public void cleanupPlayback(IDemoPlayer player) {
+		super.cleanupPlayback(player);
+		
+		player.getMachine().getSound().reset();
+	}
 }

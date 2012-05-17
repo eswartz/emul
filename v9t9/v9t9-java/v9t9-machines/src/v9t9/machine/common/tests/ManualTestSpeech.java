@@ -165,7 +165,7 @@ public class ManualTestSpeech {
 		// reset
 		tms5220.command((byte) 0x70);
 		
-		if (true) {
+		if (false) {
 			// should exit quickly (or not...)
 			//sayPhrase(tms5220, 0xfff0);
 			
@@ -183,12 +183,12 @@ public class ManualTestSpeech {
 		///
 		
 		// bad usage, no waiting -- should delay anyway!
-		sayPhrase(tms5220, 0x1D82);	// CHECK
-		sayPhrase(tms5220, 0x2612);	// DRAW
-		sayPhrase(tms5220, 0x1c48);	// BYE
-		sayPhrase(tms5220, 0x3148);	// GOODBYE
+//		sayPhrase(tms5220, 0x1D82);	// CHECK
+//		sayPhrase(tms5220, 0x2612);	// DRAW
+//		sayPhrase(tms5220, 0x1c48);	// BYE
+//		sayPhrase(tms5220, 0x3148);	// GOODBYE
 		
-		if (true) {
+		if (false) {
 		sayPhrase(tms5220, 0x1a42, false);	// BE
 		sayPhrase(tms5220, 0x4642, false);	// MORE
 		sayPhrase(tms5220, 0x51b3, false);	// POSITIVE
@@ -204,10 +204,14 @@ public class ManualTestSpeech {
 		sayPhrase(tms5220, 0x4e66, false);	// P
 		sayPhrase(tms5220, 0x4233, false);	// M
 		
-		Thread.sleep(2000);
+		} else {
+			sayPhrase(tms5220, 0x70ce, false);	// TWELVE
+//			sayPhrase(tms5220, 0x4e66, false);	// P
 		}
+		while (true)
+			Thread.sleep(2000);
 		
-		System.exit(0);
+		//System.exit(0);
 	}
 
 	/**

@@ -5,7 +5,6 @@ package v9t9.engine.demos.actors;
 
 import java.io.IOException;
 
-import v9t9.common.demo.IDemoActor;
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoPlayer;
 import v9t9.common.demo.IDemoRecorder;
@@ -19,7 +18,7 @@ import v9t9.engine.demos.events.VideoAccelCommandEvent;
  * @author ejs
  * @deprecated does not work as expected yet
  */
-public class VdpV9938AccelDemoActor implements IDemoActor {
+public class VdpV9938AccelDemoActor extends BaseDemoActor {
 	
 	private IAccelListener accelListener;
 	private IVdpV9938 vdp;

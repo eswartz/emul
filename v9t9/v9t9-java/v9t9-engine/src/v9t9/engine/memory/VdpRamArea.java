@@ -35,10 +35,6 @@ public class VdpRamArea extends ByteMemoryArea {
     	byte old = readByte(entry, addr);
     	if (old != val) {
     		super.writeByte(entry, addr, val);
-//    		if (handler != null) {
-//    			handler.touchAbsoluteVdpMemory(addr);
-//    		}
-
     	}
     }
     

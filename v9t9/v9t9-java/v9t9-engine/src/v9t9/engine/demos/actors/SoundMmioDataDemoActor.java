@@ -6,7 +6,6 @@ package v9t9.engine.demos.actors;
 import java.io.IOException;
 import java.util.List;
 
-import v9t9.common.demo.IDemoActor;
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoPlayer;
 import v9t9.common.demo.IDemoRecorder;
@@ -19,7 +18,7 @@ import v9t9.engine.demos.events.SoundWriteDataEvent;
  * @author ejs
  *
  */
-public class SoundMmioDataDemoActor implements IDemoActor {
+public class SoundMmioDataDemoActor extends BaseDemoActor {
 	private FullMemoryWriteTracker soundDataListener;
 	private int soundMmioAddr;
 	private byte[] soundBytes = new byte[256];
@@ -110,4 +109,13 @@ public class SoundMmioDataDemoActor implements IDemoActor {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.demos.actors.BaseDemoActor#cleanupPlayback(v9t9.common.demo.IDemoPlayer)
+	 */
+	@Override
+	public void cleanupPlayback(IDemoPlayer player) {
+		super.cleanupPlayback(player);
+		player.getMachine().getSound().reset();
+
+	}
 }

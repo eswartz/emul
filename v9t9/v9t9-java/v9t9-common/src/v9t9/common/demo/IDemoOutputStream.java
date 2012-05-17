@@ -5,12 +5,17 @@ package v9t9.common.demo;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * @author ejs
  *
  */
 public interface IDemoOutputStream extends Closeable {
+	/** Get underlying stream */
+	OutputStream getOutputStream();
+
+
 	/**
 	 * Register a custom buffer and event type.
 	 * @param buffer

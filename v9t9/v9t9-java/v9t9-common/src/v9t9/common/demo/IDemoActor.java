@@ -46,9 +46,19 @@ public interface IDemoActor {
 	void disconnectFromRecording(IDemoRecorder recorder);
 
 	/**
+	 * Setup for demo playback.
+	 */
+	void setupPlayback(IDemoPlayer player);
+	
+	/**
 	 * Execute an event during demo playback.
 	 */
 	void executeEvent(IDemoPlayer player, IDemoEvent event) throws IOException;
+
+	/**
+	 * Clean up after demo playback.
+	 */
+	void cleanupPlayback(IDemoPlayer player);
 
 	
 }

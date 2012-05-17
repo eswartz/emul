@@ -13,19 +13,12 @@ import ejs.base.utils.HexUtils;
  * @author ejs
  *
  */
-public class FifoLpcDataFetcher extends BaseLpcDataFetcher implements ILPCByteFetcher {
-	
-	public interface IFifoStatusListener {
-		void fetchedEmpty();
-		void lengthChanged(int length);
-	}
+public class FifoLpcDataFetcher extends BaseFifoLpcDataFetcher  {
 	
 	private byte fifo[]	= new byte[16]; /* fifo buffer */
 	private int out, in; /* ptrs. out==in --> empty */
 	private int len; /* # bytes in buffer */
 	private IProperty logProperty;
-	private IFifoStatusListener listener;
-	
 	public FifoLpcDataFetcher() {
 		setByteFetcher(this);
 		
@@ -35,11 +28,6 @@ public class FifoLpcDataFetcher extends BaseLpcDataFetcher implements ILPCByteFe
 	public void setLogProperty(IProperty property) {
 		this.logProperty = property;
 	}
-	
-	public void setListener(IFifoStatusListener listener) {
-		this.listener = listener;
-	}
-	
 	
 	/**
 	 * 

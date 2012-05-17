@@ -72,6 +72,10 @@ public class DemoPlayer implements IDemoPlayer {
 			}
 		};
 		machine.getFastMachineTimer().scheduleTask(demoTask, timerRate);
+		
+		for (IDemoActor actor : machine.getDemoManager().getActors()) {
+			actor.setupPlayback(this);
+		}
 	}
 	
 	/**
@@ -168,9 +172,10 @@ public class DemoPlayer implements IDemoPlayer {
 	public void stop() {
 		machine.getFastMachineTimer().cancelTask(demoTask);
 		
-		machine.getSound().reset();
-		machine.getSpeech().reset();
-		
+		for (IDemoActor actor : machine.getDemoManager().getActors()) {
+			actor.cleanupPlayback(this);
+		}
+
 		try {
 			is.close();
 		} catch (IOException e) {

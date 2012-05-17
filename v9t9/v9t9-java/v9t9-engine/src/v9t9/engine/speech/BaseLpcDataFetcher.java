@@ -3,14 +3,27 @@
  */
 package v9t9.engine.speech;
 
+import v9t9.common.speech.ISpeechPhraseListener;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
+
 abstract class BaseLpcDataFetcher implements ILPCDataFetcher {
 	protected ILPCByteFetcher byteFetcher;
 	protected int bit;
+	private ListenerList<ISpeechPhraseListener> listeners;
 	
 	/**
 	 * 
 	 */
 	public BaseLpcDataFetcher() {
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.speech.ILPCDataFetcher#setPhraseListeners(ejs.base.utils.ListenerList)
+	 */
+	@Override
+	public void setPhraseListeners(ListenerList<ISpeechPhraseListener> listeners) {
+		this.listeners = listeners;
 	}
 	
 	/**
@@ -31,7 +44,6 @@ abstract class BaseLpcDataFetcher implements ILPCDataFetcher {
 		/* Adjust bit ptr */
 		bit = (bit + bits) & 7;
 
-		bits += bits;
 		return cur;
 	}
 	
@@ -46,14 +58,39 @@ abstract class BaseLpcDataFetcher implements ILPCDataFetcher {
 		if (bit + bits >= 8) { /* we will cross into the next byte */
 			cur = byteFetcher.read();
 			cur <<= 8;
-			cur |= byteFetcher.peek() & 0xff; /*
+			
+			byte next = byteFetcher.peek();
+			fireByteAdded(next);
+			
+			cur |= next & 0xff; /*
 								 * we can't read more than 6 bits, so no
 								 * poss of crossing TWO bytes
 								 */
-		} else
-			cur = byteFetcher.peek() << 8;
+		} else {
+			final byte next = byteFetcher.peek();
+			if (bit == 0) {
+				fireByteAdded(next);
+			}
+			cur = next << 8;
+		}
 
 		return extractBits(cur, bits);
+	}
+
+	/**
+	 * @param next
+	 */
+	private void fireByteAdded(final byte next) {
+		if (listeners != null) {
+			listeners.fire(new IFire<ISpeechPhraseListener>() {
+
+				@Override
+				public void fire(ISpeechPhraseListener listener) {
+					listener.phraseByteAdded(next);
+				}
+			});
+		}
+		
 	}
 
 }

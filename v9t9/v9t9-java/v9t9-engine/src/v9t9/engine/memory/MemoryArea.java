@@ -161,7 +161,7 @@ public abstract class MemoryArea implements IMemoryArea {
 					int saveAddr = Integer.parseInt(entry.name, 16);
 					byte[] chunk = Base64.decode(entry.value.toString(), Base64.GZIP);
 					for (int idx = 0; idx < chunk.length; idx++) {
-						writeByte(memoryEntry, saveAddr++, chunk[idx]);
+						memoryEntry.getDomain().writeByte(saveAddr++, chunk[idx]);
 					}
 				} catch (NumberFormatException e) {
 					// not a chunk

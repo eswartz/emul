@@ -16,6 +16,7 @@ import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.demo.IDemoHandler;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
@@ -25,9 +26,11 @@ import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.common.speech.ISpeechDataSender;
+import v9t9.common.speech.ILPCParametersListener;
 import v9t9.common.speech.ISpeechPhraseListener;
 import v9t9.engine.demos.actors.SpeechDemoActor;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.speech.IFifoLpcDataFetcher.IFifoStatusListener;
 import static v9t9.common.speech.TMS5220Consts.*;
 
 /**
@@ -68,6 +71,8 @@ public class SpeechTMS5220 implements ISpeechChip {
 	private LPCSpeech lpc;
 
 	private ListenerList<ISpeechDataSender> senderList;
+	private ListenerList<ISpeechPhraseListener> phraseListeners;
+	private ListenerList<ILPCParametersListener> paramListeners;
 
 	private boolean speechOn;
 
@@ -77,7 +82,6 @@ public class SpeechTMS5220 implements ISpeechChip {
 
 	private String complainedMissingFilename;
 
-	private ListenerList<ISpeechPhraseListener> phraseListeners = new ListenerList<ISpeechPhraseListener>();
 
 	private FastTimer speechTimer;
 	private Runnable speechTimerTask;
@@ -85,13 +89,22 @@ public class SpeechTMS5220 implements ISpeechChip {
 	private FifoLpcDataFetcher fifoFetcher;
 	private RomLpcDataFetcher romFetcher;
 
+	private IProperty demoPlaying;
 	private IProperty talkRate;
 
+	private IFifoStatusListener fifoStatusListener;
+
+	private ILPCEquationFetcher equationFetcher;
+
+	private LPCParameters currentParams = new LPCParameters();
+	
 	public SpeechTMS5220(final IMachine machine,
 			final ISettingsHandler settings, final IMemoryDomain speech) {
 		this.machine = machine;
 		logSpeech = settings.get(ISpeechChip.settingLogSpeech);
 		talkRate = settings.get(ISpeechChip.settingTalkSpeed);
+		demoPlaying = settings.get(IDemoHandler.settingPlayingDemo);
+		
 		Logging.registerLog(logSpeech, new PrintWriter(System.out, true));
 
 		IPropertyListener speechRomFilenameListener = new IPropertyListener() {
@@ -110,12 +123,14 @@ public class SpeechTMS5220 implements ISpeechChip {
 				speechRomFilenameListener);
 
 		senderList = new ListenerList<ISpeechDataSender>();
+		phraseListeners = new ListenerList<ISpeechPhraseListener>();
+		paramListeners = new ListenerList<ILPCParametersListener>();
 		
-		lpc = new LPCSpeech(settings, senderList);
+		lpc = new LPCSpeech(settings);
+		lpc.setSenderList(senderList);
+		lpc.setParamListeners(paramListeners);
 
-		fifoFetcher = new FifoLpcDataFetcher();
-		fifoFetcher.setLogProperty(logSpeech);
-		fifoFetcher.setListener(new FifoLpcDataFetcher.IFifoStatusListener() {
+		fifoStatusListener = new FifoLpcDataFetcher.IFifoStatusListener() {
 			
 			@Override
 			public void lengthChanged(int length) {
@@ -136,11 +151,15 @@ public class SpeechTMS5220 implements ISpeechChip {
 			 */
 			@Override
 			public void fetchedEmpty() {
-				reset();
-				SpeechOff();
-				Logging.writeLogLine(1, logSpeech, "Speech timed out");				
+				timedOut();
 			}
-		});
+		};
+		
+		
+		fifoFetcher = new FifoLpcDataFetcher();
+		fifoFetcher.setLogProperty(logSpeech);
+		fifoFetcher.setListener(fifoStatusListener);
+		
 		romFetcher = new RomLpcDataFetcher(new ILPCByteFetcher() {
 
 			public byte read() {
@@ -168,6 +187,8 @@ public class SpeechTMS5220 implements ISpeechChip {
 			}
 
 		});
+		
+		equationFetcher = new BuiltinEquationFetcher();
 		
 		machine.getDemoManager().registerActor(new SpeechDemoActor());
 
@@ -199,28 +220,44 @@ public class SpeechTMS5220 implements ISpeechChip {
 		return addr_pos;
 	}
 
-	public void write(byte val) {
+	public void write(final byte val) {
 		Logging.writeLogLine(2, logSpeech,
 				"speech write: " + HexUtils.toHex2((val & 0xff)));
 		if ((gate & GT_WCMD) != 0) {
 			command(val);
 		} else {
-			timeout = getSpeechTimeoutFrames();
-			fifoFetcher.write(val);
-			
-			final byte cur = (byte) readMemory();
+			timeout = getNumberTimeoutFrames();
+			((IFifoLpcDataFetcher) getDataFetcher()).write(val);
 
 			phraseListeners.fire(new IFire<ISpeechPhraseListener>() { 
 
 				@Override
 				public void fire(ISpeechPhraseListener listener) {
-					listener.phraseByteAdded(cur);
+					listener.phraseByteAdded(val);
 				}
 
 			});
 		}
 	}
 
+	/**
+	 * @return
+	 */
+	private ILPCDataFetcher getDataFetcher() {
+		return (gate & GT_WDAT) != 0 ? fifoFetcher : romFetcher;
+	}
+
+	/**
+	 * @param equationFetcher the equationFetcher to set
+	 */
+	public void setEquationFetcher(ILPCEquationFetcher equationFetcher) {
+		if (equationFetcher == null) {
+			this.equationFetcher = new BuiltinEquationFetcher();
+		} else {
+			this.equationFetcher = equationFetcher;
+		}
+	}
+	
 	public byte read() {
 		byte ret;
 		if ((gate & GT_RSTAT) != 0) {
@@ -269,10 +306,10 @@ public class SpeechTMS5220 implements ISpeechChip {
 	 * @return
 	 */
 	private int getSpeechRate() {
-		return speechHertz / getSpeechSamplesPerFrame();
+		return speechHertz / getSamplesPerFrame();
 	}
 
-	private int getSpeechSamplesPerFrame() {
+	public int getSamplesPerFrame() {
 		int length = (int) (speechHertz / 40 / talkRate.getDouble());
 		if (length < 1)
 			length = 1;
@@ -281,7 +318,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 		return length;
 	}
 
-	private int getSpeechTimeoutFrames() {
+	private int getNumberTimeoutFrames() {
 		int base = getSpeechRate();
 		int frames = (1000 / base) + (360 / base);
 		return frames;
@@ -299,7 +336,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 		if (command != 0x70) {
 			// per section 6 of manual -- cannot send commands while others are executing.
 			// speak external & speak are the only ones that can "remain executing"
-			waitSpeechComplete(1000);
+			waitSpeechComplete(5000);
 		}
 		
 		switch (command) {
@@ -344,7 +381,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 		Logging.writeLogLine(
 				2,
 				logSpeech,
-				"Speech memory " + HexUtils.toHex4(addr) + " = "
+				"Speech memory " + HexUtils.toHex4(addr - 1) + " = "
 						+ HexUtils.toHex2(data));
 		return data;
 	}
@@ -396,6 +433,8 @@ public class SpeechTMS5220 implements ISpeechChip {
 
 
 		gate = (gate & ~GT_WDAT) | GT_WCMD; /* just in case */
+		getDataFetcher().reset();
+		
 		romFetcher.reset();
 		fifoFetcher.reset();
 		
@@ -410,28 +449,30 @@ public class SpeechTMS5220 implements ISpeechChip {
 	private void speakExternal() {
 		Logging.writeLogLine(1, logSpeech, "Speaking external data");
 
+		gate = (gate & ~GT_WCMD) | GT_WDAT; /* accept data from I/O */
+		fifoFetcher.purge();		// but not userDataFetcher
+		
 		phraseListeners.fire(new IFire<ISpeechPhraseListener>() {
-
+			
 			@Override
 			public void fire(ISpeechPhraseListener listener) {
 				listener.phraseStarted();
 			}
-
+			
 		});
-
-		gate = (gate & ~GT_WCMD) | GT_WDAT; /* accept data from I/O */
-		fifoFetcher.purge();
+		
 		SpeechOn(); /* call speech_intr every 25 ms */
 		
 		status |= SS_SPEAKING;
-		timeout = getSpeechTimeoutFrames();
+		timeout = getNumberTimeoutFrames();
 	}
 
 	private void waitSpeechComplete(int maxMs) {
 
 		int ms = 50;
 		
-		while (true) {
+		int elapsed = 0;
+		while (elapsed < maxMs) {
 			synchronized (this) {
 				if (!speechOn && (status & SS_TS) == 0)
 					return;
@@ -442,13 +483,20 @@ public class SpeechTMS5220 implements ISpeechChip {
 				Thread.sleep(ms);
 			} catch (InterruptedException e) {
 			}
+			
+			elapsed += ms;
 		}
+		
+		// ran out of time
+		timedOut();
 	}
 
 	@Override
 	public synchronized void reset() {
 		Logging.writeLogLine(1, logSpeech, "Speech reset");
 		status = SS_BE | SS_BL;
+		if (getDataFetcher() instanceof IFifoLpcDataFetcher)
+			((IFifoLpcDataFetcher) getDataFetcher()).purge();
 		fifoFetcher.purge();
 		command = 0x70;
 		data = 0;
@@ -457,7 +505,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 		gate = GT_RSTAT | GT_WCMD;
 		SpeechOff();
 		status &= ~SS_SPEAKING;
-		timeout = getSpeechTimeoutFrames();
+		timeout = getNumberTimeoutFrames();
 		lpc.init();
 		// in_speech_intr = 0;
 
@@ -471,7 +519,6 @@ public class SpeechTMS5220 implements ISpeechChip {
 		speechTimer.scheduleTask(speechTimerTask, getSpeechRate());
 	}
 
-	
 	private synchronized void generateSpeech() {
 		if (!speechOn)
 			return;
@@ -508,25 +555,29 @@ public class SpeechTMS5220 implements ISpeechChip {
 		}
 
 		if (do_frame) {
-			boolean last = !lpc.frame((gate & GT_WDAT) != 0 ? fifoFetcher : romFetcher, 
-					getSpeechSamplesPerFrame());
+			
+			equationFetcher.fetchEquation(getDataFetcher(), currentParams);
+			boolean last = currentParams.isLast();
+			
+			lpc.frame(currentParams, getSamplesPerFrame());
+			
+//			boolean last = !lpc.frame(getDataFetcher(), getSamplesPerFrame());
 
-			// SPEECHPLAY(vms_Speech, speech_data, speech_length, speech_hertz);
 			if (last) {
-				// send((short) 0, speech_length, speech_length);
-
 				SpeechDone();
 			}
 		}
-
-		// out:
-		// logger(_L | L_4, _("Out of speech interrupt\n"));
 	}
 
 	/**
 	 * 
 	 */
 	protected synchronized void timedOut() {
+		if (demoPlaying.getBoolean()) {
+			timeout = getNumberTimeoutFrames();
+			return;
+		}
+		
 		reset();
 
 		phraseListeners.fire(new IFire<ISpeechPhraseListener>() {
@@ -634,6 +685,22 @@ public class SpeechTMS5220 implements ISpeechChip {
 	public void removePhraseListener(ISpeechPhraseListener phraseListener) {
 		phraseListeners.remove(phraseListener);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.ISpeechChip#addParametersListener(v9t9.common.speech.ISpeechParametersListener)
+	 */
+	@Override
+	public void addParametersListener(ILPCParametersListener listener) {
+		paramListeners.add(listener);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.ISpeechChip#removeParametersListener(v9t9.common.speech.ISpeechParametersListener)
+	 */
+	@Override
+	public void removeParametersListener(ILPCParametersListener listener) {
+		paramListeners.remove(listener);
+	}
 
 	/**
 	 * @return
@@ -641,4 +708,6 @@ public class SpeechTMS5220 implements ISpeechChip {
 	public LPCSpeech getLpcSpeech() {
 		return lpc;
 	}
+
+	
 }
