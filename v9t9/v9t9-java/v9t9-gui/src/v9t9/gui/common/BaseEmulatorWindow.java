@@ -206,7 +206,9 @@ public abstract class BaseEmulatorWindow {
 					Settings.getSettings(machine).getWorkspaceSettings().load(workspace);
 				}
 				
+				boolean wasPaused = machine.setPaused(true);
 				machine.loadState(settings);
+				machine.setPaused(wasPaused);
 			} catch (Throwable e1) {
 				machine.notifyEvent(Level.ERROR, 
 						"Failed to load machine state:\n\n" + e1.getMessage());

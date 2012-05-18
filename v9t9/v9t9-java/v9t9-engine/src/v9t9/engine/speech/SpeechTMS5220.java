@@ -228,8 +228,12 @@ public class SpeechTMS5220 implements ISpeechChip {
 		if ((gate & GT_WCMD) != 0) {
 			command(val);
 		} else {
+			IFifoLpcDataFetcher fetcher = (IFifoLpcDataFetcher) getDataFetcher();
+			if (fetcher.isFull()) {
+				waitForBufferRoom(5000);
+			}
 			timeout = getNumberTimeoutFrames();
-			((IFifoLpcDataFetcher) getDataFetcher()).write(val);
+			fetcher.write(val);
 
 			phraseListeners.fire(new IFire<ISpeechPhraseListener>() { 
 
@@ -417,8 +421,6 @@ public class SpeechTMS5220 implements ISpeechChip {
 
 	private void speak() {
 		
-		waitSpeechComplete(1000);
-		
 		// SPEECHPLAY(vms_Speech, NULL, 0L, speech_hertz);
 
 		Logging.writeLogLine(1, logSpeech,
@@ -469,6 +471,8 @@ public class SpeechTMS5220 implements ISpeechChip {
 		timeout = getNumberTimeoutFrames();
 	}
 
+
+
 	private void waitSpeechComplete(int maxMs) {
 
 		int ms = 50;
@@ -493,6 +497,30 @@ public class SpeechTMS5220 implements ISpeechChip {
 		timedOut();
 	}
 
+
+	private void waitForBufferRoom(int maxMs) {
+
+		int ms = 5;
+		
+		int elapsed = 0;
+		while (elapsed < maxMs) {
+			synchronized (this) {
+				if (!speechOn || (status & SS_BL) != 0)
+					return;
+			}
+			
+			try {
+				timeout += ms * getSpeechRate() / 1000;
+				Thread.sleep(ms);
+			} catch (InterruptedException e) {
+			}
+			
+			elapsed += ms;
+		}
+		
+		// ran out of time
+		timedOut();
+	}
 	@Override
 	public synchronized void reset() {
 		Logging.writeLogLine(1, logSpeech, "Speech reset");

@@ -17,4 +17,6 @@ public interface IFifoLpcDataFetcher extends ILPCDataFetcher {
 	void setListener(IFifoStatusListener listener);
 	void write(byte val);
 	void purge();
+	
+	boolean isFull();
 }

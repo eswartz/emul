@@ -550,7 +550,8 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	 */
 	@Override
 	public void save() {
-		for (IMemoryEntry entry : mappedEntries) {
+		IMemoryEntry[] mapped = (IMemoryEntry[]) mappedEntries.toArray(new IMemoryEntry[mappedEntries.size()]);
+		for (IMemoryEntry entry : mapped) {
 			try {
 				entry.save();
 			} catch (IOException e) {

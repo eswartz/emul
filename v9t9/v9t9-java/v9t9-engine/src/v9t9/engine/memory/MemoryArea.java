@@ -158,7 +158,7 @@ public abstract class MemoryArea implements IMemoryArea {
 		if (contents != null) {
 			// clear memory first
 			for (int idx = 0; idx < getSize(); idx++) {
-				memoryEntry.getDomain().writeByte(idx, (byte) 0);
+				memoryEntry.getDomain().writeByte(memoryEntry.getAddr() + idx, (byte) 0);
 			}
 			
 			for (ISettingSection.SettingEntry entry : contents) {

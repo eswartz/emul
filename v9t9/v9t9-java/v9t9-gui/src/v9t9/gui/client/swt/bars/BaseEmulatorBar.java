@@ -121,7 +121,7 @@ public abstract class BaseEmulatorBar {
 			final IProperty setting, final int iconIndex,
 			final int secondIconIndex, final boolean isSecondOverlay,
 			final boolean inverted) {
-		setting.addListener(new IPropertyListener() {
+		setting.addListenerAndFire(new IPropertyListener() {
 	
 			public void propertyChanged(final IProperty setting) {
 				Display.getDefault().asyncExec(new Runnable() {

@@ -32,7 +32,7 @@ public class FifoLpcDataFetcher extends BaseFifoLpcDataFetcher  {
 	/**
 	 * 
 	 */
-	public void purge() {
+	public synchronized void purge() {
 		bit = 0;
 		out = in = len = 0;
 		
@@ -40,7 +40,7 @@ public class FifoLpcDataFetcher extends BaseFifoLpcDataFetcher  {
 			listener.lengthChanged(len);
 	}
 
-	public void write(byte val) {
+	public synchronized void write(byte val) {
 		fifo[in] = BinaryUtils.swapBits(val);
 		in = (in + 1) & 15;
 		
@@ -63,7 +63,7 @@ public class FifoLpcDataFetcher extends BaseFifoLpcDataFetcher  {
 	}
 	
 	@Override
-	public byte read() {
+	public synchronized byte read() {
 		byte ret = fifo[out];
 		
 		Logging.writeLogLine(2, logProperty, "FIFO read: " + HexUtils.toHex2(ret)
@@ -89,8 +89,15 @@ public class FifoLpcDataFetcher extends BaseFifoLpcDataFetcher  {
 	}
 
 	@Override
-	public byte peek() {
+	public synchronized byte peek() {
 		return fifo[out];
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.speech.IFifoLpcDataFetcher#isFull()
+	 */
+	@Override
+	public synchronized boolean isFull() {
+		return len == fifo.length;
+	}
 }
