@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-07-02 12:25-0500\n"
+"POT-Creation-Date: 2012-05-18 13:52-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2527,14 +2527,14 @@ msgstr ""
 #: source/Modules/dsr_realdisk.c:1651 source/moduledb.c:722
 #: source/moduledb.c:738 source/moduledb.c:755 source/moduledb.c:773
 #: source/moduledb.c:789 source/moduledb.c:806 source/v9t9.c:803
-#: source/v9t9.c:820 source/v9t9.c:836 source/demo.c:1235
+#: source/v9t9.c:820 source/v9t9.c:836 source/demo.c:1236
 msgid "path"
 msgstr ""
 
 #: source/Modules/dsr_realdisk.c:1652 source/moduledb.c:723
 #: source/moduledb.c:739 source/moduledb.c:756 source/moduledb.c:774
 #: source/moduledb.c:790 source/moduledb.c:807 source/v9t9.c:804
-#: source/v9t9.c:821 source/v9t9.c:837 source/demo.c:1236
+#: source/v9t9.c:821 source/v9t9.c:837 source/demo.c:1237
 msgid "list of directories separated by one of these characters: '"
 msgstr ""
 
@@ -6329,153 +6329,153 @@ msgstr ""
 msgid "Speech %d"
 msgstr ""
 
-#: source/demo.c:869
+#: source/demo.c:870
 #, c-format
 msgid "Unknown event type passed to demo_event (%d)\n"
 msgstr ""
 
-#: source/demo.c:916
+#: source/demo.c:917
 msgid "."
 msgstr ""
 
-#: source/demo.c:921
+#: source/demo.c:922
 msgid "tick\n"
 msgstr ""
 
-#: source/demo.c:930
+#: source/demo.c:931
 #, c-format
 msgid "Video %d\n"
 msgstr ""
 
-#: source/demo.c:944
+#: source/demo.c:945
 #, c-format
 msgid "(video >%04x, %d bytes)\n"
 msgstr ""
 
-#: source/demo.c:958
+#: source/demo.c:959
 #, c-format
 msgid "(video reg >%04x)\n"
 msgstr ""
 
-#: source/demo.c:967
+#: source/demo.c:968
 #, c-format
 msgid "Sound %d\n"
 msgstr ""
 
-#: source/demo.c:969
+#: source/demo.c:970
 #, c-format
 msgid "(sound %02x)\n"
 msgstr ""
 
-#: source/demo.c:976
+#: source/demo.c:977
 #, c-format
 msgid "Speech %d\n"
 msgstr ""
 
-#: source/demo.c:989
+#: source/demo.c:990
 #, c-format
 msgid "(speech %02x)\n"
 msgstr ""
 
-#: source/demo.c:1038
+#: source/demo.c:1039
 #, c-format
 msgid "(type %d)\n"
 msgstr ""
 
-#: source/demo.c:1041
+#: source/demo.c:1042
 #, c-format
 msgid "Demo appears to be corrupt at %d\n"
 msgstr ""
 
-#: source/demo.c:1096
+#: source/demo.c:1097
 msgid "Ending currently recording demo.\n"
 msgstr ""
 
-#: source/demo.c:1099
+#: source/demo.c:1100
 msgid "Stopping currently playing demo.\n"
 msgstr ""
 
-#: source/demo.c:1116
+#: source/demo.c:1117
 #, c-format
 msgid "Invalid demo filename '%s' (%s)\n"
 msgstr ""
 
-#: source/demo.c:1138
+#: source/demo.c:1139
 #, c-format
 msgid "Can't load demo '%s' (%s)\n"
 msgstr ""
 
-#: source/demo.c:1188
+#: source/demo.c:1189
 #, c-format
 msgid "Can't load demo reader '%s' (%s)\n"
 msgstr ""
 
-#: source/demo.c:1196
+#: source/demo.c:1197
 #, c-format
 msgid "Can't load demo writer '%s' (%s)\n"
 msgstr ""
 
-#: source/demo.c:1224
+#: source/demo.c:1225
 msgid "Demo Options"
 msgstr ""
 
-#: source/demo.c:1225
+#: source/demo.c:1226
 msgid ""
 "These commands control recording and playback of V9t9 demos, which do not "
 "require ROMs to view."
 msgstr ""
 
-#: source/demo.c:1229
+#: source/demo.c:1230
 msgid ""
 "Set directory list to search for demo files; first entry of the list is used "
 "to save demos"
 msgstr ""
 
-#: source/demo.c:1246
+#: source/demo.c:1247
 msgid "Start recording a new demo"
 msgstr ""
 
-#: source/demo.c:1252
+#: source/demo.c:1253
 msgid "demo file to create"
 msgstr ""
 
-#: source/demo.c:1259
+#: source/demo.c:1260
 msgid "Start playing an existing demo"
 msgstr ""
 
-#: source/demo.c:1265
+#: source/demo.c:1266
 msgid "demo file to play"
 msgstr ""
 
-#: source/demo.c:1272
+#: source/demo.c:1273
 msgid "Start listening for demo data on fifos"
 msgstr ""
 
-#: source/demo.c:1278
+#: source/demo.c:1279
 msgid "demo read file"
 msgstr ""
 
-#: source/demo.c:1283
+#: source/demo.c:1284
 msgid "demo write file"
 msgstr ""
 
-#: source/demo.c:1291
+#: source/demo.c:1292
 msgid "Start listening for demo data on port"
 msgstr ""
 
-#: source/demo.c:1297
+#: source/demo.c:1298
 msgid "port to listen on"
 msgstr ""
 
-#: source/demo.c:1304
+#: source/demo.c:1305
 msgid "Pause recording or playback of demo"
 msgstr ""
 
-#: source/demo.c:1310
+#: source/demo.c:1311
 msgid "off: continues, on: pauses"
 msgstr ""
 
-#: source/demo.c:1318
+#: source/demo.c:1319
 msgid "Stop recording or playback of demo"
 msgstr ""
 
