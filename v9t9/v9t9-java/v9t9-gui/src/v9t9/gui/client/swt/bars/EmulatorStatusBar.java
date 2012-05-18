@@ -394,7 +394,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		final URI last = last_;
 		if (last != null) {
 			final MenuItem lastDemoItem = new MenuItem(menu, SWT.PUSH);
-			lastDemoItem.setText("Play " + last.getPath());
+			lastDemoItem.setText("Play " + (last.getScheme().equals("file") ? last.getPath() : last.toString()));
 			lastDemoItem.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
