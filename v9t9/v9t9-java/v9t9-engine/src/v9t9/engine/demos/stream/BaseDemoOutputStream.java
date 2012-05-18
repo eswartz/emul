@@ -18,7 +18,7 @@ import ejs.base.utils.CountingOutputStream;
  */
 public abstract class BaseDemoOutputStream implements IDemoOutputStream {
 
-	protected CountingOutputStream os;
+	protected final CountingOutputStream os;
 	
 	protected abstract void writeTimerTick() throws IOException;
 
@@ -40,7 +40,6 @@ public abstract class BaseDemoOutputStream implements IDemoOutputStream {
 		
 		if (os != null) {
 			os.close();
-			os = null;
 		}
 		
 		buffers.clear();

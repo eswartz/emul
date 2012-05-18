@@ -4,8 +4,6 @@
 package v9t9.engine.demos.actors;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoPlayer;
@@ -13,9 +11,10 @@ import v9t9.common.demos.IDemoRecorder;
 import v9t9.common.machine.IMachine;
 import v9t9.common.speech.ILPCParameters;
 import v9t9.common.speech.ILPCParametersListener;
+import v9t9.common.speech.ISpeechPhraseListener;
 import v9t9.engine.demos.events.OldSpeechEvent;
 import v9t9.engine.demos.events.SpeechEvent;
-import v9t9.engine.speech.LPCParameters;
+import v9t9.engine.demos.format.old.OldDemoFormat;
 import v9t9.engine.speech.SpeechTMS5220;
 
 /**
@@ -25,8 +24,7 @@ import v9t9.engine.speech.SpeechTMS5220;
 public class OldSpeechDemoActor extends BaseDemoActor {
 
 	private SpeechTMS5220 speech;
-	private ILPCParametersListener paramsListener;
-	private List<ILPCParameters> currentPhraseParamsList;
+	private ISpeechPhraseListener phraseListener;
 	
 	private SpeechDemoConverter converter; 
 	private ILPCParametersListener convertParamsListener;
@@ -47,34 +45,66 @@ public class OldSpeechDemoActor extends BaseDemoActor {
 		this.speech = (SpeechTMS5220) machine.getSpeech();
 		speech.reset();
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.demos.actors.BaseDemoActor#shouldRecordFor(byte[])
+	 */
+	@Override
+	public boolean shouldRecordFor(byte[] header) {
+		return OldDemoFormat.DEMO_MAGIC_HEADER_V910.equals(header);
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoActor#connectForRecording(v9t9.common.demo.IDemoRecorder)
 	 */
 	@Override
 	public synchronized void connectForRecording(final IDemoRecorder recorder) throws IOException {
-		currentPhraseParamsList = new ArrayList<ILPCParameters>();
-		
-		this.paramsListener = new ILPCParametersListener() {
-			
-			@Override
-			public void parametersAdded(ILPCParameters params) {
-				// speech takes a really long time, so flush
-				// everything now
-				try {
-					recorder.flushData();
-				} catch (IOException e) {
-					recorder.fail(e);
+		if (phraseListener == null) {
+			this.phraseListener = new ISpeechPhraseListener() {
+				
+				@Override
+				public void phraseTerminated() {
+					try {
+						recorder.getOutputStream().writeEvent(
+								new OldSpeechEvent(OldSpeechEvent.SPEECH_TERMINATING));
+					} catch (Throwable t) {
+						recorder.fail(t);
+					}
 				}
 				
-				synchronized (OldSpeechDemoActor.this) {
-					LPCParameters copy = new LPCParameters();
-					copy.copyFrom((LPCParameters) params);
-					currentPhraseParamsList.add(copy);
+				@Override
+				public void phraseStopped() {
+					try {
+						recorder.getOutputStream().writeEvent(
+								new OldSpeechEvent(OldSpeechEvent.SPEECH_STOPPING));
+					} catch (Throwable t) {
+						recorder.fail(t);
+					}
 				}
-			}
-		};
-		speech.addParametersListener(paramsListener);
+				
+				@Override
+				public void phraseStarted() {
+					try {
+						recorder.getOutputStream().writeEvent(
+								new OldSpeechEvent(OldSpeechEvent.SPEECH_STARTING));
+					} catch (Throwable t) {
+						recorder.fail(t);
+					}
+				}
+				
+				@Override
+				public void phraseByteAdded(byte byt) {
+					try {
+						recorder.getOutputStream().writeEvent(
+								new OldSpeechEvent(byt));
+					} catch (Throwable t) {
+						recorder.fail(t);
+					}
+				}
+			};
+		}
+		
+		speech.addPhraseListener(phraseListener);
 	}
 
 	/* (non-Javadoc)
@@ -82,11 +112,6 @@ public class OldSpeechDemoActor extends BaseDemoActor {
 	 */
 	@Override
 	public synchronized void flushRecording(IDemoRecorder recorder) throws IOException {
-		for (ILPCParameters params : currentPhraseParamsList) {
-			recorder.getOutputStream().writeEvent(
-					new SpeechEvent(params));
-		}
-		currentPhraseParamsList.clear();
 	}
 
 	/* (non-Javadoc)
@@ -94,7 +119,7 @@ public class OldSpeechDemoActor extends BaseDemoActor {
 	 */
 	@Override
 	public synchronized void disconnectFromRecording(IDemoRecorder recorder) {
-		speech.removeParametersListener(paramsListener);
+		speech.removePhraseListener(phraseListener);
 	}
 
 	/* (non-Javadoc)

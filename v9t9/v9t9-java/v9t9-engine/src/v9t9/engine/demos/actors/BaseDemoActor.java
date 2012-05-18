@@ -12,6 +12,13 @@ import v9t9.common.demos.IDemoPlayer;
  */
 public abstract class BaseDemoActor implements IDemoActor {
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoActor#shouldRecordFor(byte[])
+	 */
+	@Override
+	public boolean shouldRecordFor(byte[] header) {
+		return true;
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoActor#setupPlayback(v9t9.common.demo.IDemoPlayer)

@@ -15,6 +15,10 @@ public interface IDemoOutputStream extends Closeable {
 	/** Get underlying stream */
 	OutputStream getOutputStream();
 
+	/**
+	 * Get the format (magic number)
+	 */
+	byte[] getDemoFormat();
 
 	/**
 	 * Register a custom buffer and event type.

@@ -4,6 +4,8 @@
 package v9t9.engine.demos;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import v9t9.common.demos.IDemoActor;
 import v9t9.common.demos.IDemoOutputStream;
@@ -25,7 +27,7 @@ public class DemoRecorder implements IDemoRecorder {
 
 	private final IMachine machine;
 	
-	private IDemoActor[] actors;
+	private IDemoActor[] recordingActors;
 	
 	
 	public DemoRecorder(IMachine machine, IDemoOutputStream os, ListenerList<IDemoListener> listeners) throws IOException {
@@ -33,9 +35,15 @@ public class DemoRecorder implements IDemoRecorder {
 		this.os = os;
 		this.listeners = listeners;
 		
-		actors = machine.getDemoManager().getActors();
+		List<IDemoActor> actors = new ArrayList<IDemoActor>();
+		for (IDemoActor actor : machine.getDemoManager().getActors()) {
+			if (actor.shouldRecordFor(os.getDemoFormat())) {
+				actors.add(actor);
+			}
+		}
+		recordingActors = (IDemoActor[]) actors.toArray(new IDemoActor[actors.size()]);
 		
-		for (IDemoActor actor : actors)
+		for (IDemoActor actor : recordingActors)
 			actor.setup(machine);
 		
 		connect();
@@ -66,19 +74,19 @@ public class DemoRecorder implements IDemoRecorder {
 	
 	private synchronized void connect() throws IOException {
 		
-		for (IDemoActor actor : actors) {
+		for (IDemoActor actor : recordingActors) {
 			actor.connectForRecording(this);
 		}
 	}
 
 	private synchronized void disconnect() {
-		for (IDemoActor actor : actors) {
+		for (IDemoActor actor : recordingActors) {
 			actor.disconnectFromRecording(this);
 		}
 	}
 
 	public synchronized void flushData() throws IOException {
-		for (IDemoActor actor : actors) {
+		for (IDemoActor actor : recordingActors) {
 			actor.flushRecording(this);
 		}
 		

@@ -98,7 +98,7 @@ public class DemoFormatInputStream extends BaseDemoInputStream implements IDemoI
 			}
 			
 			if (code == 0) {
-				System.out.println(Long.toHexString(is.getPosition()) + ": tick" );
+				//System.out.println(Long.toHexString(is.getPosition()) + ": tick" );
 				queueTimerTickEvent();
 				continue;
 			}
@@ -108,8 +108,8 @@ public class DemoFormatInputStream extends BaseDemoInputStream implements IDemoI
 				throw new IOException("unknown buffer for " + code);
 			}
 			
-			System.out.println(Long.toHexString(is.getPosition()) + ": " + 
-					buffer.getIdentifier());	
+			//System.out.println(Long.toHexString(is.getPosition()) + ": " + 
+			//		buffer.getIdentifier());	
 			
 			// get contents
 			buffer.refill();

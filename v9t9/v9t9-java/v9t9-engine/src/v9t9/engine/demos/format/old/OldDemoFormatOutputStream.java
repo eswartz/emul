@@ -49,6 +49,14 @@ public class OldDemoFormatOutputStream extends BaseDemoOutputStream implements I
 	}
 	
 	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoOutputStream#getDemoFormat()
+	 */
+	@Override
+	public byte[] getDemoFormat() {
+		return OldDemoFormat.DEMO_MAGIC_HEADER_V910;
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoOutputStream#registerBuffer(v9t9.common.demo.IDemoOutputBuffer, java.lang.Class)
 	 */
 	@Override

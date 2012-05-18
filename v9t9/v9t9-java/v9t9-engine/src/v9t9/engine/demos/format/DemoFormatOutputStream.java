@@ -33,11 +33,13 @@ public class DemoFormatOutputStream extends BaseDemoOutputStream implements IDem
 	
 	private Map<String, IDemoOutputEventBuffer> eventToBufferMap = 
 			new HashMap<String, IDemoOutputEventBuffer>();
+	private byte[] magic;
 
 	public DemoFormatOutputStream(DemoHeader header, OutputStream os_) throws IOException {
 		super(os_);
 		this.header = header;
 		
+		this.magic = DemoFormat.DEMO_MAGIC_HEADER_V9t9; 
 		os.write(DemoFormat.DEMO_MAGIC_HEADER_V9t9);
 		timerTicks = 0;
 		
@@ -57,6 +59,14 @@ public class DemoFormatOutputStream extends BaseDemoOutputStream implements IDem
 
 		header.write(os);
 
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoOutputStream#getDemoFormat()
+	 */
+	@Override
+	public byte[] getDemoFormat() {
+		return magic;
 	}
 
 	/**

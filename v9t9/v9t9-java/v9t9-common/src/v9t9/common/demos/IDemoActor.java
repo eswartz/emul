@@ -27,6 +27,11 @@ public interface IDemoActor {
 	void setup(IMachine machine);
 
 	/**
+	 * Tell whether this actor should be enabled for recording.
+	 */
+	boolean shouldRecordFor(byte[] header);
+	
+	/**
 	 * Connect to a machine to record the events relevant to this actor.
 	 * Also, send any initialization events.
 	 * @param machine
