@@ -32,10 +32,10 @@ import v9t9.common.speech.ISpeechSoundVoice;
  */
 public class JavaSoundHandler implements ISoundHandler {
 	public static SettingSchema settingRecordSoundOutputFile = new SettingSchema(
-			ISettingsHandler.INSTANCE,
+			ISettingsHandler.TRANSIENT,
 			"RecordSoundOutputFile", String.class, null);
 	public static SettingSchema settingRecordSpeechOutputFile = new SettingSchema(
-			ISettingsHandler.INSTANCE,
+			ISettingsHandler.TRANSIENT,
 			"RecordSpeechOutputFile", String.class, null);
 
 	private SoundRecordingHelper soundRecordingHelper;
