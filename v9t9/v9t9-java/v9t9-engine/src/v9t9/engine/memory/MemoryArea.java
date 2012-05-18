@@ -156,6 +156,11 @@ public abstract class MemoryArea implements IMemoryArea {
 	public void loadContents(ISettingSection section, IMemoryEntry memoryEntry) {
 		ISettingSection contents = section.getSection("Contents");
 		if (contents != null) {
+			// clear memory first
+			for (int idx = 0; idx < getSize(); idx++) {
+				memoryEntry.getDomain().writeByte(idx, (byte) 0);
+			}
+			
 			for (ISettingSection.SettingEntry entry : contents) {
 				try {
 					int saveAddr = Integer.parseInt(entry.name, 16);

@@ -72,4 +72,5 @@ v9t9/v9t9-java/v9t9-video/bin
 v9t9/v9t9-java/v9t9-audio/bin
 base/ejs-base/bin
 *.class
-
+v9t9/v9t9-java/v9t9-gui/core
+nohup.out
