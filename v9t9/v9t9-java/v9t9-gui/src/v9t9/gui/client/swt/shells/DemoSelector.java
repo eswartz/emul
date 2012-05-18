@@ -191,6 +191,8 @@ public class DemoSelector extends Composite {
 
 	private Button browseButton;
 
+	private IProperty recordedPathProperty;
+
 	public DemoSelector(Shell shell, IMachine machine_, IDemoManager demoManager_, SwtWindow window_) {
 		super(shell, SWT.NONE);
 		this.demoHandler = machine_.getDemoHandler();
@@ -201,6 +203,9 @@ public class DemoSelector extends Composite {
 				findOrAddSection(SECTION_DEMO_PLAYER);
 
 		demoManager.reload();
+		
+		recordedPathProperty = Settings.get(machine, IDemoManager.settingRecordedDemosPath);
+
 		
 		shell.setText("Demo Player");
 		
@@ -733,6 +738,10 @@ public class DemoSelector extends Composite {
 						}
 						
 					});
+					
+					if (recordedPathProperty.getString().equals(uri.toString())) {
+						dlitem.setEnabled(false);
+					}
 				}
 				else if (item.getData() instanceof IDemo) {
 					final IDemo demo = (IDemo) item.getData();
@@ -916,8 +925,13 @@ public class DemoSelector extends Composite {
 		public String getColumnText(Object element, int columnIndex) {
 			if (element instanceof String && columnIndex == NAME_COLUMN)
 				return element.toString();
-			if (element instanceof URI && columnIndex == NAME_COLUMN)
+			if (element instanceof URI && columnIndex == NAME_COLUMN) {
+				if (element instanceof URI && element.toString().equals(recordedPathProperty.getString())) {
+					return element.toString() + " (recording path)";
+				}
+
 				return element.toString();
+			}
 			if (!(element instanceof IDemo)) {
 				return null;
 			}
@@ -948,6 +962,9 @@ public class DemoSelector extends Composite {
 		 */
 		@Override
 		public Color getForeground(Object element, int columnIndex) {
+			if (element instanceof URI && element.toString().equals(recordedPathProperty.getString())) {
+				return getDisplay().getSystemColor(SWT.COLOR_BLUE);
+			}
 			if (!(element instanceof IDemo))
 				return null;
 			
