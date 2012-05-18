@@ -145,6 +145,7 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
 		gromaddr = (short) section.getInt("Addr");
 		gromraddrflag = section.getBoolean("ReadAddrFlag");
 		gromwaddrflag = section.getBoolean("WriteAddrFlag");
+		buf = domain.readByte(((gromaddr - 1) & 0x1fff) | (gromaddr & 0xe000));
 	}
 
 	public void saveState(ISettingSection section) {
