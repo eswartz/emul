@@ -386,7 +386,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					
 					String filenameBase = SwtDialogUtils.openFileSelectionDialog(
 							menu.getShell(),
-							"Record demo file",
+							"Select demo base name",
 							demoDir,
 							name, true,
 							IDemoManager.DEMO_EXTENSIONS);
