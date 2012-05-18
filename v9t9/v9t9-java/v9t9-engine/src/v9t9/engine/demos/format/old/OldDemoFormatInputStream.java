@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoInputStream;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoInputStream;
 import v9t9.engine.demos.events.OldSpeechEvent;
 import v9t9.engine.demos.events.SoundWriteDataEvent;
 import v9t9.engine.demos.events.TimerTick;

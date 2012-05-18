@@ -9,11 +9,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 
-import v9t9.common.demo.DemoHeader;
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoEventFormatter;
-import v9t9.common.demo.IDemoInputEventBuffer;
-import v9t9.common.demo.IDemoInputStream;
+import v9t9.common.demos.DemoHeader;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoEventFormatter;
+import v9t9.common.demos.IDemoInputEventBuffer;
+import v9t9.common.demos.IDemoInputStream;
 import v9t9.common.machine.IMachineModel;
 import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.stream.BaseDemoInputStream;

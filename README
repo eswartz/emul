@@ -10,7 +10,7 @@ and Metrowerks Codewarrior in Windows).  The C port was written from
 the assembly port which formed the original V9t9, back when it was 
 still being sold.
 
-To build standalone, see v9t9/v9t9-java/v9t9-gui/data/release/Deploy_Setup.txt.
+To build standalone, see v9t9/v9t9-java/Deploying.rtf.
 This will make a Java Web Start release in both local and web-hosted
 variants.
 

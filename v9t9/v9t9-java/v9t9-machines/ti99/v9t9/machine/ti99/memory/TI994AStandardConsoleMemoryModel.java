@@ -10,7 +10,7 @@ import java.net.URL;
 
 import ejs.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.demo.IDemoManager;
+import v9t9.common.demos.IDemoManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;

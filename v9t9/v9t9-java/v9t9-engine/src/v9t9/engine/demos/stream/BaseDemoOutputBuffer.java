@@ -5,7 +5,8 @@ package v9t9.engine.demos.stream;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import v9t9.common.demo.IDemoOutputBuffer;
+
+import v9t9.common.demos.IDemoOutputBuffer;
 
 
 /**

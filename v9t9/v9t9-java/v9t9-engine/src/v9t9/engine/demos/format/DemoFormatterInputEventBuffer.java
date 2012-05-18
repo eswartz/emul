@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Queue;
 
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoEventFormatter;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoEventFormatter;
 
 /**
  * @author ejs

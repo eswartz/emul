@@ -5,9 +5,9 @@ package v9t9.engine.demos.actors;
 
 import java.io.IOException;
 
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoPlayer;
-import v9t9.common.demo.IDemoRecorder;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoPlayer;
+import v9t9.common.demos.IDemoRecorder;
 import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.hardware.IVdpV9938.IAccelListener;
 import v9t9.common.machine.IMachine;

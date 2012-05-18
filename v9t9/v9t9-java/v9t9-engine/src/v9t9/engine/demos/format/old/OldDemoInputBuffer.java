@@ -7,7 +7,7 @@ import java.io.IOException;
 
 import ejs.base.utils.CountingInputStream;
 
-import v9t9.common.demo.IDemoInputEventBuffer;
+import v9t9.common.demos.IDemoInputEventBuffer;
 import v9t9.common.events.NotifyException;
 import v9t9.engine.demos.stream.BaseDemoInputBuffer;
 

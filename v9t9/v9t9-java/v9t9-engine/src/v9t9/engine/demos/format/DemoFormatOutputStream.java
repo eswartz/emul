@@ -8,12 +8,12 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.common.demo.DemoHeader;
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoEventFormatter;
-import v9t9.common.demo.IDemoOutputBuffer;
-import v9t9.common.demo.IDemoOutputEventBuffer;
-import v9t9.common.demo.IDemoOutputStream;
+import v9t9.common.demos.DemoHeader;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoEventFormatter;
+import v9t9.common.demos.IDemoOutputBuffer;
+import v9t9.common.demos.IDemoOutputEventBuffer;
+import v9t9.common.demos.IDemoOutputStream;
 import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.stream.BaseDemoOutputStream;
 

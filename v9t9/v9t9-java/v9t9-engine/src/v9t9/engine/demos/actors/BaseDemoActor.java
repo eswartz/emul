@@ -3,8 +3,8 @@
  */
 package v9t9.engine.demos.actors;
 
-import v9t9.common.demo.IDemoActor;
-import v9t9.common.demo.IDemoPlayer;
+import v9t9.common.demos.IDemoActor;
+import v9t9.common.demos.IDemoPlayer;
 
 /**
  * @author ejs

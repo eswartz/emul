@@ -6,10 +6,10 @@ package v9t9.engine.demos.format.old;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoOutputBuffer;
-import v9t9.common.demo.IDemoOutputEventBuffer;
-import v9t9.common.demo.IDemoOutputStream;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoOutputBuffer;
+import v9t9.common.demos.IDemoOutputEventBuffer;
+import v9t9.common.demos.IDemoOutputStream;
 import v9t9.engine.demos.events.OldSpeechEvent;
 import v9t9.engine.demos.events.SoundWriteDataEvent;
 import v9t9.engine.demos.events.SoundWriteRegisterEvent;

@@ -17,7 +17,7 @@ import ejs.base.utils.HexUtils;
 import ejs.base.utils.ListenerList;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.demo.IDemoHandler;
+import v9t9.common.demos.IDemoHandler;
 import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.machine.IMachine;

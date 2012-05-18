@@ -16,7 +16,7 @@ import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.demo.IDemoHandler;
+import v9t9.common.demos.IDemoHandler;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;

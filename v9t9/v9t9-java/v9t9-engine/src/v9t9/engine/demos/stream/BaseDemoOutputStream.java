@@ -8,8 +8,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.common.demo.IDemoOutputBuffer;
-import v9t9.common.demo.IDemoOutputStream;
+import v9t9.common.demos.IDemoOutputBuffer;
+import v9t9.common.demos.IDemoOutputStream;
 import ejs.base.utils.CountingOutputStream;
 
 /**

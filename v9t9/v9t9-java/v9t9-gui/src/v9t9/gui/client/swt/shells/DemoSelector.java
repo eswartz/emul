@@ -73,9 +73,9 @@ import org.eclipse.swt.widgets.Text;
 import org.ejs.gui.common.FontUtils;
 import org.ejs.gui.common.SwtDialogUtils;
 
-import v9t9.common.demo.IDemo;
-import v9t9.common.demo.IDemoHandler;
-import v9t9.common.demo.IDemoManager;
+import v9t9.common.demos.IDemo;
+import v9t9.common.demos.IDemoHandler;
+import v9t9.common.demos.IDemoManager;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;

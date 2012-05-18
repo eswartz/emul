@@ -3,7 +3,7 @@
  */
 package v9t9.engine.demos.events;
 
-import v9t9.common.demo.IDemoEvent;
+import v9t9.common.demos.IDemoEvent;
 
 
 /**

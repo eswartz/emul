@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.common.demo;
+package v9t9.common.demos;
 
 import java.io.IOException;
 

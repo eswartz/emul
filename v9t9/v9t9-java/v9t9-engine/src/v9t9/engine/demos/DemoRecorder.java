@@ -5,10 +5,10 @@ package v9t9.engine.demos;
 
 import java.io.IOException;
 
-import v9t9.common.demo.IDemoActor;
-import v9t9.common.demo.IDemoHandler.IDemoListener;
-import v9t9.common.demo.IDemoOutputStream;
-import v9t9.common.demo.IDemoRecorder;
+import v9t9.common.demos.IDemoActor;
+import v9t9.common.demos.IDemoOutputStream;
+import v9t9.common.demos.IDemoRecorder;
+import v9t9.common.demos.IDemoHandler.IDemoListener;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.machine.IMachine;

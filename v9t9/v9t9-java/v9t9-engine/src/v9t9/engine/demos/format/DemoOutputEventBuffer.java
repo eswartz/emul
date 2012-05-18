@@ -5,7 +5,7 @@ package v9t9.engine.demos.format;
 
 import java.io.OutputStream;
 
-import v9t9.common.demo.IDemoOutputEventBuffer;
+import v9t9.common.demos.IDemoOutputEventBuffer;
 
 /**
  * @author ejs

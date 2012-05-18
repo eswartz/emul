@@ -4,8 +4,8 @@
 package v9t9.common.machine;
 
 import v9t9.common.cpu.IExecutor;
-import v9t9.common.demo.IDemoHandler;
-import v9t9.common.demo.IDemoManager;
+import v9t9.common.demos.IDemoHandler;
+import v9t9.common.demos.IDemoManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.IFileHandler;
 import v9t9.common.files.IPathFileLocator;

@@ -9,10 +9,10 @@ import java.util.List;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoHandler;
-import v9t9.common.demo.IDemoPlayer;
-import v9t9.common.demo.IDemoRecorder;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoHandler;
+import v9t9.common.demos.IDemoPlayer;
+import v9t9.common.demos.IDemoRecorder;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;

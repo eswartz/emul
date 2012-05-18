@@ -3,7 +3,7 @@
  */
 package v9t9.engine.demos.format;
 
-import v9t9.common.demo.IDemoEventFormatter;
+import v9t9.common.demos.IDemoEventFormatter;
 
 /**
  * @author ejs

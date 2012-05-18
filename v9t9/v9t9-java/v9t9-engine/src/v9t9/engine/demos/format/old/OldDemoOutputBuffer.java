@@ -6,7 +6,7 @@ package v9t9.engine.demos.format.old;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import v9t9.common.demo.IDemoOutputBuffer;
+import v9t9.common.demos.IDemoOutputBuffer;
 import v9t9.engine.demos.stream.BaseDemoOutputBuffer;
 
 public abstract class OldDemoOutputBuffer extends BaseDemoOutputBuffer implements IDemoOutputBuffer {

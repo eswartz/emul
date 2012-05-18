@@ -6,8 +6,8 @@ package v9t9.engine.demos.format;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoEventFormatter;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoEventFormatter;
 
 /**
  * @author ejs

@@ -6,9 +6,9 @@ package v9t9.engine.demos.format;
 import java.io.IOException;
 import java.util.Arrays;
 
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoInputEventBuffer;
-import v9t9.common.demo.IDemoOutputEventBuffer;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoInputEventBuffer;
+import v9t9.common.demos.IDemoOutputEventBuffer;
 import v9t9.engine.demos.events.WriteDataBlock;
 
 /**

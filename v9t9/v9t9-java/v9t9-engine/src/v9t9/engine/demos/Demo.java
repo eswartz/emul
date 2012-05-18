@@ -5,7 +5,7 @@ package v9t9.engine.demos;
 
 import java.net.URI;
 
-import v9t9.common.demo.IDemo;
+import v9t9.common.demos.IDemo;
 
 /**
  * @author ejs

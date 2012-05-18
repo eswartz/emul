@@ -16,12 +16,12 @@ import java.net.URI;
 import java.util.BitSet;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoHandler;
-import v9t9.common.demo.IDemoInputStream;
-import v9t9.common.demo.IDemoManager;
-import v9t9.common.demo.IDemoOutputStream;
-import v9t9.common.demo.IDemoPlayer;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoHandler;
+import v9t9.common.demos.IDemoInputStream;
+import v9t9.common.demos.IDemoManager;
+import v9t9.common.demos.IDemoOutputStream;
+import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;

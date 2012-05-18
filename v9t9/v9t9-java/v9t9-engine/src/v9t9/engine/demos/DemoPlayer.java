@@ -7,12 +7,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.common.demo.IDemoActor;
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoHandler;
-import v9t9.common.demo.IDemoPlayer;
-import v9t9.common.demo.IDemoHandler.IDemoListener;
-import v9t9.common.demo.IDemoInputStream;
+import v9t9.common.demos.IDemoActor;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoHandler;
+import v9t9.common.demos.IDemoInputStream;
+import v9t9.common.demos.IDemoPlayer;
+import v9t9.common.demos.IDemoHandler.IDemoListener;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.machine.IMachine;

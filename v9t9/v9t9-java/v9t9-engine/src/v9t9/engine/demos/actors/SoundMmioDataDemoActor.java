@@ -6,9 +6,9 @@ package v9t9.engine.demos.actors;
 import java.io.IOException;
 import java.util.List;
 
-import v9t9.common.demo.IDemoEvent;
-import v9t9.common.demo.IDemoPlayer;
-import v9t9.common.demo.IDemoRecorder;
+import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoPlayer;
+import v9t9.common.demos.IDemoRecorder;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.FullMemoryWriteTracker;
 import v9t9.common.memory.IMemoryDomain;

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.common.demo;
+package v9t9.common.demos;
 
 /**
  * This interface underlies events that represent the behavior
