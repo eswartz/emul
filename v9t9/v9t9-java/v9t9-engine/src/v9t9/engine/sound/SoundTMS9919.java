@@ -75,6 +75,8 @@ public class SoundTMS9919 implements ISoundChip {
 		regIdToVoice = new HashMap<Integer, IVoice>();
 		
 		initRegisters(id, name, regBase);
+		
+		reset();
 	}
 	
 	public SoundTMS9919(IMachine machine) {
