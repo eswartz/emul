@@ -28,6 +28,7 @@ import org.ejs.gui.common.SwtDialogUtils;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.demo.IDemoHandler;
+import v9t9.common.demo.IDemoManager;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyException;
@@ -361,7 +362,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		}
 		
 		////
-		final IProperty recordPath = Settings.get(machine, IDemoHandler.settingRecordedDemosPath);
+		final IProperty recordPath = Settings.get(machine, IDemoManager.settingRecordedDemosPath);
 		final String demoDir = (recordPath.getString() == null || recordPath.getString().isEmpty())
 				? "/tmp" : recordPath.getString();
 		
@@ -388,7 +389,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 							"Record demo file",
 							demoDir,
 							name, true,
-							IDemoHandler.DEMO_EXTENSIONS);
+							IDemoManager.DEMO_EXTENSIONS);
 					File saveFile = null;
 					if (filenameBase != null) {
 						lastSelectedRecordPath = filenameBase;

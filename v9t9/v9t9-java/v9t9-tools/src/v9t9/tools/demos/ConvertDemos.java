@@ -27,7 +27,12 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.settings.BasicSettingsHandler;
+import v9t9.common.speech.ILPCParameters;
+import v9t9.common.speech.ILPCParametersListener;
 import v9t9.engine.demos.DemoPlayer;
+import v9t9.engine.demos.actors.SpeechDemoConverter;
+import v9t9.engine.demos.events.OldSpeechEvent;
+import v9t9.engine.demos.events.SpeechEvent;
 import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
@@ -117,7 +122,7 @@ public class ConvertDemos {
 		System.out.println();
 		System.out.println("Convert demos from TI Emulator! / V9t9 v6.0 to the current format.");
 		System.out.println();
-		System.out.println("The -r argument will recurse directories.");
+		System.out.println("The -r argument will work along directories recursively.");
 		System.out.println("The -s argument will shrink the demos to remove video memory changes that are not visible.");
 	}
 
@@ -136,6 +141,7 @@ public class ConvertDemos {
 	
 	/** one bit per 1<<memGranularity bytes for memory contributing to video tables */
 	private BitSet visibleVideoMemory;
+	private SpeechDemoConverter speechConverter;
 
 	public ConvertDemos(IMachineModel machineModel) {
 		ISettingsHandler settings = new BasicSettingsHandler();
@@ -252,6 +258,8 @@ public class ConvertDemos {
 			}
 			
 			try {
+				setupSpeechConverter(os);
+				
 				if (shrink)
 					processEventsAndShrink(is, os);
 				else
@@ -269,6 +277,27 @@ public class ConvertDemos {
 			if (os != null)
 				os.close();
 		}
+	}
+
+
+	/**
+	 * 
+	 */
+	private void setupSpeechConverter(final IDemoOutputStream os) {
+		speechConverter = new SpeechDemoConverter();
+		
+		ILPCParametersListener convertParamsListener = new ILPCParametersListener() {
+			
+			@Override
+			public void parametersAdded(ILPCParameters params) {
+				try {
+					os.writeEvent(new SpeechEvent(params));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		speechConverter.addEquationListener(convertParamsListener);		
 	}
 
 
@@ -303,6 +332,50 @@ public class ConvertDemos {
 	}
 
 
+	/**
+	 * Convert old-style speech events (where bytes are fed serially into the FIFO,
+	 * but without any conception of timing) into the current format (passing
+	 * equations, known to be complete).
+	 * @param event
+	 */
+	private void convertSpeechEvent(IDemoOutputStream os, OldSpeechEvent event) throws IOException {
+		switch (event.getCode()) {
+		case OldSpeechEvent.SPEECH_STARTING:
+			speechConverter.startPhrase();
+			break;
+		case OldSpeechEvent.SPEECH_STOPPING:
+			speechConverter.stopPhrase();
+			break;
+		case OldSpeechEvent.SPEECH_TERMINATING:
+			speechConverter.terminatePhrase();
+			break;
+		case OldSpeechEvent.SPEECH_ADDING_BYTE:
+			speechConverter.pushByte(event.getAddedByte());
+			break;
+		}
+	}
+
+	private void processEvents(IDemoInputStream is, IDemoOutputStream os) throws IOException {
+		IDemoEvent event;
+		
+		long timer = 0;
+		
+		while ((event = is.readNext()) != null)  {
+			if (event instanceof TimerTick) {
+				timer = updateAndEmitTimerTick(os, is, timer, (TimerTick) event);
+			}
+			else if (event instanceof OldSpeechEvent) {
+				convertSpeechEvent(os, (OldSpeechEvent) event);
+			}
+			else {
+				os.writeEvent(event);
+			}
+		}
+		
+		updateAndEmitTimerTick(os, is, timer, null);
+	}
+
+
 	private void processEventsAndShrink(IDemoInputStream is, IDemoOutputStream os) throws IOException {
 		IDemoEvent event;
 
@@ -329,7 +402,11 @@ public class ConvertDemos {
 
 				timer = updateAndEmitTimerTick(os, is, timer, (TimerTick) event);
 			}
-			
+			else if (event instanceof OldSpeechEvent) {
+				convertSpeechEvent(os, (OldSpeechEvent) event);
+				continue;
+			}
+
 			else if (event instanceof VideoWriteRegisterEvent) {
 				// When the video mode changes, new video memory
 				// may be exposed.  Execute the event to see.  
@@ -451,21 +528,4 @@ public class ConvertDemos {
 		}
 	}
 
-
-	private void processEvents(IDemoInputStream is, IDemoOutputStream os) throws IOException {
-		IDemoEvent event;
-		
-		long timer = 0;
-		
-		while ((event = is.readNext()) != null)  {
-			if (event instanceof TimerTick) {
-				timer = updateAndEmitTimerTick(os, is, timer, (TimerTick) event);
-			}
-			else {
-				os.writeEvent(event);
-			}
-		}
-		
-		updateAndEmitTimerTick(os, is, timer, null);
-	}
 }

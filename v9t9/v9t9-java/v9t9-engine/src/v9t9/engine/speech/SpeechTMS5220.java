@@ -28,6 +28,7 @@ import v9t9.common.settings.Settings;
 import v9t9.common.speech.ISpeechDataSender;
 import v9t9.common.speech.ILPCParametersListener;
 import v9t9.common.speech.ISpeechPhraseListener;
+import v9t9.engine.demos.actors.OldSpeechDemoActor;
 import v9t9.engine.demos.actors.SpeechDemoActor;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.speech.IFifoLpcDataFetcher.IFifoStatusListener;
@@ -191,6 +192,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 		equationFetcher = new BuiltinEquationFetcher();
 		
 		machine.getDemoManager().registerActor(new SpeechDemoActor());
+		machine.getDemoManager().registerActor(new OldSpeechDemoActor());
 
 		speechTimerTask = new Runnable() {
 

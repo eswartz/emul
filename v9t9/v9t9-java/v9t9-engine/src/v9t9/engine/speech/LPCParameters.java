@@ -122,14 +122,9 @@ public class LPCParameters implements ILPCParameters {
 		
 		return builder.toString();
 	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.speech.ILPCParameters#fromBytes(byte[])
-	 */
+
 	@Override
-	public void fromBytes(byte[] bytes) throws IOException {
-		ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-		BitInputStream bs = new BitInputStream(bis);
+	public void fromBytes(BitInputStream bs) throws IOException {
 		init();
 		energyParam = bs.readBits(4);
 		if (energyParam != 0 && energyParam != 15) {
@@ -150,6 +145,16 @@ public class LPCParameters implements ILPCParameters {
 				}
 			}
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.speech.ILPCParameters#fromBytes(byte[])
+	 */
+	@Override
+	public void fromBytes(byte[] bytes) throws IOException {
+		ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+		BitInputStream bs = new BitInputStream(bis);
+		fromBytes(bs);
 		bs.close();
 	}
 	
@@ -157,9 +162,7 @@ public class LPCParameters implements ILPCParameters {
 	 * @see v9t9.common.speech.ILPCParameters#toBytes()
 	 */
 	@Override
-	public byte[] toBytes() throws IOException  {
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		BitOutputStream bs = new BitOutputStream(bos);
+	public void toBytes(BitOutputStream bs) throws IOException  {
 		bs.writeBits(energyParam, 4);
 		if (energyParam != 0 && energyParam != 15) {
 			bs.writeBits(repeat ? 1 : 0, 1);
@@ -179,9 +182,21 @@ public class LPCParameters implements ILPCParameters {
 				}
 			}
 		}
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.speech.ILPCParameters#toBytes()
+	 */
+	@Override
+	public byte[] toBytes() throws IOException  {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		BitOutputStream bs = new BitOutputStream(bos);
+		toBytes(bs);
 		bs.close();
 		return bos.toByteArray();
 	}
+
 
 	/**
 	 * @return
@@ -203,4 +218,6 @@ public class LPCParameters implements ILPCParameters {
 	public boolean isUnvoiced() {
 		return pitchParam == 0;
 	}
+
+	
 }

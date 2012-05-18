@@ -11,9 +11,8 @@ import java.util.Queue;
 
 import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoInputStream;
-import v9t9.common.demo.ISpeechEvent;
+import v9t9.engine.demos.events.OldSpeechEvent;
 import v9t9.engine.demos.events.SoundWriteDataEvent;
-import v9t9.engine.demos.events.SpeechEvent;
 import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
@@ -147,14 +146,17 @@ public class OldDemoFormatInputStream extends BaseDemoInputStream implements IDe
 		while (speechBuffer.isAvailable()) {
 			int code = speechBuffer.read();
 			byte byt = (byte) speechBuffer.read();  // byte follows every command, even for commands not using it
-			if (code == ISpeechEvent.SPEECH_ADDING_BYTE) {
-				queuedEvents.add(new SpeechEvent(byt));
-			} else {
-				ISpeechEvent ev = new SpeechEvent(code);
+			if (code == OldSpeechEvent.SPEECH_ADDING_BYTE) {
+				queuedEvents.add(new OldSpeechEvent(byt));
+			} else if (code <= OldSpeechEvent.SPEECH_STOPPING) {
+				OldSpeechEvent ev = new OldSpeechEvent(code);
 				if (ev == null) {
 					throw speechBuffer.newBufferException("corrupt speech byte " + Integer.toHexString(code));
 				}
 				queuedEvents.add(ev);
+			} else {
+				// uh... what?  
+				throw speechBuffer.newBufferException("corrupt speech byte " + Integer.toHexString(code));
 			}
 		}
 	}

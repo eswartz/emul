@@ -3,35 +3,22 @@
  */
 package v9t9.engine.demos.events;
 
-import v9t9.common.demo.ISpeechEvent;
+import v9t9.common.demo.IDemoEvent;
 import v9t9.common.speech.ILPCParameters;
 
 /**
+ * New-style speech event.
  * @author ejs
  *
  */
-public class SpeechEvent implements ISpeechEvent {
+public class SpeechEvent  implements IDemoEvent {
 
 	public static final String ID = "SpeechEvent";
 	
-	private final int code;
-	private final Object data;
-	
-	
-	public SpeechEvent(int code) {
-		if (code == SPEECH_ADDING_BYTE)
-			throw new IllegalArgumentException("SPEECH_ADDING_BYTE must have a byte");
-		this.code = code;
-		this.data = null;
-	}
-	public SpeechEvent(byte byt) {
-		this.code = SPEECH_ADDING_BYTE;
-		this.data = (Byte) byt;
-	}
+	private final ILPCParameters params;
 	
 	public SpeechEvent(ILPCParameters equ) {
-		this.code = SPEECH_ADDING_EQUATION;
-		this.data = equ;
+		this.params = equ;
 	}
 	
 	/* (non-Javadoc)
@@ -42,14 +29,11 @@ public class SpeechEvent implements ISpeechEvent {
 		return ID;
 	}
 
-	
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + code;
-		result = prime * result + ((data == null) ? 0 : data.hashCode());
+		result = prime * result + ((params == null) ? 0 : params.hashCode());
 		return result;
 	}
 	@Override
@@ -61,30 +45,16 @@ public class SpeechEvent implements ISpeechEvent {
 		if (getClass() != obj.getClass())
 			return false;
 		SpeechEvent other = (SpeechEvent) obj;
-		if (code != other.code)
-			return false;
-		if (data == null) {
-			if (other.data != null)
+		if (params == null) {
+			if (other.params != null)
 				return false;
-		} else if (!data.equals(other.data))
+		} else if (!params.equals(other.params))
 			return false;
 		return true;
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.engine.demos.events.ISpeechEvent#getCode()
-	 */
-	@Override
-	public int getCode() {
-		return code;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.demo.ISpeechEvent#getData()
-	 */
-	@Override
-	public Object getData() {
-		return data;
+	public ILPCParameters getParams() {
+		return params;
 	}
 
 }

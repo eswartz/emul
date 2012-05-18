@@ -18,6 +18,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.common.speech.ILPCParameters;
 import v9t9.common.speech.ILPCParametersListener;
+import v9t9.engine.demos.events.OldSpeechEvent;
 import v9t9.engine.demos.events.SpeechEvent;
 import v9t9.engine.speech.LPCParameters;
 import v9t9.engine.speech.SpeechTMS5220;
@@ -26,23 +27,25 @@ import v9t9.engine.speech.SpeechTMS5220;
  * @author ejs
  *
  */
-public class SpeechDemoActor extends BaseDemoActor {
+public class OldSpeechDemoActor extends BaseDemoActor {
 
 	private SpeechTMS5220 speech;
 	private ILPCParametersListener paramsListener;
 	private List<ILPCParameters> currentPhraseParamsList;
 	
+	private SpeechDemoConverter converter; 
 	private IProperty demoRate;
 	private IProperty talkRate;
 	private double origTalkRate;
 	private IPropertyListener demoRateListener;
+	private ILPCParametersListener convertParamsListener;
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoActor#getEventIdentifier()
 	 */
 	@Override
 	public String getEventIdentifier() {
-		return SpeechEvent.ID;
+		return OldSpeechEvent.ID;
 	}
 
 	/* (non-Javadoc)
@@ -73,7 +76,7 @@ public class SpeechDemoActor extends BaseDemoActor {
 					recorder.fail(e);
 				}
 				
-				synchronized (SpeechDemoActor.this) {
+				synchronized (OldSpeechDemoActor.this) {
 					LPCParameters copy = new LPCParameters();
 					copy.copyFrom((LPCParameters) params);
 					currentPhraseParamsList.add(copy);
@@ -110,6 +113,22 @@ public class SpeechDemoActor extends BaseDemoActor {
 	public void setupPlayback(final IDemoPlayer player) {
 		super.setupPlayback(player);
 		
+		converter = new SpeechDemoConverter();
+		convertParamsListener = new ILPCParametersListener() {
+			
+			@Override
+			public void parametersAdded(ILPCParameters params) {
+				try {
+					player.executeEvent(new SpeechEvent(params));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		converter.addEquationListener(convertParamsListener);
+		
+		//speech.reset();
+		
 		// have the talk speed match the demo speed
 		talkRate = Settings.get(player.getMachine(), ISpeechChip.settingTalkSpeed);
 		demoRate = Settings.get(player.getMachine(), IDemoHandler.settingDemoPlaybackRate);
@@ -132,9 +151,25 @@ public class SpeechDemoActor extends BaseDemoActor {
 	@Override
 	public void executeEvent(IDemoPlayer player, IDemoEvent event)
 			throws IOException {
-		SpeechEvent ev = (SpeechEvent) event;
-		LPCParameters params = (LPCParameters) ev.getParams();
-		speech.getLpcSpeech().frame(params, speech.getSamplesPerFrame());
+		OldSpeechEvent ev = (OldSpeechEvent) event;
+		switch (ev.getCode()) {
+		//
+		//	legacy handling -- known to be broken!
+		//
+		case OldSpeechEvent.SPEECH_STARTING:
+			converter.startPhrase();
+			break;
+		case OldSpeechEvent.SPEECH_STOPPING:
+			converter.stopPhrase();
+			break;
+		case OldSpeechEvent.SPEECH_TERMINATING:
+			converter.terminatePhrase();
+			//speech.reset();
+			break;
+		case OldSpeechEvent.SPEECH_ADDING_BYTE:
+			converter.pushByte(ev.getAddedByte());
+			break;
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -144,8 +179,12 @@ public class SpeechDemoActor extends BaseDemoActor {
 	public void cleanupPlayback(IDemoPlayer player) {
 		super.cleanupPlayback(player);
 		
+		converter.removeEquationListener(convertParamsListener);
+		
 		demoRate.removeListener(demoRateListener);
 		talkRate.setDouble(origTalkRate);
+		
+		//speech.reset();
 	}
 
 }

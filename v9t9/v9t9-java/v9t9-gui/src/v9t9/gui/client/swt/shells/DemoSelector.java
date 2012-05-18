@@ -230,11 +230,11 @@ public class DemoSelector extends Composite {
 						selectedDemo != null && selectedDemo.getURI().getScheme().equals("file") ?
 								new File(selectedDemo.getURI()).getParent() : null,
 						null, false,
-						IDemoHandler.DEMO_EXTENSIONS);
+						IDemoManager.DEMO_EXTENSIONS);
 				if (filename != null) {
 					File playFile = new File(filename);
 					String parent = playFile.getParentFile().toURI().toString();
-					IProperty searchPath = Settings.get(machine, IDemoHandler.settingUserDemosPath);
+					IProperty searchPath = Settings.get(machine, IDemoManager.settingUserDemosPath);
 					if (!searchPath.getList().contains(parent)) {
 						searchPath.getList().add(parent);
 						searchPath.firePropertyChange();

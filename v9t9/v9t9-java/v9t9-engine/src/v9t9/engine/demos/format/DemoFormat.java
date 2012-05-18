@@ -35,7 +35,7 @@ public class DemoFormat {
 	public static final String VIDEO_REGS = "videoRegs";
 	public static final String VIDEO_DATA = "videoData";
 	public static final String SOUND_REGS = "soundRegs";
-	public static final String SPEECH_PHRASES = "speechPhrases";
+	public static final String SPEECH_DATA = "speechParams";
 	public static final String SOUND_DATA = "soundData";
 
 	private static final String V9938_ACCEL = "v9938Accel";
@@ -169,7 +169,7 @@ public class DemoFormat {
 		FORMATTER_REGISTRY.registerDemoEventFormatter(new VideoRegisterEventFormatter(VIDEO_REGS));
 		FORMATTER_REGISTRY.registerDemoEventFormatter(new SoundDataEventFormatter(SOUND_DATA));
 		FORMATTER_REGISTRY.registerDemoEventFormatter(new SoundRegisterEventFormatter(SOUND_REGS));
-		FORMATTER_REGISTRY.registerDemoEventFormatter(new SpeechEventFormatter(SPEECH_PHRASES));
+		FORMATTER_REGISTRY.registerDemoEventFormatter(new SpeechEventFormatter(SPEECH_DATA));
 		FORMATTER_REGISTRY.registerDemoEventFormatter(new VdpV9938AccelCommandEventFormatter(V9938_ACCEL));
 	}
 

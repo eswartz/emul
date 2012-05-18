@@ -10,7 +10,7 @@ import v9t9.common.demo.IDemoEvent;
 import v9t9.common.demo.IDemoOutputBuffer;
 import v9t9.common.demo.IDemoOutputEventBuffer;
 import v9t9.common.demo.IDemoOutputStream;
-import v9t9.common.demo.ISpeechEvent;
+import v9t9.engine.demos.events.OldSpeechEvent;
 import v9t9.engine.demos.events.SoundWriteDataEvent;
 import v9t9.engine.demos.events.SoundWriteRegisterEvent;
 import v9t9.engine.demos.events.SpeechEvent;
@@ -134,17 +134,14 @@ public class OldDemoFormatOutputStream extends BaseDemoOutputStream implements I
 	}
 	
 	protected void writeSpeechEvent(IDemoEvent event) throws IOException {
-		ISpeechEvent ev = (ISpeechEvent) event;
-		if (ev.getCode() == ISpeechEvent.SPEECH_ADDING_EQUATION) {
-			throw new IOException("incorrect setup: cannot record speech equations in this format");
-		}
-		if (ev.getCode() != ISpeechEvent.SPEECH_ADDING_BYTE || !speechBuffer.isAvailable(2)) {
+		OldSpeechEvent ev = (OldSpeechEvent) event;
+		if (ev.getCode() != OldSpeechEvent.SPEECH_ADDING_BYTE || !speechBuffer.isAvailable(2)) {
 			speechBuffer.flush();
 		}
 
 		speechBuffer.push((byte) ev.getCode());
-		if (ev.getCode() == ISpeechEvent.SPEECH_ADDING_BYTE)
-			speechBuffer.push((Byte) ev.getData());
+		if (ev.getCode() == OldSpeechEvent.SPEECH_ADDING_BYTE)
+			speechBuffer.push(ev.getAddedByte());
 		else
 			speechBuffer.push((byte) -1);
 	}

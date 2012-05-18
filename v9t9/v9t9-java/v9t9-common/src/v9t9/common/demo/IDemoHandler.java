@@ -4,7 +4,6 @@
 package v9t9.common.demo;
 
 import java.net.URI;
-import java.util.ArrayList;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.NotifyEvent;
@@ -12,32 +11,12 @@ import v9t9.common.events.NotifyException;
 import v9t9.common.settings.SettingSchema;
 
 /**
+ * This interface covers the low-level details of recording and playing demos. 
  * @author ejs
  *
  */
 public interface IDemoHandler {
 
-	interface IDemoListener {
-		void stopped(NotifyEvent event);
-	}
-	
-	/** Array of URIs where demos may be fetched */
-	SettingSchema settingBootDemosPath = 
-			new SettingSchema(
-					ISettingsHandler.INSTANCE,
-					"BootDemosPath", String.class, new ArrayList<String>());
-	/** Array of URIs where demos may be fetched */
-	SettingSchema settingUserDemosPath = 
-			new SettingSchema(
-					ISettingsHandler.INSTANCE,
-					"UserDemosPath", String.class, new ArrayList<String>());
-	/** URI where demos will be recorded */
-	SettingSchema settingRecordedDemosPath = 
-		new SettingSchema(
-				ISettingsHandler.INSTANCE,
-				"RecordedDemosPath", ".");
-
-	String[] DEMO_EXTENSIONS = new String[] { "dem|V9t9 demo file (*.dem)", "*|Other demo file" };
 	
 	/** This setting is true while a demo is being recorded. */
 	SettingSchema settingRecordDemo = new SettingSchema(
@@ -64,6 +43,10 @@ public interface IDemoHandler {
 	SettingSchema settingDemoPlaybackRate = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"DemoPlaybackRate", 1.0);
+	
+	interface IDemoListener {
+		void stopped(NotifyEvent event);
+	}
 	
 	void dispose();
 

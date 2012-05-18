@@ -5,6 +5,7 @@ package ejs.base.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
+import java.io.EOFException;
 import java.io.IOException;
 
 /**
@@ -29,12 +30,18 @@ public class BitInputStream implements Closeable {
 	
 	private final static int MAX_LENGTH  = 16;
 	
-	public BitInputStream(ByteArrayInputStream bis) {
+	public BitInputStream(ByteArrayInputStream bis, int bitPosition) {
 		this.bis = bis;
-		bit = 0;
-		curByte = -1;
+		this.bit = bitPosition;
+		this.curByte = bit > 0 ? bis.read() : -1;
 	}
 
+	public BitInputStream(ByteArrayInputStream bis) {
+		this.bis = bis;
+		this.bit = 0;
+		this.curByte = -1;
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.io.Closeable#close()
 	 */
@@ -71,7 +78,7 @@ public class BitInputStream implements Closeable {
 		
 		ensureCurByte();
 		if (curByte < 0)
-			return curByte;
+			throw new EOFException();
 		
 		int cur;
 		if (bit + count >= 8) { /* we will cross into the next byte */
@@ -80,7 +87,7 @@ public class BitInputStream implements Closeable {
 			
 			curByte = bis.read();
 			if (curByte == -1)
-				return -1;
+				throw new EOFException();
 			
 			cur |= curByte & 0xff; 
 		} else {
@@ -96,4 +103,7 @@ public class BitInputStream implements Closeable {
 		}		
 	}
 	
+	public int getBitPosition() {
+		return bit;
+	}
 }

@@ -18,7 +18,6 @@ import v9t9.common.demo.DemoHeader;
 import v9t9.common.demo.IDemo;
 import v9t9.common.demo.IDemoActor;
 import v9t9.common.demo.IDemoEventFormatter;
-import v9t9.common.demo.IDemoHandler;
 import v9t9.common.demo.IDemoInputStream;
 import v9t9.common.demo.IDemoManager;
 import v9t9.common.demo.IDemoOutputStream;
@@ -53,9 +52,9 @@ public class DemoManager implements IDemoManager {
 		this.machine = machine;
 		this.locator = new PathFileLocator();
 		
-		locator.addReadOnlyPathProperty(Settings.get(machine, IDemoHandler.settingBootDemosPath));
-		locator.addReadOnlyPathProperty(Settings.get(machine, IDemoHandler.settingUserDemosPath));
-		locator.setReadWritePathProperty(Settings.get(machine, IDemoHandler.settingRecordedDemosPath));
+		locator.addReadOnlyPathProperty(Settings.get(machine, IDemoManager.settingBootDemosPath));
+		locator.addReadOnlyPathProperty(Settings.get(machine, IDemoManager.settingUserDemosPath));
+		locator.setReadWritePathProperty(Settings.get(machine, IDemoManager.settingRecordedDemosPath));
 		
 		registerActor(new TimerTickActor());
 	}
@@ -189,10 +188,9 @@ public class DemoManager implements IDemoManager {
 				
 				IDemoEventFormatter formatter = DemoFormat.FORMATTER_REGISTRY.findFormatterByEvent(
 						actor.getEventIdentifier());
-				if (formatter == null) {
-					throw new IOException("no formatter defined for " + actor.getEventIdentifier());
+				if (formatter != null) {
+					header.findOrAllocateIdentifier(formatter.getBufferIdentifer());
 				}
-				header.findOrAllocateIdentifier(formatter.getBufferIdentifer());
 			}
 			DemoFormatOutputStream demoStream = new DemoFormatOutputStream(header, 
 					new CountingOutputStream(new BufferedOutputStream(locator.createOutputStream(uri))));
