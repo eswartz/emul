@@ -514,10 +514,13 @@ public class ModuleSelector extends Composite {
 		if (text == null || text.length() == 0) {
 			filterText.setText("Search...");
 			filterText.setForeground(getDisplay().getSystemColor(SWT.COLOR_TITLE_INACTIVE_FOREGROUND));
-		}  else {
-			filterText.setText(text);
-			filterText.selectAll();
-			filterText.setForeground(null);
+		} else {
+			String curText = filterText.getText(); 
+			if (curText.equals("Search...") || curText.isEmpty()) {
+				filterText.setText(text);
+				filterText.selectAll();
+				filterText.setForeground(null);
+			}
 		}
 		
 		refreshFilters();
