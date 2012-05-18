@@ -128,7 +128,7 @@ public class OldSpeechDemoActor extends BaseDemoActor {
 		OldSpeechEvent ev = (OldSpeechEvent) event;
 		switch (ev.getCode()) {
 		//
-		//	legacy handling -- known to be broken!
+		//	legacy handling: convert to new format
 		//
 		case OldSpeechEvent.SPEECH_STARTING:
 			converter.startPhrase();
