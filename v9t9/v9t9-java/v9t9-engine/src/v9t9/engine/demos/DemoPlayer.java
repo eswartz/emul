@@ -59,7 +59,7 @@ public class DemoPlayer implements IDemoPlayer {
 	public void start() {
 //		Settings.get(machine, IVdpChip.settingDumpVdpAccess).setBoolean(true);
 //		Settings.get(machine, ICpu.settingDumpFullInstructions).setBoolean(true);
-					
+		
 		demoTask = new Runnable() {
 			public void run() {
 				if (isFinished)

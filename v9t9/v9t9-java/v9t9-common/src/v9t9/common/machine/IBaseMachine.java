@@ -3,7 +3,6 @@
  */
 package v9t9.common.machine;
 
-import java.io.IOException;
 import java.util.Timer;
 
 import ejs.base.settings.ISettingSection;
@@ -72,7 +71,7 @@ public interface IBaseMachine {
 
 	void saveState(ISettingSection settings);
 
-	void loadState(ISettingSection section) throws IOException;
+	void loadState(ISettingSection section);
 
 	void reset();
 	
@@ -90,18 +89,12 @@ public interface IBaseMachine {
 
 	ICpuMetrics getCpuMetrics();
 
-	/**
-	 * @return
-	 */
 	IRawInstructionFactory getInstructionFactory();
 
 	Timer getMachineTimer();
 
 	FastTimer getFastMachineTimer();
 	
-	/**
-	 * 
-	 */
 	void interrupt();
 
 }

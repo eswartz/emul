@@ -6,7 +6,6 @@
  */
 package v9t9.engine.machine;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -573,7 +572,7 @@ abstract public class MachineBase implements IMachine {
 	 * @see v9t9.emulator.common.IMachine#loadState(v9t9.base.core.settings.ISettingSection)
 	 */
 	@Override
-	public synchronized void loadState(ISettingSection section) throws IOException {
+	public synchronized void loadState(ISettingSection section) {
 		/*
 		machineRunner.interrupt();
 		videoRunner.interrupt();

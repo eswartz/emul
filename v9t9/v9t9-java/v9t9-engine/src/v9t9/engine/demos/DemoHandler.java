@@ -80,7 +80,7 @@ public class DemoHandler implements IDemoHandler {
 	 * @see v9t9.common.client.IDemoHandler#startRecording(java.net.URI)
 	 */
 	@Override
-	public void startRecording(URI uri) throws NotifyException {
+	public synchronized void startRecording(URI uri) throws NotifyException {
 		if (recorder != null) {
 			stopRecording();
 		}
@@ -104,7 +104,7 @@ public class DemoHandler implements IDemoHandler {
 	 * @see v9t9.common.client.IDemoHandler#stopRecording()
 	 */
 	@Override
-	public void stopRecording() throws NotifyException {
+	public synchronized void stopRecording() throws NotifyException {
 		recordSetting.setBoolean(false);
 		demoPauseSetting.setBoolean(false);
 		
@@ -132,7 +132,7 @@ public class DemoHandler implements IDemoHandler {
 	 * @see v9t9.common.client.IDemoHandler#startPlayback(java.net.URI)
 	 */
 	@Override
-	public void startPlayback(URI uri) throws NotifyException {
+	public synchronized void startPlayback(URI uri) throws NotifyException {
 		if (player != null) {
 			stopPlayback();
 		}
@@ -152,11 +152,13 @@ public class DemoHandler implements IDemoHandler {
 				};
 				playRateSetting.addListenerAndFire(playbackRatePropertyListener);
 				
-				player.start();
-				
-				wasPaused = machine.setPaused(true);
 				playSetting.setBoolean(true);
 				demoPauseSetting.setBoolean(false);
+				
+				// note: must follow the above
+				wasPaused = machine.setPaused(true);
+				
+				player.start();
 			} else {
 				throw new NotifyException(uri, "Unrecognized demo format in " + uri);
 			}
@@ -170,18 +172,20 @@ public class DemoHandler implements IDemoHandler {
 	 * @see v9t9.common.client.IDemoHandler#stopPlayback()
 	 */
 	@Override
-	public void stopPlayback() throws NotifyException {
-		playSetting.setBoolean(false);
-		demoPauseSetting.setBoolean(false);
-		machine.setPaused(wasPaused);
-		
+	public synchronized void stopPlayback() throws NotifyException {
 		if (player == null)
 			return;
 		
 		player.stop();
 		
 		playRateSetting.removeListener(playbackRatePropertyListener);
+
+		machine.setPaused(wasPaused);
 		
+		// note: must follow the above
+		playSetting.setBoolean(false);
+		demoPauseSetting.setBoolean(false);
+
 		player = null;
 	}
 	

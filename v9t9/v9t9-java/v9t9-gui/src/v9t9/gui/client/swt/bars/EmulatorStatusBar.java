@@ -42,6 +42,8 @@ import v9t9.gui.client.swt.shells.ModuleSelector;
 import v9t9.gui.client.swt.shells.ROMSetupDialog;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingSection;
+import ejs.base.settings.SettingsSection;
 
 /**
  * This is the bar of buttons and status icons on the left-hand side of
@@ -59,7 +61,11 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	private IProperty cyclesPerSecond;
 	private IProperty devicesChanged;
 	private BlankIcon indicatorsBlank;
-	
+
+	private String lastSelectedRecordPath;
+	private ISettingSection savedPreDemoState;
+	protected IPropertyListener unpauseAfterDemoListener; 
+
 	/**
 	 * @param swtWindow
 	 * @param mainComposite
@@ -278,6 +284,47 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		}					
 		button.setSelection(pauseSetting.getBoolean());
 		
+		
+		playSetting.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				if (property.getBoolean()) {
+					machine.setPaused(true);
+					savedPreDemoState = new SettingsSection(null);
+					machine.saveState(savedPreDemoState);
+					
+					final IProperty machinePauseListener = Settings.get(machine, IMachine.settingPauseMachine);
+
+					if (unpauseAfterDemoListener == null) {
+						unpauseAfterDemoListener = new IPropertyListener() {
+							
+							@Override
+							public void propertyChanged(IProperty property) {
+	
+								if (!property.getBoolean() && savedPreDemoState != null) {
+									// make sure a playing demo stops!
+									try {
+										machine.getDemoHandler().stopPlayback();
+									} catch (NotifyException e) {
+									}
+									
+									machine.loadState(savedPreDemoState);
+									savedPreDemoState = null;
+									
+									machinePauseListener.removeListener(unpauseAfterDemoListener);
+									
+									// make sure still unpaused, in case demo playback
+									// stopping above reset the pause state
+									machinePauseListener.setBoolean(false);
+								}
+							}
+						};
+					}
+					machinePauseListener.addListener(unpauseAfterDemoListener);
+				}
+			}
+		});
 		return button;
 		
 	}
@@ -286,7 +333,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		return x < size.x / 3 && y < size.y / 3;
 	}
 
-	private static String lastSelectedRecordPath;
 
 	private void showDemoMenu(final IDemoHandler demoHandler, TypedEvent e, int x, int y, 
 			final IProperty recordSetting, final IProperty playSetting,
@@ -434,9 +480,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	}
 
 
-	/**
-	 * 
-	 */
 	protected void toggleDemoDialog() {
 		swtWindow.toggleToolShell(DemoSelector.DEMO_SELECTOR_TOOL_ID,
 				DemoSelector.getToolShellFactory(machine, buttonBar, swtWindow));
