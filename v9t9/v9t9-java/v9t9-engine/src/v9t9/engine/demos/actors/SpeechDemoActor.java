@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
 import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoPlayer;
@@ -19,8 +17,11 @@ import v9t9.common.settings.Settings;
 import v9t9.common.speech.ILPCParameters;
 import v9t9.common.speech.ILPCParametersListener;
 import v9t9.engine.demos.events.SpeechEvent;
+import v9t9.engine.demos.format.DemoFormat;
 import v9t9.engine.speech.LPCParameters;
 import v9t9.engine.speech.SpeechTMS5220;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * @author ejs
@@ -55,23 +56,31 @@ public class SpeechDemoActor extends BaseDemoActor {
 	}
 
 	/* (non-Javadoc)
+	 * @see v9t9.engine.demos.actors.BaseDemoActor#shouldRecordFor(byte[])
+	 */
+	@Override
+	public boolean shouldRecordFor(byte[] header) {
+		return DemoFormat.DEMO_MAGIC_HEADER_V9t9.equals(header);
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoActor#connectForRecording(v9t9.common.demo.IDemoRecorder)
 	 */
 	@Override
 	public synchronized void connectForRecording(final IDemoRecorder recorder) throws IOException {
 		currentPhraseParamsList = new ArrayList<ILPCParameters>();
 		
-		this.paramsListener = new ILPCParametersListener() {
+		paramsListener = new ILPCParametersListener() {
 			
 			@Override
 			public void parametersAdded(ILPCParameters params) {
 				// speech takes a really long time, so flush
 				// everything now
-				try {
-					recorder.flushData();
-				} catch (IOException e) {
-					recorder.fail(e);
-				}
+//				try {
+//					recorder.flushData();
+//				} catch (IOException e) {
+//					recorder.fail(e);
+//				}
 				
 				synchronized (SpeechDemoActor.this) {
 					LPCParameters copy = new LPCParameters();
@@ -80,6 +89,7 @@ public class SpeechDemoActor extends BaseDemoActor {
 				}
 			}
 		};
+		
 		speech.addParametersListener(paramsListener);
 	}
 
@@ -116,13 +126,15 @@ public class SpeechDemoActor extends BaseDemoActor {
 
 		origTalkRate = talkRate.getDouble();
 		
-		demoRateListener = new IPropertyListener() {
-			
-			@Override
-			public void propertyChanged(IProperty property) {
-				talkRate.setDouble(property.getDouble());
-			}
-		};
+		if (demoRateListener == null) {
+			demoRateListener = new IPropertyListener() {
+				
+				@Override
+				public void propertyChanged(IProperty property) {
+					talkRate.setDouble(property.getDouble());
+				}
+			};
+		}
 		demoRate.addListenerAndFire(demoRateListener);
 	}
 	
