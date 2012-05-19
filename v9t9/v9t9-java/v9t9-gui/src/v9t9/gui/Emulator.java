@@ -105,7 +105,7 @@ public class Emulator {
 				clean = true;
 			}
 			else if (opt == 'c') {
-				configdir = getopt.getOptarg();
+				configdir = getopt.getOptarg().trim();
 			}
 			else if (opt == 'd') {
 				debug = true;
