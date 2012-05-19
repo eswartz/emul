@@ -25,11 +25,6 @@ public interface ISpeechChip extends IPersistable {
 			"LogSpeech",
 			new Integer(0));
 			
-	SettingSchema settingAllowLPCTimeouts = new SettingSchema(
-			ISettingsHandler.INSTANCE,
-			"LPCTimeouts",
-			Boolean.FALSE);
-
 	/**
 	 * Read the next byte from memory 
 	 * @return

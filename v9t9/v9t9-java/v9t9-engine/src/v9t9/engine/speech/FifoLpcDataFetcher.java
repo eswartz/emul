@@ -45,7 +45,7 @@ public class FifoLpcDataFetcher extends BaseFifoLpcDataFetcher  {
 		in = (in + 1) & 15;
 		
 		if (logProperty != null) {
-			Logging.writeLogLine(2, logProperty,
+			Logging.writeLogLine(3, logProperty,
 				"FIFO write: " + HexUtils.toHex2(val) + "; len = " + len);
 			if (len == 16) {
 				Logging.writeLogLine(1, logProperty,
@@ -66,7 +66,7 @@ public class FifoLpcDataFetcher extends BaseFifoLpcDataFetcher  {
 	public synchronized byte read() {
 		byte ret = fifo[out];
 		
-		Logging.writeLogLine(2, logProperty, "FIFO read: " + HexUtils.toHex2(ret)
+		Logging.writeLogLine(3, logProperty, "FIFO read: " + HexUtils.toHex2(ret)
 				+ " (was: " + HexUtils.toHex2(BinaryUtils.swapBits(ret)) + ")"
 				+ "; len = " + len);
 

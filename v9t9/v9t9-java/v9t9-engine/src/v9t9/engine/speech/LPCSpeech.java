@@ -232,10 +232,10 @@ final static int FL_last	= 8;		/* stop frame seen */
 			params.kVal[9] = 0;
 		}
 
-		Logging.writeLogLine(2, settings.get(ISpeechChip.settingLogSpeech),
+		Logging.writeLogLine(3, settings.get(ISpeechChip.settingLogSpeech),
 				"Equation: " + builder);
 
-		Logging.writeLogLine(3, settings.get(ISpeechChip.settingLogSpeech),
+		Logging.writeLogLine(4, settings.get(ISpeechChip.settingLogSpeech),
 				"energy: "+oldParams.energy+" => "+params.energy+", pitch: "+oldParams.pitch+" => "+params.pitch);
 	}
 
@@ -388,6 +388,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 	 */
 	private void applyEquation(LPCParameters newParams, boolean forceUnvoiced)
 	{
+		System.out.println(newParams);
 		/* 	Copy now-old 'new' values into 'buffer' values */
 		oldParams.copyFrom(params);
 
@@ -490,10 +491,10 @@ final static int FL_last	= 8;		/* stop frame seen */
 		if ((decode & FL_nointerp + FL_first) != 0)
 			decode &= ~FL_first;
 
-		Logging.writeLogLine(2, settings.get(ISpeechChip.settingLogSpeech),
+		Logging.writeLogLine(3, settings.get(ISpeechChip.settingLogSpeech),
 				"Equation: " + params);
 
-		Logging.writeLogLine(3, settings.get(ISpeechChip.settingLogSpeech),
+		Logging.writeLogLine(4, settings.get(ISpeechChip.settingLogSpeech),
 				"energy: "+oldParams.energyParam+" => "+params.energyParam+", pitch: "+oldParams.pitchParam+" => "+params.pitchParam);
 	}	
 	

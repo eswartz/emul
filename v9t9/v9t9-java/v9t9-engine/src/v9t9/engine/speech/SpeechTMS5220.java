@@ -99,14 +99,13 @@ public class SpeechTMS5220 implements ISpeechChip {
 
 	private LPCParameters currentParams = new LPCParameters();
 
-	private IProperty allowLPCTimeouts;
+	private byte lastRead;
 	
 	public SpeechTMS5220(final IMachine machine,
 			final ISettingsHandler settings, final IMemoryDomain speech) {
 		this.machine = machine;
 		logSpeech = settings.get(ISpeechChip.settingLogSpeech);
 		talkRate = settings.get(ISpeechChip.settingTalkSpeed);
-		allowLPCTimeouts = settings.get(ISpeechChip.settingAllowLPCTimeouts);
 		demoPlaying = settings.get(IDemoHandler.settingPlayingDemo);
 		
 		Logging.registerLog(logSpeech, new PrintWriter(System.out, true));
@@ -226,17 +225,23 @@ public class SpeechTMS5220 implements ISpeechChip {
 	}
 
 	public void write(final byte val) {
-		Logging.writeLogLine(2, logSpeech,
-				"speech write: " + HexUtils.toHex2((val & 0xff)));
+		ILPCDataFetcher fetcher;
+		synchronized (this) {
+			fetcher = getDataFetcher();
+		}
 		if ((gate & GT_WCMD) != 0) {
+			Logging.writeLogLine(2, logSpeech,
+					"Speech command write: " + HexUtils.toHex2((val & 0xff)));
 			command(val);
 		} else {
-			IFifoLpcDataFetcher fetcher = (IFifoLpcDataFetcher) getDataFetcher();
-			if (fetcher.isFull()) {
+			Logging.writeLogLine(2, logSpeech,
+					"Speech data write: " + HexUtils.toHex2((val & 0xff)));
+			IFifoLpcDataFetcher fifoFetcher = (IFifoLpcDataFetcher) fetcher;
+			if (fifoFetcher.isFull()) {
 				waitForBufferRoom(5000);
 			}
 			timeout = getNumberTimeoutFrames();
-			fetcher.write(val);
+			fifoFetcher.write(val);
 
 			phraseListeners.fire(new IFire<ISpeechPhraseListener>() { 
 
@@ -274,14 +279,34 @@ public class SpeechTMS5220 implements ISpeechChip {
 			if ((status & SS_SPEAKING) != 0)
 				stat |= SS_TS;
 			ret = stat;
+			
+			if (ret != lastRead) {
+				Logging.writeLogLine(2, logSpeech,
+						"Speech status read: " + HexUtils.toHex2(ret) + " (" + statusToString(stat) + ")");
+				lastRead = ret;
+			}
 		} else {
 			// no more reading data
 			gate = (gate & ~GT_RDAT) | GT_RSTAT;
 			ret = data;
+			
+			Logging.writeLogLine(2, logSpeech,
+					"Speech data read: " + HexUtils.toHex2(ret));
+			lastRead = ret;
 		}
-		Logging.writeLogLine(3, logSpeech,
-				"Speech read: " + HexUtils.toHex2(ret));
 		return ret;
+	}
+
+	private String statusToString(byte stat) {
+		StringBuilder sb = new StringBuilder();
+		if ((stat & SS_TS) != 0)
+			sb.append("TS ");
+		if ((stat & SS_BL) != 0)
+			sb.append("BL ");
+		if ((stat & SS_BE) != 0)
+			sb.append("BE ");
+		
+		return sb.toString().trim();
 	}
 
 	/**
@@ -387,9 +412,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 			data = speech.readByte(addr);
 		addr++;
 		//
-		Logging.writeLogLine(
-				2,
-				logSpeech,
+		Logging.writeLogLine(3, logSpeech,
 				"Speech memory " + HexUtils.toHex4(addr - 1) + " = "
 						+ HexUtils.toHex2(data));
 		return data;
@@ -528,6 +551,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 	@Override
 	public synchronized void reset() {
 		Logging.writeLogLine(1, logSpeech, "Speech reset");
+		lastRead = 0;
 		status = SS_BE | SS_BL;
 		if (getDataFetcher() instanceof IFifoLpcDataFetcher)
 			((IFifoLpcDataFetcher) getDataFetcher()).purge();
@@ -559,7 +583,6 @@ public class SpeechTMS5220 implements ISpeechChip {
 
 		boolean do_frame = false;
 
-		Logging.writeLogLine(2, logSpeech, "Speech generating");
 		// logger(_L | L_2, _("Speech Interrupt\n"));
 
 		if ((gate & GT_WDAT) != 0) { /* direct data */
@@ -571,16 +594,14 @@ public class SpeechTMS5220 implements ISpeechChip {
 					if (timeout-- < 0) {
 						// speech_wait_complete(1);
 
-						if (allowLPCTimeouts.getBoolean())
-							timedOut();
+						timedOut();
 					}
 				}
 			} else {
 				if ((status & SS_BE) != 0) {
 					if (timeout-- < 0) {
 						// speech_wait_complete(1);
-						if (allowLPCTimeouts.getBoolean())
-							timedOut();
+						timedOut();
 					}
 				} else
 					do_frame = true;
@@ -591,7 +612,8 @@ public class SpeechTMS5220 implements ISpeechChip {
 		}
 
 		if (do_frame) {
-			
+			Logging.writeLogLine(3, logSpeech, "Speech generating");
+		
 			equationFetcher.fetchEquation(getDataFetcher(), currentParams);
 			boolean last = currentParams.isLast();
 			
