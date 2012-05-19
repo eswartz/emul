@@ -43,6 +43,8 @@ public class Vdp9918AMmio extends VdpMmio {
     	dumpVdpAccess = settings.get(IVdpChip.settingDumpVdpAccess);
     	
 		this.videoMemory = vdp.getVideoMemory();
+		videoMemory.setSize(memorySize);
+		
 		initMemory(memory, memorySize);
 		((VdpTMS9918A) vdp).setVdpMmio(this);
 		setVdpHandler(vdp);

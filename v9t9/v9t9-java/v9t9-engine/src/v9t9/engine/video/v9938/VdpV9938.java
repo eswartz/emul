@@ -142,7 +142,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	private IProperty msxClockDivisor;
 
 	/** Working variables for command execution */
-	class CommandVars {
+	static class CommandVars {
 		int dx, dy;
 		int sx, sy;
 		/** nx ny, or maj/min for lines */

@@ -57,6 +57,8 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	private IMemory memory;
 
 	private final String id;
+
+	private int size;
     
 	
     public MemoryDomain(String id, String name, int latency) {
@@ -70,6 +72,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     	
         //setArea(0, PHYSMEMORYSIZE, area);
     	mapEntry(zeroMemoryEntry);
+    	size = PHYSMEMORYSIZE;
     }
     
 	public MemoryDomain(String id, String name) {
@@ -79,6 +82,22 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	public MemoryDomain(String id) {
     	this(id, id, 0);
     }
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#getSize()
+	 */
+	@Override
+	public int getSize() {
+		return size;
+	}
+	
+	/**
+	 * @param size the size to set
+	 */
+	public void setSize(int size) {
+		this.size = size;
+	}
+	
     /** For testing, create a RAM-accessible memory domain which spans
      * the size of data.
      * @param data populating data, length on AREASIZE boundary 
@@ -218,7 +237,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     }
 
     private void fireWriteEvent(final IMemoryEntry entry, final int addr_, Number value) {
-    	final int addr = addr_ & BinaryUtils.getMask(PHYSMEMORYSIZE); 
+    	final int addr = addr_ & BinaryUtils.getMask(getSize()); 
     	for (Object listenerObj : writeListeners.toArray()) {
     		try {
     			((IMemoryWriteListener) listenerObj).changed(entry, addr, value);
