@@ -178,7 +178,7 @@ public class ROMSetupDialog extends Dialog {
 	 */
 	@Override
 	protected Point getInitialSize() {
-		return new Point(700, 800);
+		return new Point(700, 850);
 	}
 	
 	/* (non-Javadoc)
@@ -358,7 +358,7 @@ public class ROMSetupDialog extends Dialog {
 			});
 			
 			infoLabel.append(" for information on ROMs.\n\n");
-			infoLabel.append("Or, exit this dialog and use the 'Play Demo' button to see how V9t9 behaves.");
+			infoLabel.append("Or, exit this dialog and use the 'Demo' button to see how V9t9 behaves.");
 			
 			styledTextHelper.popStyle();
 		}
