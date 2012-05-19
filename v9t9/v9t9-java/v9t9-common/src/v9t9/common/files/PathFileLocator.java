@@ -21,6 +21,7 @@ import java.net.UnknownServiceException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -465,7 +466,10 @@ public class PathFileLocator implements IPathFileLocator {
 			cachedJarListings.put(jar, subdirs);
 		}
 		
-		return subdirs.get(dir);
+		Collection<String> list = subdirs.get(dir);
+		if (list == null)
+			list = Collections.emptyList();
+		return list;
 	}
 
 	/**

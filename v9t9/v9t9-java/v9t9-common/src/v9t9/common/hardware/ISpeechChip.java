@@ -20,11 +20,16 @@ public interface ISpeechChip extends IPersistable {
 			ISettingsHandler.INSTANCE,
 			"TalkSpeed",
 			1.0);
-	public static final SettingSchema settingLogSpeech = new SettingSchema(
+	SettingSchema settingLogSpeech = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"LogSpeech",
 			new Integer(0));
 			
+	SettingSchema settingAllowLPCTimeouts = new SettingSchema(
+			ISettingsHandler.INSTANCE,
+			"LPCTimeouts",
+			Boolean.FALSE);
+
 	/**
 	 * Read the next byte from memory 
 	 * @return

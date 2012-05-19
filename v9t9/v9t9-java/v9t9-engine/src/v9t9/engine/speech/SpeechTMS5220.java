@@ -98,12 +98,15 @@ public class SpeechTMS5220 implements ISpeechChip {
 	private ILPCEquationFetcher equationFetcher;
 
 	private LPCParameters currentParams = new LPCParameters();
+
+	private IProperty allowLPCTimeouts;
 	
 	public SpeechTMS5220(final IMachine machine,
 			final ISettingsHandler settings, final IMemoryDomain speech) {
 		this.machine = machine;
 		logSpeech = settings.get(ISpeechChip.settingLogSpeech);
 		talkRate = settings.get(ISpeechChip.settingTalkSpeed);
+		allowLPCTimeouts = settings.get(ISpeechChip.settingAllowLPCTimeouts);
 		demoPlaying = settings.get(IDemoHandler.settingPlayingDemo);
 		
 		Logging.registerLog(logSpeech, new PrintWriter(System.out, true));
@@ -521,6 +524,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 		// ran out of time
 		timedOut();
 	}
+	
 	@Override
 	public synchronized void reset() {
 		Logging.writeLogLine(1, logSpeech, "Speech reset");
@@ -567,14 +571,16 @@ public class SpeechTMS5220 implements ISpeechChip {
 					if (timeout-- < 0) {
 						// speech_wait_complete(1);
 
-						timedOut();
+						if (allowLPCTimeouts.getBoolean())
+							timedOut();
 					}
 				}
 			} else {
 				if ((status & SS_BE) != 0) {
 					if (timeout-- < 0) {
 						// speech_wait_complete(1);
-						timedOut();
+						if (allowLPCTimeouts.getBoolean())
+							timedOut();
 					}
 				} else
 					do_frame = true;

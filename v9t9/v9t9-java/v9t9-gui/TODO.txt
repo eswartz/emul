@@ -19,8 +19,11 @@ ToolShell centering is borked -- does not comprehend multiple bars
 ================
 
 Demos: 
-	
+	-- Windows host JAR URL directory listing broken
+		
 ================
 V9938:	
 	-- editor is broken (high memory writes not tracked?)
+	
+	
 		 
