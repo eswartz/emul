@@ -34,10 +34,13 @@ import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.IBreakpoint;
+import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
+import v9t9.common.cpu.SimpleBreakpoint;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
@@ -52,12 +55,15 @@ public class CpuViewer extends Composite implements IInstructionListener {
 	}
 	
 	private IProperty pauseMachine;
+	private IProperty debugging;
 	
 	private Button playPauseButton;
 	private Image playImage;
 	private Image pauseImage;
 	private Image stepImage;
+	private Image stepOverImage;
 	private Button stepButton;
+	private Button stepOverButton;
 	private IPropertyListener pauseListener;
 	private final IMachine machine;
 
@@ -80,11 +86,12 @@ public class CpuViewer extends Composite implements IInstructionListener {
 
 	private IProperty singleStep;
 	
-	public CpuViewer(Composite parent, int style, final IMachine machine, Timer timer) {
+	public CpuViewer(Composite parent, int style, final IMachine machine_, Timer timer) {
 		super(parent, style);
-		this.machine = machine;
+		this.machine = machine_;
 		
 		pauseMachine = Settings.get(machine, IMachine.settingPauseMachine);
+		debugging = Settings.get(machine, ICpu.settingDebugging);
 		singleStep = Settings.get(machine, IExecutor.settingSingleStep);
 		
 		setLayout(new GridLayout());
@@ -163,6 +170,34 @@ public class CpuViewer extends Composite implements IInstructionListener {
 						//if (!Machine.settingPauseMachine.getBoolean())
 						//	resizeTable();
 						singleStep.setBoolean(true);
+						showNextInstruction = true;
+						pauseMachine.setBoolean(false);
+					}
+				});
+				
+			}
+		});
+		
+		///
+		stepOverImage = getSubImage(icons, 120, 0, 24, 24);
+		stepOverButton = new Button(buttonBar, SWT.PUSH);
+		stepOverButton.setImage(stepOverImage);
+		stepOverButton.setToolTipText("Skip this instruction (e.g., a call, a jump in a loop)");
+		
+		GridDataFactory.swtDefaults()/*.hint(24, 24)*/.applyTo(stepOverButton);
+		
+		stepOverButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				machine.asyncExec(new Runnable() {
+					public void run() {
+						ICpuState state = machine.getCpu().getState();
+						RawInstruction curInst = machine.getInstructionFactory().decodeInstruction(
+								state.getPC(), machine.getConsole());
+						int bpPc = (state.getPC() + curInst.getSize());
+
+						IBreakpoint bp = new SimpleBreakpoint(bpPc & 0xffff, true);
+						machine.getExecutor().getBreakpoints().addBreakpoint(bp);
 						showNextInstruction = true;
 						pauseMachine.setBoolean(false);
 					}
@@ -334,9 +369,12 @@ public class CpuViewer extends Composite implements IInstructionListener {
 				playImage.dispose();
 				pauseImage.dispose();
 				stepImage.dispose();
+				stepOverImage.dispose();
 				watchImage.dispose();
 				clearImage.dispose();
-				pauseMachine.setBoolean(false);				
+				
+				pauseMachine.setBoolean(false);
+				debugging.setBoolean(false);
 			}
 			
 		});
@@ -387,7 +425,13 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		return sub;
 	}
 
-
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IInstructionListener#preExecute(v9t9.common.cpu.InstructionWorkBlock)
+	 */
+	@Override
+	public boolean preExecute(InstructionWorkBlock before) {
+		return true;
+	}
 
 	public void executed(final InstructionWorkBlock before, InstructionWorkBlock after_) {
 		if (!isVisible)

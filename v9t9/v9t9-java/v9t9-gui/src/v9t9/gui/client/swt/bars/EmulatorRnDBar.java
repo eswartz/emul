@@ -17,8 +17,12 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+
 import v9t9.common.cpu.ICpu;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.IImageBar.IPaintOffsetListener;
 import v9t9.gui.client.swt.shells.CpuMetricsCanvas;
@@ -117,16 +121,37 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 				IconConsts.CPU_LOGGING, 
 				IconConsts.CHECKMARK_OVERLAY, "Toggle CPU logging");
 
-		createButton(IconConsts.DEBUGGER,
-				"Create debugger window", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						swtWindow.toggleToolShell(DebuggerWindow.DEBUGGER_TOOL_ID, 
-								DebuggerWindow.getToolShellFactory(machine, buttonBar, swtWindow.getToolUiTimer()));
-					}
-			}
-		);
+//		createButton(IconConsts.DEBUGGER,
+//			"Create debugger window", new SelectionAdapter() {
+//				@Override
+//				public void widgetSelected(SelectionEvent e) {
+//					swtWindow.toggleToolShell(DebuggerWindow.DEBUGGER_TOOL_ID, 
+//							DebuggerWindow.getToolShellFactory(machine, buttonBar, swtWindow.getToolUiTimer()));
+//				}
+//			}
+//		);
 		
+		createToggleStateButton(ICpu.settingDebugging,
+				IconConsts.DEBUGGER, 
+				IconConsts.CHECKMARK_OVERLAY, "Toggle debugging");
+		
+		
+		IProperty debugging = Settings.get(machine, ICpu.settingDebugging);
+		debugging.addListenerAndFire(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(final IProperty property) {
+				getButtonBar().getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						if (property.getBoolean())
+							swtWindow.showToolShell(DebuggerWindow.DEBUGGER_TOOL_ID, 
+									DebuggerWindow.getToolShellFactory(machine, buttonBar, swtWindow.getToolUiTimer()));
+						else
+							swtWindow.closeToolShell(DebuggerWindow.DEBUGGER_TOOL_ID);
+					}
+				});
+			}
+		});
 
 	}
 	

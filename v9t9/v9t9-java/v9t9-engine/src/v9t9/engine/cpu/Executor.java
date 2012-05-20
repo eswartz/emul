@@ -6,18 +6,16 @@
  */
 package v9t9.engine.cpu;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.Logging;
+import ejs.base.utils.ListenerList;
 
 import v9t9.common.compiler.ICompiledCode;
 import v9t9.common.compiler.ICompiler;
 import v9t9.common.compiler.ICompilerStrategy;
 import v9t9.common.cpu.AbortedException;
+import v9t9.common.cpu.BreakpointManager;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
@@ -55,7 +53,7 @@ public class Executor implements IExecutor {
 
 	public volatile Boolean interruptExecution;
     
-	private IInstructionListener[] instructionListeners;
+	private ListenerList<IInstructionListener> instructionListeners = new ListenerList<IInstructionListener>();
 
 	private long lastCycleCount;
 
@@ -68,6 +66,8 @@ public class Executor implements IExecutor {
 	private IProperty vdpInterruptRate;
 
 	private IProperty pauseMachine;
+
+	private BreakpointManager breakpointManager;
 
     public Executor(ICpu cpu, ICpuMetrics cpuMetrics, 
     		IInterpreter interpreter, ICompiler compiler, 
@@ -85,6 +85,8 @@ public class Executor implements IExecutor {
         this.compilerStrategy = compilerStrategy;
         
         compilerStrategy.setup(this, compiler);
+        
+        breakpointManager = new BreakpointManager((IMachine) cpu.getMachine());
         
         final Object lock = Executor.this.cpu.getMachine().getExecutionLock();
         cpu.settingDumpFullInstructions().addListenerAndFire(new IPropertyListener() {
@@ -288,7 +290,7 @@ public class Executor implements IExecutor {
 	 * @see v9t9.engine.cpu.IExecutor#getInstructionListeners()
 	 */
 	@Override
-	public final IInstructionListener[] getInstructionListeners() {
+	public final ListenerList<IInstructionListener> getInstructionListeners() {
 		return instructionListeners;
 	}
 	
@@ -297,31 +299,14 @@ public class Executor implements IExecutor {
 	 */
 	@Override
 	public void addInstructionListener(IInstructionListener listener) {
-		List<IInstructionListener> newListeners;
-		if (instructionListeners == null) {
-			newListeners = new ArrayList<IInstructionListener>();
-		} else {
-			newListeners = new ArrayList<IInstructionListener>(Arrays.asList(instructionListeners));
-		}
-		if (!newListeners.contains(listener))
-			newListeners.add(listener);
-		instructionListeners = (IInstructionListener[]) newListeners
-				.toArray(new IInstructionListener[newListeners.size()]);
+		instructionListeners.add(listener);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.IExecutor#removeInstructionListener(v9t9.engine.cpu.InstructionListener)
 	 */
 	@Override
 	public void removeInstructionListener(IInstructionListener listener) {
-		if (instructionListeners == null)
-			return;
-		List<IInstructionListener> newListeners = new ArrayList<IInstructionListener>(Arrays.asList(instructionListeners));
-		newListeners.remove(listener);
-		if (newListeners.size() == 0)
-			instructionListeners = null;
-		else
-			instructionListeners = (IInstructionListener[]) newListeners
-				.toArray(new IInstructionListener[newListeners.size()]);
+		instructionListeners.remove(listener);
 	}
 
 	/* (non-Javadoc)
@@ -418,6 +403,14 @@ public class Executor implements IExecutor {
 	@Override
 	public final void interruptExecution() {
 		interruptExecution = Boolean.TRUE;		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IExecutor#getBreakpoints()
+	 */
+	@Override
+	public BreakpointManager getBreakpoints() {
+		return breakpointManager;
 	}
 
 }

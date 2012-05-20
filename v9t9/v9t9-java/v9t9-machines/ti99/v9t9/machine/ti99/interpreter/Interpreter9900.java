@@ -9,6 +9,8 @@ package v9t9.machine.ti99.interpreter;
 import java.util.HashMap;
 import java.util.Map;
 
+import ejs.base.utils.ListenerList;
+
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.InstInfo;
@@ -71,7 +73,8 @@ public class Interpreter9900 implements IInterpreter {
 	 * @see v9t9.emulator.runtime.interpreter.Interpreter#execute(java.lang.Short)
 	 */
     public void execute(Short op_x) {
-    	IInstructionListener[] instructionListeners = machine.getExecutor().getInstructionListeners();
+    	ListenerList<IInstructionListener> instructionListeners = 
+    			machine.getExecutor().getInstructionListeners();
     	if (instructionListeners != null) {
     		executeAndListen(op_x, instructionListeners);
     	} else {
@@ -126,7 +129,7 @@ public class Interpreter9900 implements IInterpreter {
     @Override
     public void executeChunk(int numinsts, IExecutor executor) {
     	// pretend the realtime and instructionListeners settings don't change often
-		if (executor.getInstructionListeners() == null) {
+		if (executor.getInstructionListeners().isEmpty()) {
 			for (int i = 0; i < numinsts; i++) {
 				executeFast(null);
 				if (executor.breakAfterExecution(1)) 
@@ -142,7 +145,7 @@ public class Interpreter9900 implements IInterpreter {
 		}    	
     }
 
-	private void executeAndListen(Short op_x, IInstructionListener[] instructionListeners) { 
+	private void executeAndListen(Short op_x, ListenerList<IInstructionListener> instructionListeners) { 
         Instruction9900 ins = getInstruction(op_x);
         
         MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
@@ -153,6 +156,14 @@ public class Interpreter9900 implements IInterpreter {
         /* get current operand values and instruction timings */
         fetchOperands(ins, op_x != null);
 
+        if (!instructionListeners.isEmpty()) {
+			for (Object listener : instructionListeners.toArray()) {
+				if (!((IInstructionListener) listener).preExecute(iblock)) {
+					return;
+				}
+			}	
+        }
+        
         InstructionWorkBlock9900 block = this.iblock.copy();
 
         /* do pre-instruction status word updates */
@@ -176,9 +187,9 @@ public class Interpreter9900 implements IInterpreter {
         block.cycles = cpu.getCurrentCycleCount();
         
         /* notify listeners */
-        if (instructionListeners != null) {
-        	for (IInstructionListener listener : instructionListeners) {
-        		listener.executed(block, iblock);
+        if (!instructionListeners.isEmpty()) {
+        	for (Object listener : instructionListeners.toArray()) {
+        		((IInstructionListener) listener).executed(block, iblock);
         	}
         }
 	}

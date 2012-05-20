@@ -66,6 +66,9 @@ public class ImageBar extends Composite implements IImageBar {
 	private int paintOffsY;
 	private ListenerList<IPaintOffsetListener> paintOffsListenerList = new ListenerList<IImageBar.IPaintOffsetListener>();
 	
+	private ImageBar pairedBar;
+	private boolean changingPairedBar;
+	
 	/**
 	 * Create a button bar with the given orientation.  This must be in a parent with a GridLayout.
 	 * @param parent
@@ -112,6 +115,9 @@ public class ImageBar extends Composite implements IImageBar {
 //		});
 	}
 	
+	public void setPairedBar(ImageBar pairedBar) {
+		this.pairedBar = pairedBar;
+	}
 	
 	public int getMinIconSize() {
 		return minIconSize;
@@ -476,6 +482,8 @@ public class ImageBar extends Composite implements IImageBar {
 									retractTask = null;
 									x = targetPos.x;
 									y = targetPos.y;
+									
+									updateCursor();
 								}
 								
 								setPaintOffset(x, y);
@@ -501,6 +509,16 @@ public class ImageBar extends Composite implements IImageBar {
 			retractStep = 0;
 			retracted = !retracted;
 			retractTimer.scheduleTask(retractTask, 64);
+		}
+		
+		
+		if (pairedBar != null && !changingPairedBar) {
+			changingPairedBar = true;
+			try {
+				pairedBar.startRetractTask();
+			} finally {
+				changingPairedBar = false;
+			}
 		}
 	}
 	

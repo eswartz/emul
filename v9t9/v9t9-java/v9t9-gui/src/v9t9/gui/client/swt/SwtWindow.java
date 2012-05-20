@@ -329,7 +329,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 				new float[] { 0.75f, 0.25f },
 				SWT.VERTICAL | SWT.RIGHT);
 		
-		
+		buttonBar.getButtonBar().setPairedBar(statusBar.getButtonBar());
+		statusBar.getButtonBar().setPairedBar(buttonBar.getButtonBar());
 
 		rndBar = new EmulatorRnDBar(this, rndImageProvider, mainComposite, machine,
 				new int[] { SWT.COLOR_BLACK, SWT.COLOR_BLACK, SWT.COLOR_BLACK  },
@@ -467,7 +468,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	 * @return 
 	 * @return 
 	 */
-	protected ToolShell showToolShell(String toolId, IToolShellFactory toolShellFactory) {
+	public ToolShell showToolShell(String toolId, IToolShellFactory toolShellFactory) {
 		ToolShell toolShell = toolShells.get(toolId);
 		if (toolShell != null) {
 			toolShell.restore();

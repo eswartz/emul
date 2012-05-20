@@ -25,6 +25,11 @@ public interface ICpu extends IPersistable {
 			ISettingsHandler.WORKSPACE,
 			"CyclesPerSecond", new Integer(0));
 
+	static public final SettingSchema settingDebugging = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"Debugging", Boolean.FALSE);
+
+	
 	IProperty settingRealTime();
 	IProperty settingCyclesPerSecond();
 	IProperty settingDumpInstructions();

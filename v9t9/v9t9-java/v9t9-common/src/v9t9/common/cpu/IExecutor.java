@@ -4,6 +4,7 @@
 package v9t9.common.cpu;
 
 import ejs.base.properties.IProperty;
+import ejs.base.utils.ListenerList;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.compiler.ICompilerStrategy;
 import v9t9.common.settings.SettingSchema;
@@ -39,7 +40,7 @@ public interface IExecutor {
 	/**
 	 * @return
 	 */
-	IInstructionListener[] getInstructionListeners();
+	ListenerList<IInstructionListener> getInstructionListeners();
 
 	void addInstructionListener(IInstructionListener listener);
 
@@ -101,5 +102,9 @@ public interface IExecutor {
 	 * 
 	 */
 	void interruptExecution();
+	/**
+	 * @return
+	 */
+	BreakpointManager getBreakpoints();
 
 }

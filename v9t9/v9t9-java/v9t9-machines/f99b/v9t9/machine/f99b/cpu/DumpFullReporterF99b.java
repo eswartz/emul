@@ -38,6 +38,15 @@ public class DumpFullReporterF99b implements IInstructionListener {
 		dumpSetting = Settings.get(cpu, ICpu.settingDumpFullInstructions);
 	}
 	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IInstructionListener#preExecute(v9t9.common.cpu.InstructionWorkBlock)
+	 */
+	@Override
+	public boolean preExecute(InstructionWorkBlock before) {
+		return true;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionAction.Block, v9t9.engine.cpu.InstructionAction.Block)
 	 */

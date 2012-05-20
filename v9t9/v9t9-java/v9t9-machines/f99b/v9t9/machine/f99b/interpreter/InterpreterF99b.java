@@ -102,6 +102,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import ejs.base.utils.HexUtils;
+import ejs.base.utils.ListenerList;
 import ejs.base.utils.Pair;
 
 
@@ -179,7 +180,7 @@ public class InterpreterF99b implements IInterpreter {
 	 * @see v9t9.emulator.runtime.interpreter.Interpreter#execute(java.lang.Short)
 	 */
     public final void execute() {
-    	IInstructionListener[] instructionListeners = machine.getExecutor().getInstructionListeners();
+    	ListenerList<IInstructionListener> instructionListeners = machine.getExecutor().getInstructionListeners();
     	executeAndListen(instructionListeners);
     }
 
@@ -205,7 +206,7 @@ public class InterpreterF99b implements IInterpreter {
 		}
 	}
 
-	private final void executeAndListen(IInstructionListener[] instructionListeners) {
+	private final void executeAndListen(ListenerList<IInstructionListener> instructionListeners) {
 		iblock.pc = cpu.getPC();
 		
 		if ((iblock.pc & 0xffff) < 0x400) {
@@ -231,9 +232,7 @@ public class InterpreterF99b implements IInterpreter {
 		
 		InstructionWorkBlockF99b block = null;
 		
-		if (instructionListeners != null) {
-			//iblock.inStack = new short[iblock.inStack.length];
-			//iblock.inReturnStack = new short[iblock.inReturnStack.length];
+		if (!instructionListeners.isEmpty()) {
 		    Pair<Integer, Integer> fx = InstF99b.getStackEffects(ins.getInst());
 			if (fx != null) {
 				int spused = fx.first;
@@ -256,6 +255,13 @@ public class InterpreterF99b implements IInterpreter {
 			}
 			
 			block = new InstructionWorkBlockF99b(cpuState);
+			
+			for (Object listener : instructionListeners.toArray()) {
+				if (!((IInstructionListener) listener).preExecute(block)) {
+					return;
+				}
+			}
+			
 		    this.iblock.copyTo(block);
 		}
 		
@@ -263,7 +269,7 @@ public class InterpreterF99b implements IInterpreter {
 		interpret(ins);
 		
 		/* notify listeners */
-		if (instructionListeners != null) {
+		if (!instructionListeners.isEmpty()) {
 		    iblock.pc = cpu.getPC();
 		    iblock.st = cpu.getST();
 		    iblock.sp = cpuState.getSP();
@@ -272,8 +278,8 @@ public class InterpreterF99b implements IInterpreter {
 		    iblock.lp = cpuState.getLP();
 		
 			iblock.cycles = cpu.getCurrentCycleCount();
-			for (IInstructionListener listener : instructionListeners) {
-				listener.executed(block, iblock);
+			for (Object listener : instructionListeners.toArray()) {
+				((IInstructionListener) listener).executed(block, iblock);
 			}
 			
 			iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Iexiti 
