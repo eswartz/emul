@@ -123,9 +123,10 @@ use a number instead of spelling it out like that.
 License
 =======
 
-This software includes content licensed under [EPL v1.0](http://www.eclipse.org/legal/epl-v10.html) 
-and code from [the Base64 library](http://iharder.net/base64) and 
-[Vlad Roubtsov's HRTimer library](http://www.javaworld.com/javaworld/javaqa/2003-01/01-qa-0110-timing.html).
+This software includes content licensed under [EPL v1.0](http://www.eclipse.org/legal/epl-v10.html); 
+code from [the Base64 library](http://iharder.net/base64);  
+[Vlad Roubtsov's HRTimer library](http://www.javaworld.com/javaworld/javaqa/2003-01/01-qa-0110-timing.html);
+and LWJGL utilities from Kevin Glass and Brian Matzon.
 
 
 
