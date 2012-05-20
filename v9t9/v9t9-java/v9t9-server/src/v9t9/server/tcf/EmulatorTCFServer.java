@@ -52,8 +52,11 @@ public class EmulatorTCFServer {
 		this.machine = machine;
 		setupLogging();
 
-		queue = new EmulatorTCFQueue();
-        Protocol.setEventQueue(queue);
+		queue = (EmulatorTCFQueue) Protocol.getEventQueue();
+		if (queue == null) {
+			queue = new EmulatorTCFQueue();
+			Protocol.setEventQueue(queue);
+		}
         
         serviceProvider = new EmulatorTCFServiceProvider(machine);
 	}
