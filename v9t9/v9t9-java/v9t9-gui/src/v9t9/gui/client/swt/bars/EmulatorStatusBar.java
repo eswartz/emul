@@ -73,9 +73,9 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	public EmulatorStatusBar(final SwtWindow swtWindow, 
 			ImageProvider iconImageProvider,
 			Composite mainComposite, final IMachine machine,
-			int[] colors, float[] points, boolean isHorizontal) {
+			int[] colors, float[] points, int style) {
 		super(swtWindow, iconImageProvider, 
-				mainComposite, machine, colors, points, isHorizontal);
+				mainComposite, machine, colors, points, style);
 		
 		realTime = Settings.get(machine, ICpu.settingRealTime);
 		compile = Settings.get(machine, IExecutor.settingCompile);

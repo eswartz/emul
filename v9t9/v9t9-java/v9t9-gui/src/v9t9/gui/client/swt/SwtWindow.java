@@ -254,8 +254,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 			rndImageProvider = buttonImageProvider;
 		}
 		
-		isHorizontal = false;
-
 		Composite fullWindow = shell;
 		GridLayoutFactory.fillDefaults().numColumns(1).spacing(0, 0).margins(0, 0).applyTo(fullWindow);
 		
@@ -272,7 +270,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		statusBar = new EmulatorStatusBar(this, statusImageProvider, mainComposite, machine, 
 				new int[] { SWT.COLOR_DARK_GRAY, SWT.COLOR_GRAY, SWT.COLOR_BLACK },
 				new float[] { 0.25f, 0.75f },
-				isHorizontal);
+				SWT.VERTICAL | SWT.LEFT);
 
 		//Composite videoAndBarComposite = new Composite(mainComposite, SWT.NONE);
 		//GridLayoutFactory.fillDefaults().margins(0, 0).applyTo(videoAndBarComposite);
@@ -329,14 +327,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 				soundHandler,
 				new int[] { SWT.COLOR_BLACK, SWT.COLOR_GRAY, SWT.COLOR_DARK_GRAY },
 				new float[] { 0.75f, 0.25f },
-				isHorizontal);
+				SWT.VERTICAL | SWT.RIGHT);
 		
 		
 
 		rndBar = new EmulatorRnDBar(this, rndImageProvider, mainComposite, machine,
 				new int[] { SWT.COLOR_BLACK, SWT.COLOR_BLACK, SWT.COLOR_BLACK  },
 				new float[] { 0.5f, 0.5f },
-				!isHorizontal);
+				SWT.HORIZONTAL | SWT.BOTTOM);
 		
 		showRnDBar = settingsHandler.get(settingShowRnDBar);
 		showRnDBar.addListenerAndFire(new IPropertyListener() {
@@ -376,8 +374,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 					if (!fullScreen.getBoolean()) {
 						adjustRectVisibility(shell, rect);
 						shell.setBounds(rect);
+						setFullscreen(false);
 					} else {
-						shell.setFullScreen(true);
+						setFullscreen(true);
 					}
 				}
 			});
@@ -388,7 +387,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			public void propertyChanged(final IProperty setting) {
 				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
-						shell.setFullScreen(setting.getBoolean());
+						setFullscreen(setting.getBoolean());
 					}
 				});
 			}
@@ -405,6 +404,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		});
 		videoRenderer.setFocus();
+	}
+	
+	protected void setFullscreen(boolean fullScreen) {
+		shell.setFullScreen(fullScreen);
+		buttonBar.getButtonBar().setRetractable(true);
+		statusBar.getButtonBar().setRetractable(true);
+		rndBar.getButtonBar().setRetractable(true);
+
 	}
 	
 	public static void adjustRectVisibility(Shell shell, Rectangle rect) {

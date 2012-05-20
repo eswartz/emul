@@ -54,10 +54,10 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 	public EmulatorButtonBar(final SwtWindow window, ImageProvider imageProvider, Composite parent, 
 			final IMachine machine,
 			final ISoundHandler soundHandler,
-			int[] colors, float[] points, boolean isHorizontal) {
-		super(window, imageProvider, parent, machine, colors, points, isHorizontal);
+			int[] colors, float[] points, int style) {
+		super(window, imageProvider, parent, machine, colors, points, style);
 		
-		if (isHorizontal) {
+		if ((style & SWT.HORIZONTAL) != 0) {
 			GridData gd = ((GridData) buttonBar.getLayoutData());
 			gd.verticalSpan = 2;
 		}

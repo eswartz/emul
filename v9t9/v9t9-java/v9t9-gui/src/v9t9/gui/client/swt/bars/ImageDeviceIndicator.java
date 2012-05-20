@@ -8,6 +8,7 @@ import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 
@@ -86,7 +87,9 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 		//Point size = new Point(bounds.width, bounds.height);
 		
 		Rectangle drawRect = getBounds();
-		drawRect.x = drawRect.y = 0;
+		Point po = parentDrawer.getPaintOffset();
+		drawRect.x = po.x;
+		drawRect.y = po.y;
 		this.parentDrawer.drawBackground(e.gc);
 		try {
 			//System.out.println(bounds);

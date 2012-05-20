@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Listener;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.machine.IMachine;
 import v9t9.gui.client.swt.SwtWindow;
+import v9t9.gui.client.swt.bars.IImageBar.IPaintOffsetListener;
 import v9t9.gui.client.swt.shells.CpuMetricsCanvas;
 import v9t9.gui.client.swt.shells.debugger.DebuggerWindow;
 
@@ -47,10 +48,12 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 	 */
 	public EmulatorRnDBar(final SwtWindow window, ImageProvider imageProvider, Composite parent, 
 			final IMachine machine,
-			int[] colors, float[] points, boolean isHorizontal) {
-		super(window, imageProvider, parent, machine, colors, points, isHorizontal);
+			int[] colors, float[] points, int style) {
+		super(window, imageProvider, parent, machine, colors, points, style);
 		
-		if (isHorizontal) {
+		boolean isHorizontal = (style & SWT.HORIZONTAL) != 0;
+		
+		if ((style & SWT.HORIZONTAL) != 0) {
 			GridData gd = ((GridData) buttonBar.getLayoutData());
 			gd.verticalSpan = 2;
 		}
@@ -83,6 +86,24 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 		
 		buttonBar.setMaxIconSize(48);
 		buttonBar.setMinIconSize(16);
+		
+
+		ImageBarChild cpuMetricsCanvasHolder = new ImageBarChild(buttonBar, 0);
+		cpuMetricsCanvas = new CpuMetricsCanvas(cpuMetricsCanvasHolder, 
+				SWT.BORDER | (isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL), 
+				machine.getCpuMetrics(), true);
+		GridDataFactory.fillDefaults()
+			.align(isHorizontal ? SWT.LEFT : SWT.FILL, isHorizontal ? SWT.FILL : SWT.BOTTOM)
+			//.grab(false, false)
+			.indent(4, 4).exclude(true).applyTo(cpuMetricsCanvas);
+		
+		buttonBar.addPaintOffsetListener(new IPaintOffsetListener() {
+			
+			@Override
+			public void offsetChanged(Point pt) {
+				cpuMetricsCanvas.setLocation(pt);
+			}
+		});
 
 		createButton(IconConsts.INTERRUPT, "Send a non-maskable interrupt",
 				new SelectionAdapter() {
@@ -106,13 +127,6 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 			}
 		);
 		
-		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar.getComposite(), 
-				SWT.BORDER | (isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL), 
-				machine.getCpuMetrics(), true);
-		GridDataFactory.fillDefaults()
-			.align(isHorizontal ? SWT.LEFT : SWT.FILL, isHorizontal ? SWT.FILL : SWT.BOTTOM)
-			//.grab(false, false)
-			.indent(4, 4).exclude(true).applyTo(cpuMetricsCanvas);
 
 	}
 	
