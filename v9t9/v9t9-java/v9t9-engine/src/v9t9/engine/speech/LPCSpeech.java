@@ -388,7 +388,6 @@ final static int FL_last	= 8;		/* stop frame seen */
 	 */
 	private void applyEquation(LPCParameters newParams, boolean forceUnvoiced)
 	{
-		System.out.println(newParams);
 		/* 	Copy now-old 'new' values into 'buffer' values */
 		oldParams.copyFrom(params);
 
