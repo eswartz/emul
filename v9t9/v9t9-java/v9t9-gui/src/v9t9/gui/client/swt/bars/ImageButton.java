@@ -47,6 +47,8 @@ public class ImageButton extends ImageIconCanvas {
 			
 			@Override
 			public void handleEvent(Event e) {
+				if (parentDrawer.isRetracted()) 
+					return;
 				if (e.button == 1) {
 					if (menuOverlayBounds != null && isMenuHovering) {
 						Event me = new Event();
@@ -70,6 +72,8 @@ public class ImageButton extends ImageIconCanvas {
 			
 			@Override
 			public void handleEvent(Event e) {
+				if (parentDrawer.isRetracted()) 
+					return;
 				if (e.button == 1)
 					doClickStop(e);
 				if (focusRestorer != null)
@@ -81,14 +85,20 @@ public class ImageButton extends ImageIconCanvas {
 		addMouseTrackListener(new MouseTrackListener() {
 
 			public void mouseEnter(MouseEvent e) {
+				if (parentDrawer.isRetracted()) 
+					return;
 				doMouseEnter(e);
 			}
 
 			public void mouseExit(MouseEvent e) {
+				if (parentDrawer.isRetracted()) 
+					return;
 				doMouseExit(e);
 			}
 
 			public void mouseHover(MouseEvent e) {
+				if (parentDrawer.isRetracted()) 
+					return;
 				doMouseHover(e);
 			}
 			
@@ -97,6 +107,8 @@ public class ImageButton extends ImageIconCanvas {
 		addMouseMoveListener(new MouseMoveListener() {
 
 			public void mouseMove(MouseEvent e) {
+				if (parentDrawer.isRetracted()) 
+					return;
 				doMouseMove(e);
 			}
 			
@@ -142,24 +154,27 @@ public class ImageButton extends ImageIconCanvas {
 	protected void doPaint(PaintEvent e) {
 		Rectangle drawRect = getBounds();
 		this.parentDrawer.drawBackground(e.gc);
+		Point po = parentDrawer.getPaintOffset();
 		//e.gc.setAntialias(SWT.ON);
 		int offset = 0;
 		if ((getStyle() & SWT.TOGGLE) != 0) {
 			if (pressed && overlayBounds == null) {
 				Color bg = e.gc.getBackground();
 				e.gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
-				e.gc.fillRectangle(0, 0, drawRect.width, drawRect.height);
+				e.gc.fillRectangle(po.x, po.y, drawRect.width, drawRect.height);
 				e.gc.setBackground(bg);
 				offset = 2;
 			}
 		} else {
 		}
 		offset = pressed ? 2 : 0;
-		drawRect.x = drawRect.y = offset;
+		drawRect.x = offset + po.x;
+		drawRect.y = offset + po.y;
 		try {
 			
 			imageProvider.drawImage(e.gc, drawRect, bounds);
-			drawRect.x = drawRect.y = 0;
+			drawRect.x = po.x;
+			drawRect.y = po.y;
 			if (overlayBounds != null)
 				imageProvider.drawImage(e.gc, drawRect, overlayBounds);
 			
@@ -174,7 +189,7 @@ public class ImageButton extends ImageIconCanvas {
 			e.gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_BLACK));
 			//e.gc.setLineStyle(SWT.LINE_DOT);
 			//e.gc.drawRectangle(0, 0, imgRect.width - 1, imgRect.height - 1);
-			e.gc.drawFocus(0, 0, drawRect.width - 1, drawRect.height - 1);
+			e.gc.drawFocus(po.x, po.y, drawRect.width - 1, drawRect.height - 1);
 		}
 	}
 	

@@ -5,6 +5,11 @@ package v9t9.gui.client.swt.bars;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
@@ -15,6 +20,10 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
 
+import ejs.base.timer.FastTimer;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
+
 import v9t9.gui.client.swt.IFocusRestorer;
 
 
@@ -22,6 +31,7 @@ public class ImageBar extends Composite implements IImageBar {
 	private static final Point ZERO_POINT = new Point(0, 0);
 	private static final int MIN_ICON_SIZE = 24;
 	private static final int MAX_ICON_SIZE = 64;
+	private static final int RETRACT_VISIBLE = 0;
 
 	private ButtonBarLayout bblayout;
 	private final boolean isHorizontal;
@@ -29,9 +39,33 @@ public class ImageBar extends Composite implements IImageBar {
 	private final IFocusRestorer focusRestorer;
 	private final boolean smoothResize;
 	private Gradient gradient;
+	private Gradient farGradient;
 	private int minIconSize = MIN_ICON_SIZE;
 	private int maxIconSize = MAX_ICON_SIZE;
 
+	private boolean canRetract;
+	private MouseListener retractListener;
+	private MouseMoveListener retractMoveListener;
+	private MouseTrackListener retractTrackListener;
+	private boolean retracted;
+	/** when non-null, transitioning to the !retracted state */
+	private Runnable retractTask;
+	
+	private int edging;
+	
+	private static FastTimer retractTimer = new FastTimer("Retractor");
+	
+	
+
+	private Point targetPos;
+	private Point origPos;
+
+	private int retractTarget;
+	private int retractStep;
+	private int paintOffsX;
+	private int paintOffsY;
+	private ListenerList<IPaintOffsetListener> paintOffsListenerList = new ListenerList<IImageBar.IPaintOffsetListener>();
+	
 	/**
 	 * Create a button bar with the given orientation.  This must be in a parent with a GridLayout.
 	 * @param parent
@@ -46,15 +80,10 @@ public class ImageBar extends Composite implements IImageBar {
 		this.focusRestorer = focusRestorer;
 		this.smoothResize = smoothResize;
 		this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
-
-		//topLeftColor = getDisplay().getSystemColor(colors[0]);
-		//centerColor = getDisplay().getSystemColor(colors[1]);
-		//bottomRightColor = getDisplay().getSystemColor(colors[2]);
-		//this.midPoint = midPoint;
+		this.edging = (style & SWT.LEFT + SWT.RIGHT + SWT.TOP + SWT.BOTTOM);
 		
 		this.gradient = gradient;
-
-		//GridLayoutFactory.swtDefaults().margins(0, 0).applyTo(this);
+		this.farGradient = new Gradient(isHorizontal, new int[] { 0, 0 }, new float[] { 1.0f });
 
 		GridDataFactory.swtDefaults()
 			.align(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL)
@@ -63,15 +92,9 @@ public class ImageBar extends Composite implements IImageBar {
 
 		// the inner composite contains the buttons, tightly packed
 		buttonComposite = this;
-		//buttonComposite = new Composite(this, SWT.NO_RADIO_GROUP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
 		bblayout = new ButtonBarLayout();
 		buttonComposite.setLayout(bblayout);
 		
-		/*
-		GridDataFactory.swtDefaults()
-			.align(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL)
-			.grab(isHorizontal, !isHorizontal).indent(0, 0).applyTo(buttonComposite);
-		*/
 		addPaintListener(new PaintListener() {
 
 			public void paintControl(PaintEvent e) {
@@ -80,13 +103,13 @@ public class ImageBar extends Composite implements IImageBar {
 			
 		});
 		
-		buttonComposite.addPaintListener(new PaintListener() {
-
-			public void paintControl(PaintEvent e) {
-				//paintButtonBar(e.gc, e.widget, new Point(0, 0), getSize());
-			}
-			
-		});
+//		buttonComposite.addPaintListener(new PaintListener() {
+//
+//			public void paintControl(PaintEvent e) {
+//				//paintButtonBar(e.gc, e.widget, new Point(0, 0), getSize());
+//			}
+//			
+//		});
 	}
 	
 	
@@ -109,10 +132,10 @@ public class ImageBar extends Composite implements IImageBar {
 		this.maxIconSize = maxIconSize;
 	}
 
-
 	public IFocusRestorer getFocusRestorer() {
 		return focusRestorer;
 	}
+	
 	class ButtonBarLayout extends Layout {
 
 		private Point prevSize;
@@ -167,13 +190,11 @@ public class ImageBar extends Composite implements IImageBar {
 			else
 				((GridData) ImageBar.this.getLayoutData()).widthHint = w; 
 			
+//			System.out.println("computeSize: " + prevSize);
+			
 			return prevSize;
 		}
 
-		/**
-		 * @param kids
-		 * @return
-		 */
 		private int getIncludedKids(Control[] kids) {
 			int cnt = 0;
 			for (Control kid : kids) {
@@ -189,7 +210,7 @@ public class ImageBar extends Composite implements IImageBar {
 		@Override
 		protected void layout(Composite composite, boolean flushCache) {
 			Control[] kids = composite.getChildren();
-			int num = getIncludedKids(kids);
+			int num = kids.length; //getIncludedKids(kids);
 			
 			Point curSize;
 			if (!flushCache) {
@@ -197,9 +218,9 @@ public class ImageBar extends Composite implements IImageBar {
 				curSize = new Point(cli.width,
 						cli.height);
 			} else {
-			//Point curSize = composite.getSize();
 				curSize = computeSize(composite, SWT.DEFAULT, SWT.DEFAULT, flushCache);
 			}
+			
 			int size;
 			int x = 0, y = 0;
 			int axisSize;
@@ -266,52 +287,55 @@ public class ImageBar extends Composite implements IImageBar {
 					}
 				}
 			}
-			
-			//ImageBar.this.getParent().layout(new Control[] { ImageBar.this });
 		}
 		
 	}
 
 	protected void paintButtonBar(GC gc, Point offset, Point size) {
+		int y = size.y;
+		int x = size.x;
+		if (isHorizontal) {
+			y = getSize().y;
+		} else {
+			x = getSize().x;
+		}
+		gradient.draw(gc, offset.x + paintOffsX, offset.y + paintOffsY, 
+				x, y); 
 		
-		/*
-		gc.setForeground(centerColor);
-		int y = size.y;
-		int x = size.x;
 		if (isHorizontal) {
-			y = getSize().y;
-			gc.setBackground(topLeftColor);
-			gc.fillGradientRectangle(offset.x, offset.y, 
-					x, (int) ((y + 1) * midPoint), true);
-			gc.setBackground(centerColor);
-			gc.setForeground(bottomRightColor);
-			gc.fillGradientRectangle(offset.x, (int) (offset.y + y), 
-					x, (int) ((y + 1) * (midPoint - 1)), true);
+			if (paintOffsY != 0) {
+				if ((edging & SWT.TOP) != 0) {
+					farGradient.draw(gc, offset.x, 
+							offset.y + y + paintOffsY,
+							x,
+							-paintOffsY);
+				} else {
+					farGradient.draw(gc, offset.x, 
+							offset.y,
+							x,
+							paintOffsY);
+					
+				}
+				
+			}
 		} else {
-			x = getSize().x;
-			gc.setForeground(topLeftColor);
-			gc.fillGradientRectangle(offset.x, offset.y, 
-					(int) ((x + 1) * midPoint), y, false);
-			gc.setBackground(centerColor);
-			gc.setForeground(bottomRightColor);
-			gc.fillGradientRectangle((int) (offset.x + x ), offset.y, 
-					(int) ((x + 1) * (midPoint - 1)), y, false);
-			
+			if (paintOffsX != 0) {
+				if ((edging & SWT.LEFT) != 0) {
+					farGradient.draw(gc, offset.x + x + paintOffsX, 
+							offset.y,
+							Math.max(0, -paintOffsX),
+							y);
+				} else {
+					farGradient.draw(gc, offset.x, 
+							offset.y,
+							Math.max(0, paintOffsX),
+							y);
+					
+				}				
+			}
 		}
-		*/
-		int y = size.y;
-		int x = size.x;
-		if (isHorizontal) {
-			y = getSize().y;
-		} else {
-			x = getSize().x;
-		}
-		gradient.draw(gc, offset.x, offset.y, x, y);
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.swt.ImageButton.ButtonParentDrawer#draw(org.eclipse.swt.graphics.GC, v9t9.emulator.clients.builtin.swt.ImageButton, org.eclipse.swt.graphics.Point, org.eclipse.swt.graphics.Point)
-	 */
 	public void drawBackground(GC gc) {
 		paintButtonBar(gc, ZERO_POINT, getSize());
 	}
@@ -328,21 +352,241 @@ public class ImageBar extends Composite implements IImageBar {
 		return isHorizontal;
 	}
 
-	/**
-	 * 
-	 */
 	public void redrawAll() {
 		redrawAll(this);
 	}
 
-	/**
-	 * @param buttonBar
-	 */
 	private void redrawAll(Control c) {
 		c.redraw();
 		if (c instanceof Composite)
 			for (Control control : ((Composite) c).getChildren())
 				redrawAll(control);
 		
+	}
+	
+	public synchronized void setRetractable(boolean retractable) {
+		if (canRetract) {
+			removeMouseListener(retractListener);
+			removeMouseMoveListener(retractMoveListener);
+			removeMouseTrackListener(retractTrackListener);
+		}
+		this.canRetract = retractable;
+		
+		if (canRetract) {
+			retractListener = new MouseAdapter() {
+				@Override
+				public void mouseUp(MouseEvent e) {
+					if (e.button == 1) {
+						startRetractTask();
+					}
+				}
+			};
+			retractMoveListener = new MouseMoveListener() {
+				
+				@Override
+				public void mouseMove(MouseEvent e) {
+					updateCursor();
+				}
+			};
+			retractTrackListener = new MouseTrackListener() {
+
+				
+				@Override
+				public void mouseEnter(MouseEvent e) {
+					updateCursor();
+					
+					//startRetractTask();
+					
+					
+				}
+
+
+				@Override
+				public void mouseExit(MouseEvent e) {
+//					if (retractTask != null) {
+//						if (fullBounds != null) {
+//							Point realPos = ((Control) e.widget).getParent().toControl(((Control) e.widget).toDisplay(e.x, e.y));
+//							if (!fullBounds.contains(realPos))
+//								return;
+//						}
+//						retractTimer.cancelTask(retractTask);
+//						
+//						retractTask = null;
+//						
+//						setLocation(origPos);
+//					}
+				}
+
+				@Override
+				public void mouseHover(MouseEvent e) {
+//					long now = System.currentTimeMillis();
+//					long hoverTime = now - enterTime;
+//					System.out.println("hover: " + hoverTime);
+//					
+					
+					updateCursor();
+				}
+				
+			};
+			addMouseListener(retractListener);
+			addMouseMoveListener(retractMoveListener);
+			addMouseTrackListener(retractTrackListener);
+
+		}
+	}
+	
+
+
+	private void updateCursor() {
+		int cursor;
+		if (isHorizontal)
+			if (((edging & SWT.TOP) != 0) != retracted)
+				cursor = SWT.CURSOR_SIZEN;
+			else //if ((edging & SWT.BOTTOM) != 0)
+				cursor = SWT.CURSOR_SIZES;
+		else
+			if (((edging & SWT.LEFT) != 0) != retracted)
+				cursor = SWT.CURSOR_SIZEW;
+			else
+				cursor = SWT.CURSOR_SIZEE;
+		
+		setCursor(getDisplay().getSystemCursor(cursor));
+		
+	}
+
+	/**
+	 * 
+	 */
+	protected synchronized void startRetractTask() {
+		if (retractTask == null) {
+			retractTask = new Runnable() {
+				
+				@Override
+				public void run() {
+					getDisplay().syncExec(new Runnable() {
+						public void run() {
+							synchronized (ImageBar.this) {
+								++retractStep;
+								
+								int x = origPos.x + (targetPos.x - origPos.x) * retractStep / retractTarget; 
+								int y = origPos.y + (targetPos.y - origPos.y) * retractStep / retractTarget;
+								
+								if (retractStep >= retractTarget) {
+									retractTimer.cancelTask(retractTask);
+									retractTask = null;
+									x = targetPos.x;
+									y = targetPos.y;
+								}
+								
+								setPaintOffset(x, y);
+								redrawAll();
+							}
+						}
+					});
+				}
+			};
+			
+
+			//origPos = getLocation();
+			if (!retracted) {
+				origPos = new Point(0, 0);
+				targetPos = getRetractedOffs();
+			} else {
+				//targetPos = getNormalPos();
+				origPos = getPaintOffset();
+				targetPos = new Point(0, 0);
+			}
+			
+			retractTarget = 8;
+			retractStep = 0;
+			retracted = !retracted;
+			retractTimer.scheduleTask(retractTask, 64);
+		}
+	}
+	
+	protected synchronized Point getRetractedPos() {
+		if (!isHorizontal) {
+			int sz = getSize().x;
+			if ((edging & SWT.LEFT) != 0) { 
+				return new Point(-sz + RETRACT_VISIBLE, getLocation().y);
+			} else {
+				return new Point(getParent().getSize().x - RETRACT_VISIBLE, getLocation().y);
+			}
+		} else {
+			int sz = getSize().y;
+			if ((edging & SWT.TOP) != 0) { 
+				return new Point(getLocation().x, -sz + RETRACT_VISIBLE);
+			} else {
+				return new Point(getLocation().x, getParent().getSize().y - RETRACT_VISIBLE);
+			}
+		}
+	}
+	protected synchronized Point getRetractedOffs() {
+		Point sz = getSize();
+		if (!isHorizontal) {
+			if ((edging & SWT.LEFT) != 0) { 
+				return new Point(-sz.x + RETRACT_VISIBLE, 0);
+			} else {
+				return new Point(sz.x - RETRACT_VISIBLE, 0);
+			}
+		} else {
+			if ((edging & SWT.TOP) != 0) { 
+				return new Point(0, -sz.y + RETRACT_VISIBLE);
+			} else {
+				return new Point(0, sz.y - RETRACT_VISIBLE);
+			}
+		}
+	}
+
+	protected synchronized Point getNormalPos() {
+		if (!isHorizontal) {
+			int sz = getSize().x;
+			if ((edging & SWT.LEFT) != 0) { 
+				return new Point(0, getLocation().y);
+			} else {
+				return new Point(getParent().getSize().x - sz, getLocation().y);
+			}
+		} else {
+			int sz = getSize().y;
+			if ((edging & SWT.TOP) != 0) { 
+				return new Point(getLocation().x, 0);
+			} else {
+				return new Point(getLocation().x, getParent().getSize().y - sz);
+			}
+		}
+	}
+
+	@Override
+	public synchronized boolean isRetracted() {
+		return retracted;
+	}
+
+
+	private void setPaintOffset(int x, int y) {
+		paintOffsX = x;
+		paintOffsY = y;
+		if (!paintOffsListenerList.isEmpty()) {
+			final Point po = getPaintOffset();
+			paintOffsListenerList.fire(new IFire<IImageBar.IPaintOffsetListener>() {
+
+				@Override
+				public void fire(IPaintOffsetListener listener) {
+					listener.offsetChanged(po);
+				}
+			});
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.bars.IImageBar#getPaintOffset()
+	 */
+	@Override
+	public Point getPaintOffset() {
+		return new Point(paintOffsX, paintOffsY);
+	}
+
+
+	public void addPaintOffsetListener(IPaintOffsetListener paintListener) {
+		this.paintOffsListenerList.add(paintListener);
 	}
 }

@@ -3,24 +3,26 @@
  */
 package v9t9.gui.client.swt.bars;
 
-import org.eclipse.swt.events.PaintEvent;
 
 /**
  * @author ejs
  *
  */
-public class BlankIcon extends ImageIconCanvas {
+public class BlankIcon extends ImageBarChild {
 
-	public BlankIcon(IImageBar parentDrawer, int style) {
-		super(parentDrawer, style, null, -1, null);
+	public BlankIcon(final IImageBar parentDrawer, int style) {
+		super(parentDrawer, style);
+		
+		setCursor(null);
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.swt.ImageIconCanvas#doPaint(org.eclipse.swt.events.PaintEvent)
+	 * @see v9t9.gui.client.swt.bars.ImageIconCanvas#isIconMouseable()
 	 */
 	@Override
-	protected void doPaint(PaintEvent e) {
-		this.parentDrawer.drawBackground(e.gc);
+	protected boolean isIconMouseable() {
+		return false;
 	}
+	
 
 }

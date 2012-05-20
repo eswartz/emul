@@ -31,25 +31,15 @@ public abstract class BaseEmulatorBar {
 	protected final IMachine machine;
 	protected final ImageProvider imageProvider;
 
-	/**
-	 * @param isHorizontal 
-	 * @param midPoint 
-	 * @param colors 
-	 * @param machine2 
-	 * @param parent 
-	 * @param imageProvider2 
-	 * @param window 
-	 * 
-	 */
 	public BaseEmulatorBar(SwtWindow window, ImageProvider imageProvider, Composite parent, 
-			IMachine machine, int[] colors, float[] points, boolean isHorizontal) {
+			IMachine machine, int[] colors, float[] points, int style) {
 		this.swtWindow = window;
 		this.imageProvider = imageProvider;
 		this.machine = machine;
 		
 		buttonBar = new ImageBar(parent, 
-				isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL,
-				new Gradient(!isHorizontal, colors, points),
+				style,
+				new Gradient((style & SWT.HORIZONTAL) == 0, colors, points),
 				swtWindow.getFocusRestorer(), true);
 		
 	}
@@ -91,10 +81,6 @@ public abstract class BaseEmulatorBar {
 		return button;
 	}
 
-	/**
-	 * @param button
-	 * @param setting
-	 */
 	protected void addButtonToggleListener(final BasicButton button,
 			final IProperty setting) {
 		button.addSelectionListener(new SelectionAdapter() {
@@ -109,14 +95,6 @@ public abstract class BaseEmulatorBar {
 		});
 	}
 
-	/**
-	 * @param button
-	 * @param setting
-	 * @param iconIndex
-	 * @param secondIconIndex
-	 * @param isSecondOverlay
-	 * @param inverted
-	 */
 	protected void addSettingToggleListener(final BasicButton button,
 			final IProperty setting, final int iconIndex,
 			final int secondIconIndex, final boolean isSecondOverlay,
@@ -164,9 +142,6 @@ public abstract class BaseEmulatorBar {
 		return createStateButton(schema, false, iconIndex, secondIconIndex, false, tooltip);
 	}
 
-	/**
-	 * @return
-	 */
 	public Point getTooltipLocation() {
 		Point pt = buttonBar.getParent().toDisplay(buttonBar.getLocation());
 		//System.out.println(pt);
@@ -175,16 +150,10 @@ public abstract class BaseEmulatorBar {
 		return pt;
 	}
 
-	/**
-	 * @return
-	 */
 	public ImageBar getButtonBar() {
 		return buttonBar;
 	}
 
-	/**
-	 * 
-	 */
 	public void dispose() {
 		
 	}
