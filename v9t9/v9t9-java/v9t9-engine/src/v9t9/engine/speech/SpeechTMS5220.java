@@ -3,17 +3,16 @@
  */
 package v9t9.engine.speech;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import static v9t9.common.speech.TMS5220Consts.GT_RDAT;
+import static v9t9.common.speech.TMS5220Consts.GT_RSTAT;
+import static v9t9.common.speech.TMS5220Consts.GT_WCMD;
+import static v9t9.common.speech.TMS5220Consts.GT_WDAT;
+import static v9t9.common.speech.TMS5220Consts.SS_BE;
+import static v9t9.common.speech.TMS5220Consts.SS_BL;
+import static v9t9.common.speech.TMS5220Consts.SS_SPEAKING;
+import static v9t9.common.speech.TMS5220Consts.SS_TS;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.settings.ISettingSection;
-import ejs.base.settings.Logging;
-import ejs.base.timer.FastTimer;
-import ejs.base.utils.HexUtils;
-import ejs.base.utils.ListenerList;
-import ejs.base.utils.ListenerList.IFire;
+import java.io.IOException;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.demos.IDemoHandler;
@@ -25,21 +24,27 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
-import v9t9.common.speech.ISpeechDataSender;
 import v9t9.common.speech.ILPCParametersListener;
+import v9t9.common.speech.ISpeechDataSender;
 import v9t9.common.speech.ISpeechPhraseListener;
 import v9t9.engine.demos.actors.OldSpeechDemoActor;
 import v9t9.engine.demos.actors.SpeechDemoActor;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.speech.IFifoLpcDataFetcher.IFifoStatusListener;
-import static v9t9.common.speech.TMS5220Consts.*;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingSection;
+import ejs.base.settings.Logging;
+import ejs.base.timer.FastTimer;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 
 /**
  * @author ejs
  * 
  */
 public class SpeechTMS5220 implements ISpeechChip {
-
 	public final static SettingSchema settingSpeechRomFileName = new SettingSchema(
 			ISettingsHandler.WORKSPACE, "SpeechRomFileName", "spchrom.bin");
 
@@ -108,8 +113,6 @@ public class SpeechTMS5220 implements ISpeechChip {
 		talkRate = settings.get(ISpeechChip.settingTalkSpeed);
 		demoPlaying = settings.get(IDemoHandler.settingPlayingDemo);
 		
-		Logging.registerLog(logSpeech, new PrintWriter(System.out, true));
-
 		IPropertyListener speechRomFilenameListener = new IPropertyListener() {
 
 			@Override
@@ -362,7 +365,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 	
 	public void command(byte cmd) {
 		command = (byte) (cmd & 0x70);
-		if (Logging.getLog(3, logSpeech) != null) {
+		if (Logging.isSettingEnabled(3, logSpeech)) {
 			Logging.writeLogLine(3, logSpeech, "Cmd=" + HexUtils.toHex2(cmd)
 					+ "  Status: " + HexUtils.toHex2(status));
 		}

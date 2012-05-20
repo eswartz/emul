@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.apache.log4j.Logger;
+
 import ejs.base.properties.AbstractProperty;
 import ejs.base.properties.PropertyUtils;
 
@@ -17,6 +19,8 @@ import ejs.base.properties.PropertyUtils;
  */
 public class SettingProperty extends AbstractProperty implements ISettingProperty {
 
+	private static final Logger logger = Logger.getLogger(SettingProperty.class);
+	
 	private Object value;
 	private final Object defaultValue;
 	private String label;
@@ -96,7 +100,7 @@ public class SettingProperty extends AbstractProperty implements ISettingPropert
 				firePropertyChange();
 			}
 			if (incompatible)
-				System.err.println("Cannot assign setting " + getName() + " from "  + value);
+				logger.error("Cannot assign setting " + getName() + " from "  + value);
 		}
 	}
 
@@ -107,7 +111,7 @@ public class SettingProperty extends AbstractProperty implements ISettingPropert
 		Object obj = PropertyUtils.convertStringToValue(value, type);
 		if (obj == null) {
 			obj = defaultValue;
-			System.err.println("Cannot assign setting " + getName() + " from "  + value);
+			logger.error("Cannot assign setting " + getName() + " from "  + value);
 		}
 		setValue(obj);
 	}

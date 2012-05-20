@@ -5,6 +5,8 @@ package v9t9.audio.sound;
 
 import java.text.MessageFormat;
 
+import org.apache.log4j.Logger;
+
 /**
  * This voice is the base of tone or noise generation against a frequency
  * period. The period is inversely related to the frequency.
@@ -17,7 +19,7 @@ import java.text.MessageFormat;
  * Thus, a small period produces a high-pitched tone and a large period produces
  * a low-pitched tone.
  * 
- * Here, we are not drivign such a high-speed clock.  Also, we want to support
+ * Here, we are not driving such a high-speed clock.  Also, we want to support
  * sound effects, which rely on knowing the phase of the current frequency
  * (the "clock", which steps from 0 to the period).  
  * 
@@ -30,6 +32,8 @@ import java.text.MessageFormat;
  */
 public abstract class ClockedSoundVoice extends SoundVoice
 {
+	private static final Logger logger = Logger.getLogger(ClockedSoundVoice.class);
+	
 	/** The clock rate against which all generation is done */
 	protected int 		refClock;
 	
@@ -108,13 +112,13 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		dump();
 	}
 	protected void dump() {
-		if (false) {
+		if (logger.isDebugEnabled()) {
 			if (getVolume() == 0)
-				System.out.println(MessageFormat.format(
+				logger.debug(MessageFormat.format(
 						"voice_cache_values[{0}]: period={1} hertz={2}   OFF",
 						getName(), period, approxHertz()));
 			else
-				System.out.println(MessageFormat.format(
+				logger.debug(MessageFormat.format(
 					"voice_cache_values[{0}]: period=>{1}, hertz={2}, volume={3}",
 					getName(),
 				   period,

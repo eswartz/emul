@@ -9,6 +9,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 
+import org.apache.log4j.Logger;
+
 
 import com.sun.jna.Memory;
 import com.sun.jna.ptr.IntByReference;
@@ -23,12 +25,14 @@ import ejs.base.winmm.WinMMLibrary;
  * This blocks on {@link #played(SoundChunk)} if data is coming too fast.
  * @author ejs
  * 
- * TODO: need to use a semaphore to avoid ugly stuttering sound.  We're currently sending samples on a fixed basis,
+ * TODO: FIXME: need to use a semaphore to avoid ugly stuttering sound.  We're currently sending samples on a fixed basis,
  * not when the driver is ready for them.
  * 
  */
 public class Win32SoundListener implements ISoundListener {
 
+	protected static final Logger logger = Logger.getLogger(Win32SoundListener.class);
+	
 	private boolean stopped;
 	private AudioFormat soundFormat;
 
@@ -89,7 +93,7 @@ public class Win32SoundListener implements ISoundListener {
 		if (wHandle != 0) {
 			int res = WinMMLibrary.INSTANCE.waveOutClose(wHandle);
 			if (res != WinMMLibrary.MMSYSERR_NOERROR) {
-				System.err.println("Could not stop sound: " + getError(res));
+				logger.error("Could not stop sound: " + getError(res));
 			}
 		}
 		wHandle = 0;
@@ -122,7 +126,7 @@ public class Win32SoundListener implements ISoundListener {
 		wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
 		wfx.cbSize = 0;
 
-		//System.out.println("Sound format: " + soundFormat);
+		logger.debug("Sound format: " + soundFormat);
     	
 		wHandle = 0;
 		
@@ -169,7 +173,7 @@ public class Win32SoundListener implements ISoundListener {
 						return;
 					
 					if (chunk.soundData != null) {
-						//System.out.println("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
+						//logger.debug("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
 						int size = chunk.soundData.length;
 						
 						WAVEHDR hdr = null;
@@ -206,7 +210,7 @@ public class Win32SoundListener implements ISoundListener {
 						int res = WinMMLibrary.INSTANCE.waveOutWrite(
 								wHandle, hdr, hdr.size());
 						if (res != WinMMLibrary.MMSYSERR_NOERROR) {
-							System.err.println("Error in waveOutWrite: " + getError(res));
+							logger.error("Error in waveOutWrite: " + getError(res));
 							WinMMLibrary.INSTANCE.waveOutReset(wHandle);
 							soundQueue.clear();
 						}
@@ -223,7 +227,7 @@ public class Win32SoundListener implements ISoundListener {
 		
 		res = WinMMLibrary.INSTANCE.waveOutRestart(wHandle);
 		if (res != WinMMLibrary.MMSYSERR_NOERROR) {
-			System.err.println("Could not restart sound: " + getError(res));
+			logger.error("Could not restart sound: " + getError(res));
 		}
 
 		soundWritingThread.setDaemon(true);

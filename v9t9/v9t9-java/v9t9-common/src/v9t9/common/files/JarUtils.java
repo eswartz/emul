@@ -12,14 +12,15 @@ import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.zip.ZipFile;
 
+import org.apache.log4j.Logger;
+
 /**
  * From <a href="http://www.objectdefinitions.com/odblog/2008/workaround-for-bug-id-6753651-find-path-to-jar-in-cache-under-webstart/"/>
  * @author ejs
  *
  */
 public class JarUtils {
-
-	private static boolean DEBUG = false;
+	private static final Logger logger = Logger.getLogger(JarUtils.class);
 	
 	private static Map<String, String> jarUrlToFileURL = new HashMap<String, String>();
 	
@@ -52,13 +53,17 @@ public class JarUtils {
 			try {
 		        JarFile jarFile = getJarFile(new URL(jarUrl, prefix + "!/"));
 		        String path = findJarPath(jarFile);
+		        
+			    // windows-ization
+		        path = path.replace('\\', '/');
+		       // path = path.replace(':', '|');
 	        
 	        	baseURLStr = "jar:file:" + (path.startsWith("/") ? "" : "/") + path;
-	        	if (DEBUG)
-	        		System.out.println("convertToJarFileURL: " + prefix + " ==> " + baseURLStr);
+	        	logger.debug("convertToJarFileURL: " + prefix + " ==> " + baseURLStr);
 				
 				jarUrlToFileURL.put(prefix, baseURLStr);
 			} catch (Throwable e) {
+				logger.debug("bonk", e);
 				e.printStackTrace();
 				return jarUrl;
 			}
@@ -66,14 +71,14 @@ public class JarUtils {
 		try {
 			return new URL(baseURLStr + suffix);
 		} catch (MalformedURLException e) {
+			logger.debug("bonk", e);
 			e.printStackTrace();
 			return jarUrl;
 		}
     }
 
     public static JarFile getJarFile(URL jarUrl) {
-    	if (DEBUG)
-    		System.out.println("getJarFile for " + jarUrl);
+    	logger.debug("getJarFile for " + jarUrl);
         try {
             JarURLConnection jarUrlConnection = (JarURLConnection)jarUrl.openConnection();
 

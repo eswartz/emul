@@ -10,9 +10,10 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
-
 
 /**
  * Help for dumping logs.
@@ -90,34 +91,14 @@ public class Logging {
 		    e.printStackTrace();
 		}
 	}
-	
-	/**
-	 * Register a log file for the given setting.  Must register before setting value.
-	 * Multiple settings may share a file.
-	 * @param setting the boolean setting 
-	 * @param logFileName filename, which will live in a temporary directory 
-	 * unless absolute
-	 */
-	public static void registerLog(IProperty setting, PrintWriter writer) {
-		if ((setting.getValue() instanceof Integer && setting.getInt() > 0)
-				|| setting.getBoolean())
-			settingToPrintwriterMap.put(setting, writer);
-		
-		setting.addListenerAndFire(new IPropertyListener() {
 
-            public void propertyChanged(IProperty setting) {
-            	PrintWriter dump = settingToPrintwriterMap.get(setting);
-            	
-            	boolean enabled = isSettingEnabled(1, setting);
-                if (enabled && dump == null) {
-                	dump = new PrintWriter(System.out, true);
-                	dump.println("Enabling " + setting.getName());
-                    settingToPrintwriterMap.put(setting, dump);
-                } else if (!enabled && dump != null) {
-                	settingToPrintwriterMap.remove(setting);
-                }
-            }});
-		
+	/**
+	 * Get the log for a given setting, if it's true.
+	 * @param setting
+	 * @return PrintWriter or <code>null</code>
+	 */
+	public static PrintWriter getLog(IProperty setting) {
+		return setting != null ? getLog(1, setting) : null;
 	}
 	
 	/**
@@ -133,8 +114,8 @@ public class Logging {
 		else
 			return null;
 	}
-
-	private static boolean isSettingEnabled(int level, IProperty setting) {
+	
+	public static boolean isSettingEnabled(int level, IProperty setting) {
 		boolean enabled;
 		if (setting.getValue() instanceof Integer) 
 			enabled = setting.getInt() >= level;
@@ -143,38 +124,26 @@ public class Logging {
 		return enabled;
 	}
 
+
 	/**
-	 * Get the log for a given setting, if it's true.
-	 * @param setting
-	 * @return PrintWriter or <code>null</code>
-	 */
-	public static PrintWriter getLog(IProperty setting) {
-		return setting != null ? getLog(1, setting) : null;
-	}
-	
-	/**
-	 * Lazy method of writing to a log which may or may not be open.
-	 * Message thrown away if log is not open.
+	 * Lazy method of writing to the log.
 	 * @param setting setting controlling the log
 	 * @param msg text to write
 	 */
 	public static void writeLogLine(IProperty setting, String msg) {
-		PrintWriter pw = getLog(setting);
-		if (pw != null) {
-			pw.println(msg);
-		}
+		writeLogLine(1, setting, msg);
 	}
-	
+
 	/**
-	 * Lazy method of writing to a log which may or may not be open.
-	 * Message thrown away if log is not open.
+	 * Lazy method of writing to the log.
+	 * @param level minimum level to log
 	 * @param setting setting controlling the log
 	 * @param msg text to write
 	 */
 	public static void writeLogLine(int level, IProperty setting, String msg) {
-		PrintWriter pw = getLog(level, setting);
-		if (pw != null) {
-			pw.println(msg);
+		if (isSettingEnabled(level, setting)) {
+			Logger.getLogger(setting.getName()).info(msg);
 		}
 	}
+
 }

@@ -28,10 +28,6 @@ public class MetricEntry {
 		this.switches = switches;
 		this.compiles = compiles;
 	}
-	public void dump() {
-        System.out.println(toSummary());
-        	
-	}
 	public int getIdealCycles() {
 		return idealCycles;
 	}

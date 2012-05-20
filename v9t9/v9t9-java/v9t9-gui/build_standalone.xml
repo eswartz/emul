@@ -132,7 +132,9 @@
               <include name="lwjgl_util.jar"/>
               <include name="lwjgl.jar"/>
     	    </fileset>
-
+       		<fileset dir="${base.base}/libs/orbit/plugins">
+                  <include name="org.apache.log4j_1.2.15.v201005080500.jar"/>
+			</fileset>        			
     		<fileset dir="${base.base}/libs/orbit/plugins">
               <include if="batik" name="org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
               <include if="batik" name="org.apache.batik.css_1.7.0.v201011041433.jar"/>
@@ -160,8 +162,8 @@
     	<copy file="${base.v9t9}/data/release/v9t9.html" tofile="${bin.v9t9.dir}/v9t9.html"/>
     	
     	<copy overwrite="true" file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-local.jnlp"/>
-    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$HOST" value="" />
-    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$ROOT" value="" />
+    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$HOST" value="file:" />
+    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$ROOT" value="." />
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$TARGET" value="local" />
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$SVGLIBS" value="${svg.libs.jnlp}" />
     	

@@ -30,9 +30,15 @@ import com.sun.jna.Native;
  *
  */
 public class Emulator {
+	
 	private static final boolean sIsWebStarted = System.getProperty("javawebstart.version") != null;
 	private static boolean debug;
 
+	static {
+		if (System.getProperty("log4j.configuration") == null) {
+			System.setProperty("log4j.configuration", "file:data/logging/default.properties");
+		}
+	}
 	static {
 		if (sIsWebStarted && System.getProperty("jna.library.path") == null) {
 			String path = Native.getWebStartLibraryPath("v9t9render");

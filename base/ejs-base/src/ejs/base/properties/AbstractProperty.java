@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
 import ejs.base.settings.ISettingSection;
@@ -23,6 +24,8 @@ import ejs.base.utils.XMLUtils;
  */
 public abstract class AbstractProperty implements IProperty {
 
+	
+	private static final Logger logger = Logger.getLogger(AbstractProperty.class);
 	
 	protected final String name;
 	protected final IClassPropertyFactory factory;
@@ -190,7 +193,7 @@ public abstract class AbstractProperty implements IProperty {
 				if (obj != null)
 					loadChildState(elements[0], obj, getName());
 				else
-					System.err.println("Cannot recreate id="+id+" for " +getName());
+					logger.error("Cannot recreate id="+id+" for " +getName());
 				setValue(obj);
 			}
 			else if (elements.length > 1)
@@ -240,7 +243,7 @@ public abstract class AbstractProperty implements IProperty {
 			if (obj != null)
 				loadChildState(childSection, obj, getName());
 			else
-				System.err.println("Cannot recreate id="+id+" for " +getName());
+				logger.error("Cannot recreate id="+id+" for " +getName());
 			setValue(obj);
 			
 			return;

@@ -33,6 +33,8 @@ import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.apache.log4j.Logger;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.MemoryEntryInfo;
 
@@ -51,13 +53,13 @@ import ejs.base.utils.Pair;
  */
 public class PathFileLocator implements IPathFileLocator {
 
+	private static final Logger logger = Logger.getLogger(PathFileLocator.class);
+	
 	/**
 	 * Files beyond this size are not queried for MD5
 	 */
 	private static final int MAX_FILE_SIZE = 16 * 1024 * 1024;
 
-	private static boolean DEBUG = false;
-	
 	private List<IProperty> roPathProperties = new ArrayList<IProperty>();
 	private IProperty rwPathProperty = null;
 	private IPropertyListener pathListChangedListener;
@@ -148,6 +150,7 @@ public class PathFileLocator implements IPathFileLocator {
 						return;
 					uris.add(uri);
 				} catch (URISyntaxException e) {
+					logger.debug("URI syntax on " + path, e);
 					e.printStackTrace();
 				}
 			}
@@ -167,6 +170,7 @@ public class PathFileLocator implements IPathFileLocator {
 					cachedWriteURI = null;
 				}
 			} catch (URISyntaxException e) {
+				logger.debug("URI syntax on " + rwPathProperty, e);
 				e.printStackTrace();
 			}
 		}
@@ -297,18 +301,23 @@ public class PathFileLocator implements IPathFileLocator {
 		URI uri = null;
 		
 		for (URI baseUri : searchURIs) {
+			logger.debug("searching " + file + " on " + baseUri);
 			if (cachedSlowURIs.contains(baseUri))
 				continue;
 			
 			uri = resolveInsideURI(baseUri, file);
+			logger.debug("\t" +uri);
 		
 			Collection<String> listing;
 			try {
 				listing = getDirectoryListing(uri);
+				logger.debug("\tlisting: " + listing.size() + " entries");
 				if (listing.contains(file)) {
 					return uri;
 				}
 			} catch (IOException e) {
+				logger.debug("failed to get listing from " + uri, e);
+				e.printStackTrace();
 			}
 		}
 		
@@ -356,8 +365,7 @@ public class PathFileLocator implements IPathFileLocator {
 		}
 		else  {
 			if (!connection.getContentType().equals("text/plain")) {
-				if (DEBUG)
-					System.err.println("!!! Unexpected directory content at " + directory + ":  " +
+				logger.error("!!! Unexpected directory content at " + directory + ":  " +
 							connection.getContentType());
 
 				throw new IOException("unexpected content at " + directory);
@@ -423,8 +431,7 @@ public class PathFileLocator implements IPathFileLocator {
 				file = new File(localJar.toURI());
 			} catch (IllegalArgumentException e) {
 				// okay, not a file... urgh... download it?
-				if (DEBUG)
-					System.out.println("Getting local copy of jar at " + jar + " for listing");
+				logger.info("Getting local copy of jar at " + jar + " for listing");
 
 				// TODO: sigh... if it's http://, we must have already downloaded it via Java Web Start -- how to find the cache?
 				File tmpFile = File.createTempFile("jar", ".jar");
@@ -448,6 +455,8 @@ public class PathFileLocator implements IPathFileLocator {
 				String entDir = entFile.getParent();
 				if (entDir == null)
 					entDir = "";
+				else
+					entDir = entDir.replace('\\', '/');  /// Windows
 				Collection<String> directory = subdirs.get(entDir);
 				if (directory == null) {
 					directory = new ArrayList<String>();
@@ -482,16 +491,26 @@ public class PathFileLocator implements IPathFileLocator {
 		int idx = baseURL.lastIndexOf('!');
 		if (idx >= 0)
 			baseURL = baseURL.substring(0, idx) + "!/";
+		URL localJar;
 		try {
-			URL localJar = resolveToLocalJarFile(new URL(baseURL));
-			// remove "jar:" prefix
-			String filePrefix = localJar.toExternalForm().substring(4);
-			// and suffix
-			int idx2 = filePrefix.lastIndexOf('!');
-			if (idx2 >= 0)
-				filePrefix = filePrefix.substring(0, idx2);
+			localJar = resolveToLocalJarFile(new URL(baseURL));
+		} catch (MalformedURLException e) {
+			logger.debug("malformed URL for " + baseURL, e);
+			e.printStackTrace();
+			return jar;
+		}
+		
+		// remove "jar:" prefix
+		String filePrefix = localJar.toExternalForm().substring(4);
+		// and suffix
+		int idx2 = filePrefix.lastIndexOf('!');
+		if (idx2 >= 0)
+			filePrefix = filePrefix.substring(0, idx2);
+		
+		try {
 			return new URL(filePrefix);
 		} catch (MalformedURLException e) {
+			logger.debug("malformed URL for " + filePrefix, e);
 			e.printStackTrace();
 			return jar;
 		}
@@ -506,8 +525,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 */
 	private URL resolveToLocalJarFile(URL jar) {
 		URL url = JarUtils.convertToJarFileURL(jar);
-		if (DEBUG)
-			System.out.println("Resolved " + jar + " to " + url);
+		logger.debug("Resolved " + jar + " to " + url);
 		return url;
 	}
 
@@ -542,12 +560,16 @@ public class PathFileLocator implements IPathFileLocator {
 					try {
 						resolved = resolveToLocalJarFile(resolved.toURL()).toURI();
 					} catch (MalformedURLException e) {
+						logger.debug("malformed URL from " + resolved, e);
+						e.printStackTrace();
+					} catch (URISyntaxException e) {
+						logger.debug("URI syntax from " + resolved, e);
 						e.printStackTrace();
 					}
 				}
-				if (DEBUG)
-					System.out.println("Resolved " + uri + " + " + string + " ==> " + resolved);
+				logger.debug("Resolved " + uri + " + " + string + " ==> " + resolved);
 			} catch (URISyntaxException e) {
+				logger.debug("URI syntax error " + string, e);
 				e.printStackTrace();
 			}
 		}
@@ -660,8 +682,10 @@ public class PathFileLocator implements IPathFileLocator {
 		try {
 			return uri.toURL().openConnection();
 		} catch (MalformedURLException e) {
+			logger.debug("malformed URL from " + uri, e);
 			e.printStackTrace();
 		} catch (IOException e) {
+			logger.debug("ignored IOException from " + uri, e);
 		}
 		return null;
 	}
@@ -681,54 +705,6 @@ public class PathFileLocator implements IPathFileLocator {
 		return resolveInsideURI(cachedWriteURI, file);
 	}
 	
-	public static void main(String[] args) throws URISyntaxException, IOException {
-		URL url = new URL("file:///home/ejs/path/to/files/");
-		URI root = url.toURI();
-		System.out.println(root);
-		URI same = root.resolve(".");
-		System.out.println(same);
-		URI parent = root.resolve("..");
-		System.out.println(parent);
-		URI parentParent = root.resolve("../../");
-		if (parentParent.getScheme().equals("file"))
-			System.out.println(new File(parentParent));
-		
-		System.out.println(url);
-		System.out.println(new URL(url, ".."));
-		System.out.println(new URL(url, "."));
-		
-		URI another = new URI("jar:///tmp/foo.jar!/in/and/out/");
-		System.out.println(another);
-		URI anotherParent = another.resolve("..");
-		System.out.println(anotherParent);
-		anotherParent = anotherParent.resolve("..");
-		if (anotherParent.getScheme().equals("file"))
-			System.out.println(new File(anotherParent));
-		System.out.println(anotherParent);
-		anotherParent = anotherParent.resolve("..");
-		System.out.println(anotherParent);
-		
-		URI query = new URI("http://foo.bar.com/path/to/something/?query=bar");
-		System.out.println(query);
-		URI queryPlus = query.resolve("foo/la/dee");
-		System.out.println(queryPlus);
-		URI queryPlus2 = query.resolve("foo/la/dee" + "?"+ query.getQuery());
-		System.out.println(queryPlus2);
-		
-		try {
-			URL dir = new URL("file:/tmp");
-			URLConnection connection = dir.openConnection();
-			connection.connect();
-			System.out.println(connection.getContentType());
-			System.out.println(connection.getContentLength());
-			InputStream is = connection.getInputStream();
-			System.out.println(FileUtils.readInputStreamTextAndClose(is));
-			is.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	/* (non-Javadoc)
 	 * @see v9t9.common.files.IPathFileLocator#createOutputStream(java.net.URI)
 	 */
@@ -758,12 +734,11 @@ public class PathFileLocator implements IPathFileLocator {
 	public boolean exists(URI uri) {
 		InputStream is = null;
 		try {
-			if (DEBUG) 
-				System.out.println("exists? " + uri);
+			logger.debug("exists? " + uri);
 			is = createInputStream(uri);
 			return true;
 		} catch (IllegalArgumentException e) {
-			System.err.println("illegal URI: " + uri);
+			logger.error("illegal URI: " + uri, e);
 			return false;
 		} catch (IOException e) {
 			return false;
@@ -772,7 +747,6 @@ public class PathFileLocator implements IPathFileLocator {
 				try {
 					is.close();
 				} catch (IOException e) {
-					e.printStackTrace();
 				}
 			}
 		}
@@ -851,13 +825,13 @@ public class PathFileLocator implements IPathFileLocator {
 							return uri; 
 						}
 					} catch (Throwable e) {
-						System.err.println(ent + ": " + e.toString());
+						logger.error(ent + ": " + e.toString());
 					}
 				}
 			} catch (FileNotFoundException e) {
-				
+				logger.debug("file not found", e);
 			} catch (IOException e) {
-				System.err.println(e.toString());
+				logger.error("MD5 search error", e);
 			}
 		}
 		return null;
@@ -894,7 +868,7 @@ public class PathFileLocator implements IPathFileLocator {
 		if (searchByContent) {
 			uri = findFileByMD5(info.getFileMD5(), info.getFileMd5Limit());
 			if (uri != null) {
-				//System.out.println("*** Found matching entry by MD5: " + uri);
+				logger.debug("*** Found matching entry by MD5: " + uri);
 				theFilename = splitFileName(uri).second;
 			}
 		}
@@ -910,4 +884,54 @@ public class PathFileLocator implements IPathFileLocator {
 		}
 		return uri;
 	}
+	
+
+	public static void main(String[] args) throws URISyntaxException, IOException {
+		URL url = new URL("file:///home/ejs/path/to/files/");
+		URI root = url.toURI();
+		System.out.println(root);
+		URI same = root.resolve(".");
+		System.out.println(same);
+		URI parent = root.resolve("..");
+		System.out.println(parent);
+		URI parentParent = root.resolve("../../");
+		if (parentParent.getScheme().equals("file"))
+			System.out.println(new File(parentParent));
+		
+		System.out.println(url);
+		System.out.println(new URL(url, ".."));
+		System.out.println(new URL(url, "."));
+		
+		URI another = new URI("jar:///tmp/foo.jar!/in/and/out/");
+		System.out.println(another);
+		URI anotherParent = another.resolve("..");
+		System.out.println(anotherParent);
+		anotherParent = anotherParent.resolve("..");
+		if (anotherParent.getScheme().equals("file"))
+			System.out.println(new File(anotherParent));
+		System.out.println(anotherParent);
+		anotherParent = anotherParent.resolve("..");
+		System.out.println(anotherParent);
+		
+		URI query = new URI("http://foo.bar.com/path/to/something/?query=bar");
+		System.out.println(query);
+		URI queryPlus = query.resolve("foo/la/dee");
+		System.out.println(queryPlus);
+		URI queryPlus2 = query.resolve("foo/la/dee" + "?"+ query.getQuery());
+		System.out.println(queryPlus2);
+		
+		try {
+			URL dir = new URL("file:/tmp");
+			URLConnection connection = dir.openConnection();
+			connection.connect();
+			System.out.println(connection.getContentType());
+			System.out.println(connection.getContentLength());
+			InputStream is = connection.getInputStream();
+			System.out.println(FileUtils.readInputStreamTextAndClose(is));
+			is.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 }

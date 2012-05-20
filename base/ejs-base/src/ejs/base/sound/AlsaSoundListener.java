@@ -9,6 +9,8 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioFormat.Encoding;
 import javax.sound.sampled.AudioSystem;
 
+import org.apache.log4j.Logger;
+
 
 import com.sun.jna.ptr.IntByReference;
 
@@ -23,6 +25,8 @@ import ejs.base.sound.AlsaLibrary.snd_pcm_sw_params_t;
  */
 public class AlsaSoundListener implements ISoundListener {
 
+	private static final Logger logger = Logger.getLogger(AlsaSoundListener.class);
+	
 	private AlsaLibrary.snd_pcm_t handle;
 	private boolean stopped;
 	private AudioFormat soundFormat;
@@ -121,7 +125,7 @@ public class AlsaSoundListener implements ISoundListener {
 				AlsaLibrary.SND_PCM_STREAM_PLAYBACK,
 				AlsaLibrary.SND_PCM_NONBLOCK);
 		if (err < 0) {
-			System.err.println("Error creating ALSA PCM: " +
+			logger.error("Error creating ALSA PCM: " +
 					INSTANCE.snd_strerror(err));
 			handle = null;
 			return;
@@ -129,7 +133,7 @@ public class AlsaSoundListener implements ISoundListener {
 		handle = pcmref.get();
 		
 
-		//System.out.println("Sound format: " + soundFormat);
+		logger.debug("Sound format: " + soundFormat);
 		
 		/*
     	snd_pcm_hw_params_t.Ref hwparamsRef = new snd_pcm_hw_params_t.Ref();
@@ -139,7 +143,7 @@ public class AlsaSoundListener implements ISoundListener {
     		IntByReference size = new IntByReference();
     		IntByReference dir = new IntByReference();
     		err = AlsaLibrary.INSTANCE.snd_pcm_hw_params_get_period_size(hwparams, size, dir);
-    		System.out.println("Period size: " + size.getValue() + "; err = " + err);
+    		logger.debug("Period size: " + size.getValue() + "; err = " + err);
     		AlsaLibrary.INSTANCE.snd_pcm_hw_params_free(hwparams);
     	}
 		 */
@@ -151,7 +155,7 @@ public class AlsaSoundListener implements ISoundListener {
     			format.getChannels(), rate, 1, 
     			100000);
     	if (err < 0) {
-    		System.err.println(AlsaLibrary.INSTANCE.snd_strerror(err));
+    		logger.error(AlsaLibrary.INSTANCE.snd_strerror(err));
     		System.exit(1);
     	}
     	
@@ -175,7 +179,7 @@ public class AlsaSoundListener implements ISoundListener {
 	    			}
     			}
     			if (err < 0) {
-    				System.err.println("Error setting up ALSA PCM: " +
+    				logger.error("Error setting up ALSA PCM: " +
     						INSTANCE.snd_strerror(err));
     			}
     		}
@@ -207,7 +211,7 @@ public class AlsaSoundListener implements ISoundListener {
 						return;
 					
 					if (chunk.soundData != null) {
-						//System.out.println("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
+						//logger.debug("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
 						int size = chunk.soundData.length / soundFormat.getFrameSize();
 						do {
 							if (stopped)
@@ -242,7 +246,7 @@ public class AlsaSoundListener implements ISoundListener {
 									continue;
 								}
 								if (err < 0) {
-									System.err.println("snd_pcm_writei failed: " + AlsaLibrary.INSTANCE.snd_strerror(err));
+									logger.error("snd_pcm_writei failed: " + AlsaLibrary.INSTANCE.snd_strerror(err));
 									err = AlsaLibrary.INSTANCE.snd_pcm_prepare(handle);
 									err = AlsaLibrary.INSTANCE.snd_pcm_start(handle);
 								}

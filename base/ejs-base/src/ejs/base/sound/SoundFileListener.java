@@ -11,6 +11,8 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 
+import org.apache.log4j.Logger;
+
 /**
  * Mixing and output for sound
  * 
@@ -19,6 +21,8 @@ import javax.sound.sampled.AudioSystem;
  */
 public class SoundFileListener implements ISoundListener {
 
+	private static final Logger logger = Logger.getLogger(SoundFileListener.class);
+	
 	private FileOutputStream soundFos;
 	private String soundFile;
 	private AudioFormat soundFormat;
@@ -161,7 +165,7 @@ public class SoundFileListener implements ISoundListener {
 				}
 			} finally {
 				if (!converted) {
-					System.err.println("Could not convert raw sound file (" + format + ") to " + fileType);
+					logger.error("Could not convert raw sound file (" + format + ") to " + fileType);
 				}
 			}
 		}

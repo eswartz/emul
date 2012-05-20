@@ -15,7 +15,10 @@
 	</security>
 
 	<resources>
+		<property name="log4j.configuration" value="file:data/logging/debug.properties"/>
+		
 		<jar href="v9t9j.jar" main="true" />
+		<jar href="libs/org.apache.log4j_1.2.15.v201005080500.jar"/>
 		<jar href="libs/jna.jar"/>	
 		<jar href="libs/org.eclipse.swt.jar"/>
 		<jar href="libs/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>

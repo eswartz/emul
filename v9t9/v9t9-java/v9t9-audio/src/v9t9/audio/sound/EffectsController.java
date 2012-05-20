@@ -4,6 +4,9 @@
 package v9t9.audio.sound;
 
 import java.util.Arrays;
+
+import org.apache.log4j.Logger;
+
 import static v9t9.common.sound.TMS9919BConsts.*;
 
 /**
@@ -11,8 +14,8 @@ import static v9t9.common.sound.TMS9919BConsts.*;
  *
  */
 public class EffectsController {
-	public boolean DUMP = false;
-
+	private static final Logger logger = Logger.getLogger(EffectsController.class);
+	
 	private static final int VOL_SHIFT = 16;
 	private static final int VOL_SCALE = (1 << VOL_SHIFT);
 	private static final int VOL_MASK = (VOL_SCALE - 1);
@@ -243,8 +246,8 @@ public class EffectsController {
 		else
 			voldelta = 0;
 		
-		if (DUMP)
-			System.out.println(voice.getName() + ": ADHR#"+ index+
+		if (logger.isDebugEnabled())
+			logger.debug(voice.getName() + ": ADHR#"+ index+
 				"; volume = " + (fromVolume>>VOL_SHIFT)+"; voldelta = " +((targetVolume - fromVolume)>>VOL_SHIFT)
 				+" over " + ticks1000 + " ms");
 	}
@@ -401,8 +404,8 @@ public class EffectsController {
 				clock++;
 				int oldVol = volume;
 				volume += voldelta;
-				if (DUMP && ((oldVol ^ volume) & ~VOL_MASK) != 0) { 
-					System.out.println(voice.getName() + ": volume = " + (volume>>VOL_SHIFT));
+				if (logger.isDebugEnabled() && ((oldVol ^ volume) & ~VOL_MASK) != 0) { 
+					logger.debug(voice.getName() + ": volume = " + (volume>>VOL_SHIFT));
 				}
 				if (clock >= timeout) {
 					index++;

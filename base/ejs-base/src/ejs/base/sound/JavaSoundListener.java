@@ -10,6 +10,8 @@ import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
+import org.apache.log4j.Logger;
+
 
 
 /**
@@ -21,6 +23,8 @@ import javax.sound.sampled.SourceDataLine;
  */
 public class JavaSoundListener implements ISoundListener {
 
+	private static final Logger logger = Logger.getLogger(JavaSoundListener.class);
+	
 	private SourceDataLine soundGeneratorLine;
 	private AudioFormat soundFormat;
 	//private int soundFramesPerTick;
@@ -74,7 +78,7 @@ public class JavaSoundListener implements ISoundListener {
 		soundFormat = format;
 		Line.Info slInfo = new DataLine.Info(SourceDataLine.class, soundFormat);
 		if (!AudioSystem.isLineSupported(slInfo)) {
-			System.err.println("Line not supported: " + soundFormat);
+			logger.error("Line not supported: " + soundFormat);
 			return;
 		}
 
@@ -83,10 +87,10 @@ public class JavaSoundListener implements ISoundListener {
 			soundGeneratorLine = (SourceDataLine) AudioSystem.getLine(slInfo);
 			soundGeneratorLine.open(soundFormat, soundFramesPerTick * 20 * 4);
 			
-			//System.out.println("Sound format: " + soundFormat);
+			logger.debug("Sound format: " + soundFormat);
 
 		} catch (LineUnavailableException e) {
-			System.err.println("Line not available");
+			logger.error("Line not available");
 			e.printStackTrace();
 			return;
 		}
@@ -156,7 +160,7 @@ public class JavaSoundListener implements ISoundListener {
 			}
 			// will block if sound is too fast
 			AudioChunk o = new AudioChunk(chunk, volume);
-			//System.out.println("Got chunk " + o + " at " + System.currentTimeMillis());
+			//logger.debug("Got chunk " + o + " at " + System.currentTimeMillis());
 			soundQueue.put(o);
 		} catch (InterruptedException e) {
 		}

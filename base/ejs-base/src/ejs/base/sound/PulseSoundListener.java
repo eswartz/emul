@@ -6,6 +6,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioFormat.Encoding;
 
+import org.apache.log4j.Logger;
+
 import com.sun.jna.ptr.IntByReference;
 
 
@@ -19,6 +21,8 @@ import com.sun.jna.ptr.IntByReference;
  */
 public class PulseSoundListener implements ISoundListener {
 
+	private static final Logger logger = Logger.getLogger(PulseSoundListener.class);
+	
 	private volatile PulseAudioLibrary.pa_simple simple;
 	private PulseAudioLibrary.pa_sample_spec sampleFormat;
 	private AudioFormat soundFormat;
@@ -99,7 +103,7 @@ public class PulseSoundListener implements ISoundListener {
 		
 		//soundGeneratorLine.open(soundFormat, soundFramesPerTick * 20 * 4);
 		
-		//System.out.println("Sound format: " + soundFormat);
+		logger.debug("Sound format: " + soundFormat);
 
 		soundWritingThread = new Thread(new Runnable() {
 
@@ -118,7 +122,7 @@ public class PulseSoundListener implements ISoundListener {
 						error);
 				
 				if (simple == null || error.getValue() != 0) {
-					System.err.println("Error contacting pulse: " + 
+					logger.error("Error contacting pulse: " + 
 							PulseAudioLibrary.INSTANCE.pa_strerror(error.getValue()));
 					simple = null;
 					return;
@@ -147,7 +151,7 @@ public class PulseSoundListener implements ISoundListener {
 							return;
 						
 						if (chunk.soundData != null) {
-							//System.out.println("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
+							//logger.debug("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
 							PulseAudioLibrary.INSTANCE.pa_simple_write(
 									simple, chunk.soundData, chunk.soundData.length, error);
 						}
@@ -181,7 +185,7 @@ public class PulseSoundListener implements ISoundListener {
 			AudioChunk o = new AudioChunk(chunk, volume);
 			//if (o.isEmpty())
 			//	return;
-			//System.out.println("Got chunk " + o + " at " + System.currentTimeMillis());
+			//logger.debug("Got chunk " + o + " at " + System.currentTimeMillis());
 			soundQueue.put(o);
 		} catch (InterruptedException e) {
 		}

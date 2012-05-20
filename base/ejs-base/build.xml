@@ -31,6 +31,7 @@
         <pathelement location="libs/google-gson-2.0/gson-2.0.jar"/>
         <pathelement location="libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
         <pathelement location="libs/junit/junit-4.8.1.jar"/>
+        <pathelement location="libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>

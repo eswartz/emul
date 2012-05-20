@@ -5,12 +5,16 @@ package ejs.base.sound;
 
 import javax.sound.sampled.AudioFormat;
 
+import org.apache.log4j.Logger;
+
 /**
  * Digital sound in a specific encoding
  * @author ejs
  *
  */
 public class AudioChunk {
+	private static final Logger logger = Logger.getLogger(AudioChunk.class);
+	
 	private boolean isEmpty;
 
 	public AudioChunk(SoundChunk chunk) {
@@ -22,7 +26,7 @@ public class AudioChunk {
 	 * @param volume
 	 */
 	public AudioChunk(SoundChunk chunk, double volume) {
-		//System.out.println(volume);
+		//logger.debug(volume);
 		double scale = volume * volume * volume;
 		AudioFormat format = chunk.getFormat();
 		this.isEmpty = true;
@@ -49,7 +53,7 @@ public class AudioChunk {
 					soundData[i] = samp;
 				}
 			} else {
-				System.err.println("Not handled: " + format);
+				logger.error("Not handled: " + format);
 			}
 		}
 	}

@@ -15,6 +15,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import v9t9.common.files.IPathFileLocator;
@@ -33,9 +34,19 @@ public class ManualTestPathFileLocator {
 	
 	private static final String FAKE_HOST = "12.168.24.100";
 	private static final String FAKE_HOST2 = "12.168.24.101";
-	private static final String ROM_PATH = "/usr/local/src/v9t9-data/roms";
-	private static final String MODULE_PATH = "/usr/local/src/v9t9-data/modules";
+	private static String ROM_PATH;
+	private static String MODULE_PATH;
 	
+	@BeforeClass
+	public static void setupPaths() {
+		if (File.separatorChar == '/') {
+			ROM_PATH = "/usr/local/src/v9t9-data/roms";
+			MODULE_PATH = "/usr/local/src/v9t9-data/modules";
+		} else {
+			ROM_PATH = "m:/fun/ti994a/v6.0/roms";
+			MODULE_PATH = "m:/fun/ti994a/v6.0/modules";
+		}
+	}
 
 	@Test
 	public void testPathLists() throws URISyntaxException {
@@ -141,16 +152,17 @@ public class ManualTestPathFileLocator {
 		writeURI = locator.getWriteURI(TESTFILE);
 		assertNull(writeURI);
 
-		File desired = new File("/tmp/" + TESTFILE);
+		File tempdir = new File(System.getProperty("java.io.tmpdir"));
+		File desired = new File(tempdir, TESTFILE);
 		desired.delete();
 		assertFalse(desired.exists());
 		
-		IProperty rwPath = new SettingProperty("RamPath", "/tmp");
+		IProperty rwPath = new SettingProperty("RamPath", tempdir.getAbsolutePath());
 		locator.setReadWritePathProperty(rwPath);
 		
 		writeURI = locator.getWriteURI(TESTFILE);
 		assertNotNull(writeURI);
-		assertEquals(desired.getAbsolutePath(), writeURI.getPath());
+		assertEquals(desired.toURI().getPath(), writeURI.getPath());
 
 		// searching should not have written anything yet
 		uri = locator.findFile(TESTFILE);
@@ -166,11 +178,11 @@ public class ManualTestPathFileLocator {
 		uri = locator.findFile(TESTFILE);
 		assertNotNull(uri);
 
-		assertEquals(desired.getAbsolutePath(), uri.getPath());
+		assertEquals(desired.toURI().getPath(), uri.getPath());
 		
 		writeURI = locator.getWriteURI(TESTFILE);
 		assertNotNull(writeURI);
-		assertEquals(desired.getAbsolutePath(), writeURI.getPath());
+		assertEquals(desired.toURI().getPath(), writeURI.getPath());
 		
 	}
 
@@ -279,7 +291,10 @@ public class ManualTestPathFileLocator {
 
 		IPathFileLocator locator = new PathFileLocator();
 		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
-		String jarPath = "jar:file:/home/ejs/devel/emul/v9t9/build/bin/v9t9/v9t9j.jar!/ti99/";
+		
+		File baseV9t9 = new File("../..");
+		File v9t9Jar = new File(baseV9t9, "build/bin/v9t9/v9t9j.jar");
+		String jarPath = "jar:" + v9t9Jar.toURI().toString() + "!/ti99/";
 		bootRoms.getList().add(jarPath);
 		locator.addReadOnlyPathProperty(bootRoms);		
 		
@@ -330,8 +345,11 @@ public class ManualTestPathFileLocator {
 	public void testJarLocal() throws URISyntaxException, IOException {
 
 		IPathFileLocator locator = new PathFileLocator();
-		String jarPath = "jar:file:/home/ejs/devel/emul/v9t9/build/bin/v9t9/v9t9j.jar!/ti99/demos/";
 		
+		File baseV9t9 = new File("../..").getAbsoluteFile();
+		File v9t9Jar = new File(baseV9t9, "build/bin/v9t9/v9t9j.jar");
+		
+		String jarPath = "jar:" + v9t9Jar.getAbsoluteFile().toURI() +"!/ti99/demos";
 		URI jarURI = locator.createURI(jarPath);
 		assertNotNull(jarURI);
 		assertTrue(jarURI.isOpaque());
@@ -340,9 +358,9 @@ public class ManualTestPathFileLocator {
 		Collection<String> listing = locator.getDirectoryListing(jarURI);
 		assertNotNull(listing);
 
-		assertEquals(6, listing.size());
 		for (String ent : listing)
 			System.out.println(ent);
+		assertEquals(2, listing.size());
 
 	}
 }
