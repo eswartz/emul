@@ -12,8 +12,36 @@ Introduction
 </a>
 </div>
 <div style='width:80%;'>
+<p>
 V9t9 emulates the TI-99/4A (by default) though it can support other
 machines -- only made-up ones for now, using much of the same hardware.
+</p>
+
+<p>
+It supports:
+</p>
+<ul>
+	<li>Built-in module database</li>
+	<li>TMS 9918A video</li>
+	<li>TMS 9919 sound</li>
+	<li>TMS 5220 speech</li>
+	<li>Disk support (files in native filesystem, sector images, track images)</li>
+	<li>Debugger</li>
+	<li>Demo playback and recording support</li>
+	<li>UCSD P-Code System (new!)</li>
+</ul>
+	
+<p>
+V9t9 also contains support for:
+</p>
+	<ul>
+		<li>V9938 (MSX2) (new!)</li>
+		<li>Multiple TMS9919 ("ForTI") support (new!)</li>
+		<li>Experimental FORTH processor ("F99B") (new!)</li>
+	</ul>
+<p>These can be enabled by modifying the *.jnlp file and passing "Forth99B"
+in the &lt;argument&gt; element of the &lt;application-desc&gt; element.
+</p>	
 </div>
 
 

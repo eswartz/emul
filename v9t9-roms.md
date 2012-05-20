@@ -10,7 +10,12 @@ V9t9 needs ROMs to emulate the TI-99/4A system.  These ROMs are copyrighted and 
 V9t9 (or by me).  
 
 The legal way to get such ROMs is to start up your own TI-99/4A system and transfer the ROMs over, or 
-purchase a license for them from Texas Instruments.
+purchase a license for them from Texas Instruments.  Or, there may be ways to find these ROMs 
+somewhere else.
+
+V9t9 can recognize ROMs by content.  They do not need special names (as in previous versions),
+only a path to the ROMs on your system.
+
 
 Base System ROMs
 -----------------
