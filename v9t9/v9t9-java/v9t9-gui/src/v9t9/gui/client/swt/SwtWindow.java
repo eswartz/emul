@@ -45,8 +45,6 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.ejs.gui.common.SwtPrefUtils;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
@@ -68,6 +66,8 @@ import v9t9.gui.client.swt.svg.ISVGLoader;
 import v9t9.gui.client.swt.svg.SVGImageProvider;
 import v9t9.gui.client.swt.svg.SVGSalamanderLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * Provide the emulator in an SWT window

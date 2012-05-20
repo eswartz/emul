@@ -186,15 +186,27 @@ public class PathFileLocator implements IPathFileLocator {
 
 		// ensure all act like directories
 		if (!path.contains(":/") || path.indexOf(":/") == 1) {
-			File file = new File(path);
-			path = file.getAbsolutePath();
+			int partIdx = path.indexOf("file:");
+			String pathPart = partIdx >= 0 ? path.substring(partIdx+5) : path;
+			
+			File file = new File(pathPart);
+			String uriPath = file.getAbsolutePath();
 			// convert slashes
-			path = path.replace('\\', '/');
-		}
+			uriPath = uriPath.replace('\\', '/');
 
-		// windows
-		if (new File(path).isAbsolute() && !path.startsWith("/"))
-			path = "/" + path;
+			// windows
+			if (new File(uriPath).isAbsolute() && !uriPath.startsWith("/"))
+				uriPath = "/" + uriPath;
+
+			uriPath = partIdx >= 0 ? path.substring(0, partIdx + 5) + uriPath : uriPath;
+			
+			path = uriPath;
+		}
+		else {
+			// windows
+			if (new File(path).isAbsolute() && !path.startsWith("/"))
+				path = "/" + path;
+		}
 		
 		// convert bad chars
 		path = path.replace(" ", "%20");
@@ -207,6 +219,7 @@ public class PathFileLocator implements IPathFileLocator {
 			uri = new URI("file", uri.getPath(), null);
 		}
 
+		logger.debug("URI created from " + path + " as " + uri);
 		return uri;
 	}
 

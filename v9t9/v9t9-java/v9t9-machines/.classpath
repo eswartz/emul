@@ -14,5 +14,6 @@
 	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/bcel-5.2.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/junit/junit-4.8.1.jar" sourcepath="/ejs-base/libs/junit/junit-4.8.1-source.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

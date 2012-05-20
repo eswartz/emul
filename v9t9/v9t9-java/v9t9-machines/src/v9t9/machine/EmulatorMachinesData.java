@@ -9,12 +9,15 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
+import org.apache.log4j.Logger;
+
 /**
  * @author ejs
  *
  */
 public class EmulatorMachinesData {
-
+	private static final Logger logger = Logger.getLogger(EmulatorMachinesData.class);
+	
 	private static final URL sBaseDataURL;
 
 	static {
@@ -61,6 +64,8 @@ public class EmulatorMachinesData {
 			
 		}
 		sBaseDataURL = burl;
+		
+		logger.info("Base emulator machine data URL: " + sBaseDataURL);
 	}
 
 	public static URL getDataURL(String string) {

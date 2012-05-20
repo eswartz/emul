@@ -12,7 +12,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 
-
 import v9t9.common.client.IClient;
 import v9t9.common.cpu.ICpu;
 import v9t9.gui.client.ClientFactory;
@@ -36,7 +35,8 @@ public class Emulator {
 
 	static {
 		if (System.getProperty("log4j.configuration") == null) {
-			System.setProperty("log4j.configuration", "file:data/logging/default.properties");
+			System.setProperty("log4j.configuration",  
+					EmulatorGuiData.getDataURL("logging/default.properties").toString());
 		}
 	}
 	static {
@@ -172,6 +172,16 @@ public class Emulator {
 		client = ClientFactory.createClient(clientId, 
 				server.getMachine());
 
+//
+//		for (Enumeration<Appender> e = LogManager.getRootLogger().getAllAppenders(); e.hasMoreElements(); ) {
+//			Appender a = e.nextElement();
+//			System.out.println(a);
+//			if (a instanceof FileAppender) {
+//				MessageDialog.openInformation(null, "Log", 
+//						System.getProperty("log4j.configuration") + "\n" +
+//						(((FileAppender) a).getFile()) );
+//			}
+//		}
 		if (debug)
 			server.getMachine().getSettings().get(ICpu.settingDumpFullInstructions).setBoolean(true);
 		

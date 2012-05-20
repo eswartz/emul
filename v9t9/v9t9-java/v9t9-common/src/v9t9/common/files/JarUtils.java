@@ -69,7 +69,11 @@ public class JarUtils {
 			}
 		}
 		try {
-			return new URL(baseURLStr + suffix);
+			URL theUrl = new URL(baseURLStr + suffix);
+	        
+	        logger.debug("convertToJarFileURL: for " + jarUrl + "; theUrl = " + theUrl);
+
+			return theUrl;
 		} catch (MalformedURLException e) {
 			logger.debug("bonk", e);
 			e.printStackTrace();

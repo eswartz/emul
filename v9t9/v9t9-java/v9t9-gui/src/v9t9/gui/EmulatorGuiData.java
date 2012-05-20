@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
+import org.apache.log4j.Logger;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Image;
 
@@ -18,6 +19,7 @@ import org.eclipse.swt.graphics.Image;
  *
  */
 public class EmulatorGuiData {
+	private static final Logger logger = Logger.getLogger(EmulatorGuiData.class);
 	
 	private static final URL sBaseDataURL;
 	static final URL sBaseV9t9URL;
@@ -73,6 +75,10 @@ public class EmulatorGuiData {
 		}
 		sBaseV9t9URL = url;
 		sBaseDataURL = burl;
+		
+
+		logger.info("Base emulator GUI data URL: " + sBaseDataURL);
+		logger.info("Base emulator V9t9 data URL: " + sBaseV9t9URL);
 		//System.out.println("sBaseV9t9URL = " + sBaseV9t9URL);
 		//System.out.println("sBaseBuildURL = " + sBaseDataURL);
 	}

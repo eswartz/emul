@@ -298,7 +298,8 @@ public class ModuleManager implements IModuleManager {
 		if (databaseURI != null) {
 			registerModules(databaseURI);
 		} else {
-			throw new AssertionError("missing stock_modules.xml");
+			//throw new AssertionError("missing stock_modules.xml");
+			return;
 		}
 		
 		// then load any user entries
