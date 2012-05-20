@@ -16,6 +16,7 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
@@ -27,7 +28,7 @@ import ejs.base.utils.ListenerList.IFire;
 import v9t9.gui.client.swt.IFocusRestorer;
 
 
-public class ImageBar extends Composite implements IImageBar {
+public class ImageBar extends Canvas implements IImageBar {
 	private static final Point ZERO_POINT = new Point(0, 0);
 	private static final int MIN_ICON_SIZE = 24;
 	private static final int MAX_ICON_SIZE = 64;
@@ -79,7 +80,8 @@ public class ImageBar extends Composite implements IImageBar {
 	public ImageBar(Composite parent, int style,
 			Gradient gradient, IFocusRestorer focusRestorer, boolean smoothResize) {
 		// the bar itself is the full width of the parent
-		super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
+		super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS 
+				| SWT.NO_BACKGROUND | SWT.DOUBLE_BUFFERED);
 		this.focusRestorer = focusRestorer;
 		this.smoothResize = smoothResize;
 		this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
@@ -367,7 +369,6 @@ public class ImageBar extends Composite implements IImageBar {
 		if (c instanceof Composite)
 			for (Control control : ((Composite) c).getChildren())
 				redrawAll(control);
-		
 	}
 	
 	public synchronized void setRetractable(boolean retractable) {
@@ -505,10 +506,10 @@ public class ImageBar extends Composite implements IImageBar {
 				targetPos = new Point(0, 0);
 			}
 			
-			retractTarget = 8;
+			retractTarget = 10;
 			retractStep = 0;
 			retracted = !retracted;
-			retractTimer.scheduleTask(retractTask, 64);
+			retractTimer.scheduleTask(retractTask, 60);
 		}
 		
 		

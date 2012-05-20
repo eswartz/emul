@@ -9,8 +9,6 @@ import java.util.List;
 
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
-import ejs.base.utils.HexUtils;
-
 
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.cpu.InstructionWorkBlock;
@@ -103,7 +101,7 @@ public class DsrManager implements IPersistable, IDsrManager {
 			/*  Only respond if we have an active module whose
 			   base matches that which DSRLNK is currently scanning. */
 			if (activeDsr != null && ((IDsrHandler9900)activeDsr).getCruBase() == crubase) {
-				System.out.println("handling DSR: pc = "+HexUtils.toHex4(callpc)+" " + instructionWorkBlock.inst);
+				//System.out.println("handling DSR: pc = "+HexUtils.toHex4(callpc)+" " + instructionWorkBlock.inst);
 	
 				// on success, return to DSR handler, to return an
 				// error or otherwise terminate instead of continuing

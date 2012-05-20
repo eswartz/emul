@@ -7,7 +7,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
@@ -52,7 +51,7 @@ public class ImageBarChild extends Canvas {
 	protected EventForwarder forwarder;
 	
 	public ImageBarChild(IImageBar parentDrawer, int style) {
-		super(parentDrawer.getComposite(), style);
+		super(parentDrawer.getComposite(), style | SWT.NO_BACKGROUND | SWT.DOUBLE_BUFFERED);
 		this.parentDrawer = parentDrawer;
 
 		forwarder = new EventForwarder(parentDrawer.getComposite());
@@ -81,10 +80,6 @@ public class ImageBarChild extends Canvas {
 	}
 
 	protected void doPaint(PaintEvent e) {
-		Rectangle drawRect = getBounds();
-		Point po = parentDrawer.getPaintOffset();
-		drawRect.x = po.x;
-		drawRect.y = po.y;
 		parentDrawer.drawBackground(e.gc);
 	}
 

@@ -85,12 +85,12 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 
 	protected void doPaint(PaintEvent e) {
 		//Point size = new Point(bounds.width, bounds.height);
+		super.doPaint(e);
 		
 		Rectangle drawRect = getBounds();
 		Point po = parentDrawer.getPaintOffset();
 		drawRect.x = po.x;
 		drawRect.y = po.y;
-		this.parentDrawer.drawBackground(e.gc);
 		try {
 			//System.out.println(bounds);
 			imageProvider.drawImage(e.gc, drawRect, bounds);

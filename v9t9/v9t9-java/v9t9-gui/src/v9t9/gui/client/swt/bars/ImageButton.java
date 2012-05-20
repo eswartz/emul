@@ -152,9 +152,11 @@ public class ImageButton extends ImageIconCanvas {
 	}
 
 	protected void doPaint(PaintEvent e) {
+		super.doPaint(e);
+		
 		Rectangle drawRect = getBounds();
-		this.parentDrawer.drawBackground(e.gc);
 		Point po = parentDrawer.getPaintOffset();
+		
 		//e.gc.setAntialias(SWT.ON);
 		int offset = 0;
 		if ((getStyle() & SWT.TOGGLE) != 0) {

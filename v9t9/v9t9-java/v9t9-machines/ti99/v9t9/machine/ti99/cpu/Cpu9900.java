@@ -160,7 +160,7 @@ public class Cpu9900 extends CpuBase {
 	    }
 	    
     	if (((pins &  PIN_LOAD + PIN_RESET) != 0)) {
-    		System.out.println("Pins set... " + Integer.toHexString(pins));
+    		//System.out.println("Pins set... " + Integer.toHexString(pins));
     		return true;
     	}   
     	

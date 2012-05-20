@@ -13,7 +13,6 @@ import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.PaintEvent;
-import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
@@ -23,28 +22,24 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Event;
 
 import v9t9.gui.client.swt.svg.ISVGLoader;
 import v9t9.gui.client.swt.svg.SVGException;
 
-class BasicButtonSVG extends Canvas {
+class BasicButtonSVG extends ImageBarChild {
 
 	private final Rectangle bounds;
 	private ISVGLoader icon;
 	private Rectangle overlayBounds;
 	private List<SelectionListener> listeners;
 	private boolean selected;
-	private ImageBar buttonBar;
 	private boolean isHighlighted;
 	private Image overlayImage;
 	private Image image;
 	
 	public BasicButtonSVG(ImageBar buttonBar, ISVGLoader icon_, Rectangle bounds_, String tooltip) {
-		super(buttonBar.getComposite(), SWT.NO_FOCUS | SWT.NO_RADIO_GROUP /*| SWT.NO_BACKGROUND*/);
-		
-		this.buttonBar = buttonBar;
+		super(buttonBar, SWT.NO_FOCUS | SWT.NO_RADIO_GROUP /*| SWT.NO_BACKGROUND*/);
 		
 		this.icon = icon_;
 		this.bounds = bounds_;
@@ -71,13 +66,6 @@ class BasicButtonSVG extends Canvas {
 		
 		setToolTipText(tooltip);
 		
-		addPaintListener(new PaintListener() {
-
-			public void paintControl(PaintEvent e) {
-				doPaint(e);
-			}
-			
-		});
 		addTraverseListener(new TraverseListener() {
 
 			public void keyTraversed(TraverseEvent e) {
@@ -144,8 +132,9 @@ class BasicButtonSVG extends Canvas {
 	}
 
 	protected void doPaint(PaintEvent e) {
+		super.doPaint(e);
 		Point size = getSize();
-		this.buttonBar.paintButtonBar(e.gc, new Point(0, 0), size);
+//		this.buttonBar.paintButtonBar(e.gc, new Point(0, 0), size);
 		
 		e.gc.drawImage(getImage(), 0, 0);
 		if (overlayBounds != null)
