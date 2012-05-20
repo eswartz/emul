@@ -125,7 +125,7 @@ public class JavaSoundHandler implements ISoundHandler {
 	}
 	
 
-	public void dispose() {
+	public synchronized void dispose() {
 		toggleSound(false);
 
 		if (soundRecordingHelper != null) {
@@ -148,7 +148,7 @@ public class JavaSoundHandler implements ISoundHandler {
 	}
 
 
-	public void toggleSound(boolean enabled) {
+	public synchronized void toggleSound(boolean enabled) {
 		if (enabled) {
 			output.start();
 			speechOutput.start();
