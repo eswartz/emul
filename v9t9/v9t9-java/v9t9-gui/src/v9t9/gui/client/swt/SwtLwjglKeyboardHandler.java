@@ -53,8 +53,8 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 			leftYAxis = controller.getComponent(Identifier.Axis.Y);
 			rightYAxis = controller.getComponent(Identifier.Axis.RY);
 			if (rightXAxis == null || rightYAxis == null) {
-				rightXAxis = leftXAxis;
-				rightYAxis = leftYAxis;
+				//rightXAxis = leftXAxis;
+				//rightYAxis = leftYAxis;
 			}
 		}
 		/* (non-Javadoc)
@@ -82,6 +82,8 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 		
 		protected float getXAxis(int joy) {
 			Component axis = joy == 1 ? leftXAxis : rightXAxis;
+			if (axis == null)
+				return 0;
 			float xAxis = axis.getPollData();
 			if (axis.isAnalog() && Math.abs(xAxis) <= 0.5)
 				xAxis = 0;
@@ -89,6 +91,8 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 		}
 		protected float getYAxis(int joy) {
 			Component axis = joy == 1 ? leftYAxis : rightYAxis;
+			if (axis == null)
+				return 0;
 			float yAxis = axis.getPollData();
 			if (axis.isAnalog() && Math.abs(yAxis) <= 0.5)
 				yAxis = 0;
@@ -96,6 +100,8 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 		}
 		protected boolean getButton(int joy) {
 			boolean fire = false;
+			if ((joy == 1 ? leftXAxis : rightXAxis) == null)
+				return false;
 			for (Component button : controller.getComponents()) {
 				if (button.getIdentifier() instanceof Button) {
 					if (isButtonFor(button, joy)) {
