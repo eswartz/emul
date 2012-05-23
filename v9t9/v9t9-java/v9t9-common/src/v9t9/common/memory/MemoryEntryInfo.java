@@ -223,7 +223,7 @@ public class MemoryEntryInfo {
 	public boolean matches(StoredMemoryEntryInfo storedInfo) {
 		if (getFilenameProperty() != null && storedInfo.fileName.equals(getFilenameProperty().getDefaultValue()))
 			return true;
-		if (getFileMD5() != null && storedInfo.md5.equals(getFileMD5())) 
+		if (getFileMD5() == null || storedInfo.md5.equals(getFileMD5())) 
 			return true;
 //		if (getFile2MD5() != null && storedInfo.md5.equals(getFile2MD5()))
 //			return true;
