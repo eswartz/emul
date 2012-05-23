@@ -6,8 +6,10 @@ package v9t9.engine.demos.format;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 import v9t9.common.demos.DemoHeader;
 import v9t9.common.demos.IDemoEvent;
@@ -30,6 +32,8 @@ public class DemoFormatInputStream extends BaseDemoInputStream implements IDemoI
 	private DemoHeader header;
 	private Map<Integer, IDemoInputEventBuffer> buffers = new HashMap<Integer, IDemoInputEventBuffer>();
 
+	private Set<Integer> unknownBuffers = new HashSet<Integer>();
+	
 	public DemoFormatInputStream(IMachineModel machineModel, InputStream is_) throws IOException {
 		super(is_);
 
@@ -51,13 +55,16 @@ public class DemoFormatInputStream extends BaseDemoInputStream implements IDemoI
 						ent.getValue(), formatter);
 			}
 			else {
-				// callers should invoke #registerBuffer later
+				// callers should invoke #registerBuffer later -- or not at all
 				buffer = new DemoInputEventBuffer(is, ent.getKey(),
 						ent.getValue()) {
 					
 					@Override
 					public void decodeEvents(Queue<IDemoEvent> queuedEvents) throws IOException {
-						System.err.println("0x" + Long.toHexString(getPosition()) + ": unrecognized code " + getCode() + " encountered");
+						if (!unknownBuffers.contains(getCode())) {
+							System.err.println("0x" + Long.toHexString(getPosition()) + ": unrecognized code " + getCode() + " encountered");
+							unknownBuffers.add(getCode());
+						}
 						readRest();
 					}
 				};

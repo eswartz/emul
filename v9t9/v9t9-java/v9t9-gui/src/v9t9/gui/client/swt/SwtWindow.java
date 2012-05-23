@@ -50,6 +50,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.keyboard.IKeyboardListener;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
@@ -405,6 +406,30 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		});
 		videoRenderer.setFocus();
+		
+//		machine.getKeyboardState().addKeyboardListener(new IKeyboardListener() {
+//			
+//			@Override
+//			public void shiftChangeEvent(byte mask) {
+//				System.out.println("SHIFT: " + Integer.toHexString(mask & 0xff));
+//			}
+//			
+//			@Override
+//			public void otherKeyEvent(int ch, boolean pressed) {
+//				System.out.println("OTHER: " + ch + " " + pressed);				
+//			}
+//			
+//			@Override
+//			public void joystickChangeEvent(int num, byte mask) {
+//				System.out.println("JOYST: " + num + " => " + Integer.toHexString(mask & 0xff));				
+//			}
+//			
+//			@Override
+//			public void asciiKeyEvent(char ch, boolean pressed) {
+//				System.out.println("ASCII: " + ch + " " + pressed);				
+//				
+//			}
+//		});
 	}
 	
 	protected void setFullscreen(boolean fullScreen) {

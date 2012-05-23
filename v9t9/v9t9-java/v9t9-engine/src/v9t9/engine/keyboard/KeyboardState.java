@@ -13,8 +13,11 @@ import java.util.List;
 import java.util.Queue;
 
 import ejs.base.utils.HexUtils;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 
 
+import v9t9.common.keyboard.IKeyboardListener;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
@@ -117,6 +120,8 @@ public class KeyboardState implements IKeyboardState {
 	private ArrayList<KeyDelta> currentGroup = null;
 
 	private boolean numLock;
+	
+	private ListenerList<IKeyboardListener> listeners = new ListenerList<IKeyboardListener>();
 
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
@@ -146,6 +151,19 @@ public class KeyboardState implements IKeyboardState {
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 104-111 */
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 112-119 */
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1  /* 120-127 */
+    };
+    
+    /** entries as 0x[row:4][column:4] */
+    static final char x9901ToLatin[] = {
+    	/* 0x00 */   0, 'X', 'C', 'V', 'B', 'Z', 0, 0,
+    	/* 0x10 */   0, 'W', 'E', 'R', 'T', 'Q', 0, 0,
+    	/* 0x20 */   0, 'S', 'D', 'F', 'G', 'A', 0, 0,
+    	/* 0x30 */   0, '2', '3', '4', '5', '1', 0, 0,
+    	/* 0x40 */   0, '9', '8', '7', '6', '0', 0, 0,
+    	/* 0x50 */  13, 'O', 'I', 'U', 'Y', 'P', 0, 0,
+    	/* 0x60 */ ' ', 'L', 'K', 'J', 'H', ';', 0, 0,
+    	/* 0x70 */ '=', '.', ',', 'M', 'N', '/', 0, 0,
+    	
     };
 	//private final Cpu cpu;
 	//private long lastAbortTime;
@@ -603,6 +621,10 @@ public class KeyboardState implements IKeyboardState {
 	 */
 	@Override
 	public synchronized void pushQueuedKey() {
+		byte[] prevmap = null;
+		if (!listeners.isEmpty())
+			prevmap = Arrays.copyOf(crukeyboardmap, crukeyboardmap.length);
+		
 		long now = System.currentTimeMillis();
 		if (queuedKeys.isEmpty() && currentGroup == null) {
 			if (lastChangeTime + TIMEOUT < now) {
@@ -611,6 +633,7 @@ public class KeyboardState implements IKeyboardState {
 						System.out.println("dumping matrix");
 				}
 				Arrays.fill(crukeyboardmap, 0, 6, (byte) 0);
+				
 			} else
 				return;
 		} else {
@@ -628,34 +651,6 @@ public class KeyboardState implements IKeyboardState {
 			}
 			changeKeyboardShifts(true, shift);
 		}
-		/*
-		if (lastChangeTime + 250 < now) {
-			boolean allShifts = true;
-			for (KeyDelta delta : queuedKeys) {
-				if (!delta.isShift) {
-					allShifts = false;
-					break;
-				}
-			}
-			if (allShifts)
-				return;
-		}
-		
-		System.out.println("===========");
-		boolean any = false;
-		boolean isOn = false;
-		while (!queuedKeys.isEmpty()) {
-			KeyDelta delta = queuedKeys.peek();
-			if (any && (delta.isShift && isOn != delta.onoff))
-				break;
-			queuedKeys.poll();
-			applyKeyDelta(delta);
-			isOn = delta.onoff;
-			any = true;
-			if (delta.time + 100 >= now)
-				break;
-		}
-		*/
 		
 		System.arraycopy(crukeyboardmap, 0, lastcrukeyboardmap, 0, 8);
 		boolean noKey = !anyKeyPressed();
@@ -665,10 +660,53 @@ public class KeyboardState implements IKeyboardState {
 		}
 		lastChangeTime = now;
 		lastAlphaLock = alphaLock;
+		
+		if (prevmap != null) {
+			sendKeyboardChanges(prevmap);
+		}
+
 	}
 
 
-    private synchronized void applyKeyDelta(KeyDelta delta) {
+    /**
+	 * @param prevmap
+	 */
+	private void sendKeyboardChanges(final byte[] prevmap) {
+		listeners.fire(new IFire<IKeyboardListener>() {
+
+			@Override
+			public void fire(IKeyboardListener listener) {
+
+				// examine shift changes
+				if (((crukeyboardmap[0] ^ prevmap[0]) & FCTN + SHIFT + CTRL) != 0) {
+					listener.shiftChangeEvent((byte) (crukeyboardmap[0] & FCTN + SHIFT + CTRL));
+				}
+				
+				// examine ASCII changes
+				for (int c = 0; c < 6; c++) {
+					byte diff = (byte) (crukeyboardmap[c] ^ prevmap[c]);
+					if (diff != 0) {
+						for (int r = 0; r < 8; r++) {
+							int mask = crukeyboardmap[c] & (0x80 >> r);
+							if ((diff & mask) != 0) {
+								char ch = x9901ToLatin[(r << 3) | c];
+								if (ch != 0) {
+									listener.asciiKeyEvent(ch, 
+											mask != 0);
+								}
+							}
+						}
+					}
+				}
+				
+				
+				// joystick changes were sent immediately
+			}
+		});
+		
+	}
+
+	private synchronized void applyKeyDelta(KeyDelta delta) {
     	if (DEBUG) System.out.println(delta);
     	
     	boolean onoff = delta.onoff;
@@ -879,7 +917,10 @@ public class KeyboardState implements IKeyboardState {
 	 * @see v9t9.engine.keyboard.IKeyboardState#setJoystick(int, int, int, int, boolean, long)
 	 */
     @Override
-	public synchronized void setJoystick(int joy, int mask, int x, int y, boolean fire, long when) {
+	public synchronized void setJoystick(final int joy, int mask, int x, int y, boolean fire, long when) {
+    	int joyRow = JOY1_C+joy-1;
+		byte oldValue = crukeyboardmap[joyRow];
+    	
     	if ((mask & JOY_X) != 0) {
     		//logger(_L | L_1, _("changing JOY_X (%d)\n\n"), x);
     		changeJoyMatrix(joy, JOY_LEFT_R, x < 0);
@@ -900,7 +941,19 @@ public class KeyboardState implements IKeyboardState {
     	changeJoyMatrix(joy, 1, false);
     	changeJoyMatrix(joy, 2, false);
     	
+    	final byte newValue = crukeyboardmap[joyRow];
+    	
     	fireListeners();
+    	
+    	if (oldValue != newValue && !listeners.isEmpty()) {
+			listeners.fire(new IFire<IKeyboardListener>() {
+
+				@Override
+				public void fire(IKeyboardListener listener) {
+					listener.joystickChangeEvent(joy, newValue); 
+				}
+			});
+		}
     }
     
 	/* (non-Javadoc)
@@ -910,6 +963,17 @@ public class KeyboardState implements IKeyboardState {
 	public synchronized void setAlpha(boolean on) {
 		System.out.println("Alpha lock is " + (on ? "ON" : "OFF"));
 		this.alphaLock = on;
+		
+		if (!listeners.isEmpty()) {
+			listeners.fire(new IFire<IKeyboardListener>() {
+
+				@Override
+				public void fire(IKeyboardListener listener) {
+					listener.otherKeyEvent(OTHER_KEY_ALPHA_LOCK, alphaLock);
+				}
+			});
+		}
+
 	}
 
 	/* (non-Javadoc)
@@ -1033,4 +1097,20 @@ public class KeyboardState implements IKeyboardState {
 	public boolean getNumLock() {
 		return numLock;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.keyboard.IKeyboardState#addKeyboardListener(v9t9.common.keyboard.IKeyboardListener)
+	 */
+	@Override
+	public synchronized void addKeyboardListener(IKeyboardListener listener) {
+		listeners.add(listener);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.keyboard.IKeyboardState#removeKeyboardListener(v9t9.common.keyboard.IKeyboardListener)
+	 */
+	@Override
+	public synchronized void removeKeyboardListener(IKeyboardListener listener) {
+		listeners.remove(listener);
+	}
+	
 }

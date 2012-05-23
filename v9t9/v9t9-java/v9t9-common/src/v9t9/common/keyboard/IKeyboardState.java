@@ -20,6 +20,9 @@ public interface IKeyboardState {
 	public static final byte SHIFT = 0x20;
 	public static final byte FCTN = 0x10;
 	public static final byte CTRL = 0x40;
+	
+	/** "other" key masks */
+	int OTHER_KEY_ALPHA_LOCK = 1;
 
 	boolean isAsciiDirectKey(char x);
 
@@ -50,6 +53,7 @@ public interface IKeyboardState {
 	;
 	public static final int JOY_X = 1;
 	public static final int JOY_Y = 2;
+	
 	public static final int JOY_FIRE_R = 7;
 	public static final int JOY_LEFT_R = 6;
 	public static final int JOY_RIGHT_R = 5;
@@ -114,6 +118,8 @@ public interface IKeyboardState {
      * @return true if we could represent it as ASCII
      */
 	boolean postCharacter(IBaseMachine machine, int realKey, boolean pressed, boolean synthetic, byte shift, char ch, long when);
-    	
+ 
+	void addKeyboardListener(IKeyboardListener listener);
+	void removeKeyboardListener(IKeyboardListener listener);
 
 }
