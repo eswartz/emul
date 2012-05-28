@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URL;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.spi.ThrowableInformation;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Image;
 
@@ -24,7 +25,7 @@ public class EmulatorGuiData {
 	private static final URL sBaseDataURL;
 	static final URL sBaseV9t9URL;
 	static {
-		URL url = EmulatorGuiData.class.getClassLoader().getResource(".");
+		URL url = EmulatorGuiData.class.getClassLoader().getResource("icons");
 		URL burl = EmulatorGuiData.class.getClassLoader().getResource(
 				EmulatorGuiData.class.getName().replace(".", "/") + ".class");
 		if (false) {
@@ -34,9 +35,9 @@ public class EmulatorGuiData {
 			System.out.flush();
 		}
 		if (url != null) {
-			// "." will be under "bin", go to parent of tree
+			// go to parent of tree + bin
 			try {
-				url = new URL(url, "..");
+				url = new URL(url, "../..");
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}
@@ -100,6 +101,14 @@ public class EmulatorGuiData {
 				return icon;
 			} catch (IOException e1) {
 				e1.printStackTrace();
+			} catch (Throwable e1) {
+				// try again -- SWT bug
+				try {
+					Image icon = new Image(device, iconFile.openStream());
+					return icon;
+				} catch (Throwable e2) {
+					e1.printStackTrace();
+				}
 			}
 		}
 		return new Image(device, 1, 1);
