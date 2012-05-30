@@ -36,6 +36,12 @@ public interface IDemoManager {
 				ISettingsHandler.INSTANCE,
 				"RecordedDemosPath", ".");
 	
+	/** if set, record demos in V9t9 6.0 format */
+	SettingSchema settingUseDemoOldFormat = 
+		new SettingSchema(
+				ISettingsHandler.TRANSIENT,
+				"UseOldDemoFormat", Boolean.FALSE);
+
 	
 	String[] DEMO_EXTENSIONS = new String[] { "dem|V9t9 demo file (*.dem)", "*|Other demo file" };
 	

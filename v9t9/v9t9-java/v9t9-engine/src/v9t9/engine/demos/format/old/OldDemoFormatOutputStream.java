@@ -126,7 +126,7 @@ public class OldDemoFormatOutputStream extends BaseDemoOutputStream implements I
 		else if (event instanceof SoundWriteRegisterEvent) {
 			writeSoundRegisterEvent(event);
 		}
-		else if (event instanceof SpeechEvent) {
+		else if (event instanceof OldSpeechEvent) {
 			writeSpeechEvent(event);
 		}
 		else {

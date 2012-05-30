@@ -16,7 +16,6 @@ import java.util.Map;
 
 import v9t9.common.demos.DemoHeader;
 import v9t9.common.demos.IDemo;
-import v9t9.common.demos.IDemoActor;
 import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEventFormatter;
 import v9t9.common.demos.IDemoInputStream;
@@ -200,7 +199,7 @@ public class DemoManager implements IDemoManager {
 	@Override
 	public IDemoOutputStream createDemoWriter(URI uri) throws IOException,
 			NotifyException {
-		if (true) {
+		if (! Settings.get(machine, settingUseDemoOldFormat).getBoolean()) {
 			DemoHeader header = new DemoHeader();
 			header.setMachineModel(machine.getModel().getIdentifier());
 			for (IDemoActorProvider actor : actorProviders.values()) {

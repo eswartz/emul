@@ -178,6 +178,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		final IProperty recordSetting = Settings.get(machine, IDemoHandler.settingRecordDemo);
 		final IProperty playSetting = Settings.get(machine, IDemoHandler.settingPlayingDemo);
 //		final IProperty playRateSetting = Settings.get(machine, IDemoHandler.settingDemoPlaybackRate);
+		final IProperty useOldFormatSetting = Settings.get(machine, IDemoManager.settingUseDemoOldFormat);
 		
 		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
 				imageProvider, demoIconIndex, tooltip) {
@@ -265,7 +266,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 
 					} else {
 						showDemoMenu(handler, e, e.x, e.y, 
-								recordSetting, playSetting, pauseSetting);
+								recordSetting, playSetting, pauseSetting,
+								useOldFormatSetting);
 					}
 					
 					e.doit = false;
@@ -336,7 +338,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 
 	private void showDemoMenu(final IDemoHandler demoHandler, TypedEvent e, int x, int y, 
 			final IProperty recordSetting, final IProperty playSetting,
-			final IProperty pauseSetting) {
+			final IProperty pauseSetting, final IProperty useOldFormatSetting) {
 		Control button = (Control) e.widget;
 		final Menu menu = new Menu(button);
 
@@ -468,6 +470,19 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				}
 
 			});
+			
+			final MenuItem oldFormatItem = new MenuItem(menu, SWT.CHECK);
+			if (recordSetting.getBoolean())
+				oldFormatItem.setEnabled(false);
+			oldFormatItem.setSelection(useOldFormatSetting.getBoolean());
+			oldFormatItem.setText("Use V9t9 v6.0 &Format");
+			oldFormatItem.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					useOldFormatSetting.setBoolean(oldFormatItem.getSelection());
+				}
+			});
+			
 		}
 		
 		new MenuItem(menu, SWT.SEPARATOR);
