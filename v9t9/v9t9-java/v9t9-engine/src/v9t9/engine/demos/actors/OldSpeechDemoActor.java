@@ -5,9 +5,13 @@ package v9t9.engine.demos.actors;
 
 import java.io.IOException;
 
+import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoRecorder;
+import v9t9.common.demos.IDemoRecordingActor;
+import v9t9.common.demos.IDemoReversePlaybackActor;
 import v9t9.common.machine.IMachine;
 import v9t9.common.speech.ILPCParameters;
 import v9t9.common.speech.ILPCParametersListener;
@@ -22,7 +26,26 @@ import v9t9.engine.speech.SpeechTMS5220;
  *
  */
 public class OldSpeechDemoActor extends BaseDemoActor {
-
+	public static class Provider implements IDemoActorProvider {
+		@Override
+		public String getEventIdentifier() {
+			return OldSpeechEvent.ID;
+		}
+		@Override
+		public IDemoPlaybackActor createForPlayback() {
+			return new OldSpeechDemoActor();
+		}
+		@Override
+		public IDemoRecordingActor createForRecording() {
+			return new OldSpeechDemoActor();
+		}
+		@Override
+		public IDemoReversePlaybackActor createForReversePlayback() {
+			return null;
+		}
+		
+	}
+	
 	private SpeechTMS5220 speech;
 	private ISpeechPhraseListener phraseListener;
 	

@@ -142,8 +142,8 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		
 		initRegisters();
 		
-		machine.getDemoManager().registerActor(new VdpDataDemoActor());
-		machine.getDemoManager().registerActor(new VdpRegisterDemoActor());
+		machine.getDemoManager().registerActorProvider(new VdpDataDemoActor.Provider());
+		machine.getDemoManager().registerActorProvider(new VdpRegisterDemoActor.Provider());
 	}
 
 	public void initRegisters() {

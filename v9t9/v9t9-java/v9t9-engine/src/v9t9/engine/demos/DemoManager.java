@@ -17,10 +17,14 @@ import java.util.Map;
 import v9t9.common.demos.DemoHeader;
 import v9t9.common.demos.IDemo;
 import v9t9.common.demos.IDemoActor;
+import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEventFormatter;
 import v9t9.common.demos.IDemoInputStream;
 import v9t9.common.demos.IDemoManager;
 import v9t9.common.demos.IDemoOutputStream;
+import v9t9.common.demos.IDemoPlaybackActor;
+import v9t9.common.demos.IDemoRecordingActor;
+import v9t9.common.demos.IDemoReversePlaybackActor;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
@@ -46,7 +50,7 @@ public class DemoManager implements IDemoManager {
 	private List<IDemo> demos = new ArrayList<IDemo>();
 	private IPathFileLocator locator;
 	private final IMachine machine;
-	private Map<String, IDemoActor> actors = new LinkedHashMap<String, IDemoActor>();
+	private Map<String, IDemoActorProvider> actorProviders = new LinkedHashMap<String, IDemoActorProvider>();
 	
 	public DemoManager(IMachine machine) {
 		this.machine = machine;
@@ -56,33 +60,50 @@ public class DemoManager implements IDemoManager {
 		locator.addReadOnlyPathProperty(Settings.get(machine, IDemoManager.settingUserDemosPath));
 		locator.setReadWritePathProperty(Settings.get(machine, IDemoManager.settingRecordedDemosPath));
 		
-		registerActor(new TimerTickActor());
+		registerActorProvider(new TimerTickActor.Provider());
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoManager#registerContributor(v9t9.common.demo.IDemoContributor)
 	 */
 	@Override
-	public void registerActor(IDemoActor actor) {
-		actors.put(actor.getEventIdentifier(), actor);
+	public void registerActorProvider(IDemoActorProvider actorProvider) {
+		actorProviders.put(actorProvider.getEventIdentifier(), actorProvider);
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.demo.IDemoManager#getActors()
-	 */
 	@Override
-	public IDemoActor[] getActors() {
-		return actors.values().toArray(new IDemoActor[actors.size()]);
+	public IDemoPlaybackActor[] createPlaybackActors() {
+		List<IDemoPlaybackActor> actors = new ArrayList<IDemoPlaybackActor>(actorProviders.size());
+		for (IDemoActorProvider provider : actorProviders.values()) {
+			IDemoPlaybackActor actor = provider.createForPlayback();
+			if (actor != null)
+				actors.add(actor);
+		}
+		return (IDemoPlaybackActor[]) actors.toArray(new IDemoPlaybackActor[actors.size()]);
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.demo.IDemoManager#findActor(java.lang.String)
-	 */
+
 	@Override
-	public IDemoActor findActor(String id) {
-		return actors.get(id);
+	public IDemoRecordingActor[] createRecordingActors() {
+		List<IDemoRecordingActor> actors = new ArrayList<IDemoRecordingActor>(actorProviders.size());
+		for (IDemoActorProvider provider : actorProviders.values()) {
+			IDemoRecordingActor actor = provider.createForRecording();
+			if (actor != null)
+				actors.add(actor);
+		}
+		return (IDemoRecordingActor[]) actors.toArray(new IDemoRecordingActor[actors.size()]);
 	}
-	
+
+	@Override
+	public IDemoReversePlaybackActor[] createReversePlaybackActors() {
+		List<IDemoReversePlaybackActor> actors = new ArrayList<IDemoReversePlaybackActor>(actorProviders.size());
+		for (IDemoActorProvider provider : actorProviders.values()) {
+			IDemoReversePlaybackActor actor = provider.createForReversePlayback();
+			if (actor != null)
+				actors.add(actor);
+		}
+		return (IDemoReversePlaybackActor[]) actors.toArray(new IDemoReversePlaybackActor[actors.size()]);
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoManager#getDemoLocator()
 	 */
@@ -182,7 +203,7 @@ public class DemoManager implements IDemoManager {
 		if (true) {
 			DemoHeader header = new DemoHeader();
 			header.setMachineModel(machine.getModel().getIdentifier());
-			for (IDemoActor actor : actors.values()) {
+			for (IDemoActorProvider actor : actorProviders.values()) {
 				if (actor.getEventIdentifier().equals(TimerTick.ID))
 					continue;
 				

@@ -11,6 +11,7 @@ import v9t9.common.demos.IDemoActor;
 import v9t9.common.demos.IDemoOutputStream;
 import v9t9.common.demos.IDemoRecorder;
 import v9t9.common.demos.IDemoHandler.IDemoListener;
+import v9t9.common.demos.IDemoRecordingActor;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.machine.IMachine;
@@ -27,7 +28,7 @@ public class DemoRecorder implements IDemoRecorder {
 
 	private final IMachine machine;
 	
-	private IDemoActor[] recordingActors;
+	private IDemoRecordingActor[] recordingActors;
 	
 	
 	public DemoRecorder(IMachine machine, IDemoOutputStream os, ListenerList<IDemoListener> listeners) throws IOException {
@@ -35,16 +36,17 @@ public class DemoRecorder implements IDemoRecorder {
 		this.os = os;
 		this.listeners = listeners;
 		
-		List<IDemoActor> actors = new ArrayList<IDemoActor>();
-		for (IDemoActor actor : machine.getDemoManager().getActors()) {
+		List<IDemoRecordingActor> actors = new ArrayList<IDemoRecordingActor>();
+		for (IDemoRecordingActor actor : machine.getDemoManager().createRecordingActors()) {
 			if (actor.shouldRecordFor(os.getDemoFormat())) {
 				actors.add(actor);
 			}
 		}
-		recordingActors = (IDemoActor[]) actors.toArray(new IDemoActor[actors.size()]);
+		recordingActors = (IDemoRecordingActor[]) actors.toArray(new IDemoRecordingActor[actors.size()]);
 		
-		for (IDemoActor actor : recordingActors)
+		for (IDemoActor actor : recordingActors) {
 			actor.setup(machine);
+		}
 		
 		connect();
 		
@@ -74,19 +76,19 @@ public class DemoRecorder implements IDemoRecorder {
 	
 	private synchronized void connect() throws IOException {
 		
-		for (IDemoActor actor : recordingActors) {
+		for (IDemoRecordingActor actor : recordingActors) {
 			actor.connectForRecording(this);
 		}
 	}
 
 	private synchronized void disconnect() {
-		for (IDemoActor actor : recordingActors) {
+		for (IDemoRecordingActor actor : recordingActors) {
 			actor.disconnectFromRecording(this);
 		}
 	}
 
 	public synchronized void flushData() throws IOException {
-		for (IDemoActor actor : recordingActors) {
+		for (IDemoRecordingActor actor : recordingActors) {
 			actor.flushRecording(this);
 		}
 		

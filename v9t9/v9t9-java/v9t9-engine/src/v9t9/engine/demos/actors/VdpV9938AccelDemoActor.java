@@ -5,9 +5,13 @@ package v9t9.engine.demos.actors;
 
 import java.io.IOException;
 
+import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoRecorder;
+import v9t9.common.demos.IDemoRecordingActor;
+import v9t9.common.demos.IDemoReversePlaybackActor;
 import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.hardware.IVdpV9938.IAccelListener;
 import v9t9.common.machine.IMachine;
@@ -19,7 +23,25 @@ import v9t9.engine.demos.events.VideoAccelCommandEvent;
  * @deprecated does not work as expected yet
  */
 public class VdpV9938AccelDemoActor extends BaseDemoActor {
-	
+	public static class Provider implements IDemoActorProvider {
+		@Override
+		public String getEventIdentifier() {
+			return VdpV9938AccelCommandEvent.ID;
+		}
+		@Override
+		public IDemoPlaybackActor createForPlayback() {
+			return new VdpV9938AccelDemoActor();
+		}
+		@Override
+		public IDemoRecordingActor createForRecording() {
+			return new VdpV9938AccelDemoActor();
+		}
+		@Override
+		public IDemoReversePlaybackActor createForReversePlayback() {
+			return null;
+		}
+		
+	}
 	private IAccelListener accelListener;
 	private IVdpV9938 vdp;
 //	private IDemoActor videoDataActor;

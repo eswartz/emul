@@ -196,8 +196,8 @@ public class SpeechTMS5220 implements ISpeechChip {
 		
 		equationFetcher = new BuiltinEquationFetcher();
 		
-		machine.getDemoManager().registerActor(new SpeechDemoActor());
-		machine.getDemoManager().registerActor(new OldSpeechDemoActor());
+		machine.getDemoManager().registerActorProvider(new SpeechDemoActor.Provider());
+		machine.getDemoManager().registerActorProvider(new OldSpeechDemoActor.Provider());
 
 		speechTimerTask = new Runnable() {
 

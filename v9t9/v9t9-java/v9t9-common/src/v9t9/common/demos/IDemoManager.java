@@ -59,8 +59,9 @@ public interface IDemoManager {
 	IDemoInputStream createDemoReader(URI uri) throws IOException, NotifyException;
 	IDemoOutputStream createDemoWriter(URI uri) throws IOException, NotifyException;
 
-	void registerActor(IDemoActor actor);
-	IDemoActor[] getActors();
-	IDemoActor findActor(String id);
+	void registerActorProvider(IDemoActorProvider actorProvider);
+	IDemoPlaybackActor[] createPlaybackActors();
+	IDemoRecordingActor[] createRecordingActors();
+	IDemoReversePlaybackActor[] createReversePlaybackActors();
 	
 }

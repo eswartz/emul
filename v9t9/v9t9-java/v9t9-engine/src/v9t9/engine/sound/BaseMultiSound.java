@@ -38,7 +38,7 @@ public abstract class BaseMultiSound implements ISoundChip, IMultiSoundChip {
 		reset();
 		
 		// note: this case is special; MMIO-based actor is registered in memory model
-		machine.getDemoManager().registerActor(new SoundRegisterDemoActor());
+		machine.getDemoManager().registerActorProvider(new SoundRegisterDemoActor.Provider());
 	}
 
 	/**

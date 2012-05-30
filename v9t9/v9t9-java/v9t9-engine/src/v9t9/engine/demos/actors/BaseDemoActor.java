@@ -4,13 +4,15 @@
 package v9t9.engine.demos.actors;
 
 import v9t9.common.demos.IDemoActor;
+import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
+import v9t9.common.demos.IDemoRecordingActor;
 
 /**
  * @author ejs
  *
  */
-public abstract class BaseDemoActor implements IDemoActor {
+public abstract class BaseDemoActor implements IDemoRecordingActor, IDemoPlaybackActor {
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.demos.IDemoActor#shouldRecordFor(byte[])

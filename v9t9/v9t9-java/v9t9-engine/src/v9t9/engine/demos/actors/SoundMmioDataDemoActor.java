@@ -6,9 +6,13 @@ package v9t9.engine.demos.actors;
 import java.io.IOException;
 import java.util.List;
 
+import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoRecorder;
+import v9t9.common.demos.IDemoRecordingActor;
+import v9t9.common.demos.IDemoReversePlaybackActor;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.FullMemoryWriteTracker;
 import v9t9.common.memory.IMemoryDomain;
@@ -19,6 +23,37 @@ import v9t9.engine.demos.events.SoundWriteDataEvent;
  *
  */
 public class SoundMmioDataDemoActor extends BaseDemoActor {
+	public static class Provider implements IDemoActorProvider {
+
+		private final int mmioAddr;
+
+		public Provider(int mmioAddr) {
+			this.mmioAddr = mmioAddr;
+		}
+
+		@Override
+		public String getEventIdentifier() {
+			return SoundWriteDataEvent.ID;
+		}
+		
+		@Override
+		public IDemoPlaybackActor createForPlayback() {
+			return new SoundMmioDataDemoActor(mmioAddr);
+		}
+
+		@Override
+		public IDemoRecordingActor createForRecording() {
+			return new SoundMmioDataDemoActor(mmioAddr);
+		}
+
+		@Override
+		public IDemoReversePlaybackActor createForReversePlayback() {
+			return null;
+		}
+		
+	}
+
+	
 	private FullMemoryWriteTracker soundDataListener;
 	private int soundMmioAddr;
 	private byte[] soundBytes = new byte[256];

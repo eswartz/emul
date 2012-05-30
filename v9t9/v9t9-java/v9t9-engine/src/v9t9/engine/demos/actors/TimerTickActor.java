@@ -8,11 +8,15 @@ import java.io.IOException;
 import ejs.base.properties.IProperty;
 
 import v9t9.common.cpu.ICpu;
+import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoOutputStream;
+import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoRecorder;
+import v9t9.common.demos.IDemoRecordingActor;
+import v9t9.common.demos.IDemoReversePlaybackActor;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
@@ -24,6 +28,26 @@ import v9t9.engine.demos.events.TimerTick;
  */
 public class TimerTickActor extends BaseDemoActor {
 
+	public static class Provider implements IDemoActorProvider {
+		@Override
+		public String getEventIdentifier() {
+			return TimerTick.ID;
+		}
+		@Override
+		public IDemoPlaybackActor createForPlayback() {
+			return new TimerTickActor();
+		}
+		@Override
+		public IDemoRecordingActor createForRecording() {
+			return new TimerTickActor();
+		}
+		@Override
+		public IDemoReversePlaybackActor createForReversePlayback() {
+			return null;
+		}
+		
+	}
+	
 	private Runnable timerTask;
 	private IProperty pauseDemoSetting;
 	

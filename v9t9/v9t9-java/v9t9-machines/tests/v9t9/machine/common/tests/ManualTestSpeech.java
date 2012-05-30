@@ -178,7 +178,7 @@ public class ManualTestSpeech {
 		});
 		
 		
-		if (false) {
+		if (true) {
 			// should exit quickly (or not...)
 			//sayPhrase(tms5220, 0xfff0);
 			
@@ -201,7 +201,7 @@ public class ManualTestSpeech {
 //		sayPhrase(tms5220, 0x1c48);	// BYE
 //		sayPhrase(tms5220, 0x3148);	// GOODBYE
 		
-		if (false) {
+		if (true) {
 		sayPhrase(tms5220, 0x1a42, false);	// BE
 		sayPhrase(tms5220, 0x4642, false);	// MORE
 		sayPhrase(tms5220, 0x51b3, false);	// POSITIVE

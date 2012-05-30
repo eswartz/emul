@@ -7,10 +7,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoHandler;
+import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoRecorder;
+import v9t9.common.demos.IDemoRecordingActor;
+import v9t9.common.demos.IDemoReversePlaybackActor;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
@@ -28,7 +32,26 @@ import ejs.base.properties.IPropertyListener;
  *
  */
 public class SpeechDemoActor extends BaseDemoActor {
-
+	public static class Provider implements IDemoActorProvider {
+		@Override
+		public String getEventIdentifier() {
+			return SpeechEvent.ID;
+		}
+		@Override
+		public IDemoPlaybackActor createForPlayback() {
+			return new SpeechDemoActor();
+		}
+		@Override
+		public IDemoRecordingActor createForRecording() {
+			return new SpeechDemoActor();
+		}
+		@Override
+		public IDemoReversePlaybackActor createForReversePlayback() {
+			return null;
+		}
+		
+	}
+	
 	private SpeechTMS5220 speech;
 	private ILPCParametersListener paramsListener;
 	private List<ILPCParameters> currentPhraseParamsList;

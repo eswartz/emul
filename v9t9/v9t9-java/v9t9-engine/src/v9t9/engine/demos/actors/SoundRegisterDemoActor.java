@@ -6,9 +6,13 @@ package v9t9.engine.demos.actors;
 import java.io.IOException;
 import java.util.List;
 
+import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoRecorder;
+import v9t9.common.demos.IDemoRecordingActor;
+import v9t9.common.demos.IDemoReversePlaybackActor;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.FullRegisterWriteTracker;
 import v9t9.common.machine.IMachine;
@@ -20,6 +24,26 @@ import v9t9.engine.demos.events.SoundWriteRegisterEvent;
  *
  */
 public class SoundRegisterDemoActor extends BaseDemoActor {
+	public static class Provider implements IDemoActorProvider {
+		@Override
+		public String getEventIdentifier() {
+			return SoundWriteRegisterEvent.ID;
+		}
+		@Override
+		public IDemoPlaybackActor createForPlayback() {
+			return new SoundRegisterDemoActor();
+		}
+		@Override
+		public IDemoRecordingActor createForRecording() {
+			return new SoundRegisterDemoActor();
+		}
+		@Override
+		public IDemoReversePlaybackActor createForReversePlayback() {
+			return null;
+		}
+		
+	}
+	
 	private FullRegisterWriteTracker soundRegisterListener;
 	private ISoundChip sound;
 	

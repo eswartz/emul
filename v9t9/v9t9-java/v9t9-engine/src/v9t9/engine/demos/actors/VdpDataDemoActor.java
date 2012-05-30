@@ -6,9 +6,13 @@ package v9t9.engine.demos.actors;
 import java.io.IOException;
 import java.util.BitSet;
 
+import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEvent;
+import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoRecorder;
+import v9t9.common.demos.IDemoRecordingActor;
+import v9t9.common.demos.IDemoReversePlaybackActor;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.ByteMemoryAccess;
@@ -20,7 +24,27 @@ import v9t9.engine.demos.events.VideoWriteDataEvent;
  *
  */
 public class VdpDataDemoActor extends BaseDemoActor {
+	public static class Provider implements IDemoActorProvider {
+		@Override
+		public String getEventIdentifier() {
+			return VideoWriteDataEvent.ID;
+		}
+		@Override
+		public IDemoPlaybackActor createForPlayback() {
+			return new VdpDataDemoActor();
+		}
+		@Override
+		public IDemoRecordingActor createForRecording() {
+			return new VdpDataDemoActor();
+		}
+		@Override
+		public IDemoReversePlaybackActor createForReversePlayback() {
+			return null;
+		}
+		
+	}
 
+	
 	protected SimpleMemoryWriteTracker vdpMemoryListener;
 	protected IVdpChip vdp;
 	private byte[] videoBytes = new byte[256];

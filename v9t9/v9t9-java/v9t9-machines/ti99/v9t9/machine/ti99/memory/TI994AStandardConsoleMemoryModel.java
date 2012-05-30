@@ -143,7 +143,7 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
         this.memory.addAndMap(new MemoryEntry("GRAM Write MMIO", CPU, 0x9C00, 0x0400,
                 new ConsoleGramWriteArea(gplMmio)));
 		
-		((IMachine) machine).getDemoManager().registerActor(new SoundMmioDataDemoActor(0x8400));
+		((IMachine) machine).getDemoManager().registerActorProvider(new SoundMmioDataDemoActor.Provider(0x8400));
 
 	}
 

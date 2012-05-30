@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.common.demos.IDemoActor;
 import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoInputStream;
+import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoHandler.IDemoListener;
 import v9t9.common.events.IEventNotifier.Level;
@@ -36,8 +36,9 @@ public class DemoPlayer implements IDemoPlayer {
 	private double playClock;
 	private double playStepMs;
 	private double rateMultiplier;
-	private Map<String, IDemoActor> eventToActorMap = new HashMap<String, IDemoActor>();
+	private Map<String, IDemoPlaybackActor> eventToActorMap = new HashMap<String, IDemoPlaybackActor>();
 	private Runnable demoTask;
+	private IDemoPlaybackActor[] playActors;
 
 	public DemoPlayer(IMachine machine, IDemoInputStream is,
 			ListenerList<IDemoListener> listeners) {
@@ -50,7 +51,8 @@ public class DemoPlayer implements IDemoPlayer {
 		
 		setPlaybackRate(1.0);
 		
-		for (IDemoActor actor : machine.getDemoManager().getActors()) {
+		playActors = machine.getDemoManager().createPlaybackActors();
+		for (IDemoPlaybackActor actor : playActors) {
 			eventToActorMap.put(actor.getEventIdentifier(), actor);
 			actor.setup(machine);
 		}
@@ -73,7 +75,7 @@ public class DemoPlayer implements IDemoPlayer {
 		};
 		machine.getFastMachineTimer().scheduleTask(demoTask, timerRate);
 		
-		for (IDemoActor actor : machine.getDemoManager().getActors()) {
+		for (IDemoPlaybackActor actor : playActors) {
 			actor.setupPlayback(this);
 		}
 	}
@@ -164,7 +166,7 @@ public class DemoPlayer implements IDemoPlayer {
 	 */
 	@Override
 	public void executeEvent(IDemoEvent event) throws IOException {
-		IDemoActor actor = eventToActorMap.get(event.getIdentifier());
+		IDemoPlaybackActor actor = eventToActorMap.get(event.getIdentifier());
 		if (actor != null)
 			actor.executeEvent(this, event);
 	}
@@ -172,7 +174,7 @@ public class DemoPlayer implements IDemoPlayer {
 	public void stop() {
 		machine.getFastMachineTimer().cancelTask(demoTask);
 		
-		for (IDemoActor actor : machine.getDemoManager().getActors()) {
+		for (IDemoPlaybackActor actor : playActors) {
 			actor.cleanupPlayback(this);
 		}
 
