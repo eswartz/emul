@@ -65,6 +65,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 	protected ISpeechGenerator speechGenerator;
 	protected ISoundHandler soundHandler;
 	protected FastTimer videoTimer;
+	protected FastTimer keyTimer;
 	private FastTimer soundTimer;
 	private SwtWindow window;
 
@@ -79,6 +80,7 @@ public abstract class BaseSwtJavaClient implements IClient {
     	this.machine = machine;
     	
     	this.videoTimer = new FastTimer("Video Timer");
+    	this.keyTimer = new FastTimer("Keyboard/Joystick Timer");
     	this.soundTimer = new FastTimer("Sound Timer");
     	
     	setupRenderer();
@@ -123,7 +125,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 				keyboardHandler.scan(machine.getKeyboardState());
         	}
         };
-        videoTimer.scheduleTask(clientTask, clientTick);
+        keyTimer.scheduleTask(clientTask, clientTick);
         
         TimerTask videoUpdateTask = new TimerTask() {
 
@@ -252,6 +254,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 		if (soundHandler != null)
 			soundHandler.dispose();
 		
+		keyTimer.cancel();
 		videoTimer.cancel();
 		try {
 			machine.stop();
