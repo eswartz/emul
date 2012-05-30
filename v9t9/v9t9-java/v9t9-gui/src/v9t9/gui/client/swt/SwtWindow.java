@@ -50,7 +50,6 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
-import v9t9.common.keyboard.IKeyboardListener;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;

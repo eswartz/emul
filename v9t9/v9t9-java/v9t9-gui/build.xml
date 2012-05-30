@@ -114,9 +114,9 @@
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
         <pathelement location="${ejs-base.location}/libs/jna.jar"/>
-        <pathelement location="libs/lwjgl/jinput.jar"/>
-        <pathelement location="libs/lwjgl/lwjgl_util.jar"/>
-        <pathelement location="libs/lwjgl/lwjgl.jar"/>
+        <pathelement location="libs/lwjgl/jar/jinput.jar"/>
+        <pathelement location="libs/lwjgl/jar/lwjgl_util.jar"/>
+        <pathelement location="libs/lwjgl/jar/lwjgl.jar"/>
 		<!-- SVG support excluded intentionally since it differs by config; build_standalone.xml brings it in -->
 
         <pathelement location="libs/svgSalamander.jar"/>

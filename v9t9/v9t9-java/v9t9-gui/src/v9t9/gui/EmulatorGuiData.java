@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.URL;
 
 import org.apache.log4j.Logger;
-import org.apache.log4j.spi.ThrowableInformation;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Image;
 

@@ -13,13 +13,6 @@
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar" sourcepath="/ejs-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/jna.jar"/>
-	<classpathentry kind="lib" path="libs/lwjgl/jinput.jar">
-		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${target.os}"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="libs/lwjgl/lwjgl_util.jar"/>
-	<classpathentry kind="lib" path="libs/lwjgl/lwjgl.jar"/>
 	<classpathentry kind="lib" path="libs/svgSalamander.jar"/>
 	<classpathentry kind="src" path="data"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
@@ -48,5 +41,16 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-remote"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ejs-gui"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
+	<classpathentry kind="lib" path="/home/ejs/devel/emul/v9t9/v9t9-java/v9t9-gui/libs/lwjgl/jar/jinput.jar" sourcepath="libs/lwjgl-source-2.8.3.zip">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${target.os}"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/home/ejs/devel/emul/v9t9/v9t9-java/v9t9-gui/libs/lwjgl/jar/lwjgl.jar"/>
+	<classpathentry kind="lib" path="/home/ejs/devel/emul/v9t9/v9t9-java/v9t9-gui/libs/lwjgl/jar/lwjgl_util.jar" sourcepath="libs/lwjgl-source-2.8.3.zip">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${target.os}"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
