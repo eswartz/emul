@@ -8,6 +8,8 @@ import net.java.games.input.Component.Identifier;
 import net.java.games.input.Component.Identifier.Button;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.ControllerEvent;
+import net.java.games.input.ControllerListener;
 
 import org.eclipse.swt.widgets.Control;
 
@@ -31,10 +33,13 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 	public interface ControllerHandler {
 		Controller getController();
 		void setJoystick(int joy, IKeyboardState state);
+		boolean isFailedLast();
+		void setFailedLast(boolean failedLast);
 	}
 	
 	static public class StupidControllerHandler implements ControllerHandler {
 		protected final Controller controller;
+		private boolean failedLast;
 		private Component leftXAxis;
 		private Component rightXAxis;
 		private Component leftYAxis;
@@ -125,14 +130,49 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 			String name = button.getIdentifier().getName();
 			return name.toLowerCase().matches(".*(trigger|thumb|" + (joy == 1 ? "left" : "right") + "|1|3|5|7).*");
 		}
+		/* (non-Javadoc)
+		 * @see v9t9.gui.client.swt.SwtLwjglKeyboardHandler.ControllerHandler#isFailedLast()
+		 */
+		@Override
+		public boolean isFailedLast() {
+			return failedLast;
+		}
+		/* (non-Javadoc)
+		 * @see v9t9.gui.client.swt.SwtLwjglKeyboardHandler.ControllerHandler#setFailedLast(boolean)
+		 */
+		@Override
+		public void setFailedLast(boolean failedLast) {
+			this.failedLast = failedLast;
+		}
 	}
 	
 	private SwtKeyboardHandler swtKeyboardHandler;
-	private ControllerHandler joystickHandler;
-	private boolean failedLast;
+	private ControllerHandler joystick1Handler, joystick2Handler;
 	
 	public SwtLwjglKeyboardHandler(IKeyboardState keyboardState, IMachine machine) {
 		this.swtKeyboardHandler = new SwtKeyboardHandler(keyboardState, machine);
+		
+		updateControllers();
+		
+		ControllerEnvironment.getDefaultEnvironment().addControllerListener(new ControllerListener() {
+			
+			@Override
+			public void controllerRemoved(ControllerEvent arg0) {
+				updateControllers();
+			}
+			
+			@Override
+			public void controllerAdded(ControllerEvent arg0) {
+				updateControllers();				
+			}
+		});
+	}
+	
+	/**
+	 * 
+	 */
+	private synchronized void updateControllers() {
+		joystick1Handler = joystick2Handler = null;
 		
 		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
 			String name = controller.getName();
@@ -144,32 +184,50 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 				continue;
 				
 			System.out.println("Using controller: " + name);
-			joystickHandler = new StupidControllerHandler(controller);
-			break;
+			if (joystick1Handler == null) {
+				joystick1Handler = new StupidControllerHandler(controller);
+			} else if (joystick2Handler == null) {
+				joystick2Handler = new StupidControllerHandler(controller);
+				break;
+			}
 		}
+		
 	}
-	
+
 	@Override
 	public void scan(IKeyboardState state) {
 		swtKeyboardHandler.scan(state);
 		
+		scanJoystick(state, joystick1Handler, 1);
+		scanJoystick(state, joystick2Handler, 2);
+		
+//		if ((joystick1Handler != null && joystick1Handler.isFailedLast())
+//				|| (joystick2Handler != null && joystick2Handler.isFailedLast())) {
+//			updateControllers();
+//		}
+	}
+	
+	/**
+	 * @param joystickHandler
+	 * @param i
+	 */
+	private void scanJoystick(IKeyboardState state, ControllerHandler joystickHandler, int joy) {
 		if (joystickHandler != null) {
 			
 			if (joystickHandler.getController().poll()) {
-				failedLast = false;
-				for (int joy = 1; joy <= 2; joy++) {
-					joystickHandler.setJoystick(joy, state);
-				}
+				joystickHandler.setFailedLast(false);
+				joystickHandler.setJoystick(joy, state);
 			} else {
-				if (!failedLast) {
+				if (!joystickHandler.isFailedLast()) {
 					// maybe unplugged?
-					state.setJoystick(1, IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
+					state.setJoystick(joy, IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
 							0, 0, false, System.currentTimeMillis());
-					failedLast = true;
+					joystickHandler.setFailedLast(true);
 				}
 			}
 		}
 	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.ISwtKeyboardHandler#init(org.eclipse.swt.widgets.Control)
 	 */

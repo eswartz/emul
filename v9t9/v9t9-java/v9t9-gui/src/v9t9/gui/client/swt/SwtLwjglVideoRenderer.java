@@ -439,6 +439,11 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 		}
 		
+		for (Integer displayList : displayListMap.values()) {
+			glDeleteLists(displayList, 1);
+		}
+		displayListMap.clear();
+		
 		if (VERBOSE) System.out.printf("Texture size: %d x %d%n", 
 				vdpCanvas.getVisibleWidth(),
 				vdpCanvas.getVisibleHeight());
@@ -544,7 +549,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glActiveTexture(GL_TEXTURE0);
 		
 		Integer displayList = displayListMap.get(effect);
-		if (true || displayList == null) {
+		if (displayList == null) {
 			effect.getRender().init();
 			
 			if (displayList != null)
@@ -565,6 +570,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		}
 
+		for (ISwtSprite sprite : sprites) {
+			
+		}
+		
 		glCanvas.swapBuffers();
 
 		// HACK for Intel Mobile Express Graphics --

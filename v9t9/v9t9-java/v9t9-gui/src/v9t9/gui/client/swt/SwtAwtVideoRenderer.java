@@ -55,6 +55,8 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private IProperty fullScreen;
 	private boolean isVisible;
 	
+	protected List<ISwtSprite> sprites = new ArrayList<ISwtSprite>(1);
+	
 	public SwtAwtVideoRenderer(IMachine machine, FastTimer timer) {
 		super(machine, timer);
 	}
@@ -363,4 +365,18 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.ISwtVideoRenderer#addSprite(v9t9.gui.client.swt.ISwtSprite)
+	 */
+	@Override
+	public void addSprite(ISwtSprite sprite) {
+		sprites.add(sprite);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.ISwtVideoRenderer#removeSprite(v9t9.gui.client.swt.ISwtSprite)
+	 */
+	@Override
+	public void removeSprite(ISwtSprite sprite) {
+		sprites.remove(sprite);
+	}
 }

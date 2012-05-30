@@ -20,7 +20,7 @@ public interface ISwtVideoRenderer extends IVideoRenderer {
 	Control createControl(Composite parent, int flags);
 	
 	Control getControl();
-
+	
 	void addMouseEventListener(MouseListener listener);
 	void addMouseMotionListener(MouseMoveListener listener);
 
@@ -36,4 +36,7 @@ public interface ISwtVideoRenderer extends IVideoRenderer {
 	void reblit();
 
 	ImageData getScreenshotImageData();
+	
+	void addSprite(ISwtSprite sprite);
+	void removeSprite(ISwtSprite sprite);
 }
