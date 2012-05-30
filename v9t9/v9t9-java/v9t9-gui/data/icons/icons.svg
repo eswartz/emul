@@ -14,7 +14,7 @@
    height="1536"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.48.2 r9819"
+   inkscape:version="0.48.3.1 r9886"
    version="1.0"
    sodipodi:docname="icons.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
@@ -33,7 +33,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="8"
      inkscape:cx="33.478142"
-     inkscape:cy="1059.0303"
+     inkscape:cy="69.0303"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -5299,5 +5299,10 @@
        sodipodi:ry="8"
        d="m 40,88 c 0,4.418278 -3.581722,8 -8,8 -4.418278,0 -8,-3.581722 -8,-8 0,-4.418278 3.581722,-8 8,-8 4.418278,0 8,3.581722 8,8 z"
        transform="matrix(0.86663079,0,0,0.8666308,4.3347684,-236.26351)" />
+    <path
+       style="fill:#00ff00;stroke:#000000;stroke-width:2.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline"
+       d="m 27.766128,964.25 0.241935,23.5 -22.499998,-12.46938 z"
+       id="path155391-5"
+       inkscape:connector-curvature="0" />
   </g>
 </svg>

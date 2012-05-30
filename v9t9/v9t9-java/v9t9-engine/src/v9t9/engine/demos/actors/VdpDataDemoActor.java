@@ -5,6 +5,7 @@ package v9t9.engine.demos.actors;
 
 import java.io.IOException;
 import java.util.BitSet;
+import java.util.LinkedList;
 
 import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEvent;
@@ -23,7 +24,7 @@ import v9t9.engine.demos.events.VideoWriteDataEvent;
  * @author ejs
  *
  */
-public class VdpDataDemoActor extends BaseDemoActor {
+public class VdpDataDemoActor extends BaseDemoActor implements IDemoReversePlaybackActor {
 	public static class Provider implements IDemoActorProvider {
 		@Override
 		public String getEventIdentifier() {
@@ -39,7 +40,7 @@ public class VdpDataDemoActor extends BaseDemoActor {
 		}
 		@Override
 		public IDemoReversePlaybackActor createForReversePlayback() {
-			return null;
+			return new VdpDataDemoActor();
 		}
 		
 	}
@@ -48,6 +49,9 @@ public class VdpDataDemoActor extends BaseDemoActor {
 	protected SimpleMemoryWriteTracker vdpMemoryListener;
 	protected IVdpChip vdp;
 	private byte[] videoBytes = new byte[256];
+	private LinkedList<IDemoEvent> reversedEventList;
+	
+	
 	
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoActor#getEventIdentifier()
@@ -142,6 +146,48 @@ public class VdpDataDemoActor extends BaseDemoActor {
 			vdp.writeAbsoluteVdpMemory(ev.getAddress() + i, 
 					ev.getData()[i + ev.getOffset()]);
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoReversePlaybackActor#setupReversePlayback(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public void setupReversePlayback(IDemoPlayer player) {
+		reversedEventList = new LinkedList<IDemoEvent>();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoReversePlaybackActor#queueEventForReversing(v9t9.common.demos.IDemoPlayer, v9t9.common.demos.IDemoEvent)
+	 */
+	@Override
+	public void queueEventForReversing(IDemoPlayer player, IDemoEvent event)
+			throws IOException {
+		VideoWriteDataEvent ev = (VideoWriteDataEvent) event;
+		byte[] oldBytes = new byte[ev.getLength()];
+		for (int i = 0; i < ev.getLength(); i++) {
+			byte byt = vdp.readAbsoluteVdpMemory(ev.getAddress() + i);
+			oldBytes[i] = byt;
+		}
+		reversedEventList.add(new VideoWriteDataEvent(ev.getAddress(), oldBytes));
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoReversePlaybackActor#emitReversedEvents(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public IDemoEvent[] emitReversedEvents(IDemoPlayer player)
+			throws IOException {
+		IDemoEvent[] evs = (IDemoEvent[]) reversedEventList.toArray(new IDemoEvent[reversedEventList.size()]);
+		reversedEventList.clear();
+		return evs;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoReversePlaybackActor#cleanupReversePlayback(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public void cleanupReversePlayback(IDemoPlayer player) {
+		reversedEventList = null;
 	}
 
 }

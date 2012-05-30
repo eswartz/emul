@@ -11,6 +11,7 @@ import v9t9.common.demos.IDemoInputStream;
 import v9t9.common.demos.IDemoOutputStream;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyException;
+import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import ejs.base.properties.IProperty;
@@ -55,8 +56,10 @@ public class DemoHandler implements IDemoHandler {
 			@Override
 			public void stopped(NotifyEvent event) {
 				try {
-					machine.getDemoHandler().stopPlayback();
-					machine.getDemoHandler().stopRecording();
+					if (event.level != Level.INFO) {
+						machine.getDemoHandler().stopPlayback();
+						machine.getDemoHandler().stopRecording();
+					}
 				} catch (NotifyException ex) {
 					//machine.getEventNotifier().notifyEvent(ex.getEvent());
 				}

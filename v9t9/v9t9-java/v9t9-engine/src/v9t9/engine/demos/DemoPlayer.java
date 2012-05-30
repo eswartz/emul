@@ -4,7 +4,9 @@
 package v9t9.engine.demos;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import v9t9.common.demos.IDemoEvent;
@@ -13,6 +15,7 @@ import v9t9.common.demos.IDemoInputStream;
 import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoHandler.IDemoListener;
+import v9t9.common.demos.IDemoReversePlaybackActor;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.machine.IMachine;
@@ -27,18 +30,51 @@ import ejs.base.utils.ListenerList.IFire;
  */
 public class DemoPlayer implements IDemoPlayer {
 
+	static abstract class DemoEventEntry {
+		IDemoEvent event;
+		long clock;
+		
+		public DemoEventEntry(IDemoEvent event, long elapsedTime) {
+			this.event = event;
+			clock = elapsedTime;
+		}
+	}
+	static class DemoPlayEventEntry extends DemoEventEntry {
+		public DemoPlayEventEntry(IDemoEvent event, long elapsedTime) {
+			super(event, elapsedTime);
+		}
+	}
+	static class DemoReverseEventEntry extends DemoEventEntry {
+		public DemoReverseEventEntry(IDemoEvent event, long elapsedTime) {
+			super(event, elapsedTime);
+		}
+	}
+	
 	private final IDemoInputStream is;
+	private List<DemoEventEntry> demoEvents = new ArrayList<DemoPlayer.DemoEventEntry>();
+	private int demoCursor;
+	
+	private IProperty pauseSetting;
+	private IProperty reverseSetting;
+	private IProperty playSetting;
+	
 	private final IMachine machine;
 	private boolean isFinished;
-	private IProperty pauseSetting;
-	private final ListenerList<IDemoListener> listeners;
+
+	private long elapsedTime;
 	private final int timerRate;
 	private double playClock;
 	private double playStepMs;
 	private double rateMultiplier;
+	
+	private final ListenerList<IDemoListener> listeners;
 	private Map<String, IDemoPlaybackActor> eventToActorMap = new HashMap<String, IDemoPlaybackActor>();
 	private Runnable demoTask;
 	private IDemoPlaybackActor[] playActors;
+	
+	private Map<String, IDemoReversePlaybackActor> eventToReverseActorMap = new HashMap<String, IDemoReversePlaybackActor>();
+	private IDemoReversePlaybackActor[] reverseActors;
+	
 
 	public DemoPlayer(IMachine machine, IDemoInputStream is,
 			ListenerList<IDemoListener> listeners) {
@@ -47,7 +83,9 @@ public class DemoPlayer implements IDemoPlayer {
 		this.timerRate = is.getTimerRate();
 		this.listeners = listeners;
 		
+		playSetting = machine.getSettings().get(IDemoHandler.settingPlayingDemo);
 		pauseSetting = machine.getSettings().get(IDemoHandler.settingDemoPaused);
+		reverseSetting = machine.getSettings().get(IDemoHandler.settingDemoReversing);
 		
 		setPlaybackRate(1.0);
 		
@@ -56,9 +94,20 @@ public class DemoPlayer implements IDemoPlayer {
 			eventToActorMap.put(actor.getEventIdentifier(), actor);
 			actor.setup(machine);
 		}
+		
+
+		reverseActors = machine.getDemoManager().createReversePlaybackActors();
+		for (IDemoReversePlaybackActor actor : reverseActors) {
+			eventToReverseActorMap.put(actor.getEventIdentifier(), actor);
+			actor.setup(machine);
+		}
 	}
 
 	public void start() {
+		if (demoTask != null) {
+			stop();
+		}
+		
 //		Settings.get(machine, IVdpChip.settingDumpVdpAccess).setBoolean(true);
 //		Settings.get(machine, ICpu.settingDumpFullInstructions).setBoolean(true);
 		
@@ -68,16 +117,27 @@ public class DemoPlayer implements IDemoPlayer {
 					return;
 				
 				if (!pauseSetting.getBoolean()) {
-					playClock += playStepMs;
-					stepDemo();
+					if (!reverseSetting.getBoolean()) {
+						playClock += playStepMs;
+						stepDemoForward();
+					} else {
+						playClock -= playStepMs;
+						stepDemoBackward();
+					}
 				}
 			}
 		};
-		machine.getFastMachineTimer().scheduleTask(demoTask, timerRate);
 		
 		for (IDemoPlaybackActor actor : playActors) {
 			actor.setupPlayback(this);
 		}
+		for (IDemoReversePlaybackActor actor : reverseActors) {
+			actor.setupReversePlayback(this);
+		}
+		
+		reverseSetting.setBoolean(false);
+		
+		machine.getFastMachineTimer().scheduleTask(demoTask, timerRate);
 	}
 	
 	/**
@@ -99,12 +159,12 @@ public class DemoPlayer implements IDemoPlayer {
 	/**
 	 * @return
 	 */
-	protected void stepDemo() {
+	protected void stepDemoForward() {
 		if (isFinished)
 			return;
 		
 		try {
-			processEvents();
+			playForwardEvents();
 		} catch (final IOException e) {
 			isFinished = true;
 			
@@ -121,38 +181,75 @@ public class DemoPlayer implements IDemoPlayer {
 
 		}
 	
-		if (isFinished) {
-			stop();
-			listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
-
-				@Override
-				public void fire(IDemoListener listener) {
-					listener.stopped(new NotifyEvent(System.currentTimeMillis(), null, 
-							Level.INFO, "Demo playback finished"));
-				}
-			});
-		}
+//		if (isFinished) {
+//			listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
+//
+//				@Override
+//				public void fire(IDemoListener listener) {
+//					listener.stopped(new NotifyEvent(System.currentTimeMillis(), null, 
+//							Level.INFO, "Demo playback finished"));
+//				}
+//			});
+//		}
 	}
 	
-	protected void processEvents() throws IOException {
+	protected void playForwardEvents() throws IOException {
 		IDemoEvent event;
 		
-		if (playClock < is.getElapsedTime())
+		if (playClock < elapsedTime)
 			return;
 		
 		while (true) {
-			event = is.readNext();
+			if (demoCursor < demoEvents.size()) {
+				DemoEventEntry entry = demoEvents.get(demoCursor++);
+				if (entry instanceof DemoReverseEventEntry)
+					continue;
+				event = entry.event;
+				elapsedTime = entry.clock;
+			} else {
+				event = is.readNext();
+				if (event != null) {
+					demoEvents.add(new DemoPlayEventEntry(event, is.getElapsedTime()));
+					demoCursor++;
+				}
+			}
 			
 			if (event == null) {
-				isFinished = true;
+				pauseSetting.setBoolean(true);
+				
+				listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
+	
+					@Override
+					public void fire(IDemoListener listener) {
+						listener.stopped(new NotifyEvent(System.currentTimeMillis(), null, 
+								Level.INFO, "Demo playback finished"));
+					}
+				});
 				break;
 			}
+
+			IDemoReversePlaybackActor revActor = eventToReverseActorMap.get(event.getIdentifier());
+			if (revActor != null)
+				revActor.queueEventForReversing(this, event);
 			
 			executeEvent(event);
 			
 			if (event instanceof TimerTick) {
 				// synchronize with virtual clock
 				long elapsed = ((TimerTick) event).getElapsedTime();
+				elapsedTime = elapsed;
+				
+				if (demoCursor == demoEvents.size()) {
+					// flush reversers
+					for (IDemoReversePlaybackActor actor : reverseActors) {
+						IDemoEvent[] evs = actor.emitReversedEvents(this);
+						for (IDemoEvent ev : evs) {
+							demoEvents.add(new DemoReverseEventEntry(ev, elapsedTime));
+							demoCursor++;
+						}
+					}
+				}
+				
 				if (elapsed >= playClock) {
 					break;
 				}
@@ -161,6 +258,63 @@ public class DemoPlayer implements IDemoPlayer {
 		
 	}
 
+
+	/**
+	 * @return
+	 */
+	protected void stepDemoBackward() {
+		try {
+			playReverseEvents();
+		} catch (final IOException e) {
+			isFinished = true;
+			
+			e.printStackTrace();
+			
+			listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
+
+				@Override
+				public void fire(IDemoListener listener) {
+					listener.stopped(new NotifyEvent(System.currentTimeMillis(), null, 
+								Level.ERROR, e.getMessage()));
+				}
+			});
+
+		}
+	}
+	
+
+	protected void playReverseEvents() throws IOException {
+		IDemoEvent event;
+		
+		if (playClock > elapsedTime)
+			return;
+		
+		while (true) {
+			if (demoCursor > 0) {
+				DemoEventEntry entry = demoEvents.get(--demoCursor);
+				if (entry instanceof DemoPlayEventEntry)
+					continue;
+				event = entry.event;
+				elapsedTime = entry.clock;
+			} else {
+				reverseSetting.setBoolean(false);
+				pauseSetting.setBoolean(true);
+				return;
+			}
+			
+			executeEvent(event);
+			
+			if (event instanceof TimerTick) {
+				// synchronize with virtual clock
+				long elapsed = ((TimerTick) event).getElapsedTime();
+				elapsedTime = elapsed;
+				if (elapsed < playClock) {
+					break;
+				}
+			}
+		}
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoPlayer#executeEvent(v9t9.common.demo.IDemoEvent)
 	 */
@@ -172,8 +326,14 @@ public class DemoPlayer implements IDemoPlayer {
 	}
 	
 	public void stop() {
-		machine.getFastMachineTimer().cancelTask(demoTask);
+		playSetting.setBoolean(false);
 		
+		machine.getFastMachineTimer().cancelTask(demoTask);
+		demoTask = null;
+		
+		for (IDemoReversePlaybackActor actor : reverseActors) {
+			actor.cleanupReversePlayback(this);
+		}
 		for (IDemoPlaybackActor actor : playActors) {
 			actor.cleanupPlayback(this);
 		}

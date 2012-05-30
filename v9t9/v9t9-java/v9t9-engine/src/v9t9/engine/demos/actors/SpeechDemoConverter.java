@@ -7,11 +7,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import v9t9.common.speech.ILPCParametersListener;
+import v9t9.engine.speech.LPCParameters;
 import ejs.base.utils.BitInputStream;
 import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
-import v9t9.common.speech.ILPCParametersListener;
-import v9t9.engine.speech.LPCParameters;
 
 /**
  * @author ejs

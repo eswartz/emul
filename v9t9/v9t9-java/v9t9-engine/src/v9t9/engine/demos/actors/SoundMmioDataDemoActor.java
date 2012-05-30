@@ -4,6 +4,7 @@
 package v9t9.engine.demos.actors;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 
 import v9t9.common.demos.IDemoActorProvider;
@@ -13,16 +14,19 @@ import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoRecorder;
 import v9t9.common.demos.IDemoRecordingActor;
 import v9t9.common.demos.IDemoReversePlaybackActor;
+import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.FullMemoryWriteTracker;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.demos.events.SoundWriteDataEvent;
+import v9t9.engine.demos.events.SoundWriteRegisterEvent;
+import v9t9.engine.sound.SoundTMS9919;
 
 /**
  * @author ejs
  *
  */
-public class SoundMmioDataDemoActor extends BaseDemoActor {
+public class SoundMmioDataDemoActor extends BaseDemoActor implements IDemoReversePlaybackActor {
 	public static class Provider implements IDemoActorProvider {
 
 		private final int mmioAddr;
@@ -48,17 +52,49 @@ public class SoundMmioDataDemoActor extends BaseDemoActor {
 
 		@Override
 		public IDemoReversePlaybackActor createForReversePlayback() {
+			return new SoundMmioDataDemoActor(mmioAddr);
+		}
+		
+	}
+
+
+	public static class ReverseProvider implements IDemoActorProvider {
+
+		private final int mmioAddr;
+
+		public ReverseProvider(int mmioAddr) {
+			this.mmioAddr = mmioAddr;
+		}
+
+		@Override
+		public String getEventIdentifier() {
+			return SoundWriteRegisterEvent.ID;
+		}
+		
+		@Override
+		public IDemoPlaybackActor createForPlayback() {
+			return new SoundRegisterDemoActor();
+		}
+
+		@Override
+		public IDemoRecordingActor createForRecording() {
+			return null;
+		}
+
+		@Override
+		public IDemoReversePlaybackActor createForReversePlayback() {
 			return null;
 		}
 		
 	}
 
-	
 	private FullMemoryWriteTracker soundDataListener;
 	private int soundMmioAddr;
 	private byte[] soundBytes = new byte[256];
 	private int soundIdx;
 	private IMemoryDomain console;
+	
+	private List<IDemoEvent> reversedEventsList;
 	
 	/**
 	 * 
@@ -93,9 +129,15 @@ public class SoundMmioDataDemoActor extends BaseDemoActor {
 		soundDataListener.addMemoryListener();
 
 		// send silence
-		recorder.getOutputStream().writeEvent(
-				new SoundWriteDataEvent(soundMmioAddr, 
-						new byte[] { (byte) 0x9f, (byte) 0xbf, (byte) 0xdf, (byte) 0xff }));
+		recorder.getOutputStream().writeEvent(createSilenceEvent());
+	}
+
+	/**
+	 * @return
+	 */
+	protected SoundWriteDataEvent createSilenceEvent() {
+		return new SoundWriteDataEvent(soundMmioAddr, 
+				new byte[] { (byte) 0x9f, (byte) 0xbf, (byte) 0xdf, (byte) 0xff });
 	}
 
 	/* (non-Javadoc)
@@ -152,5 +194,54 @@ public class SoundMmioDataDemoActor extends BaseDemoActor {
 		super.cleanupPlayback(player);
 		player.getMachine().getSound().reset();
 
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.demos.actors.BaseDemoActor#setupReversePlayback(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public void setupReversePlayback(IDemoPlayer player) {
+		reversedEventsList = new LinkedList<IDemoEvent>();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoReversePlaybackActor#queueEventForReversing(v9t9.common.demos.IDemoPlayer, v9t9.common.demos.IDemoEvent)
+	 */
+	@Override
+	public void queueEventForReversing(IDemoPlayer player, IDemoEvent event)
+			throws IOException {
+		ISoundChip sound = player.getMachine().getSound();
+		if (sound instanceof SoundTMS9919) {
+			SoundTMS9919 tms9919 = ((SoundTMS9919) sound);
+			
+			SoundWriteDataEvent ev = (SoundWriteDataEvent) event;
+			for (int i = 0; i < ev.getLength(); i++) {
+				byte byt = ev.getData()[i];
+				int reg = tms9919.convertMmioToRegister(ev.getAddress(), byt);
+				if (reg >= 0) {
+					int origVal = sound.getRegister(reg);
+					reversedEventsList.add(0, new SoundWriteRegisterEvent(reg, origVal));
+				}
+			}
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoReversePlaybackActor#emitReversedEvents(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public IDemoEvent[] emitReversedEvents(IDemoPlayer player)
+			throws IOException {
+		IDemoEvent[] evs = (IDemoEvent[]) reversedEventsList.toArray(new IDemoEvent[reversedEventsList.size()]);
+		reversedEventsList.clear();
+		return evs;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoReversePlaybackActor#cleanupReversePlayback(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public void cleanupReversePlayback(IDemoPlayer player) {
+		
 	}
 }

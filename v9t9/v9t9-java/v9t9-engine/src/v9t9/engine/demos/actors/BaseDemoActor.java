@@ -3,7 +3,6 @@
  */
 package v9t9.engine.demos.actors;
 
-import v9t9.common.demos.IDemoActor;
 import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoRecordingActor;
@@ -37,5 +36,4 @@ public abstract class BaseDemoActor implements IDemoRecordingActor, IDemoPlaybac
 	public void cleanupPlayback(IDemoPlayer player) {
 
 	}
-
 }

@@ -155,6 +155,40 @@ public class SoundTMS9919 implements ISoundChip {
 		}
 	}
 
+
+	/**
+	 * Get the register affected by the given MMIO data byte
+	 * @param address
+	 * @param byt
+	 * @return register number
+	 */
+	public int convertMmioToRegister(int address,
+			byte val) {
+		int vn;
+		if ((val & 0x80) != 0) {
+			vn = getOperationVoice(val);
+			switch ((val & 0x70) >> 4) 
+			{
+			case 0:				/* T1 FRQ */
+			case 2:				/* T2 FRQ */
+			case 4:				/* T3 FRQ */
+				return REG_OFFS_FREQUENCY_PERIOD + vn * REG_COUNT_TONE;
+			case 1:				/* T1 ATT */
+			case 3:				/* T2 ATT */
+			case 5:				/* T3 ATT */
+			case 7:				/* noise vol */
+				return REG_OFFS_ATTENUATION + vn * REG_COUNT_TONE;
+			case 6:				/* noise ctl */
+				return REG_OFFS_NOISE_CONTROL + vn * REG_COUNT_TONE;
+			}
+			return -1;
+		}
+		/*  second frequency byte */
+		else {
+			return -1;
+		}
+	}
+
 	protected int getFullPeriod(byte val) {
 		int period = periodLatches[cvoice] | ((val & 0x3f) << 4);
 		return period;
@@ -285,5 +319,4 @@ public class SoundTMS9919 implements ISoundChip {
 		}		
 		audioGateVoice.setGate(false);
 	}
-	
 }

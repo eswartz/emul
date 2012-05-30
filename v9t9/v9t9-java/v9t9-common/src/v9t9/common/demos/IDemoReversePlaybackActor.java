@@ -5,8 +5,6 @@ package v9t9.common.demos;
 
 import java.io.IOException;
 
-import v9t9.common.machine.IMachine;
-
 /**
  * This interface is implemented by an actor in the emulator
  * that wants to provide reversed events for playback.
@@ -21,9 +19,9 @@ public interface IDemoReversePlaybackActor extends IDemoActor {
 	
 	/**
 	 * Queue an event during demo playback.  Several invocations follow per
-	 * frame.
+	 * frame.  This is called before the given event is executed in the player.
 	 */
-	void queueEvent(IDemoPlayer player, IDemoEvent event) throws IOException;
+	void queueEventForReversing(IDemoPlayer player, IDemoEvent event) throws IOException;
 
 	/**
 	 * Produce the reversed events from the queue and empty the queue.

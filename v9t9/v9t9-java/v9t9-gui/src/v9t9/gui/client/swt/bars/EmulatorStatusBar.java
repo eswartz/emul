@@ -20,6 +20,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
@@ -97,8 +98,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		
 
 		createDemoButton(IconConsts.DEMO,
-				IconConsts.PLAY_OVERLAY, IconConsts.RECORD_OVERLAY,
-				IconConsts.PAUSE_OVERLAY,
 				"Play or record demo");
 
 		new BlankIcon(buttonBar, SWT.NONE);
@@ -170,14 +169,12 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 
 
 	private BasicButton createDemoButton( 
-			int demoIconIndex,
-			final int playOverlay, final int recordOverlay,
-			final int pauseOverlay, String tooltip) {
+			int demoIconIndex, String tooltip) {
 
 		final IProperty pauseSetting = Settings.get(machine, IDemoHandler.settingDemoPaused);
 		final IProperty recordSetting = Settings.get(machine, IDemoHandler.settingRecordDemo);
 		final IProperty playSetting = Settings.get(machine, IDemoHandler.settingPlayingDemo);
-//		final IProperty playRateSetting = Settings.get(machine, IDemoHandler.settingDemoPlaybackRate);
+		final IProperty reverseSetting = Settings.get(machine, IDemoHandler.settingDemoReversing);
 		final IProperty useOldFormatSetting = Settings.get(machine, IDemoManager.settingUseDemoOldFormat);
 		
 		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
@@ -200,12 +197,19 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				return false;
 			}
 		};
+
+		IPropertyListener demoButtonStateListener = new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				setDemoButtonOverlay(button, playSetting, recordSetting, pauseSetting, reverseSetting);
+			}
+		};
 		
-		addSettingToggleListener(button, recordSetting, demoIconIndex, recordOverlay,
-				true, false);
-		
-		addSettingToggleListener(button, playSetting, demoIconIndex, playOverlay,
-				true, false);
+		recordSetting.addListener(demoButtonStateListener);
+		playSetting.addListener(demoButtonStateListener);
+		reverseSetting.addListener(demoButtonStateListener);
+		pauseSetting.addListener(demoButtonStateListener);
 		
 		// the demo button controls pausing (when something active)
 		// else triggers the menu
@@ -254,16 +258,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					boolean pointOverDemoControlIcon = isPointOverDemoControlIcon(button.getSize(), menuLoc.x, menuLoc.y); 
 					if ((recordSetting.getBoolean() || playSetting.getBoolean())
 							&& pointOverDemoControlIcon) { 
-						if (pauseSetting.getBoolean())
-							button.setOverlayBounds(imageProvider.imageIndexToBounds(
-									recordSetting.getBoolean() ? recordOverlay : playOverlay));
-						else
-							button.setOverlayBounds(imageProvider.imageIndexToBounds(pauseOverlay));
-						
 						pauseSetting.setBoolean(!pauseSetting.getBoolean());
-
-						button.redraw();
-
 					} else {
 						showDemoMenu(handler, e, e.x, e.y, 
 								recordSetting, playSetting, pauseSetting,
@@ -274,15 +269,10 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				}
 			}
 		});
-
+		
 		// initialize state
 		if (recordSetting.getBoolean() || playSetting.getBoolean()) {
-			if (!pauseSetting.getBoolean()) {
-				button.setOverlayBounds(imageProvider.imageIndexToBounds(
-						recordSetting.getBoolean() ? recordOverlay : playOverlay));
-			} else {
-				button.setOverlayBounds(imageProvider.imageIndexToBounds(pauseOverlay));
-			}
+			setDemoButtonOverlay(button, playSetting, recordSetting, pauseSetting, reverseSetting);
 		}					
 		button.setSelection(pauseSetting.getBoolean());
 		
@@ -331,8 +321,38 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		
 	}
 
+	/**
+	 * @param button
+	 * @param playSetting
+	 * @param recordSetting
+	 * @param pauseSetting
+	 * @param reverseSetting
+	 */
+	protected void setDemoButtonOverlay(final BasicButton button,
+			IProperty playSetting, IProperty recordSetting,
+			IProperty pauseSetting, IProperty reverseSetting) {
+		if (!playSetting.getBoolean() && !recordSetting.getBoolean()) {
+			button.setOverlayBounds(null);
+		}
+		else if (pauseSetting.getBoolean()) {
+			button.setOverlayBounds(imageProvider.imageIndexToBounds(IconConsts.PAUSE_OVERLAY));
+		} else {
+			button.setOverlayBounds(imageProvider.imageIndexToBounds(
+					recordSetting.getBoolean() ? IconConsts.RECORD_OVERLAY : 
+						reverseSetting.getBoolean() ? IconConsts.REVERSE_OVERLAY : IconConsts.PLAY_OVERLAY));
+		}
+		
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				button.redraw();
+			}
+		});
+
+	}
+
+
 	protected boolean isPointOverDemoControlIcon(Point size, int x, int y) {
-		return x < size.x / 3 && y < size.y / 3;
+		return x < size.x / 2 && y < size.y / 2;
 	}
 
 
@@ -355,9 +375,9 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		
 		if (currentFilename != null) {
 			if (playSetting.getBoolean()) {
-				final MenuItem stopItem = new MenuItem(menu, SWT.RADIO);
+				final MenuItem stopItem = new MenuItem(menu, SWT.NONE);
 				stopItem.setText("Stop playing " + currentFilename);
-				stopItem.setSelection(true);
+				//stopItem.setSelection(true);
 				stopItem.addSelectionListener(new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
@@ -503,6 +523,21 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 
 	private Menu addRateMenuItems(final Menu menu) {
 		IProperty playbackRate = Settings.get(machine, IDemoHandler.settingDemoPlaybackRate);
+		final IProperty reversing = Settings.get(machine, IDemoHandler.settingDemoReversing);
+		final IProperty pausing = Settings.get(machine, IDemoHandler.settingDemoPaused);
+		
+		MenuItem item = new MenuItem(menu, SWT.CHECK);
+		item.setText("&Reverse");
+		item.setSelection(reversing.getBoolean());
+		item.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				reversing.setBoolean(!reversing.getBoolean());
+				pausing.setBoolean(false);
+			}
+		});
+		
+		new MenuItem(menu, SWT.SEPARATOR);
 		
 		createRateMenuItem(menu, playbackRate, -1, 1, "1x");
 		createRateMenuItem(menu, playbackRate, -1, 1.5, "1.5x");

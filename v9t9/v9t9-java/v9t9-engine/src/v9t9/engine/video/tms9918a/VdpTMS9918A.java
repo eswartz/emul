@@ -382,8 +382,10 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	public int getRegister(int reg) {
 		if (reg == REG_ST) {
 			return vdpStatus;
-		} else {
+		} else if (reg < vdpregs.length) {
 			return vdpregs[reg] & 0xff;
+		} else {
+			return 0;
 		}
 	}
 	

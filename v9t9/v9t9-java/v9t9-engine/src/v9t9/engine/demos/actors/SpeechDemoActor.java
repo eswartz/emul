@@ -5,6 +5,7 @@ package v9t9.engine.demos.actors;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import v9t9.common.demos.IDemoActorProvider;
@@ -31,7 +32,7 @@ import ejs.base.properties.IPropertyListener;
  * @author ejs
  *
  */
-public class SpeechDemoActor extends BaseDemoActor {
+public class SpeechDemoActor extends BaseDemoActor implements IDemoReversePlaybackActor {
 	public static class Provider implements IDemoActorProvider {
 		@Override
 		public String getEventIdentifier() {
@@ -47,7 +48,7 @@ public class SpeechDemoActor extends BaseDemoActor {
 		}
 		@Override
 		public IDemoReversePlaybackActor createForReversePlayback() {
-			return null;
+			return new SpeechDemoActor();
 		}
 		
 	}
@@ -60,6 +61,8 @@ public class SpeechDemoActor extends BaseDemoActor {
 	private IProperty talkRate;
 	private double origTalkRate;
 	private IPropertyListener demoRateListener;
+	
+	private List<SpeechEvent> reversedEventsList;
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoActor#getEventIdentifier()
@@ -183,4 +186,42 @@ public class SpeechDemoActor extends BaseDemoActor {
 		talkRate.setDouble(origTalkRate);
 	}
 
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.demos.actors.BaseDemoActor#setupReversePlayback(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public void setupReversePlayback(IDemoPlayer player) {
+		reversedEventsList = new LinkedList<SpeechEvent>();
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoReversePlaybackActor#queueEventForReversing(v9t9.common.demos.IDemoPlayer, v9t9.common.demos.IDemoEvent)
+	 */
+	@Override
+	public void queueEventForReversing(IDemoPlayer player, IDemoEvent event)
+			throws IOException {
+		reversedEventsList.add(0, (SpeechEvent) event);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoReversePlaybackActor#emitReversedEvents(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public IDemoEvent[] emitReversedEvents(IDemoPlayer player)
+			throws IOException {
+		IDemoEvent[] evs = (IDemoEvent[]) reversedEventsList.toArray(new IDemoEvent[reversedEventsList.size()]);
+		reversedEventsList.clear();
+		return evs;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.demos.actors.BaseDemoActor#cleanupReversePlayback(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public void cleanupReversePlayback(IDemoPlayer player) {
+		reversedEventsList = null;
+	}
 }

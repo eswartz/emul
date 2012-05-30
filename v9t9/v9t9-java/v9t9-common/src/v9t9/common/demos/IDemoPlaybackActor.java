@@ -5,8 +5,6 @@ package v9t9.common.demos;
 
 import java.io.IOException;
 
-import v9t9.common.machine.IMachine;
-
 /**
  * This interface is implemented by an actor in the emulator
  * that wants to reproduce events for a demo.

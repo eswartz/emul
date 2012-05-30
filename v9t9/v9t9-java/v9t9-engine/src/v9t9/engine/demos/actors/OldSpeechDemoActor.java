@@ -4,6 +4,7 @@
 package v9t9.engine.demos.actors;
 
 import java.io.IOException;
+import java.util.LinkedList;
 
 import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEvent;
@@ -22,10 +23,13 @@ import v9t9.engine.demos.format.old.OldDemoFormat;
 import v9t9.engine.speech.SpeechTMS5220;
 
 /**
+ * Converting actor for old-style speech events.  The OldSpeechEvents cannot be played
+ * back directly, due to timing issues.  Instead, we convert them to
+ * LPC parameters and emit them as new-style SpeechEvents.
  * @author ejs
  *
  */
-public class OldSpeechDemoActor extends BaseDemoActor {
+public class OldSpeechDemoActor extends BaseDemoActor implements IDemoReversePlaybackActor {
 	public static class Provider implements IDemoActorProvider {
 		@Override
 		public String getEventIdentifier() {
@@ -41,7 +45,7 @@ public class OldSpeechDemoActor extends BaseDemoActor {
 		}
 		@Override
 		public IDemoReversePlaybackActor createForReversePlayback() {
-			return null;
+			return new OldSpeechDemoActor();
 		}
 		
 	}
@@ -51,6 +55,10 @@ public class OldSpeechDemoActor extends BaseDemoActor {
 	
 	private SpeechDemoConverter converter; 
 	private ILPCParametersListener convertParamsListener;
+	
+	private SpeechDemoConverter reverseConverter; 
+	private ILPCParametersListener convertReversedParamsListener;
+	private LinkedList<SpeechEvent> reversedEventsList;
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoActor#getEventIdentifier()
@@ -206,4 +214,70 @@ public class OldSpeechDemoActor extends BaseDemoActor {
 		//speech.reset();
 	}
 
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.demos.actors.BaseDemoActor#setupReversePlayback(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public void setupReversePlayback(IDemoPlayer player) {
+		reversedEventsList = new LinkedList<SpeechEvent>();
+		
+		reverseConverter = new SpeechDemoConverter();
+		convertReversedParamsListener = new ILPCParametersListener() {
+			
+			@Override
+			public void parametersAdded(ILPCParameters params) {
+				reversedEventsList.add(0, new SpeechEvent(params));
+			}
+		};
+		reverseConverter.addEquationListener(convertReversedParamsListener);
+	}
+	
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoReversePlaybackActor#queueEventForReversing(v9t9.common.demos.IDemoPlayer, v9t9.common.demos.IDemoEvent)
+	 */
+	@Override
+	public void queueEventForReversing(IDemoPlayer player, IDemoEvent event)
+			throws IOException {
+		OldSpeechEvent ev = (OldSpeechEvent) event;
+		switch (ev.getCode()) {
+		//
+		//	legacy handling: convert to new format
+		//
+		case OldSpeechEvent.SPEECH_STARTING:
+			reverseConverter.startPhrase();
+			break;
+		case OldSpeechEvent.SPEECH_STOPPING:
+			reverseConverter.stopPhrase();
+			break;
+		case OldSpeechEvent.SPEECH_TERMINATING:
+			reverseConverter.terminatePhrase();
+			break;
+		case OldSpeechEvent.SPEECH_ADDING_BYTE:
+			reverseConverter.pushByte(ev.getAddedByte());
+			break;
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.demos.IDemoReversePlaybackActor#emitReversedEvents(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public IDemoEvent[] emitReversedEvents(IDemoPlayer player)
+			throws IOException {
+		reverseConverter.stopPhrase();
+		IDemoEvent[] evs = (IDemoEvent[]) reversedEventsList.toArray(new IDemoEvent[reversedEventsList.size()]);
+		reversedEventsList.clear();
+		return evs;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.demos.actors.BaseDemoActor#cleanupReversePlayback(v9t9.common.demos.IDemoPlayer)
+	 */
+	@Override
+	public void cleanupReversePlayback(IDemoPlayer player) {
+		reverseConverter.removeEquationListener(convertReversedParamsListener);		
+		reversedEventsList = null;
+	}
 }

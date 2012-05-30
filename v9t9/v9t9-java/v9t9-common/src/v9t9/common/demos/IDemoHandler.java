@@ -43,7 +43,15 @@ public interface IDemoHandler {
 	SettingSchema settingDemoPlaybackRate = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"DemoPlaybackRate", 1.0);
-	
+
+	/** 
+	 * This setting is true while a demo is playing backwards.
+	 *  */
+	SettingSchema settingDemoReversing = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"DemoReversing", new Boolean(false));
+
+
 	interface IDemoListener {
 		void stopped(NotifyEvent event);
 	}
