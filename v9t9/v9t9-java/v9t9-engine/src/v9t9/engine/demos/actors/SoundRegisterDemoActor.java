@@ -19,7 +19,6 @@ import v9t9.common.machine.FullRegisterWriteTracker;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.engine.demos.events.SoundWriteRegisterEvent;
-import v9t9.engine.demos.events.VideoWriteRegisterEvent;
 
 /**
  * @author ejs
@@ -144,8 +143,8 @@ public class SoundRegisterDemoActor extends BaseDemoActor implements IDemoRevers
 	@Override
 	public void queueEventForReversing(IDemoPlayer player, IDemoEvent event)
 			throws IOException {
-		VideoWriteRegisterEvent ev = (VideoWriteRegisterEvent) event;
-		reversedEventsList.add(0, new VideoWriteRegisterEvent(ev.getReg(), 
+		SoundWriteRegisterEvent ev = (SoundWriteRegisterEvent) event;
+		reversedEventsList.add(0, new SoundWriteRegisterEvent(ev.getReg(), 
 				sound.getRegister(ev.getReg())));
 	}
 	
