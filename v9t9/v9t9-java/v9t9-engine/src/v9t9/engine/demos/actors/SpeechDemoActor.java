@@ -63,6 +63,7 @@ public class SpeechDemoActor extends BaseDemoActor implements IDemoReversePlayba
 	private IPropertyListener demoRateListener;
 	
 	private List<SpeechEvent> reversedEventsList;
+	private SpeechEvent lastSpeechEvent;
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoActor#getEventIdentifier()
@@ -203,7 +204,15 @@ public class SpeechDemoActor extends BaseDemoActor implements IDemoReversePlayba
 	@Override
 	public void queueEventForReversing(IDemoPlayer player, IDemoEvent event)
 			throws IOException {
-		reversedEventsList.add(0, (SpeechEvent) event);
+		SpeechEvent ev = (SpeechEvent) event;
+		if (ev.getParams().isRepeat()) {
+			// repeats the *next* event, but we may have lost the last
+			// params in the events list, so duplicate the last we know of
+			if (lastSpeechEvent != null)
+				ev = lastSpeechEvent;
+		}
+		reversedEventsList.add(0, ev);
+		lastSpeechEvent = ev;
 	}
 	
 	/* (non-Javadoc)

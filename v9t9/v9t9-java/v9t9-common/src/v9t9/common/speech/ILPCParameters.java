@@ -43,4 +43,11 @@ public interface ILPCParameters {
 	 */
 	void fromBytes(BitInputStream bis) throws IOException;
 	
+	boolean isLast();
+
+	boolean isSilent();
+
+	boolean isUnvoiced();
+
+	boolean isRepeat();
 }

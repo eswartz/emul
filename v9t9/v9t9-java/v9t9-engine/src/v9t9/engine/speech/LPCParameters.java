@@ -219,5 +219,8 @@ public class LPCParameters implements ILPCParameters {
 		return pitchParam == 0;
 	}
 
+	public boolean isRepeat() {
+		return repeat;
+	}
 	
 }

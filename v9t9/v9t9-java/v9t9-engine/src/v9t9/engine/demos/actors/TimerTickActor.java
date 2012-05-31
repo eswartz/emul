@@ -21,6 +21,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.engine.demos.events.TimerTick;
 import ejs.base.properties.IProperty;
+import ejs.base.timer.FastTimer;
 
 /**
  * @author ejs
@@ -48,6 +49,7 @@ public class TimerTickActor extends BaseDemoActor implements IDemoReversePlaybac
 		
 	}
 	
+	private FastTimer timer;
 	private Runnable timerTask;
 	private IProperty pauseDemoSetting;
 	private LinkedList<IDemoEvent> reversedEventsList;
@@ -65,7 +67,7 @@ public class TimerTickActor extends BaseDemoActor implements IDemoReversePlaybac
 	 */
 	@Override
 	public void setup(IMachine machine) {
-		
+		timer = new FastTimer("Demo Timer Tick");
 	}
 
 	/* (non-Javadoc)
@@ -93,8 +95,7 @@ public class TimerTickActor extends BaseDemoActor implements IDemoReversePlaybac
 			}
 		};
 		
-		recorder.getMachine().getFastMachineTimer().scheduleTask(
-				timerTask, recorder.getOutputStream().getTimerRate());
+		timer.scheduleTask(timerTask, recorder.getOutputStream().getTimerRate());
 	}
 
 	/* (non-Javadoc)
@@ -114,8 +115,8 @@ public class TimerTickActor extends BaseDemoActor implements IDemoReversePlaybac
 	 */
 	@Override
 	public void disconnectFromRecording(IDemoRecorder recorder) {
-		recorder.getMachine().getFastMachineTimer().
-			cancelTask(timerTask);
+		timer.cancelTask(timerTask);
+		timer.cancel();
 	}
 
 	/* (non-Javadoc)
