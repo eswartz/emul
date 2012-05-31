@@ -144,7 +144,7 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
                 new ConsoleGramWriteArea(gplMmio)));
 		
 		((IMachine) machine).getDemoManager().registerActorProvider(new SoundMmioDataDemoActor.Provider(0x8400));
-		((IMachine) machine).getDemoManager().registerActorProvider(new SoundMmioDataDemoActor.ReverseProvider(0x8400));
+		((IMachine) machine).getDemoManager().registerActorProvider(new SoundMmioDataDemoActor.ReverseProvider());
 
 	}
 

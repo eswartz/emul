@@ -271,11 +271,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		});
 		
 		// initialize state
-		if (recordSetting.getBoolean() || playSetting.getBoolean()) {
-			setDemoButtonOverlay(button, playSetting, recordSetting, pauseSetting, reverseSetting);
-		}					
-		button.setSelection(pauseSetting.getBoolean());
-		
+		setDemoButtonOverlay(button, playSetting, recordSetting, pauseSetting, reverseSetting);
+		//button.setSelection(pauseSetting.getBoolean());
 		
 		playSetting.addListener(new IPropertyListener() {
 			

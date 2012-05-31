@@ -238,18 +238,18 @@ public class DemoPlayer implements IDemoPlayer {
 				// synchronize with virtual clock
 				long elapsed = ((TimerTick) event).getElapsedTime();
 				elapsedTime = elapsed;
-				
+
 				if (demoCursor == demoEvents.size()) {
 					// flush reversers
 					for (IDemoReversePlaybackActor actor : reverseActors) {
 						IDemoEvent[] evs = actor.emitReversedEvents(this);
 						for (IDemoEvent ev : evs) {
-							demoEvents.add(new DemoReverseEventEntry(ev, elapsedTime));
+							demoEvents.add(new DemoReverseEventEntry(ev, elapsed));
 							demoCursor++;
 						}
 					}
 				}
-				
+
 				if (elapsed >= playClock) {
 					break;
 				}
@@ -326,6 +326,8 @@ public class DemoPlayer implements IDemoPlayer {
 	}
 	
 	public void stop() {
+		demoEvents.clear();
+		
 		playSetting.setBoolean(false);
 		
 		machine.getFastMachineTimer().cancelTask(demoTask);

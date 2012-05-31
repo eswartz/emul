@@ -791,6 +791,8 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	 */
 	@Override
 	public int getRegister(int reg) {
+		if (reg >= getRegisterCount())
+			return 0;
 		if (reg >= VdpV9938Consts.REG_PAL0)
 			return palette[reg - VdpV9938Consts.REG_PAL0];
 		else if (reg >= VdpV9938Consts.REG_SR0)

@@ -65,7 +65,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		
 		for (SoundVoice voice : soundVoices) {
 			if (voice instanceof ClockedSoundVoice) {
-				((ClockedSoundVoice) voice).setReferenceClock(TMS9919Consts.CHIP_CLOCK / 16);
+				((ClockedSoundVoice) voice).setReferenceClock(TMS9919Consts.CHIP_CLOCK);
 			}
 		}
 		return regBase;

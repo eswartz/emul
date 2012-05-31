@@ -57,7 +57,7 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	}
 	
 	public void setReferenceClock(int refClock) {
-		this.refClock = refClock;
+		this.refClock = (refClock - 7) / 16;
 		setupVoice();
 	}
 	
@@ -111,6 +111,7 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		
 		dump();
 	}
+	
 	protected void dump() {
 		if (logger.isDebugEnabled()) {
 			if (getVolume() == 0)

@@ -59,11 +59,7 @@ public class SoundMmioDataDemoActor extends BaseDemoActor implements IDemoRevers
 
 
 	public static class ReverseProvider implements IDemoActorProvider {
-
-		private final int mmioAddr;
-
-		public ReverseProvider(int mmioAddr) {
-			this.mmioAddr = mmioAddr;
+		public ReverseProvider() {
 		}
 
 		@Override
