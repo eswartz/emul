@@ -155,7 +155,7 @@ public abstract class BaseEmulatorWindow {
 	public void loadMachineState() {
 		String filename = selectFile(
 				"Select saved machine state", settingMachineStatePath, "saves", 
-				"machine.sav", false, false, MACHINE_SAVE_FILE_EXTENSIONS);
+				null, false, false, MACHINE_SAVE_FILE_EXTENSIONS);
 		
 		if (filename != null) {
 			InputStream fis = null;
