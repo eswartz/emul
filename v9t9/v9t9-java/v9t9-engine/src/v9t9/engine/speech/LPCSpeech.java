@@ -5,6 +5,7 @@ package v9t9.engine.speech;
 
 import java.util.Arrays;
 
+import ejs.base.properties.IProperty;
 import ejs.base.settings.Logging;
 import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
@@ -37,10 +38,15 @@ final static int FL_last	= 8;		/* stop frame seen */
 
 	private ListenerList<ISpeechDataSender> senderList;
 	private ListenerList<ILPCParametersListener> paramListeners;
+	private IProperty pitchAdjust;
+	private IProperty forceUnvoiced;
 	
 	public LPCSpeech(ISettingsHandler settings) {
 		this.settings = settings;
 		
+		pitchAdjust = settings.get(ISpeechChip.settingPitchAdjust);
+		forceUnvoiced = settings.get(ISpeechChip.settingForceUnvoiced);
+
 		b = new int[12];
 		y = new int[12];
 	}
@@ -147,7 +153,9 @@ final static int FL_last	= 8;		/* stop frame seen */
 
 			} else {				/* voiced */
 
-				params.pitch = RomTables.pitchtable[params.pitch] >> 8;
+				int effPitch = RomTables.pitchtable[params.pitch];
+				effPitch *= pitchAdjust.getDouble();
+				params.pitch = effPitch >> 8;
 
 				if ((decode & FL_unvoiced) != 0)	/* unvoiced before? */
 					decode |= FL_nointerp;	/* don't interpolate */
@@ -372,7 +380,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 		if ((decode & FL_last) != 0) 
 			return false;
 					
-		readEquation(fetcher, false);
+		readEquation(fetcher, forceUnvoiced.getBoolean());
 		if ((decode & FL_nointerp + FL_first) != 0)
 			decode &= ~FL_first;
 		
@@ -431,8 +439,10 @@ final static int FL_last	= 8;		/* stop frame seen */
 
 			} else {				/* voiced */
 
-				params.pitch = RomTables.pitchtable[params.pitchParam] >> 8;
-
+				int effPitch = RomTables.pitchtable[params.pitchParam];
+				effPitch /= pitchAdjust.getDouble();
+				params.pitch = effPitch >> 8;
+				
 				if ((decode & FL_unvoiced) != 0)	/* unvoiced before? */
 					decode |= FL_nointerp;	/* don't interpolate */
 				else
@@ -510,7 +520,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 		//if ((decode & FL_last) != 0) 
 		//	return false;
 					
-		applyEquation(params, false);
+		applyEquation(params, forceUnvoiced.getBoolean());
 		
 		calcFrameData(length);
 		//return (decode & FL_last) == 0;	/* not last frame */

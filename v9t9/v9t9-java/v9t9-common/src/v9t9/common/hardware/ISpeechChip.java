@@ -20,6 +20,14 @@ public interface ISpeechChip extends IPersistable {
 			ISettingsHandler.INSTANCE,
 			"TalkSpeed",
 			1.0);
+	SettingSchema settingPitchAdjust = new SettingSchema(
+			ISettingsHandler.INSTANCE,
+			"PitchAdjust",
+			1.0);
+	SettingSchema settingForceUnvoiced = new SettingSchema(
+			ISettingsHandler.INSTANCE,
+			"ForceUnvoiced",
+			Boolean.FALSE);
 	SettingSchema settingLogSpeech = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"LogSpeech",
