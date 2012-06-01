@@ -82,6 +82,28 @@ public class SpeechDialog extends Composite {
 		});
 		
 		
+		// pitch
+		final IProperty pitchRangeAdjustProperty = Settings.get(machine, ISpeechChip.settingPitchRangeAdjust);
+		
+		label = new Label(this, SWT.WRAP);
+		label.setText("Pitch Range Adjustment");
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(label);
+		
+		final Spinner pitchRangeSpinner = new Spinner(this, SWT.NONE);
+		pitchRangeSpinner.setMinimum(0);
+		pitchRangeSpinner.setMaximum(800);
+		pitchRangeSpinner.setDigits(2);
+		pitchRangeSpinner.setSelection((int) (pitchRangeAdjustProperty.getDouble() * 100));
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(pitchRangeSpinner);
+		
+		pitchRangeSpinner.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				pitchRangeAdjustProperty.setDouble(pitchRangeSpinner.getSelection() / 100.);
+			}
+		});
+		
+		
 		// whisper
 		final IProperty forceUnvoicedProperty = Settings.get(machine, ISpeechChip.settingForceUnvoiced);
 		

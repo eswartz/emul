@@ -24,27 +24,42 @@ import v9t9.common.speech.ILPCParametersListener;
 public class LPCSpeech {
 	LPCParameters params = new LPCParameters();
 	LPCParameters oldParams = new LPCParameters();
-	int		decode;			/* speech flags */
-final static int FL_unvoiced = 1;		/* unvoiced? */
-final static int FL_nointerp = 2;		/* no interpolation */
-final static int FL_first	= 4;		/* first frame? */
-final static int FL_last	= 8;		/* stop frame seen */
+	/** speech flags (mask of FL_xxx) */
+	int		decode;			
+	/** unvoiced? */
+final static int FL_unvoiced = 1;		
+/** no interpolation */
+final static int FL_nointerp = 2;		
+/** first frame? */
+final static int FL_first	= 4;		
+/** stop frame seen */
+final static int FL_last	= 8;		
 
-	int		b[],y[];		/* lattice filter */
-	int		ns1,ns2;		/* unvoiced hiss registers */
-	int		ppctr;			/* pitch counter */
+	/** middle range of pitch (average) */
+	int 	midRange;		
+	/** which equation (0..n) is being handled */
+	int		voicedEquationNumber;
+
+	/** lattice filter */
+	int		b[],y[];		
+	/** unvoiced hiss registers */
+	int		ns1,ns2;		
+	/** pitch counter */
+	int		ppctr;			
 
 	private final ISettingsHandler settings;
 
 	private ListenerList<ISpeechDataSender> senderList;
 	private ListenerList<ILPCParametersListener> paramListeners;
 	private IProperty pitchAdjust;
+	private IProperty pitchRangeAdjust;
 	private IProperty forceUnvoiced;
 	
 	public LPCSpeech(ISettingsHandler settings) {
 		this.settings = settings;
 		
 		pitchAdjust = settings.get(ISpeechChip.settingPitchAdjust);
+		pitchRangeAdjust = settings.get(ISpeechChip.settingPitchRangeAdjust);
 		forceUnvoiced = settings.get(ISpeechChip.settingForceUnvoiced);
 
 		b = new int[12];
@@ -60,6 +75,8 @@ final static int FL_last	= 8;		/* stop frame seen */
 	
 	public synchronized void init() {
 		decode = FL_first;
+		voicedEquationNumber = 0;
+		midRange = 0;
 		ns1 = 0xaaaaaaaa;
 		ns2 = 0x1;
 		params.init();
@@ -92,7 +109,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 		params.energyParam = 0;
 		params.energy = 0;
 		Arrays.fill(params.kVal, 0);
-		
+		voicedEquationNumber = 0;
 		// if the previous frame was unvoiced,
 		// it would sound bad to interpolate.
 		// just clear it all out.
@@ -123,10 +140,12 @@ final static int FL_last	= 8;		/* stop frame seen */
 			decode |= FL_last;
 			clearToSilence();	/* clear params */
 		} else if (params.energy == 0) {	/* silent frame */
-			if ((decode & FL_unvoiced) != 0)	/* unvoiced before? */ 
+			if ((decode & FL_unvoiced) != 0) {	/* unvoiced before? */ 
 				decode |= FL_nointerp;
-			else
+			} else {
 				decode &= ~FL_nointerp;
+			}
+			voicedEquationNumber = 0;
 			clearToSilence();	/* clear params */
 		} else {
 			/*  Repeat bit  */
@@ -143,26 +162,28 @@ final static int FL_last	= 8;		/* stop frame seen */
 				else
 					decode &= ~FL_nointerp;
 				decode |= FL_unvoiced;
-				params.pitch = 12;		/* set some pitch */
-
+				
 				if (oldParams.energy == 0)	/* previous frame silent? */
 					decode |= FL_nointerp;
 				
 				/* reset pitch on voiced->unvoiced transition*/
 				ppctr = 0;
+				voicedEquationNumber = 0;
+				params.pitch = 12;		/* set some pitch */
 
 			} else {				/* voiced */
 
-				int effPitch = RomTables.pitchtable[params.pitch];
-				effPitch *= pitchAdjust.getDouble();
-				params.pitch = effPitch >> 8;
 
-				if ((decode & FL_unvoiced) != 0)	/* unvoiced before? */
+				if ((decode & FL_unvoiced) != 0) {	/* unvoiced before? */
 					decode |= FL_nointerp;	/* don't interpolate */
+					voicedEquationNumber = 0;
+				}
 				else
 					decode &= ~FL_nointerp;
 
 				decode &= ~FL_unvoiced;
+				
+				params.pitch = getRangeAdjustedPitch(params.pitch);
 			}
 
 			/* translate energy */
@@ -380,6 +401,14 @@ final static int FL_last	= 8;		/* stop frame seen */
 		if ((decode & FL_last) != 0) 
 			return false;
 					
+		if ((decode & FL_first) != 0) {
+			midRange = 0;
+			voicedEquationNumber = 0;
+		}
+		else {
+			voicedEquationNumber++;
+		}
+		
 		readEquation(fetcher, forceUnvoiced.getBoolean());
 		if ((decode & FL_nointerp + FL_first) != 0)
 			decode &= ~FL_first;
@@ -414,6 +443,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 		
 		if (params.isLast()) {
 			decode |= FL_last;
+			voicedEquationNumber = 0;
 			clearToSilence();	/* clear params */
 		} else if (params.isSilent()) {	/* silent frame */
 			if ((decode & FL_unvoiced) != 0)	/* unvoiced before? */ 
@@ -439,9 +469,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 
 			} else {				/* voiced */
 
-				int effPitch = RomTables.pitchtable[params.pitchParam];
-				effPitch /= pitchAdjust.getDouble();
-				params.pitch = effPitch >> 8;
+				params.pitch = getRangeAdjustedPitch(params.pitchParam);
 				
 				if ((decode & FL_unvoiced) != 0)	/* unvoiced before? */
 					decode |= FL_nointerp;	/* don't interpolate */
@@ -449,6 +477,8 @@ final static int FL_last	= 8;		/* stop frame seen */
 					decode &= ~FL_nointerp;
 
 				decode &= ~FL_unvoiced;
+				voicedEquationNumber++;
+
 			}
 
 			/* translate energy */
@@ -508,6 +538,30 @@ final static int FL_last	= 8;		/* stop frame seen */
 	}	
 	
 	/**
+	 * @param pitchVal
+	 * @return
+	 */
+	private int getRangeAdjustedPitch(int pitchParam) {
+		
+		int normVal = RomTables.pitchtable[pitchParam] >> 8;
+		normVal /= pitchAdjust.getDouble();
+		
+		double rangeAdjust = pitchRangeAdjust.getDouble();
+		if (voicedEquationNumber == 0) {
+			midRange = normVal;
+		} else if (voicedEquationNumber < 4) {
+			midRange = (midRange * 2 + normVal) / 3;
+		}
+		
+		int adjustedPitch = (int) (midRange + (normVal - midRange) * rangeAdjust);
+		
+		
+		int pitch = Math.max(0, Math.min(adjustedPitch, 0xc0));
+		
+		return pitch;
+	}
+
+	/**
 	 * One LPC frame consists of calculating a speech waveform and outputting it
 	 * for a set of parameters.
 	 * 
@@ -519,7 +573,13 @@ final static int FL_last	= 8;		/* stop frame seen */
 	{
 		//if ((decode & FL_last) != 0) 
 		//	return false;
-					
+				
+		
+		if ((decode & FL_first) != 0) {
+			midRange = 0;
+			voicedEquationNumber = 0;
+		}
+	
 		applyEquation(params, forceUnvoiced.getBoolean());
 		
 		calcFrameData(length);
