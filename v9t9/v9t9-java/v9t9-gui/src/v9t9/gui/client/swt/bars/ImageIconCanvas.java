@@ -61,6 +61,13 @@ public abstract class ImageIconCanvas extends ImageBarChild {
 
 	protected void doPaint(PaintEvent e) {
 		super.doPaint(e);
+		drawImage(e);
+	}
+
+	/**
+	 * @param e
+	 */
+	protected void drawImage(PaintEvent e) {
 		Rectangle drawRect = getBounds();
 		try {
 			imageProvider.drawImage(e.gc, drawRect, bounds);

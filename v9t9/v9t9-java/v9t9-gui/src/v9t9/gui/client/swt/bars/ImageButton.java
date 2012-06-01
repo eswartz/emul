@@ -151,9 +151,11 @@ public class ImageButton extends ImageIconCanvas {
 		}
 	}
 
-	protected void doPaint(PaintEvent e) {
-		super.doPaint(e);
-		
+	/**
+	 * @param e
+	 */
+	@Override
+	protected void drawImage(PaintEvent e) {
 		Rectangle drawRect = getBounds();
 		Point po = parentDrawer.getPaintOffset();
 		

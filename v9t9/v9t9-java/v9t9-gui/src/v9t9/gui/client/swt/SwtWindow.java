@@ -175,7 +175,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				statusBar.getButtonBar().setBounds(0, 0, barSz, cur.height);
 				videoRendererComposite.setBounds(barSz, 0, left, cur.height - rndSz.y);
 				buttonBar.getButtonBar().setBounds(barSz + left, 0, barSz, cur.height);
-				rndBar.getButtonBar().setBounds(barSz, cur.height - rndSz.y, rndSz.x, rndSz.y);
+				rndBar.getButtonBar().setBounds(barSz, cur.height - rndSz.y, cur.width - barSz*2, rndSz.y);
 			} else {
 				int barSz = Math.min(sbSz.y, bbSz.y);
 				int left = cur.height - barSz * 3;

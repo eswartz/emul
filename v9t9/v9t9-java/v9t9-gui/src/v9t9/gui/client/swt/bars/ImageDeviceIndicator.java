@@ -83,10 +83,8 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 		this.overlayBounds = overlayBounds; 
 	}
 
-	protected void doPaint(PaintEvent e) {
-		//Point size = new Point(bounds.width, bounds.height);
-		super.doPaint(e);
-		
+	@Override
+	protected void drawImage(PaintEvent e) {
 		Rectangle drawRect = getBounds();
 		Point po = parentDrawer.getPaintOffset();
 		drawRect.x = po.x;

@@ -201,6 +201,10 @@ public class SVGSalamanderLoader implements ISVGLoader {
         }
         */
     	
+//    	ImageLoader il = new ImageLoader();
+//    	il.data = new ImageData[] { data };
+//    	il.save("/tmp/icons.png", SWT.IMAGE_PNG);
+    	
         return data;
     }
 

@@ -302,11 +302,13 @@ public class ImageBar extends Canvas implements IImageBar {
 	protected void paintButtonBar(GC gc, Point offset, Point size) {
 		int y = size.y;
 		int x = size.x;
+		Point mySize = getSize();
 		if (isHorizontal) {
-			y = getSize().y;
+			y = mySize.y;
 		} else {
-			x = getSize().x;
+			x = mySize.x;
 		}
+		
 		gradient.draw(gc, offset.x + paintOffsX, offset.y + paintOffsY, 
 				x, y); 
 		
