@@ -107,6 +107,8 @@ import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageBar;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
+import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageAdjuster;
+import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
 
 /**
  * @author ejs
@@ -120,7 +122,9 @@ public class ModuleSelector extends Composite {
 	private static final String SHOW_MISSING_MODULES = "ShowMissingModules";
 	private static final String SORT_ENABLED = "SortEnabled";
 	private static final String SORT_DIRECTION = "SortDirection";
-	
+
+	final int MAX = 64;
+
 	private static boolean allowEditing = true;
 	
 	private static String NAME_PROPERTY = "name";
@@ -147,8 +151,6 @@ public class ModuleSelector extends Composite {
 	protected boolean sortModules;
 	protected int sortDirection;
 	
-	private static Map<String, Image> loadedImages = new HashMap<String, Image>();
-
 	private ViewerFilter filteredSearchFilter = new FilteredSearchFilter();
 	private final SwtWindow window;
 	private boolean wasPaused;
@@ -189,6 +191,10 @@ public class ModuleSelector extends Composite {
 	protected boolean isEditing;
 	protected Collection<URI> dirtyModuleLists = new HashSet<URI>();
 	private List<Object> moduleList;
+	private LazyImageLoader lazyImageLoader;
+	private Image stockModuleImage;
+	private URI builtinImagesURI;
+	private ILazyImageAdjuster moduleImageResizer;
 	
 	class FilteredSearchFilter extends ViewerFilter {
 
@@ -226,7 +232,13 @@ public class ModuleSelector extends Composite {
 		public void run() {
 			final List<Object> avail = new ArrayList<Object>();
 			while (true) {
-
+				// delay to gather more changes at once
+				try {
+					Thread.sleep(750);
+				} catch (InterruptedException e) {
+					return;
+				}
+				
 				synchronized (avail) {
 					while (!elements.isEmpty()) {
 						final Object element = elements.poll();
@@ -262,12 +274,6 @@ public class ModuleSelector extends Composite {
 					});
 				}
 				
-				// delay to gather more changes at once
-				try {
-					Thread.sleep(750);
-				} catch (InterruptedException e) {
-					return;
-				}
 			}
 		}
 
@@ -390,7 +396,6 @@ public class ModuleSelector extends Composite {
 		
 		viewerUpdater.start();
 		
-
 		addDisposeListener(new DisposeListener() {
 			
 			@Override
@@ -556,12 +561,46 @@ public class ModuleSelector extends Composite {
 		}
 		viewer.refresh();
 	}
-
 	/**
 	 * @param moduleManager
 	 */
 	protected TableViewer createTable() {
 		final TableViewer viewer = new TableViewer(this, SWT.READ_ONLY | SWT.BORDER | SWT.FULL_SELECTION);
+		
+
+		moduleImageResizer = new ILazyImageAdjuster() {
+			
+			@Override
+			public Image adjustImage(Object element, URI imageURI, Image image) {
+				//final boolean moduleLoadable = module == null || isModuleLoadable(module);
+				//final String imageKey = imageURI.toString() + (moduleLoadable ? "" : "?grey");
+
+				Rectangle bounds = image.getBounds();
+				int sz = Math.max(bounds.width, bounds.height);
+				
+				if (sz > MAX) {
+					sz = MAX;
+
+					Image scaled = ImageUtils.scaleImage(getDisplay(), image, new Point(MAX, MAX), true, true);
+					image.dispose();
+					
+//					if (!moduleLoadable) {
+//						Image grey = ImageUtils.convertToGreyscale(display, scaled);
+//						scaled.dispose();
+//						scaled = grey;
+//					}
+						
+					image = scaled;
+				}
+				return image;
+			}
+		};
+		
+		
+		loadStockModuleImage();
+		
+		lazyImageLoader = new LazyImageLoader(viewer, executor, stockModuleImage);
+		
 		
 		viewer.setComparer(new IElementComparer() {
 			
@@ -660,6 +699,7 @@ public class ModuleSelector extends Composite {
 				if (cell.getElement()  instanceof String) {
 					String string = (String) cell.getElement();
 					cell.setText(string);
+					cell.setImage(getOrLoadModuleImage(string, null, null));
 				} else {
 					IModule module = (IModule) cell.getElement();
 					cell.setText(module.getName());
@@ -719,8 +759,57 @@ public class ModuleSelector extends Composite {
 				}*/
 			}
 		});
+
+		lazyImageLoader.addListener(new ILazyImageLoadedListener() {
+			
+			@Override
+			public void imageLoaded(Object element, URI imageURI, Image image) {
+				viewerUpdater.post(element);
+			}
+		});
 		
+
 		return viewer;
+	}
+
+
+
+	/**
+	 * 
+	 */
+	protected void loadStockModuleImage() {
+		URI stockURI = null;
+		try {
+			builtinImagesURI = machine.getModel().getDataURL().toURI().resolve("images/");
+			stockURI = machine.getRomPathFileLocator().resolveInsideURI(
+					builtinImagesURI, 
+					"stock_module_missing.png");
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} 
+
+		if (stockURI != null) {
+			InputStream is = null;
+			try {
+				is = machine.getRomPathFileLocator().createInputStream(stockURI);
+				Image image = new Image(getDisplay(), is);
+				stockModuleImage = moduleImageResizer.adjustImage(null, null, image);
+			} catch (IOException e) {
+				
+			} finally {
+				if (is != null) {
+					try {
+						is.close();
+					} catch (IOException e) {
+						
+					}
+				}
+			}
+			
+		}
+		if (stockModuleImage == null) {
+			stockModuleImage = new Image(getDisplay(), new Rectangle(0, 0, MAX, MAX));
+		}
 	}
 
 	/**
@@ -1084,98 +1173,32 @@ public class ModuleSelector extends Composite {
 		URI imageURI = null;
 		
 		// see if user has an entry
+		URI imagesURI = builtinImagesURI;
+		
 		if (imagePath != null) {
 			imageURI = machine.getRomPathFileLocator().findFile(imagePath);
 		
 			if (imageURI == null) {
 				// look inside distribution
-				try {
+				
 					imageURI = machine.getRomPathFileLocator().resolveInsideURI(
-							machine.getModel().getDataURL().toURI(),
-							"images/" + imagePath);
+							imagesURI,
+							imagePath);
 					if (!machine.getRomPathFileLocator().exists(imageURI))
 						imageURI = null;
-				} catch (URISyntaxException e) {
-					e.printStackTrace();
-				} 
+				
 			}
 		}
+		
 		if (imageURI == null) {
-			try {
-				imageURI = machine.getRomPathFileLocator().resolveInsideURI(
-						machine.getModel().getDataURL().toURI(), 
-						module != null ? 
-								(isModuleLoadable(module) ? "images/stock_module.png" : "images/stock_module_missing.png")
-								: "images/stock_no_module.png");
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			}
+			imageURI = machine.getRomPathFileLocator().resolveInsideURI(
+					imagesURI, 
+					module != null ? 
+							(isModuleLoadable(module) ? "stock_module.png" : "stock_module_missing.png")
+							: "stock_no_module.png");
 		}
 
-		final boolean moduleLoadable = module == null || isModuleLoadable(module);
-		final String imageKey = imageURI.toString() + (moduleLoadable ? "" : "?grey");
-		
-		Image image;
-		synchronized (loadedImages) {
-			
-			final URI theImageURI = imageURI;
-			image = loadedImages.get(imageKey);
-			if (image == null) {
-				Runnable runnable = new Runnable() {
-					
-					@Override
-					public void run() {
-
-						//long start = System.currentTimeMillis(); 
-						Image image = null;
-						InputStream is = null;
-						try {
-							is = theImageURI.toURL().openStream();
-							image = new Image(getDisplay(), is);
-							
-							Rectangle bounds = image.getBounds();
-							int sz = Math.max(bounds.width, bounds.height);
-							
-							final int MAX = 64;
-							if (sz > MAX) {
-								sz = MAX;
-
-								Image scaled = ImageUtils.scaleImage(getDisplay(), image, new Point(MAX, MAX), true, true);
-								image.dispose();
-								
-								if (!moduleLoadable) {
-									Image grey = ImageUtils.convertToGreyscale(getDisplay(), scaled);
-									scaled.dispose();
-									scaled = grey;
-								}
-									
-								image = scaled;
-							}
-							
-							synchronized (loadedImages) {
-								loadedImages.put(imageKey, image);
-
-								viewerUpdater.post(element);
-							}
-							
-						} catch (IOException e) {
-							e.printStackTrace();
-						} finally {
-							try {
-								if (is != null) is.close();
-							} catch (IOException e) {
-							}
-							//long end = System.currentTimeMillis();
-							//System.out.println("... image load+scale took " + (end - start));
-						}
-					}
-				};
-				
-				executor.submit(runnable);
-				
-			}
-		}
-		
+		Image image = lazyImageLoader.findOrLoadImage(element, imageURI, moduleImageResizer);
 		//System.out.println(System.currentTimeMillis() + "... " + module + ": " + image);
 		return image;
 	}
