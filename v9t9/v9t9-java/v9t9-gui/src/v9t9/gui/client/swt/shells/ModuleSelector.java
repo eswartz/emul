@@ -227,13 +227,6 @@ public class ModuleSelector extends Composite {
 			final List<Object> avail = new ArrayList<Object>();
 			while (true) {
 
-				// delay to gather more changes at once
-				try {
-					Thread.sleep(750);
-				} catch (InterruptedException e) {
-					return;
-				}
-				
 				synchronized (avail) {
 					while (!elements.isEmpty()) {
 						final Object element = elements.poll();
@@ -267,6 +260,13 @@ public class ModuleSelector extends Composite {
 							}
 						}
 					});
+				}
+				
+				// delay to gather more changes at once
+				try {
+					Thread.sleep(750);
+				} catch (InterruptedException e) {
+					return;
 				}
 			}
 		}

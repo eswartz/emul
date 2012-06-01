@@ -377,12 +377,12 @@ public class PathFileLocator implements IPathFileLocator {
 			cachedListingModifiedTime.put(directory, connection.getLastModified());
 		}
 		else  {
-//			if (!connection.getContentType().equals("text/plain")) {
-//				logger.error("!!! Unexpected directory content at " + directory + ":  " +
-//							connection.getContentType());
-//
-//				throw new IOException("unexpected content at " + directory);
-//			}
+			if (!connection.getContentType().equals("text/plain")) {
+				logger.error("!!! Unexpected directory content at " + directory + ":  " +
+							connection.getContentType());
+
+				throw new IOException("unexpected content at " + directory);
+			}
 		
 			// only re-read if the directory changed
 			time = connection.getLastModified();
