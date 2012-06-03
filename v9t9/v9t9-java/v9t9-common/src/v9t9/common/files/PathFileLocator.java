@@ -628,7 +628,8 @@ public class PathFileLocator implements IPathFileLocator {
 	{
 	    if (ch > 128 || ch < 0)
 	        return true;
-	    return " %$&+,/:;=?@<>#%".indexOf(ch) >= 0;
+	    // remove '/' since it is likely a real path separator
+	    return " %$&+,:;=?@<>#%".indexOf(ch) >= 0;
 	}
 
 	protected URLConnection connect(URI uri) throws IOException,
