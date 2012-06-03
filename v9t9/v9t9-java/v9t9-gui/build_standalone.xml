@@ -127,7 +127,7 @@
               <include name="org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
               <include name="org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
     	    </fileset>
-    		<fileset dir="${base.v9t9}/libs/lwjgl">
+    		<fileset dir="${base.v9t9}/libs/lwjgl/jar">
               <include name="jinput.jar"/>
               <include name="lwjgl_util.jar"/>
               <include name="lwjgl.jar"/>

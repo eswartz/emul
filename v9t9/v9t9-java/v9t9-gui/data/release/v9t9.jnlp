@@ -7,7 +7,6 @@
   		<vendor>Ed Swartz</vendor>
   		<homepage href="http://github.com/eswartz/emul/" />
   		<description>V9t9 - TI-99/4A + more emulator</description>
-		<offline-allowed/>
 	</information>
 
 	<security>
