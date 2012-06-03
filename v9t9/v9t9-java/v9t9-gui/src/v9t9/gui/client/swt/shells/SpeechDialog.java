@@ -15,7 +15,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
 
-import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingProperty;
 
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
@@ -40,13 +40,15 @@ public class SpeechDialog extends Composite {
 		Label label;
 		
 		// rate
-		final IProperty talkRateProperty = Settings.get(machine, ISpeechChip.settingTalkSpeed);
+		final ISettingProperty talkRateProperty = (ISettingProperty) Settings.get(
+				machine, ISpeechChip.settingTalkSpeed);
 		
 		label = new Label(this, SWT.WRAP);
 		label.setText("Talk Rate");
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(label);
 		
 		final Spinner rateSpinner = new Spinner(this, SWT.NONE);
+		rateSpinner.setToolTipText("Adjust how fast speech is generated (1 = normal, 0.5 = half speed, etc.)");
 		rateSpinner.setMinimum(10);
 		rateSpinner.setMaximum(500);
 		rateSpinner.setDigits(2);
@@ -61,13 +63,15 @@ public class SpeechDialog extends Composite {
 		});
 		
 		// pitch
-		final IProperty pitchAdjustProperty = Settings.get(machine, ISpeechChip.settingPitchAdjust);
+		final ISettingProperty pitchAdjustProperty = (ISettingProperty) Settings.get(
+				machine, ISpeechChip.settingPitchAdjust);
 		
 		label = new Label(this, SWT.WRAP);
 		label.setText("Pitch Adjustment");
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(label);
 		
 		final Spinner pitchSpinner = new Spinner(this, SWT.NONE);
+		pitchSpinner.setToolTipText("Adjust the pitch of speech (1 = normal, 0.5 = octave lower, etc.)");
 		pitchSpinner.setMinimum(25);
 		pitchSpinner.setMaximum(400);
 		pitchSpinner.setDigits(2);
@@ -82,14 +86,16 @@ public class SpeechDialog extends Composite {
 		});
 		
 		
-		// pitch
-		final IProperty pitchRangeAdjustProperty = Settings.get(machine, ISpeechChip.settingPitchRangeAdjust);
+		// pitch range
+		final ISettingProperty pitchRangeAdjustProperty = (ISettingProperty) Settings.get(
+				machine, ISpeechChip.settingPitchRangeAdjust);
 		
 		label = new Label(this, SWT.WRAP);
 		label.setText("Pitch Range Adjustment");
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(label);
 		
 		final Spinner pitchRangeSpinner = new Spinner(this, SWT.NONE);
+		pitchRangeSpinner.setToolTipText("Adjust the range of pitch variation of speech (1 = normal, 0.5 = half as much, 0 = robotic, etc.)");
 		pitchRangeSpinner.setMinimum(0);
 		pitchRangeSpinner.setMaximum(800);
 		pitchRangeSpinner.setDigits(2);
@@ -103,15 +109,41 @@ public class SpeechDialog extends Composite {
 			}
 		});
 		
+
+		
+		// pitch midrange 
+		final ISettingProperty pitchMidRangeAdjustRateProperty = (ISettingProperty) Settings.get(
+				machine, ISpeechChip.settingPitchMidRangeAdjustRate);
+		
+		label = new Label(this, SWT.WRAP);
+		label.setText("Pitch Midrange Adjust Rate");
+		GridDataFactory.fillDefaults().grab(false, false).applyTo(label);
+		
+		final Spinner pitchMidRangeSpinner = new Spinner(this, SWT.NONE);
+		pitchMidRangeSpinner.setToolTipText("Adjust the rate at which pitch midrange is changed (when the pitch range selection is not 1) -- -1 uses fixed midrange, 0 adjusts immediately, etc.");
+		pitchMidRangeSpinner.setMinimum(-1);
+		pitchMidRangeSpinner.setMaximum(100);
+		pitchMidRangeSpinner.setSelection(pitchMidRangeAdjustRateProperty.getInt());
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(pitchMidRangeSpinner);
+		
+		pitchMidRangeSpinner.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				pitchMidRangeAdjustRateProperty.setInt(pitchMidRangeSpinner.getSelection());
+			}
+		});
+
 		
 		// whisper
-		final IProperty forceUnvoicedProperty = Settings.get(machine, ISpeechChip.settingForceUnvoiced);
+		final ISettingProperty forceUnvoicedProperty = (ISettingProperty) Settings.get(
+				machine, ISpeechChip.settingForceUnvoiced);
 		
 		label = new Label(this, SWT.WRAP);
 		label.setText("Always Whisper");
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(label);
 		
 		final Button whisperButton = new Button(this, SWT.TOGGLE);
+		whisperButton.setToolTipText("If set, all speech is whispered");
 		whisperButton.setText(forceUnvoicedProperty.getBoolean() ? "on" : "off");
 		whisperButton.setSelection(forceUnvoicedProperty.getBoolean());
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(whisperButton);
@@ -123,7 +155,36 @@ public class SpeechDialog extends Composite {
 				whisperButton.setText(forceUnvoicedProperty.getBoolean() ? "on" : "off");
 			}
 		});
+
 		
+		// reset
+		Button resetButton = new Button(this, SWT.PUSH);
+		resetButton.setText("Reset to defaults");
+		GridDataFactory.fillDefaults().grab(false, false).span(2, 1).applyTo(resetButton);
+		
+		resetButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				talkRateProperty.resetToDefault();
+				rateSpinner.setSelection((int) (talkRateProperty.getDouble() * 100));
+				
+				pitchAdjustProperty.resetToDefault();
+				pitchSpinner.setSelection((int) (pitchAdjustProperty.getDouble() * 100));
+				
+				pitchRangeAdjustProperty.resetToDefault();
+				pitchRangeSpinner.setSelection((int) (pitchRangeAdjustProperty.getDouble() * 100));
+				
+				pitchMidRangeAdjustRateProperty.resetToDefault();
+				pitchMidRangeSpinner.setSelection((int) (pitchMidRangeAdjustRateProperty.getDouble() * 100));
+				
+				forceUnvoicedProperty.resetToDefault();
+				whisperButton.setSelection(forceUnvoicedProperty.getBoolean());
+				whisperButton.setText(forceUnvoicedProperty.getBoolean() ? "on" : "off");
+				
+			}
+		});
+		
+
 //		GridDataFactory.fillDefaults().grab(true, true).applyTo(editGroup);
 	}
 

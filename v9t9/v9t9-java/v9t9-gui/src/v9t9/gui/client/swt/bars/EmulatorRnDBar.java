@@ -17,16 +17,16 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-
 import v9t9.common.cpu.ICpu;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.IImageBar.IPaintOffsetListener;
 import v9t9.gui.client.swt.shells.CpuMetricsCanvas;
+import v9t9.gui.client.swt.shells.SpeechDialog;
 import v9t9.gui.client.swt.shells.debugger.DebuggerWindow;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * This is the bar of command buttons and status indicators for
@@ -153,6 +153,17 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 			}
 		});
 
+		
+		createButton(IconConsts.SPEECH, "Speech options", 
+			new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					swtWindow.toggleToolShell(SpeechDialog.SPEECH_DIALOG_TOOL_ID, 
+							SpeechDialog.getToolShellFactory(buttonBar, machine, swtWindow));
+				}
+		});
+		
+		
 	}
 	
 	/* (non-Javadoc)
@@ -167,4 +178,5 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 		
 	}
 
+	
 }

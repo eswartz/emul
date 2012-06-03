@@ -122,5 +122,14 @@ public class SettingProperty extends AbstractProperty implements ISettingPropert
 	public boolean isDefault() {
 		return value == null || value.equals(defaultValue);
 	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.settings.ISettingProperty#resetToDefault()
+	 */
+	@Override
+	public void resetToDefault() {
+		if (defaultValue != null)
+			setValue(defaultValue);
+	}
 
 }

@@ -53,6 +53,7 @@ final static int FL_last	= 8;
 	private ListenerList<ILPCParametersListener> paramListeners;
 	private IProperty pitchAdjust;
 	private IProperty pitchRangeAdjust;
+	private IProperty pitchMidRangeAdjustRate;
 	private IProperty forceUnvoiced;
 	
 	public LPCSpeech(ISettingsHandler settings) {
@@ -60,6 +61,7 @@ final static int FL_last	= 8;
 		
 		pitchAdjust = settings.get(ISpeechChip.settingPitchAdjust);
 		pitchRangeAdjust = settings.get(ISpeechChip.settingPitchRangeAdjust);
+		pitchMidRangeAdjustRate = settings.get(ISpeechChip.settingPitchMidRangeAdjustRate);
 		forceUnvoiced = settings.get(ISpeechChip.settingForceUnvoiced);
 
 		b = new int[12];
@@ -542,15 +544,21 @@ final static int FL_last	= 8;
 	 * @return
 	 */
 	private int getRangeAdjustedPitch(int pitchParam) {
+		int midRangeAdjustMax = pitchMidRangeAdjustRate.getInt();
 		
 		int normVal = RomTables.pitchtable[pitchParam] >> 8;
+
+		if (midRangeAdjustMax == -1)
+			normVal = 43;
+		
 		normVal /= pitchAdjust.getDouble();
 		
 		double rangeAdjust = pitchRangeAdjust.getDouble();
-		if (voicedEquationNumber == 0) {
+		
+		if (voicedEquationNumber == 0 || midRangeAdjustMax <= 1) {
 			midRange = normVal;
-		} else if (voicedEquationNumber < 4) {
-			midRange = (midRange * 2 + normVal) / 3;
+		} else if (voicedEquationNumber < midRangeAdjustMax) {
+			midRange = (midRange * (midRangeAdjustMax - 1) + normVal) / midRangeAdjustMax;
 		}
 		
 		int adjustedPitch = (int) (midRange + (normVal - midRange) * rangeAdjust);

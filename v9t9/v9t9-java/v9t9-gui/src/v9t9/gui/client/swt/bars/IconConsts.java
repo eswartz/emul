@@ -32,7 +32,8 @@ public class IconConsts {
 	static final int RECORD_OVERLAY = 19;
 	static final int PLAY_OVERLAY = 20;
 	static final int PAUSE_OVERLAY = 21;
-	static final int DEMO = 22;
-	static final int REVERSE_OVERLAY = 23;
+	static final int REVERSE_OVERLAY = 22;
+	static final int DEMO = 23;
+	static final int SPEECH = 24;
 
 }

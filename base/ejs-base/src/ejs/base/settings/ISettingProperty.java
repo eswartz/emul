@@ -18,4 +18,5 @@ public interface ISettingProperty extends IProperty {
 	 */
 	boolean isDefault();
 
+	void resetToDefault();
 }

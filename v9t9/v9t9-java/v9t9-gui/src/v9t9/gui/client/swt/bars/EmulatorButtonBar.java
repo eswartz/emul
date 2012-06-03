@@ -31,7 +31,6 @@ import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
 import v9t9.gui.client.swt.shells.ImageImportOptionsDialog;
-import v9t9.gui.client.swt.shells.SpeechDialog;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.gui.sound.JavaSoundHandler;
 import ejs.base.properties.IProperty;
@@ -238,16 +237,6 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 			javaSoundHandler.getSoundRecordingHelper().populateSoundMenu(menu);
 			javaSoundHandler.getSpeechRecordingHelper().populateSoundMenu(menu);
 		}
-		
-		MenuItem speechItem = new MenuItem(menu, SWT.PUSH);
-		speechItem.setText("Speech Options...");
-		speechItem.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				swtWindow.toggleToolShell(SpeechDialog.SPEECH_DIALOG_TOOL_ID, 
-						SpeechDialog.getToolShellFactory(buttonBar, machine, swtWindow));
-			}
-		});
 		
 		MenuItem vitem = new MenuItem(menu, SWT.CASCADE);
 		vitem.setText("Volume");

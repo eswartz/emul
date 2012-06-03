@@ -28,6 +28,10 @@ public interface ISpeechChip extends IPersistable {
 			ISettingsHandler.INSTANCE,
 			"PitchRangeAdjust",
 			1.0);
+	SettingSchema settingPitchMidRangeAdjustRate = new SettingSchema(
+			ISettingsHandler.INSTANCE,
+			"PitchMidRangeAdjustRate",
+			4);
 	SettingSchema settingForceUnvoiced = new SettingSchema(
 			ISettingsHandler.INSTANCE,
 			"ForceUnvoiced",
