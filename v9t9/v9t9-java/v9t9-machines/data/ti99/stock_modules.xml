@@ -1303,7 +1303,7 @@
     </memoryEntries>
   </module>
   <module name="Simon Says!">
-    <image>simon_says!.png</image>
+    <image>simon_says.png</image>
     <memoryEntries>
       <gromModuleEntry fileMd5="80B5A2BBEC83BA160AADE1773B0EA241" fileName="simong.bin"/>
     </memoryEntries>
@@ -1356,7 +1356,7 @@
     </memoryEntries>
   </module>
   <module name="Strike Three!">
-    <image>strike_three!.png</image>
+    <image>strike_three.png</image>
     <memoryEntries>
       <bankedModuleEntry file2Md5="2EA9594A4AF15DBF6818D5D9F09BC8A0" fileMd5="A4587E9882BCAFDDF50955093B03A14D" fileName="strike3c.bin" fileName2="strike3d.bin"/>
     </memoryEntries>

@@ -11,6 +11,11 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Enumeration;
+
+import org.apache.log4j.Appender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.LogManager;
 
 import v9t9.common.client.IClient;
 import v9t9.common.cpu.ICpu;
@@ -33,12 +38,6 @@ public class Emulator {
 	private static final boolean sIsWebStarted = System.getProperty("javawebstart.version") != null;
 	private static boolean debug;
 
-	static {
-		if (System.getProperty("log4j.configuration") == null) {
-			System.setProperty("log4j.configuration",  
-					EmulatorGuiData.getDataURL("logging/default.properties").toString());
-		}
-	}
 	static {
 		if (sIsWebStarted && System.getProperty("jna.library.path") == null) {
 			String path = Native.getWebStartLibraryPath("v9t9render");
@@ -172,18 +171,18 @@ public class Emulator {
 		client = ClientFactory.createClient(clientId, 
 				server.getMachine());
 
-//
-//		for (Enumeration<Appender> e = LogManager.getRootLogger().getAllAppenders(); e.hasMoreElements(); ) {
-//			Appender a = e.nextElement();
-//			System.out.println(a);
-//			if (a instanceof FileAppender) {
-//				MessageDialog.openInformation(null, "Log", 
-//						System.getProperty("log4j.configuration") + "\n" +
-//						(((FileAppender) a).getFile()) );
-//			}
-//		}
-		if (debug)
+
+		for (@SuppressWarnings("unchecked")
+		Enumeration<Appender> e = LogManager.getRootLogger().getAllAppenders(); e.hasMoreElements(); ) {
+			Appender a = e.nextElement();
+			if (a instanceof FileAppender) {
+				System.out.println("Log file: " + (((FileAppender) a).getFile()) );
+			}
+		}
+		
+		if (debug) {
 			server.getMachine().getSettings().get(ICpu.settingDumpFullInstructions).setBoolean(true);
+		}
 		
 		if (client == null) {
 			System.err.println("Failed to contact or create client: " + clientId);

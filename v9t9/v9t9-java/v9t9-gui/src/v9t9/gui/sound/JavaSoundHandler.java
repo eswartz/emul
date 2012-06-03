@@ -153,8 +153,10 @@ public class JavaSoundHandler implements ISoundHandler {
 			output.start();
 			speechOutput.start();
 		} else {
-			output.stop();
-			speechOutput.stop();
+			if (output != null)
+				output.stop();
+			if (speechOutput != null)
+				speechOutput.stop();
 		}
 	}
 

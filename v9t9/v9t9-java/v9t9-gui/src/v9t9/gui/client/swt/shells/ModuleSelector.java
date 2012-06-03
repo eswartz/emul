@@ -25,6 +25,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import javax.imageio.ImageIO;
 
+import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -115,6 +116,8 @@ import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
  *
  */
 public class ModuleSelector extends Composite {
+	private static final Logger logger = Logger.getLogger(ModuleSelector.class);
+	
 	public static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 	private static String lastFilter;
 
@@ -780,12 +783,15 @@ public class ModuleSelector extends Composite {
 	protected void loadStockModuleImage() {
 		URI stockURI = null;
 		try {
-			builtinImagesURI = machine.getModel().getDataURL().toURI().resolve("images/");
+			builtinImagesURI = machine.getRomPathFileLocator().resolveInsideURI(
+					machine.getModel().getDataURL().toURI(), 
+					"images/");
+			logger.info("builtinImagesURI = " + builtinImagesURI);
 			stockURI = machine.getRomPathFileLocator().resolveInsideURI(
 					builtinImagesURI, 
 					"stock_module_missing.png");
 		} catch (URISyntaxException e) {
-			e.printStackTrace();
+			logger.error("Failed to load stock module image", e);
 		} 
 
 		if (stockURI != null) {

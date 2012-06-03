@@ -15,7 +15,7 @@
 
 	<resources>
 		<!--
-		<property name="log4j.configuration" value="jar:file:v9t9j.jar!/logging/debug.properties"/>
+		<property name="log4j.configuration" value="jar:file:v9t9j.jar!/debug.properties"/>
 		-->
 		
 		<jar href="v9t9j.jar" main="true" />

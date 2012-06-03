@@ -330,7 +330,8 @@ public class PathFileLocator implements IPathFileLocator {
 				}
 			} catch (IOException e) {
 				logger.debug("failed to get listing from " + uri, e);
-				e.printStackTrace();
+				if (false == e instanceof FileNotFoundException)
+					e.printStackTrace();
 			}
 		}
 		

@@ -73,7 +73,10 @@ public class DiskMemoryEntry extends MemoryEntry {
         super.load();
         if (!bLoaded) {
             try {
-            	URI uri = locator.findFile(storedInfo.settings, info);
+            	URI uri = null;
+            	if (storedInfo != null) {
+					uri = locator.findFile(storedInfo.settings, info);
+				}
             	if (uri == null) {
                     // TODO: send alert
             		return;
