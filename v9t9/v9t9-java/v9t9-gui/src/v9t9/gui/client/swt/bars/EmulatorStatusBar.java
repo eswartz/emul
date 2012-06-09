@@ -341,7 +341,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
-				button.redraw();
+				if (!button.isDisposed())
+					button.redraw();
 			}
 		});
 
