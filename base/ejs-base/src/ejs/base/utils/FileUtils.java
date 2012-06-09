@@ -71,10 +71,9 @@ public class FileUtils  {
 			stream = new FileInputStream(file);
 			result = new byte[(int) size];
 			stream.read(result);
-		} catch (IOException e) {
+		} finally {
 			if (stream != null)
 				stream.close();
-			throw e;
 		}
 		return new String(result);
 	}

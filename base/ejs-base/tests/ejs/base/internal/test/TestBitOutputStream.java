@@ -44,6 +44,7 @@ public class TestBitOutputStream {
 		} catch (IllegalArgumentException e) {
 			
 		}
+		bs.close();
 	}
 	
 

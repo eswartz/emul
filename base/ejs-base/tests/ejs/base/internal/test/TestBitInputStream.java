@@ -34,6 +34,7 @@ public class TestBitInputStream {
 		} catch (IOException e) {
 			// eof
 		}
+		bs.close();
 	}
 	@Test
 	public void testIllegal() throws Exception  {
@@ -51,6 +52,7 @@ public class TestBitInputStream {
 		} catch (IllegalArgumentException e) {
 			
 		}
+		bs.close();
 	}
 	
 	@Test
@@ -77,6 +79,7 @@ public class TestBitInputStream {
 		} catch (IOException e) {
 			
 		}
+		bs.close();
 	}
 	
 }
