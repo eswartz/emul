@@ -29,7 +29,7 @@ import ejs.base.winmm.WinMMLibrary;
  * not when the driver is ready for them.
  * 
  */
-public class Win32SoundListener implements ISoundListener {
+public class Win32SoundListener implements ISoundEmitter {
 
 	protected static final Logger logger = Logger.getLogger(Win32SoundListener.class);
 	

@@ -337,7 +337,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			button.setOverlayBounds(imageProvider.imageIndexToBounds(
 					recordSetting.getBoolean() ? IconConsts.RECORD_OVERLAY : 
 						reverseSetting.getBoolean() ? IconConsts.REVERSE_OVERLAY : IconConsts.PLAY_OVERLAY));
-		}
+		} 
 		
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {

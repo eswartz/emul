@@ -23,8 +23,12 @@ public interface ISoundOutput {
 	
 	void dispose();
 	
-	void addListener(ISoundListener listener);
-	void removeListener(ISoundListener listener);
+	void addEmitter(ISoundEmitter listener);
+	void removeEmitter(ISoundEmitter listener);
+	
+	void addMutator(ISoundMutator listener);
+	void removeMutator(ISoundMutator listener);
+	
 	int getSoundClock();
 	
 	void start();

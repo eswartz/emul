@@ -6,10 +6,12 @@ import java.util.List;
 import javax.sound.sampled.AudioFormat;
 
 import ejs.base.sound.IFlushableSoundVoice;
-import ejs.base.sound.ISoundListener;
+import ejs.base.sound.ISoundEmitter;
+import ejs.base.sound.ISoundMutator;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
 import ejs.base.sound.SoundChunk;
+import ejs.base.utils.ListenerList;
 
 
 
@@ -31,52 +33,88 @@ public class SoundOutput implements ISoundOutput {
 	protected volatile int lastUpdatedPos;
 	private boolean anyChanged;
 
-	private List<ISoundListener> listeners;
+	private ListenerList<ISoundMutator> mutators;
+	private ListenerList<ISoundEmitter> emitters;
+	
 	// samples * channels
 	private final int bufferSize;
-	private ISoundListener[] listenerArray;
+	private ISoundEmitter[] listenerArray;
 	private AudioFormat format;
 
 	public SoundOutput(AudioFormat format, int tickRate) {
 		this.format = format;
-		listeners = new ArrayList<ISoundListener>();
+		mutators = new ListenerList<ISoundMutator>();
+		emitters = new ListenerList<ISoundEmitter>();
 		int b = (int) (format.getFrameSize() * format.getFrameRate() / tickRate);
 		this.bufferSize = (b + 3) & ~3;
 		soundGeneratorWorkBuffer = new float[bufferSize];
 		soundClock = (int) format.getSampleRate();
 	}
-
-	public void addListener(ISoundListener listener) {
-		synchronized (this) {
-			listeners.add(listener);
-			listenerArray = (ISoundListener[]) listeners.toArray(new ISoundListener[listeners.size()]);
-		}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundOutput#addMutator(ejs.base.sound.ISoundMutator)
+	 */
+	@Override
+	public void addMutator(ISoundMutator listener) {
+		mutators.add(listener);
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundOutput#removeMutator(ejs.base.sound.ISoundMutator)
+	 */
+	@Override
+	public void removeMutator(ISoundMutator listener) {
+		mutators.remove(listener);
+	}
+	
+	public void addEmitter(ISoundEmitter listener) {
+		emitters.add(listener);
 		try {
 			listener.started(format);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	public void removeListener(ISoundListener listener) {
+	public void removeEmitter(ISoundEmitter listener) {
 		try {
 			listener.stopped();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		synchronized (this) {
-			listeners.remove(listener);
-			listenerArray = (ISoundListener[]) listeners.toArray(new ISoundListener[listeners.size()]);
-		}
+		emitters.remove(listener);
 	}
+	
 	public void fireListeners(SoundChunk chunk) {
-		ISoundListener[] listeners;
-		synchronized (this) {
-			listeners = listenerArray;
-		}
-		if (listeners != null) {
-			for (ISoundListener listener : listeners) {
+		if (!emitters.isEmpty()) {
+			List<SoundChunk> chunkList = null;
+			if (!mutators.isEmpty()) {
+				chunkList = new ArrayList<SoundChunk>(1);
+				List<SoundChunk> nextList = new ArrayList<SoundChunk>(1);
+				
+				chunkList.add(chunk);
+				
+				for (Object listener : mutators.toArray()) {
+					try {
+						for (SoundChunk c : chunkList)
+							((ISoundMutator)listener).editSoundChunk(c, nextList);
+						
+						List<SoundChunk> t = chunkList;
+						chunkList = nextList;
+						nextList = t;
+					} catch (Exception e ) {
+						e.printStackTrace();
+					}
+				}
+			}
+			for (Object listener : emitters.toArray()) {
 				try {
-					listener.played(chunk);
+					if (chunkList == null) {
+						((ISoundEmitter)listener).played(chunk);
+					} else {
+						for (SoundChunk c : chunkList) {
+							((ISoundEmitter)listener).played(c);
+						}
+					}
 				} catch (Exception e ) {
 					e.printStackTrace();
 				}
@@ -85,7 +123,7 @@ public class SoundOutput implements ISoundOutput {
 	}
 
 	public void setVolume(double loudness) {
-		for (ISoundListener listener : listeners) {
+		for (ISoundEmitter listener : emitters) {
 			listener.setVolume(loudness);
 		}
 	}
@@ -99,12 +137,12 @@ public class SoundOutput implements ISoundOutput {
 
 	public void start() {
 		
-		ISoundListener[] listeners;
+		ISoundEmitter[] listeners;
 		synchronized (this) {
 			listeners = listenerArray;
 		}
 		if (listeners != null) {
-			for (ISoundListener listener : listeners)
+			for (ISoundEmitter listener : listeners)
 			{
 				try {
 					listener.started(format);
@@ -116,12 +154,12 @@ public class SoundOutput implements ISoundOutput {
 	}
 	
 	public void stop() {
-		ISoundListener[] listeners;
+		ISoundEmitter[] listeners;
 		synchronized (this) {
 			listeners = listenerArray;
 		}
 		if (listeners != null) {
-			for (ISoundListener listener : listeners) {
+			for (ISoundEmitter listener : listeners) {
 				try {
 					listener.stopped();
 				} catch (Exception e) {

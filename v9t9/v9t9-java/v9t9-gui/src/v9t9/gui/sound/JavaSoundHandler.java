@@ -10,7 +10,7 @@ import org.ejs.gui.sound.SoundRecordingHelper;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.sound.AlsaSoundListener;
-import ejs.base.sound.ISoundListener;
+import ejs.base.sound.ISoundEmitter;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
 import ejs.base.sound.SoundFactory;
@@ -46,8 +46,8 @@ public class JavaSoundHandler implements ISoundHandler {
 	private int soundFramesPerTick;
 	private AudioFormat speechFormat;
 	private ISoundOutput speechOutput;
-	private ISoundListener audio;
-	private ISoundListener speechAudio;
+	private ISoundEmitter audio;
+	private ISoundEmitter speechAudio;
 	private final IMachine machine;
 	private IProperty soundVolume;
 	private IProperty playSound;
@@ -72,15 +72,18 @@ public class JavaSoundHandler implements ISoundHandler {
 		
 		output = SoundFactory.createSoundOutput(soundFormat, machine.getCpuTicksPerSec());
 		speechOutput = SoundFactory.createSoundOutput(speechFormat, machine.getCpuTicksPerSec());
-		
+
 		audio = SoundFactory.createAudioListener();
 		if (audio instanceof AlsaSoundListener)
 			((AlsaSoundListener) audio).setBlockMode(false);
 		
 		speechAudio = SoundFactory.createAudioListener();
-		output.addListener(audio);
-		speechOutput.addListener(speechAudio);
+		
+		output.addEmitter(audio);
+		speechOutput.addEmitter(speechAudio);
 
+		output.addMutator(new TI99SoundSmoother());
+		
 		soundVolume.addListenerAndFire(new IPropertyListener() {
 			
 			@Override

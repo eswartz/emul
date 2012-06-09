@@ -23,7 +23,7 @@ import ejs.base.sound.AlsaLibrary.snd_pcm_sw_params_t;
  * @author ejs
  * 
  */
-public class AlsaSoundListener implements ISoundListener {
+public class AlsaSoundListener implements ISoundEmitter {
 
 	private static final Logger logger = Logger.getLogger(AlsaSoundListener.class);
 	

@@ -19,7 +19,7 @@ import com.sun.jna.ptr.IntByReference;
  * @author ejs
  * 
  */
-public class PulseSoundListener implements ISoundListener {
+public class PulseSoundListener implements ISoundEmitter {
 
 	private static final Logger logger = Logger.getLogger(PulseSoundListener.class);
 	

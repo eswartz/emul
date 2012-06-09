@@ -54,7 +54,7 @@ public class SoundRecordingHelper {
 		};
 		settingRecordSoundOutputFile.addListener(listener);
 		
-		output.addListener(iSoundListener);
+		output.addEmitter(iSoundListener);
 
 	}
 
@@ -120,7 +120,7 @@ public class SoundRecordingHelper {
 	 */
 	public void dispose() {
 		soundFileSetting.removeListener(listener);
-		output.removeListener(iSoundListener);
+		output.removeEmitter(iSoundListener);
 	}
 	
 }

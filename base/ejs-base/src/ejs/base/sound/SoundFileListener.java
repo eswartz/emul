@@ -19,7 +19,7 @@ import org.apache.log4j.Logger;
  * @author ejs
  * 
  */
-public class SoundFileListener implements ISoundListener {
+public class SoundFileListener implements ISoundEmitter {
 
 	private static final Logger logger = Logger.getLogger(SoundFileListener.class);
 	

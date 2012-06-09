@@ -9,7 +9,7 @@ import java.util.Arrays;
 import javax.sound.sampled.AudioFormat;
 
 import ejs.base.sound.AlsaSoundListener;
-import ejs.base.sound.ISoundListener;
+import ejs.base.sound.ISoundEmitter;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
 import ejs.base.sound.SoundFactory;
@@ -19,7 +19,7 @@ import ejs.base.timer.FastTimer;
 
 public class SoundEngine {
 	
-	private ISoundListener iSoundListener;
+	private ISoundEmitter iSoundListener;
 
 	private ISoundVoice[] voices;
 	
@@ -52,7 +52,7 @@ public class SoundEngine {
 		
 		fileRecorder = new SoundFileListener();
 		
-		output.addListener(iSoundListener);
+		output.addEmitter(iSoundListener);
 		//output.addListener(fileRecorder);
 		clock = 0;
 		

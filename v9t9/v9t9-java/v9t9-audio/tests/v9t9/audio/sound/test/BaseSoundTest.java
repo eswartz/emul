@@ -14,7 +14,7 @@ import v9t9.audio.sound.ClockedSoundVoice;
 import v9t9.common.sound.TMS9919Consts;
 
 import ejs.base.internal.sound.SoundOutput;
-import ejs.base.sound.ISoundListener;
+import ejs.base.sound.ISoundEmitter;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
 import ejs.base.sound.SoundFactory;
@@ -25,7 +25,7 @@ import ejs.base.sound.SoundFactory;
  */
 public class BaseSoundTest {
 
-	private static ISoundListener soundListener;
+	private static ISoundEmitter soundListener;
 	private static ISoundOutput soundOutput;
 	protected static AudioFormat format = new AudioFormat(55930, 16, 2, true, false);
 
@@ -35,7 +35,7 @@ public class BaseSoundTest {
 		soundListener.started(format);
 		
 		soundOutput = new SoundOutput(format, 100);
-		soundOutput.addListener(soundListener);
+		soundOutput.addEmitter(soundListener);
 	}
 
 	@AfterClass
