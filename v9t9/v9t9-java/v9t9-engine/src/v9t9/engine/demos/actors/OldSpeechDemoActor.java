@@ -227,7 +227,7 @@ public class OldSpeechDemoActor extends BaseDemoActor implements IDemoReversePla
 			
 			@Override
 			public void parametersAdded(ILPCParameters params) {
-				reversedEventsList.add(0, new SpeechEvent(params));
+				reversedEventsList.add(new SpeechEvent(params));
 			}
 		};
 		reverseConverter.addEquationListener(convertReversedParamsListener);
