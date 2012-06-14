@@ -235,12 +235,8 @@ public class DemoPlayer implements IDemoPlayer {
 			if (demoCursor < demoEvents.size()) {
 				entry = demoEvents.get(demoCursor++);
 				if (entry instanceof DemoReverseEventEntry) {
-					dumpCheckpoint(">", null);
 					continue;
 				}
-//				if (entry.clock > target)
-//					return target;
-				
 				event = entry.event;
 				elapsedTime = entry.clock;
 			} else {
@@ -248,9 +244,6 @@ public class DemoPlayer implements IDemoPlayer {
 				if (event != null) {
 					entry = new DemoPlayEventEntry(event, is.getElapsedTime());
 					demoEvents.add(entry);
-					
-//					if (entry.clock > target)
-//						return target;
 					demoCursor++;
 				}
 			}
@@ -269,8 +262,6 @@ public class DemoPlayer implements IDemoPlayer {
 				return getTotalTime();
 			}
 
-			dumpCheckpoint(">", event);
-			
 			boolean atEnd = demoCursor == demoEvents.size();
 
 
@@ -283,11 +274,6 @@ public class DemoPlayer implements IDemoPlayer {
 			}
 			
 			if (event instanceof TimerTick) {
-//				
-//				if (atEnd) {
-//					flushReverseEvents();
-//				}
-
 				// synchronize with next instant in virtual clock 
 				long elapsed = ((TimerTick) event).getElapsedTime();
 				
@@ -301,8 +287,6 @@ public class DemoPlayer implements IDemoPlayer {
 				elapsedTime = elapsed;
 
 			}
-			
-			
 			
 			executeEvent(event);
 		}
@@ -325,27 +309,9 @@ public class DemoPlayer implements IDemoPlayer {
 				if (ev != null) {
 					demoEvents.add(new DemoReverseEventEntry(ev, elapsedTime));
 					demoCursor++;
-					dumpCheckpoint(">", null);
 				}
 			}
 		}
-		
-	}
-
-
-	/**
-	 * @param event
-	 */
-	static int lastCursor;
-	private void dumpCheckpoint(String label, IDemoEvent event) {
-//		if (Math.abs(lastCursor - demoCursor) != 1) {
-//			System.out.print(label + " " + demoCursor + " vs " + lastCursor);
-//			if (event instanceof TimerTick)
-//				System.out.println(" @ " + ((TimerTick) event).getElapsedTime());
-//			else
-//				System.out.println();
-//		}
-		lastCursor = demoCursor;
 		
 	}
 
@@ -358,7 +324,6 @@ public class DemoPlayer implements IDemoPlayer {
 			if (demoCursor > 0) {
 				DemoEventEntry entry = demoEvents.get(--demoCursor);
 				if (entry instanceof DemoPlayEventEntry) {
-					dumpCheckpoint("<", entry.event);
 					continue;
 				}
 				
@@ -377,8 +342,6 @@ public class DemoPlayer implements IDemoPlayer {
 				return 0;
 			}
 			
-			dumpCheckpoint("<", event);
-			
 			executeEvent(event);
 			
 			if (event instanceof TimerTick) {
@@ -386,10 +349,6 @@ public class DemoPlayer implements IDemoPlayer {
 				long elapsed = ((TimerTick) event).getElapsedTime();
 				elapsedTime = elapsed;
 			}
-			
-//			if (playClock >= elapsedTime)
-//				return;
-			
 		}
 	}
 	
