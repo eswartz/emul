@@ -33,14 +33,16 @@ public abstract class BaseDemoInputStream extends BaseReader implements IDemoInp
 	}
 
 	public void close() throws IOException {
-		if (getInputStream() != null)
-			getInputStream().close();
+		if (is != null) {
+			is.close();
+			is = null;
+		}
 	}
 
 	@Override
 	public IDemoEvent readNext() throws IOException {
 		try {
-			if (queuedEvents.isEmpty()) {
+			if (is != null && queuedEvents.isEmpty()) {
 				ensureEvents();
 			}
 		} catch (IOException e) {

@@ -16,4 +16,8 @@ public interface IDemoPlayer {
 	IMachine getMachine();
 	IDemoInputStream getInputStream();
 	void executeEvent(IDemoEvent event) throws IOException;
+	
+	double getTotalTime();
+	double seekToTime(double time) throws IOException;
+	double getCurrentTime();
 }

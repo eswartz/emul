@@ -5,6 +5,7 @@ package v9t9.engine.demos.actors;
 
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
 
 import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEvent;
@@ -59,6 +60,7 @@ public class OldSpeechDemoActor extends BaseDemoActor implements IDemoReversePla
 	private SpeechDemoConverter reverseConverter; 
 	private ILPCParametersListener convertReversedParamsListener;
 	private LinkedList<SpeechEvent> reversedEventsList;
+	private int reversedEventsFlushIndex;
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemoActor#getEventIdentifier()
@@ -228,6 +230,7 @@ public class OldSpeechDemoActor extends BaseDemoActor implements IDemoReversePla
 			@Override
 			public void parametersAdded(ILPCParameters params) {
 				reversedEventsList.add(new SpeechEvent(params));
+				reversedEventsFlushIndex = reversedEventsList.size();
 			}
 		};
 		reverseConverter.addEquationListener(convertReversedParamsListener);
@@ -266,10 +269,17 @@ public class OldSpeechDemoActor extends BaseDemoActor implements IDemoReversePla
 	@Override
 	public IDemoEvent[] emitReversedEvents(IDemoPlayer player)
 			throws IOException {
-		reverseConverter.stopPhrase();
-		IDemoEvent[] evs = (IDemoEvent[]) reversedEventsList.toArray(new IDemoEvent[reversedEventsList.size()]);
-		reversedEventsList.clear();
-		return evs;
+		if (reversedEventsFlushIndex > 0) {
+			reverseConverter.stopPhrase();
+			List<SpeechEvent> subList = reversedEventsList.
+					subList(0, reversedEventsFlushIndex);
+			IDemoEvent[] evs = (IDemoEvent[]) subList.
+					toArray(new IDemoEvent[reversedEventsFlushIndex]);
+			subList.clear();
+			reversedEventsFlushIndex = 0;
+			return evs;
+		}
+		return new IDemoEvent[0];
 	}
 	
 	/* (non-Javadoc)

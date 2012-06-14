@@ -66,7 +66,7 @@ public class DemoRecorder implements IDemoRecorder {
 			@Override
 			public void fire(IDemoListener listener) {
 				t.printStackTrace();
-				listener.stopped(new NotifyEvent(System.currentTimeMillis(), null, Level.ERROR, 
+				listener.firedEvent(new NotifyEvent(System.currentTimeMillis(), null, Level.ERROR, 
 						"Unexpected error writing demo: " + t.getMessage()));
 			}
 		});

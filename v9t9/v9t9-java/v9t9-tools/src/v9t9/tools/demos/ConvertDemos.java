@@ -261,7 +261,7 @@ public class ConvertDemos {
 				setupSpeechConverter(os);
 				
 				if (shrink)
-					processEventsAndShrink(is, os);
+					processEventsAndShrink(from, is, os);
 				else
 					processEvents(is, os);
 				
@@ -376,7 +376,7 @@ public class ConvertDemos {
 	}
 
 
-	private void processEventsAndShrink(IDemoInputStream is, IDemoOutputStream os) throws IOException {
+	private void processEventsAndShrink(URI uri, IDemoInputStream is, IDemoOutputStream os) throws IOException {
 		IDemoEvent event;
 
 		long timer = 0;
@@ -392,7 +392,8 @@ public class ConvertDemos {
 		
 		int visMemGranularity = 7;
 		
-		IDemoPlayer player = new DemoPlayer(machine, is, new ListenerList<IDemoHandler.IDemoListener>());
+		IDemoPlayer player = new DemoPlayer(machine,
+				uri, is, new ListenerList<IDemoHandler.IDemoListener>());
 		
 		while ((event = is.readNext()) != null)  {
 			

@@ -53,7 +53,12 @@ public interface IDemoHandler {
 
 
 	interface IDemoListener {
-		void stopped(NotifyEvent event);
+		void firedEvent(NotifyEvent event);
+	}
+	interface IDemoPlaybackListener extends IDemoListener {
+		void started(IDemoPlayer player);
+		void updatedPosition(double playClock);
+		void stopped();
 	}
 	
 	void dispose();

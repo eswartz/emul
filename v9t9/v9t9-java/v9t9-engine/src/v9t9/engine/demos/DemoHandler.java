@@ -17,6 +17,7 @@ import v9t9.common.settings.Settings;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 
 /**
  * Stock implementation of demo handler.
@@ -52,13 +53,12 @@ public class DemoHandler implements IDemoHandler {
 		playRateSetting = Settings.get(machine, IDemoHandler.settingDemoPlaybackRate);
 		
 		demoListener = new IDemoListener() {
-			
 			@Override
-			public void stopped(NotifyEvent event) {
+			public void firedEvent(NotifyEvent event) {
 				try {
 					if (event.level != Level.INFO) {
-						machine.getDemoHandler().stopPlayback();
-						machine.getDemoHandler().stopRecording();
+						stopPlayback();
+						stopRecording();
 					}
 				} catch (NotifyException ex) {
 					//machine.getEventNotifier().notifyEvent(ex.getEvent());
@@ -135,7 +135,7 @@ public class DemoHandler implements IDemoHandler {
 	 * @see v9t9.common.client.IDemoHandler#startPlayback(java.net.URI)
 	 */
 	@Override
-	public synchronized void startPlayback(URI uri) throws NotifyException {
+	public synchronized void startPlayback(final URI uri) throws NotifyException {
 		if (player != null) {
 			stopPlayback();
 		}
@@ -144,7 +144,7 @@ public class DemoHandler implements IDemoHandler {
 		try {
 			IDemoInputStream is = machine.getDemoManager().createDemoReader(uri);
 			if (is != null) {
-				player = new DemoPlayer(machine, is, listeners);
+				player = new DemoPlayer(machine, uri, is, listeners);
 				
 				playbackRatePropertyListener = new IPropertyListener() {
 					
@@ -161,7 +161,18 @@ public class DemoHandler implements IDemoHandler {
 				// note: must follow the above
 				wasPaused = machine.setPaused(true);
 				
+				listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
+
+					@Override
+					public void fire(IDemoListener listener) {
+						if (listener instanceof IDemoPlaybackListener) {
+							((IDemoPlaybackListener) listener).started(player);
+						}
+					}
+				});
+				
 				player.start();
+				
 			} else {
 				throw new NotifyException(uri, "Unrecognized demo format in " + uri);
 			}
@@ -189,6 +200,16 @@ public class DemoHandler implements IDemoHandler {
 		playSetting.setBoolean(false);
 		demoPauseSetting.setBoolean(false);
 
+		listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
+
+			@Override
+			public void fire(IDemoListener listener) {
+				if (listener instanceof IDemoPlaybackListener) {
+					((IDemoPlaybackListener) listener).stopped();
+				}
+			}
+		});
+		
 		player = null;
 	}
 	

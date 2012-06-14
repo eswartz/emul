@@ -37,6 +37,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.SwtWindow;
+import v9t9.gui.client.swt.shells.DemoProgressBar;
 import v9t9.gui.client.swt.shells.DemoSelector;
 import v9t9.gui.client.swt.shells.DiskSelectorDialog;
 import v9t9.gui.client.swt.shells.ModuleSelector;
@@ -65,7 +66,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 
 	private String lastSelectedRecordPath;
 	private ISettingSection savedPreDemoState;
-	protected IPropertyListener unpauseAfterDemoListener; 
+	protected IPropertyListener unpauseAfterDemoListener;
+	private IPropertyListener playListener;
 
 	/**
 	 * @param swtWindow
@@ -274,16 +276,23 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		setDemoButtonOverlay(button, playSetting, recordSetting, pauseSetting, reverseSetting);
 		//button.setSelection(pauseSetting.getBoolean());
 		
-		playSetting.addListener(new IPropertyListener() {
+		if (playListener != null)
+			playSetting.removeListener(playListener);
+		playListener = new IPropertyListener() {
 			
 			@Override
 			public void propertyChanged(IProperty property) {
 				if (property.getBoolean()) {
+					swtWindow.showToolShell(
+							DemoProgressBar.DEMO_PROGRESS_BAR_ID,
+							DemoProgressBar.getToolShellFactory(buttonBar, machine, swtWindow));
+					
 					machine.setPaused(true);
 					savedPreDemoState = new SettingsSection(null);
 					machine.saveState(savedPreDemoState);
 					
-					final IProperty machinePauseListener = Settings.get(machine, IMachine.settingPauseMachine);
+					final IProperty machinePauseSetting = Settings.get(
+							machine, IMachine.settingPauseMachine);
 
 					if (unpauseAfterDemoListener == null) {
 						unpauseAfterDemoListener = new IPropertyListener() {
@@ -301,19 +310,24 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 									machine.loadState(savedPreDemoState);
 									savedPreDemoState = null;
 									
-									machinePauseListener.removeListener(unpauseAfterDemoListener);
+									machinePauseSetting.removeListener(unpauseAfterDemoListener);
 									
 									// make sure still unpaused, in case demo playback
 									// stopping above reset the pause state
-									machinePauseListener.setBoolean(false);
+									machinePauseSetting.setBoolean(false);
 								}
 							}
 						};
 					}
-					machinePauseListener.addListener(unpauseAfterDemoListener);
+					machinePauseSetting.addListener(unpauseAfterDemoListener);
+				} else {
+					swtWindow.closeToolShell(
+							DemoProgressBar.DEMO_PROGRESS_BAR_ID);
 				}
 			}
-		});
+		};
+		
+		playSetting.addListener(playListener);
 		return button;
 		
 	}

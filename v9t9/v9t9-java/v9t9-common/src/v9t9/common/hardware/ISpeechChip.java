@@ -15,7 +15,11 @@ import ejs.base.properties.IPersistable;
  *
  */
 public interface ISpeechChip extends IPersistable {
-	
+	SettingSchema settingGenerateSpeech = new SettingSchema(
+			ISettingsHandler.INSTANCE,
+			"GenerateSpeech",
+			Boolean.TRUE);
+
 	SettingSchema settingTalkSpeed = new SettingSchema(
 			ISettingsHandler.INSTANCE,
 			"TalkSpeed",

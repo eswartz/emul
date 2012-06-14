@@ -15,7 +15,7 @@ import ejs.base.utils.CountingInputStream;
  */
 public class BaseReader {
 
-	protected final CountingInputStream is;
+	protected CountingInputStream is;
 
 	/**
 	 * 
