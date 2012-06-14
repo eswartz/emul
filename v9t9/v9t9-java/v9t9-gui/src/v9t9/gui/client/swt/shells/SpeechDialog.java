@@ -15,6 +15,7 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
+import org.ejs.gui.common.SwtDialogUtils;
 
 import ejs.base.settings.ISettingProperty;
 
@@ -212,20 +213,7 @@ public class SpeechDialog extends Composite {
 	protected void updatePitchUI(boolean selection) {
 		forceUnvoicedProperty.setBoolean(selection);
 		whisperButton.setText(forceUnvoicedProperty.getBoolean() ? "on" : "off");
-		setEnabled(pitchGroup, ! forceUnvoicedProperty.getBoolean());
-	}
-
-	/**
-	 * @param pitchGroup2
-	 * @param b
-	 */
-	private void setEnabled(Control c, boolean b) {
-		c.setEnabled(b);
-		if (c instanceof Composite) {
-			for (Control k : ((Composite) c).getChildren()) {
-				setEnabled(k, b);
-			}
-		}
+		SwtDialogUtils.setEnabled(pitchGroup, ! forceUnvoicedProperty.getBoolean());
 	}
 
 	/**

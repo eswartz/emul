@@ -51,6 +51,8 @@ final static int FL_last	= 8;
 
 	private ListenerList<ISpeechDataSender> senderList;
 	private ListenerList<ILPCParametersListener> paramListeners;
+	private IProperty generateSpeech;
+	
 	private IProperty pitchAdjust;
 	private IProperty pitchRangeAdjust;
 	private IProperty pitchMidRangeAdjustRate;
@@ -58,6 +60,8 @@ final static int FL_last	= 8;
 	
 	public LPCSpeech(ISettingsHandler settings) {
 		this.settings = settings;
+	
+		generateSpeech = settings.get(ISpeechChip.settingGenerateSpeech);
 		
 		pitchAdjust = settings.get(ISpeechChip.settingPitchAdjust);
 		pitchRangeAdjust = settings.get(ISpeechChip.settingPitchRangeAdjust);
@@ -376,7 +380,7 @@ final static int FL_last	= 8;
 			//if (samp > 511 || samp < -512)
 			//	System.err.println("samp["+pos+"]="+samp);
 
-			if (senderList != null && !senderList.isEmpty()) {
+			if (generateSpeech.getBoolean() && senderList != null && !senderList.isEmpty()) {
 				for (Object o : senderList.toArray()) {
 					((ISpeechDataSender) o).sendSample(LPC_TO_PCM(samp), pos, length);
 				}

@@ -38,7 +38,6 @@ public class SoundOutput implements ISoundOutput {
 	
 	// samples * channels
 	private final int bufferSize;
-	private ISoundEmitter[] listenerArray;
 	private AudioFormat format;
 
 	public SoundOutput(AudioFormat format, int tickRate) {
@@ -136,35 +135,21 @@ public class SoundOutput implements ISoundOutput {
 	}
 
 	public void start() {
-		
-		ISoundEmitter[] listeners;
-		synchronized (this) {
-			listeners = listenerArray;
-		}
-		if (listeners != null) {
-			for (ISoundEmitter listener : listeners)
-			{
-				try {
-					listener.started(format);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+		for (ISoundEmitter listener : emitters) {
+			try {
+				listener.started(format);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}
 	
 	public void stop() {
-		ISoundEmitter[] listeners;
-		synchronized (this) {
-			listeners = listenerArray;
-		}
-		if (listeners != null) {
-			for (ISoundEmitter listener : listeners) {
-				try {
-					listener.stopped();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+		for (ISoundEmitter listener : emitters) {
+			try {
+				listener.stopped();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}

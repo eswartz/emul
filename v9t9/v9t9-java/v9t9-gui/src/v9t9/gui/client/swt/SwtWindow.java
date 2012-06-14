@@ -573,11 +573,15 @@ public class SwtWindow extends BaseEmulatorWindow {
 		hider.start();
 	}
 	public boolean closeToolShell(String toolId) {
-		ToolShell old = toolShells.get(toolId);
+		final ToolShell old = toolShells.get(toolId);
 		if (old != null) {
 			toolShells.remove(toolId);
-			old.dispose();
-			focusRestorer.restoreFocus();
+			Display.getDefault().syncExec(new Runnable() {
+				public void run() {
+					old.dispose();
+					focusRestorer.restoreFocus();
+				}
+			});
 			return true;
 		} 
 		return false;

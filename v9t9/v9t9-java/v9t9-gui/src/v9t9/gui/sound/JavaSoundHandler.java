@@ -191,7 +191,8 @@ public class JavaSoundHandler implements ISoundHandler {
 
 		ISoundVoice[] vs = soundGenerator.getSoundVoices();
 
-		output.generate(vs, to - from);
+		if (output != null)
+			output.generate(vs, to - from);
 	}
 
 	public void speech() {
