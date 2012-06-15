@@ -16,6 +16,7 @@ import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Scale;
@@ -179,7 +180,13 @@ public class DemoProgressBar extends Composite {
 			}
 		});
 		
-		//pack();
+		getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				Point sz = window.getShell().getSize();
+				Point csz = control.computeSize(sz.x, -1);
+				getShell().setSize(sz.x, csz.y);	
+			}
+		});
 	}
 
 
@@ -193,10 +200,11 @@ public class DemoProgressBar extends Composite {
 		return new IToolShellFactory() {
 			Behavior behavior = new Behavior();
 			{
-				behavior.boundsPref = "DemoProgressBarBounds";
-				//behavior.centering = Centering.OUTSIDE;
-				behavior.centerOverControl = buttonBar.getShell();
+				//behavior.boundsPref = "DemoProgressBarBounds";
+				behavior.centering = Centering.BELOW;
+				behavior.centerOverControl = window.getShell();
 				behavior.dismissOnClickOutside = false;
+				behavior.style = SWT.TOOL;
 			}
 			public Control createContents(Shell shell) {
 				DemoProgressBar dialog = new DemoProgressBar(shell, window, machine);

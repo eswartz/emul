@@ -3,6 +3,7 @@
  */
 package v9t9.gui.client.swt.shells;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
@@ -20,7 +21,8 @@ public interface IToolShellFactory {
 	public enum Centering {
 		INSIDE,
 		OUTSIDE,
-		CENTER
+		CENTER,
+		BELOW
 	}
 	
 	/** The behavior of the shell */
@@ -33,6 +35,9 @@ public interface IToolShellFactory {
 		 * the tool shell will dismiss it.
 		 */
 		public boolean dismissOnClickOutside;
+		/** SWT shell style
+		 */
+		public int style = SWT.TOOL | SWT.RESIZE | SWT.CLOSE | SWT.TITLE;
 		/** Name of the preference storing the boundary of the window when
 		 * it is dismissed.
 		 */

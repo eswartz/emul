@@ -5,7 +5,6 @@ package v9t9.gui.client.swt.shells;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.DisposeEvent;
@@ -44,10 +43,11 @@ public class ToolShell {
 			IFocusRestorer focusRestorer_,
 			boolean isHorizontal,
 			Behavior behavior) {
-		this.boundsPref = settings.get(ISettingsHandler.INSTANCE, 
-				new SettingProperty(behavior.boundsPref, SwtPrefUtils.writeBoundsString(behavior.defaultBounds)));
+		if (behavior.boundsPref != null)
+			this.boundsPref = settings.get(ISettingsHandler.INSTANCE, 
+					new SettingProperty(behavior.boundsPref, SwtPrefUtils.writeBoundsString(behavior.defaultBounds)));
 		
-		this.shell = new Shell(parentShell, SWT.TOOL | SWT.RESIZE | SWT.CLOSE | SWT.TITLE);
+		this.shell = new Shell(parentShell, behavior.style);
 		this.focusRestorer = focusRestorer_;
 		this.behavior = behavior;
 		this.isHorizontal = isHorizontal;
@@ -79,7 +79,7 @@ public class ToolShell {
 			}
 		});
 
-		String boundsStr = boundsPref.getString();
+		String boundsStr = boundsPref != null ? boundsPref.getString() : null;
 		if (boundsStr != null) {
 			final Rectangle savedBounds = SwtPrefUtils.readBoundsString(boundsStr);
 			if (savedBounds != null) {
@@ -144,13 +144,15 @@ public class ToolShell {
 			}
 		});
 		
-		shell.addDisposeListener(new DisposeListener() {
-			public void widgetDisposed(DisposeEvent e) {
-				Rectangle bounds = shell.getBounds();
-				String boundsStr = SwtPrefUtils.writeBoundsString(bounds);
-				boundsPref.setString(boundsStr);
-			}
-		});
+		if (boundsPref != null) {
+			shell.addDisposeListener(new DisposeListener() {
+				public void widgetDisposed(DisposeEvent e) {
+					Rectangle bounds = shell.getBounds();
+					String boundsStr = SwtPrefUtils.writeBoundsString(bounds);
+					boundsPref.setString(boundsStr);
+				}
+			});
+		}
 	}
 	
 	/**
@@ -208,6 +210,10 @@ public class ToolShell {
 			pt = new Point(pt.x + sbounds.width / 2,
 					pt.y + sbounds.height / 2);
 			
+		} else if (behavior.centering == Centering.BELOW) {
+			pt = new Point(pt.x + bbounds.width / 2 - sbounds.width / 2,
+					pt.y + bbounds.height);
+				
 		} else {
 			if (isHorizontal) {
 				pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
