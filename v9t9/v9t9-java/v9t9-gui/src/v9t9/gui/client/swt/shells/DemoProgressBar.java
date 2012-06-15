@@ -10,6 +10,10 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Composite;
@@ -106,6 +110,27 @@ public class DemoProgressBar extends Composite {
 
 		machine.getDemoHandler().addListener(demoListener);
 
+		control.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) {
+				if (e.button == 1) {
+					pauseProperty.setBoolean(true);
+				}
+				else if (e.button == 3) {
+					if (player.getCurrentTime() == 0 && pauseProperty.getBoolean())
+						reverseProperty.setBoolean(false);
+					else if (player.getCurrentTime() == player.getTotalTime() && pauseProperty.getBoolean())
+						reverseProperty.setBoolean(true);
+					else
+						reverseProperty.setBoolean(! reverseProperty.getBoolean());
+					
+				}
+			}
+			@Override
+			public void mouseUp(MouseEvent e) {
+				pauseProperty.setBoolean(false);
+			}
+		});
 
 		control.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -117,7 +142,7 @@ public class DemoProgressBar extends Composite {
 					synchronized (player) {
 						boolean orig = generateSpeechProperty.getBoolean();
 						try {
-							pauseProperty.setBoolean(false);
+							//pauseProperty.setBoolean(false);
 							generateSpeechProperty.setBoolean(false);
 							player.seekToTime(control.getSelection() / TICKS_TO_TIME);
 							prev = System.currentTimeMillis();
@@ -129,6 +154,20 @@ public class DemoProgressBar extends Composite {
 					}
 				}
 			}
+			
+		});
+		
+		control.addKeyListener(new KeyAdapter() {
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.KeyAdapter#keyPressed(org.eclipse.swt.events.KeyEvent)
+			 */
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.character == ' ') {
+					pauseProperty.setBoolean(! pauseProperty.getBoolean());
+				}
+			}
+			
 		});
 		
 		
