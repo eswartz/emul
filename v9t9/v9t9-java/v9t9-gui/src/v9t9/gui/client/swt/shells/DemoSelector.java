@@ -462,7 +462,9 @@ public class DemoSelector extends Composite {
 		
 		GridDataFactory.fillDefaults().grab(true,true).applyTo(tree);
 
-		FontDescriptor desc = FontUtils.getFontDescriptor(JFaceResources.getBannerFont());
+		FontDescriptor desc = FontUtils.getFontDescriptor(
+				JFaceResources.getFontRegistry().getBold(
+						JFaceResources.DIALOG_FONT));
 		nameColumnFont = desc.createFont(getDisplay()); 
 
 		nameColumn = new TreeColumn(tree, SWT.LEFT);

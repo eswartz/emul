@@ -624,7 +624,9 @@ public class ModuleSelector extends Composite {
 		
 		GridDataFactory.fillDefaults().grab(true,true).applyTo(table);
 
-		FontDescriptor desc = FontUtils.getFontDescriptor(JFaceResources.getBannerFont());
+		FontDescriptor desc = FontUtils.getFontDescriptor(
+				JFaceResources.getFontRegistry().getBold(
+						JFaceResources.DIALOG_FONT));
 		tableFont = desc.createFont(getDisplay()); 
 		table.setFont(tableFont);
 
