@@ -17,7 +17,10 @@ public interface IDemoPlayer {
 	IDemoInputStream getInputStream();
 	void executeEvent(IDemoEvent event) throws IOException;
 	
+	/** Get the total time for the demo in ms */
 	double getTotalTime();
+	/** Seek to the given time in ms */
 	double seekToTime(double time) throws IOException;
+	/** Get the current time in ms */
 	double getCurrentTime();
 }

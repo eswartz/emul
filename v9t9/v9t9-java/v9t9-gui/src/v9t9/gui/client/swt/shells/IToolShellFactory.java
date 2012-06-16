@@ -43,6 +43,8 @@ public interface IToolShellFactory {
 		 */
 		public String boundsPref;
 		public Rectangle defaultBounds;
+		/** Tell whether the shell is initially visible, or whether the tool shell will show it */
+		public boolean initiallyVisible = true;
 	}
 	
 	/** Provides the tool shell behavior (queried once when a shell is created) */

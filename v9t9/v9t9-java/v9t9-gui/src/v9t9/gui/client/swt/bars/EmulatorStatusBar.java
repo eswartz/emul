@@ -218,7 +218,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				if (!isPointOverDemoControlIcon(button.getSize(), e.x, e.y))
+				if (!(recordSetting.getBoolean() || playSetting.getBoolean())
+						|| !isPointOverDemoControlIcon(button.getSize(), e.x, e.y))
 					toggleDemoDialog();
 			}
 		});

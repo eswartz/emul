@@ -115,6 +115,8 @@ public class DemoPlayer implements IDemoPlayer {
 			stop();
 		}
 		
+		totalTime = 0;
+		
 //		Settings.get(machine, IVdpChip.settingDumpVdpAccess).setBoolean(true);
 //		Settings.get(machine, ICpu.settingDumpFullInstructions).setBoolean(true);
 		
@@ -406,7 +408,7 @@ public class DemoPlayer implements IDemoPlayer {
 	/**
 	 * Get the total time the demo consumes
 	 * @param uri
-	 * @return 0 for unknown
+	 * @return 0 for unknown or time in ms
 	 */
 	
 	protected long calculateTotalTime(URI uri) {

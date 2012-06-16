@@ -133,7 +133,10 @@ public class ToolShell {
 		}
 		
 
-		shell.open();
+//		shell.open();
+//		shell.setVisible(behavior.initiallyVisible);
+		if (behavior.initiallyVisible)
+			shell.open();
 		
 		shell.addControlListener(new ControlAdapter() {
 			@Override

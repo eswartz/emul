@@ -39,11 +39,6 @@ import ejs.base.settings.ISettingProperty;
  *
  */
 public class DemoProgressBar extends Composite {
-	/**
-	 * 
-	 */
-	private static final double TICKS_TO_TIME = 1000;
-	
 	public static final String DEMO_PROGRESS_BAR_ID = "demo.progress.bar";
 	private IProperty pauseProperty;
 	private IProperty reverseProperty;
@@ -51,12 +46,17 @@ public class DemoProgressBar extends Composite {
 	private IDemoListener demoListener;
 	protected IDemoPlayer player;
 	private long prev;
+	private double totalTime;
+	private int maxDemoScale;
+	
 
 	public DemoProgressBar(Shell shell, final SwtWindow window, final IMachine machine) {
 		super(shell, SWT.NONE);
 		
 		shell.setText("Demo Timeline");
 
+		maxDemoScale = getDisplay().getBounds().width;
+		
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
 		pauseProperty = (ISettingProperty) Settings.get(
@@ -69,6 +69,9 @@ public class DemoProgressBar extends Composite {
 		final Scale control = new Scale(this, SWT.HORIZONTAL);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(control);
 		
+//		control.setVisible(false);
+//		shell.setVisible(false);
+		
 		demoListener = new IDemoHandler.IDemoPlaybackListener() {
 
 			@Override
@@ -80,11 +83,15 @@ public class DemoProgressBar extends Composite {
 			public void started(final IDemoPlayer player) {
 				DemoProgressBar.this.player = player;
 				getDisplay().syncExec(new Runnable() {
+
 					public void run() {
-						double totalTime = player.getTotalTime();
-						int max = (int) (totalTime * TICKS_TO_TIME);
-						control.setMaximum(max);
-						control.setPageIncrement(1 + (int) (max / 20));
+						totalTime = player.getTotalTime();
+						control.setMaximum(maxDemoScale);
+						
+						int incr = (int) (maxDemoScale / (int) (totalTime / 1000));
+						control.setIncrement(incr);
+						control.setPageIncrement(Math.max(10, incr));
+						
 						prev = System.currentTimeMillis();
 					}
 				});
@@ -97,7 +104,7 @@ public class DemoProgressBar extends Composite {
 						if (control.isDisposed())
 							return;
 						prev = System.currentTimeMillis();
-						control.setSelection((int) (time * TICKS_TO_TIME));
+						control.setSelection((int)( time * maxDemoScale / totalTime));
 					}
 				});
 			}
@@ -120,7 +127,7 @@ public class DemoProgressBar extends Composite {
 				else if (e.button == 3) {
 					if (player.getCurrentTime() == 0 && pauseProperty.getBoolean())
 						reverseProperty.setBoolean(false);
-					else if (player.getCurrentTime() == player.getTotalTime() && pauseProperty.getBoolean())
+					else if (player.getCurrentTime() >= totalTime && pauseProperty.getBoolean())
 						reverseProperty.setBoolean(true);
 					else
 						reverseProperty.setBoolean(! reverseProperty.getBoolean());
@@ -145,10 +152,10 @@ public class DemoProgressBar extends Composite {
 						try {
 							//pauseProperty.setBoolean(false);
 							generateSpeechProperty.setBoolean(false);
-							player.seekToTime(control.getSelection() / TICKS_TO_TIME);
+							player.seekToTime(control.getSelection() * totalTime / maxDemoScale);
 							prev = System.currentTimeMillis();
 						} catch (IOException e1) {
-							control.setSelection((int) (player.getCurrentTime() * TICKS_TO_TIME));
+							control.setSelection((int) (player.getCurrentTime() * maxDemoScale / totalTime));
 						} finally {
 							generateSpeechProperty.setBoolean(orig);
 						}
@@ -184,7 +191,10 @@ public class DemoProgressBar extends Composite {
 			public void run() {
 				Point sz = window.getShell().getSize();
 				Point csz = control.computeSize(sz.x, -1);
-				getShell().setSize(sz.x, csz.y);	
+				getShell().setSize(sz.x, csz.y);
+				
+				getShell().open();
+
 			}
 		});
 	}
