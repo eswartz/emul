@@ -67,7 +67,7 @@ public class DemoProgressBar extends Composite {
 				machine, ISpeechChip.settingGenerateSpeech);
 		
 		final Scale control = new Scale(this, SWT.HORIZONTAL);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(control);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(control);
 		
 //		control.setVisible(false);
 //		shell.setVisible(false);
@@ -191,7 +191,7 @@ public class DemoProgressBar extends Composite {
 			public void run() {
 				Point sz = window.getShell().getSize();
 				Point csz = control.computeSize(sz.x, -1);
-				getShell().setSize(sz.x, csz.y);
+				getShell().setSize(sz.x, Math.max(32, csz.y));
 				
 				getShell().open();
 
