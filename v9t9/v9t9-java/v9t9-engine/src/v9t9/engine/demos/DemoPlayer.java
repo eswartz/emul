@@ -115,7 +115,7 @@ public class DemoPlayer implements IDemoPlayer {
 			stop();
 		}
 		
-		totalTime = 0;
+		totalTime = -1;
 		
 //		Settings.get(machine, IVdpChip.settingDumpVdpAccess).setBoolean(true);
 //		Settings.get(machine, ICpu.settingDumpFullInstructions).setBoolean(true);
