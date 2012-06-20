@@ -28,6 +28,10 @@ public class VdpColorManager {
 	protected boolean useAltSpritePalette;
 	private boolean isGreyscale;
 
+	private int bg;
+
+	private int fg;
+
 	protected static final byte[][] stockPaletteEd = {
 		/* 0 */ { 0x00, 0x00, 0x00 }, 
 		/* 1 */ { 0x00, 0x00, 0x00 },
@@ -321,5 +325,23 @@ public class VdpColorManager {
 			}
 		}
 		return isStandardPalette;
+	}
+	
+	public void setForegroundBackground(int fg, int bg) {
+		this.fg = fg;
+		this.bg = bg;
+	}
+	public int getForeground() {
+		return fg;
+	}
+	public void setForeground(int fg) {
+		this.fg = fg;
+	}
+	public int getBackground() {
+		return bg;
+		
+	}
+	public void setBackground(int bg) {
+		this.bg = bg;
 	}
 }

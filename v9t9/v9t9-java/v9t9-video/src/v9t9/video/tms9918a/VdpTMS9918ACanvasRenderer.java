@@ -189,6 +189,8 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 			vdpfg = (byte) ((val >> 4) & 0xf);
 			vdpbg = (byte) (val & 0xf);
 			redraw |= REDRAW_PALETTE;
+			
+			vdpCanvas.getColorMgr().setForegroundBackground(vdpfg, vdpbg);
     		break;
 
     	default:

@@ -20,25 +20,15 @@ import java.util.TreeMap;
 
 import javax.imageio.ImageIO;
 
-import org.eclipse.swt.graphics.ImageData;
 import org.ejs.gui.images.AwtImageUtils;
 
 import v9t9.common.video.ColorMapUtils;
-
-import ejs.base.utils.Pair;
-
-import v9t9.common.hardware.IVdpChip;
-import v9t9.common.hardware.IVdpTMS9918A;
-import v9t9.common.hardware.VdpV9938Consts;
-import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ColorOctree.LeafNode;
 import v9t9.video.imageimport.ImageImportOptions.Dither;
-
-import static v9t9.common.hardware.VdpV9938Consts.*;
+import ejs.base.utils.Pair;
 
 /**
  * This class handles converting arbitrary external images and 
@@ -50,7 +40,7 @@ public class ImageImport {
 	private boolean DEBUG = false;
 
 	private final ImageImportOptions options;
-	private ImageData canvasImageData;
+	private BufferedImage convertedImage;
 	private VdpFormat format;
 	private byte[][] thePalette;
 
@@ -62,17 +52,14 @@ public class ImageImport {
 	private final ImageDataCanvas canvas;
 	private final VdpColorManager colorMgr;
 	private boolean paletteMappingDirty;
-	private final IVdpChip vdp;
+	//private final IVdpChip vdp;
 	private int firstColor;
 	private int[] rgbs;
 
 
 	/** mapping from RGB-32 pixel to each palette index */
 	protected TreeMap<Integer, Integer> paletteToIndex;
-
 	private Pair<Integer,Integer>[][] bitmapColors;
-
-	private BufferedImage theImage;
 	
 
 	/* 
@@ -131,21 +118,16 @@ public class ImageImport {
 		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
 	};
 
-	private final IVdpCanvasRenderer renderer;
-
-	public ImageImport(IVdpCanvasRenderer renderer, ImageDataCanvas canvas, IVdpChip vdp, ImageImportOptions imageImportOptions) {
-		this.renderer = renderer;
+	public ImageImport(ImageDataCanvas canvas, ImageImportOptions imageImportOptions) {
 		this.canvas = canvas;
 		this.options = imageImportOptions;
 		this.colorMgr = canvas.getColorMgr();
-		this.vdp = vdp;
-		this.canvasImageData = canvas.getImageData();
 		this.format = canvas.getFormat();
 		this.thePalette = colorMgr.getColorPalette();
 		
 		this.useColorMappedGreyScale = colorMgr.isGreyscale();
 		
-		this.rgbs = new int[canvasImageData.width];
+		this.rgbs = new int[canvas.getImageData().width];
 		
 	}
 	
@@ -383,9 +365,9 @@ public class ImageImport {
 	/** Import image from 'img' and update the canvas' image data
 	 * with colors from the current palette and in a configuration
 	 * legal for the current mode. */
-	protected void setImageData(BufferedImage img) {
+	protected BufferedImage convertImageData(BufferedImage img) {
 		if (format == null || format == VdpFormat.TEXT)
-			return;
+			return null;
 		
 		flatten(img);
 		
@@ -407,7 +389,7 @@ public class ImageImport {
 			}
 		}
 		
-		replaceImageData(img);
+		return createConvertedImage(img);
 	}
 
 	/**
@@ -495,8 +477,7 @@ public class ImageImport {
 		IPaletteMapper mapColor;
 
 		if (ditherMono) {
-			int reg = vdp.getRegister(7);
-			mapColor = new MonoMapColor((reg >> 4) & 0xf, reg & 0xf, midLum);
+			mapColor = new MonoMapColor(colorMgr.getForeground(), colorMgr.getBackground(), midLum);
 			firstColor = 0;
 		} else if (format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_4x4) {
 			if (canSetPalette) {
@@ -526,6 +507,11 @@ public class ImageImport {
 		}
 		else if (format == VdpFormat.COLOR4_1x1) {
 			if (canSetPalette) {
+				// note: in this mode, there is no point trying to use colors to
+				// map to greyscale (to find "more depth") -- any real colors
+				// discovered are essentially random, and when viewed in greyscale,
+				// may all have similar luminance.  Just make a grey palette to
+				// begin with.
 				if (useColorMappedGreyScale)
 					createOptimalGreyscalePalette(img, 4);
 				else
@@ -714,10 +700,12 @@ public class ImageImport {
 		
 	}
 
-	private void replaceImageData(BufferedImage img) {
+	private BufferedImage createConvertedImage(BufferedImage img) {
 		int xoffs, yoffs;
 		
-		Arrays.fill(canvasImageData.data, (byte) 0);
+		//Arrays.fill(canvasImageData.data, (byte) 0);
+		convertedImage = new BufferedImage(canvas.getVisibleWidth(), canvas.getVisibleHeight(), 
+				BufferedImage.TYPE_3BYTE_BGR);
 	
 		if (format == VdpFormat.COLOR16_4x4) {
 			xoffs = (64 - img.getWidth()) / 2;
@@ -743,10 +731,12 @@ public class ImageImport {
 	
 			for (int y = 0; y < img.getHeight(); y++) {
 				for (int x = 0; x < img.getWidth(); x++) {
-					canvasImageData.setPixel(x + xoffs, y + yoffs, img.getRGB(x, y));
+					convertedImage.setRGB(x + xoffs, y + yoffs, img.getRGB(x, y));
 				}
 			}
 		}
+		
+		return convertedImage;
 	}
 
 	/**
@@ -1420,7 +1410,7 @@ public class ImageImport {
 							newPixel = bpixel;
 						}
 						
-						canvasImageData.setPixel(xd + xoffs, y + yoffs, newPixel);
+						convertedImage.setRGB(xd + xoffs, y + yoffs, newPixel);
 					}
 				} else {
 					// there are more than 2 significant colors:  
@@ -1525,7 +1515,7 @@ public class ImageImport {
 							newPixel = bpixel;
 						}
 						
-						canvasImageData.setPixel(xd + xoffs, y + yoffs, newPixel); 
+						convertedImage.setRGB(xd + xoffs, y + yoffs, newPixel); 
 					}
 				}
 				
@@ -1534,48 +1524,14 @@ public class ImageImport {
 	}
 
 	protected void updatePaletteMapping() {
-		int ncols;
-		if (format == VdpFormat.COLOR16_1x1 
-				|| format == VdpFormat.COLOR16_8x1 
-				|| format == VdpFormat.COLOR16_4x4
-				|| format == VdpFormat.COLOR16_8x8) {
-			ncols = 16;
-		}
-		else if (format == VdpFormat.COLOR4_1x1) {
-			ncols = 4;
-		}
-		else if (format == VdpFormat.COLOR256_1x1) {
-			ncols = 256;
-		}
-		else {
-			return;
-		}
+		int ncols = format.getNumColors();
 	
 		paletteToIndex = new TreeMap<Integer, Integer>();
 		
 		if (ncols < 256) {
-			// TODO: why is greyscale acting funny?
-			if (useColorMappedGreyScale) {
-				// ensure palette is valid: higher bit depth may have
-				// been guessed during palette optimization
-				for (int c = 0; c < ncols; c++) {
-					vdp.setRegister(VdpV9938Consts.REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
-					//colorMgr.setRGB333(c, thePalette[c]);
-				}
-			} else {
-				// ensure palette is valid: higher bit depth may have
-				// been guessed during palette optimization
-				for (int c = 0; c < ncols; c++) {
-					vdp.setRegister(VdpV9938Consts.REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
-					//colorMgr.setRGB(c, thePalette[c]);
-				}
-				
-			}
-			
 			if (ditherMono) {
-				byte reg = (byte) vdp.getRegister(7);
-				paletteToIndex.put(0x0, (reg >> 4) & 0xf);
-				paletteToIndex.put(0xffffff, (reg >> 0) & 0xf);
+				paletteToIndex.put(0x0, colorMgr.getForeground());
+				paletteToIndex.put(0xffffff, colorMgr.getBackground());
 			} else {
 				for (int c = 0; c < ncols; c++) {
 					byte[] nrgb = thePalette[c];
@@ -1603,37 +1559,18 @@ public class ImageImport {
 		paletteMappingDirty = false;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.IBitmapPixelAccess#getHeight()
-	 */
-	/*
-	@Override
-	public int getHeight() {
-		return theImage.getHeight();
-	}
-	*/
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.IBitmapPixelAccess#getWidth()
-	 */
-	/*
-	@Override
-	public int getWidth() {
-		return theImage.getWidth();
-	}
-	*/
 	public byte getPixel(int x, int y) {
-		if (paletteMappingDirty) {
-			updatePaletteMapping();
-			if (paletteMappingDirty)
-				return 0;
-		}
-		int p = canvasImageData.getPixel(x, y) & 0xffffff;
+		
+		int p;
+		if (x < convertedImage.getWidth() && y < convertedImage.getHeight())
+			p = convertedImage.getRGB(x, y) & 0xffffff;
+		else
+			p = 0;
 		
 		Integer c = paletteToIndex.get(p);
-		if (c == null && format == VdpFormat.COLOR256_1x1) {
-			// whhyyyy is someone losing precision?!
-			c = paletteToIndex.get(paletteToIndex.ceilingKey(p));
-		}
+//		if (c == null && format == VdpFormat.COLOR256_1x1) {
+//			c = paletteToIndex.get(paletteToIndex.ceilingKey(p));	// should be fixed now
+//		}
 		if (c == null) {
 			return 0;
 		}
@@ -1642,18 +1579,16 @@ public class ImageImport {
 
 
 	/**
-	 * @param image
-	 * @param isLowColor if the image is known to have a small number of colors -- don't scale
 	 */
-	public void importImage() {
+	public ImageImportData importImage() {
 		BufferedImage image = options.getImage();
 		if (image == null)
-			return;
+			return null;
 
 		int targWidth = canvas.getVisibleWidth();
 		int targHeight = canvas.getVisibleHeight();
 
-		if (canvas.getFormat() == VdpFormat.COLOR16_4x4) {
+		if (format == VdpFormat.COLOR16_4x4) {
 			targWidth = 64;
 			targHeight = 48;
 		}
@@ -1663,7 +1598,7 @@ public class ImageImport {
 		int realHeight = image.getHeight(null);
 		
 		if (options.isKeepAspect()) {
-			if (realWidth < 0 || realHeight < 0) {
+			if (realWidth <= 0 || realHeight <= 0) {
 				throw new IllegalArgumentException("image has zero or negative size");
 			}
 			
@@ -1683,9 +1618,9 @@ public class ImageImport {
 			}
 		}
 		
-		if (canvas.getFormat() == VdpFormat.COLOR16_8x8) {
+		if (format == VdpFormat.COLOR16_8x8) {
 			// make a maximum of 256 blocks  (256*64 = 16384)
-			// Reduces total screen real estate down by sqr(3)
+			// Reduces total screen real estate down by sqrt(3)
 			//targWidth = (int) (targWidth / 1.732) & ~7;
 			//targHeight = (int) (targHeight / 1.732) & ~7;
 			while ((targWidth & ~0x7) * 
@@ -1718,7 +1653,7 @@ public class ImageImport {
 		firstColor = (canSetPalette && colorMgr.isClearFromPalette() ? 0 : 1);
 
 
-		if (canvas.getFormat() == VdpFormat.COLOR16_8x8) {
+		if (format == VdpFormat.COLOR16_8x8) {
 			canSetPalette = false;
 			ditherMono = true;
 		}
@@ -1729,337 +1664,19 @@ public class ImageImport {
 				System.arraycopy(orig[i], 0, thePalette[i], 0, 3);
 			}
 		}
+		
+		// get original mapping
 		updatePaletteMapping();
 		
-		this.theImage = scaled;
-
-		synchronized (renderer) {
-			synchronized (canvas) {
-				setImageData(scaled);
-
-				setVideoMemory();
-				canvas.markDirty();
-			}
-		}
-	}
-
-	/**
-	 * 
-	 */
-	private void setVideoMemory() {
-		if (vdp instanceof IVdpTMS9918A) {
-			IVdpTMS9918A vdp99 = (IVdpTMS9918A) vdp;
-			if (format == VdpFormat.COLOR16_8x1) {
-				setVideoMemoryBitmapMode(vdp99);
-			} 
-			else if (format == VdpFormat.COLOR16_8x8) {
-				setVideoMemoryGraphicsMode(vdp99);
-			}
-			else if (format == VdpFormat.COLOR16_1x1) {
-				setVideoMemoryV9938BitmapMode(vdp99);
-			}
-			else if (format == VdpFormat.COLOR256_1x1) {
-				setVideoMemoryV9938BitmapMode(vdp99);
-			}
-			else if (format == VdpFormat.COLOR4_1x1) {
-				setVideoMemoryV9938BitmapMode(vdp99);
-			}
-			else if (format== VdpFormat.COLOR16_4x4) {
-				setVideoMemoryMulticolorMode(vdp99);
-			}
-		}
-	}
-
-	/**
-	 * @param vdp99
-	 */
-	private void setVideoMemoryMulticolorMode(IVdpTMS9918A vdp99) {
-		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdp99.getPatternTableBase());
-		
-		for (int y = 0; y < 48; y++) {
-			for (int x = 0; x < 64; x += 2) {
-				
-				byte f = getPixel(x, y);
-				byte b = getPixel(x + 1, y);
-				
-				int poffs = ((y >> 3) << 8) + (y & 7) + ((x >> 1) << 3);  
-				//System.out.println("("+y+","+x+") = "+ poffs);
-				vdp.writeAbsoluteVdpMemory(patt.offset + poffs, (byte) ((f << 4) | b));
-			}
-		}
-	}
-
-	protected interface IBitmapModeImportHandler {
-		byte createImageDataByte(int x, int row);
-
-		/**
-		 * @return
-		 */
-		int getRowStride();
-
-		/**
-		 * @return
-		 */
-		int getColumnStride();
-	}
-	
-	class GraphicsMode4ImportHandler implements IBitmapModeImportHandler {
-		@Override
-		public byte createImageDataByte(int x, int row) {
-			
-			byte f = getPixel(x, row);
-			byte b = getPixel(x + 1, row);
-			return (byte) ((f << 4) | b);
-		}
-
-		@Override
-		public int getRowStride() {
-			return 128;
-		}
-
-		@Override
-		public int getColumnStride() {
-			return 2;
-		}
-	}
-
-	class GraphicsMode5ImportHandler implements IBitmapModeImportHandler {
-		@Override
-		public byte createImageDataByte(int x, int y) {
-			byte p = 0;
-			for (int xo = 0; xo < 4; xo++) {
-				byte c = getPixel(x + xo, y);
-				p |= c << ((3 - xo) * 2);
-			}
-			return p;
-		}
-
-		@Override
-		public int getRowStride() {
-			return 128;
-		}
-
-		@Override
-		public int getColumnStride() {
-			return 4;
-		}
-	}
-
-	class GraphicsMode6ImportHandler implements IBitmapModeImportHandler {
-		@Override
-		public byte createImageDataByte(int x, int y) {
-			byte f = getPixel(x, y);
-			byte b = getPixel(x + 1, y);
-			
-			return (byte) ((f << 4) | b);
-		}
-
-		@Override
-		public int getRowStride() {
-			return 256;
-		}
-
-		@Override
-		public int getColumnStride() {
-			return 2;
-		}
-	}
-
-	class GraphicsMode7ImportHandler implements IBitmapModeImportHandler {
-		@Override
-		public byte createImageDataByte(int x, int y) {
-			
-			return getPixel(x, y);
-		}
-
-		@Override
-		public int getRowStride() {
-			return 256;
-		}
-
-		@Override
-		public int getColumnStride() {
-			return 1;
+		BufferedImage converted = convertImageData(scaled);
+		if (paletteMappingDirty) {
+			// update mapping if palette was altered
+			updatePaletteMapping();
 		}
 		
-	}
-	/**
-	 * @param vdp99
-	 */
-	private void setVideoMemoryV9938BitmapMode(IVdpTMS9918A vdp99) {
-		IBitmapModeImportHandler handler;
-		int mx;
-		switch (vdp.getModeNumber()) {
-		case MODE_GRAPHICS4:
-			handler = new GraphicsMode4ImportHandler();
-			mx = 256;
-			break;
-		case MODE_GRAPHICS5:
-			handler = new GraphicsMode5ImportHandler();
-			mx = 512;
-			break;
-		case MODE_GRAPHICS6:
-			handler = new GraphicsMode6ImportHandler();
-			mx = 512;
-			break;
-		case MODE_GRAPHICS7:
-			handler = new GraphicsMode7ImportHandler();
-			mx = 256;
-			break;
-		default:
-			throw new IllegalStateException();	
-		}
+		ImageImportData data = new ImageImportData(scaled, converted, thePalette, paletteToIndex);
 		
-		int ystep = vdp.isInterlacedEvenOdd() ? 2 : 1;
-		int my =  (vdp.getRegister(9) & 0x80) != 0 ? 212 : 192;
-		int graphicsPageSize = vdp.getGraphicsPageSize();
-		
-		int colstride = handler.getColumnStride();
-		int rowstride = handler.getRowStride();
-		
-		for (int eo = 0; eo < ystep; eo++) {
-			ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdp99.getPatternTableBase()
-					^ (eo != 0 ? graphicsPageSize : 0));
-			for (int y = 0; y < my; y++) {
-				int row = y * ystep + eo;
-				for (int x = 0; x < mx; x += colstride) {
-					
-					byte byt = handler.createImageDataByte(x, row);
-					
-					int poffs = y * rowstride + (x / colstride); 
-					vdp.writeAbsoluteVdpMemory(patt.offset + poffs, byt);
-				}
-			}
-		}
-		
-	}
-	/**
-	 * @param vdp99
-	 */
-	private void setVideoMemoryGraphicsMode(IVdpTMS9918A vdp99) {
-		ByteMemoryAccess screen = vdp.getByteReadMemoryAccess(vdp99.getScreenTableBase());
-		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdp99.getPatternTableBase());
-		ByteMemoryAccess color = vdp.getByteReadMemoryAccess(vdp99.getColorTableBase());
-		
-		// assume char 255 is not used
-		for (int i = 0; i < 768; i++)
-			vdp.writeAbsoluteVdpMemory(screen.offset + i, (byte) 0xff);
-
-		for (int i = 0; i < 8; i++)
-			vdp.writeAbsoluteVdpMemory(patt.offset + 255*8 + i, (byte) 0x0);
-
-		byte b = 0;
-		
-		byte cb = (byte) vdp.getRegister(7);
-		cb = (byte) ((cb & 0xf) | 0x10);
-		
-		b = (byte) ((cb >> 0) & 0xf);
-
-		for (int i = 0; i < 32; i++)
-			vdp.writeAbsoluteVdpMemory(color.offset + i, cb);
-
-		int width = theImage.getWidth();
-		int height = theImage.getHeight();
-		
-		int yoffs = ((192 - height) / 2) & ~0x7;
-		int xoffs = ((256 - width) / 2) & ~0x7;
-		for (int y = 0; y < height; y++) {
-			for (int x = 0; x < width; x+= 8) {
-				int ch = ((y >> 3) * ((width + 7) >> 3)) + (x >> 3);
-				if (ch > 0xff)
-					throw new IllegalStateException();
-				int choffs = (((y + yoffs) >> 3) << 5) + ((x + xoffs) >> 3);
-				
-				vdp.writeAbsoluteVdpMemory(screen.offset + choffs, (byte) ch);
-				
-				int poffs = (ch << 3) + (y & 7);
-				
-				byte p = 0;
-				
-				for (int xo = 0; xo < 8; xo++) {
-					byte c = getPixel(x + xo + xoffs, y + yoffs);
-					if (c != b) {
-						p |= 0x80 >> xo;
-					}
-				}
-
-				vdp.writeAbsoluteVdpMemory(patt.offset + poffs, p);
-			}
-		}
-		
-	}
-
-	/**
-	 * @param vdp99
-	 */
-	private void setVideoMemoryBitmapMode(IVdpTMS9918A vdp99) {
-		boolean isMono = vdp99.isBitmapMonoMode();
-		
-		ByteMemoryAccess screen = vdp.getByteReadMemoryAccess(vdp99.getScreenTableBase());
-		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdp99.getPatternTableBase());
-		ByteMemoryAccess color = vdp.getByteReadMemoryAccess(vdp99.getColorTableBase());
-		
-		byte f = 0, b = 0;
-		
-		if (isMono) {
-			f = (byte) ((vdp.getRegister(7) >> 4) & 0xf);
-			b = (byte) ((vdp.getRegister(7) >> 0) & 0xf);
-		}
-
-		for (int y = 0; y < 192; y++) {
-			for (int x = 0; x < 256; x += 8) {
-				
-				int choffs = ((y >> 6) << 8) + ((y & 0x3f) >> 3) * 32 + (x >> 3);
-				int ch = choffs & 0xff;
-				
-				if ((y & 7) == 0) {
-					vdp.writeAbsoluteVdpMemory(screen.offset + choffs, (byte) ch);
-				}
-
-				int poffs = (y >> 6) * 0x800 + (ch << 3) + (y & 7);
-				
-				byte p = 0;
-				
-				if (!isMono) {
-					// in color mode, by convention keep the foreground color
-					// as the lesser color.
-					f = getPixel(x, y);
-					p = (byte) 0x80;
-				
-					boolean gotBG = false;
-					for (int xo = 1; xo < 8; xo++) {
-						byte c = getPixel(x + xo, y);
-						if (c == f) {
-							p |= 0x80 >> xo;
-						} else {
-							if (!gotBG) {
-								if (c < f) {
-									b = f;
-									f = c;
-									p ^= (0xff << (8 - xo));
-									p |= 0x80 >> xo;
-								} else {
-									b = c;
-								}
-								gotBG = true;
-							}
-						}
-					}
-					
-					vdp.writeAbsoluteVdpMemory(color.offset + poffs, (byte) ((f << 4) | (b)));
-				} else {
-					// in mono mode, mapper has matched with fg and bg from vr7
-					for (int xo = 0; xo < 8; xo++) {
-						byte c = getPixel(x + xo, y);
-						if (c == f) {
-							p |= 0x80 >> xo;
-						}
-					}
-				}
-
-				vdp.writeAbsoluteVdpMemory(patt.offset + poffs, p);
-			}
-		}
+		return data;
 	}
 
 	/**

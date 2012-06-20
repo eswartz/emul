@@ -59,7 +59,7 @@ public class SwtImageImportSupport extends ImageImportHandler {
 						// in case, e.g., mode changed
 						ImageImport importer = createImageImport();
 						try {
-							importer.importImage();
+							importImageAndDisplay(importer);
 						} catch (Throwable t) {
 							t.printStackTrace();
 						}
