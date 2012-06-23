@@ -4,13 +4,7 @@
 package v9t9.machine.common.tests;
 
 import java.io.FileOutputStream;
-import java.io.IOException;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Line;
-import javax.sound.sampled.SourceDataLine;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
@@ -21,6 +15,7 @@ import v9t9.common.speech.ISpeechDataSender;
 import v9t9.common.speech.TMS5220Consts;
 import v9t9.engine.speech.LPCSpeech;
 import v9t9.engine.speech.SpeechTMS5220;
+import v9t9.engine.speech.encode.SpeechDataSender;
 import v9t9.machine.ti99.machine.StandardMachineModel;
 
 /**
@@ -29,56 +24,6 @@ import v9t9.machine.ti99.machine.StandardMachineModel;
  */
 public class ManualTestSpeech {
 
-	/**
-	 * @author ejs
-	 *
-	 */
-	private final class SpeechDataSender implements ISpeechDataSender {
-		/**
-		 * 
-		 */
-		private final FileOutputStream fos;
-
-		/**
-		 * @param fos
-		 */
-		private SpeechDataSender(FileOutputStream fos) {
-			this.fos = fos;
-		}
-
-		public void sendSample(short val, int pos, int length) {
-			
-			//val ^= 0x8000;
-			if (speechIdx >= speechWaveForm.length) {
-				speechLine.write(speechWaveForm, 0, speechWaveForm.length);
-				speechIdx = 0;
-			}
-			speechWaveForm[speechIdx++] = (byte) (val & 0xff);
-			speechWaveForm[speechIdx++] = (byte) (val >> 8);
-			
-			try {
-				fos.write(val & 0xff);
-				fos.write(val >> 8);
-			} catch (IOException e) {
-			}
-//				if (pos == 0)
-//					System.out.println();
-//				System.out.print(val + " ");
-		}
-
-		/* (non-Javadoc)
-		 * @see v9t9.common.speech.ISpeechDataSender#speechDone()
-		 */
-		@Override
-		public void speechDone() {
-			System.out.println("\n// done");
-			
-
-			speechLine.write(speechWaveForm, 0, speechIdx);
-			speechLine.flush();
-			
-		}
-	}
 	/**
 	 * 
 	 */
@@ -118,27 +63,7 @@ public class ManualTestSpeech {
 		
 	}
 
-	private SourceDataLine speechLine;
-	private byte[] speechWaveForm;
-	private int speechIdx;
-
 	private void run() throws Exception {
-		AudioFormat speechFormat = new AudioFormat(8000, 16, 1, true, false);
-		Line.Info spInfo = new DataLine.Info(SourceDataLine.class,
-				speechFormat);
-		if (!AudioSystem.isLineSupported(spInfo)) {
-			System.err.println("Line not supported: " + speechFormat);
-			System.exit(1);
-		}
-		
-		
-		int speechFramesPerTick = (int) (speechFormat.getFrameRate() / 100);
-		speechLine = (SourceDataLine) AudioSystem.getLine(spInfo);
-		speechLine.open(speechFormat, speechFramesPerTick * 10);
-		speechLine.start();
-		
-		speechWaveForm = new byte[200 * 2];
-		speechIdx = 0;
 		
 		ISettingsHandler settings = new BasicSettingsHandler();
 		
@@ -158,7 +83,8 @@ public class ManualTestSpeech {
 		
 		final FileOutputStream fos = new FileOutputStream("/tmp/speech.raw");
 		
-		ISpeechDataSender sender = new SpeechDataSender(fos);
+		SpeechDataSender sender = new SpeechDataSender(8000, 20);
+		sender.setOutputStream(fos);
 		
 		tms5220.addSpeechListener(sender);
 		
@@ -223,6 +149,7 @@ public class ManualTestSpeech {
 		}
 		Thread.sleep(2000);
 		
+		fos.close();
 		//System.exit(0);
 	}
 

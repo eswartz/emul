@@ -465,7 +465,7 @@ final static int FL_last	= 8;
 					decode &= ~FL_nointerp;
 				decode |= FL_unvoiced;
 				//params.pitch = 12;		/* set some pitch */
-				params.pitch = RomTables.pitchtable[12] >> 8;
+				params.pitch = (RomTables.pitchtable[12] >> 8) & 0xff;
 
 				if (oldParams.isSilent())	/* previous frame silent? */
 					decode |= FL_nointerp;
@@ -536,7 +536,7 @@ final static int FL_last	= 8;
 		if ((decode & FL_nointerp + FL_first) != 0)
 			decode &= ~FL_first;
 
-		Logging.writeLogLine(3, settings.get(ISpeechChip.settingLogSpeech),
+		Logging.writeLogLine(0, settings.get(ISpeechChip.settingLogSpeech),
 				"Equation: " + params);
 
 		Logging.writeLogLine(4, settings.get(ISpeechChip.settingLogSpeech),
@@ -550,7 +550,7 @@ final static int FL_last	= 8;
 	private int getRangeAdjustedPitch(int pitchParam) {
 		int midRangeAdjustMax = pitchMidRangeAdjustRate.getInt();
 		
-		int normVal = RomTables.pitchtable[pitchParam] >> 8;
+		int normVal = (RomTables.pitchtable[pitchParam] >> 8) & 0xff;
 
 		if (midRangeAdjustMax == -1)
 			normVal = 43;
