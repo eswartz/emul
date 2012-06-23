@@ -97,7 +97,6 @@ public class ColorOctree {
 	}
 
 	private final InnerNode root;
-	private final int maxLeafCount;
 	private int leafCount;
 	private final int maxDepth;
 
@@ -112,12 +111,11 @@ public class ColorOctree {
 	private int maxBlue;
 
 	@SuppressWarnings("unchecked")
-	public ColorOctree(int maxDepth, int maxLeafCount, boolean removeDetail, boolean usingHSV) {
-		if (maxDepth < 2 || maxLeafCount < 1)
+	public ColorOctree(int maxDepth, boolean removeDetail, boolean usingHSV) {
+		if (maxDepth < 2)
 			throw new IllegalArgumentException();
 		
 		this.maxDepth = maxDepth;
-		this.maxLeafCount = maxLeafCount;
 		root = new InnerNode(null);
 		comparator = (removeDetail ?
 				createLeastUsedFirstComparator() : createMostUsedFirstComparator());
@@ -223,7 +221,7 @@ public class ColorOctree {
 	 * not desired, least-often-used colors are removed (to allow for
 	 * smoother color selection).
 	 */
-	public void reduceTree() {
+	public void reduceTree(int maxLeafCount) {
 		while (leafCount > maxLeafCount) {
 			LinkedList<InnerNode> list = null;
 			int depth;

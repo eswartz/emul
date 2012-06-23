@@ -42,24 +42,6 @@ public class ImageImportData {
 	public BufferedImage getConvertedImage() {
 		return converted;
 	}
-	
-	public byte getPixel(int x, int y) {
-		
-		int p;
-		if (x < converted.getWidth() && y < converted.getHeight())
-			p = converted.getRGB(x, y) & 0xffffff;
-		else
-			p = 0;
-		
-		Integer c = paletteToIndex.get(p);
-//		if (c == null && format == VdpFormat.COLOR256_1x1) {
-//			c = paletteToIndex.get(paletteToIndex.ceilingKey(p));	// should be fixed now
-//		}
-		if (c == null) {
-			return 0;
-		}
-		return (byte) (int) c;
-	}
 
 	/**
 	 * @return

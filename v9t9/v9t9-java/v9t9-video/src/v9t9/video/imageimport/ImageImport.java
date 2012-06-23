@@ -39,7 +39,6 @@ import ejs.base.utils.Pair;
 public class ImageImport {
 	private boolean DEBUG = false;
 
-	private final ImageImportOptions options;
 	private BufferedImage convertedImage;
 	private VdpFormat format;
 	private byte[][] thePalette;
@@ -60,6 +59,8 @@ public class ImageImport {
 	/** mapping from RGB-32 pixel to each palette index */
 	protected TreeMap<Integer, Integer> paletteToIndex;
 	private Pair<Integer,Integer>[][] bitmapColors;
+
+	private ColorOctree octree;
 	
 
 	/* 
@@ -118,9 +119,8 @@ public class ImageImport {
 		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
 	};
 
-	public ImageImport(ImageDataCanvas canvas, ImageImportOptions imageImportOptions) {
+	public ImageImport(ImageDataCanvas canvas) {
 		this.canvas = canvas;
-		this.options = imageImportOptions;
 		this.colorMgr = canvas.getColorMgr();
 		this.format = canvas.getFormat();
 		this.thePalette = colorMgr.getColorPalette();
@@ -327,7 +327,7 @@ public class ImageImport {
 		int[] rgbs = new int[width];
 		int[] prgb = { 0, 0, 0 };
 
-		ColorOctree octree = new ColorOctree(3, 8*8*8, false, false);
+		ColorOctree octree = new ColorOctree(3, false, false);
 
 		int total = 0;
 		for (int y = 0; y < img.getHeight(); y++) {
@@ -553,7 +553,6 @@ public class ImageImport {
 	void createOptimalPaletteWithHSV(BufferedImage image, int colorCount) {
 		int toAllocate = colorCount - firstColor;
 			
-		ColorOctree octree = new ColorOctree(3, toAllocate, true, false);
 		int[] prgb = { 0, 0, 0 };
 		float[] hsv = { 0, 0, 0 };
 		int[] rgbs = new int[image.getWidth()];
@@ -569,7 +568,7 @@ public class ImageImport {
 			}
 		}
 		
-		octree.reduceTree();
+		octree.reduceTree(colorCount);
 
 		int index = firstColor;
 		
@@ -614,7 +613,7 @@ public class ImageImport {
 
 		}
 		
-		ColorOctree octree = new ColorOctree(4, toAllocate, true, false);
+		//ColorOctree octree = new ColorOctree(4, toAllocate, true, false);
 		int[] prgb = { 0, 0, 0 };
 		int[] rgbs = new int[image.getWidth()];
 		for (int y = 0; y < image.getHeight(); y++) {
@@ -627,7 +626,7 @@ public class ImageImport {
 			}
 		}
 		
-		octree.reduceTree();
+		octree.reduceTree(colorCount);
 
 		int index = firstColor;
 		
@@ -1580,7 +1579,7 @@ public class ImageImport {
 
 	/**
 	 */
-	public ImageImportData importImage() {
+	public ImageImportData importImage(ImageImportOptions options) {
 		BufferedImage image = options.getImage();
 		if (image == null)
 			return null;
@@ -1657,6 +1656,9 @@ public class ImageImport {
 			canSetPalette = false;
 			ditherMono = true;
 		}
+		
+		//new ColorOctree(3, toAllocate, true, false);
+		octree = options.getOctree();
 		
 		byte[][] orig = options.getOrigPalette();
 		if (orig != null) {

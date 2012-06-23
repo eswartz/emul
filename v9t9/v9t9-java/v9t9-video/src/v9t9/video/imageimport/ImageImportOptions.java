@@ -61,6 +61,8 @@ public class ImageImportOptions {
 	private BufferedImage image;
 	private Rectangle clip;
 	
+	private ColorOctree octree;
+	
 	private FieldProperty scaleSmoothProperty;
 	private FieldProperty keepAspectProperty;
 	private FieldProperty asGreyScaleProperty;
@@ -180,6 +182,7 @@ public class ImageImportOptions {
 	 * Use this when the image has been dragged/dropped.
 	 */
 	public void updateFrom(BufferedImage image) {
+		octree = null;
 		setImage(image);
 	}
 	
@@ -230,5 +233,22 @@ public class ImageImportOptions {
 		}
 		else
 			setOrigPalette(canvas.getColorMgr().getPalette());
+		
+		octree = null;
+	}
+	
+	/**
+	 * @return the octree
+	 */
+	public ColorOctree getOctree() {
+		if (octree == null)
+			octree = new ColorOctree(3, true, false);
+		return octree;
+	}
+	/**
+	 * @param octree the octree to set
+	 */
+	public void setOctree(ColorOctree octree) {
+		this.octree = octree;
 	}
 }
