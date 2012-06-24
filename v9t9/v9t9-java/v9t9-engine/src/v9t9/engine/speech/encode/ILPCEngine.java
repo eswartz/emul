@@ -12,5 +12,5 @@ public interface ILPCEngine {
 
 	LPCAnalysisFrame analyze(float[] x, int offs, int len);
 	
-	void synthesize( float[] y, int offs, int len, LPCAnalysisFrame frame);
+	void synthesize( float[] y, int offs, int len, int playbackHz, LPCAnalysisFrame frame);
 }

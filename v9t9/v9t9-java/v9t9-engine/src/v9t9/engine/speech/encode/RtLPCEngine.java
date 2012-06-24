@@ -292,15 +292,17 @@ public class RtLPCEngine implements ILPCEngine {
 	// name: lpc_synthesize()
 	// desc: ...
 	//-----------------------------------------------------------------------------
-	public void synthesize( float[] y, int offs, int len, LPCAnalysisFrame frame)
+	public void synthesize( float[] y, int offs, int len, int playbackHz, LPCAnalysisFrame frame)
 	{
 	    float output;
 	    int i, j;
 	    
+	    float invPitch = frame.invPitch * playbackHz / params.getHertz();
+	    
 	    for( i = 0; i < len; i++ ) {
 	        output = 0.0f;
 
-	        if( frame.invPitch == 0 )
+			if( invPitch == 0 )
 	        {
 	            output = (float) (frame.power * 20.0f * ( 2.0f * Math.random() - 1.0f ));
 	            ticker = 0;
@@ -310,16 +312,16 @@ public class RtLPCEngine implements ILPCEngine {
 	        else {
 	            ticker--;
 	            if( ticker <= 0 ) {
-	                ticker = (int)(frame.invPitch + .5f);
+	                ticker = (int)(invPitch + .5f);
 	                if( !alt )
-	                    output = frame.power * frame.invPitch * 1.0f;
+	                    output = frame.power * invPitch * 1.0f;
 	            }
 
 	            if( alt  )
 	            {
-	                j = (int)(frame.invPitch+.5) - ticker + 0;
+	                j = (int)(invPitch+.5) - ticker + 0;
 	                if( j >= 0 && (j*4) < glot_pop_data.length )
-	                    output = frame.power * frame.invPitch * .5f * glot_pop_data[j*4] / (float)32767;
+	                    output = frame.power * invPitch * .5f * glot_pop_data[j*4] / (float)32767;
 	                else output *= .9f;
 	            }
 	        }

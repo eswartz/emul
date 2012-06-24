@@ -76,7 +76,10 @@ public class LPCSpeechEncoder {
 				format,
 				theFile.length());
 		
-		int framesPerSecond = 40;
+
+		int playbackHz = 22050;
+		
+		int framesPerSecond = 20;
 		
 		LPCEncoderParams params = new LPCEncoderParams(
 				(int) format.getFrameRate(), framesPerSecond, 10);
@@ -123,23 +126,24 @@ public class LPCSpeechEncoder {
 			
 			speech.init();
 			
-			ISpeechDataSender sender = new SpeechDataSender(8000, 20);
+			
+			ISpeechDataSender sender = new SpeechDataSender(playbackHz, 20);
 			senderList.add(sender);
 			
-			LPCConverter converter = new LPCConverter(params.getHertz());
+			LPCConverter converter = new LPCConverter((int) format.getFrameRate(), playbackHz);
 			for (LPCAnalysisFrame anaFrame : anaFrames) {
 				ILPCParameters parms = converter.apply(anaFrame);
 				System.out.println(parms);
-				speech.frame((LPCParameters) parms, 8000 / framesPerSecond);
+				speech.frame((LPCParameters) parms, playbackHz / framesPerSecond);
 				
 			}
 		} else {
-			ISpeechDataSender sender = new SpeechDataSender((int) format.getFrameRate(), framesPerSecond);
-			float[] out = new float[(int) format.getFrameRate() / framesPerSecond];
+			ISpeechDataSender sender = new SpeechDataSender(playbackHz, framesPerSecond);
+			float[] out = new float[playbackHz / framesPerSecond];
 			
 			for (LPCAnalysisFrame anaFrame : anaFrames) {
 				
-				engine.synthesize(out, 0, out.length, anaFrame);
+				engine.synthesize(out, 0, out.length, playbackHz, anaFrame);
 				
 				for (int o = 0; o < out.length; o++) {
 					sender.sendSample((short) (out[o] * 32767), o, out.length);

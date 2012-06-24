@@ -14,8 +14,10 @@ import v9t9.engine.speech.RomTables;
 public class LPCConverter {
 
 	private int hertz;
+	private int origHz;
 	
-	public LPCConverter(int hertz) {
+	public LPCConverter(int origHz, int hertz) {
+		this.origHz = origHz;
 		this.hertz = hertz;
 		
 	}
@@ -24,7 +26,7 @@ public class LPCConverter {
 		
 		LPCParameters params = new LPCParameters();
 		if (voiced) {
-			int pVal = (int) Math.max(0x1000, Math.min(0xA000, ((float)results.invPitch*8000/hertz*256)));
+			int pVal = (int) Math.max(0x1000, Math.min(0xA000, ((float)results.invPitch*hertz/origHz*256)));
 			params.pitchParam = lookup(RomTables.pitchtable, pVal);
 			params.pitch = RomTables.pitchtable[params.pitchParam];
 		} else {
