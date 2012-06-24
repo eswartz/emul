@@ -35,7 +35,7 @@ public class LPCConverter {
 		}
 		
 		int eVal = (int) (Math.min(0x7fc0, (int) (results.power * results.powerScale * 0x7fbf)));
-		params.energyParam = lookup(RomTables.energytable, eVal);
+		params.energyParam = Math.min(14, lookup(RomTables.energytable, eVal));
 		params.energy = RomTables.energytable[params.energyParam];
 		
 		int max = Math.min(results.coefs.length, voiced ? 10 : 4);

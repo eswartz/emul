@@ -5,6 +5,7 @@ package v9t9.engine.speech.encode;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,7 +78,7 @@ public class LPCSpeechEncoder {
 				theFile.length());
 		
 
-		int playbackHz = 44100;
+		int playbackHz = 8000;
 		
 		int framesPerSecond = 20;
 		
@@ -106,7 +107,7 @@ public class LPCSpeechEncoder {
 				content[i / 2] = (short) sample / 32768.0f;
 			}
 			
-			encoder.lowpass(content);
+			//encoder.lowpass(content);
 			
 			LPCAnalysisFrame anaFrame = encoder.encode(content);
 			anaFrames.add(anaFrame);
@@ -114,6 +115,12 @@ public class LPCSpeechEncoder {
 		
 		is.close();
 
+		SpeechDataSender sender = new SpeechDataSender(playbackHz, 20);
+		
+
+		final FileOutputStream fos = new FileOutputStream("/tmp/speech_out.raw");
+		
+		sender.setOutputStream(fos);
 		
 		if (true) {
 			ISettingsHandler settings = new BasicSettingsHandler();
@@ -126,8 +133,6 @@ public class LPCSpeechEncoder {
 			
 			speech.init();
 			
-			
-			ISpeechDataSender sender = new SpeechDataSender(playbackHz, 20);
 			senderList.add(sender);
 			
 			LPCConverter converter = new LPCConverter((int) format.getFrameRate(), playbackHz);
@@ -138,7 +143,6 @@ public class LPCSpeechEncoder {
 				
 			}
 		} else {
-			ISpeechDataSender sender = new SpeechDataSender(playbackHz, framesPerSecond);
 			float[] out = new float[playbackHz / framesPerSecond];
 			
 			for (LPCAnalysisFrame anaFrame : anaFrames) {
