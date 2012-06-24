@@ -77,7 +77,7 @@ public class LPCSpeechEncoder {
 				theFile.length());
 		
 
-		int playbackHz = 22050;
+		int playbackHz = 44100;
 		
 		int framesPerSecond = 20;
 		
