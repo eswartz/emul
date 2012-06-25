@@ -12,7 +12,11 @@ import javax.sound.sampled.AudioFormat;
  */
 public class SoundChunk {
 	private final AudioFormat format;
-
+	private final int offset;
+	private final float[] soundData;
+	private final int soundDataLength;
+	
+	private AudioChunk audioChunk;
 	/**
 	 * @param soundToWrite  data (should not be modified later!)
 	 * @param format
@@ -21,25 +25,25 @@ public class SoundChunk {
 		if (soundToWrite == null)
 			throw new NullPointerException();
 		this.soundData = soundToWrite;
+		this.offset = 0;
 		this.soundDataLength = soundToWrite.length;
 		this.format = format;
 	}
-	public SoundChunk(float[] soundToWrite, int length, AudioFormat format) {
+	public SoundChunk(float[] soundToWrite, int offset, int length, AudioFormat format) {
 		if (soundToWrite == null)
 			throw new NullPointerException();
 		this.soundData = soundToWrite;
+		this.offset = offset;
 		this.soundDataLength = length;
 		this.format = format;
 	}
 	public SoundChunk(int silentSamples, AudioFormat format) {
 		this.soundData = null;
+		this.offset = 0;
 		this.soundDataLength = silentSamples;
 		this.format = format;
 	}
 
-	public float[] soundData;
-	public int soundDataLength;
-	private AudioChunk audioChunk;
 	
 	public synchronized AudioChunk asAudioChunk() {
 		if (audioChunk == null) {
@@ -48,11 +52,33 @@ public class SoundChunk {
 		return audioChunk;
 	}
 	
-	/**
-	 * @return the format
-	 */
 	public AudioFormat getFormat() {
 		return format;
+	}
+	
+	public float at(int offs) {
+		if (soundData == null || offs < offset || offs + offset >= soundDataLength)
+			return 0f;
+		return soundData[offset + offs];
+	}
+	/**
+	 * @return
+	 */
+	public boolean isSilent() {
+		return soundData == null;
+	}
+	/**
+	 * @return
+	 */
+	public int getLength() {
+		return soundDataLength;
+	}
+	/**
+	 * @param i
+	 * @param v
+	 */
+	public void set(int i, float v) {
+		soundData[offset + i] = v;
 	}
 
 }

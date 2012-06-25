@@ -30,11 +30,12 @@ public class AudioChunk {
 		double scale = volume * volume * volume;
 		AudioFormat format = chunk.getFormat();
 		this.isEmpty = true;
-		this.soundData = new byte[format.getSampleSizeInBits() * chunk.soundDataLength / 8];
-		if (chunk.soundData != null) {
+		int length = chunk.getLength();
+		this.soundData = new byte[format.getSampleSizeInBits() * length / 8];
+		if (!chunk.isSilent()) {
 			if (format.getSampleSizeInBits() == 16) {
-				for (int i = 0; i < chunk.soundDataLength; i++) {
-					float s = chunk.soundData[i];
+				for (int i = 0; i < length; i++) {
+					float s = chunk.at(i);
 					if (s < -1.0f) s = -1.0f; else if (s > 1.0f) s = 1.0f;
 					short samp = (short) (s * scale * 32767);
 					if (samp != 0)
@@ -44,8 +45,8 @@ public class AudioChunk {
 					soundData[i*2+1] = (byte) (samp >> 8);
 				}
 			} else if (format.getSampleSizeInBits() == 8) {
-				for (int i = 0; i < chunk.soundData.length; i++) {
-					float s = chunk.soundData[i];
+				for (int i = 0; i < length; i++) {
+					float s = chunk.at(i);
 					if (s < -1.0f) s = -1.0f; else if (s > 1.0f) s = 1.0f;
 					byte samp = (byte) (s * scale * 127);
 					if (samp != 0)
