@@ -94,8 +94,10 @@ public class LPCSpeechEncoder {
 		
 //		ILPCFilter filter = new OpenLPCFilter(params);
 //		ILPCFilter filter = new SimpleLPCFilter(params);
+		ILPCFilter filter = new LowPassLPCFilter(params, new SimpleLPCFilter(params));
 //		ILPCFilter filter = new LowPassLPCFilter(params, new SimpleLPCFilter(params));
-		ILPCFilter filter = new LowPassLPCFilter(params, new OpenLPCFilter(params));
+		//ILPCFilter filter = new LowPassLPCFilter(params, null); //, new OpenLPCFilter(params));
+//		ILPCFilter filter = new LowPassLPCFilter(params, new OpenLPCFilter(params));
 		ILPCEngine engine = new RtLPCEngine(params);
 //		ILPCEngine engine = new OpenLPCEngine(params);
 		

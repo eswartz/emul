@@ -36,8 +36,9 @@ public class LowPassLPCFilter implements ILPCFilter {
 			out[idx] = (v * (1 - q) - last * q);
 			last = out[idx];
 		}
-		
-		chain.filter(in, offs, len, out, y);
+
+		if (chain != null)
+			chain.filter(in, offs, len, out, y);
 	}
 
 }

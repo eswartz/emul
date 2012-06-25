@@ -98,7 +98,7 @@ public class RtLPCEngine implements ILPCEngine {
 	    int i, j;
 	    
 	    LPCAnalysisFrame results = new LPCAnalysisFrame(order);
-	    results.coefsOffs = 0;
+	    results.coefsOffs = 1;
 	    
 	    if (this.corr == null || this.corr.length != len) {
 	    	corr = new float[len];
@@ -210,7 +210,7 @@ public class RtLPCEngine implements ILPCEngine {
 	    for( i = 0; i < len; i++ )
 	        y[i] *= (k-i) * norm;
 
-	    if( (y[j] / y[0]) < 0.1 ) j = 0;
+	    if( (y[j] / y[0]) < 0.4 ) j = 0;
 	    if( j > len / 2 ) j = 0;
 
 	    // we return the pitch information

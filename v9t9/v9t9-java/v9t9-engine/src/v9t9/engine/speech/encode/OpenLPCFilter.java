@@ -67,10 +67,12 @@ public class OpenLPCFilter implements ILPCFilter {
 
 			xv10 = xv11;
 			xv11 = xv12;
-			xv12 = u * 0.94597831f; /* /GAIN */
+			//xv12 = u * 0.94597831f; /* /GAIN */
+			xv12 = u * 1.0101251f; /* /GAIN */
 			yv10 = yv11;
 			yv11 = yv12;
-			yv12 = ((xv10 + xv12) - (xv11 + xv11) + -0.8948742499f * yv10 + 1.8890389823f * yv11);
+			//yv12 = ((xv10 + xv12) - (xv11 + xv11) + -0.8948742499f * yv10 + 1.8890389823f * yv11);
+			yv12 = ((xv10 + xv12) - (xv11 + xv11) + -0.9800f * yv10 + 1.9798533f * yv11);
 			u = out[j] = yv12; /*
 							 * also affects input of next stage, to the LPC
 							 * filter synth
@@ -82,10 +84,14 @@ public class OpenLPCFilter implements ILPCFilter {
 			 * Digital filter designed by mkfilter/mkshape/gencode A.J.
 			 * Fisher MKFILTER.EXE -Bu -Lp -o 2 -a 0.0375 -l -z
 			 */
-			xv30 = u * 0.04699658f; /* GAIN */
+			
+			// ejs: redone for 44100 hz
+			//xv30 = u * 0.04699658f; /* GAIN */
+			xv30 = u * 0.1772f; /* GAIN */
 			yv30 = yv31;
 			yv31 = yv32;
-			yv32 = xv30 + -0.7166152306f * yv30 + 1.6696186545f * yv31;
+			//yv32 = xv30 + -0.7166152306f * yv30 + 1.6696186545f * yv31;
+			yv32 = xv30 + -0.941347f * yv30 + 1.939575f * yv31;
 			y[j] = yv32;
 		}
 		xv1[0] = xv10;
