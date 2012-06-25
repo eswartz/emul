@@ -32,12 +32,14 @@ public class LPCSpeechEncoder {
 	private ILPCEngine lpc;
 	private LPCEncoderParams params;
 	private int frame;
+	private ILPCFilter filter;
 
 	/**
 	 * 
 	 */
-	public LPCSpeechEncoder(LPCEncoderParams params, ILPCEngine lpc) {
+	public LPCSpeechEncoder(LPCEncoderParams params, ILPCFilter filter, ILPCEngine lpc) {
 		this.params = params;
+		this.filter = filter;
 		this.lpc = lpc;
 		frame = 0;
 	}
@@ -46,6 +48,9 @@ public class LPCSpeechEncoder {
 		int frameSize = content.length; //params.getFrameSize();
 		
 		int len = Math.min(content.length, frameSize);
+		
+		filter.filter(content, 0, len, content, lpc.getY());
+		
 		LPCAnalysisFrame results = lpc.analyze(content, 0, len);
 		
 		boolean voiced = results.invPitch != 0;
@@ -78,15 +83,21 @@ public class LPCSpeechEncoder {
 				theFile.length());
 		
 
+		// nominal speech reproduction rate
 		int playbackHz = 8000;
 		
-		int framesPerSecond = 20;
+		// nominal framerate (25 ms)
+		int framesPerSecond = 40;
 		
 		LPCEncoderParams params = new LPCEncoderParams(
-				(int) format.getFrameRate(), framesPerSecond, 10);
+				(int) format.getFrameRate() , framesPerSecond, 10);
 		
-//		ILPCEngine engine = new RtLPCEngine(params);
-		ILPCEngine engine = new OpenLPCEngine(params);
+//		ILPCFilter filter = new OpenLPCFilter(params);
+//		ILPCFilter filter = new SimpleLPCFilter(params);
+//		ILPCFilter filter = new LowPassLPCFilter(params, new SimpleLPCFilter(params));
+		ILPCFilter filter = new LowPassLPCFilter(params, new OpenLPCFilter(params));
+		ILPCEngine engine = new RtLPCEngine(params);
+//		ILPCEngine engine = new OpenLPCEngine(params);
 		
 		byte[] buffer = new byte[params.getFrameSize() * format.getSampleSizeInBits() / 8];
 		float[] content = new float[params.getFrameSize()];
@@ -99,15 +110,13 @@ public class LPCSpeechEncoder {
 		// HACK: ignore header
 		is.read(buffer, 0, 0x28);
 		
-		LPCSpeechEncoder encoder = new LPCSpeechEncoder(params, engine);
+		LPCSpeechEncoder encoder = new LPCSpeechEncoder(params, filter, engine);
 				
 		while ((len = is.read(buffer)) > 0) {
 			for (int i = 0; i < len; i += 2) {
 				int sample = buffer[i] & 0xff | (buffer[i + 1] & 0xff) << 8; 
 				content[i / 2] = (short) sample / 32768.0f;
 			}
-			
-			//encoder.lowpass(content);
 			
 			LPCAnalysisFrame anaFrame = encoder.encode(content);
 			anaFrames.add(anaFrame);
@@ -155,27 +164,7 @@ public class LPCSpeechEncoder {
 				
 			}
 		}
+		fos.close();
 	}
 
-	/**
-	 * @param content
-	 * @param f
-	 */
-	public void lowpass(float[] content) {
-		float last = 0f;
-				
-		float q = 0.5f;
-		for (int idx = 0; idx < content.length; idx ++) {
-			float v = content[idx];
-
-//			v = (1f * v - 0.5f * last);
-//			last = v;
-//			
-//			content[idx] = v;
-			
-			content[idx] = (v * (1 - q) - last * q);
-			last = content[idx];
-		}
-	}
-	
 }

@@ -14,6 +14,7 @@ class LPCAnalysisFrame {
 	float invPitch;
 	float power;
 	float powerScale;
+	int coefsOffs;
 	public float[] coefs;
 	public float[] residue;
 

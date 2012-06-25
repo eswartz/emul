@@ -40,7 +40,7 @@ public class LPCConverter {
 		
 		int max = Math.min(results.coefs.length, voiced ? 10 : 4);
 		for (int k = 0; k < max; k++) {
-			int kVal = (int) (Math.max(-1.0f, Math.min(1.0f, results.coefs[k])) * 32767);
+			int kVal = (int) (Math.max(-1.0f, Math.min(1.0f, results.coefs[k + results.coefsOffs])) * 32767);
 			params.kParam[k] = lookup(RomTables.ktable[k], kVal);
 			params.kVal[k] = RomTables.ktable[k][params.kParam[k]];
 		}

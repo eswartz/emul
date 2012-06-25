@@ -45,6 +45,9 @@ public class RtLPCEngine implements ILPCEngine {
         Zs = new float[order];
 		this.Zss = new float[order];
 
+	    // allocate
+		corr = new float[params.getFrameSize()];
+	    
 	}
 	
 	private float predict(float[] x, int offs, int len, LPCAnalysisFrame results) {
@@ -78,6 +81,10 @@ public class RtLPCEngine implements ILPCEngine {
 	    return (float)Math.sqrt(power) / hope_size;
 	}
 
+	@Override
+	public float[] getY() {
+		return corr;
+	}
 	//-----------------------------------------------------------------------------
 	// name: lpc_analyze()
 	// desc: ...
@@ -91,8 +98,8 @@ public class RtLPCEngine implements ILPCEngine {
 	    int i, j;
 	    
 	    LPCAnalysisFrame results = new LPCAnalysisFrame(order);
-
-	    // allocate
+	    results.coefsOffs = 0;
+	    
 	    if (this.corr == null || this.corr.length != len) {
 	    	corr = new float[len];
 	    }
@@ -101,15 +108,15 @@ public class RtLPCEngine implements ILPCEngine {
 	    results.invPitch = autocorrelate( x, offs, len, corr );
 
 	    // construct the R matrix
-	    for( i = 1; i <= order; i++ )
-	        for( j = 1; j <= order; j++ )
-	             R.set(i-1, j-1, corr[Math.abs((int)(i-j))]);
+	    for( i = 0; i < order; i++ )
+	        for( j = 0; j < order; j++ )
+	             R.set(i, j, corr[Math.abs((int)(i-j))]);
 
 	    // invert R
 	    R.invert( res );
 
 	    // find the coefficients A = P*R^(-1)
-	    results.coefs = new float[order];
+	    results.coefs = new float[order + 1];
 	    for( i = 0; i < order; i++ )
 	    {
 	        results.coefs[i] = 0.0f;
@@ -118,8 +125,8 @@ public class RtLPCEngine implements ILPCEngine {
 	    }
 
 	    // do the linear prediction to find residue
-	    results.power = predict( x, offs, len, results);
-	    results.powerScale = params.getFrameSize();
+	    results.power = predict( x, offs, len, results) ;
+	    results.powerScale = params.getFrameSize() ;
 	    
 	    return results;
 	}
@@ -216,6 +223,63 @@ public class RtLPCEngine implements ILPCEngine {
 	private float[] Zss;
 
 
+
+	//-----------------------------------------------------------------------------
+	// name: lpc_synthesize()
+	// desc: ...
+	//-----------------------------------------------------------------------------
+	public void synthesize( float[] y, int offs, int len, int playbackHz, LPCAnalysisFrame frame)
+	{
+	    float output;
+	    int i, j;
+	    
+	    float invPitch = frame.invPitch * playbackHz / params.getHertz();
+	    
+	    for( i = 0; i < len; i++ ) {
+	        output = 0.0f;
+
+			if( invPitch == 0 )
+	        {
+	            output = (float) (frame.power * 20 * ( 2.0f * Math.random() - 1.0f ));
+	            ticker = 0;
+	            if( i == (len - 1) || i == 0 )
+	            	Arrays.fill(Zss, 0);
+	        }
+	        else {
+	            ticker--;
+	            if( ticker <= 0 ) {
+	                ticker = (int)(invPitch + .5f);
+	                if( !alt ) {
+	                	output = frame.power * invPitch * 1.0f;
+	                    //output = frame.power;
+	                }
+	            }
+
+	            if( alt  )
+	            {
+	                j = (int)(invPitch+.5) - ticker + 0;
+	                if( j >= 0 && (j*4) < glot_pop_data.length ) {
+	                    output = frame.power * invPitch * 0.5f * glot_pop_data[j*4] / (float)32767;
+	                    //output = frame.power * glot_pop_data[j*4] / (float)32767;
+	                }
+	                else output *= .9f;
+	            }
+	        }
+
+	        for( j = 0; j < frame.coefs.length; j++ )
+	            output += Zss[j] * frame.coefs[j];
+
+	        for( j = frame.coefs.length - 1; j > 0; j-- )
+	            Zss[j] = Zss[j-1];
+
+	        Zss[0] = output;
+
+	        y[i + offs] = output;
+	    }
+	}
+
+
+
 	// data for glot_pop.raw...
 	static float glot_pop_data[] = {
 	    0.0f,0.0f,1.0f,-1.0f,0.0f,0.0f,0.0f,0.0f,
@@ -286,57 +350,5 @@ public class RtLPCEngine implements ILPCEngine {
 	    0.0f,
 	    0
 	}; 
-
-
-	//-----------------------------------------------------------------------------
-	// name: lpc_synthesize()
-	// desc: ...
-	//-----------------------------------------------------------------------------
-	public void synthesize( float[] y, int offs, int len, int playbackHz, LPCAnalysisFrame frame)
-	{
-	    float output;
-	    int i, j;
-	    
-	    float invPitch = frame.invPitch * playbackHz / params.getHertz();
-	    
-	    for( i = 0; i < len; i++ ) {
-	        output = 0.0f;
-
-			if( invPitch == 0 )
-	        {
-	            output = (float) (frame.power * 20.0f * ( 2.0f * Math.random() - 1.0f ));
-	            ticker = 0;
-	            if( i == (len - 1) || i == 0 )
-	            	Arrays.fill(Zss, 0);
-	        }
-	        else {
-	            ticker--;
-	            if( ticker <= 0 ) {
-	                ticker = (int)(invPitch + .5f);
-	                if( !alt )
-	                    output = frame.power * invPitch * 1.0f;
-	            }
-
-	            if( alt  )
-	            {
-	                j = (int)(invPitch+.5) - ticker + 0;
-	                if( j >= 0 && (j*4) < glot_pop_data.length )
-	                    output = frame.power * invPitch * .5f * glot_pop_data[j*4] / (float)32767;
-	                else output *= .9f;
-	            }
-	        }
-
-	        for( j = 0; j < frame.coefs.length; j++ )
-	            output += Zss[j] * frame.coefs[j];
-
-	        for( j = frame.coefs.length - 1; j > 0; j-- )
-	            Zss[j] = Zss[j-1];
-
-	        Zss[0] = output;
-
-	        y[i + offs] = output;
-	    }
-	}
-
 
 }

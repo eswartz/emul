@@ -22,18 +22,19 @@ public class TI99SoundSmoother implements ISoundMutator {
 	@Override
 	public void editSoundChunk(SoundChunk chunk, List<SoundChunk> outChunks) {
 		
-		if (chunk.soundData != null) {
+		if (!chunk.isSilent()) {
 			int numChans = chunk.getFormat().getChannels();
 			int processedChans = Math.min(last.length, numChans);
 			
-			for (int idx = 0; idx < chunk.soundDataLength; idx += numChans) {
+			int length = chunk.getLength();
+			for (int idx = 0; idx < length; idx += numChans) {
 				for (int c = 0; c < processedChans; c++) {
-					float v = chunk.soundData[idx + c];
+					float v = chunk.at(idx + c);
 
 					v = (1f * v - 0.5f * last[c]);
 					last[c] = v;
 					
-					chunk.soundData[idx + c] = v;
+					chunk.set(idx + c, v);
 				}
 			}
 		}
