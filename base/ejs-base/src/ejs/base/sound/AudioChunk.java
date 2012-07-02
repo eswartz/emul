@@ -17,7 +17,7 @@ public class AudioChunk {
 	
 	private boolean isEmpty;
 
-	public AudioChunk(SoundChunk chunk) {
+	public AudioChunk(ISoundView chunk) {
 		this(chunk, 1.0);
 	}
 
@@ -25,12 +25,12 @@ public class AudioChunk {
 	 * @param chunk
 	 * @param volume
 	 */
-	public AudioChunk(SoundChunk chunk, double volume) {
+	public AudioChunk(ISoundView chunk, double volume) {
 		//logger.debug(volume);
 		double scale = volume * volume * volume;
 		AudioFormat format = chunk.getFormat();
 		this.isEmpty = true;
-		int length = chunk.getLength();
+		int length = chunk.getSampleCount();
 		this.soundData = new byte[format.getSampleSizeInBits() * length / 8];
 		if (!chunk.isSilent()) {
 			if (format.getSampleSizeInBits() == 16) {

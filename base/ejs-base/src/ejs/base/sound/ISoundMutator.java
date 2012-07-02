@@ -18,5 +18,5 @@ public interface ISoundMutator {
 	 * @param outChunks edited chunks; over time, the output data 
 	 * should match the time of the input data 
 	 */
-	void editSoundChunk(SoundChunk chunk, List<SoundChunk> outChunks);
+	void editSoundChunk(ISoundView chunk, List<SoundChunk> outChunks);
 }

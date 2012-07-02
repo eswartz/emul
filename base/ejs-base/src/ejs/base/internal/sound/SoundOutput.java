@@ -9,6 +9,7 @@ import ejs.base.sound.IFlushableSoundVoice;
 import ejs.base.sound.ISoundEmitter;
 import ejs.base.sound.ISoundMutator;
 import ejs.base.sound.ISoundOutput;
+import ejs.base.sound.ISoundView;
 import ejs.base.sound.ISoundVoice;
 import ejs.base.sound.SoundChunk;
 import ejs.base.utils.ListenerList;
@@ -94,7 +95,7 @@ public class SoundOutput implements ISoundOutput {
 				
 				for (Object listener : mutators.toArray()) {
 					try {
-						for (SoundChunk c : chunkList)
+						for (ISoundView c : chunkList)
 							((ISoundMutator)listener).editSoundChunk(c, nextList);
 						
 						List<SoundChunk> t = chunkList;
