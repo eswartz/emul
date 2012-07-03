@@ -71,7 +71,7 @@ public class BaseSoundTest {
 	 * @param toneVoice
 	 */
 	protected void setupVoice(ClockedSoundVoice toneVoice) {
-		toneVoice.setSoundClock((int) format.getFrameRate());
+		toneVoice.setFormat(format);
 		toneVoice.setReferenceClock(TMS9919Consts.CHIP_CLOCK);
 		toneVoice.setVolume(192);
 	}

@@ -10,7 +10,10 @@ import javax.sound.sampled.AudioFormat;
  *
  */
 public interface ISoundVoice {
-
+	/**
+	 * Set the format for which the voice is generated.
+	 * @param soundClock
+	 */
 	void setFormat(AudioFormat format);
 	
 	/** Generate samples from 'from' to 'to' in 'soundGeneratorWorkBuffer' 
@@ -21,12 +24,6 @@ public interface ISoundVoice {
 
 	/** Tell if the voice is active (i.e. producing sound, not muted) */
 	boolean isActive();
-
-	/**
-	 * Set the rate in Hz at which the voice is generated.
-	 * @param soundClock
-	 */
-	void setSoundClock(int soundClock);
 
 	/**
 	 * Reset the voice

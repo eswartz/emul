@@ -84,12 +84,12 @@ public class SoundOutput implements ISoundOutput {
 		emitters.remove(listener);
 	}
 	
-	public void fireListeners(SoundChunk chunk) {
+	public void fireListeners(ISoundView chunk) {
 		if (!emitters.isEmpty()) {
-			List<SoundChunk> chunkList = null;
+			List<ISoundView> chunkList = null;
 			if (!mutators.isEmpty()) {
-				chunkList = new ArrayList<SoundChunk>(1);
-				List<SoundChunk> nextList = new ArrayList<SoundChunk>(1);
+				chunkList = new ArrayList<ISoundView>(1);
+				List<ISoundView> nextList = new ArrayList<ISoundView>(1);
 				
 				chunkList.add(chunk);
 				
@@ -98,7 +98,7 @@ public class SoundOutput implements ISoundOutput {
 						for (ISoundView c : chunkList)
 							((ISoundMutator)listener).editSoundChunk(c, nextList);
 						
-						List<SoundChunk> t = chunkList;
+						List<ISoundView> t = chunkList;
 						chunkList = nextList;
 						nextList = t;
 					} catch (Exception e ) {
@@ -111,7 +111,7 @@ public class SoundOutput implements ISoundOutput {
 					if (chunkList == null) {
 						((ISoundEmitter)listener).played(chunk);
 					} else {
-						for (SoundChunk c : chunkList) {
+						for (ISoundView c : chunkList) {
 							((ISoundEmitter)listener).played(c);
 						}
 					}
@@ -206,13 +206,13 @@ public class SoundOutput implements ISoundOutput {
 	}
 
 	public void flushAudio(ISoundVoice[] voices, int totalCount) {
-		SoundChunk chunk;
+		ISoundView chunk;
 		chunk = createChunk(voices, totalCount);
 		if (chunk != null)
 			fireListeners(chunk);
 	}
 
-	private SoundChunk createChunk(ISoundVoice[] voices, int totalCount) {
+	private ISoundView createChunk(ISoundVoice[] voices, int totalCount) {
 		SoundChunk chunk;
 		synchronized (this) {
 			if (soundGeneratorWorkBuffer == null || soundGeneratorWorkBuffer.length == 0 || lastUpdatedPos == 0)

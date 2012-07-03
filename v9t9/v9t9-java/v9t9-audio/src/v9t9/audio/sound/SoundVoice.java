@@ -3,6 +3,8 @@
  */
 package v9t9.audio.sound;
 
+import javax.sound.sampled.AudioFormat;
+
 import ejs.base.settings.ISettingSection;
 import ejs.base.sound.ISoundVoice;
 
@@ -51,6 +53,15 @@ public abstract class SoundVoice implements ISoundVoice
 		else
 			return name + " volume="+volume;
 	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundVoice#setFormat(javax.sound.sampled.AudioFormat)
+	 */
+	@Override
+	public void setFormat(AudioFormat format) {
+		
+	}
+	
 	public void setBalance(byte balance) {
 		this.balance = balance;
 	}

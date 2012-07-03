@@ -82,7 +82,6 @@ public class SoundEngine {
 	 * @param voice
 	 */
 	public void addVoice(ISoundVoice voice) {
-		voice.setSoundClock(output.getSoundClock());
 		voice.setFormat(format);
 		
 		synchronized (this) {

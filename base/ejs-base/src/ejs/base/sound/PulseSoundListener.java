@@ -15,7 +15,7 @@ import com.sun.jna.ptr.IntByReference;
 /**
  * Pulseaudio sound output handler.
  * 
- * This blocks on {@link #played(SoundChunk)} if data is coming too fast.
+ * This blocks on {@link #played(ISoundView)} if data is coming too fast.
  * @author ejs
  * 
  */
@@ -177,12 +177,12 @@ public class PulseSoundListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public synchronized void played(SoundChunk chunk) {
+	public synchronized void played(ISoundView view) {
 		try {
 			if (soundQueue.remainingCapacity() == 0)
 				soundQueue.remove();
 			// will block if sound is too fast
-			AudioChunk o = new AudioChunk(chunk, volume);
+			AudioChunk o = new AudioChunk(view, volume);
 			//if (o.isEmpty())
 			//	return;
 			//logger.debug("Got chunk " + o + " at " + System.currentTimeMillis());

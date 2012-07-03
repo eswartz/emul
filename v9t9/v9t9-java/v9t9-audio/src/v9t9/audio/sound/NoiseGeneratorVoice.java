@@ -3,6 +3,8 @@
  */
 package v9t9.audio.sound;
 
+import javax.sound.sampled.AudioFormat;
+
 import v9t9.common.sound.TMS9919Consts;
 import ejs.base.settings.ISettingSection;
 
@@ -24,12 +26,23 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 		super((name != null ? name + " " : "") + "Noise");
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.audio.sound.ClockedSoundVoice#setFormat(javax.sound.sampled.AudioFormat)
+	 */
 	@Override
-	public void setSoundClock(int clock) {
+	public void setFormat(AudioFormat format) {
 		// Noise works on effectively double the clock of tones,
 		// because tones split the clock for the up and down parts of
 		// one cycle, whereas noise works on every cycle.
-		super.setSoundClock(clock * 2);
+		AudioFormat dblFormat = new AudioFormat(
+				format.getEncoding(),
+				format.getSampleRate() * 2, 
+				format.getSampleSizeInBits(), format.getChannels(),
+				format.getFrameSize(),
+				format.getFrameRate(),
+				format.isBigEndian());
+		
+		super.setFormat(dblFormat);
 	}
 	
 	/**

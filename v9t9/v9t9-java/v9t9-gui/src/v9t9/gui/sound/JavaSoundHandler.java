@@ -115,12 +115,12 @@ public class JavaSoundHandler implements ISoundHandler {
 		
 		if (soundGenerator != null) {
 			for (ISoundVoice voice : soundGenerator.getSoundVoices()) {
-				voice.setSoundClock((int) soundFormat.getFrameRate());
+				voice.setFormat(soundFormat);
 			}
 		}
 		if (speechGenerator != null) {
 			for (ISpeechSoundVoice voice : speechGenerator.getSpeechVoices()) {
-				voice.setSoundClock((int) speechFormat.getFrameRate());
+				voice.setFormat(speechFormat);
 			}
 		}
 		

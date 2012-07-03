@@ -19,7 +19,7 @@ import ejs.base.sound.AlsaLibrary.snd_pcm_sw_params_t;
 /**
  * ALSA sound output handler.
  * 
- * This blocks on {@link #played(SoundChunk)} if data is coming too fast.
+ * This blocks on {@link #played(ISoundView)} if data is coming too fast.
  * @author ejs
  * 
  */
@@ -274,12 +274,12 @@ public class AlsaSoundListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public synchronized void played(SoundChunk chunk) {
+	public synchronized void played(ISoundView view) {
 		try {
 			if (!blocking && soundQueue.remainingCapacity() == 0)
 				soundQueue.remove();
 			// will block if sound is too fast
-			AudioChunk o = new AudioChunk(chunk, volume);
+			AudioChunk o = new AudioChunk(view, volume);
 			soundQueue.put(o);
 		} catch (InterruptedException e) {
 		}

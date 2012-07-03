@@ -14,9 +14,9 @@ import java.util.List;
 public interface ISoundMutator {
 	/**
 	 * Edit a generated a sound chunk. 
-	 * @param chunk
-	 * @param outChunks edited chunks; over time, the output data 
+	 * @param view
+	 * @param outViews edited chunks; over time, the output data 
 	 * should match the time of the input data 
 	 */
-	void editSoundChunk(ISoundView chunk, List<SoundChunk> outChunks);
+	void editSoundChunk(ISoundView view, List<ISoundView> outViews);
 }

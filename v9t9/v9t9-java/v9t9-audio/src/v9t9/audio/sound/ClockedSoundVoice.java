@@ -5,6 +5,8 @@ package v9t9.audio.sound;
 
 import java.text.MessageFormat;
 
+import javax.sound.sampled.AudioFormat;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -79,8 +81,13 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		return soundClock;
 	}
 
-	public void setSoundClock(int clock) {
-		this.soundClock = clock;
+	/* (non-Javadoc)
+	 * @see v9t9.audio.sound.SoundVoice#setFormat(javax.sound.sampled.AudioFormat)
+	 */
+	@Override
+	public void setFormat(AudioFormat format) {
+		super.setFormat(format);
+		this.soundClock = (int) format.getFrameRate();
 		setupVoice();
 	}
 	

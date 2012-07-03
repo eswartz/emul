@@ -22,7 +22,7 @@ import ejs.base.winmm.WinMMLibrary;
 /**
  * ALSA sound output handler.
  * 
- * This blocks on {@link #played(SoundChunk)} if data is coming too fast.
+ * This blocks on {@link #played(ISoundView)} if data is coming too fast.
  * @author ejs
  * 
  * TODO: FIXME: need to use a semaphore to avoid ugly stuttering sound.  We're currently sending samples on a fixed basis,
@@ -264,12 +264,12 @@ public class Win32SoundListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public synchronized void played(SoundChunk chunk) {
+	public synchronized void played(ISoundView view) {
 		try {
 			if (soundQueue.remainingCapacity() == 0)
 				soundQueue.remove();
 			// will block if sound is too fast
-			AudioChunk o = new AudioChunk(chunk, volume);
+			AudioChunk o = new AudioChunk(view, volume);
 			soundQueue.put(o);
 		} catch (InterruptedException e) {
 		}

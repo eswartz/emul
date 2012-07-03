@@ -82,10 +82,10 @@ public class SoundFileListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public void played(SoundChunk schunk) {
+	public void played(ISoundView schunk) {
 		if (soundFos != null) {
 			try {
-				AudioChunk chunk = schunk.asAudioChunk();
+				AudioChunk chunk = new AudioChunk(schunk);
 				soundFos.write(chunk.soundData, 0,
 						chunk.soundData.length);
 			} catch (IOException e) {

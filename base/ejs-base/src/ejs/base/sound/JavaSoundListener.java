@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 /**
  * Java sound output handler.
  * 
- * This blocks on {@link #played(SoundChunk)} if data is coming too fast.
+ * This blocks on {@link #played(ISoundView)} if data is coming too fast.
  * @author ejs
  * 
  */
@@ -152,14 +152,14 @@ public class JavaSoundListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public void played(SoundChunk chunk) {
+	public void played(ISoundView view) {
 		try {
 			if (soundWritingThread == null) {
 				if (soundQueue.remainingCapacity() == 0)
 					soundQueue.remove();
 			}
 			// will block if sound is too fast
-			AudioChunk o = new AudioChunk(chunk, volume);
+			AudioChunk o = new AudioChunk(view, volume);
 			//logger.debug("Got chunk " + o + " at " + System.currentTimeMillis());
 			soundQueue.put(o);
 		} catch (InterruptedException e) {

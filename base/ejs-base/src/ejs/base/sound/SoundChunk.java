@@ -10,7 +10,7 @@ import javax.sound.sampled.AudioFormat;
  * @author ejs
  *
  */
-public class SoundChunk extends BaseSoundView{
+public class SoundChunk extends BaseSoundView implements IEditableSoundView {
 	final float[] soundData;
 	/**
 	 * @param soundData  data (should not be modified later!)
@@ -52,14 +52,6 @@ public class SoundChunk extends BaseSoundView{
 		return soundData == null;
 	}
 	
-	/**
-	 * Set a sample (interleaving channels)
-	 * @param absOffs
-	 * @param v
-	 */
-	public void set(int absOffs, float v) {
-		soundData[offset + absOffs] = v;
-	}
 	/**
 	 * @param i
 	 * @return
@@ -121,20 +113,23 @@ public class SoundChunk extends BaseSoundView{
 	}
 
 	/**
-	 * Set a sample for the given channel
+	 * Set a sample 
 	 * @param sampleOffs
 	 * @param v
 	 */
-	public void set(int sampleOffs, int channel, float v) {
-		set(sampleOffs * numChannels + channel, v);
+	@Override
+	public void set(int sampleOffs, float v) {
+		soundData[offset + sampleOffs] = v;
 	}
+	
 	/**
 	 * Set a sample for all channels
-	 * @param sampleOffs
+	 * @param frameOffs
 	 * @param v
 	 */
-	public void setAll(int sampleOffs, float v) {
-		int absOffs = sampleOffs * numChannels;
+	@Override
+	public void setFrame(int frameOffs, float v) {
+		int absOffs = frameOffs * numChannels;
 		for (int i = 0; i < numChannels; i++)
 			soundData[offset + absOffs + i] = v;
 	}
