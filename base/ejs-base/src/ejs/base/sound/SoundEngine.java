@@ -39,13 +39,13 @@ public class SoundEngine {
 	
 	/**
 	 */
-	public SoundEngine(int rate) {
+	public SoundEngine(AudioFormat format, int mutateRate) {
 		mutators = new IMutator[0];
 		voices = new ISoundVoice[0];
 		
-		format = new AudioFormat(44100, 16, 2, true, false);
+		this.format = format;
 		
-		output = SoundFactory.createSoundOutput(format, 100);
+		output = SoundFactory.createSoundOutput(format, mutateRate);
 		
 		iSoundListener = new AlsaSoundListener(null);
 		((AlsaSoundListener)iSoundListener).setBlockMode(true);
@@ -83,6 +83,7 @@ public class SoundEngine {
 	 */
 	public void addVoice(ISoundVoice voice) {
 		voice.setSoundClock(output.getSoundClock());
+		voice.setFormat(format);
 		
 		synchronized (this) {
 			ArrayList<ISoundVoice> moreVoices = new ArrayList<ISoundVoice>(voices.length + 1);
