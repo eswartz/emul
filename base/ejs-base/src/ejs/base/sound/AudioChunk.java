@@ -31,8 +31,8 @@ public class AudioChunk {
 		AudioFormat format = chunk.getFormat();
 		this.isEmpty = true;
 		int length = chunk.getSampleCount();
-		this.soundData = new byte[format.getSampleSizeInBits() * length / 8];
 		if (!chunk.isSilent()) {
+			this.soundData = new byte[format.getSampleSizeInBits() * length / 8];
 			if (format.getSampleSizeInBits() == 16) {
 				for (int i = 0; i < length; i++) {
 					float s = chunk.at(i);
