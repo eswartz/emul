@@ -69,4 +69,11 @@ public interface ISoundView {
 //	ISoundView getToSample(int sampCount);
 //	ISoundView getFromFrame(int frameOffs);
 //	ISoundView getToFrame(int frameCount);
+
+	/**
+	 * Make a deep copy of the view
+	 * @return
+	 */
+	IEditableSoundView copy();
+
 }

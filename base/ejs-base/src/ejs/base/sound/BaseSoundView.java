@@ -88,5 +88,14 @@ public abstract class BaseSoundView  implements ISoundView {
 	public ISoundView getSoundViewTime(float fromTime, float length) {
 		return getSoundView((int)(fromTime * sampleToTime), Math.round(length * sampleToTime));
 	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundView#copy()
+	 */
+	@Override
+	public IEditableSoundView copy() {
+		float[] newData = new float[getSampleCount()];
+		return new ArraySoundView(newData, 0, getSampleCount(), format);
+	}
 
 }
