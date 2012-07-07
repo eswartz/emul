@@ -95,6 +95,8 @@ public abstract class BaseSoundView  implements ISoundView {
 	@Override
 	public IEditableSoundView copy() {
 		float[] newData = new float[getSampleCount()];
+		for (int i = 0; i < newData.length; i++)
+			newData[i] = at(i);
 		return new ArraySoundView(newData, 0, getSampleCount(), format);
 	}
 
