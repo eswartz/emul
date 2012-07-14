@@ -41,6 +41,12 @@ public interface ISoundView {
 	 */
 	int getChannelCount();
 	
+	/** 
+	 * Get offset in parent (if any) 
+	 * @return
+	 */
+	int getSampleOffset();
+
 	/**
 	 * Get the number of raw entries (one per channel)
 	 * @return
@@ -53,11 +59,30 @@ public interface ISoundView {
 	 */
 	int getFrameCount();
 
+	
+	/** 
+	 * Get start sample number (e.g. time) 
+	 * @return
+	 */
+	int getSampleStart();
+	
+	void setSampleStart(int start);
+	
 	/**
 	 * Get the time in seconds for the view
 	 * @return
 	 */
-	float getTime();
+	float getElapsedTime();
+
+	/**
+	 * @return
+	 */
+	float getStartTime();
+
+	/**
+	 * @return
+	 */
+	float getEndTime();
 
 	ISoundView getSoundView(int fromSample, int count);
 	ISoundView getSoundViewFrames(int fromFrame, int count);
@@ -75,5 +100,7 @@ public interface ISoundView {
 	 * @return
 	 */
 	IEditableSoundView copy();
+
+
 
 }

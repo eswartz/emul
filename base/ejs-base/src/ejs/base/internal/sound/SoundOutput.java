@@ -227,7 +227,7 @@ public class SoundOutput implements ISoundOutput {
 				}
 
 				if (lastUpdatedPos < soundGeneratorWorkBuffer.length) {
-					chunk = new SoundChunk(soundGeneratorWorkBuffer, 0, lastUpdatedPos, format);
+					chunk = new SoundChunk(0, soundGeneratorWorkBuffer, 0, lastUpdatedPos, format);
 					soundGeneratorWorkBuffer = new float[bufferSize];
 				} else  {
 					chunk = new SoundChunk(soundGeneratorWorkBuffer, format);

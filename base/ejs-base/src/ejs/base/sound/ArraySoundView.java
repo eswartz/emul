@@ -12,10 +12,20 @@ import javax.sound.sampled.AudioFormat;
 public class ArraySoundView extends BaseSoundView implements IEditableSoundView {
 
 	private float[] data;
+	private int offset;
 
-	public ArraySoundView(float[] data, int offset, int length, AudioFormat format) {
-		super(offset, length, format);
+	public ArraySoundView(int start, float[] data, int offset, int length, AudioFormat format) {
+		super(start, length, format);
 		this.data = data;
+		this.offset = offset;
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.BaseSoundView#toString()
+	 */
+	@Override
+	public String toString() {
+		return "frames: " + frameCount + " (" + time +" sec), start = " + start + " [ " + offset + " + " + sampleCount + "] in " + format;
 	}
 
 	/* (non-Javadoc)
@@ -39,7 +49,7 @@ public class ArraySoundView extends BaseSoundView implements IEditableSoundView 
 	 */
 	@Override
 	public ISoundView getSoundView(int fromSample, int count) {
-		return new ArraySoundView(data, fromSample + offset, count, format);
+		return new ArraySoundView(fromSample, data, fromSample + offset, count, format);
 	}
 
 	/* (non-Javadoc)

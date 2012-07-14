@@ -14,18 +14,19 @@ public abstract class BaseSoundView  implements ISoundView {
 	protected final AudioFormat format;
 
 	protected final int numChannels;
-	protected final int offset;
 	protected final int sampleCount;
 	protected final int frameCount;
 	protected final float time;
 	protected AudioChunk audioChunk;
 	protected float sampleToTime;
 
+	protected int start;
+
 	/**
 	 * 
 	 */
-	public BaseSoundView(int offset, int length, AudioFormat format) {
-		this.offset = offset;
+	public BaseSoundView(int start, int length, AudioFormat format) {
+		this.start = start;
 		this.sampleCount = length;
 		this.format = format;
 		this.numChannels = format.getChannels();
@@ -37,20 +38,29 @@ public abstract class BaseSoundView  implements ISoundView {
 
 	@Override
 	public String toString() {
-		return "frames: " + frameCount + " (" + time +" sec) at [" + offset + "+" + sampleCount + "] in " + format;
+		return "frames: " + frameCount + " (" + time +" sec), start = " + start + " for " + sampleCount + " in " + format;
 	}
 
+	
 	@Override
 	public AudioFormat getFormat() {
 		return format;
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundView#getFrameOffset()
+	 */
+	@Override
+	public int getSampleOffset() {
+		return 0;
+	}
+	
 	@Override
 	public float atAvg(int frameOffs) {
 		int absOffs = frameOffs * numChannels;
 		float sum = 0f;
 		for (int i = 0; i < numChannels; i++)
-			sum += at(offset + absOffs + i);
+			sum += at(absOffs + i);
 		return sum / numChannels;
 	}
 
@@ -69,8 +79,39 @@ public abstract class BaseSoundView  implements ISoundView {
 		return frameCount;
 	}
 
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundView#getSampleStart()
+	 */
 	@Override
-	public float getTime() {
+	public int getSampleStart() {
+		return start;
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundView#setSampleStart(int)
+	 */
+	@Override
+	public void setSampleStart(int start) {
+		this.start = start;
+	}
+
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundView#getStartTime()
+	 */
+	@Override
+	public float getStartTime() {
+		return start / sampleToTime;
+	}
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundView#getEndTime()
+	 */
+	@Override
+	public float getEndTime() {
+		return getStartTime() + getElapsedTime();
+	}
+	
+	@Override
+	public float getElapsedTime() {
 		return time;
 	}
 
@@ -97,7 +138,7 @@ public abstract class BaseSoundView  implements ISoundView {
 		float[] newData = new float[getSampleCount()];
 		for (int i = 0; i < newData.length; i++)
 			newData[i] = at(i);
-		return new ArraySoundView(newData, 0, getSampleCount(), format);
+		return new ArraySoundView(start, newData, 0, getSampleCount(), format);
 	}
 
 }
