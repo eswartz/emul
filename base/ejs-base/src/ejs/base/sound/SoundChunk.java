@@ -23,8 +23,8 @@ public class SoundChunk extends BaseSoundView implements IEditableSoundView {
 	public SoundChunk(int silentSamples, AudioFormat format) {
 		this(0, null, 0, silentSamples, format);
 	}
-	public SoundChunk(int sampleOffset, int silentSamples, AudioFormat format) {
-		this(sampleOffset, null, 0, silentSamples, format);
+	public SoundChunk(int frameOffset, int silentSamples, AudioFormat format) {
+		this(frameOffset, null, 0, silentSamples, format);
 	}
 	public SoundChunk(int start, float[] soundData, int offset, int length, AudioFormat format) {
 		super(start, length, format);
@@ -66,7 +66,7 @@ public class SoundChunk extends BaseSoundView implements IEditableSoundView {
 		//	throw new IllegalArgumentException();
 		if (sampOffs == 0)
 			return this;
-		return new SoundChunk(start, soundData, offset + sampOffs, sampleCount - sampOffs, format);
+		return new SoundChunk(startFrame, soundData, offset + sampOffs, sampleCount - sampOffs, format);
 	}
 	/**
 	 * @param f
@@ -77,7 +77,7 @@ public class SoundChunk extends BaseSoundView implements IEditableSoundView {
 		//	throw new IllegalArgumentException();
 		if (sampCount == sampleCount)
 			return this;
-		return new SoundChunk(start, soundData, offset, sampCount, format);
+		return new SoundChunk(startFrame, soundData, offset, sampCount, format);
 	}
 	/**
 	 * @param f
@@ -114,7 +114,7 @@ public class SoundChunk extends BaseSoundView implements IEditableSoundView {
 	public ISoundView getSoundView(int fromSample, int count) {
 		if (fromSample == 0 && count == sampleCount)
 			return this;
-		return new SoundChunk(start + fromSample, soundData, offset + fromSample, count, format);
+		return new SoundChunk(startFrame + fromSample/numChannels, soundData, offset + fromSample, count, format);
 	}
 
 	/**

@@ -61,12 +61,12 @@ public interface ISoundView {
 
 	
 	/** 
-	 * Get start sample number (e.g. time) 
+	 * Get start frame number (e.g. time) 
 	 * @return
 	 */
-	int getSampleStart();
+	int getFrameStart();
 	
-	void setSampleStart(int start);
+	void setFrameStart(int start);
 	
 	/**
 	 * Get the time in seconds for the view

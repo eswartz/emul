@@ -20,25 +20,25 @@ public abstract class BaseSoundView  implements ISoundView {
 	protected AudioChunk audioChunk;
 	protected float sampleToTime;
 
-	protected int start;
+	protected int startFrame;
 
 	/**
 	 * 
 	 */
-	public BaseSoundView(int start, int length, AudioFormat format) {
-		this.start = start;
+	public BaseSoundView(int startFrame, int length, AudioFormat format) {
+		this.startFrame = startFrame;
 		this.sampleCount = length;
 		this.format = format;
 		this.numChannels = format.getChannels();
 		this.frameCount = sampleCount / numChannels;
 		this.time = frameCount / format.getFrameRate();
 		
-		this.sampleToTime = sampleCount / time;
+		this.sampleToTime = time > 0 ? sampleCount / time : 1;
 	}
 
 	@Override
 	public String toString() {
-		return "frames: " + frameCount + " (" + time +" sec), start = " + start + " for " + sampleCount + " in " + format;
+		return "frames: " + frameCount + " (" + time +" sec), start = " + startFrame*numChannels + " for " + sampleCount + " in " + format;
 	}
 
 	
@@ -83,16 +83,16 @@ public abstract class BaseSoundView  implements ISoundView {
 	 * @see ejs.base.sound.ISoundView#getSampleStart()
 	 */
 	@Override
-	public int getSampleStart() {
-		return start;
+	public int getFrameStart() {
+		return startFrame;
 	}
 	
 	/* (non-Javadoc)
 	 * @see ejs.base.sound.ISoundView#setSampleStart(int)
 	 */
 	@Override
-	public void setSampleStart(int start) {
-		this.start = start;
+	public void setFrameStart(int start) {
+		this.startFrame = start;
 	}
 
 	/* (non-Javadoc)
@@ -100,7 +100,7 @@ public abstract class BaseSoundView  implements ISoundView {
 	 */
 	@Override
 	public float getStartTime() {
-		return start / sampleToTime;
+		return startFrame * numChannels / sampleToTime;
 	}
 	/* (non-Javadoc)
 	 * @see ejs.base.sound.ISoundView#getEndTime()
@@ -138,7 +138,7 @@ public abstract class BaseSoundView  implements ISoundView {
 		float[] newData = new float[getSampleCount()];
 		for (int i = 0; i < newData.length; i++)
 			newData[i] = at(i);
-		return new ArraySoundView(start, newData, 0, getSampleCount(), format);
+		return new ArraySoundView(startFrame, newData, 0, newData.length, format);
 	}
 
 }

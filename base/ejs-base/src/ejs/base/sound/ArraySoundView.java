@@ -25,7 +25,7 @@ public class ArraySoundView extends BaseSoundView implements IEditableSoundView 
 	 */
 	@Override
 	public String toString() {
-		return "frames: " + frameCount + " (" + time +" sec), start = " + start + " [ " + offset + " + " + sampleCount + "] in " + format;
+		return "frames: " + frameCount + " (" + time +" sec), start = " + startFrame*numChannels + " [ " + offset + " + " + sampleCount + "] in " + format;
 	}
 
 	/* (non-Javadoc)
@@ -33,7 +33,8 @@ public class ArraySoundView extends BaseSoundView implements IEditableSoundView 
 	 */
 	@Override
 	public float at(int absOffs) {
-		return absOffs + offset < 0 || absOffs + offset >= data.length ? 0 : data[absOffs + offset];
+		return absOffs + offset < 0 || absOffs >= sampleCount || absOffs + offset >= data.length ? 0 
+				: data[absOffs + offset];
 	}
 
 	/* (non-Javadoc)
