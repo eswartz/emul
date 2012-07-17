@@ -56,7 +56,7 @@ public abstract class BaseSoundView  implements ISoundView {
 	}
 	
 	@Override
-	public float atAvg(int frameOffs) {
+	public float atFrame(int frameOffs) {
 		int absOffs = frameOffs * numChannels;
 		float sum = 0f;
 		for (int i = 0; i < numChannels; i++)
@@ -141,4 +141,12 @@ public abstract class BaseSoundView  implements ISoundView {
 		return new ArraySoundView(startFrame, newData, 0, newData.length, format);
 	}
 
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.IArrayAccess#size()
+	 */
+	@Override
+	public int size() {
+		return getSampleCount();
+	}
+	
 }

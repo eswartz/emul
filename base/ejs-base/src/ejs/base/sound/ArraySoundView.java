@@ -49,8 +49,24 @@ public class ArraySoundView extends BaseSoundView implements IEditableSoundView 
 	 * @see ejs.base.sound.ISoundView#getSoundView(int, int)
 	 */
 	@Override
-	public ISoundView getSoundView(int fromSample, int count) {
+	public IEditableSoundView getSoundView(int fromSample, int count) {
 		return new ArraySoundView(fromSample, data, fromSample + offset, count, format);
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.BaseSoundView#getSoundViewFrames(int, int)
+	 */
+	@Override
+	public IEditableSoundView getSoundViewFrames(int fromFrame, int count) {
+		return (IEditableSoundView) super.getSoundViewFrames(fromFrame, count);
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.BaseSoundView#getSoundViewTime(float, float)
+	 */
+	@Override
+	public IEditableSoundView getSoundViewTime(float fromTime, float length) {
+		return (IEditableSoundView) super.getSoundViewTime(fromTime, length);
 	}
 
 	/* (non-Javadoc)
@@ -70,4 +86,11 @@ public class ArraySoundView extends BaseSoundView implements IEditableSoundView 
 			set(frameOffs * numChannels + i, value);
 	}
 
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.IArrayAccess#size()
+	 */
+	@Override
+	public int size() {
+		return data.length;
+	}
 }

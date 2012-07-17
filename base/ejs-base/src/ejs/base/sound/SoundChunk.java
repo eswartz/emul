@@ -111,12 +111,29 @@ public class SoundChunk extends BaseSoundView implements IEditableSoundView {
 	 * @see ejs.base.sound.ISoundView#getSoundView(int, int)
 	 */
 	@Override
-	public ISoundView getSoundView(int fromSample, int count) {
+	public IEditableSoundView getSoundView(int fromSample, int count) {
 		if (fromSample == 0 && count == sampleCount)
 			return this;
 		return new SoundChunk(startFrame + fromSample/numChannels, soundData, offset + fromSample, count, format);
 	}
 
+
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.BaseSoundView#getSoundViewFrames(int, int)
+	 */
+	@Override
+	public IEditableSoundView getSoundViewFrames(int fromFrame, int count) {
+		return (IEditableSoundView) super.getSoundViewFrames(fromFrame, count);
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.BaseSoundView#getSoundViewTime(float, float)
+	 */
+	@Override
+	public IEditableSoundView getSoundViewTime(float fromTime, float length) {
+		return (IEditableSoundView) super.getSoundViewTime(fromTime, length);
+	}
+	
 	/**
 	 * Set a sample 
 	 * @param sampleOffs
@@ -144,5 +161,12 @@ public class SoundChunk extends BaseSoundView implements IEditableSoundView {
 	public float[] getData() {
 		return soundData;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.IArrayAccess#size()
+	 */
+	@Override
+	public int size() {
+		return soundData.length;
+	}
 }
