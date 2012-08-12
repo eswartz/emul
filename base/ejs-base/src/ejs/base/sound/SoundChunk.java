@@ -144,6 +144,14 @@ public class SoundChunk extends BaseSoundView implements IEditableSoundView {
 		soundData[offset + sampleOffs] = v;
 	}
 	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.IEditableSoundView#set(int, int, float)
+	 */
+	@Override
+	public void set(int frameOffs, int channel, float value) {
+		soundData[offset + frameOffs * numChannels + channel] = value;
+	}
+	
 	/**
 	 * Set a sample for all channels
 	 * @param frameOffs

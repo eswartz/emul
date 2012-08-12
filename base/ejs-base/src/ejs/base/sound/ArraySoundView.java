@@ -76,6 +76,14 @@ public class ArraySoundView extends BaseSoundView implements IEditableSoundView 
 	public void set(int sampleOffs, float value) {
 		data[sampleOffs + offset] = value;
 	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.IEditableSoundView#set(int, int, float)
+	 */
+	@Override
+	public void set(int frameOffs, int channel, float value) {
+		data[frameOffs * numChannels + channel + offset] = value;		
+	}
 
 	/* (non-Javadoc)
 	 * @see ejs.base.sound.IEditableSoundView#setFrame(int, float)

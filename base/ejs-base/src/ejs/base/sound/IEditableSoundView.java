@@ -9,7 +9,14 @@ package ejs.base.sound;
  */
 public interface IEditableSoundView extends ISoundView, IWriteArrayAccess {
 
-	
+	/**
+	 * Set the sample value 
+	 * @param frameOffs
+	 * @param channel
+	 * @param value
+	 */
+	void set(int frameOffs, int channel, float value);
+
 	/**
 	 * Set the frame to have all channels the same value
 	 * @param frameOffs
