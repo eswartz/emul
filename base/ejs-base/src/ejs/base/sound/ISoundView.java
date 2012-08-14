@@ -11,6 +11,8 @@ import javax.sound.sampled.AudioFormat;
  */
 public interface ISoundView extends IArrayAccess {
 
+	ISoundView[] EMPTY_ARRAY = new ISoundView[0];
+
 	AudioFormat getFormat();
 
 	/**
