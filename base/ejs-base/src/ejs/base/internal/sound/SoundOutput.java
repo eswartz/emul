@@ -180,13 +180,10 @@ public class SoundOutput implements ISoundOutput {
 					to = bufferSize;
 				if (lastUpdatedPos < to) {
 				
-//					int active = 0;
 					for (ISoundVoice v : voices) {
 						if (v != null && v.isActive()) {
-							//Arrays.fill(soundGeneratorWorkBuffer2, 0);
 							anyChanged |= v.generate(soundGeneratorWorkBuffer, 
 									lastUpdatedPos, to);
-//							active++;
 						}
 					}
 				}
@@ -194,7 +191,6 @@ public class SoundOutput implements ISoundOutput {
 				samples -= generated;
 				lastUpdatedPos += generated;
 				
-				//System.out.println(generated);
 				if (samples > 0)
 					flushAudio(voices, 0);
 			}

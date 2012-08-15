@@ -171,8 +171,7 @@ public class SoundEngine {
 				}
 			}
 		}
-		output.generate(voices, output.getSamples(ticks));
-		clock += ticks;
+		generate(ticks);
 	}
 
 	/**
@@ -203,7 +202,12 @@ public class SoundEngine {
 	 * @param diff
 	 */
 	public void generate(int ticks) {
-		output.generate(getVoices(), output.getSamples(ticks));
+		output.generate(voices, output.getSamples(ticks));
+		for (ISoundVoice voice : voices) {
+			if (voice.shouldDispose()) {
+				removeVoice(voice);
+			}
+		}
 		clock += ticks;
 	}
 

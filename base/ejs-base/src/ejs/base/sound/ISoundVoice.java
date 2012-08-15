@@ -30,4 +30,10 @@ public interface ISoundVoice {
 	 */
 	void reset();
 
+	/**
+	 * If true, delete the voice 
+	 * @return true once the voice is finished
+	 */
+	boolean shouldDispose();
+
 }
