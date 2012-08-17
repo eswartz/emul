@@ -24,6 +24,14 @@ public class SpeechVoice implements ISpeechSoundVoice {
 	private int soundClock;
 
 	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundVoice#shouldDispose()
+	 */
+	@Override
+	public boolean shouldDispose() {
+		return false;
+	}
+	
+	/* (non-Javadoc)
 	 * @see ejs.base.sound.ISoundVoice#setFormat(javax.sound.sampled.AudioFormat)
 	 */
 	@Override
