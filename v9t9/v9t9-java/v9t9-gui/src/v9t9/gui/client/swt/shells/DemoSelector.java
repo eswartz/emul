@@ -590,6 +590,7 @@ public class DemoSelector extends Composite {
 			
 			@Override
 			public void keyPressed(KeyEvent e) {
+				int direction = 1;
 				if (demos == null) {
 					demos = demoManager.getDemos();
 				}
@@ -600,11 +601,11 @@ public class DemoSelector extends Composite {
 					demos = demoManager.getDemos();
 				}
 				else if (e.keyCode == SWT.ARROW_DOWN) {
-					index++;
+					direction = 1;
 					e.doit = false;
 				}
 				else if (e.keyCode == SWT.ARROW_UP) {
-					index--;
+					direction = -1;
 					e.doit = false;
 				}
 				else if (e.character >= 32 && e.character < 127) {
@@ -615,16 +616,33 @@ public class DemoSelector extends Composite {
 					return;
 				}
 				
-				if (search.length() > 0) {
-					int end = (index + demos.length - 1) % demos.length;
+				int end = (index + demos.length - 1) % demos.length;
+				String searchString = search.toString().toLowerCase();
+				if (searchString.length() > 0) {
 					for (int i = index; i != end; i = (i + 1) % demos.length) {
 						IDemo m = demos[i];
-						if (m.getName().toLowerCase().contains(search.toString().toLowerCase())) {
+						if (m.getName().toLowerCase().contains(searchString)) {
 							viewer.setSelection(new StructuredSelection(m), true);
+							viewer.reveal(m);
 							index = i;
 							break;
 						}
 					}
+				} else {
+					int count = demos.length;
+					if (getDisplay().getFocusControl() != filterText) {
+						// not yet in tree
+						index += direction;
+					}
+					do {
+						index = (index + demos.length) % demos.length;
+						IDemo m = demos[index];
+						viewer.setSelection(new StructuredSelection(m), true);
+						viewer.reveal(m);
+						if (viewer.testFindItem(m) != null)	// TODO: cleaner way to see what's not filtered
+							break;
+						index += direction;
+					} while (count-- > 0);
 				}
 			}
 		});
