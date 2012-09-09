@@ -70,6 +70,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.TreeItem;
 import org.ejs.gui.common.FontUtils;
 import org.ejs.gui.common.SwtDialogUtils;
 
@@ -175,11 +176,10 @@ public class DemoSelector extends Composite {
 		
 		@Override
 		public boolean select(Viewer viewer, Object parentElement, Object element) {
-			if (parentElement.getClass().equals(Object.class))
+			if (element.getClass().equals(Object.class))
 				return true;
-			if (lastFilter != null) {
-				return element instanceof IDemo && ((IDemo) element).getName().toLowerCase().contains(
-						lastFilter.toLowerCase());
+			if (lastFilter != null && element instanceof IDemo) {
+				return ((IDemo) element).getName().toLowerCase().contains(lastFilter.toLowerCase());
 			}
 			return true;
 		}
@@ -435,6 +435,7 @@ public class DemoSelector extends Composite {
 			lastFilter = text;
 		}
 		viewer.refresh();
+		viewer.expandToLevel(2);
 	}
 
 	/**
@@ -824,7 +825,19 @@ public class DemoSelector extends Composite {
 				updateFilter(filterText.getText());
 				
 				if (lastFilter != null && viewer.getTree().getItemCount() > 0) {
-					viewer.setSelection(new StructuredSelection(viewer.getTree().getItems()[0].getData()), true);
+					TreeItem[] items = viewer.getTree().getItems();
+					boolean first = true;
+					for (TreeItem item : items) {
+						Object value = item.getData();
+						if (value instanceof IDemo) {
+							if (first) { 
+								viewer.setSelection(new StructuredSelection(value), true);
+								first = false;
+							}
+							viewer.expandToLevel(value, TreeViewer.ALL_LEVELS);
+							break;
+						}
+					}
 				}
 			}
 		});
