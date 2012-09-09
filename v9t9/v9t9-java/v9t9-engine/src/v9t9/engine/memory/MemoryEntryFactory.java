@@ -17,6 +17,7 @@ import ejs.base.utils.XMLUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
@@ -61,15 +62,35 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 	 */
 	protected IMemoryEntry newSimpleMemoryEntry(MemoryEntryInfo info)
 			throws IOException {
-		MemoryArea area;
 		IMemoryEntry entry;
+    	
+    	if (info.getResolvedFilename(settings) != null) {
+    		entry = newFromFile(info, (MemoryArea) createMemoryArea(info));
+    	}
+    	else {
+    		int size = Math.abs(info.getSize());
+    		entry = new MemoryEntry(info.getName(), info.getDomain(memory), 
+    				info.getAddress(), size,  (MemoryArea) createMemoryArea(info));
+    	}
+        
+        return entry;
+	}
+
+
+	/**
+	 * @param info
+	 * @return
+	 * @throws IOException
+	 */
+	public IMemoryArea createMemoryArea(MemoryEntryInfo info)
+			throws IOException {
+		MemoryArea area;
     	
     	if (info.getResolvedFilename(settings) != null) {
     		if (info.isByteSized())
         		area = new ByteMemoryArea();
         	else
         		area = new WordMemoryArea();
-    		entry = newFromFile(info, area);
     	}
     	else {
     		int size = Math.abs(info.getSize());
@@ -81,11 +102,9 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
         		area = new WordMemoryArea(info.getDomain(memory).getLatency(info.getAddress()),
             			new short[size / 2]	
             			);
-    		entry = new MemoryEntry(info.getName(), info.getDomain(memory), 
-    				info.getAddress(), size, area);
     	}
         
-        return entry;
+        return area;
 	}
 
     /**

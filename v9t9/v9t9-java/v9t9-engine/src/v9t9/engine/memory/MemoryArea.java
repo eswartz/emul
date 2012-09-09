@@ -157,17 +157,13 @@ public abstract class MemoryArea implements IMemoryArea {
 		ISettingSection contents = section.getSection("Contents");
 		if (contents != null) {
 			// clear memory first
-			for (int idx = 0; idx < getSize(); idx++) {
-				memoryEntry.getDomain().writeByte(memoryEntry.getAddr() + idx, (byte) 0);
-			}
+			clearMemoryOnLoad(memoryEntry);
 			
 			for (ISettingSection.SettingEntry entry : contents) {
 				try {
 					int saveAddr = Integer.parseInt(entry.name, 16);
 					byte[] chunk = Base64.decode(entry.value.toString(), Base64.GZIP);
-					for (int idx = 0; idx < chunk.length; idx++) {
-						memoryEntry.getDomain().writeByte(saveAddr++, chunk[idx]);
-					}
+					loadChunk(memoryEntry, saveAddr, chunk);
 				} catch (NumberFormatException e) {
 					// not a chunk
 				}
@@ -186,13 +182,32 @@ public abstract class MemoryArea implements IMemoryArea {
 					int saveAddr = Integer.parseInt(entry.substring(0, cidx), 16);
 					String encoded = entry.substring(cidx + 1);
 					byte[] chunk = Base64.decode(encoded, Base64.GZIP);
-					for (int idx = 0; idx < chunk.length; idx++) {
-						flatWriteByte(memoryEntry, saveAddr++, chunk[idx]);
-					}
+					loadChunk(memoryEntry, saveAddr, chunk);
 				} catch (NumberFormatException e) {
 					// not a chunk
 				}
 			}
+		}
+	}
+
+	/**
+	 * @param memoryEntry
+	 */
+	protected void clearMemoryOnLoad(IMemoryEntry memoryEntry) {
+		for (int idx = 0; idx < getSize(); idx++) {
+			memoryEntry.flatWriteByte(memoryEntry.getAddr() + idx, (byte) 0);
+		}
+	}
+
+	/**
+	 * @param memoryEntry
+	 * @param saveAddr
+	 * @param chunk
+	 */
+	protected void loadChunk(IMemoryEntry memoryEntry, int saveAddr,
+			byte[] chunk) {
+		for (int idx = 0; idx < chunk.length; idx++) {
+			memoryEntry.flatWriteByte(saveAddr++, chunk[idx]);
 		}
 	}
 

@@ -476,7 +476,9 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 		section.put("Class", getClass().getCanonicalName());
 		section.put("Name", getName());
 		section.put("Address", addr);
+		section.put("AddressOffset", addrOffset);
 		section.put("Size", size);
+		section.put("WordAccess", bWordAccess);
 		saveMemoryContents(section);
 	}
 
@@ -501,7 +503,9 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	protected void loadFields(ISettingSection section) {
 		name = section.get("Name");
 		addr = section.getInt("Address");
+		addrOffset = section.getInt("AddressOffset");
 		size = section.getInt("Size");
+		bWordAccess = section.getBoolean("WordAccess");
 	}
 
 

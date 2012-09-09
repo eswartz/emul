@@ -240,14 +240,16 @@ public class DiskMemoryEntry extends MemoryEntry {
 	@Override
 	protected void loadFields(ISettingSection section) {
 		super.loadFields(section);
-		info = (isWordAccess() ? MemoryEntryInfoBuilder.wordMemoryEntry() : MemoryEntryInfoBuilder.byteMemoryEntry())
-			.withFilename(section.get("FileName") != null ? section.get("FileName") : section.get("FilePath"))
-			.withFileMD5(section.get("FileMD5"))
-			.withOffset(section.getInt("FileOffs"))
-			.withSize(section.getInt("Size"))
-			.withAddress(getAddr())
-			.withDomain(getDomain().getIdentifier())
-			.storable(section.getBoolean("Storable")).create(getName());
+		if (info == null) {
+			info = (isWordAccess() ? MemoryEntryInfoBuilder.wordMemoryEntry() : MemoryEntryInfoBuilder.byteMemoryEntry())
+				.withFilename(section.get("FileName") != null ? section.get("FileName") : section.get("FilePath"))
+				.withFileMD5(section.get("FileMD5"))
+				.withOffset(section.getInt("FileOffs"))
+				.withSize(section.getInt("Size"))
+				.withAddress(getAddr())
+				.withDomain(getDomain().getIdentifier())
+				.storable(section.getBoolean("Storable")).create(getName());
+		}
 		
 		try {
 			storedInfo = memory.getMemoryEntryFactory().resolveMemoryEntry(info, 
@@ -271,11 +273,13 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 * @param section  
 	 */
 	protected void loadMemoryContents(ISettingSection section) {
-		if (isWordAccess())
-			area = MemoryAreaFactory.createWordMemoryArea(memory, info);
-		else
-			area = MemoryAreaFactory.createByteMemoryArea(memory, info);
-		
+		if (storedInfo != null) {
+			try {
+				area = (MemoryArea) memory.getMemoryEntryFactory().createMemoryArea(storedInfo.info);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		bLoaded = false;
 		load();
 	}

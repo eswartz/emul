@@ -32,7 +32,8 @@ public interface IMemoryEntryFactory {
 	 * @throws IOException if file cannot be read, and is not stored
 	 */
 	IMemoryEntry newMemoryEntry(MemoryEntryInfo info) throws IOException;
-
+	IMemoryArea createMemoryArea(MemoryEntryInfo info) throws IOException;
+	
 	StoredMemoryEntryInfo resolveMemoryEntry(MemoryEntryInfo info, String name,
 			String filename, String md5, int fileoffs) throws IOException;
 	

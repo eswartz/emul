@@ -155,4 +155,33 @@ public class F99bConsoleMmioArea extends ConsoleMmioArea  {
 	protected int getSize() {
 		return 0x400;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.MemoryArea#clearMemoryOnLoad(v9t9.common.memory.IMemoryEntry)
+	 */
+	@Override
+	protected void clearMemoryOnLoad(IMemoryEntry memoryEntry) {
+		int end = memoryEntry.getAddr() + memoryEntry.getSize();
+		for (int addr = memoryEntry.getAddr(); addr < end; addr++) {
+			if (addr >= 0x100) {
+				memoryEntry.flatWriteByte(addr, (byte) 0);
+			}
+		}
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.MemoryArea#loadChunk(v9t9.common.memory.IMemoryEntry, int, byte[])
+	 */
+	@Override
+	protected void loadChunk(IMemoryEntry memoryEntry, int saveAddr,
+			byte[] chunk) {
+		if (saveAddr >= 0x100) {
+			super.loadChunk(memoryEntry, saveAddr, chunk);
+		} else {
+			for (int addr = saveAddr; addr < saveAddr + chunk.length; addr++) {
+				if (addr >= 0x100) {
+					memoryEntry.flatWriteByte(addr, chunk[addr - saveAddr]);
+				}
+			}
+		}
+	}
 }
