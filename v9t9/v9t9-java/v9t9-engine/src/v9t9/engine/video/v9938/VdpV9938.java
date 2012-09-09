@@ -752,8 +752,10 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		if (statuses != null) {
 			for (String name : statuses.getSettingNames()) {
 				try {
-					statusvec[Integer.parseInt(name, 16)] = 
-						(byte) Integer.parseInt(statuses.get(name), 16);
+					int idx = Integer.parseInt(name, 16);
+					if (idx >= 0 && idx < statusvec.length)
+						statusvec[idx] = 
+							(byte) Integer.parseInt(statuses.get(name), 16);
 				} catch (NumberFormatException e) {
 					e.printStackTrace();
 				}

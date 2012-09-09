@@ -209,6 +209,8 @@ public abstract class BaseEmulatorWindow {
 				boolean wasPaused = machine.setPaused(true);
 				machine.loadState(settings);
 				machine.setPaused(wasPaused);
+				
+				videoRenderer.getCanvasHandler().forceRedraw();
 			} catch (Throwable e1) {
 				machine.notifyEvent(Level.ERROR, 
 						"Failed to load machine state:\n\n" + e1.getMessage());

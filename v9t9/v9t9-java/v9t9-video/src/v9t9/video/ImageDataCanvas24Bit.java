@@ -83,6 +83,9 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		byte cc = (byte) getColorMgr().getClearColor();
 		byte cc1 = (byte) getColorMgr().getClearColor1();
 		
+		if (colorRGBMap == null)
+			return;
+		
 		byte[] fgRGB = colorRGBMap[cc];
 		byte[] bgRGB = colorRGBMap[cc1];
 		

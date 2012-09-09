@@ -14,6 +14,7 @@ public interface IVdpCanvasRenderer {
 	
 	boolean update();
 	
+	void forceRedraw();
 
 	/**
 	 * @return
