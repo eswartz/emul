@@ -12,8 +12,10 @@ import ejs.base.utils.ListenerList;
 
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
+import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
 import v9t9.machine.f99b.asm.StatusF99b;
 
 /**
@@ -373,6 +375,14 @@ public class CpuStateF99b implements ICpuState {
 	@Override
 	public void removeWriteListener(IRegisterWriteListener listener) {
 		listeners.remove(listener);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpuState#createInstructionWorkBlock()
+	 */
+	@Override
+	public InstructionWorkBlock createInstructionWorkBlock() {
+		return new InstructionWorkBlockF99b(this);
 	}
 
 }

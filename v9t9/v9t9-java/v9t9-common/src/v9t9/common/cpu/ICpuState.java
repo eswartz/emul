@@ -27,4 +27,9 @@ public interface ICpuState extends IRegisterAccess {
 	IStatus getStatus();
 	void setStatus(IStatus status);
 
+	/**
+	 * @return
+	 */
+	InstructionWorkBlock createInstructionWorkBlock();
+
 }

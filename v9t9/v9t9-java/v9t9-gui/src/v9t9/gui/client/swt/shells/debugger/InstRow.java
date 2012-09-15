@@ -70,6 +70,13 @@ public class InstRow {
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return count;
+	}
 	/**
 	 * @return
 	 */

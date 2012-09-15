@@ -41,6 +41,7 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 		
 		///
 		instTableViewer = new TableViewer(this, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL + SWT.NO_FOCUS + SWT.FULL_SELECTION);
+		instTableViewer.setUseHashlookup(true);
 		instContentProvider = new InstContentProvider();
 		instTableViewer.setContentProvider(instContentProvider);
 		instTableViewer.setLabelProvider(new InstLabelProvider(
@@ -143,7 +144,7 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 			public void run() {
 				if (instTableViewer.getTable().isDisposed())
 					return;
-				instTableViewer.refresh(row);
+				instTableViewer.refresh(row, true);
 				//instTableViewer.getTable().setSelection(new int[] { count - 1 });
 			}
 		});		
@@ -165,6 +166,7 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 						RawInstruction inst = machine.getInstructionFactory().decodeInstruction(
 								state.getPC(), machine.getConsole());
 						
+						//InstructionWorkBlock before = state.createInstructionWorkBlock();
 						InstructionWorkBlock before = new InstructionWorkBlock(state);
 						before.inst = inst;
 						before.pc = (short) (state.getPC() + inst.getSize());
@@ -176,6 +178,7 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 						} else {
 							instContentProvider.addInstRow(row);
 						}
+						instTableViewer.refresh(row, true);
 						partialInst = row;
 						//refreshTable();
 						

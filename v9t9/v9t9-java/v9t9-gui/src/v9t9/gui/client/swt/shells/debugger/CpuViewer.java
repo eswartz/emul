@@ -308,9 +308,9 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		
 		instructionComposite.go();
 		
-		machine.getExecutor().addInstructionListener(CpuViewer.this);
-		pauseMachine.addListener(pauseListener);
-		pauseMachine.setBoolean(true);
+		//machine.getExecutor().addInstructionListener(CpuViewer.this);
+		//pauseMachine.addListener(pauseListener);
+		//pauseMachine.setBoolean(true);
 	}
 
 
