@@ -216,7 +216,7 @@ public class Executor implements IExecutor {
     	} else {
 			if (compile.getBoolean()) {
 				executeCompilableCode();
-			} else if (singleStep.getBoolean()){
+			} else if (singleStep.getBoolean()) {
 				interpretOneInstruction();
 			} else {
 				interruptExecution = Boolean.FALSE;

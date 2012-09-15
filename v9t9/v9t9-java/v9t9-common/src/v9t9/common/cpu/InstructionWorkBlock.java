@@ -30,6 +30,7 @@ public class InstructionWorkBlock  {
     public InstructionWorkBlock(ICpuState cpu) {
     	this.cpu = cpu;
     	this.domain = cpu.getConsole();
+    	this.pc = cpu.getPC();
 	}
     
     public void copyTo(InstructionWorkBlock copy) {

@@ -15,6 +15,7 @@ import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.InstInfo;
 import v9t9.common.asm.InstTableCommon;
+import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.IStatus;
@@ -159,7 +160,7 @@ public class Interpreter9900 implements IInterpreter {
         if (!instructionListeners.isEmpty()) {
 			for (Object listener : instructionListeners.toArray()) {
 				if (!((IInstructionListener) listener).preExecute(iblock)) {
-					return;
+					throw new AbortedException();
 				}
 			}	
         }

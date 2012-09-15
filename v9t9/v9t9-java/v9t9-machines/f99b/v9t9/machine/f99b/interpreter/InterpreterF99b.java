@@ -107,6 +107,7 @@ import ejs.base.utils.Pair;
 
 
 import v9t9.common.asm.IRawInstructionFactory;
+import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.machine.IMachine;
@@ -217,12 +218,12 @@ public class InterpreterF99b implements IInterpreter {
 		iblock.cycles = 0;
 		iblock.st = cpu.getST();
 		
-		
+		// get next instruction and advance
 	    InstructionF99b ins = getInstruction();
-	    cpu.setPC(iblock.pc);
+	    //cpu.setPC(iblock.pc);
 		iblock.cycles = cpu.getCurrentCycleCount();
 		
-		iblock.pc = cpu.getPC();
+		//iblock.pc = cpu.getPC();
 		iblock.st = cpu.getST();
 		iblock.sp = cpuState.getSP();
 		iblock.rp = cpuState.getRP();
@@ -255,15 +256,18 @@ public class InterpreterF99b implements IInterpreter {
 			}
 			
 			block = new InstructionWorkBlockF99b(cpuState);
-			
+
 			for (Object listener : instructionListeners.toArray()) {
-				if (!((IInstructionListener) listener).preExecute(block)) {
-					return;
+				if (!((IInstructionListener) listener).preExecute(iblock)) {
+					throw new AbortedException();
 				}
 			}
 			
-		    this.iblock.copyTo(block);
+			this.iblock.copyTo(block);
 		}
+		
+		cpu.setPC(iblock.pc);
+		iblock.pc = cpu.getPC();
 		
 		/* execute */
 		interpret(ins);

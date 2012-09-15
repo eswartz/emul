@@ -34,7 +34,7 @@ public class BreakpointManager implements IInstructionListener {
 	 */
 	@Override
 	public synchronized boolean preExecute(InstructionWorkBlock before) {
-		IBreakpoint bp = pcToBps.get(before.pc & 0xffff);
+		IBreakpoint bp = pcToBps.get(before.inst.pc & 0xffff);
 		if (bp == null)
 			return true;
 		
@@ -82,6 +82,13 @@ public class BreakpointManager implements IInstructionListener {
 			machine.getExecutor().removeInstructionListener(this);
 		}
 
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isEmpty() {
+		return bps.isEmpty();
 	}
 
 }
