@@ -20,10 +20,12 @@ public class InstRow {
 	private final int count = gCounter++;
 	private final InstructionWorkBlock before;
 	private final InstructionWorkBlock after;
-	/**
-	 * @param before
-	 * @param after
-	 */
+	private boolean isGeneric;
+	public InstRow(InstructionWorkBlock before) {
+		this.before = before;
+		this.after = before;
+		this.isGeneric = true;
+	}
 	public InstRow(InstructionWorkBlock before, InstructionWorkBlock after) {
 		this.before = before;
 		this.after = after;
@@ -33,11 +35,11 @@ public class InstRow {
 	 * @return
 	 */
 	public String getAddress() {
-		String addr = ">" + HexUtils.toHex4(before.pc);
+		String addr = ">" + HexUtils.toHex4(before.inst.pc);
 		
-		IMemoryEntry entry = before.domain.getEntryAt(before.pc);
+		IMemoryEntry entry = before.domain.getEntryAt(before.inst.pc);
 		if (entry != null) { 
-			String name = entry.lookupSymbol((short) (before.pc & 0xfffe));
+			String name = entry.lookupSymbol((short) (before.inst.pc & 0xfffe));
 			if (name != null) {
 				return name + " " + addr;
 			}
@@ -102,5 +104,12 @@ public class InstRow {
 			return "";
 		}
 		return before.formatOpChange(3, after);
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isGeneric() {
+		return isGeneric;
 	}
 }

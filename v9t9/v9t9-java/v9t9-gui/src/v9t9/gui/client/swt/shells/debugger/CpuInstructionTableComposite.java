@@ -3,6 +3,9 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.FontDescriptor;
@@ -100,6 +103,8 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 		table.setLinesVisible(true);
 		
 		instTableViewer.setColumnProperties(props);
+		
+		start();
 	}
 
 	/* (non-Javadoc)
@@ -124,73 +129,24 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 	public void go() {
 		instTableViewer.setInput(new Object());
 	}
-	
+
 	/* (non-Javadoc)
-	 * @see v9t9.gui.client.swt.shells.debugger.CpuInstructionComposite#executed(v9t9.common.cpu.InstructionWorkBlock, v9t9.common.cpu.InstructionWorkBlock)
+	 * @see v9t9.gui.client.swt.shells.debugger.CpuInstructionComposite#flush(java.util.LinkedList)
 	 */
 	@Override
-	public void executed(final InstructionWorkBlock before,
-			final InstructionWorkBlock after_) {
-		InstructionWorkBlock after = after_.copy();
-        
-		changed = true;
-        final InstRow row = new InstRow(before, after);
-        if (partialInst != null) {
-        	instContentProvider.removeInstRow(partialInst);
-        	partialInst = null;
-        }
-        instContentProvider.addInstRow(row);
-    	Display.getDefault().syncExec(new Runnable() {
-			public void run() {
-				if (instTableViewer.getTable().isDisposed())
-					return;
-				instTableViewer.refresh(row, true);
-				//instTableViewer.getTable().setSelection(new int[] { count - 1 });
-			}
-		});		
-	}
-	
-
-	volatile private Runnable refreshRunnable;
-	private boolean changed;
-	protected InstRow partialInst; 
-	public void refresh() {
-		if (isDisposed())
-			return;
-		if (changed && refreshRunnable == null) {
-			changed = false;
-			refreshRunnable = new Runnable() {
-				public void run() {
-					if (!instTableViewer.getTable().isDisposed()) {
-						ICpuState state = machine.getCpu().getState();
-						RawInstruction inst = machine.getInstructionFactory().decodeInstruction(
-								state.getPC(), machine.getConsole());
-						
-						//InstructionWorkBlock before = state.createInstructionWorkBlock();
-						InstructionWorkBlock before = new InstructionWorkBlock(state);
-						before.inst = inst;
-						before.pc = (short) (state.getPC() + inst.getSize());
-						
-						InstRow row = new InstRow(before, before);
-						if (partialInst != null) {
-							instContentProvider.removeInstRow(partialInst);
-							instContentProvider.addInstRow(row);
-						} else {
-							instContentProvider.addInstRow(row);
-						}
-						instTableViewer.refresh(row, true);
-						partialInst = row;
-						//refreshTable();
-						
-						int count = instContentProvider.getCount();
-						instTableViewer.setItemCount(count);
-						instTableViewer.getTable().setSelection(new int[] { count - 1 });
-					}
-					refreshRunnable = null;
-				}
-			};
-			getDisplay().syncExec(refreshRunnable);
+	public void flush(LinkedList<InstRow> instHistory) {
+		instContentProvider.clear();
+		instTableViewer.setItemCount(0);
+		Table table = instTableViewer.getTable();
+		int visible = (table.getClientArea().height - table.getHeaderHeight()) / table.getItemHeight();
+		List<InstRow> subList = instHistory.subList(Math.max(0, instHistory.size() - visible), instHistory.size());
+		for (InstRow row : subList) {
+			instContentProvider.addInstRow(row);
 		}
+		int count = instContentProvider.getCount();
+		instTableViewer.setItemCount(count);
+		table.setSelection(new int[] { count - 1 });
+
 	}
 	
 	protected void resizeTable() {
@@ -199,14 +155,4 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.gui.client.swt.shells.debugger.CpuInstructionComposite#clear()
-	 */
-	@Override
-	public void clear() {
-		instContentProvider.clear();
-		partialInst = null;
-		changed = true;
-		
-	}
 }

@@ -16,18 +16,18 @@ import v9t9.common.machine.IMachine;
 
 /**
  * @author ejs
- *
+ * @deprecated
  */
-public class CpuInstructionListComposite extends CpuInstructionComposite {
+public class CpuInstructionTextComposite extends CpuInstructionComposite {
 
 	private Text text;
 
-	public CpuInstructionListComposite(Composite parent, int style, IMachine machine) {
+	public CpuInstructionTextComposite(Composite parent, int style, IMachine machine) {
 		super(parent, style, machine);
 		
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
-		text = new Text(this, SWT.WRAP);
+		text = new Text(this, SWT.WRAP | SWT.V_SCROLL);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(text);
 		
 	}
@@ -68,7 +68,7 @@ public class CpuInstructionListComposite extends CpuInstructionComposite {
 
 		getDisplay().syncExec(new Runnable() {
 			public void run() {
-				if (false) {
+				if (!text.isDisposed()) {
 					text.append(row.getInst());
 					text.append("\n");
 				}
@@ -90,7 +90,6 @@ public class CpuInstructionListComposite extends CpuInstructionComposite {
 		before.inst = inst;
 		before.pc = (short) (state.getPC() + inst.getSize());
 		
-		final InstRow row = new InstRow(before, before);
 //		if (partialInst != null) {
 //			instContentProvider.removeInstRow(partialInst);
 //			instContentProvider.addInstRow(row);
@@ -101,9 +100,10 @@ public class CpuInstructionListComposite extends CpuInstructionComposite {
 		
 		getDisplay().syncExec(new Runnable() {
 			public void run() {
-				
-				text.append(row.getInst());
-				text.append("\n");
+				if (!text.isDisposed()) {
+//					text.append(row.getInst());
+//					text.append("\n");
+				}
 			}
 		});
 	}

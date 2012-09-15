@@ -133,6 +133,8 @@ public class CpuViewer extends Composite implements IInstructionListener {
 						if (!playPauseButton.isDisposed()) {
 							playPauseButton.setSelection(setting.getBoolean());
 							updatePlayPauseButtonImage();
+							if (tracker != null)
+								tracker.updateForInstruction();
 							instructionComposite.refresh();
 						}
 					}
@@ -228,7 +230,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		icons.dispose();
 	
 		instructionComposite = new CpuInstructionTableComposite(this, SWT.NONE, machine);
-//		instructionComposite = new CpuInstructionListComposite(this, SWT.NONE, machine);
+//		instructionComposite = new CpuInstructionTextCanvasComposite(this, SWT.NONE, machine);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(instructionComposite);
 		
 		////
@@ -292,15 +294,19 @@ public class CpuViewer extends Composite implements IInstructionListener {
 			@Override
 			public void handleEvent(Event event) {
 				isVisible = event.type == SWT.Show;
-				if (isVisible) {
-					machine.getExecutor().addInstructionListener(CpuViewer.this);
-					pauseMachine.addListener(pauseListener);
-					pauseMachine.setBoolean(true);
-				} else {
-					machine.getExecutor().removeInstructionListener(CpuViewer.this);
-					pauseMachine.removeListener(pauseListener);
-					pauseMachine.setBoolean(false);
-				}
+				machine.asyncExec(new Runnable() {
+					public void run() {
+						if (isVisible) {
+							machine.getExecutor().addInstructionListener(CpuViewer.this);
+							pauseMachine.addListener(pauseListener);
+							pauseMachine.setBoolean(true);
+						} else {
+							machine.getExecutor().removeInstructionListener(CpuViewer.this);
+							pauseMachine.removeListener(pauseListener);
+							pauseMachine.setBoolean(false);
+						}
+					}
+				});
 			}
 		};
 		getShell().addListener(SWT.Show, listener);
@@ -366,7 +372,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		if (!isVisible)
 			return;
 		
-		if (isWatching || showNextInstruction) {
+		if (isWatching ) {
 			instructionComposite.executed(before, after_);
 
 			if (tracker != null)
