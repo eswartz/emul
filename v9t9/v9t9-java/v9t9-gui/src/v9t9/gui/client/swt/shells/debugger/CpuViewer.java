@@ -8,16 +8,11 @@ import java.util.TimerTask;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
-import org.eclipse.jface.resource.FontDescriptor;
-import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.layout.GridLayout;
@@ -26,12 +21,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
-import org.ejs.gui.common.FontUtils;
-
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
 
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.IBreakpoint;
@@ -44,6 +33,8 @@ import v9t9.common.cpu.SimpleBreakpoint;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * @author ejs
@@ -56,7 +47,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 	
 	private IProperty pauseMachine;
 	private IProperty debugging;
-	
+
 	private Button playPauseButton;
 	private Image playImage;
 	private Image pauseImage;
@@ -67,8 +58,6 @@ public class CpuViewer extends Composite implements IInstructionListener {
 	private IPropertyListener pauseListener;
 	private final IMachine machine;
 
-	private TableViewer instTableViewer;
-	private InstContentProvider instContentProvider;
 	private TimerTask refreshTask;
 	private Image watchImage;
 	private Button watchButton;
@@ -77,14 +66,11 @@ public class CpuViewer extends Composite implements IInstructionListener {
 	
 	private Image clearImage;
 	private Button clearButton;
-	private Font tableFont;
-	private Font smallerFont;
 	private ICpuTracker tracker;
-	private InstRow partialInst;
-	private boolean changed;
 	private boolean isVisible;
 
 	private IProperty singleStep;
+	private CpuInstructionComposite instructionComposite;
 	
 	public CpuViewer(Composite parent, int style, final IMachine machine_, Timer timer) {
 		super(parent, style);
@@ -117,7 +103,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 			public void widgetSelected(SelectionEvent e) {
 				machine.asyncExec(new Runnable() {
 					public void run() {
-						partialInst = null;
+						//partialInst = null;
 						pauseMachine.setBoolean(!pauseMachine.getBoolean());
 						//resizeTable();
 					}
@@ -147,7 +133,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 						if (!playPauseButton.isDisposed()) {
 							playPauseButton.setSelection(setting.getBoolean());
 							updatePlayPauseButtonImage();
-							refreshTable();
+							instructionComposite.refresh();
 						}
 					}
 				});
@@ -235,92 +221,15 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		clearButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				instContentProvider.clear();
-				partialInst = null;
-				changed = true;
+				instructionComposite.clear();
 			}
 		});
 		
 		icons.dispose();
-		
-		///
-		instTableViewer = new TableViewer(this, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL + SWT.NO_FOCUS + SWT.FULL_SELECTION);
-		instContentProvider = new InstContentProvider();
-		instTableViewer.setContentProvider(instContentProvider);
-		instTableViewer.setLabelProvider(new InstLabelProvider(
-				//getDisplay().getSystemColor(SWT.COLOR_RED)
-				));
-		final Table table = instTableViewer.getTable();
-		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(table);
-		
-		Listener listener = new Listener() {
-			@Override
-			public void handleEvent(Event event) {
-				isVisible = event.type == SWT.Show;
-				if (isVisible) {
-					machine.getExecutor().addInstructionListener(CpuViewer.this);
-					pauseMachine.addListener(pauseListener);
-					pauseMachine.setBoolean(true);
-				} else {
-					machine.getExecutor().removeInstructionListener(CpuViewer.this);
-					pauseMachine.removeListener(pauseListener);
-					pauseMachine.setBoolean(false);
-				}
-			}
-		};
-		getShell().addListener(SWT.Show, listener);
-		getShell().addListener(SWT.Hide, listener);
-		
-		FontDescriptor fontDescriptor = FontUtils.getFontDescriptor(JFaceResources.getTextFont());
-		//fontDescriptor = fontDescriptor.increaseHeight(-2);
-		tableFont = fontDescriptor.createFont(getDisplay());
-		FontDescriptor smallerFontDescriptor = fontDescriptor.increaseHeight(-2);
-		smallerFont = smallerFontDescriptor.createFont(getDisplay());
-		
-		table.setFont(smallerFont);
-		
-		GC gc = new GC(getDisplay());
-		gc.setFont(smallerFont);
-		int charWidth = gc.stringExtent("M").x;
-		gc.dispose();
-
-		TableColumn column;
-		String[] props = new String[6];
-		
-		props[0] = "Addr";
-		column = new TableColumn(table, SWT.LEFT);
-		column.setText(props[0]);
-		column.setMoveable(true);
-		column.setWidth(charWidth * 20);
-		
-		props[1] = "Inst";
-		column = new TableColumn(table, SWT.LEFT);
-		column.setText(props[1]);
-		column.setMoveable(true);
-		column.setWidth(charWidth * 60);
-		
-		props[2] = "Op1";
-		column = new TableColumn(table, SWT.LEFT);
-		column.setText(props[2]);
-		column.setMoveable(true);
-		column.setWidth(charWidth * 20);
-
-		props[3] = "Op2";
-		column = new TableColumn(table, SWT.LEFT);
-		column.setText(props[3]);
-		column.setMoveable(true);
-		column.setWidth(charWidth * 20);
-
-		props[4] = "Op3";
-		column = new TableColumn(table, SWT.LEFT);
-		column.setText(props[4]);
-		column.setMoveable(true);
-		column.setWidth(charWidth * 20);
-
-		table.setHeaderVisible(true);
-		table.setLinesVisible(true);
-		
-		instTableViewer.setColumnProperties(props);
+	
+		instructionComposite = new CpuInstructionTableComposite(this, SWT.NONE, machine);
+//		instructionComposite = new CpuInstructionListComposite(this, SWT.NONE, machine);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(instructionComposite);
 		
 		////
 		
@@ -344,7 +253,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 					if (!isWatching) {
 						showNextInstruction = true;
 					}
-					refreshTable();
+					instructionComposite.refresh();
 				} finally {
 					working = false;
 				}
@@ -353,7 +262,8 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		};
 		timer.schedule(refreshTask, 0, 250);
 		
-		instTableViewer.setInput(new Object());
+		instructionComposite.setupEvents();
+		
 		
 		addDisposeListener(new DisposeListener() {
 
@@ -363,8 +273,6 @@ public class CpuViewer extends Composite implements IInstructionListener {
 					refreshTask.cancel();
 					refreshTask = null;
 				}
-				tableFont.dispose();
-				smallerFont.dispose();
 				pauseMachine.removeListener(pauseListener);
 				playImage.dispose();
 				pauseImage.dispose();
@@ -378,6 +286,27 @@ public class CpuViewer extends Composite implements IInstructionListener {
 			}
 			
 		});
+		
+
+		Listener listener = new Listener() {
+			@Override
+			public void handleEvent(Event event) {
+				isVisible = event.type == SWT.Show;
+				if (isVisible) {
+					machine.getExecutor().addInstructionListener(CpuViewer.this);
+					pauseMachine.addListener(pauseListener);
+					pauseMachine.setBoolean(true);
+				} else {
+					machine.getExecutor().removeInstructionListener(CpuViewer.this);
+					pauseMachine.removeListener(pauseListener);
+					pauseMachine.setBoolean(false);
+				}
+			}
+		};
+		getShell().addListener(SWT.Show, listener);
+		getShell().addListener(SWT.Hide, listener);
+		
+		instructionComposite.go();
 		
 		machine.getExecutor().addInstructionListener(CpuViewer.this);
 		pauseMachine.addListener(pauseListener);
@@ -438,23 +367,11 @@ public class CpuViewer extends Composite implements IInstructionListener {
 			return;
 		
 		if (isWatching || showNextInstruction) {
-			InstructionWorkBlock after = after_.copy();
-	        
-	        changed = true;
-	        final InstRow row = new InstRow(before, after);
-	        if (partialInst != null) {
-	        	instContentProvider.removeInstRow(partialInst);
-	        	partialInst = null;
-	        }
-	        instContentProvider.addInstRow(row);
-        	Display.getDefault().syncExec(new Runnable() {
-				public void run() {
-					if (instTableViewer.getTable().isDisposed())
-						return;
-					instTableViewer.refresh(row);
-					//instTableViewer.getTable().setSelection(new int[] { count - 1 });
-				}
-			});
+			instructionComposite.executed(before, after_);
+
+			if (tracker != null)
+				tracker.updateForInstruction();
+			
 			showNextInstruction = false;
 		}
 		if (singleStep.getBoolean()) {
@@ -467,53 +384,6 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		//throw new AbortedException();
 	}
 
-	volatile private Runnable refreshRunnable; 
-	protected void refreshTable() {
-		if (isDisposed())
-			return;
-		if (changed && refreshRunnable == null) {
-			changed = false;
-			refreshRunnable = new Runnable() {
-				public void run() {
-					if (!instTableViewer.getTable().isDisposed()) {
-						ICpuState state = machine.getCpu().getState();
-						RawInstruction inst = machine.getInstructionFactory().decodeInstruction(
-								state.getPC(), machine.getConsole());
-						
-						InstructionWorkBlock before = new InstructionWorkBlock(state);
-						before.inst = inst;
-						before.pc = (short) (state.getPC() + inst.getSize());
-						
-						InstRow row = new InstRow(before, before);
-						if (partialInst != null) {
-							instContentProvider.removeInstRow(partialInst);
-							instContentProvider.addInstRow(row);
-						} else {
-							instContentProvider.addInstRow(row);
-						}
-						partialInst = row;
-						//refreshTable();
-						
-						if (tracker != null)
-							tracker.updateForInstruction();
-						
-						int count = instContentProvider.getCount();
-						instTableViewer.setItemCount(count);
-						instTableViewer.getTable().setSelection(new int[] { count - 1 });
-					}
-					refreshRunnable = null;
-				}
-			};
-			getDisplay().syncExec(refreshRunnable);
-		}
-	}
-	
-	protected void resizeTable() {
-		for (TableColumn c : instTableViewer.getTable().getColumns()) {
-			c.pack();
-		}
-	}
-	
 	public void setTracker(ICpuTracker tracker) {
 		this.tracker = tracker;
 	}

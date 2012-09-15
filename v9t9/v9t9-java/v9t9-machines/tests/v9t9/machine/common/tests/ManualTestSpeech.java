@@ -11,7 +11,6 @@ import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.BasicSettingsHandler;
-import v9t9.common.speech.ISpeechDataSender;
 import v9t9.common.speech.TMS5220Consts;
 import v9t9.engine.speech.LPCSpeech;
 import v9t9.engine.speech.SpeechTMS5220;
