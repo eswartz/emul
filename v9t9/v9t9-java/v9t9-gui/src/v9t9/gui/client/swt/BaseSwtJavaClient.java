@@ -331,7 +331,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 					if (display.isDisposed())
 						return;
 					while (display.readAndDispatch()) ;
-					display.sleep();
+					//display.sleep();
 				} catch (SWTException e) {
 					e.printStackTrace();
 				} catch (SWTError e) {

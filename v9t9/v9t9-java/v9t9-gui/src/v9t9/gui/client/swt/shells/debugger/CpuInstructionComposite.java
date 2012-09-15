@@ -3,8 +3,7 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.swt.events.DisposeEvent;
@@ -26,14 +25,14 @@ import ejs.base.properties.IProperty;
  */
 public abstract class CpuInstructionComposite extends Composite {
 
-	private static final int MAX_INST_HISTORY = 250000;
+	protected static final int MAX_INST_HISTORY = 250000;
 	protected IMachine machine;
 	protected IProperty pauseMachine;
 	protected IProperty debugging;
 	protected IProperty singleStep;
 	private Runnable refreshTask;
 	private boolean isDirty;
-	private LinkedList<InstRow> instHistory = new LinkedList<InstRow>();
+	protected final List<InstRow> instHistory = new ArrayList<InstRow>();
 	
 	public CpuInstructionComposite(Composite parent, int style, IMachine machine) {
 		super(parent, style);
@@ -48,20 +47,22 @@ public abstract class CpuInstructionComposite extends Composite {
 	protected void start() {
 
 		refreshTask = new Runnable() {
+			volatile boolean busy = false;
 			
 			@Override
 			public void run() {
-				if (isDisposed()) 
+				if (busy || isDisposed()) 
 					return;
+				
+				busy = true;
 
 				getDisplay().asyncExec(new Runnable() {
 					public void run() {
-						synchronized (CpuInstructionComposite.this) {
-							if (!isDisposed() && isDirty) {
-								flush(instHistory);
-								isDirty = false;
-							}
+						if (!isDisposed() && isDirty) {
+							flush();
+							isDirty = false;
 						}
+						busy = false;
 					}
 				});
 				
@@ -78,7 +79,7 @@ public abstract class CpuInstructionComposite extends Composite {
 		});
 	}
 	
-	abstract public void flush(LinkedList<InstRow> instHistory);
+	abstract public void flush();
 	
 	abstract public void setupEvents();
 
@@ -98,12 +99,12 @@ public abstract class CpuInstructionComposite extends Composite {
         
         InstRow row = new InstRow(before, after);
         
-        synchronized (this) {
+        synchronized (instHistory) {
         	if (instHistory.size() >= MAX_INST_HISTORY) {
         		instHistory.subList(0, MAX_INST_HISTORY / 2).clear();
         	}
-	        if (instHistory.size() > 0 && instHistory.peekLast().isGeneric()) {
-	        	instHistory.removeLast();
+	        if (instHistory.size() > 0 && instHistory.get(instHistory.size() - 1).isGeneric()) {
+	        	instHistory.remove(instHistory.size() - 1);
 	        }
 	        instHistory.add(row);
 	        
@@ -124,8 +125,8 @@ public abstract class CpuInstructionComposite extends Composite {
 		before.pc = (short) (state.getPC() + inst.getSize());
 		
 		InstRow row = new InstRow(before);
-		synchronized (this) {
-			if (instHistory.size() == 0 || !instHistory.peekLast().isGeneric()) {
+		synchronized (instHistory) {
+			if (instHistory.size() == 0 || !instHistory.get(instHistory.size() - 1).isGeneric()) {
 				instHistory.add(row);
 				isDirty = true;
 			}
@@ -136,9 +137,9 @@ public abstract class CpuInstructionComposite extends Composite {
 	 * 
 	 */
 	public void clear() {
-		synchronized (this) {
+		synchronized (instHistory) {
 			instHistory.clear();
+			flush();
 		}
-		flush(instHistory);
 	}
 }

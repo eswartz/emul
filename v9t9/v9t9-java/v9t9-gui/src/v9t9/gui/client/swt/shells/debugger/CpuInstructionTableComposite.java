@@ -3,28 +3,24 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
-import java.util.LinkedList;
-import java.util.List;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
 import org.ejs.gui.common.FontUtils;
 
-import v9t9.common.asm.RawInstruction;
-import v9t9.common.cpu.ICpuState;
-import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.machine.IMachine;
 
 /**
@@ -32,10 +28,11 @@ import v9t9.common.machine.IMachine;
  *
  */
 public class CpuInstructionTableComposite extends CpuInstructionComposite {
-	private TableViewer instTableViewer;
-	private InstContentProvider instContentProvider;
+	private Table instTable;
 	private Font smallerFont;
 	private Font tableFont;
+	protected int pageSize = 1;
+	private InstLabelProvider instLabelProvider;
 
 	public CpuInstructionTableComposite(Composite parent, int style, IMachine machine_) {
 		super(parent, style, machine_);
@@ -43,15 +40,12 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
 		///
-		instTableViewer = new TableViewer(this, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL + SWT.NO_FOCUS + SWT.FULL_SELECTION);
-		instTableViewer.setUseHashlookup(true);
-		instContentProvider = new InstContentProvider();
-		instTableViewer.setContentProvider(instContentProvider);
-		instTableViewer.setLabelProvider(new InstLabelProvider(
-				//getDisplay().getSystemColor(SWT.COLOR_RED)
-				));
-		final Table table = instTableViewer.getTable();
-		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(table);
+		instTable = new Table(this, SWT.BORDER + SWT.VIRTUAL + SWT.NO_FOCUS + SWT.FULL_SELECTION);
+//		instTable.setLabelProvider(new InstLabelProvider(
+//				//getDisplay().getSystemColor(SWT.COLOR_RED)
+//				));
+		instLabelProvider = new InstLabelProvider();
+		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(instTable);
 		
 		FontDescriptor fontDescriptor = FontUtils.getFontDescriptor(JFaceResources.getTextFont());
 		//fontDescriptor = fontDescriptor.increaseHeight(-2);
@@ -59,7 +53,7 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 		FontDescriptor smallerFontDescriptor = fontDescriptor.increaseHeight(-2);
 		smallerFont = smallerFontDescriptor.createFont(getDisplay());
 		
-		table.setFont(smallerFont);
+		instTable.setFont(smallerFont);
 		
 		GC gc = new GC(getDisplay());
 		gc.setFont(smallerFont);
@@ -70,39 +64,39 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 		String[] props = new String[6];
 		
 		props[0] = "Addr";
-		column = new TableColumn(table, SWT.LEFT);
+		column = new TableColumn(instTable, SWT.LEFT);
 		column.setText(props[0]);
 		column.setMoveable(true);
 		column.setWidth(charWidth * 20);
 		
 		props[1] = "Inst";
-		column = new TableColumn(table, SWT.LEFT);
+		column = new TableColumn(instTable, SWT.LEFT);
 		column.setText(props[1]);
 		column.setMoveable(true);
 		column.setWidth(charWidth * 60);
 		
 		props[2] = "Op1";
-		column = new TableColumn(table, SWT.LEFT);
+		column = new TableColumn(instTable, SWT.LEFT);
 		column.setText(props[2]);
 		column.setMoveable(true);
 		column.setWidth(charWidth * 20);
 
 		props[3] = "Op2";
-		column = new TableColumn(table, SWT.LEFT);
+		column = new TableColumn(instTable, SWT.LEFT);
 		column.setText(props[3]);
 		column.setMoveable(true);
 		column.setWidth(charWidth * 20);
 
 		props[4] = "Op3";
-		column = new TableColumn(table, SWT.LEFT);
+		column = new TableColumn(instTable, SWT.LEFT);
 		column.setText(props[4]);
 		column.setMoveable(true);
 		column.setWidth(charWidth * 20);
 
-		table.setHeaderVisible(true);
-		table.setLinesVisible(true);
+		instTable.setHeaderVisible(true);
+		instTable.setLinesVisible(true);
 		
-		instTableViewer.setColumnProperties(props);
+		//instTable.setColumnProperties(props);
 		
 		start();
 	}
@@ -112,6 +106,42 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 	 */
 	@Override
 	public void setupEvents() {
+		instTable.addListener(SWT.Resize, new Listener() {
+			
+			@Override
+			public void handleEvent(Event event) {
+				pageSize = instTable.getClientArea().height / instTable.getItemHeight() - 1;
+			}
+		});
+		instTable.addListener(SWT.SetData, new Listener() {
+			
+			@Override
+			public void handleEvent(Event event) {
+				if (pageSize == 0)
+					return;
+				
+				TableItem item = (TableItem) event.item;
+//				int index =  instTable.indexOf (item);
+				int index = event.index;
+				
+				int start;
+				int end;
+				Object[] rows;
+				synchronized (instHistory) {
+					start = Math.min(instHistory.size(), index / pageSize * pageSize);
+					end = Math.min (start + pageSize, Math.min(instHistory.size(), instTable.getItemCount ()));
+					rows = instHistory.subList(start, end).toArray();
+				}
+				int columnCount = instTable.getColumnCount();
+				for (int i = start; i < end; i++) {
+					item = instTable.getItem (i);
+					InstRow row = (InstRow) rows[i - start];
+					for (int c = 0; c < columnCount; c++) {
+						item.setText(c, instLabelProvider.getColumnText(row, c));
+					}
+				}
+			}
+		});
 		addDisposeListener(new DisposeListener() {
 			
 			@Override
@@ -127,32 +157,34 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 	 */
 	@Override
 	public void go() {
-		instTableViewer.setInput(new Object());
+		//instTable.setItemCount(MAX_INST_HISTORY);
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.gui.client.swt.shells.debugger.CpuInstructionComposite#flush(java.util.LinkedList)
 	 */
 	@Override
-	public void flush(LinkedList<InstRow> instHistory) {
-		instContentProvider.clear();
-		instTableViewer.setItemCount(0);
-		Table table = instTableViewer.getTable();
-		int visible = (table.getClientArea().height - table.getHeaderHeight()) / table.getItemHeight();
-		List<InstRow> subList = instHistory.subList(Math.max(0, instHistory.size() - visible), instHistory.size());
-		for (InstRow row : subList) {
-			instContentProvider.addInstRow(row);
+	public void flush() {
+		int count;
+		synchronized (instHistory) {
+			count = instHistory.size();
 		}
-		int count = instContentProvider.getCount();
-		instTableViewer.setItemCount(count);
-		table.setSelection(new int[] { count - 1 });
-
+		instTable.setItemCount(count);
+		instTable.setSelection(count - 1); //new int[] { count - 1 });
 	}
 	
 	protected void resizeTable() {
-		for (TableColumn c : instTableViewer.getTable().getColumns()) {
+		for (TableColumn c : instTable.getColumns()) {
 			c.pack();
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.shells.debugger.CpuInstructionComposite#clear()
+	 */
+	@Override
+	public void clear() {
+		super.clear();
 	}
 
 }

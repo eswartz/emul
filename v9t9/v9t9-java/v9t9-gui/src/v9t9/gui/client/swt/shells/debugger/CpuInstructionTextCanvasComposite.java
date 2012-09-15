@@ -3,7 +3,6 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.jface.layout.GridDataFactory;
@@ -68,7 +67,7 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 	 * @see v9t9.gui.client.swt.shells.debugger.CpuInstructionComposite#refresh()
 	 */
 	@Override
-	public void flush(LinkedList<InstRow> instHistory) {
+	public void flush() {
 		synchronized (text) { 
 			text.clear();
 			int visible = text.getRows();

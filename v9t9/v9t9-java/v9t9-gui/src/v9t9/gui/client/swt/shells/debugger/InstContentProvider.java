@@ -60,7 +60,7 @@ class InstContentProvider implements ILazyContentProvider {
 	/**
 	 * @return
 	 */
-	public Object getLast() {
+	public InstRow getLast() {
 		return insts.size() > 0 ? insts.get(insts.size() - 1) : null;
 	}
 
