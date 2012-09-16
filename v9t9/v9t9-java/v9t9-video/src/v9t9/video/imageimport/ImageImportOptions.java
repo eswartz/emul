@@ -7,7 +7,6 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.WritableRaster;
-import java.util.Arrays;
 
 import ejs.base.properties.FieldProperty;
 import ejs.base.properties.IPropertySource;
@@ -17,7 +16,6 @@ import ejs.base.properties.PropertySource;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.video.IVdpCanvas;
-import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
 
 /**
@@ -33,9 +31,6 @@ public class ImageImportOptions {
 		
 		private final String label;
 
-		/**
-		 * 
-		 */
 		private Dither(String label) {
 			this.label = label;
 		}
@@ -57,7 +52,6 @@ public class ImageImportOptions {
 	private boolean ditherMono;
 	private Dither ditherType = Dither.NONE;
 	
-	private byte[][] origPalette;
 	private BufferedImage image;
 	private Rectangle clip;
 	
@@ -71,11 +65,18 @@ public class ImageImportOptions {
 	private FieldProperty ditherMonoProperty;
 	private FieldProperty imageProperty;
 	private FieldProperty clipProperty;
+	private IVdpCanvas canvas;
+	private IVdpChip vdp;
+	private boolean canSetPalette;
 	
 	/**
+	 * @param iVdpChip 
+	 * @param canvas 
 	 * 
 	 */
-	public ImageImportOptions() {
+	public ImageImportOptions(IVdpCanvas canvas, IVdpChip iVdpChip) {
+		this.canvas = canvas;
+		this.vdp = iVdpChip;
 		scaleSmoothProperty = new FieldProperty(this, "scaleSmooth", "Smooth Scaling");
 		keepAspectProperty = new FieldProperty(this, "keepAspect", "Keep Aspect Ratio");
 		asGreyScaleProperty = new FieldProperty(this, "asGreyScale", "Convert To Greyscale");
@@ -168,16 +169,16 @@ public class ImageImportOptions {
 	public void setClip(Rectangle clip) {
 		this.clip = clip;
 	}
-	public void setOrigPalette(byte[][] thePalette) {
-		byte[][] newP = new byte[thePalette.length][];
-		for (int i = 0; i < thePalette.length; i++) {
-			newP[i] = Arrays.copyOf(thePalette[i], 3);
-		}
-		this.origPalette = newP;
-	}
-	public byte[][] getOrigPalette() {
-		return origPalette;
-	}
+//	public void setOrigPalette(byte[][] thePalette) {
+//		byte[][] newP = new byte[thePalette.length][];
+//		for (int i = 0; i < thePalette.length; i++) {
+//			newP[i] = Arrays.copyOf(thePalette[i], 3);
+//		}
+//		this.origPalette = newP;
+//	}
+//	public byte[][] getOrigPalette() {
+//		return origPalette;
+//	}
 	/**
 	 * Use this when the image has been dragged/dropped.
 	 */
@@ -190,9 +191,7 @@ public class ImageImportOptions {
 	 * Call to reset options to the presumed best ones for the
 	 * current video mode.
 	 */
-	public void resetOptions(IVdpCanvas canvas, IVdpChip vdp) {
-		boolean canSetPalette;
-		
+	public void resetOptions() {
 		VdpFormat format = canvas.getFormat();
 		
 		if (vdp.getRegisterCount() > 10) {
@@ -228,13 +227,14 @@ public class ImageImportOptions {
 		setDitherMono(isMonoMode);
 		setDitherType(format == VdpFormat.COLOR16_8x1 && !canSetPalette ? Dither.ORDERED : Dither.FS);
 		
-		if (!canSetPalette) {
-			setOrigPalette(vdp.getRegisterCount() > 10 ? VdpColorManager.stockPaletteV9938 : VdpColorManager.stockPalette);
-		}
-		else
-			setOrigPalette(canvas.getColorMgr().getPalette());
-		
 		octree = null;
+	}
+	
+	/**
+	 * @return the canSetPalette
+	 */
+	public boolean canSetPalette() {
+		return canSetPalette;
 	}
 	
 	/**

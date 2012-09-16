@@ -28,13 +28,13 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 
 	@Override
 	public ImageImport createImageImport() {
-		return new ImageImport(getCanvas());
+		return new ImageImport(getCanvas(), getVdpHandler().getRegisterCount() > 10);
 	}
 	
 	@Override
 	public ImageImportOptions getImageImportOptions() {
 		if (imageImportOptions == null) {
-			imageImportOptions = new ImageImportOptions();
+			imageImportOptions = new ImageImportOptions(getCanvas(), getVdpHandler());
 			resetOptions();
 		}
 		return imageImportOptions;
@@ -42,7 +42,7 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 	
 	@Override
 	public void resetOptions() {
-		imageImportOptions.resetOptions(getCanvas(), getVdpHandler());
+		imageImportOptions.resetOptions();
 	}
 	
 	public void importImage(BufferedImage image, boolean scaleSmooth) {

@@ -119,8 +119,11 @@ public class ImageImport {
 		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
 	};
 
-	public ImageImport(ImageDataCanvas canvas) {
+	private boolean supportsSetPalette;
+
+	public ImageImport(ImageDataCanvas canvas, boolean supportsSetPalette) {
 		this.canvas = canvas;
+		this.supportsSetPalette = supportsSetPalette;
 		this.colorMgr = canvas.getColorMgr();
 		this.format = canvas.getFormat();
 		this.thePalette = colorMgr.getColorPalette();
@@ -600,7 +603,7 @@ public class ImageImport {
 
 
 	private void createOptimalPalette(BufferedImage image, int colorCount) {
-		int toAllocate = colorCount - firstColor;
+		//int toAllocate = colorCount - firstColor;
 		
 		if (false && format == VdpFormat.COLOR16_8x1) {
 			// we will not be able to allocate more than two colors
@@ -1658,9 +1661,17 @@ public class ImageImport {
 		}
 		
 		//new ColorOctree(3, toAllocate, true, false);
-		octree = options.getOctree();
+		//octree = options.getOctree();
+		octree = new ColorOctree(3, true, false);
 		
-		byte[][] orig = options.getOrigPalette();
+
+		byte[][] orig;
+		if (!canSetPalette) {
+			orig  = (supportsSetPalette ? VdpColorManager.stockPaletteV9938 : VdpColorManager.stockPalette);
+		}
+		else
+			orig = (canvas.getColorMgr().getPalette());
+		
 		if (orig != null) {
 			for (int i = 0; i < thePalette.length; i++) {
 				System.arraycopy(orig[i], 0, thePalette[i], 0, 3);
@@ -1685,11 +1696,14 @@ public class ImageImport {
 	 * @param img
 	 */
 	private void convertGreyscale(BufferedImage img) {
+		int[] rgb = new int[3];
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x++) {
 				int pixel = img.getRGB(x, y);
-				int lum = ColorMapUtils.getPixelLum(pixel);
-				int newPixel = ColorMapUtils.rgb8ToPixel(new int[] { lum, lum, lum });
+				ColorMapUtils.pixelToRGB(pixel, rgb);
+				int lum = (299 * ((pixel >> 16) & 0xff) + 587 * ((pixel >> 8) & 0xff) + 114 * (pixel & 0xff)) / 1000;
+				rgb[0] = rgb[1] = rgb[2] = lum;
+				int newPixel = ColorMapUtils.rgb8ToPixel(rgb);
 				img.setRGB(x, y, newPixel | (pixel & 0xff000000));
 			}
 		}
