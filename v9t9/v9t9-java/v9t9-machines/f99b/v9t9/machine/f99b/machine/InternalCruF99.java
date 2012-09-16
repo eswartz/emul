@@ -4,6 +4,8 @@
  */
 package v9t9.machine.f99b.machine;
 
+import static v9t9.common.keyboard.KeyboardConstants.MASK_CAPS_LOCK;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -115,7 +117,8 @@ public class InternalCruF99 extends BaseCruChip {
 		
 		case KBDA:
 			getMachine().getKeyboardHandler().setProbe();
-			return (byte) (getMachine().getKeyboardState().getAlpha() ? 1 : 0);
+			boolean isCaps = (getMachine().getKeyboardState().getLockMask() & MASK_CAPS_LOCK) != 0;
+			return (byte) (isCaps ? 1 : 0);
 		default:
 			for (IMemoryIOHandler handler : ioHandlers) {
 				if (handler.handlesAddress(addr)) {

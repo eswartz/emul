@@ -19,6 +19,7 @@ import v9t9.common.keyboard.BaseKeyboardHandler;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
+import static v9t9.common.keyboard.KeyboardConstants.*;
 
 /**
  * @author Ed
@@ -113,43 +114,43 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		// backspace?
 		if (ascii == 8 && modifiers == 0) {
-			setKey(realKey, pressed, true, (byte)(IKeyboardState.SHIFT + IKeyboardState.FCTN), 'S', when);
+			setKey(realKey, pressed, true, (byte)(MASK_SHIFT + MASK_ALT), 'S', when);
 			return;
 		}
 		
 		byte shift = 0;
 		if ((modifiers & KeyEvent.SHIFT_DOWN_MASK + KeyEvent.SHIFT_MASK) != 0)
-			shift |= IKeyboardState.SHIFT;
+			shift |= MASK_SHIFT;
 		if ((modifiers & KeyEvent.CTRL_DOWN_MASK + KeyEvent.CTRL_MASK) != 0)
-			shift |= IKeyboardState.CTRL;
+			shift |= MASK_CONTROL;
 		if ((modifiers & KeyEvent.ALT_DOWN_MASK + KeyEvent.META_DOWN_MASK + KeyEvent.ALT_MASK + KeyEvent.META_MASK) != 0)
-			shift |= IKeyboardState.FCTN;
+			shift |= MASK_ALT;
 		
 		boolean synthetic = true;
 		
-		int joy = (shift & IKeyboardState.SHIFT) != 0 ? 2 : 1;
+		int joy = (shift & MASK_SHIFT) != 0 ? 2 : 1;
 		
 		if ((ascii == 0 || ascii == 0xffff) || 
 				!postCharacter(machine, realKey, pressed, synthetic, shift, ascii, when)) {
-			byte fctn = (byte) (IKeyboardState.FCTN | shift);
+			byte fctn = (byte) (MASK_ALT | shift);
 			//System.out.println("??? " + keyCode + " : " + pressed);
 			switch (keyCode) {
 			case KeyEvent.VK_SHIFT:
-				setKey(realKey, pressed, synthetic, IKeyboardState.SHIFT, 0, when);
+				setKey(realKey, pressed, synthetic, MASK_SHIFT, 0, when);
 				break;
 			case KeyEvent.VK_CONTROL:
-				setKey(realKey, pressed, synthetic, IKeyboardState.CTRL, 0, when);
+				setKey(realKey, pressed, synthetic, MASK_CONTROL, 0, when);
 				break;
 			case KeyEvent.VK_ALT:
 			case KeyEvent.VK_META:
-				setKey(realKey, pressed, synthetic, IKeyboardState.FCTN, 0, when);
+				setKey(realKey, pressed, synthetic, MASK_ALT, 0, when);
 				break;
 			case KeyEvent.VK_ENTER:
 				setKey(realKey, pressed, synthetic, shift, '\r', when);
 				break;
 				
 			case KeyEvent.VK_ESCAPE:
-				setKey(realKey, pressed, synthetic, IKeyboardState.FCTN, '9', when);
+				setKey(realKey, pressed, synthetic, MASK_ALT, '9', when);
 				break;
 				
 			case KeyEvent.VK_CAPS_LOCK:
@@ -158,14 +159,14 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 					try {
 						on = !Toolkit.getDefaultToolkit().getLockingKeyState(keyCode);
 					} catch (UnsupportedOperationException e) {
-						on = !keyboardState.getAlpha();
+						on = (keyboardState.getLockMask() & MASK_CAPS_LOCK) == 0;
 					}
-					keyboardState.setAlpha(on);
+					keyboardState.changeLocks(on, MASK_CAPS_LOCK);
 				}
 				break;
 			case KeyEvent.VK_PAUSE:
 				if (pressed) {
-					if ((shift & IKeyboardState.CTRL) != 0) {
+					if ((shift & MASK_CONTROL) != 0) {
 						machine.getClient().close();
 						System.exit(0);	// HACK: AWT seems to get stuck otherwise
 					} else {

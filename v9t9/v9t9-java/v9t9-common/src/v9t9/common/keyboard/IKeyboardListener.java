@@ -4,29 +4,17 @@
 package v9t9.common.keyboard;
 
 /**
+ * Reports changes in high-level keyboard changes
  * @author ejs
  *
  */
 public interface IKeyboardListener {
 
 	/** Shift state changed 
-	 * @param mask
-	 * @see IKeyboardState#CTRL
-	 * @see IKeyboardState#FCTN
-	 * @see IKeyboardState#SHIFT
+	 * @param mask logical OR of states representing current state
+	 * @see KeyboardConstants#MASK_...
 	 */
 	void shiftChangeEvent(byte mask);
-	
-	/** A human-readable key was pressed or released.
-	 * The character passed is the unshifted, unmodified
-	 * key shown on the emulated keyboard.  Combined
-	 * with shift changes, represents the full state
-	 * used by the emulated machine to interpret
-	 * the keypress.
-	 * @param ch the keyboard character; SPACE is ' ', ENTER is '\r'
-	 * @param pressed true for press, false for release     
-	 */
-	void asciiKeyEvent(char ch, boolean pressed);
 	
 	/** A non-human-readable key (neither ASCII-representable
 	 * nor a shift key) was pressed or released.
@@ -34,10 +22,11 @@ public interface IKeyboardListener {
 	 * key.  Combined with shift changes, represents the full state
 	 * used by the emulated machine to interpret
 	 * the keypress.
-	 * @param ch the keyboard character     
+	 * @param key the keyboard character (see KeyboardConstants#KEY_...)
+	 * @param ch the keyboard character; SPACE is ' ', ENTER is '\r'
 	 * @param pressed true for press, false for release     
 	 */
-	void otherKeyEvent(int ch, boolean pressed);
+	void keyEvent(int key, char ch, boolean pressed);
 	
 	/**
 	 * Joystick state changed.

@@ -25,6 +25,7 @@ import v9t9.common.keyboard.BaseKeyboardHandler;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
+import static v9t9.common.keyboard.KeyboardConstants.*;
 
 /**
  * SWT keyboard control. 
@@ -134,11 +135,11 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		// separately pressed keys show up in keycode sometimes
 		
 		if (((stateMask | keyCode) & SWT.CTRL) != 0)
-			shift |= IKeyboardState.CTRL;
+			shift |= MASK_CONTROL;
 		if (((stateMask | keyCode) & SWT.SHIFT) != 0)
-			shift |= IKeyboardState.SHIFT;
+			shift |= MASK_SHIFT;
 		if (((stateMask | keyCode) & SWT.ALT) != 0)
-			shift |= IKeyboardState.FCTN;
+			shift |= MASK_ALT;
 		
 		if ((keyCode & SWT.KEYCODE_BIT) == 0) {
 			keyCode &= 0xff;
@@ -149,36 +150,36 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		//byte realshift = keyboardState.getRealShift();
 		//byte realshift = shift;
 		
-		int joy = (shift & IKeyboardState.SHIFT) != 0 ? 2 : 1;
+		int joy = (shift & MASK_SHIFT) != 0 ? 2 : 1;
 		
 		if (keyCode > 128 || keyPad || !postCharacter(machine, realKey, pressed, false, shift, (char) keyCode, when)) {
 			if (keyCode == 0)
 				keyCode = shift;
 			
-			byte fctnShifted = (byte) (shift | IKeyboardState.FCTN);
-			byte shiftShifted = (byte) (shift | IKeyboardState.SHIFT);
-			byte nonShifted = (byte) (shift & ~IKeyboardState.SHIFT);
+			byte fctnShifted = (byte) (shift | MASK_ALT);
+			byte shiftShifted = (byte) (shift | MASK_SHIFT);
+			byte nonShifted = (byte) (shift & ~MASK_SHIFT);
 			
 			//System.out.println("Handling non-postable key: " + keyCode + "; shift="+shift);
 			switch (keyCode) {
 
 				// shifts
 			case SWT.SHIFT:
-			case IKeyboardState.SHIFT:
-				setKey(realKey, pressed, false, IKeyboardState.SHIFT, 0, when);
+			case MASK_SHIFT:
+				setKey(realKey, pressed, false, MASK_SHIFT, 0, when);
 				break;
 			case SWT.CONTROL:
-			case IKeyboardState.CTRL:
-				setKey(realKey, pressed, false, IKeyboardState.CTRL, 0, when);
+			case MASK_CONTROL:
+				setKey(realKey, pressed, false, MASK_CONTROL, 0, when);
 				break;
 			case SWT.ALT:
-			case IKeyboardState.FCTN:
-				setKey(realKey, pressed, false, IKeyboardState.FCTN, 0, when);
+			case MASK_ALT:
+				setKey(realKey, pressed, false, MASK_ALT, 0, when);
 				break;
 
 			case SWT.CAPS_LOCK:
 				if (pressed) {
-					keyboardState.setAlpha(!keyboardState.getAlpha());
+					keyboardState.toggleKeyboardLocks(MASK_CAPS_LOCK);
 				}
 				break;
 			case SWT.BREAK:
@@ -198,12 +199,12 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 				break;
 			case SWT.NUM_LOCK:
 				if (pressed) {
-					keyboardState.setNumLock(!keyboardState.getNumLock());
+					keyboardState.toggleKeyboardLocks(MASK_NUM_LOCK);
 				}
 				break;
 				
 			case SWT.ESC:
-				setKey(realKey, pressed, false, IKeyboardState.FCTN, '9', when);
+				setKey(realKey, pressed, false, MASK_ALT, '9', when);
 				break;
 
 			case SWT.F1:
@@ -377,7 +378,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			long when) {
 		if (!keyPad)
 			setKey(realKey, pressed, false, shift, ch, when);
-		else if (((keyboardState.getShiftMask() & IKeyboardState.SHIFT) != 0) == !isNumLock())
+		else if (((keyboardState.getShiftMask() & MASK_SHIFT) != 0) == !isNumLock())
 			keyboardState.setJoystick(joy,
 					joyRow, x, y, (joyRow & IKeyboardState.JOY_B) != 0 && pressed, when);
 		else
@@ -387,12 +388,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 
 	private boolean isNumLock() {
 		boolean on;
-		// hmm, seems either unavailable or plain wrong
-		//try {
-		//	on = Toolkit.getDefaultToolkit().getLockingKeyState(java.awt.event.KeyEvent.VK_NUM_LOCK);
-		//} catch (UnsupportedOperationException e) {
-			on = keyboardState.getNumLock();
-		//}
+		on = (keyboardState.getLockMask() & MASK_NUM_LOCK) != 0;
 		return on;
 	}
 

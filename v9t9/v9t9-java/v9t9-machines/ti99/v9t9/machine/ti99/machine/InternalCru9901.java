@@ -6,6 +6,8 @@
  */
 package v9t9.machine.ti99.machine;
 
+import static v9t9.common.keyboard.KeyboardConstants.MASK_CAPS_LOCK;
+import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruReader;
@@ -183,7 +185,8 @@ public class InternalCru9901 extends BaseCruChip {
 				int alphamask = 0;
 				
 				if (!alphaLockMask && mask == 0x10) {
-					alphamask = getMachine().getKeyboardState().getAlpha() ? 0 : 0x10;
+					boolean isCaps = (getMachine().getKeyboardState().getLockMask() & KeyboardConstants.MASK_CAPS_LOCK) != 0;
+					alphamask = isCaps ? 0 : 0x10;
 				}
 				int keyboardRow = getMachine().getKeyboardState().getKeyboardRow(crukeyboardcol);
 				int colMask = (keyboardRow & mask);
@@ -208,7 +211,8 @@ public class InternalCru9901 extends BaseCruChip {
 		public int read(int addr, int data, int num) {
 			getMachine().getKeyboardHandler().setProbe();
 			
-			return getMachine().getKeyboardState().getAlpha() ? 1 : 0;
+			boolean isCaps = (getMachine().getKeyboardState().getLockMask() & MASK_CAPS_LOCK) != 0;
+			return isCaps ? 1 : 0;
 		}
 		
 	};

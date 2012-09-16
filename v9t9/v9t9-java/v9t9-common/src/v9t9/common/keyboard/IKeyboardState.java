@@ -15,60 +15,41 @@ public interface IKeyboardState {
 			ISettingsHandler.WORKSPACE, 
 			"BackspaceIsControlH", Boolean.FALSE);
 
-	/* Masks, corresponding to column 0 */
-	public static final byte SHIFT = 0x20;
-	public static final byte FCTN = 0x10;
-	public static final byte CTRL = 0x40;
-	
-	
-	 /* CRU rows and columns */
-    static final byte SHIFT_R = 2;
-    static final byte SHIFT_C = 0;
-    static final byte FCTN_R = 3;
-    static final byte FCTN_C = 0;
-    static final byte CTRL_R = 1;
-    static final byte CTRL_C = 0;
-    static final byte JOY1_C = 6;
-
     
-	/** "other" key masks */
-	int OTHER_KEY_ALPHA_LOCK = 1;
-
 	boolean isAsciiDirectKey(char x);
 
-	//void setPasteKeyDelay(int times);
-
+	/**
+	 * Fully reset keyboard state
+	 */
 	void resetKeyboard();
-
+	/**
+	 * Fully reset joystick
+	 */
 	void resetJoystick();
+	
 
 	/**
-	 * Set a key in the map.
-	 * @param realKey TODO
-	 * @param onoff true: pressed, false: released
-	 * @param synthetic if true, the shift + key are sent together from a synthetic
-	 * event; else, shifts are sent in separate events from keys, so track them
-	 * @param shift FCTN, SHIFT, CTRL mask
-	 * @param key normalized ASCII key: no lowercase or shifted characters
-	 * @param when time in ms when key was detected
+	 * Clear the state of all keys represented, before updating incrementally
 	 */
-//	void setKey(int realKey, boolean onoff, boolean synthetic, int shift,
-//			int key, long when);
+	void incrClearKeyboard();
 
-	void applyKeyState();
+	/**
+	 * Incrementally modify the state of the given key
+	 * @param onoff
+	 * @param key one of {@link KeyboardConstants#KEY_xxx}, including shifts
+	 */
+	void incrSetKey(boolean onoff, int key);
 
-	boolean isSet(byte shift, int key);
+	/**
+	 * Apply recent changes via {@link #incrSetKey(boolean, int)} 
+	 * etc. to expose a unified keyboard state
+	 */
+	void applyIncrKeyState();
 
 	public static final int JOY_B = 4; // set buttons
 	public static final int JOY_X = 1;
 	public static final int JOY_Y = 2;
 	
-	public static final int JOY_FIRE_R = 7;
-	public static final int JOY_LEFT_R = 6;
-	public static final int JOY_RIGHT_R = 5;
-	public static final int JOY_DOWN_R = 4;
-	public static final int JOY_UP_R = 3;
-
 	/**
 	 * 
 	 * @param joy 1 or 2
@@ -80,71 +61,40 @@ public interface IKeyboardState {
 	 */
 	void setJoystick(int joy, int mask, int x, int y, boolean fire, long when);
 
-	void setAlpha(boolean on);
-
-	boolean getAlpha();
-
 	/** Get the low-level hardware bits for the keyboard column (8) */
 	int getKeyboardRow(int column);
 
-	//boolean wasKeyboardProbed();
-
-	void resetProbe();
-
-	void setProbe();
-
 	boolean anyKeyPressed();
+
+	boolean isSet(byte shift, int key);
 
 	byte getShiftMask();
 	void setShiftMask(byte shift);
 
-	/**
-	 * @param numLock the numLock to set
-	 */
-	void setNumLock(boolean numLock);
+	void setLockMask(byte locks);
+	byte getLockMask();
 
-	boolean getNumLock();
-	
-    
-    /**
-     * Post an ASCII character, applying any conversions to make it
-     * a legal keystroke on the 99/4A keyboard.
-     * @param machine
-     * @param pressed
-     * @param synthetic if true, the character came from, e.g., pasted text,
-     * and there are not distinct shift key events; otherwise, apply logic
-     * to detect the patterns of real shift key presses and releases
-     * @param shift extra shift keys
-     * @param ch
-     * @return true if we could represent it as ASCII
-     */
-//	boolean postCharacter(IBaseMachine machine, int realKey, boolean pressed, boolean synthetic, byte shift, char ch, long when);
- 
 	void addKeyboardListener(IKeyboardListener listener);
 	void removeKeyboardListener(IKeyboardListener listener);
 
 	/**
-	 * 
+	 * Modify the shift state of the given bits in shift
+	 * @param onoff true to enable, false to disable
+	 * @param shift mask of {@link KeyboardConstants#MASK_xxx} bits to set or reset
 	 */
-	void clearKeyboard();
+	void changeShifts(boolean onoff, byte shift);
+
 
 	/**
-	 * @param b
-	 * @param shift2
+	 * Modify the lock state of the given bits in lock
+	 * @param onoff true to enable, false to disable
+	 * @param lock mask of {@link KeyboardConstants#MASK_xxx} bits to set or reset
 	 */
-	void changeKeyboardShifts(boolean onoff, byte shift);
-
+	void changeLocks(boolean onoff, byte lock);
 	/**
-	 * @param onoff
-	 * @param key
+	 * Toggle the lock state of the given bits in lock
+	 * @param lock mask of {@link KeyboardConstants#MASK_xxx} bits to set or reset
 	 */
-	void changeKeyboardMatrix(boolean onoff, int key);
-
-	/**
-	 * @param ctrlR
-	 * @param ctrlC
-	 * @param b
-	 */
-	void changeKbdMatrix(byte row, byte col, boolean onoff);
+	void toggleKeyboardLocks(byte lock);
 
 }
