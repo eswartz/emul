@@ -25,7 +25,7 @@ import ejs.base.properties.IProperty;
  */
 public abstract class CpuInstructionComposite extends Composite {
 
-	protected static final int MAX_INST_HISTORY = 250000;
+	protected static final int MAX_INST_HISTORY = 25000;
 	protected IMachine machine;
 	protected IProperty pauseMachine;
 	protected IProperty debugging;
@@ -48,10 +48,11 @@ public abstract class CpuInstructionComposite extends Composite {
 
 		refreshTask = new Runnable() {
 			volatile boolean busy = false;
+			volatile long nextTime;
 			
 			@Override
 			public void run() {
-				if (busy || isDisposed()) 
+				if (busy || isDisposed() || System.currentTimeMillis() < nextTime)
 					return;
 				
 				busy = true;
@@ -61,6 +62,7 @@ public abstract class CpuInstructionComposite extends Composite {
 						if (!isDisposed() && isDirty) {
 							flush();
 							isDirty = false;
+							nextTime = System.currentTimeMillis() + 1000 / 10;
 						}
 						busy = false;
 					}
@@ -68,7 +70,7 @@ public abstract class CpuInstructionComposite extends Composite {
 				
 			}
 		};
-		machine.getFastMachineTimer().scheduleTask(refreshTask, 20);
+		machine.getFastMachineTimer().scheduleTask(refreshTask, 10);
 		
 		addDisposeListener(new DisposeListener() {
 			
@@ -126,7 +128,8 @@ public abstract class CpuInstructionComposite extends Composite {
 		
 		InstRow row = new InstRow(before);
 		synchronized (instHistory) {
-			if (instHistory.size() == 0 || !instHistory.get(instHistory.size() - 1).isGeneric()) {
+			InstRow last = instHistory.size() > 0 ? instHistory.get(instHistory.size() - 1) : null;
+			if (last == null || last.getInstruction().pc != inst.pc) {
 				instHistory.add(row);
 				isDirty = true;
 			}

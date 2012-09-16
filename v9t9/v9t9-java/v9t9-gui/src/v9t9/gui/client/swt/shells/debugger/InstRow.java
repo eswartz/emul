@@ -7,6 +7,7 @@ package v9t9.gui.client.swt.shells.debugger;
 import ejs.base.utils.HexUtils;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryEntry;
 
@@ -111,5 +112,11 @@ public class InstRow {
 	 */
 	public boolean isGeneric() {
 		return isGeneric;
+	}
+	/**
+	 * @return
+	 */
+	public RawInstruction getInstruction() {
+		return before.inst;
 	}
 }

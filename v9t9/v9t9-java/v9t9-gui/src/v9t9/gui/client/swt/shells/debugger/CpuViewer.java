@@ -62,7 +62,6 @@ public class CpuViewer extends Composite implements IInstructionListener {
 	private Image watchImage;
 	private Button watchButton;
 	protected boolean isWatching;
-	private boolean showNextInstruction;
 	
 	private Image clearImage;
 	private Button clearButton;
@@ -158,7 +157,6 @@ public class CpuViewer extends Composite implements IInstructionListener {
 						//if (!Machine.settingPauseMachine.getBoolean())
 						//	resizeTable();
 						singleStep.setBoolean(true);
-						showNextInstruction = true;
 						pauseMachine.setBoolean(false);
 					}
 				});
@@ -186,7 +184,6 @@ public class CpuViewer extends Composite implements IInstructionListener {
 
 						IBreakpoint bp = new SimpleBreakpoint(bpPc & 0xffff, true);
 						machine.getExecutor().getBreakpoints().addBreakpoint(bp);
-						showNextInstruction = true;
 						pauseMachine.setBoolean(false);
 					}
 				});
@@ -229,8 +226,8 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		
 		icons.dispose();
 	
-		instructionComposite = new CpuInstructionTableComposite(this, SWT.NONE, machine);
-//		instructionComposite = new CpuInstructionTextCanvasComposite(this, SWT.NONE, machine);
+//		instructionComposite = new CpuInstructionTableComposite(this, SWT.NONE, machine);
+		instructionComposite = new CpuInstructionTextCanvasComposite(this, SWT.NONE, machine);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(instructionComposite);
 		
 		////
@@ -252,9 +249,6 @@ public class CpuViewer extends Composite implements IInstructionListener {
 				try {
 					if (tracker != null)
 						tracker.updateForInstruction();
-					if (!isWatching) {
-						showNextInstruction = true;
-					}
 					instructionComposite.refresh();
 				} finally {
 					working = false;
@@ -378,7 +372,6 @@ public class CpuViewer extends Composite implements IInstructionListener {
 			if (tracker != null)
 				tracker.updateForInstruction();
 			
-			showNextInstruction = false;
 		}
 		if (singleStep.getBoolean()) {
 			singleStep.setBoolean(false);
