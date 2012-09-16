@@ -47,8 +47,10 @@ public class ImageButton extends ImageIconCanvas {
 			
 			@Override
 			public void handleEvent(Event e) {
-				if (parentDrawer.isRetracted()) 
+				if (parentDrawer.isRetracted()) {
+					e.doit = false;
 					return;
+				}
 				if (e.button == 1) {
 					if (menuOverlayBounds != null && isMenuHovering) {
 						Event me = new Event();
@@ -72,8 +74,10 @@ public class ImageButton extends ImageIconCanvas {
 			
 			@Override
 			public void handleEvent(Event e) {
-				if (parentDrawer.isRetracted()) 
+				if (parentDrawer.isRetracted()) {
+					e.doit = false;
 					return;
+				}
 				if (e.button == 1)
 					doClickStop(e);
 				if (focusRestorer != null)
@@ -113,6 +117,9 @@ public class ImageButton extends ImageIconCanvas {
 			}
 			
 		});
+		
+		//setRetracted(false);
+		setCursor(getDisplay().getSystemCursor(SWT.CURSOR_HAND));
 	}
 
 	public void setFocusRestorer(IFocusRestorer focusRestorer) {
@@ -229,7 +236,9 @@ public class ImageButton extends ImageIconCanvas {
 	}
 	
 	protected void doMouseEnter(MouseEvent e) {
-		setCursor(getShell().getDisplay().getSystemCursor(SWT.CURSOR_HAND));
+		if (parentDrawer.isRetracted())
+			return;
+		
 		isHighlighted = true;
 
 		checkMenu(e);
@@ -274,7 +283,8 @@ public class ImageButton extends ImageIconCanvas {
 	 * @param e  
 	 */
 	protected void doMouseExit(MouseEvent e) {
-		setCursor(null);
+		if (parentDrawer.isRetracted())
+			return;
 		isHighlighted = false;
 		isMenuHovering = false;
 		redraw();

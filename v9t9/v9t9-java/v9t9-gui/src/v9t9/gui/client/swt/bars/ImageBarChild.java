@@ -72,7 +72,7 @@ public class ImageBarChild extends Canvas {
 			
 		});
 		
-		setCursor(getDisplay().getSystemCursor(SWT.CURSOR_HAND));
+		//setCursor(getDisplay().getSystemCursor(SWT.CURSOR_HAND));
 	}
 
 	protected boolean isIconMouseable() {
@@ -82,5 +82,4 @@ public class ImageBarChild extends Canvas {
 	protected void doPaint(PaintEvent e) {
 		parentDrawer.drawBackground(e.gc);
 	}
-
 }

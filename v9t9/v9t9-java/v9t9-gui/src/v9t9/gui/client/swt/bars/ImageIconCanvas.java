@@ -20,6 +20,7 @@ public abstract class ImageIconCanvas extends ImageBarChild {
 	protected ImageIconInfo imageIconInfo;
 	protected Rectangle bounds;
 	protected final ImageProvider imageProvider;
+	
 	public ImageIconCanvas(IImageBar parentDrawer, int style, 
 			ImageProvider imageProvider, int iconIndex, String tooltip) {
 		super(parentDrawer,  style /*| SWT.NO_BACKGROUND*/);
@@ -39,9 +40,6 @@ public abstract class ImageIconCanvas extends ImageBarChild {
 		setIconIndex(iconIndex);
 	}
 	
-	/**
-	 * @param iconIndex
-	 */
 	public void setIconIndex(int iconIndex) {
 		
 		GridData data;

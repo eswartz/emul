@@ -52,6 +52,9 @@ public class ImageBar extends Canvas implements IImageBar {
 	/** when non-null, transitioning to the !retracted state */
 	private Runnable retractTask;
 	
+	private boolean offerRetract;
+	private Runnable retractCursorTask;
+	
 	private int edging;
 	
 	private static FastTimer retractTimer = new FastTimer("Retractor");
@@ -380,11 +383,22 @@ public class ImageBar extends Canvas implements IImageBar {
 			removeMouseTrackListener(retractTrackListener);
 		}
 		this.canRetract = retractable;
-		
+
+		stopRetractOffer();
 		if (canRetract) {
 			retractListener = new MouseAdapter() {
 				@Override
 				public void mouseUp(MouseEvent e) {
+					if (e.button == 1 && e.count == 1) {
+						if (offerRetract) {
+							startRetractTask();
+						} else {
+							startRetractOffer();
+						}
+					}
+				}
+				@Override
+				public void mouseDoubleClick(MouseEvent e) {
 					if (e.button == 1) {
 						startRetractTask();
 					}
@@ -403,7 +417,6 @@ public class ImageBar extends Canvas implements IImageBar {
 				@Override
 				public void mouseEnter(MouseEvent e) {
 					updateCursor();
-					
 					//startRetractTask();
 					
 					
@@ -424,6 +437,7 @@ public class ImageBar extends Canvas implements IImageBar {
 //						
 //						setLocation(origPos);
 //					}
+					setCursor(null);
 				}
 
 				@Override
@@ -446,21 +460,65 @@ public class ImageBar extends Canvas implements IImageBar {
 	
 
 
+	/**
+	 * 
+	 */
+	private void startRetractOffer() {
+		if (!offerRetract) {
+			offerRetract = true;
+			updateCursor();
+			retractCursorTask = new Runnable() {
+				long timeout = System.currentTimeMillis() + getDisplay().getDoubleClickTime() * 2;
+				@Override
+				public void run() {
+					synchronized (ImageBar.this) {
+						if (System.currentTimeMillis() >= timeout) {
+							getDisplay().asyncExec(new Runnable() {
+								public void run() {
+									stopRetractOffer();
+								}
+							});
+						}
+					}
+				}
+			};
+			retractTimer.scheduleTask(retractCursorTask, 20);
+		}
+	}
+
+	/**
+	 * 
+	 */
+	private void stopRetractOffer() {
+		if (offerRetract) {
+			offerRetract = false;
+			setCursor(null);
+			retractTimer.cancelTask(retractCursorTask);
+			retractCursorTask = null;
+		}
+	}
+	
 	private void updateCursor() {
-		int cursor;
-		if (isHorizontal)
-			if (((edging & SWT.TOP) != 0) != retracted)
-				cursor = SWT.CURSOR_SIZEN;
-			else //if ((edging & SWT.BOTTOM) != 0)
-				cursor = SWT.CURSOR_SIZES;
-		else
-			if (((edging & SWT.LEFT) != 0) != retracted)
-				cursor = SWT.CURSOR_SIZEW;
+		updateCursor(offerRetract);
+	}
+	private void updateCursor(boolean actionPossible) {
+		if (actionPossible) {
+			int cursor;
+			if (isHorizontal)
+				if (((edging & SWT.TOP) != 0) != retracted)
+					cursor = SWT.CURSOR_SIZEN;
+				else //if ((edging & SWT.BOTTOM) != 0)
+					cursor = SWT.CURSOR_SIZES;
 			else
-				cursor = SWT.CURSOR_SIZEE;
-		
-		setCursor(getDisplay().getSystemCursor(cursor));
-		
+				if (((edging & SWT.LEFT) != 0) != retracted)
+					cursor = SWT.CURSOR_SIZEW;
+				else
+					cursor = SWT.CURSOR_SIZEE;
+			
+			setCursor(getDisplay().getSystemCursor(cursor));
+		} else {
+			setCursor(null);
+		}
 	}
 
 	/**
@@ -486,7 +544,7 @@ public class ImageBar extends Canvas implements IImageBar {
 									x = targetPos.x;
 									y = targetPos.y;
 									
-									updateCursor();
+									updateCursor(retracted);
 								}
 								
 								setPaintOffset(x, y);
@@ -510,7 +568,8 @@ public class ImageBar extends Canvas implements IImageBar {
 			
 			retractTarget = 10;
 			retractStep = 0;
-			retracted = !retracted;
+			setRetracted(!retracted);
+			stopRetractOffer();
 			retractTimer.scheduleTask(retractTask, 60);
 		}
 		
@@ -525,6 +584,18 @@ public class ImageBar extends Canvas implements IImageBar {
 		}
 	}
 	
+	/**
+	 * @param b
+	 */
+	private void setRetracted(boolean b) {
+		this.retracted = b;
+		for (Control kid : getChildren()) {
+//			if (kid instanceof ImageBarChild)
+//				((ImageBarChild) kid).setRetracted(b);
+			kid.setEnabled(!b);
+		}
+	}
+
 	protected synchronized Point getRetractedPos() {
 		if (!isHorizontal) {
 			int sz = getSize().x;
