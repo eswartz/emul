@@ -35,6 +35,8 @@ import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 
 /**
  * @author ejs
@@ -65,7 +67,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 	
 	private Image clearImage;
 	private Button clearButton;
-	private ICpuTracker tracker;
+	private ListenerList<ICpuTracker> trackerList = new ListenerList<CpuViewer.ICpuTracker>();
 	private boolean isVisible;
 
 	private IProperty singleStep;
@@ -132,8 +134,8 @@ public class CpuViewer extends Composite implements IInstructionListener {
 						if (!playPauseButton.isDisposed()) {
 							playPauseButton.setSelection(setting.getBoolean());
 							updatePlayPauseButtonImage();
-							if (tracker != null)
-								tracker.updateForInstruction();
+//							if (tracker != null)
+//								tracker.updateForInstruction();
 							instructionComposite.refresh();
 						}
 					}
@@ -247,8 +249,14 @@ public class CpuViewer extends Composite implements IInstructionListener {
 					return;
 				working = true;
 				try {
-					if (tracker != null)
-						tracker.updateForInstruction();
+					trackerList.fire(new IFire<ICpuTracker>() {
+
+						@Override
+						public void fire(ICpuTracker listener) {
+							listener.updateForInstruction();							
+						}
+						
+					});
 					instructionComposite.refresh();
 				} finally {
 					working = false;
@@ -369,21 +377,29 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		if (isWatching ) {
 			instructionComposite.executed(before, after_);
 
-			if (tracker != null)
-				tracker.updateForInstruction();
+//			if (tracker != null)
+//				tracker.updateForInstruction();
 			
 		}
 		if (singleStep.getBoolean()) {
 			singleStep.setBoolean(false);
 			pauseMachine.setBoolean(true);
 			machine.getExecutor().interruptExecution();
-			if (tracker != null)
-				tracker.updateForInstruction();
+			
+			trackerList.fire(new IFire<ICpuTracker>() {
+
+				@Override
+				public void fire(ICpuTracker listener) {
+					listener.updateForInstruction();							
+				}
+				
+			});
+
 		}
 		//throw new AbortedException();
 	}
 
-	public void setTracker(ICpuTracker tracker) {
-		this.tracker = tracker;
+	public void addTracker(ICpuTracker tracker) {
+		this.trackerList.add(tracker);
 	}
 }

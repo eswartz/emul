@@ -3,13 +3,12 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.BitSet;
 
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.memory.IMemoryWriteListener;
+import v9t9.common.memory.SimpleMemoryWriteTracker;
 
 /**
  * A range of viewable memory
@@ -20,10 +19,10 @@ public class MemoryRange {
 	final IMemoryEntry entry;
 	final int addr;
 	final int len;
-	Set<Integer> changedMemory = new TreeSet<Integer>();
-	private IMemoryWriteListener memoryWriteListener;
+	private SimpleMemoryWriteTracker tracker;
 	protected int lowRange;
 	protected int hiRange;
+	private BitSet changes;
 	
 	public MemoryRange(IMemoryEntry entry, int addr, int len) {
 		this.entry = entry;
@@ -35,11 +34,15 @@ public class MemoryRange {
 			hi = entry.getAddr() + entry.getSize() - lo; 
 		this.addr = lo;
 		this.len = hi - lo;
+		tracker = new SimpleMemoryWriteTracker(entry.getDomain(), 0);
+		tracker.addMemoryRange(addr, len);
 	}
 	public MemoryRange(IMemoryEntry element) {
 		this.entry = element;
 		this.addr = element.getAddr();
 		this.len = element.getSize();
+		tracker = new SimpleMemoryWriteTracker(entry.getDomain(), 0);
+		tracker.addMemoryRange(addr, len);
 	}
 	public boolean contains(IMemoryEntry entry, int addr) {
 		return this.entry.getDomain() == entry.getDomain() &&
@@ -50,31 +53,8 @@ public class MemoryRange {
 		return entry.isWordAccess();
 	}
 	public void attachMemoryListener() {
-		memoryWriteListener = new IMemoryWriteListener() {
-
-			public void changed(IMemoryEntry entry, int addr, Number value) {
-				synchronized (MemoryRange.this) {
-					if (contains(entry, addr)) {
-						lowRange = Math.min(lowRange, addr);
-						hiRange = Math.max(hiRange, addr);
-						
-						synchronized (changedMemory) {
-							changedMemory.add(addr);
-							if (isWordMemory()) {
-								changedMemory.add(addr + 1);
-							}
-						}
-					}
-				}
-			}
-			
-		};
-		
+		tracker.addMemoryListener();
 		clearTouchRange();
-		synchronized (changedMemory) {
-			changedMemory.clear();
-		}
-		entry.getDomain().addWriteListener(memoryWriteListener);
 	}
 	public int getAddress() {
 		return addr;
@@ -89,10 +69,26 @@ public class MemoryRange {
 		if (addr >= this.addr && addr < this.addr + this.len)
 			entry.writeByte(addr, byt);	
 	}
+	
+	public void fetchChanges() {
+		synchronized (tracker) {
+			changes = (BitSet) tracker.getChangedMemory().clone();
+			tracker.clearChanges();
+			lowRange = changes.nextSetBit(0);
+			if (lowRange < 0)
+				lowRange = Integer.MAX_VALUE;
+			hiRange = changes.length();
+		}
+	}
 	public boolean getAndResetChanged(Integer addr) {
-		synchronized (changedMemory) {
-			boolean changed = changedMemory.remove(addr);
-			return changed;
+		if (changes == null)
+			return false;
+		synchronized (tracker) {
+			boolean f = changes.get(addr) || (entry.isWordAccess() && changes.get(addr+1));
+			//changes.clear(addr);
+			//if (entry.isWordAccess())
+			//	changes.clear(addr+1);
+			return f;
 		}
 	}
 	public synchronized int getLowTouchRange() {
@@ -106,7 +102,7 @@ public class MemoryRange {
 		hiRange = 0;
 	}
 	public void removeMemoryListener() {
-		entry.getDomain().removeWriteListener(memoryWriteListener);
+		tracker.removeMemoryListener();
 	}
 	public int getSize() {
 		return len;

@@ -48,11 +48,11 @@ public abstract class CpuInstructionComposite extends Composite {
 
 		refreshTask = new Runnable() {
 			volatile boolean busy = false;
-			volatile long nextTime;
+			//volatile long nextTime;
 			
 			@Override
 			public void run() {
-				if (busy || isDisposed() || System.currentTimeMillis() < nextTime)
+				if (busy || isDisposed()) // || System.currentTimeMillis() < nextTime)
 					return;
 				
 				busy = true;
@@ -62,7 +62,7 @@ public abstract class CpuInstructionComposite extends Composite {
 						if (!isDisposed() && isDirty) {
 							flush();
 							isDirty = false;
-							nextTime = System.currentTimeMillis() + 1000 / 10;
+							//nextTime = System.currentTimeMillis() + 1000 / 10;
 						}
 						busy = false;
 					}
@@ -70,7 +70,7 @@ public abstract class CpuInstructionComposite extends Composite {
 				
 			}
 		};
-		machine.getFastMachineTimer().scheduleTask(refreshTask, 10);
+		machine.getFastMachineTimer().scheduleTask(refreshTask, 20);
 		
 		addDisposeListener(new DisposeListener() {
 			

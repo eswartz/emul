@@ -59,7 +59,7 @@ public class DebuggerWindow extends Composite {
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(cpuViewer);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(regViewer);
 
-		cpuViewer.setTracker(regViewer);
+		cpuViewer.addTracker(regViewer);
 		
 		vertSash = new SashForm(horizSash, SWT.VERTICAL);
 		
@@ -72,6 +72,8 @@ public class DebuggerWindow extends Composite {
 		for (int v = 0; v < memoryViewers.length; v++) {
 			memoryViewers[v] = new MemoryViewer(vertSash, SWT.BORDER, machine.getMemory(), 
 					memoryDecoderProvider, timer);
+			cpuViewer.addTracker(memoryViewers[v]);
+
 		}
 		
 

@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.FontDescriptor;
@@ -60,6 +59,7 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryListener;
 import v9t9.gui.EmulatorGuiData;
+import v9t9.gui.client.swt.shells.debugger.CpuViewer.ICpuTracker;
 import v9t9.gui.common.IMemoryDecoder;
 import v9t9.gui.common.IMemoryDecoderProvider;
 import ejs.base.properties.IPersistable;
@@ -71,7 +71,7 @@ import ejs.base.utils.Pair;
  * @author Ed
  *
  */
-public class MemoryViewer extends Composite implements IPersistable {
+public class MemoryViewer extends Composite implements IPersistable, ICpuTracker {
 
 	private StackLayout tableLayout;
 	private TableViewer byteTableViewer;
@@ -80,7 +80,6 @@ public class MemoryViewer extends Composite implements IPersistable {
 	
 	private ComboViewer entryViewer;
 	private final IMemory memory;
-	private TimerTask refreshTask;
 	protected MemoryRange currentRange;
 	private Button refreshButton;
 	protected boolean autoRefresh;
@@ -123,25 +122,25 @@ public class MemoryViewer extends Composite implements IPersistable {
 			
 		});
 		
-		refreshTask = new TimerTask() {
-
-			@Override
-			public void run() {
-				if (timer != null && autoRefresh && !isDisposed())
-					getDisplay().asyncExec(new Runnable() {
-						public void run() {
-							refreshViewer();
-						}
-					});
-			}
-			
-		};
-		timer.schedule(refreshTask, 0, 250);
+//		refreshTask = new TimerTask() {
+//
+//			@Override
+//			public void run() {
+//				if (timer != null && autoRefresh && !isDisposed())
+//					getDisplay().asyncExec(new Runnable() {
+//						public void run() {
+//							refreshViewer();
+//						}
+//					});
+//			}
+//			
+//		};
+//		timer.schedule(refreshTask, 0, 250);
 		
 		addDisposeListener(new DisposeListener() {
 
 			public void widgetDisposed(DisposeEvent e) {
-				refreshTask.cancel();		
+//				refreshTask.cancel();		
 				tableFont.dispose();
 			}
 			
@@ -693,6 +692,7 @@ public class MemoryViewer extends Composite implements IPersistable {
 		if (!isDisposed() && isVisible() && currentRange != null) {
 			int lowRange, hiRange;
 			synchronized (currentRange) {
+				currentRange.fetchChanges();
 				lowRange = currentRange.getLowTouchRange();
 				hiRange = currentRange.getHiTouchRange();
 				if (lowRange <= hiRange) {
@@ -715,12 +715,24 @@ public class MemoryViewer extends Composite implements IPersistable {
 						if (!pinMemory) {
 							scrollByteViewerToActiveRegion(lowRange, hiRange);
 						}
-						byteTableViewer.refresh();
-						currentRange.clearTouchRange();
+						//currentRange.clearTouchRange();
 					}
 				}
+				byteTableViewer.refresh(true);
 			}
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.shells.debugger.CpuViewer.ICpuTracker#updateForInstruction()
+	 */
+	@Override
+	public void updateForInstruction() {
+		getDisplay().syncExec(new Runnable() {
+			public void run() {
+				refreshViewer();
+			}
+		});
 	}
 	
 }
