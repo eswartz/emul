@@ -16,7 +16,7 @@ public class F99bMachine extends MachineBase {
 
 	public F99bMachine(ISettingsHandler settings, IMachineModel machineModel) {
 		super(settings, machineModel);
-		keyboardState.setPasteKeyDelay(6);
+		getKeyboardHandler().setPasteKeyDelay(6);
 	}
 
 	@Override

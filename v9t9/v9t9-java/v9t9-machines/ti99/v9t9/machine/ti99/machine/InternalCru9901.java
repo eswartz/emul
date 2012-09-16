@@ -6,7 +6,6 @@
  */
 package v9t9.machine.ti99.machine;
 
-import v9t9.common.keyboard.IKeyboardState;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruReader;
@@ -119,7 +118,7 @@ public class InternalCru9901 extends BaseCruChip {
 
 		public int write(int addr, int data, int num) {
 			if (data != 0) {
-				keyboardState.resetProbe();
+				getMachine().getKeyboardHandler().resetProbe();
 			}
 			alphaLockMask = data != 0;
 			return 0;
@@ -160,7 +159,7 @@ public class InternalCru9901 extends BaseCruChip {
 			else if ((enabledIntMask & (1 << intVdp)) != 0) {
 				// if the keyboard is not scanned continuously, this
 				// is a way to trap it in the standard TI ROM
-				keyboardState.resetProbe();
+				getMachine().getKeyboardHandler().resetProbe();
 				//System.out.println("Checking VDP interrupt... "+currentints);
 				return (currentints & (1 << intVdp)) == 0 ? 0 : 1;
 			} else
@@ -184,9 +183,10 @@ public class InternalCru9901 extends BaseCruChip {
 				int alphamask = 0;
 				
 				if (!alphaLockMask && mask == 0x10) {
-					alphamask = keyboardState.getAlpha() ? 0 : 0x10;
+					alphamask = getMachine().getKeyboardState().getAlpha() ? 0 : 0x10;
 				}
-				int colMask = (keyboardState.getKeyboardRow(crukeyboardcol) & mask);
+				int keyboardRow = getMachine().getKeyboardState().getKeyboardRow(crukeyboardcol);
+				int colMask = (keyboardRow & mask);
 				int colBits = (colMask | alphamask);
 				return colBits != 0 ? 0 : 1;
 			}
@@ -206,15 +206,15 @@ public class InternalCru9901 extends BaseCruChip {
 	private ICruReader cruralpha = new ICruReader() {
 
 		public int read(int addr, int data, int num) {
-			keyboardState.setProbe();
+			getMachine().getKeyboardHandler().setProbe();
 			
-			return keyboardState.getAlpha() ? 1 : 0;
+			return getMachine().getKeyboardState().getAlpha() ? 1 : 0;
 		}
 		
 	};
 	
-    public InternalCru9901(TI99Machine machine, IKeyboardState keyboardState) {
-    	super(machine, keyboardState, 15);
+    public InternalCru9901(TI99Machine machine) {
+    	super(machine, 15);
     	
     	intExt = 1;
     	intVdp = 2;

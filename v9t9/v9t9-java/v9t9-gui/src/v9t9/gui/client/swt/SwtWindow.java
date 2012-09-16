@@ -886,7 +886,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			contents = (String) clip.getContents(RTFTransfer.getInstance());
 		}
 		if (contents != null) {
-			machine.getKeyboardState().pasteText(contents);
+			machine.getKeyboardHandler().pasteText(contents);
 		} else {
 			eventNotifier.notifyEvent(null, Level.WARNING, 
 					"Cannot paste: no text on clipboard");

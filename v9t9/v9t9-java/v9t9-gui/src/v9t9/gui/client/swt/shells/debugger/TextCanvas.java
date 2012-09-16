@@ -9,7 +9,6 @@ import java.util.List;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
@@ -25,7 +24,6 @@ import org.eclipse.swt.widgets.Listener;
 public class TextCanvas extends Canvas {
 
 	private Point charSize;
-	private int topRow;
 	private int visRows; // visCols;
 	private List<String> lines = new ArrayList<String>();
 	private boolean dirty;
@@ -90,10 +88,6 @@ public class TextCanvas extends Canvas {
 		if (lines.size() > 10000)
 			lines = lines.subList(lines.size() - 5000, lines.size());
 		lines.add(line);
-		
-		if (lines.size() > visRows) {
-			topRow = lines.size() - visRows;
-		}
 		dirty = true;
 	}
 	

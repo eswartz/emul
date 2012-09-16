@@ -7,7 +7,6 @@ package v9t9.machine.f99b.machine;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.IMemoryIOHandler;
 import v9t9.engine.hardware.BaseCruChip;
@@ -40,8 +39,8 @@ public class InternalCruF99 extends BaseCruChip {
 	 * @param machine
 	 * @param keyboardState
 	 */
-	public InternalCruF99(IMachine machine, IKeyboardState keyboardState) {
-		super(machine, keyboardState, 8);
+	public InternalCruF99(IMachine machine) {
+		super(machine, 8);
 		
     	intExt = -1;
     	intVdp = CpuF99b.INT_VDP;
@@ -62,12 +61,12 @@ public class InternalCruF99 extends BaseCruChip {
 					if ((currentints & mask) != 0)
 						acknowledgeInterrupt(i);
 					if (mask == (1 << CpuF99b.INT_KBD)) {
-						keyboardState.resetProbe();
+						getMachine().getKeyboardHandler().resetProbe();
 					}
 				}
 				else {
-					if (mask == (1 << CpuF99b.INT_KBD) && !keyboardState.anyKeyPressed()) {
-						keyboardState.resetProbe();
+					if (mask == (1 << CpuF99b.INT_KBD) && getMachine().getKeyboardHandler().anyKeyPressed()) {
+						getMachine().getKeyboardHandler().resetProbe();
 					}
 
 				}
@@ -110,13 +109,13 @@ public class InternalCruF99 extends BaseCruChip {
 			//if (!alphaLockMask)
 			//	alphamask = keyboardState.getAlpha() ? 0x10 : 0x0;
 			
-			int col = keyboardState.getKeyboardRow(crukeyboardcol);
+			int col = getMachine().getKeyboardState().getKeyboardRow(crukeyboardcol);
 			return (byte) (col | alphamask);
 		}
 		
 		case KBDA:
-			keyboardState.setProbe();
-			return (byte) (keyboardState.getAlpha() ? 1 : 0);
+			getMachine().getKeyboardHandler().setProbe();
+			return (byte) (getMachine().getKeyboardState().getAlpha() ? 1 : 0);
 		default:
 			for (IMemoryIOHandler handler : ioHandlers) {
 				if (handler.handlesAddress(addr)) {

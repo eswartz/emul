@@ -21,6 +21,7 @@ import ejs.base.timer.FastTimer;
 
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.IClient;
+import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CpuMetrics;
@@ -39,7 +40,9 @@ import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.keyboard.IKeyboardMapping;
 import v9t9.common.keyboard.IKeyboardState;
+import v9t9.common.keyboard.NullKeyboardHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.machine.TerminatedException;
@@ -111,6 +114,8 @@ abstract public class MachineBase implements IMachine {
 
 	private IDemoHandler demoHandler;
 	private IDemoManager demoManager;
+	private IKeyboardHandler keyboardHandler;
+	private IKeyboardMapping keyboardMapping;
 
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -188,6 +193,8 @@ abstract public class MachineBase implements IMachine {
     	
     	cpu = machineModel.createCPU(this); 
 		keyboardState = new KeyboardState(this);
+		
+		keyboardHandler = new NullKeyboardHandler(keyboardState, this);
 
     	this.instructionFactory = cpu.getInstructionFactory();
 	}
@@ -828,6 +835,37 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public FastTimer getFastMachineTimer() {
 		return fastTimer;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getKeyboardMapping()
+	 */
+	@Override
+	public IKeyboardMapping getKeyboardMapping() {
+		return keyboardMapping;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#setKeyboardMapping(v9t9.common.keyboard.IKeyboardMapping)
+	 */
+	@Override
+	public void setKeyboardMapping(IKeyboardMapping mapping) {
+		this.keyboardMapping = mapping;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#setKeyboardHandler(v9t9.common.client.IKeyboardHandler)
+	 */
+	@Override
+	public void setKeyboardHandler(IKeyboardHandler keyboardHandler) {
+		this.keyboardHandler = keyboardHandler;
+		
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getKeyboardHandler()
+	 */
+	@Override
+	public IKeyboardHandler getKeyboardHandler() {
+		return keyboardHandler;
 	}
 }
 

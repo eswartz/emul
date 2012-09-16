@@ -8,7 +8,6 @@ package v9t9.engine.hardware;
 import ejs.base.settings.ISettingSection;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.ICruChip;
-import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 
 /**
@@ -44,15 +43,13 @@ public class BaseCruChip implements ICruChip {
 	 * via {@link Cpu9900#setInterruptRequest(byte)} in priority order. */
 	protected int currentints;
 
-	protected final IKeyboardState keyboardState;
 	protected long clockTargetCycleCount;
 	protected boolean intreq;
 
 	private final int intCount;
 	
-    public BaseCruChip(IMachine machine, IKeyboardState keyboardState, int intCount) {
+    public BaseCruChip(IMachine machine, int intCount) {
         this.machine = machine;
-		this.keyboardState = keyboardState;
 		this.intCount = intCount;
         
         reset();

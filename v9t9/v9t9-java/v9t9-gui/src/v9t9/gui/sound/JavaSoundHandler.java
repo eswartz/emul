@@ -198,7 +198,7 @@ public class JavaSoundHandler implements ISoundHandler {
 	public void speech() {
 		synchronized (speechGenerator) {
 			ISpeechChip speech = machine.getSpeech();
-			if (speech == null)
+			if (speech == null || speechOutput == null)
 				return;
 	
 			ISpeechSoundVoice[] vs = speechGenerator.getSpeechVoices();

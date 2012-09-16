@@ -38,15 +38,16 @@ public class Emulator {
 	private static final boolean sIsWebStarted = System.getProperty("javawebstart.version") != null;
 	private static boolean debug;
 
-	static {
-		if (sIsWebStarted && System.getProperty("jna.library.path") == null) {
-			String path = Native.getWebStartLibraryPath("v9t9render");
-			System.out.println("Native libs at " + path);
-			if (path != null)
-				System.setProperty("jna.library.path", path);
-		}		
-		
-	}
+//	static {
+//		String jnaLibraryPath = System.getProperty("jna.library.path");
+//		if (sIsWebStarted && jnaLibraryPath == null) {
+//			String path = Native.getWebStartLibraryPath("v9t9render");
+//			System.out.println("Native libs at " + path);
+//			if (path != null)
+//				System.setProperty("jna.library.path", path);
+//		}		
+//		
+//	}
 	static {
 		ClientFactory.register(SwtJavaClient.ID, SwtJavaClient.class);
 		ClientFactory.register(SwtAwtJavaClient.ID, SwtAwtJavaClient.class);
@@ -72,7 +73,7 @@ public class Emulator {
 			else {
 				String path;
 				try {
-					path = new URL(EmulatorGuiData.sBaseV9t9URL, "../libv9t9render").getPath();
+					path = new URL(EmulatorGuiData.sBaseV9t9URL, "libv9t9render").getPath();
 					System.out.println("Native libs at " + path);
 					if (path != null)
 						System.setProperty("jna.library.path", path);

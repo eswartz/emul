@@ -35,5 +35,6 @@ public class IconConsts {
 	static final int REVERSE_OVERLAY = 22;
 	static final int DEMO = 23;
 	static final int SPEECH = 24;
+	static final int KEYBOARD = 25;
 
 }

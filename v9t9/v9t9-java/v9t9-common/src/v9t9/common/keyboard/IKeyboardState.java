@@ -4,7 +4,6 @@
 package v9t9.common.keyboard;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.machine.IBaseMachine;
 import v9t9.common.settings.SettingSchema;
 
 /**
@@ -21,12 +20,23 @@ public interface IKeyboardState {
 	public static final byte FCTN = 0x10;
 	public static final byte CTRL = 0x40;
 	
+	
+	 /* CRU rows and columns */
+    static final byte SHIFT_R = 2;
+    static final byte SHIFT_C = 0;
+    static final byte FCTN_R = 3;
+    static final byte FCTN_C = 0;
+    static final byte CTRL_R = 1;
+    static final byte CTRL_C = 0;
+    static final byte JOY1_C = 6;
+
+    
 	/** "other" key masks */
 	int OTHER_KEY_ALPHA_LOCK = 1;
 
 	boolean isAsciiDirectKey(char x);
 
-	void setPasteKeyDelay(int times);
+	//void setPasteKeyDelay(int times);
 
 	void resetKeyboard();
 
@@ -42,15 +52,14 @@ public interface IKeyboardState {
 	 * @param key normalized ASCII key: no lowercase or shifted characters
 	 * @param when time in ms when key was detected
 	 */
-	void setKey(int realKey, boolean onoff, boolean synthetic, int shift,
-			int key, long when);
+//	void setKey(int realKey, boolean onoff, boolean synthetic, int shift,
+//			int key, long when);
 
-	void pushQueuedKey();
+	void applyKeyState();
 
 	boolean isSet(byte shift, int key);
 
-	public static final int JOY_B = 4 // set buttons
-	;
+	public static final int JOY_B = 4; // set buttons
 	public static final int JOY_X = 1;
 	public static final int JOY_Y = 2;
 	
@@ -67,7 +76,7 @@ public interface IKeyboardState {
 	 * @param x neg or pos or 0
 	 * @param y neg or pos or 0
 	 * @param fire boolean
-	 * @param when TODO
+	 * @param when ms timestamp
 	 */
 	void setJoystick(int joy, int mask, int x, int y, boolean fire, long when);
 
@@ -75,27 +84,19 @@ public interface IKeyboardState {
 
 	boolean getAlpha();
 
+	/** Get the low-level hardware bits for the keyboard column (8) */
 	int getKeyboardRow(int column);
 
-	boolean wasKeyboardProbed();
+	//boolean wasKeyboardProbed();
 
 	void resetProbe();
 
 	void setProbe();
 
-	void cancelPaste();
-
-	/**
-	 * Paste text into the clipboard
-	 * @param contents
-	 */
-	void pasteText(String contents);
-
-	boolean isPasting();
-
 	boolean anyKeyPressed();
 
 	byte getShiftMask();
+	void setShiftMask(byte shift);
 
 	/**
 	 * @param numLock the numLock to set
@@ -117,9 +118,33 @@ public interface IKeyboardState {
      * @param ch
      * @return true if we could represent it as ASCII
      */
-	boolean postCharacter(IBaseMachine machine, int realKey, boolean pressed, boolean synthetic, byte shift, char ch, long when);
+//	boolean postCharacter(IBaseMachine machine, int realKey, boolean pressed, boolean synthetic, byte shift, char ch, long when);
  
 	void addKeyboardListener(IKeyboardListener listener);
 	void removeKeyboardListener(IKeyboardListener listener);
+
+	/**
+	 * 
+	 */
+	void clearKeyboard();
+
+	/**
+	 * @param b
+	 * @param shift2
+	 */
+	void changeKeyboardShifts(boolean onoff, byte shift);
+
+	/**
+	 * @param onoff
+	 * @param key
+	 */
+	void changeKeyboardMatrix(boolean onoff, int key);
+
+	/**
+	 * @param ctrlR
+	 * @param ctrlC
+	 * @param b
+	 */
+	void changeKbdMatrix(byte row, byte col, boolean onoff);
 
 }

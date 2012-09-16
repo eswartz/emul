@@ -30,7 +30,6 @@ import v9t9.common.settings.Settings;
 import v9t9.common.sound.ISoundGenerator;
 import v9t9.common.speech.ISpeechDataSender;
 import v9t9.common.speech.ISpeechGenerator;
-import v9t9.gui.client.awt.AwtKeyboardHandler;
 import v9t9.gui.client.swt.shells.ROMSetupDialog;
 import v9t9.gui.sound.JavaSoundHandler;
 
@@ -47,7 +46,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 	
 	protected IVdpChip video;
 	protected IMachine machine;
-	protected IKeyboardHandler keyboardHandler;
 	protected ISwtVideoRenderer videoRenderer;
 	protected Display display;
 	private long avgUpdateTime;
@@ -69,6 +67,8 @@ public abstract class BaseSwtJavaClient implements IClient {
 	private FastTimer soundTimer;
 	private SwtWindow window;
 
+	protected IKeyboardHandler keyboardHandler;
+	
 	/**
 	 * @param machine 
 	 * 
@@ -95,8 +95,7 @@ public abstract class BaseSwtJavaClient implements IClient {
         		soundHandler);
         eventNotifier = window.getEventNotifier();
         
-        if (keyboardHandler instanceof AwtKeyboardHandler)
-        	((AwtKeyboardHandler) keyboardHandler).setEventNotifier(eventNotifier);
+        keyboardHandler.setEventNotifier(eventNotifier);
         
         //window.setSwtVideoRenderer((ISwtVideoRenderer) videoRenderer);
 
@@ -114,18 +113,17 @@ public abstract class BaseSwtJavaClient implements IClient {
 			}
 		});
 		
-        if (keyboardHandler instanceof ISwtKeyboardHandler)
-        	((ISwtKeyboardHandler) keyboardHandler).init(((ISwtVideoRenderer) videoRenderer).getControl());
+		keyboardHandler.init(videoRenderer);
         
-        TimerTask clientTask = new TimerTask() {
-        	
-        	@Override
-        	public void run() {
-        		//System.out.print('.');
-				keyboardHandler.scan(machine.getKeyboardState());
-        	}
-        };
-        keyTimer.scheduleTask(clientTask, clientTick);
+//        TimerTask clientTask = new TimerTask() {
+//        	
+//        	@Override
+//        	public void run() {
+//        		//System.out.print('.');
+//				keyboardHandler.scan(machine.getKeyboardState());
+//        	}
+//        };
+//        keyTimer.scheduleTask(clientTask, clientTick);
         
         TimerTask videoUpdateTask = new TimerTask() {
 
@@ -318,10 +316,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 		} else {
 			//displaySkips--;
 		}
-	}
-
-	public IKeyboardHandler getKeyboardHandler() {
-		return keyboardHandler;
 	}
 
 	public void handleEvents() {

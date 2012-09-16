@@ -3,6 +3,7 @@
  */
 package v9t9.common.machine;
 
+import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
@@ -13,6 +14,7 @@ import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.keyboard.IKeyboardMapping;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.modules.IModuleManager;
 
@@ -68,4 +70,9 @@ public interface IMachine extends IBaseMachine {
 	IDemoManager getDemoManager();
 	void setDemoManager(IDemoManager manager);
 
+	IKeyboardMapping getKeyboardMapping();
+	void setKeyboardMapping(IKeyboardMapping mapping);
+
+	IKeyboardHandler getKeyboardHandler();
+	void setKeyboardHandler(IKeyboardHandler keyboardHandler);
 }

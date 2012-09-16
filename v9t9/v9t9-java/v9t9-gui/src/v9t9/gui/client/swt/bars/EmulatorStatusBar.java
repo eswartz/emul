@@ -40,6 +40,7 @@ import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.shells.DemoProgressBar;
 import v9t9.gui.client.swt.shells.DemoSelector;
 import v9t9.gui.client.swt.shells.DiskSelectorDialog;
+import v9t9.gui.client.swt.shells.KeyboardDialog;
 import v9t9.gui.client.swt.shells.ModuleSelector;
 import v9t9.gui.client.swt.shells.ROMSetupDialog;
 import ejs.base.properties.IProperty;
@@ -167,6 +168,17 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					}
 				});
 
+
+		createButton(IconConsts.KEYBOARD,
+			"Show keyboard", new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					swtWindow.toggleToolShell(KeyboardDialog.KEYBOARD_TOOL_ID, 
+							KeyboardDialog.getToolShellFactory(machine, buttonBar));
+				}
+			}
+		);		
+		
 	}
 
 

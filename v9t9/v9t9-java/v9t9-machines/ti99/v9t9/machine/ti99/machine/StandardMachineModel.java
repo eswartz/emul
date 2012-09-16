@@ -78,7 +78,7 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;
-			machine.setCru(new InternalCru9901(machine, machine.getKeyboardState()));
+			machine.setCru(new InternalCru9901(machine));
 			
 			EmuDiskDsr emudsr = new EmuDiskDsr(Settings.getSettings(machine), DiskDirectoryMapper.INSTANCE);
 			machine.getDsrManager().registerDsr(emudsr);

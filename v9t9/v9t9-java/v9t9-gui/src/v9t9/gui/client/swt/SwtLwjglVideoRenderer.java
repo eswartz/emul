@@ -570,9 +570,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		}
 
-		for (ISwtSprite sprite : sprites) {
-			
-		}
+//		for (ISwtSprite sprite : sprites) {
+//			
+//		}
 		
 		glCanvas.swapBuffers();
 

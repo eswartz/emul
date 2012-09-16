@@ -233,7 +233,7 @@ final class CatalogDialog extends Dialog {
 					machine.notifyEvent( 
 							Level.INFO, "Pasting '" + filePath + "'");
 							
-					machine.getKeyboardState().pasteText(filePath);
+					machine.getKeyboardHandler().pasteText(filePath);
 				}
 			}
 		});

@@ -99,7 +99,7 @@ public class F99bMachineModel implements IMachineModel {
 		
 		memoryDiskDsr = new MemoryDiskImageDsr(machine_, InternalCruF99.DISK_BASE);
 
-		InternalCruF99 cruAccess = new InternalCruF99(machine_, machine_.getKeyboardState());
+		InternalCruF99 cruAccess = new InternalCruF99(machine_);
 		cruAccess.addIOHandler(memoryDiskDsr);
 
 		machine_.setCru(cruAccess);

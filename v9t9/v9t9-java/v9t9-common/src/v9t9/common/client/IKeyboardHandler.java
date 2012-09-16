@@ -1,22 +1,38 @@
 /*
- * (c) Ed Swartz, 2005
- * 
- * Created on Aug 27, 2005
- *
  */
 package v9t9.common.client;
 
-import v9t9.common.keyboard.IKeyboardState;
+import v9t9.common.events.IEventNotifier;
+import v9t9.common.machine.IBaseMachine;
 
 /**
- * This handler manages translating keyboard input from the outside
- * world into CRU change commands.
  * @author ejs
  */
 public interface IKeyboardHandler {
-    /** 
-     * Scan keyboard and update keyboard state
-     *
-     */
-    public void scan(IKeyboardState state);
+	void init(IVideoRenderer renderer);
+	void setEventNotifier(IEventNotifier notifier);
+	
+//	KeyDelta[] scanKeyDeltas();
+	
+	void setPasteKeyDelay(int times);
+
+	void cancelPaste();
+
+	/**
+	 * Paste text into the clipboard
+	 * @param contents
+	 */
+	void pasteText(String contents);
+
+	boolean isPasting();
+
+	void resetProbe();
+
+	void setProbe();
+	
+	boolean anyKeyPressed();
+
+	void setKey(int realKey, boolean onoff, boolean synthetic, byte shift, int key, long when);
+	boolean postCharacter(IBaseMachine machine, int realKey, boolean pressed, boolean synthetic, byte shift, char ch, long when);
+
 }

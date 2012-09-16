@@ -11,9 +11,9 @@ import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.ControllerEvent;
 import net.java.games.input.ControllerListener;
 
-import org.eclipse.swt.widgets.Control;
-
 import v9t9.common.client.IKeyboardHandler;
+import v9t9.common.client.IVideoRenderer;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 
@@ -21,7 +21,7 @@ import v9t9.common.machine.IMachine;
  * @author ejs
  *
  */
-public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHandler {
+public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 
 	private static boolean DEBUG = false;
 	
@@ -146,11 +146,27 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 		}
 	}
 	
-	private SwtKeyboardHandler swtKeyboardHandler;
 	private ControllerHandler joystick1Handler, joystick2Handler;
+	private Runnable scanTask;
 	
-	public SwtLwjglKeyboardHandler(IKeyboardState keyboardState, IMachine machine) {
-		this.swtKeyboardHandler = new SwtKeyboardHandler(keyboardState, machine);
+	public SwtLwjglKeyboardHandler(final IKeyboardState keyboardState, IMachine machine) {
+		super(keyboardState, machine);
+		
+		scanTask = new Runnable() {
+			
+			@Override
+			public void run() {
+				scanJoystick(keyboardState, joystick1Handler, 1);
+				scanJoystick(keyboardState, joystick2Handler, 2);
+				
+//				if ((joystick1Handler != null && joystick1Handler.isFailedLast())
+//						|| (joystick2Handler != null && joystick2Handler.isFailedLast())) {
+//					updateControllers();
+//				}
+				
+			}
+		};
+		machine.getFastMachineTimer().scheduleTask(scanTask, 10);
 		
 		updateControllers();
 		
@@ -193,19 +209,6 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 		}
 		
 	}
-
-	@Override
-	public void scan(IKeyboardState state) {
-		swtKeyboardHandler.scan(state);
-		
-		scanJoystick(state, joystick1Handler, 1);
-		scanJoystick(state, joystick2Handler, 2);
-		
-//		if ((joystick1Handler != null && joystick1Handler.isFailedLast())
-//				|| (joystick2Handler != null && joystick2Handler.isFailedLast())) {
-//			updateControllers();
-//		}
-	}
 	
 	/**
 	 * @param joystickHandler
@@ -226,14 +229,6 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 				}
 			}
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.swt.ISwtKeyboardHandler#init(org.eclipse.swt.widgets.Control)
-	 */
-	@Override
-	public void init(Control control) {
-		swtKeyboardHandler.init(control);
 	}
 
 }
