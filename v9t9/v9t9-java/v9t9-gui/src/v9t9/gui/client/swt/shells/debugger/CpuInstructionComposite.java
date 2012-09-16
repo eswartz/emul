@@ -25,7 +25,7 @@ import ejs.base.properties.IProperty;
  */
 public abstract class CpuInstructionComposite extends Composite {
 
-	protected static final int MAX_INST_HISTORY = 25000;
+	protected static final int MAX_INST_HISTORY = 250000;
 	protected IMachine machine;
 	protected IProperty pauseMachine;
 	protected IProperty debugging;
@@ -129,7 +129,7 @@ public abstract class CpuInstructionComposite extends Composite {
 		InstRow row = new InstRow(before);
 		synchronized (instHistory) {
 			InstRow last = instHistory.size() > 0 ? instHistory.get(instHistory.size() - 1) : null;
-			if (last == null || last.getInstruction().pc != inst.pc) {
+			if (last == null || last.getBeforeInst().pc != inst.pc) {
 				instHistory.add(row);
 				isDirty = true;
 			}

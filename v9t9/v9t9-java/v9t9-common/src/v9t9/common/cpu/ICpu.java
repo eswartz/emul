@@ -148,5 +148,7 @@ public interface ICpu extends IPersistable {
 
 	void addListener(ICpuListener listener);
 	void removeListener(ICpuListener listener);
+	
+	IInstructionEffectLabelProvider createInstructionEffectLabelProvider();
 
 }

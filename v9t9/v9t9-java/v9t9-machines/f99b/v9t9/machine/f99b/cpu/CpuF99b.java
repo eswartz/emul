@@ -12,6 +12,7 @@ import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
+import v9t9.common.cpu.IInstructionEffectLabelProvider;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
@@ -461,6 +462,14 @@ public class CpuF99b extends CpuBase {
 	@Override
 	public IDecompilePhase createDecompiler() {
 		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#createInstructionEffectLabelProvider()
+	 */
+	@Override
+	public IInstructionEffectLabelProvider createInstructionEffectLabelProvider() {
+		return new InstructionEffectLabelProviderF99b();
 	}
 	
 }

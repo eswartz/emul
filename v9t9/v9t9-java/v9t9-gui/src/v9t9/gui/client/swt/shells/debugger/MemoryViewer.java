@@ -728,7 +728,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 	 */
 	@Override
 	public void updateForInstruction() {
-		getDisplay().syncExec(new Runnable() {
+		getDisplay().asyncExec(new Runnable() {
 			public void run() {
 				refreshViewer();
 			}

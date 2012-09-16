@@ -207,6 +207,17 @@ public class InterpreterF99b implements IInterpreter {
 		}
 	}
 
+
+	public short getStackEntry(int i) {
+		return iblock.domain.readWord(cpuState.getSP() + i * 2);
+	}
+	public short getReturnStackEntry(int i) {
+		return iblock.domain.readWord(cpuState.getRP() + i * 2);
+	}
+	public short getLocalStackEntry(int i) {
+		return iblock.domain.readWord(cpuState.getLP() - (i + 1) * 2);
+	}
+
 	private final void executeAndListen(ListenerList<IInstructionListener> instructionListeners) {
 		iblock.pc = cpu.getPC();
 		
@@ -220,10 +231,9 @@ public class InterpreterF99b implements IInterpreter {
 		
 		// get next instruction and advance
 	    InstructionF99b ins = getInstruction();
-	    //cpu.setPC(iblock.pc);
 		iblock.cycles = cpu.getCurrentCycleCount();
 		
-		//iblock.pc = cpu.getPC();
+		//iblock.pc = cpu.getPC();	// do below, since PC was advanced
 		iblock.st = cpu.getST();
 		iblock.sp = cpuState.getSP();
 		iblock.rp = cpuState.getRP();
@@ -239,20 +249,18 @@ public class InterpreterF99b implements IInterpreter {
 				int spused = fx.first;
 				if (spused < 0)
 					spused = 4;
-				if (spused > iblock.inStack.length)
-					spused = iblock.inStack.length;
+				iblock.inStack = new short[spused];
 				for (int i = 0; i < spused; i++)
-					iblock.inStack[i] = iblock.getStackEntry(spused - i - 1);
+					iblock.inStack[i] = getStackEntry(spused - i - 1);
 			}
 		    fx = InstF99b.getReturnStackEffects(ins.getInst());
 			if (fx != null) {
 				int rpused = fx.first;
 				if (rpused < 0)
 					rpused = 4;
-				if (rpused > iblock.inReturnStack.length)
-					rpused = iblock.inReturnStack.length;
+				iblock.inReturnStack = new short[rpused];
 				for (int i = 0; i < rpused; i++)
-					iblock.inReturnStack[i] = iblock.getReturnStackEntry(rpused - i - 1);
+					iblock.inReturnStack[i] = getReturnStackEntry(rpused - i - 1);
 			}
 			
 			block = new InstructionWorkBlockF99b(cpuState);
@@ -519,7 +527,7 @@ public class InterpreterF99b implements IInterpreter {
         	break;
         }
         case Iover:
-        	cpu.push(iblock.getStackEntry(1));
+        	cpu.push(getStackEntry(1));
         	break;
         case Irot: {
         	short x = cpu.pop();
@@ -604,14 +612,14 @@ public class InterpreterF99b implements IInterpreter {
         	cpu.push(cpu.rpeek());
         	break;
         case Ispidx:
-        	cpu.push(iblock.getStackEntry(mop1.immed));
+        	cpu.push(getStackEntry(mop1.immed));
         	break;
         case Irpidx:
-        	cpu.push(iblock.getReturnStackEntry(mop1.immed));
+        	cpu.push(getReturnStackEntry(mop1.immed));
         	break;
         	
         case Ilpidx:
-        	cpu.push(iblock.getLocalStackEntry(mop1.immed));
+        	cpu.push(getLocalStackEntry(mop1.immed));
         	break;
         case Ilocal:
         	cpu.push((short) (iblock.lp - (mop1.immed + 1) * 2));
@@ -625,16 +633,16 @@ public class InterpreterF99b implements IInterpreter {
         	break;
         	
         case IloopUp: {
-        	short next = (short) (iblock.getReturnStackEntry(0) + 1);
-        	short lim = iblock.getReturnStackEntry(1);
+        	short next = (short) (getReturnStackEntry(0) + 1);
+        	short lim = getReturnStackEntry(1);
     		cpu.rpop();
     		cpu.rpush(next);
     		cpu.push((short) ((lim != 0 ? next < lim : next >= 1) ? 0 : -1));
         	break;
         }
         case IuloopUp: {
-        	int next = (iblock.getReturnStackEntry(0) + 1) & 0xffff;
-        	short lim = iblock.getReturnStackEntry(1);
+        	int next = (getReturnStackEntry(0) + 1) & 0xffff;
+        	short lim = getReturnStackEntry(1);
         	cpu.rpop();
         	cpu.rpush((short) next);
         	cpu.push((short) ((lim != 0 ? next < (lim & 0xffff) 
@@ -643,9 +651,9 @@ public class InterpreterF99b implements IInterpreter {
         }
         case IplusLoopUp: {
         	short change = cpu.pop();
-        	short cur = iblock.getReturnStackEntry(0);
+        	short cur = getReturnStackEntry(0);
         	int next = (cur + change);
-        	short lim = iblock.getReturnStackEntry(1);
+        	short lim = getReturnStackEntry(1);
     		cpu.rpop();
     		cpu.rpush((short) next);
     		cpu.push((short) ((lim != 0 ? (change < 0 ? next > lim  : next < lim)
@@ -654,9 +662,9 @@ public class InterpreterF99b implements IInterpreter {
         }
         case IuplusLoopUp: {
         	short change = cpu.pop();
-        	short cur = iblock.getReturnStackEntry(0);
+        	short cur = getReturnStackEntry(0);
         	int next = (cur & 0xffff) + change;
-        	short lim = iblock.getReturnStackEntry(1);
+        	short lim = getReturnStackEntry(1);
         	cpu.rpop();
         	cpu.rpush((short) next);
         	cpu.push((short) ((lim != 0 ? (change < 0 ? next > (lim & 0xffff) : next < (lim & 0xffff)) 
@@ -1272,14 +1280,14 @@ public class InterpreterF99b implements IInterpreter {
 		}
 			
         case ItoR:
-        	cpu.rpush(iblock.getStackEntry(1));
-        	cpu.rpush(iblock.getStackEntry(0));
+        	cpu.rpush(getStackEntry(1));
+        	cpu.rpush(getStackEntry(0));
         	cpu.pop();
         	cpu.pop();
         	break;
         case IRfrom:
-        	cpu.push(iblock.getReturnStackEntry(1));
-        	cpu.push(iblock.getReturnStackEntry(0));
+        	cpu.push(getReturnStackEntry(1));
+        	cpu.push(getReturnStackEntry(0));
         	cpu.rpop();
         	cpu.rpop();
         	break;

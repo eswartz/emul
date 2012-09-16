@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.LineStyleEvent;
@@ -17,12 +18,14 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+import org.ejs.gui.common.FontUtils;
 
+import v9t9.common.cpu.IInstructionEffectLabelProvider.Column;
 import v9t9.common.machine.IMachine;
 
 /**
@@ -30,12 +33,6 @@ import v9t9.common.machine.IMachine;
  *
  */
 public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
-
-	private static final int ADDR_WIDTH = 16;
-	private static final int INST_WIDTH = 32;
-	private static final int OP1_WIDTH = 12;
-	private static final int OP2_WIDTH = 12;
-	private static final int OP3_WIDTH = 12;
 	
 	private StyledText text;
 	private int numRows;
@@ -44,16 +41,24 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 	private TextStyle baseTextStyle;
 	private TextStyle bg1Style;
 	private TextStyle bg2Style;
+	private InstLabelProvider instLabelProvider;
+	private Font smallerFont;
 	
 	public CpuInstructionTextCanvasComposite(Composite parent, int style, IMachine machine) {
 		super(parent, style | SWT.V_SCROLL, machine);
+		this.instLabelProvider = new InstLabelProvider(machine.getCpu().createInstructionEffectLabelProvider());
 		
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
 		text = new StyledText(this, SWT.BORDER | SWT.READ_ONLY | SWT.H_SCROLL);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(text);
 
-		baseTextStyle = new TextStyle(JFaceResources.getTextFont(), null, null);
+		
+		FontDescriptor fontDescriptor = FontUtils.getFontDescriptor(JFaceResources.getTextFont());
+		FontDescriptor smallerFontDescriptor = fontDescriptor.increaseHeight(-2);
+		smallerFont = smallerFontDescriptor.createFont(getDisplay());
+		
+		baseTextStyle = new TextStyle(smallerFont, null, null);
 		bg1Style = new TextStyle(baseTextStyle);
 		bg1Style.background = getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND);
 		bg2Style = new TextStyle(baseTextStyle);
@@ -63,17 +68,7 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 			
 			@Override
 			public void lineGetStyle(LineStyleEvent event) {
-				StyleRange[] ranges = layoutStyles(event.lineOffset,
-						bg1Style, ADDR_WIDTH,
-						baseTextStyle, 2,
-						bg2Style, INST_WIDTH,
-						baseTextStyle, 2,
-						bg1Style, OP1_WIDTH,
-						baseTextStyle, 2,
-						bg2Style, OP2_WIDTH,
-						baseTextStyle, 2,
-						bg1Style, OP3_WIDTH);
-				
+				StyleRange[] ranges = layoutStyles(event.lineOffset);
 				event.styles = ranges;
 			}
 		});
@@ -82,13 +77,36 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 		
 	}
 
-	protected StyleRange[] layoutStyles(int offset, Object... stylesAndWidths) {
-		StyleRange[] ranges = new StyleRange[stylesAndWidths.length / 2];
-		for (int i = 0; i  < ranges.length; i++) {
-			ranges[i] = new StyleRange((TextStyle) stylesAndWidths[i*2]);
-			ranges[i].start = offset;  
-			ranges[i].length = (Integer) stylesAndWidths[i*2 + 1];
-			offset += ranges[i].length;
+	protected StyleRange[] layoutStyles(int offset) {
+		StyleRange[] ranges = new StyleRange[instLabelProvider.getColumnCount()];
+		boolean oddOp = true;
+		int rangeIdx = 0;
+		for (Column column : instLabelProvider.getColumns()) {
+			TextStyle style;
+			switch (column.role) {
+			case UNKNOWN:
+			case SYMBOL:
+			case INSTRUCTION:
+			default:
+				style = baseTextStyle;
+				break;
+			case INPUT:
+			case ADDRESS:
+				style = bg1Style;
+				break;
+			case OUTPUT:
+				style = bg2Style;
+				break;
+			case OPERAND:
+				style = oddOp ? bg2Style : bg1Style;
+				oddOp = !oddOp;
+				break;
+			}
+			ranges[rangeIdx] = new StyleRange(style);
+			ranges[rangeIdx].start = offset;  
+			ranges[rangeIdx].length = column.width + 2;
+			offset += ranges[rangeIdx].length;
+			rangeIdx++;
 		}
 		return ranges;
 	}
@@ -104,12 +122,9 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 			 */
 			@Override
 			public void handleEvent(Event event) {
-				GC gc = new GC(text);
-				gc.setFont(baseTextStyle.font);
-				int fontHeight = gc.getFontMetrics().getHeight();
-				gc.dispose();
+				text.setFont(smallerFont);
 				int height = text.getClientArea().height;
-				numRows = Math.max(1, height / fontHeight);
+				numRows = Math.max(1, height / text.getLineHeight());
 				getVerticalBar().setIncrement(1);
 				getVerticalBar().setPageIncrement(numRows);
 			}
@@ -126,6 +141,7 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
 				machine.getFastMachineTimer().cancelTask(refreshTask);
+				smallerFont.dispose();
 			}
 		});
 	}
@@ -144,9 +160,9 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 	@Override
 	public void flush() {
 		synchronized (instHistory) {
+			redrawLines();
 			getVerticalBar().setMaximum(instHistory.size());
 			getVerticalBar().setSelection(instHistory.size() - numRows + 1);
-			redrawLines();
 		}
 	}
 
@@ -158,39 +174,31 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 		synchronized (text) {
 			synchronized (instHistory) {
 				StringBuilder sb = new StringBuilder();
+				int numCols = instLabelProvider.getColumnCount();
+				Column[] cols = instLabelProvider.getColumns();
 				int visible = numRows;
 				int start = Math.min(rowIndex, instHistory.size());
 				int end = Math.min(rowIndex + visible, instHistory.size());
 				List<InstRow> subList = instHistory.subList(start, end);
 				for (InstRow row : subList) {
-					sb.append(fieldOf(row.getAddress(), ADDR_WIDTH));
-					sb.append("  ");
-					sb.append(fieldOf(row.getInst(), INST_WIDTH));
-					sb.append("  ");
-					sb.append(fieldOf(row.getOp1(), OP1_WIDTH));
-					sb.append("  ");
-					sb.append(fieldOf(row.getOp2(), OP2_WIDTH));
-					sb.append("  ");
-					sb.append(fieldOf(row.getOp3(), OP3_WIDTH));
+					for (int i = 0; i < numCols; i++) {
+						sb.append(' ');
+						sb.append(fieldOf(instLabelProvider.getColumnText(row, i), cols[i].width));
+						sb.append(' ');
+					}
 					sb.append('\n');
 				}
 				while (end - start < numRows) {
-					sb.append(fieldOf("", ADDR_WIDTH));
-					sb.append("  ");
-					sb.append(fieldOf("", INST_WIDTH));
-					sb.append("  ");
-					sb.append(fieldOf("", OP1_WIDTH));
-					sb.append("  ");
-					sb.append(fieldOf("", OP2_WIDTH));
-					sb.append("  ");
-					sb.append(fieldOf("", OP3_WIDTH));
+					for (int i = 0; i < numCols; i++) {
+						sb.append(fieldOf("", cols[i].width + 2));
+					}
 					sb.append('\n');
 					end++;
 				}
 				text.setText(sb.toString());
 			}
 		}
-		text.redraw();
+		//text.redraw();
 		
 	}
 

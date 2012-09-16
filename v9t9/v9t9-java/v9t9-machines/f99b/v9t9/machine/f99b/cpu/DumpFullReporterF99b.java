@@ -138,7 +138,7 @@ public class DumpFullReporterF99b implements IInstructionListener {
 			spadded = Math.min(4, Math.max(fx.second, spadded));
 		
 		for (int i = 0; i < spadded; i++)
-			sb.append(toStr(block.getStackEntry(spadded - i - 1))).append(' ');
+			sb.append(toStr(block.inStack[spadded - i - 1])).append(' ');
 		
 		fx = InstF99b.getReturnStackEffects(block.inst.getInst());
 		if (fx != null)
@@ -148,7 +148,7 @@ public class DumpFullReporterF99b implements IInstructionListener {
 
 			sb.append("R ");
 			for (int i = 0; i < rpadded; i++)
-				sb.append(toStr(block.getReturnStackEntry(rpadded - i - 1))).append(' ');
+				sb.append(toStr(block.inReturnStack[rpadded - i - 1])).append(' ');
 		}
 		sb.append(")");
 

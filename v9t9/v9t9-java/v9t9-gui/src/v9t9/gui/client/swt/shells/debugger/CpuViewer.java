@@ -321,8 +321,6 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		//pauseMachine.setBoolean(true);
 	}
 
-
-
 	private void updatePlayPauseButtonImage() {
 		if (pauseMachine.getBoolean()) {
 			playPauseButton.setImage(pauseImage);

@@ -643,7 +643,8 @@ public class InstF99b {
 		return instNames.get(inst);
 	}
 
-	/** Get pair for items read and items left */
+	/** Get pair for items read and items left;
+	 * negative values mean the actual amount is unknown (dependent on instruction) */
 	public static Pair<Integer, Integer> getStackEffects(int inst) {
 		for (int i = 0; i < instArgs.length; i += 5) {
 			if (instArgs[i] == inst) {

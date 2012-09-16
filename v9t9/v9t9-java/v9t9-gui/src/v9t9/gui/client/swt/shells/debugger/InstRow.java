@@ -4,12 +4,8 @@
 package v9t9.gui.client.swt.shells.debugger;
 
 
-import ejs.base.utils.HexUtils;
-import v9t9.common.asm.BaseMachineOperand;
-import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.common.memory.IMemoryEntry;
 
 /**
  * @author ejs
@@ -22,6 +18,7 @@ public class InstRow {
 	private final InstructionWorkBlock before;
 	private final InstructionWorkBlock after;
 	private boolean isGeneric;
+	
 	public InstRow(InstructionWorkBlock before) {
 		this.before = before;
 		this.after = before;
@@ -30,29 +27,6 @@ public class InstRow {
 	public InstRow(InstructionWorkBlock before, InstructionWorkBlock after) {
 		this.before = before;
 		this.after = after;
-	}
-
-	/**
-	 * @return
-	 */
-	public String getAddress() {
-		String addr = ">" + HexUtils.toHex4(before.inst.pc);
-		
-		IMemoryEntry entry = before.domain.getEntryAt(before.inst.pc);
-		if (entry != null) { 
-			String name = entry.lookupSymbol((short) (before.inst.pc & 0xfffe));
-			if (name != null) {
-				return name + " " + addr;
-			}
-		}
-		return addr;
-	}
-
-	/**
-	 * @return
-	 */
-	public String getInst() {
-		return before.inst.toString();
 	}
 
 	@Override
@@ -80,32 +54,6 @@ public class InstRow {
 	public int hashCode() {
 		return count;
 	}
-	/**
-	 * @return
-	 */
-	public String getOp1() {
-		BaseMachineOperand mop1 = (BaseMachineOperand) before.inst.getOp1();
-		if (mop1 == null || mop1.type == IMachineOperand.OP_NONE) {
-			return "";
-		}
-		return before.formatOpChange(1, after);
-	}
-
-	public String getOp2() {
-		BaseMachineOperand mop2 = (BaseMachineOperand) before.inst.getOp2();
-		if (mop2 == null || mop2.type == IMachineOperand.OP_NONE) {
-			return "";
-		}
-		return before.formatOpChange(2, after);
-	}
-
-	public String getOp3() {
-		BaseMachineOperand mop3 = (BaseMachineOperand) before.inst.getOp3();
-		if (mop3 == null || mop3.type == IMachineOperand.OP_NONE) {
-			return "";
-		}
-		return before.formatOpChange(3, after);
-	}
 
 	/**
 	 * @return
@@ -116,7 +64,22 @@ public class InstRow {
 	/**
 	 * @return
 	 */
-	public RawInstruction getInstruction() {
+	public RawInstruction getBeforeInst() {
 		return before.inst;
+	}
+	public RawInstruction getAfterInst() {
+		return after.inst;
+	}
+	/**
+	 * @return the after
+	 */
+	public InstructionWorkBlock getAfter() {
+		return after;
+	}
+	/**
+	 * @return the before
+	 */
+	public InstructionWorkBlock getBefore() {
+		return before;
 	}
 }

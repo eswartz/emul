@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.ejs.gui.common.FontUtils;
 
+import v9t9.common.cpu.IInstructionEffectLabelProvider;
 import v9t9.common.machine.IMachine;
 
 /**
@@ -44,7 +45,7 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 //		instTable.setLabelProvider(new InstLabelProvider(
 //				//getDisplay().getSystemColor(SWT.COLOR_RED)
 //				));
-		instLabelProvider = new InstLabelProvider();
+		instLabelProvider = new InstLabelProvider(machine.getCpu().createInstructionEffectLabelProvider());
 		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(instTable);
 		
 		FontDescriptor fontDescriptor = FontUtils.getFontDescriptor(JFaceResources.getTextFont());
@@ -61,42 +62,16 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 		gc.dispose();
 
 		TableColumn column;
-		String[] props = new String[6];
-		
-		props[0] = "Addr";
-		column = new TableColumn(instTable, SWT.LEFT);
-		column.setText(props[0]);
-		column.setMoveable(true);
-		column.setWidth(charWidth * 20);
-		
-		props[1] = "Inst";
-		column = new TableColumn(instTable, SWT.LEFT);
-		column.setText(props[1]);
-		column.setMoveable(true);
-		column.setWidth(charWidth * 60);
-		
-		props[2] = "Op1";
-		column = new TableColumn(instTable, SWT.LEFT);
-		column.setText(props[2]);
-		column.setMoveable(true);
-		column.setWidth(charWidth * 20);
 
-		props[3] = "Op2";
-		column = new TableColumn(instTable, SWT.LEFT);
-		column.setText(props[3]);
-		column.setMoveable(true);
-		column.setWidth(charWidth * 20);
-
-		props[4] = "Op3";
-		column = new TableColumn(instTable, SWT.LEFT);
-		column.setText(props[4]);
-		column.setMoveable(true);
-		column.setWidth(charWidth * 20);
+		for (IInstructionEffectLabelProvider.Column col : instLabelProvider.getColumns()) {
+			column = new TableColumn(instTable, SWT.LEFT);
+			column.setText(col.label);
+			column.setMoveable(true);
+			column.setWidth(charWidth * (col.width + 2));
+		}
 
 		instTable.setHeaderVisible(true);
 		instTable.setLinesVisible(true);
-		
-		//instTable.setColumnProperties(props);
 		
 		start();
 	}
@@ -121,7 +96,6 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 					return;
 				
 				TableItem item = (TableItem) event.item;
-//				int index =  instTable.indexOf (item);
 				int index = event.index;
 				
 				int start;

@@ -3,20 +3,23 @@
  */
 package v9t9.machine.f99b.asm;
 
+import java.util.Arrays;
+
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.machine.f99b.cpu.CpuStateF99b;
 
 public final class InstructionWorkBlockF99b extends InstructionWorkBlock {
     
+	private static short[] NO_ENTRIES = new short[0];
+	
     public short sp;
 	public short rp;
 	public short up;
 	public short lp;
 	public boolean showSymbol;
 	
-	public short[] inStack = new short[6];
-	public short[] inReturnStack = new short[6];
+	public short[] inStack = NO_ENTRIES;
+	public short[] inReturnStack = NO_ENTRIES;
 
 	public InstructionWorkBlockF99b(ICpuState cpuState) {
     	super(cpuState);
@@ -29,10 +32,8 @@ public final class InstructionWorkBlockF99b extends InstructionWorkBlock {
     	copy.up = up;
     	copy.lp = lp;
     	copy.showSymbol = showSymbol;
-    	//copy.inStack = Arrays.copyOf(inStack, inStack.length);
-    	//copy.inReturnStack = Arrays.copyOf(inReturnStack, inReturnStack.length);
-    	System.arraycopy(inStack, 0, copy.inStack, 0, copy.inStack.length);
-    	System.arraycopy(inReturnStack, 0, copy.inReturnStack, 0, copy.inReturnStack.length);
+    	copy.inStack = Arrays.copyOf(inStack, inStack.length);
+    	copy.inReturnStack = Arrays.copyOf(inReturnStack, inReturnStack.length);
     }
     
     /* (non-Javadoc)
@@ -44,16 +45,6 @@ public final class InstructionWorkBlockF99b extends InstructionWorkBlock {
 		this.copyTo(block);
 		return block;
     }
-
-	public short getStackEntry(int i) {
-		return domain.readWord(((CpuStateF99b)cpu).getSP() + i * 2);
-	}
-	public short getReturnStackEntry(int i) {
-		return domain.readWord(((CpuStateF99b)cpu).getRP() + i * 2);
-	}
-	public short getLocalStackEntry(int i) {
-		return domain.readWord(((CpuStateF99b)cpu).getLP() - (i + 1) * 2);
-	}
 
 	/**
 	 * @return
