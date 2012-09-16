@@ -1,3 +1,0 @@
-
-Remote launcher & Windows & console output -- again, need logging to a file
-
