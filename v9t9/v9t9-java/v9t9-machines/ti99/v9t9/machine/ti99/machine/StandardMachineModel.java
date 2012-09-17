@@ -9,7 +9,7 @@ import java.net.URL;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.IVdpChip;
-import v9t9.common.keyboard.IKeyboardState;
+import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
@@ -74,7 +74,9 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	}
 	
 	public void defineDevices(IMachine machine_) {
-		Settings.get(machine_, IKeyboardState.settingBackspaceIsCtrlH).setBoolean(false);
+//		Settings.get(machine_, IKeyboardState.settingBackspaceIsCtrlH).setBoolean(false);
+		machine_.getKeyboardState().registerMapping(KeyboardConstants.KEY_BACKSPACE,
+				new int[] { KeyboardConstants.KEY_ALT, 'S' });
 		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;

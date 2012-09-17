@@ -3,6 +3,8 @@
  */
 package v9t9.common.keyboard;
 
+import java.util.Set;
+
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.SettingSchema;
 
@@ -95,4 +97,14 @@ public interface IKeyboardState {
 	 */
 	void toggleKeyboardLocks(byte lock);
 
+	/**
+	 * @param vkey
+	 * @param keys
+	 */
+	void registerMapping(int vkey, int... keys);
+
+	/** Set hardware keys from the virtual keys
+	 * @param keys currently set keys, modified to remove matches
+	 *  */
+	void setKeysFrom(Set<Integer> keys);
 }

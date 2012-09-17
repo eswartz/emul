@@ -14,7 +14,7 @@ import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
-import v9t9.common.keyboard.IKeyboardState;
+import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
@@ -95,7 +95,9 @@ public class F99bMachineModel implements IMachineModel {
 	}
 	
 	public void defineDevices(final IMachine machine_) {
-		Settings.get(machine_, IKeyboardState.settingBackspaceIsCtrlH).setBoolean(true);
+		//Settings.get(machine_, IKeyboardState.settingBackspaceIsCtrlH).setBoolean(true);
+		machine_.getKeyboardState().registerMapping(KeyboardConstants.KEY_BACKSPACE,
+				new int[] { KeyboardConstants.KEY_CONTROL, 'H' });
 		
 		memoryDiskDsr = new MemoryDiskImageDsr(machine_, InternalCruF99.DISK_BASE);
 

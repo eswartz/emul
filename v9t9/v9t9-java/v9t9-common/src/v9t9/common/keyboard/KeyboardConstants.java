@@ -65,11 +65,15 @@ public final class KeyboardConstants {
 	public static final int KEY_CLOSE_BRACE = '}';
 	public static final int KEY_LESS = '<';
 	public static final int KEY_GREATER = '>';
+	public static final int KEY_COMMA = ',';
+	public static final int KEY_PERIOD = '.';
 	public static final int KEY_COLON = ':';
 	public static final int KEY_SEMICOLON = ';';
 	public static final int KEY_QUOTE = '"';
 	public static final int KEY_SINGLE_QUOTE = '\'';
+	public static final int KEY_QUESTION = '?';
 	
+	public static final int KEY_BACKSPACE = '\b';
 	public static final int KEY_ENTER = '\r';
 	public static final int KEY_TAB = '\t';
 	public static final int KEY_ESCAPE = 27;
@@ -81,14 +85,15 @@ public final class KeyboardConstants {
 	public static final int KEY_END = 131;
 	public static final int KEY_PAGE_UP = 132;
 	public static final int KEY_PAGE_DOWN = 133;
-	public static final int KEY_UP = 134;
-	public static final int KEY_DOWN = 135;
-	public static final int KEY_LEFT = 136;
+	public static final int KEY_ARROW_UP = 134;
+	public static final int KEY_ARROW_DOWN = 135;
+	public static final int KEY_ARROW_LEFT = 136;
+	public static final int KEY_ARROW_RIGHT = 137;
 
-	public static final int KEY_PRINT_SCREEN = 137;
-	public static final int KEY_SYSRQ = 138;
-	public static final int KEY_PAUSE = 139;
-	public static final int KEY_BREAK = 140;
+	public static final int KEY_PRINT_SCREEN = 138;
+	public static final int KEY_SYSRQ = 139;
+	public static final int KEY_PAUSE = 140;
+	public static final int KEY_BREAK = 141;
 
 	public static final int KEY_KP_SLASH = 143;
 	public static final int KEY_KP_ASTERISK = 144;
@@ -98,9 +103,37 @@ public final class KeyboardConstants {
 	public static final int KEY_KP_INSERT = 148;
 	public static final int KEY_KP_ENTER = 149;
 	public static final int KEY_KP_0 = 150;
+	public static final int KEY_KP_1 = 151;
+	public static final int KEY_KP_2 = 152;
+	public static final int KEY_KP_3 = 153;
+	public static final int KEY_KP_4 = 154;
+	public static final int KEY_KP_5 = 155;
+	public static final int KEY_KP_6 = 156;
+	public static final int KEY_KP_7 = 157;
+	public static final int KEY_KP_8 = 158;
 	public static final int KEY_KP_9 = 159;
+	public static final int KEY_KP_POINT = 160;
+	public static final int KEY_KP_HOME = 161;
+	public static final int KEY_KP_END = 161;
+	public static final int KEY_KP_ARROW_UP = 161;
+	public static final int KEY_KP_ARROW_DOWN = 161;
+	public static final int KEY_KP_ARROW_LEFT = 161;
+	public static final int KEY_KP_ARROW_RIGHT = 161;
+	public static final int KEY_KP_PAGE_UP = 161;
+	public static final int KEY_KP_PAGE_DOWN = 161;
+	public static final int KEY_KP_SHIFT_5 = 162;
 	
-	public static final int KEY_F1 = 160;
-	public static final int KEY_F12 = 171;
+	public static final int KEY_F1 = 170;
+	public static final int KEY_F2 = 171;
+	public static final int KEY_F3 = 172;
+	public static final int KEY_F4 = 173;
+	public static final int KEY_F5 = 174;
+	public static final int KEY_F6 = 175;
+	public static final int KEY_F7 = 176;
+	public static final int KEY_F8 = 177;
+	public static final int KEY_F9 = 178;
+	public static final int KEY_F10 = 179;
+	public static final int KEY_F11 = 180;
+	public static final int KEY_F12 = 181;
 
 }

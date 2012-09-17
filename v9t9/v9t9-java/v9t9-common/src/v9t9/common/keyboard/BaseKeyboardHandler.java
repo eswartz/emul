@@ -4,10 +4,11 @@
 package v9t9.common.keyboard;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 
 import ejs.base.properties.IProperty;
 import ejs.base.utils.HexUtils;
@@ -16,7 +17,6 @@ import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.KeyDelta;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
-import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import static v9t9.common.keyboard.KeyboardConstants.*;
@@ -118,7 +118,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 				//	return;
 				
 				if (prevCh != 0) {
-					postCharacter(machine, false, true, prevShift, prevCh);
+					postCharacter(false, prevShift, prevCh);
 				}
 				
 				if (index < chs.length) {
@@ -134,14 +134,14 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			    	
 					//System.out.println("ch="+ch+"; prevCh="+prevCh);
 					if (ch == prevCh) {
-						postCharacter(machine, false, true, shift, ch);
+						postCharacter(false, shift, ch);
 						prevCh = 0;
 						return;
 					}
 					
 					index++;
 					
-					postCharacter(machine, true, true, shift, ch);
+					postCharacter(true, shift, ch);
 					
 					
 					prevCh = ch;
@@ -164,11 +164,11 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	protected IKeyboardState keyboardState;
 	
 	   /* Map of keys whose shifted/ctrled/fctned versions are being tracked */
-    private byte fakemap[] = new byte[256];
-    private byte shiftmap[] = new byte[256];
-    private byte ctrlmap[] = new byte[256];
-    private byte fctnmap[] = new byte[256];
-    private int cctrl, cfctn, cshift;
+//    private byte fakemap[] = new byte[256];
+//    private byte shiftmap[] = new byte[256];
+//    private byte ctrlmap[] = new byte[256];
+//    private byte fctnmap[] = new byte[256];
+//    private int cctrl, cfctn, cshift;
     
 	protected PasteTask pasteTask;
 	private int pasteKeyDelay = 20;
@@ -189,7 +189,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		this.eventNotifier = notifier;
 	}
 
-	protected void pushQueuedKey() {
+	protected synchronized void applyKeyGroup() {
 		long now = System.currentTimeMillis();
 		if (queuedKeys.isEmpty() && currentGroup == null) {
 			if (lastChangeTime + TIMEOUT < now) {
@@ -206,9 +206,17 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			keyboardState.incrClearKeyboard();
 			List<KeyDelta> group = queuedKeys.remove();
 			
+			Set<Integer> keys = new HashSet<Integer>();
 			for (KeyDelta delta : group) {
-				applyKeyDelta(delta);
+				if (delta.onoff) {
+					keys.add(delta.key);
+				}
 			}
+			keyboardState.setKeysFrom(keys);
+			
+//			for (KeyDelta delta : group) {
+//				keyboardState.incrSetKey(delta.onoff, delta.key);
+//			}
 			
 		}
 		lastChangeTime = now;
@@ -216,104 +224,78 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		keyboardState.applyIncrKeyState();
 
 	}
-	
-	private void applyKeyDelta(KeyDelta delta) {
-    	if (DEBUG) System.out.println(delta);
-    	
-    	boolean onoff = delta.onoff;
-    	int key = delta.key;
-    	
-        /* macros bound to high keys */
-        /*
-        if (key >= 128) {
-            keyboard_macro(onoff, shift, key - 128);
-            return;
-        }*/
 
-    	if (!delta.isShift()) {
-	    	byte realshift = keyboardState.getShiftMask();
-	    	realshift = trackRealShiftKeys(onoff, realshift, key);
-    	}
-   
-        if (key >= 0) {
-            keyboardState.incrSetKey(onoff, key);
-        }
-        //if (shift && !onoff)
-//            logger(_L | L_1, "turned off [%d]: cshift=%d, cctrl=%d, cfctn=%d\n\n",
-                 //shift, cshift, cctrl, cfctn);
-    }
-
-   /**
-	 * This complicated code maintains a map of shifts that we've explicitly
-	 * turned on with other keys. The reason we need to know all this is that
-	 * there are multiple "on" events (repeats) but only one "off" event. If we
-	 * do "left arrow on" (FCTN+S), "right arrow on" (FCTN+D), and
-	 * "left arrow off" (FCTN+S) we cannot reset FCTN since FCTN+D is still
-	 * pressed. Etc.
-	 */
-
-	private byte trackRealShiftKeys(boolean onoff, byte shift, int key) {
-        if (!onoff && shift == 0 && fakemap[key] != 0) {
-            System.err.println("Resetting "+fakemap[key]+" for key "+key);
-            shift |= fakemap[key];
-        }
-        fakemap[key] = (byte) (onoff ? shift : 0);
-
-        byte effShift = 0;
-        
-        if ((shift & MASK_SHIFT) != 0) {
-            if (onoff) {
-                if (shiftmap[key] == 0) {
-                    shiftmap[key] = 1;
-                    cshift++;
-                }
-                effShift |= MASK_SHIFT; 
-            } else {
-                if (shiftmap[key] != 0) {
-                    shiftmap[key] = 0;
-                    cshift--;
-                }
-                if (cshift == 0)
-                	effShift |= MASK_SHIFT;
-            }
-        }
-        if ((shift & MASK_ALT) != 0) {
-            if (onoff) {
-                if (fctnmap[key] == 0) {
-                    fctnmap[key] = 1;
-                    cfctn++;
-                }
-                effShift |= MASK_ALT; 
-            } else {
-                if (fctnmap[key] != 0) {
-                    fctnmap[key] = 0;
-                    cfctn--;
-                }
-                if (cfctn == 0)
-                	effShift |= MASK_ALT;
-            }
-        }
-        if ((shift & MASK_CONTROL) != 0) {
-            if (onoff) {
-                if (ctrlmap[key] == 0) {
-                    ctrlmap[key] = 1;
-                    cctrl++;
-                }
-                effShift |= MASK_CONTROL; 
-            } else {
-                if (ctrlmap[key] != 0) {
-                    ctrlmap[key] = 0;
-                    cctrl--;
-                }
-                if (cctrl == 0)
-                	effShift |= MASK_CONTROL;
-            }
-        }
-        
-        keyboardState.changeShifts(onoff, effShift);
-		return shift;
-	}
-    
+//   /**
+//	 * This complicated code maintains a map of shifts that we've explicitly
+//	 * turned on with other keys. The reason we need to know all this is that
+//	 * there are multiple "on" events (repeats) but only one "off" event. If we
+//	 * do "left arrow on" (FCTN+S), "right arrow on" (FCTN+D), and
+//	 * "left arrow off" (FCTN+S) we cannot reset FCTN since FCTN+D is still
+//	 * pressed. Etc.
+//	 */
+//
+//	private byte trackRealShiftKeys(boolean onoff, byte shift, int key) {
+//        if (!onoff && shift == 0 && fakemap[key] != 0) {
+//            System.err.println("Resetting "+fakemap[key]+" for key "+key);
+//            shift |= fakemap[key];
+//        }
+//        fakemap[key] = (byte) (onoff ? shift : 0);
+//
+//        byte effShift = 0;
+//        
+//        if ((shift & MASK_SHIFT) != 0) {
+//            if (onoff) {
+//                if (shiftmap[key] == 0) {
+//                    shiftmap[key] = 1;
+//                    cshift++;
+//                }
+//                effShift |= MASK_SHIFT; 
+//            } else {
+//                if (shiftmap[key] != 0) {
+//                    shiftmap[key] = 0;
+//                    cshift--;
+//                }
+//                if (cshift == 0)
+//                	effShift |= MASK_SHIFT;
+//            }
+//        }
+//        if ((shift & MASK_ALT) != 0) {
+//            if (onoff) {
+//                if (fctnmap[key] == 0) {
+//                    fctnmap[key] = 1;
+//                    cfctn++;
+//                }
+//                effShift |= MASK_ALT; 
+//            } else {
+//                if (fctnmap[key] != 0) {
+//                    fctnmap[key] = 0;
+//                    cfctn--;
+//                }
+//                if (cfctn == 0)
+//                	effShift |= MASK_ALT;
+//            }
+//        }
+//        if ((shift & MASK_CONTROL) != 0) {
+//            if (onoff) {
+//                if (ctrlmap[key] == 0) {
+//                    ctrlmap[key] = 1;
+//                    cctrl++;
+//                }
+//                effShift |= MASK_CONTROL; 
+//            } else {
+//                if (ctrlmap[key] != 0) {
+//                    ctrlmap[key] = 0;
+//                    cctrl--;
+//                }
+//                if (cctrl == 0)
+//                	effShift |= MASK_CONTROL;
+//            }
+//        }
+//        
+//        keyboardState.changeShifts(onoff, effShift);
+//		return shift;
+//	}
+//    
 
 	/**
 	 * 
@@ -321,7 +303,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	public void resetKeyboard() {
 		queuedKeys.clear();
 		keyboardState.resetKeyboard();
-		Arrays.fill(fakemap, 0, fakemap.length, (byte)0);
+//		Arrays.fill(fakemap, 0, fakemap.length, (byte)0);
 	}
 	
 
@@ -341,7 +323,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	public synchronized void resetProbe() {
 		if (isPasting())
 			pasteTask.run();
-		pushQueuedKey();
+		applyKeyGroup();
 //		pasteNext = true;
 	}
 	
@@ -388,28 +370,24 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	 * @see v9t9.common.client.IKeyboardHandler#anyKeyPressed()
 	 */
 	@Override
-	public boolean anyKeyAvailable() {
+	public synchronized boolean anyKeyAvailable() {
 		return !queuedKeys.isEmpty() || currentGroup != null || isPasting() || keyboardState.anyKeyPressed();
 	}
 
-	protected synchronized void setKey(boolean onoff, byte shift,
-			int key) {
-		key &= 0xff;
-		shift &= 0xff;
 
+	/**
+	 * @param onoff
+	 * @param shiftBits
+	 */
+	protected void pushShifts(boolean onoff, byte shiftBits) {
 		int shiftVal = KEY_SHIFT;
-		while (shift != 0) {
+		while (shiftBits != 0) {
 			int shiftMask = 1 << shiftVal;
-			if ((shift & shiftMask) != 0)
-				queueDelta(onoff, shiftVal);
-			shift &= ~shiftMask;
+			if ((shiftBits & shiftMask) != 0)
+				pushKey(onoff, shiftVal);
+			shiftBits &= ~shiftMask;
 			shiftVal++;
 		}
-		if (key != 0) {
-			queueDelta(onoff, key);
-		}
-
-		machine.keyStateChanged();
 	}
 
 	/**
@@ -417,7 +395,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	 * @param shift
 	 * @param key
 	 */
-	protected void queueDelta(boolean onoff, int key) {
+	protected synchronized void pushKey(boolean onoff, int key) {
 		KeyDelta delta = new KeyDelta(onoff, key);
 		if (currentGroup == null) {
 			currentGroup = new ArrayList<KeyDelta>();
@@ -426,174 +404,73 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			currentGroup = new ArrayList<KeyDelta>();
 		}
 		currentGroup.add(delta);
+		machine.keyStateChanged();
 	}
   
 	/**
 	* Post an ASCII character, applying any conversions to make it
 	* a legal keystroke on the 99/4A keyboard.
-	* @param machine
 	 * @param pressed
-	 * @param synthetic if true, the character came from, e.g., pasted text,
 	* and there are not distinct shift key events; otherwise, apply logic
 	* to detect the patterns of real shift key presses and releases
 	 * @param shift extra shift keys
 	 * @param ch
-	 * @return true if we could represent it as ASCII
+	* @return true if we could represent it as ASCII
 	*/
-	public synchronized boolean postCharacter(IBaseMachine machine, boolean pressed, boolean synthetic, byte shift, char ch) {
+	public synchronized boolean postCharacter(boolean pressed, byte shift, char ch) {
 		if (DEBUG) System.out.println("==> post: ch=" + ch + "; shift="+ HexUtils.toHex2(shift)+"; pressed="+pressed);
-		if (keyboardState.isAsciiDirectKey(ch)) {
-			setKey(pressed, shift, ch);
+
+		// check for recognized non-hardware keys
+		switch (ch) {
+		case KEY_MINUS:
+		case KEY_EQUALS:
+		case KEY_OPEN_BRACKET:
+		case KEY_CLOSE_BRACKET:
+		case KEY_BACK_SLASH:
+		case KEY_SLASH:
+		case KEY_COMMA:
+		case KEY_PERIOD:
+		case KEY_SINGLE_QUOTE:
+		case KEY_SEMICOLON:
+			pushShifts(pressed, shift);
+			pushKey(pressed, ch);
+			return true;
+
+			
+		case KEY_BACK_QUOTE:	
+		case KEY_TILDE:	
+		case KEY_EXCLAMATION:
+		case KEY_AT:
+		case KEY_POUND:
+		case KEY_DOLLAR:
+		case KEY_PERCENT:
+		case KEY_CIRCUMFLEX:
+		case KEY_AMPERSAND:
+		case KEY_ASTERISK:
+		case KEY_OPEN_PARENTHESIS:
+		case KEY_CLOSE_PARENTHESIS:
+		case KEY_UNDERSCORE:
+		case KEY_PLUS:
+		case KEY_OPEN_BRACE:
+		case KEY_CLOSE_BRACE:
+		case KEY_BAR:
+		case KEY_QUESTION:
+		case KEY_LESS:
+		case KEY_GREATER:
+		case KEY_QUOTE:
+		case KEY_COLON:
+			pushShifts(pressed, (byte) (shift & ~MASK_SHIFT));
+			pushKey(pressed, ch);
 			return true;
 		}
 		
-		byte fctnShifted = (byte) (shift | MASK_ALT);
-		byte ctrlShifted = (byte) (shift | MASK_CONTROL);
-		byte shiftShifted = (byte) (shift | MASK_SHIFT);
-		
-		byte realshift = keyboardState.getShiftMask();
-		
-		switch (ch) {
-		
-		case 8:
-			if (Settings.get(machine, IKeyboardState.settingBackspaceIsCtrlH).getBoolean())
-				setKey(pressed, ctrlShifted, 'H');	/* BKSP */
-			else
-				setKey(pressed, fctnShifted, 'S');	/* FCTN-S */
-			break;
-		case 9:
-			setKey(pressed, ctrlShifted, 'I');	/* TAB */
-			break;
-			
-		case 13:
-			setKey(pressed, (byte)0, '\r');
-			break;
-			
-			// shifted keys
-		case '!':
-			setKey(pressed, shiftShifted, '1');
-			break;
-		case '@':
-			setKey(pressed, shiftShifted, '2');
-			break;
-		case '#':
-			setKey(pressed, shiftShifted, '3');
-			break;
-		case '$':
-			setKey(pressed, shiftShifted, '4');
-			break;
-		case '%':
-			setKey(pressed, shiftShifted, '5');
-			break;
-		case '^':
-			setKey(pressed, shiftShifted, '6');
-			break;
-		case '&':
-			setKey(pressed, shiftShifted, '7');
-			break;
-		case '*':
-			setKey(pressed, shiftShifted, '8');
-			break;
-		case '(':
-			setKey(pressed, shiftShifted, '9');
-			break;
-		case ')':
-			setKey(pressed, shiftShifted, '0');
-			break;
-		case '+':
-			setKey(pressed, shiftShifted, '=');
-			break;
-		case '<':
-			setKey(pressed, shiftShifted, ',');
-			break;
-		case '>':
-			setKey(pressed, shiftShifted, '.');
-			break;
-		case ':':
-			setKey(pressed, shiftShifted, ';');
-			break;
-			
-			// faked keys
-		case '`':
-			if (0 == (realshift & MASK_SHIFT) && !keyboardState.isSet(MASK_ALT, 'W'))
-				setKey(pressed, fctnShifted, 'C');	/* ` */
-			else
-				setKey(pressed, fctnShifted, 'W');	/* ~ */
-			break;
-		case '~':
-			setKey(pressed, fctnShifted, 'W');
-			break;
-		case '-':
-			if (0 == (realshift & MASK_SHIFT) && !keyboardState.isSet(MASK_ALT, 'U'))
-				setKey(pressed, MASK_SHIFT, '/');	/* - */
-			else
-				setKey(pressed, fctnShifted, 'U');	/* _ */
-			break;
-		case '_':
-			setKey(pressed, fctnShifted, 'U');
-			break;
-		case '[':
-			if (0 == (realshift & MASK_SHIFT) && !keyboardState.isSet(MASK_ALT, 'F'))
-				setKey(pressed, fctnShifted, 'R');	/* [ */
-			else
-				setKey(pressed, fctnShifted, 'F');	/* { */
-			break;
-		case '{':
-			setKey(pressed, fctnShifted, 'F');
-			break;
-		case ']':
-			if (0 == (realshift & MASK_SHIFT) && !keyboardState.isSet(MASK_ALT, 'G'))
-				setKey(pressed, fctnShifted, 'T');	/* ] */
-			else
-				setKey(pressed, fctnShifted, 'G');	/* } */
-			break;
-		case '}':
-			setKey(pressed, fctnShifted, 'G');
-			break;
-			
-		case '\'':
-			if (0 == (realshift & MASK_SHIFT) && !keyboardState.isSet(MASK_ALT, 'P'))
-				setKey(pressed, fctnShifted, 'O');	/* ' */
-			else
-				setKey(pressed, fctnShifted, 'P');	/* " */
-			break;
-		case '"':
-			setKey(pressed, fctnShifted, 'P');
-			break;
-		case '/':
-			if (0 == (realshift & MASK_SHIFT) && !keyboardState.isSet(MASK_ALT, 'I'))
-				setKey(pressed, (byte)0, '/');	/* / */
-			else
-				setKey(pressed, fctnShifted, 'I');	/* ? */
-			break;
-		case '?':
-			setKey(pressed, fctnShifted, 'I');
-			break;
-		case '\\':
-			if (0 == (realshift & MASK_SHIFT) && !keyboardState.isSet(MASK_ALT, 'A'))
-				setKey(pressed, fctnShifted, 'Z');	/* \\ */
-			else
-				setKey(pressed, fctnShifted, 'A');	/* | */
-			break;
-		case '|':
-			setKey(pressed, fctnShifted, 'A');
-			break;
-			
-		case 127:
-			setKey(pressed, fctnShifted, '1');	
-			break;
-		default:
-			return false;
+		if (ch > 0 && keyboardState.isAsciiDirectKey(ch)) {
+			pushShifts(pressed, shift);
+			pushKey(pressed, ch);
+			return true;
 		}
 		
-		return true;
-	}
-	
-	/**
-	 * Push a key
-	 */
-	protected void pushKey(boolean pressed, int key) {
-		
+		return false;
 	}
 	
 	/**
@@ -646,6 +523,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		}
 		return false;
 	}
-	
+
+
 
 }

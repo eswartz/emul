@@ -3,7 +3,6 @@
 package v9t9.common.client;
 
 import v9t9.common.events.IEventNotifier;
-import v9t9.common.machine.IBaseMachine;
 
 /**
  * @author ejs
@@ -32,6 +31,6 @@ public interface IKeyboardHandler {
 	
 	boolean anyKeyAvailable();
 
-	boolean postCharacter(IBaseMachine machine, boolean pressed, boolean synthetic, byte shift, char ch);
+	boolean postCharacter(boolean pressed, byte shift, char ch);
 
 }

@@ -77,7 +77,7 @@ public class F99bMachine extends MachineBase {
 	@Override
 	public void keyStateChanged() {
 		super.keyStateChanged();
-		if (keyboardState.anyKeyPressed()) {
+		if (getKeyboardHandler().anyKeyAvailable()) {
 			ICruChip cru = getCru();
 			if (cru instanceof BaseCruChip) {
 				cru.triggerInterrupt(CpuF99b.INT_KBD);

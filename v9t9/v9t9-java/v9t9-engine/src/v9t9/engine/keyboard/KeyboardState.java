@@ -9,6 +9,9 @@ package v9t9.engine.keyboard;
 import static v9t9.common.keyboard.KeyboardConstants.*;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import v9t9.common.keyboard.IKeyboardListener;
 import v9t9.common.keyboard.IKeyboardState;
@@ -67,7 +70,7 @@ public class KeyboardState implements IKeyboardState {
         '-'.  The target-specific code must trap '-', '/', '?', '_'
         and should use FCTN+I for '?'.*/
     static final byte latinto9901[] = new byte[] {
-          -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 0-7 */
+        0x20, 0x10, 0x30,   -1,   -1,   -1,   -1,   -1, /* 0-7 */
           -1,   -1,   -1,   -1,   -1, 0x50,   -1,   -1, /* 8-15 */
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 16-23 */
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, /* 24-31 */
@@ -130,6 +133,7 @@ public class KeyboardState implements IKeyboardState {
     @Override
     public void incrClearKeyboard() {
     	Arrays.fill(crukeyboardmap, 0, 6, (byte)0);
+    	realshift = 0;
 		if (DEBUG) System.out.println("===========");
 
     }
@@ -177,10 +181,307 @@ public class KeyboardState implements IKeyboardState {
 		//lastLocks = locks;
 	}
 
+	final Map<Integer, int[]> vkeyToKeyMappings = new HashMap<Integer, int[]>();
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.keyboard.IKeyboardState#registerMapping(int, int[])
+	 */
+	@Override
+	public void registerMapping(int vkey, int... keys) {
+		for (int k : keys) {
+			if (latinto9901[k] == -1)
+				throw new IllegalStateException();
+		}
+		vkeyToKeyMappings.put(vkey, keys);
+	}
+		
+	{
+		registerMapping(KEY_TAB, KEY_CONTROL, 'I');
+		registerMapping(KEY_EXCLAMATION, KEY_SHIFT, '1');
+		registerMapping(KEY_AT, KEY_SHIFT, '2');
+		registerMapping(KEY_POUND, KEY_SHIFT, '3');
+		registerMapping(KEY_DOLLAR, KEY_SHIFT, '4');
+		registerMapping(KEY_PERCENT, KEY_SHIFT, '5');
+		registerMapping(KEY_CIRCUMFLEX, KEY_SHIFT, '6');
+		registerMapping(KEY_AMPERSAND, KEY_SHIFT, '7');
+		registerMapping(KEY_ASTERISK, KEY_SHIFT, '8');
+		registerMapping(KEY_OPEN_PARENTHESIS, KEY_SHIFT, '9');
+		registerMapping(KEY_CLOSE_PARENTHESIS, KEY_SHIFT, '0');
+		registerMapping(KEY_PLUS, KEY_SHIFT, '=');
+		registerMapping(KEY_LESS, KEY_SHIFT, ',');
+		registerMapping(KEY_GREATER, KEY_SHIFT, '.');
+		registerMapping(KEY_COLON, KEY_SHIFT, ';');
+		registerMapping(KEY_BACK_QUOTE, KEY_ALT, 'C');
+		registerMapping(KEY_TILDE, KEY_ALT, 'W');
+		registerMapping(KEY_MINUS, KEY_SHIFT, '/');
+		registerMapping(KEY_UNDERSCORE, KEY_ALT, 'U');
+		registerMapping(KEY_OPEN_BRACKET, KEY_ALT, 'R');
+		registerMapping(KEY_OPEN_BRACE, KEY_ALT, 'F');
+		registerMapping(KEY_CLOSE_BRACKET, KEY_ALT, 'T');
+		registerMapping(KEY_CLOSE_BRACE, KEY_ALT, 'G');
+		registerMapping(KEY_QUOTE, KEY_ALT, 'P');
+		registerMapping(KEY_SINGLE_QUOTE, KEY_ALT, 'O');
+		registerMapping(KEY_QUESTION, KEY_ALT, 'I');
+		registerMapping(KEY_BACK_SLASH, KEY_ALT, 'Z');
+		registerMapping(KEY_BAR, KEY_ALT, 'A');
+		registerMapping(KEY_DELETE, KEY_ALT, '1');
+		registerMapping(KEY_F1, KEY_ALT, '1');
+		registerMapping(KEY_F2, KEY_ALT, '2');
+		registerMapping(KEY_F3, KEY_ALT, '3');
+		registerMapping(KEY_F4, KEY_ALT, '4');
+		registerMapping(KEY_F5, KEY_ALT, '5');
+		registerMapping(KEY_F6, KEY_ALT, '6');
+		registerMapping(KEY_F7, KEY_ALT, '7');
+		registerMapping(KEY_F8, KEY_ALT, '8');
+		registerMapping(KEY_F9, KEY_ALT, '9');
+		
+		registerMapping(KEY_ARROW_DOWN, KEY_ALT, 'X');
+		registerMapping(KEY_ARROW_UP, KEY_ALT, 'E');
+		registerMapping(KEY_ARROW_LEFT, KEY_ALT, 'S');
+		registerMapping(KEY_ARROW_RIGHT, KEY_ALT, 'D');
+
+		registerMapping(KEY_PAGE_UP, KEY_ALT, '6');	// CLEAR  // (as per E/A and TI Writer)
+		registerMapping(KEY_PAGE_DOWN, KEY_ALT, '4');	// PROC'D  // (as per E/A and TI Writer)
+		registerMapping(KEY_HOME, KEY_ALT, '5');	// BEGIN
+		registerMapping(KEY_END, KEY_ALT, '0');	
+		registerMapping(KEY_INSERT, KEY_ALT, '2');	// INS	
+		registerMapping(KEY_DELETE, KEY_ALT, '1');	// DEL
+		
+		// TODO: handle these as joysticks
+		
+		registerMapping(KEY_KP_ARROW_DOWN, KEY_ALT, 'X');
+		registerMapping(KEY_KP_ARROW_UP, KEY_ALT, 'E');
+		registerMapping(KEY_KP_ARROW_LEFT, KEY_ALT, 'S');
+		registerMapping(KEY_KP_ARROW_RIGHT, KEY_ALT, 'D');
+
+		registerMapping(KEY_KP_PAGE_UP, KEY_ALT, '6');	// CLEAR  // (as per E/A and TI Writer)
+		registerMapping(KEY_KP_PAGE_DOWN, KEY_ALT, '4');	// PROC'D  // (as per E/A and TI Writer)
+		registerMapping(KEY_KP_HOME, KEY_ALT, '5');	// BEGIN
+		registerMapping(KEY_KP_END, KEY_ALT, '0');	
+		registerMapping(KEY_KP_INSERT, KEY_ALT, '2');	// INS	
+		registerMapping(KEY_KP_DELETE, KEY_ALT, '1');	// DEL
+		
+		
+		registerMapping(KEY_KP_SLASH, '/');
+		registerMapping(KEY_KP_ASTERISK, KEY_SHIFT, '8');
+		registerMapping(KEY_KP_MINUS,  KEY_SHIFT, '/');
+		registerMapping(KEY_KP_PLUS, KEY_SHIFT, '=');
+		registerMapping(KEY_KP_ENTER, '\r');
+		registerMapping(KEY_KP_0, '0');
+		registerMapping(KEY_KP_1, '1');
+		registerMapping(KEY_KP_2, '2');
+		registerMapping(KEY_KP_3, '3');
+		registerMapping(KEY_KP_4, '4');
+		registerMapping(KEY_KP_5, '5');
+		registerMapping(KEY_KP_6, '6');
+		registerMapping(KEY_KP_7, '7');
+		registerMapping(KEY_KP_8, '8');
+		registerMapping(KEY_KP_9, '9');
+	}
+		
+	/* (non-Javadoc)
+	 * @see v9t9.common.keyboard.IKeyboardState#setKeysFrom(java.util.Set)
+	 */
+	@Override
+	public void setKeysFrom(Set<Integer> keys) {
+		// remove virtual keys first
+		for (int k : keys.toArray(new Integer[keys.size()])) {
+			int[] map = vkeyToKeyMappings.get(k);
+			if (map != null) {
+				keys.remove(k);
+				for (int mk : map) {
+					keys.remove(mk);
+					incrSetKey(true, mk);
+				}
+			}
+			// else, skip for now
+		}
+		
+		for (int k : keys.toArray(new Integer[keys.size()])) {
+			if (k >= 0 && k < 128 && latinto9901[k] != -1) {
+				keys.remove(k);
+				incrSetKey(true, k);
+			}
+		}
+
+		// any left are not functional
+		for (int k : keys) {
+			System.err.println("*** could not map virtual key " + k + " to hardware");
+		}
+	}
+	
+		
+//			case '5':
+//			case SWT.KEYPAD_5:
+//				setJoystickOrKey(pressed, keyPad, nonShifted,
+//						'5', nonShifted, 
+//						'5', joy, 
+//						IKeyboardState.JOY_X | IKeyboardState.JOY_Y, 0, 0);
+//				break;
+//			case SWT.ARROW_UP:
+//			case SWT.KEYPAD_8:
+//				setJoystickOrKey(pressed, keyPad, fctnShifted,
+//						'E', nonShifted, 
+//						'8', joy, 
+//						IKeyboardState.JOY_Y, 0, pressed ? -1 : 0);
+//				break;
+//			case SWT.ARROW_DOWN:
+//			case SWT.KEYPAD_2:
+//				setJoystickOrKey(pressed, keyPad, fctnShifted,
+//						'X', nonShifted, 
+//						'2', joy, 
+//						IKeyboardState.JOY_Y, 0, pressed ? 1 : 0);
+//				break;
+//			case SWT.ARROW_LEFT:
+//			case SWT.KEYPAD_4:
+//				setJoystickOrKey(pressed, keyPad, fctnShifted,
+//						'S', nonShifted, 
+//						'4', joy, 
+//						IKeyboardState.JOY_X, pressed ? -1 : 0, 0);
+//				break;
+//			case SWT.ARROW_RIGHT:
+//			case SWT.KEYPAD_6:
+//				setJoystickOrKey(pressed, keyPad, fctnShifted,
+//						'D', nonShifted,
+//						'6', joy,
+//						IKeyboardState.JOY_X, pressed ? 1 : 0, 0);
+//				break;
+//				
+//			case SWT.PAGE_UP:
+//			case SWT.KEYPAD_9:
+//				setJoystickOrKey(pressed, keyPad, fctnShifted,
+//						'6', nonShifted,	// FCTN-6  // (as per E/A and TI Writer)
+//						'9', joy, 
+//						IKeyboardState.JOY_X | IKeyboardState.JOY_Y, pressed ? 1 : 0, 
+//						pressed ? -1 : 0);
+//				break;
+//			case SWT.PAGE_DOWN:
+//			case SWT.KEYPAD_3:
+//				setJoystickOrKey(pressed, keyPad, fctnShifted,
+//						'4', nonShifted,	// FCTN-6  // (as per E/A and TI Writer)
+//						'3', joy,
+//						IKeyboardState.JOY_X | IKeyboardState.JOY_Y, pressed ? 1 : 0, 
+//						pressed ? 1 : 0);
+//				break;
+//
+//			case SWT.HOME:
+//			case SWT.KEYPAD_7:
+//				setJoystickOrKey(pressed, keyPad, fctnShifted,
+//						'5', nonShifted,	// BEGIN
+//						'7', joy, 
+//						IKeyboardState.JOY_X | IKeyboardState.JOY_Y, pressed ? -1 : 0, 
+//						pressed ? -1 : 0);
+//				break;
+//				
+//			case SWT.END:
+//			case SWT.KEYPAD_1:
+//				setJoystickOrKey(pressed, keyPad, fctnShifted,
+//						'0', nonShifted,	// FCTN-0
+//						'1', joy,
+//						IKeyboardState.JOY_X | IKeyboardState.JOY_Y, pressed ? -1 : 0, 
+//						pressed ? 1 : 0);
+//				break;
+//				
+//
+//			case SWT.INSERT:
+//			case SWT.KEYPAD_0:
+//				setJoystickOrKey(pressed, keyPad, fctnShifted,
+//						'2', nonShifted,	// INS
+//						'0', joy,
+//						IKeyboardState.JOY_B, 0, 0);
+//				break;
+//				
+//			case SWT.KEYPAD_DIVIDE:
+//				setJoystickOrKey(pressed, keyPad, nonShifted,
+//						'/', nonShifted, 
+//						'/', joy, 
+//						IKeyboardState.JOY_B, 0, 0);
+//				break;
+//			case SWT.KEYPAD_MULTIPLY:
+//				setJoystickOrKey(pressed, keyPad, shiftShifted,
+//						'8', shiftShifted, 
+//						'8', joy, 
+//						IKeyboardState.JOY_B, 0, 0);
+//				break;
+//			case SWT.KEYPAD_ADD:
+//				setJoystickOrKey(pressed, keyPad, shiftShifted,
+//						'=', shiftShifted, 
+//						'=', joy, 
+//						IKeyboardState.JOY_B, 0, 0);
+//				break;
+//			case SWT.KEYPAD_SUBTRACT:
+//				setJoystickOrKey(pressed, keyPad, shiftShifted,
+//						'/', shiftShifted,
+//						'/', joy,
+//						IKeyboardState.JOY_B, 0, 0);
+//				break;
+//			case SWT.KEYPAD_CR:
+//				setJoystickOrKey(pressed, keyPad, shift,
+//						'\r', shift, 
+//						'\r', joy, 
+//						IKeyboardState.JOY_B, 0, 0);
+//				break;
+//			case SWT.KEYPAD_DECIMAL:
+//				setKey(pressed, nonShifted, '.');
+//				break;
+//			case SWT.DEL:
+//				setKey(pressed, fctnShifted, '1');
+//				break;
+	
+	/**
+	 * @param pressed
+	 * @param shift
+	 * @param joy
+	 * @param c
+	 * @param joyY
+	 * @param i
+	 * @param j
+	 */
+//	private void setJoystickOrKey(boolean pressed, boolean keyPad, byte shift,
+//			char ch, byte keypadShift, 
+//			char keypadCh, int joy, 
+//			int joyRow, int x, int y) {
+//		if (!keyPad)
+//			setKey(pressed, shift, ch);
+//		else if (((keyboardState.getShiftMask() & MASK_SHIFT) != 0) == !isNumLock())
+//			keyboardState.setJoystick(joy,
+//					joyRow, x, y, (joyRow & IKeyboardState.JOY_B) != 0 && pressed);
+//		else
+//			setKey(pressed, keypadShift, keypadCh);
+//		
+//	}
+//
+//	private boolean isNumLock() {
+//		boolean on;
+//		on = (keyboardState.getLockMask() & MASK_NUM_LOCK) != 0;
+//		return on;
+//	}
+
+	
 	public void incrSetKey(boolean onoff, int key) {
 		byte b;
 		byte r;
 		byte c;
+		
+		switch (key) {
+		case KeyboardConstants.KEY_SHIFT:
+			realshift = (byte) ((realshift & ~MASK_SHIFT) | (onoff ? MASK_SHIFT : 0));
+			break;
+		case KeyboardConstants.KEY_CONTROL:
+			realshift = (byte) ((realshift & ~MASK_CONTROL) | (onoff ? MASK_CONTROL : 0));
+			break;
+		case KeyboardConstants.KEY_ALT:
+			realshift = (byte) ((realshift & ~MASK_ALT) | (onoff ? MASK_ALT : 0));
+			break;
+		case KeyboardConstants.KEY_CONTEXT:
+			realshift = (byte) ((realshift & ~MASK_CONTEXT) | (onoff ? MASK_CONTEXT : 0));
+			break;
+		case KeyboardConstants.KEY_LOGO:
+			realshift = (byte) ((realshift & ~MASK_LOGO) | (onoff ? MASK_LOGO : 0));
+			break;
+		}
+
+		
 		b = latinto9901[key];
 		if (b != -1) {
 		    r = (byte) (b >> 4);
@@ -191,25 +492,7 @@ public class KeyboardState implements IKeyboardState {
 			else
 				crukeyboardmap[c] &= ~(0x80 >> r);
 		} else {
-			switch (key) {
-			case KeyboardConstants.KEY_SHIFT:
-				realshift = (byte) ((realshift & ~MASK_SHIFT) | (onoff ? MASK_SHIFT : 0));
-				break;
-			case KeyboardConstants.KEY_CONTROL:
-				realshift = (byte) ((realshift & ~MASK_CONTROL) | (onoff ? MASK_CONTROL : 0));
-				break;
-			case KeyboardConstants.KEY_ALT:
-				realshift = (byte) ((realshift & ~MASK_ALT) | (onoff ? MASK_ALT : 0));
-				break;
-			case KeyboardConstants.KEY_CONTEXT:
-				realshift = (byte) ((realshift & ~MASK_CONTEXT) | (onoff ? MASK_CONTEXT : 0));
-				break;
-			case KeyboardConstants.KEY_LOGO:
-				realshift = (byte) ((realshift & ~MASK_LOGO) | (onoff ? MASK_LOGO : 0));
-				break;
-			default:
-				System.err.println("*** should have faked key " + key);
-			}
+			System.err.println("*** should have faked key " + key);
 		}
 	}
 	

@@ -126,7 +126,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		int joy = (shift & MASK_SHIFT) != 0 ? 2 : 1;
 		
 		if ((ascii == 0 || ascii == 0xffff) || 
-				!postCharacter(machine, pressed, synthetic, shift, ascii)) {
+				!postCharacter(pressed, shift, ascii)) {
 			byte fctn = (byte) (MASK_ALT | shift);
 			//System.out.println("??? " + keyCode + " : " + pressed);
 			switch (keyCode) {
