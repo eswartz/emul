@@ -57,9 +57,8 @@ public interface IKeyboardState {
 	 * @param x neg or pos or 0
 	 * @param y neg or pos or 0
 	 * @param fire boolean
-	 * @param when ms timestamp
 	 */
-	void setJoystick(int joy, int mask, int x, int y, boolean fire, long when);
+	void setJoystick(int joy, int mask, int x, int y, boolean fire);
 
 	/** Get the low-level hardware bits for the keyboard column (8) */
 	int getKeyboardRow(int column);
@@ -69,7 +68,6 @@ public interface IKeyboardState {
 	boolean isSet(byte shift, int key);
 
 	byte getShiftMask();
-	void setShiftMask(byte shift);
 
 	void setLockMask(byte locks);
 	byte getLockMask();

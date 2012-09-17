@@ -67,7 +67,7 @@ public class InternalCruF99 extends BaseCruChip {
 					}
 				}
 				else {
-					if (mask == (1 << CpuF99b.INT_KBD) && getMachine().getKeyboardHandler().anyKeyPressed()) {
+					if (mask == (1 << CpuF99b.INT_KBD) && getMachine().getKeyboardHandler().anyKeyAvailable()) {
 						getMachine().getKeyboardHandler().resetProbe();
 					}
 

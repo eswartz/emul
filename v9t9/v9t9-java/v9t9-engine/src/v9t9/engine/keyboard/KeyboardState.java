@@ -6,6 +6,8 @@
  */
 package v9t9.engine.keyboard;
 
+import static v9t9.common.keyboard.KeyboardConstants.*;
+
 import java.util.Arrays;
 
 import v9t9.common.keyboard.IKeyboardListener;
@@ -189,7 +191,25 @@ public class KeyboardState implements IKeyboardState {
 			else
 				crukeyboardmap[c] &= ~(0x80 >> r);
 		} else {
-			System.err.println("*** should have faked key " + key);
+			switch (key) {
+			case KeyboardConstants.KEY_SHIFT:
+				realshift = (byte) ((realshift & ~MASK_SHIFT) | (onoff ? MASK_SHIFT : 0));
+				break;
+			case KeyboardConstants.KEY_CONTROL:
+				realshift = (byte) ((realshift & ~MASK_CONTROL) | (onoff ? MASK_CONTROL : 0));
+				break;
+			case KeyboardConstants.KEY_ALT:
+				realshift = (byte) ((realshift & ~MASK_ALT) | (onoff ? MASK_ALT : 0));
+				break;
+			case KeyboardConstants.KEY_CONTEXT:
+				realshift = (byte) ((realshift & ~MASK_CONTEXT) | (onoff ? MASK_CONTEXT : 0));
+				break;
+			case KeyboardConstants.KEY_LOGO:
+				realshift = (byte) ((realshift & ~MASK_LOGO) | (onoff ? MASK_LOGO : 0));
+				break;
+			default:
+				System.err.println("*** should have faked key " + key);
+			}
 		}
 	}
 	
@@ -279,7 +299,7 @@ public class KeyboardState implements IKeyboardState {
 	 * @see v9t9.engine.keyboard.IKeyboardState#setJoystick(int, int, int, int, boolean, long)
 	 */
     @Override
-	public synchronized void setJoystick(final int joy, int mask, int x, int y, boolean fire, long when) {
+	public synchronized void setJoystick(final int joy, int mask, int x, int y, boolean fire) {
     	int joyRow = JOY1_C+joy-1;
 		byte oldValue = crukeyboardmap[joyRow];
     	
@@ -352,14 +372,6 @@ public class KeyboardState implements IKeyboardState {
 	@Override
 	public byte getShiftMask() {
 		return realshift;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.keyboard.IKeyboardState#setShiftMask(byte)
-	 */
-	@Override
-	public void setShiftMask(byte shift) {
-		this.realshift = shift;
 	}
 	
 	/* (non-Javadoc)

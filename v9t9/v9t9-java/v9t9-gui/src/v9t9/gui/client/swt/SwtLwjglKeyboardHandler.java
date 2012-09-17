@@ -78,8 +78,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			
 			state.setJoystick(joy, 
 					IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
-					x, y, fire, 
-					System.currentTimeMillis());
+					x, y, fire);
 		}
 		
 		protected float getXAxis(int joy) {
@@ -221,7 +220,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 				if (!joystickHandler.isFailedLast()) {
 					// maybe unplugged?
 					state.setJoystick(joy, IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
-							0, 0, false, System.currentTimeMillis());
+							0, 0, false);
 					joystickHandler.setFailedLast(true);
 				}
 			}

@@ -6,6 +6,9 @@ package v9t9.common.keyboard;
 /**
  * These constants are used in {@link IKeyboardState} to define key constants,
  * shift masks, and lock masks.
+ * <p/>
+ * They represent every distinct symbol and state on a typical U.S. keyboard,
+ * but do not represent actual physical keys on any keyboard.
  * @author ejs
  *
  */
@@ -15,6 +18,7 @@ public final class KeyboardConstants {
 	public static final int KEY_SHIFT = 0;
 	public static final int KEY_CONTROL = 1;
 	public static final int KEY_ALT = 2;
+	
 	public static final int KEY_CAPS_LOCK = 3;
 	public static final int KEY_NUM_LOCK = 4;
 	public static final int KEY_SCROLL_LOCK = 5;
@@ -37,10 +41,11 @@ public final class KeyboardConstants {
 	public static final int KEY_9 = '9';
 	
 	public static final int KEY_MINUS = '-';
+	public static final int KEY_UNDERSCORE = '_';
 	public static final int KEY_SLASH = '/';
 	public static final int KEY_BAR = '|';
-	public static final int KEY_BACKSLASH = '\\';
-	public static final int KEY_BACKQUOTE = '`';
+	public static final int KEY_BACK_SLASH = '\\';
+	public static final int KEY_BACK_QUOTE = '`';
 	public static final int KEY_TILDE = '~';
 	public static final int KEY_EXCLAMATION = '!';
 	public static final int KEY_AT = '@';
@@ -50,11 +55,22 @@ public final class KeyboardConstants {
 	public static final int KEY_CIRCUMFLEX = '^';
 	public static final int KEY_AMPERSAND = '&';
 	public static final int KEY_ASTERISK = '*';
-	public static final int KEY_OPEN_PARENTHSIS = '(';
-	public static final int KEY_CLOSE_PARENTHSIS = ')';
+	public static final int KEY_OPEN_PARENTHESIS = '(';
+	public static final int KEY_CLOSE_PARENTHESIS = ')';
 	public static final int KEY_PLUS = '+';
 	public static final int KEY_EQUALS = '=';
+	public static final int KEY_OPEN_BRACKET = '[';
+	public static final int KEY_CLOSE_BRACKET = ']';
+	public static final int KEY_OPEN_BRACE = '{';
+	public static final int KEY_CLOSE_BRACE = '}';
+	public static final int KEY_LESS = '<';
+	public static final int KEY_GREATER = '>';
+	public static final int KEY_COLON = ':';
+	public static final int KEY_SEMICOLON = ';';
+	public static final int KEY_QUOTE = '"';
+	public static final int KEY_SINGLE_QUOTE = '\'';
 	
+	public static final int KEY_ENTER = '\r';
 	public static final int KEY_TAB = '\t';
 	public static final int KEY_ESCAPE = 27;
 	public static final int KEY_SPACE = ' ';
@@ -69,17 +85,18 @@ public final class KeyboardConstants {
 	public static final int KEY_DOWN = 135;
 	public static final int KEY_LEFT = 136;
 
-	public static final int KEY_PRINT = 137;
+	public static final int KEY_PRINT_SCREEN = 137;
 	public static final int KEY_SYSRQ = 138;
 	public static final int KEY_PAUSE = 139;
 	public static final int KEY_BREAK = 140;
 
-	public static final int KEY_KP_SLASH = 144;
-	public static final int KEY_KP_ASTERISK = 145;
-	public static final int KEY_KP_MINUS = 146;
-	public static final int KEY_KP_PLUS = 147;
-	public static final int KEY_KP_DELETE = 148;
-	public static final int KEY_KP_INSERT = 149;
+	public static final int KEY_KP_SLASH = 143;
+	public static final int KEY_KP_ASTERISK = 144;
+	public static final int KEY_KP_MINUS = 145;
+	public static final int KEY_KP_PLUS = 146;
+	public static final int KEY_KP_DELETE = 147;
+	public static final int KEY_KP_INSERT = 148;
+	public static final int KEY_KP_ENTER = 149;
 	public static final int KEY_KP_0 = 150;
 	public static final int KEY_KP_9 = 159;
 	

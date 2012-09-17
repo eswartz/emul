@@ -30,9 +30,8 @@ public interface IKeyboardHandler {
 
 	void setProbe();
 	
-	boolean anyKeyPressed();
+	boolean anyKeyAvailable();
 
-	void setKey(int realKey, boolean onoff, boolean synthetic, byte shift, int key, long when);
-	boolean postCharacter(IBaseMachine machine, int realKey, boolean pressed, boolean synthetic, byte shift, char ch, long when);
+	boolean postCharacter(IBaseMachine machine, boolean pressed, boolean synthetic, byte shift, char ch);
 
 }

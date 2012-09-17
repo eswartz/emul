@@ -1,0 +1,22 @@
+
+Fix keyboard implementation:
+
+-- too close a tie between the host keyboard and the 99/4A CRU map
+-- allow independent event handling of key presses/releases to support e.g. onscreen keyboard
+-- handle host weirdnesses, like repeats on some keycodes and downs getting lost (?) 
+
+-- fix confusing uses of shifts:
+	-- 'fake' shift tracking for rolls of e.g. arrow-left, arrow-right, etc.
+	-- shift to select alternate joystick when using numpad
+	-- realshift vs. what's in the CRU map
+	
+-- cases:
+	-- host Shift+'[' is FCTN-F;  target should see this as only FCTN,F and not SHIFT,FCTN,F;
+	but if Shift is kept down while say 'I' is pressed, then target should then see SHIFT,I
+	and not FCTN,SHIFT,I.
+	
+	-- it seems the host can track a set of currently pressed symbols (including shifts).  
+	On each "scan", it repeatedly extracts the longest subset of symbols that maps to the 
+	target.  Whichever ones are left (single-length sets) are set directly.
+	
+	

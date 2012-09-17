@@ -13,8 +13,6 @@ import java.util.regex.Pattern;
 import ejs.base.properties.IProperty;
 
 import v9t9.common.client.IVideoRenderer;
-import v9t9.common.events.IEventNotifier;
-import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.keyboard.BaseKeyboardHandler;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
@@ -28,7 +26,6 @@ import static v9t9.common.keyboard.KeyboardConstants.*;
 public class AwtKeyboardHandler extends BaseKeyboardHandler {
 
 	private long lastKeystrokeTime;
-	private IEventNotifier eventNotifier;
 	private Runnable keyTask;
 	private static Pattern rawCodePattern = Pattern.compile(".*,rawCode=(\\d+),.*");
 
@@ -72,15 +69,13 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			public void keyPressed(KeyEvent e) {
 				handleKey(true, e.getModifiers(), e.getKeyCode(), 
 						e.getKeyChar(), e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD,
-						rawCode(e),
-						e.getWhen());
+						rawCode(e));
 			}
 
 			public void keyReleased(KeyEvent e) {
 				handleKey(false, e.getModifiers(), e.getKeyCode(), 
 						e.getKeyChar(), e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD,
-						rawCode(e),
-						e.getWhen());
+						rawCode(e));
 			}
 
 			public void keyTyped(KeyEvent e) {
@@ -90,13 +85,13 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		
 	}
 
-	protected void handleKey(boolean pressed, int modifiers, int keyCode, char ascii, boolean numpad, int realKey, long when) {
+	protected void handleKey(boolean pressed, int modifiers, int keyCode, char ascii, boolean numpad, int realKey) {
 		if (isPasting() && pressed && keyCode == KeyEvent.VK_ESCAPE) {
 			cancelPaste();
 			return;
 		}
 		
-		lastKeystrokeTime = when;
+		lastKeystrokeTime = System.currentTimeMillis();
 		
 		//System.out.println("pressed="+pressed+"; modifiers="+Integer.toHexString(modifiers)+"; keyCode="+keyCode+"; ascii="+(int)ascii);
 		
@@ -114,7 +109,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		// backspace?
 		if (ascii == 8 && modifiers == 0) {
-			setKey(realKey, pressed, true, (byte)(MASK_SHIFT + MASK_ALT), 'S', when);
+			setKey(pressed, (byte)(MASK_SHIFT + MASK_ALT), 'S');
 			return;
 		}
 		
@@ -131,26 +126,26 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		int joy = (shift & MASK_SHIFT) != 0 ? 2 : 1;
 		
 		if ((ascii == 0 || ascii == 0xffff) || 
-				!postCharacter(machine, realKey, pressed, synthetic, shift, ascii, when)) {
+				!postCharacter(machine, pressed, synthetic, shift, ascii)) {
 			byte fctn = (byte) (MASK_ALT | shift);
 			//System.out.println("??? " + keyCode + " : " + pressed);
 			switch (keyCode) {
 			case KeyEvent.VK_SHIFT:
-				setKey(realKey, pressed, synthetic, MASK_SHIFT, 0, when);
+				setKey(pressed, MASK_SHIFT, 0);
 				break;
 			case KeyEvent.VK_CONTROL:
-				setKey(realKey, pressed, synthetic, MASK_CONTROL, 0, when);
+				setKey(pressed, MASK_CONTROL, 0);
 				break;
 			case KeyEvent.VK_ALT:
 			case KeyEvent.VK_META:
-				setKey(realKey, pressed, synthetic, MASK_ALT, 0, when);
+				setKey(pressed, MASK_ALT, 0);
 				break;
 			case KeyEvent.VK_ENTER:
-				setKey(realKey, pressed, synthetic, shift, '\r', when);
+				setKey(pressed, shift, '\r');
 				break;
 				
 			case KeyEvent.VK_ESCAPE:
-				setKey(realKey, pressed, synthetic, MASK_ALT, '9', when);
+				setKey(pressed, MASK_ALT, '9');
 				break;
 				
 			case KeyEvent.VK_CAPS_LOCK:
@@ -184,112 +179,95 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			case KeyEvent.VK_F7:
 			case KeyEvent.VK_F8:
 			case KeyEvent.VK_F9:
-				setKey(realKey, pressed, synthetic, fctn, '1' + KeyEvent.VK_F1 - keyCode, when);	
+				setKey(pressed, fctn, '1' + KeyEvent.VK_F1 - keyCode);	
 				break;
 				
 			case KeyEvent.VK_UP:
-				setKey(realKey, pressed, synthetic, fctn, 'E', when);
+				setKey(pressed, fctn, 'E');
 				break;
 			case KeyEvent.VK_DOWN:
-				setKey(realKey, pressed, synthetic, fctn, 'X', when);
+				setKey(pressed, fctn, 'X');
 				break;
 			case KeyEvent.VK_LEFT:
-				setKey(realKey, pressed, synthetic, fctn, 'S', when);
+				setKey(pressed, fctn, 'S');
 				break;
 			case KeyEvent.VK_RIGHT:
-				setKey(realKey, pressed, synthetic, fctn, 'D', when);
+				setKey(pressed, fctn, 'D');
 				break;
 				
 			case KeyEvent.VK_KP_UP:
 				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
 							IKeyboardState.JOY_Y,
-							0, pressed ? -1 : 0, false, when);
+							0, pressed ? -1 : 0, false);
 				break;
 			case KeyEvent.VK_KP_DOWN:
 				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
 							IKeyboardState.JOY_Y,
-							 0, pressed ? 1 : 0, false, when);
+							 0, pressed ? 1 : 0, false);
 				break;
 			case KeyEvent.VK_KP_LEFT:
 				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
 							IKeyboardState.JOY_X,
-							pressed ? -1 : 0, 0, false, when);
+							pressed ? -1 : 0, 0, false);
 				break;
 			case KeyEvent.VK_KP_RIGHT:
 				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
 							IKeyboardState.JOY_X,
-							pressed ? 1 : 0, 0, false, when);
+							pressed ? 1 : 0, 0, false);
 				break;
 				
 			case KeyEvent.VK_HOME:
 				if (!numpad) {
-					setKey(realKey, pressed, synthetic, fctn, '5', when);		// BEGIN
+					setKey(pressed, fctn, '5');		// BEGIN
 				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
 							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
-							pressed ? -1 : 0, pressed ? -1 : 0, false, when);
+							pressed ? -1 : 0, pressed ? -1 : 0, false);
 				}
 				break;
 				
 			case KeyEvent.VK_INSERT:
 				if (!numpad) {
-					setKey(realKey, pressed, synthetic, fctn, '2', when);
+					setKey(pressed, fctn, '2');
 				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
 							IKeyboardState.JOY_B,
-							0, 0, pressed, when);
+							0, 0, pressed);
 				}
 				break;
 				
 			case KeyEvent.VK_PAGE_UP:
 				if (!numpad) {
-					setKey(realKey, pressed, synthetic, fctn, '6', when); // (as per E/A and TI Writer)
+					setKey(pressed, fctn, '6'); // (as per E/A and TI Writer)
 				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
 							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
-							pressed ? 1 : 0, pressed ? -1 : 0, false, when);
+							pressed ? 1 : 0, pressed ? -1 : 0, false);
 				}
 				break;
 			case KeyEvent.VK_PAGE_DOWN:
 				if (!numpad) {
-					setKey(realKey, pressed, synthetic, fctn, '4', when); // (as per E/A and TI Writer)
+					setKey(pressed, fctn, '4'); // (as per E/A and TI Writer)
 				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
 							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
-							pressed ? 1 : 0, pressed ? 1 : 0, false, when);
+							pressed ? 1 : 0, pressed ? 1 : 0, false);
 				}
 				break;
 			case KeyEvent.VK_END:
 				if (!numpad) {
-					setKey(realKey, pressed, synthetic, fctn, '0', when);		// Fctn-0
+					setKey(pressed, fctn, '0');		// Fctn-0
 				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
 							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
-							pressed ? -1 : 0, pressed ? 1 : 0, false, when);
+							pressed ? -1 : 0, pressed ? 1 : 0, false);
 				}
 				break;
 				
-			case KeyEvent.VK_SCROLL_LOCK:
-				if (pressed) {
-					boolean speedy;
-					try {
-						speedy = Toolkit.getDefaultToolkit().getLockingKeyState(keyCode);
-					} catch (UnsupportedOperationException e) {
-						// hmm
-						speedy = machine.getCpu().settingRealTime().getBoolean();
-					}
-					machine.getCpu().settingRealTime().setBoolean(!speedy);
-					if(eventNotifier != null)
-						eventNotifier.notifyEvent(null, Level.INFO, 
-								speedy ? "Scroll Lock: Executing at maximum speed" : 
-									"Scroll Lock: Executing at fixed rate");
-					//VdpTMS9918A.settingCpuSynchedVdpInterrupt.setBoolean(speedy);
-				}
-				break;
 			default:
 				System.out.println("Unhandled keycode: " + keyCode);
 			}
@@ -301,12 +279,5 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 	 */
 	private boolean isKeypadForJoystick() {
 		return true;
-	}
-
-	/**
-	 * @param eventNotifier the eventNotifier to set
-	 */
-	public void setEventNotifier(IEventNotifier eventNotifier) {
-		this.eventNotifier = eventNotifier;
 	}
 }
