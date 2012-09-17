@@ -132,7 +132,7 @@ public class KeyboardState implements IKeyboardState {
      */
     @Override
     public void incrClearKeyboard() {
-    	Arrays.fill(crukeyboardmap, 0, 6, (byte)0);
+    	Arrays.fill(crukeyboardmap, 0, 8, (byte)0);
     	realshift = 0;
 		if (DEBUG) System.out.println("===========");
 
@@ -247,8 +247,6 @@ public class KeyboardState implements IKeyboardState {
 		registerMapping(KEY_INSERT, KEY_ALT, '2');	// INS	
 		registerMapping(KEY_DELETE, KEY_ALT, '1');	// DEL
 		
-		// TODO: handle these as joysticks
-		
 		registerMapping(KEY_KP_ARROW_DOWN, KEY_ALT, 'X');
 		registerMapping(KEY_KP_ARROW_UP, KEY_ALT, 'E');
 		registerMapping(KEY_KP_ARROW_LEFT, KEY_ALT, 'S');
@@ -301,6 +299,43 @@ public class KeyboardState implements IKeyboardState {
 			if (k >= 0 && k < 128 && latinto9901[k] != -1) {
 				keys.remove(k);
 				incrSetKey(true, k);
+			}
+			else if (k >= KEY_JOYST_UP && k <= KEY_JOYST_IDLE) {
+				keys.remove(k);
+				int joy = 1;
+				switch (k) {
+				case KEY_JOYST_DOWN:
+					changeJoyMatrix(joy, JOY_DOWN_R, true);
+					break;
+				case KEY_JOYST_DOWN_LEFT:
+					changeJoyMatrix(joy, JOY_DOWN_R, true);
+					changeJoyMatrix(joy, JOY_LEFT_R, true);
+					break;
+				case KEY_JOYST_DOWN_RIGHT:
+					changeJoyMatrix(joy, JOY_DOWN_R, true);
+					changeJoyMatrix(joy, JOY_RIGHT_R, true);
+					break;
+				case KEY_JOYST_UP:
+					changeJoyMatrix(joy, JOY_UP_R, true);
+					break;
+				case KEY_JOYST_UP_LEFT:
+					changeJoyMatrix(joy, JOY_UP_R, true);
+					changeJoyMatrix(joy, JOY_LEFT_R, true);
+					break;
+				case KEY_JOYST_UP_RIGHT:
+					changeJoyMatrix(joy, JOY_UP_R, true);
+					changeJoyMatrix(joy, JOY_RIGHT_R, true);
+					break;
+				case KEY_JOYST_LEFT:
+					changeJoyMatrix(joy, JOY_LEFT_R, true);
+					break;
+				case KEY_JOYST_RIGHT:
+					changeJoyMatrix(joy, JOY_RIGHT_R, true);
+					break;
+				case KEY_JOYST_FIRE:
+					changeJoyMatrix(joy, JOY_FIRE_R, true);
+					break;
+				}
 			}
 		}
 

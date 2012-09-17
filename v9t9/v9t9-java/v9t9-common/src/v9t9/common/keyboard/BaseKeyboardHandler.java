@@ -74,9 +74,10 @@ import static v9t9.common.keyboard.KeyboardConstants.*;
  * 
  */
 public abstract class BaseKeyboardHandler implements IKeyboardHandler {
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 	private static final long TIMEOUT = 500;
 
+	private IProperty useNumPadForJoystick;
 
 	/**
 	 * @author ejs
@@ -179,6 +180,8 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		this.keyboardState = keyboardState;
 		this.machine = machine;
 		machine.setKeyboardHandler(this);
+		
+		useNumPadForJoystick = Settings.get(machine, IKeyboardState.settingUseNumPadForJoystick);
 	}
 	
 	/* (non-Javadoc)
@@ -225,85 +228,12 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 
 	}
 
-//   /**
-//	 * This complicated code maintains a map of shifts that we've explicitly
-//	 * turned on with other keys. The reason we need to know all this is that
-//	 * there are multiple "on" events (repeats) but only one "off" event. If we
-//	 * do "left arrow on" (FCTN+S), "right arrow on" (FCTN+D), and
-//	 * "left arrow off" (FCTN+S) we cannot reset FCTN since FCTN+D is still
-//	 * pressed. Etc.
-//	 */
-//
-//	private byte trackRealShiftKeys(boolean onoff, byte shift, int key) {
-//        if (!onoff && shift == 0 && fakemap[key] != 0) {
-//            System.err.println("Resetting "+fakemap[key]+" for key "+key);
-//            shift |= fakemap[key];
-//        }
-//        fakemap[key] = (byte) (onoff ? shift : 0);
-//
-//        byte effShift = 0;
-//        
-//        if ((shift & MASK_SHIFT) != 0) {
-//            if (onoff) {
-//                if (shiftmap[key] == 0) {
-//                    shiftmap[key] = 1;
-//                    cshift++;
-//                }
-//                effShift |= MASK_SHIFT; 
-//            } else {
-//                if (shiftmap[key] != 0) {
-//                    shiftmap[key] = 0;
-//                    cshift--;
-//                }
-//                if (cshift == 0)
-//                	effShift |= MASK_SHIFT;
-//            }
-//        }
-//        if ((shift & MASK_ALT) != 0) {
-//            if (onoff) {
-//                if (fctnmap[key] == 0) {
-//                    fctnmap[key] = 1;
-//                    cfctn++;
-//                }
-//                effShift |= MASK_ALT; 
-//            } else {
-//                if (fctnmap[key] != 0) {
-//                    fctnmap[key] = 0;
-//                    cfctn--;
-//                }
-//                if (cfctn == 0)
-//                	effShift |= MASK_ALT;
-//            }
-//        }
-//        if ((shift & MASK_CONTROL) != 0) {
-//            if (onoff) {
-//                if (ctrlmap[key] == 0) {
-//                    ctrlmap[key] = 1;
-//                    cctrl++;
-//                }
-//                effShift |= MASK_CONTROL; 
-//            } else {
-//                if (ctrlmap[key] != 0) {
-//                    ctrlmap[key] = 0;
-//                    cctrl--;
-//                }
-//                if (cctrl == 0)
-//                	effShift |= MASK_CONTROL;
-//            }
-//        }
-//        
-//        keyboardState.changeShifts(onoff, effShift);
-//		return shift;
-//	}
-//    
-
 	/**
 	 * 
 	 */
 	public void resetKeyboard() {
 		queuedKeys.clear();
 		keyboardState.resetKeyboard();
-//		Arrays.fill(fakemap, 0, fakemap.length, (byte)0);
 	}
 	
 
@@ -524,6 +454,70 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		return false;
 	}
 
+	protected int convertKeypadToKey(int kpKey, byte shiftMask) {
+		boolean isShifted = (shiftMask & MASK_SHIFT) != 0;
+		boolean isNumLock = (keyboardState.getLockMask() & MASK_NUM_LOCK) != 0;
+
+		int key = kpKey;
+		if (isShifted != isNumLock) {
+			switch (kpKey) {
+			case KEY_KP_0:
+				key = KEY_KP_INSERT; break; 
+			case KEY_KP_1:
+				key = KEY_KP_END; break; 
+			case KEY_KP_2:
+				key = KEY_KP_ARROW_DOWN; break; 
+			case KEY_KP_3:
+				key = KEY_KP_PAGE_DOWN; break; 
+			case KEY_KP_4:
+				key = KEY_KP_ARROW_LEFT; break; 
+			case KEY_KP_5:
+				key = KEY_KP_SHIFT_5; break; 
+			case KEY_KP_6:
+				key = KEY_KP_ARROW_RIGHT; break; 
+			case KEY_KP_7:
+				key = KEY_KP_HOME; break; 
+			case KEY_KP_8:
+				key = KEY_KP_ARROW_UP; break; 
+			case KEY_KP_9:
+				key = KEY_KP_PAGE_UP; break;
+			}
+		} else if (useNumPadForJoystick.getBoolean()) {
+			switch (kpKey) {
+			case KEY_KP_INSERT:
+			case KEY_KP_0:
+				key = KEY_JOYST_FIRE; break;
+			case KEY_KP_END:
+			case KEY_KP_1:
+				key = KEY_JOYST_DOWN_LEFT; break;
+			case KEY_KP_ARROW_DOWN:
+			case KEY_KP_2:
+				key = KEY_JOYST_DOWN; break;
+			case KEY_KP_PAGE_DOWN:
+			case KEY_KP_3:
+				key = KEY_JOYST_DOWN_RIGHT; break;
+			case KEY_KP_ARROW_LEFT:
+			case KEY_KP_4:
+				key = KEY_JOYST_LEFT; break;
+			case KEY_KP_SHIFT_5:
+			case KEY_KP_5:
+				key = KEY_JOYST_IDLE; break;
+			case KEY_KP_ARROW_RIGHT:
+			case KEY_KP_6:
+				key = KEY_JOYST_RIGHT; break;
+			case KEY_KP_HOME:
+			case KEY_KP_7:
+				key = KEY_JOYST_UP_LEFT; break;
+			case KEY_KP_ARROW_UP:
+			case KEY_KP_8:
+				key = KEY_JOYST_UP; break;
+			case KEY_KP_PAGE_UP:
+			case KEY_KP_9:
+				key = KEY_JOYST_UP_RIGHT; break;
+			}
+		}
+		return key;
+	}
 
 
 }

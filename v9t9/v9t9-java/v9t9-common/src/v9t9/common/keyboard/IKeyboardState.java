@@ -17,6 +17,10 @@ public interface IKeyboardState {
 			ISettingsHandler.WORKSPACE, 
 			"BackspaceIsControlH", Boolean.FALSE);
 
+	public static SettingSchema settingUseNumPadForJoystick = new SettingSchema(
+			ISettingsHandler.WORKSPACE, 
+			"UseNumPadForJoystick", Boolean.TRUE);
+
     
 	boolean isAsciiDirectKey(char x);
 

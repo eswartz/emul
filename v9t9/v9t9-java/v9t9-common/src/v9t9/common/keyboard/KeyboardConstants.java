@@ -114,14 +114,14 @@ public final class KeyboardConstants {
 	public static final int KEY_KP_9 = 159;
 	public static final int KEY_KP_POINT = 160;
 	public static final int KEY_KP_HOME = 161;
-	public static final int KEY_KP_END = 161;
-	public static final int KEY_KP_ARROW_UP = 161;
-	public static final int KEY_KP_ARROW_DOWN = 161;
-	public static final int KEY_KP_ARROW_LEFT = 161;
-	public static final int KEY_KP_ARROW_RIGHT = 161;
-	public static final int KEY_KP_PAGE_UP = 161;
-	public static final int KEY_KP_PAGE_DOWN = 161;
-	public static final int KEY_KP_SHIFT_5 = 162;
+	public static final int KEY_KP_END = 162;
+	public static final int KEY_KP_ARROW_UP = 163;
+	public static final int KEY_KP_ARROW_DOWN = 164;
+	public static final int KEY_KP_ARROW_LEFT = 165;
+	public static final int KEY_KP_ARROW_RIGHT = 166;
+	public static final int KEY_KP_PAGE_UP = 167;
+	public static final int KEY_KP_PAGE_DOWN = 168;
+	public static final int KEY_KP_SHIFT_5 = 169;
 	
 	public static final int KEY_F1 = 170;
 	public static final int KEY_F2 = 171;
@@ -135,5 +135,16 @@ public final class KeyboardConstants {
 	public static final int KEY_F10 = 179;
 	public static final int KEY_F11 = 180;
 	public static final int KEY_F12 = 181;
+	
+	public static final int KEY_JOYST_UP = 182;
+	public static final int KEY_JOYST_DOWN = 183;
+	public static final int KEY_JOYST_LEFT = 184;
+	public static final int KEY_JOYST_RIGHT = 185;
+	public static final int KEY_JOYST_UP_LEFT = 186;
+	public static final int KEY_JOYST_UP_RIGHT = 187;
+	public static final int KEY_JOYST_DOWN_LEFT = 188;
+	public static final int KEY_JOYST_DOWN_RIGHT = 189;
+	public static final int KEY_JOYST_FIRE = 190;
+	public static final int KEY_JOYST_IDLE = 191;
 
 }
