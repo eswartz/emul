@@ -3,21 +3,18 @@
  */
 package v9t9.gui.client.awt;
 
+import static v9t9.common.keyboard.KeyboardConstants.*;
+
 import java.awt.Component;
-import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import ejs.base.properties.IProperty;
+import java.util.HashMap;
+import java.util.Map;
 
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.keyboard.BaseKeyboardHandler;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
-import v9t9.common.settings.Settings;
-import static v9t9.common.keyboard.KeyboardConstants.*;
 
 /**
  * @author Ed
@@ -27,7 +24,6 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 
 	private long lastKeystrokeTime;
 	private Runnable keyTask;
-	private static Pattern rawCodePattern = Pattern.compile(".*,rawCode=(\\d+),.*");
 
 	public AwtKeyboardHandler(final IKeyboardState keyboardState, IMachine machine) {
 		super(keyboardState, machine);
@@ -58,24 +54,14 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		component.addKeyListener(new KeyListener() {
 
-			private int rawCode(KeyEvent e) {
-				String v = e.toString();
-				Matcher m = rawCodePattern.matcher(v);
-				if (m.matches())
-					return Integer.parseInt(m.group(1));
-				else
-					return e.getKeyCode();
-			}
 			public void keyPressed(KeyEvent e) {
 				handleKey(true, e.getModifiers(), e.getKeyCode(), 
-						e.getKeyChar(), e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD,
-						rawCode(e));
+						e.getKeyChar(), e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD);
 			}
 
 			public void keyReleased(KeyEvent e) {
 				handleKey(false, e.getModifiers(), e.getKeyCode(), 
-						e.getKeyChar(), e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD,
-						rawCode(e));
+						e.getKeyChar(), e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD);
 			}
 
 			public void keyTyped(KeyEvent e) {
@@ -85,15 +71,63 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		
 	}
 
-	protected void handleKey(boolean pressed, int modifiers, int keyCode, char ascii, boolean numpad, int realKey) {
+	private static final Map<Integer, Integer> awtKeycodeToKey = new HashMap<Integer, Integer>(); 
+	private static final int[] keycodesAndKeys = {
+		KeyEvent.VK_SHIFT, KEY_SHIFT,
+		KeyEvent.VK_CONTROL, KEY_CONTROL,
+		KeyEvent.VK_ALT, KEY_ALT,
+		KeyEvent.VK_META, KEY_ALT,
+		KeyEvent.VK_CAPS_LOCK, KEY_CAPS_LOCK,
+		KeyEvent.VK_NUM_LOCK, KEY_NUM_LOCK,
+		KeyEvent.VK_SCROLL_LOCK, KEY_SCROLL_LOCK,
+		//KeyEvent.VK_BREAK, KEY_BREAK,
+		KeyEvent.VK_PAUSE, KEY_PAUSE,
+		KeyEvent.VK_ESCAPE, KEY_ESCAPE,
+		KeyEvent.VK_F1, KEY_F1,
+		KeyEvent.VK_F2, KEY_F2,
+		KeyEvent.VK_F3, KEY_F3,
+		KeyEvent.VK_F4, KEY_F4,
+		KeyEvent.VK_F5, KEY_F5,
+		KeyEvent.VK_F6, KEY_F6,
+		KeyEvent.VK_F7, KEY_F7,
+		KeyEvent.VK_F8, KEY_F8,
+		KeyEvent.VK_F9, KEY_F9,
+		KeyEvent.VK_F10, KEY_F10,
+		KeyEvent.VK_F11, KEY_F11,
+		KeyEvent.VK_F12, KEY_F12,
+		KeyEvent.VK_DOWN, KEY_ARROW_DOWN,
+		KeyEvent.VK_UP, KEY_ARROW_UP,
+		KeyEvent.VK_LEFT, KEY_ARROW_LEFT,
+		KeyEvent.VK_RIGHT, KEY_ARROW_RIGHT,
+		KeyEvent.VK_PAGE_DOWN, KEY_PAGE_DOWN,
+		KeyEvent.VK_PAGE_UP, KEY_PAGE_UP,
+		KeyEvent.VK_HOME, KEY_HOME,
+		KeyEvent.VK_END, KEY_END,
+		KeyEvent.VK_INSERT, KEY_INSERT,
+		KeyEvent.VK_DELETE, KEY_DELETE,
+		KeyEvent.VK_PRINTSCREEN, KEY_PRINT_SCREEN,
+		KeyEvent.VK_KP_UP, KEY_KP_ARROW_UP,
+		KeyEvent.VK_KP_DOWN, KEY_KP_ARROW_DOWN,
+		KeyEvent.VK_KP_LEFT, KEY_KP_ARROW_LEFT,
+		KeyEvent.VK_KP_RIGHT, KEY_KP_ARROW_RIGHT,
+		KeyEvent.VK_TAB, KEY_TAB,
+		KeyEvent.VK_BACK_SPACE, KEY_BACKSPACE,
+		KeyEvent.VK_ENTER, KEY_ENTER,
+		KeyEvent.VK_BEGIN, KEY_KP_SHIFT_5,
+	};
+	static {
+		for (int i = 0; i < keycodesAndKeys.length; i += 2) {
+			awtKeycodeToKey.put(keycodesAndKeys[i], keycodesAndKeys[i+1]);
+		}
+	}
+	
+	protected void handleKey(boolean pressed, int modifiers, int keyCode, char ascii, boolean keyPad) {
 		if (isPasting() && pressed && keyCode == KeyEvent.VK_ESCAPE) {
 			cancelPaste();
 			return;
 		}
 		
 		lastKeystrokeTime = System.currentTimeMillis();
-		
-		//System.out.println("pressed="+pressed+"; modifiers="+Integer.toHexString(modifiers)+"; keyCode="+keyCode+"; ascii="+(int)ascii);
 		
 		if (ascii == KeyEvent.CHAR_UNDEFINED && keyCode < 128 && keyboardState.isAsciiDirectKey((char) keyCode)) {
 			ascii = (char) keyCode;
@@ -107,12 +141,6 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				ascii = Character.toUpperCase(ascii);
 		}
 		
-		// backspace?
-		if (ascii == 8 && modifiers == 0) {
-			setKey(pressed, (byte)(MASK_SHIFT + MASK_ALT), 'S');
-			return;
-		}
-		
 		byte shift = 0;
 		if ((modifiers & KeyEvent.SHIFT_DOWN_MASK + KeyEvent.SHIFT_MASK) != 0)
 			shift |= MASK_SHIFT;
@@ -121,163 +149,37 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		if ((modifiers & KeyEvent.ALT_DOWN_MASK + KeyEvent.META_DOWN_MASK + KeyEvent.ALT_MASK + KeyEvent.META_MASK) != 0)
 			shift |= MASK_ALT;
 		
-		boolean synthetic = true;
-		
-		int joy = (shift & MASK_SHIFT) != 0 ? 2 : 1;
-		
-		if ((ascii == 0 || ascii == 0xffff) || 
-				!postCharacter(pressed, shift, ascii)) {
-			byte fctn = (byte) (MASK_ALT | shift);
-			//System.out.println("??? " + keyCode + " : " + pressed);
-			switch (keyCode) {
-			case KeyEvent.VK_SHIFT:
-				setKey(pressed, MASK_SHIFT, 0);
-				break;
-			case KeyEvent.VK_CONTROL:
-				setKey(pressed, MASK_CONTROL, 0);
-				break;
-			case KeyEvent.VK_ALT:
-			case KeyEvent.VK_META:
-				setKey(pressed, MASK_ALT, 0);
-				break;
-			case KeyEvent.VK_ENTER:
-				setKey(pressed, shift, '\r');
-				break;
-				
-			case KeyEvent.VK_ESCAPE:
-				setKey(pressed, MASK_ALT, '9');
-				break;
-				
-			case KeyEvent.VK_CAPS_LOCK:
-				if (pressed) {
-					boolean on;
-					try {
-						on = !Toolkit.getDefaultToolkit().getLockingKeyState(keyCode);
-					} catch (UnsupportedOperationException e) {
-						on = (keyboardState.getLockMask() & MASK_CAPS_LOCK) == 0;
-					}
-					keyboardState.changeLocks(on, MASK_CAPS_LOCK);
-				}
-				break;
-			case KeyEvent.VK_PAUSE:
-				if (pressed) {
-					if ((shift & MASK_CONTROL) != 0) {
-						machine.getClient().close();
-						System.exit(0);	// HACK: AWT seems to get stuck otherwise
-					} else {
-						IProperty paused = Settings.get(machine, IMachine.settingPauseMachine);
-						paused.setBoolean(!paused.getBoolean());
-					}
-				}
-				break;
-			case KeyEvent.VK_F1:
-			case KeyEvent.VK_F2:
-			case KeyEvent.VK_F3:
-			case KeyEvent.VK_F4:
-			case KeyEvent.VK_F5:
-			case KeyEvent.VK_F6:
-			case KeyEvent.VK_F7:
-			case KeyEvent.VK_F8:
-			case KeyEvent.VK_F9:
-				setKey(pressed, fctn, '1' + KeyEvent.VK_F1 - keyCode);	
-				break;
-				
-			case KeyEvent.VK_UP:
-				setKey(pressed, fctn, 'E');
-				break;
-			case KeyEvent.VK_DOWN:
-				setKey(pressed, fctn, 'X');
-				break;
-			case KeyEvent.VK_LEFT:
-				setKey(pressed, fctn, 'S');
-				break;
-			case KeyEvent.VK_RIGHT:
-				setKey(pressed, fctn, 'D');
-				break;
-				
-			case KeyEvent.VK_KP_UP:
-				if (isKeypadForJoystick())
-					keyboardState.setJoystick(joy,
-							IKeyboardState.JOY_Y,
-							0, pressed ? -1 : 0, false);
-				break;
-			case KeyEvent.VK_KP_DOWN:
-				if (isKeypadForJoystick())
-					keyboardState.setJoystick(joy,
-							IKeyboardState.JOY_Y,
-							 0, pressed ? 1 : 0, false);
-				break;
-			case KeyEvent.VK_KP_LEFT:
-				if (isKeypadForJoystick())
-					keyboardState.setJoystick(joy,
-							IKeyboardState.JOY_X,
-							pressed ? -1 : 0, 0, false);
-				break;
-			case KeyEvent.VK_KP_RIGHT:
-				if (isKeypadForJoystick())
-					keyboardState.setJoystick(joy,
-							IKeyboardState.JOY_X,
-							pressed ? 1 : 0, 0, false);
-				break;
-				
-			case KeyEvent.VK_HOME:
-				if (!numpad) {
-					setKey(pressed, fctn, '5');		// BEGIN
-				} else if (isKeypadForJoystick()) {
-					keyboardState.setJoystick(joy,
-							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
-							pressed ? -1 : 0, pressed ? -1 : 0, false);
-				}
-				break;
-				
-			case KeyEvent.VK_INSERT:
-				if (!numpad) {
-					setKey(pressed, fctn, '2');
-				} else if (isKeypadForJoystick()) {
-					keyboardState.setJoystick(joy,
-							IKeyboardState.JOY_B,
-							0, 0, pressed);
-				}
-				break;
-				
-			case KeyEvent.VK_PAGE_UP:
-				if (!numpad) {
-					setKey(pressed, fctn, '6'); // (as per E/A and TI Writer)
-				} else if (isKeypadForJoystick()) {
-					keyboardState.setJoystick(joy,
-							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
-							pressed ? 1 : 0, pressed ? -1 : 0, false);
-				}
-				break;
-			case KeyEvent.VK_PAGE_DOWN:
-				if (!numpad) {
-					setKey(pressed, fctn, '4'); // (as per E/A and TI Writer)
-				} else if (isKeypadForJoystick()) {
-					keyboardState.setJoystick(joy,
-							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
-							pressed ? 1 : 0, pressed ? 1 : 0, false);
-				}
-				break;
-			case KeyEvent.VK_END:
-				if (!numpad) {
-					setKey(pressed, fctn, '0');		// Fctn-0
-				} else if (isKeypadForJoystick()) {
-					keyboardState.setJoystick(joy,
-							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
-							pressed ? -1 : 0, pressed ? 1 : 0, false);
-				}
-				break;
-				
-			default:
-				System.out.println("Unhandled keycode: " + keyCode);
+		if (ascii > 0 && ascii < 128) {
+			if (postCharacter(pressed, shift, ascii)) {
+				return;
 			}
 		}
+		
+		int key = KEY_UNKNOWN;
+		if ((shift & MASK_CONTROL) != 0 && keyCode == KeyEvent.VK_PAUSE) {
+			keyCode = KEY_BREAK;
+		}
+
+		Integer ikey = awtKeycodeToKey.get(keyCode);
+		if (ikey != null) {
+			key = ikey;
+		}
+
+		if (key != KEY_UNKNOWN) {
+			if (handleActionKey(pressed, ikey)) {
+				return;
+			}
+
+			// convert keypad variants
+			if (keyPad) {
+				ikey = convertKeypadToKey(ikey, shift);
+			}
+			
+			pushKey(pressed, ikey);
+			return;
+		} 
+		
+		System.out.println("*** Unhandled AWT keycode: " + keyCode);
 	}
 
-	/**
-	 * @return
-	 */
-	private boolean isKeypadForJoystick() {
-		return true;
-	}
 }

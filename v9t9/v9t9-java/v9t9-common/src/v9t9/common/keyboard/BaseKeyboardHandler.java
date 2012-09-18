@@ -3,6 +3,8 @@
  */
 package v9t9.common.keyboard;
 
+import java.awt.Toolkit;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -350,6 +352,45 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	public synchronized boolean postCharacter(boolean pressed, byte shift, char ch) {
 		if (DEBUG) System.out.println("==> post: ch=" + ch + "; shift="+ HexUtils.toHex2(shift)+"; pressed="+pressed);
 
+		if (Character.isLowerCase(ch)) {
+			ch = Character.toUpperCase(ch);
+		}
+		
+		if ((shift & MASK_SHIFT) != 0) {
+			boolean unshiftIt = true;
+			switch (ch) {
+				case KEY_BACK_QUOTE:
+					ch = KEY_TILDE; break;
+				case KEY_MINUS:
+					ch = KEY_UNDERSCORE; break;
+				case KEY_EQUALS:
+					ch = KEY_PLUS; break;
+				case KEY_OPEN_BRACKET:
+					ch = KEY_OPEN_BRACE; break;
+				case KEY_CLOSE_BRACKET:
+					ch = KEY_CLOSE_BRACE; break;
+				case KEY_BACK_SLASH:
+					ch = KEY_BAR; break;
+				case KEY_SLASH:
+					ch = KEY_QUESTION; break;
+				case KEY_COMMA:
+					ch = KEY_LESS; break;
+				case KEY_PERIOD:
+					ch = KEY_GREATER; break;
+				case KEY_SINGLE_QUOTE:
+					ch = KEY_QUOTE; break;
+				case KEY_SEMICOLON:
+					ch = KEY_COLON; break;
+				default:
+					unshiftIt = false;
+			}
+			if (unshiftIt) {
+				pushShifts(pressed, (byte) (shift & ~MASK_SHIFT));
+				pushKey(pressed, ch);
+				return true;
+			}
+		}
+
 		// check for recognized non-hardware keys
 		switch (ch) {
 		case KEY_MINUS:
@@ -429,27 +470,39 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 				return true;
 			case KEY_NUM_LOCK:
 				if (pressed) {
-					keyboardState.toggleKeyboardLocks(MASK_NUM_LOCK);
+					boolean on;
+					try {
+						on = !Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_NUM_LOCK);
+					} catch (UnsupportedOperationException e) {
+						on = (keyboardState.getLockMask() & MASK_NUM_LOCK) == 0;
+					}
+					
+					keyboardState.changeLocks(on, MASK_NUM_LOCK);
 					if (keyboardState.isLock(MASK_SCROLL_LOCK))
 						notifyNumpadInfo();
 				}
 				return true;
 			case KEY_CAPS_LOCK:
 				if (pressed) {
-					keyboardState.toggleKeyboardLocks(MASK_CAPS_LOCK);
+					boolean on;
+					try {
+						on = !Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_CAPS_LOCK);
+					} catch (UnsupportedOperationException e) {
+						on = (keyboardState.getLockMask() & MASK_CAPS_LOCK) == 0;
+					}
+					keyboardState.changeLocks(on, MASK_CAPS_LOCK);
 				}
 				return true;
 			case KEY_SCROLL_LOCK:
 				if (pressed) {
-					keyboardState.toggleKeyboardLocks(MASK_SCROLL_LOCK);
+					boolean on;
+					try {
+						on = !Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_NUM_LOCK);
+					} catch (UnsupportedOperationException e) {
+						on = (keyboardState.getLockMask() & MASK_NUM_LOCK) == 0;
+					}
+					keyboardState.changeLocks(on, MASK_NUM_LOCK);
 					notifyNumpadInfo();
-//					boolean speedy = machine.getCpu().settingRealTime().getBoolean();
-//					machine.getCpu().settingRealTime().setBoolean(!speedy);
-//					if (eventNotifier != null)
-//						eventNotifier.notifyEvent(null, Level.INFO, 
-//								speedy ? "Scroll Lock: Executing at maximum speed" : 
-//									"Scroll Lock: Executing at fixed rate");
-					//VdpTMS9918A.settingCpuSynchedVdpInterrupt.setBoolean(speedy);
 				}
 				return true;
 		}
@@ -474,6 +527,29 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		boolean isNumLock = (keyboardState.getLockMask() & MASK_NUM_LOCK) != 0;
 		boolean isScrollLock = (keyboardState.getLockMask() & MASK_SCROLL_LOCK) != 0;
 
+		switch (kpKey) {
+		case KEY_ARROW_UP:
+			kpKey = KEY_KP_ARROW_UP; break;
+		case KEY_ARROW_DOWN:
+			kpKey = KEY_KP_ARROW_DOWN; break;
+		case KEY_ARROW_LEFT:
+			kpKey = KEY_KP_ARROW_LEFT; break;
+		case KEY_ARROW_RIGHT:
+			kpKey = KEY_KP_ARROW_RIGHT; break;
+		case KEY_HOME:
+			kpKey = KEY_KP_HOME; break;
+		case KEY_END:
+			kpKey = KEY_KP_END; break;
+		case KEY_PAGE_UP:
+			kpKey = KEY_KP_PAGE_UP; break;
+		case KEY_PAGE_DOWN:
+			kpKey = KEY_KP_PAGE_DOWN; break;
+		case KEY_INSERT:
+			kpKey = KEY_KP_INSERT; break;
+		case KEY_DELETE:
+			kpKey = KEY_KP_DELETE; break;
+		}
+		
 		int key = kpKey;
 		if (!isNumLock && isScrollLock && useNumPadForJoystick.getBoolean()) {
 			int joy = isShifted ? 1 : 0;

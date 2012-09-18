@@ -153,45 +153,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		if ((keyCode & SWT.KEYCODE_BIT) == 0) {
 			keyCode &= 0xff;
-			if (Character.isLowerCase(keyCode)) {
-				keyCode = Character.toUpperCase(keyCode);
-			}
-			
-			if ((shiftMask & MASK_SHIFT) != 0) {
-				boolean unshiftIt = true;
-				switch (keyCode) {
-					case KEY_BACK_QUOTE:
-						keyCode = KEY_TILDE; break;
-					case KEY_MINUS:
-						keyCode = KEY_UNDERSCORE; break;
-					case KEY_EQUALS:
-						keyCode = KEY_PLUS; break;
-					case KEY_OPEN_BRACKET:
-						keyCode = KEY_OPEN_BRACE; break;
-					case KEY_CLOSE_BRACKET:
-						keyCode = KEY_CLOSE_BRACE; break;
-					case KEY_BACK_SLASH:
-						keyCode = KEY_BAR; break;
-					case KEY_SLASH:
-						keyCode = KEY_QUESTION; break;
-					case KEY_COMMA:
-						keyCode = KEY_LESS; break;
-					case KEY_PERIOD:
-						keyCode = KEY_GREATER; break;
-					case KEY_SINGLE_QUOTE:
-						keyCode = KEY_QUOTE; break;
-					case KEY_SEMICOLON:
-						keyCode = KEY_COLON; break;
-					default:
-						unshiftIt = false;
-				}
-				if (unshiftIt) {
-					pushShifts(pressed, (byte) (shiftMask & ~MASK_SHIFT));
-					pushKey(pressed, keyCode);
-					return;
-				}
-			}
-			
+		
 			if (/*!keyPad &&*/ postCharacter(pressed, shiftMask, (char) keyCode)) {
 				return;
 			}
@@ -213,29 +175,6 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 
 			// convert keypad variants
 			if (keyPad) {
-				switch (ikey) {
-				case KEY_ARROW_UP:
-					ikey = KEY_KP_ARROW_UP; break;
-				case KEY_ARROW_DOWN:
-					ikey = KEY_KP_ARROW_DOWN; break;
-				case KEY_ARROW_LEFT:
-					ikey = KEY_KP_ARROW_LEFT; break;
-				case KEY_ARROW_RIGHT:
-					ikey = KEY_KP_ARROW_RIGHT; break;
-				case KEY_HOME:
-					ikey = KEY_KP_HOME; break;
-				case KEY_END:
-					ikey = KEY_KP_END; break;
-				case KEY_PAGE_UP:
-					ikey = KEY_KP_PAGE_UP; break;
-				case KEY_PAGE_DOWN:
-					ikey = KEY_KP_PAGE_DOWN; break;
-				case KEY_INSERT:
-					ikey = KEY_KP_INSERT; break;
-				case KEY_DELETE:
-					ikey = KEY_KP_DELETE; break;
-				}
-				ikey = convertKeypadToKey(ikey, shiftMask);
 				ikey = convertKeypadToKey(ikey, shiftMask);
 			}
 
