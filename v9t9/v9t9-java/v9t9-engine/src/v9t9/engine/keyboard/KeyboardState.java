@@ -132,7 +132,7 @@ public class KeyboardState implements IKeyboardState {
      */
     @Override
     public void incrClearKeyboard() {
-    	Arrays.fill(crukeyboardmap, 0, 8, (byte)0);
+    	Arrays.fill(crukeyboardmap, 0, 6, (byte)0);
     	realshift = 0;
 		if (DEBUG) System.out.println("===========");
 
@@ -302,38 +302,38 @@ public class KeyboardState implements IKeyboardState {
 			}
 			else if (k >= KEY_JOYST_UP && k <= KEY_JOYST_IDLE) {
 				keys.remove(k);
-				int joy = 1;
+				int joy = 1 + (k & 1);
+				k &= ~1;
 				switch (k) {
 				case KEY_JOYST_DOWN:
-					changeJoyMatrix(joy, JOY_DOWN_R, true);
+					setJoystick(joy, JOY_Y, 0, 1, false);
 					break;
 				case KEY_JOYST_DOWN_LEFT:
-					changeJoyMatrix(joy, JOY_DOWN_R, true);
-					changeJoyMatrix(joy, JOY_LEFT_R, true);
+					setJoystick(joy, JOY_X|JOY_Y, -1, 1, false);
 					break;
 				case KEY_JOYST_DOWN_RIGHT:
-					changeJoyMatrix(joy, JOY_DOWN_R, true);
-					changeJoyMatrix(joy, JOY_RIGHT_R, true);
+					setJoystick(joy, JOY_X|JOY_Y, 1, 1, false);
 					break;
 				case KEY_JOYST_UP:
-					changeJoyMatrix(joy, JOY_UP_R, true);
+					setJoystick(joy, JOY_Y, 0, -1, false);
 					break;
 				case KEY_JOYST_UP_LEFT:
-					changeJoyMatrix(joy, JOY_UP_R, true);
-					changeJoyMatrix(joy, JOY_LEFT_R, true);
+					setJoystick(joy, JOY_X|JOY_Y, -1, -1, false);
 					break;
 				case KEY_JOYST_UP_RIGHT:
-					changeJoyMatrix(joy, JOY_UP_R, true);
-					changeJoyMatrix(joy, JOY_RIGHT_R, true);
+					setJoystick(joy, JOY_X|JOY_Y, 1, -1, false);
 					break;
 				case KEY_JOYST_LEFT:
-					changeJoyMatrix(joy, JOY_LEFT_R, true);
+					setJoystick(joy, JOY_X, -1, 0, false);
 					break;
 				case KEY_JOYST_RIGHT:
-					changeJoyMatrix(joy, JOY_RIGHT_R, true);
+					setJoystick(joy, JOY_X, 1, 0, false);
 					break;
 				case KEY_JOYST_FIRE:
 					changeJoyMatrix(joy, JOY_FIRE_R, true);
+					break;
+				case KEY_JOYST_IDLE:
+					setJoystick(joy, JOY_X|JOY_Y|JOY_B, 0, 0, false);
 					break;
 				}
 			}
@@ -344,154 +344,6 @@ public class KeyboardState implements IKeyboardState {
 			System.err.println("*** could not map virtual key " + k + " to hardware");
 		}
 	}
-	
-		
-//			case '5':
-//			case SWT.KEYPAD_5:
-//				setJoystickOrKey(pressed, keyPad, nonShifted,
-//						'5', nonShifted, 
-//						'5', joy, 
-//						IKeyboardState.JOY_X | IKeyboardState.JOY_Y, 0, 0);
-//				break;
-//			case SWT.ARROW_UP:
-//			case SWT.KEYPAD_8:
-//				setJoystickOrKey(pressed, keyPad, fctnShifted,
-//						'E', nonShifted, 
-//						'8', joy, 
-//						IKeyboardState.JOY_Y, 0, pressed ? -1 : 0);
-//				break;
-//			case SWT.ARROW_DOWN:
-//			case SWT.KEYPAD_2:
-//				setJoystickOrKey(pressed, keyPad, fctnShifted,
-//						'X', nonShifted, 
-//						'2', joy, 
-//						IKeyboardState.JOY_Y, 0, pressed ? 1 : 0);
-//				break;
-//			case SWT.ARROW_LEFT:
-//			case SWT.KEYPAD_4:
-//				setJoystickOrKey(pressed, keyPad, fctnShifted,
-//						'S', nonShifted, 
-//						'4', joy, 
-//						IKeyboardState.JOY_X, pressed ? -1 : 0, 0);
-//				break;
-//			case SWT.ARROW_RIGHT:
-//			case SWT.KEYPAD_6:
-//				setJoystickOrKey(pressed, keyPad, fctnShifted,
-//						'D', nonShifted,
-//						'6', joy,
-//						IKeyboardState.JOY_X, pressed ? 1 : 0, 0);
-//				break;
-//				
-//			case SWT.PAGE_UP:
-//			case SWT.KEYPAD_9:
-//				setJoystickOrKey(pressed, keyPad, fctnShifted,
-//						'6', nonShifted,	// FCTN-6  // (as per E/A and TI Writer)
-//						'9', joy, 
-//						IKeyboardState.JOY_X | IKeyboardState.JOY_Y, pressed ? 1 : 0, 
-//						pressed ? -1 : 0);
-//				break;
-//			case SWT.PAGE_DOWN:
-//			case SWT.KEYPAD_3:
-//				setJoystickOrKey(pressed, keyPad, fctnShifted,
-//						'4', nonShifted,	// FCTN-6  // (as per E/A and TI Writer)
-//						'3', joy,
-//						IKeyboardState.JOY_X | IKeyboardState.JOY_Y, pressed ? 1 : 0, 
-//						pressed ? 1 : 0);
-//				break;
-//
-//			case SWT.HOME:
-//			case SWT.KEYPAD_7:
-//				setJoystickOrKey(pressed, keyPad, fctnShifted,
-//						'5', nonShifted,	// BEGIN
-//						'7', joy, 
-//						IKeyboardState.JOY_X | IKeyboardState.JOY_Y, pressed ? -1 : 0, 
-//						pressed ? -1 : 0);
-//				break;
-//				
-//			case SWT.END:
-//			case SWT.KEYPAD_1:
-//				setJoystickOrKey(pressed, keyPad, fctnShifted,
-//						'0', nonShifted,	// FCTN-0
-//						'1', joy,
-//						IKeyboardState.JOY_X | IKeyboardState.JOY_Y, pressed ? -1 : 0, 
-//						pressed ? 1 : 0);
-//				break;
-//				
-//
-//			case SWT.INSERT:
-//			case SWT.KEYPAD_0:
-//				setJoystickOrKey(pressed, keyPad, fctnShifted,
-//						'2', nonShifted,	// INS
-//						'0', joy,
-//						IKeyboardState.JOY_B, 0, 0);
-//				break;
-//				
-//			case SWT.KEYPAD_DIVIDE:
-//				setJoystickOrKey(pressed, keyPad, nonShifted,
-//						'/', nonShifted, 
-//						'/', joy, 
-//						IKeyboardState.JOY_B, 0, 0);
-//				break;
-//			case SWT.KEYPAD_MULTIPLY:
-//				setJoystickOrKey(pressed, keyPad, shiftShifted,
-//						'8', shiftShifted, 
-//						'8', joy, 
-//						IKeyboardState.JOY_B, 0, 0);
-//				break;
-//			case SWT.KEYPAD_ADD:
-//				setJoystickOrKey(pressed, keyPad, shiftShifted,
-//						'=', shiftShifted, 
-//						'=', joy, 
-//						IKeyboardState.JOY_B, 0, 0);
-//				break;
-//			case SWT.KEYPAD_SUBTRACT:
-//				setJoystickOrKey(pressed, keyPad, shiftShifted,
-//						'/', shiftShifted,
-//						'/', joy,
-//						IKeyboardState.JOY_B, 0, 0);
-//				break;
-//			case SWT.KEYPAD_CR:
-//				setJoystickOrKey(pressed, keyPad, shift,
-//						'\r', shift, 
-//						'\r', joy, 
-//						IKeyboardState.JOY_B, 0, 0);
-//				break;
-//			case SWT.KEYPAD_DECIMAL:
-//				setKey(pressed, nonShifted, '.');
-//				break;
-//			case SWT.DEL:
-//				setKey(pressed, fctnShifted, '1');
-//				break;
-	
-	/**
-	 * @param pressed
-	 * @param shift
-	 * @param joy
-	 * @param c
-	 * @param joyY
-	 * @param i
-	 * @param j
-	 */
-//	private void setJoystickOrKey(boolean pressed, boolean keyPad, byte shift,
-//			char ch, byte keypadShift, 
-//			char keypadCh, int joy, 
-//			int joyRow, int x, int y) {
-//		if (!keyPad)
-//			setKey(pressed, shift, ch);
-//		else if (((keyboardState.getShiftMask() & MASK_SHIFT) != 0) == !isNumLock())
-//			keyboardState.setJoystick(joy,
-//					joyRow, x, y, (joyRow & IKeyboardState.JOY_B) != 0 && pressed);
-//		else
-//			setKey(pressed, keypadShift, keypadCh);
-//		
-//	}
-//
-//	private boolean isNumLock() {
-//		boolean on;
-//		on = (keyboardState.getLockMask() & MASK_NUM_LOCK) != 0;
-//		return on;
-//	}
-
 	
 	public void incrSetKey(boolean onoff, int key) {
 		byte b;
@@ -699,12 +551,21 @@ public class KeyboardState implements IKeyboardState {
 	public byte getLockMask() {
 		return locks;
 	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.keyboard.IKeyboardState#setLockMask(byte)
 	 */
 	@Override
 	public void setLockMask(byte locks) {
 		this.locks = locks; 
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.keyboard.IKeyboardState#isLock(byte)
+	 */
+	@Override
+	public boolean isLock(byte lockMask) {
+		return (locks & lockMask) == lockMask;
 	}
 	
 

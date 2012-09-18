@@ -430,6 +430,8 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			case KEY_NUM_LOCK:
 				if (pressed) {
 					keyboardState.toggleKeyboardLocks(MASK_NUM_LOCK);
+					if (keyboardState.isLock(MASK_SCROLL_LOCK))
+						notifyNumpadInfo();
 				}
 				return true;
 			case KEY_CAPS_LOCK:
@@ -440,13 +442,13 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			case KEY_SCROLL_LOCK:
 				if (pressed) {
 					keyboardState.toggleKeyboardLocks(MASK_SCROLL_LOCK);
-					
-					boolean speedy = machine.getCpu().settingRealTime().getBoolean();
-					machine.getCpu().settingRealTime().setBoolean(!speedy);
-					if (eventNotifier != null)
-						eventNotifier.notifyEvent(null, Level.INFO, 
-								speedy ? "Scroll Lock: Executing at maximum speed" : 
-									"Scroll Lock: Executing at fixed rate");
+					notifyNumpadInfo();
+//					boolean speedy = machine.getCpu().settingRealTime().getBoolean();
+//					machine.getCpu().settingRealTime().setBoolean(!speedy);
+//					if (eventNotifier != null)
+//						eventNotifier.notifyEvent(null, Level.INFO, 
+//								speedy ? "Scroll Lock: Executing at maximum speed" : 
+//									"Scroll Lock: Executing at fixed rate");
 					//VdpTMS9918A.settingCpuSynchedVdpInterrupt.setBoolean(speedy);
 				}
 				return true;
@@ -454,12 +456,62 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		return false;
 	}
 
+	/**
+	 * 
+	 */
+	private void notifyNumpadInfo() {
+		if (eventNotifier != null && useNumPadForJoystick.getBoolean())
+			eventNotifier.notifyEvent(null, Level.INFO, 
+					(keyboardState.isLock(MASK_SCROLL_LOCK) ? 
+							"Using numpad for joystick #1 (shift for #2)" : 
+								(keyboardState.isLock(MASK_NUM_LOCK) ?
+										"Using numpad for numbers" : "Using numpad for arrows")));
+		
+	}
+
 	protected int convertKeypadToKey(int kpKey, byte shiftMask) {
 		boolean isShifted = (shiftMask & MASK_SHIFT) != 0;
 		boolean isNumLock = (keyboardState.getLockMask() & MASK_NUM_LOCK) != 0;
+		boolean isScrollLock = (keyboardState.getLockMask() & MASK_SCROLL_LOCK) != 0;
 
 		int key = kpKey;
-		if (isShifted != isNumLock) {
+		if (!isNumLock && isScrollLock && useNumPadForJoystick.getBoolean()) {
+			int joy = isShifted ? 1 : 0;
+			switch (kpKey) {
+			case KEY_KP_ENTER:
+			case KEY_KP_INSERT:
+			case KEY_KP_0:
+				key = KEY_JOYST_FIRE + joy; break;
+			case KEY_KP_END:
+			case KEY_KP_1:
+				key = KEY_JOYST_DOWN_LEFT + joy; break;
+			case KEY_KP_ARROW_DOWN:
+			case KEY_KP_2:
+				key = KEY_JOYST_DOWN + joy; break;
+			case KEY_KP_PAGE_DOWN:
+			case KEY_KP_3:
+				key = KEY_JOYST_DOWN_RIGHT + joy; break;
+			case KEY_KP_ARROW_LEFT:
+			case KEY_KP_4:
+				key = KEY_JOYST_LEFT + joy; break;
+			case KEY_KP_SHIFT_5:
+			case KEY_KP_5:
+				key = KEY_JOYST_IDLE + joy; break;
+			case KEY_KP_ARROW_RIGHT:
+			case KEY_KP_6:
+				key = KEY_JOYST_RIGHT + joy; break;
+			case KEY_KP_HOME:
+			case KEY_KP_7:
+				key = KEY_JOYST_UP_LEFT + joy; break;
+			case KEY_KP_ARROW_UP:
+			case KEY_KP_8:
+				key = KEY_JOYST_UP + joy; break;
+			case KEY_KP_PAGE_UP:
+			case KEY_KP_9:
+				key = KEY_JOYST_UP_RIGHT + joy; break;
+			}
+		}
+		else if (isNumLock != isShifted) {
 			switch (kpKey) {
 			case KEY_KP_0:
 				key = KEY_KP_INSERT; break; 
@@ -482,40 +534,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			case KEY_KP_9:
 				key = KEY_KP_PAGE_UP; break;
 			}
-		} else if (useNumPadForJoystick.getBoolean()) {
-			switch (kpKey) {
-			case KEY_KP_INSERT:
-			case KEY_KP_0:
-				key = KEY_JOYST_FIRE; break;
-			case KEY_KP_END:
-			case KEY_KP_1:
-				key = KEY_JOYST_DOWN_LEFT; break;
-			case KEY_KP_ARROW_DOWN:
-			case KEY_KP_2:
-				key = KEY_JOYST_DOWN; break;
-			case KEY_KP_PAGE_DOWN:
-			case KEY_KP_3:
-				key = KEY_JOYST_DOWN_RIGHT; break;
-			case KEY_KP_ARROW_LEFT:
-			case KEY_KP_4:
-				key = KEY_JOYST_LEFT; break;
-			case KEY_KP_SHIFT_5:
-			case KEY_KP_5:
-				key = KEY_JOYST_IDLE; break;
-			case KEY_KP_ARROW_RIGHT:
-			case KEY_KP_6:
-				key = KEY_JOYST_RIGHT; break;
-			case KEY_KP_HOME:
-			case KEY_KP_7:
-				key = KEY_JOYST_UP_LEFT; break;
-			case KEY_KP_ARROW_UP:
-			case KEY_KP_8:
-				key = KEY_JOYST_UP; break;
-			case KEY_KP_PAGE_UP:
-			case KEY_KP_9:
-				key = KEY_JOYST_UP_RIGHT; break;
-			}
-		}
+		} 
 		return key;
 	}
 

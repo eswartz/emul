@@ -77,6 +77,7 @@ public interface IKeyboardState {
 
 	void setLockMask(byte locks);
 	byte getLockMask();
+	boolean isLock(byte locks);
 
 	void addKeyboardListener(IKeyboardListener listener);
 	void removeKeyboardListener(IKeyboardListener listener);

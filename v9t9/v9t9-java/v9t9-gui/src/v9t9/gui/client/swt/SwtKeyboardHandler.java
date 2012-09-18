@@ -3,6 +3,8 @@
  */
 package v9t9.gui.client.swt;
 
+import static v9t9.common.keyboard.KeyboardConstants.*;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -16,14 +18,11 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
-import ejs.base.utils.HexUtils;
-
 import v9t9.common.client.IVideoRenderer;
-import v9t9.common.events.IEventNotifier;
 import v9t9.common.keyboard.BaseKeyboardHandler;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
-import static v9t9.common.keyboard.KeyboardConstants.*;
+import ejs.base.utils.HexUtils;
 
 /**
  * SWT keyboard control. 
@@ -299,15 +298,6 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			}
 			
 		});
-		
-	}
-
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.client.IKeyboardHandler#setEventNotifier(v9t9.common.events.IEventNotifier)
-	 */
-	@Override
-	public void setEventNotifier(IEventNotifier notifier) {
 		
 	}
 

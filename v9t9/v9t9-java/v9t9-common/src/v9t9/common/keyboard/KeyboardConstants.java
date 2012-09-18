@@ -136,15 +136,16 @@ public final class KeyboardConstants {
 	public static final int KEY_F11 = 180;
 	public static final int KEY_F12 = 181;
 	
+	// odd are joy #2
 	public static final int KEY_JOYST_UP = 182;
-	public static final int KEY_JOYST_DOWN = 183;
-	public static final int KEY_JOYST_LEFT = 184;
-	public static final int KEY_JOYST_RIGHT = 185;
-	public static final int KEY_JOYST_UP_LEFT = 186;
-	public static final int KEY_JOYST_UP_RIGHT = 187;
-	public static final int KEY_JOYST_DOWN_LEFT = 188;
-	public static final int KEY_JOYST_DOWN_RIGHT = 189;
-	public static final int KEY_JOYST_FIRE = 190;
-	public static final int KEY_JOYST_IDLE = 191;
+	public static final int KEY_JOYST_DOWN = 184;
+	public static final int KEY_JOYST_LEFT = 186;
+	public static final int KEY_JOYST_RIGHT = 188;
+	public static final int KEY_JOYST_UP_LEFT = 190;
+	public static final int KEY_JOYST_UP_RIGHT = 192;
+	public static final int KEY_JOYST_DOWN_LEFT = 194;
+	public static final int KEY_JOYST_DOWN_RIGHT = 196;
+	public static final int KEY_JOYST_FIRE = 198;
+	public static final int KEY_JOYST_IDLE = 200;
 
 }
