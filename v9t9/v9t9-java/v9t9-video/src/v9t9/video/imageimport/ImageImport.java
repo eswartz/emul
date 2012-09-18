@@ -118,8 +118,28 @@ public class ImageImport {
 		/* 14 */ { (byte) 0xc0, (byte) 0xc0, (byte) 0xc0 },
 		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
 	};
+	protected static final byte[][] niceColorPalette = {
+		/* 0 */ { 0x00, 0x00, 0x00 }, 
+		/* 1 */ { 0x00, 0x00, 0x00 },
+		/* 2 */ { 0x40, (byte) 0xb0, 0x40 }, 
+		/* 3 */ { 0x60, (byte) 0xc0, 0x60 },
+		/* 4 */ { 0x40, 0x40, (byte) 0xc0 }, 
+		/* 5 */ { 0x60, 0x60, (byte) 0xf0 },
+		/* 6 */ { (byte) 0xc0, 0x40, 0x40 }, 
+		/* 7 */ { 0x40, (byte) 0xf0, (byte) 0xf0 },
+		/* 8 */ { (byte) 0xf0, 0x40, 0x40 }, 
+		/* 9 */ { (byte) 0xff, (byte) 0x80, 0x60 },
+		/* 10 */ { (byte) 0xf0, (byte) 0xc0, 0x40 },
+		/* 11 */ { (byte) 0xff, (byte) 0xe0, 0x60 }, 
+		/* 12 */ { 0x40, (byte) 0x80, 0x40 },
+		/* 13 */ { (byte) 0xc0, 0x40, (byte) 0xc0 },
+		/* 14 */ { (byte) 0xd0, (byte) 0xd0, (byte) 0xd0 },
+		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
+	};
 
 	private boolean supportsSetPalette;
+
+	private boolean convertGreyScale;
 
 	public ImageImport(ImageDataCanvas canvas, boolean supportsSetPalette) {
 		this.canvas = canvas;
@@ -496,8 +516,13 @@ public class ImageImport {
 				}
 				
 				if (isStandardPalette) {
-					mapColor = new TI16MapColor(thePalette);
-					//mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, isGreyScale);
+//					for (int i = 0; i < 16; i++) {
+//						System.arraycopy(niceColorPalette[i], 0, thePalette[i], 0, 3);
+//					}
+					if (convertGreyScale)
+						mapColor = new TI16MapColor(thePalette, true);
+					else
+						mapColor = new UserPaletteMapColor(thePalette, 1, 16, useColorMappedGreyScale);
 				}
 				else
 					mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
@@ -526,7 +551,7 @@ public class ImageImport {
 			mapColor = new RGB332MapColor(useColorMappedGreyScale);
 		}
 		else if (format == VdpFormat.COLOR16_8x8) {
-			mapColor = new TI16MapColor(thePalette);
+			mapColor = new TI16MapColor(thePalette, useColorMappedGreyScale);
 		}
 		else {
 			return;
@@ -538,10 +563,10 @@ public class ImageImport {
 
 		IPaletteColorMapper colorMapper = mapColor;
 		
-		if (false && ditherType != Dither.NONE && format == VdpFormat.COLOR16_8x1) {
-			prepareBitmapModeColors(img, mapColor);
-			colorMapper = new BitmapDitherColorMapper(mapColor);
-		}
+//		if (ditherType != Dither.NONE && format == VdpFormat.COLOR16_8x1) {
+//			prepareBitmapModeColors(img, mapColor);
+//			colorMapper = new BitmapDitherColorMapper(mapColor);
+//		}
 		
 		if (ditherType == Dither.FS) {
 			ditherFloydSteinberg(img, colorMapper, hist, false);
@@ -1177,7 +1202,7 @@ public class ImageImport {
 			if (sorted.size() >= 2) {
 				if (sorted.get(0).second + sorted.get(1).second < 4) {
 					// eek, need to pick dominant colors
-					int min = 255;
+					int min = Integer.MAX_VALUE;
 					int max = 0;
 					int avg = 0;
 					
@@ -1646,6 +1671,7 @@ public class ImageImport {
 
 		if (options.isAsGreyScale()) {
 			convertGreyscale(scaled);
+			convertGreyScale = true;
 		}
 		
 		canSetPalette = options.isOptimizePalette();

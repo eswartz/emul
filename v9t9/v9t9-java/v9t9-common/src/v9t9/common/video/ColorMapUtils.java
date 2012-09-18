@@ -124,16 +124,16 @@ public class ColorMapUtils {
 	}
 
 	public static int getRGBDistance(byte[] rgb, int pixel) {
-		int dr = ((pixel & 0xff0000) >> 16) - (rgb[0] & 0xff);
-		int dg = ((pixel & 0x00ff00) >> 8) - (rgb[1] & 0xff);
-		int db = ((pixel & 0x0000ff) >> 0) - (rgb[2] & 0xff);
-		return dr * dr + dg * dg + db * db;
+		int dr = (pixel >> 16 & 0xff) - (rgb[0] & 0xff);
+		int dg = (pixel >> 8 & 0xff) - (rgb[1] & 0xff);
+		int db = (pixel >> 0 & 0xff) - (rgb[2] & 0xff);
+		return 30 * dr * dr + 59 * dg * dg + 11 * db * db;
 	}
 	public static int getPixelDistance(int pixel, int newRGB) {
-		int dr = ((pixel & 0xff0000) - (newRGB & 0xff0000)) >> 16;
-		int dg = ((pixel & 0x00ff00) - (newRGB & 0x00ff00)) >> 8;
-		int db = ((pixel & 0x0000ff) - (newRGB & 0x0000ff)) >> 0;
-		return dr * dr + dg * dg + db * db;
+		int dr = (pixel >> 16 & 0xff) - (newRGB >> 16 & 0xff);
+		int dg = (pixel >> 8 & 0xff) - (newRGB >> 8 & 0xff);
+		int db = (pixel >> 0 & 0xff) - (newRGB >> 0 & 0xff);
+		return 30 * dr * dr + 59 * dg * dg + 11 * db * db;
 	}
 	public static int getRGBLumDistance(byte[] rgb, int pixel) {
 		int p = getPixelLum(pixel);
@@ -241,7 +241,7 @@ public class ColorMapUtils {
 		if (phsv[1] < (phsv[0] >= 30 && phsv[0] < 75 ? 0.66f : 0.33f)) {
 			float[] hsv = { 0, 0, 0 };
 			int whiteColor = -1, blackColor = -1;
-			float whiteVal = Float.MAX_VALUE;
+			float whiteVal = -Float.MAX_VALUE;
 			float blackVal = Float.MAX_VALUE;
 			for (int c = first; c < count; c++) {
 				if (c != exceptFor) {

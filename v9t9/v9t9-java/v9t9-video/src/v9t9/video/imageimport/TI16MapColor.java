@@ -6,9 +6,13 @@ import v9t9.common.video.ColorMapUtils;
 import ejs.base.utils.Pair;
 
 class TI16MapColor extends BasePaletteMapper {
+	final int white = 15;
+	final int black = 1;
+	final int grey = 14;
+	//final int darkGreen = 12;
 	
-	public TI16MapColor(byte[][] thePalette) {
-		super(thePalette, 1, 16, false, false);
+	public TI16MapColor(byte[][] thePalette, boolean useColorMappedGreyScale) {
+		super(thePalette, 1, 16, false, useColorMappedGreyScale);
 	}
 	
 	/* (non-Javadoc)
@@ -62,14 +66,23 @@ class TI16MapColor extends BasePaletteMapper {
 	 * @return pair of index and distance
 	 */
 	private Pair<Integer, Integer> getCloseColor(int pixel) {
+		int closest = -1;
+		int mindiff = -1;
+
 		if (isGreyscale) {
-			return ColorMapUtils.getClosestColorByLumDistance(palette, firstColor, numColors, pixel);
+			int lum = ColorMapUtils.getPixelLum(pixel);
+			if (lum >= 90) {
+				closest = white;
+			} else if (lum >= 70) {
+				// dithering will take care of the rest
+				closest = grey;
+			} else  {
+				closest = black;
+			}
+			mindiff = ColorMapUtils.getRGBDistance(palette[closest], pixel);
+			return new Pair<Integer, Integer>(closest, mindiff);
 		}
 		
-		final int white = 15;
-		final int black = 1;
-		final int grey = 14;
-		final int darkGreen = 12;
 		
 		float[] phsv = { 0, 0, 0 };
 		ColorMapUtils.rgbToHsv((pixel & 0xff0000) >> 16, (pixel & 0x00ff00) >> 8, (pixel & 0xff), phsv);
@@ -77,17 +90,15 @@ class TI16MapColor extends BasePaletteMapper {
 		float hue = phsv[0];
 		float val = phsv[2] * 100 / 256;
 
-		int closest = -1;
-		int mindiff;
 
 		
-		if (phsv[1] < (hue >= 30 && hue < 75 ? 0.66f : 0.33f)) {
-			if (val >= 70) {
+		if (phsv[1] < (hue >= 30 && hue < 75 ? 0.4f : 0.2f)) {
+			if (val >= 80) {
 				closest = white;
-			} else if (val >= 25) {
+			} else if (val >= 50) {
 				// dithering will take care of the rest
 				closest = grey;
-			} else {
+			} else  {
 				closest = black;
 			}
 			mindiff = ColorMapUtils.getRGBDistance(palette[closest], pixel);
@@ -95,31 +106,33 @@ class TI16MapColor extends BasePaletteMapper {
 		else {
 			Pair<Integer, Integer> info = ColorMapUtils.getClosestColorByDistanceAndHSV(
 					palette, firstColor, 16, pixel, -1);
+//			Pair<Integer, Integer> info = ColorMapUtils.getClosestColorByDistance(
+//					palette, firstColor, 16, pixel, -1);
 			
 			closest = info.first; mindiff = info.second;
-			if (!isGreyscale) {
-				if (closest == darkGreen) {
-					if (phsv[1] < 0.5f) {
-						closest = black;
-						mindiff = ColorMapUtils.getRGBDistance(palette[closest], pixel);
-					}
-				}
-				// see how the color matches
-				else if (false && closest == black) {
-					if (phsv[1] > 0.9f && val >= 25) {
-						if ((hue >= 90 && hue < 140) && (val >= 5 && val <= 33)) {
-							closest = 12;
-							mindiff = ColorMapUtils.getRGBDistance(palette[closest], pixel);
-						}
-					}
-				}
-				/*else {
-					int rigid = rigidMatch(phsv, hue, val);
-					if (phsv[1] < 0.5f && (rigid == 1 || rigid == 14 || rigid == 15)) {
-						closest = rigid;
-					}
-				}*/
-			}
+//			if (!isGreyscale) {
+//				if (false && closest == darkGreen) {
+//					if (phsv[1] < 0.5f) {
+//						closest = black;
+//						mindiff = ColorMapUtils.getRGBDistance(palette[closest], pixel);
+//					}
+//				}
+//				// see how the color matches
+//				else if (false && closest == black) {
+//					if (phsv[1] > 0.9f && val >= 25) {
+//						if ((hue >= 90 && hue < 140) && (val >= 5 && val <= 33)) {
+//							closest = 12;
+//							mindiff = ColorMapUtils.getRGBDistance(palette[closest], pixel);
+//						}
+//					}
+//				}
+//				/*else {
+//					int rigid = rigidMatch(phsv, hue, val);
+//					if (phsv[1] < 0.5f && (rigid == 1 || rigid == 14 || rigid == 15)) {
+//						closest = rigid;
+//					}
+//				}*/
+//			}
 		}
 		
 		//closest = rigidMatch(phsv, hue, val);
