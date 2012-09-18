@@ -275,6 +275,8 @@ public class KeyboardState implements IKeyboardState {
 		registerMapping(KEY_KP_7, '7');
 		registerMapping(KEY_KP_8, '8');
 		registerMapping(KEY_KP_9, '9');
+		
+		registerMapping(KEY_KP_SHIFT_5);
 	}
 		
 	/* (non-Javadoc)
