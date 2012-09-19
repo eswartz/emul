@@ -9,10 +9,12 @@ class TI16MapColor extends BasePaletteMapper {
 	final int white = 15;
 	final int black = 1;
 	final int grey = 14;
+	private boolean isGreyscale;
 	//final int darkGreen = 12;
 	
-	public TI16MapColor(byte[][] thePalette, boolean useColorMappedGreyScale) {
+	public TI16MapColor(byte[][] thePalette, boolean useColorMappedGreyScale, boolean isGreyScale) {
 		super(thePalette, 1, 16, false, useColorMappedGreyScale);
+		this.isGreyscale = isGreyScale;
 	}
 	
 	/* (non-Javadoc)
@@ -71,9 +73,9 @@ class TI16MapColor extends BasePaletteMapper {
 
 		if (isGreyscale) {
 			int lum = ColorMapUtils.getPixelLum(pixel);
-			if (lum >= 90) {
+			if (lum >= 192) {
 				closest = white;
-			} else if (lum >= 70) {
+			} else if (lum >= 96) {
 				// dithering will take care of the rest
 				closest = grey;
 			} else  {

@@ -22,7 +22,7 @@ class RGB333MapColor extends BasePaletteMapper {
 		
 		byte[] rgbs = getRGB33x(r, g, b);
 		
-		if (isGreyscale)
+		if (isColorMappedGreyscale)
 			dist[0] = ColorMapUtils.getRGBLumDistance(rgbs, pixel);
 		else
 			dist[0] = ColorMapUtils.getRGBDistance(rgbs, pixel);
@@ -35,7 +35,7 @@ class RGB333MapColor extends BasePaletteMapper {
 
 	protected byte[] getRGB33x(int r, int g, int b) {
 		byte[] rgbs;
-		if (!isGreyscale) {
+		if (!isColorMappedGreyscale) {
 			rgbs = ColorMapUtils.getGRB333(g, r, b);
 		} else {
 			// (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
@@ -56,7 +56,7 @@ class RGB333MapColor extends BasePaletteMapper {
 	public int getClosestPaletteEntry(int x, int y, int pixel) {
 		int closest = -1;
 		int mindiff = Integer.MAX_VALUE;
-		if (isGreyscale) {
+		if (isColorMappedGreyscale) {
 			for (int c = firstColor; c < numColors; c++) {
 				int dist = ColorMapUtils.getRGBLumDistance(palette[c], pixel);
 				if (dist < mindiff) {

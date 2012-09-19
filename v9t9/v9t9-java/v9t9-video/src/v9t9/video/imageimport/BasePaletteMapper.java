@@ -4,35 +4,35 @@ import v9t9.common.video.ColorMapUtils;
 
 abstract class BasePaletteMapper implements IPaletteMapper {
 	private final boolean canSetPalette;
-	private int minDist;
+//	private int minDist;
 	protected byte[][] palette;
 	protected int numColors;
 	protected int firstColor;
-	protected final boolean isGreyscale;
+	protected final boolean isColorMappedGreyscale;
 	
 	protected int[] palettePixels;
 
 	public BasePaletteMapper(byte[][] palette, int firstColor, int numColors, boolean canSetPalette, boolean isGreyscale) {
 		this.palette = palette;
-		this.isGreyscale = isGreyscale;
+		this.isColorMappedGreyscale = isGreyscale;
 		
 		this.firstColor = firstColor;
 		this.numColors = numColors;
 		this.canSetPalette = canSetPalette;
 		
-		minDist = Integer.MAX_VALUE;
-		for (int c = 0; c < numColors; c++) {
-			int cpixel = ColorMapUtils.rgb8ToPixel(palette[c]);
-			for (int d = c + 1; d < numColors; d++) {
-				int dist;
-				if (!isGreyscale)
-					dist = ColorMapUtils.getRGBDistance(palette[d], cpixel);
-				else
-					dist = ColorMapUtils.getRGBLumDistance(palette[d], cpixel);
-				if (dist > 0 && dist < minDist)
-					minDist = dist;
-			}
-		}
+//		minDist = Integer.MAX_VALUE;
+//		for (int c = 0; c < numColors; c++) {
+//			int cpixel = ColorMapUtils.rgb8ToPixel(palette[c]);
+//			for (int d = c + 1; d < numColors; d++) {
+//				int dist;
+//				if (!isGreyscale)
+//					dist = ColorMapUtils.getRGBDistance(palette[d], cpixel);
+//				else
+//					dist = ColorMapUtils.getRGBLumDistance(palette[d], cpixel);
+//				if (dist > 0 && dist < minDist)
+//					minDist = dist;
+//			}
+//		}
 		
 	}
 	
@@ -78,7 +78,7 @@ abstract class BasePaletteMapper implements IPaletteMapper {
 			
 			for (int x = 0; x < numColors; x++) {
 				byte[] nrgb = palette[x];
-				if (isGreyscale)
+				if (isColorMappedGreyscale)
 					nrgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(nrgb);
 				palettePixels[x] = ColorMapUtils.rgb8ToPixel(nrgb);
 			}

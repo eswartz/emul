@@ -127,13 +127,13 @@ public class ColorMapUtils {
 		int dr = (pixel >> 16 & 0xff) - (rgb[0] & 0xff);
 		int dg = (pixel >> 8 & 0xff) - (rgb[1] & 0xff);
 		int db = (pixel >> 0 & 0xff) - (rgb[2] & 0xff);
-		return 30 * dr * dr + 59 * dg * dg + 11 * db * db;
+		return (30 * dr * dr + 59 * dg * dg + 11 * db * db) / 100;
 	}
 	public static int getPixelDistance(int pixel, int newRGB) {
 		int dr = (pixel >> 16 & 0xff) - (newRGB >> 16 & 0xff);
 		int dg = (pixel >> 8 & 0xff) - (newRGB >> 8 & 0xff);
 		int db = (pixel >> 0 & 0xff) - (newRGB >> 0 & 0xff);
-		return 30 * dr * dr + 59 * dg * dg + 11 * db * db;
+		return (30 * dr * dr + 59 * dg * dg + 11 * db * db) / 100;
 	}
 	public static int getRGBLumDistance(byte[] rgb, int pixel) {
 		int p = getPixelLum(pixel);

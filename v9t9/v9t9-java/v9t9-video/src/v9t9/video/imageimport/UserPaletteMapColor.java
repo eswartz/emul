@@ -33,7 +33,7 @@ class UserPaletteMapColor extends BasePaletteMapper {
 	 * @return
 	 */
 	private Pair<Integer, Integer> getCloseColor(int pixel) {
-		if (isGreyscale) {
+		if (isColorMappedGreyscale) {
 			return ColorMapUtils.getClosestColorByLumDistance(palette, firstColor, numColors, pixel);
 		}
 		return ColorMapUtils.getClosestColorByDistance(palette, firstColor, numColors, pixel, -1);

@@ -21,7 +21,7 @@ class RGB332MapColor extends RGB333MapColor {
 
 	protected byte[] getRGB33x(int r, int g, int b) {
 		byte[] rgbs;
-		if (!isGreyscale) {
+		if (!isColorMappedGreyscale) {
 			rgbs = ColorMapUtils.getGRB332(g, r, b >> 1);
 		} else {
 			// (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
@@ -66,7 +66,7 @@ class RGB332MapColor extends RGB333MapColor {
 	@Override
 	public int getClosestPaletteEntry(int x, int y, int pixel) {
 		// we don't need to trawl the palette here
-		if (isGreyscale) {
+		if (isColorMappedGreyscale) {
 			pixel = ColorMapUtils.getPixelForGreyscaleMode(pixel);
 		}
 		

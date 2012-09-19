@@ -520,7 +520,7 @@ public class ImageImport {
 //						System.arraycopy(niceColorPalette[i], 0, thePalette[i], 0, 3);
 //					}
 					if (convertGreyScale)
-						mapColor = new TI16MapColor(thePalette, true);
+						mapColor = new TI16MapColor(thePalette, false, true);
 					else
 						mapColor = new UserPaletteMapColor(thePalette, 1, 16, useColorMappedGreyScale);
 				}
@@ -551,7 +551,7 @@ public class ImageImport {
 			mapColor = new RGB332MapColor(useColorMappedGreyScale);
 		}
 		else if (format == VdpFormat.COLOR16_8x8) {
-			mapColor = new TI16MapColor(thePalette, useColorMappedGreyScale);
+			mapColor = new TI16MapColor(thePalette, useColorMappedGreyScale, convertGreyScale);
 		}
 		else {
 			return;
