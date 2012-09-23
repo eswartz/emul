@@ -48,10 +48,11 @@ public class ColorOctree {
 				(blues / pixelCount) 
 			};
 		}
-		public void add(int[] prgb) {
-			reds += prgb[0];
-			greens += prgb[1];
-			blues += prgb[2];
+		public void add(int[] prgb, int componentMask) {
+			int offs = (~componentMask+1)>>1;
+			reds += (Math.max(0, Math.min(255, prgb[0] + offs))) & componentMask;
+			greens +=  (Math.max(0, Math.min(255, prgb[1] + offs)))& componentMask;
+			blues +=  (Math.max(0, Math.min(255, prgb[2] + offs))) & componentMask;
 			pixelCount++;
 			
 			Node n = parent;
@@ -109,6 +110,7 @@ public class ColorOctree {
 	private int maxRed;
 	private int maxGreen;
 	private int maxBlue;
+	private int componentMask;
 
 	@SuppressWarnings("unchecked")
 	public ColorOctree(int maxDepth, boolean removeDetail, boolean usingHSV) {
@@ -116,6 +118,7 @@ public class ColorOctree {
 			throw new IllegalArgumentException();
 		
 		this.maxDepth = maxDepth;
+		componentMask = ~0 << maxDepth;
 		root = new InnerNode(null);
 		comparator = (removeDetail ?
 				createLeastUsedFirstComparator() : createMostUsedFirstComparator());
@@ -199,7 +202,7 @@ public class ColorOctree {
 				reducibleLists[depth].add((InnerNode) kid);
 			} else {
 				LeafNode leaf = new LeafNode(traverse);
-				leaf.add(prgb);
+				leaf.add(prgb, componentMask);
 				leafCount++;
 				traverse.kids[index]= leaf;
 				kid = leaf;
@@ -207,7 +210,7 @@ public class ColorOctree {
 		}
 		else if (kid instanceof LeafNode) {
 			LeafNode leaf = (LeafNode) kid;
-			leaf.add(prgb);
+			leaf.add(prgb, componentMask);
 		} else {
 			// is inner node
 		}
@@ -395,5 +398,12 @@ public class ColorOctree {
 			else if (k instanceof LeafNode)
 				nodes.add((LeafNode) k);
 		}
+	}
+
+	/**
+	 * @return
+	 */
+	public int getComponentMask() {
+		return componentMask;
 	}
 }
