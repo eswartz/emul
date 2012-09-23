@@ -39,10 +39,6 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.settings.ISettingProperty;
-
 import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.Catalog;
@@ -52,6 +48,10 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.ISettingDecorator;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.gui.client.swt.bars.ImageBar;
+import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingProperty;
 
 /**
  * Select and set up disks

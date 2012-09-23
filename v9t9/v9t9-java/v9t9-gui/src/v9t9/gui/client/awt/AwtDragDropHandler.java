@@ -38,7 +38,10 @@ import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.graphics.ImageData;
 import org.ejs.gui.images.AwtImageUtils;
 
+
 import v9t9.common.video.ICanvas;
+import v9t9.gui.client.swt.svg.SVGException;
+import v9t9.gui.client.swt.svg.SVGSalamanderLoader;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageImport;
 
@@ -183,6 +186,13 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 		Transferable transferable = dtde.getTransferable();
 		BufferedImage image = null;
 
+		if (imageImportSupport == null) {
+			imageImportSupport = new AwtImageImportSupport(
+					(ImageDataCanvas) renderer.getCanvas(), renderer.getVdpHandler(), renderer);
+			imageImportSupport.resetOptions();
+		}
+		
+
 		DataFlavor[] flavors = dtde.getCurrentDataFlavors();
 		/*
 		 * for (DataFlavor flavor : flavors) { System.out.println(flavor); }
@@ -216,6 +226,21 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 					return;
 				}
 				image = ImageIO.read(url.openStream());
+				
+				if (image == null) {
+					SVGSalamanderLoader loader = new SVGSalamanderLoader(url);
+					try {
+						image = loader.getImageData(loader.getSize());
+						imageImportSupport.getHistory().add(url.toString());
+					} catch (SVGException e2) {
+						System.err.println( 
+								"Could not load '" +
+										url + "' (" + e2.getMessage() + ")" );
+						return ;
+					}
+				}
+
+				
 				if (image == null) {
 					System.err.println("Failed to load image from " + url);
 					return;
@@ -243,12 +268,6 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 			return;
 		}
 		//System.out.println(image);
-		
-		if (imageImportSupport == null) {
-			imageImportSupport = new AwtImageImportSupport(
-					(ImageDataCanvas) renderer.getCanvas(), renderer.getVdpHandler(), renderer);
-			imageImportSupport.resetOptions();
-		}
 		
 		imageImportSupport.importImage(image, true);
 		

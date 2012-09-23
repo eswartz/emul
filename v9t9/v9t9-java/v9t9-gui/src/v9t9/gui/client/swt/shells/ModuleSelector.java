@@ -93,9 +93,6 @@ import org.eclipse.swt.widgets.TreeColumn;
 import org.ejs.gui.common.FontUtils;
 import org.ejs.gui.common.SwtDialogUtils;
 
-import ejs.base.settings.DialogSettingsWrapper;
-import ejs.base.settings.ISettingSection;
-
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
@@ -108,8 +105,11 @@ import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageBar;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
+import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageAdjuster;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
+import ejs.base.settings.DialogSettingsWrapper;
+import ejs.base.settings.ISettingSection;
 
 /**
  * @author ejs

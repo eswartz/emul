@@ -17,6 +17,7 @@ public class AwtImageImportSupport extends ImageImportHandler {
 		this.canvas = canvas;
 		this.vdp = vdp;
 		this.videoRenderer = videoRenderer;
+		getImageImportOptions();
 	}
 
 	@Override

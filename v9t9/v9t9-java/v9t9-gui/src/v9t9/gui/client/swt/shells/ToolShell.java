@@ -19,14 +19,13 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.ejs.gui.common.SwtPrefUtils;
 
-import ejs.base.properties.IProperty;
-import ejs.base.settings.SettingProperty;
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.gui.client.swt.IFocusRestorer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.shells.IToolShellFactory.Behavior;
 import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.SettingProperty;
 
 public class ToolShell {
 	private Point desiredLocation; 

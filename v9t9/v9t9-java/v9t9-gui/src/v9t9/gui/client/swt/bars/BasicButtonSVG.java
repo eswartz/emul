@@ -3,6 +3,7 @@
  */
 package v9t9.gui.client.swt.bars;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Event;
 
+import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.svg.ISVGLoader;
 import v9t9.gui.client.swt.svg.SVGException;
 
@@ -152,7 +154,8 @@ class BasicButtonSVG extends ImageBarChild {
 			if (overlayImage != null)
 				overlayImage.dispose();
 			try {
-				overlayImage = new Image(getDisplay(), icon.getImageData(overlayBounds, getSize()));
+				BufferedImage img = icon.getImageData(overlayBounds, getSize());
+				overlayImage = new Image(getDisplay(), ImageUtils.convertAwtImageData(img));
 			} catch (SVGException e) {
 				e.printStackTrace();
 			}
@@ -166,7 +169,8 @@ class BasicButtonSVG extends ImageBarChild {
 			if (image != null)
 				image.dispose();
 			try {
-				image = new Image(getDisplay(), icon.getImageData(bounds, getSize()));
+				BufferedImage img = icon.getImageData(bounds, getSize());
+				image = new Image(getDisplay(), ImageUtils.convertAwtImageData(img));
 			} catch (SVGException e) {
 				e.printStackTrace();
 			}

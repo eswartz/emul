@@ -71,6 +71,9 @@ public class SWTImageTranscoder extends ImageTranscoder {
     	return new Image(device, data);
     }
 
+    public BufferedImage getBufferedImage() {
+    	return img_;
+    }
     /**
      * Get the image generated from the transcode operation.
      * This constructs a new, non-owned Image each time it is called. 

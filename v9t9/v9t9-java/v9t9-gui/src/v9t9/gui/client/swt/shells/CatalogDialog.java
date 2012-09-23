@@ -25,12 +25,11 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
-import ejs.base.properties.IProperty;
-
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
 import v9t9.common.machine.IMachine;
+import ejs.base.properties.IProperty;
 
 final class CatalogDialog extends Dialog {
 	private static final int COLUMN_NAME = 0;

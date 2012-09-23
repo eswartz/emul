@@ -12,7 +12,7 @@ import org.eclipse.swt.widgets.Composite;
 
 import v9t9.gui.client.swt.bars.IImageBar;
 import v9t9.gui.client.swt.bars.MultiImageSizeProvider;
-
+import v9t9.gui.client.swt.imageimport.ImageUtils;
 import ejs.base.utils.Pair;
 
 
@@ -114,7 +114,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 			
 			long start = System.currentTimeMillis();
 			
-			scaledImageData = svgLoader.getImageData(scaledSize);
+			scaledImageData = ImageUtils.convertAwtImageData(svgLoader.getImageData(scaledSize));
 			long end = System.currentTimeMillis();
 			if (DEBUG)
 				System.out.println("Loaded " + svgLoader.getURI() + " @ " + scaledSize + ": " + (end - start) + " ms");

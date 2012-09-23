@@ -46,6 +46,8 @@ import v9t9.common.video.ICanvas;
 import v9t9.common.video.VdpFormat;
 import v9t9.gui.client.swt.imageimport.IImageImportHandler;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
+import v9t9.gui.client.swt.svg.SVGException;
+import v9t9.gui.client.swt.svg.SVGSalamanderLoader;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageImport;
 
@@ -408,6 +410,12 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 
 	public static Pair<BufferedImage, Boolean> loadImageFromFile(IEventNotifier notifier, String file) {
 		Pair<BufferedImage, Boolean> info = null;
+		URL url;
+		try {
+			url = new File(file).toURI().toURL();
+		} catch (MalformedURLException e4) {
+			return null;
+		}
 		try {
 			ImageLoader imgLoader = new ImageLoader();
 			ImageData[] datas = imgLoader.load(file);
@@ -417,17 +425,32 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		} catch (SWTException e) {
 			BufferedImage img;
 			try {
-				img = ImageIO.read(new File(file));
+				img = ImageIO.read(url);
 				if (img != null)
 					info = new Pair<BufferedImage, Boolean>(img, false);
 			} catch (IOException e1) {
-				notifier.notifyEvent(null, Level.ERROR, 
-						"Could not load '" +
-						file + "' (" + e1.getMessage() + ")" );
-				return null;
 			}
 		}
 
+		if (info == null) {
+			SVGSalamanderLoader loader = new SVGSalamanderLoader(url);
+			try {
+				BufferedImage img = loader.getImageData(loader.getSize());
+				if (false) {
+					//BufferedImage img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+					info = new Pair<BufferedImage, Boolean>(img, false);
+				} else {
+					// hmm... something about the AWT-ness makes it impossible to clip properly
+					ImageData data = ImageUtils.convertAwtImageData(img);
+					info = ImageUtils.convertToBufferedImage(data);
+				}
+			} catch (SVGException e2) {
+				notifier.notifyEvent(null, Level.ERROR, 
+						"Could not load '" +
+								file + "' (" + e2.getMessage() + ")" );
+				return null;
+			}
+		}
 		if (info == null)
 			notifier.notifyEvent(null, Level.ERROR, 
 					"Image format not recognized for '" +

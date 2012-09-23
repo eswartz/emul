@@ -67,9 +67,9 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.TreeItem;
 import org.ejs.gui.common.FontUtils;
 import org.ejs.gui.common.SwtDialogUtils;
@@ -83,6 +83,7 @@ import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageBar;
+import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 

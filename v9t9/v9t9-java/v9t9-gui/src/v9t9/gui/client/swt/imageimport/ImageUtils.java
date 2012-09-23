@@ -805,8 +805,8 @@ public abstract class ImageUtils {
         int w = img_.getWidth();
         int h = img_.getHeight();
 
-		// this is the palette AWT uses
-        PaletteData pal = new PaletteData(0xFF00, 0xFF0000, 0xFF000000);
+        PaletteData pal;
+        pal = new PaletteData(0xFF0000, 0xFF00, 0xFF);
 
         ImageData data = new ImageData(w, h, 32, pal);
 
@@ -819,10 +819,10 @@ public abstract class ImageUtils {
             img_.getRGB(0, r, w, 1, pixels, 0, w);
             for (int c = 0; c < w; c++) {
                 /*
+                  0xff000000 // Alpha
                  0x00ff0000, // Red
                   0x0000ff00,   // Green
                   0x000000ff,   // Blue
-                  0xff000000 // Alpha
                   */
                 int defaultRGB = pixels[c];
                 int alpha = defaultRGB >>> 24;
@@ -830,7 +830,7 @@ public abstract class ImageUtils {
                 // move color components around
                 int R = ((defaultRGB >> 16) & 0xff); 
                 int G = ((defaultRGB >> 8) & 0xff); 
-                int B = (defaultRGB & 0xff);
+                int B = ((defaultRGB >> 0) & 0xff);
                 
                 // The colors are premultiplied.  Undo that.
                 if (isPremultiplied && alpha > 0) {
@@ -839,7 +839,8 @@ public abstract class ImageUtils {
                     B = B * 255 / alpha;
                 }
                 
-                pixels[c] = (R << 8) | (G << 16) | (B << 24);
+                //pixels[c] = (R << 8) | (G << 16) | (B << 24);
+                pixels[c] = (R << 16) | (G << 8) | (B << 0);
                 
                 alphas[c] = (byte) (defaultRGB >>> 24);
             }
@@ -855,7 +856,7 @@ public abstract class ImageUtils {
 	 * Create PaletteData for the standard 32-bit palette.
 	 */
 	public static PaletteData createStandardPaletteData() {
-		return new PaletteData(0xff000000, 0x00ff0000, 0x0000ff00);
+		return new PaletteData(0xff0000, 0x00ff00, 0x0000ff);
 	}
 
 	/**
@@ -1018,7 +1019,6 @@ public abstract class ImageUtils {
 	 */
 	public static Pair<BufferedImage, Boolean> convertToBufferedImage(ImageData data) {
 
-		// convert to AWT image -- don't scale with SWT, which is lame
 		BufferedImage img = new BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_ARGB);
 		int[] pix = new int[data.width * data.height];
 
@@ -1030,16 +1030,17 @@ public abstract class ImageUtils {
 			// apply palette..
 			for (int i = 0; i < pix.length; i++) {
 				RGB rgb = data.palette.colors[pix[i]]; 
-				pix[i] = (rgb.red << 16) | (rgb.green << 8) | (rgb.blue);
+				pix[i] = (rgb.red << 16) | (rgb.green << 8) | (rgb.blue << 0);
 			}
 		}
-		else if (data.palette.blueShift != 0) {
+		else {
 			// assume it was BGR
 			for (int i = 0; i < pix.length; i++) {
 				int p = pix[i];
-				int r = p & 0xff0000;
-				int b = p & 0xff;
-				pix[i] = (p & 0xff00) | (r >> 16) | (b << 16);
+				int r = (p >>> -data.palette.redShift) & 0xff;
+				int g = (p >>> -data.palette.greenShift) & 0xff;
+				int b = (p >>> -data.palette.blueShift) & 0xff;
+				pix[i] = (r << 16) | (g << 8) | (b << 0);
 			}
 		}
 		

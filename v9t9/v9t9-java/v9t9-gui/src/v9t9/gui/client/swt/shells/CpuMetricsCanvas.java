@@ -18,9 +18,9 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 
+import v9t9.common.cpu.CpuMetrics.IMetricsListener;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.MetricEntry;
-import v9t9.common.cpu.CpuMetrics.IMetricsListener;
 
 /**
  * @author Ed

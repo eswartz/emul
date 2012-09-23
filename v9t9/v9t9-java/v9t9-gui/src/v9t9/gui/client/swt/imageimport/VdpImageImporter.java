@@ -48,6 +48,8 @@ public class VdpImageImporter {
 	 * @param data
 	 */
 	private void setPalette() {
+		if (data == null)
+			return;
 		byte[][] thePalette = data.getThePalette();
 		VdpFormat format = canvas.getFormat();
 		

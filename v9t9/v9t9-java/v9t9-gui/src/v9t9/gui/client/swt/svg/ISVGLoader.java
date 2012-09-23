@@ -3,7 +3,8 @@
  */
 package v9t9.gui.client.swt.svg;
 
-import org.eclipse.swt.graphics.ImageData;
+import java.awt.image.BufferedImage;
+
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 
@@ -20,7 +21,7 @@ public interface ISVGLoader {
 	 * @param size the size to scale to, or null
 	 * @return new ImageData
 	 */
-	ImageData getImageData(Point size) throws SVGException;
+	BufferedImage getImageData(Point size) throws SVGException;
 
 	/**
 	 * Transcode and create an image from the SVG.
@@ -28,7 +29,7 @@ public interface ISVGLoader {
 	 * @param size the size to scale to, or null
 	 * @return new ImageData
 	 */
-	ImageData getImageData(Rectangle aoi, Point size) throws SVGException;
+	BufferedImage getImageData(Rectangle aoi, Point size) throws SVGException;
 
 	Point getSize();
 

@@ -1,5 +1,7 @@
 package v9t9.gui.client.swt.svg;
 
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -11,9 +13,9 @@ import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
-import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.ejs.gui.images.AwtImageUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -105,7 +107,7 @@ public class SVGBatikLoader implements ISVGLoader {
 	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#getImageData(org.eclipse.swt.graphics.Point)
 	 */
 	@Override
-	public ImageData getImageData(Point size) throws SVGException {
+	public BufferedImage getImageData(Point size) throws SVGException {
 		try {
 			if (document == null) {
 				document = getSvgDomFromFile(uri);
@@ -126,7 +128,7 @@ public class SVGBatikLoader implements ISVGLoader {
 	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#getImageData(org.eclipse.swt.graphics.Rectangle, org.eclipse.swt.graphics.Point)
 	 */
 	@Override
-	public ImageData getImageData(Rectangle aoi, Point size) throws SVGException {
+	public BufferedImage getImageData(Rectangle aoi, Point size) throws SVGException {
 		try {
 			if (document == null) {
 				document = getSvgDomFromFile(uri);
@@ -169,7 +171,7 @@ public class SVGBatikLoader implements ISVGLoader {
 		}
 	}
 
-    private ImageData load(TranscoderInput input, Point size)
+    private BufferedImage load(TranscoderInput input, Point size)
             throws TranscoderException {
 
     	//System.out.println("loading svg " + uri + " at " + size);
@@ -228,7 +230,7 @@ public class SVGBatikLoader implements ISVGLoader {
         // save the image
         trans.transcode(input, output);
 
-        ImageData imageData = trans.getImageData();
+        BufferedImage image = trans.getBufferedImage();
         
         // if the size is not what we expected, force it
         // (we may desire a different aspect ratio)
@@ -241,16 +243,16 @@ public class SVGBatikLoader implements ISVGLoader {
         }
         */
         
-        if (imageData != null && size.x > 0 && size.y > 0) {
-        	if (imageData.width != size.x || imageData.height != size.y) {
-        		imageData = ImageUtils.scaleImageData(imageData, size, false, false);
+        if (image != null && size.x > 0 && size.y > 0) {
+        	if (image.getWidth() != size.x || image.getHeight() != size.y) {
+        		image = AwtImageUtils.getScaledInstance(image, size.x, size.y, RenderingHints.VALUE_INTERPOLATION_BILINEAR, false);
         	}
         }
         
-        return imageData;
+        return image;
     }
 
-    private ImageData load(TranscoderInput input, Rectangle aoi, Point size)
+    private BufferedImage load(TranscoderInput input, Rectangle aoi, Point size)
 			throws TranscoderException {
 
     	//System.out.println("rendering svg " + aoi + " at " + size);
@@ -285,7 +287,7 @@ public class SVGBatikLoader implements ISVGLoader {
 		// save the image
 		trans.transcode(input, output);
 
-		ImageData imageData = trans.getImageData();
+		BufferedImage image = trans.getBufferedImage();
 
 		// if the size is not what we expected, force it
 		// (we may desire a different aspect ratio)
@@ -297,14 +299,14 @@ public class SVGBatikLoader implements ISVGLoader {
 		 * }
 		 */
 
-		if (imageData != null && size.x > 0 && size.y > 0) {
-			if (imageData.width != size.x || imageData.height != size.y) {
-				imageData = ImageUtils.scaleImageData(imageData, size, false,
-						false);
+		if (image != null && size.x > 0 && size.y > 0) {
+			if (image.getWidth() != size.x || image.getHeight() != size.y) {
+				image = AwtImageUtils.getScaledInstance(image, size.x, size.y, 
+						RenderingHints.VALUE_INTERPOLATION_BILINEAR, false);
 			}
 		}
 
-		return imageData;
+		return image;
 	}
     
     /**

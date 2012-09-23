@@ -17,13 +17,13 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
 import org.ejs.gui.common.SwtDialogUtils;
 
-import ejs.base.settings.ISettingProperty;
-
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageBar;
+import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
+import ejs.base.settings.ISettingProperty;
 
 /**
  * @author ejs

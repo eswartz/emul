@@ -46,11 +46,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.ejs.gui.common.FontUtils;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.settings.DialogSettingsWrapper;
-import ejs.base.settings.ISettingSection;
-
 import v9t9.common.InternetDefinitions;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
@@ -64,6 +59,10 @@ import v9t9.gui.client.swt.BrowserUtils;
 import v9t9.gui.client.swt.PathSelector;
 import v9t9.gui.client.swt.StyledTextHelper;
 import v9t9.gui.client.swt.SwtWindow;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.DialogSettingsWrapper;
+import ejs.base.settings.ISettingSection;
 
 /**
  * This tool shell shows up when a new configuration has

@@ -31,6 +31,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageBar;
+import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingProperty;
 

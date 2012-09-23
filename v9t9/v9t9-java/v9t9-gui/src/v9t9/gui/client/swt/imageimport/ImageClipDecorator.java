@@ -167,6 +167,7 @@ public class ImageClipDecorator implements PaintListener {
 	}
 
 	protected void publishClip(Rectangle clip) {
+		Object old = clipProperty.getValue();
 		if (clip == null) {
 			//System.out.println("Publishing clip: " + clip);
 			//importOptions.setClip(null);
@@ -181,8 +182,12 @@ public class ImageClipDecorator implements PaintListener {
 		}
 
 		// is hidden property
-		if (clipListener != null)
-			clipListener.propertyChanged(null);
+		if (clipListener != null) {
+			boolean newNull = clipProperty.getValue() == null;
+			boolean nonNull = old != null && clipProperty.getValue() != null;
+			if ((old != null && newNull) || (old == null && !newNull) || (nonNull &&  !old.equals(clipProperty.getValue())))
+				clipListener.propertyChanged(null);
+		}
 
 	}
 

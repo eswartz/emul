@@ -9,11 +9,8 @@ import java.awt.image.WritableRaster;
 import java.net.URI;
 import java.net.URL;
 
-import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-
-import v9t9.gui.client.swt.imageimport.ImageUtils;
 
 import com.kitfox.svg.SVGCache;
 import com.kitfox.svg.SVGDiagram;
@@ -29,7 +26,6 @@ public class SVGSalamanderLoader implements ISVGLoader {
 
     private URI uri;
 	private BufferedImage image;
-	private ImageData imageData;
 	private SVGUniverse universe;
 	private SVGDiagram diagram;
 
@@ -91,7 +87,7 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#getImageData(org.eclipse.swt.graphics.Point)
 	 */
 	@Override
-	public ImageData getImageData(Point size) throws SVGException {
+	public BufferedImage getImageData(Point size) throws SVGException {
 		try {
 			java.awt.Rectangle r = getNativeRect();
 			return load(new Rectangle(r.x, r.y, r.width, r.height), size);
@@ -113,7 +109,7 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#getImageData(org.eclipse.swt.graphics.Rectangle, org.eclipse.swt.graphics.Point)
 	 */
 	@Override
-	public ImageData getImageData(Rectangle aoi, Point size) throws SVGException {
+	public BufferedImage getImageData(Rectangle aoi, Point size) throws SVGException {
 		try {
 			return load(aoi, size);
 		} catch (Exception e) {
@@ -134,7 +130,7 @@ public class SVGSalamanderLoader implements ISVGLoader {
 		}
 	}
 
-    private ImageData load(Rectangle aoi, Point size) {
+    private BufferedImage load(Rectangle aoi, Point size) {
 
     	if (size.x == 0 || size.y == 0)
     		return null;
@@ -150,7 +146,6 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	    	image = new BufferedImage(size.x, 
 	    			size.y, 
 	    			BufferedImage.TYPE_4BYTE_ABGR);
-	    	imageData = null;
 	    	
 	    	diagram.setDeviceViewport(new java.awt.Rectangle(aoi.x, aoi.y, aoi.width, aoi.height));
 	    	
@@ -173,11 +168,7 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	    	g.dispose();
 	    	
     	}
-    	
-    	if (imageData == null)
-    		imageData = ImageUtils.convertAwtImageData(image);
 
-    	ImageData data;
     	BufferedImage sub;
     	
     	if (scaledAoi.width != image.getWidth() || scaledAoi.height != image.getHeight()) {
@@ -187,25 +178,13 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	        wr.setRect(-scaledAoi.x, -scaledAoi.y, image.getRaster());
 	
 	        sub = new BufferedImage(cm, wr, cm.isAlphaPremultiplied(), null);
-	        data = imageData = ImageUtils.convertAwtImageData(sub);
+	        //data = imageData = ImageUtils.convertAwtImageData(sub);
     	} else {
     		sub = image;
-    		data = imageData;
+    		//data = imageData;
     	}
     	
-    	/*
-        if (data != null && size.x > 0 && size.y > 0) {
-        	if (data.width != size.x || data.height != size.y) {
-        		data = ImageUtils.scaleImageData(data, size, false, false);
-        	}
-        }
-        */
-    	
-//    	ImageLoader il = new ImageLoader();
-//    	il.data = new ImageData[] { data };
-//    	il.save("/tmp/icons.png", SWT.IMAGE_PNG);
-    	
-        return data;
+        return sub;
     }
 
 
