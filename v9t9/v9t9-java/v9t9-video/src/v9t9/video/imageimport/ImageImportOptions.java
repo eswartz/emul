@@ -68,6 +68,7 @@ public class ImageImportOptions {
 	private IVdpCanvas canvas;
 	private IVdpChip vdp;
 	private boolean canSetPalette;
+	private byte[][] thePalette;
 	
 	/**
 	 * @param iVdpChip 
@@ -250,5 +251,17 @@ public class ImageImportOptions {
 	 */
 	public void setOctree(ColorOctree octree) {
 		this.octree = octree;
+	}
+	/**
+	 * @param thePalette
+	 */
+	public void setFixedPalette(byte[][] thePalette) {
+		this.thePalette = thePalette;
+	}
+	/**
+	 * @return the thePalette
+	 */
+	public byte[][] getFixedPalette() {
+		return thePalette;
 	}
 }

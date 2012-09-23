@@ -88,6 +88,9 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	 */
 	@Override
 	public BufferedImage getImageData(Point size) throws SVGException {
+		if (diagram == null)
+			throw new SVGException("Failed to read SVG image from " + uri, null);
+			
 		try {
 			java.awt.Rectangle r = getNativeRect();
 			return load(new Rectangle(r.x, r.y, r.width, r.height), size);
@@ -100,6 +103,8 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	 * @return
 	 */
 	protected java.awt.Rectangle getNativeRect() {
+		if (diagram == null)
+			return null;
 		Rectangle2D r = diagram.getViewRect();
 		return new java.awt.Rectangle((int) r.getMinX(), (int) r.getMinY(), 
 				(int) Math.round(r.getMaxX() - r.getMinX()), 
@@ -124,6 +129,8 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	public Point getSize() {
 		try {
 			java.awt.Rectangle r = getNativeRect();
+			if (r == null)
+				return null;
 			return new Point(r.width, r.height);
 		} catch (Exception e) {
 			return null;

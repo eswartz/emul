@@ -137,13 +137,13 @@ public class ImageImport {
 		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
 	};
 
-	private boolean supportsSetPalette;
+//	private boolean supportsSetPalette;
 
 	private boolean convertGreyScale;
 
 	public ImageImport(ImageDataCanvas canvas, boolean supportsSetPalette) {
 		this.canvas = canvas;
-		this.supportsSetPalette = supportsSetPalette;
+//		this.supportsSetPalette = supportsSetPalette;
 		this.colorMgr = canvas.getColorMgr();
 		this.format = canvas.getFormat();
 		this.thePalette = colorMgr.getColorPalette();
@@ -181,7 +181,7 @@ public class ImageImport {
 		
 		boolean skipped = false;
 		
-		if (!useColorMappedGreyScale && !ditherMono && prevC != -1) {
+		if (false && !useColorMappedGreyScale && !ditherMono && prevC != -1) {
 			if (newC == prevC) {
 				// was not dithered away, but palette may have changed,
 				// so update color but ignore dithering
@@ -629,17 +629,6 @@ public class ImageImport {
 
 	private void createOptimalPalette(BufferedImage image, int colorCount) {
 		//int toAllocate = colorCount - firstColor;
-		
-		if (false && format == VdpFormat.COLOR16_8x1) {
-			// we will not be able to allocate more than two colors
-			// per 8 pixels anyway, so fit the palette as if each
-			// 8 pixel block were only two pixels.
-			image = AwtImageUtils.getScaledInstance(
-					image, image.getWidth() / 4, image.getHeight(), 
-					RenderingHints.VALUE_INTERPOLATION_BICUBIC,
-					false);
-
-		}
 		
 		//ColorOctree octree = new ColorOctree(4, toAllocate, true, false);
 		int[] prgb = { 0, 0, 0 };
@@ -1692,11 +1681,7 @@ public class ImageImport {
 		
 
 		byte[][] orig;
-		if (!canSetPalette) {
-			orig  = (supportsSetPalette ? VdpColorManager.stockPaletteV9938 : VdpColorManager.stockPalette);
-		}
-		else
-			orig = (canvas.getColorMgr().getPalette());
+		orig  = options.getFixedPalette();
 		
 		if (orig != null) {
 			for (int i = 0; i < thePalette.length; i++) {

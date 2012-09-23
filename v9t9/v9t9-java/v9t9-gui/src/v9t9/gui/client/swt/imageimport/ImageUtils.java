@@ -801,6 +801,9 @@ public abstract class ImageUtils {
      * @return RGBA image data
      */
     public static ImageData convertAwtImageData(BufferedImage img_) {
+    	if (img_ == null)
+    		return null;
+    	
         // Get all the pixels
         int w = img_.getWidth();
         int h = img_.getHeight();
@@ -1064,7 +1067,7 @@ public abstract class ImageUtils {
 		
 		img.setRGB(0, 0, data.width, data.height, pix, 0, pix.length / data.height);
 
-		return new Pair<BufferedImage, Boolean>(img, !data.palette.isDirect);
+		return new Pair<BufferedImage, Boolean>(img, data.palette.isDirect);
 		
 	}
 

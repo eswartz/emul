@@ -427,7 +427,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			try {
 				img = ImageIO.read(url);
 				if (img != null)
-					info = new Pair<BufferedImage, Boolean>(img, false);
+					info = new Pair<BufferedImage, Boolean>(img, true);
 			} catch (IOException e1) {
 			}
 		}
@@ -438,7 +438,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				BufferedImage img = loader.getImageData(loader.getSize());
 				if (false) {
 					//BufferedImage img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
-					info = new Pair<BufferedImage, Boolean>(img, false);
+					info = new Pair<BufferedImage, Boolean>(img, true);
 				} else {
 					// hmm... something about the AWT-ness makes it impossible to clip properly
 					ImageData data = ImageUtils.convertAwtImageData(img);

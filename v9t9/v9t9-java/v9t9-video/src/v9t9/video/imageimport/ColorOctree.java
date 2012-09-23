@@ -354,11 +354,11 @@ public class ColorOctree {
 		// bias towards extremes so dark and light are not lost
 		if (usingHSV && depth == 0) {
 			if (index == 0) {
-				//newLeaf.reds = (minRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
+				newLeaf.reds = (minRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
 				newLeaf.greens = (minGreen * newLeaf.pixelCount + newLeaf.greens) / 2; 
 				newLeaf.blues = (minBlue * newLeaf.pixelCount + newLeaf.blues) / 2; 
 			} else if (index == 7) {  
-				//newLeaf.reds = (maxRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
+				newLeaf.reds = (maxRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
 				newLeaf.greens = (maxGreen * newLeaf.pixelCount + newLeaf.greens) / 2; 
 				newLeaf.blues = (maxBlue * newLeaf.pixelCount + newLeaf.blues) / 2; 
 			}
