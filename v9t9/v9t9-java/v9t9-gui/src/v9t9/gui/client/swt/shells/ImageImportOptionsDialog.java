@@ -4,6 +4,7 @@
 package v9t9.gui.client.swt.shells;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.Collection;
 
 import org.eclipse.jface.layout.GridDataFactory;
@@ -285,8 +286,11 @@ public class ImageImportOptionsDialog extends Composite {
 	protected static void showFileOpenDialog(final SwtWindow window,
 			final IImageImportHandler imageSupport,
 			final Collection<String> fileHistory) {
-		String file = window.openFileSelectionDialog("Open Image", null, null, false, 
-				new String[] { ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".tga" });
+		String lastFile = fileHistory.isEmpty() ? null : (String) fileHistory.toArray()[fileHistory.size()-1];
+		String lastDir = lastFile != null ? new File(lastFile).getParent() : null; 
+				
+		String file = window.openFileSelectionDialog("Open Image", lastDir, null, false, 
+				new String[] { "*.jpg;*.jpeg;*.gif;*.png;*.bmp;*.tga;*.svg|Images", ".*|Other files" });
 		if (file != null) {
 			Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(
 					window.getEventNotifier(), file);

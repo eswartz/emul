@@ -44,14 +44,6 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 	@Override
 	public void resetOptions() {
 		imageImportOptions.resetOptions();
-//		imageImportOptions.setFixedPalette(getVdpHandler().getRegisterCount() > 10
-//				? VdpColorManager.stockPaletteV9938 : VdpColorManager.stockPalette);
-		byte[][] curPalette = getCanvas().getColorMgr().getColorPalette();
-		byte[][] copy = new byte[curPalette.length][];
-		for (int i = 0; i < copy.length; i++)
-			copy[i] = Arrays.copyOf(curPalette[i], 3);
-		imageImportOptions.setFixedPalette(copy);
-
 	}
 	
 	public void importImage(BufferedImage image, boolean scaleSmooth) {

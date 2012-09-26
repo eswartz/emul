@@ -35,20 +35,33 @@ public class ImageImportOptions {
 			this.label = label;
 		}
 		
-		/* (non-Javadoc)
-		 * @see java.lang.Enum#toString()
-		 */
+		@Override
+		public String toString() {
+			return label;
+		}
+	}
+
+	public enum Palette {
+		STANDARD("Standard"),
+		CURRENT("Current"),
+		OPTIMIZED("Optimized");
+		
+		private final String label;
+
+		private Palette(String label) {
+			this.label = label;
+		}
+		
 		@Override
 		public String toString() {
 			return label;
 		}
 	}
 	
-	
 	private boolean scaleSmooth = true;
 	private boolean keepAspect = true;
 	private boolean asGreyScale;
-	private boolean optimizePalette = true;
+	private Palette optimizePalette = Palette.OPTIMIZED;
 	private boolean ditherMono;
 	private Dither ditherType = Dither.NONE;
 	
@@ -68,7 +81,6 @@ public class ImageImportOptions {
 	private IVdpCanvas canvas;
 	private IVdpChip vdp;
 	private boolean canSetPalette;
-	private byte[][] thePalette;
 	
 	/**
 	 * @param iVdpChip 
@@ -122,10 +134,10 @@ public class ImageImportOptions {
 	public void setAsGreyScale(boolean asGreyScale) {
 		this.asGreyScale = asGreyScale;
 	}
-	public boolean isOptimizePalette() {
+	public Palette getPalette() {
 		return optimizePalette;
 	}
-	public void setOptimizePalette(boolean optimizePalette) {
+	public void setPalette(Palette optimizePalette) {
 		this.optimizePalette = optimizePalette;
 	}
 	public Dither getDitherType() {
@@ -198,7 +210,7 @@ public class ImageImportOptions {
 		if (vdp.getRegisterCount() > 10) {
 			// hack: graphics mode 2 allows setting the palette too, 
 			// but for comparison shopping, pretend we can't.
-			if (format == VdpFormat.COLOR16_8x1 && (vdp.getRegister(0) & 0x6) == 0x2) {
+			if (format == VdpFormat.COLOR16_8x1) {
 				canSetPalette = false;
 			} else {
 				canSetPalette = format != VdpFormat.COLOR256_1x1;
@@ -211,7 +223,7 @@ public class ImageImportOptions {
 		
 		boolean isLowColor = false;
 		
-		if (format == VdpFormat.COLOR16_8x1) {
+		if (format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938) {
 			if (!canvas.getColorMgr().isGreyscale())
 				isLowColor = true;
 		}
@@ -220,13 +232,13 @@ public class ImageImportOptions {
 		
 		////
 		
-		setOptimizePalette(canSetPalette);
+		setPalette(canSetPalette ? Palette.OPTIMIZED : Palette.STANDARD);
 		
 		/////
 		boolean isMonoMode = vdp instanceof IVdpTMS9918A && ((IVdpTMS9918A) vdp).isBitmapMonoMode();
 		
 		setDitherMono(isMonoMode);
-		setDitherType(format == VdpFormat.COLOR16_8x1 && !canSetPalette ? Dither.ORDERED : Dither.FS);
+		setDitherType(format == VdpFormat.COLOR16_8x1 ? Dither.ORDERED : Dither.FS);
 		
 		octree = null;
 	}
@@ -251,17 +263,5 @@ public class ImageImportOptions {
 	 */
 	public void setOctree(ColorOctree octree) {
 		this.octree = octree;
-	}
-	/**
-	 * @param thePalette
-	 */
-	public void setFixedPalette(byte[][] thePalette) {
-		this.thePalette = thePalette;
-	}
-	/**
-	 * @return the thePalette
-	 */
-	public byte[][] getFixedPalette() {
-		return thePalette;
 	}
 }

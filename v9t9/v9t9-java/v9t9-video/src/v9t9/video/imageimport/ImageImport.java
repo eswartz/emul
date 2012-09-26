@@ -28,6 +28,7 @@ import v9t9.common.video.VdpFormat;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ColorOctree.LeafNode;
 import v9t9.video.imageimport.ImageImportOptions.Dither;
+import v9t9.video.imageimport.ImageImportOptions.Palette;
 import ejs.base.utils.Pair;
 
 /**
@@ -37,7 +38,7 @@ import ejs.base.utils.Pair;
  *
  */
 public class ImageImport {
-	private boolean DEBUG = false;
+	private boolean DEBUG = true;
 
 	private BufferedImage convertedImage;
 	private VdpFormat format;
@@ -46,7 +47,7 @@ public class ImageImport {
 	private boolean useColorMappedGreyScale;
 	private Dither ditherType;
 	private boolean ditherMono;
-	private boolean canSetPalette;
+	private Palette paletteOption;
 
 	private final ImageDataCanvas canvas;
 	private final VdpColorManager colorMgr;
@@ -141,11 +142,15 @@ public class ImageImport {
 
 	private boolean convertGreyScale;
 
+private boolean isBitmap;
+
 	public ImageImport(ImageDataCanvas canvas, boolean supportsSetPalette) {
 		this.canvas = canvas;
 //		this.supportsSetPalette = supportsSetPalette;
 		this.colorMgr = canvas.getColorMgr();
 		this.format = canvas.getFormat();
+
+		isBitmap = format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938; 
 		this.thePalette = colorMgr.getColorPalette();
 		
 		this.useColorMappedGreyScale = colorMgr.isGreyscale();
@@ -208,7 +213,7 @@ public class ImageImport {
 		b_error = ((pixel >> 0) & 0xff) - ((newPixel >> 0) & 0xff);
 
 
-		if (useColorMappedGreyScale) {
+		if (false&&useColorMappedGreyScale) {
 			int lum = (299 * r_error + 587 * g_error + 114 * b_error) / 1000;
 			r_error = g_error = b_error = lum;
 		}
@@ -236,7 +241,7 @@ public class ImageImport {
 					}
 				}
 			} else {
-				if (format == VdpFormat.COLOR256_1x1) {
+				if (false&&format == VdpFormat.COLOR256_1x1) {
 					// will never find a match if the color 
 					// didn't already match...
 					if (Math.abs(r_error) < 0x8 && Math.abs(g_error) < 0x8 && Math.abs(b_error) < 0x8) {
@@ -372,7 +377,7 @@ public class ImageImport {
 					break;
 		}
 		if (DEBUG) System.out.println("*** finding " + numColors + " apparent colors");
-		if (numColors > (format == VdpFormat.COLOR256_1x1 ? 256 : 16))
+		if (numColors > format.getNumColors()) //(format == VdpFormat.COLOR256_1x1 ? 256 : 16))
 			return;
 		
 		for (int y = 0; y < img.getHeight(); y++) {
@@ -459,8 +464,7 @@ public class ImageImport {
 		if (format == VdpFormat.COLOR256_1x1 || ditherMono || format == VdpFormat.COLOR16_8x8)
 			return false;
 		
-		int numColors = format == VdpFormat.COLOR4_1x1 ? 4
-				: 16;
+		int numColors = format.getNumColors();
 		
 		// effective minimum distance for any mode
 		int maxDist = 0x8*0x8 * 3;
@@ -502,39 +506,33 @@ public class ImageImport {
 		if (ditherMono) {
 			mapColor = new MonoMapColor(colorMgr.getForeground(), colorMgr.getBackground(), midLum);
 			firstColor = 0;
-		} else if (format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_4x4) {
-			if (canSetPalette) {
+		} else if (isBitmap || format == VdpFormat.COLOR16_4x4) {
+			if (paletteOption == Palette.OPTIMIZED) {
 				if (false)
 					createOptimalPaletteWithHSV(img, 16);
 				else
 					createOptimalPalette(img, 16);
 				mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
-			} else {
-				boolean isStandardPalette = false;
-				if (!useColorMappedGreyScale) {
-					isStandardPalette = canvas.getColorMgr().isStandardPalette();
-				}
-				
-				if (isStandardPalette) {
+			} else if (paletteOption == Palette.STANDARD) {
 //					for (int i = 0; i < 16; i++) {
 //						System.arraycopy(niceColorPalette[i], 0, thePalette[i], 0, 3);
 //					}
-					if (convertGreyScale)
-						mapColor = new TI16MapColor(thePalette, false, true);
-					else
-						mapColor = new UserPaletteMapColor(thePalette, 1, 16, useColorMappedGreyScale);
-				}
+				if (convertGreyScale)
+					mapColor = new TI16MapColor(thePalette, false, true);
 				else
 					mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
 			}
+			else /* current */ {
+				mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
+			}
 		}
 		else if (format == VdpFormat.COLOR16_1x1) {
-			if (canSetPalette) 
+			if (paletteOption == Palette.OPTIMIZED) 
 				createOptimalPalette(img, 16);
 			mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
 		}
 		else if (format == VdpFormat.COLOR4_1x1) {
-			if (canSetPalette) {
+			if (paletteOption == Palette.OPTIMIZED) {
 				// note: in this mode, there is no point trying to use colors to
 				// map to greyscale (to find "more depth") -- any real colors
 				// discovered are essentially random, and when viewed in greyscale,
@@ -628,7 +626,7 @@ public class ImageImport {
 
 
 	private void createOptimalPalette(BufferedImage image, int colorCount) {
-		//int toAllocate = colorCount - firstColor;
+		int toAllocate = colorCount - firstColor;
 		
 		//ColorOctree octree = new ColorOctree(4, toAllocate, true, false);
 		int[] prgb = { 0, 0, 0 };
@@ -643,7 +641,7 @@ public class ImageImport {
 			}
 		}
 		
-		octree.reduceTree(colorCount);
+		octree.reduceTree(toAllocate);
 
 		int index = firstColor;
 		
@@ -652,20 +650,21 @@ public class ImageImport {
 		for (ColorOctree.LeafNode node :  leaves) {
 			int[] repr = node.reprRGB();
 			
-			if (DEBUG) System.out.println("palette[" + index +"] = " 
-					+ Integer.toHexString(repr[0]) + "/" 
-					+ Integer.toHexString(repr[1]) + "/" 
-					+ Integer.toHexString(repr[2]));
-
 			if (useColorMappedGreyScale)
 				ColorMapUtils.rgbToGreyForGreyscaleMode(prgb, prgb);
 			else
-				ColorMapUtils.mapForRGB555(repr);
+				ColorMapUtils.mapForRGB333(repr);
 			
 			thePalette[index][0] = (byte) repr[0];
 			thePalette[index][1] = (byte) repr[1];
 			thePalette[index][2] = (byte) repr[2];
-			
+
+			if (DEBUG) System.out.println("palette[" + index +"] = " 
+					+ Integer.toHexString(thePalette[index][0]&0xff) + "/" 
+					+ Integer.toHexString(thePalette[index][1]&0xff) + "/" 
+					+ Integer.toHexString(thePalette[index][2]&0xff));
+
+
 			index++;
 			
 		}
@@ -730,8 +729,9 @@ public class ImageImport {
 			xoffs = (canvas.getVisibleWidth() - img.getWidth() + canvas.getXOffset()) / 2;
 			yoffs = (canvas.getVisibleHeight() - img.getHeight() + canvas.getYOffset()) / 2;
 		}
+		
 	
-		if (format == VdpFormat.COLOR16_8x1) {
+		if (isBitmap) {
 			// be sure we select the 8 pixel groups sensibly
 			if ((xoffs & 7) > 3)
 				xoffs = (xoffs + 7) & ~7;
@@ -739,7 +739,7 @@ public class ImageImport {
 				xoffs = xoffs & ~7;
 		}
 		
-		if (format == VdpFormat.COLOR16_8x1 && !ditherMono) {
+		if (isBitmap && !ditherMono) {
 			
 			reduceBitmapMode(img, xoffs, yoffs);
 	
@@ -1626,7 +1626,7 @@ public class ImageImport {
 					
 					// make sure, for bitmap mode, that the size is a multiple of 8,
 					// otherwise the import into video memory will destroy the picture
-					if (format == VdpFormat.COLOR16_8x1) {
+					if (isBitmap) {
 						targWidth &= ~7;
 						targHeight = (int) (targWidth * realHeight / realWidth / aspect);
 					}
@@ -1663,15 +1663,15 @@ public class ImageImport {
 			convertGreyScale = true;
 		}
 		
-		canSetPalette = options.isOptimizePalette();
+		paletteOption = options.getPalette();
 		ditherType = options.getDitherType();
 		ditherMono = options.isDitherMono();
 
-		firstColor = (canSetPalette && colorMgr.isClearFromPalette() ? 0 : 1);
+		firstColor = (colorMgr.isClearFromPalette() ? 0 : 1);
 
 
 		if (format == VdpFormat.COLOR16_8x8) {
-			canSetPalette = false;
+			paletteOption = Palette.STANDARD;
 			ditherMono = true;
 		}
 		
@@ -1679,11 +1679,13 @@ public class ImageImport {
 		//octree = options.getOctree();
 		octree = new ColorOctree(3, true, false);
 		
-
-		byte[][] orig;
-		orig  = options.getFixedPalette();
-		
-		if (orig != null) {
+		if (paletteOption == Palette.STANDARD) {
+			byte[][] orig;
+			if (format.isMsx2()) {
+				orig = VdpColorManager.stockPaletteV9938;
+			} else {
+				orig = VdpColorManager.stockPalette;
+			}
 			for (int i = 0; i < thePalette.length; i++) {
 				System.arraycopy(orig[i], 0, thePalette[i], 0, 3);
 			}

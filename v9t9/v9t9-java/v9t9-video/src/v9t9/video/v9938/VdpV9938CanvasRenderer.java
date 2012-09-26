@@ -14,6 +14,7 @@ import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
 import v9t9.video.common.VdpModeInfo;
+import v9t9.video.tms9918a.BitmapModeRedrawHandler;
 import v9t9.video.tms9918a.VdpTMS9918ACanvasRenderer;
 
 /**
@@ -265,6 +266,8 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 
 	protected void setGraphics3Mode() {
 		super.setBitmapMode();
+
+		vdpCanvas.setFormat(VdpFormat.COLOR16_8x1_9938);
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
 	}
 

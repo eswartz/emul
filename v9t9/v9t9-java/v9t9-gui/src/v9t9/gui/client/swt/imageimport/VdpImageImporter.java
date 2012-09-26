@@ -72,7 +72,7 @@ public class VdpImageImporter {
 		
 		if (vdp instanceof IVdpTMS9918A) {
 			IVdpTMS9918A vdp99 = (IVdpTMS9918A) vdp;
-			if (format == VdpFormat.COLOR16_8x1) {
+			if (format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938) {
 				setVideoMemoryBitmapMode(vdp99);
 			} 
 			else if (format == VdpFormat.COLOR16_8x8) {
