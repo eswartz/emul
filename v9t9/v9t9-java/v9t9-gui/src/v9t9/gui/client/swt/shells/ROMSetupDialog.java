@@ -730,7 +730,7 @@ public class ROMSetupDialog extends Dialog {
 				public void widgetSelected(SelectionEvent e) {
 					String newPath = window.openFileSelectionDialog(
 							"Select ROM", null, text.getText(), false,
-							new String[] { "bin|raw binary (*.bin)", "|all files" });
+							new String[] { "*.bin|raw binary (*.bin)", "|all files" });
 					if (newPath != null) {
 						text.setText(newPath);
 					}

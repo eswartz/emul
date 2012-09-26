@@ -264,7 +264,7 @@ public abstract class BaseEmulatorWindow {
 		
 		String filenameBase = selectFile(
 				"Select screenshot file", settingScreenShotsBase, "screenshots", "screen.png", true, true, 
-				new String[] { ".png|PNG file" });
+				new String[] { "*.png|PNG file" });
 		if (filenameBase != null) {
 			File saveFile = getUniqueFile(filenameBase);
 			if (saveFile == null) {

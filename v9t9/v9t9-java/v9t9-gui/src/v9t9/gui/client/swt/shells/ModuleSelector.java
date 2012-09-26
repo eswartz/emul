@@ -105,7 +105,6 @@ import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageBar;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
-import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageAdjuster;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
 import ejs.base.settings.DialogSettingsWrapper;
@@ -1281,7 +1280,7 @@ public class ModuleSelector extends Composite {
 				defDir,
 				"images/" + imagePath + ".png",
 				true,
-				new String[] { ".png|PNG" });
+				new String[] { "*.png|PNG" });
 		if (targFile != null) {
 			ImageData data = ((ISwtVideoRenderer) window.getVideoRenderer()).getScreenshotImageData();
 			try {
