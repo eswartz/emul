@@ -61,7 +61,7 @@ public class ImageImportOptions {
 	private boolean scaleSmooth = true;
 	private boolean keepAspect = true;
 	private boolean asGreyScale;
-	private Palette optimizePalette = Palette.OPTIMIZED;
+	private Palette paletteOption = Palette.OPTIMIZED;
 	private boolean ditherMono;
 	private Dither ditherType = Dither.NONE;
 	
@@ -73,7 +73,7 @@ public class ImageImportOptions {
 	private FieldProperty scaleSmoothProperty;
 	private FieldProperty keepAspectProperty;
 	private FieldProperty asGreyScaleProperty;
-	private FieldProperty optimizePaletteProperty;
+	private FieldProperty paletteOptionProperty;
 	private FieldProperty ditheringProperty;
 	private FieldProperty ditherMonoProperty;
 	private FieldProperty imageProperty;
@@ -93,7 +93,7 @@ public class ImageImportOptions {
 		scaleSmoothProperty = new FieldProperty(this, "scaleSmooth", "Smooth Scaling");
 		keepAspectProperty = new FieldProperty(this, "keepAspect", "Keep Aspect Ratio");
 		asGreyScaleProperty = new FieldProperty(this, "asGreyScale", "Convert To Greyscale");
-		optimizePaletteProperty = new FieldProperty(this, "optimizePalette", "Optimize Palette");
+		paletteOptionProperty = new FieldProperty(this, "paletteOption", "Palette Selection");
 		ditheringProperty = new FieldProperty(this, "ditherType", "Dithering");
 		ditherMonoProperty = new FieldProperty(this, "ditherMono", "Dither Monochrome");
 		imageProperty = new FieldProperty(this, "image", "Last Image");
@@ -108,7 +108,7 @@ public class ImageImportOptions {
 		ps.addProperty(scaleSmoothProperty);
 		ps.addProperty(keepAspectProperty);
 		ps.addProperty(asGreyScaleProperty);
-		ps.addProperty(optimizePaletteProperty);
+		ps.addProperty(paletteOptionProperty);
 		ps.addProperty(ditheringProperty);
 		ps.addProperty(ditherMonoProperty);
 		ps.addProperty(imageProperty);
@@ -135,10 +135,10 @@ public class ImageImportOptions {
 		this.asGreyScale = asGreyScale;
 	}
 	public Palette getPalette() {
-		return optimizePalette;
+		return paletteOption;
 	}
-	public void setPalette(Palette optimizePalette) {
-		this.optimizePalette = optimizePalette;
+	public void setPalette(Palette option) {
+		this.paletteOption = option;
 	}
 	public Dither getDitherType() {
 		return ditherType;

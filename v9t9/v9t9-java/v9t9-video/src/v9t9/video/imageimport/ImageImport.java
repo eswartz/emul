@@ -38,7 +38,7 @@ import ejs.base.utils.Pair;
  *
  */
 public class ImageImport {
-	private boolean DEBUG = true;
+	private boolean DEBUG = false;
 
 	private BufferedImage convertedImage;
 	private VdpFormat format;

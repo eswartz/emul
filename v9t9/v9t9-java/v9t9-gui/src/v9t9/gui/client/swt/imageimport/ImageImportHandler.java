@@ -1,7 +1,6 @@
 package v9t9.gui.client.swt.imageimport;
 
 import java.awt.image.BufferedImage;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
