@@ -38,7 +38,6 @@ import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.widgets.Control;
 
 import ejs.base.properties.IPropertyListener;
-import ejs.base.utils.Pair;
 
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;

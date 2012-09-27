@@ -2,6 +2,7 @@ package v9t9.gui.client.swt.imageimport;
 
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
@@ -18,9 +19,6 @@ import org.eclipse.swt.widgets.Display;
 import org.ejs.gui.images.AwtImageUtils;
 
 import v9t9.video.imageimport.ImageFrame;
-
-
-import ejs.base.utils.Pair;
 
 /**
  * Image utilities
@@ -1024,12 +1022,81 @@ public abstract class ImageUtils {
 	 */
 	public static ImageFrame[] convertToBufferedImages(ImageData[] datas) {
 		ImageFrame[] frames = new ImageFrame[datas.length];
+		ImageData data = new ImageData(datas[0].width, datas[0].height, datas[0].depth, datas[0].palette);
 		for (int i = 0; i < frames.length; i++) {
-			ImageFrame frame = convertToBufferedImage(datas[i]);
+			ImageFrame frame;
+			if (i == 0)
+				frame = convertToBufferedImage(datas[i]);
+			else
+				frame = convertToBufferedImage(data);
+			frame.delayMs = datas[i].delayTime * 10;
 			frames[i] = frame;
+			
+			if (i + 1 < frames.length) {
+				if (i == 0) {
+					copyImageInto(datas[0], data);
+				}
+				switch (datas[i].disposalMethod) {
+				case SWT.DM_FILL_BACKGROUND:
+					copyImageInto(datas[i+1], data);
+					break;
+				case SWT.DM_FILL_NONE:
+					combineImages(datas[i+1], data);
+					break;
+				case SWT.DM_FILL_PREVIOUS:
+					break;
+				case SWT.DM_UNSPECIFIED:
+					copyImageInto(datas[i+1], data);
+					break;
+				}
+			}
 		}
 		return frames;
 	}
+	
+	/**
+	 * @param imageData
+	 * @param data
+	 */
+	private static void copyImageInto(ImageData imageData, ImageData data) {
+		if (imageData.alphaData != null) {
+			if (data.alphaData == null)
+				data.alphaData = Arrays.copyOf(imageData.alphaData, imageData.alphaData.length);
+			else
+				System.arraycopy(imageData.alphaData, 0, data.alphaData, 0, imageData.alphaData.length);
+		}
+		if (imageData.data != null) {
+			if (data.data == null)
+				data.data = Arrays.copyOf(imageData.data, imageData.data.length);
+			else
+				System.arraycopy(imageData.data, 0, data.data, 0, imageData.data.length);
+		}
+		if (imageData.maskData != null) {
+			if (data.maskData == null)
+				data.maskData = Arrays.copyOf(imageData.maskData, imageData.maskData.length);
+			else
+				System.arraycopy(imageData.maskData, 0, data.maskData, 0, imageData.maskData.length);
+		}
+		data.bytesPerLine = imageData.bytesPerLine;
+		data.alpha = imageData.alpha;
+		data.delayTime = imageData.delayTime;
+		data.depth = imageData.depth;
+		//data.disposalMethod = imageData.disposalMethod;
+		//data.height = imageData.height;
+		data.maskPad = imageData.maskPad;
+		data.scanlinePad = imageData.scanlinePad;
+	}
+
+	private static void combineImages(ImageData from, ImageData to) {
+		for (int y = 0; y < from.height; y++) {
+			for (int x = 0; x < from.width; x++) {
+				if (from.getPixel(x, y) != from.transparentPixel) {
+					to.setPixel(x + from.x, y + from.y, from.getPixel(x, y));
+				}
+			}
+		}
+	}
+
 	/**
 	 * @param data
 	 */
@@ -1045,9 +1112,11 @@ public abstract class ImageUtils {
 		if (!data.palette.isDirect) {
 			// apply palette..
 			for (int i = 0; i < pix.length; i++) {
-				RGB rgb;
-				rgb = data.palette.colors[pix[i]]; 
-				pix[i] = (rgb.red << 16) | (rgb.green << 8) | (rgb.blue << 0);
+				if (pix[i] < data.palette.colors.length) {
+					RGB rgb;
+					rgb = data.palette.colors[pix[i]]; 
+					pix[i] = (rgb.red << 16) | (rgb.green << 8) | (rgb.blue << 0);
+				}
 			}
 		}
 		else {

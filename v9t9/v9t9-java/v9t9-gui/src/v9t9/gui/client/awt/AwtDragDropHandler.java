@@ -43,6 +43,7 @@ import v9t9.common.video.ICanvas;
 import v9t9.gui.client.swt.svg.SVGException;
 import v9t9.gui.client.swt.svg.SVGSalamanderLoader;
 import v9t9.video.ImageDataCanvas;
+import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
 
 /**
@@ -269,7 +270,7 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 		}
 		//System.out.println(image);
 		
-		imageImportSupport.importImage(new BufferedImage[] { image }, true);
+		imageImportSupport.importImage(new ImageFrame[] { new ImageFrame(image, true) });
 		
 		renderer.setFocus();
 	}
