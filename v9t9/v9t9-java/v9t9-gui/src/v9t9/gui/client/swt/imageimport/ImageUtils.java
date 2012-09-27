@@ -17,6 +17,8 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 import org.ejs.gui.images.AwtImageUtils;
 
+import v9t9.video.imageimport.ImageFrame;
+
 
 import ejs.base.utils.Pair;
 
@@ -384,7 +386,7 @@ public abstract class ImageUtils {
 		if (!(scaledSize.x > 0 && scaledSize.y > 0))
 			throw new IllegalArgumentException("Invalid scaled size: " + scaledSize + " from " + newSize); //$NON-NLS-1$
 		
-		BufferedImage img = convertToBufferedImage(source).first;
+		BufferedImage img = convertToBufferedImage(source).image;
 		img = AwtImageUtils.getScaledInstance(img, scaledSize.x, scaledSize.y, RenderingHints.VALUE_INTERPOLATION_BICUBIC, true);
 		//ImageData scaledImageData = source.scaledTo(scaledSize.x, scaledSize.y);
 		ImageData scaledImageData = convertAwtImageData(img);
@@ -1020,8 +1022,19 @@ public abstract class ImageUtils {
 	/**
 	 * @param data
 	 */
-	public static Pair<BufferedImage, Boolean> convertToBufferedImage(ImageData data) {
-
+	public static ImageFrame[] convertToBufferedImages(ImageData[] datas) {
+		ImageFrame[] frames = new ImageFrame[datas.length];
+		for (int i = 0; i < frames.length; i++) {
+			ImageFrame frame = convertToBufferedImage(datas[i]);
+			frames[i] = frame;
+		}
+		return frames;
+	}
+	/**
+	 * @param data
+	 */
+	public static ImageFrame convertToBufferedImage(ImageData data) {
+			
 		BufferedImage img = new BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_ARGB);
 		int[] pix = new int[data.width * data.height];
 
@@ -1032,7 +1045,8 @@ public abstract class ImageUtils {
 		if (!data.palette.isDirect) {
 			// apply palette..
 			for (int i = 0; i < pix.length; i++) {
-				RGB rgb = data.palette.colors[pix[i]]; 
+				RGB rgb;
+				rgb = data.palette.colors[pix[i]]; 
 				pix[i] = (rgb.red << 16) | (rgb.green << 8) | (rgb.blue << 0);
 			}
 		}
@@ -1067,7 +1081,7 @@ public abstract class ImageUtils {
 		
 		img.setRGB(0, 0, data.width, data.height, pix, 0, pix.length / data.height);
 
-		return new Pair<BufferedImage, Boolean>(img, data.palette.isDirect);
+		return new ImageFrame(img, data.palette.isDirect, data.delayTime);
 		
 	}
 

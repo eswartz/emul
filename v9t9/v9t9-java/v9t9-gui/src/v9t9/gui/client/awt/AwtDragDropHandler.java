@@ -269,7 +269,7 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 		}
 		//System.out.println(image);
 		
-		imageImportSupport.importImage(image, true);
+		imageImportSupport.importImage(new BufferedImage[] { image }, true);
 		
 		renderer.setFocus();
 	}

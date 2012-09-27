@@ -3,7 +3,6 @@
  */
 package v9t9.video.imageimport;
 
-import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -19,8 +18,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import javax.imageio.ImageIO;
-
-import org.ejs.gui.images.AwtImageUtils;
 
 import v9t9.common.video.ColorMapUtils;
 import v9t9.common.video.VdpColorManager;
@@ -147,13 +144,19 @@ private boolean isBitmap;
 	public ImageImport(ImageDataCanvas canvas, boolean supportsSetPalette) {
 		this.canvas = canvas;
 //		this.supportsSetPalette = supportsSetPalette;
-		this.colorMgr = canvas.getColorMgr();
-		this.format = canvas.getFormat();
-
-		isBitmap = format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938; 
-		this.thePalette = colorMgr.getColorPalette();
-		
-		this.useColorMappedGreyScale = colorMgr.isGreyscale();
+		synchronized (canvas) {
+			this.colorMgr = canvas.getColorMgr();
+			this.format = canvas.getFormat();
+	
+			isBitmap = format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938; 
+			byte[][] curPalette = colorMgr.getColorPalette();
+			this.thePalette = new byte[curPalette.length][];
+			for (int i = 0; i < thePalette.length; i++) {
+				thePalette[i] = Arrays.copyOf(curPalette[i], curPalette[i].length);
+			}
+			
+			this.useColorMappedGreyScale = colorMgr.isGreyscale();
+		}
 		
 		this.rgbs = new int[canvas.getImageData().width];
 		
@@ -324,6 +327,37 @@ private boolean isBitmap;
 		
 	}
 	
+
+//	private void ditherOrderedPixelBitmap(BufferedImage img, IPaletteColorMapper mapColor,
+//			int x, int y, int[] prgb) {
+//
+//		
+//		int pixel = img.getRGB(x, y);
+//		ColorMapUtils.pixelToRGB(pixel, prgb);
+//
+//		int threshold = thresholdMap8x8[x & 7][y & 7];
+//		int threshold2 = thresholdMap8x8[(x + 1) & 7][y & 7];
+//		int threshold3 = thresholdMap8x8[x & 7][(y + 1) & 7];
+//		prgb[0] = (prgb[0] + threshold - 32);
+//		prgb[1] = (prgb[1] + threshold2 - 32);
+//		prgb[2] = (prgb[2] + threshold3 - 32);
+//		
+//		int newC = mapColor.getClosestPaletteEntry(x, y, ColorMapUtils.rgb8ToPixel(prgb));
+//		
+//		int newPixel = mapColor.getPalettePixel(newC);
+//		
+//		img.setRGB(x, y, newPixel | 0xff000000);
+//	}
+//	
+//	private void ditherOrderedBitmap(BufferedImage img, IPaletteColorMapper mapColor) {
+//		int[] prgb = { 0, 0, 0 };
+//		for (int y = 0; y < img.getHeight(); y++) {
+//			for (int x = 0; x < img.getWidth(); x++) {
+//				ditherOrderedPixelBitmap(img, mapColor, x, y, prgb);
+//			}
+//		}
+//		
+//	}
 	
 	private void ditherNone(BufferedImage img, IPaletteColorMapper mapColor) {
 		for (int y = 0; y < img.getHeight(); y++) {
@@ -402,7 +436,7 @@ private boolean isBitmap;
 		if (!importDirectMappedImage(img)) {
 			int midLum = equalize(img);
 			
-			//reduceNoise(img);
+//			reduceNoise(img);
 			
 			convertImageToColorMap(img, midLum);
 		}
@@ -471,7 +505,7 @@ private boolean isBitmap;
 		int numPixels = img.getWidth() * img.getHeight();
 		
 		boolean matched = false;
-		Histogram hist = new Histogram(img);
+		Histogram hist = null;
 		
 		List<byte[][]> palettes = new ArrayList<byte[][]>();
 		palettes.add(thePalette);
@@ -480,7 +514,8 @@ private boolean isBitmap;
 		for (byte[][] palette : palettes) {
 			FixedPaletteMapColor paletteMapper = new FixedPaletteMapColor(
 					palette, firstColor, numColors);
-			int matchedC = hist.generate(paletteMapper, maxDist); 
+			hist = new Histogram(paletteMapper, img.getWidth(), img.getHeight(), maxDist);
+			int matchedC = hist.generate(img); 
 			if (matchedC == numPixels) {
 				matched = true;
 				break;
@@ -570,6 +605,8 @@ private boolean isBitmap;
 			ditherFloydSteinberg(img, colorMapper, hist, false);
 		} else if (ditherType == Dither.ORDERED) {
 			ditherOrdered(img, colorMapper);
+//		} else if (ditherType == Dither.ORDERED2) {
+//			ditherOrderedBitmap(img, colorMapper);
 		} else {
 			ditherNone(img, colorMapper);
 		}
@@ -692,8 +729,8 @@ private boolean isBitmap;
 				}
 			};
 			
-			Histogram hist = new Histogram(image);
-			hist.generate(greyMapper, Integer.MAX_VALUE);
+			Histogram hist = new Histogram(greyMapper, image.getWidth(), image.getHeight(), Integer.MAX_VALUE);
+			hist.generate(image);
 	
 			// take darkest and brighest first
 			Map<Integer, Integer> colorToCountMap = hist.colorToCountMap();
@@ -707,7 +744,10 @@ private boolean isBitmap;
 			
 			for (int cidx = firstColor; cidx < colorCount; cidx++) {
 				int c = hist.getColorIndex(cidx);
-				colorMgr.setGRB333(cidx, c, c, c);
+				//colorMgr.setGRB333(cidx, c, c, c);
+				thePalette[cidx][0] = ColorMapUtils.rgb3to8[c];
+				thePalette[cidx][1] = ColorMapUtils.rgb3to8[c];
+				thePalette[cidx][2] = ColorMapUtils.rgb3to8[c];
 			}
 			
 			break;
@@ -840,11 +880,11 @@ private boolean isBitmap;
 		
 		if (DEBUG) System.out.println("Minimum color palette distance: " + ourDist);
 
-		Histogram hist = new Histogram(img);
+		Histogram hist = new Histogram(mapColor, img.getWidth(), img.getHeight(), ourDist);
 		int mappedColors = 0;
 		int interestingColors = 0;
 		
-		mappedColors = hist.generate(mapColor, ourDist);
+		mappedColors = hist.generate(img);
 		interestingColors = hist.size();
 		if (DEBUG) System.out.println("# interesting = " + interestingColors
 				+"; # mapped = " + mappedColors);
@@ -1596,70 +1636,12 @@ private boolean isBitmap;
 
 	/**
 	 */
-	public ImageImportData importImage(ImageImportOptions options) {
-		BufferedImage image = options.getImage();
+	public ImageImportData importImage(ImageImportOptions options, BufferedImage image) {
 		if (image == null)
 			return null;
-
-		int targWidth = canvas.getVisibleWidth();
-		int targHeight = canvas.getVisibleHeight();
-
-		if (format == VdpFormat.COLOR16_4x4) {
-			targWidth = 64;
-			targHeight = 48;
-		}
 		
-		float aspect = (float) targWidth / targHeight / 256.f * 192.f;
-		int realWidth = image.getWidth(null);
-		int realHeight = image.getHeight(null);
-		
-		if (options.isKeepAspect()) {
-			if (realWidth <= 0 || realHeight <= 0) {
-				throw new IllegalArgumentException("image has zero or negative size");
-			}
-			
-			if (realWidth != targWidth || realHeight != targHeight) {
-				if (realWidth * targHeight * aspect > realHeight * targWidth) {
-					targHeight = (int) (targWidth * realHeight / realWidth / aspect);
-				} else {
-					targWidth = (int) (targHeight * realWidth * aspect / realHeight);
-					
-					// make sure, for bitmap mode, that the size is a multiple of 8,
-					// otherwise the import into video memory will destroy the picture
-					if (isBitmap) {
-						targWidth &= ~7;
-						targHeight = (int) (targWidth * realHeight / realWidth / aspect);
-					}
-				}
-			}
-		}
-		
-		if (format == VdpFormat.COLOR16_8x8) {
-			// make a maximum of 256 blocks  (256*64 = 16384)
-			// Reduces total screen real estate down by sqrt(3)
-			//targWidth = (int) (targWidth / 1.732) & ~7;
-			//targHeight = (int) (targHeight / 1.732) & ~7;
-			while ((targWidth & ~0x7) * 
-					 (((int)(targWidth * realHeight / realWidth / aspect) + 7) & ~0x7) > 16384) {
-				targWidth *= 0.99;
-				targHeight *= 0.99;
-			}
-			targWidth &= ~0x7;
-			targHeight = (int) (targWidth * realHeight / realWidth / aspect);
-			if (DEBUG) System.out.println("Graphics mode: " + targWidth*((targHeight+7)&~0x7));
-		}
-		
-		Object hint = options.isScaleSmooth() ? RenderingHints.VALUE_INTERPOLATION_BILINEAR
-					:  RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
-
-		BufferedImage scaled = AwtImageUtils.getScaledInstance(
-				image, targWidth, targHeight, 
-				hint,
-				false);
-		//System.out.println(scaled.getWidth(null) + " x " +scaled.getHeight(null));
-
 		if (options.isAsGreyScale()) {
-			convertGreyscale(scaled);
+			convertGreyscale(image);
 			convertGreyScale = true;
 		}
 		
@@ -1677,6 +1659,9 @@ private boolean isBitmap;
 		
 		//new ColorOctree(3, toAllocate, true, false);
 		//octree = options.getOctree();
+		
+		paletteMappingDirty = true;
+		paletteToIndex = null;
 		octree = new ColorOctree(3, true, false);
 		
 		if (paletteOption == Palette.STANDARD) {
@@ -1694,13 +1679,13 @@ private boolean isBitmap;
 		// get original mapping
 		updatePaletteMapping();
 		
-		BufferedImage converted = convertImageData(scaled);
+		BufferedImage converted = convertImageData(image);
 		if (paletteMappingDirty) {
 			// update mapping if palette was altered
 			updatePaletteMapping();
 		}
 		
-		ImageImportData data = new ImageImportData(scaled, converted, thePalette, paletteToIndex);
+		ImageImportData data = new ImageImportData(converted, thePalette, paletteToIndex);
 		
 		return data;
 	}

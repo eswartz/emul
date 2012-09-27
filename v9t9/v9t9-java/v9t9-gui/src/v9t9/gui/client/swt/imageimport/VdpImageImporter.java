@@ -4,11 +4,13 @@
 package v9t9.gui.client.swt.imageimport;
 
 import static v9t9.common.hardware.VdpV9938Consts.*;
+
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ColorMapUtils;
+import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpFormat;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageImportData;
@@ -19,29 +21,33 @@ import v9t9.video.imageimport.ImageImportData;
  */
 public class VdpImageImporter {
 
-	private ImageImportData data;
 	private IVdpChip vdp;
 	private ImageDataCanvas canvas;
+	private ImageImportData data;
+	private IVdpCanvasRenderer canvasRenderer;
 
 	/**
+	 * @param canvasRenderer 
+	 * @param importer 
 	 * @param data
 	 */
-	public VdpImageImporter(ImageImportData data,
-			IVdpChip vdp, ImageDataCanvas canvas) {
-		this.data = data;
+	public VdpImageImporter(IVdpChip vdp, ImageDataCanvas canvas, IVdpCanvasRenderer canvasRenderer) {
 		this.vdp = vdp;
 		this.canvas = canvas;
+		this.canvasRenderer = canvasRenderer;
 	}
 
-
-	/**
-	 * @param data
-	 */
-	public void importImageToCanvas() {
-		setPalette();
-		setVideoMemory();
-		canvas.markDirty();
-		
+	public void importImageToCanvas(ImageImportData data) {
+		synchronized (vdp) {
+			synchronized (canvasRenderer) {
+				synchronized (canvas) {
+					this.data = data;
+					setPalette();
+					setVideoMemory();
+					canvas.markDirty();
+				}
+			}
+		}
 	}
 
 	/**
@@ -303,8 +309,8 @@ public class VdpImageImporter {
 		for (int i = 0; i < 32; i++)
 			vdp.writeAbsoluteVdpMemory(color.offset + i, cb);
 
-		int width = data.getScaledImage().getWidth();
-		int height = data.getScaledImage().getHeight();
+		int width = data.getConvertedImage().getWidth();
+		int height = data.getConvertedImage().getHeight();
 		
 		int yoffs = ((192 - height) / 2) & ~0x7;
 		int xoffs = ((256 - width) / 2) & ~0x7;

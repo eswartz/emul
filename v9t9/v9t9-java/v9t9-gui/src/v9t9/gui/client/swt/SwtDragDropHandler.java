@@ -49,6 +49,7 @@ import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.svg.SVGException;
 import v9t9.gui.client.swt.svg.SVGSalamanderLoader;
 import v9t9.video.ImageDataCanvas;
+import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
 
 /**
@@ -315,19 +316,19 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	@Override
 	public void drop(DropTargetEvent event) {
 		try {
-			Pair<BufferedImage, Boolean> info = null;
+			ImageFrame[] frames = null;
 			
 			if (FileTransfer.getInstance().isSupportedType(event.currentDataType)) {
 				String[] files = (String[]) event.data;
 				if (files != null) {
-					info = loadImageFromFile(notifier, files[0]);
+					frames = loadImageFromFile(notifier, files[0]);
 					importHandler.getHistory().add(files[0]);
 				}
 			}
-			if (info == null && ImageTransfer.getInstance().isSupportedType(event.currentDataType)) {
-				info = ImageUtils.convertToBufferedImage((ImageData) event.data);
+			if (frames == null && ImageTransfer.getInstance().isSupportedType(event.currentDataType)) {
+				frames = ImageUtils.convertToBufferedImages(new ImageData[] { (ImageData) event.data });
 			}
-			if (info == null && URLTransfer.getInstance().isSupportedType(event.currentDataType)) {
+			if (frames == null && URLTransfer.getInstance().isSupportedType(event.currentDataType)) {
 				
 				String[] entries = ((String) event.data).split("\n");
 				String trimmed = null;
@@ -351,13 +352,13 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 					}
 				}
 				if (lastURLFile != null) {
-					info = loadImageFromFile(notifier, lastURLFile.getAbsolutePath());
+					frames = loadImageFromFile(notifier, lastURLFile.getAbsolutePath());
 				}
 			}
 			
-			if (info != null) {
+			if (frames != null) {
 
-				importHandler.importImage(info.first, info.second);
+				importHandler.importImage(frames);
 				
 				renderer.setFocus();
 			}
@@ -408,8 +409,8 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		return temp;
 	}
 
-	public static Pair<BufferedImage, Boolean> loadImageFromFile(IEventNotifier notifier, String file) {
-		Pair<BufferedImage, Boolean> info = null;
+	public static ImageFrame[] loadImageFromFile(IEventNotifier notifier, String file) {
+		ImageFrame[] info = null;
 		URL url;
 		try {
 			url = new File(file).toURI().toURL();
@@ -420,14 +421,14 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			ImageLoader imgLoader = new ImageLoader();
 			ImageData[] datas = imgLoader.load(file);
 			if (datas.length > 0) {
-				info = ImageUtils.convertToBufferedImage(datas[0]);
+				info = ImageUtils.convertToBufferedImages(datas);
 			}
 		} catch (SWTException e) {
 			BufferedImage img;
 			try {
 				img = ImageIO.read(url);
 				if (img != null)
-					info = new Pair<BufferedImage, Boolean>(img, true);
+					info = new ImageFrame[] { new ImageFrame(img, true) };
 			} catch (IOException e1) {
 			}
 		}
@@ -438,11 +439,11 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				BufferedImage img = loader.getImageData(loader.getSize());
 				if (false) {
 					//BufferedImage img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
-					info = new Pair<BufferedImage, Boolean>(img, true);
+					info = new ImageFrame[] { new ImageFrame(img, true) };
 				} else {
 					// hmm... something about the AWT-ness makes it impossible to clip properly
 					ImageData data = ImageUtils.convertAwtImageData(img);
-					info = ImageUtils.convertToBufferedImage(data);
+					info = ImageUtils.convertToBufferedImages(new ImageData[] { data });
 				}
 			} catch (SVGException e2) {
 				notifier.notifyEvent(null, Level.ERROR, 

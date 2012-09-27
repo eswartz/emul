@@ -1,20 +1,26 @@
 package v9t9.gui.client.swt.imageimport;
 
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
+import org.ejs.gui.images.AwtImageUtils;
+
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.IVdpCanvasRenderer;
+import v9t9.common.video.VdpFormat;
 import v9t9.video.ImageDataCanvas;
+import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
 import v9t9.video.imageimport.ImageImportData;
-import v9t9.video.imageimport.ImageImportOptions;
+import v9t9.video.imageimport.ImageImportDialogOptions;
 
 public abstract class ImageImportHandler implements IImageImportHandler {
 
-	private ImageImportOptions imageImportOptions;
+	private ImageImportDialogOptions imageImportOptions;
 	private Collection<String> urlHistory = new LinkedHashSet<String>();
+	private RenderThread renderThread;
 
 	public ImageImportHandler() {
 		super();
@@ -32,9 +38,9 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 	}
 	
 	@Override
-	public ImageImportOptions getImageImportOptions() {
+	public ImageImportDialogOptions getImageImportOptions() {
 		if (imageImportOptions == null) {
-			imageImportOptions = new ImageImportOptions(getCanvas(), getVdpHandler());
+			imageImportOptions = new ImageImportDialogOptions(getCanvas(), getVdpHandler());
 			resetOptions();
 		}
 		return imageImportOptions;
@@ -43,13 +49,16 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 	@Override
 	public void resetOptions() {
 		imageImportOptions.resetOptions();
+		stopRendering();
 	}
 	
-	public void importImage(BufferedImage image, boolean scaleSmooth) {
+	public void importImage(ImageFrame[] frames) {
 		ImageImport importer = createImageImport();
-		ImageImportOptions imageImportOptions = getImageImportOptions();
-		imageImportOptions.updateFrom(image);
-		imageImportOptions.setScaleSmooth(scaleSmooth);
+		ImageImportDialogOptions imageImportOptions = getImageImportOptions();
+		
+		imageImportOptions.updateFrom(frames);
+		imageImportOptions.setScaleSmooth(!frames[0].isLowColor);
+		
 		importImageAndDisplay(importer);
 	}
 
@@ -61,15 +70,96 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 	/**
 	 * @param importer
 	 */
-	public void importImageAndDisplay(ImageImport importer) {
-		synchronized (getCanvasRenderer()) {
-			synchronized (getCanvas()) {
-				ImageImportData data = importer.importImage(imageImportOptions);
-				VdpImageImporter vdpImporter = new VdpImageImporter(data,
-						getVdpHandler(), getCanvas());
-				vdpImporter.importImageToCanvas();
-				
+	protected void importImageAndDisplay(ImageImport importer) {
+		Object hint = imageImportOptions.isScaleSmooth() ? RenderingHints.VALUE_INTERPOLATION_BILINEAR
+				:  RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
+	
+		VdpFormat format = getCanvas().getFormat();
+		boolean isBitmap = format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938;
+		
+		int targWidth = getCanvas().getVisibleWidth();
+		int targHeight = getCanvas().getVisibleHeight();
+	
+		if (format == VdpFormat.COLOR16_4x4) {
+			targWidth = 64;
+			targHeight = 48;
+		}
+		
+		int realWidth = imageImportOptions.getWidth();
+		int realHeight = imageImportOptions.getHeight();
+		float aspect = (float) targWidth / targHeight / 256.f * 192.f;
+
+		
+		if (imageImportOptions.isKeepAspect()) {
+			if (realWidth <= 0 || realHeight <= 0) {
+				throw new IllegalArgumentException("image has zero or negative size");
 			}
+			if (realWidth != targWidth || realHeight != targHeight) {
+				if (realWidth * targHeight * aspect > realHeight * targWidth) {
+					targHeight = (int) (targWidth * realHeight / realWidth / aspect);
+				} else {
+					targWidth = (int) (targHeight * realWidth * aspect / realHeight);
+					
+					// make sure, for bitmap mode, that the size is a multiple of 8,
+					// otherwise the import into video memory will destroy the picture
+					if (isBitmap) {
+						targWidth &= ~7;
+						targHeight = (int) (targWidth * realHeight / realWidth / aspect);
+					}
+				}
+			}
+		}
+		
+		if (format == VdpFormat.COLOR16_8x8) {
+			// make a maximum of 256 blocks  (256*64 = 16384)
+			// Reduces total screen real estate down by sqrt(3)
+			//targWidth = (int) (targWidth / 1.732) & ~7;
+			//targHeight = (int) (targHeight / 1.732) & ~7;
+			while ((targWidth & ~0x7) * 
+					 (((int)(targWidth * realHeight / realWidth / aspect) + 7) & ~0x7) > 16384) {
+				targWidth *= 0.99;
+				targHeight *= 0.99;
+			}
+			targWidth &= ~0x7;
+			targHeight = (int) (targWidth * realHeight / realWidth / aspect);
+			//if (DEBUG) System.out.println("Graphics mode: " + targWidth*((targHeight+7)&~0x7));
+		}
+
+		stopRendering();
+		
+		ImageFrame[] frames = imageImportOptions.getImages();
+		
+		ImageImportData[] datas = new ImageImportData[frames.length];
+		for (int i = 0; i < datas.length; i++) {
+			// always scale even if same size since the option destroys the image
+			BufferedImage scaled = AwtImageUtils.getScaledInstance(
+					frames[i].image, targWidth, targHeight, 
+					hint,
+					false);
+			//System.out.println(scaled.getWidth(null) + " x " +scaled.getHeight(null));
+			
+			ImageImportData data = importer.importImage(imageImportOptions, scaled);
+			data.delayMs = frames[i].delayMs;
+			datas[i] = data;
+		}
+	
+		VdpImageImporter vdpImporter = new VdpImageImporter(getVdpHandler(), getCanvas(), 
+				getCanvasRenderer());
+		renderThread = new RenderThread(vdpImporter, datas);
+		renderThread.start();
+	}
+
+	/**
+	 * 
+	 */
+	public void stopRendering() {
+		if (renderThread != null) {
+			renderThread.cancel();
+			try {
+				renderThread.join(500);
+			} catch (InterruptedException e) {
+			}
+			renderThread = null;
 		}
 	}
 	

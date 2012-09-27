@@ -1284,7 +1284,7 @@ public class ModuleSelector extends Composite {
 		if (targFile != null) {
 			ImageData data = ((ISwtVideoRenderer) window.getVideoRenderer()).getScreenshotImageData();
 			try {
-				ImageIO.write(ImageUtils.convertToBufferedImage(data).first, "png", new File(targFile));
+				ImageIO.write(ImageUtils.convertToBufferedImage(data).image, "png", new File(targFile));
 				
 				module.setImagePath(targFile.substring(targFile.lastIndexOf(File.separatorChar) + 1));
 				viewer.update(module, NAME_PROPERTY_ARRAY);

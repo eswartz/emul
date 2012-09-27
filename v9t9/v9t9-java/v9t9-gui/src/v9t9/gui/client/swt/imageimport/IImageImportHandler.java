@@ -6,8 +6,9 @@ package v9t9.gui.client.swt.imageimport;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 
+import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
-import v9t9.video.imageimport.ImageImportOptions;
+import v9t9.video.imageimport.ImageImportDialogOptions;
 
 /**
  * @author ejs
@@ -15,10 +16,10 @@ import v9t9.video.imageimport.ImageImportOptions;
  */
 public interface IImageImportHandler {
 	ImageImport createImageImport();
-	ImageImportOptions getImageImportOptions();
+	ImageImportDialogOptions getImageImportOptions();
 	void resetOptions();
-	
-	void importImage(BufferedImage image, boolean scaleSmooth);
+	void stopRendering() ;
+	void importImage(ImageFrame[] frames);
 	
 	Collection<String> getHistory();
 }

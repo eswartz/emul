@@ -18,7 +18,7 @@ public class AwtImageUtils {
 
 	/**
 	 * Convenience method that returns a scaled instance of the
-	 * provided {@code BufferedImage}.
+	 * provided {@code BufferedImage}.  Always returns a new image.
 	 *
 	 * @param img the original image to be scaled
 	 * @param targetWidth the desired width of the scaled instance,
@@ -44,7 +44,7 @@ public class AwtImageUtils {
 	                                       Object hint,
 	                                       boolean higherQuality)
 	{
-	    int type = BufferedImage.TYPE_INT_ARGB;
+	    int type = BufferedImage.TYPE_INT_RGB;
 	    BufferedImage ret = (BufferedImage)img;
 	    int w, h;
 	    if (higherQuality) {

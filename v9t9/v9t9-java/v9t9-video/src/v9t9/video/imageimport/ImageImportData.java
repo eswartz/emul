@@ -4,6 +4,8 @@
 package v9t9.video.imageimport;
 
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -20,16 +22,17 @@ public class ImageImportData {
 	/** mapping from RGB-32 pixel to each palette index */
 	protected Map<Integer, Integer> paletteToIndex;
 
-	private BufferedImage scaledImage;
+	public int delayMs;
 
 	/**
 	 * 
 	 */
-	public ImageImportData(BufferedImage scaled, BufferedImage converted, byte[][] thePalette, Map<Integer, Integer> paletteToIndex) {
-		this.scaledImage = scaled;
+	public ImageImportData(BufferedImage converted, byte[][] thePalette, Map<Integer, Integer> paletteToIndex) {
 		this.converted = converted;
-		this.thePalette = thePalette;
-		this.paletteToIndex = paletteToIndex;
+		this.thePalette = new byte[thePalette.length][];
+		for (int  i = 0; i < thePalette.length; i++)
+			this.thePalette[i] = Arrays.copyOf(thePalette[i], thePalette[i].length);
+		this.paletteToIndex = new HashMap<Integer, Integer>(paletteToIndex);
 	}
 	
 	/**
@@ -48,12 +51,5 @@ public class ImageImportData {
 	 */
 	public Map<Integer, Integer> getPaletteToIndex() {
 		return paletteToIndex;
-	}
-
-	/**
-	 * @return
-	 */
-	public BufferedImage getScaledImage() {
-		return scaledImage;
 	}
 }

@@ -13,17 +13,29 @@ import ejs.base.utils.Pair;
 
 
 class Histogram {
-	private final BufferedImage img;
 	final Map<Integer, Integer> hist;
 	final Map<Integer, Integer> pixelToColor;
 	final List<Integer> indices;
 	final int[] mappedColors;
+	private int mapped;
+	private IColorMapper paletteMapper;
+	private int maxDist;
 	
-	public Histogram(BufferedImage img) {
-		this.img = img;
+	/**
+	 * Build a histogram of the colors in the image once the 
+	 * colors are reduced to the given palette with the given
+	 * error.
+	 * @param paletteMapper the color mapper
+	 * @param width maximum width of images
+	 * @param height maximum height of images
+	 * @param maxDist maximum distance for a color to be considered to match
+	 */
+	public Histogram(IColorMapper paletteMapper, int width, int height, int maxDist) {
+		this.paletteMapper = paletteMapper;
+		this.maxDist = maxDist;
 		hist = new TreeMap<Integer, Integer>();
 		indices = new ArrayList<Integer>();
-		mappedColors = new int[img.getWidth() * img.getHeight()];  
+		mappedColors = new int[width * height];
 		pixelToColor = new TreeMap<Integer, Integer>();
 	}
 	
@@ -34,23 +46,27 @@ class Histogram {
 	 * @param paletteMapper the color mapper
 	 * @return the number of colors that map directly (within maxDist)
 	 */
-	public int generate(IColorMapper paletteMapper, int maxDist) {
-		int mapped = gather(paletteMapper, maxDist);
+	public int generate(BufferedImage image) {
+		hist.clear();
+		indices.clear();
+		pixelToColor.clear();
+		Arrays.fill(mappedColors, 0);
+		mapped = 0;
+
+		add(image);
 		
 		sort();
 		
 		return mapped;
 	}
 
-	private int gather(IColorMapper paletteMapper, int maxDist) {
-		hist.clear();
-		indices.clear();
-		pixelToColor.clear();
-		Arrays.fill(mappedColors, 0);
-		
+
+	/**
+	 * Add the given image to the histogram.
+	 */
+	public void add(BufferedImage img) {
 		int[] distA = { 0 };
 		int offs = 0;
-		int mapped = 0;
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x++) {
 				int pixel = img.getRGB(x, y);
@@ -80,7 +96,6 @@ class Histogram {
 				}
 			}
 		}
-		return mapped;
 	}
 
 	private void sort() {

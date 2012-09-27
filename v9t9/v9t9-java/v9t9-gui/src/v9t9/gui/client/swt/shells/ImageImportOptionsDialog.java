@@ -3,7 +3,6 @@
  */
 package v9t9.gui.client.swt.shells;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Collection;
 
@@ -16,6 +15,8 @@ import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
@@ -36,10 +37,11 @@ import v9t9.gui.client.swt.imageimport.ImageClipDecorator;
 import v9t9.gui.client.swt.imageimport.ImageLabel;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
+import v9t9.video.imageimport.ImageFrame;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.properties.IPropertySource;
-import ejs.base.utils.Pair;
+import ejs.base.properties.PropertySource;
 
 /**
  * Control the options used for importing images
@@ -48,16 +50,18 @@ import ejs.base.utils.Pair;
  */
 public class ImageImportOptionsDialog extends Composite {
 	
-	private final class ImagePropertyListener implements
+	private final static class ImagePropertyListener implements
 			IPropertyListener {
-		private final IProperty imageProperty;
+		private final IProperty imagesProperty;
 		private final ImageLabel imageLabel;
 		private Image img;
-		private BufferedImage bufImg;
+		private ImageFrame[] imgFrames;
+		private Shell shell;
 
-		private ImagePropertyListener(IProperty imageProperty,
+		private ImagePropertyListener(Shell shell, IProperty imagesProperty,
 				ImageLabel imageLabel) {
-			this.imageProperty = imageProperty;
+			this.shell = shell;
+			this.imagesProperty = imagesProperty;
 			this.imageLabel = imageLabel;
 		}
 
@@ -71,11 +75,11 @@ public class ImageImportOptionsDialog extends Composite {
 				img.dispose();
 				img = null;
 			}
-			bufImg = (BufferedImage) imageProperty.getValue();
+			imgFrames = (ImageFrame[]) imagesProperty.getValue();
 			
-			if (bufImg != null && !imageLabel.isDisposed()) {
+			if (imgFrames != null && !imageLabel.isDisposed()) {
 				if (img == null) { 
-					img = ImageUtils.convertAwtImage(getDisplay(), bufImg);
+					img = ImageUtils.convertAwtImage(shell.getDisplay(), imgFrames[0].image);
 				}
 				imageLabel.setImage(img);
 			}
@@ -110,8 +114,8 @@ public class ImageImportOptionsDialog extends Composite {
 
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
-		
-		propertySource = imageImportHandler.getImageImportOptions().createPropertySource();
+		propertySource = new PropertySource();
+		imageImportHandler.getImageImportOptions().addToPropertySource((PropertySource) propertySource);
 		
 		PropertySourceEditor editor = new PropertySourceEditor(
 				new FieldPropertyEditorProvider(),
@@ -121,23 +125,27 @@ public class ImageImportOptionsDialog extends Composite {
 		
 		editGroup.setToolTipText("Drag an image onto or out of this dialog");
 
-		final IProperty imageProperty = propertySource.getProperty("image");
+		final IProperty imagesProperty = propertySource.getProperty("frames");
 
 		final ImageLabel imageLabel = new ImageLabel(editGroup.getContainer(), SWT.BORDER);
+		
+		PropertySource tmp = new PropertySource();
+		imageImportHandler.getImageImportOptions().addToPropertySource(tmp);
+		
 		/*final ImageClipDecorator clipDecorator = */ new ImageClipDecorator(
 				imageLabel, 
-				imageImportHandler.getImageImportOptions().createPropertySource().getProperty("clip"),
+				tmp.getProperty("clip"),
 				listener);
 		
-		final ImagePropertyListener imagePropertyListener = 
-			new ImagePropertyListener(imageProperty, imageLabel);
-		imageProperty.addListener(imagePropertyListener);
+		final ImagePropertyListener imagesPropertyListener = 
+			new ImagePropertyListener(getShell(), imagesProperty, imageLabel);
+		imagesProperty.addListener(imagesPropertyListener);
 		
 		GridDataFactory.fillDefaults().grab(true, true).
 			minSize(64, 64).applyTo(imageLabel);
 		
 		for (IProperty prop : propertySource.getProperties()) {
-			if (listener != imageProperty) 
+			if (listener != imagesProperty) 
 				prop.addListener(listener);
 		}
 		
@@ -154,8 +162,6 @@ public class ImageImportOptionsDialog extends Composite {
 		});
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.BOTTOM).applyTo(reset);
 		
-		
-
 		final Button button = new Button(this, SWT.PUSH);
 		button.setText("Import Again");
 		button.setToolTipText("Import the last dragged image (for example, if the screen mode or contents changed)");
@@ -181,23 +187,33 @@ public class ImageImportOptionsDialog extends Composite {
 		this.pack();
 		
 		//imageProperty.firePropertyChange();
-		imagePropertyListener.propertyChanged(imageProperty);
+		imagesPropertyListener.propertyChanged(imagesProperty);
 		
 		this.addDisposeListener(new DisposeListener() {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
-				imagePropertyListener.dispose();
-				imageProperty.removeListener(imagePropertyListener);
+				imagesPropertyListener.dispose();
+				imagesProperty.removeListener(imagesPropertyListener);
 				
 				for (IProperty prop : propertySource.getProperties()) {
-					if (listener != imageProperty) 
+					if (listener != imagesProperty) 
 						prop.removeListener(listener);
 				}
 			}
 		});
 		
-		if (imageImportHandler.getImageImportOptions().getImage() == null) {
+		getShell().addShellListener(new ShellAdapter() {
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.ShellAdapter#shellClosed(org.eclipse.swt.events.ShellEvent)
+			 */
+			@Override
+			public void shellClosed(ShellEvent e) {
+				imageImportHandler.stopRendering();
+			}
+		});
+		
+		if (imageImportHandler.getImageImportOptions().getImages() == null) {
 			showFileOpenDialog(window, imageImportHandler, imageImportHandler.getHistory());
 		}
 	}
@@ -264,10 +280,10 @@ public class ImageImportOptionsDialog extends Composite {
 				hitem.addSelectionListener(new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(window.getEventNotifier(), file);
+						ImageFrame[] frames = SwtDragDropHandler.loadImageFromFile(window.getEventNotifier(), file);
 						
-						if (info != null) {
-							imageSupport.importImage(info.first, !info.second);
+						if (frames != null) {
+							imageSupport.importImage(frames);
 							((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
 						}
 					}
@@ -292,11 +308,11 @@ public class ImageImportOptionsDialog extends Composite {
 		String file = window.openFileSelectionDialog("Open Image", lastDir, null, false, 
 				new String[] { "*.jpg;*.jpeg;*.gif;*.png;*.bmp;*.tga;*.svg|Images", ".*|Other files" });
 		if (file != null) {
-			Pair<BufferedImage, Boolean> info = SwtDragDropHandler.loadImageFromFile(
+			ImageFrame[] frames = SwtDragDropHandler.loadImageFromFile(
 					window.getEventNotifier(), file);
 			
-			if (info != null) {
-				imageSupport.importImage(info.first, !info.second);
+			if (frames != null) {
+				imageSupport.importImage(frames);
 				((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
 				
 				fileHistory.add(file);
