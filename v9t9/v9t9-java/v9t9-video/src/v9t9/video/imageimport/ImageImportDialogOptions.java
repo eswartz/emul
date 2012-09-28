@@ -100,9 +100,13 @@ public class ImageImportDialogOptions extends ImageImportOptions {
 	}
 	
 	public int getWidth() {
+		if (frames == null)
+			return 1;
 		return clip != null && !clip.isEmpty() ? clip.width : frames[0].image.getWidth();
 	}
 	public int getHeight() {
+		if (frames == null)
+			return 1;
 		return clip != null && !clip.isEmpty() ? clip.height : frames[0].image.getHeight();
 	}
 

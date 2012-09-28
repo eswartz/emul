@@ -134,6 +134,8 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 		stopRendering();
 		
 		ImageFrame[] frames = imageImportOptions.getImages();
+		if (frames == null)
+			return;
 		
 		importer.prepareConversion(imageImportOptions);
 		

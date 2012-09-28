@@ -428,7 +428,8 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				img = ImageIO.read(url);
 				if (img != null)
 					info = new ImageFrame[] { new ImageFrame(img, true) };
-			} catch (IOException e1) {
+			} catch (Throwable e1) {
+				// IOException or IllegalArgumentException from broken file
 			}
 		}
 

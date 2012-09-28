@@ -306,7 +306,7 @@ public class ImageImportOptionsDialog extends Composite {
 		String lastDir = lastFile != null ? new File(lastFile).getParent() : null; 
 				
 		String file = window.openFileSelectionDialog("Open Image", lastDir, null, false, 
-				new String[] { "*.jpg;*.jpeg;*.gif;*.png;*.bmp;*.tga;*.svg|Images", ".*|Other files" });
+				new String[] { "*.jpg;*.jpeg;*.gif;*.png;*.bmp;*.tga;*.svg|Images", "*|Other files" });
 		if (file != null) {
 			ImageFrame[] frames = SwtDragDropHandler.loadImageFromFile(
 					window.getEventNotifier(), file);
