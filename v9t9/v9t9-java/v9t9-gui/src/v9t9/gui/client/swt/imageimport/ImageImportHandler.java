@@ -80,9 +80,12 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 		int targWidth = getCanvas().getVisibleWidth();
 		int targHeight = getCanvas().getVisibleHeight();
 	
+		int screenWidth = targWidth;
+		int screenHeight = targHeight;
+		
 		if (format == VdpFormat.COLOR16_4x4) {
-			targWidth = 64;
-			targHeight = 48;
+			targWidth = screenWidth = 64;
+			targHeight = screenHeight = 48;
 		}
 		
 		int realWidth = imageImportOptions.getWidth();
@@ -122,12 +125,23 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 			}
 			targWidth &= ~0x7;
 			targHeight = (int) (targWidth * realHeight / realWidth / aspect);
+			
+			screenWidth = targWidth;
+			screenHeight = targHeight;
 			//if (DEBUG) System.out.println("Graphics mode: " + targWidth*((targHeight+7)&~0x7));
 		}
 
 		stopRendering();
 		
 		ImageFrame[] frames = imageImportOptions.getImages();
+		
+		importer.prepareConversion(imageImportOptions);
+		
+		for (ImageFrame frame : frames) {
+			importer.addImage(imageImportOptions, frame.image);
+		}
+
+		importer.finishAddingImages();
 		
 		ImageImportData[] datas = new ImageImportData[frames.length];
 		for (int i = 0; i < datas.length; i++) {
@@ -136,13 +150,13 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 					frames[i].image, targWidth, targHeight, 
 					hint,
 					false);
-			//System.out.println(scaled.getWidth(null) + " x " +scaled.getHeight(null));
 			
-			ImageImportData data = importer.importImage(imageImportOptions, scaled);
+			ImageImportData data = importer.convertImage(imageImportOptions, scaled,
+					screenWidth, screenHeight);
 			data.delayMs = frames[i].delayMs;
 			datas[i] = data;
 		}
-	
+
 		VdpImageImporter vdpImporter = new VdpImageImporter(getVdpHandler(), getCanvas(), 
 				getCanvasRenderer());
 		renderThread = new RenderThread(vdpImporter, datas);

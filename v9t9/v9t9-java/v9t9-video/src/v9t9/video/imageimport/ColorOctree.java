@@ -245,7 +245,7 @@ public class ColorOctree {
 				Iterator<InnerNode> iter = sorted.iterator();
 				InnerNode candidate = iter.next();
 				
-				mergeInnerNode(depth, candidate);
+				mergeInnerNode(depth, candidate, maxLeafCount);
 				
 				iter.remove();
 				//if (leafCount != gatherLeaves().size())
@@ -332,23 +332,30 @@ public class ColorOctree {
 	 * @param inner
 	 * @return 
 	 */
-	private LeafNode mergeInnerNode(int depth, InnerNode parent) {
+	private LeafNode mergeInnerNode(int depth, InnerNode parent, int maxLeafCount) {
 		LeafNode newLeaf = new LeafNode(parent.parent);
+		boolean found = false;
 		for (int i = 0; i < 8; i++) {
 			Node n = parent.kids[i];
 			if (n instanceof LeafNode) {
 				newLeaf.add((LeafNode) n);
-				parent.kids[i] = null;
-				leafCount--;
 			}
 			else if (n instanceof InnerNode) {
-				LeafNode rec = mergeInnerNode(depth + 1, (InnerNode) n);
+				LeafNode rec = mergeInnerNode(depth + 1, (InnerNode) n, maxLeafCount);
 				newLeaf.add(rec);
-				parent.kids[i] = null;
-				leafCount--;
 			}
+			else
+				continue;
+			parent.kids[i] = null;
+			leafCount--;
+			found = true;
+			if (leafCount < maxLeafCount)
+				break;
 		}
 
+		if (!found)
+			throw new IllegalStateException();
+		
 		int index = 0;
 		while (index < 8 && parent.parent.kids[index] != parent) {
 			index++;

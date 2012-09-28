@@ -314,7 +314,7 @@ public class VdpImageImporter {
 		
 		int yoffs = ((192 - height) / 2) & ~0x7;
 		int xoffs = ((256 - width) / 2) & ~0x7;
-		for (int y = 0; y < height; y++) {
+		for (int y = 0; y < height; y ++) {
 			for (int x = 0; x < width; x+= 8) {
 				int ch = ((y >> 3) * ((width + 7) >> 3)) + (x >> 3);
 				if (ch > 0xff)
@@ -328,7 +328,7 @@ public class VdpImageImporter {
 				byte p = 0;
 				
 				for (int xo = 0; xo < 8; xo++) {
-					byte c = getPixel(x + xo + xoffs, y + yoffs);
+					byte c = getPixel(x + xo, y);
 					if (c != b) {
 						p |= 0x80 >> xo;
 					}

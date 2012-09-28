@@ -6,14 +6,21 @@ class MonoMapColor implements IPaletteMapper {
 	private final int fg;
 	private final int bg;
 	private byte[][] palette;
-	private final int midLum;
+	private int midLum;
 	
-	public MonoMapColor(int fg, int bg, int midLum) {
+	public MonoMapColor(int fg, int bg) {
 		this.fg = fg;
 		this.bg = bg;
-		this.midLum = midLum;
 		this.palette = createMonoPalette(fg, bg);
 	}
+	
+	/**
+	 * @param midLum the midLum to set
+	 */
+	public void setMidLum(int midLum) {
+		this.midLum = midLum;
+	}
+	
 	
 	private static byte[][] createMonoPalette(int fg, int bg) {
 		byte[][] palette = new byte[16][];

@@ -37,7 +37,7 @@ import ejs.base.utils.Pair;
 public class ImageImport {
 	private boolean DEBUG = false;
 
-	private BufferedImage convertedImage;
+	//private BufferedImage convertedImage;
 	private VdpFormat format;
 	private byte[][] thePalette;
 
@@ -46,7 +46,7 @@ public class ImageImport {
 	private boolean ditherMono;
 	private Palette paletteOption;
 
-	private final ImageDataCanvas canvas;
+//	private final ImageDataCanvas canvas;
 	private final VdpColorManager colorMgr;
 	private boolean paletteMappingDirty;
 	//private final IVdpChip vdp;
@@ -141,8 +141,10 @@ public class ImageImport {
 
 private boolean isBitmap;
 
+private IPaletteMapper mapColor;
+
 	public ImageImport(ImageDataCanvas canvas, boolean supportsSetPalette) {
-		this.canvas = canvas;
+//		this.canvas = canvas;
 //		this.supportsSetPalette = supportsSetPalette;
 		synchronized (canvas) {
 			this.colorMgr = canvas.getColorMgr();
@@ -162,7 +164,9 @@ private boolean isBitmap;
 		
 	}
 	
-	private void ditherFSApplyError(BufferedImage img, int x, int y, int sixteenths, int r_error, int g_error, int b_error) {
+	private void ditherFSApplyError(BufferedImage img, int x, int y, int sixteenths, int r_error, int g_error, int b_error, int tot_err) {
+		if (sixteenths * tot_err / 16 == 0)
+			return;
 		int pixel = img.getRGB(x, y);
 		int r = clamp(((pixel >> 16) & 0xff) + (sixteenths * r_error / 16));
 		int g = clamp(((pixel >> 8) & 0xff) + (sixteenths * g_error / 16));
@@ -215,7 +219,6 @@ private boolean isBitmap;
 		g_error = ((pixel >> 8) & 0xff) - ((newPixel >> 8) & 0xff);
 		b_error = ((pixel >> 0) & 0xff) - ((newPixel >> 0) & 0xff);
 
-
 		if (false&&useColorMappedGreyScale) {
 			int lum = (299 * r_error + 587 * g_error + 114 * b_error) / 1000;
 			r_error = g_error = b_error = lum;
@@ -257,20 +260,23 @@ private boolean isBitmap;
 		}
 		
 		if ((r_error | g_error | b_error) != 0) {
+			int tot_err = Math.abs(r_error) | Math.abs(g_error) | Math.abs(b_error); 
 			if (x + 1 < img.getWidth()) {
 				// x+1, y
 				ditherFSApplyError(img, x + 1, y,  
-						7, r_error, g_error, b_error);
+						7, r_error, g_error, b_error, tot_err);
 			}
 			if (y + 1 < img.getHeight()) {
-				if (x > 0)
+				if (x > 0) {
 					ditherFSApplyError(img, x - 1, y + 1, 
-							3, r_error, g_error, b_error);
+							3, r_error, g_error, b_error, tot_err);
+				}
 				ditherFSApplyError(img, x, y + 1, 
-						5, r_error, g_error, b_error);
-				if (x + 1 < img.getWidth())
+						5, r_error, g_error, b_error, tot_err);
+				if (x + 1 < img.getWidth()) {
 					ditherFSApplyError(img, x + 1, y + 1, 
-							1, r_error, g_error, b_error);
+							1, r_error, g_error, b_error, tot_err);
+				}
 			}
 		}
 	}
@@ -314,7 +320,8 @@ private boolean isBitmap;
 		
 		int newPixel = mapColor.getPalettePixel(newC);
 		
-		img.setRGB(x, y, newPixel | 0xff000000);
+		if (pixel != newPixel)
+			img.setRGB(x, y, newPixel | 0xff000000);
 	}
 	
 	private void ditherOrdered(BufferedImage img, IPaletteColorMapper mapColor) {
@@ -424,21 +431,15 @@ private boolean isBitmap;
 			img.setRGB(0, y, width, 1, rgbs, 0, width);
 		}
 	}
-	/** Import image from 'img' and update the canvas' image data
-	 * with colors from the current palette and in a configuration
-	 * legal for the current mode. */
-	protected BufferedImage convertImageData(BufferedImage img) {
-		if (format == null || format == VdpFormat.TEXT)
-			return null;
-		
+	protected BufferedImage convertImageData(BufferedImage img, int targWidth, int targHeight) {
 		flatten(img);
 		
 		if (!importDirectMappedImage(img)) {
-			int midLum = equalize(img);
+			 equalize(img);
 			
 //			reduceNoise(img);
 			
-			convertImageToColorMap(img, midLum);
+			convertImageToColorMap(img);
 		}
 	
 		if (false) {
@@ -451,7 +452,7 @@ private boolean isBitmap;
 			}
 		}
 		
-		return createConvertedImage(img);
+		return createConvertedImage(img, targWidth, targHeight);
 	}
 
 	/**
@@ -535,80 +536,20 @@ private boolean isBitmap;
 		return false;
 	}
 
-	private void convertImageToColorMap(BufferedImage img, int midLum) {
-		IPaletteMapper mapColor;
-
-		if (ditherMono) {
-			mapColor = new MonoMapColor(colorMgr.getForeground(), colorMgr.getBackground(), midLum);
-			firstColor = 0;
-		} else if (isBitmap || format == VdpFormat.COLOR16_4x4) {
-			if (paletteOption == Palette.OPTIMIZED) {
-				if (false)
-					createOptimalPaletteWithHSV(img, 16);
-				else
-					createOptimalPalette(img, 16);
-				mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
-			} else if (paletteOption == Palette.STANDARD) {
-//					for (int i = 0; i < 16; i++) {
-//						System.arraycopy(niceColorPalette[i], 0, thePalette[i], 0, 3);
-//					}
-				if (convertGreyScale)
-					mapColor = new TI16MapColor(thePalette, false, true);
-				else
-					mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
-			}
-			else /* current */ {
-				mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
-			}
-		}
-		else if (format == VdpFormat.COLOR16_1x1) {
-			if (paletteOption == Palette.OPTIMIZED) 
-				createOptimalPalette(img, 16);
-			mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
-		}
-		else if (format == VdpFormat.COLOR4_1x1) {
-			if (paletteOption == Palette.OPTIMIZED) {
-				// note: in this mode, there is no point trying to use colors to
-				// map to greyscale (to find "more depth") -- any real colors
-				// discovered are essentially random, and when viewed in greyscale,
-				// may all have similar luminance.  Just make a grey palette to
-				// begin with.
-				if (useColorMappedGreyScale)
-					createOptimalGreyscalePalette(img, 4);
-				else
-					createOptimalPalette(img, 4);
-			}
-			mapColor = new UserPaletteMapColor(thePalette, firstColor, 4, useColorMappedGreyScale);
-		}
-		else if (format == VdpFormat.COLOR256_1x1) {
-			mapColor = new RGB332MapColor(useColorMappedGreyScale);
-		}
-		else if (format == VdpFormat.COLOR16_8x8) {
-			mapColor = new TI16MapColor(thePalette, useColorMappedGreyScale, convertGreyScale);
-		}
-		else {
-			return;
-		}
+	private void convertImageToColorMap(BufferedImage img) {
 		
-		Histogram hist = optimizeForNColors(img, mapColor);
+		Histogram hist = optimizeForNColors(img);
 		
 		updatePaletteMapping();
 
-		IPaletteColorMapper colorMapper = mapColor;
-		
-//		if (ditherType != Dither.NONE && format == VdpFormat.COLOR16_8x1) {
-//			prepareBitmapModeColors(img, mapColor);
-//			colorMapper = new BitmapDitherColorMapper(mapColor);
-//		}
-		
 		if (ditherType == Dither.FS) {
-			ditherFloydSteinberg(img, colorMapper, hist, false);
+			ditherFloydSteinberg(img, mapColor, hist, false);
 		} else if (ditherType == Dither.ORDERED) {
-			ditherOrdered(img, colorMapper);
+			ditherOrdered(img, mapColor);
 //		} else if (ditherType == Dither.ORDERED2) {
 //			ditherOrderedBitmap(img, colorMapper);
 		} else {
-			ditherNone(img, colorMapper);
+			ditherNone(img, mapColor);
 		}
 	}
 
@@ -661,10 +602,7 @@ private boolean isBitmap;
 		}
 	}
 
-
-	private void createOptimalPalette(BufferedImage image, int colorCount) {
-		int toAllocate = colorCount - firstColor;
-		
+	private void addToOctree(BufferedImage image) {
 		//ColorOctree octree = new ColorOctree(4, toAllocate, true, false);
 		int[] prgb = { 0, 0, 0 };
 		int[] rgbs = new int[image.getWidth()];
@@ -672,11 +610,18 @@ private boolean isBitmap;
 			image.getRGB(0, y, rgbs.length, 1, rgbs, 0, rgbs.length);
 			for (int x = 0; x < rgbs.length; x++) {
 				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
-				if (useColorMappedGreyScale)
-					ColorMapUtils.rgbToGreyForGreyscaleMode(prgb, prgb);
+//					if (useColorMappedGreyScale)
+//						ColorMapUtils.rgbToGreyForGreyscaleMode(prgb, prgb);
+//					else if (convertGreyScale) 
+//						ColorMapUtils.rgbToGrey(prgb, prgb);
+				
 				octree.addColor(prgb);
 			}
 		}
+
+	}
+	private void createOptimalPalette(int colorCount) {
+		int toAllocate = colorCount - firstColor;
 		
 		octree.reduceTree(toAllocate);
 
@@ -688,7 +633,9 @@ private boolean isBitmap;
 			int[] repr = node.reprRGB();
 			
 			if (useColorMappedGreyScale)
-				ColorMapUtils.rgbToGreyForGreyscaleMode(prgb, prgb);
+				ColorMapUtils.rgbToGreyForGreyscaleMode(repr, repr);
+			else if (convertGreyScale) 
+				ColorMapUtils.rgbToGrey(repr, repr);
 			else
 				ColorMapUtils.mapForRGB333(repr);
 			
@@ -707,69 +654,115 @@ private boolean isBitmap;
 		}
 	}
 
-	/**
-	 * Pick areas where histogram finds the most luminance.
-	 * @param image
-	 * @param colorCount
-	 */
-	private void createOptimalGreyscalePalette(BufferedImage image, int colorCount) {
-		int toAlloc = colorCount - firstColor;
-		
-		Histogram prevHist = null;
-		
-		for (int mask = 0; mask < 3; mask++) {
-			final int maskVal = (~0) << mask;
-			final int max = 8 - (1 << mask);
-			IColorMapper greyMapper = new IColorMapper() {
-				
-				@Override
-				public int mapColor(int pixel, int[] dist) {
-					int lum = ColorMapUtils.getPixelLum(pixel);
-					return ((lum >> 5) & maskVal) * 7 / max;
-				}
-			};
-			
-			Histogram hist = new Histogram(greyMapper, image.getWidth(), image.getHeight(), Integer.MAX_VALUE);
-			hist.generate(image);
+//	/**
+//	 * Pick areas where histogram finds the most luminance.
+//	 * @param image
+//	 * @param colorCount
+//	 */
+//	private void addToOctreeInGreyscale(BufferedImage image) {
+//		Histogram prevHist = null;
+//		
+//		for (int mask = 0; mask < 3; mask++) {
+//			final int maskVal = (~0) << mask;
+//			final int max = 8 - (1 << mask);
+//			IColorMapper greyMapper = new IColorMapper() {
+//				
+//				@Override
+//				public int mapColor(int pixel, int[] dist) {
+//					int lum = ColorMapUtils.getPixelLum(pixel);
+//					return ((lum >> 5) & maskVal) * 7 / max;
+//				}
+//			};
+//			
+//			Histogram hist = new Histogram(greyMapper, image.getWidth(), image.getHeight(), Integer.MAX_VALUE);
+//			hist.generate(image);
+//	
+//			Map<Integer, Integer> colorToCountMap = hist.colorToCountMap();
+//			if (colorToCountMap.size() > toAlloc && mask + 1 < 3) {
+//				prevHist = hist;
+//				continue;
+//			}
+//		
+//			if (colorToCountMap.size() < colorCount && prevHist != null)
+//				hist = prevHist;
+//			
+//			for (int cidx = firstColor; cidx < colorCount; cidx++) {
+//				int c = hist.getColorIndex(cidx);
+//				//colorMgr.setGRB333(cidx, c, c, c);
+//				thePalette[cidx][0] = ColorMapUtils.rgb3to8[c];
+//				thePalette[cidx][1] = ColorMapUtils.rgb3to8[c];
+//				thePalette[cidx][2] = ColorMapUtils.rgb3to8[c];
+//			}
+//			
+//			break;
+//		}
+//		
+//	}
+//
+//	/**
+//	 * Pick areas where histogram finds the most luminance.
+//	 * @param image
+//	 * @param colorCount
+//	 */
+//	private void createOptimalGreyscalePalette(int colorCount) {
+//		int toAlloc = colorCount - firstColor;
+//		
+//		Histogram prevHist = null;
+//		
+//		for (int mask = 0; mask < 3; mask++) {
+//			final int maskVal = (~0) << mask;
+//			final int max = 8 - (1 << mask);
+//			IColorMapper greyMapper = new IColorMapper() {
+//				
+//				@Override
+//				public int mapColor(int pixel, int[] dist) {
+//					int lum = ColorMapUtils.getPixelLum(pixel);
+//					return ((lum >> 5) & maskVal) * 7 / max;
+//				}
+//			};
+//			
+//			Histogram hist = new Histogram(greyMapper, image.getWidth(), image.getHeight(), Integer.MAX_VALUE);
+//			hist.generate(image);
+//			
+//			// take darkest and brighest first
+//			Map<Integer, Integer> colorToCountMap = hist.colorToCountMap();
+//			if (colorToCountMap.size() > toAlloc && mask + 1 < 3) {
+//				prevHist = hist;
+//				continue;
+//			}
+//			
+//			if (colorToCountMap.size() < colorCount && prevHist != null)
+//				hist = prevHist;
+//			
+//			for (int cidx = firstColor; cidx < colorCount; cidx++) {
+//				int c = hist.getColorIndex(cidx);
+//				//colorMgr.setGRB333(cidx, c, c, c);
+//				thePalette[cidx][0] = ColorMapUtils.rgb3to8[c];
+//				thePalette[cidx][1] = ColorMapUtils.rgb3to8[c];
+//				thePalette[cidx][2] = ColorMapUtils.rgb3to8[c];
+//			}
+//			
+//			break;
+//		}
+//		
+//	}
 	
-			// take darkest and brighest first
-			Map<Integer, Integer> colorToCountMap = hist.colorToCountMap();
-			if (colorToCountMap.size() > toAlloc && mask + 1 < 3) {
-				prevHist = hist;
-				continue;
-			}
-		
-			if (colorToCountMap.size() < colorCount && prevHist != null)
-				hist = prevHist;
-			
-			for (int cidx = firstColor; cidx < colorCount; cidx++) {
-				int c = hist.getColorIndex(cidx);
-				//colorMgr.setGRB333(cidx, c, c, c);
-				thePalette[cidx][0] = ColorMapUtils.rgb3to8[c];
-				thePalette[cidx][1] = ColorMapUtils.rgb3to8[c];
-				thePalette[cidx][2] = ColorMapUtils.rgb3to8[c];
-			}
-			
-			break;
-		}
-		
-	}
-
-	private BufferedImage createConvertedImage(BufferedImage img) {
+	private BufferedImage createConvertedImage(BufferedImage img, int targWidth, int targHeight) {
 		int xoffs, yoffs;
 		
 		//Arrays.fill(canvasImageData.data, (byte) 0);
-		convertedImage = new BufferedImage(canvas.getVisibleWidth(), canvas.getVisibleHeight(), 
+		BufferedImage convertedImage = new BufferedImage(targWidth, targHeight, 
 				BufferedImage.TYPE_3BYTE_BGR);
 	
-		if (format == VdpFormat.COLOR16_4x4) {
-			xoffs = (64 - img.getWidth()) / 2;
-			yoffs = (48 - img.getHeight()) / 2;
-		} else {
-			xoffs = (canvas.getVisibleWidth() - img.getWidth() + canvas.getXOffset()) / 2;
-			yoffs = (canvas.getVisibleHeight() - img.getHeight() + canvas.getYOffset()) / 2;
-		}
-		
+//		if (format == VdpFormat.COLOR16_4x4) {
+//			xoffs = (64 - img.getWidth()) / 2;
+//			yoffs = (48 - img.getHeight()) / 2;
+//		} else {
+//			xoffs = (canvas.getVisibleWidth() - img.getWidth() + canvas.getXOffset()) / 2;
+//			yoffs = (canvas.getVisibleHeight() - img.getHeight() + canvas.getYOffset()) / 2;
+//		}
+		xoffs = (targWidth - img.getWidth()) / 2;
+		yoffs = (targHeight - img.getHeight()) / 2;
 	
 		if (isBitmap) {
 			// be sure we select the 8 pixel groups sensibly
@@ -781,7 +774,7 @@ private boolean isBitmap;
 		
 		if (isBitmap && !ditherMono) {
 			
-			reduceBitmapMode(img, xoffs, yoffs);
+			reduceBitmapMode(convertedImage, img, xoffs, yoffs);
 	
 		} else {
 	
@@ -872,7 +865,7 @@ private boolean isBitmap;
 	 * @param img
 	 * @return minimum color distance
 	 */
-	private Histogram optimizeForNColors(BufferedImage img, IPaletteMapper mapColor) {
+	private Histogram optimizeForNColors(BufferedImage img) {
 		
 		int numColors = mapColor.getNumColors();
 		
@@ -1412,7 +1405,7 @@ private boolean isBitmap;
 	 * @param yoffs
 	 */
 	@SuppressWarnings("unchecked")
-	protected void prepareBitmapModeColors(final BufferedImage img, final IPaletteMapper mapColor) {
+	protected void prepareBitmapModeColors(final BufferedImage img) {
 		bitmapColors = new Pair[img.getHeight()][];
 		
 		if (!colorMgr.isGreyscale()) {
@@ -1433,7 +1426,7 @@ private boolean isBitmap;
 	 * @param xoffs
 	 * @param yoffs
 	 */
-	protected void reduceBitmapMode(final BufferedImage img, final int xoffs, final int yoffs) {
+	protected void reduceBitmapMode(final BufferedImage convertedImage, final BufferedImage img, final int xoffs, final int yoffs) {
 		analyzeBitmap(img, 4, new IBitmapColorUser() {
 			
 			@Override
@@ -1615,36 +1608,11 @@ private boolean isBitmap;
 		paletteMappingDirty = false;
 	}
 
-	public byte getPixel(int x, int y) {
-		
-		int p;
-		if (x < convertedImage.getWidth() && y < convertedImage.getHeight())
-			p = convertedImage.getRGB(x, y) & 0xffffff;
-		else
-			p = 0;
-		
-		Integer c = paletteToIndex.get(p);
-//		if (c == null && format == VdpFormat.COLOR256_1x1) {
-//			c = paletteToIndex.get(paletteToIndex.ceilingKey(p));	// should be fixed now
-//		}
-		if (c == null) {
-			return 0;
-		}
-		return (byte) (int) c;
-	}
-
-
 	/**
+	 * @param options
+	 * @param image
 	 */
-	public ImageImportData importImage(ImageImportOptions options, BufferedImage image) {
-		if (image == null)
-			return null;
-		
-		if (options.isAsGreyScale()) {
-			convertGreyscale(image);
-			convertGreyScale = true;
-		}
-		
+	public void prepareConversion(ImageImportOptions options) {
 		paletteOption = options.getPalette();
 		ditherType = options.getDitherType();
 		ditherMono = options.isDitherMono();
@@ -1675,16 +1643,91 @@ private boolean isBitmap;
 				System.arraycopy(orig[i], 0, thePalette[i], 0, 3);
 			}
 		}
-		
+
+		convertGreyScale = options.isAsGreyScale();
+
 		// get original mapping
 		updatePaletteMapping();
 		
-		BufferedImage converted = convertImageData(image);
+		if (ditherMono) {
+			paletteOption = Palette.CURRENT;
+			mapColor = new MonoMapColor(colorMgr.getForeground(), colorMgr.getBackground());
+			firstColor = 0;
+		} else if (isBitmap || format == VdpFormat.COLOR16_4x4) {
+			if (paletteOption == Palette.OPTIMIZED) {
+				mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
+			} else if (paletteOption == Palette.STANDARD) {
+				if (convertGreyScale)
+					mapColor = new TI16MapColor(thePalette, false, true);
+				else
+					mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
+			}
+			else /* current */ {
+				mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
+			}
+		}
+		else if (format == VdpFormat.COLOR16_1x1) {
+			mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
+		}
+		else if (format == VdpFormat.COLOR4_1x1) {
+			mapColor = new UserPaletteMapColor(thePalette, firstColor, 4, useColorMappedGreyScale);
+		}
+		else if (format == VdpFormat.COLOR256_1x1) {
+			paletteOption = Palette.STANDARD;
+			mapColor = new RGB332MapColor(useColorMappedGreyScale);
+		}
+		else if (format == VdpFormat.COLOR16_8x8) {
+			paletteOption = Palette.STANDARD;
+			mapColor = new TI16MapColor(thePalette, useColorMappedGreyScale, convertGreyScale);
+		}
+		else {
+			throw new UnsupportedOperationException(format.toString());
+		}
+	}
+
+	public void addImage(ImageImportOptions options, BufferedImage image) {
+		if (image == null)
+			return;
+		
+		if (format == null)
+			return;
+		
+		if (paletteOption == Palette.OPTIMIZED) {
+			addToOctree(image);
+//			else if (format.getNumColors() > 4)
+//				// note: in this mode, there is no point trying to use colors to
+//				// map to greyscale (to find "more depth") -- any real colors
+//				// discovered are essentially random, and when viewed in greyscale,
+//				// may all have similar luminance.  Just make a grey palette to
+//				// begin with.
+//				if (useColorMappedGreyScale)
+//					createOptimalGreyscalePalette(image, format.getNumColors());
+//				else
+//					createOptimalPalette(image, format.getNumColors());
+//			}
+		}
+	}
+	
+	public void finishAddingImages() {
+		createOptimalPalette(format.getNumColors());
+
+	}
+	public ImageImportData convertImage(ImageImportOptions options, BufferedImage image,
+			int targWidth, int targHeight) {
+		if (image == null)
+			return null;
+
+		if (convertGreyScale) {
+			convertGreyscale(image);
+		}
+
+		BufferedImage converted = convertImageData(image, targWidth, targHeight);
+		
 		if (paletteMappingDirty) {
 			// update mapping if palette was altered
 			updatePaletteMapping();
 		}
-		
+			
 		ImageImportData data = new ImageImportData(converted, thePalette, paletteToIndex);
 		
 		return data;
@@ -1708,6 +1751,24 @@ private boolean isBitmap;
 		
 		
 	}
+
+//	public byte getPixel(int x, int y) {
+//			
+//			int p;
+//			if (x < convertedImage.getWidth() && y < convertedImage.getHeight())
+//				p = convertedImage.getRGB(x, y) & 0xffffff;
+//			else
+//				p = 0;
+//			
+//			Integer c = paletteToIndex.get(p);
+//	//		if (c == null && format == VdpFormat.COLOR256_1x1) {
+//	//			c = paletteToIndex.get(paletteToIndex.ceilingKey(p));	// should be fixed now
+//	//		}
+//			if (c == null) {
+//				return 0;
+//			}
+//			return (byte) (int) c;
+//		}
 
 	/**
 	 * @return

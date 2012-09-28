@@ -343,6 +343,17 @@ public class ColorMapUtils {
 	}
 	
 	/**
+	 * Fill in a grey RGB triplet corresponding to the luminance
+	 * of the incoming color RGB triplet.
+	 * @param rgb
+	 * @return
+	 */
+	public static void rgbToGrey(int[] prgb, int[] grgb) {
+		int lum = getRGBLum(prgb);
+		grgb[0] = grgb[1] = grgb[2] = lum;
+	}
+	
+	/**
 	 * Return an RGB triplet corresponding to the luminance
 	 * of the incoming color RGB triplet, in a mode where
 	 * all colors are rendered as greyscale.

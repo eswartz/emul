@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import v9t9.common.video.ColorMapUtils;
+
 import ejs.base.utils.Pair;
 
 
@@ -20,6 +22,9 @@ class Histogram {
 	private int mapped;
 	private IColorMapper paletteMapper;
 	private int maxDist;
+	
+	private long lumSum;
+	private int lumCount;
 	
 	/**
 	 * Build a histogram of the colors in the image once the 
@@ -52,11 +57,16 @@ class Histogram {
 		pixelToColor.clear();
 		Arrays.fill(mappedColors, 0);
 		mapped = 0;
-
+		lumSum = 0;
+		lumCount = 0;
+		
 		add(image);
 		
 		sort();
 		
+		if (paletteMapper instanceof MonoMapColor)
+			((MonoMapColor) paletteMapper).setMidLum(getAverageLuminance());
+			
 		return mapped;
 	}
 
@@ -94,10 +104,15 @@ class Histogram {
 				if (c != -1) {
 					mapped++;
 				}
+				lumSum += ColorMapUtils.getPixelLum(pixel);
+				lumCount++;
 			}
 		}
 	}
 
+	public int getAverageLuminance() {
+		return (int) (lumCount == 0 ? 128 : lumSum / lumCount);
+	}
 	private void sort() {
 		List<Pair<Integer, Integer>> sorted = new ArrayList<Pair<Integer,Integer>>();
 		for (Map.Entry<Integer, Integer> entry : hist.entrySet()) {
