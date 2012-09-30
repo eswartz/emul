@@ -482,7 +482,7 @@ public class ColorMapUtils {
 	public static void mapForRGB333(int[] rgb) {
 		rgb[0] = Math.min(255, ((rgb[0] & 0xe0) * 0xff / 0xe0));
 		rgb[1] = Math.min(255, ((rgb[1] & 0xe0) * 0xff / 0xe0));
-		rgb[2] = Math.min(255, ((rgb[2] & 0xe0) * 0xff / 0xe0));
+		rgb[2] = Math.min(255, ((rgb[2] & 0xe0) * 0xff / 0xe0));  
 	}
 	
 	public static void mapForRGB555(int[] rgb) {
