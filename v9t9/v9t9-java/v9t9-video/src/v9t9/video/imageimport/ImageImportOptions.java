@@ -57,6 +57,7 @@ public class ImageImportOptions {
 	protected boolean asGreyScale;
 	protected Palette paletteOption = Palette.OPTIMIZED;
 	protected boolean ditherMono;
+	protected boolean isMonoMode;
 	protected Dither ditherType = Dither.NONE;
 	
 	protected ColorOctree octree;
@@ -140,12 +141,19 @@ public class ImageImportOptions {
 		setPalette(canSetPalette ? Palette.OPTIMIZED : Palette.STANDARD);
 		
 		/////
-		boolean isMonoMode = vdp instanceof IVdpTMS9918A && ((IVdpTMS9918A) vdp).isBitmapMonoMode();
+		isMonoMode = vdp instanceof IVdpTMS9918A && ((IVdpTMS9918A) vdp).isBitmapMonoMode();
 		
 		setDitherMono(isMonoMode);
 		setDitherType(format == VdpFormat.COLOR16_8x1 ? Dither.ORDERED : Dither.FS);
 		
 		octree = null;
+	}
+	
+	/**
+	 * @return the isMonoMode
+	 */
+	public boolean isMonoMode() {
+		return isMonoMode;
 	}
 	
 	/**

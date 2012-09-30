@@ -54,7 +54,7 @@ abstract class BasePaletteMapper implements IPaletteMapper {
 	public int getMinimalPaletteDistance() {
 		//if (canSetPalette)
 			// 0xff --> 0xe0 for R, G, B
-			return 0x4*0x4 * 3;
+			return 0x20*0x20 * 3;
 
 		//return minDist;
 	}

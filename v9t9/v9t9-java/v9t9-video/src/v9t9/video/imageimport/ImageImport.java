@@ -35,7 +35,7 @@ import ejs.base.utils.Pair;
  *
  */
 public class ImageImport {
-	private boolean DEBUG = false;
+	private boolean DEBUG = true;
 
 	//private BufferedImage convertedImage;
 	private VdpFormat format;
@@ -164,50 +164,19 @@ private IPaletteMapper mapColor;
 		
 	}
 	
-	private void ditherFSApplyError(BufferedImage img, int x, int y, int sixteenths, int r_error, int g_error, int b_error, int tot_err) {
-		if (sixteenths * tot_err / 16 == 0)
-			return;
-		int pixel = img.getRGB(x, y);
-		int r = clamp(((pixel >> 16) & 0xff) + (sixteenths * r_error / 16));
-		int g = clamp(((pixel >> 8) & 0xff) + (sixteenths * g_error / 16));
-		int b = clamp(((pixel >> 0) & 0xff) + (sixteenths * b_error / 16));
-		img.setRGB(x, y, (r << 16) | (g << 8) | b | 0xff000000);
-
-	}
 	private final int clamp(int i) {
 		return i < 0 ? 0 : i > 255 ? 255 : i;
 	}
 
 	private void ditherFSPixel(BufferedImage img, IPaletteColorMapper mapColor,
-			Histogram hist, int x, int y, boolean limit8) {
+			Histogram hist, int x, int y) {
 
 		
 		int pixel = img.getRGB(x, y);
 
 		int newC = mapColor.getClosestPaletteEntry(x, y, pixel);
 		
-		int newPixel;
-		
-		int offs = y * img.getWidth() + x;
-		int prevC = hist.mappedColors()[offs];
-		
-		boolean skipped = false;
-		
-		if (false && !useColorMappedGreyScale && !ditherMono && prevC != -1) {
-			if (newC == prevC) {
-				// was not dithered away, but palette may have changed,
-				// so update color but ignore dithering
-				pixel = 
-					newPixel = mapColor.getPalettePixel(newC);
-				skipped = true;
-			}
-			else {
-				// don't change existing colors, but propagate error
-				newPixel = mapColor.getPalettePixel(newC);
-			}
-		} else  {
-			newPixel = mapColor.getPalettePixel(newC);
-		}
+		int newPixel = mapColor.getPalettePixel(newC);
 		
 		img.setRGB(x, y, newPixel | 0xff000000);
 		
@@ -219,46 +188,6 @@ private IPaletteMapper mapColor;
 		g_error = ((pixel >> 8) & 0xff) - ((newPixel >> 8) & 0xff);
 		b_error = ((pixel >> 0) & 0xff) - ((newPixel >> 0) & 0xff);
 
-		if (false&&useColorMappedGreyScale) {
-			int lum = (299 * r_error + 587 * g_error + 114 * b_error) / 1000;
-			r_error = g_error = b_error = lum;
-		}
-		else if (!ditherMono) {
-			if (limit8) {
-				if (!skipped) {
-					if (Math.abs(r_error) < 0x20 && Math.abs(g_error) < 0x20 && Math.abs(b_error) < 0x20) {
-						r_error /= 4;
-						g_error /= 4;
-						b_error /= 4;
-					}
-					else {
-						//if (Math.abs(r_error) < 0x20)
-						//	r_error /= 4;
-						//else
-							r_error /= 2;
-						//if (Math.abs(g_error) < 0x20)
-						//	g_error /= 4;
-						//else
-							g_error /= 2;
-						//if (Math.abs(b_error) < 0x20)
-						//	b_error /= 4;
-						//else
-							b_error /= 2;
-					}
-				}
-			} else {
-				if (false&&format == VdpFormat.COLOR256_1x1) {
-					// will never find a match if the color 
-					// didn't already match...
-					if (Math.abs(r_error) < 0x8 && Math.abs(g_error) < 0x8 && Math.abs(b_error) < 0x8) {
-						r_error /= 2;
-						g_error /= 2;
-						b_error /= 2;
-					}
-				}
-			}
-		}
-		
 		if ((r_error | g_error | b_error) != 0) {
 			int tot_err = Math.abs(r_error) | Math.abs(g_error) | Math.abs(b_error); 
 			if (x + 1 < img.getWidth()) {
@@ -281,10 +210,21 @@ private IPaletteMapper mapColor;
 		}
 	}
 	
-	private void ditherFloydSteinberg(BufferedImage img, IPaletteColorMapper mapColor, Histogram hist, boolean limitDither) {
+	private void ditherFSApplyError(BufferedImage img, int x, int y, int sixteenths, int r_error, int g_error, int b_error, int tot_err) {
+		if (sixteenths * tot_err / 16 == 0)
+			return;
+		int pixel = img.getRGB(x, y);
+		int r = clamp(((pixel >> 16) & 0xff) + (sixteenths * r_error / 16));
+		int g = clamp(((pixel >> 8) & 0xff) + (sixteenths * g_error / 16));
+		int b = clamp(((pixel >> 0) & 0xff) + (sixteenths * b_error / 16));
+		img.setRGB(x, y, (r << 16) | (g << 8) | b | 0xff000000);
+	
+	}
+
+	private void ditherFloydSteinberg(BufferedImage img, IPaletteColorMapper mapColor, Histogram hist) {
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x++) {
-				ditherFSPixel(img, mapColor, hist, x, y, limitDither);
+				ditherFSPixel(img, mapColor, hist, x, y);
 			}
 		}
 		
@@ -543,7 +483,7 @@ private IPaletteMapper mapColor;
 		updatePaletteMapping();
 
 		if (ditherType == Dither.FS) {
-			ditherFloydSteinberg(img, mapColor, hist, false);
+			ditherFloydSteinberg(img, mapColor, hist);
 		} else if (ditherType == Dither.ORDERED) {
 			ditherOrdered(img, mapColor);
 //		} else if (ditherType == Dither.ORDERED2) {
@@ -1632,7 +1572,7 @@ private IPaletteMapper mapColor;
 		paletteToIndex = null;
 		octree = new ColorOctree(3, true, false);
 		
-		if (paletteOption == Palette.STANDARD) {
+		if (paletteOption == Palette.STANDARD || options.isDitherMono()) {
 			byte[][] orig;
 			if (format.isMsx2()) {
 				orig = VdpColorManager.stockPaletteV9938;
@@ -1651,7 +1591,9 @@ private IPaletteMapper mapColor;
 		
 		if (ditherMono) {
 			paletteOption = Palette.CURRENT;
-			mapColor = new MonoMapColor(colorMgr.getForeground(), colorMgr.getBackground());
+			Pair<Integer, Integer> darkInfo = ColorMapUtils.getClosestColorByLumDistance(thePalette, firstColor, format.getNumColors(), 0);
+			Pair<Integer, Integer> brightInfo = ColorMapUtils.getClosestColorByLumDistance(thePalette, firstColor, format.getNumColors(), 0xffffff);
+			mapColor = new MonoMapColor(darkInfo.first, brightInfo.first);
 			firstColor = 0;
 		} else if (isBitmap || format == VdpFormat.COLOR16_4x4) {
 			if (paletteOption == Palette.OPTIMIZED) {
