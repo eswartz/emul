@@ -188,6 +188,11 @@ private IPaletteMapper mapColor;
 		g_error = ((pixel >> 8) & 0xff) - ((newPixel >> 8) & 0xff);
 		b_error = ((pixel >> 0) & 0xff) - ((newPixel >> 0) & 0xff);
 
+		if (useColorMappedGreyScale) {
+			int lum = (299 * r_error + 587 * g_error + 114 * b_error) / 1000;
+			r_error = g_error = b_error = lum;
+		}
+		
 		if ((r_error | g_error | b_error) != 0) {
 			int tot_err = Math.abs(r_error) | Math.abs(g_error) | Math.abs(b_error); 
 			if (x + 1 < img.getWidth()) {
