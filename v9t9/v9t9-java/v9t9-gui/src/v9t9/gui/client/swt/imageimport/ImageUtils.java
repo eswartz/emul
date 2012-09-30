@@ -1025,17 +1025,19 @@ public abstract class ImageUtils {
 		ImageData data = new ImageData(datas[0].width, datas[0].height, datas[0].depth, datas[0].palette);
 		for (int i = 0; i < frames.length; i++) {
 			ImageFrame frame;
-			if (i == 0)
-				frame = convertToBufferedImage(datas[i]);
-			else
-				frame = convertToBufferedImage(data);
+			if (i == 0) {
+				switch (datas[i].disposalMethod) {
+				case SWT.DM_FILL_BACKGROUND:
+					Arrays.fill(data.data, (byte)datas[0].transparentPixel);
+					break;
+				}
+				combineImages(datas[0], data);
+			}
+			frame = convertToBufferedImage(data);
 			frame.delayMs = datas[i].delayTime * 10;
 			frames[i] = frame;
 			
 			if (i + 1 < frames.length) {
-				if (i == 0) {
-					copyImageInto(datas[0], data);
-				}
 				switch (datas[i].disposalMethod) {
 				case SWT.DM_FILL_BACKGROUND:
 					copyImageInto(datas[i+1], data);
