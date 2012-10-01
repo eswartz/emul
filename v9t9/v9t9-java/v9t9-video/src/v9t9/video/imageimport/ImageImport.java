@@ -256,10 +256,17 @@ private IPaletteMapper mapColor;
 		int pixel = img.getRGB(x, y);
 		ColorMapUtils.pixelToRGB(pixel, prgb);
 
-		int threshold = thresholdMap8x8[x & 7][y & 7];
-		prgb[0] = (prgb[0] + threshold - 32);
-		prgb[1] = (prgb[1] + threshold - 32);
-		prgb[2] = (prgb[2] + threshold - 32);
+		if (true) {
+			int threshold = ((byte) (thresholdMap8x8[x & 7][y & 7] << 2)) >> 2;
+			prgb[0] = (prgb[0] + threshold);
+			prgb[1] = (prgb[1] + threshold);
+			prgb[2] = (prgb[2] + threshold);
+		} else {
+			int threshold = thresholdMap8x8[x & 7][y & 7];
+			prgb[0] = (prgb[0] + threshold - 32);
+			prgb[1] = (prgb[1] + threshold - 32);
+			prgb[2] = (prgb[2] + threshold - 32);
+		}
 		
 		int newC = mapColor.getClosestPaletteEntry(x, y, ColorMapUtils.rgb8ToPixel(prgb));
 		
