@@ -48,7 +48,7 @@ public class RenderThread extends Thread {
 				break;
 			
 			try {
-				Thread.sleep(datas[index].delayMs);
+				Thread.sleep(Math.max(25, datas[index].delayMs));
 			} catch (InterruptedException e) {
 			}
 			
