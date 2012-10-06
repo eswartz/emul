@@ -11,13 +11,14 @@ import java.io.IOException;
 import ejs.base.utils.Check;
 
 
+import v9t9.common.files.EmulatedFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.memory.IMemoryDomain;
 
 public class NativeFileMemoryEntry extends MemoryEntry {
 
     
-    private NativeFile file;
+    private EmulatedFile file;
     private boolean bLoaded;
     private int filesize;
     private int fileoffs;
@@ -25,7 +26,7 @@ public class NativeFileMemoryEntry extends MemoryEntry {
     public NativeFileMemoryEntry(
             MemoryArea area, int addr, int size, String name,
             IMemoryDomain domain, 
-            NativeFile file, int fileoffs, int filesize) {
+            EmulatedFile file, int fileoffs, int filesize) {
         super(name, domain, addr, size, area);
         Check.checkArg(file);
         this.file = file;

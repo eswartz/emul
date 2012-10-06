@@ -25,10 +25,10 @@ public class RealDiskUtils {
 	
 			builder.append(HexUtils.toHex4(x));
 			builder.append(' ');
-			for (y = 0; y < rowLength; y++)
+			for (y = 0; y < rowLength && x + y < buffer.length; y++)
 				builder.append(HexUtils.toHex2(buffer[x + y]) + " ");
 			builder.append(' ');
-			for (y = 0; y < rowLength; y++) {
+			for (y = 0; y < rowLength && x + y < buffer.length; y++) {
 				byte b = buffer[x+y];
 				if (b >= 32 && b < 127)
 					builder.append((char) b);

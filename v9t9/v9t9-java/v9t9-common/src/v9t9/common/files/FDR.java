@@ -40,6 +40,7 @@ public abstract class FDR implements IFDRInfo {
     protected int flags;
     
     protected final int fdrsize;
+	private int[] sectors;
     
     /**
 	 * @param fdrsize2
@@ -201,13 +202,44 @@ public abstract class FDR implements IFDRInfo {
     
 	public abstract void writeFDR(File file) throws IOException;
 
-	/** Validate the FDR against the file which provided it */
-	public void validate(File file) throws InvalidFDRException {
+	/** Validate the FDR for sanity */
+	public void validate() throws InvalidFDRException {
         // check for invalid filetype flags
         if ((flags & ~FF_VALID_FLAGS) != 0) {
-            throw new InvalidFDRException("Invalid FDR flags " + HexUtils.toHex2(flags) + " for " + file);
+            throw new InvalidFDRException("Invalid FDR flags " + HexUtils.toHex2(flags) + " for " + this);
         }
 
+        // fixed files have 256/reclen records per sector
+        if ((flags & ff_program) == 0
+            && (flags & ff_variable) == 0) {
+            if (reclen == 0 ||
+                256 / reclen != recspersec) 
+            {
+                throw new InvalidFDRException("record length "+reclen+" / records per sector "+recspersec+" invalid for FIXED file: " + this);
+            }
+        }
+        
+        // variable files have 255/(reclen+1) records per sector
+        if ((flags & ff_program) == 0) {
+            if (reclen == 0 || 
+                255 / (reclen + 1) != recspersec 
+                 // known problem that older v9t9s used this calculation
+                && 256 / reclen != recspersec)
+            {
+                throw new InvalidFDRException("record length "+reclen+" / records per sector "+recspersec+" invalid for VARIABLE file: " + this);
+            }
+        } else {
+	        // program files have 0
+	        if (reclen != 0 && recspersec != 0) {
+	            throw new InvalidFDRException("record length "+reclen+" / records per sector "+recspersec+" invalid for PROGRAM file: " + this);
+	        }
+        }
+	}
+
+	/** Validate the FDR against the file which provided it */
+	public void validate(File file) throws InvalidFDRException {
+		validate();
+		
         long filesize = file.length();
         
         // check for invalid file size:
@@ -219,37 +251,27 @@ public abstract class FDR implements IFDRInfo {
                  || secsused > (filesize - fdrsize) / 256 + 64) {
                 throw new InvalidFDRException("Invalid number of sectors " + secsused + " for data size " + (filesize - fdrsize) +": " + file);
         }
-
-        // fixed files have 256/reclen records per sector
-        if ((flags & ff_program) == 0
-            && (flags & ff_variable) == 0) {
-            if (reclen == 0 ||
-                256 / reclen != recspersec) 
-            {
-                throw new InvalidFDRException("record length "+reclen+" / records per sector "+recspersec+" invalid for FIXED file: " + file);
-            }
-        }
-        
-        // variable files have 255/(reclen+1) records per sector
-        if ((flags & ff_program) == 0) {
-            if (reclen == 0 || 
-                255 / (reclen + 1) != recspersec 
-                 // known problem that older v9t9s used this calculation
-                && 256 / reclen != recspersec)
-            {
-                throw new InvalidFDRException("record length "+reclen+" / records per sector "+recspersec+" invalid for VARIABLE file: " + file);
-            }
-        } else {
-	        // program files have 0
-	        if (reclen != 0 && recspersec != 0) {
-	            throw new InvalidFDRException("record length "+reclen+" / records per sector "+recspersec+" invalid for PROGRAM file: " + file);
-	        }
-        }
 	}
     
-
     /**
      * Set the filename -- may be a noop!
      */
-    abstract public void setFileName(String name) throws IOException; 
+    abstract public void setFileName(String name) throws IOException;
+    
+    /* (non-Javadoc)
+     * @see v9t9.common.files.IFDRInfo#getContentSectors()
+     */
+    @Override
+    public int[] getContentSectors() {
+    	if (sectors == null || sectors.length != getSectorsUsed()) {
+    		sectors = fetchContentSectors();
+    	}
+    	return sectors;
+    }
+
+	/**
+	 * Fetch the sectors that compose the file content.
+	 * @return array, size is {@link #getContentSectors()}
+	 */
+	protected abstract int[] fetchContentSectors();
 }

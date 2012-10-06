@@ -10,20 +10,18 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import ejs.base.properties.IPersistable;
-import ejs.base.properties.IProperty;
-import ejs.base.settings.ISettingSection;
-import ejs.base.settings.SettingProperty;
-
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
-import v9t9.common.files.FDR;
+import v9t9.common.files.DiskImageFDR;
 import v9t9.common.files.IDiskImage;
-import v9t9.common.files.V9t9FDR;
+import v9t9.common.files.EmulatedDiskImageFile;
 import v9t9.common.files.VDR;
+import ejs.base.properties.IPersistable;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
+import ejs.base.settings.SettingProperty;
 
 
 /**
@@ -87,6 +85,14 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		inUseSetting = new SettingProperty(name, Boolean.FALSE);
 		inUseSetting.addEnablementDependency(settingDsrEnabled);
 		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IDiskImage#isDiskImageOpen()
+	 */
+	@Override
+	public boolean isDiskImageOpen() {
+		return handle != null;
 	}
 
 	/**
@@ -423,12 +429,14 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 				break;
 			try {
 				readSector(sec, fdrSec, 0, 256);
-				V9t9FDR fdr = V9t9FDR.createFDR(fdrSec, 0);
-				int sz = fdr.getSectorsUsed() + 1;
+				DiskImageFDR fdr = DiskImageFDR.createFDR(fdrSec, 0);
+//				int sz = fdr.getSectorsUsed() + 1;
 				
-				entries.add(new CatalogEntry(fdr.getFileName(), sz, 
-						fdr.getFlags(), fdr.getRecordLength(),
-						(fdr.getFlags() & FDR.ff_protected) != 0));
+				entries.add(new CatalogEntry(fdr.getFileName(), 
+						new EmulatedDiskImageFile(this, fdr, fdr.getFileName())));
+//						sz, 
+//						fdr.getFlags(), fdr.getRecordLength(),
+//						(fdr.getFlags() & FDR.ff_protected) != 0));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

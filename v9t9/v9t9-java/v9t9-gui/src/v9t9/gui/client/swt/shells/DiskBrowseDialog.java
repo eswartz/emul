@@ -11,6 +11,8 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -19,7 +21,10 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Item;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -28,10 +33,11 @@ import org.eclipse.swt.widgets.TableItem;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
+import v9t9.common.files.EmulatedFile;
 import v9t9.common.machine.IMachine;
 import ejs.base.properties.IProperty;
 
-final class CatalogDialog extends Dialog {
+public class DiskBrowseDialog extends Dialog {
 	private static final int COLUMN_NAME = 0;
 	private static final int COLUMN_SIZE = 1;
 	private static final int COLUMN_TYPE = 2;
@@ -139,7 +145,7 @@ final class CatalogDialog extends Dialog {
 		setShellStyle(getShellStyle() & ~(SWT.APPLICATION_MODAL + SWT.SYSTEM_MODAL) | SWT.RESIZE | SWT.MODELESS);
 	}
 
-	public CatalogDialog(Shell parentShell,
+	public DiskBrowseDialog(Shell parentShell,
 			IMachine machine,
 			List<CatalogEntry> entries, 
 			Catalog catalog, IProperty setting) {
@@ -236,6 +242,50 @@ final class CatalogDialog extends Dialog {
 				}
 			}
 		});
+		
+		table.addMenuDetectListener(new MenuDetectListener() {
+			
+			@Override
+			public void menuDetected(MenuDetectEvent e) {
+				final Item item = viewer.getTable().getItem(
+						viewer.getControl().toControl(new Point(e.x, e.y))
+						);
+				if (item == null)
+					return;
+
+				Menu menu = new Menu(viewer.getControl());
+
+				if (item.getData() instanceof CatalogEntry) {
+
+					final CatalogEntry entry = (CatalogEntry) item.getData();
+					
+					final MenuItem viewItem;
+					viewItem = new MenuItem(menu, SWT.NONE);
+					viewItem.setText("View content");
+					
+					viewItem.addSelectionListener(new SelectionAdapter() {
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							doViewContent(entry.getFile());
+						}
+					});
+				}
+
+				if (menu.getItemCount() == 0) {
+					menu.dispose();
+					return;
+				}
+				
+				menu.setLocation(e.x, e.y);
+				menu.setVisible(true);
+				
+				while (!menu.isDisposed() && menu.isVisible()) {
+					if (!getShell().getDisplay().readAndDispatch())
+						getShell().getDisplay().sleep();
+				}
+
+			}
+		});
 
 		label = new Label(composite, SWT.WRAP);
 		label.setText("Double-click to paste path (shift for filename)");
@@ -255,4 +305,11 @@ final class CatalogDialog extends Dialog {
 		});
 		
 	}
+	
+	protected void doViewContent(EmulatedFile file) {
+		FileContentDialog dialog = new FileContentDialog(getShell());
+		dialog.setFile(file);
+		dialog.open();
+	}
+
 }

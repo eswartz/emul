@@ -7,42 +7,12 @@
 package v9t9.common.files;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * This is the interface to a native (TI-99) file
  * @author ejs
  */
-public interface NativeFile extends IFDRInfo {
+public interface NativeFile extends EmulatedFile {
     /** Get the host file */
     public File getFile();
-
-    /** Read contents, excluding headers  */
-    public int readContents(byte[] contents, int contentOffset, int offset, int length) throws IOException;
-
-    /** Get the represented file content size */
-    public int getFileSize();
-
-    /** Write file contents, excluding headers */
- 	public int writeContents(byte[] contents, int contentOffset, int offset, int length) throws IOException;
-
-	/**
-	 * Set absolute file length
-	 * @param size
-	 * @throws IOException 
-	 */
-	public void setFileSize(int size) throws IOException;
-	
-	/**
-	 * Validate state.
-	 * @throws InvalidFDRException 
-	 */
-	void validate() throws InvalidFDRException;
-	
-	/**
-	 * Flush to disk.
-	 */
-	void flush() throws IOException;
-	
-	String toString();
 }

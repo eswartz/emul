@@ -14,6 +14,7 @@ import ejs.base.utils.HexUtils;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.FDR;
 import v9t9.common.files.IFileMapper;
+import v9t9.common.files.EmulatedBaseFDRFile;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
@@ -283,7 +284,7 @@ public class EmuDiskPabHandler extends PabHandler {
 				else
 					fdr.setRecordsPerSector(Math.min(255, 256 / pab.preclen));
 				
-				NativeFile nativefile = new NativeFDRFile(file, fdr);
+				NativeFDRFile nativefile = new NativeFDRFile(file, fdr);
 				try {
 					nativefile.flush();
 				} catch (IOException e) {
@@ -309,8 +310,8 @@ public class EmuDiskPabHandler extends PabHandler {
 		}
 
 		// validate flags for existing file
-		if (openFile.getNativeFile() instanceof NativeFDRFile) {
-			NativeFDRFile fdrFile = (NativeFDRFile) openFile.getNativeFile();
+		if (openFile.getNativeFile() instanceof EmulatedBaseFDRFile) {
+			EmulatedBaseFDRFile fdrFile = (EmulatedBaseFDRFile) openFile.getNativeFile();
 			int mask = FDR.ff_variable + FDR.ff_program;
 			int extFdrFlags = (fdrFile.getFDR().getFlags() & FDR.ff_internal + FDR.ff_variable + FDR.ff_program);
 			if ((extFdrFlags & mask) != (fdrflags & mask)) {
@@ -550,7 +551,8 @@ public class EmuDiskPabHandler extends PabHandler {
 		fdr.setFlags(FDR.ff_program);
 		
 		// and a native file
-		openFile.setNativeFile(new NativeFDRFile(file, fdr));
+		NativeFDRFile nativefile = new NativeFDRFile(file, fdr);
+		openFile.setNativeFile(nativefile);
 		openFile.flush();
 		
 		ByteMemoryAccess access = xfer.getVdpMemory(pab.bufaddr);

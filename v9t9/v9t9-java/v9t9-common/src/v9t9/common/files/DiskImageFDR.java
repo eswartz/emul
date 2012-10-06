@@ -11,16 +11,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class V9t9FDR extends FDR {
+public class DiskImageFDR extends FDR {
 
-    public static final int FDRSIZE = 128;
+    public static final int FDRSIZE = 256;
     
     /** 10 bytes, padded with spaces */
     private final byte[] filename = new byte[10];
     
     private final byte[] res10 = new byte[2];
-    private final byte[] dcpb = new byte[100];
     private final byte[] rec20 = new byte[8];
+    private final byte[] dcpb = new byte[228];
 
     /**
     char        filenam[10];// filename, padded with spaces
@@ -38,14 +38,14 @@ public class V9t9FDR extends FDR {
                                # sectors for VARIABLE file,
                                0 for program 
     u8          rec20[8];   // reserved 
-    u8          dcpb[100];  // sector layout of file, ignored for v9t9 
+    u8          dcpb[228];  // sector layout of file, in >UM >SN >OF == >NUM >OFS format
      */
 
-    public V9t9FDR() {
+    public DiskImageFDR() {
     	super(FDRSIZE);
     }
-    public static V9t9FDR readFDR(File file) throws IOException, InvalidFDRException {
-        V9t9FDR fdr = new V9t9FDR();
+    public static DiskImageFDR readFDR(File file) throws IOException, InvalidFDRException {
+        DiskImageFDR fdr = new DiskImageFDR();
         FileInputStream stream = new FileInputStream(file);
         try {
 	        stream.read(fdr.filename);
@@ -66,8 +66,8 @@ public class V9t9FDR extends FDR {
         return fdr;
     }
     
-    public static V9t9FDR createFDR(byte[] data, int offset) {
-        V9t9FDR fdr = new V9t9FDR();
+    public static DiskImageFDR createFDR(byte[] data, int offset) {
+        DiskImageFDR fdr = new DiskImageFDR();
         
     	System.arraycopy(data, offset, fdr.filename, 0, fdr.filename.length);
     	System.arraycopy(data, offset + 0xA, fdr.res10, 0, fdr.res10.length);
@@ -139,10 +139,31 @@ public class V9t9FDR extends FDR {
 	 */
 	@Override
 	protected int[] fetchContentSectors() {
-		int[] secs = new int[getSectorsUsed()];
-    	for (int i = 0; i < secs.length; i++) {
-    		secs[i] = i * 256;
+    	int[] secs = new int[getSectorsUsed()];
+    	
+		// decode cluster list:
+    	//
+    	// >1C-FF 	Cluster list 	>UM >SN >OF == >NUM >OFS
+
+    	int clusOffs = 0;
+    	int secIdx = 0;
+    	while (secIdx < secs.length) {
+    		int um = dcpb[clusOffs++] & 0xff;
+    		int sn = dcpb[clusOffs++] & 0xff;
+    		int of = dcpb[clusOffs++] & 0xff;
+    		if ((um | sn | of) == 0) 
+    			break;
+    		int num = um | ((sn & 0xf) << 8);
+    		int ofs = (of << 4) | ((sn >> 4) & 0xf);
+    		while (secIdx <= ofs) {
+    			secs[secIdx++] = num++;
+    		}
     	}
+    	
+    	while (secIdx < secs.length) {
+    		secs[secIdx++] = -1;
+    	}
+    	
     	return secs;
 	}
 	

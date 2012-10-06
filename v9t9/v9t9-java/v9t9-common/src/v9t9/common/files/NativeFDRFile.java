@@ -15,23 +15,20 @@ import ejs.base.utils.Check;
 import ejs.base.utils.CompatUtils;
 
 
-public class NativeFDRFile implements NativeFile, IFDROwner {
+public class NativeFDRFile extends EmulatedBaseFDRFile implements NativeFile, IFDROwner {
 
     private File file;
-    private FDR fdr;
-    
     public NativeFDRFile(File file, FDR fdr) {
+    	super(fdr);
         Check.checkArg(file);
-        Check.checkArg(fdr);
         this.file = file;
-        this.fdr = fdr;
     }
     
     @Override
     public String toString() {
     	return file + " (FDR)";
     }
-
+    
     public int readContents(byte[] contents, int contentOffset, int offset, int length) throws IOException {
         FileInputStream fis = new FileInputStream(file);
         CompatUtils.skipFully(fis, (fdr.getFDRSize() + offset));
@@ -53,10 +50,6 @@ public class NativeFDRFile implements NativeFile, IFDROwner {
         return length;
 	}
 
-    public int getFileSize() {
-        return fdr.getFileSize();
-    }
-    
     public File getFile() {
         return file;
     }
@@ -65,18 +58,15 @@ public class NativeFDRFile implements NativeFile, IFDROwner {
      * @see v9t9.engine.files.NativeFile#setLength(int)
      */
     public void setFileSize(int size) throws IOException {
+    	super.setFileSize(size);
+    	
     	file.setWritable(true);
     	RandomAccessFile raf = new RandomAccessFile(file, "rw");
-    	fdr.setFileSize(size);
         raf.setLength(fdr.getFDRSize() + fdr.getFileSize());
         raf.close();
         file.setWritable(!fdr.isReadOnly());
     }
     
-	public FDR getFDR() {
-		return fdr;
-	}
-
 	/* (non-Javadoc)
 	 * @see v9t9.engine.files.NativeFile#validate()
 	 */
@@ -99,40 +89,5 @@ public class NativeFDRFile implements NativeFile, IFDROwner {
 		if (!file.canWrite())
 			flags |= FDR.ff_protected;
 		return flags;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.engine.files.NativeFile#getSectorsUsed()
-	 */
-	public int getSectorsUsed() {
-		return fdr.secsused;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.engine.files.IFDRInfo#getByteOffset()
-	 */
-	public int getByteOffset() {
-		return fdr.getByteOffset();
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.engine.files.IFDRInfo#getNumberRecords()
-	 */
-	public int getNumberRecords() {
-		return fdr.getNumberRecords();
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.engine.files.IFDRInfo#getRecordLength()
-	 */
-	public int getRecordLength() {
-		return fdr.getRecordLength();
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.engine.files.IFDRInfo#getRecordsPerSector()
-	 */
-	public int getRecordsPerSector() {
-		return fdr.getRecordsPerSector();
 	}
 }

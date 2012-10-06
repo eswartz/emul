@@ -14,7 +14,9 @@ import ejs.base.utils.HexUtils;
 
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.FDR;
+import v9t9.common.files.IFDROwner;
 import v9t9.common.files.IFileMapper;
+import v9t9.common.files.EmulatedBaseFDRFile;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
@@ -143,8 +145,8 @@ public class DirectDiskHandler {
 
 		if (secs == 0) {
 			// read FDR info
-			if (file instanceof NativeFDRFile) {
-				NativeFDRFile fdrFile = (NativeFDRFile) file;
+			if (file instanceof EmulatedBaseFDRFile) {
+				EmulatedBaseFDRFile fdrFile = (EmulatedBaseFDRFile) file;
 				FDR fdr = fdrFile.getFDR();
 				xfer.writeParamWord(parms + 2, (short) fdr.getSectorsUsed());
 				xfer.writeParamByte(parms + 4, (byte) fdr.getFlags());
@@ -203,8 +205,8 @@ public class DirectDiskHandler {
 				file = new NativeFDRFile(localFile, new V9t9FDR());
 			}
 			
-			if (file instanceof NativeFDRFile) {
-				NativeFDRFile fdrFile = (NativeFDRFile) file;
+			if (file instanceof EmulatedBaseFDRFile) {
+				EmulatedBaseFDRFile fdrFile = (EmulatedBaseFDRFile) file;
 				FDR fdr = fdrFile.getFDR();
 				fdr.setSectorsUsed(xfer.readParamWord(parms + 2) & 0xffff);
 				fdr.setFlags(xfer.readParamByte(parms + 4) & FDR.FF_VALID_FLAGS);
@@ -344,8 +346,8 @@ public class DirectDiskHandler {
 		dumper.info("Changing protection for " + file + " to " 
 				+ (protect ? "enabled" : "disabled"));
 		
-		if (file instanceof NativeFDRFile) {
-			NativeFDRFile fdrFile = (NativeFDRFile) file;
+		if (file instanceof IFDROwner) {
+			IFDROwner fdrFile = (IFDROwner) file;
 			
 			FDR fdr = fdrFile.getFDR();
 			if (protect)
@@ -397,8 +399,8 @@ public class DirectDiskHandler {
 			throw new DsrException(EmuDiskConsts.es_hardware, "File is protected when renaming: " + file.getFile());
 		}
 		
-		if (file instanceof NativeFDRFile) {
-			NativeFDRFile fdrFile = (NativeFDRFile) file;
+		if (file instanceof IFDROwner) {
+			IFDROwner fdrFile = (IFDROwner) file;
 			
 			FDR fdr = fdrFile.getFDR();
 			if ((fdr.getFlags() & FDR.ff_protected) != 0) {

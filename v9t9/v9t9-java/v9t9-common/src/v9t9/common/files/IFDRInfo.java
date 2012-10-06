@@ -9,6 +9,8 @@ package v9t9.common.files;
  *
  */
 public interface IFDRInfo {
+	public String getFileName();
+	
     /** filetype flags */
     public int getFlags();
 	
@@ -36,4 +38,8 @@ public interface IFDRInfo {
     
     public int getFileSize();
     
+    /** Get the array of sectors which contain the content of the associated file. 
+     * @return array of sector numbers, size {@link #getSectorsUsed()}
+     */
+    public int[] getContentSectors();
 }

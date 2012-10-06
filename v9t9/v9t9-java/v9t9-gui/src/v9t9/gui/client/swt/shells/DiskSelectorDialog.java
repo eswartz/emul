@@ -263,7 +263,7 @@ public class DiskSelectorDialog extends Composite {
 		protected void showCatalogDialog(final IProperty setting,
 				final Catalog catalog) {
 			final List<CatalogEntry> entries = catalog.getEntries();
-			Dialog dialog = new CatalogDialog(getShell(), machine, entries, catalog, setting);
+			Dialog dialog = new DiskBrowseDialog(getShell(), machine, entries, catalog, setting);
 			dialog.open();
 
 			

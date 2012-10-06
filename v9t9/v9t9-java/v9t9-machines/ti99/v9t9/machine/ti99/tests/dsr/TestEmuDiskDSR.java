@@ -16,7 +16,9 @@ import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 
+import v9t9.common.files.EmulatedFile;
 import v9t9.common.files.IFileMapper;
+import v9t9.common.files.EmulatedBaseFDRFile;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
@@ -219,14 +221,14 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 	 * @throws IOException 
 	 */
 	private void assertFDRFile(PabStruct pab) throws IOException {
-		NativeFile file = getNativeFile(pab.path);
+		EmulatedFile file = getNativeFile(pab.path);
 		assertTrue(file.getClass()+"", file instanceof NativeFDRFile);
-		assertTrue(file.getFile().exists());		
+		assertTrue(((NativeFDRFile) file).getFile().exists());		
 	}
 	private void assertTextFile(PabStruct pab) throws IOException {
-		NativeFile file = getNativeFile(pab.path);
+		EmulatedFile file = getNativeFile(pab.path);
 		assertTrue(file.getClass()+"", file instanceof NativeTextFile);
-		assertTrue(file.getFile().exists());		
+		assertTrue(((NativeTextFile) file).getFile().exists());		
 	}
 	
 	@Before

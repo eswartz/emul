@@ -18,6 +18,8 @@ public class TIFILESFDR extends FDR {
 
     private byte[] unused;
 
+	private String name;
+
     /**
     u8          sig[8];     // '\007TIFILES'
     u16         secsused;   // [big-endian]:  # sectors in file
@@ -46,9 +48,10 @@ public class TIFILESFDR extends FDR {
     
     public static FDR readFDR(File file) throws IOException, InvalidFDRException {
         TIFILESFDR fdr = new TIFILESFDR();
-      
+        
         FileInputStream stream = new FileInputStream(file);
         try {
+        	fdr.name = file.getName().toUpperCase();
 	        fdr.sig = new byte[8];
 	        stream.read(fdr.sig, 0, 8);
 	        if (!Arrays.equals(fdr.sig, SIGNATURE)) {
@@ -90,8 +93,28 @@ public class TIFILESFDR extends FDR {
         file.setWritable(!isReadOnly());
     }
     
+    /* (non-Javadoc)
+     * @see v9t9.common.files.IFDRInfo#getFileName()
+     */
+    @Override
+    public String getFileName() {
+    	return name;
+    }
+    
     @Override
     public void setFileName(String name) throws IOException {
-    	// nothing to do
+    	this.name = name;
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.common.files.FDR#fetchContentSectors()
+     */
+    @Override
+    protected int[] fetchContentSectors() {
+    	int[] secs = new int[getSectorsUsed()];
+    	for (int i = 0; i < secs.length; i++) {
+    		secs[i] = i * 256;
+    	}
+    	return secs;
     }
 }

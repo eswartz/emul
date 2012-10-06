@@ -25,16 +25,21 @@ public class CatalogEntry {
 	public final int typeCode;
 	public final boolean isProtected;
 
+
+	private EmulatedFile file;
+
 	/**
 	 * @param fileName
 	 * @param sz
 	 * @param type
 	 * @param recordLength
 	 */
-	public CatalogEntry(String fileName, int sz, int flags, int recordLength, boolean isProtected) {
+	public CatalogEntry(String fileName, EmulatedFile file) {
 		this.fileName = fileName;
-		this.secs = sz;
-		this.isProtected = isProtected;
+		this.file = file;
+		this.secs = file.getSectorsUsed() + 1;
+		int flags = file.getFlags();
+		this.isProtected = (flags & FDR.ff_protected) != 0;
 		
 		String ttype = "???";
 		if ((flags & FDR.ff_program) != 0)
@@ -65,7 +70,7 @@ public class CatalogEntry {
 		}
 		this.typeCode = code;
 		
-		this.recordLength = recordLength;
+		this.recordLength = file.getRecordLength();
 	}
 
 	@Override
@@ -106,5 +111,11 @@ public class CatalogEntry {
 		return true;
 	}
 
+	/**
+	 * @return the file
+	 */
+	public EmulatedFile getFile() {
+		return file;
+	}
 	
 }

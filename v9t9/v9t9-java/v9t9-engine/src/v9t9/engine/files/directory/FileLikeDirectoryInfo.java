@@ -10,9 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import v9t9.common.files.CatalogEntry;
-import v9t9.common.files.FDR;
 import v9t9.common.files.IFileMapper;
-import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
 import v9t9.common.files.NativeTextFile;
@@ -50,17 +48,16 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 		// file or volume name
 		String name = mapper.getDsrFileName(file.getName());
 
-		// second field is file type
-		int flags = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFlags() : FDR.ff_variable;
+//		// second field is file type
+//		int flags = nativefile instanceof EmulatedBaseFDRFile ? ((NativeFDRFile) nativefile).getFlags() : FDR.ff_variable;
+//
+//		// third field is file size, one sector for fdr
+//		int size = 1 + (nativefile.getFileSize() + 255) / 256;
+//
+//		// fourth field is record size
+//		int reclen = nativefile instanceof EmulatedBaseFDRFile ? ((EmulatedBaseFDRFile) nativefile).getFDR().getRecordLength() : 80;
 
-		// third field is file size, one sector for fdr
-		int size = 1 + (nativefile.getFileSize() + 255) / 256;
-
-		// fourth field is record size
-		int reclen = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDR().getRecordLength() : 80;
-
-		return new CatalogEntry(name, size, flags, reclen, 
-				(flags & FDR.ff_protected) != 0 || !file.canWrite());
+		return new CatalogEntry(name, nativefile);
 	}
 
 	/**
