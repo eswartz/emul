@@ -13,12 +13,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.settings.ISettingSection;
-import ejs.base.settings.SettingProperty;
-import ejs.base.timer.FastTimer;
-
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.IClient;
 import v9t9.common.client.IKeyboardHandler;
@@ -34,6 +28,7 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.files.DataFiles;
 import v9t9.common.files.IFileHandler;
+import v9t9.common.files.IFileMapper;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.hardware.ICruChip;
@@ -54,7 +49,13 @@ import v9t9.common.modules.IModuleManager;
 import v9t9.engine.demos.DemoManager;
 import v9t9.engine.events.RecordingEventNotifier;
 import v9t9.engine.files.FileHandler;
+import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.keyboard.KeyboardState;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingSection;
+import ejs.base.settings.SettingProperty;
+import ejs.base.timer.FastTimer;
 
 /** Encapsulate all the information about a running emulated machine.
  * @author ejs
@@ -116,6 +117,7 @@ abstract public class MachineBase implements IMachine {
 	private IDemoManager demoManager;
 	private IKeyboardHandler keyboardHandler;
 	private IKeyboardMapping keyboardMapping;
+	protected IFileMapper fileMapper;
 
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -149,12 +151,14 @@ abstract public class MachineBase implements IMachine {
 
     	init(machineModel);
 
+    	fileMapper = new DiskDirectoryMapper();
+    	fileHandler = new FileHandler(settings, fileMapper);
+    	
     	machineModel.defineDevices(this);
     	
     	cpuMetrics = new CpuMetrics();
     	executor = cpu.createExecutor(cpuMetrics);
     	
-    	fileHandler = new FileHandler(settings);
 
     	pauseListener = new IPropertyListener() {
     		
@@ -866,6 +870,13 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public IKeyboardHandler getKeyboardHandler() {
 		return keyboardHandler;
+	}
+	
+	/**
+	 * @return the fileMapper
+	 */
+	public IFileMapper getFileMapper() {
+		return fileMapper;
 	}
 }
 

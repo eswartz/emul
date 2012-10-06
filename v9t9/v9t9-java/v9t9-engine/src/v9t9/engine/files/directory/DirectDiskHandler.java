@@ -14,6 +14,7 @@ import ejs.base.utils.HexUtils;
 
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.FDR;
+import v9t9.common.files.IFileMapper;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
@@ -133,7 +134,7 @@ public class DirectDiskHandler {
 		NativeFile file = null;
 		
 		try {
-			file = NativeFileFactory.createNativeFile(mapper.getLocalFile(devname, filename));
+			file = NativeFileFactory.INSTANCE.createNativeFile(mapper.getLocalFile(devname, filename));
 		} catch (IOException e) {
 			throw new DsrException(EmuDiskConsts.es_filenotfound, e);
 		}
@@ -195,7 +196,7 @@ public class DirectDiskHandler {
 		if (secs == 0) {
 			// write FDR info (or create file)
 			try {
-				file = NativeFileFactory.createNativeFile(localFile);
+				file = NativeFileFactory.INSTANCE.createNativeFile(localFile);
 			} catch (IOException e) {
 			}
 			if (file == null || file.getFileSize() == 0) {
@@ -245,7 +246,7 @@ public class DirectDiskHandler {
 		} else {
 			// write sectors
 			try {
-				file = NativeFileFactory.createNativeFile(localFile);
+				file = NativeFileFactory.INSTANCE.createNativeFile(localFile);
 			} catch (IOException e) {
 				throw new DsrException(EmuDiskConsts.es_filenotfound, "File not found: " + localFile);
 			}
@@ -335,7 +336,7 @@ public class DirectDiskHandler {
 		NativeFile file = null;
 		
 		try {
-			file = NativeFileFactory.createNativeFile(mapper.getLocalFile(devname, filename));
+			file = NativeFileFactory.INSTANCE.createNativeFile(mapper.getLocalFile(devname, filename));
 		} catch (IOException e) {
 			throw new DsrException(EmuDiskConsts.es_filenotfound, e);
 		}
@@ -373,7 +374,7 @@ public class DirectDiskHandler {
 		NativeFile file = null;
 		
 		try {
-			file = NativeFileFactory.createNativeFile(mapper.getLocalFile(devname, fromFilename));
+			file = NativeFileFactory.INSTANCE.createNativeFile(mapper.getLocalFile(devname, fromFilename));
 		} catch (IOException e) {
 			throw new DsrException(EmuDiskConsts.es_filenotfound, e);
 		}

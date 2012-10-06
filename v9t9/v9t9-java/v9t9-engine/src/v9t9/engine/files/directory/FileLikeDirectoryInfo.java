@@ -11,6 +11,7 @@ import java.util.List;
 
 import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.FDR;
+import v9t9.common.files.IFileMapper;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
@@ -40,7 +41,7 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 	protected CatalogEntry decodeFile(File file) throws DsrException {
 		NativeFile nativefile;
 		try {
-			nativefile = NativeFileFactory.createNativeFile(file);
+			nativefile = NativeFileFactory.INSTANCE.createNativeFile(file);
 		} catch (IOException e) {
 			nativefile = new NativeTextFile(file);
 		}

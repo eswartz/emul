@@ -7,6 +7,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.files.IFileMapper;
+import v9t9.common.files.NativeFile;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabConstants;
 
@@ -36,7 +38,7 @@ public class PabInfoBlock {
 		openDirectories.clear();
 	}
 
-	protected OpenFile allocOpenFile(short pabaddr, File file, String devName, String fileName) throws DsrException {
+	protected OpenFile allocOpenFile(short pabaddr, NativeFile nativefile, String devName, String fileName) throws DsrException {
 		OpenFile pabfile = openFiles.get(pabaddr);
 		if (pabfile != null) {
 			pabfile.close();
@@ -45,7 +47,8 @@ public class PabInfoBlock {
 				throw new DsrException(PabConstants.e_outofspace, null, "Too many open files");
 			openFileCount++;
 		}
-		pabfile = new OpenFile(file, devName, fileName);
+
+		pabfile = new OpenFile(nativefile, devName, fileName);
 		openFiles.put(pabaddr, pabfile);
 		return pabfile;
 	}

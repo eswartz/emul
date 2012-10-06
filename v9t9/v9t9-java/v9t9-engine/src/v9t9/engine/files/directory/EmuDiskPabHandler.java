@@ -13,6 +13,7 @@ import ejs.base.utils.HexUtils;
 
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.FDR;
+import v9t9.common.files.IFileMapper;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
@@ -38,7 +39,7 @@ public class EmuDiskPabHandler extends PabHandler {
 		return block;
 	}
 
-	IFileMapper mapper;
+	private IFileMapper mapper;
 	private PabInfoBlock block;
 	private Dumper dumper;
 
@@ -210,6 +211,18 @@ public class EmuDiskPabHandler extends PabHandler {
 		
 	}
 
+	private NativeFile getNativeFile(File file) {
+
+		NativeFile nativefile = null; 
+		if (file.exists()) {
+			try {
+				nativefile = NativeFileFactory.INSTANCE.createNativeFile(file);
+			} catch (IOException e) {
+				nativefile = new NativeTextFile(file);
+			}
+		}
+		return nativefile;
+	}
 	private void DSKOpen(File file) throws DsrException {
 		
 		// clear error
@@ -228,7 +241,7 @@ public class EmuDiskPabHandler extends PabHandler {
 			throw new DsrException(PabConstants.e_illegal, "Directory read not implemented");
 		}
 		
-		OpenFile openFile = block.allocOpenFile(pab.pabaddr, file, devname, fname);
+		OpenFile openFile = block.allocOpenFile(pab.pabaddr, getNativeFile(file), devname, fname);
 		
 		int fdrflags = 0;
 		if ((pab.pflags & PabConstants.fp_internal) != 0)
@@ -260,7 +273,23 @@ public class EmuDiskPabHandler extends PabHandler {
 			if (openFile.getNativeFile() == null) {
 				if (pab.preclen == 0)
 					pab.preclen = 80;
-				openFile.create(fdrflags, pab.preclen);
+				
+				FDR fdr = EmuDiskPabHandler.createNewFDR(openFile.getFileName());
+				fdr.setFlags(fdrflags);
+				fdr.setRecordLength(pab.preclen);
+				
+				if ((fdrflags & FDR.ff_variable) != 0)
+					fdr.setRecordsPerSector(255 / (pab.preclen + 1));
+				else
+					fdr.setRecordsPerSector(Math.min(255, 256 / pab.preclen));
+				
+				NativeFile nativefile = new NativeFDRFile(file, fdr);
+				try {
+					nativefile.flush();
+				} catch (IOException e) {
+					throw new DsrException(PabConstants.e_outofspace, e, "Failed to create: " + file);
+				}
+				openFile.setNativeFile(nativefile);
 			}
 		} else {
 			// input mode
@@ -454,7 +483,7 @@ public class EmuDiskPabHandler extends PabHandler {
 	
 	private void DSKLoad(File file) throws DsrException {
 		
-		OpenFile openFile = new OpenFile(file, devname, fname);
+		OpenFile openFile = new OpenFile(getNativeFile(file), devname, fname);
 		if (openFile.getNativeFile() == null)
 			throw new DsrException(PabConstants.e_badfiletype, "File not found: " + file);
 		
@@ -494,7 +523,7 @@ public class EmuDiskPabHandler extends PabHandler {
 			openFile.close();
 			block.removeOpenFile(pab.pabaddr);
 		} else {
-			openFile = new OpenFile(file, devname, fname);
+			openFile = new OpenFile(getNativeFile(file), devname, fname);
 		}
 		if (openFile.isProtected()) {
 			throw new DsrException(PabConstants.e_readonly, null, "File is protected: " + file);
@@ -507,7 +536,7 @@ public class EmuDiskPabHandler extends PabHandler {
 
 	private void DSKSave(File file) throws DsrException {
 
-		OpenFile openFile = new OpenFile(file, devname, fname);
+		OpenFile openFile = new OpenFile(getNativeFile(file), devname, fname);
 		if (openFile.getNativeFile() != null) {
 			if (openFile.isProtected()) {
 				throw new DsrException(PabConstants.e_readonly, null, "File is protected: " + file);
@@ -579,7 +608,7 @@ public class EmuDiskPabHandler extends PabHandler {
 				}
 			} else {
 				try {
-					nativeFile = NativeFileFactory.createNativeFile(file);
+					nativeFile = NativeFileFactory.INSTANCE.createNativeFile(file);
 				} catch (IOException e) {
 					status |= PabConstants.st_noexist;
 				}

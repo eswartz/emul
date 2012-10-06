@@ -10,7 +10,6 @@ import java.io.File;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import v9t9.common.files.V9t9FDR;
@@ -22,12 +21,6 @@ import v9t9.engine.files.directory.EmuDiskConsts;
  *
  */
 public class TestEmuDiskDSRDiskLike extends BaseEmuDiskDSRTest {
-	
-	@BeforeClass
-	public static void setupSearch() {
-		BaseEmuDiskDSRTest.setupSearch();
-	}
-
 
 	private boolean wasRealDisk;
 

@@ -25,6 +25,7 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.files.IFileMapper;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
@@ -33,11 +34,9 @@ import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.files.directory.DirectDiskHandler;
-import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.files.directory.EmuDiskConsts;
 import v9t9.engine.files.directory.EmuDiskSettings;
 import v9t9.engine.files.directory.EmuDiskPabHandler;
-import v9t9.engine.files.directory.IFileMapper;
 import v9t9.engine.files.directory.PabInfoBlock;
 import v9t9.engine.files.image.Dumper;
 import v9t9.engine.files.image.RealDiskDsrSettings;
@@ -102,7 +101,7 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
     				new EmuDiskSetting(settings, devname, dskdefault.getAbsolutePath(),
     						EmuDiskSettings.diskDirectoryIconPath));
 			
-			DiskDirectoryMapper.INSTANCE.registerDiskSetting(devname, diskSetting);
+			mapper.registerDiskSetting(devname, diskSetting);
 
 			// one setting per disk
 			IProperty diskActiveSetting = new SettingProperty(devname, Boolean.FALSE);

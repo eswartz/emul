@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import v9t9.common.files.IFileMapper;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
 import v9t9.common.memory.ByteMemoryAccess;
@@ -37,7 +38,7 @@ class DiskLikeDirectoryInfo extends DirectoryInfo {
 			
 			DiskFileRange range = new DiskFileRange();
 			try {
-				range.file = NativeFileFactory.createNativeFile(entry);
+				range.file = NativeFileFactory.INSTANCE.createNativeFile(entry);
 				range.fdrSector = sec++;
 				range.start = sec;
 				range.len = range.file.getSectorsUsed();

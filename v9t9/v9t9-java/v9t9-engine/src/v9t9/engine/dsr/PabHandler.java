@@ -75,7 +75,8 @@ public abstract class PabHandler {
 		current = (current & ~0xe0) | (e.getErrorCode());
 		pab.pflags = current;
 		
-		System.out.println(e.getMessage());
+		if (e.getErrorCode() != PabConstants.e_endoffile)
+			System.out.println(e.getMessage());
 	}
 	
 	public void store() {

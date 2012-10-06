@@ -136,7 +136,7 @@ final class CatalogDialog extends Dialog {
 	private final IProperty setting;
 	private final IMachine machine;
 	{
-		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MODELESS);
+		setShellStyle(getShellStyle() & ~(SWT.APPLICATION_MODAL + SWT.SYSTEM_MODAL) | SWT.RESIZE | SWT.MODELESS);
 	}
 
 	public CatalogDialog(Shell parentShell,
@@ -158,7 +158,7 @@ final class CatalogDialog extends Dialog {
 		super.configureShell(newShell);
 		newShell.setText("Catalog of " + setting.getName());
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
 	 */

@@ -11,7 +11,7 @@ import ejs.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.IFileHandler;
-import v9t9.engine.files.directory.DiskDirectoryMapper;
+import v9t9.common.files.IFileMapper;
 import v9t9.engine.files.directory.FileDirectory;
 import v9t9.engine.files.image.BaseDiskImage;
 import v9t9.engine.files.image.DiskImageFactory;
@@ -23,8 +23,10 @@ import v9t9.engine.files.image.DiskImageFactory;
 public class FileHandler implements IFileHandler {
 
 	private final ISettingsHandler settings;
+	private IFileMapper fileMapper;
 
-	public FileHandler(ISettingsHandler settings) {
+	public FileHandler(ISettingsHandler settings, IFileMapper fileMapper) {
+		this.fileMapper = fileMapper;
 		this.settings = settings;
 		
 	}
@@ -47,7 +49,7 @@ public class FileHandler implements IFileHandler {
 			image.closeDiskImage();
 			return catalog;
 		} else {
-			FileDirectory fileDir = new FileDirectory(spec, DiskDirectoryMapper.INSTANCE);
+			FileDirectory fileDir = new FileDirectory(spec, fileMapper);
 
 			Catalog catalog = fileDir.readCatalog();
 
@@ -55,4 +57,11 @@ public class FileHandler implements IFileHandler {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IFileHandler#getFileMapper()
+	 */
+	@Override
+	public IFileMapper getFileMapper() {
+		return fileMapper;
+	}
 }

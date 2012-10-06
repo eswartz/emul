@@ -28,44 +28,44 @@ import static v9t9.common.keyboard.KeyboardConstants.*;
  * <p/>
  * 
  * There are two challenges:
- * 
+ * <p/>
  * 1) A modern PC keyboard has many more keys than the 99/4A did. While someone
  * can press Alt+R to imitate Fctn-R to enter '[', he can also directly press
  * '[' in a single keypress. Thus, in some cases, one keypress must set multiple
  * bits, one "real" key and one "fake" shift key.
- * 
+ * <p/>
  * One particular aspect is arrow keys.  When, for example, Left Arrow is
  * held down (Fctn-S) and then Right-Arrow is pressed (Fctn-D), then 
  * a release of Left-Arrow should not reset the Fctn key until Right-Arrow
  * is also released.
- * 
+ * <p/>
  * At the same time, real shift keys may be pressed. So we cannot get confused
  * if the user presses, e.g., '{' via Shift+R. This should not, if possible, be
  * exposed as "Fctn+Shift+R" but just as "Fctn-R". And of course, once '[' or
  * '{' is released on the PC, the "fake" shift keys should be released unless
  * the "real" shift or Alt key is still held down.
- * 
+ * <p/>
  * 
  * 
  * 2) Modern OSes expose keypresses via interrupts with "on" and "off" states.
  * And the host is much faster than the older computers, so it's highly likely
  * that the PC user can quickly press and release a key, and the emulated
  * computer may not even see it!
- * 
+ * <p/>
  * This is mainly due to the issues of emulating the system down to the lowest
  * levels. In the "real" 99/4A computer, the keyboard is scanned only at known
  * times, and when a keypress is detected, the keyboard scanning routine will
  * enter a delay loop to avoid "keyboard debounce". But this loop, interleaved
  * with the real host computer, can conspire to make a lot of keypresses so
  * unnoticed.
- * 
+ * <p/>
  * Also, again, since the host publishes discrete events for each key press,
  * "rollover" doesn't work quite the same way. When typing quickly, several
  * key-press events can happen at once and "pile up" before the corresponding
  * key-release events arrive. On the emulated keyboard, though, such pile- up
  * will set the logical OR of the bits for those keys, and will either be
  * detected as "no key" or detected as only one or the other key.
- * 
+ * <p/>
  * Finally, the host (esp. under AWT) may send key-press AND key-release events
  * when repeating a key! When this sequence is interleaved with the emulated
  * keyscan routine, the frequencies may alias each other, and the keyscan

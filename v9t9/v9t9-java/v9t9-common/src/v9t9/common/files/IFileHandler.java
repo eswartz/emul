@@ -14,4 +14,5 @@ import ejs.base.properties.IProperty;
  */
 public interface IFileHandler {
 	Catalog createCatalog(IProperty diskProperty, boolean isDiskImage) throws IOException;
+	IFileMapper getFileMapper();
 }

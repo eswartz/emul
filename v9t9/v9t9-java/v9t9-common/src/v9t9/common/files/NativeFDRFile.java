@@ -15,7 +15,7 @@ import ejs.base.utils.Check;
 import ejs.base.utils.CompatUtils;
 
 
-public class NativeFDRFile implements NativeFile {
+public class NativeFDRFile implements NativeFile, IFDROwner {
 
     private File file;
     private FDR fdr;

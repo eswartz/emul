@@ -14,9 +14,9 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
+import v9t9.common.files.IFileMapper;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
@@ -26,7 +26,6 @@ import v9t9.engine.dsr.PabConstants;
 import v9t9.engine.dsr.PabStruct;
 import v9t9.engine.files.directory.EmuDiskConsts;
 import v9t9.engine.files.directory.EmuDiskPabHandler;
-import v9t9.engine.files.directory.IFileMapper;
 import v9t9.engine.files.directory.OpenFile;
 import v9t9.engine.files.directory.PabInfoBlock;
 
@@ -37,11 +36,6 @@ import v9t9.engine.files.directory.PabInfoBlock;
  */
 public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 
-	@BeforeClass
-	public static void setupSearch() {
-		BaseEmuDiskDSRTest.setupSearch();
-	}
-	
 	@Test
 	public void testFileMappingDos() throws Exception {
 		assertEquals("FILENAME", mymapper.dsrToDOS("filename"));
@@ -219,7 +213,7 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 	protected NativeFile getNativeFile(String path) throws IOException {
 		int idx = path.indexOf('.');
 		File file = mymapper.getLocalFile(path.substring(0, idx), path.substring(idx+1));
-		return NativeFileFactory.createNativeFile(file);
+		return NativeFileFactory.INSTANCE.createNativeFile(file);
 	}
 	/**
 	 * @throws IOException 
@@ -804,8 +798,9 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 	@Test
 	public void testFileCount() throws Exception {
 		xfer.writeParamByte(0x4c, (byte) 1);
+		xfer.writeParamByte(0x50, (byte) 0xff);
 		dsr.handleDSR(xfer, (short) EmuDiskConsts.D_FILES);
-		assertEquals(0, xfer.readParamByte(0x50));
+		assertEquals(0, xfer.readParamByte(0x50));	// if not 0, we thought the real disk DSR would handle it
 		
 		PabStruct pab1 = createOpenPab(PabConstants.m_input, PabConstants.fp_variable, 0x1000, 0, "DSK1.DV80");
 		runCase(pab1);

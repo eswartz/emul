@@ -61,7 +61,7 @@ public class DataFiles {
 	{
         File file = new File(filepath);
         
-        NativeFile nativeFile = NativeFileFactory.createNativeFile(file);
+        NativeFile nativeFile = NativeFileFactory.INSTANCE.INSTANCE.createNativeFile(file);
         
         /* adjust sizes */
         int sz = nativeFile.getFileSize();

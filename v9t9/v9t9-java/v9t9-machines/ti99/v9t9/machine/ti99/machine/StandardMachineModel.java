@@ -14,7 +14,6 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.Settings;
-import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.modules.ModuleManager;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
@@ -82,7 +81,8 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.setCru(new InternalCru9901(machine));
 			
-			EmuDiskDsr emudsr = new EmuDiskDsr(Settings.getSettings(machine), DiskDirectoryMapper.INSTANCE);
+			EmuDiskDsr emudsr = new EmuDiskDsr(Settings.getSettings(machine), 
+					machine.getFileMapper());
 			machine.getDsrManager().registerDsr(emudsr);
 			RealDiskImageDsr diskdsr = new RealDiskImageDsr(machine, (short) 0x1100);
 			machine.getDsrManager().registerDsr(diskdsr);

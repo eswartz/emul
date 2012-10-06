@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.files.IFileMapper;
+
 import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
@@ -21,22 +23,33 @@ import ejs.base.settings.ISettingSection;
 public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 	private Map<String, File> diskMap = new HashMap<String, File>();
 	private Map<String, IProperty> diskSettingsMap = new HashMap<String, IProperty>();
+	private Map<String, IPropertyListener> diskSettingsListenerMap = new HashMap<String, IPropertyListener>();
 	
-	public static final DiskDirectoryMapper INSTANCE = new DiskDirectoryMapper();
-	
-	private DiskDirectoryMapper() {
+	public DiskDirectoryMapper() {
 	}
 
 	public void registerDiskSetting(String device, IProperty diskSetting) {
 		diskMap.put(device, new File(diskSetting.getString()));
 		diskSettingsMap.put(device, diskSetting); 
-		diskSetting.addListener(new IPropertyListener() {
+		IPropertyListener listener = new IPropertyListener() {
 			
 			public void propertyChanged(IProperty setting) {
 				diskMap.put(setting.getName(), new File(setting.getString()));
 			}
-		});
+		};
+		diskSettingsListenerMap.put(device, listener);
+		diskSetting.addListener(listener);
 	}
+
+	public void unregisterDiskSetting(String devname) {
+		diskMap.remove(devname);
+		IProperty diskSetting = diskSettingsMap.remove(devname);
+		if (diskSetting != null) {
+			IPropertyListener listener = diskSettingsListenerMap.remove(devname);
+			diskSetting.removeListener(listener);
+		}
+	}
+
 	public void setDiskPath(String device, File dir) {
 		diskMap.put(device, dir);
 		IProperty diskSetting = diskSettingsMap.get(device);

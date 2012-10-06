@@ -10,11 +10,12 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.net.URL;
 import java.util.Arrays;
 
-import org.junit.BeforeClass;
-
+import org.junit.Before;
 import ejs.base.properties.IProperty;
+import ejs.base.settings.SettingProperty;
 import ejs.base.utils.HexUtils;
 
 import v9t9.common.client.ISettingsHandler;
@@ -23,6 +24,7 @@ import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.FDR;
 import v9t9.common.files.FDRFactory;
 import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabStruct;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
@@ -39,30 +41,14 @@ import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
  */
 public class BaseEmuDiskDSRTest {
 
-	protected static DiskDirectoryMapper mymapper = DiskDirectoryMapper.INSTANCE;
-	protected static File dsk1Path;
+	protected DiskDirectoryMapper mymapper = new DiskDirectoryMapper();
+	protected File dsk1Path;
 	
-	protected static ISettingsHandler settings;
-	protected static IProperty diskImageDsrEnabled;
+	protected ISettingsHandler settings;
+	protected IProperty diskImageDsrEnabled;
 	
-	@BeforeClass
-	public static void setupSearch() {
-		String path = TestEmuDiskDSRDiskLike.class.getName().replaceAll("\\.", "/");
-		String cwd = System.getProperty("user.dir");
-		File dir = new File(cwd + "/src/" + path);
-		dir = new File(dir.getParentFile(), "data");
-		assertTrue(dir+"", dir.exists());
-		dsk1Path = dir;
-		mymapper.setDiskPath("DSK1", dir);
-		
-		dir = new File(dir.getParentFile(), mymapper.getLocalFileName("EXTRA/LALA"));
-		mymapper.setDiskPath("DSK2", dir);
 
-		diskImageDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
-
-		emuDiskDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
-		emuDiskDsrEnabled.setBoolean(true);
-	}
+	private IProperty emuDiskDsrEnabled;
 	
 	static class FakeMemory implements IMemoryTransfer {
 		byte[] vdp = new byte[0x4000];
@@ -146,19 +132,46 @@ public class BaseEmuDiskDSRTest {
 		}
 		
 	}
-	
+
 	protected FakeMemory xfer = new FakeMemory();
-	{
-		xfer.writeParamWord(0x70, (short) 0x3fff);
-	}
-	protected EmuDiskDsr dsr = new EmuDiskDsr(settings, mymapper);
+	protected EmuDiskDsr dsr;
 	private Dumper dumper;
-	private static IProperty emuDiskDsrEnabled;
-	{
+	
+	@Before
+	public void setupDSR() throws Exception {
+		settings = new BasicSettingsHandler();
+		
+
+		diskImageDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
+		diskImageDsrEnabled.setBoolean(false);
+		
+		emuDiskDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
+		emuDiskDsrEnabled.setBoolean(true);
+		
+		
+		xfer.writeParamWord(0x70, (short) 0x3fff);
+		
+		dsr = new EmuDiskDsr(settings, mymapper);
+		
+
+		URL url = BaseEmuDiskDSRTest.class.getResource("/data/df80");
+		assertNotNull(url);
+		File dir = new File(url.toURI()).getParentFile();
+		assertTrue(dir+"", dir.isDirectory());
+		
+		
+		dsk1Path = dir;
+		mymapper.registerDiskSetting("DSK1", new SettingProperty("DSK1", dir.getAbsolutePath()));
+		
+		dir = new File(dir.getParentFile(), mymapper.getLocalFileName("EXTRA/LALA"));
+		mymapper.registerDiskSetting("DSK2", new SettingProperty("DSK2", dir.getAbsolutePath()));
+		
+		mymapper.unregisterDiskSetting("DSK3");
+		
 		dumper = new Dumper(settings, RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions); 
 		dsr.handleDSR(xfer, (short) EmuDiskConsts.D_INIT);
 	}
-	
+
 	protected EmuDiskPabHandler runCase(PabStruct pab) throws DsrException {
 		EmuDiskPabHandler handler = new EmuDiskPabHandler(
 				dumper,

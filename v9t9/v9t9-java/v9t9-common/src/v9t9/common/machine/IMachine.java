@@ -75,4 +75,6 @@ public interface IMachine extends IBaseMachine {
 
 	IKeyboardHandler getKeyboardHandler();
 	void setKeyboardHandler(IKeyboardHandler keyboardHandler);
+	
+	
 }

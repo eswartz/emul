@@ -43,4 +43,6 @@ public interface NativeFile extends IFDRInfo {
 	 * Flush to disk.
 	 */
 	void flush() throws IOException;
+	
+	String toString();
 }

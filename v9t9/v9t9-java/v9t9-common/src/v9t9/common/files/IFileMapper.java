@@ -1,4 +1,4 @@
-package v9t9.engine.files.directory;
+package v9t9.common.files;
 
 import java.io.File;
 
@@ -63,4 +63,7 @@ public interface IFileMapper extends IPersistable {
 	 */
 	String getDsrDeviceName(File dir);
 	
+	void registerDiskSetting(String devname, IProperty diskSetting);
+	void unregisterDiskSetting(String devname);
+	void setDiskPath(String device, File dir);	
 }

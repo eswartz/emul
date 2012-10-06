@@ -6,6 +6,8 @@ package v9t9.engine.files.directory;
 import java.io.File;
 import java.util.Arrays;
 
+import v9t9.common.files.IFileMapper;
+
 class DirectoryInfo {
 
 	protected File[] entries;

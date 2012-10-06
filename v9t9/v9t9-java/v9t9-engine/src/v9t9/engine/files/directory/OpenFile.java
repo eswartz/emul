@@ -1,15 +1,12 @@
 package v9t9.engine.files.directory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
 import v9t9.common.files.FDR;
+import v9t9.common.files.IFDROwner;
 import v9t9.common.files.InvalidFDRException;
-import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
-import v9t9.common.files.NativeFileFactory;
-import v9t9.common.files.NativeTextFile;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabConstants;
@@ -19,7 +16,7 @@ public class OpenFile {
 	final String devName;
 	final String fileName;
 	final byte[] sector = new byte[256];
-	private final File file;
+//	private final File file;
 	
 	private NativeFile nativefile;
 
@@ -32,15 +29,8 @@ public class OpenFile {
 	
 	boolean modified;
 	
-	public OpenFile(File file, String devName, String fileName) throws DsrException {
-		this.file = file;
-		if (file.exists()) {
-			try {
-				this.nativefile = NativeFileFactory.createNativeFile(file);
-			} catch (IOException e) {
-				this.nativefile = new NativeTextFile(file);
-			}
-		}
+	public OpenFile(NativeFile file, String devName, String fileName) throws DsrException {
+		this.nativefile = file;
 		this.devName = devName;
 		this.fileName = fileName;
 		
@@ -54,22 +44,11 @@ public class OpenFile {
 		seekToPosition(0);
 	}
 	
-	public void create(int fdrflags, int reclen) throws DsrException {
-		FDR fdr = EmuDiskPabHandler.createNewFDR(fileName);
-		fdr.setFlags(fdrflags);
-		fdr.setRecordLength(reclen);
-		
-		if ((fdrflags & FDR.ff_variable) != 0)
-			fdr.setRecordsPerSector(255 / (reclen + 1));
-		else
-			fdr.setRecordsPerSector(Math.min(255, 256 / reclen));
-		
-		nativefile = new NativeFDRFile(file, fdr);
-		try {
-			nativefile.flush();
-		} catch (IOException e) {
-			throw new DsrException(PabConstants.e_outofspace, e, "Failed to create: " + file);
-		}
+	/**
+	 * @return the fileName
+	 */
+	public String getFileName() {
+		return fileName;
 	}
 	
 	public void close() throws DsrException {
@@ -124,17 +103,18 @@ public class OpenFile {
 	}
 	
 	public boolean isVariable() {
-		return nativefile instanceof NativeFDRFile ? (((NativeFDRFile) nativefile).getFDR().getFlags() & FDR.ff_variable) != 0 : true;
+		return (nativefile.getFlags() & FDR.ff_variable) != 0;
+//		return nativefile instanceof IFDROwner ? (((IFDROwner) nativefile).getFDR().getFlags() & FDR.ff_variable) != 0 : true;
 	}
 
 	public int getRecordLength() {
-		int len = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDR().getRecordLength() : 80;
+		int len = nativefile instanceof IFDROwner ? ((IFDROwner) nativefile).getFDR().getRecordLength() : 80;
 		if (len == 0)
 			len = 256;
 		return len;
 	}
 	public int getNumberRecords() {
-		int num = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDR().getNumberRecords() : 0;
+		int num = nativefile instanceof IFDROwner ? ((IFDROwner) nativefile).getFDR().getNumberRecords() : 0;
 		return num;
 	}
 	protected void ensureSector() throws DsrException {
@@ -183,7 +163,7 @@ public class OpenFile {
 		}
 		
 		if (position >= nativefile.getFileSize())
-			throw new DsrException(PabConstants.e_endoffile, "End of file: " + file);
+			throw new DsrException(PabConstants.e_endoffile, "End of file: " + nativefile);
 		
 		System.arraycopy(sector, byteoffs, access.memory, access.offset, size);
 		position += size;
