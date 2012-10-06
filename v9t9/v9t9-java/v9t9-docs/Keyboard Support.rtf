@@ -1,0 +1,53 @@
+{\rtf1\ansi\deff3\adeflang1025
+{\fonttbl{\f0\froman\fprq2\fcharset0 Times New Roman;}{\f1\froman\fprq2\fcharset2 Symbol;}{\f2\fswiss\fprq2\fcharset0 Arial;}{\f3\froman\fprq2\fcharset128 Times New Roman;}{\f4\fswiss\fprq2\fcharset128 Arial;}{\f5\fnil\fprq0\fcharset128 Ubuntu{\*\falt sans-serif};}{\f6\fnil\fprq2\fcharset128 Droid Sans;}{\f7\fnil\fprq2\fcharset128 Lohit Hindi;}{\f8\fnil\fprq0\fcharset128 Lohit Hindi;}}
+{\colortbl;\red0\green0\blue0;\red128\green128\blue128;}
+{\stylesheet{\s0\snext0\nowidctlpar{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\cf0\kerning1\hich\af6\langfe2052\dbch\af7\afs24\alang1081\loch\f3\fs24\lang1033 Normal;}
+{\s15\sbasedon0\snext16\sb240\sa120\keepn\hich\af6\dbch\af7\afs28\loch\f4\fs28 Heading;}
+{\s16\sbasedon0\snext16\sb0\sa120 Text body;}
+{\s17\sbasedon16\snext17\sb0\sa120\dbch\af8 List;}
+{\s18\sbasedon0\snext18\sb120\sa120\noline\i\dbch\af8\afs24\ai\fs24 Caption;}
+{\s19\sbasedon0\snext19\noline\dbch\af8 Index;}
+}{\info{\author Ed Swartz}{\creatim\yr2012\mo10\dy6\hr8\min26}{\revtim\yr0\mo0\dy0\hr0\min0}{\printim\yr0\mo0\dy0\hr0\min0}{\comment LibreOffice}{\vern3500}}\deftab709
+
+{\*\pgdsctbl
+{\pgdsc0\pgdscuse195\pgwsxn12240\pghsxn15840\marglsxn1134\margrsxn1134\margtsxn1134\margbsxn1134\pgdscnxt0 Default;}}
+\formshade\paperh15840\paperw12240\margl1134\margr1134\margt1134\margb1134\sectd\sbknone\sectunlocked1\pgndec\pgwsxn12240\pghsxn15840\marglsxn1134\margrsxn1134\margtsxn1134\margbsxn1134\ftnbj\ftnstart1\ftnrstcont\ftnnar\aenddoc\aftnrstcont\aftnstart1\aftnnrlc
+\pgndec\pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+Keyboard Support}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+There are two challenges:}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+1) A modern PC keyboard has many more keys than the 99/4A did. While someone can press Alt+R to imitate Fctn-R to enter '[', he can also directly press '[' in a single keypress. Thus, in some cases, one keypress must set multiple bits, one "real" key and one "fake" shift key.}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+One particular aspect is arrow keys. When, for example, Left Arrow is held down (Fctn-S) and then Right-Arrow is pressed (Fctn-D), then a release of Left-Arrow should not reset the Fctn key until Right-Arrow is also released.}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+At the same time, real shift keys may be pressed. So we cannot get confused if the user presses, e.g., '\{' via Shift+R. This should not, if possible, be exposed as "Fctn+Shift+R" but just as "Fctn-R". And of course, once '[' or '\{' is released on the PC, the "fake" shift keys should be released unless the "real" shift or Alt key is still held down.}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+2) Modern OSes expose keypresses via interrupts with "on" and "off" states. And the host is much faster than the older computers, so it's highly likely that the PC user can quickly press and release a key, and the emulated computer may not even see it!}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+This is mainly due to the issues of emulating the system down to the lowest levels. In the "real" 99/4A computer, the keyboard is scanned only at known times, and when a keypress is detected, the keyboard scanning routine will enter a delay loop to avoid "keyboard debounce". But this loop, interleaved with the real host computer, can conspire to make a lot of keypresses so unnoticed.}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+Also, again, since the host publishes discrete events for each key press, "rollover" doesn't work quite the same way. When typing quickly, several key-press events can happen at once and "pile up" before the corresponding key-release events arrive. On the emulated keyboard, though, such pile- up will set the logical OR of the bits for those keys, and will either be detected as "no key" or detected as only one or the other key.}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+Finally, the host (esp. under AWT) may send key-press AND key-release events when repeating a key! When this sequence is interleaved with the emulated keyscan routine, the frequencies may alias each other, and the keyscan routine may see the key during the short time it is "released", even when held down continuously on the host, leading to dropped keys, where the keyboard appears to "choke" between a long series of repeated keys.}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+In earlier V9t9 and TI Emulator! releases, the keyboard support suffered from the issues above because I tried to track the current keyboard state using an \uc3 \u8220\'e2\'80\'9cincremental\u8221\'e2\'80\'9d method \u8211\'e2\'80\'93 relying too much on the OS / framework layer and keyboard hardware behaving a certain way, exposing the quirks mentioned above.  Also, there was not a good way to tell whether the emulated machine was asking for a key or not, although the emulator was updating the keyboard state in real time \u8211\'e2\'80\'93 so depending on timing, one or more user keystrokes could go completely unnoticed by the machine.\uc1 }
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+Especially embarrassing was the quite convoluted way of detecting \uc3 \u8220\'e2\'80\'9creal\u8221\'e2\'80\'9d and \u8220\'e2\'80\'9cfake\u8221\'e2\'80\'9d shift/fctn/ctrl key states, which was unreliable and led to a need to periodically flush the keyboard state anyway...\uc1 }
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+Also, just in the programming aesthetics sense, the previous solutions were ugly since every framework layer (e.g. SWT, AWT in Java) would need to replicate a lot of work translating its keycodes into the 99/4A CRU keyboard matrix.  This both hindered the ability to introduce new types of hardware and to easily provide a way to know which human-readable key sequence was responsible for the current CRU keyboard state (for demos, on-screen keyboard, etc.).}
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+The current solution is probably the best and most elegant.  }
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+In the current model, the OS / framework layer tracks only which keys are currently pressed \uc3 \u8211\'e2\'80\'93 which we can tell reliably \u8211\'e2\'80\'93 and converts these to a set of virtual keycodes independent of other Java or external keyboard codes.  At the middle layer of the keyboard support, we maintain a set of these virtual keycodes.  So, this solves a few problems with the replication of middle layer logic and eliminates the incremental approach in favor of tracking only pressed keys.\uc1 }
+\par \pard\plain \s16\sb0\sa120{\rtlch \ltrch\loch
+Then, the machine emulator class provides a way to detect whether the emulated machine has scanned the CRU keyboard matrix.  If so, it triggers the middle layer to convert the current pressed keycode set into a new iteration of the CRU matrix.  Again, this matrix is completely replaced, so there are no stuck keys unless the host platform has a bug.}
+\par \pard\plain \s16\sb0\sa120\sb0\sa120{\rtlch \ltrch\loch
+What is interesting in this approach is the solution to the problem where multiple host key combinations can map to the same CRU matrix (and the \uc3 \u8220\'e2\'80\'9cfake\u8221\'e2\'80\'9d vs. \u8220\'e2\'80\'9creal\u8221\'e2\'80\'9d shift states).  Rather than tracking this at all, on each keyboard matrix scan, we start from scratch.  The middle keyboard layer will ask the lower keyboard layer \u8211\'e2\'80\'93 the one that knows about the CRU matrix \u8211\'e2\'80\'93 to consume the\uc1 }{\i\ai\rtlch \ltrch\loch
+ largest subset of keycodes }{\i0\ai0\rtlch \ltrch\loch
+that maps to some set of CRU bits.  Thus, it can consume the host's \uc3 \u8220\'e2\'80\'9cShift\u8221\'e2\'80\'9d and \u8220\'e2\'80\'9c[\u8220\'e2\'80\'9c and know this maps to \u8220\'e2\'80\'9cFCTN\u8221\'e2\'80\'9d + \u8220\'e2\'80\'9cW\u8221\'e2\'80\'9d on the 99/4A matrix without any notion of \u8220\'e2\'80\'9cfake\u8221\'e2\'80\'9d FCTN state.  \uc1 }
+\par }
