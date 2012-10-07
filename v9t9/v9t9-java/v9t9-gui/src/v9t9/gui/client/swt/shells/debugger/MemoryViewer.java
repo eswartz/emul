@@ -72,6 +72,7 @@ import ejs.base.utils.Pair;
  *
  */
 public class MemoryViewer extends Composite implements IPersistable, ICpuTracker {
+	final int BYTES = 16;
 
 	private StackLayout tableLayout;
 	private TableViewer byteTableViewer;
@@ -94,6 +95,8 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 	private ByteMemoryLabelProvider byteMemoryLabelProvider;
 	private IMemoryDecoder memoryDecoder;
 	private Composite tableComposite;
+	private DecodedMemoryContentProvider decodedContentProvider;
+	private ByteMemoryContentProvider byteContentViewer;
 
 	public MemoryViewer(Composite parent, int style, IMemory memory, 
 			IMemoryDecoderProvider decoderProvider,
@@ -182,8 +185,9 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		if (section == null)
 			return;
 		String range = section.get("Range");
-		if (range != null)
+		if (range != null) {
 			currentRange = MemoryRange.fromString(memory, range);
+		}
 		autoRefresh = section.getBoolean("AutoRefresh");
 		pinMemory = section.getBoolean("PinMemory");
 		filterMemory = section.getBoolean("FilterMemory");
@@ -271,10 +275,10 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 	}
 
 	protected final int getMemoryRowIndex(int addr) {
-		return (addr - currentRange.addr) / 16;
+		return (addr - currentRange.addr) / BYTES;
 	}
 	protected final int getMemoryColumnIndex(int addr) {
-		return (addr - currentRange.addr) % 16;
+		return (addr - currentRange.addr) % BYTES;
 	}
 
 	static class MemoryEntryLabelProvider extends LabelProvider {
@@ -388,11 +392,6 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		
 		GridDataFactory.fillDefaults().grab(true, true).span(2, 1).applyTo(tableComposite);
 		
-		byteMemoryLabelProvider = new ByteMemoryLabelProvider(
-				new Color(getDisplay(), new RGB(64, 64, 128)),
-				getDisplay().getSystemColor(SWT.COLOR_RED)
-				);
-		
 		createByteTableViewer(tableComposite);
 		createDecodedContentTableViewer(tableComposite);
 		
@@ -456,7 +455,14 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 	protected void createByteTableViewer(Composite parent) {
 		byteTableViewer = new TableViewer(parent, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL 
 				+ SWT.NO_FOCUS + SWT.FULL_SELECTION);
-		byteTableViewer.setContentProvider(new ByteMemoryContentProvider());
+		byteContentViewer = new ByteMemoryContentProvider(BYTES);
+		byteTableViewer.setContentProvider(byteContentViewer);
+		
+		byteMemoryLabelProvider = new ByteMemoryLabelProvider(
+				new Color(getDisplay(), new RGB(64, 64, 128)),
+				getDisplay().getSystemColor(SWT.COLOR_RED),
+				byteContentViewer
+				);
 		
 		byteTableViewer.setLabelProvider(byteMemoryLabelProvider);
 		
@@ -464,16 +470,16 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		final Table table = byteTableViewer.getTable();
 		//GridDataFactory.fillDefaults().grab(true, true).span(2, 1).applyTo(table);
 		
-		String[] props = new String[1 + 16 + 1];
+		String[] props = new String[1 + BYTES + 1];
 		props[0] = "Addr";
 		new TableColumn(table, SWT.CENTER).setText(props[0]);
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < BYTES; i++) {
 			String id = Integer.toHexString(i).toUpperCase();
 			props[i + 1] = id;
 			new TableColumn(table, SWT.CENTER).setText(id + " ");
 		}
-		props[17] = "0123456789ABCDEF";
-		new TableColumn(table, SWT.CENTER).setText(props[17]);
+		props[BYTES+1] = "0123456789ABCDEF";
+		new TableColumn(table, SWT.CENTER).setText(props[BYTES+1]);
 		
 		table.setFont(tableFont);
 		
@@ -483,10 +489,10 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		gc.dispose();
 		
 		table.getColumn(0).setWidth(width);
-		for (int i = 1; i <= 16; i++) {
+		for (int i = 1; i <= BYTES; i++) {
 			table.getColumn(i).setWidth(width / 2);
 		}
-		table.getColumn(17).setWidth(width * 2);
+		table.getColumn(BYTES+1).setWidth(width * 2);
 		
 		for (TableColumn column : table.getColumns()) {
 			column.pack();
@@ -494,8 +500,8 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		
-		CellEditor[] editors = new CellEditor[1+16+16];
-		for (int i = 1; i < 17; i++) {
+		CellEditor[] editors = new CellEditor[1+BYTES+BYTES];
+		for (int i = 1; i < BYTES+1; i++) {
 			editors[i] = new TextCellEditor(table);
 		}
 		
@@ -510,7 +516,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 			public void mouseHover(MouseEvent e) {
 				TableItem item = table.getItem(new Point(e.x, e.y));
 				if (item != null) {
-					for (int i = 0; i <= 16; i++) {
+					for (int i = 0; i <= BYTES; i++) {
 						Rectangle bounds = item.getTextBounds(i);
 						if (e.x >= bounds.x && e.x < bounds.x + bounds.width) {
 							MemoryRange range = (MemoryRange) byteTableViewer.getInput();
@@ -591,7 +597,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 			public void widgetSelected(SelectionEvent e) {
 				if (currentRange == null)
 					return;
-				int addr = table.getSelectionIndex() * 16;
+				int addr = table.getSelectionIndex() * BYTES;
 				restrictRange(currentRange.getAddress() + addr, currentRange.getAddress() + currentRange.getSize());
 			}
 		});
@@ -602,7 +608,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 			public void widgetSelected(SelectionEvent e) {
 				if (currentRange == null)
 					return;
-				int endAddr = (table.getSelectionIndex() + 1) * 16;
+				int endAddr = (table.getSelectionIndex() + 1) * BYTES;
 				restrictRange(currentRange.getAddress(), currentRange.getAddress() + endAddr);
 			}
 		});
@@ -624,6 +630,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		byteTableViewer.getTable().setLayoutDeferred(true);
 		byteTableViewer.setInput(range);
 		currentRange = range;
+
 		//for (TableColumn column : byteTableViewer.getTable().getColumns())
 		//	column.pack();
 		byteTableViewer.getTable().setLayoutDeferred(false);
@@ -639,7 +646,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 			tableLayout.topControl = byteTableViewer.getControl();
 			tableComposite.layout();
 			decodedTableViewer.setLabelProvider(byteMemoryLabelProvider);
-			decodedTableViewer.setContentProvider(new ByteMemoryContentProvider());
+			decodedTableViewer.setContentProvider(byteContentViewer);
 			decodedTableViewer.setInput(range);
 			decodedTableViewer.refresh(true);
 			return;
@@ -650,8 +657,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		if (decodedTableViewer.getContentProvider() != null)
 			decodedTableViewer.setInput(null);
 		
-		DecodedMemoryContentProvider contentProvider 
-			= new DecodedMemoryContentProvider(memoryDecoder);
+		decodedContentProvider = new DecodedMemoryContentProvider(memoryDecoder);
 		
 		ILabelProvider contentLabelProvider = memoryDecoder.getLabelProvider();
 		if (contentLabelProvider == null)
@@ -665,7 +671,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		decodedTableViewer.setLabelProvider(new DecodedTableLabelProvider(
 				contentLabelProvider, memoryDecoder.getChunkSize()));
 		
-		decodedTableViewer.setContentProvider(contentProvider);
+		decodedTableViewer.setContentProvider(decodedContentProvider);
 		
 		decodedTableViewer.setInput(range);
 	}
@@ -692,25 +698,18 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		if (!isDisposed() && isVisible() && currentRange != null) {
 			int lowRange, hiRange;
 			synchronized (currentRange) {
-				currentRange.fetchChanges();
-				lowRange = currentRange.getLowTouchRange();
-				hiRange = currentRange.getHiTouchRange();
+				byteContentViewer.refresh();
+				//currentRange.fetchChanges();
+				MemoryRangeChanges changes = byteContentViewer.getChanges();
+				if (changes == null || !changes.isTouched(currentRange.getAddress(), currentRange.getSize()))
+					return;
+				lowRange = changes.getLowTouchRange();
+				hiRange = changes.getHiTouchRange();
 				if (lowRange <= hiRange) {
 					if (!byteTableViewer.getTable().isDisposed()) {
 						if (pinMemory) {
 							byteTableViewer.setSelection(null);
 						}
-						/*
-						for (int addr = lowRange; addr < hiRange; addr += 16) {
-							int row = (lowRange - currentEntry.addr) / 16;
-							Object elementAt = byteTableViewer.getElementAt(row);
-							if (elementAt != null) {
-								byteTableViewer.refresh(elementAt);
-								if (addr == lowRange && !pinMemory) {
-									byteTableViewer.reveal(elementAt);
-								}
-							}
-						}*/
 						
 						if (!pinMemory) {
 							scrollByteViewerToActiveRegion(lowRange, hiRange);
@@ -718,7 +717,14 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 						//currentRange.clearTouchRange();
 					}
 				}
-				byteTableViewer.refresh(true);
+				byteTableViewer.refresh();
+				
+				if (decodeMemory) {
+					//((DecodedMemoryContentProvider) decodedTableViewer.getContentProvider()).refresh();
+					if (decodedContentProvider != null)
+						decodedContentProvider.refresh();
+					decodedTableViewer.refresh();
+				}
 			}
 		}
 	}
@@ -733,6 +739,16 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 				refreshViewer();
 			}
 		});
+	}
+
+	/**
+	 * @param entry
+	 * @param addr
+	 * @return
+	 */
+	public boolean contains(IMemoryEntry entry, int addr) {
+		return currentRange != null && currentRange.contains(entry, addr);
+				
 	}
 	
 }

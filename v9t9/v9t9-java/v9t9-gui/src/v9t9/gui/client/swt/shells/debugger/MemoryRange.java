@@ -3,12 +3,9 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
-import java.util.BitSet;
-
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.memory.SimpleMemoryWriteTracker;
 
 /**
  * A range of viewable memory
@@ -19,10 +16,6 @@ public class MemoryRange {
 	final IMemoryEntry entry;
 	final int addr;
 	final int len;
-	private SimpleMemoryWriteTracker tracker;
-	protected int lowRange;
-	protected int hiRange;
-	private BitSet changes;
 	
 	public MemoryRange(IMemoryEntry entry, int addr, int len) {
 		this.entry = entry;
@@ -34,15 +27,11 @@ public class MemoryRange {
 			hi = entry.getAddr() + entry.getSize() - lo; 
 		this.addr = lo;
 		this.len = hi - lo;
-		tracker = new SimpleMemoryWriteTracker(entry.getDomain(), 0);
-		tracker.addMemoryRange(addr, len);
 	}
 	public MemoryRange(IMemoryEntry element) {
 		this.entry = element;
 		this.addr = element.getAddr();
 		this.len = element.getSize();
-		tracker = new SimpleMemoryWriteTracker(entry.getDomain(), 0);
-		tracker.addMemoryRange(addr, len);
 	}
 	public boolean contains(IMemoryEntry entry, int addr) {
 		return this.entry.getDomain() == entry.getDomain() &&
@@ -52,10 +41,7 @@ public class MemoryRange {
 	public boolean isWordMemory() {
 		return entry.isWordAccess();
 	}
-	public void attachMemoryListener() {
-		tracker.addMemoryListener();
-		clearTouchRange();
-	}
+	
 	public int getAddress() {
 		return addr;
 	}
@@ -70,40 +56,6 @@ public class MemoryRange {
 			entry.writeByte(addr, byt);	
 	}
 	
-	public void fetchChanges() {
-		synchronized (tracker) {
-			changes = (BitSet) tracker.getChangedMemory().clone();
-			tracker.clearChanges();
-			lowRange = changes.nextSetBit(0);
-			if (lowRange < 0)
-				lowRange = Integer.MAX_VALUE;
-			hiRange = changes.length();
-		}
-	}
-	public boolean getAndResetChanged(Integer addr) {
-		if (changes == null)
-			return false;
-		synchronized (tracker) {
-			boolean f = changes.get(addr) || (entry.isWordAccess() && changes.get(addr+1));
-			//changes.clear(addr);
-			//if (entry.isWordAccess())
-			//	changes.clear(addr+1);
-			return f;
-		}
-	}
-	public synchronized int getLowTouchRange() {
-		return lowRange;
-	}
-	public synchronized int getHiTouchRange() {
-		return hiRange;
-	}
-	public synchronized void clearTouchRange() {
-		lowRange = Integer.MAX_VALUE;
-		hiRange = 0;
-	}
-	public void removeMemoryListener() {
-		tracker.removeMemoryListener();
-	}
 	public int getSize() {
 		return len;
 	}

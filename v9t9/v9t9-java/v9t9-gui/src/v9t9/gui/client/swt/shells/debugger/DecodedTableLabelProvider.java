@@ -46,8 +46,7 @@ public class DecodedTableLabelProvider extends BaseLabelProvider implements
 				if (i > 0 && i % chunkSize == 0)
 					sb.append(' ');
 				sb.append(HexUtils.toHex2(
-						row.getRange().readByte(
-								 content.getAddr() + i)));
+						row.getBytes()[i]));
 			}
 			return sb.toString();
 		}

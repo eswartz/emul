@@ -8,32 +8,39 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 
 /**
- * This provides rows of 16 bytes for each index of the memory viewer.
+ * This provides rows of bytes for each index of the memory viewer.
  * @author ejs
  *
  */
 class ByteMemoryContentProvider implements ILazyContentProvider {
 
-	MemoryRange range;
+	private MemoryRange range;
+	private MemoryRangeChanges changes;
 	private TableViewer tableViewer;
+	private int size;
 	
+	public ByteMemoryContentProvider(int size) {
+		this.size = size;
+		
+	}
 	public void dispose() {
 		
 	}
 
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		this.tableViewer = (TableViewer) viewer;
-		if (range != null)
-			range.removeMemoryListener();
+		if (changes != null)
+			changes.removeMemoryListener();
 		
 		range = (MemoryRange) newInput;
 		if (range != null) {
-			range.attachMemoryListener();
+			changes = new MemoryRangeChanges(range);
+			changes.attachMemoryListener();
 
 			// clear
 			tableViewer.setItemCount(0);
 			// reset
-			tableViewer.setItemCount(range.getSize() / 16);
+			tableViewer.setItemCount(range.getSize() / size);
 		}
 	}
 
@@ -42,12 +49,26 @@ class ByteMemoryContentProvider implements ILazyContentProvider {
 			return;
 		
 		//System.out.println(index);
-		int addr = index * 16;
+		int addr = index * size;
 		MemoryRow row = (MemoryRow) tableViewer.getElementAt(index);
-		if (row == null)
+		if (row == null || changes.isTouched(addr, addr + size))
 			row = new MemoryRow(addr, range);
 		
 		tableViewer.replace(row, index);
+	}
+
+	/**
+	 * 
+	 */
+	public void refresh() {
+		if (changes != null)
+			changes.fetchChanges();
+	}
+	/**
+	 * @return
+	 */
+	public MemoryRangeChanges getChanges() {
+		return changes;
 	}
 	
 }

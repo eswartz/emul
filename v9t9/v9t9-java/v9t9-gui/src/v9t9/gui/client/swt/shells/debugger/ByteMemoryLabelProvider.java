@@ -15,10 +15,13 @@ import ejs.base.utils.HexUtils;
 class ByteMemoryLabelProvider extends BaseLabelProvider implements ITableLabelProvider, ITableColorProvider {
 	private Color changedMemoryBackground;
 	private Color alternatingWordForeground;
+	private ByteMemoryContentProvider contentProvider;
 
-	public ByteMemoryLabelProvider(Color alternatingWordForeground, Color changedMemoryBackground) {
+	public ByteMemoryLabelProvider(Color alternatingWordForeground, Color changedMemoryBackground,
+			ByteMemoryContentProvider contentProvider) {
 		this.alternatingWordForeground = alternatingWordForeground;
 		this.changedMemoryBackground = changedMemoryBackground;
+		this.contentProvider = contentProvider;
 	}
 	public Image getColumnImage(Object element, int columnIndex) {
 		return null;
@@ -52,7 +55,7 @@ class ByteMemoryLabelProvider extends BaseLabelProvider implements ITableLabelPr
 		if (columnIndex > 0 && columnIndex <= 16) {
 			Integer addr = row.getAddress() + columnIndex - 1;
 			
-			if (row.getRange().getAndResetChanged(addr)) {
+			if (contentProvider.getChanges().getAndResetChanged(addr)) {
 				color = changedMemoryBackground;
 			}
 		}

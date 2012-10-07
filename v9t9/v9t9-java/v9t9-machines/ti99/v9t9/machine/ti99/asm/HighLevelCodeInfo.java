@@ -153,6 +153,13 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		return memoryRanges;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.asm.IDecompileInfo#getInstructions()
+	 */
+	@Override
+	public Map<Integer, RawInstruction> getInstructions() {
+		return instructions;
+	}
 	public Map<Integer, Block> getBlockMap() {
 		return blockMap;
 	}
@@ -187,11 +194,14 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		IHighLevelInstruction first = null;
 		IHighLevelInstruction prev = null;
 		for (int addr = startAddr; addr < startAddr + size; addr += 2) {
-			RawInstruction rawInst = instructionFactory.decodeInstruction(addr, domain);
-			IHighLevelInstruction inst = new HighLevelInstruction(0,
-					rawInst,
-					instructionFactory.getInstructionFlags(rawInst));
-			getLLInstructions().put(new Integer(inst.getInst().pc), inst);
+			IHighLevelInstruction inst = getLLInstructions().get(addr);
+			if (inst == null) {
+				RawInstruction rawInst = instructionFactory.decodeInstruction(addr, domain);
+				inst = new HighLevelInstruction(0,
+						rawInst,
+						instructionFactory.getInstructionFlags(rawInst));
+				getLLInstructions().put(new Integer(inst.getInst().pc), inst);
+			}
 			if (prev != null) {
 				prev.setPhysicalNext(inst);
 			} else {
@@ -278,5 +288,17 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 	
 	public void replaceInstruction(IHighLevelInstruction inst) {
 		instructions.put(inst.getInst().pc, inst.getInst());
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.asm.IDecompileInfo#reset()
+	 */
+	@Override
+	public void reset() {
+		instructions.clear();
+		llInstructions.clear();
+		labelMap.clear();
+		routineMap.clear();
+		blockMap.clear();
 	}
 }

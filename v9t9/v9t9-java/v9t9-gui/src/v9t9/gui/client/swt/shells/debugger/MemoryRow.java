@@ -22,7 +22,7 @@ class MemoryRow {
 	}
 
 	public final void putByte(int column, byte byt) {
-		range.writeByte(getAddress() + column, byt);
+		range.getEntry().getDomain().writeByte(getAddress() + column, byt);
 	}
 
 	public final char getChar(int column) {

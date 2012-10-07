@@ -53,6 +53,10 @@ public class TopDownPhase extends Phase {
 
 	public TopDownPhase(ICpuState state, IDecompileInfo info) {
 		super(state, info);
+		unresolvedRoutines = new LinkedList<Routine>();
+		unresolvedBlocks = new LinkedList<Block>();
+		routineCalls = new TreeSet<IHighLevelInstruction>();
+
 	}
 
 	/* (non-Javadoc)
@@ -68,11 +72,13 @@ public class TopDownPhase extends Phase {
 	
 	
 	public void run() {
-
 		addStandardROMRoutines();
 			
 		// add blocks for every branch instruction
 		for (IHighLevelInstruction inst : decompileInfo.getLLInstructions().values()) {
+			if (inst.getBlock() != null && !blocks.containsKey(inst.getInst().pc)) {
+				inst.setBlock(null);
+			}
 			if (inst.getInst().getInst() == InstTableCommon.Idata) {
 				continue;
 			}
@@ -81,7 +87,7 @@ public class TopDownPhase extends Phase {
 				doAddBlock = true;
 			} else {
 				IHighLevelInstruction logPrev = inst.getLogicalPrev();
-				if (logPrev != null && (logPrev.getFlags() & IHighLevelInstruction.fEndsBlock) != 0) {
+				if (logPrev == null || (logPrev.getFlags() & IHighLevelInstruction.fEndsBlock) != 0) {
 					doAddBlock = true;
 				}
 			}
@@ -93,14 +99,18 @@ public class TopDownPhase extends Phase {
 					//dumpBlock(System.out, inst.getBlock());
 					//inst.getBlock().setLast(null);
 					//addBlock(new Block(inst));
-					addBlock(inst.getBlock().split(inst));
+					Block split = inst.getBlock().split(inst);
+					if (split != null)
+						addBlock(split);
 				}
 			}
 		}
 		
-		unresolvedRoutines = new LinkedList<Routine>(getRoutines());
-		unresolvedBlocks = new LinkedList<Block>(blocks.values());
-		routineCalls = new TreeSet<IHighLevelInstruction>();
+		unresolvedRoutines.clear();
+		unresolvedRoutines.addAll(getRoutines());
+		unresolvedBlocks.clear();
+		unresolvedBlocks.addAll(blocks.values());
+		routineCalls.clear();
 		
 		boolean changed;
 		

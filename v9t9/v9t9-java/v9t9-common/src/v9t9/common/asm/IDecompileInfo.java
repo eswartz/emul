@@ -40,6 +40,7 @@ public interface IDecompileInfo {
     
     public Collection<Routine> getRoutines();
 
+    public Map<Integer, RawInstruction> getInstructions();
     /**
      * Get map of LL instructions generated in code.
      * @return
@@ -60,6 +61,11 @@ public interface IDecompileInfo {
 	 * 
 	 */
 	public void analyze();
+
+	/**
+	 * 
+	 */
+	public void reset();
 
 
 }

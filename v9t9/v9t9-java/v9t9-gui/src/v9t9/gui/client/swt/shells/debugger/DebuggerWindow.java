@@ -19,6 +19,7 @@ import v9t9.common.asm.IDecompilePhase;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryWriteListener;
 import v9t9.gui.client.swt.bars.ImageBar;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
 import v9t9.gui.common.IMemoryDecoder;
@@ -29,7 +30,7 @@ import ejs.base.settings.ISettingSection;
  * @author Ed
  *
  */
-public class DebuggerWindow extends Composite {
+public class DebuggerWindow extends Composite implements IMemoryWriteListener {
 
 	private static final int NUM_MEMORY_VIEWERS = 3;
 	private SashForm horizSash;
@@ -40,9 +41,9 @@ public class DebuggerWindow extends Composite {
 	private RegisterViews regViewer;
 	public static final String DEBUGGER_TOOL_ID = "debugger";
 
-	public DebuggerWindow(Shell parent, int style, IMachine machine, Timer timer) {
+	public DebuggerWindow(Shell parent, int style, IMachine machine_, Timer timer) {
 		super(parent, style);
-		this.machine = machine;
+		this.machine = machine_;
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
 		parent.setText("V9t9 Debugger");
@@ -76,6 +77,10 @@ public class DebuggerWindow extends Composite {
 
 		}
 		
+		for (IMemoryDomain domain : machine.getMemory().getDomains()) {
+			domain.addWriteListener(this);
+		}
+		
 
 		String[] sweights = history.getArray("SashDivisions");
 		if (sweights != null && sweights.length == memoryViewers.length) {
@@ -103,6 +108,10 @@ public class DebuggerWindow extends Composite {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
+
+				for (IMemoryDomain domain : machine.getMemory().getDomains()) {
+					domain.removeWriteListener(DebuggerWindow.this);
+				}
 				for (int v = 0; v < memoryViewers.length; v++) {
 					memoryViewers[v].saveState(history.findOrAddSection("MemoryViewer." + v));
 				}
@@ -117,23 +126,43 @@ public class DebuggerWindow extends Composite {
 		});
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryWriteListener#changed(v9t9.common.memory.IMemoryEntry, int, java.lang.Number)
+	 */
+	@Override
+	public void changed(IMemoryEntry entry, int addr, Number value) {
+		if (machine.isPaused()) {
+			for (final MemoryViewer viewer : memoryViewers) {
+				if (viewer.contains(entry, addr)) {
+					getDisplay().asyncExec(new Runnable() {
+						public void run() {
+							viewer.refreshViewer();
+						}
+					});
+				}
+			}
+		}
+	}
 
 	/**
-	 * @param machine2
+	 * TODO: make generic
 	 * @return
 	 */
 	private IMemoryDecoderProvider createMemoryDecoderProvider() {
 		return new IMemoryDecoderProvider() {
-			
+			DisassemblerDecoder cpuDecoder = null;
 			@Override
 			public IMemoryDecoder getMemoryDecoder(IMemoryEntry entry) {
 				if (entry.getDomain().getIdentifier().equals(IMemoryDomain.NAME_CPU)) {
-					IDecompilePhase decompiler = machine.getCpu().createDecompiler();
-					if (decompiler != null) {
-						return new DisassemblerDecoder(entry, 
-								machine.getCpu().getInstructionFactory(),
-								machine.getCpu().createDecompiler());
+					if (true||cpuDecoder == null) {
+						IDecompilePhase decompiler = machine.getCpu().createDecompiler();
+						if (decompiler != null) {
+							cpuDecoder = new DisassemblerDecoder(entry.getDomain(), 
+									machine.getCpu().getInstructionFactory(),
+									machine.getCpu().createDecompiler());
+						}
 					}
+					return cpuDecoder;
 				}
 				return null;
 			}

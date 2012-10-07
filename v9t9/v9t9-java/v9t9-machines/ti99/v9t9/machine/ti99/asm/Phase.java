@@ -75,6 +75,7 @@ public abstract class Phase implements IDecompilePhase {
 	 */
 	@Override
 	public void reset() {
+		decompileInfo.reset();
 		blocks.clear();
 		labels.clear();
 		routines.clear();

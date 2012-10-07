@@ -17,9 +17,11 @@ import v9t9.gui.common.IMemoryDecoder;
  */
 public class DecodedMemoryContentProvider implements ILazyContentProvider {
 
-	MemoryRange range;
+	private MemoryRange range;
+	private MemoryRangeChanges changes;
 	private TableViewer tableViewer;
 	private final IMemoryDecoder decoderProvider;
+	private int firstIndex;
 	
 	public DecodedMemoryContentProvider(IMemoryDecoder decoder) {
 		this.decoderProvider = decoder;
@@ -27,28 +29,32 @@ public class DecodedMemoryContentProvider implements ILazyContentProvider {
 	public void dispose() {
 		
 	}
-
+	
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		this.tableViewer = (TableViewer) viewer;
-		if (range != null)
-			range.removeMemoryListener();
+		if (changes != null) {
+			changes.removeMemoryListener();
+//			range.getEntry().getDomain().removeWriteListener(this);
+			decoderProvider.reset();
+		}
 		
 		range = (MemoryRange) newInput;
+		changes = null;
 		if (range != null) {
-			range.attachMemoryListener();
+			changes = new MemoryRangeChanges(range);
+			changes.attachMemoryListener();
+//			range.getEntry().getDomain().addWriteListener(this);
 
-			decoderProvider.initialize(range);
+			decoderProvider.addRange(range.getAddress(), range.getSize());
 			
 			// clear
 			tableViewer.setItemCount(0);
-			tableViewer.refresh(true); 
+			tableViewer.refresh(); 
 			
-			// reset
-			tableViewer.setItemCount(decoderProvider.getItemCount());
-			tableViewer.refresh(true);
+			updateRange();
 			
 		} else {
-			decoderProvider.initialize(null);
+			decoderProvider.reset();
 			tableViewer.setItemCount(0);
 			tableViewer.refresh(true);
 		}
@@ -67,13 +73,40 @@ public class DecodedMemoryContentProvider implements ILazyContentProvider {
 			row = new DecodedRow(addr, range, info.first, info.second);
 		}
 		*/
+		
 		DecodedRow row = (DecodedRow) tableViewer.getElementAt(index);
+		if (row != null) {
+			IDecodedContent content = row.getContent();
+			if (changes.isTouched(content.getAddr(), content.getSize())) {
+				row = null;
+			}
+		}
 		if (row == null) {
-			IDecodedContent content = decoderProvider.decodeItem(index);
-			row = new DecodedRow(content, range);
+			IDecodedContent content = decoderProvider.decodeItem(index + firstIndex);
+			byte[] bytes = new byte[content.getSize()];
+			for (int i = 0; i < bytes.length; i++)
+				bytes[i] = range.getEntry().flatReadByte(content.getAddr() + i);
+			row = new DecodedRow(content, bytes);
 		}
 		
 		tableViewer.replace(row, index);
+	}
+	/**
+	 * 
+	 */
+	public void refresh() {
+		changes.fetchChanges();
+		if (changes.isTouched(range.getAddress(), range.getSize())) {
+			
+			decoderProvider.updateRange(changes.getChangeSet());
+
+			updateRange();
+		}
+	}
+	private synchronized void updateRange() {
+		firstIndex = decoderProvider.getFirstItemIndex(range.getAddress());
+		tableViewer.setItemCount(decoderProvider.getItemCount(range.getAddress(), range.getSize()));
+		tableViewer.refresh();
 	}
 	
 	

@@ -3,6 +3,8 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
+import java.util.Arrays;
+
 /**
  * @author ejs
  *
@@ -10,15 +12,15 @@ package v9t9.gui.client.swt.shells.debugger;
 public class DecodedRow {
 
 	private final IDecodedContent content;
-	private final MemoryRange range;
+	private final byte[] bytes;
 
 	/**
 	 * @param addr
 	 * @param range
 	 * @param decode
 	 */
-	public DecodedRow(IDecodedContent content, MemoryRange range) {
-		this.range = range;
+	public DecodedRow(IDecodedContent content, byte[] bytes) {
+		this.bytes = bytes;
 		this.content = content;
 	}
 
@@ -31,7 +33,7 @@ public class DecodedRow {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((range == null) ? 0 : range.hashCode());
+		result = prime * result + ((bytes == null) ? 0 : bytes.hashCode());
 		result = prime * result + content.getAddr();
 		result = prime * result + content.getSize();
 		return result;
@@ -51,10 +53,10 @@ public class DecodedRow {
 		if (getClass() != obj.getClass())
 			return false;
 		DecodedRow other = (DecodedRow) obj;
-		if (range == null) {
-			if (other.range != null)
+		if (bytes == null) {
+			if (other.bytes != null)
 				return false;
-		} else if (!range.equals(other.range))
+		} else if (!Arrays.equals(bytes, other.bytes))
 			return false;
 		if (content == null) {
 			if (other.content != null)
@@ -76,13 +78,13 @@ public class DecodedRow {
 	public IDecodedContent getContent() {
 		return content;
 	}
+
 	/**
-	 * @return the range
+	 * @return the bytes
 	 */
-	public MemoryRange getRange() {
-		return range;
+	public byte[] getBytes() {
+		return bytes;
 	}
-	
 	
 
 }

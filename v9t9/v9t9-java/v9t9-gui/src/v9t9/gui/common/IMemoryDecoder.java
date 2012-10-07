@@ -3,6 +3,8 @@
  */
 package v9t9.gui.common;
 
+import java.util.BitSet;
+
 import org.eclipse.jface.viewers.ILabelProvider;
 
 import v9t9.gui.client.swt.shells.debugger.IDecodedContent;
@@ -15,23 +17,28 @@ import v9t9.gui.client.swt.shells.debugger.MemoryRange;
  *
  */
 public interface IMemoryDecoder {
-
+	void reset();
 	/**
 	 * Initialize the decoder for the given range
 	 * @param range
 	 */
-	void initialize(MemoryRange range);
+	void addRange(int addr, int size);
+	/**
+	 * Update the decoder for the given range
+	 * @param addrSet
+	 */
+	void updateRange(BitSet addrSet);
 	
 	/**
 	 * Return number of items to display from the initialized range
+	 * @param size 
+	 * @param i 
 	 * @return
 	 */
-	int getItemCount();
-
-	
-	
+	int getItemCount(int i, int size);
+	int getFirstItemIndex(int addr);
 	/**
-	 * Get the label provider for the content produced by {@link #decode(int, int)}.
+	 * Get the label provider for {@link IDecodedContent#getContent()} elements
 	 * @return label provider
 	 */
 	ILabelProvider getLabelProvider();
@@ -48,16 +55,4 @@ public interface IMemoryDecoder {
 	 * @return content to render at addr.
 	 */
 	IDecodedContent decodeItem(int addr);
-
-	/**
-	 * Tell if the row at the given address is visible,
-	 * given the previous visible address.
-	 * @param addr
-	 * @param previous
-	 * @return true if addr's content is visible
-	 */
-	//boolean isAddrVisible(int addr, int previous);
-
-
-
 }
