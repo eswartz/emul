@@ -63,7 +63,19 @@ public interface IFileMapper extends IPersistable {
 	 */
 	String getDsrDeviceName(File dir);
 	
+	/**
+	 * Map the given device name (e.g. "DSK1") to a property (which need
+	 * not be named the same)
+	 */
 	void registerDiskSetting(String devname, IProperty diskSetting);
+	/**
+	 * Unnap the given device name from its setting
+	 */
 	void unregisterDiskSetting(String devname);
+	/**
+	 * Set the directory for the given device to the given directory
+	 * @param device
+	 * @param dir
+	 */
 	void setDiskPath(String device, File dir);	
 }

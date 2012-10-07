@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.gui.client.swt.shells;
+package v9t9.gui.client.swt.shells.disk;
 
 import java.io.IOException;
 
@@ -10,10 +10,10 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 
 import v9t9.common.files.EmulatedFile;
-import v9t9.gui.client.swt.shells.ByteContentViewer.ByteRow;
+import v9t9.gui.client.swt.shells.disk.ByteContentViewer.ByteRow;
 
 /**
- * This provides rows of 16 bytes for each index of the memory viewer.
+ * This provides rows of @width bytes for each index of the memory viewer.
  * @author ejs
  *
  */
@@ -21,7 +21,11 @@ class ByteContentProvider implements ILazyContentProvider {
 
 	private TableViewer tableViewer;
 	private EmulatedFile file;
+	private int width;
 	
+	public ByteContentProvider(int width) {
+		this.width = width;
+	}
 	public void dispose() {
 		
 	}
@@ -35,7 +39,7 @@ class ByteContentProvider implements ILazyContentProvider {
 			// clear
 			tableViewer.setItemCount(0);
 			// reset
-			tableViewer.setItemCount(file.getFileSize() / 16);
+			tableViewer.setItemCount(file.getFileSize() / width);
 		}
 	}
 
@@ -44,12 +48,12 @@ class ByteContentProvider implements ILazyContentProvider {
 			return;
 		
 		//System.out.println(index);
-		int addr = index * 16;
+		int addr = index * width;
 		ByteRow row = (ByteRow) tableViewer.getElementAt(index);
 		if (row == null) {
-			row = new ByteRow(addr, 16);
+			row = new ByteRow(addr, width);
 			try {
-				file.readContents(row.getContent(), 0, addr, 16);
+				file.readContents(row.getContent(), 0, addr, width);
 			} catch (IOException e) {
 				
 			}

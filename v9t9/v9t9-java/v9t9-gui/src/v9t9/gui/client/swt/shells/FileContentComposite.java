@@ -12,6 +12,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
 import v9t9.common.files.EmulatedFile;
+import v9t9.gui.client.swt.shells.disk.ByteContentViewer;
 
 /**
  * @author ejs

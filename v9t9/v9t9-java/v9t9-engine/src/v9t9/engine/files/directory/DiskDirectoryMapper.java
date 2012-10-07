@@ -22,6 +22,8 @@ import ejs.base.settings.ISettingSection;
 
 public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 	private Map<String, File> diskMap = new HashMap<String, File>();
+	private Map<String, String> deviceToDiskMap = new HashMap<String, String>();
+	private Map<String, String> diskToDeviceMap = new HashMap<String, String>();
 	private Map<String, IProperty> diskSettingsMap = new HashMap<String, IProperty>();
 	private Map<String, IPropertyListener> diskSettingsListenerMap = new HashMap<String, IPropertyListener>();
 	
@@ -30,11 +32,15 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 
 	public void registerDiskSetting(String device, IProperty diskSetting) {
 		diskMap.put(device, new File(diskSetting.getString()));
+		
+		deviceToDiskMap.put(device, diskSetting.getName());
+		diskToDeviceMap.put(diskSetting.getName(), device);
+		
 		diskSettingsMap.put(device, diskSetting); 
 		IPropertyListener listener = new IPropertyListener() {
 			
 			public void propertyChanged(IProperty setting) {
-				diskMap.put(setting.getName(), new File(setting.getString()));
+				diskMap.put(diskToDeviceMap.get(setting.getName()), new File(setting.getString()));
 			}
 		};
 		diskSettingsListenerMap.put(device, listener);

@@ -44,7 +44,7 @@ public class FileHandler implements IFileHandler {
 					settings, name, spec);
 			image.openDiskImage();
 			
-			Catalog catalog = image.readCatalog();
+			Catalog catalog = image.readCatalog("DSK" + name.charAt(name.length() - 1));
 			
 			image.closeDiskImage();
 			return catalog;

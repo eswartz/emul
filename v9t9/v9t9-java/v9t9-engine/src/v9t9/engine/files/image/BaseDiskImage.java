@@ -411,7 +411,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	 * @return
 	 * @throws IOException 
 	 */
-	public Catalog readCatalog() throws IOException {
+	public Catalog readCatalog(String devname) throws IOException {
 		List<CatalogEntry> entries = new ArrayList<CatalogEntry>();
 		byte[] asec = new byte[256];
 		byte[] fdrSec = new byte[256];
@@ -441,7 +441,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 				e.printStackTrace();
 			}
 		}
-		return new Catalog(volume, total, used, entries);
+		return new Catalog(devname, volume, total, used, entries);
 	}
 
 	/**

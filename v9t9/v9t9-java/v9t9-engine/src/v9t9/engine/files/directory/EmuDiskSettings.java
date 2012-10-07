@@ -27,7 +27,20 @@ public class EmuDiskSettings {
 			diskDirectoryIconPath);
 
 	public static String getEmuDiskSetting(int i) {
-		return "DSK" + i;
+		return "EmuDisk" + i;
 	}
 
+	public static String getEmuDiskSetting(String devname) {
+		char last = devname.charAt(devname.length() - 1);
+		return "EmuDisk" + last;
+	}
+
+	/**
+	 * @param dev
+	 * @return
+	 */
+	public static String getDeviceName(int dev) {
+		return "DSK" + dev;
+	}
+	
 }

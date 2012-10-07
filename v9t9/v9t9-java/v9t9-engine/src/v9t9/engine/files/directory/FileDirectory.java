@@ -33,7 +33,9 @@ public class FileDirectory {
 		FileLikeDirectoryInfo info = new FileLikeDirectoryInfo(dir, mapper);
 		long total = dir.getTotalSpace();
 		long used = total - dir.getFreeSpace();
-		return new Catalog(dir.getName().toUpperCase(), (int)(total / 256) & 0xffff, 
+		return new Catalog(
+				mapper.getDsrDeviceName(dir),
+				dir.getName().toUpperCase(), (int)(total / 256) & 0xffff, 
 				(int)((total - used) / 256) & 0xffff,
 				info.readCatalog());
 	}

@@ -95,18 +95,18 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 		emuDiskDsrActiveSetting.addEnablementDependency(settingDsrEnabled);
 		
     	for (int dev = 1; dev <= 5; dev++) {
-    		String devname = EmuDiskSettings.getEmuDiskSetting(dev);
+    		String settingName = EmuDiskSettings.getEmuDiskSetting(dev);
     		
     		EmuDiskSetting diskSetting = settings.get(ISettingsHandler.WORKSPACE,
-    				new EmuDiskSetting(settings, devname, dskdefault.getAbsolutePath(),
+    				new EmuDiskSetting(settings, settingName, dskdefault.getAbsolutePath(),
     						EmuDiskSettings.diskDirectoryIconPath));
 			
-			mapper.registerDiskSetting(devname, diskSetting);
+			mapper.registerDiskSetting(EmuDiskSettings.getDeviceName(dev), diskSetting);
 
 			// one setting per disk
-			IProperty diskActiveSetting = new SettingProperty(devname, Boolean.FALSE);
+			IProperty diskActiveSetting = new SettingProperty(settingName, Boolean.FALSE);
 			diskActiveSetting.addEnablementDependency(settingDsrEnabled);
-			diskActivitySettings.put(devname, diskActiveSetting);
+			diskActivitySettings.put(settingName, diskActiveSetting);
 			/*
 			deviceIndicatorProvider = new DeviceIndicatorProvider(
 					diskActiveSetting, 
@@ -183,12 +183,13 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 					(short) (vdpNameCompareBuffer + 1));
 			
 			if (handler.devname.equals("DSK1")
-					|| handler.devname.equals("DSK2")) {
+					|| handler.devname.equals("DSK2")
+					|| (handler.devname.equals("DSK") /* unmatched */)) {
 				if (settingRealDsrEnabled.getBoolean())
 					return false;
 			}
 			
-			IProperty settingProperty = diskActivitySettings.get(handler.devname);
+			IProperty settingProperty = diskActivitySettings.get(EmuDiskSettings.getEmuDiskSetting(handler.devname));
 			if (settingProperty != null)
 				settingProperty.setBoolean(true);
 			

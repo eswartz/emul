@@ -1,4 +1,4 @@
-package v9t9.gui.client.swt.shells;
+package v9t9.gui.client.swt.shells.disk;
 
 import java.util.List;
 
@@ -13,8 +13,6 @@ import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
-import org.eclipse.swt.events.MouseAdapter;
-import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
@@ -28,14 +26,13 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
 
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.EmulatedFile;
 import v9t9.common.machine.IMachine;
-import ejs.base.properties.IProperty;
+import v9t9.gui.client.swt.shells.FileContentDialog;
 
 public class DiskBrowseDialog extends Dialog {
 	private static final int COLUMN_NAME = 0;
@@ -139,7 +136,6 @@ public class DiskBrowseDialog extends Dialog {
 
 	private final List<CatalogEntry> entries;
 	private final Catalog catalog;
-	private final IProperty setting;
 	private final IMachine machine;
 	{
 		setShellStyle(getShellStyle() & ~(SWT.APPLICATION_MODAL + SWT.SYSTEM_MODAL) | SWT.RESIZE | SWT.MODELESS);
@@ -148,12 +144,11 @@ public class DiskBrowseDialog extends Dialog {
 	public DiskBrowseDialog(Shell parentShell,
 			IMachine machine,
 			List<CatalogEntry> entries, 
-			Catalog catalog, IProperty setting) {
+			Catalog catalog) {
 		super(parentShell);
 		this.machine = machine;
 		this.entries = entries;
 		this.catalog = catalog;
-		this.setting = setting;
 	}
 
 	/* (non-Javadoc)
@@ -162,7 +157,7 @@ public class DiskBrowseDialog extends Dialog {
 	@Override
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
-		newShell.setText("Catalog of " + setting.getName());
+		newShell.setText("Catalog of " + catalog.deviceName);
 	}
 	
 	/* (non-Javadoc)
@@ -181,7 +176,7 @@ public class DiskBrowseDialog extends Dialog {
 		Composite composite = (Composite) super.createDialogArea(parent);
 		
 		Label label = new Label(composite, SWT.WRAP);
-		label.setText(setting.getString() + "\n\nName: " + catalog.volumeName + "; Total: " + catalog.totalSectors + "; Used: " + catalog.usedSectors);
+		label.setText(catalog.deviceName + "\n\nName: " + catalog.volumeName + "; Total: " + catalog.totalSectors + "; Used: " + catalog.usedSectors);
 		GridDataFactory.fillDefaults().grab(true,false).applyTo(label);
 		
 		final TableViewer viewer = new TableViewer(composite, SWT.FULL_SELECTION | SWT.BORDER | SWT.MULTI);
@@ -221,28 +216,6 @@ public class DiskBrowseDialog extends Dialog {
 		protColumn.pack();
 		///
 		
-
-		final boolean[] isShifted = { false };
-		table.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseDoubleClick(MouseEvent e) {
-				isShifted[0] = (e.stateMask & SWT.SHIFT) != 0;
-				TableItem item = table.getItem(new Point(e.x, e.y));
-				if (item != null && item.getData() instanceof CatalogEntry) {
-					CatalogEntry entry = (CatalogEntry)item.getData();
-					String filePath;
-					if (isShifted[0])
-						filePath = entry.fileName;
-					else
-						filePath = setting.getName() + "." + entry.fileName;
-					machine.notifyEvent( 
-							Level.INFO, "Pasting '" + filePath + "'");
-							
-					machine.getKeyboardHandler().pasteText(filePath);
-				}
-			}
-		});
-		
 		table.addMenuDetectListener(new MenuDetectListener() {
 			
 			@Override
@@ -259,6 +232,31 @@ public class DiskBrowseDialog extends Dialog {
 
 					final CatalogEntry entry = (CatalogEntry) item.getData();
 					
+
+					final MenuItem pasteFullPathItem;
+					pasteFullPathItem = new MenuItem(menu, SWT.NONE);
+					pasteFullPathItem.setText("Paste path into emulator");
+					
+					pasteFullPathItem.addSelectionListener(new SelectionAdapter() {
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							doPaste(entry, true);
+						}
+					});
+					
+
+					final MenuItem pasteNameItem;
+					pasteNameItem = new MenuItem(menu, SWT.NONE);
+					pasteNameItem.setText("Paste filename into emulator");
+					
+					pasteNameItem.addSelectionListener(new SelectionAdapter() {
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							doPaste(entry, false);
+						}
+					});
+					
+					
 					final MenuItem viewItem;
 					viewItem = new MenuItem(menu, SWT.NONE);
 					viewItem.setText("View content");
@@ -269,6 +267,7 @@ public class DiskBrowseDialog extends Dialog {
 							doViewContent(entry.getFile());
 						}
 					});
+					
 				}
 
 				if (menu.getItemCount() == 0) {
@@ -287,14 +286,20 @@ public class DiskBrowseDialog extends Dialog {
 			}
 		});
 
-		label = new Label(composite, SWT.WRAP);
-		label.setText("Double-click to paste path (shift for filename)");
-		GridDataFactory.fillDefaults().grab(true,false).applyTo(label);
-		
-		
 		return composite;
 	}
 
+	protected void doPaste(CatalogEntry entry, boolean full) {
+		String filePath;
+		if (full)
+			filePath = catalog.deviceName + "." + entry.fileName;
+		else
+			filePath = entry.fileName;
+		machine.notifyEvent( 
+				Level.INFO, "Pasting '" + filePath + "'");
+				
+		machine.getKeyboardHandler().pasteText(filePath);
+	}
 	private void setSortListener(final TableViewer viewer, TableColumn column, final int columnName) {
 		column.addSelectionListener(new SelectionAdapter() {
 			@Override

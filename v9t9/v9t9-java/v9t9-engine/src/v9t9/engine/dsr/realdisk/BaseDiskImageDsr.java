@@ -45,7 +45,7 @@ import v9t9.engine.files.image.StatusBit;
  *
  */
 public abstract class BaseDiskImageDsr implements IDeviceSettings {
-	/** setting name (DSKImage1) to setting */
+	/** setting name (DiskImage1) to setting */
 	protected Map<String, IProperty> diskSettingsMap = new LinkedHashMap<String, IProperty>();
 	
 	FDC1771 fdc;

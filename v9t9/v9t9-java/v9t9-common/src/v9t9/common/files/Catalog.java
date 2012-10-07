@@ -8,15 +8,16 @@ import java.util.List;
  *
  */
 public class Catalog {
+	public final String deviceName;
 	public final String volumeName;
 	public final int totalSectors;
 	public final int usedSectors;
 	
 	public final  List<CatalogEntry> entries;
 
-	public Catalog(String volumeName, int totalSectors, int usedSectors,
+	public Catalog(String deviceName, String volumeName, int totalSectors, int usedSectors,
 			List<CatalogEntry> entries) {
-		super();
+		this.deviceName = deviceName;
 		this.volumeName = volumeName;
 		this.totalSectors = totalSectors;
 		this.usedSectors = usedSectors;

@@ -47,7 +47,7 @@ public class RealDiskDsrSettings {
 	public static File defaultDiskRootDir;
 
 	public static String getDiskImageSetting(int num) {
-		return "DSKImage" + num;
+		return "DiskImage" + num;
 	}
 
 	public static File getDefaultDiskImage(String name) {

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.gui.client.swt.shells;
+package v9t9.gui.client.swt.shells.disk;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.FontDescriptor;
@@ -14,10 +14,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
@@ -32,6 +30,7 @@ import v9t9.common.files.EmulatedFile;
  */
 public class ByteContentViewer extends Composite {
 
+	final int WIDTH = 16;
 	public static class ByteRow {
 		public ByteRow(int address, int length) {
 			this.address = address;
@@ -125,10 +124,10 @@ public class ByteContentViewer extends Composite {
 	}
 
 	protected final int getMemoryRowIndex(int addr) {
-		return (addr - currentAddr) / 16;
+		return (addr - currentAddr) / WIDTH;
 	}
 	protected final int getMemoryColumnIndex(int addr) {
-		return (addr - currentAddr) % 16;
+		return (addr - currentAddr) % WIDTH;
 	}
 
 	protected void createUI() {
@@ -142,8 +141,7 @@ public class ByteContentViewer extends Composite {
 		
 		GridDataFactory.fillDefaults().grab(true, true).span(2, 1).applyTo(tableComposite);
 		
-		byteMemoryLabelProvider = new ByteLabelProvider(
-				new Color(getDisplay(), new RGB(64, 64, 128)));
+		byteMemoryLabelProvider = new ByteLabelProvider(WIDTH);
 		
 		createByteTableViewer(tableComposite);
 		
@@ -153,7 +151,8 @@ public class ByteContentViewer extends Composite {
 	protected void createByteTableViewer(Composite parent) {
 		byteTableViewer = new TableViewer(parent, SWT.V_SCROLL + SWT.BORDER + SWT.VIRTUAL 
 				+ SWT.NO_FOCUS + SWT.FULL_SELECTION);
-		byteTableViewer.setContentProvider(new ByteContentProvider());
+		
+		byteTableViewer.setContentProvider(new ByteContentProvider(WIDTH));
 		
 		byteTableViewer.setLabelProvider(byteMemoryLabelProvider);
 		
@@ -161,29 +160,33 @@ public class ByteContentViewer extends Composite {
 		final Table table = byteTableViewer.getTable();
 		GridDataFactory.fillDefaults().grab(true, true).span(2, 1).applyTo(table);
 		
-		String[] props = new String[1 + 16 + 1];
+		String[] props = new String[1 + WIDTH + 1];
 		props[0] = "Addr";
 		new TableColumn(table, SWT.CENTER).setText(props[0]);
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < WIDTH; i++) {
 			String id = Integer.toHexString(i).toUpperCase();
 			props[i + 1] = id;
 			new TableColumn(table, SWT.CENTER).setText(id + " ");
 		}
-		props[17] = "0123456789ABCDEF";
-		new TableColumn(table, SWT.CENTER).setText(props[17]);
+		StringBuilder sb = new StringBuilder();
+		for (int w = 0; w < WIDTH; w++) {
+			sb.append("0123456789ABCDEF".charAt(w&15));
+		}
+		props[WIDTH+1] = sb.toString();
+		new TableColumn(table, SWT.CENTER).setText(props[WIDTH+1]);
 		
 		table.setFont(tableFont);
 		
 		GC gc = new GC(table);
 		gc.setFont(tableFont);
-		int width = gc.stringExtent("FFFF").x;
+		int width = gc.stringExtent("FFFFF").x;
 		gc.dispose();
 		
 		table.getColumn(0).setWidth(width);
-		for (int i = 1; i <= 16; i++) {
+		for (int i = 1; i <= WIDTH; i++) {
 			table.getColumn(i).setWidth(width / 2);
 		}
-		table.getColumn(17).setWidth(width * 2);
+		table.getColumn(WIDTH+1).setWidth(width * 2);
 		
 		for (TableColumn column : table.getColumns()) {
 			column.pack();
@@ -191,8 +194,8 @@ public class ByteContentViewer extends Composite {
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		
-		CellEditor[] editors = new CellEditor[1+16+16];
-		for (int i = 1; i < 17; i++) {
+		CellEditor[] editors = new CellEditor[1+WIDTH+WIDTH];
+		for (int i = 1; i < WIDTH+1; i++) {
 			editors[i] = new TextCellEditor(table);
 		}
 		
