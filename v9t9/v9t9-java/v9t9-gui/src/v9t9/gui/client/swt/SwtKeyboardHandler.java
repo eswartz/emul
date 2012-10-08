@@ -154,7 +154,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		if ((keyCode & SWT.KEYCODE_BIT) == 0) {
 			keyCode &= 0xff;
 		
-			if (/*!keyPad &&*/ postCharacter(pressed, shiftMask, (char) keyCode)) {
+			if (postCharacter(pressed, shiftMask, (char) keyCode)) {
 				return;
 			}
 		}

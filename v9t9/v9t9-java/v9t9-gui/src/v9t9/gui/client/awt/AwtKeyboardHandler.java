@@ -22,27 +22,27 @@ import v9t9.common.machine.IMachine;
  */
 public class AwtKeyboardHandler extends BaseKeyboardHandler {
 
-	private long lastKeystrokeTime;
-	private Runnable keyTask;
+//	private long lastKeystrokeTime;
+//	private Runnable keyTask;
 
 	public AwtKeyboardHandler(final IKeyboardState keyboardState, IMachine machine) {
 		super(keyboardState, machine);
 		
-		keyTask = new Runnable() {
-			
-			@Override
-			public void run() {
-				// all handled incrementally, but just in case something goes goofy...
-				if (!isPasting()) {
-					if (lastKeystrokeTime + 500 < System.currentTimeMillis()) {
-						lastKeystrokeTime = System.currentTimeMillis();
-						keyboardState.resetKeyboard();
-					}
-				}
-			}
-		};
-		
-		machine.getFastMachineTimer().scheduleTask(keyTask, 4);
+//		keyTask = new Runnable() {
+//			
+//			@Override
+//			public void run() {
+//				// all handled incrementally, but just in case something goes goofy...
+//				if (!isPasting()) {
+//					if (lastKeystrokeTime + 500 < System.currentTimeMillis()) {
+//						lastKeystrokeTime = System.currentTimeMillis();
+//						keyboardState.resetKeyboard();
+//					}
+//				}
+//			}
+//		};
+//		
+//		machine.getFastMachineTimer().scheduleTask(keyTask, 4);
 	}
 	
 	/* (non-Javadoc)
@@ -114,6 +114,16 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		KeyEvent.VK_BACK_SPACE, KEY_BACKSPACE,
 		KeyEvent.VK_ENTER, KEY_ENTER,
 		KeyEvent.VK_BEGIN, KEY_KP_SHIFT_5,
+		KeyEvent.VK_NUMPAD0, KEY_KP_0,
+		KeyEvent.VK_NUMPAD1, KEY_KP_1,
+		KeyEvent.VK_NUMPAD2, KEY_KP_2,
+		KeyEvent.VK_NUMPAD3, KEY_KP_3,
+		KeyEvent.VK_NUMPAD4, KEY_KP_4,
+		KeyEvent.VK_NUMPAD5, KEY_KP_5,
+		KeyEvent.VK_NUMPAD6, KEY_KP_6,
+		KeyEvent.VK_NUMPAD7, KEY_KP_7,
+		KeyEvent.VK_NUMPAD8, KEY_KP_8,
+		KeyEvent.VK_NUMPAD9, KEY_KP_9,
 	};
 	static {
 		for (int i = 0; i < keycodesAndKeys.length; i += 2) {
@@ -127,9 +137,9 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			return;
 		}
 		
-		lastKeystrokeTime = System.currentTimeMillis();
+//		lastKeystrokeTime = System.currentTimeMillis();
 		
-		if (ascii == KeyEvent.CHAR_UNDEFINED && keyCode < 128 && keyboardState.isAsciiDirectKey((char) keyCode)) {
+		if (ascii == KeyEvent.CHAR_UNDEFINED && keyCode < 128 && keyboardState.isAsciiDirectKey((char) keyCode) && !keyPad) {
 			ascii = (char) keyCode;
 		}
 		if (ascii <= 32 && (modifiers & KeyEvent.CTRL_MASK) != 0) {
@@ -150,6 +160,10 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			shiftMask |= MASK_ALT;
 		
 		if (ascii > 0 && ascii < 128) {
+			if (keyPad) {
+				shiftMask &= ~MASK_SHIFT;
+			}
+			
 			if (postCharacter(pressed, shiftMask, ascii)) {
 				return;
 			}
@@ -157,16 +171,18 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		int key = KEY_UNKNOWN;
 		if ((shiftMask & MASK_CONTROL) != 0 && keyCode == KeyEvent.VK_PAUSE) {
-			keyCode = KEY_BREAK;
+			key = KEY_BREAK;
 		}
 
-		Integer ikey = awtKeycodeToKey.get(keyCode);
-		if (ikey != null) {
-			key = ikey;
+		if (key == KEY_UNKNOWN) {
+			Integer ikey = awtKeycodeToKey.get(keyCode);
+			if (ikey != null) {
+				key = ikey;
+			}
 		}
-
+		
 		if (key != KEY_UNKNOWN) {
-			handleSpecialKey(pressed, shiftMask, ikey, keyPad);
+			handleSpecialKey(pressed, shiftMask, key, keyPad);
 		}
 		else {
 			System.out.println("*** Unhandled AWT keycode: " + keyCode);
