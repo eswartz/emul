@@ -531,7 +531,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 				key = KEY_JOYST_UP_RIGHT + joy; break;
 			}
 		}
-		else if (isNumLock != isShifted) {
+		else if (isNumLock == isShifted) {
 			switch (kpKey) {
 			case KEY_KP_0:
 				key = KEY_KP_INSERT; break; 
@@ -555,8 +555,40 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 				key = KEY_KP_PAGE_UP; break;
 			}
 		} 
+		else {
+			switch (kpKey) {
+			case KEY_KP_0:
+			case KEY_KP_1:
+			case KEY_KP_2:
+			case KEY_KP_3:
+			case KEY_KP_4:
+			case KEY_KP_5:
+			case KEY_KP_6:
+			case KEY_KP_7:
+			case KEY_KP_8:
+			case KEY_KP_9:
+				key = key + '0' - KEY_KP_0; break;
+			}
+		}
 		return key;
 	}
 
+	protected void handleSpecialKey(boolean pressed, byte shiftMask, int ikey, boolean keyPad) {
+		if (handleActionKey(pressed, ikey)) {
+			return;
+		}
+
+		// convert keypad variants
+		if (keyPad) {
+			int prev = ikey;
+			ikey = convertKeypadToKey(ikey, shiftMask);
+			if (ikey != prev)
+				shiftMask &= ~MASK_SHIFT;
+		}
+
+		if (shiftMask != 0)
+			pushShifts(pressed, shiftMask);
+		pushKey(pressed, ikey);
+	}
 
 }

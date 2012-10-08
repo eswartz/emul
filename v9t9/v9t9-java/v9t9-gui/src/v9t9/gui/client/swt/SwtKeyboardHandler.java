@@ -168,21 +168,11 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		Integer ikey = swtKeycodeToKey.get(keyCode);
 		if (ikey != null) {
-			
-			if (handleActionKey(pressed, ikey)) {
-				return;
-			}
-
-			// convert keypad variants
-			if (keyPad) {
-				ikey = convertKeypadToKey(ikey, shiftMask);
-			}
-
-			pushKey(pressed, ikey);
-			return;
+			handleSpecialKey(pressed, shiftMask, ikey, keyPad);
 		}
-		
-		System.err.println("*** unhandled SWT keyCode: " + keyCode);
+		else {
+			System.err.println("*** unhandled SWT keyCode: " + keyCode);
+		}
 	}
 	
 	private int lastKeyPressedCode = -1;

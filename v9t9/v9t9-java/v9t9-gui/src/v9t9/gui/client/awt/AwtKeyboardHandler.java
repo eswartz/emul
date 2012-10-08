@@ -141,22 +141,22 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				ascii = Character.toUpperCase(ascii);
 		}
 		
-		byte shift = 0;
+		byte shiftMask = 0;
 		if ((modifiers & KeyEvent.SHIFT_DOWN_MASK + KeyEvent.SHIFT_MASK) != 0)
-			shift |= MASK_SHIFT;
+			shiftMask |= MASK_SHIFT;
 		if ((modifiers & KeyEvent.CTRL_DOWN_MASK + KeyEvent.CTRL_MASK) != 0)
-			shift |= MASK_CONTROL;
+			shiftMask |= MASK_CONTROL;
 		if ((modifiers & KeyEvent.ALT_DOWN_MASK + KeyEvent.META_DOWN_MASK + KeyEvent.ALT_MASK + KeyEvent.META_MASK) != 0)
-			shift |= MASK_ALT;
+			shiftMask |= MASK_ALT;
 		
 		if (ascii > 0 && ascii < 128) {
-			if (postCharacter(pressed, shift, ascii)) {
+			if (postCharacter(pressed, shiftMask, ascii)) {
 				return;
 			}
 		}
 		
 		int key = KEY_UNKNOWN;
-		if ((shift & MASK_CONTROL) != 0 && keyCode == KeyEvent.VK_PAUSE) {
+		if ((shiftMask & MASK_CONTROL) != 0 && keyCode == KeyEvent.VK_PAUSE) {
 			keyCode = KEY_BREAK;
 		}
 
@@ -166,20 +166,11 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		}
 
 		if (key != KEY_UNKNOWN) {
-			if (handleActionKey(pressed, ikey)) {
-				return;
-			}
-
-			// convert keypad variants
-			if (keyPad) {
-				ikey = convertKeypadToKey(ikey, shift);
-			}
-			
-			pushKey(pressed, ikey);
-			return;
-		} 
-		
-		System.out.println("*** Unhandled AWT keycode: " + keyCode);
+			handleSpecialKey(pressed, shiftMask, ikey, keyPad);
+		}
+		else {
+			System.out.println("*** Unhandled AWT keycode: " + keyCode);
+		}
 	}
 
 }
