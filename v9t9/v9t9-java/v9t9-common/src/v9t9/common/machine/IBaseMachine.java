@@ -27,13 +27,13 @@ import v9t9.common.settings.SettingSchema;
  */
 public interface IBaseMachine {
 
-	static public final SettingSchema settingPauseMachine = new SettingSchema(
+	SettingSchema settingPauseMachine = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"PauseMachine", new Boolean(false));
-	static public final SettingSchema settingThrottleInterrupts = new SettingSchema(
+	SettingSchema settingThrottleInterrupts = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"ThrottleVDPInterrupts", new Boolean(false));
-	static public final SettingSchema settingModuleList = new SettingSchema(
+	SettingSchema settingModuleList = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"ModuleListFile", "");
 

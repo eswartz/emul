@@ -13,10 +13,6 @@ import v9t9.common.settings.SettingSchema;
  *
  */
 public interface IKeyboardState {
-	public static SettingSchema settingBackspaceIsCtrlH = new SettingSchema(
-			ISettingsHandler.WORKSPACE, 
-			"BackspaceIsControlH", Boolean.FALSE);
-
 	public static SettingSchema settingUseNumPadForJoystick = new SettingSchema(
 			ISettingsHandler.WORKSPACE, 
 			"UseNumPadForJoystick", Boolean.TRUE);

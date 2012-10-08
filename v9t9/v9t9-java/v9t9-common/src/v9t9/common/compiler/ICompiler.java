@@ -15,22 +15,22 @@ import v9t9.common.settings.SettingSchema;
  */
 public interface ICompiler {
 
-	static public final SettingSchema settingOptimize = new SettingSchema(
+	SettingSchema settingOptimize = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"CompilerOptimize", new Boolean(false));
-	static public final SettingSchema settingOptimizeRegAccess = new SettingSchema(
+	SettingSchema settingOptimizeRegAccess = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"CompilerOptimizeRegAccess", new Boolean(true));
-	static public final SettingSchema settingOptimizeStatus = new SettingSchema(
+	SettingSchema settingOptimizeStatus = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"CompilerOptimizeStatus", new Boolean(false));
-	static public final SettingSchema settingCompileOptimizeCallsWithData = new SettingSchema(
+	SettingSchema settingCompileOptimizeCallsWithData = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"CompilerOptmizeCallsWithData", new Boolean(false));
-	static public final SettingSchema settingDebugInstructions = new SettingSchema(
+	SettingSchema settingDebugInstructions = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"DebugInstructions", new Boolean(true));
-	static public final SettingSchema settingCompileFunctions = new SettingSchema(
+	SettingSchema settingCompileFunctions = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"CompilerCompileFunctions", new Boolean(false));
 

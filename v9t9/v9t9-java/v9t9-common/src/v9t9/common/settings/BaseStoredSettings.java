@@ -37,7 +37,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	 * 
 	 */
 	private static final String HISTORY = "History";
-	private static class SyntheticProperty extends AbstractProperty {
+	private static class SyntheticProperty extends AbstractProperty implements IReadOnlyProperty {
 
 		private Object value;
 

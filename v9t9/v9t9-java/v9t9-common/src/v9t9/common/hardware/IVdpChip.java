@@ -23,13 +23,13 @@ import v9t9.common.settings.SettingSchema;
  * @author ejs
  */
 public interface IVdpChip extends IPersistable, IRegisterAccess {
-	static public final SettingSchema settingVdpInterruptRate = new SettingSchema(
+	SettingSchema settingVdpInterruptRate = new SettingSchema(
 			ISettingsHandler.INSTANCE, "VdpInterruptRate", new Integer(60));
 	// this should pretty much stay on
-	static public final SettingSchema settingCpuSynchedVdpInterrupt = new SettingSchema(
+	SettingSchema settingCpuSynchedVdpInterrupt = new SettingSchema(
 			ISettingsHandler.INSTANCE, "CpuSynchedVdpInterrupt", new Boolean(
 					true));
-	static public final SettingSchema settingDumpVdpAccess = new SettingSchema(
+	SettingSchema settingDumpVdpAccess = new SettingSchema(
 			ISettingsHandler.TRANSIENT, "DumpVdpAccess", new Boolean(false));
 
 	/** Update video canvas periodically */

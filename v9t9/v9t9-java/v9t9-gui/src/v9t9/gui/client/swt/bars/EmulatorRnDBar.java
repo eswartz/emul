@@ -23,6 +23,7 @@ import v9t9.common.settings.Settings;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.IImageBar.IPaintOffsetListener;
 import v9t9.gui.client.swt.shells.CpuMetricsCanvas;
+import v9t9.gui.client.swt.shells.SettingsDialog;
 import v9t9.gui.client.swt.shells.SpeechDialog;
 import v9t9.gui.client.swt.shells.debugger.DebuggerWindow;
 import ejs.base.properties.IProperty;
@@ -163,6 +164,15 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 				}
 		});
 		
+		createButton(IconConsts.SETTINGS, "Settings", 
+				new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						swtWindow.toggleToolShell(SettingsDialog.SETTINGS_DIALOG_TOOL_ID, 
+								SettingsDialog.getToolShellFactory(buttonBar, machine, swtWindow));
+					}
+			});
+			
 		
 	}
 	

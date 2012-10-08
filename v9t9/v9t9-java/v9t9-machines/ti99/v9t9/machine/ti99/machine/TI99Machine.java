@@ -2,6 +2,7 @@ package v9t9.machine.ti99.machine;
 
 
 import ejs.base.settings.ISettingSection;
+import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDsrManager;
 import v9t9.common.machine.IMachineModel;
@@ -22,6 +23,8 @@ public class TI99Machine extends MachineBase {
 	
 	public TI99Machine(ISettingsHandler settings, IMachineModel machineModel) {
 		super(settings, machineModel);
+		
+		getSettings().get(IKeyboardHandler.settingPasteKeyDelay).setInt(3);
 	}
 
 	@Override

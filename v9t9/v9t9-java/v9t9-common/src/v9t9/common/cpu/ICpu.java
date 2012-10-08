@@ -11,21 +11,21 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.SettingSchema;
 
 public interface ICpu extends IPersistable {
-	static public final SettingSchema settingDumpInstructions = new SettingSchema(
+	SettingSchema settingDumpInstructions = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"DumpInstructions", new Boolean(false));
-	static public final SettingSchema settingDumpFullInstructions = new SettingSchema(
+	SettingSchema settingDumpFullInstructions = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"DumpFullInstructions", new Boolean(false));
 
-	static public final SettingSchema settingRealTime = new SettingSchema(
+	SettingSchema settingRealTime = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"RealTime", new Boolean(true));
-	static public final SettingSchema settingCyclesPerSecond = new SettingSchema(
+	SettingSchema settingCyclesPerSecond = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"CyclesPerSecond", new Integer(0));
 
-	static public final SettingSchema settingDebugging = new SettingSchema(
+	SettingSchema settingDebugging = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"Debugging", Boolean.FALSE);
 

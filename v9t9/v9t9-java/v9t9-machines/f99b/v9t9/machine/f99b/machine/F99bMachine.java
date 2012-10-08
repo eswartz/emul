@@ -2,6 +2,7 @@ package v9t9.machine.f99b.machine;
 
 
 import ejs.base.settings.ISettingSection;
+import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.machine.IMachineModel;
@@ -16,7 +17,8 @@ public class F99bMachine extends MachineBase {
 
 	public F99bMachine(ISettingsHandler settings, IMachineModel machineModel) {
 		super(settings, machineModel);
-		getKeyboardHandler().setPasteKeyDelay(6);
+
+		getSettings().get(IKeyboardHandler.settingPasteKeyDelay).setInt(2);
 	}
 
 	@Override
