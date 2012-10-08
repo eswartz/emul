@@ -24,6 +24,8 @@ import org.eclipse.jface.viewers.TableViewerFocusCellManager;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.widgets.Composite;
@@ -38,12 +40,13 @@ import v9t9.common.settings.SettingSchema;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageBar;
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * @author ejs
  *
  */
-public class SettingsDialog extends Composite {
+public class SettingsDialog extends Composite implements IPropertyListener {
 	public static final String SETTINGS_DIALOG_TOOL_ID = "settings.dialog";
 	private TableViewer viewer;
 	private Table table;
@@ -155,19 +158,43 @@ public class SettingsDialog extends Composite {
 
 		viewer.setComparator(new ViewerComparator());
 		
-		List<IProperty> props = new ArrayList<IProperty>();
+		final List<IProperty> props = new ArrayList<IProperty>();
 		for (Map.Entry<IProperty, SettingSchema> ent : settings.getAllSettings().entrySet()) {
 			if (ent.getValue() == null)
 				continue;
 			IProperty prop = settings.get(ent.getValue());
 			if (prop != null) {
 				props.add(prop);
+				prop.addListener(this);
 			}
 		}
+		
 		viewer.setInput(props);
+		
+		addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				for (IProperty prop : props)
+					prop.removeListener(SettingsDialog.this);
+			}
+		});
 		//viewer.setInput(settings.getAllSettings().keySet());
 	}
 
+	/* (non-Javadoc)
+	 * @see ejs.base.properties.IPropertyListener#propertyChanged(ejs.base.properties.IProperty)
+	 */
+	@Override
+	public void propertyChanged(final IProperty property) {
+		getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				if (!viewer.getControl().isDisposed()) {
+					viewer.refresh(property);
+				}
+			}
+		});
+	}
 	/**
 	 * @param buttonBar
 	 * @return
@@ -181,7 +208,7 @@ public class SettingsDialog extends Composite {
 				behavior.boundsPref = "SettingsDialogBounds";
 				behavior.centering = Centering.OUTSIDE;
 				behavior.centerOverControl = buttonBar.getShell();
-				behavior.dismissOnClickOutside = true;
+				behavior.dismissOnClickOutside = false;
 			}
 			public Control createContents(Shell shell) {
 				SettingsDialog dialog = new SettingsDialog(shell, window, machine);
