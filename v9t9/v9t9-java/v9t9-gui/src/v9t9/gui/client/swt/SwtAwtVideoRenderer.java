@@ -62,6 +62,15 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	}
 	
 	/* (non-Javadoc)
+	 * @see v9t9.gui.client.awt.AwtVideoRenderer#dispose()
+	 */
+	@Override
+	public void dispose() {
+		frame.dispose();
+		super.dispose();
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.ISwtVideoRenderer#createControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public Control createControl(Composite parent, int flags) {

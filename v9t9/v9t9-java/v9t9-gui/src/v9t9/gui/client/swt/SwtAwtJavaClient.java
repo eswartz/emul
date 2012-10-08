@@ -6,8 +6,6 @@
  */
 package v9t9.gui.client.swt;
 
-import java.awt.Window;
-
 import v9t9.common.client.IClient;
 import v9t9.common.machine.IMachine;
 import v9t9.gui.client.awt.AwtKeyboardHandler;
@@ -35,17 +33,6 @@ public class SwtAwtJavaClient extends BaseSwtJavaClient implements IClient {
 	
 		keyboardHandler = new AwtKeyboardHandler(
     		machine.getKeyboardState(), machine);
-	}
-    
-	/* (non-Javadoc)
-	 * @see v9t9.gui.client.swt.BaseSwtJavaClient#close()
-	 */
-	@Override
-	public void close() {
-		for (Window window : Window.getWindows()) {
-			window.dispose();
-		}
-		super.close();
 	}
 }
 
