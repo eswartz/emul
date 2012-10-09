@@ -83,6 +83,9 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 		machine_.getKeyboardState().registerMapping(KeyboardConstants.KEY_BACKSPACE,
 				new int[] { KeyboardConstants.KEY_CONTROL, 'H' });
 		
+//		machine_.setKeyboardMapping(new Enhanched48KForthKeyboardMapping());
+
+		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.setCru(new InternalCru9901(machine));

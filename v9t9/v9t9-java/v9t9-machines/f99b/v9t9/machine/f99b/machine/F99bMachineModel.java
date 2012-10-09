@@ -95,9 +95,10 @@ public class F99bMachineModel implements IMachineModel {
 	}
 	
 	public void defineDevices(final IMachine machine_) {
-		//Settings.get(machine_, IKeyboardState.settingBackspaceIsCtrlH).setBoolean(true);
 		machine_.getKeyboardState().registerMapping(KeyboardConstants.KEY_BACKSPACE,
 				new int[] { KeyboardConstants.KEY_CONTROL, 'H' });
+		
+//		machine_.setKeyboardMapping(new F99bKeyboardMapping());
 		
 		memoryDiskDsr = new MemoryDiskImageDsr(machine_, InternalCruF99.DISK_BASE);
 

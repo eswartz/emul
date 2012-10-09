@@ -3,6 +3,8 @@
  */
 package v9t9.common.keyboard;
 
+import java.util.Collection;
+
 /**
  * Reports changes in high-level keyboard changes
  * @author ejs
@@ -10,23 +12,11 @@ package v9t9.common.keyboard;
  */
 public interface IKeyboardListener {
 
-	/** Shift state changed 
-	 * @param mask logical OR of states representing current state
-	 * @see KeyboardConstants#MASK_...
-	 */
-	void shiftChangeEvent(byte mask);
-	
-	/** A non-human-readable key (neither ASCII-representable
-	 * nor a shift key) was pressed or released.
-	 * The character passed is the unshifted, unmodified
-	 * key.  Combined with shift changes, represents the full state
-	 * used by the emulated machine to interpret
-	 * the keypress.
+	/** A key was pressed or released.
 	 * @param key the keyboard character (see KeyboardConstants#KEY_...)
-	 * @param ch the keyboard character; SPACE is ' ', ENTER is '\r'
 	 * @param pressed true for press, false for release     
 	 */
-	void keyEvent(int key, char ch, boolean pressed);
+	void keyEvent(Collection<Integer> keys, boolean pressed);
 	
 	/**
 	 * Joystick state changed.

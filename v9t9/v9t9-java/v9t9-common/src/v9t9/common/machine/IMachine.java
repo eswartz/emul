@@ -15,6 +15,7 @@ import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardMapping;
+import v9t9.common.keyboard.IKeyboardModeListener;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.modules.IModuleManager;
 
@@ -72,6 +73,13 @@ public interface IMachine extends IBaseMachine {
 
 	IKeyboardMapping getKeyboardMapping();
 	void setKeyboardMapping(IKeyboardMapping mapping);
+	
+	/** Get the identifier of the current keyboard mode 
+	 * @see IKeyboardMapping#getMode(String) */
+	String getKeyboardMode();
+	
+	void addKeyboardModeListener(IKeyboardModeListener listener);
+	void removeKeyboardModeListener(IKeyboardModeListener listener);
 
 	IKeyboardHandler getKeyboardHandler();
 	void setKeyboardHandler(IKeyboardHandler keyboardHandler);

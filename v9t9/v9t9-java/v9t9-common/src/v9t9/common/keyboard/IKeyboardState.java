@@ -108,4 +108,10 @@ public interface IKeyboardState {
 	 * @param keys currently set keys, modified to remove matches
 	 *  */
 	void setKeysFrom(Set<Integer> keys);
+
+	/**
+	 * @param keycode
+	 * @param selection
+	 */
+	void stickyApplyKey(int keycode, boolean onoff);
 }

@@ -10,6 +10,7 @@ import static v9t9.common.keyboard.KeyboardConstants.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -53,6 +54,7 @@ public class KeyboardState implements IKeyboardState {
 	private byte[] lastcrukeyboardmap = new byte[8];
 	private IMachine machine;
 
+	private Set<Integer> pressedKeyCodes = new HashSet<Integer>();
 	
 	//protected Timer pasteTimer;
 	private boolean prevWasBlank;
@@ -131,7 +133,11 @@ public class KeyboardState implements IKeyboardState {
      * @see v9t9.common.keyboard.IKeyboardState#clearKeyboard()
      */
     @Override
-    public void incrClearKeyboard() {
+    public synchronized void incrClearKeyboard() {
+    	fireKeyboardListeners(false);
+    	
+    	pressedKeyCodes.clear();
+    	
     	Arrays.fill(crukeyboardmap, 0, 6, (byte)0);
     	realshift = 0;
 		if (DEBUG) System.out.println("===========");
@@ -146,6 +152,9 @@ public class KeyboardState implements IKeyboardState {
         Arrays.fill(crukeyboardmap, 0, 6, (byte)0);
         Arrays.fill(lastcrukeyboardmap, 0, 6, (byte)0);
         realshift = 0;
+        pressedKeyCodes.clear();
+        stickyKeys.clear();
+        
         //lastLocks = 0;	// keep these
     }
     
@@ -172,16 +181,41 @@ public class KeyboardState implements IKeyboardState {
 	 */
 	@Override
 	public synchronized void applyIncrKeyState() {
+		if (!stickyKeys.isEmpty()) {
+			setKeysFrom(new HashSet<Integer>(stickyKeys));
+		}
+		
 		System.arraycopy(crukeyboardmap, 0, lastcrukeyboardmap, 0, 8);
 		boolean noKey = !anyKeyPressed();
 		if (!noKey || !prevWasBlank) {
 			if (DEBUG) { for (int i=0;i<8;i++) System.out.print(HexUtils.toHex2(crukeyboardmap[i])+" "); System.out.println(); }
 			prevWasBlank = noKey;
 		}
+		
+		fireKeyboardListeners(true);
+
 		//lastLocks = locks;
 	}
 
+	/**
+	 * 
+	 */
+	private void fireKeyboardListeners(final boolean onoff) {
+		if (!listeners.isEmpty()) {
+			listeners.fire(new IFire<IKeyboardListener>() {
+
+				@Override
+				public void fire(IKeyboardListener listener) {
+					listener.keyEvent(pressedKeyCodes, onoff); 
+				}
+			});
+		}
+		
+	}
+
 	final Map<Integer, int[]> vkeyToKeyMappings = new HashMap<Integer, int[]>();
+
+	private Set<Integer> stickyKeys = new HashSet<Integer>();
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.keyboard.IKeyboardState#registerMapping(int, int[])
@@ -298,7 +332,7 @@ public class KeyboardState implements IKeyboardState {
 		}
 		
 		for (int k : keys.toArray(new Integer[keys.size()])) {
-			if (k >= 0 && k < 128 && latinto9901[k] != -1) {
+			if (k >= 0 && k < 128) {
 				keys.remove(k);
 				incrSetKey(true, k);
 			}
@@ -343,11 +377,12 @@ public class KeyboardState implements IKeyboardState {
 
 		// any left are not functional
 		for (int k : keys) {
-			System.err.println("*** could not map virtual key " + k + " to hardware");
+			if (k != KEY_UNKNOWN)
+				System.err.println("*** could not map virtual key " + k + " to hardware");
 		}
 	}
 	
-	public void incrSetKey(boolean onoff, int key) {
+	public void incrSetKey(final boolean onoff, final int key) {
 		byte b;
 		byte r;
 		byte c;
@@ -380,6 +415,11 @@ public class KeyboardState implements IKeyboardState {
 				crukeyboardmap[c] |= (0x80 >> r);
 			else
 				crukeyboardmap[c] &= ~(0x80 >> r);
+
+			if (onoff)
+				pressedKeyCodes.add(key);
+			else
+				pressedKeyCodes.remove(key);
 		} else {
 			System.err.println("*** should have faked key " + key);
 		}
@@ -398,6 +438,8 @@ public class KeyboardState implements IKeyboardState {
 			crukeyboardmap[0] |= cruShift;
 		else
 			crukeyboardmap[0] &= ~cruShift;
+		
+		fireKeyboardListeners(true);
 	}
 
 	public void changeLocks(boolean onoff, byte lock) {
@@ -405,6 +447,9 @@ public class KeyboardState implements IKeyboardState {
 			locks |= lock;
 		else
 			locks &= ~lock;
+		
+		fireKeyboardListeners(true);
+
 	}
 	
 	/* (non-Javadoc)
@@ -413,6 +458,8 @@ public class KeyboardState implements IKeyboardState {
 	@Override
 	public void toggleKeyboardLocks(byte lock) {
 		locks ^= lock;
+		
+		fireKeyboardListeners(true);
 	}
 	
  
@@ -585,5 +632,15 @@ public class KeyboardState implements IKeyboardState {
 	public synchronized void removeKeyboardListener(IKeyboardListener listener) {
 		listeners.remove(listener);
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.keyboard.IKeyboardState#stickyApplyKey(int, boolean)
+	 */
+	@Override
+	public void stickyApplyKey(int keycode, boolean onoff) {
+		if (onoff)
+			stickyKeys .add(keycode);
+		else
+			stickyKeys.remove(keycode);
+	}
 }

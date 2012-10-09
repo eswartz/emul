@@ -73,9 +73,10 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	}
 	
 	public void defineDevices(IMachine machine_) {
-//		Settings.get(machine_, IKeyboardState.settingBackspaceIsCtrlH).setBoolean(false);
 		machine_.getKeyboardState().registerMapping(KeyboardConstants.KEY_BACKSPACE,
 				new int[] { KeyboardConstants.KEY_ALT, 'S' });
+		
+		machine_.setKeyboardMapping(new StandardTI994AKeyboardMapping());
 		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;

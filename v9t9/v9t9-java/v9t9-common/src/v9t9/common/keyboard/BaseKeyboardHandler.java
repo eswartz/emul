@@ -377,6 +377,11 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			pushShifts(pressed, (byte) (shift & ~MASK_SHIFT));
 			pushKey(pressed, ch);
 			return true;
+			
+		case KEY_QUIT:
+			pushShifts(pressed, (byte) (shift | MASK_ALT));
+			pushKey(pressed, KEY_EQUALS);
+			return true;
 		}
 		
 		if (ch > 0 && keyboardState.isAsciiDirectKey(ch)) {

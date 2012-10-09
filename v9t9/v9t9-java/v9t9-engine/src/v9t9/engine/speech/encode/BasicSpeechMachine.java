@@ -23,4 +23,5 @@ public class BasicSpeechMachine extends MachineBase implements IMachine {
 		super(settings, machineModel);
 	}
 
+	
 }

@@ -94,6 +94,8 @@ public final class KeyboardConstants {
 	public static final int KEY_SYSRQ = 139;
 	public static final int KEY_PAUSE = 140;
 	public static final int KEY_BREAK = 141;
+	
+	public static final int KEY_QUIT = 142;
 
 	public static final int KEY_KP_SLASH = 143;
 	public static final int KEY_KP_ASTERISK = 144;

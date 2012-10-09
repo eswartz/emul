@@ -36,6 +36,7 @@ import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardMapping;
+import v9t9.common.keyboard.IKeyboardModeListener;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.keyboard.NullKeyboardHandler;
 import v9t9.common.machine.IMachine;
@@ -56,6 +57,8 @@ import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
 import ejs.base.settings.SettingProperty;
 import ejs.base.timer.FastTimer;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 
 /** Encapsulate all the information about a running emulated machine.
  * @author ejs
@@ -118,6 +121,7 @@ abstract public class MachineBase implements IMachine {
 	private IKeyboardHandler keyboardHandler;
 	private IKeyboardMapping keyboardMapping;
 	protected IFileMapper fileMapper;
+	private ListenerList<IKeyboardModeListener> keyboardModeListeners;
 
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -149,6 +153,7 @@ abstract public class MachineBase implements IMachine {
     	timer = new Timer(true);
     	fastTimer = new FastTimer("Machine");
 
+    	keyboardModeListeners = new ListenerList<IKeyboardModeListener>();
     	init(machineModel);
 
     	fileMapper = new DiskDirectoryMapper();
@@ -435,7 +440,7 @@ abstract public class MachineBase implements IMachine {
 	 */
 	@Override
 	public void reset() {
-
+		keyboardState.resetKeyboard();
 		executor.getCompilerStrategy().reset();
 		
 		IMemoryDomain domain = getMemory().getDomain(IMemoryDomain.NAME_CPU);
@@ -872,6 +877,60 @@ abstract public class MachineBase implements IMachine {
 		return keyboardHandler;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#addKeyboardModeListener(v9t9.common.keyboard.IKeyboardModeListener)
+	 */
+	@Override
+	public synchronized void addKeyboardModeListener(IKeyboardModeListener listener) {
+		keyboardModeListeners.add(listener);
+		if (!keyboardModeListeners.isEmpty()) {
+			attachKeyboardModeListener();
+		}
+		
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#removeKeyboardModeListener(v9t9.common.keyboard.IKeyboardModeListener)
+	 */
+	@Override
+	public synchronized void removeKeyboardModeListener(IKeyboardModeListener listener) {
+		keyboardModeListeners.remove(listener);
+		if (keyboardModeListeners.isEmpty()) {
+			detachKeyboardModeListener();
+		}
+	}
+	
+	/**
+	 * Start listening for keyboard mode changes
+	 * @see #fireKeyboardModeChanged(String)
+	 */
+	protected void attachKeyboardModeListener() {
+		
+	}
+	/**
+	 * Stop listening for keyboard mode changes
+	 */
+	protected void detachKeyboardModeListener() {
+		
+	}
+
+	protected void fireKeyboardModeChanged(final String modeId) {
+		keyboardModeListeners.fire(new IFire<IKeyboardModeListener>() {
+
+			@Override
+			public void fire(IKeyboardModeListener listener) {
+				listener.keyboardModeChanged(modeId);
+			}
+		});
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getKeyboardMode()
+	 */
+	@Override
+	public String getKeyboardMode() {
+		return null;
+	}
 	/**
 	 * @return the fileMapper
 	 */

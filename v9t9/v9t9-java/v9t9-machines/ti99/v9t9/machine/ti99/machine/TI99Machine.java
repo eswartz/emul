@@ -18,6 +18,12 @@ import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 
 public class TI99Machine extends MachineBase {
 
+	public static final String KEYBOARD_MODE_TI994A = "ti994a";
+	public static final String KEYBOARD_MODE_TI994 = "ti994";
+	public static final String KEYBOARD_MODE_LEFT = "left";
+	public static final String KEYBOARD_MODE_RIGHT = "right";
+	public static final String KEYBOARD_MODE_PASCAL = "pascal";
+	
 	private CruManager cruManager;
 	protected DsrManager dsrManager;
 	
