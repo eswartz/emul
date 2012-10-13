@@ -71,7 +71,6 @@ public interface IKeyboardState {
 
 	byte getShiftMask();
 
-	void setLockMask(byte locks);
 	byte getLockMask();
 	boolean isLock(byte locks);
 
@@ -79,24 +78,11 @@ public interface IKeyboardState {
 	void removeKeyboardListener(IKeyboardListener listener);
 
 	/**
-	 * Modify the shift state of the given bits in shift
-	 * @param onoff true to enable, false to disable
-	 * @param shift mask of {@link KeyboardConstants#MASK_xxx} bits to set or reset
-	 */
-	void changeShifts(boolean onoff, byte shift);
-
-
-	/**
 	 * Modify the lock state of the given bits in lock
 	 * @param onoff true to enable, false to disable
 	 * @param lock mask of {@link KeyboardConstants#MASK_xxx} bits to set or reset
 	 */
 	void changeLocks(boolean onoff, byte lock);
-	/**
-	 * Toggle the lock state of the given bits in lock
-	 * @param lock mask of {@link KeyboardConstants#MASK_xxx} bits to set or reset
-	 */
-	void toggleKeyboardLocks(byte lock);
 
 	/**
 	 * @param vkey

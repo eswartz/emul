@@ -10,37 +10,27 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackListener;
-import org.eclipse.swt.events.PaintEvent;
-import org.eclipse.swt.events.PaintListener;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
 
+import v9t9.gui.client.swt.IFocusRestorer;
 import ejs.base.timer.FastTimer;
 import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
 
-import v9t9.gui.client.swt.IFocusRestorer;
 
+public class ImageBar extends ImageCanvas implements IImageBar {
 
-public class ImageBar extends Canvas implements IImageBar {
-	private static final Point ZERO_POINT = new Point(0, 0);
 	private static final int MIN_ICON_SIZE = 24;
 	private static final int MAX_ICON_SIZE = 64;
 	private static final int RETRACT_VISIBLE = 0;
 
 	private ButtonBarLayout bblayout;
-	private final boolean isHorizontal;
-	private Composite buttonComposite;
-	private final IFocusRestorer focusRestorer;
-	private final boolean smoothResize;
-	private Gradient gradient;
-	private Gradient farGradient;
+	
 	private int minIconSize = MIN_ICON_SIZE;
 	private int maxIconSize = MAX_ICON_SIZE;
 
@@ -55,7 +45,6 @@ public class ImageBar extends Canvas implements IImageBar {
 	private boolean offerRetract;
 	private Runnable retractCursorTask;
 	
-	private int edging;
 	
 	private static FastTimer retractTimer = new FastTimer("Retractor");
 	
@@ -66,8 +55,7 @@ public class ImageBar extends Canvas implements IImageBar {
 
 	private int retractTarget;
 	private int retractStep;
-	private int paintOffsX;
-	private int paintOffsY;
+	
 	private ListenerList<IPaintOffsetListener> paintOffsListenerList = new ListenerList<IImageBar.IPaintOffsetListener>();
 	
 	private ImageBar pairedBar;
@@ -82,42 +70,15 @@ public class ImageBar extends Canvas implements IImageBar {
 	 */
 	public ImageBar(Composite parent, int style,
 			Gradient gradient, IFocusRestorer focusRestorer, boolean smoothResize) {
-		// the bar itself is the full width of the parent
-		super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS 
-				| SWT.NO_BACKGROUND | SWT.DOUBLE_BUFFERED);
-		this.focusRestorer = focusRestorer;
-		this.smoothResize = smoothResize;
-		this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
-		this.edging = (style & SWT.LEFT + SWT.RIGHT + SWT.TOP + SWT.BOTTOM);
 		
-		this.gradient = gradient;
-		this.farGradient = new Gradient(isHorizontal, new int[] { 0, 0 }, new float[] { 1.0f });
-
-		GridDataFactory.swtDefaults()
-			.align(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL)
-			.grab(isHorizontal, !isHorizontal).indent(0, 0)
-			.applyTo(this);
-
+		super(parent, style, gradient, focusRestorer, smoothResize);
+		
+		
 		// the inner composite contains the buttons, tightly packed
-		buttonComposite = this;
 		bblayout = new ButtonBarLayout();
 		buttonComposite.setLayout(bblayout);
 		
-		addPaintListener(new PaintListener() {
-
-			public void paintControl(PaintEvent e) {
-				paintButtonBar(e.gc, ZERO_POINT, getSize());
-			}
-			
-		});
 		
-//		buttonComposite.addPaintListener(new PaintListener() {
-//
-//			public void paintControl(PaintEvent e) {
-//				//paintButtonBar(e.gc, e.widget, new Point(0, 0), getSize());
-//			}
-//			
-//		});
 	}
 	
 	public void setPairedBar(ImageBar pairedBar) {
@@ -143,10 +104,6 @@ public class ImageBar extends Canvas implements IImageBar {
 		this.maxIconSize = maxIconSize;
 	}
 
-	public IFocusRestorer getFocusRestorer() {
-		return focusRestorer;
-	}
-	
 	class ButtonBarLayout extends Layout {
 
 		private Point prevSize;
@@ -302,80 +259,7 @@ public class ImageBar extends Canvas implements IImageBar {
 		
 	}
 
-	protected void paintButtonBar(GC gc, Point offset, Point size) {
-		int y = size.y;
-		int x = size.x;
-		Point mySize = getSize();
-		if (isHorizontal) {
-			y = mySize.y;
-		} else {
-			x = mySize.x;
-		}
-		
-		gradient.draw(gc, offset.x + paintOffsX, offset.y + paintOffsY, 
-				x, y); 
-		
-		if (isHorizontal) {
-			if (paintOffsY != 0) {
-				if ((edging & SWT.TOP) != 0) {
-					farGradient.draw(gc, offset.x, 
-							offset.y + y + paintOffsY,
-							x,
-							-paintOffsY);
-				} else {
-					farGradient.draw(gc, offset.x, 
-							offset.y,
-							x,
-							paintOffsY);
-					
-				}
-				
-			}
-		} else {
-			if (paintOffsX != 0) {
-				if ((edging & SWT.LEFT) != 0) {
-					farGradient.draw(gc, offset.x + x + paintOffsX, 
-							offset.y,
-							Math.max(0, -paintOffsX),
-							y);
-				} else {
-					farGradient.draw(gc, offset.x, 
-							offset.y,
-							Math.max(0, paintOffsX),
-							y);
-					
-				}				
-			}
-		}
-	}
-	
-	public void drawBackground(GC gc) {
-		paintButtonBar(gc, ZERO_POINT, getSize());
-	}
 
-	/**
-	 * The composite to which to add buttons.
-	 * @return
-	 */
-	public Composite getComposite() {
-		return buttonComposite;
-	}
-
-	public boolean isHorizontal() {
-		return isHorizontal;
-	}
-
-	public void redrawAll() {
-		redrawAll(this);
-	}
-
-	private void redrawAll(Control c) {
-		c.redraw();
-		if (c instanceof Composite)
-			for (Control control : ((Composite) c).getChildren())
-				redrawAll(control);
-	}
-	
 	public synchronized void setRetractable(boolean retractable) {
 		if (canRetract) {
 			removeMouseListener(retractListener);

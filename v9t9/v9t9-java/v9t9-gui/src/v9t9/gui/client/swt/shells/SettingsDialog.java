@@ -38,7 +38,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.IReadOnlyProperty;
 import v9t9.common.settings.SettingSchema;
 import v9t9.gui.client.swt.SwtWindow;
-import v9t9.gui.client.swt.bars.ImageBar;
+import v9t9.gui.client.swt.bars.ImageCanvas;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 
@@ -199,7 +199,7 @@ public class SettingsDialog extends Composite implements IPropertyListener {
 	 * @param buttonBar
 	 * @return
 	 */
-	public static IToolShellFactory getToolShellFactory(final ImageBar buttonBar, 
+	public static IToolShellFactory getToolShellFactory(final ImageCanvas buttonBar, 
 			final IMachine machine,
 			final SwtWindow window) {
 		return new IToolShellFactory() {

@@ -31,7 +31,7 @@ import org.ejs.gui.properties.PropertySourceEditor;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtDragDropHandler;
 import v9t9.gui.client.swt.SwtWindow;
-import v9t9.gui.client.swt.bars.ImageBar;
+import v9t9.gui.client.swt.bars.ImageCanvas;
 import v9t9.gui.client.swt.imageimport.IImageImportHandler;
 import v9t9.gui.client.swt.imageimport.ImageClipDecorator;
 import v9t9.gui.client.swt.imageimport.ImageLabel;
@@ -222,7 +222,7 @@ public class ImageImportOptionsDialog extends Composite {
 	 * @param buttonBar
 	 * @return
 	 */
-	public static IToolShellFactory getToolShellFactory(final ImageBar buttonBar, final SwtImageImportSupport imageSupport,
+	public static IToolShellFactory getToolShellFactory(final ImageCanvas buttonBar, final SwtImageImportSupport imageSupport,
 			final SwtWindow window) {
 		return new IToolShellFactory() {
 			Behavior behavior = new Behavior();

@@ -47,10 +47,10 @@ public class ImageBarChild extends Canvas {
 		
 	}
 
-	protected IImageBar parentDrawer;
+	protected IImageCanvas parentDrawer;
 	protected EventForwarder forwarder;
 	
-	public ImageBarChild(IImageBar parentDrawer, int style) {
+	public ImageBarChild(IImageCanvas parentDrawer, int style) {
 		super(parentDrawer.getComposite(), style | SWT.NO_BACKGROUND | SWT.DOUBLE_BUFFERED);
 		this.parentDrawer = parentDrawer;
 
@@ -76,7 +76,8 @@ public class ImageBarChild extends Canvas {
 	}
 
 	protected boolean isIconMouseable() {
-		return parentDrawer == null || !parentDrawer.isRetracted();
+		return parentDrawer == null || (false == parentDrawer instanceof IImageBar 
+				|| !((IImageBar) parentDrawer).isRetracted());
 	}
 
 	protected void doPaint(PaintEvent e) {

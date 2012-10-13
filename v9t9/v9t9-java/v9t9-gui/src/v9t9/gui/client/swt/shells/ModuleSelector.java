@@ -103,7 +103,7 @@ import v9t9.common.modules.ModuleDatabase;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
-import v9t9.gui.client.swt.bars.ImageBar;
+import v9t9.gui.client.swt.bars.ImageCanvas;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageAdjuster;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
@@ -1157,7 +1157,7 @@ public class ModuleSelector extends Composite {
 	 * @return
 	 */
 	public static IToolShellFactory getToolShellFactory(final IMachine machine,
-			final ImageBar buttonBar,
+			final ImageCanvas buttonBar,
 			final SwtWindow window) {
 		 return new IToolShellFactory() {
 			Behavior behavior = new Behavior();

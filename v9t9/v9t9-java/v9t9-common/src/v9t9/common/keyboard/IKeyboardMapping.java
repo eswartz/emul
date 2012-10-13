@@ -3,11 +3,7 @@
  */
 package v9t9.common.keyboard;
 
-import java.util.Map;
 
-import v9t9.common.machine.IMachine;
-
-import ejs.base.utils.Pair;
 
 /**
  * Provides a dynamic interpretation of the keyboard mapping
@@ -18,8 +14,8 @@ import ejs.base.utils.Pair;
 public interface IKeyboardMapping {
 	/**
 	 * Representation of a key on a physical keyboard,
-	 * mapping an id to a rectangle.  Units are in 
-	 * key halves -- a normal key is 2x2, while e.g.
+	 * mapping an id to a rectangle.  For example, if units are in 
+	 * key halves, then a normal key is 2x2, while e.g.
 	 * Tab is 3x2, Shift and Enter are 4x2, and Space
 	 * is 12x2.  
 	 * @author ejs
@@ -48,7 +44,10 @@ public interface IKeyboardMapping {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((keyId == null) ? 0 : keyId.hashCode());
+			result = prime * result + x;
+			result = prime * result + y;
+			result = prime * result + width;
+			result = prime * result + height;
 			return result;
 		}
 		@Override
@@ -60,10 +59,13 @@ public interface IKeyboardMapping {
 			if (getClass() != obj.getClass())
 				return false;
 			PhysKey other = (PhysKey) obj;
-			if (keyId == null) {
-				if (other.keyId != null)
-					return false;
-			} else if (!keyId.equals(other.keyId))
+			if (x != other.x)
+				return false;
+			if (y != other.y)
+				return false;
+			if (width != other.width)
+				return false;
+			if (height != other.height)
 				return false;
 			return true;
 		}

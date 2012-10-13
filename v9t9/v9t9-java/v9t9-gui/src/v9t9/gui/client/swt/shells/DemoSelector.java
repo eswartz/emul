@@ -82,7 +82,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.SwtWindow;
-import v9t9.gui.client.swt.bars.ImageBar;
+import v9t9.gui.client.swt.bars.ImageCanvas;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 
@@ -1033,7 +1033,7 @@ public class DemoSelector extends Composite {
 	 * @return
 	 */
 	public static IToolShellFactory getToolShellFactory(final IMachine machine,
-			final ImageBar buttonBar,
+			final ImageCanvas buttonBar,
 			final SwtWindow window) {
 		 return new IToolShellFactory() {
 			Behavior behavior = new Behavior();

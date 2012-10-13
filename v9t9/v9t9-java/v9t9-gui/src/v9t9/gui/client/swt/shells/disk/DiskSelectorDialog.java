@@ -24,7 +24,7 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.IconSettingProperty;
-import v9t9.gui.client.swt.bars.ImageBar;
+import v9t9.gui.client.swt.bars.ImageCanvas;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
 import ejs.base.properties.IProperty;
 
@@ -37,7 +37,7 @@ public class DiskSelectorDialog extends Composite {
 
 	public static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
 
-	public static IToolShellFactory getToolShellFactory(final IMachine machine, final ImageBar buttonBar) {
+	public static IToolShellFactory getToolShellFactory(final IMachine machine, final ImageCanvas buttonBar) {
 		return new IToolShellFactory() {
 			Behavior behavior = new Behavior();
 			{

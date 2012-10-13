@@ -174,7 +174,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					swtWindow.toggleToolShell(KeyboardDialog.KEYBOARD_TOOL_ID, 
-							KeyboardDialog.getToolShellFactory(machine, buttonBar));
+							KeyboardDialog.getToolShellFactory(machine, buttonBar, imageProvider));
 				}
 			}
 		);		

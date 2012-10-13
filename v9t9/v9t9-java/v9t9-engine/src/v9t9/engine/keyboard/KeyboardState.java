@@ -55,6 +55,7 @@ public class KeyboardState implements IKeyboardState {
 	private IMachine machine;
 
 	private Set<Integer> pressedKeyCodes = new HashSet<Integer>();
+	private Set<Integer> pressedKeyIds = new HashSet<Integer>();
 	
 	//protected Timer pasteTimer;
 	private boolean prevWasBlank;
@@ -137,6 +138,7 @@ public class KeyboardState implements IKeyboardState {
     	fireKeyboardListeners(false);
     	
     	pressedKeyCodes.clear();
+    	pressedKeyIds.clear();
     	
     	Arrays.fill(crukeyboardmap, 0, 6, (byte)0);
     	realshift = 0;
@@ -153,6 +155,7 @@ public class KeyboardState implements IKeyboardState {
         Arrays.fill(lastcrukeyboardmap, 0, 6, (byte)0);
         realshift = 0;
         pressedKeyCodes.clear();
+        pressedKeyIds.clear();
         stickyKeys.clear();
         
         //lastLocks = 0;	// keep these
@@ -201,12 +204,20 @@ public class KeyboardState implements IKeyboardState {
 	 * 
 	 */
 	private void fireKeyboardListeners(final boolean onoff) {
-		if (!listeners.isEmpty()) {
+		if (!listeners.isEmpty() && !pressedKeyCodes.isEmpty()) {
 			listeners.fire(new IFire<IKeyboardListener>() {
 
 				@Override
 				public void fire(IKeyboardListener listener) {
 					listener.keyEvent(pressedKeyCodes, onoff); 
+				}
+			});
+			
+			listeners.fire(new IFire<IKeyboardListener>() {
+
+				@Override
+				public void fire(IKeyboardListener listener) {
+					listener.physKeyEvent(pressedKeyIds, onoff); 
 				}
 			});
 		}
@@ -416,50 +427,37 @@ public class KeyboardState implements IKeyboardState {
 			else
 				crukeyboardmap[c] &= ~(0x80 >> r);
 
-			if (onoff)
+			if (onoff) {
 				pressedKeyCodes.add(key);
-			else
+				pressedKeyIds.add((r<<4)|c);
+			} else {
 				pressedKeyCodes.remove(key);
+				pressedKeyIds.remove((r<<4)|c);
+			}
 		} else {
 			System.err.println("*** should have faked key " + key);
 		}
 	}
 	
-	public void changeShifts(boolean onoff, byte shift) {
-		byte cruShift = 0;
-		if ((shift & KeyboardConstants.MASK_SHIFT) != 0)
-			cruShift |= 0x80 >> SHIFT_R; 
-		if ((shift & KeyboardConstants.MASK_CONTROL) != 0)
-			cruShift |= 0x80 >> CTRL_R; 
-		if ((shift & KeyboardConstants.MASK_ALT) != 0)
-			cruShift |= 0x80 >> FCTN_R; 
-			
-		if (onoff)
-			crukeyboardmap[0] |= cruShift;
-		else
-			crukeyboardmap[0] &= ~cruShift;
-		
-		fireKeyboardListeners(true);
-	}
-
 	public void changeLocks(boolean onoff, byte lock) {
-		if (onoff)
+		if (onoff) {
 			locks |= lock;
-		else
+			if ((locks & MASK_CAPS_LOCK) != 0) {
+				pressedKeyCodes.add(KEY_CAPS_LOCK);
+				pressedKeyIds.add(0x100);
+			}
+				
+		} else {
 			locks &= ~lock;
+			
+			if ((locks & MASK_CAPS_LOCK) == 0) {
+				pressedKeyCodes.remove(KEY_CAPS_LOCK);
+				pressedKeyIds.remove(0x100);
+			}
+		}
 		
 		fireKeyboardListeners(true);
 
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.keyboard.IKeyboardState#toggleKeyboardLocks(byte)
-	 */
-	@Override
-	public void toggleKeyboardLocks(byte lock) {
-		locks ^= lock;
-		
-		fireKeyboardListeners(true);
 	}
 	
  
@@ -599,14 +597,6 @@ public class KeyboardState implements IKeyboardState {
 	@Override
 	public byte getLockMask() {
 		return locks;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.keyboard.IKeyboardState#setLockMask(byte)
-	 */
-	@Override
-	public void setLockMask(byte locks) {
-		this.locks = locks; 
 	}
 	
 	/* (non-Javadoc)

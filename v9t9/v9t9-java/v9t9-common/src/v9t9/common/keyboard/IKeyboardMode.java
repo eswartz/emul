@@ -6,8 +6,6 @@ package v9t9.common.keyboard;
 import java.util.Map;
 
 import v9t9.common.keyboard.IKeyboardMapping.PhysKey;
-import v9t9.common.machine.IMachine;
-
 import ejs.base.utils.Pair;
 
 /**

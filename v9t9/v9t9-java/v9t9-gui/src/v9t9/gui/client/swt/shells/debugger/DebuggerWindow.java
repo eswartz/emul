@@ -20,7 +20,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
-import v9t9.gui.client.swt.bars.ImageBar;
+import v9t9.gui.client.swt.bars.ImageCanvas;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
 import v9t9.gui.common.IMemoryDecoder;
 import v9t9.gui.common.IMemoryDecoderProvider;
@@ -177,7 +177,7 @@ public class DebuggerWindow extends Composite implements IMemoryWriteListener {
 	 * @return
 	 */
 	public static IToolShellFactory getToolShellFactory(final IMachine machine,
-			final ImageBar buttonBar, final Timer timer) {
+			final ImageCanvas buttonBar, final Timer timer) {
 		return new IToolShellFactory() {
 			Behavior behavior = new Behavior();
 			{

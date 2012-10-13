@@ -5,6 +5,8 @@ package v9t9.common.keyboard;
 
 import java.util.Collection;
 
+import v9t9.common.keyboard.IKeyboardMapping.PhysKey;
+
 /**
  * Reports changes in high-level keyboard changes
  * @author ejs
@@ -18,6 +20,13 @@ public interface IKeyboardListener {
 	 */
 	void keyEvent(Collection<Integer> keys, boolean pressed);
 	
+
+	/** A physical key was pressed or released.
+	 * @param key the physical key identifier (@see {@link PhysKey#getIdentifier()})
+	 * @param pressed true for press, false for release     
+	 */
+	void physKeyEvent(Collection<Integer> keys, boolean pressed);
+
 	/**
 	 * Joystick state changed.
 	 * @param num

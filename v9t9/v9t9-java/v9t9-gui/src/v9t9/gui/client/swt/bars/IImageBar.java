@@ -3,27 +3,17 @@
  */
 package v9t9.gui.client.swt.bars;
 
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.widgets.Composite;
 
-import v9t9.gui.client.swt.IFocusRestorer;
 
-public interface IImageBar {
+public interface IImageBar extends IImageCanvas {
 	
 
 	public interface IPaintOffsetListener {
 		void offsetChanged(Point pt);
 	}
 	
-	
-	Composite getComposite();
-	void drawBackground(GC gc);
-	IFocusRestorer getFocusRestorer();
-	boolean isHorizontal();
-	void redrawAll();
-	Point getPaintOffset();
-	boolean isRetracted();
+
 	
 	void addPaintOffsetListener(IPaintOffsetListener listener);
 }

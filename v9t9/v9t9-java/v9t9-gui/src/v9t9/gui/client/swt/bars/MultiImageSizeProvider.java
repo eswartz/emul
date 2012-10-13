@@ -50,7 +50,8 @@ public class MultiImageSizeProvider implements ImageProvider {
 		Pair<Double, Image> iconInfo = getImage(drawRect.width, drawRect.height);
 		ratio = iconInfo.first;
 		Image icon = iconInfo.second;
-		gc.drawImage(icon, (int)(imgRect.x * ratio), (int)(imgRect.y * ratio), 
+		if (drawRect.width > 0 && imgRect.width > 0 && ratio > 0 && imgRect.x >= 0 && imgRect.y >= 0)
+			gc.drawImage(icon, (int)(imgRect.x * ratio), (int)(imgRect.y * ratio), 
 				(int)(imgRect.width * ratio), (int) (imgRect.height * ratio), 
 				drawRect.x, drawRect.y, drawRect.width, drawRect.height);
 	}

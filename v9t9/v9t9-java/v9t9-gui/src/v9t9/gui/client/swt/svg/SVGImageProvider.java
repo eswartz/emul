@@ -10,7 +10,7 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 
-import v9t9.gui.client.swt.bars.IImageBar;
+import v9t9.gui.client.swt.bars.IImageCanvas;
 import v9t9.gui.client.swt.bars.MultiImageSizeProvider;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 import ejs.base.utils.Pair;
@@ -31,7 +31,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 	private Point desiredSize;
 	private Image scaledImage;
 	private boolean svgFailed;
-	private IImageBar imageBar;
+	private IImageCanvas imageBar;
 	
 	/**
 	 * @param iconMap
@@ -41,7 +41,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 		this.svgLoader = svgIcon;
 	}
 
-	public void setImageBar(IImageBar imageBar) {
+	public void setImageBar(IImageCanvas imageBar) {
 		this.imageBar = imageBar;
 	}
 

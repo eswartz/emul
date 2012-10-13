@@ -37,7 +37,7 @@ public class ImageButton extends ImageIconCanvas {
 	private Rectangle overlayBounds;
 	protected IFocusRestorer focusRestorer;
 
-	public ImageButton(IImageBar parentBar, int style, 
+	public ImageButton(IImageCanvas parentBar, int style, 
 			ImageProvider imageProvider, int iconIndex, String tooltip) {
 		super(parentBar, style, imageProvider, iconIndex, tooltip);
 		
@@ -182,8 +182,8 @@ public class ImageButton extends ImageIconCanvas {
 		drawRect.x = offset + po.x;
 		drawRect.y = offset + po.y;
 		try {
-			
-			imageProvider.drawImage(e.gc, drawRect, bounds);
+			if (bounds.width > 0)
+				imageProvider.drawImage(e.gc, drawRect, bounds);
 			drawRect.x = po.x;
 			drawRect.y = po.y;
 			if (overlayBounds != null)
