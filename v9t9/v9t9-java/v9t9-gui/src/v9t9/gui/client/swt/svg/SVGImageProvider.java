@@ -31,7 +31,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 	private Point desiredSize;
 	private Image scaledImage;
 	private boolean svgFailed;
-	private IImageCanvas imageBar;
+	private IImageCanvas imageCanvas;
 	
 	/**
 	 * @param iconMap
@@ -41,8 +41,8 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 		this.svgLoader = svgIcon;
 	}
 
-	public void setImageBar(IImageCanvas imageBar) {
-		this.imageBar = imageBar;
+	public void setImageCanvas(IImageCanvas imageCanvas) {
+		this.imageCanvas = imageCanvas;
 	}
 
 	/* (non-Javadoc)
@@ -120,7 +120,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 				System.out.println("Loaded " + svgLoader.getURI() + " @ " + scaledSize + ": " + (end - start) + " ms");
 			svgFailed = false;
 			
-			final Composite composite = imageBar.getComposite();
+			final Composite composite = imageCanvas.getComposite();
 			
 			if (composite != null && !composite.isDisposed() && scaledImageData != null) {
 				Runnable runnable = new Runnable() {
@@ -129,7 +129,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 							scaledImage = new Image(composite.getDisplay(), scaledImageData);
 							if (DEBUG)
 								System.out.println("Got image " + scaledImage.getBounds());
-							imageBar.redrawAll();
+							imageCanvas.redrawAll();
 						}
 					}
 				};

@@ -357,13 +357,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		
 		if (buttonImageProvider instanceof SVGImageProvider) {
-			((SVGImageProvider) buttonImageProvider).setImageBar(buttonBar.getButtonBar());
+			((SVGImageProvider) buttonImageProvider).setImageCanvas(buttonBar.getButtonBar());
 		}
 		if (statusImageProvider instanceof SVGImageProvider) {
-			((SVGImageProvider) statusImageProvider).setImageBar(statusBar.getButtonBar());
+			((SVGImageProvider) statusImageProvider).setImageCanvas(statusBar.getButtonBar());
 		}
 		if (rndImageProvider instanceof SVGImageProvider) {
-			((SVGImageProvider) rndImageProvider).setImageBar(rndBar.getButtonBar());
+			((SVGImageProvider) rndImageProvider).setImageCanvas(rndBar.getButtonBar());
 		}
 
 		// restore original window geometry

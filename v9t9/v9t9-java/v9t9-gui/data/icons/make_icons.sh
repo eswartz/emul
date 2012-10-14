@@ -23,5 +23,11 @@ resize_icons "icons"
 resize_icons "dev_icons"
 
 export_png "cpu" "cpu.png" 90
+export_png "key" "key_32.png" 90
+export_png "key" "key_64.png" 180
+export_png "key" "key_128.png" 360
+export_png "key" "key_256.png" 720
+export_png "key" "key_512.png" 1440
+
 
 

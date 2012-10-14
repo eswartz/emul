@@ -64,7 +64,8 @@ public class ImageCanvas extends Canvas  implements IImageCanvas{
 		addPaintListener(new PaintListener() {
 
 			public void paintControl(PaintEvent e) {
-				paintButtonBar(e.gc, ZERO_POINT, getSize());
+				if (e.count == 0)
+					paintButtonBar(e.gc, ZERO_POINT, getSize());
 			}
 			
 		});

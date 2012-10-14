@@ -36,7 +36,10 @@ public class MultiImageSizeProvider implements ImageProvider {
 		SortedMap<Integer, Image> tailMap = iconMap.tailMap(sz);
 		Image icon;
 		if (tailMap.isEmpty())
-			icon = iconMap.lastEntry().getValue();
+			if (!iconMap.isEmpty())
+				icon = iconMap.lastEntry().getValue();
+			else
+				icon = null;
 		else
 			icon = tailMap.values().iterator().next();
 		int min = iconMap.values().iterator().next().getBounds().width;

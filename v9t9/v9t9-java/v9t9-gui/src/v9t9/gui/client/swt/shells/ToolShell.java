@@ -88,8 +88,10 @@ public class ToolShell {
 					SwtWindow.adjustRectVisibility(shell, savedBounds);
 					Display.getDefault().asyncExec(new Runnable() {
 						public void run() {
-							shell.setBounds(savedBounds);
-							shell.setLocation(savedBounds.x, savedBounds.y);
+							if (!shell.isDisposed()) {
+								shell.setBounds(savedBounds);
+								shell.setLocation(savedBounds.x, savedBounds.y);
+							}
 						}
 					});
 				}

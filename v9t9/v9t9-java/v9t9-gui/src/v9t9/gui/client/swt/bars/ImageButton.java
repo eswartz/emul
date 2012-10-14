@@ -158,6 +158,18 @@ public class ImageButton extends ImageIconCanvas {
 		}
 	}
 
+	protected void updateDrawRect(Rectangle drawRect) {
+		int offset = 0;
+		if ((getStyle() & SWT.TOGGLE) != 0) {
+			if (pressed && overlayBounds == null) {
+				offset = 2;
+			}
+		} else {
+		}
+		offset = pressed ? 2 : 0;
+		drawRect.x += offset;
+		drawRect.y += offset;
+	}
 	/**
 	 * @param e
 	 */
@@ -167,23 +179,37 @@ public class ImageButton extends ImageIconCanvas {
 		Point po = parentDrawer.getPaintOffset();
 		
 		//e.gc.setAntialias(SWT.ON);
-		int offset = 0;
+		drawRect.x = po.x;
+		drawRect.y = po.y;
+//		int offset = 0;
+//		if ((getStyle() & SWT.TOGGLE) != 0) {
+//			if (pressed && overlayBounds == null) {
+//				Color bg = e.gc.getBackground();
+//				e.gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
+//				e.gc.fillRectangle(po.x, po.y, drawRect.width, drawRect.height);
+//				e.gc.setBackground(bg);
+//				offset = 2;
+//			}
+//		} else {
+//		}
+//		offset = pressed ? 2 : 0;
+//		drawRect.x = offset + po.x + iox;
+//		drawRect.y = offset + po.y + ioy;
+		
 		if ((getStyle() & SWT.TOGGLE) != 0) {
 			if (pressed && overlayBounds == null) {
 				Color bg = e.gc.getBackground();
 				e.gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
 				e.gc.fillRectangle(po.x, po.y, drawRect.width, drawRect.height);
 				e.gc.setBackground(bg);
-				offset = 2;
 			}
-		} else {
 		}
-		offset = pressed ? 2 : 0;
-		drawRect.x = offset + po.x;
-		drawRect.y = offset + po.y;
+		
+		updateDrawRect(drawRect);
 		try {
-			if (bounds.width > 0)
+			if (bounds.width > 0) {
 				imageProvider.drawImage(e.gc, drawRect, bounds);
+			}
 			drawRect.x = po.x;
 			drawRect.y = po.y;
 			if (overlayBounds != null)
