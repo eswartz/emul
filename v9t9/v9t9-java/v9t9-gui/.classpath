@@ -13,7 +13,6 @@
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar" sourcepath="/ejs-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/jna.jar"/>
-	<classpathentry kind="lib" path="libs/svgSalamander.jar"/>
 	<classpathentry kind="src" path="data"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.css_1.7.0.v201011041433.jar"/>
@@ -52,5 +51,6 @@
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${target.os}"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/ejs-base/libs/svgSalamander.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
