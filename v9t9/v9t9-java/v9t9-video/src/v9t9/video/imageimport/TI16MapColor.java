@@ -1,7 +1,8 @@
 package v9t9.video.imageimport;
 
 
-import v9t9.common.video.ColorMapUtils;
+import org.ejs.gui.images.BasePaletteMapper;
+import org.ejs.gui.images.ColorMapUtils;
 
 import ejs.base.utils.Pair;
 

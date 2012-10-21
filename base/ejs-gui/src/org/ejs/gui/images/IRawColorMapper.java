@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.video.imageimport;
+package org.ejs.gui.images;
 
 /**
  * @author ejs

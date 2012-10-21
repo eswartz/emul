@@ -7,6 +7,7 @@
 <project basedir="." default="build" name="v9t9-common">
     <property environment="env"/>
     <property name="ejs-base.location" value="../../../base/ejs-base"/>
+    <property name="ejs-gui.location" value="../../../base/ejs-gui"/>
     <property name="v9t9-audio.location" value="../v9t9-audio"/>
     <property name="v9t9-engine.location" value="../v9t9-engine"/>
     <property name="v9t9-gui.location" value="../v9t9-gui"/>
@@ -32,12 +33,16 @@
         <pathelement location="${ejs-base.location}/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
     </path>
+	<path id="ejs-gui.classpath">
+	        <pathelement location="${ejs-gui.location}/bin"/>
+	    </path>
     <path id="v9t9-common.classpath">
         <pathelement location="bin"/>
         <pathelement location="${ejs-base.location}/libs/jna.jar"/>
         <path refid="ejs-base.classpath"/>
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
         <pathelement location="${ejs-base.location}/libs/junit/junit-4.8.1.jar"/>
+        <path refid="ejs-gui.classpath"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>

@@ -1,6 +1,8 @@
 package v9t9.video.imageimport;
 
-import v9t9.common.video.ColorMapUtils;
+import org.ejs.gui.images.BasePaletteMapper;
+import org.ejs.gui.images.ColorMapUtils;
+import org.ejs.gui.images.V99ColorMapUtils;
 
 class RGB333MapColor extends BasePaletteMapper {
 	/**
@@ -36,13 +38,13 @@ class RGB333MapColor extends BasePaletteMapper {
 	protected byte[] getRGB33x(int r, int g, int b) {
 		byte[] rgbs;
 		if (!isColorMappedGreyscale) {
-			rgbs = ColorMapUtils.getGRB333(g, r, b);
+			rgbs = V99ColorMapUtils.getGRB333(g, r, b);
 		} else {
 			// (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
 			
 			//int l = (r * 299 + g * 587 + b * 114) / 1000;
 			//rgbs = ColorMapUtils.getGRB333(l, l, l);
-			rgbs = ColorMapUtils.getRgbToGreyForGreyscaleMode(new byte[] { 
+			rgbs = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(new byte[] { 
 					(byte) (r * 255 / 7), (byte) (g * 255 / 7), (byte) (b * 255 / 7) });
 		}
 			

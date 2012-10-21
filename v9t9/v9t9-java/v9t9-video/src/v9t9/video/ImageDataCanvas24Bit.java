@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
-import v9t9.common.video.ColorMapUtils;
+import org.ejs.gui.images.V99ColorMapUtils;
 
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ISpriteVdpCanvas;
@@ -58,7 +58,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		byte[] rgb;
 		if (getFormat() == VdpFormat.COLOR256_1x1) {
 			rgb = new byte[] { 0, 0, 0};
-			ColorMapUtils.getGRB332(rgb, (byte) getColorMgr().getClearColor(), getColorMgr().isGreyscale());
+			V99ColorMapUtils.getGRB332(rgb, (byte) getColorMgr().getClearColor(), getColorMgr().isGreyscale());
 		} else {
 			rgb = getColorMgr().getRGB(getColorMgr().getClearColor());
 		}

@@ -18,7 +18,6 @@ import org.junit.Test;
 
 import v9t9.common.files.EmulatedFile;
 import v9t9.common.files.IFileMapper;
-import v9t9.common.files.EmulatedBaseFDRFile;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;

@@ -19,11 +19,20 @@ import java.util.TreeMap;
 
 import javax.imageio.ImageIO;
 
-import v9t9.common.video.ColorMapUtils;
+import org.ejs.gui.images.ColorMapUtils;
+import org.ejs.gui.images.ColorOctree;
+import org.ejs.gui.images.ColorOctree.LeafNode;
+import org.ejs.gui.images.FixedPaletteMapColor;
+import org.ejs.gui.images.Histogram;
+import org.ejs.gui.images.IPaletteColorMapper;
+import org.ejs.gui.images.IPaletteMapper;
+import org.ejs.gui.images.MonoMapColor;
+import org.ejs.gui.images.UserPaletteMapColor;
+import org.ejs.gui.images.V99ColorMapUtils;
+
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
 import v9t9.video.ImageDataCanvas;
-import v9t9.video.imageimport.ColorOctree.LeafNode;
 import v9t9.video.imageimport.ImageImportOptions.Dither;
 import v9t9.video.imageimport.ImageImportOptions.Palette;
 import ejs.base.utils.Pair;
@@ -377,7 +386,7 @@ private IPaletteMapper mapColor;
 			img.getRGB(0, y, width, 1, rgbs, 0, width);
 			for (int x = 0; x < width; x++) {
 				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
-				ColorMapUtils.mapForRGB333(prgb);
+				V99ColorMapUtils.mapForRGB333(prgb);
 				rgbs[x] = ColorMapUtils.rgb8ToPixel(prgb);
 			}
 			img.setRGB(0, y, width, 1, rgbs, 0, width);
@@ -468,7 +477,10 @@ private IPaletteMapper mapColor;
 			FixedPaletteMapColor paletteMapper = new FixedPaletteMapColor(
 					palette, firstColor, numColors);
 			hist = new Histogram(paletteMapper, img.getWidth(), img.getHeight(), maxDist);
-			int matchedC = hist.generate(img); 
+			int matchedC = hist.generate(img);
+			if (mapColor instanceof MonoMapColor)
+				((MonoMapColor) mapColor).setMidLum(hist.getAverageLuminance());
+
 			if (matchedC == numPixels) {
 				matched = true;
 				break;
@@ -585,11 +597,11 @@ private IPaletteMapper mapColor;
 			int[] repr = node.reprRGB();
 			
 			if (useColorMappedGreyScale)
-				ColorMapUtils.rgbToGreyForGreyscaleMode(repr, repr);
+				V99ColorMapUtils.rgbToGreyForGreyscaleMode(repr, repr);
 			else if (convertGreyScale) 
 				ColorMapUtils.rgbToGrey(repr, repr);
 			else
-				ColorMapUtils.mapForRGB333(repr);
+				V99ColorMapUtils.mapForRGB333(repr);
 			
 			thePalette[index][0] = (byte) repr[0];
 			thePalette[index][1] = (byte) repr[1];
@@ -606,98 +618,6 @@ private IPaletteMapper mapColor;
 		}
 	}
 
-//	/**
-//	 * Pick areas where histogram finds the most luminance.
-//	 * @param image
-//	 * @param colorCount
-//	 */
-//	private void addToOctreeInGreyscale(BufferedImage image) {
-//		Histogram prevHist = null;
-//		
-//		for (int mask = 0; mask < 3; mask++) {
-//			final int maskVal = (~0) << mask;
-//			final int max = 8 - (1 << mask);
-//			IColorMapper greyMapper = new IColorMapper() {
-//				
-//				@Override
-//				public int mapColor(int pixel, int[] dist) {
-//					int lum = ColorMapUtils.getPixelLum(pixel);
-//					return ((lum >> 5) & maskVal) * 7 / max;
-//				}
-//			};
-//			
-//			Histogram hist = new Histogram(greyMapper, image.getWidth(), image.getHeight(), Integer.MAX_VALUE);
-//			hist.generate(image);
-//	
-//			Map<Integer, Integer> colorToCountMap = hist.colorToCountMap();
-//			if (colorToCountMap.size() > toAlloc && mask + 1 < 3) {
-//				prevHist = hist;
-//				continue;
-//			}
-//		
-//			if (colorToCountMap.size() < colorCount && prevHist != null)
-//				hist = prevHist;
-//			
-//			for (int cidx = firstColor; cidx < colorCount; cidx++) {
-//				int c = hist.getColorIndex(cidx);
-//				//colorMgr.setGRB333(cidx, c, c, c);
-//				thePalette[cidx][0] = ColorMapUtils.rgb3to8[c];
-//				thePalette[cidx][1] = ColorMapUtils.rgb3to8[c];
-//				thePalette[cidx][2] = ColorMapUtils.rgb3to8[c];
-//			}
-//			
-//			break;
-//		}
-//		
-//	}
-//
-//	/**
-//	 * Pick areas where histogram finds the most luminance.
-//	 * @param image
-//	 * @param colorCount
-//	 */
-//	private void createOptimalGreyscalePalette(int colorCount) {
-//		int toAlloc = colorCount - firstColor;
-//		
-//		Histogram prevHist = null;
-//		
-//		for (int mask = 0; mask < 3; mask++) {
-//			final int maskVal = (~0) << mask;
-//			final int max = 8 - (1 << mask);
-//			IColorMapper greyMapper = new IColorMapper() {
-//				
-//				@Override
-//				public int mapColor(int pixel, int[] dist) {
-//					int lum = ColorMapUtils.getPixelLum(pixel);
-//					return ((lum >> 5) & maskVal) * 7 / max;
-//				}
-//			};
-//			
-//			Histogram hist = new Histogram(greyMapper, image.getWidth(), image.getHeight(), Integer.MAX_VALUE);
-//			hist.generate(image);
-//			
-//			// take darkest and brighest first
-//			Map<Integer, Integer> colorToCountMap = hist.colorToCountMap();
-//			if (colorToCountMap.size() > toAlloc && mask + 1 < 3) {
-//				prevHist = hist;
-//				continue;
-//			}
-//			
-//			if (colorToCountMap.size() < colorCount && prevHist != null)
-//				hist = prevHist;
-//			
-//			for (int cidx = firstColor; cidx < colorCount; cidx++) {
-//				int c = hist.getColorIndex(cidx);
-//				//colorMgr.setGRB333(cidx, c, c, c);
-//				thePalette[cidx][0] = ColorMapUtils.rgb3to8[c];
-//				thePalette[cidx][1] = ColorMapUtils.rgb3to8[c];
-//				thePalette[cidx][2] = ColorMapUtils.rgb3to8[c];
-//			}
-//			
-//			break;
-//		}
-//		
-//	}
 	
 	private BufferedImage createConvertedImage(BufferedImage img, int targWidth, int targHeight) {
 		int xoffs, yoffs;
@@ -830,6 +750,10 @@ private IPaletteMapper mapColor;
 		int interestingColors = 0;
 		
 		mappedColors = hist.generate(img);
+
+		if (mapColor instanceof MonoMapColor)
+			((MonoMapColor) mapColor).setMidLum(hist.getAverageLuminance());
+		
 		interestingColors = hist.size();
 		if (DEBUG) System.out.println("# interesting = " + interestingColors
 				+"; # mapped = " + mappedColors);
@@ -934,7 +858,7 @@ private IPaletteMapper mapColor;
 					if (xd < width) {
 						pixel = img.getRGB(xd, y);
 						if (useColorMappedGreyScale) {
-							pixel = ColorMapUtils.getPixelForGreyscaleMode(pixel);
+							pixel = V99ColorMapUtils.getPixelForGreyscaleMode(pixel);
 						}
 					}
 					
@@ -1030,7 +954,7 @@ private IPaletteMapper mapColor;
 					if (xd < width) {
 						pixel = img.getRGB(xd, y) & 0xffffff;
 						if (useColorMappedGreyScale) {
-							pixel = ColorMapUtils.getPixelForGreyscaleMode(pixel);
+							pixel = V99ColorMapUtils.getPixelForGreyscaleMode(pixel);
 						}
 					}
 					
@@ -1396,7 +1320,7 @@ private IPaletteMapper mapColor;
 						if (xd < img.getWidth()) {
 							origPixel = img.getRGB(xd, y);
 							if (useColorMappedGreyScale)
-								origPixel = ColorMapUtils.getPixelForGreyscaleMode(origPixel);
+								origPixel = V99ColorMapUtils.getPixelForGreyscaleMode(origPixel);
 						}
 						
 						int fdist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(origPixel, fpixel) 
@@ -1489,7 +1413,7 @@ private IPaletteMapper mapColor;
 						if (xd < img.getWidth()) {
 							origPixel = img.getRGB(xd, y);
 							if (useColorMappedGreyScale)
-								origPixel = ColorMapUtils.getPixelForGreyscaleMode(origPixel);
+								origPixel = V99ColorMapUtils.getPixelForGreyscaleMode(origPixel);
 						}
 						
 						int newPixel = origPixel;
@@ -1537,7 +1461,7 @@ private IPaletteMapper mapColor;
 				for (int c = 0; c < ncols; c++) {
 					byte[] nrgb = thePalette[c];
 					if (useColorMappedGreyScale) 
-						nrgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(nrgb);
+						nrgb = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(nrgb);
 					int p = ColorMapUtils.rgb8ToPixel(nrgb);
 					paletteToIndex.put(p, c);
 				}
@@ -1545,10 +1469,10 @@ private IPaletteMapper mapColor;
 		} else {
 			byte[] rgb = { 0, 0, 0};
 			for (int c = 0; c < ncols; c++) {
-				ColorMapUtils.getGRB332(rgb, (byte) c, false);
+				V99ColorMapUtils.getGRB332(rgb, (byte) c, false);
 				int p;
 				if (useColorMappedGreyScale) {
-					byte[] nrgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(rgb);
+					byte[] nrgb = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(rgb);
 					p = ColorMapUtils.rgb8ToPixel(nrgb);
 				} else {
 					p = ColorMapUtils.rgb8ToPixel(rgb);

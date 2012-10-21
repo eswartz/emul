@@ -1,6 +1,7 @@
 package v9t9.video.imageimport;
 
-import v9t9.common.video.ColorMapUtils;
+import org.ejs.gui.images.ColorMapUtils;
+import org.ejs.gui.images.V99ColorMapUtils;
 
 class RGB332MapColor extends RGB333MapColor {
 
@@ -12,7 +13,7 @@ class RGB332MapColor extends RGB333MapColor {
 		byte[][] pal = new byte[512][];
 		for (int i = 0; i < 512; i++) {
 			 byte[] rgb = { 0, 0, 0 };
-			 ColorMapUtils.getGRB332(rgb, (byte) (i >> 1),false);
+			 V99ColorMapUtils.getGRB332(rgb, (byte) (i >> 1),false);
 			 pal[i] = rgb;
 		}
 		return pal;
@@ -22,14 +23,14 @@ class RGB332MapColor extends RGB333MapColor {
 	protected byte[] getRGB33x(int r, int g, int b) {
 		byte[] rgbs;
 		if (!isColorMappedGreyscale) {
-			rgbs = ColorMapUtils.getGRB332(g, r, b >> 1);
+			rgbs = V99ColorMapUtils.getGRB332(g, r, b >> 1);
 		} else {
 			// (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
 			
 			//int l = (r * 299 + g * 587 + b * 114) / 1000;
 			//rgbs = ColorMapUtils.getGRB333(l, l, l);
 			int bi = ((b & ~1) | ((r | g) & 1));
-			rgbs = ColorMapUtils.getRgbToGreyForGreyscaleMode(new byte[] { 
+			rgbs = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(new byte[] { 
 					(byte) (r * 255 / 7), (byte) (g * 255 / 7), (byte) (bi * 255 / 7) });
 		}
 			
@@ -67,7 +68,7 @@ class RGB332MapColor extends RGB333MapColor {
 	public int getClosestPaletteEntry(int x, int y, int pixel) {
 		// we don't need to trawl the palette here
 		if (isColorMappedGreyscale) {
-			pixel = ColorMapUtils.getPixelForGreyscaleMode(pixel);
+			pixel = V99ColorMapUtils.getPixelForGreyscaleMode(pixel);
 		}
 		
 		int r = ((pixel & 0xff0000) >>> 16) >>> 5;

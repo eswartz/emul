@@ -1,4 +1,4 @@
-package v9t9.video.imageimport;
+package org.ejs.gui.images;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -9,12 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import v9t9.common.video.ColorMapUtils;
-
 import ejs.base.utils.Pair;
 
 
-class Histogram {
+public class Histogram {
 	final Map<Integer, Integer> hist;
 	final Map<Integer, Integer> pixelToColor;
 	final List<Integer> indices;
@@ -63,9 +61,6 @@ class Histogram {
 		add(image);
 		
 		sort();
-		
-		if (paletteMapper instanceof MonoMapColor)
-			((MonoMapColor) paletteMapper).setMidLum(getAverageLuminance());
 			
 		return mapped;
 	}

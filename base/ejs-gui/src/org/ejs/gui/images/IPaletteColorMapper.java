@@ -1,6 +1,6 @@
-package v9t9.video.imageimport;
+package org.ejs.gui.images;
 
-interface IPaletteColorMapper {
+public interface IPaletteColorMapper {
 	/**
 	 * Get the color in the new palette closest to this one.
 	 * @param x 

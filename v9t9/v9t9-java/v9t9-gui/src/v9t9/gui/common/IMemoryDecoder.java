@@ -8,7 +8,6 @@ import java.util.BitSet;
 import org.eclipse.jface.viewers.ILabelProvider;
 
 import v9t9.gui.client.swt.shells.debugger.IDecodedContent;
-import v9t9.gui.client.swt.shells.debugger.MemoryRange;
 
 /**
  * This allows portions of memory to be decoded into structured units

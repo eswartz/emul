@@ -4,14 +4,14 @@
 package v9t9.video.imageimport;
 
 
-import ejs.base.properties.FieldProperty;
-import ejs.base.properties.PropertySource;
-
+import org.ejs.gui.images.ColorOctree;
 
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.VdpFormat;
+import ejs.base.properties.FieldProperty;
+import ejs.base.properties.PropertySource;
 
 /**
  * @author ejs

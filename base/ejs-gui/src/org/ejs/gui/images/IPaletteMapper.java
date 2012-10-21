@@ -1,8 +1,8 @@
-package v9t9.video.imageimport;
+package org.ejs.gui.images;
 
 import java.awt.image.BufferedImage;
 
-interface IPaletteMapper extends IPaletteColorMapper, IColorMapper {
+public interface IPaletteMapper extends IPaletteColorMapper, IColorMapper {
 	/**
 	 * Get number of colors (range of indices for mapColor and getClosestPalettePixel)
 	 */

@@ -17,5 +17,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/SWT"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/junit/junit-4.8.1.jar" sourcepath="/ejs-base/libs/junit/junit-4.8.1-source.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ejs-gui"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -11,7 +11,6 @@ import java.util.Map;
 
 import ejs.base.utils.Pair;
 
-import v9t9.common.keyboard.IKeyboardMapping;
 import v9t9.common.keyboard.IKeyboardMapping.PhysKey;
 import v9t9.common.keyboard.IKeyboardMode;
 import v9t9.common.keyboard.KeyboardConstants;

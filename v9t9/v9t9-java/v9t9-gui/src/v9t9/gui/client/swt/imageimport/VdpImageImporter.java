@@ -5,11 +5,12 @@ package v9t9.gui.client.swt.imageimport;
 
 import static v9t9.common.hardware.VdpV9938Consts.*;
 
+import org.ejs.gui.images.V99ColorMapUtils;
+
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.common.video.ColorMapUtils;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpFormat;
 import v9t9.video.ImageDataCanvas;
@@ -62,7 +63,7 @@ public class VdpImageImporter {
 		int ncols = format.getNumColors();
 		if (ncols < 256) {
 			for (int c = 0; c < ncols; c++) {
-				vdp.setRegister(VdpV9938Consts.REG_PAL0 + c, ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
+				vdp.setRegister(VdpV9938Consts.REG_PAL0 + c, V99ColorMapUtils.rgb8ToRgbRBXG(thePalette[c]));
 			}
 		}
 				

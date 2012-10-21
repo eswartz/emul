@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.video.imageimport;
+package org.ejs.gui.images;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,7 +31,7 @@ public class ColorOctree {
 			this.parent = parent;
 		}
 	}
-	static class LeafNode extends Node {
+	public static class LeafNode extends Node {
 		int pixelCount;
 		int reds, greens, blues;
 		public LeafNode(InnerNode parent) {

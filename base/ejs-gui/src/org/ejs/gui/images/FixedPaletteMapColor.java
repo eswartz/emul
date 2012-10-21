@@ -1,8 +1,7 @@
-package v9t9.video.imageimport;
+package org.ejs.gui.images;
 
-import v9t9.common.video.ColorMapUtils;
 
-class FixedPaletteMapColor extends BasePaletteMapper {
+public class FixedPaletteMapColor extends BasePaletteMapper {
 	public FixedPaletteMapColor(byte[][] thePalette, int firstColor, int numColors) {
 		super(thePalette, firstColor, numColors, false, false);
 	}

@@ -6,15 +6,12 @@ package v9t9.engine.video.v9938;
 
 import static v9t9.common.hardware.VdpTMS9918AConsts.*;
 import static v9t9.common.hardware.VdpV9938Consts.*;
+
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
-import v9t9.common.video.ColorMapUtils;
 
-import ejs.base.properties.IProperty;
-import ejs.base.settings.ISettingSection;
-import ejs.base.utils.HexUtils;
-import ejs.base.utils.ListenerList;
+import org.ejs.gui.images.V99ColorMapUtils;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.demos.IDemoHandler;
@@ -26,6 +23,10 @@ import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.ListenerList;
 
 /**
  * V9938 video chip support.  This functions as a superset of the TMS9918A.
@@ -200,7 +201,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 
 		for (int i = 0; i < 16; i++) {
 			byte[] p = defaultPalette[i];
-			palette[i] = ColorMapUtils.rgb8ToRgbRBXG(ColorMapUtils.getGRB333(
+			palette[i] = V99ColorMapUtils.rgb8ToRgbRBXG(V99ColorMapUtils.getGRB333(
 					p[0], p[1], p[2]));
 		}
 		

@@ -7,6 +7,7 @@
 <project basedir="." default="build" name="v9t9-engine">
     <property environment="env"/>
     <property name="ejs-base.location" value="../../../base/ejs-base"/>
+    <property name="ejs-gui.location" value="../../../base/ejs-gui"/>
     <property name="v9t9-machines.location" value="../v9t9-machines"/>
     <property name="v9t9-server.location" value="../v9t9-server"/>
     <property name="v9t9-tools.location" value="../v9t9-tools"/>
@@ -27,10 +28,14 @@
         <pathelement location="${ejs-base.location}/libs/google-gson-2.0/gson-2.0.jar"/>
         <pathelement location="${ejs-base.location}/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
     </path>
+	<path id="ejs-gui.classpath">
+        <pathelement location="${ejs-gui.location}/bin"/>
+    </path>
     <path id="v9t9-common.classpath">
         <pathelement location="${v9t9-common.location}/bin"/>
         <pathelement location="${ejs-base.location}/libs/jna.jar"/>
         <path refid="ejs-base.classpath"/>
+        <path refid="ejs-gui.classpath"/>
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
     </path>
     <path id="SWT.userclasspath">

@@ -1,8 +1,7 @@
-package v9t9.video.imageimport;
+package org.ejs.gui.images;
 
-import v9t9.common.video.ColorMapUtils;
 
-abstract class BasePaletteMapper implements IPaletteMapper {
+abstract public class BasePaletteMapper implements IPaletteMapper {
 	private final boolean canSetPalette;
 //	private int minDist;
 	protected byte[][] palette;
@@ -79,7 +78,7 @@ abstract class BasePaletteMapper implements IPaletteMapper {
 			for (int x = 0; x < numColors; x++) {
 				byte[] nrgb = palette[x];
 				if (isColorMappedGreyscale)
-					nrgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(nrgb);
+					nrgb = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(nrgb);
 				palettePixels[x] = ColorMapUtils.rgb8ToPixel(nrgb);
 			}
 		}

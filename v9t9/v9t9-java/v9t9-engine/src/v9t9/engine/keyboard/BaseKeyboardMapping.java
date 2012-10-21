@@ -4,15 +4,12 @@
 package v9t9.engine.keyboard;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import v9t9.common.keyboard.IKeyboardMapping;
 import v9t9.common.keyboard.IKeyboardMode;
-import v9t9.common.machine.IMachine;
-import v9t9.engine.keyboard.BaseKeyboardMode.KeyInfoBuilder;
 import ejs.base.utils.Pair;
 
 /**

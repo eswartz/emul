@@ -291,5 +291,9 @@ public class ColorMapUtils {
 		g[0] = g[1] = g[2] = (byte) lum;
 		return g;
 	}
+	public static void rgbToGrey(int[] rgb, int[] g) {
+		int lum = getRGBLum(rgb);
+		g[0] = g[1] = g[2] = lum;
+	}
 
 }

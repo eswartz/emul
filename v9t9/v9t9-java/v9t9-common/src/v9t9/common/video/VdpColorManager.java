@@ -5,6 +5,9 @@ package v9t9.common.video;
 
 import java.util.Arrays;
 
+import org.ejs.gui.images.ColorMapUtils;
+import org.ejs.gui.images.V99ColorMapUtils;
+
 /**
  * Handle all the needs of the VDP color model -- stock palettes,
  * greyscale handling, V9938 4-color mode & sprite palette handling, etc.
@@ -128,7 +131,7 @@ public class VdpColorManager {
 		int r = Integer.parseInt(hex.substring(0, 1), 16);
 		int b = Integer.parseInt(hex.substring(1, 2), 16);
 		int g = Integer.parseInt(hex.substring(2, 3), 16);
-		return ColorMapUtils.getGRB333(g, r, b);
+		return V99ColorMapUtils.getGRB333(g, r, b);
 	}
 
 	public static final byte[][][] palettes() {
@@ -165,7 +168,7 @@ public class VdpColorManager {
     	altSpritePalette = new byte[16][];
     	altSpritePaletteGrey = new byte[16][];
     	for (int i = 0; i < 16; i++) {
-    		altSpritePalette[i] = ColorMapUtils.getGRB333(
+    		altSpritePalette[i] = V99ColorMapUtils.getGRB333(
     				altSpritePaletteGBR[i][0], altSpritePaletteGBR[i][1], altSpritePaletteGBR[i][2]);
     		altSpritePaletteGrey[i] = ColorMapUtils.rgbToGrey(altSpritePalette[i]);
     	}
@@ -205,18 +208,18 @@ public class VdpColorManager {
 	}
 
 	public void setRGB333(int idx, byte[] rgb) {
-		byte[] low = ColorMapUtils.getMapForRGB333(rgb);
+		byte[] low = V99ColorMapUtils.getMapForRGB333(rgb);
 		setGRB333(idx, low[1] >> 5, low[0] >> 5, low[2] >> 5); 
 	}
 	
 	/** Set the RGB triple for the palette entry, using 3-bit RGB (usually from a palette). */
 	public void setGRB333(int idx, int g, int r, int b) {
-		setRGB(idx, ColorMapUtils.getGRB333(g, r, b));
+		setRGB(idx, V99ColorMapUtils.getGRB333(g, r, b));
 	}
 
 	/** Get the 8-bit RGB values from a packed 3-3-2 GRB byte */
 	public void getGRB332(byte[] rgb, byte grb) {
-		ColorMapUtils.getGRB332(rgb, grb, isGreyscale);
+		V99ColorMapUtils.getGRB332(rgb, grb, isGreyscale);
 	}
 
 	public byte[] getStockRGB(int i) {

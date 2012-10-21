@@ -119,7 +119,7 @@
         <pathelement location="libs/lwjgl/jar/lwjgl.jar"/>
 		<!-- SVG support excluded intentionally since it differs by config; build_standalone.xml brings it in -->
 
-        <pathelement location="${ejs-base.location}/libs/libs/svgSalamander.jar"/>
+        <pathelement location="${ejs-base.location}/libs/svgSalamander.jar"/>
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.css_1.7.0.v201011041433.jar"/>
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.dom_1.7.0.v201011041433.jar"/>

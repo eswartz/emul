@@ -1,13 +1,13 @@
 /**
  * 
  */
-package v9t9.video.imageimport;
+package org.ejs.gui.images;
 
 /**
  * @author ejs
  *
  */
-interface IColorMapper {
+public interface IColorMapper {
 
 	/** Return a color index from mapping the RGB pixel 
 	 * 

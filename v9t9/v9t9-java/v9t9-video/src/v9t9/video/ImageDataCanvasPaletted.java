@@ -8,7 +8,7 @@ import java.util.Arrays;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
-import v9t9.common.video.ColorMapUtils;
+import org.ejs.gui.images.V99ColorMapUtils;
 
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ISpriteVdpCanvas;
@@ -215,12 +215,12 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 				mem = access.memory[access.offset + j];
 				
 				int ri = (mem >> 5) & 0x7;
-				int r = ColorMapUtils.rgb3to8[ri] & 0xff;
+				int r = V99ColorMapUtils.rgb3to8[ri] & 0xff;
 				int gi = (mem >> 2) & 0x7;
-				int g = ColorMapUtils.rgb3to8[gi] & 0xff;
+				int g = V99ColorMapUtils.rgb3to8[gi] & 0xff;
 				//int b = ColorMapUtils.rgb2to8[mem & 0x3] & 0xff;
 				int bi = mem & 0x3;
-				int b = ColorMapUtils.rgb3to8[bi*2 + ((ri|gi) & 1)] & 0xff;
+				int b = V99ColorMapUtils.rgb3to8[bi*2 + ((ri|gi) & 1)] & 0xff;
 				
 				// XXX: no palette
 				byte pix = (byte) imageData.palette.getPixel(new RGB(r, g, b));

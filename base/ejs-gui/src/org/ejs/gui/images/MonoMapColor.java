@@ -1,8 +1,7 @@
-package v9t9.video.imageimport;
+package org.ejs.gui.images;
 
-import v9t9.common.video.ColorMapUtils;
 
-class MonoMapColor implements IPaletteMapper {
+public class MonoMapColor implements IPaletteMapper {
 	private final int fg;
 	private final int bg;
 	private byte[][] palette;
