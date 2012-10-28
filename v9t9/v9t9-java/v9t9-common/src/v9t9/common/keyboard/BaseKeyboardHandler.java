@@ -420,11 +420,11 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			case KEY_NUM_LOCK:
 				if (pressed) {
 					boolean on;
-					try {
-						on = !Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_NUM_LOCK);
-					} catch (UnsupportedOperationException e) {
+//					try {
+//						on = !Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_NUM_LOCK);
+//					} catch (UnsupportedOperationException e) {
 						on = (keyboardState.getLockMask() & MASK_NUM_LOCK) == 0;
-					}
+//					}
 					
 					keyboardState.changeLocks(on, MASK_NUM_LOCK);
 					if (keyboardState.isLock(MASK_SCROLL_LOCK))
@@ -434,22 +434,22 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			case KEY_CAPS_LOCK:
 				if (pressed) {
 					boolean on;
-					try {
-						on = !Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_CAPS_LOCK);
-					} catch (UnsupportedOperationException e) {
+//					try {
+//						on = !Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_CAPS_LOCK);
+//					} catch (UnsupportedOperationException e) {
 						on = (keyboardState.getLockMask() & MASK_CAPS_LOCK) == 0;
-					}
+//					}
 					keyboardState.changeLocks(on, MASK_CAPS_LOCK);
 				}
 				return true;
 			case KEY_SCROLL_LOCK:
 				if (pressed) {
 					boolean on;
-					try {
-						on = !Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_NUM_LOCK);
-					} catch (UnsupportedOperationException e) {
+//					try {
+//						on = !Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_NUM_LOCK);
+//					} catch (UnsupportedOperationException e) {
 						on = (keyboardState.getLockMask() & MASK_NUM_LOCK) == 0;
-					}
+//					}
 					keyboardState.changeLocks(on, MASK_NUM_LOCK);
 					notifyNumpadInfo();
 				}
