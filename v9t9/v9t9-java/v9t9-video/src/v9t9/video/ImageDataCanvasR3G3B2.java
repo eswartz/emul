@@ -18,15 +18,16 @@ import v9t9.common.video.VdpFormat;
  * @author ejs
  *
  */
-public class ImageDataCanvas24Bit extends ImageDataCanvas {
+public class ImageDataCanvasR3G3B2 extends ImageDataCanvas {
 	private static PaletteData stockPaletteData = new PaletteData(0xFF0000, 0xFF00, 0xFF);
 
-	protected byte[][] colorRGBMap;
-	protected byte[][] spriteColorRGBMap;
 
-	private byte[][][] fourColorRGBMap;
+	protected byte[] colorRGBMap;
+	protected byte[] spriteColorRGBMap;
 
-	public ImageDataCanvas24Bit() {
+	private byte[][] fourColorRGBMap;
+	
+	public ImageDataCanvasR3G3B2() {
 		super();
 		setSize(256, 192);
 	}
@@ -41,14 +42,15 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		if ((height & 7) != 0)
 			allocHeight += 8;
 		
-		imageData = new ImageData(width, allocHeight * (isInterlacedEvenOdd() ? 2 : 1), 24, getPaletteData());
+		imageData = new ImageData(width, allocHeight * (isInterlacedEvenOdd() ? 2 : 1), 8, getPaletteData());
 		if (isInterlacedEvenOdd())
 			bytesPerLine = imageData.bytesPerLine * 2;
 		else
 			bytesPerLine = imageData.bytesPerLine;
 		
-		pixSize = (imageData.depth >> 3);
+		pixSize = 1; //(imageData.depth >> 3);
 	}
+	
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#clear()
@@ -62,13 +64,11 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		} else {
 			rgb = getColorMgr().getRGB(getColorMgr().getClearColor());
 		}
+
+		byte col;
+		col = V99ColorMapUtils.getRGBToGRB332(rgb);
 		
-		int bpp = imageData.depth >> 3;
-		for (int i = 0; i < imageData.data.length; i += bpp) {
-			imageData.data[i] = rgb[0];
-			imageData.data[i + 1] = rgb[1];
-			imageData.data[i + 2] = rgb[2];
-		}
+		Arrays.fill(imageData.data, col);
 		if (imageData.alphaData != null) {
 			Arrays.fill(imageData.alphaData, 0, imageData.alphaData.length, (byte)-1);
 		}
@@ -80,23 +80,18 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	 */
 	@Override
 	public void clearToEvenOddClearColors() {
-		byte cc = (byte) getColorMgr().getClearColor();
-		byte cc1 = (byte) getColorMgr().getClearColor1();
+		byte cc = colorRGBMap[getColorMgr().getClearColor()];
+		byte cc1 = colorRGBMap[getColorMgr().getClearColor1()];
 		
 		if (colorRGBMap == null)
 			return;
 		
-		byte[] fgRGB = colorRGBMap[cc];
-		byte[] bgRGB = colorRGBMap[cc1];
-		
-		int bpp = imageData.depth >> 3;
-		for (int i = 0; i < imageData.data.length; i += bpp + bpp) {
-			imageData.data[i + 0] = fgRGB[0];
-			imageData.data[i + 1] = fgRGB[1];
-			imageData.data[i + 2] = fgRGB[2];
-			imageData.data[i + 3] = bgRGB[0];
-			imageData.data[i + 4] = bgRGB[1];
-			imageData.data[i + 5] = bgRGB[2];
+		byte fgRGB = colorRGBMap[cc];
+		byte bgRGB = colorRGBMap[cc1];
+
+		for (int i = 0; i < imageData.data.length; i += 2) {
+			imageData.data[i ] = fgRGB;
+			imageData.data[i + 1] = bgRGB;
 		}
 		if (imageData.alphaData != null) {
 			Arrays.fill(imageData.alphaData, 0, imageData.alphaData.length, (byte)-1);
@@ -119,47 +114,41 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	@Override
 	public void syncColors() {
 		super.syncColors();
-
+		
 		if (colorRGBMap == null) 
-			colorRGBMap = new byte[16][];
+			colorRGBMap = new byte[16];
 		if (spriteColorRGBMap == null) 
-			spriteColorRGBMap = new byte[16][];
+			spriteColorRGBMap = new byte[16];
 		if (fourColorRGBMap == null) { 
-			fourColorRGBMap = new byte[2][][];
-			fourColorRGBMap[0] = new byte[16][];
-			fourColorRGBMap[1] = new byte[16][];
+			fourColorRGBMap = new byte[2][];
+			fourColorRGBMap[0] = new byte[16];
+			fourColorRGBMap[1] = new byte[16];
 		}
 		
 		for (int i = 0; i < 16; i++) {
-			colorRGBMap[i] = getColorMgr().getRGB(colorMap[i]);
-			spriteColorRGBMap[i] = getColorMgr().getRGB(spriteColorMap[i]);
-			fourColorRGBMap[0][i] = getColorMgr().getRGB(fourColorMap[0][i]);
-			fourColorRGBMap[1][i] = getColorMgr().getRGB(fourColorMap[1][i]);
+			colorRGBMap[i] = V99ColorMapUtils.getRGBToGRB332(getColorMgr().getRGB(colorMap[i]));
+			spriteColorRGBMap[i] = V99ColorMapUtils.getRGBToGRB332(getColorMgr().getRGB(spriteColorMap[i]));
+			fourColorRGBMap[0][i] = V99ColorMapUtils.getRGBToGRB332(getColorMgr().getRGB(fourColorMap[0][i]));
+			fourColorRGBMap[1][i] = V99ColorMapUtils.getRGBToGRB332(getColorMgr().getRGB(fourColorMap[1][i]));
 		}
-
 	}
 
 	protected void drawEightPixels(int offs, byte mem, byte fg, byte bg) {
-		byte[] fgRGB = colorRGBMap[fg];
-		byte[] bgRGB = colorRGBMap[bg];
+		byte fgRGB = colorRGBMap[fg];
+		byte bgRGB = colorRGBMap[bg];
 		for (int i = 0; i < 8; i++) {
-			byte[] rgb = (mem & 0x80) != 0 ? fgRGB : bgRGB;
-			imageData.data[offs] = rgb[0];
-			imageData.data[offs + 1] = rgb[1];
-			imageData.data[offs + 2] = rgb[2];
+			byte rgb = (mem & 0x80) != 0 ? fgRGB : bgRGB;
+			imageData.data[offs + i] = rgb;
 			mem <<= 1;
-			offs += 3;
 		}
 	}
 
 	protected void drawSixPixels(int offs, byte mem, byte fg, byte bg) {
-		byte[] fgRGB = colorRGBMap[fg];
-		byte[] bgRGB = colorRGBMap[bg];
+		byte fgRGB = colorRGBMap[fg];
+		byte bgRGB = colorRGBMap[bg];
 		for (int i = 0; i < 6; i++) {
-			byte[] rgb = (mem & 0x80) != 0 ? fgRGB : bgRGB;
-			imageData.data[offs++] = rgb[0];
-			imageData.data[offs++] = rgb[1];
-			imageData.data[offs++] = rgb[2];
+			byte rgb = (mem & 0x80) != 0 ? fgRGB : bgRGB;
+			imageData.data[offs + i] = rgb;
 			mem <<= 1;
 		}
 	}
@@ -167,45 +156,38 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	public void drawEightSpritePixels(int x, int y, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
 		int endOffs = getBitmapOffset(256, y);
-		byte[] fgRGB = colorRGBMap[fg];
+		byte fgRGB = colorRGBMap[fg];
 		for (int i = 0; i < 8; i++) {
-			if (offs >= endOffs)
+			int ioffs = offs + i;
+			if (ioffs >= endOffs)
 				break;
 			if ((mem & bitmask & 0x80) != 0) {
-				imageData.data[offs] = fgRGB[0];
-				imageData.data[offs + 1] = fgRGB[1];
-				imageData.data[offs + 2] = fgRGB[2];
+				imageData.data[ioffs] = fgRGB;
 			}
 			bitmask <<= 1;
 			mem <<= 1;
-			offs += 3;
 		}
 	}
 
 	public void drawEightMagnifiedSpritePixels(int x, int y, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
 		int endOffs = getBitmapOffset(256, y);
-		byte[] fgRGB = colorRGBMap[fg];
+		byte fgRGB = colorRGBMap[fg];
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
-			if (offs >= endOffs)
+			int ioffs = offs + i;
+			if (ioffs >= endOffs)
 				break;
 			if ((mem & bitmask & 0x8000) != 0) {
-				imageData.data[offs] = fgRGB[0];
-				imageData.data[offs + 1] = fgRGB[1];
-				imageData.data[offs + 2] = fgRGB[2];
+				imageData.data[ioffs] = fgRGB;
 			}
 			bitmask <<= 1;
-			offs += 3;
-			if (offs >= endOffs)
+			if (ioffs + 1 >= endOffs)
 				break;
 			if ((mem & bitmask & 0x8000) != 0) {
-				imageData.data[offs] = fgRGB[0];
-				imageData.data[offs + 1] = fgRGB[1];
-				imageData.data[offs + 2] = fgRGB[2];
+				imageData.data[ioffs + 1] = fgRGB;
 			}
 			bitmask <<= 1;
-			offs += 3;
 			mem <<= 1;
 		}
 	}
@@ -213,37 +195,28 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	public void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
 		int endOffs = getBitmapOffset(256, y);
-		byte[] fgRGB = colorRGBMap[fg];
+		byte fgRGB = colorRGBMap[fg];
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
-			if (offs >= endOffs)
+			int ioffs = offs + i;
+			if (ioffs >= endOffs)
 				break;
 			if ((mem & bitmask & 0x8000) != 0) {
-				imageData.data[offs] = fgRGB[0];
-				imageData.data[offs + 1] = fgRGB[1];
-				imageData.data[offs + 2] = fgRGB[2];
-				if (offs + 3 >= endOffs)
+				imageData.data[ioffs] = fgRGB;
+				if (ioffs + 1 >= endOffs)
 					return;
-				imageData.data[offs + 3] = fgRGB[0];
-				imageData.data[offs + 4] = fgRGB[1];
-				imageData.data[offs + 5] = fgRGB[2];
+				imageData.data[ioffs + 1] = fgRGB;
 			}
 			bitmask <<= 1;
-			offs += 6;
-			if (offs >= endOffs)
+			if (ioffs + 2 >= endOffs)
 				break;
 			if ((mem & bitmask & 0x8000) != 0) {
-				imageData.data[offs] = fgRGB[0];
-				imageData.data[offs + 1] = fgRGB[1];
-				imageData.data[offs + 2] = fgRGB[2];
-				if (offs + 3 >= endOffs)
+				imageData.data[ioffs + 2] = fgRGB;
+				if (ioffs + 3 >= endOffs)
 					return;
-				imageData.data[offs + 3] = fgRGB[0];
-				imageData.data[offs + 4] = fgRGB[1];
-				imageData.data[offs + 5] = fgRGB[2];
+				imageData.data[ioffs + 3] = fgRGB;
 			}
 			bitmask <<= 1;
-			offs += 6;
 			mem <<= 1;
 		}
 	}
@@ -257,28 +230,17 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 				byte mem;
 				
 				byte pix;
-				byte[] rgb;
 
 				mem = access.memory[access.offset + j];
 
 				pix = (byte) ((mem >> 4) & 0xf);
-				rgb = colorRGBMap[pix];
-				imageData.data[offs] = rgb[0];
-				imageData.data[offs + 1] = rgb[1];
-				imageData.data[offs + 2] = rgb[2];
-				
-				offs += 3;
+				imageData.data[offs + j] = colorRGBMap[pix];
 				
 				pix = (byte) (mem & 0xf);
-				rgb = colorRGBMap[pix];
-				imageData.data[offs] = rgb[0];
-				imageData.data[offs + 1] = rgb[1];
-				imageData.data[offs + 2] = rgb[2];
-				
-				offs += 3;
+				imageData.data[offs + j] = colorRGBMap[pix];
 			}
 			
-			offs += lineStride - 6 * 4;
+			offs += lineStride;
 			access.offset += rowstride;
 		}
 	}
@@ -293,44 +255,23 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 				byte mem;
 				
 				byte pix;
-				byte[] rgb;
 
 				mem = access.memory[access.offset + j];
 
 				pix = (byte) ((mem >> 6) & 0x3);
-				rgb = fourColorRGBMap[0][pix];
-				imageData.data[offs] = rgb[0];
-				imageData.data[offs + 1] = rgb[1];
-				imageData.data[offs + 2] = rgb[2];
-				
-				offs += 3;
+				imageData.data[offs] = colorRGBMap[pix];
 				
 				pix = (byte) ((mem >> 4) & 0x3);
-				rgb = fourColorRGBMap[1][pix];
-				imageData.data[offs] = rgb[0];
-				imageData.data[offs + 1] = rgb[1];
-				imageData.data[offs + 2] = rgb[2];
-				
-				offs += 3;
+				imageData.data[offs + 1] = colorRGBMap[pix];
 				
 				pix = (byte) ((mem >> 2) & 0x3);
-				rgb = fourColorRGBMap[0][pix];
-				imageData.data[offs] = rgb[0];
-				imageData.data[offs + 1] = rgb[1];
-				imageData.data[offs + 2] = rgb[2];
-				
-				offs += 3;
+				imageData.data[offs + 2] = colorRGBMap[pix];
 				
 				pix = (byte) (mem & 0x3);
-				rgb = fourColorRGBMap[1][pix];
-				imageData.data[offs] = rgb[0];
-				imageData.data[offs + 1] = rgb[1];
-				imageData.data[offs + 2] = rgb[2];
-				
-				offs += 3;
+				imageData.data[offs + 3] = colorRGBMap[pix];
 			}
 			
-			offs += lineStride - 6 * 4;
+			offs += lineStride;
 			access.offset += rowstride;
 		}
 	}
@@ -340,22 +281,15 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
 		int offs = getBitmapOffset(x, y);
-		byte[] rgb = { 0, 0, 0 };
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				byte mem;
 				
 				mem = access.memory[access.offset + j];
-
-				getColorMgr().getGRB332(rgb, mem);
-				imageData.data[offs] = rgb[0];
-				imageData.data[offs + 1] = rgb[1];
-				imageData.data[offs + 2] = rgb[2];
-				
-				offs += 3;
+				imageData.data[offs + j] = mem;
 			}
 			
-			offs += lineStride - 3 * 8;
+			offs += lineStride - 8;
 			access.offset += rowstride;
 		}
 	}
@@ -370,20 +304,16 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 				for (int j = 0; j < 8; j++) {
 					byte cl = spriteCanvas.getColorAtOffset(sprOffset + j);
 					if (cl != 0) {
-						byte[] rgb = spriteColorRGBMap[cl];
-						imageData.data[bitmapOffset] = rgb[0];
-						imageData.data[bitmapOffset + 1] = rgb[1];
-						imageData.data[bitmapOffset + 2] = rgb[2];
-						if (blockMag > 1 && bitmapOffset < imageData.data.length) {
-							imageData.data[bitmapOffset + 3] = rgb[0];
-							imageData.data[bitmapOffset + 4] = rgb[1];
-							imageData.data[bitmapOffset + 5] = rgb[2];
+						byte rgb = spriteColorRGBMap[cl];
+						imageData.data[bitmapOffset] = rgb;
+						if (blockMag > 1 && bitmapOffset + 1 < imageData.data.length) {
+							imageData.data[bitmapOffset + 1] = rgb;
 						}
 					}
-					bitmapOffset += 3 * blockMag;
+					bitmapOffset += blockMag;
 				}
 				sprOffset += spriteCanvas.getLineStride();
-				bitmapOffset += getLineStride() - 3 * 8 * blockMag;
+				bitmapOffset += getLineStride() - 8 * blockMag;
 			}
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// ignore
@@ -406,12 +336,10 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 					else
 						cl = (byte) (col & 0x3);
 					if (cl != 0) {
-						byte[] rgb = spriteColorRGBMap[cl];
-						imageData.data[bitmapOffset] = rgb[0];
-						imageData.data[bitmapOffset + 1] = rgb[1];
-						imageData.data[bitmapOffset + 2] = rgb[2];
+						byte rgb = spriteColorRGBMap[cl];
+						imageData.data[bitmapOffset] = rgb;
 					}
-					bitmapOffset += 3;
+					bitmapOffset ++;
 					colorColumn ^= 1;
 					//System.out.println(j+","+(j * blockMag + x + 1));
 					if (blockMag > 1) {
@@ -420,17 +348,15 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 						else
 							cl = (byte) (col & 0x3);
 						if (cl != 0) {
-							byte[] rgb = spriteColorRGBMap[cl];
-							imageData.data[bitmapOffset] = rgb[0];
-							imageData.data[bitmapOffset + 1] = rgb[1];
-							imageData.data[bitmapOffset + 2] = rgb[2];
+							byte rgb = spriteColorRGBMap[cl];
+							imageData.data[bitmapOffset] = rgb;
 						}
-						bitmapOffset += 3;
+						bitmapOffset ++;
 						colorColumn ^= 1;
 					}
 				}
 				sprOffset += spriteCanvas.getLineStride();
-				bitmapOffset += getLineStride() - 3 * 8 * blockMag;
+				bitmapOffset += getLineStride() - 8 * blockMag;
 			}
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// ignore

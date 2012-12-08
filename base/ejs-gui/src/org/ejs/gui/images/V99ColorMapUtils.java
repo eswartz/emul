@@ -12,6 +12,8 @@ import java.util.TreeMap;
  *
  */
 public class V99ColorMapUtils {
+	public static byte[] rgb3to8 = new byte[8];
+	public static byte[] rgb2to8 = new byte[4];
 	static {
 		for (int i = 0; i < 8; i++) {
 			byte val = (byte) i;
@@ -28,8 +30,7 @@ public class V99ColorMapUtils {
 			V99ColorMapUtils.rgb2to8[i] = val8;
 		}
 	}
-	public static byte[] rgb3to8 = new byte[8];
-	public static byte[] rgb2to8 = new byte[4];
+	
 	public static TreeMap<Integer,byte[]> greyToRgbMap;
 	/** Get the RGB triple for the 3-bit GRB. */
 	public static byte[] getGRB333(int g, int r, int b) {
@@ -194,6 +195,16 @@ public class V99ColorMapUtils {
 		return (short) ((((rgb[0] >> 5) & 0x7) << 12) | 
 				(((rgb[2] >> 5) & 0x7) << 8) |
 				(((rgb[1] >> 5) & 0x7) << 0));
+	}
+	/**
+	 * @param rgb
+	 * @return
+	 */
+	public static byte getRGBToGRB332(byte[] rgb) {
+		int r = (rgb[0] >> 5) & 0x7;
+		int g = (rgb[1] >> 5) & 0x7;
+		int b = (rgb[2] >> 6) & 0x3;
+		return (byte) ((r << 5) | (g << 2) | b);
 	}
 
 }

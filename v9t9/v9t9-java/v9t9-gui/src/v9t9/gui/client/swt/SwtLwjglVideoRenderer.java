@@ -3,54 +3,9 @@
  */
 package v9t9.gui.client.swt;
 
-import static org.lwjgl.opengl.GL11.GL_CLAMP;
-import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
-import static org.lwjgl.opengl.GL11.GL_COMPILE;
-import static org.lwjgl.opengl.GL11.GL_FALSE;
-import static org.lwjgl.opengl.GL11.GL_FLAT;
-import static org.lwjgl.opengl.GL11.GL_LINEAR;
-import static org.lwjgl.opengl.GL11.GL_MODELVIEW;
-import static org.lwjgl.opengl.GL11.GL_NEAREST;
-import static org.lwjgl.opengl.GL11.GL_PROJECTION;
-import static org.lwjgl.opengl.GL11.GL_REPEAT;
-import static org.lwjgl.opengl.GL11.GL_REPLACE;
-import static org.lwjgl.opengl.GL11.GL_RGB;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_ENV;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_ENV_MODE;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
-import static org.lwjgl.opengl.GL11.GL_UNPACK_ALIGNMENT;
-import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
-import static org.lwjgl.opengl.GL11.glBindTexture;
-import static org.lwjgl.opengl.GL11.glCallList;
-import static org.lwjgl.opengl.GL11.glClear;
-import static org.lwjgl.opengl.GL11.glClearColor;
-import static org.lwjgl.opengl.GL11.glClearDepth;
-import static org.lwjgl.opengl.GL11.glDeleteLists;
-import static org.lwjgl.opengl.GL11.glDeleteTextures;
-import static org.lwjgl.opengl.GL11.glDisable;
-import static org.lwjgl.opengl.GL11.glEnable;
-import static org.lwjgl.opengl.GL11.glEndList;
-import static org.lwjgl.opengl.GL11.glFlush;
-import static org.lwjgl.opengl.GL11.glGenLists;
-import static org.lwjgl.opengl.GL11.glGenTextures;
-import static org.lwjgl.opengl.GL11.glLoadIdentity;
-import static org.lwjgl.opengl.GL11.glMatrixMode;
-import static org.lwjgl.opengl.GL11.glNewList;
-import static org.lwjgl.opengl.GL11.glPixelStorei;
-import static org.lwjgl.opengl.GL11.glScalef;
-import static org.lwjgl.opengl.GL11.glShadeModel;
-import static org.lwjgl.opengl.GL11.glTexEnvf;
-import static org.lwjgl.opengl.GL11.glTexImage2D;
-import static org.lwjgl.opengl.GL11.glTexParameteri;
-import static org.lwjgl.opengl.GL11.glViewport;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
-import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
-import static org.lwjgl.opengl.GL13.glActiveTexture;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL12.*;
+import static org.lwjgl.opengl.GL13.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -90,6 +45,7 @@ import v9t9.gui.client.swt.gl.StandardMonitorRender;
 import v9t9.gui.client.swt.gl.TextureLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.video.ImageDataCanvas24Bit;
+import v9t9.video.ImageDataCanvasR3G3B2;
 import v9t9.video.VdpCanvasFactory;
 
 /**
@@ -147,17 +103,24 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 	private IProperty monitorDrawing;
 
+
+	private long lastReport;
+	private long lastFrameTime;
+	private int frames;
+	private long frameTimes;
+
 	public SwtLwjglVideoRenderer(IMachine machine) {
 		super(machine);
 		monitorDrawing = settings.get(BaseEmulatorWindow.settingMonitorDrawing);
 	}
 
 	protected void createVdpCanvasHandler() {
-		vdpCanvas = new ImageDataCanvas24Bit();
+		vdpCanvas = new ImageDataCanvasR3G3B2();
+		//vdpCanvas = new ImageDataCanvas24Bit();
 		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(settings, this);
 		vdpCanvasBuffer = ByteBuffer.allocateDirect(vdpCanvas.getImageData().bytesPerLine * vdpCanvas.getImageData().height);
 		imageCanvasFormat = GL_RGB; 
-		imageCanvasType = GL_UNSIGNED_BYTE; 
+		imageCanvasType = vdpCanvas.getImageData().depth == 8 ? GL_UNSIGNED_BYTE_3_3_2 : GL_UNSIGNED_BYTE; 
 	}
 
 	/* (non-Javadoc)
@@ -478,6 +441,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 	
 	private void reblitGL() {
+		long firstTime = System.currentTimeMillis();
+		
 		MonitorEffect effect = getEffect();
 		MonitorParams params = effect.getParams();
 		
@@ -517,7 +482,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		
 		glTexImage2D(GL_TEXTURE_2D, 0, 
-				GL_RGB,
+				vdpCanvas.getImageData().depth == 8 ? GL_R3_G3_B2 : GL_RGB,
 				vdpCanvas.getVisibleWidth(),
 				vdpCanvas.getVisibleHeight(),
 				0, 
@@ -581,6 +546,19 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		// the whole ig4icd[32|64].dll DLL crashes and burns
 		if (programObject == 0 && supportsShaders) {
 			compileLinkShaders();
+		}
+		
+		frames++;
+		long lastTime = System.currentTimeMillis();
+		lastFrameTime = lastTime;
+		
+		frameTimes += (lastTime - firstTime);
+		
+		if (lastReport + 1000 <= lastFrameTime) {
+			@SuppressWarnings("unused")
+			long avgTime = frameTimes / frames;
+			//System.out.println("Max FPS: " + 1000 / avgTime);
+			lastReport = lastTime;
 		}
 	}
 	

@@ -208,6 +208,7 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
 		int offs = getBitmapOffset(x, y);
+		RGB rgb = new RGB(0, 0, 0);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				byte mem;
@@ -215,15 +216,15 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 				mem = access.memory[access.offset + j];
 				
 				int ri = (mem >> 5) & 0x7;
-				int r = V99ColorMapUtils.rgb3to8[ri] & 0xff;
+				rgb.red = V99ColorMapUtils.rgb3to8[ri] & 0xff;
 				int gi = (mem >> 2) & 0x7;
-				int g = V99ColorMapUtils.rgb3to8[gi] & 0xff;
+				rgb.green = V99ColorMapUtils.rgb3to8[gi] & 0xff;
 				//int b = ColorMapUtils.rgb2to8[mem & 0x3] & 0xff;
 				int bi = mem & 0x3;
-				int b = V99ColorMapUtils.rgb3to8[bi*2 + ((ri|gi) & 1)] & 0xff;
+				rgb.blue = V99ColorMapUtils.rgb3to8[bi*2 + ((ri|gi) & 1)] & 0xff;
 				
 				// XXX: no palette
-				byte pix = (byte) imageData.palette.getPixel(new RGB(r, g, b));
+				byte pix = (byte) imageData.palette.getPixel(rgb);
 				imageData.data[offs++] = pix;
 			}
 			
