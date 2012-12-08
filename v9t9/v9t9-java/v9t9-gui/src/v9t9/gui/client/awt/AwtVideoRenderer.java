@@ -30,6 +30,7 @@ import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
+import v9t9.common.video.BaseVdpCanvas.Rect;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.ICanvasListener;
 import v9t9.common.video.IVdpCanvas;
@@ -252,11 +253,11 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 			return;
 		
 		synchronized (vdpCanvas) {
-			org.eclipse.swt.graphics.Rectangle dirtyRect = vdpCanvas.getDirtyRect(); 
+			Rect dirtyRect = vdpCanvas.getDirtyRect(); 
 			if (dirtyRect == null)
 				return;
 			
-			Rectangle redrawRect_ = new Rectangle(dirtyRect.x, dirtyRect.y, dirtyRect.width, dirtyRect.height);
+			Rectangle redrawRect_ = new Rectangle(dirtyRect.x, dirtyRect.y, dirtyRect.dx, dirtyRect.dy);
 			
 			final Rectangle redrawRect = redrawRect_;
 			

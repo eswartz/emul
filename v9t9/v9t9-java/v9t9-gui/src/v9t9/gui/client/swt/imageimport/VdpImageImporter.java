@@ -11,9 +11,9 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpFormat;
-import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageImportData;
 
 /**
@@ -23,7 +23,7 @@ import v9t9.video.imageimport.ImageImportData;
 public class VdpImageImporter {
 
 	private IVdpChip vdp;
-	private ImageDataCanvas canvas;
+	private IVdpCanvas canvas;
 	private ImageImportData data;
 	private IVdpCanvasRenderer canvasRenderer;
 
@@ -32,7 +32,7 @@ public class VdpImageImporter {
 	 * @param importer 
 	 * @param data
 	 */
-	public VdpImageImporter(IVdpChip vdp, ImageDataCanvas canvas, IVdpCanvasRenderer canvasRenderer) {
+	public VdpImageImporter(IVdpChip vdp, IVdpCanvas canvas, IVdpCanvasRenderer canvasRenderer) {
 		this.vdp = vdp;
 		this.canvas = canvas;
 		this.canvasRenderer = canvasRenderer;

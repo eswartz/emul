@@ -4,13 +4,15 @@
 package v9t9.gui.client.swt;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +46,9 @@ import v9t9.gui.client.swt.gl.SimpleCurvedCrtMonitorRender;
 import v9t9.gui.client.swt.gl.StandardMonitorRender;
 import v9t9.gui.client.swt.gl.TextureLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
+import v9t9.video.BitmapCanvasShort;
+import v9t9.video.IGLDataCanvas;
+import v9t9.video.ImageDataCanvas;
 import v9t9.video.ImageDataCanvas24Bit;
 import v9t9.video.ImageDataCanvasR3G3B2;
 import v9t9.video.VdpCanvasFactory;
@@ -83,11 +88,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	
 	// pfft, lwjgl doesn't handle all our modes
 	//private MemoryCanvas memoryCanvas;
-	private int imageCanvasFormat;
-	private int imageCanvasType;
 
+	private IGLDataCanvas glDataCanvas;
 	private int vdpCanvasTexture;
-	private ByteBuffer vdpCanvasBuffer;
 	
 	private boolean supportsShaders = true;
 	
@@ -115,12 +118,14 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 
 	protected void createVdpCanvasHandler() {
-		vdpCanvas = new ImageDataCanvasR3G3B2();
-		//vdpCanvas = new ImageDataCanvas24Bit();
+		vdpCanvas = new BitmapCanvasShort();
+//		vdpCanvas = new ImageDataCanvasR3G3B2();
+//		vdpCanvas = new ImageDataCanvas24Bit();
+		
+		glDataCanvas = (IGLDataCanvas) vdpCanvas;
 		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(settings, this);
-		vdpCanvasBuffer = ByteBuffer.allocateDirect(vdpCanvas.getImageData().bytesPerLine * vdpCanvas.getImageData().height);
-		imageCanvasFormat = GL_RGB; 
-		imageCanvasType = vdpCanvas.getImageData().depth == 8 ? GL_UNSIGNED_BYTE_3_3_2 : GL_UNSIGNED_BYTE; 
+		//vdpCanvasBuffer = ByteBuffer.allocateDirect(vdpCanvas.getImageData().bytesPerLine * vdpCanvas.getImageData().height);
+//		vdpCanvasBuffer = ((IGLDataCanvas) vdpCanvas).allocateBuffer();
 	}
 
 	/* (non-Javadoc)
@@ -475,20 +480,43 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		
 		glBindTexture(GL_TEXTURE_2D, vdpCanvasTexture);
-		
-		// copy current bitmap to texture (EXPENSIVE ON SLOW CARDS!)
-		vdpCanvasBuffer = vdpCanvas.copy(vdpCanvasBuffer);
+
+		Buffer vdpCanvasBuffer = glDataCanvas.getBuffer();
 		
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		
-		glTexImage2D(GL_TEXTURE_2D, 0, 
-				vdpCanvas.getImageData().depth == 8 ? GL_R3_G3_B2 : GL_RGB,
-				vdpCanvas.getVisibleWidth(),
-				vdpCanvas.getVisibleHeight(),
-				0, 
-				imageCanvasFormat,
-				imageCanvasType, 
-				vdpCanvasBuffer);		
+
+		int imageCanvasFormat = glDataCanvas.getImageFormat();
+		int imageCanvasType = glDataCanvas.getImageType();
+
+		int texFmt = glDataCanvas.getInternalFormat();
+		if (vdpCanvasBuffer instanceof ByteBuffer) {
+			glTexImage2D(GL_TEXTURE_2D, 0, 
+					texFmt,
+					vdpCanvas.getVisibleWidth(),
+					vdpCanvas.getVisibleHeight(),
+					0, 
+					imageCanvasFormat,
+					imageCanvasType, 
+					(ByteBuffer) vdpCanvasBuffer);
+		} else if (vdpCanvasBuffer instanceof ShortBuffer) {
+			glTexImage2D(GL_TEXTURE_2D, 0, 
+					texFmt,
+					vdpCanvas.getVisibleWidth(),
+					vdpCanvas.getVisibleHeight(),
+					0, 
+					imageCanvasFormat,
+					imageCanvasType, 
+					(ShortBuffer) vdpCanvasBuffer);
+		} else if (vdpCanvasBuffer instanceof IntBuffer) {
+			glTexImage2D(GL_TEXTURE_2D, 0, 
+					texFmt,
+					vdpCanvas.getVisibleWidth(),
+					vdpCanvas.getVisibleHeight(),
+					0, 
+					imageCanvasFormat,
+					imageCanvasType, 
+					(IntBuffer) vdpCanvasBuffer);
+		}	
 
 		/*
 		 * Second texture: the monitor overlay

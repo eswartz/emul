@@ -6,57 +6,74 @@ package v9t9.video;
 import java.nio.Buffer;
 import java.util.Arrays;
 
-import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.PaletteData;
 import org.ejs.gui.images.ColorMapUtils;
 import org.ejs.gui.images.V99ColorMapUtils;
 
 import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.video.BitmapVdpCanvas;
 import v9t9.common.video.ISpriteVdpCanvas;
 import v9t9.common.video.VdpFormat;
 
 /**
- * Render video content into an ImageData
+ * Render video content into a short array
  * @author ejs
  *
  */
-public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCanvas {
-	private static PaletteData stockPaletteData = new PaletteData(0xFF0000, 0xFF00, 0xFF);
+public class BitmapCanvasShort extends BitmapVdpCanvas implements IGLDataCanvas {
+	protected short[] sdata;
+	protected int pixelsPerLine;
 
+	
 
-	protected byte[] colorRGB332Map;
-	protected byte[] colorRGBMap;
-	protected byte[] spriteColorRGBMap;
+	protected short[] colorRGB332Map;
+	protected short[] colorRGBMap;
+	protected short[] spriteColorRGBMap;
 
-	private byte[][] fourColorRGBMap;
-
-
+	private short[][] fourColorRGBMap;
 	private Buffer vdpCanvasBuffer;
 	
-	public ImageDataCanvasR3G3B2() {
+	public BitmapCanvasShort() {
 		super();
 		setSize(256, 192);
 	}
 	
-	protected PaletteData getPaletteData() {
-		return stockPaletteData;
+	
+	@Override
+	final public int getLineStride() {
+		return pixelsPerLine;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.ICanvas#getPixelStride()
+	 */
+	@Override
+	final public int getPixelStride() {
+		return 1;
 	}
 
 	@Override
-	protected void createImageData() {
+	public void doChangeSize() {
 		int allocHeight = height;
 		if ((height & 7) != 0)
 			allocHeight += 8;
 		
-		imageData = new ImageData(width, allocHeight * (isInterlacedEvenOdd() ? 2 : 1), 8, getPaletteData());
+		sdata = new short[width * allocHeight * (isInterlacedEvenOdd() ? 2 : 1)];
 		if (isInterlacedEvenOdd())
-			bytesPerLine = imageData.bytesPerLine * 2;
+			pixelsPerLine = width * 2;
 		else
-			bytesPerLine = imageData.bytesPerLine;
+			pixelsPerLine = width;
 		
-		pixSize = 1; //(imageData.depth >> 3);
+	}
+
+	/**
+	 * @param buffer
+	 * @return 
+	 */
+	public Buffer copy(Buffer buffer) {
+		return copyShorts(buffer, sdata, pixelsPerLine);
 	}
 	
+
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#clear()
@@ -71,13 +88,10 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 			rgb = getColorMgr().getRGB(getColorMgr().getClearColor());
 		}
 
-		byte col;
-		col = V99ColorMapUtils.getRGBToGRB332(rgb);
+		short col;
+		col = ColorMapUtils.getRGBToRGBX444(rgb);
 		
-		Arrays.fill(imageData.data, col);
-		if (imageData.alphaData != null) {
-			Arrays.fill(imageData.alphaData, 0, imageData.alphaData.length, (byte)-1);
-		}
+		Arrays.fill(sdata, col);
 	}
 	
 	
@@ -89,26 +103,21 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 		if (colorRGBMap == null)
 			return;
 		
-		byte fgRGB = colorRGBMap[getColorMgr().getClearColor()];
-		byte bgRGB = colorRGBMap[getColorMgr().getClearColor1()];
+		short fgRGB = colorRGBMap[getColorMgr().getClearColor()];
+		short bgRGB = colorRGBMap[getColorMgr().getClearColor1()];
 
-		for (int i = 0; i < imageData.data.length; i += 2) {
-			imageData.data[i ] = fgRGB;
-			imageData.data[i + 1] = bgRGB;
-		}
-		if (imageData.alphaData != null) {
-			Arrays.fill(imageData.alphaData, 0, imageData.alphaData.length, (byte)-1);
+		for (int i = 0; i < sdata.length; i += 2) {
+			sdata[i ] = fgRGB;
+			sdata[i + 1] = bgRGB;
 		}
 	}
-	
-
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#getBitmapOffset(int, int)
 	 */
 	@Override
 	final public int getBitmapOffset(int x, int y) {
-		return getLineStride() * (y) + x * pixSize;
+		return getLineStride() * (y) + x;
 	}
 	
 	/* (non-Javadoc)
@@ -119,75 +128,78 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 		super.syncColors();
 
 		if (colorRGB332Map == null)
-			colorRGB332Map = new byte[256];
+			colorRGB332Map = new short[256];
 
 		if (colorRGBMap == null) 
-			colorRGBMap = new byte[16];
+			colorRGBMap = new short[16];
 		if (spriteColorRGBMap == null) 
-			spriteColorRGBMap = new byte[16];
+			spriteColorRGBMap = new short[16];
 		if (fourColorRGBMap == null) { 
-			fourColorRGBMap = new byte[2][];
-			fourColorRGBMap[0] = new byte[16];
-			fourColorRGBMap[1] = new byte[16];
+			fourColorRGBMap = new short[2][];
+			fourColorRGBMap[0] = new short[16];
+			fourColorRGBMap[1] = new short[16];
 		}
 		
 		for (int i = 0; i < 16; i++) {
-			colorRGBMap[i] = V99ColorMapUtils.getRGBToGRB332(getColorMgr().getRGB(colorMap[i]));
-			spriteColorRGBMap[i] = V99ColorMapUtils.getRGBToGRB332(getColorMgr().getRGB(spriteColorMap[i]));
-			fourColorRGBMap[0][i] = V99ColorMapUtils.getRGBToGRB332(getColorMgr().getRGB(fourColorMap[0][i]));
-			fourColorRGBMap[1][i] = V99ColorMapUtils.getRGBToGRB332(getColorMgr().getRGB(fourColorMap[1][i]));
+			colorRGBMap[i] = ColorMapUtils.getRGBToRGBX444(getColorMgr().getRGB(colorMap[i]));
+			spriteColorRGBMap[i] = ColorMapUtils.getRGBToRGBX444(getColorMgr().getRGB(spriteColorMap[i]));
+			fourColorRGBMap[0][i] = ColorMapUtils.getRGBToRGBX444(getColorMgr().getRGB(fourColorMap[0][i]));
+			fourColorRGBMap[1][i] = ColorMapUtils.getRGBToRGBX444(getColorMgr().getRGB(fourColorMap[1][i]));
 		}
 
 		// TODO: clean up between color manager, SwtLwjglVideoRenderer, etc in terms of how
 		// to map greyscale -- we get it for free from OpenGL!
-		if (getColorMgr().isGreyscale()) {
+		boolean greyscale = getColorMgr().isGreyscale();
+//		if (greyscale) {
+//			byte[] rgb = { 0, 0, 0 };
+//			for (int i = 0; i < 256; i++) {
+//				V99ColorMapUtils.getGRB332(rgb, (byte) i, true);
+//				colorRGB332Map[i] = (byte) ColorMapUtils.getRGBLum(rgb);
+//			}
+//		} else 
+		{
 			byte[] rgb = { 0, 0, 0 };
 			for (int i = 0; i < 256; i++) {
-				V99ColorMapUtils.getGRB332(rgb, (byte) i, true);
-				colorRGB332Map[i] = (byte) ColorMapUtils.getRGBLum(rgb);
-			}
-		} else {
-			for (int i = 0; i < 256; i++) {
-				int j = ((i & 0xe0) >> 3) | ((i & 0x1c) << 3) | (i & 0x3);
-				colorRGB332Map[i] = (byte) j;
+				V99ColorMapUtils.getGRB332(rgb, (byte) i, greyscale);
+				colorRGB332Map[i] = ColorMapUtils.getRGBToRGBX444(rgb);
 			}
 		}
 	}
 
 	protected void drawEightPixels(int offs, byte mem, byte fg, byte bg) {
-		byte fgRGB = colorRGBMap[fg];
-		byte bgRGB = colorRGBMap[bg];
-		imageData.data[offs + 0] = (mem & 0x80) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 1] = (mem & 0x40) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 2] = (mem & 0x20) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 3] = (mem & 0x10) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 4] = (mem & 0x08) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 5] = (mem & 0x04) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 6] = (mem & 0x02) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 7] = (mem & 0x01) != 0 ? fgRGB : bgRGB;
+		short fgRGB = colorRGBMap[fg];
+		short bgRGB = colorRGBMap[bg];
+		sdata[offs + 0] = (mem & 0x80) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 1] = (mem & 0x40) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 2] = (mem & 0x20) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 3] = (mem & 0x10) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 4] = (mem & 0x08) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 5] = (mem & 0x04) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 6] = (mem & 0x02) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 7] = (mem & 0x01) != 0 ? fgRGB : bgRGB;
 	}
 
 	protected void drawSixPixels(int offs, byte mem, byte fg, byte bg) {
-		byte fgRGB = colorRGBMap[fg];
-		byte bgRGB = colorRGBMap[bg];
-		imageData.data[offs + 0] = (mem & 0x80) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 1] = (mem & 0x40) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 2] = (mem & 0x20) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 3] = (mem & 0x10) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 4] = (mem & 0x08) != 0 ? fgRGB : bgRGB;
-		imageData.data[offs + 5] = (mem & 0x04) != 0 ? fgRGB : bgRGB;
+		short fgRGB = colorRGBMap[fg];
+		short bgRGB = colorRGBMap[bg];
+		sdata[offs + 0] = (mem & 0x80) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 1] = (mem & 0x40) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 2] = (mem & 0x20) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 3] = (mem & 0x10) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 4] = (mem & 0x08) != 0 ? fgRGB : bgRGB;
+		sdata[offs + 5] = (mem & 0x04) != 0 ? fgRGB : bgRGB;
 	}
 
 	public void drawEightSpritePixels(int x, int y, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
 		int endOffs = getBitmapOffset(256, y);
-		byte fgRGB = colorRGBMap[fg];
+		short fgRGB = colorRGBMap[fg];
 		for (int i = 0; i < 8; i++) {
 			int ioffs = offs + i;
 			if (ioffs >= endOffs)
 				break;
 			if ((mem & bitmask & 0x80) != 0) {
-				imageData.data[ioffs] = fgRGB;
+				sdata[ioffs] = fgRGB;
 			}
 			bitmask <<= 1;
 			mem <<= 1;
@@ -197,20 +209,20 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 	public void drawEightMagnifiedSpritePixels(int x, int y, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
 		int endOffs = getBitmapOffset(256, y);
-		byte fgRGB = colorRGBMap[fg];
+		short fgRGB = colorRGBMap[fg];
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
 			int ioffs = offs + i;
 			if (ioffs >= endOffs)
 				break;
 			if ((mem & bitmask & 0x8000) != 0) {
-				imageData.data[ioffs] = fgRGB;
+				sdata[ioffs] = fgRGB;
 			}
 			bitmask <<= 1;
 			if (ioffs + 1 >= endOffs)
 				break;
 			if ((mem & bitmask & 0x8000) != 0) {
-				imageData.data[ioffs + 1] = fgRGB;
+				sdata[ioffs + 1] = fgRGB;
 			}
 			bitmask <<= 1;
 			mem <<= 1;
@@ -220,26 +232,26 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 	public void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
 		int offs = getBitmapOffset(x, y);
 		int endOffs = getBitmapOffset(256, y);
-		byte fgRGB = colorRGBMap[fg];
+		short fgRGB = colorRGBMap[fg];
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
 			int ioffs = offs + i;
 			if (ioffs >= endOffs)
 				break;
 			if ((mem & bitmask & 0x8000) != 0) {
-				imageData.data[ioffs] = fgRGB;
+				sdata[ioffs] = fgRGB;
 				if (ioffs + 1 >= endOffs)
 					return;
-				imageData.data[ioffs + 1] = fgRGB;
+				sdata[ioffs + 1] = fgRGB;
 			}
 			bitmask <<= 1;
 			if (ioffs + 2 >= endOffs)
 				break;
 			if ((mem & bitmask & 0x8000) != 0) {
-				imageData.data[ioffs + 2] = fgRGB;
+				sdata[ioffs + 2] = fgRGB;
 				if (ioffs + 3 >= endOffs)
 					return;
-				imageData.data[ioffs + 3] = fgRGB;
+				sdata[ioffs + 3] = fgRGB;
 			}
 			bitmask <<= 1;
 			mem <<= 1;
@@ -254,20 +266,20 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 			byte mem;
 
 			mem = access.memory[access.offset + 0];
-			imageData.data[offs + 0] = colorRGBMap[((mem >> 4) & 0xf)];
-			imageData.data[offs + 1] = colorRGBMap[(mem & 0xf)];
+			sdata[offs + 0] = colorRGBMap[((mem >> 4) & 0xf)];
+			sdata[offs + 1] = colorRGBMap[(mem & 0xf)];
 			
 			mem = access.memory[access.offset + 1];
-			imageData.data[offs + 2] = colorRGBMap[((mem >> 4) & 0xf)];
-			imageData.data[offs + 3] = colorRGBMap[(mem & 0xf)];
+			sdata[offs + 2] = colorRGBMap[((mem >> 4) & 0xf)];
+			sdata[offs + 3] = colorRGBMap[(mem & 0xf)];
 			
 			mem = access.memory[access.offset + 2];
-			imageData.data[offs + 4] = colorRGBMap[((mem >> 4) & 0xf)];
-			imageData.data[offs + 5] = colorRGBMap[(mem & 0xf)];
+			sdata[offs + 4] = colorRGBMap[((mem >> 4) & 0xf)];
+			sdata[offs + 5] = colorRGBMap[(mem & 0xf)];
 			
 			mem = access.memory[access.offset + 3];
-			imageData.data[offs + 6] = colorRGBMap[((mem >> 4) & 0xf)];
-			imageData.data[offs + 7] = colorRGBMap[(mem & 0xf)];
+			sdata[offs + 6] = colorRGBMap[((mem >> 4) & 0xf)];
+			sdata[offs + 7] = colorRGBMap[(mem & 0xf)];
 			
 			offs += lineStride;
 			access.offset += rowstride;
@@ -284,17 +296,17 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 			
 			mem = access.memory[access.offset + 0];
 
-			imageData.data[offs + 0] = colorRGBMap[((mem >> 6) & 0x3)];
-			imageData.data[offs + 1] = colorRGBMap[((mem >> 4) & 0x3)];
-			imageData.data[offs + 2] = colorRGBMap[((mem >> 2) & 0x3)];
-			imageData.data[offs + 3] = colorRGBMap[(mem & 0x3)];
+			sdata[offs + 0] = colorRGBMap[((mem >> 6) & 0x3)];
+			sdata[offs + 1] = colorRGBMap[((mem >> 4) & 0x3)];
+			sdata[offs + 2] = colorRGBMap[((mem >> 2) & 0x3)];
+			sdata[offs + 3] = colorRGBMap[(mem & 0x3)];
 			
 			mem = access.memory[access.offset + 1];
 			
-			imageData.data[offs + 4] = colorRGBMap[((mem >> 6) & 0x3)];
-			imageData.data[offs + 5] = colorRGBMap[((mem >> 4) & 0x3)];
-			imageData.data[offs + 6] = colorRGBMap[((mem >> 2) & 0x3)];
-			imageData.data[offs + 7] = colorRGBMap[(mem & 0x3)];
+			sdata[offs + 4] = colorRGBMap[((mem >> 6) & 0x3)];
+			sdata[offs + 5] = colorRGBMap[((mem >> 4) & 0x3)];
+			sdata[offs + 6] = colorRGBMap[((mem >> 2) & 0x3)];
+			sdata[offs + 7] = colorRGBMap[(mem & 0x3)];
 			
 			offs += lineStride;
 			access.offset += rowstride;
@@ -307,14 +319,14 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 		int lineStride = getLineStride();
 		int offs = getBitmapOffset(x, y);
 		for (int i = 0; i < 8; i++) {
-			imageData.data[offs + 0] = colorRGB332Map[access.memory[access.offset + 0] & 0xff];
-			imageData.data[offs + 1] = colorRGB332Map[access.memory[access.offset + 1] & 0xff];
-			imageData.data[offs + 2] = colorRGB332Map[access.memory[access.offset + 2] & 0xff];
-			imageData.data[offs + 3] = colorRGB332Map[access.memory[access.offset + 3] & 0xff];
-			imageData.data[offs + 4] = colorRGB332Map[access.memory[access.offset + 4] & 0xff];
-			imageData.data[offs + 5] = colorRGB332Map[access.memory[access.offset + 5] & 0xff];
-			imageData.data[offs + 6] = colorRGB332Map[access.memory[access.offset + 6] & 0xff];
-			imageData.data[offs + 7] = colorRGB332Map[access.memory[access.offset + 7] & 0xff];
+			sdata[offs + 0] = colorRGB332Map[access.memory[access.offset + 0] & 0xff];
+			sdata[offs + 1] = colorRGB332Map[access.memory[access.offset + 1] & 0xff];
+			sdata[offs + 2] = colorRGB332Map[access.memory[access.offset + 2] & 0xff];
+			sdata[offs + 3] = colorRGB332Map[access.memory[access.offset + 3] & 0xff];
+			sdata[offs + 4] = colorRGB332Map[access.memory[access.offset + 4] & 0xff];
+			sdata[offs + 5] = colorRGB332Map[access.memory[access.offset + 5] & 0xff];
+			sdata[offs + 6] = colorRGB332Map[access.memory[access.offset + 6] & 0xff];
+			sdata[offs + 7] = colorRGB332Map[access.memory[access.offset + 7] & 0xff];
 			
 			offs += lineStride;
 			access.offset += rowstride;
@@ -331,10 +343,10 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 				for (int j = 0; j < 8; j++) {
 					byte cl = spriteCanvas.getColorAtOffset(sprOffset + j);
 					if (cl != 0) {
-						byte rgb = spriteColorRGBMap[cl];
-						imageData.data[bitmapOffset] = rgb;
-						if (blockMag > 1 && bitmapOffset + 1 < imageData.data.length) {
-							imageData.data[bitmapOffset + 1] = rgb;
+						short rgb = spriteColorRGBMap[cl];
+						sdata[bitmapOffset] = rgb;
+						if (blockMag > 1 && bitmapOffset + 1 < sdata.length) {
+							sdata[bitmapOffset + 1] = rgb;
 						}
 					}
 					bitmapOffset += blockMag;
@@ -363,8 +375,8 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 					else
 						cl = (byte) (col & 0x3);
 					if (cl != 0) {
-						byte rgb = spriteColorRGBMap[cl];
-						imageData.data[bitmapOffset] = rgb;
+						short rgb = spriteColorRGBMap[cl];
+						sdata[bitmapOffset] = rgb;
 					}
 					bitmapOffset ++;
 					colorColumn ^= 1;
@@ -375,8 +387,8 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 						else
 							cl = (byte) (col & 0x3);
 						if (cl != 0) {
-							byte rgb = spriteColorRGBMap[cl];
-							imageData.data[bitmapOffset] = rgb;
+							short rgb = spriteColorRGBMap[cl];
+							sdata[bitmapOffset] = rgb;
 						}
 						bitmapOffset ++;
 						colorColumn ^= 1;
@@ -390,21 +402,24 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 		}			
 	}
 
+
 	/* (non-Javadoc)
 	 * @see v9t9.video.IGLDataCanvas#getBuffer()
 	 */
 	@Override
 	public Buffer getBuffer() {
-		vdpCanvasBuffer = copy(vdpCanvasBuffer);
+		vdpCanvasBuffer = copyShorts(vdpCanvasBuffer, sdata, pixelsPerLine);
 		return vdpCanvasBuffer;
 	}
-	
+
+
 	/* (non-Javadoc)
 	 * @see v9t9.video.IGLDataCanvas#getImageType()
 	 */
 	@Override
 	public int getImageType() {
-		return getColorMgr().isGreyscale() ? GL_UNSIGNED_BYTE : GL_UNSIGNED_BYTE_3_3_2;
+		//return getColorMgr().isGreyscale() ? GL_LUMINANCE12_ALPHA4 : GL_UNSIGNED_SHORT_4_4_4_4;
+		return GL_UNSIGNED_SHORT_4_4_4_4;
 	}
 	
 	/* (non-Javadoc)
@@ -412,14 +427,16 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 	 */
 	@Override
 	public int getImageFormat() {
-		return getColorMgr().isGreyscale() ? GL_LUMINANCE : GL_RGB;
+//		return getColorMgr().isGreyscale() ? GL_LUMINANCE12_ALPHA4 : GL_RGBA;
+		return GL_RGBA;
 	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.video.IGLDataCanvas#getInternalFormat()
 	 */
 	@Override
 	public int getInternalFormat() {
-		return GL_RGB4;
+		return getColorMgr().isGreyscale() ? GL_LUMINANCE12_ALPHA4 : GL_RGB4;
+//		return GL_RGB4;
 	}
-
 }

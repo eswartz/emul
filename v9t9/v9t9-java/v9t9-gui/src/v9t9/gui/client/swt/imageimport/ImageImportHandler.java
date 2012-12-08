@@ -8,9 +8,9 @@ import java.util.LinkedHashSet;
 import org.ejs.gui.images.AwtImageUtils;
 
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpFormat;
-import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
 import v9t9.video.imageimport.ImageImportData;
@@ -29,7 +29,7 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 	abstract protected IVdpCanvasRenderer getCanvasRenderer() ;
 	abstract protected IVdpChip getVdpHandler() ;
 
-	abstract protected ImageDataCanvas getCanvas();
+	abstract protected IVdpCanvas getCanvas();
 
 
 	@Override

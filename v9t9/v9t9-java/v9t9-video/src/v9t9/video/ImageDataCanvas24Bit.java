@@ -3,6 +3,7 @@
  */
 package v9t9.video;
 
+import java.nio.Buffer;
 import java.util.Arrays;
 
 import org.eclipse.swt.graphics.ImageData;
@@ -18,13 +19,15 @@ import v9t9.common.video.VdpFormat;
  * @author ejs
  *
  */
-public class ImageDataCanvas24Bit extends ImageDataCanvas {
+public class ImageDataCanvas24Bit extends ImageDataCanvas implements IGLDataCanvas {
 	private static PaletteData stockPaletteData = new PaletteData(0xFF0000, 0xFF00, 0xFF);
 
 	protected byte[][] colorRGBMap;
 	protected byte[][] spriteColorRGBMap;
 
 	private byte[][][] fourColorRGBMap;
+
+	private Buffer vdpCanvasBuffer;
 
 	public ImageDataCanvas24Bit() {
 		super();
@@ -435,5 +438,37 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		} catch (ArrayIndexOutOfBoundsException e) {
 			// ignore
 		}			
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.video.IGLDataCanvas#copyIntoTexture()
+	 */
+	@Override
+	public Buffer getBuffer() {
+		vdpCanvasBuffer = copy(vdpCanvasBuffer);
+		return vdpCanvasBuffer;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.video.IGLDataCanvas#getImageType()
+	 */
+	@Override
+	public int getImageType() {
+		return GL_UNSIGNED_BYTE;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.video.IGLDataCanvas#getImageFormat()
+	 */
+	@Override
+	public int getImageFormat() {
+		return GL_RGB;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.video.IGLDataCanvas#getInternalFormat()
+	 */
+	@Override
+	public int getInternalFormat() {
+		return GL_RGB8;
 	}
 }

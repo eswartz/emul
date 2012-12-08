@@ -30,9 +30,9 @@ import org.ejs.gui.images.MonoMapColor;
 import org.ejs.gui.images.UserPaletteMapColor;
 import org.ejs.gui.images.V99ColorMapUtils;
 
+import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
-import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageImportOptions.Dither;
 import v9t9.video.imageimport.ImageImportOptions.Palette;
 import ejs.base.utils.Pair;
@@ -152,7 +152,7 @@ private boolean isBitmap;
 
 private IPaletteMapper mapColor;
 
-	public ImageImport(ImageDataCanvas canvas, boolean supportsSetPalette) {
+	public ImageImport(IVdpCanvas canvas, boolean supportsSetPalette) {
 //		this.canvas = canvas;
 //		this.supportsSetPalette = supportsSetPalette;
 		synchronized (canvas) {
@@ -169,7 +169,7 @@ private IPaletteMapper mapColor;
 			this.useColorMappedGreyScale = colorMgr.isGreyscale();
 		}
 		
-		this.rgbs = new int[canvas.getImageData().width];
+		this.rgbs = new int[canvas.getWidth()];
 		
 	}
 	

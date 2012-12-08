@@ -3,6 +3,7 @@
  */
 package v9t9.video;
 
+import java.nio.Buffer;
 import java.util.Arrays;
 
 import v9t9.common.memory.ByteMemoryAccess;
@@ -258,5 +259,9 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 	public void blitFourColorSpriteBlock(ISpriteVdpCanvas spriteCanvas, int x,
 			int y, int blockMag) {
 		throw new IllegalArgumentException();
+	}
+	
+	public Buffer copy(Buffer buffer) {
+		return copyBytes(buffer, bitmap, getLineStride(), 1);
 	}
 }

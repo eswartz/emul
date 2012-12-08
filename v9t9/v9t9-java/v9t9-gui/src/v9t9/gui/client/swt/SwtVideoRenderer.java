@@ -40,11 +40,15 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.video.BaseVdpCanvas.Rect;
+import v9t9.common.video.BitmapVdpCanvas;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.ICanvasListener;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
+import v9t9.common.video.VdpCanvas;
 import v9t9.gui.common.BaseEmulatorWindow;
+import v9t9.video.BitmapCanvasShort;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.ImageDataCanvas24Bit;
 import v9t9.video.VdpCanvasFactory;
@@ -57,7 +61,7 @@ import v9t9.video.VdpCanvasFactory;
 public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVideoRenderer {
 	
 	protected Canvas canvas;
-	protected ImageDataCanvas vdpCanvas;
+	protected BitmapVdpCanvas vdpCanvas;
 	protected Color bg;
 
 	protected Image image;
@@ -279,8 +283,9 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	}
 	
 	protected void doTriggerRedraw() {
-		if (vdpCanvas.getDirtyRect() != null) {
-			Rectangle redrawPhys = logicalToPhysical(vdpCanvas.getDirtyRect());
+		Rect dirty = vdpCanvas.getDirtyRect();
+		if (dirty != null) {
+			Rectangle redrawPhys = logicalToPhysical(new Rectangle(dirty.x, dirty.y, dirty.dx, dirty.dy));
 			canvas.redraw(redrawPhys.x, redrawPhys.y, 
 					redrawPhys.width, redrawPhys.height, false);
 		}
@@ -464,8 +469,12 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 * @return
 	 */
 	public ImageData getScreenshotImageData() {
-		ImageData imageData = (ImageData) ((ImageDataCanvas) vdpCanvas).getImageData().clone();
-		return imageData;
+		if (vdpCanvas instanceof ImageDataCanvas) {
+			ImageData imageData;
+			imageData = (ImageData) ((ImageDataCanvas) vdpCanvas).getImageData().clone();
+			return imageData;
+		}
+		return null;
 	}
 
 	public void addMouseEventListener(MouseListener listener) {

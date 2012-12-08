@@ -3,6 +3,7 @@ package v9t9.gui.client.awt;
 
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.gui.client.swt.imageimport.ImageImportHandler;
 import v9t9.video.ImageDataCanvas;
@@ -26,7 +27,7 @@ public class AwtImageImportSupport extends ImageImportHandler {
 	}
 
 	@Override
-	protected ImageDataCanvas getCanvas() {
+	protected IVdpCanvas getCanvas() {
 		return canvas;
 	}
 	

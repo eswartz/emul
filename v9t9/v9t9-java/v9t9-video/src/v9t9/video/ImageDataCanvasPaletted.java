@@ -244,4 +244,6 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			int y, int blockMag) {
 		throw new IllegalArgumentException();
 	}
+	
+	
 }

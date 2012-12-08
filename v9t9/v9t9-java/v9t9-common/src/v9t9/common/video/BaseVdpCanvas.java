@@ -3,13 +3,21 @@
  */
 package v9t9.common.video;
 
-
-
 /**
  * @author ejs
  *
  */
 public abstract class BaseVdpCanvas implements ICanvas {
+	public static class Rect {
+		public Rect(int x, int y, int dx, int dy) {
+			this.x = x;
+			this.y = y;
+			this.dx = dx;
+			this.dy = dy;
+		}
+
+		public final int x, y, dx, dy;
+	}
 	protected int dx1;
 	protected int dy1;
 	protected int dx2;
@@ -142,4 +150,12 @@ public abstract class BaseVdpCanvas implements ICanvas {
 		markDirty();
 	}
 
+
+	/** Get the dirty rectangle in pixels */
+	public synchronized Rect getDirtyRect() {
+		if (dx1 >= dx2 || dy1 >= dy2)
+			return null;
+
+		return new Rect(dx1, dy1, (dx2 - dx1), (dy2 - dy1));
+	}
 }

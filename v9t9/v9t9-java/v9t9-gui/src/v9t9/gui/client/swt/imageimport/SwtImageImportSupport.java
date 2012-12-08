@@ -14,12 +14,12 @@ import ejs.base.properties.IPropertyListener;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtDragDropHandler;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.shells.ImageImportOptionsDialog;
-import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageImport;
 
 /**
@@ -107,10 +107,9 @@ public class SwtImageImportSupport extends ImageImportHandler {
 	}
 
 	@Override
-	protected ImageDataCanvas getCanvas() {
+	protected IVdpCanvas getCanvas() {
 		ISwtVideoRenderer renderer = (ISwtVideoRenderer) getVideoRenderer();
-		final ImageDataCanvas canvas = (ImageDataCanvas) renderer.getCanvas();
-		return canvas;
+		return renderer.getCanvas();
 	}
 	@Override
 	protected IVdpChip getVdpHandler() {
