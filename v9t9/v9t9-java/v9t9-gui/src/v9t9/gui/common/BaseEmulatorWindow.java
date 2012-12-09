@@ -39,7 +39,7 @@ public abstract class BaseEmulatorWindow {
 	/**
 	 * 
 	 */
-	private static final String[] MACHINE_SAVE_FILE_EXTENSIONS = new String[] { ".sav|V9t9 machine save file" };
+	private static final String[] MACHINE_SAVE_FILE_EXTENSIONS = new String[] { "*.sav|V9t9 machine save file" };
 	protected IVideoRenderer videoRenderer;
 	protected final IMachine machine;
 	static public final SettingSchema settingMonitorDrawing = new SettingSchema(
