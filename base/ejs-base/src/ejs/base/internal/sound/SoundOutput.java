@@ -214,14 +214,14 @@ public class SoundOutput implements ISoundOutput {
 			if (soundGeneratorWorkBuffer == null || soundGeneratorWorkBuffer.length == 0 || lastUpdatedPos == 0)
 				return null;
 	
-			if (anyChanged) {
-				for (ISoundVoice voice : voices) {
-					if (voice instanceof IFlushableSoundVoice) {
-						((IFlushableSoundVoice) voice).flushAudio(
-								soundGeneratorWorkBuffer, 0, lastUpdatedPos, totalCount);
-					}
+			for (ISoundVoice voice : voices) {
+				if (voice instanceof IFlushableSoundVoice) {
+					anyChanged |= ((IFlushableSoundVoice) voice).flushAudio(
+							soundGeneratorWorkBuffer, 0, lastUpdatedPos, totalCount);
 				}
-
+			}
+			
+			if (anyChanged) {
 				if (lastUpdatedPos < soundGeneratorWorkBuffer.length) {
 					chunk = new SoundChunk(0, soundGeneratorWorkBuffer, 0, lastUpdatedPos, format);
 					soundGeneratorWorkBuffer = new float[bufferSize];
@@ -237,6 +237,4 @@ public class SoundOutput implements ISoundOutput {
 		}
 		return chunk;
 	}
-
-
 }

@@ -244,7 +244,10 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 	
 	public void tick() {
 		if (soundHandler != null) {
-			soundHandler.flushAudio();
+			int pos = machine.getCpu().getCurrentCycleCount();
+			int total = machine.getCpu().getCurrentTargetCycleCount();
+
+			soundHandler.flushAudio(pos, total);
 		}
 	}
 }

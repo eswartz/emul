@@ -89,35 +89,47 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	 * @see v9t9.base.sound.ITimeAdjustSoundVoice#flushAudio(float[], int, int)
 	 */
 	@Override
-	public synchronized void flushAudio(float[] soundGeneratorWorkBuffer, int from,
+	public synchronized boolean flushAudio(float[] soundGeneratorWorkBuffer, int from,
 			int to, int total) {
-		if (from < to && deltaIdx > 0) {
+		boolean generated = false;
+		if (from < to && (origState || deltaIdx > 0)) {
+			generated = true;
 			int ratio = 128 + balance;
-			float sampleMagnitude = origState ? 1f : 0f;
-			float sampleL = ((256 - ratio) * sampleMagnitude) / 256.f;
-			float sampleR = (ratio * sampleMagnitude) / 256.f;
+			float sampleL = ((256 - ratio) * 1f) / 256.f;
+			float sampleR = (ratio * 1f) / 256.f;
 			
 			int idx = 0;
 			
+			int origFrom = from;
+			int totalSamps = to - from;
+			
+			int next = origFrom + (int) (idx < deltaIdx ? (long) absp1(deltas[idx++]) * totalSamps / total : totalSamps);
+			
+			
+			boolean on = origState;
 			while (from < to) {
-				if (idx < deltaIdx && (long) from * total / to >= absp1(deltas[idx])) {
-					//System.out.print("@" + deltas[idx] +":" + from +" ");
-					
-					sampleMagnitude = deltas[idx] >= 0 ? 1f : 0f;
-					sampleL = ((256 - ratio) * sampleMagnitude) / 256.f;
-					sampleR = (ratio * sampleMagnitude) / 256.f;
-					
-					idx++;
+				if (on) {
+					soundGeneratorWorkBuffer[from++] += sampleL;
+					soundGeneratorWorkBuffer[from++] += sampleR;
+				} else {
+					from += 2;
 				}
-				
-				soundGeneratorWorkBuffer[from++] += sampleL;
-				soundGeneratorWorkBuffer[from++] += sampleR;
+				if (from >= next) {
+					if (idx < deltaIdx) {
+						on = deltas[idx] > 0; 
+						next = origFrom + (int) (long) absp1(deltas[idx++]) * totalSamps / total;
+					} else {
+						on = state;
+						next = to;
+					}
+				}
 			}
-			//System.out.println(from + "! ");
 		}
 		
 		deltaIdx = 0;
 		origState = state;
+		
+		return generated;
 	}
 	
 	/**

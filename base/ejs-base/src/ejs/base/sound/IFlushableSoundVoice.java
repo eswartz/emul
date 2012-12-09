@@ -21,7 +21,8 @@ public interface IFlushableSoundVoice extends ISoundVoice {
 	 * @param startPos
 	 * @param lastUpdatedPos
 	 * @param totalCount same parameter passed to {@link ISoundOutput#flushAudio(ISoundVoice[], int)}
+	 * @return true if any sound generated
 	 */
-	void flushAudio(float[] soundGeneratorWorkBuffer, int startPos, int lastUpdatedPos, int totalCount);
+	boolean flushAudio(float[] soundGeneratorWorkBuffer, int startPos, int lastUpdatedPos, int totalCount);
 
 }

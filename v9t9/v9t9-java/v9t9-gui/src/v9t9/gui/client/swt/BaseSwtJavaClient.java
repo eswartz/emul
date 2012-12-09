@@ -134,20 +134,27 @@ public abstract class BaseSwtJavaClient implements IClient {
         };
         videoTimer.scheduleTask(videoUpdateTask, videoUpdateTick);
         
+        // flush sound each tick
         TimerTask soundUpdateTask = new TimerTask() {
         	
         	@Override
         	public void run() {
-        		soundHandler.flushAudio();
+        		int pos = machine.getCpu().getCurrentCycleCount();
+        		int total = machine.getCpu().getCurrentTargetCycleCount();
+
+        		soundHandler.flushAudio(pos, total);
         	}
         };
         soundTimer.scheduleTask(soundUpdateTask, soundTick);
         
-        // update sound as often as possible
+        // update sound as often as registers change
         final TimerTask soundGenerateTask = new TimerTask() {
 			@Override
 			public void run() {
-				soundHandler.generateSound();
+				int pos = machine.getCpu().getCurrentCycleCount();
+				int total = machine.getCpu().getCurrentTargetCycleCount();
+
+				soundHandler.generateSound(pos, total);
 			}
 		};
         machine.getSound().addWriteListener(new IRegisterWriteListener() {
@@ -168,7 +175,10 @@ public abstract class BaseSwtJavaClient implements IClient {
 		final TimerTask speechDoneTask = new TimerTask() {
 			@Override
 			public void run() {
-				soundHandler.flushAudio();
+				int pos = machine.getCpu().getCurrentCycleCount();
+				int total = machine.getCpu().getCurrentTargetCycleCount();
+
+				soundHandler.flushAudio(pos, total);
 			}
 		};
         machine.getSpeech().addSpeechListener(new ISpeechDataSender() {

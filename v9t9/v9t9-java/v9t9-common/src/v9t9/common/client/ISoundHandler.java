@@ -32,13 +32,17 @@ public interface ISoundHandler {
 	
 	/**
 	 * Generate the sound for the given range of time.
+	 * @param pos TODO
+	 * @param total TODO
 	 */
-	void generateSound();
+	void generateSound(int pos, int total);
 	
 	/**
 	 * Fill out and flush the sound accumulated for this tick
+	 * @param pos TODO
+	 * @param total TODO
 	 */
-	void flushAudio();
+	void flushAudio(int pos, int total);
 	
 
 	/**
