@@ -88,7 +88,7 @@ public class DemoProgressBar extends Composite {
 						totalTime = player.getTotalTime();
 						control.setMaximum(maxDemoScale);
 						
-						int incr = (int) (maxDemoScale / (int) (totalTime / 1000));
+						int incr = Math.max(1, (int) (maxDemoScale / Math.max(1, (int) (totalTime / 1000))));
 						control.setIncrement(incr);
 						control.setPageIncrement(Math.max(10, incr));
 						

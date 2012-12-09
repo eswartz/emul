@@ -64,52 +64,50 @@ import ejs.base.utils.ListenerList.IFire;
  * @author ejs
  */
 abstract public class MachineBase implements IMachine {
-    protected IMemory memory;
-    protected IMemoryDomain console;
-    protected  ICpu cpu;
-    protected IExecutor executor;
-    protected IClient client;
-    protected  volatile boolean bAlive;
-    protected Timer timer;
-    protected FastTimer fastTimer;
-    //Timer cpuTimer;
-    //protected Timer videoTimer;
+	private Object executionLock = new Object();
+	private volatile boolean bAlive;
+	private volatile boolean bExecuting;
+
+	private final int cpuTicksPerSec = 100;
+	
+	protected IMemory memory;
+	protected IMemoryDomain console;
+	protected ICpu cpu;
+	protected IExecutor executor;
+	protected IClient client;
+
+	protected Timer timer;
+	protected FastTimer fastTimer;
 	private IVdpChip vdp;
 	private IFileHandler fileHandler;
-	
-    protected long lastInterrupt = System.currentTimeMillis();
-    protected long lastInfo = lastInterrupt;
-    protected long upTime = 0;
-    
-    protected boolean allowInterrupts;
-    protected final int cpuTicksPerSec = 100;
-    //protected long now;
-    //private TimerTask vdpInterruptTask;
-    protected  TimerTask clientTask;
-    protected  Runnable cpuTimingTask;
+
+	protected long lastInfo = 0;
+	protected long upTime = 0;
+
+	protected boolean allowInterrupts;
+	protected TimerTask clientTask;
+	protected Runnable cpuTimingTask;
 	protected IMemoryModel memoryModel;
-	protected  TimerTask videoUpdateTask;
-	protected  Thread machineRunner;
-	protected  Thread videoRunner;
+	protected TimerTask videoUpdateTask;
+	protected Thread machineRunner;
+	protected Thread videoRunner;
 	protected int throttleCount;
-	protected  IKeyboardState keyboardState;
-	private Object executionLock = new Object();
-	volatile protected boolean bExecuting;
-	protected  ISoundChip sound;
-	protected  ISpeechChip speech;
+	protected IKeyboardState keyboardState;
+	protected ISoundChip sound;
+	protected ISpeechChip speech;
 	private List<Runnable> runnableList;
 	private ICpuMetrics cpuMetrics;
-	
-	protected  TimerTask memorySaverTask;
+
+	protected TimerTask memorySaverTask;
 	protected IModuleManager moduleManager;
-	
+
 	private ICruChip cru;
-	
-	protected  RecordingEventNotifier recordingNotifier = new RecordingEventNotifier();
+
+	protected RecordingEventNotifier recordingNotifier = new RecordingEventNotifier();
 	private IRawInstructionFactory instructionFactory;
 	private final IMachineModel machineModel;
 	private IPropertyListener pauseListener;
-	
+
 	protected IProperty pauseMachine;
 	protected IProperty moduleList;
 	protected IProperty realTime;
@@ -136,7 +134,6 @@ abstract public class MachineBase implements IMachine {
     	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingBootRomsPath));
     	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingUserRomsPath));
     	try {
-    		//if (false) throw new URISyntaxException(null, null);
 			locator.addReadOnlyPathProperty(new SettingProperty("BuiltinPath", Collections.singletonList(
 					//"jar:file:/home/ejs/devel/emul/v9t9/build/bin/v9t9/v9t9j.jar!/ti99/"
 					getModel().getDataURL().toURI().toString()
@@ -375,8 +372,9 @@ abstract public class MachineBase implements IMachine {
 	            				executor.execute();
 	            			}
 	            		}
-	            		if (bExecuting && cpu.isIdle())
-	            			executor.execute();
+	            		if (bExecuting && cpu.isIdle()) {
+							executor.execute();
+						}
     	            } catch (AbortedException e) {
     	            } catch (InterruptedException e) {
       	              	break;
