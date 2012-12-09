@@ -14,6 +14,7 @@ import java.util.Map;
 import org.ejs.gui.images.V99ColorMapUtils;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.cpu.ICpu;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.hardware.VdpV9938Consts;
@@ -177,6 +178,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	private IProperty demoPlaying;
 
 	private ListenerList<IAccelListener> accelListeners = new ListenerList<IVdpV9938.IAccelListener>();
+	private IProperty realTime;
 	
 
 	public VdpV9938(IMachine machine) {
@@ -184,6 +186,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		
 		msxClockDivisor = Settings.get(machine, settingMsxClockDivisor); 
 		demoPlaying = Settings.get(machine, IDemoHandler.settingPlayingDemo);
+		realTime = Settings.get(machine, ICpu.settingRealTime);
 		
 //		machine.getDemoManager().registerActor(new VdpV9938DataDemoActor());
 //		machine.getDemoManager().registerActor(new VdpV9938AccelDemoActor());
@@ -319,7 +322,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	@Override
 	public boolean isThrottled() {
 		// this is called by normal execution to ensure the acceleration isn't too fast
-		return !isAccelActive() || (currentcycles <= 0) || (machine.isPaused() && !demoPlaying.getBoolean());
+		return !isAccelActive() || (currentcycles <= 0 && realTime.getBoolean()) || (machine.isPaused() && !demoPlaying.getBoolean());
 	}
 	
 	@Override

@@ -24,6 +24,7 @@ import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpChanges;
+import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
 import v9t9.video.BlankModeRedrawHandler;
 import v9t9.video.IVdpModeRedrawHandler;
@@ -67,6 +68,8 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	
 	private BitSet vdpTouches;
 
+	protected boolean colorsChanged;
+
 	public VdpTMS9918ACanvasRenderer(ISettingsHandler settings, IVideoRenderer renderer) {
 		this.renderer = renderer;
 		this.vdpChip = (IVdpTMS9918A) renderer.getVdpHandler();
@@ -85,6 +88,17 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		vdpChip.addWriteListener(this);
 		
 		vdpTouches = new BitSet(vdpChip.getMemorySize());
+		
+		this.colorsChanged = true;
+		vdpCanvas.getColorMgr().addListener(new VdpColorManager.IColorListener() {
+			
+			@Override
+			public void colorsChanged() {
+				synchronized (VdpTMS9918ACanvasRenderer.this) {
+					colorsChanged = true;
+				}
+			}
+		});
 	}
 	
 	/* (non-Javadoc)
@@ -462,7 +476,10 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 			
 			// don't let video rendering happen in middle of updating
 			synchronized (vdpCanvas) {
-				vdpCanvas.syncColors();
+				if (colorsChanged) {
+					vdpCanvas.syncColors();
+					colorsChanged = false;
+				}
 				
 				vdpModeRedrawHandler.prepareUpdate();
 				

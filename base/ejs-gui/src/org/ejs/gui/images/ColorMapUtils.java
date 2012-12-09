@@ -298,25 +298,20 @@ public class ColorMapUtils {
 
 	public static short getRGBToRGB565(byte[] rgb) {
 		int r = (rgb[0] >> 3) & 0x1f;
-		int g = (rgb[1] >> 2) & 0x3f;
+		int g = ((rgb[1] >> 3) & 0x1f) << 1;
 		int b = (rgb[2] >> 3) & 0x1f;
-		//return (short) ((r << 10) | (g << 5) | b);
-		return (short) ((r << 11) | (g << 5) | (b << 0));	
+		return (short) ((r << 11) | (g << 5) | b);
 	}
 	public static short getRGBToRGBX555(byte[] rgb) {
 		int r = (rgb[0] >> 3) & 0x1f;
 		int g = (rgb[1] >> 3) & 0x1f;
 		int b = (rgb[2] >> 3) & 0x1f;
-//		return (short) 0xfeff; 	//((g << 11) | (r << 6) | (b << 1));
-		short t = (short) ((r << 11) | (g << 6) | (b << 1) );
-		// byteswapped
-		return (short) (((t & 0xff) << 8) | ((t >> 8) & 0xff));
+		return (short) ((r << 11) | (g << 6) | (b << 1) );
 	}
 	public static short getRGBToRGBX444(byte[] rgb) {
 		int r = (rgb[0] >> 4) & 0xf;
 		int g = (rgb[1] >> 4) & 0xf;
 		int b = (rgb[2] >> 4) & 0xf;
-		// byteswapped
-		return (short) ((b << 12) | (r << 4) | (g));
+		return (short) ((r << 12) | (g << 8) | (b << 4));
 	}
 }

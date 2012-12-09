@@ -8,6 +8,8 @@ import java.util.Arrays;
 import org.ejs.gui.images.ColorMapUtils;
 import org.ejs.gui.images.V99ColorMapUtils;
 
+import ejs.base.utils.ListenerList;
+
 /**
  * Handle all the needs of the VDP color model -- stock palettes,
  * greyscale handling, V9938 4-color mode & sprite palette handling, etc.
@@ -15,7 +17,13 @@ import org.ejs.gui.images.V99ColorMapUtils;
  *
  */
 public class VdpColorManager {
+	
+	public interface IColorListener {
+		void colorsChanged();
+	}
 
+	private ListenerList<IColorListener> listeners = new ListenerList<IColorListener>();
+	
 	protected int clearColor;
 
 	protected int clearColor1;
@@ -227,10 +235,13 @@ public class VdpColorManager {
 	}
 
 	public void setGreyscale(boolean b) {
-		this.isGreyscale = b;
-		thePalette = b ? greyPalette : colorPalette;
-		theSpritePalette = useAltSpritePalette ? (b ? altSpritePaletteGrey : altSpritePalette) : thePalette;
-		paletteMappingDirty = true;
+		if (isGreyscale != b || thePalette == null) {
+			this.isGreyscale = b;
+			thePalette = b ? greyPalette : colorPalette;
+			theSpritePalette = useAltSpritePalette ? (b ? altSpritePaletteGrey : altSpritePalette) : thePalette;
+			paletteMappingDirty = true;
+			fireChanged();
+		}
 	}
 
 	public boolean isGreyscale() {
@@ -265,7 +276,10 @@ public class VdpColorManager {
 	 * @param b true: clear (color 0) is a palette color, false: transparent
 	 */
 	public void setClearFromPalette(boolean b) {
-		clearFromPalette = b;
+		if (clearFromPalette != b) {
+			clearFromPalette = b;
+			fireChanged();
+		}
 	}
 
 	/**
@@ -283,7 +297,10 @@ public class VdpColorManager {
 	 * @param c 1-15 for a real color or 0 for transparent, or some other value if supported 
 	 */
 	public void setClearColor(int c) {
-		this.clearColor = c;
+		if (clearColor != c) {
+			this.clearColor = c;
+			fireChanged();
+		}
 	}
 
 	/**
@@ -292,7 +309,10 @@ public class VdpColorManager {
 	 * @param c
 	 */
 	public void setClearColor1(int c) {
-		this.clearColor1 = c;
+		if (clearColor1 != c) {
+			this.clearColor1 = c;
+			fireChanged();
+		}
 	}
 
 	final public int getFourColorModeColor(int idx, boolean even) {
@@ -305,9 +325,13 @@ public class VdpColorManager {
 	 * @param b
 	 */
 	public void useAltSpritePalette(boolean b) {
-		paletteMappingDirty = true;
-		useAltSpritePalette = b;
-		setGreyscale(isGreyscale());	// reset sprite palette		
+		if (useAltSpritePalette != b) {
+			paletteMappingDirty = true;
+			useAltSpritePalette = b;
+			setGreyscale(isGreyscale());	// reset sprite palette 
+			
+			fireChanged();
+		}
 	}
 	
 	public boolean isStandardPalette() {
@@ -331,20 +355,48 @@ public class VdpColorManager {
 	}
 	
 	public void setForegroundBackground(int fg, int bg) {
-		this.fg = fg;
-		this.bg = bg;
+		if (this.fg != fg || this.bg != bg) {
+			this.fg = fg;
+			this.bg = bg;
+			fireChanged();
+		}
 	}
 	public int getForeground() {
 		return fg;
 	}
 	public void setForeground(int fg) {
-		this.fg = fg;
+		if (this.fg != fg) {
+			this.fg = fg;
+			fireChanged();
+		}
 	}
 	public int getBackground() {
 		return bg;
 		
 	}
 	public void setBackground(int bg) {
-		this.bg = bg;
+		if (this.bg != bg) {
+			this.bg = bg;
+			fireChanged();
+		}
+	}
+	
+	public void addListener(IColorListener listener) {
+		listeners.add(listener);
+	}
+	public void removeListener(IColorListener listener) {
+		listeners.remove(listener);
+	}
+	
+	protected void fireChanged() {
+		if (!listeners.isEmpty()) {
+			listeners.fire(new ListenerList.IFire<VdpColorManager.IColorListener>() {
+
+				@Override
+				public void fire(IColorListener listener) {
+					listener.colorsChanged();
+				}
+			});
+		}
 	}
 }

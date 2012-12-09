@@ -189,6 +189,10 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		//System.out.println("palette " + paletteidx + ": " + g +"|"+ r + "|"+ b);
 		vdpCanvas.getColorMgr().setGRB333(col, g, r, b);
 		dirtyAll();
+		
+		synchronized (this) {
+			colorsChanged = true;
+		}
 	}
 
 	@Override

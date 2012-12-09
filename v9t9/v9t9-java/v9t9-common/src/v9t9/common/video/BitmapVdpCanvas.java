@@ -5,6 +5,8 @@ package v9t9.common.video;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import v9t9.common.memory.ByteMemoryAccess;
@@ -103,9 +105,6 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 			offs += bytesPerLine;
 		}
 	}
-	
-	abstract public Buffer copy(Buffer buffer);
-	
 
 	protected Buffer copyBytes(Buffer buffer, byte[] data, int bytesPerLine, int bpp) {
 		int vw = getVisibleWidth();
@@ -132,8 +131,9 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 	protected Buffer copyShorts(Buffer buffer, short[] data, int pixelsPerLine) {
 		int vw = getVisibleWidth();
 		int vh = getVisibleHeight();
-		if (buffer == null || buffer.capacity() < pixelsPerLine * vh * 2)
-			buffer = ByteBuffer.allocateDirect(pixelsPerLine * vh * 2).asShortBuffer();
+		if (buffer == null || buffer.capacity() < pixelsPerLine * vh) {
+			buffer = ByteBuffer.allocateDirect(pixelsPerLine * vh * 2).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+		}
 		
 		buffer.rewind();
 		int offs = getBitmapOffset(0, 0);
@@ -143,6 +143,29 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 		} else {
 			for (int r = 0; r < vh; r++) {
 				((ShortBuffer) buffer).put(data, offs, vw);
+				offs += pixelsPerLine;
+			}
+		}
+		buffer.rewind();
+		
+		return buffer;
+	}
+	
+	protected Buffer copyInts(Buffer buffer, int[] data, int pixelsPerLine) {
+		int vw = getVisibleWidth();
+		int vh = getVisibleHeight();
+		if (buffer == null || buffer.capacity() < pixelsPerLine * vh) {
+			buffer = ByteBuffer.allocateDirect(pixelsPerLine * vh * 4).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
+		}
+		
+		buffer.rewind();
+		int offs = getBitmapOffset(0, 0);
+		//int bpp = bytesPerLine / width;
+		if (pixelsPerLine == vw) {
+			((IntBuffer) buffer).put(data, offs, vw * vh);
+		} else {
+			for (int r = 0; r < vh; r++) {
+				((IntBuffer) buffer).put(data, offs, vw);
 				offs += pixelsPerLine;
 			}
 		}

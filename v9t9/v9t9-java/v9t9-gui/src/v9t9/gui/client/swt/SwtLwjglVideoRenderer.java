@@ -39,6 +39,7 @@ import ejs.base.properties.IPropertyListener;
 import ejs.base.utils.FileUtils;
 
 import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.video.ICanvas;
 import v9t9.gui.client.swt.gl.MonitorEffect;
 import v9t9.gui.client.swt.gl.MonitorParams;
@@ -47,6 +48,7 @@ import v9t9.gui.client.swt.gl.StandardMonitorRender;
 import v9t9.gui.client.swt.gl.TextureLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.video.BitmapCanvasShort;
+import v9t9.video.BitmapCanvasInt;
 import v9t9.video.IGLDataCanvas;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.ImageDataCanvas24Bit;
@@ -85,9 +87,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 	private GLCanvas glCanvas;
 	private GLData glData;
-	
-	// pfft, lwjgl doesn't handle all our modes
-	//private MemoryCanvas memoryCanvas;
 
 	private IGLDataCanvas glDataCanvas;
 	private int vdpCanvasTexture;
@@ -118,6 +117,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 
 	protected void createVdpCanvasHandler() {
+//		vdpCanvas = new BitmapCanvasInt();
 		vdpCanvas = new BitmapCanvasShort();
 //		vdpCanvas = new ImageDataCanvasR3G3B2();
 //		vdpCanvas = new ImageDataCanvas24Bit();
@@ -583,9 +583,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		frameTimes += (lastTime - firstTime);
 		
 		if (lastReport + 1000 <= lastFrameTime) {
-			@SuppressWarnings("unused")
-			long avgTime = frameTimes / frames;
-			//System.out.println("Max FPS: " + 1000 / avgTime);
+//			System.out.println("Max FPS: " + 1000 * frames / frameTimes);
 			lastReport = lastTime;
 		}
 	}
