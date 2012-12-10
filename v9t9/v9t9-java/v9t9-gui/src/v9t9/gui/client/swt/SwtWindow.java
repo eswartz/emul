@@ -203,10 +203,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell.setText("V9t9 [" + machine.getModel().getIdentifier() + "]");
 
 		List<Image> icons = new ArrayList<Image>();
-		for (int siz : new int[] { 128, 64, 32 }) {
+		for (int siz : new int[] { 256, 192, 128, 96, 64, 32 }) {
 			Image icon = EmulatorGuiData.loadImage(shell.getDisplay(), "icons/v9t9_" + siz + ".png");
-			if (icon != null)
+			if (icon != null) {
 				icons.add(icon);
+			}
 		}
 		shell.setImages(icons.toArray(new Image[icons.size()]));
 

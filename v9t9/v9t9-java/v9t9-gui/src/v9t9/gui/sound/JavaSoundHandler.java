@@ -211,7 +211,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		}
 	}
 
-	public synchronized void flushAudio(int pos, int total) {
+	public synchronized void flushAudio(int pos, int total, long baseCount) {
 		if (output != null && machine.getSound() != null && total > 0) {
 			int totalCount = (int) (((long) pos * (soundFramesPerTick - lastUpdatedPos + total - 1)) / total);
 			updateSoundGenerator(lastUpdatedPos, soundFramesPerTick, totalCount);
@@ -219,7 +219,7 @@ public class JavaSoundHandler implements ISoundHandler {
 			lastUpdatedPos = 0;
 	
 			ISoundVoice[] vs = soundGenerator.getSoundVoices();
-			output.flushAudio(vs, total);
+			output.flushAudio(vs, total, baseCount);
 		}
 		
 		if (speechOutput != null && machine.getSpeech() != null) {
