@@ -190,7 +190,7 @@ public class SoundEngine {
 	public void stop() {
 		if (soundTimer != null)
 			soundTimer.cancel();
-		output.flushAudio(voices, output.getSamples(0));
+		output.flushAudio(voices, output.getSamples(0), 0);
 		output.stop();
 	}
 	

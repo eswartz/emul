@@ -58,7 +58,7 @@ public class BaseSoundTest {
 	 */
 	protected void generate(int samples, ISoundVoice... voices) {
 		soundOutput.generate(voices, samples);
-		soundOutput.flushAudio(voices, 0);
+		soundOutput.flushAudio(voices, 0, 0);
 	}
 
 	protected int toSamples(TimeUnit unit, int i) {

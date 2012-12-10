@@ -17,6 +17,7 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	private boolean origState;
 	private int[] deltas = new int[0];
 	private int deltaIdx = 0;
+	private long baseCycles;
 	
 	public AudioGateSoundVoice(String name) {
 		super((name != null ? name + " " : "") + "Audio Gate");
@@ -53,9 +54,11 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	}
 	public synchronized void setState(IMachine machine, boolean b) {
 		if (state != b) {
+			long curr = machine.getCpu().getTotalCurrentCycleCount();
+			int pos = (int) (curr - baseCycles);
+			baseCycles = curr;
+//			System.out.println(pos);
 			state = b;
-			
-			int pos = machine.getCpu().getCurrentCycleCount();
 			appendPos(state ? pos : -pos-1);
 		}
 	}
@@ -90,9 +93,9 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	 */
 	@Override
 	public synchronized boolean flushAudio(float[] soundGeneratorWorkBuffer, int from,
-			int to, int total) {
+			int to, int total, long baseCycles) {
 		boolean generated = false;
-		if (from < to && (origState || deltaIdx > 0)) {
+		if (from < to && (true)) {
 			generated = true;
 			int ratio = 128 + balance;
 			float sampleL = ((256 - ratio) * 1f) / 256.f;
@@ -100,12 +103,17 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 			
 			int idx = 0;
 			
-			int origFrom = from;
 			int totalSamps = to - from;
 			
-			int next = origFrom + (int) (idx < deltaIdx ? (long) absp1(deltas[idx++]) * totalSamps / total : totalSamps);
+			total = 0;
+			for (int i = 0; i < deltaIdx; i++)
+				total += absp1(deltas[i]);
 			
 			
+			int consumed = deltaIdx > 0 ? absp1(deltas[idx]) : 0;
+			int next = from + (int) (idx < deltaIdx ? (long) consumed * totalSamps / total : totalSamps);
+			idx++;
+						
 			boolean on = origState;
 			while (from < to) {
 				if (on) {
@@ -116,8 +124,9 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 				}
 				if (from >= next) {
 					if (idx < deltaIdx) {
-						on = deltas[idx] > 0; 
-						next = origFrom + (int) (long) absp1(deltas[idx++]) * totalSamps / total;
+						on = (deltas[idx] > 0);
+						consumed += absp1(deltas[idx++]);
+						next = (int) ((long) consumed * totalSamps / total);
 					} else {
 						on = state;
 						next = to;
@@ -129,6 +138,7 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 		deltaIdx = 0;
 		origState = state;
 		
+		this.baseCycles = baseCycles;
 		return generated;
 	}
 	

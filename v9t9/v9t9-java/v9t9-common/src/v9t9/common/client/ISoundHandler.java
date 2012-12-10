@@ -41,8 +41,9 @@ public interface ISoundHandler {
 	 * Fill out and flush the sound accumulated for this tick
 	 * @param pos TODO
 	 * @param total TODO
+	 * @param baseCount TODO
 	 */
-	void flushAudio(int pos, int total);
+	void flushAudio(int pos, int total, long baseCount);
 	
 
 	/**
