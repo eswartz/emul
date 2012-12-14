@@ -39,7 +39,6 @@ import ejs.base.properties.IPropertyListener;
 import ejs.base.utils.FileUtils;
 
 import v9t9.common.machine.IMachine;
-import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.video.ICanvas;
 import v9t9.gui.client.swt.gl.MonitorEffect;
 import v9t9.gui.client.swt.gl.MonitorParams;
@@ -48,11 +47,7 @@ import v9t9.gui.client.swt.gl.StandardMonitorRender;
 import v9t9.gui.client.swt.gl.TextureLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.video.BitmapCanvasShort;
-import v9t9.video.BitmapCanvasInt;
 import v9t9.video.IGLDataCanvas;
-import v9t9.video.ImageDataCanvas;
-import v9t9.video.ImageDataCanvas24Bit;
-import v9t9.video.ImageDataCanvasR3G3B2;
 import v9t9.video.VdpCanvasFactory;
 
 /**
@@ -108,7 +103,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 	private long lastReport;
 	private long lastFrameTime;
+	@SuppressWarnings("unused")
 	private int frames;
+	@SuppressWarnings("unused")
 	private long frameTimes;
 
 	public SwtLwjglVideoRenderer(IMachine machine) {

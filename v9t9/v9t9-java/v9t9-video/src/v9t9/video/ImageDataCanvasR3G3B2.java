@@ -200,7 +200,7 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 		byte fgRGB = colorRGBMap[fg];
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
-			int ioffs = offs + i;
+			int ioffs = offs + i * 2;
 			if (ioffs >= endOffs)
 				break;
 			if ((mem & bitmask & 0x8000) != 0) {

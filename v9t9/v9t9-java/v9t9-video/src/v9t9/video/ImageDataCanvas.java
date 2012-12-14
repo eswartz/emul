@@ -3,8 +3,6 @@ package v9t9.video;
 import java.nio.Buffer;
 
 import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.Rectangle;
-
 import v9t9.common.video.BitmapVdpCanvas;
 
 

@@ -202,7 +202,7 @@ public class BitmapCanvasInt extends BitmapVdpCanvas implements IGLDataCanvas {
 		int fgRGB = colorRGBMap[fg];
 		int mem = (int) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
-			int ioffs = offs + i;
+			int ioffs = offs + i * 2;
 			if (ioffs >= endOffs)
 				break;
 			if ((mem & bitmask & 0x8000) != 0) {
