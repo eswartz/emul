@@ -15,13 +15,11 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.DiskImageFDR;
-import v9t9.common.files.IDiskImage;
 import v9t9.common.files.EmulatedDiskImageFile;
+import v9t9.common.files.IDiskImage;
 import v9t9.common.files.VDR;
 import ejs.base.properties.IPersistable;
-import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
-import ejs.base.settings.SettingProperty;
 
 
 /**
@@ -53,8 +51,6 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	protected File spec;
 	private RandomAccessFile handle;
 	
-	private IProperty inUseSetting;
-	
 	protected boolean trackFetched;
 	protected byte trackBuffer[] = new byte[RealDiskConsts.DSKbuffersize];
 	protected DSKheader hdr = new DSKheader();
@@ -64,7 +60,6 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	protected byte sideReg;
 	private boolean motorRunning;
 	private long motorTimeout;
-	private IProperty settingDsrEnabled;
 	
 	protected Dumper dumper;
 
@@ -79,12 +74,6 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		
 		dumper = new Dumper(settings,
 				RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
-
-		settingDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
-		
-		inUseSetting = new SettingProperty(name, Boolean.FALSE);
-		inUseSetting.addEnablementDependency(settingDsrEnabled);
-		
 	}
 	
 	/* (non-Javadoc)
@@ -95,13 +84,6 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		return handle != null;
 	}
 
-	/**
-	 * @return the inUseSetting
-	 */
-	public IProperty getInUseSetting() {
-		return inUseSetting;
-	}
-	
 	/**
 	 * @param file
 	 */

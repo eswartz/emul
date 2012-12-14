@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.TimerTask;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
+import ejs.base.settings.SettingProperty;
 import ejs.base.utils.HexUtils;
 
 
@@ -124,7 +126,6 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	private byte lastStatus = -1;
 
 
-	protected IProperty realDiskDsrActiveSetting;
 	private IProperty settingRealTime;
 	protected IProperty settingDsrEnabled;
 	private IProperty settingDebug;
@@ -172,10 +173,8 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 					if (info.getMotorTimeout() != 0) {
 						if (!info.isMotorRunning()) {
 							if (now >= info.getMotorTimeout()) {
-								//info.motorTimeout = 0;
 								info.setMotorRunning(true);
-								Object[] args = { name };
-								dumper.info("{0}: motor on", args);
+								dumper.info("{0}: motor on", name);
 								
 								fdc.getStatus().reset(StatusBit.BUSY);
 								info.setMotorTimeout(System.currentTimeMillis() + 4320);
@@ -184,10 +183,9 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 							if (now >= info.getMotorTimeout()) {
 								info.setMotorTimeout(0);
 								info.setMotorRunning(false);
-								Object[] args = { name };
-								//fdc.status.set(StatusBit.BUSY);
-								dumper.info("{0}: motor off", args);
-								info.getInUseSetting().setBoolean(false);
+								dumper.info("{0}: motor off", name);
+								updateDiskActivity(entry.getKey(), false);
+								//info.getInUseSetting().setBoolean(false);
 							}
 						}
 					}
@@ -234,7 +232,8 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 						dumper.error(e.getMessage());
 					}
 					
-					oldInfo.getInUseSetting().setBoolean(false);
+					updateDiskActivity(info.getName(), false);
+					//oldInfo.getInUseSetting().setBoolean(false);
 					
 					// just in case the image went missing
 					if (info != null)
@@ -292,7 +291,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 						info.setMotorRunning(true);
 						
 					}
-					info.getInUseSetting().setBoolean(true);
+					updateDiskActivity(info.getName(), true);
 				} else {
 					info.setMotorTimeout(System.currentTimeMillis() + 4230);
 				}
@@ -571,19 +570,42 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 		for (Map.Entry<String, BaseDiskImage> entry : disks.entrySet())
 			entry.getValue().loadState(section.getSection(entry.getKey()));
 	}
+
+
+	private Map<String, IProperty> diskMotorProperties = new HashMap<String, IProperty>();
 	
+	protected IProperty getDiskMotorProperty(String name) {
+		IProperty prop = diskMotorProperties.get(name);
+		if (prop == null) {
+			settingDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
+			prop = new SettingProperty(name + "Active", Boolean.FALSE);
+			prop.addEnablementDependency(settingDsrEnabled);
+			diskMotorProperties.put(name, prop);
+		}
+		return prop;
+			
+	}
+	
+	
+	/**
+	 * @param on 
+	 * @param key
+	 */
+	protected void updateDiskActivity(String name, boolean on) {
+		getDiskMotorProperty(name).setBoolean(on);
+	}
 
-	static class DiskImageDeviceIndicatorProvider implements IDeviceIndicatorProvider {
+	class DiskMotorIndicatorProvider implements IDeviceIndicatorProvider {
 
-		private final BaseDiskImage image;
+		private String name;
 
-		public DiskImageDeviceIndicatorProvider(BaseDiskImage image) {
-			this.image = image;
+		public DiskMotorIndicatorProvider(String name) {
+			this.name = name;
 		}
 
 		@Override
 		public String getToolTip() {
-			return image.getName() + " activity";
+			return name + " activity";
 		}
 		
 		@Override
@@ -598,7 +620,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 		
 		@Override
 		public IProperty getActiveProperty() {
-			return image.getInUseSetting();
+			return getDiskMotorProperty(name);
 		}
 	}
 }

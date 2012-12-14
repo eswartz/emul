@@ -48,6 +48,7 @@ import v9t9.gui.client.swt.gl.TextureLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.video.BitmapCanvasShort;
 import v9t9.video.IGLDataCanvas;
+import v9t9.video.ImageDataCanvasR3G3B2;
 import v9t9.video.VdpCanvasFactory;
 
 /**
@@ -115,8 +116,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 	protected void createVdpCanvasHandler() {
 //		vdpCanvas = new BitmapCanvasInt();
-		vdpCanvas = new BitmapCanvasShort();
-//		vdpCanvas = new ImageDataCanvasR3G3B2();
+//		vdpCanvas = new BitmapCanvasShort();
+		vdpCanvas = new ImageDataCanvasR3G3B2();
 //		vdpCanvas = new ImageDataCanvas24Bit();
 		
 		glDataCanvas = (IGLDataCanvas) vdpCanvas;

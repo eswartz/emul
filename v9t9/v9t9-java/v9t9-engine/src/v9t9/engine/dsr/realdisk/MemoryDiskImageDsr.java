@@ -8,14 +8,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-
-
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.IMemoryIOHandler;
-import v9t9.engine.files.image.BaseDiskImage;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * This disk DSR assumes all control and ports are in MMIO.
@@ -49,7 +46,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	private final int baseAddr;
 
 	private byte flags;
-	
+
 	/**
 	 * 
 	 */
@@ -167,8 +164,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 		 */
 			
 		for (Map.Entry<String, IProperty> entry : diskSettingsMap.entrySet()) {
-			BaseDiskImage image = getDiskImage(entry.getValue().getName());
-			DiskImageDeviceIndicatorProvider provider = new DiskImageDeviceIndicatorProvider(image);
+			DiskMotorIndicatorProvider provider = new DiskMotorIndicatorProvider(entry.getKey());
 			list.add(provider);
 		}
 		return list;

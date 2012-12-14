@@ -148,6 +148,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 
 	private short base;
 
+	protected IProperty realDiskDsrActiveSetting;
 
 	public RealDiskImageDsr(TI99Machine machine, short base) {
 		super(machine);
