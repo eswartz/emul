@@ -264,7 +264,7 @@ public class Win32SoundListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public synchronized void played(ISoundView view) {
+	public void played(ISoundView view) {
 		try {
 			if (soundQueue.remainingCapacity() == 0)
 				soundQueue.remove();

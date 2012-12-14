@@ -92,5 +92,26 @@ public class FieldUtils {
 		Object value = PropertyUtils.convertStringToValue(txt, arrayType.getComponentType());
 		setArrayValue(field, index, obj, value);
 	}
+
+	/**
+	 * @param obj
+	 * @param fieldName
+	 * @return
+	 */
+	public static Field fetchField(Object obj, String fieldName) throws IllegalArgumentException {
+		Class<?> klass = obj.getClass();
+		while (klass != null) {
+			try {
+				Field field = klass.getDeclaredField(fieldName);
+				field.setAccessible(true);
+				return field;
+			} catch (NoSuchFieldException e) {
+				klass = klass.getSuperclass();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		throw new IllegalArgumentException(fieldName);
+	}
 	
 }

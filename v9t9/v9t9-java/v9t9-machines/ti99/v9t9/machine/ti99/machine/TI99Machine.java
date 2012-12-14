@@ -41,14 +41,11 @@ public class TI99Machine extends MachineBase {
 		dsrManager = new DsrManager(this);
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.engine.machine.MachineBase#setNotRunning()
-	 */
 	@Override
-	public void setNotRunning() {
-		super.setNotRunning();
+	public void stop() {
+		super.stop();
 		 if (dsrManager != null)
-				dsrManager.dispose();
+			 dsrManager.dispose();
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.Machine#getMemoryModel()

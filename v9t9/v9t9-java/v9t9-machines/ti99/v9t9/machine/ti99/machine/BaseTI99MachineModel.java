@@ -29,7 +29,7 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 	 */
 	@Override
 	public ICpu createCPU(IMachine machine) {
-		return new Cpu9900(machine, 1000 / machine.getCpuTicksPerSec(), machine.getVdp());
+		return new Cpu9900(machine, machine.getVdp());
 	}
 
 	/* (non-Javadoc)

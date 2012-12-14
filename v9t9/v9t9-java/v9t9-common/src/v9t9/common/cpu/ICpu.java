@@ -1,6 +1,8 @@
 package v9t9.common.cpu;
 
 
+import java.util.concurrent.Semaphore;
+
 import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
 import v9t9.common.asm.IDecompilePhase;
@@ -67,7 +69,7 @@ public interface ICpu extends IPersistable {
 
 	void tick();
 
-	boolean isThrottled();
+//	boolean isThrottled();
 
 	int getCurrentCycleCount();
 
@@ -83,6 +85,11 @@ public interface ICpu extends IPersistable {
 	/** Get target # cycles to be executed per tick */
 	int getTargetCycleCount();
 
+	/**
+	 * @return
+	 */
+	Semaphore getAllocatedCycles();
+	
 	/** 
 	 * Acknowledge the interrupt at the given level, and tell whether
 	 * the interrupt is now acknowledged
@@ -140,7 +147,7 @@ public interface ICpu extends IPersistable {
 	IRawInstructionFactory getInstructionFactory();
 	
 
-	IExecutor createExecutor(ICpuMetrics metrics);
+	IExecutor createExecutor();
 	/**
 	 * @return
 	 */

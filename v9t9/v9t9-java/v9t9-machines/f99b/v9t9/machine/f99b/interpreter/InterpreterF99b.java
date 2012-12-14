@@ -192,7 +192,7 @@ public class InterpreterF99b implements IInterpreter {
 	@Override
 	public void executeChunk(int numinsts, IExecutor executor) {
 		int i;
-		for (i = numinsts; i > 4; i -= 4) {
+		for (i = numinsts; i >= 4; i -= 4) {
 			execute();
 			execute();
 			execute();

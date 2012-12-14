@@ -57,7 +57,6 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	private volatile int currentcycles = 0;
 	/** total # current cycles executed */
 	protected long totalcurrentcycles;
-	protected int interruptTick;
 	/** State of the pins above  */
 	protected int pins;
 	
@@ -87,12 +86,14 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 
 	private ListenerList<ICpuListener> listeners = new ListenerList<ICpuListener>();
 
-	public CpuBase(IMachine machine, ICpuState state, int interruptTick) {
-		this.machine = machine;
+	private Semaphore allocatedCycles;
+
+	public CpuBase(IMachine machine_, ICpuState state) {
+		this.machine = machine_;
 		this.state = state;
         this.state.getConsole().setAccessListener(this);
-        this.interruptTick = interruptTick;
         
+        allocatedCycles = new Semaphore(0);
         interruptWaiting = new Semaphore(0);
         
         cyclesPerSecond = Settings.get(this, ICpu.settingCyclesPerSecond);
@@ -103,9 +104,14 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
         cyclesPerSecond.addListenerAndFire(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
+
 				baseclockhz = setting.getInt();
-				targetcycles = (int)((long) baseclockhz * CpuBase.this.interruptTick / 1000);
+				targetcycles = (int)((long) baseclockhz / machine.getTicksPerSec());
 		        currenttargetcycles = targetcycles;
+		        
+		        allocatedCycles.drainPermits();
+		        if (realTime.getBoolean())
+		        	allocatedCycles.release(targetcycles); 
 		        //System.out.println("target: " + targetcycles);
 			}
         	
@@ -117,7 +123,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 				tick();
 				if (setting.getBoolean()) {
 					totalcurrentcycles = totaltargetcycles;
-					currenttargetcycles = cyclesPerSecond.getInt() * CpuBase.this.interruptTick / 1000;
+					currenttargetcycles = cyclesPerSecond.getInt() / machine.getTicksPerSec();
 				}
 			}
         	
@@ -162,27 +168,44 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	}
 
 
-	public synchronized void addCycles(int cycles) {
+	public void addCycles(int cycles) {
 		if (cycles != 0) {
-			this.currentcycles += cycles; 
+			synchronized (this) {
+				this.currentcycles += cycles;
+			}
+			
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#getAllocatedCycles()
+	 */
+	@Override
+	public Semaphore getAllocatedCycles() {
+		return allocatedCycles;
+	}
 	public synchronized void tick() {
 		totalcurrentcycles += currentcycles;
 		
 		// if we went over, aim for fewer this time
 		currenttargetcycles = (int) (totaltargetcycles - totalcurrentcycles);
+//		currenttargetcycles = currentcycles > targetcycles ? Math.min(targetcycles / 4, currentcycles - targetcycles)
+//					: targetcycles;
+		
 		
 		// If really fast speeds are demanded, and/or the system is otherwise busy,
 		// we can fall behind the target.  But if we fall too far behind,
 		// we'll never catch up.
-		if (currenttargetcycles > cyclesPerSecond.getInt() / 10) {
+		int expCycles = cyclesPerSecond.getInt() / machine.getTicksPerSec() / 10;
+		if (currenttargetcycles > expCycles || currenttargetcycles < expCycles) {
 			// something really threw us off -- just start over
 			totalcurrentcycles = totaltargetcycles;
 			currenttargetcycles = targetcycles;
 		}
-		//System.out.println(System.currentTimeMillis()+": " + currentcycles + " -> " + currenttargetcycles);
+		
+//		System.out.println(System.currentTimeMillis()+": " + currentcycles + " -> " + currenttargetcycles);
+		
+		allocatedCycles.release(realTime.getBoolean() ? currenttargetcycles : cyclesPerSecond.getInt() );
 		
 		currentcycles = 0;
 		
@@ -252,6 +275,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	public void resetCycleCounts() {
 		currenttargetcycles = currentcycles = 0;
 		totalcurrentcycles = totaltargetcycles = 0;
+		allocatedCycles.drainPermits();
 	}
 
 	/**

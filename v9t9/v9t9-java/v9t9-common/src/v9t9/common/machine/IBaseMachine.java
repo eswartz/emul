@@ -58,8 +58,6 @@ public interface IBaseMachine {
 	 */
 	void stop();
 
-	void setNotRunning();
-
 	ICpu getCpu();
 
 	void setCpu(ICpu cpu);
@@ -75,9 +73,8 @@ public interface IBaseMachine {
 
 	void reset();
 	
-	int getCpuTicksPerSec();
-
-	Object getExecutionLock();
+	/** Get the number of times per second the machine executes a chunk of work. */
+	int getTicksPerSec();
 
 	boolean isExecuting();
 	

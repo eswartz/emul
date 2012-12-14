@@ -9,7 +9,6 @@ package v9t9.machine.ti99.cpu;
 import v9t9.common.asm.IDecompilePhase;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionEffectLabelProvider;
 import v9t9.common.hardware.ICruChip;
@@ -72,8 +71,8 @@ public class Cpu9900 extends CpuBase {
 	private final IVdpChip vdp;
 	private Dumper dumper;
 	
-    public Cpu9900(IMachine machine, int interruptTick, IVdpChip vdp) {
-    	super(machine, new CpuState9900(machine.getConsole()), interruptTick);
+    public Cpu9900(IMachine machine, IVdpChip vdp) {
+    	super(machine, new CpuState9900(machine.getConsole()));
 		this.vdp = vdp;
     	
 		this.dumper = new Dumper(Settings.getSettings(machine),
@@ -343,12 +342,13 @@ public class Cpu9900 extends CpuBase {
 	 * @see v9t9.common.cpu.ICpu#createExecutor(v9t9.common.cpu.ICpuMetrics)
 	 */
 	@Override
-	public IExecutor createExecutor(ICpuMetrics metrics) {
-		return new Executor(this, metrics, 
+	public IExecutor createExecutor() {
+		return new Executor(machine, this,  
 				new Interpreter9900((TI99Machine) getMachine()),
 				new Compiler9900(this),
 				new CodeBlockCompilerStrategy(),
-				new DumpFullReporter9900(this), new DumpReporter9900(this));
+				new DumpFullReporter9900(this), 
+				new DumpReporter9900(this));
 	}
 	
 	/* (non-Javadoc)

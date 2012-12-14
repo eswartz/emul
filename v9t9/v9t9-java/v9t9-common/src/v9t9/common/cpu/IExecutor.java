@@ -31,9 +31,10 @@ public interface IExecutor {
 	 * Run an unbounded amount of code.  Some external factor
 	 * tells the execution unit when to stop.  The interpret/compile
 	 * setting is sticky until execution is interrupted.
+	 * @return TODO
 	 * @throws AbortedException when interrupt or other machine event stops execution
 	 */
-	void execute();
+	int execute();
 
 	void recordMetrics();
 
@@ -106,5 +107,34 @@ public interface IExecutor {
 	 * @return
 	 */
 	BreakpointManager getBreakpoints();
+	/**
+	 * @param cpuMetrics
+	 */
+	void setMetrics(ICpuMetrics cpuMetrics);
+	/**
+	 * @param b
+	 * @return
+	 */
+	boolean setExecuting(boolean b);
+	/**
+	 * @return
+	 */
+	boolean isExecuting();
+	/**
+	 * 
+	 */
+	void start();
+	/**
+	 * 
+	 */
+	void stop();
+	/**
+	 * @param runnable
+	 */
+	void asyncExec(Runnable runnable);
+	/**
+	 * 
+	 */
+	void tick();
 
 }

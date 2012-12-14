@@ -17,7 +17,6 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	private boolean origState;
 	private int[] deltas = new int[0];
 	private int deltaIdx = 0;
-	private long baseCycles;
 	
 	public AudioGateSoundVoice(String name) {
 		super((name != null ? name + " " : "") + "Audio Gate");
@@ -54,9 +53,10 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	}
 	public synchronized void setState(IMachine machine, boolean b) {
 		if (state != b) {
-			long curr = machine.getCpu().getTotalCurrentCycleCount();
-			int pos = (int) (curr - baseCycles);
-			baseCycles = curr;
+//			long curr = machine.getCpu().getTotalCurrentCycleCount();
+//			int pos = (int) (curr - baseCycles);
+//			baseCycles = curr;
+			int pos = machine.getCpu().getCurrentCycleCount();
 //			System.out.println(pos);
 			state = b;
 			appendPos(state ? pos : -pos-1);
@@ -93,7 +93,7 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	 */
 	@Override
 	public synchronized boolean flushAudio(float[] soundGeneratorWorkBuffer, int from,
-			int to, int total, long baseCycles) {
+			int to, int total) {
 		boolean generated = false;
 		if (from < to && (true)) {
 			generated = true;
@@ -138,7 +138,6 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 		deltaIdx = 0;
 		origState = state;
 		
-		this.baseCycles = baseCycles;
 		return generated;
 	}
 	

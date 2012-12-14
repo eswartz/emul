@@ -189,6 +189,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 	}
 	
+//	public interface GtkLibrary extends Library {
+//		GtkLibrary INSTANCE = (GtkLibrary) Native.loadLibrary("libgtk-x11-2.0",
+//				GtkLibrary.class);
+//		
+//		boolean gtk_window_set_icon_from_file(Pointer window,
+//	            String filename,
+//	            PointerByReference err);
+//	}
 	public SwtWindow(Display display, final IMachine machine, 
 			final ISwtVideoRenderer videoRenderer, final ISettingsHandler settingsHandler,
 			final ISoundHandler soundHandler) {
@@ -202,14 +210,23 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell = new Shell(display, SWT.SHELL_TRIM | SWT.RESIZE);
 		shell.setText("V9t9 [" + machine.getModel().getIdentifier() + "]");
 
-		List<Image> icons = new ArrayList<Image>();
-		for (int siz : new int[] { 256, 192, 128, 96, 64, 32 }) {
-			Image icon = EmulatorGuiData.loadImage(shell.getDisplay(), "icons/v9t9_" + siz + ".png");
-			if (icon != null) {
-				icons.add(icon);
+		// sigh, doesn't work either
+//		if (OS.IsLinux) {
+//			Long shellHandle = (Long) FieldUtils.getValue(FieldUtils.fetchField(shell, "shellHandle"),
+//					shell);
+//			GtkLibrary.INSTANCE.gtk_window_set_icon_from_file(Pointer.createConstant(shellHandle), 
+//					EmulatorGuiData.getDataURL("icons/v9t9.svg").getPath(), null);
+//		} else 
+		{
+			List<Image> icons = new ArrayList<Image>();
+			for (int siz : new int[] { 256, 192, 128, 96, 64, 32 }) {
+				Image icon = EmulatorGuiData.loadImage(shell.getDisplay(), "icons/v9t9_" + siz + ".png");
+				if (icon != null) {
+					icons.add(icon);
+				}
 			}
+			shell.setImages(icons.toArray(new Image[icons.size()]));
 		}
-		shell.setImages(icons.toArray(new Image[icons.size()]));
 
 		TreeMap<Integer, Image> mainIcons = new TreeMap<Integer, Image>();
 		for (int size : new int[] { 16, 32, 64, 128 }) {

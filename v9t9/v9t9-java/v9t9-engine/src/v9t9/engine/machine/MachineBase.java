@@ -8,8 +8,6 @@ package v9t9.engine.machine;
 
 import java.net.URISyntaxException;
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -17,7 +15,6 @@ import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.IClient;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CpuMetrics;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
@@ -64,9 +61,8 @@ import ejs.base.utils.ListenerList.IFire;
  * @author ejs
  */
 abstract public class MachineBase implements IMachine {
-	private Object executionLock = new Object();
-	private volatile boolean bAlive;
-	private volatile boolean bExecuting;
+	
+	private volatile boolean alive;
 
 	private final int cpuTicksPerSec = 100;
 	
@@ -81,12 +77,9 @@ abstract public class MachineBase implements IMachine {
 	private IVdpChip vdp;
 	private IFileHandler fileHandler;
 
-	protected long lastInfo = 0;
-	protected long upTime = 0;
-
 	protected boolean allowInterrupts;
 	protected TimerTask clientTask;
-	protected Runnable cpuTimingTask;
+	protected Runnable baseTimingTask;
 	protected IMemoryModel memoryModel;
 	protected TimerTask videoUpdateTask;
 	protected Thread machineRunner;
@@ -95,7 +88,6 @@ abstract public class MachineBase implements IMachine {
 	protected IKeyboardState keyboardState;
 	protected ISoundChip sound;
 	protected ISpeechChip speech;
-	private List<Runnable> runnableList;
 	private ICpuMetrics cpuMetrics;
 
 	protected TimerTask memorySaverTask;
@@ -110,7 +102,6 @@ abstract public class MachineBase implements IMachine {
 
 	protected IProperty pauseMachine;
 	protected IProperty moduleList;
-	protected IProperty realTime;
 	private final ISettingsHandler settings;
 	private IPathFileLocator locator;
 
@@ -120,11 +111,10 @@ abstract public class MachineBase implements IMachine {
 	private IKeyboardMapping keyboardMapping;
 	protected IFileMapper fileMapper;
 	private ListenerList<IKeyboardModeListener> keyboardModeListeners;
-
+	
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
 		pauseMachine = settings.get(settingPauseMachine);
-    	realTime = settings.get(ICpu.settingRealTime);
     	moduleList = settings.get(settingModuleList);
     	
     	this.machineModel = machineModel;
@@ -142,7 +132,6 @@ abstract public class MachineBase implements IMachine {
 			e.printStackTrace();
 		}
     	
-    	runnableList = Collections.synchronizedList(new LinkedList<Runnable>());
     	this.memoryModel = machineModel.createMemoryModel(this);
     	this.memory = memoryModel.getMemory();
     	this.console = memoryModel.getConsole();
@@ -159,18 +148,13 @@ abstract public class MachineBase implements IMachine {
     	machineModel.defineDevices(this);
     	
     	cpuMetrics = new CpuMetrics();
-    	executor = cpu.createExecutor(cpuMetrics);
-    	
+    	executor = cpu.createExecutor();
+    	executor.setMetrics(cpuMetrics);
 
     	pauseListener = new IPropertyListener() {
     		
     		public void propertyChanged(IProperty setting) {
-    			synchronized (executionLock) {
-    				executor.interruptExecution();
-    				cpu.resetCycleCounts();
-    				bExecuting = !setting.getBoolean();
-    				executionLock.notifyAll();
-    			}
+    			executor.setExecuting(!setting.getBoolean());
     		}
     		
     	};
@@ -259,7 +243,7 @@ abstract public class MachineBase implements IMachine {
 	 */
     @Override
 	public boolean isAlive() {
-        return bAlive;
+        return alive;
     }
     
     /* (non-Javadoc)
@@ -269,134 +253,26 @@ abstract public class MachineBase implements IMachine {
 	public void start() {
     	allowInterrupts = true;
     	
-    	//videoTimer = new Timer();
-
-        // the CPU emulation task (a fast timer because 100 Hz is a little too much for Windows) 
-        cpuTimingTask = new Runnable() {
-
-			@Override
-        	public void run() {
-				synchronized (executionLock) {
-					if (!bExecuting)
-						return;
-				
-	    			long now = System.currentTimeMillis();
-	    			//System.out.println(now);
-	    			
-	    	
-	    			//System.out.print(now);
-	    			
-	    			if (now >= lastInfo + 1000) {
-	    				upTime += now - lastInfo;
-	    				executor.recordMetrics();
-	    				executor.resetVdpInterrupts();
-	    				lastInfo = now;
-	    				//vdpInterruptDelta = 0;
-	    			}
-	    			
-	    			//if (sound != null)
-	    			//	sound.tick();
-	    			
-	    			cpu.tick();
-	
-	    			vdp.tick();
-				}    			
-        	}
-        };
-        fastTimer.scheduleTask(cpuTimingTask, cpuTicksPerSec);
-        
-        videoRunner = new Thread("Video Runner") {
-        	@Override
-        	public void run() {
-        		while (MachineBase.this.isAlive()) {
-	        		// delay if going too fast
-	    			while (vdp.isThrottled() && bAlive) {
-	    				// Just sleep.  Another timer thread will reset the throttle.
-	    				try {
-	    					Thread.sleep(10);
-	    				} catch (InterruptedException e) {
-	    					break;
-	    				}
-	    			}
-	    			if (!vdp.isThrottled()) {
-	    				vdp.work();
-	    			}
-        		}
-        	}
-        };
-        
-        memorySaverTask = new TimerTask() {
-        	@Override
-        	public void run() {
-        		synchronized (executionLock) {
-        			memory.save();
-        		}
-        	}
-        };
-        timer.scheduleAtFixedRate(memorySaverTask, 0, 5000);
-        
-        bAlive = true;
-        
-      	// the machine (well, actually, CPU) runner
-		machineRunner = new Thread("Machine Runner") {
-        	@Override
-        	public void run() {
-    	        while (MachineBase.this.isAlive()) {
-            		Runnable runnable;
-            		while (runnableList.size() > 0) {
-            			runnable = runnableList.remove(0);
-            			runnable.run();
-            		}
-	            	
-    	        	
-    	        	// delay if going too fast
-    				if (realTime.getBoolean()) {
-    					if (cpu.isThrottled() && cpu.getMachine().isAlive()) {
-    						// Just sleep.  Another timer thread will reset the throttle.
-    						try {
-    							Thread.sleep(1000 / 200);		// expected clock: 100Hz
-    							continue;
-    						} catch (InterruptedException e) {
-    							return;
-    						}
-    					}
-    				}
-    				
-    	            try {
-    	            	// synchronize on events like debugging, loading/saving, etc
-	            		synchronized (executionLock) {
-	            			if (!bExecuting && bAlive) {
-	            				executionLock.wait(100);
-	            			}
-	            			if (bExecuting && !cpu.isIdle()) {
-	            				executor.execute();
-	            			}
-	            		}
-	            		if (bExecuting && cpu.isIdle()) {
-							executor.execute();
-						}
-    	            } catch (AbortedException e) {
-    	            } catch (InterruptedException e) {
-      	              	break;
-    	            } catch (Throwable t) {
-    	            	t.printStackTrace();
-    	            	MachineBase.this.setNotRunning();
-    	            	break;
-    	            }
-    	        }
-        	}
-        };
+        alive = true;
         
         if (client != null)
         	client.start();
-        
-        machineRunner.start();
-        videoRunner.start();
-        
-        synchronized (executionLock) {
-			bExecuting = !pauseMachine.getBoolean();
-			executionLock.notifyAll();
-		}
+
+        // the base machine running task 
+        baseTimingTask = new Runnable() {
+
+			@Override
+        	public void run() {
+				if (client != null)
+					client.tick();
+				executor.tick();
+        	}
+        };
+        getFastMachineTimer().scheduleTask(baseTimingTask, getTicksPerSec());
+
+
+    	executor.start();
+
     }
     
 	/* (non-Javadoc)
@@ -404,34 +280,16 @@ abstract public class MachineBase implements IMachine {
 	 */
     @Override
 	public void stop() {
-    	setNotRunning();
+    	alive = false;
+    	executor.stop();
+		timer.cancel();
+        fastTimer.cancel();
+		
+		memory.save();        
+		
         throw new TerminatedException();
     }
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.common.IMachine#setNotRunning()
-	 */
-	@Override
-	public void setNotRunning() {
-		bAlive = false;
-		executor.interruptExecution();
-		synchronized (executionLock) {
-			bExecuting = false;
-			executionLock.notifyAll();
-		}
-		machineRunner.interrupt();
-		videoRunner.interrupt();
-		timer.cancel();
-        fastTimer.cancel();
-        //videoTimer.cancel();
-		try {
-			videoRunner.join();
-		} catch (InterruptedException e) {
-		}
-		
-		memory.save();        
-        //getSound().getSoundHandler().dispose();
-	}
     
 	/* (non-Javadoc)
 	 * @see v9t9.common.settings.IBaseMachine#reset()
@@ -540,12 +398,8 @@ abstract public class MachineBase implements IMachine {
 	 */
 	@Override
 	public synchronized void saveState(ISettingSection settings) {
-		boolean wasExecuting;
-		synchronized (executionLock) {
-			wasExecuting = bExecuting;
-			bExecuting = false;
-			executionLock.notifyAll();
-		}
+		
+		boolean wasExecuting = executor.setExecuting(false);
 		
 		settings.put("Class", getClass());
 		
@@ -557,10 +411,7 @@ abstract public class MachineBase implements IMachine {
 		this.settings.getWorkspaceSettings().save(workspace);
 		//WorkspaceSettings.CURRENT.saveState(settings);
 		
-		synchronized (executionLock) {
-			bExecuting = wasExecuting;
-			executionLock.notifyAll();
-		}
+		executor.setExecuting(wasExecuting);
 	}
 
 
@@ -595,12 +446,7 @@ abstract public class MachineBase implements IMachine {
 		videoTimer.cancel();
 		*/
 		
-		boolean wasExecuting;
-		synchronized (executionLock) {
-			wasExecuting = bExecuting;
-			bExecuting = false;
-			executionLock.notifyAll();
-		}
+		boolean wasExecuting = executor.setExecuting(false);
 		
 		settings.get(DataFiles.settingUserRomsPath).loadState(section);
 		
@@ -609,11 +455,8 @@ abstract public class MachineBase implements IMachine {
 		//Executor.settingDumpFullInstructions.setBoolean(true);
 		
 		//start();
-		
-		synchronized (executionLock) {
-			bExecuting = wasExecuting;
-			executionLock.notifyAll();
-		}
+
+		executor.setExecuting(wasExecuting);
 	}
 
 
@@ -654,26 +497,17 @@ abstract public class MachineBase implements IMachine {
 	 * @see v9t9.emulator.common.IMachine#getCpuTicksPerSec()
 	 */
 	@Override
-	public int getCpuTicksPerSec() {
+	public int getTicksPerSec() {
 		return cpuTicksPerSec;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.common.IMachine#getExecutionLock()
-	 */
-	@Override
-	public Object getExecutionLock() {
-		return executionLock;
-	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.IMachine#isExecuting()
 	 */
 	@Override
 	public boolean isExecuting() {
-		synchronized (executionLock) {
-			return bExecuting;
-		}
+		return executor.isExecuting();
 	}
 
 	/* (non-Javadoc)
@@ -699,10 +533,7 @@ abstract public class MachineBase implements IMachine {
 	 */
 	@Override
 	public void asyncExec(Runnable runnable) {
-		runnableList.add(runnable);
-		//synchronized (executionLock) {
-		//	executionLock.notifyAll();
-		//}
+		executor.asyncExec(runnable);
 	}
 
 	/* (non-Javadoc)

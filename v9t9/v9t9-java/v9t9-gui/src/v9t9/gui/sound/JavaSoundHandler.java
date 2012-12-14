@@ -70,8 +70,8 @@ public class JavaSoundHandler implements ISoundHandler {
 		
 		speechFormat = new AudioFormat(8000 * 6, 16, 1, true, false);
 		
-		output = SoundFactory.createSoundOutput(soundFormat, machine.getCpuTicksPerSec());
-		speechOutput = SoundFactory.createSoundOutput(speechFormat, machine.getCpuTicksPerSec());
+		output = SoundFactory.createSoundOutput(soundFormat, machine.getTicksPerSec());
+		speechOutput = SoundFactory.createSoundOutput(speechFormat, machine.getTicksPerSec());
 
 		audio = SoundFactory.createAudioListener();
 		if (audio instanceof AlsaSoundListener)
@@ -103,7 +103,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		// frames in ALSA means samples per channel, but raw freq in javax
 		//soundFramesPerTick = (int) ((soundFormat.getFrameRate()
 		//		+ machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
-		soundFramesPerTick = output.getSamples((1000 + machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
+		soundFramesPerTick = output.getSamples((1000 + machine.getTicksPerSec() - 1) / machine.getTicksPerSec());
 		
 		playSound.addListenerAndFire(new IPropertyListener() {
 
@@ -211,7 +211,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		}
 	}
 
-	public synchronized void flushAudio(int pos, int total, long baseCount) {
+	public synchronized void flushAudio(int pos, int total) {
 		if (output != null && machine.getSound() != null && total > 0) {
 			int totalCount = (int) (((long) pos * (soundFramesPerTick - lastUpdatedPos + total - 1)) / total);
 			updateSoundGenerator(lastUpdatedPos, soundFramesPerTick, totalCount);
@@ -219,7 +219,7 @@ public class JavaSoundHandler implements ISoundHandler {
 			lastUpdatedPos = 0;
 	
 			ISoundVoice[] vs = soundGenerator.getSoundVoices();
-			output.flushAudio(vs, total, baseCount);
+			output.flushAudio(vs, total);
 		}
 		
 		if (speechOutput != null && machine.getSpeech() != null) {

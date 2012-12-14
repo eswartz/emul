@@ -153,7 +153,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	protected void recalcInterruptTiming() {
         vdpInterruptLimit = cyclesPerSecond.getInt() / vdpInterruptRate.getInt();
         vdpInterruptFrac = 0;
-        fixedTimeVdpInterruptDelta = (int) ((long) vdpInterruptRate.getInt() * 65536 / machine.getCpuTicksPerSec());
+        fixedTimeVdpInterruptDelta = (int) ((long) vdpInterruptRate.getInt() * 65536 / machine.getTicksPerSec());
         //System.out.println("VDP interrupt target: " + Cpu.settingCyclesPerSecond.getInt() + " /  " + settingVdpInterruptRate.getInt() + " = " + vdpInterruptLimit);		
 	}
 
@@ -238,7 +238,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		if (machine.isExecuting()) {
 			vdpInterruptDelta += fixedTimeVdpInterruptDelta;
 			//System.out.print("[VDP delt:" + vdpInterruptDelta + "]");
-			if (vdpInterruptDelta >= 65536) {
+			while (vdpInterruptDelta >= 65536) {
 		
 				vdpInterruptDelta -= 65536;
 				
@@ -257,7 +257,10 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		// so we can trigger VDP interrupts in lockstep
 		// with the CPU.
 		
-		if (vdpInterruptFrac >= vdpInterruptLimit) {
+		if (vdpInterruptFrac < 0)
+			vdpInterruptFrac = 0;
+		
+		while (vdpInterruptFrac >= vdpInterruptLimit) {
 			vdpInterruptFrac -= vdpInterruptLimit;
 			
 			doTick();

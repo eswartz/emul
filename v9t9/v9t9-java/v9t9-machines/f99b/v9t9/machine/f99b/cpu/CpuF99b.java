@@ -10,7 +10,6 @@ import ejs.base.utils.HexUtils;
 import v9t9.common.asm.IDecompilePhase;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.AbortedException;
-import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionEffectLabelProvider;
 import v9t9.common.hardware.ICruChip;
@@ -66,8 +65,8 @@ public class CpuF99b extends CpuBase {
 
 	private final IVdpChip vdp;
 	
-	public CpuF99b(IMachine machine, int interruptTick, IVdpChip vdp) {
-		super(machine, new CpuStateF99b(machine.getConsole()), interruptTick);
+	public CpuF99b(IMachine machine, IVdpChip vdp) {
+		super(machine, new CpuStateF99b(machine.getConsole()));
 		this.vdp = vdp;
 		stateF99b = (CpuStateF99b) state;
         cyclesPerSecond.setInt(BASE_CYCLES_PER_SEC);
@@ -428,7 +427,7 @@ public class CpuF99b extends CpuBase {
 	 * TODO: this should not depend on vdp
 	 */
 	@Override
-	public synchronized void addCycles(int cycles) {
+	public void addCycles(int cycles) {
 		if (cycles != 0) {
 			super.addCycles(cycles);
 			vdp.addCpuCycles(cycles);
@@ -447,8 +446,8 @@ public class CpuF99b extends CpuBase {
 	 * @see v9t9.common.cpu.ICpu#createExecutor(v9t9.common.cpu.ICpuMetrics)
 	 */
 	@Override
-	public IExecutor createExecutor(ICpuMetrics metrics) {
-		return new Executor(this, metrics, 
+	public IExecutor createExecutor() {
+		return new Executor(machine, this,
 				new InterpreterF99b(machine),
 				null,
 				new NullCompilerStrategy(),

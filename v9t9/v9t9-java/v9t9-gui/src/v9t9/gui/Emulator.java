@@ -19,6 +19,7 @@ import org.apache.log4j.LogManager;
 
 import v9t9.common.client.IClient;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.machine.TerminatedException;
 import v9t9.gui.client.ClientFactory;
 import v9t9.gui.client.swt.SwtAwtJavaClient;
 import v9t9.gui.client.swt.SwtJavaClient;
@@ -194,6 +195,8 @@ public class Emulator {
 		
 		try {
 			server.run();
+		} catch (TerminatedException e) {
+			// good
 		} finally {
 			try {
 				server.dispose();

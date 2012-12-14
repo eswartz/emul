@@ -23,28 +23,15 @@ public interface IClient {
 
 	String getIdentifier();
 
-
 	void start();
 
     void close();
     
-    //ISettingsHandler getSettingsHandler();
-    
-    /**
-     * Handle one timer tick (nominally 1/60 second).  
-     *
-     */
-    //void timerInterrupt();
+    void tick();
 
 	boolean isAlive();
 
 	void handleEvents();
-
-	//void updateVideo();
-
-	//IVideoRenderer getVideoRenderer();
-	
-	//IKeyboardHandler getKeyboardHandler();
 	
 	IEventNotifier getEventNotifier();
 

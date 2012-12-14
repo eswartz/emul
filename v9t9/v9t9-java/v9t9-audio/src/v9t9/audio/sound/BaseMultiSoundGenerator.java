@@ -79,10 +79,10 @@ public abstract class BaseMultiSoundGenerator implements ISoundGenerator {
 	/* (non-Javadoc)
 	 * @see v9t9.common.sound.ISoundGenerator#tick()
 	 */
-	@Override
-	public void tick() {
-		for (ISoundGenerator generator : generators)
-			generator.tick();
-	}
+//	@Override
+//	public void tick() {
+//		for (ISoundGenerator generator : generators)
+//			generator.tick();
+//	}
 
 }

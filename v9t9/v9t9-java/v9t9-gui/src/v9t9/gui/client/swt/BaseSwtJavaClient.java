@@ -108,7 +108,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 			@Override
 			public void shellClosed(ShellEvent e) {
 		        if (machine.isAlive()) {
-		        	machine.setNotRunning();
+		        	machine.stop();
 		        }
 			}
 		});
@@ -133,21 +133,6 @@ public abstract class BaseSwtJavaClient implements IClient {
             }
         };
         videoTimer.scheduleTask(videoUpdateTask, videoUpdateTick);
-        
-        // flush sound each tick
-        TimerTask soundUpdateTask = new TimerTask() {
-        	
-        	@Override
-        	public void run() {
-        		int pos = machine.getCpu().getCurrentCycleCount();
-        		int total = machine.getCpu().getCurrentTargetCycleCount();
-//        		int total = (int) machine.getCpu().getTotalCurrentCycleCount();
-        		long baseCount = machine.getCpu().getTotalCycleCount();
-        		
-        		soundHandler.flushAudio(pos, total, baseCount);
-        	}
-        };
-        soundTimer.scheduleTask(soundUpdateTask, soundTick);
         
         // update sound as often as registers change
         final TimerTask soundGenerateTask = new TimerTask() {
@@ -181,7 +166,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 				int total = machine.getCpu().getCurrentTargetCycleCount();
 				long baseCount = machine.getCpu().getTotalCycleCount();
 				
-				soundHandler.flushAudio(pos, total, baseCount);
+				soundHandler.flushAudio(pos, total);
 			}
 		};
         machine.getSpeech().addSpeechListener(new ISpeechDataSender() {
@@ -198,6 +183,20 @@ public abstract class BaseSwtJavaClient implements IClient {
 		});
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IClient#tick()
+	 */
+	@Override
+	public void tick() {
+		// flush sound each tick
+		int pos = machine.getCpu().getCurrentCycleCount();
+		int total = machine.getCpu().getCurrentTargetCycleCount();
+//        		int total = (int) machine.getCpu().getTotalCurrentCycleCount();
+		long baseCount = machine.getCpu().getTotalCycleCount();
+
+		//System.out.println(pos + " / " + total);
+		soundHandler.flushAudio(pos, total);
+	}
 
 	abstract protected void setupRenderer();
 

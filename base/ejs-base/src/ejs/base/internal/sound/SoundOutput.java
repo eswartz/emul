@@ -192,7 +192,7 @@ public class SoundOutput implements ISoundOutput {
 				lastUpdatedPos += generated;
 				
 				if (samples > 0)
-					flushAudio(voices, 0, 0);
+					flushAudio(voices, 0);
 			}
 		}
 	}
@@ -201,14 +201,14 @@ public class SoundOutput implements ISoundOutput {
 
 	}
 
-	public void flushAudio(ISoundVoice[] voices, int totalCount, long baseCount) {
+	public void flushAudio(ISoundVoice[] voices, int totalCount) {
 		ISoundView chunk;
-		chunk = createChunk(voices, totalCount, baseCount);
+		chunk = createChunk(voices, totalCount);
 		if (chunk != null)
 			fireListeners(chunk);
 	}
 
-	private ISoundView createChunk(ISoundVoice[] voices, int totalCount, long baseCycles) {
+	private ISoundView createChunk(ISoundVoice[] voices, int totalCount) {
 		SoundChunk chunk;
 		synchronized (this) {
 			if (soundGeneratorWorkBuffer == null || soundGeneratorWorkBuffer.length == 0 || lastUpdatedPos == 0)
@@ -217,7 +217,7 @@ public class SoundOutput implements ISoundOutput {
 			for (ISoundVoice voice : voices) {
 				if (voice instanceof IFlushableSoundVoice) {
 					anyChanged |= ((IFlushableSoundVoice) voice).flushAudio(
-							soundGeneratorWorkBuffer, 0, lastUpdatedPos, totalCount, baseCycles);
+							soundGeneratorWorkBuffer, 0, lastUpdatedPos, totalCount);
 				}
 			}
 			

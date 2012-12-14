@@ -13,5 +13,5 @@ import ejs.base.sound.ISoundVoice;
 public interface ISoundGenerator extends IRegisterAccess.IRegisterWriteListener {
 
 	ISoundVoice[] getSoundVoices();
-	void tick();
+	//void tick();
 }

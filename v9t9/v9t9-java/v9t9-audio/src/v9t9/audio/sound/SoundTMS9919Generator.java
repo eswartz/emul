@@ -242,13 +242,13 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		return soundVoices;
 	}
 	
-	public void tick() {
-		if (soundHandler != null) {
-			int pos = machine.getCpu().getCurrentCycleCount();
-			int total = machine.getCpu().getCurrentTargetCycleCount();
-			long baseCount = machine.getCpu().getTotalCurrentCycleCount();
-
-			soundHandler.flushAudio(pos, total, baseCount);
-		}
-	}
+//	public void tick() {
+//		if (soundHandler != null) {
+//			int pos = machine.getCpu().getCurrentCycleCount();
+//			int total = machine.getCpu().getCurrentTargetCycleCount();
+//			long baseCount = machine.getCpu().getTotalCurrentCycleCount();
+//
+//			soundHandler.flushAudio(pos, total, baseCount);
+//		}
+//	}
 }

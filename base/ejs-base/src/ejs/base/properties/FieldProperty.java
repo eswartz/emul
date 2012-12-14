@@ -21,20 +21,8 @@ public class FieldProperty extends AbstractProperty {
 				//editorProvider != null ? editorProvider : new FieldPropertyEditorProvider());
 		this.obj = obj;
 		this.fieldName = fieldName;
-		Class<?> klass = obj.getClass();
-		while (klass != null) {
-			try {
-				field = klass.getDeclaredField(fieldName);
-				field.setAccessible(true);
-				setType(field.getType());
-				return;
-			} catch (NoSuchFieldException e) {
-				klass = klass.getSuperclass();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		throw new IllegalArgumentException(fieldName);
+		this.field = FieldUtils.fetchField(obj, fieldName);
+		setType(field.getType());
 	}
 	
 

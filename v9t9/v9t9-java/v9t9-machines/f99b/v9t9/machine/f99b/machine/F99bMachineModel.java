@@ -138,7 +138,7 @@ public class F99bMachineModel implements IMachineModel {
 	 */
 	@Override
 	public ICpu createCPU(IMachine machine) {
-		return new CpuF99b(machine, 1000 / machine.getCpuTicksPerSec(), machine.getVdp());
+		return new CpuF99b(machine, machine.getVdp());
 	}
 	
 	/*

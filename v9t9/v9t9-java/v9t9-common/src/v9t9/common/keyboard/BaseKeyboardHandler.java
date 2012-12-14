@@ -3,8 +3,6 @@
  */
 package v9t9.common.keyboard;
 
-import java.awt.Toolkit;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;

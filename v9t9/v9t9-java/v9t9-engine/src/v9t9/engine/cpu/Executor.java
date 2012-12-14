@@ -6,10 +6,10 @@
  */
 package v9t9.engine.cpu;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.settings.Logging;
-import ejs.base.utils.ListenerList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.TimerTask;
 
 import v9t9.common.compiler.ICompiledCode;
 import v9t9.common.compiler.ICompiler;
@@ -25,6 +25,10 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.engine.interpreter.IInterpreter;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.Logging;
+import ejs.base.utils.ListenerList;
 
 
 /**
@@ -33,7 +37,7 @@ import v9t9.engine.interpreter.IInterpreter;
  * @author ejs
  */
 public class Executor implements IExecutor {
-
+	private Object executionLock = new Object();
     private ICpu cpu;
 
     public IInterpreter interp;
@@ -44,6 +48,12 @@ public class Executor implements IExecutor {
     public long nSwitches;
     public long nCompiles;
 
+	protected long lastInfo = 0;
+	protected long upTime = 0;
+
+	private List<Runnable> runnableList;
+
+
 	//private ICpuController cpuController;
 
 	public int nVdpInterrupts;
@@ -51,13 +61,13 @@ public class Executor implements IExecutor {
 	/** counter for DBG/DBGF instructions */
     public int debugCount;
 
-	public volatile Boolean interruptExecution;
+	protected volatile Boolean interruptExecution;
     
 	private ListenerList<IInstructionListener> instructionListeners = new ListenerList<IInstructionListener>();
 
 	private long lastCycleCount;
 
-	private final ICpuMetrics cpuMetrics;
+	private ICpuMetrics cpuMetrics;
 
 	private IProperty compile;
 
@@ -69,18 +79,30 @@ public class Executor implements IExecutor {
 
 	private BreakpointManager breakpointManager;
 
-    public Executor(ICpu cpu, ICpuMetrics cpuMetrics, 
+	private boolean executing;
+
+	private IMachine machine;
+
+	private TimerTask memorySaverTask;
+
+	private Thread videoRunner;
+
+	private Thread cpuRunner;
+
+    public Executor(IMachine machine, ICpu cpu, 
     		IInterpreter interpreter, ICompiler compiler, 
     		ICompilerStrategy compilerStrategy,
     		final IInstructionListener dumpFullReporter, final IInstructionListener dumpReporter) {
     	
-    	compile = Settings.get(cpu, settingCompile);
+    	runnableList = Collections.synchronizedList(new LinkedList<Runnable>());
+
+    	this.machine = machine;
+		compile = Settings.get(cpu, settingCompile);
     	singleStep = Settings.get(cpu, settingSingleStep);
     	pauseMachine = Settings.get(cpu, IMachine.settingPauseMachine);
     	vdpInterruptRate = Settings.get(cpu, IVdpChip.settingVdpInterruptRate);
     	
         this.cpu = cpu;
-		this.cpuMetrics = cpuMetrics;
         this.interp = interpreter;
         this.compilerStrategy = compilerStrategy;
         
@@ -88,11 +110,10 @@ public class Executor implements IExecutor {
         
         breakpointManager = new BreakpointManager((IMachine) cpu.getMachine());
         
-        final Object lock = Executor.this.cpu.getMachine().getExecutionLock();
         cpu.settingDumpFullInstructions().addListenerAndFire(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
-				synchronized (lock) {
+				synchronized (executionLock) {
 					Settings.get(Executor.this.cpu, 
 							IMachine.settingThrottleInterrupts).setBoolean(setting.getBoolean());
 					
@@ -102,21 +123,21 @@ public class Executor implements IExecutor {
 						Executor.this.removeInstructionListener(dumpFullReporter);
 					}
 					interruptExecution = Boolean.TRUE;
-					lock.notifyAll();
+					executionLock.notifyAll();
 				}
 			}
         	
         });
         cpu.settingDumpInstructions().addListenerAndFire(new IPropertyListener() {
 			public void propertyChanged(IProperty setting) {
-				synchronized (lock) {
+				synchronized (executionLock) {
 					if (setting.getBoolean()) {
 						Executor.this.addInstructionListener(dumpReporter);
 					} else {
 						Executor.this.removeInstructionListener(dumpReporter);
 					}
 					interruptExecution = Boolean.TRUE;
-					lock.notifyAll();
+					executionLock.notifyAll();
 				}
 			}
         	
@@ -133,9 +154,9 @@ public class Executor implements IExecutor {
         singleStep.addListener(new IPropertyListener() {
         	
         	public void propertyChanged(IProperty setting) {
-        		synchronized (lock) {
+        		synchronized (executionLock) {
         			interruptExecution = Boolean.TRUE;
-        			lock.notifyAll();
+        			executionLock.notifyAll();
         		}
         	}
         	
@@ -144,12 +165,10 @@ public class Executor implements IExecutor {
 
 			public void propertyChanged(IProperty setting) {
 				interruptExecution = Boolean.TRUE;
-				//synchronized (lock) {
-				//	lock.notifyAll();
-				// }
 			}
         	
         });
+
         
 
 
@@ -165,6 +184,13 @@ public class Executor implements IExecutor {
         Logging.registerLog(cpu.settingDumpFullInstructions(), "instrs_full.txt");
     }
 
+    /* (non-Javadoc)
+     * @see v9t9.common.cpu.IExecutor#setMetrics(v9t9.common.cpu.ICpuMetrics)
+     */
+    @Override
+    public void setMetrics(ICpuMetrics cpuMetrics) {
+    	this.cpuMetrics = cpuMetrics;
+    }
 	public IProperty settingCompile() {
 		return compile;
 	}
@@ -181,31 +207,14 @@ public class Executor implements IExecutor {
     }
 
     /* (non-Javadoc)
-	 * @see v9t9.engine.cpu.IExecutor#execute()
-	 */
+     * @see v9t9.common.cpu.IExecutor#execute()
+     */
     @Override
-	public void execute() {
+    public int execute() {
     	if (cpu.isIdle() && cpu.settingRealTime().getBoolean()) {
-    		if (cpu.isThrottled())
-    			return;
-    		/*
-    		long start = System.currentTimeMillis();
-    		try {
-    			// short sleep
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-			}
-			long end = System.currentTimeMillis();
-			//System.out.print((end - start) + " ");
-			cpu.addCycles(cpu.getBaseCyclesPerSec() * (int)(end - start + 500) / 1000);
-    		cpu.checkAndHandleInterrupts();
-			*/
-    		while (!cpu.isThrottled() && nVdpInterrupts < vdpInterruptRate.getInt()) {
+    		while (nVdpInterrupts < vdpInterruptRate.getInt()) {
     			try {
-    				//long start = System.currentTimeMillis();
     				Thread.yield();
-    				
-    				//long end = System.currentTimeMillis();
     				cpu.addCycles(1);
     				cpu.checkInterrupts();
     			} catch (AbortedException e) {
@@ -213,7 +222,9 @@ public class Executor implements IExecutor {
     				break;
     			}
     		}
+    		return 0;
     	} else {
+    		int curCycles = cpu.getCurrentCycleCount();
 			if (compile.getBoolean()) {
 				executeCompilableCode();
 			} else if (singleStep.getBoolean()) {
@@ -221,15 +232,54 @@ public class Executor implements IExecutor {
 			} else {
 				interruptExecution = Boolean.FALSE;
 				if (cpu.settingRealTime().getBoolean()) {
-					while (!cpu.isThrottled() && !interruptExecution) {
-						interp.executeChunk(10, this);
-					}
+					interp.executeChunk(10, this);
 				} else {
 					interp.executeChunk(100, this);
 				}
 			}
+			int usedCycles = cpu.getCurrentCycleCount() - curCycles;
+			return usedCycles;
     	}
     }
+    /* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#execute()
+	 */
+//    @Override
+//	public void execute() {
+//    	if (cpu.isIdle() && cpu.settingRealTime().getBoolean()) {
+//    		if (cpu.isThrottled())
+//    			return;
+//    		
+//    		while (!cpu.isThrottled() && nVdpInterrupts < vdpInterruptRate.getInt()) {
+//    			try {
+//    				//long start = System.currentTimeMillis();
+//    				Thread.yield();
+//    				
+//    				//long end = System.currentTimeMillis();
+//    				cpu.addCycles(1);
+//    				cpu.checkInterrupts();
+//    			} catch (AbortedException e) {
+//    				cpu.handleInterrupts();
+//    				break;
+//    			}
+//    		}
+//    	} else {
+//			if (compile.getBoolean()) {
+//				executeCompilableCode();
+//			} else if (singleStep.getBoolean()) {
+//				interpretOneInstruction();
+//			} else {
+//				interruptExecution = Boolean.FALSE;
+//				if (cpu.settingRealTime().getBoolean()) {
+//					while (!cpu.isThrottled() && !interruptExecution) {
+//						interp.executeChunk(10, this);
+//					}
+//				} else {
+//					interp.executeChunk(100, this);
+//				}
+//			}
+//    	}
+//    }
     
 
     private void executeCompilableCode() {
@@ -264,6 +314,8 @@ public class Executor implements IExecutor {
 	 */
 	@Override
 	public final void recordMetrics() {
+		if (cpuMetrics == null)
+			return;
 		
 		long totalCycleCount = cpu.getTotalCycleCount();
 		if (totalCycleCount == lastCycleCount)
@@ -412,5 +464,180 @@ public class Executor implements IExecutor {
 	public BreakpointManager getBreakpoints() {
 		return breakpointManager;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IExecutor#setExecuting(boolean)
+	 */
+	@Override
+	public boolean setExecuting(boolean b) {
+		synchronized (executionLock) {
+			interruptExecution();
+			boolean wasExecuting = executing;
+			executing = b;
+			cpu.resetCycleCounts();
+			executionLock.notifyAll();
+			return wasExecuting;
+		}
 
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IExecutor#isExecuting()
+	 */
+	@Override
+	public boolean isExecuting() {
+		synchronized (executionLock) {
+			return executing;
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IExecutor#tick()
+	 */
+	@Override
+	public void tick() {
+		synchronized (executionLock) {
+			if (!executing)
+				return;
+			
+			long now = System.currentTimeMillis();
+			
+			if (now >= lastInfo + 1000) {
+				upTime += now - lastInfo;
+				recordMetrics();
+				resetVdpInterrupts();
+				lastInfo = now;
+			}
+			
+			cpu.tick();
+			
+			machine.getVdp().tick();
+		}    					
+	}
+	@Override
+	public void start() {
+		
+        videoRunner = new Thread("Video Runner") {
+        	@Override
+        	public void run() {
+        		IVdpChip vdp = machine.getVdp();
+        				
+        		while (machine.isAlive()) {
+	        		// delay if going too fast
+	    			while (vdp.isThrottled() && machine.isAlive()) {
+	    				// Just sleep.  Another timer thread will reset the throttle.
+	    				try {
+	    					Thread.sleep(10);
+	    				} catch (InterruptedException e) {
+	    					break;
+	    				}
+	    			}
+	    			if (!vdp.isThrottled()) {
+	    				vdp.work();
+	    			}
+        		}
+        	}
+        };
+        
+        
+        memorySaverTask = new TimerTask() {
+        	@Override
+        	public void run() {
+        		synchronized (executionLock) {
+        			machine.getMemory().save();
+        		}
+        	}
+        };
+        machine.getMachineTimer().scheduleAtFixedRate(memorySaverTask, 0, 5000);
+        
+        
+		cpuRunner = new Thread("CPU Runner") {
+        	@Override
+        	public void run() {
+    	        while (machine.isAlive()) {
+            		Runnable runnable;
+            		while (runnableList.size() > 0) {
+            			runnable = runnableList.remove(0);
+            			runnable.run();
+            		}
+	            	
+//        	        	
+//        	        	// delay if going too fast
+//        				if (realTime.getBoolean()) {
+//        					if (cpu.isThrottled() && cpu.getMachine().isAlive()) {
+//        						// Just sleep.  Another timer thread will reset the throttle.
+//        						try {
+//        							Thread.sleep(1000 / 200);		// expected clock: 100Hz
+//        							continue;
+//        						} catch (InterruptedException e) {
+//        							return;
+//        						}
+//        					}
+//        				}
+//        				
+    	            try {
+    	            	// synchronize on events like debugging, loading/saving, etc
+    	            	int usedCycles = 0;
+	            		synchronized (executionLock) {
+	            			if (!executing && machine.isAlive()) {
+	            				executionLock.wait(100);
+	            			}
+	            			if (executing) {
+	            				usedCycles = execute();
+	            			}
+	            		}
+	            		
+            			if (usedCycles >= 0)
+            				cpu.getAllocatedCycles().acquire(usedCycles);
+    	            } catch (AbortedException e) {
+    	            } catch (InterruptedException e) {
+      	              	break;
+    	            } catch (Throwable t) {
+    	            	t.printStackTrace();
+    	            	machine.stop();
+    	            	break;
+    	            }
+    	        }
+        	}
+        };
+        
+        
+        cpuRunner.start();
+
+        videoRunner.start();
+        
+        synchronized (executionLock) {
+			executing = !pauseMachine.getBoolean();
+			executionLock.notifyAll();
+		}
+
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IExecutor#stop()
+	 */
+	@Override
+	public void stop() {
+		interruptExecution();
+		synchronized (executionLock) {
+			executing = false;
+			executionLock.notifyAll();
+		}
+		cpuRunner.interrupt();
+		videoRunner.interrupt();
+		try {
+			videoRunner.join();
+		} catch (InterruptedException e) {
+		}
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IExecutor#asyncExec(java.lang.Runnable)
+	 */
+	@Override
+	public void asyncExec(Runnable runnable) {
+		runnableList.add(runnable);
+		
+	}
 }
