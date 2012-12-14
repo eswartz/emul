@@ -3,6 +3,8 @@
  */
 package v9t9.engine.sound;
 
+import v9t9.common.cpu.ICpu;
+import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.sound.TMS9919Consts;
 
@@ -16,15 +18,21 @@ import ejs.base.utils.ListenerList;
 public class AudioGateVoice extends BaseVoice {
 
 	private boolean gate;
+	private IMachine machine;
 
 	public AudioGateVoice(String id, String name,
-			ListenerList<IRegisterWriteListener> listeners) {
+			ListenerList<IRegisterWriteListener> listeners, IMachine machine) {
 		super(id, name, listeners);
+		this.machine = machine;
 	}
 
 	public void setGate(boolean gate) {
 		this.gate = gate;
-		fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_AUDIO_GATE, gate ? 1 : 0);
+		ICpu cpu = machine.getCpu();
+		if (cpu != null) {
+			int cycles = cpu.getCurrentCycleCount();
+			fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_AUDIO_GATE, gate ? cycles : -cycles-1);
+		}
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.engine.sound.BaseVoice#loadState(ejs.base.settings.ISettingSection)

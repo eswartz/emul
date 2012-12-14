@@ -92,6 +92,7 @@ public class BaseCruChip implements ICruChip {
 		if (clockRegister != 0) {
 			// this decrements once every 64 cycles
 			long nowCycles = cpu.getTotalCurrentCycleCount();
+			
 			while (clockTargetCycleCount < nowCycles) {
 				if (--clockDecrementerRegister <= 0) {
 					//System.out.println("tick");

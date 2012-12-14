@@ -8,8 +8,6 @@ import java.util.Arrays;
 import ejs.base.settings.ISettingSection;
 import ejs.base.sound.IFlushableSoundVoice;
 
-import v9t9.common.machine.IMachine;
-
 public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVoice {
 
 	private boolean wasSet;
@@ -17,6 +15,7 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	private boolean origState;
 	private int[] deltas = new int[0];
 	private int deltaIdx = 0;
+	private int baseCycles;
 	
 	public AudioGateSoundVoice(String name) {
 		super((name != null ? name + " " : "") + "Audio Gate");
@@ -42,6 +41,7 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 		wasSet = false;
 		origState = false;
 		deltaIdx = 0;
+		baseCycles = 0;
 	}
 	
 	/* (non-Javadoc)
@@ -51,15 +51,15 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	public boolean isActive() {
 		return super.isActive();
 	}
-	public synchronized void setState(IMachine machine, boolean b) {
-		if (state != b) {
-//			long curr = machine.getCpu().getTotalCurrentCycleCount();
-//			int pos = (int) (curr - baseCycles);
-//			baseCycles = curr;
-			int pos = machine.getCpu().getCurrentCycleCount();
-//			System.out.println(pos);
-			state = b;
-			appendPos(state ? pos : -pos-1);
+	public synchronized void setState(int curr) {
+		boolean newState = curr >= 0;
+		if (state != newState) {
+			int offs = absp1(curr) - baseCycles;
+			if (offs < 0)
+				offs = curr;
+			baseCycles = curr;
+			state = newState;
+			appendPos(state ? offs : -offs-1);
 		}
 	}
 
@@ -93,27 +93,34 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	 */
 	@Override
 	public synchronized boolean flushAudio(float[] soundGeneratorWorkBuffer, int from,
-			int to, int total) {
+			int to, int total_unused) {
 		boolean generated = false;
 		if (from < to && (true)) {
+			
 			generated = true;
 			int ratio = 128 + balance;
 			float sampleL = ((256 - ratio) * 1f) / 256.f;
 			float sampleR = (ratio * 1f) / 256.f;
 			
-			int idx = 0;
 			
 			int totalSamps = to - from;
 			
-			total = 0;
+			int total = 0;
 			for (int i = 0; i < deltaIdx; i++)
 				total += absp1(deltas[i]);
 			
+
+			if (total == 0)
+				total = 1;
+
+			//StringBuilder sb = new StringBuilder();
 			
+			int idx = 0;
 			int consumed = deltaIdx > 0 ? absp1(deltas[idx]) : 0;
-			int next = from + (int) (idx < deltaIdx ? (long) consumed * totalSamps / total : totalSamps);
+			int next = from + (int) ((long) consumed * totalSamps / total);
 			idx++;
-						
+			//sb.append(next - from).append(',');
+			
 			boolean on = origState;
 			while (from < to) {
 				if (on) {
@@ -131,12 +138,16 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 						on = state;
 						next = to;
 					}
+					//sb.append(next - from).append(',');
 				}
 			}
+			//System.out.println(sb.toString());
+			//sb.setLength(0);
 		}
 		
 		deltaIdx = 0;
 		origState = state;
+		baseCycles = total_unused;
 		
 		return generated;
 	}

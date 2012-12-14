@@ -44,14 +44,11 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 
 	protected int active;
 
-	protected final IMachine machine;
-
 	protected final ISoundChip soundChip;
 
 	protected final List<SoundVoice> soundVoicesList = new ArrayList<SoundVoice>();
 	
 	public SoundTMS9919Generator(IMachine machine, String name, int regBase) {
-		this.machine = machine;
 		this.soundChip = machine.getSound();
 		soundChip.addWriteListener(this);
 		init(name, regBase);
@@ -110,7 +107,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 				
 				@Override
 				public void registerChanged(int reg, int value) {
-					voice.setState(machine, value != 0);
+					voice.setState(value);
 				}
 			});
 				

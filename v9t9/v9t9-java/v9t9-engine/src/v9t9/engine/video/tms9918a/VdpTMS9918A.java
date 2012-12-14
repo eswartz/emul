@@ -238,9 +238,11 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		if (machine.isExecuting()) {
 			vdpInterruptDelta += fixedTimeVdpInterruptDelta;
 			//System.out.print("[VDP delt:" + vdpInterruptDelta + "]");
-			while (vdpInterruptDelta >= 65536) {
+			if (vdpInterruptDelta >= 65536) {
 		
 				vdpInterruptDelta -= 65536;
+				
+				//vdpInterruptDelta &= 65535;
 				
 				doTick();
 			}
@@ -260,7 +262,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		if (vdpInterruptFrac < 0)
 			vdpInterruptFrac = 0;
 		
-		while (vdpInterruptFrac >= vdpInterruptLimit) {
+		if (vdpInterruptFrac >= vdpInterruptLimit) {
 			vdpInterruptFrac -= vdpInterruptLimit;
 			
 			doTick();

@@ -47,7 +47,7 @@ public class SoundTMS9919B extends SoundTMS9919 {
 		mapRegisters(regBase, count, voices[3]);
 		regBase += count;
 		
-		audioGateVoice = new AudioGateVoice(id + "A", name + " Audio Gate", listeners);
+		audioGateVoice = new AudioGateVoice(id + "A", name + " Audio Gate", listeners, machine);
 		count = ((BaseVoice) audioGateVoice).initRegisters(regNames, regDescs, regIds, regBase);
 		mapRegisters(regBase, count, audioGateVoice);
 		regBase += count;
