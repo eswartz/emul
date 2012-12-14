@@ -192,15 +192,13 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 //		currenttargetcycles = currentcycles > targetcycles ? Math.min(targetcycles / 4, currentcycles - targetcycles)
 //					: targetcycles;
 		
-		
-		// If really fast speeds are demanded, and/or the system is otherwise busy,
-		// we can fall behind the target.  But if we fall too far behind,
-		// we'll never catch up.
-		int expCycles = cyclesPerSecond.getInt() / machine.getTicksPerSec() / 10;
-		if (currenttargetcycles > expCycles || currenttargetcycles < expCycles) {
-			// something really threw us off -- just start over
-			totalcurrentcycles = totaltargetcycles;
+		if (currenttargetcycles < targetcycles / 10 || currenttargetcycles > targetcycles * 2) {
+			if (currenttargetcycles < 0) {
+				// something really threw us off -- just start over
+				totalcurrentcycles = totaltargetcycles;
+			}
 			currenttargetcycles = targetcycles;
+			
 		}
 		
 //		System.out.println(System.currentTimeMillis()+": " + currentcycles + " -> " + currenttargetcycles);

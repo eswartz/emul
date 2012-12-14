@@ -135,14 +135,14 @@ public class DumpFullReporterF99b implements IInstructionListener {
 			PrintWriter dumpfull) {
 		Pair<Integer, Integer> fx = InstF99b.getStackEffects(block.inst.getInst());
 		if (fx != null)
-			spadded = Math.min(4, Math.max(fx.second, spadded));
+			spadded = Math.min(block.inStack.length, Math.min(4, Math.max(fx.second, spadded)));
 		
 		for (int i = 0; i < spadded; i++)
 			sb.append(toStr(block.inStack[spadded - i - 1])).append(' ');
 		
 		fx = InstF99b.getReturnStackEffects(block.inst.getInst());
 		if (fx != null)
-			rpadded = Math.min(4, Math.max(fx.second, rpadded));
+			rpadded = Math.min(block.inReturnStack.length, Math.min(4, Math.max(fx.second, rpadded)));
 		
 		if (rpadded != 0) {
 

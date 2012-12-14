@@ -844,9 +844,14 @@ public class InterpreterF99b implements IInterpreter {
 	        		break;
 	        	}
 	        	
-	        	case SYSCALL_SPIN:
-	        		cpu.addCycles(cpu.pop());
+	        	case SYSCALL_SPIN: {
+	        		int toSpin = cpu.pop();
+	        		if (cpu.getCurrentCycleCount() + toSpin > cpu.getTargetCycleCount()) {
+	        			toSpin = cpu.getTargetCycleCount() - cpu.getCurrentCycleCount();
+	        		}
+	        		cpu.addCycles(toSpin);
 	        		break;
+	        	}
         	}
         	break;
 
