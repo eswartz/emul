@@ -164,7 +164,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 			public void run() {
 				int pos = machine.getCpu().getCurrentCycleCount();
 				int total = machine.getCpu().getCurrentTargetCycleCount();
-				long baseCount = machine.getCpu().getTotalCycleCount();
 				
 				soundHandler.flushAudio(pos, total);
 			}
@@ -191,8 +190,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 		// flush sound each tick
 		int pos = machine.getCpu().getCurrentCycleCount();
 		int total = machine.getCpu().getCurrentTargetCycleCount();
-//        		int total = (int) machine.getCpu().getTotalCurrentCycleCount();
-		long baseCount = machine.getCpu().getTotalCycleCount();
 
 		//System.out.println(pos + " / " + total);
 		soundHandler.flushAudio(pos, total);

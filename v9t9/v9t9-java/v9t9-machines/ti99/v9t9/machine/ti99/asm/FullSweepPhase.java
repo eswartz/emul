@@ -279,7 +279,8 @@ public class FullSweepPhase extends Phase {
             block.setFlags(block.getFlags() & (~Block.fVisited));
         }
 
-        boolean changed = false;
+        @SuppressWarnings("unused")
+		boolean changed = false;
         for (Object element : getRoutines()) {
             Routine routine = (Routine) element;
             if (routine instanceof ContextSwitchRoutine) {
