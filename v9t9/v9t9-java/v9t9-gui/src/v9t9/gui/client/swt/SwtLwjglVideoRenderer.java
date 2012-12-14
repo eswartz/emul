@@ -46,6 +46,7 @@ import v9t9.gui.client.swt.gl.SimpleCurvedCrtMonitorRender;
 import v9t9.gui.client.swt.gl.StandardMonitorRender;
 import v9t9.gui.client.swt.gl.TextureLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
+import v9t9.video.BitmapCanvasShort;
 import v9t9.video.IGLDataCanvas;
 import v9t9.video.ImageDataCanvasR3G3B2;
 import v9t9.video.VdpCanvasFactory;
@@ -115,8 +116,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 	protected void createVdpCanvasHandler() {
 //		vdpCanvas = new BitmapCanvasInt();
-//		vdpCanvas = new BitmapCanvasShort();
-		vdpCanvas = new ImageDataCanvasR3G3B2();
+		if (getVdpHandler().getRegisterCount() > 16)
+			vdpCanvas = new BitmapCanvasShort();	// V9938
+		else
+			vdpCanvas = new ImageDataCanvasR3G3B2();
 //		vdpCanvas = new ImageDataCanvas24Bit();
 		
 		glDataCanvas = (IGLDataCanvas) vdpCanvas;
@@ -147,24 +150,25 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 
 	protected void updateShaders() {
-		if (!glCanvas.isDisposed()) {
-			Display.getDefault().syncExec(new Runnable() {
-				public void run() {
-					glCanvas.setCurrent();
-					try {
-						GLContext.useContext(glCanvas);
-						compileLinkShaders();
-						glCanvas.redraw();
-						updateWidgetSizeForMode();
-						reblitGL();
-					} catch (LWJGLException e) { 
-						e.printStackTrace(); 
-						return;
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				synchronized (SwtLwjglVideoRenderer.this) {
+					if (!glCanvas.isDisposed()) {
+						glCanvas.setCurrent();
+						try {
+							GLContext.useContext(glCanvas);
+							compileLinkShaders();
+							glCanvas.redraw();
+							updateWidgetSizeForMode();
+							reblitGL();
+						} catch (LWJGLException e) { 
+							e.printStackTrace(); 
+							return;
+						}
 					}
-					
 				}
-			});
-		}
+			}
+		});
 	}
 	
 	protected Canvas createCanvasControl(Composite parent, int flags) {
@@ -247,7 +251,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		return monitorDrawing.getBoolean() ? CRT : STANDARD;
 	}
 	
-	private void compileLinkShaders() {
+	private synchronized void compileLinkShaders() {
 		if (!supportsShaders)
 			return;
 		
@@ -256,12 +260,15 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 				ARBShaderObjects.glDeleteObjectARB(programObject);
 			programObject = ARBShaderObjects.glCreateProgramObjectARB();
 			
-			String base = getEffect().getParams().getShaderBase();
+			MonitorEffect effect = getEffect();
+			String base = effect.getParams().getShaderBase();
 			vertexShader = compileShader(vertexShader, ARBVertexShader.GL_VERTEX_SHADER_ARB, base + ".vert");
 			fragShader = compileShader(fragShader, ARBFragmentShader.GL_FRAGMENT_SHADER_ARB, base + ".frag");
 			
 			linkShaders(programObject, vertexShader, fragShader);
 
+			updateProgramVariables();
+			
 		} catch (GLShaderException e) {
 			ARBShaderObjects.glDeleteObjectARB(programObject);
 			ARBShaderObjects.glDeleteObjectARB(fragShader);
@@ -371,6 +378,38 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		
+		updateProgramVariables();
+		
+
+		glActiveTexture(GL_TEXTURE1);
+		
+		glMatrixMode(GL_TEXTURE);
+		
+		glLoadIdentity();
+		glScalef(vdpCanvas.getVisibleWidth() > 256 ? vdpCanvas.getVisibleWidth() / 2 : vdpCanvas.getVisibleWidth(), 
+				vdpCanvas.isInterlacedEvenOdd() ? vdpCanvas.getVisibleHeight() / 2 : vdpCanvas.getVisibleHeight(), 1.0f);
+
+		glMatrixMode(GL_MODELVIEW);
+		
+		glActiveTexture(GL_TEXTURE0);
+
+		
+		for (Integer displayList : displayListMap.values()) {
+			glDeleteLists(displayList, 1);
+		}
+		displayListMap.clear();
+		
+		if (VERBOSE) System.out.printf("Texture size: %d x %d%n", 
+				vdpCanvas.getVisibleWidth(),
+				vdpCanvas.getVisibleHeight());
+
+	}
+
+	
+	/**
+	 * 
+	 */
+	private void updateProgramVariables() {
 		if (programObject != 0) {
 			// bind program so we can look up uniforms
 			ARBShaderObjects.glUseProgramObjectARB(programObject);
@@ -389,33 +428,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			ARBShaderObjects.glUniform1iARB(
 					ARBShaderObjects.glGetUniformLocationARB(programObject, "pixelTexture"), 
 					1);
-
-			glActiveTexture(GL_TEXTURE1);
-			
-			glMatrixMode(GL_TEXTURE);
-			
-			glLoadIdentity();
-			glScalef(vdpCanvas.getVisibleWidth() > 256 ? vdpCanvas.getVisibleWidth() / 2 : vdpCanvas.getVisibleWidth(), 
-					vdpCanvas.isInterlacedEvenOdd() ? vdpCanvas.getVisibleHeight() / 2 : vdpCanvas.getVisibleHeight(), 1.0f);
-
-			glMatrixMode(GL_MODELVIEW);
-			
-			glActiveTexture(GL_TEXTURE0);
-
 		}
 		
-		for (Integer displayList : displayListMap.values()) {
-			glDeleteLists(displayList, 1);
-		}
-		displayListMap.clear();
-		
-		if (VERBOSE) System.out.printf("Texture size: %d x %d%n", 
-				vdpCanvas.getVisibleWidth(),
-				vdpCanvas.getVisibleHeight());
-
 	}
 
-	
 	protected void doRepaint(GC gc, Rectangle updateRect) {
 		reblitGL();
 	}
@@ -442,7 +458,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glFlush();
 	}
 	
-	private void reblitGL() {
+	private synchronized void reblitGL() {
 		long firstTime = System.currentTimeMillis();
 		
 		MonitorEffect effect = getEffect();
@@ -569,7 +585,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		// HACK for Intel Mobile Express Graphics --
 		// if shaders are compiled/linked BEFORE an initial render,
 		// the whole ig4icd[32|64].dll DLL crashes and burns
-		if (programObject == 0 && supportsShaders) {
+		if (supportsShaders && programObject == 0) {
 			compileLinkShaders();
 		}
 		
