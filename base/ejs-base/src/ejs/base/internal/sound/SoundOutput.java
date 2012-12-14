@@ -40,6 +40,7 @@ public class SoundOutput implements ISoundOutput {
 	// samples * channels
 	private final int bufferSize;
 	private AudioFormat format;
+	private boolean wasStarted;
 
 	public SoundOutput(AudioFormat format, int tickRate) {
 		this.format = format;
@@ -143,6 +144,7 @@ public class SoundOutput implements ISoundOutput {
 				e.printStackTrace();
 			}
 		}
+		wasStarted = true;
 	}
 	
 	public void stop() {
@@ -153,8 +155,16 @@ public class SoundOutput implements ISoundOutput {
 				e.printStackTrace();
 			}
 		}
+		wasStarted = false;
 	}
 	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundOutput#isStarted()
+	 */
+	@Override
+	public boolean isStarted() {
+		return wasStarted;
+	}
 	public int getSamples(int ms) {
 		int samples = (int) (((long) ms * format.getSampleRate() * format.getChannels() + 999) / 1000);
 		if (format.getChannels() > 1)

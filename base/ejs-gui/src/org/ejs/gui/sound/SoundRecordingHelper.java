@@ -92,22 +92,30 @@ public class SoundRecordingHelper {
 			item.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					String filenameBase = SwtDialogUtils.openFileSelectionDialog(
-							menu.getShell(),
-							"Record " + label + " to...", 
-							"/tmp", 
-							label, true,
-							SoundFileListener.getSoundFileExtensions());
-					File saveFile = null;
-					if (filenameBase != null) {
-						saveFile = SwtDialogUtils.getUniqueFile(filenameBase);
-						if (saveFile == null) {
-							SwtDialogUtils.showErrorMessage(menu.getShell(), "Save error", 
-									"Too many " + label + " files here!");
-							return;
+					boolean wasGoing = output.isStarted();
+					if (wasGoing)
+						output.stop();
+					try {
+						String filenameBase = SwtDialogUtils.openFileSelectionDialog(
+								menu.getShell(),
+								"Record " + label + " to...", 
+								"/tmp", 
+								label, true,
+								SoundFileListener.getSoundFileExtensions());
+						File saveFile = null;
+						if (filenameBase != null) {
+							saveFile = SwtDialogUtils.getUniqueFile(filenameBase);
+							if (saveFile == null) {
+								SwtDialogUtils.showErrorMessage(menu.getShell(), "Save error", 
+										"Too many " + label + " files here!");
+								return;
+							}
 						}
+						soundFileSetting.setString(saveFile != null ? saveFile.getAbsolutePath() : null);
+					} finally {
+						if (wasGoing)
+							output.start();
 					}
-					soundFileSetting.setString(saveFile != null ? saveFile.getAbsolutePath() : null);
 				}
 
 			});
