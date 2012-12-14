@@ -230,10 +230,10 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 			// even-odd tiling function
 			vdpCanvas.getColorMgr().setClearColor((vdpbg >> 2) & 0x3);
 			vdpCanvas.getColorMgr().setClearColor1((vdpbg) & 0x3);
-			vdpCanvas.clearToEvenOddClearColors();
+			//vdpCanvas.clearToEvenOddClearColors();
 		} else if (modeNumber == MODE_GRAPHICS7) {
 			vdpCanvas.getColorMgr().setClearColor(vdpregs[7] & 0xff);
-			vdpCanvas.clear();
+			//vdpCanvas.clear();
 		} else {
 			super.setupBackdrop();
 		}
