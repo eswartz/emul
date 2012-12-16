@@ -24,6 +24,7 @@ public interface ISoundChip extends IPersistable, IRegisterAccess {
 	//void setSoundHandler(ISoundHandler soundHandler);
 
 	void setAudioGate(int addr, boolean b);
+	void setCassette(int addr, boolean b);
 
 	/**
 	 * 

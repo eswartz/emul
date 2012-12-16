@@ -43,7 +43,6 @@ public class BaseCruChip implements ICruChip {
 	 * via {@link Cpu9900#setInterruptRequest(byte)} in priority order. */
 	protected int currentints;
 
-	protected long clockTargetCycleCount;
 	protected boolean intreq;
 
 	private final int intCount;
@@ -64,8 +63,9 @@ public class BaseCruChip implements ICruChip {
 	}
 
 	protected void resetClock() {
-		clockDecrementerRegister = clockRegister;
-		clockTargetCycleCount = machine.getCpu().getTotalCurrentCycleCount() + 64;
+		clockDecrementerRegister = (clockRegister >> 1);
+		prevCycles = machine.getCpu().getCurrentCycleCount();
+		//clockTargetCycleCount = machine.getCpu().getTotalCurrentCycleCount() + 64;
 		//System.out.println("Reset clock to " + clockRegister);
 	}
 
@@ -81,7 +81,9 @@ public class BaseCruChip implements ICruChip {
   
     /** When PIN_INTREQ set, the interrupt level (IC* bits on the TMS9900). */
     private byte ic;
-    
+
+	private int prevCycles;
+
 	public void pollForPins(ICpu cpu) {
 		// interrupts not generated in clock mode
 		if (clockmode) {
@@ -89,26 +91,35 @@ public class BaseCruChip implements ICruChip {
 		}
 		
 		// while polling, also handle clock if in I/O mode
+		final int CYCLES_PER_TICK = 64;
 		if (clockRegister != 0) {
-			// this decrements once every 64 cycles
-			long nowCycles = cpu.getTotalCurrentCycleCount();
+			// this decrements once every N cycles
+			int nowCycles = cpu.getCurrentCycleCount();
+			int diff = nowCycles >= prevCycles ? nowCycles - prevCycles : nowCycles;
+			prevCycles = nowCycles;
 			
-			while (clockTargetCycleCount < nowCycles) {
+			while (diff >= CYCLES_PER_TICK) {
 				if (--clockDecrementerRegister <= 0) {
 					//System.out.println("tick");
-					if (!suppressClockInterrupts && (enabledIntMask & (1 << intClock)) != 0) {
-						triggerInterrupt(intClock);
-						
-						// "When the clock interrupt is active, the clock mask must be written
-						// to clear the interrupt."
-						suppressClockInterrupts = true;
+					if ((enabledIntMask & (1 << intClock)) != 0) {
+						if (!suppressClockInterrupts) {
+							triggerInterrupt(intClock);
+							
+							// "When the clock interrupt is active, the clock mask must be written
+							// to clear the interrupt."
+							suppressClockInterrupts = true;
+							resetClock();
+						}
+					} else {
+						resetClock();
 					}
-					resetClock();
 					break;
 				}
-				clockTargetCycleCount += 64;
+				diff -= CYCLES_PER_TICK;
 				clockReadRegister = clockDecrementerRegister;
 			}
+			
+			prevCycles -= diff;
 		}
 		
 		intreq = false;

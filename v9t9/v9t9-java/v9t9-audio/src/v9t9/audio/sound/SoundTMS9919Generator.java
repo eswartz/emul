@@ -36,7 +36,8 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		VOICE_TONE_1 = 1, 
 		VOICE_TONE_2 = 2, 
 		VOICE_NOISE = 3,
-		VOICE_AUDIO = 4;
+		VOICE_AUDIO = 4,
+		VOICE_CASSETTE = 5;
 
 	private SoundVoice[] soundVoices;
 
@@ -89,6 +90,10 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		soundVoicesList.add(av);
 		regBase += setupAudioGateVoice(regBase, av);
 		
+		CassetteSoundVoice cv = new CassetteSoundVoice(name);
+		soundVoicesList.add(cv);
+		regBase += setupCassetteVoice(regBase, cv);
+		
 		return regBase;
 	}
 
@@ -114,6 +119,28 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		return TMS9919Consts.REG_COUNT_AUDIO_GATE;
 	}
 
+	/**
+	 * @param regBase
+	 */
+	protected int setupCassetteVoice(int regBase, final CassetteSoundVoice voice) {
+		RegisterInfo info;
+		info = soundChip.getRegisterInfo(regBase);
+		assert info != null && info.id.endsWith("C:C");
+		
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE, voice);
+		
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE,
+				new IRegisterAccess.IRegisterWriteListener() {
+			
+			@Override
+			public void registerChanged(int reg, int value) {
+				voice.setState(value);
+			}
+		});
+		
+		return TMS9919Consts.REG_COUNT_CASSETTE;
+	}
+	
 	/**
 	 * @param regBase
 	 * @param voice 

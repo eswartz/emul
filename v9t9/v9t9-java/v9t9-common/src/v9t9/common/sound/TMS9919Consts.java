@@ -37,9 +37,16 @@ public class TMS9919Consts {
 	 */
 	final public static int REG_OFFS_AUDIO_GATE = 0;
 	
+	/** 
+	 * This is the offset in the cassette register bank for
+	 * the state of the cassette (0=off, 1=on) 
+	 */
+	final public static int REG_OFFS_CASSETTE = 0;
+	
 	final public static int REG_COUNT_TONE = 2;
 	final public static int REG_COUNT_NOISE = 2;
 	final public static int REG_COUNT_AUDIO_GATE = 1;
+	final public static int REG_COUNT_CASSETTE = 1;
 
 	/**
 	 *	Masks for the noise control register

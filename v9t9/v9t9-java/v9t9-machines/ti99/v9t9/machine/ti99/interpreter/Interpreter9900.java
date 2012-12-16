@@ -81,15 +81,6 @@ public class Interpreter9900 implements IInterpreter {
     	} else {
     		executeFast(op_x);
     	}
-    	
-        /* dump instruction */
-        //PrintWriter dumpfull = machine.getExecutor().getDumpfull(); 
-        //PrintWriter dump = machine.getExecutor().getDump();
-        
-        //if (dumpfull != null || dump != null || Machine.settingDebugTracing.getBoolean()) {
-        //} else {
-        //}
-
     }
 
     /* (non-Javadoc)

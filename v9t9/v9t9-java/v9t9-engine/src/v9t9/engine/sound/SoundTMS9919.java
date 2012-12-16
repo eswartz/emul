@@ -61,6 +61,7 @@ public class SoundTMS9919 implements ISoundChip {
 	protected int regBase;
 	protected IClockedVoice[] voices = new IClockedVoice[4];
 	protected AudioGateVoice audioGateVoice;
+	protected CassetteVoice cassetteVoice;
 
 	public SoundTMS9919(IMachine machine, String id, String name, int regBase) {
 		this.machine = machine;
@@ -101,6 +102,11 @@ public class SoundTMS9919 implements ISoundChip {
 		audioGateVoice = new AudioGateVoice(id + "A", name + " Audio Gate", listeners, machine);
 		count = ((BaseVoice) audioGateVoice).initRegisters(regNames, regDescs, regIds, regBase);
 		mapRegisters(regBase, count, audioGateVoice);
+		regBase += count;
+		
+		cassetteVoice = new CassetteVoice(id + "C", name + " Cassette", listeners, machine);
+		count = ((BaseVoice) cassetteVoice).initRegisters(regNames, regDescs, regIds, regBase);
+		mapRegisters(regBase, count, cassetteVoice);
 		regBase += count;
 		
 		return regBase;
@@ -211,9 +217,14 @@ public class SoundTMS9919 implements ISoundChip {
 			v.loadState(settings.getSection(name));
 		}
 	}
-
+	
 	public void setAudioGate(int addr, boolean b) {
 		audioGateVoice.setGate(b);
+	}
+
+
+	public void setCassette(int addr, boolean b) {
+		cassetteVoice.setState(b);
 	}
 	
 	/* (non-Javadoc)
@@ -254,9 +265,10 @@ public class SoundTMS9919 implements ISoundChip {
 	 */
 	@Override
 	public RegisterInfo getRegisterInfo(int reg) {
+		IVoice voice = regIdToVoice.get(reg);
 		RegisterInfo info = new RegisterInfo(regNames.get(reg), 
 				IRegisterAccess.FLAG_ROLE_GENERAL,
-				1,
+				voice instanceof CassetteVoice ? 4 : 1,
 				regDescs.get(reg));
 		return info;
 	}
@@ -317,6 +329,7 @@ public class SoundTMS9919 implements ISoundChip {
 		for (IVoice v : voices) {
 			v.setRegister(v.getBaseRegister() + REG_OFFS_ATTENUATION, 0xf);
 		}		
-		audioGateVoice.setGate(false);
+//		audioGateVoice.setGate(false);
+		cassetteVoice.setState(false);
 	}
 }

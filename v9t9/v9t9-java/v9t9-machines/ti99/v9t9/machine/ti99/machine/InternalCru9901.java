@@ -136,6 +136,35 @@ public class InternalCru9901 extends BaseCruChip {
 		
 	};
 
+	private ICruWriter cruwCassette1 = new ICruWriter() {
+		public int write(int addr, int data, int num) {
+			// TODO: also pass to cassette
+			System.out.println("[CS1] " + (data == 0 ? "on" : "off"));
+			return 0;
+		}
+		
+	};
+	
+	private ICruWriter cruwCassette2 = new ICruWriter() {
+		public int write(int addr, int data, int num) {
+			// TODO: also pass to cassette
+			System.out.println("[CS2] " + (data == 0 ? "on" : "off"));
+			return 0;
+		}
+		
+	};
+	
+	private ICruWriter cruwCassetteOut = new ICruWriter() {
+		public int write(int addr, int data, int num) {
+			// TODO: also pass to cassette
+
+			getMachine().getSound().setCassette(addr, data != 0);
+//			getMachine().getSound().setRegister(TMS9919Consts.REG_OFFS_ATTENUATION, data != 0 ? 0x0 : 0xf);
+			return 0;
+		}
+		
+	};
+
 	private ICruReader crur9901_0 = new ICruReader() {
 		public int read(int addr, int data, int num) {
 			return clockmode ? 1 : 0;
@@ -216,7 +245,16 @@ public class InternalCru9901 extends BaseCruChip {
 		}
 		
 	};
-	
+
+	private ICruReader crurCassetteIn = new ICruReader() {
+		public int read(int addr, int data, int num) {
+			int bit = Math.random() >= 0.5 ? 1 : 0;
+			getMachine().getSound().setCassette(addr, bit != 0);
+			return bit;
+		}
+		
+	};
+
     public InternalCru9901(TI99Machine machine) {
     	super(machine, 15);
     	
@@ -251,6 +289,10 @@ public class InternalCru9901 extends BaseCruChip {
 
         registerInternalCru(0x30, 1, cruwAudioGate);
         
+        registerInternalCru(0x2C, 1, cruwCassette1);
+        registerInternalCru(0x2E, 1, cruwCassette2);
+        registerInternalCru(0x32, 1, cruwCassetteOut);
+        
         registerInternalCru(0x0, 1, crur9901_0);
         registerInternalCru(0x2, 1, crur9901_1);
         registerInternalCru(0x4, 1, crur9901_2);
@@ -265,13 +307,9 @@ public class InternalCru9901 extends BaseCruChip {
         registerInternalCru(0x1e, 1, crur9901_15);
         registerInternalCru(0x2a, 1, cruralpha);
 
+        registerInternalCru(0x36, 1, crurCassetteIn);
     }
 
-	protected void resetClock() {
-		clockDecrementerRegister = clockRegister;
-		clockTargetCycleCount = getMachine().getCpu().getTotalCurrentCycleCount() + 64;
-		//System.out.println("Reset clock to " + clockRegister);
-	}
 
 	/** Register handler for a range of bits.  Note that the internal bus
      * aliases in blocks of 0x40.

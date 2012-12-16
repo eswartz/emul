@@ -9,7 +9,6 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.cpu.SimpleBreakpoint;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.IVdpChip;
@@ -180,7 +179,7 @@ public abstract class EmulatorServerBase {
         machine.start();
         machine.reset();
         
-        machine.getExecutor().getBreakpoints().addBreakpoint(new SimpleBreakpoint(0x1404, true));
+        //machine.getExecutor().getBreakpoints().addBreakpoint(new SimpleBreakpoint(0x1404, true));
         
         if (enableTCF)
         	server.run();

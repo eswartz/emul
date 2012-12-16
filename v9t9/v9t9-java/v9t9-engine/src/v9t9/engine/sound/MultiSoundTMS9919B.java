@@ -61,6 +61,10 @@ public class MultiSoundTMS9919B extends BaseMultiSound {
 	public void setAudioGate(int addr, boolean b) {
 		chips[0].setAudioGate(addr, b);
 	}
+	
+	public void setCassette(int addr, boolean b) {
+		chips[0].setCassette(addr, b);
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IRegisterAccess#getGroupName()
