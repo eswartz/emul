@@ -90,7 +90,8 @@ public class SoundFileListener implements ISoundEmitter {
 						chunk.soundData.length);
 			} catch (IOException e) {
 				try {
-					soundFos.close();
+					if (soundFos != null)
+						soundFos.close();
 					soundFos = null;
 				} catch (IOException e1) {
 					e1.printStackTrace();

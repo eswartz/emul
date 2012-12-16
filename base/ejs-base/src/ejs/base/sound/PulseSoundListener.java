@@ -23,6 +23,11 @@ import com.sun.jna.ptr.IntByReference;
  */
 public class PulseSoundListener implements ISoundEmitter {
 
+	/**
+	 * 
+	 */
+	private static final int SOUND_QUEUE_SIZE = 16;
+
 	private static final Logger logger = Logger.getLogger(PulseSoundListener.class);
 	
 	private volatile PulseAudioLibrary.pa_simple simple;
@@ -76,7 +81,7 @@ public class PulseSoundListener implements ISoundEmitter {
 			stopped();
 		}
 		
-		soundQueue = new LinkedBlockingQueue<AudioChunk>(20);
+		soundQueue = new LinkedBlockingQueue<AudioChunk>(SOUND_QUEUE_SIZE);
 
 		soundFormat = format;
 		sampleFormat = new PulseAudioLibrary.pa_sample_spec();
@@ -181,7 +186,7 @@ public class PulseSoundListener implements ISoundEmitter {
 	 */
 	public void played(ISoundView view) {
 		try {
-			soundQueue.drainTo(new ArrayList<AudioChunk>(1), 1);
+			soundQueue.drainTo(new ArrayList<AudioChunk>(1), SOUND_QUEUE_SIZE - 1);
 //			if (soundQueue.remainingCapacity() == 0)
 //				soundQueue.remove();
 			// will block if sound is too fast

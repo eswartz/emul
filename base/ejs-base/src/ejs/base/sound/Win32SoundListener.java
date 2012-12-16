@@ -31,6 +31,11 @@ import ejs.base.winmm.WinMMLibrary;
  */
 public class Win32SoundListener implements ISoundEmitter {
 
+	/**
+	 * 
+	 */
+	private static final int SOUND_QUEUE_SIZE = 32;
+
 	protected static final Logger logger = Logger.getLogger(Win32SoundListener.class);
 	
 	private boolean stopped;
@@ -108,7 +113,7 @@ public class Win32SoundListener implements ISoundEmitter {
 				return;
 			stopped();
 		}
-		soundQueue = new LinkedBlockingQueue<AudioChunk>(32);
+		soundQueue = new LinkedBlockingQueue<AudioChunk>(SOUND_QUEUE_SIZE);
 
 		soundFormat = format;
 		
@@ -266,8 +271,9 @@ public class Win32SoundListener implements ISoundEmitter {
 	 */
 	public void played(ISoundView view) {
 		try {
-			if (soundQueue.remainingCapacity() == 0)
-				soundQueue.remove();
+			soundQueue.drainTo(new ArrayList<AudioChunk>(1), SOUND_QUEUE_SIZE - 1);
+//			if (soundQueue.remainingCapacity() == 0)
+//				soundQueue.remove();
 			// will block if sound is too fast
 			AudioChunk o = new AudioChunk(view, volume);
 			soundQueue.put(o);
