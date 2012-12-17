@@ -30,7 +30,7 @@ import ejs.base.sound.IFlushableSoundVoice;
  */
 public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableSoundVoice {
 
-	private double CARRIER_FREQ = 689.37;
+	private double CARRIER_FREQ = 690;
 	private double MODULATOR_FREQ = 1380;
 	private boolean wasSet;
 	private boolean state;
@@ -149,32 +149,36 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 			boolean on = origState;
 			
 			
-			phaseCtr = 0;
+//			phaseCtr = 0;
 			//onTime = 0;
 			
 			while (from < to) {
 
-				final int LIMIT = soundClock / 10;
+				final int LIMIT = (int) (MODULATOR_FREQ / 8); // soundClock / 500;
 				// only emit sound as long as different values are being written
-				if (on ? onTime < LIMIT/2 : onTime < LIMIT) {
+				if (onTime < LIMIT) 
+				{
 					float v;
 					
 					double rad = phaseCtr * 2. * Math.PI / soundClock ;  
 				//	double onTimeMod = Math.sin(onTime * Math.PI  / LIMIT);
-					double onTimeRad = onTime * Math.PI / 2 / soundClock ;  
-					v = (float) ( Math.sin(rad * MODULATOR_FREQ +  Math.sin(onTimeRad * CARRIER_FREQ) ));
-					if (on) {
-						if (onTime < LIMIT / 2)
-							onTime++;
-					} else {
-//						v = (float) (Math.sin(rad * CARRIER_FREQ));
-						if (onTime < LIMIT)
-							onTime++;
-					}
+					double onTimeRad = onTime *  Math.PI / soundClock ;
+					v = (float) ( Math.sin(rad * CARRIER_FREQ ) * (0.5 + Math.sin(onTimeRad * MODULATOR_FREQ) ) );
+//					if (on) {
+//						if (onTime < LIMIT / 2)
+//							onTime++;
+//					} else {
+////						v = (float) (Math.sin(rad * CARRIER_FREQ));
+//						if (onTime < LIMIT)
+//							onTime++;
+//					}
+					if (on)
+						onTime++;
 					phaseCtr++;
-					if (phaseCtr >= soundClock)
-						phaseCtr -= soundClock;
-					
+//					if (phaseCtr >= soundClock)
+//						phaseCtr -= soundClock;
+//					if (onTime >= 32)
+//						onTime -= 32;
 					soundGeneratorWorkBuffer[from++] += sampleL * v;
 					soundGeneratorWorkBuffer[from++] += sampleR * v;
 				} else {
@@ -185,8 +189,12 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 						boolean nextOn = (deltas[idx] > 0);
 						consumed += absp1(deltas[idx++]);
 						next = (int) ((long) consumed * totalSamps / total);
-						phaseCtr = 0; //nextOn != on ? 0 : phaseCtr;
-						onTime = nextOn != on ? onTime : 0;
+						//phaseCtr = 0; //nextOn != on ? 0 : phaseCtr;
+						//onTime = nextOn != on ? onTime : 0;
+//						if (nextOn)
+						onTime = nextOn == on ? onTime : 0;
+						//if (nextOn != on)
+						//	phaseCtr = 0;
 						on = nextOn;
 					} else {
 						on = state;
