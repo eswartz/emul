@@ -40,6 +40,7 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 	private int[] deltas = new int[0];
 	private int deltaIdx = 0;
 	private int baseCycles;
+	private int liveTime;
 	
 	public CassetteSoundVoice(String name) {
 		super((name != null ? name + " " : "") + "Cassette");
@@ -68,6 +69,7 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 		baseCycles = 0;
 		phaseCtr = 0;
 		onTime = 0;
+		liveTime = 0;
 	}
 	
 	/* (non-Javadoc)
@@ -156,13 +158,13 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 
 				final int LIMIT = (int) (MODULATOR_FREQ / 8); // soundClock / 500;
 				// only emit sound as long as different values are being written
-				if (onTime < LIMIT) 
+				if (liveTime > 0) 
 				{
 					float v;
 					
 					double rad = phaseCtr * 2. * Math.PI / soundClock ;  
 				//	double onTimeMod = Math.sin(onTime * Math.PI  / LIMIT);
-					double onTimeRad = onTime *  Math.PI / soundClock ;
+					double onTimeRad = onTime < LIMIT  ? onTime *  Math.PI / soundClock : 0f;
 					v = (float) ( Math.sin(rad * CARRIER_FREQ ) * (0.5 + Math.sin(onTimeRad * MODULATOR_FREQ) ) );
 //					if (on) {
 //						if (onTime < LIMIT / 2)
@@ -175,6 +177,7 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 					if (on)
 						onTime++;
 					phaseCtr++;
+					liveTime--;
 //					if (phaseCtr >= soundClock)
 //						phaseCtr -= soundClock;
 //					if (onTime >= 32)
@@ -193,8 +196,9 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 						//onTime = nextOn != on ? onTime : 0;
 //						if (nextOn)
 						onTime = nextOn == on ? onTime : 0;
+						liveTime += (next - from);
 						//if (nextOn != on)
-						//	phaseCtr = 0;
+						phaseCtr = 0;
 						on = nextOn;
 					} else {
 						on = state;
