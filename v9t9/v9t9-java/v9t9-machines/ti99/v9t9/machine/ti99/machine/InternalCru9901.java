@@ -139,7 +139,7 @@ public class InternalCru9901 extends BaseCruChip {
 	private ICruWriter cruwCassette1 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
 			getMachine().getSound().getCassetteVoice().setMotor1(data != 0);
-			System.out.println(System.currentTimeMillis() + ": [CS1] " + (data != 0 ? "on" : "off"));
+			//System.out.println(System.currentTimeMillis() + ": [CS1] " + (data != 0 ? "on" : "off"));
 			return 0;
 		}
 		
@@ -148,7 +148,7 @@ public class InternalCru9901 extends BaseCruChip {
 	private ICruWriter cruwCassette2 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
 			getMachine().getSound().getCassetteVoice().setMotor2(data != 0);
-			System.out.println(System.currentTimeMillis() + ": [CS2] " + (data != 0 ? "on" : "off"));
+			//System.out.println(System.currentTimeMillis() + ": [CS2] " + (data != 0 ? "on" : "off"));
 			return 0;
 		}
 		
