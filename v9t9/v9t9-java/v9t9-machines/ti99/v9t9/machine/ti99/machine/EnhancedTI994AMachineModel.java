@@ -39,4 +39,12 @@ public class EnhancedTI994AMachineModel extends StandardMachineModel {
 	public IVdpChip createVdp(IMachine machine) {
 		return new VdpV9938(machine);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.machine.StandardMachineModel#isModelCompatible(java.lang.String)
+	 */
+	@Override
+	public boolean isModelCompatible(String machineModel) {
+		return machineModel.equals(ID) || super.isModelCompatible(machineModel);
+	}
 }

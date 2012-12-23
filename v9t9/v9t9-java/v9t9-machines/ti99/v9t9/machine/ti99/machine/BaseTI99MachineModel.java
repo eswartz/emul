@@ -74,4 +74,12 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 		final SpeechTMS5220 speech = new SpeechTMS5220(machine, Settings.getSettings(machine), domain);
 		return speech;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#isModelCompatible(java.lang.String)
+	 */
+	@Override
+	public boolean isModelCompatible(String machineModel) {
+		return getIdentifier().equals(machineModel);
+	}
 }

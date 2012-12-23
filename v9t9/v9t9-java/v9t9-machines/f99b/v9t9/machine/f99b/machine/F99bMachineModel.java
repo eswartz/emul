@@ -213,4 +213,12 @@ public class F99bMachineModel implements IMachineModel {
 	public URL getDataURL() {
 		return EmulatorMachinesData.getDataURL("f99b/");
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#isModelCompatible(java.lang.String)
+	 */
+	@Override
+	public boolean isModelCompatible(String machineModel) {
+		return getIdentifier().equals(machineModel);
+	}
 }

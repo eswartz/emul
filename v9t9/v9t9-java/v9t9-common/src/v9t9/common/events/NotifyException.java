@@ -33,7 +33,8 @@ public class NotifyException extends Exception {
 	
 	public NotifyException(Object context,String message, Throwable cause) {
 		super(message, cause);
-		this.event = new NotifyEvent(System.currentTimeMillis(), context, Level.ERROR, message);
+		this.event = new NotifyEvent(System.currentTimeMillis(), context, Level.ERROR, 
+				cause != null ? message + "\n" + cause.getMessage() : message);
 	}
 	
 	public NotifyEvent getEvent() {

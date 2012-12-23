@@ -54,4 +54,10 @@ public interface IMachineModel {
 	 * @return
 	 */
 	URL getDataURL();
+
+	/**
+	 * @param machineModel
+	 * @return
+	 */
+	boolean isModelCompatible(String machineModel);
 }

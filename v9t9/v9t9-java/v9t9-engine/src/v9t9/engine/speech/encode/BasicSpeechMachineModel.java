@@ -137,4 +137,11 @@ public class BasicSpeechMachineModel implements IMachineModel {
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#isModelCompatible(java.lang.String)
+	 */
+	@Override
+	public boolean isModelCompatible(String machineModel) {
+		return getIdentifier().equals(machineModel);
+	}
 }

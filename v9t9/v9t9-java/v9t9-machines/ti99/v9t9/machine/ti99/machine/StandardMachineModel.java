@@ -112,4 +112,12 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	public URL getDataURL() {
 		return EmulatorMachinesData.getDataURL("ti99/");
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#isModelCompatible(java.lang.String)
+	 */
+	@Override
+	public boolean isModelCompatible(String machineModel) {
+		return machineModel.equals(ID);
+	}
 }

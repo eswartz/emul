@@ -40,7 +40,7 @@ public class DemoFormatInputStream extends BaseDemoInputStream implements IDemoI
 		header = new DemoHeader();
 		header.read(is);
 		
-		if (!machineModel.getIdentifier().equals(header.getMachineModel())) {
+		if (!machineModel.isModelCompatible(header.getMachineModel())) {
 			throw new IOException(
 					"Note: this demo is incompatible with the "+
 					"current machine: " + header.getMachineModel() + " expected");
