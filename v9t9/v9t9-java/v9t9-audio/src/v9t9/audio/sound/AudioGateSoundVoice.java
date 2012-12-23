@@ -18,7 +18,7 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	private int baseCycles;
 	
 	public AudioGateSoundVoice(String name) {
-		super((name != null ? name + " " : "") + "Audio Gate");
+		super("Audio Gate");
 	}
 	
 	@Override

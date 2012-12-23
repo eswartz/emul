@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.engine.sound;
+package v9t9.common.sound;
 
 import ejs.base.properties.IPersistable;
 

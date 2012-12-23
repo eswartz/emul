@@ -30,20 +30,27 @@ import ejs.base.sound.IFlushableSoundVoice;
  */
 public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableSoundVoice {
 
-	private double CARRIER_FREQ = 690;
-	private double MODULATOR_FREQ = 1380;
+	private static final short[] cassetteChirp = new short[] { 
+		0x0000, 0x0038, 0x01bf,
+		0x017a, 0x0248, 0x029c, 0x03b7, 0x0579, 0x078f, 0x0b7e, 0x0fcd,
+		0x1b18, 0x2c65, 0x443b, 0x5861, 0x564b, 0x2d83, (short) 0xef6c, (short) 0xc3b2,
+		(short) 0xbe15, (short) 0xd7c4, (short) 0xf5bb, 0x067d, 0x081b, 0x0195, (short) 0xfbfc, (short) 0xfa6b,
+		(short) 0xfe46, 0x0156, 0x026d, 0x01c2, 0x0094
+		
+	};
 	private boolean wasSet;
 	private boolean state;
 	private boolean origState;
-	private int phaseCtr = Integer.MAX_VALUE;
-	private int onTime = 0;
 	private int[] deltas = new int[0];
 	private int deltaIdx = 0;
 	private int baseCycles;
-	private int liveTime;
+	private boolean motor2;
+	private boolean motor1;
+	private float prevV;
+	private float sign = 1f;
 	
 	public CassetteSoundVoice(String name) {
-		super((name != null ? name + " " : "") + "Cassette");
+		super("Cassette");
 	}
 	
 	@Override
@@ -67,9 +74,8 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 		origState = false;
 		deltaIdx = 0;
 		baseCycles = 0;
-		phaseCtr = 0;
-		onTime = 0;
-		liveTime = 0;
+		prevV = 0f;
+		sign = 1f;
 	}
 	
 	/* (non-Javadoc)
@@ -81,13 +87,17 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 	}
 	public synchronized void setState(int curr) {
 		boolean newState = curr >= 0;
-		if (state != newState) {
-			int offs = absp1(curr) - baseCycles;
-			if (offs < 0)
-				offs = curr;
-			baseCycles = curr;
+		curr = absp1(curr);
+		
+		// always note a change; the speed is what counts
+		if (motor1 || motor2) 
+		{
+			int offs = curr >= baseCycles ? curr - baseCycles : curr;
+			
 			state = newState;
 			appendPos(state ? offs : -offs-1);
+		
+			baseCycles = curr;
 		}
 	}
 
@@ -121,15 +131,14 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 	 */
 	@Override
 	public synchronized boolean flushAudio(float[] soundGeneratorWorkBuffer, int from,
-			int to, int total_unused) {
+			int to, int totalCycles) {
 		boolean generated = false;
-		if (from < to && (true)) {
+		if (from < to && deltaIdx > 0) {
 			
 			generated = true;
 			int ratio = 128 + balance;
 			float sampleL = ((256 - ratio) * 1f) / 256.f;
 			float sampleR = (ratio * 1f) / 256.f;
-			
 			
 			int totalSamps = to - from;
 			
@@ -140,80 +149,57 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 			if (total == 0)
 				total = 1;
 
-			//StringBuilder sb = new StringBuilder();
+			int firstFrom = from;
 			
 			int idx = 0;
-			int consumed = deltaIdx > 0 ? absp1(deltas[idx]) : 0;
+			int consumed = absp1(deltas[idx]) ;
 			int next = from + (int) ((long) consumed * totalSamps / total);
 			idx++;
-			//sb.append(next - from).append(',');
 			
+			int origFrom = from;
+			
+			//System.out.println("**" + (next-origFrom));
 			boolean on = origState;
-			
-			
-//			phaseCtr = 0;
-			//onTime = 0;
-			
+			sign = on ? 1f : -1f;
+			int diff = next - origFrom;
 			while (from < to) {
-
-				final int LIMIT = (int) (MODULATOR_FREQ / 8); // soundClock / 500;
-				// only emit sound as long as different values are being written
-				if (liveTime > 0) 
-				{
-					float v;
-					
-					double rad = phaseCtr * 2. * Math.PI / soundClock ;  
-				//	double onTimeMod = Math.sin(onTime * Math.PI  / LIMIT);
-					double onTimeRad = onTime < LIMIT  ? onTime *  Math.PI / soundClock : 0f;
-					v = (float) ( Math.sin(rad * CARRIER_FREQ ) * (0.5 + Math.sin(onTimeRad * MODULATOR_FREQ) ) );
-//					if (on) {
-//						if (onTime < LIMIT / 2)
-//							onTime++;
-//					} else {
-////						v = (float) (Math.sin(rad * CARRIER_FREQ));
-//						if (onTime < LIMIT)
-//							onTime++;
-//					}
-					if (on)
-						onTime++;
-					phaseCtr++;
-					liveTime--;
-//					if (phaseCtr >= soundClock)
-//						phaseCtr -= soundClock;
-//					if (onTime >= 32)
-//						onTime -= 32;
-					soundGeneratorWorkBuffer[from++] += sampleL * v;
-					soundGeneratorWorkBuffer[from++] += sampleR * v;
+				float v;
+				if (diff != 0) {
+					int fullPos = (from - origFrom)  * cassetteChirp.length;
+					int aPos = fullPos / diff;
+					float c = cassetteChirp[aPos] / (float) 0x4000;
+					int aOffs = fullPos % diff;
+					v = (prevV * (diff - aOffs) + c * (aOffs)) / diff;
 				} else {
-					from += 2;
+					v = prevV;
 				}
+				prevV = v;
+				v *= sign;
+				soundGeneratorWorkBuffer[from++] += sampleL * v;
+				soundGeneratorWorkBuffer[from++] += sampleR * v;
+				
 				if (from >= next) {
 					if (idx < deltaIdx) {
-						boolean nextOn = (deltas[idx] > 0);
+						boolean nextOn = (deltas[idx] >= 0);
 						consumed += absp1(deltas[idx++]);
-						next = (int) ((long) consumed * totalSamps / total);
-						//phaseCtr = 0; //nextOn != on ? 0 : phaseCtr;
-						//onTime = nextOn != on ? onTime : 0;
-//						if (nextOn)
-						onTime = nextOn == on ? onTime : 0;
-						liveTime += (next - from);
-						//if (nextOn != on)
-						phaseCtr = 0;
+						next = firstFrom + (int) ((long) consumed * totalSamps / total);
 						on = nextOn;
+						sign = -sign;
 					} else {
-						on = state;
-						next = to;
+						break;
+//						on = state;
+//						next = to;
 					}
-					//sb.append(next - from).append(',');
+					origFrom = from;
+					diff = next - origFrom;
+					
 				}
 			}
-			//System.out.println(sb.toString());
-			//sb.setLength(0);
 		}
 		
 		deltaIdx = 0;
 		origState = state;
-		baseCycles = total_unused;
+		baseCycles = totalCycles;
 		
 		return generated;
 	}
@@ -231,12 +217,32 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 		if (settings == null) return;
 		super.loadState(settings);
 		setVolume((byte) (settings.getBoolean("State") ? MAX_VOLUME : 0));
+		motor1 = settings.getBoolean("Motor1");
+		motor2 = settings.getBoolean("Motor2");
 	}
 	
 	@Override
 	public void saveState(ISettingSection settings) {
 		super.saveState(settings);
 		settings.put("State", Boolean.toString(getVolume() != 0));
+		settings.put("Motor1", Boolean.toString(motor1));
+		settings.put("Motor2", Boolean.toString(motor2));
+	}
+
+	/**
+	 * @param b
+	 */
+	public void setMotor1(int curr, boolean b) {
+		motor1 = b;
+		baseCycles = curr;
+	}
+
+	/**
+	 * @param b
+	 */
+	public void setMotor2(int curr, boolean b) {
+		motor2 = b;
+		baseCycles = curr;
 	}
 	
 }

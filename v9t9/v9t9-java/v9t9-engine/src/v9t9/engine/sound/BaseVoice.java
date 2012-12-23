@@ -6,6 +6,7 @@ package v9t9.engine.sound;
 import java.util.Map;
 
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
+import v9t9.common.sound.IVoice;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.ListenerList;
 

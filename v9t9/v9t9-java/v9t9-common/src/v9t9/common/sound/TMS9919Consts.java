@@ -39,14 +39,24 @@ public class TMS9919Consts {
 	
 	/** 
 	 * This is the offset in the cassette register bank for
-	 * the state of the cassette (0=off, 1=on) 
+	 * the current queued value of the cassette toggle (0=off, 1=on) 
 	 */
-	final public static int REG_OFFS_CASSETTE = 0;
+	final public static int REG_OFFS_CASSETTE_STATE = 0;
+	/** 
+	 * This is the offset in the cassette register bank for
+	 * the state of the cassette #1 motor (0=off, 1=on) 
+	 */
+	final public static int REG_OFFS_CASSETTE_MOTOR_1 = 1;
+	/** 
+	 * This is the offset in the cassette register bank for
+	 * the state of the cassette #2 motor (0=off, 1=on) 
+	 */
+	final public static int REG_OFFS_CASSETTE_MOTOR_2 = 2;
 	
 	final public static int REG_COUNT_TONE = 2;
 	final public static int REG_COUNT_NOISE = 2;
 	final public static int REG_COUNT_AUDIO_GATE = 1;
-	final public static int REG_COUNT_CASSETTE = 1;
+	final public static int REG_COUNT_CASSETTE = 3;
 
 	/**
 	 *	Masks for the noise control register

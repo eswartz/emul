@@ -138,8 +138,8 @@ public class InternalCru9901 extends BaseCruChip {
 
 	private ICruWriter cruwCassette1 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			// TODO: also pass to cassette
-			System.out.println("[CS1] " + (data == 0 ? "on" : "off"));
+			getMachine().getSound().getCassetteVoice().setMotor1(data != 0);
+			System.out.println(System.currentTimeMillis() + ": [CS1] " + (data != 0 ? "on" : "off"));
 			return 0;
 		}
 		
@@ -147,8 +147,8 @@ public class InternalCru9901 extends BaseCruChip {
 	
 	private ICruWriter cruwCassette2 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			// TODO: also pass to cassette
-			System.out.println("[CS2] " + (data == 0 ? "on" : "off"));
+			getMachine().getSound().getCassetteVoice().setMotor2(data != 0);
+			System.out.println(System.currentTimeMillis() + ": [CS2] " + (data != 0 ? "on" : "off"));
 			return 0;
 		}
 		
@@ -156,10 +156,7 @@ public class InternalCru9901 extends BaseCruChip {
 	
 	private ICruWriter cruwCassetteOut = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			// TODO: also pass to cassette
-
-			getMachine().getSound().setCassette(addr, data != 0);
-//			getMachine().getSound().setRegister(TMS9919Consts.REG_OFFS_ATTENUATION, data != 0 ? 0x0 : 0xf);
+			getMachine().getSound().getCassetteVoice().setState(data != 0);
 			return 0;
 		}
 		
@@ -249,7 +246,7 @@ public class InternalCru9901 extends BaseCruChip {
 	private ICruReader crurCassetteIn = new ICruReader() {
 		public int read(int addr, int data, int num) {
 			int bit = Math.random() >= 0.5 ? 1 : 0;
-			getMachine().getSound().setCassette(addr, bit != 0);
+			getMachine().getSound().getCassetteVoice().setState(data != 0);
 			return bit;
 		}
 		
@@ -287,10 +284,9 @@ public class InternalCru9901 extends BaseCruChip {
         registerInternalCru(0x28, 1, cruwkeyboard_2);
         registerInternalCru(0x2A, 1, cruwAlpha);
 
-        registerInternalCru(0x30, 1, cruwAudioGate);
-        
         registerInternalCru(0x2C, 1, cruwCassette1);
         registerInternalCru(0x2E, 1, cruwCassette2);
+        registerInternalCru(0x30, 1, cruwAudioGate);
         registerInternalCru(0x32, 1, cruwCassetteOut);
         
         registerInternalCru(0x0, 1, crur9901_0);

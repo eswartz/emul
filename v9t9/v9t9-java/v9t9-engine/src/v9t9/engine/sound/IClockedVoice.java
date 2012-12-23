@@ -3,6 +3,8 @@
  */
 package v9t9.engine.sound;
 
+import v9t9.common.sound.IVoice;
+
 /**
  * This represents the parameters controlling a single voice
  * which has a volume and a frequency

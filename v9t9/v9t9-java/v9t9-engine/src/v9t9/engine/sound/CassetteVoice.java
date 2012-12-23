@@ -6,6 +6,7 @@ package v9t9.engine.sound;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
+import v9t9.common.sound.ICassetteVoice;
 import v9t9.common.sound.TMS9919Consts;
 
 import ejs.base.settings.ISettingSection;
@@ -15,9 +16,11 @@ import ejs.base.utils.ListenerList;
  * @author ejs
  *
  */
-public class CassetteVoice extends BaseVoice {
+public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 
-	private boolean state;
+	private int state;
+	private int motor1;
+	private int motor2;
 	private IMachine machine;
 
 	public CassetteVoice(String id, String name,
@@ -27,11 +30,28 @@ public class CassetteVoice extends BaseVoice {
 	}
 
 	public void setState(boolean state) {
-		this.state = state;
 		ICpu cpu = machine.getCpu();
 		if (cpu != null) {
 			int cycles = cpu.getCurrentCycleCount();
-			fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_CASSETTE, state ? cycles : -cycles-1);
+			this.state = state ? cycles : -cycles-1;
+			fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_STATE, this.state);
+		}
+	}
+	
+	public void setMotor1(boolean motor) {
+		ICpu cpu = machine.getCpu();
+		if (cpu != null) {
+			int cycles = cpu.getCurrentCycleCount();
+			this.motor1 = motor ? cycles : -cycles-1;
+			fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_1, this.motor1);
+		}
+	}
+	public void setMotor2(boolean motor) {
+		ICpu cpu = machine.getCpu();
+		if (cpu != null) {
+			int cycles = cpu.getCurrentCycleCount();
+			this.motor2 = motor ? cycles : -cycles-1;
+			fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_2, this.motor2);
 		}
 	}
 	/* (non-Javadoc)
@@ -41,6 +61,8 @@ public class CassetteVoice extends BaseVoice {
 	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
 		setState(settings.getBoolean("State"));
+		setMotor1(settings.getBoolean("Motor1"));
+		setMotor2(settings.getBoolean("Motor2"));
 	}
 
 	/* (non-Javadoc)
@@ -48,7 +70,9 @@ public class CassetteVoice extends BaseVoice {
 	 */
 	@Override
 	public void saveState(ISettingSection settings) {
-		settings.put("State", state);
+		settings.put("State", state >= 0);
+		settings.put("Motor1", motor1 >= 0);
+		settings.put("Motor2", motor2 >= 0);
 	}
 
 	/* (non-Javadoc)
@@ -56,8 +80,14 @@ public class CassetteVoice extends BaseVoice {
 	 */
 	@Override
 	public int doInitRegisters() {
-		register(baseReg + TMS9919Consts.REG_OFFS_CASSETTE,
+		register(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_STATE,
 				getId() + ":C",
+				getName());
+		register(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_1,
+				getId() + ":1",
+				getName());
+		register(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_2,
+				getId() + ":2",
 				getName());
 		return TMS9919Consts.REG_COUNT_CASSETTE;
 	}
@@ -67,8 +97,14 @@ public class CassetteVoice extends BaseVoice {
 	 */
 	@Override
 	public int getRegister(int reg) {
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE) {
-			return state ? 1 : 0;
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_STATE) {
+			return state;
+		}
+		else if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_1) {
+			return motor1;
+		}
+		else if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_2) {
+			return motor2;
 		}
 		return 0;
 	}
@@ -78,8 +114,17 @@ public class CassetteVoice extends BaseVoice {
 	 */
 	@Override
 	public void setRegister(int reg, int newValue) {
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE) {
-			setState(newValue != 0);
+		if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_STATE) {
+			state = newValue;
+			fireRegisterChanged(reg, this.state);
+		}
+		else if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_1) {
+			motor1 = newValue;
+			fireRegisterChanged(reg, this.motor1);
+		}
+		else if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_2) {
+			motor2 = newValue;
+			fireRegisterChanged(reg, this.motor2);
 		}
 	}
 }

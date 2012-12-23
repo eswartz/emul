@@ -127,14 +127,33 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		info = soundChip.getRegisterInfo(regBase);
 		assert info != null && info.id.endsWith("C:C");
 		
-		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE, voice);
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_STATE, voice);
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_1, voice);
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_2, voice);
 		
-		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE,
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_STATE,
 				new IRegisterAccess.IRegisterWriteListener() {
 			
 			@Override
 			public void registerChanged(int reg, int value) {
 				voice.setState(value);
+			}
+		});
+		
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_1,
+				new IRegisterAccess.IRegisterWriteListener() {
+			
+			@Override
+			public void registerChanged(int reg, int value) {
+				voice.setMotor1(value, value >= 0);
+			}
+		});
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_2,
+				new IRegisterAccess.IRegisterWriteListener() {
+			
+			@Override
+			public void registerChanged(int reg, int value) {
+				voice.setMotor2(value, value >= 0);
 			}
 		});
 		

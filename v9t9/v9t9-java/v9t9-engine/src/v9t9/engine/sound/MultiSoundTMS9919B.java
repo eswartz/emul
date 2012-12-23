@@ -7,6 +7,7 @@ package v9t9.engine.sound;
 
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.sound.ICassetteVoice;
 import v9t9.common.sound.MultiSoundTMS9919BConsts;
 
 /**
@@ -62,10 +63,18 @@ public class MultiSoundTMS9919B extends BaseMultiSound {
 		chips[0].setAudioGate(addr, b);
 	}
 	
-	public void setCassette(int addr, boolean b) {
-		chips[0].setCassette(addr, b);
-	}
+//	public void setCassette(int addr, boolean b) {
+//		chips[0].setCassette(addr, b);
+//	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.ISoundChip#getCassetteVoice()
+	 */
+	@Override
+	public ICassetteVoice getCassetteVoice() {
+		return chips[0].getCassetteVoice();
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IRegisterAccess#getGroupName()
 	 */

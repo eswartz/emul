@@ -4,6 +4,7 @@
 package v9t9.engine.sound;
 
 import v9t9.common.machine.IMachine;
+import v9t9.common.sound.IVoice;
 import v9t9.common.sound.TMS9919BConsts;
 
 import static v9t9.common.sound.TMS9919BConsts.*;

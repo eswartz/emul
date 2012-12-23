@@ -15,6 +15,8 @@ import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.settings.Settings;
+import v9t9.common.sound.ICassetteVoice;
+import v9t9.common.sound.IVoice;
 import static v9t9.common.sound.TMS9919Consts.*;
 
 /**
@@ -99,12 +101,12 @@ public class SoundTMS9919 implements ISoundChip {
 		mapRegisters(regBase, count, voices[3]);
 		regBase += count;
 		
-		audioGateVoice = new AudioGateVoice(id + "A", name + " Audio Gate", listeners, machine);
+		audioGateVoice = new AudioGateVoice(id + "A", "Audio Gate", listeners, machine);
 		count = ((BaseVoice) audioGateVoice).initRegisters(regNames, regDescs, regIds, regBase);
 		mapRegisters(regBase, count, audioGateVoice);
 		regBase += count;
 		
-		cassetteVoice = new CassetteVoice(id + "C", name + " Cassette", listeners, machine);
+		cassetteVoice = new CassetteVoice(id + "C", "Cassette", listeners, machine);
 		count = ((BaseVoice) cassetteVoice).initRegisters(regNames, regDescs, regIds, regBase);
 		mapRegisters(regBase, count, cassetteVoice);
 		regBase += count;
@@ -205,8 +207,10 @@ public class SoundTMS9919 implements ISoundChip {
 		for (int vn = 0; vn < voices.length; vn++) {
 			IVoice v = voices[vn];
 			v.saveState(settings.addSection(v.getName()));
-			
 		}
+		audioGateVoice.saveState(settings.addSection(audioGateVoice.getName()));
+		cassetteVoice.saveState(settings.addSection(cassetteVoice.getName()));
+
 	}
 	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
@@ -216,6 +220,8 @@ public class SoundTMS9919 implements ISoundChip {
 			String name = v.getName();
 			v.loadState(settings.getSection(name));
 		}
+		audioGateVoice.loadState(settings.getSection(audioGateVoice.getName()));
+		cassetteVoice.loadState(settings.getSection(cassetteVoice.getName()));
 	}
 	
 	public void setAudioGate(int addr, boolean b) {
@@ -227,6 +233,13 @@ public class SoundTMS9919 implements ISoundChip {
 		cassetteVoice.setState(b);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.ISoundChip#getCassetteVoice()
+	 */
+	@Override
+	public ICassetteVoice getCassetteVoice() {
+		return cassetteVoice;
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IRegisterAccess#getGroupName()
 	 */
@@ -331,5 +344,7 @@ public class SoundTMS9919 implements ISoundChip {
 		}		
 //		audioGateVoice.setGate(false);
 		cassetteVoice.setState(false);
+		cassetteVoice.setMotor1(false);
+		cassetteVoice.setMotor2(false);
 	}
 }

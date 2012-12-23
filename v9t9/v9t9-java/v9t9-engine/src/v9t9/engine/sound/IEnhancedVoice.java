@@ -3,6 +3,8 @@
  */
 package v9t9.engine.sound;
 
+import v9t9.common.sound.IVoice;
+
 /**
  * @author ejs
  *
