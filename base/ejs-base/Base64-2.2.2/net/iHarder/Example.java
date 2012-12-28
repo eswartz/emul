@@ -1,5 +1,7 @@
 package net.iHarder;
 
+import java.io.IOException;
+
 
 public class Example 
 {
@@ -91,7 +93,12 @@ public class Example
             finally
             {
                 
-                try{ b64os.flush(); } catch( Exception e ){}
+            	if (b64os != null) {
+            		try{ 
+            			b64os.flush(); 
+            			b64os.close();
+            		} catch( IOException e ){}
+            	}
                 //try{ ps.close();    } catch( Exception e ){} // Closes System.out!
             }   // end finally
         }   // end suspsend/resume example
