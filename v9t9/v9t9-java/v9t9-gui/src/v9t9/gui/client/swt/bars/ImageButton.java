@@ -4,6 +4,7 @@
 package v9t9.gui.client.swt.bars;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
@@ -34,8 +35,8 @@ public class ImageButton extends ImageIconCanvas {
 	private boolean pressed;
 	private boolean isMenuHovering;
 	private Rectangle menuOverlayBounds;
-	private Rectangle overlayBounds;
 	protected IFocusRestorer focusRestorer;
+	private List<Rectangle> imageOverlays = new LinkedList<Rectangle>();
 
 	public ImageButton(IImageCanvas parentBar, int style, 
 			ImageProvider imageProvider, int iconIndex, String tooltip) {
@@ -121,21 +122,41 @@ public class ImageButton extends ImageIconCanvas {
 		//setRetracted(false);
 		setCursor(getDisplay().getSystemCursor(SWT.CURSOR_HAND));
 	}
+	
+	/**
+	 * @return the imageOverlays
+	 */
+	public List<Rectangle> getImageOverlays() {
+		return imageOverlays;
+	}
+	public void setOverlayBounds(Rectangle overlayBounds) {
+		imageOverlays.clear();
+		if (overlayBounds != null)
+			imageOverlays.add(overlayBounds); 
+	}
 
+	public void addImageOverlay(Rectangle overlayBounds) {
+		if (overlayBounds == null || overlayBounds.isEmpty())
+			return;
+		if (!imageOverlays.contains(overlayBounds))
+			imageOverlays.add(overlayBounds);
+	}
+
+	public void removeImageOverlay(Rectangle overlayBounds) {
+		if (overlayBounds == null || overlayBounds.isEmpty())
+			return;
+		imageOverlays.remove(overlayBounds);
+	}
+	
+	
+	public void clearImageOverlays() {
+		imageOverlays.clear();
+	}
+	
 	public void setFocusRestorer(IFocusRestorer focusRestorer) {
 		this.focusRestorer = focusRestorer;
 	}
 
-
-	public void setOverlayBounds(Rectangle overlayBounds) {
-		if (overlayBounds == null)
-			this.overlayBounds = null;
-		else
-			this.overlayBounds = overlayBounds; 
-				//new Rectangle(
-				//overlayBounds.x * 2, overlayBounds.y * 2,
-				//overlayBounds.width * 2, overlayBounds.height * 2);
-	}
 
 	public void setMenuOverlayBounds(Rectangle menuOverlayBounds) {
 		this.menuOverlayBounds = menuOverlayBounds;
@@ -161,7 +182,7 @@ public class ImageButton extends ImageIconCanvas {
 	protected void updateDrawRect(Rectangle drawRect) {
 		int offset = 0;
 		if ((getStyle() & SWT.TOGGLE) != 0) {
-			if (pressed && overlayBounds == null) {
+			if (pressed && imageOverlays.isEmpty()) {
 				offset = 2;
 			}
 		} else {
@@ -181,23 +202,9 @@ public class ImageButton extends ImageIconCanvas {
 		//e.gc.setAntialias(SWT.ON);
 		drawRect.x = po.x;
 		drawRect.y = po.y;
-//		int offset = 0;
-//		if ((getStyle() & SWT.TOGGLE) != 0) {
-//			if (pressed && overlayBounds == null) {
-//				Color bg = e.gc.getBackground();
-//				e.gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
-//				e.gc.fillRectangle(po.x, po.y, drawRect.width, drawRect.height);
-//				e.gc.setBackground(bg);
-//				offset = 2;
-//			}
-//		} else {
-//		}
-//		offset = pressed ? 2 : 0;
-//		drawRect.x = offset + po.x + iox;
-//		drawRect.y = offset + po.y + ioy;
-		
+
 		if ((getStyle() & SWT.TOGGLE) != 0) {
-			if (pressed && overlayBounds == null) {
+			if (pressed && imageOverlays.isEmpty()) {
 				Color bg = e.gc.getBackground();
 				e.gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
 				e.gc.fillRectangle(po.x, po.y, drawRect.width, drawRect.height);
@@ -212,9 +219,10 @@ public class ImageButton extends ImageIconCanvas {
 			}
 			drawRect.x = po.x;
 			drawRect.y = po.y;
-			if (overlayBounds != null)
-				imageProvider.drawImage(e.gc, drawRect, overlayBounds);
 			
+			for (Rectangle imgRect : imageOverlays) {
+				imageProvider.drawImage(e.gc, drawRect, imgRect);
+			}
 			if (menuOverlayBounds != null && isMenuHovering) {
 				imageProvider.drawImage(e.gc, drawRect, menuOverlayBounds);
 			}

@@ -8,6 +8,8 @@ import java.io.File;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.MouseAdapter;
@@ -15,9 +17,11 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
@@ -32,8 +36,9 @@ import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
 import v9t9.gui.client.swt.shells.ImageImportOptionsDialog;
 import v9t9.gui.common.BaseEmulatorWindow;
-import v9t9.gui.sound.JavaSoundHandler;
+import v9t9.gui.sound.SoundRecordingHelper;
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * This is the bar of command buttons on the right-hand side of the main emulator window.
@@ -43,6 +48,9 @@ import ejs.base.properties.IProperty;
  *
  */
 public class EmulatorButtonBar extends BaseEmulatorBar  {
+	private SoundRecordingHelper soundRecordingHelper;
+	private SoundRecordingHelper speechRecordingHelper;
+
 	/**
 	 * @param parent 
 	 * @param isHorizontal 
@@ -171,6 +179,24 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 				IconConsts.FULLSCREEN, IconConsts.CHECKMARK_OVERLAY, "Toggle fullscreen");
 
 		
+		
+		
+		soundRecordingHelper = new SoundRecordingHelper(soundHandler.getSoundOutput(), 
+				Settings.get(machine, ISoundHandler.settingRecordSoundOutputFile), 
+				"sound", machine);
+		speechRecordingHelper = new SoundRecordingHelper(soundHandler.getSpeechOutput(), 
+				Settings.get(machine, ISoundHandler.settingRecordSpeechOutputFile), 
+				"speech", machine);
+		
+		getButtonBar().addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				soundRecordingHelper.dispose();
+				speechRecordingHelper.dispose();
+			}
+		});
+		
 		final BasicButton soundButton = createStateButton(ISoundHandler.settingPlaySound, 
 				true, 
 				IconConsts.SOUND_SPEAKER, IconConsts.NO_OVERLAY,
@@ -183,6 +209,31 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 				createSoundMenu(machine, soundHandler, e);
 			}
 		});
+		
+		final IProperty soundRecording = machine.getSettings().get(ISoundHandler.settingRecordSoundOutputFile);
+		final IProperty speechRecording = machine.getSettings().get(ISoundHandler.settingRecordSpeechOutputFile);
+		
+		final Rectangle recordingOverlayBounds = imageProvider.imageIndexToBounds(IconConsts.RECORD_OVERLAY);
+		IPropertyListener recordingListener = new IPropertyListener() {
+	
+			public void propertyChanged(final IProperty setting) {
+				Display.getDefault().asyncExec(new Runnable() {
+	
+					public void run() {
+						if (soundButton.isDisposed())
+							return;
+						if (soundRecording.getString() != null || speechRecording.getString() != null) {
+							soundButton.addImageOverlay(recordingOverlayBounds);
+						} else {
+							soundButton.removeImageOverlay(recordingOverlayBounds);
+						}
+						soundButton.redraw();
+					}
+				});
+			}
+		};
+		soundRecording.addListenerAndFire(recordingListener);
+		speechRecording.addListenerAndFire(recordingListener);
 
 	}
 
@@ -232,11 +283,8 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 			final ISoundHandler soundHandler, MenuDetectEvent e) {
 		Control button = (Control) e.widget;
 		Menu menu = new Menu(button);
-		if (soundHandler instanceof JavaSoundHandler) {
-			JavaSoundHandler javaSoundHandler = (JavaSoundHandler) soundHandler;
-			javaSoundHandler.getSoundRecordingHelper().populateSoundMenu(menu);
-			javaSoundHandler.getSpeechRecordingHelper().populateSoundMenu(menu);
-		}
+		soundRecordingHelper.populateSoundMenu(menu);
+		speechRecordingHelper.populateSoundMenu(menu);
 		
 		MenuItem vitem = new MenuItem(menu, SWT.CASCADE);
 		vitem.setText("Volume");

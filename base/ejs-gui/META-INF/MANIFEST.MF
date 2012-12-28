@@ -9,8 +9,7 @@ Bundle-ClassPath: ejs-gui.jar,
  libs/swt/org.eclipse.core.runtime_3.6.0.v20100505.jar
 Export-Package: org.ejs.gui.common,
  org.ejs.gui.images,
- org.ejs.gui.properties,
- org.ejs.gui.sound
+ org.ejs.gui.properties
 Require-Bundle: org.eclipse.swt,
  org.eclipse.jface,
  ejs-base;bundle-version="1.0.0"

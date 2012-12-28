@@ -5,7 +5,6 @@ package v9t9.gui.sound;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.ejs.gui.sound.SoundRecordingHelper;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
@@ -15,11 +14,9 @@ import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
 import ejs.base.sound.SoundFactory;
 
-import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
-import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.common.sound.ISoundGenerator;
 import v9t9.common.speech.ISpeechGenerator;
@@ -31,15 +28,7 @@ import v9t9.common.speech.ISpeechSoundVoice;
  *
  */
 public class JavaSoundHandler implements ISoundHandler {
-	public static SettingSchema settingRecordSoundOutputFile = new SettingSchema(
-			ISettingsHandler.TRANSIENT,
-			"RecordSoundOutputFile", String.class, null);
-	public static SettingSchema settingRecordSpeechOutputFile = new SettingSchema(
-			ISettingsHandler.TRANSIENT,
-			"RecordSpeechOutputFile", String.class, null);
 
-	private SoundRecordingHelper soundRecordingHelper;
-	private SoundRecordingHelper speechRecordingHelper;
 	private AudioFormat soundFormat;
 	private ISoundOutput output;
 	private int lastUpdatedPos;
@@ -93,13 +82,6 @@ public class JavaSoundHandler implements ISoundHandler {
 			}
 		});
 
-		soundRecordingHelper = new SoundRecordingHelper(output, 
-				Settings.get(machine, settingRecordSoundOutputFile), 
-				"sound");
-		speechRecordingHelper = new SoundRecordingHelper(speechOutput, 
-				Settings.get(machine, settingRecordSpeechOutputFile), 
-				"speech");
-		
 		// frames in ALSA means samples per channel, but raw freq in javax
 		//soundFramesPerTick = (int) ((soundFormat.getFrameRate()
 		//		+ machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
@@ -131,14 +113,6 @@ public class JavaSoundHandler implements ISoundHandler {
 	public synchronized void dispose() {
 		toggleSound(false);
 
-		if (soundRecordingHelper != null) {
-			soundRecordingHelper.dispose();
-			soundRecordingHelper = null;
-		}
-		if (speechRecordingHelper != null) {
-			speechRecordingHelper.dispose();
-			speechRecordingHelper = null;
-		}
 		if (output != null) {
 			output.dispose();
 			output = null;
@@ -230,17 +204,19 @@ public class JavaSoundHandler implements ISoundHandler {
 		}
 	}
 
-	/**
-	 * @return the soundRecordingHelper
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.ISoundHandler#getSoundOutput()
 	 */
-	public SoundRecordingHelper getSoundRecordingHelper() {
-		return soundRecordingHelper;
+	@Override
+	public ISoundOutput getSoundOutput() {
+		return output;
 	}
 	
-	/**
-	 * @return the speechRecordingHelper
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.ISoundHandler#getSpeechOutput()
 	 */
-	public SoundRecordingHelper getSpeechRecordingHelper() {
-		return speechRecordingHelper;
+	@Override
+	public ISoundOutput getSpeechOutput() {
+		return speechOutput;
 	}
 }

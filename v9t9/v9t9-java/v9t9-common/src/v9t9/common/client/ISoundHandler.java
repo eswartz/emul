@@ -6,6 +6,7 @@
  */
 package v9t9.common.client;
 
+import ejs.base.sound.ISoundOutput;
 import v9t9.common.settings.SettingSchema;
 
 
@@ -23,7 +24,12 @@ public interface ISoundHandler {
 	SettingSchema settingSoundVolume = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"SoundVolume", new Integer(5));
-
+	SettingSchema settingRecordSoundOutputFile = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"RecordSoundOutputFile", String.class, null);
+	SettingSchema settingRecordSpeechOutputFile = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"RecordSpeechOutputFile", String.class, null);
 
 	/**
 	 * Dispose sound and turn off audio
@@ -49,6 +55,9 @@ public interface ISoundHandler {
 	 * Handle one sample (signed 16-bit) of speech data.
 	 */
 	void speech();
+	
+	ISoundOutput getSoundOutput();
+	ISoundOutput getSpeechOutput();
 	
 }
 

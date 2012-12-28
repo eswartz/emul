@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.ejs.gui.sound;
+package v9t9.gui.sound;
 
 import java.io.File;
 
@@ -12,6 +12,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.ejs.gui.common.SwtDialogUtils;
+
+import v9t9.common.machine.IMachine;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
@@ -37,13 +39,17 @@ public class SoundRecordingHelper {
 
 	private final String label;
 
+	private IMachine machine;
+
 	/**
 	 * @param shell
 	 */
-	public SoundRecordingHelper(ISoundOutput output, IProperty settingRecordSoundOutputFile, String label) {
+	public SoundRecordingHelper(ISoundOutput output, IProperty settingRecordSoundOutputFile, String label,
+			IMachine machine) {
 		this.output = output;
 		this.soundFileSetting = settingRecordSoundOutputFile;
 		this.label = label;
+		this.machine = machine;
 		iSoundListener = new SoundFileListener();
 		
 		listener = new IPropertyListener() {
@@ -92,9 +98,7 @@ public class SoundRecordingHelper {
 			item.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					boolean wasGoing = output.isStarted();
-					if (wasGoing)
-						output.stop();
+					boolean wasPaused = machine.setPaused(true);
 					try {
 						String filenameBase = SwtDialogUtils.openFileSelectionDialog(
 								menu.getShell(),
@@ -113,8 +117,7 @@ public class SoundRecordingHelper {
 						}
 						soundFileSetting.setString(saveFile != null ? saveFile.getAbsolutePath() : null);
 					} finally {
-						if (wasGoing)
-							output.start();
+						machine.setPaused(wasPaused);
 					}
 				}
 

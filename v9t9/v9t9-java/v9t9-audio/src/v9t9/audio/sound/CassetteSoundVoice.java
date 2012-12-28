@@ -29,19 +29,16 @@ import ejs.base.sound.IFlushableSoundVoice;
  *
  */
 public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableSoundVoice {
-
-	private static final short[] cassetteChirp = new short[] { 
-		0x0000, 0x00b7, 0x008b, 0x006b, 0x0066, 0x00a2, 0x00c6, 0x00d6, 0x00fd, 0x0124, 0x0178,
-		0x0214, 0x02cb, 0x0409, 0x0650, 0x0a04, 0x0f25, 0x14e2, 0x1687, 0x0e19, 
-		(short) 0xfe33, (short) 0xf17c, (short) 0xef28, (short) 0xf52b, (short) 0xfd48, 
-		0x0212, 0x02aa, 0x00cd, (short) 0xff18, (short) 0xfefa, (short) 0xffa8, 0x00b9,
-		0x0132, 0x100, 0x00c9, 0x0046, (short) 0xfffc, (short) 0xff7a, (short) 0xff5e, 
-		(short) 0xfebc, (short) 0xfd8b, (short) 0xfba9, (short) 0xf8a3,
-		(short) 0xf384, (short) 0xecbd, (short) 0xe724, (short) 0xe625, (short) 0xebc5, 
-		(short) 0xf5bc, 0x0074, 0x0857, 0x0c75, 0x0d4b, 0x0b73, 0x0848,
-		0x0575, 0x037b, 0x028f, 0x025d, 0x022d, 0x01c2, 0x015e,
-		0x0142, 0x0120, 0x00e8
-	};
+	private static final short[] cassetteChirp = new short[256];
+	final static int cassetteChirpMag = 0x1800;
+	static {
+		for (int i = 0; i < cassetteChirp.length; i++) {
+			double sin = Math.sin(i * Math.PI * 2 / cassetteChirp.length);
+			double sin2 = Math.sin(i * Math.PI / cassetteChirp.length);
+			double v = sin * (sin2*sin2*sin2*sin2); 
+			cassetteChirp[i] = (short) (v *  cassetteChirpMag); 
+		}
+	}
 	private boolean wasSet;
 	private boolean state;
 	private boolean origState;
@@ -166,14 +163,15 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 			boolean on = origState;
 			sign = on ? 1f : -1f;
 			int diff = next - origFrom;
+			
+			int minMag = soundClock / 16000;
 			while (from < to) {
 				float v;
-				if (diff != 0) {
+				// avoid weird spikes
+				if (diff >= minMag) {
 					int fullPos = (from - origFrom)  * cassetteChirp.length;
 					int aPos = fullPos / diff;
-					float c = cassetteChirp[aPos] / (float) 0x1800;
-					int aOffs = fullPos % diff;
-					v = (prevV * (diff - aOffs) + c * (aOffs)) / diff;
+					v = cassetteChirp[aPos] / (float) cassetteChirpMag;
 				} else {
 					v = prevV;
 				}
@@ -191,8 +189,6 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 						sign = -sign;
 					} else {
 						break;
-//						on = state;
-//						next = to;
 					}
 					origFrom = from;
 					diff = next - origFrom;

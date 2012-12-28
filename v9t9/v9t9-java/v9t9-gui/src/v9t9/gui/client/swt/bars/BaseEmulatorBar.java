@@ -63,18 +63,19 @@ public abstract class BaseEmulatorBar {
 		
 		addButtonToggleListener(button, setting);
 		
+		Rectangle secondOverlayBounds = imageProvider.imageIndexToBounds(secondIconIndex);
 		if (isSecondOverlay) {
 			if (setting.getBoolean() != inverted) {
-				button.setOverlayBounds(imageProvider.imageIndexToBounds(secondIconIndex));
+				button.addImageOverlay(secondOverlayBounds);
 				button.setSelection(setting.getBoolean());
 			}
 		} else {
 			if (setting.getBoolean() != inverted) {
 				button.setIconIndex(secondIconIndex);
-				button.setOverlayBounds(new Rectangle(0, 0, 0, 0));
+				button.removeImageOverlay(secondOverlayBounds);
 			} else {
 				button.setIconIndex(iconIndex);
-				button.setOverlayBounds(new Rectangle(0, 0, 0, 0));
+				button.removeImageOverlay(secondOverlayBounds);
 			}
 			button.setSelection(setting.getBoolean());
 		}
@@ -99,6 +100,7 @@ public abstract class BaseEmulatorBar {
 			final IProperty setting, final int iconIndex,
 			final int secondIconIndex, final boolean isSecondOverlay,
 			final boolean inverted) {
+		final Rectangle secondOverlayBounds = imageProvider.imageIndexToBounds(secondIconIndex);
 		setting.addListenerAndFire(new IPropertyListener() {
 	
 			public void propertyChanged(final IProperty setting) {
@@ -108,10 +110,10 @@ public abstract class BaseEmulatorBar {
 						if (button.isDisposed())
 							return;
 						if (isSecondOverlay) {
-							if (setting.getBoolean() != inverted)
-								button.setOverlayBounds(imageProvider.imageIndexToBounds(secondIconIndex));
-							else
-								button.setOverlayBounds(null);
+							if (setting.getBoolean() != inverted) {
+								button.addImageOverlay(secondOverlayBounds);
+							} else
+								button.removeImageOverlay(secondOverlayBounds);
 						}
 						else {
 							if (setting.getBoolean() != inverted)

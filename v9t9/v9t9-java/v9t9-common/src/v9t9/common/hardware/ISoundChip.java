@@ -5,12 +5,11 @@ package v9t9.common.hardware;
 
 
 import ejs.base.properties.IPersistable;
-import v9t9.common.client.ISoundHandler;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.sound.ICassetteVoice;
 
 /**
- * This interface is used to hook up a sound chip to a {@link ISoundHandler}.
+ * This interface is used to hook up a sound chip to a SoundHandler.
  * @author ejs
  *
  */

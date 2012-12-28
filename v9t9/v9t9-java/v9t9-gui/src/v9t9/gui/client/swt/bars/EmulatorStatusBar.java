@@ -236,33 +236,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			}
 		});
 		
-//
-//		button.addMouseListener(new MouseAdapter() {
-//			@Override
-//			public void mouseDown(MouseEvent e) {
-//				Rectangle bounds = button.getBounds();
-//				if (e.y < bounds.height / 2) {
-//					double rate = (Double) playRateSetting.getValue();
-//					if (e.x < bounds.width / 3) {
-//						rate /= 1.1;
-//					}
-//					else if (e.x < bounds.width * 2 / 3) {
-//						
-//					}
-//					else {
-//						rate *= 1.1;
-//					}
-//					playRateSetting.setValue(rate);
-//				}
-//			}
-//			
-//			@Override
-//			public void mouseDoubleClick(MouseEvent e) {
-//				toggleDemoDialog();
-//			}
-//		});
-
-
 		button.setMenuOverlayBounds(imageProvider.imageIndexToBounds(IconConsts.MENU_OVERLAY));
 		button.addMenuDetectListener(new MenuDetectListener() {
 
@@ -358,12 +331,14 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		if (!playSetting.getBoolean() && !recordSetting.getBoolean()) {
 			button.setOverlayBounds(null);
 		}
-		else if (pauseSetting.getBoolean()) {
-			button.setOverlayBounds(imageProvider.imageIndexToBounds(IconConsts.PAUSE_OVERLAY));
-		} else {
+		else {
 			button.setOverlayBounds(imageProvider.imageIndexToBounds(
 					recordSetting.getBoolean() ? IconConsts.RECORD_OVERLAY : 
 						reverseSetting.getBoolean() ? IconConsts.REVERSE_OVERLAY : IconConsts.PLAY_OVERLAY));
+			
+			if (pauseSetting.getBoolean()) {
+				button.getImageOverlays().add(0, imageProvider.imageIndexToBounds(IconConsts.PAUSE_OVERLAY));
+			}
 		} 
 		
 		Display.getDefault().asyncExec(new Runnable() {
