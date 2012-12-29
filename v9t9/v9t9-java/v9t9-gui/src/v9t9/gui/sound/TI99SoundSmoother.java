@@ -38,6 +38,12 @@ public class TI99SoundSmoother implements ISoundMutator {
 				outChunk = new SoundChunk(new float[length], chunk.getFormat());
 			}
 			
+			// watch out for errors from bad sounds
+			for (int c = 0; c < processedChans; c++) {
+				if (Float.isNaN(last[c]))
+					last[c] = 0f;
+			}
+			
 			for (int idx = 0; idx < length; idx += numChans) {
 				for (int c = 0; c < processedChans; c++) {
 					float v = chunk.at(idx + c);
