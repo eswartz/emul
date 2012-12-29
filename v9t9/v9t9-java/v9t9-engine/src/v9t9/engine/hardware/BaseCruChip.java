@@ -99,7 +99,7 @@ public class BaseCruChip implements ICruChip {
 			prevCycles = nowCycles;
 			
 			while (diff >= CYCLES_PER_TICK) {
-				if (--clockDecrementerRegister <= 0) {
+				if (--clockDecrementerRegister < 0) {
 					//System.out.println("tick");
 					if ((enabledIntMask & (1 << intClock)) != 0) {
 						if (!suppressClockInterrupts) {
