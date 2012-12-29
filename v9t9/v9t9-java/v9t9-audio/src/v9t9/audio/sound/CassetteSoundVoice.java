@@ -200,6 +200,7 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 						next = firstFrom + (int) ((long) consumed * totalSamps / total);
 						on = nextOn;
 						sign = -sign;
+						dcOffset *= 0.9;	// avoid too much cumulative distortion
 					} else {
 						break;
 					}
