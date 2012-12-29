@@ -50,6 +50,7 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 	private float prevV;
 	private float sign = 1f;
 	private int leftover;
+	private float dcOffset;
 	
 	public CassetteSoundVoice(String name) {
 		super("Cassette");
@@ -79,6 +80,7 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 		baseCycles = 0;
 		prevV = 0f;
 		sign = 1f;
+		dcOffset = 0f;
 	}
 	
 	/* (non-Javadoc)
@@ -135,7 +137,11 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 	public synchronized boolean flushAudio(float[] soundGeneratorWorkBuffer, int from,
 			int to, int totalCycles) {
 		boolean generated = false;
-		if (from < to && deltaIdx > 0) {
+		if (from >= to || deltaIdx <= 0) {
+			dcOffset /= 1.1;
+		} else {
+			if (Double.isNaN(dcOffset))
+				dcOffset = 0;
 			
 			generated = true;
 			int ratio = 128 + balance;
@@ -178,8 +184,14 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 				}
 				prevV = v;
 				v *= sign;
+				
+				// this seems to be how the "perfect" wave is messed up in analog-land
+				dcOffset += v * 8 / diff;
+				v += dcOffset;
+				
 				soundGeneratorWorkBuffer[from++] += sampleL * v;
 				soundGeneratorWorkBuffer[from++] += sampleR * v;
+				
 				
 				if (from >= next) {
 					if (idx < deltaIdx) {
