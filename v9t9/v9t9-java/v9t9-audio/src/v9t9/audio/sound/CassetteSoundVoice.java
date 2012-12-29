@@ -49,6 +49,7 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 	private boolean motor1;
 	private float prevV;
 	private float sign = 1f;
+	private int leftover;
 	
 	public CassetteSoundVoice(String name) {
 		super("Cassette");
@@ -73,6 +74,7 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 	public void reset() {
 		wasSet = false;
 		origState = false;
+		leftover = 0;
 		deltaIdx = 0;
 		baseCycles = 0;
 		prevV = 0f;
@@ -96,9 +98,8 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 			int offs = curr >= baseCycles ? curr - baseCycles : curr;
 			
 			state = newState;
-			appendPos(state ? offs : -offs-1);
-		
 			baseCycles = curr;
+			appendPos(state ? offs : -offs-1);
 		}
 	}
 
@@ -143,7 +144,7 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 			
 			int totalSamps = to - from;
 			
-			int total = 0;
+			int total = leftover;
 			for (int i = 0; i < deltaIdx; i++)
 				total += absp1(deltas[i]);
 
@@ -153,22 +154,22 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 			int firstFrom = from;
 			
 			int idx = 0;
-			int consumed = absp1(deltas[idx]) ;
+			int consumed = absp1(deltas[idx]) + leftover;
 			int next = from + (int) ((long) consumed * totalSamps / total);
 			idx++;
 			
 			int origFrom = from;
+			//leftover = 0;
 			
 			//System.out.println("**" + (next-origFrom));
 			boolean on = origState;
 			sign = on ? 1f : -1f;
 			int diff = next - origFrom;
 			
-			int minMag = soundClock / 16000;
 			while (from < to) {
 				float v;
 				// avoid weird spikes
-				if (diff >= minMag) {
+				if (diff > 0) {
 					int fullPos = (from - origFrom)  * cassetteChirp.length;
 					int aPos = fullPos / diff;
 					v = cassetteChirp[aPos] / (float) cassetteChirpMag;
@@ -199,6 +200,9 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 		
 		deltaIdx = 0;
 		origState = state;
+		leftover = totalCycles - baseCycles;
+		if (leftover < 0)
+			leftover = 0;
 		baseCycles = totalCycles;
 		
 		return generated;
