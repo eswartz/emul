@@ -12,12 +12,12 @@ import java.util.TreeMap;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
-import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -192,25 +192,55 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		final IProperty useOldFormatSetting = Settings.get(machine, IDemoManager.settingUseDemoOldFormat);
 		
 		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
-				imageProvider, demoIconIndex, tooltip) {
+				imageProvider, demoIconIndex, tooltip);
+		
+		button.addAreaHandler(new BaseImageButtonAreaHandler() {
+			
+			@Override
+			public boolean isActive() {
+				return recordSetting.getBoolean() || playSetting.getBoolean();
+			}
+			
+			@Override
+			public String getTooltip() {
+				return pauseSetting.getBoolean() ? "Continue" : "Pause";
+			}
+			
+			@Override
+			public Rectangle getBounds(Point size) {
+				return new Rectangle(0, 0, size.x/2, size.y/2);
+			}
+			
 			/* (non-Javadoc)
-			 * @see v9t9.gui.client.swt.bars.ImageButton#isEventOverMenu(org.eclipse.swt.events.MouseEvent)
+			 * @see v9t9.gui.client.swt.bars.BaseImageButtonAreaHandler#mouseClicked(int)
 			 */
 			@Override
-			protected boolean isEventOverMenu(MouseEvent e) {
-				if (super.isEventOverMenu(e))
+			public boolean mouseDown(int button) {
+				if (button == 1) {
+					pauseSetting.setBoolean(!pauseSetting.getBoolean());
 					return true;
-				
-				if (recordSetting.getBoolean() || playSetting.getBoolean()) {
-					// upper-left corner toggles these
-					if (isPointOverDemoControlIcon(getSize(), e.x, e.y)) {
-						return true;
-					}
 				}
-				
 				return false;
 			}
-		};
+		});
+//			/* (non-Javadoc)
+//			 * @see v9t9.gui.client.swt.bars.ImageButton#isEventOverMenu(org.eclipse.swt.events.MouseEvent)
+//			 */
+//			@Override
+//			protected boolean isEventOverMenu(MouseEvent e) {
+//				if (super.isEventOverMenu(e))
+//					return true;
+//				
+//				if (recordSetting.getBoolean() || playSetting.getBoolean()) {
+//					// upper-left corner toggles these
+//					if (isPointOverDemoControlIcon(getSize(), e.x, e.y)) {
+//						return true;
+//					}
+//				}
+//				
+//				return false;
+//			}
+//		};
 
 		IPropertyListener demoButtonStateListener = new IPropertyListener() {
 			
@@ -226,33 +256,23 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		pauseSetting.addListener(demoButtonStateListener);
 		
 		// the demo button controls pausing (when something active)
-		// else triggers the menu
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				if (!(recordSetting.getBoolean() || playSetting.getBoolean())
-						|| !isPointOverDemoControlIcon(button.getSize(), e.x, e.y))
+				if (!recordSetting.getBoolean() && !playSetting.getBoolean())
 					toggleDemoDialog();
 			}
 		});
 		
-		button.setMenuOverlayBounds(imageProvider.imageIndexToBounds(IconConsts.MENU_OVERLAY));
+		button.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider));
 		button.addMenuDetectListener(new MenuDetectListener() {
 
 			public void menuDetected(MenuDetectEvent e) {
 				final IDemoHandler handler = machine.getDemoHandler();
 				if (handler != null) {
-					Point menuLoc = button.toControl(((Control) e.widget).toDisplay(e.x, e.y));
-					boolean pointOverDemoControlIcon = isPointOverDemoControlIcon(button.getSize(), menuLoc.x, menuLoc.y); 
-					if ((recordSetting.getBoolean() || playSetting.getBoolean())
-							&& pointOverDemoControlIcon) { 
-						pauseSetting.setBoolean(!pauseSetting.getBoolean());
-					} else {
-						showDemoMenu(handler, e, e.x, e.y, 
-								recordSetting, playSetting, pauseSetting,
-								useOldFormatSetting);
-					}
-					
+					showDemoMenu(handler, e, e.x, e.y, 
+							recordSetting, playSetting, pauseSetting,
+							useOldFormatSetting);
 					e.doit = false;
 				}
 			}
@@ -260,7 +280,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		
 		// initialize state
 		setDemoButtonOverlay(button, playSetting, recordSetting, pauseSetting, reverseSetting);
-		//button.setSelection(pauseSetting.getBoolean());
 		
 		if (playListener != null)
 			playSetting.removeListener(playListener);
@@ -351,9 +370,9 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	}
 
 
-	protected boolean isPointOverDemoControlIcon(Point size, int x, int y) {
-		return x < size.x / 2 && y < size.y / 2;
-	}
+//	protected boolean isPointOverDemoControlIcon(Point size, int x, int y) {
+//		return x < size.x / 2 && y < size.y / 2;
+//	}
 
 
 	private void showDemoMenu(final IDemoHandler demoHandler, TypedEvent e, int x, int y, 
@@ -430,10 +449,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		}
 		
 		////
-		final IProperty recordPath = Settings.get(machine, IDemoManager.settingRecordedDemosPath);
-		final String demoDir = (recordPath.getString() == null || recordPath.getString().isEmpty())
-				? "/tmp" : recordPath.getString();
-		
 		if (currentFilename == null) {
 			recordItem = new MenuItem(menu, SWT.RADIO);
 
@@ -444,49 +459,16 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			recordItem.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
+					final Shell shell = menu.getShell();
 					
-					boolean wasPaused = machine.setPaused(true);
-					
-					String name = "demo";
-					if (lastSelectedRecordPath != null) {
-						name = lastSelectedRecordPath;
-					}
-					
-					String filenameBase = SwtDialogUtils.openFileSelectionDialog(
-							menu.getShell(),
-							"Select demo base name",
-							demoDir,
-							name, true,
-							IDemoManager.DEMO_EXTENSIONS);
-					File saveFile = null;
-					if (filenameBase != null) {
-						lastSelectedRecordPath = filenameBase;
-						saveFile = SwtDialogUtils.getUniqueFile(filenameBase);
-						if (saveFile == null) {
-							SwtDialogUtils.showErrorMessage(menu.getShell(), "Save error", 
-									"Too many demo files here!");
-							machine.setPaused(wasPaused);
-							return;
+					machine.getClient().asyncExecInUI(new Runnable() {
+
+						@Override
+						public void run() {
+							recordDemoFile(shell);
 						}
-						
-						URI parent = saveFile.getParentFile().toURI();
-						recordPath.setString(parent.toString());
-						
-						try {
-							demoHandler.startRecording(saveFile.toURI());
-							machine.getEventNotifier().notifyEvent(
-									null, Level.INFO, 
-									"Recording to " + saveFile);
-						} catch (NotifyException ex) {
-							if (ex.getCause() != null)
-								machine.getEventNotifier().notifyEvent(ex.getEvent().context,
-										ex.getEvent().level, ex.getEvent().message + "\n(" 
-												+ ex.getCause().getMessage() +")");
-							else
-								machine.getEventNotifier().notifyEvent(ex.getEvent());
-						}
-					}
-					machine.setPaused(wasPaused);
+					});
+					
 				}
 
 			});
@@ -514,6 +496,51 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		swtWindow.showMenu(menu, null, x, y);
 	}
 
+
+	private void recordDemoFile(Shell shell) {
+		String name = "demo";
+		if (lastSelectedRecordPath != null) {
+			name = lastSelectedRecordPath;
+		}
+		
+		final IProperty recordPath = Settings.get(machine, IDemoManager.settingRecordedDemosPath);
+		final String demoDir = (recordPath.getString() == null || recordPath.getString().isEmpty())
+				? "/tmp" : recordPath.getString();
+
+		String filenameBase = SwtDialogUtils.openFileSelectionDialog(
+				shell,
+				"Select demo base name",
+				demoDir,
+				name, true,
+				IDemoManager.DEMO_EXTENSIONS);
+		File saveFile = null;
+		if (filenameBase != null) {
+			lastSelectedRecordPath = filenameBase;
+			saveFile = SwtDialogUtils.getUniqueFile(filenameBase);
+			if (saveFile == null) {
+				SwtDialogUtils.showErrorMessage(shell, "Save error", 
+						"Too many demo files here!");
+				return;
+			}
+			
+			URI parent = saveFile.getParentFile().toURI();
+			recordPath.setString(parent.toString());
+			
+			try {
+				machine.getDemoHandler().startRecording(saveFile.toURI());
+				machine.getEventNotifier().notifyEvent(
+						null, Level.INFO, 
+						"Recording to " + saveFile);
+			} catch (NotifyException ex) {
+				if (ex.getCause() != null)
+					machine.getEventNotifier().notifyEvent(ex.getEvent().context,
+							ex.getEvent().level, ex.getEvent().message + "\n(" 
+									+ ex.getCause().getMessage() +")");
+				else
+					machine.getEventNotifier().notifyEvent(ex.getEvent());
+			}
+		}		
+	}
 
 	protected void toggleDemoDialog() {
 		swtWindow.toggleToolShell(DemoSelector.DEMO_SELECTOR_TOOL_ID,

@@ -13,6 +13,8 @@ import javax.sound.sampled.AudioSystem;
 
 import org.apache.log4j.Logger;
 
+import ejs.base.properties.IProperty;
+
 /**
  * Mixing and output for sound
  * 
@@ -27,9 +29,15 @@ public class SoundFileListener implements ISoundEmitter {
 	private String soundFile;
 	private AudioFormat soundFormat;
 
+	private IProperty pauseProperty;
+
 	public SoundFileListener() {
 	}
 
+	public void setPauseProperty(IProperty pauseProperty) {
+		this.pauseProperty = pauseProperty;
+	}
+	
 	public void setFileName(String filename) {
 		stopped();
 		if (filename != null) {
@@ -83,7 +91,7 @@ public class SoundFileListener implements ISoundEmitter {
 	 * 
 	 */
 	public void played(ISoundView schunk) {
-		if (soundFos != null) {
+		if (soundFos != null && (pauseProperty == null || !pauseProperty.getBoolean())) {
 			try {
 				AudioChunk chunk = new AudioChunk(schunk);
 				soundFos.write(chunk.soundData, 0,

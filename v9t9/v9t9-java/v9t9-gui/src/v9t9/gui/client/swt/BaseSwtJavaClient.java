@@ -348,4 +348,19 @@ public abstract class BaseSwtJavaClient implements IClient {
 		return !display.isDisposed();
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IClient#asyncExecInUI(java.lang.Runnable)
+	 */
+	@Override
+	public void asyncExecInUI(final Runnable runnable) {
+		machine.asyncExec(new Runnable() {
+			public void run() {
+				display.syncExec(runnable);
+				
+				// reset counts since the machine was not running
+				machine.getCpu().resetCycleCounts();
+			}
+		});
+	}
+	
 }

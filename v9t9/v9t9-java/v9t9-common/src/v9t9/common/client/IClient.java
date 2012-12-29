@@ -35,4 +35,10 @@ public interface IClient {
 	
 	IEventNotifier getEventNotifier();
 
+	/**
+	 * Run a task in the machine's asyncExec loop, but in the UI thread.
+	 * @param runnable
+	 */
+	void asyncExecInUI(Runnable runnable);
+
 }

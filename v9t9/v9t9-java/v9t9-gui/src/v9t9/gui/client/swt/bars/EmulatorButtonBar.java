@@ -166,7 +166,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		imageSupport.setImageImportDnDControl(((ISwtVideoRenderer) window.getVideoRenderer()).getControl());
 		
 
-		imageImportButton.setMenuOverlayBounds(imageProvider.imageIndexToBounds(IconConsts.MENU_OVERLAY));
+		imageImportButton.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider));
 		imageImportButton.addMenuDetectListener(new MenuDetectListener() {
 
 			public void menuDetected(MenuDetectEvent e) {
@@ -179,14 +179,12 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 				IconConsts.FULLSCREEN, IconConsts.CHECKMARK_OVERLAY, "Toggle fullscreen");
 
 		
-		
-		
-		soundRecordingHelper = new SoundRecordingHelper(soundHandler.getSoundOutput(), 
-				Settings.get(machine, ISoundHandler.settingRecordSoundOutputFile), 
-				"sound", machine);
-		speechRecordingHelper = new SoundRecordingHelper(soundHandler.getSpeechOutput(), 
-				Settings.get(machine, ISoundHandler.settingRecordSpeechOutputFile), 
-				"speech", machine);
+		soundRecordingHelper = new SoundRecordingHelper(machine, 
+				soundHandler.getSoundOutput(), 
+				ISoundHandler.settingRecordSoundOutputFile, "sound");
+		speechRecordingHelper = new SoundRecordingHelper(machine, 
+				soundHandler.getSpeechOutput(), 
+				ISoundHandler.settingRecordSpeechOutputFile, "speech");
 		
 		getButtonBar().addDisposeListener(new DisposeListener() {
 			
@@ -202,7 +200,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 				IconConsts.SOUND_SPEAKER, IconConsts.NO_OVERLAY,
 				true, "Sound options");
 		
-		soundButton.setMenuOverlayBounds(imageProvider.imageIndexToBounds(IconConsts.MENU_OVERLAY));
+		soundButton.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider));
 		soundButton.addMenuDetectListener(new MenuDetectListener() {
 
 			public void menuDetected(MenuDetectEvent e) {
@@ -212,8 +210,10 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		
 		final IProperty soundRecording = machine.getSettings().get(ISoundHandler.settingRecordSoundOutputFile);
 		final IProperty speechRecording = machine.getSettings().get(ISoundHandler.settingRecordSpeechOutputFile);
+		final IProperty pauseRecordingProperty = machine.getSettings().get(ISoundHandler.settingPauseSoundRecording);
 		
 		final Rectangle recordingOverlayBounds = imageProvider.imageIndexToBounds(IconConsts.RECORD_OVERLAY);
+		final Rectangle pauseOverlayBounds = imageProvider.imageIndexToBounds(IconConsts.PAUSE_OVERLAY);
 		IPropertyListener recordingListener = new IPropertyListener() {
 	
 			public void propertyChanged(final IProperty setting) {
@@ -224,8 +224,13 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 							return;
 						if (soundRecording.getString() != null || speechRecording.getString() != null) {
 							soundButton.addImageOverlay(recordingOverlayBounds);
+							if (pauseRecordingProperty.getBoolean())
+								soundButton.addImageOverlay(pauseOverlayBounds);
+							else
+								soundButton.removeImageOverlay(pauseOverlayBounds);
 						} else {
 							soundButton.removeImageOverlay(recordingOverlayBounds);
+							soundButton.removeImageOverlay(pauseOverlayBounds);
 						}
 						soundButton.redraw();
 					}
@@ -234,6 +239,41 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		};
 		soundRecording.addListenerAndFire(recordingListener);
 		speechRecording.addListenerAndFire(recordingListener);
+		pauseRecordingProperty.addListener(recordingListener);
+		
+		soundButton.addAreaHandler(new BaseImageButtonAreaHandler() {
+			
+			@Override
+			public boolean isActive() {
+				return soundRecording.getString() != null || speechRecording.getString() != null;
+			}
+			
+			@Override
+			public String getTooltip() {
+				return pauseRecordingProperty.getBoolean() ? "Resume" : "Pause";
+			}
+			
+			@Override
+			public Rectangle getBounds(Point size) {
+				return new Rectangle(0, 0, size.x/2, size.y/2);
+			}
+			
+			/* (non-Javadoc)
+			 * @see v9t9.gui.client.swt.bars.BaseImageButtonAreaHandler#mouseClicked(int)
+			 */
+			@Override
+			public boolean mouseDown(int button) {
+				if (button == 1) {
+					pauseRecordingProperty.setBoolean(!pauseRecordingProperty.getBoolean());
+					
+					if (pauseRecordingProperty.getBoolean()) {
+						
+					}
+					return true;
+				}
+				return false;
+			}
+		});
 
 	}
 

@@ -20,7 +20,7 @@ public interface ISoundHandler {
 	
 	SettingSchema settingPlaySound = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"PlaySound", new Boolean(true));
+			"PlaySound", Boolean.TRUE);
 	SettingSchema settingSoundVolume = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"SoundVolume", new Integer(5));
@@ -30,6 +30,10 @@ public interface ISoundHandler {
 	SettingSchema settingRecordSpeechOutputFile = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"RecordSpeechOutputFile", String.class, null);
+
+	SettingSchema settingPauseSoundRecording = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"PauseSoundRecording", Boolean.FALSE);
 
 	/**
 	 * Dispose sound and turn off audio

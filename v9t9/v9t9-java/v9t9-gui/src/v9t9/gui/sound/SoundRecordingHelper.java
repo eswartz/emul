@@ -11,9 +11,12 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.Shell;
 import org.ejs.gui.common.SwtDialogUtils;
 
+import v9t9.common.client.ISoundHandler;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchema;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
@@ -29,7 +32,7 @@ import ejs.base.sound.SoundFileListener;
  */
 public class SoundRecordingHelper {
 
-	private SoundFileListener iSoundListener;
+	private SoundFileListener soundListener;
 	
 	private IProperty soundFileSetting;
 
@@ -44,23 +47,24 @@ public class SoundRecordingHelper {
 	/**
 	 * @param shell
 	 */
-	public SoundRecordingHelper(ISoundOutput output, IProperty settingRecordSoundOutputFile, String label,
-			IMachine machine) {
+	public SoundRecordingHelper(IMachine machine, ISoundOutput output, SettingSchema fileSchema,
+			String label) {
 		this.output = output;
-		this.soundFileSetting = settingRecordSoundOutputFile;
+		this.soundFileSetting = machine.getSettings().get(fileSchema);
 		this.label = label;
 		this.machine = machine;
-		iSoundListener = new SoundFileListener();
+		soundListener = new SoundFileListener();
+		soundListener.setPauseProperty(machine.getSettings().get(ISoundHandler.settingPauseSoundRecording));
 		
 		listener = new IPropertyListener() {
 			public void propertyChanged(IProperty setting) {
-				iSoundListener.setFileName(setting.getString());
+				soundListener.setFileName(setting.getString());
 			}
 			
 		};
-		settingRecordSoundOutputFile.addListener(listener);
+		soundFileSetting.addListener(listener);
 		
-		output.addEmitter(iSoundListener);
+		output.addEmitter(soundListener);
 
 	}
 
@@ -89,7 +93,7 @@ public class SoundRecordingHelper {
 			item.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					soundFileSetting.setString(null);
+					stop();
 				}
 
 			});
@@ -98,27 +102,27 @@ public class SoundRecordingHelper {
 			item.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					boolean wasPaused = machine.setPaused(true);
-					try {
-						String filenameBase = SwtDialogUtils.openFileSelectionDialog(
-								menu.getShell(),
-								"Record " + label + " to...", 
-								"/tmp", 
-								label, true,
-								SoundFileListener.getSoundFileExtensions());
-						File saveFile = null;
-						if (filenameBase != null) {
-							saveFile = SwtDialogUtils.getUniqueFile(filenameBase);
-							if (saveFile == null) {
-								SwtDialogUtils.showErrorMessage(menu.getShell(), "Save error", 
-										"Too many " + label + " files here!");
-								return;
+					final Shell shell = menu.getShell();
+					machine.getClient().asyncExecInUI(new Runnable() {
+						public void run() {
+							String filenameBase = SwtDialogUtils.openFileSelectionDialog(
+									shell,
+									"Record " + label + " to...", 
+									"/tmp", 
+									label, true,
+									SoundFileListener.getSoundFileExtensions());
+							File saveFile = null;
+							if (filenameBase != null) {
+								saveFile = SwtDialogUtils.getUniqueFile(filenameBase);
+								if (saveFile == null) {
+									SwtDialogUtils.showErrorMessage(shell, "Save error", 
+											"Too many " + label + " files here!");
+									return;
+								}
 							}
+							soundFileSetting.setString(saveFile != null ? saveFile.getAbsolutePath() : null);
 						}
-						soundFileSetting.setString(saveFile != null ? saveFile.getAbsolutePath() : null);
-					} finally {
-						machine.setPaused(wasPaused);
-					}
+					});
 				}
 
 			});
@@ -131,7 +135,15 @@ public class SoundRecordingHelper {
 	 */
 	public void dispose() {
 		soundFileSetting.removeListener(listener);
-		output.removeEmitter(iSoundListener);
+		output.removeEmitter(soundListener);
+	}
+
+	/**
+	 * 
+	 */
+	public void stop() {
+		soundFileSetting.setString(null);
+		
 	}
 	
 }

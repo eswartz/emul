@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackListener;
@@ -33,15 +35,20 @@ public class ImageButton extends ImageIconCanvas {
 	private boolean selected;
 	private boolean isHighlighted;
 	private boolean pressed;
-	private boolean isMenuHovering;
-	private Rectangle menuOverlayBounds;
+//	private boolean isMenuHovering;
+//	private Rectangle menuOverlayBounds;
 	protected IFocusRestorer focusRestorer;
 	private List<Rectangle> imageOverlays = new LinkedList<Rectangle>();
+	private String baseTooltip;
+	private List<IImageButtonAreaHandler> areaHandlers = new ArrayList<IImageButtonAreaHandler>();
+	private List<IImageButtonAreaHandler> mouseDownActiveHandlers = new ArrayList<IImageButtonAreaHandler>();
+	private IImageButtonAreaHandler lastMousedAreaHandler = null;
 
 	public ImageButton(IImageCanvas parentBar, int style, 
 			ImageProvider imageProvider, int iconIndex, String tooltip) {
 		super(parentBar, style, imageProvider, iconIndex, tooltip);
 		
+		baseTooltip = tooltip;
 		this.listeners = new ArrayList<SelectionListener>();
 		
 		addListener(SWT.MouseDown, new Listener() {
@@ -52,21 +59,34 @@ public class ImageButton extends ImageIconCanvas {
 					e.doit = false;
 					return;
 				}
-				if (e.button == 1) {
-					if (menuOverlayBounds != null && isMenuHovering) {
-						Event me = new Event();
-						me.button = e.button;
-						me.display = e.display;
-						me.item = ImageButton.this;
-						me.stateMask = e.stateMask;
-						me.type = SWT.MenuDetect;
-						me.widget = ImageButton.this;
-						me.x = e.x;
-						me.y = e.y;
-						notifyListeners(SWT.MenuDetect, me);
-						e.doit = false;
-						return;
+				
+				boolean wasHandled = false;
+				for (IImageButtonAreaHandler handler : areaHandlers) {
+					if (handler.getBounds(getSize()).contains(e.x, e.y) && handler.isActive()) {
+						if (e.button == 1 && handler.isMenu()) {
+							Event me = new Event();
+							me.button = e.button;
+							me.display = e.display;
+							me.item = ImageButton.this;
+							me.stateMask = e.stateMask;
+							me.type = SWT.MenuDetect;
+							me.widget = ImageButton.this;
+							me.x = e.x;
+							me.y = e.y;
+							notifyListeners(SWT.MenuDetect, me);
+							e.doit = false;
+							return;
+						}
+						wasHandled = handler.mouseDown(e.button);
+						if (wasHandled) {
+							if (!mouseDownActiveHandlers.contains(handler))
+								mouseDownActiveHandlers.add(handler);
+							e.doit = false;
+							break;
+						}
 					}
+				}
+				if (!wasHandled && e.button == 1) {
 					doClickStart();
 				}
 			}
@@ -79,8 +99,21 @@ public class ImageButton extends ImageIconCanvas {
 					e.doit = false;
 					return;
 				}
-				if (e.button == 1)
+				boolean wasHandled = false;
+				for (IImageButtonAreaHandler handler : areaHandlers) {
+					if (handler.getBounds(getSize()).contains(e.x, e.y) && 
+							mouseDownActiveHandlers.contains(handler)) {
+						mouseDownActiveHandlers.remove(handler);
+						wasHandled = handler.mouseUp(e.button);
+						if (wasHandled) {
+							e.doit = false;
+							break;
+						}
+					}
+				}
+				if (!wasHandled && e.button == 1) {
 					doClickStop(e);
+				}
 				if (focusRestorer != null)
 					focusRestorer.restoreFocus();
 		
@@ -121,7 +154,19 @@ public class ImageButton extends ImageIconCanvas {
 		
 		//setRetracted(false);
 		setCursor(getDisplay().getSystemCursor(SWT.CURSOR_HAND));
+		
+		addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				for (IImageButtonAreaHandler handler : areaHandlers) {
+					handler.detach(ImageButton.this);
+				}
+				areaHandlers.clear();
+			}
+		});
 	}
+	
 	
 	/**
 	 * @return the imageOverlays
@@ -158,9 +203,6 @@ public class ImageButton extends ImageIconCanvas {
 	}
 
 
-	public void setMenuOverlayBounds(Rectangle menuOverlayBounds) {
-		this.menuOverlayBounds = menuOverlayBounds;
-	}
 	public void addSelectionListener(SelectionListener listener) {
 		listeners.add(listener);
 	}
@@ -223,9 +265,9 @@ public class ImageButton extends ImageIconCanvas {
 			for (Rectangle imgRect : imageOverlays) {
 				imageProvider.drawImage(e.gc, drawRect, imgRect);
 			}
-			if (menuOverlayBounds != null && isMenuHovering) {
-				imageProvider.drawImage(e.gc, drawRect, menuOverlayBounds);
-			}
+//			if (menuOverlayBounds != null && isMenuHovering) {
+//				imageProvider.drawImage(e.gc, drawRect, menuOverlayBounds);
+//			}
 		} catch (IllegalArgumentException e2) {
 			e2.printStackTrace();
 		}
@@ -265,7 +307,6 @@ public class ImageButton extends ImageIconCanvas {
 		for (SelectionListener listener : array) {
 			listener.widgetSelected(selEvent);
 		}
-		//this.buttonBar.videoRenderer.setFocus();
 		
 	}
 	
@@ -274,44 +315,74 @@ public class ImageButton extends ImageIconCanvas {
 			return;
 		
 		isHighlighted = true;
-
-		checkMenu(e);
+		setToolTipText(baseTooltip);
 		
-		redraw();
-	}
-	
-	private void checkMenu(MouseEvent e) {
-		if (menuOverlayBounds != null) {
-			boolean isOverMenu = isEventOverMenu(e); 
-				
-			if (isOverMenu) {
-				if (!isMenuHovering) {
-					isMenuHovering = true;
-					redraw();
+		for (IImageButtonAreaHandler handler : areaHandlers) {
+			Rectangle handlerBounds = handler.getBounds(getSize());
+			//System.out.println(handlerBounds + " vs " + e.x + "/" + e.y);
+			if (handlerBounds.contains(e.x, e.y) && handler.isActive()) {
+				handler.mouseEnter();
+				String tt = handler.getTooltip();
+				if (tt != null) {
+					setToolTipText(tt);
 				}
+				
+				setMousedArea(handler);
 				return;
 			}
-			if (isMenuHovering) {
-				isMenuHovering = false;
-				redraw();
+		}
+		resetMousedArea();
+	}
+	/**
+	 * @param handler
+	 */
+	private void setMousedArea(IImageButtonAreaHandler handler) {
+		if (handler != lastMousedAreaHandler) {
+			if (lastMousedAreaHandler != null) {
+				lastMousedAreaHandler.mouseExit();
+			}
+			lastMousedAreaHandler = handler;
+			handler.mouseEnter();
+			String tt = handler.getTooltip();
+			if (tt != null)
+				setToolTipText(tt);
+			redraw();
+		}
+	}
+
+
+	protected void doMouseHover(MouseEvent e) {
+		for (IImageButtonAreaHandler handler : areaHandlers) {
+			if (handler.getBounds(getSize()).contains(e.x, e.y) && handler.isActive()) {
+				setMousedArea(handler);
+				handler.mouseHover();
+				return;
 			}
 		}
-		
+		resetMousedArea();
+	}
+	protected void doMouseMove(MouseEvent e) {
+		for (IImageButtonAreaHandler handler : areaHandlers) {
+			if (handler.getBounds(getSize()).contains(e.x, e.y) && handler.isActive()) {
+				setMousedArea(handler);
+				return;
+			}
+		}
+		resetMousedArea();
 	}
 
 	/**
-	 * @param e
-	 * @return
+	 * 
 	 */
-	protected boolean isEventOverMenu(MouseEvent e) {
-		boolean isOverMenu;
-		Point corner = getSize();
-		corner.x -= corner.x / 3;
-		corner.y -= corner.y / 3;
-		isOverMenu = (e.x >= corner.x
-				&& e.y >= corner.y);
-		return isOverMenu;
+	private void resetMousedArea() {
+		if (lastMousedAreaHandler != null)
+			lastMousedAreaHandler.mouseExit();
+		lastMousedAreaHandler = null;
+		setToolTipText(baseTooltip);
+		redraw();
+		
 	}
+
 
 	/**
 	 * @param e  
@@ -320,14 +391,67 @@ public class ImageButton extends ImageIconCanvas {
 		if (parentDrawer.isRetracted())
 			return;
 		isHighlighted = false;
-		isMenuHovering = false;
 		redraw();
+		
+		for (IImageButtonAreaHandler handler : areaHandlers) {
+			if (handler.getBounds(getSize()).contains(e.x, e.y) && handler.isActive()) {
+				handler.mouseExit();
+				String tt = handler.getTooltip();
+				if (tt != null)
+					setToolTipText(baseTooltip);
+				break;
+			}
+		}
+		resetMousedArea();
 	}
 
-	protected void doMouseHover(MouseEvent e) {
-		checkMenu(e);
+	public void addAreaHandler(IImageButtonAreaHandler handler) {
+		if (!areaHandlers.contains(handler)) {
+			areaHandlers.add(handler);
+			handler.attach(this);
+		}
 	}
-	protected void doMouseMove(MouseEvent e) {
-		checkMenu(e);
-	}
+
+//	private void checkMenu(MouseEvent e) {
+//		for (IImageButtonAreaHandler handler : areaHandlers) {
+//			if (handler.getBounds(getSize()).contains(e.x, e.y) && handler.isActive()) {
+//				handler.mouseEnter();
+//			} else {
+//					handler.mouseExit();
+//				}
+//			}
+//		}
+//		
+//		if (menuOverlayBounds != null) {
+//			boolean isOverMenu = isEventOverMenu(e); 
+//				
+//			if (isOverMenu) {
+//				if (!isMenuHovering) {
+//					isMenuHovering = true;
+//					redraw();
+//				}
+//				return;
+//			}
+//			if (isMenuHovering) {
+//				isMenuHovering = false;
+//				redraw();
+//			}
+//		}
+//		
+//	}
+
+	/**
+	 * @param e
+	 * @return
+	 */
+//	protected boolean isEventOverMenu(MouseEvent e) {
+//		boolean isOverMenu;
+//		Point corner = getSize();
+//		corner.x -= corner.x / 3;
+//		corner.y -= corner.y / 3;
+//		isOverMenu = (e.x >= corner.x
+//				&& e.y >= corner.y);
+//		return isOverMenu;
+//	}
+
 }
