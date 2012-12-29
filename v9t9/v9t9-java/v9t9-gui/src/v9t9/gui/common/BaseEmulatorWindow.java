@@ -44,17 +44,17 @@ public abstract class BaseEmulatorWindow {
 	protected final IMachine machine;
 	static public final SettingSchema settingMonitorDrawing = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"MonitorDrawing", new Boolean(true));
+			"MonitorDrawing", Boolean.TRUE);
 	static public final SettingSchema settingZoomLevel = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"ZoomLevel", new Integer(3));
 	static public final SettingSchema settingFullScreen = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"FullScreen", new Boolean(false));
+			"FullScreen", Boolean.FALSE);
 
 	static public final SettingSchema settingShowRnDBar = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"ShowRnDBar", new Boolean(false));
+			"ShowRnDBar", Boolean.FALSE);
 
 	// not persisted
 	static public final SettingSchema settingMachineStatePath = new SettingSchema(

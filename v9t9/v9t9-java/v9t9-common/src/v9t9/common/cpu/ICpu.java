@@ -15,14 +15,14 @@ import v9t9.common.settings.SettingSchema;
 public interface ICpu extends IPersistable {
 	SettingSchema settingDumpInstructions = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"DumpInstructions", new Boolean(false));
+			"DumpInstructions", Boolean.FALSE);
 	SettingSchema settingDumpFullInstructions = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"DumpFullInstructions", new Boolean(false));
+			"DumpFullInstructions", Boolean.FALSE);
 
 	SettingSchema settingRealTime = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"RealTime", new Boolean(true));
+			"RealTime", Boolean.TRUE);
 	SettingSchema settingCyclesPerSecond = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"CyclesPerSecond", new Integer(0));

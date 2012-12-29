@@ -99,7 +99,7 @@ public class Compiler9900 extends CompilerBase {
 
     static public final SettingSchema settingDumpModuleRomInstructions = new SettingSchema(
     		ISettingsHandler.TRANSIENT,
-    		"CompilerDumpModuleRomInstructions", new Boolean(false));
+    		"CompilerDumpModuleRomInstructions", Boolean.FALSE);
 
     public Compiler9900(Cpu9900 cpu) {
     	super(cpu.getState(), InstructionFactory9900.INSTANCE);

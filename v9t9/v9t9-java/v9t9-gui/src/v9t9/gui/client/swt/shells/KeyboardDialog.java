@@ -16,7 +16,6 @@ import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
-import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
@@ -171,21 +170,7 @@ public class KeyboardDialog extends Composite implements IKeyboardModeListener, 
 			fireKeypress(false);
 		}
 		
-		/* (non-Javadoc)
-		 * @see v9t9.gui.client.swt.bars.ImageButton#doMouseHover(org.eclipse.swt.events.MouseEvent)
-		 */
-		@Override
-		protected void doMouseHover(MouseEvent e) {
-			super.doMouseHover(e);
-//			if (nextChangeTime > 0) {
-//				if (System.currentTimeMillis() >= nextChangeTime ) {
-//					fireKeypress(getSelection());
-//					//setSelection(!getSelection());
-//					nextChangeTime = System.currentTimeMillis() + 100;
-//				}
-//			}
-		}
-
+	
 		/**
 		 * 
 		 */

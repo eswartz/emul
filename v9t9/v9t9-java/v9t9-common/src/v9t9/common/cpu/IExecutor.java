@@ -17,10 +17,10 @@ public interface IExecutor {
 
 	SettingSchema settingCompile = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"Compile", new Boolean(false));
+			"Compile", Boolean.FALSE);
 	SettingSchema settingSingleStep = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"SingleStep", new Boolean(false));
+			"SingleStep", Boolean.FALSE);
 
 	IProperty settingCompile();
 	IProperty settingSingleStep();

@@ -30,7 +30,7 @@ public interface IVdpChip extends IPersistable, IRegisterAccess {
 			ISettingsHandler.INSTANCE, "CpuSynchedVdpInterrupt", new Boolean(
 					true));
 	SettingSchema settingDumpVdpAccess = new SettingSchema(
-			ISettingsHandler.TRANSIENT, "DumpVdpAccess", new Boolean(false));
+			ISettingsHandler.TRANSIENT, "DumpVdpAccess", Boolean.FALSE);
 
 	/** Update video canvas periodically */
     //boolean update();

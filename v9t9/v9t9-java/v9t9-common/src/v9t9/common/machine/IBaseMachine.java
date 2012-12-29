@@ -29,10 +29,10 @@ public interface IBaseMachine {
 
 	SettingSchema settingPauseMachine = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"PauseMachine", new Boolean(false));
+			"PauseMachine", Boolean.FALSE);
 	SettingSchema settingThrottleInterrupts = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"ThrottleVDPInterrupts", new Boolean(false));
+			"ThrottleVDPInterrupts", Boolean.FALSE);
 	SettingSchema settingModuleList = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"ModuleListFile", "");

@@ -21,12 +21,12 @@ public interface IDemoHandler {
 	/** This setting is true while a demo is being recorded. */
 	SettingSchema settingRecordDemo = new SettingSchema(
 				ISettingsHandler.TRANSIENT,
-				"RecordDemo", new Boolean(false));
+				"RecordDemo", Boolean.FALSE);
 
 	/** This setting is true while a demo is being played back. */
 	SettingSchema settingPlayingDemo = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"PlayingDemo", new Boolean(false));
+			"PlayingDemo", Boolean.FALSE);
 
 	/** This setting is true while a demo is paused:
 	 * 
@@ -37,7 +37,7 @@ public interface IDemoHandler {
 	 *  */
 	SettingSchema settingDemoPaused = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"DemoPaused", new Boolean(false));
+			"DemoPaused", Boolean.FALSE);
 
 	/** This setting is the playback rate (multiplier) for demo playback. */
 	SettingSchema settingDemoPlaybackRate = new SettingSchema(
@@ -49,7 +49,7 @@ public interface IDemoHandler {
 	 *  */
 	SettingSchema settingDemoReversing = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"DemoReversing", new Boolean(false));
+			"DemoReversing", Boolean.FALSE);
 
 
 	interface IDemoListener {

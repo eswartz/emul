@@ -46,7 +46,7 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 
 	static public final SettingSchema settingExpRam = new SettingSchema(
     		ISettingsHandler.WORKSPACE,
-    		"MemoryExpansion32K", new Boolean(false));
+    		"MemoryExpansion32K", Boolean.FALSE);
 
 	static protected final MemoryEntryInfo cpuRomInfo = MemoryEntryInfoBuilder
 		.standardConsoleRom(null)

@@ -12,7 +12,7 @@ import v9t9.common.settings.SettingSchema;
 public class ExpRamArea extends ConsoleMemoryArea {
     static public final SettingSchema settingExpRam = new SettingSchema(
     		ISettingsHandler.WORKSPACE,
-    		"MemoryExpansion32K", new Boolean(false));
+    		"MemoryExpansion32K", Boolean.FALSE);
 	private IProperty expRam;
 
 

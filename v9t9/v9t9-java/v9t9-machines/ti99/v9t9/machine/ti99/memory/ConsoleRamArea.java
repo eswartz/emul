@@ -13,7 +13,7 @@ import v9t9.common.settings.SettingSchema;
 public class ConsoleRamArea extends ConsoleMemoryArea {
     static public final SettingSchema settingEnhRam = new SettingSchema(
     		ISettingsHandler.WORKSPACE,
-    		"ExtraConsoleRAM", new Boolean(false));
+    		"ExtraConsoleRAM", Boolean.FALSE);
 	private final IProperty enhRam;
 
 	public ConsoleRamArea(ISettingsHandler settings) {

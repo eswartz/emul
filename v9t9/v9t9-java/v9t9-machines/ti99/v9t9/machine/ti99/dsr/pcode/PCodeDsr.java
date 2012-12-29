@@ -50,7 +50,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 			ISettingsHandler.WORKSPACE,
 			"PCodeCardEnabled", "Enable P-Code Card", 
 			"Enables the UCSD Pascal P-Code card.",
-			new Boolean(false),
+			Boolean.FALSE,
 			pcodeIconPath);
 	private PCodeDsrRomBankedMemoryEntry dsrMemoryEntry;
 	private TI99Machine machine;

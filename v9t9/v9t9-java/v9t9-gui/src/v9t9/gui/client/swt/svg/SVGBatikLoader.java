@@ -184,10 +184,10 @@ public class SVGBatikLoader implements ISVGLoader {
 
         // be sure to execute script code every time
         trans.addTranscodingHint(ImageTranscoder.KEY_EXECUTE_ONLOAD,
-                new Boolean(true));
+                Boolean.TRUE);
 
         //trans.addTranscodingHint(SWTImageTranscoder.KEY_USE_TRANSPARENT_PIXEL,
-        //        new Boolean(true));
+        //        Boolean.TRUE);
 
         Document doc = input.getDocument();
         if (doc == null)
@@ -265,7 +265,7 @@ public class SVGBatikLoader implements ISVGLoader {
 
 		// be sure to execute script code every time
 		trans.addTranscodingHint(ImageTranscoder.KEY_EXECUTE_ONLOAD,
-				new Boolean(true));
+				Boolean.TRUE);
 
 		trans.addTranscodingHint(ImageTranscoder.KEY_AOI,
 				new java.awt.Rectangle(aoi.x, aoi.y, aoi.width, aoi.height));

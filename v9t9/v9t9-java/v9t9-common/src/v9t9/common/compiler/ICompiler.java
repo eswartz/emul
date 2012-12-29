@@ -17,22 +17,22 @@ public interface ICompiler {
 
 	SettingSchema settingOptimize = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"CompilerOptimize", new Boolean(false));
+			"CompilerOptimize", Boolean.FALSE);
 	SettingSchema settingOptimizeRegAccess = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"CompilerOptimizeRegAccess", new Boolean(true));
+			"CompilerOptimizeRegAccess", Boolean.TRUE);
 	SettingSchema settingOptimizeStatus = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"CompilerOptimizeStatus", new Boolean(false));
+			"CompilerOptimizeStatus", Boolean.FALSE);
 	SettingSchema settingCompileOptimizeCallsWithData = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"CompilerOptmizeCallsWithData", new Boolean(false));
+			"CompilerOptmizeCallsWithData", Boolean.FALSE);
 	SettingSchema settingDebugInstructions = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"DebugInstructions", new Boolean(true));
+			"DebugInstructions", Boolean.TRUE);
 	SettingSchema settingCompileFunctions = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"CompilerCompileFunctions", new Boolean(false));
+			"CompilerCompileFunctions", Boolean.FALSE);
 
 	/**
 	 * Compile the instructions into bytecode.

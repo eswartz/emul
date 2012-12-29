@@ -28,7 +28,7 @@ import v9t9.common.settings.Settings;
 public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersistable {
 	static public final SettingSchema settingDumpGplAccess = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
-			"DumpGplAccess", new Boolean(false));
+			"DumpGplAccess", Boolean.FALSE);
     
     private IMemoryDomain domain;
     
