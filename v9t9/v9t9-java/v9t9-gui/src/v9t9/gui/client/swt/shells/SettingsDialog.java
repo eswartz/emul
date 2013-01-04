@@ -192,7 +192,7 @@ public class SettingsDialog extends Composite implements IPropertyListener {
 		final List<IProperty> props = new ArrayList<IProperty>();
 		for (Map.Entry<IProperty, SettingSchema> ent : settings.getAllSettings().entrySet()) {
 			SettingSchema schema = ent.getValue();
-			if (schema == null || schema.getContext().equals(ISettingsHandler.TRANSIENT))
+			if (schema == null)
 				continue;
 			IProperty prop = settings.get(schema);
 			if (prop != null) {
