@@ -46,7 +46,7 @@ import ejs.base.utils.ListenerList.IFire;
  */
 public class SpeechTMS5220 implements ISpeechChip {
 	public final static SettingSchema settingSpeechRomFileName = new SettingSchema(
-			ISettingsHandler.WORKSPACE, "SpeechRomFileName", "spchrom.bin");
+			ISettingsHandler.MACHINE, "SpeechRomFileName", "spchrom.bin");
 
 	public static MemoryEntryInfo speechRomInfo = MemoryEntryInfoBuilder
 			.byteMemoryEntry().withDomain(IMemoryDomain.NAME_SPEECH)

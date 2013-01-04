@@ -13,9 +13,9 @@ import java.util.Map;
 
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.settings.BasicSettingsHandler;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryEntryFactory;
-import ejs.base.settings.SettingProperty;
 
 /**
  * @author ejs
@@ -31,7 +31,7 @@ public class FindDuplicateRomFiles {
 	private Memory memory;
 	private PathFileLocator locator;
 	private BasicSettingsHandler settings;
-	private SettingProperty pathProp;
+	private SettingSchemaProperty pathProp;
 	
 	/**
 	 * 
@@ -40,7 +40,7 @@ public class FindDuplicateRomFiles {
 		memory = new Memory();
 		locator = new PathFileLocator();
 		
-		pathProp = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		pathProp = new SettingSchemaProperty("Paths", String.class, new ArrayList<String>());
 		pathProp.getList().add("/usr/local/src/v9t9-data/roms");
 		pathProp.getList().add("/usr/local/src/v9t9-data/modules");
 		pathProp.getList().add("/usr/local/src/v9t9-data/modules/mess");

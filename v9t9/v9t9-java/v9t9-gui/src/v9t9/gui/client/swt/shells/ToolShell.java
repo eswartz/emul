@@ -20,12 +20,12 @@ import org.eclipse.swt.widgets.Shell;
 import org.ejs.gui.common.SwtPrefUtils;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.gui.client.swt.IFocusRestorer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.shells.IToolShellFactory.Behavior;
 import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
 import ejs.base.properties.IProperty;
-import ejs.base.settings.SettingProperty;
 
 public class ToolShell {
 	private Point desiredLocation; 
@@ -43,8 +43,8 @@ public class ToolShell {
 			boolean isHorizontal,
 			Behavior behavior) {
 		if (behavior.boundsPref != null)
-			this.boundsPref = settings.get(ISettingsHandler.INSTANCE, 
-					new SettingProperty(behavior.boundsPref, SwtPrefUtils.writeBoundsString(behavior.defaultBounds)));
+			this.boundsPref = settings.get(ISettingsHandler.USER, 
+					new SettingSchemaProperty(behavior.boundsPref, SwtPrefUtils.writeBoundsString(behavior.defaultBounds)));
 		
 		this.shell = new Shell(parentShell, behavior.style);
 		this.focusRestorer = focusRestorer_;

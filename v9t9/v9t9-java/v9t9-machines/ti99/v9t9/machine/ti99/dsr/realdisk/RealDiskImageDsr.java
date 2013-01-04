@@ -9,7 +9,6 @@ import java.util.List;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
-import ejs.base.settings.SettingProperty;
 
 
 import v9t9.common.client.ISettingsHandler;
@@ -18,6 +17,7 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.common.settings.SettingSchema;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
@@ -41,7 +41,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 	private IMemoryEntry romMemoryEntry;
 	
 	public static SettingSchema settingDsrRomFileName = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"RealDiskDsrFileName",
 			"tidiskdsr.bin");
 
@@ -157,7 +157,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		if (!diskSettingsMap.isEmpty()) {
 			
 			// one setting for entire DSR
-			realDiskDsrActiveSetting = new SettingProperty(getName(), Boolean.FALSE);
+			realDiskDsrActiveSetting = new SettingSchemaProperty(getName(), Boolean.FALSE);
 			realDiskDsrActiveSetting.addEnablementDependency(settingDsrEnabled);
 			
 			

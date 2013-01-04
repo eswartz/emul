@@ -80,11 +80,11 @@ abstract class DiskSettingEntry extends Composite {
 	}
 
 	protected String[] getHistory(String name) {
-		return machine.getSettings().getInstanceSettings().
+		return machine.getSettings().getUserSettings().
 			getHistorySettings().getArray("DiskSelector." + name);
 	}
 	protected void setHistory(String name, String[] history) {
-		machine.getSettings().getInstanceSettings().
+		machine.getSettings().getUserSettings().
 			getHistorySettings().put("DiskSelector." + name, history);
 		//EmulatorSettings.INSTANCE.save();
 	}

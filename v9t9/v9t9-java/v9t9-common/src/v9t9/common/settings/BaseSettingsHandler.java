@@ -24,17 +24,17 @@ public class BaseSettingsHandler implements ISettingsHandler {
 				return null;
 			}
 		};
-	protected final IStoredSettings workspaceSettings;
-	protected final IStoredSettings instanceSettings;
+	protected final IStoredSettings machineSettings;
+	protected final IStoredSettings userSettings;
 
 	
-	public BaseSettingsHandler(IStoredSettings workspaceSettings,
-			IStoredSettings instanceSettings) {
-		this.workspaceSettings = workspaceSettings;
-		this.instanceSettings = instanceSettings;
+	public BaseSettingsHandler(IStoredSettings machineSettings,
+			IStoredSettings userSettings) {
+		this.machineSettings = machineSettings;
+		this.userSettings = userSettings;
 		
-		workspaceSettings.setOwner(this);
-		instanceSettings.setOwner(this);
+		machineSettings.setOwner(this);
+		userSettings.setOwner(this);
 		transientSettings.setOwner(this);
 	}
 
@@ -45,19 +45,19 @@ public class BaseSettingsHandler implements ISettingsHandler {
 	public Map<IProperty, SettingSchema> getAllSettings() {
 		Map<IProperty, SettingSchema> ret = new HashMap<IProperty, SettingSchema>();
 		ret.putAll(transientSettings.getAll());
-		ret.putAll(instanceSettings.getAll());
-		ret.putAll(workspaceSettings.getAll());
+		ret.putAll(userSettings.getAll());
+		ret.putAll(machineSettings.getAll());
 		return ret;
 	}
 
 	@Override
-	public IStoredSettings getWorkspaceSettings() {
-		return workspaceSettings;
+	public IStoredSettings getMachineSettings() {
+		return machineSettings;
 	}
 
 	@Override
-	public IStoredSettings getInstanceSettings() {
-		return instanceSettings;
+	public IStoredSettings getUserSettings() {
+		return userSettings;
 	}
 
 	@Override
@@ -76,10 +76,10 @@ public class BaseSettingsHandler implements ISettingsHandler {
 	 */
 	protected IStoredSettings getSettings(String context) {
 		IStoredSettings settings;
-		if (WORKSPACE.equals(context))
-			settings = getWorkspaceSettings();
-		else if (INSTANCE.equals(context))
-			settings = getInstanceSettings();
+		if (MACHINE.equals(context))
+			settings = getMachineSettings();
+		else if (USER.equals(context))
+			settings = getUserSettings();
 		else if (TRANSIENT.equals(context))
 			settings = transientSettings;
 		else
@@ -92,10 +92,10 @@ public class BaseSettingsHandler implements ISettingsHandler {
 	 */
 	@Override
 	public IStoredSettings findSettingStorage(String settingsName) {
-		if (workspaceSettings.find(settingsName) != null)
-			return workspaceSettings;
-		if (instanceSettings.find(settingsName) != null)
-			return instanceSettings;
+		if (machineSettings.find(settingsName) != null)
+			return machineSettings;
+		if (userSettings.find(settingsName) != null)
+			return userSettings;
 		if (transientSettings.find(settingsName) != null)
 			return transientSettings;
 		return null;

@@ -132,7 +132,7 @@ public class Emulator {
 		if (configdir != null) {
 			server.setConfigDir(configdir);
 			if (clean) {
-				File top = new File(server.getSettingsHandler().getInstanceSettings().getConfigDirectory());
+				File top = new File(server.getSettingsHandler().getUserSettings().getConfigDirectory());
 				deleteDirectory(top);
 			}
 		}

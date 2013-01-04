@@ -75,8 +75,8 @@ public abstract class EmulatorServerBase {
 	}
 	protected void setupDefaults() {
 		try {
-			settings.getWorkspaceSettings().setDirty(false);
-			WorkspaceSettings.loadFrom(settings.getWorkspaceSettings(),
+			settings.getMachineSettings().setDirty(false);
+			WorkspaceSettings.loadFrom(settings.getMachineSettings(),
 					"workspace." + machine.getModel().getIdentifier());
 		} catch (IOException e) {
 		}
@@ -110,10 +110,10 @@ public abstract class EmulatorServerBase {
     public void init(String modelId) throws IOException {
     	if (bootRomsPath.getList().isEmpty())
     		bootRomsPath.getList().add(
-    			settings.getInstanceSettings().getConfigDirectory() + "roms");
+    			settings.getUserSettings().getConfigDirectory() + "roms");
     	if (".".equals(storedRamPath.getString()))
     		storedRamPath.setString(
-				settings.getInstanceSettings().getConfigDirectory() + "module_ram");
+				settings.getUserSettings().getConfigDirectory() + "module_ram");
 		DataFiles.addSearchPath(settings, storedRamPath.getString());
     	
 		IMachineModel model = createModel(modelId);
@@ -122,7 +122,7 @@ public abstract class EmulatorServerBase {
         
 
     	try {
-    		WorkspaceSettings.loadFrom(settings.getWorkspaceSettings(),
+    		WorkspaceSettings.loadFrom(settings.getMachineSettings(),
     				WorkspaceSettings.currentWorkspace.getString());
     				
     	} catch (IOException e) {
@@ -131,7 +131,7 @@ public abstract class EmulatorServerBase {
     	
 
     	try {
-    		settings.getInstanceSettings().load();
+    		settings.getUserSettings().load();
     	} catch (IOException e) {
     		System.err.println("Setting up new instance");
     		settings.get(IClient.settingNewConfiguration).setBoolean(true);
@@ -164,8 +164,8 @@ public abstract class EmulatorServerBase {
 		machine.getDemoHandler().dispose();
 		machine.getMemory().save();
 		
-		settings.getWorkspaceSettings().save();        	
-    	settings.getInstanceSettings().save();   
+		settings.getMachineSettings().save();        	
+    	settings.getUserSettings().save();   
 	}
 
 	public void run() {
@@ -223,8 +223,8 @@ public abstract class EmulatorServerBase {
 	 * @param configdir
 	 */
 	public void setConfigDir(String configdir) {
-		settings.getInstanceSettings().setConfigDirectory(configdir);
-		settings.getWorkspaceSettings().setConfigDirectory(configdir);
+		settings.getUserSettings().setConfigDirectory(configdir);
+		settings.getMachineSettings().setConfigDirectory(configdir);
 	}
 
 	/**

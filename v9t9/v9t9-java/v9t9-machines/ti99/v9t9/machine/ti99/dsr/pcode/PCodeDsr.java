@@ -13,7 +13,6 @@ import java.util.Map;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
-import ejs.base.settings.SettingProperty;
 
 
 import v9t9.common.client.ISettingsHandler;
@@ -26,6 +25,7 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.IconSettingSchema;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.common.settings.Settings;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
@@ -47,7 +47,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 	private static URL pcodeIconPath = EmulatorMachinesData.getDataURL("icons/pcode_system.png");
 
 	static public final IconSettingSchema settingPcodeCardEnabled = new IconSettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"PCodeCardEnabled", "Enable P-Code Card", 
 			"Enables the UCSD Pascal P-Code card.",
 			Boolean.FALSE,
@@ -69,7 +69,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 	 */
 	public PCodeDsr(TI99Machine machine_) {
 		this.machine = machine_;
-		pcodeActive = new SettingProperty("pcodeActive", Boolean.FALSE);
+		pcodeActive = new SettingSchemaProperty("pcodeActive", Boolean.FALSE);
 		pcodeCardEnabled = Settings.get(machine, settingPcodeCardEnabled);
 		pcodeActive.addEnablementDependency(pcodeCardEnabled);
 		

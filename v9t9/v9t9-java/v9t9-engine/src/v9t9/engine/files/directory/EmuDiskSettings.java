@@ -19,7 +19,7 @@ public class EmuDiskSettings {
 
 	public static URL diskDirectoryIconPath = EmulatorEngineData.getDataURL("icons/disk_directory.png");
 	public static final SettingSchema emuDiskDsrEnabled = new IconSettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"EmuDiskDSREnabled", 
 			"Disk Directory Support",
 			"This implements a drive (like DSK1) in a single directory level on your host.",

@@ -88,7 +88,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	// cycles for commands execute in 3579545 Hz (from blueMSX)
 	/* 3579545 / 60 target # cycles to be executed per tick */
     static public final SettingSchema settingMsxClockDivisor = new SettingSchema(
-    		ISettingsHandler.INSTANCE,
+    		ISettingsHandler.MACHINE,
     		"MsxClockDivisor", new Integer(6));
 
 	/* from mame and blueMSX:

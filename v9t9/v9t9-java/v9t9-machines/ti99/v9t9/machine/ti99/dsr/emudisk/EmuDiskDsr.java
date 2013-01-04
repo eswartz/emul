@@ -17,7 +17,6 @@ import java.util.Map;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
-import ejs.base.settings.SettingProperty;
 
 
 import v9t9.common.client.ISettingsHandler;
@@ -29,6 +28,7 @@ import v9t9.common.files.IFileMapper;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.common.settings.SettingSchema;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.DsrException;
@@ -83,7 +83,7 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 		this.mapper = mapper;
 		
 		
-    	String diskRootPath = settings.getWorkspaceSettings().getConfigDirectory() + "disks";
+    	String diskRootPath = settings.getMachineSettings().getConfigDirectory() + "disks";
     	File diskRootDir = new File(diskRootPath);
     	File dskdefault = new File(diskRootDir, "default");
     	dskdefault.mkdirs();
@@ -91,20 +91,20 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
     	diskActivitySettings = new HashMap<String, IProperty>();
 
     	// one setting for entire DSR
-		emuDiskDsrActiveSetting = new SettingProperty(getName(), Boolean.FALSE);
+		emuDiskDsrActiveSetting = new SettingSchemaProperty(getName(), Boolean.FALSE);
 		emuDiskDsrActiveSetting.addEnablementDependency(settingDsrEnabled);
 		
     	for (int dev = 1; dev <= 5; dev++) {
     		String settingName = EmuDiskSettings.getEmuDiskSetting(dev);
     		
-    		EmuDiskSetting diskSetting = settings.get(ISettingsHandler.WORKSPACE,
+    		EmuDiskSetting diskSetting = settings.get(ISettingsHandler.MACHINE,
     				new EmuDiskSetting(settings, settingName, dskdefault.getAbsolutePath(),
     						EmuDiskSettings.diskDirectoryIconPath));
 			
 			mapper.registerDiskSetting(EmuDiskSettings.getDeviceName(dev), diskSetting);
 
 			// one setting per disk
-			IProperty diskActiveSetting = new SettingProperty(settingName, Boolean.FALSE);
+			IProperty diskActiveSetting = new SettingSchemaProperty(settingName, Boolean.FALSE);
 			diskActiveSetting.addEnablementDependency(settingDsrEnabled);
 			diskActivitySettings.put(settingName, diskActiveSetting);
 			/*
@@ -133,7 +133,7 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 	}
 	
 	public static SettingSchema settingDsrRomFileName = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"EmuDiskDsrRomFileName", "emudisk.bin");
 	
 	public void activate(IMemoryDomain console, IMemoryEntryFactory memoryEntryFactory) throws IOException {

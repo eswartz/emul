@@ -16,28 +16,28 @@ import ejs.base.properties.IPersistable;
  */
 public interface ISpeechChip extends IPersistable {
 	SettingSchema settingGenerateSpeech = new SettingSchema(
-			ISettingsHandler.INSTANCE,
+			ISettingsHandler.USER,
 			"GenerateSpeech",
 			Boolean.TRUE);
 
 	SettingSchema settingTalkSpeed = new SettingSchema(
-			ISettingsHandler.INSTANCE,
+			ISettingsHandler.USER,
 			"TalkSpeed",
 			1.0);
 	SettingSchema settingPitchAdjust = new SettingSchema(
-			ISettingsHandler.INSTANCE,
+			ISettingsHandler.USER,
 			"PitchAdjust",
 			1.0);
 	SettingSchema settingPitchRangeAdjust = new SettingSchema(
-			ISettingsHandler.INSTANCE,
+			ISettingsHandler.USER,
 			"PitchRangeAdjust",
 			1.0);
 	SettingSchema settingPitchMidRangeAdjustRate = new SettingSchema(
-			ISettingsHandler.INSTANCE,
+			ISettingsHandler.USER,
 			"PitchMidRangeAdjustRate",
 			4);
 	SettingSchema settingForceUnvoiced = new SettingSchema(
-			ISettingsHandler.INSTANCE,
+			ISettingsHandler.USER,
 			"ForceUnvoiced",
 			Boolean.FALSE);
 	SettingSchema settingLogSpeech = new SettingSchema(

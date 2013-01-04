@@ -20,8 +20,8 @@ import org.junit.Test;
 
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
+import v9t9.common.settings.SettingSchemaProperty;
 import ejs.base.properties.IProperty;
-import ejs.base.settings.SettingProperty;
 
 /**
  * This test assumes a file '994arom.bin' really exists under /usr/local/src/v9t9-data/roms,
@@ -52,7 +52,7 @@ public class ManualTestPathFileLocator {
 	public void testPathLists() throws URISyntaxException {
 
 		IPathFileLocator locator = new PathFileLocator();
-		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		IProperty bootRoms = new SettingSchemaProperty("Paths", String.class, new ArrayList<String>());
 
 		assertEquals(0, locator.getSearchURIs().length);
 
@@ -68,7 +68,7 @@ public class ManualTestPathFileLocator {
 
 		assertEquals(2, locator.getSearchURIs().length);
 
-		IProperty rwPath = new SettingProperty("RamPath", "file://tmp");
+		IProperty rwPath = new SettingSchemaProperty("RamPath", "file://tmp");
 		locator.setReadWritePathProperty(rwPath);
 		
 		assertEquals(3, locator.getSearchURIs().length);
@@ -83,7 +83,7 @@ public class ManualTestPathFileLocator {
 	public void testLookups() {
 		
 		IPathFileLocator locator = new PathFileLocator();
-		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		IProperty bootRoms = new SettingSchemaProperty("Paths", String.class, new ArrayList<String>());
 		
 		locator.addReadOnlyPathProperty(bootRoms);
 		
@@ -102,7 +102,7 @@ public class ManualTestPathFileLocator {
 		uri = locator.findFile("994arom.bin");
 		assertNull(uri);
 
-		IProperty rwPath = new SettingProperty("RamPath", "/tmp");
+		IProperty rwPath = new SettingSchemaProperty("RamPath", "/tmp");
 		locator.setReadWritePathProperty(rwPath);
 
 		uri = locator.findFile("994arom.bin");
@@ -129,7 +129,7 @@ public class ManualTestPathFileLocator {
 	public void testWritePaths() throws MalformedURLException, IOException {
 		
 		IPathFileLocator locator = new PathFileLocator();
-		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		IProperty bootRoms = new SettingSchemaProperty("Paths", String.class, new ArrayList<String>());
 		
 		locator.addReadOnlyPathProperty(bootRoms);
 		
@@ -157,7 +157,7 @@ public class ManualTestPathFileLocator {
 		desired.delete();
 		assertFalse(desired.exists());
 		
-		IProperty rwPath = new SettingProperty("RamPath", tempdir.getAbsolutePath());
+		IProperty rwPath = new SettingSchemaProperty("RamPath", tempdir.getAbsolutePath());
 		locator.setReadWritePathProperty(rwPath);
 		
 		writeURI = locator.getWriteURI(TESTFILE);
@@ -190,7 +190,7 @@ public class ManualTestPathFileLocator {
 	public void testTroublesomeLookups() {
 		
 		IPathFileLocator locator = new PathFileLocator();
-		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		IProperty bootRoms = new SettingSchemaProperty("Paths", String.class, new ArrayList<String>());
 		
 		locator.addReadOnlyPathProperty(bootRoms);
 		
@@ -290,7 +290,7 @@ public class ManualTestPathFileLocator {
 	public void testJarFile() throws URISyntaxException, IOException {
 
 		IPathFileLocator locator = new PathFileLocator();
-		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		IProperty bootRoms = new SettingSchemaProperty("Paths", String.class, new ArrayList<String>());
 		
 		File baseV9t9 = new File("../..");
 		File v9t9Jar = new File(baseV9t9, "build/bin/v9t9/v9t9j.jar");
@@ -319,7 +319,7 @@ public class ManualTestPathFileLocator {
 	public void testJarHttp() throws URISyntaxException, IOException {
 
 		IPathFileLocator locator = new PathFileLocator();
-		IProperty bootRoms = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		IProperty bootRoms = new SettingSchemaProperty("Paths", String.class, new ArrayList<String>());
 		String jarPath = "jar:http://192.168.24.9:8080/v9t9/v9t9j.jar!/ti99/";
 		bootRoms.getList().add(jarPath);
 		locator.addReadOnlyPathProperty(bootRoms);		

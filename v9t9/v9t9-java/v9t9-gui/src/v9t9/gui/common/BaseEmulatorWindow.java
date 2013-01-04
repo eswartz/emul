@@ -43,20 +43,20 @@ public abstract class BaseEmulatorWindow {
 	protected IVideoRenderer videoRenderer;
 	protected final IMachine machine;
 	static public final SettingSchema settingMonitorDrawing = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"MonitorDrawing", Boolean.TRUE);
 	static public final SettingSchema settingMonitorEffect = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"MonitorEffect", "");
 	static public final SettingSchema settingZoomLevel = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"ZoomLevel", new Integer(3));
 	static public final SettingSchema settingFullScreen = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"FullScreen", Boolean.FALSE);
 
 	static public final SettingSchema settingShowRnDBar = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"ShowRnDBar", Boolean.FALSE);
 
 	// not persisted
@@ -94,7 +94,7 @@ public abstract class BaseEmulatorWindow {
 		IProperty configVar = Settings.get(machine, configVarSchema);
 		
 		boolean isUndefined = false;
-		IStoredSettings workspace = machine.getSettings().getWorkspaceSettings();
+		IStoredSettings workspace = machine.getSettings().getMachineSettings();
 		ISettingSection settings = workspace.getSettings();
 		configVar.loadState(settings);
 		String configPath = configVar.getString();
@@ -122,7 +122,7 @@ public abstract class BaseEmulatorWindow {
 	protected String selectDirectory(String title, IProperty configVar, String defaultSubdir,
 			boolean ifUndefined) {
 		boolean isUndefined = false;
-		IStoredSettings workspace = machine.getSettings().getWorkspaceSettings();
+		IStoredSettings workspace = machine.getSettings().getMachineSettings();
 		ISettingSection settings = workspace.getSettings();
 		configVar.loadState(settings);
 		String configDir = configVar.getString();
@@ -193,7 +193,7 @@ public abstract class BaseEmulatorWindow {
 				if (origWorkspace != null) {
 					try {
 						WorkspaceSettings.loadFrom(
-								Settings.getSettings(machine).getWorkspaceSettings(), 
+								Settings.getSettings(machine).getMachineSettings(), 
 								origWorkspace);
 					} catch (IOException e) {
 						machine.notifyEvent(
@@ -206,7 +206,7 @@ public abstract class BaseEmulatorWindow {
 				
 				ISettingSection workspace = settings.getSection("Workspace");
 				if (workspace != null) {
-					Settings.getSettings(machine).getWorkspaceSettings().load(workspace);
+					Settings.getSettings(machine).getMachineSettings().load(workspace);
 				}
 				
 				boolean wasPaused = machine.setPaused(true);
@@ -273,7 +273,7 @@ public abstract class BaseEmulatorWindow {
 			if (saveFile == null) {
 				machine.notifyEvent(Level.ERROR, 
 						"Too many screenshots here!");
-				machine.getSettings().getInstanceSettings().clearConfigVar("ScreenShotsBase");
+				machine.getSettings().getUserSettings().clearConfigVar("ScreenShotsBase");
 				return screenshot();
 			} else {
 				try {

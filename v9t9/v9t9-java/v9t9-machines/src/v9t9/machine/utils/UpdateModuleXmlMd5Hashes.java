@@ -19,10 +19,10 @@ import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.ModuleDatabase;
 import v9t9.common.settings.BasicSettingsHandler;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryEntryFactory;
 import ejs.base.properties.IProperty;
-import ejs.base.settings.SettingProperty;
 
 /**
  * @author ejs
@@ -46,7 +46,7 @@ public class UpdateModuleXmlMd5Hashes {
 		memory = new Memory();
 		locator = new PathFileLocator();
 		
-		IProperty prop = new SettingProperty("Paths", String.class, new ArrayList<String>());
+		IProperty prop = new SettingSchemaProperty("Paths", String.class, new ArrayList<String>());
 		prop.getList().add("/usr/local/src/v9t9-data/roms");
 		prop.getList().add("/usr/local/src/v9t9-data/modules");
 		prop.getList().add("/usr/local/src/v9t9-data/modules/mess");

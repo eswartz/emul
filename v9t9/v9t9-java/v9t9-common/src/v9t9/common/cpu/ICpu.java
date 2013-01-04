@@ -21,10 +21,10 @@ public interface ICpu extends IPersistable {
 			"DumpFullInstructions", Boolean.FALSE);
 
 	SettingSchema settingRealTime = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"RealTime", Boolean.TRUE);
 	SettingSchema settingCyclesPerSecond = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"CyclesPerSecond", new Integer(0));
 
 	SettingSchema settingDebugging = new SettingSchema(

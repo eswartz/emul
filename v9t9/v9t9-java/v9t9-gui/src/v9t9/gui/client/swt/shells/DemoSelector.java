@@ -199,7 +199,7 @@ public class DemoSelector extends Composite {
 		this.demoManager = demoManager_;
 		this.machine = machine_;
 		
-		dialogSettings = machine.getSettings().getWorkspaceSettings().getHistorySettings().
+		dialogSettings = machine.getSettings().getMachineSettings().getHistorySettings().
 				findOrAddSection(SECTION_DEMO_PLAYER);
 
 		demoManager.reload();

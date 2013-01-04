@@ -11,7 +11,7 @@ import ejs.base.properties.IProperty;
 public interface IDeviceIndicatorProvider {
 	
 	/** Modify the setting for this property when devices go in and out of existence */ 
-	SettingSchema settingDevicesChanged = new SettingSchema(ISettingsHandler.TRANSIENT, "devicesChanged", Boolean.FALSE);
+	SettingSchema settingDevicesChanged = new SettingSchema(ISettingsHandler.TRANSIENT, "DevicesChanged", Boolean.FALSE);
 
 	int getBaseIconIndex();
 	int getActiveIconIndex();

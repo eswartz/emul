@@ -11,7 +11,7 @@ import v9t9.common.settings.SettingSchema;
 /** 99/4A expansion RAM, accessed over the peripheral bus */
 public class ExpRamArea extends ConsoleMemoryArea {
     static public final SettingSchema settingExpRam = new SettingSchema(
-    		ISettingsHandler.WORKSPACE,
+    		ISettingsHandler.MACHINE,
     		"MemoryExpansion32K", Boolean.FALSE);
 	private IProperty expRam;
 

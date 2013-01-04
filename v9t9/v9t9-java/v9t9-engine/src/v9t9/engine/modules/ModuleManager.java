@@ -44,7 +44,7 @@ public class ModuleManager implements IModuleManager {
 	private List<IModule> loadedModules = new ArrayList<IModule>();
 	
 	public static SettingSchema settingLastLoadedModule = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"LastLoadedModule", "");
 	
 	private Map<IMemoryEntry, IModule> memoryEntryModules = new HashMap<IMemoryEntry, IModule>();

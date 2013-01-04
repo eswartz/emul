@@ -9,6 +9,7 @@ import ejs.base.properties.IProperty;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.IconSettingProperty;
+import v9t9.common.settings.SettingSchema;
 import v9t9.engine.files.directory.EmuDiskSettings;
 import v9t9.engine.files.image.RealDiskDsrSettings;
 
@@ -17,10 +18,10 @@ class EmuDiskSetting extends IconSettingProperty {
 	private IProperty diskImageDsrEnabled;
 
 	public EmuDiskSetting(ISettingsHandler settings, String name, Object storage, URL iconPath) {
-		super(name, 
-				"DSK" + name.charAt(name.length() - 1) + " Directory",
+		super(new SettingSchema(ISettingsHandler.TRANSIENT,
+				name, "DSK" + name.charAt(name.length() - 1) + " Directory",
 				"Specify the full path of the directory representing this disk.",
-				storage, iconPath);
+				storage), iconPath);
 		
 		emuDiskDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
 		addEnablementDependency(emuDiskDsrEnabled);

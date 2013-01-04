@@ -693,7 +693,7 @@ public class Compiler9900 extends CompilerBase {
         byte[] bytecode = cgen.getJavaClass().getBytes();
 
         if (true) {
-            File dir = new File(new File(Settings.getSettings(cpu).getInstanceSettings().getConfigDirectory()), "compilertmp"); 
+            File dir = new File(new File(Settings.getSettings(cpu).getUserSettings().getConfigDirectory()), "compilertmp"); 
             dir.mkdirs();
             File test = new File(dir, baseName + ".class");
             try {

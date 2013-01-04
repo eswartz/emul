@@ -8,7 +8,7 @@ import v9t9.common.settings.StaticStoredSettings;
 
 
 /**
- * This maintains settings global to the emulator (and saved automagically in
+ * This maintains settings global to the user (and saved automagically in
  * a config file) as opposed to state-specific settings.
  * <p>
  * @author ejs
@@ -21,6 +21,6 @@ public class EmulatorSettings extends StaticStoredSettings {
 	 */
 	
 	protected EmulatorSettings() {
-		super(ISettingsHandler.INSTANCE, "config");
+		super(ISettingsHandler.USER, "config");
 	}
 }

@@ -77,7 +77,7 @@ import ejs.base.properties.IPropertyListener;
 public class SwtWindow extends BaseEmulatorWindow {
 	
 	private static final SettingSchema settingEmulatorWindowBounds =
-		new SettingSchema(ISettingsHandler.INSTANCE, "EmulatorWindowBounds", String.class, "");
+		new SettingSchema(ISettingsHandler.USER, "EmulatorWindowBounds", String.class, "");
 	
 	protected Shell shell;
 	protected Control videoControl;

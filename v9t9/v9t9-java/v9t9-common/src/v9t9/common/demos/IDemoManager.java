@@ -23,17 +23,17 @@ public interface IDemoManager {
 	/** Array of URIs where demos may be fetched */
 	SettingSchema settingBootDemosPath = 
 			new SettingSchema(
-					ISettingsHandler.INSTANCE,
+					ISettingsHandler.USER,
 					"BootDemosPath", String.class, new ArrayList<String>());
 	/** Array of URIs where demos may be fetched */
 	SettingSchema settingUserDemosPath = 
 			new SettingSchema(
-					ISettingsHandler.INSTANCE,
+					ISettingsHandler.USER,
 					"UserDemosPath", String.class, new ArrayList<String>());
 	/** URI where demos will be recorded */
 	SettingSchema settingRecordedDemosPath = 
 		new SettingSchema(
-				ISettingsHandler.INSTANCE,
+				ISettingsHandler.USER,
 				"RecordedDemosPath", ".");
 	
 	/** if set, record demos in V9t9 6.0 format */

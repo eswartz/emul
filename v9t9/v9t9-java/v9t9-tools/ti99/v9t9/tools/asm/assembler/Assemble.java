@@ -6,7 +6,6 @@
  */
 package v9t9.tools.asm.assembler;
 
-import ejs.base.settings.SettingProperty;
 import gnu.getopt.Getopt;
 
 import java.io.File;
@@ -16,6 +15,7 @@ import java.io.PrintStream;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.memory.MemoryEntryFactory;
 import v9t9.tools.asm.assembler.inst9900.Assembler9900;
@@ -35,7 +35,7 @@ public class Assemble {
         
         PathFileLocator locator = new PathFileLocator();
 		memoryEntryFactory = new MemoryEntryFactory(null, assembler.getMemory(), locator);
-        locator.setReadWritePathProperty(new SettingProperty("Output", "."));
+        locator.setReadWritePathProperty(new SettingSchemaProperty("Output", "."));
         
         boolean selectedProcessor = false;
         int romStart = 0, romSize = 0x2000;

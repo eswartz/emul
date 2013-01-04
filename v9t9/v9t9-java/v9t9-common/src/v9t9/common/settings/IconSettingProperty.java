@@ -7,14 +7,13 @@ import java.net.URL;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 
-import ejs.base.settings.SettingProperty;
 
 
 /**
  * @author ejs
  *
  */
-public class IconSettingProperty extends SettingProperty implements ISettingDecorator {
+public class IconSettingProperty extends SettingSchemaProperty implements ISettingDecorator {
 
 	private final URL iconPath;
 
@@ -22,8 +21,8 @@ public class IconSettingProperty extends SettingProperty implements ISettingDeco
 	 * @param name
 	 * @param storage
 	 */
-	public IconSettingProperty(String name, String label, String description, Object storage, URL iconPath) {
-		super(name, label, description, storage);
+	public IconSettingProperty(SettingSchema schema, URL iconPath) {
+		super(schema);
 		this.iconPath = iconPath;
 	}
 

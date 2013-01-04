@@ -23,7 +23,7 @@ public class SettingProperty extends AbstractProperty implements ISettingPropert
 	
 	private Object value;
 	private final Object defaultValue;
-	private String label;
+	private final String label;
 	
 	public SettingProperty(String name, String label, String description, Class<?> klass, Object value) {
 		super(null, klass != null ? klass : value.getClass(), name);
@@ -49,7 +49,7 @@ public class SettingProperty extends AbstractProperty implements ISettingPropert
 	public SettingProperty(String name, Object value) {
 		this(name, name, null, value);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see v9t9.base.core.properties.AbstractProperty#getLabel()
 	 */

@@ -15,7 +15,6 @@ import java.util.Arrays;
 
 import org.junit.Before;
 import ejs.base.properties.IProperty;
-import ejs.base.settings.SettingProperty;
 import ejs.base.utils.HexUtils;
 
 import v9t9.common.client.ISettingsHandler;
@@ -25,6 +24,7 @@ import v9t9.common.files.FDR;
 import v9t9.common.files.FDRFactory;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.settings.BasicSettingsHandler;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabStruct;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
@@ -161,10 +161,10 @@ public class BaseEmuDiskDSRTest {
 		
 		
 		dsk1Path = dir;
-		mymapper.registerDiskSetting("DSK1", new SettingProperty("DSK1", dir.getAbsolutePath()));
+		mymapper.registerDiskSetting("DSK1", new SettingSchemaProperty("DSK1", dir.getAbsolutePath()));
 		
 		dir = new File(dir.getParentFile(), mymapper.getLocalFileName("EXTRA/LALA"));
-		mymapper.registerDiskSetting("DSK2", new SettingProperty("DSK2", dir.getAbsolutePath()));
+		mymapper.registerDiskSetting("DSK2", new SettingSchemaProperty("DSK2", dir.getAbsolutePath()));
 		
 		mymapper.unregisterDiskSetting("DSK3");
 		

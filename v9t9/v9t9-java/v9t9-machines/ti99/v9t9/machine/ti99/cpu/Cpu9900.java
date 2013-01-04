@@ -39,7 +39,7 @@ import ejs.base.utils.HexUtils;
 public class Cpu9900 extends CpuBase {
 	
 	public static final SettingSchema settingForceAllIntsToLevel1 = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"ForceAllIntsToLevel1",
 			Boolean.TRUE);
 	

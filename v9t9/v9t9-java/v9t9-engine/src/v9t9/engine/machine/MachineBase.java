@@ -44,6 +44,7 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.demos.DemoManager;
 import v9t9.engine.events.RecordingEventNotifier;
 import v9t9.engine.files.FileHandler;
@@ -52,7 +53,6 @@ import v9t9.engine.keyboard.KeyboardState;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
-import ejs.base.settings.SettingProperty;
 import ejs.base.timer.FastTimer;
 import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
@@ -124,7 +124,7 @@ abstract public class MachineBase implements IMachine {
     	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingBootRomsPath));
     	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingUserRomsPath));
     	try {
-			locator.addReadOnlyPathProperty(new SettingProperty("BuiltinPath", Collections.singletonList(
+			locator.addReadOnlyPathProperty(new SettingSchemaProperty("BuiltinPath", Collections.singletonList(
 					//"jar:file:/home/ejs/devel/emul/v9t9/build/bin/v9t9/v9t9j.jar!/ti99/"
 					getModel().getDataURL().toURI().toString()
 					)));
@@ -408,7 +408,7 @@ abstract public class MachineBase implements IMachine {
 		this.settings.get(DataFiles.settingUserRomsPath).saveState(settings);
 		
 		ISettingSection workspace = settings.addSection("Workspace");
-		this.settings.getWorkspaceSettings().save(workspace);
+		this.settings.getMachineSettings().save(workspace);
 		//WorkspaceSettings.CURRENT.saveState(settings);
 		
 		executor.setExecuting(wasExecuting);

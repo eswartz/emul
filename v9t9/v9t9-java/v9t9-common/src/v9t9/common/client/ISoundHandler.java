@@ -19,10 +19,10 @@ import v9t9.common.settings.SettingSchema;
 public interface ISoundHandler {
 	
 	SettingSchema settingPlaySound = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"PlaySound", Boolean.TRUE);
 	SettingSchema settingSoundVolume = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"SoundVolume", new Integer(5));
 	SettingSchema settingRecordSoundOutputFile = new SettingSchema(
 			ISettingsHandler.TRANSIENT,

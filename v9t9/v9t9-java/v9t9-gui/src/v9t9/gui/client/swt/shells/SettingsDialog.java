@@ -22,6 +22,7 @@ import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.TableViewerEditor;
 import org.eclipse.jface.viewers.TableViewerFocusCellManager;
 import org.eclipse.jface.viewers.TextCellEditor;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
@@ -36,6 +37,7 @@ import org.eclipse.swt.widgets.Table;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.IReadOnlyProperty;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.common.settings.SettingSchema;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageCanvas;
@@ -156,13 +158,43 @@ public class SettingsDialog extends Composite implements IPropertyListener {
 			}
 		});
 
-		viewer.setComparator(new ViewerComparator());
+		viewer.setComparator(new ViewerComparator() {
+			/* (non-Javadoc)
+			 * @see org.eclipse.jface.viewers.ViewerComparator#compare(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
+			 */
+			@Override
+			public int compare(Viewer viewer, Object e1, Object e2) {
+				IProperty s1 = (IProperty) e1;
+				IProperty s2 = (IProperty) e2;
+				if (s1 instanceof SettingSchemaProperty && s2 instanceof SettingSchemaProperty) {
+					String c1 = ((SettingSchemaProperty) s1).getSchema().getContext();
+					String c2 = ((SettingSchemaProperty) s2).getSchema().getContext();
+					if (c1.equals(ISettingsHandler.TRANSIENT)) {
+						if (!c2.equals(ISettingsHandler.TRANSIENT))
+							return 1;
+					} else {
+						if (c2.equals(ISettingsHandler.TRANSIENT))
+							return -1;
+					}
+					return super.compare(viewer, e1, e2);
+				}
+				else if (s1 instanceof SettingSchemaProperty) {
+					return -1;
+				}
+				else if (s2 instanceof SettingSchemaProperty) {
+					return 1;
+				}
+				else
+					return super.compare(viewer, e1, e2);
+			}
+		});
 		
 		final List<IProperty> props = new ArrayList<IProperty>();
 		for (Map.Entry<IProperty, SettingSchema> ent : settings.getAllSettings().entrySet()) {
-			if (ent.getValue() == null)
+			SettingSchema schema = ent.getValue();
+			if (schema == null || schema.getContext().equals(ISettingsHandler.TRANSIENT))
 				continue;
-			IProperty prop = settings.get(ent.getValue());
+			IProperty prop = settings.get(schema);
 			if (prop != null) {
 				props.add(prop);
 				prop.addListener(this);

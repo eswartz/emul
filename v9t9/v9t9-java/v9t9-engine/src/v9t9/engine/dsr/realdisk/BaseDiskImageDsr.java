@@ -18,7 +18,6 @@ import java.util.TimerTask;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
-import ejs.base.settings.SettingProperty;
 import ejs.base.utils.HexUtils;
 
 
@@ -29,6 +28,7 @@ import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.common.settings.Settings;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.files.image.BaseDiskImage;
@@ -95,7 +95,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 
 
 	private void registerDiskImagePath(String device, File dskfile) {
-		DiskImageSetting diskSetting = settings.get(ISettingsHandler.WORKSPACE,
+		DiskImageSetting diskSetting = settings.get(ISettingsHandler.MACHINE,
 				new DiskImageSetting(settings, 
 						device, dskfile.getAbsolutePath(),
 						RealDiskDsrSettings.diskImageIconPath));
@@ -147,7 +147,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 		
 		fdc = new FDC1771(dumper);
 		
-    	String diskImageRootPath = settings.getWorkspaceSettings().getConfigDirectory() + "disks";
+    	String diskImageRootPath = settings.getMachineSettings().getConfigDirectory() + "disks";
     	RealDiskDsrSettings.defaultDiskRootDir = new File(diskImageRootPath);
     	RealDiskDsrSettings.defaultDiskRootDir.mkdirs();
     	
@@ -578,7 +578,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 		IProperty prop = diskMotorProperties.get(name);
 		if (prop == null) {
 			settingDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
-			prop = new SettingProperty(name + "Active", Boolean.FALSE);
+			prop = new SettingSchemaProperty(name + "Active", Boolean.FALSE);
 			prop.addEnablementDependency(settingDsrEnabled);
 			diskMotorProperties.put(name, prop);
 		}

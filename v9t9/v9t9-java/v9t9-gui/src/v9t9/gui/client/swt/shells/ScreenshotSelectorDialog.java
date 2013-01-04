@@ -17,6 +17,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.client.IVideoRenderer;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.imageimport.ImageClipDecorator;
@@ -25,7 +26,6 @@ import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.DialogSettingsWrapper;
 import ejs.base.settings.ISettingSection;
-import ejs.base.settings.SettingProperty;
 
 /**
  * Not used -- UI is too complex 
@@ -35,7 +35,7 @@ import ejs.base.settings.SettingProperty;
 final class ScreenshotSelectorDialog extends Dialog {
 	private static final String SECTION_SCREEN_SHOTS = "ScreenShots";
 	private ImageLabel imageLabel;
-	private IProperty clipProperty = new SettingProperty("clip", new java.awt.Rectangle());
+	private IProperty clipProperty = new SettingSchemaProperty("clip", new java.awt.Rectangle());
 	private Image screenshot;
 	private ImageLabel renderedImageLabel;
 	private Image renderedImage;

@@ -19,14 +19,14 @@ public class RealDiskDsrSettings {
 
 
 	public static final SettingSchema diskImageDebug = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"DiskImageDebug",
 			"Debug Disk Image Support",
 			"When set, log disk operation information to the console.",
 			Boolean.FALSE
 			);
 	public static final SettingSchema diskImageRealTime = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"DiskImageRealTime",
 			"Real-Time Disk Images",
 			"When set, disk operations on disk images will try to run at a similar speed to the original FDC1771.",
@@ -35,7 +35,7 @@ public class RealDiskDsrSettings {
 	
 	public static final URL diskImageIconPath = EmulatorEngineData.getDataURL("icons/disk_image.png");
 	public static final SettingSchema diskImageDsrEnabled = new IconSettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"DiskImageDSREnabled",
 			"Disk Image Support",
 			"This implements a drive (like DSK1) in a disk image on your host.\n\n"+

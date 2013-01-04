@@ -13,11 +13,11 @@ public class BasicSettingsHandler extends BaseSettingsHandler {
 
 	public BasicSettingsHandler() {
 		super(new StaticStoredSettings(
-				ISettingsHandler.WORKSPACE,
-					"workspace"), 
+				ISettingsHandler.MACHINE,
+					"machine"), 
 			new StaticStoredSettings(
-					ISettingsHandler.INSTANCE, 
-					"instance"));
+					ISettingsHandler.USER, 
+					"user"));
 	}
 
 }

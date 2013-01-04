@@ -10,7 +10,7 @@ import v9t9.common.settings.SettingSchema;
  */
 public interface IKeyboardHandler {
 	SettingSchema settingPasteKeyDelay = new SettingSchema(
-			ISettingsHandler.WORKSPACE,
+			ISettingsHandler.MACHINE,
 			"PasteKeyDelay", 20);
 	
 	void init(IVideoRenderer renderer);

@@ -64,7 +64,7 @@ public class DebuggerWindow extends Composite implements IMemoryWriteListener {
 		
 		vertSash = new SashForm(horizSash, SWT.VERTICAL);
 		
-		final ISettingSection history = machine.getSettings().getInstanceSettings()
+		final ISettingSection history = machine.getSettings().getUserSettings()
 			.getHistorySettings().findOrAddSection(DEBUGGER_TOOL_ID);
 		
 		IMemoryDecoderProvider memoryDecoderProvider = createMemoryDecoderProvider();

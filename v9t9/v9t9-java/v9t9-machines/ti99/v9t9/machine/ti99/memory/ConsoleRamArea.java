@@ -12,7 +12,7 @@ import v9t9.common.settings.SettingSchema;
 /** Builtin console RAM: 256 bytes */
 public class ConsoleRamArea extends ConsoleMemoryArea {
     static public final SettingSchema settingEnhRam = new SettingSchema(
-    		ISettingsHandler.WORKSPACE,
+    		ISettingsHandler.MACHINE,
     		"ExtraConsoleRAM", Boolean.FALSE);
 	private final IProperty enhRam;
 

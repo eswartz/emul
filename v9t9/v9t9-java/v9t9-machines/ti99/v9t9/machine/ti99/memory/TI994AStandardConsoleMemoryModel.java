@@ -38,14 +38,14 @@ import v9t9.machine.ti99.memory.mmio.ConsoleVdpWriteArea;
  */
 public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
     static public final SettingSchema settingRomFileName = new SettingSchema(
-    		ISettingsHandler.WORKSPACE,
+    		ISettingsHandler.MACHINE,
     		"RomFileName", "994arom.bin");
     static public final SettingSchema settingGromFileName = new SettingSchema(
-    		ISettingsHandler.WORKSPACE,
+    		ISettingsHandler.MACHINE,
     		"GromFileName", "994agrom.bin");
 
 	static public final SettingSchema settingExpRam = new SettingSchema(
-    		ISettingsHandler.WORKSPACE,
+    		ISettingsHandler.MACHINE,
     		"MemoryExpansion32K", Boolean.FALSE);
 
 	static protected final MemoryEntryInfo cpuRomInfo = MemoryEntryInfoBuilder

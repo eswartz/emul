@@ -16,8 +16,8 @@ import v9t9.common.settings.SettingSchema;
  */
 public interface ISettingsHandler {
 	String GLOBAL = "Global";
-	String WORKSPACE = "Workspace";
-	String INSTANCE = "Instance";
+	String MACHINE = "Machine";
+	String USER = "User";
 	String TRANSIENT = "Transient";
 	
 	IProperty get(SettingSchema schema);
@@ -25,8 +25,8 @@ public interface ISettingsHandler {
 	
 	Map<IProperty, SettingSchema> getAllSettings();
 	
-	IStoredSettings getWorkspaceSettings();
-	IStoredSettings getInstanceSettings();
+	IStoredSettings getMachineSettings();
+	IStoredSettings getUserSettings();
 	
 	IStoredSettings findSettingStorage(String settingsName);
 }

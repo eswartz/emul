@@ -13,9 +13,6 @@ public interface ISettingProperty extends IProperty {
 
 	boolean isEnabled();
 
-	/**
-	 * @return
-	 */
 	boolean isDefault();
 
 	void resetToDefault();

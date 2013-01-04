@@ -295,7 +295,7 @@ public class ModuleSelector extends Composite {
 		
 		viewerUpdater = new ViewerUpdater();
 		
-		dialogSettings = machine.getSettings().getWorkspaceSettings().getHistorySettings().findOrAddSection(SECTION_MODULE_SELECTOR);
+		dialogSettings = machine.getSettings().getMachineSettings().getHistorySettings().findOrAddSection(SECTION_MODULE_SELECTOR);
 		
 		shell.setText("Module Selector");
 		

@@ -24,10 +24,10 @@ import v9t9.common.settings.SettingSchema;
  */
 public interface IVdpChip extends IPersistable, IRegisterAccess {
 	SettingSchema settingVdpInterruptRate = new SettingSchema(
-			ISettingsHandler.INSTANCE, "VdpInterruptRate", new Integer(60));
+			ISettingsHandler.MACHINE, "VdpInterruptRate", new Integer(60));
 	// this should pretty much stay on
 	SettingSchema settingCpuSynchedVdpInterrupt = new SettingSchema(
-			ISettingsHandler.INSTANCE, "CpuSynchedVdpInterrupt", new Boolean(
+			ISettingsHandler.MACHINE, "CpuSynchedVdpInterrupt", new Boolean(
 					true));
 	SettingSchema settingDumpVdpAccess = new SettingSchema(
 			ISettingsHandler.TRANSIENT, "DumpVdpAccess", Boolean.FALSE);

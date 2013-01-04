@@ -185,7 +185,7 @@ public class ROMSetupDialog extends Dialog {
 	 */
 	@Override
 	protected IDialogSettings getDialogBoundsSettings() {
-		return new DialogSettingsWrapper(machine.getSettings().getInstanceSettings()
+		return new DialogSettingsWrapper(machine.getSettings().getUserSettings()
 				.getHistorySettings().findOrAddSection("ROMSetup"));
 	}
 	

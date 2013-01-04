@@ -7,15 +7,15 @@ import java.io.File;
 import java.io.IOException;
 
 import ejs.base.properties.IProperty;
-import ejs.base.settings.SettingProperty;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.BaseStoredSettings;
 import v9t9.common.settings.IStoredSettings;
+import v9t9.common.settings.SettingSchemaProperty;
 
 
 /**
- * This maintains settings for a given workspace (and saved automagically in
+ * This maintains settings for a given machine (and saved automagically in
  * a config file) as opposed to global settings or state-specific settings.
  * <p>
  * @author ejs
@@ -23,7 +23,7 @@ import v9t9.common.settings.IStoredSettings;
  */
 public class WorkspaceSettings extends BaseStoredSettings {
 
-	public static IProperty currentWorkspace = new SettingProperty(
+	public static IProperty currentWorkspace = new SettingSchemaProperty(
 			//ISettingsHandler.GLOBAL,
 			"CurrentWorkspace", "workspace");
 
@@ -34,7 +34,7 @@ public class WorkspaceSettings extends BaseStoredSettings {
 	private String workspacePath;
 
 	public WorkspaceSettings(String workspaceName) {
-		super(ISettingsHandler.WORKSPACE);
+		super(ISettingsHandler.MACHINE);
 		setWorkspaceName(workspaceName);
 		//EmulatorSettings.INSTANCE.register(currentWorkspace);
 	}

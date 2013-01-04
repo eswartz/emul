@@ -28,15 +28,15 @@ import v9t9.common.settings.SettingSchema;
 public class DataFiles {
 	static public final SettingSchema settingBootRomsPath = 
 		new SettingSchema(
-				ISettingsHandler.INSTANCE,
+				ISettingsHandler.USER,
 				"BootRomsPath", String.class, new ArrayList<String>());
 	static public final SettingSchema settingUserRomsPath = 
 		new SettingSchema(
-				ISettingsHandler.INSTANCE,
+				ISettingsHandler.USER,
 				"UserRomsPath", String.class, new ArrayList<String>());
 	static public final SettingSchema settingStoredRamPath = 
 		new SettingSchema(
-				ISettingsHandler.INSTANCE,
+				ISettingsHandler.USER,
 				"StoredRamPath", ".");
 	
 	public static void addSearchPath(ISettingsHandler settings, String filepath) {

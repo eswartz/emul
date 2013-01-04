@@ -4,7 +4,6 @@
 package v9t9.common.settings;
 
 import ejs.base.properties.IProperty;
-import ejs.base.settings.SettingProperty;
 
 /**
  * @author ejs
@@ -56,12 +55,33 @@ public class SettingSchema {
 		return name;
 	}
 	
+	/**
+	 * @return the label
+	 */
+	public String getLabel() {
+		return label;
+	}
+	
 	public String getContext() {
 		return context;
 	}
 	
+	/**
+	 * @return the description
+	 */
+	public String getDescription() {
+		return description;
+	}
+	
+	/**
+	 * @return the klass
+	 */
+	public Class<?> getKlass() {
+		return klass;
+	}
+	
 	public IProperty createSetting() {
-		IProperty prop = new SettingProperty(name, label, description, klass, defaultValue);
+		IProperty prop = new SettingSchemaProperty(this);
 		return prop;
 	}
 
