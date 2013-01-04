@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 
+import v9t9.common.client.IMonitorEffectSupport;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
@@ -134,9 +135,20 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 
 			});
 		
-		if (window.getVideoRenderer().supportsMonitorEffect()) {
-			createToggleStateButton(BaseEmulatorWindow.settingMonitorDrawing, IconConsts.MONITOR_EFFECT,  
+		if (window.getVideoRenderer().getMonitorEffectSupport() != null) {
+			BasicButton monitorEffectButton = createToggleStateButton(BaseEmulatorWindow.settingMonitorDrawing, 
+					IconConsts.MONITOR_EFFECT,  
 					IconConsts.CHECKMARK_OVERLAY, "Apply monitor effect to video");
+			
+			monitorEffectButton.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider));
+			monitorEffectButton.addMenuDetectListener(new MenuDetectListener() {
+
+				public void menuDetected(MenuDetectEvent e) {
+					createMonitorEffectMenu(window.getVideoRenderer().getMonitorEffectSupport(), e);
+				}
+			});
+
+
 		}
 		
 		createButton(IconConsts.SCREENSHOT, "Take screenshot",
@@ -350,4 +362,32 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		vitem.setMenu(volumeMenu);
 		swtWindow.showMenu(menu, null, e.x, e.y);
 	}
+
+	/**
+	 * @param machine
+	 * @param soundHandler
+	 * @param e
+	 */
+	private void createMonitorEffectMenu(IMonitorEffectSupport fxSupport, MenuDetectEvent e) {
+		Control button = (Control) e.widget;
+		Menu menu = new Menu(button);
+
+		final IProperty monitorEffect = machine.getSettings().get(BaseEmulatorWindow.settingMonitorEffect);
+				
+		for (final String effectId : fxSupport.getIds()) {
+			MenuItem item = new MenuItem(menu, SWT.RADIO);
+			item.setText(fxSupport.getEffect(effectId).getLabel());
+			if (effectId.equals(monitorEffect.getString()))
+				item.setSelection(true);
+			item.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					monitorEffect.setString(effectId);
+				}
+
+			});
+		}
+		swtWindow.showMenu(menu, null, e.x, e.y);
+	}
+
 }

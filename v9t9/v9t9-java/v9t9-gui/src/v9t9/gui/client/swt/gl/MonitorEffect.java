@@ -3,19 +3,31 @@
  */
 package v9t9.gui.client.swt.gl;
 
+import v9t9.common.client.IMonitorEffect;
+
 /**
  * @author Ed
  *
  */
-public class MonitorEffect {
+public class MonitorEffect implements IGLMonitorEffect {
 	private final MonitorParams params;
 	private final IGLMonitorRender render;
+	private String label;
 
-	public MonitorEffect(MonitorParams params, IGLMonitorRender render) {
+	public MonitorEffect(String label, MonitorParams params, IGLMonitorRender render) {
+		this.label = label;
 		this.params = params;
 		this.render = render;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IMonitorEffect#getLabel()
+	 */
+	@Override
+	public String getLabel() {
+		return label;
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */

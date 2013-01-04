@@ -36,6 +36,7 @@ import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.timer.FastTimer;
 
+import v9t9.common.client.IMonitorEffectSupport;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
@@ -512,14 +513,13 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.client.IVideoRenderer#supportsMonitorEffect()
+	 * @see v9t9.common.client.IVideoRenderer#getMonitorEffectSupport()
 	 */
 	@Override
-	public boolean supportsMonitorEffect() {
-		return false;
+	public IMonitorEffectSupport getMonitorEffectSupport() {
+		return null;
 	}
 	
-
 	/* (non-Javadoc)
 	 * @see v9t9.gui.client.swt.ISwtVideoRenderer#addSprite(v9t9.gui.client.swt.ISwtSprite)
 	 */

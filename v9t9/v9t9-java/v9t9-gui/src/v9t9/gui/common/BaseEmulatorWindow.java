@@ -45,6 +45,9 @@ public abstract class BaseEmulatorWindow {
 	static public final SettingSchema settingMonitorDrawing = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"MonitorDrawing", Boolean.TRUE);
+	static public final SettingSchema settingMonitorEffect = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
+			"MonitorEffect", "");
 	static public final SettingSchema settingZoomLevel = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"ZoomLevel", new Integer(3));

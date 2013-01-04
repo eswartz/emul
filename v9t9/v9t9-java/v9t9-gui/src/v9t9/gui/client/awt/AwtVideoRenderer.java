@@ -25,6 +25,7 @@ import ejs.base.properties.IPropertyListener;
 import ejs.base.timer.FastTimer;
 
 
+import v9t9.common.client.IMonitorEffectSupport;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
@@ -35,6 +36,7 @@ import v9t9.common.video.ICanvas;
 import v9t9.common.video.ICanvasListener;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
+import v9t9.gui.client.MonitorEffectSupport;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.gui.jna.V9t9Render;
 import v9t9.gui.jna.V9t9Render.AnalogTV;
@@ -50,8 +52,15 @@ import v9t9.video.VdpCanvasFactory;
  */
 public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 
+	/**
+	 * 
+	 */
+	private static final NoiseEffect NOISE_EFFECT = new NoiseEffect();
+
 	/** buggy... */
 	private static final boolean USE_ANALOGTV = false;
+
+	private static final String EFFECT_NOISE_ID = "noisy";
 
 	private ImageDataCanvas vdpCanvas;
 	private IVdpCanvasRenderer vdpCanvasRenderer;
@@ -69,7 +78,6 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 
 
 	private BufferedImage surface;
-	private BufferedImage noisySurface;
 	private Canvas canvas;
 
 	private Rectangle updateRect;
@@ -86,8 +94,11 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	protected final IMachine machine;
 
 	private IProperty monitorDrawing;
+	private IProperty monitorEffect;
 
 	private FastTimer fastTimer;
+
+	private MonitorEffectSupport monitorEffectSupport;
 	
 	public AwtVideoRenderer(IMachine machine, FastTimer timer) {
 		this.machine = machine;
@@ -97,6 +108,9 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 		fastTimer = timer;
 		
 		monitorDrawing = Settings.get(machine, BaseEmulatorWindow.settingMonitorDrawing);
+		monitorEffect = Settings.get(machine, BaseEmulatorWindow.settingMonitorEffect);
+		monitorEffectSupport = new MonitorEffectSupport();
+		monitorEffectSupport.registerEffect(EFFECT_NOISE_ID, NOISE_EFFECT);
 
 		// init outside locks
 		V9t9Render.INSTANCE.hashCode();
@@ -141,6 +155,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 			
 		};
 		monitorDrawing.addListener(monitorSettingListener);
+		monitorEffect.addListener(monitorSettingListener);
 	}
 
 
@@ -163,6 +178,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	@Override
 	public void dispose() {
 		monitorDrawing.removeListener(monitorSettingListener);
+		monitorEffect.removeListener(monitorSettingListener);
 		if (vdpCanvasRenderer != null)
 			vdpCanvasRenderer.dispose();
 	}
@@ -413,10 +429,6 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 				}
 				
 			}
-			if (monitorDrawing.getBoolean() && 
-					(noisySurface == null || noisySurface.getWidth() != desiredWidth || noisySurface.getHeight() != desiredHeight)) {
-				noisySurface = new BufferedImage(desiredWidth, desiredHeight, BufferedImage.TYPE_INT_BGR);
-			}
 		}
 		
 		int destWidth = surface.getWidth();
@@ -515,30 +527,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 					
 					
 					//System.out.println("scaled");
-					if (monitorDrawing.getBoolean() && zoom > 1) {
-						// modify the original area
-						//if (logRect.x > 0) { logRect.x--; logRect.width++; }
-						//if (logRect.y > 0) { logRect.y--; logRect.height++; }
-						//if (logRect.y + logRect.height + 2 <= logMax.height) logRect.height++;
-	
-						//logRect = physicalToLogical(new Rectangle(x, y, width, height));
-						//Rectangle physRect = logicalToPhysical(logRect);
-						
-						DataBufferInt noisyBuffer = (DataBufferInt) noisySurface.getRaster().getDataBuffer();
-						int[] noisyData = noisyBuffer.getData();
-						
-						try {
-							V9t9Render.INSTANCE.addNoiseRGBA/*Monitor*/(noisyData, data,
-									destWidth * 4 * physRect.y + 4 * physRect.x,
-									Math.min(noisyData.length, data.length) * 4,
-									physRect.width, physRect.height, destWidth * 4,
-									logRect.width, logRect.height, destHeight);
-						} catch (Throwable t) {
-							t.printStackTrace();
-						}
-						
-						toRender = noisySurface;
-					}
+					toRender = applyEffect(destWidth, destHeight, logRect, physRect);
 				}
 			}
 			
@@ -556,6 +545,31 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 					physRect.x, physRect.y, physRect.x + physRect.width, physRect.y + physRect.height,
 					canvas);
 		}
+	}
+
+
+	/**
+	 * @param destWidth
+	 * @param destHeight
+	 * @param data
+	 * @param logRect
+	 * @param physRect
+	 * @param toRender
+	 * @return
+	 */
+	protected BufferedImage applyEffect(int destWidth, int destHeight, Rectangle logRect, Rectangle physRect) {
+		if (monitorDrawing.getBoolean()) {
+			IAwtMonitorEffect effect =  (IAwtMonitorEffect) monitorEffectSupport.getEffect(monitorEffect.getString());
+			if (effect == null)
+				effect = NOISE_EFFECT;
+			
+			BufferedImage newImage = effect.applyEffect(destWidth, destHeight, surface, logRect, physRect);
+			if (newImage != null) {
+				return newImage;
+			}
+		}
+		return surface;
+
 	}
 
 	public Component getAwtCanvas() {
@@ -590,12 +604,13 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	public FastTimer getFastTimer() {
 		return fastTimer;
 	}
-	
+
 	/* (non-Javadoc)
-	 * @see v9t9.common.client.IVideoRenderer#supportsMonitorEffect()
+	 * @see v9t9.common.client.IVideoRenderer#getMonitorEffectSupport()
 	 */
 	@Override
-	public boolean supportsMonitorEffect() {
-		return true;
+	public IMonitorEffectSupport getMonitorEffectSupport() {
+		return monitorEffectSupport;
 	}
+	
 }

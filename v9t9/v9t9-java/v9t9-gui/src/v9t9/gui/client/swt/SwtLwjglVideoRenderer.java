@@ -34,12 +34,11 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.util.glu.GLU;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.utils.FileUtils;
-
+import v9t9.common.client.IMonitorEffectSupport;
 import v9t9.common.machine.IMachine;
 import v9t9.common.video.ICanvas;
+import v9t9.gui.client.MonitorEffectSupport;
+import v9t9.gui.client.swt.gl.IGLMonitorEffect;
 import v9t9.gui.client.swt.gl.MonitorEffect;
 import v9t9.gui.client.swt.gl.MonitorParams;
 import v9t9.gui.client.swt.gl.SimpleCurvedCrtMonitorRender;
@@ -50,6 +49,9 @@ import v9t9.video.BitmapCanvasShort;
 import v9t9.video.IGLDataCanvas;
 import v9t9.video.ImageDataCanvasR3G3B2;
 import v9t9.video.VdpCanvasFactory;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.utils.FileUtils;
 
 /**
  * Render video into an OpenGL canvas in an SWT window
@@ -57,6 +59,11 @@ import v9t9.video.VdpCanvasFactory;
  *
  */
 public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IPropertyListener {
+
+	private static final String EFFECT_STANDARD_CRT1 = "standardCrt1";
+	private static final String EFFECT_STANDARD_CRT2 = "standardCrt2";
+	private static final String EFFECT_CURVED_CRT1 = "curvedCrt1";
+	private static final String EFFECT_DEFAULT = EFFECT_STANDARD_CRT1;
 
 	private static boolean VERBOSE = false;
 	
@@ -66,21 +73,34 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		"shaders/crt", null, GL_LINEAR, GL_LINEAR);
 	static final MonitorParams paramsCRT1 = new MonitorParams(
 		"shaders/crt1", "shaders/monitor.png", GL_LINEAR, GL_LINEAR);
-	static final MonitorParams paramsCRT2 = new MonitorParams(
+	static final MonitorParams paramsCurvedCRT = new MonitorParams(
 		"shaders/crt2", "shaders/monitorRGB.png", GL_LINEAR, GL_LINEAR);
 		
-	static final MonitorEffect STANDARD = new MonitorEffect(paramsSTANDARD,
+	static final MonitorEffect STANDARD = new MonitorEffect(
+			"No effect",
+			paramsSTANDARD,
 			StandardMonitorRender.INSTANCE);
-	static final MonitorEffect CRT = new MonitorEffect(paramsCRT,
-			StandardMonitorRender.INSTANCE);
-	static final MonitorEffect CRT1 = new MonitorEffect(paramsCRT1,
-			StandardMonitorRender.INSTANCE);
-	static final MonitorEffect CRT2 = new MonitorEffect(paramsCRT2,
-			SimpleCurvedCrtMonitorRender.INSTANCE);
 	
 	static {
 		if (VERBOSE) System.out.println(System.getProperty("java.library.path"));
 	}
+
+	static MonitorEffectSupport monitorEffectSupport = new MonitorEffectSupport(); 
+	static {
+		monitorEffectSupport.registerEffect(EFFECT_STANDARD_CRT1, new MonitorEffect(
+				"Standard CRT #1",
+				paramsCRT,
+				StandardMonitorRender.INSTANCE));
+		monitorEffectSupport.registerEffect(EFFECT_STANDARD_CRT2, new MonitorEffect(
+				"Standard CRT #2",
+				paramsCRT1,
+				StandardMonitorRender.INSTANCE));
+		monitorEffectSupport.registerEffect(EFFECT_CURVED_CRT1, new MonitorEffect(
+				"Curved CRT",
+				paramsCurvedCRT,
+				SimpleCurvedCrtMonitorRender.INSTANCE));
+	}
+	
 	private GLCanvas glCanvas;
 	private GLData glData;
 
@@ -97,9 +117,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private Rectangle imageRect;
 	private Listener resizeListener;
 	private TextureLoader textureLoader = new TextureLoader();
-	private Map<MonitorEffect, Integer> displayListMap = new HashMap<MonitorEffect, Integer>();
+	private Map<IGLMonitorEffect, Integer> displayListMap = new HashMap<IGLMonitorEffect, Integer>();
 
 	private IProperty monitorDrawing;
+	private IProperty monitorEffect;
 
 
 	private long lastReport;
@@ -112,6 +133,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	public SwtLwjglVideoRenderer(IMachine machine) {
 		super(machine);
 		monitorDrawing = settings.get(BaseEmulatorWindow.settingMonitorDrawing);
+		monitorEffect = settings.get(BaseEmulatorWindow.settingMonitorEffect);
 	}
 
 	protected void createVdpCanvasHandler() {
@@ -134,6 +156,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	@Override
 	public void dispose() {
 		monitorDrawing.removeListener(this);
+		monitorEffect.removeListener(this);
 		if (!glCanvas.isDisposed())
 			glCanvas.getParent().removeListener(SWT.Resize, resizeListener);
 		super.dispose();
@@ -144,7 +167,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	 */
 	@Override
 	public void propertyChanged(IProperty property) {
-		if (property == monitorDrawing) {
+		if (property == monitorDrawing || property == monitorEffect) {
 			updateShaders();
 		}
 	}
@@ -178,6 +201,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glCanvas = new GLCanvas(parent, flags | getStyleBits(), glData);
 		
 		monitorDrawing.addListener(this);
+		monitorEffect.addListener(this);
 
 		
 		resizeListener = new Listener() {
@@ -247,8 +271,21 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 	}
 	
-	private MonitorEffect getEffect() {
-		return monitorDrawing.getBoolean() ? CRT : STANDARD;
+	private IGLMonitorEffect getEffect() {
+		if (!monitorDrawing.getBoolean())
+			return STANDARD;
+		
+		String effectId = monitorEffect.getString();
+		
+		IGLMonitorEffect effect = (IGLMonitorEffect) monitorEffectSupport.getEffect(effectId);
+		if (effect == null) {
+			effect = (IGLMonitorEffect) monitorEffectSupport.getEffect(EFFECT_DEFAULT);
+			if (effect == null) {
+				return STANDARD;
+			}
+		}
+		
+		return effect;
 	}
 	
 	private synchronized void compileLinkShaders() {
@@ -260,7 +297,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 				ARBShaderObjects.glDeleteObjectARB(programObject);
 			programObject = ARBShaderObjects.glCreateProgramObjectARB();
 			
-			MonitorEffect effect = getEffect();
+			IGLMonitorEffect effect = getEffect();
 			String base = effect.getParams().getShaderBase();
 			vertexShader = compileShader(vertexShader, ARBVertexShader.GL_VERTEX_SHADER_ARB, base + ".vert");
 			fragShader = compileShader(fragShader, ARBFragmentShader.GL_FRAGMENT_SHADER_ARB, base + ".frag");
@@ -461,7 +498,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private synchronized void reblitGL() {
 		long firstTime = System.currentTimeMillis();
 		
-		MonitorEffect effect = getEffect();
+		IGLMonitorEffect effect = getEffect();
 		MonitorParams params = effect.getParams();
 		
 		glCanvas.setCurrent();
@@ -602,10 +639,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.gui.client.swt.SwtVideoRenderer#supportsMonitorEffect()
+	 * @see v9t9.gui.client.swt.SwtVideoRenderer#getMonitorEffectSupport()
 	 */
 	@Override
-	public boolean supportsMonitorEffect() {
-		return true;
+	public IMonitorEffectSupport getMonitorEffectSupport() {
+		return monitorEffectSupport;
 	}
 }
