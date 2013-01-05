@@ -13,12 +13,18 @@ public class MonitorParams {
 	private final String texture;
 	private final int minFilter;
 	private final int magFilter;
+	private boolean refreshRealtime;
 
-	public MonitorParams(String shaderBase, String texture, int minFilter, int maxFilter) {
+	public MonitorParams(String shaderBase, String texture, int minFilter, int maxFilter, boolean refreshRealtime) {
 		this.shaderBase = shaderBase;
 		this.texture = texture;
 		this.minFilter = minFilter;
 		this.magFilter = maxFilter;
+		this.refreshRealtime = refreshRealtime;
+	}
+	
+	public MonitorParams(String shaderBase, String texture, int minFilter, int maxFilter) {
+		this(shaderBase, texture, minFilter, maxFilter, false);
 	}
 	
 	
@@ -79,5 +85,12 @@ public class MonitorParams {
 	}
 	public int getMagFilter() {
 		return magFilter;
+	}
+	
+	/**
+	 * @return the refreshRealtime
+	 */
+	public boolean isRefreshRealtime() {
+		return refreshRealtime;
 	}
 }

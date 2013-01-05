@@ -257,7 +257,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	}
 
 	public void redraw() {
-		if (!isDirty || canvas == null)
+		if (!shouldRedraw() || canvas == null)
 			return;
 		
 		Display.getDefault().syncExec(new Runnable() {
@@ -281,6 +281,13 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		});
 	}
 	
+	/**
+	 * @return
+	 */
+	protected boolean shouldRedraw() {
+		return isDirty;
+	}
+
 	protected void doTriggerRedraw() {
 		Rect dirty = vdpCanvas.getDirtyRect();
 		if (dirty != null) {

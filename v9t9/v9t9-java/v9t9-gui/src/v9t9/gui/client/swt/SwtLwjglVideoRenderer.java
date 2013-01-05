@@ -62,19 +62,34 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 	private static final String EFFECT_STANDARD_CRT1 = "standardCrt1";
 	private static final String EFFECT_STANDARD_CRT2 = "standardCrt2";
+	private static final String EFFECT_STANDARD_CRT3 = "standardCrt3";
 	private static final String EFFECT_CURVED_CRT1 = "curvedCrt1";
+	private static final String EFFECT_CURVED_CRT2 = "curvedCrt2";
+	private static final String EFFECT_SUBPIXEL_CRT1 = "subPixelCrt1";
+	private static final String EFFECT_WAVY_CRT1 = "wavyCrt1";
+	private static final String EFFECT_WAVY_CRT2 = "wavyCrt2";
 	private static final String EFFECT_DEFAULT = EFFECT_STANDARD_CRT1;
 
 	private static boolean VERBOSE = false;
 	
 	static final MonitorParams paramsSTANDARD = new MonitorParams(
 		"shaders/std", null, GL_LINEAR, GL_NEAREST);
-	static final MonitorParams paramsCRT = new MonitorParams(
-		"shaders/crt", null, GL_LINEAR, GL_LINEAR);
 	static final MonitorParams paramsCRT1 = new MonitorParams(
-		"shaders/crt1", "shaders/monitor.png", GL_LINEAR, GL_LINEAR);
-	static final MonitorParams paramsCurvedCRT = new MonitorParams(
+		"shaders/crt", null, GL_LINEAR, GL_LINEAR);
+	static final MonitorParams paramsCRT2 = new MonitorParams(
 		"shaders/crt2", "shaders/monitorRGB.png", GL_LINEAR, GL_LINEAR);
+	static final MonitorParams paramsCRT3 = new MonitorParams(
+		"shaders/crt1", "shaders/monitor.png", GL_LINEAR, GL_LINEAR);
+	static final MonitorParams paramsSubPixelCRT1 = new MonitorParams(
+		"shaders/crtSubPixel1", null, GL_LINEAR, GL_LINEAR);
+	static final MonitorParams paramsWavyCRT1 = new MonitorParams(
+			"shaders/crtWavy1", null, GL_LINEAR, GL_LINEAR);
+	static final MonitorParams paramsWavyCRT2 = new MonitorParams(
+			"shaders/crtWavy2", null, GL_LINEAR, GL_LINEAR, true);
+	static final MonitorParams paramsCurvedCRT1 = new MonitorParams(
+			"shaders/crtCurved", null, GL_LINEAR, GL_LINEAR);
+	static final MonitorParams paramsCurvedCRT2 = new MonitorParams(
+			"shaders/crt2", "shaders/monitorRGB.png", GL_LINEAR, GL_LINEAR);
 		
 	static final MonitorEffect STANDARD = new MonitorEffect(
 			"No effect",
@@ -89,16 +104,36 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	static {
 		monitorEffectSupport.registerEffect(EFFECT_STANDARD_CRT1, new MonitorEffect(
 				"Standard CRT #1",
-				paramsCRT,
+				paramsCRT1,
 				StandardMonitorRender.INSTANCE));
 		monitorEffectSupport.registerEffect(EFFECT_STANDARD_CRT2, new MonitorEffect(
 				"Standard CRT #2",
-				paramsCRT1,
+				paramsCRT2,
+				StandardMonitorRender.INSTANCE));
+		monitorEffectSupport.registerEffect(EFFECT_STANDARD_CRT3, new MonitorEffect(
+				"Standard CRT #3",
+				paramsCRT3,
 				StandardMonitorRender.INSTANCE));
 		monitorEffectSupport.registerEffect(EFFECT_CURVED_CRT1, new MonitorEffect(
-				"Curved CRT",
-				paramsCurvedCRT,
+				"Curved CRT #1 (frag)",
+				paramsCurvedCRT1,
+				StandardMonitorRender.INSTANCE));
+		monitorEffectSupport.registerEffect(EFFECT_CURVED_CRT2, new MonitorEffect(
+				"Curved CRT #2 (vert)",
+				paramsCurvedCRT2,
 				SimpleCurvedCrtMonitorRender.INSTANCE));
+		monitorEffectSupport.registerEffect(EFFECT_SUBPIXEL_CRT1, new MonitorEffect(
+				"Subpixel CRT",
+				paramsSubPixelCRT1,
+				StandardMonitorRender.INSTANCE));
+		monitorEffectSupport.registerEffect(EFFECT_WAVY_CRT1, new MonitorEffect(
+				"Wavy CRT (still)",
+				paramsWavyCRT1,
+				StandardMonitorRender.INSTANCE));
+		monitorEffectSupport.registerEffect(EFFECT_WAVY_CRT2, new MonitorEffect(
+				"Wavy CRT (moving)",
+				paramsWavyCRT2,
+				StandardMonitorRender.INSTANCE));
 	}
 	
 	private GLCanvas glCanvas;
@@ -482,6 +517,16 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 	
 	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.SwtVideoRenderer#shouldRedraw()
+	 */
+	@Override
+	protected boolean shouldRedraw() {
+		IGLMonitorEffect effect = getEffect();
+		MonitorParams params = effect.getParams();
+		
+		return super.shouldRedraw() || params.isRefreshRealtime(); 
+	}
+	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.SwtVideoRenderer#reblit()
 	 */
 	@Override
@@ -608,6 +653,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		glDisable(GL_TEXTURE_2D);
 
+		ARBShaderObjects.glUniform1iARB(
+				ARBShaderObjects.glGetUniformLocationARB(programObject, "time"), 
+				(int) System.currentTimeMillis());
+		
 		if (programObject != 0) {
 			ARBShaderObjects.glUseProgramObjectARB(0); 
 		
@@ -628,6 +677,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		frames++;
 		long lastTime = System.currentTimeMillis();
+		
 		lastFrameTime = lastTime;
 		
 		frameTimes += (lastTime - firstTime);
@@ -635,6 +685,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		if (lastReport + 1000 <= lastFrameTime) {
 //			System.out.println("Max FPS: " + 1000 * frames / frameTimes);
 			lastReport = lastTime;
+		}
+		
+		if (params.isRefreshRealtime()) {
+			//getControl().redraw();
 		}
 	}
 	
