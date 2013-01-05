@@ -65,7 +65,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private static final String EFFECT_STANDARD_CRT3 = "standardCrt3";
 	private static final String EFFECT_CURVED_CRT1 = "curvedCrt1";
 	private static final String EFFECT_CURVED_CRT2 = "curvedCrt2";
-	private static final String EFFECT_SUBPIXEL_CRT1 = "subPixelCrt1";
+//	private static final String EFFECT_SUBPIXEL_CRT1 = "subPixelCrt1";
+	private static final String EFFECT_SUBPIXEL_CRT2 = "subPixelCrt2";
 	private static final String EFFECT_WAVY_CRT1 = "wavyCrt1";
 	private static final String EFFECT_WAVY_CRT2 = "wavyCrt2";
 	private static final String EFFECT_DEFAULT = EFFECT_STANDARD_CRT1;
@@ -82,6 +83,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		"shaders/crt1", "shaders/monitor.png", GL_LINEAR, GL_LINEAR);
 	static final MonitorParams paramsSubPixelCRT1 = new MonitorParams(
 		"shaders/crtSubPixel1", null, GL_LINEAR, GL_LINEAR);
+	static final MonitorParams paramsSubPixelCRT2 = new MonitorParams(
+			"shaders/crtSubPixel2", null, GL_LINEAR, GL_LINEAR);
 	static final MonitorParams paramsWavyCRT1 = new MonitorParams(
 			"shaders/crtWavy1", null, GL_LINEAR, GL_LINEAR);
 	static final MonitorParams paramsWavyCRT2 = new MonitorParams(
@@ -122,9 +125,13 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 				"Curved CRT #2 (vert)",
 				paramsCurvedCRT2,
 				SimpleCurvedCrtMonitorRender.INSTANCE));
-		monitorEffectSupport.registerEffect(EFFECT_SUBPIXEL_CRT1, new MonitorEffect(
-				"Subpixel CRT",
-				paramsSubPixelCRT1,
+//		monitorEffectSupport.registerEffect(EFFECT_SUBPIXEL_CRT1, new MonitorEffect(
+//				"Subpixel CRT #1",
+//				paramsSubPixelCRT1,
+//				StandardMonitorRender.INSTANCE));
+		monitorEffectSupport.registerEffect(EFFECT_SUBPIXEL_CRT2, new MonitorEffect(
+				"Subpixel CRT #2",
+				paramsSubPixelCRT2,
 				StandardMonitorRender.INSTANCE));
 		monitorEffectSupport.registerEffect(EFFECT_WAVY_CRT1, new MonitorEffect(
 				"Wavy CRT (still)",
@@ -218,7 +225,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 							compileLinkShaders();
 							glCanvas.redraw();
 							updateWidgetSizeForMode();
-							reblitGL();
+							reblitGL(false);
 						} catch (LWJGLException e) { 
 							e.printStackTrace(); 
 							return;
@@ -377,12 +384,16 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		ARBShaderObjects.glCompileShaderARB(shaderObj);
 		
 		int error = ARBShaderObjects.glGetObjectParameteriARB(shaderObj, ARBShaderObjects.GL_OBJECT_COMPILE_STATUS_ARB);
+		int length = ARBShaderObjects.glGetObjectParameteriARB(shaderObj, ARBShaderObjects.GL_OBJECT_INFO_LOG_LENGTH_ARB);
+		String log = ARBShaderObjects.glGetInfoLogARB(shaderObj, length);
 		if (error == GL_FALSE) {
-			int length = ARBShaderObjects.glGetObjectParameteriARB(shaderObj, ARBShaderObjects.GL_OBJECT_INFO_LOG_LENGTH_ARB);
-			String log = ARBShaderObjects.glGetInfoLogARB(shaderObj, length);
 			throw new GLShaderException(filename, 
 					log,
 					null);
+		} else {
+			if (!log.isEmpty()) {
+				System.err.println(filename+":\n"+log);
+			}
 		}
 		return shaderObj;
 	}
@@ -505,7 +516,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 
 	protected void doRepaint(GC gc, Rectangle updateRect) {
-		reblitGL();
+		reblitGL(true);
 	}
 	
 	/* (non-Javadoc)
@@ -513,18 +524,20 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	 */
 	@Override
 	protected void doTriggerRedraw() {
-		reblitGL();
+		reblitGL(true);
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.gui.client.swt.SwtVideoRenderer#shouldRedraw()
+	 * @see v9t9.gui.client.swt.SwtVideoRenderer#doCleanRedraw()
 	 */
 	@Override
-	protected boolean shouldRedraw() {
+	protected void doCleanRedraw() {
 		IGLMonitorEffect effect = getEffect();
 		MonitorParams params = effect.getParams();
 		
-		return super.shouldRedraw() || params.isRefreshRealtime(); 
+		if (params.isRefreshRealtime()) {
+			reblitGL(false);
+		}
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.SwtVideoRenderer#reblit()
@@ -532,7 +545,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	@Override
 	public void reblit() {
 		try {
-			reblitGL();
+			reblitGL(true);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -540,7 +553,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glFlush();
 	}
 	
-	private synchronized void reblitGL() {
+	private synchronized void reblitGL(boolean updated) {
 		long firstTime = System.currentTimeMillis();
 		
 		IGLMonitorEffect effect = getEffect();
@@ -570,8 +583,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, params.getMagFilter());
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, params.getMinFilter());
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		int border = 1;
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		
 		glBindTexture(GL_TEXTURE_2D, vdpCanvasTexture);
@@ -584,35 +599,37 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		int imageCanvasType = glDataCanvas.getImageType();
 
 		int texFmt = glDataCanvas.getInternalFormat();
-		if (vdpCanvasBuffer instanceof ByteBuffer) {
-			glTexImage2D(GL_TEXTURE_2D, 0, 
-					texFmt,
-					vdpCanvas.getVisibleWidth(),
-					vdpCanvas.getVisibleHeight(),
-					0, 
-					imageCanvasFormat,
-					imageCanvasType, 
-					(ByteBuffer) vdpCanvasBuffer);
-		} else if (vdpCanvasBuffer instanceof ShortBuffer) {
-			glTexImage2D(GL_TEXTURE_2D, 0, 
-					texFmt,
-					vdpCanvas.getVisibleWidth(),
-					vdpCanvas.getVisibleHeight(),
-					0, 
-					imageCanvasFormat,
-					imageCanvasType, 
-					(ShortBuffer) vdpCanvasBuffer);
-		} else if (vdpCanvasBuffer instanceof IntBuffer) {
-			glTexImage2D(GL_TEXTURE_2D, 0, 
-					texFmt,
-					vdpCanvas.getVisibleWidth(),
-					vdpCanvas.getVisibleHeight(),
-					0, 
-					imageCanvasFormat,
-					imageCanvasType, 
-					(IntBuffer) vdpCanvasBuffer);
-		}	
-
+		if (updated) {
+			if (vdpCanvasBuffer instanceof ByteBuffer) {
+				glTexImage2D(GL_TEXTURE_2D, 0, 
+						texFmt,
+						vdpCanvas.getVisibleWidth(),
+						vdpCanvas.getVisibleHeight(),
+						border, 
+						imageCanvasFormat,
+						imageCanvasType, 
+						(ByteBuffer) vdpCanvasBuffer);
+			} else if (vdpCanvasBuffer instanceof ShortBuffer) {
+				glTexImage2D(GL_TEXTURE_2D, 0, 
+						texFmt,
+						vdpCanvas.getVisibleWidth(),
+						vdpCanvas.getVisibleHeight(),
+						border, 
+						imageCanvasFormat,
+						imageCanvasType, 
+						(ShortBuffer) vdpCanvasBuffer);
+			} else if (vdpCanvasBuffer instanceof IntBuffer) {
+				glTexImage2D(GL_TEXTURE_2D, 0, 
+						texFmt,
+						vdpCanvas.getVisibleWidth(),
+						vdpCanvas.getVisibleHeight(),
+						border, 
+						imageCanvasFormat,
+						imageCanvasType, 
+						(IntBuffer) vdpCanvasBuffer);
+			}	
+		}
+		
 		/*
 		 * Second texture: the monitor overlay
 		 */

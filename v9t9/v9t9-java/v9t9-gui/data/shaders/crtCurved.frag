@@ -4,7 +4,7 @@ uniform ivec2 viewport;
 
 void main()
 {
-	vec2 wave = vec2(sin(gl_TexCoord[0].s*2*3.14159),  sin(gl_TexCoord[0].t*2*3.14159)) * 0.01;
+	vec2 wave = vec2(sin(gl_TexCoord[0].s*2.*3.14159),  sin(gl_TexCoord[0].t*2.*3.14159)) * 0.01;
 	vec2 tx = gl_TexCoord[0].st + wave;
    
    /////

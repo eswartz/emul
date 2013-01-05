@@ -2,9 +2,11 @@ uniform sampler2D canvasTexture;
 uniform ivec2 visible;
 uniform ivec2 viewport;
 
+const float waves = 4.;
 void main()
 {
-	vec2 wave = vec2(sin(gl_TexCoord[0].t*4*2*3.14159), 0) * 0.002
+
+	vec2 wave = vec2(sin(gl_TexCoord[0].t * waves * 2.*3.14159), 0) * 0.003
 		* sin(gl_TexCoord[0].t*3.14159);  
    vec4 color = texture2D(canvasTexture, gl_TexCoord[0].st + wave);
     

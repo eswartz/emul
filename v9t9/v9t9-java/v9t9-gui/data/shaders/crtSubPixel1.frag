@@ -14,19 +14,21 @@ void main()
     }
     
     // hmm... why 4 pixels per...?
-    vec2 subpix = fract(gl_TexCoord[0].st * visible * 4 / 3);
+    vec2 subpix = fract(gl_TexCoord[0].st * vec2(viewport) / 3. );
     vec4 rgba;
-    vec4 base = color / 4;
+    vec4 base = color / 4.;
     if (subpix.x < 0.333) {
-    	rgba = mix(vec4(color.r, color.g/8, color.b/8, 1.0), base, subpix.x * 3.);
+    	rgba = mix(vec4(color.r, color.g/8., color.b/8., 1.0), base, subpix.x * 3.);
     }
     else if (subpix.x < 0.666) {
-    	rgba = mix(vec4(color.r/8, color.g, color.b/8, 1.0), base, (subpix.x - 0.333) * 3.);
+    	rgba = mix(vec4(color.r/8., color.g, color.b/8., 1.0), base, (subpix.x - 0.333) * 3.);
     }
     else {
-    	rgba = mix(vec4(color.r/8, color.g/8, color.b, 1.0), base, (subpix.x - 0.666) * 3.);
+    	rgba = mix(vec4(color.r/8., color.g/8., color.b, 1.0), base, (subpix.x - 0.666) * 3.);
     }
+gl_FragColor = rgba;
 
+/*
 	////////
 	
     vec2 fract_center_dist = fract((vec2(0.25, 0.25) + gl_TexCoord[0].st) * vec2(visible.x, visible.y));
@@ -42,6 +44,6 @@ void main()
     else
         hvec = vec4(1,1,1,1);
     
-    gl_FragColor = rgba * hvec * vvec * 4;
-    
+    gl_FragColor = rgba * hvec * vvec * 4.;
+    */
 }

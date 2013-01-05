@@ -257,8 +257,9 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	}
 
 	public void redraw() {
-		if (!shouldRedraw() || canvas == null)
+		if (canvas == null) {
 			return;
+		}
 		
 		Display.getDefault().syncExec(new Runnable() {
 
@@ -266,15 +267,19 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 				synchronized (vdpCanvas) {
 					if (canvas.isDisposed())
 						return;
-					
-					try {
-						doTriggerRedraw();
-					} catch (Throwable t) {
-						t.printStackTrace();
+
+					if (!isDirty) {
+						doCleanRedraw();
+					} else {
+						try {
+							doTriggerRedraw();
+						} catch (Throwable t) {
+							t.printStackTrace();
+						}
+						
+						isDirty = false;
+						vdpCanvas.clearDirty();
 					}
-					
-					isDirty = false;
-					vdpCanvas.clearDirty();
 				}
 			}
 			
@@ -282,10 +287,10 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	}
 	
 	/**
-	 * @return
+	 * 
 	 */
-	protected boolean shouldRedraw() {
-		return isDirty;
+	protected void doCleanRedraw() {
+		
 	}
 
 	protected void doTriggerRedraw() {
