@@ -211,7 +211,6 @@ public class SettingsDialog extends Composite implements IPropertyListener {
 					prop.removeListener(SettingsDialog.this);
 			}
 		});
-		//viewer.setInput(settings.getAllSettings().keySet());
 	}
 
 	/* (non-Javadoc)
