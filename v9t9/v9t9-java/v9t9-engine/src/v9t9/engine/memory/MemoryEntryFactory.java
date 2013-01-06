@@ -126,6 +126,10 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 		@SuppressWarnings("unchecked")
 		Class<? extends BankedMemoryEntry> klass = (Class<? extends BankedMemoryEntry>) info.getBankedClass();
 		
+		if (PCBBankedMemoryEntry.class.isAssignableFrom(klass)) {
+			return newPCBBankedMemoryFromFile(info);
+		}
+		
 		IMemoryEntry bank0 = newFromFile(info, info.getName() + " (bank 0)", 
 				info.getFilename(), info.getFileMD5(), info.getOffset(), 
 				MemoryAreaFactory.createMemoryArea(memory, info));
@@ -150,7 +154,38 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 	}
 
 
-    /** Construct a DiskMemoryEntry based on the file length.
+    /**
+	 * @param info
+	 * @return
+	 */
+	private BankedMemoryEntry newPCBBankedMemoryFromFile(MemoryEntryInfo info) throws IOException {
+
+    	StoredMemoryEntryInfo storedInfo = resolveMemoryEntry(info, info.getName(), 
+    			info.getFilename(), info.getFileMD5(), info.getOffset());
+
+    	int bankSize = 0x2000;
+    	int numBanks = storedInfo.size / bankSize;
+    	
+    	IMemoryEntry[] entries = new IMemoryEntry[numBanks];
+    	for (int bank = 0; bank < entries.length; bank++) {
+    		// banks are numbered/accessed in reverse order
+    		entries[entries.length - bank - 1] = newFromFile(info, info.getName() + " (bank " + bank + ")", 
+    				info.getFilename(), info.getFileMD5(), info.getOffset() + bank * bankSize, 
+    				MemoryAreaFactory.createMemoryArea(memory, info));
+    	}
+		
+		BankedMemoryEntry bankedMemoryEntry;
+		try {
+			bankedMemoryEntry = new PCBBankedMemoryEntry(
+							settings, memory, info.getName(), entries);
+		} catch (Exception e) {
+			throw (IOException) new IOException().initCause(e);
+		}
+		return bankedMemoryEntry;
+	}
+
+
+	/** Construct a DiskMemoryEntry based on the file length.
      * @throws IOException if the memory cannot be read and is not stored
      */
     private DiskMemoryEntry newFromFile(MemoryEntryInfo info, MemoryArea area) throws IOException {
@@ -269,7 +304,12 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 					if ("true".equals(el.getAttribute("custom"))) {
 						properties.put(MemoryEntryInfo.CLASS, BankedMemoryEntry.class);
 					} else {
-						properties.put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
+						if ("true".equals(el.getAttribute("pcb"))) {
+							properties.put(MemoryEntryInfo.SIZE, -0x20000);
+							properties.put(MemoryEntryInfo.CLASS, PCBBankedMemoryEntry.class);
+						} else {
+							properties.put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
+						}
 					}
 				}
 				else if (!el.getNodeName().equals("memoryEntry")) {

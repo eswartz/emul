@@ -48,6 +48,7 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	}
 	
 	public boolean selectBank(int bank) {
+		bank &= bankCount - 1;
 		if (currentBankIndex != bank) {
 			doSelectBank(bank);
 			return true;
@@ -70,22 +71,6 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	public int getBankCount() {
 		return bankCount;
 	}
-
-	/*
-	@Override
-	public void writeByte(int addr, byte val) {
-		int bank = (addr & 2) >> 1;
-		selectBank(bank);
-		super.writeByte(addr, val);
-	}
-	
-	@Override
-	public void writeWord(int addr, short val) {
-		int bank = (addr & 2) >> 1;
-		selectBank(bank);
-		super.writeWord(addr, val);
-	}
-	*/
 	
 	public int getBankSize() {
 		return getSize();

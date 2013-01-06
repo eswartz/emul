@@ -59,8 +59,7 @@ public class StoredMemoryEntryInfo {
 		
         boolean isStored = info.isStored();
         
-		if (size < -IMemoryDomain.PHYSMEMORYSIZE
-                || isStored && size <= 0
+		if (isStored && size <= 0
                 || isStored && fileoffs != 0
                 ) {
 			throw new IOException("size or offset is incompatible with the memory model for '" + name + "')");

@@ -3,5 +3,20 @@ Fix keyboard implementation:
 
 -- too close a tie between the host keyboard and the 99/4A CRU map
 
+-- fix paste support in Ext Basic.  Pasting the content from
+http://www.atariage.com/forums/topic/168968-f18a/page__st__750#entry2644934
+will hit a lot of errors as characters are dropped, unless PasteKeyDelay 
+is set to 60...
+
+Also note that e.g. (96 loses the 9 and "PONGO" loses the "P" since 
+one is the SHIFT/FCTN version of the previous.
+
+Sprite collision info:
+
+http://www.atariage.com/forums/topic/168968-f18a/page__st__750#entry2648609
+
+
+
+
 
 	

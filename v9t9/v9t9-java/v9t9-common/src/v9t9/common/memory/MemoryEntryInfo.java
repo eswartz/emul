@@ -176,8 +176,12 @@ public class MemoryEntryInfo {
 	}
 
 	public boolean isBanked() { 
-		return getFilename() != null && getFilename2() != null
-		&& !getFilename().equals(getFilename2());
+		if (getFilename() != null && getFilename2() != null
+		&& !getFilename().equals(getFilename2()))
+			return true;
+		if (getBankedClass() != null)
+			return true;
+		return false;
 	}
 
 
