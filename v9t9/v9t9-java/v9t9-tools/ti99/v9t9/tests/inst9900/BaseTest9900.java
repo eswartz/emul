@@ -85,7 +85,7 @@ public abstract class BaseTest9900 extends TestCase {
 		assertNotNull(block);
 		assertTrue(block.isComplete());
 		IHighLevelInstruction inst = block.getFirst();
-		IHighLevelInstruction prev = block.getFirst().getPhysicalPrev();
+		IHighLevelInstruction prev = block.getFirst().getLogicalPrev();
 		while (inst != null) {
 			if (inst == block.getLast() || block.getLast() == null)
 				break;

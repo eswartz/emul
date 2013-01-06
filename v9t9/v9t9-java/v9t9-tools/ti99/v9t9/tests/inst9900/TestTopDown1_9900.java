@@ -17,6 +17,7 @@ import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.Block;
 import v9t9.common.asm.IHighLevelInstruction;
 import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.LabelListOperand;
 import v9t9.common.asm.Routine;
 import v9t9.common.asm.RoutineOperand;
@@ -44,7 +45,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
 			super.setUp();
 			
 			List<String> arr = new ArrayList<String>();
-			arr.add("/home/ejs/devel/v9t9-data/roms");
+			arr.add("../../build/roms");
 			arr.add("/usr/local/src/v9t9-data/roms");
 			fileLocator.addReadOnlyPathProperty(new SettingProperty("foo", arr));
 		}
@@ -591,18 +592,20 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
     		"B *R2", //108
     		"rt", //10A
     		"data >10A",//10C
-    		"data >102",//stop here
+    		"data >102",//10E  could be a jump
     		"data >ffff",
     	});
-        highLevel.getLLInstructions().put(0x102, createHLInstruction(0x102, 0, "CLR R1"));
+        highLevel.getLLInstructions().put(0x102, createHLInstruction(0x102, 0, "CLR R1"));	// this is the decoded constant in the LI R1,>4c1
         
         phase.run();
-        assertEquals(2, routine.getSpannedBlocks().size());
+        Collection<Block> spannedBlocks = routine.getSpannedBlocks();
+		assertEquals(3, spannedBlocks.size());
 
         LabelListOperand op = (LabelListOperand) getSingleEntry(routine).getFirst().getLogicalNext().getLogicalNext().getInst().getOp1();
-        assertEquals(1, op.operands.size());
+        assertEquals(2, op.operands.size());
         assertEquals(0x10A, op.operands.get(0).label.getAddr());
-        validateBlocks(routine.getSpannedBlocks());
+        assertEquals(0x102, op.operands.get(1).label.getAddr());
+        validateBlocks(spannedBlocks);
         
     }
 
@@ -764,7 +767,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
     	phase.disassemble();
     	// add label at every instruction just to be sure it doesn't explode
     	for (IHighLevelInstruction inst : phase.decompileInfo.getLLInstructions().values()) {
-    		if (inst.getBlock() == null)
+    		if (inst.getInst().getInst() != InstTableCommon.Idata && inst.getBlock() == null)
     			phase.addBlock(new Block(inst));
     	}
     	phase.run();
@@ -789,7 +792,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
     	phase.disassemble();
     	IHighLevelInstruction inst = phase.decompileInfo.getLLInstructions().get(0x800);
     	while (inst != null) {
-    		if (inst.getInst().pc >= 0x800 && inst.getInst().pc < 0x1000 && inst.getBlock() == null)
+    		if (inst.getInst().pc >= 0x800 && inst.getInst().pc < 0x1000 && inst.getBlock() == null && inst.getInst().getInst() != InstTableCommon.Idata)
     			phase.addBlock(new Block(inst));
     		inst = inst.getPhysicalNext();
     	}

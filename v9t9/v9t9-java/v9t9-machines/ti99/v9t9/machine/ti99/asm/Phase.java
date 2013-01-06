@@ -109,28 +109,6 @@ public abstract class Phase implements IDecompilePhase {
 		}
 		return ranges;
 	}
-/*
- public MemoryDomain getCPUMemory() {
-        return CPU;
-    }
-
-    public void addInstruction(LLInstruction inst) {
-        instructionMap.put(new Integer(inst.pc), inst);
-    }
-
-    public LLInstruction getInstruction(int addr) {
-        return instructionMap.get(new Integer(addr));
-    }
-
-    public Iterator<LLInstruction> instructionIterator() {
-        return instructionMap.values().iterator();
-    }
-
-    public MemoryRanges getRanges() {
-        return ranges;
-    }
- */
-	
 
 	/* (non-Javadoc)
 	 * @see v9t9.machine.ti99.asm.IDecompilePhase#dumpInstructions(java.io.PrintStream)
@@ -198,34 +176,6 @@ public abstract class Phase implements IDecompilePhase {
 		Label label = labels.get(block);
 		return label;
 	}
-
-	/**
-	 * Add a label for the given address.
-	 * The label is created with the given parameters,
-	 * and a routine is realized by setting its label to this.
-	 * If a label already exists, an exception is emitted.
-	 * @param bufaddr
-	 * @param path
-	 * @param routine
-	 * @return
-	 */
-	/*
-	public Label addLabel(int addr, boolean rel, int pc, String name) {
-		Integer key = getLabelKey(addr);
-		Label label = labels.get(key);
-		Check.checkArg(label == null);
-
-		
-		label = new Label((short) addr, name);
-		label.llll(null);
-		label.rel = rel;
-		label.rels = 0;
-		labels.put(key, label);
-
-		return label;
-	}
-*/
-	
 
 	private void addProgramList(int list) {
 		int addr, link;

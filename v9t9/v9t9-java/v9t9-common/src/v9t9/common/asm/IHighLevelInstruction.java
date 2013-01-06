@@ -44,11 +44,10 @@ public interface IHighLevelInstruction {
 
 	/** 
 	 * Set the next instruction after this one's PC addressable by the CPU.
-	 * Not necessarily the logical instruction -- see {@link #getFollowing()} for that.
+	 * Not necessarily the logical instruction -- see {@link #getLogicalNext()} for that.
 	 * @param next
 	 */
 	void setPhysicalNext(IHighLevelInstruction next);
-	//void setPhysicalPrev(IHighLevelInstruction next);
 
 	/** 
 	 * Get the next possible instruction in memory.  This is not necessarily the next logical
@@ -59,13 +58,13 @@ public interface IHighLevelInstruction {
 	IHighLevelInstruction getPhysicalNext();
 	/** 
 	 * Get the previous possible instruction in memory.  This is not necessarily the previous logical
-	 * instruction, but the one at the next address according to the CPU's
+	 * instruction, but the one at the previous address according to the CPU's
 	 * addressing capabilities. 
 	 * @return
 	 */
 	IHighLevelInstruction getPhysicalPrev();
 
-	/** Get the instruction that follows this one in PC order (not necessarily execution order).
+	/** Get the instruction that precedes this one in PC order (not necessarily execution order).
 	 * Its {@link #getInst()} will have the PC of this one's PC plus the receiver's size.
 	 * @return
 	 */

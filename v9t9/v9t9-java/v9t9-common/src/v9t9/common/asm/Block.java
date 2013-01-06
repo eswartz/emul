@@ -21,7 +21,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 	
 	private int id;
 	
-    /** first instruction in block; only one block holds this fist */
+    /** first instruction in block; only one block holds this first */
     private IHighLevelInstruction first;
     /** last instruction in block; only one block holds this last,
      * but may be <code>null</code> for unresolved block */
@@ -44,6 +44,8 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
     	this.id = nextId++;
         succ = new ArrayList<Block>(2);
         pred = new ArrayList<Block>(2);
+        if (inst.getInst().getInst() == InstTableCommon.Idata)
+        	throw new IllegalArgumentException();
         this.first = inst;
         this.last = inst;
         this.first.setBlock(this);
@@ -181,6 +183,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 			// because if we didn't, those insts need to be lost
 			IHighLevelInstruction inst = this.first;
 			while (inst != null) {
+				inst.setBlock(null);
 				inst.setBlock(this);
 				if (inst == this.last) {
 					hitOldLast = true;
@@ -196,7 +199,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 	
 			// reset blocks for insts no longer in block
 			if (!hitOldLast && this.last != null) {
-				inst = inst.getPhysicalNext();
+				inst = inst.getLogicalNext();
 				while (inst != null) {
 					inst.setBlock(null);
 					//if (inst.getInst().getPc() >= this.last.getInst().getPc()) {
@@ -204,7 +207,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 						hitOldLast = true;
 						break;
 					}
-					inst = inst.getPhysicalNext();
+					inst = inst.getLogicalNext();
 				}
 				
 				if (!hitOldLast) {
@@ -213,13 +216,13 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 			}
 		} else {
 			// clear block for from first.next to current last
-			IHighLevelInstruction inst = first.getPhysicalNext();
+			IHighLevelInstruction inst = first.getLogicalNext();
 			while (inst != null) {
 				inst.setBlock(null);
 				if (inst == this.last) {
 					break;
 				}
-				inst = inst.getPhysicalNext();
+				inst = inst.getLogicalNext();
 			}
 		}
 		
@@ -329,7 +332,7 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 				break;
 			if (first == last)
 				break;
-			first = first.getPhysicalNext();
+			first = first.getLogicalNext();
 		}
 		first = last = null;
 		
@@ -359,6 +362,9 @@ public class Block implements Comparable<Block>, Iterable<IHighLevelInstruction>
 	public void addInst(IHighLevelInstruction inst) {
 		if (first == null) {
 			first = last = inst;
+	        if (inst.getInst().getInst() == InstTableCommon.Idata)
+	        	throw new IllegalArgumentException();
+
 		} else {
 			last.setPhysicalNext(inst);
 			last = inst;

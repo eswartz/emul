@@ -177,18 +177,6 @@ public class TopDownPhase extends Phase {
 		
 		flowedBlocks.add(block);
 		
-		/*
-		if (inst == null) {
-			inst = decompileInfo.getLLInstructions().get(new Integer(block.label.getAddr()));
-			if (inst == null) {
-				System.out.println("!!! jump to unhandled code: " + block);
-				return;
-			}
-			
-			block.setFirst(inst);
-			block.setLast(inst);
-		}*/
-
 		while (inst != null) {
 			if (inst == block.getFirst()) {
 				 inst.setFlags(inst.getFlags() | IHighLevelInstruction.fStartsBlock);
@@ -430,6 +418,12 @@ public class TopDownPhase extends Phase {
 					return null;
 				}
 					
+			}
+			
+			if (target.getInst().getInst() == InstTableCommon.Idata) {
+				System.out.println("!!! ignoring jump to data: " + target + " from "  
+						+ caller);
+				return null;
 			}
 			
 			block = new Block(target);
@@ -972,6 +966,9 @@ public class TopDownPhase extends Phase {
 						IHighLevelInstruction inst = null;
 						while (pc < last) {
 							inst = decompileInfo.getLLInstructions().get(pc);
+							
+							if (inst.getBlock() != null && inst.getBlock().getFirst() == inst)
+								break;
 							
 							noopInstruction(inst);
 							args[idx++] = ((BaseMachineOperand)inst.getInst().getOp1()).immed & 0xffff;

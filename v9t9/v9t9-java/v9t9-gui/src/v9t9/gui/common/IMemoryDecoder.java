@@ -30,11 +30,12 @@ public interface IMemoryDecoder {
 	
 	/**
 	 * Return number of items to display from the initialized range
+	 * @param addr 
 	 * @param size 
-	 * @param i 
 	 * @return
 	 */
-	int getItemCount(int i, int size);
+	int getItemCount(int addr, int size);
+	
 	int getFirstItemIndex(int addr);
 	/**
 	 * Get the label provider for {@link IDecodedContent#getContent()} elements

@@ -78,15 +78,27 @@ public class DisassemblerDecoder implements IMemoryDecoder {
 
 		
 		TreeSet<Integer> addrs = new TreeSet<Integer>();
-		for (Routine routine : decompilePhase.getRoutines()) {
-			for (Block block : routine.getSpannedBlocks()) {
-				IHighLevelInstruction instr = block.getFirst();
-				while (instr != null) {
-					addrToInstrMap.put(instr.getInst().getPc(), instr);
-					addrs.add(instr.getInst().getPc());
-					if (instr == block.getLast())
-						break;
-					instr = instr.getLogicalNext();
+		
+		if (true) {
+			// until the below is more reliable
+			Block block = decompilePhase.getBlocks().iterator().next();
+			IHighLevelInstruction instr = block.getFirst();
+			while (instr != null) {
+				addrToInstrMap.put(instr.getInst().getPc(), instr);
+				addrs.add(instr.getInst().getPc());
+				instr = instr.getLogicalNext();
+			}
+		} else {
+			for (Routine routine : decompilePhase.getRoutines()) {
+				for (Block block : routine.getSpannedBlocks()) {
+					IHighLevelInstruction instr = block.getFirst();
+					while (instr != null) {
+						addrToInstrMap.put(instr.getInst().getPc(), instr);
+						addrs.add(instr.getInst().getPc());
+						if (instr == block.getLast())
+							break;
+						instr = instr.getLogicalNext();
+					}
 				}
 			}
 		}

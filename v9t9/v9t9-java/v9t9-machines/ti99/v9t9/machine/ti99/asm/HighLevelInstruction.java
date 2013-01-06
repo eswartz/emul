@@ -33,7 +33,7 @@ public class HighLevelInstruction  implements Comparable<IHighLevelInstruction>,
 
     public int flags;
     
-    /** Next legal instruction, not the next in memory */
+    /** Next physical instruction */
     private IHighLevelInstruction next;
     /** Previous instruction, whose next points to this */
     private IHighLevelInstruction prev;
