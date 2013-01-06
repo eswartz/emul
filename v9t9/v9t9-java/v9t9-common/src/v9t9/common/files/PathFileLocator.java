@@ -319,13 +319,14 @@ public class PathFileLocator implements IPathFileLocator {
 				continue;
 			
 			uri = resolveInsideURI(baseUri, file);
+			String baseFile = new File(uri.getPath()).getName(); 
 			logger.debug("\t" +uri);
 		
 			Collection<String> listing;
 			try {
 				listing = getDirectoryListing(uri);
 				logger.debug("\tlisting: " + listing.size() + " entries");
-				if (listing.contains(file)) {
+				if (listing.contains(baseFile)) {
 					return uri;
 				}
 			} catch (IOException e) {
