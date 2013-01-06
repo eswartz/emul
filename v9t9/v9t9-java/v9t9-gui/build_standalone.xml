@@ -150,7 +150,7 @@
               <include if="batik" name="org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
               <include if="batik" name="org.apache.batik.xml_1.7.0.v201011041433.jar"/>
     	    </fileset>
-    		<fileset dir="${base.v9t9}/libs">
+    		<fileset dir="${base.base}/libs">
               <include if="svgSalamander" name="svgSalamander.jar"/>
     	    </fileset>
       	</copy>
