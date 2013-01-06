@@ -16,6 +16,7 @@ somewhere else.
 V9t9 can recognize ROMs by content.  They do not need special names (as in previous versions),
 only a path to the ROMs on your system.
 
+If you have custom modules or ROMS, see "Adding Modules" below.
 
 Base System ROMs
 -----------------
@@ -57,3 +58,39 @@ Unlike in earlier DOS version of V9t9 (and TI Emulator), V9t9 can detect ROMs by
 need to name any ROMs in any particular way.  The information about the system ROMs and a large database of 
 TI-99/4A modules is built into V9t9 now.  So, all you need to do is point V9t9 to your collection and V9t9 
 will discover them for you.
+
+Adding Modules
+------------------
+
+If you want to add your own modules to V9t9, and V9t9 does not recognize them, then add them
+to its knowledge base like this:
+
+* Create or edit a `modules.xml` file.  This should be available on one of the "Search Locations"
+in the "Setup ROMs" dialog.
+
+* Add content like the following:
+
+<pre>
+&lt;modules&gt;
+    &lt;module name="My Module Name"&gt;
+        &lt;memoryEntries&gt;
+            &lt;gromModuleEntry fileName="moduleg.bin" /&gt;
+        	&lt;!-- either this or the following, or neither --&gt;
+            &lt;romModuleEntry fileName="modulec.bin" /&gt;  
+            &lt;!-- for standard 'write to 0x6000' type bank switching --&gt;
+            &lt;bankedModuleEntry fileName="modulec.bin" fileName2="moduled.bin" /&gt;  
+        &lt;/memoryEntries&gt;
+    &lt;/module&gt;
+&lt;/modules&gt;
+</pre>
+
+* When you bring up the "Switch Module" dialog, the new entry should be in the list.
+
+* If you want to add an image, then get an image from somewhere or take a screenshot, then add an entry to the &lt;module&gt; element like:
+
+<pre>
+    &lt;image&gt;myModuleImage.png&lt;/image&gt;
+</pre>
+
+* All filenames mentioned above will be detected on the "Search Locations" path.
+

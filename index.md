@@ -21,15 +21,24 @@ machines -- only made-up ones for now, using much of the same hardware.
 It supports:
 </p>
 <ul>
+	<li>Ability to save/restore sessions</li>
 	<li>Built-in module database</li>
 	<li>TMS 9918A video</li>
 	<li>TMS 9919 sound</li>
 	<li>TMS 5220 speech</li>
 	<li>Disk support (files in native filesystem, sector images, track images)</li>
-	<li>Debugger</li>
 	<li>Demo playback and recording support</li>
-	<li>UCSD P-Code System (new!)</li>
+	<li>UCSD P-Code System</li>
+	<li>Rudimentary debugger</li>
+	<li>Image import (new!)</li>
+	<li>"Realistic" rendering of the monitor (new!)</li>
 </ul>
+
+<p>
+(The debugger and other "RnD" features are enabled by right-clicking the screen and
+invoking "Enable Advanced Controls".  Then, a new toolbar appears at the bottom of
+the screen with a "Toggle Debugger" button.)
+</p>
 	
 <p>
 V9t9 also contains support for:
@@ -39,6 +48,7 @@ V9t9 also contains support for:
 		<li>Multiple TMS9919 ("ForTI") support (new!)</li>
 		<li>Experimental FORTH processor ("F99B") (new!)</li>
 	</ul>
+	
 <p>These can be enabled by modifying the *.jnlp file and passing "Forth99B"
 in the &lt;argument&gt; element of the &lt;application-desc&gt; element.
 </p>	
@@ -126,7 +136,7 @@ License
 This software includes content licensed under [EPL v1.0](http://www.eclipse.org/legal/epl-v10.html); 
 code from [the Base64 library](http://iharder.net/base64);  
 [Vlad Roubtsov's HRTimer library](http://www.javaworld.com/javaworld/javaqa/2003-01/01-qa-0110-timing.html);
-and LWJGL utilities from Kevin Glass and Brian Matzon.
+LWJGL utilities from Kevin Glass and Brian Matzon; and the various packages from Apache Commons. 
 
 
 
