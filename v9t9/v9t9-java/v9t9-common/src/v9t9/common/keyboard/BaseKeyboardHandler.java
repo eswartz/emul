@@ -91,16 +91,26 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			    	}
 			    	
 					//System.out.println("ch="+ch+"; prevCh="+prevCh);
+					if (currentGroup != null) {
+						queuedKeys.add(currentGroup);
+						currentGroup = null;
+					}
+					
+					postCharacter(false, shift, ch);
+					
 					if (ch == prevCh) {
-						postCharacter(false, shift, ch);
 						prevCh = 0;
 						return;
 					}
-					
-					index++;
-					
+
+					if (currentGroup != null) {
+						queuedKeys.add(currentGroup);
+						currentGroup = null;
+					}
+
 					postCharacter(true, shift, ch);
 					
+					index++;
 					
 					prevCh = ch;
 					prevShift = shift;
