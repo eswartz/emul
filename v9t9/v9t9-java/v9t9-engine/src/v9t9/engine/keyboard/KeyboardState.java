@@ -30,7 +30,7 @@ import ejs.base.utils.ListenerList.IFire;
  * 
  */
 public class KeyboardState implements IKeyboardState {
-	public static boolean DEBUG = false;
+	public static boolean DEBUG = true;
 	
 	 /* CRU rows and columns */
     static final byte SHIFT_R = 2;

@@ -48,7 +48,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		int index = 0;
 		byte prevShift = 0;
 		char prevCh = 0;
-		int runDelay;
+		long nextTime;
 
 		/**
 		 * @param chs
@@ -64,16 +64,20 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			if (machine.isPaused())
 				return;
 			
-			if (runDelay > 0) {
-				runDelay--;
+			long now = System.currentTimeMillis();
+			if (now < nextTime) {
 				return;
-			} else {
-				runDelay = machine.getSettings().get(IKeyboardHandler.settingPasteKeyDelay).getInt();
-			}
+			} 
+			
+			int pasteDelay = machine.getSettings().get(IKeyboardHandler.settingPasteKeyDelay).getInt();
+			
 			if (index <= chs.length) {
 				// only send chars as fast as the machine is reading
 //				if (!keyboardState.wasKeyboardProbed())
 //					return;
+
+				//System.out.println("ch="+ch+"; prevCh="+prevCh);
+				flushCurrentGroup();
 				
 				if (prevCh != 0) {
 					postCharacter(false, prevShift, prevCh);
@@ -89,34 +93,28 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			    	} else if (Character.isUpperCase(ch)) {
 			    		shift |= MASK_SHIFT;
 			    	}
-			    	
-					//System.out.println("ch="+ch+"; prevCh="+prevCh);
-					if (currentGroup != null) {
-						queuedKeys.add(currentGroup);
-						currentGroup = null;
-					}
 					
 					postCharacter(false, shift, ch);
 					
 					if (ch == prevCh) {
 						prevCh = 0;
+						nextTime += pasteDelay;
 						return;
 					}
 
-					if (currentGroup != null) {
-						queuedKeys.add(currentGroup);
-						currentGroup = null;
-					}
+					flushCurrentGroup();
 
 					postCharacter(true, shift, ch);
 					
+					nextTime = now + pasteDelay;
 					index++;
 					
 					prevCh = ch;
 					prevShift = shift;
 					
+					applyKeyGroup();
 				} else {
-					cancelPaste();
+					pasteTask = null;
 				}
 			}
 		}
@@ -131,6 +129,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	protected final IMachine machine;
 
 	protected IKeyboardState keyboardState;
+	private long nextResetTimeout;
 	
 	   /* Map of keys whose shifted/ctrled/fctned versions are being tracked */
 //    private byte fakemap[] = new byte[256];
@@ -165,11 +164,8 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			} else
 				return;
 		} else {
-			if (currentGroup != null) {
-				queuedKeys.add(currentGroup);
-				currentGroup = null;
-			}
-			
+			flushCurrentGroup();
+				
 			keyboardState.incrClearKeyboard();
 			List<KeyDelta> group = queuedKeys.remove();
 			
@@ -184,12 +180,21 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 //			for (KeyDelta delta : group) {
 //				keyboardState.incrSetKey(delta.onoff, delta.key);
 //			}
-			
 		}
 		lastChangeTime = now;
 		
 		keyboardState.applyIncrKeyState();
 
+	}
+
+	/**
+	 * 
+	 */
+	protected void flushCurrentGroup() {
+		if (currentGroup != null) {
+			queuedKeys.add(currentGroup);
+			currentGroup = null;
+		}
 	}
 
 	/**
@@ -205,10 +210,16 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	 */
 	@Override
 	public synchronized void resetProbe() {
+		long now = System.currentTimeMillis();
+		if (now < nextResetTimeout)
+			return;
+		
 		if (isPasting())
 			pasteTask.run();
-		applyKeyGroup();
-//		pasteNext = true;
+		else
+			applyKeyGroup();
+		
+		nextResetTimeout = now + 5;
 	}
 	
 	/* (non-Javadoc)
@@ -223,7 +234,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	 */
 	@Override
 	public void cancelPaste() {
-		resetKeyboard();
+		resetKeyboard();	// clear queued keys
 		pasteTask = null;
 		
 	}

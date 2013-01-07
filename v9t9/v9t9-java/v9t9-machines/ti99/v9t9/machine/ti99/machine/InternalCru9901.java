@@ -93,6 +93,7 @@ public class InternalCru9901 extends BaseCruChip {
 
 		public int write(int addr, int data, int num) {
 			crukeyboardcol = (crukeyboardcol & 3) | (data << 2);
+			//getMachine().getKeyboardHandler().resetProbe();
 			return 0;
 		}
 		
@@ -111,6 +112,7 @@ public class InternalCru9901 extends BaseCruChip {
 
 		public int write(int addr, int data, int num) {
 			crukeyboardcol = (crukeyboardcol & 6) | (data);
+			
 			return 0;
 		}
 		
@@ -120,7 +122,9 @@ public class InternalCru9901 extends BaseCruChip {
 
 		public int write(int addr, int data, int num) {
 			if (data != 0) {
+				// first CRU bit set in TI ROM keyboard scanning routine, good place to paste
 				getMachine().getKeyboardHandler().resetProbe();
+				
 			}
 			alphaLockMask = data != 0;
 			return 0;
@@ -187,7 +191,7 @@ public class InternalCru9901 extends BaseCruChip {
 			else if ((enabledIntMask & (1 << intVdp)) != 0) {
 				// if the keyboard is not scanned continuously, this
 				// is a way to trap it in the standard TI ROM
-				getMachine().getKeyboardHandler().resetProbe();
+//				getMachine().getKeyboardHandler().resetProbe();
 				//System.out.println("Checking VDP interrupt... "+currentints);
 				return (currentints & (1 << intVdp)) == 0 ? 0 : 1;
 			} else
@@ -208,6 +212,12 @@ public class InternalCru9901 extends BaseCruChip {
 			else if ((enabledIntMask & (1 << bit)) != 0)
 				return (currentints & (1 << bit)) == 0 ? 0 : 1;
 			else {
+				
+//				if (bit == 3) {
+//					getMachine().getKeyboardHandler().resetProbe();
+//				}
+
+				
 				int alphamask = 0;
 				
 				if (!alphaLockMask && mask == 0x10) {
@@ -217,6 +227,7 @@ public class InternalCru9901 extends BaseCruChip {
 				int keyboardRow = getMachine().getKeyboardState().getKeyboardRow(crukeyboardcol);
 				int colMask = (keyboardRow & mask);
 				int colBits = (colMask | alphamask);
+				
 				return colBits != 0 ? 0 : 1;
 			}
 		}
