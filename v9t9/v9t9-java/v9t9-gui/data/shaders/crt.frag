@@ -13,15 +13,16 @@ void main()
         vec2 center_dist = abs(step(vec2(0.5, 0.5), fract_center_dist) - fract_center_dist);
         // vertical lines have are strongest shading
         lines = min(vec2(1.0, 1.0), center_dist + vec2(0.75, 0.5));
+
         
-        vec4 vvec = vec4(lines.y, lines.y, lines.y, 1.0);
-        vec4 hvec;
+        float v = lines.y;
+        float h;
         if (viewport.x > 256)
-            hvec = vec4(lines.x, lines.x, lines.x, 1.0);
+            h = lines.x;
         else
-            hvec = vec4(1,1,1,1);
+            h = 1;
         
-        gl_FragColor = color * hvec * vvec * vec4(1.5, 1.5, 1.5, 1);
+        gl_FragColor = color * (h * v * 1.5);
     } else {
         gl_FragColor = color;
     }

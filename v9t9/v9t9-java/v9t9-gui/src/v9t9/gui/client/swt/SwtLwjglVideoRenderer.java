@@ -583,7 +583,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, params.getMagFilter());
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, params.getMinFilter());
 
-		int border = 1;
+		int border = 0;
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		
@@ -604,7 +604,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 				glTexImage2D(GL_TEXTURE_2D, 0, 
 						texFmt,
 						vdpCanvas.getVisibleWidth(),
-						vdpCanvas.getVisibleHeight()+border,
+						vdpCanvas.getVisibleHeight()+border*2,
 						border, 
 						imageCanvasFormat,
 						imageCanvasType, 
@@ -613,7 +613,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 				glTexImage2D(GL_TEXTURE_2D, 0, 
 						texFmt,
 						vdpCanvas.getVisibleWidth(),
-						vdpCanvas.getVisibleHeight()+border,
+						vdpCanvas.getVisibleHeight()+border*2,
 						border, 
 						imageCanvasFormat,
 						imageCanvasType, 
@@ -622,7 +622,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 				glTexImage2D(GL_TEXTURE_2D, 0, 
 						texFmt,
 						vdpCanvas.getVisibleWidth(),
-						vdpCanvas.getVisibleHeight()+border,
+						vdpCanvas.getVisibleHeight()+border*2,
 						border, 
 						imageCanvasFormat,
 						imageCanvasType, 
