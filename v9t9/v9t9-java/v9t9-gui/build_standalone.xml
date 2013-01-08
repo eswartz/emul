@@ -169,7 +169,7 @@
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$SVGLIBS" value="${svg.libs.jnlp}" />
     	
     	<copy overwrite="true" file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-remote.jnlp"/>
-    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$SCHEME" value="" />
+    	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$SCHEME" value="" />
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$HOST" value="${v9t9.host}" />
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$ROOT" value="/${v9t9.root}" />
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$TARGET" value="remote" />
