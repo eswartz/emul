@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
 import v9t9.common.events.NotifyException;
@@ -25,8 +26,11 @@ import ejs.base.utils.XMLUtils;
  *
  */
 public class ModuleDatabase {
+	private static final Logger logger = Logger.getLogger(ModuleDatabase.class);
 
 	public static List<IModule> loadModuleListAndClose(IMemory memory, InputStream is, URI databaseURI) throws NotifyException {
+		
+		logger.debug("Loading modules database from " + databaseURI);
 		
 		StreamXMLStorage storage = new StreamXMLStorage();
 		storage.setInputStream(is);
@@ -34,6 +38,7 @@ public class ModuleDatabase {
 		try {
 			storage.load("modules");
 		} catch (StorageException e) {
+			logger.error("failed to load module database", e);
 			if (e.getCause() instanceof StorageException)
 				throw new NotifyException(null, "Error loading module database", e.getCause());
 			throw new NotifyException(null, "Error parsing module database", e);
@@ -45,6 +50,9 @@ public class ModuleDatabase {
 		}
 		for (Element moduleElement : XMLUtils.getChildElementsNamed(storage.getDocumentElement(), "module")) {
 			String name = moduleElement.getAttribute("name");
+			
+			logger.debug("Processing " + name);
+			
 			Module module = new Module(databaseURI, name);
 			
 			Element[] entries;
@@ -64,6 +72,8 @@ public class ModuleDatabase {
 			if (!memoryEntries.isEmpty())
 				modules.add(module);
 		}
+		
+		logger.debug("Done processing modules");
 		return modules;
 	}
 	

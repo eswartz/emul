@@ -3,14 +3,6 @@ Fix keyboard implementation:
 
 -- too close a tie between the host keyboard and the 99/4A CRU map
 
--- fix paste support in Ext Basic.  Pasting the content from
-http://www.atariage.com/forums/topic/168968-f18a/page__st__750#entry2644934
-will hit a lot of errors as characters are dropped, unless PasteKeyDelay 
-is set to 60...
-
-Also note that e.g. (96 loses the 9 and "PONGO" loses the "P" since 
-one is the SHIFT/FCTN version of the previous.
-
 Sprite collision info:
 
 http://www.atariage.com/forums/topic/168968-f18a/page__st__750#entry2648609
@@ -18,7 +10,7 @@ http://www.atariage.com/forums/topic/168968-f18a/page__st__750#entry2648609
 
 
 
-
+test program for pasting:
 	
 9 DATA 1,5,1,27,5,10,5,22,9,3,9,29,13,13,13,19,17,2,17,23,21,7,21,27
 10 CALL CLEAR::CALL CHARSET::CALL SCREEN(11)

@@ -319,11 +319,14 @@ public class PathFileLocator implements IPathFileLocator {
 				continue;
 			
 			uri = resolveInsideURI(baseUri, file);
-			if (uri == null)
+			if (uri == null) {
+				logger.debug("failed to get listing from " + baseUri + " for " + file + "; got " + uri);
 				return null;
+			}
 			
-			String baseFile = new File(uri.getPath()).getName(); 
-			logger.debug("\t" +uri);
+			int idx = uri.toString().lastIndexOf('/');
+			String baseFile = uri.toString().substring(idx+1); 
+			logger.debug("\t" +uri + " base = " + baseFile);
 		
 			Collection<String> listing;
 			try {
@@ -937,6 +940,13 @@ public class PathFileLocator implements IPathFileLocator {
 		URI queryPlus = query.resolve("foo/la/dee");
 		System.out.println(queryPlus);
 		URI queryPlus2 = query.resolve("foo/la/dee" + "?"+ query.getQuery());
+		System.out.println(queryPlus2);
+		
+		query = new URI("https://foo.bar.com/path/to/something/?query=bar");
+		System.out.println(query);
+		queryPlus = query.resolve("foo/la/dee");
+		System.out.println(queryPlus);
+		queryPlus2 = query.resolve("foo/la/dee" + "?"+ query.getQuery());
 		System.out.println(queryPlus2);
 		
 		try {

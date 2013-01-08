@@ -320,7 +320,8 @@ public class ManualTestPathFileLocator {
 
 		IPathFileLocator locator = new PathFileLocator();
 		IProperty bootRoms = new SettingSchemaProperty("Paths", String.class, new ArrayList<String>());
-		String jarPath = "jar:http://192.168.24.9:8080/v9t9/v9t9j.jar!/ti99/";
+		String jarPath = "jar:https://s3.amazonaws.com/V9t9/data/v9t9j.jar!/ti99/";
+		//String jarPath = "jar:http://192.168.24.9:8080/v9t9/v9t9j.jar!/ti99/";
 		bootRoms.getList().add(jarPath);
 		locator.addReadOnlyPathProperty(bootRoms);		
 		

@@ -14,6 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import v9t9.common.demos.DemoHeader;
 import v9t9.common.demos.IDemo;
 import v9t9.common.demos.IDemoActorProvider;
@@ -45,6 +47,7 @@ import ejs.base.utils.FileUtils;
  *
  */
 public class DemoManager implements IDemoManager {
+	private static final Logger logger = Logger.getLogger(DemoManager.class);
 
 	private List<IDemo> demos = new ArrayList<IDemo>();
 	private IPathFileLocator locator;
@@ -127,10 +130,13 @@ public class DemoManager implements IDemoManager {
 		
 		demos.clear();
 		
+		logger.debug("scanning available demos");
 		for (final URI dirURI : locator.getSearchURIs()) {
 			try {
+				logger.debug("scanning " + dirURI);
 				Collection<String> ents = locator.getDirectoryListing(dirURI);
 				for (String ent : ents) {
+					logger.debug("\t" + ent);
 					if (ent.endsWith(".dem")) {
 						final URI demoURI = locator.resolveInsideURI(dirURI, ent);
 						String descrName = ent.substring(0, ent.length() - 4) + ".txt";
@@ -147,10 +153,11 @@ public class DemoManager implements IDemoManager {
 					}
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				logger.error("failed to scan directory", e);
 				// ignore
 			}
 		}
+		logger.debug("done scanning");
 	}
 
 	/* (non-Javadoc)

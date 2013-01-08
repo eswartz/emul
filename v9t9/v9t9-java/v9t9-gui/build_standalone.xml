@@ -11,7 +11,7 @@
     <property name="base.tcf"     value="../../../org.eclipse.tcf"/>
     <property name="base.tcf.agent" value="../../../org.eclipse.tcf.agent"/>
 	
-	<condition property="v9t9.host"     value="https://s3.amazonaws.com/V9t9">
+	<condition property="v9t9.host"     value="http://s3.amazonaws.com/V9t9">
 		<isset property="release"/>
 	</condition>
 	<condition property="v9t9.root"     value="data">
@@ -162,12 +162,14 @@
     	<copy file="${base.v9t9}/data/release/v9t9.html" tofile="${bin.v9t9.dir}/v9t9.html"/>
     	
     	<copy overwrite="true" file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-local.jnlp"/>
+    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$SCHEME" value="file:" />
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$HOST" value="" />
-    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$ROOT" value="" />
+    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$ROOT" value="." />
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$TARGET" value="local" />
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$SVGLIBS" value="${svg.libs.jnlp}" />
     	
     	<copy overwrite="true" file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-remote.jnlp"/>
+    	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$SCHEME" value="" />
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$HOST" value="${v9t9.host}" />
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$ROOT" value="/${v9t9.root}" />
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$TARGET" value="remote" />
