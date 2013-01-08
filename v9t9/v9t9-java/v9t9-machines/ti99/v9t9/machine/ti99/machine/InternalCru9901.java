@@ -7,6 +7,12 @@
 package v9t9.machine.ti99.machine;
 
 import static v9t9.common.keyboard.KeyboardConstants.MASK_CAPS_LOCK;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.hardware.CruManager;
@@ -93,7 +99,7 @@ public class InternalCru9901 extends BaseCruChip {
 
 		public int write(int addr, int data, int num) {
 			crukeyboardcol = (crukeyboardcol & 3) | (data << 2);
-			//getMachine().getKeyboardHandler().resetProbe();
+			checkKeyscanPattern(3);
 			return 0;
 		}
 		
@@ -123,8 +129,7 @@ public class InternalCru9901 extends BaseCruChip {
 		public int write(int addr, int data, int num) {
 			if (data != 0) {
 				// first CRU bit set in TI ROM keyboard scanning routine, good place to paste
-				getMachine().getKeyboardHandler().resetProbe();
-				
+				checkKeyscanPattern(1);
 			}
 			alphaLockMask = data != 0;
 			return 0;
@@ -191,7 +196,8 @@ public class InternalCru9901 extends BaseCruChip {
 			else if ((enabledIntMask & (1 << intVdp)) != 0) {
 				// if the keyboard is not scanned continuously, this
 				// is a way to trap it in the standard TI ROM
-//				getMachine().getKeyboardHandler().resetProbe();
+				// getMachine().getKeyboardHandler().resetProbe();
+				//checkKeyscanPattern(2);
 				//System.out.println("Checking VDP interrupt... "+currentints);
 				return (currentints & (1 << intVdp)) == 0 ? 0 : 1;
 			} else
@@ -213,10 +219,8 @@ public class InternalCru9901 extends BaseCruChip {
 				return (currentints & (1 << bit)) == 0 ? 0 : 1;
 			else {
 				
-//				if (bit == 3) {
-//					getMachine().getKeyboardHandler().resetProbe();
-//				}
-
+				if (bit == 10)
+					checkKeyscanPattern(4);
 				
 				int alphamask = 0;
 				
@@ -262,6 +266,11 @@ public class InternalCru9901 extends BaseCruChip {
 		}
 		
 	};
+
+	private List<Integer> knownKeyscanPattern = new LinkedList<Integer>();
+	private List<Integer> keyscanPattern = new LinkedList<Integer>();
+
+	private long nextKeyscanPatternCheckTime;
 
     public InternalCru9901(TI99Machine machine) {
     	super(machine, 15);
@@ -316,6 +325,84 @@ public class InternalCru9901 extends BaseCruChip {
 
         registerInternalCru(0x36, 1, crurCassetteIn);
     }
+
+
+	/**
+	 * @param addr
+	 */
+	protected synchronized void checkKeyscanPattern(int addr) {
+		
+		long now = System.currentTimeMillis();
+		
+		// always favor this one
+		if (addr == 1) {
+			// use this
+			knownKeyscanPattern.clear();
+			knownKeyscanPattern.add(1);
+			
+			keyscanPattern.clear();
+			getMachine().getKeyboardHandler().resetProbe();
+			
+			nextKeyscanPatternCheckTime = now + 1000;
+			return;
+		}
+		else if (now < nextKeyscanPatternCheckTime) {
+			// ignore
+			return;
+		}
+		
+		// we haven't seen the expected pattern in a while
+		if (!knownKeyscanPattern.isEmpty()) {
+			if (knownKeyscanPattern.indexOf(addr) == keyscanPattern.size()) {
+				keyscanPattern.add(addr);
+				if (keyscanPattern.size() == knownKeyscanPattern.size()) {
+					keyscanPattern.clear();
+					getMachine().getKeyboardHandler().resetProbe();
+				}
+				return;
+			} else {
+				// mismatch
+				knownKeyscanPattern.clear();
+			}
+		}
+
+		keyscanPattern.add(addr);
+		
+		// check for a repeat
+		if (keyscanPattern.contains(3) && keyscanPattern.contains(4)) {
+			for (int seqlen = 1; seqlen < keyscanPattern.size() / 2; seqlen++) {
+				int lastSeq = keyscanPattern.size() - seqlen;
+				List<Integer> seq = new ArrayList<Integer>(keyscanPattern.subList(lastSeq, lastSeq + seqlen)); 
+				if (Collections.lastIndexOfSubList(keyscanPattern.subList(0, lastSeq), seq) == lastSeq - seqlen) {
+					// found the sequence: now, bias toward the smallest address
+					List<Integer> expSeq = new ArrayList<Integer>(seq);
+					int min = Integer.MAX_VALUE;
+					int minI = 0;
+					for (int i = 0; i < seqlen; i++) {
+						int v = seq.get(i);
+						if (v < min) {
+							expSeq.clear();
+							expSeq.addAll(keyscanPattern.subList(lastSeq - i, lastSeq - i + seqlen));
+							minI = i;
+							min = v;
+						}
+					}
+
+					knownKeyscanPattern.clear();
+					knownKeyscanPattern.addAll(expSeq);
+					
+					keyscanPattern.clear();
+					// add entries we skipped
+					keyscanPattern.addAll(knownKeyscanPattern.subList(0, minI));
+
+					getMachine().getKeyboardHandler().resetProbe();
+					
+					nextKeyscanPatternCheckTime = now + 1000;
+					return;
+				}
+			}
+		}
+	}
 
 
 	/** Register handler for a range of bits.  Note that the internal bus

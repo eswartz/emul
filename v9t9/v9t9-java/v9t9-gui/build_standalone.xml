@@ -11,10 +11,10 @@
     <property name="base.tcf"     value="../../../org.eclipse.tcf"/>
     <property name="base.tcf.agent" value="../../../org.eclipse.tcf.agent"/>
 	
-	<condition property="v9t9.host"     value="http://eswartz.github.com/emul">
+	<condition property="v9t9.host"     value="https://s3.amazonaws.com/V9t9">
 		<isset property="release"/>
 	</condition>
-	<condition property="v9t9.root"     value="data/v9t9">
+	<condition property="v9t9.root"     value="data">
 		<isset property="release"/>
 	</condition>
 	

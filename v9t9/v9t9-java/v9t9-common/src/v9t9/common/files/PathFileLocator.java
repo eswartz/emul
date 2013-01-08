@@ -319,6 +319,9 @@ public class PathFileLocator implements IPathFileLocator {
 				continue;
 			
 			uri = resolveInsideURI(baseUri, file);
+			if (uri == null)
+				return null;
+			
 			String baseFile = new File(uri.getPath()).getName(); 
 			logger.debug("\t" +uri);
 		

@@ -188,7 +188,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 				if (!control.isFocusControl())
 					return;
 				
-				if (isPasting() && event.keyCode == SWT.ESC) {
+				if (event.keyCode == SWT.ESC) {
 					cancelPaste();
 					event.doit = false;
 					return;

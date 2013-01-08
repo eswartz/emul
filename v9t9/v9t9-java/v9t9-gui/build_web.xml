@@ -33,6 +33,7 @@
 
     	<mkdir dir="${web}/data" />
     	<mkdir dir="${web}/data/v9t9" />
+    	<delete file="${web}/data/v9t9/v9t9.zip" />
 
     	<copy todir="${web}/data/v9t9" verbose="true" preservelastmodified="yes">
     		<fileset dir="${bin.v9t9.dir}">
@@ -40,7 +41,7 @@
     	    </fileset>
       	</copy>
     	
-    	<zip destfile="${web}/data/v9t9.zip">
+    	<zip destfile="${web}/data/v9t9/v9t9.zip">
     		<fileset dir="${web}/data">
     			<include name="v9t9/**"/>
     		</fileset>

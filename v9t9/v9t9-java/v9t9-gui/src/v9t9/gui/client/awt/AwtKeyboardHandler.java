@@ -132,7 +132,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 	}
 	
 	protected void handleKey(boolean pressed, int modifiers, int keyCode, char ascii, boolean keyPad) {
-		if (isPasting() && pressed && keyCode == KeyEvent.VK_ESCAPE) {
+		if (pressed && keyCode == KeyEvent.VK_ESCAPE) {
 			cancelPaste();
 			return;
 		}

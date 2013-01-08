@@ -180,3 +180,6 @@ http://www.atariage.com/forums/topic/168968-f18a/page__st__750#entry2648609
 10230 CALL KEY(5,T,S)::IF T=13 THEN 10240 ELSE 10230
 10235 !@P+
 10240 SUBEND 
+
+
+220, 690, 10020, 10030, 10050

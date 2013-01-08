@@ -17,7 +17,7 @@ class JnlpResource(static.File):
         ret = static.File.render_GET(self, request)
         return ret
 		
-if "github" in "http://localhost:8080":
+if "github" in "$v9t9.host":
 	print "NOTE: the last build is targeting http://localhost:8080 (-Drelease=1),\nso this script will not work"
 	sys.exit(1)
     

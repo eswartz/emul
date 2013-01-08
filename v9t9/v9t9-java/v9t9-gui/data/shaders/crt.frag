@@ -20,7 +20,7 @@ void main()
         if (viewport.x > 256)
             h = lines.x;
         else
-            h = 1;
+            h = 1.;
         
         gl_FragColor = color * (h * v * 1.5);
     } else {
