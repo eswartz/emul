@@ -108,7 +108,7 @@ Using Web Start
 <div  class='lookyhere' style=' padding: 0em 1em;'>
 <script type="text/javascript">
     //var dir = location.href.substring(0, location.href.lastIndexOf('/')+1);
-    var url = "https://s3.amazonaws.com/V9t9/data/v9t9/v9t9-remote.jnlp";
+    var url = "https://s3.amazonaws.com/V9t9/data/v9t9-remote.jnlp";
     deployJava.launchButtonPNG = 'images/v9t9-webstart-button.png';
     deployJava.createWebStartLaunchButton(url, '1.6.0');
 </script>
