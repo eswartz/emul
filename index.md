@@ -83,7 +83,7 @@ Installing Locally
 --------------------
 
 <div class='lookyhere'>
-<a href="https://s3.amazonaws.com/V9t9/data/v9t9.zip">V9t9.zip</a>
+<a href="http://s3.amazonaws.com/V9t9/data/v9t9.zip">V9t9.zip</a>
 <p>
 <i>Download</i>
 </p>
@@ -108,7 +108,7 @@ Using Web Start
 <div  class='lookyhere' style=' padding: 0em 1em;'>
 <script type="text/javascript">
     //var dir = location.href.substring(0, location.href.lastIndexOf('/')+1);
-    var url = "https://s3.amazonaws.com/V9t9/data/v9t9-remote.jnlp";
+    var url = "http://s3.amazonaws.com/V9t9/data/v9t9-remote.jnlp";
     deployJava.launchButtonPNG = 'images/v9t9-webstart-button.png';
     deployJava.createWebStartLaunchButton(url, '1.6.0');
 </script>
