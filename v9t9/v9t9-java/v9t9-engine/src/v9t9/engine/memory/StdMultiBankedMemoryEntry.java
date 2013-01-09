@@ -12,7 +12,8 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryEntry;
 
 /**
- * This is a standard TI-99/4A style banked memory entry.
+ * This is a standard TI-99/4A style banked memory entry, where a write to
+ * a byte/word in increments of >2 from >6000 will select the given bank.
  * @author ejs
  *
  */
@@ -43,7 +44,7 @@ public class StdMultiBankedMemoryEntry extends
 	
 	@Override
 	public void writeByte(int addr, byte val) {
-		int bank = (addr & 2) >> 1;
+		int bank = (addr & 0xff) >> 1;
 		if (selectBank(bank)) {
 			
 			PrintWriter log = Logging.getLog(dumpFullInstructions);
@@ -56,7 +57,7 @@ public class StdMultiBankedMemoryEntry extends
 
 	@Override
 	public void writeWord(int addr, short val) {
-		int bank = (addr & 2) >> 1;
+		int bank = (addr & 0xff) >> 1;
 		if (selectBank(bank)) {
 			PrintWriter log = Logging.getLog(dumpFullInstructions);
 			if (log != null) {

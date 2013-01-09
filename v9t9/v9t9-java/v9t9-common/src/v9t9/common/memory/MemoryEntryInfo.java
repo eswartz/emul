@@ -55,6 +55,9 @@ public class MemoryEntryInfo {
 	/** SettingsSchema */
 	public static final String FILENAME_PROPERTY = "fileProperty";
 
+	/** Boolean: whether bank order is reversed */
+	public final static String REVERSED = "reversed";
+
 	private Map<String, Object> properties;
 	
 	public MemoryEntryInfo() {
@@ -232,6 +235,14 @@ public class MemoryEntryInfo {
 //		if (getFile2MD5() != null && storedInfo.md5.equals(getFile2MD5()))
 //			return true;
 		return false;
+	}
+
+
+	/**
+	 * @return
+	 */
+	public boolean isReversed() {
+		return getBool(REVERSED);
 	}
 
 }

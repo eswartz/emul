@@ -126,8 +126,8 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 		@SuppressWarnings("unchecked")
 		Class<? extends BankedMemoryEntry> klass = (Class<? extends BankedMemoryEntry>) info.getBankedClass();
 		
-		if (PCBBankedMemoryEntry.class.isAssignableFrom(klass)) {
-			return newPCBBankedMemoryFromFile(info);
+		if (info.getFilename2() == null) {
+			return newMultiBankedMemoryFromFile(info);
 		}
 		
 		IMemoryEntry bank0 = newFromFile(info, info.getName() + " (bank 0)", 
@@ -158,7 +158,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 	 * @param info
 	 * @return
 	 */
-	private BankedMemoryEntry newPCBBankedMemoryFromFile(MemoryEntryInfo info) throws IOException {
+	private BankedMemoryEntry newMultiBankedMemoryFromFile(MemoryEntryInfo info) throws IOException {
 
     	StoredMemoryEntryInfo storedInfo = resolveMemoryEntry(info, info.getName(), 
     			info.getFilename(), info.getFileMD5(), info.getOffset());
@@ -167,16 +167,19 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
     	int numBanks = storedInfo.size / bankSize;
     	
     	IMemoryEntry[] entries = new IMemoryEntry[numBanks];
+    	
+    	boolean reversed = storedInfo.info.isReversed();
+    	
     	for (int bank = 0; bank < entries.length; bank++) {
-    		// banks are numbered/accessed in reverse order
-    		entries[entries.length - bank - 1] = newFromFile(info, info.getName() + " (bank " + bank + ")", 
+    		int entryIdx = reversed ? entries.length - bank - 1 : bank;
+    		entries[entryIdx] = newFromFile(info, info.getName() + " (bank " + bank + ")", 
     				info.getFilename(), info.getFileMD5(), info.getOffset() + bank * bankSize, 
     				MemoryAreaFactory.createMemoryArea(memory, info));
     	}
 		
 		BankedMemoryEntry bankedMemoryEntry;
 		try {
-			bankedMemoryEntry = new PCBBankedMemoryEntry(
+			bankedMemoryEntry = new StdMultiBankedMemoryEntry(
 							settings, memory, info.getName(), entries);
 		} catch (Exception e) {
 			throw (IOException) new IOException().initCause(e);
@@ -304,11 +307,9 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 					if ("true".equals(el.getAttribute("custom"))) {
 						properties.put(MemoryEntryInfo.CLASS, BankedMemoryEntry.class);
 					} else {
-						if ("true".equals(el.getAttribute("pcb"))) {
-							properties.put(MemoryEntryInfo.SIZE, -0x20000);
-							properties.put(MemoryEntryInfo.CLASS, PCBBankedMemoryEntry.class);
-						} else {
-							properties.put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
+						properties.put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
+						if (el.getAttribute(MemoryEntryInfo.FILENAME2).isEmpty()) {
+							properties.put(MemoryEntryInfo.SIZE, -0x40000);
 						}
 					}
 				}
@@ -327,6 +328,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				getIntAttribute(el, MemoryEntryInfo.OFFSET, info);
 				getBooleanAttribute(el, MemoryEntryInfo.STORED, info);
 				getClassAttribute(el, MemoryEntryInfo.CLASS, MemoryEntry.class, info);
+				getBooleanAttribute(el, MemoryEntryInfo.REVERSED, info);
 
 				memoryEntries.add(info);
 			}
@@ -399,6 +401,8 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 						"0x" + HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.OFFSET)).intValue()));
 			if (info.isStored())
 				entry.setAttribute(MemoryEntryInfo.STORED, "true");
+			if (info.isBanked() && info.isReversed())
+				entry.setAttribute(MemoryEntryInfo.REVERSED, "true");
 
 			memoryEntriesEl.appendChild(entry);
 		}
