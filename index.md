@@ -18,8 +18,8 @@ Sound samples:
 <ul>
 	<li><a href='audio/jawbreaker.mp3' type='audio/mpeg'>Jawbreaker theme (45s)</a></li>
 	<li><a href='audio/cassette-recording.mp3' type='audio/mpeg'>Cassette recording (11s)</a></li>
-	<li><a href='audio/parsec-speech.wav' type='audio/wav'>Parsec speech</a></li>
-	<li><a href='audio/teii-speech.wav' type='audio/wav'>Terminal Emulator II speech</a></li>
+	<li><a href='audio/parsec-speech.wav' type='audio/x-wav'>Parsec speech</a></li>
+	<li><a href='audio/teii-speech.wav' type='audio/x-wav'>Terminal Emulator II speech</a></li>
 </ul>
 </div>
 </div>
