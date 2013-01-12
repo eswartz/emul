@@ -6,11 +6,25 @@ layout: wikistyle
 Introduction
 ============
 
+
 <div class='lookyhere' style='width:inherit'>
-<a href='images/v9t9-window.png'>
-<img alt="V9t9 image" src="images/v9t9-window_th.png" width="232" height="137"></img>
-</a>
+<p>
+	<a href='images/v9t9-window.png'>
+	<img alt="V9t9 image" src="images/v9t9-window_th.png" width="232" height="157"></img>
+	</a>
+</p>
+<div class='lookyhere' style='text-align:left'>
+Sound samples:
+<ul>
+	<li><a href='audio/jawbreaker.mp3' type='audio/mpeg'>Jawbreaker theme (45s)</a></li>
+	<li><a href='audio/cassette-recording.mp3' type='audio/mpeg'>Cassette recording (11s)</a></li>
+	<li><a href='audio/parsec-speech.wav' type='audio/wav'>Parsec speech</a></li>
+	<li><a href='audio/teii-speech.wav' type='audio/wav'>Terminal Emulator II speech</a></li>
+</ul>
 </div>
+</div>
+
+
 <div style='width:80%;'>
 <p>
 V9t9 emulates the TI-99/4A (by default) though it can support other

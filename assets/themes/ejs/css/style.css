@@ -305,7 +305,6 @@ span.bash-output {
   -moz-background-clip: padding;
   -webkit-background-clip: padding-box;
   background-clip: padding-box;
-  position: relative;
   padding: 1em 1em;
   
   margin: 0em 0.5em;
