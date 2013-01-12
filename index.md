@@ -8,7 +8,7 @@ Introduction
 
 <div class='lookyhere' style='width:inherit'>
 <a href='images/v9t9-window.png'>
-<img alt="V9t9 image" src="images/v9t9-window_th.png" width='303' height='200'></img>
+<img alt="V9t9 image" src="images/v9t9-window_th.png" width="232" height="137"></img>
 </a>
 </div>
 <div style='width:80%;'>
