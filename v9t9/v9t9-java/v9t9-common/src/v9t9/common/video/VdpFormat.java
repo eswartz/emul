@@ -19,7 +19,7 @@ public enum VdpFormat {
 	/** V9938 4-color mode */
 	COLOR4_1x1(4, true),
 	/** V9938 256-color mode */
-	COLOR256_1x1(256, false);
+	COLOR256_1x1(256, true);
 	
 	private int ncols;
 	private boolean isMsx2;
