@@ -730,6 +730,10 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	public void saveState(ISettingSection section) {
 		super.saveState(section);
 
+		ISettingSection palettes = section.addSection("Palette");
+		for (int i = 0; i < palette.length; i++)
+			palettes.put(HexUtils.toHex2(i), HexUtils.toHex4(palette[i]));
+
 		ISettingSection statuses = section.addSection("Statuses");
 		for (int i = 0; i < statusvec.length; i++)
 			statuses.put(HexUtils.toHex2(i), HexUtils.toHex2(statusvec[i]));
@@ -752,6 +756,21 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			setupCommand();
 		}
 
+		ISettingSection palettes = section.getSection("Palette");
+		if (palettes != null) {
+			for (String name : palettes.getSettingNames()) {
+				try {
+					int idx = Integer.parseInt(name, 16);
+					if (idx >= 0 && idx < palette.length)
+						setRegister(VdpV9938Consts.REG_PAL0 + idx, 
+							(short) Integer.parseInt(palettes.get(name), 16));
+				} catch (NumberFormatException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		
 		ISettingSection statuses = section.getSection("Statuses");
 		if (statuses != null) {
 			for (String name : statuses.getSettingNames()) {
