@@ -6,6 +6,7 @@ package v9t9.gui.client.swt;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +48,7 @@ import v9t9.common.video.ICanvas;
 import v9t9.common.video.ICanvasListener;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
+import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.ImageDataCanvas24Bit;
@@ -480,10 +482,25 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 * @return
 	 */
 	public ImageData getScreenshotImageData() {
-		if (vdpCanvas instanceof ImageDataCanvas) {
-			ImageData imageData;
-			imageData = (ImageData) ((ImageDataCanvas) vdpCanvas).getImageData().clone();
-			return imageData;
+		synchronized (vdpCanvas) {
+			if (vdpCanvas instanceof ImageDataCanvas) {
+				ImageData imageData;
+				imageData = (ImageData) ((ImageDataCanvas) vdpCanvas).getImageData().clone();
+				return imageData;
+			}
+			if (vdpCanvas instanceof BitmapVdpCanvas) {
+				Buffer buffer = ((BitmapVdpCanvas) vdpCanvas).getBuffer();
+				ImageData imageData = ImageUtils.createStandard32BitImageData(vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight());
+				byte[] rgb = { 0, 0, 0 };
+				for (int i = 0; i < imageData.data.length; i += 4) {
+					((BitmapVdpCanvas) vdpCanvas).getNextRGB(buffer, rgb);
+					imageData.data[i+1] = rgb[0];
+					imageData.data[i+2] = rgb[1];
+					imageData.data[i+3] = rgb[2];
+					imageData.data[i+0] = -1;
+				}
+				return imageData;
+			}
 		}
 		return null;
 	}

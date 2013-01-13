@@ -4,6 +4,7 @@
 package v9t9.video;
 
 import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.eclipse.swt.graphics.ImageData;
@@ -468,6 +469,15 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas implements IGLDataCanv
 		return vdpCanvasBuffer;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.BitmapVdpCanvas#getNextRGB(java.nio.Buffer, byte[])
+	 */
+	@Override
+	public void getNextRGB(Buffer buffer, byte[] rgb) {
+		((ByteBuffer) buffer).get(rgb);
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see v9t9.video.IGLDataCanvas#getImageType()
 	 */

@@ -3,6 +3,8 @@
  */
 package v9t9.video;
 
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.eclipse.swt.graphics.ImageData;
@@ -64,6 +66,24 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			imageData.data[x] = cc;
 			imageData.data[x+1] = cc1;
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.BitmapVdpCanvas#getBuffer()
+	 */
+	@Override
+	public Buffer getBuffer() {
+		return ByteBuffer.wrap(imageData.data);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.BitmapVdpCanvas#getNextRGB(java.nio.Buffer, byte[])
+	 */
+	@Override
+	public void getNextRGB(Buffer buffer, byte[] rgb) {
+		RGB c = imageData.palette.colors[((ByteBuffer) buffer).get() & 0xff];
+		rgb[0] = (byte) c.red;
+		rgb[1] = (byte) c.green;
+		rgb[2] = (byte) c.blue;
 	}
 
 	/* (non-Javadoc)

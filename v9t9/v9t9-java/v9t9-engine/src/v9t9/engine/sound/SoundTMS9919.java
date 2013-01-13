@@ -208,7 +208,8 @@ public class SoundTMS9919 implements ISoundChip {
 			IVoice v = voices[vn];
 			v.saveState(settings.addSection(v.getName()));
 		}
-		audioGateVoice.saveState(settings.addSection(audioGateVoice.getName()));
+		if (audioGateVoice != null)
+			audioGateVoice.saveState(settings.addSection(audioGateVoice.getName()));
 		cassetteVoice.saveState(settings.addSection(cassetteVoice.getName()));
 
 	}
@@ -220,7 +221,8 @@ public class SoundTMS9919 implements ISoundChip {
 			String name = v.getName();
 			v.loadState(settings.getSection(name));
 		}
-		audioGateVoice.loadState(settings.getSection(audioGateVoice.getName()));
+		if (audioGateVoice != null)
+			audioGateVoice.loadState(settings.getSection(audioGateVoice.getName()));
 		cassetteVoice.loadState(settings.getSection(cassetteVoice.getName()));
 	}
 	

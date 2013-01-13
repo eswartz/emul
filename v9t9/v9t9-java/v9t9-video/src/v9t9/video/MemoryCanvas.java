@@ -4,6 +4,7 @@
 package v9t9.video;
 
 import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import v9t9.common.memory.ByteMemoryAccess;
@@ -272,5 +273,25 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 	
 	public Buffer copy(Buffer buffer) {
 		return copyBytes(buffer, bitmap, getLineStride(), 1);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.BitmapVdpCanvas#getBuffer()
+	 */
+	@Override
+	public Buffer getBuffer() {
+		return ByteBuffer.wrap(bitmap);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.BitmapVdpCanvas#getNextRGB(java.nio.Buffer, byte[])
+	 */
+	@Override
+	public void getNextRGB(Buffer buffer, byte[] rgb) {
+		byte col = ((ByteBuffer) buffer).get();
+		byte[] crgb = getColorMgr().getRGB(col & 0xff);
+		rgb[0] = crgb[0];
+		rgb[1] = crgb[1];
+		rgb[2] = crgb[2];
 	}
 }

@@ -4,6 +4,7 @@
 package v9t9.video;
 
 import java.nio.Buffer;
+import java.nio.ShortBuffer;
 import java.util.Arrays;
 
 import org.ejs.gui.images.ColorMapUtils;
@@ -179,6 +180,15 @@ public class BitmapCanvasShort extends BitmapVdpCanvas implements IGLDataCanvas 
 				colorRGB332Map[i] = ColorMapUtils.getRGBToRGB565(rgb);
 			}
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.BitmapVdpCanvas#getNextRGB(java.nio.Buffer, byte[])
+	 */
+	@Override
+	public void getNextRGB(Buffer buffer, byte[] rgb) {
+		short pixel = ((ShortBuffer) buffer).get();
+		ColorMapUtils.rgb565ToRGB(pixel, rgb);
 	}
 
 	protected void drawEightPixels(int offs, byte mem, byte fg, byte bg) {
@@ -454,4 +464,5 @@ public class BitmapCanvasShort extends BitmapVdpCanvas implements IGLDataCanvas 
 		return getColorMgr().isGreyscale() ? GL_LUMINANCE12_ALPHA4 : GL_RGB4;
 //		return GL_RGB4;
 	}
+
 }

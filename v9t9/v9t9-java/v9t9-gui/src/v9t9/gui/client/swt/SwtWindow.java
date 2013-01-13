@@ -862,7 +862,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 		save.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				saveMachineState();
+				try {
+					saveMachineState();
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
 			}
 		});
 

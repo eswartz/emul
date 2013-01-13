@@ -180,4 +180,7 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 		return displayAdjust;
 	}
 
+	public abstract Buffer getBuffer();
+
+	public abstract void getNextRGB(Buffer buffer, byte[] rgb);
 }

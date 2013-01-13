@@ -4,6 +4,7 @@
 package v9t9.video;
 
 import java.nio.Buffer;
+import java.nio.IntBuffer;
 import java.util.Arrays;
 
 import org.ejs.gui.images.ColorMapUtils;
@@ -78,6 +79,15 @@ public class BitmapCanvasInt extends BitmapVdpCanvas implements IGLDataCanvas {
 			int fgRGB = colorRGBMap[rowData[i]];
 			idata[offs+i] = fgRGB;
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.BitmapVdpCanvas#getNextRGB(java.nio.Buffer, byte[])
+	 */
+	@Override
+	public void getNextRGB(Buffer buffer, byte[] rgb) {
+		int pixel = ((IntBuffer) buffer).get();
+		ColorMapUtils.pixelToRGB(pixel, rgb);
 	}
 
 
