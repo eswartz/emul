@@ -120,7 +120,7 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 		} else {
 			for (int r = 0; r < vh; r++) {
 				((ByteBuffer) buffer).put(data, offs, bpp * vw);
-				offs += bytesPerLine;
+				offs += bpp * vw;	// skip other half
 			}
 		}
 		buffer.rewind();
@@ -143,7 +143,7 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 		} else {
 			for (int r = 0; r < vh; r++) {
 				((ShortBuffer) buffer).put(data, offs, vw);
-				offs += pixelsPerLine;
+				offs += vw;	// skip other half
 			}
 		}
 		buffer.rewind();
@@ -166,7 +166,7 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 		} else {
 			for (int r = 0; r < vh; r++) {
 				((IntBuffer) buffer).put(data, offs, vw);
-				offs += pixelsPerLine;
+				offs += vw;	// skip other half
 			}
 		}
 		buffer.rewind();
