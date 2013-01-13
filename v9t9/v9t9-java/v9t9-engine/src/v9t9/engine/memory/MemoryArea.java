@@ -207,7 +207,7 @@ public abstract class MemoryArea implements IMemoryArea {
 	protected void loadChunk(IMemoryEntry memoryEntry, int saveAddr,
 			byte[] chunk) {
 		for (int idx = 0; idx < chunk.length; idx++) {
-			memoryEntry.flatWriteByte(saveAddr++, chunk[idx]);
+			flatWriteByte(memoryEntry, saveAddr++, chunk[idx]);
 		}
 	}
 
