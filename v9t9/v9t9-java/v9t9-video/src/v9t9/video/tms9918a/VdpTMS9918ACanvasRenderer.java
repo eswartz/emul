@@ -25,6 +25,7 @@ import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpChanges;
 import v9t9.common.video.VdpColorManager;
+import v9t9.common.video.VdpColorManager.IColorListener;
 import v9t9.common.video.VdpFormat;
 import v9t9.video.BlankModeRedrawHandler;
 import v9t9.video.IVdpModeRedrawHandler;
@@ -70,6 +71,8 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 
 	protected boolean colorsChanged;
 
+	private IColorListener colorListener;
+
 	public VdpTMS9918ACanvasRenderer(ISettingsHandler settings, IVideoRenderer renderer) {
 		this.renderer = renderer;
 		this.vdpChip = (IVdpTMS9918A) renderer.getVdpHandler();
@@ -79,7 +82,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		
 		setupRegisters();
 		
-		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, vdpChip, this, vdpChanges, vdpCanvas);
+		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, vdpChip, vdpChanges, vdpCanvas);
 		blankModeRedrawHandler = new BlankModeRedrawHandler(vdpRedrawInfo, createBlankModeInfo());
 		
 		pauseMachine = settings.get(IMachine.settingPauseMachine);
@@ -90,7 +93,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		vdpTouches = new BitSet(vdpChip.getMemorySize());
 		
 		this.colorsChanged = true;
-		vdpCanvas.getColorMgr().addListener(new VdpColorManager.IColorListener() {
+		colorListener = new VdpColorManager.IColorListener() {
 			
 			@Override
 			public void colorsChanged() {
@@ -98,7 +101,8 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 					colorsChanged = true;
 				}
 			}
-		});
+		};
+		vdpCanvas.getColorMgr().addListener(colorListener);
 	}
 	
 	/* (non-Javadoc)
@@ -106,7 +110,10 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	 */
 	@Override
 	public void dispose() {
-		
+		vdpChip.getVideoMemory().removeWriteListener(this);
+		vdpChip.removeWriteListener(this);
+
+		vdpCanvas.getColorMgr().removeListener(colorListener);
 	}
 
 	protected void setupRegisters() {
@@ -129,7 +136,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		 	if ((redraw & REDRAW_MODE) != 0) {
 		 		setVideoMode();
 		 		setupBackdrop();
-		 		dirtyAll();
+		 		forceRedraw();
 		 	}
 		
 		 	if ((redraw & REDRAW_SPRITES) != 0) {
@@ -138,17 +145,17 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	
 		 	if ((redraw & REDRAW_PALETTE) != 0) {
 		 		setupBackdrop();
-		 		dirtyAll();
+		 		forceRedraw();
 		 	}
 		
 		 	if ((redraw & REDRAW_BLANK) != 0) {
 		 		if ((vdpregs[1] & R1_NOBLANK) == 0) {
 		 			vdpCanvas.setBlank(true);
-		 			dirtyAll();
+			 		forceRedraw();
 		 			//update();
 		 		} else {
 		 			vdpCanvas.setBlank(false);
-		 			dirtyAll();
+			 		forceRedraw();
 		 			//update();
 		 		}
 		 	}
@@ -244,7 +251,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 		switch (modeNumber) {
 		case MODE_TEXT:
 			setTextMode();
-			dirtyAll();	// for border
+	 		forceRedraw();  // for border
 			break;
 		case MODE_MULTI:
 			setMultiMode();
@@ -444,11 +451,6 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	    	vdpTouches.set(vdpaddr);
 	    	if (val instanceof Short)
 	    		vdpTouches.set(vdpaddr + 1);
-	    	//long now = System.currentTimeMillis();
-	    	//if (now >= nextTouchFlushTime) {
-	    	//	flushVdpChanges();
-	    	//	nextTouchFlushTime = now + 1000;
-	    	//}
     	}
     }
     
@@ -459,11 +461,6 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	}
 
 
-	protected synchronized void dirtyAll() {
-		vdpChanges.changed = true;
-		vdpChanges.fullRedraw = true;
-	}
-	
 	public synchronized boolean update() {
 		flushVdpChanges();
 		if (!vdpChanges.changed)
@@ -534,8 +531,9 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	 * @see v9t9.common.video.IVdpCanvasRenderer#forceRedraw()
 	 */
 	@Override
-	public void forceRedraw() {
-		dirtyAll();
+	public synchronized void forceRedraw() {
+		vdpChanges.changed = true;
+		vdpChanges.fullRedraw = true;
 	}
 	
 	/* (non-Javadoc)

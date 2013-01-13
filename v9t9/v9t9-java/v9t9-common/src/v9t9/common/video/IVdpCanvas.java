@@ -14,13 +14,26 @@ public interface IVdpCanvas extends ICanvas {
 
 	VdpFormat getFormat();
 	
-	void writeRow(int y, byte[] rowData);
+	void setFormat(VdpFormat format);
+
+	void setOffset(int xoffs, int yoffs);
+
+	void setSize(int width, int height, boolean interlacedEvenOdd);
+
+	int getBitmapOffset(int i, int j);
 
 	boolean isInterlacedEvenOdd();
+
+	void writeRow(int y, byte[] rowData);
+
 
 	/** Clear the canvas to the clear color, if the rgb is not used.  
 	 */
 	void clear();
+	void clearToEvenOddClearColors();
+
+	void setBlank(boolean b);
+
 	
 
 	/**
@@ -103,20 +116,6 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param isLogicalOr */
 	void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr);
 
-	void clearToEvenOddClearColors();
-
-	void setFormat(VdpFormat format);
-
-	void setBlank(boolean b);
-
-	void syncColors();
-
-	void setOffset(int xoffs, int yoffs);
-
-	void setSize(int width, int height, boolean interlacedEvenOdd);
-
-	int getBitmapOffset(int i, int j);
-
 	void blitSpriteBlock(ISpriteVdpCanvas spriteCanvas, int i, int j, int blockMag);
 
 	void blitFourColorSpriteBlock(ISpriteVdpCanvas spriteCanvas, int i, int j,
@@ -125,5 +124,6 @@ public interface IVdpCanvas extends ICanvas {
 
 	VdpColorManager getColorMgr();
 	void setClearColor(int c);
+	void syncColors();
 
 }

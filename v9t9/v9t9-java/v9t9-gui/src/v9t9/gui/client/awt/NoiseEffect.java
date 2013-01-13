@@ -7,7 +7,6 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 
-import v9t9.common.client.IMonitorEffect;
 import v9t9.gui.jna.V9t9Render;
 
 /**

@@ -68,6 +68,7 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 	@Override
 	public void dispose() {
 		renderer.getFastTimer().cancelTask(timerRunnable);
+		super.dispose();
 	}
 
 	protected void setupRegisters() {
@@ -175,7 +176,7 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		vdpCanvas.setOffset(xoffs, yoffs);
 		// V9990 reference says:
 		// (P1 and B1 by 1 pixel unit, P2, B2 and B3 by 2-pixel unit, B4, B5 and B6 by 4-pixel unit) 
-		dirtyAll();
+		forceRedraw();
 		
 	}
 
@@ -188,7 +189,7 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		int g = (palette[col]) & 0x7;
 		//System.out.println("palette " + paletteidx + ": " + g +"|"+ r + "|"+ b);
 		vdpCanvas.getColorMgr().setGRB333(col, g, r, b);
-		dirtyAll();
+		forceRedraw();
 		
 		synchronized (this) {
 			colorsChanged = true;
@@ -201,7 +202,7 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		switch (modeNumber) {
 		case MODE_TEXT2:
 			setText2Mode();
-			dirtyAll();	// for border
+			forceRedraw();	// for border
 			break;
 		case MODE_GRAPHICS3:
 			setGraphics3Mode();
@@ -402,6 +403,9 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 			} else if (reg == 13) {
 				blinkOn = value != 0 && (value & 0xf) == 0x0;
 			}
+			if (vdpModeRedrawHandler instanceof Text2ModeRedrawHandler) {
+				((Text2ModeRedrawHandler) vdpModeRedrawHandler).setBlink(blinkOn);
+			}
 			super.registerChanged(reg, value);
 		}
 	}
@@ -441,17 +445,21 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 				if (prevPageOffset != pageOffset) {
 					//System.out.println("dirtying " + pageOffset);
 					vdpModeInfo.patt.base = vdpChip.getPatternTableBase() ^ pageOffset;
-					dirtyAll();
+					forceRedraw();
 				}
 			} else if (isBlinking) {
 				boolean wasOn = blinkOn;
 				blinkOn = isAltMode;
-				if (blinkOn != wasOn) {
-					if (vdpModeRedrawHandler instanceof Text2ModeRedrawHandler) {
+				if (vdpModeRedrawHandler instanceof Text2ModeRedrawHandler) {
+					((Text2ModeRedrawHandler) vdpModeRedrawHandler).setBlink(blinkOn);
+					if (blinkOn != wasOn) {
 						((Text2ModeRedrawHandler) vdpModeRedrawHandler).updateForBlink();
 					}
 				}
 			}
+		}
+		if (vdpModeRedrawHandler instanceof PackedBitmapGraphicsModeRedrawHandler) {
+			((PackedBitmapGraphicsModeRedrawHandler) vdpModeRedrawHandler).setPageOffset(pageOffset);
 		}
 	}
 

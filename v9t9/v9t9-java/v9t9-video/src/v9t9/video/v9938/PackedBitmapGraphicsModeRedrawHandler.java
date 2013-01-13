@@ -26,7 +26,8 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	protected int blockshift;
 	protected int blockstride;
 	protected int blockcount;
-	protected int colshift;	
+	protected int colshift;
+	private int pageOffset;	
 	
 	protected class ScreenBitmapTouchHandler implements VdpTouchHandler {
 		public void modify(int offs) {
@@ -68,7 +69,6 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	public int updateCanvas(RedrawBlock[] blocks) {
 		/*  Redraw 8x8 blocks where pixels changed */
 		IVdpV9938 vdp9938 = (IVdpV9938)info.vdp;
-		int pageOffset = ((VdpV9938CanvasRenderer) info.renderer).getGraphicsPageOffset();
 		boolean interlacedEvenOdd = vdp9938.isInterlacedEvenOdd();
 		int graphicsPageSize = vdp9938.getGraphicsPageSize();
 		
@@ -97,5 +97,11 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 
 	abstract protected void drawBlock(RedrawBlock block, int pageOffset, boolean interlaced);
 
+	/**
+	 * @param pageOffset the pageOffset to set
+	 */
+	public void setPageOffset(int pageOffset) {
+		this.pageOffset = pageOffset;
+	}
 
 }

@@ -29,6 +29,7 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		}
 		
 	};
+	private boolean blinkOn;
 	
 	public Text2ModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
 		super(info, modeInfo);
@@ -52,7 +53,7 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		}
 		
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#updateCanvas(v9t9.emulator.clients.builtin.VdpCanvas, v9t9.emulator.clients.builtin.InternalVdp.RedrawBlock[])
 	 */
@@ -79,8 +80,6 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		bbg = (byte) (info.vdpregs[12] & 0xf);
 		bfg = (byte) ((info.vdpregs[12] >> 4) & 0xf);
 
-		boolean blinkOn = ((VdpV9938CanvasRenderer) info.renderer).isBlinkOn();
-		
 		for (int i = info.changes.screen.nextSetBit(0); 
 			i >= 0 && i < size; 
 			i = info.changes.screen.nextSetBit(i+1)) 
@@ -137,4 +136,8 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		}
 	}
 
+	public void setBlink(boolean blinkOn) {
+		this.blinkOn = blinkOn;
+		
+	}
 }

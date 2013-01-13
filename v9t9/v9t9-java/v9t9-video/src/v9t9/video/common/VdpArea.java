@@ -14,6 +14,6 @@ public class VdpArea
 	 */
 	@Override
 	public String toString() {
-		return "Base: " + HexUtils.toHex4(base) + "; Size: " + HexUtils.toHex4(size);
+		return "Base: " + Integer.toHexString(base) + "; Size: " + HexUtils.toHex4(size);
 	}
 }
