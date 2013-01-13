@@ -265,7 +265,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	 * @see v9t9.common.client.IKeyboardHandler#anyKeyPressed()
 	 */
 	@Override
-	public synchronized boolean anyKeyAvailable() {
+	public boolean anyKeyAvailable() {
 		return !queuedKeys.isEmpty() || currentGroup != null || isPasting() || keyboardState.anyKeyPressed();
 	}
 
