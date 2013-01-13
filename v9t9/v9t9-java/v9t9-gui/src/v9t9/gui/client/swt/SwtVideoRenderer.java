@@ -50,7 +50,7 @@ import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.ImageDataCanvas24Bit;
-import v9t9.video.VdpCanvasFactory;
+import v9t9.video.VdpCanvasRendererFactory;
 
 /**
  * Render video into an SWT window
@@ -206,7 +206,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 
 	protected void createVdpCanvasHandler() {
 		vdpCanvas = new ImageDataCanvas24Bit();
-		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(settings, this);
+		vdpCanvasRenderer = VdpCanvasRendererFactory.createCanvasRenderer(settings, this);
 	}
 
 	protected void initWidgets() {

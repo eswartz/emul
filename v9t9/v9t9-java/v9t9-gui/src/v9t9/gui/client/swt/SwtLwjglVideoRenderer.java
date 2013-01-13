@@ -48,7 +48,7 @@ import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.video.BitmapCanvasShort;
 import v9t9.video.IGLDataCanvas;
 import v9t9.video.ImageDataCanvasR3G3B2;
-import v9t9.video.VdpCanvasFactory;
+import v9t9.video.VdpCanvasRendererFactory;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.utils.FileUtils;
@@ -187,7 +187,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 //		vdpCanvas = new ImageDataCanvas24Bit();
 		
 		glDataCanvas = (IGLDataCanvas) vdpCanvas;
-		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(settings, this);
+		vdpCanvasRenderer = VdpCanvasRendererFactory.createCanvasRenderer(settings, this);
 		//vdpCanvasBuffer = ByteBuffer.allocateDirect(vdpCanvas.getImageData().bytesPerLine * vdpCanvas.getImageData().height);
 //		vdpCanvasBuffer = ((IGLDataCanvas) vdpCanvas).allocateBuffer();
 	}

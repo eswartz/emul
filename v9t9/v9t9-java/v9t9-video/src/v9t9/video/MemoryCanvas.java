@@ -42,6 +42,15 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#writeRow(byte[])
+	 */
+	@Override
+	public void writeRow(int y, byte[] rowData) {
+		System.arraycopy(rowData, 0, bitmap, getBitmapOffset(0, y), rowData.length);
+	}
+	
+	
 	@Override
 	public int getLineStride() {
 		return UPDATEBLOCK_ROW_STRIDE;

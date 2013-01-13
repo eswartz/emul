@@ -65,6 +65,21 @@ public class BitmapCanvasShort extends BitmapVdpCanvas implements IGLDataCanvas 
 		
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#writeRow(byte[])
+	 */
+	@Override
+	public void writeRow(int y, byte[] rowData) {
+		if (colorRGBMap == null)
+			return;
+		
+		int offs = getBitmapOffset(0, y);
+		for (int i = 0; i < rowData.length; i++) {
+			short fgRGB = colorRGBMap[rowData[i]];
+			sdata[offs+i] = fgRGB;
+		}
+	}
+
 	/**
 	 * @param buffer
 	 * @return 

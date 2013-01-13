@@ -21,6 +21,7 @@ import v9t9.common.client.IClient;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
+import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
@@ -361,6 +362,14 @@ public abstract class BaseSwtJavaClient implements IClient {
 				machine.getCpu().resetCycleCounts();
 			}
 		});
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IClient#getVideoRenderer()
+	 */
+	@Override
+	public IVideoRenderer getVideoRenderer() {
+		return videoRenderer;
 	}
 	
 }

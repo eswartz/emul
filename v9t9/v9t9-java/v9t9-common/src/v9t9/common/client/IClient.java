@@ -40,5 +40,7 @@ public interface IClient {
 	 * @param runnable
 	 */
 	void asyncExecInUI(Runnable runnable);
+	
+	IVideoRenderer getVideoRenderer();
 
 }

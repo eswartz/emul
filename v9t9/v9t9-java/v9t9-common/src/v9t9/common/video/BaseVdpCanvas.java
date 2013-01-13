@@ -58,23 +58,17 @@ public abstract class BaseVdpCanvas implements ICanvas {
 			return;
 		if (dx1 == 0 && dy1 == 0 && dx2 == width && dy2 == height) {
 			// already dirty
-			if (listener != null)
-				listener.canvasDirtied(this);
 		} else {
 			for (int i = 0; i < count; i++) {
 				RedrawBlock block = blocks[i];
-				//int y = (block.r / 8);
-				//int x = block.c / blockWidth;
-				//int idx = y * dirtyStride + x;
-				//dirtyBlocks[idx] = true;
 				if (block.c < dx1) dx1 = block.c;
 				if (block.r < dy1) dy1 = block.r;
 				if (block.c + 8 >= dx2) dx2 = block.c + 8;
 				if (block.r + 8 >= dy2) dy2 = block.r + 8;
 			}
-			if (count > 0 && listener != null)
-				listener.canvasDirtied(this);
 		}
+		if (listener != null)
+			listener.canvasDirtied(this);
 	}
 	
 	public synchronized void markDirty() {
@@ -91,6 +85,10 @@ public abstract class BaseVdpCanvas implements ICanvas {
 		dx1 = width;
 		dy1 = height; 
 		dx2 = dy2 = 0;
+	}
+
+	public int getBlockCount() {
+		return (getVisibleWidth() / 8) * ((height + 7) / 8);
 	}
 	
 	public BaseVdpCanvas() {
@@ -128,10 +126,6 @@ public abstract class BaseVdpCanvas implements ICanvas {
 	@Override
 	public int getVisibleHeight() {
 		return height;
-	}
-
-	public int getBlockCount() {
-		return (getVisibleWidth() / 8) * ((height + 7) / 8);
 	}
 
 	/**

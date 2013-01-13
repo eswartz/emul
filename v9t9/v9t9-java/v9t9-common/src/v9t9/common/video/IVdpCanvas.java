@@ -13,6 +13,8 @@ import v9t9.common.memory.ByteMemoryAccess;
 public interface IVdpCanvas extends ICanvas {
 
 	VdpFormat getFormat();
+	
+	void writeRow(int y, byte[] rowData);
 
 	boolean isInterlacedEvenOdd();
 
@@ -103,9 +105,7 @@ public interface IVdpCanvas extends ICanvas {
 
 	void clearToEvenOddClearColors();
 
-	int getBlockCount();
-
-	void setFormat(VdpFormat color168x8);
+	void setFormat(VdpFormat format);
 
 	void setBlank(boolean b);
 

@@ -18,6 +18,7 @@ import ejs.base.settings.SettingsSection;
 import ejs.base.settings.XMLSettingStorage;
 
 
+import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier.Level;
@@ -169,6 +170,9 @@ public abstract class BaseEmulatorWindow {
 				
 				String modelId = settings.get("MachineModel");
 
+				boolean changedMachines = false;
+				EmulatorLocalServer server = null;
+				
 				if (modelId != null) {
 			        if (!machine.getModel().getIdentifier().equals(modelId)) {
 			        	String clientId = machine.getClient().getIdentifier();
@@ -182,38 +186,21 @@ public abstract class BaseEmulatorWindow {
 			        		t.printStackTrace();
 			        	}
 			        	
-			        	Emulator.createAndRun(new EmulatorLocalServer(), modelId, clientId);
-
-			        	// $NOTREACHED$
-			        	return;
+						server = new EmulatorLocalServer();
+						IClient client = Emulator.create(server, modelId, clientId);
+			        	
+			        	loadState(client, server.getMachine(), settings);
+			        	changedMachines = true;
 			        }
 				}
 		        
-				String origWorkspace = settings.get(WorkspaceSettings.currentWorkspace.getName());
-				if (origWorkspace != null) {
-					try {
-						WorkspaceSettings.loadFrom(
-								Settings.getSettings(machine).getMachineSettings(), 
-								origWorkspace);
-					} catch (IOException e) {
-						machine.notifyEvent(
-								Level.WARNING, 
-								MessageFormat.format(
-										"Could not find the workspace ''{0}'' referenced in the saved state",
-										origWorkspace));
-					}
+				if (!changedMachines) {
+					loadState(machine.getClient(), machine, settings);
 				}
-				
-				ISettingSection workspace = settings.getSection("Workspace");
-				if (workspace != null) {
-					Settings.getSettings(machine).getMachineSettings().load(workspace);
+				else {
+					Emulator.runServer(server);
 				}
-				
-				boolean wasPaused = machine.setPaused(true);
-				machine.loadState(settings);
-				machine.setPaused(wasPaused);
-				
-				videoRenderer.getCanvasHandler().forceRedraw();
+
 			} catch (Throwable e1) {
 				machine.notifyEvent(Level.ERROR, 
 						"Failed to load machine state:\n\n" + e1.getMessage());
@@ -228,6 +215,37 @@ public abstract class BaseEmulatorWindow {
 				}
 			}
 		}
+	}
+
+	/**
+	 * @param client
+	 * @param settings2 
+	 * @param machine2 
+	 */
+	private static void loadState(IClient client, IMachine machine, ISettingSection settings) {
+		String origWorkspace = settings.get(WorkspaceSettings.currentWorkspace.getName());
+		if (origWorkspace != null) {
+			try {
+				WorkspaceSettings.loadFrom(
+						Settings.getSettings(machine).getMachineSettings(), 
+						origWorkspace);
+			} catch (IOException e) {
+				machine.notifyEvent(
+						Level.WARNING, 
+						MessageFormat.format(
+								"Could not find the workspace ''{0}'' referenced in the saved state",
+								origWorkspace));
+			}
+		}
+		
+		ISettingSection workspace = settings.getSection("Workspace");
+		if (workspace != null) {
+			Settings.getSettings(machine).getMachineSettings().load(workspace);
+		}
+		
+		machine.loadState(settings);
+		
+		client.getVideoRenderer().getCanvasHandler().forceRedraw();		
 	}
 
 	abstract protected void showErrorMessage(String title, String msg);

@@ -33,8 +33,10 @@ public interface ICanvas {
 	 * @see #getBitmapOffset(int, int) 
 	 */ 
 	int getLineStride();
-	
 
+
+	int getBlockCount();
+	
 	void markDirty();
 
 	void markDirty(RedrawBlock[] blocks, int count);

@@ -54,6 +54,25 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas implements IGLDataCanv
 	}
 	
 	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#writeRow(byte[])
+	 */
+	@Override
+	public void writeRow(int y, byte[] rowData) {
+		if (colorRGBMap == null)
+			return;
+		
+		byte[] data = imageData.data;
+		int offs = getBitmapOffset(0, y);
+		for (int i = 0; i < rowData.length; i++) {
+			byte[] fgRGB = colorRGBMap[rowData[i]];
+			data[offs] = fgRGB[0];
+			data[offs+1] = fgRGB[1];
+			data[offs+2] = fgRGB[2];
+			offs += 3;
+		}
+	}
+
+	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#clear()
 	 */
 	@Override

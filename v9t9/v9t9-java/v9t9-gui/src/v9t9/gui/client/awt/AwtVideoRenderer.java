@@ -43,7 +43,7 @@ import v9t9.gui.jna.V9t9Render.AnalogTV;
 import v9t9.gui.jna.V9t9Render.AnalogTVData;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.ImageDataCanvas24Bit;
-import v9t9.video.VdpCanvasFactory;
+import v9t9.video.VdpCanvasRendererFactory;
 
 /**
  * AWT has nice accelerated blit routines, which are superior to SWT on Linux/GTK and Windows.
@@ -164,7 +164,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	 */
 	protected void createVdpCanvasHandler() {
 		vdpCanvas = new ImageDataCanvas24Bit();
-		vdpCanvasRenderer = VdpCanvasFactory.createCanvasHandler(settings, this);
+		vdpCanvasRenderer = VdpCanvasRendererFactory.createCanvasRenderer(settings, this);
 	}
 
 

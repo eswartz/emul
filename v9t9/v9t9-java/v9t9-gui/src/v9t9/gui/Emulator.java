@@ -12,6 +12,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
@@ -95,16 +97,19 @@ public class Emulator {
 		boolean tcf = false;
 		
 		Getopt getopt = new Getopt(Emulator.class.getName(), args, 
-				"r:Cc:t",
+				"r:Cc:ts:",
 				new LongOpt[] {
 					//new LongOpt("remote", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), 'r'),
 					new LongOpt("clean", LongOpt.NO_ARGUMENT, null, 'C'),
 					new LongOpt("configdir", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
 					new LongOpt("debug", LongOpt.NO_ARGUMENT, null, 'd'),
 					new LongOpt("tcf", LongOpt.NO_ARGUMENT, null, 't'),
+					new LongOpt("set", LongOpt.REQUIRED_ARGUMENT, null, 's'),
 				}
 		);
-		
+
+		Map<String, String> settings = new LinkedHashMap<String, String>();
+
 		int opt;
 		while ((opt = getopt.getopt()) != -1)
 		{
@@ -119,6 +124,17 @@ public class Emulator {
 			}
 			else if (opt == 't') {
 				tcf = true;
+			}
+			else if (opt == 's') {
+				String arg = getopt.getOptarg().trim();
+				int idx = arg.indexOf('=');
+				if (idx < 0)  {
+					System.err.println("expected var=value for -s " + arg);
+					continue;
+				}
+				String var = arg.substring(0, idx-1);
+				String val = arg.substring(idx+1);
+				settings.put(var, val);
 			}
 		}
 		
@@ -141,7 +157,11 @@ public class Emulator {
 		String clientId = getClientId(args);
 		
 
-		createAndRun(server, modelId, clientId);
+		create(server, modelId, clientId);
+		
+		server.setSettings(settings);
+		
+		runServer(server);
 	}
 
 
@@ -159,14 +179,14 @@ public class Emulator {
 	}
 
 
-	public static void createAndRun(EmulatorServerBase server, String modelId, String clientId) {
+	public static IClient create(EmulatorServerBase server, String modelId, String clientId) {
 		try {
 			server.init(modelId);
 		} catch (IOException e) {
 			System.err.println("Failed to contact or create server:" + modelId);
 			e.printStackTrace();
 			System.exit(23);
-			return;
+			return null;
 		}
 		
 		IClient client = null;
@@ -189,10 +209,15 @@ public class Emulator {
 		if (client == null) {
 			System.err.println("Failed to contact or create client: " + clientId);
 			System.exit(23);
-			return;
+			return null;
 		}
 		server.setClient(client);
 		
+		return client;
+		
+	}
+	
+	public static void runServer(EmulatorServerBase server) {
 		try {
 			server.run();
 		} catch (TerminatedException e) {

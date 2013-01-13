@@ -15,15 +15,10 @@ import v9t9.video.v9938.VdpV9938CanvasRenderer;
  * @author ejs
  *
  */
-public class VdpCanvasFactory {
-	private VdpCanvasFactory() { }
+public class VdpCanvasRendererFactory {
+	private VdpCanvasRendererFactory() { }
 
-	/**
-	 * @param vdp
-	 * @param canvas 
-	 * @return
-	 */
-	public static IVdpCanvasRenderer createCanvasHandler(ISettingsHandler settings, IVideoRenderer video) {
+	public static IVdpCanvasRenderer createCanvasRenderer(ISettingsHandler settings, IVideoRenderer video) {
 		if (video.getVdpHandler() instanceof IVdpV9938)
 			return new VdpV9938CanvasRenderer(settings, video);
 		else if (video.getVdpHandler() instanceof IVdpTMS9918A)

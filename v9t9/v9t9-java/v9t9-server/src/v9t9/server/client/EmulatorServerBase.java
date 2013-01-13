@@ -4,6 +4,7 @@
 package v9t9.server.client;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.eclipse.tm.tcf.protocol.Protocol;
 
@@ -16,6 +17,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.settings.IStoredSettings;
 import v9t9.engine.demos.DemoHandler;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.modules.ModuleManager;
@@ -56,6 +58,7 @@ public abstract class EmulatorServerBase {
 	private IProperty storedRamPath;
 	private EmulatorTCFServer server;
 	private boolean enableTCF;
+	private Map<String, String> initSettings;
 
     public EmulatorServerBase() {
     	settings = new SettingsHandler(WorkspaceSettings.currentWorkspace.getString()); 
@@ -184,6 +187,16 @@ public abstract class EmulatorServerBase {
         if (enableTCF)
         	server.run();
         
+        if (initSettings != null) {
+        	for (Map.Entry<String, String> ent : initSettings.entrySet()) {
+        		IStoredSettings storage = settings.findSettingStorage(ent.getKey());
+        		if (storage != null) {
+        			storage.find(ent.getKey()).setValueFromString(ent.getValue());
+        		}
+        	}
+        }
+        
+        
         while (client.isAlive()) {
         	client.handleEvents();
 	    	
@@ -232,6 +245,13 @@ public abstract class EmulatorServerBase {
 	 */
 	public void enableTcf() {
 		enableTCF = true;
+	}
+
+	/**
+	 * @param settings
+	 */
+	public void setSettings(Map<String, String> settings) {
+		this.initSettings = settings;
 	}
 
 }

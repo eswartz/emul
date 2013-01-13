@@ -39,6 +39,15 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 		pixSize = 1;
 	}
 
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#writeRow(byte[])
+	 */
+	@Override
+	public void writeRow(int y, byte[] rowData) {
+		System.arraycopy(rowData, 0, imageData.data, getBitmapOffset(0, y), rowData.length);
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#clear()
 	 */

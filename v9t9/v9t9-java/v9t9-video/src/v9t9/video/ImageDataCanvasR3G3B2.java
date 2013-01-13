@@ -57,6 +57,21 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 		pixSize = 1; //(imageData.depth >> 3);
 	}
 	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#writeRow(byte[])
+	 */
+	@Override
+	public void writeRow(int y, byte[] rowData) {
+		if (colorRGBMap == null)
+			return;
+		
+		int offs = getBitmapOffset(0, y);
+		for (int i = 0; i < rowData.length; i++) {
+			byte fgRGB = colorRGBMap[rowData[i]];
+			imageData.data[offs+i] = fgRGB;
+		}
+	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#clear()
