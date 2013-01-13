@@ -81,12 +81,14 @@ public class DisassemblerDecoder implements IMemoryDecoder {
 		
 		if (true) {
 			// until the below is more reliable
-			Block block = decompilePhase.getBlocks().iterator().next();
-			IHighLevelInstruction instr = block.getFirst();
-			while (instr != null) {
-				addrToInstrMap.put(instr.getInst().getPc(), instr);
-				addrs.add(instr.getInst().getPc());
-				instr = instr.getLogicalNext();
+			if (!decompilePhase.getBlocks().isEmpty()) {
+				Block block = decompilePhase.getBlocks().iterator().next();
+				IHighLevelInstruction instr = block.getFirst();
+				while (instr != null) {
+					addrToInstrMap.put(instr.getInst().getPc(), instr);
+					addrs.add(instr.getInst().getPc());
+					instr = instr.getLogicalNext();
+				}
 			}
 		} else {
 			for (Routine routine : decompilePhase.getRoutines()) {

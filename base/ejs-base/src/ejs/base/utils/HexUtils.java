@@ -34,7 +34,9 @@ public class HexUtils {
 	}
 
 	public static String toHex4(int value) {
-	    return padAddress(Integer.toHexString(value & 0xffff).toUpperCase());
+		if (value < 0)
+			value &= 0xffff;
+	    return padAddress(Integer.toHexString(value & 0x7fffffff).toUpperCase());
 	}
 
 	/**

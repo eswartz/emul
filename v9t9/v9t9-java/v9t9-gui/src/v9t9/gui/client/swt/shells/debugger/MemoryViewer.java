@@ -521,6 +521,9 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 						if (e.x >= bounds.x && e.x < bounds.x + bounds.width) {
 							MemoryRange range = (MemoryRange) byteTableViewer.getInput();
 							MemoryRow row = (MemoryRow) item.getData();
+							if (row == null)
+								continue;
+							
 							if (i > 0) i--;
 							int addr = row.getAddress() + i;
 							
@@ -644,11 +647,11 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 			decodeButton.setEnabled(false);
 			decodeMemory = false;
 			tableLayout.topControl = byteTableViewer.getControl();
-			tableComposite.layout();
-			decodedTableViewer.setLabelProvider(byteMemoryLabelProvider);
-			decodedTableViewer.setContentProvider(byteContentViewer);
-			decodedTableViewer.setInput(range);
-			decodedTableViewer.refresh(true);
+			tableComposite.layout(true);
+//			decodedTableViewer.setLabelProvider(byteMemoryLabelProvider);
+//			decodedTableViewer.setContentProvider(byteContentViewer);
+//			decodedTableViewer.setInput(range);
+//			decodedTableViewer.refresh(true);
 			return;
 
 		}
