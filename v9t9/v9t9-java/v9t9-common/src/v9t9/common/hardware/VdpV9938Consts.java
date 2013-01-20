@@ -37,6 +37,8 @@ public class VdpV9938Consts extends VdpTMS9918AConsts {
 	final public static int R8_BW = 0x01;
 
 	
+	final public static int R0_IE1 = 0x10;
+	final public static int R0_IE2 = 0x20;
 	final public static int R0_M4 = 0x4;
 	final public static int R0_M5 = 0x8;
 
@@ -124,6 +126,11 @@ public class VdpV9938Consts extends VdpTMS9918AConsts {
 	final public static int S9_BOR_LO = 9;
 
 	public static final int REG_COUNT = 1 + 48 /* base */ + 9 /* status */ + 16 /* palette */;
+	
+	/** lightpen flag */
+	public static final int ST1_LP = 0x80;
+	/** horizontal scanning interrupt flag */
+	public static final int ST1_VSIF = 0x01;
 	
 
 }

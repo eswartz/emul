@@ -281,6 +281,11 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
     		return super.readVdpStatus();
     	
     	byte ret = statusvec[statusidx];
+    	
+    	if (statusidx == 1) {
+    		// reset flags
+    		statusvec[1] &= ~(VdpV9938Consts.ST1_VSIF + VdpV9938Consts.ST1_LP);
+    	}
         return ret;
     }
 
@@ -818,12 +823,19 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	public int getRegister(int reg) {
 		if (reg >= getRegisterCount())
 			return 0;
-		if (reg >= VdpV9938Consts.REG_PAL0)
+		if (reg >= VdpV9938Consts.REG_PAL0) {
 			return palette[reg - VdpV9938Consts.REG_PAL0];
-		else if (reg >= VdpV9938Consts.REG_SR0)
-			return statusvec[reg - VdpV9938Consts.REG_SR0];
-		else
+		} else if (reg >= VdpV9938Consts.REG_SR0) {
+			int ret;
+			if (reg == VdpV9938Consts.REG_SR0 + 0) {
+				ret = vdpStatus;
+			} else {
+				ret = statusvec[reg - VdpV9938Consts.REG_SR0];
+			}
+			return ret;
+		} else {
 			return super.getRegister(reg);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -1370,13 +1382,16 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	 */
 	@Override
 	protected void updateForMode() {
+		int baseLines = (vdpregs[9] & R9_LN) != 0 ? 212 : 192;
 		switch (modeNumber) {
 		case MODE_TEXT2:
 			vdpMmio.setMemoryAccessCycles(1);
+			setSize(512, baseLines);
 			break;
 		case MODE_BITMAP:
 		case MODE_GRAPHICS3:
 			vdpMmio.setMemoryAccessCycles(2);
+			setSize(256, baseLines);
 			break;
 		case MODE_GRAPHICS4:
 			rowstride = 256 / 2;
@@ -1384,6 +1399,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			pixshift = 4;
 			pixmask = 0xf;
 			
+			setSize(256, baseLines);
 			vdpMmio.setMemoryAccessCycles(4);
 			break;
 		case MODE_GRAPHICS5:
@@ -1392,6 +1408,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			pixshift = 2;
 			pixmask = 0x3;
 			
+			setSize(512, baseLines);
 			vdpMmio.setMemoryAccessCycles(4);
 			break;
 		case MODE_GRAPHICS6:
@@ -1400,6 +1417,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			pixshift = 4;
 			pixmask = 0xf;
 			
+			setSize(512, baseLines);
 			vdpMmio.setMemoryAccessCycles(8);
 			break;
 		case MODE_GRAPHICS7:
@@ -1408,6 +1426,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 			pixshift = 8;
 			pixmask = 0xff;
 			
+			setSize(256, baseLines);
 			vdpMmio.setMemoryAccessCycles(8);
 			break;
 		default:
@@ -1464,5 +1483,24 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 		
 		// no status regs
 		return bs;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.tms9918a.VdpTMS9918A#onScanline(int)
+	 */
+	@Override
+	protected void onScanline(int vdpScanline) {
+		super.onScanline(vdpScanline);
+		
+		if ((vdpregs[0] & VdpV9938Consts.R0_IE1) != 0 && (vdpregs[19] & 0xff) == vdpScanline) {
+			setRegister(VdpV9938Consts.REG_SR0 + 1, 
+					statusvec[1] | VdpV9938Consts.ST1_VSIF);
+			
+			// a real interrupt only occurs if wanted
+    		if ((vdpregs[1] & R1_INT) != 0) {
+    			triggerInterrupt();
+    		}
+
+		}
 	}
 }

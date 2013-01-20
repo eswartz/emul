@@ -4,7 +4,7 @@
 ;
 
 \   Last VDP status
-1       RamVar vdp-status
+|+ 1    RamVar vdp-status
 
 |+ cell RamVar 'vsprmot
 
@@ -25,7 +25,13 @@ cell    RamVar    vdp-timeout
     
     \ acknowledge VDP
     VDPST c@  vdp-status c!
-    
+
+	vdp-tick    
+
+    exiti
+;
+
+|+ : vdp-tick
     \ timer
     1. vdp-ticks d+!
 
@@ -50,9 +56,8 @@ cell    RamVar    vdp-timeout
     v-int-nosprmot v-intflag-off? if 
         'vsprmot @ ?dup if  execute  then
     then
-    
-    exiti
 ;
+
 
 :   kbd-int-handler
     'INTS c@  
@@ -75,6 +80,8 @@ cell    RamVar    vdp-timeout
     \ reset mask
     0  [ ItoContext c,  CTX_SR field, ] 
     
+    ints-init
+    
     $00 msx-cmdsetup
     err-abort throw
     \ exiti       \ NOTREACHED
@@ -86,14 +93,14 @@ cell    RamVar    vdp-timeout
     \ exiti         \ NOTREACHED
 ;
 
-:   >int-vec ( num -- )
+|+ :   >int-vec ( num -- )
     2*  IntVecs +
 ;
-:   set-int-vec ( addr num -- )
+|+ :   set-int-vec ( addr num -- )
     >int-vec  !
 ;
 
-:   enable-int ( addr num -- )
+|+ :   enable-int ( addr num -- )
     dup >r   set-int-vec
 
     \ enable bit

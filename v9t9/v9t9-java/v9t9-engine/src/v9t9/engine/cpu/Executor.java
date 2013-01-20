@@ -212,15 +212,13 @@ public class Executor implements IExecutor {
     @Override
     public int execute() {
     	if (cpu.isIdle() && cpu.settingRealTime().getBoolean()) {
-    		while (nVdpInterrupts < vdpInterruptRate.getInt()) {
+    		if (nVdpInterrupts < vdpInterruptRate.getInt()) {
     			try {
-    				Thread.yield();
     				cpu.addCycles(1);
     				cpu.checkInterrupts();
     			} catch (AbortedException e) {
     				cpu.handleInterrupts();
-    				break;
-    			}
+				}
     		}
     		return 0;
     	} else {

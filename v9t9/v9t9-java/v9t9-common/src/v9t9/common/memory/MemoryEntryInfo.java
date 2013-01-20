@@ -45,7 +45,7 @@ public class MemoryEntryInfo {
 	public final static String STANDARD_BANKING = "standardBanking";
 	/** Integer */
 	public final static String LATENCY = "latency";
-	/** Boolean */
+	/** Boolean: changes are stored */
 	public final static String STORED = "stored";
 	
 	/** Int */

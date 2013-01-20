@@ -471,8 +471,8 @@ public class ForthComp {
 			grom = DataFiles.readMemoryImage(gromFilePath, 0, gromFileSize);
 			int gromDictBase = (grom[2] << 8) | (grom[3] & 0xff);
 			
-			if (gromDictSize + gromDictBase > 16 * 1024) {
-				System.err.println("GROM dictionary too big!  GROM plus dictionary maxes out at 16k.");
+			if (gromDictSize + gromDictBase > grom.length) {
+				System.err.println("GROM dictionary too big!  GROM plus dictionary maxes out at "+grom.length + " bytes.");
 			}
 			
 			byte[] gromDict = DataFiles.readMemoryImage(gromDictPath, 0, gromDictSize);

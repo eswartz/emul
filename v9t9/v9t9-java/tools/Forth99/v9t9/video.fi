@@ -58,7 +58,7 @@ v-data
 
     +field  msx-rowsperbankmask  \ mask for detecting bank crossings  
     
-    16 +Nfield v-regsave    \ saved registers
+    20 +Nfield v-regsave    \ saved registers
 
 dup constant v-data0
 
@@ -114,7 +114,7 @@ $00B    constant    last-video-mode
 
 
 :   >vr         ( val reg -- )
-    dup 16 <  if  v-regsave + c!  else 2drop then    
+    dup 20 <  if  v-regsave + c!  else 2drop then    
 ;
 
 :   v-regaddr ( reg -- )

@@ -400,6 +400,7 @@ abstract public class MachineBase implements IMachine {
 	public synchronized void saveState(ISettingSection settings) {
 		
 		boolean wasExecuting = executor.setExecuting(false);
+		boolean wasPaused = setPaused(true);
 		
 		settings.put("Class", getClass());
 		
@@ -411,6 +412,7 @@ abstract public class MachineBase implements IMachine {
 		this.settings.getMachineSettings().save(workspace);
 		//WorkspaceSettings.CURRENT.saveState(settings);
 		
+		setPaused(wasPaused);
 		executor.setExecuting(wasExecuting);
 	}
 

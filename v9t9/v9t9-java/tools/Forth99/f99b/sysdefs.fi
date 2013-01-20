@@ -3,28 +3,28 @@
 
 $0000       constant    I/O
 
-$0000       constant    VDPRD
-$0002       constant    VDPST
-$0004       constant    VDPWD
-$0006       constant    VDPWA       \ high then low
-$0008       constant    VDPCL
-$000A       constant    VDPWI
+|+ $0000       constant    VDPRD
+|+ $0002       constant    VDPST
+|+ $0004       constant    VDPWD
+|+ $0006       constant    VDPWA       \ high then low
+|+ $0008       constant    VDPCL
+|+ $000A       constant    VDPWI
 
-$0010       constant    GPLRD
-$0012       constant    GPLRA       \ high then low
-$0014       constant    GPLWD
-$0016       constant    GPLWA
-$0018       constant    SPCHRD
-$001a       constant    SPCHWT
+|+ $0010       constant    GPLRD
+|+ $0012       constant    GPLRA       \ high then low
+|+ $0014       constant    GPLWD
+|+ $0016       constant    GPLWA
+|+ $0018       constant    SPCHRD
+|+ $001a       constant    SPCHWT
 
-$0020       constant    KBD
+|+ $0020       constant    KBD
 
-$0040       constant    SOUND  \ ... 0x20!
+|+ $0040       constant    SOUND  \ ... 0x20!
 
 \   ---------  peripherals
 
-$0080       constant    'INTS
-$0081       constant    'INTSP
+|+ $0080       constant    'INTS
+|+ $0081       constant    'INTSP
     
     $1      constant    M_INT_BKPT
     $2      constant    M_INT_EXT
@@ -88,14 +88,14 @@ ROM 6 +     constant    (LATEST)
 
 $ffc0       constant    FaultStacks \ ... 0x20
 
-$ffe0       constant    IntVecs     \ ... 0x20
+|+ $ffe0       constant    IntVecs     \ ... 0x20
 
-    15      constant    INT_RESET
-    14      constant    INT_NMI
-    13      constant    INT_FAULT
-    3       constant    INT_KBD
-    2       constant    INT_VDP
-    0       constant    INT_BKPT
+|+     15      constant    INT_RESET
+|+     14      constant    INT_NMI
+|+     13      constant    INT_FAULT
+|+     3       constant    INT_KBD
+|+     2       constant    INT_VDP
+|+     0       constant    INT_BKPT
 
 
 \ sizes of fixed areas
@@ -192,6 +192,7 @@ $6c         constant    Icfill
 $6e         constant    Icmove
 $6f         constant    Iccompare
 $70         constant    Iexit
+$71         constant    Iexiti
 $72         constant    Iexecute
 $73         constant    Idovar
 $74         constant    Isyscall

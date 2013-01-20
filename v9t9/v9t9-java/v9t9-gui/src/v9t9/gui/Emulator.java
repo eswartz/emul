@@ -97,7 +97,7 @@ public class Emulator {
 		boolean tcf = false;
 		
 		Getopt getopt = new Getopt(Emulator.class.getName(), args, 
-				"r:Cc:ts:",
+				"r:Cc:ts:d",
 				new LongOpt[] {
 					//new LongOpt("remote", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), 'r'),
 					new LongOpt("clean", LongOpt.NO_ARGUMENT, null, 'C'),

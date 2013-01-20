@@ -30,6 +30,7 @@ import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.Settings;
+import v9t9.common.video.IVdpRealtimeCanvasRenderer;
 import v9t9.engine.demos.actors.VdpDataDemoActor;
 import v9t9.engine.demos.actors.VdpRegisterDemoActor;
 import v9t9.engine.hardware.BaseCruChip;
@@ -84,6 +85,11 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	/** The number of CPU cycles corresponding to 1/60 second */
 	private int vdpInterruptLimit;
 	private int vdpInterruptDelta;
+	
+	/** The circular counter for VDP scanline timing. */
+	private int vdpScanlineFrac;
+	/** The number of CPU cycles corresponding to one scanline */
+	private int vdpScanlineLimit;
 
 	private int throttleCount;
 	protected final IMachine machine;
@@ -92,6 +98,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	protected IProperty vdpInterruptRate;
 	private IProperty realTime;
 	private IProperty cpuSynchedVdpInterrupt;
+	private boolean isCpuSynchedVdpInterrupt;
 	protected IProperty dumpVdpAccess;
 	protected IProperty dumpFullInstructions;
 	private IProperty throttleInterrupts;
@@ -100,6 +107,14 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 
 	protected int modeNumber;
 
+	private IVdpRealtimeCanvasRenderer realtimeCanvasRenderer;
+
+	private int vdpScanline;
+
+	protected int width;
+
+	protected int scanlineCount;
+	
 	public VdpTMS9918A(IMachine machine) {
 		this.machine = machine;
 		
@@ -109,6 +124,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		vdpInterruptRate = settings.get(settingVdpInterruptRate);
 		realTime = settings.get(ICpu.settingRealTime);
 		cpuSynchedVdpInterrupt = settings.get(settingCpuSynchedVdpInterrupt);
+		isCpuSynchedVdpInterrupt = cpuSynchedVdpInterrupt.getBoolean();
 		throttleInterrupts = settings.get(IMachine.settingThrottleInterrupts);
 		dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
 		dumpVdpAccess = settings.get(settingDumpVdpAccess);
@@ -133,7 +149,8 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		
 		realTime.addListener(new IPropertyListener() {
 			public void propertyChanged(IProperty setting) {
-				cpuSynchedVdpInterrupt.setBoolean(setting.getBoolean());				
+				cpuSynchedVdpInterrupt.setBoolean(setting.getBoolean());
+				isCpuSynchedVdpInterrupt = cpuSynchedVdpInterrupt.getBoolean();
 			}
 		});
 		
@@ -153,6 +170,13 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	protected void recalcInterruptTiming() {
         vdpInterruptLimit = cyclesPerSecond.getInt() / vdpInterruptRate.getInt();
         vdpInterruptFrac = 0;
+        
+        vdpScanlineLimit = vdpInterruptLimit / 192;
+        vdpScanlineFrac = 0;
+        if (scanlineCount > 0) {
+        	vdpScanlineLimit = vdpInterruptLimit / scanlineCount;
+        }
+        
         fixedTimeVdpInterruptDelta = (int) ((long) vdpInterruptRate.getInt() * 65536 / machine.getTicksPerSec());
         //System.out.println("VDP interrupt target: " + Cpu.settingCyclesPerSecond.getInt() + " /  " + settingVdpInterruptRate.getInt() + " = " + vdpInterruptLimit);		
 	}
@@ -179,10 +203,6 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	protected byte[] allocVdpRegs() {
 		return new byte[8];
 	}
-
-	public byte readVdpReg(int reg) {
-		return vdpregs[reg];
-	}
 	
 	/**
 	 * @param reg
@@ -206,8 +226,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
     public byte readVdpStatus() {
 		/* >8802, status read and acknowledge interrupt */
     	byte ret = vdpStatus;
-		vdpStatus &= ~VDP_INTERRUPT;
-		// TODO machine.getCpu().reset9901int(v9t9.cpu.Cpu.M_INT_VDP);
+    	setRegister(REG_ST, vdpStatus & ~VDP_INTERRUPT);
 
         return ret;
     }
@@ -229,7 +248,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	}
 	
 	public void tick() {
-		 if (cpuSynchedVdpInterrupt.getBoolean())
+		 if (isCpuSynchedVdpInterrupt)
 			 return;
 		 
 		 // in this model, we use the system clock to ensure reliable VDP
@@ -242,7 +261,12 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		
 				vdpInterruptDelta -= 65536;
 				
-				//vdpInterruptDelta &= 65535;
+				for (int row = 0; row < scanlineCount; row++) {
+					if (realtimeCanvasRenderer != null) {
+						realtimeCanvasRenderer.renderRow(row);
+					}
+					onScanline(row);
+				}
 				
 				doTick();
 			}
@@ -252,7 +276,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	
 
 	public void syncVdpInterrupt(IMachine machine) {
-		if (!cpuSynchedVdpInterrupt.getBoolean())
+		if (!isCpuSynchedVdpInterrupt)
 			return;
 
 		// in this model, the CPU is running at a fixed rate,
@@ -261,6 +285,24 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		
 		if (vdpInterruptFrac < 0)
 			vdpInterruptFrac = 0;
+
+		if (vdpScanlineFrac < 0)
+			vdpScanlineFrac = 0;
+		
+		while (vdpScanlineFrac >= vdpScanlineLimit) {
+			vdpScanlineFrac -= vdpScanlineLimit;
+			
+			if (vdpScanline >= scanlineCount)
+				vdpScanline -= scanlineCount;
+			
+			if (realtimeCanvasRenderer != null) {
+				realtimeCanvasRenderer.renderRow(vdpScanline);
+			}
+
+			onScanline(vdpScanline);
+			
+			vdpScanline++;
+		}
 		
 		if (vdpInterruptFrac >= vdpInterruptLimit) {
 			vdpInterruptFrac -= vdpInterruptLimit;
@@ -268,6 +310,13 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 			doTick();
 		}
 	}
+	
+	/**
+	 */
+	protected void onScanline(int vdpScanline) {
+		
+	}
+
 	/**
 	 * 
 	 */
@@ -282,7 +331,10 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
     		}
     		
     		// a real interrupt only occurs if wanted
-    		if ((readVdpReg(1) & R1_INT) != 0) {
+    		if ((vdpregs[1] & R1_INT) != 0) {
+    			if ((vdpStatus & VDP_INTERRUPT) == 0) {
+    				setRegister(REG_ST, vdpStatus | VDP_INTERRUPT);
+    			}
     			triggerInterrupt();
 				//machine.getCpu().setIdle(false);
     		}
@@ -291,14 +343,28 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		
 	}
 
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip#hookRealtimeCanvasRenderer(v9t9.common.video.IVdpRealtimeCanvasRenderer)
+	 */
+	@Override
+	public void setRealtimeCanvasRenderer(IVdpRealtimeCanvasRenderer renderer) {
+		this.realtimeCanvasRenderer = renderer;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip#getRealtimeCanvasRenderer()
+	 */
+	@Override
+	public IVdpRealtimeCanvasRenderer getRealtimeCanvasRenderer() {
+		return realtimeCanvasRenderer;
+	}
+	
 	/**
 	 * 
 	 */
 	protected void triggerInterrupt() {
-		if ((vdpStatus & VDP_INTERRUPT) == 0) {
-			vdpStatus |= VDP_INTERRUPT;
-			machine.getExecutor().vdpInterrupt();
-		}
+		machine.getExecutor().vdpInterrupt();
 		
 		ICruChip cru = machine.getCru();
 		if (cru instanceof BaseCruChip) {
@@ -339,6 +405,8 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		
 		//settingDumpVdpAccess.loadState(section);
 		cpuSynchedVdpInterrupt.loadState(section);
+		isCpuSynchedVdpInterrupt = cpuSynchedVdpInterrupt.getBoolean();
+
 		vdpInterruptRate.loadState(section);
 	}
 	
@@ -350,6 +418,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	
 	public void addCpuCycles(int cycles) {
 		vdpInterruptFrac += cycles;
+		vdpScanlineFrac += cycles;
 	}
 	
 	@Override
@@ -569,12 +638,12 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	 * @param val
 	 */
 	protected void doSetVdpReg(int reg, byte old, byte val) {
-		/* if interrupts enabled, and interrupt was pending, trigger it */
-		if ((val & R1_INT) != 0 
-		&& 	(old & R1_INT) == 0) 
-		{
-			triggerInterrupt();
-		}
+//		/* if interrupts enabled, and interrupt was pending, trigger it */
+//		if ((val & R1_INT) != 0 
+//		&& 	(old & R1_INT) == 0) 
+//		{
+//			triggerInterrupt();
+//		}
 
 	}
 
@@ -582,6 +651,8 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	 * @param modeNumber
 	 */
 	protected void updateForMode() {
+		setSize(256, 192);
+		
 		if ((vdpregs[1] & R1_NOBLANK) == 0) {
 			vdpMmio.setMemoryAccessCycles(0);
 			return;
@@ -601,6 +672,15 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 			vdpMmio.setMemoryAccessCycles(8);
 			break;
 		}
+	}
+
+	/**
+	 * @param width
+	 * @param height
+	 */
+	protected void setSize(int width, int height) {
+		this.width = width;
+		this.scanlineCount = height;
 	}
 
 	/**
@@ -779,7 +859,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	
 
     /** Tell if the registers indicate a blank screen. */
-    protected boolean isBlank() {
+    public boolean isBlank() {
     	return (vdpregs[1] & R1_NOBLANK) == 0;
     }
     
@@ -823,4 +903,5 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		bs.set(0, 8);
 		return bs;
 	}
+
 }

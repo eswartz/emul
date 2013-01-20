@@ -82,7 +82,9 @@ public class DiskMemoryEntry extends MemoryEntry {
             		return;
             	}
 
-            	filename = locator.splitFileName(uri).second;
+            	if (!info.isStored()) {
+            		filename = locator.splitFileName(uri).second;
+            	}
             	
             	int filesize = locator.getContentLength(uri);
             	
@@ -189,7 +191,7 @@ public class DiskMemoryEntry extends MemoryEntry {
             	if (origData != null) {
             		try {
             			FileUtils.writeOutputStreamContentsAndClose(
-            					locator.createOutputStream(backup), origData, getSize());
+            					locator.createOutputStream(backup), origData, Math.min(getSize(), origData.length));
             		} catch (IOException e) {
             			e.printStackTrace();
             			// ignore
