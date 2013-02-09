@@ -169,6 +169,8 @@ public class ColorMapUtils {
 		int mindiff = Integer.MAX_VALUE;
 		int closest = -1;
 
+		count = Math.min(thePalette.length, count);
+		
 		for (int c = first; c < count; c++) {
 			if (c != exceptFor) {
 				int dist = getRGBDistance(thePalette[c], pixel);
@@ -192,6 +194,8 @@ public class ColorMapUtils {
 		
 		int lum = getPixelLum(pixel);
 		
+		count = Math.min(thePalette.length, count);
+		
 		int mindiff = Integer.MAX_VALUE;
 		int closest = -1;
 
@@ -212,6 +216,8 @@ public class ColorMapUtils {
 		int mindiff = Integer.MAX_VALUE;
 		int closest = -1;
 
+		count = Math.min(thePalette.length, count);
+		
 		// first, only pick greys for low hue cases
 		float[] phsv = { 0, 0, 0 };
 		rgbToHsv((pixel & 0xff0000) >> 16, (pixel & 0xff00) >> 8, (pixel & 0xff), phsv);
