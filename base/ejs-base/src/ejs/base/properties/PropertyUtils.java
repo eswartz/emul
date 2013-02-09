@@ -18,7 +18,7 @@ public class PropertyUtils {
 	}
 
 	public static Object convertStringToValue(String txt, Class<?> klass) {
-		Object v;
+		Object v = null;
 		try {
 			if (klass.equals(Double.class) || klass.equals(Double.TYPE))
 				v = Double.parseDouble(txt);
@@ -30,6 +30,18 @@ public class PropertyUtils {
 				v = txt;
 			else if (klass.equals(Boolean.class) || klass.equals(Boolean.TYPE))
 				v = Boolean.parseBoolean(txt);
+			else if (klass.isEnum()) {
+				for (Object val : klass.getEnumConstants()) {
+					if (val.toString().equals(txt)) {
+						v = val;
+						break;
+					}
+				}
+				if (v == null) {
+					new IllegalStateException("invalid enum " + txt + " for " + klass).printStackTrace();
+				}
+				
+			}
 			else {
 				throw new IllegalStateException("not handled: " + klass);
 			}
