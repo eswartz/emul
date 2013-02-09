@@ -537,6 +537,17 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	}
 	
 	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvasRenderer#refresh()
+	 */
+	@Override
+	public void refresh() {
+		for (int reg = 0; reg < vdpregs.length; reg++)
+			vdpregs[reg] = (byte) vdpChip.getRegister(reg);
+		setVideoMode();
+		forceRedraw();
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.canvas.video.IVdpCanvasHandler#getCanvas()
 	 */
 	@Override

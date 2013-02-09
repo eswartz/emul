@@ -16,9 +16,8 @@ public interface IVdpCanvasRenderer {
 	
 	void forceRedraw();
 
-	/**
-	 * @return
-	 */
 	IVdpCanvas getCanvas();
+	
+	void refresh();
 
 }

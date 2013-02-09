@@ -45,10 +45,8 @@ import v9t9.gui.client.swt.gl.SimpleCurvedCrtMonitorRender;
 import v9t9.gui.client.swt.gl.StandardMonitorRender;
 import v9t9.gui.client.swt.gl.TextureLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
-import v9t9.video.BitmapCanvasShort;
 import v9t9.video.IGLDataCanvas;
-import v9t9.video.ImageDataCanvasR3G3B2;
-import v9t9.video.VdpCanvasRendererFactory;
+import v9t9.video.common.CanvasFormat;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.utils.FileUtils;
@@ -172,6 +170,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	@SuppressWarnings("unused")
 	private long frameTimes;
 
+
 	public SwtLwjglVideoRenderer(IMachine machine) {
 		super(machine);
 		monitorDrawing = settings.get(BaseEmulatorWindow.settingMonitorDrawing);
@@ -179,17 +178,26 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 
 	protected void createVdpCanvasHandler() {
-//		vdpCanvas = new BitmapCanvasInt();
+		super.createVdpCanvasHandler();
+		if (false == vdpCanvas instanceof IGLDataCanvas) {
+			canvasFormat.setValue(getDefaultCanvasFormat());
+		} else {
+			glDataCanvas = (IGLDataCanvas) vdpCanvas;
+			updateShaders();
+		}
+	}
+	
+
+	/**
+	 * @return
+	 */
+	protected CanvasFormat getDefaultCanvasFormat() {
+		CanvasFormat format;
 		if (getVdpHandler().getRegisterCount() > 16)
-			vdpCanvas = new BitmapCanvasShort();	// V9938
+			format = CanvasFormat.RGB16_5_6_5;	// V9938
 		else
-			vdpCanvas = new ImageDataCanvasR3G3B2();
-//		vdpCanvas = new ImageDataCanvas24Bit();
-		
-		glDataCanvas = (IGLDataCanvas) vdpCanvas;
-		vdpCanvasRenderer = VdpCanvasRendererFactory.createCanvasRenderer(settings, this);
-		//vdpCanvasBuffer = ByteBuffer.allocateDirect(vdpCanvas.getImageData().bytesPerLine * vdpCanvas.getImageData().height);
-//		vdpCanvasBuffer = ((IGLDataCanvas) vdpCanvas).allocateBuffer();
+			format = CanvasFormat.RGB8_3_3_2;	// TMS9918A
+		return format;
 	}
 
 	/* (non-Javadoc)
@@ -209,7 +217,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	 */
 	@Override
 	public void propertyChanged(IProperty property) {
-		if (property == monitorDrawing || property == monitorEffect) {
+		if (property == monitorDrawing || property == monitorEffect
+				|| property == canvasFormat) {
 			updateShaders();
 		}
 	}

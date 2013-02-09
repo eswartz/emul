@@ -22,7 +22,6 @@ import v9t9.common.video.IVdpCanvasRenderer;
  *
  */
 public interface IVideoRenderer {
-    
     /** Force redraw of screen from changes from VdpHandler#update, 
      * incorporating any resolution changes, blank/unblank state, etc. */
     void redraw();

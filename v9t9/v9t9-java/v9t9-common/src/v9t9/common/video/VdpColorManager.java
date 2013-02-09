@@ -189,7 +189,7 @@ public class VdpColorManager {
 		if (idx == 0 && !clearFromPalette)
 			idx = clearColor;
 		if (idx >= thePalette.length)
-			return null;
+			idx = 0;
 		return thePalette[idx];
 	}
 

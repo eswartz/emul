@@ -42,6 +42,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchema;
 import v9t9.common.video.BaseVdpCanvas.Rect;
 import v9t9.common.video.BitmapVdpCanvas;
 import v9t9.common.video.ICanvas;
@@ -51,8 +52,8 @@ import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.video.ImageDataCanvas;
-import v9t9.video.ImageDataCanvas24Bit;
 import v9t9.video.VdpCanvasRendererFactory;
+import v9t9.video.common.CanvasFormat;
 
 /**
  * Render video into an SWT window
@@ -60,6 +61,10 @@ import v9t9.video.VdpCanvasRendererFactory;
  *
  */
 public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVideoRenderer {
+
+	static public final SettingSchema settingCanvasFormat = new SettingSchema(
+			ISettingsHandler.MACHINE,
+			"CanvasFormat", CanvasFormat.class, CanvasFormat.DEFAULT);
 	
 	protected Canvas canvas;
 	protected BitmapVdpCanvas vdpCanvas;
@@ -81,8 +86,11 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	private IProperty fullScreen;
 	private FastTimer fastTimer;
 	private boolean isVisible;
+	protected IProperty canvasFormat;
 	
 	protected List<ISwtSprite> sprites = new ArrayList<ISwtSprite>(1);
+
+	private IPropertyListener canvasFormatListener;
 	
 	public SwtVideoRenderer(IMachine machine) {
 		this.settings = machine.getSettings();
@@ -90,6 +98,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
 		zoomx = zoomy = 0.0f;
 		fastTimer = new FastTimer("Video Renderer");
+		canvasFormat = settings.get(settingCanvasFormat);
 	}
 
 	/* (non-Javadoc)
@@ -105,6 +114,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 */
 	@Override
 	public void dispose() {
+		canvasFormat.removeListener(canvasFormatListener);
 		if (vdpCanvasRenderer != null)
 			vdpCanvasRenderer.dispose();
 	}
@@ -135,14 +145,25 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 			}
 		});
 		
-		createVdpCanvasHandler();
+		//createVdpCanvasHandler();
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
-		vdpCanvas.setListener(this);
-		
 		initWidgets();
-		updateWidgetSizeForMode();
-		
+		//updateWidgetSizeForMode();
+
+		canvasFormatListener = new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				getShell().getDisplay().syncExec(new Runnable() {
+					public void run() {
+						createVdpCanvasHandler();
+					}
+				});
+			}
+		};
+		canvasFormat.addListenerAndFire(canvasFormatListener);
+
 		// the canvas collects update regions in a big rect
 		this.canvas.addPaintListener(new PaintListener() {
 
@@ -207,8 +228,32 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	}
 
 	protected void createVdpCanvasHandler() {
-		vdpCanvas = new ImageDataCanvas24Bit();
+		CanvasFormat format = (CanvasFormat) canvasFormat.getValue();
+		if (format == null || format == CanvasFormat.DEFAULT) {
+			format = getDefaultCanvasFormat();
+		}
+		
+		if (vdpCanvasRenderer != null) {
+			vdpCanvasRenderer.dispose();
+		}
+		
+		vdpCanvas = format.create();
 		vdpCanvasRenderer = VdpCanvasRendererFactory.createCanvasRenderer(settings, this);
+
+		vdpCanvas.setListener(this);
+		
+		updateWidgetSizeForMode();
+		
+		vdpCanvas.syncColors();
+		
+		vdpCanvasRenderer.refresh();
+	}
+
+	/**
+	 * @return
+	 */
+	protected CanvasFormat getDefaultCanvasFormat() {
+		return CanvasFormat.RGB24;
 	}
 
 	protected void initWidgets() {

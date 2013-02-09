@@ -15,6 +15,7 @@ import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ColumnViewerEditor;
 import org.eclipse.jface.viewers.ColumnViewerEditorActivationStrategy;
+import org.eclipse.jface.viewers.ComboBoxViewerCellEditor;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.FocusCellOwnerDrawHighlighter;
 import org.eclipse.jface.viewers.TableViewer;
@@ -145,7 +146,21 @@ public class SettingsDialog extends Composite implements IPropertyListener {
 			}
 
 			protected CellEditor getCellEditor(Object element) {
-				return textCellEditor;
+				IProperty property = (IProperty) element;
+				if (property.getType().isEnum()) {
+					Object[] enums = property.getType().getEnumConstants();
+					String[] items = new String[enums.length];
+					for (int i = 0; i < items.length; i++) {
+						items[i] = enums[i].toString();
+					}
+					ComboBoxViewerCellEditor ce = new ComboBoxViewerCellEditor(
+							(Composite) viewer.getControl(), SWT.READ_ONLY);
+					ce.setContenProvider(new ArrayContentProvider());
+					ce.setInput(items);
+					return ce;
+				} else {
+					return textCellEditor;
+				}
 			}
 
 			protected Object getValue(Object element) {
