@@ -66,9 +66,24 @@
 		<nativelib href="v9t9j-natives-linux-x86_64.jar" download="eager"/>
 	</resources>
 
-	<resources os="Linux">
+	<resources os="Linux" arch="x86">
 		<jar href="libs/org.eclipse.swt.gtk.linux.x86.jar" />
 		<nativelib href="v9t9j-natives-linux-x86.jar" download="eager"/>
+	</resources>
+
+	<resources os="Mac OS X" arch="x86_64">
+		<jar href="libs/org.eclipse.swt.cocoa.macosx.x86_64.jar" />
+		<nativelib href="v9t9j-natives-macosx-x86_64.jar" download="eager"/>
+	</resources>
+
+	<resources os="Mac OS X" arch="amd64">
+		<jar href="libs/org.eclipse.swt.cocoa.macosx.x86_64.jar" />
+		<nativelib href="v9t9j-natives-macosx-x86_64.jar" download="eager"/>
+	</resources>
+
+	<resources os="Mac OS X" arch="x86">
+		<jar href="libs/org.eclipse.swt.gtk.macosx.x86.jar" />
+		<nativelib href="v9t9j-natives-macosx-x86.jar" download="eager"/>
 	</resources>
 
 	<application-desc 
