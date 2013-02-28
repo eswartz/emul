@@ -10,11 +10,16 @@ fi
 
 JAVA=java
 OS=$(uname)
+VMARGS=-Xmx256M
+
 if [ "$OS" = "Linux" ]; then
 	OS=linux
 	WS=gtk
+elif [ "$OS" = "Mac OS X" ]; then		# VERIFY THIS
+    OS=macosx
+    WS=cocoa
+    VMARGS="$VMARGS -XstartOnFirstThread"
 else
-	# TODO: distinguish MacOS X...
 	OS=win32
 	WS=win32
 	
@@ -24,9 +29,36 @@ else
 	fi
 fi
 
-SWT=org.eclipse.swt.${WS}.${OS}.${ARCH}_3.6.2.v3659c.jar
-echo $SWT
+SWT=libs/org.eclipse.swt.${WS}.${OS}.${ARCH}.jar
+NATIVES=v9t9j-natives-${OS}-${ARCH}.jar
+
+JARS="libs/bcel-5.2.jar \
+	libs/gnu-getopt-1.0.13.jar \
+	libs/jinput.jar \
+	libs/jna.jar \
+	libs/lwjgl.jar \
+	libs/lwjgl_util.jar \
+	libs/org.apache.* \
+	libs/org.eclipse.core.* \
+	libs/org.eclipse.equinox.* \
+	libs/org.eclipse.jface* \
+	libs/org.eclipse.swt.jar \
+	libs/org.eclipse.tm.tcf.jar \
+	libs/svgSalamander.jar"
+
+JARPATH=""
+for jar in $JARS; do
+	JARPATH=$JARPATH:$jar
+done
+	
+echo $SWT $NATIVES
 echo $JAVA
+echo $JARPATH
+
+mkdir -p tmpdir
+unzip -o -d tmpdir $NATIVES 
 
 cd "$BASEDIR"
-"$JAVA" -Djava.library.path=lwjgl/$OS -cp $SWT -Xmx256M -jar v9t9j.jar
+"$JAVA" -cp "v9t9j.jar:$SWT:libs/*" -Djava.library.path=tmpdir $VMARGS  v9t9.gui.Emulator 
+
+
