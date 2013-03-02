@@ -1,29 +1,21 @@
-\
-\   Forth99 local support.
-\
-\   This is a mix of Factor and ANS Forth.
-\
-\   Locals may be declared with   :> name  
-\   at any time in a word, provided the first occurrence is not
-\   inside control flow.  This removes the top stack item
-\   and assigns it to 'name'.
-\
-\   'name' anywhere after in the word then pushes the
-\   current value onto the stack.
-\
-\   The syntax  TO name
-\   will remove the top stack item and reassign 'name'.   
-\
-\   Also, a word may be declared to take named arguments
-\   by using the '::' syntax.  Here, the stack effect
-\   comment is parsed for argument names on the LHS
-\   of the '--'.  Each name becomes another local,
-\   in the same ordering expected in the comment.
-\   Arguments after '--' (or a missing '--') is ignored.
-\
-\   A word may have an empty or missing stack effect
-\   comment, which allows the first use of  :> name
-\   to occur anywhere.
+\   locals.fi
+\ 
+\   (c) 2011 Edward Swartz
+\ 
+\   This program is free software; you can redistribute it and/or modify
+\   it under the terms of the GNU General Public License as published by
+\   the Free Software Foundation; either version 2 of the License, or
+\   (at your option) any later version.
+\  
+\   This program is distributed in the hope that it will be useful, but
+\   WITHOUT ANY WARRANTY; without even the implied warranty of
+\   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+\   General Public License for more details.
+\  
+\   You should have received a copy of the GNU General Public License
+\   along with this program; if not, write to the Free Software
+\   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+\   02111-1307, USA.
 \ 
 
 0 <export

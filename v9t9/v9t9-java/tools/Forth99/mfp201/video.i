@@ -1,6 +1,6 @@
 ;	video.i	 			    	-- video routines 
 ;
-;	(c) 2010 Edward Swartz
+;	(c) 2010-2011 Edward Swartz
 ;
 ;   This program is free software; you can redistribute it and/or modify
 ;   it under the terms of the GNU General Public License as published by
