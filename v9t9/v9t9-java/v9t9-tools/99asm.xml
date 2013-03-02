@@ -21,11 +21,16 @@
             <fileset dir="${bin.dir}" includes="v9t9/tools/asm/**/*.class"/>
             <fileset dir="${common.bin.dir}" includes="v9t9/common/asm/*.class"/>
             <fileset dir="${common.bin.dir}" includes="v9t9/common/asm/assembler/**/*.class"/>
+            <fileset dir="${common.bin.dir}" includes="v9t9/common/properties/**/*.class"/>
+            <fileset dir="${common.bin.dir}" includes="v9t9/common/settings/**/*.class"/>
             <fileset dir="${common.bin.dir}" includes="v9t9/common/files/PathFileLocator*.class"/>
+            <fileset dir="${common.bin.dir}" includes="v9t9/common/files/IPathFileLocator*.class"/>
             <fileset dir="${common.bin.dir}" includes="v9t9/common/memory/**/*.class"/>
             <fileset dir="${engine.bin.dir}" includes="v9t9/engine/cpu/**/Cpu*.class"/>
             <fileset dir="${engine.bin.dir}" includes="v9t9/engine/memory/**/Memory*.class"/>
             <fileset dir="${engine.bin.dir}" includes="v9t9/engine/memory/**/*Area*.class"/>
+        	<fileset dir="${engine.bin.dir}" includes="v9t9/engine/memory/**/*Banked*Entry*.class"/>
+        	<fileset dir="${engine.bin.dir}" includes="v9t9/engine/memory/**/DiskMemoryEntry*.class"/>
             <fileset dir="${machines.bin.dir}" includes="v9t9/common/memory/**/*.class"/>
             <fileset dir="${machines.bin.dir}" includes="v9t9/engine/cpu/**/*.class"/>
             <fileset dir="${machines.bin.dir}" includes="v9t9/machine/ti99/asm/**/*.class"/>
@@ -35,6 +40,7 @@
             <fileset dir="${ejs.base.dir}/bin" includes="ejs/base/properties/**/*.class"/>
             <fileset dir="${ejs.base.dir}/bin" includes="ejs/base/utils/**/*.class"/>
             <zipfileset excludes="META-INF/*.SF" src="${ejs.base.dir}/libs/gnu-getopt-1.0.13.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${ejs.base.dir}/libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
         </jar>
     </target>
 

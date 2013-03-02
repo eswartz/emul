@@ -9,7 +9,7 @@ TIASM_JAR = $(BIN)/tiasm.jar
 all: $(TIASM_JAR)
 	
 $(TIASM_JAR):
-	ant
+	ant -f $(TOP)/../../v9t9-java/v9t9-tools/99asm.xml
 
 clean:
 	rm -f $(TIASM_JAR)

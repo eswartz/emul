@@ -8,7 +8,7 @@ AUTOMAKE_OPTIONS = foreign
 EXTRA_DIST = $(DSRS) opcodes.inc aclocal.m4
 
 TIASM = java -jar $(TIASM_JAR)
-TIASM_JAR = $(BUILD)/bin/tiasm.jar
+TIASM_JAR = $(BUILD)/bin/99asm.jar
 ASMFLAGS=
 
 DSRS = emudisk.dsr emu2disk.dsr emurs232.dsr emupio.dsr
