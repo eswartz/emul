@@ -15,7 +15,7 @@ VMARGS=-Xmx256M
 if [ "$OS" = "Linux" ]; then
 	OS=linux
 	WS=gtk
-elif [ "$OS" = "Mac OS X" ]; then		# VERIFY THIS
+elif [ "$OS" = "Darwin" ]; then
     OS=macosx
     WS=cocoa
     VMARGS="$VMARGS -XstartOnFirstThread"
@@ -51,9 +51,9 @@ for jar in $JARS; do
 	JARPATH=$JARPATH:$jar
 done
 	
-echo $SWT $NATIVES
-echo $JAVA
-echo $JARPATH
+#echo $SWT $NATIVES
+#echo $JAVA
+#echo $JARPATH
 
 mkdir -p tmpdir
 unzip -o -d tmpdir $NATIVES 

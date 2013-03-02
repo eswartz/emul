@@ -160,6 +160,7 @@
     	<copy file="${base.v9t9}/data/release/v9t9.sh" tofile="${bin.v9t9.dir}/v9t9.sh"/>
 	-->
     	<copy file="${base.v9t9}/data/release/v9t9.html" tofile="${bin.v9t9.dir}/v9t9.html"/>
+    	<copy file="${base.v9t9}/data/release/v9t9.sh" tofile="${bin.v9t9.dir}/v9t9.sh"/>
     	
     	<copy overwrite="true" file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-local.jnlp"/>
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$SCHEME" value="file:" />

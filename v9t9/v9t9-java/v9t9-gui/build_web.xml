@@ -43,7 +43,10 @@
     	<zip destfile="${web}/data/v9t9.zip">
     		<fileset dir="${web}/data">
     			<include name="**"/>
-    			<exclude name="v9t9.zip" />
+    			<exclude name="v9t9**.zip" />
+    			<exclude name="v9t9*.log" />
+    			<exclude name="tmpdir" />
+    			<exclude name="tmpdir/**" />
     		</fileset>
     	
     	</zip>
