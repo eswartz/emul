@@ -1,7 +1,7 @@
 /*
   demo.c						-- store and playback demo files (unfinished)
 
-  (c) 1994-2001 Edward Swartz
+  (c) 1994-2012 Edward Swartz
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

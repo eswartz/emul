@@ -2,7 +2,7 @@
 /*
   speech.c						-- TMS5220 speech synthesizer emulation
 
-  (c) 1994-2001 Edward Swartz
+  (c) 1994-2011 Edward Swartz
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

@@ -1,7 +1,7 @@
 /*
   dsr_pio.c					-- V9t9 module for PIO DSR
 
-  (c) 1994-2005 Edward Swartz
+  (c) 1994-2011 Edward Swartz
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

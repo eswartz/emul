@@ -1,7 +1,7 @@
 /*
   video_win32_ddraw.cpp			-- V9t9 module for Win32 video interface
 
-  (c) 1994-2000 Edward Swartz
+  (c) 1994-2011 Edward Swartz
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

@@ -4,7 +4,7 @@
   This file is no longer used.  The information is in a different
   format in tms5220r.c.
 
-  (c) 1994-2001 Edward Swartz
+  (c) 1994-2011 Edward Swartz
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

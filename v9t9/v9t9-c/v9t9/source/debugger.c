@@ -1,7 +1,7 @@
 /*
   debugger.c					-- 99/4A debugger implementation
 
-  (c) 1994-2001 Edward Swartz
+  (c) 1994-2011 Edward Swartz
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
