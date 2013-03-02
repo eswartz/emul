@@ -1,17 +1,23 @@
 /*
-	DECODE(*addr,*op,*s,*d,*ts,*td)
+  decode.c
 
+  (c) 1991-2012 Edward Swartz
 
-	Disassemble instruction at ADDR, print out disassembly.
-
-	Return OP = defining bits of instruction (minus s/d/ts/td)
-	     ADDR = new address after 'executing'
-		S = source value (address or offset)
-		D = destination value (address or offset)
-	       TS = type of source
-	       TD = type of dest
-*/
-
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+ 
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
+ 
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+  02111-1307, USA.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 
