@@ -76,6 +76,10 @@
 		<nativelib href="v9t9j-natives-linux.jar" download="eager"/>
 	</resources>
 
+	<!--
+	
+	SWT + Java Web Start doesn't work
+	
 	<resources os="Mac OS X" arch="x86_64">
 		<jar href="libs/org.eclipse.swt.cocoa.macosx.x86_64.jar" />
 		<nativelib href="v9t9j-natives-macosx-intel.jar" download="eager"/>
@@ -91,6 +95,8 @@
 		<nativelib href="v9t9j-natives-macosx-intel.jar" download="eager"/>
 	</resources>
 
+	-->
+	
 	<application-desc 
 		main-class="v9t9.gui.Emulator">
 		<!--
