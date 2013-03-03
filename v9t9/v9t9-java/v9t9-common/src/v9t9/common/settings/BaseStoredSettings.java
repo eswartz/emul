@@ -18,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,6 +31,7 @@ import ejs.base.settings.ISettingSection;
 import ejs.base.settings.ISettingStorage;
 import ejs.base.settings.SettingsSection;
 import ejs.base.settings.XMLSettingStorage;
+import ejs.base.utils.StringUtils;
 
 import v9t9.common.client.ISettingsHandler;
 
@@ -172,13 +174,15 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 			}
 			
 			if (property == null || property instanceof SyntheticProperty) {
-				if (logger.isDebugEnabled()) logger.debug("Synthesizing: " + context + "::" + name + " = " + settings.get(name));
+				if (logger.isDebugEnabled()) logger.debug("Synthesizing: " + context + "::" + name + " = " 
+							+ format(settings.get(name)));
 				Object value = deduceObject(settings.getObject(name));
 				SyntheticProperty synProperty = new SyntheticProperty(name, value);
 				registeredSettings.put(name, synProperty);
 				syntheticSettings.put(name, synProperty);
 			} else {
-				if (logger.isDebugEnabled()) logger.debug("Loading: "+ context + "::"  + name + " = " + settings.get(name));
+				if (logger.isDebugEnabled()) logger.debug("Loading: "+ context + "::"  + name + " = " 
+							+ format(settings.get(name)));
 				property.loadState(settings);
 			}
 		}
@@ -337,7 +341,8 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		IProperty prop = findOrRealize(schema);
 		if (prop == null) {
 			prop = schema.createSetting();
-			if (logger.isDebugEnabled()) logger.debug("Creating: "+ context + "::" + prop.getName() + " = " + prop.getValue());
+			if (logger.isDebugEnabled()) logger.debug("Creating: "+ context + "::" + prop.getName() + 
+						" = " + format(prop.getValue()));
 			registeredSettings.put(schema.getName(), prop);
 		}
 		return prop;
@@ -478,5 +483,13 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 			ret.put(syntheticSettings.get(entry.getKey()), null);
 		}
 		return ret;
+	}
+	
+	private String format(Object val) {
+		if (val instanceof Collection<?>)
+			return StringUtils.catenate((Collection<?>) val, ", ");
+		if (val instanceof Object[])
+			return StringUtils.catenate((Object[]) val, ", ");
+		return String.valueOf(val);
 	}
 }
