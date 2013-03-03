@@ -102,8 +102,9 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 		settings.get(ExpRamArea.settingExpRam).setBoolean(true);
 		settings.get(ConsoleRamArea.settingEnhRam).setBoolean(false);
 		
-		URL dataURL = EmulatorMachinesData.getDataURL("dsrs");
-		DataFiles.addSearchPath(settings, dataURL.getPath());
+		IProperty shipPath = settings.get(DataFiles.settingShippingRomsPath);
+		URL dataURL = EmulatorMachinesData.getDataURL("ti99/dsrs/");
+		shipPath.getList().add(dataURL.toString());
 		
 		IProperty demoPath = settings.get(IDemoManager.settingBootDemosPath); 
 		if (demoPath.getList().isEmpty()) {

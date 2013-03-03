@@ -127,6 +127,7 @@ abstract public class MachineBase implements IMachine {
     	locator.setReadWritePathProperty(settings.get(DataFiles.settingStoredRamPath));
     	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingBootRomsPath));
     	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingUserRomsPath));
+    	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingShippingRomsPath));
     	try {
 			locator.addReadOnlyPathProperty(new SettingSchemaProperty("BuiltinPath", Collections.singletonList(
 					//"jar:file:/home/ejs/devel/emul/v9t9/build/bin/v9t9/v9t9j.jar!/ti99/"

@@ -155,6 +155,7 @@ public class PathFileLocator implements IPathFileLocator {
 					URI uri = createURI(path);
 					if (!uri.isAbsolute())
 						return;
+					logger.debug("Adding URI " + uri);
 					uris.add(uri);
 				} catch (URISyntaxException e) {
 					logger.debug("URI syntax on " + path, e);

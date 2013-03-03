@@ -38,6 +38,10 @@ public class DataFiles {
 		new SettingSchema(
 				ISettingsHandler.USER,
 				"UserRomsPath", String.class, new ArrayList<String>());
+	static public final SettingSchema settingShippingRomsPath = 
+			new SettingSchema(
+					ISettingsHandler.TRANSIENT,
+					"ShippingRomsPath", String.class, new ArrayList<String>());
 	static public final SettingSchema settingStoredRamPath = 
 		new SettingSchema(
 				ISettingsHandler.USER,
