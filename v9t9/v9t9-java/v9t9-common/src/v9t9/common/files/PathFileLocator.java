@@ -87,6 +87,8 @@ public class PathFileLocator implements IPathFileLocator {
 	private Map<URI, Map<String, String>> cachedMD5Hashes = new HashMap<URI, Map<String,String>>();
 	
 	private int timeoutMs = 30 * 1000;
+
+	private static Set<String> sReportedMissing = new HashSet<String>();
 	
 	/**
 	 * 
@@ -344,7 +346,11 @@ public class PathFileLocator implements IPathFileLocator {
 					return uri;
 				}
 			} catch (IOException e) {
-				logger.debug("failed to get listing from " + uri, e);
+				if (sReportedMissing.add(uri.toString())) {
+					logger.debug("failed to get listing from " + uri, e);
+				} else {
+					logger.debug("failed to get listing from " + uri);
+				}
 				if (false == e instanceof FileNotFoundException)
 					e.printStackTrace();
 			}
@@ -859,7 +865,9 @@ public class PathFileLocator implements IPathFileLocator {
 					}
 				}
 			} catch (FileNotFoundException e) {
-				logger.debug("file not found", e);
+				if (sReportedMissing.add(e.toString())) {
+					logger.debug("file not found", e);
+				}
 			} catch (IOException e) {
 				logger.error("MD5 search error", e);
 			}
