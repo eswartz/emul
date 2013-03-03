@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
 
@@ -34,7 +36,8 @@ import v9t9.machine.ti99.machine.TI99Machine;
  *
  */
 public class DsrManager implements IPersistable, IDsrManager {
-
+	private static final Logger log = Logger.getLogger(DsrManager.class);
+	
 	protected final IMachine machine;
 	protected List<IDsrHandler> dsrs;
 	
@@ -84,7 +87,8 @@ public class DsrManager implements IPersistable, IDsrManager {
 						dsr.activate(machine.getConsole(), machine.getMemory().getMemoryEntryFactory());
 						activeDsr = dsr;
 					} catch (IOException e) {
-						System.err.println("Could not activate DSR " + dsr.getName() + ": " + e.getMessage());
+						System.err.println("Could not activate " + dsr.getName() + ": " + e.getMessage());
+						log.error("Could not activate " + dsr.getName(), e);
 					}
 				} else {
 					dsr.deactivate(machine.getConsole());
