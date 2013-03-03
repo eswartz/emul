@@ -175,14 +175,14 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 			
 			if (property == null || property instanceof SyntheticProperty) {
 				if (logger.isDebugEnabled()) logger.debug("Synthesizing: " + context + "::" + name + " = " 
-							+ format(settings.get(name)));
+							+ format(settings.getObject(name)));
 				Object value = deduceObject(settings.getObject(name));
 				SyntheticProperty synProperty = new SyntheticProperty(name, value);
 				registeredSettings.put(name, synProperty);
 				syntheticSettings.put(name, synProperty);
 			} else {
 				if (logger.isDebugEnabled()) logger.debug("Loading: "+ context + "::"  + name + " = " 
-							+ format(settings.get(name)));
+							+ format(settings.getObject(name)));
 				property.loadState(settings);
 			}
 		}
@@ -488,7 +488,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	private String format(Object val) {
 		if (val instanceof Collection<?>)
 			return StringUtils.catenate((Collection<?>) val, ", ");
-		if (val instanceof Object[])
+		if (val instanceof Object[] || val instanceof String[])
 			return StringUtils.catenate((Object[]) val, ", ");
 		return String.valueOf(val);
 	}
