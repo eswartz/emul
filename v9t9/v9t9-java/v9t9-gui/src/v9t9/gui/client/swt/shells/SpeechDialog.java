@@ -50,7 +50,7 @@ public class SpeechDialog extends Composite {
 		
 		shell.setText("Speech Options");
 
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(this);
+		GridLayoutFactory.fillDefaults().numColumns(2).margins(6, 6).applyTo(this);
 
 		Label label;
 		

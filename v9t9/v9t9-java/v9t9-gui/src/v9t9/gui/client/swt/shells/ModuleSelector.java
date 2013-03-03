@@ -310,7 +310,7 @@ public class ModuleSelector extends Composite {
 
 		moduleManager.reload();
 		
-		GridLayoutFactory.fillDefaults().applyTo(this);
+		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(this);
 		
 		
 		createSearchFilter();

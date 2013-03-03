@@ -248,7 +248,7 @@ public class KeyboardDialog extends Composite implements IKeyboardModeListener, 
 		
 		//renderIcon(40);
 		
-		GridLayoutFactory.fillDefaults().applyTo(this);
+		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(this);
 		
 		keyboardMapping = machine.getKeyboardMapping();
 		

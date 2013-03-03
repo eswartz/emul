@@ -37,6 +37,7 @@
     	<copy todir="${web}/data" verbose="true" preservelastmodified="yes">
     		<fileset dir="${bin.v9t9.dir}">
     	      <include name="**"/>
+    		  <exclude name="data/**"/>
     	    </fileset>
       	</copy>
     	
@@ -44,7 +45,9 @@
     		<fileset dir="${web}/data">
     			<include name="**"/>
     			<exclude name="v9t9**.zip" />
-    			<exclude name="v9t9*.log" />
+    			<exclude name="v9t9*.log*" />
+    			<exclude name=".*" />
+    			<exclude name="hs_err*" />
     			<exclude name="tmpdir" />
     			<exclude name="tmpdir/**" />
     		</fileset>

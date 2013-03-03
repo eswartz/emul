@@ -216,7 +216,7 @@ public class DemoSelector extends Composite {
 		
 		shell.setText("Demo Player");
 		
-		GridLayoutFactory.fillDefaults().applyTo(this);
+		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(this);
 		
 		createSearchFilter();
 		

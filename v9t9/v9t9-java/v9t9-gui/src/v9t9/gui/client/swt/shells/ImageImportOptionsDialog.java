@@ -119,7 +119,7 @@ public class ImageImportOptionsDialog extends Composite {
 		
 		shell.setText("Image Importer");
 
-		GridLayoutFactory.fillDefaults().applyTo(this);
+		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(this);
 		
 		propertySource = new PropertySource();
 		imageImportHandler.getImageImportOptions().addToPropertySource((PropertySource) propertySource);

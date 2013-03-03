@@ -66,7 +66,7 @@ public class SettingsDialog extends Composite implements IPropertyListener {
 		
 		shell.setText("Settings");
 
-		GridLayoutFactory.fillDefaults().applyTo(this);
+		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(this);
 
 		ISettingsHandler settings = machine.getSettings();
 		

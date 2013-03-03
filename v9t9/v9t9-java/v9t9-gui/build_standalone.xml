@@ -10,6 +10,7 @@
     <property name="bin.v9t9.dir"     value="${build.dir}/bin/v9t9"/>
     <property name="base.tcf"     value="../../../org.eclipse.tcf"/>
     <property name="base.tcf.agent" value="../../../org.eclipse.tcf.agent"/>
+    <property name="base.v9t9-data" value="${base}/v9t9-data"/>
 	
 	<condition property="v9t9.host"     value="http://s3.amazonaws.com/V9t9">
 		<isset property="release"/>
@@ -154,6 +155,23 @@
               <include if="svgSalamander" name="svgSalamander.jar"/>
     	    </fileset>
       	</copy>
+
+    	<!--
+    	<copy todir="${bin.v9t9.dir}/data">
+    		<fileset dir="${base.v9t9-data}/data">
+              <include name="**"/>
+    	    </fileset>
+		</copy>
+		-->
+    	
+        <jar destfile="${bin.v9t9.dir}/v9t9-data.jar">
+            <manifest>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+        	<fileset dir="${base.v9t9-data}/data">
+    	       <include name="**"/>
+    	    </fileset>
+  	    </jar>
 
 	<!--      		
     	<copy file="${base.v9t9}/data/release/v9t9.bat" tofile="${bin.v9t9.dir}/v9t9.bat"/>
