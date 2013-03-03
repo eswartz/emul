@@ -80,6 +80,20 @@ and Metrowerks Codewarrior in Windows).  The C port was written from
 the assembly port which formed the original V9t9, back when it was 
 still being sold.
 
+
+Recent Changes
+===========
+
+<ul>
+<li>2013/03/03: split data out from V9t9 JAR to reduce download size
+</li><li>2013/03/02: "file in a directory" disk access should work now, because the
+proper emulated ROMs are actually included (!).
+</li><li>2013/03/02: Module Selector should work now -- was incorrectly checking
+filenames instead of content, as promised (!).
+</li><li>2013/02/27: Make OS X build available -- unfortunately, only through a shell script.
+</li>
+
+</ul>
 Running
 ========
 
@@ -105,8 +119,9 @@ Installing Locally
 
 Download the archive to the right and unzip it somewhere on your system.
 
+<b>On Windows or Linux:</b>
 
-Then launch it by double-clicking the `v9t9-local.jnlp` file in your favorite operating system 
+Launch it by double-clicking the `v9t9-local.jnlp` file in your favorite operating system 
 (though only Linux and Windows have been tested so far).
 
 Or, if your Java isn't installed properly, try:
@@ -116,7 +131,15 @@ Or, if your Java isn't installed properly, try:
 
 (or the equivalent in Windows)
 
-Using Web Start
+<b>On OS X:</b>
+
+Java Web Start does not play nicely with SWT on OS X, so you need to use a script instead:
+
+    $ cd /path/to/v9t9
+    $ sh v9t9.sh
+
+
+Using Web Start (Windows or Linux only)
 --------------------
 
 <div  class='lookyhere' style=' padding: 0em 1em;'>
@@ -134,11 +157,13 @@ Using Web Start
 
 Click on the button to the right.  This will fetch the most recent V9t9 build each time you use it.
 
+(Java Web Start does not play nicely with SWT on OS X, sorry.)
+
 Contact
 =======
 
-I'm currently in a trial run with this and haven't made the repository hosting V9t9 public.  
-(Mainly, the sources are a bit messy and have no license headers yet.)
+Sources are hosted in github at:  <a href="https://github.com/eswartz/emul">
+https://github.com/eswartz/emul</a>.
 
 If you have questions or issues, please contact me at ed.swartz.twofiftyeight@gmail.com, but
 use a number instead of spelling it out like that.
@@ -146,6 +171,9 @@ use a number instead of spelling it out like that.
 
 License
 =======
+
+The V9t9 Java codebase is licensed under EPL v1.0, with the exception that *no commercial
+redistribution is allowed*.
 
 This software includes content licensed under [EPL v1.0](http://www.eclipse.org/legal/epl-v10.html); 
 code from [the Base64 library](http://iharder.net/base64);  
