@@ -75,10 +75,12 @@ public class Emulator {
 	static {
 		if (System.getProperty("jna.library.path") == null) {
 			if (sIsWebStarted) {
+				/* not shipping
 				String path = Native.getWebStartLibraryPath("v9t9render");
 				System.out.println("Native libs at " + path);
 				if (path != null)
 					System.setProperty("jna.library.path", path);
+				*/
 			}
 			else {
 				String path;

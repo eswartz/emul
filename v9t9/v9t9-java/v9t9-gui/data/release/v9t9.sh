@@ -38,7 +38,7 @@ else
 fi
 
 SWT=libs/org.eclipse.swt.${WS}.${OS}.${ARCH}.jar
-NATIVES=v9t9j-natives-${OS}-${ARCH}.jar
+NATIVES=v9t9j-natives-${OS}-intel.jar
 
 JARS="libs/bcel-5.2.jar \
 	libs/gnu-getopt-1.0.13.jar \
