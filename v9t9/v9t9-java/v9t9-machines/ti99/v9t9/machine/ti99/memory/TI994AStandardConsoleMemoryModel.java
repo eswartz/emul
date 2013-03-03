@@ -16,6 +16,7 @@ import ejs.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.demos.IDemoManager;
 import v9t9.common.events.IEventNotifier;
+import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryEntry;
@@ -26,6 +27,7 @@ import v9t9.engine.demos.actors.SoundMmioDataDemoActor;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.speech.SpeechTMS5220;
+import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
 import v9t9.machine.ti99.dsr.realdisk.RealDiskImageDsr;
 import v9t9.machine.ti99.memory.mmio.ConsoleGramWriteArea;
@@ -99,6 +101,9 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
     protected void initSettings(ISettingsHandler settings) {
 		settings.get(ExpRamArea.settingExpRam).setBoolean(true);
 		settings.get(ConsoleRamArea.settingEnhRam).setBoolean(false);
+		
+		URL dataURL = EmulatorMachinesData.getDataURL("dsrs");
+		DataFiles.addSearchPath(settings, dataURL.getPath());
 		
 		IProperty demoPath = settings.get(IDemoManager.settingBootDemosPath); 
 		if (demoPath.getList().isEmpty()) {
