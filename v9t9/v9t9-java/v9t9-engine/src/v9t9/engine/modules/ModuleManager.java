@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 
@@ -45,6 +47,8 @@ import v9t9.common.settings.Settings;
  *
  */
 public class ModuleManager implements IModuleManager {
+	private static Logger log = Logger.getLogger(ModuleManager.class);
+	
 	private List<IModule> modules;
 	private final IMachine machine;
 	
@@ -74,6 +78,7 @@ public class ModuleManager implements IModuleManager {
 		try {
 			return new URL(machine.getModel().getDataURL(), stockModuleDatabase);
 		} catch (MalformedURLException e) {
+			log.error("could not find " + stockModuleDatabase, e);
 			return null;
 		}
 	}
