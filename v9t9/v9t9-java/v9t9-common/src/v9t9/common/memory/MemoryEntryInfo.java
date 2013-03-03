@@ -205,9 +205,13 @@ public class MemoryEntryInfo {
 	}
 
 	public boolean isDefaultFilename(ISettingsHandler settings) {
-		return getFilenameProperty() != null && 
-				settings.get(getFilenameProperty()).getValue().equals(
-						getFilenameProperty().getDefaultValue());
+		SettingSchema filenameProperty = getFilenameProperty();
+		if (filenameProperty == null)
+			return true;
+		Object filenameProp = settings.get(filenameProperty).getValue();
+		Object filenameDefault = filenameProperty.getDefaultValue();
+		return filenameProperty != null && 
+				filenameProp.equals(filenameDefault);
 	}
 
 	public String getResolvedFilename(ISettingsHandler settings) {
