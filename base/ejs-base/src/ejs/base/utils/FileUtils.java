@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -113,5 +114,26 @@ public class FileUtils  {
 		}
 		return sb.toString();
 	}
-	
+
+
+	/**
+	 * @param uri
+	 * @return
+	 */
+	public static String abbreviateURI(URI uri, int maxlength) {
+		String text;
+		try {
+			text = new File(uri).toString();
+		} catch (IllegalArgumentException e) {
+			text = uri.toString();
+		}
+		if (text.length() > maxlength) {
+			int prev = text.length();
+			do {
+				prev = text.lastIndexOf('/', prev - 1);
+			} while (prev > 0 && text.length() - prev < 20);
+			text = prev > 0 ? "..." + text.substring(prev) : text;
+		}
+		return text;
+	}
 }

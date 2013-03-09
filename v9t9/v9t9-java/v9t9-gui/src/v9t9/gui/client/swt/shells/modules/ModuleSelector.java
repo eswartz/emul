@@ -106,6 +106,7 @@ import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
 import v9t9.gui.client.swt.shells.ROMSetupDialog;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
+import ejs.base.utils.FileUtils;
 
 /**
  * Dialog for examining, running, and editing modules
@@ -637,19 +638,7 @@ public class ModuleSelector extends Composite {
 			public void update(ViewerCell cell) {
 				if (cell.getElement()  instanceof URI) {
 					URI uri = (URI) cell.getElement();
-					String text;
-					try {
-						text = new File(uri).toString();
-					} catch (IllegalArgumentException e) {
-						text = uri.toString();
-					}
-					if (text.length() > 20) {
-						int prev = text.length();
-						do {
-							prev = text.lastIndexOf('/', prev - 1);
-						} while (prev > 0 && text.length() - prev < 20);
-						text = prev > 0 ? "..." + text.substring(prev) : text;
-					}
+					String text = FileUtils.abbreviateURI(uri, 20);
 					
 					cell.setText(text);
 					cell.setImage(getModuleListImage());
