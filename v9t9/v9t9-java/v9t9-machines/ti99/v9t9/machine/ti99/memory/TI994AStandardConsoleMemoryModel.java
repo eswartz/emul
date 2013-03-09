@@ -109,7 +109,7 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 		IProperty demoPath = settings.get(IDemoManager.settingBootDemosPath); 
 		if (demoPath.getList().isEmpty()) {
     		try {
-				URL demosUrl = new URL(machine.getModel().getDataURL(), "demos/");
+				URL demosUrl = EmulatorMachinesData.getDataURL("ti99/demos/");
 				demoPath.getList().add(new URL(demosUrl, "v9t9j").toURI().toString());
 				demoPath.getList().add(new URL(demosUrl, "tiemul6").toURI().toString());
 			} catch (Exception e) {
