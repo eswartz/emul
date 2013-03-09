@@ -221,7 +221,8 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 		return dosname.toString();
 	}
 
-	/** Convert a TI filename to the host OS.  
+	/** Convert a TI filename to the host OS, assuming a modern
+	 * filesystem.  
 
 	   We convert illegal chars in FIAD_illegalchars into HTML-like
 	   encodings (&#xx;) so all possible filenames can be stored.
@@ -293,16 +294,30 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 			}
 			if (filename == null || filename.length() == 0)
 				return dir;
-			File cand = new File(dir, getLocalFileName(filename));
-			if (!cand.exists()) {
-				File alt = new File(dir, dsrToDOS(filename));
-				if (alt.exists())
-					return alt;
-				alt = new File(dir, dsrToDOSLinux(filename));
-				if (alt.exists())
-					return alt;
+			
+			String[] cands = new String[] {
+					getLocalFileName(filename),
+					dsrToDOS(filename),
+					dsrToDOSLinux(filename)
+			};
+			
+			File preferred = new File(dir, cands[0]);
+			
+			String[] names = dir.list();
+			if (names != null) {
+				for (String candName : cands) {
+					// do case-insensitive check
+					for (String name : names) {
+						if (name.equalsIgnoreCase(candName)
+								|| name.equalsIgnoreCase(candName + ".bin")) {
+							File cand = new File(dir, name);
+							if (cand.exists())
+								return cand;
+						}
+					}
+				}
 			}
-			return cand;
+			return preferred;
 		} else {
 			int idx = filename.indexOf('.');
 			String diskName = filename.substring(0, idx >= 0 ? idx : filename.length());

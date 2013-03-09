@@ -52,6 +52,17 @@ public abstract class FDR implements IFDRInfo {
 	public FDR(int fdrsize) {
 		this.fdrsize = fdrsize;
 	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "FDR: '" + getFileName() + "', type="+getType()  + ' ' + 
+		((flags & ff_program) == 0 ? String.valueOf(getRecordLength()) : "") +
+		", #secs: " + getSectorsUsed(); 
+		
+	}
 
 	/** get size of FDR */
     public int getFDRSize() {
@@ -278,4 +289,25 @@ public abstract class FDR implements IFDRInfo {
 	 * @return array, size is {@link #getContentSectors()}
 	 */
 	protected abstract int[] fetchContentSectors();
+
+	public String getType() {
+		return getType(flags);
+	}
+	public static String getType(int flags) {
+
+		String ttype = "???";
+		if ((flags & FDR.ff_program) != 0)
+			ttype = "PROGRAM";
+		else {
+			if ((flags & FDR.ff_internal) != 0)
+				ttype = "INT";
+			else
+				ttype = "DIS";
+			if ((flags & FDR.ff_variable) != 0)
+				ttype += "/VAR";
+			else
+				ttype += "/FIX";
+		}
+		return ttype;
+	}
 }

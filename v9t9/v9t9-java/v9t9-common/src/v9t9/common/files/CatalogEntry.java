@@ -48,20 +48,7 @@ public class CatalogEntry {
 		int flags = file.getFlags();
 		this.isProtected = (flags & FDR.ff_protected) != 0;
 		
-		String ttype = "???";
-		if ((flags & FDR.ff_program) != 0)
-			ttype = "PROGRAM";
-		else {
-			if ((flags & FDR.ff_internal) != 0)
-				ttype = "INT";
-			else
-				ttype = "DIS";
-			if ((flags & FDR.ff_variable) != 0)
-				ttype += "/VAR";
-			else
-				ttype += "/FIX";
-		}
-		this.type = ttype;
+		this.type = FDR.getType(flags);
 		
 		int idx;
 		int code = 0;
