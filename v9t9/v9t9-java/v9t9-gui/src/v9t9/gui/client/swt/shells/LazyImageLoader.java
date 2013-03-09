@@ -31,10 +31,10 @@ import ejs.base.utils.ListenerList.IFire;
 public class LazyImageLoader {
 	private static Map<String, Image> loadedImages = new HashMap<String, Image>();
 	
-	interface ILazyImageAdjuster {
+	public interface ILazyImageAdjuster {
 		Image adjustImage(Object element, URI imageURI, Image image);
 	}
-	interface ILazyImageLoadedListener {
+	public interface ILazyImageLoadedListener {
 		void imageLoaded(Object element, URI imageURI, Image image);
 	}
 	

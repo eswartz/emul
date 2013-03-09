@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.gui.client.swt.shells;
+package v9t9.gui.client.swt.shells.modules;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,49 +24,36 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import javax.imageio.ImageIO;
 
 import org.apache.log4j.Logger;
-import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ITableColorProvider;
-import org.eclipse.jface.viewers.ITableLabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
-import org.eclipse.jface.viewers.TextCellEditor;
-import org.eclipse.jface.viewers.TreeNode;
-import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusEvent;
@@ -79,7 +66,6 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
@@ -96,15 +82,12 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeColumn;
 import org.ejs.gui.common.FontUtils;
 import org.ejs.gui.common.SwtDialogUtils;
 
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
-import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
@@ -113,13 +96,16 @@ import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageCanvas;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
+import v9t9.gui.client.swt.shells.IToolShellFactory;
+import v9t9.gui.client.swt.shells.LazyImageLoader;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageAdjuster;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
+import v9t9.gui.client.swt.shells.ROMSetupDialog;
 import ejs.base.properties.IProperty;
-import ejs.base.settings.DialogSettingsWrapper;
 import ejs.base.settings.ISettingSection;
 
 /**
+ * Dialog for examining, running, and editing modules
  * @author ejs
  *
  */
@@ -127,7 +113,7 @@ public class ModuleSelector extends Composite {
 	private static final Logger logger = Logger.getLogger(ModuleSelector.class);
 	
 	public static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
-	private static String lastFilter;
+	static String lastFilter;
 
 	private static final String SECTION_MODULE_SELECTOR = "ModuleSelector";
 	private static final String SHOW_MISSING_MODULES = "ShowMissingModules";
@@ -138,8 +124,8 @@ public class ModuleSelector extends Composite {
 
 	private static boolean allowEditing = true;
 	
-	private static String NAME_PROPERTY = "name";
-	private static String[] NAME_PROPERTY_ARRAY = { NAME_PROPERTY };
+	static String NAME_PROPERTY = "name";
+	static String[] NAME_PROPERTY_ARRAY = { NAME_PROPERTY };
 	static final int NAME_COLUMN = 0;
 	static final int FILE_COLUMN = 1;
 	
@@ -168,37 +154,7 @@ public class ModuleSelector extends Composite {
 	private ExecutorService executor;
 	private ViewerUpdater viewerUpdater;
 
-	/**
-	 * This filter only allows through module entries for
-	 * which all the ROM segments exist.
-	 * @author ejs
-	 *
-	 */
-	class ExistingModulesFilter extends ViewerFilter {
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ViewerFilter#isFilterProperty(java.lang.Object, java.lang.String)
-		 */
-		@Override
-		public boolean isFilterProperty(Object element, String property) {
-			return true;
-		}
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ViewerFilter#select(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
-		 */
-		@Override
-		public boolean select(Viewer viewer, Object parentElement,
-				Object element) {
-			if (showMissingModules || !(element instanceof IModule))
-				return true;
-			
-			IModule module = (IModule) element;
-			return isModuleLoadable(module);
-		}
-		
-	}
-	
-	private ViewerFilter existingModulesFilter = new ExistingModulesFilter();
+	private ViewerFilter existingModulesFilter = new ExistingModulesFilter(this);
 	protected boolean isEditing;
 	protected Collection<URI> dirtyModuleLists = new HashSet<URI>();
 	private List<Object> moduleList;
@@ -209,93 +165,6 @@ public class ModuleSelector extends Composite {
 
 	private Button addButton;
 	
-	class FilteredSearchFilter extends ViewerFilter {
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ViewerFilter#isFilterProperty(java.lang.Object, java.lang.String)
-		 */
-		@Override
-		public boolean isFilterProperty(Object element, String property) {
-			return NAME_PROPERTY.equals(property);
-		}
-		
-		@Override
-		public boolean select(Viewer viewer, Object parentElement, Object element) {
-			if (lastFilter != null) {
-				// note: instanceof excludes "<No module>" entry too
-				if (false == element instanceof IModule)
-					return false;
-				IModule mod = (IModule) element;
-				String lowSearch = lastFilter.toLowerCase();
-				return mod.getName().toLowerCase().contains(lowSearch)
-						|| mod.getKeywords().contains(lowSearch);
-			}
-			return true;
-		}
-	}
-	
-	class ViewerUpdater extends Thread { 
-
-		private Queue<Object> elements = new LinkedBlockingDeque<Object>();
-		
-		public void post(Object element) {
-			elements.add(element);
-		}
-		
-		/* (non-Javadoc)
-		 * @see java.lang.Thread#run()
-		 */
-		@Override
-		public void run() {
-			final List<Object> avail = new ArrayList<Object>();
-			while (true) {
-				// delay to gather more changes at once
-				try {
-					Thread.sleep(750);
-				} catch (InterruptedException e) {
-					return;
-				}
-				
-				synchronized (avail) {
-					while (!elements.isEmpty()) {
-						final Object element = elements.poll();
-						avail.add(element);
-					}
-				}
-				if (!avail.isEmpty() && !getDisplay().isDisposed()) {
-					getDisplay().syncExec(new Runnable() {
-						private boolean firstRefresh = true;
-
-						public void run() {
-							if (!viewer.getControl().isDisposed()) {
-								Object[] availarray;
-								synchronized (avail) {
-									availarray = avail.toArray();
-									avail.clear();
-								}
-								viewer.update(availarray, NAME_PROPERTY_ARRAY);
-								
-								// the node may have been filtered out
-								//refreshFilters();
-								
-								if (firstRefresh) {
-									firstRefresh = false;
-									
-									initFilter(lastFilter);
-	
-									hookActions();
-								}								
-								
-							}
-						}
-					});
-				}
-				
-			}
-		}
-
-	}
-
 	/**
 	 * @param window 
 	 * 
@@ -308,7 +177,7 @@ public class ModuleSelector extends Composite {
 		
 		executor = Executors.newFixedThreadPool(4);
 		
-		viewerUpdater = new ViewerUpdater();
+		viewerUpdater = new ViewerUpdater(this);
 		
 		dialogSettings = machine.getSettings().getMachineSettings().getHistorySettings().findOrAddSection(SECTION_MODULE_SELECTOR);
 		
@@ -664,7 +533,7 @@ public class ModuleSelector extends Composite {
 		nameColumn.setText("Name");
 
 		viewer.setContentProvider(new ArrayContentProvider());
-		viewer.setLabelProvider(new ModuleTableLabelProvider());
+		viewer.setLabelProvider(new ModuleTableLabelProvider(this));
 
 		viewer.setColumnProperties(NAME_PROPERTY_ARRAY);
 		
@@ -743,43 +612,7 @@ public class ModuleSelector extends Composite {
 			}
 		});
 		
-		EditingSupport editingSupport = new EditingSupport(viewer) {
-			
-			@Override
-			protected void setValue(Object element, Object value) {
-				if (element instanceof IModule) {
-					IModule module = (IModule) element;
-					if (!value.toString().equals(module.getName())) {
-						module.setName(value.toString());
-						dirtyModuleLists.add(module.getDatabaseURI());
-						viewer.refresh(module);
-						//viewer.setSelection(new StructuredSelection(module), true);
-					}
-				}
-			}
-			
-			@Override
-			protected Object getValue(Object element) {
-				if (element instanceof IModule)
-					return ((IModule) element).getName();
-				return null;
-			}
-			
-			@Override
-			protected CellEditor getCellEditor(Object element) {
-				if (element instanceof IModule)
-					return new TextCellEditor(viewer.getTable());
-
-				return null;
-			}
-			
-			@Override
-			protected boolean canEdit(Object element) {
-				return isEditing;
-			}
-			
-			
-		};
+		EditingSupport editingSupport = new ModuleNameEditingSupport(this, viewer);
 		nameViewerColumn.setEditingSupport(editingSupport);
 		
 
@@ -1104,7 +937,7 @@ public class ModuleSelector extends Composite {
 	/**
 	 * @return the viewer
 	 */
-	public Viewer getViewer() {
+	public TableViewer getViewer() {
 		return viewer;
 	}
 	
@@ -1115,75 +948,6 @@ public class ModuleSelector extends Composite {
 		return selectedModule;
 	}
 	
-	class ModuleTableLabelProvider extends LabelProvider implements ITableLabelProvider,
-		ITableColorProvider {
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
-		 */
-		public Image getColumnImage(Object element, int columnIndex) {
-			if (!(element instanceof IModule)) {
-				if (columnIndex == NAME_COLUMN)
-					return getOrLoadModuleImage(element, null, null); 
-			}
-			IModule module = (IModule) element;
-			switch (columnIndex) {
-			case NAME_COLUMN: 
-				{
-					return getOrLoadModuleImage(element, module, module.getImagePath());
-				}
-			default:
-				return null;
-			}
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
-		 */
-		public String getColumnText(Object element, int columnIndex) {
-			if (element instanceof String && columnIndex == NAME_COLUMN)
-				return element.toString();
-			if (!(element instanceof IModule)) {
-				return null;
-			}
-			IModule module = (IModule) element;
-			switch (columnIndex) {
-			case NAME_COLUMN: return module.getName();
-			case FILE_COLUMN: {
-				for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-					Object v = info.getProperties().get(MemoryEntryInfo.FILENAME);
-					if (v != null)
-						return v.toString();
-				}
-			}
-			}
-			return null;
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableColorProvider#getForeground(java.lang.Object, int)
-		 */
-		@Override
-		public Color getForeground(Object element, int columnIndex) {
-			if (!(element instanceof IModule))
-				return null;
-			
-			IModule module = (IModule) element;
-			if (!isModuleLoadable(module))
-				return getDisplay().getSystemColor(SWT.COLOR_TITLE_INACTIVE_FOREGROUND);
-			
-			return null;
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableColorProvider#getBackground(java.lang.Object, int)
-		 */
-		@Override
-		public Color getBackground(Object element, int columnIndex) {
-			return null;
-		}
-	}
-
 	/**
 	 * @param machine2
 	 * @param buttonBar2
@@ -1209,7 +973,7 @@ public class ModuleSelector extends Composite {
 		};
 	}
 	
-	private Image getOrLoadModuleImage(final Object element, final IModule module, String imagePath) {
+	Image getOrLoadModuleImage(final Object element, final IModule module, String imagePath) {
 		URI imageURI = null;
 		
 		// see if user has an entry
@@ -1347,132 +1111,8 @@ public class ModuleSelector extends Composite {
 		
 	}
 
-	static class ErrorTreeNode extends TreeNode {
-
-		public ErrorTreeNode(Object value) {
-			super(value);
-		}
-		
-	}
-	static class InfoTreeNode extends TreeNode {
-		
-		public InfoTreeNode(Object value) {
-			super(value);
-		}
-		
-	}
-	final class ModuleInfoDialog extends Dialog {
-		private final IModule module;
-
-		private ModuleInfoDialog(Shell parentShell, IModule module) {
-			super(parentShell);
-			this.module = module;
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.window.Window#setShellStyle(int)
-		 */
-		@Override
-		protected void setShellStyle(int newShellStyle) {
-			super.setShellStyle(newShellStyle | SWT.RESIZE | SWT.TOOL | SWT.CLOSE);
-		}
-		
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.dialogs.Dialog#createButtonsForButtonBar(org.eclipse.swt.widgets.Composite)
-		 */
-		@Override
-		protected void createButtonsForButtonBar(Composite parent) {
-			createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL,
-					true);
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
-		 */
-		@Override
-		protected void configureShell(Shell newShell) {
-			super.configureShell(newShell);
-		}
-
-		protected IDialogSettings getDialogBoundsSettings() {
-			return new DialogSettingsWrapper(dialogSettings.findOrAddSection("ModuleInfo"));
-		}
-		
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
-		 */
-		@Override
-		protected Point getInitialSize() {
-			return super.getInitialSize();
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
-		 */
-		@Override
-		protected Control createDialogArea(Composite parent) {
-			Composite composite = (Composite) super.createDialogArea(parent);
-
-			///////////
-			
-			CLabel title = new CLabel(composite, SWT.NONE);
-			title.setText(module.getName());
-			title.setFont(JFaceResources.getHeaderFont());
-			
-			title.setImage(getOrLoadModuleImage(null, module, module.getImagePath()));
-			
-			GridDataFactory.fillDefaults().grab(true, false).applyTo(title);
-			
-			///////////
-			Label sep = new Label(composite, SWT.HORIZONTAL);
-			GridDataFactory.fillDefaults().grab(true, false).applyTo(sep);
-
-			///////////
-			
-			CLabel summary = new CLabel(composite, SWT.WRAP);
-			if (isModuleLoadable(module)) {
-				summary.setText("All module files resolved");
-				summary.setImage(getShell().getDisplay().getSystemImage(SWT.ICON_INFORMATION));
-			} else {
-				summary.setText("One or more module files are missing");
-				summary.setImage(getShell().getDisplay().getSystemImage(SWT.ICON_ERROR));
-			}
-			GridDataFactory.fillDefaults().grab(true, false).applyTo(summary);
-
-			///////////
-			
-			final TreeViewer viewer = new TreeViewer(composite, SWT.BORDER);
-			
-			Tree tree = viewer.getTree();
-			tree.setHeaderVisible(true);
-			tree.setLinesVisible(true);
-			
-			GridDataFactory.fillDefaults().grab(true,true).applyTo(tree);
-
-			final TreeColumn nameColumn = new TreeColumn(tree, SWT.RIGHT);
-			final TreeColumn infoColumn = new TreeColumn(tree, SWT.LEFT);
-
-			ModuleDetailsContentProvider contentProvider = new ModuleDetailsContentProvider(machine);
-			viewer.setContentProvider(contentProvider);
-			viewer.setLabelProvider(new ModuleDetailsTreeLabelProvider());
-			
-			viewer.setInput(contentProvider.createModuleContent(module));
-			
-			composite.getDisplay().asyncExec(new Runnable() {
-				public void run() {
-					viewer.expandToLevel(2);
-					nameColumn.pack();
-					infoColumn.pack();
-				}
-			});
-			
-			return composite;
-		}
-
-	}
-	
 	private void showModuleDetails(IModule module) {
-		ModuleInfoDialog dialog = new ModuleInfoDialog(window.getShell(), module);
+		ModuleInfoDialog dialog = new ModuleInfoDialog(this, window.getShell(), module);
 		
 		dialog.open();
 	}
@@ -1483,6 +1123,51 @@ public class ModuleSelector extends Composite {
 	 */
 	public IMachine getMachine() {
 		return machine;
+	}
+
+
+
+	/**
+	 * @return the showMissingModules
+	 */
+	public boolean isShowMissingModules() {
+		return showMissingModules;
+	}
+
+
+
+	/**
+	 * @param showMissingModules the showMissingModules to set
+	 */
+	public void setShowMissingModules(boolean showMissingModules) {
+		this.showMissingModules = showMissingModules;
+	}
+
+
+
+	/**
+	 * @return the dialogSettings
+	 */
+	public ISettingSection getDialogSettings() {
+		return dialogSettings;
+	}
+
+
+
+	/**
+	 * @param dialogSettings the dialogSettings to set
+	 */
+	public void setDialogSettings(ISettingSection dialogSettings) {
+		this.dialogSettings = dialogSettings;
+	}
+
+
+
+	/**
+	 * @param viewer the viewer to set
+	 */
+	public void setViewer(TableViewer viewer) {
+		this.viewer = viewer;
 	}
 
 

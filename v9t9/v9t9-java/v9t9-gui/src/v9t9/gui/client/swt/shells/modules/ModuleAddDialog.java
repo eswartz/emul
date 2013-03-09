@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.gui.client.swt.shells;
+package v9t9.gui.client.swt.shells.modules;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,8 +19,10 @@ import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.CheckStateChangedEvent;
+import org.eclipse.jface.viewers.CheckboxTableViewer;
+import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -69,7 +71,8 @@ public class ModuleAddDialog extends StatusDialog {
 	private Combo dbSelector;
 	
 	private File dir;
-	private ListViewer discoveredList;
+	private CheckboxTableViewer discoveredList;
+	private List<IModule> selectedModules = new ArrayList<IModule>();
 	private List<IModule> discoveredModules = new ArrayList<IModule>();
 	private File dbFile;
 
@@ -163,20 +166,20 @@ public class ModuleAddDialog extends StatusDialog {
 	 */
 	private void createDiscoveredList(Composite composite) {
 		Composite listArea = new Composite(composite, SWT.NONE);
-		GridLayoutFactory.fillDefaults().applyTo(listArea);
+		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(listArea);
 		GridDataFactory.fillDefaults().grab(true, true).span(3, 1).applyTo(listArea);
 		
 		Label label;
 		
 		/*spacer*/ label = new Label(listArea, SWT.NONE);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(label);
+		GridDataFactory.fillDefaults().grab(true, false).span(2, 1).applyTo(label);
 		
 		label = new Label(listArea, SWT.NONE);
 		label.setText("Modules found:");
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(label);
+		GridDataFactory.fillDefaults().grab(true, false).span(2, 1).applyTo(label);
 		
-		discoveredList = new ListViewer(listArea, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(discoveredList.getControl());
+		discoveredList = CheckboxTableViewer.newCheckList(listArea, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL | SWT.CHECK);
+		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(discoveredList.getControl());
 		discoveredList.setLabelProvider(new LabelProvider() {
 			@Override
 			public String getText(Object element) {
@@ -185,6 +188,60 @@ public class ModuleAddDialog extends StatusDialog {
 		});
 		discoveredList.setContentProvider(new ArrayContentProvider());
 		discoveredList.setInput(discoveredModules);
+		
+		Composite buttons = new Composite(listArea, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(buttons);
+		GridDataFactory.swtDefaults().grab(false, false).span(1, 1).applyTo(buttons);
+		
+		final Button selectAllButton = new Button(buttons, SWT.PUSH);
+		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(selectAllButton);
+		selectAllButton.setText("Select All");
+		
+		final Button selectNoneButton = new Button(buttons, SWT.PUSH);
+		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(selectNoneButton);
+		selectNoneButton.setText("Select None");
+		
+		final Button selectUniqueButton = new Button(buttons, SWT.PUSH);
+		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(selectUniqueButton);
+		selectUniqueButton.setText("Select Unique");
+
+		selectAllButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				discoveredList.setAllChecked(true);
+				selectedModules.clear();
+				selectedModules.addAll(discoveredModules);
+				validate();
+			}
+		});
+		selectNoneButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				discoveredList.setAllChecked(false);
+				selectedModules.clear();
+				validate();
+			}
+		});
+		selectUniqueButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				selectUniqueModules();
+				validate();
+			}
+		});
+		
+		discoveredList.addCheckStateListener(new ICheckStateListener() {
+			
+			@Override
+			public void checkStateChanged(CheckStateChangedEvent event) {
+				if (event.getChecked()) {
+					selectedModules.add((IModule) event.getElement());
+				} else {
+					selectedModules.remove((IModule) event.getElement());
+				}
+				validate();
+			}
+		});
 	}
 
 	/**
@@ -333,7 +390,9 @@ public class ModuleAddDialog extends StatusDialog {
 			if (discoveredModules.isEmpty()) {
 				status = createStatus(IStatus.WARNING, "No modules recognized");
 			} else {
-				status = createStatus(IStatus.INFO, "Recognized " + discoveredModules.size() + " modules");
+				status = createStatus(IStatus.INFO, "Selected " +
+						selectedModules.size() + " of " +
+						discoveredModules.size() + " modules");
 			}
 		}
 		
@@ -356,16 +415,36 @@ public class ModuleAddDialog extends StatusDialog {
 	 */
 	protected void refresh() {
 		discoveredModules.clear();
+		selectedModules.clear();
 		
 		dir = new File(dirText.getText());
 		URI databaseURI = dbFile != null ? dbFile.toURI() : URI.create("modules.xml");
 		
 		Collection<IModule> ents = machine.scanModules(databaseURI, dir);
 		discoveredModules.addAll(ents);
-		
+
+		discoveredList.setAllChecked(false);
 		discoveredList.refresh();
+		
+		selectUniqueModules();
+		
 	}
 	
+	/**
+	 * 
+	 */
+	private void selectUniqueModules() {
+		URI thisDB = dbFile.toURI();
+		selectedModules.clear();
+		for (IModule module : discoveredModules) {
+			IModule match = machine.getModuleManager().findModuleByName(module.getName(), false);
+			if (match == null || match.getDatabaseURI().equals(thisDB)) {
+				discoveredList.setChecked(module, true);
+				selectedModules.add(module);
+			}
+		}
+	}
+
 	/**
 	 * @return the discoveredModules
 	 */

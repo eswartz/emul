@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.gui.client.swt.shells;
+package v9t9.gui.client.swt.shells.modules;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -26,8 +26,6 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.memory.StoredMemoryEntryInfo;
 import v9t9.common.modules.IModule;
-import v9t9.gui.client.swt.shells.ModuleSelector.ErrorTreeNode;
-import v9t9.gui.client.swt.shells.ModuleSelector.InfoTreeNode;
 import ejs.base.properties.IProperty;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
