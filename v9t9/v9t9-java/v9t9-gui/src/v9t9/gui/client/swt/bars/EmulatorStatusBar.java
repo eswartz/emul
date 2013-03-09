@@ -266,7 +266,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				if (!recordSetting.getBoolean() && !playSetting.getBoolean())
+				if (!recordSetting.getBoolean() /*&& !playSetting.getBoolean()*/)
 					toggleDemoDialog();
 			}
 		});
