@@ -7,7 +7,7 @@
       <gromModuleEntry fileMd5="070B6E348E0D6DEA1F6096A4E7EAAF7B" fileName="logog.bin"/>
     </memoryEntries>
   </module>
-  <module name="TI Extended BASIC">
+  <module name="TI Extended BASIC" keywords="xb">
     <memoryEntries>
       <bankedModuleEntry file2Md5="952770D3772331F441079FE8B01C5676" fileMd5="CBBA4B9C66981F69C6F4F588D394E233" fileName="tiextc.bin" fileName2="tiextd.bin"/>
       <gromModuleEntry fileMd5="6CBBB03904E985747FB75F8155263AFB" fileName="tiextg.bin"/>
@@ -49,7 +49,7 @@
       <gromModuleEntry fileMd5="E03ACD21098738A9A4FFAEDF11FDD36F" fileName="carwarsg.bin"/>
     </memoryEntries>
   </module>
-  <module name="Editor/Assembler">
+  <module name="Editor/Assembler" keywords="e/a ea">
     <image>editor_assembler.png</image>
     <memoryEntries>
       <gromModuleEntry fileMd5="5A61839C9F14A782126434A501C1D83F" fileName="eag.bin"/>

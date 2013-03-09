@@ -57,7 +57,6 @@ public class ModuleDatabase {
 		}
 		for (Element moduleElement : XMLUtils.getChildElementsNamed(storage.getDocumentElement(), "module")) {
 			String name = moduleElement.getAttribute("name");
-			
 			logger.debug("Processing " + name);
 			
 			Module module = new Module(databaseURI, name);
@@ -76,8 +75,17 @@ public class ModuleDatabase {
 					name, moduleElement);
 			module.setMemoryEntryInfos(memoryEntries);
 			
-			if (!memoryEntries.isEmpty())
+			if (!memoryEntries.isEmpty()) {
+				
+				String keywordStr = moduleElement.getAttribute("keywords");
+				
+				if (keywordStr != null && keywordStr.length() > 0) {
+					String[] kws = keywordStr.split("\\s+");
+					module.getKeywords().addAll(Arrays.asList(kws));
+				}
+				
 				modules.add(module);
+			}
 		}
 		
 		logger.debug("Done processing modules");

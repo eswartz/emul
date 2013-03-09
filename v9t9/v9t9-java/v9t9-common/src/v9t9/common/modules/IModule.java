@@ -11,6 +11,7 @@
 package v9t9.common.modules;
 
 import java.net.URI;
+import java.util.List;
 
 import v9t9.common.memory.MemoryEntryInfo;
 
@@ -29,5 +30,7 @@ public interface IModule {
 	void setImagePath(String imagePath);
 	
 	MemoryEntryInfo[] getMemoryEntryInfos();
+	
+	List<String> getKeywords();
 
 }

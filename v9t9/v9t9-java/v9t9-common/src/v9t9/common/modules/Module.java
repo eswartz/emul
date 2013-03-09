@@ -27,6 +27,9 @@ public class Module implements IModule {
 	private String imagePath;
 	private URI databaseURI;
 	
+	// not used for equality
+	private List<String> keywords = new ArrayList<String>(1);
+	
 	public Module(URI uri, String name) {
 		this.databaseURI = uri;
 		this.name = name;
@@ -119,5 +122,13 @@ public class Module implements IModule {
 
 	public void setImagePath(String image) {
 		this.imagePath = image;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModule#getKeywords()
+	 */
+	@Override
+	public List<String> getKeywords() {
+		return keywords;
 	}
 }

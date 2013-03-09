@@ -219,8 +219,12 @@ public class ModuleSelector extends Composite {
 		public boolean select(Viewer viewer, Object parentElement, Object element) {
 			if (lastFilter != null) {
 				// note: instanceof excludes "<No module>" entry too
-				return element instanceof IModule && ((IModule) element).getName().toLowerCase().contains(
-						lastFilter.toLowerCase());
+				if (false == element instanceof IModule)
+					return false;
+				IModule mod = (IModule) element;
+				String lowSearch = lastFilter.toLowerCase();
+				return mod.getName().toLowerCase().contains(lowSearch)
+						|| mod.getKeywords().contains(lowSearch);
 			}
 			return true;
 		}
@@ -868,7 +872,9 @@ public class ModuleSelector extends Composite {
 					int end = (index + modules.length - 1) % modules.length;
 					for (int i = index; i != end; i = (i + 1) % modules.length) {
 						IModule m = modules[i];
-						if (m.getName().toLowerCase().contains(search.toString().toLowerCase())) {
+						String lowSearch = search.toString().toLowerCase();
+						if (m.getName().toLowerCase().contains(lowSearch)
+								|| m.getKeywords().contains(lowSearch)) {
 							viewer.setSelection(new StructuredSelection(m), true);
 							index = i;
 							break;
