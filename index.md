@@ -85,8 +85,12 @@ Recent Changes
 ===========
 
 <ul>
+<li>2013/03/09: improve UI for Module Selector and allow adding user modules --
+RPK format supported as well!
+</li>
 <li>2013/03/03: split data out from V9t9 JAR to reduce download size
-</li><li>2013/03/02: "file in a directory" disk access should work now, because the
+</li>
+<li>2013/03/02: "file in a directory" disk access should work now, because the
 proper emulated ROMs are actually included (!).
 </li><li>2013/03/02: Module Selector should work now -- was incorrectly checking
 filenames instead of content, as promised (!).
