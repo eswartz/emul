@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +37,6 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.IElementComparer;
@@ -46,8 +46,8 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.TreeViewerColumn;
+import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
@@ -78,10 +78,10 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.TreeColumn;
 import org.ejs.gui.common.FontUtils;
 import org.ejs.gui.common.SwtDialogUtils;
 
@@ -132,8 +132,8 @@ public class ModuleSelector extends Composite {
 
 	private ISettingSection dialogSettings; 
 
-	private TableViewer viewer;
-	private TableColumn nameColumn;
+	private TreeViewer viewer;
+	private TreeColumn nameColumn;
 	private IModule selectedModule;
 	private Composite buttonBar;
 	private final IMachine machine;
@@ -157,13 +157,16 @@ public class ModuleSelector extends Composite {
 	private ViewerFilter existingModulesFilter = new ExistingModulesFilter(this);
 	protected boolean isEditing;
 	protected Collection<URI> dirtyModuleLists = new HashSet<URI>();
-	private List<Object> moduleList;
+	//private List<Object> moduleList;
+	private Map<URI, Collection<IModule>> moduleMap;
 	private LazyImageLoader lazyImageLoader;
 	private Image stockModuleImage;
 	private URI builtinImagesURI;
 	private ILazyImageAdjuster moduleImageResizer;
 
 	private Button addButton;
+
+	private Image modulesListImage;
 	
 	/**
 	 * @param window 
@@ -185,7 +188,7 @@ public class ModuleSelector extends Composite {
 		
 		wasPaused = machine.setPaused(true);
 
-		moduleManager.reload();
+		//moduleManager.reload();
 		
 		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(this);
 		
@@ -438,7 +441,7 @@ public class ModuleSelector extends Composite {
 		getDisplay().asyncExec(new Runnable() {
 			public void run() {
 				if (!nameColumn.isDisposed())
-					nameColumn.setWidth(viewer.getTable().getSize().x);
+					nameColumn.setWidth(viewer.getControl().getSize().x);
 				
 				final IModule[] loadedModules = moduleManager.getLoadedModules();
 				viewer.setSelection(new StructuredSelection(loadedModules), true);
@@ -466,8 +469,8 @@ public class ModuleSelector extends Composite {
 	/**
 	 * @param moduleManager
 	 */
-	protected TableViewer createTable() {
-		final TableViewer viewer = new TableViewer(this, SWT.READ_ONLY | SWT.BORDER | SWT.FULL_SELECTION);
+	protected TreeViewer createTable() {
+		final TreeViewer viewer = new TreeViewer(this, SWT.READ_ONLY | SWT.BORDER | SWT.FULL_SELECTION);
 		
 
 		moduleImageResizer = new ILazyImageAdjuster() {
@@ -503,6 +506,7 @@ public class ModuleSelector extends Composite {
 		
 		lazyImageLoader = new LazyImageLoader(viewer, executor, stockModuleImage);
 		
+		modulesListImage = EmulatorGuiData.loadImage(getDisplay(), "icons/module_list.png");
 		
 		viewer.setComparer(new IElementComparer() {
 			
@@ -517,22 +521,22 @@ public class ModuleSelector extends Composite {
 			}
 		});
 		
-		Table table = viewer.getTable();
-		table.setHeaderVisible(true);
-		table.setLinesVisible(true);
+		Tree tree = viewer.getTree();
+		tree.setHeaderVisible(true);
+		tree.setLinesVisible(true);
 		
-		GridDataFactory.fillDefaults().grab(true,true).applyTo(table);
+		GridDataFactory.fillDefaults().grab(true,true).applyTo(tree);
 
 		FontDescriptor desc = FontUtils.getFontDescriptor(
 				JFaceResources.getFontRegistry().getBold(
 						JFaceResources.DIALOG_FONT));
 		tableFont = desc.createFont(getDisplay()); 
-		table.setFont(tableFont);
+		tree.setFont(tableFont);
 
-		nameColumn = new TableColumn(table, SWT.LEFT);
+		nameColumn = new TreeColumn(tree, SWT.LEFT);
 		nameColumn.setText("Name");
 
-		viewer.setContentProvider(new ArrayContentProvider());
+		viewer.setContentProvider(new ModuleContentProvider());
 		viewer.setLabelProvider(new ModuleTableLabelProvider(this));
 
 		viewer.setColumnProperties(NAME_PROPERTY_ARRAY);
@@ -571,18 +575,20 @@ public class ModuleSelector extends Composite {
 		
 		selectedModule = null;
 		
-		addIterativeSearch(viewer, table);
+		addIterativeSearch(viewer, tree);
 
 		sortModules = dialogSettings.getBoolean(SORT_ENABLED);
 		sortDirection = dialogSettings.getInt(SORT_DIRECTION);
 		
-		moduleList = new ArrayList<Object>(Arrays.asList(moduleManager.getModules()));
-		moduleList.add(0, "<No module>");
-		viewer.setInput(moduleList);
+		moduleMap = new LinkedHashMap<URI, Collection<IModule>>();
+		
+		revertModules();
+		viewer.setInput(moduleMap);
+		viewer.expandToLevel(2);
 		
 		viewer.setSelection(new StructuredSelection(moduleManager.getLoadedModules()), true);
 
-		table.addKeyListener(new KeyAdapter() {
+		tree.addKeyListener(new KeyAdapter() {
 			/* (non-Javadoc)
 			 * @see org.eclipse.swt.events.KeyAdapter#keyPressed(org.eclipse.swt.events.KeyEvent)
 			 */
@@ -595,15 +601,15 @@ public class ModuleSelector extends Composite {
 			}
 		});
 		
-		TableViewerColumn nameViewerColumn = new TableViewerColumn(viewer, nameColumn);
+		TreeViewerColumn nameViewerColumn = new TreeViewerColumn(viewer, nameColumn);
 		nameViewerColumn.setLabelProvider(new CellLabelProvider() {
 			
 			@Override
 			public void update(ViewerCell cell) {
-				if (cell.getElement()  instanceof String) {
-					String string = (String) cell.getElement();
-					cell.setText(string);
-					cell.setImage(getOrLoadModuleImage(string, null, null));
+				if (cell.getElement()  instanceof URI) {
+					URI uri = (URI) cell.getElement();
+					cell.setText(uri.toString());
+					cell.setImage(null);
 				} else {
 					IModule module = (IModule) cell.getElement();
 					cell.setText(module.getName());
@@ -620,6 +626,8 @@ public class ModuleSelector extends Composite {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
+				if (modulesListImage != null)
+					modulesListImage.dispose();
 				if (tableFont != null)
 					tableFont.dispose();
 				/*for (Image image : loadedImages.values()) {
@@ -638,6 +646,32 @@ public class ModuleSelector extends Composite {
 		
 
 		return viewer;
+	}
+
+
+
+	/**
+	 * 
+	 */
+	private void revertModules() {
+		moduleMap.clear();
+		List<String> modDbList = machine.getSettings().get(IModuleManager.settingModuleList).getList();
+		modDbList = new ArrayList<String>(modDbList);
+		modDbList.add(0, moduleManager.getStockDatabaseURL().toString());
+		for (String modDb : modDbList) {
+			try {
+				URI databaseURI = machine.getRomPathFileLocator().findFile(modDb);
+				List<IModule> mods = moduleManager.readModules(databaseURI);
+				moduleMap.put(databaseURI, mods);
+			} catch (Exception e3) {
+				machine.getEventNotifier().notifyEvent(null, Level.WARNING, 
+						e3.getMessage());
+			}
+		}
+//		moduleList = new ArrayList<Object>(Arrays.asList(moduleManager.getModules()));
+//		moduleList.add(0, "<No module>");
+//		viewer.setInput(moduleList);
+		
 	}
 
 
@@ -685,11 +719,11 @@ public class ModuleSelector extends Composite {
 
 	/**
 	 * @param viewer
-	 * @param table
+	 * @param tree
 	 * @param realModules
 	 */
-	protected void addIterativeSearch(final TableViewer viewer, Table table) {
-		table.addKeyListener(new KeyAdapter() {
+	protected void addIterativeSearch(final TreeViewer viewer, Tree tree) {
+		tree.addKeyListener(new KeyAdapter() {
 			StringBuilder search = new StringBuilder();
 			int index = 0;
 			IModule[] modules;
@@ -766,7 +800,7 @@ public class ModuleSelector extends Composite {
 			
 			public void selectionChanged(SelectionChangedEvent event) {
 				Object obj = ((IStructuredSelection) event.getSelection()).getFirstElement();
-				if (obj instanceof String) {
+				if (false == obj instanceof IModule) {
 					selectedModule = null;
 					switchButton.setEnabled(true);
 				}
@@ -782,7 +816,7 @@ public class ModuleSelector extends Composite {
 			
 			public void open(OpenEvent event) {
 				Object obj = ((IStructuredSelection) event.getSelection()).getFirstElement();
-				if (obj instanceof String) {
+				if (false == obj instanceof IModule) {
 					selectedModule = null;
 					if (!switchButton.isDisposed())
 						switchButton.setEnabled(true);
@@ -800,17 +834,17 @@ public class ModuleSelector extends Composite {
 			}
 		});
 		
-		viewer.getTable().addMenuDetectListener(new MenuDetectListener() {
+		viewer.getControl().addMenuDetectListener(new MenuDetectListener() {
 			
 			@Override
 			public void menuDetected(MenuDetectEvent e) {
-				final TableItem item = viewer.getTable().getItem(
-						viewer.getTable().toControl(new Point(e.x, e.y))
+				final TreeItem item = viewer.getTree().getItem(
+						viewer.getTree().toControl(new Point(e.x, e.y))
 						);
 				if (item != null && item.getData() instanceof IModule) {
 					final IModule module = (IModule) item.getData();
 
-					Menu menu = new Menu(viewer.getTable());
+					Menu menu = new Menu(viewer.getControl());
 					
 					if (isEditing && window.getVideoRenderer() instanceof ISwtVideoRenderer) {
 						final MenuItem mitem;
@@ -836,7 +870,7 @@ public class ModuleSelector extends Composite {
 							public void widgetSelected(SelectionEvent e) {
 								dirtyModuleLists.add(module.getDatabaseURI());
 								moduleManager.removeModule(module);
-								moduleList.remove(module);
+								moduleMap.get(module.getDatabaseURI()).remove(module);
 								viewer.remove(module);
 							}
 							
@@ -873,7 +907,7 @@ public class ModuleSelector extends Composite {
 		
 		filterText.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent e) {
-				if (viewer.getTable().isDisposed())
+				if (viewer.getControl().isDisposed())
 					return;
 
 				if (lastFilter == null) {
@@ -883,14 +917,14 @@ public class ModuleSelector extends Composite {
 				}
 				
 				if (e.keyCode == SWT.ARROW_DOWN) {
-					viewer.getTable().setFocus();
+					viewer.getControl().setFocus();
 				}
 				
 				if (e.keyCode == '\r') {
-					viewer.getTable().setFocus();
+					viewer.getControl().setFocus();
 					e.doit = false;
 					
-					if (viewer.getTable().getItemCount() > 0 && selectedModule != null) {
+					if (viewer.getTree().getItemCount() > 0 && selectedModule != null) {
 						switchModule(false);
 					}
 				}
@@ -903,8 +937,8 @@ public class ModuleSelector extends Composite {
 			public void modifyText(ModifyEvent e) {
 				updateFilter(filterText.getText());
 				
-				if (lastFilter != null && viewer.getTable().getItemCount() > 0) {
-					viewer.setSelection(new StructuredSelection(viewer.getTable().getItems()[0].getData()), true);
+				if (lastFilter != null && viewer.getTree().getItemCount() > 0) {
+					viewer.setSelection(new StructuredSelection(viewer.getTree().getItems()[0].getData()), true);
 				}
 			}
 		});
@@ -937,7 +971,7 @@ public class ModuleSelector extends Composite {
 	/**
 	 * @return the viewer
 	 */
-	public TableViewer getViewer() {
+	public TreeViewer getViewer() {
 		return viewer;
 	}
 	
@@ -1134,41 +1168,12 @@ public class ModuleSelector extends Composite {
 		return showMissingModules;
 	}
 
-
-
-	/**
-	 * @param showMissingModules the showMissingModules to set
-	 */
-	public void setShowMissingModules(boolean showMissingModules) {
-		this.showMissingModules = showMissingModules;
-	}
-
-
-
-	/**
-	 * @return the dialogSettings
-	 */
 	public ISettingSection getDialogSettings() {
 		return dialogSettings;
 	}
 
-
-
-	/**
-	 * @param dialogSettings the dialogSettings to set
-	 */
-	public void setDialogSettings(ISettingSection dialogSettings) {
-		this.dialogSettings = dialogSettings;
+	public Image getModuleListImage() {
+		return modulesListImage;
 	}
-
-
-
-	/**
-	 * @param viewer the viewer to set
-	 */
-	public void setViewer(TableViewer viewer) {
-		this.viewer = viewer;
-	}
-
 
 }

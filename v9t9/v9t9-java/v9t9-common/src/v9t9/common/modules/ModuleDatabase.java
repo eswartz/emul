@@ -36,7 +36,7 @@ import ejs.base.utils.XMLUtils;
 public class ModuleDatabase {
 	private static final Logger logger = Logger.getLogger(ModuleDatabase.class);
 
-	public static List<IModule> loadModuleListAndClose(IMemory memory, InputStream is, URI databaseURI) throws NotifyException {
+	public static List<IModule> loadModuleListAndClose(IMemory memory, InputStream is, URI databaseURI) throws IOException {
 		
 		logger.debug("Loading modules database from " + databaseURI);
 		
@@ -48,8 +48,8 @@ public class ModuleDatabase {
 		} catch (StorageException e) {
 			logger.error("failed to load module database", e);
 			if (e.getCause() instanceof StorageException)
-				throw new NotifyException(null, "Error loading module database", e.getCause());
-			throw new NotifyException(null, "Error parsing module database", e);
+				throw new IOException("Error loading module database", e.getCause());
+			throw new IOException("Error parsing module database", e);
 		} finally {
 			try {
 				is.close();

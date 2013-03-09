@@ -3,6 +3,8 @@
  */
 package v9t9.gui.client.swt.shells.modules;
 
+import java.net.URI;
+
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 
@@ -22,6 +24,8 @@ class FilteredSearchFilter extends ViewerFilter {
 	public boolean select(Viewer viewer, Object parentElement, Object element) {
 		if (ModuleSelector.lastFilter != null) {
 			// note: instanceof excludes "<No module>" entry too
+			if (element instanceof URI)
+				return true;
 			if (false == element instanceof IModule)
 				return false;
 			IModule mod = (IModule) element;

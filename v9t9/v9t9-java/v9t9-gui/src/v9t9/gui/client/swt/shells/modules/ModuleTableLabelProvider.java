@@ -28,7 +28,7 @@ class ModuleTableLabelProvider extends LabelProvider implements ITableLabelProvi
 	public Image getColumnImage(Object element, int columnIndex) {
 		if (!(element instanceof IModule)) {
 			if (columnIndex == ModuleSelector.NAME_COLUMN)
-				return selector.getOrLoadModuleImage(element, null, null); 
+				return selector.getModuleListImage();
 		}
 		IModule module = (IModule) element;
 		switch (columnIndex) {
@@ -45,7 +45,7 @@ class ModuleTableLabelProvider extends LabelProvider implements ITableLabelProvi
 	 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
 	 */
 	public String getColumnText(Object element, int columnIndex) {
-		if (element instanceof String && columnIndex == ModuleSelector.NAME_COLUMN)
+		if (false == element instanceof IModule && columnIndex == ModuleSelector.NAME_COLUMN)
 			return element.toString();
 		if (!(element instanceof IModule)) {
 			return null;

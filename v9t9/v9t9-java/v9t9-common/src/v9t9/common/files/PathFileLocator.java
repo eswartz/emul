@@ -319,6 +319,16 @@ public class PathFileLocator implements IPathFileLocator {
 		if (localFile.isAbsolute())
 			return localFile.toURI();
 
+		if (file.contains("/")) {
+			try {
+				URI resolved = URI.create(file);
+				if (resolved.isOpaque() || resolved.isAbsolute())
+					return resolved;
+			} catch (IllegalArgumentException e) {
+				
+			}
+		}
+
 		URI[] searchURIs = getSearchURIs();
 		
 		URI uri = null;

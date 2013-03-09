@@ -10,10 +10,12 @@
  */
 package v9t9.common.modules;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.NotifyException;
@@ -39,6 +41,7 @@ public interface IModuleManager extends IPersistable {
 	//void loadModuleDatabases(String[] files, IEventNotifier notifier);
 
 	IModule[] getModules();
+	List<IModule> readModules(URI databaseURI) throws IOException;
 
 	void switchModule(IModule module) throws NotifyException;
 

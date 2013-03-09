@@ -4,9 +4,11 @@
 package v9t9.gui.client.swt.shells.modules;
 
 import org.eclipse.jface.viewers.CellEditor;
+import org.eclipse.jface.viewers.ColumnViewer;
 import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TextCellEditor;
+import org.eclipse.swt.widgets.Composite;
 
 import v9t9.common.modules.IModule;
 
@@ -15,21 +17,13 @@ import v9t9.common.modules.IModule;
  *
  */
 final class ModuleNameEditingSupport extends EditingSupport {
-	/**
-	 * 
-	 */
 	private final ModuleSelector moduleSelector;
-	private final TableViewer viewer;
 
 	/**
-	 * @param viewer
-	 * @param moduleSelector TODO
-	 * @param viewer2
 	 */
-	ModuleNameEditingSupport(ModuleSelector moduleSelector, TableViewer viewer) {
+	ModuleNameEditingSupport(ModuleSelector moduleSelector, ColumnViewer viewer) {
 		super(viewer);
 		this.moduleSelector = moduleSelector;
-		this.viewer = viewer;
 	}
 
 	@Override
@@ -39,7 +33,7 @@ final class ModuleNameEditingSupport extends EditingSupport {
 			if (!value.toString().equals(module.getName())) {
 				module.setName(value.toString());
 				this.moduleSelector.dirtyModuleLists.add(module.getDatabaseURI());
-				viewer.refresh(module);
+				getViewer().refresh(module);
 				//viewer.setSelection(new StructuredSelection(module), true);
 			}
 		}
@@ -55,7 +49,7 @@ final class ModuleNameEditingSupport extends EditingSupport {
 	@Override
 	protected CellEditor getCellEditor(Object element) {
 		if (element instanceof IModule)
-			return new TextCellEditor(viewer.getTable());
+			return new TextCellEditor((Composite) getViewer().getControl());
 
 		return null;
 	}

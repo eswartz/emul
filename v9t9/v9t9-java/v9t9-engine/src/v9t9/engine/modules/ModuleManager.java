@@ -239,7 +239,7 @@ public class ModuleManager implements IModuleManager {
 	}
 
 
-	public IMemoryEntry createMemoryEntry(MemoryEntryInfo info, IMemory memory) throws NotifyException {
+	public IMemoryEntry createMemoryEntry(IModule module, MemoryEntryInfo info, IMemory memory) throws NotifyException {
 		try {
 
 			IMemoryEntry entry = null;
@@ -247,7 +247,10 @@ public class ModuleManager implements IModuleManager {
 			return entry;
 		} catch (IOException e) {
 			String filename = info.getString(MemoryEntryInfo.FILENAME); 
-			throw new NotifyException(null, "Failed to load file '" + filename + "' for '" + info.getString(MemoryEntryInfo.NAME) +"'", e);
+			throw new NotifyException(null, "Failed to load file '" + filename 
+					+ "' for '" + info.getString(MemoryEntryInfo.NAME) +"' "
+					+ "in " + module.getDatabaseURI(),
+					e);
 		}
 	}
 	
@@ -260,7 +263,7 @@ public class ModuleManager implements IModuleManager {
 		List<IMemoryEntry> entries = new ArrayList<IMemoryEntry>();
 		IMemory memory = machine.getMemory();
 		for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-			IMemoryEntry entry = createMemoryEntry(info, memory);
+			IMemoryEntry entry = createMemoryEntry(module, info, memory);
 			if (entry != null)
 				entries.add(entry);
 		}
@@ -271,28 +274,27 @@ public class ModuleManager implements IModuleManager {
 	public void registerModules(URI uri) {
 		if (uri == null)
 			return;
-		
-		//boolean anyErrors = false;
-		InputStream is = null;
+
 		try {
-			is = machine.getRomPathFileLocator().createInputStream(uri);
-			List<IModule> modList = ModuleDatabase.loadModuleListAndClose(machine.getMemory(), is, uri);
+			List<IModule> modList = readModules(uri);
 			addModules(modList);
-		} catch (NotifyException e) {
-			machine.getClient().getEventNotifier().notifyEvent(e.getEvent());
-			//anyErrors = true;
 		} catch (IOException e) {
 			machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
-					"Could not load module list: " + e.getMessage());
+					"Could not load module list " + uri + ": " + e.getMessage());
 		}
-		
-		/*
-		if (anyErrors) {
-			machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
-					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
-					+ settings.findSettingStorage(DataFiles.settingBootRomsPath.getName()).getConfigFilePath());
-		}
-		*/
+
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#readModules(java.net.URI)
+	 */
+	@Override
+	public List<IModule> readModules(URI databaseURI) throws IOException {
+		//boolean anyErrors = false;
+		InputStream is = null;
+		is = machine.getRomPathFileLocator().createInputStream(databaseURI);
+		List<IModule> modList = ModuleDatabase.loadModuleListAndClose(machine.getMemory(), is, databaseURI);
+		return modList;
 	}
 
 	/* (non-Javadoc)
