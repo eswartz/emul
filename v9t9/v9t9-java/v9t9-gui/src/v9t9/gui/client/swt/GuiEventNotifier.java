@@ -66,6 +66,8 @@ public final class GuiEventNotifier extends BaseEventNotifier {
 	protected void consumeEvent(final NotifyEvent event) {
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
+				System.err.println(event);
+				
 				if (swtWindow.getShell().isDisposed())
 					return;
 				

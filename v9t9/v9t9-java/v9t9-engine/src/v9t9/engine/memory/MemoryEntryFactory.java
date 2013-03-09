@@ -132,6 +132,8 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 	private BankedMemoryEntry newBankedMemoryFromFile(MemoryEntryInfo info) throws IOException {
 		@SuppressWarnings("unchecked")
 		Class<? extends BankedMemoryEntry> klass = (Class<? extends BankedMemoryEntry>) info.getBankedClass();
+		if (klass == null)
+			throw new IOException("no 'class' specified for banked memory in " + info);
 		
 		if (info.getFilename2() == null) {
 			return newMultiBankedMemoryFromFile(info);

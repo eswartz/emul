@@ -144,6 +144,14 @@ public class MemoryEntryInfoBuilder {
 			.withFilename(filename);
 	}
 
+	public static MemoryEntryInfoBuilder standardModuleRom(
+			String filename) {
+		return wordMemoryEntry()
+				.withAddress(0x6000)
+				.withSize(0x2000)
+				.withFilename(filename);
+	}
+	
 	public static MemoryEntryInfoBuilder standardModuleGrom(String filename) {
 		return byteMemoryEntry()
 			.withDomain(IMemoryDomain.NAME_GRAPHICS)

@@ -47,8 +47,6 @@ public class MemoryEntryInfo {
 	/** Integer */
 	public final static String OFFSET2 = "offset2";
 	/** Boolean */
-	public final static String BANKED = "banked";
-	/** Boolean */
 	public final static String STANDARD_BANKING = "standardBanking";
 	/** Integer */
 	public final static String LATENCY = "latency";
@@ -151,10 +149,14 @@ public class MemoryEntryInfo {
 	}
 
 
+	public String getDomainName() {
+		return getString(MemoryEntryInfo.DOMAIN);
+	}
+
 	public IMemoryDomain getDomain(IMemory memory) {
 		return memory.getDomain(getString(MemoryEntryInfo.DOMAIN));
 	}
-
+	
 
 	public String getName() {
 		return getString(MemoryEntryInfo.NAME);

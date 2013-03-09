@@ -30,7 +30,9 @@ public interface IModule {
 	void setImagePath(String imagePath);
 	
 	MemoryEntryInfo[] getMemoryEntryInfos();
+	void addMemoryEntryInfo(MemoryEntryInfo info);
 	
 	List<String> getKeywords();
+
 
 }

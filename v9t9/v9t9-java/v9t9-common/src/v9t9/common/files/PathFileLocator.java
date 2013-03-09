@@ -318,7 +318,7 @@ public class PathFileLocator implements IPathFileLocator {
 		File localFile = new File(file);
 		if (localFile.isAbsolute())
 			return localFile.toURI();
-		
+
 		URI[] searchURIs = getSearchURIs();
 		
 		URI uri = null;
@@ -571,6 +571,15 @@ public class PathFileLocator implements IPathFileLocator {
 	 */
 	public URI resolveInsideURI(URI uri, String string) {
 		URI resolved = null;
+		if (string.contains("/")) {
+			try {
+				resolved = URI.create(string);
+				if (resolved.isOpaque())
+					return resolved;
+			} catch (IllegalArgumentException e) {
+				
+			}
+		}
 		if (!uri.isOpaque()) {
 			resolved = uri.resolve(encodeURIcomponent(string));
 		} else {

@@ -116,6 +116,14 @@ public class Module implements IModule {
 		return (MemoryEntryInfo[]) entries.toArray(new MemoryEntryInfo[entries.size()]);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModule#addMemoryEntryInfo(v9t9.common.memory.MemoryEntryInfo)
+	 */
+	@Override
+	public void addMemoryEntryInfo(MemoryEntryInfo info) {
+		entries.add(info);
+	}
+	
 	public void setMemoryEntryInfos(List<MemoryEntryInfo> entries) {
 		this.entries = entries;
 	}

@@ -64,6 +64,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.DisposeEvent;
@@ -114,6 +115,7 @@ import v9t9.gui.client.swt.bars.ImageCanvas;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageAdjuster;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
+import ejs.base.properties.IProperty;
 import ejs.base.settings.DialogSettingsWrapper;
 import ejs.base.settings.ISettingSection;
 
@@ -204,6 +206,8 @@ public class ModuleSelector extends Composite {
 	private Image stockModuleImage;
 	private URI builtinImagesURI;
 	private ILazyImageAdjuster moduleImageResizer;
+
+	private Button addButton;
 	
 	class FilteredSearchFilter extends ViewerFilter {
 
@@ -338,13 +342,14 @@ public class ModuleSelector extends Composite {
 		
 		showMissingModules = dialogSettings.getBoolean(SHOW_MISSING_MODULES);
 		showUnloadable.setSelection(showMissingModules);
-
+		
 
 		if (allowEditing) {
 			final Button enableEdit = new Button(this, SWT.CHECK);
 			GridDataFactory.fillDefaults().grab(true, false).applyTo(enableEdit);
 			
 			enableEdit.setText("Edit module list");
+			enableEdit.setToolTipText("When enabled, allow editing names and screenshots in user modules");
 			enableEdit.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -358,30 +363,16 @@ public class ModuleSelector extends Composite {
 		}
 		
 		buttonBar = new Composite(this, SWT.NONE);
-		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(3).equalWidth(false).applyTo(buttonBar);
+		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(4).equalWidth(false).applyTo(buttonBar);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(buttonBar);
 		
 		final Button configureButton = new Button(buttonBar, SWT.PUSH | SWT.NO_FOCUS);
-		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).applyTo(configureButton);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).hint(128, -1).applyTo(configureButton);
 		configureButton.setText("Setup ROMs...");
 		configureButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				/*
-				ToolShell shell = window.toggleToolShell(ROMSetupDialog.ROM_SETUP_TOOL_ID, 
-						ROMSetupDialog.getToolShellFactory(machine, window));
-				shell.getShell().addDisposeListener(new DisposeListener() {
-					
-					@Override
-					public void widgetDisposed(DisposeEvent e) {
-						synchronized (knownStates) {
-							knownStates.clear();
-						}
-						viewer.refresh();
-					}
-				});*/
-				
-				ROMSetupDialog dialog = ROMSetupDialog.createDialog(getShell(), machine, window);
+				ROMSetupDialog dialog = ROMSetupDialog.createDialog(window.getShell(), machine, window);
 	        	dialog.open();
 	        	
 	        	synchronized (knownStates) {
@@ -390,6 +381,35 @@ public class ModuleSelector extends Composite {
 				viewer.refresh();
 			}
 		});
+		
+		addButton = new Button(buttonBar, SWT.PUSH);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).hint(128, -1).applyTo(addButton);
+		
+		addButton.setText("Add...");
+		addButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				ModuleAddDialog dialog = new ModuleAddDialog(window.getShell(), machine, window);
+				int ret = dialog.open();
+				if (ret == Window.OK) {
+					
+					IProperty modList = machine.getSettings().get(IModuleManager.settingModuleList);
+					List<String> curDbs = modList.getList();
+					String dbaseStr = dialog.getModuleDatabase().getAbsolutePath();
+					if (!curDbs.contains(dbaseStr)) {
+						curDbs.add(dbaseStr);
+						modList.setList(curDbs);
+					}
+					
+					synchronized (knownStates) {
+						knownStates.clear();
+					}
+					viewer.refresh();
+				}
+			}
+		});
+		
+		
 		
 		Label filler = new Label(buttonBar, SWT.NONE);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).applyTo(filler);
@@ -1452,7 +1472,7 @@ public class ModuleSelector extends Composite {
 	}
 	
 	private void showModuleDetails(IModule module) {
-		ModuleInfoDialog dialog = new ModuleInfoDialog(getShell(), module);
+		ModuleInfoDialog dialog = new ModuleInfoDialog(window.getShell(), module);
 		
 		dialog.open();
 	}

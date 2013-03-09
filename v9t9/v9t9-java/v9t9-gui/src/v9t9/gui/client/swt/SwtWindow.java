@@ -50,6 +50,7 @@ import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.gui.common.DirectoryDialogHelper;
 import org.ejs.gui.common.SwtPrefUtils;
 
 import v9t9.common.client.IClient;
@@ -807,7 +808,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	protected String openDirectorySelectionDialog(String title, String directory) {
 		DirectoryDialog dialog = new DirectoryDialog(getShell(), SWT.NONE);
 		dialog.setText(title);
-		dialog.setFilterPath(directory);
+		DirectoryDialogHelper.setFilterPathToExistingDirectory(dialog, directory);
 		String dirname = dialog.open();
 		return dirname;
 	}

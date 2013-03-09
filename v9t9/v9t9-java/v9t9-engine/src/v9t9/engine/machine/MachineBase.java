@@ -105,7 +105,6 @@ abstract public class MachineBase implements IMachine {
 	private IPropertyListener pauseListener;
 
 	protected IProperty pauseMachine;
-	protected IProperty moduleList;
 	private final ISettingsHandler settings;
 	private IPathFileLocator locator;
 
@@ -119,7 +118,6 @@ abstract public class MachineBase implements IMachine {
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
 		pauseMachine = settings.get(settingPauseMachine);
-    	moduleList = settings.get(settingModuleList);
     	
     	this.machineModel = machineModel;
     	

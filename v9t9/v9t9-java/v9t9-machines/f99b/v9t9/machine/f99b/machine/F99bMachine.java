@@ -11,12 +11,15 @@
 package v9t9.machine.f99b.machine;
 
 
+import java.util.Collections;
+
 import ejs.base.settings.ISettingSection;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.Settings;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.machine.MachineBase;
@@ -33,7 +36,7 @@ public class F99bMachine extends MachineBase {
 
 	@Override
 	protected void init(IMachineModel machineModel) {
-		Settings.get(this, settingModuleList).setString("");
+		Settings.get(this, IModuleManager.settingModuleList).setList(Collections.emptyList());
 		
 		super.init(machineModel);
 	}

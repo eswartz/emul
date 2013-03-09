@@ -26,6 +26,7 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.MemoryEntryInfo;
 import ejs.base.utils.StorageException;
 import ejs.base.utils.StreamXMLStorage;
+import ejs.base.utils.TextUtils;
 import ejs.base.utils.XMLUtils;
 
 /**
@@ -120,6 +121,12 @@ public class ModuleDatabase {
 				image.setTextContent(module.getImagePath());
 				moduleElement.appendChild(image);
 			}
+
+			if (!module.getKeywords().isEmpty()) {
+				String keywordStr = TextUtils.catenateStrings(module.getKeywords(), " ");
+				moduleElement.setAttribute("keywords", keywordStr);
+			}
+
 			
 			memory.getMemoryEntryFactory().saveEntriesTo(
 					Arrays.asList(module.getMemoryEntryInfos()), moduleElement);

@@ -24,31 +24,20 @@ public class TIFILESFDR extends FDR {
 
 	private String name;
 
-    /**
-    u8          sig[8];     // '\007TIFILES'
-    u16         secsused;   // [big-endian]:  # sectors in file
-    u8          flags;      // filetype flags
-    u8          recspersec; // # records per sector, 
-                               256/reclen for FIXED,
-                               255/(reclen+1) for VAR,
-                               0 for program 
-    u8          byteoffs;   // last byte used in file 
-                               (0 = no last empty sector)
-    u8          reclen;     // record length, 0 for program
-    u16         numrecs;    // [little-endian]:  # records for FIXED file,
-                               # sectors for VARIABLE file,
-                               0 for program
-    u8          unused[112];    // zero 
-     */
+	private byte mxt;
 
-    /**
-	 * 
-	 */
+	private byte res1b;
+
+	private int exthdr;
+	private int crtime;
+	private int updtime;
+
 	public TIFILESFDR() {
 		super(128);
 	}
 	
     public static final byte[] SIGNATURE = { 7, 'T', 'I', 'F', 'I', 'L', 'E', 'S' };
+    public static final byte[] MULTI_SIGNATURE = { 8, 'T', 'I', 'F', 'I', 'L', 'E', 'S' };
     
     public static FDR readFDR(File file) throws IOException, InvalidFDRException {
         TIFILESFDR fdr = new TIFILESFDR();
@@ -56,17 +45,27 @@ public class TIFILESFDR extends FDR {
         FileInputStream stream = new FileInputStream(file);
         try {
         	fdr.name = file.getName().toUpperCase();
+        	
 	        fdr.sig = new byte[8];
 	        stream.read(fdr.sig, 0, 8);
-	        if (!Arrays.equals(fdr.sig, SIGNATURE)) {
+	        
+	        if (!Arrays.equals(fdr.sig, SIGNATURE)
+	        		&& !Arrays.equals(fdr.sig, MULTI_SIGNATURE)) {
 				throw new InvalidFDRException("No TIFILES signature found");
 			}
+	        
 	        fdr.secsused = (stream.read() << 8 | stream.read());
 	        fdr.flags = stream.read();
 	        fdr.recspersec = stream.read();
 	        fdr.byteoffs = stream.read();
 	        fdr.reclen = stream.read();
 	        fdr.numrecs = (stream.read() | stream.read() << 8);
+	        
+	        fdr.mxt = (byte) stream.read();
+	        fdr.res1b = (byte) stream.read();
+	        fdr.exthdr = (stream.read() << 8 | stream.read());
+	        fdr.crtime = (stream.read() << 24 | stream.read() << 16 | stream.read() << 8 | stream.read());
+	        
 	        fdr.unused = new byte[112];
 	        stream.read(fdr.unused, 0, 112);
         } finally {
@@ -90,6 +89,21 @@ public class TIFILESFDR extends FDR {
     	raf.write(reclen);
     	raf.write(numrecs & 0xff);
     	raf.write(numrecs >> 8);
+    	
+    	raf.write(mxt);
+    	raf.write(res1b);
+    	raf.write(exthdr >> 8);
+    	raf.write(exthdr & 0xff);
+    	
+    	raf.write(crtime >> 24);
+    	raf.write(crtime >> 16);
+    	raf.write(crtime >> 8);
+    	raf.write(crtime);
+    	raf.write(updtime >> 24);
+    	raf.write(updtime >> 16);
+    	raf.write(updtime >> 8);
+    	raf.write(updtime);
+    	
         raf.write(unused);
         
         raf.close();

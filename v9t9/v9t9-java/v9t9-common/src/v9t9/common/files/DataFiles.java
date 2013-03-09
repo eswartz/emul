@@ -64,11 +64,9 @@ public class DataFiles {
      * @return File located
      * @throws FileNotFoundException
      */
-    public static byte[] readMemoryImage(String filepath, int offset, int size) 
-    	throws FileNotFoundException, IOException 
+    public static byte[] readMemoryImage(File file, int offset, int size) 
+    	throws IOException 
 	{
-        File file = new File(filepath);
-        
         NativeFile nativeFile = NativeFileFactory.INSTANCE.createNativeFile(file);
         
         /* adjust sizes */
@@ -106,11 +104,9 @@ public class DataFiles {
     }
 
     
-    public static File writeMemoryImage(String filepath, int addr, int size, IMemoryDomain memory)
+    public static File writeMemoryImage(File file, int addr, int size, IMemoryDomain memory)
     throws FileNotFoundException, IOException 
 	{
-        File file = new File(filepath);
-        
         /* write the chunk */
         FileOutputStream stream = new FileOutputStream(file);
         for (int i = 0; i < size; i++) {

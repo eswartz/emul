@@ -40,10 +40,6 @@ public interface IBaseMachine {
 	SettingSchema settingThrottleInterrupts = new SettingSchema(
 			ISettingsHandler.MACHINE,
 			"ThrottleVDPInterrupts", Boolean.FALSE);
-	SettingSchema settingModuleList = new SettingSchema(
-			ISettingsHandler.MACHINE,
-			"ModuleListFile", "");
-
 	ISettingsHandler getSettings();
 
 	IClient getClient();

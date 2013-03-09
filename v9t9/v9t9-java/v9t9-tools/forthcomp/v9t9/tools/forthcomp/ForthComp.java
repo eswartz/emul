@@ -407,7 +407,7 @@ public class ForthComp {
 		if (consoleOutFile != null) {
 			System.out.println("Writing " + consoleOutFile);
 			
-			DataFiles.writeMemoryImage(new File(consoleOutFile).getAbsolutePath(), 
+			DataFiles.writeMemoryImage(new File(consoleOutFile), 
 					0, targetContext.getDP(), 
 					console);
 			
@@ -431,7 +431,7 @@ public class ForthComp {
 			
 			System.out.println("Writing " + gromOutFile);
 			
-			DataFiles.writeMemoryImage(new File(gromOutFile).getAbsolutePath(), 
+			DataFiles.writeMemoryImage(new File(gromOutFile), 
 					0, f99bCtx.getGP(), 
 					gromMemory);
 
@@ -475,14 +475,14 @@ public class ForthComp {
     		
 			int gromDictSize = (int) dictFile.length();
 
-			grom = DataFiles.readMemoryImage(gromFilePath, 0, gromFileSize);
+			grom = DataFiles.readMemoryImage(new File(gromFilePath), 0, gromFileSize);
 			int gromDictBase = (grom[2] << 8) | (grom[3] & 0xff);
 			
 			if (gromDictSize + gromDictBase > grom.length) {
 				System.err.println("GROM dictionary too big!  GROM plus dictionary maxes out at "+grom.length + " bytes.");
 			}
 			
-			byte[] gromDict = DataFiles.readMemoryImage(gromDictPath, 0, gromDictSize);
+			byte[] gromDict = DataFiles.readMemoryImage(new File(gromDictPath), 0, gromDictSize);
 			
 			for (int i = 0; i < gromDictSize; i++) {
 				grom[i + gromDictBase] = gromDict[i];
