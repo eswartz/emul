@@ -360,7 +360,7 @@ public class ModuleAddDialog extends StatusDialog {
 		dir = new File(dirText.getText());
 		URI databaseURI = dbFile != null ? dbFile.toURI() : URI.create("modules.xml");
 		
-		Collection<IModule> ents = machine.getModuleManager().scanModules(databaseURI, dir);
+		Collection<IModule> ents = machine.scanModules(databaseURI, dir);
 		discoveredModules.addAll(ents);
 		
 		discoveredList.refresh();

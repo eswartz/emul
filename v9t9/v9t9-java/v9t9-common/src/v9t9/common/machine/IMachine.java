@@ -10,6 +10,10 @@
  */
 package v9t9.common.machine;
 
+import java.io.File;
+import java.net.URI;
+import java.util.Collection;
+
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.demos.IDemoHandler;
@@ -24,6 +28,7 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardMapping;
 import v9t9.common.keyboard.IKeyboardModeListener;
 import v9t9.common.keyboard.IKeyboardState;
+import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 
 /**
@@ -90,5 +95,13 @@ public interface IMachine extends IBaseMachine {
 
 	IKeyboardHandler getKeyboardHandler();
 	void setKeyboardHandler(IKeyboardHandler keyboardHandler);
-	
+
+
+	/**
+	 * Scan the directory for modules
+	 * @param databaseURI uri of module database
+	 * @param base
+	 * @return array of entries
+	 */
+	Collection<IModule> scanModules(URI databaseURI, File base);
 }

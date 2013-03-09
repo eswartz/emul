@@ -11,16 +11,45 @@
 package v9t9.machine.ti99.machine;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+import org.w3c.dom.Element;
+
 import ejs.base.settings.ISettingSection;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.StorageException;
+import ejs.base.utils.StreamXMLStorage;
+import ejs.base.utils.TextUtils;
+import ejs.base.utils.XMLUtils;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDsrManager;
+import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.modules.IModule;
+import v9t9.common.modules.Module;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.machine.MachineBase;
 import v9t9.engine.memory.GplMmio;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.memory.SpeechMmio;
+import v9t9.engine.memory.StdMultiBankedMemoryEntry;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.machine.ti99.dsr.DsrManager;
@@ -141,5 +170,424 @@ public class TI99Machine extends MachineBase {
 	
 	public IDsrManager getDsrManager() {
 		return dsrManager;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#scanModules(java.io.File)
+	 */
+	@Override
+	public Collection<IModule> scanModules(URI databaseURI, File base) {
+		
+		File[] files = base.listFiles(); 
+		if (files == null) {
+			return Collections.emptyList();
+		}
+		
+		Map<String, IModule> moduleMap = new HashMap<String, IModule>();
+		
+		for (File file : files) {
+			if (file.isDirectory())
+				continue;
+
+			if (analyzeV9t9ModuleFile(databaseURI, file, moduleMap))
+				continue;
+			
+			if (analyzeGRAMKrackerModuleFile(databaseURI, file, moduleMap))
+				continue;
+			
+			if (analyzeRPKModuleFile(databaseURI, file, moduleMap))
+				continue;
+		}
+
+		List<IModule> modules = new ArrayList<IModule>(moduleMap.values());
+		Collections.sort(modules, new Comparator<IModule>() {
+
+			@Override
+			public int compare(IModule o1, IModule o2) {
+				return o1.getName().compareTo(o2.getName());
+			}
+		});
+		return modules;
+	}
+
+	/**
+	 * Look for V9t9 module parts -- bare binaries with pieces identified
+	 * by the final filename letter ('C' = console module ROM, 'D' = console module ROM,
+	 * bank #2, 'G' = module GROM). 
+	 * @param databaseURI
+	 * @param file
+	 * @param moduleMap
+	 * @return 
+	 */
+	private boolean analyzeV9t9ModuleFile(URI databaseURI, File file,
+			Map<String, IModule> moduleMap) {
+		String fname = file.getName();
+		if (!fname.toLowerCase().endsWith(".bin"))
+			return false;
+		
+		String moduleName = readHeaderName(file);
+		if (TextUtils.isEmpty(moduleName) || !isASCII(moduleName))
+			return false;
+		
+		moduleName = cleanupTitle(moduleName);
+		
+		String base = fname.substring(0, fname.length() - 4); // remove extension
+		String key = base.substring(0, base.length() - 1);	// minus indicator char
+		
+		IModule module = moduleMap.get(key);
+		if (module == null) {
+			module = new Module(databaseURI, key);
+		}
+		if (moduleName.length() > 0)
+			module.setName(moduleName);
+		
+		char last = base.charAt(base.length() - 1);
+		switch (last) {
+		case 'c': {
+			
+			injectModuleRom(module, databaseURI, moduleName, file.getName(), 0);
+			
+			break;
+		}
+		case 'd': {
+			injectModuleBank2Rom(module, databaseURI, moduleName, file.getName(), 0);
+			
+			break;
+		}
+
+		case 'g': {
+			injectModuleGrom(module, databaseURI, moduleName, file.getName(), 0);
+			break;
+		}
+		default:
+			return false;
+		}
+
+		// register/update module
+		moduleMap.put(key, module);
+
+		return true;
+	}
+
+	private void injectModuleGrom(IModule module, URI databaseURI,
+			String moduleName, String fileName, int fileOffset) {
+		MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleGrom(fileName)
+				.withOffset(fileOffset)
+				.create(moduleName);
+		module.addMemoryEntryInfo(info);		
+	}
+
+	private void injectModuleRom(IModule module, URI databaseURI,
+			String moduleName, String fileName, int fileOffset) {
+		MemoryEntryInfo info;
+		boolean found = false;
+		for (MemoryEntryInfo ex : module.getMemoryEntryInfos()) {
+			// modify a banked entry
+			if (ex.isBanked() && ex.getAddress() == 0x6000 && IMemoryDomain.NAME_CPU.equals(ex.getDomainName())) {
+				ex.getProperties().put(MemoryEntryInfo.FILENAME, fileName);
+				ex.getProperties().put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
+				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
+				found = true;
+				break;
+			} 
+		}
+		if (!found) {
+			info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
+					.withOffset(fileOffset)
+					.create(moduleName);
+			module.addMemoryEntryInfo(info);
+		}
+		
+	}
+
+	private void injectModuleBank2Rom(IModule module, URI databaseURI,
+			String moduleName, String fileName, int fileOffset) {
+
+		MemoryEntryInfo info;
+		boolean found = false;
+		for (MemoryEntryInfo ex : module.getMemoryEntryInfos()) {
+			// modify a non-banked entry
+			if (ex.getAddress() == 0x6000 && IMemoryDomain.NAME_CPU.equals(ex.getDomainName())) {
+				ex.getProperties().put(MemoryEntryInfo.FILENAME2, fileName);
+				ex.getProperties().put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
+				ex.getProperties().put(MemoryEntryInfo.SIZE, -0x2000);
+				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
+				found = true;
+				break;
+			} 
+		}
+		if (!found) {
+			// make temporary
+			info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
+					.withFilename2(fileName)
+					.withOffset2(fileOffset)
+					.withBankClass(StdMultiBankedMemoryEntry.class)
+					.create(moduleName);
+			module.addMemoryEntryInfo(info);
+		}
+		
+	}
+	
+	
+	/**
+	 * Analyze GRAM Kracker-format files
+	 * 
+	 * &lt;http://www.ninerpedia.org/index.php/GRAM_Kracker_format&gt;
+	 *  
+	 * @param databaseURI 
+	 * @param file
+	 * @param moduleMap
+	 * @return
+	 */
+	private boolean analyzeGRAMKrackerModuleFile(URI databaseURI, File file,
+			Map<String, IModule> moduleMap) {
+		
+		
+		return false;
+	}
+	
+	
+	/**
+	 * Analyze MESS *.rpk format files
+	 *  
+	 * @param databaseURI 
+	 * @param file
+	 * @param moduleMap
+	 * @return
+	 */
+	private boolean analyzeRPKModuleFile(URI databaseURI, File file,
+			Map<String, IModule> moduleMap) {
+		
+		if (!file.getName().toLowerCase().endsWith(".rpk")) {
+			return false;
+		}
+		
+		// it is a zip container: softlist.xml contains the info
+		ZipFile zf;
+		try {
+			zf = new ZipFile(file);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		try {
+			for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
+				ZipEntry ent = en.nextElement();
+				if (ent.getName().equals("softlist.xml")) {
+					InputStream is = zf.getInputStream(ent);
+					IModule module = convertSoftList(databaseURI, file.toURI(), is);
+					if (module != null) {
+						moduleMap.put(module.getName(), module);
+					}
+					is.close();
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		} finally {
+			try {
+				zf.close();
+			} catch (IOException e) {
+			}
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * @param is
+	 * @return
+	 */
+	private IModule convertSoftList(URI databaseURI, URI zipUri, InputStream is) {
+		IModule module;
+		
+		StreamXMLStorage storage = new StreamXMLStorage();
+		storage.setInputStream(is);
+		try {
+			storage.load("software");
+		} catch (StorageException e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			try {
+				is.close();
+			} catch (IOException e) {
+			}
+		}
+		
+		String moduleName = storage.getDocumentElement().getAttribute("name");
+		module = new Module(databaseURI, moduleName);
+		
+		for (Element el : XMLUtils.getChildElements(storage.getDocumentElement())) {
+			if (el.getNodeName().equals("description")) {
+				moduleName = XMLUtils.getText(el);
+				module.setName(moduleName);
+			}
+			else if (el.getNodeName().equals("year")
+					|| el.getNodeName().equals("publisher")
+					|| el.getNodeName().equals("info")) {
+				//
+			}
+		}
+		for (Element partEl : XMLUtils.getChildElementsNamed(storage.getDocumentElement(),  "part")) {
+			if (!partEl.getAttribute("interface").equals("ti99_cart"))
+				return null;
+			
+			//Element[] feats = XMLUtils.getChildElementsNamed(partEl, "feature");
+			
+			Element[] dataAreas = XMLUtils.getChildElementsNamed(partEl, "dataarea");
+			for (Element dataArea : dataAreas) {
+				String name = dataArea.getAttribute("name");
+				if (name.equals("rom_socket")) {
+					for (Element rom : XMLUtils.getChildElementsNamed(dataArea, "rom")) {
+						injectModuleRom(module, databaseURI, moduleName, 
+								makeZipUriString(zipUri, rom.getAttribute("name")),
+								HexUtils.parseInt(rom.getAttribute("offset")));
+					}
+				}
+				else if (name.equals("rom2_socket")) {
+					for (Element rom : XMLUtils.getChildElementsNamed(dataArea, "rom")) {
+						injectModuleBank2Rom(module, databaseURI, moduleName, 
+								makeZipUriString(zipUri, rom.getAttribute("name")),
+								HexUtils.parseInt(rom.getAttribute("offset")));
+					}
+				}
+				else if (name.equals("grom_socket")) {
+					for (Element rom : XMLUtils.getChildElementsNamed(dataArea, "rom")) {
+						injectModuleGrom(module, databaseURI, moduleName, 
+								makeZipUriString(zipUri, rom.getAttribute("name")),
+								HexUtils.parseInt(rom.getAttribute("offset")));
+					}
+				}
+			}
+			
+		}
+
+		return module;
+	}
+
+	private String makeZipUriString(URI zipUri, String name) {
+		try {
+			return new URI("jar", zipUri + "!/" + name, null).toString();
+		} catch (URISyntaxException e) {
+			assert false;
+			return name;
+		}
+	}
+
+	/**
+	 * @param file
+	 * @return
+	 */
+	private String readHeaderName(File file) {
+		byte[] content;
+		try {
+			content = DataFiles.readMemoryImage(file, 0, 0x2000);
+		} catch (IOException e) {
+			return null;
+		}
+		if (content[0] != (byte) 0xaa) {
+			return "";
+		}
+		
+		// program list
+		int addr = readAddr(content, 0x6);
+		if (addr == 0)
+			return "";
+
+		// get the last name (ordered reverse, non-English first)
+		String name;
+		int next;
+		do {
+			next = readAddr(content, (addr & 0x1fff));
+			name = readString(content, (addr & 0x1fff) + 4);
+			addr = next;
+		} while (next >= 0x6000);		/* else not really module? */
+		
+		return name.trim();
+	}
+
+	/**
+	 * @param name
+	 * @return
+	 */
+	private boolean isASCII(String name) {
+		for (char ch : name.toCharArray()) {
+			if (ch < 0x20 || ch >= 127)
+				return false;
+		}
+		return true;
+	}
+
+	/**
+	 * @param addr
+	 * @return
+	 */
+	private String readString(byte[] content, int addr) {
+		int len = content[addr++] & 0xff;
+		StringBuilder sb = new StringBuilder();
+		while (len != 0 && addr < content.length) {
+			sb.append((char) content[addr++]);
+			len--;
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * @param content
+	 * @param i
+	 * @return
+	 */
+	private int readAddr(byte[] content, int i) {
+		return ((content[i] << 8) & 0xff00) | (content[i+1] & 0xff);
+	}
+	
+	private String cleanupTitle(String allCaps) {
+		// remove spurious quotes
+		allCaps = TextUtils.unquote(allCaps, '"');
+		
+		// capitalize each word
+		StringBuilder sb = new StringBuilder();
+		boolean newWord = true;
+		for (char ch : allCaps.toCharArray()) {
+			
+			if (Character.isLetter(ch)) {
+				if (newWord) {
+					ch = Character.toUpperCase(ch);
+					newWord = false;
+				} else {
+					ch = Character.toLowerCase(ch);
+				}
+			} else {
+				newWord = true;
+			}
+				
+			sb.append(ch);
+		}
+		
+		String titledName = sb.toString();
+		
+		// lowercase prepositions
+		for (String prep : new String[] { "And", "Or", "Of", "In", "For", "The" }) {
+			titledName = replaceWord(titledName, prep, prep.toLowerCase(), false);
+		}
+				
+		// uppercase common acronyms
+		for (String acr : new String[] { "Ti", "Ii", "Iii" }) {
+			titledName = replaceWord(titledName, acr, acr.toUpperCase(), true);
+		}
+				
+		return titledName;		
+	}
+
+	private String replaceWord(String str, String word, String repl, boolean allowAtStart) {
+		int idx = str.indexOf(word);
+		if (idx > (allowAtStart ? -1 : 0)) {
+			str = str.substring(0, idx) + repl + str.substring(idx + word.length());
+		}
+
+		return str;
 	}
 }
