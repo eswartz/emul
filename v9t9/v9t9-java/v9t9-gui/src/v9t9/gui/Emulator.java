@@ -37,8 +37,6 @@ import v9t9.remote.EmulatorRemoteServer;
 import v9t9.server.EmulatorLocalServer;
 import v9t9.server.client.EmulatorServerBase;
 
-import com.sun.jna.Native;
-
 /**
  * @author Ed
  *
