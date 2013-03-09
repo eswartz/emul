@@ -360,11 +360,25 @@ public class ModuleAddDialog extends StatusDialog {
 		
 		boolean valid = true;
 		
-		dbFile = null;
-		
+		String dbTextStr = dbSelector.getText();
+		dbFile = new File(dbTextStr);
+		if (status == null) {
+			if (dbTextStr.isEmpty()) {
+				status = createStatus(IStatus.INFO, "Select a module list file");
+				valid = false;
+			} else {
+				if (!dbFile.isFile()) {
+					status = createStatus(IStatus.WARNING, "Module list will be created");
+				}
+			}
+		}
+
 		String dirTextStr = dirText.getText();
 		if (dirTextStr.isEmpty()) {
-			status = createStatus(IStatus.INFO, "Enter or browse to a directory");
+			if (!dbFile.exists())
+				status = createStatus(IStatus.INFO, "Enter or browse to a directory");
+			else
+				status = createStatus(IStatus.INFO, "Leave directory blank to add module list");
 		} else {
 			File dir = new File(dirTextStr);
 			if (!dir.isDirectory()) {
@@ -373,19 +387,7 @@ public class ModuleAddDialog extends StatusDialog {
 			}
 		}
 
-		if (status == null) {
-			String dbTextStr = dbSelector.getText();
-			if (dbTextStr.isEmpty()) {
-				status = createStatus(IStatus.INFO, "Select a module list file");
-				valid = false;
-			} else {
-				dbFile = new File(dbTextStr);
-				if (!dbFile.isFile()) {
-					status = createStatus(IStatus.WARNING, "Module list will be created");
-				}
-			}
-		}
-		
+
 		if (status == null) {
 			if (discoveredModules.isEmpty()) {
 				status = createStatus(IStatus.WARNING, "No modules recognized");
@@ -434,7 +436,7 @@ public class ModuleAddDialog extends StatusDialog {
 	 * 
 	 */
 	private void selectUniqueModules() {
-		URI thisDB = dbFile.toURI();
+		URI thisDB = dbFile != null ? dbFile.toURI() : null;
 		selectedModules.clear();
 		for (IModule module : discoveredModules) {
 			IModule match = machine.getModuleManager().findModuleByName(module.getName(), false);
@@ -462,10 +464,22 @@ public class ModuleAddDialog extends StatusDialog {
 	@Override
 	protected void okPressed() {
 		File dbase = getModuleDatabase();
+		if (dbase != null && !selectedModules.isEmpty()) {
+			if (!saveModuleList(dbase))
+				return;
+		}
+		
+		super.okPressed();
+	}
+
+	/**
+	 * @param dbase
+	 */
+	protected boolean saveModuleList(File dbase) {
 		if (dbase.exists()) {
 			if (false == MessageDialog.openConfirm(getShell(), "File exists", 
 					"The file " + dbase + " already exists.  Overwrite?")) {
-				return;
+				return false;
 			}
 		}
 		try {
@@ -484,10 +498,9 @@ public class ModuleAddDialog extends StatusDialog {
 				msg += "\n\n" + e1.getCause(); 
 						
 			MessageDialog.openError(getShell(), "Cannot write", msg);
-			return;
+			return false;
 		}
-		
-		super.okPressed();
+		return true;
 	}
 	
 }

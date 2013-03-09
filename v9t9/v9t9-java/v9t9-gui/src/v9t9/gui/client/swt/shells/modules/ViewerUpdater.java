@@ -23,6 +23,7 @@ class ViewerUpdater extends Thread {
 	}
 
 	private Queue<Object> elements = new LinkedBlockingDeque<Object>();
+	protected boolean firstRefresh = true;
 	
 	public void post(Object element) {
 		elements.add(element);
@@ -50,8 +51,6 @@ class ViewerUpdater extends Thread {
 			}
 			if (!avail.isEmpty() && !this.moduleSelector.getDisplay().isDisposed()) {
 				this.moduleSelector.getDisplay().syncExec(new Runnable() {
-					private boolean firstRefresh = true;
-
 					public void run() {
 						if (!ViewerUpdater.this.moduleSelector.getViewer().getControl().isDisposed()) {
 							Object[] availarray;
