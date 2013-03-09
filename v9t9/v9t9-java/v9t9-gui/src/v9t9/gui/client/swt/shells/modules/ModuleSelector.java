@@ -53,6 +53,10 @@ import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.dnd.URLTransfer;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusEvent;
@@ -554,7 +558,8 @@ public class ModuleSelector extends Composite {
 		nameColumn = new TreeColumn(tree, SWT.LEFT);
 		nameColumn.setText("Name");
 
-		viewer.setContentProvider(new ModuleContentProvider());
+		final ModuleContentProvider contentProvider = new ModuleContentProvider();
+		viewer.setContentProvider(contentProvider);
 		viewer.setLabelProvider(new ModuleTableLabelProvider(this));
 
 		viewer.setColumnProperties(NAME_PROPERTY_ARRAY);
@@ -616,6 +621,12 @@ public class ModuleSelector extends Composite {
 					switchModule(false);
 					e.doit = false;
 				}
+				else if (e.keyCode == SWT.ARROW_LEFT) {
+					if (selectedModule != null) {
+						viewer.setSelection(new StructuredSelection(
+								contentProvider.getParent(selectedModule)));
+					}
+				}
 			}
 		});
 		
@@ -626,7 +637,21 @@ public class ModuleSelector extends Composite {
 			public void update(ViewerCell cell) {
 				if (cell.getElement()  instanceof URI) {
 					URI uri = (URI) cell.getElement();
-					cell.setText(uri.toString());
+					String text;
+					try {
+						text = new File(uri).toString();
+					} catch (IllegalArgumentException e) {
+						text = uri.toString();
+					}
+					if (text.length() > 20) {
+						int prev = text.length();
+						do {
+							prev = text.lastIndexOf('/', prev - 1);
+						} while (prev > 0 && text.length() - prev < 20);
+						text = prev > 0 ? "..." + text.substring(prev) : text;
+					}
+					
+					cell.setText(text);
 					cell.setImage(getModuleListImage());
 				} else {
 					IModule module = (IModule) cell.getElement();
@@ -898,12 +923,37 @@ public class ModuleSelector extends Composite {
 					final URI uri = (URI) item.getData();
 
 					final Menu menu = new Menu(viewer.getControl());
+
+					final MenuItem infoitem;
+					infoitem = new MenuItem(menu, SWT.NONE);
+					infoitem.setText(uri.toString());
+					infoitem.setEnabled(false);
 					
-					final MenuItem dlitem;
-					dlitem = new MenuItem(menu, SWT.NONE);
-					dlitem.setText("Remove list");
+					final MenuItem copyitem;
+					copyitem = new MenuItem(menu, SWT.NONE);
+					copyitem.setText("Copy module list path");
 						
-					dlitem.addSelectionListener(new SelectionAdapter() {
+					copyitem.addSelectionListener(new SelectionAdapter() {
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							Clipboard clipboard = new Clipboard(getDisplay());
+							TextTransfer textTransfer = TextTransfer.getInstance();
+							URLTransfer urlTransfer = URLTransfer.getInstance();
+							Transfer[] transfers = new Transfer[]{textTransfer,urlTransfer};
+							Object[] data;
+							data = new Object[]{uri.getPath(),uri.toString()};
+							clipboard.setContents(data, transfers);
+							clipboard.dispose();
+						}
+						
+					});
+
+					
+					final MenuItem remitem;
+					remitem = new MenuItem(menu, SWT.NONE);
+					remitem.setText("Remove list");
+						
+					remitem.addSelectionListener(new SelectionAdapter() {
 						@Override
 						public void widgetSelected(SelectionEvent e) {
 							if (dirtyModuleLists.contains(uri)) {
