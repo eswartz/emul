@@ -80,6 +80,8 @@ public class VDR {
 		int bytes = getTotalSecs() / 8;
 		int count = 0;
 		for (int i = 0; i < bytes; i++) {
+			if (i >= secBitMap.length)
+				return -1;
 			for (int j = 0x80; j > 0; j >>= 1) {
 				if ((secBitMap[i] & j) != 0) {
 					count++;

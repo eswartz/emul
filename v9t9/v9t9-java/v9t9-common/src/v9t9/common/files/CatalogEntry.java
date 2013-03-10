@@ -27,8 +27,10 @@ public class CatalogEntry {
 
 	public final String fileName;
 	public final int secs;
+	/** symbolic name, from {@link FDR#getType(int)} */
 	public final String type;
 	public final int recordLength;
+	/** one of drcTrans */
 	public final int typeCode;
 	public final boolean isProtected;
 

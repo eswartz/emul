@@ -31,9 +31,8 @@ import v9t9.common.demos.IDemoManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.files.DataFiles;
-import v9t9.common.files.IDiskImageMapper;
 import v9t9.common.files.IEmulatedFileHandler;
-import v9t9.common.files.IFilesInDirectoryMapper;
+import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.hardware.ICruChip;
@@ -119,8 +118,6 @@ abstract public class MachineBase implements IMachine {
 	private IKeyboardMapping keyboardMapping;
 	private ListenerList<IKeyboardModeListener> keyboardModeListeners;
 	
-	protected IFilesInDirectoryMapper fileMapper;
-	private IDiskImageMapper imageMapper;
 	private IEmulatedFileHandler emulatedFileHandler;
 	
 
@@ -157,9 +154,10 @@ abstract public class MachineBase implements IMachine {
     	keyboardModeListeners = new ListenerList<IKeyboardModeListener>();
     	init(machineModel);
 
-    	fileMapper = new DiskDirectoryMapper();
-    	imageMapper = new DiskImageMapper(settings);
-    	emulatedFileHandler = new EmulatedFileHandler(settings, fileMapper, imageMapper);
+    	DiskDirectoryMapper fileMapper = new DiskDirectoryMapper();
+    	DiskImageMapper imageMapper = new DiskImageMapper(settings);
+    	IFileExecutionHandler execHandler = createFileExecutionHandler();
+    	emulatedFileHandler = new EmulatedFileHandler(settings, fileMapper, imageMapper, execHandler);
     	
     	machineModel.defineDevices(this);
     	
@@ -183,7 +181,9 @@ abstract public class MachineBase implements IMachine {
 
 	}
 
-    /**
+	abstract protected IFileExecutionHandler createFileExecutionHandler();
+
+	/**
 	 * @return the settings
 	 */
 	public ISettingsHandler getSettings() {
@@ -635,7 +635,7 @@ abstract public class MachineBase implements IMachine {
 	 * @see v9t9.common.machine.IMachine#getFileHandler()
 	 */
 	@Override
-	public IEmulatedFileHandler getFileHandler() {
+	public IEmulatedFileHandler getEmulatedFileHandler() {
 		return emulatedFileHandler;
 	}
 	

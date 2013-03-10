@@ -41,26 +41,45 @@ public interface IDiskImageMapper extends IPersistable {
 	Catalog createCatalog(String name, File image) throws IOException;
 
 	/**
+	 * Register a new disk image property
 	 * @param name
-	 * @param defaultDiskImage
+	 * @param defaultPath
+	 * @return new property
 	 */
-	IProperty registerDiskImagePath(String device, File image);
+	IProperty registerDiskImageSetting(String device, String initialPath);
 
 	/**
+	 * Get the current disk property to disk image map
 	 * @return
 	 */
 	Map<String, IDiskImage> getDiskImageMap();
 
 	/**
+	 * Get the current disk image at the given property name
 	 * @param name
 	 * @return
 	 */
 	IDiskImage getDiskImage(String name);
 
 	/**
+	 * Get the map of disk property name to disk image property
 	 * @return
 	 */
 	Map<String, IProperty> getDiskSettingsMap();
-
+	
+	/**
+	 * Try to create a disk image from the given file
+	 * @param name property name associated with image, e.g. "DSK1"
+	 * @param file
+	 * @return image
+	 * @throws IOException if not a recognized disk image
+	 */
+	IDiskImage createDiskImage(String name, File file) throws IOException;
+	
+	/**
+	 * Get the property that controls whether disk image support is enabled
+	 * @return
+	 */
+	IProperty getImageSupportProperty();
 	
 }

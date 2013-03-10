@@ -99,7 +99,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 
 
 	public BaseDiskImageDsr(IMachine machine) {
-		imageMapper = machine.getFileHandler().getDiskImageMapper();
+		imageMapper = machine.getEmulatedFileHandler().getDiskImageMapper();
 		settings = Settings.getSettings(machine);
 		dumper = new Dumper(settings,
 				RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
@@ -117,8 +117,8 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
     	
     	for (int drive = 1; drive <= 3; drive++) {
     		String name = RealDiskDsrSettings.getDiskImageSetting(drive);
-			imageMapper.registerDiskImagePath(name, 
-					RealDiskDsrSettings.getDefaultDiskImage(name));
+			File defaultDiskImage = RealDiskDsrSettings.getDefaultDiskImage(name);
+			imageMapper.registerDiskImageSetting(name, defaultDiskImage.getAbsolutePath());
 			
 			imageMapper.addListener(new IDiskImageListener() {
 				

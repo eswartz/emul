@@ -16,6 +16,7 @@ import java.util.Collections;
 import ejs.base.settings.ISettingSection;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
@@ -23,6 +24,7 @@ import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.Settings;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.machine.MachineBase;
+import v9t9.engine.machine.NullFileExecutionHandler;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.f99b.cpu.CpuF99b;
 
@@ -99,6 +101,14 @@ public class F99bMachine extends MachineBase {
 			}
 		}
 		getCpu().setIdle(false);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.machine.MachineBase#createFileExecutionHandler()
+	 */
+	@Override
+	protected IFileExecutionHandler createFileExecutionHandler() {
+		return new NullFileExecutionHandler();
 	}
 
 }

@@ -126,7 +126,7 @@ class DiskEntry extends DiskSettingEntry {
 			}
 		});			
 		
-		final IEmulatedFileHandler fileHandler = machine.getFileHandler();
+		final IEmulatedFileHandler fileHandler = machine.getEmulatedFileHandler();
 		if (fileHandler != null) {
 			catalog = new Button(parent, SWT.PUSH);
 			GridDataFactory.fillDefaults().grab(false, false).applyTo(catalog);

@@ -37,6 +37,29 @@ public class Catalog {
 	public List<CatalogEntry> getEntries() {
 		return entries;
 	}
+
+	/**
+	 * @return
+	 */
+	public boolean isValid() {
+		return totalSectors > 0 && usedSectors >= 0;
+	}
+
+	/**
+	 * @param string
+	 * @param ffProgram
+	 * @return
+	 */
+	public CatalogEntry findEntry(String name, String type, int reclen) {
+		for (CatalogEntry ent : entries) {
+			if (ent.fileName.equalsIgnoreCase(name)) {
+				if (ent.type.equals(type) && ent.recordLength == reclen) {
+					return ent;
+				}
+			}
+		}
+		return null;
+	}
 	
 	
 }

@@ -87,10 +87,10 @@ public class DiskImageMapper implements IDiskImageMapper {
 		return disks.get(name);
 	}
 
-	public IProperty registerDiskImagePath(String device, File dskfile) {
+	public IProperty registerDiskImageSetting(String device, String initialPath) {
 		DiskImageSetting diskSetting = settings.get(ISettingsHandler.MACHINE,
 				new DiskImageSetting(settings, 
-						device, dskfile.getAbsolutePath(),
+						device, initialPath,
 						RealDiskDsrSettings.diskImageIconPath));
 	
 		diskSettingsMap.put(device, diskSetting); 
@@ -149,4 +149,20 @@ public class DiskImageMapper implements IDiskImageMapper {
 		return catalog;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IDiskImageMapper#createDiskImage(java.io.File)
+	 */
+	@Override
+	public IDiskImage createDiskImage(String name, File file) throws IOException {
+		return DiskImageFactory.createDiskImage(
+				settings, name, file);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IDiskImageMapper#isImageSupportEnabled()
+	 */
+	@Override
+	public IProperty getImageSupportProperty() {
+		return settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
+	}
 }

@@ -16,6 +16,12 @@ import ejs.base.properties.IPersistable;
 
 
 public interface IDiskImage extends IPersistable {
+	/**
+	 * Get the name of the property associated with this image (also for diags)
+	 * @return
+	 */
+	String getName();
+	
 	void readImageHeader() throws IOException;
 	boolean isDiskImageOpen();
 	void openDiskImage() throws IOException;
@@ -30,12 +36,11 @@ public interface IDiskImage extends IPersistable {
 	int getHeaderSize();
 	
 	void readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException;
+
 	/**
-	 * 
-	 */
-	void validateDiskImage();
-	/**
+	 * Tell if the disk appears formatted
 	 * @return
+	 * @throws IOException 
 	 */
-	String getName();
+	boolean isFormatted() throws IOException;
 }

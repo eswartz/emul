@@ -19,6 +19,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.IDiskImageMapper;
 import v9t9.common.files.IEmulatedFileHandler;
+import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.engine.files.directory.FileDirectory;
 import v9t9.engine.files.image.BaseDiskImage;
@@ -33,12 +34,14 @@ public class EmulatedFileHandler implements IEmulatedFileHandler {
 	private final ISettingsHandler settings;
 	private IFilesInDirectoryMapper fileMapper;
 	private IDiskImageMapper imageMapper;
+	private IFileExecutionHandler execHandler;
 
 	public EmulatedFileHandler(ISettingsHandler settings, IFilesInDirectoryMapper fileMapper,
-			IDiskImageMapper imageMapper) {
+			IDiskImageMapper imageMapper, IFileExecutionHandler execHandler) {
 		this.fileMapper = fileMapper;
 		this.settings = settings;
 		this.imageMapper = imageMapper;
+		this.execHandler = execHandler;
 		
 	}
 	
@@ -83,4 +86,13 @@ public class EmulatedFileHandler implements IEmulatedFileHandler {
 	public IDiskImageMapper getDiskImageMapper() {
 		return imageMapper;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IEmulatedFileHandler#getFileExecutionHandler()
+	 */
+	@Override
+	public IFileExecutionHandler getFileExecutionHandler() {
+		return execHandler;
+	}
+	
 }

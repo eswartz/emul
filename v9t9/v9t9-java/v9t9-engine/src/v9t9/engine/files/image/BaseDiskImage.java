@@ -11,6 +11,7 @@
 package v9t9.engine.files.image;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.MessageFormat;
@@ -158,7 +159,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		/* get disk info */
 		try {
 			readImageHeader();
-		} catch (IOException e) {
+		} catch (FileNotFoundException e) {
 			try {
 				createDiskImage();
 			} catch (IOException e2) {
@@ -416,19 +417,15 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			int sec = ((asec[ent] << 8) | (asec[ent+1] & 0xff)) & 0xffff;
 			if (sec == 0)
 				break;
-			try {
-				readSector(sec, fdrSec, 0, 256);
-				DiskImageFDR fdr = DiskImageFDR.createFDR(fdrSec, 0);
+			readSector(sec, fdrSec, 0, 256);
+			DiskImageFDR fdr = DiskImageFDR.createFDR(fdrSec, 0);
 //				int sz = fdr.getSectorsUsed() + 1;
-				
-				entries.add(new CatalogEntry(fdr.getFileName(), 
-						new EmulatedDiskImageFile(this, fdr, fdr.getFileName())));
+			
+			entries.add(new CatalogEntry(fdr.getFileName(), 
+					new EmulatedDiskImageFile(this, fdr, fdr.getFileName())));
 //						sz, 
 //						fdr.getFlags(), fdr.getRecordLength(),
 //						(fdr.getFlags() & FDR.ff_protected) != 0));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
 		return new Catalog(devname, volume, total, used, entries);
 	}
@@ -487,5 +484,29 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	 */
 	public String getName() {
 		return name;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IDiskImage#isFormatted()
+	 */
+	@Override
+	public boolean isFormatted() {
+		boolean wasOpen = isDiskImageOpen();
+		if (!wasOpen) {
+			try {
+				openDiskImage();
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			} finally {
+				if (!wasOpen) {
+					try {
+						closeDiskImage();
+					} catch (IOException e) {
+					}
+				}
+			}
+		}
+		return true;
 	}
 }

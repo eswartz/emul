@@ -97,7 +97,7 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.setCru(new InternalCru9901(machine));
 			
-			EmuDiskDsr dsr = new EmuDiskDsr(Settings.getSettings(machine), machine_.getFileHandler().getFilesInDirectoryMapper());
+			EmuDiskDsr dsr = new EmuDiskDsr(Settings.getSettings(machine), machine_.getEmulatedFileHandler().getFilesInDirectoryMapper());
 			machine.getDsrManager().registerDsr(dsr);
 			
 			defineCpuVdpBanks(machine);

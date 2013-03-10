@@ -19,4 +19,11 @@ public class IdMarker {
 	public byte sideid;
 	public byte sizeid;
 	public short crcid;
+	@Override
+	public String toString() {
+		return "IdMarker [trackid=" + trackid + ", sectorid=" + sectorid
+				+ ", sideid=" + sideid + "]";
+	}
+	
+	
 }

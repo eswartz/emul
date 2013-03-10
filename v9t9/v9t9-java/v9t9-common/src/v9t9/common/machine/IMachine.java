@@ -68,7 +68,7 @@ public interface IMachine extends IBaseMachine {
 	ICruChip getCru();
 	void setCru(ICruChip cru);
 
-	IEmulatedFileHandler getFileHandler();
+	IEmulatedFileHandler getEmulatedFileHandler();
 	
 	IPathFileLocator getRomPathFileLocator();
 

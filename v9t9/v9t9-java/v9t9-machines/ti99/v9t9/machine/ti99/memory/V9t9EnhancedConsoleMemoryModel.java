@@ -84,7 +84,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 			}
 		}
 		
-		IFilesInDirectoryMapper mapper = machine.getFileHandler().getFilesInDirectoryMapper();
+		IFilesInDirectoryMapper mapper = machine.getEmulatedFileHandler().getFilesInDirectoryMapper();
 		mapper.setDiskPath("DSK1", new File("../../v9t9-c/tools/Forth/disk1"));
 		mapper.setDiskPath("DSK2", new File("../../v9t9-c/tools/Forth/disk2"));
 		mapper.setDiskPath("DSK3", new File("../../v9t9-c/tools/Forth/disk3"));

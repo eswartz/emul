@@ -15,13 +15,15 @@ import java.net.URL;
 import ejs.base.properties.IProperty;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.files.IDiskImageSetting;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.common.settings.SettingSchema;
 import v9t9.engine.files.directory.EmuDiskSettings;
 
-public class DiskImageSetting extends IconSettingProperty {
+public class DiskImageSetting extends IconSettingProperty implements IDiskImageSetting {
 	private IProperty realDsrEnabled;
 	private IProperty emuDsrEnabled;
+	private int drive;
 
 	public DiskImageSetting(ISettingsHandler settings, String name, Object storage, URL iconPath) {
 		super(new SettingSchema(ISettingsHandler.TRANSIENT,
@@ -29,6 +31,8 @@ public class DiskImageSetting extends IconSettingProperty {
 				"Specify the full path of the image for this disk.\n\n"+
 				"The extension selects the image type when creating a new image.\n\nUse *.dsk for sector-image disks and *.trk for track image disks.",
 				storage), iconPath);
+		
+		drive = Integer.parseInt(name.substring(name.length() - 1));
 		
 		realDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
 		emuDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
@@ -47,5 +51,9 @@ public class DiskImageSetting extends IconSettingProperty {
 		
 		// only DSK1 and DSK2 are real disks if emu disk also enabled
 		return getName().compareTo(RealDiskDsrSettings.getDiskImageSetting(3)) < 0;
+	}
+	
+	public int getDrive() {
+		return drive;
 	}
 }

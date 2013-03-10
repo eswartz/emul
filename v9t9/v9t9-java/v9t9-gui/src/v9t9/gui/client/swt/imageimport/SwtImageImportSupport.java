@@ -82,7 +82,7 @@ public class SwtImageImportSupport extends ImageImportHandler {
 			/*imageDragDropHandler =*/ new SwtDragDropHandler(imageDndControl, 
 					(ISwtVideoRenderer) getVideoRenderer(), 
 					getEventNotifier(),
-					this, new FileImportHandler(machine));
+					this, new FileImportHandler(imageDndControl.getShell(), machine));
 		}
 	}
 	public void addImageImportDnDControl(Control control) {
@@ -93,7 +93,7 @@ public class SwtImageImportSupport extends ImageImportHandler {
 		new SwtDragDropHandler(control, 
 				(ISwtVideoRenderer) getVideoRenderer(), 
 				getEventNotifier(),
-				this, new FileImportHandler(machine));
+				this, new FileImportHandler(control.getShell(), machine));
 	}
 	
 

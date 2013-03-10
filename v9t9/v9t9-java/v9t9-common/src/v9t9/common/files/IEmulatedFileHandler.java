@@ -37,4 +37,8 @@ public interface IEmulatedFileHandler {
 	 * @return
 	 */
 	IDiskImageMapper getDiskImageMapper();
+	/**
+	 * @return
+	 */
+	IFileExecutionHandler getFileExecutionHandler();
 }
