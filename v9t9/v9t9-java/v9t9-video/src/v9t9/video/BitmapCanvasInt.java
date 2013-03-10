@@ -112,7 +112,7 @@ public class BitmapCanvasInt extends BitmapVdpCanvas implements IGLDataCanvas {
 		}
 
 		int col;
-		col = ColorMapUtils.getRGBToRGB565(rgb);
+		col = ColorMapUtils.rgb8ToPixel(rgb);
 		
 		Arrays.fill(idata, col);
 	}
