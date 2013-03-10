@@ -20,7 +20,9 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 
 import v9t9.common.modules.IModule;
+import v9t9.common.modules.ModuleInfo;
 import ejs.base.settings.DialogSettingsWrapper;
+import ejs.base.utils.TextUtils;
 
 final class ModuleInfoDialog extends Dialog {
 	/**
@@ -85,14 +87,27 @@ final class ModuleInfoDialog extends Dialog {
 		title.setText(module.getName());
 		title.setFont(JFaceResources.getHeaderFont());
 		
-		title.setImage(this.moduleSelector.getOrLoadModuleImage(null, module, module.getImagePath()));
+		ModuleInfo info = module.getInfo();
+		String imagePath = info != null ? info.getImagePath() : null;
+		title.setImage(this.moduleSelector.getOrLoadModuleImage(null, module, imagePath));
 		
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(title);
 		
 		///////////
-		Label sep = new Label(composite, SWT.HORIZONTAL);
+		Label sep;
+		
+		sep = new Label(composite, SWT.HORIZONTAL);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(sep);
 
+		if (info != null && !TextUtils.isEmpty(info.getDescription())) {
+			Label descr = new Label(composite, SWT.WRAP);
+			descr.setText(info.getDescription());
+			GridDataFactory.fillDefaults().grab(true, false).applyTo(descr);
+		
+			sep = new Label(composite, SWT.HORIZONTAL);
+			GridDataFactory.fillDefaults().grab(true, false).applyTo(sep);
+		}
+		
 		///////////
 		
 		CLabel summary = new CLabel(composite, SWT.WRAP);

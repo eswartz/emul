@@ -36,7 +36,9 @@ import ejs.base.utils.XMLUtils;
 public class ModuleDatabase {
 	private static final Logger logger = Logger.getLogger(ModuleDatabase.class);
 
-	public static List<IModule> loadModuleListAndClose(IMemory memory, InputStream is, URI databaseURI) throws IOException {
+	public static List<IModule> loadModuleListAndClose(IMemory memory, 
+			ModuleInfoDatabase moduleInfoDb,
+			InputStream is, URI databaseURI) throws IOException {
 		
 		logger.debug("Loading modules database from " + databaseURI);
 		
@@ -62,14 +64,14 @@ public class ModuleDatabase {
 			
 			Module module = new Module(databaseURI, name);
 			
-			Element[] entries;
 			
 			// image?
-			entries = XMLUtils.getChildElementsNamed(moduleElement, "image");
-			for (Element el : entries) {
-				String image = el.getTextContent().trim();
-				module.setImagePath(image);
-			}
+//			Element[] entries;
+//			entries = XMLUtils.getChildElementsNamed(moduleElement, "image");
+//			for (Element el : entries) {
+//				String image = el.getTextContent().trim();
+//				module.setImagePath(image);
+//			}
 
 			// memory entries
 			List<MemoryEntryInfo> memoryEntries = memory.getMemoryEntryFactory().loadEntriesFrom(
@@ -77,13 +79,15 @@ public class ModuleDatabase {
 			module.setMemoryEntryInfos(memoryEntries);
 			
 			if (!memoryEntries.isEmpty()) {
-				
 				String keywordStr = moduleElement.getAttribute("keywords");
 				
 				if (keywordStr != null && keywordStr.length() > 0) {
 					String[] kws = keywordStr.split("\\s+");
 					module.getKeywords().addAll(Arrays.asList(kws));
 				}
+
+				if (moduleInfoDb != null)
+					moduleInfoDb.syncModuleInfo(module);
 				
 				modules.add(module);
 			}
@@ -115,13 +119,6 @@ public class ModuleDatabase {
 			
 			moduleElement.setAttribute("name", module.getName());
 			
-
-			if (module.getImagePath() != null) {
-				Element image = doc.getOwnerDocument().createElement("image");
-				image.setTextContent(module.getImagePath());
-				moduleElement.appendChild(image);
-			}
-
 			if (!module.getKeywords().isEmpty()) {
 				String keywordStr = TextUtils.catenateStrings(module.getKeywords(), " ");
 				moduleElement.setAttribute("keywords", keywordStr);

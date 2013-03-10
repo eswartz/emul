@@ -82,4 +82,9 @@ public interface IModuleManager extends IPersistable {
 	 * @param module
 	 */
 	void removeModule(IModule module);
+
+	/**
+	 * @return
+	 */
+	ModuleInfoDatabase getModuleInfoDatabase();
 }

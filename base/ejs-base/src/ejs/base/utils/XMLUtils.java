@@ -51,6 +51,8 @@ public class XMLUtils {
 	 * @return array, never <code>null</code>
 	 */
 	public static Element[] getChildElementsNamed(Element element, String name) {
+		if (element == null)
+			return new Element[0];
 		NodeList nodeList = element.getChildNodes();
 		List<Element> elements = new ArrayList<Element>(); 
 		Node node = nodeList.item(0);

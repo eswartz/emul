@@ -1114,7 +1114,13 @@ public abstract class ImageUtils {
 	 */
 	public static ImageFrame convertToBufferedImage(ImageData data) {
 			
-		BufferedImage img = new BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_ARGB);
+		int type;
+		if (data.palette.redShift == 0)
+			type = BufferedImage.TYPE_INT_BGR;
+		else
+			type = BufferedImage.TYPE_INT_RGB;
+		
+		BufferedImage img = new BufferedImage(data.width, data.height, type);
 		int[] pix = new int[data.width * data.height];
 
 		for (int y = 0; y < data.height; y++) {

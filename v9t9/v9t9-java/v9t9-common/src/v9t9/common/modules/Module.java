@@ -24,11 +24,12 @@ public class Module implements IModule {
 
 	private List<MemoryEntryInfo> entries = new ArrayList<MemoryEntryInfo>();
 	private String name;
-	private String imagePath;
 	private URI databaseURI;
 	
 	// not used for equality
 	private List<String> keywords = new ArrayList<String>(1);
+	private ModuleInfo info;
+//	private String imagePath;
 	
 	public Module(URI uri, String name) {
 		this.databaseURI = uri;
@@ -102,14 +103,6 @@ public class Module implements IModule {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.modules.IModule#getImageURL()
-	 */
-	@Override
-	public String getImagePath() {
-		return imagePath;
-	}
-	
-	/* (non-Javadoc)
 	 * @see v9t9.engine.modules.IModule#getEntries()
 	 */
 	public MemoryEntryInfo[] getMemoryEntryInfos() {
@@ -127,10 +120,6 @@ public class Module implements IModule {
 	public void setMemoryEntryInfos(List<MemoryEntryInfo> entries) {
 		this.entries = entries;
 	}
-
-	public void setImagePath(String image) {
-		this.imagePath = image;
-	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.common.modules.IModule#getKeywords()
@@ -139,4 +128,36 @@ public class Module implements IModule {
 	public List<String> getKeywords() {
 		return keywords;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModule#getInfo()
+	 */
+	@Override
+	public ModuleInfo getInfo() {
+		return info;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModule#getInfo(v9t9.common.modules.ModuleInfo)
+	 */
+	@Override
+	public void setInfo(ModuleInfo info) {
+		this.info = info;
+		
+	}
+	
+//	/* (non-Javadoc)
+//	 * @see v9t9.common.modules.IModule#getImagePath()
+//	 */
+//	@Override
+//	public String getImagePath() {
+//		return imagePath;
+//	}
+//	/* (non-Javadoc)
+//	 * @see v9t9.common.modules.IModule#setImagePath(java.lang.String)
+//	 */
+//	@Override
+//	public void setImagePath(String imagePath) {
+//		this.imagePath = imagePath;
+//		
+//	}
 }

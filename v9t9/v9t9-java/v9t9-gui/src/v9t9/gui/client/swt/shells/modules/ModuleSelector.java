@@ -11,10 +11,12 @@
 package v9t9.gui.client.swt.shells.modules;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +33,7 @@ import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 
 import org.apache.log4j.Logger;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -94,6 +97,8 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
+import v9t9.common.modules.ModuleInfo;
+import v9t9.common.modules.ModuleInfoDatabase;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
@@ -161,6 +166,7 @@ public class ModuleSelector extends Composite {
 	private ViewerFilter existingModulesFilter = new ExistingModulesFilter(this);
 	protected boolean isEditing;
 	protected Collection<URI> dirtyModuleLists = new HashSet<URI>();
+	protected boolean isModuleInfoDirty = false;
 	//private List<Object> moduleList;
 	private Map<URI, Collection<IModule>> moduleMap;
 	private LazyImageLoader lazyImageLoader;
@@ -354,7 +360,6 @@ public class ModuleSelector extends Composite {
 	 */
 	protected void promptSave() {
 		if (!dirtyModuleLists.isEmpty()) {
-			
 			boolean doSave = MessageDialog.openConfirm(getShell(), "Module Changes", 
 					"Save changes to module list(s)?");
 			if (doSave) {
@@ -363,7 +368,7 @@ public class ModuleSelector extends Composite {
 				moduleManager.reload();
 			}
 		}
-		
+
 	}
 
 
@@ -372,10 +377,26 @@ public class ModuleSelector extends Composite {
 	 * 
 	 */
 	protected void saveModules() {
+		if (isModuleInfoDirty && !dirtyModuleLists.isEmpty()) {
+			try {
+				URL databaseURL = machine.getModuleManager().getModuleInfoDatabase().getDatabaseURL();
+				if (!databaseURL.getProtocol().equals("file")) {
+					databaseURL = URIUtil.append(dirtyModuleLists.iterator().next(), ModuleInfoDatabase.NAME).toURL(); 
+					window.getEventNotifier().notifyEvent(null, Level.WARNING, 
+							"Cannot modify original info; saving module info changes to " + databaseURL);
+				}
+				OutputStream os = new FileOutputStream(databaseURL.getPath());
+				machine.getModuleManager().getModuleInfoDatabase().saveModuleInfoAndClose(os);
+			} catch (IOException e) {
+				window.getEventNotifier().notifyEvent(null, Level.ERROR, "Failed to save module info database: " + e.getMessage());
+			}
+		}
+
 		for (URI modDbUri : dirtyModuleLists ) {
 			saveModules(modDbUri);
 		}
 		dirtyModuleLists.clear();
+		isModuleInfoDirty = false;
 	}
 
 
@@ -645,7 +666,8 @@ public class ModuleSelector extends Composite {
 				} else {
 					IModule module = (IModule) cell.getElement();
 					cell.setText(module.getName());
-					cell.setImage(getOrLoadModuleImage(module, module, module.getImagePath()));
+					ModuleInfo info = module.getInfo();
+					cell.setImage(getOrLoadModuleImage(module, module, info != null ? info.getImagePath() : null));
 				}
 			}
 		});
@@ -676,7 +698,8 @@ public class ModuleSelector extends Composite {
 			
 			@Override
 			public void imageLoaded(Object element, URI imageURI, Image image) {
-				viewerUpdater.post(element);
+				if (element != null)
+					viewerUpdater.post(element);
 			}
 		});
 		
@@ -1098,21 +1121,9 @@ public class ModuleSelector extends Composite {
 		URI imageURI = null;
 		
 		// see if user has an entry
-		URI imagesURI = builtinImagesURI;
 		
 		if (imagePath != null) {
-			imageURI = machine.getRomPathFileLocator().findFile(imagePath);
-		
-			if (imageURI == null) {
-				// look inside distribution
-				
-					imageURI = machine.getRomPathFileLocator().resolveInsideURI(
-							imagesURI,
-							imagePath);
-					if (!machine.getRomPathFileLocator().exists(imageURI))
-						imageURI = null;
-				
-			}
+			imageURI = getImageURI(imagePath);
 		}
 		
 		if (imageURI == null) {
@@ -1125,6 +1136,32 @@ public class ModuleSelector extends Composite {
 		Image image = lazyImageLoader.findOrLoadImage(element, imageURI, moduleImageResizer);
 		//System.out.println(System.currentTimeMillis() + "... " + module + ": " + image);
 		return image;
+	}
+
+
+
+	/**
+	 * @param imagePath
+	 * @param imagesURI
+	 * @return
+	 */
+	protected URI getImageURI(String imagePath) {
+		URI imagesURI = builtinImagesURI;
+
+		URI imageURI;
+		imageURI = machine.getRomPathFileLocator().findFile(imagePath);
+
+		if (imageURI == null) {
+			// look inside distribution
+			
+				imageURI = machine.getRomPathFileLocator().resolveInsideURI(
+						imagesURI,
+						imagePath);
+				if (!machine.getRomPathFileLocator().exists(imageURI))
+					imageURI = null;
+			
+		}
+		return imageURI;
 	}
 
 
@@ -1218,9 +1255,18 @@ public class ModuleSelector extends Composite {
 			try {
 				ImageIO.write(ImageUtils.convertToBufferedImage(data).image, "png", new File(targFile));
 				
-				module.setImagePath(targFile.substring(targFile.lastIndexOf(File.separatorChar) + 1));
-				viewer.update(module, NAME_PROPERTY_ARRAY);
+				ModuleInfo info = module.getInfo();
+				if (info == null) {
+					info = ModuleInfo.createForModule(module);
+					module.setInfo(info);
+				}
+				info.setImagePath(targFile.substring(targFile.lastIndexOf(File.separatorChar) + 1));
+				lazyImageLoader.resetImage(getImageURI(info.getImagePath()));
+				viewer.update(module, null);
 
+				machine.getModuleManager().getModuleInfoDatabase().register(module);
+				isModuleInfoDirty = true;
+				
 				dirtyModuleLists.add(module.getDatabaseURI());
 			} catch (IOException e) {
 				window.getEventNotifier().notifyEvent(null, Level.ERROR, "Failed to save image: " + e.getMessage());

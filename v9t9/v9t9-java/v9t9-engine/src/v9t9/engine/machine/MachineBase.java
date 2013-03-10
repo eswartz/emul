@@ -131,10 +131,12 @@ abstract public class MachineBase implements IMachine {
     	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingUserRomsPath));
     	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingShippingRomsPath));
     	try {
-			locator.addReadOnlyPathProperty(new SettingSchemaProperty("BuiltinPath", Collections.singletonList(
+    		if (getModel().getDataURL() != null) {
+    			locator.addReadOnlyPathProperty(new SettingSchemaProperty("BuiltinPath", Collections.singletonList(
 					//"jar:file:/home/ejs/devel/emul/v9t9/build/bin/v9t9/v9t9j.jar!/ti99/"
 					getModel().getDataURL().toURI().toString()
 					)));
+    		}
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
@@ -154,14 +156,17 @@ abstract public class MachineBase implements IMachine {
     	
     	machineModel.defineDevices(this);
     	
-    	cpuMetrics = new CpuMetrics();
-    	executor = cpu.createExecutor();
-    	executor.setMetrics(cpuMetrics);
+    	if (cpu != null) {
+    		cpuMetrics = new CpuMetrics();
+    		executor = cpu.createExecutor();
+    		executor.setMetrics(cpuMetrics);
+    	}
 
     	pauseListener = new IPropertyListener() {
     		
     		public void propertyChanged(IProperty setting) {
-    			executor.setExecuting(!setting.getBoolean());
+    			if (executor != null)
+    				executor.setExecuting(!setting.getBoolean());
     		}
     		
     	};
@@ -193,7 +198,7 @@ abstract public class MachineBase implements IMachine {
 		
 		keyboardHandler = new NullKeyboardHandler(keyboardState, this);
 
-    	this.instructionFactory = cpu.getInstructionFactory();
+    	this.instructionFactory = cpu != null ? cpu.getInstructionFactory() : null;
 	}
     
 	/* (non-Javadoc)

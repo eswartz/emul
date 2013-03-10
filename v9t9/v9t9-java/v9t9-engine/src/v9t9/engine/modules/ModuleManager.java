@@ -35,6 +35,7 @@ import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
+import v9t9.common.modules.ModuleInfoDatabase;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import ejs.base.properties.IProperty;
@@ -59,11 +60,15 @@ public class ModuleManager implements IModuleManager {
 	private Map<IMemoryEntry, IModule> memoryEntryModules = new HashMap<IMemoryEntry, IModule>();
 	private IProperty lastLoadedModule;
 	private final String stockModuleDatabase;
+
+	private ModuleInfoDatabase moduleInfoDb;
 	
 	public ModuleManager(IMachine machine, String stockModuleDatabase) {
 		this.machine = machine;
 		this.stockModuleDatabase = stockModuleDatabase;
 		this.modules = new ArrayList<IModule>();
+		
+		this.moduleInfoDb = ModuleInfoDatabase.loadModuleInfo(machine);
 		
 		lastLoadedModule = Settings.get(machine, settingLastLoadedModule);
 	}
@@ -95,8 +100,9 @@ public class ModuleManager implements IModuleManager {
 	@Override
 	public void addModules(Collection<IModule> modList) {
 		for (IModule module : modList) {
-			if (!modules.contains(module))
+			if (!modules.contains(module)) {
 				modules.add(module);
+			}
 		}
 	}
 
@@ -293,7 +299,9 @@ public class ModuleManager implements IModuleManager {
 		//boolean anyErrors = false;
 		InputStream is = null;
 		is = machine.getRomPathFileLocator().createInputStream(databaseURI);
-		List<IModule> modList = ModuleDatabase.loadModuleListAndClose(machine.getMemory(), is, databaseURI);
+		List<IModule> modList = ModuleDatabase.loadModuleListAndClose(machine.getMemory(), 
+				moduleInfoDb,
+				is, databaseURI);
 		return modList;
 	}
 
@@ -334,5 +342,12 @@ public class ModuleManager implements IModuleManager {
 	@Override
 	public void removeModule(IModule module) {
 		modules.remove(module);
+	}
+	
+	/**
+	 * @return the moduleInfoDb
+	 */
+	public ModuleInfoDatabase getModuleInfoDatabase() {
+		return moduleInfoDb;
 	}
 }

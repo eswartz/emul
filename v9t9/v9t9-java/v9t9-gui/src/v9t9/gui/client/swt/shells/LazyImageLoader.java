@@ -140,5 +140,18 @@ public class LazyImageLoader {
 		}		
 	}
 
+	/**
+	 * @param findFile
+	 */
+	public void resetImage(URI uri) {
+		synchronized (loadedImages) {
+			Image image = loadedImages.remove(uri.toString());
+			if (image != null) {
+				image.dispose();
+				findOrLoadImage(null, uri);
+			}
+		}
+	}
+
 }
  

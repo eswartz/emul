@@ -25,14 +25,15 @@ public interface IModule {
 	String getName();
 	void setName(String name);
 	
-	/** Get filename or path to associated image, or <code>null</code> */
-	String getImagePath();
-	void setImagePath(String imagePath);
+//	String getImagePath();
+//	void setImagePath(String imagePath);
 	
 	MemoryEntryInfo[] getMemoryEntryInfos();
 	void addMemoryEntryInfo(MemoryEntryInfo info);
 	
 	List<String> getKeywords();
 
+	ModuleInfo getInfo();
+	void setInfo(ModuleInfo info);
 
 }
