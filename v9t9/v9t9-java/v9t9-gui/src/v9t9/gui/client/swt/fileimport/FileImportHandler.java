@@ -71,10 +71,10 @@ public class FileImportHandler implements IFileImportHandler {
 		IDiskImageMapper imageMapper = machine.getEmulatedFileHandler().getDiskImageMapper();
 		Catalog catalog = null;
 		try {
-			IDiskImage image = imageMapper.createDiskImage("temp", file);
+			IDiskImage image = imageMapper.createDiskImage("DSK1", file);
 			if (!image.isFormatted())
 				return false;
-			catalog = imageMapper.createCatalog("temp", file);
+			catalog = imageMapper.createCatalog("DSK1", file);
 			
 		} catch (IOException e1) {
 			e1.printStackTrace();

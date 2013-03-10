@@ -4,7 +4,6 @@
 package v9t9.gui.client.swt.fileimport;
 
 import java.text.MessageFormat;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -27,27 +26,20 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Text;
 
 import v9t9.common.files.Catalog;
 import v9t9.common.files.IDiskImageSetting;
-import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.machine.IMachine;
-
 import ejs.base.properties.IProperty;
 
 class SelectDiskImageDialog extends MessageDialog {
 
 	private Map<String, IProperty> diskSettingMap;
 	protected IProperty theProperty;
-	private IFileExecutor[] execs;
-	private IFileExecutionHandler execHandler;
 	private Catalog catalog;
-	protected IFileExecutor selectedExec;
-	private ComboViewer execComboViewer;
 	private IMachine machine;
-	private Text descrText;
+	private FileExecutorComposite execComp;
 
 	public SelectDiskImageDialog(Shell parentShell,  
 			String dialogTitle,
@@ -66,7 +58,6 @@ class SelectDiskImageDialog extends MessageDialog {
 		this.machine = machine;
 		this.diskSettingMap = diskSettingMap;
 		this.catalog = catalog;
-		this.execHandler = machine.getEmulatedFileHandler().getFileExecutionHandler();
 		
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 	}
@@ -102,33 +93,16 @@ class SelectDiskImageDialog extends MessageDialog {
 		driveComboViewer.setComparator(new ViewerComparator());
 		
 		
-		//
+		label = new Label(composite, SWT.HORIZONTAL);
+		GridDataFactory.fillDefaults().grab(true, false).span(2, 1).applyTo(label);
+		
 		label = new Label(composite, SWT.WRAP);
-		label.setText("Action:");
-		GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.CENTER).grab(false, false).applyTo(label);
+		label.setText("If this disk contains programs, you may ask V9t9 to run them:");
+		GridDataFactory.fillDefaults().grab(true, false).span(2, 1).applyTo(label);
 		
-		execComboViewer = new ComboViewer(composite, SWT.BORDER);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(execComboViewer.getControl());
-		execComboViewer.setLabelProvider(new LabelProvider() {
-			/* (non-Javadoc)
-			 * @see org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
-			 */
-			@Override
-			public String getText(Object element) {
-				IFileExecutor exec = (IFileExecutor) element;
-				return exec != null ? exec.getLabel() : "Nothing";
-			}
-		}) ;
-		execComboViewer.setContentProvider(new ArrayContentProvider());
-
-		label = new Label(composite, SWT.WRAP);
-		GridDataFactory.fillDefaults().grab(false, false).span(2, 1).applyTo(label);
-		label.setText("Description:");
 		
-		descrText = new Text(composite, SWT.READ_ONLY | SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.V_SCROLL) ;
-		GridDataFactory.fillDefaults().grab(false, true).span(2, 1).indent(6, 0).minSize(-1, 96).applyTo(descrText);
-		
-		descrText.setBackground(composite.getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+		execComp = new FileExecutorComposite(composite, machine);
+		GridDataFactory.fillDefaults().grab(true, true).span(2, 1).indent(12, 12). applyTo(execComp);
 		
 		//////
 		
@@ -151,31 +125,12 @@ class SelectDiskImageDialog extends MessageDialog {
 		});
 
 
-		execComboViewer.addSelectionChangedListener(new ISelectionChangedListener() {
-			
-			@Override
-			public void selectionChanged(SelectionChangedEvent event) {
-				IFileExecutor exec = (IFileExecutor) 
-						((IStructuredSelection) event.getSelection()).getFirstElement();
-				selectedExec = exec;
-				if (exec != null) {
-					descrText.setText(exec.getDescription());
-					descrText.setEnabled(true);
-				} else {
-					descrText.setText("");
-					descrText.setEnabled(false);
-				}
-			}
-		});
-
-
-		
 		// go
 		
 		driveComboViewer.setInput(diskSettingMap.entrySet());
-		execComboViewer.setInput(Collections.emptyList());
 		
 		driveComboViewer.setSelection(new StructuredSelection(diskSettingMap.entrySet().iterator().next()));
+				
 		
 		updateExecs();
 		
@@ -186,46 +141,10 @@ class SelectDiskImageDialog extends MessageDialog {
 	 * 
 	 */
 	protected void updateExecs() {
-		if (catalog != null) {
-			execs = execHandler.analyze(machine, ((IDiskImageSetting) theProperty).getDrive(), catalog);
-			
-			IFileExecutor[] allExecs = new IFileExecutor[execs.length + 1];
-			allExecs[0] = new DoNothingFileExecutor();
-			System.arraycopy(execs, 0, allExecs, 1, execs.length);
-			execs = allExecs;
-			
-			if (selectedExec != null) {
-				boolean found = false;
-				for (IFileExecutor e : execs) {
-					if (e.getLabel().equals(selectedExec.getLabel())) {
-						selectedExec = e;
-						found = true;
-						break;
-					}
-				}
-				if (!found) {
-					selectedExec = null;
-				}
-			}
-			execComboViewer.setInput(execs);
-			
-			if (selectedExec == null) {
-				selectedExec = execs.length == 1 ? execs[0] : execs[1];
-			}
-			execComboViewer.setSelection(new StructuredSelection(selectedExec));
-			descrText.setText(selectedExec.getDescription());
-			descrText.setEnabled(true);
-			
-		} else {
-			execs = null;
-			selectedExec = null;
-			execComboViewer.setInput(Collections.emptyList());
-			descrText.setText("");
-			descrText.setEnabled(false);
-		}				
-		
-		execComboViewer.getControl().setEnabled(execs != null && execs.length > 1);
-		
+		int drive = 1;
+		if (theProperty != null)
+			drive = ((IDiskImageSetting) theProperty).getDrive();
+		execComp.updateExecs(drive, catalog);
 	}
 
 	/* (non-Javadoc)
@@ -248,7 +167,7 @@ class SelectDiskImageDialog extends MessageDialog {
 	 * @return the execs
 	 */
 	public IFileExecutor getFileExecutor() {
-		return selectedExec;
+		return execComp.getFileExecutor();
 	}
 	
 }

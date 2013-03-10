@@ -88,12 +88,29 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 				
 				if (prevCh != 0) {
 					postCharacter(false, prevShift, prevCh);
+					prevCh = 0;
 				}
 				
 				if (index < chs.length) {
 					char ch = chs[index];
 					byte shift = 0;
 
+
+					if (ch == '\uFFFC') {
+						// wait for current keys to flush
+						if (!queuedKeys.isEmpty() || currentGroup != null) {
+							flushCurrentGroup();
+							applyKeyGroup();
+							return;
+						}
+						
+						nextTime += 1 * 1000;
+						
+						index++;
+						return;
+					}
+
+					
 					if (Character.isLowerCase(ch)) {
 			    		ch = Character.toUpperCase(ch);
 			    		shift &= ~ MASK_SHIFT;
@@ -120,6 +137,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 					prevShift = shift;
 					
 					applyKeyGroup();
+					
 				} else {
 					pasteTask = null;
 				}
@@ -251,7 +269,9 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	 */
 	@Override
 	public void pasteText(String contents) {
-
+		if (isPasting())
+			cancelPaste();
+		
 		contents = contents.replaceAll("(\r\n|\r|\n)", "\r");
 		contents = contents.replaceAll("\t", "    ");
 		final char[] chs = contents.toCharArray();

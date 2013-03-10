@@ -12,11 +12,11 @@ import v9t9.common.modules.IModule;
  * @author ejs
  *
  */
-public class ExtBasicFileExecutor implements IFileExecutor {
+public class ExtBasicAutoLoadFileExecutor implements IFileExecutor {
 
 	private IModule module;
 
-	public ExtBasicFileExecutor(IModule module) {
+	public ExtBasicAutoLoadFileExecutor(IModule module) {
 		this.module = module;
 	}
 	

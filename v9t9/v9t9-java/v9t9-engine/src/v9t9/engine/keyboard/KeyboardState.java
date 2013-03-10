@@ -126,7 +126,7 @@ public class KeyboardState implements IKeyboardState {
 	 */
     @Override
 	public boolean isAsciiDirectKey(char x) { 
-    	return (latinto9901[x] != -1 && (x) != '/');
+    	return (int) x < latinto9901.length && (latinto9901[x] != -1 && (x) != '/');
     }
 
     public KeyboardState(IMachine machine) {
