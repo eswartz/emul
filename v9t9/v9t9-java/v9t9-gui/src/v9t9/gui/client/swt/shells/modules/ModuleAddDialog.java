@@ -283,7 +283,8 @@ public class ModuleAddDialog extends StatusDialog {
 		dirText.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
-				refresh();
+				if (!new File(dirText.getText()).equals(dbFile))
+					refresh();
 			}
 		});
 		
@@ -486,7 +487,7 @@ public class ModuleAddDialog extends StatusDialog {
 			try {
 				ModuleDatabase.saveModuleListAndClose(machine.getMemory(),
 						new FileOutputStream(dbase),
-						dbase.toURI(),
+						null,
 						discoveredModules);
 			} catch (IOException ex) {
 				throw new NotifyException(this, "Failed to create list file: " + dbase, ex);

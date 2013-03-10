@@ -108,7 +108,7 @@ public class ModuleDatabase {
 		Element doc = storage.getDocumentElement();
 		
 		for (IModule module : modules) {
-			if (!module.getDatabaseURI().equals(databaseURI))
+			if (databaseURI != null && !module.getDatabaseURI().equals(databaseURI))
 				continue;
 				
 			Element moduleElement = doc.getOwnerDocument().createElement("module");

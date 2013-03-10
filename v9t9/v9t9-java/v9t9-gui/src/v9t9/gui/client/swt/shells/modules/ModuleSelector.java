@@ -712,8 +712,14 @@ public class ModuleSelector extends Composite {
 	protected void loadModuleList(String modDb) {
 		try {
 			URI databaseURI = machine.getRomPathFileLocator().findFile(modDb);
-			List<IModule> mods = moduleManager.readModules(databaseURI);
-			moduleMap.put(databaseURI, mods);
+			try {
+				List<IModule> mods = moduleManager.readModules(databaseURI);
+				moduleMap.put(databaseURI, mods);
+			} catch (IOException e3) {
+				moduleMap.put(databaseURI, new ArrayList<IModule>(1));
+				machine.getEventNotifier().notifyEvent(null, Level.WARNING, 
+						e3.getMessage());
+			}
 		} catch (Exception e3) {
 			machine.getEventNotifier().notifyEvent(null, Level.WARNING, 
 					e3.getMessage());

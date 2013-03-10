@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -30,6 +31,7 @@ import java.util.zip.ZipFile;
 import org.w3c.dom.Element;
 
 import ejs.base.settings.ISettingSection;
+import ejs.base.utils.FileUtils;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.StorageException;
 import ejs.base.utils.StreamXMLStorage;
@@ -189,7 +191,7 @@ public class TI99Machine extends MachineBase {
 			if (file.isDirectory())
 				continue;
 
-			if (analyzeV9t9ModuleFile(databaseURI, file, moduleMap))
+			if (analyzeV9t9ModuleFile(databaseURI, file.toURI(), file.getName(), moduleMap))
 				continue;
 			
 			if (analyzeGRAMKrackerModuleFile(databaseURI, file, moduleMap))
@@ -197,14 +199,29 @@ public class TI99Machine extends MachineBase {
 			
 			if (analyzeRPKModuleFile(databaseURI, file, moduleMap))
 				continue;
+			
+			if (analyzeZipModuleFile(databaseURI, file, moduleMap))
+				continue;
+			
+
 		}
 
+		
+		// remove spurious modules
+		for (Iterator<IModule> iter = moduleMap.values().iterator(); iter.hasNext(); ) {
+			IModule module = iter.next();
+			System.out.println(module);
+			String moduleName = module.getName();
+			if (TextUtils.isEmpty(moduleName) || !isASCII(moduleName)) {
+				iter.remove();
+			}
+		}
 		List<IModule> modules = new ArrayList<IModule>(moduleMap.values());
 		Collections.sort(modules, new Comparator<IModule>() {
 
 			@Override
 			public int compare(IModule o1, IModule o2) {
-				return o1.getName().compareTo(o2.getName());
+				return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
 			}
 		});
 		return modules;
@@ -214,25 +231,52 @@ public class TI99Machine extends MachineBase {
 	 * Look for V9t9 module parts -- bare binaries with pieces identified
 	 * by the final filename letter ('C' = console module ROM, 'D' = console module ROM,
 	 * bank #2, 'G' = module GROM). 
-	 * @param databaseURI
-	 * @param file
-	 * @param moduleMap
-	 * @return 
 	 */
-	private boolean analyzeV9t9ModuleFile(URI databaseURI, File file,
+	private boolean analyzeV9t9ModuleFile(URI databaseURI, URI uri,
+			String fname,
 			Map<String, IModule> moduleMap) {
-		String fname = file.getName();
 		if (!fname.toLowerCase().endsWith(".bin"))
 			return false;
 		
-		String moduleName = readHeaderName(file);
-		if (TextUtils.isEmpty(moduleName) || !isASCII(moduleName))
-			return false;
-		
-		moduleName = cleanupTitle(moduleName);
-		
 		String base = fname.substring(0, fname.length() - 4); // remove extension
 		String key = base.substring(0, base.length() - 1);	// minus indicator char
+		int idx = key.lastIndexOf('/');
+		if (idx < 0)
+			idx = key.lastIndexOf('\\');
+		if (idx > 0)
+			key = base.substring(idx+1);
+		
+		return analyzeV9t9ModuleFile(databaseURI, uri, fname, key, moduleMap);
+	}
+
+
+	/**
+	 * Look for V9t9 module parts -- bare binaries with pieces identified
+	 * by the final filename letter ('C' = console module ROM, 'D' = console module ROM,
+	 * bank #2, 'G' = module GROM). 
+	 */
+	private boolean analyzeV9t9ModuleFile(URI databaseURI, URI uri,
+			String fname, String key,
+			Map<String, IModule> moduleMap) {
+		if (!fname.toLowerCase().endsWith(".bin"))
+			return false;
+		
+		byte[] content = null;
+		try {
+			try {
+				File file = new File(uri);
+				content = DataFiles.readMemoryImage(file, 0, 0x2000);
+			} catch (IllegalArgumentException e) {
+				// not file
+				content = FileUtils.readInputStreamContentsAndClose(uri.toURL().openStream());
+			}
+		} catch (IOException e) {
+			return false;
+		}
+		
+		String moduleName = readHeaderName(content);
+	
+		moduleName = cleanupTitle(moduleName);
 		
 		IModule module = moduleMap.get(key);
 		if (module == null) {
@@ -241,22 +285,22 @@ public class TI99Machine extends MachineBase {
 		if (moduleName.length() > 0)
 			module.setName(moduleName);
 		
-		char last = base.charAt(base.length() - 1);
+		char last = fname.charAt(fname.length() - 4 - 1);	// '.bin' and last char
 		switch (last) {
 		case 'c': {
 			
-			injectModuleRom(module, databaseURI, moduleName, file.getName(), 0);
+			injectModuleRom(module, databaseURI, moduleName, fname, 0);
 			
 			break;
 		}
 		case 'd': {
-			injectModuleBank2Rom(module, databaseURI, moduleName, file.getName(), 0);
+			injectModuleBank2Rom(module, databaseURI, moduleName, fname, 0);
 			
 			break;
 		}
 
 		case 'g': {
-			injectModuleGrom(module, databaseURI, moduleName, file.getName(), 0);
+			injectModuleGrom(module, databaseURI, moduleName, fname, 0);
 			break;
 		}
 		default:
@@ -397,6 +441,63 @@ public class TI99Machine extends MachineBase {
 	}
 	
 	/**
+	 * Analyze *.zip files
+	 *  
+	 * @param databaseURI 
+	 * @param file
+	 * @param moduleMap
+	 * @return
+	 */
+	private boolean analyzeZipModuleFile(URI databaseURI, File file,
+			Map<String, IModule> moduleMap) {
+		
+		ZipFile zf;
+		try {
+			zf = new ZipFile(file);
+		} catch (Exception e) {
+			return false;
+		}
+		
+		boolean any = false;
+		try {
+			boolean oneModule = zf.size() <= 4;
+				
+			for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
+				ZipEntry ent = en.nextElement();
+				
+				try {
+					URI uri = makeZipUri(file.toURI(), ent.getName());
+					
+					if (oneModule) {
+						// associate with zip file's module
+						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), file.getName(), moduleMap)) {
+							System.out.println(ent.getName());
+							// nice
+						}
+					} else {
+						// associate with appropriate module
+						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), moduleMap)) {
+							System.out.println(ent.getName());
+							// nice
+						}
+					}
+				} catch (URISyntaxException e) {
+					continue;
+				}
+				
+				any = true;
+			}
+		} finally {
+			try {
+				zf.close();
+			} catch (IOException e) {
+			}
+		}
+		
+		return any;
+	}
+	
+	/**
 	 * @param is
 	 * @return
 	 */
@@ -468,45 +569,46 @@ public class TI99Machine extends MachineBase {
 		return module;
 	}
 
+	private URI makeZipUri(URI zipUri, String name) throws URISyntaxException {
+		return new URI("jar", zipUri + "!/" + name, null);
+	}
+
 	private String makeZipUriString(URI zipUri, String name) {
 		try {
-			return new URI("jar", zipUri + "!/" + name, null).toString();
+			return makeZipUri(zipUri, name).toString();
 		} catch (URISyntaxException e) {
 			assert false;
 			return name;
 		}
 	}
-
+	
 	/**
 	 * @param file
 	 * @return
 	 */
-	private String readHeaderName(File file) {
-		byte[] content;
-		try {
-			content = DataFiles.readMemoryImage(file, 0, 0x2000);
-		} catch (IOException e) {
-			return null;
+	private String readHeaderName(byte[] content) {
+		for (int offs = 0; offs < content.length; offs += 0x2000) {
+			if (content[offs] != (byte) 0xaa) {
+				continue;
+			}
+			
+			// program list
+			int addr = readAddr(content, offs + 0x6);
+			if (addr == 0)
+				continue;
+	
+			// get the last name (ordered reverse, non-English first)
+			String name;
+			int next;
+			do {
+				next = readAddr(content, offs + (addr & 0x1fff));
+				name = readString(content, offs + (addr & 0x1fff) + 4);
+				addr = next;
+			} while (next >= 0x6000);		/* else not really module? */
+			
+			return name.trim();
 		}
-		if (content[0] != (byte) 0xaa) {
-			return "";
-		}
-		
-		// program list
-		int addr = readAddr(content, 0x6);
-		if (addr == 0)
-			return "";
-
-		// get the last name (ordered reverse, non-English first)
-		String name;
-		int next;
-		do {
-			next = readAddr(content, (addr & 0x1fff));
-			name = readString(content, (addr & 0x1fff) + 4);
-			addr = next;
-		} while (next >= 0x6000);		/* else not really module? */
-		
-		return name.trim();
+		return "";
 	}
 
 	/**
