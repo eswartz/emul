@@ -22,10 +22,12 @@ import ejs.base.utils.HexUtils;
 
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.KeyDelta;
+import v9t9.common.client.IVideoRenderer.IVideoRenderListener;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
+import v9t9.common.video.IVdpCanvas;
 import static v9t9.common.keyboard.KeyboardConstants.*;
 
 /**
@@ -42,12 +44,11 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	protected PasteTask pasteTask;
 	private IEventNotifier eventNotifier;
 
-
 	/**
 	 * @author ejs
 	 *
 	 */
-	private final class PasteTask implements Runnable {
+	private static final class PasteTask implements Runnable, IVideoRenderListener {
 		/**
 		 * 
 		 */
@@ -56,19 +57,34 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		byte prevShift = 0;
 		char prevCh = 0;
 		long nextTime;
+		private IKeyboardHandler handler;
+		private boolean redrew;
+		private boolean awaitingRedraw;
+		private boolean holdingDown;
 
 		/**
 		 * @param chs
 		 */
-		private PasteTask(char[] chs) {
+		private PasteTask(IKeyboardHandler handler, char[] chs) {
+			this.handler = handler;
 			this.chs = chs;
+			
+			handler.getMachine().getClient().getVideoRenderer().addListener(this);
+		}
+		
+		/* (non-Javadoc)
+		 * @see v9t9.common.client.IVideoRenderer.IVideoRenderListener#finishedRedraw(v9t9.common.video.IVdpCanvas)
+		 */
+		@Override
+		public synchronized void finishedRedraw(IVdpCanvas canvas) {
+			redrew = true;
 		}
 
 		public void run() {
-			if (!machine.isAlive())
-				cancelPaste();
+			if (!handler.getMachine().isAlive())
+				handler.cancelPaste();
 			
-			if (machine.isPaused())
+			if (handler.getMachine().isPaused())
 				return;
 			
 			long now = System.currentTimeMillis();
@@ -76,7 +92,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 				return;
 			} 
 			
-			int pasteDelay = machine.getSettings().get(IKeyboardHandler.settingPasteKeyDelay).getInt();
+			int pasteDelay = handler.getMachine().getSettings().get(IKeyboardHandler.settingPasteKeyDelay).getInt();
 			
 			if (index <= chs.length) {
 				// only send chars as fast as the machine is reading
@@ -84,10 +100,10 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 //					return;
 
 				//System.out.println("ch="+ch+"; prevCh="+prevCh);
-				flushCurrentGroup();
+				handler.flushCurrentGroup();
 				
-				if (prevCh != 0) {
-					postCharacter(false, prevShift, prevCh);
+				if (prevCh != 0 && !holdingDown) {
+					handler.postCharacter(false, prevShift, prevCh);
 					prevCh = 0;
 				}
 				
@@ -96,29 +112,73 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 					byte shift = 0;
 
 
-					if (ch == '\uFFFC') {
+					if (ch == WAIT_FOR_FLUSH) {
 						// wait for current keys to flush
-						if (!queuedKeys.isEmpty() || currentGroup != null) {
-							flushCurrentGroup();
-							applyKeyGroup();
+						if (handler.isAnyKeyPending()) {
+							handler.applyKeyGroup();
+							nextTime = now + pasteDelay;
 							return;
 						}
 						
-						nextTime += 1 * 1000;
-						
+						//nextTime += 1 * 1000;
 						index++;
 						return;
 					}
+					else if (ch == WAIT_VIDEO) {
+						// wait for some change in video
+						synchronized (this) {
+							// flush keys first
+							if (handler.isAnyKeyPending()) {
+								handler.applyKeyGroup();
+								nextTime = now + pasteDelay;
+								return;
+							}
+							
+							if (!awaitingRedraw) {
+								redrew = false;
+								awaitingRedraw = true;
+								nextTime = now + 500;
+							} else {
+								if (redrew) {
+									nextTime = now + 500;
+									index++;
+								}
+							}
+							return;
+						}
+					}
 
+					synchronized (this) {
+						redrew = false;
+					}
 					
-					if (Character.isLowerCase(ch)) {
-			    		ch = Character.toUpperCase(ch);
-			    		shift &= ~ MASK_SHIFT;
-			    	} else if (Character.isUpperCase(ch)) {
-			    		shift |= MASK_SHIFT;
-			    	}
+					if (ch == FCTN) {
+						index++;
+						shift |= MASK_ALT;
+						ch = chs[index];
+					}
+					else if (ch == HOLD_DOWN) {
+						index++;
+						holdingDown = true;
+						return;
+					}
+					else if (ch == RELEASE) {
+						index++;
+						holdingDown = false;
+						return;
+					}
+					else {
+						if (Character.isLowerCase(ch)) {
+				    		ch = Character.toUpperCase(ch);
+				    		shift &= ~ MASK_SHIFT;
+				    	} else if (Character.isUpperCase(ch)) {
+				    		shift |= MASK_SHIFT;
+				    	}
+					}
 					
-					postCharacter(false, shift, ch);
+					if (!holdingDown) {
+						handler.postCharacter(false, shift, ch);
+					}
 					
 					if (ch == prevCh) {
 						prevCh = 0;
@@ -126,9 +186,9 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 						return;
 					}
 
-					flushCurrentGroup();
+					handler.flushCurrentGroup();
 
-					postCharacter(true, shift, ch);
+					handler.postCharacter(true, shift, ch);
 					
 					nextTime = now + pasteDelay;
 					index++;
@@ -136,12 +196,24 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 					prevCh = ch;
 					prevShift = shift;
 					
-					applyKeyGroup();
+					handler.applyKeyGroup();
 					
 				} else {
-					pasteTask = null;
+					if (handler.isAnyKeyPending()) {
+						handler.applyKeyGroup();
+						nextTime = now + pasteDelay;
+					} else {
+						handler.cancelPaste();
+					}
 				}
 			}
+		}
+
+		/**
+		 * 
+		 */
+		public void dispose() {
+			handler.getMachine().getClient().getVideoRenderer().removeListener(this);			
 		}
 	}
 
@@ -180,7 +252,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		this.eventNotifier = notifier;
 	}
 
-	protected synchronized void applyKeyGroup() {
+	public synchronized void applyKeyGroup() {
 		long now = System.currentTimeMillis();
 		if (queuedKeys.isEmpty() && currentGroup == null) {
 			if (lastChangeTime + TIMEOUT < now) {
@@ -215,7 +287,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	/**
 	 * 
 	 */
-	protected void flushCurrentGroup() {
+	public void flushCurrentGroup() {
 		if (currentGroup != null) {
 			queuedKeys.add(currentGroup);
 			currentGroup = null;
@@ -260,6 +332,8 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	@Override
 	public void cancelPaste() {
 		resetKeyboard();	// clear queued keys
+		if (pasteTask != null)
+			pasteTask.dispose();
 		pasteTask = null;
 		
 	}
@@ -277,7 +351,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		final char[] chs = contents.toCharArray();
 		
 		// this runnable is manually executed, not scheduled
-		pasteTask = new PasteTask(chs);
+		pasteTask = new PasteTask(this, chs);
 	}
 
 	/* (non-Javadoc)
@@ -642,4 +716,18 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		pushKey(pressed, ikey);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IKeyboardHandler#getMachine()
+	 */
+	@Override
+	public IMachine getMachine() {
+		return machine;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IKeyboardHandler#isAnyKeyPending()
+	 */
+	@Override
+	public boolean isAnyKeyPending() {
+		return !keyboardState.isBufferEmpty() || !queuedKeys.isEmpty();
+	}
 }

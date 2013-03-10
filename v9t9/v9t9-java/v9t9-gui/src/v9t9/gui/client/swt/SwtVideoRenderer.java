@@ -40,10 +40,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.timer.FastTimer;
-
 import v9t9.common.client.IMonitorEffectSupport;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
@@ -61,6 +57,10 @@ import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.VdpCanvasRendererFactory;
 import v9t9.video.common.CanvasFormat;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.timer.FastTimer;
+import ejs.base.utils.ListenerList;
 
 /**
  * Render video into an SWT window
@@ -98,8 +98,11 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	protected List<ISwtSprite> sprites = new ArrayList<ISwtSprite>(1);
 
 	private IPropertyListener canvasFormatListener;
+
+	private ListenerList<IVideoRenderListener> listeners;
 	
 	public SwtVideoRenderer(IMachine machine) {
+		this.listeners = new ListenerList<IVideoRenderListener>();
 		this.settings = machine.getSettings();
 		this.vdp = machine.getVdp();
 		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
@@ -324,6 +327,8 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 
 					if (!isDirty) {
 						doCleanRedraw();
+						
+						// no firing
 					} else {
 						try {
 							doTriggerRedraw();
@@ -333,6 +338,16 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 						
 						isDirty = false;
 						vdpCanvas.clearDirty();
+						
+						listeners.fire(new ListenerList.IFire<IVideoRenderListener>() {
+
+							@Override
+							public void fire(IVideoRenderListener listener) {
+								listener.finishedRedraw(getCanvas());
+							}
+							
+						});
+
 					}
 				}
 			}
@@ -614,5 +629,20 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	@Override
 	public void removeSprite(ISwtSprite sprite) {
 		sprites.remove(sprite);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IVideoRenderer#addListener(v9t9.common.client.IVideoRenderer.IVideoRenderListener)
+	 */
+	@Override
+	public void addListener(IVideoRenderListener listener) {
+		listeners.add(listener);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IVideoRenderer#removeListener(v9t9.common.client.IVideoRenderer.IVideoRenderListener)
+	 */
+	@Override
+	public void removeListener(IVideoRenderListener listener) {
+		listeners.remove(listener);
 	}
 }

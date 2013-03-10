@@ -637,4 +637,13 @@ public class KeyboardState implements IKeyboardState {
 		else
 			stickyKeys.remove(keycode);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.keyboard.IKeyboardState#isBufferEmpty()
+	 */
+	@Override
+	public boolean isBufferEmpty() {
+		
+		return this.stickyKeys.isEmpty() && pressedKeyCodes.isEmpty();
+	}
 }

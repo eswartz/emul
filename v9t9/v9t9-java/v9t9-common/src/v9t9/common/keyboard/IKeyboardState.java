@@ -107,4 +107,9 @@ public interface IKeyboardState {
 	 * @param selection
 	 */
 	void stickyApplyKey(int keycode, boolean onoff);
+
+	/**
+	 * @return
+	 */
+	boolean isBufferEmpty();
 }

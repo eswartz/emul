@@ -11,12 +11,21 @@
 package v9t9.common.client;
 
 import v9t9.common.events.IEventNotifier;
+import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 
 /**
  * @author ejs
  */
 public interface IKeyboardHandler {
+
+	public static final char WAIT_FOR_FLUSH = '\uFFFC';
+	public static final char WAIT_VIDEO = '\uFFFD';
+	public static final char FCTN = '\uFFFB';
+	public static final char HOLD_DOWN = '\uFFFA';
+	public static final char RELEASE = '\uFFF9';
+
+	
 	SettingSchema settingPasteKeyDelay = new SettingSchema(
 			ISettingsHandler.MACHINE,
 			"PasteKeyDelay", 20);
@@ -43,5 +52,21 @@ public interface IKeyboardHandler {
 	boolean anyKeyAvailable();
 
 	boolean postCharacter(boolean pressed, byte shift, char ch);
+	/**
+	 * @return
+	 */
+	IMachine getMachine();
+	/**
+	 * 
+	 */
+	void flushCurrentGroup();
+	/**
+	 * @return
+	 */
+	boolean isAnyKeyPending();
+	/**
+	 * 
+	 */
+	void applyKeyGroup();
 
 }

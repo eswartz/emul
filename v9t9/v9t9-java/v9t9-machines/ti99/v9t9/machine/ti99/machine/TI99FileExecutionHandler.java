@@ -3,6 +3,7 @@
  */
 package v9t9.machine.ti99.machine;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,32 +32,59 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 
 		for (IModule module : machine.getModuleManager().getModules()) {
 			if (module.getName().toLowerCase().contains("extended basic")) {
-				scanExtBasic(drive, catalog, execs, module);
+				scanExtBasic(machine, drive, catalog, execs, module);
 				break;
 			}
 		}
 		return (IFileExecutor[]) execs.toArray(new IFileExecutor[execs.size()]);
 	}
 
-	private void scanExtBasic(int drive, Catalog catalog,
+	private void scanExtBasic(IMachine machine, int drive, Catalog catalog,
 			List<IFileExecutor> execs, IModule module) {
 		if (drive == 1) {
 			CatalogEntry load = catalog.findEntry("LOAD", "PROGRAM", 0);
 			if (load != null) {
 				execs.add(new ExtBasicAutoLoadFileExecutor(module));
-				// can't really avoid otherwise
+				
+				// can't do anything else (yet)
 				return;
 			}
 		}
 		
 		// else look for programs
 		for (CatalogEntry ent : catalog.entries) {
-			if (ent.type.equals("PROGRAM")) {
+			if (ent.type.equals("PROGRAM") && isExtBasicProgram(machine, ent)) {
 				execs.add(new ExtBasicLoadAndRunFileExecutor(module,
 						catalog.deviceName + "." + ent.fileName));
 			}
 		}
 	
+	}
+
+	int readShort(byte[] content, int offs) {
+		return (((content[offs] << 8) & 0xff00) | (content[offs + 1] & 0xff));
+	}
+	/**
+	 * @param machine 
+	 * @param ent
+	 * @return
+	 */
+	private boolean isExtBasicProgram(IMachine machine, CatalogEntry ent) {
+		int size = ent.getFile().getFileSize();
+		byte[] header = new byte[256];
+		try {
+			ent.getFile().readContents(header, 0, 0, header.length);
+		} catch (IOException e) {
+			return false;
+		}
+		//int low = readShort(header, 0);
+		int pgm1 = readShort(header, 2);
+		int pgm2 = readShort(header, 4);
+		int hi = readShort(header, 6);
+		if (pgm2 < hi && hi < machine.getVdp().getMemorySize() && (hi - Math.min(pgm1, pgm2) < size)) {
+			return true;
+		}
+		return false;
 	}
 
 }

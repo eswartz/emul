@@ -30,6 +30,8 @@ import javax.imageio.ImageIO;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.timer.FastTimer;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 
 
 import v9t9.common.client.IMonitorEffectSupport;
@@ -106,6 +108,8 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	private FastTimer fastTimer;
 
 	private MonitorEffectSupport monitorEffectSupport;
+
+	private ListenerList<IVideoRenderListener> listeners = new ListenerList<IVideoRenderListener>();
 	
 	public AwtVideoRenderer(IMachine machine, FastTimer timer) {
 		this.machine = machine;
@@ -303,6 +307,14 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 			updateRect.y = 0;
 			isDirty = false;
 			vdpCanvas.clearDirty();
+			
+			listeners.fire(new IFire<IVideoRenderer.IVideoRenderListener>() {
+
+				@Override
+				public void fire(IVideoRenderListener listener) {
+					listener.finishedRedraw(getCanvas());
+				}
+			});
 		}
 	}
 
@@ -619,5 +631,19 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	public IMonitorEffectSupport getMonitorEffectSupport() {
 		return monitorEffectSupport;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IVideoRenderer#addListener(v9t9.common.client.IVideoRenderer.IVideoRenderListener)
+	 */
+	@Override
+	public void addListener(IVideoRenderListener listener) {
+		listeners .add(listener);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IVideoRenderer#removeListener(v9t9.common.client.IVideoRenderer.IVideoRenderListener)
+	 */
+	@Override
+	public void removeListener(IVideoRenderListener listener) {
+		listeners.remove(listener);
+	}
 }

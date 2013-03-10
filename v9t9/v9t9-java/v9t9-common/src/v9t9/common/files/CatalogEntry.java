@@ -69,6 +69,13 @@ public class CatalogEntry {
 		this.recordLength = file.getRecordLength();
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return fileName + " " + type + " " + recordLength;
+	}
 	@Override
 	public int hashCode() {
 		final int prime = 31;

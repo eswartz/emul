@@ -3,6 +3,7 @@
  */
 package v9t9.machine.ti99.machine.fileExecutors;
 
+import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.machine.IMachine;
@@ -50,9 +51,14 @@ public class ExtBasicLoadAndRunFileExecutor implements IFileExecutor {
 		machine.getModuleManager().switchModule(module);
 		machine.reset();
 		machine.getKeyboardHandler().pasteText(" 2"+	// space for title, 2 for extended basic
-				"\uFFFC\uFFFC"+
+//				IKeyboardHandler.FCTN + '4' +
+//				IKeyboardHandler.HOLD_DOWN + 
+//				IKeyboardHandler.FCTN + '4' +
+//				IKeyboardHandler.WAIT_VIDEO + 
+//				IKeyboardHandler.RELEASE +
+				IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_FOR_FLUSH + 
 				"\nOLD " + devicePath + "\n"+
-				"\uFFFC\uFFFC\uFFFC\uFFFC\uFFFC"+
+				IKeyboardHandler.WAIT_VIDEO + 
 				"RUN\n");
 	}
 
