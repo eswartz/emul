@@ -3,6 +3,8 @@
  */
 package v9t9.gui.client.swt.shells.modules;
 
+import java.net.URI;
+
 import org.eclipse.jface.viewers.ITableColorProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.SWT;
@@ -24,8 +26,15 @@ class ModuleTableLabelProvider extends LabelProvider implements ITableColorProvi
 	 */
 	@Override
 	public Color getForeground(Object element, int columnIndex) {
-		if (!(element instanceof IModule))
+		if (element instanceof URI) {
+			if (selector.getMachine().getRomPathFileLocator().exists((URI) element))
+				return null;
+			return selector.getDisplay().getSystemColor(SWT.COLOR_TITLE_INACTIVE_FOREGROUND);
+		}
+		
+		if (!(element instanceof IModule)) {
 			return null;
+		}
 		
 		IModule module = (IModule) element;
 		if (!selector.isModuleLoadable(module))
