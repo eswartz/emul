@@ -22,7 +22,7 @@ import ejs.base.utils.HexUtils;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.FDR;
 import v9t9.common.files.IFDROwner;
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.files.EmulatedBaseFDRFile;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
@@ -48,7 +48,7 @@ public class DirectDiskHandler {
 	/** the command code */
 	private final short code;
 	private final String devname;
-	private final IFileMapper mapper;
+	private final IFilesInDirectoryMapper mapper;
 	/** device from >834C -- e.g. DSK# */
 	byte dev;
 	/** option from >834D -- usually flag or # of sectors */
@@ -70,7 +70,7 @@ public class DirectDiskHandler {
 		return block;
 	}
 	
-	public DirectDiskHandler(Dumper dumper, short cru, IMemoryTransfer xfer, IFileMapper mapper, short code) {
+	public DirectDiskHandler(Dumper dumper, short cru, IMemoryTransfer xfer, IFilesInDirectoryMapper mapper, short code) {
 		this.dumper = dumper;
 		this.cru = cru;
 		this.xfer = xfer;

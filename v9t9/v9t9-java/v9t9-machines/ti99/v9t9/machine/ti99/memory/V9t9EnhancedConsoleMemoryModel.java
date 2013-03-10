@@ -18,7 +18,7 @@ import java.net.URL;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.DataFiles;
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
@@ -84,7 +84,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 			}
 		}
 		
-		IFileMapper mapper = machine.getFileHandler().getFileMapper();
+		IFilesInDirectoryMapper mapper = machine.getFileHandler().getFilesInDirectoryMapper();
 		mapper.setDiskPath("DSK1", new File("../../v9t9-c/tools/Forth/disk1"));
 		mapper.setDiskPath("DSK2", new File("../../v9t9-c/tools/Forth/disk2"));
 		mapper.setDiskPath("DSK3", new File("../../v9t9-c/tools/Forth/disk3"));

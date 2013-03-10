@@ -15,37 +15,32 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.TimerTask;
-
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.settings.ISettingSection;
-import ejs.base.utils.HexUtils;
-
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
-import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IDeviceSettings;
+import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.files.IDiskImage;
+import v9t9.common.files.IDiskImageMapper;
+import v9t9.common.files.IDiskImageMapper.IDiskImageListener;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.common.settings.Settings;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.files.image.BaseDiskImage;
-import v9t9.engine.files.image.DiskImageFactory;
-import v9t9.engine.files.image.DiskImageSetting;
 import v9t9.engine.files.image.Dumper;
 import v9t9.engine.files.image.FDC1771;
 import v9t9.engine.files.image.RealDiskConsts;
 import v9t9.engine.files.image.RealDiskDsrSettings;
 import v9t9.engine.files.image.StatusBit;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.HexUtils;
 
 /**
  * This is a device handler which allows accessing disks as flat sector files
@@ -54,8 +49,7 @@ import v9t9.engine.files.image.StatusBit;
  *
  */
 public abstract class BaseDiskImageDsr implements IDeviceSettings {
-	/** setting name (DiskImage1) to setting */
-	protected Map<String, IProperty> diskSettingsMap = new LinkedHashMap<String, IProperty>();
+
 	
 	FDC1771 fdc;
 	
@@ -66,8 +60,6 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	protected byte side;
 	
 
-	private Map<String, BaseDiskImage> disks = new LinkedHashMap<String, BaseDiskImage>();
-	
 	protected int getSelectedDisk() {
 		return selectedDisk;
 	}
@@ -80,18 +72,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	
 	private BaseDiskImage getDiskInfo(int num) {
 		String name = RealDiskDsrSettings.getDiskImageSetting(num);
-		return getDiskImage(name);
-	}
-	protected BaseDiskImage getDiskImage(String name) {
-		BaseDiskImage info = disks.get(name);
-		if (info == null) {
-			IProperty setting = diskSettingsMap.get(name);
-			if (setting == null)
-				return null;
-			info = DiskImageFactory.createDiskImage(settings, name, new File(setting.getString()));
-			disks.put(name, info);
-		}
-		return disks.get(name);
+		return (BaseDiskImage) imageMapper.getDiskImage(name);
 	}
 	
 	/* (non-Javadoc)
@@ -101,33 +82,6 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	}
 
 
-	private void registerDiskImagePath(String device, File dskfile) {
-		DiskImageSetting diskSetting = settings.get(ISettingsHandler.MACHINE,
-				new DiskImageSetting(settings, 
-						device, dskfile.getAbsolutePath(),
-						RealDiskDsrSettings.diskImageIconPath));
-	
-		diskSettingsMap.put(device, diskSetting); 
-		diskSetting.addListener(new IPropertyListener() {
-			
-			public void propertyChanged(IProperty setting) {
-	
-				BaseDiskImage image = disks.get(setting.getName());
-				if (image != null) {
-					if (image == fdc.getImage())
-						fdc.setImage(null);
-					
-				}
-				image = DiskImageFactory.createDiskImage(settings, 
-						setting.getName(), new File(setting.getString()));
-				disks.put(setting.getName(), image);
-						
-				//setting.saveState(EmulatorSettings.getInstance().getApplicationSettings());
-			}
-		});
-	}
-
-	
 	private TimerTask motorTickTask;
 
 	private byte lastStatus = -1;
@@ -141,8 +95,11 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 
 	protected ISettingsHandler settings;
 
+	protected IDiskImageMapper imageMapper;
+
 
 	public BaseDiskImageDsr(IMachine machine) {
+		imageMapper = machine.getFileHandler().getDiskImageMapper();
 		settings = Settings.getSettings(machine);
 		dumper = new Dumper(settings,
 				RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
@@ -160,7 +117,20 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
     	
     	for (int drive = 1; drive <= 3; drive++) {
     		String name = RealDiskDsrSettings.getDiskImageSetting(drive);
-			registerDiskImagePath(name, RealDiskDsrSettings.getDefaultDiskImage(name)); 
+			imageMapper.registerDiskImagePath(name, 
+					RealDiskDsrSettings.getDefaultDiskImage(name));
+			
+			imageMapper.addListener(new IDiskImageListener() {
+				
+				@Override
+				public void diskChanged(String device, IDiskImage oldImage,
+						IDiskImage newImage) {
+					if (oldImage != null) {
+						if (oldImage == fdc.getImage())
+							fdc.setImage(null);
+					}
+				}
+			});
     	}
     	
 		// add motor timer
@@ -173,10 +143,12 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 				if (now > fdc.commandBusyExpiration)
 					fdc.commandBusyExpiration = 0;
 				
-				Set<Entry<String, BaseDiskImage>> entrySet = new HashSet<Entry<String,BaseDiskImage>>(disks.entrySet());
-				for (Map.Entry<String, BaseDiskImage> entry : entrySet) {
+				for (Map.Entry<String, IDiskImage> entry : imageMapper.getDiskImageMap().entrySet()) { 
 					String name = "DSK" + entry.getKey().charAt(entry.getKey().length() - 1);
-					BaseDiskImage info = entry.getValue();
+					IDiskImage info_ = entry.getValue();
+					if (false == info_ instanceof BaseDiskImage)
+						continue;
+					BaseDiskImage info = (BaseDiskImage) info_;
 					if (info.getMotorTimeout() != 0) {
 						if (!info.isMotorRunning()) {
 							if (now >= info.getMotorTimeout()) {
@@ -213,8 +185,9 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 			dumper.error(e.getMessage());
 		}
 		
-		for (BaseDiskImage info : disks.values()) {
-			info.setSide(side);
+		for (IDiskImage info : imageMapper.getDiskImageMap().values()) {
+			if (info instanceof BaseDiskImage)
+				((BaseDiskImage) info).setSide(side);
 		}
 		
 	}
@@ -556,7 +529,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 		settings.add(settingDsrEnabled);
 		map.put(IDsrHandler.GROUP_DSR_SELECTION, settings);
 		
-		settings = new ArrayList<IProperty>(diskSettingsMap.values());
+		settings = new ArrayList<IProperty>(imageMapper.getDiskSettingsMap().values());
 		settings.add(settingRealTime);
 		settings.add(settingDebug);
 		map.put(IDsrHandler.GROUP_DISK_CONFIGURATION, settings);
@@ -566,16 +539,15 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	public void saveState(ISettingSection section) {
 		settingDsrEnabled.saveState(section);
 		fdc.saveState(section.addSection("FDC1771"));
-		for (Map.Entry<String, BaseDiskImage> entry : disks.entrySet())
-			entry.getValue().saveState(section.addSection(entry.getKey()));
+		imageMapper.saveState(section);
 	}
 	
 	public void loadState(ISettingSection section) {
 		if (section == null) return;
 		settingDsrEnabled.loadState(section);
 		fdc.loadState(section.getSection("FDC1771"));
-		for (Map.Entry<String, BaseDiskImage> entry : disks.entrySet())
-			entry.getValue().loadState(section.getSection(entry.getKey()));
+		imageMapper.loadState(section);
+	
 	}
 
 

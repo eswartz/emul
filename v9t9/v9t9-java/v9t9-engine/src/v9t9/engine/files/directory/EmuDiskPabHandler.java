@@ -20,7 +20,7 @@ import ejs.base.utils.HexUtils;
 
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.FDR;
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.files.EmulatedBaseFDRFile;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
@@ -47,20 +47,20 @@ public class EmuDiskPabHandler extends PabHandler {
 		return block;
 	}
 
-	private IFileMapper mapper;
+	private IFilesInDirectoryMapper mapper;
 	private PabInfoBlock block;
 	private Dumper dumper;
 
-	public EmuDiskPabHandler(Dumper dumper, short cruaddr, IMemoryTransfer xfer, IFileMapper mapper, short vdpNameCompareBuffer) {
+	public EmuDiskPabHandler(Dumper dumper, short cruaddr, IMemoryTransfer xfer, IFilesInDirectoryMapper mapper, short vdpNameCompareBuffer) {
 		super(xfer);
 		init(dumper, cruaddr, mapper, vdpNameCompareBuffer);
 	}
-	public EmuDiskPabHandler(Dumper dumper, short cruaddr, IMemoryTransfer xfer, IFileMapper mapper, PabStruct pab, short vdpNameCompareBuffer) {
+	public EmuDiskPabHandler(Dumper dumper, short cruaddr, IMemoryTransfer xfer, IFilesInDirectoryMapper mapper, PabStruct pab, short vdpNameCompareBuffer) {
 		super(xfer, pab);
 		init(dumper, cruaddr, mapper, vdpNameCompareBuffer);
 	}
 
-	private void init(Dumper dumper, short cruaddr, IFileMapper mapper,
+	private void init(Dumper dumper, short cruaddr, IFilesInDirectoryMapper mapper,
 			short vdpNameCompareBuffer) {
 		this.dumper = dumper;
 		this.block = getPabInfoBlock(cruaddr);

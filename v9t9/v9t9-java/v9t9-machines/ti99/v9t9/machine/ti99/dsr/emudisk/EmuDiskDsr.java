@@ -31,7 +31,7 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IMemoryTransfer;
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
@@ -60,7 +60,7 @@ import v9t9.machine.ti99.dsr.IDsrHandler9900;
 public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 	private IMemoryEntry memoryEntry;
 	private short vdpNameCompareBuffer;
-	private final IFileMapper mapper;
+	private final IFilesInDirectoryMapper mapper;
 
 	private Map<String, IProperty> diskActivitySettings;
 
@@ -70,7 +70,7 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 	private Dumper dumper;
 	private final ISettingsHandler settings;
 
-	public EmuDiskDsr(ISettingsHandler settings_, IFileMapper mapper) {
+	public EmuDiskDsr(ISettingsHandler settings_, IFilesInDirectoryMapper mapper) {
 		this.settings = settings_;
 		//emuDiskDsrEnabled.setBoolean(true);
 		settingDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);

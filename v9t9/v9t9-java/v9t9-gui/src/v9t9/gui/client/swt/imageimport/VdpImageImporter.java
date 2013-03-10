@@ -300,7 +300,7 @@ public class VdpImageImporter {
 		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdp.getPatternTableBase());
 		ByteMemoryAccess color = vdp.getByteReadMemoryAccess(vdp.getColorTableBase());
 		
-		// assume char 255 is not used
+		// assume char 255 is not used: fill screen with this and clear block 0xff for background
 		for (int i = 0; i < 768; i++)
 			vdp.writeAbsoluteVdpMemory(screen.offset + i, (byte) 0xff);
 

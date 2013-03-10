@@ -33,7 +33,7 @@ import org.eclipse.swt.widgets.Label;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
-import v9t9.common.files.IFileHandler;
+import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.machine.IMachine;
 import ejs.base.properties.IProperty;
 
@@ -126,7 +126,7 @@ class DiskEntry extends DiskSettingEntry {
 			}
 		});			
 		
-		final IFileHandler fileHandler = machine.getFileHandler();
+		final IEmulatedFileHandler fileHandler = machine.getFileHandler();
 		if (fileHandler != null) {
 			catalog = new Button(parent, SWT.PUSH);
 			GridDataFactory.fillDefaults().grab(false, false).applyTo(catalog);
@@ -136,7 +136,14 @@ class DiskEntry extends DiskSettingEntry {
 				public void widgetSelected(SelectionEvent e) {
 					Catalog catalog;
 					try {
-						catalog = fileHandler.createCatalog(setting, isDiskImage());
+						if (!isDiskImage()) {
+							catalog = fileHandler.getFilesInDirectoryMapper().createCatalog(
+									new File(setting.getString()));
+						} else {
+							catalog = fileHandler.getDiskImageMapper().createCatalog(
+									setting.getName(),
+									new File(setting.getString()));
+						}
 						showCatalogDialog(setting, catalog);
 					} catch (IOException e1) {
 						machine.notifyEvent(IEventNotifier.Level.ERROR,

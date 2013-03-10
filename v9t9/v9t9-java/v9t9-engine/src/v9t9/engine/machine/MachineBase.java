@@ -31,8 +31,9 @@ import v9t9.common.demos.IDemoManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.files.DataFiles;
-import v9t9.common.files.IFileHandler;
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.IDiskImageMapper;
+import v9t9.common.files.IEmulatedFileHandler;
+import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.hardware.ICruChip;
@@ -55,8 +56,9 @@ import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.demos.DemoManager;
 import v9t9.engine.events.RecordingEventNotifier;
-import v9t9.engine.files.FileHandler;
+import v9t9.engine.files.EmulatedFileHandler;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
+import v9t9.engine.files.image.DiskImageMapper;
 import v9t9.engine.keyboard.KeyboardState;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
@@ -83,7 +85,6 @@ abstract public class MachineBase implements IMachine {
 	protected Timer timer;
 	protected FastTimer fastTimer;
 	private IVdpChip vdp;
-	private IFileHandler fileHandler;
 
 	protected boolean allowInterrupts;
 	protected TimerTask clientTask;
@@ -116,8 +117,13 @@ abstract public class MachineBase implements IMachine {
 	private IDemoManager demoManager;
 	private IKeyboardHandler keyboardHandler;
 	private IKeyboardMapping keyboardMapping;
-	protected IFileMapper fileMapper;
 	private ListenerList<IKeyboardModeListener> keyboardModeListeners;
+	
+	protected IFilesInDirectoryMapper fileMapper;
+	private IDiskImageMapper imageMapper;
+	private IEmulatedFileHandler emulatedFileHandler;
+	
+
 	
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -152,7 +158,8 @@ abstract public class MachineBase implements IMachine {
     	init(machineModel);
 
     	fileMapper = new DiskDirectoryMapper();
-    	fileHandler = new FileHandler(settings, fileMapper);
+    	imageMapper = new DiskImageMapper(settings);
+    	emulatedFileHandler = new EmulatedFileHandler(settings, fileMapper, imageMapper);
     	
     	machineModel.defineDevices(this);
     	
@@ -628,12 +635,12 @@ abstract public class MachineBase implements IMachine {
 	 * @see v9t9.common.machine.IMachine#getFileHandler()
 	 */
 	@Override
-	public IFileHandler getFileHandler() {
-		return fileHandler;
+	public IEmulatedFileHandler getFileHandler() {
+		return emulatedFileHandler;
 	}
 	
-	public void setFileHandler(IFileHandler fileHandler) {
-		this.fileHandler = fileHandler;
+	public void setFileHandler(IEmulatedFileHandler fileHandler) {
+		this.emulatedFileHandler = fileHandler;
 	}
 	
 	/* (non-Javadoc)
@@ -773,12 +780,6 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public String getKeyboardMode() {
 		return null;
-	}
-	/**
-	 * @return the fileMapper
-	 */
-	public IFileMapper getFileMapper() {
-		return fileMapper;
 	}
 	
 	/* (non-Javadoc)

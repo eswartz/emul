@@ -23,6 +23,8 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.RTFTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.events.ControlAdapter;
@@ -348,7 +350,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 		});
 
-		
 		buttonBar = new EmulatorButtonBar(this, buttonImageProvider, mainComposite, machine,
 				soundHandler,
 				new int[] { SWT.COLOR_BLACK, SWT.COLOR_GRAY, SWT.COLOR_DARK_GRAY },

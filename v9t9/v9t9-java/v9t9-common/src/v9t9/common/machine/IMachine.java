@@ -19,7 +19,7 @@ import v9t9.common.cpu.IExecutor;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
 import v9t9.common.events.IEventNotifier;
-import v9t9.common.files.IFileHandler;
+import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
@@ -68,7 +68,7 @@ public interface IMachine extends IBaseMachine {
 	ICruChip getCru();
 	void setCru(ICruChip cru);
 
-	IFileHandler getFileHandler();
+	IEmulatedFileHandler getFileHandler();
 	
 	IPathFileLocator getRomPathFileLocator();
 

@@ -17,7 +17,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.Catalog;
+import v9t9.common.files.IFilesInDirectoryMapper;
 
 import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
@@ -27,7 +28,7 @@ import ejs.base.settings.ISettingSection;
 
 
 
-public class DiskDirectoryMapper implements IFileMapper, IPersistable {
+public class DiskDirectoryMapper implements IFilesInDirectoryMapper, IPersistable {
 	private Map<String, File> diskMap = new HashMap<String, File>();
 	private Map<String, String> deviceToDiskMap = new HashMap<String, String>();
 	private Map<String, String> diskToDeviceMap = new HashMap<String, String>();
@@ -394,5 +395,16 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IFilesInDirectoryMapper#createCatalog(java.io.File)
+	 */
+	@Override
+	public Catalog createCatalog(File dir) throws IOException {
+		FileDirectory fileDir = new FileDirectory(dir, this);
+
+		Catalog catalog = fileDir.readCatalog();
+
+		return catalog;
+	}
 
 }

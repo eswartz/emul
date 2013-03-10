@@ -13,7 +13,7 @@ package v9t9.engine.files.directory;
 import java.io.File;
 
 import v9t9.common.files.Catalog;
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.IFilesInDirectoryMapper;
 
 /**
  * @author ejs
@@ -21,14 +21,14 @@ import v9t9.common.files.IFileMapper;
  */
 public class FileDirectory {
 
-	private IFileMapper mapper;
+	private IFilesInDirectoryMapper mapper;
 	private File dir;
 
 	/**
 	 * @param dir
 	 * @param mapper
 	 */
-	public FileDirectory(File file, IFileMapper mapper) {
+	public FileDirectory(File file, IFilesInDirectoryMapper mapper) {
 		this.dir = file.isDirectory() ? file : file.getParentFile();
 		this.mapper = mapper;
 	}

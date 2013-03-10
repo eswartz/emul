@@ -161,7 +161,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		super(machine);
 		this.base = base;
 
-		if (!diskSettingsMap.isEmpty()) {
+		if (!imageMapper.getDiskSettingsMap().isEmpty()) {
 			
 			// one setting for entire DSR
 			realDiskDsrActiveSetting = new SettingSchemaProperty(getName(), Boolean.FALSE);

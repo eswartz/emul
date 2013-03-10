@@ -24,7 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import v9t9.common.files.EmulatedFile;
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
@@ -82,7 +82,7 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 
 	@Test
 	public void testFileMapping() throws Exception {
-		IFileMapper mapper = mymapper;
+		IFilesInDirectoryMapper mapper = mymapper;
 		assertEquals("DSK1", mapper.getDsrDeviceName(dsk1Path));
 		assertNull(mapper.getDsrDeviceName(new File(dsk1Path, "foo")));
 		assertEquals(dsk1Path, mapper.getLocalRoot(new File(dsk1Path, "foo")));
@@ -98,7 +98,7 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 	
 	@Test
 	public void testDeviceMapping() throws Exception {
-		IFileMapper mapper = mymapper;
+		IFilesInDirectoryMapper mapper = mymapper;
 		assertEquals("DSK1", mapper.getDeviceNamed("DATA"));
 		assertEquals("DSK2", mapper.getDeviceNamed("EXTRA/LALA"));
 		assertNull(mapper.getDeviceNamed("MONKEY"));

@@ -11,6 +11,7 @@
 package v9t9.common.files;
 
 import java.io.File;
+import java.io.IOException;
 
 import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
@@ -21,7 +22,7 @@ import ejs.base.properties.IProperty;
  * @author ejs
  *
  */
-public interface IFileMapper extends IPersistable {
+public interface IFilesInDirectoryMapper extends IPersistable {
 	/**
 	 * Get all the registered settings (String)
 	 */
@@ -88,4 +89,13 @@ public interface IFileMapper extends IPersistable {
 	 * @param dir
 	 */
 	void setDiskPath(String device, File dir);	
+	
+	/**
+	 * Get a catalog for the given disk
+	 * @param dir the directory
+	 * @return
+	 * @throws IOException
+	 */
+	Catalog createCatalog(File dir) throws IOException;
+	
 }

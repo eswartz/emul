@@ -17,8 +17,9 @@ import ejs.base.properties.IProperty;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.Catalog;
-import v9t9.common.files.IFileHandler;
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.IDiskImageMapper;
+import v9t9.common.files.IEmulatedFileHandler;
+import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.engine.files.directory.FileDirectory;
 import v9t9.engine.files.image.BaseDiskImage;
 import v9t9.engine.files.image.DiskImageFactory;
@@ -27,14 +28,17 @@ import v9t9.engine.files.image.DiskImageFactory;
  * @author Ed
  *
  */
-public class FileHandler implements IFileHandler {
+public class EmulatedFileHandler implements IEmulatedFileHandler {
 
 	private final ISettingsHandler settings;
-	private IFileMapper fileMapper;
+	private IFilesInDirectoryMapper fileMapper;
+	private IDiskImageMapper imageMapper;
 
-	public FileHandler(ISettingsHandler settings, IFileMapper fileMapper) {
+	public EmulatedFileHandler(ISettingsHandler settings, IFilesInDirectoryMapper fileMapper,
+			IDiskImageMapper imageMapper) {
 		this.fileMapper = fileMapper;
 		this.settings = settings;
+		this.imageMapper = imageMapper;
 		
 	}
 	
@@ -68,7 +72,15 @@ public class FileHandler implements IFileHandler {
 	 * @see v9t9.common.files.IFileHandler#getFileMapper()
 	 */
 	@Override
-	public IFileMapper getFileMapper() {
+	public IFilesInDirectoryMapper getFilesInDirectoryMapper() {
 		return fileMapper;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IEmulatedFileHandler#getDiskImageMapper()
+	 */
+	@Override
+	public IDiskImageMapper getDiskImageMapper() {
+		return imageMapper;
 	}
 }

@@ -12,8 +12,10 @@ package v9t9.common.files;
 
 import java.io.IOException;
 
+import ejs.base.properties.IPersistable;
 
-public interface IDiskImage {
+
+public interface IDiskImage extends IPersistable {
 	void readImageHeader() throws IOException;
 	boolean isDiskImageOpen();
 	void openDiskImage() throws IOException;
@@ -28,4 +30,12 @@ public interface IDiskImage {
 	int getHeaderSize();
 	
 	void readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException;
+	/**
+	 * 
+	 */
+	void validateDiskImage();
+	/**
+	 * @return
+	 */
+	String getName();
 }

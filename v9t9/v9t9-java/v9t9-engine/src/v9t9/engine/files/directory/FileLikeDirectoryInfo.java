@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import v9t9.common.files.CatalogEntry;
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
 import v9t9.common.files.NativeTextFile;
@@ -32,7 +32,7 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 	private long freeSectors;
 	private int lastEntry;
 
-	public FileLikeDirectoryInfo(File file, IFileMapper mapper) {
+	public FileLikeDirectoryInfo(File file, IFilesInDirectoryMapper mapper) {
 		super(file, mapper);
 		lastEntry = Math.min(128, entries.length);
 		totalSectors = (file.getTotalSpace() + 255) / 256;

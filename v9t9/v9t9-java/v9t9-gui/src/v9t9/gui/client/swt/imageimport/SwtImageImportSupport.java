@@ -21,11 +21,13 @@ import ejs.base.properties.IPropertyListener;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.machine.IMachine;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtDragDropHandler;
 import v9t9.gui.client.swt.SwtWindow;
+import v9t9.gui.client.swt.fileimport.FileImportHandler;
 import v9t9.gui.client.swt.shells.ImageImportOptionsDialog;
 import v9t9.video.imageimport.ImageImport;
 
@@ -38,7 +40,9 @@ public class SwtImageImportSupport extends ImageImportHandler {
 	protected IEventNotifier eventNotifier;
 	private Control imageDndControl;
 	private IPropertyListener importPropertyListener;
-	public SwtImageImportSupport(IEventNotifier eventNotifier, IVideoRenderer videoRenderer) {
+	private IMachine machine;
+	public SwtImageImportSupport(IMachine machine, IEventNotifier eventNotifier, IVideoRenderer videoRenderer) {
+		this.machine = machine;
 		if (eventNotifier == null || videoRenderer == null)
 			throw new NullPointerException();
 		
@@ -74,20 +78,22 @@ public class SwtImageImportSupport extends ImageImportHandler {
 				}
 			};
 
+			// TODO: this is general DnD assignment -- not just images like the owner
 			/*imageDragDropHandler =*/ new SwtDragDropHandler(imageDndControl, 
 					(ISwtVideoRenderer) getVideoRenderer(), 
 					getEventNotifier(),
-					this);
+					this, new FileImportHandler(machine));
 		}
 	}
 	public void addImageImportDnDControl(Control control) {
 		if (getVideoRenderer() == null)
 			throw new IllegalStateException();
 		
+		// TODO: this is general DnD assignment -- not just images like the owner
 		new SwtDragDropHandler(control, 
 				(ISwtVideoRenderer) getVideoRenderer(), 
 				getEventNotifier(),
-				this);
+				this, new FileImportHandler(machine));
 	}
 	
 

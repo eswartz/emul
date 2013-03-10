@@ -14,7 +14,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.files.NativeFile;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabConstants;
@@ -78,7 +78,7 @@ public class PabInfoBlock {
 	 * @param dskName 
 	 * @throws DsrException 
 	 */
-	public void openDirectory(short pabaddr, File file, IFileMapper mapper) throws DsrException {
+	public void openDirectory(short pabaddr, File file, IFilesInDirectoryMapper mapper) throws DsrException {
 		if (openFileCount >= maxOpenFileCount) {
 			throw new DsrException(PabConstants.e_outofspace, null, "Too many open files");
 		}

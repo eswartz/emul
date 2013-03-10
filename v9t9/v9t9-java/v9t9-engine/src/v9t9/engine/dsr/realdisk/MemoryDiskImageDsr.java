@@ -157,7 +157,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 		if (!settingDsrEnabled.getBoolean())
 			return Collections.emptyList();
 		
-		if (diskSettingsMap.isEmpty())
+		if (imageMapper.getDiskSettingsMap().isEmpty())
 			return Collections.emptyList();
 			
 		List<IDeviceIndicatorProvider> list = new ArrayList<IDeviceIndicatorProvider>();
@@ -170,7 +170,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 		list(deviceIndicatorProvider);
 		 */
 			
-		for (Map.Entry<String, IProperty> entry : diskSettingsMap.entrySet()) {
+		for (Map.Entry<String, IProperty> entry : imageMapper.getDiskSettingsMap().entrySet()) {
 			DiskMotorIndicatorProvider provider = new DiskMotorIndicatorProvider(entry.getKey());
 			list.add(provider);
 		}

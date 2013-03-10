@@ -171,6 +171,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 	
 
 		final SwtImageImportSupport imageSupport = new SwtImageImportSupport(
+				machine,
 				swtWindow.getEventNotifier(), swtWindow.getVideoRenderer());
 		BasicButton imageImportButton = createButton(IconConsts.IMAGE_IMPORT, "Import image",
 			new SelectionAdapter() {

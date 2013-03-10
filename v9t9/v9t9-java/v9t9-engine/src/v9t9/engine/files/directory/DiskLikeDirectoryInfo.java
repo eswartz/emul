@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import v9t9.common.files.IFileMapper;
+import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
 import v9t9.common.memory.ByteMemoryAccess;
@@ -34,7 +34,7 @@ class DiskLikeDirectoryInfo extends DirectoryInfo {
 	private String devname;
 	int lastSector;
 	
-	public DiskLikeDirectoryInfo(File dir, IFileMapper mapper, String devname) {
+	public DiskLikeDirectoryInfo(File dir, IFilesInDirectoryMapper mapper, String devname) {
 		super(dir, mapper);
 		this.devname = devname;
 		

@@ -44,19 +44,18 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.widgets.Control;
 
-import ejs.base.properties.IPropertyListener;
-
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyException;
 import v9t9.common.video.ICanvas;
-import v9t9.common.video.VdpFormat;
+import v9t9.gui.client.swt.fileimport.IFileImportHandler;
 import v9t9.gui.client.swt.imageimport.IImageImportHandler;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.svg.SVGException;
 import v9t9.gui.client.swt.svg.SVGSalamanderLoader;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageFrame;
-import v9t9.video.imageimport.ImageImport;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * Support dragging image out of window, or into window (and VDP buffer)
@@ -76,11 +75,14 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	private String lastURL;
 	private final IEventNotifier notifier;
 	protected IPropertyListener importPropertyListener;
-	private final IImageImportHandler importHandler;
+	private final IImageImportHandler imageImportHandler;
+	private IFileImportHandler fileImportHandler;
 
 	public SwtDragDropHandler(Control control, ISwtVideoRenderer renderer, 
-			IEventNotifier notifier, IImageImportHandler importHandler) {
-		this.importHandler = importHandler;
+			IEventNotifier notifier, IImageImportHandler imageImportHandler,
+			IFileImportHandler fileImportHandler) {
+		this.imageImportHandler = imageImportHandler;
+		this.fileImportHandler = fileImportHandler;
 		if (renderer == null || control == null || notifier == null)
 			throw new NullPointerException();
 		
@@ -271,12 +273,12 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	public void dragEnter(DropTargetEvent event) {
 		// set DND.DROP_NONE if not supported
 		
-		VdpFormat format = renderer.getCanvas().getFormat();
-		if (!ImageImport.isModeSupported(format)) {
-			System.out.println("Unsupported format: " + format);
-			event.detail = DND.DROP_NONE;
-			return;
-		}
+//		VdpFormat format = renderer.getCanvas().getFormat();
+//		if (!ImageImport.isModeSupported(format)) {
+//			System.out.println("Unsupported format: " + format);
+//			event.detail = DND.DROP_NONE;
+//			return;
+//		}
 		
 		event.detail = DND.DROP_COPY;
 	}
@@ -321,59 +323,121 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	 */
 	@Override
 	public void drop(DropTargetEvent event) {
+		// gross:  we only know the content now 
+		
+		boolean didImage = false;
 		try {
-			ImageFrame[] frames = null;
-			
-			if (FileTransfer.getInstance().isSupportedType(event.currentDataType)) {
-				String[] files = (String[]) event.data;
-				if (files != null) {
-					frames = loadImageFromFile(notifier, files[0]);
-					importHandler.getHistory().add(files[0]);
-				}
-			}
-			if (frames == null && ImageTransfer.getInstance().isSupportedType(event.currentDataType)) {
-				frames = ImageUtils.convertToBufferedImages(new ImageData[] { (ImageData) event.data });
-			}
-			if (frames == null && URLTransfer.getInstance().isSupportedType(event.currentDataType)) {
-				
-				String[] entries = ((String) event.data).split("\n");
-				String trimmed = null;
-				for (String entry : entries) {
-					trimmed = entry.replaceAll("\u00A0", "").trim();
-					importHandler.getHistory().add(trimmed);
-					break;
-				}
-				
-				if (!trimmed.equals(lastURL)) {
-					if (lastURLFile != null)
-						lastURLFile.delete();
-					File temp = File.createTempFile("url", ".img");
-					URL url = new URL(trimmed);
-					lastURLFile = readImageFromURL(temp, url);
-					if (lastURLFile != null)
-						lastURL = trimmed;
-					else {
-						lastURLFile = null;
-						temp.delete();
-					}
-				}
-				if (lastURLFile != null) {
-					frames = loadImageFromFile(notifier, lastURLFile.getAbsolutePath());
-				}
-			}
-			
-			if (frames != null) {
-
-				importHandler.importImage(frames);
-				
-				renderer.setFocus();
-			}
+			didImage = tryLoadImage(event);
+		} catch (NotifyException e) {
+			notifier.notifyEvent(e.getEvent());
+			return;
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
+		
+		if (!didImage) {
+			try {
+				tryLoadFile(event);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		}
 	}
 
-	private File readImageFromURL(File temp, URL url) {
+	private File getDraggedFile(DropTargetEvent event, String pattern) throws IOException {
+		File file = null;
+
+		if (FileTransfer.getInstance().isSupportedType(event.currentDataType)) {
+			String[] files = (String[]) event.data;
+			if (files != null) {
+				String path = files[0];
+				if (!path.matches(pattern))
+					return null;
+				file = new File(path);
+				return file;
+			}
+		}
+		if (URLTransfer.getInstance().isSupportedType(event.currentDataType)) {
+			String[] entries = ((String) event.data).split("\n");
+			String trimmed = null;
+			for (String entry : entries) {
+				trimmed = entry.replaceAll("\u00A0", "").trim();
+				break;
+			}
+			
+			if (!trimmed.equals(lastURL)) {
+				if (lastURLFile != null)
+					lastURLFile.delete();
+				
+				if (!trimmed.matches(pattern) && !trimmed.endsWith("/"))
+					return null;
+				
+				File temp = File.createTempFile("url", ".img");
+				URL url = new URL(trimmed);
+				lastURLFile = readFileFromURL(temp, url);
+				if (lastURLFile != null) {
+					lastURL = trimmed;
+					return lastURLFile;
+				}
+				else {
+					lastURLFile = null;
+					temp.delete();
+					return null;
+				}
+			}
+			return lastURLFile;
+		}
+		return null;
+	}
+	/**
+	 * @param event
+	 * @throws IOException 
+	 */
+	private void tryLoadFile(DropTargetEvent event) throws IOException {
+
+		File file = getDraggedFile(event, ".*");
+		if (file == null)
+			return;
+		
+		fileImportHandler.importFile(file);
+		fileImportHandler.getHistory().add(file.getAbsolutePath());
+	}
+
+	/**
+	 * @param event
+	 * @throws NotifyException
+	 * @throws IOException
+	 * @throws MalformedURLException
+	 */
+	protected boolean tryLoadImage(DropTargetEvent event) throws NotifyException,
+			IOException, MalformedURLException {
+		ImageFrame[] frames = null;
+
+		if (ImageTransfer.getInstance().isSupportedType(event.currentDataType)) {
+			frames = ImageUtils.convertToBufferedImages(new ImageData[] { (ImageData) event.data });
+		} else {
+			File file = getDraggedFile(event, "(?i).*\\.(gif|png|bmp|jpeg|jpg|svg|svgt|img)");
+			if (file == null)
+				return false;
+			
+			String theFile = file.getAbsolutePath();
+			frames = loadImageFromFile(theFile);
+			imageImportHandler.getHistory().add(theFile);
+
+		}
+		if (frames != null) {
+
+			imageImportHandler.importImage(frames);
+			
+			renderer.setFocus();
+			
+			return true;
+		}
+		
+		return false;
+	}
+
+	private File readFileFromURL(File temp, URL url) {
 		System.out.println("Loading " + url + " into " + temp);
 
 		InputStream is = null;
@@ -415,7 +479,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		return temp;
 	}
 
-	public static ImageFrame[] loadImageFromFile(IEventNotifier notifier, String file) {
+	public static ImageFrame[] loadImageFromFile(String file) throws NotifyException {
 		ImageFrame[] info = null;
 		URL url;
 		try {
@@ -444,23 +508,25 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			SVGSalamanderLoader loader = new SVGSalamanderLoader(url);
 			try {
 				BufferedImage img = loader.getImageData(loader.getSize());
-				if (false) {
-					//BufferedImage img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
-					info = new ImageFrame[] { new ImageFrame(img, true) };
-				} else {
-					// hmm... something about the AWT-ness makes it impossible to clip properly
-					ImageData data = ImageUtils.convertAwtImageData(img);
-					info = ImageUtils.convertToBufferedImages(new ImageData[] { data });
+				if (img != null) {
+					if (false) {
+						//BufferedImage img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+						info = new ImageFrame[] { new ImageFrame(img, true) };
+					} else {
+						// hmm... something about the AWT-ness makes it impossible to clip properly
+						ImageData data = ImageUtils.convertAwtImageData(img);
+						info = ImageUtils.convertToBufferedImages(new ImageData[] { data });
+					}
 				}
 			} catch (SVGException e2) {
-				notifier.notifyEvent(null, Level.ERROR, 
+				throw new NotifyException(
+						Level.ERROR, 
 						"Could not load '" +
-								file + "' (" + e2.getMessage() + ")" );
-				return null;
+								file + "' (" + e2.getMessage() + ")" , e2);
 			}
 		}
 		if (info == null)
-			notifier.notifyEvent(null, Level.ERROR, 
+			throw new NotifyException(Level.ERROR, 
 					"Image format not recognized for '" +
 					file + "'" );
 

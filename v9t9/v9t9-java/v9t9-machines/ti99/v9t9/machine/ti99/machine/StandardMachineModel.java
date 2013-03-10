@@ -90,7 +90,7 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 			machine.setCru(new InternalCru9901(machine));
 			
 			EmuDiskDsr emudsr = new EmuDiskDsr(Settings.getSettings(machine), 
-					machine.getFileMapper());
+					machine.getFileHandler().getFilesInDirectoryMapper());
 			machine.getDsrManager().registerDsr(emudsr);
 			RealDiskImageDsr diskdsr = new RealDiskImageDsr(machine, (short) 0x1100);
 			machine.getDsrManager().registerDsr(diskdsr);

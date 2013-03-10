@@ -35,6 +35,7 @@ import org.ejs.gui.properties.EditGroup;
 import org.ejs.gui.properties.FieldPropertyEditorProvider;
 import org.ejs.gui.properties.PropertySourceEditor;
 
+import v9t9.common.events.NotifyException;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtDragDropHandler;
 import v9t9.gui.client.swt.SwtWindow;
@@ -287,11 +288,15 @@ public class ImageImportOptionsDialog extends Composite {
 				hitem.addSelectionListener(new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						ImageFrame[] frames = SwtDragDropHandler.loadImageFromFile(window.getEventNotifier(), file);
-						
-						if (frames != null) {
-							imageSupport.importImage(frames);
-							((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
+						try {
+							ImageFrame[] frames = SwtDragDropHandler.loadImageFromFile(file);
+							
+							if (frames != null) {
+								imageSupport.importImage(frames);
+								((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
+							}
+						} catch (NotifyException ex) {
+							window.getEventNotifier().notifyEvent(ex.getEvent());
 						}
 					}
 				});
@@ -315,14 +320,15 @@ public class ImageImportOptionsDialog extends Composite {
 		String file = window.openFileSelectionDialog("Open Image", lastDir, null, false, 
 				new String[] { "*.jpg;*.jpeg;*.gif;*.png;*.bmp;*.tga;*.svg|Images", "*|Other files" });
 		if (file != null) {
-			ImageFrame[] frames = SwtDragDropHandler.loadImageFromFile(
-					window.getEventNotifier(), file);
+			try {
+				ImageFrame[] frames = SwtDragDropHandler.loadImageFromFile(file);
 			
-			if (frames != null) {
 				imageSupport.importImage(frames);
 				((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
 				
 				fileHistory.add(file);
+			} catch (NotifyException e) {
+				window.getEventNotifier().notifyEvent(e.getEvent());
 			}
 		}
 	}
