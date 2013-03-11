@@ -47,7 +47,7 @@ public class EmulatedDiskImageFile extends EmulatedBaseFDRFile implements Emulat
 		int lastSector = -1;
 		
 		while (length > 0 ) {
-			if (fileSecs.length < secOffs)
+			if (fileSecs.length <= secOffs)
 				break;
 		
 			int toRead = Math.min(256, length);

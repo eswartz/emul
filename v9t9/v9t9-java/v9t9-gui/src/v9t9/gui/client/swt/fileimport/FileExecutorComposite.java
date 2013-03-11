@@ -30,6 +30,8 @@ import v9t9.common.machine.IMachine;
  *
  */
 public class FileExecutorComposite extends Composite {
+	
+	private static String lastExecLabel;
 
 	private IFileExecutor[] execs;
 	private IFileExecutionHandler execHandler;
@@ -86,6 +88,7 @@ public class FileExecutorComposite extends Composite {
 				if (exec != null) {
 					descrText.setText(exec.getDescription());
 					descrText.setEnabled(true);
+					lastExecLabel = exec.getLabel();
 				} else {
 					descrText.setText("");
 					descrText.setEnabled(false);
@@ -125,7 +128,17 @@ public class FileExecutorComposite extends Composite {
 			execComboViewer.setInput(execs);
 			
 			if (selectedExec == null) {
-				selectedExec = execs.length == 1 ? execs[0] : execs[1];
+				if (lastExecLabel != null) {
+					for (IFileExecutor exec : execs) {
+						if (exec.getLabel().equals(lastExecLabel)) {
+							selectedExec = exec;
+							break;
+						}
+					}
+				}
+				if (selectedExec == null) {
+					selectedExec = execs.length == 1 ? execs[0] : execs[1];
+				}
 			}
 			execComboViewer.setSelection(new StructuredSelection(selectedExec));
 			descrText.setText(selectedExec.getDescription());
