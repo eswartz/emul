@@ -85,6 +85,10 @@ Recent Changes
 ===========
 
 <ul>
+<li>2013/03/10: support drag'n'drop of disk images into the emulator to load
+the disk into the drive, and also to run programs on the disk -- try it out!
+(Also see the 'Run...' button in the Disk Selector.)
+</li>
 <li>2013/03/09: improve UI for Module Selector and allow adding user modules --
 RPK format supported as well!
 </li>
