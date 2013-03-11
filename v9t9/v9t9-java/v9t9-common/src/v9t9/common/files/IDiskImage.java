@@ -25,6 +25,8 @@ public interface IDiskImage extends IPersistable {
 	void readImageHeader() throws IOException;
 	boolean isDiskImageOpen();
 	void openDiskImage() throws IOException;
+	void openDiskImage(boolean readOnly) throws IOException;
+
 	void closeDiskImage() throws IOException;
 	void writeImageHeader() throws IOException;
 	byte[] readCurrentTrackData() throws IOException;
@@ -43,4 +45,5 @@ public interface IDiskImage extends IPersistable {
 	 * @throws IOException 
 	 */
 	boolean isFormatted() throws IOException;
+
 }

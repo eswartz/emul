@@ -12,7 +12,6 @@ package v9t9.engine.files.image;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,48 +41,6 @@ public class SectorDiskImage extends BaseDiskImage  {
 		return 256 * 9;
 	}
 	
-	/**
-	 * 
-	 */
-	public void openDiskImage() throws IOException {
-		if (getHandle() != null)
-			closeDiskImage();
-	
-		if (spec.exists()) {
-			try {
-				setHandle(new RandomAccessFile(spec, "rw"));
-				readonly = false;
-			} catch (IOException e) {
-				setHandle(new RandomAccessFile(spec, "r"));
-				readonly = true;
-			}
-		} else {
-			readonly = false;
-			createDiskImage();
-			closeDiskImage();
-			return;
-		}
-	
-		/* get disk info */
-		try {
-			readImageHeader();
-		} catch (IOException e) {
-			try {
-				createDiskImage();
-			} catch (IOException e2) {
-				closeDiskImage();
-				throw e2;
-			}
-			readImageHeader();
-		}
-	
-		trackFetched = false;
-		
-		dumper.info(
-			"Opened sector-image disk ''{0}'' {1},\n#tracks={2}, tracksize={3}, sides={4}",
-			spec, getName(), hdr.tracks, hdr.tracksize, hdr.sides);
-	}
-
 	@Override
 	public void writeImageHeader() throws IOException {
 		if (getHandle() == null || readonly) {
@@ -105,7 +62,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		if (getHandle() == null)
 			return;
 		
-		readonly = !spec.canWrite();
+		readonly |= !spec.canWrite();
 
 		/* no header: guess */
 		sz = getHandle().length();

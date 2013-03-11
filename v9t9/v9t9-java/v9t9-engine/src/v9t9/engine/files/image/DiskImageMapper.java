@@ -148,7 +148,7 @@ public class DiskImageMapper implements IDiskImageMapper {
 	public Catalog createCatalog(String name, File spec) throws IOException {
 		BaseDiskImage image = DiskImageFactory.createDiskImage(
 				settings, name, spec);
-		image.openDiskImage();
+		image.openDiskImage(true);
 		
 		Catalog catalog = image.readCatalog("DSK" + name.charAt(name.length() - 1));
 		

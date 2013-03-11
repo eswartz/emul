@@ -134,23 +134,37 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	}
 
 	protected abstract short getDefaultTrackSize();
+	
 	/**
 	 * 
 	 */
 	public void openDiskImage() throws IOException {
-		if (handle != null)
+		openDiskImage(false);
+	}
+
+	/**
+	 * @throws IOException
+	 * @throws FileNotFoundException
+	 */
+	public void openDiskImage(boolean readOnly) throws IOException {
+		if (getHandle() != null)
 			closeDiskImage();
 	
 		if (spec.exists()) {
-			try {
-				handle = new RandomAccessFile(spec, "rw");
-				readonly = false;
-			} catch (IOException e) {
-				handle = new RandomAccessFile(spec, "r");
+			if (readOnly) {
+				setHandle(new RandomAccessFile(spec, "r"));
 				readonly = true;
+			} else {
+				try {
+					setHandle(new RandomAccessFile(spec, "rw"));
+					readonly = false;
+				} catch (IOException e) {
+					setHandle(new RandomAccessFile(spec, "r"));
+					readonly = true;
+				}
 			}
 		} else {
-			readonly = false;
+			readonly = readOnly;
 			createDiskImage();
 			closeDiskImage();
 			return;
@@ -159,7 +173,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		/* get disk info */
 		try {
 			readImageHeader();
-		} catch (FileNotFoundException e) {
+		} catch (IOException e) {
 			try {
 				createDiskImage();
 			} catch (IOException e2) {
@@ -168,6 +182,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			}
 			readImageHeader();
 		}
+	
+		trackFetched = false;
+		
 		
 		trackFetched = false;
 		
@@ -235,7 +252,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		if (handle == null) 
 			return false;
 	
-		if (seektrack >= hdr.tracks || sideReg >= hdr.sides) {
+		if (!readonly && (seektrack >= hdr.tracks || sideReg >= hdr.sides)) {
 			// grow the disk
 			if (seektrack >= hdr.tracks)
 				hdr.tracks = seektrack;
@@ -494,7 +511,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		boolean wasOpen = isDiskImageOpen();
 		if (!wasOpen) {
 			try {
-				openDiskImage();
+				openDiskImage(true);
 			} catch (IOException e) {
 				e.printStackTrace();
 				return false;

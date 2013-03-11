@@ -78,7 +78,7 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 		if (getHandle() == null)
 			return;
 		
-		readonly = !spec.canWrite();
+		readonly |= !spec.canWrite();
 
 		getHandle().seek(0);
 		
