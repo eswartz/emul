@@ -13,12 +13,12 @@ import v9t9.common.modules.IModule;
  * @author ejs
  *
  */
-public class EditAssmLoadAndRunProgramFileExecutor implements IFileExecutor {
+public class EditAssmRunProgramFileExecutor implements IFileExecutor {
 
 	private IModule module;
 	private String devicePath;
 
-	public EditAssmLoadAndRunProgramFileExecutor(IModule module, String devicePath) {
+	public EditAssmRunProgramFileExecutor(IModule module, String devicePath) {
 		this.module = module;
 		this.devicePath = devicePath;
 	}

@@ -13,16 +13,16 @@ import v9t9.common.modules.IModule;
  * @author ejs
  *
  */
-public class AdventureLoadFileExecutor implements IFileExecutor {
+public class EditAssmLoadAndRunFileExecutor implements IFileExecutor {
 
 	private IModule module;
 	private String devicePath;
-	private String name;
+	private String entry;
 
-	public AdventureLoadFileExecutor(IModule module, String devicePath, String name) {
+	public EditAssmLoadAndRunFileExecutor(IModule module, String devicePath, String entry) {
 		this.module = module;
 		this.devicePath = devicePath;
-		this.name = name;
+		this.entry = entry;
 	}
 	
 	/* (non-Javadoc)
@@ -30,10 +30,10 @@ public class AdventureLoadFileExecutor implements IFileExecutor {
 	 */
 	@Override
 	public String getLabel() {
-		if (name == null)
-			return "Play file " + devicePath + " with " + module.getName();
+		if (entry == null)
+			return "Load file " + devicePath + " with " + module.getName();
 		else
-			return "Play " + name + " (" + devicePath + ") with " + module.getName();
+			return "Load file " + devicePath + " and run " + entry + " with " + module.getName();
 	}
 	
 	/* (non-Javadoc)
@@ -41,9 +41,9 @@ public class AdventureLoadFileExecutor implements IFileExecutor {
 	 */
 	@Override
 	public String getDescription() {
-		return "Load module " + module.getName() + 
-				" then load the adventure file " + devicePath + "." +
-				(name != null ? "\n\nThis is the game " + name + "." : "");
+		return "Load module " + module.getName() + ", load the object file '" 
+				+ devicePath + "' using 'Option 3'"
+				+ (entry != null ? ", then run at the entry '" + entry + "'." : "");
 				
 	}
 	
@@ -54,10 +54,11 @@ public class AdventureLoadFileExecutor implements IFileExecutor {
 	public void run(IMachine machine) throws NotifyException {
 		machine.getModuleManager().switchModule(module);
 		machine.reset();
-		machine.getKeyboardHandler().pasteText(" 2"+	// space for title, 2 for Adventure
-				IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO +
-				"\n" +
-				devicePath + "\n");
+		machine.getKeyboardHandler().pasteText(" 2"+	// space for title, 2 for extended basic
+				IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO + 
+				"3" + devicePath + "\n" + IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO +
+				"\n"+
+				entry + "\n");
 	}
 
 }

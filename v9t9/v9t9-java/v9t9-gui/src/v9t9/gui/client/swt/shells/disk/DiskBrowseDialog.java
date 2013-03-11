@@ -153,11 +153,10 @@ public class DiskBrowseDialog extends Dialog {
 
 	public DiskBrowseDialog(Shell parentShell,
 			IMachine machine,
-			List<CatalogEntry> entries, 
 			Catalog catalog) {
 		super(parentShell);
 		this.machine = machine;
-		this.entries = entries;
+		this.entries = catalog.getEntries();
 		this.catalog = catalog;
 	}
 

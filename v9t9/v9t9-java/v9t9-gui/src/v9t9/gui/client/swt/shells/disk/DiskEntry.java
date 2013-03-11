@@ -13,7 +13,6 @@ package v9t9.gui.client.swt.shells.disk;
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.List;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -31,16 +30,16 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 
 import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyException;
 import v9t9.common.files.Catalog;
-import v9t9.common.files.CatalogEntry;
+import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.files.IEmulatedFileHandler;
+import v9t9.common.files.IFileExecutor;
 import v9t9.common.machine.IMachine;
 import ejs.base.properties.IProperty;
 
 class DiskEntry extends DiskSettingEntry {
 	private Combo combo;
-	private Button browse;
-	private Button catalog;
 	
 	public DiskEntry(final Composite parent, IMachine machine, IProperty setting_) {
 		super(parent, machine, setting_, SWT.NONE);
@@ -52,7 +51,7 @@ class DiskEntry extends DiskSettingEntry {
 	 */
 	@Override
 	protected void createControls(final Composite parent) {
-		GridLayoutFactory.fillDefaults().numColumns(5).applyTo(this);
+		GridLayoutFactory.fillDefaults().numColumns(6).applyTo(this);
 		
 		Label label = new Label(parent, SWT.NONE);
 		label.setText(setting.getLabel() + ": ");
@@ -86,7 +85,7 @@ class DiskEntry extends DiskSettingEntry {
 		});
 		
 		
-		browse = new Button(parent, SWT.PUSH);
+		final Button browse = new Button(parent, SWT.PUSH);
 		GridDataFactory.fillDefaults().grab(false, false).applyTo(browse);
 		browse.setText("Browse...");
 		browse.addSelectionListener(new SelectionAdapter() {
@@ -128,7 +127,7 @@ class DiskEntry extends DiskSettingEntry {
 		
 		final IEmulatedFileHandler fileHandler = machine.getEmulatedFileHandler();
 		if (fileHandler != null) {
-			catalog = new Button(parent, SWT.PUSH);
+			final Button catalog = new Button(parent, SWT.PUSH);
 			GridDataFactory.fillDefaults().grab(false, false).applyTo(catalog);
 			catalog.setText("Catalog...");
 			catalog.addSelectionListener(new SelectionAdapter() {
@@ -136,14 +135,7 @@ class DiskEntry extends DiskSettingEntry {
 				public void widgetSelected(SelectionEvent e) {
 					Catalog catalog;
 					try {
-						if (!isDiskImage()) {
-							catalog = fileHandler.getFilesInDirectoryMapper().createCatalog(
-									new File(setting.getString()));
-						} else {
-							catalog = fileHandler.getDiskImageMapper().createCatalog(
-									setting.getName(),
-									new File(setting.getString()));
-						}
+						catalog = readCatalog(fileHandler, setting);
 						showCatalogDialog(setting, catalog);
 					} catch (IOException e1) {
 						machine.notifyEvent(IEventNotifier.Level.ERROR,
@@ -152,23 +144,72 @@ class DiskEntry extends DiskSettingEntry {
 					}
 				}
 			});
+			
+			final Button runButton = new Button(parent, SWT.PUSH);
+			GridDataFactory.fillDefaults().grab(false, false).applyTo(runButton);
+			runButton.setText("Run...");
+			runButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					Catalog catalog;
+					try {
+						catalog = readCatalog(fileHandler, setting);
+						showRunDialog(setting, catalog);
+					} catch (IOException e1) {
+						machine.notifyEvent(IEventNotifier.Level.ERROR,
+								MessageFormat.format("Could not read catalog for disk image ''{0}''\n\n{1}",
+										setting.getString(), e1.getMessage()));
+					}
+				}
+			});
+
 		}
 	}
 	
 
 	/**
 	 * @param setting
-	 * @param entries
+	 * @return
+	 * @throws IOException 
 	 */
+	protected Catalog readCatalog(IEmulatedFileHandler fileHandler, IProperty setting) throws IOException {
+		Catalog catalog;
+		if (!isDiskImage()) {
+			catalog = fileHandler.getFilesInDirectoryMapper().createCatalog(
+					new File(setting.getString()));
+		} else {
+			catalog = fileHandler.getDiskImageMapper().createCatalog(
+					setting.getName(),
+					new File(setting.getString()));
+		}
+		return catalog;
+	}
+
 	protected void showCatalogDialog(final IProperty setting,
 			final Catalog catalog) {
-		final List<CatalogEntry> entries = catalog.getEntries();
-		Dialog dialog = new DiskBrowseDialog(getShell(), machine, entries, catalog);
+		Dialog dialog = new DiskBrowseDialog(getShell(), machine, catalog);
 		dialog.open();
 
 		
 	}
 
+	protected void showRunDialog(final IProperty setting,
+			final Catalog catalog) {
+		DiskRunDialog dialog = new DiskRunDialog(getShell(), machine, 
+				setting instanceof IDiskDriveSetting ? ((IDiskDriveSetting) setting).getDrive() : 1,
+				catalog);
+		int ret = dialog.open();
+		if (ret == Dialog.OK) {
+			IFileExecutor exec = dialog.getFileExecutor();
+			try {
+				exec.run(machine);
+			} catch (NotifyException e) {
+				machine.getEventNotifier().notifyEvent(e.getEvent());
+			}
+		}
+		
+	}
+	
 	private boolean isDiskImage() {
 		return setting.getName().contains("Image");
 	}

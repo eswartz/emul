@@ -5,6 +5,7 @@ package v9t9.machine.ti99.machine;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -16,9 +17,13 @@ import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.machine.IMachine;
+import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.modules.IModule;
+import v9t9.engine.dsr.DsrException;
+import v9t9.engine.files.directory.OpenFile;
 import v9t9.machine.ti99.machine.fileExecutors.AdventureLoadFileExecutor;
-import v9t9.machine.ti99.machine.fileExecutors.EditAssmLoadAndRunProgramFileExecutor;
+import v9t9.machine.ti99.machine.fileExecutors.EditAssmLoadAndRunFileExecutor;
+import v9t9.machine.ti99.machine.fileExecutors.EditAssmRunProgramFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.ExtBasicAutoLoadFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.ExtBasicLoadAndRunFileExecutor;
 
@@ -70,7 +75,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 			if (load != null) {
 				execs.add(new ExtBasicAutoLoadFileExecutor(module));
 				
-				// can't do anything else (yet)
+				// if there is a LOAD, can't do anything else (yet -- need a way to force FCTN-4 to work)
 				return;
 			}
 		}
@@ -86,7 +91,10 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 						catalog.deviceName + "." + ent.fileName));
 			}
 		}
-	
+
+		// and uncompressed objects
+		gatherObjectFiles(machine, catalog, execs, module, false);
+
 	}
 
 	int readShort(byte[] content, int offs) {
@@ -128,6 +136,8 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 			List<IFileExecutor> execs, IModule module) {
 		
 		gatherMemoryImagePrograms(machine, catalog, execs, module);
+		gatherObjectFiles(machine, catalog, execs, module, true);
+		gatherObjectFiles(machine, catalog, execs, module, false);
 
 	}
 
@@ -152,14 +162,16 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 				}
 				CatalogEntry old = memImgMap.put(baseName, ent);
 				// keep the lowest file
-				if (old != null && old.fileName.compareTo(ent.fileName) < 0) {
-					memImgMap.put(baseName, old);
+				if (old != null) {
+					if (old.fileName.compareTo(ent.fileName) < 0) {
+						memImgMap.put(baseName, old);
+					}
 				}
 			}
 		}
 
 		for (CatalogEntry ent : memImgMap.values()) {
-			execs.add(new EditAssmLoadAndRunProgramFileExecutor(module,
+			execs.add(new EditAssmRunProgramFileExecutor(module,
 					catalog.deviceName + "." + ent.fileName));
 		}
 	}
@@ -190,7 +202,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		int addr = readShort(header, 4);
 		if (((low & 0xff) == 0 || (low & 0xff) == 0xff
 				|| (low & 0xff00) == 0xff00 || (low & 0xff00) == 0)
-				&& binsize <= size
+				&& binsize <= size + 6
 				&& addr + binsize <= 0x10000
 				&& machine.getConsole().hasRamAccess(addr)
 				&& machine.getConsole().hasRamAccess(addr + binsize - 1)) {
@@ -199,9 +211,254 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		return false;
 	}
 
-	
 	/**
 	 * Look for memory image programs, PROGRAM files in groups of one
+	 * or more with incrementing filenames.
+	 * @param machine
+	 * @param catalog
+	 * @param execs
+	 * @param module
+	 */
+	protected void gatherObjectFiles(IMachine machine, Catalog catalog,
+			List<IFileExecutor> execs, IModule module, boolean allowCompressed) {
+		for (CatalogEntry ent : catalog.entries) {
+			if (ent.type.equals("DIS/FIX") && ent.recordLength == 80) { 
+				List<String> entries = new ArrayList<String>();
+				if (isUncompressedObjectFile(machine, catalog, ent, entries)
+						|| (allowCompressed && isCompressedObjectFile(machine, catalog, ent, entries))) {
+					if (entries.isEmpty() || entries.contains("*")) {
+						execs.add(new EditAssmLoadAndRunFileExecutor(module,
+								catalog.deviceName + "." + ent.fileName, null));
+					} else {
+						for (String entry : entries) {
+							execs.add(new EditAssmLoadAndRunFileExecutor(module,
+									catalog.deviceName + "." + ent.fileName, entry));
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Identify uncompressed object files.
+	 * <p/>
+	 * These are DIS/FIX 80 files with tagged records in ASCII.
+	 * @param machine
+	 * @param ent
+	 * @param entries 
+	 * @return
+	 */
+	private boolean isUncompressedObjectFile(IMachine machine, Catalog catalog, CatalogEntry ent, List<String> entries) {
+		entries.clear();
+		
+		OpenFile file;
+		try {
+			file = new OpenFile(ent.getFile(), catalog.deviceName, ent.fileName);
+		} catch (DsrException e1) {
+			return false;
+		}
+		
+		byte[] record = new byte[80];
+		ByteMemoryAccess access = new ByteMemoryAccess(record, 0);
+		
+		boolean valid = false;
+		while (true) {
+			try {
+				int len = file.readRecord(access, 80);
+				System.out.println(new String(record).replaceAll("[\\x00-\\x1f]", " "));
+				
+				if (!isUncompressedObjectCodeRecord(Arrays.copyOf(record, len), entries)) {
+					valid = false;
+					break;
+				} else {
+					// at least one record
+					valid = true;
+				}
+			} catch (DsrException e) {
+				break;
+			}
+			
+		}
+		return valid;
+	}
+
+	
+	/**
+	 * @param copyOf
+	 * @return
+	 */
+	private boolean isUncompressedObjectCodeRecord(byte[] rec, List<String> entries) {
+		int idx = 0;
+		while (idx < rec.length) {
+			char tag = (char) rec[idx++];
+			int left = rec.length - idx;
+			switch (tag) {
+			case '0':
+				if (left < 4 + 8)
+					return false;
+				idx += 12;
+				break;
+			case '1':
+			case '2':
+				// entry
+				entries.add("*");
+				idx += 4;
+				break;
+			case '7':
+			case '8':
+			case '9':
+			case 'A':
+			case 'B':
+			case 'C':
+				if (left < 4)
+					return false;
+				idx += 4;
+				break;
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+				if (left < 4 + 6)
+					return false;
+				idx += 4;
+				StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < 6; i++) {
+					char ch = (char) rec[idx++];
+					if (ch <= 0x20)
+						break;
+					sb.append(ch);
+				}
+				if (tag == '5' || tag == '6') {
+					entries.add(sb.toString());
+				}
+				break;
+			case 'F':
+				// end of record
+				return true;
+			case ':':
+				// end of file
+				if (idx == 1)
+					return true;
+				return false;
+			}
+			idx++;
+		}
+				
+		return false;
+	}
+
+	/**
+	 * Identify compressed object files.
+	 * <p/>
+	 * These are DIS/FIX 80 files with tagged records in binary.
+	 * @param machine
+	 * @param ent
+	 * @param entries 
+	 * @return
+	 */
+	private boolean isCompressedObjectFile(IMachine machine, Catalog catalog, CatalogEntry ent, List<String> entries) {
+		entries.clear();
+		
+		OpenFile file;
+		try {
+			file = new OpenFile(ent.getFile(), catalog.deviceName, ent.fileName);
+		} catch (DsrException e1) {
+			return false;
+		}
+		
+		byte[] record = new byte[80];
+		ByteMemoryAccess access = new ByteMemoryAccess(record, 0);
+		
+		boolean valid = false;
+		while (true) {
+			try {
+				int len = file.readRecord(access, 80);
+				System.out.println(new String(record).replaceAll("[\\x00-\\x1f]", " "));
+				
+				if (!isCompressedObjectCodeRecord(Arrays.copyOf(record, len), entries)) {
+					if (record[0] != 0)
+						valid = false;
+					break;
+				} else {
+					// at least one record
+					valid = true;
+				}
+			} catch (DsrException e) {
+				break;
+			}
+			
+		}
+		return valid;
+	}
+
+	
+	/**
+	 */
+	private boolean isCompressedObjectCodeRecord(byte[] rec, List<String> entries) {
+		int idx = 0;
+		while (idx < rec.length) {
+			char tag = (char) rec[idx++];
+			int left = rec.length - idx;
+			switch (tag) {
+			case '\001':
+				if (left < 2 + 8)
+					return false;
+				idx += 10;
+				break;
+			case '1':
+			case '2':
+				// entry
+				entries.add("*");
+				idx += 2;
+				break;
+			case '7':
+			case '8':
+			case '9':
+			case 'A':
+			case 'B':
+			case 'C':
+				if (left < 2)
+					return false;
+				idx += 2;
+				break;
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+				if (left < 2 + 6)
+					return false;
+				idx += 2;
+				StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < 6; i++) {
+					char ch = (char) rec[idx+i];
+					if (ch <= 0x20)
+						break;
+					sb.append(ch);
+				}
+				idx += 6;
+				if (tag == '5' || tag == '6') {
+					entries.add(sb.toString());
+				}
+				break;
+			case 'F':
+				// end of record
+				return true;
+			case ':':
+				// end of file
+				if (idx == 1)
+					return true;
+				return false;
+			default:
+				return false;
+			}
+		}
+				
+		return false;
+	}
+
+	/**
+	 * Look for Adventure files, PROGRAM files in groups of one
 	 * or more with incrementing filenames.
 	 * @param machine
 	 * @param catalog

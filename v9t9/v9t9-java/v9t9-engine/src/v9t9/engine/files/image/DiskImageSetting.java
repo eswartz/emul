@@ -15,12 +15,12 @@ import java.net.URL;
 import ejs.base.properties.IProperty;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.files.IDiskImageSetting;
+import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.common.settings.SettingSchema;
 import v9t9.engine.files.directory.EmuDiskSettings;
 
-public class DiskImageSetting extends IconSettingProperty implements IDiskImageSetting {
+public class DiskImageSetting extends IconSettingProperty implements IDiskDriveSetting {
 	private IProperty realDsrEnabled;
 	private IProperty emuDsrEnabled;
 	private int drive;

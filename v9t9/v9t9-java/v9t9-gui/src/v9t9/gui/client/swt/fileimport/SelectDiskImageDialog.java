@@ -28,7 +28,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.files.Catalog;
-import v9t9.common.files.IDiskImageSetting;
+import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.machine.IMachine;
 import ejs.base.properties.IProperty;
@@ -61,6 +61,13 @@ class SelectDiskImageDialog extends MessageDialog {
 		
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 	}
+	
+	@Override
+	protected void configureShell(Shell newShell) {
+		super.configureShell(newShell);
+		newShell.setText("Load Disk");
+	}
+	
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.MessageDialog#createCustomArea(org.eclipse.swt.widgets.Composite)
@@ -143,7 +150,7 @@ class SelectDiskImageDialog extends MessageDialog {
 	protected void updateExecs() {
 		int drive = 1;
 		if (theProperty != null)
-			drive = ((IDiskImageSetting) theProperty).getDrive();
+			drive = ((IDiskDriveSetting) theProperty).getDrive();
 		execComp.updateExecs(drive, catalog);
 	}
 

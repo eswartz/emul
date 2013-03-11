@@ -9,7 +9,7 @@ import ejs.base.properties.IProperty;
  * @author ejs
  *
  */
-public interface IDiskImageSetting extends IProperty {
+public interface IDiskDriveSetting extends IProperty {
 
 	int getDrive();
 }

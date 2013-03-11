@@ -15,14 +15,16 @@ import java.net.URL;
 import ejs.base.properties.IProperty;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.common.settings.SettingSchema;
 import v9t9.engine.files.directory.EmuDiskSettings;
 import v9t9.engine.files.image.RealDiskDsrSettings;
 
-class EmuDiskSetting extends IconSettingProperty {
+class EmuDiskSetting extends IconSettingProperty implements IDiskDriveSetting {
 	private IProperty emuDiskDsrEnabled;
 	private IProperty diskImageDsrEnabled;
+	private int drive;
 
 	public EmuDiskSetting(ISettingsHandler settings, String name, Object storage, URL iconPath) {
 		super(new SettingSchema(ISettingsHandler.TRANSIENT,
@@ -30,6 +32,8 @@ class EmuDiskSetting extends IconSettingProperty {
 				"Specify the full path of the directory representing this disk.",
 				storage), iconPath);
 		
+		drive = Integer.parseInt(name.substring(name.length() - 1));
+
 		emuDiskDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
 		addEnablementDependency(emuDiskDsrEnabled);
 		diskImageDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
@@ -48,5 +52,13 @@ class EmuDiskSetting extends IconSettingProperty {
 		
 		// only DSK3 + are real disks if emu disk also enabled
 		return getName().compareTo(EmuDiskSettings.getEmuDiskSetting(3)) >= 0;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IDiskDriveSetting#getDrive()
+	 */
+	@Override
+	public int getDrive() {
+		return drive;
 	}
 }

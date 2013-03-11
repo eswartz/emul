@@ -18,7 +18,7 @@ import ejs.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.IDiskImageMapper;
-import v9t9.common.files.IDiskImageSetting;
+import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.files.IFilesInDirectoryMapper;
@@ -60,8 +60,8 @@ public class EmulatedFileHandler implements IEmulatedFileHandler {
 			image.openDiskImage();
 			
 			int drive = 1;
-			if (diskProperty instanceof IDiskImageSetting)
-				drive = ((IDiskImageSetting) diskProperty).getDrive();
+			if (diskProperty instanceof IDiskDriveSetting)
+				drive = ((IDiskDriveSetting) diskProperty).getDrive();
 			
 			Catalog catalog = image.readCatalog("DSK" + drive);
 			

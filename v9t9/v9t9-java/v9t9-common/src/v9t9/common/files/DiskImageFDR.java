@@ -151,7 +151,7 @@ public class DiskImageFDR extends FDR {
 
     	int clusOffs = 0;
     	int secIdx = 0;
-    	while (secIdx < secs.length) {
+    	while (secIdx < secs.length && clusOffs < dcpb.length) {
     		int um = dcpb[clusOffs++] & 0xff;
     		int sn = dcpb[clusOffs++] & 0xff;
     		int of = dcpb[clusOffs++] & 0xff;
@@ -159,7 +159,7 @@ public class DiskImageFDR extends FDR {
     			break;
     		int num = um | ((sn & 0xf) << 8);
     		int ofs = (of << 4) | ((sn >> 4) & 0xf);
-    		while (secIdx <= ofs) {
+    		while (secIdx <= ofs && secIdx < secs.length) {
     			secs[secIdx++] = num++;
     		}
     	}
