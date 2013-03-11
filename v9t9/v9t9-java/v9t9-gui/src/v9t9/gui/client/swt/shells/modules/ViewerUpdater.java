@@ -57,7 +57,7 @@ class ViewerUpdater extends Thread {
 				}
 			}
 			if (!avail.isEmpty() && !this.moduleSelector.getDisplay().isDisposed()) {
-				this.moduleSelector.getDisplay().syncExec(new Runnable() {
+				this.moduleSelector.getDisplay().asyncExec(new Runnable() {
 					public void run() {
 						if (!ViewerUpdater.this.moduleSelector.getViewer().getControl().isDisposed()) {
 							Object[] availarray;
