@@ -29,7 +29,7 @@ import ejs.base.properties.IPersistable;
  */
 public interface IModuleManager extends IPersistable {
 
-	SettingSchema settingModuleList = new SettingSchema(
+	SettingSchema settingUserModuleLists = new SettingSchema(
 			ISettingsHandler.MACHINE,
 			"UserModuleLists", String.class, new ArrayList<String>());
 

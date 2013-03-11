@@ -323,7 +323,7 @@ public class ModuleManager implements IModuleManager {
 		}
 		
 		// then load any user entries
-		IProperty moduleList = Settings.get(machine, IModuleManager.settingModuleList);
+		IProperty moduleList = Settings.get(machine, IModuleManager.settingUserModuleLists);
 		List<String> dbNames = moduleList.getList();
 		for (String dbName : dbNames) {
 			databaseURI = machine.getRomPathFileLocator().findFile(dbName);

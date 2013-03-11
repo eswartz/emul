@@ -26,10 +26,12 @@ import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.BaseLabelProvider;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ICheckStateListener;
-import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -41,6 +43,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
@@ -54,6 +57,7 @@ import org.ejs.gui.common.DirectoryDialogHelper;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
@@ -84,6 +88,10 @@ public class ModuleAddDialog extends StatusDialog {
 	private File dbFile;
 
 	private ISettingSection settings;
+
+	private TableViewerColumn nameColumn;
+
+	private TableViewerColumn filesColumn;
 
 	/**
 	 * @param parentShell
@@ -151,7 +159,6 @@ public class ModuleAddDialog extends StatusDialog {
 
 		if (restored) {
 			refresh();
-			validate();
 		}
 		
 		composite.addDisposeListener(new DisposeListener() {
@@ -168,6 +175,41 @@ public class ModuleAddDialog extends StatusDialog {
 		return composite;
 	}
 
+	static class DiscoveredModuleLabelProvider extends BaseLabelProvider implements ITableLabelProvider {
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
+		 */
+		@Override
+		public String getColumnText(Object element, int columnIndex) {
+			IModule module = (IModule) element;
+			if (columnIndex == 0) {
+				return module.getName();
+			} else {
+				StringBuilder sb = new StringBuilder();
+				for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
+					if (info.getFilename() != null) {
+						if (sb.length() > 0)
+							sb.append(", ");
+						sb.append(info.getFilename());
+					}
+					if (info.getFilename2() != null) {
+						if (sb.length() > 0)
+							sb.append(", ");
+						sb.append(info.getFilename2());
+					}
+				}
+				return sb.toString();
+			}
+		}
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
+		 */
+		@Override
+		public Image getColumnImage(Object element, int columnIndex) {
+			return null;
+		}
+	}
+	
 	/**
 	 * @param composite
 	 */
@@ -187,12 +229,16 @@ public class ModuleAddDialog extends StatusDialog {
 		
 		discoveredList = CheckboxTableViewer.newCheckList(listArea, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL | SWT.CHECK);
 		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(discoveredList.getControl());
-		discoveredList.setLabelProvider(new LabelProvider() {
-			@Override
-			public String getText(Object element) {
-				return ((IModule) element).getName();
-			}
-		});
+		
+		discoveredList.getTable().setHeaderVisible(true);
+		
+		nameColumn = new TableViewerColumn(discoveredList, SWT.LEFT | SWT.RESIZE);
+		nameColumn.getColumn().setText("Name");
+		
+		filesColumn = new TableViewerColumn(discoveredList, SWT.LEFT | SWT.RESIZE);
+		filesColumn.getColumn().setText("Files");
+		
+		discoveredList.setLabelProvider(new DiscoveredModuleLabelProvider());
 		discoveredList.setContentProvider(new ArrayContentProvider());
 		discoveredList.setInput(discoveredModules);
 		
@@ -353,7 +399,7 @@ public class ModuleAddDialog extends StatusDialog {
 			}
 		});
 		
-		IProperty modList = machine.getSettings().get(IModuleManager.settingModuleList);
+		IProperty modList = machine.getSettings().get(IModuleManager.settingUserModuleLists);
 		List<String> mods = modList.getList();
 		dbFile = null;
 		for (String mod : mods) {
@@ -438,6 +484,10 @@ public class ModuleAddDialog extends StatusDialog {
 		
 		selectUniqueModules();
 		
+		nameColumn.getColumn().pack();
+		filesColumn.getColumn().pack();
+		
+		validate();
 	}
 	
 	/**
@@ -472,7 +522,7 @@ public class ModuleAddDialog extends StatusDialog {
 	@Override
 	protected void okPressed() {
 		File dbase = getModuleDatabase();
-		if (dbase != null && !selectedModules.isEmpty()) {
+		if (dbase != null) {
 			if (!saveModuleList(dbase))
 				return;
 		}
@@ -495,7 +545,7 @@ public class ModuleAddDialog extends StatusDialog {
 				ModuleDatabase.saveModuleListAndClose(machine.getMemory(),
 						new FileOutputStream(dbase),
 						null,
-						discoveredModules);
+						selectedModules);
 			} catch (IOException ex) {
 				throw new NotifyException(this, "Failed to create list file: " + dbase, ex);
 			}

@@ -192,7 +192,7 @@ public class ModuleSelector extends Composite {
 		this.window = window_;
 		this.machine = machine_;
 		
-		modDbList = machine.getSettings().get(IModuleManager.settingModuleList);
+		modDbList = machine.getSettings().get(IModuleManager.settingUserModuleLists);
 		
 		executor = Executors.newFixedThreadPool(4);
 		
@@ -285,7 +285,6 @@ public class ModuleSelector extends Composite {
 					if (!curDbs.contains(dialog.getModuleDatabase().getAbsolutePath())
 							&& !curDbs.contains(moduleDatabaseURI.toString())) {
 						curDbs.add(moduleDatabaseURI.toString());
-						modDbList.setList(curDbs);
 						loadModuleList(moduleDatabaseURI.toString());
 					}
 					
@@ -715,7 +714,7 @@ public class ModuleSelector extends Composite {
 	private void revertModules() {
 		dirtyModuleLists.clear();
 		moduleMap.clear();
-		List<String> modDbList = machine.getSettings().get(IModuleManager.settingModuleList).getList();
+		List<String> modDbList = machine.getSettings().get(IModuleManager.settingUserModuleLists).getList();
 		modDbList = new ArrayList<String>(modDbList);
 		modDbList.add(0, moduleManager.getStockDatabaseURL().toString());
 		for (String modDb : modDbList) {
@@ -989,7 +988,6 @@ public class ModuleSelector extends Composite {
 							} catch (IllegalArgumentException ia) {
 								// ignore
 							}
-							modDbList.setList(list);
 							dirtyModuleLists.remove(uri);
 							moduleMap.remove(uri);
 							viewer.remove(uri);
