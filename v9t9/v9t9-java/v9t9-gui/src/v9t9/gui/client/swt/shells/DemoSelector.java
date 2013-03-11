@@ -782,7 +782,7 @@ public class DemoSelector extends Composite {
 						dlitem.addSelectionListener(new SelectionAdapter() {
 							@Override
 							public void widgetSelected(SelectionEvent e) {
-								boolean ok = MessageDialog.openConfirm(
+								boolean ok = MessageDialog.openQuestion(
 										getShell(), "Delete?", "Are you sure you want to delete:\n"
 										+ demo.getURI());
 								if (!ok)

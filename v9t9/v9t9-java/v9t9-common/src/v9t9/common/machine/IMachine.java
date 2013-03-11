@@ -98,9 +98,9 @@ public interface IMachine extends IBaseMachine {
 
 
 	/**
-	 * Scan the directory for modules
+	 * Scan the directory or a file for modules
 	 * @param databaseURI uri of module database
-	 * @param base
+	 * @param base directory or file
 	 * @return array of entries
 	 */
 	Collection<IModule> scanModules(URI databaseURI, File base);

@@ -13,12 +13,14 @@ package v9t9.common.files;
 import java.io.File;
 import java.util.Collection;
 
+import v9t9.common.events.NotifyException;
+
 /**
  * @author ejs
  *
  */
 public interface IFileImportHandler {
-	void importFile(File file);
+	void importFile(File file) throws NotifyException;
 	
 	Collection<String> getHistory();
 }

@@ -399,8 +399,12 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		if (file == null)
 			return;
 		
-		fileImportHandler.importFile(file);
-		fileImportHandler.getHistory().add(file.getAbsolutePath());
+		try {
+			fileImportHandler.importFile(file);
+			fileImportHandler.getHistory().add(file.getAbsolutePath());
+		} catch (NotifyException e) {
+			notifier.notifyEvent(e.getEvent());
+		}
 	}
 
 	/**

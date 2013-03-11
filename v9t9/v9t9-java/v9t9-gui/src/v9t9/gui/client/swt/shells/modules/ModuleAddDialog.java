@@ -190,12 +190,12 @@ public class ModuleAddDialog extends StatusDialog {
 					if (info.getFilename() != null) {
 						if (sb.length() > 0)
 							sb.append(", ");
-						sb.append(info.getFilename());
+						sb.append(new File(info.getFilename()).getName());
 					}
 					if (info.getFilename2() != null) {
 						if (sb.length() > 0)
 							sb.append(", ");
-						sb.append(info.getFilename2());
+						sb.append(new File(info.getFilename2()).getName());
 					}
 				}
 				return sb.toString();
@@ -535,7 +535,7 @@ public class ModuleAddDialog extends StatusDialog {
 	 */
 	protected boolean saveModuleList(File dbase) {
 		if (dbase.exists()) {
-			if (false == MessageDialog.openConfirm(getShell(), "File exists", 
+			if (false == MessageDialog.openQuestion(getShell(), "File exists", 
 					"The file " + dbase + " already exists.  Overwrite?")) {
 				return false;
 			}

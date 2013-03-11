@@ -12,10 +12,13 @@ package v9t9.gui.client.swt.fileimport;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
@@ -30,6 +33,8 @@ import v9t9.common.files.IDiskImageMapper;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.files.IFileImportHandler;
 import v9t9.common.machine.IMachine;
+import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.modules.IModule;
 
 /**
  * @author ejs
@@ -62,12 +67,18 @@ public class FileImportHandler implements IFileImportHandler {
 	 * @see v9t9.gui.client.swt.fileimport.IFileImportHandler#importFile(java.io.File)
 	 */
 	@Override
-	public void importFile(File file) {
-
-		if (!tryDiskImage(file)) {
-			MessageDialog.openError(shell, "Unsupported File", 
-					"V9t9 does not know how to handle " + file);
+	public void importFile(File file) throws NotifyException {
+		
+		if (tryModule(file)) {
+			return;
 		}
+
+		if (tryDiskImage(file)) {
+			return;
+		}
+		
+		MessageDialog.openError(shell, "Unsupported File", 
+				"V9t9 does not know how to handle " + file);
 	}
 
 	/**
@@ -98,7 +109,7 @@ public class FileImportHandler implements IFileImportHandler {
 		}
 		
 		if (!enabledProperty.getBoolean()) {
-			boolean go = MessageDialog.openConfirm(shell, "Enable Disk Image?", 
+			boolean go = MessageDialog.openQuestion(shell, "Enable Disk Image?", 
 					"Disk image support is not enabled.\n\n"+
 					"To use this disk, V9t9 needs to turn on that support and reset the emulator.\n\n"+
 							"Continue?");
@@ -129,5 +140,62 @@ public class FileImportHandler implements IFileImportHandler {
 			}
 		}
 		return true;
+	}
+	
+	private boolean tryModule(File file) throws NotifyException {
+		
+		URI databaseURI;
+//		// choose a target module list
+//		IProperty moduleList = Settings.get(machine, IModuleManager.settingUserModuleLists);
+//		List<String> dbNames = moduleList.getList();
+//		if (dbNames.isEmpty()) {
+//			dbNames.add(machine.getSettings().getUserSettings().getConfigDirectory() + "/modules.xml");
+//			moduleList.setList(dbNames);
+//		}
+//		
+//		databaseURI = URI.create(dbNames.get(0));
+	
+		databaseURI = URI.create("temp_modules.xml");
+		
+		Collection<IModule> ents = machine.scanModules(databaseURI, file);
+		
+		if (ents.isEmpty())
+			return false;
+					
+		IModule theMatch = null;
+		String matchPattern = ".*/?"+Pattern.quote(file.getName());
+		for (IModule module : ents) {
+			for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
+				if (info.getFilename() != null && info.getFilename().matches(matchPattern)) {
+					theMatch = module;
+					break;
+				}
+				if (info.getFilename2() != null && info.getFilename2().matches(matchPattern)) {
+					theMatch = module;
+					break;
+				}
+						
+			}
+			if (theMatch != null)
+				break;
+		}
+		
+		if (theMatch == null)
+			return false;
+		
+		boolean doit = MessageDialog.openQuestion(shell, "Load Module?",
+				"V9t9 recognized the module '" + theMatch.getName() + "'.\n\n"+
+				"Load this module and reset the emulator now?");
+		
+		if (doit) {
+			machine.getModuleManager().addModules(Collections.singletonList(theMatch));
+			
+			machine.reset();
+			machine.getModuleManager().unloadAllModules();
+			machine.getModuleManager().loadModule(theMatch);
+		}
+		
+		return true;
+				
 	}
 }

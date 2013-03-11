@@ -12,6 +12,7 @@ package v9t9.machine.ti99.machine;
 
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -25,6 +26,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -181,7 +184,20 @@ public class TI99Machine extends MachineBase {
 	@Override
 	public Collection<IModule> scanModules(URI databaseURI, File base) {
 		
-		File[] files = base.listFiles(); 
+		File[] files = null;
+		if (base.isDirectory()) {
+			files = base.listFiles();
+		} else if (base.getParentFile() != null) {
+			final String baseKey = getModuleBaseFile(base.getName());
+			files = base.getParentFile().listFiles(new FilenameFilter() {
+				
+				@Override
+				public boolean accept(File dir, String name) {
+					String key = getModuleBaseFile(name);
+					return key.equals(baseKey);
+				}
+			});
+		}
 		if (files == null) {
 			return Collections.emptyList();
 		}
@@ -192,7 +208,7 @@ public class TI99Machine extends MachineBase {
 			if (file.isDirectory())
 				continue;
 
-			if (analyzeV9t9ModuleFile(databaseURI, file.toURI(), file.getName(), moduleMap))
+			if (analyzeV9t9ModuleFile(databaseURI, file.toURI(), file.getAbsolutePath(), moduleMap))
 				continue;
 			
 			if (analyzeGRAMKrackerModuleFile(databaseURI, file, moduleMap))
@@ -228,6 +244,51 @@ public class TI99Machine extends MachineBase {
 		return modules;
 	}
 
+	private static final Pattern tosecNaming = Pattern.compile("(?i).*\\([^)]+\\).*\\([^)]+\\).*\\([^)]+\\).*\\(([^)]+)\\)");
+
+	private String getModuleBaseFile(String fname) {
+		String base = fname.length() > 4 ?
+				fname.substring(0, fname.length() - 4) : // remove extension
+				fname;
+		
+
+		// name may be from tosec archive, and the interesting part is
+		// the last parenthesized group
+		Matcher m = tosecNaming.matcher(base);
+		if (m.matches()) {
+			base = m.group(1);
+		}
+		
+		String key = base.substring(0, base.length());	
+		if (Character.isLetter(key.charAt(key.length() - 1)))
+			key = key.substring(0, key.length() - 1); // minus indicator char
+		int idx = key.lastIndexOf('/');
+		if (idx < 0)
+			idx = key.lastIndexOf('\\');
+		if (idx > 0)
+			key = key.substring(idx+1);
+		
+				
+		return key;
+
+	}
+	
+
+	private char getModulePart(String fname) {
+		String base = fname.length() > 4 ?
+				fname.substring(0, fname.length() - 4) : // remove extension
+				fname;
+
+		// name may be from tosec archive, and the interesting part is
+		// the last parenthesized group
+		Matcher m = tosecNaming.matcher(base);
+		if (m.matches()) {
+			base = m.group(1);
+		}
+		
+		return base.charAt(base.length() - 1);
+	}
+	
 	/**
 	 * Look for V9t9 module parts -- bare binaries with pieces identified
 	 * by the final filename letter ('C' = console module ROM, 'D' = console module ROM,
@@ -239,17 +300,10 @@ public class TI99Machine extends MachineBase {
 		if (!fname.toLowerCase().endsWith(".bin"))
 			return false;
 		
-		String base = fname.substring(0, fname.length() - 4); // remove extension
-		String key = base.substring(0, base.length() - 1);	// minus indicator char
-		int idx = key.lastIndexOf('/');
-		if (idx < 0)
-			idx = key.lastIndexOf('\\');
-		if (idx > 0)
-			key = base.substring(idx+1);
+		String key = getModuleBaseFile(fname);
 		
 		return analyzeV9t9ModuleFile(databaseURI, uri, fname, key, moduleMap);
 	}
-
 
 	/**
 	 * Look for V9t9 module parts -- bare binaries with pieces identified
@@ -266,7 +320,7 @@ public class TI99Machine extends MachineBase {
 		try {
 			try {
 				File file = new File(uri);
-				content = DataFiles.readMemoryImage(file, 0, 0x2000);
+				content = DataFiles.readMemoryImage(file, 0, 0xA000);
 			} catch (IllegalArgumentException e) {
 				// not file
 				content = FileUtils.readInputStreamContentsAndClose(uri.toURL().openStream());
@@ -293,7 +347,7 @@ public class TI99Machine extends MachineBase {
 			md5 = null;
 		}
 
-		char last = fname.charAt(fname.length() - 4 - 1);	// '.bin' and last char
+		char last = getModulePart(fname);
 		switch (last) {
 		case 'C':
 		case 'c': {
@@ -309,15 +363,14 @@ public class TI99Machine extends MachineBase {
 			break;
 		}
 
+		default:
 		case 'G':
 		case 'g': {
 			injectModuleGrom(module, databaseURI, moduleName, fname, 0, md5);
 			break;
 		}
-		default:
-			return false;
 		}
-
+		
 		// register/update module
 		moduleMap.put(key, module);
 
@@ -329,6 +382,7 @@ public class TI99Machine extends MachineBase {
 		MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleGrom(fileName)
 				.withOffset(fileOffset)
 				.withFileMD5(md5)
+				.withSize(-0xA000)
 				.create(moduleName);
 		module.addMemoryEntryInfo(info);		
 	}

@@ -286,6 +286,7 @@ public class ModuleSelector extends Composite {
 							&& !curDbs.contains(moduleDatabaseURI.toString())) {
 						curDbs.add(moduleDatabaseURI.toString());
 						loadModuleList(moduleDatabaseURI.toString());
+						modDbList.setList(curDbs);
 					}
 					
 					synchronized (knownStates) {
@@ -359,7 +360,7 @@ public class ModuleSelector extends Composite {
 	 */
 	protected void promptSave() {
 		if (!dirtyModuleLists.isEmpty()) {
-			boolean doSave = MessageDialog.openConfirm(getShell(), "Module Changes", 
+			boolean doSave = MessageDialog.openQuestion(getShell(), "Module Changes", 
 					"Save changes to module list(s)?");
 			if (doSave) {
 				saveModules();
@@ -714,12 +715,13 @@ public class ModuleSelector extends Composite {
 	private void revertModules() {
 		dirtyModuleLists.clear();
 		moduleMap.clear();
-		List<String> modDbList = machine.getSettings().get(IModuleManager.settingUserModuleLists).getList();
-		modDbList = new ArrayList<String>(modDbList);
-		modDbList.add(0, moduleManager.getStockDatabaseURL().toString());
-		for (String modDb : modDbList) {
+		List<String> modDbs = modDbList.getList();
+		modDbs = new ArrayList<String>(modDbs);		// copy -- no change intended
+		modDbs.add(0, moduleManager.getStockDatabaseURL().toString());
+		for (String modDb : modDbs) {
 			loadModuleList(modDb);
 		}
+		
 //		moduleList = new ArrayList<Object>(Arrays.asList(moduleManager.getModules()));
 //		moduleList.add(0, "<No module>");
 //		viewer.setInput(moduleList);
@@ -974,7 +976,7 @@ public class ModuleSelector extends Composite {
 						@Override
 						public void widgetSelected(SelectionEvent e) {
 							if (dirtyModuleLists.contains(uri)) {
-								boolean doSave = MessageDialog.openConfirm(getShell(), "Module Changes", 
+								boolean doSave = MessageDialog.openQuestion(getShell(), "Module Changes", 
 										"Save changes to module list?");
 								if (doSave) {
 									saveModules(uri);
@@ -988,6 +990,7 @@ public class ModuleSelector extends Composite {
 							} catch (IllegalArgumentException ia) {
 								// ignore
 							}
+							modDbList.setList(list);
 							dirtyModuleLists.remove(uri);
 							moduleMap.remove(uri);
 							viewer.remove(uri);
