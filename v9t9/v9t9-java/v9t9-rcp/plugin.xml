@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         id="v9t9.application"
+         name="V9t9"
+         point="org.eclipse.core.runtime.applications">
+      <application
+            cardinality="singleton-global"
+            thread="main">
+         <run
+               class="v9t9.rcp.ui.Application">
+         </run>
+      </application>
+   </extension>
+   <extension
+         id="v9t9.product"
+         name="V9t9"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="v9t9.application"
+            description="V9t9 Emulator for TI-99/4A"
+            name="V9t9">
+      </product>
+   </extension>
+
+</plugin>

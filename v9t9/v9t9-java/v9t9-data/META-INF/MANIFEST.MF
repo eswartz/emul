@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: v9t9-data
+Bundle-SymbolicName: v9t9-data;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: Ed Swartz
+Bundle-ActivationPolicy: lazy
+Bundle-Activator: v9t9.data.src.Activator
+Require-Bundle: org.eclipse.core.runtime;bundle-version="3.7.0"

@@ -192,6 +192,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 	 */
 	private synchronized void updateControllers() {
 		joystick1Handler = joystick2Handler = null;
+		System.out.println("java.library.path=" + System.getProperty("java.library.path"));
 		
 		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
 			String name = controller.getName();

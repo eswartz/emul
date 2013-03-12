@@ -1,16 +1,21 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: ejs-gui
-Bundle-SymbolicName: ejs-gui
+Bundle-SymbolicName: ejs-gui;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-ClassPath: ejs-gui.jar,
  libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar,
  libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar,
  libs/swt/org.eclipse.core.runtime_3.6.0.v20100505.jar
-Export-Package: org.ejs.gui.common,
+Export-Package: com.sun.jna,
+ com.sun.jna.ptr,
+ com.sun.jna.win32,
+ org.ejs.gui.common,
  org.ejs.gui.images,
  org.ejs.gui.properties
-Require-Bundle: org.eclipse.swt,
- org.eclipse.jface,
+Require-Bundle: org.eclipse.swt;visibility:=reexport,
+ org.eclipse.jface;visibility:=reexport,
  ejs-base;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-Vendor: Ed Swartz
+Bundle-ActivationPolicy: lazy

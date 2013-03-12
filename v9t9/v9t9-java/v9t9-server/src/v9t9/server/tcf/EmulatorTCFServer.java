@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.eclipse.tm.tcf.core.ServerTCP;
+import org.eclipse.tm.tcf.protocol.IEventQueue;
 import org.eclipse.tm.tcf.protocol.ILogger;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
@@ -42,7 +43,7 @@ public class EmulatorTCFServer {
 
 	private IProperty tcfLog;
 
-	private EmulatorTCFQueue queue;
+	private IEventQueue queue;
 
 	private EmulatorTCFServiceProvider serviceProvider;
 
@@ -59,7 +60,7 @@ public class EmulatorTCFServer {
 		this.machine = machine;
 		setupLogging();
 
-		queue = (EmulatorTCFQueue) Protocol.getEventQueue();
+		queue = (IEventQueue) Protocol.getEventQueue();
 		if (queue == null) {
 			queue = new EmulatorTCFQueue();
 			Protocol.setEventQueue(queue);
@@ -101,7 +102,8 @@ public class EmulatorTCFServer {
 		if (isRunning)
 			return;
 
-		queue.start();
+		if (queue instanceof EmulatorTCFQueue)
+			((EmulatorTCFQueue) queue).start();
 		
 		Protocol.addServiceProvider(serviceProvider);
 		
@@ -129,7 +131,8 @@ public class EmulatorTCFServer {
 		}
 		
 		Protocol.removeServiceProvider(serviceProvider);
-		queue.shutdown();
+		if (queue instanceof EmulatorTCFQueue)
+			((EmulatorTCFQueue) queue).shutdown();
 		
 		isRunning = false;
 	}

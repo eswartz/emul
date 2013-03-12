@@ -10,8 +10,14 @@
  */
 package v9t9.common;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 
 /**
  * @author ejs
@@ -44,6 +50,17 @@ public class EmulatorLocations {
 	}
 	
 	public static URL getV9t9DataURL(Class<?> klass) {
+		
+		if (Platform.isRunning()) {
+			URL url = FileLocator.find(Platform.getBundle("v9t9-data"), new Path("data"), null);
+			assert url != null;
+			try {
+				url = FileLocator.toFileURL(url);
+				return url;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		
 		URL base = klass.getProtectionDomain().getCodeSource().getLocation();
 		

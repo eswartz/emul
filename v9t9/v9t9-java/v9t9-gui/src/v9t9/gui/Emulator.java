@@ -25,6 +25,7 @@ import java.util.Map;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.LogManager;
+import org.eclipse.core.runtime.Platform;
 
 import v9t9.common.client.IClient;
 import v9t9.common.cpu.ICpu;
@@ -164,10 +165,12 @@ public class Emulator {
 		String clientId = getClientId(args);
 		
 
-		create(server, modelId, clientId);
+		IClient client = create(server, modelId, clientId);
+		if (client == null)
+			return;
 		
 		server.setSettings(settings);
-		
+
 		runServer(server);
 	}
 
@@ -215,7 +218,8 @@ public class Emulator {
 		
 		if (client == null) {
 			System.err.println("Failed to contact or create client: " + clientId);
-			System.exit(23);
+			if (!Platform.isRunning())
+				System.exit(23);
 			return null;
 		}
 		server.setClient(client);

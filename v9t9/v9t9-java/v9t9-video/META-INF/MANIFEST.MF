@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: v9t9-video
+Bundle-SymbolicName: v9t9-video;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Export-Package: v9t9.video,
+ v9t9.video.common,
+ v9t9.video.imageimport,
+ v9t9.video.tms9918a,
+ v9t9.video.v9938
+Bundle-Vendor: Ed Swartz
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: J2SE-1.5,
+ JavaSE-1.6
+Require-Bundle: org.eclipse.swt;bundle-version="3.7.2",
+ ejs-base;bundle-version="1.0.0",
+ ejs-gui;bundle-version="1.0.0",
+ v9t9-common;bundle-version="1.0.0"

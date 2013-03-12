@@ -2,55 +2,26 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/SWT"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ejs-base"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.runtime.source_3.6.0.v20100505.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.equinox.common.source_3.6.0.v20100503.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar" sourcepath="/ejs-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/jna.jar"/>
 	<classpathentry kind="src" path="data"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.css_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.dom_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.dom.svg_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.ext.awt_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.extension_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.parser_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.svggen_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.swing_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.swing.source_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.transcoder_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.util_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.xml_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.w3c.css.sac_1.3.1.v200903091627.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.w3c.dom.smil_1.0.0.v200806040011.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.w3c.dom.svg_1.1.0.v201011041433.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-server"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-video"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-audio"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/gnu-getopt-1.0.13.jar" sourcepath="/ejs-base/libs/gnu-getopt-source-1.0.13.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-remote"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ejs-gui"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
 	<classpathentry kind="lib" path="libs/lwjgl/jar/jinput.jar" sourcepath="libs/lwjgl-source-2.8.3.zip">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${target.os}"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="libs/lwjgl/jar/lwjgl.jar"/>
+	<classpathentry kind="lib" path="libs/lwjgl/jar/lwjgl.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${os}"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="libs/lwjgl/jar/lwjgl_util.jar" sourcepath="libs/lwjgl-source-2.8.3.zip">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${target.os}"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/ejs-base/libs/svgSalamander.jar"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

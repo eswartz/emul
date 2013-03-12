@@ -23,8 +23,6 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
-import org.eclipse.swt.dnd.DND;
-import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.RTFTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.events.ControlAdapter;
@@ -252,8 +250,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 				String boundsPref = SwtPrefUtils.writeBoundsString(shell.getBounds());
 				settingsHandler.get(settingEmulatorWindowBounds).setString(boundsPref);
 				dispose();
-				
-				machine.getClient().close();
+				if (machine.getClient() != null)
+					machine.getClient().close();
 			}
 			
 		});
@@ -746,19 +744,19 @@ public class SwtWindow extends BaseEmulatorWindow {
 	
 	@Override
 	public void dispose() {
-		
-		buttonBar.dispose();
-		
-		statusBar.dispose();
-		
-		toolUiTimer.cancel();
-		
-		ToolShell[] shellArray = (ToolShell[]) toolShells.values().toArray(new ToolShell[toolShells.values().size()]);
-		for (ToolShell shell : shellArray) {
-			shell.dispose();
-		}
-		toolShells.clear();
-		
+		if (buttonBar != null) {
+			buttonBar.dispose();
+			
+			statusBar.dispose();
+			
+			toolUiTimer.cancel();
+			
+			ToolShell[] shellArray = (ToolShell[]) toolShells.values().toArray(new ToolShell[toolShells.values().size()]);
+			for (ToolShell shell : shellArray) {
+				shell.dispose();
+			}
+			toolShells.clear();
+		}		
 		super.dispose();
 	}
 
