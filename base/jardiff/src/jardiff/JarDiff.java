@@ -37,7 +37,7 @@ public class JarDiff {
 		
 		if (content1.length != content2.length) {
 			System.out.println("File lengths differ");
-			//System.exit(1);
+			System.exit(1);
 		}
 		
 		// files appear to differ -- but it could just be timestamps
