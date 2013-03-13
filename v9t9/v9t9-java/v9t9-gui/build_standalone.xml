@@ -2,8 +2,17 @@
 <project default="buildall" name="Create Runnable Jar for Project v9t9-java with Jar-in-Jar Loader">
     <!--this file was created by Eclipse Runnable JAR Export Wizard-->
     <!--ANT 1.7 is required                                        -->
+	
+    <!-- needed for foreach (http://ant-contrib.sourceforge.net/) -->
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	  <classpath>
+	    <pathelement location="/usr/share/java/ant-contrib.jar"/>
+	  </classpath>
+	</taskdef>
+
     <property name="base"        value=".."/>
     <property name="base.v9t9"   value="."/>
+    <property name="jardiff"   value="../../../base/jardiff.jar"/>
     <property name="base.base"   value="../../../base/ejs-base"/>
     <property name="base.gui"   value="../../../base/ejs-gui"/>
     <property name="build.dir"   value="${base}/../build"/>
@@ -74,46 +83,76 @@
     	<mkdir dir="${bin.v9t9.dir}" />
     	<mkdir dir="${bin.v9t9.dir}/libs" />
     	
+    	<property name="JarClassPath" value="
+	    	./ 
+	    	libs/jna.jar 
+	    	libs/org.eclipse.swt.jar 
+	    	libs/org.eclipse.jface_3.6.2.M20110210-1200.jar 
+	    	libs/org.eclipse.core.commands_3.6.0.I20100512-1500.jar 
+	    	libs/org.eclipse.core.runtime_3.6.0.v20100505.jar 
+	    	libs/org.eclipse.equinox.common_3.6.0.v20100503.jar 
+	    	libs/junit.jar libs/gnu-getopt-1.0.13.jar 
+	    	libs/jinput.jar 
+	    	libs/lwjgl_util.jar 
+	    	libs/lwjgl.jar 
+	    	libs/antlr-runtime-3.2.jar 
+	    	libs/antlr-3.2.jar 
+	    	libs/bcel-5.2.jar 
+	    	libs/org.eclipse.tm.tcf.jar 
+	    	${svg.libs}
+			ejs-base.jar
+	    	ejs-gui.jar
+	    	v9t9-audio.jar
+	    	v9t9-common.jar
+	    	v9t9-video.jar
+	    	v9t9-engine.jar
+	    	v9t9-machines.jar
+	    	v9t9-server.jar
+	    	v9t9-remote.jar
+	    	
+    	"/>
+    	
         <jar destfile="${bin.v9t9.dir}/v9t9j.jar">
             <manifest>
-                <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
-                <attribute name="Rsrc-Main-Class" value="v9t9.gui.Emulator"/>
-                <attribute name="Class-Path" value="."/>
-                <attribute name="Rsrc-Class-Path" value="
-                	./ 
-                	libs/jna.jar 
-                	libs/org.eclipse.swt.jar 
-                	libs/org.eclipse.jface_3.6.2.M20110210-1200.jar 
-                	libs/org.eclipse.core.commands_3.6.0.I20100512-1500.jar 
-                	libs/org.eclipse.core.runtime_3.6.0.v20100505.jar 
-                	libs/org.eclipse.equinox.common_3.6.0.v20100503.jar 
-                	libs/junit.jar libs/gnu-getopt-1.0.13.jar 
-                	libs/jinput.jar 
-                	libs/lwjgl_util.jar 
-                	libs/lwjgl.jar 
-                	libs/antlr-runtime-3.2.jar 
-                	libs/antlr-3.2.jar 
-                	libs/bcel-5.2.jar 
-                	libs/org.eclipse.tm.tcf.jar 
-                	${svg.libs}
-                	"/>
+                <attribute name="Main-Class" value="v9t9.gui.Emulator"/>
+                <attribute name="Class-Path" value="${JarClassPath}"/>
             </manifest>
         	
-            <zipfileset src="jar-in-jar-loader.zip"/>
-        	
         	<!-- subprojects -->
-            <fileset dir="${base.base}/bin"/>
-            <fileset dir="${base.gui}/bin"/>
             <fileset dir="${base.v9t9}/bin" excludes="release icons shaders" />
-            <fileset dir="../v9t9-audio/bin"/>
-            <fileset dir="../v9t9-video/bin"/>
-            <fileset dir="../v9t9-common/bin"/>
-            <fileset dir="../v9t9-engine/bin"/>
-            <fileset dir="../v9t9-machines/bin"/>
-            <fileset dir="../v9t9-server/bin"/>
             <fileset dir="../v9t9-remote/bin"/>
         </jar>
 
+       	<!-- subprojects -->
+        <jar destfile="${bin.v9t9.dir}/ejs-base.jar">
+            <fileset dir="${base.base}/bin"/>
+        </jar>
+    	
+    	 <jar destfile="${bin.v9t9.dir}/ejs-gui.jar">
+            <fileset dir="${base.gui}/bin"/>
+        </jar>    	
+    	 <jar destfile="${bin.v9t9.dir}/v9t9-audio.jar">
+            <fileset dir="../v9t9-audio/bin"/>
+        </jar>    	
+    	 <jar destfile="${bin.v9t9.dir}/v9t9-common.jar">
+            <fileset dir="../v9t9-common/bin"/>
+        </jar>    	
+    	 <jar destfile="${bin.v9t9.dir}/v9t9-video.jar">
+            <fileset dir="../v9t9-video/bin"/>
+        </jar>    	
+    	 <jar destfile="${bin.v9t9.dir}/v9t9-engine.jar">
+            <fileset dir="../v9t9-engine/bin"/>
+        </jar>    	
+    	 <jar destfile="${bin.v9t9.dir}/v9t9-machines.jar">
+            <fileset dir="../v9t9-machines/bin"/>
+        </jar>    	
+    	 <jar destfile="${bin.v9t9.dir}/v9t9-server.jar">
+            <fileset dir="../v9t9-server/bin"/>
+        </jar>    	
+    	 <jar destfile="${bin.v9t9.dir}/v9t9-remote.jar">
+            <fileset dir="../v9t9-remote/bin"/>
+        </jar>
+    	
     	<copy todir="${bin.v9t9.dir}/libs">
     		<fileset dir="${base.base}/libs">
     	      <include name="jna.jar"/>
@@ -264,18 +303,104 @@
   	    </jar>    	
     	
 	</target>
+	
 
-    <target name="sign-jars" >
+	<target name="check-sign-jar"  >
+		
+		 <pathconvert  property="newunsignedjar" >
+ 			<path path="${jarfile}"/>
+		 	
+		 	<filtermapper>
+		 	  <replacestring from="unsigned/" to="orig/"/>
+		 	</filtermapper>
+		 </pathconvert>
+		 <pathconvert  property="newsignedjar" >
+ 			<path path="${jarfile}"/>
+		 	
+		 	<filtermapper>
+		 	  <replacestring from="unsigned/" to="signed/"/>
+		 	</filtermapper>
+		 </pathconvert>
+		 <pathconvert  property="distribjar" >
+ 			<path path="${jarfile}"/>
+		 	
+		 	<filtermapper>
+		 	  <replacestring from="unsigned/" to=""/>
+		 	</filtermapper>
+		 </pathconvert>
+
+		<echo message="processing jar: ${distribjar}"/>
+		<!--
+		<echo message="cur jar: ${jarfile}"/>
+		<echo message="old jar: ${newunsignedjar}"/>
+		<echo message="new jar: ${newsignedjar}"/>
+		-->
+		
+		<java jar="${jardiff}" resultproperty="code" fork="true" >
+			<arg value="${newunsignedjar}" />
+			<arg value="${jarfile}" />
+		</java>
+		<condition property="unchanged">
+				<!-- <filesmatch file1="${newunsignedjar}" file2="${jarfile}" /> -->
+			<equals arg1="${code}" arg2="0" />
+		</condition>
+		
+		<antcall target="sign-jar" inheritall="true" inheritrefs="true">
+		</antcall>
+		<antcall target="copy-jar" inheritall="true" inheritrefs="true">
+		</antcall>
+	</target>
+
+	<target name="sign-jar" unless="unchanged" >
+		<copy file="${jarfile}" tofile="${newunsignedjar}" preservelastmodified="true"  />
     	<signjar
     	    alias="v9t9" 
     		keystore="${keystore}"
     	    storepass="${storepass}"
     	    lazy="true"
+    		preservelastmodified="true"
+    		jar="${newunsignedjar}"
+    		signedjar="${newsignedjar}"
     	    >
-    	  <path>
-    	    <fileset dir="${bin.v9t9.dir}" includes="**.jar" />
-    	    <fileset dir="${bin.v9t9.dir}/libs" includes="**.jar" />
-    	  </path>
     	</signjar>
+		<copy file="${newsignedjar}" tofile="${distribjar}" preservelastmodified="true"  />
+	</target>
+
+	<target name="copy-jar" if="unchanged" >
+		<copy file="${newsignedjar}" tofile="${distribjar}" preservelastmodified="true" />
+	</target>
+
+    <target name="sign-jars" >
+    	<mkdir dir="${bin.v9t9.dir}/unsigned" />
+    	<mkdir dir="${bin.v9t9.dir}/unsigned/libs" />
+    	<mkdir dir="${bin.v9t9.dir}/signed" />
+    	<mkdir dir="${bin.v9t9.dir}/signed/libs" />
+    	
+		<move todir="${bin.v9t9.dir}/unsigned"
+				overwrite="true"
+    		preservelastmodified="true">
+    		<fileset dir="${bin.v9t9.dir}">
+    	      <include name="**.jar"/>
+    	    </fileset>
+		</move>
+    	<move todir="${bin.v9t9.dir}/unsigned/libs"
+				overwrite="true"
+    		preservelastmodified="true">
+    		<fileset dir="${bin.v9t9.dir}/libs">
+    	      <include name="**.jar"/>
+    	    </fileset>
+		</move>
+    	
+    	<mkdir dir="${bin.v9t9.dir}/orig" />
+    	<mkdir dir="${bin.v9t9.dir}/orig/libs" />
+
+		<fileset dir="${bin.v9t9.dir}/unsigned" id="oldjars">
+		    <include name="**.jar"/>
+		    <include name="libs/**.jar"/>
+		</fileset>
+
+    	<foreach param="jarfile" target="check-sign-jar" inheritall="true" inheritrefs="true" parallel="true">
+			<fileset refid="oldjars" />
+		</foreach>    		
     </target>
 </project>
