@@ -19,7 +19,17 @@
 		-->
 		
 		<jar href="v9t9j.jar" main="true" />
+		<jar href="ejs-base.jar" />
+		<jar href="ejs-gui.jar" />
+		<jar href="v9t9-audio.jar" />
+		<jar href="v9t9-common.jar" />
 		<jar href="v9t9-data.jar" />
+		<jar href="v9t9-engine.jar" />
+		<jar href="v9t9-machines.jar" />
+		<jar href="v9t9-remote.jar" />
+		<jar href="v9t9-server.jar" />
+		<jar href="v9t9-video.jar" />
+		
 		<jar href="libs/org.apache.log4j_1.2.15.v201005080500.jar"/>
 		<jar href="libs/jna.jar"/>	
 		<jar href="libs/org.eclipse.swt.jar"/>

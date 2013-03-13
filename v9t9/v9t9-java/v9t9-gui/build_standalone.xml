@@ -104,11 +104,12 @@
 	    	ejs-gui.jar
 	    	v9t9-audio.jar
 	    	v9t9-common.jar
-	    	v9t9-video.jar
+	    	v9t9-data.jar
 	    	v9t9-engine.jar
 	    	v9t9-machines.jar
-	    	v9t9-server.jar
 	    	v9t9-remote.jar
+	    	v9t9-server.jar
+	    	v9t9-video.jar
 	    	
     	"/>
     	
@@ -153,7 +154,7 @@
             <fileset dir="../v9t9-remote/bin"/>
         </jar>
     	
-    	<copy todir="${bin.v9t9.dir}/libs">
+    	<copy overwrite="true" todir="${bin.v9t9.dir}/libs">
     		<fileset dir="${base.base}/libs">
     	      <include name="jna.jar"/>
               <include name="bcel-5.2.jar"/>
@@ -238,7 +239,7 @@
     	<replace file="${bin.v9t9.dir}/test-httpd.py" token="$v9t9.root" value="${v9t9.root}" />
     	<replace file="${bin.v9t9.dir}/test-httpd.py" token="$v9t9.host" value="${v9t9.host}" />
 
-		<copy todir="${bin.v9t9.dir}/libs" preservelastmodified="yes">
+		<copy overwrite="true" todir="${bin.v9t9.dir}/libs" preservelastmodified="yes">
 			<fileset dir="${base.base}/libs/swt">
 				<include name="**/org.eclipse.swt.**.jar"/>
 				<exclude name="**/*source*.jar"/>
@@ -307,37 +308,33 @@
 
 	<target name="check-sign-jar"  >
 		
-		 <pathconvert  property="newunsignedjar" >
+		 <pathconvert  property="prevunsignedjar" >
  			<path path="${jarfile}"/>
 		 	
 		 	<filtermapper>
-		 	  <replacestring from="unsigned/" to="orig/"/>
+		 	  <replacestring from="/cur/" to="/ref/"/>
 		 	</filtermapper>
 		 </pathconvert>
 		 <pathconvert  property="newsignedjar" >
  			<path path="${jarfile}"/>
 		 	
 		 	<filtermapper>
-		 	  <replacestring from="unsigned/" to="signed/"/>
+		 	  <replacestring from="/cur/" to="/signed/"/>
 		 	</filtermapper>
 		 </pathconvert>
 		 <pathconvert  property="distribjar" >
  			<path path="${jarfile}"/>
 		 	
 		 	<filtermapper>
-		 	  <replacestring from="unsigned/" to=""/>
+		 	  <replacestring from="/cur/" to="/"/>
 		 	</filtermapper>
 		 </pathconvert>
 
-		<echo message="processing jar: ${distribjar}"/>
-		<!--
-		<echo message="cur jar: ${jarfile}"/>
-		<echo message="old jar: ${newunsignedjar}"/>
-		<echo message="new jar: ${newsignedjar}"/>
-		-->
+		<echo message="old jar: ${prevunsignedjar}"/>
+		<echo message="new jar: ${jarfile}"/>
 		
 		<java jar="${jardiff}" resultproperty="code" fork="true" >
-			<arg value="${newunsignedjar}" />
+			<arg value="${prevunsignedjar}" />
 			<arg value="${jarfile}" />
 		</java>
 		<condition property="unchanged">
@@ -352,14 +349,14 @@
 	</target>
 
 	<target name="sign-jar" unless="unchanged" >
-		<copy file="${jarfile}" tofile="${newunsignedjar}" preservelastmodified="true"  />
+		<copy overwrite="true" file="${jarfile}" tofile="${prevunsignedjar}" preservelastmodified="true"  />
     	<signjar
     	    alias="v9t9" 
     		keystore="${keystore}"
     	    storepass="${storepass}"
     	    lazy="true"
     		preservelastmodified="true"
-    		jar="${newunsignedjar}"
+    		jar="${prevunsignedjar}"
     		signedjar="${newsignedjar}"
     	    >
     	</signjar>
@@ -367,40 +364,40 @@
 	</target>
 
 	<target name="copy-jar" if="unchanged" >
-		<copy file="${newsignedjar}" tofile="${distribjar}" preservelastmodified="true" />
+		<copy overwrite="true" file="${newsignedjar}" tofile="${distribjar}" preservelastmodified="true" />
 	</target>
 
     <target name="sign-jars" >
-    	<mkdir dir="${bin.v9t9.dir}/unsigned" />
-    	<mkdir dir="${bin.v9t9.dir}/unsigned/libs" />
+    	<mkdir dir="${bin.v9t9.dir}/cur" />
+    	<mkdir dir="${bin.v9t9.dir}/cur" />
     	<mkdir dir="${bin.v9t9.dir}/signed" />
     	<mkdir dir="${bin.v9t9.dir}/signed/libs" />
     	
-		<move todir="${bin.v9t9.dir}/unsigned"
-				overwrite="true"
-    		preservelastmodified="true">
-    		<fileset dir="${bin.v9t9.dir}">
-    	      <include name="**.jar"/>
-    	    </fileset>
-		</move>
-    	<move todir="${bin.v9t9.dir}/unsigned/libs"
+    	<move todir="${bin.v9t9.dir}/cur/libs"
 				overwrite="true"
     		preservelastmodified="true">
     		<fileset dir="${bin.v9t9.dir}/libs">
-    	      <include name="**.jar"/>
+    	      <include name="*.jar"/>
+    	    </fileset>
+		</move>
+		<move todir="${bin.v9t9.dir}/cur"
+				overwrite="true"
+    		preservelastmodified="true">
+    		<fileset dir="${bin.v9t9.dir}">
+    	      <include name="*.jar"/>
     	    </fileset>
 		</move>
     	
-    	<mkdir dir="${bin.v9t9.dir}/orig" />
-    	<mkdir dir="${bin.v9t9.dir}/orig/libs" />
+    	<mkdir dir="${bin.v9t9.dir}/ref" />
+    	<mkdir dir="${bin.v9t9.dir}/ref/libs" />
 
-		<fileset dir="${bin.v9t9.dir}/unsigned" id="oldjars">
-		    <include name="**.jar"/>
-		    <include name="libs/**.jar"/>
+		<fileset dir="${bin.v9t9.dir}/cur" id="curjars">
+		    <include name="*.jar"/>
+		    <include name="libs/*.jar"/>
 		</fileset>
 
-    	<foreach param="jarfile" target="check-sign-jar" inheritall="true" inheritrefs="true" parallel="true">
-			<fileset refid="oldjars" />
+    	<foreach param="jarfile" target="check-sign-jar" inheritall="true" parallel="true" >
+			<fileset refid="curjars" />
 		</foreach>    		
     </target>
 </project>

@@ -44,6 +44,8 @@
 			  <exclude name="orig/**" />
 			  <exclude name="unsigned/**" />
 			  <exclude name="signed/**" />
+			  <exclude name="cur/**" />
+			  <exclude name="ref/**" />
     	    </fileset>
       	</copy>
     	
@@ -57,11 +59,11 @@
     			<exclude name="tmpdir" />
     			<exclude name="tmpdir/**" />
     			<exclude name="orig" />
-    			<exclude name="unsigned" />
-    			<exclude name="signed" />
+    			<exclude name="cur" />
+    			<exclude name="ref" />
     			<exclude name="orig/**" />
-    			<exclude name="unsigned/**" />
-    			<exclude name="signed/**" />
+    			<exclude name="cur/**" />
+    			<exclude name="ref/**" />
     		</fileset>
     	
     	</zip>
