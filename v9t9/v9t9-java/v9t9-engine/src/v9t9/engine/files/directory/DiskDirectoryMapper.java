@@ -310,7 +310,7 @@ public class DiskDirectoryMapper implements IFilesInDirectoryMapper, IPersistabl
 					// do case-insensitive check
 					for (String name : names) {
 						if (name.equalsIgnoreCase(candName)
-								|| name.equalsIgnoreCase(candName + ".bin")) {
+								|| (name.toLowerCase().startsWith(candName.toLowerCase()) && name.toLowerCase().endsWith(".bin"))) {
 							File cand = new File(dir, name);
 							if (cand.exists())
 								return cand;
