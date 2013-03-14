@@ -44,7 +44,10 @@ import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDsrManager;
 import v9t9.common.files.DataFiles;
+import v9t9.common.files.FDR;
+import v9t9.common.files.FDRFactory;
 import v9t9.common.files.IFileExecutionHandler;
+import v9t9.common.files.InvalidFDRException;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
@@ -320,6 +323,14 @@ public class TI99Machine extends MachineBase {
 		try {
 			try {
 				File file = new File(uri);
+				try {
+					FDR fdr = FDRFactory.createFDR(file);
+					fdr.validate();
+					// hmm, likely a file, and not a module
+					return false;
+				} catch (InvalidFDRException e) {
+					// okay, not likely an errant disk image
+				}
 				content = DataFiles.readMemoryImage(file, 0, 0xA000);
 			} catch (IllegalArgumentException e) {
 				// not file
@@ -437,6 +448,7 @@ public class TI99Machine extends MachineBase {
 				ex.getProperties().put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
 				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
 				ex.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
+				ex.getProperties().put(MemoryEntryInfo.SIZE, -0x2000);
 				found = true;
 				break;
 			} 
@@ -454,6 +466,7 @@ public class TI99Machine extends MachineBase {
 				info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
 						.withOffset(fileOffset)
 						.withFileMD5(md5)
+						.withSize(-0x2000)
 						.create(moduleName);
 			}
 			module.addMemoryEntryInfo(info);

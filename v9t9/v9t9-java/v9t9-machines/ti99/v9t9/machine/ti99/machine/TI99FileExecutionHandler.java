@@ -29,6 +29,7 @@ import v9t9.common.modules.IModule;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.files.directory.OpenFile;
 import v9t9.machine.ti99.machine.fileExecutors.AdventureLoadFileExecutor;
+import v9t9.machine.ti99.machine.fileExecutors.ArchiverExtractFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.EditAssmLoadAndRunFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.EditAssmRunProgramFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.ExtBasicAutoLoadFileExecutor;
@@ -143,6 +144,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 			List<IFileExecutor> execs, IModule module) {
 		
 		gatherMemoryImagePrograms(machine, catalog, execs, module);
+		gatherArchives(machine, catalog, execs, module);
 		gatherObjectFiles(machine, catalog, execs, module, true);
 		gatherObjectFiles(machine, catalog, execs, module, false);
 
@@ -218,6 +220,46 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		return false;
 	}
 
+	/**
+	 * Look for memory image programs, PROGRAM files in groups of one
+	 * or more with incrementing filenames.
+	 * @param machine
+	 * @param catalog
+	 * @param execs
+	 * @param module
+	 */
+	protected void gatherArchives(IMachine machine, Catalog catalog,
+			List<IFileExecutor> execs, IModule module) {
+		for (CatalogEntry ent : catalog.entries) {
+			if (ent.type.equals("INT/FIX") && ent.recordLength == 128) {
+				
+				OpenFile file;
+				try {
+					file = new OpenFile(ent.getFile(), catalog.deviceName, ent.fileName);
+				} catch (DsrException e1) {
+					continue;
+				}
+				
+				byte[] record = new byte[128];
+				ByteMemoryAccess access = new ByteMemoryAccess(record, 0);
+				
+				int len;
+				try {
+					len = file.readRecord(access, 128);
+				} catch (DsrException e) {
+					continue;
+				}
+
+				if (len == 128 && access.memory[0] == (byte) 0x80 && access.memory[1] == 0x13) {
+					execs.add(new ArchiverExtractFileExecutor(module,
+							ent.fileName,
+							file.getNativeFile().getFile().getParent()
+							 ));
+				}
+			}
+		}
+	}
+	
 	/**
 	 * Look for memory image programs, PROGRAM files in groups of one
 	 * or more with incrementing filenames.

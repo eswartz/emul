@@ -57,6 +57,7 @@ import v9t9.engine.demos.DemoManager;
 import v9t9.engine.events.RecordingEventNotifier;
 import v9t9.engine.files.EmulatedFileHandler;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
+import v9t9.engine.files.directory.EmuDiskSettings;
 import v9t9.engine.files.image.DiskImageMapper;
 import v9t9.engine.keyboard.KeyboardState;
 import ejs.base.properties.IProperty;
@@ -154,7 +155,7 @@ abstract public class MachineBase implements IMachine {
     	keyboardModeListeners = new ListenerList<IKeyboardModeListener>();
     	init(machineModel);
 
-    	DiskDirectoryMapper fileMapper = new DiskDirectoryMapper();
+    	DiskDirectoryMapper fileMapper = new DiskDirectoryMapper(settings.get(EmuDiskSettings.emuDiskDsrEnabled));
     	DiskImageMapper imageMapper = new DiskImageMapper(settings);
     	IFileExecutionHandler execHandler = createFileExecutionHandler();
     	emulatedFileHandler = new EmulatedFileHandler(settings, fileMapper, imageMapper, execHandler);

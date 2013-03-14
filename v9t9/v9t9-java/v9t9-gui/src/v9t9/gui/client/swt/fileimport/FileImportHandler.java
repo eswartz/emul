@@ -16,6 +16,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -28,10 +30,14 @@ import ejs.base.properties.IProperty;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.Catalog;
+import v9t9.common.files.CatalogEntry;
+import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.files.IDiskImage;
 import v9t9.common.files.IDiskImageMapper;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.files.IFileImportHandler;
+import v9t9.common.files.IFilesInDirectoryMapper;
+import v9t9.common.files.NativeFileFactory;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
@@ -74,6 +80,10 @@ public class FileImportHandler implements IFileImportHandler {
 		}
 
 		if (tryDiskImage(file)) {
+			return;
+		}
+		
+		if (tryStandaloneFile(file)) {
 			return;
 		}
 		
@@ -124,7 +134,74 @@ public class FileImportHandler implements IFileImportHandler {
 				machine,
 				diskSettingsMap, 
 				catalog,
-				catalog.volumeName);
+				"Select the drive into which to load the disk ''{0}''",
+				catalog.volumeName.trim());
+
+		int ret = dialog.open();
+		if (ret == Window.OK) {
+			dialog.getDiskProperty().setString(file.getAbsolutePath());
+			
+			IFileExecutor exec = dialog.getFileExecutor();
+			if (exec != null) {
+				try {
+					exec.run(machine);
+				} catch (NotifyException e) {
+					machine.getEventNotifier().notifyEvent(e.getEvent());
+				}
+			}
+		}
+		return true;
+	}
+	
+
+	/**
+	 * @param file
+	 * @return
+	 */
+	private boolean tryStandaloneFile(File file) {
+		IFilesInDirectoryMapper fiadMapper = machine.getEmulatedFileHandler().getFilesInDirectoryMapper();
+		if (fiadMapper == null) {
+			return false;
+		}
+		
+		Catalog catalog = null;
+		
+		CatalogEntry entry;
+		try {
+			entry = new CatalogEntry(fiadMapper.getDsrFileName(file.getName()), 
+					NativeFileFactory.INSTANCE.createNativeFile(file));
+		} catch (IOException e1) {
+			return false;
+		}
+		
+		catalog = new Catalog("DSK1", "TEMP", 1, 1, Collections.singletonList(entry));
+
+		IProperty[] disks = fiadMapper.getSettings();
+		IProperty enabledProperty = fiadMapper.getDirectorySupportProperty();
+		if (enabledProperty == null || disks.length == 0) {
+			MessageDialog.openError(shell, "Not Supported", "This machine does not support files in directories");
+			return true;
+		}
+		
+		if (!enabledProperty.getBoolean()) {
+			boolean go = MessageDialog.openQuestion(shell, "Enable Files in Directories?", 
+					"Support for files in a directory is not enabled.\n\n"+
+					"To use this disk, V9t9 needs to turn on that support.\n\n"+
+							"Continue?");
+			if (!go)
+				return true;
+			
+			enabledProperty.setBoolean(true);
+		}
+
+		Map<String, IProperty> diskSettingMap = fiadMapper.getDiskSettingMap();
+		SelectDiskImageDialog dialog = new SelectDiskImageDialog(shell, "Select Drive",
+				machine,
+				diskSettingMap, 
+				catalog,
+				"Select the drive into which to host the file ''{0}''",
+				file.getName()
+				);
 
 		int ret = dialog.open();
 		if (ret == Window.OK) {

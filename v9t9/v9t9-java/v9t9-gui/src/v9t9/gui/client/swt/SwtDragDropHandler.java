@@ -371,7 +371,12 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				if (!trimmed.matches(pattern) && !trimmed.endsWith("/"))
 					return null;
 				
-				File temp = File.createTempFile("url", ".img");
+				File temp = null;
+				int dotIdx = trimmed.lastIndexOf('/');
+				if (dotIdx >= 0)
+					temp = new File(System.getProperty("java.io.tmpdir"), trimmed.substring(dotIdx+1));
+				else
+					temp = File.createTempFile("url", ".img");
 				URL url = new URL(trimmed);
 				lastURLFile = readFileFromURL(temp, url);
 				if (lastURLFile != null) {

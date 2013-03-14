@@ -34,8 +34,10 @@ public class DiskDirectoryMapper implements IFilesInDirectoryMapper, IPersistabl
 	private Map<String, String> diskToDeviceMap = new HashMap<String, String>();
 	private Map<String, IProperty> diskSettingsMap = new HashMap<String, IProperty>();
 	private Map<String, IPropertyListener> diskSettingsListenerMap = new HashMap<String, IPropertyListener>();
+	private IProperty enabledProperty;
 	
-	public DiskDirectoryMapper() {
+	public DiskDirectoryMapper(IProperty enabledProperty) {
+		this.enabledProperty = enabledProperty;
 	}
 
 	public void registerDiskSetting(String device, IProperty diskSetting) {
@@ -405,6 +407,22 @@ public class DiskDirectoryMapper implements IFilesInDirectoryMapper, IPersistabl
 		Catalog catalog = fileDir.readCatalog();
 
 		return catalog;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IFilesInDirectoryMapper#getDirectorySupportProperty()
+	 */
+	@Override
+	public IProperty getDirectorySupportProperty() {
+		return enabledProperty;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IFilesInDirectoryMapper#getDiskSettingMap()
+	 */
+	@Override
+	public Map<String, IProperty> getDiskSettingMap() {
+		return diskSettingsMap;
 	}
 
 }

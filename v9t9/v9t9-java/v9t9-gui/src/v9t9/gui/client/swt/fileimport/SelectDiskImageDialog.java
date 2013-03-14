@@ -53,12 +53,13 @@ class SelectDiskImageDialog extends MessageDialog {
 			IMachine machine,
 			Map<String, IProperty> diskSettingMap,
 			Catalog catalog,
+			String messageFormat,
 			//IFileExecutionHandler execHandler,
-			String diskVolumeName) {
+			String label) {
 		super(parentShell, dialogTitle, 
 				null /*image*/,
-				MessageFormat.format("Select the drive into which to load the disk ''{0}''", 
-						diskVolumeName.trim()),
+				MessageFormat.format(messageFormat, 
+						label.trim()),
 				MessageDialogWithToggle.QUESTION,
 				new String[] { IDialogConstants.OK_LABEL, IDialogConstants.CANCEL_LABEL },
 				0);
