@@ -101,7 +101,7 @@ public class ModuleAddDialog extends StatusDialog {
 	protected ModuleAddDialog(Shell parentShell, IMachine machine, SwtWindow window) {
 		super(parentShell);
 		this.machine = machine;
-		setShellStyle(getShellStyle() | SWT.RESIZE);
+		setShellStyle((getShellStyle() & ~SWT.APPLICATION_MODAL) | SWT.RESIZE | SWT.MODELESS);
 		
 		settings = machine.getSettings().getMachineSettings().getHistorySettings().findOrAddSection(SECTION_MODULE_ADDER);
 	}
@@ -403,10 +403,23 @@ public class ModuleAddDialog extends StatusDialog {
 		List<String> mods = modList.getList();
 		dbFile = null;
 		for (String mod : mods) {
-			if (dbFile == null)
-				dbFile = new File(mod);
+			if (dbFile == null) {
+				setDbFile(mod);
+			}
 			dbSelector.add(mod);
 		}
+	}
+
+	/**
+	 * @param mod
+	 */
+	private void setDbFile(String mod) {
+		try {
+			dbFile = new File(URI.create(mod));
+		} catch (IllegalArgumentException e) { 
+			dbFile = new File(mod);
+		}
+		
 	}
 
 	protected void validate() {
@@ -415,7 +428,8 @@ public class ModuleAddDialog extends StatusDialog {
 		boolean valid = true;
 		
 		String dbTextStr = dbSelector.getText();
-		dbFile = new File(dbTextStr);
+		setDbFile(dbTextStr);
+		
 		if (status == null) {
 			if (dbTextStr.isEmpty()) {
 				status = createStatus(IStatus.INFO, "Select a module list file");

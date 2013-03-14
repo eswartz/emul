@@ -335,6 +335,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				getIntAttribute(el, MemoryEntryInfo.ADDRESS, info);
 				getIntAttribute(el, MemoryEntryInfo.SIZE, info);
 				getIntAttribute(el, MemoryEntryInfo.OFFSET, info);
+				getIntAttribute(el, MemoryEntryInfo.OFFSET2, info);
 				getBooleanAttribute(el, MemoryEntryInfo.STORED, info);
 				getClassAttribute(el, MemoryEntryInfo.CLASS, MemoryEntry.class, info);
 				getBooleanAttribute(el, MemoryEntryInfo.REVERSED, info);

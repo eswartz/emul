@@ -112,6 +112,10 @@ public class MemoryEntryInfoBuilder {
 		return this;
 	}
 
+	public MemoryEntryInfoBuilder isReversed(boolean b) {
+		props.put(MemoryEntryInfo.REVERSED, b);
+		return this;
+	}
 
 	public MemoryEntryInfo create(String name) {
 		props.put(MemoryEntryInfo.NAME, name);

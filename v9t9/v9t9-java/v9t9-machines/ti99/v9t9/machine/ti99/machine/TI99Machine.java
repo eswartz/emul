@@ -352,7 +352,7 @@ public class TI99Machine extends MachineBase {
 		case 'C':
 		case 'c': {
 			
-			injectModuleRom(module, databaseURI, moduleName, fname, 0, md5);
+			injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length, md5);
 			
 			break;
 		}
@@ -363,18 +363,57 @@ public class TI99Machine extends MachineBase {
 			break;
 		}
 
-		default:
 		case 'G':
 		case 'g': {
 			injectModuleGrom(module, databaseURI, moduleName, fname, 0, md5);
 			break;
 		}
+		
+		default:
+			if (looksLikeBankedOr9900Code(content)) {
+				injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length, md5);
+			} else {
+				injectModuleGrom(module, databaseURI, moduleName, fname, 0, md5);
+			}
+			break;
 		}
 		
 		// register/update module
 		moduleMap.put(key, module);
 
 		return true;
+	}
+
+	/**
+	 * @param content
+	 * @return
+	 */
+	private boolean looksLikeBankedOr9900Code(byte[] content) {
+		int insts = 0;
+		for (int addr = 0; addr < content.length; addr += 2) {
+			int word = readAddr(content, addr);
+			if (word == 0x45b /* RT */ 
+					|| word == 0x8300  /* CPU RAM base */
+					|| word == 0x83e0  /* GPLWS */
+					|| word == 0x8c00  /* VDPWA */
+					|| word == 0x8c02  /* VDPWD */
+					|| word == 0x8400  /* SOUND */
+					|| word == 0x380)  /* RTWP */
+				{
+				insts++;
+			}
+		}
+		
+		boolean allIded = true;
+		for (int addr = 0 ; addr < content.length; addr += 0x2000) {
+			if (content[addr] != (byte) 0xaa) {
+				allIded = false;
+			}
+		}
+		if (content.length > 0x2000 && allIded)
+			insts *= 2;
+		
+		return insts > content.length / 256;
 	}
 
 	private void injectModuleGrom(IModule module, URI databaseURI,
@@ -388,7 +427,7 @@ public class TI99Machine extends MachineBase {
 	}
 
 	private void injectModuleRom(IModule module, URI databaseURI,
-			String moduleName, String fileName, int fileOffset, String md5) {
+			String moduleName, String fileName, int fileOffset, int fileSize, String md5) {
 		MemoryEntryInfo info;
 		boolean found = false;
 		for (MemoryEntryInfo ex : module.getMemoryEntryInfos()) {
@@ -403,10 +442,20 @@ public class TI99Machine extends MachineBase {
 			} 
 		}
 		if (!found) {
-			info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
-					.withOffset(fileOffset)
-					.withFileMD5(md5)
-					.create(moduleName);
+			if (fileSize > 0x3e00) {
+				// probably a new-format reversed PBX module
+				info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
+						.withOffset(fileOffset)
+						.withFileMD5(md5)
+						.withBankClass(StdMultiBankedMemoryEntry.class)
+						.isReversed(true)
+						.create(moduleName);
+			} else {
+				info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
+						.withOffset(fileOffset)
+						.withFileMD5(md5)
+						.create(moduleName);
+			}
 			module.addMemoryEntryInfo(info);
 		}
 		
@@ -635,6 +684,7 @@ public class TI99Machine extends MachineBase {
 						injectModuleRom(module, databaseURI, moduleName, 
 								makeZipUriString(zipUri, rom.getAttribute("name")),
 								HexUtils.parseInt(rom.getAttribute("offset")),
+								HexUtils.parseInt(rom.getAttribute("size")),
 								null
 								);
 					}
