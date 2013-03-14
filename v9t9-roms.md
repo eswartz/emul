@@ -35,18 +35,17 @@ Optional ROMs are:
   memory-mapped registers, so the checksum only considers the first 0x1FF0 bytes -- 
   "head --bytes=-16 tidiskdsr.bin | md5sum")
 
+Note: you can supply your own console ROM/GROM images if you like.   Check out the
+<a href="advanced.html">"Advanced Setup" page</a> for more information.
+
 Module ROMs
 -----------------
 
 In addition, you will need module (cartridge) ROMs to do anything besides TI BASIC programming.  
 
-At least in the V9t9 family of emulators, these are named in groups like:
+V9t9 includes a database of modules which you will see in the *Module Selector* dialog.
+Any modules V9t9 detects will show up in this list.
 
-* `<module>G.bin` (GROM image at >6000)
-* `<module>C.bin` (ROM image at >6000)
-* `<module>D.bin` (ROM second bank at >6000)
-
-The "C" and/or "D" variants may not be present, and sometimes not even the "G" variant.
 
 Setup
 -----------------
@@ -59,38 +58,33 @@ need to name any ROMs in any particular way.  The information about the system R
 TI-99/4A modules is built into V9t9 now.  So, all you need to do is point V9t9 to your collection and V9t9 
 will discover them for you.
 
-Adding Modules
+
+Loading Modules
 ------------------
 
-If you want to add your own modules to V9t9, and V9t9 does not recognize them, then add them
-to its knowledge base like this:
+If you have some module ROMs on disk somewhere and want to quickly try them out,
+just drag one of them (e.g. "mymoduleg.bin") into V9t9.  It will detect the module and offer to launch it.
 
-* Create or edit a `modules.xml` file.  This should be available on one of the "Search Locations"
-in the "Setup ROMs" dialog.
+If V9t9 has problems with your module, let me know!
 
-* Add content like the following:
+Making Module Lists
+------------------
 
-<pre>
-&lt;modules&gt;
-    &lt;module name="My Module Name"&gt;
-        &lt;memoryEntries&gt;
-            &lt;gromModuleEntry fileName="moduleg.bin" /&gt;
-        	&lt;!-- either this or the following, or neither --&gt;
-            &lt;romModuleEntry fileName="modulec.bin" /&gt;  
-            &lt;!-- for standard 'write to 0x6000' type bank switching --&gt;
-            &lt;bankedModuleEntry fileName="modulec.bin" fileName2="moduled.bin" /&gt;  
-        &lt;/memoryEntries&gt;
-    &lt;/module&gt;
-&lt;/modules&gt;
-</pre>
+If you want to permanently add your own modules to V9t9, you can add a *module list* 
+and access the entries in the *Module Selector* like this:
 
-* When you bring up the "Switch Module" dialog, the new entry should be in the list.
+* Open the *Module Selector* dialog.
 
-* If you want to add an image, then get an image from somewhere or take a screenshot, then add an entry to the &lt;module&gt; element like:
+* Click the '*Add...*' button.
 
-<pre>
-    &lt;image&gt;myModuleImage.png&lt;/image&gt;
-</pre>
+* Browse to the directory where your ROMs reside.
 
-* All filenames mentioned above will be detected on the "Search Locations" path.
+* V9t9 should detect the modules.  (If some aren't detected, let me know!)
+
+* V9t9 will select (checkmark) by defualt the modules that it doesn't already know about.  You can add or remove entries as you desire.
+
+* Enter a new *List File* -- usually called 'modules.xml' -- where you want to record your modules.
+
+* All filenames in `modules.xml`  will be detected on the "Search Locations" path.  V9t9 records full paths by default when doing scanning, but feel free to edit the modules.xml file to make the filenames more portable.  (You can use relative paths from some "Search Location" path too.)
+
 
