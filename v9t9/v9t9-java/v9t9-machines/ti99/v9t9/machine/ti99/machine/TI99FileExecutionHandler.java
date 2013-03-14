@@ -273,7 +273,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		while (true) {
 			try {
 				int len = file.readRecord(access, 80);
-				System.out.println(new String(record).replaceAll("[\\x00-\\x1f]", " "));
+				//System.out.println(new String(record).replaceAll("[\\x00-\\x1f]", " "));
 				
 				if (!isUncompressedObjectCodeRecord(Arrays.copyOf(record, len), entries)) {
 					valid = false;
@@ -381,7 +381,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		while (true) {
 			try {
 				int len = file.readRecord(access, 80);
-				System.out.println(new String(record).replaceAll("[\\x00-\\x1f]", " "));
+				//System.out.println(new String(record).replaceAll("[\\x00-\\x1f]", " "));
 				
 				if (!isCompressedObjectCodeRecord(Arrays.copyOf(record, len), entries)) {
 					if (record[0] != 0)
