@@ -73,6 +73,8 @@ Recent Changes
 ===========
 
 <ul>
+<li>2013/03/13: support handling files encoded with Archiver 3 (e.g. from http://tigameshelf.net)
+</li>
 <li>2013/03/11: support drag'n'drop of module images into the emulator!
 </li>
 <li>2013/03/10: support drag'n'drop of disk images into the emulator to load
