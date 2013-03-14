@@ -24,6 +24,7 @@ import v9t9.common.keyboard.IPasteListener;
 import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
 import v9t9.engine.files.directory.EmuDiskSettings;
+import v9t9.engine.files.image.RealDiskDsrSettings;
 import v9t9.machine.EmulatorMachinesData;
 import ejs.base.properties.IProperty;
 import ejs.base.utils.FileUtils;
@@ -34,12 +35,9 @@ import ejs.base.utils.FileUtils;
  */
 public class ArchiverExtractFileExecutor implements IFileExecutor {
 
-	/**
-	 * 
-	 */
-	private static final int TEMP_DRIVE_NUM = 5;
 	public String userFileDir;
-
+	private int driveNum;
+	
 	/**
 	 * @author ejs
 	 *
@@ -72,7 +70,7 @@ public class ArchiverExtractFileExecutor implements IFileExecutor {
 			
 			// now extract files
 			String contents = "2"  + IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO  /* extract files */
-					+ TEMP_DRIVE_NUM + IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO  /* select drive */
+					+ driveNum + IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO  /* select drive */
 					+ fileName + "\n" + IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO;
 			machine.getKeyboardHandler().pasteText(
 					contents);
@@ -86,10 +84,11 @@ public class ArchiverExtractFileExecutor implements IFileExecutor {
 	private String devicePath;
 	private String fileName;
 
-	public ArchiverExtractFileExecutor(IModule module, String fileName, String userFileDir) {
+	public ArchiverExtractFileExecutor(IModule module, String fileName, int driveNum, String userFileDir) {
 		this.module = module;
+		this.driveNum = driveNum;
 		this.userFileDir = userFileDir;
-		this.devicePath = "DSK" + TEMP_DRIVE_NUM + "." + fileName;
+		this.devicePath = "DSK" + driveNum + "." + fileName;
 		this.fileName = fileName;
 	}
 	
@@ -113,7 +112,7 @@ public class ArchiverExtractFileExecutor implements IFileExecutor {
 				"drive and responding to the prompts.\n"+
 				"\n"+
 				"NOTE: this option turns on 'file in a directory' disk support and\n"+
-				"changes DSK5 for you.\n";
+				"changes DSK"+driveNum+" for you.\n";
 				
 	}
 	
@@ -124,8 +123,13 @@ public class ArchiverExtractFileExecutor implements IFileExecutor {
 	public void run(final IMachine machine) throws NotifyException {
 		final IProperty emuDskProp = machine.getSettings().get(EmuDiskSettings.emuDiskDsrEnabled);
 		emuDskProp.setBoolean(true);
+		final IProperty realDskProp = machine.getSettings().get(RealDiskDsrSettings.diskImageDsrEnabled);
+		if (driveNum < 3 && realDskProp.getBoolean()) {
+			realDskProp.setBoolean(false);
+			machine.reset();
+		}
 		
-		final IProperty dskProp = EmuDiskSettings.getEmuDiskSetting(machine, TEMP_DRIVE_NUM);
+		final IProperty dskProp = EmuDiskSettings.getEmuDiskSetting(machine, driveNum);
 		URL arc3Loc = EmulatorMachinesData.getDataURL("ti99/disks/archiver3/arc33_1");
 		
 		File arc3TmpDir = new File(System.getProperty("java.io.tmpdir"), "archiver3");
@@ -152,7 +156,7 @@ public class ArchiverExtractFileExecutor implements IFileExecutor {
 		machine.reset();
 		machine.getKeyboardHandler().pasteText(" 2"+	// space for title, 2 for editor/assembler
 				IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO + 
-				"5DSK"+TEMP_DRIVE_NUM+".ARC33_1\n" + IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO +
+				"5DSK"+driveNum+".ARC33_1\n" + IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO +
 				" " + // past opening screen
 				IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO); 
 		
