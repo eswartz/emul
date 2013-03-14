@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import ejs.base.properties.IProperty;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.ListenerList;
@@ -37,6 +39,10 @@ import static v9t9.common.keyboard.KeyboardConstants.*;
  * 
  */
 public abstract class BaseKeyboardHandler implements IKeyboardHandler {
+
+	private static final Logger log = Logger.getLogger(BaseKeyboardHandler.class);
+	
+	
 	public static boolean DEBUG = false;
 	private static final long TIMEOUT = 500;
 
@@ -72,6 +78,8 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		private PasteTask(IKeyboardHandler handler, char[] chs) {
 			this.handler = handler;
 			this.chs = chs;
+			
+			log.debug("Pasting text: " + new String(chs));
 			
 			handler.getMachine().getClient().getVideoRenderer().addListener(this);
 		}

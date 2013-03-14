@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
 import ejs.base.settings.ISettingSection;
@@ -66,6 +67,8 @@ import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 
 public class TI99Machine extends MachineBase {
 
+	private static final Logger log = Logger.getLogger(TI99Machine.class);
+	
 	public static final String KEYBOARD_MODE_TI994A = "ti994a";
 	public static final String KEYBOARD_MODE_TI994 = "ti994";
 	public static final String KEYBOARD_MODE_LEFT = "left";
@@ -327,6 +330,7 @@ public class TI99Machine extends MachineBase {
 					FDR fdr = FDRFactory.createFDR(file);
 					fdr.validate();
 					// hmm, likely a file, and not a module
+					log.debug("Not treating " + fname + " as module since it looks like a file: " + fdr);
 					return false;
 				} catch (InvalidFDRException e) {
 					// okay, not likely an errant disk image
@@ -343,6 +347,8 @@ public class TI99Machine extends MachineBase {
 		String moduleName = readHeaderName(content);
 	
 		moduleName = cleanupTitle(moduleName);
+		log.debug("Module Name: " + moduleName);
+
 		
 		IModule module = moduleMap.get(key);
 		if (module == null) {
@@ -381,9 +387,12 @@ public class TI99Machine extends MachineBase {
 		}
 		
 		default:
+			log.debug("Unknown file naming for " + fname);
 			if (looksLikeBankedOr9900Code(content)) {
+				log.debug("Assuming content is module ROM");
 				injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length, md5);
 			} else {
+				log.debug("Assuming content is module GROM");
 				injectModuleGrom(module, databaseURI, moduleName, fname, 0, md5);
 			}
 			break;
@@ -424,7 +433,11 @@ public class TI99Machine extends MachineBase {
 		if (content.length > 0x2000 && allIded)
 			insts *= 2;
 		
-		return insts > content.length / 256;
+		boolean isROMCode = insts > content.length / 256;
+		
+		log.debug("# insts = " + insts +"; all banks have IDs: " + allIded);
+		
+		return isROMCode;
 	}
 
 	private void injectModuleGrom(IModule module, URI databaseURI,
@@ -537,6 +550,9 @@ public class TI99Machine extends MachineBase {
 		if (!file.getName().toLowerCase().endsWith(".rpk")) {
 			return false;
 		}
+
+		log.debug("Trying " + file + " as RPK");
+
 		
 		// it is a zip container: softlist.xml contains the info
 		ZipFile zf;
@@ -552,6 +568,7 @@ public class TI99Machine extends MachineBase {
 			for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
 				ZipEntry ent = en.nextElement();
 				if (ent.getName().equals("softlist.xml")) {
+					log.debug("Handling softlist.xml");
 					InputStream is = zf.getInputStream(ent);
 					module = convertSoftList(databaseURI, file.toURI(), is);
 					is.close();
@@ -612,6 +629,7 @@ public class TI99Machine extends MachineBase {
 		boolean any = false;
 		try {
 			boolean oneModule = zf.size() <= 4;
+			log.debug("Assuming " + file + " has " + (oneModule ? "one module" :"multiple modules"));
 				
 			for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
 				ZipEntry ent = en.nextElement();
@@ -622,13 +640,13 @@ public class TI99Machine extends MachineBase {
 					if (oneModule) {
 						// associate with zip file's module
 						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), file.getName(), moduleMap)) {
-							System.out.println(ent.getName());
+							log.debug("Matched " + ent.getName() + " from " + file.getName());
 							// nice
 						}
 					} else {
 						// associate with appropriate module
 						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), moduleMap)) {
-							System.out.println(ent.getName());
+							log.debug("Matched " + ent.getName() + " from " + file.getName());
 							// nice
 						}
 					}
@@ -726,7 +744,9 @@ public class TI99Machine extends MachineBase {
 	}
 
 	private URI makeZipUri(URI zipUri, String name) throws URISyntaxException {
-		return new URI("jar", zipUri + "!/" + name, null);
+		URI zipEntURI = new URI("jar", zipUri + "!/" + name, null);
+		log.debug("Zip entry URI for " + zipUri + " is: " + zipEntURI);
+		return zipEntURI;
 	}
 
 	private String makeZipUriString(URI zipUri, String name) {
@@ -744,12 +764,15 @@ public class TI99Machine extends MachineBase {
 	 */
 	private String readHeaderName(byte[] content) {
 		for (int offs = 0; offs < content.length; offs += 0x2000) {
+			log.debug("Module Header scan @ " + HexUtils.toHex4(offs) 
+					+ ": header byte =  " + HexUtils.toHex2(content[offs]));
 			if (content[offs] != (byte) 0xaa) {
 				continue;
 			}
 			
 			// program list
 			int addr = readAddr(content, offs + 0x6);
+			log.debug("Program list @ " + HexUtils.toHex4(offs) + ": " + HexUtils.toHex4(addr));
 			if (addr == 0)
 				continue;
 	
@@ -759,9 +782,11 @@ public class TI99Machine extends MachineBase {
 			do {
 				next = readAddr(content, offs + (addr & 0x1fff));
 				name = readString(content, offs + (addr & 0x1fff) + 4);
+				log.debug("Fetched name: " + name) ;
 				addr = next;
 			} while (next >= 0x6000);		/* else not really module? */
 			
+			log.debug("Using name: " + name) ;
 			return name.trim();
 		}
 		return "";

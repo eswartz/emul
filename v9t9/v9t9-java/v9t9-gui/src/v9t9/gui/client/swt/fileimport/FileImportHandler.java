@@ -16,12 +16,11 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
@@ -31,7 +30,6 @@ import ejs.base.properties.IProperty;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
-import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.files.IDiskImage;
 import v9t9.common.files.IDiskImageMapper;
 import v9t9.common.files.IFileExecutor;
@@ -48,6 +46,8 @@ import v9t9.common.modules.IModule;
  */
 public class FileImportHandler implements IFileImportHandler {
 
+	private static final Logger log = Logger.getLogger(FileImportHandler.class);
+	
 	private IMachine machine;
 	private List<String> history = new ArrayList<String>();
 	private Shell shell;
@@ -76,18 +76,21 @@ public class FileImportHandler implements IFileImportHandler {
 	public void importFile(File file) throws NotifyException {
 		
 		if (tryModule(file)) {
+			log.debug("handled as module: " + file);
 			return;
 		}
 
 		if (tryDiskImage(file)) {
+			log.debug("handled as disk image: " + file);
 			return;
 		}
 		
 		if (tryStandaloneFile(file)) {
+			log.debug("handled as standalone file: " + file);
 			return;
 		}
-		
-		MessageDialog.openError(shell, "Unsupported File", 
+
+		throw new NotifyException(null, 
 				"V9t9 does not know how to handle " + file);
 	}
 
@@ -174,7 +177,7 @@ public class FileImportHandler implements IFileImportHandler {
 			return false;
 		}
 		
-		catalog = new Catalog("DSK1", "TEMP", 1, 1, Collections.singletonList(entry));
+		catalog = new Catalog("DSK1", "TEMP", 0, 0, Collections.singletonList(entry));
 
 		IProperty[] disks = fiadMapper.getSettings();
 		IProperty enabledProperty = fiadMapper.getDirectorySupportProperty();

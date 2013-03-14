@@ -25,6 +25,7 @@ import java.util.Date;
 
 import javax.imageio.ImageIO;
 
+import org.apache.log4j.Logger;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.dnd.DND;
@@ -64,6 +65,8 @@ import ejs.base.properties.IPropertyListener;
  */
 public class SwtDragDropHandler implements DragSourceListener, DropTargetListener {
 
+	private static final Logger log = Logger.getLogger(SwtDragDropHandler.class);
+	
 	private DragSource source;
 	private DropTarget target;
 	private final ISwtVideoRenderer renderer;
@@ -350,8 +353,11 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			String[] files = (String[]) event.data;
 			if (files != null) {
 				String path = files[0];
-				if (!path.matches(pattern))
+				log.debug("dropped file: " + path);
+				if (!path.matches(pattern)) {
+					log.debug("ignoring because doesn't match pattern");
 					return null;
+				}
 				file = new File(path);
 				return file;
 			}
@@ -368,8 +374,11 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				if (lastURLFile != null)
 					lastURLFile.delete();
 				
-				if (!trimmed.matches(pattern) && !trimmed.endsWith("/"))
+				log.debug("dropped URL: " + trimmed);
+				if (!trimmed.matches(pattern) && !trimmed.endsWith("/")) {
+					log.debug("ignoring because doesn't match pattern");
 					return null;
+				}
 				
 				File temp = null;
 				int dotIdx = trimmed.lastIndexOf('/');
@@ -377,6 +386,8 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 					temp = new File(System.getProperty("java.io.tmpdir"), trimmed.substring(dotIdx+1));
 				else
 					temp = File.createTempFile("url", ".img");
+				
+				log.debug("copying file to " + temp);
 				URL url = new URL(trimmed);
 				lastURLFile = readFileFromURL(temp, url);
 				if (lastURLFile != null) {
@@ -446,7 +457,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	}
 
 	private File readFileFromURL(File temp, URL url) {
-		System.out.println("Loading " + url + " into " + temp);
+		log.info("Loading " + url + " into " + temp);
 
 		InputStream is = null;
 		try {
@@ -488,6 +499,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	}
 
 	public static ImageFrame[] loadImageFromFile(String file) throws NotifyException {
+		log.debug("attempting to load image: " + file);
 		ImageFrame[] info = null;
 		URL url;
 		try {
