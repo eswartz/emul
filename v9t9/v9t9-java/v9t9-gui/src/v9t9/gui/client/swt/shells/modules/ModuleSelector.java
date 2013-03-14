@@ -289,6 +289,7 @@ public class ModuleSelector extends Composite {
 						modDbList.setList(curDbs);
 					}
 					
+					revertModules();
 					synchronized (knownStates) {
 						knownStates.clear();
 					}

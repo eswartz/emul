@@ -65,6 +65,7 @@ import v9t9.gui.client.swt.SwtWindow;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.DialogSettingsWrapper;
 import ejs.base.settings.ISettingSection;
+import ejs.base.utils.TextUtils;
 
 /**
  * @author ejs
@@ -548,6 +549,10 @@ public class ModuleAddDialog extends StatusDialog {
 	 * @param dbase
 	 */
 	protected boolean saveModuleList(File dbase) {
+		// if no directory, just add the list
+		if (TextUtils.isEmpty(dirText.getText())) {
+			return true;
+		}
 		if (dbase.exists()) {
 			if (false == MessageDialog.openQuestion(getShell(), "File exists", 
 					"The file " + dbase + " already exists.  Overwrite?")) {
