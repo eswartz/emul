@@ -54,18 +54,6 @@ invoking "Enable Advanced Controls".  Then, a new toolbar appears at the bottom 
 the screen with a "Toggle Debugger" button.)
 </p>
 	
-<p>
-V9t9 also contains support for:
-</p>
-	<ul>
-		<li>V9938 (MSX2) (new!)</li>
-		<li>Multiple TMS9919 ("ForTI") support (new!)</li>
-		<li>Experimental FORTH processor ("F99B") (new!)</li>
-	</ul>
-	
-<p>These can be enabled by modifying the *.jnlp file and passing "Forth99B"
-in the &lt;argument&gt; element of the &lt;application-desc&gt; element.
-</p>	
 </div>
 
 
