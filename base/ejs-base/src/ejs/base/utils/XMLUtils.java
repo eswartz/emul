@@ -117,4 +117,10 @@ public class XMLUtils {
 		return null;
 	}
 
+	public static Element getChildElementNamed(Element element, String name) {
+		Element[] els = getChildElementsNamed(element, name);
+		if (els == null || els.length == 0)
+			return null;
+		return els[0];
+	}
 }

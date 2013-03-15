@@ -243,7 +243,7 @@ public class FileImportHandler implements IFileImportHandler {
 			return false;
 					
 		IModule theMatch = null;
-		String matchPattern = ".*/?"+Pattern.quote(file.getName());
+		String matchPattern = ".*/?"+Pattern.quote(file.getName())+"/?.*";
 		for (IModule module : ents) {
 			for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
 				if (info.getFilename() != null && info.getFilename().matches(matchPattern)) {

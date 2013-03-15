@@ -68,6 +68,14 @@ public class MemoryEntryInfo {
 	public MemoryEntryInfo() {
 		properties = new HashMap<String, Object>();
 	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return properties.toString();
+	}
 
 	
 	/**

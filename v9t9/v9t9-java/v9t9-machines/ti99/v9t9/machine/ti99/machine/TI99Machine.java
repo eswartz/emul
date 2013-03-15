@@ -233,7 +233,9 @@ public class TI99Machine extends MachineBase {
 		// remove spurious modules
 		for (Iterator<IModule> iter = moduleMap.values().iterator(); iter.hasNext(); ) {
 			IModule module = iter.next();
-			System.out.println(module);
+			System.out.println("module: " + module);
+			log.info("module: " + module);
+			
 			String moduleName = module.getName();
 			if (TextUtils.isEmpty(moduleName) || !isASCII(moduleName)) {
 				iter.remove();
@@ -328,10 +330,12 @@ public class TI99Machine extends MachineBase {
 				File file = new File(uri);
 				try {
 					FDR fdr = FDRFactory.createFDR(file);
-					fdr.validate();
-					// hmm, likely a file, and not a module
-					log.debug("Not treating " + fname + " as module since it looks like a file: " + fdr);
-					return false;
+					if (fdr != null) {
+						fdr.validate();
+						// hmm, likely a file, and not a module
+						log.debug("Not treating " + fname + " as module since it looks like a file: " + fdr);
+						return false;
+					}
 				} catch (InvalidFDRException e) {
 					// okay, not likely an errant disk image
 				}
@@ -473,6 +477,7 @@ public class TI99Machine extends MachineBase {
 						.withOffset(fileOffset)
 						.withFileMD5(md5)
 						.withBankClass(StdMultiBankedMemoryEntry.class)
+						.withSize(-0x2000)
 						.isReversed(true)
 						.create(moduleName);
 			} else {
@@ -565,19 +570,39 @@ public class TI99Machine extends MachineBase {
 		
 		try {
 			IModule module = null;
-			for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
-				ZipEntry ent = en.nextElement();
-				if (ent.getName().equals("softlist.xml")) {
-					log.debug("Handling softlist.xml");
-					InputStream is = zf.getInputStream(ent);
+			ZipEntry softlist = zf.getEntry("softlist.xml");
+			if (softlist != null) {
+				log.debug("Handling softlist.xml");
+				InputStream is = zf.getInputStream(softlist);
+				try {
 					module = convertSoftList(databaseURI, file.toURI(), is);
+				} finally {
 					is.close();
-					if (module != null) {
-						moduleMap.put(module.getName(), module);
-					}
 				}
 			}
+			else {
+				// try layout.xml + meta-inf.xml
+				ZipEntry layout = zf.getEntry("layout.xml");
+				ZipEntry metainf = zf.getEntry("meta-inf.xml");
+				if (layout != null && metainf != null) {
+					InputStream lis = null;
+					InputStream mis = null;
+					try {
+						lis = zf.getInputStream(layout);
+						mis = zf.getInputStream(metainf);
+						module = convertLayoutMetainf(databaseURI, file.toURI(), lis, mis);
+					} finally {
+						if (lis != null)
+							lis.close();
+						if (mis != null)
+							mis.close();
+					}
+					
+				}
+			}
+			
 			if (module != null) {
+				moduleMap.put(module.getName(), module);
 				for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
 					ZipEntry ent = en.nextElement();
 					for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
@@ -673,19 +698,7 @@ public class TI99Machine extends MachineBase {
 	private IModule convertSoftList(URI databaseURI, URI zipUri, InputStream is) {
 		IModule module;
 		
-		StreamXMLStorage storage = new StreamXMLStorage();
-		storage.setInputStream(is);
-		try {
-			storage.load("software");
-		} catch (StorageException e) {
-			e.printStackTrace();
-			return null;
-		} finally {
-			try {
-				is.close();
-			} catch (IOException e) {
-			}
-		}
+		StreamXMLStorage storage = readXMLAndClose(is, "software", "softlist.xml");
 		
 		String moduleName = storage.getDocumentElement().getAttribute("name");
 		module = new Module(databaseURI, moduleName);
@@ -736,6 +749,95 @@ public class TI99Machine extends MachineBase {
 								null);
 					}
 				}
+			}
+			
+		}
+
+		return module;
+	}
+
+	/**
+	 * @param is
+	 * @return
+	 */
+	protected StreamXMLStorage readXMLAndClose(InputStream is, String rootTag, String fileName) {
+		StreamXMLStorage storage = new StreamXMLStorage();
+		storage.setInputStream(is);
+		try {
+			storage.load(rootTag);
+			return storage;
+		} catch (StorageException e) {
+			log.error("failed to read <"+rootTag+"> from " + fileName, e);
+			return null;
+		} finally {
+			try {
+				is.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	/**
+	 * @param is
+	 * @return
+	 */
+	private IModule convertLayoutMetainf(URI databaseURI, URI zipUri, InputStream lis,
+			InputStream mis) {
+		IModule module;
+
+		StreamXMLStorage layout = readXMLAndClose(lis, "romset", "layout.xml");
+		StreamXMLStorage metainf = readXMLAndClose(mis, "meta-inf", "meta-inf.xml");
+		
+		Element moduleNameEl = XMLUtils.getChildElementNamed(metainf.getDocumentElement(), "name");
+		if (moduleNameEl == null) {
+			log.debug("unexpected format, no <name>");
+			return null;
+		}
+		String moduleName = moduleNameEl.getTextContent().trim();
+		module = new Module(databaseURI, moduleName);
+
+		Element resources = XMLUtils.getChildElementNamed(layout.getDocumentElement(),  "resources");
+		if (resources == null) {
+			log.debug("unexpected format, no <resources>");
+			return null;
+		}
+
+		Map<String, String> imgToFile = new HashMap<String, String>();
+		for (Element romEl : XMLUtils.getChildElementsNamed(resources,  "rom")) {
+			imgToFile.put(romEl.getAttribute("id"), romEl.getAttribute("file"));
+		}
+		
+		Element config = XMLUtils.getChildElementNamed(layout.getDocumentElement(),  "configuration");
+		if (config == null) {
+			log.debug("unexpected format, no <configuration>");
+			return null;
+		}
+		
+		Element pcb = XMLUtils.getChildElementNamed(config,  "pcb");
+		if (pcb == null) {
+			log.debug("unexpected format, no <pcb>");
+			return null;
+		}
+		
+//		boolean banked = pcb.getAttribute("type").equals("banked");
+
+		for (Element socketEl : XMLUtils.getChildElementsNamed(pcb,  "socket")) {
+			String type = socketEl.getAttribute("id");
+			String uri = makeZipUriString(zipUri, imgToFile.get(socketEl.getAttribute("uses")));
+
+			if (type.equals("rom_socket")) {
+				injectModuleRom(module, databaseURI, moduleName, uri,
+						0, -0x2000, null
+						);
+			}
+			else if (type.equals("rom2_socket")) {
+				injectModuleBank2Rom(module, databaseURI, moduleName, uri, 
+						0, null
+						);
+			}
+			else if (type.equals("grom_socket")) {
+				injectModuleGrom(module, databaseURI, moduleName, uri,
+						0, null);
 			}
 			
 		}
