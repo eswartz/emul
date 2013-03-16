@@ -12,6 +12,7 @@ v9t9/v9t9-java/libanalogtv/swig
 v9t9/v9t9-java/libv9t9render/libv9t9render.so
 v9t9/v9t9-java/libv9t9render/swig
 v9t9/java/*/bin
+v9t9/v9t9-java/v9t9-data/bin
 v9t9/v9t9-c/v9t9-c/log.unix.txt
 music.raw
 v9t9/v9t9-c/tools/.classpath

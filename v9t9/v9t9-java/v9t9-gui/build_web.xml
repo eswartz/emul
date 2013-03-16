@@ -38,6 +38,14 @@
     		<fileset dir="${bin.v9t9.dir}">
     	      <include name="**"/>
     		  <exclude name="data/**"/>
+			  <exclude name="orig" />
+		  	  <exclude name="unsigned" />
+			  <exclude name="signed" />
+			  <exclude name="orig/**" />
+			  <exclude name="unsigned/**" />
+			  <exclude name="signed/**" />
+			  <exclude name="cur/**" />
+			  <exclude name="ref/**" />
     	    </fileset>
       	</copy>
     	
@@ -50,6 +58,12 @@
     			<exclude name="hs_err*" />
     			<exclude name="tmpdir" />
     			<exclude name="tmpdir/**" />
+    			<exclude name="orig" />
+    			<exclude name="cur" />
+    			<exclude name="ref" />
+    			<exclude name="orig/**" />
+    			<exclude name="cur/**" />
+    			<exclude name="ref/**" />
     		</fileset>
     	
     	</zip>

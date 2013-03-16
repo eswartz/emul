@@ -12,6 +12,7 @@ package v9t9.common.files;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
@@ -97,5 +98,15 @@ public interface IFilesInDirectoryMapper extends IPersistable {
 	 * @throws IOException
 	 */
 	Catalog createCatalog(File dir) throws IOException;
+
+	/**
+	 * @return
+	 */
+	IProperty getDirectorySupportProperty();
+
+	/**
+	 * @return
+	 */
+	Map<String, IProperty> getDiskSettingMap();
 	
 }

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
@@ -28,10 +29,13 @@ import ejs.base.properties.IProperty;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.Catalog;
+import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.IDiskImage;
 import v9t9.common.files.IDiskImageMapper;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.files.IFileImportHandler;
+import v9t9.common.files.IFilesInDirectoryMapper;
+import v9t9.common.files.NativeFileFactory;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
@@ -42,6 +46,8 @@ import v9t9.common.modules.IModule;
  */
 public class FileImportHandler implements IFileImportHandler {
 
+	private static final Logger log = Logger.getLogger(FileImportHandler.class);
+	
 	private IMachine machine;
 	private List<String> history = new ArrayList<String>();
 	private Shell shell;
@@ -69,16 +75,44 @@ public class FileImportHandler implements IFileImportHandler {
 	@Override
 	public void importFile(File file) throws NotifyException {
 		
+		if (tryDemo(file)) {
+			log.debug("handled as demo: " + file);
+			return;
+			
+		}
+		
 		if (tryModule(file)) {
+			log.debug("handled as module: " + file);
 			return;
 		}
 
 		if (tryDiskImage(file)) {
+			log.debug("handled as disk image: " + file);
 			return;
 		}
 		
-		MessageDialog.openError(shell, "Unsupported File", 
+		if (tryStandaloneFile(file)) {
+			log.debug("handled as standalone file: " + file);
+			return;
+		}
+
+		throw new NotifyException(null, 
 				"V9t9 does not know how to handle " + file);
+	}
+
+	/**
+	 * @param file
+	 * @return
+	 */
+	private boolean tryDemo(File file) {
+		try {
+			machine.getDemoHandler().startPlayback(file.toURI());
+			return true;
+		} catch (NotifyException e) {
+			return false;
+		} catch (Throwable e) {
+			return false;
+		}
 	}
 
 	/**
@@ -124,7 +158,74 @@ public class FileImportHandler implements IFileImportHandler {
 				machine,
 				diskSettingsMap, 
 				catalog,
-				catalog.volumeName);
+				"Select the drive into which to load the disk ''{0}''",
+				catalog.volumeName.trim());
+
+		int ret = dialog.open();
+		if (ret == Window.OK) {
+			dialog.getDiskProperty().setString(file.getAbsolutePath());
+			
+			IFileExecutor exec = dialog.getFileExecutor();
+			if (exec != null) {
+				try {
+					exec.run(machine);
+				} catch (NotifyException e) {
+					machine.getEventNotifier().notifyEvent(e.getEvent());
+				}
+			}
+		}
+		return true;
+	}
+	
+
+	/**
+	 * @param file
+	 * @return
+	 */
+	private boolean tryStandaloneFile(File file) {
+		IFilesInDirectoryMapper fiadMapper = machine.getEmulatedFileHandler().getFilesInDirectoryMapper();
+		if (fiadMapper == null) {
+			return false;
+		}
+		
+		Catalog catalog = null;
+		
+		CatalogEntry entry;
+		try {
+			entry = new CatalogEntry(fiadMapper.getDsrFileName(file.getName()), 
+					NativeFileFactory.INSTANCE.createNativeFile(file));
+		} catch (IOException e1) {
+			return false;
+		}
+		
+		catalog = new Catalog("DSK1", "TEMP", 0, 0, Collections.singletonList(entry));
+
+		IProperty[] disks = fiadMapper.getSettings();
+		IProperty enabledProperty = fiadMapper.getDirectorySupportProperty();
+		if (enabledProperty == null || disks.length == 0) {
+			MessageDialog.openError(shell, "Not Supported", "This machine does not support files in directories");
+			return true;
+		}
+		
+		if (!enabledProperty.getBoolean()) {
+			boolean go = MessageDialog.openQuestion(shell, "Enable Files in Directories?", 
+					"Support for files in a directory is not enabled.\n\n"+
+					"To use this disk, V9t9 needs to turn on that support.\n\n"+
+							"Continue?");
+			if (!go)
+				return true;
+			
+			enabledProperty.setBoolean(true);
+		}
+
+		Map<String, IProperty> diskSettingMap = fiadMapper.getDiskSettingMap();
+		SelectDiskImageDialog dialog = new SelectDiskImageDialog(shell, "Select Drive",
+				machine,
+				diskSettingMap, 
+				catalog,
+				"Select the drive into which to host the file ''{0}''",
+				file.getName()
+				);
 
 		int ret = dialog.open();
 		if (ret == Window.OK) {
@@ -163,7 +264,7 @@ public class FileImportHandler implements IFileImportHandler {
 			return false;
 					
 		IModule theMatch = null;
-		String matchPattern = ".*/?"+Pattern.quote(file.getName());
+		String matchPattern = ".*/?"+Pattern.quote(file.getName())+"/?.*";
 		for (IModule module : ents) {
 			for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
 				if (info.getFilename() != null && info.getFilename().matches(matchPattern)) {

@@ -11,6 +11,7 @@
 package v9t9.common.client;
 
 import v9t9.common.events.IEventNotifier;
+import v9t9.common.keyboard.IPasteListener;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 
@@ -35,7 +36,11 @@ public interface IKeyboardHandler {
 	
 //	KeyDelta[] scanKeyDeltas();
 
+	void addPasteListener(IPasteListener listener);
+	void removePasteListener(IPasteListener listener);
+	
 	void cancelPaste();
+	void finishPaste();
 
 	/**
 	 * Paste text into the clipboard

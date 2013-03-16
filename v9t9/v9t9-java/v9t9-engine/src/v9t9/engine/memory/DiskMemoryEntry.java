@@ -45,7 +45,7 @@ public class DiskMemoryEntry extends MemoryEntry {
     }
     DiskMemoryEntry(MemoryEntryInfo info, String name, MemoryArea area, StoredMemoryEntryInfo storedInfo) {
     	super(name, info.getDomain(storedInfo.memory), info.getAddress(), 
-    			Math.min(Math.abs(info.getSize()), storedInfo.size) - storedInfo.fileoffs, area);
+    			Math.min(Math.abs(info.getSize()), storedInfo.size - storedInfo.fileoffs), area);
 		this.storedInfo = storedInfo;
 		this.info = storedInfo.createMemoryEntryInfo();
 		this.locator = storedInfo.locator;
@@ -96,7 +96,8 @@ public class DiskMemoryEntry extends MemoryEntry {
             	
                 InputStream is = locator.createInputStream(uri);
                 FileUtils.skipFully(is, storedInfo.fileoffs);
-				byte[] data = FileUtils.readInputStreamContentsAndClose(is, filesize - storedInfo.fileoffs);
+				byte[] data = FileUtils.readInputStreamContentsAndClose(is, 
+						filesize );
                 area.copyFromBytes(data);
 
             	bLoaded = true;

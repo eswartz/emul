@@ -88,7 +88,7 @@ public class StoredMemoryEntryInfo {
     				throw new IOException("file '" + filename + "'found for '" + name + "' is not the expected size (" + info.getSize() +" bytes); found " + filesize + " bytes at " + uri);
     			}
     		} else {
-    			if (filesize > -info.getSize()) {
+    			if (!info.isBanked() && filesize > -info.getSize()) {
     				throw new IOException("file '" + filename + "'found for '" + name + "' is too large (>= " + -info.getSize() +" bytes); found " + filesize + " bytes at " + uri);
     			}
     		}

@@ -19,6 +19,10 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
+
+import ejs.base.utils.HexUtils;
+
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.IFileExecutionHandler;
@@ -29,6 +33,7 @@ import v9t9.common.modules.IModule;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.files.directory.OpenFile;
 import v9t9.machine.ti99.machine.fileExecutors.AdventureLoadFileExecutor;
+import v9t9.machine.ti99.machine.fileExecutors.ArchiverExtractFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.EditAssmLoadAndRunFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.EditAssmRunProgramFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.ExtBasicAutoLoadFileExecutor;
@@ -41,6 +46,8 @@ import v9t9.machine.ti99.machine.fileExecutors.ExtBasicLoadAndRunFileExecutor;
  */
 public class TI99FileExecutionHandler implements IFileExecutionHandler {
 
+	private static final Logger log = Logger.getLogger(TI99FileExecutionHandler.class);
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.files.IFileExecutionHandler#analyze(v9t9.common.files.Catalog)
 	 */
@@ -56,18 +63,21 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 			if (module.getName().toLowerCase().contains("extended basic")) {
 				if (sawExtBasic)
 					continue;
+				log.debug("Found Extended BASIC match: " + module);
 				scanExtBasic(machine, drive, catalog, execs, module);
 				sawExtBasic = true;
 			}
 			else if (module.getName().toLowerCase().contains("editor/assembler")) {
 				if (sawEditAssm)
 					continue;
+				log.debug("Found Editor/Assembler match: " + module);
 				scanEditAssm(machine, drive, catalog, execs, module);
 				sawEditAssm = true;
 			}
 			else if (module.getName().toLowerCase().contains("scott adam's adventure")) {
 				if (sawAdventure)
 					continue;
+				log.debug("Found Scott Adam's Adventure match: " + module);
 				scanAdventure(machine, catalog, execs, module);
 				sawAdventure = true;
 			}
@@ -80,22 +90,25 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		if (drive == 1) {
 			CatalogEntry load = catalog.findEntry("LOAD", "PROGRAM", 0);
 			if (load != null) {
+				log.debug("Found DSK1.LOAD");
 				execs.add(new ExtBasicAutoLoadFileExecutor(module));
 				
 				// if there is a LOAD, can't do anything else (yet -- need a way to force FCTN-4 to work)
+				log.debug("Not scanning further -- can't yet abort auto-load to do anything else");
 				return;
 			}
 		}
 		
 		// else look for programs
 		for (CatalogEntry ent : catalog.entries) {
+			String filePath = catalog.deviceName + "." + ent.fileName;
 			if (ent.type.equals("PROGRAM") && isExtBasicMemoryImageProgram(machine, ent)) {
 				execs.add(new ExtBasicLoadAndRunFileExecutor(module,
-						catalog.deviceName + "." + ent.fileName));
+						filePath));
 			}
 			else if (ent.type.equals("DIS/VAR") && ent.recordLength == 163) {
 				execs.add(new ExtBasicLoadAndRunFileExecutor(module,
-						catalog.deviceName + "." + ent.fileName));
+						filePath));
 			}
 		}
 
@@ -133,7 +146,13 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		int pgm1 = readShort(header, 2);
 		int pgm2 = readShort(header, 4);
 		int hi = readShort(header, 6);
+		
+		log.debug("Ext Basic program attempt for " + ent.getFile() + ": hdr is " 
+				+ HexUtils.toHex4(pgm1) + ", "
+				+ HexUtils.toHex4(pgm2) + ", "
+				+ HexUtils.toHex4(hi));
 		if (pgm2 < hi && hi < machine.getVdp().getMemorySize() && (hi - Math.min(pgm1, pgm2) < size)) {
+			log.debug("accepting");
 			return true;
 		}
 		return false;
@@ -143,6 +162,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 			List<IFileExecutor> execs, IModule module) {
 		
 		gatherMemoryImagePrograms(machine, catalog, execs, module);
+		gatherArchives(machine, drive, catalog, execs, module);
 		gatherObjectFiles(machine, catalog, execs, module, true);
 		gatherObjectFiles(machine, catalog, execs, module, false);
 
@@ -165,6 +185,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 			if (ent.type.equals("PROGRAM") && isMemoryImageProgram(machine, ent)) {
 				String baseName = ent.fileName.substring(0, ent.fileName.length() - 1);
 				if (baseName.equals("ASSM") || baseName.equals("EDIT")) {
+					log.debug("Skipping ASSM/EDIT");
 					continue;
 				}
 				CatalogEntry old = memImgMap.put(baseName, ent);
@@ -207,6 +228,12 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		int low = readShort(header, 0);
 		int binsize = readShort(header, 2);
 		int addr = readShort(header, 4);
+		
+		log.debug("Memory Image program attempt for " + ent.getFile() + ": hdr is " 
+				+ HexUtils.toHex4(low) + ", "
+				+ HexUtils.toHex4(binsize) + ", "
+				+ HexUtils.toHex4(addr));
+
 		if (((low & 0xff) == 0 || (low & 0xff) == 0xff
 				|| (low & 0xff00) == 0xff00 || (low & 0xff00) == 0)
 				&& binsize <= size + 6
@@ -218,6 +245,51 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		return false;
 	}
 
+	/**
+	 * Look for memory image programs, PROGRAM files in groups of one
+	 * or more with incrementing filenames.
+	 * @param machine
+	 * @param catalog
+	 * @param execs
+	 * @param module
+	 */
+	protected void gatherArchives(IMachine machine, int drive, Catalog catalog,
+			List<IFileExecutor> execs, IModule module) {
+		for (CatalogEntry ent : catalog.entries) {
+			if (ent.type.equals("INT/FIX") && ent.recordLength == 128) {
+				
+				OpenFile file;
+				try {
+					file = new OpenFile(ent.getFile(), catalog.deviceName, ent.fileName);
+				} catch (DsrException e1) {
+					continue;
+				}
+				
+				byte[] record = new byte[128];
+				ByteMemoryAccess access = new ByteMemoryAccess(record, 0);
+				
+				int len;
+				try {
+					len = file.readRecord(access, 128);
+				} catch (DsrException e) {
+					continue;
+				}
+
+				log.debug("Archiver3 attempt for " + ent.getFile() + ": hdr is " 
+						+ HexUtils.toHex2(record[0]) + ", "
+						+ HexUtils.toHex2(record[1]));
+
+				if (len == 128 && access.memory[0] == (byte) 0x80 && 
+						(access.memory[1] >= 0x10 && access.memory[1] <= 0x13)) {
+					execs.add(new ArchiverExtractFileExecutor(module,
+							ent.fileName, drive,
+							file.getNativeFile().getFile().getParent()
+							 ));
+				}
+			}
+		}
+	}
+	
 	/**
 	 * Look for memory image programs, PROGRAM files in groups of one
 	 * or more with incrementing filenames.
@@ -273,7 +345,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		while (true) {
 			try {
 				int len = file.readRecord(access, 80);
-				System.out.println(new String(record).replaceAll("[\\x00-\\x1f]", " "));
+				//System.out.println(new String(record).replaceAll("[\\x00-\\x1f]", " "));
 				
 				if (!isUncompressedObjectCodeRecord(Arrays.copyOf(record, len), entries)) {
 					valid = false;
@@ -381,7 +453,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 		while (true) {
 			try {
 				int len = file.readRecord(access, 80);
-				System.out.println(new String(record).replaceAll("[\\x00-\\x1f]", " "));
+				//System.out.println(new String(record).replaceAll("[\\x00-\\x1f]", " "));
 				
 				if (!isCompressedObjectCodeRecord(Arrays.copyOf(record, len), entries)) {
 					if (record[0] != 0)

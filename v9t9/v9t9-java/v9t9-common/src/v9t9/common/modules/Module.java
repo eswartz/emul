@@ -77,7 +77,7 @@ public class Module implements IModule {
 	 */
 	@Override
 	public String toString() {
-		return "Module: " + name + " (" + entries.size() + " entries)";
+		return "Module: " + name + " (" + entries.size() + " entries)\n" + entries;
 	}
 	
 	/* (non-Javadoc)

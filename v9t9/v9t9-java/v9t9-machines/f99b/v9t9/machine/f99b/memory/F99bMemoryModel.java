@@ -10,8 +10,17 @@
  */
 package v9t9.machine.f99b.memory;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
 import java.net.URL;
+
+import org.apache.log4j.Logger;
+
+import ejs.base.properties.IProperty;
+import ejs.base.utils.FileUtils;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
@@ -32,7 +41,8 @@ import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
  * @author ejs
  */
 public class F99bMemoryModel extends BaseTI994AMemoryModel {
-
+	private static final Logger log = Logger.getLogger(F99bMemoryModel.class);
+	
 	private MemoryEntry consoleEntry;
 
 	public F99bMemoryModel(IMachine machine) {
@@ -41,8 +51,14 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 
 	@Override
 	protected void initSettings(ISettingsHandler settings) {
-		URL dataURL = EmulatorMachinesData.getDataURL("../../../build/forth99");
+		URL dataURL;
+		dataURL = EmulatorMachinesData.getDataURL("../../../build/forth99");
 		DataFiles.addSearchPath(settings, dataURL.getPath());
+		
+		IProperty shipPath = settings.get(DataFiles.settingShippingRomsPath);
+		dataURL = EmulatorMachinesData.getDataURL("f99b/");
+		shipPath.getList().add(dataURL.toString());
+
 	}
 
 
@@ -138,6 +154,29 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		}
 		
 		// then 32k of GRAM storage
+		IProperty shipPath = settings.get(DataFiles.settingShippingRomsPath);
+		URI shippingDiskImage = URI.create(shipPath.getList().get(0) + f99bDiskGramMemoryEntryInfo.getFilename());
+		URI userDiskImage = machine.getRomPathFileLocator().getWriteURI(f99bDiskGramMemoryEntryInfo.getFilename());
+		File userDiskImageFile = new File(userDiskImage);
+		if (shippingDiskImage != null && userDiskImage == null || !userDiskImageFile.exists()) {
+			userDiskImageFile.getParentFile().mkdirs();
+			InputStream is = null;
+			OutputStream os = null;
+			try {
+				is = machine.getRomPathFileLocator().createInputStream(shippingDiskImage);
+				os = machine.getRomPathFileLocator().createOutputStream(userDiskImage);
+				byte[] content = FileUtils.readInputStreamContentsAndClose(is);
+				FileUtils.writeOutputStreamContentsAndClose(os, content, content.length);
+			} catch (IOException e) {
+				log.error("Failed to copy initial disk image from " + shippingDiskImage + " to " + userDiskImage, e);
+				eventNotifier.notifyEvent(this, IEventNotifier.Level.ERROR, 
+						"Failed to copy initial disk image from " + shippingDiskImage + " to " + userDiskImage); 
+			} finally {
+				try { if (is != null) is.close(); } catch (IOException e) { }
+				try { if (os != null) os.close(); } catch (IOException e) { }
+			}
+		}
+		
 		try {
 			IMemoryEntry entry = memory.getMemoryEntryFactory().newMemoryEntry(
 					f99bDiskGramMemoryEntryInfo);

@@ -48,10 +48,11 @@ import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
  */
 public class BaseEmuDiskDSRTest {
 
-	protected DiskDirectoryMapper mymapper = new DiskDirectoryMapper();
+	protected ISettingsHandler settings;
+	
+	protected DiskDirectoryMapper mymapper = new DiskDirectoryMapper(settings.get(EmuDiskSettings.emuDiskDsrEnabled));
 	protected File dsk1Path;
 	
-	protected ISettingsHandler settings;
 	protected IProperty diskImageDsrEnabled;
 	
 

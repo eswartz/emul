@@ -32,7 +32,7 @@ public class Logging {
 	private static Map<File, PrintWriter> fileToStreamMap = new HashMap<File, PrintWriter>();
 	private static Map<IProperty, PrintWriter> settingToPrintwriterMap = new HashMap<IProperty, PrintWriter>();
 	
-	final static String TMPDIR = File.separatorChar == '/' ? "/tmp/" : "c:/temp/";
+	final static String TMPDIR = System.getProperty("java.io.tmpdir");
     
 	/**
 	 * Register a log file for the given setting.  Must register before setting value.
@@ -47,7 +47,7 @@ public class Logging {
 			
 		File file = new File(logFileName);
 		if (!file.isAbsolute()) {
-			logFileName = TMPDIR + logFileName;
+			logFileName = TMPDIR + File.separatorChar + logFileName;
 			file = new File(logFileName);
 		}
 		

@@ -331,7 +331,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			
 			public void mouseDown(final MouseEvent e) {
 				//System.out.println("Mouse detected " + e);
-				if (!SWT.getPlatform().equals("win32") && e.button == 3) {
+				if (!SWT.getPlatform().equals("win32") && isContextClick(e)) {
 					showAppMenu(e);
 				}
 			}
@@ -341,7 +341,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					handleClickOutsideToolWindow(videoControl.toDisplay(e.x, e.y));
 					focusRestorer.restoreFocus();
 				}
-				if (SWT.getPlatform().equals("win32") && e.button == 3) {
+				if (SWT.getPlatform().equals("win32") && isContextClick(e)) {
 					showAppMenu(e);
 				}
 			}
@@ -456,6 +456,20 @@ public class SwtWindow extends BaseEmulatorWindow {
 //		});
 	}
 	
+	/**
+	 * @param e
+	 * @return
+	 */
+	protected boolean isContextClick(MouseEvent e) {
+		if (e.button == 3)
+			return true;
+		if (SWT.getPlatform().equals("cocoa") 
+				&& e.button == 1 
+				&& (e.stateMask & SWT.CONTROL) != 0)
+			return true;
+		return false;
+	}
+
 	protected void setFullscreen(boolean fullScreen) {
 		shell.setFullScreen(fullScreen);
 		buttonBar.getButtonBar().setRetractable(true);

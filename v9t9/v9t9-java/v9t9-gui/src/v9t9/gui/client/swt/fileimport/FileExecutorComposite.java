@@ -82,7 +82,7 @@ public class FileExecutorComposite extends Composite {
 		
 		descrText = new Text(composite, SWT.READ_ONLY | SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.V_SCROLL) ;
 		GridDataFactory.fillDefaults().grab(false, true).span(2, 1).indent(6, 0).minSize(-1, 96).applyTo(descrText);
-		
+
 		descrText.setBackground(composite.getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
 		
 		execComboViewer.addSelectionChangedListener(new ISelectionChangedListener() {

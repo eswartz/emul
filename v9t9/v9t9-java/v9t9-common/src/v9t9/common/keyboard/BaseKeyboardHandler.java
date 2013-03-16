@@ -17,8 +17,11 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import ejs.base.properties.IProperty;
 import ejs.base.utils.HexUtils;
+import ejs.base.utils.ListenerList;
 
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.KeyDelta;
@@ -36,6 +39,10 @@ import static v9t9.common.keyboard.KeyboardConstants.*;
  * 
  */
 public abstract class BaseKeyboardHandler implements IKeyboardHandler {
+
+	private static final Logger log = Logger.getLogger(BaseKeyboardHandler.class);
+	
+	
 	public static boolean DEBUG = false;
 	private static final long TIMEOUT = 500;
 
@@ -43,6 +50,9 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 
 	protected PasteTask pasteTask;
 	private IEventNotifier eventNotifier;
+
+	private ListenerList<IPasteListener> pasteListeners = new ListenerList<IPasteListener>();
+
 
 	/**
 	 * @author ejs
@@ -68,6 +78,8 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		private PasteTask(IKeyboardHandler handler, char[] chs) {
 			this.handler = handler;
 			this.chs = chs;
+			
+			log.debug("Pasting text: " + new String(chs));
 			
 			handler.getMachine().getClient().getVideoRenderer().addListener(this);
 		}
@@ -203,7 +215,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 						handler.applyKeyGroup();
 						nextTime = now + pasteDelay;
 					} else {
-						handler.cancelPaste();
+						handler.finishPaste();
 					}
 				}
 			}
@@ -331,10 +343,42 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	 */
 	@Override
 	public void cancelPaste() {
+		donePaste();
+		
+		pasteListeners.fire(new ListenerList.IFire<IPasteListener>() {
+
+			@Override
+			public void fire(IPasteListener listener) {
+				listener.pasteCanceled();
+			}
+		});
+
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IKeyboardHandler#finishPaste()
+	 */
+	@Override
+	public void finishPaste() {
+		donePaste();
+		
+		pasteListeners.fire(new ListenerList.IFire<IPasteListener>() {
+
+			@Override
+			public void fire(IPasteListener listener) {
+				listener.pasteCompleted();
+			}
+		});
+
+		
+	}
+	
+	protected void donePaste() {
 		resetKeyboard();	// clear queued keys
 		if (pasteTask != null)
 			pasteTask.dispose();
 		pasteTask = null;
+		
 		
 	}
 	
@@ -730,4 +774,20 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	public boolean isAnyKeyPending() {
 		return !keyboardState.isBufferEmpty() || !queuedKeys.isEmpty();
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IKeyboardHandler#addPasteListener(v9t9.common.keyboard.IPasteListener)
+	 */
+	@Override
+	public void addPasteListener(IPasteListener listener) {
+		pasteListeners.add(listener);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IKeyboardHandler#removePasteListener(v9t9.common.keyboard.IPasteListener)
+	 */
+	@Override
+	public void removePasteListener(IPasteListener listener) {
+		pasteListeners.remove(listener);
+	}
+
 }

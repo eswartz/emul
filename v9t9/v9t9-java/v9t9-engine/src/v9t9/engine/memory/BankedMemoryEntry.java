@@ -55,8 +55,7 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	}
 	
 	public boolean selectBank(int bank) {
-		if (bank >= bankCount)
-			return false;
+		bank %= bankCount;
 		if (currentBankIndex != bank) {
 			doSelectBank(bank);
 			return true;

@@ -13,6 +13,7 @@ package v9t9.gui.client.swt;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.apache.log4j.Logger;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Control;
@@ -29,6 +30,8 @@ import v9t9.common.events.NotifyEvent;
  *
  */
 public final class GuiEventNotifier extends BaseEventNotifier {
+	private static final Logger log = Logger.getLogger(GuiEventNotifier.class);
+	
 	ToolTip lastTooltip = null;
 	private final SwtWindow swtWindow;
 	private Timer timer;
@@ -67,6 +70,12 @@ public final class GuiEventNotifier extends BaseEventNotifier {
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
 				System.err.println(event);
+				if (event.level == Level.INFO)
+					log.debug(event);
+				else if (event.level == Level.WARNING)
+					log.warn(event);
+				else
+					log.error(event);
 				
 				if (swtWindow.getShell().isDisposed())
 					return;

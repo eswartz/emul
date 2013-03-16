@@ -12,8 +12,12 @@ package v9t9.engine.files.directory;
 
 import java.net.URL;
 
+import ejs.base.properties.IProperty;
+
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.machine.IMachine;
+import v9t9.common.settings.IStoredSettings;
 import v9t9.common.settings.IconSettingSchema;
 import v9t9.common.settings.SettingSchema;
 import v9t9.engine.EmulatorEngineData;
@@ -48,6 +52,20 @@ public class EmuDiskSettings {
 	 */
 	public static String getDeviceName(int dev) {
 		return "DSK" + dev;
+	}
+
+	/**
+	 * @param machine
+	 * @param i
+	 * @return
+	 */
+	public static IProperty getEmuDiskSetting(IMachine machine, int i) {
+		String diskName = getEmuDiskSetting(i);
+		IStoredSettings storage = machine.getSettings().findSettingStorage(diskName);
+		if (storage == null)
+			return null;
+		IProperty dskProp = storage.find(diskName);
+		return dskProp;
 	}
 	
 }

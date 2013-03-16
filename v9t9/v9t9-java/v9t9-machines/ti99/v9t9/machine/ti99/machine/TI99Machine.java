@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
 import ejs.base.settings.ISettingSection;
@@ -44,7 +45,10 @@ import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDsrManager;
 import v9t9.common.files.DataFiles;
+import v9t9.common.files.FDR;
+import v9t9.common.files.FDRFactory;
 import v9t9.common.files.IFileExecutionHandler;
+import v9t9.common.files.InvalidFDRException;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
@@ -63,6 +67,8 @@ import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 
 public class TI99Machine extends MachineBase {
 
+	private static final Logger log = Logger.getLogger(TI99Machine.class);
+	
 	public static final String KEYBOARD_MODE_TI994A = "ti994a";
 	public static final String KEYBOARD_MODE_TI994 = "ti994";
 	public static final String KEYBOARD_MODE_LEFT = "left";
@@ -227,7 +233,9 @@ public class TI99Machine extends MachineBase {
 		// remove spurious modules
 		for (Iterator<IModule> iter = moduleMap.values().iterator(); iter.hasNext(); ) {
 			IModule module = iter.next();
-			System.out.println(module);
+			System.out.println("module: " + module);
+			log.info("module: " + module);
+			
 			String moduleName = module.getName();
 			if (TextUtils.isEmpty(moduleName) || !isASCII(moduleName)) {
 				iter.remove();
@@ -320,6 +328,17 @@ public class TI99Machine extends MachineBase {
 		try {
 			try {
 				File file = new File(uri);
+				try {
+					FDR fdr = FDRFactory.createFDR(file);
+					if (fdr != null) {
+						fdr.validate();
+						// hmm, likely a file, and not a module
+						log.debug("Not treating " + fname + " as module since it looks like a file: " + fdr);
+						return false;
+					}
+				} catch (InvalidFDRException e) {
+					// okay, not likely an errant disk image
+				}
 				content = DataFiles.readMemoryImage(file, 0, 0xA000);
 			} catch (IllegalArgumentException e) {
 				// not file
@@ -332,6 +351,8 @@ public class TI99Machine extends MachineBase {
 		String moduleName = readHeaderName(content);
 	
 		moduleName = cleanupTitle(moduleName);
+		log.debug("Module Name: " + moduleName);
+
 		
 		IModule module = moduleMap.get(key);
 		if (module == null) {
@@ -352,7 +373,7 @@ public class TI99Machine extends MachineBase {
 		case 'C':
 		case 'c': {
 			
-			injectModuleRom(module, databaseURI, moduleName, fname, 0, md5);
+			injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length, md5);
 			
 			break;
 		}
@@ -363,18 +384,64 @@ public class TI99Machine extends MachineBase {
 			break;
 		}
 
-		default:
 		case 'G':
 		case 'g': {
 			injectModuleGrom(module, databaseURI, moduleName, fname, 0, md5);
 			break;
 		}
+		
+		default:
+			log.debug("Unknown file naming for " + fname);
+			if (looksLikeBankedOr9900Code(content)) {
+				log.debug("Assuming content is module ROM");
+				injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length, md5);
+			} else {
+				log.debug("Assuming content is module GROM");
+				injectModuleGrom(module, databaseURI, moduleName, fname, 0, md5);
+			}
+			break;
 		}
 		
 		// register/update module
 		moduleMap.put(key, module);
 
 		return true;
+	}
+
+	/**
+	 * @param content
+	 * @return
+	 */
+	private boolean looksLikeBankedOr9900Code(byte[] content) {
+		int insts = 0;
+		for (int addr = 0; addr < content.length; addr += 2) {
+			int word = readAddr(content, addr);
+			if (word == 0x45b /* RT */ 
+					|| word == 0x8300  /* CPU RAM base */
+					|| word == 0x83e0  /* GPLWS */
+					|| word == 0x8c00  /* VDPWA */
+					|| word == 0x8c02  /* VDPWD */
+					|| word == 0x8400  /* SOUND */
+					|| word == 0x380)  /* RTWP */
+				{
+				insts++;
+			}
+		}
+		
+		boolean allIded = true;
+		for (int addr = 0 ; addr < content.length; addr += 0x2000) {
+			if (content[addr] != (byte) 0xaa) {
+				allIded = false;
+			}
+		}
+		if (content.length > 0x2000 && allIded)
+			insts *= 2;
+		
+		boolean isROMCode = insts > content.length / 256;
+		
+		log.debug("# insts = " + insts +"; all banks have IDs: " + allIded);
+		
+		return isROMCode;
 	}
 
 	private void injectModuleGrom(IModule module, URI databaseURI,
@@ -388,7 +455,7 @@ public class TI99Machine extends MachineBase {
 	}
 
 	private void injectModuleRom(IModule module, URI databaseURI,
-			String moduleName, String fileName, int fileOffset, String md5) {
+			String moduleName, String fileName, int fileOffset, int fileSize, String md5) {
 		MemoryEntryInfo info;
 		boolean found = false;
 		for (MemoryEntryInfo ex : module.getMemoryEntryInfos()) {
@@ -398,15 +465,28 @@ public class TI99Machine extends MachineBase {
 				ex.getProperties().put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
 				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
 				ex.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
+				ex.getProperties().put(MemoryEntryInfo.SIZE, -0x2000);
 				found = true;
 				break;
 			} 
 		}
 		if (!found) {
-			info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
-					.withOffset(fileOffset)
-					.withFileMD5(md5)
-					.create(moduleName);
+			if (fileSize > 0x3e00) {
+				// probably a new-format reversed PBX module
+				info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
+						.withOffset(fileOffset)
+						.withFileMD5(md5)
+						.withBankClass(StdMultiBankedMemoryEntry.class)
+						.withSize(-0x2000)
+						.isReversed(true)
+						.create(moduleName);
+			} else {
+				info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
+						.withOffset(fileOffset)
+						.withFileMD5(md5)
+						.withSize(-0x2000)
+						.create(moduleName);
+			}
 			module.addMemoryEntryInfo(info);
 		}
 		
@@ -475,6 +555,9 @@ public class TI99Machine extends MachineBase {
 		if (!file.getName().toLowerCase().endsWith(".rpk")) {
 			return false;
 		}
+
+		log.debug("Trying " + file + " as RPK");
+
 		
 		// it is a zip container: softlist.xml contains the info
 		ZipFile zf;
@@ -487,18 +570,39 @@ public class TI99Machine extends MachineBase {
 		
 		try {
 			IModule module = null;
-			for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
-				ZipEntry ent = en.nextElement();
-				if (ent.getName().equals("softlist.xml")) {
-					InputStream is = zf.getInputStream(ent);
+			ZipEntry softlist = zf.getEntry("softlist.xml");
+			if (softlist != null) {
+				log.debug("Handling softlist.xml");
+				InputStream is = zf.getInputStream(softlist);
+				try {
 					module = convertSoftList(databaseURI, file.toURI(), is);
+				} finally {
 					is.close();
-					if (module != null) {
-						moduleMap.put(module.getName(), module);
-					}
 				}
 			}
+			else {
+				// try layout.xml + meta-inf.xml
+				ZipEntry layout = zf.getEntry("layout.xml");
+				ZipEntry metainf = zf.getEntry("meta-inf.xml");
+				if (layout != null && metainf != null) {
+					InputStream lis = null;
+					InputStream mis = null;
+					try {
+						lis = zf.getInputStream(layout);
+						mis = zf.getInputStream(metainf);
+						module = convertLayoutMetainf(databaseURI, file.toURI(), lis, mis);
+					} finally {
+						if (lis != null)
+							lis.close();
+						if (mis != null)
+							mis.close();
+					}
+					
+				}
+			}
+			
 			if (module != null) {
+				moduleMap.put(module.getName(), module);
 				for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
 					ZipEntry ent = en.nextElement();
 					for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
@@ -550,6 +654,7 @@ public class TI99Machine extends MachineBase {
 		boolean any = false;
 		try {
 			boolean oneModule = zf.size() <= 4;
+			log.debug("Assuming " + file + " has " + (oneModule ? "one module" :"multiple modules"));
 				
 			for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
 				ZipEntry ent = en.nextElement();
@@ -560,13 +665,13 @@ public class TI99Machine extends MachineBase {
 					if (oneModule) {
 						// associate with zip file's module
 						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), file.getName(), moduleMap)) {
-							System.out.println(ent.getName());
+							log.debug("Matched " + ent.getName() + " from " + file.getName());
 							// nice
 						}
 					} else {
 						// associate with appropriate module
 						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), moduleMap)) {
-							System.out.println(ent.getName());
+							log.debug("Matched " + ent.getName() + " from " + file.getName());
 							// nice
 						}
 					}
@@ -593,19 +698,7 @@ public class TI99Machine extends MachineBase {
 	private IModule convertSoftList(URI databaseURI, URI zipUri, InputStream is) {
 		IModule module;
 		
-		StreamXMLStorage storage = new StreamXMLStorage();
-		storage.setInputStream(is);
-		try {
-			storage.load("software");
-		} catch (StorageException e) {
-			e.printStackTrace();
-			return null;
-		} finally {
-			try {
-				is.close();
-			} catch (IOException e) {
-			}
-		}
+		StreamXMLStorage storage = readXMLAndClose(is, "software", "softlist.xml");
 		
 		String moduleName = storage.getDocumentElement().getAttribute("name");
 		module = new Module(databaseURI, moduleName);
@@ -635,6 +728,7 @@ public class TI99Machine extends MachineBase {
 						injectModuleRom(module, databaseURI, moduleName, 
 								makeZipUriString(zipUri, rom.getAttribute("name")),
 								HexUtils.parseInt(rom.getAttribute("offset")),
+								HexUtils.parseInt(rom.getAttribute("size")),
 								null
 								);
 					}
@@ -662,8 +756,99 @@ public class TI99Machine extends MachineBase {
 		return module;
 	}
 
+	/**
+	 * @param is
+	 * @return
+	 */
+	protected StreamXMLStorage readXMLAndClose(InputStream is, String rootTag, String fileName) {
+		StreamXMLStorage storage = new StreamXMLStorage();
+		storage.setInputStream(is);
+		try {
+			storage.load(rootTag);
+			return storage;
+		} catch (StorageException e) {
+			log.error("failed to read <"+rootTag+"> from " + fileName, e);
+			return null;
+		} finally {
+			try {
+				is.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	/**
+	 * @param is
+	 * @return
+	 */
+	private IModule convertLayoutMetainf(URI databaseURI, URI zipUri, InputStream lis,
+			InputStream mis) {
+		IModule module;
+
+		StreamXMLStorage layout = readXMLAndClose(lis, "romset", "layout.xml");
+		StreamXMLStorage metainf = readXMLAndClose(mis, "meta-inf", "meta-inf.xml");
+		
+		Element moduleNameEl = XMLUtils.getChildElementNamed(metainf.getDocumentElement(), "name");
+		if (moduleNameEl == null) {
+			log.debug("unexpected format, no <name>");
+			return null;
+		}
+		String moduleName = moduleNameEl.getTextContent().trim();
+		module = new Module(databaseURI, moduleName);
+
+		Element resources = XMLUtils.getChildElementNamed(layout.getDocumentElement(),  "resources");
+		if (resources == null) {
+			log.debug("unexpected format, no <resources>");
+			return null;
+		}
+
+		Map<String, String> imgToFile = new HashMap<String, String>();
+		for (Element romEl : XMLUtils.getChildElementsNamed(resources,  "rom")) {
+			imgToFile.put(romEl.getAttribute("id"), romEl.getAttribute("file"));
+		}
+		
+		Element config = XMLUtils.getChildElementNamed(layout.getDocumentElement(),  "configuration");
+		if (config == null) {
+			log.debug("unexpected format, no <configuration>");
+			return null;
+		}
+		
+		Element pcb = XMLUtils.getChildElementNamed(config,  "pcb");
+		if (pcb == null) {
+			log.debug("unexpected format, no <pcb>");
+			return null;
+		}
+		
+//		boolean banked = pcb.getAttribute("type").equals("banked");
+
+		for (Element socketEl : XMLUtils.getChildElementsNamed(pcb,  "socket")) {
+			String type = socketEl.getAttribute("id");
+			String uri = makeZipUriString(zipUri, imgToFile.get(socketEl.getAttribute("uses")));
+
+			if (type.equals("rom_socket")) {
+				injectModuleRom(module, databaseURI, moduleName, uri,
+						0, -0x2000, null
+						);
+			}
+			else if (type.equals("rom2_socket")) {
+				injectModuleBank2Rom(module, databaseURI, moduleName, uri, 
+						0, null
+						);
+			}
+			else if (type.equals("grom_socket")) {
+				injectModuleGrom(module, databaseURI, moduleName, uri,
+						0, null);
+			}
+			
+		}
+
+		return module;
+	}
+
 	private URI makeZipUri(URI zipUri, String name) throws URISyntaxException {
-		return new URI("jar", zipUri + "!/" + name, null);
+		URI zipEntURI = new URI("jar", zipUri + "!/" + name, null);
+		log.debug("Zip entry URI for " + zipUri + " is: " + zipEntURI);
+		return zipEntURI;
 	}
 
 	private String makeZipUriString(URI zipUri, String name) {
@@ -681,12 +866,15 @@ public class TI99Machine extends MachineBase {
 	 */
 	private String readHeaderName(byte[] content) {
 		for (int offs = 0; offs < content.length; offs += 0x2000) {
+			log.debug("Module Header scan @ " + HexUtils.toHex4(offs) 
+					+ ": header byte =  " + HexUtils.toHex2(content[offs]));
 			if (content[offs] != (byte) 0xaa) {
 				continue;
 			}
 			
 			// program list
 			int addr = readAddr(content, offs + 0x6);
+			log.debug("Program list @ " + HexUtils.toHex4(offs) + ": " + HexUtils.toHex4(addr));
 			if (addr == 0)
 				continue;
 	
@@ -696,9 +884,11 @@ public class TI99Machine extends MachineBase {
 			do {
 				next = readAddr(content, offs + (addr & 0x1fff));
 				name = readString(content, offs + (addr & 0x1fff) + 4);
+				log.debug("Fetched name: " + name) ;
 				addr = next;
 			} while (next >= 0x6000);		/* else not really module? */
 			
+			log.debug("Using name: " + name) ;
 			return name.trim();
 		}
 		return "";
