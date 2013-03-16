@@ -75,6 +75,12 @@ public class FileImportHandler implements IFileImportHandler {
 	@Override
 	public void importFile(File file) throws NotifyException {
 		
+		if (tryDemo(file)) {
+			log.debug("handled as demo: " + file);
+			return;
+			
+		}
+		
 		if (tryModule(file)) {
 			log.debug("handled as module: " + file);
 			return;
@@ -92,6 +98,21 @@ public class FileImportHandler implements IFileImportHandler {
 
 		throw new NotifyException(null, 
 				"V9t9 does not know how to handle " + file);
+	}
+
+	/**
+	 * @param file
+	 * @return
+	 */
+	private boolean tryDemo(File file) {
+		try {
+			machine.getDemoHandler().startPlayback(file.toURI());
+			return true;
+		} catch (NotifyException e) {
+			return false;
+		} catch (Throwable e) {
+			return false;
+		}
 	}
 
 	/**
