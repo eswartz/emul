@@ -109,9 +109,21 @@
 	
 	<application-desc 
 		main-class="v9t9.gui.Emulator">
-		<!--
-		<argument>-C -c /tmp/v9t9</argument>	
-		-->
+			<!-- clean config -->
+			<!--
+            <argument>-C</argument>
+            -->
+            <!-- config dir -->
+            <!-- 
+            <argument>-c</argument> 
+            <argument>/tmp/v9t9</argument>
+            -->
+            <!--
+            <argument>EnhancedTI994A</argument> 
+            -->
+            <!--
+            <argument>Forth99B</argument> 
+            -->
     </application-desc>
     
 </jnlp>

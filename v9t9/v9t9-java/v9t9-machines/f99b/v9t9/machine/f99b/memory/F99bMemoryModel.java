@@ -157,7 +157,9 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		IProperty shipPath = settings.get(DataFiles.settingShippingRomsPath);
 		URI shippingDiskImage = URI.create(shipPath.getList().get(0) + f99bDiskGramMemoryEntryInfo.getFilename());
 		URI userDiskImage = machine.getRomPathFileLocator().getWriteURI(f99bDiskGramMemoryEntryInfo.getFilename());
-		if (shippingDiskImage != null && userDiskImage == null || !new File(userDiskImage).exists()) {
+		File userDiskImageFile = new File(userDiskImage);
+		if (shippingDiskImage != null && userDiskImage == null || !userDiskImageFile.exists()) {
+			userDiskImageFile.getParentFile().mkdirs();
 			InputStream is = null;
 			OutputStream os = null;
 			try {
@@ -170,8 +172,8 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 				eventNotifier.notifyEvent(this, IEventNotifier.Level.ERROR, 
 						"Failed to copy initial disk image from " + shippingDiskImage + " to " + userDiskImage); 
 			} finally {
-				try { is.close(); } catch (IOException e) { }
-				try { os.close(); } catch (IOException e) { }
+				try { if (is != null) is.close(); } catch (IOException e) { }
+				try { if (os != null) os.close(); } catch (IOException e) { }
 			}
 		}
 		
