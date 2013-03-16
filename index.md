@@ -35,27 +35,27 @@ machines -- only made-up ones for now, using much of the same hardware.
 It supports:
 </p>
 <ul>
+	<li>Drag and drop / auto-detection of modules, disks, demos, 99/4A files -- try it!</li>
 	<li>Ability to save/restore sessions</li>
-	<li>Built-in module database</li>
+	<li>Module formats:  V9t9, MESS (.rpk/.zip) (new!)</li>
+	<li>Disk support (files in native filesystem, sector images, track images (new!))</li>
 	<li>TMS 9918A video</li>
 	<li>TMS 9919 sound</li>
 	<li>TMS 5220 speech</li>
-	<li>Disk support (files in native filesystem, sector images, track images)</li>
 	<li>Demo playback and recording support</li>
 	<li>UCSD P-Code System</li>
 	<li>Rudimentary debugger</li>
-	<li>Image import (new!)</li>
-	<li>"Realistic" rendering of the monitor (new!)</li>
+	<li>Image import</li>
+	<li>"Realistic" rendering of the monitor</li>
 </ul>
 
 <p>
-(The debugger and other "RnD" features are enabled by right-clicking the screen and
-invoking "Enable Advanced Controls".  Then, a new toolbar appears at the bottom of
-the screen with a "Toggle Debugger" button.)
+(Some features here are <a href="advanced.html">advanced</a>.)
 </p>
 	
 </div>
 
+<hr/>
 
 History
 -------- 
@@ -151,7 +151,7 @@ Using Web Start (Windows or Linux only)
 </script>
 <noscript>This page requires JavaScript.</noscript>
 <p>
-<i>Launch</i>
+<i>Launch<br> (Windows/Linux only!)</i>
 </p>
 </div>
 
@@ -159,14 +159,16 @@ Click on the button to the right.  This will fetch the most recent V9t9 build ea
 
 (Java Web Start does not play nicely with SWT on OS X, sorry.)
 
+Advanced
+=======
+
+Please see <a href="advanced.html">this page</a> for advanced usage and 
+configuration.
+
 Contact
 =======
 
-Sources are hosted in github at:  <a href="https://github.com/eswartz/emul">
-https://github.com/eswartz/emul</a>.
-
-If you have questions or issues, please contact me at ed.swartz.twofiftyeight@gmail.com, but
-use a number instead of spelling it out like that.
+Please see <a href="contact.html">this page</a> for details.
 
 
 License
@@ -181,7 +183,7 @@ code from [the Base64 library](http://iharder.net/base64);
 LWJGL utilities from Kevin Glass and Brian Matzon; and the various packages from Apache Commons. 
 
 
-
+<hr/>
 <div class="footer">
 Last updated:  {{site.time}}
 </div>

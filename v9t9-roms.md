@@ -65,7 +65,7 @@ Loading Modules
 If you have some module ROMs on disk somewhere and want to quickly try them out,
 just drag one of them (e.g. "mymoduleg.bin") into V9t9.  It will detect the module and offer to launch it.
 
-If V9t9 has problems with your module, let me know!
+If V9t9 has problems with your module, <a href="contact.html">let me know</a>!
 
 Making Module Lists
 ------------------
@@ -79,12 +79,16 @@ and access the entries in the *Module Selector* like this:
 
 * Browse to the directory where your ROMs reside.
 
-* V9t9 should detect the modules.  (If some aren't detected, let me know!)
+* V9t9 should detect the modules.  (If some aren't detected, <a href="contact.html">let me know</a>!)
 
-* V9t9 will select (checkmark) by defualt the modules that it doesn't already know about.  You can add or remove entries as you desire.
+* V9t9 will select (checkmark) by default the modules that it doesn't already know about.  You can add or remove entries as you desire.
 
 * Enter a new *List File* -- usually called 'modules.xml' -- where you want to record your modules.
 
 * All filenames in `modules.xml`  will be detected on the "Search Locations" path.  V9t9 records full paths by default when doing scanning, but feel free to edit the modules.xml file to make the filenames more portable.  (You can use relative paths from some "Search Location" path too.)
 
+<hr/>
 
+<div class="footer">
+Last updated:  {{site.time}}
+</div>

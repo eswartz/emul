@@ -1,13 +1,150 @@
 ---
-title: Advanced Usage
+title: Advanced Stuff
 layout: wikistyle
 ---
 
-Advanced Settings
+Track Disk Images
 ==================
 
-Right-click on the emulator screen and select `Advanced Controls` to enable
-a toolbar at the bottom of the screen.  This allows you to:
+V9t9 now supports disk track images (\*.trk).  Yes, I have been able to transfer
+the Advanced Diagnostics, DisKassembler, and Draw 'n' Plot disks and run them
+in V9t9.
+
+I don't currently have access to
+the software to fetch these from your own 99/4A, but I'm sure someone with a 
+working system can do it.  See <a href="http://nouspikel.group.shef.ac.uk//ti99/disks.htm#Tracks%20&amp;%20sectors"> Thierry's page</a> for details.
+
+The format is:
+
+<pre>
+'trak'       (magic, 4 bytes)
+0x1          (version, 1 byte)
+&num;tracks      (1 byte)
+&num;sides       (1 byte) 
+0            (unused, 1 byte)
+track size   (maximum size in bytes, big-endian, 2 bytes)
+data offset  (from start of file: usually 12; big-endian, 2 bytes)
+</pre>
+
+Then, each track's raw data follows, as you might fetch with the algorithm at
+<a href="http://nouspikel.group.shef.ac.uk//ti99/disks2.htm#Track%20access">Thierry's page</a>.
+Each track must use the same number of bytes.  V9t9 is very relaxed about the actual track data, since 
+the track data can have a variable number of lead bytes between sectors.
+
+V9t9 has only been tested with FM (single-density) disks so far.  If you would 
+like to donate a dumped MFM disk image for me to test, I'd <a href="contact.html">appreciate it</a>.
+
+V9938 / MSX2 video support
+===============
+
+The front page mentions V9938 / MSX2 support.  I emulated this strictly based
+on data sheets and some random pieces of documentation some people sent me in the
+early days of V9t9.  It may, thus, be completely wrong in some ways.
+
+For example, docs mention that the 99/4A ROM's purportedly incorrect
+VDP register mappings don't work with the V9938.  V9t9 does the "right thing" and
+masks the address ranges to 16k for legacy graphics modes -- I didn't want to
+make a fake DSR ROM to patch the startup code.  If it's important to emulate all
+the buggy behavior, I'd appreciate references to programs that actually do V9938
+rendering, so I can test.
+
+Anyway, I was able to run ZORK in 80-column mode in V9t9.  So I guess it works
+well enough ;)
+
+Enabling
+----------
+
+To enable this, you'll need the v9t9.zip file (not the web launcher).  Edit
+the `v9t9-local.jnlp` file and remove the comments (&lt;!-- and --&gt;) lines at the end
+around this &lt;argument&gt; node:
+
+<pre>
+	&lt;application-desc 
+		main-class="v9t9.gui.Emulator"&gt;
+		...
+<b>             <argument>EnhancedTI994A</argument> </b>
+		...
+   	 &lt;/application-desc>
+    
+</pre>
+
+Or in the `v9t9.sh` file, add `EnhancedTI994A` to the command line:
+
+<pre>
+	"$JAVA" -cp "v9t9j.jar:$SWT:libs/*" -Djava.library.path=tmpdir $VMARGS  v9t9.gui.Emulator <b>EnhancedTI994A</b>
+</pre>
+
+You'll know this worked if you start up and notice the palette in the startup screen 
+is a bit off -- the V9938 palette is slightly different from the TMS9918A's.
+
+Forth99B Machine
+==================
+
+I'll need to rename this, since it is not a 9900-based machine.  But it does
+use the 99/4A VDP, GROM/GRAM, and disk image formats.  And it uses the V9938 video chip
+and a crazy custom sound chip with 12 voices and sound effects.  
+
+All this stuff is only documented in the sources.  It's 100% a hobby project,
+so use at your own risk.  It can and will change unpredictably!
+
+Enabling
+----------
+
+To enable this, you'll need the v9t9.zip file (not the web launcher).  Edit
+the `v9t9-local.jnlp` file and remove the comments (&lt;!-- and --&gt;) lines at the end
+around this &lt;argument&gt; node:
+
+<pre>
+	&lt;application-desc 
+		main-class="v9t9.gui.Emulator"&gt;
+		...
+<b>            <argument>Forth99B</argument> </b>
+		...
+   	 &lt;/application-desc>
+    
+</pre>
+
+Or in the `v9t9.sh` file, add `Forth99B` to the command line:
+
+<pre>
+	"$JAVA" -cp "v9t9j.jar:$SWT:libs/*" -Djava.library.path=tmpdir $VMARGS  v9t9.gui.Emulator <b>Forth99B</b>
+</pre>
+
+Quick setup
+----------
+
+* Forth99 uses a GRAM disk image called `f99bgram.bin`.  This will be copied
+into your `${config}/.v9t9j/module_ram` directory on first launch.
+* If you want to use disk images instead, call the word `DSK1`.  Call `GRAM` to get
+back to the GRAM image.
+* Use `edit` to edit the current block.  Use <i>number</i> `>edit` to edit
+a specific block.
+* Unfortunately the built-in dictionary is stored mostly in GROM to save space,
+so `words` will only show your custom words.  
+Check <a href="https://github.com/eswartz/emul/tree/master/v9t9/v9t9-java/tools/Forth99">the sources</a>
+to see what's available.
+
+Image Import
+===============
+
+You can load graphics files into V9t9 and it will render them in the current graphics mode. 
+This is totally a hobby feature and is not intended to be useful to anyone, for any reason.
+
+This feature may be a bit of a mystery -- unfortunately it only works nicely 
+with a real video chip (e.g. V9938 / MSX2) in a high-res mode.  When you try this with
+the TMS9918A graphics 0 mode, the results are poor.  
+
+Try it in a bitmapped mode (like for Parsec), or use the EnhancedTI994A machine (above) and the Debugger (below) to force the system into a better mode.  Or, use the Forth99B machine
+and use one of "0 mode" through "10 mode" to activate different graphics modes.
+
+And pause the emulator so the running program doesn't overwrite
+the results ;)
+
+
+RnD Settings
+==================
+
+Right-click (or Ctrl-Click on a single-button Mac mouse) on the emulator screen and select `Advanced Controls` to enable a toolbar at the bottom of the screen.  This allows you to:
 
 * view emulated CPU performance & interrupt rate
 * send a NMI (not really useful on 99/4A since it crashes the system)
@@ -131,4 +268,8 @@ from the `write address`.  For example, writes to >6000,
 
 
 
+<hr/>
+<div class="footer">
+Last updated:  {{site.time}}
+</div>
 
