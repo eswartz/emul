@@ -203,6 +203,14 @@
     	    </fileset>
 		</copy>
 		-->
+    	<copy todir="${base.v9t9-data}/data/f99b">
+    		<fileset dir="${build.dir}/forth99">
+              <include name="*.bin"/>
+              <include name="*.sym"/>
+    		  <exclude name="f99bgram.bin"/>
+    	    </fileset>
+		</copy>
+    	
     	
         <jar destfile="${bin.v9t9.dir}/v9t9-data.jar">
             <manifest>
