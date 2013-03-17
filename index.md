@@ -182,8 +182,15 @@ code from [the Base64 library](http://iharder.net/base64);
 [Vlad Roubtsov's HRTimer library](http://www.javaworld.com/javaworld/javaqa/2003-01/01-qa-0110-timing.html);
 LWJGL utilities from Kevin Glass and Brian Matzon; and the various packages from Apache Commons. 
 
-
 <hr/>
 <div class="footer">
 Last updated:  {{site.time}}
 </div>
+
+
+<div style='float:right;text-align:center;width:inherit'>
+<p>
+        <img alt="Friend of Eclipse" src="http://www.eclipse.org/donate/images/friendslogo200.jpg"></img>
+</p>
+</div>
+
