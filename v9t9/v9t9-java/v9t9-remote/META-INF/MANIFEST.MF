@@ -3,8 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: v9t9-remote
 Bundle-SymbolicName: v9t9-remote;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-ClassPath: v9t9-remote.jar,
- libs/org.eclipse.tm.tcf.jar
 Export-Package: v9t9.remote
 Bundle-Vendor: Ed Swartz
 Bundle-ActivationPolicy: lazy

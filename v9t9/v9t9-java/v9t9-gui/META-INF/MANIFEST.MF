@@ -5,7 +5,8 @@ Bundle-SymbolicName: v9t9-gui;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-ClassPath: libs/lwjgl/jar/jinput.jar,
  libs/lwjgl/jar/lwjgl.jar,
- libs/lwjgl/jar/lwjgl_util.jar
+ libs/lwjgl/jar/lwjgl_util.jar,
+ .
 Export-Package: v9t9.gui,
  v9t9.gui.client,
  v9t9.gui.client.awt,

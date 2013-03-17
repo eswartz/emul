@@ -3,9 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: v9t9-server
 Bundle-SymbolicName: v9t9-server;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-ClassPath: v9t9-server.jar,
- libs/junit/junit-4.8.1.jar,
- libs/org.eclipse.tm.tcf.jar
 Export-Package: v9t9.server,
  v9t9.server.client,
  v9t9.server.settings,

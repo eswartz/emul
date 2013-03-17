@@ -3,13 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: v9t9-machines
 Bundle-SymbolicName: v9t9-machines;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-ClassPath: v9t9-machines.jar,
- libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar,
- libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar,
- libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar,
- libs/bcel-5.2.jar,
- libs/junit/junit-4.8.1.jar,
- libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar
 Export-Package: v9t9.machine,
  v9t9.machine.common.tests,
  v9t9.machine.common.tests.bench,
@@ -36,8 +29,8 @@ Export-Package: v9t9.machine,
 Bundle-Vendor: Ed Swartz
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Require-Bundle: ejs-base;bundle-version="1.0.0",
+Require-Bundle: org.eclipse.jface;bundle-version="3.7.0",
+ org.junit4;bundle-version="4.8.1";resolution:=optional,
+ ejs-base;bundle-version="1.0.0",
  v9t9-common;bundle-version="1.0.0",
- v9t9-engine;bundle-version="1.0.0",
- org.eclipse.jface;bundle-version="3.7.0",
- org.junit4;bundle-version="4.8.1";resolution:=optional
+ v9t9-engine;bundle-version="1.0.0"
