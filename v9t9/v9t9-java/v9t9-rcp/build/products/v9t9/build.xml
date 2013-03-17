@@ -35,6 +35,7 @@
 	<resources id="target.fileset.plugins">
 		<resources refId="target.fileset.base.plugins" />
 		<resources refId="target.fileset.v9t9.plugins" />
+		
 	</resources>
 	
 	<resources id="target.fileset.features">
