@@ -1,0 +1,214 @@
+<project>
+	<!-- invoke a JUnit test run -->
+
+	<!-- fetch environment for other properties to use -->
+	<property environment="env123"/>
+	
+	<property name="winRunPath" value="${gcc.base}/bin;${gcc.base}/msys/1.0/bin;${env123.PATH}"/>
+	<condition property="runpath" value="${winRunPath}">
+		<os family="windows" />
+	</condition>
+	<property name="runpath" value="${gcc.base}/bin:${gcc.base}/msys/1.0/bin:${env123.PATH}" />
+
+	<!-- **** includes COPY (modified) of Eclipse Test Framework, following *** -->
+
+	<target name="usage">
+		<echo message="Please refer to the testframework.html in org.eclipse.test for instructions on usage." />
+	</target>
+
+	<target name="init">
+		<!-- 
+			Parameters:
+				(Mandatory)
+				data-dir		- the directory for Eclipse to write its data
+				plugin-name		- the name of the plugin to test
+				classname		- the name of the test class
+				
+				(Optional - overrides defaults set in script)
+				vmargs			- a string containing arguments to pass to the VM.
+				extraVMargs		- allows separate setting of VM args from separate caller.
+				timeout			- overrides default test timeout value (in milliseconds).
+				test-output		- overrides default output file produced from test run.
+				plugin-path		- path to root of plug-in
+				useEclipseExe	- property setting forces test to launch via eclipse executable.
+				junit-report-output - output directory for junit reports produced for specified classname.
+		-->
+
+		<tstamp>
+			<format property="TIMENOW" pattern="HHmmssSSSS" />
+		</tstamp>
+		<!--property setting useEclipseExe launches tests using the eclipse executable-->
+		<condition property="launchTarget" value="eclipse-test">
+			<isset property="useEclipseExe" />
+		</condition>
+		<!--default launch target for launching tests-->
+		<property name="launchTarget" value="java-test" />
+		<property name="formatter" value="org.apache.tools.ant.taskdefs.optional.junit.XMLJUnitResultFormatter" />
+
+		<!--default heap sizes when running performance tests-->
+		<condition property="vmargs" value=" -Xms256M -Xmx512M -XX:MaxPermSize=500m">
+			<equals arg1="${test.target}" arg2="performance" />
+		</condition>
+		<tstamp prefix="NOW" />
+		<property name="coverage-output" value="${eclipse-home}/coverage" />
+		<property file="${basedir}/finalPluginsVersions.properties" />
+		<condition property="extraVMargs" value="-javaagent:${basedir}/plugins/org.eclipse.test_${org.eclipse.test}/lib/jacocoagent.jar=destfile=${coverage-output}/jacoco${classname}${NOW.DSTAMP}_${NOW.TSTAMP}.exec ">
+			<not>
+				<equals arg1="${test.target}" arg2="performance" />
+			</not>
+		</condition>
+		<property name="extraVMargs" value="" />
+		<property name="plugin-path" value="" />
+		<property name="timeout" value="7200000" />
+		
+		<property name="test-output-dir" value="${eclipse-home}/testruns" />
+		<mkdir dir="${test-output-dir}" />
+		<property name="test-output" value="${test-output-dir}/${classname}.xml" />
+		
+		<property name="junit-report-output" value="${eclipse-home}/results" />
+		<mkdir dir="${junit-report-output}" />
+		
+		<!-- not used -->
+		<property name="junit-stylesheet" value="${eclipse-home}/plugins/org.eclipse.test_${org.eclipse.test}/JUNIT.XSL" />
+	</target>
+
+	<target name="core-test" description="Eclipse application used to launch HEADLESS plugin tests." depends="init">
+		<antcall target="${launchTarget}">
+			<param name="application" value="org.eclipse.test.coretestapplication" />
+		</antcall>
+	</target>
+
+	<target name="ui-test" description="Eclipse application used to launch UI plugin tests." depends="init">
+		<antcall target="${launchTarget}">
+			<param name="application" value="org.eclipse.test.uitestapplication" />
+		</antcall>
+	</target>
+
+	<target name="java-test">
+		<!--default vm args-->
+		<property name="vmargs" value=" -Xms40m -Xmx1g -XX:MaxPermSize=128M -Djava.net.preferIPv4Stack=true" />
+
+		<!--set default jvm to use for testing-->
+		<property name="jvm" value="${eclipse-home}/jre/bin/java" />
+
+		<property name="base.src.dir" value="" />
+		
+		<echo message="Running ${eclipse-home}'s ${classname}. Result file: ${junit-report-output}/${classname}.xml." />
+		
+		<!--
+		<echo message="runpath=${runpath}" />
+		-->
+		
+		<exec executable="${jvm}" dir="." timeout="${timeout}"  
+			logError="true"   failonerror="false" 
+			output="${test-output-dir}/${classname}.txt">
+			<env key="PATH" value="${runpath}" />
+			<arg line="${vmargs} ${extraVMargs}" />
+			<arg value="-DPLUGIN_PATH=${plugin-path}"/>
+			<arg line="-Dbase.src.dir=${base.src.dir}" />
+			<arg value="-jar"/>
+				<arg value="${eclipse-home}/plugins/org.eclipse.equinox.launcher_${org.eclipse.equinox.launcher}.jar"/>
+			<!-- <arg line="-debug ${common.scripts}/debug.options"/> -->
+			<arg line="-application ${application}" />
+			<arg line="-data ${data-dir}" />
+			<arg line="formatter=${formatter},${test-output}" />
+			<arg line="-testPluginName ${plugin-name}" />
+			<arg line="-className ${classname}" />
+			<!-- uh... why would this make sense?
+			<arg line="-os ${baseos}" />
+			<arg line="-ws ${basews}" />
+			<arg line="-arch ${basearch}" />
+			-->
+			<arg line="-consolelog" />
+			<arg line="-timeout ${timeout}" />
+			<!--
+			<jvmarg line="${vmargs} ${extraVMargs}" />
+			<sysproperty key="PLUGIN_PATH" value="${plugin-path}" />
+			-->
+		</exec>
+		<antcall target="collect-results" />
+	</target>
+
+	<target name="eclipse-test" description="Runs the specified classname as a plug-in test.">
+		<property name="vmargs" value="-Xms256m -Xmx1g -XX:MaxPermSize=256m" />
+
+		<!--use -consolelog if launching a headless test-->
+		<condition property="consolelog" value="-consolelog">
+			<equals arg1="${application}" arg2="org.eclipse.test.coretestapplication" />
+		</condition>
+		<property name="consolelog" value="" />
+		<property name="base.src.dir" value="" />
+		
+		<!--
+			vm selection priority:
+			1.  user-specified java executable via outer Ant property setting of "jvm".
+			2.  java executable on path.
+		-->
+		<condition property="test-vm" value="-vm ${jvm}">
+			<isset property="jvm" />
+		</condition>
+		<property name="test-vm" value="" />
+
+		<!--ensure executable has execute permission-->
+		<chmod file="${eclipse-home}/eclipse" perm="ugo+rx" />
+
+
+		<echo message="Running ${classname}. Result file: ${junit-report-output}/${classname}.xml." />
+
+		<exec executable="${eclipse-home}/eclipse" dir="${eclipse-home}" timeout="${timeout}" logError="true" failonerror="false" output="${junit-report-output}/${classname}.txt">
+			<env key="PATH" path="${runpath}" />
+			<arg line="-data ${data-dir}" />
+			<arg line="${test-vm}" />
+			<arg line="-application ${application}" />
+			<arg line="formatter=${formatter},${test-output}" />
+			<arg line="-className ${classname}"/>
+			<arg line="-nosplash" />
+			<arg line="--launcher.suppressErrors" />
+			<arg line="${consolelog}" />
+			<arg line="-vmargs ${vmargs} ${extraVMargs} -DPLUGIN_PATH=${plugin-path}" />
+			<arg line="-Dbase.src.dir=${base.src.dir}" />
+		</exec>
+		<antcall target="collect-results" />
+	</target>
+
+	<target name="collect-results">
+
+		<!-- convert XML to HTML -->
+		<!--
+		<xslt style="${junit-stylesheet}" basedir="${output-dir}" includes="${test-output}" destdir="${junit-report-output}" />
+-->
+		<!--save .log content and *.log content from configuration directory-->
+		<concat destfile="${test-output-dir}/${classname}.log">
+			<fileset dir="${eclipse-home}" includes="${data-dir}/.metadata/*.log" />
+			<fileset dir="${eclipse-home}" includes="configuration/*.log" />
+		</concat>
+	</target>
+
+	<target name="report">
+		<!-- windows hack: if a test run is too fast (meaning no content) then the xml file can
+		still be open and cause this to fail -->
+		<sleep seconds="2" />
+		<junitreport todir="${junit-report-output}" tofile="full.results.xml" >
+			<fileset dir="${test-output-dir}">
+				<include name="*.xml" />
+			</fileset>
+			<report todir="${junit-report-output}"/>
+		</junitreport>
+	</target>
+
+	<!--  *** END COPY *** -->
+	
+	<!--
+
+junit4, non-ui	
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -consoleLog -version 3 -port 53637 -testLoaderClass org.eclipse.jdt.internal.junit4.runner.JUnit4TestLoader -loaderpluginname org.eclipse.jdt.junit4.runtime -testNameFile C:\Users\edswartz\AppData\Local\Temp\testNames5750842227112982540.txt -application org.eclipse.pde.junit.runtime.nonuithreadtestapplication -testApplication org.eclipse.pde.junit.runtime.coretestapplication -data C:\devel\workspaces\git-silk/../junit-workspace -dev file:C:/devel/workspaces/git-silk/.metadata/.plugins/org.eclipse.pde.core/pde-junit/dev.properties -os win32 -ws win32 -arch x86_64 -consoleLog -testpluginname org.eclipse.cdt.make.core.tests
+
+junit 3, ui
+
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -consoleLog -version 3 -port 53643 -testLoaderClass org.eclipse.jdt.internal.junit.runner.junit3.JUnit3TestLoader -loaderpluginname org.eclipse.jdt.junit.runtime -testNameFile C:\Users\edswartz\AppData\Local\Temp\testNames5037213686209914590.txt -application org.eclipse.pde.junit.runtime.coretestapplication -data C:\devel\workspaces\git-silk/../junit-workspace -dev file:C:/devel/workspaces/git-silk/.metadata/.plugins/org.eclipse.pde.core/pde-junit/dev.properties -os win32 -ws win32 -arch x86_64 -consoleLog -testpluginname org.eclipse.cdt.make.core.tests
+
+
+-->
+	
+</project>
+	

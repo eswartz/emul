@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="libs/org.eclipse.tm.tcf.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/bcel-5.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/gnu-getopt-1.0.13.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/svgSalamander.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="HRTimer"/>
 	<classpathentry excluding="api/" kind="src" path="Base64-2.2.2"/>
 	<classpathentry kind="src" path="tests"/>
-	<classpathentry kind="lib" path="libs/jna.jar" sourcepath="libs/jna-src.zip"/>
+	<classpathentry exported="true" kind="lib" path="libs/jna.jar" sourcepath="libs/jna-src.zip"/>
 	<classpathentry kind="lib" path="libs/google-gson-2.0/gson-2.0.jar" sourcepath="libs/google-gson-2.0/gson-2.0-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/asm-4.0/asm-4.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/asm-4.0/asm-util-4.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gnu-getopt-1.0.13.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/svgSalamander.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/bcel-5.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/org.eclipse.tm.tcf.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

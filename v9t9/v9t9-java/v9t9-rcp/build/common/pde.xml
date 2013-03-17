@@ -1,0 +1,249 @@
+<project>
+
+	<!--
+	This script drives the setup of the baseLocation/buildDirectory for 
+	the PDE builder.
+	
+	It should be <import>'ed into its caller.
+	-->
+
+	<!-- our property 'target.product.name' supplies both of these, by default -->
+	
+	<!-- The prefix that will be used in the generated archive -->
+	<property name="archivePrefix" value="${target.product.name}" />
+
+	<!-- ID of the build.  Used in naming the build output. -->
+	<property name="buildId" value="${target.product.name}" />
+
+	
+	<!-- take sources checked out from git using this format:
+	
+	<featureSrcDir>/
+		<category1>/
+			<foo>-feature/
+			<plugin1>/
+			<plugin2>/
+		<category2>/
+			<bar>-feature/
+			<plugin3>/
+			<plugin4>/
+	
+	and lay them out into the 
+	
+		<base.build.dir>/features and
+		<base.build.dir>/plugins
+		
+	directories, as required by PDE build.
+	-->
+	<macrodef name="layoutFeaturesAndPlugins">
+		<attribute name="featuresRefId"/>
+		<attribute name="pluginsRefId"/>
+		<attribute name="eclipseTarget" default="${base.build.dir}" />
+		<attribute name="eclipseHome" default="${eclipse.home}" />
+		<sequential>
+			<sync todir="@{eclipseTarget}/features">
+				<resources refId="@{featuresRefId}" />
+				<fileset dir="@{eclipseHome}/features">
+					<include name="**" />
+				</fileset>
+			</sync>
+			<sync todir="@{eclipseTarget}/plugins">
+				<resources refId="@{pluginsRefId}" />
+				<fileset dir="@{eclipseHome}/plugins">
+					<include name="**" />
+				</fileset>
+			</sync>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="layoutFeaturesAndPluginsMinusEclipseHome">
+		<attribute name="featuresRefId"/>
+		<attribute name="pluginsRefId"/>
+		<attribute name="eclipseTarget" default="${base.build.dir}" />
+		<sequential>
+			<sync todir="@{eclipseTarget}/features">
+				<resources refId="@{featuresRefId}" />
+			</sync>
+			<sync todir="@{eclipseTarget}/plugins">
+				<resources refId="@{pluginsRefId}" />
+			</sync>
+		</sequential>
+	</macrodef>
+
+	<!-- invoke a PDE plugin build -->
+	<macrodef name="pdeBuildPlugin">
+		<attribute name="buildXmlDir"/>
+		<attribute name="plugin"/>
+		<attribute name="label"/>
+		<attribute name="eclipseHome" default="${eclipse.home}" />
+		<attribute name="buildDirectory" default="${base.build.dir}" />
+		<attribute name="collectingFolder" default="${collectingFolder}" />
+		<attribute name="wsDirectory" default="${base.build.dir}/workspace" />
+		<sequential>
+			<echo message="********* Building @{label}..." />
+			<exec executable="java" failOnError="true" >
+				<arg value="-jar"/>
+				<arg value="@{eclipseHome}/plugins/org.eclipse.equinox.launcher_${org.eclipse.equinox.launcher}.jar"/>
+				<arg value="-nosplash"/>
+				<arg value="-application"/>
+				<arg value="org.eclipse.ant.core.antRunner"/>
+				<arg value="-data"/>
+				<arg value="@{wsDirectory}"/>
+				<arg value="-buildfile"/>
+				<arg value="@{eclipseHome}/plugins/org.eclipse.pde.build_${org.eclipse.pde.build}/scripts/build.xml" />
+				<arg value="-Dbuilder=@{buildXmlDir}"/>
+				
+				<arg value="-DbaseLocation=@{eclipseHome}"/>
+				<arg value="-DbuildDirectory=@{buildDirectory}"/>
+				<arg value="-DtopLevelElementType=plugin"/>
+				<arg value="-DtopLevelElementId=${plugin}"/>
+			
+				<!-- all these are propagations of the properties set from the target's build.properties... -->
+				<arg value="-Dbase=@{eclipseHome}"/>
+				<arg value="-DskipFetch=true"/>
+				
+				<arg value="-Dconfigs=${configs}"/>
+				<arg value="-DbuildLabel=${buildLabel}"/>
+				<arg value="-DbuildId=${buildId}"/>
+				<arg value="-Dtimestamp=${timestamp}"/>
+				<arg value="-DarchivePrefix=${archivePrefix}"/>
+				<arg value="-Dproduct=${product}"/>
+				<arg value="-DrunPackager=${runPackager}"/>
+				<arg value="-DcollectingFolder=@{collectingFolder}"/>
+				<arg value="-DjavacSource=${javacSource}"/>
+				<arg value="-DjavacTarget=${javacTarget}"/>
+				<arg value="-DjavacDebugInfo=${javacDebugInfo}"/>
+				<arg value="-DjavacFailOnError=${javacFailOnError}"/>
+				<arg value="-DallowBinaryCycles=${allowBinaryCycles}"/>
+				<arg value="-Dp2.gathering=${p2.gathering}"/>
+				<arg value="-DforceContextQualifier=${forceContextQualifier}"/>
+			</exec>			
+		</sequential>
+	</macrodef>	
+	
+
+	<!-- invoke a PDE feature build -->
+	<macrodef name="pdeBuildFeature">
+		<attribute name="buildXmlDir"/>
+		<attribute name="feature"/>
+		<attribute name="label"/>
+		<attribute name="eclipseHome" default="${eclipse.home}" />
+		<attribute name="buildDirectory" default="${base.build.dir}" />
+		<attribute name="pluginPath" default="${eclipse.home}" />
+		<attribute name="collectingFolder" default="${collectingFolder}" />
+		<attribute name="p2Gathering" default="${p2.gathering}" />
+		<attribute name="p2BuildRepo" default="${p2.build.repo}" />
+		<attribute name="wsDirectory" default="${base.build.dir}/workspace" />
+		<attribute name="target" default="main" />
+		
+		<sequential>
+			<echo message="********* Building @{label}..." />
+			<exec executable="java" failOnError="true" >
+				<arg value="-jar"/>
+				<arg value="@{eclipseHome}/plugins/org.eclipse.equinox.launcher_${org.eclipse.equinox.launcher}.jar"/>
+				<arg value="-nosplash"/>
+				<arg value="-application"/>
+				<arg value="org.eclipse.ant.core.antRunner"/>
+				<arg value="-data"/>
+				<arg value="@{wsDirectory}"/>
+				<arg value="-buildfile"/>
+				<arg value="@{eclipseHome}/plugins/org.eclipse.pde.build_${org.eclipse.pde.build}/scripts/build.xml" />
+				<arg value="@{target}" />
+				<arg value="-Dbuilder=@{buildXmlDir}"/>
+				
+				<arg value="-DbaseLocation=@{eclipseHome}"/>
+				<arg value="-DbuildDirectory=@{buildDirectory}"/>
+				<arg value="-DpluginPath=@{pluginPath}"/>
+				<arg value="-DtopLevelElementType=feature"/>
+				<arg value="-DtopLevelElementId=@{feature}"/>
+			
+				<!-- all these are propagations of the properties set from the target's build.properties... -->
+				<arg value="-Dbase=@{eclipseHome}"/>
+				<arg value="-DskipFetch=true"/>
+				
+				<arg value="-Dconfigs=${configs}"/>
+				<arg value="-DbuildLabel=${buildLabel}"/>
+				<arg value="-DbuildId=${buildId}"/>
+				<arg value="-Dtimestamp=${timestamp}"/>
+				<arg value="-DarchivePrefix=${archivePrefix}"/>
+				<arg value="-DcollectingFolder=@{collectingFolder}"/>
+				<arg value="-DjavacSource=${javacSource}"/>
+				<arg value="-DjavacTarget=${javacTarget}"/>
+				<arg value="-DjavacDebugInfo=${javacDebugInfo}"/>
+				<arg value="-DjavacFailOnError=${javacFailOnError}"/>
+				
+				<arg value="-DallowBinaryCycles=${allowBinaryCycles}"/>
+				<arg value="-Dp2.gathering=@{p2Gathering}"/>
+				<arg value="-Dp2.build.repo=@{p2BuildRepo}"/>
+				<arg value="-DforceContextQualifier=${forceContextQualifier}"/>
+				
+				<arg value="-Dbaseos=${buildos}" />
+				<arg value="-Dbasews=${buildws}" />
+				<arg value="-Dbasearch=${buildarch}" />
+				
+			</exec>			
+		</sequential>
+	</macrodef>		
+	
+	<!-- invoke a PDE product build -->
+	<macrodef name="pdeBuildProduct">
+		<attribute name="buildXmlDir"/>
+		<attribute name="label"/>
+		<attribute name="eclipseHome" default="${eclipse.home}" />
+		<attribute name="buildDirectory" default="${base.build.dir}" />
+		<attribute name="collectingFolder" default="${collectingFolder}" />
+		<attribute name="p2Gathering" default="${p2.gathering}" />
+		<attribute name="p2BuildRepo" default="${p2.build.repo}" />
+		<attribute name="wsDirectory" default="${base.build.dir}/workspace" />
+		<sequential>
+			<echo message="********* Building @{label}..." />
+			<exec executable="java" failOnError="true" >
+				<arg value="-jar"/>
+				<arg value="@{eclipseHome}/plugins/org.eclipse.equinox.launcher_${org.eclipse.equinox.launcher}.jar"/>
+				<arg value="-nosplash"/>
+				<arg value="-application"/>
+				<arg value="org.eclipse.ant.core.antRunner"/>
+				<arg value="-data"/>
+				<arg value="@{wsDirectory}"/>
+				<arg value="-buildfile"/>
+				<arg value="@{eclipseHome}/plugins/org.eclipse.pde.build_${org.eclipse.pde.build}/scripts/productBuild/productBuild.xml" />
+				<arg value="-Dbuilder=@{buildXmlDir}"/>
+				<arg value="-DbaseLocation=@{eclipseHome}"/>
+				<arg value="-DbuildDirectory=@{buildDirectory}"/>
+			
+				<!-- all these are propagations of the properties set from the target's build.properties... -->
+				<arg value="-Dbase=@{eclipseHome}"/>
+				<arg value="-DskipBase=true"/>
+				<arg value="-DskipFetch=true"/>
+				
+				<arg value="-DarchivePrefix=${archivePrefix}" />
+				<arg value="-Dconfigs=${configs}"/>
+				<arg value="-DbuildLabel=${buildLabel}"/>
+				<arg value="-DbuildId=${buildId}"/>
+				<arg value="-Dtimestamp=${timestamp}"/>
+				<arg value="-DarchivePrefix=${archivePrefix}"/>
+				<arg value="-Dproduct=${product}"/>
+				<arg value="-DrunPackager=${runPackager}"/>
+				<arg value="-DcollectingFolder=@{collectingFolder}"/>
+				<arg value="-DjavacSource=${javacSource}"/>
+				<arg value="-DjavacTarget=${javacTarget}"/>
+				<arg value="-DjavacDebugInfo=${javacDebugInfo}"/>
+				<arg value="-DjavacFailOnError=${javacFailOnError}"/>
+				
+				<arg value="-DallowBinaryCycles=${allowBinaryCycles}"/>
+				<arg value="-Dp2.gathering=@{p2Gathering}"/>
+				<arg value="-Dp2.build.repo=@{p2BuildRepo}"/>
+				<arg value="-DforceContextQualifier=${forceContextQualifier}"/>
+				
+			</exec>			
+		</sequential>
+	</macrodef>
+	
+
+		
+	<target name="scratch">
+		<delete dir="${base.build.dir}"  quiet="true" includeemptydirs="true"/>
+	</target>
+	
+</project>
+

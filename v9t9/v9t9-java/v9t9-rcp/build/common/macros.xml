@@ -1,0 +1,60 @@
+<project >
+
+	<!-- expand nested property references -->
+	<macrodef name="expandProperty">
+	  <attribute name="name"/>
+	  <attribute name="prefix" default=""/>
+	  <attribute name="property"/>
+	  <attribute name="suffix" default=""/>
+	  <sequential>
+		<property name="@{name}" value="${@{prefix}@{property}@{suffix}}"/>
+	  </sequential>
+	</macrodef>
+	
+
+	<!-- fetch git repository revision (needs to be macro since it defines property) -->
+	<macrodef name="getGitRevision" description="Return the SHA-1 of the most recent commit">
+		<attribute name="repo" />
+		<attribute name="property" />
+		<sequential>
+			<local name="git.dirname"/>
+			<local name="git.repodir"/>
+			<expandProperty name="git.dirname" prefix="git." property="@{repo}" suffix=".repository.dirname" />
+			<property name="git.repodir" value="${base.src.dir}/${git.dirname}" />
+
+			<echo message="Checking current git repository commit at ${git.repodir}..."/>
+			<exec executable="${git.executable.location}" dir="${git.repodir}">
+				<arg value="rev-parse" />
+				<arg value="HEAD" />
+				<redirector  outputproperty="@{property}" alwayslog="true"  />
+			</exec>
+		</sequential>		
+	</macrodef>
+	
+	<macrodef name="createPluginFeatureFilesetsFromDirectory" description="Create fileset from the plugins and features in a directory">
+		<attribute name="baseId" />
+		<attribute name="dir" />
+		<attribute name="pluginBase" default="." />
+		<attribute name="featureBase" default="." />
+		<sequential>
+			<fileset id="@{baseId}.plugins" dir="@{dir}/@{pluginBase}">
+				<include name="**" />
+				<exclude name="*feature/**" />
+			</fileset>
+			<fileset id="@{baseId}.features" dir="@{dir}/@{featureBase}">
+				<include name="*feature/**" />
+			</fileset>
+			<fileset id="@{baseId}.plugins.test" dir="@{dir}/@{pluginBase}">
+				<include name="**test*/**" />
+				<exclude name="*feature/**" />
+			</fileset>
+			<fileset id="@{baseId}.features.test" dir="@{dir}/@{featureBase}">
+				<include name="*feature/**test*/**" />
+				<include name="*test*feature/**"/>
+			</fileset>
+		</sequential>
+	</macrodef>
+	
+	
+</project>
+	

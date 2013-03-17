@@ -1,0 +1,53 @@
+<project name="v9t9.build" default="main" basedir=".">
+
+	<!--
+	This is a target build.  It is driven mostly by the common.xml
+	file (and eclipse.xml, git.xml, etc. below that).  In this file,
+	just point to the target build and let the common script do the work.
+	-->
+
+	<property name="base.dir" value="/tmp/v9t9-build" />
+	<property name="base.git.url" value="/home/ejs/devel" />
+	<property name="eclipse.home" value="/usr/local/install/eclipse-3.8-really/eclipse" />
+		
+	<!-- Establish target-specific properties. -->
+	<property file="build.properties" />
+
+	<!-- common scripts location -->
+	<property name="common.scripts" value="${basedir}/../../common" />
+
+	<!-- define our top-level build directory (containing build.xml) -->
+	<property name="target.build.name" value="V9t9" />
+
+
+	<!-- get the common build steps -->
+	<import file="${common.scripts}/common.xml" />
+
+
+	<!-- define our features and plugins filesets -->
+
+	<createPluginFeatureFilesetsFromDirectory baseId="target.fileset.base"
+		dir="${base.src.dir}/emul/base" />
+
+	<createPluginFeatureFilesetsFromDirectory baseId="target.fileset.v9t9"
+		dir="${base.src.dir}/emul/v9t9/v9t9-java" />
+
+	<resources id="target.fileset.plugins">
+		<resources refId="target.fileset.base.plugins" />
+		<resources refId="target.fileset.v9t9.plugins" />
+	</resources>
+	
+	<resources id="target.fileset.features">
+		<resources refId="target.fileset.base.features" />
+		<resources refId="target.fileset.v9t9.features" />
+	</resources>
+
+	<!-- test features -->
+	<resources id="target.fileset.plugins.test">
+	</resources>
+	<resources id="target.fileset.features.test">
+	</resources>
+	<property name="target.test.features" value="" />
+	
+</project>
+

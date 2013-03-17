@@ -1,0 +1,217 @@
+<project default="main">
+
+	<!--
+	This is the common build script, which does the build work shared by
+	any plugin, feature, or product built on the "Silicon Labs Studio" IDE stack.
+	This file must be <import>ed into another script, or else you must define
+	-Dcommon.scripts=. so it can find its local contents.
+	-->
+
+	<!-- needed for foreach (http://ant-contrib.sourceforge.net/) -->
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+	  <classpath>
+	    <pathelement location="/usr/share/java/ant-contrib.jar"/>
+	  </classpath>
+	</taskdef>
+
+	<!-- fetch environment for other properties to use -->
+	<property environment="env"/>
+
+	<!-- Check some important prerequisites -->
+	<import file="${common.scripts}/prerequisites.xml" />
+
+	<!-- Get common property files.-->
+	<property file="${common.scripts}/common.properties" />
+
+	<!-- Get common property files.-->
+	<property file="${common.scripts}/build.properties" />
+
+	<!-- Get repository locations and URLs -->
+	<property file="${common.scripts}/repos.properties" />
+
+	<!-- Get Eclipse locations and flags -->
+	<property file="${common.scripts}/eclipse.properties" />
+
+	<condition property="noBuildBase">
+		<contains substring="}${" string="${env.BUILD_BASE}${base.build.dir}" />
+	</condition>
+	<fail if="${noBuildBase}" message="Missing BUILD_BASE environment variable or base.build.dir property -- see common.properties" />
+
+	<!-- Get macros to drive the build -->
+	<import file="macros.xml" />
+
+	<!-- Get Eclipse support macros/targets -->
+	<import file="eclipse.xml" as="eclipse" />
+
+	<!-- Get PDE support macros/targets -->
+	<import file="pde.xml" as="pde" />
+
+	<!-- Get CDT support macros -->
+	<import file="cdt.xml" as="cdt" />
+
+	<!-- TODO: actual multi-platform builds -->
+	<property name="buildos" value="${baseos}" />
+	<property name="buildws" value="${basews}" />
+	<property name="buildarch" value="${basearch}" />
+	
+	
+	<expandProperty name="buildExeExt" prefix="exeExt." property="${buildos}" />
+	<expandProperty name="buildSharedLibExt" prefix="sharedLibExt." property="${buildos}" />
+
+
+	<tstamp>
+       	<format property="date" pattern="yyyyMMddHHmm" locale="en"/>
+	</tstamp>
+
+	<!-- Defining build timestamp. -->
+	<property name="timestamp" value="${date}" />
+
+
+	<!-- ******************** SCRATCH:  clean up everything (the Eclipse setup, git clones) as if on a new computer -->
+	<target name="scratch">
+		<for list="${allRepos}" delimiter=" " trim="true" param="repo">
+			<sequential>
+				<ant antfile="${common.scripts}/git.xml" target="deleteClone" >
+					<property name="repo" value="@{repo}" />
+				</ant>
+			</sequential>
+		</for>
+		<antcall target="eclipse.scratch" />
+		<antcall target="pde.scratch" />
+	</target>
+
+	<!-- ******************** GIT-CHECKOUT:  incrementally update sources needed for build -->
+	<!-- This common script maintains a central source directory for everything buildable... don't
+	make a custom location for an extension, for example, or else you're wasting time. -->
+	<target name="git-checkout">
+		<!-- Fetch/update sources -->
+		<for list="${allRepos}" delimiter=" " trim="true" param="repo">
+			<sequential>
+				<ant antfile="${common.scripts}/git.xml" target="checkout" >
+					<property name="repo" value="@{repo}" />
+				</ant>
+		
+				<!-- fetch versions of repositories -->
+				<!-- <getGitRevision repo="@{repo}" property="git.@{repo}.repository.version" /> -->
+			</sequential>
+		</for>
+	</target>
+
+	<!-- ******************** DEV-SETUP:  set up the build environment -->
+	<!-- this is called after checkout, in case the Eclipse base archive is in a repo as well -->
+
+	<target name="dev-setup">
+		<antcall target="eclipse.setup" />
+	</target>
+	<!-- override to extend the target setup before building -->
+	<target name="target-setup-extra" >
+	</target>
+
+	<target name="setup" depends="dev-setup, target-setup-extra" />
+
+	<!-- ******************** PDE-LAYOUT:  reshuffle sources to make PDE happy -->
+	<target name="pde-layout">
+		<layoutFeaturesAndPlugins featuresRefId="target.fileset.features" pluginsrefId="target.fileset.plugins" />
+	</target>
+
+	<!-- ******************** BUILD: invoke the build -->
+
+	<target name="pde-build" depends="pde-layout">
+		<delete dir="${base.build.dir}/output/" failonerror="true" />
+		<!-- p2 weirdness: old plugins can override new ones! -->
+		<delete dir="${base.p2.repo.dir}" failonerror="false" />
+		<pdeBuildProduct buildXmlDir="${target.build.dir}" label="${target.product.name}" />
+	</target>
+	
+	<target name="p2-cache-cleanup">
+		<!-- delete P2 cache from archive: this duplicates all rootfiles! -->
+		<!-- TODO: windows-specific:  may be other archive format -->
+		<exec executable="${7z.executable.location}" failonerror="true" >
+			<arg value="d" />
+			<arg value="${output.archive}" />
+			<arg value="${target.product.name}/p2/org.eclipse.equinox.p2.core/cache/*" />
+		</exec>	
+	</target>
+
+	<!-- override to extend the target build after building -->
+	<target name="target-build-extra" />
+	<target name="target-pre-build" />
+
+	<target name="build" depends="target-pre-build, pde-build, target-build-extra, p2-cache-cleanup" />
+
+	<!-- unpack real installation on top of source installation (to save space and avoid installing test plugins) -->
+	<!-- <property name="target.eclipse.home" value="${base.build.dir}" /> -->
+	<property name="target.eclipse.home" value="${base.build.dir}/rt/${target.product.name}" />
+	
+	<!-- ******************** FEATURE-BUILD-PDE-LAYOUT:  reshuffle sources to make PDE happy -->
+	<target name="feature-build-pde-layout">
+		<layoutFeaturesAndPluginsMinusEclipseHome featuresRefId="target.fileset.features" pluginsrefId="target.fileset.plugins" />
+	</target>
+
+	<!-- ********************FEATURE-BUILD: invoke the feature build -->
+	<target name="feature-build">
+		<delete dir="${base.build.dir}/output/" failonerror="true" />
+		<!-- p2 weirdness: old plugins can override new ones! -->
+		<delete dir="${base.p2.repo.dir}" failonerror="false" />
+		<pdeBuildFeature buildXmlDir="${target.build.dir}" pluginPath="${base.build.dir}/sls" feature="${target.product.name}" label="${target.product.name}" />
+	</target>
+
+
+	<!-- ******************** TARGET-SCRATCH: clean up target for tests -->
+	<target name="target-scratch-common">
+		<delete dir="${target.eclipse.home}" failonerror="false" />
+		<delete dir="${target.eclipse.home}" failonerror="true" />
+	</target>
+
+	<target name="target-scratch-extra"> 
+	</target>
+	<target name="target-scratch" depends="target-scratch-common, target-scratch-extra">
+	
+	</target>
+	
+	<!-- not used to generate the output name, but a hack -->
+	<property name="output.archive" value="${base.build.dir}/output/${target.product.name}-${buildos}.${buildws}.${buildarch}.zip"/>
+
+	<!-- ******************** TARGET-INSTALL: install the generated build, so it will
+	be a base for building the test plugins	-->
+	<target name="target-install" depends="target-scratch">
+		<!-- '..' to remove product name, which is mirrored in the property and the archive -->
+		<unzip src="${output.archive}" dest="${target.eclipse.home}/.." />
+
+	</target>
+
+	<!-- ******************** TARGET-INSTALL-JUNIT: install the necessary testing
+	plugins	-->
+	<target name="target-install-junit">
+		<!--
+		<installIntoBaseEclipse iuNames="org.eclipse.equinox.launcher,
+		org.eclipse.pde.build,
+		org.eclipse.jdt.feature.group,
+		org.eclipse.pde.build.product.feature.feature.group,
+		org.junit4,
+		org.eclipse.pde.junit.runtime,
+		org.eclipse.pde.junit.runtime.standalone.feature.group,
+		org.eclipse.pde.junit.runtime.addon.feature.group,
+		org.eclipse.test,
+		org.eclipse.test.feature.group"
+			repos="${eclipse.p2.base.urls}" profile="profile"
+			eclipseHome="${target.eclipse.home}" />
+-->
+	</target>
+
+	<!-- ******************** PDE-TEST-LAYOUT:  reshuffle test sources to make PDE happy -->
+	<target name="pde-test-layout">
+
+		<layoutFeaturesAndPlugins featuresRefId="target.fileset.features.test" pluginsRefId="target.fileset.plugins.test"
+		eclipseTarget="${target.eclipse.home}" eclipseHome="${target.eclipse.home}" />
+	</target>
+
+	<target name="test-build-setup" depends="target-install, target-install-junit, target-test-build-setup-extra, pde-test-layout" />
+
+	<target name="target-test-build-setup-extra" />
+
+
+	<target name="main" depends="git-checkout, setup, build" />
+
+</project>
+

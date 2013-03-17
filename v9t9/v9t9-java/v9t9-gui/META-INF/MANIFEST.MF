@@ -3,13 +3,9 @@ Bundle-ManifestVersion: 2
 Bundle-Name: v9t9-gui
 Bundle-SymbolicName: v9t9-gui;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-ClassPath: v9t9-gui.jar,
- libs/jna.jar,
- libs/gnu-getopt-1.0.13.jar,
- libs/lwjgl/jar/jinput.jar,
+Bundle-ClassPath: libs/lwjgl/jar/jinput.jar,
  libs/lwjgl/jar/lwjgl.jar,
- libs/lwjgl/jar/lwjgl_util.jar,
- libs/svgSalamander.jar
+ libs/lwjgl/jar/lwjgl_util.jar
 Export-Package: v9t9.gui,
  v9t9.gui.client,
  v9t9.gui.client.awt,
@@ -28,17 +24,12 @@ Export-Package: v9t9.gui,
  v9t9.gui.sound
 Bundle-Vendor: Ed Swartz
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: J2SE-1.5,
- JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.7.0",
  ejs-base;bundle-version="1.0.0",
  ejs-gui;bundle-version="1.0.0",
- v9t9-asm;bundle-version="1.0.0",
  v9t9-audio;bundle-version="1.0.0",
  v9t9-common;bundle-version="1.0.0",
- v9t9-data;bundle-version="1.0.0",
- v9t9-engine;bundle-version="1.0.0",
- v9t9-machines;bundle-version="1.0.0",
  v9t9-remote;bundle-version="1.0.0",
  v9t9-server;bundle-version="1.0.0",
  v9t9-video;bundle-version="1.0.0"

@@ -1,0 +1,84 @@
+<project>
+
+	<!--
+	This script drives builds of components through CDT.
+	
+	It should be <import>'ed into its caller.
+	-->
+
+	<!-- invoke a CDT command line build -->
+	<!-- See comment in org.eclipse.cdt.managedbuilder.internal.core.HeadlessBuilder
+		for options	-->
+	<macrodef name="cdtMbsBuildProject">
+		<attribute name="label"/>
+		<attribute name="projectDir"/>
+		<attribute name="projectName"/>
+		<attribute name="config"/>
+		<attribute name="expectedOutputFile" />
+		<attribute name="wsDirectory" default="${base.build.dir}/workspace" />
+		<attribute name="eclipseHome" default="${eclipse.home}" />
+		<sequential>
+			<echo message="********* Building @{label} from @{projectDir}..." />
+			
+			<exec executable="java" failOnError="false" resultProperty="javaInvocResult" >
+				<env key="PATH" path="${gcc.base}/bin;${PATH}" />
+				<arg value="-Dorg.eclipse.cdt.core.console=org.eclipse.cdt.core.systemConsole"/>
+				<arg value="-jar"/>
+				<arg value="@{eclipseHome}/plugins/org.eclipse.equinox.launcher_${org.eclipse.equinox.launcher}.jar"/>
+				<arg value="-nosplash"/>
+				<arg value="-application"/>
+				<arg value="org.eclipse.cdt.managedbuilder.core.headlessbuild"/>
+				<arg value="-import"/>
+				<arg value="file:///@{projectDir}" />
+				
+				<arg value="-build"/>	<!-- note: this is not incremental -->
+				<arg value="@{projectName}/@{config}" />
+				<arg value="-data"/>
+				<arg value="@{wsDirectory}"/>
+			</exec>	
+
+			<!-- if it fails, try one rebuild: CDT does not close the workspace so the linked resources could be broken -->
+			<if>
+				<not>
+					<equals arg1="${javaInvocResult}" arg2="0" />			
+				</not>
+				<then>
+					<echo message="Build failed -- trying again with clean build" />
+					
+					<delete dir="@{wsDirectory}/.metadata" failonerror="true"/>
+					
+					<exec executable="java" failOnError="true">
+						<env key="PATH" path="${gcc.base}/bin;${PATH}" />
+						<arg value="-Dorg.eclipse.cdt.core.console=org.eclipse.cdt.core.systemConsole"/>
+						<arg value="-jar"/>
+						<arg value="@{eclipseHome}/plugins/org.eclipse.equinox.launcher_${org.eclipse.equinox.launcher}.jar"/>
+						<arg value="-nosplash"/>
+						<arg value="-application"/>
+						<arg value="org.eclipse.cdt.managedbuilder.core.headlessbuild"/>
+						<arg value="-import"/>
+						<arg value="file:///@{projectDir}" />
+						
+						<arg value="-cleanBuild"/>		<!-- this is the change -->
+						<arg value="@{projectName}/@{config}" />
+						<arg value="-data"/>
+						<arg value="@{wsDirectory}"/>
+					</exec>						
+				</then>
+			</if>
+			
+			<fail message="Build failed for:  @{expectedOutputFile}.&#10;Check for errors in the lines above or correct the expectedOutputFile attribute.">
+				<condition>
+					<not>
+						<available file="@{expectedOutputFile}" />
+					</not>
+				</condition>
+			</fail>			
+			
+			<!-- headless builder does not clean up after itself -->
+			<delete file="@{wsDirectory}/.metadata/.lock" failonerror="true"/>
+			
+		</sequential>
+	</macrodef>
+
+</project>
+

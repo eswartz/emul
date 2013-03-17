@@ -1,0 +1,116 @@
+<project >
+
+	<!-- 
+	This script discovers test classes in *built features and plugins*
+	but not *deployed* ones.  So, run this after a PDE build but before
+	installing the features.
+	
+	In general, if a feature provides a file (e.g. coreTests.lst, 
+	from ${feature.list}), then that file will be copied to ${list}.
+	Otherwise, we scan the plugins in the feature and then gather a
+	set of classes that look like tests, and send that list to the
+	target file.
+	-->
+
+	<!-- needed for XML -->
+	<taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask"/>
+
+	<!-- needed for foreach -->
+	<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+	
+	
+	<property name="target.eclipse.home" value="unknown" />
+	<property name="feature" value="unknown" />
+	<property name="feature.list" value="sourceTests.lst" />
+	<property name="out.feature.list.base" value="targetTests_${feature}" />
+		
+	<target name="check-test-list">
+		
+		<condition property="test.list.available">
+			<available file="${feature.list}" />
+		</condition>
+	</target>
+	
+	<target name="copy-test-list" if="test.list.available">
+		<echo message="Using ${feature.list}"/>
+		<copy file="${feature.list}" tofile="${list}" />
+					
+	</target>
+	
+	<target name="gather-test-classes" unless="test.list.available">
+		<property name="plugin" value=""/>
+		
+		<echo message="Gathering test class list for plugin: ${plugin} in ${list}..."/>
+		
+		<delete file="${list}" />
+		
+		<for param="classfilepath">
+			<path>
+				<fileset dir="${target.eclipse.home}/plugins/${plugin}/@dot">
+					<include name="**/AllTest*.class"/>
+					<include name="**/Test*.class"/>
+					<include name="**/*Test.class"/>
+					<include name="**/*Tests.class"/>
+					<!-- base/abstract classes -->
+					<exclude name="**/Base*.class"/>
+					<exclude name="**/Abstract*.class"/>
+					<!-- user-invoked tests -->
+					<exclude name="**/*Manual*.class"/>
+					<!-- plugin activator -->
+					<exclude name="**/*Activator.class"/>
+					<!-- inner classes -->
+					<exclude name="**/*$*.class"/>
+				</fileset>
+				
+			</path>
+			<sequential>		
+				<propertyregex override="yes"
+					property="classpath"  input="@{classfilepath}"
+					regexp=".*\@dot(?:/|\\)(.+)\.class" replace="\1"/>
+				<propertyregex override="yes"
+					property="classname"  input="${classpath}"
+					regexp="(/|\\)" replace="." global="true"/>
+				<echo message="Found ${classname} at @{classfilepath}"/>
+				<echo message="${plugin}/${classname}${line.separator}"
+					file="${list}"  append="true" />
+				<!--
+				<runJunitNonUiTests eclipseHome="${target.eclipse.home}"
+				workspace="${target.eclipse.home}/workspace"
+				label="tests"
+				pluginName="${plugin}" 
+				className="${classname}" />
+				-->
+			</sequential>
+		</for>							
+	</target>
+	
+	<!-- invoke to iterate each plugin defined in a (test) feature and
+	report every supposed test class inside into the file 'list'. -->
+	<target name="gather-feature-tests" depends="check-test-list" >
+		
+		<!-- iterate each plugin in the test features -->
+		<xmltask source="${target.eclipse.home}/features/${feature}/feature.xml">
+			<call path="//plugin">
+				<param name="id" path="@id"/>
+				<actions>
+					
+					<!-- one of the below is called -->
+					<antcall target="copy-test-list" >
+						
+					</antcall>
+					<antcall target="gather-test-classes">
+						<param name="plugin" value="@{id}"/>
+					</antcall>
+				</actions>
+			</call>
+		</xmltask>
+		
+		<condition property="feature.has.tests">
+			<available file="${list}"/>
+		</condition>
+		
+		<fail unless="feature.has.tests" message="Did not find any ${feature.list} or test classes in ${feature}" />
+	
+	</target>
+	
+</project>

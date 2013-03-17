@@ -7,18 +7,8 @@ Bundle-Activator: v9t9.rcp.Activator
 Bundle-Vendor: Ed Swartz
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
- v9t9-asm;bundle-version="1.0.0",
- v9t9-audio;bundle-version="1.0.0",
- v9t9-common;bundle-version="1.0.0",
- v9t9-data;bundle-version="1.0.0",
- v9t9-engine;bundle-version="1.0.0",
- v9t9-gui;bundle-version="1.0.0",
- v9t9-machines;bundle-version="1.0.0",
- v9t9-remote;bundle-version="1.0.0",
- v9t9-server;bundle-version="1.0.0",
- v9t9-video;bundle-version="1.0.0"
-Bundle-RequiredExecutionEnvironment: J2SE-1.5,
- JavaSE-1.6
+ v9t9-gui;bundle-version="1.0.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Export-Package: v9t9.rcp,
  v9t9.rcp.ui

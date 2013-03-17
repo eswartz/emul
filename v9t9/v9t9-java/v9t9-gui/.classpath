@@ -1,27 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/SWT"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/jna.jar"/>
-	<classpathentry kind="src" path="data"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/gnu-getopt-1.0.13.jar" sourcepath="/ejs-base/libs/gnu-getopt-source-1.0.13.jar"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry excluding="v9t9/gui/client/swt/svg/SVGBatikLoader.java|v9t9/gui/client/swt/svg/SWTImageTranscoder.java" kind="src" path="src"/>
 	<classpathentry kind="lib" path="libs/lwjgl/jar/jinput.jar" sourcepath="libs/lwjgl-source-2.8.3.zip">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${target.os}"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="libs/lwjgl/jar/lwjgl.jar">
-		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${os}"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="libs/lwjgl/jar/lwjgl.jar"/>
 	<classpathentry kind="lib" path="libs/lwjgl/jar/lwjgl_util.jar" sourcepath="libs/lwjgl-source-2.8.3.zip">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${target.os}"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/ejs-base/libs/svgSalamander.jar"/>
-	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

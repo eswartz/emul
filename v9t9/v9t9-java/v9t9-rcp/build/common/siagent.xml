@@ -1,0 +1,82 @@
+<project  default="main">
+
+	<!-- build customization:  handle Silabs TCF agent -->
+	<property name="buildDepsDebugDriversDir" 
+		value="${base.src.dir}/${git.ide.repository.dirname}/build-deps/debug-drivers/os/${buildos}/${buildarch}" />
+	<property name="tcfAgentDir" 
+		value="${base.src.dir}/${git.ide.repository.dirname}/native/common/tcf/SiAgent"/>
+	<property name="tcfBuildConfig" value="Release" />
+	<property name="tcfAgentBaseDir" 
+		value="${base.src.dir}/${git.ide.repository.dirname}/features/common/tcf/com.silabs.ide.tcf.core/os"/>
+	<property name="tcfAgentReleaseDir" 
+		value="${tcfAgentBaseDir}/${buildos}/${buildarch}"/>
+	<property name="tcfAgentExe" value="SiAgent${buildExeExt}" />
+
+	<resources id="tcfGeneratedBinaryList">
+		<fileset dir="${tcfAgentDir}/${tcfBuildConfig}/">
+			<include name="${tcfAgentExe}" />
+		</fileset>
+	</resources>
+	
+	<resources id="tcfBinaryList">
+		<resources refId="tcfGeneratedBinaryList" />
+		<fileset dir="${buildDepsDebugDriversDir}">
+			<include name="SLAB8051${buildSharedLibExt}" />
+			<include name="SLABHIDDevice${buildSharedLibExt}" />
+			<include name="SLAB_ADI_Util${buildSharedLibExt}" />
+			<include name="SLAB_ADI${buildSharedLibExt}" />
+			<!-- these following are not really OS-independent -->
+			<include name="libstdc++-6${buildSharedLibExt}" />
+			<include name="libgcc_s_dw2-1${buildSharedLibExt}" />
+		</fileset>
+	</resources>
+		
+	<!-- the agent rarely changes... when building locally, set this property to attempt to save time 
+	(note: the uptodate task is buggy! don't rely on this!) -->
+	<property name="siagent.build.lazy" value="false" />
+	
+		
+	<if>
+		<equals arg1="${siagent.build.lazy}" arg2="true" />
+		<then>
+			<uptodate property="agentBuilt" targetfile="${tcfAgentDir}/${tcfBuildConfig}/${tcfAgentExe}" >
+				<srcfiles dir="${tcfAgentDir}" includes="**" excludes="${tcfBuildConfig}/**" />
+			</uptodate>
+		</then>
+	</if>
+
+  	
+	<target name="siagent-build" unless="agentBuilt">
+		<echo message="Rebuilding ${tcfAgentDir}/${tcfBuildConfig}/${tcfAgentExe}"/>
+		<!-- build it... -->
+		<cdtMbsBuildProject 
+			label="Silabs TCF Agent"
+			projectDir="${tcfAgentDir}"
+			projectName="SiAgent"
+			config="${tcfBuildConfig}"
+			expectedOutputFile="${tcfAgentDir}/${tcfBuildConfig}/${tcfAgentExe}" />
+		
+	</target>
+
+	
+	<target name="siagent-pre-build" depends="siagent-build" if="true">
+		<echo message="Send target binaries to ${tcfAgentReleaseDir}"/>
+		<!-- copy agent and dependent binaries into the release location for use in PDE -->
+		<sync todir="${tcfAgentReleaseDir}" verbose="true">
+			<resources refId="tcfBinaryList" />
+		</sync>
+			
+		<!-- delete placeholder -->
+		<delete file="${tcfAgentBaseDir}/placeholder.txt" />
+	</target>
+
+	<target name="siagent-scratch-extra">
+	
+		<!-- delete entries from the release location  -->
+		<delete verbose="true">
+			<resources refId="tcfGeneratedBinaryList" />
+		</delete>
+	</target>
+	
+</project>
+	

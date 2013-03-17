@@ -1,0 +1,71 @@
+<project  default="checkout" basedir=".">
+
+	<!--
+	This script drives git commands from 'git' on the PATH.
+	Its main configuration property is 'repo', which is the label for
+	a repository.  This label is used to construct other properties
+	that reference the URL and local directory of the cloned repository.
+	
+	E.g. for repo='foo', this expects to find 'git.foo.repository.url'
+	and 'git.foo.repository.dirname' properties.
+	
+	-->
+	
+	<condition property="noGitBase">
+		<contains substring="$" string="${base.git.url}" />
+	</condition>
+	<fail if="${noGitBase}" message="Missing GIT_BASE_URL environment variable or base.git.url property -- see repos.properties" />
+
+	
+	<!-- Check some important prerequisites -->
+	<import file="prerequisites.xml" />
+
+	<!-- Get common property files.-->
+	<property file="common.properties" />
+	
+	<!-- Get macros to drive the build -->
+	<import file="macros.xml" />
+	
+	<!-- Get repository locations and URLs -->
+	<property file="repos.properties" />
+
+	<!-- git repository -->
+	<property name="repo" value="undefined" />
+
+	<property name="git.workdir" value="${base.src.dir}" />	
+	<expandProperty name="git.dirname" prefix="git." property="${repo}"  suffix=".repository.dirname" />
+	<expandProperty name="git.url" prefix="git." property="${repo}"  suffix=".repository.url" />
+
+	<!-- <echo message="workdir=${git.workdir}, url=${git.url}, dirname=${git.dirname}" /> -->
+	
+	<!-- see if repo was cloned yet -->
+	<available file=".git" type="dir" filepath="${git.workdir}/${git.dirname}" property="repo.cloned" />
+	
+	<target name="clone" unless="repo.cloned">
+		<mkdir dir="${git.workdir}"/>
+		<echo message="Cloning ${git.dirname} into ${git.workdir}..."/>
+		<!-- NOTE the TIMEOUT: the git URL *should* be local, or else this may be waiting for an SSH passphrase forever -->
+		<exec executable="${git.executable.location}" dir="${git.workdir}" timeout="${git.timeout}" failonerror="true" >
+			<arg value="clone" />
+			<arg value="${git.url}" />
+			<arg value="${git.dirname}" />
+		</exec>
+	</target>	
+	
+	<target name="pull" if="repo.cloned" >
+		<echo message="Pulling ${git.dirname} into ${git.workdir}..."/>
+		<exec executable="${git.executable.location}" dir="${git.workdir}/${git.dirname}"  timeout="${git.timeout}" failonerror="true" >
+			<arg value="pull" />
+			<arg value="--force" />		<!-- in case there were rebases -->
+			<arg value="origin" />
+			<arg value="master" />
+		</exec>
+	</target>	
+	
+	<target name="deleteClone" >
+		<delete dir="${git.workdir}/${git.dirname}" quiet="true" includeemptydirs="true" />
+	</target>
+	
+	<target name="checkout" depends="clone, pull" />
+</project>
+

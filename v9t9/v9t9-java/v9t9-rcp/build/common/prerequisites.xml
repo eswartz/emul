@@ -1,0 +1,87 @@
+<project>
+
+	<property environment="env" />
+	
+	<condition property="path" value="${env.PATH}">
+		<isset property="env.PATH" />
+	</condition>
+	<condition property="path" value="${env.Path}">
+		<isset property="env.Path" />
+	</condition>
+
+
+	<!-- this property is needed to find gcc et. al. when building. -->
+	<condition property="gcc.base" value="c:/MinGW">
+		<os family="windows" />
+	</condition>
+	<condition property="gcc.base" value="/usr">
+		<not>
+			<os family="windows" />
+		</not>
+	</condition>
+
+	<!-- the variables below follow Eclipse's 'os' attribute valuing -->
+
+	<property name="exeExt.win32" value=".exe" />
+	<property name="exeExt.linux" value="" />
+	<property name="exeExt.macosx" value="" />
+	
+	<property name="sharedLibExt.win32" value=".dll" />
+	<property name="sharedLibExt.linux" value=".so" />
+	<property name="sharedLibExt.macosx" value=".dylib" />
+	
+	<condition property="hostExeExt" value="${exeExt}.win32">
+		<os family="windows" />
+	</condition>
+	<condition property="hostExeExt" value="${exeExt}.linux">
+		<and>
+			<os family="unix" />
+			<not>
+				<os family="mac" />
+			</not>
+		</and>
+	</condition>
+	<condition property="hostExeExt" value="${exeExt}.macosx">
+		<os family="mac" />
+	</condition>
+	
+	<condition property="hostSharedLibExt" value="${sharedLibExt}.win32">
+		<os family="windows" />
+	</condition>
+	<condition property="hostSharedLibExt" value="${sharedLibExt}.linux">
+		<and>
+			<os family="unix" />
+			<not>
+				<os family="mac" />
+			</not>
+		</and>
+	</condition>
+	<condition property="hostSharedLibExt" value="${sharedLibExt}.macosx">
+		<os family="mac" />
+	</condition>
+	
+
+	<!-- this is flaky -->
+	<macrodef name="check.executable">
+		<attribute name="executable" />
+		<attribute name="property" />
+		<sequential>
+			<echo>Checking for @{executable} on path.</echo>
+			<!-- absolute path via property? -->
+			<property name="@{property}" value="@{executable}${hostExeExt}" />
+			<condition property="@{executable}.executable.available">
+				<or>
+					<available file="@{property}" type="file" filepath="${path}" property="@{executable}.executable.available.1" />
+					<available file="@{executable}${hostSharedLibExt}" filepath="${path}" property="@{executable}.executable.available.2" />
+				</or>
+			</condition>
+			<fail unless="@{executable}.executable.available" message="@{executable} not found.  Please ensure that @{executable} is on the path or the @{property} property is set to other than ${@{property}}." />
+			<echo>Found @{executable} (@{property}=${@{property}}).</echo>
+		</sequential>
+	</macrodef>
+
+	<property name="git.executable.location" value="git" />
+	<property name="zip.executable.location" value="zip" />
+
+
+</project>

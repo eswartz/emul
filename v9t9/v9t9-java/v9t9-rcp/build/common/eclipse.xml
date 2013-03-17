@@ -1,0 +1,74 @@
+<project  default="setup">
+
+	<!--
+	This script drives the Eclipse base/host environment setup.
+	-->
+
+	<condition property="eclipseArchivesFound">
+		<available file="${eclipse.archive.dir}" />
+	</condition>
+	<!--
+	<fail unless="${eclipseArchivesFound}" message="Missing ECLIPSE_ARCHIVES environment variable or eclipse.archive.dir property: see eclipse.properties" />
+		-->
+	
+	<!-- see if installation was set up yet -->
+	<available file="plugins" type="dir" filepath="${eclipse.home}" property="eclipse.exists" />
+	
+	<!-- install features/etc into the base Eclipse.
+	This is a COPY of the base for PDE, which works in another copy inside
+	${base.build.dir}, where the source features/plugins are also located.
+	-->
+	<macrodef name="installIntoBaseEclipse">
+		<attribute name="profile"/>
+		<attribute name="repos"/>
+		<attribute name="iuNames"/>
+		<attribute name="eclipseHome" default="${eclipse.home}" />
+		<sequential>
+			<echo message="Checking @{eclipseHome} for @{iuNames} from @{repos}..." />
+			<exec executable="java" failOnError="true" >
+				<arg value="-jar"/>
+				<arg value="${eclipse.home}/plugins/org.eclipse.equinox.launcher_${org.eclipse.equinox.launcher}.jar"/>
+				<arg value="-nosplash"/>
+				<arg value="-application"/>
+				<arg value="org.eclipse.equinox.p2.director"/>
+				<arg value="-r"/>
+				<arg value="@{repos}" />
+				<arg value="-installIUs"/>
+				<arg value="@{iuNames}"/>
+				<arg value="-destination"/>
+				<arg value="@{eclipseHome}"/>
+				<arg value="-profile"/>
+				<arg value="@{profile}"/>
+				
+			</exec>
+		</sequential>
+	</macrodef>
+	
+	
+	<!-- ************** SCRATCH:  deletes base and release Eclipse installation -->
+	<target name="scratch" if="eclipse.exists">
+		<!--
+		<delete dir="${eclipse.home}"  quiet="true" includeemptydirs="true"/>
+		-->
+	</target>
+
+	<!-- ************** UNPACK-BASE:  if needed, extract an existing Eclipse archive -->
+	<target name="unpack-base" unless="eclipse.exists">
+		<mkdir dir="${eclipse.home}"/>
+		
+		<unzip src="${eclipse.base.archive}" dest="${eclipse.home}/.." />
+		<unzip src="${eclipse.deltapack.archive}" dest="${eclipse.home}/.." />
+	</target>
+	
+	<!-- ************** INSTALL-EXTENSIONS:  install extensions  -->
+	<target name="install-extensions" >
+			<!--
+		<installIntoBaseEclipse iuNames="${eclipse.p2.base.ius}" 
+			repos="${eclipse.p2.base.urls}" profile="${eclipse.p2.base.profile}" />
+			-->
+	</target>
+
+	<target name="setup" depends="install-extensions" />
+	
+</project>
+
