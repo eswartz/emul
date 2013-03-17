@@ -98,4 +98,3 @@ Require-Bundle: org.junit4;bundle-version="4.8.1";resolution:=optional,
  org.eclipse.jface,
  org.eclipse.core.runtime;bundle-version="3.7.0"
 Bundle-Vendor: Ed Swartz
-Bundle-Activator: ejs.base.internal.Activator
