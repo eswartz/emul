@@ -18,13 +18,6 @@
    </license>
 
    <plugin
-         id="org.hamcrest.core"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.core.databinding.property"
          download-size="0"
          install-size="0"
@@ -33,13 +26,6 @@
 
    <plugin
          id="org.eclipse.osgi"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.help"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -101,35 +87,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.ui"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.jface.databinding"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.core.commands"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.ui.workbench"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.core.expressions"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -171,13 +129,6 @@
          fragment="true"/>
 
    <plugin
-         id="org.eclipse.core.databinding"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.jface"
          download-size="0"
          install-size="0"
@@ -206,13 +157,6 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.core.databinding.observable"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.core.runtime"
          download-size="0"
          install-size="0"
@@ -221,13 +165,6 @@
 
    <plugin
          id="org.eclipse.swt"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="com.ibm.icu"
          download-size="0"
          install-size="0"
          version="0.0.0"
