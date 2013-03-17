@@ -12,7 +12,6 @@ Bundle-ClassPath: libs/jna.jar,
  libs/svgSalamander.jar,
  libs/bcel-5.2.jar,
  libs/org.eclipse.tm.tcf.jar,
- src/,
  .
 Export-Package: com.google.gson,
  com.google.gson.annotations,
