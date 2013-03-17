@@ -58,7 +58,7 @@
 			<arg value="pull" />
 			<arg value="--force" />		<!-- in case there were rebases -->
 			<arg value="origin" />
-			<arg value="master" />
+			<arg value="${git.branch}" />
 		</exec>
 	</target>	
 	
