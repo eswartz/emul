@@ -10,10 +10,10 @@
 	<property name="base.git.url" value="/home/ejs/devel" />
 	<property name="eclipse.home" value="/usr/local/install/eclipse-3.8-really/eclipse" />
 	<property name="7z.executable.location" value="/usr/bin/7z" />
-	<property name="configs" value="linux, gtk, x86_64" />
 	<property name="baseos" value="linux" />
 	<property name="basews" value="gtk" />
 	<property name="basearch" value="x86_64" />
+	<property name="configs" value="${baseos}, ${basews}, ${basearch}" />
 		
 	<!-- Establish target-specific properties. -->
 	<property file="build.properties" />
@@ -22,7 +22,8 @@
 	<property name="common.scripts" value="${basedir}/../../common" />
 
 	<!-- define our top-level build directory (containing build.xml) -->
-	<property name="target.build.name" value="V9t9" />
+	<property name="target.build.name" value="v9t9" />
+	<property name="target.product.name" value="v9t9" />
 
 
 	<!-- get the common build steps -->
