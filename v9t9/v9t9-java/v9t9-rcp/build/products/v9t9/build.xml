@@ -15,7 +15,7 @@
 	<property name="basearch" value="x86_64" />
 	<property name="configs" value="linux,gtk,x86_64 &amp; linux,gtk,x86 &amp; 
 		win32,win32,x86 &amp; win32,win32,x86_64 &amp;
-		macosx,cocoa,x86 &amp; macosx,cocoa,x86_64" />
+		macosx,cocoa,x86_64" />
 		
 	<!-- Establish target-specific properties. -->
 	<property file="build.properties" />
