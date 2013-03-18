@@ -6,20 +6,21 @@
 	just point to the target build and let the common script do the work.
 	-->
 
-	<property name="base.dir" value="/tmp/v9t9-build" />
+	<property name="base.dir" value="/tmp/launchers-build" />
 	<property name="base.git.url" value="/home/ejs/devel" />
 	<property name="eclipse.home" value="/usr/local/install/eclipse-3.8-really/eclipse" />
 	<property name="7z.executable.location" value="/usr/bin/7z" />
 	<property name="baseos" value="win32" />
 	<property name="basews" value="win32" />
 	<property name="basearch" value="x86" />
-	<property name="configs" value="${baseos},${basews},${basearch}" />
-	<property name="configs_all" value="linux,gtk,x86_64 &amp; linux,gtk,x86 &amp; 
+	<property name="configs" value="linux,gtk,x86_64 &amp; linux,gtk,x86 &amp; 
 		win32,win32,x86 &amp; win32,win32,x86_64 &amp;
-		macosx,cocoa,x86_64" />
+		macosx,cocoa,x86 &amp; macosx,cocoa,x86_64" />
 	
 	<property name="archiveName" value="v9t9.zip"/>
 		
+	<property name="allRepos" value="emul" />
+	
 	<!-- Establish target-specific properties. -->
 	<property file="build.properties" />
 
@@ -27,7 +28,7 @@
 	<property name="common.scripts" value="${basedir}/../../common" />
 
 	<!-- define our top-level build directory (containing build.xml) -->
-	<property name="target.build.name" value="v9t9" />
+	<property name="target.build.name" value="launchers" />
 	<property name="target.product.name" value="v9t9" />
 
 	<!-- get the common build steps -->
@@ -36,21 +37,13 @@
 
 	<!-- define our features and plugins filesets -->
 
-	<createPluginFeatureFilesetsFromDirectory baseId="target.fileset.base"
-		dir="${base.src.dir}/emul/base" />
-
-	<createPluginFeatureFilesetsFromDirectory baseId="target.fileset.v9t9"
-		dir="${base.src.dir}/emul/v9t9/v9t9-java" />
-
 	<resources id="target.fileset.plugins">
-		<resources refId="target.fileset.base.plugins" />
-		<resources refId="target.fileset.v9t9.plugins" />
-		
+		<fileset id="@{baseId}.plugins" dir="@{dir}/@{pluginBase}">
+			<include name="${base.src.dir}/emul/v9t9/v9t9-java/v9t9-rcp/**" />
+		</fileset>
 	</resources>
 	
 	<resources id="target.fileset.features">
-		<resources refId="target.fileset.base.features" />
-		<resources refId="target.fileset.v9t9.features" />
 	</resources>
 
 	<!-- test features -->
