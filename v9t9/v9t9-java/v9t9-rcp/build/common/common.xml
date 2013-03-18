@@ -125,7 +125,7 @@
 	
 	<target name="p2-output-rename">
 		<rename dest="${output.archive}" src="${base.build.dir}/output/${target.product.name}-${buildos}.${buildws}.${buildarch}.zip"
-		overwrite="true"/>
+		/>
 	</target>
 	
 	<target name="p2-cache-cleanup">
@@ -150,11 +150,18 @@
 			dir="${base.dir}">
 			<arg value="a" />
 			<arg value="${output.archive}" />
+			<arg value="${target.product.name}/plugins/org.eclipse.swt.cocoa.macosx_${eclipse.base.version}*.jar" />
 			<arg value="${target.product.name}/plugins/org.eclipse.swt.cocoa.macosx.x86_64_${eclipse.base.version}*.jar" />
 			<arg value="${target.product.name}/plugins/org.eclipse.swt.win32.win32.x86_${eclipse.base.version}*.jar"/>
 			<arg value="${target.product.name}/plugins/org.eclipse.swt.win32.win32.x86_64_${eclipse.base.version}*.jar"/>
 			<arg value="${target.product.name}/plugins/org.eclipse.swt.gtk.linux.x86_${eclipse.base.version}*.jar"/>
 			<arg value="${target.product.name}/plugins/org.eclipse.swt.gtk.linux.x86_64_${eclipse.base.version}*.jar"/>
+			<arg value="${target.product.name}/plugins/org.eclipse.equinox.launcher.cocoa.macosx_${equinox.base.version}*" />
+			<arg value="${target.product.name}/plugins/org.eclipse.equinox.launcher.cocoa.macosx.x86_64_${equinox.base.version}*" />
+			<arg value="${target.product.name}/plugins/org.eclipse.equinox.launcher.win32.win32.x86_${equinox.base.version}*"/>
+			<arg value="${target.product.name}/plugins/org.eclipse.equinox.launcher.win32.win32.x86_64_${equinox.base.version}*"/>
+			<arg value="${target.product.name}/plugins/org.eclipse.equinox.launcher.gtk.linux.x86_${equinox.base.version}*"/>
+			<arg value="${target.product.name}/plugins/org.eclipse.equinox.launcher.gtk.linux.x86_64_${equinox.base.version}*"/>
 		</exec>	
 		<exec executable="${7z.executable.location}" failonerror="true" 
 			dir="${base.dir}/launchers">
@@ -164,11 +171,36 @@
 		</exec>	
 		<exec executable="${7z.executable.location}" failonerror="true">
 			<arg value="d" />
-			<arg value="v9t9.exe" />
-			<arg value="v9t9.ini"/>
+			<arg value="${output.archive}" />
+			<arg value="${target.product.name}/${target.product.name}.*" />
+		</exec>
+		
+		<delete dir="${base.dir}/output/tmp" />
+		<property name="tmpx" value="${base.dir}/output/tmp" />
+		<unzip src="${output.archive}" dest="${tmpx}" />
+		
+		<for delimiter=" " list="${configs_segments}" trim="true" param="seg">
+			<sequential>
+		    	<copy todir="${tmpx}/${target.product.name}/configuration_@{seg}">
+		    		<fileset dir="${tmpx}">
+		    			<include name="${target.product.name}/configuration/**"/>
+		    		</fileset>
+				</copy>
+		    	<replace file="${tmpx}/${target.product.name}/configuration/config.ini" token="win32.win32.x86" value="@{seg}" />
+			</sequential>
+		</for>
+		<exec executable="${7z.executable.location}" failonerror="true"
+			dir="${tmpx}" >
+			<arg value="a" />
+			<arg value="${output.archive}" />
+			<arg value="${target.product.name}/configuration_*" />
+		</exec>	
+		<exec executable="${7z.executable.location}" failonerror="true" >
+			<arg value="d" />
+			<arg value="${output.archive}" />
+			<arg value="${target.product.name}/${target.product.name}.*" />
 		</exec>	
 	</target>
-
 	
 	<target name="build" depends="target-pre-build, pde-build, target-build-extra, p2-output-rename, p2-cache-cleanup, p2-combine" />
 

@@ -17,6 +17,8 @@
 	<property name="configs_all" value="linux,gtk,x86_64 &amp; linux,gtk,x86 &amp; 
 		win32,win32,x86 &amp; win32,win32,x86_64 &amp;
 		macosx,cocoa,x86_64" />
+	<property name="configs_segments" value="gtk.linux.x86_64 gtk.linux.x86 
+		win32.win32.x86 win32.win32.x86_64 cocoa.macosx.x86_64 cocoa.macosx" />
 	
 	<property name="archiveName" value="v9t9.zip"/>
 		
