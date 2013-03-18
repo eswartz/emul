@@ -144,7 +144,10 @@
 
 	<target name="p2-combine">
 		<!-- make a super-launcher -->
-		<unzip src="${common.scripts}/../v9t9-launchers.zip" dest="${base.dir}/launchers" />
+		
+		<property name="tmpx" value="${base.dir}/output/tmp" />
+		<delete dir="${tmpx}" />
+		<unzip src="${common.scripts}/../v9t9-launchers.zip" dest="${tmpx}/launchers" />
 
 		<exec executable="${7z.executable.location}" failonerror="true" 
 			dir="${base.dir}">
@@ -164,7 +167,7 @@
 			<arg value="${target.product.name}/plugins/org.eclipse.equinox.launcher.gtk.linux.x86_64_${equinox.base.version}*"/>
 		</exec>	
 		<exec executable="${7z.executable.location}" failonerror="true" 
-			dir="${base.dir}/launchers">
+			dir="${tmpx}/launchers">
 			<arg value="a" />
 			<arg value="${output.archive}" />
 			<arg value="*"/>
@@ -175,8 +178,6 @@
 			<arg value="${target.product.name}/${target.product.name}.*" />
 		</exec>
 		
-		<delete dir="${base.dir}/output/tmp" />
-		<property name="tmpx" value="${base.dir}/output/tmp" />
 		<unzip src="${output.archive}" dest="${tmpx}" />
 		
 		<for delimiter=" " list="${configs_segments}" trim="true" param="seg">
@@ -186,7 +187,7 @@
 		    			<include name="${target.product.name}/configuration/**"/>
 		    		</fileset>
 				</copy>
-		    	<replace file="${tmpx}/${target.product.name}/configuration/config.ini" token="win32.win32.x86" value="@{seg}" />
+		    	<replace file="${tmpx}/${target.product.name}/configuration_@{seg}/v9t9/configuration/config.ini" token="win32.win32.x86" value="@{seg}" />
 			</sequential>
 		</for>
 		<exec executable="${7z.executable.location}" failonerror="true"
