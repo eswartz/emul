@@ -124,7 +124,7 @@
 	</target>
 	
 	<target name="p2-output-rename">
-		<move dest="${output.archive}" src="${base.build.dir}/output/${target.product.name}-${buildos}.${buildws}.${buildarch}.zip"
+		<rename dest="${output.archive}" src="${base.build.dir}/output/${target.product.name}-${buildos}.${buildws}.${buildarch}.zip"
 		overwrite="true"/>
 	</target>
 	
@@ -144,6 +144,8 @@
 
 	<target name="p2-combine">
 		<!-- make a super-launcher -->
+		<unzip src="${common.scripts}/../v9t9-launchers.zip" dest="${base.dir}/launchers" />
+
 		<exec executable="${7z.executable.location}" failonerror="true" 
 			dir="${base.dir}">
 			<arg value="a" />
@@ -153,6 +155,17 @@
 			<arg value="${target.product.name}/plugins/org.eclipse.swt.win32.win32.x86_64_${eclipse.base.version}*.jar"/>
 			<arg value="${target.product.name}/plugins/org.eclipse.swt.gtk.linux.x86_${eclipse.base.version}*.jar"/>
 			<arg value="${target.product.name}/plugins/org.eclipse.swt.gtk.linux.x86_64_${eclipse.base.version}*.jar"/>
+		</exec>	
+		<exec executable="${7z.executable.location}" failonerror="true" 
+			dir="${base.dir}/launchers">
+			<arg value="a" />
+			<arg value="${output.archive}" />
+			<arg value="*"/>
+		</exec>	
+		<exec executable="${7z.executable.location}" failonerror="true">
+			<arg value="d" />
+			<arg value="v9t9.exe" />
+			<arg value="v9t9.ini"/>
 		</exec>	
 	</target>
 
