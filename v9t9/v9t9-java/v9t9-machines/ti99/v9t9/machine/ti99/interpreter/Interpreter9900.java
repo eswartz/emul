@@ -720,4 +720,12 @@ public class Interpreter9900 implements IInterpreter {
         	
         }
     }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.interpreter.IInterpreter#reset()
+     */
+    @Override
+    public void reset() {
+    	parsedInstructions.clear();
+    }
 }

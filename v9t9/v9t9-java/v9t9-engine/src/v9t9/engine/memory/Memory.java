@@ -120,6 +120,8 @@ public class Memory implements IMemory {
 	 */
     @Override
 	public void removeAndUnmap(IMemoryEntry entry) {
+    	if (entry == null)
+    		return;
     	entry.getDomain().unmapEntry(entry);
     	notifyListenersOfPhysicalChange(entry);
     }

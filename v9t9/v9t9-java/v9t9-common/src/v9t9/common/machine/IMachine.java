@@ -104,4 +104,9 @@ public interface IMachine extends IBaseMachine {
 	 * @return array of entries
 	 */
 	Collection<IModule> scanModules(URI databaseURI, File base);
+
+	/**
+	 * Reload machine (e.g. re-read ROMs and re-set module)
+	 */
+	void reload();
 }

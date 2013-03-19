@@ -143,5 +143,9 @@ public interface IExecutor {
 	 * 
 	 */
 	void tick();
+	/**
+	 * 
+	 */
+	void reset();
 
 }

@@ -45,6 +45,14 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	
 	private MemoryEntry consoleEntry;
 
+	private IMemoryEntry gromEntry;
+
+	private IMemoryEntry gramDictEntry;
+
+	private IMemoryEntry gramMemoryEntry;
+
+	private IMemoryEntry cpuRomEntry;
+
 	public F99bMemoryModel(IMachine machine) {
 		super(machine);
 	}
@@ -110,7 +118,6 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	 */
 	@Override
 	public void loadMemory(IEventNotifier eventNotifier) {
-		IMemoryEntry cpuRomEntry;
     	try {
 			cpuRomEntry = memory.getMemoryEntryFactory().newMemoryEntry(
 					f99bRomMemoryEntryInfo);
@@ -120,7 +127,10 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 			// shrink RAM accordingly
 			int st = cpuRomEntry.getAddr() + 0x400 * ((cpuRomEntry.getSize() + 0x3ff) / 0x400);
 			int sz = 0x10000 - st;
+			
+			memory.removeAndUnmap(cpuRomEntry);
 			memory.removeAndUnmap(consoleEntry);
+			
 			consoleEntry = new MemoryEntry("64K RAM", CPU, 
 					st, sz, new EnhancedRamByteArea(0, sz));
 			memory.addAndMap(consoleEntry);
@@ -131,8 +141,9 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
     	}
     	
     	// GROM consists of ROM up to 16k
-		IMemoryEntry gromEntry;
 		try {
+			memory.removeAndUnmap(gromEntry);
+			
 			gromEntry = memory.getMemoryEntryFactory().newMemoryEntry(
 					f99bGromMemoryEntryInfo);
 			
@@ -142,8 +153,8 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		}
 		
 		// then 16k of GRAM for new dictionary
-		IMemoryEntry gramDictEntry;
 		try {
+			memory.removeAndUnmap(gramDictEntry);
 			gramDictEntry = memory.getMemoryEntryFactory().newMemoryEntry(
 					f99bGramMemoryEntryInfo);
 			gramDictEntry.getArea().setLatency(0);
@@ -178,9 +189,10 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		}
 		
 		try {
-			IMemoryEntry entry = memory.getMemoryEntryFactory().newMemoryEntry(
+			memory.removeAndUnmap(gramMemoryEntry);
+			gramMemoryEntry = memory.getMemoryEntryFactory().newMemoryEntry(
 					f99bDiskGramMemoryEntryInfo);
-			memory.addAndMap(entry);
+			memory.addAndMap(gramMemoryEntry);
 		} catch (IOException e) {
 			reportLoadError(eventNotifier, f99bDiskGramMemoryEntryInfo.getFilename(), e);
 		}

@@ -642,4 +642,17 @@ public class Executor implements IExecutor {
 		runnableList.add(runnable);
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IExecutor#reset()
+	 */
+	@Override
+	public void reset() {
+		runnableList.clear();
+		if (interp != null)
+			interp.reset();
+		if (compilerStrategy != null)
+			compilerStrategy.reset();
+			
+	}
 }

@@ -32,6 +32,7 @@ import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
+import v9t9.common.events.NotifyException;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.DataFiles;
 import v9t9.common.files.IEmulatedFileHandler;
@@ -63,6 +64,8 @@ import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.files.directory.EmuDiskSettings;
 import v9t9.engine.files.image.DiskImageMapper;
 import v9t9.engine.keyboard.KeyboardState;
+import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.modules.ModuleManager;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
@@ -331,6 +334,8 @@ abstract public class MachineBase implements IMachine {
 	 */
 	@Override
 	public void reset() {
+		boolean wasPaused = setPaused(true);
+		
 		keyboardState.resetKeyboard();
 		executor.getCompilerStrategy().reset();
 		
@@ -342,12 +347,20 @@ abstract public class MachineBase implements IMachine {
 				for (int i = 0; i < entry.getSize(); i+= 2)
 					domain.writeWord(i + addr, (short) 0);
 			}
+			else if (entry instanceof DiskMemoryEntry) {
+				((DiskMemoryEntry) entry).unload();
+			}
 		}
+		
+		reload();
 		
 		if (cru != null)
 			cru.reset();
 				
 		cpu.reset();
+		
+		setPaused(wasPaused);
+
 	}
 	
 	/* (non-Javadoc)
@@ -804,6 +817,31 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public Collection<IModule> scanModules(URI databaseURI, File base) {
 		return Collections.emptyList();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#reload()
+	 */
+	@Override
+	public void reload() {
+		
+		getExecutor().reset();
+		
+		memoryModel.loadMemory(client.getEventNotifier());
+		
+		if (getModuleManager() != null) {
+			getModuleManager().reload();
+			
+			// reset state
+			try {
+				String lastModule = settings.get(ModuleManager.settingLastLoadedModule).getString();
+				if (lastModule.length() > 0)
+					getModuleManager().switchModule(lastModule);
+			} catch (NotifyException e) {
+				notifyEvent(e.getEvent());
+			}		
+		}
+		
 	}
 }
 

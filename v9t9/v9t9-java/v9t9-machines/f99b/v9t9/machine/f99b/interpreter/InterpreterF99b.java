@@ -181,9 +181,7 @@ public class InterpreterF99b implements IInterpreter {
      }
 
 	public void dispose() {
-    	Arrays.fill(cachedInstrs, null);
-    	cachedInstrCount = 0;
-    	instrMap.clear();
+		reset();
     	memory.removeWriteListener(memoryWriteListener);
     }
 	
@@ -1441,5 +1439,16 @@ public class InterpreterF99b implements IInterpreter {
 	 */
 	public void setShowSymbol() {
 		iblock.showSymbol = true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.interpreter.IInterpreter#reset()
+	 */
+	@Override
+	public void reset() {
+    	Arrays.fill(cachedInstrs, null);
+    	cachedInstrCount = 0;
+    	instrMap.clear();
+		
 	}
 }

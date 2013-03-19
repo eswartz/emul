@@ -21,4 +21,9 @@ public interface IInterpreter {
 	void executeChunk(int numinsts, IExecutor executor);
 
 	void dispose();
+
+	/**
+	 * 
+	 */
+	void reset();
 }

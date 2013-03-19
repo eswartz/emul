@@ -17,17 +17,13 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
-import v9t9.common.memory.IMemory;
-import v9t9.common.memory.IMemoryModel;
 import v9t9.common.settings.IStoredSettings;
 import v9t9.engine.demos.DemoHandler;
 import v9t9.engine.memory.GplMmio;
-import v9t9.engine.modules.ModuleManager;
 import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
 import v9t9.machine.ti99.machine.EnhancedTI994AMachineModel;
@@ -55,9 +51,7 @@ public abstract class EmulatorServerBase {
 				F99bMachineModel.ID, F99bMachineModel.class);
 	}
 	
-	private IMemory memory;
 	private IMachine machine;
-	private IMemoryModel memoryModel;
 	private IClient client;
 	private boolean inited;
 	private ISettingsHandler settings;
@@ -96,21 +90,7 @@ public abstract class EmulatorServerBase {
 	protected void loadState() {
 		int barrier = client.getEventNotifier().getErrorCount();
 		
-		
-		memoryModel.loadMemory(client.getEventNotifier());
-		
-		if (machine.getModuleManager() != null) {
-			machine.getModuleManager().reload();
-			
-			// reset state
-			try {
-				String lastModule = settings.get(ModuleManager.settingLastLoadedModule).getString();
-				if (lastModule.length() > 0)
-					machine.getModuleManager().switchModule(lastModule);
-			} catch (NotifyException e) {
-				machine.notifyEvent(e.getEvent());
-			}		
-		}
+		machine.reload();
 		
 		if (client.getEventNotifier().getErrorCount() > barrier) {
 			settings.get(IClient.settingNewConfiguration).setValue(true);
@@ -147,10 +127,6 @@ public abstract class EmulatorServerBase {
     		settings.get(IClient.settingNewConfiguration).setBoolean(true);
     	}
     	
-    	this.memory = machine.getMemory();
-    	
-    	this.memoryModel = memory.getModel();
-
     	this.server = new EmulatorTCFServer(machine);
     	
     	// demo support
