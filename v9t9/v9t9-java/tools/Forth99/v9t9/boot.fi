@@ -38,6 +38,7 @@
     
     \ >grom_logo g@ gtypez cr
     
+    0 heapptr !
     (RAM0)  RAM !
 ;
 

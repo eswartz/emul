@@ -1,0 +1,112 @@
+
+
+\ pointer to end of block chain;  0 if no heap
+\
+\ heapptr 
+\
+2   RamVar  heapptr
+
+\ [ link to prev block ] [ next 'here' ] [ data .... ]
+| 4 Constant #heaphdr  
+
+: allocate ( u -- a-addr ior )
+\ Allocate u address units of contiguous data space. 
+\ EJS: ignored: [[[ The data-space pointer is unaffected by this operation. ]]] 
+\ The initial content of the allocated space is undefined.
+\
+\ If the allocation succeeds, a-addr is the aligned starting address of the
+\ allocated space and ior is zero.
+\ 
+\ If the operation fails, a-addr does not represent a valid address and ior 
+\ is the implementation-defined I/O result code. 
+
+	\ the new addr
+	here  >r
+	
+	\ get the space, plus a slot for the link pointer
+	#heaphdr +  allot
+	
+	\ if overflowed, oops!
+	r@ here  u>  
+	r@ RamTop u>  OR  if   
+		r> dp !  \ restore dict
+		0 err-no-memory  exit
+	then 
+
+	\ link to previous slot
+	heapptr @   ( prev )
+	
+	\ remember last buffer
+	r@  heapptr !
+	
+	\ store link to prev
+	r@  !
+
+	\ and remember last 'here'
+	here  r@  cell+  !
+
+	\ leave new addr
+	r>	#heaphdr +
+	0
+;
+
+: heap? ( a-addr )
+	\ point to link addr
+	#heaphdr -	
+	
+	\ walk all allocated items
+	heapptr @
+	begin
+		dup 
+	while
+		over = if
+			drop true exit
+		then
+		
+		\ prev entry
+		@
+	repeat
+	false
+;
+
+: hdump ( ) 
+	heapptr @
+	begin
+		dup 
+	while
+		dup #heaphdr + u.
+		
+		\ prev entry
+		@
+	repeat
+	drop
+;
+
+: free ( a-addr -- ior )
+	dup heap?  0=  err-invalid-addr ?throw
+	
+	#heaphdr -  dup		( buffer buffer ) 
+	>r					( R: buffer )
+	
+	\ get prev ptr
+	dup @				( buffer prev )
+	
+	\ clear link
+	0 rot  ! 			( prev )  
+	
+	\ IFF the current block is at the end of the heap, adjust ptr
+	\ TODO: garbage collect or mark available buffers
+	r@  heapptr @  =  if
+		heapptr !
+	else
+		drop
+	then
+
+	\ see if the dictionary can shrink	
+	r@ cell+  @  here =  if 
+		\ restore DP
+		r@  dp !
+	then
+	
+	rdrop
+;

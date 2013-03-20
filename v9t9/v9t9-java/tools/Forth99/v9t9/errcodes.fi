@@ -14,6 +14,7 @@
 0    Constant  err-none
 -1   Constant  err-abort
 -2   Constant  err-abort"
+-9	 Constant  err-invalid-addr
 -13  Constant  err-undefined
 -33  Constant  err-block-read
 -34  Constant  err-block-write

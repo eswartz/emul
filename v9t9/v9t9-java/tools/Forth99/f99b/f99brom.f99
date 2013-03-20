@@ -80,6 +80,8 @@ include ../ans/dualstate.fi
 
 include ../ans/interp.fi
 
+include ../ans/alloc.fi
+
 include ../v9t9/utils.fi
 
 include ../v9t9/io.fi

@@ -136,7 +136,7 @@ User GDP              \ GROM dictionary pointer
 [THEN]
 
 [IFUNDEF] ALLOT
-: ALLOT
+: ALLOT ( u -- )
     here + dp !
 ;
 [THEN]

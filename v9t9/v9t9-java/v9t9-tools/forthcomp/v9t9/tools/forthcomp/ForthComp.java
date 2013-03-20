@@ -371,6 +371,7 @@ public class ForthComp {
 	public void finish() {
 		for (ForwardRef ref : targetContext.getForwardRefs()) {
 			logfile.println("*** Unresolved symbol: " + ref.getEntry().getName() + " (" + ref.getLocation() + ")");
+			System.err.println("*** Unresolved symbol: " + ref.getEntry().getName() + " (" + ref.getLocation() + ")");
 			errors++;
 		}
 	}
