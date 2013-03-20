@@ -114,6 +114,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		reset.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseDoubleClick(MouseEvent e) {
+				machine.notifyEvent(Level.INFO, "Hard reset, reloading");
 				machine.reset();
 			}
 		});
