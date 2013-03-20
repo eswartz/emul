@@ -6,7 +6,8 @@
 \
 2   RamVar  heapptr
 
-\ [ link to prev block ] [ next 'here' ] [ data .... ]
+\ allocated block:    [ link to prev block &~ 1 ] [ next 'here' ] [ data .... ]
+\ deallocated block:  [ link to prev block |  1 ] [ next 'here' ] [ data .... ]
 | 4 Constant #heaphdr  
 
 : allocate ( u -- a-addr ior )
@@ -20,18 +21,19 @@
 \ If the operation fails, a-addr does not represent a valid address and ior 
 \ is the implementation-defined I/O result code. 
 
+	\ every allocation on 2-byte boundary
+	align
+	
+	\ get the space, plus a slot for the link pointer
+	#heaphdr +  			( #bytes )
+	dup  mfree u>  if
+		err-no-memory  exit
+	then
+
 	\ the new addr
 	here  >r
 	
-	\ get the space, plus a slot for the link pointer
-	#heaphdr +  allot
-	
-	\ if overflowed, oops!
-	r@ here  u>  
-	r@ RamTop u>  OR  if   
-		r> dp !  \ restore dict
-		0 err-no-memory  exit
-	then 
+    allot 
 
 	\ link to previous slot
 	heapptr @   ( prev )
@@ -52,21 +54,20 @@
 
 : heap? ( a-addr )
 	\ point to link addr
-	#heaphdr -	
+	#heaphdr -	 >r
 	
 	\ walk all allocated items
-	heapptr @
+	heapptr @ 
 	begin
-		dup 
-	while
-		over = if
-			drop true exit
+		r@ over = if
+			rdrop drop true exit
 		then
 		
 		\ prev entry
-		@
-	repeat
-	false
+		1 nand  @
+		dup 0=
+	until
+	drop rdrop false
 ;
 
 : hdump ( ) 
@@ -74,39 +75,48 @@
 	begin
 		dup 
 	while
-		dup #heaphdr + u.
-		
-		\ prev entry
-		@
+		dup	 		( buffer buffer )
+		@  dup  	( buffer link link )
+		1 AND  if &70 emit then		\ 'free'
+		swap  #heaphdr +  u.
+		1 NAND
 	repeat
+	&69 emit
 	drop
 ;
 
 : free ( a-addr -- ior )
-	dup heap?  0=  err-invalid-addr ?throw
+	dup  heap?  0=  err-invalid-addr ?throw
 	
-	#heaphdr -  dup		( buffer buffer ) 
-	>r					( R: buffer )
+	\ point to block head
+	#heaphdr -  :> buffer
 	
-	\ get prev ptr
-	dup @				( buffer prev )
+	\ mark block deallocated
+	buffer @   1 OR  buffer !  
 	
-	\ clear link
-	0 rot  ! 			( prev )  
-	
-	\ IFF the current block is at the end of the heap, adjust ptr
-	\ TODO: garbage collect or mark available buffers
-	r@  heapptr @  =  if
-		heapptr !
-	else
-		drop
-	then
-
-	\ see if the dictionary can shrink	
-	r@ cell+  @  here =  if 
-		\ restore DP
-		r@  dp !
-	then
-	
-	rdrop
+	begin
+		\ IFF the current block is deallocated and at the end of the 
+		\ heap, free space
+		buffer if
+			buffer @  1 AND		\ deallocated?
+			buffer heapptr @  = 	\ and this is the top?
+			AND
+		else
+			0
+		then
+	while
+		buffer @  1 NAND 
+		
+		dup  heapptr !		( save link )
+		
+		\ see if the dictionary can shrink	
+		buffer cell+  @  here =  if 
+			\ restore DP
+			buffer  dp !
+		then
+		
+		to buffer  			
+	repeat
 ;
+
+

@@ -38,6 +38,6 @@
 ;
 
 : ?throw ( t|f code -- )
-    AND throw
+    swap 0<> swap  AND  throw
 ;
 
