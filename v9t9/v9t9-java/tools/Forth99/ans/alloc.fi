@@ -1,63 +1,107 @@
 
 
-\ pointer to end of block chain;  0 if no heap
-\
-\ heapptr 
-\
-2   RamVar  heapptr
+\ normal heap header:  
+\ [ 'alloc ( n heap -- addr ) ( throws ) ] 
+\ [ 'free ( addr heap -- ) ( throws ) ] 
+\ [ 'init ( heap -- ) ] 
+\ [ link ]
+\ [ low ] [ high ]
+| 12 Constant #heap  
+| : >link+  6 + ;  
 
+\
+
+\ dictionary heap header:  
+\ [ 'alloc ] [ 'free ] [ 'init ] [ link ]
+| 8 Constant #dheap
+
+| : dict-halloc ( n heap -- addr ) ( throws )
+	drop
+	dup mfree  u>   err-no-memory ?throw
+	
+	\ the new addr
+	here
+		
+    swap  
+    
+    ( addr n )  allot
+    
+	\ and remember last 'here'
+	here  over cell+  !
+;
+
+| : dict-hfree ( buffer heap -- ) 
+	\ see if the dictionary can shrink	
+	drop 
+	dup  cell+  @  here =  if 
+		\ restore DP
+		dp !
+	else
+		drop
+	then
+;
+
+| : dict-hinit ( heap -- )
+	['] dict-halloc over  !
+	2+
+	['] dict-hfree over !
+	2+
+	[ lastxt literal ] over !
+	2+
+	0 swap !
+;
+
+\ create dictionary heap
+8  RamVar gheap
+
+\ each heap is a pointer to end of block chain;  0 if no heap
+\
+\ a block chain consists of entries like this:
+\
 \ allocated block:    [ link to prev block &~ 1 ] [ next 'here' ] [ data .... ]
 \ deallocated block:  [ link to prev block |  1 ] [ next 'here' ] [ data .... ]
+
 | 4 Constant #heaphdr  
 
-: allocate ( u -- a-addr ior )
-\ Allocate u address units of contiguous data space. 
-\ EJS: ignored: [[[ The data-space pointer is unaffected by this operation. ]]] 
+:: halloc ( bytes heap -- a-addr ) ( throws: err-fault | err-no-memory  )
+\ Allocate bytes address units of contiguous data space in the given heap. 
 \ The initial content of the allocated space is undefined.
 \
 \ If the allocation succeeds, a-addr is the aligned starting address of the
-\ allocated space and ior is zero.
+\ allocated space.
 \ 
-\ If the operation fails, a-addr does not represent a valid address and ior 
-\ is the implementation-defined I/O result code. 
+\ If the operation fails, an exception is thrown. 
 
 	\ every allocation on 2-byte boundary
-	align
+	bytes  align 
 	
 	\ get the space, plus a slot for the link pointer
-	#heaphdr +  			( #bytes )
-	dup  mfree u>  if
-		err-no-memory  exit
-	then
-
-	\ the new addr
-	here  >r
+	#heaphdr +  to bytes
 	
-    allot 
+	\ do alloc
+	bytes  heap dup  @  execute  :> addr
 
 	\ link to previous slot
-	heapptr @   ( prev )
+	heap >link+  dup  @   addr !
 	
 	\ remember last buffer
-	r@  heapptr !
-	
-	\ store link to prev
-	r@  !
-
-	\ and remember last 'here'
-	here  r@  cell+  !
+	addr  swap  !
 
 	\ leave new addr
-	r>	#heaphdr +
-	0
+	addr  #heaphdr +
 ;
 
-: heap? ( a-addr )
+\ Tell if the given address represents an entry allocated on the heap.
+\ It does NOT tell if the address is inside a heap-allocated item.
+\
+: hheap? ( a-addr heap -- t|f )
+	swap
+	
 	\ point to link addr
 	#heaphdr -	 >r
 	
 	\ walk all allocated items
-	heapptr @ 
+	( heap ) >link+ @ 
 	begin
 		r@ over = if
 			rdrop drop true exit
@@ -70,8 +114,8 @@
 	drop rdrop false
 ;
 
-: hdump ( ) 
-	heapptr @
+: h-dump ( heap -- ) 
+	>link+  @
 	begin
 		dup 
 	while
@@ -85,8 +129,10 @@
 	drop
 ;
 
-: free ( a-addr -- ior )
-	dup  heap?  0=  err-invalid-addr ?throw
+: hfree ( a-addr heap -- ) ( throws: err-invalid-addr | err-fault )
+	:> heap
+	
+	dup  heap hheap?  0=  err-invalid-addr ?throw
 	
 	\ point to block head
 	#heaphdr -  :> buffer
@@ -99,24 +145,49 @@
 		\ heap, free space
 		buffer if
 			buffer @  1 AND		\ deallocated?
-			buffer heapptr @  = 	\ and this is the top?
+			buffer  heap >link+  @  = 	\ and this is the top?
 			AND
 		else
 			0
 		then
 	while
-		buffer @  1 NAND 
+		buffer @  1 NAND	( -- link ) 
 		
-		dup  heapptr !		( save link )
+		dup  heap >link+  !		( remove block )
+
+		\ do free
+		buffer  heap dup  2+  @  execute
 		
-		\ see if the dictionary can shrink	
-		buffer cell+  @  here =  if 
-			\ restore DP
-			buffer  dp !
-		then
-		
-		to buffer  			
+		( link ) to buffer  			
 	repeat
 ;
 
+: hinit ( heap -- )
+	dup  4 +  @ execute 
+;
+
+\ ----------------------------------
+
+: hdump ( )
+	gheap 	h-dump
+;
+
+: ?alloc ( n -- a-addr ) ( throw )
+	gheap  halloc
+;
+
+: ?free ( a-addr -- ) ( throw )
+	gheap hfree
+;
+
+\
+\ standard words
+\
+: allocate ( n -- a-addr ior )
+	['] ?alloc  catch
+;
+
+: free ( a-addr -- ior )
+	['] ?free  catch
+;
 

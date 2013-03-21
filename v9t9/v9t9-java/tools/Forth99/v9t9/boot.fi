@@ -38,7 +38,9 @@
     
     \ >grom_logo g@ gtypez cr
     
-    0 heapptr !
+    \ gheap hinit
+    gheap dict-hinit
+    
     (RAM0)  RAM !
 ;
 
