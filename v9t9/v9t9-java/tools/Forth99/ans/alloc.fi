@@ -14,15 +14,20 @@
 \ [ 'free ( addr heap -- ) ( throws ) ] 
 \ [ 'init ( heap -- ) ] 
 \ [ link ]
-\ [ low ] [ high ]
-| 12 Constant #heap  
-| : >link+  6 + ;  
+\ [ low ] [ cur ] [ high ]
 
-\
+| 2 constant >hfree
+| 4 constant >hinit 
+| 6 constant >link 
+| 8 constant >low
+| 10 constant >cur
+| 12 constant >high
+
+| 14 constant #dheap 
 
 \ dictionary heap header:  
 \ [ 'alloc ] [ 'free ] [ 'init ] [ link ]
-| 8 Constant #dheap
+
 
 | : dict-halloc ( n heap -- addr ) ( throws )
 	drop
@@ -63,6 +68,56 @@
 \ create dictionary heap
 8  RamVar gheap
 
+\ ----------------------------------------------------
+
+| :: dyn-halloc ( n heap -- addr ) ( throw )
+	heap >cur +  @   ( cur )
+	dup 		:> addr 
+	n +  dup  	:> new-end
+	
+	heap >high +  @   u>   err-no-memory ?throw
+
+	new-end  heap >cur +  !	
+    
+	\ and remember size
+    n  addr cell+  !  
+    addr
+;
+
+| :: dyn-hfree ( a-addr heap -- )
+	heap >cur +  @  :> end
+	a-addr  cell+  @  end =  if 
+		\ lower the cur
+		a-addr  heap >cur +  !
+	then
+;
+
+| : dyn-hinit ( heap -- )
+	>low + dup cell+  @  swap  !		( start -> end )
+;
+
+: heap:  ( "name" size -- )
+	dup  
+	#dheap +  mfree  U>  err-no-memory ?throw 
+
+	create
+	['] dyn-halloc ,
+	['] dyn-hfree ,
+	['] dyn-hinit ,
+	0 ,				( link )
+	
+	\ take RAM space
+	RAM @
+	
+	swap  negate  RAM +! 
+	RAM @  
+	dup ,  ,		( start ptr )
+	,				( end )
+;
+
+
+\ ----------------------------------------------------
+
 \ each heap is a pointer to end of block chain;  0 if no heap
 \
 \ a block chain consists of entries like this:
@@ -88,10 +143,10 @@
 	#heaphdr +  to bytes
 	
 	\ do alloc
-	bytes  heap dup  @  execute  :> addr
+	bytes  heap dup ( 0 + ) @  execute  :> addr
 
 	\ link to previous slot
-	heap >link+  dup  @   addr !
+	heap >link +  dup  @   addr !
 	
 	\ remember last buffer
 	addr  swap  !
@@ -110,7 +165,7 @@
 	#heaphdr -	 >r
 	
 	\ walk all allocated items
-	( heap ) >link+ @ 
+	( heap ) >link + @ 
 	begin
 		r@ over = if
 			rdrop drop true exit
@@ -123,8 +178,8 @@
 	drop rdrop false
 ;
 
-: h-dump ( heap -- ) 
-	>link+  @
+: hdump ( heap -- ) 
+	>link +  @
 	begin
 		dup 
 	while
@@ -154,7 +209,7 @@
 		\ heap, free space
 		buffer if
 			buffer @  1 AND		\ deallocated?
-			buffer  heap >link+  @  = 	\ and this is the top?
+			buffer  heap >link +  @  = 	\ and this is the top?
 			AND
 		else
 			0
@@ -162,27 +217,27 @@
 	while
 		buffer @  1 NAND	( -- link ) 
 		
-		dup  heap >link+  !		( remove block )
+		dup  heap >link +  !		( remove block )
 
 		\ do free
-		buffer  heap dup  2+  @  execute
+		buffer  heap dup  >free +  @  execute
 		
 		( link ) to buffer  			
 	repeat
 ;
 
 : hinit ( heap -- )
-	dup  4 +  @ execute 
+	dup  >hinit +  @ execute 
 ;
 
 \ ----------------------------------
 
-: hdump ( )
-	gheap 	h-dump
+: ghdump ( )
+	gheap hdump
 ;
 
 : ?alloc ( n -- a-addr ) ( throw )
-	gheap  halloc
+	gheap halloc
 ;
 
 : ?free ( a-addr -- ) ( throw )
