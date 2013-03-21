@@ -418,9 +418,8 @@ export>
                     clear
                     
                     \ take length from existing buffer
-                    c-addr dup 
-                    strlen
-                    2dup type
+                    c-addr strlen
+                    c-addr over type
                     dup to len
                 else            
                     >r          \ store key
