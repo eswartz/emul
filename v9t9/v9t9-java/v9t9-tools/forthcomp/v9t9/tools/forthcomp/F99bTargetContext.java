@@ -16,12 +16,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
-import ejs.base.utils.HexUtils;
-
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.cpu.CpuStateF99b;
 import v9t9.machine.f99b.memory.EnhancedRamByteArea;
@@ -34,6 +33,7 @@ import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetSQuote;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
 import v9t9.tools.forthcomp.words.TargetValue;
+import ejs.base.utils.HexUtils;
 
 /**
  * @author ejs
@@ -64,6 +64,13 @@ public class F99bTargetContext extends TargetContext {
 	//private boolean localSupport;
 
 	private DictEntry stub8BitNegLit;
+
+	@SuppressWarnings("unused")
+	private int startColonWord;
+
+	private ITargetWord cellWord;
+
+	private ITargetWord cellPlusWord;
 	
 
 	/**
@@ -284,6 +291,11 @@ public class F99bTargetContext extends TargetContext {
 		compileCall((ITargetWord) find("((s\"))"));
 		compileOpcode(Iexit);
 		
+		defineInlinePrim("cell+", I2plus); 
+		defineInlinePrim("cell", IlitX | 0x2);
+		
+		defineInlinePrim("0<>", I0equ, Inot); 
+		defineInlinePrim("<>", Iequ, Inot); 
 	}
 	
 	private void definePrim(String string, int opcode) {
@@ -305,6 +317,7 @@ public class F99bTargetContext extends TargetContext {
 	@Override
 	public DictEntry defineEntry(String name) {
 		DictEntry entry = super.defineEntry(name);
+		startColonWord = 0;
 		return entry;
 	}
 	/* (non-Javadoc)
@@ -315,6 +328,8 @@ public class F99bTargetContext extends TargetContext {
 		TargetColonWord word = super.defineColonWord(name);
 		
 		leaves.clear();
+		
+		startColonWord = getDP();
 		
 		return word;
 	}
@@ -1062,5 +1077,107 @@ public class F99bTargetContext extends TargetContext {
 	 */
 	public MemoryDomain getGrom() {
 		return grom;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetContext#compileExit(v9t9.tools.forthcomp.HostContext)
+	 */
+	@Override
+	public void compileExit(HostContext hostContext) throws AbortException {
+		super.compileExit(hostContext);
+		
+//		int endDP = getDP();
+//		if (startColonWord != 0) {
+//			peephole(startColonWord, endDP);
+//		}
+	}
+
+	/**
+	 * @param startColonWord2
+	 * @param endDP
+	 * @return
+	 */
+	protected void peephole(int start, int end) {
+		if (cellWord == null) 
+			cellWord = (ITargetWord) find("cell");
+		if (cellPlusWord == null) 
+			cellPlusWord = (ITargetWord) find("cell+");
+		
+		setDP(start);
+		while (start < end) {
+			start = peepholePattern(start);
+		}
+	}
+
+	protected void peepByte(int start) {
+		writeChar(getDP(), readChar(start));
+		incDP(1);
+	}
+	/**
+	 * @param start
+	 * @return
+	 */
+	protected int peepholePattern(int start) {
+		int addr = findReloc(start);
+		if (addr == 0) {
+			// not a call but a lit
+			int op = readChar(start);
+			if ((op & 0xf0) == InstF99b.I0branchX) {
+				// fixup a branch
+				peepByte(start++); 
+			}
+			else if (op == InstF99b.I0branchB) {
+				peepByte(start++); 
+				peepByte(start++); 
+				
+			}
+			else if (op == InstF99b.I0branchW) {
+				peepByte(start++); 
+				peepByte(start++); 
+				peepByte(start++); 
+			}
+			else if (op == InstF99b.IbranchX) {
+				peepByte(start++); 
+
+			}
+			else if (op == InstF99b.IbranchB) {
+				peepByte(start++); 
+				peepByte(start++); 
+				
+			}
+			else if (op == InstF99b.IbranchW) {
+				peepByte(start++); 
+				peepByte(start++); 
+				peepByte(start++); 
+				
+			}
+			else {
+				peepByte(start++); 
+			}
+			return start;
+		}
+		
+		if (cellWord != null && addr == cellWord.getEntry().getAddr()) {
+			writeChar(getDP(), InstF99b.IlitX + 2);
+			removeReloc(start++);
+			incDP(1);
+			return start + 2;
+		}
+		if (cellPlusWord != null && addr == cellPlusWord.getEntry().getAddr()) {
+			writeChar(getDP(), InstF99b.I2plus);
+			removeReloc(start);
+			incDP(1);
+			return start + 2;
+		}
+
+		peepByte(start++);
+		return start;
+	}
+
+	/**
+	 * @param i
+	 */
+	private void incDP(int i) {
+		setDP(getDP() + i);
 	}
 }

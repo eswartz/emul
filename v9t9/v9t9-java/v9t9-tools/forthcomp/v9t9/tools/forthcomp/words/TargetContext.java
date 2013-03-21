@@ -181,6 +181,9 @@ public abstract class TargetContext extends Context {
 			return 0;
 		return reloc.target;
 	}
+	public void removeReloc(int addr) {
+		relocEntries.remove(addr);
+	}
 
 	public RelocEntry getRelocEntry(int id) {
 		return relocs.get(-id - 1);
@@ -737,8 +740,7 @@ public abstract class TargetContext extends Context {
 		if (((ITargetWord) getLatest()).getEntry().hasLocals())
 			compileCleanupLocals(hostContext);
 		
-		ITargetWord semiS = (ITargetWord) require(";S");
-		semiS.getCompilationSemantics().execute(hostContext, this);
+		require(";S").getCompilationSemantics().execute(hostContext, this);
 	}
 
 	/**

@@ -220,7 +220,7 @@
 		dup  heap >link +  !		( remove block )
 
 		\ do free
-		buffer  heap dup  >free +  @  execute
+		buffer  heap dup  >hfree +  @  execute
 		
 		( link ) to buffer  			
 	repeat

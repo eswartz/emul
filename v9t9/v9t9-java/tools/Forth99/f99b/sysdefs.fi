@@ -187,6 +187,9 @@ $41         constant    Isub
 $46         constant    Iumul
 $47         constant    Iudivmod
 $7e47       constant    Iudivmod_d
+\ $4b         constant    I2plus
+\ $53         constant    Inot
+\ $54         constant    I0equ
 $60         constant    Iload
 $61         constant    Icload
 $62         constant    Istore

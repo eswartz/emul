@@ -31,9 +31,7 @@ public class Colon extends BaseStdWord {
 		
 		hostContext.setCSP();
 		
-		targetContext.defineColonWord(name);
-		
-		ITargetWord targetWord = (ITargetWord) targetContext.getLatest();
+		ITargetWord targetWord = targetContext.defineColonWord(name);
 		
 		targetWord.getEntry().setHidden(true);
 		targetWord.setHostDp(hostContext.getLocalDP());
