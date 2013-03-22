@@ -29,8 +29,6 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.tools.forthcomp.words.HostDoubleLiteral;
-import v9t9.tools.forthcomp.words.HostLiteral;
 import v9t9.tools.forthcomp.words.HostVariable;
 import v9t9.tools.forthcomp.words.TargetConstant;
 import v9t9.tools.forthcomp.words.TargetContext;
@@ -202,7 +200,6 @@ public class ForthComp {
 	private HostContext hostContext;
 	private TargetContext targetContext;
 	private TokenStream tokenStream;
-	private HostVariable baseVar;
 	private int errors;
 
 	public ForthComp(HostContext hostContext, TargetContext targetContext) {
@@ -222,7 +219,7 @@ public class ForthComp {
 	}
 
 	private void defineCompilerWords() {
-		baseVar = (HostVariable) hostContext.define("base", new HostVariable(10));
+		hostContext.define("base", new HostVariable(10));
 		hostContext.define("state", new HostVariable(0));
 		hostContext.define("(state)", new HostVariable(0));
 	}
@@ -273,7 +270,7 @@ public class ForthComp {
 				word = targetContext.find(token);
 			}
 			if (word == null) {
-				word = parseLiteral(token);
+				word = targetContext.parseLiteral(token);
 			}
 			if (word == null) {
 				throw abort("unknown word or literal: " + token);
@@ -289,7 +286,7 @@ public class ForthComp {
 				word = hostContext.find(token);
 			}
 			if (word == null) {
-				word = parseLiteral(token);
+				word = targetContext.parseLiteral(token);
 			}
 			if (word == null) {
 				word = targetContext.defineForward(token, hostContext.getStream().getLocation());
@@ -324,46 +321,6 @@ public class ForthComp {
 		return tokenStream.abort(string);
 	}
 
-	private IWord parseLiteral(String token) {
-		int radix = baseVar.getValue();
-		boolean isNeg = token.startsWith("-");
-		if (isNeg) {
-			token = token.substring(1);
-		}
-		if (token.startsWith("$")) {
-			radix = 16;
-			token = token.substring(1);
-		}
-		else if (token.startsWith("&")) {
-			radix = 10;
-			token = token.substring(1);
-		}
-		boolean isDouble = false;
-		if (token.contains(".")) {
-			isDouble = true;
-		}
-		token = token.replaceAll("\\.", "");
-		boolean isUnsigned = false;
-		if (token.toUpperCase().endsWith("U")) {
-			isUnsigned = true;
-			token = token.substring(0, token.length() - 1);
-		}
-		try {
-			long val = Long.parseLong(token, radix);
-			if (isNeg)
-				val = -val;
-			if (isDouble) {
-				if (targetContext.getCellSize() == 2)
-					return new HostDoubleLiteral((int)(val & 0xffff), (int)(val >> 16), isUnsigned);
-				else
-					throw new UnsupportedOperationException();
-			}
-			else
-				return new HostLiteral((int) val, isUnsigned);
-		} catch (NumberFormatException e) {
-			return null;
-		}
-	}
 	
 	/**
 	 * 

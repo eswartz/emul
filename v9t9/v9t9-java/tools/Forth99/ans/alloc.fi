@@ -16,12 +16,14 @@
 \ [ link ]
 \ [ low ] [ cur ] [ high ]
 
-| 2 constant >hfree
-| 4 constant >hinit 
-| 6 constant >link 
-| 8 constant >low
-| 10 constant >cur
-| 12 constant >high
+| : >bend 2 + ;
+ 
+| : >hfree 2 + ; 
+| : >hinit 4 + ; 
+| : >link 6 + ;
+| : >low 8 + ; 
+| : >cur 10 + ; 
+| : >high 12 + ;
 
 | 14 constant #dheap 
 
@@ -41,7 +43,7 @@
     ( addr n )  allot
     
 	\ and remember last 'here'
-	here  over cell+  !
+	here  over >bend  !
 ;
 
 | : dict-hfree ( buffer heap -- ) 
@@ -71,13 +73,13 @@
 \ ----------------------------------------------------
 
 | :: dyn-halloc ( n heap -- addr ) ( throw )
-	heap >cur +  @   ( cur )
+	heap >cur  @   ( cur )
 	dup 		:> addr 
 	n +  dup  	:> new-end
 	
-	heap >high +  @   u>   err-no-memory ?throw
+	heap >high  @   u>   err-no-memory ?throw
 
-	new-end  heap >cur +  !	
+	new-end  heap >cur  !	
     
 	\ and remember size
     n  addr cell+  !  
@@ -85,15 +87,15 @@
 ;
 
 | :: dyn-hfree ( a-addr heap -- )
-	heap >cur +  @  :> end
-	a-addr  cell+  @  end =  if 
+	heap >cur  @  :> end
+	a-addr  >bend @  end =  if 
 		\ lower the cur
-		a-addr  heap >cur +  !
+		a-addr  heap >cur  !
 	then
 ;
 
 | : dyn-hinit ( heap -- )
-	>low + dup cell+  @  swap  !		( start -> end )
+	>low  dup cell+  @  swap  !		( start -> end )
 ;
 
 : heap:  ( "name" size -- )
@@ -122,10 +124,75 @@
 \
 \ a block chain consists of entries like this:
 \
-\ allocated block:    [ link to prev block &~ 1 ] [ next 'here' ] [ data .... ]
-\ deallocated block:  [ link to prev block |  1 ] [ next 'here' ] [ data .... ]
+\ allocated block:    [ link to prev block &~ 1 ] [ end addr ] [ data .... ]
+\ deallocated block:  [ link to prev block |  1 ] [ end addr ] [ data .... ]
+\ 
+\  (end addr = HERE in dictionary or address of next block in dynamic heap)
 
 | 4 Constant #heaphdr  
+
+| : free? ( a-addr ) 
+	@  1 AND
+;
+
+\ Get the size (including header) of a buffer block
+| : bsize ( a-addr -- size )
+	dup  >r
+	>bend @
+	r>  -
+;
+
+| :: reuse? ( heap bytes -- cand )
+	
+	0 :> cand
+	$ffff :> candsize
+	0 :> avail
+	
+	0 :> prev
+	0 :> cprev
+	
+	heap >link @
+	begin
+		dup
+	while
+		dup	free? if    ( buffer )
+			dup bsize to avail  
+			avail bytes u>= 
+			avail candsize u< AND if
+				dup to cand
+				avail to candsize
+				prev to cprev 
+			then 
+		then
+		dup to prev
+		@  1 NAND
+	repeat
+	drop
+	
+	cand ." cand=" u. 
+	candsize ." , size=" u. cr
+	
+	cand dup if
+		avail bytes -  2/  #heaphdr  >= if
+			\  room for another header
+			cand  #heaphdr + bytes +  :> newhdr
+			cand 1 OR  newhdr  !			\ mark new block as free
+			newhdr
+			cand >bend  dup 
+				@  newhdr >bend  !	\ and ending where the former one did
+				!					\ and the orig block ends before 
+				
+			cprev ?dup if
+				newhdr over !		\ update link
+				newhdr swap !		\ update link
+			then
+		else
+			\ just reuse small space
+		then  
+		cand @  1 NAND  cand !		\ and no longer free
+
+	then
+	 ;
 
 :: halloc ( bytes heap -- a-addr ) ( throws: err-fault | err-no-memory  )
 \ Allocate bytes address units of contiguous data space in the given heap. 
@@ -141,16 +208,24 @@
 	
 	\ get the space, plus a slot for the link pointer
 	#heaphdr +  to bytes
-	
-	\ do alloc
-	bytes  heap dup ( 0 + ) @  execute  :> addr
 
-	\ link to previous slot
-	heap >link +  dup  @   addr !
+	\ see if an existing block is available
+	heap bytes  reuse?  :> cand
 	
-	\ remember last buffer
-	addr  swap  !
-
+	0 :> addr
+	cand if
+		cand to addr
+	else
+		\ do alloc
+		bytes  heap dup ( 0 + ) @  execute  to addr
+	
+		\ link to previous slot
+		heap >link  dup  @   addr !
+		
+		\ remember last buffer
+		addr  swap  !
+	then
+	
 	\ leave new addr
 	addr  #heaphdr +
 ;
@@ -165,27 +240,28 @@
 	#heaphdr -	 >r
 	
 	\ walk all allocated items
-	( heap ) >link + @ 
+	( heap ) >link  @ 
 	begin
+		dup
+	while
 		r@ over = if
 			rdrop drop true exit
 		then
 		
 		\ prev entry
-		1 nand  @
-		dup 0=
-	until
+		@    1 NAND
+	repeat
 	drop rdrop false
 ;
 
 : hdump ( heap -- ) 
-	>link +  @
+	>link  @
 	begin
 		dup 
 	while
 		dup	 		( buffer buffer )
-		@  dup  	( buffer link link )
-		1 AND  if &70 emit then		\ 'free'
+		dup free?	if &70 emit then		\ 'F'
+		@  			( buffer link )
 		swap  #heaphdr +  u.
 		1 NAND
 	repeat
@@ -208,8 +284,8 @@
 		\ IFF the current block is deallocated and at the end of the 
 		\ heap, free space
 		buffer if
-			buffer @  1 AND		\ deallocated?
-			buffer  heap >link +  @  = 	\ and this is the top?
+			buffer free?
+			buffer  heap >link  @  = 	\ and this is the top?
 			AND
 		else
 			0
@@ -217,17 +293,17 @@
 	while
 		buffer @  1 NAND	( -- link ) 
 		
-		dup  heap >link +  !		( remove block )
+		dup  heap >link  !		( remove block )
 
 		\ do free
-		buffer  heap dup  >hfree +  @  execute
+		buffer  heap dup  >hfree  @  execute
 		
 		( link ) to buffer  			
 	repeat
 ;
 
 : hinit ( heap -- )
-	dup  >hinit +  @ execute 
+	dup  >hinit  @ execute 
 ;
 
 \ ----------------------------------
