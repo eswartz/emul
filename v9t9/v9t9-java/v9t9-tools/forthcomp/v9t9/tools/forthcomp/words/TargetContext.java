@@ -871,4 +871,45 @@ public abstract class TargetContext extends Context {
 			logfile.println("\t"+word.getName() + " = " + word.getEntry().getUses());
 		}
 	}
+	
+	public IWord parseLiteral(String token) {
+		int radix = ((HostVariable) hostCtx.find("base")).getValue();
+		boolean isNeg = token.startsWith("-");
+		if (isNeg) {
+			token = token.substring(1);
+		}
+		if (token.startsWith("$")) {
+			radix = 16;
+			token = token.substring(1);
+		}
+		else if (token.startsWith("&")) {
+			radix = 10;
+			token = token.substring(1);
+		}
+		boolean isDouble = false;
+		if (token.contains(".")) {
+			isDouble = true;
+		}
+		token = token.replaceAll("\\.", "");
+		boolean isUnsigned = false;
+		if (token.toUpperCase().endsWith("U")) {
+			isUnsigned = true;
+			token = token.substring(0, token.length() - 1);
+		}
+		try {
+			long val = Long.parseLong(token, radix);
+			if (isNeg)
+				val = -val;
+			if (isDouble) {
+				if (getCellSize() == 2)
+					return new HostDoubleLiteral((int)(val & 0xffff), (int)(val >> 16), isUnsigned);
+				else
+					throw new UnsupportedOperationException();
+			}
+			else
+				return new HostLiteral((int) val, isUnsigned);
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
 }

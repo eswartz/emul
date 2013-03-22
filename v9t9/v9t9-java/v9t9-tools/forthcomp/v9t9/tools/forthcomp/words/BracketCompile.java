@@ -35,7 +35,13 @@ public class BracketCompile extends BaseWord {
 				String name = hostContext.readToken();
 				IWord word = targetContext.find(name);
 				if (word == null) {
-					word = targetContext.defineForward(name, hostContext.getStream().getLocation());
+					IWord num = targetContext.parseLiteral(name);
+					if (num != null) {
+						num.getCompilationSemantics().execute(hostContext, targetContext);
+						return;
+					} else {
+						word = targetContext.defineForward(name, hostContext.getStream().getLocation());
+					}
 				}
 				
 				if (!(word instanceof ITargetWord))
