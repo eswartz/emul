@@ -10,6 +10,7 @@
  */
 package v9t9.tools.forthcomp;
 
+import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetWord;
 
@@ -17,7 +18,7 @@ import v9t9.tools.forthcomp.words.TargetWord;
  * @author ejs
  *
  */
-public class F99InlineWord extends TargetWord {
+public class F99InlineWord extends TargetWord implements IPrimitiveWord {
 
 	private final int[] opcodes;
 
@@ -45,6 +46,21 @@ public class F99InlineWord extends TargetWord {
 	 */
 	public int[] getOpcodes() {
 		return opcodes;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.IPrimitiveWord#getSize()
+	 */
+	@Override
+	public int getPrimitiveSize() {
+		int total = 0;
+		for (int opcode : opcodes) {
+			if (opcode < 0x80)
+				total++;
+			else
+				total += 2;
+		}
+		return total;
 	}
 
 }

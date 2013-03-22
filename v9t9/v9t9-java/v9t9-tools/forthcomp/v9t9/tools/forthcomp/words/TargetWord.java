@@ -27,6 +27,7 @@ public abstract class TargetWord extends BaseWord implements ITargetWord {
 	 */
 	public TargetWord(DictEntry entry) {
 		this.entry = entry;
+		entry.setTargetWord(this);
 		this.hostPc = -1;
 		if (entry != null)
 			setName(entry.getName());

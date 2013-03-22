@@ -30,6 +30,7 @@ import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.tools.forthcomp.words.HostVariable;
+import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetConstant;
 import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetContext.IMemoryReader;
@@ -145,18 +146,22 @@ public class ForthComp {
     	
     	if (doHistogram) {
 	    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getTargetDictionary().values());
-	    	logfile.println("Top word uses of " + sortedDict.size() +":");
+	    	logfile.println("Top 100 word uses of " + sortedDict.size() +":");
 			
 	    	Collections.sort(sortedDict, new Comparator<DictEntry>() {
 					public int compare(DictEntry o1, DictEntry o2) {
-						return o1.getUses() - o2.getUses();
+						return o2.getUses() - o1.getUses();
 					}
 				}
 	    	);
-	    	for (DictEntry entry : sortedDict.subList(Math.max(sortedDict.size() - 32, 32), sortedDict.size())) {
-	    		logfile.println("\t" + entry.getUses() +"\t" + entry.getName() );
-	    		
-	    	}
+			for (int i = 0; i < sortedDict.size() && i < 100; i++) {
+				DictEntry entry = sortedDict.get(i);
+				logfile.print("\t" + entry.getUses() +"\t" + entry.getName() );
+				if (entry.getTargetWord() instanceof IPrimitiveWord)
+					logfile.print("\t" + "(primitive, size = " + 
+							((IPrimitiveWord) entry.getTargetWord()).getPrimitiveSize() + ")");
+				logfile.println();
+			}
 	    	
 	    	
 	    	logfile.println("Word sizes:");

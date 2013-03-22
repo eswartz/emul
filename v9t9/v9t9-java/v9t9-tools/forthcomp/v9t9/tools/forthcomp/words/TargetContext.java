@@ -378,7 +378,6 @@ public abstract class TargetContext extends Context {
 		int loc = alloc(bytes);
 		entry.setCodeSize(loc - dp);
 		final TargetVariable var = (TargetVariable) define(name, new TargetVariable(entry));
-		
 		return var;
 	}
 
@@ -391,7 +390,6 @@ public abstract class TargetContext extends Context {
 		logfile.println(name);
 		initCode();
 		final TargetColonWord colon =  (TargetColonWord) define(name, new TargetColonWord(entry));
-		
 		return colon;
 	}
 

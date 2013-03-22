@@ -10,6 +10,7 @@
  */
 package v9t9.tools.forthcomp;
 
+import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetWord;
 
@@ -17,7 +18,7 @@ import v9t9.tools.forthcomp.words.TargetWord;
  * @author ejs
  *
  */
-public class F99PrimitiveWord extends TargetWord {
+public class F99PrimitiveWord extends TargetWord implements IPrimitiveWord {
 
 	private final int opcode;
 
@@ -46,4 +47,11 @@ public class F99PrimitiveWord extends TargetWord {
 		return opcode;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.IPrimitiveWord#getSize()
+	 */
+	@Override
+	public int getPrimitiveSize() {
+		return opcode < 0x100 ? 1 : 2;
+	}
 }
