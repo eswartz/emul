@@ -72,8 +72,9 @@ User 'lines
         
         \ fix the block, assuming it's out of bounds, and redraw
         'lastscr @  1 max  scr !  redraw-block   
-          
-        scr @ block  ( rethrows otherwise )
+        
+        drop 
+        scr @  block   ( rethrows otherwise )
     then
     
     r>  video>
@@ -752,7 +753,7 @@ User in-editor
     
     cls
     
-    4 LSHIFT OR   $8C00 OR  v-regaddr 
+    4 LSHIFT OR   $8C00 OR  v-regaddr  ( set text colors, sx sy -- )
     
     1 vblink!
     
@@ -964,7 +965,6 @@ User in-editor
     \ don't miss keystrokes
     edit.window
     edit.drawstatus
-    \ edit.drawblock
     
     begin
         edit.update
