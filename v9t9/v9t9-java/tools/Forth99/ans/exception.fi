@@ -38,7 +38,8 @@
                 \  stack is restored to the state that existed
                 \  when catch began execution
         else
-            abort           \ no handler in place
+        	regs-init
+        	quit           \ no handler in place
         then
     then
 ;

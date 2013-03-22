@@ -35,7 +35,6 @@
 
 [IFUNDEF] ABORT"
 | : (abort")
-    \ rot if cr ." error: " type cr abort else 2drop then
     rot if 
         type cr
         err-abort" throw  

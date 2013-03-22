@@ -614,8 +614,15 @@ error" need prim execute"
 [IFUNDEF] ABORT
 
 : abort
-    regs-init
-    quit
+\ EXCEPTION EXT
+\ 
+\ Extend the semantics of 6.1.0670 ABORT to be:
+\ 
+\         ( i*x -- ) ( R: j*x -- )
+\ 
+\ Perform the function of -1 THROW .
+ 
+	err-abort throw
 ;
 
 [THEN]
