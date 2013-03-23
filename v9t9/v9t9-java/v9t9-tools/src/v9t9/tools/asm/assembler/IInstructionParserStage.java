@@ -20,7 +20,7 @@ import v9t9.common.asm.IInstruction;
 public interface IInstructionParserStage {
 
 	/** Try to parse one or more instructions from a string. 
-	 * @param descr TODO
+	 * @param descr 
 	 * @param string the text 
 	 * 
 	 * @return instructions generated, or <code>null</code> if unhandled

@@ -25,9 +25,6 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ejs.base.utils.HexUtils;
-
-
 import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.MemoryRanges;
 import v9t9.common.asm.RawInstruction;
@@ -40,23 +37,10 @@ import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StockRamArea;
-import v9t9.tools.asm.assembler.AssemblerError;
-import v9t9.tools.asm.assembler.BaseAssemblerInstruction;
-import v9t9.tools.asm.assembler.ConditionalInstructionParserStage;
-import v9t9.tools.asm.assembler.ContentEntry;
-import v9t9.tools.asm.assembler.DirectiveInstructionParserStage;
-import v9t9.tools.asm.assembler.Equate;
-import v9t9.tools.asm.assembler.FileContentEntry;
-import v9t9.tools.asm.assembler.IAssembler;
-import v9t9.tools.asm.assembler.IInstructionParserStage;
-import v9t9.tools.asm.assembler.InstructionParser;
-import v9t9.tools.asm.assembler.LLInstruction;
-import v9t9.tools.asm.assembler.MacroInstructionParserStage;
-import v9t9.tools.asm.assembler.OperandParser;
-import v9t9.tools.asm.assembler.ParseException;
 import v9t9.tools.asm.assembler.directive.DescrDirective;
 import v9t9.tools.asm.assembler.directive.LabelDirective;
 import v9t9.tools.asm.assembler.transform.ConstPool;
+import ejs.base.utils.HexUtils;
 
 /**
  * @author ejs
@@ -97,7 +81,13 @@ public abstract class Assembler implements IAssembler {
 	private Memory memory;
 	private static final Pattern INCL_LINE = Pattern.compile(
 				"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
-	private static final Pattern ASM_LINE = Pattern.compile("(?:((?:[A-Za-z_][A-Za-z0-9_]*)|(?:\\$[0-9])):?(?:\\s*)(.*))|(?:\\s+(.*))");
+	private static final Pattern ASM_LINE_STD = Pattern.compile(
+			"(?:((?:[A-Za-z_$][A-Za-z0-9_$]*)|(?:\\$[0-9])):?(?:\\s*)(.*))|(?:\\s+(.*))");
+	private Pattern asmLinePattern = ASM_LINE_STD;
+	/**
+	 * @param b
+	 */
+	private boolean optimize;
 
 	/**
 	 * @param operandParserStage 
@@ -180,7 +170,8 @@ public abstract class Assembler implements IAssembler {
 			return false;
 		
 		insts = resolve(asmInsts);
-		insts = optimize(insts);
+		if (!optimize)
+			insts = optimize(insts);
 		if (errorList.size() >0)
 			return false;
 		
@@ -261,7 +252,7 @@ public abstract class Assembler implements IAssembler {
 				// remove comments
 				String line = line_.replaceAll(";.*", "");
 				
-				Matcher matcher = ASM_LINE.matcher(line);
+				Matcher matcher = asmLinePattern.matcher(line);
 				if (!matcher.matches())
 					return;
 				
@@ -327,7 +318,9 @@ public abstract class Assembler implements IAssembler {
 			// see if the label was already defined in this scope
 			label = symbolTable.findSymbolLocal(name);
 			if (label != null && labelTable.containsKey(label)) {
-				reportError(new ParseException("Redefining label: " + name));
+				//reportError(new ParseException("Redefining label: " + name));
+				errlog.println("WARNING: Redefining label: " + name);
+
 			}
 		}
 		
@@ -696,6 +689,9 @@ public abstract class Assembler implements IAssembler {
 	public IMemory getMemory() {
 		return memory;
 	}
-
+	public void setOptimize(boolean b) {
+		this.optimize = b;
+		
+	}
 
 }

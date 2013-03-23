@@ -146,6 +146,4 @@ public class Assembler9900 extends Assembler implements IAssembler {
 			// unresolved inst
 		}
 	}
-
-	
 }

@@ -118,6 +118,9 @@ public class Assemble {
             	romSize = 0x1000;
             	selectedProcessor = true;
             	break;
+            case 'x':
+            	assembler.setOptimize(false);
+            	break;
             default:
             	//throw new AssertionError();
     

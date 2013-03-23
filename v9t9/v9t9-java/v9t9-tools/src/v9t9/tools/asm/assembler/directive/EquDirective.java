@@ -17,6 +17,7 @@ import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.assembler.IAssembler;
 import v9t9.tools.asm.assembler.Symbol;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLForwardOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
@@ -41,7 +42,10 @@ public class EquDirective extends Directive {
 		// establish initial PC, for "equ $"
 		setPc(assembler.getPc());
 		
-		LLOperand lop = op.resolve(assembler, this); 
+		LLOperand lop = op.resolve(assembler, this);
+		if (lop instanceof LLForwardOperand)
+			return new IInstruction[] { this };
+		
 		if (!(lop instanceof LLImmedOperand))
 			throw new ResolveException(op, "Expected number");
 

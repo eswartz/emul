@@ -74,7 +74,7 @@ public class StandardInstructionParserStage9900 implements IInstructionParserSta
         if (name.equals("RT")) {
         	inst.setInst(Inst9900.Ib);
             op1 = new LLRegIndOperand(11);
-        } else if (name.equals("NOP")) {
+        } else if (name.equals("NOP") || name.equals("SPIN")) {
         	inst.setInst(Inst9900.Ijmp);
             op1 = new LLPCRelativeOperand(null, 2);
         } else {
@@ -104,7 +104,12 @@ public class StandardInstructionParserStage9900 implements IInstructionParserSta
         // ensure EOL
         t = tokenizer.nextToken();
         if (t != AssemblerTokenizer.EOF && t != ';') {
-        	throw new ParseException("Trailing text on line: " + tokenizer.currentToken());
+			if (tokenizer.currentTokenType() == AssemblerTokenizer.CHAR) {
+				throw new ParseException("Trailing text on line: " + tokenizer.currentToken());
+			} else {
+				// assume comment
+				tokenizer.skipToEOF();
+			}
         }
         
         inst.setOp1(op1 != null ? op1 : null);

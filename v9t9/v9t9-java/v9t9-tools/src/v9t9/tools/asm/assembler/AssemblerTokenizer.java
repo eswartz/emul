@@ -114,6 +114,9 @@ public class AssemblerTokenizer {
 					ch = reader.read();
 				} while (ch != -1 && isIdentiferChar(ch));
 				if (ch != -1) reader.unread();
+				if (image.equals("$")) {
+					return '$';
+				}
 				return ID;
 			} else if (ch == '\'' || ch == '\"') {
 				int end = ch;
@@ -122,7 +125,7 @@ public class AssemblerTokenizer {
 				}
 				if (ch == -1)
 					throw new ParseException("Unterminated constant: " + (char)ch);
-				return end == '\'' ? CHAR : STRING;
+				return end == '\'' && image.length() < 4 ? CHAR : STRING;
 			} else {
 				image += (char) ch;
 				return ch;
@@ -133,7 +136,7 @@ public class AssemblerTokenizer {
 	}
 
 	private boolean isIdentiferChar(int ch) {
-		return isLetterChar(ch) || (ch >= '0' && ch <= '9');
+		return isLetterChar(ch) || (ch >= '0' && ch <= '9') || ch == '$';
 	}
 	private boolean isLetterChar(int ch) {
 		return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_';
@@ -230,5 +233,15 @@ public class AssemblerTokenizer {
 		this.number = state.number;
 		this.pushedBack = state.pushedBack;
 		this.reader.setPos(state.streamPos);
+	}
+	/**
+	 * 
+	 */
+	public void skipToEOF() {
+		int ch = reader.read();
+		
+		while (ch != -1) {
+			ch = reader.read();
+		}
 	}
 }

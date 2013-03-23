@@ -26,6 +26,7 @@ import v9t9.tools.asm.assembler.directive.DefineWordDirective;
 import v9t9.tools.asm.assembler.directive.Directive;
 import v9t9.tools.asm.assembler.directive.EquDirective;
 import v9t9.tools.asm.assembler.directive.EvenDirective;
+import v9t9.tools.asm.assembler.directive.IgnoreDirective;
 
 /**
  * Parse directives
@@ -57,6 +58,12 @@ public class DirectiveInstructionParserStage implements IInstructionParserStage 
 		dirMap.put("even", new DirectiveInfo(0, EvenDirective.class));
 		dirMap.put("consttable", new DirectiveInfo(0, ConstPoolDirective.class));
 		
+		dirMap.put("def", new DirectiveInfo(-1, IgnoreDirective.class));
+		dirMap.put("idt", new DirectiveInfo(-1, IgnoreDirective.class));
+		dirMap.put("titl", new DirectiveInfo(-1, IgnoreDirective.class));
+		dirMap.put("end", new DirectiveInfo(0, IgnoreDirective.class));
+		dirMap.put("rorg", new DirectiveInfo(0, IgnoreDirective.class));
+		
 	}
 	public DirectiveInstructionParserStage(OperandParser operandParser) {
 		this.operandParser = operandParser;
@@ -78,24 +85,44 @@ public class DirectiveInstructionParserStage implements IInstructionParserStage 
 		int cnt = info.argNum;
 		List<IOperand> ops = new ArrayList<IOperand>();
 		while (cnt != 0) {
-			IOperand op = operandParser.parse(tokenizer);
-			ops.add(op);
-			if (cnt > 0) {
-				cnt--;
-				if (cnt == 0)
+			try {
+				IOperand op = operandParser.parse(tokenizer);
+				ops.add(op);
+				if (cnt > 0) {
+					cnt--;
+					if (cnt == 0)
+						break;
+				}
+				int t = tokenizer.nextToken();
+				if (t == AssemblerTokenizer.EOF) {
+					if (cnt > 0)
+						throw new ParseException("Expected additional arguments");
 					break;
-			}
-			int t = tokenizer.nextToken();
-			if (t == AssemblerTokenizer.EOF) {
-				if (cnt > 0)
-					throw new ParseException("Expected additional arguments");
-				break;
-			} else if (t != ',') { 
-				throw new ParseException("Expected ','");
+				} else if (t != ',') {
+					if (cnt > 0) {
+						throw new ParseException("Expected ','");
+					}
+					// assume comment
+					tokenizer.skipToEOF();
+					break;
+				}
+			} catch (ParseException e) {
+				if (e.getMessage().contains("Unexpected end of line") && cnt < 0) {
+					// assume comment
+					tokenizer.skipToEOF();
+					break;
+				} else {
+					throw e;
+				}
 			}
 		}
 		if (tokenizer.nextToken() != AssemblerTokenizer.EOF) {
-			throw new ParseException("Trailing garbage: " + tokenizer.currentToken());
+			if (cnt < 0) {
+				throw new ParseException("Trailing garbage: " + tokenizer.currentToken());
+			} else {
+				// assume comment
+				tokenizer.skipToEOF();
+			}
 		}
 		
 		try {
