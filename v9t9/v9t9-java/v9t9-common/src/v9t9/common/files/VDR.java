@@ -10,7 +10,6 @@
  */
 package v9t9.common.files;
 
-
 /**
  * Volume description record
  * @author ejs
@@ -18,6 +17,24 @@ package v9t9.common.files;
  */
 public class VDR {
     public static final int VDRSIZE = 256;
+    
+    public static VDR createVDR(byte[] data, int offset) {
+        VDR vdr = new VDR();
+        
+    	System.arraycopy(data, offset, vdr.volname, 0, vdr.volname.length);
+    	System.arraycopy(data, offset + 0xA, vdr.numSecs, 0, vdr.numSecs.length);
+    	vdr.secsPerTrack = data[offset + 0xc] & 0xff;
+    	System.arraycopy(data, offset + 0xd, vdr.dsrMark, 0, vdr.dsrMark.length);
+        vdr.protection = (char) data[offset + 0x10];
+        vdr.tracksPerSide = data[offset + 0x11] & 0xff;
+        vdr.sides = data[offset + 0x12] & 0xff;
+        vdr.density = data[offset + 0x13] & 0xff;
+        System.arraycopy(data, offset + 0x14, vdr.reserved14, 0, vdr.reserved14.length);
+        System.arraycopy(data, offset + 0x38, vdr.secBitMap, 0, vdr.secBitMap.length);
+        System.arraycopy(data, offset + 0xEC, vdr.reservedEC, 0, vdr.reservedEC.length);
+        
+        return vdr;
+    }
     
     /** 10 bytes, padded with spaces */
     protected final byte[] volname = new byte[10];
@@ -40,24 +57,17 @@ public class VDR {
     public VDR() {
     	
     }
-    public static VDR createVDR(byte[] data, int offset) {
-        VDR vdr = new VDR();
-        
-    	System.arraycopy(data, offset, vdr.volname, 0, vdr.volname.length);
-    	System.arraycopy(data, offset + 0xA, vdr.numSecs, 0, vdr.numSecs.length);
-    	vdr.secsPerTrack = data[offset + 0xc] & 0xff;
-    	System.arraycopy(data, offset + 0xd, vdr.dsrMark, 0, vdr.dsrMark.length);
-        vdr.protection = (char) data[offset + 0x10];
-        vdr.tracksPerSide = data[offset + 0x11] & 0xff;
-        vdr.sides = data[offset + 0x12] & 0xff;
-        vdr.density = data[offset + 0x13] & 0xff;
-        System.arraycopy(data, offset + 0x14, vdr.reserved14, 0, vdr.reserved14.length);
-        System.arraycopy(data, offset + 0x38, vdr.secBitMap, 0, vdr.secBitMap.length);
-        System.arraycopy(data, offset + 0xEC, vdr.reservedEC, 0, vdr.reservedEC.length);
-        
-        return vdr;
-    }
+   
     
+	@Override
+	public String toString() {
+		return "VDR [volname=" + new String(volname) + ", numSecs="
+				+ getTotalSecs() + ", secsPerTrack=" + secsPerTrack
+				+ ", tracksPerSide=" + tracksPerSide + ", sides=" + sides
+				+ ", density=" + density + "]";
+	}
+
+
 	public String getVolumeName() {
 		StringBuilder builder = new StringBuilder();
 		int len = 0;

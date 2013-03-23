@@ -64,7 +64,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	protected DSKheader hdr = new DSKheader();
 	protected boolean readonly;
 	int trackoffset;
-	protected byte seektrack;
+	protected int seektrack;
 	protected byte sideReg;
 	private boolean motorRunning;
 	private long motorTimeout;
@@ -240,7 +240,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	/**
 	 * 
 	 */
-	public boolean seekToCurrentTrack(byte seektrack, byte sideReg)
+	public boolean seekToCurrentTrack(int seektrack, byte sideReg)
 			throws IOException {
 		int         offs;
 	
@@ -255,14 +255,14 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		if (!readonly && (seektrack >= hdr.tracks || sideReg >= hdr.sides)) {
 			// grow the disk
 			if (seektrack >= hdr.tracks)
-				hdr.tracks = seektrack;
+				hdr.tracks = (byte) seektrack;
 			if (sideReg >= hdr.sides)
 				hdr.sides = sideReg;
 			
 			writeImageHeader();
 		}
 	
-		offs = hdr.track0offs + hdr.getTrackOffset(seektrack);
+		offs = hdr.track0offs + hdr.getTrackOffset(seektrack % (hdr.tracks & 0xff));
 	
 		// side is handled dynamically
 		
@@ -283,7 +283,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		long offset = trackoffset;
 		if (sideReg != 0) {
 			// goes in reverse order on side 2
-			offset = hdr.track0offs + hdr.getTrackOffset(hdr.tracks) * 2 - hdr.getTrackOffset(seektrack + 1);
+			int side2 = hdr.getTrackOffset(hdr.tracks) * 2;
+			offset = hdr.track0offs + side2 - hdr.getTrackOffset(seektrack + 1);
+//			offset += hdr.getTrackOffset(hdr.tracks);
 		}
 		return offset;
 	}
@@ -364,7 +366,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	 * 
 	 */
 	public void validateDiskImage() {
-		if (!spec.exists()) {
+		if (!spec.exists() && handle != null) {
 			try {
 				handle.close();
 			} catch (IOException e) {
@@ -400,8 +402,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 
 	public void readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException {
 		int secsPerTrack = 9;
-		byte track = (byte) (sector / secsPerTrack);
+		int track = (sector / secsPerTrack);
 		byte side = (byte) (track > 40 ? 1 : 0);
+		track %= 40;
 		byte tracksec = (byte) (sector % secsPerTrack);
 		seekToCurrentTrack(track, side);
 		List<IdMarker> markers = getTrackMarkers();

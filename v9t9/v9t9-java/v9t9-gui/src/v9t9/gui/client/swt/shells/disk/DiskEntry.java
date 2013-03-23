@@ -137,7 +137,7 @@ class DiskEntry extends DiskSettingEntry {
 					try {
 						catalog = readCatalog(fileHandler, setting);
 						showCatalogDialog(setting, catalog);
-					} catch (IOException e1) {
+					} catch (Throwable e1) {
 						machine.notifyEvent(IEventNotifier.Level.ERROR,
 								MessageFormat.format("Could not read catalog for disk image ''{0}''\n\n{1}",
 										setting.getString(), e1.getMessage()));

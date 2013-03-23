@@ -258,7 +258,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 			marker.crcid = 0;
 			marker.idoffset = -1;
 			marker.dataoffset = dataoffset - 1;
-			marker.trackid = seektrack;
+			marker.trackid = (byte) seektrack;
 			marker.sectorid = (byte) (dataoffset / sectorsize);
 			marker.sideid = sideReg;
 			marker.sizeid = (byte) sizeid;
