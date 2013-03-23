@@ -13,6 +13,7 @@ package v9t9.engine.files.image;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import ejs.base.utils.HexUtils;
@@ -122,25 +123,49 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 	 */
 	@Override
 	public List<IdMarker> getTrackMarkers() {
-		List<IdMarker> markers = new ArrayList<IdMarker>();
 		
 		try {
 			readCurrentTrackData();
 		} catch (IOException e) {
 			dumper.error(e.getMessage());
-			return markers;
+			return Collections.emptyList();
 		}
 		
-		/* scan track for markers */
-		
+		List<IdMarker> fmMarkers = scanFMMarkers();
+		List<IdMarker> mfmMarkers = scanMFMMarkers();
+		if (fmMarkers.size() < 9 && mfmMarkers.size() == 0) {
+			dumper.error("found only " + fmMarkers.size() + " FM sectors on track " + seektrack  +" in disk image " + getName());
+		}
+		else if (mfmMarkers.size() < 17 && fmMarkers.size() == 0) {
+			dumper.error("found only " + mfmMarkers.size() + " MFM sectors on track " + seektrack  +" in disk image " + getName());
+		}
+		return fmMarkers.size() > mfmMarkers.size() ? fmMarkers : mfmMarkers;
+	}
+
+	/**
+	 * Scan single-density (FM) track markers
+	 * @return list of markers
+	 */
+	protected List<IdMarker> scanFMMarkers() {
+		List<IdMarker> markers = new ArrayList<IdMarker>();
+		int ffCount = 0;
 		for (int startoffset = 0; startoffset < hdr.tracksize; startoffset++) {
-			if (trackBuffer[startoffset] != (byte) 0xfe)
+			byte b = trackBuffer[startoffset];
+			if (b == (byte) 0xff) {
+				ffCount++;
 				continue;
+			}
+			if (b != (byte) 0xfe)
+				continue;
+			if (ffCount < 12 && ffCount != 0) {
+				ffCount = 0;
+				continue;
+			}
 			
 			CircularByteIter iter = new CircularByteIter(trackBuffer, hdr.tracksize);
 		
 			iter.setPointers(0, startoffset);
-			iter.setCount(30);	/* 30 or 43 for MFM */
+			iter.setCount(30);	
 
 			IdMarker marker = new IdMarker();
 			marker.idoffset = iter.getPointer() + iter.getStart();
@@ -189,6 +214,102 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 			else
 				marker.dataoffset = -1;
 
+			markers.add(marker);
+		}
+		return markers;
+	}
+	
+	/**
+	 * Scan double-density (MFM) track markers
+	 * @return list of markers
+	 */
+	protected List<IdMarker> scanMFMMarkers() {
+		List<IdMarker> markers = new ArrayList<IdMarker>();
+		int n4eCount = 0;
+		int na1Count = 0;
+		for (int startoffset = 0; startoffset < hdr.tracksize; startoffset++) {
+			byte b = trackBuffer[startoffset];
+			if (b == (byte) 0x4e) {
+				n4eCount++;
+				continue;
+			}
+			if (b == (byte) 0xa1) {
+				na1Count++;
+				continue;
+			}
+			if (b != (byte) 0xfe)
+				continue;
+			if (n4eCount < 32 || na1Count < 3) {
+				n4eCount = 0;
+				na1Count = 0;
+				continue;
+			}
+			
+			CircularByteIter iter = new CircularByteIter(trackBuffer, hdr.tracksize);
+			
+			iter.setPointers(0, startoffset);
+			iter.setCount(64);
+			
+			IdMarker marker = new IdMarker();
+			marker.idoffset = iter.getPointer() + iter.getStart();
+			
+			// reset CRC
+			short crc;
+			crc = (short) 0xffff;
+			crc = RealDiskUtils.calc_crc(crc, iter.next());
+			
+			// get ID
+			marker.trackid = iter.next();
+			marker.sideid = iter.next();
+			marker.sectorid = iter.next();
+			marker.sizeid = iter.next();
+			marker.crcid = (short) (iter.next()<<8); marker.crcid |= iter.next() & 0xff;
+			
+			crc = RealDiskUtils.calc_crc(crc, marker.trackid);
+			crc = RealDiskUtils.calc_crc(crc, marker.sideid);
+			crc = RealDiskUtils.calc_crc(crc, marker.sectorid);
+			crc = RealDiskUtils.calc_crc(crc, marker.sizeid);
+			
+			// this algorithm does NOT WORK
+			if (false && crc != marker.crcid)
+			{
+				dumper.info("FDCfindIDmarker: failed ID CRC check (>{0} != >{1})",
+						HexUtils.toHex4(marker.crcid), HexUtils.toHex4(crc));
+				continue;
+			}
+			
+			// look ahead to see if we find a data marker
+			boolean foundAnotherId = false;
+			while (iter.hasNext() && iter.peek() != (byte) 0xfb) {
+				b = iter.peek();
+				if (b == (byte) 0x4e) {
+					n4eCount++;
+					iter.next();
+					continue;
+				}
+				if (b == (byte) 0xa1) {
+					na1Count++;
+					iter.next();
+					continue;
+				}
+				if (b == (byte) 0xfe) {
+					if (n4eCount >= 32 && na1Count >= 3) {
+						foundAnotherId = true;
+						break;
+					}
+				}
+				iter.next();
+			}
+			
+			// we probably started inside data
+			if (foundAnotherId)
+				continue;
+			
+			if (iter.hasNext())
+				marker.dataoffset = iter.getPointer() + iter.getStart();
+			else
+				marker.dataoffset = -1;
+			
 			markers.add(marker);
 		}
 		return markers;
