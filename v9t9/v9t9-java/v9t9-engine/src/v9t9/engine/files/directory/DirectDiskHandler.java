@@ -146,6 +146,8 @@ public class DirectDiskHandler {
 			file = NativeFileFactory.INSTANCE.createNativeFile(mapper.getLocalFile(devname, filename));
 		} catch (IOException e) {
 			throw new DsrException(EmuDiskConsts.es_filenotfound, e);
+		} catch (Throwable t) {
+			throw new DsrException(EmuDiskConsts.es_filenotfound, t);
 		}
 		
 		parms = (parms >> 8);
