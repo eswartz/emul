@@ -98,14 +98,12 @@ class DiskEntry extends DiskSettingEntry {
 					String filename = new File(setting.getString()).getName();
 					dialog.setFilterPath(dir);
 					dialog.setFileName(filename);
-					dialog.setFilterExtensions(new String[] { "*.dsk;*.trk", "*.*" });
+					dialog.setFilterExtensions(new String[] { "*.dsk;*.DSK;*.trk;*.TRK", "*.*" });
 					dialog.setFilterNames(new String[] { "Disk images (*.dsk; *.trk)", "All files" });
-					if (filename.endsWith(".dsk"))  {
+					if (filename.toLowerCase().endsWith(".dsk") || filename.toLowerCase().endsWith(".trk"))  {
 						dialog.setFilterIndex(0);
-					} else if (filename.endsWith(".trk"))  {
-						dialog.setFilterIndex(1);
 					} else {
-						dialog.setFilterIndex(2);
+						dialog.setFilterIndex(1);
 					}
 					filename = dialog.open();
 					if (filename != null) {
