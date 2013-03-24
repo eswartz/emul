@@ -14,9 +14,13 @@ import java.util.List;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
@@ -27,6 +31,8 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Item;
@@ -44,7 +50,7 @@ import v9t9.common.files.EmulatedFile;
 import v9t9.common.machine.IMachine;
 import v9t9.gui.client.swt.shells.FileContentDialog;
 
-public class DiskBrowseDialog extends Dialog {
+public class DiskCatalogDialog extends Dialog {
 	private static final int COLUMN_NAME = 0;
 	private static final int COLUMN_SIZE = 1;
 	private static final int COLUMN_TYPE = 2;
@@ -147,11 +153,15 @@ public class DiskBrowseDialog extends Dialog {
 	private final List<CatalogEntry> entries;
 	private final Catalog catalog;
 	private final IMachine machine;
+	private Button pastePathButton;
+	private Button pasteFileNameButton;
+	private Button viewContentButton;
+	protected CatalogEntry selectedEntry;
 	{
 		setShellStyle(getShellStyle() & ~(SWT.APPLICATION_MODAL + SWT.SYSTEM_MODAL) | SWT.RESIZE | SWT.MODELESS);
 	}
 
-	public DiskBrowseDialog(Shell parentShell,
+	public DiskCatalogDialog(Shell parentShell,
 			IMachine machine,
 			Catalog catalog) {
 		super(parentShell);
@@ -174,7 +184,7 @@ public class DiskBrowseDialog extends Dialog {
 	 */
 	@Override
 	protected Point getInitialSize() {
-		return new Point(400, 600);
+		return new Point(500, 600);
 	}
 
 	/* (non-Javadoc)
@@ -183,10 +193,11 @@ public class DiskBrowseDialog extends Dialog {
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite composite = (Composite) super.createDialogArea(parent);
+		((GridLayout) composite.getLayout()).numColumns = 2;
 		
 		Label label = new Label(composite, SWT.WRAP);
 		label.setText(catalog.deviceName + "\n\nName: " + catalog.volumeName + "; Total: " + catalog.totalSectors + "; Used: " + catalog.usedSectors);
-		GridDataFactory.fillDefaults().grab(true,false).applyTo(label);
+		GridDataFactory.fillDefaults().grab(true,false).span(2,1).applyTo(label);
 		
 		final TableViewer viewer = new TableViewer(composite, SWT.FULL_SELECTION | SWT.BORDER | SWT.MULTI);
 		viewer.setContentProvider(new ArrayContentProvider());
@@ -223,8 +234,63 @@ public class DiskBrowseDialog extends Dialog {
 		typeColumn.pack();
 		lenColumn.pack();
 		protColumn.pack();
+		
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			
+			@Override
+			public void selectionChanged(SelectionChangedEvent event) {
+				IStructuredSelection sel = (IStructuredSelection) event.getSelection();
+				if (sel.isEmpty()) {
+					selectedEntry = null;
+				} else {
+					selectedEntry = (CatalogEntry) sel.getFirstElement();
+				}
+				pastePathButton.setEnabled(selectedEntry != null);
+				pasteFileNameButton.setEnabled(selectedEntry != null);
+				viewContentButton.setEnabled(selectedEntry != null);
+			}
+		});
 		///
 		
+		Composite buttons = new Composite(composite, SWT.NONE);
+		GridLayoutFactory.fillDefaults().applyTo(buttons);
+		GridDataFactory.fillDefaults().applyTo(buttons);
+		pastePathButton = new Button(buttons, SWT.PUSH);
+		pastePathButton.setText("Paste Path");
+		
+		GridDataFactory.fillDefaults().applyTo(pastePathButton);
+		pasteFileNameButton = new Button(buttons, SWT.PUSH);
+		pasteFileNameButton.setText("Paste Filename");
+		GridDataFactory.fillDefaults().applyTo(pasteFileNameButton);
+		viewContentButton = new Button(buttons, SWT.PUSH);
+		GridDataFactory.fillDefaults().applyTo(viewContentButton);
+		viewContentButton.setText("View Content");
+		
+		pastePathButton.setEnabled(selectedEntry != null);
+		pasteFileNameButton.setEnabled(selectedEntry != null);
+		viewContentButton.setEnabled(selectedEntry != null);
+
+		pastePathButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (selectedEntry == null) return;
+				doPaste(selectedEntry, true);
+			}
+		});
+		pasteFileNameButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (selectedEntry == null) return;
+				doPaste(selectedEntry, false);
+			}
+		});
+		viewContentButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (selectedEntry == null) return;
+				doViewContent(selectedEntry.getFile());
+			}
+		});
 		table.addMenuDetectListener(new MenuDetectListener() {
 			
 			@Override

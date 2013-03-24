@@ -185,7 +185,7 @@ class DiskEntry extends DiskSettingEntry {
 
 	protected void showCatalogDialog(final IProperty setting,
 			final Catalog catalog) {
-		Dialog dialog = new DiskBrowseDialog(getShell(), machine, catalog);
+		Dialog dialog = new DiskCatalogDialog(getShell(), machine, catalog);
 		dialog.open();
 
 		
