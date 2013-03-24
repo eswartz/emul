@@ -421,7 +421,6 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 					return true;
 				return false;
 			}
-			idx++;
 		}
 				
 		return false;
