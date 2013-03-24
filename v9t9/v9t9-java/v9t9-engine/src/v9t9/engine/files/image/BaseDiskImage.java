@@ -396,6 +396,18 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		handle.seek(diskoffs);
 		handle.write(trackBuffer, 0, size);
 		
+		boolean newHeader = false;
+		if (sideReg > 0 && hdr.sides == 1) {
+			hdr.sides = 2;
+			newHeader = true;
+		}
+		if (seektrack > hdr.tracks) {
+			hdr.tracks = seektrack;
+			newHeader = true;
+		}
+		if (newHeader) {
+			writeImageHeader();
+		}
 		handle.getFD().sync();
 		
 		trackFetched = true;

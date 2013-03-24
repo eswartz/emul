@@ -197,7 +197,8 @@ public class TestRealDiskImage  {
 			
 			Catalog catalog = image.readCatalog("DSK1");
 			assertNotNull(catalog);
-			assertTrue(expSecs ==  catalog.totalSectors || (expMaxSector != null && expMaxSector == catalog.totalSectors));
+			assertTrue(expSecs + " vs " + catalog.totalSectors, 
+					expSecs ==  catalog.totalSectors || (expMaxSector != null && expMaxSector == catalog.totalSectors));
 		}
 	}
 
@@ -218,7 +219,7 @@ public class TestRealDiskImage  {
 		doTestReadTrackImage("sssd", 1, 360);
 	}
 
-	//@Test
+	@Test
 	public void testReadTrackImageDSSD() throws IOException {
 		doTestReadTrackImage("dssd", 2, 720);
 	}
