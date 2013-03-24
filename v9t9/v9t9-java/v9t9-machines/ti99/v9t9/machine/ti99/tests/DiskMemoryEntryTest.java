@@ -27,7 +27,7 @@ public class DiskMemoryEntryTest extends TestCase {
     private TI994A machine;
     private IMemoryDomain CPU;
     
-    String basedir = "/usr/local/src/v9t9-data/roms/";
+    String basedir = "/usr/local/src/v9t9-data/test/roms/";
 	private ISettingsHandler settings;
 	private MemoryEntryFactory memoryEntryFactory;
 

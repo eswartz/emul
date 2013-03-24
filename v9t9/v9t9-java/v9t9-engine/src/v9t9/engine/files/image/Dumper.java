@@ -13,11 +13,10 @@ package v9t9.engine.files.image;
 import java.io.PrintWriter;
 import java.text.MessageFormat;
 
-import ejs.base.properties.IProperty;
-import ejs.base.settings.Logging;
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.SettingSchema;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.Logging;
 
 /**
  * @author ejs

@@ -11,6 +11,7 @@
 package v9t9.common.files;
 
 import java.io.IOException;
+import java.util.List;
 
 import ejs.base.properties.IPersistable;
 
@@ -39,11 +40,76 @@ public interface IDiskImage extends IPersistable {
 	
 	void readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException;
 
+	void writeTrackData(byte[] rwBuffer, int start,
+			int buflen);
+
+	void writeSectorData(byte[] rwBuffer, int start,
+			int buflen, IdMarker marker);
+
+
 	/**
 	 * Tell if the disk appears formatted
 	 * @return
 	 * @throws IOException 
 	 */
 	boolean isFormatted() throws IOException;
+
+	boolean isReadOnly();
+	
+	/**
+	 * 
+	 */
+	IDiskHeader getHeader();
+	
+	Catalog readCatalog(String devname) throws IOException;
+
+	/**
+	 * 
+	 */
+	void commitTrack() throws IOException;
+
+	/**
+	 * @return
+	 */
+	List<IdMarker> getTrackMarkers();
+
+	/**
+	 * @param seektrack
+	 * @param seekside
+	 * @throws IOException 
+	 */
+	boolean seekToCurrentTrack(int seektrack, int seekside) throws IOException;
+
+	/**
+	 * @return
+	 */
+	int getTrackSize();
+
+	/**
+	 * @param currentMarker
+	 * @param rwBuffer
+	 * @param i
+	 * @param buflen
+	 */
+	void readSectorData(IdMarker currentMarker, byte[] rwBuffer, int i,
+			int buflen);
+
+	/**
+	 * @param i
+	 */
+	void setMotorTimeout(long millis);
+
+	/**
+	 * @return
+	 */
+	boolean isMotorRunning();
+
+	/**
+	 * @param rwBuffer
+	 * @param i
+	 * @param buflen
+	 * @throws IOException 
+	 */
+	void readTrackData(byte[] rwBuffer, int i, int buflen) throws IOException;
 
 }

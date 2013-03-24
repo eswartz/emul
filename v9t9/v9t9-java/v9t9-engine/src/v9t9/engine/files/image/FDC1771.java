@@ -11,10 +11,13 @@
 package v9t9.engine.files.image;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import v9t9.common.files.IDiskImage;
+import v9t9.common.files.IdMarker;
+import v9t9.engine.dsr.realdisk.CRC16;
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
 
@@ -36,8 +39,9 @@ public class FDC1771 implements IPersistable {
 	private byte trackReg; /* desired track */
 	byte sideReg; /* current side */
 	private byte sectorReg; /* desired sector */
-	private short crc; /* current CRC */
 
+	private CRC16 crcAlg = new CRC16(0x1021);
+	
 	private boolean stepout; /* false: in, true: out */
 	
 	byte seektrack; /* physically seeked track */
@@ -45,8 +49,7 @@ public class FDC1771 implements IPersistable {
 	
 	private FDCStatus status = new FDCStatus();
 	
-	private BaseDiskImage image;
-	private List<IdMarker> trackMarkers;
+	private IDiskImage image;
 	private Iterator<IdMarker> trackMarkerIter;
 	private IdMarker currentMarker;
 	private boolean heads;
@@ -54,6 +57,7 @@ public class FDC1771 implements IPersistable {
 	public long commandBusyExpiration;
 	
 	private Dumper dumper;
+	private List<IdMarker> trackMarkers;
 
 	/**
 	 * 
@@ -71,7 +75,6 @@ public class FDC1771 implements IPersistable {
 
 			// refetch markers (and track) next time
 			trackMarkerIter = null;
-			trackMarkers = null;
 			currentMarker = null;
 			
 			seektrack = -1;
@@ -113,27 +116,36 @@ public class FDC1771 implements IPersistable {
 			status.reset(StatusBit.LOST_DATA);
 			status.reset(StatusBit.CRC_ERROR);
 
-			if (command == RealDiskConsts.FDC_writesector)
-				image.writeSectorData(rwBuffer, 0, buflen, currentMarker, status);
-			else if (command == RealDiskConsts.FDC_writetrack)
-				image.writeTrackData(rwBuffer, 0, buflen, status);
+			if (command == RealDiskConsts.FDC_writesector) {
+				if (image.isReadOnly()) {
+					status.set(StatusBit.WRITE_PROTECT);
+				}
+				if (currentMarker == null) {
+					status.set(StatusBit.REC_NOT_FOUND);
+				}
+				else if (currentMarker.isInvalid()) {
+					status.set(StatusBit.REC_NOT_FOUND);
+				} else {
+					image.writeSectorData(rwBuffer, 0, buflen, currentMarker);
+				}
+			} else if (command == RealDiskConsts.FDC_writetrack) {
+				if (image.isReadOnly()) {
+					status.set(StatusBit.WRITE_PROTECT);
+					return;
+				}
+				image.writeTrackData(rwBuffer, 0, buflen);
+			}
 			
-			image.commitTrack(status);
+			try {
+				image.commitTrack();
+			} catch (IOException e) {
+				status.set(StatusBit.NOT_READY);
+				status.set(StatusBit.LOST_DATA);
+			}
 		
 			//readCurrentTrackData();
 		}
 
-	}
-
-	private void ensureTrackMarkers() {
-		if (trackMarkers == null) {
-			if (image == null) {
-				trackMarkers = new ArrayList<IdMarker>();
-			} else {
-				trackMarkers = image.getTrackMarkers();
-			}
-			trackMarkerIter = trackMarkers.iterator();
-		}
 	}
 
 
@@ -204,6 +216,19 @@ public class FDC1771 implements IPersistable {
 		return true;
 	}
 
+	/**
+	 * 
+	 */
+	private void ensureTrackMarkers() {
+		if (trackMarkers == null || trackMarkers.isEmpty()) {
+			if (image != null)
+				trackMarkers = image.getTrackMarkers();
+			else
+				trackMarkers = Collections.<IdMarker>emptyList();
+			trackMarkerIter = trackMarkers.iterator();
+		}
+	}
+
 	private void updateSeek(byte track, byte side) throws IOException {
 		if (seektrack != track || seekside != side) {
 			// don't change anything until the track changes, 
@@ -228,8 +253,8 @@ public class FDC1771 implements IPersistable {
 			seekside = side;
 			
 			currentMarker = null;
-			trackMarkers = null;
 			trackMarkerIter = null;
+			trackMarkers = null;
 			
 			if (image != null)
 				image.seekToCurrentTrack(seektrack, seekside);
@@ -262,6 +287,13 @@ public class FDC1771 implements IPersistable {
 			verifyTrack(trackReg);
 		}
 		
+		currentMarker = null;
+		trackMarkerIter = null;
+		trackMarkers = null;
+		
+		if (image != null)
+			image.seekToCurrentTrack(seektrack, seekside);
+
 	}
 
 	public void FDCseek() throws IOException {
@@ -405,7 +437,7 @@ public class FDC1771 implements IPersistable {
 		
 		status.set(StatusBit.DRQ_PIN);
 		
-		if (image.readonly)
+		if (image.isReadOnly())
 			status.set(StatusBit.WRITE_PROTECT);
 	}
 
@@ -414,6 +446,7 @@ public class FDC1771 implements IPersistable {
 	 */
 	public void FDCreadIDmarker() {
 		status.reset(StatusBit.LOST_DATA);
+		status.reset(StatusBit.REC_NOT_FOUND);
 		
 		if (!FDCfindIDmarker()) {
 			status.set(StatusBit.REC_NOT_FOUND);
@@ -469,7 +502,7 @@ public class FDC1771 implements IPersistable {
 		
 		addBusyTime(buflen * 10 / 1000);
 		
-		if (image != null && image.readonly)
+		if (image != null && image.isReadOnly())
 			status.set(StatusBit.WRITE_PROTECT);
 	}
 
@@ -514,7 +547,7 @@ public class FDC1771 implements IPersistable {
 
 		if (hold && image != null && image.isMotorRunning() && buflen != 0) {
 			ret = rwBuffer[bufpos++];
-			crc = RealDiskUtils.calc_crc(crc, ret & 0xff);
+			crcAlg.feed(ret);
 			if (bufpos >= buflen) {
 				status.reset(StatusBit.DRQ_PIN);
 			}
@@ -532,7 +565,7 @@ public class FDC1771 implements IPersistable {
 			/* fill circular buffer */
 			if (bufpos < buflen) {
 				rwBuffer[bufpos++] = val;
-				crc = RealDiskUtils.calc_crc(crc, val);
+				crcAlg.feed(val);
 			} else {
 				status.reset(StatusBit.DRQ_PIN);
 				dumper.error("Tossing extra byte >{0}", Integer.toHexString(val & 0xff));
@@ -553,7 +586,7 @@ public class FDC1771 implements IPersistable {
 	/**
 	 * @return
 	 */
-	public BaseDiskImage getImage() {
+	public IDiskImage getImage() {
 		return image;
 	}
 
@@ -622,12 +655,12 @@ public class FDC1771 implements IPersistable {
 		return bufpos;
 	}
 
-	public void setCrc(short crc) {
-		this.crc = crc;
+	public void resetCrc() {
+		crcAlg.reset();
 	}
 
 	public short getCrc() {
-		return crc;
+		return crcAlg.read();
 	}
 
 	public void setBuflen(int buflen) {

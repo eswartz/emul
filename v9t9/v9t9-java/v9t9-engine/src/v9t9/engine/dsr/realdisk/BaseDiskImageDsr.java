@@ -15,8 +15,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TimerTask;
 
 import v9t9.common.client.ISettingsHandler;
@@ -143,7 +146,8 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 				if (now > fdc.commandBusyExpiration)
 					fdc.commandBusyExpiration = 0;
 				
-				for (Map.Entry<String, IDiskImage> entry : imageMapper.getDiskImageMap().entrySet()) { 
+				Set<Entry<String, IDiskImage>> entrySet = new HashSet<Map.Entry<String,IDiskImage>>(imageMapper.getDiskImageMap().entrySet());
+				for (Map.Entry<String, IDiskImage> entry : entrySet) { 
 					String name = "DSK" + entry.getKey().charAt(entry.getKey().length() - 1);
 					IDiskImage info_ = entry.getValue();
 					if (false == info_ instanceof BaseDiskImage)
@@ -259,7 +263,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 			// strobe the motor (this doesn't turn it off, which happens via timeout)
 			if (on) {
 				if (!info.isMotorRunning()) {
-					if (settingRealTime.getBoolean()) {
+					if (true||settingRealTime.getBoolean()) {
 						Object[] args = { selectedDisk };
 						dumper.info("DSK{0}: motor starting", args);
 						info.setMotorTimeout(System.currentTimeMillis() + 1500);
@@ -424,7 +428,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 						fdc.writeByte((byte) (fdc.getCrc() >> 8));
 						fdc.writeByte((byte) (fdc.getCrc() & 0xff));
 					} else if (val >= (byte) 0xf8 && val <= (byte) 0xfb) {
-						fdc.setCrc((short) -1);
+						fdc.resetCrc();
 						fdc.writeByte(val);
 					} else {
 						fdc.writeByte(val);

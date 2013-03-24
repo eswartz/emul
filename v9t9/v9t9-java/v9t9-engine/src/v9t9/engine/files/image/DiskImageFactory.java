@@ -33,11 +33,18 @@ public class DiskImageFactory {
 			
 			if (RawTrackDiskImage.isTrackImage(file))
 				return new RawTrackDiskImage(settings, name, file);
+			
+			BaseDiskImage secImg = new SectorDiskImage(settings, name, file);
+			if (secImg.isFormatted()) {
+				return secImg;
+			}
 		}
-		if (file.getName().toLowerCase().endsWith(".trk"))
+		
+		if (file.getName().toLowerCase().endsWith(".trk")) {
 			return new V9t9TrackDiskImage(settings, name, file);
-		else
+		} else {
 			return new SectorDiskImage(settings, name, file);
+		}
 	}
 
 }

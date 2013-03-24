@@ -48,29 +48,4 @@ public class RealDiskUtils {
 		dumper.info(builder.toString());
 	
 	}
-
-	/* calculate CRC for data address marks or sector data */
-	/* borrowed from xmess-0.56.2.  seems like this only works for MFM */
-	static short calc_crc(int crc, int value) {
-		int l, h;
-	
-		l = value ^ ((crc >> 8) & 0xff);
-		crc = (crc & 0xff) | (l << 8);
-		l >>= 4;
-		l ^= (crc >> 8) & 0xff;
-		crc <<= 8;
-		crc = (crc & 0xff00) | l;
-		l = (l << 4) | (l >> 4);
-		h = l;
-		l = (l << 2) | (l >> 6);
-		l &= 0x1f;
-		crc = crc ^ (l << 8);
-		l = h & 0xf0;
-		crc = crc ^ (l << 8);
-		l = (h << 1) | (h >> 7);
-		l &= 0xe0;
-		crc = crc ^ l;
-		return (short) crc;
-	}
-
 }

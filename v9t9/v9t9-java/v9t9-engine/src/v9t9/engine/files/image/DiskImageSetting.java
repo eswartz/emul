@@ -12,13 +12,12 @@ package v9t9.engine.files.image;
 
 import java.net.URL;
 
-import ejs.base.properties.IProperty;
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.common.settings.SettingSchema;
 import v9t9.engine.files.directory.EmuDiskSettings;
+import ejs.base.properties.IProperty;
 
 public class DiskImageSetting extends IconSettingProperty implements IDiskDriveSetting {
 	private IProperty realDsrEnabled;

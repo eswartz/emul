@@ -86,10 +86,10 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 		byte[] magic = new byte[TRACK_MAGIC.length()];
 		getHandle().read(magic);
 		byte version = getHandle().readByte();
-		hdr.tracks = getHandle().readByte();
-		hdr.sides = getHandle().readByte();
+		hdr.tracks = getHandle().readByte() & 0xff;
+		hdr.sides = getHandle().readByte() & 0xff;
 		getHandle().readByte(); // unused
-		hdr.tracksize =  (short) (((getHandle().read() & 0xff) << 8) | (getHandle().read() & 0xff));
+		hdr.tracksize =  (((getHandle().read() & 0xff) << 8) | (getHandle().read() & 0xff));
 		hdr.track0offs = (((getHandle().read() & 0xff) << 8) | (getHandle().read() & 0xff));
 
 		/* verify */

@@ -105,7 +105,12 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		this.listeners = new ListenerList<IVideoRenderListener>();
 		this.settings = machine.getSettings();
 		this.vdp = machine.getVdp();
-		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
+		
+		Rectangle vis = Display.getDefault().getBounds();
+		int xz = (int ) vis.width / 256;
+		int yz = (int ) vis.height / 212;
+		int z = Math.max(1, Math.min(xz, yz));
+		fixedAspectLayout = new FixedAspectLayout(256, 192, z, z, 1., 5);
 		zoomx = zoomy = 0.0f;
 		fastTimer = new FastTimer("Video Renderer");
 		canvasFormat = settings.get(settingCanvasFormat);

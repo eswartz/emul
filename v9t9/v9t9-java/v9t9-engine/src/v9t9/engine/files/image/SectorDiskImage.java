@@ -14,9 +14,12 @@ import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.files.IdMarker;
+import v9t9.engine.dsr.realdisk.CRC16;
+import v9t9.engine.dsr.realdisk.ICRCAlgorithm;
 
 
 
@@ -73,23 +76,23 @@ public class SectorDiskImage extends BaseDiskImage  {
 		getHandle().seek(0);
 		getHandle().read(sector);
 
-		hdr.tracks = sector[17];
-		hdr.sides = sector[18];
-		hdr.tracksize = (short) (sector[12] * 256L);
+		hdr.tracks = sector[17] & 0xff;
+		hdr.sides = sector[18] & 0xff;
+		hdr.tracksize = (sector[12] * 256);
 		hdr.track0offs = 0;
 		if (hdr.tracks <= 0 || hdr.sides <= 0 || hdr.tracksize <= 0)
 		{
 			hdr.sides = 1;
 			hdr.tracksize = 256*9;
 			int tracks = (int) (sz / hdr.tracksize);
-			hdr.tracks = (byte) tracks;
+			hdr.tracks = tracks;
 			if (tracks >= 80) {
 				tracks /= 2;
-				hdr.tracks = (byte) tracks;
+				hdr.tracks = tracks;
 				hdr.sides++;
 				if (tracks >= 80) {
 					tracks /= 2;
-					hdr.tracks = (byte) tracks;
+					hdr.tracks = tracks;
 					hdr.tracksize <<= 1;
 					if (tracks > 40) {
 						hdr.tracks = 40;
@@ -120,142 +123,69 @@ public class SectorDiskImage extends BaseDiskImage  {
 	 */
 	@Override
 	public void writeSectorData(byte[] rwBuffer, int start, int buflen,
-			IdMarker marker, FDCStatus status) {
-		if (readonly) {
-			status.set(StatusBit.WRITE_PROTECT);
-			return;
+			IdMarker marker) {
+		try {
+			System.arraycopy(rwBuffer, 0, trackBuffer, marker.dataoffset + 1, buflen);
+		} catch (IndexOutOfBoundsException e) {
+			e.printStackTrace();
 		}
-
-		if (marker == null) {
-			status.set(StatusBit.REC_NOT_FOUND);
-			return;
-		}
-		
-		System.arraycopy(rwBuffer, 0, trackBuffer, marker.dataoffset + 1, buflen);
 		
 		// dump contents
 		RealDiskUtils.dumpBuffer(dumper, rwBuffer, start, buflen);
 		
 	}
 
-	/**
-	 * Write data written for the track; may be larger than allowed track size
-	 * @param rwBuffer
-	 * @param i
-	 * @param buflen
-	 * @param fdc 
-	 */
 	@Override
-	public void writeTrackData(byte[] rwBuffer, int i, int buflen, FDCStatus status) {
-		if (readonly) {
-			status.set(StatusBit.WRITE_PROTECT);
-			return;
+	public void writeTrackData(byte[] rwBuffer, int start, int buflen) {
+		super.writeTrackData(rwBuffer, start, buflen);
+		if (trackMarkers == null || trackMarkers.size() != hdr.getTrackSize()/256) {
+			dumper.error("Program is formatting track at {1} on ''{0}'' with non-ordinary sectors; " +
+					"this does not work with sector-image disks", 
+					spec, Long.toHexString(getTrackDiskOffset()));
 		}
 		
-		formatSectorTrack(rwBuffer, i, buflen);
-
-		// dump contents
-		RealDiskUtils.dumpBuffer(dumper, rwBuffer, i, buflen);
-	}
-	
-
-	/**
-	 * Interpret track data and extract sector data from it 
-	 * @param fdc 
-	 */
-	private void formatSectorTrack(byte[] buffer, int start, int length) {
-		// interpret data
-		int is = start;
-		while (is < length) {
-			while (is < length && is < buffer.length && buffer[is] != (byte) 0xfe) is++;
-			if (is + 6 < length) {
-				byte track, side, sector, size;
-				int offs, sz;
-				short crc = (short) 0xffff, crcid;
-
-				// ID marker
-				is++;
-
-				crc = RealDiskUtils.calc_crc(crc, 0xfe);
-				track = buffer[is++]; crc = RealDiskUtils.calc_crc(crc, track);
-				side = buffer[is++]; crc = RealDiskUtils.calc_crc(crc, side);
-				sector = buffer[is++]; crc = RealDiskUtils.calc_crc(crc, sector);
-				size = buffer[is++]; crc = RealDiskUtils.calc_crc(crc, size);
-				crcid = (short) (buffer[is++]<<8); crcid += buffer[is++]&0xff;
-
-				if (crcid == (short) 0xf7ff) crcid = crc;
-				/*
-				if (false && crcid != crc) {
-					// only for MFM, apparently
-					info("retrying for id marker (CRC=%04X != %04X)", crc, crcid);
-					goto retry;
-				}*/
-
-				dumper.info("Formatting sector track:{0}, side:{1}, sector:{2}, size:{3}, crc={4}", track, side, sector, size, crc);
-
-				sz = 128 << size;
-				offs = sector * sz;
-				if (offs >= hdr.tracksize) {
-					dumper.error("Program is formatting track on ''{0}'' with non-ordinary sectors; " +
-									"this does not work with sector-image disks", spec);
-					offs = 0;
-				}
-
-				while (is < length && buffer[is++] != (byte) 0xfb) /**/;
-
-				crc = (short) 0xffff;
-
-				if (is + sz + 2 < length) {
-					crc = RealDiskUtils.calc_crc(crc, 0xfb);
-					int cnt = 0;
-					for (cnt=0; cnt < sz; cnt++) {
-						crc = RealDiskUtils.calc_crc(crc, buffer[cnt + is]);
-					}
-					crcid = (short) (buffer[cnt++]<<8); crcid += buffer[cnt++]&0xff;
-					if (crcid == (short) 0xf7ff) crcid = crc;
-					/*
-					if (0 && crc != crcid) {
-						module_logger(&realDiskDSR, _L|L_3,
-									  _("retrying for sector data (CRC=%04X != %04X)\n"),
-									  crc, crcid);
-						goto retry1;
-					}*/
-
-					System.arraycopy(buffer, is, trackBuffer, offs, sz);
-					//FDCwritedataat(buffer, offs, is, sz, status);
-					
-					is += sz + 2; // + crc
-				} else {
-					dumper.error("Lost sector data in format of sector-image disk ''{0}''", spec);
-					break;
+		// extract only sector data
+		for (IdMarker marker : trackMarkers) {
+			if (marker.sizeid == 1 && marker.sectorid < 18) {
+				try {
+					System.arraycopy(rwBuffer, marker.dataoffset+1,
+							trackBuffer, marker.sectorid*256, 256);
+				} catch (IndexOutOfBoundsException e) {
+					e.printStackTrace();
 				}
 			}
-		}			
+		}
 	}
-
+	
 	/**
 	 * Scan the current track for ID markers
 	 * @return
 	 */
 	@Override
-	public List<IdMarker> getTrackMarkers() {
-		List<IdMarker> markers = new ArrayList<IdMarker>();
+	public void fetchFormatAndTrackMarkers() {
 		
 		try {
 			readCurrentTrackData();
 		} catch (IOException e) {
 			dumper.error(e.getMessage());
-			return markers;
+			trackFormat = fmFormat;
+			trackMarkers = Collections.emptyList();
+			return;
 		}
 		
 		/* easy */
 		
+		trackMarkers = new ArrayList<IdMarker>();
 		int sizeid = 1; // HACK
 		int sectorsize = (128 << sizeid);
 		
+		ICRCAlgorithm crcAlg = new CRC16(0x1021);
 		for (int dataoffset = 0; dataoffset < hdr.tracksize; dataoffset += sectorsize) {
 			IdMarker marker = new IdMarker();
-			marker.crcid = 0;
+
+			crcAlg.reset();
+			marker.idCode = (byte) 0xfe;
+			marker.dataCode = (byte) 0xfb;
 			marker.idoffset = -1;
 			marker.dataoffset = dataoffset - 1;
 			marker.trackid = (byte) seektrack;
@@ -263,10 +193,16 @@ public class SectorDiskImage extends BaseDiskImage  {
 			marker.sideid = sideReg;
 			marker.sizeid = (byte) sizeid;
 			
-			markers.add(marker);
+			crcAlg.feed(marker.idCode);
+			crcAlg.feed(marker.trackid);
+			crcAlg.feed(marker.sideid);
+			crcAlg.feed(marker.sectorid);
+			crcAlg.feed(marker.sizeid);
+			
+			marker.crcid = crcAlg.read();
+			
+			trackMarkers.add(marker);
 		}
-		
-		return markers;
 	}
 
 	/**

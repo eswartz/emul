@@ -110,6 +110,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 	private IProperty showRnDBar;
 
+	private ISettingsHandler settingsHandler;
+
 
 	class EmulatorWindowLayout extends Layout {
 
@@ -209,6 +211,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			final ISwtVideoRenderer videoRenderer, final ISettingsHandler settingsHandler,
 			final ISoundHandler soundHandler) {
 		super(machine);
+		this.settingsHandler = settingsHandler;
 		
 		fullScreen = Settings.get(machine, settingFullScreen);
 		
@@ -254,13 +257,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 				machine.getClient().close();
 			}
 			
-		});
-		
-		shell.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlMoved(ControlEvent e) {
-				recenterToolShells();
-			}
 		});
 		
 		if (false) {
@@ -391,23 +387,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 			((SVGImageProvider) rndImageProvider).setImageCanvas(rndBar.getButtonBar());
 		}
 
-		// restore original window geometry
-		String boundsPref = settingsHandler.get(settingEmulatorWindowBounds).getString();
-		final Rectangle rect = SwtPrefUtils.readBoundsString(boundsPref);
-		if (rect != null) {
-			Display.getDefault().asyncExec(new Runnable() {
-				public void run() {
-					if (!fullScreen.getBoolean()) {
-						adjustRectVisibility(shell, rect);
-						shell.setBounds(rect);
-						setFullscreen(false);
-					} else {
-						setFullscreen(true);
-					}
-				}
-			});
-		}
-
 		fullScreenListener = new IPropertyListener() {
 
 			public void propertyChanged(final IProperty setting) {
@@ -431,31 +410,51 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 		videoRenderer.setFocus();
 		
-//		machine.getKeyboardState().addKeyboardListener(new IKeyboardListener() {
-//			
-//			@Override
-//			public void shiftChangeEvent(byte mask) {
-//				System.out.println("SHIFT: " + Integer.toHexString(mask & 0xff));
-//			}
-//			
-//			@Override
-//			public void otherKeyEvent(int ch, boolean pressed) {
-//				System.out.println("OTHER: " + ch + " " + pressed);				
-//			}
-//			
-//			@Override
-//			public void joystickChangeEvent(int num, byte mask) {
-//				System.out.println("JOYST: " + num + " => " + Integer.toHexString(mask & 0xff));				
-//			}
-//			
-//			@Override
-//			public void asciiKeyEvent(char ch, boolean pressed) {
-//				System.out.println("ASCII: " + ch + " " + pressed);				
-//				
-//			}
-//		});
+		// restore original window geometry
+		String boundsPref = settingsHandler.get(settingEmulatorWindowBounds).getString();
+		final Rectangle rect = SwtPrefUtils.readBoundsString(boundsPref);
+		if (rect != null) {
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					if (!fullScreen.getBoolean()) {
+						adjustRectVisibility(shell, rect);
+						shell.setBounds(rect);
+						setFullscreen(false);
+					} else {
+						setFullscreen(true);
+					}
+					
+					attachControlListener();
+				}
+			});
+		} else {
+			attachControlListener();
+		}
+
+
 	}
 	
+	
+	protected void attachControlListener() {
+
+		shell.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlMoved(ControlEvent e) {
+				String boundsPref = SwtPrefUtils.writeBoundsString(shell.getBounds());
+				settingsHandler.get(settingEmulatorWindowBounds).setString(boundsPref);
+				recenterToolShells();
+			}
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.ControlAdapter#controlResized(org.eclipse.swt.events.ControlEvent)
+			 */
+			@Override
+			public void controlResized(ControlEvent e) {
+				String boundsPref = SwtPrefUtils.writeBoundsString(shell.getBounds());
+				settingsHandler.get(settingEmulatorWindowBounds).setString(boundsPref);
+			}
+		});
+		
+	}
 	/**
 	 * @param e
 	 * @return
