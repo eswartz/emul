@@ -116,6 +116,7 @@
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="src"/>
             <classpath refid="v9t9-machines.classpath"/>
+        	<exclude name="v9t9/machine/utils/**"/>
         </javac>
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="ti99"/>
