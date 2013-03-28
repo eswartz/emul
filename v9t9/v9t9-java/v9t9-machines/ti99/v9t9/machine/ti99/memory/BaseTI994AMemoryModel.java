@@ -97,9 +97,12 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 	public void initMemory(IBaseMachine machine) {
         defineConsoleMemory(machine);
      
-        soundMmio = new SoundMmio(((IMachine) machine).getSound());
-        gplMmio = new GplMmio(machine, GRAPHICS);
-        speechMmio = new SpeechMmio(((IMachine) machine).getSpeech());
+        if (soundMmio == null)
+        	soundMmio = new SoundMmio(((IMachine) machine).getSound());
+        if (gplMmio == null)
+        	gplMmio = new GplMmio(machine, GRAPHICS, 6);
+        if (speechMmio == null)
+        	speechMmio = new SpeechMmio(((IMachine) machine).getSpeech());
         
         ISettingsHandler settings = Settings.getSettings(machine);
         IVdpChip vdp = ((IMachine) machine).getVdp();

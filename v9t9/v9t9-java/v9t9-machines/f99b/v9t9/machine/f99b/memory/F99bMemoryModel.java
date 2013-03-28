@@ -30,6 +30,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.machine.EmulatorMachinesData;
@@ -224,5 +225,14 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	@Override
 	public MemoryEntryInfo[] getOptionalRomMemoryEntries() {
 		return new MemoryEntryInfo[0];
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.memory.BaseTI994AMemoryModel#initMemory(v9t9.common.machine.IBaseMachine)
+	 */
+	@Override
+	public void initMemory(IBaseMachine machine) {
+		gplMmio = new GplMmio(machine, GRAPHICS, 3); 
+		super.initMemory(machine);
 	}
 }

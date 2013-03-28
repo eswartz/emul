@@ -44,12 +44,16 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
 
 	private IProperty dumpFullInstructions;
 
+	private IBaseMachine machine;
+
+	private int cycles;
+
     /**
-     * @param machine TODO
-     * @param machine
      */
-    public GplMmio(IBaseMachine machine, IMemoryDomain domain) {
-        if (domain == null) {
+    public GplMmio(IBaseMachine machine, IMemoryDomain domain, int cycles) {
+        this.machine = machine;
+		this.cycles = cycles;
+		if (domain == null) {
 			throw new IllegalArgumentException();
 		}
         this.domain = domain;
@@ -106,6 +110,8 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
 
     	    ret = readGrom();
     	}
+    	
+	    machine.getCpu().addCycles(cycles);
     	return ret;
     }
 
@@ -140,7 +146,9 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
 
     		domain.writeByte(gromaddr - 1, val);
     		gromaddr = getNextAddr(gromaddr);
-    	}    
+    	}   
+    	
+    	machine.getCpu().addCycles(cycles);
     }
 
 	public void loadState(ISettingSection section) {
