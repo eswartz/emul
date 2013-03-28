@@ -99,10 +99,11 @@ public class ByteMemoryArea extends MemoryArea {
     @Override
 	public byte readByte(IMemoryEntry entry, int addr) {
         if (read != null) {
-			return read[addr - entry.getAddr()];
-		} else {
-			return 0;
+			int offs = addr - entry.getAddr();
+			if (offs >= 0 && offs < read.length)
+				return read[offs];
 		}
+        return 0;
     }
 
     @Override
@@ -115,7 +116,9 @@ public class ByteMemoryArea extends MemoryArea {
     @Override
 	public void writeByte(IMemoryEntry entry, int addr, byte val) {
         if (write != null) {
-			write[addr - entry.getAddr()] = val;
+			int offs = addr - entry.getAddr();
+			if (offs >= 0 && offs < write.length)
+				write[offs] = val;
 		}
     }
 

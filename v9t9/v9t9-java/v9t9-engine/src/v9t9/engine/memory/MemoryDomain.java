@@ -42,14 +42,6 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     	
     };
     
-    public IMemoryWriteListener nullMemoryWriteListener = new IMemoryWriteListener() {
-
-		public void changed(IMemoryEntry entry, int addr, Number value) {
-		}
-    	
-    };
-    
-    
     private IMemoryAccessListener accessListener = nullMemoryAccessListener;
     private ListenerList<IMemoryWriteListener> writeListeners = new ListenerList<IMemoryWriteListener>();
     

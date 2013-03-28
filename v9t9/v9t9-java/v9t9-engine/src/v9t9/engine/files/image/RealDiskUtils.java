@@ -23,7 +23,7 @@ public class RealDiskUtils {
 			return;
 		
 		StringBuilder builder = new StringBuilder();
-		int rowLength = 32;
+		int rowLength = 16;
 		int x;
 		if (len > 0)
 			builder.append("Buffer contents:\n");
