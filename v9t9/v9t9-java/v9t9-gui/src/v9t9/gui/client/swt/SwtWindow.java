@@ -36,6 +36,8 @@ import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -109,9 +111,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private EmulatorRnDBar rndBar;
 
 	private IProperty showRnDBar;
-
-	private ISettingsHandler settingsHandler;
-
 
 	class EmulatorWindowLayout extends Layout {
 
@@ -211,7 +210,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 			final ISwtVideoRenderer videoRenderer, final ISettingsHandler settingsHandler,
 			final ISoundHandler soundHandler) {
 		super(machine);
-		this.settingsHandler = settingsHandler;
 		
 		fullScreen = Settings.get(machine, settingFullScreen);
 		
@@ -247,16 +245,15 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		}
 		
-		shell.addDisposeListener(new DisposeListener() {
-
-			public void widgetDisposed(DisposeEvent e) {
+		shell.addShellListener(new ShellAdapter() {
+			@Override
+			public void shellClosed(ShellEvent e) {
 				String boundsPref = SwtPrefUtils.writeBoundsString(shell.getBounds());
 				settingsHandler.get(settingEmulatorWindowBounds).setString(boundsPref);
 				dispose();
 				
 				machine.getClient().close();
 			}
-			
 		});
 		
 		if (false) {
@@ -440,17 +437,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell.addControlListener(new ControlAdapter() {
 			@Override
 			public void controlMoved(ControlEvent e) {
-				String boundsPref = SwtPrefUtils.writeBoundsString(shell.getBounds());
-				settingsHandler.get(settingEmulatorWindowBounds).setString(boundsPref);
 				recenterToolShells();
-			}
-			/* (non-Javadoc)
-			 * @see org.eclipse.swt.events.ControlAdapter#controlResized(org.eclipse.swt.events.ControlEvent)
-			 */
-			@Override
-			public void controlResized(ControlEvent e) {
-				String boundsPref = SwtPrefUtils.writeBoundsString(shell.getBounds());
-				settingsHandler.get(settingEmulatorWindowBounds).setString(boundsPref);
 			}
 		});
 		
