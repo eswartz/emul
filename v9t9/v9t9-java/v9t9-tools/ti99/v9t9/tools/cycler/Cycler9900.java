@@ -47,11 +47,8 @@ public class Cycler9900 {
 
     }
 
-	public static void main(String[] args) {;
-		String logName = Cycler9900.class.getName() + "/../log4j.properties";
-		URL logURL = Cycler9900.class.getResource(logName);
-		if (logURL != null)
-			System.setProperty("log4j.configuration", logURL.toString());
+	public static void main(String[] args) {
+		setupLogging();
         
         EmulatorServerBase server = new EmulatorLocalServer();
         String modelId = server.getMachineModelFactory().getDefaultModel();
@@ -184,6 +181,18 @@ public class Cycler9900 {
         	if (out != System.out)
         		out.close();
         }
+	}
+
+	/**
+	 * 
+	 */
+	protected static void setupLogging() {
+		String className = Cycler9900.class.getName();
+		int didx = className.lastIndexOf('.');
+		String logName = "/" + className.substring(0, didx+1).replace('.', '/') + "log4j.properties";
+		URL logURL = Cycler9900.class.getResource(logName);
+		if (logURL != null)
+			System.setProperty("log4j.configuration", logURL.toString());
 	}
 
 	/**
