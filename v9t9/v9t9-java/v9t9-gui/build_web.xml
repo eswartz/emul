@@ -31,6 +31,15 @@
 	
     <target name="build-web"  >
 
+    	<tstamp>
+    		<format property="touch.time" pattern="dd MMMM yyyy hh:mm aa"/>
+    	</tstamp>
+
+    	<copy overwrite="true" file="${base.v9t9}/data/release/updated.js" 
+    		tofile="${web}/updated.js"/>
+    	<replace file="${web}/updated.js" token="*STAMP*" value="${touch.time}" />
+    	
+
     	<mkdir dir="${web}/data" />
     	<delete file="${web}/data/v9t9.zip" />
 
@@ -55,6 +64,7 @@
     			<exclude name="v9t9**.zip" />
     			<exclude name="v9t9*.log*" />
     			<exclude name=".*" />
+    			<exclude name="updated.*" />
     			<exclude name="hs_err*" />
     			<exclude name="tmpdir" />
     			<exclude name="tmpdir/**" />
@@ -65,9 +75,8 @@
     			<exclude name="cur/**" />
     			<exclude name="ref/**" />
     		</fileset>
-    	
     	</zip>
-
+    		
 	</target>
 		
 </project>

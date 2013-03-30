@@ -11,7 +11,6 @@
 package v9t9.gui;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.apache.log4j.Logger;
@@ -28,32 +27,19 @@ import v9t9.common.EmulatorLocations;
 public class EmulatorGuiData {
 	private static final Logger logger = Logger.getLogger(EmulatorGuiData.class);
 	
-	private static final URL sBaseDataURL;
 	static final URL sBaseV9t9URL;
 	static {
-		sBaseDataURL = EmulatorLocations.getV9t9DataURL(EmulatorGuiData.class);
-		if (sBaseDataURL == null) {
-			System.err.println("Could not find data/ directory");
-			System.exit(123);
-		}
 		sBaseV9t9URL = EmulatorLocations.getV9t9BaseURL(EmulatorGuiData.class);
 		if (sBaseV9t9URL == null) {
 			System.err.println("Could not find base (install) directory");
 			System.exit(123);
 		}
 		logger.info("Base emulator V9t9 data URL: " + sBaseV9t9URL);
-		logger.info("Base emulator GUI data URL: " + sBaseDataURL);
 		System.out.println("Base emulator V9t9 data URL: " + sBaseV9t9URL);
-		System.out.println("Base emulator GUI data URL: " + sBaseDataURL);
 	}
 	
 	public static URL getDataURL(String string) {
-		try {
-			return new URL(sBaseDataURL, string);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			return null;
-		}
+		return EmulatorGuiData.class.getClassLoader().getResource(string);
 	}
 	
 	public static Image loadImage(Device device, String path) {

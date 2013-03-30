@@ -44,6 +44,7 @@ import org.lwjgl.util.glu.GLU;
 import v9t9.common.client.IMonitorEffectSupport;
 import v9t9.common.machine.IMachine;
 import v9t9.common.video.ICanvas;
+import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.MonitorEffectSupport;
 import v9t9.gui.client.swt.gl.IGLMonitorEffect;
 import v9t9.gui.client.swt.gl.MonitorEffect;
@@ -374,7 +375,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 
 	private int compileShader(int shaderObj, int type, String filename) throws GLShaderException {
-		URL url = getClass().getClassLoader().getResource(filename);
+		URL url = EmulatorGuiData.getDataURL(filename);
 		if (url == null)
 			throw new GLShaderException(filename, "Not found", null);
 		
@@ -392,7 +393,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			throw new GLShaderException(filename, "Cannot read file " + url, e);
 		} finally {
 			try {
-				is.close();
+				if (is != null) is.close();
 			} catch (IOException e) {
 			}
 		}

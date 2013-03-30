@@ -120,7 +120,7 @@
             </manifest>
         	
         	<!-- subprojects -->
-            <fileset dir="${base.v9t9}/bin" excludes="release icons shaders" />
+            <fileset dir="${base.v9t9}/bin" excludes="release/**" />
             <fileset dir="../v9t9-remote/bin"/>
         </jar>
 
