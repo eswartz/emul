@@ -72,7 +72,11 @@ still being sold.
 Recent Changes
 ===========
 
+<script type="text/javascript" src="updated.js"> </script>
+
 <ul>
+<li>2013/03/30: fix issue closing V9t9 in OS X 
+</li>
 <li>2013/03/13: support handling files encoded with Archiver 3 (e.g. from http://tigameshelf.net)
 </li>
 <li>2013/03/11: support drag'n'drop of module images into the emulator!
@@ -115,14 +119,14 @@ Installing Locally
 <p>
 <i>Download</i>
 </p>
+<script type="text/javascript" src="updated.js"> </script>
 </div>
 
 Download the archive to the right and unzip it somewhere on your system.
 
 <b>On Windows or Linux:</b>
 
-Launch it by double-clicking the `v9t9-local.jnlp` file in your favorite operating system 
-(though only Linux and Windows have been tested so far).
+Launch it by double-clicking the `v9t9-local.jnlp` file in your favorite operating system. 
 
 Or, if your Java isn't installed properly, try:
 
@@ -153,6 +157,7 @@ Using Web Start (Windows or Linux only)
 <p>
 <i>Launch<br> (Windows/Linux only!)</i>
 </p>
+<script type="text/javascript" src="updated.js"> </script>
 </div>
 
 Click on the button to the right.  This will fetch the most recent V9t9 build each time you use it.
