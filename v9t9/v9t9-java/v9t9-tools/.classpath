@@ -11,5 +11,7 @@
 	<classpathentry kind="lib" path="/ejs-base/libs/junit/junit-4.8.1.jar" sourcepath="/ejs-base/libs/junit/junit-4.8.1-source.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/gnu-getopt-1.0.13.jar" sourcepath="/ejs-base/libs/gnu-getopt-source-1.0.13.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-video"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-remote"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-server"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

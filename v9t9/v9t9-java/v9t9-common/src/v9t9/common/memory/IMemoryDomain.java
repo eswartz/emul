@@ -160,4 +160,9 @@ public interface IMemoryDomain {
 	int getSize();
 	void setSize(int size);
 
+	/**
+	 * @return
+	 */
+	boolean isWordAccess();
+
 }

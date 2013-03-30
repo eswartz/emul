@@ -57,9 +57,9 @@ public abstract class Assembler implements IAssembler {
 	public abstract void setProcessor(String proc);
 
 	/** memory domain for area-sensitive view of the world */
-	protected IMemoryDomain StdCPU = new MemoryDomain(IMemoryDomain.NAME_CPU, "CPU Std");
+	protected IMemoryDomain StdCPU = new MemoryDomain(IMemoryDomain.NAME_CPU, "CPU Std", false);
 	/** memory domain for the assembler's view of the world */
-	protected MemoryDomain CPUFullRAM = new MemoryDomain(IMemoryDomain.NAME_CPU, "CPU Write");
+	protected MemoryDomain CPUFullRAM = new MemoryDomain(IMemoryDomain.NAME_CPU, "CPU Write", false);
 	protected MemoryEntry CPUFullRAMEntry = new MemoryEntry("Assembler RAM",
 	    		CPUFullRAM, 0, 0x10000, new StockRamArea(0x10000));
 	private List<IMemoryEntry> memoryEntries = new ArrayList<IMemoryEntry>();
@@ -242,7 +242,7 @@ public abstract class Assembler implements IAssembler {
 		super();
 		
 		memory = new Memory();
-		memory.addDomain(IMemoryDomain.NAME_CPU, new MemoryDomain(IMemoryDomain.NAME_CPU));
+		memory.addDomain(IMemoryDomain.NAME_CPU, new MemoryDomain(IMemoryDomain.NAME_CPU, false));
 	}
 
 	private void assembleInst(List<IInstruction> asmInsts, String line_, String filename,

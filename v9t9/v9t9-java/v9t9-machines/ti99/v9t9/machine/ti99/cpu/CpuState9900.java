@@ -13,6 +13,7 @@ package v9t9.machine.ti99.cpu;
 import java.util.HashMap;
 import java.util.Map;
 
+import ejs.base.utils.HexUtils;
 import ejs.base.utils.ListenerList;
 
 import v9t9.common.cpu.ICpuState;
@@ -55,6 +56,15 @@ public class CpuState9900 implements ICpuState {
 		this.console = console;
 		this.status = createStatus();
 	}
+	
+	
+
+	@Override
+	public String toString() {
+		return "PC=" + HexUtils.toHex4(PC) + ", WP=" + HexUtils.toHex4(WP) + ", status=" + status;
+	}
+
+
 
 	protected final void fireRegisterChanged(int reg, int value) {
 		if (!listeners.isEmpty()) {

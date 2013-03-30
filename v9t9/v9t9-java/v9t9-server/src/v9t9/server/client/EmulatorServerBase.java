@@ -113,8 +113,7 @@ public abstract class EmulatorServerBase {
 
     	try {
     		WorkspaceSettings.loadFrom(settings.getMachineSettings(),
-    				WorkspaceSettings.currentWorkspace.getString());
-    				
+    				"workspace." + machine.getModel().getIdentifier());
     	} catch (IOException e) {
     		System.err.println("Setting up new configuration");
     	}

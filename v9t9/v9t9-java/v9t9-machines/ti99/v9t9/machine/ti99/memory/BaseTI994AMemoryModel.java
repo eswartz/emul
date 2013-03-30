@@ -78,7 +78,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 	    	memory.setModel(this);
 	    	memory.setMemoryEntryFactory(new MemoryEntryFactory(settings, memory, machine.getRomPathFileLocator()));
 	    	
-	        CPU = new MemoryDomain(IMemoryDomain.NAME_CPU, "Console", 4);
+	        CPU = new MemoryDomain(IMemoryDomain.NAME_CPU, "Console", true, 4);
 	        GRAPHICS = new MemoryDomain(IMemoryDomain.NAME_GRAPHICS, "GROM/GRAM");
 	        VIDEO = new MemoryDomain(IMemoryDomain.NAME_VIDEO, "VDP");
 	        SPEECH = new MemoryDomain(IMemoryDomain.NAME_SPEECH, "Speech");

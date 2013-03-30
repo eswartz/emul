@@ -971,7 +971,7 @@ public class F99bTargetContext extends TargetContext {
 	 */
 	@Override
 	public MemoryDomain createMemory() {
-		MemoryDomain console = new MemoryDomain(IMemoryDomain.NAME_CPU);
+		MemoryDomain console = new MemoryDomain(IMemoryDomain.NAME_CPU, false);
 		EnhancedRamByteArea bigRamArea = new EnhancedRamByteArea(0, 0x10000); 
 		MemoryEntry bigRamEntry = new MemoryEntry("RAM", console, 0, MemoryDomain.PHYSMEMORYSIZE, 
 				bigRamArea);

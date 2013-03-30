@@ -43,7 +43,7 @@ public class MemoryEntryTest extends TestCase {
         super.setUp();
         settings = new BasicSettingsHandler();
         
-        CPU = new MemoryDomain(IMemoryDomain.NAME_CPU);
+        CPU = new MemoryDomain(IMemoryDomain.NAME_CPU, true);
    }
 
     /*

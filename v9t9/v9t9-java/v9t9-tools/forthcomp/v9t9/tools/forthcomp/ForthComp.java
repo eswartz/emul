@@ -91,7 +91,7 @@ public class ForthComp {
         	if (targetContext instanceof F99bTargetContext) {
         		((F99bTargetContext) targetContext).setUseGromDictionary(true);
         		
-        		MemoryDomain grom = new MemoryDomain(IMemoryDomain.NAME_GRAPHICS);
+        		MemoryDomain grom = new MemoryDomain(IMemoryDomain.NAME_GRAPHICS, false);
         		ByteMemoryArea memArea = new ByteMemoryArea(0, new byte[0x10000]); 
         		MemoryEntry bigRamEntry = new MemoryEntry("GRAM", grom, 0, MemoryDomain.PHYSMEMORYSIZE, 
         				memArea);

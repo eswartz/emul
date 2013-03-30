@@ -57,11 +57,14 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	private int size;
 
 	private int sizeMask;
+
+	private boolean isWordAccess;
     
 	
-    public MemoryDomain(String id, String name, int latency) {
+    public MemoryDomain(String id, String name, boolean isWordAccess, int latency) {
     	this.id = id;
 		this.name = name;
+		this.isWordAccess = isWordAccess;
 		zeroMemoryEntry = new MemoryEntry(UNMAPPED_MEMORY_ID,
     			this,
     			0,
@@ -75,12 +78,18 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     }
     
 	public MemoryDomain(String id, String name) {
-    	this(id, name, 0);
+    	this(id, name, false, 0);
     }
+	public MemoryDomain(String id, String name, boolean isWordAccess) {
+		this(id, name, isWordAccess, 0);
+	}
 
-	public MemoryDomain(String id) {
-    	this(id, id, 0);
+	public MemoryDomain(String id, boolean isWordAccess) {
+    	this(id, id, isWordAccess, 0);
     }
+	public MemoryDomain(String id) {
+		this(id, id, false, 0);
+	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryDomain#getSize()
@@ -104,7 +113,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
      * @return
      */
     public static MemoryDomain newFromArray(short[] data, boolean bWordAccess) {
-        MemoryDomain domain = new MemoryDomain(IMemoryDomain.NAME_CPU, IMemoryDomain.NAME_CPU);
+        MemoryDomain domain = new MemoryDomain(IMemoryDomain.NAME_CPU, IMemoryDomain.NAME_CPU, bWordAccess);
         WordMemoryArea area = WordMemoryArea.newDefaultArea();
         area.bWordAccess = bWordAccess;
         area.memory = data;
@@ -118,7 +127,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     }    
 
     public static IMemoryDomain newFromArray(byte[] data) {
-        IMemoryDomain domain = new MemoryDomain(IMemoryDomain.NAME_CPU, IMemoryDomain.NAME_CPU);
+        IMemoryDomain domain = new MemoryDomain(IMemoryDomain.NAME_CPU, IMemoryDomain.NAME_CPU, false);
         ByteMemoryArea area = new ByteMemoryArea();
         area.memory = data;
         area.read = data;
@@ -589,5 +598,13 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 
 	public void setMemory(IMemory memory) {
 		this.memory = memory;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#isWordAccess()
+	 */
+	@Override
+	public boolean isWordAccess() {
+		return isWordAccess;
 	}
 }
