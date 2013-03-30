@@ -1,1 +1,1 @@
-document.write("<span class=\"timestamp\">Last update: 30 March 2013 10:51 AM</span>")
+document.write("<span class=\"timestamp\">Last update: 30 March 2013 03:01 PM</span>")
