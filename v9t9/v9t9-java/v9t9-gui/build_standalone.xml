@@ -91,6 +91,7 @@
 	    	libs/org.eclipse.core.commands_3.6.0.I20100512-1500.jar 
 	    	libs/org.eclipse.core.runtime_3.6.0.v20100505.jar 
 	    	libs/org.eclipse.equinox.common_3.6.0.v20100503.jar 
+			libs/org.apache.log4j_1.2.15.v201005080500.jar
 	    	libs/junit.jar libs/gnu-getopt-1.0.13.jar 
 	    	libs/jinput.jar 
 	    	libs/lwjgl_util.jar 
@@ -121,7 +122,6 @@
         	
         	<!-- subprojects -->
             <fileset dir="${base.v9t9}/bin" excludes="release/**" />
-            <fileset dir="../v9t9-remote/bin"/>
         </jar>
 
        	<!-- subprojects -->
@@ -153,6 +153,37 @@
     	 <jar destfile="${bin.v9t9.dir}/v9t9-remote.jar">
             <fileset dir="../v9t9-remote/bin"/>
         </jar>
+    	
+
+    	<property name="ToolsJarClassPath" value="
+	    	./ 
+	    	libs/jna.jar 
+			libs/gnu-getopt-1.0.13.jar 
+	    	libs/bcel-5.2.jar 
+	    	libs/org.eclipse.tm.tcf.jar 
+			libs/org.apache.log4j_1.2.15.v201005080500.jar
+			ejs-base.jar
+	    	v9t9-audio.jar
+	    	v9t9-common.jar
+	    	v9t9-data.jar
+	    	v9t9-engine.jar
+	    	v9t9-machines.jar
+	    	v9t9-remote.jar
+	    	v9t9-server.jar
+	    	v9t9-video.jar
+	    	
+    	"/>
+    	 <jar destfile="${bin.v9t9.dir}/v9t9-tools.jar">
+
+            <manifest>
+                <attribute name="Class-Path" value="${ToolsJarClassPath}"/>
+            </manifest>
+
+            <fileset dir="../v9t9-tools/bin">
+    			<exclude name="v9t9/tests/**"/>
+    			<exclude name="v9t9/tools/forthcomp/test/**"/>
+    	 	</fileset>
+        </jar>    	
     	
     	<copy overwrite="true" todir="${bin.v9t9.dir}/libs">
     		<fileset dir="${base.base}/libs">
