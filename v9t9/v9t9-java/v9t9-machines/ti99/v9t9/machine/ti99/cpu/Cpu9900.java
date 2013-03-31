@@ -188,13 +188,13 @@ public class Cpu9900 extends CpuBase {
             System.out.println("**** NMI ****");
             contextSwitch(0xfffc);
             
-            addCycles(22);
+            cycleCounts.addExecute(22);
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
             state.getStatus().expand((short) 0);
             contextSwitch(0);
-            addCycles(26);
+            cycleCounts.addExecute(26);
             
             pins = 0;
             ic = 0;
@@ -211,7 +211,7 @@ public class Cpu9900 extends CpuBase {
         	//System.out.print('=');
         	//interrupts++;
             contextSwitch(0x4 * ic);
-            addCycles(22);
+            cycleCounts.addExecute(22);
             
             // no more interrupt until 9901 gives us another
             ic = 0;
@@ -322,16 +322,13 @@ public class Cpu9900 extends CpuBase {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuBase#addCycles(int)
-	 * 
+	 * @see v9t9.engine.cpu.CpuBase#applyCycles()
 	 * TODO: this should not depend on vdp
 	 */
 	@Override
-	public synchronized void addCycles(int cycles) {
-		if (cycles != 0) {
-			super.addCycles(cycles);
-			vdp.addCpuCycles(cycles);
-		}
+	public void applyCycles() {
+		vdp.addCpuCycles(cycleCounts.getTotal());
+		super.applyCycles();
 	}
 	
 	/* (non-Javadoc)

@@ -20,10 +20,10 @@ import org.junit.After;
 import org.junit.Before;
 
 import v9t9.common.cpu.ICpu;
+import v9t9.common.cpu.IInterpreter;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.interpreter.IInterpreter;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.ForthComp;
 import v9t9.tools.forthcomp.HostContext;

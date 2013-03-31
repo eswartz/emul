@@ -3,10 +3,12 @@
  */
 package v9t9.tools.cycler;
 
+import ejs.base.utils.FileUtils;
 import ejs.base.utils.HexUtils;
 import gnu.getopt.Getopt;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
@@ -50,6 +52,7 @@ public class Cycler9900 {
 	public static void main(String[] args) {
 		setupLogging();
         
+		
         EmulatorServerBase server = new EmulatorLocalServer();
         String modelId = server.getMachineModelFactory().getDefaultModel();
         IMachine machine = createMachine(server, modelId);
@@ -59,7 +62,12 @@ public class Cycler9900 {
         
         PrintStream out = System.out;
         
-        Getopt getopt = new Getopt(PROGNAME, args, "?m::e:l:s:");
+        if (args.length == 0) {
+        	help(machine);
+        	System.exit(0);
+        }
+        
+        Getopt getopt = new Getopt(PROGNAME, args, "?m:::e:l:s:");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -68,29 +76,44 @@ public class Cycler9900 {
                 break;
             case 'm': {
             	String domainName = getopt.getOptarg();
-            	String addrStr = getopt.getOptarg();
-            	String fileName = getopt.getOptarg();
+            	String addrStr = args[getopt.getOptind()];
+            	String fileName = args[getopt.getOptind()+1];
+            	getopt.setOptind(getopt.getOptind()+2);
             	IMemoryDomain domain = machine.getMemory().getDomain(domainName);
             	if (domain == null) {
             		System.err.println("could not resolve memory domain '"+ domainName +'"');
             		return;
             	}
-            	MemoryEntryInfo userEntryInfo = new MemoryEntryInfoBuilder(
-        			domain.isWordAccess() ? 2 : 1)
-            		.withDomain(domainName)
-            		.withAddress(HexUtils.parseInt(addrStr))
-            		.withSize(-0x10000)
-            		.storable(false)
-            		.withFilename(fileName)
-            		.create(domainName);
             	
-            	IMemoryEntry userEntry;
-				try {
-					userEntry = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(userEntryInfo);
-					System.out.println("loading " + fileName);
-					machine.getMemory().addAndMap(userEntry);
-					gotFile = true;
-				} catch (IOException e) {
+            	File file = new File(fileName);
+            	int addr = HexUtils.parseInt(addrStr);
+            	IMemoryEntry userEntry = domain.getEntryAt(addr);
+            	if (userEntry == null) {
+	            	MemoryEntryInfo userEntryInfo = new MemoryEntryInfoBuilder(
+	        			domain.isWordAccess() ? 2 : 1)
+	            		.withDomain(domainName)
+	            		.withAddress(HexUtils.parseInt(addrStr))
+	            		.withSize((int) file.length())
+	            		.storable(false)
+	            		.create(domainName);
+	            	
+					try {
+						userEntry = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(userEntryInfo);
+						System.out.println("loading " + fileName);
+						machine.getMemory().addAndMap(userEntry);
+					} catch (IOException e) {
+						System.err.println("could not load memory to '"+ domainName +"' from '" + fileName +"'\n"+e.getMessage());
+						System.exit(1);
+					}
+            	}
+            	
+            	gotFile = true;
+            	try {
+	        		byte[] contents = FileUtils.readInputStreamContentsAndClose(new FileInputStream(file));
+	        		for (int o = 0; o < contents.length; o++) {
+	        			machine.getConsole().flatWriteByte(addr + o, contents[o]);
+	        		}
+            	} catch (IOException e) {
 					System.err.println("could not load memory to '"+ domainName +"' from '" + fileName +"'\n"+e.getMessage());
 					System.exit(1);
 				}

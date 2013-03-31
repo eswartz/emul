@@ -15,5 +15,6 @@ public interface IMemoryAccessListener {
 	/** Indicate that a memory entry was accessed.
 	 * @param entry
 	 */
-	void access(IMemoryEntry entry);
+	void write(IMemoryEntry entry);
+	void read(IMemoryEntry entry);
 }

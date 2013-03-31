@@ -432,17 +432,15 @@ public class CpuF99b extends CpuBase {
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuBase#addCycles(int)
-	 * 
+	 * @see v9t9.engine.cpu.CpuBase#applyCycles()
 	 * TODO: this should not depend on vdp
 	 */
 	@Override
-	public void addCycles(int cycles) {
-		if (cycles != 0) {
-			super.addCycles(cycles);
-			vdp.addCpuCycles(cycles);
-		}
+	public void applyCycles() {
+		vdp.addCpuCycles(cycleCounts.getTotal());
+		super.applyCycles();
 	}
+
 	
 	/* (non-Javadoc)
 	 * @see v9t9.common.cpu.ICpu#getInstructionFactory()

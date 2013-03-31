@@ -11,6 +11,7 @@
 package v9t9.engine.cpu;
 
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
@@ -21,6 +22,7 @@ import ejs.base.utils.ListenerList.IFire;
 
 
 import v9t9.common.cpu.AbortedException;
+import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuListener;
 import v9t9.common.cpu.ICpuState;
@@ -60,18 +62,19 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	/** target # cycles to be executed per tick */
 	protected int targetcycles;
 	/** target # cycles to be executed for this tick */
-	protected int currenttargetcycles;
+	protected final AtomicInteger currenttargetcycles = new AtomicInteger();
 	/**  total # target cycles expected throughout execution */
 	protected long totaltargetcycles;
 	/** current cycles per tick */
-	private volatile int currentcycles = 0;
+	protected final AtomicInteger currentcycles = new AtomicInteger();
+	protected final CycleCounts cycleCounts = new CycleCounts();
 	/** total # current cycles executed */
 	protected long totalcurrentcycles;
 	/** State of the pins above  */
 	protected int pins;
 	
 	protected volatile boolean idle;
-	protected Semaphore interruptWaiting;
+	protected final Semaphore interruptWaiting;
 	
 	/**
 	 * Called when hardware triggers another pin.
@@ -117,11 +120,12 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 
 				baseclockhz = setting.getInt();
 				targetcycles = (int)((long) baseclockhz / machine.getTicksPerSec());
-		        currenttargetcycles = targetcycles;
+		        currenttargetcycles.set(0);
+		        cycleCounts.getAndResetTotal();
 		        
 		        allocatedCycles.drainPermits();
 		        if (realTime.getBoolean())
-		        	allocatedCycles.release(targetcycles); 
+		        	allocatedCycles.release(targetcycles);
 		        //System.out.println("target: " + targetcycles);
 			}
         	
@@ -133,8 +137,11 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 				tick();
 				if (setting.getBoolean()) {
 					totalcurrentcycles = totaltargetcycles;
-					currenttargetcycles = cyclesPerSecond.getInt() / machine.getTicksPerSec();
+					currenttargetcycles.set(cyclesPerSecond.getInt() / machine.getTicksPerSec());
 				}
+		        allocatedCycles.drainPermits();
+		        allocatedCycles.release(targetcycles);
+
 			}
         	
         });
@@ -177,14 +184,12 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		return state.getConsole();
 	}
 
-
-	public void addCycles(int cycles) {
-		if (cycles != 0) {
-			synchronized (this) {
-				this.currentcycles += cycles;
-			}
-			
-		}
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#getCycleCounts()
+	 */
+	@Override
+	public final CycleCounts getCycleCounts() {
+		return cycleCounts;
 	}
 
 	/* (non-Javadoc)
@@ -195,27 +200,26 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		return allocatedCycles;
 	}
 	public synchronized void tick() {
-		totalcurrentcycles += currentcycles;
+		totalcurrentcycles += currentcycles.getAndSet(0);
 		
+		int newTargetCycles = (int) (totaltargetcycles - totalcurrentcycles);
 		// if we went over, aim for fewer this time
-		currenttargetcycles = (int) (totaltargetcycles - totalcurrentcycles);
-//		currenttargetcycles = currentcycles > targetcycles ? Math.min(targetcycles / 4, currentcycles - targetcycles)
-//					: targetcycles;
 		
-		if (currenttargetcycles < targetcycles / 10 || currenttargetcycles > targetcycles * 2) {
-			if (currenttargetcycles < 0) {
+		if (newTargetCycles < targetcycles / 10 || newTargetCycles > targetcycles * 2) {
+			if (newTargetCycles < 0) {
 				// something really threw us off -- just start over
 				totalcurrentcycles = totaltargetcycles;
 			}
-			currenttargetcycles = targetcycles;
+			newTargetCycles = targetcycles;
 			
 		}
+		currenttargetcycles.set(newTargetCycles);
 		
 //		System.out.println(System.currentTimeMillis()+": " + currentcycles + " -> " + currenttargetcycles);
 		
-		allocatedCycles.release(realTime.getBoolean() ? currenttargetcycles : cyclesPerSecond.getInt() );
-		
-		currentcycles = 0;
+		if (realTime.getBoolean()) {
+			allocatedCycles.release(newTargetCycles);
+		}
 		
 		totaltargetcycles += targetcycles;
 	
@@ -234,28 +238,25 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		}
 	}
 
-	public synchronized boolean isThrottled() {
-		return (currentcycles >= currenttargetcycles);
+	@Override
+	public void read(IMemoryEntry entry) {
+		cycleCounts.addLoad(entry.getLatency());
 	}
-
-	public void access(IMemoryEntry entry) {
-		addCycles(entry.getLatency());
+	@Override
+	public void write(IMemoryEntry entry) {
+		cycleCounts.addStore(entry.getLatency());
 	}
 
 	public int getCurrentCycleCount() {
-		return currentcycles;
+		return currentcycles.get();
 	}
 
 	public int getCurrentTargetCycleCount() {
-		return currenttargetcycles;
+		return currenttargetcycles.get();
 	}
 
 	public long getTotalCycleCount() {
 		return totalcurrentcycles;
-	}
-
-	public synchronized long getTotalCurrentCycleCount() {
-		return totalcurrentcycles + currentcycles;
 	}
 
 	public int getTickCount() {
@@ -275,14 +276,13 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		return n;
 	}
 
-	public void addAllowedCycles(int i) {
-		currenttargetcycles += i;
-		
-	}
-
 	public void resetCycleCounts() {
-		currenttargetcycles = currentcycles = 0;
-		totalcurrentcycles = totaltargetcycles = 0;
+		currentcycles.set(0);
+		cycleCounts.getAndResetTotal();
+		currenttargetcycles.set(0);
+		synchronized (this) {
+			totalcurrentcycles = totaltargetcycles = 0;
+		}
 		allocatedCycles.drainPermits();
 	}
 
@@ -331,7 +331,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Cpu#checkAndHandleInterrupts()
 	 */
-	public final void checkAndHandleInterrupts() {
+	public void checkAndHandleInterrupts() {
     	if (doCheckInterrupts()) {
     		//interruptWaiting.release();
     		handleInterrupts();
@@ -339,11 +339,19 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
     }
 	
 	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#applyCycles()
+	 */
+	@Override
+	public void applyCycles() {
+		currentcycles.addAndGet(cycleCounts.getAndResetTotal());
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.common.cpu.ICpu#addListener(v9t9.common.cpu.ICpuListener)
 	 */
 	@Override
 	public void addListener(ICpuListener listener) {
-		listeners .add(listener);		
+		listeners.add(listener);		
 	}
 	
 	/* (non-Javadoc)

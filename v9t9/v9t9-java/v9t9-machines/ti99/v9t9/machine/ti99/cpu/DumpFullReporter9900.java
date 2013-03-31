@@ -123,7 +123,7 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		                .toUpperCase() + " wp="
 		        + Integer.toHexString(((Cpu9900) cpu).getWP() & 0xffff).toUpperCase());
 		
-		int cycles = cpu.getCurrentCycleCount() - origCycleCount;
+		int cycles = iinstructionWorkBlock.cycles - origCycleCount;
 		dumpfull.print(" @ " + cycles);
 		dumpfull.println();
 		dumpfull.flush();

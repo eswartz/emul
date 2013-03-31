@@ -31,7 +31,8 @@ public interface IExecutor {
 
 	IProperty settingCompile();
 	IProperty settingSingleStep();
-	
+
+	IInterpreter getInterpreter();
 	void interpretOneInstruction();
 
 	/** 

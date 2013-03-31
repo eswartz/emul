@@ -24,11 +24,11 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
+import v9t9.common.cpu.IInterpreter;
 import v9t9.common.cpu.MetricEntry;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
-import v9t9.engine.interpreter.IInterpreter;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.Logging;
@@ -44,7 +44,7 @@ public class Executor implements IExecutor {
 	private Object executionLock = new Object();
     private ICpu cpu;
 
-    public IInterpreter interp;
+    private IInterpreter interp;
     ICompilerStrategy compilerStrategy;
 
     public long nInstructions;
@@ -208,6 +208,7 @@ public class Executor implements IExecutor {
     @Override
 	public synchronized void interpretOneInstruction() {
         interp.executeChunk(1, this);
+        cpu.applyCycles();
     }
 
     /* (non-Javadoc)
@@ -218,12 +219,13 @@ public class Executor implements IExecutor {
     	if (cpu.isIdle() && cpu.settingRealTime().getBoolean()) {
     		if (nVdpInterrupts < vdpInterruptRate.getInt()) {
     			try {
-    				cpu.addCycles(1);
+    				cpu.getCycleCounts().addOverhead(1);
     				cpu.checkInterrupts();
     			} catch (AbortedException e) {
     				cpu.handleInterrupts();
 				}
     		}
+    		cpu.applyCycles();
     		return 0;
     	} else {
     		int curCycles = cpu.getCurrentCycleCount();
@@ -239,6 +241,7 @@ public class Executor implements IExecutor {
 					interp.executeChunk(100, this);
 				}
 			}
+			cpu.applyCycles();
 			int usedCycles = cpu.getCurrentCycleCount() - curCycles;
 			return usedCycles;
     	}
@@ -402,7 +405,7 @@ public class Executor implements IExecutor {
 	public final void recordCompileRun(int nInstructions, int nCycles) {
         this.nInstructions += nInstructions;
         nCompiledInstructions += nInstructions;
-        getCpu().addCycles(nCycles);
+        getCpu().getCycleCounts().addOverhead(nCycles);
 	}
 	
 	/* (non-Javadoc)
@@ -580,7 +583,10 @@ public class Executor implements IExecutor {
     	            try {
     	            	// synchronize on events like debugging, loading/saving, etc
     	            	int usedCycles = 0;
+    	            	boolean realTime = false;
 	            		synchronized (executionLock) {
+	            			realTime = cpu.settingRealTime().getBoolean();
+	            					
 	            			if (!executing && machine.isAlive()) {
 	            				executionLock.wait(100);
 	            			}
@@ -588,9 +594,10 @@ public class Executor implements IExecutor {
 	            				usedCycles = execute();
 	            			}
 	            		}
-	            		
-            			if (usedCycles >= 0)
+            			if (usedCycles >= 0 && realTime) {
             				cpu.getAllocatedCycles().acquire(usedCycles);
+            			}
+	            		
     	            } catch (AbortedException e) {
     	            } catch (InterruptedException e) {
       	              	break;
@@ -654,5 +661,19 @@ public class Executor implements IExecutor {
 		if (compilerStrategy != null)
 			compilerStrategy.reset();
 			
+	}
+
+	/**
+	 * @return the interp
+	 */
+	public IInterpreter getInterpreter() {
+		return interp;
+	}
+
+	/**
+	 * @param interp the interp to set
+	 */
+	public void setInterpreter(IInterpreter interp) {
+		this.interp = interp;
 	}
 }

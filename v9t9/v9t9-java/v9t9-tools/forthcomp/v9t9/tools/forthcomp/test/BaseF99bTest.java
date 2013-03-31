@@ -14,8 +14,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.PrintWriter;
 
+import v9t9.common.cpu.IInterpreter;
 import v9t9.common.settings.BasicSettingsHandler;
-import v9t9.engine.interpreter.IInterpreter;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.cpu.CpuStateF99b;
 import v9t9.machine.f99b.cpu.DumpFullReporterF99b;

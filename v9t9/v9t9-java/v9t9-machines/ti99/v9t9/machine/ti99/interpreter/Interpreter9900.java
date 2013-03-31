@@ -20,13 +20,14 @@ import v9t9.common.asm.IOperand;
 import v9t9.common.asm.InstInfo;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.cpu.AbortedException;
+import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
+import v9t9.common.cpu.IInterpreter;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.interpreter.IInterpreter;
 import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.InstTable9900;
@@ -56,6 +57,8 @@ public class Interpreter9900 implements IInterpreter {
 
 	private Status9900 status;
 
+	private CycleCounts cycleCounts;
+
     public Interpreter9900(TI99Machine machine) {
         this.machine = machine;
         this.cpu = (Cpu9900) machine.getCpu();
@@ -64,6 +67,7 @@ public class Interpreter9900 implements IInterpreter {
         parsedInstructions = new HashMap<IMemoryArea, Instruction9900[]>();
         iblock = new InstructionWorkBlock9900(cpu.getState());
         status = (Status9900) cpu.getState().createStatus();
+        cycleCounts = cpu.getCycleCounts();
      }
 
     /* (non-Javadoc)
@@ -80,14 +84,14 @@ public class Interpreter9900 implements IInterpreter {
     public void execute(Short op_x) {
     	ListenerList<IInstructionListener> instructionListeners = 
     			machine.getExecutor().getInstructionListeners();
-    	if (instructionListeners != null) {
+    	if (!instructionListeners.isEmpty()) {
     		executeAndListen(op_x, instructionListeners);
     	} else {
     		executeFast(op_x);
     	}
     }
 
-    /* (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.interpreter.Interpreter#executeFast(java.lang.Short)
 	 */
     public void executeFast(Short op_x) {
@@ -116,7 +120,7 @@ public class Interpreter9900 implements IInterpreter {
         flushOperands(ins);
         
         int cycles = ins.getInfo().cycles + mop1.cycles + mop2.cycles;
-		cpu.addCycles(cycles);
+		cycleCounts.addExecute(cycles);
 	}
     
     /* (non-Javadoc)
@@ -138,7 +142,7 @@ public class Interpreter9900 implements IInterpreter {
 				if (executor.breakAfterExecution(1)) 
 					break;
 			}
-		}    	
+		}
     }
 
 	private void executeAndListen(Short op_x, ListenerList<IInstructionListener> instructionListeners) { 
@@ -147,18 +151,16 @@ public class Interpreter9900 implements IInterpreter {
         MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
         MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
 
-        iblock.cycles = cpu.getCurrentCycleCount();
+        iblock.cycles = cpu.getCurrentCycleCount() + cycleCounts.getTotal();
         
         /* get current operand values and instruction timings */
         fetchOperands(ins, op_x != null);
 
-        if (!instructionListeners.isEmpty()) {
-			for (Object listener : instructionListeners.toArray()) {
-				if (!((IInstructionListener) listener).preExecute(iblock)) {
-					throw new AbortedException();
-				}
-			}	
-        }
+		for (Object listener : instructionListeners.toArray()) {
+			if (!((IInstructionListener) listener).preExecute(iblock)) {
+				throw new AbortedException();
+			}
+		}	
         
         InstructionWorkBlock9900 block = this.iblock.copy();
 
@@ -178,15 +180,13 @@ public class Interpreter9900 implements IInterpreter {
         /* save any operands */
         flushOperands(ins);
         
-        cpu.addCycles(ins.getInfo().cycles + mop1.cycles + mop2.cycles);
+        cycleCounts.addExecute(ins.getInfo().cycles + mop1.cycles + mop2.cycles);
 
-        block.cycles = cpu.getCurrentCycleCount();
+        iblock.cycles = cpu.getCurrentCycleCount() + cycleCounts.getTotal();
         
         /* notify listeners */
-        if (!instructionListeners.isEmpty()) {
-        	for (Object listener : instructionListeners.toArray()) {
-        		((IInstructionListener) listener).executed(block, iblock);
-        	}
+        for (Object listener : instructionListeners.toArray()) {
+        	((IInstructionListener) listener).executed(block, iblock);
         }
 	}
 
@@ -199,6 +199,7 @@ public class Interpreter9900 implements IInterpreter {
 		if (op_x != null) {
 	    	op = op_x;
 	    	ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console));
+	    	ins.fetchCycles = cpu.getCycleCounts().getAndResetTotal();
 	    } else {
 	    	IMemoryEntry entry = console.getEntryAt(pc);
 	    	op = entry.readWord(pc);
@@ -215,7 +216,11 @@ public class Interpreter9900 implements IInterpreter {
 	    		ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console));
 	    	}
 	    	instructions[pc/2] = ins;
+	    	ins.fetchCycles = cpu.getCycleCounts().getAndResetLoad();
 	    }
+		
+        cpu.getCycleCounts().addFetch(ins.fetchCycles);
+
 		return ins;
 	}
 
@@ -501,97 +506,97 @@ public class Interpreter9900 implements IInterpreter {
         case Inst9900.Iabs:
         	if ((iblock.val1 & 0x8000) != 0) {
         		iblock.val1 = (short) -iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Isra:
         	iblock.val1 = (short) (iblock.val1 >> iblock.val2);
-        	cpu.addCycles(iblock.val2 * 2);
+        	cycleCounts.addExecute(iblock.val2 * 2);
             break;
         case Inst9900.Isrl:
         	iblock.val1 = (short) ((iblock.val1 & 0xffff) >> iblock.val2);
-        	cpu.addCycles(iblock.val2 * 2);
+        	cycleCounts.addExecute(iblock.val2 * 2);
             break;
 
         case Inst9900.Isla:
         	iblock.val1 = (short) (iblock.val1 << iblock.val2);
-        	cpu.addCycles(iblock.val2 * 2);
+        	cycleCounts.addExecute(iblock.val2 * 2);
             break;
 
         case Inst9900.Isrc:
         	iblock.val1 = (short) ((iblock.val1 & 0xffff) >> iblock.val2 | (iblock.val1 & 0xffff) << 16 - iblock.val2);
-        	cpu.addCycles(iblock.val2 * 2);
+        	cycleCounts.addExecute(iblock.val2 * 2);
             break;
 
         case Inst9900.Ijmp:
         	iblock.pc = iblock.val1;
-        	cpu.addCycles(2);
+        	cycleCounts.addExecute(2);
             break;
         case Inst9900.Ijlt:
         	if (status.isLT()) {
         		iblock.pc = iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijle:
         	if (status.isLE()) {
         		iblock.pc = iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
         	}
             break;
 
         case Inst9900.Ijeq:
         	if (status.isEQ()) {
         		iblock.pc = iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijhe:
         	if (status.isHE()) {
         		iblock.pc = iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijgt:
         	if (status.isGT()) {
         		iblock.pc = iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijne:
         	if (status.isNE()) {
         		iblock.pc = iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijnc:
         	if (!status.isC()) {
         		iblock.pc = iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijoc:
         	if (status.isC()) {
         		iblock.pc = iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijno:
         	if (!status.isO()) {
         		iblock.pc = iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijl:
         	if (status.isL()) {
         		iblock.pc = iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijh:
         	if (status.isH()) {
         		iblock.pc = iblock.val1;
-        		cpu.addCycles(2);
+        		cycleCounts.addExecute(2);
             }
             break;
 
@@ -599,7 +604,7 @@ public class Interpreter9900 implements IInterpreter {
             // jump on ODD parity
             if (status.isP()) {
 				iblock.pc = iblock.val1;
-				cpu.addCycles(2);
+				cycleCounts.addExecute(2);
             }
             break;
 
@@ -654,13 +659,13 @@ public class Interpreter9900 implements IInterpreter {
                     iblock.val2 = (short) (dval / (iblock.val1 & 0xffff));
                     iblock.val3 = (short) (dval % (iblock.val1 & 0xffff));
                 } catch (ArithmeticException e) {
-                	cpu.addCycles((124 + 92) / 2 - 16);
+                	cycleCounts.addExecute((124 + 92) / 2 - 16);
                 }
                 //memory.writeWord(block.op2.ea + 2,
                 //        (short) (val % (block.val1 & 0xffff)));
                 //inst.op2.value = (short) val;
             } else {
-            	cpu.addCycles((124 + 92) / 2 - 16);
+            	cycleCounts.addExecute((124 + 92) / 2 - 16);
             }
             break;
 

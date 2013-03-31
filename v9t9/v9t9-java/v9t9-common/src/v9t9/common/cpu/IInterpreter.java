@@ -8,10 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.engine.interpreter;
-
-import v9t9.common.cpu.IExecutor;
-import v9t9.engine.cpu.Executor;
+package v9t9.common.cpu;
 
 public interface IInterpreter {
 	/**

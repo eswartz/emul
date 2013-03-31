@@ -7,6 +7,7 @@ import java.io.PrintStream;
 
 import v9t9.common.asm.IInstruction;
 import v9t9.common.cpu.AbortedException;
+import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;
@@ -44,18 +45,21 @@ public class Cycler {
 	}
 
 	public void run() {
+		CycleCounts counts = cpu.getCycleCounts();
 		while (true) {
 			if (stopAddr != 0 && (state.getPC() & 0xffff) == stopAddr)
 				break;
+			
 			try {
-				long beforeCycles = cpu.getCurrentCycleCount();
+				counts.getAndResetTotal();
 				IInstruction instr = cpu.getInstructionFactory().decodeInstruction(
 						state.getPC(), machine.getConsole());
 				out.print(state + "; " + instr);
-				executor.interpretOneInstruction();
-				long afterCycles = cpu.getCurrentCycleCount();
-				out.println("; " + (afterCycles - beforeCycles));
-				
+				executor.getInterpreter().executeChunk(1, executor);
+				out.print("; F=" + counts.getFetch() + "; L=" + counts.getLoad() + 
+						"; S=" + counts.getStore() + "; E="+counts.getExecute() +
+						"; O="+ counts.getOverhead());
+				out.println("; total=" + counts.getAndResetTotal());
 				if (state.getPC() == 0)
 					break;
 			} catch (AbortedException e) {

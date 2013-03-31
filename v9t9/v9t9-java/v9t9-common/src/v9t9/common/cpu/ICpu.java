@@ -75,19 +75,20 @@ public interface ICpu extends IPersistable {
 
 	void checkAndHandleInterrupts();
 
-	void addCycles(int cycles);
+	CycleCounts getCycleCounts();
+	
+	/**
+	 * Flush CycleCounts into internal timing
+	 */
+	void applyCycles();
 
 	void tick();
-
-//	boolean isThrottled();
 
 	int getCurrentCycleCount();
 
 	int getCurrentTargetCycleCount();
 
 	long getTotalCycleCount();
-
-	long getTotalCurrentCycleCount();
 
 	/** Get the tick count, in ms */
 	int getTickCount();
@@ -107,8 +108,6 @@ public interface ICpu extends IPersistable {
 	 */
 	void acknowledgeInterrupt(int level);
 	int getAndResetInterruptCount();
-
-	void addAllowedCycles(int i);
 
 	void resetCycleCounts();
 

@@ -37,9 +37,13 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     
 	public IMemoryAccessListener nullMemoryAccessListener = new IMemoryAccessListener() {
 
-		public void access(IMemoryEntry entry) {
+		@Override
+		public void write(IMemoryEntry entry) {
 		}
-    	
+
+		@Override
+		public void read(IMemoryEntry entry) {
+		}
     };
     
     private IMemoryAccessListener accessListener = nullMemoryAccessListener;
@@ -179,7 +183,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final short flatReadWord(int addr) {
         IMemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry);
+        accessListener.read(entry);
         return entry.flatReadWord(addr);
     }
 
@@ -189,7 +193,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final byte flatReadByte(int addr) {
     	IMemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry);
+        accessListener.read(entry);
         return entry.flatReadByte(addr);
     }
 
@@ -199,7 +203,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final void flatWriteByte(int addr, byte val) {
     	IMemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry);
+        accessListener.write(entry);
         entry.flatWriteByte(addr, val);
     }
 
@@ -209,7 +213,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final void flatWriteWord(int addr, short val) {
     	IMemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry);
+        accessListener.write(entry);
         entry.flatWriteWord(addr, val);
     }
 
@@ -219,7 +223,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final byte readByte(int addr) {
     	IMemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry);
+        accessListener.read(entry);
         return entry.readByte(addr);
     }
 
@@ -229,7 +233,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final short readWord(int addr) {
     	IMemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry);
+        accessListener.read(entry);
         return entry.readWord(addr);
     }
 
@@ -239,7 +243,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final void writeByte(int addr, byte val) {
     	IMemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry);
+        accessListener.write(entry);
         entry.writeByte(addr, val);
         if (!writeListeners.isEmpty())
         	fireWriteEvent(entry, (addr + entry.getAddrOffset()), (Byte) val);
@@ -262,7 +266,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	@Override
 	public final void writeWord(int addr, short val) {
         IMemoryEntry entry = getEntryAt(addr);
-        accessListener.access(entry);
+        accessListener.write(entry);
         entry.writeWord(addr, val);
         if (!writeListeners.isEmpty())
         	fireWriteEvent(entry, addr, (Short) val);

@@ -111,7 +111,7 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     	    ret = readGrom();
     	}
     	
-	    machine.getCpu().addCycles(cycles);
+	    machine.getCpu().getCycleCounts().addOverhead(cycles);
     	return ret;
     }
 
@@ -148,7 +148,7 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     		gromaddr = getNextAddr(gromaddr);
     	}   
     	
-    	machine.getCpu().addCycles(cycles);
+    	machine.getCpu().getCycleCounts().addOverhead(cycles);
     }
 
 	public void loadState(ISettingSection section) {
