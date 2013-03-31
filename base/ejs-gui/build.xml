@@ -96,8 +96,8 @@
         <antcall target="build"/>
     </target>
 	
-
-	<import file="../../v9t9/v9t9-java/v9t9-gui/common.properties"/>
+	
+	<import file="../ejs-base/common.properties"/>	
 
     <target name="build-jar" depends="build-project">
 	  <jar destfile="${bin.v9t9.dir}/ejs-gui.jar">

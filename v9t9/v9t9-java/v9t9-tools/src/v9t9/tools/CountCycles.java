@@ -46,7 +46,8 @@ public class CountCycles {
         System.out.println("\n"+
            			 "-e <addr>: start executing at addr (via BL)\n" +
            			 "-s <addr>: stop executing at addr, if code does not RT\n" +
-           			 "-n <count>: execute at most <count> instructions (0 means go forever, until -s <...> or RT)\n" +
+           			 "-n <count>: execute at most <count> instructions (0 means go forever,\n"+
+           			 "\tor until -s <...> or RT)\n" +
            			 "-l sends a listing to the given file (- for stdout)");
 
     }

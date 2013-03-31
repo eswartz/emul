@@ -18,6 +18,7 @@
     <property name="v9t9-video.location" value="../v9t9-video"/>
     <property name="v9t9-remote.location" value="../v9t9-remote"/>
     <property name="v9t9-data.location" value="../v9t9-data"/>
+    <property name="v9t9-tools.location" value="../v9t9-tools"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.6"/>
     <property name="source" value="1.6"/>
@@ -168,6 +169,7 @@
     </target>
     <target depends="clean" name="cleanall">
         <ant antfile="build.xml" dir="${ejs-base.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${ejs-gui.location}" inheritAll="false" target="clean"/>
         <ant antfile="build.xml" dir="${v9t9-common.location}" inheritAll="false" target="clean"/>
         <ant antfile="build.xml" dir="${v9t9-audio.location}" inheritAll="false" target="clean"/>
         <ant antfile="build.xml" dir="${v9t9-engine.location}" inheritAll="false" target="clean"/>
@@ -175,10 +177,16 @@
         <ant antfile="build.xml" dir="${v9t9-server.location}" inheritAll="false" target="clean"/>
         <ant antfile="build.xml" dir="${v9t9-remote.location}" inheritAll="false" target="clean"/>
         <ant antfile="build.xml" dir="${v9t9-video.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-tools.location}" inheritAll="false" target="clean"/>
     </target>
     <target depends="build-subprojects,build-project" name="build"/>
     <target name="build-subprojects">
         <ant antfile="build.xml" dir="${ejs-base.location}" inheritAll="false" target="build-jar">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${ejs-gui.location}" inheritAll="false" target="build-jar">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
@@ -219,6 +227,11 @@
             </propertyset>
         </ant>
         <ant antfile="build.xml" dir="${v9t9-data.location}" inheritAll="false" target="build-jar">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${v9t9-tools.location}" inheritAll="false" target="build-jar">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
