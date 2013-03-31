@@ -38,6 +38,11 @@ public class Assemble {
     public static void main(String[] args) throws IOException {
     	LoggingUtils.setupNullLogging();
     	
+    	if (args.length == 0) {
+    		help();
+    		return;
+    	}
+    	
         Assembler9900 assembler = new Assembler9900();
         
         assembler.setList(null);
@@ -51,7 +56,7 @@ public class Assemble {
         
         boolean hadOutput = false;
         
-        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:D:e:h:v92");
+        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:D:e:L:H:v92");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -88,7 +93,13 @@ public class Assemble {
             	hadOutput = true;
             	break;  
             }
-            case 'h': {
+            case 'L': {
+            	assembler.addMemoryEntry(
+            			createMemoryEntry(0x2000, 0x2000, "Low 8K Expansion RAM", getopt.getOptarg()));
+            	hadOutput = true;
+            	break;  
+            }
+            case 'H': {
             	assembler.addMemoryEntry(
             			createMemoryEntry(0xA000, 0x6000, "High 24K Expansion RAM", getopt.getOptarg()));
             	hadOutput = true;
@@ -146,7 +157,7 @@ public class Assemble {
         }
         
         if (!hadOutput) {
-        	System.err.println(PROGNAME + ": no output specified");
+        	System.err.println(PROGNAME + ": no output file(s) specified");
         	System.exit(1);
         }
         if (!selectedProcessor) {
@@ -154,18 +165,20 @@ public class Assemble {
         }
         
         if (getopt.getOptind() < args.length) {
-        	FileContentEntry entry;
-        	String name = args[getopt.getOptind()]; 
-        	try {
-        		entry = new FileContentEntry(new File(name));
-        		assembler.pushContentEntry(entry);
-        		getopt.setOptind(getopt.getOptind() + 1);
-        	} catch (IOException e) {
-        		System.err.println(PROGNAME + ": failed to read: " + name);
-                System.exit(1);
-            }
+        	while (getopt.getOptind() < args.length) {
+	        	FileContentEntry entry;
+	        	String name = args[getopt.getOptind()]; 
+	        	try {
+	        		entry = new FileContentEntry(new File(name));
+	        		assembler.pushContentEntry(entry);
+	        		getopt.setOptind(getopt.getOptind() + 1);
+	        	} catch (IOException e) {
+	        		System.err.println(PROGNAME + ": failed to read: " + name);
+	                System.exit(1);
+	            }
+        	}
         } else {
-        	System.err.println(PROGNAME + ": no files specified");
+        	System.err.println(PROGNAME + ": no input file(s) specified");
         }
         
         if (!assembler.assemble()) {
@@ -189,13 +202,18 @@ public class Assemble {
                         + "9900 Assembler v2.0\n"
                         + "\n" 
                         +
-                        PROGNAME + " <input file> [-r|e <console ROM output>[#size]] [-m <module ROM output>]\n" +
-           			 "[-d <DSR ROM output>] [-g <console GROM output>[#size]] [-Dequ=val] [-l<list file>]\n" +
+                        PROGNAME + " <input file>\n"+
+                        "\t[-r|e <console ROM output>[#size]] [-m <module ROM output>]\n" +
+                        "\t[-d <DSR ROM output>] [-g <console GROM output>[#size]]\n"+
+           			 	"\t[-L <low 8k output>] [-H <high 24K output>]\n"+
+                        "\t[-Dequ=val] [-l<list file>]\n" +
            			 "\n"+
-           			 "-r|e saves the default 8k/16k memory block at >0000.\n" +
-           			 "-m saves the 8k memory block at >6000.\n" +
-           			 "-d saves the 8k memory block at >4000.\n" +
-           			 "-g saves the default 24k memory block at >0000.\n"+
+           			 "-r|e saves the 8k/16k console ROM block at >0000.\n" +
+           			 "-m saves the 8k module ROM block at >6000.\n" +
+           			 "-d saves the 8k DSR ROM block at >4000.\n" +
+           			 "-g saves the 24k GROM block at >0000.\n"+
+           			 "-L saves the 8k expansion RAM block at >2000.\n"+
+           			 "-H saves the 24k expansion RAM block at >A000.\n"+
            			 "-l sends a listing to the given file (- for stdout)");
 
     }

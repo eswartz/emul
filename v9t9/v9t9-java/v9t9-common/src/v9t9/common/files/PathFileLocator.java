@@ -508,9 +508,7 @@ public class PathFileLocator implements IPathFileLocator {
 					subdirs.put(entDir, directory);
 				}
 				
-				// ignore class files
-				if (!entFile.getName().endsWith(".class"))
-					directory.add(entFile.getName());
+				directory.add(entFile.getName());
 			}
 			zf.close();
 			
