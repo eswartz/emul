@@ -237,7 +237,7 @@
  			<path path="${jarfile}"/>
 		 	
 		 	<filtermapper>
-		 	  <replacestring from="/cur/" to="/"/>
+		 	  <replacestring from="-temp/cur/" to="/"/>
 		 	</filtermapper>
 		 </pathconvert>
 
@@ -279,19 +279,18 @@
 	</target>
 
     <target name="sign-jars" >
-    	<mkdir dir="${bin.v9t9.dir}/cur" />
-    	<mkdir dir="${bin.v9t9.dir}/cur" />
-    	<mkdir dir="${bin.v9t9.dir}/signed" />
-    	<mkdir dir="${bin.v9t9.dir}/signed/libs" />
+    	<mkdir dir="${bin.v9t9-temp.dir}/cur" />
+    	<mkdir dir="${bin.v9t9-temp.dir}/signed" />
+    	<mkdir dir="${bin.v9t9-temp.dir}/signed/libs" />
     	
-    	<move todir="${bin.v9t9.dir}/cur/libs"
+    	<move todir="${bin.v9t9-temp.dir}/cur/libs"
 				overwrite="true"
     		preservelastmodified="true">
     		<fileset dir="${bin.v9t9.dir}/libs">
     	      <include name="*.jar"/>
     	    </fileset>
 		</move>
-		<move todir="${bin.v9t9.dir}/cur"
+		<move todir="${bin.v9t9-temp.dir}/cur"
 				overwrite="true"
     		preservelastmodified="true">
     		<fileset dir="${bin.v9t9.dir}">
@@ -299,10 +298,10 @@
     	    </fileset>
 		</move>
     	
-    	<mkdir dir="${bin.v9t9.dir}/ref" />
-    	<mkdir dir="${bin.v9t9.dir}/ref/libs" />
+    	<mkdir dir="${bin.v9t9-temp.dir}/ref" />
+    	<mkdir dir="${bin.v9t9-temp.dir}/ref/libs" />
 
-		<fileset dir="${bin.v9t9.dir}/cur" id="curjars">
+		<fileset dir="${bin.v9t9-temp.dir}/cur" id="curjars">
 		    <include name="*.jar"/>
 		    <include name="libs/*.jar"/>
 		</fileset>
