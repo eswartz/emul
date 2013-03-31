@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="data"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ejs-base"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
