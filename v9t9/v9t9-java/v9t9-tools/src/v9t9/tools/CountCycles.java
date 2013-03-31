@@ -36,7 +36,7 @@ public class CountCycles {
                         + "9900 Cycle Counter\n"
                         + "\n" 
                         + PROGNAME + " {-m<domain> <address> <raw file>} {<FIAD memory image>}\n" +
-           			 "-e <addr> [-l<list file>]\n" +
+           			 "-e <addr> [-s <addr>] [-n <count>] [-l<list file>]  \n" +
            			 "\n"+
            			 "-m<domain> <address> <raw file>: load <raw file> into memory at <address>\n"+
     				"Domains:");
@@ -46,6 +46,7 @@ public class CountCycles {
         System.out.println("\n"+
            			 "-e <addr>: start executing at addr (via BL)\n" +
            			 "-s <addr>: stop executing at addr, if code does not RT\n" +
+           			 "-n <count>: execute at most <count> instructions (0 means go forever, until -s <...> or RT)\n" +
            			 "-l sends a listing to the given file (- for stdout)");
 
     }
