@@ -14,19 +14,19 @@ import java.io.IOException;
 
 import v9t9.common.asm.IOperand;
 import v9t9.tests.inst9900.BaseTest9900;
-import v9t9.tools.asm.assembler.Assembler;
-import v9t9.tools.asm.assembler.AssemblerOperandParserStage;
-import v9t9.tools.asm.assembler.AssemblerTokenizer;
-import v9t9.tools.asm.assembler.IOperandParserStage;
-import v9t9.tools.asm.assembler.OperandParser;
-import v9t9.tools.asm.assembler.ParseException;
-import v9t9.tools.asm.assembler.inst9900.Assembler9900;
-import v9t9.tools.asm.assembler.inst9900.AssemblerOperandParserStage9900;
-import v9t9.tools.asm.assembler.inst9900.MachineOperandFactory9900;
-import v9t9.tools.asm.assembler.inst9900.MachineOperandParserStage9900;
-import v9t9.tools.asm.assembler.inst9900.StandardInstructionParserStage9900;
-import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLOperand;
+import v9t9.tools.asm.Assembler;
+import v9t9.tools.asm.AssemblerOperandParserStage;
+import v9t9.tools.asm.AssemblerTokenizer;
+import v9t9.tools.asm.IOperandParserStage;
+import v9t9.tools.asm.OperandParser;
+import v9t9.tools.asm.ParseException;
+import v9t9.tools.asm.inst9900.Assembler9900;
+import v9t9.tools.asm.inst9900.AssemblerOperandParserStage9900;
+import v9t9.tools.asm.inst9900.MachineOperandFactory9900;
+import v9t9.tools.asm.inst9900.MachineOperandParserStage9900;
+import v9t9.tools.asm.inst9900.StandardInstructionParserStage9900;
+import v9t9.tools.asm.operand.hl.NumberOperand;
+import v9t9.tools.asm.operand.ll.LLOperand;
 
 public class TestAssembler extends BaseTest9900 {
 

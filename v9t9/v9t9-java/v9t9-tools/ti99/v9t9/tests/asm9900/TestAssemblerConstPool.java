@@ -14,9 +14,9 @@ import java.util.List;
 
 import v9t9.common.asm.IInstruction;
 import v9t9.tests.inst9900.BaseTest9900;
-import v9t9.tools.asm.assembler.ContentEntry;
-import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
-import v9t9.tools.asm.assembler.transform.ConstPool;
+import v9t9.tools.asm.ContentEntry;
+import v9t9.tools.asm.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.transform.ConstPool;
 
 public class TestAssemblerConstPool extends BaseTest9900 {
 	protected int getTableByte(ConstPool pool, int val) {

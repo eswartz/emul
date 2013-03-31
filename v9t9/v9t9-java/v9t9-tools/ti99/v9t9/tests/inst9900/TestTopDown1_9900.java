@@ -31,7 +31,7 @@ import v9t9.machine.ti99.asm.HighLevelInstruction;
 import v9t9.machine.ti99.asm.LinkedRoutine;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.MachineOperand9900;
-import v9t9.tools.asm.assembler.ParseException;
+import v9t9.tools.asm.ParseException;
 
 
 public class TestTopDown1_9900 extends BaseTopDownTest9900

@@ -37,15 +37,15 @@ import v9t9.engine.memory.MemoryEntryFactory;
 import v9t9.machine.ti99.asm.HighLevelInstruction;
 import v9t9.machine.ti99.cpu.InstTable9900;
 import v9t9.machine.ti99.cpu.Instruction9900;
-import v9t9.tools.asm.assembler.Assembler;
-import v9t9.tools.asm.assembler.AssemblerInstruction;
-import v9t9.tools.asm.assembler.DirectiveInstructionParserStage;
-import v9t9.tools.asm.assembler.LLInstruction;
-import v9t9.tools.asm.assembler.ParseException;
-import v9t9.tools.asm.assembler.Symbol;
-import v9t9.tools.asm.assembler.directive.Directive;
-import v9t9.tools.asm.assembler.inst9900.Assembler9900;
-import v9t9.tools.asm.assembler.inst9900.StandardInstructionParserStage9900;
+import v9t9.tools.asm.Assembler;
+import v9t9.tools.asm.AssemblerInstruction;
+import v9t9.tools.asm.DirectiveInstructionParserStage;
+import v9t9.tools.asm.LLInstruction;
+import v9t9.tools.asm.ParseException;
+import v9t9.tools.asm.Symbol;
+import v9t9.tools.asm.directive.Directive;
+import v9t9.tools.asm.inst9900.Assembler9900;
+import v9t9.tools.asm.inst9900.StandardInstructionParserStage9900;
 
 public abstract class BaseTest9900 extends TestCase {
 	protected ISettingsHandler settings = new BasicSettingsHandler();

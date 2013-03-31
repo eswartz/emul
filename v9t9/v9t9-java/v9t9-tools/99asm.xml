@@ -15,12 +15,12 @@
     <target name="create_run_jar" depends="build-subprojects">
         <jar destfile="${build.dir}/bin/99asm.jar" filesetmanifest="mergewithoutmain">
             <manifest>
-                <attribute name="Main-Class" value="v9t9.tools.asm.assembler.Assemble"/>
+                <attribute name="Main-Class" value="v9t9.tools.Assemble"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
+            <fileset dir="${bin.dir}" includes="v9t9/tools/Assemble.class"/>
             <fileset dir="${bin.dir}" includes="v9t9/tools/asm/**/*.class"/>
             <fileset dir="${common.bin.dir}" includes="v9t9/common/asm/*.class"/>
-            <fileset dir="${common.bin.dir}" includes="v9t9/common/asm/assembler/**/*.class"/>
             <fileset dir="${common.bin.dir}" includes="v9t9/common/properties/**/*.class"/>
             <fileset dir="${common.bin.dir}" includes="v9t9/common/settings/**/*.class"/>
             <fileset dir="${common.bin.dir}" includes="v9t9/common/files/PathFileLocator*.class"/>
@@ -36,6 +36,7 @@
             <fileset dir="${machines.bin.dir}" includes="v9t9/machine/ti99/asm/**/*.class"/>
             <fileset dir="${machines.bin.dir}" includes="v9t9/machine/ti99/cpu/Inst*.class"/>
             <fileset dir="${machines.bin.dir}" includes="v9t9/machine/ti99/cpu/*Operand*.class"/>
+            <fileset dir="${ejs.base.dir}/bin" includes="ejs/base/logging/**"/>
             <fileset dir="${ejs.base.dir}/bin" includes="ejs/base/settings/**/*.class"/>
             <fileset dir="${ejs.base.dir}/bin" includes="ejs/base/properties/**/*.class"/>
             <fileset dir="${ejs.base.dir}/bin" includes="ejs/base/utils/**/*.class"/>

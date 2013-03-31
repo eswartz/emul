@@ -14,8 +14,8 @@ import java.util.List;
 
 import v9t9.common.asm.IInstruction;
 import v9t9.tests.inst9900.BaseTest9900;
-import v9t9.tools.asm.assembler.ContentEntry;
-import v9t9.tools.asm.assembler.Symbol;
+import v9t9.tools.asm.ContentEntry;
+import v9t9.tools.asm.Symbol;
 
 public class TestAssemblerOptimizer extends BaseTest9900 {
 

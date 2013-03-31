@@ -26,8 +26,8 @@ import v9t9.machine.ti99.asm.HighLevelCodeInfo;
 import v9t9.machine.ti99.asm.InstructionFactory9900;
 import v9t9.machine.ti99.asm.Phase;
 import v9t9.machine.ti99.cpu.CpuState9900;
-import v9t9.tools.asm.assembler.ParseException;
-import v9t9.tools.asm.assembler.inst9900.AsmInstructionFactory9900;
+import v9t9.tools.asm.ParseException;
+import v9t9.tools.asm.inst9900.AsmInstructionFactory9900;
 
 public abstract class BaseTopDownPhaseTest9900 extends BaseTest9900 implements ICodeProvider
 {

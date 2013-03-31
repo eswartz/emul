@@ -14,17 +14,17 @@ import junit.framework.TestCase;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.ResolveException;
 import v9t9.machine.ti99.cpu.MachineOperand9900;
-import v9t9.tools.asm.assembler.AssemblerTokenizer;
-import v9t9.tools.asm.assembler.ParseException;
-import v9t9.tools.asm.assembler.inst9900.MachineOperandFactory9900;
-import v9t9.tools.asm.assembler.inst9900.MachineOperandParserStage9900;
-import v9t9.tools.asm.assembler.operand.ll.LLAddrOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
+import v9t9.tools.asm.AssemblerTokenizer;
+import v9t9.tools.asm.ParseException;
+import v9t9.tools.asm.inst9900.MachineOperandFactory9900;
+import v9t9.tools.asm.inst9900.MachineOperandParserStage9900;
+import v9t9.tools.asm.operand.ll.LLAddrOperand;
+import v9t9.tools.asm.operand.ll.LLImmedOperand;
+import v9t9.tools.asm.operand.ll.LLOperand;
+import v9t9.tools.asm.operand.ll.LLRegIncOperand;
+import v9t9.tools.asm.operand.ll.LLRegIndOperand;
+import v9t9.tools.asm.operand.ll.LLRegOffsOperand;
+import v9t9.tools.asm.operand.ll.LLRegisterOperand;
 
 public class MachineOperandParserTest9900 extends TestCase {
 

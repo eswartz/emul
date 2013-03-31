@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/v9t9-tools/ti99/v9t9/tools/asm/assembler/Assemble.java"/>
+<listEntry value="/v9t9-tools/ti99/v9t9/tools/Assemble.java"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="1"/>
 </listAttribute>
-<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.tools.asm.assembler.Assemble"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.tools.Assemble"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="data/forth99.gsm -g ../../../build/forth99/f99bgrom.bin#16384"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="v9t9-tools"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:Forth99}"/>
