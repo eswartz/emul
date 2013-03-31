@@ -184,4 +184,13 @@
             <report format="frames" todir="${junit.output.dir}"/>
         </junitreport>
     </target>
+	
+
+	<import file="../v9t9-gui/common.properties"/>
+
+    <target name="build-jar" depends="build-project">
+	  <jar destfile="${bin.v9t9.dir}/v9t9-server.jar">
+	     <fileset dir="bin"/>
+	  </jar>
+    </target>	
 </project>

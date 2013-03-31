@@ -157,4 +157,13 @@
         <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
         <antcall target="build"/>
     </target>
+
+	<import file="../v9t9-gui/common.properties"/>
+
+    <target name="build-jar" depends="build-project">
+	  <jar destfile="${bin.v9t9.dir}/v9t9-remote.jar">
+	     <fileset dir="bin"/>
+	  </jar>
+    </target>
+	
 </project>

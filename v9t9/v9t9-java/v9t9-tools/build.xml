@@ -4,7 +4,7 @@
               To include a user specific buildfile here, simply create one in the same
               directory with the processing instruction <?eclipse.ant.import?>
               as the first entry and export the buildfile again. -->
-<project basedir="." default="build" name="v9t9-tools">
+<project basedir="." default="build-jar" name="v9t9-tools">
     <property environment="env"/>
     <property name="ejs-base.location" value="../../../base/ejs-base"/>
     <property name="ECLIPSE_HOME" value="../../../../orbit/plugins"/>
@@ -168,5 +168,42 @@
     <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
         <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
         <antcall target="build"/>
+    </target>
+
+	<import file="../v9t9-gui/common.properties"/>
+
+	<property name="ToolsJarClassPath" value="
+    	./ 
+    	libs/jna.jar 
+		libs/gnu-getopt-1.0.13.jar 
+    	libs/bcel-5.2.jar 
+    	libs/org.eclipse.tm.tcf.jar 
+		libs/org.apache.log4j_1.2.15.v201005080500.jar
+		ejs-base.jar
+    	v9t9-audio.jar
+    	v9t9-common.jar
+    	v9t9-data.jar
+    	v9t9-engine.jar
+    	v9t9-machines.jar
+    	v9t9-remote.jar
+    	v9t9-server.jar
+    	v9t9-video.jar
+    	
+	"/>
+	
+
+    <target name="build-jar" depends="build">
+    	 <jar destfile="${bin.v9t9.dir}/v9t9-tools.jar">
+
+            <manifest>
+                <attribute name="Main-Class" value="v9t9.tools.Help"/>
+                <attribute name="Class-Path" value="${ToolsJarClassPath}"/>
+            </manifest>
+
+            <fileset dir="bin">
+    			<exclude name="v9t9/tests/**"/>
+    			<exclude name="v9t9/tools/forthcomp/test/**"/>
+    	 	</fileset>
+        </jar>    
     </target>
 </project>

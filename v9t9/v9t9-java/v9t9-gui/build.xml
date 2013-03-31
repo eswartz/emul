@@ -17,6 +17,7 @@
     <property name="v9t9-server.location" value="../v9t9-server"/>
     <property name="v9t9-video.location" value="../v9t9-video"/>
     <property name="v9t9-remote.location" value="../v9t9-remote"/>
+    <property name="v9t9-data.location" value="../v9t9-data"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.6"/>
     <property name="source" value="1.6"/>
@@ -177,42 +178,47 @@
     </target>
     <target depends="build-subprojects,build-project" name="build"/>
     <target name="build-subprojects">
-        <ant antfile="build.xml" dir="${ejs-base.location}" inheritAll="false" target="build-project">
+        <ant antfile="build.xml" dir="${ejs-base.location}" inheritAll="false" target="build-jar">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
         </ant>
-        <ant antfile="build.xml" dir="${v9t9-common.location}" inheritAll="false" target="build-project">
+        <ant antfile="build.xml" dir="${v9t9-common.location}" inheritAll="false" target="build-jar">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
         </ant>
-        <ant antfile="build.xml" dir="${v9t9-audio.location}" inheritAll="false" target="build-project">
+        <ant antfile="build.xml" dir="${v9t9-audio.location}" inheritAll="false" target="build-jar">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
         </ant>
-        <ant antfile="build.xml" dir="${v9t9-engine.location}" inheritAll="false" target="build-project">
+        <ant antfile="build.xml" dir="${v9t9-engine.location}" inheritAll="false" target="build-jar">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
         </ant>
-        <ant antfile="build.xml" dir="${v9t9-machines.location}" inheritAll="false" target="build-project">
+        <ant antfile="build.xml" dir="${v9t9-machines.location}" inheritAll="false" target="build-jar">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
         </ant>
-        <ant antfile="build.xml" dir="${v9t9-server.location}" inheritAll="false" target="build-project">
+        <ant antfile="build.xml" dir="${v9t9-server.location}" inheritAll="false" target="build-jar">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
         </ant>
-        <ant antfile="build.xml" dir="${v9t9-video.location}" inheritAll="false" target="build-project">
+        <ant antfile="build.xml" dir="${v9t9-video.location}" inheritAll="false" target="build-jar">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
         </ant>
-        <ant antfile="build.xml" dir="${v9t9-remote.location}" inheritAll="false" target="build-project">
+        <ant antfile="build.xml" dir="${v9t9-remote.location}" inheritAll="false" target="build-jar">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${v9t9-data.location}" inheritAll="false" target="build-jar">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
@@ -266,4 +272,47 @@
             <classpath refid="v9t9-gui.classpath"/>
         </java>
     </target>
+	
+    <target name="build-jar" depends="build-project">
+    	<property name="JarClassPath" value="
+	    	./ 
+	    	libs/jna.jar 
+	    	libs/org.eclipse.swt.jar 
+	    	libs/org.eclipse.jface_3.6.2.M20110210-1200.jar 
+	    	libs/org.eclipse.core.commands_3.6.0.I20100512-1500.jar 
+	    	libs/org.eclipse.core.runtime_3.6.0.v20100505.jar 
+	    	libs/org.eclipse.equinox.common_3.6.0.v20100503.jar 
+			libs/org.apache.log4j_1.2.15.v201005080500.jar
+	    	libs/junit.jar libs/gnu-getopt-1.0.13.jar 
+	    	libs/jinput.jar 
+	    	libs/lwjgl_util.jar 
+	    	libs/lwjgl.jar 
+	    	libs/antlr-runtime-3.2.jar 
+	    	libs/antlr-3.2.jar 
+	    	libs/bcel-5.2.jar 
+	    	libs/org.eclipse.tm.tcf.jar 
+	    	${svg.libs}
+			ejs-base.jar
+	    	ejs-gui.jar
+	    	v9t9-audio.jar
+	    	v9t9-common.jar
+	    	v9t9-data.jar
+	    	v9t9-engine.jar
+	    	v9t9-machines.jar
+	    	v9t9-remote.jar
+	    	v9t9-server.jar
+	    	v9t9-video.jar
+	    	
+    	"/>
+    	
+        <jar destfile="${bin.v9t9.dir}/v9t9j.jar">
+            <manifest>
+                <attribute name="Main-Class" value="v9t9.gui.Emulator"/>
+                <attribute name="Class-Path" value="${JarClassPath}"/>
+            </manifest>
+        	
+            <fileset dir="${base.v9t9}/bin" excludes="release/**" />
+        </jar>
+    </target>
+	
 </project>

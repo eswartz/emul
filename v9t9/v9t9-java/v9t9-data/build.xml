@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="build-jar" name="v9t9-data">
+    <property environment="env"/>
+    <property name="ECLIPSE_HOME" value="../../../../orbit/plugins"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.6"/>
+    <property name="source" value="1.6"/>
+    <target name="init">
+    </target>
+    <target name="clean">
+    </target>
+    <target depends="clean" name="cleanall">
+    </target>
+    <target depends="build-subprojects,build-project" name="build"/>
+    <target name="build-subprojects">
+    </target>
+    <target depends="init" name="build-project">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+    </target>
+
+	<import file="../v9t9-gui/common.properties"/>
+	
+    <target name="build-jar" depends="build-project">
+
+        <jar destfile="${bin.v9t9.dir}/v9t9-data.jar">
+            <manifest>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+        	<fileset dir="data">
+    	       <include name="**"/>
+    	    </fileset>
+  	    </jar>
+    </target>		
+</project>
