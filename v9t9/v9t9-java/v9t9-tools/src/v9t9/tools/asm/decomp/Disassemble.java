@@ -48,7 +48,7 @@ public class Disassemble {
             	outfilename = getopt.getOptarg();
                 break;
             case 'b':
-                baseAddr = HexUtils.parseInt(getopt.getOptarg()) & 0xfffe;
+                baseAddr = HexUtils.parseHexInt(getopt.getOptarg()) & 0xfffe;
                 break;
             case 'a':
                 dc.addFile(getopt.getOptarg(), baseAddr);

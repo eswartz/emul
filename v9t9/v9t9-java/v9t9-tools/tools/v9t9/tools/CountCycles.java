@@ -91,13 +91,13 @@ public class CountCycles {
             	}
             	
             	File file = new File(fileName);
-            	int addr = HexUtils.parseInt(addrStr);
+            	int addr = HexUtils.parseHexInt(addrStr);
             	IMemoryEntry userEntry = domain.getEntryAt(addr);
             	if (userEntry == null) {
 	            	MemoryEntryInfo userEntryInfo = new MemoryEntryInfoBuilder(
 	        			domain.isWordAccess() ? 2 : 1)
 	            		.withDomain(domainName)
-	            		.withAddress(HexUtils.parseInt(addrStr))
+	            		.withAddress(HexUtils.parseHexInt(addrStr))
 	            		.withSize((int) file.length())
 	            		.storable(false)
 	            		.create(domainName);
@@ -125,12 +125,12 @@ public class CountCycles {
             	break;
             }
             case 'e': {
-            	startAddr = HexUtils.parseInt(getopt.getOptarg());
+            	startAddr = HexUtils.parseHexInt(getopt.getOptarg());
             	gotEntry = true;
             	break;
             }
             case 's': {
-            	stopAddr = HexUtils.parseInt(getopt.getOptarg());
+            	stopAddr = HexUtils.parseHexInt(getopt.getOptarg());
             	break;
             }
             case 'l':

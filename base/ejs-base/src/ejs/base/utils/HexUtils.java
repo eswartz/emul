@@ -61,6 +61,20 @@ public class HexUtils {
 	    return Integer.parseInt(string);
 	}
 
+	/**
+	 * Parse a hex integer which or may not have the C-style hex prefix (0x).
+	 * @param string
+	 * @return
+	 */
+	public static int parseHexInt(String string) {
+		string = string.toUpperCase();
+		if (string.length() > 2 && string.charAt(0) == '0'
+				&& string.charAt(1) == 'X') {
+			return Integer.parseInt(string.substring(2), 16);
+		}
+		return Integer.parseInt(string, 16);
+	}
+	
 	public static String padString(String string, int size) {
 		StringBuilder builder = new StringBuilder();
 		builder.append(string);

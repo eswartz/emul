@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.tools.asm.decomp;
+package v9t9.tools;
 
 import ejs.base.utils.HexUtils;
 import gnu.getopt.Getopt;
@@ -21,6 +21,8 @@ import java.util.List;
 
 
 import v9t9.common.asm.IDecompilePhase;
+import v9t9.tools.asm.decomp.Decompiler;
+import v9t9.tools.asm.decomp.Decompiler9900;
 
 public class Decompile {
 
@@ -37,7 +39,7 @@ public class Decompile {
         int baseAddr = 0;
         List<Integer> refDefTables = new ArrayList<Integer>();
         
-        getopt = new Getopt(PROGNAME, args, "?o:b:a:r:d:s:");
+        getopt = new Getopt(PROGNAME, args, "?o:b:a:i:r:d:s:");
         String outfilename = null;
 		int opt;
 		while ((opt = getopt.getopt()) != -1) {
@@ -49,11 +51,14 @@ public class Decompile {
             	outfilename = getopt.getOptarg();
                 break;
             case 'b':
-                baseAddr = HexUtils.parseInt(getopt.getOptarg()) & 0xfffe;
+                baseAddr = HexUtils.parseHexInt(getopt.getOptarg());
                 break;
             case 'a':
                 dc.addFile(getopt.getOptarg(), baseAddr);
                 break;
+            case 'i':
+            	dc.addMemoryImage(getopt.getOptarg());
+            	break;
             case 'r':
                 dc.addRangeFromArgv(getopt.getOptarg(), true /* code */);
                 break;
@@ -61,7 +66,7 @@ public class Decompile {
                 dc.addRangeFromArgv(getopt.getOptarg(), false /* code */);
                 break;
             case 's': {
-                int addr = HexUtils.parseInt(getopt.getOptarg());
+                int addr = HexUtils.parseHexInt(getopt.getOptarg());
                 refDefTables.add(new Integer(addr));
                 break;
             }
@@ -76,7 +81,8 @@ public class Decompile {
             System.exit(1);
         }
         
-        if (dc.highLevel.getMemoryRanges().isEmpty()) {
+        if (dc.getHighLevel().getMemoryRanges().isEmpty()) {
+        	help();
             System.err.println(PROGNAME + ": no code added: use -r or -d options to add content");
             System.exit(1);
         }

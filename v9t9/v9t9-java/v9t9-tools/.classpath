@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="ti99"/>
 	<classpathentry kind="src" path="forthcomp"/>
+	<classpathentry kind="src" path="tools"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ejs-base"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
