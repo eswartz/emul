@@ -23,6 +23,7 @@ import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoEventFormatter;
 import v9t9.common.demos.IDemoInputEventBuffer;
 import v9t9.common.demos.IDemoInputStream;
+import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachineModel;
 import v9t9.engine.demos.events.TimerTick;
 import v9t9.engine.demos.stream.BaseDemoInputStream;
@@ -41,14 +42,14 @@ public class DemoFormatInputStream extends BaseDemoInputStream implements IDemoI
 
 	private Set<Integer> unknownBuffers = new HashSet<Integer>();
 	
-	public DemoFormatInputStream(IMachineModel machineModel, InputStream is_) throws IOException {
+	public DemoFormatInputStream(IMachineModel machineModel, InputStream is_) throws IOException, NotifyException {
 		super(is_);
 
 		header = new DemoHeader();
 		header.read(is);
 		
 		if (!machineModel.isModelCompatible(header.getMachineModel())) {
-			throw new IOException(
+			throw new NotifyException(null,
 					"Note: this demo is incompatible with the "+
 					"current machine: " + header.getMachineModel() + " expected");
 		}

@@ -333,6 +333,9 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			didImage = tryLoadImage(event);
 		} catch (NotifyException e) {
 			e.printStackTrace();
+		} catch (UnsupportedOperationException t) {
+			notifier.notifyEvent(null, Level.WARNING, t.getMessage());
+			return;
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}

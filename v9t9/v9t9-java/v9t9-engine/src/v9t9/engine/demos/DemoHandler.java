@@ -142,49 +142,46 @@ public class DemoHandler implements IDemoHandler {
 	 * @see v9t9.common.client.IDemoHandler#startPlayback(java.net.URI)
 	 */
 	@Override
-	public synchronized void startPlayback(final URI uri) throws NotifyException {
+	public synchronized void startPlayback(final URI uri) throws NotifyException, IOException {
 		if (player != null) {
 			stopPlayback();
 		}
 		
 		lastPlaybackURI = uri;
-		try {
-			IDemoInputStream is = machine.getDemoManager().createDemoReader(uri);
-			if (is != null) {
-				player = new DemoPlayer(machine, uri, is, listeners);
+		
+		IDemoInputStream is = machine.getDemoManager().createDemoReader(uri);
+		if (is != null) {
+			player = new DemoPlayer(machine, uri, is, listeners);
+			
+			playbackRatePropertyListener = new IPropertyListener() {
 				
-				playbackRatePropertyListener = new IPropertyListener() {
-					
-					@Override
-					public void propertyChanged(IProperty property) {
-						player.setPlaybackRate((Double) property.getValue());
-					}
-				};
-				playRateSetting.addListenerAndFire(playbackRatePropertyListener);
-				
-				playSetting.setBoolean(true);
-				demoPauseSetting.setBoolean(false);
-				
-				// note: must follow the above
-				wasPaused = machine.setPaused(true);
-				
-				listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
+				@Override
+				public void propertyChanged(IProperty property) {
+					player.setPlaybackRate((Double) property.getValue());
+				}
+			};
+			playRateSetting.addListenerAndFire(playbackRatePropertyListener);
+			
+			playSetting.setBoolean(true);
+			demoPauseSetting.setBoolean(false);
+			
+			// note: must follow the above
+			wasPaused = machine.setPaused(true);
+			
+			listeners.fire(new IFire<IDemoHandler.IDemoListener>() {
 
-					@Override
-					public void fire(IDemoListener listener) {
-						if (listener instanceof IDemoPlaybackListener) {
-							((IDemoPlaybackListener) listener).started(player);
-						}
+				@Override
+				public void fire(IDemoListener listener) {
+					if (listener instanceof IDemoPlaybackListener) {
+						((IDemoPlaybackListener) listener).started(player);
 					}
-				});
-				
-				player.start();
-				
-			} else {
-				throw new NotifyException(uri, "Unrecognized demo format in " + uri);
-			}
-		} catch (IOException e) {
-			throw new NotifyException(uri, "Failed to open demo " + uri, e);
+				}
+			});
+			
+			player.start();
+			
+		} else {
+			throw new IOException("Unrecognized demo format in " + uri);
 		}
 		
 	}

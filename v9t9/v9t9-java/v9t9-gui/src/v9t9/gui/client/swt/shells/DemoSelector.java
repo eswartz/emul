@@ -85,6 +85,7 @@ import v9t9.common.demos.IDemo;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
 import v9t9.common.events.NotifyException;
+import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.EmulatorGuiData;
@@ -260,6 +261,8 @@ public class DemoSelector extends Composite {
 					
 					try {
 						demoHandler.startPlayback(playFile.toURI());
+					} catch (IOException ex) {
+						machine.getEventNotifier().notifyEvent(null, Level.ERROR, ex.getMessage());
 					} catch (NotifyException ex) {
 						machine.getEventNotifier().notifyEvent(ex.getEvent());
 					}

@@ -596,6 +596,12 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		if (!wasOpen) {
 			try {
 				openDiskImage(true);
+				
+				if (hdr.sides <= 2 && hdr.track0offs <= 256 && (hdr.tracks == 40 || hdr.tracks == 80)
+						&& hdr.tracksize < RealDiskConsts.DSKbuffersize) {
+					return true;
+				}
+				return false;
 			} catch (IOException e) {
 				e.printStackTrace();
 				return false;

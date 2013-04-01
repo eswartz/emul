@@ -11,6 +11,7 @@
 package v9t9.gui.client.swt.bars;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -448,6 +449,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				public void widgetSelected(SelectionEvent e) {
 					try {
 						demoHandler.startPlayback(last);
+					} catch (IOException ex) {
+						machine.getEventNotifier().notifyEvent(null, Level.ERROR, ex.getMessage());
 					} catch (NotifyException ex) {
 						machine.getEventNotifier().notifyEvent(ex.getEvent());
 					}

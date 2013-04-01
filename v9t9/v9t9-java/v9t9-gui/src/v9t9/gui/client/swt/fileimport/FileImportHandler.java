@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import ejs.base.properties.IProperty;
 
+import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
@@ -109,7 +110,8 @@ public class FileImportHandler implements IFileImportHandler {
 			machine.getDemoHandler().startPlayback(file.toURI());
 			return true;
 		} catch (NotifyException e) {
-			return false;
+			machine.getEventNotifier().notifyEvent(e.getEvent());
+			return true;
 		} catch (Throwable e) {
 			return false;
 		}
@@ -122,16 +124,21 @@ public class FileImportHandler implements IFileImportHandler {
 	private boolean tryDiskImage(File file) {
 		IDiskImageMapper imageMapper = machine.getEmulatedFileHandler().getDiskImageMapper();
 		Catalog catalog = null;
+		IDiskImage image;
 		try {
-			IDiskImage image = imageMapper.createDiskImage("DSK1", file);
-			if (!image.isFormatted())
-				return false;
-			catalog = imageMapper.createCatalog("DSK1", file);
-			
+			image = imageMapper.createDiskImage("DSK1", file);
 		} catch (IOException e1) {
 			e1.printStackTrace();
-			// not disk image
+			// not disk image 
 			return false;
+		}
+		if (!image.isFormatted())
+			return false;
+		try {
+			catalog = imageMapper.createCatalog("DSK1", file);
+		} catch (IOException e1) {
+			machine.getEventNotifier().notifyEvent(null, Level.ERROR, "Could not read disk image catalog\n" + e1.getMessage());
+			return true;
 		}
 		
 		Map<String, IProperty> diskSettingsMap = imageMapper.getDiskSettingsMap();
@@ -187,6 +194,12 @@ public class FileImportHandler implements IFileImportHandler {
 		if (fiadMapper == null) {
 			return false;
 		}
+		IProperty[] disks = fiadMapper.getSettings();
+		IProperty enabledProperty = fiadMapper.getDirectorySupportProperty();
+		if (enabledProperty == null || disks.length == 0) {
+			//MessageDialog.openError(shell, "Not Supported", "This machine does not support files in directories");
+			return false;
+		}
 		
 		Catalog catalog = null;
 		
@@ -200,13 +213,6 @@ public class FileImportHandler implements IFileImportHandler {
 		
 		catalog = new Catalog("DSK1", "TEMP", 0, 0, Collections.singletonList(entry));
 
-		IProperty[] disks = fiadMapper.getSettings();
-		IProperty enabledProperty = fiadMapper.getDirectorySupportProperty();
-		if (enabledProperty == null || disks.length == 0) {
-			MessageDialog.openError(shell, "Not Supported", "This machine does not support files in directories");
-			return true;
-		}
-		
 		if (!enabledProperty.getBoolean()) {
 			boolean go = MessageDialog.openQuestion(shell, "Enable Files in Directories?", 
 					"Support for files in a directory is not enabled.\n\n"+

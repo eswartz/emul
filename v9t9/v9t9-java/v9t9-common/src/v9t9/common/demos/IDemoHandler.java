@@ -10,6 +10,7 @@
  */
 package v9t9.common.demos;
 
+import java.io.IOException;
 import java.net.URI;
 
 import v9t9.common.client.ISettingsHandler;
@@ -77,7 +78,7 @@ public interface IDemoHandler {
 	void stopRecording() throws NotifyException;
 	URI getRecordingURI();
 	
-	void startPlayback(URI uri) throws NotifyException;
+	void startPlayback(URI uri) throws NotifyException, IOException;
 	void stopPlayback() throws NotifyException;
 	URI getPlaybackURI();
 

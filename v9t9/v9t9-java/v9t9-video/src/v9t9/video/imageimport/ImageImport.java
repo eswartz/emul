@@ -1566,7 +1566,7 @@ private IPaletteMapper mapColor;
 			mapColor = new TI16MapColor(thePalette, useColorMappedGreyScale, convertGreyScale);
 		}
 		else {
-			throw new UnsupportedOperationException(format.toString());
+			throw new UnsupportedOperationException("Cannot import images into mode: " + format.toString());
 		}
 	}
 

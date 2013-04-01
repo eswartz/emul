@@ -50,9 +50,8 @@ public interface IDiskImage extends IPersistable {
 	/**
 	 * Tell if the disk appears formatted
 	 * @return
-	 * @throws IOException 
 	 */
-	boolean isFormatted() throws IOException;
+	boolean isFormatted();
 
 	boolean isReadOnly();
 	
