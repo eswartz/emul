@@ -650,11 +650,11 @@ public class Interpreter9900 implements IInterpreter {
 
         case Inst9900.Idiv:
             // manually read second reg
-            if (iblock.val1 > iblock.val2) {
-                short low = iblock.val3;
+            if ((iblock.val1 & 0xffff) > (iblock.val2 & 0xffff)) {
+                int low = iblock.val3 & 0xffff;
                 //short low = memory.readWord(block.op2.ea + 2);
-                int dval = (iblock.val2 & 0xffff) << 16
-                        | low & 0xffff;
+                long dval = ((iblock.val2 & 0xffff) << 16
+                        | (low & 0xffff)) & 0xffffffffL;
                 try {
                     iblock.val2 = (short) (dval / (iblock.val1 & 0xffff));
                     iblock.val3 = (short) (dval % (iblock.val1 & 0xffff));
