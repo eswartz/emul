@@ -140,7 +140,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 			svgFailed = false;
 			
 			if (composite != null && !composite.isDisposed() && scaledImageData != null) {
-				composite.getDisplay().syncExec(new Runnable() {
+				composite.getDisplay().asyncExec(new Runnable() {
 					public void run() {
 						if (composite.isDisposed())
 							return;
