@@ -39,7 +39,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 	private Image scaledImage;
 	private boolean svgFailed;
 	private IImageCanvas imageCanvas;
-	
+
 	/**
 	 * @param iconMap
 	 */
@@ -74,11 +74,6 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 				loadIconThread = new Thread("Scaling icon") {
 
 					public void run() {
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException e1) {
-							return;
-						}
 						fetchImage(desiredSize);
 						loadIconThread = null;
 					}
@@ -107,47 +102,56 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 	 * @param size
 	 */
 	protected void fetchImage(final Point size) {
-		final ImageData scaledImageData;
 		if (!svgLoader.isValid()) {
 			svgFailed = true;
 			return;
 		}
 		
-		try {
+		synchronized (this) {
+			while (!svgLoader.isLoaded()) {
+				try {
+					wait(100);
+				} catch (InterruptedException e) {
+					svgFailed = true;
+					return;
+				}
+			}
+			
 			//int min = iconMap.values().iterator().next().getBounds().width;
+			
+			final Composite composite = imageCanvas.getComposite();
+			
 			Point scaledSize = new Point(size.x, size.y);
 			Point svgSize = svgLoader.getSize();
 			scaledSize.y = size.y * svgSize.y / svgSize.x;
 			
 			long start = System.currentTimeMillis();
-			
-			scaledImageData = ImageUtils.convertAwtImageData(svgLoader.getImageData(scaledSize));
+			final ImageData scaledImageData;
+			try {
+				scaledImageData = ImageUtils.convertAwtImageData(svgLoader.getImageData(scaledSize));
+			} catch (SVGException e) {
+				e.printStackTrace();
+				svgFailed = true;
+				return;
+			}
 			long end = System.currentTimeMillis();
 			if (DEBUG)
 				System.out.println("Loaded " + svgLoader.getURI() + " @ " + scaledSize + ": " + (end - start) + " ms");
 			svgFailed = false;
 			
-			final Composite composite = imageCanvas.getComposite();
-			
 			if (composite != null && !composite.isDisposed() && scaledImageData != null) {
-				Runnable runnable = new Runnable() {
+				composite.getDisplay().syncExec(new Runnable() {
 					public void run() {
-						if (!composite.isDisposed()) {
-							scaledImage = new Image(composite.getDisplay(), scaledImageData);
-							if (DEBUG)
-								System.out.println("Got image " + scaledImage.getBounds());
-							imageCanvas.redrawAll();
-						}
+						if (composite.isDisposed())
+							return;
+						scaledImage = new Image(composite.getDisplay(), scaledImageData);
+						if (DEBUG)
+							System.out.println("Got image " + scaledImage.getBounds());
+						imageCanvas.redrawAll();
 					}
-				};
-				if (svgLoader.isSlow())
-					composite.getDisplay().asyncExec(runnable);
-				else
-					composite.getDisplay().syncExec(runnable);
+				});
 			}
-		} catch (SVGException e) {
-			e.printStackTrace();
-			svgFailed = true;
+			
 		}
 	}
 }

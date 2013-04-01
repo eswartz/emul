@@ -378,5 +378,13 @@ public class SVGBatikLoader implements ISVGLoader {
 	public String getURI() {
 		return uri;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.svg.ISVGLoader#isLoaded()
+	 */
+	@Override
+	public boolean isLoaded() {
+		return true;
+	}
 
 }

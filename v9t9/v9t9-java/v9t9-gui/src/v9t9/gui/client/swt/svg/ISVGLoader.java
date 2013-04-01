@@ -50,4 +50,9 @@ public interface ISVGLoader {
 	 */
 	boolean isValid();
 
+	/**
+	 * @return
+	 */
+	boolean isLoaded();
+
 }

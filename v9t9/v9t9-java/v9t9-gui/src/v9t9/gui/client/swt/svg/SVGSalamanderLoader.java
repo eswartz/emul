@@ -33,18 +33,38 @@ import com.kitfox.svg.SVGUniverse;
  *
  */
 public class SVGSalamanderLoader implements ISVGLoader {
-
+	private static boolean DEBUG = false;
+	
     private URI uri;
 	private BufferedImage image;
-	private SVGUniverse universe;
 	private SVGDiagram diagram;
+	private Thread loaderThread;
 
-    public SVGSalamanderLoader(URL url) {
-		universe = SVGCache.getSVGUniverse();
-        diagram = null;
-
-        uri = universe.loadSVG(url);
-        diagram = universe.getDiagram(uri);
+    public SVGSalamanderLoader(final URL url) {
+    	loaderThread = new Thread() {
+    		/* (non-Javadoc)
+    		 * @see java.lang.Thread#run()
+    		 */
+    		@Override
+    		public void run() {
+    			if (DEBUG) System.err.println("*** start");
+    			try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+				}
+    			if (DEBUG) System.err.println("*** loading");
+    			SVGUniverse universe = SVGCache.getSVGUniverse();
+    			URI uri = universe.loadSVG(url);
+    			SVGDiagram diagram = universe.getDiagram(uri);
+				synchronized (SVGSalamanderLoader.this) {
+					SVGSalamanderLoader.this.uri = uri;
+					SVGSalamanderLoader.this.diagram = diagram;
+					if (DEBUG) System.err.println("*** done");
+					SVGSalamanderLoader.this.notifyAll();
+    			}
+    		}
+    	};
+    	loaderThread.start();
 		
         /*
 		this.icon = new SVGIcon();
@@ -83,23 +103,25 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#isValid()
 	 */
 	@Override
-	public boolean isValid() {
-		return diagram != null;
+	public synchronized boolean isValid() {
+		return loaderThread.isAlive() || diagram != null;
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#isSlow()
 	 */
 	@Override
-	public boolean isSlow() {
-		return false;
+	public synchronized boolean isSlow() {
+		return diagram == null;
 	}
     /* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#getImageData(org.eclipse.swt.graphics.Point)
 	 */
 	@Override
 	public BufferedImage getImageData(Point size) throws SVGException {
-		if (diagram == null)
-			throw new SVGException("Failed to read SVG image from " + uri, null);
+		synchronized (this) {
+			if (diagram == null)
+				throw new SVGException("Failed to read SVG image from " + uri, null);
+		}
 			
 		try {
 			java.awt.Rectangle r = getNativeRect();
@@ -113,8 +135,10 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	 * @return
 	 */
 	protected java.awt.Rectangle getNativeRect() {
-		if (diagram == null)
-			return null;
+		synchronized (this) {
+			if (diagram == null)
+				return null;
+		}
 		Rectangle2D r = diagram.getViewRect();
 		return new java.awt.Rectangle((int) r.getMinX(), (int) r.getMinY(), 
 				(int) Math.round(r.getMaxX() - r.getMinX()), 
@@ -147,7 +171,7 @@ public class SVGSalamanderLoader implements ISVGLoader {
 		}
 	}
 
-    private BufferedImage load(Rectangle aoi, Point size) {
+    private synchronized BufferedImage load(Rectangle aoi, Point size) {
 
     	if (size.x == 0 || size.y == 0)
     		return null;
@@ -211,6 +235,14 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	@Override
 	public String getURI() {
 		return uri.toString();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.svg.ISVGLoader#isLoaded()
+	 */
+	@Override
+	public synchronized boolean isLoaded() {
+		return !loaderThread.isAlive();
 	}
 
 }
