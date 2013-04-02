@@ -72,7 +72,7 @@ still being sold.
 Recent Changes
 ===========
 
-<script type="text/javascript" src="updated.js"> </script>
+<span class="timestamp"> </span>
 
 <ul>
 <li>2013/03/30: fix issue closing V9t9 in OS X 
@@ -119,7 +119,7 @@ Installing Locally
 <p>
 <i>Download</i>
 </p>
-<script type="text/javascript" src="updated.js"> </script>
+<span class="timestamp"> </span>
 </div>
 
 Download the archive to the right and unzip it somewhere on your system.
@@ -157,7 +157,7 @@ Using Web Start (Windows or Linux only)
 <p>
 <i>Launch<br> (Windows/Linux only!)</i>
 </p>
-<script type="text/javascript" src="updated.js"> </script>
+<span  class="timestamp"> </span>
 </div>
 
 Click on the button to the right.  This will fetch the most recent V9t9 build each time you use it.

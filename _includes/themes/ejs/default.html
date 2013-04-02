@@ -39,7 +39,17 @@
   
   <!-- to enable web launcher... -->
   <script src="http://www.java.com/js/deployJava.js"></script>
+
+  <!-- track last update -->
+  <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
   
+  <script type="text/javascript">
+timestampUrl = "http://s3.amazonaws.com/V9t9/data/updated.txt";
+$.get(timestampUrl, function (data) {
+    $('.timestamp').text("Last updated: " + data);
+} );
+  </script>
+
   </head>
 
   <body>
@@ -70,4 +80,7 @@
     </div> <!-- /container -->
 
   </body>
+  
+
+  
 </html>
