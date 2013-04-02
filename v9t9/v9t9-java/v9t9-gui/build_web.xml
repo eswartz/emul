@@ -35,10 +35,13 @@
     		<format property="touch.time" pattern="dd MMMM yyyy hh:mm aa"/>
     	</tstamp>
 
+    	<echo message="${touch.time}" file="${web}/data/updated.txt" />
+    	
+    	<!--
     	<copy overwrite="true" file="${base.v9t9}/data/release/updated.js" 
     		tofile="${web}/updated.js"/>
     	<replace file="${web}/updated.js" token="*STAMP*" value="${touch.time}" />
-    	
+    	-->
 
     	<mkdir dir="${web}/data" />
     	<delete file="${web}/data/v9t9.zip" />
