@@ -250,9 +250,22 @@ public class SwtWindow extends BaseEmulatorWindow {
 			public void shellClosed(ShellEvent e) {
 				String boundsPref = SwtPrefUtils.writeBoundsString(shell.getBounds());
 				settingsHandler.get(settingEmulatorWindowBounds).setString(boundsPref);
+				machine.getClient().close();
+				
 				dispose();
 				
-				machine.getClient().close();
+				// FIXME:  AWT doesn't want to quit all the time... force it after a reasonable time 
+				Thread reallyQuit = new Thread() {
+					public void run() {
+						try {
+							Thread.sleep(1000);
+							System.exit(0);
+						} catch (InterruptedException e) {
+						}
+					}
+				};
+				reallyQuit.setDaemon(true);
+				reallyQuit.start();
 			}
 		});
 		
