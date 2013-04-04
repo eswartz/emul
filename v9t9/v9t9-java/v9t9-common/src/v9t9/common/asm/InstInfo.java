@@ -17,7 +17,7 @@ public class InstInfo {
 	/**
 	 * machine cycles 
 	 */
-	public short cycles;
+	//public short cycles;
 	/**
 	 * bit mask from Status.ST_xxx
 	 */

@@ -25,7 +25,7 @@ public interface IInstructionFactory {
 
 	String getInstName(int inst);
 
-	
+	/** Fetch and decode an instruction against live operands */
 	RawInstruction decodeInstruction(int pc, IMemoryDomain domain);
 	byte[] encodeInstruction(RawInstruction instruction);
 

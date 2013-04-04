@@ -10,53 +10,44 @@
  */
 package v9t9.machine.ti99.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import java.util.Random;
 
-import ejs.base.properties.IProperty;
+import org.junit.Before;
+import org.junit.Test;
 
-import junit.framework.TestCase;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.machine.ti99.machine.TI994A;
 import v9t9.machine.ti99.memory.ConsoleRamArea;
 import v9t9.machine.ti99.memory.ExpRamArea;
+import ejs.base.properties.IProperty;
 
 /**
  * @author ejs
  */
-public class MemoryTest extends TestCase {
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(MemoryTest.class);
-    }
+public class MemoryTest {
 
     private ISettingsHandler settings;
     private TI994A machine;
     private IMemoryDomain CPU;
-
-    /**
-     * Constructor for MemoryTest.
-     * 
-     * @param arg0
-     */
-    public MemoryTest(String arg0) {
-        super(arg0);
-    }
 
     /*
      * (non-Javadoc)
      * 
      * @see junit.framework.TestCase#setUp()
      */
-    @Override
-	protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+	public void setUp() throws Exception {
         settings = new BasicSettingsHandler();
         machine = new TI994A(settings);
         CPU = machine.getConsole();
     }
 
+    @Test
     public void testReads() {
 
         int i;

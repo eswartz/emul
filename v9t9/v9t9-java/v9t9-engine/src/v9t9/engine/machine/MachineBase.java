@@ -214,7 +214,7 @@ abstract public class MachineBase implements IMachine {
 		
 		keyboardHandler = new NullKeyboardHandler(keyboardState, this);
 
-    	this.instructionFactory = cpu != null ? cpu.getInstructionFactory() : null;
+    	this.instructionFactory = cpu != null ? cpu.getRawInstructionFactory() : null;
 	}
     
 	/* (non-Javadoc)

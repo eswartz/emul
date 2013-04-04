@@ -18,6 +18,7 @@ import ejs.base.utils.HexUtils;
 
 
 import v9t9.common.asm.IDecompilePhase;
+import v9t9.common.asm.IInstructionFactory;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.IExecutor;
@@ -446,7 +447,15 @@ public class CpuF99b extends CpuBase {
 	 * @see v9t9.common.cpu.ICpu#getInstructionFactory()
 	 */
 	@Override
-	public IRawInstructionFactory getInstructionFactory() {
+	public IInstructionFactory getInstructionFactory() {
+		throw new UnsupportedOperationException();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#getInstructionFactory()
+	 */
+	@Override
+	public IRawInstructionFactory getRawInstructionFactory() {
 		return F99bInstructionFactory.INSTANCE;
 	}
 	

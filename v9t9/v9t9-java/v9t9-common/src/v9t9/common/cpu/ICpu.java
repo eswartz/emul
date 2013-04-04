@@ -16,7 +16,9 @@ import java.util.concurrent.Semaphore;
 import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
 import v9t9.common.asm.IDecompilePhase;
+import v9t9.common.asm.IInstructionFactory;
 import v9t9.common.asm.IRawInstructionFactory;
+import v9t9.common.asm.RawInstruction;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
@@ -150,10 +152,9 @@ public interface ICpu extends IPersistable {
 	 * Set interrupt request interrupt line
 	 */
 	void irq();
-	/**
-	 * @return
-	 */
-	IRawInstructionFactory getInstructionFactory();
+
+	IInstructionFactory getInstructionFactory();
+	IRawInstructionFactory getRawInstructionFactory();
 	
 
 	IExecutor createExecutor();
@@ -166,5 +167,9 @@ public interface ICpu extends IPersistable {
 	void removeListener(ICpuListener listener);
 	
 	IInstructionEffectLabelProvider createInstructionEffectLabelProvider();
+	/**
+	 * @return
+	 */
+	RawInstruction getCurrentInstruction();
 
 }

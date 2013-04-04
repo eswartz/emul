@@ -19,7 +19,6 @@ import org.eclipse.swt.widgets.Composite;
 
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.ICpu;
-import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.machine.IMachine;
@@ -125,13 +124,11 @@ public abstract class CpuInstructionComposite extends Composite {
 	 * 
 	 */
 	public void refresh() {
-		ICpuState state = machine.getCpu().getState();
-		RawInstruction inst = machine.getInstructionFactory().decodeInstruction(
-				state.getPC(), machine.getConsole());
+		RawInstruction inst = machine.getCpu().getCurrentInstruction();
 		
-		InstructionWorkBlock before = new InstructionWorkBlock(state);
+		InstructionWorkBlock before = new InstructionWorkBlock(machine.getCpu().getState());
 		before.inst = inst;
-		before.pc = (short) (state.getPC() + inst.getSize());
+		before.pc = (short) (inst.pc + inst.getSize());
 		
 		InstRow row = new InstRow(before);
 		synchronized (instHistory) {

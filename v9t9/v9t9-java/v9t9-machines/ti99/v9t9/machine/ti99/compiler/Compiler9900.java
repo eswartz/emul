@@ -373,7 +373,7 @@ public class Compiler9900 extends CompilerBase {
      */
     public void generateInstruction(int pc, RawInstruction rawins,
             CompileInfo info, CompiledInstInfo ii) {
-    	Instruction9900 ins = new Instruction9900(rawins);
+    	Instruction9900 ins = new Instruction9900(rawins, cpu.getConsole());
         InstructionList ilist = info.ilist;
 
         BaseMachineOperand mop1 = (BaseMachineOperand) ins.getOp1();
@@ -457,8 +457,12 @@ public class Compiler9900 extends CompilerBase {
         /* compose operand values and instruction timings */
         fetchOperands(ins, pc, info);
 
-        ilist.append(new IINC(info.localCycles, ins.getInfo().cycles
-        		+ ((MachineOperand9900) ins.getOp1()).cycles + ((MachineOperand9900) ins.getOp2()).cycles));
+        
+        // FIXME
+        int cycles = ins.fetchCycles
+        		+ ((MachineOperand9900) ins.getOp1()).cycles + ((MachineOperand9900) ins.getOp2()).cycles;
+        
+        ilist.append(new IINC(info.localCycles, cycles));
 
         if (debugInstructions.getBoolean()) {
             dumpFull(info, ilist, ins, "dumpBefore", ins.toString());

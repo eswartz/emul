@@ -21,6 +21,7 @@ import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
 
 
+import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.ICpu;
@@ -360,6 +361,22 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	@Override
 	public void removeListener(ICpuListener listener) {
 		listeners.remove(listener);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#currentInstruction()
+	 */
+	@Override
+	public RawInstruction getCurrentInstruction() {
+		ICpu cpu = machine.getCpu();
+		CycleCounts origCounts = cpu.getCycleCounts().clone();
+		
+		RawInstruction inst = machine.getInstructionFactory().decodeInstruction(
+				cpu.getState().getPC(), machine.getConsole());
+		
+		origCounts.copyTo(cpu.getCycleCounts());
+
+		return inst;
 	}
 	
 }

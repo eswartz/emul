@@ -201,8 +201,9 @@ public abstract class BaseTest9900 extends TestCase {
 	}
 	protected IHighLevelInstruction createHLInstruction(int pc, int wp, String element) throws ParseException {
 		RawInstruction inst = createInstruction(pc, element);
-		return new HighLevelInstruction(wp, new Instruction9900(inst), 
-				Instruction9900.getInstructionFlags(new Instruction9900(inst)));
+		Instruction9900 inst9900 = new Instruction9900(inst, CPU);
+		return new HighLevelInstruction(wp, inst9900, 
+				Instruction9900.getInstructionFlags(inst9900));
 	}
 
 	class InstFollowInfo {

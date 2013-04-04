@@ -25,6 +25,13 @@ public class CycleCounts {
 	
 	public CycleCounts() {
 	}
+	
+	@Override
+	public String toString() {
+		return "CycleCounts [fetch=" + fetch.get() + ", load=" + load.get()  + ", store="
+				+ store.get()  + ", execute=" + execute.get()  + ", overhead=" + overhead.get() 
+				+ "]";
+	}
 
 	public void addFetch(int cycles) {
 		fetch.addAndGet(cycles);
@@ -85,5 +92,18 @@ public class CycleCounts {
 	 */
 	public int getAndResetLoad() {
 		return load.getAndSet(0);
+	}
+	
+	public CycleCounts clone() {
+		CycleCounts c = new CycleCounts();
+		copyTo(c);
+		return c;
+	}
+	public void copyTo(CycleCounts c) {
+		c.fetch.set(fetch.get());
+		c.execute.set(execute.get());
+		c.load.set(load.get());
+		c.store.set(store.get());
+		c.overhead.set(overhead.get());
 	}
 }

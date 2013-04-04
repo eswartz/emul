@@ -24,6 +24,8 @@ import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.CycleCounts;
+import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryDomain;
 
 /**
@@ -50,106 +52,501 @@ public class InstTable9900 {
 	static Map<Integer, InstPattern9900> instEntries = new HashMap<Integer, InstPattern9900>();
 	static Map<Integer, Integer> instOpcodes = new HashMap<Integer, Integer>();
 	static Map<Integer, Integer> instMasks = new HashMap<Integer, Integer>();
+	
 
-	private static void register(int inst, int opcode, InstPattern9900 entry) {
-		instEntries.put(inst, entry);
-		instOpcodes.put(inst, opcode);
-		instMasks.put(inst, entry == NONE_NONE || entry == IMM_NONE ? opcode : 0xffff);
+	public static Map<String, Integer> nameToInst = new HashMap<String, Integer>();
+	public static Map<Integer, String> instToName = new HashMap<Integer, String>();
+
+	public static Map<Integer, ICycleCalculator> instCycles = new HashMap<Integer, ICycleCalculator>();
+
+
+	public interface ICycleCalculator {
+		void addCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts);
+		void setLoads(boolean b);
+		void setStores(boolean b);
+		boolean loads();
+		boolean stores();
 	}
-	private static void register(int inst, int opcode, InstPattern9900 entry, int mask) {
-		instEntries.put(inst, entry);
-		instOpcodes.put(inst, opcode);
-		instMasks.put(inst, mask);
-	}
-	static {
-		register(InstTableCommon.Idata, 0x0000, IMM_NONE, 0xffff);
-		register(InstTableCommon.Ibyte, 0x0000, IMM_NONE, 0xffff);
+	public static abstract class BaseCycleCalculator implements ICycleCalculator {
 
-		register(Inst9900.Ili, 0x0200, REG_IMM, 0x20f);
-		register(Inst9900.Iai, 0x0220, REG_IMM, 0x22f);
-		register(Inst9900.Iandi, 0x0240, REG_IMM, 0x24f);
-		register(Inst9900.Iori, 0x0260, REG_IMM, 0x26f);
-		register(Inst9900.Ici, 0x0280, REG_IMM, 0x28f);
-
-		register(Inst9900.Istwp, 0x02a0, REG_NONE, 0x2af);
-		register(Inst9900.Istst, 0x02c0, REG_NONE, 0x2cf);
-		register(Inst9900.Ilwpi, 0x02e0, IMM_NONE);
-		register(Inst9900.Ilimi, 0x0300, IMM_NONE);
-		register(Inst9900.Iidle, 0x0340, NONE_NONE);
-		register(Inst9900.Irset, 0x0360, NONE_NONE);
-		register(Inst9900.Irtwp, 0x0380, NONE_NONE);
-		register(Inst9900.Ickon, 0x03a0, NONE_NONE);
-		register(Inst9900.Ickof, 0x03c0, NONE_NONE);
-		register(Inst9900.Ilrex, 0x03e0, NONE_NONE);
-
-		register(Inst9900.Iblwp, 0x0400, GEN_NONE);
-		register(Inst9900.Ib, 0x0440, GEN_NONE);
-		register(Inst9900.Ix, 0x0480, GEN_NONE);
-		register(Inst9900.Iclr, 0x04c0, GEN_NONE);
-		register(Inst9900.Ineg, 0x0500, GEN_NONE);
-		register(Inst9900.Iinv, 0x0540, GEN_NONE);
-		register(Inst9900.Iinc, 0x0580, GEN_NONE);
-		register(Inst9900.Iinct, 0x05c0, GEN_NONE);
-		register(Inst9900.Idec, 0x0600, GEN_NONE);
-		register(Inst9900.Idect, 0x0640, GEN_NONE);
-		register(Inst9900.Ibl, 0x0680, GEN_NONE);
-		register(Inst9900.Iswpb, 0x06c0, GEN_NONE);
-		register(Inst9900.Iseto, 0x0700, GEN_NONE);
-		register(Inst9900.Iabs, 0x0740, GEN_NONE);
-
-		register(Inst9900.Isra, 0x0800, REG_CNT);
-		register(Inst9900.Isrl, 0x0900, REG_CNT);
-		register(Inst9900.Isla, 0x0a00, REG_CNT);
-		register(Inst9900.Isrc, 0x0b00, REG_CNT);
-
-		register(InstTableCommon.Idsr, 0x0c00, OFF_NONE, 0xcff);
-		register(InstTableCommon.Ikysl, 0x0d40, NONE_NONE, 0xd40);
-		register(InstTableCommon.Iticks, 0x0d60, REG_NONE, 0xd60);
-		register(InstTableCommon.Iemitchar, 0x0dc0, REG_CNT, 0xdcf);
-		register(InstTableCommon.Idbg, 0x0de0, NONE_NONE, 0xde0);
-		register(InstTableCommon.Idbgf, 0x0de1, NONE_NONE, 0xde1);
-
-		register(Inst9900.Ijmp, 0x1000, JMP_NONE);
-		register(Inst9900.Ijlt, 0x1100, JMP_NONE);
-		register(Inst9900.Ijle, 0x1200, JMP_NONE);
-		register(Inst9900.Ijeq, 0x1300, JMP_NONE);
-		register(Inst9900.Ijhe, 0x1400, JMP_NONE);
-		register(Inst9900.Ijgt, 0x1500, JMP_NONE);
-		register(Inst9900.Ijne, 0x1600, JMP_NONE);
-		register(Inst9900.Ijnc, 0x1700, JMP_NONE);
-		register(Inst9900.Ijoc, 0x1800, JMP_NONE);
-		register(Inst9900.Ijno, 0x1900, JMP_NONE);
-		register(Inst9900.Ijl, 0x1a00, JMP_NONE);
-		register(Inst9900.Ijh, 0x1b00, JMP_NONE);
-		register(Inst9900.Ijop, 0x1c00, JMP_NONE);
-
-		register(Inst9900.Isbo, 0x1d00, OFF_NONE);
-		register(Inst9900.Isbz, 0x1e00, OFF_NONE);
-		register(Inst9900.Itb, 0x1f00, OFF_NONE);
-
-		register(Inst9900.Icoc, 0x2000, GEN6_REG);
-		register(Inst9900.Iczc, 0x2400, GEN6_REG);
-		register(Inst9900.Ixor, 0x2800, GEN6_REG);
-		register(Inst9900.Ixop, 0x2c00, GEN6_REG);
+		protected boolean loads;
+		protected boolean stores;
 		
-		register(Inst9900.Ildcr, 0x3000, GEN_CNT);
-		register(Inst9900.Istcr, 0x3400, GEN_CNT);
-		register(Inst9900.Impy, 0x3800, GEN_REG);
-		register(Inst9900.Idiv, 0x3c00, GEN_REG);
+		public BaseCycleCalculator() {
+		}
+
+		public void setLoads(boolean b) {
+			this.loads = b;
+		}
+		public void setStores(boolean b) {
+			this.stores = b;
+		}
+		
+		public boolean loads() {
+			return loads;
+		}
+		public boolean stores() {
+			return stores;
+		}
+		
+		@Override
+		final public void addCycles(InstructionWorkBlock origBlock_,
+				InstructionWorkBlock block_, 
+				CycleCounts counts) {
+			InstructionWorkBlock9900 origBlock = (InstructionWorkBlock9900) origBlock_;
+			
+			RawInstruction inst = origBlock.inst;
+			counts.addFetch(origBlock.inst.fetchCycles);
+			
+			MachineOperand9900 op1 = (MachineOperand9900) inst.getOp1();
+			MachineOperand9900 op2 = (MachineOperand9900) inst.getOp2();
+			
+			if (op1 != null) {
+				counts.addFetch(op1.cycles);
+				if (op2 != null) {
+					counts.addFetch(op2.cycles);
+				}
+			}
+			
+			addCustomCycles(origBlock_, block_, counts);
+		}
+		
+		abstract protected void addCustomCycles(InstructionWorkBlock origBlock_,
+				InstructionWorkBlock block_, 
+				CycleCounts counts);
+		
+	}
+	
+	
+	public static class NullCycleCalculator implements ICycleCalculator {
+		@Override
+		public void addCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
+		}
+
+		/* (non-Javadoc)
+		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#setLoads(boolean)
+		 */
+		@Override
+		public void setLoads(boolean b) {
+			throw new UnsupportedOperationException();
+		}
+
+		/* (non-Javadoc)
+		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#setStores(boolean)
+		 */
+		@Override
+		public void setStores(boolean b) {
+			throw new UnsupportedOperationException();
+		}
+
+		/* (non-Javadoc)
+		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#loads()
+		 */
+		@Override
+		public boolean loads() {
+			return false;
+		}
+
+		/* (non-Javadoc)
+		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#stores()
+		 */
+		@Override
+		public boolean stores() {
+			return false;
+		}
+		
+	}
+	public static class FixedCycleCalculator extends BaseCycleCalculator {
+		
+		private int exec;
+		protected int memAccesses;
+
+		public FixedCycleCalculator(int exec, int memAccesses) {
+			super();
+			this.exec = exec;
+			this.memAccesses = memAccesses;
+		}
+		
+		@Override
+		protected void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
+			counts.addExecute(exec);
+		}
+
+	}
+
+	static class InstBuilder {
+		private int inst;
+		private ICycleCalculator cycleCounter;
+
+		public static InstBuilder from(String name, int inst, int opcode, InstPattern9900 entry, int mask) {
+			InstBuilder b = new InstBuilder();
+			
+			nameToInst.put(name.toUpperCase(), inst);
+			instToName.put(inst, name.toUpperCase());
+			
+			instEntries.put(inst, entry);
+			instOpcodes.put(inst, opcode);
+			instMasks.put(inst, mask);
+			
+			b.cycleCounter = new NullCycleCalculator();
+			b.inst = inst;
+			return b;
+		}
+		
+		public static InstBuilder from(String name, int inst, int opcode, InstPattern9900 entry) {
+			return from(name, inst, opcode, entry,
+					entry == NONE_NONE || entry == IMM_NONE ? opcode : 0xffff);
+		}
+		
+		public void register() {
+			instCycles.put(inst, cycleCounter);
+		}
+		
+		public InstBuilder withCycles(int exec, int memAccesses) {
+			cycleCounter = new FixedCycleCalculator(exec, memAccesses);
+			return this;
+		}
+		public InstBuilder withCycleCalculator(ICycleCalculator calculator) {
+			cycleCounter = calculator;
+			return this;
+		}
+		public InstBuilder source() {
+			cycleCounter.setLoads(true);
+			return this;
+		}
+		public InstBuilder destination() {
+			cycleCounter.setStores(true);
+			return this;
+		}
+	}
+	
+	static class JumpCycleCounter extends BaseCycleCalculator {
+
+		public static final ICycleCalculator INSTANCE = new JumpCycleCounter();
+
+		@Override
+		protected void addCustomCycles(InstructionWorkBlock origBlock,
+				InstructionWorkBlock block, CycleCounts counts) {
+			if (block.pc != origBlock.pc) {
+				counts.addExecute(10);
+			} else {
+				counts.addExecute(8);
+			}
+		}
+		
+	}
+	
+	static class ShiftCycleCalculator extends BaseCycleCalculator {
+		
+		public static final ICycleCalculator INSTANCE = new ShiftCycleCalculator();
+		
+		@Override
+		protected void addCustomCycles(InstructionWorkBlock origBlock,
+				InstructionWorkBlock block, CycleCounts counts) {
+			int disp = ((InstructionWorkBlock9900) block).val2;
+			counts.addExecute(2 * disp);
+			if (!((MachineOperand9900) origBlock.inst.getOp2()).isRegister()) {
+				counts.addExecute(12);
+			} else {
+				counts.addExecute(20);
+			}
+		}
+		
+	}
+	
+	static {
+		InstBuilder.from("data", InstTableCommon.Idata, 0x0000, IMM_NONE, 0xffff)
+			.withCycles(6, 1)
+			.register();
+		InstBuilder.from("byte", InstTableCommon.Ibyte, 0x0000, IMM_NONE, 0xffff)
+			.withCycles(6, 1)
+			.register();
+
+		InstBuilder.from("li", Inst9900.Ili, 0x0200, REG_IMM, 0x20f)
+			.withCycles(12, 3)
+			.register();
+		InstBuilder.from("ai", Inst9900.Iai, 0x0220, REG_IMM, 0x22f)
+			.withCycles(14, 4)
+			.register();
+		InstBuilder.from("andi", Inst9900.Iandi, 0x0240, REG_IMM, 0x24f)
+			.withCycles(14, 4)
+			.register();
+		InstBuilder.from("ori", Inst9900.Iori, 0x0260, REG_IMM, 0x26f)
+			.withCycles(14, 4)
+			.register();
+		InstBuilder.from("ci", Inst9900.Ici, 0x0280, REG_IMM, 0x28f)
+			.withCycles(14, 3)
+			.register();
+
+		InstBuilder.from("stwp", Inst9900.Istwp, 0x02a0, REG_NONE, 0x2af)
+			.withCycles(8, 2)
+			.register();
+		InstBuilder.from("stst", Inst9900.Istst, 0x02c0, REG_NONE, 0x2cf)
+			.withCycles(8, 2)
+			.register();
+		InstBuilder.from("lwpi", Inst9900.Ilwpi, 0x02e0, IMM_NONE)
+			.withCycles(10, 2)
+			.register();
+		InstBuilder.from("limi", Inst9900.Ilimi, 0x0300, IMM_NONE)
+			.withCycles(16, 2)
+			.register();
+		InstBuilder.from("idle", Inst9900.Iidle, 0x0340, NONE_NONE)
+			.withCycles(12, 1)
+			.register();
+		InstBuilder.from("rset", Inst9900.Irset, 0x0360, NONE_NONE)
+			.withCycles(12, 1)
+			.register();
+		InstBuilder.from("rtwp", Inst9900.Irtwp, 0x0380, NONE_NONE)
+			.withCycles(14, 4)
+			.register();
+		InstBuilder.from("ckon", Inst9900.Ickon, 0x03a0, NONE_NONE)
+			.withCycles(12, 1)
+			.register();
+		InstBuilder.from("ckof", Inst9900.Ickof, 0x03c0, NONE_NONE)
+			.withCycles(12, 1)
+			.register();
+		InstBuilder.from("lrex", Inst9900.Ilrex, 0x03e0, NONE_NONE)
+			.withCycles(12, 1)
+			.register();
+
+		InstBuilder.from("blwp", Inst9900.Iblwp, 0x0400, GEN_NONE)
+			.withCycles(26, 6)
+			.source()
+			.register();
+		InstBuilder.from("b", Inst9900.Ib, 0x0440, GEN_NONE)
+			.withCycles(8, 2)
+			.register();
+		InstBuilder.from("x", Inst9900.Ix, 0x0480, GEN_NONE).register();
+		InstBuilder.from("clr", Inst9900.Iclr, 0x04c0, GEN_NONE)
+			.withCycles(10, 3)
+			.source()
+			.register();
+		InstBuilder.from("neg", Inst9900.Ineg, 0x0500, GEN_NONE)
+			.withCycles(12, 3)
+			.register();
+		InstBuilder.from("inv", Inst9900.Iinv, 0x0540, GEN_NONE)
+			.withCycles(10, 3)
+			.source()
+			.register();
+		InstBuilder.from("inc", Inst9900.Iinc, 0x0580, GEN_NONE)
+			.withCycles(10, 3)
+			.source()
+			.register();
+		InstBuilder.from("inct", Inst9900.Iinct, 0x05c0, GEN_NONE)
+			.withCycles(10, 3)
+			.source()
+			.register();
+		InstBuilder.from("dec", Inst9900.Idec, 0x0600, GEN_NONE)
+			.withCycles(10, 3)
+			.source()
+			.register();
+		InstBuilder.from("dect", Inst9900.Idect, 0x0640, GEN_NONE)
+			.withCycles(10, 3)
+			.source()
+			.register();
+		InstBuilder.from("bl", Inst9900.Ibl, 0x0680, GEN_NONE)
+			.withCycles(12, 3)
+			.source()
+			.register();
+		InstBuilder.from("swpb", Inst9900.Iswpb, 0x06c0, GEN_NONE)
+			.withCycles(10, 3)
+			.source()
+			.register();
+		InstBuilder.from("seto", Inst9900.Iseto, 0x0700, GEN_NONE)
+			.withCycles(10, 3)
+			.source()
+			.register();
+		InstBuilder.from("abs", Inst9900.Iabs, 0x0740, GEN_NONE)
+			.withCycleCalculator(new BaseCycleCalculator() {
+				
+				@Override
+				protected void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
+					if (((InstructionWorkBlock9900) origBlock).val1 >= 0) {
+						counts.addExecute(12);
+					} else {
+						counts.addExecute(14);
+					}
+				}
+			})
+			.source().destination()
+			.register();
+
+		InstBuilder.from("sra", Inst9900.Isra, 0x0800, REG_CNT)
+			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
+			.register();
+		InstBuilder.from("srl", Inst9900.Isrl, 0x0900, REG_CNT)
+			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
+			.register();
+		InstBuilder.from("sla", Inst9900.Isla, 0x0a00, REG_CNT)
+			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
+			.register();
+		InstBuilder.from("src", Inst9900.Isrc, 0x0b00, REG_CNT)
+			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
+			.register();
+
+		InstBuilder.from("dsr", InstTableCommon.Idsr, 0x0c00, OFF_NONE, 0xcff).register();
+		InstBuilder.from("kysl", InstTableCommon.Ikysl, 0x0d40, NONE_NONE, 0xd40).register();
+		InstBuilder.from("ticks", InstTableCommon.Iticks, 0x0d60, REG_NONE, 0xd60).register();
+		InstBuilder.from("emitchar", InstTableCommon.Iemitchar, 0x0dc0, REG_CNT, 0xdcf).register();
+		InstBuilder.from("dbg", InstTableCommon.Idbg, 0x0de0, NONE_NONE, 0xde0).register();
+		InstBuilder.from("dbgf", InstTableCommon.Idbgf, 0x0de1, NONE_NONE, 0xde1).register();
+
+		InstBuilder.from("jmp", Inst9900.Ijmp, 0x1000, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("jlt", Inst9900.Ijlt, 0x1100, JMP_NONE)
+		.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("jle", Inst9900.Ijle, 0x1200, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("jeq", Inst9900.Ijeq, 0x1300, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("jhe", Inst9900.Ijhe, 0x1400, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("jgt", Inst9900.Ijgt, 0x1500, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("jne", Inst9900.Ijne, 0x1600, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("jnc", Inst9900.Ijnc, 0x1700, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("joc", Inst9900.Ijoc, 0x1800, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("jno", Inst9900.Ijno, 0x1900, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("jl", Inst9900.Ijl, 0x1a00, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("jh", Inst9900.Ijh, 0x1b00, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+		InstBuilder.from("jop", Inst9900.Ijop, 0x1c00, JMP_NONE)
+			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			.register();
+
+		InstBuilder.from("sbo", Inst9900.Isbo, 0x1d00, OFF_NONE).register();
+		InstBuilder.from("sbz", Inst9900.Isbz, 0x1e00, OFF_NONE).register();
+		InstBuilder.from("tb", Inst9900.Itb, 0x1f00, OFF_NONE)
+			.withCycles(12, 2)
+			.register();
+
+		InstBuilder.from("coc", Inst9900.Icoc, 0x2000, GEN6_REG)
+			.withCycles(14, 3)
+			.source()
+			.register();
+		InstBuilder.from("czc", Inst9900.Iczc, 0x2400, GEN6_REG)
+			.withCycles(14, 3)
+			.source()
+			.register();
+		InstBuilder.from("xor", Inst9900.Ixor, 0x2800, GEN6_REG)
+			.withCycles(14, 4)
+			.source()
+			.register();
+		InstBuilder.from("xop", Inst9900.Ixop, 0x2c00, GEN6_REG)
+			.withCycles(36, 8)
+			.source()
+			.register();
+		
+		InstBuilder.from("ldcr", Inst9900.Ildcr, 0x3000, GEN_CNT)
+			.withCycleCalculator(new BaseCycleCalculator() {
+				
+				@Override
+				public void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
+					counts.addExecute(20 + 2 * ((InstructionWorkBlock9900) origBlock).val2);
+				}
+			})
+			.source()
+			.register();
+		InstBuilder.from("stcr", Inst9900.Istcr, 0x3400, GEN_CNT)
+			.withCycleCalculator(new BaseCycleCalculator() {
+				
+				@Override
+				protected void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
+					int disp = ((InstructionWorkBlock9900) origBlock).val2;
+					if (disp > 0 && disp <= 7)
+						counts.addExecute(42);
+					else if (disp == 8)
+						counts.addExecute(44);
+					else if (disp > 0 && disp <= 15)
+						counts.addExecute(58);
+					else /* disp == 0 or 16 */
+						counts.addExecute(60);
+				}
+			})
+			.register();
+		InstBuilder.from("mpy", Inst9900.Impy, 0x3800, GEN_REG)
+			.withCycles(52, 5)
+			.source()
+			.register();
+		InstBuilder.from("div", Inst9900.Idiv, 0x3c00, GEN_REG)
+			.withCycleCalculator(new BaseCycleCalculator() {
+				
+				@Override
+				public void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
+					if ((((InstructionWorkBlock9900) block).st & Status9900.ST_O) != 0) {
+						counts.addExecute(16);
+					} else {
+						counts.addExecute((92+124)/2);		// FIXME
+					}
+				}
+			})
+			.source()
+			.register();
 
 
-		register(Inst9900.Iszc, 0x4000, GEN_GEN);
-		register(Inst9900.Iszcb, 0x5000, GEN_GEN);
-		register(Inst9900.Is, 0x6000, GEN_GEN);
-		register(Inst9900.Isb, 0x7000, GEN_GEN);
-		register(Inst9900.Ic, 0x8000, GEN_GEN);
-		register(Inst9900.Icb, 0x9000, GEN_GEN);
-		register(Inst9900.Ia, 0xa000, GEN_GEN);
-		register(Inst9900.Iab, 0xb000, GEN_GEN);
-		register(Inst9900.Imov, 0xc000, GEN_GEN);
-		register(Inst9900.Imovb, 0xd000, GEN_GEN);
-		register(Inst9900.Isoc, 0xe000, GEN_GEN);
-		register(Inst9900.Isocb, 0xf000, GEN_GEN);
+		InstBuilder.from("szc", Inst9900.Iszc, 0x4000, GEN_GEN)
+			.withCycles(14, 4)
+			.source().destination()
+			.register();
+		InstBuilder.from("szcb", Inst9900.Iszcb, 0x5000, GEN_GEN)
+			.withCycles(14, 4)
+			.source().destination()
+			.register();
+		InstBuilder.from("s", Inst9900.Is, 0x6000, GEN_GEN)
+			.withCycles(14, 4)
+			.source().destination()
+			.register();
+		InstBuilder.from("sb", Inst9900.Isb, 0x7000, GEN_GEN)
+			.withCycles(14, 4)
+			.source().destination()
+			.register();
+		InstBuilder.from("c", Inst9900.Ic, 0x8000, GEN_GEN)
+			.withCycles(14, 3)
+			.source().destination()
+			.register();
+		InstBuilder.from("cb", Inst9900.Icb, 0x9000, GEN_GEN)
+			.withCycles(14, 3)
+			.source().destination()
+			.register();
+		InstBuilder.from("a", Inst9900.Ia, 0xa000, GEN_GEN)
+			.withCycles(14, 4).source().destination()
+			.register();
+		InstBuilder.from("ab", Inst9900.Iab, 0xb000, GEN_GEN)
+			.withCycles(14, 4).source().destination()
+			.register();
+		InstBuilder.from("mov", Inst9900.Imov, 0xc000, GEN_GEN)
+			.withCycles(14, 4)
+			.source().destination()
+			.register();
+		InstBuilder.from("movb", Inst9900.Imovb, 0xd000, GEN_GEN)
+			.withCycles(14, 4)
+			.source().destination()
+			.register();
+		InstBuilder.from("soc", Inst9900.Isoc, 0xe000, GEN_GEN)
+			.withCycles(14, 4)
+			.source().destination()
+			.register();
+		InstBuilder.from("socb", Inst9900.Isocb, 0xf000, GEN_GEN)
+			.withCycles(14, 4)
+			.source().destination()
+			.register();
 
 	};
 
@@ -319,95 +716,10 @@ public class InstTable9900 {
 		return instEntries.get(inst);
 	}
 	
-	public static Map<String, Integer> nameToInst = new HashMap<String, Integer>();
-	public static Map<Integer, String> instToName = new HashMap<Integer, String>();
-	
-	static { registerInstruction(InstTableCommon.Idata, "data"); }
-	static { registerInstruction(Inst9900.Ili, "li"); }
-	static { registerInstruction(Inst9900.Iai, "ai"); }
-	static { registerInstruction(Inst9900.Iandi, "andi"); }
-	static { registerInstruction(Inst9900.Iori, "ori"); }
-	static { registerInstruction(Inst9900.Ici, "ci"); }
-	static { registerInstruction(Inst9900.Istwp, "stwp"); }
-	static { registerInstruction(Inst9900.Istst, "stst"); }
-	static { registerInstruction(Inst9900.Ilwpi, "lwpi"); }
-	static { registerInstruction(Inst9900.Ilimi, "limi"); }
-	static { registerInstruction(Inst9900.Iidle, "idle"); }
-	static { registerInstruction(Inst9900.Irset, "rset"); }
-	static { registerInstruction(Inst9900.Irtwp, "rtwp"); }
-	static { registerInstruction(Inst9900.Ickon, "ckon"); }
-	static { registerInstruction(Inst9900.Ickof, "ckof"); }
-	static { registerInstruction(Inst9900.Ilrex, "lrex"); }
-	static { registerInstruction(Inst9900.Iblwp, "blwp"); }
-	static { registerInstruction(Inst9900.Ib, "b"); }
-	static { registerInstruction(Inst9900.Ix, "x"); }
-	static { registerInstruction(Inst9900.Iclr, "clr"); }
-	static { registerInstruction(Inst9900.Ineg, "neg"); }
-	static { registerInstruction(Inst9900.Iinv, "inv"); }
-	static { registerInstruction(Inst9900.Iinc, "inc"); }
-	static { registerInstruction(Inst9900.Iinct, "inct"); }
-	static { registerInstruction(Inst9900.Idec, "dec"); }
-	static { registerInstruction(Inst9900.Idect, "dect"); }
-	static { registerInstruction(Inst9900.Ibl, "bl"); }
-	static { registerInstruction(Inst9900.Iswpb, "swpb"); }
-	static { registerInstruction(Inst9900.Iseto, "seto"); }
-	static { registerInstruction(Inst9900.Iabs, "abs"); }
-	static { registerInstruction(Inst9900.Isra, "sra"); }
-	static { registerInstruction(Inst9900.Isrl, "srl"); }
-	static { registerInstruction(Inst9900.Isla, "sla"); }
-	static { registerInstruction(Inst9900.Isrc, "src"); }
-	static { registerInstruction(Inst9900.Ijmp, "jmp"); }
-	static { registerInstruction(Inst9900.Ijlt, "jlt"); }
-	static { registerInstruction(Inst9900.Ijle, "jle"); }
-	static { registerInstruction(Inst9900.Ijeq, "jeq"); }
-	static { registerInstruction(Inst9900.Ijhe, "jhe"); }
-	static { registerInstruction(Inst9900.Ijgt, "jgt"); }
-	static { registerInstruction(Inst9900.Ijne, "jne"); }
-	static { registerInstruction(Inst9900.Ijnc, "jnc"); }
-	static { registerInstruction(Inst9900.Ijoc, "joc"); }
-	static { registerInstruction(Inst9900.Ijno, "jno"); }
-	static { registerInstruction(Inst9900.Ijl, "jl"); }
-	static { registerInstruction(Inst9900.Ijh, "jh"); }
-	static { registerInstruction(Inst9900.Ijop, "jop"); }
-	static { registerInstruction(Inst9900.Isbo, "sbo"); }
-	static { registerInstruction(Inst9900.Isbz, "sbz"); }
-	static { registerInstruction(Inst9900.Itb, "tb"); }
-	static { registerInstruction(Inst9900.Icoc, "coc"); }
-	static { registerInstruction(Inst9900.Iczc, "czc"); }
-	static { registerInstruction(Inst9900.Ixor, "xor"); }
-	static { registerInstruction(Inst9900.Ixop, "xop"); }
-	static { registerInstruction(Inst9900.Impy, "mpy"); }
-	static { registerInstruction(Inst9900.Idiv, "div"); }
-	static { registerInstruction(Inst9900.Ildcr, "ldcr"); }
-	static { registerInstruction(Inst9900.Istcr, "stcr"); }
-	static { registerInstruction(Inst9900.Iszc, "szc"); }
-	static { registerInstruction(Inst9900.Iszcb, "szcb"); }
-	static { registerInstruction(Inst9900.Is, "s"); }
-	static { registerInstruction(Inst9900.Isb, "sb"); }
-	static { registerInstruction(Inst9900.Ic, "c"); }
-	static { registerInstruction(Inst9900.Icb, "cb"); }
-	static { registerInstruction(Inst9900.Ia, "a"); }
-	static { registerInstruction(Inst9900.Iab, "ab"); }
-	static { registerInstruction(Inst9900.Imov, "mov"); }
-	static { registerInstruction(Inst9900.Imovb, "movb"); }
-	static { registerInstruction(Inst9900.Isoc, "soc"); }
-	static { registerInstruction(Inst9900.Isocb, "socb"); }
-	static { registerInstruction(InstTableCommon.Idsr, "dsr"); }
-	static { registerInstruction(InstTableCommon.Ikysl, "kysl"); }
-	static { registerInstruction(InstTableCommon.Iticks, "ticks"); }
-	static { registerInstruction(InstTableCommon.Iemitchar, "emitchar"); }
-	static { registerInstruction(InstTableCommon.Idbg, "dbg"); }
-	static { registerInstruction(InstTableCommon.Idbgf, "dbgf"); }
-	static { registerInstruction(InstTableCommon.Ibyte, "byte"); }
 	
 	static { registerAlias(Inst9900.Ijeq, "je"); }
 	static { registerAlias(Inst9900.Ijoc, "jc"); }
 
-	public static void registerInstruction(int inst, String str) {
-	    Integer i = new Integer(inst);
-	    nameToInst.put(str.toUpperCase(), i);
-	    instToName.put(i, str.toUpperCase());
-	}
 	public static void registerAlias(int inst, String str) {
 	    Integer i = new Integer(inst);
 	    nameToInst.put(str.toUpperCase(), i);
@@ -472,23 +784,18 @@ public class InstTable9900 {
             mop2.type = MachineOperand9900.OP_IMMED;
             switch ((op & 0x1e0) >> 5) {
             case 0:
-                //inst.name = "LI";
                 inst.setInst(Inst9900.Ili);
                 break;
             case 1:
-                //inst.name = "AI";
                 inst.setInst(Inst9900.Iai);
                 break;
             case 2:
-                //inst.name = "ANDI";
                 inst.setInst(Inst9900.Iandi);
                 break;
             case 3:
-                //inst.name = "ORI";
                 inst.setInst(Inst9900.Iori);
                 break;
             case 4:
-                //inst.name = "CI";
                 inst.setInst(Inst9900.Ici);
                 break;
             }
@@ -498,11 +805,9 @@ public class InstTable9900 {
             mop1.val = op & 15;
             switch ((op & 0x1e0) >> 5) {
             case 5:
-                //inst.name = "STWP";
                 inst.setInst(Inst9900.Istwp);
                 break;
             case 6:
-                //inst.name = "STST";
                 inst.setInst(Inst9900.Istst);
                 break;
             }
@@ -512,11 +817,9 @@ public class InstTable9900 {
     
             switch ((op & 0x1e0) >> 5) {
             case 7:
-                //inst.name = "LWPI";
                 inst.setInst(Inst9900.Ilwpi);
                 break;
             case 8:
-                //inst.name = "LIMI";
                 inst.setInst(Inst9900.Ilimi);
                 break;
             }
@@ -524,27 +827,21 @@ public class InstTable9900 {
         } else if (op < 0x400) {
             switch ((op & 0x1e0) >> 5) {
             case 10:
-                //inst.name = "IDLE";
                 inst.setInst(Inst9900.Iidle);
                 break;
             case 11:
-                //inst.name = "RSET";
                 inst.setInst(Inst9900.Irset);
                 break;
             case 12:
-                //inst.name = "RTWP";
                 inst.setInst(Inst9900.Irtwp);
                 break;
             case 13:
-                //inst.name = "CKON";
                 inst.setInst(Inst9900.Ickon);
                 break;
             case 14:
-                //inst.name = "CKOF";
                 inst.setInst(Inst9900.Ickof);
                 break;
             case 15:
-                //inst.name = "LREX";
                 inst.setInst(Inst9900.Ilrex);
                 break;
             }
@@ -555,59 +852,45 @@ public class InstTable9900 {
     
             switch ((op & 0x3c0) >> 6) {
             case 0:
-                //inst.name = "BLWP";
                 inst.setInst(Inst9900.Iblwp);
                 break;
             case 1:
-                //inst.name = "B";
                 inst.setInst(Inst9900.Ib);
                 break;
             case 2:
-                //inst.name = "X";
                 inst.setInst(Inst9900.Ix);
                 break;
             case 3:
-                //inst.name = "CLR";
                 inst.setInst(Inst9900.Iclr);
                 break;
             case 4:
-                //inst.name = "NEG";
                 inst.setInst(Inst9900.Ineg);
                 break;
             case 5:
-                //inst.name = "INV";
                 inst.setInst(Inst9900.Iinv);
                 break;
             case 6:
-                //inst.name = "INC";
                 inst.setInst(Inst9900.Iinc);
                 break;
             case 7:
-                //inst.name = "INCT";
                 inst.setInst(Inst9900.Iinct);
                 break;
             case 8:
-                //inst.name = "DEC";
                 inst.setInst(Inst9900.Idec);
                 break;
             case 9:
-                //inst.name = "DECT";
                 inst.setInst(Inst9900.Idect);
                 break;
             case 10:
-                //inst.name = "BL";
                 inst.setInst(Inst9900.Ibl);
                 break;
             case 11:
-                //inst.name = "SWPB";
                 inst.setInst(Inst9900.Iswpb);
                 break;
             case 12:
-                //inst.name = "SETO";
                 inst.setInst(Inst9900.Iseto);
                 break;
             case 13:
-                //inst.name = "ABS";
                 inst.setInst(Inst9900.Iabs);
                 break;
             }
@@ -620,19 +903,15 @@ public class InstTable9900 {
     
             switch ((op & 0x700) >> 8) {
             case 0:
-                //inst.name = "SRA";
                 inst.setInst(Inst9900.Isra);
                 break;
             case 1:
-                //inst.name = "SRL";
                 inst.setInst(Inst9900.Isrl);
                 break;
             case 2:
-                //inst.name = "SLA";
                 inst.setInst(Inst9900.Isla);
                 break;
             case 3:
-                //inst.name = "SRC";
                 inst.setInst(Inst9900.Isrc);
                 break;
             }
@@ -673,67 +952,51 @@ public class InstTable9900 {
     
             switch ((op & 0xf00) >> 8) {
             case 0:
-                //inst.name = "JMP";
                 inst.setInst(Inst9900.Ijmp);
                 break;
             case 1:
-                //inst.name = "JLT";
                 inst.setInst(Inst9900.Ijlt);
                 break;
             case 2:
-                //inst.name = "JLE";
                 inst.setInst(Inst9900.Ijle);
                 break;
             case 3:
-                //inst.name = "JEQ";
                 inst.setInst(Inst9900.Ijeq);
                 break;
             case 4:
-                //inst.name = "JHE";
                 inst.setInst(Inst9900.Ijhe);
                 break;
             case 5:
-                //inst.name = "JGT";
                 inst.setInst(Inst9900.Ijgt);
                 break;
             case 6:
-                //inst.name = "JNE";
                 inst.setInst(Inst9900.Ijne);
                 break;
             case 7:
-                //inst.name = "JNC";
                 inst.setInst(Inst9900.Ijnc);
                 break;
             case 8:
-                //inst.name = "JOC";
                 inst.setInst(Inst9900.Ijoc);
                 break;
             case 9:
-                //inst.name = "JNO";
                 inst.setInst(Inst9900.Ijno);
                 break;
             case 10:
-                //inst.name = "JL";
                 inst.setInst(Inst9900.Ijl);
                 break;
             case 11:
-                //inst.name = "JH";
                 inst.setInst(Inst9900.Ijh);
                 break;
             case 12:
-                //inst.name = "JOP";
                 inst.setInst(Inst9900.Ijop);
                 break;
             case 13:
-                //inst.name = "SBO";
                 inst.setInst(Inst9900.Isbo);
                 break;
             case 14:
-                //inst.name = "SBZ";
                 inst.setInst(Inst9900.Isbz);
                 break;
             case 15:
-                //inst.name = "TB";
                 inst.setInst(Inst9900.Itb);
                 break;
             }
@@ -746,27 +1009,21 @@ public class InstTable9900 {
     
             switch ((op & 0x1c00) >> 10) {
             case 0:
-                //inst.name = "COC";
                 inst.setInst(Inst9900.Icoc);
                 break;
             case 1:
-                //inst.name = "CZC";
                 inst.setInst(Inst9900.Iczc);
                 break;
             case 2:
-                //inst.name = "XOR";
                 inst.setInst(Inst9900.Ixor);
                 break;
             case 3:
-                //inst.name = "XOP";
                 inst.setInst(Inst9900.Ixop);
                 break;
             case 6:
-                //inst.name = "MPY";
                 inst.setInst(Inst9900.Impy);
                 break;
             case 7:
-                //inst.name = "DIV";
                 inst.setInst(Inst9900.Idiv);
                 break;
             }
@@ -778,10 +1035,8 @@ public class InstTable9900 {
             mop2.val = (op & 0x3c0) >> 6;
     
             if (op < 0x3400) {
-                //inst.name = "LDCR";
                 inst.setInst(Inst9900.Ildcr);
             } else {
-                //inst.name = "STCR";
                 inst.setInst(Inst9900.Istcr);
             }
     
@@ -793,51 +1048,39 @@ public class InstTable9900 {
     
             switch ((op & 0xf000) >> 12) {
             case 4:
-                //inst.name = "SZC";
                 inst.setInst(Inst9900.Iszc);
                 break;
             case 5:
-                //inst.name = "SZCB";
                 inst.setInst(Inst9900.Iszcb);
                 break;
             case 6:
-                //inst.name = "S";
                 inst.setInst(Inst9900.Is);
                 break;
             case 7:
-                //inst.name = "SB";
                 inst.setInst(Inst9900.Isb);
                 break;
             case 8:
-                //inst.name = "C";
                 inst.setInst(Inst9900.Ic);
                 break;
             case 9:
-                //inst.name = "CB";
                 inst.setInst(Inst9900.Icb);
                 break;
             case 10:
-                //inst.name = "A";
                 inst.setInst(Inst9900.Ia);
                 break;
             case 11:
-                //inst.name = "AB";
                 inst.setInst(Inst9900.Iab);
                 break;
             case 12:
-                //inst.name = "MOV";
                 inst.setInst(Inst9900.Imov);
                 break;
             case 13:
-                //inst.name = "MOVB";
                 inst.setInst(Inst9900.Imovb);
                 break;
             case 14:
-                //inst.name = "SOC";
                 inst.setInst(Inst9900.Isoc);
                 break;
             case 15:
-                //inst.name = "SOCB";
                 inst.setInst(Inst9900.Isocb);
                 break;
             }
@@ -847,10 +1090,8 @@ public class InstTable9900 {
         {
             mop1.type = MachineOperand9900.OP_IMMED;
             mop1.val = mop1.immed = (short) op;
-            //inst.name = "DATA";
             inst.setSize(2);
         } else {
-        	// inst.completeInstruction(pc);
             // Finish reading operand immediates
             pc += 2;
             pc = mop1.fetchOperandImmediates(domain, (short)pc);

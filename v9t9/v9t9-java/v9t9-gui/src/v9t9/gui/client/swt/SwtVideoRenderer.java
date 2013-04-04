@@ -129,6 +129,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 */
 	@Override
 	public void dispose() {
+		shell = null;
 		canvasFormat.removeListener(canvasFormatListener);
 		if (vdpCanvasRenderer != null)
 			vdpCanvasRenderer.dispose();
@@ -592,7 +593,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 */
 	@Override
 	public boolean isVisible() {
-		if (Display.getDefault().isDisposed())
+		if (shell == null || Display.getDefault().isDisposed())
 			return false;
 		return isVisible;
 	}

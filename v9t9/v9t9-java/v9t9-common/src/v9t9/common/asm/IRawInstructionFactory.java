@@ -18,5 +18,6 @@ import v9t9.common.memory.IMemoryDomain;
  */
 public interface IRawInstructionFactory {
 	int getChunkSize();
+	/** Fetch and decode an instruction without examining operands */
 	RawInstruction decodeInstruction(int pc, IMemoryDomain domain);
 }

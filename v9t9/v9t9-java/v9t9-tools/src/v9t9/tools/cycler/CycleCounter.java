@@ -13,6 +13,7 @@ package v9t9.tools.cycler;
 import java.io.PrintStream;
 
 import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.ICpu;
@@ -61,8 +62,7 @@ public class CycleCounter {
 			
 			try {
 				counts.getAndResetTotal();
-				IInstruction instr = cpu.getInstructionFactory().decodeInstruction(
-						state.getPC(), machine.getConsole());
+				RawInstruction instr = cpu.getCurrentInstruction();
 				out.print(state + "; " + instr);
 				executor.getInterpreter().executeChunk(1, executor);
 				out.print("; F=" + counts.getFetch() + "; L=" + counts.getLoad() + 

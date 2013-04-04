@@ -32,7 +32,6 @@ import org.eclipse.swt.widgets.Listener;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.IBreakpoint;
 import v9t9.common.cpu.ICpu;
-import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
@@ -186,10 +185,8 @@ public class CpuViewer extends Composite implements IInstructionListener {
 			public void widgetSelected(SelectionEvent e) {
 				machine.asyncExec(new Runnable() {
 					public void run() {
-						ICpuState state = machine.getCpu().getState();
-						RawInstruction curInst = machine.getInstructionFactory().decodeInstruction(
-								state.getPC(), machine.getConsole());
-						int bpPc = (state.getPC() + curInst.getSize());
+						RawInstruction curInst = machine.getCpu().getCurrentInstruction();
+						int bpPc = (curInst.pc + curInst.getSize());
 
 						IBreakpoint bp = new SimpleBreakpoint(bpPc & 0xffff, true);
 						machine.getExecutor().getBreakpoints().addBreakpoint(bp);

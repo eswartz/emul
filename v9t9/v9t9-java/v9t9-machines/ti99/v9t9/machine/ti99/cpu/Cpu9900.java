@@ -11,6 +11,7 @@
 package v9t9.machine.ti99.cpu;
 
 import v9t9.common.asm.IDecompilePhase;
+import v9t9.common.asm.IInstructionFactory;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.IExecutor;
@@ -335,8 +336,16 @@ public class Cpu9900 extends CpuBase {
 	 * @see v9t9.common.cpu.ICpu#getInstructionFactory()
 	 */
 	@Override
-	public IRawInstructionFactory getInstructionFactory() {
+	public IRawInstructionFactory getRawInstructionFactory() {
 		return RawInstructionFactory9900.INSTANCE;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#getInstructionFactory()
+	 */
+	@Override
+	public IInstructionFactory getInstructionFactory() {
+		return InstructionFactory9900.INSTANCE;
 	}
 	
 	/* (non-Javadoc)

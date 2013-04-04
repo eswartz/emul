@@ -35,6 +35,7 @@ import v9t9.machine.ti99.cpu.Instruction9900;
 import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;
 import v9t9.machine.ti99.cpu.MachineOperand9900;
 import v9t9.machine.ti99.cpu.Status9900;
+import v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator;
 import v9t9.machine.ti99.machine.TI99Machine;
 
 /**
@@ -97,8 +98,8 @@ public class Interpreter9900 implements IInterpreter {
     public void executeFast(Short op_x) {
         Instruction9900 ins = getInstruction(op_x);
 
-        MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
-        MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
+//        MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
+//        MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
 
         /* get current operand values and instruction timings */
         fetchOperands(ins, op_x != null);
@@ -119,11 +120,22 @@ public class Interpreter9900 implements IInterpreter {
         /* save any operands */
         flushOperands(ins);
         
-        int cycles = ins.getInfo().cycles + mop1.cycles + mop2.cycles;
-		cycleCounts.addExecute(cycles);
+        //int cycles = ins.getInfo().cycles + mop1.cycles + mop2.cycles;
+		//cycleCounts.addExecute(cycles);
+        gatherCycles(iblock, iblock);
 	}
     
-    /* (non-Javadoc)
+	private void gatherCycles(InstructionWorkBlock9900 before,
+			InstructionWorkBlock9900 after) {
+		//cycleCounts.addExecute(ins.getInfo().cycles + mop1.cycles + mop2.cycles);
+		ICycleCalculator calc = InstTable9900.instCycles.get(before.inst.getInst());
+		if (calc == null)
+			return;
+		
+		calc.addCycles(before, after, cycleCounts);
+	}
+
+	/* (non-Javadoc)
      * @see v9t9.emulator.runtime.interpreter.Interpreter#executeChunk(int, v9t9.emulator.runtime.cpu.Executor)
      */
     @Override
@@ -148,8 +160,8 @@ public class Interpreter9900 implements IInterpreter {
 	private void executeAndListen(Short op_x, ListenerList<IInstructionListener> instructionListeners) { 
         Instruction9900 ins = getInstruction(op_x);
         
-        MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
-        MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
+//        MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
+//        MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
 
         iblock.cycles = cpu.getCurrentCycleCount() + cycleCounts.getTotal();
         
@@ -180,7 +192,7 @@ public class Interpreter9900 implements IInterpreter {
         /* save any operands */
         flushOperands(ins);
         
-        cycleCounts.addExecute(ins.getInfo().cycles + mop1.cycles + mop2.cycles);
+        gatherCycles(block, iblock);
 
         iblock.cycles = cpu.getCurrentCycleCount() + cycleCounts.getTotal();
         
@@ -194,15 +206,16 @@ public class Interpreter9900 implements IInterpreter {
 		Instruction9900 ins;
 	    int pc = cpu.getPC() & 0xfffe;
 	    
+	    CycleCounts counts = cpu.getCycleCounts().clone();
+	    
 	    short op;
 	    IMemoryDomain console = cpu.getConsole();
 		if (op_x != null) {
 	    	op = op_x;
-	    	ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console));
-	    	ins.fetchCycles = cpu.getCycleCounts().getAndResetTotal();
+	    	ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console), console);
 	    } else {
 	    	IMemoryEntry entry = console.getEntryAt(pc);
-	    	op = entry.readWord(pc);
+	    	op = entry.flatReadWord(pc);
 	    	IMemoryArea area = entry.getArea();
 	    	Instruction9900[] instructions = parsedInstructions.get(area);
 	    	if (instructions == null) {
@@ -213,13 +226,13 @@ public class Interpreter9900 implements IInterpreter {
 	    		// expensive (10%)
 	    		ins = ins.update(op, pc, console);
 	    	} else {
-	    		ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console));
+	    		ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console), console);
 	    	}
 	    	instructions[pc/2] = ins;
-	    	ins.fetchCycles = cpu.getCycleCounts().getAndResetLoad();
 	    }
-		
-        cpu.getCycleCounts().addFetch(ins.fetchCycles);
+
+		// restore
+		counts.copyTo(cpu.getCycleCounts());
 
 		return ins;
 	}
@@ -506,97 +519,97 @@ public class Interpreter9900 implements IInterpreter {
         case Inst9900.Iabs:
         	if ((iblock.val1 & 0x8000) != 0) {
         		iblock.val1 = (short) -iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Isra:
         	iblock.val1 = (short) (iblock.val1 >> iblock.val2);
-        	cycleCounts.addExecute(iblock.val2 * 2);
+        	//cycleCounts.addExecute(iblock.val2 * 2);
             break;
         case Inst9900.Isrl:
         	iblock.val1 = (short) ((iblock.val1 & 0xffff) >> iblock.val2);
-        	cycleCounts.addExecute(iblock.val2 * 2);
+        	//cycleCounts.addExecute(iblock.val2 * 2);
             break;
 
         case Inst9900.Isla:
         	iblock.val1 = (short) (iblock.val1 << iblock.val2);
-        	cycleCounts.addExecute(iblock.val2 * 2);
+        	//cycleCounts.addExecute(iblock.val2 * 2);
             break;
 
         case Inst9900.Isrc:
         	iblock.val1 = (short) ((iblock.val1 & 0xffff) >> iblock.val2 | (iblock.val1 & 0xffff) << 16 - iblock.val2);
-        	cycleCounts.addExecute(iblock.val2 * 2);
+        	//cycleCounts.addExecute(iblock.val2 * 2);
             break;
 
         case Inst9900.Ijmp:
         	iblock.pc = iblock.val1;
-        	cycleCounts.addExecute(2);
+        	//cycleCounts.addExecute(2);
             break;
         case Inst9900.Ijlt:
         	if (status.isLT()) {
         		iblock.pc = iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijle:
         	if (status.isLE()) {
         		iblock.pc = iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
         	}
             break;
 
         case Inst9900.Ijeq:
         	if (status.isEQ()) {
         		iblock.pc = iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijhe:
         	if (status.isHE()) {
         		iblock.pc = iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijgt:
         	if (status.isGT()) {
         		iblock.pc = iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijne:
         	if (status.isNE()) {
         		iblock.pc = iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijnc:
         	if (!status.isC()) {
         		iblock.pc = iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijoc:
         	if (status.isC()) {
         		iblock.pc = iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijno:
         	if (!status.isO()) {
         		iblock.pc = iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijl:
         	if (status.isL()) {
         		iblock.pc = iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
         	}
             break;
         case Inst9900.Ijh:
         	if (status.isH()) {
         		iblock.pc = iblock.val1;
-        		cycleCounts.addExecute(2);
+        		//cycleCounts.addExecute(2);
             }
             break;
 
@@ -604,7 +617,7 @@ public class Interpreter9900 implements IInterpreter {
             // jump on ODD parity
             if (status.isP()) {
 				iblock.pc = iblock.val1;
-				cycleCounts.addExecute(2);
+				//cycleCounts.addExecute(2);
             }
             break;
 
@@ -659,13 +672,13 @@ public class Interpreter9900 implements IInterpreter {
                     iblock.val2 = (short) (dval / (iblock.val1 & 0xffff));
                     iblock.val3 = (short) (dval % (iblock.val1 & 0xffff));
                 } catch (ArithmeticException e) {
-                	cycleCounts.addExecute((124 + 92) / 2 - 16);
+                	//cycleCounts.addExecute((124 + 92) / 2 - 16);
                 }
                 //memory.writeWord(block.op2.ea + 2,
                 //        (short) (val % (block.val1 & 0xffff)));
                 //inst.op2.value = (short) val;
             } else {
-            	cycleCounts.addExecute((124 + 92) / 2 - 16);
+            	//cycleCounts.addExecute((124 + 92) / 2 - 16);
             }
             break;
 

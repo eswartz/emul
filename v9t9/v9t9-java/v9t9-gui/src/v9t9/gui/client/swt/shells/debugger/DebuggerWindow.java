@@ -165,7 +165,7 @@ public class DebuggerWindow extends Composite implements IMemoryWriteListener {
 						IDecompilePhase decompiler = machine.getCpu().createDecompiler();
 						if (decompiler != null) {
 							cpuDecoder = new DisassemblerDecoder(entry.getDomain(), 
-									machine.getCpu().getInstructionFactory(),
+									machine.getCpu().getRawInstructionFactory(),
 									machine.getCpu().createDecompiler());
 						}
 					}
