@@ -32,6 +32,13 @@ import ejs.base.sound.IFlushableSoundVoice;
  * </pre>
  * 
  * (From the above, the modulation is not a convention!)
+ * 
+ * <p/>
+ * 
+ * From my investigation, the SBO to the cassette out changes the sign of the
+ * modulation waveform recorded to the cassette.  Also, the <i>speed</i> at which
+ * the sign changes controls the waveform generated: the full waveform is
+ * emitted between each sign change.   
  * @author ejs
  *
  */
