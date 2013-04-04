@@ -235,7 +235,7 @@ public class FileImportHandler implements IFileImportHandler {
 
 		int ret = dialog.open();
 		if (ret == Window.OK) {
-			dialog.getDiskProperty().setString(file.getAbsolutePath());
+			dialog.getDiskProperty().setString(file.getParentFile().getAbsolutePath());
 			
 			IFileExecutor exec = dialog.getFileExecutor();
 			if (exec != null) {
@@ -300,9 +300,11 @@ public class FileImportHandler implements IFileImportHandler {
 			machine.reset();
 			machine.getModuleManager().unloadAllModules();
 			machine.getModuleManager().loadModule(theMatch);
+			
+			return true;
 		}
 		
-		return true;
+		return false;
 				
 	}
 }

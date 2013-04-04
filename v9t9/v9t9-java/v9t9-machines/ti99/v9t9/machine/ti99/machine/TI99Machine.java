@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -203,6 +204,9 @@ public class TI99Machine extends MachineBase {
 					return key.equals(baseKey);
 				}
 			});
+			if (!Arrays.asList(files).contains(base)) {
+				return Collections.emptyList();
+			}
 		}
 		if (files == null) {
 			return Collections.emptyList();

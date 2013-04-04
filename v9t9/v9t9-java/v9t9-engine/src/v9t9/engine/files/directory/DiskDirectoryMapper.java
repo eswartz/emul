@@ -314,7 +314,7 @@ public class DiskDirectoryMapper implements IFilesInDirectoryMapper, IPersistabl
 						if (name.equalsIgnoreCase(candName)
 								|| (name.toLowerCase().startsWith(candName.toLowerCase()) && name.toLowerCase().endsWith(".bin"))) {
 							File cand = new File(dir, name);
-							if (cand.exists())
+							if (cand.exists() && !preferred.exists())
 								return cand;
 						}
 					}

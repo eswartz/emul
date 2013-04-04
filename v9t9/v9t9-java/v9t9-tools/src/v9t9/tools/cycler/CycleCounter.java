@@ -12,7 +12,6 @@ package v9t9.tools.cycler;
 
 import java.io.PrintStream;
 
-import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CycleCounts;
@@ -28,7 +27,6 @@ import v9t9.machine.ti99.cpu.CpuState9900;
  *
  */
 public class CycleCounter {
-	private IMachine machine;
 	private PrintStream out;
 	private IExecutor executor;
 	private int stopAddr;
@@ -38,7 +36,6 @@ public class CycleCounter {
 
 	public CycleCounter(IMachine machine, int startAddr, int stopAddr,
 			int numInstrs, PrintStream out) {
-		this.machine = machine;
 		this.stopAddr = stopAddr;
 		this.numInstrs = numInstrs;
 		this.out = out;

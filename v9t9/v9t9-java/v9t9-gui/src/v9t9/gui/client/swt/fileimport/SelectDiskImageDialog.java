@@ -26,7 +26,9 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
+import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
@@ -39,6 +41,7 @@ import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.machine.IMachine;
 import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingProperty;
 
 class SelectDiskImageDialog extends MessageDialog {
 
@@ -54,7 +57,6 @@ class SelectDiskImageDialog extends MessageDialog {
 			Map<String, IProperty> diskSettingMap,
 			Catalog catalog,
 			String messageFormat,
-			//IFileExecutionHandler execHandler,
 			String label) {
 		super(parentShell, dialogTitle, 
 				null /*image*/,
@@ -128,7 +130,11 @@ class SelectDiskImageDialog extends MessageDialog {
 				@SuppressWarnings("unchecked")
 				Map.Entry<String, IProperty> ent = (Entry<String, IProperty>) 
 						((IStructuredSelection) event.getSelection()).getFirstElement();
-				theProperty = ent.getValue();
+				if (ent != null) {
+					theProperty = ent.getValue();
+				} else {
+					theProperty = null;
+				}
 				
 				updateExecs();
 				
@@ -143,6 +149,18 @@ class SelectDiskImageDialog extends MessageDialog {
 		// go
 		
 		driveComboViewer.setInput(diskSettingMap.entrySet());
+		driveComboViewer.addFilter(new ViewerFilter() {
+			
+			@Override
+			public boolean select(Viewer viewer, Object parentElement, Object element) {
+				@SuppressWarnings("unchecked")
+				Map.Entry<String, IProperty> ent = (Entry<String, IProperty>) element;
+				if (ent.getValue() instanceof ISettingProperty) {
+					return ((ISettingProperty) ent.getValue()).isEnabled();
+				}
+				return true;
+			}
+		});
 		
 		driveComboViewer.setSelection(new StructuredSelection(diskSettingMap.entrySet().iterator().next()));
 				
@@ -157,8 +175,9 @@ class SelectDiskImageDialog extends MessageDialog {
 	 */
 	protected void updateExecs() {
 		int drive = 1;
-		if (theProperty != null)
+		if (theProperty != null) 
 			drive = ((IDiskDriveSetting) theProperty).getDrive();
+		catalog.deviceName = "DSK" + drive;
 		execComp.updateExecs(drive, catalog);
 	}
 

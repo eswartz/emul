@@ -18,7 +18,7 @@ import java.util.List;
  *
  */
 public class Catalog {
-	public final String deviceName;
+	public String deviceName;
 	public final String volumeName;
 	public final int totalSectors;
 	public final int usedSectors;
