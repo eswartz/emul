@@ -46,9 +46,9 @@ public class TMS9919Consts {
 	
 	/** 
 	 * This is the offset in the cassette register bank for
-	 * the current queued value of the cassette toggle (0=off, 1=on) 
+	 * the current queued value of the cassette output (0=off, 1=on) 
 	 */
-	final public static int REG_OFFS_CASSETTE_STATE = 0;
+	final public static int REG_OFFS_CASSETTE_OUTPUT = 0;
 	/** 
 	 * This is the offset in the cassette register bank for
 	 * the state of the cassette #1 motor (0=off, 1=on) 

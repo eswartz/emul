@@ -183,7 +183,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 		}
 		
 		if (pcodeGromMmio == null) {
-			pcodeGromMmio = new GplMmio(machine, pcodeDomain, 6);
+			pcodeGromMmio = new GplMmio(machine, pcodeDomain);
 			readMmioEntry = null;
 			writeMmioEntry = null;
 		}

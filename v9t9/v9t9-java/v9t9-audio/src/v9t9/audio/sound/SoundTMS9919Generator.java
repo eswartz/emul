@@ -134,11 +134,11 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		info = soundChip.getRegisterInfo(regBase);
 		assert info != null && info.id.endsWith("C:C");
 		
-		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_STATE, voice);
+		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_OUTPUT, voice);
 		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_1, voice);
 		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_2, voice);
 		
-		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_STATE,
+		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_CASSETTE_OUTPUT,
 				new IRegisterAccess.IRegisterWriteListener() {
 			
 			@Override

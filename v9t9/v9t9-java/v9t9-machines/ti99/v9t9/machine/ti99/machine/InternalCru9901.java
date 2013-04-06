@@ -18,10 +18,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 import v9t9.common.keyboard.KeyboardConstants;
+import v9t9.common.sound.ICassetteVoice;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruReader;
 import v9t9.engine.hardware.ICruWriter;
+import v9t9.engine.sound.CassetteVoice;
 
 /**
  * CRU handlers for the TMS9901 (as attached to a TI-99/4A).
@@ -264,8 +266,9 @@ public class InternalCru9901 extends BaseCruChip {
 
 	private ICruReader crurCassetteIn = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			int bit = Math.random() >= 0.5 ? 1 : 0;
-			getMachine().getSound().getCassetteVoice().setState(data != 0);
+			getMachine().getSettings().get(CassetteVoice.settingCassetteReading).setBoolean(true);
+			ICassetteVoice voice = getMachine().getSound().getCassetteVoice();
+			int bit = voice.getState() ? 1 : 0;
 			return bit;
 		}
 		
@@ -435,6 +438,15 @@ public class InternalCru9901 extends BaseCruChip {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.hardware.BaseCruChip#resetClock()
+	 */
+	@Override
+	protected void resetClock() {
+		super.resetClock();
+		getMachine().getSound().getCassetteVoice().setClock(
+				(float) clockRegister * 64 / getMachine().getCpu().getBaseCyclesPerSec());
+	}
     /** Access the registration object for CRU handlers */
     public CruManager getCruManager() {
     	return manager;

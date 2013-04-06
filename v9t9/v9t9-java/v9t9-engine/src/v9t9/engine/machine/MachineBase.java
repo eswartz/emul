@@ -128,9 +128,7 @@ abstract public class MachineBase implements IMachine {
 	private ListenerList<IKeyboardModeListener> keyboardModeListeners;
 	
 	private IEmulatedFileHandler emulatedFileHandler;
-	
 
-	
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
 		pauseMachine = settings.get(settingPauseMachine);

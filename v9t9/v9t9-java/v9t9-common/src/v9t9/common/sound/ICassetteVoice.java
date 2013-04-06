@@ -16,7 +16,13 @@ package v9t9.common.sound;
  */
 public interface ICassetteVoice {
 
-	public void setState(boolean state);
-	public void setMotor1(boolean motor);
-	public void setMotor2(boolean motor);
+	void setState(boolean state);
+	boolean getState();
+	
+	void setMotor1(boolean motor);
+	void setMotor2(boolean motor);
+	/**
+	 * @param secs
+	 */
+	void setClock(float secs);
 }
