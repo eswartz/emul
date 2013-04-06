@@ -78,7 +78,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 	    	memory.setModel(this);
 	    	memory.setMemoryEntryFactory(new MemoryEntryFactory(settings, memory, machine.getRomPathFileLocator()));
 	    	
-	        CPU = new MemoryDomain(IMemoryDomain.NAME_CPU, "Console", true, 4);
+	        CPU = new MemoryDomain(IMemoryDomain.NAME_CPU, "Console", true, 0);
 	        GRAPHICS = new MemoryDomain(IMemoryDomain.NAME_GRAPHICS, "GROM/GRAM");
 	        VIDEO = new MemoryDomain(IMemoryDomain.NAME_VIDEO, "VDP");
 	        SPEECH = new MemoryDomain(IMemoryDomain.NAME_SPEECH, "Speech");
@@ -100,7 +100,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
         if (soundMmio == null)
         	soundMmio = new SoundMmio(((IMachine) machine).getSound());
         if (gplMmio == null)
-        	gplMmio = new GplMmio(machine, GRAPHICS, 6);
+        	gplMmio = new GplMmio(machine, GRAPHICS);
         if (speechMmio == null)
         	speechMmio = new SpeechMmio(((IMachine) machine).getSpeech());
         
