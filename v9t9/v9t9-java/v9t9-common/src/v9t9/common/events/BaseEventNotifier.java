@@ -20,7 +20,7 @@ import java.util.concurrent.PriorityBlockingQueue;
  * @author ejs
  *
  */
-public class BaseEventNotifier implements IEventNotifier {
+public abstract class BaseEventNotifier implements IEventNotifier {
 
 	protected PriorityBlockingQueue<NotifyEvent> pendingEvents;
 	private Thread displayer;
@@ -103,9 +103,7 @@ public class BaseEventNotifier implements IEventNotifier {
 	 * Consume the next event.
 	 * @param event
 	 */
-	protected void consumeEvent(NotifyEvent event) {
-		
-	}
+	abstract protected void consumeEvent(NotifyEvent event);
 	
 	/*
 	 * (non-Javadoc)
