@@ -593,7 +593,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 */
 	@Override
 	public boolean isVisible() {
-		if (shell == null || Display.getDefault().isDisposed())
+		if (shell == null)
 			return false;
 		return isVisible;
 	}
