@@ -14,19 +14,31 @@ import v9t9.engine.memory.WordMemoryArea;
 import v9t9.engine.memory.ZeroWordMemoryArea;
 
 public class ConsoleMmioArea extends WordMemoryArea {
-    public ConsoleMmioArea() {
-    	// the 16->8 bit multiplexer forces all accesses to be slow
-    	this(4);
-    	
-    }
+	private byte oddLatency;
+	
     public ConsoleMmioArea(int latency) {
+    	this(latency, latency);
+    }
+    public ConsoleMmioArea(int latency, int oddLatency) {
     	super(latency);
-        bWordAccess = true;
-        memory = ZeroWordMemoryArea.zeroes;
+    	this.oddLatency = (byte) oddLatency;
+    	bWordAccess = true;
+    	memory = ZeroWordMemoryArea.zeroes;
     }
     
     @Override
     public boolean hasReadAccess() {
     	return false;
     }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.memory.MemoryArea#getLatency()
+     */
+    @Override
+    protected byte getLatency(int addr) {
+    	if ((addr & 1) != 0)
+    		return oddLatency;
+    	return super.getLatency(addr);
+    }
+
 }

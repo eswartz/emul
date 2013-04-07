@@ -240,12 +240,12 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	}
 
 	@Override
-	public void read(IMemoryEntry entry) {
-		cycleCounts.addLoad(entry.getLatency());
+	public void read(IMemoryEntry entry, int addr) {
+		cycleCounts.addLoad(entry.getLatency(addr));
 	}
 	@Override
-	public void write(IMemoryEntry entry) {
-		cycleCounts.addStore(entry.getLatency());
+	public void write(IMemoryEntry entry, int addr) {
+		cycleCounts.addStore(entry.getLatency(addr));
 	}
 
 	public int getCurrentCycleCount() {

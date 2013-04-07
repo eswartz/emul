@@ -458,8 +458,8 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	 * @see v9t9.common.memory.IMemoryEntry#getLatency()
 	 */
 	@Override
-	public final byte getLatency() {
-		return area.getLatency();
+	public final byte getLatency(int addr) {
+		return area.getLatency(addr);
 	}
 
 

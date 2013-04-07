@@ -53,20 +53,13 @@ public class InternalCru9901 extends BaseCruChip {
 			int         bit = addr / 2;
 		
 			if (clockmode) {
-				clockRegister =
-					(clockRegister & ~(1 << bit)) | (data << bit);
+				clockRegister =	(clockRegister & ~(1 << (bit - 1))) | (data << (bit - 1));
 				resetClock();
-				//logger(_L | L_2, "cruw9901_S:  hw9901.latchedclockinvl=%04X\n",
-					// hw9901.latchedclockinvl);
 			} else {
-				//int         mask = (~((~0) << num)) << bit;
 				int mask = 1 << bit;
 		
-				//logger(_L | L_2, _("Altering 9901 bit... addr=%04X, data=%04X,mask=%04X\n"), addr,
-				//	 data, mask);
-		
 				if (bit == intClock)
-					suppressClockInterrupts= false;
+					suppressClockInterrupts = false;
 				
 				//  First, writing a 0 will disable the interrupt,
 				//  and writing a 1 will enable it, or acknowledge it.
@@ -77,15 +70,6 @@ public class InternalCru9901 extends BaseCruChip {
 						acknowledgeInterrupt(bit);
 					enabledIntMask |= mask;
 				}
-				
-				//logger(_L | L_2, _("before reset: enabledIntMask = %04X, currentints = %04X\n"), hw9901.enabledIntMask,
-				//	 hw9901.currentints);
-		
-				//logger(_L | L_2, _("after reset: enabledIntMask = %04X, currentints = %04X\n"), hw9901.enabledIntMask,
-				//	 hw9901.currentints);
-		
-				/*  enabledIntMaskchange();
-				   handle9901(); */
 			}
 			return 0;
 		}
@@ -186,59 +170,62 @@ public class InternalCru9901 extends BaseCruChip {
 	/*	Read INT_EXT status or lowest bit of timer.  */
 	private ICruReader crur9901_1 = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			if (clockmode)
+			if (clockmode) {
 				return clockReadRegister & 1;
-			else if ((enabledIntMask & (1 << intExt)) != 0) {
+			} else if ((enabledIntMask & (1 << intExt)) != 0) {
 				return (currentints & (1 << intExt)) == 0 ? 0 : 1;
-			} else
+			} else {
 				return 0;
+			}
 		}
 	};
 
 	private ICruReader crur9901_2 = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			if (clockmode)
+			if (clockmode) {
 				return (clockReadRegister >> 1) & 1;
-			else if ((enabledIntMask & (1 << intVdp)) != 0) {
+			} else if ((enabledIntMask & (1 << intVdp)) != 0) {
 				// if the keyboard is not scanned continuously, this
 				// is a way to trap it in the standard TI ROM
 				// getMachine().getKeyboardHandler().resetProbe();
 				//checkKeyscanPattern(2);
 				//System.out.println("Checking VDP interrupt... "+currentints);
 				return (currentints & (1 << intVdp)) == 0 ? 0 : 1;
-			} else
+			} else {
 				return 0;
+			}
 		}
 	};
 	
 	private ICruReader crur9901_KS = new ICruReader() {
 
 		public int read(int addr, int data, int num) {
-			int mask;
 			int bit = addr / 2;
 
-			mask = 1 << (bit - 3);
-
-			if (clockmode)
-				return (clockReadRegister >> (bit - 1)) & 0x1;
-			else if ((enabledIntMask & (1 << bit)) != 0)
+			if (clockmode) {
+				return (clockReadRegister >> (bit - 1)) & 0x1;	// addr 6, bit 3, start at 2
+			} else if ((enabledIntMask & (1 << bit)) != 0) {
 				return (currentints & (1 << bit)) == 0 ? 0 : 1;
-			else {
-				
-				if (bit == 10)
-					checkKeyscanPattern(4);
-				
-				int alphamask = 0;
-				
-				if (!alphaLockMask && mask == 0x10) {
-					boolean isCaps = (getMachine().getKeyboardState().getLockMask() & KeyboardConstants.MASK_CAPS_LOCK) != 0;
-					alphamask = isCaps ? 0 : 0x10;
+			} else {
+				if (bit >= 3 && bit < 11) {
+					if (bit == 10)
+						checkKeyscanPattern(4);
+					
+					int alphamask = 0;
+					
+					int mask = 1 << (bit - 3);
+					if (!alphaLockMask && mask == 0x10) {
+						boolean isCaps = (getMachine().getKeyboardState().getLockMask() & KeyboardConstants.MASK_CAPS_LOCK) != 0;
+						alphamask = isCaps ? 0 : 0x10;
+					}
+					int keyboardRow = getMachine().getKeyboardState().getKeyboardRow(crukeyboardcol);
+					int colMask = (keyboardRow & mask);
+					int colBits = (colMask | alphamask);
+					
+					return colBits != 0 ? 0 : 1;
+				} else {
+					return 0;
 				}
-				int keyboardRow = getMachine().getKeyboardState().getKeyboardRow(crukeyboardcol);
-				int colMask = (keyboardRow & mask);
-				int colBits = (colMask | alphamask);
-				
-				return colBits != 0 ? 0 : 1;
 			}
 		}
 		
@@ -327,6 +314,10 @@ public class InternalCru9901 extends BaseCruChip {
         registerInternalCru(0x10, 1, crur9901_KS);
         registerInternalCru(0x12, 1, crur9901_KS);
         registerInternalCru(0x14, 1, crur9901_KS);
+        registerInternalCru(0x16, 1, crur9901_KS);
+        registerInternalCru(0x18, 1, crur9901_KS);
+        registerInternalCru(0x1A, 1, crur9901_KS);
+        registerInternalCru(0x1C, 1, crur9901_KS);
         registerInternalCru(0x1e, 1, crur9901_15);
         registerInternalCru(0x2a, 1, cruralpha);
 
@@ -444,8 +435,9 @@ public class InternalCru9901 extends BaseCruChip {
 	@Override
 	protected void resetClock() {
 		super.resetClock();
-		getMachine().getSound().getCassetteVoice().setClock(
-				(float) clockRegister * 64 / getMachine().getCpu().getBaseCyclesPerSec());
+//		getMachine().getSound().getCassetteVoice().setClock(
+//				(float) clockRegister * 64 / getMachine().getCpu().getBaseCyclesPerSec());
+
 	}
     /** Access the registration object for CRU handlers */
     public CruManager getCruManager() {

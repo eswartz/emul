@@ -13,8 +13,7 @@ package v9t9.common.memory;
 /** Listener for noticing memory accesses. */
 public interface IMemoryAccessListener {
 	/** Indicate that a memory entry was accessed.
-	 * @param entry
 	 */
-	void write(IMemoryEntry entry);
-	void read(IMemoryEntry entry);
+	void write(IMemoryEntry entry, int addr);
+	void read(IMemoryEntry entry, int addr);
 }

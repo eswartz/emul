@@ -16,12 +16,6 @@ import v9t9.engine.memory.VdpMmio;
 
 public class ConsoleVdpWriteArea extends ConsoleMmioWriteArea {
     public ConsoleVdpWriteArea(VdpMmio mmio) {
-        super(mmio);
+        super(mmio, 4, 0);
     }
-    
-    @Override
-    public byte getLatency() {
-    	return (byte) (4 + ((VdpMmio)writer).getMemoryAccessCycles());
-    }
-
 }

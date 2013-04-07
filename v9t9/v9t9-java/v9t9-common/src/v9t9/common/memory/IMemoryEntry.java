@@ -88,7 +88,7 @@ public interface IMemoryEntry extends IMemoryAccess, Comparable<IMemoryEntry>, I
 
 	boolean hasWriteAccess();
 
-	byte getLatency();
+	byte getLatency(int addr);
 
 	String getName();
 

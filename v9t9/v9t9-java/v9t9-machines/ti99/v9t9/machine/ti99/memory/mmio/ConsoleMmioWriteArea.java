@@ -16,13 +16,18 @@ import v9t9.engine.memory.IConsoleMmioWriter;
 public class ConsoleMmioWriteArea extends ConsoleMmioArea {
     protected final IConsoleMmioWriter writer;
 
-	ConsoleMmioWriteArea(IConsoleMmioWriter writer) {
+	ConsoleMmioWriteArea(IConsoleMmioWriter writer, int latency, int oddLatency) {
+		super(latency, oddLatency);
         this.writer = writer;
 		if (writer == null) {
 			throw new NullPointerException();
 		}
-    };
-    
+    }
+
+	ConsoleMmioWriteArea(IConsoleMmioWriter writer, int latency) {
+		this(writer, latency, latency);
+    }
+	
     @Override
     public void writeByte(IMemoryEntry entry, int addr, byte val) {
     	if (0 == (addr & 1))
@@ -33,4 +38,5 @@ public class ConsoleMmioWriteArea extends ConsoleMmioArea {
     public void writeWord(IMemoryEntry entry, int addr, short val) {
     	writer.write(addr, (byte) (val >> 8));
     }
+    
 }

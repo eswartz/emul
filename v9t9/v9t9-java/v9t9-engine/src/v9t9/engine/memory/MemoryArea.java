@@ -130,7 +130,7 @@ public abstract class MemoryArea implements IMemoryArea {
 		this.latency = latency;
 	}
 
-	protected byte getLatency() {
+	protected byte getLatency(int addr) {
 		return latency;
 	}
 

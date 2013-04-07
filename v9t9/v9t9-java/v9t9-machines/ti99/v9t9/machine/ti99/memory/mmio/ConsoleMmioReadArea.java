@@ -16,12 +16,17 @@ import v9t9.engine.memory.IConsoleMmioReader;
 public class ConsoleMmioReadArea extends ConsoleMmioArea {
     protected final IConsoleMmioReader reader;
 
-	public ConsoleMmioReadArea(IConsoleMmioReader reader) {
+	public ConsoleMmioReadArea(IConsoleMmioReader reader, int latency, int oddLatency) {
+		super(latency, oddLatency);
         this.reader = reader;
 		if (reader == null) {
 			throw new NullPointerException();
 		}
     }
+	
+	public ConsoleMmioReadArea(IConsoleMmioReader reader, int latency) {
+		this(reader, latency, latency);
+	}
 	
 	@Override
 	public byte readByte(IMemoryEntry entry, int addr) {

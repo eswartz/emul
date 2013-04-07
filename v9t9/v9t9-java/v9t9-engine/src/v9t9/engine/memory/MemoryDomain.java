@@ -38,11 +38,11 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	public IMemoryAccessListener nullMemoryAccessListener = new IMemoryAccessListener() {
 
 		@Override
-		public void write(IMemoryEntry entry) {
+		public void write(IMemoryEntry entry, int addr) {
 		}
 
 		@Override
-		public void read(IMemoryEntry entry) {
+		public void read(IMemoryEntry entry, int addr) {
 		}
     };
     
@@ -223,7 +223,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final byte readByte(int addr) {
     	IMemoryEntry entry = getEntryAt(addr);
-        accessListener.read(entry);
+        accessListener.read(entry, addr);
         return entry.readByte(addr);
     }
 
@@ -233,7 +233,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final short readWord(int addr) {
     	IMemoryEntry entry = getEntryAt(addr);
-        accessListener.read(entry);
+        accessListener.read(entry, addr);
         return entry.readWord(addr);
     }
 
@@ -243,7 +243,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final void writeByte(int addr, byte val) {
     	IMemoryEntry entry = getEntryAt(addr);
-        accessListener.write(entry);
+        accessListener.write(entry, addr);
         entry.writeByte(addr, val);
         if (!writeListeners.isEmpty())
         	fireWriteEvent(entry, (addr + entry.getAddrOffset()), (Byte) val);
@@ -266,7 +266,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	@Override
 	public final void writeWord(int addr, short val) {
         IMemoryEntry entry = getEntryAt(addr);
-        accessListener.write(entry);
+        accessListener.write(entry, addr);
         entry.writeWord(addr, val);
         if (!writeListeners.isEmpty())
         	fireWriteEvent(entry, addr, (Short) val);
@@ -348,7 +348,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	@Override
 	public int getLatency(int addr) {
 		IMemoryEntry entry = getEntryAt(addr);
-		return entry.getLatency();
+		return entry.getLatency(addr);
 	}
 
 	/* (non-Javadoc)
