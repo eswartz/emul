@@ -18,4 +18,13 @@ public class ConsoleVdpWriteArea extends ConsoleMmioWriteArea {
     public ConsoleVdpWriteArea(VdpMmio mmio) {
         super(mmio, 4, 0);
     }
+    
+    // http://nouspikel.group.shef.ac.uk/ti99/tms9918a.htm#CPUtiming
+    // "Contrarily to standard memory, the VDP cannot hold the CPU in 
+    // a wait state until it is ready to accept/send data."
+    
+//    @Override
+//    public byte getLatency(int addr) {
+//    	return (byte) (super.getLatency(addr) + ((VdpMmio)writer).getMemoryAccessCycles());
+//    }
 }
