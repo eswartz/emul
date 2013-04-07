@@ -239,7 +239,7 @@ public class InterpreterF99b implements IInterpreter {
 			return;
 		}
 		
-		iblock.cycles = cpu.getCurrentCycleCount() + cycleCounts.getTotal();
+		iblock.cycles = cycleCounts.getTotal();
 		iblock.st = cpu.getST();
 		
 		// get next instruction and advance
@@ -301,7 +301,7 @@ public class InterpreterF99b implements IInterpreter {
 		    iblock.up = cpuState.getUP();
 		    iblock.lp = cpuState.getLP();
 		
-		    iblock.cycles = cpu.getCurrentCycleCount() + cycleCounts.getTotal();
+		    iblock.cycles = cycleCounts.getTotal();
 			
 			for (Object listener : instructionListeners.toArray()) {
 				((IInstructionListener) listener).executed(block, iblock);
@@ -370,8 +370,10 @@ public class InterpreterF99b implements IInterpreter {
 		int pc = cpu.getPC() & 0xffff;
 		InstructionF99b inst = cachedInstrs[pc];
 		if (inst == null) {
+			CycleCounts counts = cycleCounts.clone();
 			inst = (InstructionF99b) instructionFactory.decodeInstruction(pc, memory);
-			inst.fetchCycles = cpu.getCycleCounts().getAndResetTotal();
+			inst.fetchCycles = cycleCounts.getTotal() - counts.getTotal();
+			counts.copyTo(cycleCounts);
 			cachedInstrs[pc] = inst;
 			cachedInstrCount++;
 			instrMap.set(pc, pc + inst.getSize());
@@ -380,7 +382,7 @@ public class InterpreterF99b implements IInterpreter {
 		}
 		iblock.pc = (short) (pc + inst.getSize());
 		
-	    cpu.getCycleCounts().addFetch(inst.fetchCycles);
+	    cycleCounts.addFetch(inst.fetchCycles);
 
 		return inst;
 	}
@@ -866,7 +868,7 @@ public class InterpreterF99b implements IInterpreter {
 	        		if (cpu.getCurrentCycleCount() + toSpin > cpu.getTargetCycleCount()) {
 	        			toSpin = cpu.getTargetCycleCount() - cpu.getCurrentCycleCount();
 	        		}
-	        		cpu.getCycleCounts().addOverhead(toSpin);
+	        		cycleCounts.addOverhead(toSpin);
 	        		break;
 	        	}
         	}
