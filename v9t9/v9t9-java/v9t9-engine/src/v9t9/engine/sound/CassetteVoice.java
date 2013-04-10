@@ -57,8 +57,9 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 	private IProperty cassetteReading;
 
 	protected CassetteReader cassetteReader;
-	protected int prevCassetteCycles;
+	protected long prevCassetteCycles;
 	protected int avgCassetteCycles;
+	protected long lastRead;
 	protected long lastScroll;
 
 	private float clockSecs = 1.0f / 1500f;
@@ -136,7 +137,8 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 	
 	public void setClock(float secs) {
 		if (clockSecs != secs) {
-			System.out.println("\nnew cassette clock = " + secs);
+			if (CassetteReader.DEBUG)
+				System.out.println("\nnew cassette clock = " + 1.0f / secs + " Hz");
 			this.clockSecs = secs;
 		}
 		
@@ -158,26 +160,26 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 			ICpu cpu = machine.getCpu();
 			if (cpu != null) {
 				float time;
-				int curCycles = cpu.getCurrentCycleCount();
-				int cycles = curCycles;
-				if (cycles > prevCassetteCycles) {
-					cycles -= prevCassetteCycles;
-					if (cycles < avgCassetteCycles || avgCassetteCycles < cpu.getBaseCyclesPerSec() / 3000)
-						avgCassetteCycles = (avgCassetteCycles + cycles) / 2;
-				} else {
-					System.out.println();
-					if (cycles < avgCassetteCycles / 2 || cycles > avgCassetteCycles * 2)
-						cycles = avgCassetteCycles;
-				}
-				time = (float) cycles / cpu.getBaseCyclesPerSec();
-				prevCassetteCycles = curCycles;
-				state = cassetteReader.readBit(time) != 0;
-				System.out.print(state ? '.' : ' ');
-				
 				long now = System.currentTimeMillis();
-				if (lastScroll + 1000 <= now) {
-					lastScroll = now;
-					System.out.println();
+				
+				long curCycles = cpu.getCurrentCycleCount() + cpu.getTotalCycleCount();
+				long cycles = curCycles;
+				if (cycles >= prevCassetteCycles) {
+					cycles -= prevCassetteCycles;
+				}
+				prevCassetteCycles = curCycles;
+				
+				time = (float) cycles / cpu.getBaseCyclesPerSec();
+				
+				state = cassetteReader.readBit(time);
+				if (CassetteReader.DEBUG) System.out.print(state ? 'x' : '-');
+				
+				if (CassetteReader.DEBUG) {
+					if (lastScroll + 1000 <= now) {
+						lastScroll = now;
+						System.out.println();
+						System.out.print("[" + cassetteReader.getPosition() +"]");
+					}
 				}
 				//fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_INPUT, this.inputState);
 			}

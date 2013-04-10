@@ -3,11 +3,14 @@
  */
 package v9t9.engine.sound;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFileFormat.Type;
 import javax.sound.sampled.AudioFormat.Encoding;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -19,17 +22,24 @@ import javax.sound.sampled.UnsupportedAudioFileException;
  *
  */
 public class CassetteReader {
+	static final boolean DEBUG = false;
 
+
+	/**
+	 * 
+	 */
+	private static final float MIN_MAG = 0.1f;
 
 	public static void main(String[] args) throws UnsupportedAudioFileException, IOException {
 
 		File audioFile = new File(args[0]);
-		AudioFileFormat format = AudioSystem.getAudioFileFormat(audioFile);
+		InputStream fis = new BufferedInputStream(new FileInputStream(audioFile));
+		AudioFileFormat format = AudioSystem.getAudioFileFormat(fis);
 		
 		AudioInputStream is = null;
 		
 		is = new AudioInputStream(
-				new FileInputStream(args[0]),
+				fis,
 				format.getFormat(),
 				audioFile.length());
 
@@ -39,8 +49,9 @@ public class CassetteReader {
 		
 		CassetteReader reader = new CassetteReader(is);
 		while (!reader.isDone()) {
+			
+			boolean val = reader.readBit(secsPerPoll);
 			System.out.print(reader.getPosition() + ": ");
-			int val = reader.readBit(secsPerPoll);
 			System.out.println(val);
 		}
 	}
@@ -55,6 +66,13 @@ public class CassetteReader {
 	private boolean signed;
 	private boolean endOfTape;
 	private int lastPolarity;
+	private float min;
+	private float max;
+	private float dcOffset;
+	private int locMaxima;
+	private float prevPeak;
+	private float prevRevPeak;
+	private int polarity;
 
 	/**
 	 * @param is 
@@ -62,11 +80,25 @@ public class CassetteReader {
 	 */
 	public CassetteReader(AudioInputStream is) {
 		this.is = is;
+		
+		// why doesn't Java provide a way to skip the header!?!?
+		AudioFileFormat format;
+		try {
+			format = AudioSystem.getAudioFileFormat(is);
+			if (format.getType() == Type.WAVE) {
+				is.skip(44);
+			}
+		} catch (IOException e) {
+		} catch (UnsupportedAudioFileException e) {
+		}
+		
 		nch = is.getFormat().getChannels();
 		sampSize = is.getFormat().getFrameSize();
 		bigEndian = is.getFormat().isBigEndian();
 		signed = is.getFormat().getEncoding() == Encoding.PCM_SIGNED;
 		mag = 1.0f;
+		min = 1f;
+		max = -1f;
 	}
 
 	/**
@@ -83,7 +115,7 @@ public class CassetteReader {
 	/**
 	 * @return
 	 */
-	private long getPosition() {
+	public long getPosition() {
 		return position;
 	}
 	
@@ -91,7 +123,7 @@ public class CassetteReader {
 	/**
 	 * @return
 	 */
-	private float readSample() {
+	public float readSample() {
 		if (endOfTape)
 			return 0f;
 		try {
@@ -143,7 +175,7 @@ public class CassetteReader {
 				mag = (mag * 255f) / 256f;
 			}
 			
-			if (mag >= 0.05f) {
+			if (mag >= MIN_MAG) {
 				return samp;
 			}
 			return 0f;
@@ -153,50 +185,80 @@ public class CassetteReader {
 		}
 	}
 	
-	public int readBit(float secs) {
-		int polarity = readPolarity(secs);
-		if (lastPolarity == 0) {
-			lastPolarity = polarity;
-			return 0;
+	public boolean readBit(float secs) {
+		int samples = (int) (is.getFormat().getFrameRate() * secs);
+		if (samples > 0) {
+			/*int changes =*/ scanPolarities(samples);
 		}
-		else if (polarity != lastPolarity) {
-			lastPolarity = polarity;
-			return 1;
-		}
-		return 0;
+		return polarity > 0;
+		
+//		if (lastPolarity == 0) {
+//			lastPolarity = polarity;
+//			return 0;
+//		}
+//		else if (polarity != lastPolarity) {
+//			lastPolarity = polarity;
+//			return 1;
+//		}
+//		return 0;
 	}
 	/**
 	 * Read the current polarity
 	 * @param secs amount of time, in seconds, to poll
 	 * @return
 	 */
-	protected int readPolarity(float secs) {
-		//System.out.print("[" + position + "]");
-		int samples = (int) (is.getFormat().getFrameRate() * secs);
-		int pos = 0;
-		int neg = 0;
-		float prev = 0;
-		boolean count = true;
+	protected int scanPolarities(int samples) {
+		if (samples > 48) {
+			samples = 48;
+		}
+		if (DEBUG) System.out.print(" @"+ samples+":");
+		
+		int changes = 0;
+		polarity = lastPolarity;
+		
 		while (samples-- > 0) {
 			float samp = readSample();
+			if (samp < min) {
+				min = samp;
+			} else if (samp > max) {
+				max = samp;
+			} 
+
+			if (max > 0 && min < 0)
+				dcOffset = (max + min) / 2;
 			
-			if (!count) {
-				// look for next polarity shift
-				if (Math.signum(samp) != Math.signum(prev)) {
-					count = true;
-				} else {
-					prev = samp;
-					continue;
+			samp -= dcOffset / 16;
+//			if (Math.abs(samp) < MIN_MAG)
+//				continue;
+			
+			//long pos = reader.getPosition();
+			
+			boolean newPeak = false;
+			if (min < 0 && samp < 0 && samp < prevPeak && prevRevPeak >= 0) {
+				locMaxima++;
+				newPeak = locMaxima >= 2;
+				prevPeak = samp;
+			} else if (max > 0 && samp > 0 && samp > prevPeak && prevRevPeak <= 0) {
+				locMaxima++;
+				newPeak = locMaxima >= 2;
+				prevPeak = samp;
+			} 
+			if (newPeak) {
+				polarity = samp < 0 ? -1 : 1;
+				if (polarity != lastPolarity) {
+					lastPolarity = polarity;
+					changes++;
 				}
+				
+				locMaxima = 0;
+				prevRevPeak = samp;
+				prevPeak = 0;
 			}
-			
-			if (samp < prev)
-				neg++;
-			else if (samp > prev)
-				pos++;
+			max *= 0.99f;
+			min *= 0.99f;
 			
 		}
-		return pos > neg ? 1 : pos < neg ? -1 : 0;
+		return changes;
 	}
 
 	public boolean isEndOfTape() {
