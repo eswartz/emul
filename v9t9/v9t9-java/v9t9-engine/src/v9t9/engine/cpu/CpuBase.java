@@ -278,12 +278,12 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	}
 
 	public void resetCycleCounts() {
-		currentcycles.set(0);
-		cycleCounts.getAndResetTotal();
-		currenttargetcycles.set(0);
-		synchronized (this) {
-			totalcurrentcycles = totaltargetcycles = 0;
-		}
+//		currentcycles.set(0);
+//		cycleCounts.getAndResetTotal();
+//		currenttargetcycles.set(0);
+//		synchronized (this) {
+//			totalcurrentcycles = totaltargetcycles = 0;
+//		}
 		allocatedCycles.drainPermits();
 	}
 
