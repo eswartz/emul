@@ -101,13 +101,13 @@ public class CruManager implements ICruHandler {
         	ICruWriter writer = writerArray[addr / 2];
         	if (writer != null) {
         		try {
-        			writer.write(addr, val & (~(~0 << 1)), 1);
+        			writer.write(addr, val & 1, 1);
         		} catch (Throwable t) {
         			t.printStackTrace();
         		}
         	}
         	num -= 1;
-        	addr += 1 * 2;
+        	addr += 2;
         	val >>= 1;
         }
     }
@@ -127,23 +127,23 @@ public class CruManager implements ICruHandler {
     public final int readBits(int addr, int num) {
     	addr &= 0x1fff;
     	int val = 0;
-    	int orgaddr = addr;
+    	int shift = 0;
     	while (num > 0) {
     		if (addr >= 0x2000)
     			break;
          	ICruReader reader = readerArray[addr / 2];
-         	int shift = (addr - orgaddr) / 2;
-            int bits = 0;
+            int bit = 0;
             if (reader != null) {
             	try {
-            		bits = reader.read(addr, val, 1) & (~(~0 << 1));
+            		bit = reader.read(addr, val, 1) & 1;
             	} catch (Throwable t) {
         			t.printStackTrace();
         		}
             }
-            val = (val & ~((~(~0 << 1)) << shift)) | (bits << shift);
-            num -= 1;
-            addr += 1 * 2;
+            val |= bit << shift;
+            addr += 2;
+            shift++;
+            num --;
     	}
         return val;
     }
