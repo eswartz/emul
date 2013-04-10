@@ -11,6 +11,8 @@
 package v9t9.engine.hardware;
 
 
+import org.apache.log4j.Logger;
+
 import ejs.base.settings.ISettingSection;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.ICruChip;
@@ -21,6 +23,8 @@ import v9t9.common.machine.IMachine;
  * @author ejs
  */
 public class BaseCruChip implements ICruChip {
+	static final Logger logger = Logger.getLogger(BaseCruChip.class);
+	
     IMachine machine;
 
 	/** intlevel for peripheral interrupt */ 
@@ -52,6 +56,8 @@ public class BaseCruChip implements ICruChip {
 	protected boolean intreq;
 
 	private final int intCount;
+
+	private int prevClockRegister;
 	
     public BaseCruChip(IMachine machine, int intCount) {
         this.machine = machine;
@@ -66,13 +72,21 @@ public class BaseCruChip implements ICruChip {
         ic = 0xf;
 		// 	XXX: reset software pins
         currentints = 0;
+        clockRegister = 0;
+        clockmode = false;
+        leftoverCycles = 0;
 	}
 
 	protected void resetClock() {
-		clockDecrementerRegister = (clockRegister >> 1);
-		prevCycles = machine.getCpu().getCurrentCycleCount();
+		if (clockRegister != prevClockRegister) {
+			logger.info("new clock register: " + clockRegister+"; rate = " + 
+					(3000000 / clockRegister / 64) + " Hz");
+			prevClockRegister = clockRegister;
+		}
+		clockDecrementerRegister = clockRegister;
+		prevCycles = machine.getCpu().getCurrentCycleCount() + machine.getCpu().getTotalCycleCount();
+		leftoverCycles = 0;
 		//clockTargetCycleCount = machine.getCpu().getTotalCurrentCycleCount() + 64;
-		//System.out.println("Reset clock to " + clockRegister);
 	}
 
     public boolean isInterruptWaiting() {
@@ -88,7 +102,8 @@ public class BaseCruChip implements ICruChip {
     /** When PIN_INTREQ set, the interrupt level (IC* bits on the TMS9900). */
     private byte ic;
 
-	private int prevCycles;
+	private long prevCycles;
+	private int leftoverCycles;
 
 	public void pollForPins(ICpu cpu) {
 		// interrupts not generated in clock mode
@@ -100,32 +115,32 @@ public class BaseCruChip implements ICruChip {
 		final int CYCLES_PER_TICK = 64;
 		if (clockRegister != 0) {
 			// this decrements once every N cycles
-			int nowCycles = cpu.getCurrentCycleCount();
-			int diff = nowCycles >= prevCycles ? nowCycles - prevCycles : nowCycles;
+			long nowCycles = cpu.getCurrentCycleCount() + cpu.getTotalCycleCount();
+			long diff = nowCycles >= prevCycles ? nowCycles - prevCycles : nowCycles;
+			diff += leftoverCycles;
 			prevCycles = nowCycles;
 			
 			while (diff >= CYCLES_PER_TICK) {
+				clockReadRegister = clockDecrementerRegister;
 				if (--clockDecrementerRegister < 0) {
-					//System.out.println("tick");
 					if ((enabledIntMask & (1 << intClock)) != 0) {
+						//logger.debug("tick");
 						if (!suppressClockInterrupts) {
 							triggerInterrupt(intClock);
 							
 							// "When the clock interrupt is active, the clock mask must be written
 							// to clear the interrupt."
 							suppressClockInterrupts = true;
-							resetClock();
 						}
 					} else {
-						resetClock();
 					}
+					resetClock();
 					break;
 				}
 				diff -= CYCLES_PER_TICK;
-				clockReadRegister = clockDecrementerRegister;
 			}
 			
-			prevCycles -= diff;
+			leftoverCycles = (int) diff;
 		}
 		
 		intreq = false;
