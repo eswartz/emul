@@ -316,7 +316,9 @@ public class InstTable9900 {
 		InstBuilder.from("b", Inst9900.Ib, 0x0440, GEN_NONE)
 			.withCycles(8, 2)
 			.register();
-		InstBuilder.from("x", Inst9900.Ix, 0x0480, GEN_NONE).register();
+		InstBuilder.from("x", Inst9900.Ix, 0x0480, GEN_NONE)
+			.withCycles(8, 2)
+			.register();
 		InstBuilder.from("clr", Inst9900.Iclr, 0x04c0, GEN_NONE)
 			.withCycles(10, 3)
 			.source()
@@ -431,8 +433,12 @@ public class InstTable9900 {
 			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 
-		InstBuilder.from("sbo", Inst9900.Isbo, 0x1d00, OFF_NONE).register();
-		InstBuilder.from("sbz", Inst9900.Isbz, 0x1e00, OFF_NONE).register();
+		InstBuilder.from("sbo", Inst9900.Isbo, 0x1d00, OFF_NONE)
+			.withCycles(12, 2)
+			.register();
+		InstBuilder.from("sbz", Inst9900.Isbz, 0x1e00, OFF_NONE)
+			.withCycles(12, 2)
+			.register();
 		InstBuilder.from("tb", Inst9900.Itb, 0x1f00, OFF_NONE)
 			.withCycles(12, 2)
 			.register();
