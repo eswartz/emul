@@ -11,9 +11,13 @@
 package v9t9.engine.hardware;
 
 
+import java.io.PrintWriter;
+
 import org.apache.log4j.Logger;
 
+import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
+import ejs.base.settings.Logging;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.machine.IMachine;
@@ -58,14 +62,22 @@ public class BaseCruChip implements ICruChip {
 	private final int intCount;
 
 	private int prevClockRegister;
+
+	private IProperty dumpFullInstructions;
 	
     public BaseCruChip(IMachine machine, int intCount) {
         this.machine = machine;
 		this.intCount = intCount;
-        
+		dumpFullInstructions = machine.getSettings().get(ICpu.settingDumpFullInstructions);
+		
+
         reset();
     }
-
+    protected void log(String msg) {
+		PrintWriter pw = Logging.getLog(dumpFullInstructions);
+		if (pw != null)
+			pw.println("[CRU] " + msg);
+	}
     public void reset() {
         enabledIntMask = 0;
         intreq = false;
@@ -79,6 +91,8 @@ public class BaseCruChip implements ICruChip {
 
 	protected void resetClock() {
 		if (clockRegister != prevClockRegister) {
+			log("new clock register: " + clockRegister+"; rate = " + 
+					(3000000 / clockRegister / 64) + " Hz");
 			logger.info("new clock register: " + clockRegister+"; rate = " + 
 					(3000000 / clockRegister / 64) + " Hz");
 			prevClockRegister = clockRegister;
@@ -121,7 +135,7 @@ public class BaseCruChip implements ICruChip {
 			prevCycles = nowCycles;
 			
 			while (diff >= CYCLES_PER_TICK) {
-				clockReadRegister = clockDecrementerRegister;
+				diff -= CYCLES_PER_TICK;
 				if (--clockDecrementerRegister < 0) {
 					if ((enabledIntMask & (1 << intClock)) != 0) {
 						//logger.debug("tick");
@@ -132,12 +146,13 @@ public class BaseCruChip implements ICruChip {
 							// to clear the interrupt."
 							suppressClockInterrupts = true;
 						}
+						clockReadRegister = clockDecrementerRegister;
 					} else {
+						clockReadRegister = clockDecrementerRegister;
 					}
 					resetClock();
 					break;
 				}
-				diff -= CYCLES_PER_TICK;
 			}
 			
 			leftoverCycles = (int) diff;

@@ -13,6 +13,7 @@ package v9t9.engine.sound;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -27,10 +28,13 @@ import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.sound.ICassetteVoice;
 import v9t9.common.sound.TMS9919Consts;
+import v9t9.engine.video.tms9918a.VdpTMS9918A;
 
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
+import ejs.base.settings.Logging;
+import ejs.base.utils.HexUtils;
 import ejs.base.utils.ListenerList;
 
 /**
@@ -47,14 +51,18 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 			ISettingsHandler.MACHINE,
 			"CassetteInput", "");
 	
+	public static SettingSchema settingDumpCassetteAccess = new SettingSchema(
+			ISettingsHandler.MACHINE,
+			"CassetteAccess", true);
+	
 	private int outputState;
 	private int motor1;
 	private int motor2;
 	private IMachine machine;
 
 	private IProperty cassetteInput;
-
 	private IProperty cassetteReading;
+	protected IProperty dumpFullInstructions;
 
 	protected CassetteReader cassetteReader;
 	protected long prevCassetteCycles;
@@ -64,6 +72,8 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 
 	private float clockSecs = 1.0f / 1500f;
 
+	private IProperty dumpCassetteAccess;
+
 	public CassetteVoice(String id, String name,
 			ListenerList<IRegisterWriteListener> listeners, IMachine machine_) {
 		super(id, name, listeners);
@@ -71,6 +81,9 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 		
 		cassetteInput = machine.getSettings().get(settingCassetteInput);
 		cassetteReading = machine.getSettings().get(settingCassetteReading);
+		
+		dumpFullInstructions = machine.getSettings().get(ICpu.settingDumpFullInstructions);
+		dumpCassetteAccess = machine.getSettings().get(settingDumpCassetteAccess);
 		
 		cassetteInput.addListenerAndFire(new IPropertyListener() {
 			
@@ -92,6 +105,15 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 		});
 	}
 
+	protected void log(String msg) {
+		if (dumpCassetteAccess.getBoolean()) {
+			PrintWriter pw = Logging.getLog(dumpFullInstructions);
+			if (pw != null)
+				pw.println("[Cassette] " + msg);
+		}
+	}
+
+	
 	/**
 	 * 
 	 */
@@ -137,8 +159,7 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 	
 	public void setClock(float secs) {
 		if (clockSecs != secs) {
-			if (CassetteReader.DEBUG)
-				System.out.println("\nnew cassette clock = " + 1.0f / secs + " Hz");
+			log("\nnew cassette clock = " + 1.0f / secs + " Hz");
 			this.clockSecs = secs;
 		}
 		
@@ -171,14 +192,20 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 				
 				time = (float) cycles / cpu.getBaseCyclesPerSec();
 				
+				long pos = cassetteReader.getPosition();
+				
 				state = cassetteReader.readBit(time);
-				if (CassetteReader.DEBUG) System.out.print(state ? 'x' : '-');
+				
+				//if (CassetteReader.DEBUG) System.out.print(state ? 'x' : '-');
+				if (dumpCassetteAccess.getBoolean())
+					log(pos + "-" + cassetteReader.getPosition() + ": " + state);
 				
 				if (CassetteReader.DEBUG) {
 					if (lastScroll + 1000 <= now) {
 						lastScroll = now;
 						System.out.println();
-						System.out.print("[" + cassetteReader.getPosition() +"]");
+						System.out.print("[" + pos +"] vdp=" + 
+						HexUtils.toHex4(((VdpTMS9918A) machine.getVdp()).getVdpMmio().getAddr())+" ");
 					}
 				}
 				//fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_INPUT, this.inputState);

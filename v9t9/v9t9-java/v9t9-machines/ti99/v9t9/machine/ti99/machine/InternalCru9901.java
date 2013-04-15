@@ -12,10 +12,14 @@ package v9t9.machine.ti99.machine;
 
 import static v9t9.common.keyboard.KeyboardConstants.MASK_CAPS_LOCK;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import ejs.base.properties.IProperty;
+import ejs.base.settings.Logging;
 
 import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.sound.ICassetteVoice;
@@ -273,7 +277,7 @@ public class InternalCru9901 extends BaseCruChip {
     	intVdp = 2;
     	intClock = 3;
     	
-        this.manager = machine.getCruManager();
+        manager = machine.getCruManager();
         assert manager != null;
 
         registerInternalCru(0x0, 1, cruw9901_0);
@@ -323,8 +327,7 @@ public class InternalCru9901 extends BaseCruChip {
 
         registerInternalCru(0x36, 1, crurCassetteIn);
     }
-
-
+    
 	/**
 	 * @param addr
 	 */

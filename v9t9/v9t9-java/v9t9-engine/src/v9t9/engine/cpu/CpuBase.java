@@ -91,11 +91,8 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	protected ICpuState state;
 
 	protected IProperty cyclesPerSecond;
-
 	protected IProperty realTime;
-
 	private IProperty dumpInstructions;
-
 	private IProperty dumpFullInstructions;
 
 	private ListenerList<ICpuListener> listeners = new ListenerList<ICpuListener>();
@@ -201,10 +198,12 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		return allocatedCycles;
 	}
 	public synchronized void tick() {
-		totalcurrentcycles += currentcycles.getAndSet(0);
+		int tickCycles = currentcycles.getAndSet(0);
+		totalcurrentcycles += tickCycles;
 		
-		int newTargetCycles = (int) (totaltargetcycles - totalcurrentcycles);
-		// if we went over, aim for fewer this time
+		int newTargetCycles = targetcycles;
+		
+		newTargetCycles = (int) (totaltargetcycles - totalcurrentcycles);
 		
 		if (newTargetCycles < targetcycles / 10 || newTargetCycles > targetcycles * 2) {
 			if (newTargetCycles < 0) {
@@ -212,8 +211,24 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 				totalcurrentcycles = totaltargetcycles;
 			}
 			newTargetCycles = targetcycles;
-			
 		}
+		
+		
+//		long now = System.currentTimeMillis();
+//		if (firstTime != 0) {
+//			long expTotalCycles = (cyclesPerSecond.getInt() * (now - firstTime) 
+//					/ 1000);
+//			newTargetCycles = (int) (expTotalCycles - totalcurrentcycles);
+//			if (newTargetCycles < targetcycles / 2 || newTargetCycles > targetcycles * 2) {
+//				newTargetCycles = targetcycles;
+//				firstTime = now;
+//				totalcurrentcycles = 0;
+//			}
+//			//System.out.println(newTargetCycles);
+//		} else {
+//			firstTime = now;
+//		}
+
 		currenttargetcycles.set(newTargetCycles);
 		
 //		System.out.println(System.currentTimeMillis()+": " + currentcycles + " -> " + currenttargetcycles);

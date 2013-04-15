@@ -24,12 +24,6 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 public class CassetteReader {
 	static final boolean DEBUG = false;
 
-
-	/**
-	 * 
-	 */
-	private static final float MIN_MAG = 0.1f;
-
 	public static void main(String[] args) throws UnsupportedAudioFileException, IOException {
 
 		File audioFile = new File(args[0]);
@@ -65,14 +59,14 @@ public class CassetteReader {
 	private boolean bigEndian;
 	private boolean signed;
 	private boolean endOfTape;
-	private int lastPolarity;
 	private float min;
 	private float max;
 	private float dcOffset;
-	private int locMaxima;
-	private float prevPeak;
-	private float prevRevPeak;
+	private float prev;
 	private int polarity;
+
+
+	private float samplesFrac;
 
 	/**
 	 * @param is 
@@ -93,7 +87,7 @@ public class CassetteReader {
 		}
 		
 		nch = is.getFormat().getChannels();
-		sampSize = is.getFormat().getFrameSize();
+		sampSize = is.getFormat().getFrameSize() / nch;
 		bigEndian = is.getFormat().isBigEndian();
 		signed = is.getFormat().getEncoding() == Encoding.PCM_SIGNED;
 		mag = 1.0f;
@@ -124,8 +118,9 @@ public class CassetteReader {
 	 * @return
 	 */
 	public float readSample() {
-		if (endOfTape)
+		if (endOfTape) {
 			return 0f;
+		}
 		try {
 			float total = 0.f;
 			byte[] buf = new byte[is.getFormat().getFrameSize()];
@@ -134,6 +129,7 @@ public class CassetteReader {
 				int len = is.read(buf);
 				if (len != buf.length) {
 					if (!endOfTape) {
+						mag = 0f;
 						endOfTape = true;
 					}
 				}
@@ -175,10 +171,10 @@ public class CassetteReader {
 				mag = (mag * 255f) / 256f;
 			}
 			
-			if (mag >= MIN_MAG) {
-				return samp;
-			}
-			return 0f;
+			if (absSamp < 0.001f)
+				return 0f;
+			
+			return samp;
 			
 		} catch (IOException e) {
 			return 0;
@@ -186,21 +182,22 @@ public class CassetteReader {
 	}
 	
 	public boolean readBit(float secs) {
-		int samples = (int) (is.getFormat().getFrameRate() * secs);
+		if (isEndOfTape()) {
+			polarity = 0;
+			return false;
+		}
+		
+		float samplesf = (is.getFormat().getFrameRate() * secs);
+		int samples = (int) samplesf;
+		samplesFrac += (samplesf - samples);
+		if (samplesFrac >= 1.0f) {
+			samplesFrac -= 1.0f;
+			samples++;
+		}
 		if (samples > 0) {
-			/*int changes =*/ scanPolarities(samples);
+			polarity = scanPolarities(samples);
 		}
 		return polarity > 0;
-		
-//		if (lastPolarity == 0) {
-//			lastPolarity = polarity;
-//			return 0;
-//		}
-//		else if (polarity != lastPolarity) {
-//			lastPolarity = polarity;
-//			return 1;
-//		}
-//		return 0;
 	}
 	/**
 	 * Read the current polarity
@@ -213,8 +210,7 @@ public class CassetteReader {
 		}
 		if (DEBUG) System.out.print(" @"+ samples+":");
 		
-		int changes = 0;
-		polarity = lastPolarity;
+		int newPolarity = polarity;
 		
 		while (samples-- > 0) {
 			float samp = readSample();
@@ -224,41 +220,32 @@ public class CassetteReader {
 				max = samp;
 			} 
 
-			if (max > 0 && min < 0)
-				dcOffset = (max + min) / 2;
-			
-			samp -= dcOffset / 16;
-//			if (Math.abs(samp) < MIN_MAG)
-//				continue;
-			
-			//long pos = reader.getPosition();
-			
-			boolean newPeak = false;
-			if (min < 0 && samp < 0 && samp < prevPeak && prevRevPeak >= 0) {
-				locMaxima++;
-				newPeak = locMaxima >= 2;
-				prevPeak = samp;
-			} else if (max > 0 && samp > 0 && samp > prevPeak && prevRevPeak <= 0) {
-				locMaxima++;
-				newPeak = locMaxima >= 2;
-				prevPeak = samp;
-			} 
-			if (newPeak) {
-				polarity = samp < 0 ? -1 : 1;
-				if (polarity != lastPolarity) {
-					lastPolarity = polarity;
-					changes++;
-				}
-				
-				locMaxima = 0;
-				prevRevPeak = samp;
-				prevPeak = 0;
+			if (max > 0 && min < 0) {
+				dcOffset = (dcOffset + (max + min) / 2) / 2;
+			} else {
+				dcOffset = 0f;
 			}
+			
+			samp -= dcOffset;
+			
+			if (samp < 0) {
+				if (prev < 0) {
+					newPolarity = -1;
+				}
+			} else if (samp > 0) {
+				if (prev > 0) {
+					newPolarity = 1;
+				}
+			}
+			
 			max *= 0.99f;
 			min *= 0.99f;
 			
+			prev = samp;
+			
 		}
-		return changes;
+		
+		return newPolarity;
 	}
 
 	public boolean isEndOfTape() {

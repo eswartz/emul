@@ -49,7 +49,8 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 		for (int i = 0; i < cassetteChirp.length; i++) {
 			double sin = Math.sin(i * Math.PI * 2 / cassetteChirp.length);
 			double sin2 = Math.sin(i * Math.PI / cassetteChirp.length);
-			double v = sin * (sin2*sin2*sin2*sin2); 
+			double v = sin * (sin2*sin2*sin2*sin2);
+//			double v = i < cassetteChirp.length/ 2 ? -1 : 1;
 			cassetteChirp[i] = (short) (v *  cassetteChirpMag); 
 		}
 	}
@@ -200,8 +201,8 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 				v *= sign;
 				
 				// this seems to be how the "perfect" wave is messed up in analog-land
-				dcOffset += v * 8 / diff;
-				v += dcOffset;
+				//dcOffset += v * 8 / diff;
+				//v += dcOffset;
 				
 				soundGeneratorWorkBuffer[from++] += sampleL * v;
 				soundGeneratorWorkBuffer[from++] += sampleR * v;
