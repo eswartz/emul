@@ -5,7 +5,7 @@
               To include a user specific buildfile here, simply create one in the same
               directory with the processing instruction <?eclipse.ant.import?>
               as the first entry and export the buildfile again. -->
-<project basedir="." default="nothing" name="v9t9-gui">
+<project basedir="." default="build-jar" name="v9t9-gui">
     <property environment="env"/>
     <property name="ejs-base.location" value="../../../base/ejs-base"/>
     <property name="ejs-gui.location" value="../../../base/ejs-gui"/>
@@ -236,6 +236,11 @@
                 <propertyref name="build.compiler"/>
             </propertyset>
         </ant>
+        <ant antfile="build.xml" dir="." inheritAll="false" target="build-jar">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
     </target>
     <target depends="init" name="build-project">
         <echo message="${ant.project.name}: ${ant.file}"/>
@@ -285,7 +290,9 @@
             <classpath refid="v9t9-gui.classpath"/>
         </java>
     </target>
-	
+
+
+	<import file="../v9t9-gui/common.properties"/>
     <target name="build-jar" depends="build-project">
     	<property name="JarClassPath" value="
 	    	./ 

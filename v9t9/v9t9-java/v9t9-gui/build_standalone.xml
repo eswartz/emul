@@ -269,6 +269,8 @@
     		preservelastmodified="true"
     		jar="${prevunsignedjar}"
     		signedjar="${newsignedjar}"
+    		
+    		verbose="true"
     	    >
     	</signjar>
 		<copy file="${newsignedjar}" tofile="${distribjar}" preservelastmodified="true"  />
@@ -279,10 +281,6 @@
 	</target>
 
     <target name="sign-jars" >
-    	<mkdir dir="${bin.v9t9-temp.dir}/cur" />
-    	<mkdir dir="${bin.v9t9-temp.dir}/signed" />
-    	<mkdir dir="${bin.v9t9-temp.dir}/signed/libs" />
-    	
     	<move todir="${bin.v9t9-temp.dir}/cur/libs"
 				overwrite="true"
     		preservelastmodified="true">
@@ -305,6 +303,10 @@
 		    <include name="*.jar"/>
 		    <include name="libs/*.jar"/>
 		</fileset>
+
+    	<mkdir dir="${bin.v9t9-temp.dir}/ref/libs" />
+    	<mkdir dir="${bin.v9t9-temp.dir}/cur/libs" />
+    	<mkdir dir="${bin.v9t9-temp.dir}/signed/libs" />
 
     	<foreach param="jarfile" target="check-sign-jar" inheritall="true" parallel="true" >
 			<fileset refid="curjars" />
