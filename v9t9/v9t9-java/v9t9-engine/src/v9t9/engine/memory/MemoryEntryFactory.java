@@ -361,9 +361,18 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			boolean needAddress = true;
 			boolean needSize = true;
 			boolean needDomain = true;
+			Class<?> cls = (Class<?>)properties.get(MemoryEntryInfo.CLASS);
+			
+			boolean isBanked = 
+					(cls != null && BankedMemoryEntry.class.isAssignableFrom(cls))
+					|| (cls == null && (properties.containsKey(MemoryEntryInfo.FILENAME2)
+							|| properties.containsKey(MemoryEntryInfo.FILE2_MD5)));
+			
+			Integer size = (Integer) properties.get(MemoryEntryInfo.SIZE);
 			if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))
 					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000
-					&& (Integer) properties.get(MemoryEntryInfo.SIZE) == 0x2000) {
+					&& (size != null && size <= 0x2000)
+					&& !isBanked) {
 				entry = root.getOwnerDocument().createElement("romModuleEntry");
 				needAddress = needSize = needDomain = false;
 			}
@@ -371,18 +380,19 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000) {
 				entry = root.getOwnerDocument().createElement("gromModuleEntry");
 				needAddress = needSize = needDomain = false;
-			}
-			else if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))
-					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000
-					&& BankedMemoryEntry.class.isAssignableFrom((Class<?>)properties.get(MemoryEntryInfo.CLASS))) {
-				entry = root.getOwnerDocument().createElement("bankedModuleEntry");
-				needAddress = needSize = needDomain = false;
-				
-				if (BankedMemoryEntry.class.equals((Class<?>)properties.get(MemoryEntryInfo.CLASS)))
-					entry.setAttribute("custom", "true");
-			}
-			else {
-				entry = root.getOwnerDocument().createElement("memoryEntry");
+			} else {
+				if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))
+						&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000
+						&& isBanked) {
+					entry = root.getOwnerDocument().createElement("bankedModuleEntry");
+					needAddress = needSize = needDomain = false;
+					
+					if (cls == null || BankedMemoryEntry.class.equals(cls))
+						entry.setAttribute("custom", "true");
+				}
+				else {
+					entry = root.getOwnerDocument().createElement("memoryEntry");
+				}
 			}
 
 			if (needDomain) {
@@ -392,9 +402,13 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				entry.setAttribute(MemoryEntryInfo.ADDRESS, 
 						"0x" + HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.ADDRESS)).intValue()));
 			}
-			if (needSize) {
-				entry.setAttribute(MemoryEntryInfo.SIZE, 
-						"0x" + HexUtils.toHex4(((Number) properties.get(MemoryEntryInfo.SIZE)).intValue()));
+			if (needSize && size != null) {
+				if (size < 0) {
+					entry.setAttribute(MemoryEntryInfo.SIZE, Integer.toString(size));
+				} else {
+					entry.setAttribute(MemoryEntryInfo.SIZE, 
+							"0x" + HexUtils.toHex4(size));
+				}
 			}
 			if (properties.containsKey(MemoryEntryInfo.FILENAME))
 				entry.setAttribute(MemoryEntryInfo.FILENAME, properties.get(MemoryEntryInfo.FILENAME).toString());

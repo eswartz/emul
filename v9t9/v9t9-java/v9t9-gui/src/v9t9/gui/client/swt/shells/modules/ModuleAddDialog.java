@@ -450,7 +450,7 @@ public class ModuleAddDialog extends StatusDialog {
 				status = createStatus(IStatus.INFO, "Leave directory blank to add module list");
 		} else {
 			File dir = new File(dirTextStr);
-			if (!dir.isDirectory()) {
+			if (!dir.exists()) {
 				status = createStatus(IStatus.ERROR, "Directory does not exist");
 				valid = false;
 			}

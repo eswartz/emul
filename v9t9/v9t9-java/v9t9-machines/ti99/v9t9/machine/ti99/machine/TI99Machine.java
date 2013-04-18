@@ -204,7 +204,7 @@ public class TI99Machine extends MachineBase {
 					return key.equals(baseKey);
 				}
 			});
-			if (!Arrays.asList(files).contains(base)) {
+			if (files == null || !Arrays.asList(files).contains(base)) {
 				return Collections.emptyList();
 			}
 		}

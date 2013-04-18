@@ -10,6 +10,7 @@
  */
 package v9t9.engine.modules;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -251,11 +252,17 @@ public class ModuleManager implements IModuleManager {
 			IMemoryEntry entry = null;
 			entry = memory.getMemoryEntryFactory().newMemoryEntry(info);
 			return entry;
-		} catch (IOException e) {
+		} catch (FileNotFoundException e) {
 			String filename = info.getString(MemoryEntryInfo.FILENAME); 
 			throw new NotifyException(null, "Failed to load file '" + filename 
 					+ "' for '" + info.getString(MemoryEntryInfo.NAME) +"' "
 					+ "in " + module.getDatabaseURI(),
+					e);
+		} catch (IOException e) {
+			String filename = info.getString(MemoryEntryInfo.FILENAME); 
+			throw new NotifyException(null, "Error with file '" + filename 
+					+ "' for '" + info.getString(MemoryEntryInfo.NAME) +"' "
+					+ "in " + module.getDatabaseURI() +":\n\n" + e.getMessage(),
 					e);
 		}
 	}
