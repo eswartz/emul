@@ -43,17 +43,13 @@ import ejs.base.sound.IFlushableSoundVoice;
  *
  */
 public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableSoundVoice {
-	private static final short[] cassetteChirp = new short[256];
-	final static int cassetteChirpMag = 0x1800;
-	static {
-		for (int i = 0; i < cassetteChirp.length; i++) {
-			double sin = Math.sin(i * Math.PI * 2 / cassetteChirp.length);
-			double sin2 = Math.sin(i * Math.PI / cassetteChirp.length);
-			double v = sin * (sin2*sin2*sin2*sin2);
-//			double v = i < cassetteChirp.length/ 2 ? -1 : 1;
-			cassetteChirp[i] = (short) (v *  cassetteChirpMag); 
-		}
-	}
+	private static final short[] cassetteChirp = {
+		0x400, 0x1570, 0x1814, 0x0d13, 0x456, 0x305, 0x0d6e, 0x200d, 0x2c8a, 0x2a1c,
+		0x1d92, 0x0e90, 0x0787, 0x07d2, 0x0db7, 0x1093, 0x1044, 0x0d61, 
+		0x0c6e, 0x0e05, 0x10c3, 0x15e0, 0x1a0c, 0x1e28, 0x21a0, 0x2978,
+		0x3417, 0x4060, 0x445b, 0x31f2, 0x07f9
+	};
+	final static int cassetteChirpMag = 0x4800;
 	private boolean wasSet;
 	private boolean state;
 	private boolean origState;
@@ -160,8 +156,8 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 			
 			generated = true;
 			int ratio = 128 + balance;
-			float sampleL = ((256 - ratio) * 1f) / 256.f;
-			float sampleR = (ratio * 1f) / 256.f;
+			float sampleL = ((256 - ratio) * 1f) / 128.f;
+			float sampleR = (ratio * 1f) / 128.f;
 			
 			int totalSamps = to - from;
 			

@@ -33,8 +33,8 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 			float sampleMagnitude = getCurrentMagnitude();
 			if (sampleMagnitude != 0.0f) {
 				any = true;
-				float sampleL = ((256 - ratio) * sampleMagnitude) / 256.f;
-				float sampleR = (ratio * sampleMagnitude) / 256.f;
+				float sampleL = ((256 - ratio) * sampleMagnitude) / 128.f;
+				float sampleR = (ratio * sampleMagnitude) / 128.f;
 				
 				soundGeneratorWorkBuffer[from++] += sampleL;
 				soundGeneratorWorkBuffer[from++] += sampleR;
