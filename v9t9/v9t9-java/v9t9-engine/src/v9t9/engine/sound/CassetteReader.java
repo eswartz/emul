@@ -124,24 +124,27 @@ public class CassetteReader {
 		try {
 			float total = 0.f;
 			byte[] buf = new byte[is.getFormat().getFrameSize()];
-			for (int ch = 0; ch < nch; ch++) {
-				int samp = 0;
-				int len = is.read(buf);
-				if (len != buf.length) {
-					if (!endOfTape) {
-						mag = 0f;
-						endOfTape = true;
-					}
+			int len = is.read(buf);
+			if (len != buf.length) {
+				if (!endOfTape) {
+					mag = 0f;
+					endOfTape = true;
 				}
+				return 0f;
+			}
+			position++;
+			for (int ch = 0; ch < nch; ch++) {
+				int bufIdx = ch * sampSize;
+				int samp = 0;
 				if (sampSize == 1) {
-					samp = signed ? buf[0] : (buf[0] - 0x80) & 0xff;
+					samp = signed ? buf[bufIdx] : (buf[bufIdx] - 0x80) & 0xff;
 					total += samp / 128f;
 				}
 				else if (sampSize == 2) {
 					if (bigEndian)
-						samp = ((buf[0] & 0xff) << 8) | (buf[1] & 0xff);
+						samp = ((buf[bufIdx] & 0xff) << 8) | (buf[bufIdx+1] & 0xff);
 					else
-						samp = ((buf[1] & 0xff) << 8) | (buf[0] & 0xff);
+						samp = ((buf[bufIdx+1] & 0xff) << 8) | (buf[bufIdx] & 0xff);
 					if (signed)
 						samp = (short) samp;
 					total += samp / 32768f;
@@ -149,17 +152,16 @@ public class CassetteReader {
 				else if (sampSize == 4) {
 					long lsamp;
 					if (bigEndian)
-						lsamp = ((buf[3] & 0xff) << 24) | ((buf[2] & 0xff) << 16) |
-							((buf[1] & 0xff) << 8) | (buf[1] & 0xff);
+						lsamp = ((buf[bufIdx+3] & 0xff) << 24) | ((buf[bufIdx+2] & 0xff) << 16) |
+							((buf[bufIdx+1] & 0xff) << 8) | (buf[bufIdx] & 0xff);
 					else
-						lsamp = ((buf[0] & 0xff) << 24) | ((buf[1] & 0xff) << 16) |
-							((buf[2] & 0xff) << 8) | (buf[3] & 0xff);
+						lsamp = ((buf[bufIdx] & 0xff) << 24) | ((buf[bufIdx+1] & 0xff) << 16) |
+							((buf[bufIdx+2] & 0xff) << 8) | (buf[bufIdx+3] & 0xff);
 					if (signed)
 						lsamp = (int) lsamp;
 
 					total += lsamp / (float)0x80000000L;
 				}
-				position++;
 			}
 			
 			float samp = total / nch;
@@ -256,6 +258,7 @@ public class CassetteReader {
 	 */
 	public void close() {
 		try { is.close(); } catch (IOException e) { }
+		endOfTape = true;
 	}
 
 

@@ -208,7 +208,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		if (newTargetCycles < targetcycles / 10 || newTargetCycles > targetcycles * 2) {
 			if (newTargetCycles < 0) {
 				// something really threw us off -- just start over
-				totalcurrentcycles = totaltargetcycles;
+				//totalcurrentcycles = totaltargetcycles;
 			}
 			newTargetCycles = targetcycles;
 		}

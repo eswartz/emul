@@ -87,6 +87,7 @@ public class BaseCruChip implements ICruChip {
         clockRegister = 0;
         clockmode = false;
         leftoverCycles = 0;
+        prevCycles = machine.getCpu().getCurrentCycleCount();
 	}
 
 	protected void resetClock() {
@@ -96,10 +97,11 @@ public class BaseCruChip implements ICruChip {
 			logger.info("new clock register: " + clockRegister+"; rate = " + 
 					(3000000 / clockRegister / 64) + " Hz");
 			prevClockRegister = clockRegister;
+			//prevCycles = machine.getCpu().getCurrentCycleCount() + machine.getCpu().getTotalCycleCount();
+			prevCycles = machine.getCpu().getCurrentCycleCount();
+			leftoverCycles = 0;
 		}
 		clockDecrementerRegister = clockRegister;
-		prevCycles = machine.getCpu().getCurrentCycleCount() + machine.getCpu().getTotalCycleCount();
-		leftoverCycles = 0;
 		//clockTargetCycleCount = machine.getCpu().getTotalCurrentCycleCount() + 64;
 	}
 
@@ -129,14 +131,15 @@ public class BaseCruChip implements ICruChip {
 		final int CYCLES_PER_TICK = 64;
 		if (clockRegister != 0) {
 			// this decrements once every N cycles
-			long nowCycles = cpu.getCurrentCycleCount() + cpu.getTotalCycleCount();
-			long diff = nowCycles >= prevCycles ? nowCycles - prevCycles : nowCycles;
-			diff += leftoverCycles;
-			prevCycles = nowCycles;
+			long nowCycles = cpu.getCurrentCycleCount();
+			if (nowCycles < prevCycles) {
+				prevCycles = -leftoverCycles;
+			}
 			
-			while (diff >= CYCLES_PER_TICK) {
-				diff -= CYCLES_PER_TICK;
-				if (--clockDecrementerRegister < 0) {
+			while (prevCycles + CYCLES_PER_TICK < nowCycles) {
+				prevCycles += CYCLES_PER_TICK;
+				clockReadRegister = --clockDecrementerRegister;
+				if (clockDecrementerRegister <= 0) {
 					if ((enabledIntMask & (1 << intClock)) != 0) {
 						//logger.debug("tick");
 						if (!suppressClockInterrupts) {
@@ -146,16 +149,14 @@ public class BaseCruChip implements ICruChip {
 							// to clear the interrupt."
 							suppressClockInterrupts = true;
 						}
-						clockReadRegister = clockDecrementerRegister;
-					} else {
-						clockReadRegister = clockDecrementerRegister;
 					}
-					resetClock();
+					//resetClock();
+					clockDecrementerRegister = clockRegister;
 					break;
 				}
+				
 			}
-			
-			leftoverCycles = (int) diff;
+			leftoverCycles = (int) (nowCycles - prevCycles);
 		}
 		
 		intreq = false;
