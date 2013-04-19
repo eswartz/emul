@@ -209,7 +209,7 @@
 
 
 	<target name="build-jar" depends="build">
-		<jar destfile="${bin.v9t9.dir}/v9t9-tools.jar">
+		<jar destfile="${bin.v9t9.jar.dir}/v9t9-tools.jar">
 
 			<manifest>
 				<attribute name="Main-Class" value="v9t9.tools.Help" />

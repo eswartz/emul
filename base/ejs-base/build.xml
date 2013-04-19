@@ -151,7 +151,7 @@
 	<import file="../ejs-base/common.properties"/>	
 
     <target name="build-jar" depends="build-project">
-	  <jar destfile="${bin.v9t9.dir}/ejs-base.jar">
+	  <jar destfile="${bin.v9t9.jar.dir}/ejs-base.jar">
 	     <fileset dir="bin"/>
 	  </jar>
     </target>	

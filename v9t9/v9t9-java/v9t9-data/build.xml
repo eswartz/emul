@@ -22,7 +22,7 @@
 	
     <target name="build-jar" depends="build-project">
 
-        <jar destfile="${bin.v9t9.dir}/v9t9-data.jar">
+        <jar destfile="${bin.v9t9.jar.dir}/v9t9-data.jar">
             <manifest>
                 <attribute name="Class-Path" value="."/>
             </manifest>

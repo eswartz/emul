@@ -49,6 +49,8 @@
     	<copy todir="${web}/data" verbose="true" preservelastmodified="yes">
     		<fileset dir="${bin.v9t9.dir}">
     	      <include name="**"/>
+    		  <exclude name="libs/**"/>
+    		  <exclude name="jar/**"/>
     		  <exclude name="data/**"/>
 			  <exclude name="orig" />
 		  	  <exclude name="unsigned" />

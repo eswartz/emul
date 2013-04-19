@@ -10,13 +10,15 @@
 	  </classpath>
 	</taskdef>
 
+	<property name="release" value="1" />
+		
 	<import file="../v9t9-gui/common.properties"/>
 	
 	<condition property="v9t9.host"     value="http://s3.amazonaws.com/V9t9">
-		<isset property="release"/>
+		<equals arg1="${release}" arg2="1"/>
 	</condition>
 	<condition property="v9t9.root"     value="data">
-		<isset property="release"/>
+		<equals arg1="${release}" arg2="1"/>
 	</condition>
 	
     <property name="v9t9.host"     value="http://localhost:8080"/>
@@ -63,13 +65,16 @@
     	<delete dir="${bin.v9t9.dir}" /> 
 	</target>
 
-	<uptodate property="natives.notrequired" targetfile="${bin.v9t9.dir}/v9t9j-natives-linux-x86.jar" >
+	<uptodate property="natives.notrequired" targetfile="${bin.v9t9.jar.dir}/v9t9j-natives-linux-intel.jar" >
 	    <srcfiles dir="${base.v9t9}/libs/lwjgl/native/linux" includes="**"/>
 	    <srcfiles dir="${base}/libv9t9render" includes="*.so"/>
 	 </uptodate>
 
 	
-    <target name="buildall" depends="build-subprojects,create_run_jar,build-natives,sign-jars" >
+	<!--
+	    <target name="buildall" depends="build-subprojects,create_run_jar,build-natives,sign-jars" />
+	    -->
+    <target name="buildall" depends="build-subprojects,create_run_jar,build-natives,package-jars" >
 	</target>
 	
     <target name="create_run_jar" depends="build-subprojects" >
@@ -169,7 +174,7 @@
     	-->
 
     	
-        <jar destfile="${bin.v9t9.dir}/v9t9j-natives-linux-intel.jar">
+        <jar destfile="${bin.v9t9.jar.dir}/v9t9j-natives-linux-intel.jar">
             <manifest>
                 <attribute name="Class-Path" value="."/>
             </manifest>
@@ -184,7 +189,7 @@
     	    -->
   	    </jar>
     	
-        <jar destfile="${bin.v9t9.dir}/v9t9j-natives-win32-intel.jar">
+        <jar destfile="${bin.v9t9.jar.dir}/v9t9j-natives-win32-intel.jar">
             <manifest>
                 <attribute name="Class-Path" value="."/>
             </manifest>
@@ -199,7 +204,7 @@
     	    -->
   	    </jar>    	
     	
-        <jar destfile="${bin.v9t9.dir}/v9t9j-natives-macosx-intel.jar">
+        <jar destfile="${bin.v9t9.jar.dir}/v9t9j-natives-macosx-intel.jar">
             <manifest>
                 <attribute name="Class-Path" value="."/>
             </manifest>
@@ -312,4 +317,26 @@
 			<fileset refid="curjars" />
 		</foreach>    		
     </target>
+	
+    <target name="package-jars" >
+   	  <jar destfile="${bin.v9t9.dir}/v9t9j.jar">
+
+        <manifest>
+            <attribute name="Main-Class" value="v9t9.launch.Launcher"/>
+            <attribute name="Class-Path" value="${JarClassPath}"/>
+        </manifest>
+        	
+		<fileset dir="${bin.v9t9.jar.dir}">
+	    </fileset>
+		<fileset dir="${bin.v9t9.dir}">
+	      <include name="libs/**"/>
+	    </fileset>
+   	  	
+   	    <fileset dir="bin">
+	      <include name="v9t9/launch/*.class"/>
+	    </fileset>
+   	 	
+       </jar>    	
+    </target>
+	
 </project>

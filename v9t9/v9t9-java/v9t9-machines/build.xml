@@ -158,7 +158,7 @@
 	<import file="../v9t9-gui/common.properties"/>
 
     <target name="build-jar" depends="build-project">
-   	 <jar destfile="${bin.v9t9.dir}/v9t9-machines.jar">
+   	 <jar destfile="${bin.v9t9.jar.dir}/v9t9-machines.jar">
            <fileset dir="bin"/>
        </jar>    	
     </target>

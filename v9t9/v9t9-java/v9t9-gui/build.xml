@@ -166,6 +166,7 @@
     </target>
     <target name="clean">
         <delete dir="bin"/>
+        <delete dir="launch"/>
     </target>
     <target depends="clean" name="cleanall">
         <ant antfile="build.xml" dir="${ejs-base.location}" inheritAll="false" target="clean"/>
@@ -325,7 +326,7 @@
 	    	
     	"/>
     	
-        <jar destfile="${bin.v9t9.dir}/v9t9j.jar">
+        <jar destfile="${bin.v9t9.jar.dir}/v9t9-gui.jar">
             <manifest>
                 <attribute name="Main-Class" value="v9t9.gui.Emulator"/>
                 <attribute name="Class-Path" value="${JarClassPath}"/>
