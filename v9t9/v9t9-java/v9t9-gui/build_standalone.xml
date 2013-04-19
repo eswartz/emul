@@ -129,12 +129,12 @@
     	    </fileset>
 		</copy>
     	
-    	<copy file="${base.v9t9}/data/release/v9t9j.sh" todir="${bin.v9t9.dir}"/>
-    	<copy file="${base.v9t9}/data/release/v9t9j.bat" todir="${bin.v9t9.dir}"/>
+    	<copy file="${base.v9t9}/data/release/v9t9.sh" todir="${bin.v9t9.dir}"/>
+    	<copy file="${base.v9t9}/data/release/v9t9.bat" todir="${bin.v9t9.dir}"/>
 
     	<chmod perm="0777">
     		<fileset dir="${bin.v9t9.dir}">
-				<include name="v9t9j.sh" />
+				<include name="v9t9.sh" />
 			</fileset>
     	</chmod>
 
@@ -335,9 +335,12 @@
 		<fileset dir="${bin.v9t9.dir}">
 	      <include name="libs/**"/>
 	    </fileset>
-   	  	
    	    <fileset dir="bin">
 	      <include name="v9t9/launch/*.class"/>
+	    </fileset>
+		<fileset dir="bin">
+	      <include name="debug.properties"/>
+	      <include name="log4j.properties"/>
 	    </fileset>
    	 	
        </jar>    	

@@ -160,6 +160,7 @@ public class Launcher {
 				
 			File target = new File(targetDir, path);
 
+			
 			//System.out.println(entry.getName() + " => " + target);
 			
 			if (entry.isDirectory()) {
@@ -168,6 +169,8 @@ public class Launcher {
 				
 				boolean doExtract = false;
 				String name = target.getName();
+				
+				target.getParentFile().mkdirs();
 				
 				// filter OS-specific ones
 				if (name.startsWith("org.eclipse.swt") && !name.equals("org.eclipse.swt.jar")) {
