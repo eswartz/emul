@@ -166,7 +166,6 @@
     </target>
     <target name="clean">
         <delete dir="bin"/>
-        <delete dir="launch"/>
     </target>
     <target depends="clean" name="cleanall">
         <ant antfile="build.xml" dir="${ejs-base.location}" inheritAll="false" target="clean"/>
