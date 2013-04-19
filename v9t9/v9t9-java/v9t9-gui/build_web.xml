@@ -47,14 +47,22 @@
 
     	<delete file="${web}/data/v9t9j.zip" />
 
-     	<zip destfile="${web}/data/v9t9j.zip">
-    		<fileset dir="${bin.v9t9.dir}">
-    			<include name="v9t9j.jar"/>
-    			<include name="v9t9j.bat" />
-    			<include name="v9t9j.sh" />
+    	<!-- zip task loses permissions
+     	<zip destfile="${web}/data/v9t9j.zip" >
+    		<fileset dir="${bin.v9t9.dir}/..">
+    			<include name="v9t9j/v9t9j.jar"/>
+    			<include name="v9t9j/v9t9j.bat" />
+    			<include name="v9t9j/v9t9j.sh" />
     		</fileset>
     	</zip>
-    		   	
+    	-->
+    	
+    	<exec executable="zip" dir="${bin.v9t9.dir}/.." failonerror="true">
+    		<arg value="${web}/data/v9t9j.zip"/>
+			<arg value="v9t9j/v9t9j.jar"/>
+			<arg value="v9t9j/v9t9j.bat" />
+			<arg value="v9t9j/v9t9j.sh" />
+    	</exec>
 	</target>
 		
 </project>

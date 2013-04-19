@@ -129,8 +129,14 @@
     	    </fileset>
 		</copy>
     	
-    	<copy file="${base.v9t9}/data/release/v9t9j.sh" tofile="${bin.v9t9.dir}/v9t9j.sh"/>
-    	<copy file="${base.v9t9}/data/release/v9t9j.bat" tofile="${bin.v9t9.dir}/v9t9j.bat"/>
+    	<copy file="${base.v9t9}/data/release/v9t9j.sh" todir="${bin.v9t9.dir}"/>
+    	<copy file="${base.v9t9}/data/release/v9t9j.bat" todir="${bin.v9t9.dir}"/>
+
+    	<chmod perm="0777">
+    		<fileset dir="${bin.v9t9.dir}">
+				<include name="v9t9j.sh" />
+			</fileset>
+    	</chmod>
 
     	<!--
     	<copy file="${base.v9t9}/data/release/v9t9.html" tofile="${bin.v9t9.dir}/v9t9.html"/>

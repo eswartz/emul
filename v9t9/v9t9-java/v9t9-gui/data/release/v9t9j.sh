@@ -1,3 +1,4 @@
+#!/bin/sh
 #   v9t9j.sh
 # 
 #   (c) 2011-2013 Edward Swartz
