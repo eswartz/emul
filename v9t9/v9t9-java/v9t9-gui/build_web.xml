@@ -44,44 +44,13 @@
     	-->
 
     	<mkdir dir="${web}/data" />
-    	<delete file="${web}/data/v9t9.zip" />
 
     	<copy todir="${web}/data" verbose="true" preservelastmodified="yes">
     		<fileset dir="${bin.v9t9.dir}">
-    	      <include name="**"/>
-    		  <exclude name="libs/**"/>
-    		  <exclude name="jar/**"/>
-    		  <exclude name="data/**"/>
-			  <exclude name="orig" />
-		  	  <exclude name="unsigned" />
-			  <exclude name="signed" />
-			  <exclude name="orig/**" />
-			  <exclude name="unsigned/**" />
-			  <exclude name="signed/**" />
-			  <exclude name="cur/**" />
-			  <exclude name="ref/**" />
+    	      <include name="v9t9j.jar"/>
     	    </fileset>
       	</copy>
     	
-    	<zip destfile="${web}/data/v9t9.zip">
-    		<fileset dir="${web}/data">
-    			<include name="**"/>
-    			<exclude name="v9t9**.zip" />
-    			<exclude name="v9t9*.log*" />
-    			<exclude name=".*" />
-    			<exclude name="updated.*" />
-    			<exclude name="hs_err*" />
-    			<exclude name="tmpdir" />
-    			<exclude name="tmpdir/**" />
-    			<exclude name="orig" />
-    			<exclude name="cur" />
-    			<exclude name="ref" />
-    			<exclude name="orig/**" />
-    			<exclude name="cur/**" />
-    			<exclude name="ref/**" />
-    		</fileset>
-    	</zip>
-    		
 	</target>
 		
 </project>
