@@ -229,7 +229,7 @@ public class Launcher {
 			// don't re-copy unless changed
 			long entTime = entry.getTime();
 			long fileTime = target.lastModified();
-			if (fileTime != 0 && entTime > 0) {
+			if (target.exists() && fileTime != 0 && entTime > 0) {
 				if (Math.abs(fileTime - entTime) <= 2000 
 						&& entry.getSize() == target.length()) {
 					doCopy = false;
