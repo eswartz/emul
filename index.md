@@ -75,6 +75,8 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
+<li>2013/04/18: dump Java Web Start approach since Java 7 doesn't like it at all, at all 
+</li>
 <li>2013/03/30: fix issue closing V9t9 in OS X 
 </li>
 <li>2013/03/13: support handling files encoded with Archiver 3 (e.g. from http://tigameshelf.net)
@@ -104,65 +106,57 @@ Running
 Setup
 -----
 
-Have Java 6 or newer installed on your system.  (The "Using Web Start" section may 
-assist with this.)
+Have Java 6 or newer installed on your system.  
 
 You will need ROMs to actually use the emulator.  I don't provide these but 
 **[this page](v9t9-roms.html)** will give you some instructions.
 
 
-Installing Locally
---------------------
+Installation
+----------
 
 <div class='lookyhere'>
-<a href="http://s3.amazonaws.com/V9t9/data/v9t9.zip">V9t9.zip</a>
+<a href="http://s3.amazonaws.com/V9t9/data/v9t9j.jar">
+<img src="images/v9t9-webstart-button.png" />
 <p>
+v9t9j.jar
+</p><p>
 <i>Download</i>
 </p>
+</a>
 <span class="timestamp"> </span>
 </div>
 
-Download the archive to the right and unzip it somewhere on your system.
+Download the archive to the right.  Do not unpack it.
 
-<b>On Windows or Linux:</b>
+<b>Running it from your desktop:</b>
 
-Launch it by double-clicking the `v9t9-local.jnlp` file in your favorite operating system. 
+Launch it by double-clicking the `v9t9j.jar` file in your favorite operating system. 
 
-Or, if your Java isn't installed properly, try:
+You should be prompted to run it as an Executable JAR File.
 
-    $ cd /path/to/v9t9
-    $ javaws v9t9-local.jnlp
+<b>Running it from a command prompt:</b>
 
-(or the equivalent in Windows)
+If your Java file associations aren't set up properly, then run it this way:
 
-<b>On OS X:</b>
-
-Java Web Start does not play nicely with SWT on OS X, so you need to use a script instead:
-
-    $ cd /path/to/v9t9
-    $ sh v9t9.sh
-
-
-Using Web Start (Windows or Linux only)
---------------------
-
-<div  class='lookyhere' style=' padding: 0em 1em;'>
-<script type="text/javascript">
-    //var dir = location.href.substring(0, location.href.lastIndexOf('/')+1);
-    var url = "http://s3.amazonaws.com/V9t9/data/v9t9-remote.jnlp";
-    deployJava.launchButtonPNG = 'images/v9t9-webstart-button.png';
-    deployJava.createWebStartLaunchButton(url, '1.6.0');
-</script>
-<noscript>This page requires JavaScript.</noscript>
 <p>
-<i>Launch<br> (Windows/Linux only!)</i>
+<b>Windows:</b>
 </p>
-<span  class="timestamp"> </span>
-</div>
 
-Click on the button to the right.  This will fetch the most recent V9t9 build each time you use it.
+Run a `Command Prompt` and type:
 
-(Java Web Start does not play nicely with SWT on OS X, sorry.)
+    cd \path\to\downloads
+    java -jar v9t9j.jar
+
+<p>
+<b>OS X / Linux:</b>
+</p>
+
+Run a `Terminal` and type:
+
+    cd /path/to/downloads
+    java -jar v9t9j.jar
+
 
 Advanced
 =======
