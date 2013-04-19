@@ -19,9 +19,10 @@ if [ "$OS" = "Darwin" ]; then
     VMARGS="$VMARGS -XstartOnFirstThread"
 fi
 
+VMARGS="$VMARGS -Dlog4j.configuration=jar:file:./v9t9j.jar!/log4j.properties"
 #VMARGS="$VMARGS -Dlog4j.configuration=jar:file:./v9t9j.jar!/debug.properties"
 
 cd "$BASEDIR"
-"$JAVA" $VMARGS  -jar v9t9j.jar  
+"$JAVA" $VMARGS  -jar v9t9j.jar "$@"
 
 

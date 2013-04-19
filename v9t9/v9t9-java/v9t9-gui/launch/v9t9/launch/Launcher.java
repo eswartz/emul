@@ -54,28 +54,66 @@ public class Launcher {
 		File tmpDir = getExtractDir();
 		libDir = new File(tmpDir, LIBS);
 		
+		for (int idx = 0; idx < args.length; idx++) {
+			if ("-clean".equals(args[idx])) {
+				args = remove(args, idx);
+				recursiveDelete(tmpDir);
+				break;
+			}
+		}
+		
 		URL jarURL = Launcher.class.getProtectionDomain().getCodeSource().getLocation();
 		
 		JarFile jarFile = JarUtils.getJarFile(jarURL);
 
-		List<URL> jarURLs = new ArrayList<URL>();
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		if (jarFile != null) {
-			System.out.println("Extracting V9t9 to " + tmpDir + "...");
-
-			extractZipFile(tmpDir, jarFile, jarURLs);
+			List<URL> jarURLs = new ArrayList<URL>();
+			
+			extractZipFileAndClose("Extracting V9t9 to " + tmpDir + "...",
+					tmpDir, jarFile, jarURLs);
+			
+			classLoader = replaceClassLoader(jarURLs);
 		}
 
-		URLClassLoader urlClassLoader = replaceClassLoader(jarURLs);
+		// run alternate main class
+		String mainClass = "v9t9.gui.Emulator";
+		for (int idx = 0; idx < args.length; idx++) {
+			if ("-tool".equals(args[idx])) {
+				mainClass = "v9t9.tools.Help";
+				args = remove(args, idx);
+				if (idx < args.length) {
+					mainClass = args[idx];
+					args = remove(args, idx);
+				}
+				break;
+			}
+		}
 		
-		Class<?> klass = urlClassLoader.loadClass("v9t9.gui.Emulator");
+		Class<?> klass = classLoader.loadClass(mainClass);
 		Method main = klass.getMethod("main", String[].class);
 		main.invoke(null, new Object[] { args });
 	}
 
-	/**
-	 * @param jarURLs
-	 * @return
-	 */
+	private void recursiveDelete(File tmpDir) {
+		File[] files = tmpDir.listFiles();
+		if (files == null)
+			return;
+		for (File file : files) {
+			if (file.isDirectory())
+				recursiveDelete(file);
+			else
+				file.delete();
+		}
+	}
+
+	private String[] remove(String[] args, int idx) {
+		String[] newArgs = new String[args.length - 1];
+		System.arraycopy(args, 0, newArgs, 0, idx);
+		System.arraycopy(args, idx + 1, newArgs, idx, args.length - idx - 1);
+		return newArgs;
+	}
+
 	protected URLClassLoader replaceClassLoader(List<URL> jarURLs) {
 		ClassLoader currentThreadClassLoader = Thread.currentThread().getContextClassLoader();
 
@@ -94,9 +132,6 @@ public class Launcher {
 		return urlClassLoader;
 	}
 
-	/**
-	 * @return
-	 */
 	protected File getExtractDir() {
 		File tmpDir;
 		String v9t9Path = System.getProperty("v9t9.dir");
@@ -129,7 +164,9 @@ public class Launcher {
 	 * @param jarURLs 
 	 * @return 
 	 */
-	protected void extractZipFile(File targetDir, ZipFile zipFile, List<URL> jarURLs) {
+	protected void extractZipFileAndClose(String label, File targetDir, ZipFile zipFile, List<URL> jarURLs) {
+		boolean any = false;
+		
 		Enumeration<? extends ZipEntry> enm = zipFile.entries();
 		
 		String myOS = System.getProperty("os.name");
@@ -159,32 +196,50 @@ public class Launcher {
 				continue;
 				
 			File target = new File(targetDir, path);
-
 			
 			//System.out.println(entry.getName() + " => " + target);
 			
 			if (entry.isDirectory()) {
 				target.mkdirs();
-			} else {
+				continue;
+			} 
 				
-				boolean doExtract = false;
-				String name = target.getName();
-				
-				target.getParentFile().mkdirs();
-				
-				// filter OS-specific ones
-				if (name.startsWith("org.eclipse.swt") && !name.equals("org.eclipse.swt.jar")) {
-					if (!name.matches("org.eclipse.swt..*" + myOS + "." + myArch + ".jar")) {
-						continue;
-					}
+			boolean doExtract = false;
+			boolean doCopy = true;
+			
+			String name = target.getName();
+			
+			target.getParentFile().mkdirs();
+			
+			// filter OS-specific ones
+			if (name.startsWith("org.eclipse.swt") && !name.equals("org.eclipse.swt.jar")) {
+				if (!name.matches("org.eclipse.swt..*" + myOS + "." + myArch + ".jar")) {
+					continue;
 				}
-				if (name.startsWith("v9t9j-natives-")) {
-					if (!name.matches("v9t9j-natives-" + myOS + "-" + genericArch + ".jar")) {
-						continue;
-					}
-					
-					// extract directly
-					doExtract = true;
+			}
+			if (name.startsWith("v9t9j-natives-")) {
+				if (!name.matches("v9t9j-natives-" + myOS + "-" + genericArch + ".jar")) {
+					continue;
+				}
+				
+				// extract directly
+				doExtract = true;
+			}
+			
+			// don't re-copy unless changed
+			long entTime = entry.getTime();
+			long fileTime = target.lastModified();
+			if (fileTime != 0 && entTime > 0) {
+				if (Math.abs(fileTime - entTime) <= 2000 
+						&& entry.getSize() == target.length()) {
+					doCopy = false;
+				}
+			}
+			
+			if (doCopy) {
+				if (!any) {
+					System.out.println(label);
+					any = true;
 				}
 				
 				try {
@@ -194,32 +249,40 @@ public class Launcher {
 					if (name.matches("(?i).*\\.(so|dylib|dll)")) {
 						target.setExecutable(true, false);
 					}
+					
+					target.setLastModified(entTime);
 				} catch (IOException e) {
 					e.printStackTrace();
 					System.exit(3);
 				}
-				
-				if (doExtract) {
-					try {
-						System.out.println("Extracting native libraries to " + targetDir + "...");
-						File libDir = new File(targetDir, LIBS);
-						extractZipFile(libDir, new ZipFile(target), jarURLs);
-						jarURLs.add(libDir.toURI().toURL());
-					} catch (Exception e) {
-						e.printStackTrace();
-						System.exit(5);
+			}
+			
+			if (doExtract) {
+				try {
+					File libDir = new File(targetDir, LIBS);
+					if (doCopy) {
+						extractZipFileAndClose("Extracting native libraries to " + targetDir + "...",
+								libDir, new ZipFile(target), jarURLs);
 					}
+					jarURLs.add(libDir.toURI().toURL());
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(5);
 				}
-				else {
-					if (path.endsWith(".jar")) {
-						try {
-							jarURLs.add(target.toURI().toURL());
-						} catch (MalformedURLException e) {
-							throw new RuntimeException(e);
-						}
+			}
+			else {
+				if (path.endsWith(".jar")) {
+					try {
+						jarURLs.add(target.toURI().toURL());
+					} catch (MalformedURLException e) {
+						throw new RuntimeException(e);
 					}
 				}
 			}
+		}
+		try {
+			zipFile.close();
+		} catch (IOException e) {
 		}
 	}
 
