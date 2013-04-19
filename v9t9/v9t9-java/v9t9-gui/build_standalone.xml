@@ -129,13 +129,11 @@
     	    </fileset>
 		</copy>
     	
-	<!--      		
-    	<copy file="${base.v9t9}/data/release/v9t9.bat" tofile="${bin.v9t9.dir}/v9t9.bat"/>
-    	<copy file="${base.v9t9}/data/release/v9t9.sh" tofile="${bin.v9t9.dir}/v9t9.sh"/>
-	-->
+    	<copy file="${base.v9t9}/data/release/v9t9j.sh" tofile="${bin.v9t9.dir}/v9t9j.sh"/>
+    	<copy file="${base.v9t9}/data/release/v9t9j.bat" tofile="${bin.v9t9.dir}/v9t9j.bat"/>
+
+    	<!--
     	<copy file="${base.v9t9}/data/release/v9t9.html" tofile="${bin.v9t9.dir}/v9t9.html"/>
-    	<copy file="${base.v9t9}/data/release/v9t9.sh" tofile="${bin.v9t9.dir}/v9t9.sh"/>
-    	
     	<copy overwrite="true" file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9-local.jnlp"/>
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$SCHEME" value="file:" />
     	<replace file="${bin.v9t9.dir}/v9t9-local.jnlp" token="$HOST" value="" />
@@ -149,12 +147,12 @@
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$ROOT" value="/${v9t9.root}" />
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$TARGET" value="remote" />
     	<replace file="${bin.v9t9.dir}/v9t9-remote.jnlp" token="$SVGLIBS" value="${svg.libs.jnlp}" />
-    		
     
     	<copy overwrite="true" file="${base.v9t9}/data/release/test-httpd.py" tofile="${bin.v9t9.dir}/test-httpd.py"/>
     	<replace file="${bin.v9t9.dir}/test-httpd.py" token="$v9t9.root" value="${v9t9.root}" />
     	<replace file="${bin.v9t9.dir}/test-httpd.py" token="$v9t9.host" value="${v9t9.host}" />
-
+		-->
+    	
 		<copy overwrite="true" todir="${bin.v9t9.dir}/libs" preservelastmodified="yes">
 			<fileset dir="${base.base}/libs/swt">
 				<include name="**/org.eclipse.swt.**.jar"/>

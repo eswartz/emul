@@ -45,12 +45,16 @@
 
     	<mkdir dir="${web}/data" />
 
-    	<copy todir="${web}/data" verbose="true" preservelastmodified="yes">
+    	<delete file="${web}/data/v9t9j.zip" />
+
+     	<zip destfile="${web}/data/v9t9j.zip">
     		<fileset dir="${bin.v9t9.dir}">
-    	      <include name="v9t9j.jar"/>
-    	    </fileset>
-      	</copy>
-    	
+    			<include name="v9t9j.jar"/>
+    			<include name="v9t9j.bat" />
+    			<include name="v9t9j.sh" />
+    		</fileset>
+    	</zip>
+    		   	
 	</target>
 		
 </project>
