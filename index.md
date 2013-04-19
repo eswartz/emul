@@ -116,10 +116,10 @@ Installation
 ----------
 
 <div class='lookyhere'>
-<a href="http://s3.amazonaws.com/V9t9/data/v9t9j.zip">
+<a href="http://s3.amazonaws.com/V9t9/data/v9t9.zip">
 <img src="images/v9t9-webstart-button.png" />
 <p>
-v9t9j.zip
+v9t9.zip
 </p><p>
 <i>Download</i>
 </p>
@@ -133,26 +133,26 @@ Download the archive to the right and unzip it somewhere on your system.
 Running from Windows
 ----------
 
-Launch V9t9 by double-clicking the `v9t9j.bat` file.  
+Launch V9t9 by double-clicking the `v9t9.bat` file.  
 
 If this exits immediately, be sure `java` is on your `PATH`.
 
 Alternately, run a `Command Prompt` and type:
 
-    cd \path\to\downloads
-    v9t9j.bat
+    cd \path\to\extracted\v9t9
+    v9t9.bat
 
 Running from OS X or Linux
 ------------
 
-Launch V9t9 by double-clicking the `v9t9j.sh` file.
+Launch V9t9 by double-clicking the `v9t9.sh` file.
   
 If this exits immediately, be sure `java` is on your `PATH`.
 
 Alternately, run a `Terminal` and type:
 
-    cd /path/to/downloads
-    ./v9t9j.sh
+    cd /path/to/extracted/v9t9
+    ./v9t9.sh
 
 
 Advanced
