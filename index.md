@@ -116,10 +116,10 @@ Installation
 ----------
 
 <div class='lookyhere'>
-<a href="http://s3.amazonaws.com/V9t9/data/v9t9j.jar">
+<a href="http://s3.amazonaws.com/V9t9/data/v9t9j.zip">
 <img src="images/v9t9-webstart-button.png" />
 <p>
-v9t9j.jar
+v9t9j.zip
 </p><p>
 <i>Download</i>
 </p>
@@ -127,35 +127,32 @@ v9t9j.jar
 <span class="timestamp"> </span>
 </div>
 
-Download the archive to the right.  Do not unpack it.
+Download the archive to the right and unzip it somewhere on your system.
 
-<b>Running it from your desktop:</b>
 
-Launch it by double-clicking the `v9t9j.jar` file in your favorite operating system. 
+Running from Windows
+----------
 
-You should be prompted to run it as an Executable JAR File.
+Launch V9t9 by double-clicking the `v9t9j.bat` file.  
 
-<b>Running it from a command prompt:</b>
+If this exits immediately, be sure `java` is on your `PATH`.
 
-If your Java file associations aren't set up properly, then run it this way:
-
-<p>
-<b>Windows:</b>
-</p>
-
-Run a `Command Prompt` and type:
+Alternately, run a `Command Prompt` and type:
 
     cd \path\to\downloads
-    java -jar v9t9j.jar
+    v9t9j.bat
 
-<p>
-<b>OS X / Linux:</b>
-</p>
+Running from OS X or Linux
+------------
 
-Run a `Terminal` and type:
+Launch V9t9 by double-clicking the `v9t9j.sh` file.
+  
+If this exits immediately, be sure `java` is on your `PATH`.
+
+Alternately, run a `Terminal` and type:
 
     cd /path/to/downloads
-    java -jar v9t9j.jar
+    ./v9t9j.sh
 
 
 Advanced
