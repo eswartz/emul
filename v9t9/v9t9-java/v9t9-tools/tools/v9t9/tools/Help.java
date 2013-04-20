@@ -30,8 +30,8 @@ public class Help {
 		
 		System.out.println("V9t9 Tools\n");
 		
-		System.out.println("Run this JAR as:\n");
-		System.out.println("\tjava -cp v9t9-tools.jar <class> [args]\n");
+		System.out.println("Run as:\n");
+		System.out.println("v9t9[.bat|.sh] -tool <class> [args]\n");
 		System.out.println("where <class> is one of:\n");
 		
 		String className = Help.class.getName();
