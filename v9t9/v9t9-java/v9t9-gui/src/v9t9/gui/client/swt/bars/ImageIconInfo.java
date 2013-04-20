@@ -21,10 +21,10 @@ import org.eclipse.swt.graphics.Rectangle;
 public class ImageIconInfo {
 
 	protected Rectangle bounds;
-	protected final ImageProvider imageProvider;
+	protected final IImageProvider imageProvider;
 	private int iconIndex;
 	
-	public ImageIconInfo(ImageProvider imageProvider, int iconIndex) {
+	public ImageIconInfo(IImageProvider imageProvider, int iconIndex) {
 		this.imageProvider = imageProvider;
 		setIconIndex(iconIndex);
 	}
@@ -32,7 +32,7 @@ public class ImageIconInfo {
 	/**
 	 * @param imageProvider2
 	 */
-	public ImageIconInfo(ImageProvider imageProvider) {
+	public ImageIconInfo(IImageProvider imageProvider) {
 		this.imageProvider = imageProvider;
 	}
 
@@ -55,7 +55,7 @@ public class ImageIconInfo {
 		return bounds;
 	}
 	
-	public ImageProvider getImageProvider() {
+	public IImageProvider getImageProvider() {
 		return imageProvider;
 	}
 	

@@ -36,9 +36,9 @@ public abstract class BaseEmulatorBar {
 	protected final SwtWindow swtWindow;
 	protected ImageBar buttonBar;
 	protected final IMachine machine;
-	protected final ImageProvider imageProvider;
+	protected final IImageProvider imageProvider;
 
-	public BaseEmulatorBar(SwtWindow window, ImageProvider imageProvider, Composite parent, 
+	public BaseEmulatorBar(SwtWindow window, IImageProvider imageProvider, Composite parent, 
 			IMachine machine, int[] colors, float[] points, int style) {
 		this.swtWindow = window;
 		this.imageProvider = imageProvider;

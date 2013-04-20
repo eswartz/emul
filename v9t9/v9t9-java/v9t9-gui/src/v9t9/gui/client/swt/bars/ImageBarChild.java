@@ -58,7 +58,7 @@ public class ImageBarChild extends Canvas {
 	protected EventForwarder forwarder;
 	
 	public ImageBarChild(IImageCanvas parentDrawer, int style) {
-		super(parentDrawer.getComposite(), style | SWT.NO_BACKGROUND | SWT.DOUBLE_BUFFERED);
+		super(parentDrawer.getComposite(), adjustStyle(style));
 		this.parentDrawer = parentDrawer;
 
 		forwarder = new EventForwarder(parentDrawer.getComposite());
@@ -80,6 +80,17 @@ public class ImageBarChild extends Canvas {
 		});
 		
 		//setCursor(getDisplay().getSystemCursor(SWT.CURSOR_HAND));
+	}
+
+	/**
+	 * @param style
+	 * @return
+	 */
+	private static int adjustStyle(int style) {
+		style |= SWT.NO_BACKGROUND;
+		//if (SWT.getPlatform().equals("win32"))
+		style |= SWT.DOUBLE_BUFFERED;
+		return style;
 	}
 
 	protected boolean isIconMouseable() {

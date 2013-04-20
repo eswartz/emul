@@ -68,7 +68,7 @@ import v9t9.gui.client.swt.bars.BaseEmulatorBar;
 import v9t9.gui.client.swt.bars.EmulatorButtonBar;
 import v9t9.gui.client.swt.bars.EmulatorRnDBar;
 import v9t9.gui.client.swt.bars.EmulatorStatusBar;
-import v9t9.gui.client.swt.bars.ImageProvider;
+import v9t9.gui.client.swt.bars.IImageProvider;
 import v9t9.gui.client.swt.bars.MultiImageSizeProvider;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
 import v9t9.gui.client.swt.shells.ToolShell;
@@ -102,9 +102,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private IPropertyListener fullScreenListener;
 	private boolean isHorizontal;
 
-	private ImageProvider buttonImageProvider;
-	private ImageProvider statusImageProvider;
-	private ImageProvider rndImageProvider;
+	private IImageProvider buttonImageProvider;
+	private IImageProvider statusImageProvider;
+	private IImageProvider rndImageProvider;
 
 	private IProperty fullScreen;
 
@@ -419,6 +419,16 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		});
 		videoRenderer.setFocus();
+		
+		shell.addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				buttonImageProvider.dispose();
+				statusImageProvider.dispose();
+				rndImageProvider.dispose();
+			}
+		});
 		
 		// restore original window geometry
 		String boundsPref = settingsHandler.get(settingEmulatorWindowBounds).getString();
@@ -953,7 +963,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	/**
 	 * @return
 	 */
-	public ImageProvider getImageProvider() {
+	public IImageProvider getImageProvider() {
 		return buttonImageProvider;
 	}
 

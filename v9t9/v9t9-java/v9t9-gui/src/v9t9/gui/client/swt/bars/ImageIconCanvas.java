@@ -26,10 +26,10 @@ public abstract class ImageIconCanvas extends ImageBarChild {
 
 	protected ImageIconInfo imageIconInfo;
 	protected Rectangle bounds;
-	protected final ImageProvider imageProvider;
+	protected final IImageProvider imageProvider;
 	
 	public ImageIconCanvas(IImageCanvas parentDrawer, int style, 
-			ImageProvider imageProvider, int iconIndex, String tooltip) {
+			IImageProvider imageProvider, int iconIndex, String tooltip) {
 		super(parentDrawer,  style /*| SWT.NO_BACKGROUND*/);
 		
 		this.imageProvider = imageProvider;

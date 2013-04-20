@@ -24,7 +24,7 @@ public class ImageButtonMenuAreaHandler extends BaseImageButtonAreaHandler {
 	/**
 	 * 
 	 */
-	public ImageButtonMenuAreaHandler(ImageProvider imageProvider) {
+	public ImageButtonMenuAreaHandler(IImageProvider imageProvider) {
 		menuOverlayBounds = imageProvider.imageIndexToBounds(IconConsts.MENU_OVERLAY);
 	}
 	

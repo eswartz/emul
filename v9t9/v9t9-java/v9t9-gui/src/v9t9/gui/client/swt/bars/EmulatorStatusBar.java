@@ -66,7 +66,7 @@ import ejs.base.settings.SettingsSection;
 public class EmulatorStatusBar extends BaseEmulatorBar {
 
 	private List<ImageDeviceIndicator> indicators;
-	private ImageProvider deviceImageProvider;
+	private IImageProvider deviceImageProvider;
 	private IProperty realTime;
 	private IProperty compile;
 	private IProperty cyclesPerSecond;
@@ -83,7 +83,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	 * @param mainComposite
 	 */
 	public EmulatorStatusBar(final SwtWindow swtWindow, 
-			ImageProvider iconImageProvider,
+			IImageProvider iconImageProvider,
 			Composite mainComposite, final IMachine machine,
 			int[] colors, float[] points, int style) {
 		super(swtWindow, iconImageProvider, 
@@ -678,7 +678,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	/**
 	 * @return
 	 */
-	private static ImageProvider createDeviceImageProvider(Shell shell) {
+	private static IImageProvider createDeviceImageProvider(Shell shell) {
 
 		TreeMap<Integer, Image> mainIcons = new TreeMap<Integer, Image>();
 		for (int size : new int[] { 16, 32, 64, 128 }) {
@@ -693,6 +693,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		for (ImageDeviceIndicator indic : indicators)
 			indic.dispose();
 		indicators.clear();
+		imageProvider.dispose();
 	}
 
 	public void addDeviceIndicatorProvider(IDeviceIndicatorProvider provider) {

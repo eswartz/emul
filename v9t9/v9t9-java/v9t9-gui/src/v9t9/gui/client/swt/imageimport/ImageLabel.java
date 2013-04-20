@@ -37,9 +37,19 @@ public class ImageLabel extends Composite implements PaintListener {
 	 * @param style
 	 */
 	public ImageLabel(Composite parent, int style) {
-		super(parent, style | SWT.DOUBLE_BUFFERED);
+		super(parent, adjustStyle(style));
 		
 		addPaintListener(this);
+	}
+
+	/**
+	 * @param style
+	 * @return
+	 */
+	protected static int adjustStyle(int style) {
+		if (SWT.getPlatform().equals("win32"))
+			return style | SWT.DOUBLE_BUFFERED;
+		return style;
 	}
 	
 	public void setClip(Rectangle clip) {

@@ -33,7 +33,7 @@ import ejs.base.utils.Pair;
  * @author ejs
  *
  */
-public class MultiImageSizeProvider implements ImageProvider {
+public class MultiImageSizeProvider implements IImageProvider {
 	protected TreeMap<Integer, Image> iconMap;
 	private Map<Integer, Image> scaleCache = new LinkedHashMap<Integer, Image>();
 	
@@ -42,6 +42,16 @@ public class MultiImageSizeProvider implements ImageProvider {
 	 */
 	public MultiImageSizeProvider(TreeMap<Integer, Image> iconMap) {
 		this.iconMap = iconMap;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.bars.IImageProvider#dispose()
+	 */
+	@Override
+	public void dispose() {
+		for (Image image : scaleCache.values()) {
+			image.dispose();
+		}
+		scaleCache.clear();
 	}
 	/**
 	 */
@@ -69,7 +79,8 @@ public class MultiImageSizeProvider implements ImageProvider {
 				int newHeight = iconWidth > iconHeight ? iconWidth * sx / iconHeight 
 						: iconHeight * sx / iconWidth;
 				scaled = ImageUtils.scaleImage(icon.getDevice(), 
-						iconMap.lastEntry().getValue(), 
+						//iconMap.lastEntry().getValue(),
+						icon,
 						new Point(sx, newHeight), 
 						true); 
 				scaleCache.put(sx, scaled);

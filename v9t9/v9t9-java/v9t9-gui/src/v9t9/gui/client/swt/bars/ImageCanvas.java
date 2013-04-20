@@ -46,8 +46,7 @@ public class ImageCanvas extends Canvas  implements IImageCanvas{
 	public ImageCanvas(Composite parent, int style,
 			Gradient gradient, IFocusRestorer focusRestorer, boolean smoothResize) {
 		// the bar itself is the full width of the parent
-		super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS 
-				| SWT.NO_BACKGROUND | SWT.DOUBLE_BUFFERED);
+		super(parent, adjustStyle(style));
 		this.focusRestorer = focusRestorer;
 		this.smoothResize = smoothResize;
 		
@@ -76,6 +75,18 @@ public class ImageCanvas extends Canvas  implements IImageCanvas{
 			}
 			
 		});
+	}
+
+	/**
+	 * @param style
+	 * @return
+	 */
+	private static int adjustStyle(int style) {
+		style &= ~(SWT.HORIZONTAL + SWT.VERTICAL);
+		style |= SWT.NO_RADIO_GROUP | SWT.NO_FOCUS | SWT.NO_BACKGROUND;
+//		if (SWT.getPlatform().equals("win32"))
+//			style |= SWT.DOUBLE_BUFFERED;
+		return style;
 	}
 
 	public boolean isHorizontal() {

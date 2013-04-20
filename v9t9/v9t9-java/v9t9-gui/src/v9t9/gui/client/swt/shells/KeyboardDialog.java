@@ -48,7 +48,7 @@ import v9t9.gui.client.swt.bars.Gradient;
 import v9t9.gui.client.swt.bars.IImageCanvas;
 import v9t9.gui.client.swt.bars.ImageButton;
 import v9t9.gui.client.swt.bars.ImageCanvas;
-import v9t9.gui.client.swt.bars.ImageProvider;
+import v9t9.gui.client.swt.bars.IImageProvider;
 import v9t9.gui.client.swt.bars.MultiImageSizeProvider;
 import ejs.base.utils.Pair;
 
@@ -196,7 +196,7 @@ public class KeyboardDialog extends Composite implements IKeyboardModeListener, 
 		}
 	}
 	
-	public static IToolShellFactory getToolShellFactory(final IMachine machine, final ImageCanvas buttonBar, final ImageProvider imageProvider) {
+	public static IToolShellFactory getToolShellFactory(final IMachine machine, final ImageCanvas buttonBar, final IImageProvider imageProvider) {
 		return new IToolShellFactory() {
 			Behavior behavior = new Behavior();
 			{
@@ -227,7 +227,7 @@ public class KeyboardDialog extends Composite implements IKeyboardModeListener, 
 	private MultiImageSizeProvider keyImageProvider;
 	private Map<Integer, Font> textFonts = new HashMap<Integer, Font>();
 	
-	public KeyboardDialog(Shell shell, IMachine machine_, IFocusRestorer focusRestorer, ImageProvider imageProvider) {
+	public KeyboardDialog(Shell shell, IMachine machine_, IFocusRestorer focusRestorer, IImageProvider imageProvider) {
 		
 		super(shell, SWT.NONE);
 		
@@ -285,6 +285,7 @@ public class KeyboardDialog extends Composite implements IKeyboardModeListener, 
 					font.dispose();
 				textFonts.clear();
 //				keyImage.dispose();
+				keyImageProvider.dispose();
 			}
 		});
 		

@@ -35,7 +35,7 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 	private IPropertyListener listener;
 
 	public ImageDeviceIndicator(IImageBar parentDrawer, int style,
-			ImageProvider imageProvider, IDeviceIndicatorProvider provider) {
+			IImageProvider imageProvider, IDeviceIndicatorProvider provider) {
 		super(parentDrawer, style, imageProvider, provider.getBaseIconIndex(), provider.getToolTip());
 		setOverlayBounds(imageProvider.imageIndexToBounds(provider.getActiveIconIndex()));
 		this.provider = provider;

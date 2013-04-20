@@ -52,7 +52,7 @@ public class ImageButton extends ImageIconCanvas {
 	private IImageButtonAreaHandler lastMousedAreaHandler = null;
 
 	public ImageButton(IImageCanvas parentBar, int style, 
-			ImageProvider imageProvider, int iconIndex, String tooltip) {
+			IImageProvider imageProvider, int iconIndex, String tooltip) {
 		super(parentBar, style, imageProvider, iconIndex, tooltip);
 		
 		baseTooltip = tooltip;

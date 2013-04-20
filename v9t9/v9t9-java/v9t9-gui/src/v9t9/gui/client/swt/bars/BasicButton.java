@@ -21,7 +21,7 @@ public class BasicButton extends ImageButton {
 	
 	public BasicButton(IImageBar buttonBar, 
 			int style,
-			ImageProvider provider, int iconIndex, String tooltip) {
+			IImageProvider provider, int iconIndex, String tooltip) {
 		super(buttonBar, SWT.NO_FOCUS | SWT.NO_RADIO_GROUP |style, provider, iconIndex, tooltip);
 		
 		addKeyListener(new KeyListener() {

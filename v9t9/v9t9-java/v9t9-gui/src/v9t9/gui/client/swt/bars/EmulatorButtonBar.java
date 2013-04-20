@@ -67,7 +67,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 	 * @param focusRestorer
 	 * @param smoothResize
 	 */
-	public EmulatorButtonBar(final SwtWindow window, ImageProvider imageProvider, Composite parent, 
+	public EmulatorButtonBar(final SwtWindow window, IImageProvider imageProvider, Composite parent, 
 			final IMachine machine,
 			final ISoundHandler soundHandler,
 			int[] colors, float[] points, int style) {

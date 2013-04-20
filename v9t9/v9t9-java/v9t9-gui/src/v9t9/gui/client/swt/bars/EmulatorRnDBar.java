@@ -46,19 +46,12 @@ import ejs.base.properties.IPropertyListener;
  *
  */
 public class EmulatorRnDBar extends BaseEmulatorBar  {
+	private static final int MIN_HEIGHT = 16;
+	private static final int MAX_HEIGHT = 48;
+	
 	private Canvas cpuMetricsCanvas;
 	
-
-	
-	/**
-	 * @param parent 
-	 * @param isHorizontal 
-	 * @param parent
-	 * @param style
-	 * @param focusRestorer
-	 * @param smoothResize
-	 */
-	public EmulatorRnDBar(final SwtWindow window, ImageProvider imageProvider, Composite parent, 
+	public EmulatorRnDBar(final SwtWindow window, IImageProvider imageProvider, Composite parent, 
 			final IMachine machine,
 			int[] colors, float[] points, int style) {
 		super(window, imageProvider, parent, machine, colors, points, style);
@@ -78,7 +71,7 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 			@Override
 			public void controlResized(ControlEvent e) {
 				swtWindow.recenterToolShells();
-				buttonBar.setMaxIconSize(Math.max(16, Math.min(48, swtWindow.getShell().getSize().y / 8)));
+				buttonBar.setMaxIconSize(Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, swtWindow.getShell().getSize().y / 8)));
 			}
 		});
 		
@@ -96,8 +89,8 @@ public class EmulatorRnDBar extends BaseEmulatorBar  {
 			}
 		});
 		
-		buttonBar.setMaxIconSize(48);
-		buttonBar.setMinIconSize(16);
+		buttonBar.setMaxIconSize(MAX_HEIGHT);
+		buttonBar.setMinIconSize(MIN_HEIGHT);
 		
 
 		ImageBarChild cpuMetricsCanvasHolder = new ImageBarChild(buttonBar, 0);

@@ -33,7 +33,7 @@ import ejs.base.utils.ListenerList.IFire;
 public class ImageBar extends ImageCanvas implements IImageBar {
 
 	private static final int MIN_ICON_SIZE = 24;
-	private static final int MAX_ICON_SIZE = 64;
+	private static final int MAX_ICON_SIZE = 96;
 	private static final int RETRACT_VISIBLE = 0;
 
 	private ButtonBarLayout bblayout;
