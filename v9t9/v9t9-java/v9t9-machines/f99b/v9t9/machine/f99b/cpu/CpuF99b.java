@@ -325,8 +325,10 @@ public class CpuF99b extends CpuBase {
 		if (doubleFault) {
 			if (dumpfull != null) { 
 				dumpfull.println("*** DOUBLE FAULT ==> RESET");
+				System.err.println("*** DOUBLE FAULT ==> RESET");
 			}
-			reset();
+			machine.reset();
+			machine.setPaused(true);
 			throw new AbortedException();
 		}
 

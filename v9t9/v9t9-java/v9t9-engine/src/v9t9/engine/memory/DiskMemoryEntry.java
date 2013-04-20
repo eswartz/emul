@@ -221,6 +221,8 @@ public class DiskMemoryEntry extends MemoryEntry {
 	}
 	
 	public String getSymbolFileName() {
+		if (filename == null)
+			return null;
 		int idx = filename.lastIndexOf('.');
         if (idx >= 0) {
         	return filename.substring(0, idx) + ".sym";
