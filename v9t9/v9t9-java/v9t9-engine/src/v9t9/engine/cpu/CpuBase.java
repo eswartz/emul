@@ -205,7 +205,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		
 		newTargetCycles = (int) (totaltargetcycles - totalcurrentcycles);
 		
-		if (newTargetCycles < targetcycles / 10 || newTargetCycles > targetcycles * 2) {
+		if (true||newTargetCycles < targetcycles / 10 || newTargetCycles > targetcycles * 2) {
 			if (newTargetCycles < 0) {
 				// something really threw us off -- just start over
 				//totalcurrentcycles = totaltargetcycles;
@@ -231,9 +231,10 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 
 		currenttargetcycles.set(newTargetCycles);
 		
-//		System.out.println(System.currentTimeMillis()+": " + currentcycles + " -> " + currenttargetcycles);
+//		System.out.println(System.currentTimeMillis()+": " + currentcycles + " -> " + currenttargetcycles.get());
 		
 		if (realTime.getBoolean()) {
+			allocatedCycles.drainPermits();
 			allocatedCycles.release(newTargetCycles);
 		}
 		
@@ -275,6 +276,13 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		return totalcurrentcycles;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#getTotalCurrentCycleCount()
+	 */
+	@Override
+	public synchronized long getTotalCurrentCycleCount() {
+		return totalcurrentcycles + currentcycles.get();
+	}
 	public int getTickCount() {
 		return ticks;
 	}

@@ -91,6 +91,8 @@ public interface ICpu extends IPersistable {
 	int getCurrentTargetCycleCount();
 
 	long getTotalCycleCount();
+	
+	long getTotalCurrentCycleCount();
 
 	/** Get the tick count, in ms */
 	int getTickCount();
