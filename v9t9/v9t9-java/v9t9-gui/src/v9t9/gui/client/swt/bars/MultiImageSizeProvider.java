@@ -10,13 +10,19 @@
  */
 package v9t9.gui.client.swt.bars;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 
+import v9t9.gui.client.swt.imageimport.ImageUtils;
 
 import ejs.base.utils.Pair;
 
@@ -29,6 +35,7 @@ import ejs.base.utils.Pair;
  */
 public class MultiImageSizeProvider implements ImageProvider {
 	protected TreeMap<Integer, Image> iconMap;
+	private Map<Integer, Image> scaleCache = new LinkedHashMap<Integer, Image>();
 	
 	/**
 	 * 
@@ -49,8 +56,36 @@ public class MultiImageSizeProvider implements ImageProvider {
 				icon = null;
 		else
 			icon = tailMap.values().iterator().next();
+		
+		if (icon == null)
+			return new Pair<Double, Image>(1.0, null);
+		
+		Rectangle bounds = icon.getBounds();
+		int iconWidth = bounds.width;
+		int iconHeight = bounds.height;
+		if (iconWidth != sx) {
+			Image scaled = scaleCache.get(sx);
+			if (scaled == null) {
+				int newHeight = iconWidth > iconHeight ? iconWidth * sx / iconHeight 
+						: iconHeight * sx / iconWidth;
+				scaled = ImageUtils.scaleImage(icon.getDevice(), 
+						iconMap.lastEntry().getValue(), 
+						new Point(sx, newHeight), 
+						true); 
+				scaleCache.put(sx, scaled);
+				if (scaleCache.size() > 16) {
+					Iterator<Entry<Integer, Image>> iter = scaleCache.entrySet().iterator();
+					Entry<Integer, Image> ent = iter.next();
+					ent.getValue().dispose();
+					iter.remove();
+				}
+			}
+			icon = scaled;
+			iconWidth = sx;
+		}
+		
 		int min = iconMap.values().iterator().next().getBounds().width;
-		double ratio = (double) icon.getBounds().width / min;
+		double ratio = (double) iconWidth / min;
 		return new Pair<Double, Image>(ratio, icon);
 	}
 
@@ -60,10 +95,18 @@ public class MultiImageSizeProvider implements ImageProvider {
 		Pair<Double, Image> iconInfo = getImage(drawRect.width, drawRect.height);
 		ratio = iconInfo.first;
 		Image icon = iconInfo.second;
-		if (drawRect.width > 0 && imgRect.width > 0 && ratio > 0 && imgRect.x >= 0 && imgRect.y >= 0)
-			gc.drawImage(icon, (int)(imgRect.x * ratio), (int)(imgRect.y * ratio), 
+		if (drawRect.width > 0 && imgRect.width > 0 && ratio > 0 && imgRect.x >= 0 && imgRect.y >= 0) {
+//			gc.setAntialias(SWT.ON);
+//			Transform transform = new Transform(gc.getDevice());
+//			transform.translate(-drawRect.x, -drawRect.y);
+//			gc.setTransform(transform);
+			gc.drawImage(icon, 
+					(int)(imgRect.x * ratio), (int)(imgRect.y * ratio),
 				(int)(imgRect.width * ratio), (int) (imgRect.height * ratio), 
-				drawRect.x, drawRect.y, drawRect.width, drawRect.height);
+				drawRect.x, drawRect.y,
+				drawRect.width, drawRect.height);
+//			transform.dispose();
+		}
 	}
 
 	/**

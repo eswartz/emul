@@ -53,6 +53,8 @@ public class AwtImageUtils {
 	{
 	    int type = BufferedImage.TYPE_INT_RGB;
 	    BufferedImage ret = (BufferedImage)img;
+	    if (ret.getColorModel().hasAlpha())
+	    	type = BufferedImage.TYPE_INT_ARGB;
 	    int w, h;
 	    if (higherQuality) {
 	        // Use multi-step technique: start with original size, then

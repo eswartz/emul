@@ -146,10 +146,14 @@ public abstract class BaseSwtJavaClient implements IClient {
         final TimerTask soundGenerateTask = new TimerTask() {
 			@Override
 			public void run() {
-				int pos = machine.getCpu().getCurrentCycleCount();
-				int total = machine.getCpu().getCurrentTargetCycleCount();
-
+				int pos;
+				int total;
+				synchronized (machine.getCpu()) {
+					pos = machine.getCpu().getCurrentCycleCount();
+					total = machine.getCpu().getCurrentTargetCycleCount();
+				}
 				soundHandler.generateSound(pos, total);
+
 			}
 		};
         machine.getSound().addWriteListener(new IRegisterWriteListener() {
@@ -170,8 +174,12 @@ public abstract class BaseSwtJavaClient implements IClient {
 		final TimerTask speechDoneTask = new TimerTask() {
 			@Override
 			public void run() {
-				int pos = machine.getCpu().getCurrentCycleCount();
-				int total = machine.getCpu().getCurrentTargetCycleCount();
+				int pos;
+				int total;
+				synchronized (machine.getCpu()) {
+					pos = machine.getCpu().getCurrentCycleCount();
+					total = machine.getCpu().getCurrentTargetCycleCount();
+				}
 				
 				soundHandler.flushAudio(pos, total);
 			}
@@ -196,8 +204,12 @@ public abstract class BaseSwtJavaClient implements IClient {
 	@Override
 	public void tick() {
 		// flush sound each tick
-		int pos = machine.getCpu().getCurrentCycleCount();
-		int total = machine.getCpu().getCurrentTargetCycleCount();
+		int pos;
+		int total;
+		synchronized (machine.getCpu()) {
+			pos = machine.getCpu().getCurrentCycleCount();
+			total = machine.getCpu().getCurrentTargetCycleCount();
+		}
 
 		//System.out.println(pos + " / " + total);
 		soundHandler.flushAudio(pos, total);

@@ -31,9 +31,9 @@
      objecttolerance="10"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2"
+     inkscape:zoom="5.6568542"
      inkscape:cx="31.653328"
-     inkscape:cy="754.65083"
+     inkscape:cy="1826.7294"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -1419,7 +1419,7 @@
        transform="matrix(-0.91259732,2.1782652e-8,-2.1782667e-8,-0.9125967,61.938626,-527.40221)" />
     <g
        id="g3631"
-       transform="matrix(0.55289958,0,0,0.5528992,14.306589,-913.82566)">
+       transform="matrix(0.55289958,0,0,0.5528992,15.190472,-913.64888)">
       <g
          id="g3756"
          style="opacity:0.75;stroke:#000000;stroke-opacity:1;filter:url(#filter3762)"
@@ -1463,7 +1463,7 @@
       </g>
     </g>
     <g
-       transform="translate(0.40539293,-1024)"
+       transform="translate(1.2892764,-1023.8232)"
        id="g4033">
       <path
          transform="matrix(-0.8593,2.0798622e-8,-2.2725091e-8,-0.9654542,62.689452,447.83224)"
@@ -3141,7 +3141,7 @@
     <use
        height="1024"
        width="64"
-       transform="matrix(0.7071068,-0.70710622,0.70710718,0.7071068,408.75592,-18.964399)"
+       transform="matrix(0.7071068,-0.70710622,0.70710718,0.7071068,408.00592,-18.464399)"
        id="use20928"
        xlink:href="#g4033"
        y="0"

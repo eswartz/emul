@@ -1116,9 +1116,13 @@ public abstract class ImageUtils {
 			
 		int type;
 		if (data.palette.redShift == 0)
-			type = BufferedImage.TYPE_INT_BGR;
+			type = data.alpha != 0 || data.alphaData != null ?
+					BufferedImage.TYPE_INT_ARGB :
+						BufferedImage.TYPE_INT_BGR;
 		else
-			type = BufferedImage.TYPE_INT_RGB;
+			type = data.alpha != 0 || data.alphaData != null ?
+					BufferedImage.TYPE_INT_ARGB :
+					BufferedImage.TYPE_INT_RGB;
 		
 		BufferedImage img = new BufferedImage(data.width, data.height, type);
 		int[] pix = new int[data.width * data.height];
@@ -1167,7 +1171,6 @@ public abstract class ImageUtils {
 		}
 		
 		img.setRGB(0, 0, data.width, data.height, pix, 0, pix.length / data.height);
-
 		return new ImageFrame(img, data.palette.isDirect, data.delayTime);
 		
 	}

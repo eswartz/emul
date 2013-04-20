@@ -275,7 +275,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			shell.setMenuBar(bar);
 		}
 		
-		if (true) {
+		if (false) {
 			ISVGLoader svgIconLoader = new SVGSalamanderLoader(EmulatorGuiData.getDataURL("icons/icons.svg"));
 			buttonImageProvider = new SVGImageProvider(mainIcons, svgIconLoader);
 			statusImageProvider = new SVGImageProvider(mainIcons, svgIconLoader);

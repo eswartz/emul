@@ -271,7 +271,10 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 			
 			@Override
 			public String getTooltip() {
-				return pauseRecordingProperty.getBoolean() ? "Resume" : "Pause";
+				return (pauseRecordingProperty.getBoolean() ? "Resume recording to " : "Pause recording to ")
+						+ (soundRecording.getString() != null ? soundRecording.getString() +"\n" : "")
+						+ (speechRecording.getString() != null ? speechRecording.getString() : "")
+						;
 			}
 			
 			@Override
