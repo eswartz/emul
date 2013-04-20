@@ -30,7 +30,6 @@ public class TI99SoundSmoother implements ISoundMutator {
 	 */
 	@Override
 	public void editSoundChunk(ISoundView chunk, List<ISoundView> outViews) {
-		
 		ISoundView outView = chunk;
 		if (!chunk.isSilent()) {
 			int numChans = chunk.getFormat().getChannels();

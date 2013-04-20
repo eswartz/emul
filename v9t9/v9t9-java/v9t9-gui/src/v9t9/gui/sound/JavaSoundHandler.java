@@ -51,6 +51,8 @@ public class JavaSoundHandler implements ISoundHandler {
 	private ISoundGenerator soundGenerator;
 	private final ISpeechGenerator speechGenerator;
 	/*private*/ int lastSpeechUpdatedPos;
+	private IProperty recordingSound;
+	private IProperty recordingSpeech;
 	
 	public JavaSoundHandler(final IMachine machine, final ISoundGenerator soundGenerator,
 			final ISpeechGenerator speechGenerator) {
@@ -61,6 +63,9 @@ public class JavaSoundHandler implements ISoundHandler {
 		
 		soundVolume = Settings.get(machine, ISoundHandler.settingSoundVolume);
 		playSound = Settings.get(machine, ISoundHandler.settingPlaySound);
+		
+		recordingSound = Settings.get(machine, ISoundHandler.settingRecordSoundOutputFile);
+		recordingSpeech = Settings.get(machine, ISoundHandler.settingRecordSpeechOutputFile);
 		
 		soundFormat = new AudioFormat(55930, 16, 2, true, false);
 		
@@ -94,10 +99,22 @@ public class JavaSoundHandler implements ISoundHandler {
 		//		+ machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
 		soundFramesPerTick = output.getSamples((1000 + machine.getTicksPerSec() - 1) / machine.getTicksPerSec());
 		
+		toggleSound(true);
 		playSound.addListenerAndFire(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
-				toggleSound(setting.getBoolean());
+				if (!isRecording()) {
+					toggleSound(setting.getBoolean());
+				} else {
+					// while recording, just mute
+					if (setting.getBoolean()) {
+						output.setVolume(soundVolume.getInt() / 10.0);
+						speechOutput.setVolume(soundVolume.getInt() / 10.0);
+					} else {
+						output.setVolume(0);
+						speechOutput.setVolume(0);
+					}
+				}
 			}
 			
 		});
@@ -116,6 +133,14 @@ public class JavaSoundHandler implements ISoundHandler {
 
 	}
 	
+
+	/**
+	 * @return
+	 */
+	protected boolean isRecording() {
+		return recordingSound.getString() != null || recordingSpeech.getString() != null;
+	}
+
 
 	public synchronized void dispose() {
 		toggleSound(false);

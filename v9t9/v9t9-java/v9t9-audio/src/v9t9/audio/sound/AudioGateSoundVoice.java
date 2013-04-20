@@ -22,7 +22,7 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	private boolean origState;
 	private int[] deltas = new int[0];
 	private int deltaIdx = 0;
-	private int baseCycles;
+	private long timeout;
 	
 	public AudioGateSoundVoice(String name) {
 		super("Audio Gate");
@@ -48,7 +48,6 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 		wasSet = false;
 		origState = false;
 		deltaIdx = 0;
-		baseCycles = 0;
 	}
 	
 	/* (non-Javadoc)
@@ -61,10 +60,8 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	public synchronized void setState(int curr) {
 		boolean newState = curr >= 0;
 		if (state != newState) {
-			int offs = absp1(curr) - baseCycles;
-			if (offs < 0)
-				offs = curr;
-			baseCycles = curr;
+//			System.out.println(curr);
+			int offs = absp1(curr);
 			state = newState;
 			appendPos(state ? offs : -offs-1);
 		}
@@ -86,6 +83,9 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 		}
 		
 		deltas[deltaIdx++] = pos;
+		
+		// don't keep a high audio gate on all the time
+		timeout = System.currentTimeMillis() + 1000;
 	}
 
 	public boolean generate(float[] soundGeneratorWorkBuffer, int from,
@@ -102,12 +102,12 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	public synchronized boolean flushAudio(float[] soundGeneratorWorkBuffer, int from,
 			int to, int total_unused) {
 		boolean generated = false;
-		if (from < to && (true)) {
+		if (from < to && System.currentTimeMillis() < timeout) {
 			
 			generated = true;
 			int ratio = 128 + balance;
-			float sampleL = ((256 - ratio) * 1f) / 256.f;
-			float sampleR = (ratio * 1f) / 256.f;
+			float sampleL = ((256 - ratio) * 1f) / 128.f;
+			float sampleR = (ratio * 1f) / 128.f;
 			
 			
 			int totalSamps = to - from;
@@ -153,7 +153,6 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 		
 		deltaIdx = 0;
 		origState = state;
-		baseCycles = total_unused;
 		
 		return generated;
 	}

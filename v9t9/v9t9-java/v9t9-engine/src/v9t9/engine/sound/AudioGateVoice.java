@@ -26,6 +26,7 @@ public class AudioGateVoice extends BaseVoice {
 
 	private boolean gate;
 	private IMachine machine;
+	private long lastCycles;
 
 	public AudioGateVoice(String id, String name,
 			ListenerList<IRegisterWriteListener> listeners, IMachine machine) {
@@ -37,7 +38,9 @@ public class AudioGateVoice extends BaseVoice {
 		this.gate = gate;
 		ICpu cpu = machine.getCpu();
 		if (cpu != null) {
-			int cycles = cpu.getCurrentCycleCount();
+			long nowCycles = cpu.getTotalCurrentCycleCount();
+			int cycles = (int) (nowCycles - lastCycles);
+			lastCycles = nowCycles;
 			fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_AUDIO_GATE, gate ? cycles : -cycles-1);
 		}
 	}

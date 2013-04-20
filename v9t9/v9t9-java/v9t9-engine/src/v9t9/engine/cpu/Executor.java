@@ -514,6 +514,17 @@ public class Executor implements IExecutor {
 				lastInfo = now;
 			}
 			
+//			if (!cpu.isIdle() && !machine.isPaused()) {
+//				// make up the difference if we did not fulfill all the instructions 
+//				int diff = cpu.getCurrentTargetCycleCount() - cpu.getCurrentCycleCount();
+//				if (diff < cpu.getTargetCycleCount()) {
+//					while (diff > 0) {
+//						interpretOneInstruction();
+//						diff = cpu.getCurrentTargetCycleCount() - cpu.getCurrentCycleCount();
+//					}
+//				}
+//			}
+			
 			cpu.tick();
 			
 			machine.getVdp().tick();

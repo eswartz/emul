@@ -191,7 +191,7 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 				long now = System.currentTimeMillis();
 				
 				long curCycles = cpu.getTotalCurrentCycleCount();
-				long cycles = curCycles;
+				long cycles = curCycles - prevCassetteCycles;
 				prevCassetteCycles = curCycles;
 				
 				time = (float) cycles / cpu.getBaseCyclesPerSec();

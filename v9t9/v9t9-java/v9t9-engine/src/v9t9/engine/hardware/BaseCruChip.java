@@ -86,7 +86,6 @@ public class BaseCruChip implements ICruChip {
         currentints = 0;
         clockRegister = 0;
         clockmode = false;
-        leftoverCycles = 0;
         prevCycles = machine.getCpu().getCurrentCycleCount();
 	}
 
@@ -97,12 +96,9 @@ public class BaseCruChip implements ICruChip {
 			logger.info("new clock register: " + clockRegister+"; rate = " + 
 					(3000000 / clockRegister / 64) + " Hz");
 			prevClockRegister = clockRegister;
-			//prevCycles = machine.getCpu().getCurrentCycleCount() + machine.getCpu().getTotalCycleCount();
-			prevCycles = machine.getCpu().getCurrentCycleCount();
-			leftoverCycles = 0;
+			prevCycles = machine.getCpu().getTotalCurrentCycleCount();
 		}
 		clockDecrementerRegister = clockRegister;
-		//clockTargetCycleCount = machine.getCpu().getTotalCurrentCycleCount() + 64;
 	}
 
     public boolean isInterruptWaiting() {
@@ -119,7 +115,6 @@ public class BaseCruChip implements ICruChip {
     private byte ic;
 
 	private long prevCycles;
-	private int leftoverCycles;
 
 	public void pollForPins(ICpu cpu) {
 		// interrupts not generated in clock mode
@@ -131,10 +126,7 @@ public class BaseCruChip implements ICruChip {
 		final int CYCLES_PER_TICK = 64;
 		if (clockRegister != 0) {
 			// this decrements once every N cycles
-			long nowCycles = cpu.getCurrentCycleCount();
-			if (nowCycles < prevCycles) {
-				prevCycles = -leftoverCycles;
-			}
+			long nowCycles = cpu.getTotalCurrentCycleCount();
 			
 			while (prevCycles + CYCLES_PER_TICK < nowCycles) {
 				prevCycles += CYCLES_PER_TICK;
@@ -156,7 +148,6 @@ public class BaseCruChip implements ICruChip {
 				}
 				
 			}
-			leftoverCycles = (int) (nowCycles - prevCycles);
 		}
 		
 		intreq = false;

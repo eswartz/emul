@@ -198,6 +198,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		return allocatedCycles;
 	}
 	public synchronized void tick() {
+		applyCycles();
 		int tickCycles = currentcycles.getAndSet(0);
 		totalcurrentcycles += tickCycles;
 		
@@ -281,7 +282,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	 */
 	@Override
 	public synchronized long getTotalCurrentCycleCount() {
-		return totalcurrentcycles + currentcycles.get();
+		return totalcurrentcycles + currentcycles.get() + cycleCounts.getTotal();
 	}
 	public int getTickCount() {
 		return ticks;

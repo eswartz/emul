@@ -327,7 +327,8 @@ public class Cpu9900 extends CpuBase {
 	 */
 	@Override
 	public void applyCycles() {
-		vdp.addCpuCycles(cycleCounts.getTotal());
+		if (vdp != null)
+			vdp.addCpuCycles(cycleCounts.getTotal());
 		super.applyCycles();
 	}
 	
