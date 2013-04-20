@@ -15,6 +15,8 @@ BASEDIR=$(dirname "$NORMSCRIPT")
 JAVA=java
 VMARGS=-Xmx256M
 
+OS=$(uname)
+
 if [ "$OS" = "Darwin" ]; then
     VMARGS="$VMARGS -XstartOnFirstThread"
 fi
