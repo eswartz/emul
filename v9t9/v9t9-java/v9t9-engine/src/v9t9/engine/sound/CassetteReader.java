@@ -16,13 +16,17 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.settings.BasicSettingsHandler;
+
+import ejs.base.properties.IProperty;
+
 
 /**
  * @author ejs
  *
  */
 public class CassetteReader {
-	static final boolean DEBUG = false;
 
 	public static void main(String[] args) throws UnsupportedAudioFileException, IOException {
 
@@ -41,7 +45,9 @@ public class CassetteReader {
 		final int POLL_CLOCK = 1378 * 3 / 2;
 		float secsPerPoll = (float) POLL_CLOCK / BASE_CLOCK;
 		
-		CassetteReader reader = new CassetteReader(is);
+		ISettingsHandler settings = new BasicSettingsHandler();
+		IProperty debug = settings.get(CassetteVoice.settingCassetteDebug);
+		CassetteReader reader = new CassetteReader(is, debug);
 		while (!reader.isDone()) {
 			
 			boolean val = reader.readBit(secsPerPoll);
@@ -67,13 +73,16 @@ public class CassetteReader {
 
 
 	private float samplesFrac;
+	private IProperty debug;
 
 	/**
 	 * @param is 
+	 * @param debug 
 	 * 
 	 */
-	public CassetteReader(AudioInputStream is) {
+	public CassetteReader(AudioInputStream is, IProperty debug) {
 		this.is = is;
+		this.debug = debug;
 		
 		// why doesn't Java provide a way to skip the header!?!?
 		AudioFileFormat format;
@@ -210,7 +219,7 @@ public class CassetteReader {
 		if (samples > 48) {
 			samples = 48;
 		}
-		if (DEBUG) System.out.print(" @"+ samples+":");
+		if (debug.getBoolean()) System.out.print(" @"+ samples+":");
 		
 		int newPolarity = polarity;
 		

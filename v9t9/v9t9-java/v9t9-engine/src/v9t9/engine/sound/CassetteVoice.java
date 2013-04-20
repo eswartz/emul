@@ -55,6 +55,10 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 			ISettingsHandler.MACHINE,
 			"CassetteAccess", true);
 	
+	public static SettingSchema settingCassetteDebug = new SettingSchema(
+			ISettingsHandler.MACHINE,
+			"CassetteDebug", false);
+	
 	private int outputState;
 	private int motor1;
 	private int motor2;
@@ -64,6 +68,9 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 	private IProperty cassetteReading;
 	protected IProperty dumpFullInstructions;
 
+	private IProperty dumpCassetteAccess;
+	private IProperty cassetteDebug;
+
 	protected CassetteReader cassetteReader;
 	protected long prevCassetteCycles;
 	protected int avgCassetteCycles;
@@ -71,8 +78,6 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 	protected long lastScroll;
 
 	private float clockSecs = 1.0f / 1500f;
-
-	private IProperty dumpCassetteAccess;
 
 	public CassetteVoice(String id, String name,
 			ListenerList<IRegisterWriteListener> listeners, IMachine machine_) {
@@ -85,6 +90,8 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 		dumpFullInstructions = machine.getSettings().get(ICpu.settingDumpFullInstructions);
 		dumpCassetteAccess = machine.getSettings().get(settingDumpCassetteAccess);
 		
+		cassetteDebug = machine.getSettings().get(settingCassetteDebug);
+
 		cassetteInput.addListenerAndFire(new IPropertyListener() {
 			
 			@Override
@@ -135,7 +142,7 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 						audioFile.length());
 				
 				synchronized (CassetteVoice.this) {
-					cassetteReader = new CassetteReader(is);
+					cassetteReader = new CassetteReader(is, cassetteDebug);
 				}
 			} catch (IOException e) {
 				machine.getEventNotifier().notifyEvent(audioFile, Level.ERROR, 
@@ -183,11 +190,8 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 				float time;
 				long now = System.currentTimeMillis();
 				
-				long curCycles = cpu.getCurrentCycleCount() + cpu.getTotalCycleCount();
+				long curCycles = cpu.getTotalCurrentCycleCount();
 				long cycles = curCycles;
-				if (cycles >= prevCassetteCycles) {
-					cycles -= prevCassetteCycles;
-				}
 				prevCassetteCycles = curCycles;
 				
 				time = (float) cycles / cpu.getBaseCyclesPerSec();
@@ -200,7 +204,7 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 				if (dumpCassetteAccess.getBoolean())
 					log(pos + "-" + cassetteReader.getPosition() + ": " + state);
 				
-				if (CassetteReader.DEBUG) {
+				if (cassetteDebug.getBoolean()) {
 					if (lastScroll + 1000 <= now) {
 						lastScroll = now;
 						System.out.println();
