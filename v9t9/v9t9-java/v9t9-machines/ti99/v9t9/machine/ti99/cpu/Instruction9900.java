@@ -328,7 +328,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            //info.cycles += 8;
 	        } else {
 	            mop1.type = MachineOperand9900.OP_OFFS_R12;
-	            mop1.val <<= 1;
+	            //mop1.val <<= 1;
 	            //info.cycles += 12;
 	        }
 	

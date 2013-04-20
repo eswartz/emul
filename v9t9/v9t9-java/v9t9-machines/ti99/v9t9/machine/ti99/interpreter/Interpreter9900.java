@@ -622,15 +622,15 @@ public class Interpreter9900 implements IInterpreter {
             break;
 
         case Inst9900.Isbo:
-        	machine.getCruManager().writeBits(iblock.val1, 1, 1);
+        	machine.getCruManager().writeBits(iblock.val1<<1, 1, 1);
             break;
 
         case Inst9900.Isbz:
-        	machine.getCruManager().writeBits(iblock.val1, 0, 1);
+        	machine.getCruManager().writeBits(iblock.val1<<1, 0, 1);
             break;
 
         case Inst9900.Itb:
-        	iblock.val1 = (short) machine.getCruManager().readBits(iblock.val1, 1);
+        	iblock.val1 = (short) machine.getCruManager().readBits(iblock.val1<<1, 1);
         	iblock.val2 = 0;
             break;
 

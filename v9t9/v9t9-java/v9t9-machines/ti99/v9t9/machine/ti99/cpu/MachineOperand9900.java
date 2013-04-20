@@ -362,7 +362,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
             value = (short) val;
             break;
         case MachineOperand9900.OP_OFFS_R12:   // offset from R12
-            value = (short) (block.domain.readWord(ea) + val);
+            value = (short) ((block.domain.readWord(ea) >> 1) + val);
             break;
         case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
             value = (short) (block.domain.readWord(ea) & 0xf);

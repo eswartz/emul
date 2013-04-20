@@ -126,7 +126,8 @@ public class DsrManager implements IPersistable, IDsrManager {
 				
 				int retreg = instructionWorkBlock.wp + 11 * 2;
 				short ret = instructionWorkBlock.domain.readWord(retreg);
-				if (activeDsr.handleDSR(xfer, (short) ((BaseMachineOperand)instructionWorkBlock.inst.getOp1()).val)) {
+				short oper = (short) (((BaseMachineOperand)instructionWorkBlock.inst.getOp1()).val);
+				if (activeDsr.handleDSR(xfer, oper)) {
 					// success: skip next word (handling error)
 					ret += 2;
 				}
