@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFileFormat.Type;
@@ -41,7 +42,11 @@ public class SoundFileListener implements ISoundEmitter {
 
 	private IProperty pauseProperty;
 
+	private byte[] silence;
+
 	public SoundFileListener() {
+		silence = new byte[8192];
+		Arrays.fill(silence, (byte) 0);
 	}
 
 	public void setPauseProperty(IProperty pauseProperty) {
@@ -104,8 +109,16 @@ public class SoundFileListener implements ISoundEmitter {
 		if (soundFos != null && (pauseProperty == null || !pauseProperty.getBoolean())) {
 			try {
 				AudioChunk chunk = new AudioChunk(schunk);
-				soundFos.write(chunk.soundData, 0,
-						chunk.soundData.length);
+				if (chunk.soundData != null) {
+					soundFos.write(chunk.soundData, 0,
+							chunk.soundData.length);
+				} else {
+					for (int len = schunk.getSampleCount(); len > 0; ) {
+						int toWrite = Math.min(len, silence.length);
+						soundFos.write(silence, 0, toWrite);
+						len -= toWrite;
+					}
+				}
 			} catch (IOException e) {
 				try {
 					if (soundFos != null)
