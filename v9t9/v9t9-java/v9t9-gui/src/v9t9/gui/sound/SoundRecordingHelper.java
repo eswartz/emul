@@ -22,6 +22,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.ejs.gui.common.SwtDialogUtils;
 
 import v9t9.common.client.ISoundHandler;
+import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 
@@ -93,7 +94,7 @@ public class SoundRecordingHelper {
 	 */
 	public Menu populateSoundMenu(final Menu menu) {
 		MenuItem item = new MenuItem(menu, SWT.CHECK);
-		String filename = soundFileSetting.getString();
+		final String filename = soundFileSetting.getString();
 		if (filename != null) {
 			item.setText("Stop recording " + label + " to " + filename);
 			item.setSelection(true);
@@ -101,6 +102,7 @@ public class SoundRecordingHelper {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					stop();
+					machine.notifyEvent(Level.INFO, "Finished recording to " + filename);
 				}
 
 			});
@@ -128,6 +130,9 @@ public class SoundRecordingHelper {
 								}
 							}
 							soundFileSetting.setString(saveFile != null ? saveFile.getAbsolutePath() : null);
+							if (saveFile != null) {
+								machine.notifyEvent(Level.INFO, "Started recording to " + saveFile);
+							}
 						}
 					});
 				}
