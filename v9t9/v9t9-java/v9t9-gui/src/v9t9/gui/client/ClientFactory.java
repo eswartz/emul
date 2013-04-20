@@ -11,6 +11,7 @@
 package v9t9.gui.client;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,14 +24,23 @@ import v9t9.common.machine.IMachine;
  */
 public class ClientFactory {
 
-	private static Map<String, Class<? extends IClient>> classMap = new HashMap<String, Class<? extends IClient>>();
+	public static final ClientFactory INSTANCE = new ClientFactory();
+	private ClientFactory() { }
+	
+	private Map<String, Class<? extends IClient>> classMap = new HashMap<String, Class<? extends IClient>>();
+	private String defaultClient;
 
-	public static void register(String id, Class<? extends IClient> klass) {
+	public Collection<String> getRegisteredClients() {
+		return classMap.keySet();
+	}
+	public void register(String id, Class<? extends IClient> klass) {
 		assert !classMap.containsKey(id);
 		classMap.put(id, klass);
+		if (defaultClient == null)
+			defaultClient = id;
 	}
 	
-	public static IClient createClient(String id, IMachine machine) {
+	public IClient createClient(String id, IMachine machine) {
 		Class<? extends IClient> klass = classMap.get(id);
 		if (klass == null)
 			return null;
@@ -43,6 +53,18 @@ public class ClientFactory {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	/**
+	 * @return
+	 */
+	public String getDefaultClient() {
+		return defaultClient;
+	}
+	/**
+	 * @param id
+	 */
+	public void setDefault(String id) {
+		this.defaultClient = id;
 	}
 	
 }

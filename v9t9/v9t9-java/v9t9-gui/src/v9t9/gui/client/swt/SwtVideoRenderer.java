@@ -254,6 +254,10 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		}
 		
 		vdpCanvas = format.create();
+		if (false == vdpCanvas instanceof ImageDataCanvas) {
+			canvasFormat.setValue(CanvasFormat.RGB24);
+			return;
+		}
 		vdpCanvasRenderer = VdpCanvasRendererFactory.createCanvasRenderer(settings, this);
 
 		vdpCanvas.setListener(this);

@@ -54,9 +54,9 @@ public class MachineModelFactory {
 		return Collections.unmodifiableCollection(classMap.keySet());
 	}
 
-	/**
-	 * @return
-	 */
+	public void setDefaultModel(String defaultModel) {
+		this.defaultModel = defaultModel;
+	}
 	public String getDefaultModel() {
 		return defaultModel;
 	}

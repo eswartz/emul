@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,6 +24,7 @@ import java.util.Map;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import v9t9.common.client.IClient;
 import v9t9.common.cpu.ICpu;
@@ -35,6 +35,7 @@ import v9t9.gui.client.swt.SwtJavaClient;
 import v9t9.gui.client.swt.SwtLwjglJavaClient;
 import v9t9.remote.EmulatorRemoteServer;
 import v9t9.server.EmulatorLocalServer;
+import v9t9.server.MachineModelFactory;
 import v9t9.server.client.EmulatorServerBase;
 
 /**
@@ -42,24 +43,16 @@ import v9t9.server.client.EmulatorServerBase;
  *
  */
 public class Emulator {
+	private static final Logger logger = Logger.getLogger(Emulator.class);
 	
 	private static final boolean sIsWebStarted = System.getProperty("javawebstart.version") != null;
 	private static boolean debug;
 
-//	static {
-//		String jnaLibraryPath = System.getProperty("jna.library.path");
-//		if (sIsWebStarted && jnaLibraryPath == null) {
-//			String path = Native.getWebStartLibraryPath("v9t9render");
-//			System.out.println("Native libs at " + path);
-//			if (path != null)
-//				System.setProperty("jna.library.path", path);
-//		}		
-//		
-//	}
 	static {
-		ClientFactory.register(SwtJavaClient.ID, SwtJavaClient.class);
-		ClientFactory.register(SwtAwtJavaClient.ID, SwtAwtJavaClient.class);
-		ClientFactory.register(SwtLwjglJavaClient.ID, SwtLwjglJavaClient.class);
+		ClientFactory.INSTANCE.register(SwtJavaClient.ID, SwtJavaClient.class);
+		ClientFactory.INSTANCE.register(SwtAwtJavaClient.ID, SwtAwtJavaClient.class);
+		ClientFactory.INSTANCE.register(SwtLwjglJavaClient.ID, SwtLwjglJavaClient.class);
+		ClientFactory.INSTANCE.setDefault(SwtLwjglJavaClient.ID);
 	}
 	
  	private static boolean findArgument(String[] args, String string) {
@@ -84,7 +77,7 @@ public class Emulator {
 				String path;
 				try {
 					path = new URL(EmulatorGuiData.sBaseV9t9URL, "libv9t9render").getPath();
-					System.out.println("Native libs at " + path);
+					logger.info("Native libs at " + path);
 					if (path != null)
 						System.setProperty("jna.library.path", path);
 				} catch (MalformedURLException e) {
@@ -112,11 +105,22 @@ public class Emulator {
 					new LongOpt("debug", LongOpt.NO_ARGUMENT, null, 'd'),
 					new LongOpt("tcf", LongOpt.NO_ARGUMENT, null, 't'),
 					new LongOpt("set", LongOpt.REQUIRED_ARGUMENT, null, 's'),
+					new LongOpt("list-machines", LongOpt.NO_ARGUMENT, null, 0x101),
+					new LongOpt("list-clients", LongOpt.NO_ARGUMENT, null, 0x102),
+					new LongOpt("machine", LongOpt.REQUIRED_ARGUMENT, null, 0x103),
+					new LongOpt("client", LongOpt.REQUIRED_ARGUMENT, null, 0x104),
 				}
 		);
+		
+		EmulatorServerBase server = remote != null 
+				? new EmulatorRemoteServer(remote)
+				: new EmulatorLocalServer();
 
 		Map<String, String> settings = new LinkedHashMap<String, String>();
 
+		String modelId = MachineModelFactory.INSTANCE.getDefaultModel();
+		String clientId = ClientFactory.INSTANCE.getDefaultClient();
+				
 		int opt;
 		while ((opt = getopt.getopt()) != -1)
 		{
@@ -143,12 +147,33 @@ public class Emulator {
 				String val = arg.substring(idx+1);
 				settings.put(var, val);
 			}
+			else if (opt == 0x101) {
+				for (String model : MachineModelFactory.INSTANCE.getRegisteredModels()) {
+					System.out.println(model);
+				}
+				return;
+			}
+			else if (opt == 0x102) {
+				for (String client : ClientFactory.INSTANCE.getRegisteredClients()) {
+					System.out.println(client);
+				}
+				return;
+			}
+			else if (opt == 0x103) {
+				modelId = getopt.getOptarg();
+				if (!MachineModelFactory.INSTANCE.getRegisteredModels().contains(modelId)) {
+					System.err.println("No such registered machine: " + modelId);
+					return;
+				}
+			}
+			else if (opt == 0x104) {
+				clientId = getopt.getOptarg();
+				if (!ClientFactory.INSTANCE.getRegisteredClients().contains(clientId)) {
+					System.err.println("No such registered client: " + clientId);
+					return;
+				}
+			}
 		}
-		
-		EmulatorServerBase server = remote != null 
-			? new EmulatorRemoteServer(remote)
-			: new EmulatorLocalServer();
-		
 		if (tcf)
 			server.enableTcf();
 		
@@ -159,10 +184,6 @@ public class Emulator {
 				deleteDirectory(top);
 			}
 		}
-		
-		String modelId = getModelId(server, args);
-		String clientId = getClientId(args);
-		
 
 		create(server, modelId, clientId);
 		
@@ -197,7 +218,7 @@ public class Emulator {
 		}
 		
 		IClient client = null;
-		client = ClientFactory.createClient(clientId, 
+		client = ClientFactory.INSTANCE.createClient(clientId, 
 				server.getMachine());
 
 
@@ -236,46 +257,5 @@ public class Emulator {
 				e.printStackTrace();
 			}
 		}
-	}
-
-
-	/**
-	 * @param args
-	 * @return
-	 */
-	private static String getClientId(String[] args) {
-		String clientID = SwtLwjglJavaClient.ID;
-        /*if (findArgument(args, "--awt")) {
-        	clientID = AwtJavaClient.ID;
-		} 
-        else 
-        */
-		if (findArgument(args, "--swt")) {
-        	clientID = SwtJavaClient.ID;
-		} 
-        else if (findArgument(args, "--swtawt")) {
-        	clientID = SwtAwtJavaClient.ID;
-        } 
-        else if (findArgument(args, "--swtgl")) {
-        	clientID = SwtLwjglJavaClient.ID;
-		} 
-        return clientID;
-	}
-
-
-	/**
-	 * @param server 
-	 * @param args
-	 * @return
-	 */
-	private static String getModelId(EmulatorServerBase server, String[] args) {
-
-		Collection<String> models = server.getMachineModelFactory().getRegisteredModels();
-		for (String arg : args) {
-			if (models.contains(arg))
-				return arg;
-		}
-        
-        return server.getMachineModelFactory().getDefaultModel();
 	}
 }

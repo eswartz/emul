@@ -22,7 +22,7 @@ import ejs.base.logging.LoggingUtils;
  * @author ejs
  *
  */
-public class Help {
+public class ToolHelp {
 
 
 	public static void main(String[] args) throws IOException, URISyntaxException {
@@ -34,14 +34,14 @@ public class Help {
 		System.out.println("v9t9[.bat|.sh] -tool <class> [args]\n");
 		System.out.println("where <class> is one of:\n");
 		
-		String className = Help.class.getName();
+		String className = ToolHelp.class.getName();
 		int didx = className.lastIndexOf('.');
 		String packageName = className.substring(0, didx+1);
 		String helpDir = "/" + packageName.replace('.', '/');
 		
-		String classPath = helpDir + Help.class.getSimpleName() + ".class";
+		String classPath = helpDir + ToolHelp.class.getSimpleName() + ".class";
 		//System.out.println("classPath=" +classPath);
-		URL classURL = Help.class.getResource(classPath);
+		URL classURL = ToolHelp.class.getResource(classPath);
 		//System.out.println("classURL=" +classURL);
 		URL helpDirURL = new URL(classURL, ".");
 		//System.out.println("helpDirURL=" +helpDirURL);
@@ -52,7 +52,7 @@ public class Help {
 		for (String ent : ents) {
 			if (ent.endsWith(".class")) {
 				String toolName = packageName + ent.substring(0, ent.length() - ".class".length());
-				if (!toolName.equals(Help.class.getName())) {
+				if (!toolName.equals(ToolHelp.class.getName())) {
 					System.out.println("\t" + toolName);
 				}
 			}

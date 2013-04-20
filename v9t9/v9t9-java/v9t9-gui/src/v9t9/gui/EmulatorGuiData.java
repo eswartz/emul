@@ -35,7 +35,7 @@ public class EmulatorGuiData {
 			System.exit(123);
 		}
 		logger.info("Base emulator V9t9 data URL: " + sBaseV9t9URL);
-		System.out.println("Base emulator V9t9 data URL: " + sBaseV9t9URL);
+		//System.out.println("Base emulator V9t9 data URL: " + sBaseV9t9URL);
 	}
 	
 	public static URL getDataURL(String string) {

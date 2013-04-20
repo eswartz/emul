@@ -10,12 +10,12 @@
  */
 package v9t9.engine.memory;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import ejs.base.settings.ISettingSection;
 
@@ -36,7 +36,7 @@ public class Memory implements IMemory {
 
 	private IMemoryModel model;
 
-	private Map<String, IMemoryDomain> domains = new HashMap<String, IMemoryDomain>();
+	private Map<String, IMemoryDomain> domains = new TreeMap<String, IMemoryDomain>();
 
 	private IMemoryEntryFactory factory;
 

@@ -10,6 +10,7 @@
  */
 package v9t9.server.client;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 
@@ -107,6 +108,8 @@ public abstract class EmulatorServerBase {
 		DataFiles.addSearchPath(settings, storedRamPath.getString());
     	
 		IMachineModel model = createModel(modelId);
+		if (model == null)
+			throw new FileNotFoundException("no model found: " + modelId);
         
         machine = model.createMachine(settings);
         

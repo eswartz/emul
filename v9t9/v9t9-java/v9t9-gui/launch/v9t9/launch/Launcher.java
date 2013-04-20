@@ -79,8 +79,22 @@ public class Launcher {
 		// run alternate main class
 		String mainClass = "v9t9.gui.Emulator";
 		for (int idx = 0; idx < args.length; idx++) {
+			if ("-help".equals(args[idx]) || "-h".equals(args[idx]) 
+					|| "-?".equals(args[idx])) {
+				System.out.println("V9t9 Launcher\n"
+					+"\n"
+					+"To emulate a machine:\n"
+					+"\n"
+					+"v9t9.[sh|bat] [MachineName | --list-machines] [ClientName | --list-clients]\n"
+					+"\n"
+					+"To use tools:\n"
+					+"\n"
+					+"v9t9.[sh|bat] -tool [class args...] \n"
+					);
+				return;
+			}
 			if ("-tool".equals(args[idx])) {
-				mainClass = "v9t9.tools.Help";
+				mainClass = "v9t9.tools.ToolHelp";
 				args = remove(args, idx);
 				if (idx < args.length) {
 					mainClass = args[idx];
