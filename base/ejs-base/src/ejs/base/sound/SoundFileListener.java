@@ -168,7 +168,6 @@ public class SoundFileListener implements ISoundEmitter {
 			
 			File soundFile = new File(filename);
 			File soundFileRaw = new File(filename + ".tmp");
-			soundFileRaw.delete();
 			
 			boolean converted = false;
 			try {
@@ -189,7 +188,7 @@ public class SoundFileListener implements ISoundEmitter {
 				
 				try {
 					AudioSystem.write(is, fileType, soundFile);
-					
+					is.close();
 					soundFileRaw.delete();
 					converted = true;
 				} catch (IOException e) {
