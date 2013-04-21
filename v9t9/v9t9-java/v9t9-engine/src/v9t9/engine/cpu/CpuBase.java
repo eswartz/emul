@@ -266,7 +266,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	}
 
 	public int getCurrentCycleCount() {
-		return currentcycles.get();
+		return currentcycles.get() + cycleCounts.getTotal();
 	}
 
 	public int getCurrentTargetCycleCount() {
