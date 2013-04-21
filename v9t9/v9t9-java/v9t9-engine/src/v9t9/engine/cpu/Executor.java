@@ -572,11 +572,12 @@ public class Executor implements IExecutor {
         	public void run() {
     	        while (machine.isAlive()) {
             		Runnable runnable;
-            		while (runnableList.size() > 0) {
-            			runnable = runnableList.remove(0);
-            			runnable.run();
+            		synchronized (executionLock) {
+	            		while (runnableList.size() > 0) {
+	            			runnable = runnableList.remove(0);
+	            			runnable.run();
+	            		}
             		}
-	            	
 //        	        	
 //        	        	// delay if going too fast
 //        				if (realTime.getBoolean()) {

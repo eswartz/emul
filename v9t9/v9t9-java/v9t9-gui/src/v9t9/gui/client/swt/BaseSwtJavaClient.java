@@ -376,9 +376,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 		machine.asyncExec(new Runnable() {
 			public void run() {
 				display.syncExec(runnable);
-				
-				// reset counts since the machine was not running
-				machine.getCpu().resetCycleCounts();
 			}
 		});
 	}
