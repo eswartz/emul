@@ -14,7 +14,6 @@ package v9t9.engine.sound;
 
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
-import v9t9.common.sound.ICassetteVoice;
 import v9t9.common.sound.MultiSoundTMS9919BConsts;
 
 /**

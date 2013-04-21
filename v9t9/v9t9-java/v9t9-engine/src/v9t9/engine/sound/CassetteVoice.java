@@ -22,12 +22,11 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.hardware.CassetteConsts;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.sound.ICassetteVoice;
-import v9t9.common.sound.TMS9919Consts;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
-
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
@@ -142,7 +141,7 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 		if (cpu != null) {
 			int cycles = cpu.getCurrentCycleCount();
 			this.outputState = state ? cycles : -cycles-1;
-			fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_OUTPUT, this.outputState);
+			fireRegisterChanged(baseReg + CassetteConsts.REG_OFFS_CASSETTE_OUTPUT, this.outputState);
 		}
 	}
 	
@@ -194,7 +193,7 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 						HexUtils.toHex4(((VdpTMS9918A) machine.getVdp()).getVdpMmio().getAddr())+" ");
 					}
 				}
-				//fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_INPUT, this.inputState);
+				//fireRegisterChanged(baseReg + CassetteConsts.REG_OFFS_CASSETTE_INPUT, this.inputState);
 			}
 		}
 		return state;
@@ -205,7 +204,7 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 		if (cpu != null) {
 			int cycles = cpu.getCurrentCycleCount();
 			this.motor1 = motor ? cycles : -cycles-1;
-			fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_1, this.motor1);
+			fireRegisterChanged(baseReg + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_1, this.motor1);
 			
 			synchronized (this) {
 				cassetteReader = null;
@@ -217,7 +216,7 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 		if (cpu != null) {
 			int cycles = cpu.getCurrentCycleCount();
 			this.motor2 = motor ? cycles : -cycles-1;
-			fireRegisterChanged(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_2, this.motor2);
+			fireRegisterChanged(baseReg + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_2, this.motor2);
 		}
 	}
 	/* (non-Javadoc)
@@ -246,16 +245,16 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 	 */
 	@Override
 	public int doInitRegisters() {
-		register(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_OUTPUT,
+		register(baseReg + CassetteConsts.REG_OFFS_CASSETTE_OUTPUT,
 				getId() + ":C",
 				getName());
-		register(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_1,
+		register(baseReg + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_1,
 				getId() + ":1",
 				getName());
-		register(baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_2,
+		register(baseReg + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_2,
 				getId() + ":2",
 				getName());
-		return TMS9919Consts.REG_COUNT_CASSETTE;
+		return CassetteConsts.REG_COUNT_CASSETTE;
 	}
 	
 	/* (non-Javadoc)
@@ -263,13 +262,13 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 	 */
 	@Override
 	public int getRegister(int reg) {
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_OUTPUT) {
+		if (reg == baseReg + CassetteConsts.REG_OFFS_CASSETTE_OUTPUT) {
 			return outputState;
 		}
-		else if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_1) {
+		else if (reg == baseReg + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_1) {
 			return motor1;
 		}
-		else if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_2) {
+		else if (reg == baseReg + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_2) {
 			return motor2;
 		}
 		return 0;
@@ -280,15 +279,15 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 	 */
 	@Override
 	public void setRegister(int reg, int newValue) {
-		if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_OUTPUT) {
+		if (reg == baseReg + CassetteConsts.REG_OFFS_CASSETTE_OUTPUT) {
 			outputState = newValue;
 			fireRegisterChanged(reg, this.outputState);
 		}
-		else if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_1) {
+		else if (reg == baseReg + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_1) {
 			motor1 = newValue;
 			fireRegisterChanged(reg, this.motor1);
 		}
-		else if (reg == baseReg + TMS9919Consts.REG_OFFS_CASSETTE_MOTOR_2) {
+		else if (reg == baseReg + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_2) {
 			motor2 = newValue;
 			fireRegisterChanged(reg, this.motor2);
 		}
