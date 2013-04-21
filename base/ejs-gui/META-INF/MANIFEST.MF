@@ -3,10 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: ejs-gui
 Bundle-SymbolicName: ejs-gui
 Bundle-Version: 1.0.0.qualifier
-Bundle-ClassPath: ejs-gui.jar,
- libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar,
- libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar,
- libs/swt/org.eclipse.core.runtime_3.6.0.v20100505.jar
+Bundle-ClassPath: ejs-gui.jar
 Export-Package: org.ejs.gui.common,
  org.ejs.gui.images,
  org.ejs.gui.properties

@@ -56,9 +56,7 @@ Export-Package: com.google.gson,
  org.objectweb.asm,
  org.objectweb.asm.signature,
  org.objectweb.asm.util
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7,
- JavaSE-1.6,
- J2SE-1.5
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.junit4;bundle-version="4.8.1",
  org.junit,
