@@ -212,7 +212,14 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 						on = nextOn;
 						sign = -sign;
 						dcOffset *= 0.9;	// avoid too much cumulative distortion
+						origState = on;
 					} else {
+						on = state;
+						if (deltaIdx > 0)
+							origState = !on;	// actually changed
+						else
+							origState = state;	// nope, still handling this one
+
 						break;
 					}
 					origFrom = from;
@@ -223,7 +230,7 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 		}
 		
 		deltaIdx = 0;
-		origState = state;
+//		origState = state;
 		leftover = totalCycles - baseCycles;
 		if (leftover < 0)
 			leftover = 0;

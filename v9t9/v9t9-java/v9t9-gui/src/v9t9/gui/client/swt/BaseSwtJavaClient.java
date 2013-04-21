@@ -68,6 +68,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 	protected IEventNotifier eventNotifier;
 	protected final ISettingsHandler settingsHandler;
 	protected ISoundGenerator soundGenerator;
+	protected ISoundGenerator cassettGenerator;
 	protected ISpeechGenerator speechGenerator;
 	protected ISoundHandler soundHandler;
 	protected FastTimer videoTimer;
@@ -76,6 +77,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 	private SwtWindow window;
 
 	protected IKeyboardHandler keyboardHandler;
+	private ISoundGenerator cassetteGenerator;
 	
 	/**
 	 * @param machine 
@@ -95,8 +97,10 @@ public abstract class BaseSwtJavaClient implements IClient {
 
     	soundGenerator = SoundGeneratorFactory.createSoundGenerator(machine);
     	speechGenerator = SpeechGeneratorFactory.createSpeechGenerator(machine);
+    	cassetteGenerator = SoundGeneratorFactory.createCassetteGenerator(machine);
         
-        soundHandler = new JavaSoundHandler(machine, soundGenerator, speechGenerator);
+        soundHandler = new JavaSoundHandler(machine, soundGenerator, speechGenerator,
+        		cassetteGenerator);
         
         window = new SwtWindow(display, machine, 
         		(ISwtVideoRenderer) videoRenderer, settingsHandler,

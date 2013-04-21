@@ -20,12 +20,10 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
-import v9t9.common.settings.SettingSchema;
 import v9t9.common.sound.ICassetteVoice;
 import v9t9.common.sound.TMS9919Consts;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
@@ -43,22 +41,6 @@ import ejs.base.utils.ListenerList;
  */
 public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 
-	public static SettingSchema settingCassetteReading = new SettingSchema(
-			ISettingsHandler.TRANSIENT,
-			"CassetteReading", false);
-	
-	public static SettingSchema settingCassetteInput = new SettingSchema(
-			ISettingsHandler.MACHINE,
-			"CassetteInput", "");
-	
-	public static SettingSchema settingDumpCassetteAccess = new SettingSchema(
-			ISettingsHandler.MACHINE,
-			"CassetteAccess", true);
-	
-	public static SettingSchema settingCassetteDebug = new SettingSchema(
-			ISettingsHandler.MACHINE,
-			"CassetteDebug", false);
-	
 	private int outputState;
 	private int motor1;
 	private int motor2;

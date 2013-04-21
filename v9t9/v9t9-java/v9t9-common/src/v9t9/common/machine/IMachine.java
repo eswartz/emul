@@ -21,6 +21,7 @@ import v9t9.common.demos.IDemoManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IPathFileLocator;
+import v9t9.common.hardware.ICassetteChip;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
@@ -46,6 +47,7 @@ public interface IMachine extends IBaseMachine {
 
 	ISoundChip getSound();
 	ISpeechChip getSpeech();
+	ICassetteChip getCassette();
 
 	/**
 	 * @return the moduleManager

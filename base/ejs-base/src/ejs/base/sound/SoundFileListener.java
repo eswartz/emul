@@ -44,9 +44,18 @@ public class SoundFileListener implements ISoundEmitter {
 
 	private byte[] silence;
 
+	private boolean includeSilence;
+
 	public SoundFileListener() {
 		silence = new byte[8192];
 		Arrays.fill(silence, (byte) 0);
+	}
+	
+	/**
+	 * @param includeSilence the includeSilence to set
+	 */
+	public void setIncludeSilence(boolean includeSilence) {
+		this.includeSilence = includeSilence;
 	}
 
 	public void setPauseProperty(IProperty pauseProperty) {
@@ -112,7 +121,7 @@ public class SoundFileListener implements ISoundEmitter {
 				if (chunk.soundData != null) {
 					soundFos.write(chunk.soundData, 0,
 							chunk.soundData.length);
-				} else {
+				} else if (includeSilence) {
 					for (int len = schunk.getSampleCount(); len > 0; ) {
 						int toWrite = Math.min(len, silence.length);
 						soundFos.write(silence, 0, toWrite);

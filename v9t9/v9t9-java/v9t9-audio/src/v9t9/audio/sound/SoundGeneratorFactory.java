@@ -45,5 +45,8 @@ public class SoundGeneratorFactory {
         }
 		throw new UnsupportedOperationException();
 	}
+	public static ISoundGenerator createCassetteGenerator(IMachine machine) {
+		return new CassetteSoundGenerator(machine);
+	}
 
 }

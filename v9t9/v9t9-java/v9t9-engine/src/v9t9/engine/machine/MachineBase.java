@@ -39,6 +39,7 @@ import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
+import v9t9.common.hardware.ICassetteChip;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
@@ -129,6 +130,8 @@ abstract public class MachineBase implements IMachine {
 	
 	private IEmulatedFileHandler emulatedFileHandler;
 
+	private ICassetteChip cassette;
+
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
 		pauseMachine = settings.get(settingPauseMachine);
@@ -203,6 +206,7 @@ abstract public class MachineBase implements IMachine {
     	vdp = machineModel.createVdp(this);
     	sound = machineModel.createSoundChip(this);
     	speech = machineModel.createSpeechChip(this);
+    	cassette = machineModel.createCassetteChip(this);
     	memoryModel.initMemory(this);
     	
     	moduleManager = machineModel.createModuleManager(this);
@@ -539,6 +543,14 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public ISpeechChip getSpeech() {
 		return speech;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getCassette()
+	 */
+	@Override
+	public ICassetteChip getCassette() {
+		return cassette;
 	}
 
 	/* (non-Javadoc)

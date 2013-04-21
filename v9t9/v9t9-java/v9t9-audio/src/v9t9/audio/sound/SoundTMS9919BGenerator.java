@@ -56,9 +56,9 @@ public class SoundTMS9919BGenerator extends SoundTMS9919Generator {
 		soundVoicesList.add(av);
 		regBase += setupAudioGateVoice(regBase, av);
 		
-		CassetteSoundVoice cv = new CassetteSoundVoice(name);
-		soundVoicesList.add(cv);
-		regBase += setupCassetteVoice(regBase, cv);
+//		CassetteSoundVoice cv = new CassetteSoundVoice(name);
+//		soundVoicesList.add(cv);
+//		regBase += setupCassetteVoice(regBase, cv);
 		
 		return regBase;
 	}

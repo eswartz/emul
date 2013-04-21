@@ -18,6 +18,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
+import v9t9.common.hardware.ICassetteChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
@@ -109,6 +110,14 @@ public class BasicSpeechMachineModel implements IMachineModel {
 	public ISpeechChip createSpeechChip(IMachine machine) {
 		return new SpeechTMS5220(machine, machine.getSettings(), machine.getMemory().getDomain(
 				IMemoryDomain.NAME_SPEECH));
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#createCassetteChip(v9t9.common.machine.IMachine)
+	 */
+	@Override
+	public ICassetteChip createCassetteChip(IMachine machine) {
+		return null;
 	}
 
 	/* (non-Javadoc)

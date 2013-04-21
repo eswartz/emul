@@ -11,6 +11,7 @@
 package ejs.base.sound;
 
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioFormat.Encoding;
 
 import org.apache.log4j.Logger;
 
@@ -47,6 +48,8 @@ public class AudioChunk {
 					short samp = (short) (s * scale * 32767);
 					if (samp != 0)
 						isEmpty = false;
+					if (format.getEncoding() == Encoding.PCM_UNSIGNED)
+						samp ^= 0x8000;
 					//samp &= 0xf000;
 					soundData[i*2] = (byte) (samp & 0xff);
 					soundData[i*2+1] = (byte) (samp >> 8);
@@ -58,6 +61,8 @@ public class AudioChunk {
 					byte samp = (byte) (s * scale * 127);
 					if (samp != 0)
 						isEmpty = false;
+					if (format.getEncoding() == Encoding.PCM_UNSIGNED)
+						samp ^= 0x80;
 					soundData[i] = samp;
 				}
 			} else {

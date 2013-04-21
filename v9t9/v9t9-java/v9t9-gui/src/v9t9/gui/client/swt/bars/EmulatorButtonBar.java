@@ -39,14 +39,15 @@ import v9t9.common.client.ISoundHandler;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
+import v9t9.common.sound.ICassetteVoice;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
 import v9t9.gui.client.swt.shells.ImageImportOptionsDialog;
 import v9t9.gui.common.BaseEmulatorWindow;
-import v9t9.gui.sound.SoundRecordingHelper;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.utils.TextUtils;
 
 /**
  * This is the bar of command buttons on the right-hand side of the main emulator window.
@@ -56,8 +57,7 @@ import ejs.base.properties.IPropertyListener;
  *
  */
 public class EmulatorButtonBar extends BaseEmulatorBar  {
-	private SoundRecordingHelper soundRecordingHelper;
-	private SoundRecordingHelper speechRecordingHelper;
+	private MultiRecordingHandler multiRecordingHandler;
 
 	/**
 	 * @param parent 
@@ -199,20 +199,20 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		createToggleStateButton(BaseEmulatorWindow.settingFullScreen, 
 				IconConsts.FULLSCREEN, IconConsts.CHECKMARK_OVERLAY, "Toggle fullscreen");
 
+		multiRecordingHandler = new MultiRecordingHandler(machine);
 		
-		soundRecordingHelper = new SoundRecordingHelper(machine, 
-				soundHandler.getSoundOutput(), 
-				ISoundHandler.settingRecordSoundOutputFile, "sound");
-		speechRecordingHelper = new SoundRecordingHelper(machine, 
-				soundHandler.getSpeechOutput(), 
-				ISoundHandler.settingRecordSpeechOutputFile, "speech");
+		multiRecordingHandler.register(soundHandler.getSoundOutput(), 
+				ISoundHandler.settingRecordSoundOutputFile, "sound", true);
+		multiRecordingHandler.register(soundHandler.getSpeechOutput(), 
+				ISoundHandler.settingRecordSpeechOutputFile, "speech", true);
+		multiRecordingHandler.register(soundHandler.getCassetteOutput(), 
+				ICassetteVoice.settingCassette1OutputFile, "cassette", false);
 		
 		getButtonBar().addDisposeListener(new DisposeListener() {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
-				soundRecordingHelper.dispose();
-				speechRecordingHelper.dispose();
+				multiRecordingHandler.dispose();
 			}
 		});
 		
@@ -229,8 +229,6 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 			}
 		});
 		
-		final IProperty soundRecording = machine.getSettings().get(ISoundHandler.settingRecordSoundOutputFile);
-		final IProperty speechRecording = machine.getSettings().get(ISoundHandler.settingRecordSpeechOutputFile);
 		final IProperty pauseRecordingProperty = machine.getSettings().get(ISoundHandler.settingPauseSoundRecording);
 		
 		final Rectangle recordingOverlayBounds = imageProvider.imageIndexToBounds(IconConsts.RECORD_OVERLAY);
@@ -243,7 +241,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 					public void run() {
 						if (soundButton.isDisposed())
 							return;
-						if (soundRecording.getString() != null || speechRecording.getString() != null) {
+						if (multiRecordingHandler.isRecording()) {
 							soundButton.addImageOverlay(recordingOverlayBounds);
 							if (pauseRecordingProperty.getBoolean())
 								soundButton.addImageOverlay(pauseOverlayBounds);
@@ -258,23 +256,21 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 				});
 			}
 		};
-		soundRecording.addListenerAndFire(recordingListener);
-		speechRecording.addListenerAndFire(recordingListener);
+		
+		multiRecordingHandler.addListenerAndFire(recordingListener);
 		pauseRecordingProperty.addListener(recordingListener);
 		
 		soundButton.addAreaHandler(new BaseImageButtonAreaHandler() {
 			
 			@Override
 			public boolean isActive() {
-				return soundRecording.getString() != null || speechRecording.getString() != null;
+				return multiRecordingHandler.isRecording();
 			}
 			
 			@Override
 			public String getTooltip() {
 				return (pauseRecordingProperty.getBoolean() ? "Resume recording to " : "Pause recording to ")
-						+ (soundRecording.getString() != null ? soundRecording.getString() +"\n" : "")
-						+ (speechRecording.getString() != null ? speechRecording.getString() : "")
-						;
+						+ TextUtils.catenateStrings(multiRecordingHandler.getRecordings(), ", ");
 			}
 			
 			@Override
@@ -347,8 +343,8 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 			final ISoundHandler soundHandler, MenuDetectEvent e) {
 		Control button = (Control) e.widget;
 		Menu menu = new Menu(button);
-		soundRecordingHelper.populateSoundMenu(menu);
-		speechRecordingHelper.populateSoundMenu(menu);
+		
+		multiRecordingHandler.populateSoundMenu(menu);
 		
 		MenuItem vitem = new MenuItem(menu, SWT.CASCADE);
 		vitem.setText("Volume");

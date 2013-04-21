@@ -18,6 +18,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
+import v9t9.common.hardware.ICassetteChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
@@ -92,6 +93,13 @@ public class F99bMachineModel implements IMachineModel {
 		return new MultiSoundTMS9919B(machine);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#createCassetteChip(v9t9.common.machine.IMachine)
+	 */
+	@Override
+	public ICassetteChip createCassetteChip(IMachine machine) {
+		return null;
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.engine.machine.MachineModel#createSpeechChip(v9t9.engine.machine.Machine)
 	 */

@@ -46,15 +46,15 @@ public interface ISoundHandler {
 	
 	/**
 	 * Generate the sound for the given range of time.
-	 * @param pos TODO
-	 * @param total TODO
+	 * @param pos cycles
+	 * @param total total cycles
 	 */
 	void generateSound(int pos, int total);
 	
 	/**
 	 * Fill out and flush the sound accumulated for this tick
-	 * @param pos TODO
-	 * @param total TODO
+	 * @param pos cycles
+	 * @param total total cycles
 	 */
 	void flushAudio(int pos, int total);
 	
@@ -66,6 +66,7 @@ public interface ISoundHandler {
 	
 	ISoundOutput getSoundOutput();
 	ISoundOutput getSpeechOutput();
+	ISoundOutput getCassetteOutput();
 	
 }
 

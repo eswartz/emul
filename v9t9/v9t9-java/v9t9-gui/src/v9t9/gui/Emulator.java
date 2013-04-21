@@ -55,14 +55,6 @@ public class Emulator {
 		ClientFactory.INSTANCE.setDefault(SwtLwjglJavaClient.ID);
 	}
 	
- 	private static boolean findArgument(String[] args, String string) {
-    	for (String arg : args)
-    		if (arg.equals(string))
-    			return true;
-		return false;
-	}
- 	
-
 	static {
 		if (System.getProperty("jna.library.path") == null) {
 			if (sIsWebStarted) {

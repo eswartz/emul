@@ -12,14 +12,10 @@ package v9t9.machine.ti99.machine;
 
 import static v9t9.common.keyboard.KeyboardConstants.MASK_CAPS_LOCK;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-
-import ejs.base.properties.IProperty;
-import ejs.base.settings.Logging;
 
 import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.sound.ICassetteVoice;
@@ -27,7 +23,6 @@ import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruReader;
 import v9t9.engine.hardware.ICruWriter;
-import v9t9.engine.sound.CassetteVoice;
 
 /**
  * CRU handlers for the TMS9901 (as attached to a TI-99/4A).
@@ -141,7 +136,7 @@ public class InternalCru9901 extends BaseCruChip {
 
 	private ICruWriter cruwCassette1 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			getMachine().getSound().getCassetteVoice().setMotor1(data != 0);
+			getMachine().getCassette().getCassetteVoice().setMotor1(data != 0);
 			//System.out.println(System.currentTimeMillis() + ": [CS1] " + (data != 0 ? "on" : "off"));
 			return 0;
 		}
@@ -150,7 +145,7 @@ public class InternalCru9901 extends BaseCruChip {
 	
 	private ICruWriter cruwCassette2 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			getMachine().getSound().getCassetteVoice().setMotor2(data != 0);
+			getMachine().getCassette().getCassetteVoice().setMotor2(data != 0);
 			//System.out.println(System.currentTimeMillis() + ": [CS2] " + (data != 0 ? "on" : "off"));
 			return 0;
 		}
@@ -159,7 +154,7 @@ public class InternalCru9901 extends BaseCruChip {
 	
 	private ICruWriter cruwCassetteOut = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			getMachine().getSound().getCassetteVoice().setState(data != 0);
+			getMachine().getCassette().getCassetteVoice().setState(data != 0);
 			return 0;
 		}
 		
@@ -257,8 +252,7 @@ public class InternalCru9901 extends BaseCruChip {
 
 	private ICruReader crurCassetteIn = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			getMachine().getSettings().get(CassetteVoice.settingCassetteReading).setBoolean(true);
-			ICassetteVoice voice = getMachine().getSound().getCassetteVoice();
+			ICassetteVoice voice = getMachine().getCassette().getCassetteVoice();
 			int bit = voice.getState() ? 1 : 0;
 			return bit;
 		}

@@ -146,7 +146,7 @@ public class CassetteReader {
 				int bufIdx = ch * sampSize;
 				int samp = 0;
 				if (sampSize == 1) {
-					samp = signed ? buf[bufIdx] : (buf[bufIdx] - 0x80) & 0xff;
+					samp = signed ? buf[bufIdx] : (byte) ((buf[bufIdx]) & 0xff);
 					total += samp / 128f;
 				}
 				else if (sampSize == 2) {

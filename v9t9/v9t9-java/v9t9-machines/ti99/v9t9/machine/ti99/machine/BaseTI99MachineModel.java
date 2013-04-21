@@ -18,11 +18,13 @@ import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.dsr.IDsrManager;
+import v9t9.common.hardware.ICassetteChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.Settings;
+import v9t9.engine.sound.CassetteChip;
 import v9t9.engine.speech.SpeechTMS5220;
 import v9t9.machine.ti99.cpu.Cpu9900;
 
@@ -82,6 +84,14 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 		return speech;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachineModel#createCassetteChip(v9t9.common.machine.IMachine)
+	 */
+	@Override
+	public ICassetteChip createCassetteChip(IMachine machine) {
+		return new CassetteChip(machine, "Cassette", "Cassette", 0);
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IMachineModel#isModelCompatible(java.lang.String)
 	 */

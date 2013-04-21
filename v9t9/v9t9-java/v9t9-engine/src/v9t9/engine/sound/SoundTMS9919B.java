@@ -60,10 +60,10 @@ public class SoundTMS9919B extends SoundTMS9919 {
 //		mapRegisters(regBase, count, audioGateVoice);
 //		regBase += count;
 //		
-		cassetteVoice = new CassetteVoice(id + "C", name + " Cassette", listeners, machine);
-		count = ((BaseVoice) cassetteVoice).initRegisters(regNames, regDescs, regIds, regBase);
-		mapRegisters(regBase, count, cassetteVoice);
-		regBase += count;
+//		cassetteVoice = new CassetteVoice(id + "C", name + " Cassette", listeners, machine);
+//		count = ((BaseVoice) cassetteVoice).initRegisters(regNames, regDescs, regIds, regBase);
+//		mapRegisters(regBase, count, cassetteVoice);
+//		regBase += count;
 		
 		return regBase - origRegBase;
 	}

@@ -56,12 +56,14 @@ public class SoundRecordingHelper {
 	 * @param shell
 	 */
 	public SoundRecordingHelper(IMachine machine, ISoundOutput output, SettingSchema fileSchema,
-			String label) {
+			String label, boolean includeSilence) {
 		this.output = output;
 		this.soundFileSetting = machine.getSettings().get(fileSchema);
 		this.label = label;
 		this.machine = machine;
 		soundListener = new SoundFileListener();
+		soundListener.setIncludeSilence(includeSilence);
+		
 		soundListener.setPauseProperty(machine.getSettings().get(ISoundHandler.settingPauseSoundRecording));
 		
 		listener = new IPropertyListener() {

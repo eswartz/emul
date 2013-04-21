@@ -32,7 +32,7 @@ public interface ISoundChip extends IPersistable, IRegisterAccess {
 
 	void setAudioGate(int addr, boolean b);
 //	void setCassette(int addr, boolean b);
-	ICassetteVoice getCassetteVoice();
+	//ICassetteVoice getCassetteVoice();
 
 	/**
 	 * 

@@ -74,13 +74,13 @@ public class MultiSoundTMS9919B extends BaseMultiSound {
 //		chips[0].setCassette(addr, b);
 //	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.ISoundChip#getCassetteVoice()
-	 */
-	@Override
-	public ICassetteVoice getCassetteVoice() {
-		return chips[0].getCassetteVoice();
-	}
+//	/* (non-Javadoc)
+//	 * @see v9t9.common.hardware.ISoundChip#getCassetteVoice()
+//	 */
+//	@Override
+//	public ICassetteVoice getCassetteVoice() {
+//		return chips[0].getCassetteVoice();
+//	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IRegisterAccess#getGroupName()

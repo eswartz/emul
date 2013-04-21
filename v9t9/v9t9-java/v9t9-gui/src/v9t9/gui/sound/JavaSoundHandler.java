@@ -25,6 +25,7 @@ import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
+import v9t9.common.sound.ICassetteVoice;
 import v9t9.common.sound.ISoundGenerator;
 import v9t9.common.speech.ISpeechGenerator;
 import v9t9.common.speech.ISpeechSoundVoice;
@@ -37,13 +38,16 @@ import v9t9.common.speech.ISpeechSoundVoice;
 public class JavaSoundHandler implements ISoundHandler {
 
 	private AudioFormat soundFormat;
-	private ISoundOutput output;
-	private int lastUpdatedPos;
+	private ISoundOutput soundOutput;
+	private int lastSoundUpdatedPos;
 	private int soundFramesPerTick;
 	private AudioFormat speechFormat;
 	private ISoundOutput speechOutput;
-	private ISoundEmitter audio;
+	private ISoundEmitter soundAudio;
 	private ISoundEmitter speechAudio;
+	private AudioFormat cassetteFormat;
+	private ISoundOutput cassetteOutput;
+	private ISoundEmitter cassetteAudio;
 	private final IMachine machine;
 	private IProperty soundVolume;
 	private IProperty playSound;
@@ -53,51 +57,68 @@ public class JavaSoundHandler implements ISoundHandler {
 	/*private*/ int lastSpeechUpdatedPos;
 	private IProperty recordingSound;
 	private IProperty recordingSpeech;
+	private ISoundGenerator cassetteGenerator;
+	private IProperty recordingCassette1;
+	private IProperty recordingCassette2;
+	private int cassetteFramesPerTick;
+	private int lastCassetteUpdatedPos;
 	
-	public JavaSoundHandler(final IMachine machine, final ISoundGenerator soundGenerator,
-			final ISpeechGenerator speechGenerator) {
+	public JavaSoundHandler(final IMachine machine,
+			final ISoundGenerator soundGenerator,
+			final ISpeechGenerator speechGenerator,
+			final ISoundGenerator cassetteGenerator
+			) {
 
 		this.machine = machine;
 		this.soundGenerator = soundGenerator;
 		this.speechGenerator = speechGenerator;
+		this.cassetteGenerator = cassetteGenerator;
 		
 		soundVolume = Settings.get(machine, ISoundHandler.settingSoundVolume);
 		playSound = Settings.get(machine, ISoundHandler.settingPlaySound);
 		
 		recordingSound = Settings.get(machine, ISoundHandler.settingRecordSoundOutputFile);
 		recordingSpeech = Settings.get(machine, ISoundHandler.settingRecordSpeechOutputFile);
+		recordingCassette1 = Settings.get(machine, ICassetteVoice.settingCassette1OutputFile);
+		recordingCassette2 = Settings.get(machine, ICassetteVoice.settingCassette2OutputFile);
 		
 		soundFormat = new AudioFormat(55930, 16, 2, true, false);
-		
 		speechFormat = new AudioFormat(8000 * 6, 16, 1, true, false);
+		cassetteFormat = new AudioFormat(22000, 8, 1, false, false);	// 22050 freaks out Pulse :(
 		
-		output = SoundFactory.createSoundOutput(soundFormat, machine.getTicksPerSec());
+		soundOutput = SoundFactory.createSoundOutput(soundFormat, machine.getTicksPerSec());
 		speechOutput = SoundFactory.createSoundOutput(speechFormat, machine.getTicksPerSec());
+		cassetteOutput = SoundFactory.createSoundOutput(cassetteFormat, machine.getTicksPerSec());
 
-		audio = SoundFactory.createAudioListener();
-		if (audio instanceof AlsaSoundListener)
-			((AlsaSoundListener) audio).setBlockMode(false);
+		soundAudio = SoundFactory.createAudioListener();
+		if (soundAudio instanceof AlsaSoundListener)
+			((AlsaSoundListener) soundAudio).setBlockMode(false);
 		
 		speechAudio = SoundFactory.createAudioListener();
 		
-		output.addEmitter(audio);
+		cassetteAudio = SoundFactory.createAudioListener();
+		
+		soundOutput.addEmitter(soundAudio);
 		speechOutput.addEmitter(speechAudio);
+		cassetteOutput.addEmitter(cassetteAudio);
 
-		output.addMutator(new TI99SoundSmoother());
+		soundOutput.addMutator(new TI99SoundSmoother());
 		
 		soundVolume.addListenerAndFire(new IPropertyListener() {
 			
 			@Override
 			public void propertyChanged(IProperty setting) {
-				output.setVolume(setting.getInt() / 10.0);
+				soundOutput.setVolume(setting.getInt() / 10.0);
 				speechOutput.setVolume(setting.getInt() / 10.0);
+				cassetteOutput.setVolume(setting.getInt() / 10.0);
 			}
 		});
 
 		// frames in ALSA means samples per channel, but raw freq in javax
 		//soundFramesPerTick = (int) ((soundFormat.getFrameRate()
 		//		+ machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
-		soundFramesPerTick = output.getSamples((1000 + machine.getTicksPerSec() - 1) / machine.getTicksPerSec());
+		soundFramesPerTick = soundOutput.getSamples((1000 + machine.getTicksPerSec() - 1) / machine.getTicksPerSec());
+		cassetteFramesPerTick = cassetteOutput.getSamples((1000 + machine.getTicksPerSec() - 1) / machine.getTicksPerSec());
 		
 		toggleSound(true);
 		playSound.addListenerAndFire(new IPropertyListener() {
@@ -108,11 +129,13 @@ public class JavaSoundHandler implements ISoundHandler {
 				} else {
 					// while recording, just mute
 					if (setting.getBoolean()) {
-						output.setVolume(soundVolume.getInt() / 10.0);
+						soundOutput.setVolume(soundVolume.getInt() / 10.0);
 						speechOutput.setVolume(soundVolume.getInt() / 10.0);
+						cassetteOutput.setVolume(soundVolume.getInt() / 10.0);
 					} else {
-						output.setVolume(0);
+						soundOutput.setVolume(0);
 						speechOutput.setVolume(0);
+						cassetteOutput.setVolume(0);
 					}
 				}
 			}
@@ -129,8 +152,11 @@ public class JavaSoundHandler implements ISoundHandler {
 				voice.setFormat(speechFormat);
 			}
 		}
-		
-
+		if (cassetteGenerator != null) {
+			for (ISoundVoice voice : cassetteGenerator.getSoundVoices()) {
+				voice.setFormat(cassetteFormat);
+			}
+		}
 	}
 	
 
@@ -138,16 +164,17 @@ public class JavaSoundHandler implements ISoundHandler {
 	 * @return
 	 */
 	protected boolean isRecording() {
-		return recordingSound.getString() != null || recordingSpeech.getString() != null;
+		return recordingSound.getString() != null || recordingSpeech.getString() != null
+				|| recordingCassette1.getString() != null || recordingCassette2.getString() != null;
 	}
 
 
 	public synchronized void dispose() {
 		toggleSound(false);
 
-		if (output != null) {
-			output.dispose();
-			output = null;
+		if (soundOutput != null) {
+			soundOutput.dispose();
+			soundOutput = null;
 		}
 		
 		if (speechOutput != null) {
@@ -159,20 +186,21 @@ public class JavaSoundHandler implements ISoundHandler {
 
 	public synchronized void toggleSound(boolean enabled) {
 		if (enabled) {
-			output.start();
+			soundOutput.start();
 			speechOutput.start();
 		} else {
-			if (output != null)
-				output.stop();
+			if (soundOutput != null)
+				soundOutput.stop();
 			if (speechOutput != null)
 				speechOutput.stop();
 		}
 	}
 
 	public synchronized void generateSound(int pos, int total) {
+		if (total == 0)
+			return;
+		
 		if (soundGenerator != null) {
-			if (total == 0)
-				return;
 			
 			int totalCount = pos;
 			
@@ -180,8 +208,18 @@ public class JavaSoundHandler implements ISoundHandler {
 			int currentPos = (int) ((ticksPos + total - 1 ) / total);
 			if (currentPos < 0)
 				currentPos = 0;
-			updateSoundGenerator(lastUpdatedPos, currentPos, totalCount);
-			lastUpdatedPos = currentPos;
+			updateSoundGenerator(lastSoundUpdatedPos, currentPos, totalCount);
+			lastSoundUpdatedPos = currentPos;
+		}
+		if (cassetteGenerator != null) {
+			int totalCount = pos;
+			
+			long ticksPos = (long) (pos * cassetteFramesPerTick * cassetteFormat.getChannels() );
+			int currentPos = (int) ((ticksPos + total - 1 ) / total);
+			if (currentPos < 0)
+				currentPos = 0;
+			updateCassetteGenerator(lastCassetteUpdatedPos, currentPos, totalCount);
+			lastCassetteUpdatedPos = currentPos;
 		}
 	}
 
@@ -191,10 +229,22 @@ public class JavaSoundHandler implements ISoundHandler {
 		if (from >= to)
 			return;
 
-		ISoundVoice[] vs = soundGenerator.getSoundVoices();
+		if (soundOutput != null) {
+			ISoundVoice[] vs = soundGenerator.getSoundVoices();
+			soundOutput.generate(vs, to - from);
+		}
+	}
 
-		if (output != null)
-			output.generate(vs, to - from);
+	protected void updateCassetteGenerator(int from, int to, int totalCount) {
+		if (to > cassetteFramesPerTick)
+			to = cassetteFramesPerTick;
+		if (from >= to)
+			return;
+
+		if (cassetteOutput != null) {
+			ISoundVoice[] vs = cassetteGenerator.getSoundVoices();
+			cassetteOutput.generate(vs, to - from);
+		}
 	}
 
 	public void speech() {
@@ -218,14 +268,21 @@ public class JavaSoundHandler implements ISoundHandler {
 	}
 
 	public synchronized void flushAudio(int pos, int total) {
-		if (output != null && machine.getSound() != null && total > 0) {
-			int totalCount = (int) (((long) pos * (soundFramesPerTick - lastUpdatedPos + total - 1)) / total);
-			updateSoundGenerator(lastUpdatedPos, soundFramesPerTick, totalCount);
-			
-			lastUpdatedPos = 0;
+		if (soundOutput != null && machine.getSound() != null && total > 0) {
+			int totalSoundCount = (int) (((long) pos * (soundFramesPerTick - lastSoundUpdatedPos + total - 1)) / total);
+			updateSoundGenerator(lastSoundUpdatedPos, soundFramesPerTick, totalSoundCount);
+			lastSoundUpdatedPos = 0;
 	
 			ISoundVoice[] vs = soundGenerator.getSoundVoices();
-			output.flushAudio(vs, total);
+			soundOutput.flushAudio(vs, total);
+		}
+		if (cassetteOutput != null && machine.getSound() != null && total > 0) {
+			int totalCassetteCount = (int) (((long) pos * (cassetteFramesPerTick - lastCassetteUpdatedPos + total - 1)) / total);
+			updateCassetteGenerator(lastCassetteUpdatedPos, cassetteFramesPerTick, totalCassetteCount);
+			lastCassetteUpdatedPos = 0;
+			
+			ISoundVoice[] vs = cassetteGenerator.getSoundVoices();
+			cassetteOutput.flushAudio(vs, total);
 		}
 		
 		if (speechOutput != null && machine.getSpeech() != null) {
@@ -241,7 +298,7 @@ public class JavaSoundHandler implements ISoundHandler {
 	 */
 	@Override
 	public ISoundOutput getSoundOutput() {
-		return output;
+		return soundOutput;
 	}
 	
 	/* (non-Javadoc)
@@ -250,5 +307,12 @@ public class JavaSoundHandler implements ISoundHandler {
 	@Override
 	public ISoundOutput getSpeechOutput() {
 		return speechOutput;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.ISoundHandler#getCassetteOutput()
+	 */
+	@Override
+	public ISoundOutput getCassetteOutput() {
+		return cassetteOutput;
 	}
 }
