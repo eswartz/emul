@@ -123,7 +123,7 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 			
 			int idx = 0;
 			int consumed = deltaIdx > 0 ? absp1(deltas[idx]) : 0;
-			int next = from + (int) ((long) consumed * totalSamps / total);
+			int next = from + (int) ((long) (consumed * totalSamps + total / 2 ) / total);
 			idx++;
 			//sb.append(next - from).append(',');
 			
@@ -139,20 +139,23 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 					if (idx < deltaIdx) {
 						on = (deltas[idx] > 0);
 						consumed += absp1(deltas[idx++]);
-						next = (int) ((long) consumed * totalSamps / total);
+						next = (int) ((long) (consumed * totalSamps + total / 2 ) / total);
+						origState = on;
 					} else {
 						on = state;
 						next = to;
+						if (deltaIdx > 0)
+							origState = !on;	// actually changed
+						else
+							origState = state;	// nope, still handling this one
 					}
 					//sb.append(next - from).append(',');
 				}
+				
 			}
-			//System.out.println(sb.toString());
-			//sb.setLength(0);
 		}
 		
 		deltaIdx = 0;
-		origState = state;
 		
 		return generated;
 	}
