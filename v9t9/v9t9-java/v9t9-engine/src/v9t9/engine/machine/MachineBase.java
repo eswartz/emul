@@ -393,7 +393,7 @@ abstract public class MachineBase implements IMachine {
 	public void setClient(IClient client) {
         this.client = client;
         if (client != null) {
-        	if (recordingNotifier != null) {
+        	if (recordingNotifier != null && client.getEventNotifier() != null) {
         		NotifyEvent event;
         		while ((event = recordingNotifier.getNextEvent()) != null) {
         			client.getEventNotifier().notifyEvent(event);
