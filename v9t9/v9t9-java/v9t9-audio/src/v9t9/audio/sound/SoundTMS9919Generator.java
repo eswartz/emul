@@ -92,10 +92,6 @@ public class SoundTMS9919Generator extends BaseSoundChipSoundGenerator {
 		soundVoicesList.add(av);
 		regBase += setupAudioGateVoice(regBase, av);
 		
-//		CassetteSoundVoice cv = new CassetteSoundVoice(name);
-//		soundVoicesList.add(cv);
-//		regBase += setupCassetteVoice(regBase, cv);
-		
 		return regBase;
 	}
 

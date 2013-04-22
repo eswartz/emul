@@ -111,11 +111,6 @@ public class SoundTMS9919 implements ISoundChip {
 		mapRegisters(regBase, count, audioGateVoice);
 		regBase += count;
 		
-//		cassetteVoice = new CassetteVoice(id + "C", "Cassette", listeners, machine);
-//		count = ((BaseVoice) cassetteVoice).initRegisters(regNames, regDescs, regIds, regBase);
-//		mapRegisters(regBase, count, cassetteVoice);
-//		regBase += count;
-		
 		return regBase;
 	}
 
@@ -210,7 +205,6 @@ public class SoundTMS9919 implements ISoundChip {
 		}
 		if (audioGateVoice != null)
 			audioGateVoice.saveState(settings.addSection(audioGateVoice.getName()));
-//		cassetteVoice.saveState(settings.addSection(cassetteVoice.getName()));
 
 	}
 	public void loadState(ISettingSection settings) {
@@ -223,20 +217,12 @@ public class SoundTMS9919 implements ISoundChip {
 		}
 		if (audioGateVoice != null)
 			audioGateVoice.loadState(settings.getSection(audioGateVoice.getName()));
-//		cassetteVoice.loadState(settings.getSection(cassetteVoice.getName()));
 	}
 	
 	public void setAudioGate(int addr, boolean b) {
 		audioGateVoice.setGate(b);
 	}
 
-//	/* (non-Javadoc)
-//	 * @see v9t9.common.hardware.ISoundChip#getCassetteVoice()
-//	 */
-//	@Override
-//	public ICassetteVoice getCassetteVoice() {
-//		return cassetteVoice;
-//	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IRegisterAccess#getGroupName()
 	 */
@@ -275,10 +261,9 @@ public class SoundTMS9919 implements ISoundChip {
 	 */
 	@Override
 	public RegisterInfo getRegisterInfo(int reg) {
-		IVoice voice = regIdToVoice.get(reg);
 		RegisterInfo info = new RegisterInfo(regNames.get(reg), 
 				IRegisterAccess.FLAG_ROLE_GENERAL,
-				voice instanceof CassetteVoice ? 4 : 1,
+				1,
 				regDescs.get(reg));
 		return info;
 	}
@@ -339,9 +324,6 @@ public class SoundTMS9919 implements ISoundChip {
 		for (IVoice v : voices) {
 			v.setRegister(v.getBaseRegister() + REG_OFFS_ATTENUATION, 0xf);
 		}		
-//		audioGateVoice.setGate(false);
-//		cassetteVoice.setState(false);
-//		cassetteVoice.setMotor1(false);
-//		cassetteVoice.setMotor2(false);
+		audioGateVoice.setGate(false);
 	}
 }
