@@ -13,6 +13,7 @@ package v9t9.gui.client.swt.shells;
 import java.io.File;
 import java.util.Collection;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
@@ -46,6 +47,7 @@ import v9t9.gui.client.swt.imageimport.ImageLabel;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
 import v9t9.video.imageimport.ImageFrame;
+import v9t9.video.imageimport.ImageImport;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.properties.IPropertySource;
@@ -314,6 +316,11 @@ public class ImageImportOptionsDialog extends Composite {
 	protected static void showFileOpenDialog(final SwtWindow window,
 			final IImageImportHandler imageSupport,
 			final Collection<String> fileHistory) {
+		if (!ImageImport.isModeSupported(window.getVideoRenderer().getCanvas().getFormat())) {
+			MessageDialog.openError(null, "Cannot Import", "The current video mode does not support images");
+			return;
+		}
+				
 		String lastFile = fileHistory.isEmpty() ? null : (String) fileHistory.toArray()[fileHistory.size()-1];
 		String lastDir = lastFile != null ? new File(lastFile).getParent() : null; 
 				
@@ -329,6 +336,9 @@ public class ImageImportOptionsDialog extends Composite {
 				fileHistory.add(file);
 			} catch (NotifyException e) {
 				window.getEventNotifier().notifyEvent(e.getEvent());
+			} catch (Throwable e) {
+				e.printStackTrace();
+				MessageDialog.openError(null, "Problem Occurred", e.getMessage());
 			}
 		}
 	}
