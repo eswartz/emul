@@ -41,6 +41,8 @@ import org.apache.log4j.Logger;
  */
 public abstract class ClockedSoundVoice extends SoundVoice
 {
+	private static final int SHIFT = 16;
+
 	private static final Logger logger = Logger.getLogger(ClockedSoundVoice.class);
 	
 	/** The clock rate against which all generation is done */
@@ -53,20 +55,20 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	protected int		period;			
 	
 	/** 
-	 * Current accumulator, fractional 16:8.
+	 * Current accumulator, fractional 16:SHIFT.
 	 * 
-	 * Once it reaches period << 8, the voice updates.
+	 * Once it reaches period << SHIFT, the voice updates.
 	 */
-	protected int		accum;			
-	/** amount to add to the accum per clock, fractional 16:8 */
-	protected int		incr;
+	protected long		accum;			
+	/** amount to add to the accum per clock, fractional 16:SHIFT */
+	protected long		incr;
 
 	public ClockedSoundVoice(String name) {
 		super(name);
 	}
 	
 	public void setReferenceClock(int refClock) {
-		this.refClock = (refClock - 7) / 16;
+		this.refClock = refClock / 32;
 		setupVoice();
 	}
 	
@@ -114,8 +116,8 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	
 	public void setupVoice() {
 		if (soundClock > 0 && refClock  > 0 && period > 0) {
-			incr = (int) (65536L * refClock / soundClock);
-			if (incr >= period << 16) {
+			incr = (int) ((1L << SHIFT) * refClock / soundClock);
+			if (incr >= period << SHIFT) {
 				// sound will alias, just silence
 				incr = 0;
 			}
@@ -141,6 +143,14 @@ public abstract class ClockedSoundVoice extends SoundVoice
 				   getVolume(),
 				   getName()));
 		}
+//		System.out.println(
+//				MessageFormat.format(
+//						"voice_cache_values[{0}]: period=>{1}, hertz={2}, volume={3}",
+//						getName(),
+//					   period,
+//					   approxHertz(),
+//					   getVolume(),
+//					   getName()));
 	}
 	
 	/** For testing! */
@@ -154,12 +164,12 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		return period > 0 ? refClock / period : soundClock;
 	}
 
-	protected final boolean updateAccumulator(int amount) {
-		accum -= amount;
+	protected final boolean updateAccumulator(long amount) {
+		accum -= amount * 2;		// we flip twice per wave
 		boolean flag = false;
 		if (period > 0) {
 			while (accum < 0) {
-				accum += period << 16;
+				accum += period << SHIFT;
 				flag = !flag;
 			}
 		}

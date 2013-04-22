@@ -320,5 +320,4 @@ public class AlsaSoundListener implements ISoundEmitter {
 			return;
 		INSTANCE.snd_pcm_drain(handle);
 	}
-
 }

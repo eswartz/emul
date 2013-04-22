@@ -81,11 +81,14 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 		}
 	}
 
-	public void setupVoice()
-	{
-		super.setupVoice();
+	/* (non-Javadoc)
+	 * @see v9t9.audio.sound.ClockedSoundVoice#setPeriod(int)
+	 */
+	@Override
+	public void setPeriod(int period) {
+		// noise operates at half the rate
+		super.setPeriod(period << 1);
 	}
-
 	public boolean generate(float[] soundGeneratorWorkBuffer, int from,
 			int to) {
 		int ratio = 128 + balance;

@@ -18,4 +18,5 @@ public interface ISoundEmitter {
 	void stopped();
 	void waitUntilSilent();
 	void setVolume(double loudness);
+	void setBlockMode(boolean block);
 }

@@ -225,5 +225,12 @@ public class SoundFileListener implements ISoundEmitter {
 		return extensions;
 	}
 
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundEmitter#setBlockMode(boolean)
+	 */
+	@Override
+	public void setBlockMode(boolean block) {
+		// ignored
+	}
 
 }

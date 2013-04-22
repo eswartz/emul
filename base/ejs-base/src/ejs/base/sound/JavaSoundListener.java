@@ -45,6 +45,8 @@ public class JavaSoundListener implements ISoundEmitter {
 	private int ticksPerSec;
 	private double volume;
 
+	private boolean block;
+
 	public JavaSoundListener(int ticksPerSec) {
 		this.ticksPerSec = ticksPerSec;
 		volume = 1.0;
@@ -165,7 +167,7 @@ public class JavaSoundListener implements ISoundEmitter {
 	public void played(ISoundView view) {
 		try {
 			if (soundWritingThread == null) {
-				if (soundQueue.remainingCapacity() == 0)
+				if (!block && soundQueue.remainingCapacity() == 0)
 					soundQueue.remove();
 			}
 			// will block if sound is too fast
@@ -201,4 +203,12 @@ public class JavaSoundListener implements ISoundEmitter {
 		soundGeneratorLine.drain();
 	}
 
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundEmitter#setBlockMode(boolean)
+	 */
+	@Override
+	public void setBlockMode(boolean block) {
+		this.block = block;
+		
+	}
 }

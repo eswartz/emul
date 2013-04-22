@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import v9t9.audio.sound.NoiseGeneratorVoice;
 import v9t9.audio.sound.ToneGeneratorVoice;
+import v9t9.common.sound.TI99SoundSmoother;
 import v9t9.common.sound.TMS9919Consts;
 
 
@@ -244,5 +245,27 @@ public class ManualTestSoundTMS9919 extends BaseSoundTest {
 			generate(toSamples(TimeUnit.MILLISECONDS, 10), voice);
 		}		
 	}
-	
+
+	@Test
+	public void testNoisesAlignedHarmony() {
+		ToneGeneratorVoice voice1 = new ToneGeneratorVoice("simple", 0);
+		ToneGeneratorVoice voice2 = new ToneGeneratorVoice("simple", 1);
+		ToneGeneratorVoice voice3 = new ToneGeneratorVoice("simple", 2);
+		setupVoice(voice1);
+		setupVoice(voice2);
+		setupVoice(voice3);
+		
+		
+		soundOutput.addMutator(new TI99SoundSmoother());
+		for (int i = 0; i < 300; i++) {
+			voice1.setFrequency(110);
+			generate(15, voice1, voice2, voice3);
+			voice2.setFrequency(220);
+			generate(15, voice1, voice2, voice3);
+			voice3.setFrequency(440);
+			generate(2000, voice1, voice2, voice3);
+		}
+		
+	}
+
 }

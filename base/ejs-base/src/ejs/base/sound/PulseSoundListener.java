@@ -49,6 +49,8 @@ public class PulseSoundListener implements ISoundEmitter {
 	private BlockingQueue<AudioChunk> soundQueue;
 	private double volume;
 
+	private boolean block;
+
 	public PulseSoundListener(int ticksPerSec) {
 		//this.ticksPerSec = ticksPerSec;
 		this.volume = 1.0;
@@ -217,14 +219,11 @@ public class PulseSoundListener implements ISoundEmitter {
 	 */
 	public void played(ISoundView view) {
 		try {
-			soundQueue.drainTo(new ArrayList<AudioChunk>(1), SOUND_QUEUE_SIZE - 1);
-//			if (soundQueue.remainingCapacity() == 0)
-//				soundQueue.remove();
+			if (!block) {
+				soundQueue.drainTo(new ArrayList<AudioChunk>(1), SOUND_QUEUE_SIZE - 1);
+			}
 			// will block if sound is too fast
 			AudioChunk o = new AudioChunk(view, volume);
-			//if (o.isEmpty())
-			//	return;
-			//logger.debug("Got chunk " + o + " at " + System.currentTimeMillis());
 			soundQueue.put(o);
 		} catch (NoSuchElementException e) {
 		} catch (InterruptedException e) {
@@ -262,6 +261,14 @@ public class PulseSoundListener implements ISoundEmitter {
 			return;
 		IntByReference error = new IntByReference();
 		PulseAudioLibrary.INSTANCE.pa_simple_drain(simple, error);
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundEmitter#setBlockMode(boolean)
+	 */
+	@Override
+	public void setBlockMode(boolean block) {
+		this.block = block;
 	}
 
 }

@@ -33,13 +33,14 @@ import ejs.base.sound.SoundFactory;
 public class BaseSoundTest {
 
 	private static ISoundEmitter soundListener;
-	private static ISoundOutput soundOutput;
+	protected static ISoundOutput soundOutput;
 	protected static AudioFormat format = new AudioFormat(55930, 16, 2, true, false);
 
 	@BeforeClass
 	public static void setup() {
 		soundListener = SoundFactory.createAudioListener();
 		soundListener.started(format);
+		soundListener.setBlockMode(true);
 		
 		soundOutput = new SoundOutput(format, 100);
 		soundOutput.addEmitter(soundListener);
