@@ -20,6 +20,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.BasicSettingsHandler;
 
 import ejs.base.properties.IProperty;
+import ejs.base.sound.ISoundOutput;
 
 
 /**
@@ -47,7 +48,8 @@ public class CassetteReader {
 		
 		ISettingsHandler settings = new BasicSettingsHandler();
 		IProperty debug = settings.get(CassetteVoice.settingCassetteDebug);
-		CassetteReader reader = new CassetteReader(is, debug);
+		
+		CassetteReader reader = new CassetteReader(is, debug, null);
 		while (!reader.isDone()) {
 			
 			boolean val = reader.readBit(secsPerPoll);
@@ -80,7 +82,8 @@ public class CassetteReader {
 	 * @param debug 
 	 * 
 	 */
-	public CassetteReader(AudioInputStream is, IProperty debug) {
+	public CassetteReader(AudioInputStream is, IProperty debug,
+			ISoundOutput output) {
 		this.is = is;
 		this.debug = debug;
 		

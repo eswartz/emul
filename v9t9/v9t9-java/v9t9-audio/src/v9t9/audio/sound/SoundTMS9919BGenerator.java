@@ -10,13 +10,14 @@
  */
 package v9t9.audio.sound;
 
+import static v9t9.common.sound.TMS9919BConsts.*;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.sound.TMS9919BConsts;
-import static v9t9.common.sound.TMS9919BConsts.*;
 
 /**
  * Controller for the TMS9919(B) sound chip.

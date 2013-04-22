@@ -46,7 +46,9 @@ public class SoundGeneratorFactory {
 		throw new UnsupportedOperationException();
 	}
 	public static ISoundGenerator createCassetteGenerator(IMachine machine) {
-		return new CassetteSoundGenerator(machine);
+		if (machine.getCassette() != null)
+			return new CassetteSoundGenerator(machine);
+		return null;
 	}
 
 }

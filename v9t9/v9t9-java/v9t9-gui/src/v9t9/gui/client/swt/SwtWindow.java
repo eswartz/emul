@@ -353,9 +353,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 
 		});
-
+		
 		buttonBar = new EmulatorButtonBar(this, buttonImageProvider, mainComposite, machine,
-				soundHandler,
 				new int[] { SWT.COLOR_BLACK, SWT.COLOR_GRAY, SWT.COLOR_DARK_GRAY },
 				new float[] { 0.75f, 0.25f },
 				SWT.VERTICAL | SWT.RIGHT);

@@ -10,8 +10,12 @@
  */
 package v9t9.common.client;
 
+import java.util.Map;
+
 import ejs.base.sound.ISoundOutput;
+
 import v9t9.common.settings.SettingSchema;
+import v9t9.common.sound.ISoundGenerator;
 
 
 
@@ -39,6 +43,9 @@ public interface ISoundHandler {
 			ISettingsHandler.TRANSIENT,
 			"PauseSoundRecording", Boolean.FALSE);
 
+	void register(ISoundGenerator generator);
+	Map<ISoundGenerator, ISoundOutput> getGeneratorToOutputMap();
+	
 	/**
 	 * Dispose sound and turn off audio
 	 */
@@ -63,10 +70,5 @@ public interface ISoundHandler {
 	 * Handle one sample (signed 16-bit) of speech data.
 	 */
 	void speech();
-	
-	ISoundOutput getSoundOutput();
-	ISoundOutput getSpeechOutput();
-	ISoundOutput getCassetteOutput();
-	
 }
 

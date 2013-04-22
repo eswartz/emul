@@ -20,10 +20,6 @@ import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import ejs.base.timer.FastTimer;
-
-import v9t9.audio.sound.SoundGeneratorFactory;
-import v9t9.audio.speech.SpeechGeneratorFactory;
 import v9t9.common.client.IClient;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
@@ -35,11 +31,10 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.machine.TerminatedException;
 import v9t9.common.settings.Settings;
-import v9t9.common.sound.ISoundGenerator;
 import v9t9.common.speech.ISpeechDataSender;
-import v9t9.common.speech.ISpeechGenerator;
 import v9t9.gui.client.swt.shells.ROMSetupDialog;
 import v9t9.gui.sound.JavaSoundHandler;
+import ejs.base.timer.FastTimer;
 
 /**
  * @author ejs
@@ -67,9 +62,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 
 	protected IEventNotifier eventNotifier;
 	protected final ISettingsHandler settingsHandler;
-	protected ISoundGenerator soundGenerator;
-	protected ISoundGenerator cassettGenerator;
-	protected ISpeechGenerator speechGenerator;
 	protected ISoundHandler soundHandler;
 	protected FastTimer videoTimer;
 	protected FastTimer keyTimer;
@@ -77,7 +69,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 	private SwtWindow window;
 
 	protected IKeyboardHandler keyboardHandler;
-	private ISoundGenerator cassetteGenerator;
 	
 	/**
 	 * @param machine 
@@ -88,19 +79,15 @@ public abstract class BaseSwtJavaClient implements IClient {
 		this.display = Display.getDefault();
     	this.video = machine.getVdp();
     	this.machine = machine;
+    	machine.setClient(this);
     	
     	this.videoTimer = new FastTimer("Video Timer");
     	this.keyTimer = new FastTimer("Keyboard/Joystick Timer");
     	this.soundTimer = new FastTimer("Sound Timer");
     	
     	setupRenderer();
-
-    	soundGenerator = SoundGeneratorFactory.createSoundGenerator(machine);
-    	speechGenerator = SpeechGeneratorFactory.createSpeechGenerator(machine);
-    	cassetteGenerator = SoundGeneratorFactory.createCassetteGenerator(machine);
-        
-        soundHandler = new JavaSoundHandler(machine, soundGenerator, speechGenerator,
-        		cassetteGenerator);
+    	        
+        soundHandler = new JavaSoundHandler(machine);
         
         window = new SwtWindow(display, machine, 
         		(ISwtVideoRenderer) videoRenderer, settingsHandler,
@@ -172,7 +159,7 @@ public abstract class BaseSwtJavaClient implements IClient {
         final TimerTask speechGenerateTask = new TimerTask() {
 			@Override
 			public void run() {
-				soundHandler.speech();
+				soundTimer.invoke(soundGenerateTask);
 			}
 		};
 		final TimerTask speechDoneTask = new TimerTask() {
@@ -184,7 +171,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 					pos = machine.getCpu().getCurrentCycleCount();
 					total = machine.getCpu().getCurrentTargetCycleCount();
 				}
-				
 				soundHandler.flushAudio(pos, total);
 			}
 		};
@@ -390,6 +376,14 @@ public abstract class BaseSwtJavaClient implements IClient {
 	@Override
 	public IVideoRenderer getVideoRenderer() {
 		return videoRenderer;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IClient#getSoundHandler()
+	 */
+	@Override
+	public ISoundHandler getSoundHandler() {
+		return soundHandler;
 	}
 	
 }

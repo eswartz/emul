@@ -31,6 +31,7 @@ import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
 import ejs.base.settings.Logging;
+import ejs.base.sound.ISoundOutput;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.ListenerList;
 
@@ -59,6 +60,7 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 	protected long lastScroll;
 
 	private float clockSecs = 1.0f / 1500f;
+	private ISoundOutput soundOutput;
 
 	public CassetteVoice(String id, String name,
 			ListenerList<IRegisterWriteListener> listeners, IMachine machine_) {
@@ -93,6 +95,13 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 		});
 	}
 
+	/**
+	 * @param soundOutput the soundOutput to set
+	 */
+	public void setSoundOutput(ISoundOutput soundOutput) {
+		this.soundOutput = soundOutput;
+	}
+	
 	protected void log(String msg) {
 		if (dumpCassetteAccess.getBoolean()) {
 			PrintWriter pw = Logging.getLog(dumpFullInstructions);
@@ -123,7 +132,8 @@ public class CassetteVoice extends BaseVoice implements ICassetteVoice {
 						audioFile.length());
 				
 				synchronized (CassetteVoice.this) {
-					cassetteReader = new CassetteReader(is, cassetteDebug);
+					cassetteReader = new CassetteReader(is, cassetteDebug, 
+							soundOutput);
 				}
 			} catch (IOException e) {
 				machine.getEventNotifier().notifyEvent(audioFile, Level.ERROR, 

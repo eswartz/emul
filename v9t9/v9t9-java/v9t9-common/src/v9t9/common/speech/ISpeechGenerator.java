@@ -10,11 +10,13 @@
  */
 package v9t9.common.speech;
 
+import v9t9.common.sound.ISoundGenerator;
+
 /**
  * @author ejs
  *
  */
-public interface ISpeechGenerator extends ISpeechDataSender {
+public interface ISpeechGenerator extends ISpeechDataSender, ISoundGenerator {
 
 	ISpeechSoundVoice[] getSpeechVoices();
 }

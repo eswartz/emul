@@ -51,8 +51,13 @@ public class AudioChunk {
 					if (format.getEncoding() == Encoding.PCM_UNSIGNED)
 						samp ^= 0x8000;
 					//samp &= 0xf000;
-					soundData[i*2] = (byte) (samp & 0xff);
-					soundData[i*2+1] = (byte) (samp >> 8);
+					if (format.isBigEndian()) {
+						soundData[i*2+1] = (byte) (samp & 0xff);
+						soundData[i*2] = (byte) (samp >> 8);
+					} else {
+						soundData[i*2] = (byte) (samp & 0xff);
+						soundData[i*2+1] = (byte) (samp >> 8);
+					}
 				}
 			} else if (format.getSampleSizeInBits() == 8) {
 				for (int i = 0; i < length; i++) {

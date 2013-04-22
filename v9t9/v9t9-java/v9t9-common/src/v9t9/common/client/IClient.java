@@ -47,4 +47,8 @@ public interface IClient {
 	
 	IVideoRenderer getVideoRenderer();
 
+	/**
+	 * @return
+	 */
+	ISoundHandler getSoundHandler();
 }

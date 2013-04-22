@@ -10,15 +10,39 @@
  */
 package v9t9.common.sound;
 
-import v9t9.common.machine.IRegisterAccess;
+import javax.sound.sampled.AudioFormat;
+
+import v9t9.common.settings.SettingSchema;
+import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
 
 /**
  * @author ejs
  *
  */
-public interface ISoundGenerator extends IRegisterAccess.IRegisterWriteListener {
+public interface ISoundGenerator {
 
+	String getName();
+	
+	SettingSchema getRecordingSettingSchema();
+	boolean isSilenceRecorded();
+	
+	AudioFormat getAudioFormat();
 	ISoundVoice[] getSoundVoices();
 	//void tick();
+	
+	void generate(ISoundOutput output, int pos, int total);
+	/**
+	 * @param output
+	 */
+	void configureSoundOutput(ISoundOutput output);
+	/**
+	 * @param iSoundOutput
+	 * @param pos
+	 * @param total
+	 */
+	void flushAudio(ISoundOutput iSoundOutput, int pos, int total);
+	/**
+	 * @return
+	 */
 }

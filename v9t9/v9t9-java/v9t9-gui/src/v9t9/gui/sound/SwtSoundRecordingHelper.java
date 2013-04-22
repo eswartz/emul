@@ -15,19 +15,15 @@ import java.io.File;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.ejs.gui.common.SwtDialogUtils;
 
-import v9t9.common.client.ISoundHandler;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
-
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
+import v9t9.common.sound.SoundRecordingHelper;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.SoundFileListener;
 
@@ -38,62 +34,20 @@ import ejs.base.sound.SoundFileListener;
  * @author ejs
  * 
  */
-public class SoundRecordingHelper {
+public class SwtSoundRecordingHelper extends SoundRecordingHelper implements ISwtSoundRecordingHelper {
+	protected final String label;
 
-	private SoundFileListener soundListener;
-	
-	private IProperty soundFileSetting;
 
-	private final ISoundOutput output;
-
-	private IPropertyListener listener;
-
-	private final String label;
-
-	private IMachine machine;
-
-	/**
-	 * @param shell
-	 */
-	public SoundRecordingHelper(IMachine machine, ISoundOutput output, SettingSchema fileSchema,
-			String label, boolean includeSilence) {
-		this.output = output;
-		this.soundFileSetting = machine.getSettings().get(fileSchema);
+	public SwtSoundRecordingHelper(IMachine machine, ISoundOutput output,
+			SettingSchema fileSchema, String label, boolean includeSilence) {
+		super(machine, output, fileSchema, includeSilence);
 		this.label = label;
-		this.machine = machine;
-		soundListener = new SoundFileListener();
-		soundListener.setIncludeSilence(includeSilence);
-		
-		soundListener.setPauseProperty(machine.getSettings().get(ISoundHandler.settingPauseSoundRecording));
-		
-		listener = new IPropertyListener() {
-			public void propertyChanged(IProperty setting) {
-				soundListener.setFileName(setting.getString());
-			}
-			
-		};
-		soundFileSetting.addListener(listener);
-		
-		output.addEmitter(soundListener);
-
 	}
 
-	/**
-	 * @return the soundFileSetting
+	/* (non-Javadoc)
+	 * @see v9t9.gui.sound.ISwtSoundRecordingHelper#populateSoundMenu(org.eclipse.swt.widgets.Menu)
 	 */
-	public IProperty getSoundFileSetting() {
-		return soundFileSetting;
-	}
-	public Menu createSoundMenu(final Control parent) {
-		final Menu menu = new Menu(parent);
-		return populateSoundMenu(menu);
-	}
-
-	/**
-	 * Add a record/stop recording item to a menu
-	 * @param menu
-	 * @return the menu
-	 */
+	@Override
 	public Menu populateSoundMenu(final Menu menu) {
 		MenuItem item = new MenuItem(menu, SWT.CHECK);
 		final String filename = soundFileSetting.getString();
@@ -142,22 +96,6 @@ public class SoundRecordingHelper {
 			});
 		}
 		return menu;
-	}
-	
-	/**
-	 * 
-	 */
-	public void dispose() {
-		soundFileSetting.removeListener(listener);
-		output.removeEmitter(soundListener);
-	}
-
-	/**
-	 * 
-	 */
-	public void stop() {
-		soundFileSetting.setString(null);
-		
 	}
 	
 }

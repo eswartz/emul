@@ -24,7 +24,10 @@ public class SpeechGeneratorFactory {
 	 * @return
 	 */
 	public static ISpeechGenerator createSpeechGenerator(IMachine machine) {
-		return new SpeechTMS5220Generator(machine.getSpeech());
+		if (machine.getSpeech() != null)
+			return new SpeechTMS5220Generator(machine.getSpeech());
+		else
+			return null;
 	}
 
 }

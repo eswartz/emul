@@ -120,11 +120,12 @@ public class PulseSoundListener implements ISoundEmitter {
 		
 		//soundGeneratorLine.open(soundFormat, soundFramesPerTick * 20 * 4);
 		
-		logger.debug("Sound format: " + soundFormat);
+		logger.info("Sound format: " + soundFormat);
 
 		soundWritingThread = new Thread(new Runnable() {
 
 			public void run() {
+				// Pulse needs to be created and used on the same thread
 				IntByReference error = new IntByReference();
 
 				simple = PulseAudioLibrary.INSTANCE.pa_simple_new(
@@ -142,7 +143,17 @@ public class PulseSoundListener implements ISoundEmitter {
 					logger.error("Error contacting pulse: " + 
 							PulseAudioLibrary.INSTANCE.pa_strerror(error.getValue()));
 					simple = null;
+					
+					synchronized (soundWritingThread) {
+						// done
+						soundWritingThread.notifyAll();
+					}
 					return;
+				}
+
+				synchronized (soundWritingThread) {
+					// done
+					soundWritingThread.notifyAll();
 				}
 
 				while (true) {
@@ -180,7 +191,17 @@ public class PulseSoundListener implements ISoundEmitter {
 
 		}, "Sound Writing");
 		soundWritingThread.setDaemon(true);
-		soundWritingThread.start();
+		
+		// don't attempt to create the thread twice
+		synchronized (soundWritingThread) {
+			soundWritingThread.start();
+			try {
+				soundWritingThread.wait(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
 
 		//soundGeneratorLine.start();
 		

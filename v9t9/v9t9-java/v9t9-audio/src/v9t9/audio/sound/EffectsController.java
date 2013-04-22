@@ -10,11 +10,11 @@
  */
 package v9t9.audio.sound;
 
+import static v9t9.common.sound.TMS9919BConsts.*;
+
 import java.util.Arrays;
 
 import org.apache.log4j.Logger;
-
-import static v9t9.common.sound.TMS9919BConsts.*;
 
 /**
  * @author ejs

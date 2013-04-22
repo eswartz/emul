@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.gui.sound;
+package v9t9.common.sound;
 
 import java.util.List;
 
@@ -52,7 +52,7 @@ public class TI99SoundSmoother implements ISoundMutator {
 			
 			for (int idx = 0; idx < length; idx += numChans) {
 				for (int c = 0; c < processedChans; c++) {
-					float v = chunk.at(idx + c);
+					float v = Math.max(-1, Math.min(1, chunk.at(idx + c)));
 
 					v = (1f * v - 0.5f * last[c]);
 					last[c] = v;

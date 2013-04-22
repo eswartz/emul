@@ -12,17 +12,14 @@ package v9t9.audio.sound;
 
 
 
-import java.util.ArrayList;
+
+
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import v9t9.common.client.ISoundHandler;
-import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.machine.IRegisterAccess.RegisterInfo;
-import v9t9.common.sound.ISoundGenerator;
 import v9t9.common.sound.TMS9919Consts;
 import ejs.base.sound.ISoundVoice;
 
@@ -31,12 +28,7 @@ import ejs.base.sound.ISoundVoice;
  * @author ejs
  *
  */
-public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.IRegisterWriteListener {
-
-	protected final Map<Integer, SoundVoice> regIdToVoices = 
-		new HashMap<Integer, SoundVoice>();
-	protected final Map<Integer, IRegisterAccess.IRegisterWriteListener> regIdToListener = 
-		new HashMap<Integer, IRegisterAccess.IRegisterWriteListener>();
+public class SoundTMS9919Generator extends BaseSoundChipSoundGenerator {
 
 	final public static int 
 		VOICE_TONE_0 = 0, 
@@ -46,29 +38,31 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		VOICE_AUDIO = 4,
 		VOICE_CASSETTE = 5;
 
-	private SoundVoice[] soundVoices;
+	protected final Map<Integer, SoundVoice> regIdToVoices = new HashMap<Integer, SoundVoice>();
 
-	protected ISoundHandler soundHandler;
+	protected final Map<Integer, IRegisterAccess.IRegisterWriteListener> regIdToListener = new HashMap<Integer, IRegisterAccess.IRegisterWriteListener>();
 
-	protected int active;
-
-	protected final ISoundChip soundChip;
-
-	protected final List<SoundVoice> soundVoicesList = new ArrayList<SoundVoice>();
-	
 	public SoundTMS9919Generator(IMachine machine, String name, int regBase) {
-		this.soundChip = machine.getSound();
-		soundChip.addWriteListener(this);
+		super(machine);
 		init(name, regBase);
-		
 	}
 	
+	@Override
+	public synchronized void registerChanged(int reg, int value) {
+		
+		SoundVoice v = regIdToVoices.get(reg);
+		if (v == null)
+			return;
+		IRegisterAccess.IRegisterWriteListener listener = regIdToListener.get(reg);
+		if (listener == null)
+			throw new IllegalStateException();
+		
+		listener.registerChanged(reg, value);
+	}
 	protected int init(String name, int regBase) {
 		regBase = doInitVoices(name, regBase);
 		
-		soundVoices = soundVoicesList.toArray(new SoundVoice[soundVoicesList.size()]);
-		
-		for (SoundVoice voice : soundVoices) {
+		for (ISoundVoice voice : getSoundVoices()) {
 			if (voice instanceof ClockedSoundVoice) {
 				((ClockedSoundVoice) voice).setReferenceClock(TMS9919Consts.CHIP_CLOCK);
 			}
@@ -76,6 +70,7 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 		return regBase;
 	}
 
+	
 	/**
 	 * @param name
 	 * @param regBase
@@ -172,8 +167,9 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 	 * 
 	 */
 	protected void updateNoisePeriod() {
-		((ClockedSoundVoice) soundVoices[VOICE_NOISE]).setPeriod(
-				((ClockedSoundVoice) soundVoices[VOICE_TONE_2]).getPeriod());		
+		ISoundVoice[] voices = getSoundVoices();
+		((ClockedSoundVoice) voices[VOICE_NOISE]).setPeriod(
+				((ClockedSoundVoice) voices[VOICE_TONE_2]).getPeriod());		
 	}
 
 	/**
@@ -228,28 +224,9 @@ public class SoundTMS9919Generator implements ISoundGenerator, IRegisterAccess.I
 	 * @return
 	 */
 	protected boolean isNoiseTrackingTone2() {
-		return (((NoiseGeneratorVoice) soundVoices[VOICE_NOISE]).getNoiseControl() & TMS9919Consts.NOISE_PERIOD_MASK)
+		ISoundVoice[] voices = getSoundVoices();
+		return (((NoiseGeneratorVoice) voices[VOICE_NOISE]).getNoiseControl() & TMS9919Consts.NOISE_PERIOD_MASK)
 			== TMS9919Consts.NOISE_PERIOD_VARIABLE;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.machine.IRegisterAccess.IRegisterWriteListener#registerChanged(int, int)
-	 */
-	@Override
-	public synchronized void registerChanged(int reg, int value) {
-		
-		SoundVoice v = regIdToVoices.get(reg);
-		if (v == null)
-			return;
-		IRegisterAccess.IRegisterWriteListener listener = regIdToListener.get(reg);
-		if (listener == null)
-			throw new IllegalStateException();
-		
-		listener.registerChanged(reg, value);
-	}
-
-	public ISoundVoice[] getSoundVoices() {
-		return soundVoices;
 	}
 	
 //	public void tick() {

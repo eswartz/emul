@@ -607,7 +607,7 @@ public class Executor implements IExecutor {
 	            			}
 	            		}
             			if (usedCycles >= 0 && realTime) {
-            				cpu.getAllocatedCycles().acquire(usedCycles);
+            				cpu.getAllocatedCycles().acquire(Math.min(usedCycles, cpu.getCurrentTargetCycleCount()));
             			}
 	            		
     	            } catch (AbortedException e) {
