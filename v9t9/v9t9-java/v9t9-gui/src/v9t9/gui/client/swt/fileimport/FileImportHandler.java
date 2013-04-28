@@ -27,7 +27,6 @@ import org.eclipse.swt.widgets.Shell;
 
 import ejs.base.properties.IProperty;
 
-import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.Catalog;
