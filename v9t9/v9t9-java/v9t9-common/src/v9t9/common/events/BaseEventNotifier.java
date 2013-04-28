@@ -12,6 +12,7 @@ package v9t9.common.events;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import v9t9.common.events.NotifyEvent.Level;
@@ -27,6 +28,7 @@ import ejs.base.utils.ListenerList;
 public class BaseEventNotifier implements IEventNotifier {
 
 	protected List<NotifyEvent> events;
+	protected int baseIdx;
 	private int errorCount;
 	
 	private ListenerList<IEventNotifierListener> listeners = new ListenerList<IEventNotifierListener>();
@@ -103,7 +105,8 @@ public class BaseEventNotifier implements IEventNotifier {
 	 */
 	@Override
 	public NotifyEvent fetchEvent(int index) {
-		return index >= 0 && index < this.events.size() ? this.events.get(index) : null;
+		return index >= baseIdx && index < baseIdx + this.events.size() 
+				? this.events.get(index - baseIdx) : null;
 	}
 	
 	/* (non-Javadoc)
@@ -111,6 +114,6 @@ public class BaseEventNotifier implements IEventNotifier {
 	 */
 	@Override
 	public Collection<NotifyEvent> getEvents() {
-		return events;
+		return Collections.unmodifiableList(events);
 	}
 }
