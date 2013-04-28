@@ -84,7 +84,6 @@ import org.ejs.gui.common.SwtDialogUtils;
 import v9t9.common.demos.IDemo;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
-import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
