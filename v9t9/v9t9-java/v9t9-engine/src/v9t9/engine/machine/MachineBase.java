@@ -18,8 +18,6 @@ import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.apache.log4j.Logger;
-
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.IClient;
 import v9t9.common.client.IKeyboardHandler;
@@ -30,10 +28,11 @@ import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
+import v9t9.common.events.BaseEventNotifier;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
-import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.DataFiles;
 import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IFileExecutionHandler;
@@ -59,7 +58,6 @@ import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.demos.DemoManager;
-import v9t9.engine.events.RecordingEventNotifier;
 import v9t9.engine.files.EmulatedFileHandler;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.files.directory.EmuDiskSettings;
@@ -78,9 +76,6 @@ import ejs.base.utils.ListenerList.IFire;
  * @author ejs
  */
 abstract public class MachineBase implements IMachine {
-
-	private static final Logger log = Logger.getLogger(MachineBase.class);
-	
 	private volatile boolean alive;
 
 	private final int cpuTicksPerSec = 100;
@@ -113,7 +108,6 @@ abstract public class MachineBase implements IMachine {
 
 	private ICruChip cru;
 
-	protected RecordingEventNotifier recordingNotifier = new RecordingEventNotifier();
 	private IRawInstructionFactory instructionFactory;
 	private final IMachineModel machineModel;
 	private IPropertyListener pauseListener;
@@ -132,10 +126,13 @@ abstract public class MachineBase implements IMachine {
 
 	private ICassetteChip cassette;
 
+	private IEventNotifier eventNotifier;
+
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
 		pauseMachine = settings.get(settingPauseMachine);
     	
+		eventNotifier = new BaseEventNotifier();
     	this.machineModel = machineModel;
     	
     	locator = new PathFileLocator();
@@ -220,14 +217,11 @@ abstract public class MachineBase implements IMachine {
 	}
     
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.common.IMachine#notifyEvent(v9t9.emulator.common.IEventNotifier.Level, java.lang.String)
+	 * @see v9t9.emulator.common.IMachine#notifyEvent(v9t9.emulator.common.Level, java.lang.String)
 	 */
 	@Override
-	public void notifyEvent(IEventNotifier.Level level, String string) {
-		if (client != null)
-			client.getEventNotifier().notifyEvent(this, level, string);
-		else
-			recordingNotifier.notifyEvent(this, level, string);
+	public void notifyEvent(Level level, String string) {
+		eventNotifier.notifyEvent(this, level, string);
 	}
 	
 	/* (non-Javadoc)
@@ -235,10 +229,7 @@ abstract public class MachineBase implements IMachine {
 	 */
 	@Override
 	public void notifyEvent(NotifyEvent event) {
-		if (client != null)
-			client.getEventNotifier().notifyEvent(event);
-		else
-			recordingNotifier.notifyEvent(event);
+		eventNotifier.notifyEvent(event);
 	}
 
 	/* (non-Javadoc)
@@ -247,27 +238,10 @@ abstract public class MachineBase implements IMachine {
     @Override
 	protected void finalize() throws Throwable {
     	pauseMachine.removeListener(pauseListener);
-    	
-    	if (recordingNotifier != null) {
-    		NotifyEvent event;
-    		while ((event = recordingNotifier.getNextEvent()) != null) {
-    			
-    			System.err.println(event);
-    			
-				System.err.println(event);
-				if (event.level == Level.INFO)
-					log.debug(event);
-				else if (event.level == Level.WARNING)
-					log.warn(event);
-				else
-					log.error(event);
-
-    		}
-    	}
-        super.finalize();
         client = null;
         memory = null;
         executor = null;
+        super.finalize();
     }
     
     /* (non-Javadoc)
@@ -392,17 +366,6 @@ abstract public class MachineBase implements IMachine {
     @Override
 	public void setClient(IClient client) {
         this.client = client;
-        if (client != null) {
-        	if (recordingNotifier != null && client.getEventNotifier() != null) {
-        		NotifyEvent event;
-        		while ((event = recordingNotifier.getNextEvent()) != null) {
-        			client.getEventNotifier().notifyEvent(event);
-        		}
-        		recordingNotifier = null;
-        	}
-        } else {
-        	recordingNotifier = new RecordingEventNotifier();
-        }
     }
     /* (non-Javadoc)
 	 * @see v9t9.emulator.common.IMachine#getExecutor()
@@ -695,7 +658,7 @@ abstract public class MachineBase implements IMachine {
 	 */
 	@Override
 	public IEventNotifier getEventNotifier() {
-		return client != null ? client.getEventNotifier() : recordingNotifier;
+		return eventNotifier;
 	}
 	
 	/* (non-Javadoc)

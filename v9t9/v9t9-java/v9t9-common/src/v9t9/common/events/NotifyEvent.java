@@ -10,9 +10,26 @@
  */
 package v9t9.common.events;
 
-import v9t9.common.events.IEventNotifier.Level;
-
 public class NotifyEvent implements Comparable<NotifyEvent> {
+	public static enum Level {
+		INFO(0, "Info"),
+		WARNING(1, "Warning"),
+		ERROR(2, "Error");
+	
+		private int code;
+		private String label;
+		private Level(int code, String label) {
+			this.code = code;
+			this.label = label;
+		}
+		public int getCode() {
+			return code;
+		}
+		public String getLabel() {
+			return label;
+		}
+	}
+
 	public static int ORDER;
 	
 	public int order;

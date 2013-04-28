@@ -29,7 +29,8 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 
-import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyEvent;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.IDiskDriveSetting;
@@ -136,7 +137,7 @@ class DiskEntry extends DiskSettingEntry {
 						catalog = readCatalog(fileHandler, setting);
 						showCatalogDialog(setting, catalog);
 					} catch (Throwable e1) {
-						machine.notifyEvent(IEventNotifier.Level.ERROR,
+						machine.notifyEvent(Level.ERROR,
 								MessageFormat.format("Could not read catalog for disk image ''{0}''\n\n{1}",
 										setting.getString(), e1.getMessage()));
 					}
@@ -154,7 +155,7 @@ class DiskEntry extends DiskSettingEntry {
 						catalog = readCatalog(fileHandler, setting);
 						showRunDialog(setting, catalog);
 					} catch (IOException e1) {
-						machine.notifyEvent(IEventNotifier.Level.ERROR,
+						machine.notifyEvent(Level.ERROR,
 								MessageFormat.format("Could not read catalog for disk image ''{0}''\n\n{1}",
 										setting.getString(), e1.getMessage()));
 					}

@@ -10,8 +10,12 @@
  */
 package v9t9.common.events;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.List;
+
+import v9t9.common.events.NotifyEvent.Level;
+import ejs.base.utils.ListenerList;
 
 
 
@@ -20,18 +24,19 @@ import java.util.concurrent.PriorityBlockingQueue;
  * @author ejs
  *
  */
-public abstract class BaseEventNotifier implements IEventNotifier {
+public class BaseEventNotifier implements IEventNotifier {
 
-	protected PriorityBlockingQueue<NotifyEvent> pendingEvents;
-	private Thread displayer;
+	protected List<NotifyEvent> events;
 	private int errorCount;
 	
+	private ListenerList<IEventNotifierListener> listeners = new ListenerList<IEventNotifierListener>();
+	
 	public BaseEventNotifier() {
-		pendingEvents = new PriorityBlockingQueue<NotifyEvent>();
+		events = new ArrayList<NotifyEvent>();
 	}
 	
 	public BaseEventNotifier(Collection<NotifyEvent> events) {
-		pendingEvents = new PriorityBlockingQueue<NotifyEvent>(events);
+		events = new ArrayList<NotifyEvent>(events);
 	}
 	
 	/* (non-Javadoc)
@@ -49,77 +54,10 @@ public abstract class BaseEventNotifier implements IEventNotifier {
 	public int getErrorCount() {
 		return errorCount;
 	}
-	
-	protected interface IEventConsumer {
-		void consumeEvent(NotifyEvent event);
-	}
-	
-	/**
-	 * Start a thread which consumes events as they become available.
-	 * Calls the #consumeEvent() method.
-	 */
-	protected final void startConsumerThread() {
-		displayer = new Thread("Event notifier") {
-			/*
-			 * (non-Javadoc)
-			 * 
-			 * @see java.lang.Thread#run()
-			 */
-			@Override
-			public void run() {
-				while (true) {
-					while (!canConsume()) {
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException e) {
-							return;
-						}
-					}
-					NotifyEvent event = null;
 
-					try {
-						event = pendingEvents.take();
-					} catch (InterruptedException e) {
-						return;
-					}
-					
-					consumeEvent(event);
-				}
-			}
-		};
-		displayer.setDaemon(true);
-		displayer.start();
-	}
-	
-	/**
-	 * Tell if you are ready to consume another event.  This does not mean
-	 * one is ready, only that other events have been properly handled.
-	 * @return
-	 */
-	protected boolean canConsume() { 
-		return true;
-	}
-	/** 
-	 * Consume the next event.
-	 * @param event
-	 */
-	abstract protected void consumeEvent(NotifyEvent event);
-	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#finalize()
-	 */
-	@Override
-	protected void finalize() throws Throwable {
-		if (displayer != null) {
-			displayer.interrupt();
-		}
-		super.finalize();
-	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.IEventNotifier#notifyEvent(java.lang.Object, v9t9.emulator.clients.builtin.IEventNotifier.Level, java.lang.String)
+	 * @see v9t9.emulator.clients.builtin.IEventNotifier#notifyEvent(java.lang.Object, v9t9.emulator.clients.builtin.Level, java.lang.String)
 	 */
 	@Override
 	public final void notifyEvent(Object context, Level level, String message) {
@@ -131,23 +69,48 @@ public abstract class BaseEventNotifier implements IEventNotifier {
 	 * @see v9t9.emulator.clients.builtin.IEventNotifier#notifyEvent(v9t9.emulator.clients.builtin.IEventNotifier.NotifyEvent)
 	 */
 	@Override
-	public final void notifyEvent(NotifyEvent event) {
+	public final void notifyEvent(final NotifyEvent event) {
 		if (event.level == Level.ERROR)
 			errorCount++;
-		pendingEvents.put(event);
+		events.add(event);
+		
+		listeners.fire(new ListenerList.IFire<IEventNotifierListener>() {
+
+			@Override
+			public void fire(IEventNotifierListener listener) {
+				listener.eventNotified(event);
+			}
+		});
 	}
 	
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.common.events.IEventNotifier#addListener(v9t9.common.events.IEventNotifierListener)
 	 */
-	public final NotifyEvent getNextEvent() {
-		return pendingEvents.poll();
+	@Override
+	public void addListener(IEventNotifierListener listener) {
+		listeners.add(listener);
 	}
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.common.events.IEventNotifier#removeListener(v9t9.common.events.IEventNotifierListener)
 	 */
-	public final NotifyEvent peekNextEvent() {
-		return pendingEvents.peek();
+	@Override
+	public void removeListener(IEventNotifierListener listener) {
+		listeners.remove(listener);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.events.IEventNotifier#fetchEvent(int)
+	 */
+	@Override
+	public NotifyEvent fetchEvent(int index) {
+		return index >= 0 && index < this.events.size() ? this.events.get(index) : null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.events.IEventNotifier#getEvents()
+	 */
+	@Override
+	public Collection<NotifyEvent> getEvents() {
+		return events;
+	}
 }

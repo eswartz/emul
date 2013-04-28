@@ -15,6 +15,7 @@ import java.io.IOException;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
@@ -115,7 +116,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
     }
 
 	protected void reportLoadError(IEventNotifier eventNotifier, String file, IOException e) {
-		eventNotifier.notifyEvent(this, IEventNotifier.Level.ERROR, 
+		eventNotifier.notifyEvent(this, Level.ERROR, 
 				e instanceof FileNotFoundException ?
 				"Failed to find image '" + file +"' which is needed to start" : e.getMessage()); 
 	

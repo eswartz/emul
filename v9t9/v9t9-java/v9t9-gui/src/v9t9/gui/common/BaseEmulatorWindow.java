@@ -21,17 +21,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.MessageFormat;
 
-import ejs.base.properties.IProperty;
-import ejs.base.settings.ISettingSection;
-import ejs.base.settings.ISettingStorage;
-import ejs.base.settings.SettingsSection;
-import ejs.base.settings.XMLSettingStorage;
-
-
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
-import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.TerminatedException;
 import v9t9.common.settings.IStoredSettings;
@@ -40,6 +33,11 @@ import v9t9.common.settings.Settings;
 import v9t9.gui.Emulator;
 import v9t9.server.EmulatorLocalServer;
 import v9t9.server.settings.WorkspaceSettings;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
+import ejs.base.settings.ISettingStorage;
+import ejs.base.settings.SettingsSection;
+import ejs.base.settings.XMLSettingStorage;
 
 public abstract class BaseEmulatorWindow {
 

@@ -46,7 +46,8 @@ import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.widgets.Control;
 
 import v9t9.common.events.IEventNotifier;
-import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyEvent;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IFileImportHandler;
 import v9t9.common.video.ICanvas;

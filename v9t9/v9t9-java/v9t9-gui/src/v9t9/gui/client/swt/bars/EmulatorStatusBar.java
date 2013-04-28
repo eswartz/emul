@@ -34,7 +34,8 @@ import v9t9.common.cpu.IExecutor;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
-import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyEvent;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
@@ -42,6 +43,7 @@ import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.shells.DemoProgressBar;
 import v9t9.gui.client.swt.shells.DemoSelector;
+import v9t9.gui.client.swt.shells.EventLogDialog;
 import v9t9.gui.client.swt.shells.KeyboardDialog;
 import v9t9.gui.client.swt.shells.ROMSetupDialog;
 import v9t9.gui.client.swt.shells.disk.DiskSelectorDialog;
@@ -181,6 +183,18 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				}
 			}
 		);		
+		
+
+		createButton(IconConsts.EVENT_LOG,
+			"Review events", new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					swtWindow.toggleToolShell(EventLogDialog.EVENT_LOG_ID, 
+							EventLogDialog.getToolShellFactory(machine, buttonBar, imageProvider));
+				}
+			}
+		);		
+		
 		
 	}
 

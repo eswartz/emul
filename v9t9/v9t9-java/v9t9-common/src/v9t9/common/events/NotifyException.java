@@ -10,7 +10,7 @@
  */
 package v9t9.common.events;
 
-import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyEvent.Level;
 
 
 /**

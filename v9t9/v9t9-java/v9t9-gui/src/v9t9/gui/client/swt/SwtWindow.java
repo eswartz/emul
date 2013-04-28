@@ -59,7 +59,8 @@ import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.events.IEventNotifier;
-import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyEvent;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
@@ -94,7 +95,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private Map<String, ToolShell> toolShells;
 	private Timer toolUiTimer;
 	private IFocusRestorer focusRestorer;
-	private final IEventNotifier eventNotifier;
 	private Composite videoRendererComposite;
 	BaseEmulatorBar buttonBar;
 	private EmulatorStatusBar statusBar;
@@ -111,6 +111,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private EmulatorRnDBar rndBar;
 
 	private IProperty showRnDBar;
+
+	private GuiPopupEventListener eventListener;
 
 	class EmulatorWindowLayout extends Layout {
 
@@ -319,7 +321,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 		};
 		
 
-		eventNotifier = new GuiEventNotifier(this);
+		eventListener = new GuiPopupEventListener(this, machine.getEventNotifier());
+		machine.getEventNotifier().addListener(eventListener);
 
 		setVideoRenderer(videoRenderer);
 		
@@ -423,6 +426,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
+				machine.getEventNotifier().removeListener(eventListener);
 				buttonImageProvider.dispose();
 				statusImageProvider.dispose();
 				rndImageProvider.dispose();
@@ -838,7 +842,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	 * @return
 	 */
 	public IEventNotifier getEventNotifier() {
-		return eventNotifier;
+		return machine.getEventNotifier();
 	}
 
 	public Timer getToolUiTimer() {
@@ -939,7 +943,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		if (contents != null) {
 			machine.getKeyboardHandler().pasteText(contents);
 		} else {
-			eventNotifier.notifyEvent(null, Level.WARNING, 
+			getEventNotifier().notifyEvent(null, Level.WARNING, 
 					"Cannot paste: no text on clipboard");
 		}
 		clip.dispose();

@@ -10,6 +10,10 @@
  */
 package v9t9.common.events;
 
+import java.util.Collection;
+
+import v9t9.common.events.NotifyEvent.Level;
+
 /**
  * Handler for events happening inside the emulator, usually presented to the user
  * as a tooltip or balloon.
@@ -17,25 +21,6 @@ package v9t9.common.events;
  *
  */
 public interface IEventNotifier {
-	enum Level {
-		INFO(0, "Info"),
-		WARNING(1, "Warning"),
-		ERROR(2, "Error");
-
-		private int code;
-		private String label;
-		private Level(int code, String label) {
-			this.code = code;
-			this.label = label;
-		}
-		public int getCode() {
-			return code;
-		}
-		public String getLabel() {
-			return label;
-		}
-	}
-	
 	/**
 	 * Notify of an event
 	 * @param context for example, an Event
@@ -62,4 +47,14 @@ public interface IEventNotifier {
 	 * @return notification count
 	 */
 	int getErrorCount();
+	
+	void addListener(IEventNotifierListener listener);
+	void removeListener(IEventNotifierListener listener);
+	
+	NotifyEvent fetchEvent(int index);
+
+	/**
+	 * @return
+	 */
+	Collection<NotifyEvent> getEvents();
 }

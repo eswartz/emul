@@ -35,7 +35,7 @@ import org.eclipse.swt.widgets.MenuItem;
 
 import v9t9.common.client.IMonitorEffectSupport;
 import v9t9.common.client.ISoundHandler;
-import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.common.sound.ISoundGenerator;

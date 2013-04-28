@@ -21,8 +21,8 @@ import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
-import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryModel;
@@ -46,7 +46,7 @@ public interface IBaseMachine {
 
 	void setClient(IClient client);
 	
-	void notifyEvent(IEventNotifier.Level level, String string);
+	void notifyEvent(Level level, String string);
 
 	void notifyEvent(NotifyEvent event);
 

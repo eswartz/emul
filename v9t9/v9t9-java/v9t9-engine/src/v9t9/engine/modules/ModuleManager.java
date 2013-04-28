@@ -26,7 +26,8 @@ import org.apache.log4j.Logger;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
-import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyEvent;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
@@ -292,7 +293,7 @@ public class ModuleManager implements IModuleManager {
 			List<IModule> modList = readModules(uri);
 			addModules(modList);
 		} catch (IOException e) {
-			machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
+			machine.getClient().getEventNotifier().notifyEvent(this, Level.ERROR,
 					"Could not load module list " + uri + ": " + e.getMessage());
 		}
 
@@ -337,7 +338,7 @@ public class ModuleManager implements IModuleManager {
 			if (databaseURI != null) {
 				registerModules(databaseURI);
 			} else {
-				machine.getClient().getEventNotifier().notifyEvent(this, IEventNotifier.Level.ERROR,
+				machine.getClient().getEventNotifier().notifyEvent(this, Level.ERROR,
 						"Could not find module list " + dbName);
 			}
 		}

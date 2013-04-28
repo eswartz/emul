@@ -24,6 +24,7 @@ import ejs.base.utils.FileUtils;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
@@ -181,7 +182,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 				FileUtils.writeOutputStreamContentsAndClose(os, content, content.length);
 			} catch (IOException e) {
 				log.error("Failed to copy initial disk image from " + shippingDiskImage + " to " + userDiskImage, e);
-				eventNotifier.notifyEvent(this, IEventNotifier.Level.ERROR, 
+				eventNotifier.notifyEvent(this, Level.ERROR, 
 						"Failed to copy initial disk image from " + shippingDiskImage + " to " + userDiskImage); 
 			} finally {
 				try { if (is != null) is.close(); } catch (IOException e) { }

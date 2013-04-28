@@ -17,7 +17,7 @@ import java.io.InputStream;
 import java.net.URL;
 
 import v9t9.common.client.IKeyboardHandler;
-import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.keyboard.IPasteListener;

@@ -25,7 +25,7 @@ import ejs.base.settings.ISettingSection;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IMemoryTransfer;
-import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;

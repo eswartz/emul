@@ -91,7 +91,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.ejs.gui.common.FontUtils;
 import org.ejs.gui.common.SwtDialogUtils;
 
-import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
@@ -105,6 +105,7 @@ import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageCanvas;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
+import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
 import v9t9.gui.client.swt.shells.LazyImageLoader;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageAdjuster;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
