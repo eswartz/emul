@@ -18,16 +18,11 @@ import java.util.List;
 import java.util.TreeMap;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.MenuDetectEvent;
-import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
@@ -166,16 +161,16 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			}
 		});
 
-		createButton(IconConsts.CPU_ACCELERATE, "Accelerate execution",
-				new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						Control button = (Control) e.widget;
-						Point size = button.getSize();
-						swtWindow.showMenu(createAccelMenu(button), button, size.x / 2, size.y / 2);
-					}
-				});
-
+		BasicButton accelButton = new BasicButton(buttonBar, SWT.NONE, imageProvider, 
+				IconConsts.CPU_ACCELERATE, "Accelerate execution");
+		accelButton.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider, new IMenuHandler() {
+			
+			@Override
+			public void fillMenu(Menu menu) {
+				fillAccelMenu(menu);
+				
+			}
+		}));
 
 		createButton(IconConsts.KEYBOARD,
 			"Show keyboard", new SelectionAdapter() {
@@ -215,8 +210,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			}
 			
 			@Override
-			public Rectangle getBounds(Point size) {
-				return new Rectangle(0, 0, size.x/2, size.y/2);
+			public boolean isInBounds(int x, int y, Point size) {
+				return x < size.x/2 && y < size.y/2;
 			}
 			
 			/* (non-Javadoc)
@@ -272,19 +267,18 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			}
 		});
 		
-		button.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider));
-		button.addMenuDetectListener(new MenuDetectListener() {
-
-			public void menuDetected(MenuDetectEvent e) {
+		button.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider, new IMenuHandler() {
+			
+			@Override
+			public void fillMenu(Menu menu) {
 				final IDemoHandler handler = machine.getDemoHandler();
 				if (handler != null) {
-					showDemoMenu(handler, e, e.x, e.y, 
+					fillDemoMenu(handler, menu, 
 							recordSetting, playSetting, pauseSetting,
 							useOldFormatSetting);
-					e.doit = false;
-				}
+				}		
 			}
-		});
+		}));
 		
 		// initialize state
 		setDemoButtonOverlay(button, playSetting, recordSetting, pauseSetting, reverseSetting);
@@ -383,12 +377,9 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 //	}
 
 
-	private void showDemoMenu(final IDemoHandler demoHandler, TypedEvent e, int x, int y, 
+	private void fillDemoMenu(final IDemoHandler demoHandler, final Menu menu, 
 			final IProperty recordSetting, final IProperty playSetting,
 			final IProperty pauseSetting, final IProperty useOldFormatSetting) {
-		Control button = (Control) e.widget;
-		final Menu menu = new Menu(button);
-
 		String currentFilename = null;
 		
 		if (playSetting.getBoolean()) {
@@ -502,8 +493,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		rateItem.setText("Playback rate:");
 		rateItem.setEnabled(false);
 		addRateMenuItems(menu);
-		
-		swtWindow.showMenu(menu, null, x, y);
 	}
 
 
@@ -608,8 +597,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 	}
 		
 	
-	private Menu createAccelMenu(final Control parent) {
-		final Menu menu = new Menu(parent);
+	private void fillAccelMenu(final Menu menu) {
 		for (int mult = 1; mult <= 10; mult++) {
 			createAccelMenuItem(menu, mult, mult + "x");
 		}
@@ -649,8 +637,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				}
 			});
 		}
-		
-		return menu;
 	}
 	
 

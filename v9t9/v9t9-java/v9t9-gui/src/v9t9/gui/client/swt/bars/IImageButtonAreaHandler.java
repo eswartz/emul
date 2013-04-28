@@ -11,7 +11,6 @@
 package v9t9.gui.client.swt.bars;
 
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 
 /**
  * This allows extending the behavior of an image button given a particular
@@ -36,10 +35,12 @@ public interface IImageButtonAreaHandler {
 	void detach(ImageButton button);
 	
 	/**
-	 * Get the area covered by the image, with respect to the button's size.
+	 * @param x
+	 * @param y
+	 * @param size
 	 * @return
 	 */
-	Rectangle getBounds(Point size);
+	boolean isInBounds(int x, int y, Point size);
 	
 	/** Tell whether the area is currently active.  If so, other
 	 * queries may be performed.  If not, control passes

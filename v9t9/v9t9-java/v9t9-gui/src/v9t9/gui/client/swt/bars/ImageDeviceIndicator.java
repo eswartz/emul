@@ -19,10 +19,9 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 
+import v9t9.common.dsr.IDeviceIndicatorProvider;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
-
-import v9t9.common.dsr.IDeviceIndicatorProvider;
 
 /**
  * @author ejs

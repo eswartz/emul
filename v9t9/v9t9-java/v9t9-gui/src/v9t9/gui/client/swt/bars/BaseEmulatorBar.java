@@ -18,14 +18,14 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
+import org.eclipse.swt.widgets.Menu;
 
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.gui.client.swt.SwtWindow;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * @author ejs
@@ -54,8 +54,14 @@ public abstract class BaseEmulatorBar {
 	protected BasicButton createButton(int iconIndex, String tooltip, SelectionListener selectionListener) {
 		BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
 				imageProvider, iconIndex, tooltip);
-		button.addSelectionListener(selectionListener);
+		if (selectionListener != null) {
+			button.addSelectionListener(selectionListener);
+		}
 		return button;
+	}
+	
+	protected BasicButton createButton(int iconIndex, String tooltip) {
+		return createButton(iconIndex, tooltip, null);
 	}
 
 	protected BasicButton createStateButton(final SettingSchema schema, final boolean inverted, 
@@ -131,7 +137,7 @@ public abstract class BaseEmulatorBar {
 						if (setting.getBoolean() != button.getSelection()) {
 							button.setSelection(setting.getBoolean());
 						}
-						button.redraw();
+						//button.redraw();
 					}
 					
 				});
@@ -149,6 +155,10 @@ public abstract class BaseEmulatorBar {
 	protected BasicButton createTwoStateButton(final SettingSchema schema, int iconIndex, int secondIconIndex,
 			String tooltip) {
 		return createStateButton(schema, false, iconIndex, secondIconIndex, false, tooltip);
+	}
+	
+	protected void showMenu(Menu e) {
+		
 	}
 
 	public Point getTooltipLocation() {

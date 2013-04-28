@@ -22,7 +22,6 @@ import java.util.TimerTask;
 import org.eclipse.swt.graphics.Rectangle;
 
 import v9t9.gui.client.swt.ISwtVideoRenderer;
-
 import ejs.base.utils.Pair;
 
 

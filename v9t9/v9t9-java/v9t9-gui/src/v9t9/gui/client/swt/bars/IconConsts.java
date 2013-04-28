@@ -44,5 +44,7 @@ public class IconConsts {
 	static final int SPEECH = 24;
 	static final int SETTINGS = 25;
 	static final int KEYBOARD = 26;
+	static final int TO_UPPER_LEFT = 27;
+	static final int TO_LOWER_RIGHT = 28;
 
 }

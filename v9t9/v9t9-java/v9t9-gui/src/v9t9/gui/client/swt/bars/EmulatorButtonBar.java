@@ -18,8 +18,6 @@ import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
-import org.eclipse.swt.events.MenuDetectEvent;
-import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -74,10 +72,10 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 	 * @param focusRestorer
 	 * @param smoothResize
 	 */
-	public EmulatorButtonBar(final SwtWindow window, IImageProvider imageProvider, Composite parent, 
+	public EmulatorButtonBar(final SwtWindow window, IImageProvider imageProvider_, Composite parent, 
 			final IMachine machine,
 			int[] colors, float[] points, int style) {
-		super(window, imageProvider, parent, machine, colors, points, style);
+		super(window, imageProvider_, parent, machine, colors, points, style);
 		
 		if ((style & SWT.HORIZONTAL) != 0) {
 			GridData gd = ((GridData) buttonBar.getLayoutData());
@@ -138,31 +136,116 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 					}
 			});
 		
-		createButton(IconConsts.LOAD_SAVE_STATE, "Load or save machine state",
-				new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						Control button = (Control) e.widget;
-						Point size = button.getSize();
-						swtWindow.showMenu(createFilePopupMenu(button), button, size.x / 2, size.y / 2);
-					}
-
-			});
+		final BasicButton loadSave = createButton(IconConsts.LOAD_SAVE_STATE, "Load or save machine state");
 		
+		final Rectangle toUpperLeftBounds = imageProvider.imageIndexToBounds(IconConsts.TO_UPPER_LEFT);
+		final Rectangle toLowerRightBounds = imageProvider.imageIndexToBounds(IconConsts.TO_LOWER_RIGHT);
+
+		final BaseImageButtonAreaHandler loadHandler = new BaseImageButtonAreaHandler() {
+
+			@Override
+			public boolean isInBounds(int x, int y, Point size) {
+				return x + (size.x - y) > size.x;
+			}
+
+			@Override
+			public boolean isActive() {
+				return true;
+			}
+
+			@Override
+			public String getTooltip() {
+				return "Load state";
+			}
+			
+			/* (non-Javadoc)
+			 * @see v9t9.gui.client.swt.bars.BaseImageButtonAreaHandler#mouseEnter()
+			 */
+			@Override
+			public void mouseEnter() {
+				super.mouseEnter();
+				loadSave.addImageOverlay(toUpperLeftBounds);
+			}
+			
+			/* (non-Javadoc)
+			 * @see v9t9.gui.client.swt.bars.BaseImageButtonAreaHandler#mouseExit()
+			 */
+			@Override
+			public void mouseExit() {
+				loadSave.removeImageOverlay(toUpperLeftBounds);
+				super.mouseExit();
+			}
+
+			
+		};
+		final BaseImageButtonAreaHandler saveHandler = new BaseImageButtonAreaHandler() {
+			
+			@Override
+			public boolean isInBounds(int x, int y, Point size) {
+				return x + (size.x - y) < size.x;
+			}
+			
+			@Override
+			public boolean isActive() {
+				return true;
+			}
+			
+			@Override
+			public String getTooltip() {
+				return "Save state";
+			}
+			
+			/* (non-Javadoc)
+			 * @see v9t9.gui.client.swt.bars.BaseImageButtonAreaHandler#mouseEnter()
+			 */
+			@Override
+			public void mouseEnter() {
+				super.mouseEnter();
+				loadSave.addImageOverlay(toLowerRightBounds);
+			}
+			
+			/* (non-Javadoc)
+			 * @see v9t9.gui.client.swt.bars.BaseImageButtonAreaHandler#mouseExit()
+			 */
+			@Override
+			public void mouseExit() {
+				loadSave.removeImageOverlay(toLowerRightBounds);
+				super.mouseExit();
+			}
+		};
+		
+		loadSave.addAreaHandler(loadHandler);
+		loadSave.addAreaHandler(saveHandler);
+
+		loadSave.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (loadHandler.isInBounds(e.x, e.y, loadSave.getSize())) {
+					swtWindow.loadMachineState();
+				}
+				else if (saveHandler.isInBounds(e.x, e.y, loadSave.getSize())) {
+					swtWindow.saveMachineState();
+				}
+			}
+		});
+
 		if (window.getVideoRenderer().getMonitorEffectSupport() != null) {
 			BasicButton monitorEffectButton = createToggleStateButton(BaseEmulatorWindow.settingMonitorDrawing, 
 					IconConsts.MONITOR_EFFECT,  
 					IconConsts.CHECKMARK_OVERLAY, "Apply monitor effect to video");
 			
-			monitorEffectButton.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider));
-			monitorEffectButton.addMenuDetectListener(new MenuDetectListener() {
-
-				public void menuDetected(MenuDetectEvent e) {
-					createMonitorEffectMenu(window.getVideoRenderer().getMonitorEffectSupport(), e);
-				}
-			});
-
-
+			monitorEffectButton.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider,
+					new IMenuHandler() {
+						
+						@Override
+						public void fillMenu(Menu menu) {
+							fillMonitorEffectMenu(
+									window.getVideoRenderer().getMonitorEffectSupport(),
+									menu
+									);
+						}
+					}
+					));
 		}
 		
 		createButton(IconConsts.SCREENSHOT, "Take screenshot",
@@ -193,13 +276,14 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		imageSupport.setImageImportDnDControl(((ISwtVideoRenderer) window.getVideoRenderer()).getControl());
 		
 
-		imageImportButton.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider));
-		imageImportButton.addMenuDetectListener(new MenuDetectListener() {
-
-			public void menuDetected(MenuDetectEvent e) {
-				ImageImportOptionsDialog.createImageImportMenu(window, imageSupport, e);
-			}
-		});
+		imageImportButton.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider,
+				new IMenuHandler() {
+					
+					@Override
+					public void fillMenu(Menu menu) {
+						ImageImportOptionsDialog.fillImageImportMenu(window, imageSupport, menu); 
+					}
+				}));
 
 		
 		createToggleStateButton(BaseEmulatorWindow.settingFullScreen, 
@@ -228,13 +312,14 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 				IconConsts.SOUND_SPEAKER, IconConsts.NO_OVERLAY,
 				true, "Sound options");
 		
-		soundButton.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider));
-		soundButton.addMenuDetectListener(new MenuDetectListener() {
-
-			public void menuDetected(MenuDetectEvent e) {
-				createSoundMenu(machine, e);
-			}
-		});
+		soundButton.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider,
+				new IMenuHandler() {
+					
+					@Override
+					public void fillMenu(Menu menu) {
+						fillSoundMenu(machine, menu);
+					}
+				}));
 		
 		final IProperty pauseRecordingProperty = machine.getSettings().get(ISoundHandler.settingPauseSoundRecording);
 		
@@ -258,7 +343,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 							soundButton.removeImageOverlay(recordingOverlayBounds);
 							soundButton.removeImageOverlay(pauseOverlayBounds);
 						}
-						soundButton.redraw();
+						//soundButton.redraw();
 					}
 				});
 			}
@@ -280,9 +365,12 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 						+ TextUtils.catenateStrings(multiSoundHandler.getRecordings(), ", ");
 			}
 			
+			/* (non-Javadoc)
+			 * @see v9t9.gui.client.swt.bars.IImageButtonAreaHandler#isInBounds(int, int, org.eclipse.swt.graphics.Point)
+			 */
 			@Override
-			public Rectangle getBounds(Point size) {
-				return new Rectangle(0, 0, size.x/2, size.y/2);
+			public boolean isInBounds(int x, int y, Point size) {
+				return x < size.x/2 && y < size.y/2;
 			}
 			
 			/* (non-Javadoc)
@@ -335,22 +423,13 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		videoRenderer.setZoom(zoom);
 	}
 	 */
-	private Menu createFilePopupMenu(final Control parent) {
-		final Menu menu = new Menu(parent);
-		return swtWindow.populateFileMenu(menu);
-	}
-
 
 	/**
 	 * @param machine
 	 * @param soundHandler
 	 * @param e
 	 */
-	private void createSoundMenu(final IMachine machine,
-			MenuDetectEvent e) {
-		Control button = (Control) e.widget;
-		Menu menu = new Menu(button);
-		
+	private void fillSoundMenu(final IMachine machine, Menu menu) {
 		for (ISoundRecordingHelper helper : multiSoundHandler.getRecordingHelpers()) {
 			if (helper instanceof ISwtSoundRecordingHelper)
 				((ISwtSoundRecordingHelper) helper).populateSoundMenu(menu);
@@ -378,7 +457,6 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 			});
 		}
 		vitem.setMenu(volumeMenu);
-		swtWindow.showMenu(menu, null, e.x, e.y);
 	}
 
 	/**
@@ -386,10 +464,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 	 * @param soundHandler
 	 * @param e
 	 */
-	private void createMonitorEffectMenu(IMonitorEffectSupport fxSupport, MenuDetectEvent e) {
-		Control button = (Control) e.widget;
-		Menu menu = new Menu(button);
-
+	private void fillMonitorEffectMenu(IMonitorEffectSupport fxSupport, Menu menu) {
 		final IProperty monitorEffect = machine.getSettings().get(BaseEmulatorWindow.settingMonitorEffect);
 				
 		for (final String effectId : fxSupport.getIds()) {
@@ -405,7 +480,6 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 
 			});
 		}
-		swtWindow.showMenu(menu, null, e.x, e.y);
 	}
 
 }

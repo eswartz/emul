@@ -190,7 +190,10 @@ public class ImageImportOptionsDialog extends Composite {
 			
 			@Override
 			public void menuDetected(MenuDetectEvent e) {
-				createImageImportMenu(window, imageImportHandler, e);
+				Control parent = (Control) e.widget;
+				Menu menu = new Menu(parent);
+				fillImageImportMenu(window, imageImportHandler, menu);
+				window.runMenu(parent, e.x, e.y, menu);
 			}
 		});
 		
@@ -260,12 +263,10 @@ public class ImageImportOptionsDialog extends Composite {
 	 * @param imageSupport
 	 * @param e
 	 */
-	public static void createImageImportMenu(final SwtWindow window,
-			final IImageImportHandler imageSupport, MenuDetectEvent e) {
+	public static void fillImageImportMenu(final SwtWindow window,
+			final IImageImportHandler imageSupport, Menu menu) {
 		final Collection<String> fileHistory = imageSupport.getHistory();
 		
-		Control control = (Control) e.widget;
-		Menu menu = new Menu(control);
 		MenuItem vitem = new MenuItem(menu, SWT.NONE);
 		vitem.setText("Load file...");
 		
@@ -304,8 +305,6 @@ public class ImageImportOptionsDialog extends Composite {
 				});
 			}
 		}
-		
-		window.showMenu(menu, null, e.x, e.y);
 	}
 
 	/**

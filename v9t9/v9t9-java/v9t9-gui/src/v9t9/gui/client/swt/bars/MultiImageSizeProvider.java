@@ -23,7 +23,6 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 
 import v9t9.gui.client.swt.imageimport.ImageUtils;
-
 import ejs.base.utils.Pair;
 
 

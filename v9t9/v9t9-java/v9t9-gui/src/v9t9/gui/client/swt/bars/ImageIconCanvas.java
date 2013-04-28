@@ -61,6 +61,7 @@ public abstract class ImageIconCanvas extends ImageBarChild {
 			data = GridDataFactory.fillDefaults().grab(true, false).create();
 		}
 		setLayoutData(data);
+		redraw();
 	}
 
 

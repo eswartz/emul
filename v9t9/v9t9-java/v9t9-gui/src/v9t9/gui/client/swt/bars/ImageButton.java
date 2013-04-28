@@ -69,7 +69,7 @@ public class ImageButton extends ImageIconCanvas {
 				
 				boolean wasHandled = false;
 				for (IImageButtonAreaHandler handler : areaHandlers) {
-					if (handler.getBounds(getSize()).contains(e.x, e.y) && handler.isActive()) {
+					if (handler.isInBounds(e.x, e.y, getSize()) && handler.isActive()) {
 						if (e.button == 1 && handler.isMenu()) {
 							Event me = new Event();
 							me.button = e.button;
@@ -108,7 +108,7 @@ public class ImageButton extends ImageIconCanvas {
 				}
 				boolean wasHandled = false;
 				for (IImageButtonAreaHandler handler : areaHandlers) {
-					if (handler.getBounds(getSize()).contains(e.x, e.y) && 
+					if (handler.isInBounds(e.x, e.y, getSize()) && 
 							mouseDownActiveHandlers.contains(handler)) {
 						mouseDownActiveHandlers.remove(handler);
 						wasHandled = handler.mouseUp(e.button);
@@ -190,14 +190,17 @@ public class ImageButton extends ImageIconCanvas {
 	public void addImageOverlay(Rectangle overlayBounds) {
 		if (overlayBounds == null || overlayBounds.isEmpty())
 			return;
-		if (!imageOverlays.contains(overlayBounds))
+		if (!imageOverlays.contains(overlayBounds)) {
 			imageOverlays.add(overlayBounds);
+			redraw();
+		}
 	}
 
 	public void removeImageOverlay(Rectangle overlayBounds) {
 		if (overlayBounds == null || overlayBounds.isEmpty())
 			return;
 		imageOverlays.remove(overlayBounds);
+		redraw();
 	}
 	
 	
@@ -296,7 +299,7 @@ public class ImageButton extends ImageIconCanvas {
 	protected void doClickStop(Event e) {
 		if ((getStyle() & SWT.PUSH) != 0)
 			pressed = false;
-		else
+		else if ((getStyle() & SWT.TOGGLE) != 0)
 			pressed = !pressed;
 		redraw();
 
@@ -325,9 +328,7 @@ public class ImageButton extends ImageIconCanvas {
 		setToolTipText(baseTooltip);
 		
 		for (IImageButtonAreaHandler handler : areaHandlers) {
-			Rectangle handlerBounds = handler.getBounds(getSize());
-			//System.out.println(handlerBounds + " vs " + e.x + "/" + e.y);
-			if (handlerBounds.contains(e.x, e.y) && handler.isActive()) {
+			if (handler.isInBounds(e.x, e.y, getSize()) && handler.isActive()) {
 				handler.mouseEnter();
 				String tt = handler.getTooltip();
 				if (tt != null) {
@@ -360,7 +361,7 @@ public class ImageButton extends ImageIconCanvas {
 
 	protected void doMouseHover(MouseEvent e) {
 		for (IImageButtonAreaHandler handler : areaHandlers) {
-			if (handler.getBounds(getSize()).contains(e.x, e.y) && handler.isActive()) {
+			if (handler.isInBounds(e.x, e.y, getSize()) && handler.isActive()) {
 				setMousedArea(handler);
 				handler.mouseHover();
 				return;
@@ -370,7 +371,7 @@ public class ImageButton extends ImageIconCanvas {
 	}
 	protected void doMouseMove(MouseEvent e) {
 		for (IImageButtonAreaHandler handler : areaHandlers) {
-			if (handler.getBounds(getSize()).contains(e.x, e.y) && handler.isActive()) {
+			if (handler.isInBounds(e.x, e.y, getSize()) && handler.isActive()) {
 				setMousedArea(handler);
 				return;
 			}
@@ -401,7 +402,7 @@ public class ImageButton extends ImageIconCanvas {
 		redraw();
 		
 		for (IImageButtonAreaHandler handler : areaHandlers) {
-			if (handler.getBounds(getSize()).contains(e.x, e.y) && handler.isActive()) {
+			if (handler.isInBounds(e.x, e.y, getSize()) && handler.isActive()) {
 				handler.mouseExit();
 				String tt = handler.getTooltip();
 				if (tt != null)
