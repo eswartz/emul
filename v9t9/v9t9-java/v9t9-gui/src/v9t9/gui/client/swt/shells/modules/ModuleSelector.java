@@ -177,6 +177,7 @@ public class ModuleSelector extends Composite {
 	private Button addButton;
 
 	private Image modulesListImage;
+	private Image noModuleImage;
 
 	private Map<String, Image> stockImages = new HashMap<String, Image>();
 
@@ -552,6 +553,9 @@ public class ModuleSelector extends Composite {
 		lazyImageLoader = new LazyImageLoader(viewer, executor, stockModuleImage);
 		
 		modulesListImage = EmulatorGuiData.loadImage(getDisplay(), "icons/module_list.png");
+		noModuleImage = ImageUtils.scaleImage(getDisplay(),  
+				EmulatorGuiData.loadImage(getDisplay(), "icons/stock_no_module.png"),
+				new Point(MAX, MAX));
 		
 		viewer.setComparer(new IElementComparer() {
 			
@@ -629,8 +633,8 @@ public class ModuleSelector extends Composite {
 		moduleMap = new LinkedHashMap<URI, Collection<IModule>>();
 		
 		revertModules();
-		viewer.setInput(moduleMap);
-		viewer.expandToLevel(2);
+		viewer.setInput(new ModuleInput("No module",  moduleMap));
+		viewer.expandToLevel(3);
 		
 		viewer.setSelection(new StructuredSelection(moduleManager.getLoadedModules()), true);
 
@@ -664,11 +668,14 @@ public class ModuleSelector extends Composite {
 					
 					cell.setText(text);
 					cell.setImage(getModuleListImage());
-				} else {
+				} else if (cell.getElement() instanceof IModule) {
 					IModule module = (IModule) cell.getElement();
 					cell.setText(module.getName());
 					ModuleInfo info = module.getInfo();
 					cell.setImage(getOrLoadModuleImage(module, module, info != null ? info.getImagePath() : null));
+				} else {
+					cell.setText(String.valueOf(cell.getElement()));
+					cell.setImage(getNoModuleImage());
 				}
 			}
 		});
@@ -686,6 +693,8 @@ public class ModuleSelector extends Composite {
 				stockImages.clear();
 				if (modulesListImage != null)
 					modulesListImage.dispose();
+				if (noModuleImage != null)
+					noModuleImage.dispose();
 
 				if (tableFont != null)
 					tableFont.dispose();
@@ -1323,6 +1332,9 @@ public class ModuleSelector extends Composite {
 
 	public Image getModuleListImage() {
 		return modulesListImage;
+	}
+	public Image getNoModuleImage() {
+		return noModuleImage;
 	}
 
 }
