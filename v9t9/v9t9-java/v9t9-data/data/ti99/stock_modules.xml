@@ -109,7 +109,7 @@
   <module name="Mini Memory">
     <memoryEntries>
       <gromModuleEntry fileMd5="DBD9CD2FEB76E12F5FA290ED1E0409F7" fileName="minig.bin"/>
-      <romModuleEntry fileMd5="98CE13A825349736CBA2343BBD948B46" fileName="minic.bin"/>
+      <romModuleEntry fileMd5="98CE13A825349736CBA2343BBD948B46" fileName="minic.bin" fileMd5Limit="0x1000"/>
       <memoryEntry address="0x7000" domain="CPU" fileName="minir.bin" size="0x1000" stored="true"/>
     </memoryEntries>
   </module>
