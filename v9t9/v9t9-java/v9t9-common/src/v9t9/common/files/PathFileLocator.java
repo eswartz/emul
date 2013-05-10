@@ -402,8 +402,11 @@ public class PathFileLocator implements IPathFileLocator {
 
 		// JAR?
 		if (connection instanceof JarURLConnection) {
+			String ssp = directory.getSchemeSpecificPart();
+			if (ssp == null)
+				ssp = directory.getPath();
 			cachedListing = getJarDirectoryListing(uri.toURL(),
-					directory.getSchemeSpecificPart().substring(directory.getSchemeSpecificPart().lastIndexOf('!') + 1));
+					ssp.substring(ssp.lastIndexOf('!') + 1));
 
 			cachedListings.put(directory, cachedListing);
 			cachedListingModifiedTime.put(directory, connection.getLastModified());
@@ -693,6 +696,8 @@ public class PathFileLocator implements IPathFileLocator {
 		URLConnection connection = connect(uri);
 		is = connection.getInputStream();
 		
+		if (is == null)
+			throw new FileNotFoundException("failed to connect to " + uri);
 		return is;
 	}
 
@@ -843,10 +848,15 @@ public class PathFileLocator implements IPathFileLocator {
 							length > 0 ? length : size);
 					md5 = FileUtils.getMD5Hash(content);
 				}
+			} catch (NullPointerException e) {
+				// sun magic...
+				md5 = "";
+				logger.debug("can't fetch directory listing from " + uri, e);
 			} catch (FileNotFoundException e) {
 				// this happens when invalid filenames are located and the
 				// URI was not properly de/en-coded -- TODO
 				md5 = "";
+				logger.debug("can't fetch directory listing from " + uri, e);
 			}
 			md5Dir.put(key, md5);
 		}
@@ -878,7 +888,8 @@ public class PathFileLocator implements IPathFileLocator {
 							return uri; 
 						}
 					} catch (Throwable e) {
-						logger.error(ent + ": " + e.toString());
+						logger.error(ent + ": " + e.toString(), e);
+						e.printStackTrace();
 					}
 				}
 			} catch (FileNotFoundException e) {

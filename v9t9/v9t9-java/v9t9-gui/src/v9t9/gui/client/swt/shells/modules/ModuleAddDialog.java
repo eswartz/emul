@@ -156,6 +156,9 @@ public class ModuleAddDialog extends StatusDialog {
 		if (last != null) {
 			dbSelector.setText(last);
 			restored = true;
+		} else {
+			dbSelector.setText(machine.getSettings().getUserSettings().getConfigDirectory()
+					+ "modules.xml");
 		}
 
 		if (restored) {
@@ -561,6 +564,7 @@ public class ModuleAddDialog extends StatusDialog {
 		}
 		try {
 			try {
+				dbase.getParentFile().mkdirs();
 				ModuleDatabase.saveModuleListAndClose(machine.getMemory(),
 						new FileOutputStream(dbase),
 						null,

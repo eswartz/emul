@@ -62,7 +62,7 @@ public class FileUtils  {
 			}
 		} finally {
 			if (is != null) {
-				try { is.close(); } catch (IOException e) { }
+				try { is.close(); } catch (IOException e) { } 
 			}
 		}
 		return bos.toByteArray();
