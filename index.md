@@ -81,7 +81,7 @@ Recent Changes
 </li>
 <li>2013/04/27: make buttons more uniform when they have menus; make Load/Save State button a bit more intuitive to use without a menu   
 </li>
-<li>2013/04/18: dump Java Web Start approach since Java 7 doesn't like it at all, at all 
+<li>2013/04/18: ship V9t9 as a zip file only
 </li>
 <li>2013/03/30: fix issue closing V9t9 in OS X 
 </li>
