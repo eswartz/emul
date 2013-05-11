@@ -77,6 +77,10 @@ Recent Changes
 <ul>
 <li>2013/05/10: auto-detection of modules (including Mini Memory) and P-Code DSRs should be more reliable 
 </li>
+<li>2013/04/28: added Event Log button to review notifications that you may have missed  
+</li>
+<li>2013/04/27: make buttons more uniform when they have menus; make Load/Save State button a bit more intuitive to use without a menu   
+</li>
 <li>2013/04/18: dump Java Web Start approach since Java 7 doesn't like it at all, at all 
 </li>
 <li>2013/03/30: fix issue closing V9t9 in OS X 
