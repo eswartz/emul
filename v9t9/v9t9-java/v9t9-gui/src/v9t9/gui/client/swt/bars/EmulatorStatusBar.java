@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.TreeMap;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
@@ -35,6 +38,8 @@ import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.events.NotifyEvent.Level;
+import v9t9.common.events.IEventNotifierListener;
+import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
@@ -182,19 +187,62 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				}
 			}
 		);		
-		
 
-		createButton(IconConsts.EVENT_LOG,
-			"Review events", new SelectionAdapter() {
+
+		createEventLogButton(swtWindow, machine);
+		
+	}
+
+
+	private void createEventLogButton(final SwtWindow swtWindow, final IMachine machine) {
+		final boolean[] acknowledged = { true };
+		final BasicButton eventLogButton = new BasicButton(buttonBar, SWT.PUSH,
+				imageProvider, IconConsts.EVENT_LOG,
+				"Review events") {
+			/* (non-Javadoc)
+			 * @see v9t9.gui.client.swt.bars.ImageButton#drawImage(org.eclipse.swt.events.PaintEvent)
+			 */
+			@Override
+			protected void drawImage(PaintEvent e) {
+				int origAlpha = e.gc.getAlpha();
+				if (acknowledged[0]) {
+					e.gc.setAlpha(32);
+				}
+				super.drawImage(e);
+				e.gc.setAlpha(origAlpha);
+			}
+		};
+		final IEventNotifierListener eventListener = new IEventNotifierListener() {
+			
+			@Override
+			public void eventNotified(NotifyEvent event) {
+				acknowledged[0] = false;
+				eventLogButton.getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						eventLogButton.redraw();
+					}
+				});
+			}
+		};
+		machine.getEventNotifier().addListener(eventListener);
+		
+		eventLogButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					swtWindow.toggleToolShell(EventLogDialog.EVENT_LOG_ID, 
 							EventLogDialog.getToolShellFactory(machine, buttonBar, imageProvider));
+					acknowledged[0] = true;
 				}
 			}
 		);		
 		
-		
+		eventLogButton.addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				machine.getEventNotifier().removeListener(eventListener);
+			}
+		});
 	}
 
 
