@@ -68,6 +68,11 @@ import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 
 public class TI99Machine extends MachineBase {
 
+	/**
+	 * 
+	 */
+	private static final String MINI_MEMORY = "Mini Memory";
+
 	private static final Logger log = Logger.getLogger(TI99Machine.class);
 	
 	public static final String KEYBOARD_MODE_TI994A = "ti994a";
@@ -245,6 +250,36 @@ public class TI99Machine extends MachineBase {
 			String moduleName = module.getName();
 			if (TextUtils.isEmpty(moduleName) || !isASCII(moduleName)) {
 				iter.remove();
+				continue;
+			}
+			
+			// fixup specific modules
+			if (moduleName.equalsIgnoreCase(MINI_MEMORY)) {
+				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
+				if (infos.length == 2) {
+					MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleRom("minir.bin")
+							.withAddress(0x7000)
+							.withSize(0x1000)
+							.storable(true)
+							.create("Mini Memory Non-Volatile RAM");
+					module.addMemoryEntryInfo(info);
+					
+					// fixup earlier entry if present
+					for (MemoryEntryInfo xinfo : infos) {
+						if (xinfo.getDomainName().equals(IMemoryDomain.NAME_CPU)) {
+							URI uri = getRomPathFileLocator().findFile(xinfo.getFilename());
+							try {
+								int limit = 0x1000;
+								String md5 = getRomPathFileLocator().getContentMD5(uri, limit);
+								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
+								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5_LIMIT, limit);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
+						}
+					}
+				}
 			}
 		}
 		List<IModule> modules = new ArrayList<IModule>(moduleMap.values());
@@ -366,20 +401,9 @@ public class TI99Machine extends MachineBase {
 		if (moduleName.length() > 0) {
 			// HACK
 			if ("Easy Bug".equalsIgnoreCase(moduleName)) {
-				moduleName = "Mini Memory";
+				moduleName = MINI_MEMORY;
 			}
 			module.setName(moduleName);
-		}
-		
-		String md5;
-		try {
-			int length = -1;
-			if ("Mini Memory".equals(moduleName) && fname.toLowerCase().endsWith("c.bin")) {
-				length = 0x1000;
-			}
-			md5 = getRomPathFileLocator().getContentMD5(uri, length);
-		} catch (IOException e) {
-			md5 = null;
 		}
 
 		char last = getModulePart(fname);
@@ -387,20 +411,20 @@ public class TI99Machine extends MachineBase {
 		case 'C':
 		case 'c': {
 			
-			injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length, md5);
+			injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length);
 			
 			break;
 		}
 		case 'D':
 		case 'd': {
-			injectModuleBank2Rom(module, databaseURI, moduleName, fname, 0, md5);
+			injectModuleBank2Rom(module, databaseURI, moduleName, fname, 0);
 			
 			break;
 		}
 
 		case 'G':
 		case 'g': {
-			injectModuleGrom(module, databaseURI, moduleName, fname, 0, md5);
+			injectModuleGrom(module, databaseURI, moduleName, fname, 0);
 			break;
 		}
 		
@@ -408,10 +432,10 @@ public class TI99Machine extends MachineBase {
 			log.debug("Unknown file naming for " + fname);
 			if (looksLikeBankedOr9900Code(content)) {
 				log.debug("Assuming content is module ROM");
-				injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length, md5);
+				injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length);
 			} else {
 				log.debug("Assuming content is module GROM");
-				injectModuleGrom(module, databaseURI, moduleName, fname, 0, md5);
+				injectModuleGrom(module, databaseURI, moduleName, fname, 0);
 			}
 			break;
 		}
@@ -459,17 +483,39 @@ public class TI99Machine extends MachineBase {
 	}
 
 	private void injectModuleGrom(IModule module, URI databaseURI,
-			String moduleName, String fileName, int fileOffset, String md5) {
+			String moduleName, String fileName, int fileOffset) {
 		MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleGrom(fileName)
 				.withOffset(fileOffset)
-				.withFileMD5(md5)
 				.withSize(-0xA000)
 				.create(moduleName);
+		fetchMD5(module, info);
 		module.addMemoryEntryInfo(info);		
 	}
 
+	/**
+	 * @param moduleName TODO
+	 * @param fileName
+	 * @return
+	 */
+	private void fetchMD5(IModule module, MemoryEntryInfo info) {
+		String md5;
+		try {
+			String fileName = info.getFilename() != null ? info.getFilename() : info.getFilename2();
+			URI uri = getRomPathFileLocator().findFile(fileName);
+			md5 = getRomPathFileLocator().getContentMD5(uri);
+			
+			if (info.getFilename2() != null) {
+				info.getProperties().put(MemoryEntryInfo.FILE2_MD5, md5);
+			} else {
+				info.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	private void injectModuleRom(IModule module, URI databaseURI,
-			String moduleName, String fileName, int fileOffset, int fileSize, String md5) {
+			String moduleName, String fileName, int fileOffset, int fileSize) {
 		MemoryEntryInfo info;
 		boolean found = false;
 		for (MemoryEntryInfo ex : module.getMemoryEntryInfos()) {
@@ -478,8 +524,8 @@ public class TI99Machine extends MachineBase {
 				ex.getProperties().put(MemoryEntryInfo.FILENAME, fileName);
 				ex.getProperties().put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
 				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
-				ex.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
 				ex.getProperties().put(MemoryEntryInfo.SIZE, -0x2000);
+				fetchMD5(module, ex);
 				found = true;
 				break;
 			} 
@@ -489,7 +535,6 @@ public class TI99Machine extends MachineBase {
 				// probably a new-format reversed PBX module
 				info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
 						.withOffset(fileOffset)
-						.withFileMD5(md5)
 						.withBankClass(StdMultiBankedMemoryEntry.class)
 						.withSize(-0x2000)
 						.isReversed(true)
@@ -497,18 +542,18 @@ public class TI99Machine extends MachineBase {
 			} else {
 				info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
 						.withOffset(fileOffset)
-						.withFileMD5(md5)
 						.withSize(-0x2000)
 						.create(moduleName);
 			}
+			
+			fetchMD5(module, info);
 			module.addMemoryEntryInfo(info);
 		}
 		
 	}
 
 	private void injectModuleBank2Rom(IModule module, URI databaseURI,
-			String moduleName, String fileName, int fileOffset, String md5) {
-
+			String moduleName, String fileName, int fileOffset) {
 		MemoryEntryInfo info;
 		boolean found = false;
 		for (MemoryEntryInfo ex : module.getMemoryEntryInfos()) {
@@ -518,7 +563,7 @@ public class TI99Machine extends MachineBase {
 				ex.getProperties().put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
 				ex.getProperties().put(MemoryEntryInfo.SIZE, -0x2000);
 				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
-				ex.getProperties().put(MemoryEntryInfo.FILE2_MD5, md5);
+				fetchMD5(module, ex);
 				found = true;
 				break;
 			} 
@@ -529,8 +574,8 @@ public class TI99Machine extends MachineBase {
 					.withFilename2(fileName)
 					.withOffset2(fileOffset)
 					.withBankClass(StdMultiBankedMemoryEntry.class)
-					.withFile2MD5(md5)
 					.create(moduleName);
+			fetchMD5(module, info);
 			module.addMemoryEntryInfo(info);
 		}
 		
@@ -617,26 +662,6 @@ public class TI99Machine extends MachineBase {
 			
 			if (module != null) {
 				moduleMap.put(file.getName(), module);
-				for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
-					ZipEntry ent = en.nextElement();
-					for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-						try {
-							if (info.getFilename().contains(ent.getName())) {
-								int length = -1;
-								if ("Mini Memory".equalsIgnoreCase(module.getName())) {
-									length = 0x1000;
-								}
-								String md5 = getRomPathFileLocator().getContentMD5(URI.create(info.getFilename()), length);
-								info.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
-							} else if (info.getFilename2() != null && info.getFilename2().contains(ent.getName())) {
-								info.getProperties().put(MemoryEntryInfo.FILE2_MD5,
-										getRomPathFileLocator().getContentMD5(URI.create(info.getFilename2())));
-							}
-						} catch (IOException e) {
-							// okay, ignore
-						}
-					}
-				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -746,8 +771,7 @@ public class TI99Machine extends MachineBase {
 						injectModuleRom(module, databaseURI, moduleName, 
 								makeZipUriString(zipUri, rom.getAttribute("name")),
 								HexUtils.parseInt(rom.getAttribute("offset")),
-								HexUtils.parseInt(rom.getAttribute("size")),
-								null
+								HexUtils.parseInt(rom.getAttribute("size"))
 								);
 					}
 				}
@@ -755,16 +779,14 @@ public class TI99Machine extends MachineBase {
 					for (Element rom : XMLUtils.getChildElementsNamed(dataArea, "rom")) {
 						injectModuleBank2Rom(module, databaseURI, moduleName, 
 								makeZipUriString(zipUri, rom.getAttribute("name")),
-								HexUtils.parseInt(rom.getAttribute("offset")),
-								null);
+								HexUtils.parseInt(rom.getAttribute("offset")));
 					}
 				}
 				else if (name.equals("grom_socket")) {
 					for (Element rom : XMLUtils.getChildElementsNamed(dataArea, "rom")) {
 						injectModuleGrom(module, databaseURI, moduleName, 
 								makeZipUriString(zipUri, rom.getAttribute("name")),
-								HexUtils.parseInt(rom.getAttribute("offset")),
-								null);
+								HexUtils.parseInt(rom.getAttribute("offset")));
 					}
 				}
 			}
@@ -850,17 +872,17 @@ public class TI99Machine extends MachineBase {
 
 			if (type.equals("rom_socket")) {
 				injectModuleRom(module, databaseURI, moduleName, uri,
-						0, -0x2000, null
+						0, -0x2000
 						);
 			}
 			else if (type.equals("rom2_socket")) {
 				injectModuleBank2Rom(module, databaseURI, moduleName, uri, 
-						0, null
+						0
 						);
 			}
 			else if (type.equals("grom_socket")) {
 				injectModuleGrom(module, databaseURI, moduleName, uri,
-						0, null);
+						0);
 			}
 			
 		}

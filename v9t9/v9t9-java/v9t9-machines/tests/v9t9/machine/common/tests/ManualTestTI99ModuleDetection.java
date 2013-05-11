@@ -19,6 +19,8 @@ import org.junit.Test;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
@@ -108,6 +110,8 @@ public class ManualTestTI99ModuleDetection {
 				System.out.println("\t" + file);
 			}
 			allFiles.removeAll(files);
+			
+			verifySpecificModule(module);
 		}
 		
 		StringBuilder sb = new StringBuilder();
@@ -119,6 +123,38 @@ public class ManualTestTI99ModuleDetection {
 			System.err.print(sb);
 			fail(sb.toString());
 		}
+	}
+
+	/**
+	 * @param module
+	 */
+	private void verifySpecificModule(IModule module) {
+		if (verifyMiniMemory(module))
+			return;
+	}
+
+	/**
+	 * @param module
+	 * @return
+	 */
+	private boolean verifyMiniMemory(IModule module) {
+		if (module.getName().equalsIgnoreCase("Easy Bug")) {
+			fail("should be named Mini Memory");
+		}
+		else if (module.getName().equalsIgnoreCase("Mini Memory")) {
+			// make sure it has the nonvolatile RAM
+			MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
+			for (MemoryEntryInfo info : infos) {
+				if (info.getDomainName().equals(IMemoryDomain.NAME_CPU)
+						&& info.getAddress() == 0x6000) {
+					assertEquals(0x1000, info.getFileMd5Limit());
+					assertEquals("9BCF230E42BB280199A04F0E0C4797C1", info.getFileMD5());
+				}
+			}
+			assertEquals(3, infos.length);
+			return true;
+		}
+		return false;
 	}
 	
 }
