@@ -65,7 +65,13 @@ public class MemoryEntryInfoBuilder {
 		if (file2MD5 != null) props.put(MemoryEntryInfo.FILE2_MD5, file2MD5);
 		return this;
 	}
+
+	public MemoryEntryInfoBuilder withFile2MD5Limit(int md5Limit) {
+		props.put(MemoryEntryInfo.FILE2_MD5_LIMIT, md5Limit);
+		return this;
+	}
 	
+
 	public MemoryEntryInfoBuilder withFilenameProperty(SettingSchema schema) {
 		if (schema != null) props.put(MemoryEntryInfo.FILENAME_PROPERTY, schema);
 		return this;

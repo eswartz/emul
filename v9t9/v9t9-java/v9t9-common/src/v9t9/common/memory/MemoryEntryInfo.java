@@ -36,6 +36,8 @@ public class MemoryEntryInfo {
 	public final static String FILE_MD5_LIMIT = "fileMd5Limit";
 	/** String, hex-encoded */
 	public final static String FILE2_MD5 = "file2Md5";
+	/** integer */
+	public final static String FILE2_MD5_LIMIT = "file2Md5Limit";
 	/** String */
 	public final static String DOMAIN = "domain";
 	/** Integer */
@@ -243,6 +245,12 @@ public class MemoryEntryInfo {
 		return getInt(FILE_MD5_LIMIT);
 	}
 
+	/**
+	 * @return the file2Md5Limit
+	 */
+	public int getFile2Md5Limit() {
+		return getInt(FILE2_MD5_LIMIT);
+	}
 
 	/**
 	 * @param storedInfo

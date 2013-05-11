@@ -332,6 +332,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				getStringAttribute(el, MemoryEntryInfo.FILE_MD5, info);
 				getIntAttribute(el, MemoryEntryInfo.FILE_MD5_LIMIT, info);
 				getStringAttribute(el, MemoryEntryInfo.FILE2_MD5, info);
+				getIntAttribute(el, MemoryEntryInfo.FILE2_MD5_LIMIT, info);
 				getStringAttribute(el, MemoryEntryInfo.DOMAIN, info);
 				getIntAttribute(el, MemoryEntryInfo.ADDRESS, info);
 				getIntAttribute(el, MemoryEntryInfo.SIZE, info);

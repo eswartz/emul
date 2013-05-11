@@ -126,9 +126,11 @@ public class PCodeDsr implements IDsrHandler9900 {
 		.withAddress(0x4000)
 		.withSize(0x2000)
 		.withFilename("pCodeRomA.bin")
-		.withFileMD5("3A202E35036CD58C76BD49D0F446958D")
+		.withFileMD5("63DACF33F9C4B628F258A9DD68274CB6")
+		.withFileMD5Limit(0x1BFC)  // there are two MMIO areas here and at the end; don't be too picky 
 		.withFilename2("pCodeRomB.bin")
-		.withFile2MD5("0D64C8CD01E473933588547D2D7889F2")
+		.withFile2MD5("C78D7AC5EBF24F8AB9A599DD5E6A6D8E")
+		.withFile2MD5Limit(0x1BFC)  // there are two MMIO areas here and at the end; don't be too picky 
 		.withBankClass(PCodeDsrRomBankedMemoryEntry.class)
 		.create("P-Code DSR ROM");
 	
@@ -138,7 +140,8 @@ public class PCodeDsr implements IDsrHandler9900 {
 		.withAddress(0x4000)
 		.withSize(0x2000)
 		.withFilename("pCodeRomA.bin")
-		.withFileMD5("3A202E35036CD58C76BD49D0F446958D")
+		.withFileMD5("63DACF33F9C4B628F258A9DD68274CB6")
+		.withFileMD5Limit(0x1BFC)  // there are two MMIO areas here and at the end; don't be too picky
 		.create("P-Code DSR ROM (bank 1)");
 
 	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
@@ -147,7 +150,8 @@ public class PCodeDsr implements IDsrHandler9900 {
 		.withAddress(0x4000)
 		.withSize(0x2000)
 		.withFilename("pCodeRomB.bin")
-		.withFileMD5("0D64C8CD01E473933588547D2D7889F2")
+		.withFileMD5("C78D7AC5EBF24F8AB9A599DD5E6A6D8E")
+		.withFileMD5Limit(0x1BFC)  // there are two MMIO areas here and at the end; don't be too picky 
 		.create("P-Code DSR ROM (bank 2)");
 	
 	public static MemoryEntryInfo pcodeGromMemoryEntryInfo = MemoryEntryInfoBuilder
