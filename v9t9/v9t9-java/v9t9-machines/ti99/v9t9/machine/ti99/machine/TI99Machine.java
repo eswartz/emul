@@ -218,7 +218,9 @@ public class TI99Machine extends MachineBase {
 			if (file.isDirectory())
 				continue;
 
-			if (analyzeV9t9ModuleFile(databaseURI, file.toURI(), file.getAbsolutePath(), moduleMap))
+			if (analyzeV9t9ModuleFile(databaseURI, file.toURI(), file.getAbsolutePath(), 
+					getModuleBaseFile(file.getName()),
+					moduleMap))
 				continue;
 			
 			if (analyzeGRAMKrackerModuleFile(databaseURI, file, moduleMap))
@@ -237,7 +239,7 @@ public class TI99Machine extends MachineBase {
 		// remove spurious modules
 		for (Iterator<IModule> iter = moduleMap.values().iterator(); iter.hasNext(); ) {
 			IModule module = iter.next();
-			System.out.println("module: " + module);
+			//System.out.println("module: " + module);
 			log.info("module: " + module);
 			
 			String moduleName = module.getName();
@@ -306,16 +308,16 @@ public class TI99Machine extends MachineBase {
 	 * by the final filename letter ('C' = console module ROM, 'D' = console module ROM,
 	 * bank #2, 'G' = module GROM). 
 	 */
-	private boolean analyzeV9t9ModuleFile(URI databaseURI, URI uri,
-			String fname,
-			Map<String, IModule> moduleMap) {
-		if (!fname.toLowerCase().endsWith(".bin"))
-			return false;
-		
-		String key = getModuleBaseFile(fname);
-		
-		return analyzeV9t9ModuleFile(databaseURI, uri, fname, key, moduleMap);
-	}
+//	private boolean analyzeV9t9ModuleFile(URI databaseURI, URI uri,
+//			String fname, String key,
+//			Map<String, IModule> moduleMap) {
+//		if (!fname.toLowerCase().endsWith(".bin"))
+//			return false;
+//		
+////		String key = getModuleBaseFile(fname);
+//		
+//		return analyzeV9t9ModuleFile(databaseURI, uri, fname, key, moduleMap);
+//	}
 
 	/**
 	 * Look for V9t9 module parts -- bare binaries with pieces identified
@@ -334,7 +336,7 @@ public class TI99Machine extends MachineBase {
 				File file = new File(uri);
 				try {
 					FDR fdr = FDRFactory.createFDR(file);
-					if (fdr != null) {
+					if (fdr != null && isASCII(fdr.getFileName())) {
 						fdr.validate();
 						// hmm, likely a file, and not a module
 						log.debug("Not treating " + fname + " as module since it looks like a file: " + fdr);
@@ -352,9 +354,8 @@ public class TI99Machine extends MachineBase {
 			return false;
 		}
 		
-		String moduleName = readHeaderName(content);
+		String moduleName = readHeaderName(fname, content, 0x6000);
 	
-		moduleName = cleanupTitle(moduleName);
 		log.debug("Module Name: " + moduleName);
 
 		
@@ -615,7 +616,7 @@ public class TI99Machine extends MachineBase {
 			}
 			
 			if (module != null) {
-				moduleMap.put(module.getName(), module);
+				moduleMap.put(file.getName(), module);
 				for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
 					ZipEntry ent = en.nextElement();
 					for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
@@ -687,7 +688,7 @@ public class TI99Machine extends MachineBase {
 						}
 					} else {
 						// associate with appropriate module
-						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), moduleMap)) {
+						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), file.getName(), moduleMap)) {
 							log.debug("Matched " + ent.getName() + " from " + file.getName());
 							// nice
 						}
@@ -805,6 +806,11 @@ public class TI99Machine extends MachineBase {
 		StreamXMLStorage layout = readXMLAndClose(lis, "romset", "layout.xml");
 		StreamXMLStorage metainf = readXMLAndClose(mis, "meta-inf", "meta-inf.xml");
 		
+		if (metainf == null || layout == null) {
+			log.error("problem parsing layout.xml or meta-inf.xml from " + zipUri);
+			return null;
+		}
+		
 		Element moduleNameEl = XMLUtils.getChildElementNamed(metainf.getDocumentElement(), "name");
 		if (moduleNameEl == null) {
 			log.debug("unexpected format, no <name>");
@@ -881,12 +887,17 @@ public class TI99Machine extends MachineBase {
 	 * @param file
 	 * @return
 	 */
-	private String readHeaderName(byte[] content) {
+	private String readHeaderName(String fname, byte[] content, int baseAddr) {
 		for (int offs = 0; offs < content.length; offs += 0x2000) {
 			log.debug("Module Header scan @ " + HexUtils.toHex4(offs) 
 					+ ": header byte =  " + HexUtils.toHex2(content[offs]));
 			if (content[offs] != (byte) 0xaa) {
 				continue;
+			}
+			
+			// see if it's auto-start
+			if (content[offs + 1] < 0) {
+				return new File(fname).getName() + " (auto-start)";
 			}
 			
 			// program list
@@ -899,14 +910,17 @@ public class TI99Machine extends MachineBase {
 			String name;
 			int next;
 			do {
-				next = readAddr(content, offs + (addr & 0x1fff));
-				name = readString(content, offs + (addr & 0x1fff) + 4);
+				next = readAddr(content, (addr - baseAddr));
+				name = readString(content, (addr - baseAddr) + 4);
 				log.debug("Fetched name: " + name) ;
 				addr = next;
-			} while (next >= 0x6000);		/* else not really module? */
+			} while (next >= baseAddr);		/* else not really module? */
 			
-			log.debug("Using name: " + name) ;
-			return name.trim();
+			if (isASCII(name)) {
+				log.debug("Using name: " + name) ;
+				
+				return cleanupTitle(name);
+			}
 		}
 		return "";
 	}
@@ -928,9 +942,11 @@ public class TI99Machine extends MachineBase {
 	 * @return
 	 */
 	private String readString(byte[] content, int addr) {
+		if (addr < 0 || addr >= content.length)
+			return "";
 		int len = content[addr++] & 0xff;
 		StringBuilder sb = new StringBuilder();
-		while (len != 0 && addr < content.length) {
+		while (len != 0 && addr >= 0 && addr < content.length) {
 			sb.append((char) content[addr++]);
 			len--;
 		}
@@ -939,14 +955,19 @@ public class TI99Machine extends MachineBase {
 
 	/**
 	 * @param content
-	 * @param i
+	 * @param addr
 	 * @return
 	 */
-	private int readAddr(byte[] content, int i) {
-		return ((content[i] << 8) & 0xff00) | (content[i+1] & 0xff);
+	private int readAddr(byte[] content, int addr) {
+		if (addr >= 0 && addr < content.length - 1)
+			return ((content[addr] << 8) & 0xff00) | (content[addr+1] & 0xff);
+		else
+			return 0;
 	}
 	
 	private String cleanupTitle(String allCaps) {
+		allCaps = allCaps.trim();
+		
 		// remove spurious quotes
 		allCaps = TextUtils.unquote(allCaps, '"');
 		

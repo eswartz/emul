@@ -10,11 +10,17 @@
  */
 package v9t9.common.modules;
 
+import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
+import v9t9.common.files.IPathFileLocator;
 import v9t9.common.memory.MemoryEntryInfo;
+import ejs.base.utils.TextUtils;
 
 /**
  * @author ejs
@@ -160,4 +166,50 @@ public class Module implements IModule {
 //		this.imagePath = imagePath;
 //		
 //	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModule#getUsedFiles()
+	 */
+	@Override
+	public Collection<File> getUsedFiles(IPathFileLocator locator) {
+		Set<File> files = new TreeSet<File>();
+		for (MemoryEntryInfo info : getMemoryEntryInfos()) {
+			File file;
+			file = getFileFrom(locator, info.getFilename());
+			if (file != null)
+				files.add(file);
+			file = getFileFrom(locator, info.getFilename2());
+			if (file != null)
+				files.add(file);
+		}
+		return files;
+	}
+
+	/**
+	 * @param locator
+	 * @param filename2
+	 * @return
+	 */
+	private File getFileFrom(IPathFileLocator locator, String filename) {
+		if (TextUtils.isEmpty(filename))
+			return null;
+		URI uri = locator.findFile(filename);
+		if (uri == null)
+			return null;
+		try {
+			return new File(uri);
+		} catch (IllegalArgumentException e) {
+			if (uri.getScheme().equals("jar")) {
+				uri = URI.create(uri.getSchemeSpecificPart());
+				if (uri.getScheme().equals("file")) {
+					String ssp = uri.getSchemeSpecificPart();
+					int idx = ssp.lastIndexOf('!');
+					if (idx >= 0)
+						ssp = ssp.substring(0, idx);
+					return new File(ssp);
+				}
+			}
+			return null;
+		}
+	}
 }

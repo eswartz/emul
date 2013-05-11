@@ -34,11 +34,11 @@ import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
  * @author ejs
  *
  */
-public class StandardMachineModel extends BaseTI99MachineModel {
+public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 
 	public static final String ID = "StandardTI994A";
 
-	public StandardMachineModel() {
+	public StandardTI994AMachineModel() {
 	}
 
 	/* (non-Javadoc)

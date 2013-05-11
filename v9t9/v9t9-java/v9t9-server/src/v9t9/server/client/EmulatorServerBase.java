@@ -28,7 +28,7 @@ import v9t9.engine.memory.GplMmio;
 import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
 import v9t9.machine.ti99.machine.EnhancedTI994AMachineModel;
-import v9t9.machine.ti99.machine.StandardMachineModel;
+import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
 import v9t9.server.MachineModelFactory;
 import v9t9.server.settings.SettingsHandler;
 import v9t9.server.settings.WorkspaceSettings;
@@ -43,7 +43,7 @@ public abstract class EmulatorServerBase {
 
 	static {
 		MachineModelFactory.INSTANCE.register(
-				StandardMachineModel.ID, StandardMachineModel.class);
+				StandardTI994AMachineModel.ID, StandardTI994AMachineModel.class);
 		MachineModelFactory.INSTANCE.register(
 				EnhancedTI994AMachineModel.ID, EnhancedTI994AMachineModel.class);
 		MachineModelFactory.INSTANCE.register(

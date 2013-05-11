@@ -28,7 +28,7 @@ import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryEntryFactory;
-import v9t9.machine.ti99.machine.StandardMachineModel;
+import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
 import ejs.base.properties.IProperty;
 
 /**
@@ -75,7 +75,7 @@ public class MigrateModuleXML {
 			InputStream is = new FileInputStream(file);
 			
 			try {
-				ModuleInfoDatabase moduleInfoDb = ModuleInfoDatabase.loadModuleInfo(new StandardMachineModel().createMachine(settings));
+				ModuleInfoDatabase moduleInfoDb = ModuleInfoDatabase.loadModuleInfo(new StandardTI994AMachineModel().createMachine(settings));
 				List<IModule> modules = ModuleDatabase.loadModuleListAndClose(memory, moduleInfoDb, is, dbUri);
 				
 				for (@SuppressWarnings("unused") IModule module : modules) {

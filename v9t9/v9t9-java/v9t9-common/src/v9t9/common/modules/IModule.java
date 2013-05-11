@@ -10,9 +10,12 @@
  */
 package v9t9.common.modules;
 
+import java.io.File;
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 
+import v9t9.common.files.IPathFileLocator;
 import v9t9.common.memory.MemoryEntryInfo;
 
 /**
@@ -36,4 +39,5 @@ public interface IModule {
 	ModuleInfo getInfo();
 	void setInfo(ModuleInfo info);
 
+	Collection<File> getUsedFiles(IPathFileLocator locator);
 }

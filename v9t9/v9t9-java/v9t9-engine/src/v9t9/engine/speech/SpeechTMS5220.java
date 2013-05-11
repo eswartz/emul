@@ -23,7 +23,6 @@ import java.io.IOException;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.demos.IDemoHandler;
-import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;

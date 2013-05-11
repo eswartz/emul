@@ -38,7 +38,6 @@ import v9t9.common.files.IFileImportHandler;
 import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.files.NativeFileFactory;
 import v9t9.common.machine.IMachine;
-import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 
 /**
@@ -272,16 +271,11 @@ public class FileImportHandler implements IFileImportHandler {
 		IModule theMatch = null;
 		String matchPattern = ".*/?"+Pattern.quote(file.getName())+"/?.*";
 		for (IModule module : ents) {
-			for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-				if (info.getFilename() != null && info.getFilename().matches(matchPattern)) {
+			for (File modFile : module.getUsedFiles(machine.getRomPathFileLocator())) {
+				if (modFile.getName().matches(matchPattern)) {
 					theMatch = module;
 					break;
 				}
-				if (info.getFilename2() != null && info.getFilename2().matches(matchPattern)) {
-					theMatch = module;
-					break;
-				}
-						
 			}
 			if (theMatch != null)
 				break;

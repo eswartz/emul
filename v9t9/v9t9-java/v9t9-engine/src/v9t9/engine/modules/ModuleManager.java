@@ -26,7 +26,6 @@ import org.apache.log4j.Logger;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
-import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;

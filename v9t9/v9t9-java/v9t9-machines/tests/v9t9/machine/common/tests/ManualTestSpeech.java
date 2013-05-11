@@ -22,7 +22,7 @@ import v9t9.common.speech.TMS5220Consts;
 import v9t9.engine.speech.LPCSpeech;
 import v9t9.engine.speech.SpeechTMS5220;
 import v9t9.engine.speech.encode.SpeechDataSender;
-import v9t9.machine.ti99.machine.StandardMachineModel;
+import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
 
 /**
  * @author ejs
@@ -75,7 +75,7 @@ public class ManualTestSpeech {
 		
 		DataFiles.addSearchPath(settings, "/usr/local/src/v9t9-data/roms");
 		DataFiles.addSearchPath(settings, "l:/src/v9t9-data/roms");
-		IMachine machine = new StandardMachineModel().createMachine(settings);
+		IMachine machine = new StandardTI994AMachineModel().createMachine(settings);
 		SpeechTMS5220 tms5220 = (SpeechTMS5220) machine.getSpeech();
 		
 		settings.get(ISpeechChip.settingLogSpeech).setInt(1);

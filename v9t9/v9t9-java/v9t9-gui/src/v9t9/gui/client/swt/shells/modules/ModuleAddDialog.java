@@ -56,8 +56,8 @@ import org.eclipse.swt.widgets.Text;
 import org.ejs.gui.common.DirectoryDialogHelper;
 
 import v9t9.common.events.NotifyException;
+import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
-import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
@@ -180,6 +180,13 @@ public class ModuleAddDialog extends StatusDialog {
 	}
 
 	static class DiscoveredModuleLabelProvider extends BaseLabelProvider implements ITableLabelProvider {
+		private IPathFileLocator locator;
+		/**
+		 * 
+		 */
+		public DiscoveredModuleLabelProvider(IPathFileLocator locator) {
+			this.locator = locator;
+		}
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
 		 */
@@ -189,18 +196,12 @@ public class ModuleAddDialog extends StatusDialog {
 			if (columnIndex == 0) {
 				return module.getName();
 			} else {
+				Collection<File> coveredFiles = module.getUsedFiles(locator);
 				StringBuilder sb = new StringBuilder();
-				for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-					if (info.getFilename() != null) {
-						if (sb.length() > 0)
-							sb.append(", ");
-						sb.append(new File(info.getFilename()).getName());
-					}
-					if (info.getFilename2() != null) {
-						if (sb.length() > 0)
-							sb.append(", ");
-						sb.append(new File(info.getFilename2()).getName());
-					}
+				for (File file : coveredFiles) {
+					if (sb.length() > 0)
+						sb.append(", ");
+					sb.append(file.getName());
 				}
 				return sb.toString();
 			}
@@ -242,7 +243,7 @@ public class ModuleAddDialog extends StatusDialog {
 		filesColumn = new TableViewerColumn(discoveredList, SWT.LEFT | SWT.RESIZE);
 		filesColumn.getColumn().setText("Files");
 		
-		discoveredList.setLabelProvider(new DiscoveredModuleLabelProvider());
+		discoveredList.setLabelProvider(new DiscoveredModuleLabelProvider(machine.getRomPathFileLocator()));
 		discoveredList.setContentProvider(new ArrayContentProvider());
 		discoveredList.setInput(discoveredModules);
 		

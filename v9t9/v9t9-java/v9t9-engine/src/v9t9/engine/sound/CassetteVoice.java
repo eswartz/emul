@@ -21,7 +21,6 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import v9t9.common.cpu.ICpu;
-import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.hardware.CassetteConsts;
 import v9t9.common.machine.IMachine;

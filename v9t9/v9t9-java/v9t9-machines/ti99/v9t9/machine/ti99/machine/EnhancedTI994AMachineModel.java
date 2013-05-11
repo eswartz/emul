@@ -21,7 +21,7 @@ import v9t9.machine.ti99.memory.EnhancedTI994AMemoryModel;
  * @author ejs
  *
  */
-public class EnhancedTI994AMachineModel extends StandardMachineModel {
+public class EnhancedTI994AMachineModel extends StandardTI994AMachineModel {
 
 	public static final String ID = "EnhancedTI994A";
 	

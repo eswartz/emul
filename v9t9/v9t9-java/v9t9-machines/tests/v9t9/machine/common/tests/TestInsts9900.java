@@ -20,7 +20,7 @@ import v9t9.common.machine.IMachineModel;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.Status9900;
-import v9t9.machine.ti99.machine.StandardMachineModel;
+import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
 import v9t9.machine.ti99.memory.ExpRamArea;
 
 public class TestInsts9900  {
@@ -31,7 +31,7 @@ public class TestInsts9900  {
 
 	@Before
 	public void setup() throws Exception {
-        IMachineModel model = new StandardMachineModel();
+        IMachineModel model = new StandardTI994AMachineModel();
         assertNotNull(model);
         settings = new BasicSettingsHandler();
         machine = model.createMachine(settings);

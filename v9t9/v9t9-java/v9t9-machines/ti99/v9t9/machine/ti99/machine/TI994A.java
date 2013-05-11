@@ -31,7 +31,7 @@ public class TI994A extends TI99Machine {
 	protected byte currentMode;
 	private IMemoryWriteListener keyboardModeListener;
 	public TI994A(ISettingsHandler settings) {
-		this(settings, new StandardMachineModel());
+		this(settings, new StandardTI994AMachineModel());
 	}
 	
     public TI994A(ISettingsHandler settings, IMachineModel machineModel) {

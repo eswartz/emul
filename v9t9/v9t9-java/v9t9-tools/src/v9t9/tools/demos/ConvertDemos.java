@@ -45,7 +45,7 @@ import v9t9.engine.demos.events.VideoWriteDataEvent;
 import v9t9.engine.demos.events.VideoWriteRegisterEvent;
 import v9t9.engine.demos.format.old.OldDemoFormatOutputStream;
 import v9t9.machine.f99b.machine.F99bMachineModel;
-import v9t9.machine.ti99.machine.StandardMachineModel;
+import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
 
 /**
  * @author ejs
@@ -96,7 +96,7 @@ public class ConvertDemos {
 		}
 		
 		if (model == null) {
-			model = new StandardMachineModel();
+			model = new StandardTI994AMachineModel();
 		}
 		
 		cvt = new ConvertDemos(model);
