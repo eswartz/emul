@@ -45,6 +45,7 @@ import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
@@ -72,6 +73,8 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
@@ -1026,6 +1029,21 @@ public class ModuleSelector extends Composite {
 			}
 		});
 		
+		viewer.getTree().addTraverseListener(new TraverseListener() {
+			
+			@Override
+			public void keyTraversed(TraverseEvent e) {
+				if (e.detail == SWT.TRAVERSE_ARROW_NEXT) {
+					traverseTree(1);
+				} else if (e.detail == SWT.TRAVERSE_PAGE_NEXT) {
+					traverseTree(8);
+				} else if (e.detail == SWT.TRAVERSE_ARROW_PREVIOUS) {
+					traverseTree(-1);
+				} else if (e.detail == SWT.TRAVERSE_PAGE_PREVIOUS) {
+					traverseTree(-8);
+				} 
+			}
+		});
 		filterText.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent e) {
 				if (viewer.getControl().isDisposed())
@@ -1065,6 +1083,39 @@ public class ModuleSelector extends Composite {
 		});
 		
 	}
+
+	/**
+	 * @param i
+	 */
+	protected void traverseTree(int step) {
+		ITreeContentProvider cp = ((ITreeContentProvider) viewer.getContentProvider());
+		List<Object> flatList = new ArrayList<Object>();
+		addToList(cp, viewer.getInput(), flatList);
+		
+		IStructuredSelection sel = (IStructuredSelection) viewer.getSelection();
+		int index = 0;
+		if (!sel.isEmpty()) {
+			index = flatList.indexOf(sel.getFirstElement());
+		}
+		int newIndex = Math.max(0, Math.min(flatList.size() - 1, index + step));
+		if (newIndex >= 0 && newIndex < flatList.size()) {
+			viewer.setSelection(new StructuredSelection(flatList.get(newIndex)));
+		}
+	}
+
+
+	private void addToList(ITreeContentProvider cp, Object parent,
+			List<Object> flatList) {
+		flatList.add(parent);
+		Object[] kids = cp.getChildren(parent);
+		if (kids == null)
+			return;
+		for (Object kid : kids) {
+			addToList(cp, kid, flatList);
+		}
+	}
+
+
 
 	/**
 	 * @param softReset if true, just reset CPU, else if false, reset whole machine 
