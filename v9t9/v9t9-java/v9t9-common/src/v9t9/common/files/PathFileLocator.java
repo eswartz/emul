@@ -843,6 +843,11 @@ public class PathFileLocator implements IPathFileLocator {
 					md5 = "";
 				}
 				else {
+					// HACK: ignore trailing garbage
+					if (uri.toString().endsWith(".bin") && size > 0x1000 && (size & 0x3ff) >= 0x200) {
+						size &= ~0x3ff;
+					}
+					
 					InputStream is = createInputStream(uri);
 					byte[] content = FileUtils.readInputStreamContentsAndClose(is, 
 							length > 0 ? length : size);

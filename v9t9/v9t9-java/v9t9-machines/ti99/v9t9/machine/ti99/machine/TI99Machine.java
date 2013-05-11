@@ -362,12 +362,21 @@ public class TI99Machine extends MachineBase {
 		if (module == null) {
 			module = new Module(databaseURI, key);
 		}
-		if (moduleName.length() > 0)
+		if (moduleName.length() > 0) {
+			// HACK
+			if ("Easy Bug".equalsIgnoreCase(moduleName)) {
+				moduleName = "Mini Memory";
+			}
 			module.setName(moduleName);
+		}
 		
 		String md5;
 		try {
-			md5 = getRomPathFileLocator().getContentMD5(uri);
+			int length = -1;
+			if ("Mini Memory".equals(moduleName) && fname.toLowerCase().endsWith("c.bin")) {
+				length = 0x1000;
+			}
+			md5 = getRomPathFileLocator().getContentMD5(uri, length);
 		} catch (IOException e) {
 			md5 = null;
 		}
@@ -612,8 +621,12 @@ public class TI99Machine extends MachineBase {
 					for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
 						try {
 							if (info.getFilename().contains(ent.getName())) {
-								info.getProperties().put(MemoryEntryInfo.FILE_MD5,
-										getRomPathFileLocator().getContentMD5(URI.create(info.getFilename())));
+								int length = -1;
+								if ("Mini Memory".equalsIgnoreCase(module.getName())) {
+									length = 0x1000;
+								}
+								String md5 = getRomPathFileLocator().getContentMD5(URI.create(info.getFilename()), length);
+								info.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
 							} else if (info.getFilename2() != null && info.getFilename2().contains(ent.getName())) {
 								info.getProperties().put(MemoryEntryInfo.FILE2_MD5,
 										getRomPathFileLocator().getContentMD5(URI.create(info.getFilename2())));
