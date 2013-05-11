@@ -259,8 +259,9 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	 */
     @Override
 	public void loadSymbolsAndClose(InputStream is) throws IOException {
+    	BufferedReader reader = null;
     	try {
-    		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+			reader = new BufferedReader(new InputStreamReader(is));
     		String line;
     		while ((line = reader.readLine()) != null) {
     			int idx = line.indexOf(' ');
@@ -276,7 +277,11 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
     		}
     		
     	} finally {
-    		is.close();
+    		if (reader != null) {
+    			reader.close();
+    		} else {
+    			is.close();
+    		}
     	}
     }
     

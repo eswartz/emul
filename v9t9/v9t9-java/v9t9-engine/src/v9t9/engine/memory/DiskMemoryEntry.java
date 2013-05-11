@@ -97,7 +97,7 @@ public class DiskMemoryEntry extends MemoryEntry {
                 InputStream is = locator.createInputStream(uri);
                 FileUtils.skipFully(is, storedInfo.fileoffs);
 				byte[] data = FileUtils.readInputStreamContentsAndClose(is, 
-						filesize );
+						filesize);
                 area.copyFromBytes(data);
 
             	bLoaded = true;

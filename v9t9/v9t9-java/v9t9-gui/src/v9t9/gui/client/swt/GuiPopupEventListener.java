@@ -48,7 +48,8 @@ public final class GuiPopupEventListener extends BaseGuiEventNotifier {
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
 				NotifyEvent event = notifier.fetchEvent(position);
-				if (event != null && event.isPriority && lastTooltip != null && !lastTooltip.isDisposed()) {
+				if (event != null 
+						&& event.isPriority && lastTooltip != null && !lastTooltip.isDisposed()) {
 					lastTooltip.dispose();
 					lastTooltip = null;
 				}

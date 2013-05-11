@@ -917,11 +917,6 @@ public class TI99Machine extends MachineBase {
 				continue;
 			}
 			
-			// see if it's auto-start
-			if (content[offs + 1] < 0) {
-				return new File(fname).getName() + " (auto-start)";
-			}
-			
 			// program list
 			int addr = readAddr(content, offs + 0x6);
 			log.debug("Program list @ " + HexUtils.toHex4(offs) + ": " + HexUtils.toHex4(addr));
@@ -943,7 +938,15 @@ public class TI99Machine extends MachineBase {
 				
 				return cleanupTitle(name);
 			}
+			
+			// see if it's auto-start
+			if (content[offs + 1] < 0) {
+				return new File(fname).getName() + " (auto-start)";
+			}
+
 		}
+		
+
 		return "";
 	}
 

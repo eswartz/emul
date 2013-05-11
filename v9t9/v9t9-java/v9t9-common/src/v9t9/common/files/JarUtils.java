@@ -10,6 +10,7 @@
  */
 package v9t9.common.files;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
@@ -57,8 +58,9 @@ public class JarUtils {
 		
 		String baseURLStr = jarUrlToFileURL.get(prefix);
 		if (baseURLStr == null) {
+			JarFile jarFile = null;
 			try {
-		        JarFile jarFile = getJarFile(new URL(jarUrl, prefix + "!/"));
+				jarFile = getJarFile(new URL(jarUrl, prefix + "!/"));
 		        String path = findJarPath(jarFile);
 		        
 			    // windows-ization
@@ -73,6 +75,13 @@ public class JarUtils {
 				logger.debug("bonk", e);
 				e.printStackTrace();
 				return jarUrl;
+			} finally {
+				if (jarFile != null) {
+					try {
+						jarFile.close();
+					} catch (IOException e) {
+					}
+				}
 			}
 		}
 		try {

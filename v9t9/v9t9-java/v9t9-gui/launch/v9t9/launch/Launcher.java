@@ -74,6 +74,12 @@ public class Launcher {
 					tmpDir, jarFile, jarURLs);
 			
 			classLoader = replaceClassLoader(jarURLs);
+			
+			try {
+				jarFile.close();
+			} catch (IOException e) {
+				
+			}
 		}
 
 		// run alternate main class
