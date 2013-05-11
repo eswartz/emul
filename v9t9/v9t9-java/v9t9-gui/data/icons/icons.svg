@@ -5991,42 +5991,24 @@
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
     <path
-<<<<<<< HEAD
-       style="fill:none;stroke:#000000;stroke-width:1.89986968;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="m 17.281226,654.50371 28.718995,3.54133"
-=======
        style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        d="m 13.809337,656.19178 31.996582,2.1214"
->>>>>>> bdd6e097405d857bfb942b4b70b631533db6f742
        id="path4777"
        inkscape:connector-curvature="0" />
     <path
        inkscape:connector-curvature="0"
        id="path4779"
-<<<<<<< HEAD
-       d="m 14.897716,661.75253 28.718994,3.54133"
-       style="fill:none;stroke:#000000;stroke-width:1.89986968;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:1.89986968;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="m 13.507025,668.76072 28.718993,3.54134"
-=======
        d="m 11.667263,663.55227 31.996582,2.1214"
        style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
     <path
        style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
        d="m 10.606602,670.62334 31.996582,2.1214"
->>>>>>> bdd6e097405d857bfb942b4b70b631533db6f742
        id="path4781"
        inkscape:connector-curvature="0" />
     <path
        inkscape:connector-curvature="0"
        id="path4783"
-<<<<<<< HEAD
-       d="m 13.494014,675.88471 28.718993,3.54133"
-       style="fill:none;stroke:#000000;stroke-width:1.89986968;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
-=======
        d="m 11.077168,677.74213 31.996582,2.1214"
        style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
->>>>>>> bdd6e097405d857bfb942b4b70b631533db6f742
   </g>
 </svg>
