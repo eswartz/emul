@@ -16,6 +16,6 @@ package v9t9.common;
  */
 public class InternetDefinitions {
 
-	public static String sV9t9WikiURL = "http://eswartz.github.com/emul/v9t9-roms.html";
+	public static String sV9t9RomsURL = "http://eswartz.github.io/emul/v9t9-roms.html";
 
 }

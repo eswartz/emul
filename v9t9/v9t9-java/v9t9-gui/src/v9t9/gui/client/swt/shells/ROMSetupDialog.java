@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -146,6 +147,8 @@ public class ROMSetupDialog extends Dialog {
 
 	private ISettingsHandler settings;
 
+	private boolean allRequiredRomsFound;
+
 	public ROMSetupDialog(Shell shell, IMachine machine_, SwtWindow window,
 			MemoryEntryInfo[] requiredRoms, MemoryEntryInfo[] optionalRoms) {
 		super(shell);
@@ -214,7 +217,7 @@ public class ROMSetupDialog extends Dialog {
 		
 		sash.setWeights(new int[] { 75, 25 });
 		
-		updateRomAvailability();
+		//updateRomAvailability();
 		
 		origDetectedROMs = new HashSet<URI>(detectedROMs);
 		
@@ -249,6 +252,16 @@ public class ROMSetupDialog extends Dialog {
 		return composite;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.dialogs.Dialog#createButtonsForButtonBar(org.eclipse.swt.widgets.Composite)
+	 */
+	@Override
+	protected void createButtonsForButtonBar(Composite parent) {
+		createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL,
+				true);
+		
+		refreshAll();
+	}
 
 	/**
 	 * @param parent 
@@ -322,7 +335,7 @@ public class ROMSetupDialog extends Dialog {
 		infoLabel.append(
 				"In order to emulate the " + machine.getModel().getName() + ", you need to configure V9t9 so it can "+
 				"find the necessary ROMs for the system and for any modules you want to use.\n\n"+
-				"Add new Search Locations (below), and V9t9 will detect ROMs by content. " +
+				"Add new Search Locations (below), and V9t9 will detect ROMs and modules by content. " +
 				(ADVANCED ? "If you have custom ROMs, though, you can select your own file by clicking the links.\n" : "\n"));
 
 		if (requiredRoms.length > 0) {
@@ -352,14 +365,14 @@ public class ROMSetupDialog extends Dialog {
 	
 			final StyleRange urlStyle = styledTextHelper.pushStyle(urlSt, SWT.ITALIC);
 	
-			infoLabel.append(InternetDefinitions.sV9t9WikiURL);
+			infoLabel.append(InternetDefinitions.sV9t9RomsURL);
 	
 			styledTextHelper.popStyle();
 			
 			registerLink(urlStyle, 
 				new ILinkHandler() {
 					public void linkClicked() {
-						BrowserUtils.openURL(InternetDefinitions.sV9t9WikiURL);
+						BrowserUtils.openURL(InternetDefinitions.sV9t9RomsURL);
 					}
 			});
 			
@@ -553,6 +566,11 @@ public class ROMSetupDialog extends Dialog {
 				setupInfoLabel();
 				updateRomAvailability();
 				infoLabel.setRedraw(true);
+				
+				Button ok = getButton(OK);
+				if (ok != null) {
+					ok.setEnabled(allRequiredRomsFound);
+				}
 			}
 		});
 	}
@@ -579,7 +597,7 @@ public class ROMSetupDialog extends Dialog {
 	}
 
 	protected void updateRomAvailability() {
-		updateRomLabels(requiredRoms, reqdRomNameStyleRanges);
+		allRequiredRomsFound = updateRomLabels(requiredRoms, reqdRomNameStyleRanges);
 		updateRomLabels(optionalRoms, optionalRomNameStyleRanges);
 		
 	}
@@ -592,25 +610,24 @@ public class ROMSetupDialog extends Dialog {
 	}
 
 	
-	private void updateRomLabels(MemoryEntryInfo[] infos, StyleRange[] styleRanges) {
+	private boolean updateRomLabels(MemoryEntryInfo[] infos, StyleRange[] styleRanges) {
+		boolean allFound = true;
 		for (int i = 0; i < infos.length; i++) {
 			StyleRange style = styleRanges[i];
 			
 			if (isRomAvailable(infos[i])) {
-				//style.borderStyle = SWT.BORDER_SOLID;
-				//style.borderColor = getDisplay().getSystemColor(SWT.COLOR_GREEN);
 				if (!infos[i].isDefaultFilename(settings))
 					style.font = JFaceResources.getFontRegistry().getBold(JFaceResources.TEXT_FONT);
 				else
 					style.font = JFaceResources.getTextFont();
 			} else {
-				//style.borderStyle = SWT.BORDER_DASH;
-				//style.borderColor = getDisplay().getSystemColor(SWT.COLOR_RED);
 				style.font = JFaceResources.getFontRegistry().getItalic(JFaceResources.TEXT_FONT);
-				
+				allFound = false;
 			}
+			
 			infoLabel.setStyleRange(style);
 		}
+		return allFound;
 	}
 
 
