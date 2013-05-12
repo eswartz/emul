@@ -525,11 +525,6 @@ public class TI99Machine extends MachineBase {
 		return info;
 	}
 
-	/**
-	 * @param moduleName TODO
-	 * @param fileName
-	 * @return
-	 */
 	private void fetchMD5(IModule module, MemoryEntryInfo info) {
 		String md5;
 		try {

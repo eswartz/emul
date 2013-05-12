@@ -384,11 +384,16 @@ public class PathFileLocator implements IPathFileLocator {
 		
 		Collection<String> cachedListing = cachedListings.get(directory);
 		
-		// don't update anything more than once a second
-		if (cachedListing != null && !directory.equals(rwPathProperty) 
-				&& (!"jar".equals(directory.getScheme())
-						&& cachedListingTime.get(directory) + 1 * 1000 > System.currentTimeMillis())) {
-			return cachedListing;
+		if (cachedListing != null && !directory.equals(rwPathProperty)) {
+			// never update JAR cache
+			if ("jar".equals(directory.getScheme())) 
+				return cachedListing;
+			
+			// don't update cache more than once a second
+			Long listingTime = cachedListingTime.get(directory);
+			if (listingTime != null && listingTime + 1 * 1000 > System.currentTimeMillis()) {
+				return cachedListing;
+			}
 		}
 		
 		cachedListing = fetchDirectoryListing(uri, directory);
@@ -418,7 +423,8 @@ public class PathFileLocator implements IPathFileLocator {
 			String zipPath = ssp.substring(0, ssp.lastIndexOf('!'));
 			ZipFile zf;
 			try {
-				zf = new ZipFile(new File(URI.create(zipPath)));
+				File file = new File(URI.create(zipPath));
+				zf = new ZipFile(file);
 				
 				try {
 					cachedListing = new ArrayList<String>();
@@ -426,6 +432,8 @@ public class PathFileLocator implements IPathFileLocator {
 						ZipEntry entry = en.nextElement();
 						cachedListing.add(entry.getName());
 					}
+					cachedListings.put(directory, cachedListing);
+					cachedListingModifiedTime.put(directory, file.lastModified());
 					return cachedListing;
 				} finally {
 					zf.close();
@@ -960,12 +968,14 @@ public class PathFileLocator implements IPathFileLocator {
 	 */
 	protected URI findFileByMD5(URI directory, String md5, int offset, int limit) {
 		try {
+//			System.out.println("searching " + directory + " for " + md5);
 			Collection<String> direct = getDirectoryListing(directory);
 			for (String ent : direct) {
 				try {
 					URI uri = resolveInsideURI(directory, ent);
 					String entMd5 = getContentMD5(uri, offset, limit);
 					if (entMd5.equalsIgnoreCase(md5)) {
+						//System.out.println("\t" + entMd5 + " = " + uri);
 						return uri; 
 					}
 					
@@ -974,9 +984,10 @@ public class PathFileLocator implements IPathFileLocator {
 						URI zipURI = URI.create("jar:" + uri + "!/");
 						uri = findFileByMD5(
 								zipURI,
-								entMd5, 
+								md5, 
 								offset, limit);
 						if (uri != null) {
+							//System.out.println("\t" + entMd5 + " = " + uri);
 							return uri;
 						}
 					}
