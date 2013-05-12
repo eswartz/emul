@@ -325,7 +325,7 @@ public class MemoryEntryInfo {
 		Map<String, Object> props = copy.getProperties();
 		move(props, FILENAME, getFilename2());
 		move(props, ADDRESS, getAddress2());
-		move(props, SIZE, getSize2());
+		move(props, SIZE, getSize2() != 0 ? getSize2() : getSize());
 		move(props, OFFSET, getOffset2());
 		move(props, FILE_MD5, getFile2MD5());
 		move(props, FILE_MD5_OFFSET, getFile2Md5Offset());
