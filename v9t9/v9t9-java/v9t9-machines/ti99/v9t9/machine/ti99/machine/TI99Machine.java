@@ -35,13 +35,6 @@ import java.util.zip.ZipFile;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
-import ejs.base.settings.ISettingSection;
-import ejs.base.utils.FileUtils;
-import ejs.base.utils.HexUtils;
-import ejs.base.utils.StorageException;
-import ejs.base.utils.StreamXMLStorage;
-import ejs.base.utils.TextUtils;
-import ejs.base.utils.XMLUtils;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDsrManager;
@@ -65,6 +58,13 @@ import v9t9.engine.memory.TIMemoryModel;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.machine.ti99.dsr.DsrManager;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.FileUtils;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.StorageException;
+import ejs.base.utils.StreamXMLStorage;
+import ejs.base.utils.TextUtils;
+import ejs.base.utils.XMLUtils;
 
 public class TI99Machine extends MachineBase {
 
@@ -236,8 +236,6 @@ public class TI99Machine extends MachineBase {
 			
 			if (analyzeZipModuleFile(databaseURI, file, moduleMap))
 				continue;
-			
-
 		}
 
 		
@@ -249,6 +247,17 @@ public class TI99Machine extends MachineBase {
 			
 			String moduleName = module.getName();
 			if (TextUtils.isEmpty(moduleName) || !isASCII(moduleName)) {
+				iter.remove();
+				continue;
+			}
+			
+			boolean anyHeader = false;
+			for (MemoryEntryInfo info :module.getMemoryEntryInfos()) {
+				if (Boolean.TRUE.equals(info.getProperties().get(MemoryEntryInfo.HAS_HEADER))) {
+					anyHeader = true;
+				}
+			}
+			if (!anyHeader) {
 				iter.remove();
 				continue;
 			}
@@ -391,6 +400,10 @@ public class TI99Machine extends MachineBase {
 		
 		String moduleName = readHeaderName(fname, content, 0x6000);
 	
+		if (moduleName == null) {
+			return false;
+		}
+		
 		log.debug("Module Name: " + moduleName);
 
 		
@@ -406,25 +419,27 @@ public class TI99Machine extends MachineBase {
 			module.setName(moduleName);
 		}
 
+		MemoryEntryInfo info = null;
+
 		char last = getModulePart(fname);
 		switch (last) {
 		case 'C':
 		case 'c': {
 			
-			injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length);
+			info = injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length);
 			
 			break;
 		}
 		case 'D':
 		case 'd': {
-			injectModuleBank2Rom(module, databaseURI, moduleName, fname, 0);
+			info = injectModuleBank2Rom(module, databaseURI, moduleName, fname, 0);
 			
 			break;
 		}
 
 		case 'G':
 		case 'g': {
-			injectModuleGrom(module, databaseURI, moduleName, fname, 0);
+			info = injectModuleGrom(module, databaseURI, moduleName, fname, 0);
 			break;
 		}
 		
@@ -432,18 +447,35 @@ public class TI99Machine extends MachineBase {
 			log.debug("Unknown file naming for " + fname);
 			if (looksLikeBankedOr9900Code(content)) {
 				log.debug("Assuming content is module ROM");
-				injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length);
+				info = injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length);
 			} else {
 				log.debug("Assuming content is module GROM");
-				injectModuleGrom(module, databaseURI, moduleName, fname, 0);
+				info = injectModuleGrom(module, databaseURI, moduleName, fname, 0);
 			}
 			break;
+		}
+		
+		if (info != null && hasId(content)) {
+			info.getProperties().put(MemoryEntryInfo.HAS_HEADER, true);
 		}
 		
 		// register/update module
 		moduleMap.put(key, module);
 
 		return true;
+	}
+
+	/**
+	 * @param content
+	 * @return
+	 */
+	private boolean hasId(byte[] content) {
+		for (int addr = 0 ; addr < content.length; addr += 0x2000) {
+			if (content[addr] == (byte) 0xaa) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -482,14 +514,15 @@ public class TI99Machine extends MachineBase {
 		return isROMCode;
 	}
 
-	private void injectModuleGrom(IModule module, URI databaseURI,
+	private MemoryEntryInfo injectModuleGrom(IModule module, URI databaseURI,
 			String moduleName, String fileName, int fileOffset) {
 		MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleGrom(fileName)
 				.withOffset(fileOffset)
 				.withSize(-0xA000)
 				.create(moduleName);
 		fetchMD5(module, info);
-		module.addMemoryEntryInfo(info);		
+		module.addMemoryEntryInfo(info);
+		return info;
 	}
 
 	/**
@@ -514,9 +547,9 @@ public class TI99Machine extends MachineBase {
 		}
 	}
 
-	private void injectModuleRom(IModule module, URI databaseURI,
+	private MemoryEntryInfo injectModuleRom(IModule module, URI databaseURI,
 			String moduleName, String fileName, int fileOffset, int fileSize) {
-		MemoryEntryInfo info;
+		MemoryEntryInfo info = null;
 		boolean found = false;
 		for (MemoryEntryInfo ex : module.getMemoryEntryInfos()) {
 			// modify a banked entry
@@ -527,6 +560,7 @@ public class TI99Machine extends MachineBase {
 				ex.getProperties().put(MemoryEntryInfo.SIZE, -0x2000);
 				fetchMD5(module, ex);
 				found = true;
+				info = ex;
 				break;
 			} 
 		}
@@ -549,12 +583,12 @@ public class TI99Machine extends MachineBase {
 			fetchMD5(module, info);
 			module.addMemoryEntryInfo(info);
 		}
-		
+		return info;
 	}
 
-	private void injectModuleBank2Rom(IModule module, URI databaseURI,
+	private MemoryEntryInfo injectModuleBank2Rom(IModule module, URI databaseURI,
 			String moduleName, String fileName, int fileOffset) {
-		MemoryEntryInfo info;
+		MemoryEntryInfo info = null;
 		boolean found = false;
 		for (MemoryEntryInfo ex : module.getMemoryEntryInfos()) {
 			// modify a non-banked entry
@@ -565,6 +599,7 @@ public class TI99Machine extends MachineBase {
 				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
 				fetchMD5(module, ex);
 				found = true;
+				info = ex;
 				break;
 			} 
 		}
@@ -578,6 +613,7 @@ public class TI99Machine extends MachineBase {
 			fetchMD5(module, info);
 			module.addMemoryEntryInfo(info);
 		}
+		return info;
 		
 	}
 	
@@ -773,6 +809,7 @@ public class TI99Machine extends MachineBase {
 								HexUtils.parseInt(rom.getAttribute("offset")),
 								HexUtils.parseInt(rom.getAttribute("size"))
 								);
+						
 					}
 				}
 				else if (name.equals("rom2_socket")) {
@@ -792,6 +829,9 @@ public class TI99Machine extends MachineBase {
 			}
 			
 		}
+
+		for (MemoryEntryInfo info : module.getMemoryEntryInfos())
+			info.getProperties().put(MemoryEntryInfo.HAS_HEADER, true);
 
 		return module;
 	}
@@ -887,6 +927,9 @@ public class TI99Machine extends MachineBase {
 			
 		}
 
+		for (MemoryEntryInfo info : module.getMemoryEntryInfos())
+			info.getProperties().put(MemoryEntryInfo.HAS_HEADER, true);
+		
 		return module;
 	}
 
@@ -910,18 +953,51 @@ public class TI99Machine extends MachineBase {
 	 * @return
 	 */
 	private String readHeaderName(String fname, byte[] content, int baseAddr) {
+		// too large (even with accidental cruft)
+		if (content.length > 0xA100)
+			return null;
+		
 		for (int offs = 0; offs < content.length; offs += 0x2000) {
+			int addr;
+			
 			log.debug("Module Header scan @ " + HexUtils.toHex4(offs) 
 					+ ": header byte =  " + HexUtils.toHex2(content[offs]));
+
+			// check non-module signs
+			
+			// ROMs
+			addr = readAddr(content, offs);
+			if (addr == 0x83e0)
+				return null;	// console ROM
+			
+			
 			if (content[offs] != (byte) 0xaa) {
 				continue;
 			}
 			
+			// powerup
+			addr = readAddr(content, offs + 0x4);
+			if (addr != 0 && addr >= 0x1000 && addr < 0x6000)
+				return null;
+			
+			// DSR headers?
+			addr = readAddr(content, offs + 0x8);
+			if (addr != 0 && addr >= 0x4000 && addr < 0x6000)
+				return null;
+			
+			addr = readAddr(content, offs + 0xA);
+			if (addr != 0 && addr >= 0x1000 && addr < 0x6000)
+				return null;
+			
 			// program list
-			int addr = readAddr(content, offs + 0x6);
+			addr = readAddr(content, offs + 0x6);
 			log.debug("Program list @ " + HexUtils.toHex4(offs) + ": " + HexUtils.toHex4(addr));
 			if (addr == 0)
 				continue;
+			
+			// not a module-area ROM
+			if (addr < 0x6000)
+				return null;
 	
 			// get the last name (ordered reverse, non-English first)
 			String name;
@@ -933,20 +1009,20 @@ public class TI99Machine extends MachineBase {
 				addr = next;
 			} while (next >= baseAddr);		/* else not really module? */
 			
+			String suffix = (content[offs + 1] < 0) ? " (auto-start)" : "";
 			if (isASCII(name)) {
 				log.debug("Using name: " + name) ;
 				
-				return cleanupTitle(name);
+				return cleanupTitle(name) + suffix;
 			}
 			
 			// see if it's auto-start
-			if (content[offs + 1] < 0) {
-				return new File(fname).getName() + " (auto-start)";
+			if (suffix.length() > 0) {
+				return new File(fname).getName() + suffix;
 			}
 
 		}
 		
-
 		return "";
 	}
 

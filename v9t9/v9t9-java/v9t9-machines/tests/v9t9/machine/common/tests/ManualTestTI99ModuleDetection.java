@@ -47,19 +47,21 @@ public class ManualTestTI99ModuleDetection {
 		testDirectory("/usr/local/src/v9t9-data/modules", 
 				"(?i).*\\.bin",
 				"c.bin", "g.bin", 
-				"forthc.bin", "nforthc.bin", "0forth.bin"
+				"forthc.bin", "nforthc.bin", "0forth.bin",
+				"TI-EXTBC.BIN","TI-EXTBD.BIN", "cp01.bin"
 				);
 	}
 
 	@Test
 	public void testMessModules() throws Exception {
 		testDirectory("/usr/local/src/v9t9-data/modules/mess",
-				"(?i).*\\.bin");
+				"(?i).*\\.bin", "forthc.bin" 
+				);
 	}
 	@Test
 	public void testToSecModules() throws Exception {
 		testDirectory("/usr/local/src/v9t9-data/modules/tosec",
-				"(?i).*\\.bin");
+				"(?i).*\\.bin", "Forthc (19xx)(-)(Unknown).bin");
 	}
 	@Test
 	public void testToWhtechZipModules() throws Exception {
@@ -82,20 +84,7 @@ public class ManualTestTI99ModuleDetection {
 		File dir = new File(path);
 		assertTrue(dir.exists());
 		
-		Set<File> allFiles = new LinkedHashSet<File>(Arrays.asList(dir.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File pathname) {
-				if (pathname.isDirectory() || !pathname.getName().matches(pattern))
-					return false;
-				for (String ign : ignore) {
-					if (pathname.getName().equals(ign))
-						return false;
-					if (pathname.getName().indexOf('\uFFFD') >= 0)
-						return false;
-				}
-				return true;
-			}
-		}))); 
+		Set<File> allFiles = getAllFiles(pattern, dir, ignore); 
 		
 		URI databaseURI = URI.create("test.xml");
 		Collection<IModule> modules = machine.scanModules(databaseURI, dir);
@@ -123,6 +112,31 @@ public class ManualTestTI99ModuleDetection {
 			System.err.print(sb);
 			fail(sb.toString());
 		}
+	}
+
+	/**
+	 * @param pattern
+	 * @param dir
+	 * @param ignore
+	 * @return
+	 */
+	protected Set<File> getAllFiles(final String pattern, File dir,
+			final String... ignore) {
+		Set<File> allFiles = new LinkedHashSet<File>(Arrays.asList(dir.listFiles(new FileFilter() {
+			@Override
+			public boolean accept(File pathname) {
+				if (pathname.isDirectory() || !pathname.getName().matches(pattern))
+					return false;
+				for (String ign : ignore) {
+					if (pathname.getName().equals(ign))
+						return false;
+					if (pathname.getName().indexOf('\uFFFD') >= 0)
+						return false;
+				}
+				return true;
+			}
+		})));
+		return allFiles;
 	}
 
 	/**
@@ -156,5 +170,43 @@ public class ManualTestTI99ModuleDetection {
 		}
 		return false;
 	}
+
+	@Test
+	public void testNonModules() throws Exception {
+		testNoneDirectory("/usr/local/src/v9t9-data/roms", "(?i).*\\.bin", "ed_basicL.bin");		
+		testNoneDirectory("/usr/local/src/v9t9-data/roms/pcode", "(?i).*\\.bin");		
+		testNoneDirectory("/home/ejs/devel/emul/v9t9/v9t9-java/v9t9-data/data/ti99/dsrs", "(?i).*\\.bin");		
+	}
 	
+	protected void testNoneDirectory(String path, final String pattern, final String... ignore) {
+		File dir = new File(path);
+		assertTrue(dir.exists());
+		
+		URI databaseURI = URI.create("test.xml");
+		Collection<IModule> modules = machine.scanModules(databaseURI, dir);
+		
+		System.out.println("Found " + modules.size() + " modules in " + dir);
+		
+		StringBuilder sb = new StringBuilder();
+		for (IModule module : modules) {
+
+			boolean bad = false;
+			Collection<File> files = module.getUsedFiles(locator);
+			for (File file : files) {
+				if (!bad && !Arrays.asList(ignore).contains(file.getName())) {
+					bad = true;
+					System.out.println(module);
+					sb.append("*** found ").append(module).append('\n');
+				}
+				if (bad)
+					System.out.println("\t" + file);
+			}
+		}
+
+		if (sb.length() > 0) {
+			System.err.print(sb);
+			fail(sb.toString());
+		}
+	}
+
 }

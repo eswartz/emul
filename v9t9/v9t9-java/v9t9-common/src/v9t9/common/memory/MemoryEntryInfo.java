@@ -73,6 +73,9 @@ public class MemoryEntryInfo {
 	/** Boolean: whether bank order is reversed */
 	public final static String REVERSED = "reversed";
 
+	/** Boolean: whether the memory had a recognized header (0xAA) */
+	public final static String HAS_HEADER = "hasHeader";
+
 	private Map<String, Object> properties;
 	
 	public MemoryEntryInfo() {
