@@ -31,8 +31,6 @@ public class PCodeDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 	public PCodeDsrRomBankedMemoryEntry(ISettingsHandler settings, IMemory memory, String name,
 			IMemoryEntry[] banks) {
 		super(settings, memory, name, banks);
-		
-
 	}
 	
 	public void setup(TI99Machine machine, GplMmio pcodeGromMmio) {
@@ -86,4 +84,12 @@ public class PCodeDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 		super.writeByte(addr, val);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.BankedMemoryEntry#reset()
+	 */
+	@Override
+	public void reset() {
+		super.reset();
+		pcodeGromMmio.reset();
+	}
 }

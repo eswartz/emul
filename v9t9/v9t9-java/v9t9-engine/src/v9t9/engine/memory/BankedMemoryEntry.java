@@ -48,9 +48,20 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 		this.bankCount = bankCount;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.MemoryEntry#reset()
+	 */
+	@Override
+	public void reset() {
+		super.reset();
+		this.currentBankIndex = -1;
+	}
+	
 	@Override
 	public void onMap() {
 		super.onMap();
+		if (currentBankIndex < 0)
+			currentBankIndex = 0;
 		doSelectBank(currentBankIndex);
 	}
 	

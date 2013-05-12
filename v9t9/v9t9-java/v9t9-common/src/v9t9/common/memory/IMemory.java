@@ -52,5 +52,9 @@ public interface IMemory extends IPersistable {
 	 * 
 	 */
 	void clear();
+	/**
+	 * 
+	 */
+	void reset();
 
 }

@@ -270,7 +270,7 @@ public class TI99Machine extends MachineBase {
 							URI uri = getRomPathFileLocator().findFile(xinfo.getFilename());
 							try {
 								int limit = 0x1000;
-								String md5 = getRomPathFileLocator().getContentMD5(uri, limit);
+								String md5 = getRomPathFileLocator().getContentMD5(uri, 0, limit);
 								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
 								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5_LIMIT, limit);
 							} catch (IOException e) {

@@ -30,8 +30,6 @@ import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 
-//import v9t9.engine.modules.IModule;
-
 /**
  * These enums and struct define a higher-level organization of the memory map,
  * used to allow large-scale customization of the emulated computer's architecture.
@@ -623,4 +621,11 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 		this.locator = locator;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#reset()
+	 */
+	@Override
+	public void reset() {
+		
+	}
 }

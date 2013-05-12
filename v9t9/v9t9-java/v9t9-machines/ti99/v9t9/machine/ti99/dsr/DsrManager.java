@@ -24,6 +24,7 @@ import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IDsrManager;
 import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.ConsoleMemoryTransfer;
 import v9t9.engine.hardware.ICruWriter;
@@ -87,7 +88,8 @@ public class DsrManager implements IPersistable, IDsrManager {
 						dsr.activate(machine.getConsole(), machine.getMemory().getMemoryEntryFactory());
 						activeDsr = dsr;
 					} catch (IOException e) {
-						System.err.println("Could not activate " + dsr.getName() + ": " + e.getMessage());
+						machine.getEventNotifier().notifyEvent(machine, Level.ERROR, 
+								"Could not activate " + dsr.getName() + ": " + e.getMessage());
 						log.error("Could not activate " + dsr.getName(), e);
 					}
 				} else {

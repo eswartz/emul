@@ -54,15 +54,15 @@ public class StoredMemoryEntryInfo {
 	
 	public static StoredMemoryEntryInfo createStoredMemoryEntryInfo(
 			IPathFileLocator locator, ISettingsHandler settings, IMemory memory,
-			MemoryEntryInfo info,
-			String name,
-			String filename,
-			String md5,
-			int fileoffs) throws IOException {
+			MemoryEntryInfo info) throws IOException {
 		
 		int size = info.getSize();
 		if (size == 0)
 			throw new IOException("size is zero");
+
+		String name = info.getName();
+		String filename = info.getResolvedFilename(settings);
+		int fileoffs = info.getOffset();
 		
         boolean isStored = info.isStored();
         
@@ -76,13 +76,6 @@ public class StoredMemoryEntryInfo {
 		
 		URI uri = null;
     	if (!info.isStored()) {
-//    		if (md5 != null && md5.equals(info.getFileMD5())) {
-//    			// found MD5 match
-//    			uri = locator.findFile(settings, info);
-//    		} else {
-//    			// look by filename
-//    			 uri = locator.findFile(filename);
-//    		}
     		uri = locator.findFile(settings, info);
     		if (uri == null) {
     			throw new FileNotFoundException(filename);
@@ -90,7 +83,7 @@ public class StoredMemoryEntryInfo {
     		
     		filesize = locator.getContentLength(uri);
     		if (info.getSize() > 0) {
-    			if (filesize + 64 < info.getSize()) {
+    			if (filesize < info.getSize()) {
     				throw new IOException("file '" + filename + "'found for '" + name + "' is not the expected size (" + info.getSize() +" bytes); found " + filesize + " bytes at " + uri);
     			}
     		} else {
@@ -103,7 +96,9 @@ public class StoredMemoryEntryInfo {
     		if (info.getSize() < 0)
     			throw new IOException("negative size not allowed for stored files (in file '" + filename +"' for '" + name + "')");
     	}
-		String realMD5 = locator.getContentMD5(uri, info.getFileMd5Limit());
+		String realMD5 = locator.getContentMD5(uri,  
+				info.getFileMd5Offset(),
+				info.getFileMd5Limit());
     	
         return new StoredMemoryEntryInfo(info, settings, memory, locator, 
         		uri, filename, realMD5, name, fileoffs, filesize);

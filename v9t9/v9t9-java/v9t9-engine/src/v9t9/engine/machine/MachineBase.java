@@ -800,6 +800,8 @@ abstract public class MachineBase implements IMachine {
 		
 		getExecutor().reset();
 		
+		memory.reset();
+		
 		memoryModel.loadMemory(client.getEventNotifier());
 		
 		if (getModuleManager() != null) {

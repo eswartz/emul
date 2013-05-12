@@ -43,8 +43,8 @@ public class DiskMemoryEntry extends MemoryEntry {
     	// only to be used when reconstructing
     	super();
     }
-    DiskMemoryEntry(MemoryEntryInfo info, String name, MemoryArea area, StoredMemoryEntryInfo storedInfo) {
-    	super(name, info.getDomain(storedInfo.memory), info.getAddress(), 
+    DiskMemoryEntry(MemoryEntryInfo info, MemoryArea area, StoredMemoryEntryInfo storedInfo) {
+    	super(info.getName(), info.getDomain(storedInfo.memory), info.getAddress(), 
     			Math.min(Math.abs(info.getSize()), storedInfo.size - storedInfo.fileoffs), area);
 		this.storedInfo = storedInfo;
 		this.info = storedInfo.createMemoryEntryInfo();
@@ -60,6 +60,20 @@ public class DiskMemoryEntry extends MemoryEntry {
     	this.area = area;
     }
     
+    
+    /**
+	 * @return the storedInfo
+	 */
+	public StoredMemoryEntryInfo getStoredInfo() {
+		return storedInfo;
+	}
+	
+	/**
+	 * @return the info
+	 */
+	public MemoryEntryInfo getInfo() {
+		return info;
+	}
     /* (non-Javadoc)
      * @see v9t9.common.memory.MemoryEntry#isVolatile()
      */
@@ -261,8 +275,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 		}
 		
 		try {
-			storedInfo = memory.getMemoryEntryFactory().resolveMemoryEntry(info, 
-					info.getName(), info.getFilename(), info.getFileMD5(), info.getOffset());
+			storedInfo = memory.getMemoryEntryFactory().resolveMemoryEntry(info);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

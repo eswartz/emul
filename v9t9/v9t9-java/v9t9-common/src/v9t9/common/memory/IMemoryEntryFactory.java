@@ -41,8 +41,7 @@ public interface IMemoryEntryFactory {
 	IMemoryEntry newMemoryEntry(MemoryEntryInfo info) throws IOException;
 	IMemoryArea createMemoryArea(MemoryEntryInfo info) throws IOException;
 	
-	StoredMemoryEntryInfo resolveMemoryEntry(MemoryEntryInfo info, String name,
-			String filename, String md5, int fileoffs) throws IOException;
+	StoredMemoryEntryInfo resolveMemoryEntry(MemoryEntryInfo info) throws IOException;
 	
 	List<MemoryEntryInfo> loadEntriesFrom(String name, Element root);
 	void saveEntriesTo(Collection<MemoryEntryInfo> memoryEntries, Element root);

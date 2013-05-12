@@ -458,9 +458,7 @@ public class ROMSetupDialog extends Dialog {
 			try {
 				storedInfo = StoredMemoryEntryInfo.createStoredMemoryEntryInfo(
 						machine.getRomPathFileLocator(), settings, 
-						machine.getMemory(), info, 
-						info.getName(), info.getResolvedFilename(settings), 
-						info.getFileMD5(), info.getOffset());
+						machine.getMemory(), info);
 			} catch (IOException e) {
 			}
 			

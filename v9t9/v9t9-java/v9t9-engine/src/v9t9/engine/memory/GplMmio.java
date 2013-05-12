@@ -157,4 +157,13 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
 		section.put("ReadAddrFlag", gromraddrflag);
 		section.put("WriteAddrFlag", gromwaddrflag);
 	}
+
+	/**
+	 * 
+	 */
+	public void reset() {
+		gromaddr = 0;
+		gromraddrflag = gromwaddrflag = false;
+		buf = 0;
+	}
 }

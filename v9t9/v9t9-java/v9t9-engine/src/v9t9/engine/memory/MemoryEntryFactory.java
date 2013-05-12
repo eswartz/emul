@@ -139,11 +139,9 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			return newMultiBankedMemoryFromFile(info);
 		}
 		
-		IMemoryEntry bank0 = newFromFile(info, info.getName() + " (bank 0)", 
-				info.getFilename(), info.getFileMD5(), info.getOffset(), 
+		IMemoryEntry bank0 = newFromFile(info.asFirstBank(),  
 				MemoryAreaFactory.createMemoryArea(memory, info));
-		IMemoryEntry bank1 = newFromFile(info, info.getName() + " (bank 1)", 
-				info.getFilename2(), info.getFile2MD5(), info.getOffset2(), 
+		IMemoryEntry bank1 = newFromFile(info.asSecondBank(), 
 				MemoryAreaFactory.createMemoryArea(memory, info));
 		
 		IMemoryEntry[] entries = new IMemoryEntry[] { bank0, bank1 };
@@ -169,8 +167,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 	 */
 	private BankedMemoryEntry newMultiBankedMemoryFromFile(MemoryEntryInfo info) throws IOException {
 
-    	StoredMemoryEntryInfo storedInfo = resolveMemoryEntry(info, info.getName(), 
-    			info.getFilename(), info.getFileMD5(), info.getOffset());
+    	StoredMemoryEntryInfo storedInfo = resolveMemoryEntry(info);
 
     	int bankSize = 0x2000;
     	int numBanks = storedInfo.size / bankSize;
@@ -181,8 +178,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
     	
     	for (int bank = 0; bank < entries.length; bank++) {
     		int entryIdx = reversed ? entries.length - bank - 1 : bank;
-    		entries[entryIdx] = newFromFile(info, info.getName() + " (bank " + bank + ")", 
-    				info.getFilename(), info.getFileMD5(), info.getOffset() + bank * bankSize, 
+    		entries[entryIdx] = newFromFile(info.asBank(entryIdx, info.getOffset() + bank * bankSize), 
     				MemoryAreaFactory.createMemoryArea(memory, info));
     	}
 		
@@ -197,22 +193,14 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 	}
 
 
-	/** Construct a DiskMemoryEntry based on the file length.
+	/** 
+	 * Construct a DiskMemoryEntry 
      * @throws IOException if the memory cannot be read and is not stored
      */
     private DiskMemoryEntry newFromFile(MemoryEntryInfo info, MemoryArea area) throws IOException {
-    	return newFromFile(info, info.getName(), info.getResolvedFilename(settings), info.getFileMD5(), info.getOffset(), area);
-    }
-    
-    /** 
-     * @return the entry
-     * @throws IOException if the memory cannot be read and is not stored
-     */
-    private DiskMemoryEntry newFromFile(MemoryEntryInfo info, String name, String filename, String md5, int offset, MemoryArea area) throws IOException {
+    	StoredMemoryEntryInfo storedInfo = resolveMemoryEntry(info);
     	
-    	StoredMemoryEntryInfo storedInfo = resolveMemoryEntry(info, name, filename, md5, offset);
-    	
-    	DiskMemoryEntry entry = new DiskMemoryEntry(info, name, area, storedInfo);
+    	DiskMemoryEntry entry = new DiskMemoryEntry(info, area, storedInfo);
     	
         entry.setArea(MemoryAreaFactory.createMemoryArea(memory, info)); 
         
@@ -223,15 +211,10 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 	 * @see v9t9.engine.memory.IMemoryEntryFactory#resolveMemoryEntry(v9t9.common.modules.MemoryEntryInfo, java.lang.String, java.lang.String, int)
 	 */
 	@Override
-	public StoredMemoryEntryInfo resolveMemoryEntry(
-			MemoryEntryInfo info,
-			String name,
-			String filename,
-			String md5, int fileoffs) throws IOException {
+	public StoredMemoryEntryInfo resolveMemoryEntry(MemoryEntryInfo info) throws IOException {
 
 		return StoredMemoryEntryInfo.createStoredMemoryEntryInfo(
-				locator, settings, memory, 
-				info, name, filename, md5, fileoffs);
+				locator, settings, memory, info);
 	}
 
 

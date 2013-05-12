@@ -10,6 +10,7 @@
  */
 package v9t9.common.files;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -883,14 +884,14 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @see v9t9.common.files.IPathFileLocator#getContentMD5(java.net.URI)
 	 */
 	@Override
-	public String getContentMD5(URI uri, int length) throws IOException {
+	public String getContentMD5(URI uri, int offset, int length) throws IOException {
 		URI directory = resolveInsideURI(uri, ".");
 		Map<String, String> md5Dir = cachedMD5Hashes.get(directory);
 		if (md5Dir == null) {
 			md5Dir = new HashMap<String, String>();
 			cachedMD5Hashes.put(directory, md5Dir);
 		}
-		String key = uri + ":" + length;
+		String key = uri + ":" + offset + ":" + length;
 		String md5 = md5Dir.get(key);
 		if (md5 == null) {
 			try {
@@ -906,9 +907,14 @@ public class PathFileLocator implements IPathFileLocator {
 					}
 					
 					InputStream is = createInputStream(uri);
-					byte[] content = FileUtils.readInputStreamContentsAndClose(is, 
-							length > 0 ? length : size);
-					md5 = FileUtils.getMD5Hash(content);
+					try {
+						FileUtils.skipFully(is, offset);
+						byte[] content = FileUtils.readInputStreamContentsAndClose(is, 
+								length > 0 ? length : size - offset);
+						md5 = FileUtils.getMD5Hash(content);
+					} catch (EOFException e) {
+						md5 = "";
+					}
 				}
 			} catch (NullPointerException e) {
 				// sun magic...
@@ -930,7 +936,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 */
 	@Override
 	public String getContentMD5(URI uri) throws IOException {
-		return getContentMD5(uri, -1);
+		return getContentMD5(uri, 0, -1);
 	}
 	
 	
@@ -938,9 +944,9 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @see v9t9.common.files.IPathFileLocator#findFileByMD5(java.lang.String)
 	 */
 	@Override
-	public URI findFileByMD5(String md5, int limit) {
+	public URI findFileByMD5(String md5, int offset, int limit) {
 		for (URI directory : getSearchURIs()) {
-			URI uri = findFileByMD5(directory, md5, limit);
+			URI uri = findFileByMD5(directory, md5, offset, limit);
 			if (uri != null)
 				return uri;
 		}
@@ -952,13 +958,13 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @param md5
 	 * @param limit
 	 */
-	protected URI findFileByMD5(URI directory, String md5, int limit) {
+	protected URI findFileByMD5(URI directory, String md5, int offset, int limit) {
 		try {
 			Collection<String> direct = getDirectoryListing(directory);
 			for (String ent : direct) {
 				try {
 					URI uri = resolveInsideURI(directory, ent);
-					String entMd5 = getContentMD5(uri, limit);
+					String entMd5 = getContentMD5(uri, offset, limit);
 					if (entMd5.equalsIgnoreCase(md5)) {
 						return uri; 
 					}
@@ -968,7 +974,8 @@ public class PathFileLocator implements IPathFileLocator {
 						URI zipURI = URI.create("jar:" + uri + "!/");
 						uri = findFileByMD5(
 								zipURI,
-								entMd5, limit);
+								entMd5, 
+								offset, limit);
 						if (uri != null) {
 							return uri;
 						}
@@ -1018,7 +1025,7 @@ public class PathFileLocator implements IPathFileLocator {
 		String theFilename = info.getResolvedFilename(settings);
 		
 		if (searchByContent) {
-			uri = findFileByMD5(info.getFileMD5(), info.getFileMd5Limit());
+			uri = findFileByMD5(info.getFileMD5(), info.getFileMd5Offset(), info.getFileMd5Limit());
 			if (uri != null) {
 				logger.debug("*** Found matching entry by MD5: " + uri);
 				theFilename = splitFileName(uri).second;

@@ -17,11 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.settings.ISettingSection;
-
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IMemoryTransfer;
@@ -45,6 +40,9 @@ import v9t9.machine.ti99.dsr.IDsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import v9t9.machine.ti99.memory.mmio.ConsoleGramWriteArea;
 import v9t9.machine.ti99.memory.mmio.ConsoleGromReadArea;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingSection;
 
 /**
  * @author ejs
@@ -59,7 +57,8 @@ public class PCodeDsr implements IDsrHandler9900 {
 			"Enables the UCSD Pascal P-Code card.",
 			Boolean.FALSE,
 			pcodeIconPath);
-	private PCodeDsrRomBankedMemoryEntry dsrMemoryEntry;
+	private IMemoryEntry dsrCommonMemoryEntry;
+	private PCodeDsrRomBankedMemoryEntry dsrBankedMemoryEntry;
 	private TI99Machine machine;
 	private IMemoryDomain pcodeDomain;
 	private GplMmio pcodeGromMmio;
@@ -114,7 +113,8 @@ public class PCodeDsr implements IDsrHandler9900 {
 		ensureSetup(memoryEntryFactory);
 		
 		// pCode GROMs are accessed specially
-		memory.addAndMap(dsrMemoryEntry);
+		memory.addAndMap(dsrCommonMemoryEntry);
+		memory.addAndMap(dsrBankedMemoryEntry);
 		memory.addAndMap(readMmioEntry);
 		memory.addAndMap(writeMmioEntry);
 		
@@ -123,36 +123,48 @@ public class PCodeDsr implements IDsrHandler9900 {
 
 	private static MemoryEntryInfo pcodeDsrRomMemoryEntryInfo = MemoryEntryInfoBuilder
 		.wordMemoryEntry()
+		.withFilename("pcode_r0.bin")
 		.withAddress(0x4000)
-		.withSize(0x2000)
-		.withFilename("pCodeRomA.bin")
-		.withFileMD5("63DACF33F9C4B628F258A9DD68274CB6")
-		.withFileMD5Limit(0x1BFC)  // there are two MMIO areas here and at the end; don't be too picky 
-		.withFilename2("pCodeRomB.bin")
-		.withFile2MD5("C78D7AC5EBF24F8AB9A599DD5E6A6D8E")
-		.withFile2MD5Limit(0x1BFC)  // there are two MMIO areas here and at the end; don't be too picky 
-		.withBankClass(PCodeDsrRomBankedMemoryEntry.class)
+		.withSize(0x1000)
+		.withFileMD5("4CC461030701A1F2D2E209644F8DEB9C")
 		.create("P-Code DSR ROM");
-	
+
+	private static MemoryEntryInfo pcodeDsrRomBankedMemoryEntryInfo = MemoryEntryInfoBuilder
+		.wordMemoryEntry()
+		.withFilename("pcode_r1.bin")
+		.withAddress(0x5000)
+		.withSize(0x1000)
+		.withFileMD5("ABE55D238E3925D20B17CC859AD43D36")
+		.withFileMD5Limit(0x0BFC)  // there are two MMIO areas here and at the end; don't be too picky
+		.withFilename2("pcode_r1.bin")
+		.withAddress2(0x5000)
+		.withSize2(0x1000)
+		.withOffset2(0x1000)
+		.withFile2MD5("7ED0D59B05752007CB0777531F19300C")
+		.withFile2MD5Offset(0x1000)
+		.withFile2MD5Limit(0x0BFC)  // there are two MMIO areas here and at the end; don't be too picky 
+		.withBankClass(PCodeDsrRomBankedMemoryEntry.class)
+		.create("P-Code DSR ROM (bank 2)");
+		
+
 	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
 	public static MemoryEntryInfo pcodeDsrRomBankAMemoryEntryInfo = MemoryEntryInfoBuilder
 		.wordMemoryEntry()
+		.withFilename("pcode_r0.bin")
 		.withAddress(0x4000)
-		.withSize(0x2000)
-		.withFilename("pCodeRomA.bin")
-		.withFileMD5("63DACF33F9C4B628F258A9DD68274CB6")
-		.withFileMD5Limit(0x1BFC)  // there are two MMIO areas here and at the end; don't be too picky
-		.create("P-Code DSR ROM (bank 1)");
+		.withSize(0x1000)
+		.withFileMD5("4CC461030701A1F2D2E209644F8DEB9C")
+		.create("P-Code DSR ROM");
 
 	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
 	public static MemoryEntryInfo pcodeDsrRomBankBMemoryEntryInfo = MemoryEntryInfoBuilder
 		.wordMemoryEntry()
+		.withFilename("pcode_r1.bin")
 		.withAddress(0x4000)
 		.withSize(0x2000)
-		.withFilename("pCodeRomB.bin")
-		.withFileMD5("C78D7AC5EBF24F8AB9A599DD5E6A6D8E")
-		.withFileMD5Limit(0x1BFC)  // there are two MMIO areas here and at the end; don't be too picky 
-		.create("P-Code DSR ROM (bank 2)");
+		.withFileMD5("2E4D62D3984FA705252000851C594CEE")
+		.withFileMD5Limit(0x2000)
+		.create("P-Code DSR ROM (banks)");
 	
 	public static MemoryEntryInfo pcodeGromMemoryEntryInfo = MemoryEntryInfoBuilder
 		.byteMemoryEntry()
@@ -167,13 +179,18 @@ public class PCodeDsr implements IDsrHandler9900 {
 		IMemory memory = machine.getMemory();
 		IMemoryDomain console = machine.getConsole();
 
-		if (console.getEntryAt(0x4000) instanceof PCodeDsrRomBankedMemoryEntry)
-			dsrMemoryEntry = (PCodeDsrRomBankedMemoryEntry) console.getEntryAt(0x4000);
-		
-		if (dsrMemoryEntry == null) {
-			this.dsrMemoryEntry = (PCodeDsrRomBankedMemoryEntry) 
-				memoryEntryFactory.newMemoryEntry(pcodeDsrRomMemoryEntryInfo);
+		if (console.getEntryAt(0x5000) instanceof PCodeDsrRomBankedMemoryEntry) {
+			dsrBankedMemoryEntry = (PCodeDsrRomBankedMemoryEntry) console.getEntryAt(0x5000);
 		}
+		
+		if (dsrCommonMemoryEntry == null) {
+			this.dsrCommonMemoryEntry = memoryEntryFactory.newMemoryEntry(pcodeDsrRomMemoryEntryInfo);
+		}
+		if (dsrBankedMemoryEntry == null) {
+			this.dsrBankedMemoryEntry = (PCodeDsrRomBankedMemoryEntry) 
+					memoryEntryFactory.newMemoryEntry(pcodeDsrRomBankedMemoryEntryInfo);
+		}
+		
 		pcodeDomain = memory.getDomain(PCODE);
 		if (pcodeDomain == null) {
 			// P-Code GROMs are completely private to the card
@@ -192,7 +209,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 			writeMmioEntry = null;
 		}
 		
-		dsrMemoryEntry.setup(machine, pcodeGromMmio);
+		dsrBankedMemoryEntry.setup(machine, pcodeGromMmio);
 		
 		if (readMmioEntry == null) {
 			readMmioEntry = new MemoryEntry("PCode Read MMIO", pcodeDomain, 0x5800, 0x0400,
@@ -210,11 +227,12 @@ public class PCodeDsr implements IDsrHandler9900 {
 	public void deactivate(IMemoryDomain console) {
 		IMemory memory = console.getMemory();
 		
-		if (dsrMemoryEntry != null) {
+		if (dsrBankedMemoryEntry != null) {
 			memory.removeAndUnmap(gromMemoryEntry);
-			memory.removeAndUnmap(dsrMemoryEntry);
 			memory.removeAndUnmap(readMmioEntry);
 			memory.removeAndUnmap(writeMmioEntry);
+			memory.removeAndUnmap(dsrBankedMemoryEntry);
+			memory.removeAndUnmap(dsrCommonMemoryEntry);
 		}
 		
 		pcodeActive.setBoolean(false);

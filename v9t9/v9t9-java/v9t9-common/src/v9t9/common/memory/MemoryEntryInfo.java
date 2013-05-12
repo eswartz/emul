@@ -34,16 +34,24 @@ public class MemoryEntryInfo {
 	public final static String FILE_MD5 = "fileMd5";
 	/** integer */
 	public final static String FILE_MD5_LIMIT = "fileMd5Limit";
+	/** integer */
+	public final static String FILE_MD5_OFFSET = "fileMd5Offset";
 	/** String, hex-encoded */
 	public final static String FILE2_MD5 = "file2Md5";
 	/** integer */
 	public final static String FILE2_MD5_LIMIT = "file2Md5Limit";
+	/** integer */
+	public final static String FILE2_MD5_OFFSET = "file2Md5Offset";
 	/** String */
 	public final static String DOMAIN = "domain";
 	/** Integer */
 	public final static String ADDRESS = "address";
 	/** Integer */
+	public final static String ADDRESS2 = "address2";
+	/** Integer */
 	public final static String SIZE = "size";
+	/** Integer */
+	public final static String SIZE2 = "size2";
 	/** Integer */
 	public final static String OFFSET = "offset";
 	/** Integer */
@@ -176,10 +184,16 @@ public class MemoryEntryInfo {
 	public int getSize() {
 		return getInt(MemoryEntryInfo.SIZE);
 	}
+	public int getSize2() {
+		return getInt(MemoryEntryInfo.SIZE2);
+	}
 
 
 	public int getAddress() {
 		return getInt(MemoryEntryInfo.ADDRESS);
+	}
+	public int getAddress2() {
+		return getInt(MemoryEntryInfo.ADDRESS2);
 	}
 
 	public String getFilename2() {
@@ -253,6 +267,18 @@ public class MemoryEntryInfo {
 	}
 
 	/**
+	 * @return the file2Md5Offset
+	 */
+	public int getFile2Md5Offset() {
+		return getInt(FILE2_MD5_OFFSET);
+	}
+	/**
+	 * @return the fileMd5Offset
+	 */
+	public int getFileMd5Offset() {
+		return getInt(FILE_MD5_OFFSET);
+	}
+	/**
 	 * @param storedInfo
 	 * @return
 	 */
@@ -274,4 +300,45 @@ public class MemoryEntryInfo {
 		return getBool(REVERSED);
 	}
 
+	public MemoryEntryInfo asBank(int number, int offset) {
+		MemoryEntryInfo copy = new MemoryEntryInfo(new HashMap<String, Object>(properties));
+		copy.getProperties().put(NAME, getName() + " (bank " + number + ")"); 
+		copy.getProperties().put(OFFSET, offset); 
+		return copy;
+	}
+
+	public MemoryEntryInfo asFirstBank() {
+		MemoryEntryInfo copy = asBank(0, 0);
+		Map<String, Object> props = copy.getProperties();
+		props.remove(FILENAME2);
+		props.remove(OFFSET2);
+		props.remove(ADDRESS2);
+		props.remove(SIZE2);
+		props.remove(FILE2_MD5);
+		props.remove(FILE2_MD5_LIMIT);
+		props.remove(FILE2_MD5_OFFSET);
+		return copy;
+	}
+	
+	public MemoryEntryInfo asSecondBank() {
+		MemoryEntryInfo copy = asBank(1, 0);
+		Map<String, Object> props = copy.getProperties();
+		move(props, FILENAME, getFilename2());
+		move(props, ADDRESS, getAddress2());
+		move(props, SIZE, getSize2());
+		move(props, OFFSET, getOffset2());
+		move(props, FILE_MD5, getFile2MD5());
+		move(props, FILE_MD5_OFFSET, getFile2Md5Offset());
+		move(props, FILE_MD5_LIMIT, getFile2Md5Limit());
+		return copy;
+	}
+
+	private void move(Map<String, Object> props, String key, Object val) {
+		if (val != null) {
+			props.put(key, val);
+			props.remove(key + "2");
+			if (key.length() > 4)
+				props.remove(key.substring(0, 4) + "2" + key.substring(4));
+		}
+	}
 }

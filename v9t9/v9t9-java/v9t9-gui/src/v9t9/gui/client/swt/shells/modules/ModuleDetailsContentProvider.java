@@ -65,20 +65,10 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 		List<TreeNode> memNodes = new ArrayList<TreeNode>();
 		for (MemoryEntryInfo info : infos) {
 			if (!info.isBanked()) {
-				addMemoryInfoNode(memNodes, info,
-						info.getName(), info.getFilename(), info.getFileMD5(), info.getOffset());
+				addMemoryInfoNode(memNodes, info);
 			} else {
-				addMemoryInfoNode(memNodes, info, 
-						info.getName() + " (bank 0)", 
-						info.getFilename(), 
-						info.getFileMD5(), 
-						info.getOffset());
-
-				addMemoryInfoNode(memNodes, info, 
-						info.getName() + " (bank 1)", 
-						info.getFilename2(), 
-						info.getFile2MD5(), 
-						info.getOffset2());
+				addMemoryInfoNode(memNodes, info.asFirstBank()); 
+				addMemoryInfoNode(memNodes, info.asSecondBank()); 
 			}
 		}
 		memInfoNode.setChildren(memNodes.toArray(new TreeNode[memNodes.size()]));
@@ -93,17 +83,16 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 	}
 
 	protected void addMemoryInfoNode(
-			List<TreeNode> memNodes, MemoryEntryInfo info,
-			String name, String filename, String md5, int offset) {
+			List<TreeNode> memNodes, MemoryEntryInfo info) {
 		StoredMemoryEntryInfo storedInfo;
 		try {
 			storedInfo = StoredMemoryEntryInfo.createStoredMemoryEntryInfo(
 					pathFileLocator, machine.getSettings(), 
-					machine.getMemory(), info, 
-					name, filename, md5, offset);
+					machine.getMemory(), info);
 			memNodes.add(makeTreeNode(storedInfo));
 		} catch (IOException e) {
-			TreeNode errorNode = new ErrorTreeNode(new Pair<String, String>(filename,
+			TreeNode errorNode = new ErrorTreeNode(new Pair<String, String>(
+					info.getResolvedFilename(machine.getSettings()),
 					e instanceof FileNotFoundException ? 
 					"File not found on search paths" : e.getMessage()));
 			TreeNode[] kids = new TreeNode[] {

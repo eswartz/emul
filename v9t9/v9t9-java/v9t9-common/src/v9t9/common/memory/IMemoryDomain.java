@@ -165,4 +165,9 @@ public interface IMemoryDomain {
 	 */
 	boolean isWordAccess();
 
+	/**
+	 * 
+	 */
+	void reset();
+
 }

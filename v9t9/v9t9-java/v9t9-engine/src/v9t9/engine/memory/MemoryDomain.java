@@ -611,4 +611,14 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	public boolean isWordAccess() {
 		return isWordAccess;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#reset()
+	 */
+	@Override
+	public void reset() {
+		for (IMemoryEntry entry : mappedEntries) {
+			entry.reset();
+		}
+	}
 }

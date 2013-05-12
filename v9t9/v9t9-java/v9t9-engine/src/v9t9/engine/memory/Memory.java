@@ -216,5 +216,15 @@ public class Memory implements IMemory {
 	public void setMemoryEntryFactory(IMemoryEntryFactory factory) {
 		this.factory = factory;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemory#reset()
+	 */
+	@Override
+	public void reset() {
+		for (IMemoryDomain domain : domains.values()) {
+			domain.reset();
+		}
+	}
 }
 

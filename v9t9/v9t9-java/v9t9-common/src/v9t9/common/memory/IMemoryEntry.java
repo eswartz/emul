@@ -108,4 +108,9 @@ public interface IMemoryEntry extends IMemoryAccess, Comparable<IMemoryEntry>, I
 	void onUnmap();
 	void onMap();
 
+	/**
+	 * 
+	 */
+	void reset();
+
 }
