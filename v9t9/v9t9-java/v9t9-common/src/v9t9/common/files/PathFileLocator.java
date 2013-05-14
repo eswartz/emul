@@ -158,10 +158,10 @@ public class PathFileLocator implements IPathFileLocator {
 					URI uri = createURI(path);
 					if (!uri.isAbsolute())
 						return;
-					logger.debug("Adding URI " + uri);
+					logger.info("Adding URI " + uri);
 					uris.add(uri);
 				} catch (URISyntaxException e) {
-					logger.debug("URI syntax on " + path, e);
+					logger.error("URI syntax on " + path, e);
 					e.printStackTrace();
 				}
 			}
@@ -181,7 +181,7 @@ public class PathFileLocator implements IPathFileLocator {
 					cachedWriteURI = null;
 				}
 			} catch (URISyntaxException e) {
-				logger.debug("URI syntax on " + rwPathProperty, e);
+				logger.error("URI syntax on " + rwPathProperty, e);
 				e.printStackTrace();
 			}
 		}
@@ -341,26 +341,27 @@ public class PathFileLocator implements IPathFileLocator {
 			
 			uri = resolveInsideURI(baseUri, file);
 			if (uri == null) {
-				logger.debug("failed to get listing from " + baseUri + " for " + file + "; got " + uri);
+				logger.error("failed to get listing from " + baseUri + " for " + file + "; got " + uri);
 				return null;
 			}
 			
 			int idx = uri.toString().lastIndexOf('/');
 			String baseFile = uri.toString().substring(idx+1); 
-			logger.debug("\t" +uri + " base = " + baseFile);
+			//logger.debug("\t" +uri + " base = " + baseFile);
 		
+			URI dirURI = URI.create(uri.toString().substring(0, idx+1));
 			Collection<String> listing;
 			try {
-				listing = getDirectoryListing(uri);
-				logger.debug("\tlisting: " + listing.size() + " entries");
+				listing = getDirectoryListing(dirURI);
 				if (listing.contains(baseFile)) {
+					logger.info("\tfound in " + dirURI + "; listing: " + listing.size() + " entries");
 					return uri;
 				}
 			} catch (IOException e) {
-				if (sReportedMissing.add(uri.toString())) {
-					logger.debug("failed to get listing from " + uri, e);
+				if (sReportedMissing.add(dirURI.toString())) {
+					logger.error("failed to get listing from " + dirURI, e);
 				} else {
-					logger.debug("failed to get listing from " + uri);
+					logger.debug("failed to get listing from " + dirURI);
 				}
 				if (false == e instanceof FileNotFoundException)
 					e.printStackTrace();
@@ -396,7 +397,7 @@ public class PathFileLocator implements IPathFileLocator {
 			}
 		}
 		
-		cachedListing = fetchDirectoryListing(uri, directory);
+		cachedListing = fetchDirectoryListing(directory);
 		
 		return cachedListing;
 	}
@@ -410,9 +411,10 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @throws MalformedURLException
 	 * @throws SocketTimeoutException
 	 */
-	protected Collection<String> fetchDirectoryListing(URI uri, URI directory) throws IOException,
+	protected Collection<String> fetchDirectoryListing(URI directory) throws IOException,
 			MalformedURLException, SocketTimeoutException {
 		
+		logger.info("\tfetching listing for " + directory);
 		Collection<String> cachedListing = null;
 
 		// skip JarFile access which just leaks files
@@ -423,6 +425,7 @@ public class PathFileLocator implements IPathFileLocator {
 			String zipPath = ssp.substring(0, ssp.lastIndexOf('!'));
 			ZipFile zf;
 			try {
+				logger.info("reading zip file " + zipPath);
 				File file = new File(URI.create(zipPath));
 				zf = new ZipFile(file);
 				
@@ -434,6 +437,9 @@ public class PathFileLocator implements IPathFileLocator {
 					}
 					cachedListings.put(directory, cachedListing);
 					cachedListingModifiedTime.put(directory, file.lastModified());
+					cachedListingTime.put(directory, System.currentTimeMillis());
+					
+					logger.info("\tlisting: " + cachedListing.size() + " entries");
 					return cachedListing;
 				} finally {
 					zf.close();
@@ -441,9 +447,11 @@ public class PathFileLocator implements IPathFileLocator {
 				
 			} catch (IllegalArgumentException e) {
 				// ok, need to try harder below
+				logger.info("\tfailed:", e);
 			}
 		}
 		
+		logger.info("\tok, trying URL instead");
 		// do the hard work
 		long time;
 		URLConnection connection = null;
@@ -459,7 +467,7 @@ public class PathFileLocator implements IPathFileLocator {
 			String ssp = directory.getSchemeSpecificPart();
 			if (ssp == null)
 				ssp = directory.getPath();
-			cachedListing = getJarDirectoryListing(uri.toURL(),
+			cachedListing = getJarDirectoryListing(directory.toURL(),
 					ssp.substring(ssp.lastIndexOf('!') + 1));
 
 			cachedListings.put(directory, cachedListing);
@@ -499,6 +507,7 @@ public class PathFileLocator implements IPathFileLocator {
 		
 
 		cachedListingTime.put(directory, System.currentTimeMillis());
+		logger.info("\tlisting: " + cachedListing.size() + " entries");
 		return cachedListing;
 	}
 	
@@ -592,7 +601,7 @@ public class PathFileLocator implements IPathFileLocator {
 		try {
 			localJar = resolveToLocalJarFile(new URL(baseURL));
 		} catch (MalformedURLException e) {
-			logger.debug("malformed URL for " + baseURL, e);
+			logger.error("malformed URL for " + baseURL, e);
 			e.printStackTrace();
 			return zip;
 		}
@@ -607,7 +616,7 @@ public class PathFileLocator implements IPathFileLocator {
 		try {
 			return new URL(filePrefix);
 		} catch (MalformedURLException e) {
-			logger.debug("malformed URL for " + filePrefix, e);
+			logger.error("malformed URL for " + filePrefix, e);
 			e.printStackTrace();
 			return zip;
 		}
@@ -674,17 +683,17 @@ public class PathFileLocator implements IPathFileLocator {
 						got = true;
 					}
 				} catch (MalformedURLException e) {
-					logger.debug("malformed URL from " + resolved, e);
+					logger.error("malformed URL from " + resolved, e);
 					e.printStackTrace();
 				} catch (URISyntaxException e) {
-					logger.debug("URI syntax from " + resolved, e);
+					logger.error("URI syntax from " + resolved, e);
 					e.printStackTrace();
 				}
 				if (got) {
 					logger.debug("Resolved " + uri + " + " + string + " ==> " + resolved);
 				}
 			} catch (URISyntaxException e) {
-				logger.debug("URI syntax error " + string, e);
+				logger.error("URI syntax error " + string, e);
 				e.printStackTrace();
 			}
 		}
@@ -800,10 +809,10 @@ public class PathFileLocator implements IPathFileLocator {
 		try {
 			return uri.toURL().openConnection();
 		} catch (MalformedURLException e) {
-			logger.debug("malformed URL from " + uri, e);
+			logger.error("malformed URL from " + uri, e);
 			e.printStackTrace();
 		} catch (IOException e) {
-			logger.debug("ignored IOException from " + uri, e);
+			logger.error("ignored IOException from " + uri, e);
 		}
 		return null;
 	}
@@ -927,12 +936,12 @@ public class PathFileLocator implements IPathFileLocator {
 			} catch (NullPointerException e) {
 				// sun magic...
 				md5 = "";
-				logger.debug("can't fetch directory listing from " + uri, e);
+				logger.error("can't fetch directory listing from " + uri, e);
 			} catch (FileNotFoundException e) {
 				// this happens when invalid filenames are located and the
 				// URI was not properly de/en-coded -- TODO
 				md5 = "";
-				logger.debug("can't fetch directory listing from " + uri, e);
+				logger.error("can't fetch directory listing from " + uri, e);
 			}
 			md5Dir.put(key, md5);
 		}
@@ -999,7 +1008,7 @@ public class PathFileLocator implements IPathFileLocator {
 			}
 		} catch (FileNotFoundException e) {
 			if (sReportedMissing.add(e.toString())) {
-				logger.debug("file not found", e);
+				logger.error("file not found", e);
 			}
 		} catch (IOException e) {
 			logger.error("MD5 search error", e);
@@ -1038,7 +1047,7 @@ public class PathFileLocator implements IPathFileLocator {
 		if (searchByContent) {
 			uri = findFileByMD5(info.getFileMD5(), info.getFileMd5Offset(), info.getFileMd5Limit());
 			if (uri != null) {
-				logger.debug("*** Found matching entry by MD5: " + uri);
+				logger.info("*** Found matching entry by MD5: " + uri);
 				theFilename = splitFileName(uri).second;
 			}
 		}
