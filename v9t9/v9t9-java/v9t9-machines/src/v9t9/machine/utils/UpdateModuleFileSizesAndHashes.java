@@ -22,6 +22,7 @@ import java.util.List;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.PathFileLocator;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.ModuleDatabase;
@@ -126,8 +127,13 @@ public class UpdateModuleFileSizesAndHashes {
 		}
 	
 		int size = locator.getContentLength(uri);
-		if (size >= 0x1000)
+		if (size >= 0x1000) {
 			size &= ~0x7ff;
+			if (info.getDomainName().equals(IMemoryDomain.NAME_GRAPHICS)) {
+				if ((size & 0x7ff) == 0)
+					size -= 0x800;
+			}
+		}
 		
 		Integer md5offset = (Integer) info.getProperties().get(md5OffsetProperty);
 		if (md5offset == null)
