@@ -1227,4 +1227,10 @@
       <romModuleEntry fileMd5="3799C427F8ED71793D0D6C7FFBC83877" fileName="platoc.bin"/>
     </memoryEntries>
   </module>
+  <module name="EA/8K Super Cart">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="B12B018824E332DBE5A35768174DE020" fileName="ea+8k.bin" size="0x2000"/>
+      <memoryEntry address="0x6000" domain="CPU" fileName="ea+8kr.bin" size="0x2000" stored="true"/>
+    </memoryEntries>
+  </module>
 </modules>
