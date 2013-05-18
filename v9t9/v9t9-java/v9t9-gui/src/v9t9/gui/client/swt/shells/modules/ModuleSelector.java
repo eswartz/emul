@@ -1259,7 +1259,7 @@ public class ModuleSelector extends Composite {
 		// this can take a long time
 		synchronized (currentFetches) {
 			if (currentFetches.contains(module))
-				return false;
+				return true;	// guess
 			currentFetches.add(module);
 		
 			Runnable runnable = new Runnable() {

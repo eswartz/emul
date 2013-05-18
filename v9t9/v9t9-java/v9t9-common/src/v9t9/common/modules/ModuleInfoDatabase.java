@@ -99,6 +99,7 @@ public class ModuleInfoDatabase {
 				info.setDescription(descr);
 			}
 
+			infoMap.put(name, info);
 			infoMap.put(md5, info);
 		}
 		
@@ -191,9 +192,14 @@ public class ModuleInfoDatabase {
 	public void syncModuleInfo(IModule module) {
 		if (module.getInfo() != null)
 			return;
-		
+
+		ModuleInfo moduleInfo = infoMap.get(module.getName());
+		if (moduleInfo != null) {
+			module.setInfo(moduleInfo);
+			return;
+		}
 		for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-			ModuleInfo moduleInfo = infoMap.get(info.getFileMD5());
+			moduleInfo = infoMap.get(info.getFileMD5());
 			if (moduleInfo != null) {
 				// find the first match
 				module.setInfo(moduleInfo);

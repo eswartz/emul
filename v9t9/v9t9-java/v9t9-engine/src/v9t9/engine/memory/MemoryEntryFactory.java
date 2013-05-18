@@ -294,7 +294,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				else if (el.getNodeName().equals("bankedModuleEntry")) {
 					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_CPU);
 					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
-					properties.put(MemoryEntryInfo.SIZE, -0x2000);
+					properties.put(MemoryEntryInfo.SIZE, 0x2000);
 					
 					if ("true".equals(el.getAttribute("custom"))) {
 						properties.put(MemoryEntryInfo.CLASS, BankedMemoryEntry.class);
@@ -353,10 +353,12 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 					|| (cls == null && (properties.containsKey(MemoryEntryInfo.FILENAME2)
 							|| properties.containsKey(MemoryEntryInfo.FILE2_MD5)));
 			
+			Integer offset = (Integer) properties.get(MemoryEntryInfo.OFFSET);
 			Integer size = (Integer) properties.get(MemoryEntryInfo.SIZE);
 			if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))
 					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000
-					&& (size != null && size <= 0x2000)
+					&& (size == null || size == 0x2000)
+					&& (offset == null || offset == 0)
 					&& !isBanked) {
 				entry = root.getOwnerDocument().createElement("romModuleEntry");
 				needAddress = needSize = needDomain = false;
@@ -364,13 +366,16 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			else if (IMemoryDomain.NAME_GRAPHICS.equals(properties.get(MemoryEntryInfo.DOMAIN))
 					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000) {
 				entry = root.getOwnerDocument().createElement("gromModuleEntry");
-				needAddress = needSize = needDomain = false;
+				needAddress = needDomain = false;
 			} else {
 				if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))
 						&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000
 						&& isBanked) {
 					entry = root.getOwnerDocument().createElement("bankedModuleEntry");
-					needAddress = needSize = needDomain = false;
+					needAddress = needDomain = false;
+					if ((size == null || size == 0x2000)
+							&& (offset == null || offset == 0))
+						needSize = false;
 					
 					if (cls == null || BankedMemoryEntry.class.equals(cls))
 						entry.setAttribute("custom", "true");

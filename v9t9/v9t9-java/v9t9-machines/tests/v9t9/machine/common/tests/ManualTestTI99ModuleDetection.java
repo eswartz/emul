@@ -61,7 +61,10 @@ public class ManualTestTI99ModuleDetection {
 	@Test
 	public void testToSecModules() throws Exception {
 		testDirectory("/usr/local/src/v9t9-data/modules/tosec",
-				"(?i).*\\.bin", "Forthc (19xx)(-)(Unknown).bin");
+				"(?i).*\\.bin", "Forthc (19xx)(-)(Unknown).bin",
+				"Supercart (19xx)(Texas Instruments).bin",		// nothing
+				"Sneggit (1982)(Texas Instruments)(File 1 of 2)(Sneggitc).bin"	// no #2
+				);
 	}
 	@Test
 	public void testToWhtechZipModules() throws Exception {

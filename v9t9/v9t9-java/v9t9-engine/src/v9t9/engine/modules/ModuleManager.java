@@ -63,7 +63,7 @@ public class ModuleManager implements IModuleManager {
 	private final String stockModuleDatabase;
 
 	private ModuleInfoDatabase moduleInfoDb;
-	
+
 	public ModuleManager(IMachine machine, String stockModuleDatabase) {
 		this.machine = machine;
 		this.stockModuleDatabase = stockModuleDatabase;
@@ -326,6 +326,7 @@ public class ModuleManager implements IModuleManager {
 			registerModules(databaseURI);
 		} else {
 			//throw new AssertionError("missing stock_modules.xml");
+			log.error("failed to find stock_modules.xml");
 			return;
 		}
 		

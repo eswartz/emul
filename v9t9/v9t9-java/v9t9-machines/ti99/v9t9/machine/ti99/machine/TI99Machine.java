@@ -302,20 +302,10 @@ public class TI99Machine extends MachineBase {
 		return modules;
 	}
 
-	private static final Pattern tosecNaming = Pattern.compile("(?i).*\\([^)]+\\).*\\([^)]+\\).*\\([^)]+\\).*\\(([^)]+)\\)");
+	private static final Pattern tosecNaming = Pattern.compile("(?i).*\\([^)]+\\).*\\([^)]+\\).*\\([^)]+\\).*\\(([^)]+)\\)?");
 
 	private String getModuleBaseFile(String fname) {
-		String base = fname.length() > 4 ?
-				fname.substring(0, fname.length() - 4) : // remove extension
-				fname;
-		
-
-		// name may be from tosec archive, and the interesting part is
-		// the last parenthesized group
-		Matcher m = tosecNaming.matcher(base);
-		if (m.matches()) {
-			base = m.group(1);
-		}
+		String base = getModuleFileBase(fname); 
 		
 		String key = base.substring(0, base.length());	
 		if (Character.isLetter(key.charAt(key.length() - 1)))
@@ -332,10 +322,22 @@ public class TI99Machine extends MachineBase {
 	}
 	
 
-	private char getModulePart(String fname) {
-		String base = fname.length() > 4 ?
-				fname.substring(0, fname.length() - 4) : // remove extension
-				fname;
+	private char getV9t9ModuleTypePart(String fname) {
+		String base = getModuleFileBase(fname);
+
+		return base.charAt(base.length() - 1);
+	}
+
+	/**
+	 * @param fname
+	 * @return
+	 */
+	protected String getModuleFileBase(String fname) {
+		String base = fname;
+		int idx = fname.lastIndexOf('.');
+		if (idx > 0)
+			base = fname.substring(0, idx);
+		
 
 		// name may be from tosec archive, and the interesting part is
 		// the last parenthesized group
@@ -344,7 +346,7 @@ public class TI99Machine extends MachineBase {
 			base = m.group(1);
 		}
 		
-		return base.charAt(base.length() - 1);
+		return base;
 	}
 	
 	/**
@@ -405,7 +407,6 @@ public class TI99Machine extends MachineBase {
 		}
 		
 		log.debug("Module Name: " + moduleName);
-
 		
 		IModule module = moduleMap.get(key);
 		if (module == null) {
@@ -421,7 +422,7 @@ public class TI99Machine extends MachineBase {
 
 		MemoryEntryInfo info = null;
 
-		char last = getModulePart(fname);
+		char last = getV9t9ModuleTypePart(fname);
 		switch (last) {
 		case 'C':
 		case 'c': {

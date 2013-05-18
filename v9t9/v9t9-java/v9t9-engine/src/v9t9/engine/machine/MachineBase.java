@@ -13,8 +13,10 @@ package v9t9.engine.machine;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -142,10 +144,12 @@ abstract public class MachineBase implements IMachine {
     	locator.addReadOnlyPathProperty(settings.get(DataFiles.settingShippingRomsPath));
     	try {
     		if (getModel().getDataURL() != null) {
-    			locator.addReadOnlyPathProperty(new SettingSchemaProperty("BuiltinPath", Collections.singletonList(
-					//"jar:file:/home/ejs/devel/emul/v9t9/build/bin/v9t9/v9t9j.jar!/ti99/"
-					getModel().getDataURL().toURI().toString()
-					)));
+    			// get refs to data files bundled in *.jar
+    			String modDbPath = getModel().getDataURL().toURI().toString();
+    			List<String> list = new ArrayList<String>(2);
+    			list.add(modDbPath);
+    			list.add(modDbPath + "images/");
+				locator.addReadOnlyPathProperty(new SettingSchemaProperty("BuiltinPath", list));
     		}
 		} catch (URISyntaxException e) {
 			e.printStackTrace();

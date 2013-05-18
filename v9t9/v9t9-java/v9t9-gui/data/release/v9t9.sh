@@ -13,7 +13,8 @@ NORMSCRIPT=$(echo $0 | sed 's/\\/\//g')
 BASEDIR=$(dirname "$NORMSCRIPT")
 
 JAVA=java
-VMARGS=-Xmx256M
+VMARGS="$V9T9_VMARGS  -Xmx256M"
+#VMARGS="$VMARGS -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:8000"
 
 OS=$(uname)
 

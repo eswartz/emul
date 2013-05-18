@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -376,14 +377,17 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @see v9t9.common.files.IPathFileLocator#getDirectoryListing(java.net.URI)
 	 */
 	@Override
-	public synchronized Collection<String> getDirectoryListing(URI uri) throws IOException {
+	public Collection<String> getDirectoryListing(URI uri) throws IOException {
 		
 		// read from directory, not file
 		URI directory = resolveInsideURI(uri, ".");
 		if (directory == null)
 			throw new IOException("cannot read directory in " + uri);
 		
-		Collection<String> cachedListing = cachedListings.get(directory);
+		Collection<String> cachedListing;
+		synchronized (this) {
+			cachedListing = cachedListings.get(directory);
+		}
 		
 		if (cachedListing != null && !directory.equals(rwPathProperty)) {
 			// never update JAR cache
@@ -398,6 +402,9 @@ public class PathFileLocator implements IPathFileLocator {
 		}
 		
 		cachedListing = fetchDirectoryListing(directory);
+		synchronized (this) {
+			
+		}
 		
 		return cachedListing;
 	}
@@ -422,22 +429,38 @@ public class PathFileLocator implements IPathFileLocator {
 			String ssp = directory.getSchemeSpecificPart();
 			if (ssp == null)
 				ssp = directory.getPath();
-			String zipPath = ssp.substring(0, ssp.lastIndexOf('!'));
+			int dirIdx = ssp.lastIndexOf('!');
+			String zipPath = ssp.substring(0, dirIdx);
+			String entPrefix = ssp.substring(dirIdx + 2);	// skip '!' and '/'
 			ZipFile zf;
 			try {
 				logger.info("reading zip file " + zipPath);
 				File file = new File(URI.create(zipPath));
 				zf = new ZipFile(file);
-				
 				try {
 					cachedListing = new ArrayList<String>();
 					for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
 						ZipEntry entry = en.nextElement();
-						cachedListing.add(entry.getName());
+						String entPath = entry.getName();
+						// get only entries under the desired directory...
+						if (entPath.length() > entPrefix.length() && entPath.startsWith(entPrefix)) {
+							String entSuffix = entPath.substring(entPrefix.length());
+							int slashIdx = entSuffix.indexOf('/');
+							if (slashIdx < 0) {
+								// and not in a deeper directory
+								cachedListing.add(entSuffix);
+							} else if (slashIdx == entSuffix.length() - 1) {
+								// directory entry
+								cachedListing.add(entSuffix.substring(0, slashIdx - 1));
+							}
+						}
 					}
-					cachedListings.put(directory, cachedListing);
-					cachedListingModifiedTime.put(directory, file.lastModified());
-					cachedListingTime.put(directory, System.currentTimeMillis());
+					
+					synchronized (this) {
+						cachedListings.put(directory, cachedListing);
+						cachedListingModifiedTime.put(directory, file.lastModified());
+						cachedListingTime.put(directory, System.currentTimeMillis());
+					}
 					
 					logger.info("\tlisting: " + cachedListing.size() + " entries");
 					return cachedListing;
@@ -458,7 +481,9 @@ public class PathFileLocator implements IPathFileLocator {
 		try {
 			connection = connect(directory, false);
 		} catch (SocketTimeoutException e) {
-			cachedSlowURIs.add(directory);
+			synchronized (this) {
+				cachedSlowURIs.add(directory);
+			}
 			throw e;
 		}
 
@@ -470,8 +495,10 @@ public class PathFileLocator implements IPathFileLocator {
 			cachedListing = getJarDirectoryListing(directory.toURL(),
 					ssp.substring(ssp.lastIndexOf('!') + 1));
 
-			cachedListings.put(directory, cachedListing);
-			cachedListingModifiedTime.put(directory, connection.getLastModified());
+			synchronized (this) {
+				cachedListings.put(directory, cachedListing);
+				cachedListingModifiedTime.put(directory, connection.getLastModified());
+			}
 		}
 		else  {
 			if (!connection.getContentType().equals("text/plain")) {
@@ -484,30 +511,33 @@ public class PathFileLocator implements IPathFileLocator {
 			// only re-read if the directory changed
 			time = connection.getLastModified();
 	
-			if (cachedListing == null
-					|| directory.equals(cachedWriteURI) 
-					|| ! ((Long) time).equals(cachedListingModifiedTime.get(directory))) {
-				String[] entries;
-				InputStream is = connection.getInputStream();
-				try {
-					String content = FileUtils.readInputStreamTextAndClose(is);
-					entries = content.split("\r\n|\n");
-				} catch (IOException e) {
-					throw e;
+			synchronized (this) {
+				if (cachedListing == null
+						|| directory.equals(cachedWriteURI) 
+						|| ! ((Long) time).equals(cachedListingModifiedTime.get(directory))) {
+					String[] entries;
+					InputStream is = connection.getInputStream();
+					try {
+						String content = FileUtils.readInputStreamTextAndClose(is);
+						entries = content.split("\r\n|\n");
+					} catch (IOException e) {
+						throw e;
+					}
+					
+					time = connection.getLastModified();
+					
+					cachedListing = new HashSet<String>(Arrays.asList(entries));
+					
+					cachedListings.put(directory, cachedListing);
+					cachedListingModifiedTime.put(directory, time);
 				}
-				
-				time = connection.getLastModified();
-				
-				cachedListing = new HashSet<String>(Arrays.asList(entries));
-				
-				cachedListings.put(directory, cachedListing);
-				cachedListingModifiedTime.put(directory, time);
-			} 
+			}
 		}
 		
-
-		cachedListingTime.put(directory, System.currentTimeMillis());
-		logger.info("\tlisting: " + cachedListing.size() + " entries");
+		synchronized (this) {
+			cachedListingTime.put(directory, System.currentTimeMillis());
+			logger.info("\tlisting: " + cachedListing.size() + " entries");
+		}
 		return cachedListing;
 	}
 	
@@ -751,7 +781,12 @@ public class PathFileLocator implements IPathFileLocator {
 		MalformedURLException {
 		URLConnection connection = uri.toURL().openConnection();
 		configureConnection(connection, useCache);
-		connection.connect();
+		try {
+			connection.connect();
+		} catch (NullPointerException e) {
+			// too-many files open bug...
+			throw new IOException(e);
+		}
 		return connection;
 	}
 
@@ -762,7 +797,7 @@ public class PathFileLocator implements IPathFileLocator {
 	public InputStream createInputStream(URI uri) throws IOException {
 
 		InputStream is = null; 
-		URLConnection connection = connect(uri);
+		URLConnection connection = connect(uri, false);
 		is = connection.getInputStream();
 		
 		if (is == null)
@@ -777,7 +812,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 */
 	@Override
 	public int getContentLength(URI uri) throws IOException {
-		URLConnection connection = connect(uri);
+		URLConnection connection = connect(uri, false);
 		return connection.getContentLength();
 	}
 	
@@ -787,7 +822,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 */
 	@Override
 	public long getLastModified(URI uri) throws IOException {
-		URLConnection connection = connect(uri);
+		URLConnection connection = connect(uri, false);
 		return connection.getLastModified();
 	}
 	
@@ -905,7 +940,7 @@ public class PathFileLocator implements IPathFileLocator {
 		URI directory = resolveInsideURI(uri, ".");
 		Map<String, String> md5Dir = cachedMD5Hashes.get(directory);
 		if (md5Dir == null) {
-			md5Dir = new HashMap<String, String>();
+			md5Dir = new LinkedHashMap<String, String>();
 			cachedMD5Hashes.put(directory, md5Dir);
 		}
 		String key = uri + ":" + offset + ":" + length;
@@ -1045,7 +1080,8 @@ public class PathFileLocator implements IPathFileLocator {
 		String theFilename = info.getResolvedFilename(settings);
 		
 		if (searchByContent) {
-			uri = findFileByMD5(info.getFileMD5(), info.getFileMd5Offset(), info.getFileMd5Limit());
+			uri = findFileByMD5(info.getFileMD5(), info.getFileMd5Offset(), 
+					info.getFileMd5Limit() != 0 ? info.getFileMd5Limit() : info.getSize());
 			if (uri != null) {
 				logger.info("*** Found matching entry by MD5: " + uri);
 				theFilename = splitFileName(uri).second;
