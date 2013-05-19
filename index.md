@@ -75,9 +75,11 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
-<li>2013/05/12: revamped ROM Setup dialog so you can see, also, what modules will be detected 
+<li>2013/05/18: runs on Windows XP again 
 </li>
-<li>2013/05/12: auto-detection of modules (including Mini Memory) and P-Code DSRs should be more reliable 
+<li>2013/05/18: auto-detection of modules (including Mini Memory) and P-Code DSRs works again 
+</li>
+<li>2013/05/12: revamped ROM Setup dialog so you can see, also, what modules will be detected 
 </li>
 <li>2013/04/28: added Event Log button to review notifications that you may have missed  
 </li>
