@@ -270,6 +270,8 @@ public class ROMSetupDialog extends Dialog {
 	private StyledText createInfoSection(final Composite parent) {
 		final StyledText text = new StyledText(parent, SWT.BORDER | SWT.WRAP | SWT.READ_ONLY | SWT.V_SCROLL);
 				
+		text.setCaret(null);
+		
 		GridDataFactory.fillDefaults().grab(true, false).indent(8, 8).applyTo(text);
 		text.setMargins(6, 6, 6, 6);
 		
