@@ -76,16 +76,20 @@ public class SectorDiskImage extends BaseDiskImage  {
 		getHandle().seek(0);
 		getHandle().read(sector);
 
-		hdr.tracks = sector[17] & 0xff;
-		hdr.sides = sector[18] & 0xff;
-		hdr.tracksize = (sector[12] * 256);
+		hdr.tracks = sector[0x11] & 0xff;
+		hdr.sides = sector[0x12] & 0xff;
+		hdr.tracksize = (sector[0x0C] * 256);
+		hdr.secsPerTrack = sector[0x0C];
 		hdr.track0offs = 0;
-		if (hdr.tracks <= 0 || hdr.sides <= 0 || hdr.tracksize <= 0)
+		if ((hdr.tracks <= 0 || hdr.sides <= 0 || hdr.tracksize <= 0)
+				 || 'D' != sector[0x0D] || 'S' != sector[0x0E] || 'K' != sector[0x0F])
 		{
+			// hmm... bogus or unformatted disk -- guess
 			hdr.sides = 1;
 			hdr.tracksize = 256*9;
 			int tracks = (int) (sz / hdr.tracksize);
 			hdr.tracks = tracks;
+			hdr.secsPerTrack = 9;
 			if (tracks >= 80) {
 				tracks /= 2;
 				hdr.tracks = tracks;
@@ -93,6 +97,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 				if (tracks >= 80) {
 					tracks /= 2;
 					hdr.tracks = tracks;
+					hdr.secsPerTrack <<= 1;
 					hdr.tracksize <<= 1;
 					if (tracks > 40) {
 						hdr.tracks = 40;

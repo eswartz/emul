@@ -29,4 +29,6 @@ public interface IDiskHeader {
 	long getImageSize();
 	int getTrackOffset(int num);
 
+	int getSecsPerTrack();
+
 }

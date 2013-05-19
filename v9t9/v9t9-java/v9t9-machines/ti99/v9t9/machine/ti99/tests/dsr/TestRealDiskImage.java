@@ -161,7 +161,7 @@ public class TestRealDiskImage  {
 		return trkDisks;
 	}
 
-	protected void doTestReadTrackImage(String subdir, int expSides, int expSecs) throws IOException {
+	protected void doTestReadTrackImage(String subdir, int expSides, int expSecs, int secsPerTrack) throws IOException {
 		File[] secDisks = getTrackDisks(subdir);
 		byte[] buf = new byte[256];
 		for (File disk : secDisks) {
@@ -174,6 +174,7 @@ public class TestRealDiskImage  {
 			IDiskHeader header = image.getHeader();
 			assertNotNull(header);
 			assertTrue(header.toString(), header.getTracks() >= 35 && header.getTracks() <= 40);
+			assertEquals(header.toString(), secsPerTrack, header.getSecsPerTrack());
 			long headerExpSize = header.getImageSize() + image.getHeaderSize();
 			long actualSize = disk.length();
 			assertTrue(header.toString() + "; " + actualSize + " vs " + headerExpSize,
@@ -216,17 +217,17 @@ public class TestRealDiskImage  {
 
 	@Test
 	public void testReadTrackImageSSSD() throws IOException {
-		doTestReadTrackImage("sssd", 1, 360);
+		doTestReadTrackImage("sssd", 1, 360, 9);
 	}
 
 	@Test
 	public void testReadTrackImageDSSD() throws IOException {
-		doTestReadTrackImage("dssd", 2, 720);
+		doTestReadTrackImage("dssd", 2, 720, 9);
 	}
 
 	@Test
 	public void testReadTrackImageDSDD() throws IOException {
-		doTestReadTrackImage("dsdd", 2, 1440);
+		doTestReadTrackImage("dsdd", 2, 1440, 18);
 	}
 	
 	/**

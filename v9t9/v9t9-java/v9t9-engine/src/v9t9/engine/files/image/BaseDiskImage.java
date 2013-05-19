@@ -46,7 +46,8 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		int tracks;
 		/** 1 or 2 */
 		int sides;
-		byte unused;
+		/** # tracks per side */
+		int secsPerTrack;
 		/** bytes per track */
 		int tracksize;
 		/** offset for track 0 data */
@@ -93,9 +94,17 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		public int getTrack0Offset() {
 			return track0offs;
 		}
+		/* (non-Javadoc)
+		 * @see v9t9.common.files.IDiskHeader#getSecsPerTrack()
+		 */
+		@Override
+		public int getSecsPerTrack() {
+			return secsPerTrack;
+		}
 		@Override
 		public String toString() {
 			return "DSKheader [spec="+spec+", tracks=" + tracks + ", sides=" + sides
+					+ ", secsPerTrack=" + secsPerTrack
 					+ ", tracksize=" + tracksize + ", track0offs=" + track0offs
 					+ "]";
 		}
@@ -269,6 +278,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		hdr.spec = spec.getPath();
 		hdr.tracks = 40;
 		hdr.sides = 1;
+		hdr.secsPerTrack = 9;
 		hdr.tracksize = getDefaultTrackSize();
 		hdr.track0offs = getHeaderSize();
 
@@ -366,7 +376,8 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	public long getTrackDiskOffset() {
 		tracksideoffset = trackoffset;
 		if (sideReg != 0) {
-			tracksideoffset += hdr.getTrackOffset(hdr.tracks);
+			int sideOffs = hdr.getTrackOffset(hdr.tracks);
+			tracksideoffset += sideOffs;
 		}
 		return tracksideoffset;
 	}
@@ -481,11 +492,10 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	public void readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException {
 		ensureFormatAndTrackMarkers();
 		
-		int secsPerTrack = 9;
-		int track = (sector / secsPerTrack);
+		int track = (sector / hdr.secsPerTrack);
 		byte side = (byte) (track > 40 ? 1 : 0);
 		track %= 40;
-		byte tracksec = (byte) (sector % secsPerTrack);
+		byte tracksec = (byte) (sector % hdr.secsPerTrack);
 		seekToCurrentTrack(track, side);
 		readCurrentTrackData();
 		for (IdMarker marker : trackMarkers) {

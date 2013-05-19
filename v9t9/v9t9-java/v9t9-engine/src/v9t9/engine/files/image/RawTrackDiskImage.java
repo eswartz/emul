@@ -70,8 +70,10 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 
 		hdr.sides = sector[0x12] & 0xff;
 		hdr.tracks = sector[0x11] & 0xff;
+		hdr.secsPerTrack = sector[0x0C] & 0xff;
 		
-		if (hdr.tracks == 0 || hdr.sides == 0)
+		if (hdr.tracks == 0 || hdr.sides == 0 ||
+				'D' != sector[0x0D] || 'S' != sector[0x0E] || 'K' != sector[0x0F])
 			throw new IOException(MessageFormat.format("RawTrackDiskImage:  disk image ''{0}'' does not appear to be formatted",
 					spec));
 		
@@ -80,6 +82,7 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 			hdr.tracksize /= 2;
 			hdr.sides++;
 		}
+		
 		hdr.track0offs = 0;
 
 		if (hdr.tracksize <= 0) {

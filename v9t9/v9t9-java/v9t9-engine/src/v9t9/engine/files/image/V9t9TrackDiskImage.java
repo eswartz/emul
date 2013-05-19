@@ -55,7 +55,7 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 		getHandle().write(TRACK_VERSION);
 		getHandle().write(hdr.tracks);
 		getHandle().write(hdr.sides);
-		getHandle().write(0); // unused
+		getHandle().write(hdr.secsPerTrack);
 		getHandle().write(hdr.tracksize >> 8);
 		getHandle().write(hdr.tracksize & 0xff);
 		getHandle().write(hdr.track0offs >> 8);
@@ -88,8 +88,16 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 		byte version = getHandle().readByte();
 		hdr.tracks = getHandle().readByte() & 0xff;
 		hdr.sides = getHandle().readByte() & 0xff;
-		getHandle().readByte(); // unused
+		byte spt = getHandle().readByte(); 
 		hdr.tracksize =  (((getHandle().read() & 0xff) << 8) | (getHandle().read() & 0xff));
+		if (spt == 0) {
+			spt = (byte) (hdr.tracksize / 256);
+			if (spt < 18)
+				spt = 9;
+			else
+				spt = 18;
+		}
+		hdr.secsPerTrack = spt & 0xff;
 		hdr.track0offs = (((getHandle().read() & 0xff) << 8) | (getHandle().read() & 0xff));
 
 		/* verify */
