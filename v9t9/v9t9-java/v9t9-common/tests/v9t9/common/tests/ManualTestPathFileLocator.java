@@ -20,12 +20,13 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Map;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import v9t9.common.files.IPathFileLocator;
+import v9t9.common.files.IPathFileLocator.FileInfo;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.settings.SettingSchemaProperty;
 import ejs.base.properties.IProperty;
@@ -117,15 +118,19 @@ public class ManualTestPathFileLocator {
 
 		bootRoms.getList().add("file://" + ROM_PATH);
 		
-		uri = locator.findFile("994arom.bin");
+		uri = locator.findFile("__994arom.bin");
 		assertNotNull(uri);
 		uri = locator.findFile("wumpusg.bin");
 		assertNull(uri);
 		
 		bootRoms.getList().add(MODULE_PATH);
 		
-		uri = locator.findFile("994arom.bin");
+		uri = locator.findFileByMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB", 0, -1);
 		assertNotNull(uri);
+		uri = locator.findFileByMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB", 0, 8192);
+		assertNotNull(uri);
+		uri = locator.findFileByMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB", 1, 8192);
+		assertNull(uri);
 		uri = locator.findFile("wumpusg.bin");
 		assertNotNull(uri);
 
@@ -145,7 +150,7 @@ public class ManualTestPathFileLocator {
 		bootRoms.getList().add(ROM_PATH);
 		bootRoms.getList().add(MODULE_PATH);
 
-		uri = locator.findFile("994arom.bin");
+		uri = locator.findFile("__994arom.bin");
 		assertNotNull(uri);
 
 		// new file should not exist yet... if not, test area needs cleaning
@@ -193,7 +198,7 @@ public class ManualTestPathFileLocator {
 		
 	}
 
-	@Test
+	//@Test
 	public void testTroublesomeLookups() {
 		
 		IPathFileLocator locator = new PathFileLocator();
@@ -293,7 +298,7 @@ public class ManualTestPathFileLocator {
 		assertTrue(third * 100 < orig);
 	}
 	
-	@Test
+	//@Test
 	public void testJarFile() throws URISyntaxException, IOException {
 
 		IPathFileLocator locator = new PathFileLocator();
@@ -310,7 +315,7 @@ public class ManualTestPathFileLocator {
 		assertTrue(jarURI.isOpaque());
 		assertTrue(jarURI.isAbsolute());
 		
-		Collection<String> listing = locator.getDirectoryListing(jarURI);
+		Map<String, FileInfo> listing = locator.getDirectoryListing(jarURI);
 		assertNotNull(listing);
 		
 		URI moduleXML = locator.resolveInsideURI(jarURI, "stock_modules.xml");
@@ -322,7 +327,7 @@ public class ManualTestPathFileLocator {
 	}
 	
 
-	@Test
+	//@Test
 	public void testJarHttp() throws URISyntaxException, IOException {
 
 		IPathFileLocator locator = new PathFileLocator();
@@ -337,7 +342,7 @@ public class ManualTestPathFileLocator {
 		assertTrue(jarURI.isOpaque());
 		assertTrue(jarURI.isAbsolute());
 		
-		Collection<String> listing = locator.getDirectoryListing(jarURI);
+		Map<String, FileInfo> listing = locator.getDirectoryListing(jarURI);
 		assertNotNull(listing);
 		
 		URI moduleXML = locator.resolveInsideURI(jarURI, "stock_modules.xml");
@@ -349,7 +354,7 @@ public class ManualTestPathFileLocator {
 	}
 	
 
-	@Test
+	//@Test
 	public void testJarLocal() throws URISyntaxException, IOException {
 
 		IPathFileLocator locator = new PathFileLocator();
@@ -363,10 +368,10 @@ public class ManualTestPathFileLocator {
 		assertTrue(jarURI.isOpaque());
 		assertTrue(jarURI.isAbsolute());
 		
-		Collection<String> listing = locator.getDirectoryListing(jarURI);
+		Map<String, FileInfo> listing = locator.getDirectoryListing(jarURI);
 		assertNotNull(listing);
 
-		for (String ent : listing)
+		for (String ent : listing.keySet())
 			System.out.println(ent);
 		assertEquals(2, listing.size());
 

@@ -16,7 +16,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +34,7 @@ import v9t9.common.demos.IDemoRecordingActor;
 import v9t9.common.demos.IDemoReversePlaybackActor;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
+import v9t9.common.files.IPathFileLocator.FileInfo;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
@@ -141,12 +141,14 @@ public class DemoManager implements IDemoManager {
 		for (final URI dirURI : locator.getSearchURIs()) {
 			try {
 				logger.debug("scanning " + dirURI);
-				Collection<String> ents = locator.getDirectoryListing(dirURI);
-				for (String ent : ents) {
-					logger.debug("\t" + ent);
-					if (ent.endsWith(".dem")) {
-						final URI demoURI = locator.resolveInsideURI(dirURI, ent);
-						String descrName = ent.substring(0, ent.length() - 4) + ".txt";
+				Map<String, FileInfo> ents = locator.getDirectoryListing(dirURI);
+				for (Map.Entry<String, FileInfo> ent : ents.entrySet()) {
+					String name = ent.getKey();
+					logger.debug("\t" + name);
+					if (name.endsWith(".dem")) {
+						FileInfo info = ent.getValue();
+						final URI demoURI = info.uri;
+						String descrName = name.substring(0, name.length() - 4) + ".txt";
 						URI descrURI = locator.resolveInsideURI(dirURI, descrName);
 						
 						String description;
@@ -156,7 +158,7 @@ public class DemoManager implements IDemoManager {
 						} catch (IOException e) {
 							description = "";
 						}
-						demos.add(new Demo(dirURI, demoURI, ent, description));
+						demos.add(new Demo(dirURI, demoURI, ent.getKey(), description));
 					}
 				}
 			} catch (IOException e) {

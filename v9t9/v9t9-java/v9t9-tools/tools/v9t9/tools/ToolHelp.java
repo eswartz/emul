@@ -13,8 +13,9 @@ package v9t9.tools;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Collection;
+import java.util.Map;
 
+import v9t9.common.files.IPathFileLocator.FileInfo;
 import v9t9.common.files.PathFileLocator;
 import ejs.base.logging.LoggingUtils;
 
@@ -47,9 +48,9 @@ public class ToolHelp {
 		//System.out.println("helpDirURL=" +helpDirURL);
 		
 		PathFileLocator loc = new PathFileLocator();
-		Collection<String> ents = loc.getDirectoryListing(helpDirURL.toURI());
+		Map<String, FileInfo> ents = loc.getDirectoryListing(helpDirURL.toURI());
 		
-		for (String ent : ents) {
+		for (String ent : ents.keySet()) {
 			if (ent.endsWith(".class")) {
 				String toolName = packageName + ent.substring(0, ent.length() - ".class".length());
 				if (!toolName.equals(ToolHelp.class.getName())) {
