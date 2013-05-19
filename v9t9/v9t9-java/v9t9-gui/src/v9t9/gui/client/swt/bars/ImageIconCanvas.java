@@ -27,6 +27,7 @@ public abstract class ImageIconCanvas extends ImageBarChild {
 	protected ImageIconInfo imageIconInfo;
 	protected Rectangle bounds;
 	protected final IImageProvider imageProvider;
+	protected int invAlpha;
 	
 	public ImageIconCanvas(IImageCanvas parentDrawer, int style, 
 			IImageProvider imageProvider, int iconIndex, String tooltip) {
@@ -70,13 +71,16 @@ public abstract class ImageIconCanvas extends ImageBarChild {
 		drawImage(e);
 	}
 
+	protected void setAlpha(int alpha) {
+		this.invAlpha = 255 - alpha;
+	}
 	/**
 	 * @param e
 	 */
 	protected void drawImage(PaintEvent e) {
 		Rectangle drawRect = getBounds();
 		try {
-			imageProvider.drawImage(e.gc, drawRect, bounds);
+			imageProvider.drawImage(e.gc, invAlpha, drawRect, bounds);
 		} catch (IllegalArgumentException e2) {
 			e2.printStackTrace();
 		}

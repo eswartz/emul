@@ -37,9 +37,9 @@ import v9t9.common.cpu.IExecutor;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
-import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.IEventNotifierListener;
 import v9t9.common.events.NotifyEvent;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
@@ -204,12 +204,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			 */
 			@Override
 			protected void drawImage(PaintEvent e) {
-				int origAlpha = e.gc.getAlpha();
-				if (acknowledged[0]) {
-					e.gc.setAlpha(32);
-				}
+				setAlpha(acknowledged[0] ? 32 : 255);
 				super.drawImage(e);
-				e.gc.setAlpha(origAlpha);
 			}
 		};
 		final IEventNotifierListener eventListener = new IEventNotifierListener() {

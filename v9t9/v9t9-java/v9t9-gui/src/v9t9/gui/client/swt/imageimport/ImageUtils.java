@@ -1175,5 +1175,28 @@ public abstract class ImageUtils {
 		
 	}
 
+	/**
+	 * @param image
+	 * @param alpha
+	 * @return
+	 */
+	public static Image makeAlphaBlendedImage(Image image, int alpha) {
+		ImageData maskedImg = (ImageData) image.getImageData().clone();
+		byte[] alphaData = maskedImg.alphaData;
+		int length = (maskedImg.bytesPerLine * maskedImg.height) / (maskedImg.depth / 8);
+		if (alphaData == null) {
+			alphaData = maskedImg.alphaData = new byte[length];
+		} else {
+			length = maskedImg.alphaData.length;
+		}
+		for (int i = 0; i < length; i++) {
+			int o = (alphaData[i] & 0xff);
+			int n = (o * alpha) / 255;
+			alphaData[i] = (byte) n;
+		}
+		Image alphaImg = new Image(image.getDevice(), maskedImg);
+		return alphaImg;
+	}
+
 
 }

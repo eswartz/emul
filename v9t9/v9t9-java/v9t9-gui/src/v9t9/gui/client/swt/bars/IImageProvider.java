@@ -16,6 +16,6 @@ import org.eclipse.swt.graphics.Rectangle;
 
 public interface IImageProvider {
 	void dispose();
-	void drawImage(GC gc, Rectangle drawRect, Rectangle imgRect);
+	void drawImage(GC gc, int alpha, Rectangle drawRect, Rectangle imgRect);
 	Rectangle imageIndexToBounds(int iconIndex);
 }

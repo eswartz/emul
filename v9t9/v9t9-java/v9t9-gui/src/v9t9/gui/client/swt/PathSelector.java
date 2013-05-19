@@ -140,7 +140,7 @@ public class PathSelector extends Composite {
 	 * 
 	 */
 	private void createListTable() {
-		viewer = new TableViewer(this);
+		viewer = new TableViewer(this, SWT.FULL_SELECTION + SWT.MULTI);
 		
 		final Table table = viewer.getTable();
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(table);

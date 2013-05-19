@@ -416,7 +416,7 @@ public class ModuleSelector extends Composite {
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(comp);
 
 		filterText = new Text(comp, SWT.BORDER);
-		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, false).applyTo(filterText);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(filterText);
 		
 		filterText.addFocusListener(new FocusListener() {
 			

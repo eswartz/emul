@@ -100,7 +100,7 @@ public class MultiImageSizeProvider implements IImageProvider {
 	}
 
 	@Override
-	public void drawImage(GC gc, Rectangle drawRect, Rectangle imgRect) {
+	public void drawImage(GC gc, int alpha, Rectangle drawRect, Rectangle imgRect) {
 		double ratio;
 		Pair<Double, Image> iconInfo = getImage(drawRect.width, drawRect.height);
 		ratio = iconInfo.first;
@@ -110,11 +110,27 @@ public class MultiImageSizeProvider implements IImageProvider {
 //			Transform transform = new Transform(gc.getDevice());
 //			transform.translate(-drawRect.x, -drawRect.y);
 //			gc.setTransform(transform);
-			gc.drawImage(icon, 
-					(int)(imgRect.x * ratio), (int)(imgRect.y * ratio),
-				(int)(imgRect.width * ratio), (int) (imgRect.height * ratio), 
-				drawRect.x, drawRect.y,
-				drawRect.width, drawRect.height);
+			
+			if (alpha != 0 && ImageUtils.isAlphaBlendingSupported()) {
+				int origAlpha = gc.getAlpha();
+				gc.setAlpha(alpha);
+				gc.drawImage(icon, 
+						(int)(imgRect.x * ratio), (int)(imgRect.y * ratio),
+					(int)(imgRect.width * ratio), (int) (imgRect.height * ratio), 
+					drawRect.x, drawRect.y,
+					drawRect.width, drawRect.height);
+
+				gc.setAlpha(origAlpha);
+			} else {
+				// e.g. no GDI+
+				Image alphaImg = ImageUtils.makeAlphaBlendedImage(icon, alpha);
+				gc.drawImage(alphaImg, 
+						(int)(imgRect.x * ratio), (int)(imgRect.y * ratio),
+						(int)(imgRect.width * ratio), (int) (imgRect.height * ratio), 
+						drawRect.x, drawRect.y,
+						drawRect.width, drawRect.height);
+				alphaImg.dispose();
+			}
 //			transform.dispose();
 		}
 	}

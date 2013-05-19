@@ -67,6 +67,7 @@ final class ModuleInfoDialog extends Dialog {
 	@Override
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
+		newShell.setText("Module Details");
 	}
 
 	protected IDialogSettings getDialogBoundsSettings() {
@@ -78,7 +79,10 @@ final class ModuleInfoDialog extends Dialog {
 	 */
 	@Override
 	protected Point getInitialSize() {
-		return super.getInitialSize();
+		Point sz = super.getInitialSize();
+		if (sz.x < 600)
+			sz.x = 600;
+		return sz;
 	}
 
 	/* (non-Javadoc)

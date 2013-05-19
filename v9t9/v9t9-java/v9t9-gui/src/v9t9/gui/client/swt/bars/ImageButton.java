@@ -267,13 +267,13 @@ public class ImageButton extends ImageIconCanvas {
 		updateDrawRect(drawRect);
 		try {
 			if (bounds.width > 0) {
-				imageProvider.drawImage(e.gc, drawRect, bounds);
+				imageProvider.drawImage(e.gc, 255 - invAlpha, drawRect, bounds);
 			}
 			drawRect.x = po.x;
 			drawRect.y = po.y;
 			
 			for (Rectangle imgRect : imageOverlays) {
-				imageProvider.drawImage(e.gc, drawRect, imgRect);
+				imageProvider.drawImage(e.gc, 255 - invAlpha, drawRect, imgRect);
 			}
 //			if (menuOverlayBounds != null && isMenuHovering) {
 //				imageProvider.drawImage(e.gc, drawRect, menuOverlayBounds);
