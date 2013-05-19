@@ -11,6 +11,7 @@
 package v9t9.gui;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 import org.apache.log4j.Logger;
@@ -45,18 +46,32 @@ public class EmulatorGuiData {
 	public static Image loadImage(Device device, String path) {
 		URL iconFile = getDataURL(path);
 		if (iconFile != null) {
+			InputStream is = null;
 			try {
-				Image icon = new Image(device, iconFile.openStream());
+				is = iconFile.openStream();
+				Image icon = new Image(device, is);
 				return icon;
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			} catch (Throwable e1) {
+				try {
+					if (is != null)
+						is.close();
+				} catch (IOException e) {
+				}
 				// try again -- SWT bug
 				try {
-					Image icon = new Image(device, iconFile.openStream());
+					is = iconFile.openStream();
+					Image icon = new Image(device, is);
 					return icon;
 				} catch (Throwable e2) {
 					e1.printStackTrace();
+				} finally {
+					try {
+						if (is != null)
+							is.close();
+					} catch (IOException e) {
+					}
 				}
 			}
 		}
