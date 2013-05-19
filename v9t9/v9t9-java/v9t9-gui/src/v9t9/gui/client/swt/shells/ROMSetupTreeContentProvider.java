@@ -86,8 +86,10 @@ public class ROMSetupTreeContentProvider implements ITreeContentProvider {
 						if (viewer != null) {
 							viewer.getControl().getDisplay().asyncExec(new Runnable() {
 								public void run() {
-									viewer.refresh();
-									((TreeViewer) viewer).expandToLevel(2);
+									if (viewer != null && !viewer.getControl().isDisposed()) {
+										viewer.refresh();
+										((TreeViewer) viewer).expandToLevel(2);
+									}
 								}
 							});
 						}

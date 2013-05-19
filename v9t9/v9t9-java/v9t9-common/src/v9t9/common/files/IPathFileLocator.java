@@ -16,7 +16,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
-import java.util.Collection;
+import java.util.Map;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.MemoryEntryInfo;
@@ -30,6 +30,19 @@ import ejs.base.utils.Pair;
  */
 public interface IPathFileLocator {
 
+	public class FileInfo {
+		public final long length;
+		public final String md5;
+		public final URI uri;
+		public FileInfo(URI uri, long length, String md5) {
+			super();
+			this.uri = uri;
+			this.length = length;
+			this.md5 = md5;
+		}
+		
+	}
+	
 	void addReadOnlyPathProperty(IProperty property);
 
 	void setReadWritePathProperty(IProperty property);
@@ -75,9 +88,9 @@ public interface IPathFileLocator {
 	/**
 	 * Get the listing of entries in this URI 
 	 * @param uri
-	 * @return list of filenames
+	 * @return map of filenames to their info
 	 */
-	Collection<String> getDirectoryListing(URI uri) throws IOException;
+	Map<String, FileInfo> getDirectoryListing(URI uri) throws IOException;
 
 	/**
 	 * Open a (new) input stream to the URI
@@ -184,6 +197,11 @@ public interface IPathFileLocator {
 	 */
 	long getLastModified(URI uri) throws IOException;
 	
+	public interface IPathChangeListener {
+		void pathsChanged();
+	}
 
+	void addListener(IPathChangeListener listener);
+	void removeListener(IPathChangeListener listener);
 
 }

@@ -20,6 +20,10 @@ class ViewerUpdater extends Thread {
 	/**
 	 * 
 	 */
+	private static final String REFRESH = "Refresh";
+	/**
+	 * 
+	 */
 	private final ModuleSelector moduleSelector;
 
 	/**
@@ -59,23 +63,31 @@ class ViewerUpdater extends Thread {
 			if (!avail.isEmpty() && !this.moduleSelector.getDisplay().isDisposed()) {
 				this.moduleSelector.getDisplay().asyncExec(new Runnable() {
 					public void run() {
-						if (!ViewerUpdater.this.moduleSelector.getViewer().getControl().isDisposed()) {
+						if (!moduleSelector.getViewer().getControl().isDisposed()) {
 							Object[] availarray;
+							boolean toRefresh = false;
 							synchronized (avail) {
+								toRefresh = avail.remove(REFRESH);
 								availarray = avail.toArray();
 								avail.clear();
 							}
-							ViewerUpdater.this.moduleSelector.getViewer().update(availarray, ModuleSelector.NAME_PROPERTY_ARRAY);
 							
+							moduleSelector.refreshFilters();
+							moduleSelector.getViewer().update(availarray, null);
+
+							if (toRefresh) {
+								moduleSelector.getViewer().refresh(true);
+								moduleSelector.getViewer().expandToLevel(2);
+							}
 							// the node may have been filtered out
 							//refreshFilters();
 							
 							if (firstRefresh) {
 								firstRefresh = false;
 								
-								ViewerUpdater.this.moduleSelector.initFilter(ModuleSelector.lastFilter);
-
-								ViewerUpdater.this.moduleSelector.hookActions();
+								moduleSelector.firstRefresh();
+//								moduleSelector.initFilter(ModuleSelector.lastFilter);
+//								moduleSelector.hookActions();
 							}								
 							
 						}
@@ -84,6 +96,13 @@ class ViewerUpdater extends Thread {
 			}
 			
 		}
+	}
+
+	/**
+	 * 
+	 */
+	public void postRefresh() {
+		elements.add(REFRESH);
 	}
 
 }

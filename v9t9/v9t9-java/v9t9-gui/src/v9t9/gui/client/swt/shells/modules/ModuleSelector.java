@@ -23,10 +23,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -96,6 +96,7 @@ import org.ejs.gui.common.SwtDialogUtils;
 
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
+import v9t9.common.files.IPathFileLocator.IPathChangeListener;
 import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
@@ -154,8 +155,8 @@ public class ModuleSelector extends Composite {
 	private final IModuleManager moduleManager;
 	private Text filterText;
 
-	private Map<IModule, Boolean> knownStates = new HashMap<IModule, Boolean>();
-	private Set<IModule> currentFetches = new HashSet<IModule>();
+	private Map<IModule, Boolean> knownStates = new IdentityHashMap<IModule, Boolean>();
+	private Map<IModule, Boolean> currentFetches = new IdentityHashMap<IModule, Boolean>();
 	private boolean showMissingModules;
 	protected boolean sortModules;
 	protected int sortDirection;
@@ -185,6 +186,8 @@ public class ModuleSelector extends Composite {
 	private Map<String, Image> stockImages = new HashMap<String, Image>();
 
 	protected IProperty modDbList;
+
+	private IPathChangeListener pathChangeListener;
 	
 	/**
 	 * @param window 
@@ -227,7 +230,7 @@ public class ModuleSelector extends Composite {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				showMissingModules = showUnloadable.getSelection();
-				viewer.refresh();
+				viewer.refresh(true);
 				dialogSettings.put(SHOW_MISSING_MODULES, showMissingModules);
 			}
 		});
@@ -266,11 +269,6 @@ public class ModuleSelector extends Composite {
 			public void widgetSelected(SelectionEvent e) {
 				ROMSetupDialog dialog = ROMSetupDialog.createDialog(window.getShell(), machine, window);
 	        	dialog.open();
-	        	
-	        	synchronized (knownStates) {
-					knownStates.clear();
-				}
-				viewer.refresh();
 			}
 		});
 		
@@ -297,7 +295,7 @@ public class ModuleSelector extends Composite {
 					synchronized (knownStates) {
 						knownStates.clear();
 					}
-					viewer.refresh();
+					viewer.refresh(true);
 					viewer.expandToLevel(moduleDatabaseURI, 2);
 					viewer.setSelection(new StructuredSelection(moduleDatabaseURI));
 				}
@@ -324,11 +322,33 @@ public class ModuleSelector extends Composite {
 		
 		viewerUpdater.start();
 		
+		pathChangeListener = new IPathChangeListener() {
+			
+			@Override
+			public void pathsChanged() {
+				if (!viewer.getTree().isDisposed()) {
+					viewer.getTree().getDisplay().asyncExec(new Runnable() {
+						public void run() {
+							if (!viewer.getTree().isDisposed()) {
+								synchronized (knownStates) {
+									knownStates.clear();
+								}
+								viewerUpdater.postRefresh();
+							}
+						}
+					});
+				}
+			}
+		};
+		
+		machine.getRomPathFileLocator().addListener(pathChangeListener);
+		
 		addDisposeListener(new DisposeListener() {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
 				machine.setPaused(wasPaused);
+				machine.getRomPathFileLocator().removeListener(pathChangeListener);
 			}
 		});
 		
@@ -560,6 +580,7 @@ public class ModuleSelector extends Composite {
 				EmulatorGuiData.loadImage(getDisplay(), "icons/stock_no_module.png"),
 				new Point(MAX, MAX));
 		
+		viewer.setUseHashlookup(true);
 		viewer.setComparer(new IElementComparer() {
 			
 			@Override
@@ -569,7 +590,8 @@ public class ModuleSelector extends Composite {
 			
 			@Override
 			public boolean equals(Object a, Object b) {
-				return a == b || a.equals(b);
+				return a == b 
+						|| a.equals(b);
 			}
 		});
 		
@@ -590,7 +612,31 @@ public class ModuleSelector extends Composite {
 
 		final ModuleContentProvider contentProvider = new ModuleContentProvider();
 		viewer.setContentProvider(contentProvider);
-		viewer.setLabelProvider(new ModuleTableLabelProvider(this));
+		
+		CellLabelProvider cellLabelProvider = new CellLabelProvider() {
+			
+			@Override
+			public void update(ViewerCell cell) {
+				if (cell.getElement()  instanceof URI) {
+					URI uri = (URI) cell.getElement();
+					String text = FileUtils.abbreviateURI(uri, 20);
+					
+					cell.setText(text);
+					cell.setImage(getModuleListImage());
+				} else if (cell.getElement() instanceof IModule) {
+					IModule module = (IModule) cell.getElement();
+					cell.setText(module.getName());
+					ModuleInfo info = module.getInfo();
+					cell.setForeground(isModuleLoadable(module) ? null : viewer.getControl().getDisplay().getSystemColor(SWT.COLOR_TITLE_INACTIVE_FOREGROUND));
+					cell.setImage(getOrLoadModuleImage(module, module, info != null ? info.getImagePath() : null));
+				} else {
+					cell.setText(String.valueOf(cell.getElement()));
+					cell.setImage(getNoModuleImage());
+				}
+			}
+		};
+		
+		viewer.setLabelProvider(cellLabelProvider);
 
 		viewer.setColumnProperties(NAME_PROPERTY_ARRAY);
 		
@@ -661,27 +707,7 @@ public class ModuleSelector extends Composite {
 		});
 		
 		TreeViewerColumn nameViewerColumn = new TreeViewerColumn(viewer, nameColumn);
-		nameViewerColumn.setLabelProvider(new CellLabelProvider() {
-			
-			@Override
-			public void update(ViewerCell cell) {
-				if (cell.getElement()  instanceof URI) {
-					URI uri = (URI) cell.getElement();
-					String text = FileUtils.abbreviateURI(uri, 20);
-					
-					cell.setText(text);
-					cell.setImage(getModuleListImage());
-				} else if (cell.getElement() instanceof IModule) {
-					IModule module = (IModule) cell.getElement();
-					cell.setText(module.getName());
-					ModuleInfo info = module.getInfo();
-					cell.setImage(getOrLoadModuleImage(module, module, info != null ? info.getImagePath() : null));
-				} else {
-					cell.setText(String.valueOf(cell.getElement()));
-					cell.setImage(getNoModuleImage());
-				}
-			}
-		});
+		nameViewerColumn.setLabelProvider(cellLabelProvider);
 		
 		EditingSupport editingSupport = new ModuleNameEditingSupport(this, viewer);
 		nameViewerColumn.setEditingSupport(editingSupport);
@@ -1258,9 +1284,9 @@ public class ModuleSelector extends Composite {
 		
 		// this can take a long time
 		synchronized (currentFetches) {
-			if (currentFetches.contains(module))
-				return true;	// guess
-			currentFetches.add(module);
+			if (currentFetches.containsKey(module))
+				return false; 	// not known yet
+			currentFetches.put(module, true);
 		
 			Runnable runnable = new Runnable() {
 				
@@ -1283,11 +1309,12 @@ public class ModuleSelector extends Composite {
 								knownStates.put(module, Boolean.FALSE);
 							}
 						}
-						synchronized (currentFetches) {
-							currentFetches.remove(module);
-						}
+					} 
+
+					synchronized (currentFetches) {
+						currentFetches.remove(module);
 					}
-					
+
 					// notify viewer of change (label or content)
 					viewerUpdater.post(module);
 				}
@@ -1296,7 +1323,7 @@ public class ModuleSelector extends Composite {
 			executor.submit(runnable);
 		}
 		
-		return true;
+		return false;	// not known yet
 	}
 
 	private void assignModuleImage(IModule module) {
@@ -1386,6 +1413,16 @@ public class ModuleSelector extends Composite {
 	}
 	public Image getNoModuleImage() {
 		return noModuleImage;
+	}
+
+
+
+	/**
+	 * 
+	 */
+	public void firstRefresh() {
+		initFilter(ModuleSelector.lastFilter);
+		hookActions();
 	}
 
 }

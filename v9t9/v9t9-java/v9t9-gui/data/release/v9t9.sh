@@ -13,8 +13,12 @@ NORMSCRIPT=$(echo $0 | sed 's/\\/\//g')
 BASEDIR=$(dirname "$NORMSCRIPT")
 
 JAVA=java
-VMARGS="$V9T9_VMARGS  -Xmx256M"
-#VMARGS="$VMARGS -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:8000"
+VMARGS="-Xmx256M"
+
+if [ "$1" = "-debug" ]; then
+	VMARGS="$VMARGS -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:8000"
+	shift
+fi	
 
 OS=$(uname)
 
@@ -25,6 +29,8 @@ fi
 VMARGS="$VMARGS -Dlog4j.configuration=jar:file:./v9t9j.jar!/log4j.properties"
 #VMARGS="$VMARGS -Dlog4j.configuration=jar:file:./v9t9j.jar!/debug.properties"
 
+VMARGS="$VMARGS $V9T9_VMARGS"
+  
 cd "$BASEDIR"
 "$JAVA" $VMARGS  -jar v9t9j.jar "$@"
 

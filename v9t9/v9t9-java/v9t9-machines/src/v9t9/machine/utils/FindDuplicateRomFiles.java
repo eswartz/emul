@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.files.IPathFileLocator.FileInfo;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.common.settings.SettingSchemaProperty;
@@ -66,12 +67,12 @@ public class FindDuplicateRomFiles {
 		
 		for (Object obj : pathProp.getList()) {
 			URI dirURI = locator.createURI(obj.toString());
-			Collection<String> files = locator.getDirectoryListing(dirURI);
+			Map<String, FileInfo> files = locator.getDirectoryListing(dirURI);
 			
-			for (String file : files) {
+			for (Map.Entry<String, FileInfo> info : files.entrySet()) {
 				try {
-					URI fileURI = locator.resolveInsideURI(dirURI, file);
-					String md5 = locator.getContentMD5(fileURI);
+					URI fileURI = info.getValue().uri;
+					String md5 = info.getValue().md5;
 					Collection<URI> dirs = matches.get(md5);
 					if (dirs == null) {
 						dirs = new ArrayList<URI>();
