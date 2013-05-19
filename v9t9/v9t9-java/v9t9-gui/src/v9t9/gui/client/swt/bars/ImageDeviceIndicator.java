@@ -97,9 +97,9 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 		drawRect.y = po.y;
 		try {
 			//System.out.println(bounds);
-			imageProvider.drawImage(e.gc, 0, drawRect, bounds);
+			imageProvider.drawImage(e.gc, 255, drawRect, bounds);
 			if (overlayBounds != null && provider.getActiveProperty().getBoolean()) {
-				imageProvider.drawImage(e.gc, 0, drawRect, overlayBounds);
+				imageProvider.drawImage(e.gc, 255, drawRect, overlayBounds);
 			}
 		} catch (IllegalArgumentException e2) {
 			e2.printStackTrace();

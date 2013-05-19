@@ -80,7 +80,7 @@ public abstract class ImageIconCanvas extends ImageBarChild {
 	protected void drawImage(PaintEvent e) {
 		Rectangle drawRect = getBounds();
 		try {
-			imageProvider.drawImage(e.gc, invAlpha, drawRect, bounds);
+			imageProvider.drawImage(e.gc, 255 - invAlpha, drawRect, bounds);
 		} catch (IllegalArgumentException e2) {
 			e2.printStackTrace();
 		}

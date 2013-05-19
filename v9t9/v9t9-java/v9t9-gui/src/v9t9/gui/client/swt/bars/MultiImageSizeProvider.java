@@ -111,16 +111,18 @@ public class MultiImageSizeProvider implements IImageProvider {
 //			transform.translate(-drawRect.x, -drawRect.y);
 //			gc.setTransform(transform);
 			
-			if (alpha != 0 && ImageUtils.isAlphaBlendingSupported()) {
+			if (alpha == 255 || ImageUtils.isAlphaBlendingSupported()) {
 				int origAlpha = gc.getAlpha();
-				gc.setAlpha(alpha);
+				if (alpha != 255) 
+					gc.setAlpha(alpha);
 				gc.drawImage(icon, 
 						(int)(imgRect.x * ratio), (int)(imgRect.y * ratio),
 					(int)(imgRect.width * ratio), (int) (imgRect.height * ratio), 
 					drawRect.x, drawRect.y,
 					drawRect.width, drawRect.height);
 
-				gc.setAlpha(origAlpha);
+				if (alpha != origAlpha)
+					gc.setAlpha(origAlpha);
 			} else {
 				// e.g. no GDI+
 				Image alphaImg = ImageUtils.makeAlphaBlendedImage(icon, alpha);
