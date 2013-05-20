@@ -378,12 +378,15 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			tracksideoffset = trackoffset;
 		}
 		else  {
-			//int sideOffs = hdr.getTrackOffset(hdr.tracks);
-			//tracksideoffset += sideOffs;
-			// tracks go in the opposite direction on side 2
-			tracksideoffset = hdr.track0offs 
-					+ hdr.getTrackOffset(hdr.tracks * 2 - 1)
-					- hdr.getTrackOffset(seektrack % hdr.tracks);
+			if (false) {
+				int sideOffs = hdr.getTrackOffset(hdr.tracks);
+				tracksideoffset += sideOffs;
+			} else {
+				// tracks go in the opposite direction on side 2
+				tracksideoffset = hdr.track0offs 
+						+ hdr.getTrackOffset(hdr.tracks * 2 - 1)
+						- hdr.getTrackOffset(seektrack % hdr.tracks);
+			}
 		}
 		return tracksideoffset;
 	}

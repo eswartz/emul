@@ -327,7 +327,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 		BaseDiskImage image = getSelectedDiskImage();
 		boolean realTime = settingRealTime.getBoolean();
 		if ((image != null && !image.isMotorRunning() && 
-				(!realTime && image.getMotorTimeout() > 0))
+				(!realTime || image.getMotorTimeout() > 0))
 				|| (realTime && fdc.commandBusyExpiration > System.currentTimeMillis()))
 			ret |= StatusBit.BUSY.getVal();
 		
