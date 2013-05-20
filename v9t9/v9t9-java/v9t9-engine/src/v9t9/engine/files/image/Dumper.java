@@ -66,7 +66,11 @@ public class Dumper {
 	 * @return
 	 */
 	public boolean isEnabled() {
-		return settingDump.getBoolean() || settingDumpFull.getBoolean();
+		if (!settingDump.getBoolean() && !settingDumpFull.getBoolean())
+			return false;
+		PrintWriter full = Logging.getLog(settingDumpFull);
+		PrintWriter dump = Logging.getLog(settingDump);
+		return (full != null || dump != null);
 	}
 
 }

@@ -194,7 +194,7 @@ public class FDC1771 implements IPersistable {
 				break;
 			
 			if (currentMarker.trackid == trackReg
-				//&& sideid == desiredSide  // for FDC179x
+				&& ((command & 0x02) == 0 || currentMarker.sideid == sideReg)  
 				&& currentMarker.sectorid == sectorReg
 				//&& crcid == crc
 				)

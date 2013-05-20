@@ -374,10 +374,16 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	 * @return
 	 */
 	public long getTrackDiskOffset() {
-		tracksideoffset = trackoffset;
-		if (sideReg != 0) {
-			int sideOffs = hdr.getTrackOffset(hdr.tracks);
-			tracksideoffset += sideOffs;
+		if (sideReg == 0) {
+			tracksideoffset = trackoffset;
+		}
+		else  {
+			//int sideOffs = hdr.getTrackOffset(hdr.tracks);
+			//tracksideoffset += sideOffs;
+			// tracks go in the opposite direction on side 2
+			tracksideoffset = hdr.track0offs 
+					+ hdr.getTrackOffset(hdr.tracks * 2 - 1)
+					- hdr.getTrackOffset(seektrack % hdr.tracks);
 		}
 		return tracksideoffset;
 	}
@@ -466,6 +472,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		
 	}
 	
+	// for utilities, not realtime usage
 	public void readSectorData(IdMarker currentMarker, byte[] rwBuffer,
 			int start, int buflen) {
 		if (currentMarker != null) {
@@ -495,6 +502,8 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		int track = (sector / hdr.secsPerTrack);
 		byte side = (byte) (track > 40 ? 1 : 0);
 		track %= 40;
+		if (side > 0)
+			track = 39 - track;
 		byte tracksec = (byte) (sector % hdr.secsPerTrack);
 		seekToCurrentTrack(track, side);
 		readCurrentTrackData();
