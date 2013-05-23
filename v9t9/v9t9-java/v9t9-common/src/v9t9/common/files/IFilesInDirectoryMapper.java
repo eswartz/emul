@@ -11,7 +11,6 @@
 package v9t9.common.files;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 
 import ejs.base.properties.IPersistable;
@@ -35,6 +34,14 @@ public interface IFilesInDirectoryMapper extends IPersistable {
 	 * @return File (directory or file possibly not existing)
 	 */
 	File getLocalDottedFile(String deviceFilename);
+	
+	/**
+	 * Get the candidate file for the given filename
+	 * @param directory
+	 * @param filename name, or null
+	 * @return File (directory or file possibly not existing)
+	 */
+	File getLocalFile(File dir, String filename);
 	
 	/**
 	 * Get the candidate file for the given filename
@@ -97,7 +104,7 @@ public interface IFilesInDirectoryMapper extends IPersistable {
 	 * @return
 	 * @throws IOException
 	 */
-	Catalog createCatalog(File dir) throws IOException;
+//	Catalog createCatalog(File dir) throws IOException;
 
 	/**
 	 * @return
@@ -108,5 +115,11 @@ public interface IFilesInDirectoryMapper extends IPersistable {
 	 * @return
 	 */
 	Map<String, IProperty> getDiskSettingMap();
+
+	/**
+	 * @param dir
+	 * @return
+	 */
+	IDiskDirectory createDiskDirectory(File dir);
 	
 }

@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.engine.files.directory;
+package v9t9.common.files;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,13 +16,9 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import v9t9.common.files.IFilesInDirectoryMapper;
-import v9t9.common.files.NativeFile;
-import v9t9.common.files.NativeFileFactory;
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.engine.dsr.DsrException;
 
-class DiskLikeDirectoryInfo extends DirectoryInfo {
+public class DiskLikeDirectoryInfo extends DirectoryInfo {
 
 	static class DiskFileRange {
 		int fdrSector;
@@ -32,7 +28,7 @@ class DiskLikeDirectoryInfo extends DirectoryInfo {
 	}
 	Map<File, DiskFileRange> sectorRanges = new LinkedHashMap<File, DiskFileRange>();
 	private String devname;
-	int lastSector;
+	public int lastSector;
 	
 	public DiskLikeDirectoryInfo(File dir, IFilesInDirectoryMapper mapper, String devname) {
 		super(dir, mapper);
@@ -125,7 +121,7 @@ class DiskLikeDirectoryInfo extends DirectoryInfo {
 		
 		File localFile = mapper.getLocalFile(devname, null);
 		if (localFile == null)
-			throw new DsrException(EmuDiskConsts.es_hardware, "No directory for " + devname);
+			throw new DsrException(PabConstants.es_hardware, "No directory for " + devname);
 		
 		String diskname = mapper.getDsrFileName(localFile.getName());
 		for (int i = 0; i < 10; i++) {

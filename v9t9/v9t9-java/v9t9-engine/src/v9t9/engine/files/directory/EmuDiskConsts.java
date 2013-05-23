@@ -35,14 +35,5 @@ public class EmuDiskConsts {
 	public static final int D_DOUTPUT = 12;	// direct output file   (15)
 	public static final int D_FILES = 13;		// set the number of file buffers (16)
 	public static final int D_CALL_FILES = 14;	// BASIC entry point for FILES
-	/*	Error codes for subroutines */
-	public static final byte es_okay = 0;
-	public static final byte es_outofspace = 0x4;
-	public static final byte es_cantopenfile = 0x1;
-	public static final byte es_filenotfound = 0x1;
-	public static final byte es_badfuncerr = 0x7;
-	public static final byte es_fileexists = 0x7;
-	public static final byte es_badvalerr = 0x1;
-	public static final byte es_hardware = 0x6;
 
 }

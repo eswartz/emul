@@ -16,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.files.Catalog;
 import v9t9.common.files.IDiskImage;
 import v9t9.common.files.IDiskImageMapper;
 import ejs.base.properties.IProperty;
@@ -144,25 +143,25 @@ public class DiskImageMapper implements IDiskImageMapper {
 	/* (non-Javadoc)
 	 * @see v9t9.common.files.IDiskImageMapper#createCatalog(java.io.File)
 	 */
-	@Override
-	public Catalog createCatalog(String name, File spec) throws IOException {
-		BaseDiskImage image = DiskImageFactory.createDiskImage(
-				settings, name, spec);
-		image.openDiskImage(true);
-		
-		Catalog catalog = image.readCatalog("DSK" + name.charAt(name.length() - 1));
-		
-		image.closeDiskImage();
-		return catalog;
-	}
+//	@Override
+//	public Catalog createCatalog(String name, File spec) throws IOException {
+//		BaseDiskImage image = DiskImageFactory.createDiskImage(
+//				settings, name, spec);
+//		image.openDiskImage(true);
+//		
+//		Catalog catalog = image.readCatalog("DSK" + name.charAt(name.length() - 1));
+//		
+//		image.closeDiskImage();
+//		return catalog;
+//	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.files.IDiskImageMapper#createDiskImage(java.io.File)
 	 */
 	@Override
-	public IDiskImage createDiskImage(String name, File file) throws IOException {
+	public IDiskImage createDiskImage(File file) throws IOException {
 		return DiskImageFactory.createDiskImage(
-				settings, name, file);
+				settings, "DSK1", file);
 	}
 	
 	/* (non-Javadoc)

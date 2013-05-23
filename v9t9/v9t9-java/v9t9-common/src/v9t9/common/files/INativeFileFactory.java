@@ -29,4 +29,5 @@ public interface INativeFileFactory {
 	 * @throws IOException if cannot read file
 	 */
     NativeFile createNativeFile(File file) throws IOException;
+    NativeFile createNativeFile(IEmulatedDisk disk, File file) throws IOException;
 }

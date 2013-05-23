@@ -29,7 +29,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.ejs.gui.common.FontUtils;
 
-import v9t9.common.files.EmulatedFile;
+import v9t9.common.files.IEmulatedFile;
 
 /**
  * @author Ed
@@ -213,7 +213,7 @@ public class ByteContentViewer extends Composite {
 		currentAddr = 0;
 	}
 
-	public void setFile(EmulatedFile file) {
+	public void setFile(IEmulatedFile file) {
 		byteTableViewer.setInput(file);
 	}
 }

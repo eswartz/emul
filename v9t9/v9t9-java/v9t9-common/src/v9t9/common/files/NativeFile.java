@@ -16,7 +16,7 @@ import java.io.File;
  * This is the interface to a native (TI-99) file
  * @author ejs
  */
-public interface NativeFile extends EmulatedFile {
+public interface NativeFile extends IEmulatedFile {
     /** Get the host file */
     public File getFile();
 }

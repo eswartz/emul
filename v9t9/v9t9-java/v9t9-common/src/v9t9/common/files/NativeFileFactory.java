@@ -22,12 +22,21 @@ public class NativeFileFactory implements INativeFileFactory {
 	 * @throws IOException if cannot read file
 	 */
     public NativeFile createNativeFile(File file) throws IOException {
+    	return createNativeFile(null, file);
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.common.files.INativeFileFactory#createNativeFile(v9t9.common.files.IEmulatedDisk, java.io.File)
+     */
+    @Override
+    public NativeFile createNativeFile(IEmulatedDisk disk, File file)
+    		throws IOException {
         FDR fdr = FDRFactory.createFDR(file);
         
         if (fdr != null) {
-            return new NativeFDRFile(file, fdr);
+            return new NativeFDRFile(disk, file, fdr);
         }
         
-        return new NativeTextFile(file);
+        return new NativeTextFile(disk, file);
     }
 }

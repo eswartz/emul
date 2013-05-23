@@ -15,24 +15,24 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import ejs.base.utils.HexUtils;
-
-
 import v9t9.common.dsr.IMemoryTransfer;
-import v9t9.common.files.FDR;
-import v9t9.common.files.IFilesInDirectoryMapper;
+import v9t9.common.files.DirectoryInfo;
+import v9t9.common.files.DsrException;
 import v9t9.common.files.EmulatedBaseFDRFile;
+import v9t9.common.files.FDR;
+import v9t9.common.files.FileLikeDirectoryInfo;
+import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
 import v9t9.common.files.NativeTextFile;
+import v9t9.common.files.PabConstants;
 import v9t9.common.files.V9t9FDR;
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.engine.dsr.DsrException;
-import v9t9.engine.dsr.PabConstants;
 import v9t9.engine.dsr.PabHandler;
 import v9t9.engine.dsr.PabStruct;
 import v9t9.engine.files.image.Dumper;
+import ejs.base.utils.HexUtils;
 
 public class EmuDiskPabHandler extends PabHandler {
 
@@ -226,7 +226,7 @@ public class EmuDiskPabHandler extends PabHandler {
 			try {
 				nativefile = NativeFileFactory.INSTANCE.createNativeFile(file);
 			} catch (IOException e) {
-				nativefile = new NativeTextFile(file);
+				nativefile = new NativeTextFile(null, file);
 			}
 		}
 		return nativefile;

@@ -11,21 +11,24 @@
 package v9t9.common.files;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import ejs.base.utils.Check;
-import ejs.base.utils.CompatUtils;
 
 
 public class NativeFDRFile extends EmulatedBaseFDRFile implements NativeFile, IFDROwner {
 
     private File file;
-    public NativeFDRFile(File file, FDR fdr) {
-    	super(fdr);
+    
+    public NativeFDRFile(IEmulatedDisk disk, File file, FDR fdr) {
+    	super(disk, fdr);
         Check.checkArg(file);
         this.file = file;
+    }
+    
+    public NativeFDRFile(File file, FDR fdr) {
+    	this(null, file, fdr);
     }
     
     @Override
@@ -34,12 +37,19 @@ public class NativeFDRFile extends EmulatedBaseFDRFile implements NativeFile, IF
     }
     
     public int readContents(byte[] contents, int contentOffset, int offset, int length) throws IOException {
-        FileInputStream fis = new FileInputStream(file);
-        CompatUtils.skipFully(fis, (fdr.getFDRSize() + offset));
-        int size = Math.min(fdr.getFileSize(), length);
-        int read = fis.read(contents, contentOffset, size);
-        fis.close();
-        return read;
+//        FileInputStream fis = new FileInputStream(file);
+//        CompatUtils.skipFully(fis, (fdr.getFDRSize() + offset));
+//        int size = Math.min(fdr.getFileSize(), length);
+//        int read = fis.read(contents, contentOffset, size);
+//        fis.close();
+//        return read;
+    	
+    	RandomAccessFile raf = new RandomAccessFile(file, "r");
+        
+    	raf.seek(offset + fdr.getFDRSize());
+        int len = raf.read(contents, contentOffset, length);
+        raf.close();
+        return len;
     }
 
     public int writeContents(byte[] contents, int contentOffset, int offset,
@@ -50,7 +60,9 @@ public class NativeFDRFile extends EmulatedBaseFDRFile implements NativeFile, IF
     	raf.seek(offset + fdr.getFDRSize());
         raf.write(contents, contentOffset, length);
         raf.close();
+        
         file.setWritable(!fdr.isReadOnly());
+        
         return length;
 	}
 

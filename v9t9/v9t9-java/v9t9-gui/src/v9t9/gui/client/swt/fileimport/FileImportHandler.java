@@ -125,7 +125,7 @@ public class FileImportHandler implements IFileImportHandler {
 		Catalog catalog = null;
 		IDiskImage image;
 		try {
-			image = imageMapper.createDiskImage("DSK1", file);
+			image = imageMapper.createDiskImage(file);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			// not disk image 
@@ -134,7 +134,7 @@ public class FileImportHandler implements IFileImportHandler {
 		if (!image.isFormatted())
 			return false;
 		try {
-			catalog = imageMapper.createCatalog("DSK1", file);
+			catalog = image.readCatalog();
 		} catch (IOException e1) {
 			machine.getEventNotifier().notifyEvent(null, Level.ERROR, "Could not read disk image catalog\n" + e1.getMessage());
 			return true;
@@ -210,7 +210,8 @@ public class FileImportHandler implements IFileImportHandler {
 			return false;
 		}
 		
-		catalog = new Catalog("DSK1", "TEMP", 0, 0, Collections.singletonList(entry));
+		catalog = new Catalog(null,
+				"DSK1", "TEMP", 0, 0, Collections.singletonList(entry));
 
 		if (!enabledProperty.getBoolean()) {
 			boolean go = MessageDialog.openQuestion(shell, "Enable Files in Directories?", 

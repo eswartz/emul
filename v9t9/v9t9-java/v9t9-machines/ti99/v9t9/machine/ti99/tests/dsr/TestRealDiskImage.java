@@ -133,7 +133,7 @@ public class TestRealDiskImage  {
 				image.readSector(sec, buf, 0, buf.length);
 			}
 			
-			Catalog catalog = image.readCatalog("DSK1");
+			Catalog catalog = image.readCatalog();
 			assertNotNull(catalog);
 			assertEquals(expSecs, catalog.totalSectors);
 		}
@@ -196,7 +196,7 @@ public class TestRealDiskImage  {
 				}
 			}
 			
-			Catalog catalog = image.readCatalog("DSK1");
+			Catalog catalog = image.readCatalog();
 			assertNotNull(catalog);
 			assertTrue(expSecs + " vs " + catalog.totalSectors, 
 					expSecs ==  catalog.totalSectors || (expMaxSector != null && expMaxSector == catalog.totalSectors));

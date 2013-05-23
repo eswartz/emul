@@ -16,7 +16,7 @@ import org.eclipse.jface.viewers.ILazyContentProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 
-import v9t9.common.files.EmulatedFile;
+import v9t9.common.files.IEmulatedFile;
 import v9t9.gui.client.swt.shells.disk.ByteContentViewer.ByteRow;
 
 /**
@@ -27,7 +27,7 @@ import v9t9.gui.client.swt.shells.disk.ByteContentViewer.ByteRow;
 class ByteContentProvider implements ILazyContentProvider {
 
 	private TableViewer tableViewer;
-	private EmulatedFile file;
+	private IEmulatedFile file;
 	private int width;
 	
 	public ByteContentProvider(int width) {
@@ -40,7 +40,7 @@ class ByteContentProvider implements ILazyContentProvider {
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		this.tableViewer = (TableViewer) viewer;
 		
-		file = (EmulatedFile) newInput;
+		file = (IEmulatedFile) newInput;
 		if (file != null) {
 
 			// clear

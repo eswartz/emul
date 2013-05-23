@@ -11,10 +11,12 @@
 package v9t9.engine.dsr;
 
 import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.files.DsrException;
 import v9t9.common.files.FDR;
+import v9t9.common.files.PabConstants;
 import v9t9.common.files.V9t9FDR;
 
-import static v9t9.engine.dsr.PabConstants.*;
+import static v9t9.common.files.PabConstants.*;
 
 public class PabStruct 
 {

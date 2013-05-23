@@ -16,12 +16,17 @@ package v9t9.common.files;
  *
  */
 public class CatalogEntry {
+	public static final int TYPE_DIS_FIX = 1;
+	public static final int TYPE_DIS_VAR = 2;
+	public static final int TYPE_INT_FIX = 3;
+	public static final int TYPE_INT_VAR = 4;
+	public static final int TYPE_PROGRAM = 5;
 	static byte drcTrans[][] = new byte[][] { 
-		{0, 1}, 
-		{FDR.ff_program, 5},
-		{FDR.ff_internal, 3}, 
-		{(byte) FDR.ff_variable, 2},
-		{(byte) (FDR.ff_variable + FDR.ff_internal), 4}
+		{0, TYPE_DIS_FIX}, 
+		{FDR.ff_program, TYPE_PROGRAM},
+		{FDR.ff_internal, TYPE_INT_FIX}, 
+		{(byte) FDR.ff_variable, TYPE_DIS_VAR},
+		{(byte) (FDR.ff_variable + FDR.ff_internal), TYPE_INT_VAR}
 	};
 
 
@@ -30,12 +35,12 @@ public class CatalogEntry {
 	/** symbolic name, from {@link FDR#getType(int)} */
 	public final String type;
 	public final int recordLength;
-	/** one of drcTrans */
+	/** one of TYPE_ */
 	public final int typeCode;
 	public final boolean isProtected;
 
 
-	private EmulatedFile file;
+	private IEmulatedFile file;
 
 	/**
 	 * @param fileName
@@ -43,7 +48,7 @@ public class CatalogEntry {
 	 * @param type
 	 * @param recordLength
 	 */
-	public CatalogEntry(String fileName, EmulatedFile file) {
+	public CatalogEntry(String fileName, IEmulatedFile file) {
 		this.fileName = fileName;
 		this.file = file;
 		this.secs = file.getSectorsUsed() + 1;
@@ -117,7 +122,7 @@ public class CatalogEntry {
 	/**
 	 * @return the file
 	 */
-	public EmulatedFile getFile() {
+	public IEmulatedFile getFile() {
 		return file;
 	}
 	

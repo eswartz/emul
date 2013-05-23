@@ -31,6 +31,8 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.events.IEventNotifier;
+import v9t9.common.files.DsrException;
 import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
@@ -38,7 +40,6 @@ import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.common.settings.SettingSchema;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
-import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.files.directory.DirectDiskHandler;
 import v9t9.engine.files.directory.EmuDiskConsts;
@@ -69,9 +70,11 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 	private IProperty settingRealDsrEnabled;
 	private Dumper dumper;
 	private final ISettingsHandler settings;
+	private IEventNotifier eventNotifier;
 
-	public EmuDiskDsr(ISettingsHandler settings_, IFilesInDirectoryMapper mapper) {
+	public EmuDiskDsr(ISettingsHandler settings_, IFilesInDirectoryMapper mapper, IEventNotifier eventNotifier) {
 		this.settings = settings_;
+		this.eventNotifier = eventNotifier;
 		//emuDiskDsrEnabled.setBoolean(true);
 		settingDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
 		settingRealDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
@@ -282,7 +285,7 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 		case EmuDiskConsts.D_DOUTPUT:
 		case EmuDiskConsts.D_SECRW:
 		{
-			DirectDiskHandler handler = new DirectDiskHandler(
+			DirectDiskHandler handler = new DirectDiskHandler(eventNotifier,
 					dumper, getCruBase(), xfer, mapper, code);
 	
 			if (handler.getDevice() <= 2 && settingRealDsrEnabled.getBoolean()) {

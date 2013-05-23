@@ -14,10 +14,12 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.files.DsrException;
+import v9t9.common.files.FileDirectory;
+import v9t9.common.files.FileLikeDirectoryInfo;
 import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.files.NativeFile;
-import v9t9.engine.dsr.DsrException;
-import v9t9.engine.dsr.PabConstants;
+import v9t9.common.files.PabConstants;
 
 public class PabInfoBlock {
 	private Map<Short, OpenFile> openFiles = new HashMap<Short, OpenFile>();
@@ -82,8 +84,9 @@ public class PabInfoBlock {
 		if (openFileCount >= maxOpenFileCount) {
 			throw new DsrException(PabConstants.e_outofspace, null, "Too many open files");
 		}
-		FileLikeDirectoryInfo info = new FileLikeDirectoryInfo(file, mapper);
-		openDirectories.put(pabaddr, info);
+		FileDirectory dir = new FileDirectory(file, mapper);
+		//FileLikeDirectoryInfo info = new FileLikeDirectoryInfo( file, mapper);
+		openDirectories.put(pabaddr, dir.getInfo());
 		openFileCount++;
 	}
 

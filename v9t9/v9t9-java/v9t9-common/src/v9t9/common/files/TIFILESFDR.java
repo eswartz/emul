@@ -18,9 +18,9 @@ import java.util.Arrays;
 
 public class TIFILESFDR extends FDR {
 
-    private byte[] sig;
+    private byte[] sig = new byte[8];
 
-    private byte[] unused;
+    private byte[] unused = new byte[112];
 
 	private String name;
 
@@ -44,9 +44,8 @@ public class TIFILESFDR extends FDR {
         
         FileInputStream stream = new FileInputStream(file);
         try {
-        	fdr.name = file.getName().toUpperCase();
+        	fdr.name = DiskDirectoryUtils.hostToDSR(file.getName().toUpperCase());
         	
-	        fdr.sig = new byte[8];
 	        stream.read(fdr.sig, 0, 8);
 	        
 	        if (!Arrays.equals(fdr.sig, SIGNATURE)

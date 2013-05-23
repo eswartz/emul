@@ -16,7 +16,7 @@ import java.util.List;
 import ejs.base.properties.IPersistable;
 
 
-public interface IDiskImage extends IPersistable {
+public interface IDiskImage extends IPersistable, IEmulatedDisk {
 	/**
 	 * Get the name of the property associated with this image (also for diags)
 	 * @return
@@ -47,20 +47,12 @@ public interface IDiskImage extends IPersistable {
 			int buflen, IdMarker marker);
 
 
-	/**
-	 * Tell if the disk appears formatted
-	 * @return
-	 */
-	boolean isFormatted();
-
 	boolean isReadOnly();
 	
 	/**
 	 * 
 	 */
 	IDiskHeader getHeader();
-	
-	Catalog readCatalog(String devname) throws IOException;
 
 	/**
 	 * 

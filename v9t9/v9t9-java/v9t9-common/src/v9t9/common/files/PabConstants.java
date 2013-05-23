@@ -8,13 +8,23 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.engine.dsr;
+package v9t9.common.files;
 
 /**
  * @author ejs
  *
  */
 public class PabConstants {
+	/*	Error codes for subroutines */
+	public static final byte es_okay = 0;
+	public static final byte es_outofspace = 0x4;
+	public static final byte es_cantopenfile = 0x1;
+	public static final byte es_filenotfound = 0x1;
+	public static final byte es_badfuncerr = 0x7;
+	public static final byte es_fileexists = 0x7;
+	public static final byte es_badvalerr = 0x1;
+	public static final byte es_hardware = 0x6;
+
 	private PabConstants() { }
 	
 	/*	Error codes (byte 1, pflags)*/

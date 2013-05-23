@@ -33,6 +33,7 @@ import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.IDiskDriveSetting;
+import v9t9.common.files.IEmulatedDisk;
 import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.machine.IMachine;
@@ -172,14 +173,20 @@ class DiskEntry extends DiskSettingEntry {
 	 */
 	protected Catalog readCatalog(IEmulatedFileHandler fileHandler, IProperty setting) throws IOException {
 		Catalog catalog;
+		
+		IEmulatedDisk disk;
+		
 		if (!isDiskImage()) {
-			catalog = fileHandler.getFilesInDirectoryMapper().createCatalog(
-					new File(setting.getString()));
+			disk = fileHandler.getFilesInDirectoryMapper().createDiskDirectory(new File(setting.getString()));
+//			catalog = fileHandler.getFilesInDirectoryMapper().createCatalog(
+//					new File(setting.getString()));
 		} else {
-			catalog = fileHandler.getDiskImageMapper().createCatalog(
-					setting.getName(),
-					new File(setting.getString()));
+			disk = fileHandler.getDiskImageMapper().createDiskImage(new File(setting.getString()));
+//			catalog = fileHandler.getDiskImageMapper().createCatalog(
+//					setting.getName(),
+//					new File(setting.getString()));
 		}
+		catalog = disk.readCatalog();
 		return catalog;
 	}
 

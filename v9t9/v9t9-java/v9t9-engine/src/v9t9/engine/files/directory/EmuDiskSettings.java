@@ -12,15 +12,13 @@ package v9t9.engine.files.directory;
 
 import java.net.URL;
 
-import ejs.base.properties.IProperty;
-
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.IStoredSettings;
 import v9t9.common.settings.IconSettingSchema;
 import v9t9.common.settings.SettingSchema;
 import v9t9.engine.EmulatorEngineData;
+import ejs.base.properties.IProperty;
 
 /**
  * @author ejs

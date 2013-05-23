@@ -16,12 +16,12 @@ import java.io.IOException;
  * @author ejs
  *
  */
-public class EmulatedDiskImageFile extends EmulatedBaseFDRFile implements EmulatedFile {
+public class EmulatedDiskImageFile extends EmulatedBaseFDRFile implements IEmulatedFile {
 
 	private IDiskImage diskImage;
 
 	public EmulatedDiskImageFile(IDiskImage diskImage, FDR fdr, String name) {
-		super(fdr);
+		super(diskImage, fdr);
 		this.diskImage = diskImage;
 	}
 

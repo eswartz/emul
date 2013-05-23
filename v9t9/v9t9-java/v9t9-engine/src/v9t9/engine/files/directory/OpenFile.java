@@ -13,14 +13,14 @@ package v9t9.engine.files.directory;
 import java.io.IOException;
 import java.util.Arrays;
 
-import v9t9.common.files.EmulatedFile;
+import v9t9.common.files.DsrException;
 import v9t9.common.files.FDR;
+import v9t9.common.files.IEmulatedFile;
 import v9t9.common.files.IFDROwner;
 import v9t9.common.files.InvalidFDRException;
 import v9t9.common.files.NativeFile;
+import v9t9.common.files.PabConstants;
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.engine.dsr.DsrException;
-import v9t9.engine.dsr.PabConstants;
 
 /** Information about an open file. */
 public class OpenFile {
@@ -29,7 +29,7 @@ public class OpenFile {
 	final byte[] sector = new byte[256];
 //	private final File file;
 	
-	private EmulatedFile emulFile;
+	private IEmulatedFile emulFile;
 
 	/** number of sector in sector buffer */
 	int currentSecNum = -1;
@@ -40,7 +40,7 @@ public class OpenFile {
 	
 	boolean modified;
 	
-	public OpenFile(EmulatedFile file, String devName, String fileName) throws DsrException {
+	public OpenFile(IEmulatedFile file, String devName, String fileName) throws DsrException {
 		this.emulFile = file;
 		this.devName = devName;
 		this.fileName = fileName;

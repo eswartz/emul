@@ -11,6 +11,8 @@
 package v9t9.engine.dsr;
 
 import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.files.DsrException;
+import v9t9.common.files.PabConstants;
 
 public abstract class PabHandler {
 	protected Short pabaddr;

@@ -17,7 +17,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.common.files.EmulatedFile;
+import v9t9.common.files.IEmulatedFile;
 
 /**
  * @author ejs
@@ -25,7 +25,7 @@ import v9t9.common.files.EmulatedFile;
  */
 public class FileContentDialog extends Dialog {
 
-	private EmulatedFile file;
+	private IEmulatedFile file;
 	private FileContentComposite fileContent;
 
 	/**
@@ -36,7 +36,7 @@ public class FileContentDialog extends Dialog {
 		setShellStyle(getShellStyle() & ~(SWT.APPLICATION_MODAL + SWT.SYSTEM_MODAL) | SWT.MODELESS | SWT.RESIZE);
 	}
 
-	public void setFile(EmulatedFile file) {
+	public void setFile(IEmulatedFile file) {
 		this.file = file;
 		if (fileContent != null)
 			fileContent.setFile(file);

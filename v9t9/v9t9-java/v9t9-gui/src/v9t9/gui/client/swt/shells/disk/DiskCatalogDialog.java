@@ -47,7 +47,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
-import v9t9.common.files.EmulatedFile;
+import v9t9.common.files.IEmulatedFile;
 import v9t9.common.machine.IMachine;
 import v9t9.gui.client.swt.shells.FileContentDialog;
 
@@ -395,7 +395,7 @@ public class DiskCatalogDialog extends Dialog {
 		
 	}
 	
-	protected void doViewContent(EmulatedFile file) {
+	protected void doViewContent(IEmulatedFile file) {
 		FileContentDialog dialog = new FileContentDialog(getShell());
 		dialog.setFile(file);
 		dialog.open();

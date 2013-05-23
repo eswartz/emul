@@ -221,7 +221,5 @@ public class SectorDiskImage extends BaseDiskImage  {
 			int i, int buflen) {
 		System.arraycopy(trackBuffer, currentMarker.dataoffset + 1, rwBuffer, 0, buflen);
 		RealDiskUtils.dumpBuffer(dumper, rwBuffer, 0, 256);
-		
 	}
-	
 }

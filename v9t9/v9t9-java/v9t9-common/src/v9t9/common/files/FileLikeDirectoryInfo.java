@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.engine.files.directory;
+package v9t9.common.files;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,14 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import v9t9.common.files.CatalogEntry;
-import v9t9.common.files.IFilesInDirectoryMapper;
-import v9t9.common.files.NativeFile;
-import v9t9.common.files.NativeFileFactory;
-import v9t9.common.files.NativeTextFile;
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.engine.dsr.DsrException;
-import v9t9.engine.dsr.PabConstants;
 
 public class FileLikeDirectoryInfo extends DirectoryInfo {
 
@@ -31,9 +24,11 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 	private long totalSectors;
 	private long freeSectors;
 	private int lastEntry;
+	private FileDirectory disk;
 
-	public FileLikeDirectoryInfo(File file, IFilesInDirectoryMapper mapper) {
+	public FileLikeDirectoryInfo(FileDirectory disk, File file, IFilesInDirectoryMapper mapper) {
 		super(file, mapper);
+		this.disk = disk;
 		lastEntry = Math.min(128, entries.length);
 		totalSectors = (file.getTotalSpace() + 255) / 256;
 		freeSectors = (file.getFreeSpace() + 255) / 256;
@@ -44,12 +39,13 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 	}
 	
 	protected CatalogEntry decodeFile(File file) throws DsrException {
-		NativeFile nativefile;
+		IEmulatedFile nativefile;
 		try {
-			nativefile = NativeFileFactory.INSTANCE.createNativeFile(file);
+			nativefile = disk.getFile(file.getName());
 		} catch (IOException e) {
-			nativefile = new NativeTextFile(file);
+			throw new DsrException(PabConstants.es_hardware, e);
 		}
+		
 		
 		// first field is the string representing the
 		// file or volume name
@@ -76,7 +72,7 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 		for (int index = 1; index <= entries.length; index++) {
 			try {
 				list.add(decodeFile(entries[index - 1]));
-			} catch (DsrException e) { 
+			} catch (IOException e) { 
 				// ignore
 			}
 		}

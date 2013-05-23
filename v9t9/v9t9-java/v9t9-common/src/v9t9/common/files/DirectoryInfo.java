@@ -8,14 +8,13 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.engine.files.directory;
+package v9t9.common.files;
 
 import java.io.File;
 import java.util.Arrays;
 
-import v9t9.common.files.IFilesInDirectoryMapper;
 
-class DirectoryInfo {
+public class DirectoryInfo {
 
 	protected File[] entries;
 	protected final IFilesInDirectoryMapper mapper;

@@ -16,21 +16,23 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import ejs.base.utils.HexUtils;
-
-
 import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyEvent.Level;
+import v9t9.common.files.DiskLikeDirectoryInfo;
+import v9t9.common.files.DsrException;
+import v9t9.common.files.EmulatedBaseFDRFile;
 import v9t9.common.files.FDR;
 import v9t9.common.files.IFDROwner;
 import v9t9.common.files.IFilesInDirectoryMapper;
-import v9t9.common.files.EmulatedBaseFDRFile;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
+import v9t9.common.files.PabConstants;
 import v9t9.common.files.V9t9FDR;
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.engine.dsr.DsrException;
 import v9t9.engine.files.image.Dumper;
+import ejs.base.utils.HexUtils;
 
 public class DirectDiskHandler {
 	public static class DirectDiskInfo {
@@ -60,6 +62,8 @@ public class DirectDiskHandler {
 
 	private final Dumper dumper;
 
+	private IEventNotifier eventNotifier;
+
 	
 	public static DirectDiskHandler.DirectDiskInfo getDiskInfoBlock(short cru) {
 		DirectDiskHandler.DirectDiskInfo block = diskInfoBlocks.get(cru);
@@ -70,7 +74,9 @@ public class DirectDiskHandler {
 		return block;
 	}
 	
-	public DirectDiskHandler(Dumper dumper, short cru, IMemoryTransfer xfer, IFilesInDirectoryMapper mapper, short code) {
+	public DirectDiskHandler(IEventNotifier eventNotifier, Dumper dumper, 
+			short cru, IMemoryTransfer xfer, IFilesInDirectoryMapper mapper, short code) {
+		this.eventNotifier = eventNotifier;
 		this.dumper = dumper;
 		this.cru = cru;
 		this.xfer = xfer;
@@ -108,7 +114,8 @@ public class DirectDiskHandler {
 			break;
 			
 		default:
-			throw new DsrException(EmuDiskConsts.es_badfuncerr, "Unhandled function: " + code);
+			eventNotifier.notifyEvent(this, Level.ERROR, "Unknown disk directory DSR function: " + code);
+			throw new DsrException(PabConstants.es_badfuncerr, "Unhandled function: " + code);
 		}
 	}
 	
@@ -145,9 +152,9 @@ public class DirectDiskHandler {
 		try {
 			file = NativeFileFactory.INSTANCE.createNativeFile(mapper.getLocalFile(devname, filename));
 		} catch (IOException e) {
-			throw new DsrException(EmuDiskConsts.es_filenotfound, e);
+			throw new DsrException(PabConstants.es_filenotfound, e);
 		} catch (Throwable t) {
-			throw new DsrException(EmuDiskConsts.es_filenotfound, t);
+			throw new DsrException(PabConstants.es_filenotfound, t);
 		}
 		
 		parms = (parms >> 8);
@@ -186,7 +193,7 @@ public class DirectDiskHandler {
 				xfer.writeParamByte(0x4D, (byte) ((read + 255) >> 8));
 				xfer.writeParamByte(0x50, (byte) 0);
 			} catch (IOException e) {
-				throw new DsrException(EmuDiskConsts.es_hardware, e);
+				throw new DsrException(PabConstants.es_hardware, e);
 			}
 		}
 	}
@@ -226,13 +233,13 @@ public class DirectDiskHandler {
 				try {
 					fdr.setFileName(filename);
 				} catch (IOException e) {
-					throw new DsrException(EmuDiskConsts.es_badvalerr, e);
+					throw new DsrException(PabConstants.es_badvalerr, e);
 				}
 				try {
 					fdr.writeFDR(file.getFile());
 					xfer.writeParamByte(0x50, (byte) 0);
 				} catch (IOException e) {
-					throw new DsrException(EmuDiskConsts.es_hardware, e, "Failed to write FDR: " + file.getFile());
+					throw new DsrException(PabConstants.es_hardware, e, "Failed to write FDR: " + file.getFile());
 				}
 			}
 			
@@ -246,7 +253,7 @@ public class DirectDiskHandler {
 			try {
 				file.setFileSize(size);
 			} catch (IOException e) {
-				throw new DsrException(oldsize < size ? EmuDiskConsts.es_outofspace : EmuDiskConsts.es_hardware, e, "Failed to resize file: " + file.getFile());
+				throw new DsrException(oldsize < size ? PabConstants.es_outofspace : PabConstants.es_hardware, e, "Failed to resize file: " + file.getFile());
 			}
 			int flags = xfer.readParamByte(parms + 4);
 			
@@ -259,7 +266,7 @@ public class DirectDiskHandler {
 			try {
 				file = NativeFileFactory.INSTANCE.createNativeFile(localFile);
 			} catch (IOException e) {
-				throw new DsrException(EmuDiskConsts.es_filenotfound, "File not found: " + localFile);
+				throw new DsrException(PabConstants.es_filenotfound, "File not found: " + localFile);
 			}
 			
 			short   vaddr = xfer.readParamWord(parms);
@@ -277,7 +284,7 @@ public class DirectDiskHandler {
 				xfer.writeParamByte(0x4D, (byte) ((wrote + 255) >> 8));
 				xfer.writeParamByte(0x50, (byte) 0);
 			} catch (IOException e) {
-				throw new DsrException(EmuDiskConsts.es_outofspace, e);
+				throw new DsrException(PabConstants.es_outofspace, e);
 			}
 		}
 	}
@@ -294,8 +301,10 @@ public class DirectDiskHandler {
 		boolean write = opt == 0;
 		
 		// we only pretend to read sectors, e.g. to handle catalogs
-		if (write)
-			throw new DsrException(EmuDiskConsts.es_hardware, "Write sector not implemented");
+		if (write) {
+			eventNotifier.notifyEvent(this, Level.ERROR, "The program is trying to write sectors in a disk directory -- this isn't supported");
+			throw new DsrException(PabConstants.es_hardware, "Write sector not implemented");
+		}
 		
 		short addr = addr1;
 		int secnum = addr2 & 0xffff;
@@ -314,7 +323,7 @@ public class DirectDiskHandler {
 				try {
 					info.synthesizeSector(access, secnum);
 				} catch (IOException e) {
-					throw new DsrException(EmuDiskConsts.es_hardware, e);
+					throw new DsrException(PabConstants.es_hardware, e);
 				}
 			}	
 		} else {
@@ -349,7 +358,7 @@ public class DirectDiskHandler {
 		try {
 			file = NativeFileFactory.INSTANCE.createNativeFile(mapper.getLocalFile(devname, filename));
 		} catch (IOException e) {
-			throw new DsrException(EmuDiskConsts.es_filenotfound, e);
+			throw new DsrException(PabConstants.es_filenotfound, e);
 		}
 		
 		dumper.info("Changing protection for " + file + " to " 
@@ -368,7 +377,7 @@ public class DirectDiskHandler {
 				fdr.writeFDR(file.getFile());
 				xfer.writeParamByte(0x50, (byte) 0);
 			} catch (IOException e) {
-				throw new DsrException(EmuDiskConsts.es_hardware, e, "Failed to write FDR: " + file.getFile());
+				throw new DsrException(PabConstants.es_hardware, e, "Failed to write FDR: " + file.getFile());
 			}
 		}
 		
@@ -387,7 +396,7 @@ public class DirectDiskHandler {
 		try {
 			file = NativeFileFactory.INSTANCE.createNativeFile(mapper.getLocalFile(devname, fromFilename));
 		} catch (IOException e) {
-			throw new DsrException(EmuDiskConsts.es_filenotfound, e);
+			throw new DsrException(PabConstants.es_filenotfound, e);
 		}
 		
 		dumper.info("Renaming " + file + " to " + toFilename); 
@@ -396,16 +405,16 @@ public class DirectDiskHandler {
 		File toFile = new File(file.getFile().getParentFile(),
 				mapper.getLocalFileName(toFilename));
 		if (toFile.exists()) {
-			throw new DsrException(EmuDiskConsts.es_fileexists, 
+			throw new DsrException(PabConstants.es_fileexists, 
 					"Cannot rename " + fromFilename + "; " + toFilename + " already exists");
 		}
 		
 		// early check
 		if (!file.getFile().exists()) {
-			throw new DsrException(EmuDiskConsts.es_filenotfound, "File is does not exist when renaming: " + file.getFile());
+			throw new DsrException(PabConstants.es_filenotfound, "File is does not exist when renaming: " + file.getFile());
 		}
 		if (!file.getFile().canWrite()) {
-			throw new DsrException(EmuDiskConsts.es_hardware, "File is protected when renaming: " + file.getFile());
+			throw new DsrException(PabConstants.es_hardware, "File is protected when renaming: " + file.getFile());
 		}
 		
 		if (file instanceof IFDROwner) {
@@ -413,26 +422,26 @@ public class DirectDiskHandler {
 			
 			FDR fdr = fdrFile.getFDR();
 			if ((fdr.getFlags() & FDR.ff_protected) != 0) {
-				throw new DsrException(EmuDiskConsts.es_hardware, "Cannot rename; file is protected: " + file.getFile());
+				throw new DsrException(PabConstants.es_hardware, "Cannot rename; file is protected: " + file.getFile());
 			}
 			
 			try {
 				fdr.setFileName(toFilename);
 			} catch (IOException e) {
-				throw new DsrException(EmuDiskConsts.es_badvalerr, e);
+				throw new DsrException(PabConstants.es_badvalerr, e);
 			}
 			
 			try {
 				fdr.writeFDR(file.getFile());
 				xfer.writeParamByte(0x50, (byte) 0);
 			} catch (IOException e) {
-				throw new DsrException(EmuDiskConsts.es_hardware, e, "Failed to write FDR: " + file.getFile());
+				throw new DsrException(PabConstants.es_hardware, e, "Failed to write FDR: " + file.getFile());
 			}
 		}
 		
 		// change real file
 		if (!file.getFile().renameTo(toFile)) {
-			throw new DsrException(EmuDiskConsts.es_hardware, "Failed to rename file: " + file.getFile());
+			throw new DsrException(PabConstants.es_hardware, "Failed to rename file: " + file.getFile());
 		}
 	}
 }

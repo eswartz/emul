@@ -25,12 +25,12 @@ import ejs.base.utils.HexUtils;
 
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
+import v9t9.common.files.DsrException;
 import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.modules.IModule;
-import v9t9.engine.dsr.DsrException;
 import v9t9.engine.files.directory.OpenFile;
 import v9t9.machine.ti99.machine.fileExecutors.AdventureLoadFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.ArchiverExtractFileExecutor;

@@ -23,8 +23,10 @@ import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.DiskImageFDR;
 import v9t9.common.files.EmulatedDiskImageFile;
+import v9t9.common.files.FDR;
 import v9t9.common.files.IDiskHeader;
 import v9t9.common.files.IDiskImage;
+import v9t9.common.files.IEmulatedFile;
 import v9t9.common.files.IdMarker;
 import v9t9.common.files.VDR;
 import v9t9.engine.dsr.realdisk.ICRCAlgorithm;
@@ -136,6 +138,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	
 	protected IDiskFormat trackFormat = new FMFormat(dumper);
 	protected List<IdMarker> trackMarkers;
+	private Catalog catalog;
 	
 	/**
 	 * @param name 
@@ -192,6 +195,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		}			
 		trackFetched = false;
 		trackMarkers = null;
+		catalog = null;
 	}
 
 	public void growImageForContent() throws IOException {
@@ -550,7 +554,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 //						fdr.getFlags(), fdr.getRecordLength(),
 //						(fdr.getFlags() & FDR.ff_protected) != 0));
 		}
-		return new Catalog(devname, volume, total, used, entries);
+		return new Catalog(this, devname, volume, total, used, entries);
 	}
 
 	/**
@@ -690,6 +694,89 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 
 		// dump contents
 		RealDiskUtils.dumpBuffer(dumper, rwBuffer, start, buflen);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IEmulatedDisk#readCatalog()
+	 */
+	@Override
+	public Catalog readCatalog() throws IOException {
+		if (catalog == null) {
+			boolean wasOpen = isDiskImageOpen();
+			if (!wasOpen)
+				openDiskImage(true);
+			
+			Catalog catalog = readCatalog("DSK" + name.charAt(name.length() - 1));
+			
+			if (!wasOpen)
+				closeDiskImage();
+			
+			this.catalog = catalog;
+			
+		}
+		
+		return catalog;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IEmulatedDisk#getFile(java.lang.String)
+	 */
+	@Override
+	public IEmulatedFile getFile(String name) throws IOException {
+		Catalog catalog = readCatalog();
+		CatalogEntry ent = catalog.findEntry(name);
+		if (ent == null)
+			throw new FileNotFoundException(name);
+		return ent.getFile();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IEmulatedDisk#getPath()
+	 */
+	@Override
+	public String getPath() {
+		return spec.getPath();
+	}
+
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IEmulatedDisk#createFile(java.lang.String, v9t9.common.files.FDR)
+	 */
+	@Override
+	public IEmulatedFile createFile(String fileName, FDR fdr)
+			throws IOException {
+		Catalog catalog = readCatalog();
+		for (CatalogEntry entry : catalog.getEntries()) {
+			if (entry.getFile().getFileName().equalsIgnoreCase(fileName)) {
+				// existing file
+				deleteFile(entry.getFile());
+				break;
+			}
+		}
+		
+		int fdrSec = allocateSector();
+		if (fdrSec < 0)
+			throw new IOException("no sectors free");
+//		
+//		seekToCurrentTrack(fdrSec, fdrSec)
+//
+//		IdMarker marker = fetchFormatAndTrackMarkers()
+//		writeSectorData(fdr.getBytes(), 0, 256, new IdMarker());
+		return null;
+	}
+
+	/**
+	 * @return
+	 */
+	private int allocateSector() throws IOException {
+		throw new IOException("allocating sectors not implemented");
+	}
+
+	/**
+	 * @param file
+	 */
+	public void deleteFile(IEmulatedFile file) {
+		
 	}
 	
 

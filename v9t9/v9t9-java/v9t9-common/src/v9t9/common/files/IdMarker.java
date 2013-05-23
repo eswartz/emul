@@ -26,6 +26,9 @@ public class IdMarker {
 	public byte idCode;
 	public byte dataCode;
 	
+	public IdMarker() { }
+	
+	
 	@Override
 	public String toString() {
 		return "IdMarker [trackid=" + trackid + ", sectorid=" + sectorid

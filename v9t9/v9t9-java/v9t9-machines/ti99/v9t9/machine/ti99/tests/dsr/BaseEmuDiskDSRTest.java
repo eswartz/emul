@@ -27,12 +27,13 @@ import ejs.base.utils.HexUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.events.BaseEventNotifier;
+import v9t9.common.files.DsrException;
 import v9t9.common.files.FDR;
 import v9t9.common.files.FDRFactory;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.common.settings.SettingSchemaProperty;
-import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabStruct;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.files.directory.EmuDiskConsts;
@@ -159,7 +160,7 @@ public class BaseEmuDiskDSRTest {
 		
 		xfer.writeParamWord(0x70, (short) 0x3fff);
 		
-		dsr = new EmuDiskDsr(settings, mymapper);
+		dsr = new EmuDiskDsr(settings, mymapper, new BaseEventNotifier());
 		
 
 		URL url = BaseEmuDiskDSRTest.class.getResource("/data/df80");

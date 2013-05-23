@@ -23,14 +23,15 @@ import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 
-import v9t9.common.files.EmulatedFile;
+import v9t9.common.files.DiskDirectoryUtils;
+import v9t9.common.files.DsrException;
+import v9t9.common.files.IEmulatedFile;
 import v9t9.common.files.IFilesInDirectoryMapper;
 import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
 import v9t9.common.files.NativeTextFile;
-import v9t9.engine.dsr.DsrException;
-import v9t9.engine.dsr.PabConstants;
+import v9t9.common.files.PabConstants;
 import v9t9.engine.dsr.PabStruct;
 import v9t9.engine.files.directory.EmuDiskConsts;
 import v9t9.engine.files.directory.EmuDiskPabHandler;
@@ -46,36 +47,36 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 
 	@Test
 	public void testFileMappingDos() throws Exception {
-		assertEquals("FILENAME", mymapper.dsrToDOS("filename"));
-		assertEquals("FILENAME", mymapper.dsrToDOS("FileName"));
-		assertEquals("FOO" + (char)('/' + 0x80) + "S", mymapper.dsrToDOS("FOO/S"));
-		assertEquals("LONGNAME.11", mymapper.dsrToDOS("LONGNAME11"));
-		assertEquals("LONGNAME.11", mymapper.dsrToDOS("LONGNAME11GARBAGE"));
-		assertEquals("SPACE", mymapper.dsrToDOS("SPACE NAME"));
-		//assertEquals("SPACE" + (char)(' ' + 0x80) + "N.AME", mymapper.dsrToDOS("SPACE NAME"));
+		assertEquals("FILENAME", DiskDirectoryUtils.dsrToDOS("filename"));
+		assertEquals("FILENAME", DiskDirectoryUtils.dsrToDOS("FileName"));
+		assertEquals("FOO" + (char)('/' + 0x80) + "S", DiskDirectoryUtils.dsrToDOS("FOO/S"));
+		assertEquals("LONGNAME.11", DiskDirectoryUtils.dsrToDOS("LONGNAME11"));
+		assertEquals("LONGNAME.11", DiskDirectoryUtils.dsrToDOS("LONGNAME11GARBAGE"));
+		assertEquals("SPACE", DiskDirectoryUtils.dsrToDOS("SPACE NAME"));
+		//assertEquals("SPACE" + (char)(' ' + 0x80) + "N.AME", DiskDirectoryUtils.dsrToDOS("SPACE NAME"));
 	}
 
 	@Test
 	public void testFileMappingHost() throws Exception {
-		assertEquals("filename", mymapper.dsrToHost("filename"));
-		assertEquals("filename", mymapper.dsrToHost("FileName"));
-		assertEquals("foo&#2F;s", mymapper.dsrToHost("FOO/S"));
-		assertEquals("longname11", mymapper.dsrToHost("LONGNAME11"));
-		assertEquals("longname11", mymapper.dsrToHost("LONGNAME11GARBAGE"));
-		assertEquals("space name", mymapper.dsrToHost("SPACE NAME"));
+		assertEquals("filename", DiskDirectoryUtils.dsrToHost("filename"));
+		assertEquals("filename", DiskDirectoryUtils.dsrToHost("FileName"));
+		assertEquals("foo&#2F;s", DiskDirectoryUtils.dsrToHost("FOO/S"));
+		assertEquals("longname11", DiskDirectoryUtils.dsrToHost("LONGNAME11"));
+		assertEquals("longname11", DiskDirectoryUtils.dsrToHost("LONGNAME11GARBAGE"));
+		assertEquals("space name", DiskDirectoryUtils.dsrToHost("SPACE NAME"));
 
 	}
 	
 
 	@Test
 	public void testFileMappingFromHost() throws Exception {
-		assertEquals("FILENAME", mymapper.hostToDSR("filename"));
-		assertEquals("FILENAME", mymapper.hostToDSR("FileName"));
-		assertEquals("FOO/S", mymapper.hostToDSR("foo&#2F;s"));
-		assertEquals("FOO/S", mymapper.hostToDSR("FOO" + (char)('/' + 0x80) + "S"));
-		assertEquals("LONGNAME11", mymapper.hostToDSR("longname11"));
-		assertEquals("LONGNAME11", mymapper.hostToDSR("longname11garbage"));
-		assertEquals("SPACE NAME", mymapper.hostToDSR("space name"));
+		assertEquals("FILENAME", DiskDirectoryUtils.hostToDSR("filename"));
+		assertEquals("FILENAME", DiskDirectoryUtils.hostToDSR("FileName"));
+		assertEquals("FOO/S", DiskDirectoryUtils.hostToDSR("foo&#2F;s"));
+		assertEquals("FOO/S", DiskDirectoryUtils.hostToDSR("FOO" + (char)('/' + 0x80) + "S"));
+		assertEquals("LONGNAME11", DiskDirectoryUtils.hostToDSR("longname11"));
+		assertEquals("LONGNAME11", DiskDirectoryUtils.hostToDSR("longname11garbage"));
+		assertEquals("SPACE NAME", DiskDirectoryUtils.hostToDSR("space name"));
 
 	}
 	
@@ -227,12 +228,12 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 	 * @throws IOException 
 	 */
 	private void assertFDRFile(PabStruct pab) throws IOException {
-		EmulatedFile file = getNativeFile(pab.path);
+		IEmulatedFile file = getNativeFile(pab.path);
 		assertTrue(file.getClass()+"", file instanceof NativeFDRFile);
 		assertTrue(((NativeFDRFile) file).getFile().exists());		
 	}
 	private void assertTextFile(PabStruct pab) throws IOException {
-		EmulatedFile file = getNativeFile(pab.path);
+		IEmulatedFile file = getNativeFile(pab.path);
 		assertTrue(file.getClass()+"", file instanceof NativeTextFile);
 		assertTrue(((NativeTextFile) file).getFile().exists());		
 	}

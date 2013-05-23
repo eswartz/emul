@@ -17,12 +17,12 @@ import ejs.base.properties.IProperty;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.Catalog;
+import v9t9.common.files.FileDirectory;
 import v9t9.common.files.IDiskImageMapper;
 import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.files.IFilesInDirectoryMapper;
-import v9t9.engine.files.directory.FileDirectory;
 import v9t9.engine.files.image.BaseDiskImage;
 import v9t9.engine.files.image.DiskImageFactory;
 

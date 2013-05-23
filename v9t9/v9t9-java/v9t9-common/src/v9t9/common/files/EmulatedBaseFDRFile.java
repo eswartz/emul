@@ -16,14 +16,33 @@ import java.io.IOException;
  * @author ejs
  *
  */
-public abstract class EmulatedBaseFDRFile implements EmulatedFile {
+public abstract class EmulatedBaseFDRFile implements IEmulatedFile, IFDROwner {
 
 	protected FDR fdr;
+	private IEmulatedDisk disk;
 
-	public EmulatedBaseFDRFile(FDR fdr) {
+	public EmulatedBaseFDRFile(IEmulatedDisk disk, FDR fdr) {
+		this.disk = disk;
 		this.fdr = fdr;
 	}
+	
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return fdr.toString();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IEmulatedFile#getDisk()
+	 */
+	@Override
+	public IEmulatedDisk getDisk() {
+		return disk;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.files.EmulatedFile#getName()
 	 */

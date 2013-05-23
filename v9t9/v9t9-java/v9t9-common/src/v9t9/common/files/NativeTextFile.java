@@ -11,23 +11,30 @@
 package v9t9.common.files;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import ejs.base.utils.Check;
-import ejs.base.utils.CompatUtils;
 
 
 public class NativeTextFile implements NativeFile {
 
     private File file;
+	private IEmulatedDisk disk;
 
-    public NativeTextFile(File file) {
-        Check.checkArg(file);
+    public NativeTextFile(IEmulatedDisk disk, File file) {
+        this.disk = disk;
+		Check.checkArg(file);
         this.file = file;
     }
 
+    /* (non-Javadoc)
+     * @see v9t9.common.files.IEmulatedFile#getDisk()
+     */
+    @Override
+    public IEmulatedDisk getDisk() {
+    	return disk;
+    }
     @Override
     public String toString() {
     	return file.getAbsolutePath() + " (text)";
@@ -46,14 +53,20 @@ public class NativeTextFile implements NativeFile {
     }
     @Override
     public int readContents(byte[] contents, int contentOffset, int offset, int length) throws IOException {
-        FileInputStream fis = new FileInputStream(file);
-        int size = (int) file.length() - offset;
-        size = Math.min(size, length);
+//        FileInputStream fis = new FileInputStream(file);
+//        int size = (int) file.length() - offset;
+//        size = Math.min(size, length);
+//        
+//        Check.checkArg((size < (long)Integer.MAX_VALUE));
+//        CompatUtils.skipFully(fis, offset);
+//        int ret = fis.read(contents, contentOffset, size);
+//        fis.close();
+    	
+    	RandomAccessFile raf = new RandomAccessFile(file, "r");
         
-        Check.checkArg((size < (long)Integer.MAX_VALUE));
-        CompatUtils.skipFully(fis, offset);
-        int ret = fis.read(contents, contentOffset, size);
-        fis.close();
+    	raf.seek(offset);
+        int ret = raf.read(contents, contentOffset, length);
+        raf.close();
         return ret;
     }
     @Override

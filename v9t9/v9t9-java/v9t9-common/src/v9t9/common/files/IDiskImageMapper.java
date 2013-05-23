@@ -38,7 +38,7 @@ public interface IDiskImageMapper extends IPersistable {
 	 * @return
 	 * @throws IOException
 	 */
-	Catalog createCatalog(String name, File image) throws IOException;
+	//Catalog createCatalog(String name, File image) throws IOException;
 
 	/**
 	 * Register a new disk image property
@@ -69,12 +69,11 @@ public interface IDiskImageMapper extends IPersistable {
 	
 	/**
 	 * Try to create a disk image from the given file
-	 * @param name property name associated with image, e.g. "DSK1"
 	 * @param file
 	 * @return image
 	 * @throws IOException if not a recognized disk image
 	 */
-	IDiskImage createDiskImage(String name, File file) throws IOException;
+	IDiskImage createDiskImage(File file) throws IOException;
 	
 	/**
 	 * Get the property that controls whether disk image support is enabled
