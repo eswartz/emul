@@ -55,6 +55,13 @@ public class DataFiles {
 		}
 	}
 
+	public static void removeSearchPath(ISettingsHandler settings, String filepath) {
+		List<String> list = settings.get(settingBootRomsPath).getList();
+		if (list.contains(filepath)) {
+			list.remove(filepath);
+			settings.get(settingBootRomsPath).firePropertyChange();
+		}
+	}
 	
     /**
      * @param filepath

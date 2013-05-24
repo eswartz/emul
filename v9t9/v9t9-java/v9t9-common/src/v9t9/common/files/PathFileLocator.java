@@ -139,6 +139,23 @@ public class PathFileLocator implements IPathFileLocator {
 		property.addListenerAndFire(pathListChangedListener);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#resetPathProperties()
+	 */
+	@Override
+	public synchronized void resetPathProperties() {
+		if (rwPathProperty != null)
+			rwPathProperty.removeListener(pathListChangedListener);
+		
+		rwPathProperty = null;
+		
+		for (IProperty prop : roPathProperties) {
+			prop.removeListener(pathListChangedListener);
+		}
+		roPathProperties.clear();
+		
+	}
+	
 	interface IPathIterator {
 		void handle(IProperty property, String path);
 	}
@@ -476,13 +493,14 @@ public class PathFileLocator implements IPathFileLocator {
 			String entPrefix = ssp.substring(dirIdx + 2);	// skip '!' and '/'
 			ZipFile zf;
 			try {
-				logger.info("reading zip file " + zipPath);
+				logger.info("reading zip file " + directory);
 				File file = new File(URI.create(zipPath));
 				zf = new ZipFile(file);
 				try {
 					cachedListing = new LinkedHashMap<String, IPathFileLocator.FileInfo>();
 					for (Enumeration<? extends ZipEntry> en = zf.entries(); en.hasMoreElements(); ) {
 						ZipEntry entry = en.nextElement();
+						
 						String entPath = entry.getName();
 						// get only entries under the desired directory...
 						if (entPath.length() > entPrefix.length() && entPath.startsWith(entPrefix)) {
@@ -502,7 +520,7 @@ public class PathFileLocator implements IPathFileLocator {
 							fileURI = resolveInsideURI(directory, name);
 							String md5 = "";
 							
-							if (entry.getSize() <= MAX_FILE_SIZE) {
+							if (!entry.isDirectory() && entry.getSize() <= MAX_FILE_SIZE) {
 								InputStream is = null;
 								try {
 									is = zf.getInputStream(entry);

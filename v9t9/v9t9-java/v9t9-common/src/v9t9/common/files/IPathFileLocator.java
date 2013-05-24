@@ -47,6 +47,8 @@ public interface IPathFileLocator {
 
 	void setReadWritePathProperty(IProperty property);
 
+	void resetPathProperties();
+
 	/**
 	 * @param path
 	 * @return
@@ -203,5 +205,6 @@ public interface IPathFileLocator {
 
 	void addListener(IPathChangeListener listener);
 	void removeListener(IPathChangeListener listener);
+
 
 }
