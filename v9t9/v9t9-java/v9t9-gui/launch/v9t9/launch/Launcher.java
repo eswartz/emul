@@ -26,7 +26,8 @@ import java.util.zip.ZipFile;
  *
  */
 public class Launcher {
-	
+
+	public static final String TOOL_PREFIX = "v9t9.tools.";
 	/**
 	 * 
 	 */
@@ -100,12 +101,14 @@ public class Launcher {
 				return;
 			}
 			if ("-tool".equals(args[idx])) {
-				mainClass = "v9t9.tools.ToolHelp";
+				mainClass = "ToolHelp";
 				args = remove(args, idx);
 				if (idx < args.length) {
 					mainClass = args[idx];
 					args = remove(args, idx);
 				}
+				if (mainClass.indexOf('.') < 0)
+					mainClass = TOOL_PREFIX + mainClass;
 				break;
 			}
 		}

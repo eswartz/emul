@@ -25,15 +25,14 @@ import ejs.base.logging.LoggingUtils;
  */
 public class ToolHelp {
 
-
 	public static void main(String[] args) throws IOException, URISyntaxException {
 		LoggingUtils.setupNullLogging();
 		
 		System.out.println("V9t9 Tools\n");
 		
 		System.out.println("Run as:\n");
-		System.out.println("v9t9[.bat|.sh] -tool <class> [args]\n");
-		System.out.println("where <class> is one of:\n");
+		System.out.println("v9t9[.bat|.sh] -tool <name> [args]\n");
+		System.out.println("where <name> is one of:\n");
 		
 		String className = ToolHelp.class.getName();
 		int didx = className.lastIndexOf('.');
@@ -41,11 +40,8 @@ public class ToolHelp {
 		String helpDir = "/" + packageName.replace('.', '/');
 		
 		String classPath = helpDir + ToolHelp.class.getSimpleName() + ".class";
-		//System.out.println("classPath=" +classPath);
 		URL classURL = ToolHelp.class.getResource(classPath);
-		//System.out.println("classURL=" +classURL);
 		URL helpDirURL = new URL(classURL, ".");
-		//System.out.println("helpDirURL=" +helpDirURL);
 		
 		PathFileLocator loc = new PathFileLocator();
 		Map<String, FileInfo> ents = loc.getDirectoryListing(helpDirURL.toURI());
@@ -54,11 +50,14 @@ public class ToolHelp {
 			if (ent.endsWith(".class")) {
 				String toolName = packageName + ent.substring(0, ent.length() - ".class".length());
 				if (!toolName.equals(ToolHelp.class.getName())) {
+					if (toolName.startsWith(packageName))
+						toolName = toolName.substring(packageName.length());
 					System.out.println("\t" + toolName);
 				}
 			}
 		}
 		
+		System.out.println("\nRun a tool without arguments to get help.");
 	}
 	
 }
