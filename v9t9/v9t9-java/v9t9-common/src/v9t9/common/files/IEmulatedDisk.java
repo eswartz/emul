@@ -19,7 +19,13 @@ public interface IEmulatedDisk extends IEmulatedStorage {
 	
 
 	/**
-	 * Tell if the disk appears formatted
+	 * Tell if the disk appears valid (less strict than whether it's formatted)
+	 * @return
+	 */
+	boolean isValid();
+
+	/**
+	 * Tell if the disk appears formatted (right size and identifiers)
 	 * @return
 	 */
 	boolean isFormatted();

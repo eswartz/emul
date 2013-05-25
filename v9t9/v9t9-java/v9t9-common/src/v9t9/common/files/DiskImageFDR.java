@@ -10,22 +10,15 @@
  */
 package v9t9.common.files;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
-public class DiskImageFDR extends FDR {
+public class DiskImageFDR extends TIFDR {
 
     public static final int FDRSIZE = 256;
     
-    /** 10 bytes, padded with spaces */
-    private final byte[] filename = new byte[10];
-    
-    private final byte[] res10 = new byte[2];
-    private final byte[] rec20 = new byte[8];
-    private final byte[] dcpb = new byte[228];
-
     /**
     char        filenam[10];// filename, padded with spaces
     u8          res10[2];   // reserved 
@@ -101,28 +94,29 @@ public class DiskImageFDR extends FDR {
     	}
     }
 
-    public void writeFDR(File file) throws IOException {
-    	file.setWritable(true);
+    public byte[] toBytes() {
+    	ByteArrayOutputStream os = new ByteArrayOutputStream(256);
     	
-    	RandomAccessFile raf = new RandomAccessFile(file, "rw");
-    	raf.seek(0);
+    	try {
+	    	os.write(filename);
+	    	os.write(res10);
+	    	os.write(flags);
+	    	os.write(recspersec);
+	    	os.write(secsused >> 8);
+	    	os.write(secsused & 0xff);
+	    	os.write(byteoffs);
+	    	os.write(reclen);
+	    	os.write(numrecs & 0xff);
+	    	os.write(numrecs >> 8);
+	    	os.write(rec20);
+	        os.write(dcpb);
+	        
+	        os.close();
+    	} catch (IOException e) {
+    		throw new IllegalStateException(e);
+    	}
     	
-    	raf.write(filename);
-    	raf.write(res10);
-    	raf.write(flags);
-    	raf.write(recspersec);
-    	raf.write(secsused >> 8);
-    	raf.write(secsused & 0xff);
-    	raf.write(byteoffs);
-    	raf.write(reclen);
-    	raf.write(numrecs & 0xff);
-    	raf.write(numrecs >> 8);
-    	raf.write(rec20);
-        raf.write(dcpb);
-        
-        raf.close();
-        
-        file.setWritable(!isReadOnly());
+        return os.toByteArray();
     }
     
 	public String getFileName() {

@@ -190,14 +190,6 @@ public class ModuleManager implements IModuleManager {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.engine.modules.IModuleManager#switchModule(java.lang.String)
-	 */
-	@Override
-	public void switchModule(String name) throws NotifyException {
-		switchModule(findModuleByName(name, true));
-	}
-	
-	/* (non-Javadoc)
 	 * @see v9t9.engine.modules.IModuleManager#findModuleByName(java.lang.String, boolean)
 	 */
 	@Override

@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.common.files.DiskDirectoryUtils;
-import v9t9.common.files.FileDirectory;
+import v9t9.common.files.DiskDirectory;
 import v9t9.common.files.IDiskDirectory;
 import v9t9.common.files.IFilesInDirectoryMapper;
 
@@ -207,7 +207,7 @@ public class DiskDirectoryMapper implements IFilesInDirectoryMapper, IPersistabl
 	 */
 	@Override
 	public IDiskDirectory createDiskDirectory(File dir) {
-		return new FileDirectory(dir, this);
+		return new DiskDirectory(dir, this);
 	}
 	
 	/* (non-Javadoc)

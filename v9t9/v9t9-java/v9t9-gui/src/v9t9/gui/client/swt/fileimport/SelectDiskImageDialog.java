@@ -178,7 +178,7 @@ class SelectDiskImageDialog extends MessageDialog {
 		if (theProperty != null) 
 			drive = ((IDiskDriveSetting) theProperty).getDrive();
 		catalog.deviceName = "DSK" + drive;
-		execComp.updateExecs(drive, catalog);
+		execComp.updateExecs(drive, catalog, true);
 	}
 
 	/* (non-Javadoc)

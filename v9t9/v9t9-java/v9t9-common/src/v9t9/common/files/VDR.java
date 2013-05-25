@@ -10,28 +10,43 @@
  */
 package v9t9.common.files;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 /**
  * Volume description record
  * @author ejs
  *
  */
 public class VDR {
-    public static final int VDRSIZE = 256;
-    
+	public static final int OFFS_NAME = 0;
+	public static final int OFFS_NUM_SECS = 0xA;
+	public static final int OFFS_SECS_PER_TRACK = 0xc;
+	public static final int OFFS_DSR_MARK = 0xd;
+	public static final int OFFS_PROTECTION = 0x10;
+	public static final int OFFS_TRACKS_PER_SIDE = 0x11;
+	public static final int OFFS_SIDES = 0x12;
+	public static final int OFFS_DENSITY = 0x13;
+	public static final int OFFS_RESERVED_14 = 0x14;
+	public static final int OFFS_SECTOR_BITMAP = 0x38;
+	public static final int OFFS_RESERVED_EC = 0xEC;
+
+	public static final int VDRSIZE = 256;
+
     public static VDR createVDR(byte[] data, int offset) {
         VDR vdr = new VDR();
         
-    	System.arraycopy(data, offset, vdr.volname, 0, vdr.volname.length);
-    	System.arraycopy(data, offset + 0xA, vdr.numSecs, 0, vdr.numSecs.length);
-    	vdr.secsPerTrack = data[offset + 0xc] & 0xff;
-    	System.arraycopy(data, offset + 0xd, vdr.dsrMark, 0, vdr.dsrMark.length);
-        vdr.protection = (char) data[offset + 0x10];
-        vdr.tracksPerSide = data[offset + 0x11] & 0xff;
-        vdr.sides = data[offset + 0x12] & 0xff;
-        vdr.density = data[offset + 0x13] & 0xff;
-        System.arraycopy(data, offset + 0x14, vdr.reserved14, 0, vdr.reserved14.length);
-        System.arraycopy(data, offset + 0x38, vdr.secBitMap, 0, vdr.secBitMap.length);
-        System.arraycopy(data, offset + 0xEC, vdr.reservedEC, 0, vdr.reservedEC.length);
+    	System.arraycopy(data, offset + OFFS_NAME, vdr.volname, 0, vdr.volname.length);
+    	System.arraycopy(data, offset + OFFS_NUM_SECS, vdr.numSecs, 0, vdr.numSecs.length);
+    	vdr.secsPerTrack = data[offset + OFFS_SECS_PER_TRACK] & 0xff;
+    	System.arraycopy(data, offset + OFFS_DSR_MARK, vdr.dsrMark, 0, vdr.dsrMark.length);
+        vdr.protection = (char) data[offset + OFFS_PROTECTION];
+        vdr.tracksPerSide = data[offset + OFFS_TRACKS_PER_SIDE] & 0xff;
+        vdr.sides = data[offset + OFFS_SIDES] & 0xff;
+        vdr.density = data[offset + OFFS_DENSITY] & 0xff;
+        System.arraycopy(data, offset + OFFS_RESERVED_14, vdr.reserved14, 0, vdr.reserved14.length);
+        System.arraycopy(data, offset + OFFS_SECTOR_BITMAP, vdr.secBitMap, 0, vdr.secBitMap.length);
+        System.arraycopy(data, offset + OFFS_RESERVED_EC, vdr.reservedEC, 0, vdr.reservedEC.length);
         
         return vdr;
     }
@@ -86,6 +101,10 @@ public class VDR {
 		return ((numSecs[0] & 0xff) << 8) | (numSecs[1] & 0xff);
 	}
 	
+	void setTotalSecs(short total) {
+		numSecs[0] = (byte) ((total >> 8) & 0xff);
+		numSecs[1] = (byte) (total & 0xff);
+	}
 	public int getSecsUsed() {
 		int bytes = getTotalSecs() / 8;
 		int count = 0;
@@ -100,5 +119,59 @@ public class VDR {
 		}
 		return count;
 	}
+
+	public boolean isFormatted() {
+		return "DSK".equals(new String(dsrMark)) && getTotalSecs() > 0;
+	}
+	
+	public int allocateSector(int start) throws IOException {
+		int bytes = getTotalSecs() / 8;
+		int num = start;
+		int i = start / 8;
+		for (; i < bytes; i++) {
+			if (i >= secBitMap.length)
+				return -1;
+			for (int j = 0x1; j < 0x100; j <<= 1) {
+				if ((secBitMap[i] & j) == 0) {
+					secBitMap[i] |= j;
+					return num;
+				}
+				num++;
+			}
+			if (start != 0 && i + 1 == bytes)
+				i = -1;
+		}
+		throw new IOException("no free sectors available");
+	}
+	
+	public void deallocateSector(int num) throws IOException {
+		int bytes = getTotalSecs() / 8;
+		int i = num / 8;
+		if (i < 0 || i >= Math.min(bytes, secBitMap.length))
+			throw new IOException("illegal sector number: " + num);
+		int j = num % 8;
+		secBitMap[i] &= ~(0x1 << (7 - j));
+	}
+	
+    public byte[] toBytes() {
+        ByteArrayOutputStream os = new ByteArrayOutputStream(256); 
+        
+        try {
+	        os.write(volname);
+	    	os.write(numSecs);
+	    	os.write(secsPerTrack);
+	    	os.write(dsrMark);
+	    	os.write(protection);
+	        os.write(tracksPerSide);
+	        os.write(sides);
+	        os.write(density);
+	        os.write(reserved14);
+	        os.write(secBitMap);
+	        os.write(reservedEC);
+        } catch (IOException e) {
+        	throw new IllegalStateException(e);
+        }
+        return os.toByteArray();
+    }
 
 }

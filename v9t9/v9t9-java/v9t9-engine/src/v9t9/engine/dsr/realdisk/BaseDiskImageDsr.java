@@ -221,7 +221,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 					
 					// just in case the image went missing
 					if (info != null)
-						info.validateDiskImage();
+						info.closeIfMissing();
 				}
 			}
 			if (info != null) {

@@ -21,11 +21,16 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
 import org.apache.log4j.Logger;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.dnd.DND;
@@ -45,10 +50,13 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.widgets.Control;
 
+import v9t9.common.client.IEmulatorContentHandler;
+import v9t9.common.client.IEmulatorContentSource;
+import v9t9.common.client.IEmulatorContentSourceProvider;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
-import v9t9.common.files.IFileImportHandler;
+import v9t9.common.machine.IMachine;
 import v9t9.common.video.ICanvas;
 import v9t9.gui.client.swt.imageimport.IImageImportHandler;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
@@ -79,19 +87,22 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	private final IEventNotifier notifier;
 	protected IPropertyListener importPropertyListener;
 	private final IImageImportHandler imageImportHandler;
-	private IFileImportHandler fileImportHandler;
 
-	public SwtDragDropHandler(Control control, ISwtVideoRenderer renderer, 
-			IEventNotifier notifier, IImageImportHandler imageImportHandler,
-			IFileImportHandler fileImportHandler) {
+	private IEmulatorContentSourceProvider[] emulatorContentProviders;
+
+	private IMachine machine;
+
+	public SwtDragDropHandler(Control control, ISwtVideoRenderer renderer,
+			IMachine machine, IImageImportHandler imageImportHandler) {
+		this.machine = machine;
 		this.imageImportHandler = imageImportHandler;
-		this.fileImportHandler = fileImportHandler;
+		this.notifier = machine.getEventNotifier();
+		this.emulatorContentProviders = machine.getEmulatorContentProviders(); 
 		if (renderer == null || control == null || notifier == null)
 			throw new NullPointerException();
 		
 		this.control = control;
 		this.renderer = renderer;
-		this.notifier = notifier;
 		
 		//source = new DragSource(control, DND.DROP_COPY | DND.DROP_DEFAULT);
 		//source.addDragListener(this);
@@ -417,11 +428,66 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		if (file == null)
 			return;
 		
-		try {
-			fileImportHandler.importFile(file);
-			fileImportHandler.getHistory().add(file.getAbsolutePath());
-		} catch (NotifyException e) {
-			notifier.notifyEvent(e.getEvent());
+		List<IEmulatorContentSource> sources = new ArrayList<IEmulatorContentSource>();
+		for (IEmulatorContentSourceProvider provider : emulatorContentProviders) {
+			try {
+				IEmulatorContentSource[] sourceArr = provider.analyze(file.toURI());
+				sources.addAll(Arrays.asList(sourceArr));
+			} catch (Throwable t) {
+				log.error("error scanning " + file + " with " + provider, t);
+			}
+		}
+		
+		if (sources.isEmpty()) {
+			MessageDialog.openWarning(control.getShell(), "Unknown File", 
+					"V9t9 does not recognize this file:\n\n" + file);			
+			return;
+		}
+		
+		// see if we can skip the dialog
+		boolean anyFound = false;
+		for (IEmulatorContentSource source : sources) {
+			IEmulatorContentHandler[] handlers = machine.getClient().getEmulatorContentHandlers(source);
+			if (handlers.length > 0) {
+				anyFound = true;
+				continue;
+			}
+			
+			if (handlers.length == 1 && sources.size() == 1) {
+				IEmulatorContentHandler handler = handlers[0];
+				if (!handler.requireConfirmation()) {
+					try {
+						handler.handleContent();
+					} catch (NotifyException e) {
+						notifier.notifyEvent(e.getEvent());
+					}
+					return;
+				}
+			}
+		}
+		
+		if (!anyFound) {
+			MessageDialog.openWarning(control.getShell(), "Unhandled File", 
+					"V9t9 does not know what to do with " + sources.get(0).getLabel());		
+			return;
+		}
+		
+		// okay, show a dialog
+		
+		EmulatorSourceHandlerDialog dialog = new EmulatorSourceHandlerDialog(
+				control.getShell(), machine.getClient(),
+				sources.toArray(new IEmulatorContentSource[sources.size()]));
+		
+		int ret = dialog.open();
+		if (ret == Window.OK) {
+			IEmulatorContentHandler handler = dialog.getHandler();
+			if (handler != null) {
+				try {
+					handler.handleContent();
+				} catch (NotifyException e) {
+					notifier.notifyEvent(e.getEvent());
+				}
+			}
 		}
 	}
 

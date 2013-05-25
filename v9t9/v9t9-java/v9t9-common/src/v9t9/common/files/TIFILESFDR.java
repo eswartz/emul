@@ -10,17 +10,17 @@
  */
 package v9t9.common.files;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 public class TIFILESFDR extends FDR {
 
     private byte[] sig = new byte[8];
 
-    private byte[] unused = new byte[112];
+    private byte[] unused = new byte[100];
 
 	private String name;
 
@@ -73,41 +73,43 @@ public class TIFILESFDR extends FDR {
         return fdr;
     }
     
-    public void writeFDR(File file) throws IOException {
-    	file.setWritable(true);
-    	
-    	RandomAccessFile raf = new RandomAccessFile(file, "rw");
-    	raf.seek(0);
-    	
-    	raf.write(SIGNATURE);
-    	raf.write(secsused >> 8);
-    	raf.write(secsused & 0xff);
-    	raf.write(flags);
-    	raf.write(recspersec);
-    	raf.write(byteoffs);
-    	raf.write(reclen);
-    	raf.write(numrecs & 0xff);
-    	raf.write(numrecs >> 8);
-    	
-    	raf.write(mxt);
-    	raf.write(res1b);
-    	raf.write(exthdr >> 8);
-    	raf.write(exthdr & 0xff);
-    	
-    	raf.write(crtime >> 24);
-    	raf.write(crtime >> 16);
-    	raf.write(crtime >> 8);
-    	raf.write(crtime);
-    	raf.write(updtime >> 24);
-    	raf.write(updtime >> 16);
-    	raf.write(updtime >> 8);
-    	raf.write(updtime);
-    	
-        raf.write(unused);
-        
-        raf.close();
-        
-        file.setWritable(!isReadOnly());
+    public byte[] toBytes() {
+
+    	ByteArrayOutputStream os = new ByteArrayOutputStream(128);
+    	try {
+        	
+        	os.write(SIGNATURE);
+        	os.write(secsused >> 8);
+        	os.write(secsused & 0xff);
+        	os.write(flags);
+        	os.write(recspersec);
+        	os.write(byteoffs);
+        	os.write(reclen);
+        	os.write(numrecs & 0xff);
+        	os.write(numrecs >> 8);
+        	
+        	os.write(mxt);
+        	os.write(res1b);
+        	os.write(exthdr >> 8);
+        	os.write(exthdr & 0xff);
+        	
+        	os.write(crtime >> 24);
+        	os.write(crtime >> 16);
+        	os.write(crtime >> 8);
+        	os.write(crtime);
+        	os.write(updtime >> 24);
+        	os.write(updtime >> 16);
+        	os.write(updtime >> 8);
+        	os.write(updtime);
+        	
+            os.write(unused);
+            
+            os.close();
+
+    	} catch (IOException e) {
+    		throw new IllegalStateException(e);
+    	}
+    	return os.toByteArray(); 
     }
     
     /* (non-Javadoc)
@@ -134,4 +136,31 @@ public class TIFILESFDR extends FDR {
     	}
     	return secs;
     }
+    
+    /* (non-Javadoc)
+     * @see v9t9.common.files.FDR#copyFrom(v9t9.common.files.FDR)
+     */
+    @Override
+    public void copyFrom(FDR srcFdr) throws IOException {
+    	super.copyFrom(srcFdr);
+    	if (srcFdr instanceof TIFILESFDR) {
+    		TIFILESFDR o = (TIFILESFDR) srcFdr;
+    		System.arraycopy(o.sig, 0, sig, 0, sig.length);
+    		System.arraycopy(o.unused, 0, unused, 0, unused.length);
+    		mxt = o.mxt;
+    		res1b = o.res1b;
+    		exthdr = o.exthdr;
+    		crtime = o.crtime;
+    		updtime = o.updtime;
+    	}
+    }
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.FDR#copyAllocation(v9t9.common.files.FDR)
+	 */
+	@Override
+	public void copyAllocation(FDR srcFdr) throws IOException {
+		throw new IOException("unsupported");
+		
+	}
 }

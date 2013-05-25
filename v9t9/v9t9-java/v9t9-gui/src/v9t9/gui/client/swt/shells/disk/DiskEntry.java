@@ -206,13 +206,15 @@ class DiskEntry extends DiskSettingEntry {
 		int ret = dialog.open();
 		if (ret == Dialog.OK) {
 			IFileExecutor exec = dialog.getFileExecutor();
-			try {
-				exec.run(machine);
-				
-				// close disk selector
-				getShell().close();
-			} catch (NotifyException e) {
-				machine.getEventNotifier().notifyEvent(e.getEvent());
+			if (exec != null) {
+				try {
+					exec.run(machine);
+					
+					// close disk selector
+					getShell().close();
+				} catch (NotifyException e) {
+					machine.getEventNotifier().notifyEvent(e.getEvent());
+				}
 			}
 		}
 		

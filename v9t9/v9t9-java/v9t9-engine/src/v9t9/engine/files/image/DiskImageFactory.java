@@ -35,7 +35,7 @@ public class DiskImageFactory {
 				return new RawTrackDiskImage(settings, name, file);
 			
 			BaseDiskImage secImg = new SectorDiskImage(settings, name, file);
-			if (secImg.isFormatted()) {
+			if (secImg.isValid()) {
 				return secImg;
 			}
 		}

@@ -60,7 +60,7 @@ public class DiskRunDialog extends Dialog {
 		execComp = new FileExecutorComposite(composite, machine);
 		GridDataFactory.fillDefaults().grab(true,true).applyTo(execComp);
 		
-		execComp.updateExecs(drive, catalog);
+		execComp.updateExecs(drive, catalog, false);
 		
 		return composite;
 	}

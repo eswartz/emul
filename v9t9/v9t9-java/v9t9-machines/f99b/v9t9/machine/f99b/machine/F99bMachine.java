@@ -18,6 +18,8 @@ import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.engine.demos.DemoContentProvider;
+import v9t9.engine.files.image.DiskImageContentProvider;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.machine.MachineBase;
 import v9t9.engine.machine.NullFileExecutionHandler;
@@ -30,6 +32,9 @@ public class F99bMachine extends MachineBase {
 		super(settings, machineModel);
 
 		getSettings().get(IKeyboardHandler.settingPasteKeyDelay).setInt(2);
+		
+		addEmulatorContentProvider(new DemoContentProvider(this));
+		addEmulatorContentProvider(new DiskImageContentProvider(this));
 	}
 
 	@Override

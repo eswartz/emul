@@ -51,4 +51,10 @@ public interface IClient {
 	 * @return
 	 */
 	ISoundHandler getSoundHandler();
+
+	/**
+	 * Get all the handlers for the content 
+	 * @return
+	 */
+	IEmulatorContentHandler[] getEmulatorContentHandlers(IEmulatorContentSource source);
 }

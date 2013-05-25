@@ -28,6 +28,7 @@ import v9t9.common.files.IDiskHeader;
 import v9t9.common.files.IDiskImage;
 import v9t9.common.files.IEmulatedFile;
 import v9t9.common.files.IdMarker;
+import v9t9.common.files.IndexSector;
 import v9t9.common.files.VDR;
 import v9t9.engine.dsr.realdisk.ICRCAlgorithm;
 import ejs.base.properties.IPersistable;
@@ -119,6 +120,8 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	private RandomAccessFile handle;
 	
 	protected boolean trackFetched;
+	protected boolean trackChanged;
+	
 	protected byte trackBuffer[] = new byte[RealDiskConsts.DSKbuffersize];
 	protected DSKheader hdr = new DSKheader();
 	protected boolean readonly;
@@ -187,15 +190,25 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	 * 
 	 */
 	public void closeDiskImage() throws IOException {
+		commitTrack();
+
+		reset();
+	}
+
+	/**
+	 * @throws IOException 
+	 * 
+	 */
+	protected void reset() throws IOException {
 		if (handle != null) {
-			//FDCflush();
-			//buflen = bufpos = 0;
 			handle.close();
 			handle = null;
 		}			
 		trackFetched = false;
+		trackChanged = false;
 		trackMarkers = null;
 		catalog = null;
+		
 	}
 
 	public void growImageForContent() throws IOException {
@@ -266,6 +279,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		}
 	
 		trackFetched = false;
+		trackChanged = false;
 		
 		dumper.info("Opened {0} disk ''{1}'' {2},\n#tracks={3}, tracksize={4}, sides={5}",
 					  getDiskType(),
@@ -313,6 +327,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 				throw (IOException) new IOException().initCause(e);
 			}
 			trackFetched = true;
+			trackChanged = false;
 			trackFormat = null;
 			trackMarkers = null;
 			
@@ -339,6 +354,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	@Override
 	public boolean seekToCurrentTrack(int seektrack, int sideReg)
 			throws IOException {
+		
+		commitTrack();
+		
 		int         offs;
 	
 		this.seektrack = seektrack;
@@ -367,6 +385,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		
 		// refresh
 		trackFetched = false;
+		trackChanged = false;
 		trackMarkers = null;
 		//readCurrentTrackData();
 		
@@ -411,6 +430,12 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	/**
 	 */
 	public void commitTrack() throws IOException {
+		if (!trackFetched || !trackChanged)
+			return;
+		
+		if (handle == null)
+			throw new IOException("lost disk before committing track");
+		
 		int size = getTrackSize();
 		long diskoffs = getTrackDiskOffset();
 	
@@ -435,6 +460,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		handle.getFD().sync();
 		
 		trackFetched = true;
+		trackChanged = false;
 	}
 
 	/**
@@ -464,13 +490,12 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	/**
 	 * 
 	 */
-	public void validateDiskImage() {
-		if (!spec.exists() && handle != null) {
+	public void closeIfMissing() {
+		if (!spec.exists()) {
 			try {
-				handle.close();
+				reset();
 			} catch (IOException e) {
 			}
-			handle = null;
 		}
 	}
 
@@ -503,21 +528,25 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	/** Fetch ID markers into markers and establish format */ 
 	protected abstract void fetchFormatAndTrackMarkers();
 
-	public void readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException {
-		ensureFormatAndTrackMarkers();
-		
+	public IdMarker readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException {
 		int track = (sector / hdr.secsPerTrack);
 		byte side = (byte) (track > 40 ? 1 : 0);
+
 		track %= 40;
 		if (side > 0)
 			track = 39 - track;
-		byte tracksec = (byte) (sector % hdr.secsPerTrack);
+
 		seekToCurrentTrack(track, side);
+		
 		readCurrentTrackData();
+		
+		//ensureFormatAndTrackMarkers();
+		
+		byte tracksec = (byte) (sector % hdr.secsPerTrack);
 		for (IdMarker marker : trackMarkers) {
 			if (marker.sectorid == tracksec && marker.trackid == track) {
 				readSectorData(marker, rwBuffer, start, buflen);
-				return;
+				return marker;
 			}
 		}
 		throw new MissingSectorException(sector, tracksideoffset,
@@ -548,8 +577,8 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			DiskImageFDR fdr = DiskImageFDR.createFDR(fdrSec, 0);
 //				int sz = fdr.getSectorsUsed() + 1;
 			
-			entries.add(new CatalogEntry(fdr.getFileName(), 
-					new EmulatedDiskImageFile(this, fdr, fdr.getFileName())));
+			entries.add(new CatalogEntry(sec, fdr.getFileName(), 
+					new EmulatedDiskImageFile(this, sec, fdr, fdr.getFileName())));
 //						sz, 
 //						fdr.getFlags(), fdr.getRecordLength(),
 //						(fdr.getFlags() & FDR.ff_protected) != 0));
@@ -614,10 +643,10 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.files.IDiskImage#isFormatted()
+	 * @see v9t9.common.files.IEmulatedDisk#isValid()
 	 */
 	@Override
-	public boolean isFormatted() {
+	public boolean isValid() {
 		boolean wasOpen = isDiskImageOpen();
 		if (!wasOpen) {
 			try {
@@ -628,6 +657,36 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 					return true;
 				}
 				return false;
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			} finally {
+				if (!wasOpen) {
+					try {
+						closeDiskImage();
+					} catch (IOException e) {
+					}
+				}
+			}
+		}
+		return true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IDiskImage#isFormatted()
+	 */
+	@Override
+	public boolean isFormatted() {
+		boolean wasOpen = isDiskImageOpen();
+		if (!wasOpen) {
+			try {
+				openDiskImage(true);
+				
+				byte[] sec0 = new byte[256];
+				readSector(0, sec0, 0, 256);
+				VDR vdr = VDR.createVDR(sec0, 0);
+				
+				return vdr.isFormatted();
 			} catch (IOException e) {
 				e.printStackTrace();
 				return false;
@@ -691,6 +750,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		
 		System.arraycopy(rwBuffer, start, trackBuffer, 0, buflen);
 		trackFetched = true;
+		trackChanged = true;
 
 		// dump contents
 		RealDiskUtils.dumpBuffer(dumper, rwBuffer, start, buflen);
@@ -743,9 +803,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	 * @see v9t9.common.files.IEmulatedDisk#createFile(java.lang.String, v9t9.common.files.FDR)
 	 */
 	@Override
-	public IEmulatedFile createFile(String fileName, FDR fdr)
+	public IEmulatedFile createFile(final String fileName, final FDR fdr)
 			throws IOException {
-		Catalog catalog = readCatalog();
+		final Catalog catalog = readCatalog();
 		for (CatalogEntry entry : catalog.getEntries()) {
 			if (entry.getFile().getFileName().equalsIgnoreCase(fileName)) {
 				// existing file
@@ -754,28 +814,129 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			}
 		}
 		
-		int fdrSec = allocateSector();
-		if (fdrSec < 0)
+		final int indexSector = allocateSector(32);
+		if (indexSector < 0)
 			throw new IOException("no sectors free");
-//		
-//		seekToCurrentTrack(fdrSec, fdrSec)
-//
-//		IdMarker marker = fetchFormatAndTrackMarkers()
-//		writeSectorData(fdr.getBytes(), 0, 256, new IdMarker());
-		return null;
+		
+		updateSector(1, new SectorUpdater() {
+			
+			@Override
+			public boolean updateSector(byte[] sec1) throws IOException {
+				IndexSector index = IndexSector.create(sec1);
+
+				// free sectors for FDR
+				index.add(indexSector, fileName, catalog);
+			
+				System.arraycopy(index.toBytes(), 0, sec1, 0, sec1.length);
+				return true;
+			}
+		});
+		
+		
+		final DiskImageFDR diskfdr = new DiskImageFDR();
+		diskfdr.copyFrom(fdr);
+		
+		// dump FDR to sector
+		updateSector(indexSector, new SectorUpdater() {
+			
+			@Override
+			public boolean updateSector(byte[] fdrSec) throws IOException {
+				byte[] out = diskfdr.toBytes();
+				System.arraycopy(out, 0, fdrSec, 0, out.length);
+				return true;
+			}
+		});
+		
+		EmulatedDiskImageFile file = new EmulatedDiskImageFile(this, indexSector, 
+				diskfdr, diskfdr.getFileName());
+		
+		commitTrack();
+		
+		return file;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IDiskImage#updateSector(int, v9t9.common.files.IDiskImage.SectorUpdater)
+	 */
+	@Override
+	public void updateSector(int num, SectorUpdater sectorUpdater) throws IOException {
+		byte[] sec = new byte[256];
+		IdMarker marker = readSector(num, sec, 0, 256);
+		
+		if (sectorUpdater.updateSector(sec)) {
+			writeSectorData(sec, num, 256, marker);
+			
+			commitTrack();
+		}
+	}
+	
 	/**
 	 * @return
 	 */
-	private int allocateSector() throws IOException {
-		throw new IOException("allocating sectors not implemented");
+	private int allocateSector(final int start) throws IOException {
+		final int[] num = { -1 };
+		updateSector(0, new SectorUpdater() {
+			
+			@Override
+			public boolean updateSector(byte[] content) throws IOException {
+				VDR vdr = VDR.createVDR(content, 0);
+				num[0] = vdr.allocateSector(start);
+				
+				System.arraycopy(vdr.toBytes(), 0, content, 0, 256);
+
+				return true;
+			}
+		});
+		return num[0];
 	}
 
 	/**
 	 * @param file
 	 */
-	public void deleteFile(IEmulatedFile file) {
+	public void deleteFile(IEmulatedFile file) throws IOException {
+		if (false == file instanceof EmulatedDiskImageFile)
+			throw new IOException("unexpected file type: " + file.getClass());
+		
+		final EmulatedDiskImageFile dfile = (EmulatedDiskImageFile) file;
+		final int[] contents = dfile.getFDR().getContentSectors();
+		
+		updateSector(0, new SectorUpdater() {
+			
+			@Override
+			public boolean updateSector(byte[] sec0) throws IOException {
+				VDR vdr = VDR.createVDR(sec0, 0);
+
+				// free sectors for content
+				for (int csec : contents) {
+					if (csec > 0)
+						vdr.deallocateSector(csec);
+				}
+				
+				// free index sector
+				if (dfile.getIndexSector() > 0) {
+					vdr.deallocateSector(dfile.getIndexSector());
+				}
+			
+				System.arraycopy(vdr.toBytes(), 0, sec0, 0, sec0.length);
+				
+				return true;
+			}
+		});
+		
+		updateSector(1, new SectorUpdater() {
+			
+			@Override
+			public boolean updateSector(byte[] sec1) throws IOException {
+				IndexSector index = IndexSector.create(sec1);
+
+				// free sectors for FDR
+				index.remove(dfile.getIndexSector());
+			
+				System.arraycopy(index.toBytes(), 0, sec1, 0, sec1.length);
+				
+				return true;
+			}
+		});
 		
 	}
 	

@@ -12,6 +12,7 @@ package v9t9.common.files;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 import ejs.base.utils.HexUtils;
 
@@ -215,7 +216,22 @@ public abstract class FDR implements IFDRInfo {
 		return (flags & ff_protected) != 0;
 	}
     
-	public abstract void writeFDR(File file) throws IOException;
+	public abstract byte[] toBytes();
+	
+	public final void writeFDR(File file) throws IOException {
+		byte[] sec = toBytes();
+		
+    	file.setWritable(true);
+    	
+    	RandomAccessFile raf = new RandomAccessFile(file, "rw");
+    	raf.seek(0);
+
+    	raf.write(sec);
+
+    	raf.close();
+        
+        file.setWritable(!isReadOnly());
+	}
 
 	/** Validate the FDR for sanity */
 	public void validate() throws InvalidFDRException {
@@ -308,4 +324,21 @@ public abstract class FDR implements IFDRInfo {
 		}
 		return ttype;
 	}
+
+	/**
+	 * Copy info from another FDR (except sector allocation)
+	 * @param srcFdr
+	 * @throws IOException
+	 */
+	public void copyFrom(FDR srcFdr) throws IOException {
+		setSectorsUsed(srcFdr.getSectorsUsed());
+		setFlags(srcFdr.getFlags());
+		setRecordsPerSector(srcFdr.getRecordsPerSector());
+		setByteOffset(srcFdr.getByteOffset());
+		setRecordLength(srcFdr.getRecordLength());
+		setNumberRecords(srcFdr.getNumberRecords());
+		setFileName(srcFdr.getFileName());
+	}
+	
+	public abstract void copyAllocation(FDR srcFdr) throws IOException;
 }

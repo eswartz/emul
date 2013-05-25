@@ -52,9 +52,6 @@ public class FileImportHandler implements IFileImportHandler {
 	private List<String> history = new ArrayList<String>();
 	private Shell shell;
 
-	/**
-	 * @param machine
-	 */
 	public FileImportHandler(Shell shell, IMachine machine) {
 		this.shell = shell;
 		this.machine = machine;
@@ -204,7 +201,8 @@ public class FileImportHandler implements IFileImportHandler {
 		
 		CatalogEntry entry;
 		try {
-			entry = new CatalogEntry(fiadMapper.getDsrFileName(file.getName()), 
+			entry = new CatalogEntry(-1,
+					fiadMapper.getDsrFileName(file.getName()), 
 					NativeFileFactory.INSTANCE.createNativeFile(file));
 		} catch (IOException e1) {
 			return false;

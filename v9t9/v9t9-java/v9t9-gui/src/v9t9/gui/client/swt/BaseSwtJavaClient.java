@@ -21,17 +21,28 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.client.IClient;
+import v9t9.common.client.IEmulatorContentHandler;
+import v9t9.common.client.IEmulatorContentSource;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.client.IVideoRenderer;
+import v9t9.common.demos.DemoContentSource;
 import v9t9.common.events.IEventNotifier;
+import v9t9.common.files.EmulatedDiskContentSource;
+import v9t9.common.files.IFileExecutionHandler;
+import v9t9.common.files.IFileExecutor;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.machine.TerminatedException;
+import v9t9.common.modules.ModuleContentSource;
 import v9t9.common.settings.Settings;
 import v9t9.common.speech.ISpeechDataSender;
+import v9t9.gui.client.swt.fileimport.DoNothingFileExecutor;
+import v9t9.gui.client.swt.handlers.DemoContentHandler;
+import v9t9.gui.client.swt.handlers.FileExecutorContentHandler;
+import v9t9.gui.client.swt.handlers.ModuleContentHandler;
 import v9t9.gui.client.swt.shells.ROMSetupDialog;
 import v9t9.gui.sound.JavaSoundHandler;
 import ejs.base.timer.FastTimer;
@@ -69,7 +80,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 	private SwtWindow window;
 
 	protected IKeyboardHandler keyboardHandler;
-	
+
 	/**
 	 * @param machine 
 	 * 
@@ -93,7 +104,7 @@ public abstract class BaseSwtJavaClient implements IClient {
         		(ISwtVideoRenderer) videoRenderer, settingsHandler,
         		soundHandler);
         eventNotifier = window.getEventNotifier();
-        
+
         keyboardHandler.setEventNotifier(eventNotifier);
         
         //window.setSwtVideoRenderer((ISwtVideoRenderer) videoRenderer);
@@ -385,5 +396,37 @@ public abstract class BaseSwtJavaClient implements IClient {
 	public ISoundHandler getSoundHandler() {
 		return soundHandler;
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IClient#getEmulatorContentHandlers(v9t9.common.client.IEmulatorContentSource)
+	 */
+	@Override
+	public IEmulatorContentHandler[] getEmulatorContentHandlers(
+			IEmulatorContentSource source) {
+		if (source instanceof DemoContentSource)
+			return new IEmulatorContentHandler[] { new DemoContentHandler((DemoContentSource) source) };
+		if (source instanceof ModuleContentSource)
+			return new IEmulatorContentHandler[] { new ModuleContentHandler((ModuleContentSource) source) };
+		if (source instanceof EmulatedDiskContentSource) {
+			EmulatedDiskContentSource diskSource = (EmulatedDiskContentSource) source;
+			IFileExecutionHandler execHandler = machine.getEmulatedFileHandler().getFileExecutionHandler();
+			
+			diskSource.getCatalog().deviceName = diskSource.getDevice();
+			 
+			IFileExecutor[] execs = execHandler.analyze(machine, diskSource.getDrive(), diskSource.getCatalog());
+			
+			IFileExecutor[] allExecs = new IFileExecutor[execs.length + 1];
+			allExecs[0] = new DoNothingFileExecutor(diskSource.getContent(), "Load disk");
+			System.arraycopy(execs, 0, allExecs, 1, execs.length);
+			execs = allExecs;
+			
+			IEmulatorContentHandler[] handlers = new IEmulatorContentHandler[execs.length];
+			for (int i = 0; i < execs.length; i++) {
+				handlers[i] = new FileExecutorContentHandler(window.getShell(), machine, diskSource, execs[i]);
+			}
+			return handlers;
+		}
+		return IEmulatorContentHandler.NONE;
+	}
+
 }

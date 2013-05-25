@@ -12,6 +12,7 @@ import java.util.List;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.FDR;
+import v9t9.common.files.IDiskImage;
 import v9t9.common.files.IEmulatedDisk;
 import v9t9.common.files.IEmulatedFile;
 import v9t9.common.files.IEmulatedFileHandler;
@@ -200,12 +201,22 @@ public class DiskUtils {
 			if (srcFiles.size() != 1) {
 				throw new IOException("last argument should be a disk or directory");
 			} else {
-				copy(srcFiles.get(0), dstDisk, dstFile);
+				try {
+					copy(srcFiles.get(0), dstDisk, dstFile);
+				} catch (IOException e) {
+					System.err.println("failed to copy " + srcFiles.get(0) + " to " +dstDisk);
+					e.printStackTrace();
+				}
 			}
 		} else {
 			// copying to a disk
 			for (IEmulatedFile srcFile : srcFiles) {
-				copy(srcFile, dstDisk, srcFile.getFileName());
+				try {
+					copy(srcFile, dstDisk, srcFile.getFileName());
+				} catch (IOException e) {
+					System.err.println("failed to copy " + srcFile + " to " +dstDisk);
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -218,6 +229,10 @@ public class DiskUtils {
 	 */
 	private void copy(IEmulatedFile srcFile, IEmulatedDisk dstDisk,
 			String dstFilename) throws IOException {
+		
+		if (dstDisk instanceof IDiskImage)
+			((IDiskImage)dstDisk).openDiskImage();
+		
 		byte[] contents = new byte[256];
 		
 		FDR srcFdr = null;
@@ -235,6 +250,10 @@ public class DiskUtils {
 			left--;
 		}
 		dstFile.flush();
+		
+		if (dstDisk instanceof IDiskImage)
+			((IDiskImage)dstDisk).closeDiskImage();
+
 	}
 
 

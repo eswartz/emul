@@ -10,13 +10,12 @@
  */
 package v9t9.machine.ti99.machine;
 
+import static v9t9.common.keyboard.KeyboardConstants.*;
+import static v9t9.machine.ti99.machine.TI994AKeys.*;
 import v9t9.common.keyboard.IKeyboardMapping;
 import v9t9.engine.keyboard.BaseKeyboardMapping;
 import v9t9.engine.keyboard.BaseKeyboardMode;
 import v9t9.engine.keyboard.BaseKeyboardMode.KeyInfoBuilder;
-
-import static v9t9.machine.ti99.machine.TI994AKeys.*;
-import static v9t9.common.keyboard.KeyboardConstants.*;
 
 /**
  * @author ejs

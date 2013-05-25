@@ -17,7 +17,7 @@ import java.io.IOException;
  * @author ejs
  *
  */
-public class FileDirectory implements IDiskDirectory {
+public class DiskDirectory implements IDiskDirectory {
 
 	private IFilesInDirectoryMapper mapper;
 	private File dir;
@@ -26,7 +26,7 @@ public class FileDirectory implements IDiskDirectory {
 	 * @param dir
 	 * @param mapper
 	 */
-	public FileDirectory(File file, IFilesInDirectoryMapper mapper) {
+	public DiskDirectory(File file, IFilesInDirectoryMapper mapper) {
 		this.dir = file.isDirectory() ? file : file.getParentFile();
 		this.mapper = mapper;
 	}
@@ -80,13 +80,7 @@ public class FileDirectory implements IDiskDirectory {
 		if (srcFdr != null && file instanceof EmulatedBaseFDRFile) {
 			EmulatedBaseFDRFile fdrFile = (EmulatedBaseFDRFile) file;
 			FDR fdr = fdrFile.getFDR();
-			fdr.setSectorsUsed(srcFdr.getSectorsUsed());
-			fdr.setFlags(srcFdr.getFlags());
-			fdr.setRecordsPerSector(srcFdr.getRecordsPerSector());
-			fdr.setByteOffset(srcFdr.getByteOffset());
-			fdr.setRecordLength(srcFdr.getRecordLength());
-			fdr.setNumberRecords(srcFdr.getNumberRecords());
-			fdr.setFileName(fileName);
+			fdr.copyFrom(srcFdr);
 			fdr.writeFDR(file.getFile());
 			file.flush();
 		}
@@ -108,5 +102,13 @@ public class FileDirectory implements IDiskDirectory {
 	@Override
 	public boolean isFormatted() {
 		return dir.exists();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IEmulatedDisk#isValid()
+	 */
+	@Override
+	public boolean isValid() {
+		return true;
 	}
 }

@@ -43,16 +43,38 @@ public interface IModuleManager extends IPersistable {
 	IModule[] getModules();
 	List<IModule> readModules(URI databaseURI) throws IOException;
 
+	/**
+	 * Unload the current module and load this module into memory
+	 * @param module
+	 * @throws NotifyException
+	 */
 	void switchModule(IModule module) throws NotifyException;
 
+	/**
+	 * Unload any loaded modules from memory
+	 */
 	void unloadAllModules();
 
+	/**
+	 * Load the given module into memory
+	 * @param module
+	 * @throws NotifyException
+	 */
 	void loadModule(IModule module) throws NotifyException;
 
+	/**
+	 * Unload the given module from memory
+	 * @param module
+	 * @throws NotifyException
+	 */
 	void unloadModule(IModule loaded);
 
-	void switchModule(String name) throws NotifyException;
-
+	/**
+	 * Find the module with this name
+	 * @param string
+	 * @param exact
+	 * @return
+	 */
 	IModule findModuleByName(String string, boolean exact);
 
 	/**

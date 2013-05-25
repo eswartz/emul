@@ -48,6 +48,9 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.Module;
+import v9t9.engine.demos.DemoContentProvider;
+import v9t9.engine.files.directory.FileDirectoryContentProvider;
+import v9t9.engine.files.image.DiskImageContentProvider;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.machine.MachineBase;
 import v9t9.engine.memory.GplMmio;
@@ -56,6 +59,7 @@ import v9t9.engine.memory.SpeechMmio;
 import v9t9.engine.memory.StdMultiBankedMemoryEntry;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.engine.memory.VdpMmio;
+import v9t9.engine.modules.ModuleContentProvider;
 import v9t9.machine.ti99.dsr.DsrManager;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 import ejs.base.settings.ISettingSection;
@@ -88,6 +92,11 @@ public class TI99Machine extends MachineBase {
 		super(settings, machineModel);
 		
 		getSettings().get(IKeyboardHandler.settingPasteKeyDelay).setInt(3);
+		
+		addEmulatorContentProvider(new DemoContentProvider(this));
+		addEmulatorContentProvider(new ModuleContentProvider(this));
+		addEmulatorContentProvider(new DiskImageContentProvider(this));
+		addEmulatorContentProvider(new FileDirectoryContentProvider(this));
 	}
 
 	@Override

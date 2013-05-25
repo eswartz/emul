@@ -17,7 +17,7 @@ import ejs.base.properties.IProperty;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.Catalog;
-import v9t9.common.files.FileDirectory;
+import v9t9.common.files.DiskDirectory;
 import v9t9.common.files.IDiskImageMapper;
 import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.files.IEmulatedFileHandler;
@@ -47,7 +47,7 @@ public class EmulatedFileHandler implements IEmulatedFileHandler {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.files.IFileHandler#createCatalog(v9t9.base.properties.IProperty, boolean)
+	 * @see v9t9.common.files.IEmulatorContentHandler#createCatalog(v9t9.base.properties.IProperty, boolean)
 	 */
 	@Override
 	public Catalog createCatalog(IProperty diskProperty, boolean isDiskImage)
@@ -68,7 +68,7 @@ public class EmulatedFileHandler implements IEmulatedFileHandler {
 			image.closeDiskImage();
 			return catalog;
 		} else {
-			FileDirectory fileDir = new FileDirectory(spec, fileMapper);
+			DiskDirectory fileDir = new DiskDirectory(spec, fileMapper);
 
 			Catalog catalog = fileDir.readCatalog();
 
@@ -77,7 +77,7 @@ public class EmulatedFileHandler implements IEmulatedFileHandler {
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.common.files.IFileHandler#getFileMapper()
+	 * @see v9t9.common.files.IEmulatorContentHandler#getFileMapper()
 	 */
 	@Override
 	public IFilesInDirectoryMapper getFilesInDirectoryMapper() {

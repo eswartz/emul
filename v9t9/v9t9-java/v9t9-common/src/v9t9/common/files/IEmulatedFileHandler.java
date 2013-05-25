@@ -1,5 +1,5 @@
 /*
-  IFileHandler.java
+  IEmulatorContentHandler.java
 
   (c) 2011-2012 Edward Swartz
 

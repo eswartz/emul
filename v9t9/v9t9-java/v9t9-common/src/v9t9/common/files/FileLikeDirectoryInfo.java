@@ -24,9 +24,9 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 	private long totalSectors;
 	private long freeSectors;
 	private int lastEntry;
-	private FileDirectory disk;
+	private DiskDirectory disk;
 
-	public FileLikeDirectoryInfo(FileDirectory disk, File file, IFilesInDirectoryMapper mapper) {
+	public FileLikeDirectoryInfo(DiskDirectory disk, File file, IFilesInDirectoryMapper mapper) {
 		super(file, mapper);
 		this.disk = disk;
 		lastEntry = Math.min(128, entries.length);
@@ -38,7 +38,9 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 		this.index = index;
 	}
 	
-	protected CatalogEntry decodeFile(File file) throws DsrException {
+	protected CatalogEntry decodeFile(int index) throws DsrException {
+		File file = entries[index];
+		
 		IEmulatedFile nativefile;
 		try {
 			nativefile = disk.getFile(file.getName());
@@ -60,7 +62,7 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 //		// fourth field is record size
 //		int reclen = nativefile instanceof EmulatedBaseFDRFile ? ((EmulatedBaseFDRFile) nativefile).getFDR().getRecordLength() : 80;
 
-		return new CatalogEntry(name, nativefile);
+		return new CatalogEntry(index + 2, name, nativefile);
 	}
 
 	/**
@@ -71,7 +73,7 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 		List<CatalogEntry> list = new ArrayList<CatalogEntry>();
 		for (int index = 1; index <= entries.length; index++) {
 			try {
-				list.add(decodeFile(entries[index - 1]));
+				list.add(decodeFile(index - 1));
 			} catch (IOException e) { 
 				// ignore
 			}
@@ -118,7 +120,7 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 		}
 		
 		// Get file info
-		CatalogEntry entry = decodeFile(entries[index - 1]);
+		CatalogEntry entry = decodeFile(index - 1);
 		
 		// first field is the string representing the
 		// file or volume name

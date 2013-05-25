@@ -19,10 +19,14 @@ import java.io.IOException;
 public class EmulatedDiskImageFile extends EmulatedBaseFDRFile implements IEmulatedFile {
 
 	private IDiskImage diskImage;
+	private int indexSector;
 
-	public EmulatedDiskImageFile(IDiskImage diskImage, FDR fdr, String name) {
+	public EmulatedDiskImageFile(IDiskImage diskImage, int indexSector, FDR fdr, String name) {
 		super(diskImage, fdr);
+		if (false == fdr instanceof DiskImageFDR)
+			throw new IllegalArgumentException();
 		this.diskImage = diskImage;
+		this.indexSector = indexSector;
 	}
 
 	/* (non-Javadoc)
@@ -74,9 +78,46 @@ public class EmulatedDiskImageFile extends EmulatedBaseFDRFile implements IEmula
 	 * @see v9t9.common.files.NativeFile#writeContents(byte[], int, int, int)
 	 */
 	@Override
-	public int writeContents(byte[] contents, int contentOffset, int offset,
-			int length) throws IOException {
-		throw new IOException("write operation not implemented");
+	public int writeContents(final byte[] contents, final int startContentOffset, 
+			final int startOffset, final int length) throws IOException {
+
+		int[] secs = getContentSectors();
+		if (startOffset + length > secs.length * 256) {
+			throw new IOException("writing past end of file (only " + secs.length + " sectors allocated)");
+		}
+		
+		int left = length;
+		int offset = startOffset;
+		while (left > 0) {
+			int toWrite = Math.min(255 - offset % 256, left);
+			int sec = secs[offset / 256];
+			if (sec < 0) {
+				throw new IOException("corrupt FDR: not enough sectors allocated at position " + offset);
+			}
+			writeContentToSector(sec, 
+					contents, startContentOffset + offset % 256, 
+					offset % 256, toWrite);
+			left -= toWrite;
+			offset += toWrite;
+		}
+		return length;
+	}
+
+	/**
+	 * @throws IOException 
+	 */
+	protected void writeContentToSector(int sec, final byte[] contents, final int contentOffset, 
+			final int offset, final int length) throws IOException {
+		diskImage.updateSector(sec, new IDiskImage.SectorUpdater() {
+
+			@Override
+			public boolean updateSector(byte[] content) {
+				System.arraycopy(contents, contentOffset, content, offset, length); 
+				return true;
+			}
+			
+		});
+		
 	}
 
 	/* (non-Javadoc)
@@ -92,7 +133,14 @@ public class EmulatedDiskImageFile extends EmulatedBaseFDRFile implements IEmula
 	 */
 	@Override
 	public void flush() throws IOException {
-		throw new IOException("write operation not implemented");
+		diskImage.closeDiskImage();
+	}
+
+	/**
+	 * @return
+	 */
+	public int getIndexSector() {
+		return indexSector;
 	}
 
 

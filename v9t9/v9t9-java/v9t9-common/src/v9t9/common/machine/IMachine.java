@@ -14,6 +14,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.Collection;
 
+import v9t9.common.client.IEmulatorContentSourceProvider;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.demos.IDemoHandler;
@@ -111,4 +112,13 @@ public interface IMachine extends IBaseMachine {
 	 * Reload machine (e.g. re-read ROMs and re-set module)
 	 */
 	void reload();
+	
+	/**
+	 * Get the handlers for emulator content
+	 */
+	IEmulatorContentSourceProvider[] getEmulatorContentProviders();
+	/**
+	 * Add a handler for emulator content
+	 */
+	void addEmulatorContentProvider(IEmulatorContentSourceProvider provider);
 }

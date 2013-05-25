@@ -15,9 +15,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
@@ -27,9 +24,10 @@ import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtDragDropHandler;
 import v9t9.gui.client.swt.SwtWindow;
-import v9t9.gui.client.swt.fileimport.FileImportHandler;
 import v9t9.gui.client.swt.shells.ImageImportOptionsDialog;
 import v9t9.video.imageimport.ImageImport;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * @author ejs
@@ -81,8 +79,8 @@ public class SwtImageImportSupport extends ImageImportHandler {
 			// TODO: this is general DnD assignment -- not just images like the owner
 			/*imageDragDropHandler =*/ new SwtDragDropHandler(imageDndControl, 
 					(ISwtVideoRenderer) getVideoRenderer(), 
-					getEventNotifier(),
-					this, new FileImportHandler(imageDndControl.getShell(), machine));
+					machine,
+					this);
 		}
 	}
 	public void addImageImportDnDControl(Control control) {
@@ -92,8 +90,8 @@ public class SwtImageImportSupport extends ImageImportHandler {
 		// TODO: this is general DnD assignment -- not just images like the owner
 		new SwtDragDropHandler(control, 
 				(ISwtVideoRenderer) getVideoRenderer(), 
-				getEventNotifier(),
-				this, new FileImportHandler(control.getShell(), machine));
+				machine,
+				this);
 	}
 	
 

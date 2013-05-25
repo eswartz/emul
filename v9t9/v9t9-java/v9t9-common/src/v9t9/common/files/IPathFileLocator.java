@@ -180,7 +180,7 @@ public interface IPathFileLocator {
 	 * @return pair consisting of the URI up to the filename, 
 	 * and the filename (or empty string if this represents a directory)
 	 */
-	Pair<String, String> splitFileName(URI uri);
+	Pair<URI, String> splitFileName(URI uri);
 
 	/**
 	 * Find a file according to the default content or user-defined filename

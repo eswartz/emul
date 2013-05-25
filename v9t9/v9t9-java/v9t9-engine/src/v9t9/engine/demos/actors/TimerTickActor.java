@@ -159,6 +159,8 @@ public class TimerTickActor extends BaseDemoActor implements IDemoReversePlaybac
 	@Override
 	public void queueEventForReversing(IDemoPlayer player, IDemoEvent event)
 			throws IOException {
+		if (reversedEventsList == null)
+			return;
 		reversedEventsList.add(0, event);
 	}
 
@@ -168,6 +170,8 @@ public class TimerTickActor extends BaseDemoActor implements IDemoReversePlaybac
 	@Override
 	public IDemoEvent[] emitReversedEvents(IDemoPlayer player)
 			throws IOException {
+		if (reversedEventsList == null)
+			return new IDemoEvent[0];
 		IDemoEvent[] evs = (IDemoEvent[]) reversedEventsList.toArray(new IDemoEvent[reversedEventsList.size()]);
 		reversedEventsList.clear();
 		return evs;

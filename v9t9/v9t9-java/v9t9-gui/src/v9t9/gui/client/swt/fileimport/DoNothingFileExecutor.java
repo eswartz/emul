@@ -11,6 +11,8 @@
 package v9t9.gui.client.swt.fileimport;
 
 import v9t9.common.events.NotifyException;
+import v9t9.common.files.IDiskImage;
+import v9t9.common.files.IEmulatedDisk;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.machine.IMachine;
 
@@ -20,12 +22,20 @@ import v9t9.common.machine.IMachine;
  */
 public class DoNothingFileExecutor implements IFileExecutor {
 
+	private IEmulatedDisk disk;
+	private String label;
+
+	public DoNothingFileExecutor(IEmulatedDisk disk, String label) {
+		this.disk = disk;
+		this.label = label;
+		
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.files.IFileExecutor#getLabel()
 	 */
 	@Override
 	public String getLabel() {
-		return "Nothing (just load disk)";
+		return label;
 	}
 	
 	/* (non-Javadoc)
@@ -33,7 +43,7 @@ public class DoNothingFileExecutor implements IFileExecutor {
 	 */
 	@Override
 	public String getDescription() {
-		return "Change the current disk mapping to point to this image";
+		return "Change the current disk mapping to point to this " + (disk instanceof IDiskImage ? "image" : "directory");
 	}
 
 	/* (non-Javadoc)

@@ -70,8 +70,11 @@ public class FileExecutorComposite extends Composite {
 			 */
 			@Override
 			public String getText(Object element) {
-				IFileExecutor exec = (IFileExecutor) element;
-				return exec != null ? exec.getLabel() : "Nothing";
+				if (element instanceof IFileExecutor) {
+					IFileExecutor exec = (IFileExecutor) element;
+					return exec.getLabel();
+				}
+				return element.toString();
 			}
 		}) ;
 		execComboViewer.setContentProvider(new ArrayContentProvider());
@@ -89,10 +92,11 @@ public class FileExecutorComposite extends Composite {
 			
 			@Override
 			public void selectionChanged(SelectionChangedEvent event) {
-				IFileExecutor exec = (IFileExecutor) 
-						((IStructuredSelection) event.getSelection()).getFirstElement();
-				selectedExec = exec;
-				if (exec != null) {
+				Object firstElement = ((IStructuredSelection) event.getSelection()).getFirstElement();
+				if (firstElement instanceof IFileExecutor) {
+					IFileExecutor exec = (IFileExecutor) 
+							firstElement;
+					selectedExec = exec;
 					descrText.setText(exec.getDescription());
 					descrText.setEnabled(true);
 					lastExecLabel = exec.getLabel();
@@ -110,14 +114,17 @@ public class FileExecutorComposite extends Composite {
 	/**
 	 * 
 	 */
-	public void updateExecs(int drive, Catalog catalog) {
+	public void updateExecs(int drive, Catalog catalog, boolean doNothing) {
+		boolean any = false;
 		if (catalog != null) {
 			execs = execHandler.analyze(machine, drive, catalog);
 			
-			IFileExecutor[] allExecs = new IFileExecutor[execs.length + 1];
-			allExecs[0] = new DoNothingFileExecutor();
-			System.arraycopy(execs, 0, allExecs, 1, execs.length);
-			execs = allExecs;
+			if (doNothing) {
+				IFileExecutor[] allExecs = new IFileExecutor[execs.length + 1];
+				allExecs[0] = new DoNothingFileExecutor(catalog.getDisk(), "Do nothing (just load disk)");
+				System.arraycopy(execs, 0, allExecs, 1, execs.length);
+				execs = allExecs;
+			}
 			
 			if (selectedExec != null) {
 				boolean found = false;
@@ -144,18 +151,31 @@ public class FileExecutorComposite extends Composite {
 					}
 				}
 				if (selectedExec == null) {
-					selectedExec = execs.length == 1 ? execs[0] : execs[1];
+					if (doNothing)
+						selectedExec = execs.length < 2 ? execs[0] : execs[1];
+					else
+						selectedExec = execs.length > 0 ? execs[0] : null;
 				}
 			}
-			execComboViewer.setSelection(new StructuredSelection(selectedExec));
-			descrText.setText(selectedExec.getDescription());
-			descrText.setEnabled(true);
-			
+			if (selectedExec != null) {
+				any = true;
+				execComboViewer.setSelection(new StructuredSelection(selectedExec));
+				descrText.setText(selectedExec.getDescription());
+				descrText.setEnabled(true);
+			}
+			else {
+				any = false;
+			}
 		} else {
 			execs = null;
+			any = false;
+		}
+		if (!any) {
 			selectedExec = null;
-			execComboViewer.setInput(Collections.emptyList());
-			descrText.setText("");
+			String nothing = "Nothing to do";
+			execComboViewer.setInput(Collections.singletonList(nothing));
+			execComboViewer.setSelection(new StructuredSelection(nothing));
+			descrText.setText("No actions available");
 			descrText.setEnabled(false);
 		}				
 		

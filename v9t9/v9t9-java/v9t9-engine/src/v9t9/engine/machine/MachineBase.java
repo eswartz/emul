@@ -22,6 +22,7 @@ import java.util.TimerTask;
 
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.IClient;
+import v9t9.common.client.IEmulatorContentSourceProvider;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.CpuMetrics;
@@ -129,6 +130,8 @@ abstract public class MachineBase implements IMachine {
 	private ICassetteChip cassette;
 
 	private IEventNotifier eventNotifier;
+
+	private List<IEmulatorContentSourceProvider> contentProviders = new ArrayList<IEmulatorContentSourceProvider>(1);
 
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -813,14 +816,35 @@ abstract public class MachineBase implements IMachine {
 			
 			// reset state
 			try {
-				String lastModule = settings.get(ModuleManager.settingLastLoadedModule).getString();
-				if (lastModule.length() > 0)
-					getModuleManager().switchModule(lastModule);
+				String lastModuleName = settings.get(ModuleManager.settingLastLoadedModule).getString();
+				if (lastModuleName.length() > 0) {
+					IModule lastModule = getModuleManager().findModuleByName(lastModuleName, true);
+					if (lastModule != null) {
+						getModuleManager().switchModule(lastModule);
+					}
+				}
 			} catch (NotifyException e) {
 				notifyEvent(e.getEvent());
 			}		
 		}
 		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getEmulatorContentProviders()
+	 */
+	@Override
+	public IEmulatorContentSourceProvider[] getEmulatorContentProviders() {
+		return (IEmulatorContentSourceProvider[]) contentProviders.toArray(
+				new IEmulatorContentSourceProvider[contentProviders.size()]);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#addEmulatorContentProvider(v9t9.common.client.IEmulatorContentProvider)
+	 */
+	@Override
+	public void addEmulatorContentProvider(IEmulatorContentSourceProvider provider) {
+		if (!contentProviders.contains(provider))
+			contentProviders.add(provider);
 	}
 }
 

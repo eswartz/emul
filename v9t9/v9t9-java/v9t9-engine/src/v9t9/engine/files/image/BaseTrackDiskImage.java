@@ -77,6 +77,8 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 		trackBuffer[ptr++] = (byte) (marker.crcid >> 8);
 		trackBuffer[ptr++] = (byte) (marker.crcid & 0xff);
 		
+		trackChanged = true;
+		
 		// dump contents
 		RealDiskUtils.dumpBuffer(dumper, rwBuffer, start, buflen);
 		

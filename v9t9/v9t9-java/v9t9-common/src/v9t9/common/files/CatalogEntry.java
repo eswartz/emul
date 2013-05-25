@@ -30,6 +30,7 @@ public class CatalogEntry {
 	};
 
 
+	public final int indexSector;
 	public final String fileName;
 	public final int secs;
 	/** symbolic name, from {@link FDR#getType(int)} */
@@ -48,7 +49,8 @@ public class CatalogEntry {
 	 * @param type
 	 * @param recordLength
 	 */
-	public CatalogEntry(String fileName, IEmulatedFile file) {
+	public CatalogEntry(int indexSector, String fileName, IEmulatedFile file) {
+		this.indexSector = indexSector;
 		this.fileName = fileName;
 		this.file = file;
 		this.secs = file.getSectorsUsed() + 1;

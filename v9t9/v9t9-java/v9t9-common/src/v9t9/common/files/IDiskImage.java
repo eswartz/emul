@@ -17,6 +17,10 @@ import ejs.base.properties.IPersistable;
 
 
 public interface IDiskImage extends IPersistable, IEmulatedDisk {
+	public interface SectorUpdater {
+		boolean updateSector(byte[] content) throws IOException;
+	}
+
 	/**
 	 * Get the name of the property associated with this image (also for diags)
 	 * @return
@@ -38,7 +42,7 @@ public interface IDiskImage extends IPersistable, IEmulatedDisk {
 	String getDiskType();
 	int getHeaderSize();
 	
-	void readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException;
+	IdMarker readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException;
 
 	void writeTrackData(byte[] rwBuffer, int start,
 			int buflen);
@@ -102,5 +106,12 @@ public interface IDiskImage extends IPersistable, IEmulatedDisk {
 	 * @throws IOException 
 	 */
 	void readTrackData(byte[] rwBuffer, int i, int buflen) throws IOException;
+
+	/**
+	 * @param i
+	 * @param sectorUpdater
+	 * @throws IOException 
+	 */
+	void updateSector(int i, SectorUpdater sectorUpdater) throws IOException;
 
 }

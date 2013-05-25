@@ -15,8 +15,8 @@ import java.util.List;
 
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
-import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IDeviceSettings;
+import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IDsrManager;
 import v9t9.common.hardware.ICassetteChip;
 import v9t9.common.hardware.ISpeechChip;

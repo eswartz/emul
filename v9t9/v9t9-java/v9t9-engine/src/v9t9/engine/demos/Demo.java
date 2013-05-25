@@ -31,6 +31,13 @@ public class Demo implements IDemo {
 		this.name = name;
 		this.description = description;
 	}
+	
+	
+
+	@Override
+	public String toString() {
+		return "Demo [name=" + name + ", description=" + description + "]";
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.demo.IDemo#getURI()

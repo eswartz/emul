@@ -106,7 +106,7 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 	private TreeNode makeTreeNode(StoredMemoryEntryInfo info) {
 		URI uri = info.uri;
 		
-		Pair<String, String> pathAndName = pathFileLocator.splitFileName(uri);
+		Pair<URI, String> pathAndName = pathFileLocator.splitFileName(uri);
 		TreeNode node = new TreeNode(new Pair<String, String>(pathAndName.second, ""));
 		TreeNode[] kids = new TreeNode[4];
 		kids[0] = new TreeNode(new Pair<String, String>("Location", uri.toString()));

@@ -22,6 +22,8 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import v9t9.common.client.IEmulatorContentSource;
+import v9t9.common.demos.DemoContentSource;
 import v9t9.common.demos.DemoHeader;
 import v9t9.common.demos.IDemo;
 import v9t9.common.demos.IDemoActorProvider;
@@ -34,7 +36,6 @@ import v9t9.common.demos.IDemoRecordingActor;
 import v9t9.common.demos.IDemoReversePlaybackActor;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
-import v9t9.common.files.IPathFileLocator.FileInfo;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
@@ -47,7 +48,6 @@ import v9t9.engine.demos.format.old.OldDemoFormat;
 import v9t9.engine.demos.format.old.OldDemoFormatInputStream;
 import v9t9.engine.demos.format.old.OldDemoFormatOutputStream;
 import ejs.base.utils.CountingOutputStream;
-import ejs.base.utils.FileUtils;
 
 /**
  * @author ejs
@@ -137,33 +137,13 @@ public class DemoManager implements IDemoManager {
 		
 		demos.clear();
 		
-		logger.debug("scanning available demos");
-		for (final URI dirURI : locator.getSearchURIs()) {
-			try {
-				logger.debug("scanning " + dirURI);
-				Map<String, FileInfo> ents = locator.getDirectoryListing(dirURI);
-				for (Map.Entry<String, FileInfo> ent : ents.entrySet()) {
-					String name = ent.getKey();
-					logger.debug("\t" + name);
-					if (name.endsWith(".dem")) {
-						FileInfo info = ent.getValue();
-						final URI demoURI = info.uri;
-						String descrName = name.substring(0, name.length() - 4) + ".txt";
-						URI descrURI = locator.resolveInsideURI(dirURI, descrName);
-						
-						String description;
-						try {
-							description = FileUtils.readInputStreamTextAndClose(
-									locator.createInputStream(descrURI));
-						} catch (IOException e) {
-							description = "";
-						}
-						demos.add(new Demo(dirURI, demoURI, ent.getKey(), description));
-					}
+		for (URI dirURI : locator.getSearchURIs()) {
+			IEmulatorContentSource[] sources = new DemoContentProvider(machine).analyze(dirURI);
+			for (IEmulatorContentSource source : sources) {
+				if (source instanceof DemoContentSource) {
+					IDemo demo = ((DemoContentSource) source).getContent();
+					demos.add(demo);
 				}
-			} catch (IOException e) {
-				logger.error("failed to scan directory", e);
-				// ignore
 			}
 		}
 		logger.debug("done scanning");

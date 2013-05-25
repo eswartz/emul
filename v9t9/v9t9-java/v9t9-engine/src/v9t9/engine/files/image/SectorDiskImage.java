@@ -134,10 +134,10 @@ public class SectorDiskImage extends BaseDiskImage  {
 		} catch (IndexOutOfBoundsException e) {
 			e.printStackTrace();
 		}
+		trackChanged = true;
 		
 		// dump contents
 		RealDiskUtils.dumpBuffer(dumper, rwBuffer, start, buflen);
-		
 	}
 
 	@Override

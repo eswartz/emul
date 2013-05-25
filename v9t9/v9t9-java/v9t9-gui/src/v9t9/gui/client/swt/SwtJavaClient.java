@@ -10,14 +10,13 @@
  */
 package v9t9.gui.client.swt;
 
-import v9t9.common.client.IClient;
 import v9t9.common.machine.IMachine;
 
 /**
  * This client does all its own dang work!
  * @author ejs
  */
-public class SwtJavaClient extends BaseSwtJavaClient implements IClient {
+public class SwtJavaClient extends BaseSwtJavaClient {
 	public static String ID = "SWT";
 	
     public SwtJavaClient(final IMachine machine) {

@@ -1259,15 +1259,27 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @see v9t9.common.files.IPathFileLocator#splitFileName(java.net.URI)
 	 */
 	@Override
-	public Pair<String, String> splitFileName(URI uri) {
-		String path = uri.toString();
-		int idx = path.lastIndexOf('/');
-		if (idx == path.length() - 1)
-			return new Pair<String, String>(path.substring(0, idx), "");
-		else if (idx >= 0)
-			return new Pair<String, String>(path.substring(0, idx), path.substring(idx + 1));
-		else
-			return new Pair<String, String>("", path);
+	public Pair<URI, String> splitFileName(URI uri) {
+		URI parent = resolveInsideURI(uri, ".");
+		if (parent.getPath() != null) {
+			int l1 = parent.getPath().length();
+			String path = uri.getPath();
+			String name = path.substring(l1);
+			return new Pair<URI, String>(parent, name);
+		} else {
+			int l1 = parent.getSchemeSpecificPart().length();
+			String path = uri.getSchemeSpecificPart();
+			String name = path.substring(l1);
+			return new Pair<URI, String>(parent, name);
+		}
+//		String path = uri.toString();
+//		int idx = path.lastIndexOf('/');
+//		if (idx == path.length() - 1)
+//			return new Pair<String, String>(path.substring(0, idx + 1), "");
+//		else if (idx >= 0)
+//			return new Pair<String, String>(path.substring(0, idx + 1), path.substring(idx + 1));
+//		else
+//			return new Pair<String, String>("", path);
 	}
 	
 	/* (non-Javadoc)

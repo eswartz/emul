@@ -83,7 +83,18 @@ public final class GuiPopupEventListener extends BaseGuiEventNotifier {
 				Shell shell = Display.getDefault().getActiveShell();
 				if (shell == null)
 					shell = swtWindow.getShell();
-				final ToolTip tip = new ToolTip(shell, SWT.BALLOON | SWT.WRAP | status);
+				
+				Control parent;
+				if (event.context instanceof Event) {
+					Event e = (Event)event.context;
+					parent = (Control) e.widget;
+				} else {
+					parent = swtWindow.getButtonBar().getButtonBar();
+				}
+				final ToolTip tip = new ToolTip(
+						parent.getShell(), 
+						SWT.BALLOON | SWT.WRAP | status);
+				
 				String text = event.message != null ? event.message : "";
 				tip.setText(text);
 				
