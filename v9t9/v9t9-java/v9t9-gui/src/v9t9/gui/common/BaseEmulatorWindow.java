@@ -305,7 +305,7 @@ public abstract class BaseEmulatorWindow {
 				try {
 					videoRenderer.saveScreenShot(saveFile);
 					return saveFile;
-				} catch (IOException e) {
+				} catch (Throwable e) {
 					showErrorMessage("Save error", 
 						"Failed to write file:\n\n" + e.getMessage());
 					return null;

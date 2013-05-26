@@ -311,6 +311,10 @@ public class ColorMapUtils {
 		int lum = getRGBLum(rgb);
 		g[0] = g[1] = g[2] = lum;
 	}
+	public static void rgbToGrey(byte[] rgb, byte[] g) {
+		int lum = getRGBLum(rgb);
+		g[0] = g[1] = g[2] = (byte) lum;
+	}
 
 	public static short getRGBToRGB565(byte[] rgb) {
 		int r = (rgb[0] >> 3) & 0x1f;

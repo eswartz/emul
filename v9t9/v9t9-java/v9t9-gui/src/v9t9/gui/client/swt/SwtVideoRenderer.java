@@ -254,10 +254,10 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		}
 		
 		vdpCanvas = format.create();
-		if (false == vdpCanvas instanceof ImageDataCanvas) {
-			canvasFormat.setValue(CanvasFormat.RGB24);
-			return;
-		}
+//		if (false == vdpCanvas instanceof ImageDataCanvas) {
+//			canvasFormat.setValue(CanvasFormat.RGB24);
+//			return;
+//		}
 		vdpCanvasRenderer = VdpCanvasRendererFactory.createCanvasRenderer(settings, this);
 
 		vdpCanvas.setListener(this);
@@ -560,21 +560,15 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 */
 	public ImageData getScreenshotImageData() {
 		synchronized (vdpCanvas) {
-			if (vdpCanvas instanceof ImageDataCanvas) {
-				ImageData imageData;
-				imageData = (ImageData) ((ImageDataCanvas) vdpCanvas).getImageData().clone();
-				return imageData;
-			}
 			if (vdpCanvas instanceof BitmapVdpCanvas) {
 				Buffer buffer = ((BitmapVdpCanvas) vdpCanvas).getBuffer();
-				ImageData imageData = ImageUtils.createStandard32BitImageData(vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight());
+				ImageData imageData = ImageUtils.createStandard24BitImageData(vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight());
 				byte[] rgb = { 0, 0, 0 };
-				for (int i = 0; i < imageData.data.length; i += 4) {
+				for (int i = 0; i < imageData.data.length; i += 3) {
 					((BitmapVdpCanvas) vdpCanvas).getNextRGB(buffer, rgb);
-					imageData.data[i+1] = rgb[0];
-					imageData.data[i+2] = rgb[1];
-					imageData.data[i+3] = rgb[2];
-					imageData.data[i+0] = -1;
+					imageData.data[i+0] = rgb[0];
+					imageData.data[i+1] = rgb[1];
+					imageData.data[i+2] = rgb[2];
 				}
 				return imageData;
 			}

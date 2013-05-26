@@ -882,6 +882,16 @@ public abstract class ImageUtils {
 			height = 1;
 		return new ImageData(width, height, 32, createStandardPaletteData());
 	}
+	/**
+	 * Create ImageData for the standard 24-bit palette.
+	 */
+	public static ImageData createStandard24BitImageData(int width, int height) {
+		if (width <= 0)
+			width = 1;
+		if (height <= 0)
+			height = 1;
+		return new ImageData(width, height, 24, createStandardPaletteData());
+	}
 
     /**
      * Crop an image to the given size (upper-left hand corner)

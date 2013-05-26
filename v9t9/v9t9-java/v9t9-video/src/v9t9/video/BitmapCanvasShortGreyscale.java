@@ -10,6 +10,10 @@
  */
 package v9t9.video;
 
+import java.nio.Buffer;
+
+import org.ejs.gui.images.ColorMapUtils;
+
 
 /**
  * Render video content into a short array
@@ -41,4 +45,13 @@ public class BitmapCanvasShortGreyscale extends BitmapCanvasShort {
 		return GL_LUMINANCE12_ALPHA4;
 	}
 
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.BitmapVdpCanvas#getNextRGB(java.nio.Buffer, byte[])
+	 */
+	@Override
+	public void getNextRGB(Buffer buffer, byte[] rgb) {
+		super.getNextRGB(buffer, rgb);
+		ColorMapUtils.rgbToGrey(rgb, rgb);
+	}
 }

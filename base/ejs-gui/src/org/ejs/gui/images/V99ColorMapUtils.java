@@ -58,10 +58,7 @@ public class V99ColorMapUtils {
 		int b = grb & 0x3;
 		rgb[2] = rgb3to8[b*2 + ((r|g) & 1)];
 		if (isGreyscale) {
-			int l = ((rgb[0] & 0xff) * 299 + (rgb[1] & 0xff) * 587 + (rgb[2] & 0xff) * 114) / 1000;
-			rgb[0] = (byte) l;
-			rgb[1] = (byte) l;
-			rgb[2] = (byte) l;
+			ColorMapUtils.rgbToGrey(rgb, rgb);
 		}
 	}
 	/**

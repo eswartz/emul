@@ -429,6 +429,9 @@ public class ImageDataCanvasR3G3B2 extends ImageDataCanvas implements IGLDataCan
 	public void getNextRGB(Buffer buffer, byte[] rgb) {
 		byte b = ((ByteBuffer) buffer).get();
 		V99ColorMapUtils.getGRB332(rgb, b, getColorMgr().isGreyscale());
+		byte t = rgb[0];
+		rgb[0] = rgb[1];
+		rgb[1] = t;
 	}
 	
 	/* (non-Javadoc)
