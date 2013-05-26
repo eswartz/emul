@@ -76,39 +76,41 @@ public class SectorDiskImage extends BaseDiskImage  {
 		getHandle().seek(0);
 		getHandle().read(sector);
 
-		hdr.tracks = sector[0x11] & 0xff;
-		hdr.sides = sector[0x12] & 0xff;
-		hdr.tracksize = (sector[0x0C] * 256);
-		hdr.secsPerTrack = sector[0x0C];
-		hdr.track0offs = 0;
-		if ((hdr.tracks <= 0 || hdr.sides <= 0 || hdr.tracksize <= 0)
+		hdr.setTracks(sector[0x11] & 0xff);
+		hdr.setSides(sector[0x12] & 0xff);
+		hdr.setTrackSize((sector[0x0C] * 256));
+		hdr.setSecsPerTrack(sector[0x0C]);
+		hdr.setTrack0Offset(0);
+		if ((hdr.getTracks() <= 0 || hdr.getSides() <= 0 || hdr.getTrackSize() <= 0)
 				 || 'D' != sector[0x0D] || 'S' != sector[0x0E] || 'K' != sector[0x0F])
 		{
 			// hmm... bogus or unformatted disk -- guess
-			hdr.sides = 1;
-			hdr.tracksize = 256*9;
-			int tracks = (int) (sz / hdr.tracksize);
-			hdr.tracks = tracks;
-			hdr.secsPerTrack = 9;
+			hdr.setSides(1);
+			hdr.setTrackSize(256*9);
+			int tracks = (int) (sz / hdr.getTrackSize());
+			hdr.setTracks(tracks);
+			hdr.setSecsPerTrack(9);
 			if (tracks >= 80) {
 				tracks /= 2;
-				hdr.tracks = tracks;
-				hdr.sides++;
+				hdr.setTracks(tracks);
+				hdr.setSides(hdr.getSides() + 1);
 				if (tracks >= 80) {
 					tracks /= 2;
-					hdr.tracks = tracks;
-					hdr.secsPerTrack <<= 1;
-					hdr.tracksize <<= 1;
+					hdr.setTracks(tracks);
+					hdr.setSecsPerTrack(hdr.getSecsPerTrack() << 1);
+					hdr.setTrackSize(hdr.getTrackSize() << 1);
 					if (tracks > 40) {
-						hdr.tracks = 40;
+						hdr.setTracks(40);
 					}
 				}
 			}
 		}
 
-		if (hdr.tracksize > RealDiskConsts.DSKbuffersize) {
+		hdr.setSide2DirectionKnown(false);
+		
+		if (hdr.getTrackSize() > RealDiskConsts.DSKbuffersize) {
 			throw new IOException(MessageFormat.format("Disk image has too large track size ({0} > {1})",
-						  hdr.tracksize, RealDiskConsts.DSKbuffersize));
+						  hdr.getTrackSize(), RealDiskConsts.DSKbuffersize));
 		}
 	}
 	
@@ -143,7 +145,8 @@ public class SectorDiskImage extends BaseDiskImage  {
 	@Override
 	public void writeTrackData(byte[] rwBuffer, int start, int buflen) {
 		super.writeTrackData(rwBuffer, start, buflen);
-		if (trackMarkers == null || trackMarkers.size() != hdr.getTrackSize()/256) {
+		int expSecs = hdr.getTrackSize()/256;
+		if (trackMarkers == null || trackMarkers.size() != expSecs) {
 			dumper.error("Program is formatting track at {1} on ''{0}'' with non-ordinary sectors; " +
 					"this does not work with sector-image disks", 
 					spec, Long.toHexString(getTrackDiskOffset()));
@@ -185,7 +188,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		int sectorsize = (128 << sizeid);
 		
 		ICRCAlgorithm crcAlg = new CRC16(0x1021);
-		for (int dataoffset = 0; dataoffset < hdr.tracksize; dataoffset += sectorsize) {
+		for (int dataoffset = 0; dataoffset < hdr.getTrackSize(); dataoffset += sectorsize) {
 			IdMarker marker = new IdMarker();
 
 			crcAlg.reset();
@@ -193,9 +196,9 @@ public class SectorDiskImage extends BaseDiskImage  {
 			marker.dataCode = (byte) 0xfb;
 			marker.idoffset = -1;
 			marker.dataoffset = dataoffset - 1;
-			marker.trackid = (byte) seektrack;
+			marker.trackid = (byte) track;
 			marker.sectorid = (byte) (dataoffset / sectorsize);
-			marker.sideid = sideReg;
+			marker.sideid = (byte) side;
 			marker.sizeid = (byte) sizeid;
 			
 			crcAlg.feed(marker.idCode);

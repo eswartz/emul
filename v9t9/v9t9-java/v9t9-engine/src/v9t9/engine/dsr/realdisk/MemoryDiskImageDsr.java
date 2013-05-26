@@ -45,6 +45,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	public static final int DATA = 3; 
 	public static final int FLAGS = 4;
 	public static final int DSK = 5;
+	/** Motor is spun up */
 	public static final int FL_MOTOR = 0x8;
 	public static final int FL_HOLD = 0x4;
 	public static final int FL_HEAD = 0x2;
@@ -79,22 +80,24 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	public void writeData(int offset, byte val) {
 		switch (offset - baseAddr) {
 		case COMMAND:
-			writeCommand(val);
+			fdc.writeCommand(val);
 			break;
 		case TRACK:
-			writeTrackAddr(val);
+			fdc.setTrackReg(val);
+			//DSK.status &= ~fdc_LOSTDATA;
 			break;
 		case SECTOR:
-			writeSectorAddr(val);
+			fdc.setSectorReg(val);
+			//DSK.status &= ~fdc_LOSTDATA;
 			break;
 		case DATA:
-			writeData(val);
+			fdc.writeData(val);
 			break;
 		case DSK:
 			if (val == 0)
-				selectDisk(0, false);
+				fdc.selectDisk(0, false);
 			else
-				selectDisk(val, true);
+				fdc.selectDisk(val, true);
 			break;
 		case FLAGS: {
 			byte oldflags = flags;
@@ -103,14 +106,14 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 				setDiskSide((flags & FL_SIDE) != 0 ? 1 : 0);
 			}
 			if (((flags ^ oldflags) & FL_HEAD) != 0) {
-				setDiskHeads((flags & FL_HEAD) != 0);
+				fdc.setHeads((flags & FL_HEAD) != 0);
 			}
 			if (((flags ^ oldflags) & FL_HOLD) != 0) {
-				setDiskHold((flags & FL_HOLD) != 0);
+				fdc.setHold((flags & FL_HOLD) != 0);
 			}
 			
 			// always pass on, since setting will keep it going
-			setDiskMotor((flags & FL_MOTOR) != 0);
+			fdc.setDiskMotor((flags & FL_MOTOR) != 0);
 			}
 		}
 	}
@@ -122,20 +125,26 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	public byte readData(int offset) {
 		switch (offset - baseAddr) {
 		case COMMAND:
-			return readStatus();
+			byte ret = fdc.readStatus();
+			
+			return ret;
 		case TRACK:
-			return readTrackAddr();
+			byte ret1 = fdc.getTrackReg();
+			
+			return ret1;
 		case SECTOR:
-			return readSectorAddr();
+			byte ret2 = fdc.getSectorReg();
+			
+			return ret2;
 		case DATA:
-			return readData();
+			return fdc.readByte();
 		case DSK:
-			return (byte) getSelectedDisk();
+			return (byte) fdc.getSelectedDisk();
 		case FLAGS:
 			flags = (byte) ((getSide() != 0 ? FL_SIDE : 0) 
-				| (isMotorRunning() ? FL_MOTOR : 0)
-				| (isDiskHeads() ? FL_HEAD : 0)
-				| (isDiskHold() ? FL_HOLD : 0));
+				| (fdc.isMotorRunning() ? FL_MOTOR : 0)
+				| (fdc.isHeads() ? FL_HEAD : 0)
+				| (fdc.isHold() ? FL_HOLD : 0));
 			return flags;
 		}
 		return 0;
@@ -171,8 +180,13 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 		 */
 			
 		for (Map.Entry<String, IProperty> entry : imageMapper.getDiskSettingsMap().entrySet()) {
-			DiskMotorIndicatorProvider provider = new DiskMotorIndicatorProvider(entry.getKey());
-			list.add(provider);
+			IDeviceIndicatorProvider drive = fdc.getDrive(entry.getKey());
+			if (drive != null) {
+				IProperty activeProperty = drive.getActiveProperty(); 
+				DiskMotorIndicatorProvider provider = new DiskMotorIndicatorProvider(entry.getKey(), 
+						activeProperty);
+				list.add(provider);
+			}
 		}
 		return list;
 	}

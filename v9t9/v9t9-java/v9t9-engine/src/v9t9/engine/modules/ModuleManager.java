@@ -177,13 +177,14 @@ public class ModuleManager implements IModuleManager {
 		
 		IMemory memory = machine.getMemory();
 		
-		for (IMemoryDomain domain : memory.getDomains())
+		for (IMemoryDomain domain : memory.getDomains()) {
 			for (IMemoryEntry entry : domain.getMemoryEntries()) {
 				if (loaded.equals(memoryEntryModules.get(entry))) {
 					domain.unmapEntry(entry);
 					memoryEntryModules.remove(entry);
 				}
 			}
+		}
 		
 		loadedModules.remove(loaded);
 		lastLoadedModule.setString(null);
@@ -210,7 +211,7 @@ public class ModuleManager implements IModuleManager {
 	 */
 	@Override
 	public IModule[] getLoadedModules() {
-		return (IModule[]) loadedModules.toArray(new IModule[loadedModules.size()]);
+		return loadedModules.toArray(new IModule[loadedModules.size()]);
 	}
 
 	public void saveState(ISettingSection section) {
@@ -295,7 +296,6 @@ public class ModuleManager implements IModuleManager {
 	 */
 	@Override
 	public List<IModule> readModules(URI databaseURI) throws IOException {
-		//boolean anyErrors = false;
 		InputStream is = null;
 		is = machine.getRomPathFileLocator().createInputStream(databaseURI);
 		List<IModule> modList = ModuleDatabase.loadModuleListAndClose(machine.getMemory(), 

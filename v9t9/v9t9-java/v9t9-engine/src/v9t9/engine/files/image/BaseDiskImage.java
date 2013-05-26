@@ -29,7 +29,7 @@ import v9t9.common.files.IDiskImage;
 import v9t9.common.files.IEmulatedFile;
 import v9t9.common.files.IdMarker;
 import v9t9.common.files.IndexSector;
-import v9t9.common.files.VDR;
+import v9t9.common.files.VIB;
 import v9t9.engine.dsr.realdisk.ICRCAlgorithm;
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
@@ -43,18 +43,23 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 
 	static class DSKheader implements IDiskHeader
 	{
-		String spec;
+		private String spec;
 
 		/** tracks per side */
-		int tracks;
+		private int tracks;
 		/** 1 or 2 */
-		int sides;
+		private int sides;
 		/** # tracks per side */
-		int secsPerTrack;
+		private int secsPerTrack;
 		/** bytes per track */
-		int tracksize;
+		private int tracksize;
 		/** offset for track 0 data */
-		int track0offs;
+		private int track0offs;
+		
+		/** if true, tracks go in opposite order on side 2 */
+		private boolean invertedSide2;
+
+		private boolean side2DirectionKnown;
 	
 		/* (non-Javadoc)
 		 * @see v9t9.common.files.IDiskHeader#getPath()
@@ -63,15 +68,38 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		public String getPath() {
 			return spec;
 		}
-		public long getImageSize() {
-			return (tracksize & 0xffff) * (tracks & 0xff) * sides;
+		@Override
+		public void setPath(String spec) {
+			this.spec = spec;
 		}
-		public int getTrackOffset(int num) {
-			return num * (tracksize & 0xffff);
+
+		@Override
+		public String toString() {
+			return "DSKheader [spec="+spec+", tracks=" + tracks + ", sides=" + sides
+					+ ", secsPerTrack=" + secsPerTrack
+					+ ", tracksize=" + tracksize + ", track0offs=" + track0offs
+					+ "]";
 		}
-		/* (non-Javadoc)
-		 * @see v9t9.engine.files.image.IDiskHeader#getTracks()
-		 */
+		@Override
+		public void setSides(int sides) {
+			this.sides = sides;
+		}
+		@Override
+		public void setTracks(int tracks) {
+			this.tracks = tracks;
+		}
+		@Override
+		public void setSecsPerTrack(int secsPerTrack) {
+			this.secsPerTrack = secsPerTrack;
+		}
+		@Override
+		public void setTrackSize(int tracksize) {
+			this.tracksize = tracksize;
+		}
+		@Override
+		public void setTrack0Offset(int track0offs) {
+			this.track0offs = track0offs;
+		}
 		@Override
 		public int getTracks() {
 			return tracks;
@@ -104,14 +132,36 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		public int getSecsPerTrack() {
 			return secsPerTrack;
 		}
-		@Override
-		public String toString() {
-			return "DSKheader [spec="+spec+", tracks=" + tracks + ", sides=" + sides
-					+ ", secsPerTrack=" + secsPerTrack
-					+ ", tracksize=" + tracksize + ", track0offs=" + track0offs
-					+ "]";
+		public long getImageSize() {
+			return (tracksize & 0xffff) * (tracks & 0xff) * sides;
 		}
-		
+		protected int getTrackOffset(int track) {
+			return track0offs + (tracksize & 0xffff) * track;
+		}
+		public int getTrackOffset(int track, int side) {
+			int effTrack = side == 0 ? track : 
+				(invertedSide2 ? tracks * 2 - track - 1 : tracks + track);
+			return getTrackOffset(effTrack);
+		}
+
+		public void setInvertedSide2(boolean invertedSide2) {
+			this.invertedSide2 = invertedSide2;
+		}
+		public boolean isInvertedSide2() {
+			return invertedSide2;
+		}
+		/**
+		 * @param b
+		 */
+		public void setSide2DirectionKnown(boolean b) {
+			side2DirectionKnown = b;
+		}
+		/**
+		 * @return the side2DirectionKnown
+		 */
+		public boolean isSide2DirectionKnown() {
+			return side2DirectionKnown;
+		}
 		
 	};
 	
@@ -125,14 +175,8 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	protected byte trackBuffer[] = new byte[RealDiskConsts.DSKbuffersize];
 	protected DSKheader hdr = new DSKheader();
 	protected boolean readonly;
-	/** track offset, minus side */
-	long trackoffset;
-	/** track offset, plus side */
-	long tracksideoffset;
-	protected int seektrack;
-	protected byte sideReg;
-	private boolean motorRunning;
-	private long motorTimeout;
+	protected int track;
+	protected int side;
 	
 	protected Dumper dumper;
 	protected IDiskFormat fmFormat;
@@ -245,7 +289,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			closeDiskImage();
 	
 		if (spec.exists()) {
-			hdr.spec = spec.getPath();
+			hdr.setPath(spec.getPath());
 			if (readOnly) {
 				setHandle(new RandomAccessFile(spec, "r"));
 				readonly = true;
@@ -284,7 +328,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		dumper.info("Opened {0} disk ''{1}'' {2},\n#tracks={3}, tracksize={4}, sides={5}",
 					  getDiskType(),
 					  spec,
-			 name, hdr.tracks, hdr.tracksize, hdr.sides);
+			 name, hdr.getTracks(), hdr.getTrackSize(), hdr.getSides());
 	}
 	
 
@@ -293,12 +337,12 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		dumper.info("Creating new {2} disk image at {0} ({1})", name, spec, getDiskType());
 
 		/* defaults */
-		hdr.spec = spec.getPath();
-		hdr.tracks = 40;
-		hdr.sides = 1;
-		hdr.secsPerTrack = 9;
-		hdr.tracksize = getDefaultTrackSize();
-		hdr.track0offs = getHeaderSize();
+		hdr.setPath(spec.getPath());
+		hdr.setTracks(40);
+		hdr.setSides(1);
+		hdr.setSecsPerTrack(9);
+		hdr.setTrackSize(getDefaultTrackSize());
+		hdr.setTrack0Offset(getHeaderSize());
 
 		/* create file */
 		handle = null;
@@ -318,11 +362,12 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			long diskoffs = getTrackDiskOffset();
 			
 			dumper.info("Reading {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
-					hdr.tracksize, seektrack, trackoffset, Long.toHexString(diskoffs));
+					hdr.getTrackSize(), track, diskoffs, Long.toHexString(diskoffs));
 	
+			// TODO: need to encapsulate as track data when reading from sector disk
 			handle.seek(diskoffs);
 			try {
-				handle.read(trackBuffer, 0, hdr.tracksize);
+				handle.read(trackBuffer, 0, hdr.getTrackSize());
 			} catch (IndexOutOfBoundsException e) {
 				throw (IOException) new IOException().initCause(e);
 			}
@@ -348,48 +393,24 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		
 	}
 
-	/**
-	 * 
-	 */
-	@Override
-	public boolean seekToCurrentTrack(int seektrack, int sideReg)
-			throws IOException {
-		
-		commitTrack();
-		
-		int         offs;
-	
-		this.seektrack = seektrack;
-		this.sideReg = (byte) sideReg;
-		
-		trackoffset = 0;
-	
+	protected void updateDiskSize() throws IOException {
 		if (handle == null) 
-			return false;
+			return;
 	
-		if (!readonly && (seektrack >= hdr.tracks || sideReg >= hdr.sides)) {
+		if (!readonly && (track >= hdr.getTracks() || side >= hdr.getSides())) {
 			// grow the disk
-			if (seektrack >= hdr.tracks)
-				hdr.tracks = seektrack;
-			if (sideReg >= hdr.sides)
-				hdr.sides = sideReg;
+			if (track >= hdr.getTracks())
+				hdr.setTracks(track);
+			if (side >= hdr.getSides())
+				hdr.setSides(side);
 			
 			writeImageHeader();
 		}
 	
-		offs = hdr.track0offs + hdr.getTrackOffset(seektrack % hdr.tracks);
-	
-		// side is handled dynamically
-		
-		trackoffset = offs;
-		
 		// refresh
 		trackFetched = false;
 		trackChanged = false;
 		trackMarkers = null;
-		//readCurrentTrackData();
-		
-		return true;
 	}
 
 
@@ -397,21 +418,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	 * @return
 	 */
 	public long getTrackDiskOffset() {
-		if (sideReg == 0) {
-			tracksideoffset = trackoffset;
-		}
-		else  {
-			if (false) {
-				int sideOffs = hdr.getTrackOffset(hdr.tracks);
-				tracksideoffset += sideOffs;
-			} else {
-				// tracks go in the opposite direction on side 2
-				tracksideoffset = hdr.track0offs 
-						+ hdr.getTrackOffset(hdr.tracks * 2 - 1)
-						- hdr.getTrackOffset(seektrack % hdr.tracks);
-			}
-		}
-		return tracksideoffset;
+		return hdr.getTrackOffset(track, side);
 	}
 
 	/**
@@ -422,7 +429,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	public void readTrackData(byte[] rwBuffer, int i, int buflen) throws IOException {
 		readCurrentTrackData();
 		
-		buflen = Math.min(hdr.tracksize, buflen);
+		buflen = Math.min(hdr.getTrackSize(), buflen);
 		
 		System.arraycopy(trackBuffer, 0, rwBuffer, i, buflen);			
 	}
@@ -439,19 +446,19 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		int size = getTrackSize();
 		long diskoffs = getTrackDiskOffset();
 	
-		dumper.info("Writing {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
-				size, seektrack, trackoffset, Long.toHexString(diskoffs));
+		dumper.info("Writing {0} bytes of data on track {1}, offset = >{2}", 
+				size, track, Long.toHexString(diskoffs));
 	
 		handle.seek(diskoffs);
 		handle.write(trackBuffer, 0, size);
 		
 		boolean newHeader = false;
-		if (sideReg > 0 && hdr.sides == 1) {
-			hdr.sides = 2;
+		if (side > 0 && hdr.getSides() == 1) {
+			hdr.setSides(2);
 			newHeader = true;
 		}
-		if (seektrack > hdr.tracks) {
-			hdr.tracks = seektrack;
+		if (track > hdr.getTracks()) {
+			hdr.setTracks(track);
 			newHeader = true;
 		}
 		if (newHeader) {
@@ -499,9 +506,60 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		}
 	}
 
-	public void setSide(byte side) {
-		sideReg = side;
+	@Override
+	public void setSide(int side) throws IOException {
+		if (side != this.side) {
+			commitTrack();
+			
+			this.side = side;
+			
+			if (side == 1 && !hdr.isSide2DirectionKnown()) {
+				// detect the side 2 ordering
+				int origTrack = track;
+				try {
+					setTrack(0);
+					
+					fetchFormatAndTrackMarkers();
+					boolean any = false;
+					for (IdMarker marker : trackMarkers) {
+						if (marker.sideid != 1)
+							continue;
+						
+						if (marker.trackid == hdr.getTracks() - 1) {
+							any = true;
+							hdr.setInvertedSide2(true);
+							break;
+						}
+						else if (marker.trackid == 0) {
+							any = true;
+							hdr.setInvertedSide2(false);
+							break;
+						}
+					}
+					if (any) {
+						hdr.setSide2DirectionKnown(true);
+					}
+				} catch (IOException e) {
+					// ok, leave it alone for now
+				} finally {
+					try {
+						setTrack(origTrack);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			
+			updateDiskSize();
+		}
 		
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IDiskImage#getSide()
+	 */
+	@Override
+	public int getSide() {
+		return side;
 	}
 	
 	// for utilities, not realtime usage
@@ -529,27 +587,26 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	protected abstract void fetchFormatAndTrackMarkers();
 
 	public IdMarker readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException {
-		int track = (sector / hdr.secsPerTrack);
-		byte side = (byte) (track > 40 ? 1 : 0);
+		int track = (sector / hdr.getSecsPerTrack());
+		byte side = (byte) (track >= 40 ? 1 : 0);
 
 		track %= 40;
 		if (side > 0)
 			track = 39 - track;
 
-		seekToCurrentTrack(track, side);
+		setTrack(track);
+		setSide(side);
 		
 		readCurrentTrackData();
 		
-		//ensureFormatAndTrackMarkers();
-		
-		byte tracksec = (byte) (sector % hdr.secsPerTrack);
+		byte tracksec = (byte) (sector % hdr.getSecsPerTrack());
 		for (IdMarker marker : trackMarkers) {
 			if (marker.sectorid == tracksec && marker.trackid == track) {
 				readSectorData(marker, rwBuffer, start, buflen);
 				return marker;
 			}
 		}
-		throw new MissingSectorException(sector, tracksideoffset,
+		throw new MissingSectorException(sector, getTrackDiskOffset(),
 				spec+": sector " + tracksec + " not found on track " + track + ", side " + side, null);
 	}
 
@@ -563,10 +620,10 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		byte[] fdrSec = new byte[256];
 		
 		readSector(0, asec, 0, 256);
-		VDR vdr = VDR.createVDR(asec, 0);
-		String volume = vdr.getVolumeName();
-		int total = vdr.getTotalSecs();
-		int used = vdr.getSecsUsed();
+		VIB vib = VIB.createVIB(asec, 0);
+		String volume = vib.getVolumeName();
+		int total = vib.getTotalSecs();
+		int used = vib.getSecsUsed();
 		
 		readSector(1, asec, 0, 256);
 		for (int ent = 0; ent < 256; ent+=2) {
@@ -584,34 +641,6 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 //						(fdr.getFlags() & FDR.ff_protected) != 0));
 		}
 		return new Catalog(this, devname, volume, total, used, entries);
-	}
-
-	/**
-	 * @param motorTimeout the motorTimeout to set
-	 */
-	public void setMotorTimeout(long motorTimeout) {
-		this.motorTimeout = motorTimeout;
-	}
-
-	/**
-	 * @return the motorTimeout
-	 */
-	public long getMotorTimeout() {
-		return motorTimeout;
-	}
-
-	/**
-	 * @param motorRunning the motorRunning to set
-	 */
-	public void setMotorRunning(boolean motorRunning) {
-		this.motorRunning = motorRunning;
-	}
-
-	/**
-	 * @return the motorRunning
-	 */
-	public boolean isMotorRunning() {
-		return motorRunning;
 	}
 
 	/**
@@ -652,8 +681,8 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			try {
 				openDiskImage(true);
 				
-				if (hdr.sides <= 2 && hdr.track0offs <= 256 && (hdr.tracks == 40 || hdr.tracks == 80)
-						&& hdr.tracksize < RealDiskConsts.DSKbuffersize) {
+				if (hdr.getSides() <= 2 && hdr.getTrack0Offset() <= 256 && (hdr.getTracks() == 40 || hdr.getTracks() == 80)
+						&& hdr.getTrackSize() < RealDiskConsts.DSKbuffersize) {
 					return true;
 				}
 				return false;
@@ -684,9 +713,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 				
 				byte[] sec0 = new byte[256];
 				readSector(0, sec0, 0, 256);
-				VDR vdr = VDR.createVDR(sec0, 0);
+				VIB vib = VIB.createVIB(sec0, 0);
 				
-				return vdr.isFormatted();
+				return vib.isFormatted();
 			} catch (IOException e) {
 				e.printStackTrace();
 				return false;
@@ -738,12 +767,10 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		if (buflen == 0)
 			buflen = Math.min(rwBuffer.length, RealDiskConsts.DSKbuffersize);
 		
-		if (trackFormat == null) {
-			if (mfmFormat.doesFormatMatch(rwBuffer, buflen))
-				trackFormat = mfmFormat;
-			else
-				trackFormat = fmFormat;
-		}
+		if (mfmFormat.doesFormatMatch(rwBuffer, buflen))
+			trackFormat = mfmFormat;
+		else
+			trackFormat = fmFormat;
 		
 		// fetch and update markers
 		trackMarkers = trackFormat.fetchIdMarkers(rwBuffer, buflen, true);
@@ -879,10 +906,10 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			
 			@Override
 			public boolean updateSector(byte[] content) throws IOException {
-				VDR vdr = VDR.createVDR(content, 0);
-				num[0] = vdr.allocateSector(start);
+				VIB vib = VIB.createVIB(content, 0);
+				num[0] = vib.allocateSector(start);
 				
-				System.arraycopy(vdr.toBytes(), 0, content, 0, 256);
+				System.arraycopy(vib.toBytes(), 0, content, 0, 256);
 
 				return true;
 			}
@@ -904,20 +931,20 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			
 			@Override
 			public boolean updateSector(byte[] sec0) throws IOException {
-				VDR vdr = VDR.createVDR(sec0, 0);
+				VIB vib = VIB.createVIB(sec0, 0);
 
 				// free sectors for content
 				for (int csec : contents) {
 					if (csec > 0)
-						vdr.deallocateSector(csec);
+						vib.deallocateSector(csec);
 				}
 				
 				// free index sector
 				if (dfile.getIndexSector() > 0) {
-					vdr.deallocateSector(dfile.getIndexSector());
+					vib.deallocateSector(dfile.getIndexSector());
 				}
 			
-				System.arraycopy(vdr.toBytes(), 0, sec0, 0, sec0.length);
+				System.arraycopy(vib.toBytes(), 0, sec0, 0, sec0.length);
 				
 				return true;
 			}
@@ -939,6 +966,24 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		});
 		
 	}
-	
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IDiskImage#getTrack()
+	 */
+	@Override
+	public int getTrack() {
+		return track;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IDiskImage#setTrack(int)
+	 */
+	@Override
+	public void setTrack(int track) throws IOException {
+		if (this.track != track) {
+			commitTrack();
+			this.track = track;
+			updateDiskSize();
+		}
+	}
 }

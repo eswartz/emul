@@ -69,13 +69,6 @@ public interface IDiskImage extends IPersistable, IEmulatedDisk {
 	List<IdMarker> getTrackMarkers();
 
 	/**
-	 * @param seektrack
-	 * @param seekside
-	 * @throws IOException 
-	 */
-	boolean seekToCurrentTrack(int seektrack, int seekside) throws IOException;
-
-	/**
 	 * @return
 	 */
 	int getTrackSize();
@@ -88,16 +81,6 @@ public interface IDiskImage extends IPersistable, IEmulatedDisk {
 	 */
 	void readSectorData(IdMarker currentMarker, byte[] rwBuffer, int i,
 			int buflen);
-
-	/**
-	 * @param i
-	 */
-	void setMotorTimeout(long millis);
-
-	/**
-	 * @return
-	 */
-	boolean isMotorRunning();
 
 	/**
 	 * @param rwBuffer
@@ -113,5 +96,11 @@ public interface IDiskImage extends IPersistable, IEmulatedDisk {
 	 * @throws IOException 
 	 */
 	void updateSector(int i, SectorUpdater sectorUpdater) throws IOException;
+
+	void setSide(int side) throws IOException;
+	int getSide();
+
+	int getTrack();
+	void setTrack(int i) throws IOException;
 
 }

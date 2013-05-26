@@ -11,21 +11,28 @@
 package v9t9.engine.files.image;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-import v9t9.common.files.IDiskImage;
+import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.files.IdMarker;
+import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.dsr.realdisk.CRC16;
 import ejs.base.properties.IPersistable;
+import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
+import ejs.base.utils.HexUtils;
 
 
 
 public class FDC1771 implements IPersistable {
+	private byte lastStatus = -1;
 
-	
+	/** currently selected disk */
+	private byte selectedDisk = 0;
+	private FloppyDrive drive = null;
+
 	private boolean hold; /* holding for data? */
 	private byte lastbyte; /* last byte written to WDDATA when hold off */
 	byte rwBuffer[] = new byte[RealDiskConsts.DSKbuffersize]; /* read/write contents */
@@ -44,42 +51,44 @@ public class FDC1771 implements IPersistable {
 	
 	private boolean stepout; /* false: in, true: out */
 	
-	byte seektrack; /* physically seeked track */
-	byte seekside; /* the side we seeked to in the image */
-	
 	private FDCStatus status = new FDCStatus();
 	
-	private IDiskImage image;
-	private Iterator<IdMarker> trackMarkerIter;
-	private IdMarker currentMarker;
-	private boolean heads;
-
-	public long commandBusyExpiration;
-	
 	private Dumper dumper;
-	private List<IdMarker> trackMarkers;
+	private FloppyDrive[] drives;
+
+	private Map<String,FloppyDrive> driveMap;
+
+	private long commandBusyExpiration;
+
+	private IProperty settingRealTime;
+
 
 	/**
+	 * @param machine 
 	 * 
 	 */
-	public FDC1771(Dumper dumper) {
+	public FDC1771(IMachine machine, Dumper dumper, int numDrives,
+			IProperty dsrEnabledProperty) {
+		
 		this.dumper = dumper;
-	}
-	
-	/**
-	 * @param image the image to set
-	 */
-	public void setImage(BaseDiskImage image) {
-		if (this.image != image) {
-			this.image = image;
+		settingRealTime = machine.getSettings().get(RealDiskDsrSettings.diskImageRealTime);
+		
+		drives = new FloppyDrive[numDrives];
+		
+		driveMap = new HashMap<String, FloppyDrive>();
+		
+		for (int num = 1; num <= drives.length; num++) {
 
-			// refetch markers (and track) next time
-			trackMarkerIter = null;
-			currentMarker = null;
+			String name = RealDiskDsrSettings.getDiskImageSetting(num);
+
+			IProperty motorProperty = new SettingSchemaProperty(name + "Motor", Boolean.FALSE);
+			motorProperty.addEnablementDependency(dsrEnabledProperty);
 			
-			seektrack = -1;
-			seekside = -1;
+			drives[num - 1] = new FloppyDrive(machine, dumper, status, num, motorProperty, this);
+			
+			driveMap.put(name, drives[num - 1]);
 		}
+		
 	}
 
 	public void FDChold(boolean onoff) throws IOException {
@@ -104,7 +113,7 @@ public class FDC1771 implements IPersistable {
 		
 		if (!hold) return;
 
-		if (image == null) {
+		if (drive == null || drive.getImage() == null) {
 			status.set(StatusBit.NOT_READY);
 			return;
 		}
@@ -117,195 +126,73 @@ public class FDC1771 implements IPersistable {
 			status.reset(StatusBit.CRC_ERROR);
 
 			if (command == RealDiskConsts.FDC_writesector) {
-				if (image.isReadOnly()) {
+				if (drive.isReadOnly()) {
 					status.set(StatusBit.WRITE_PROTECT);
 				}
+				IdMarker currentMarker = drive.getCurrentMarker();
 				if (currentMarker == null) {
 					status.set(StatusBit.REC_NOT_FOUND);
 				}
 				else if (currentMarker.isInvalid()) {
 					status.set(StatusBit.REC_NOT_FOUND);
 				} else {
-					image.writeSectorData(rwBuffer, 0, buflen, currentMarker);
+					drive.getImage().writeSectorData(rwBuffer, 0, buflen, currentMarker);
 				}
 			} else if (command == RealDiskConsts.FDC_writetrack) {
-				if (image.isReadOnly()) {
+				if (drive.isReadOnly()) {
 					status.set(StatusBit.WRITE_PROTECT);
 					return;
 				}
-				image.writeTrackData(rwBuffer, 0, buflen);
+				drive.getImage().writeTrackData(rwBuffer, 0, buflen);
 			}
 			
 			try {
-				image.commitTrack();
+				drive.getImage().commitTrack();
 			} catch (IOException e) {
 				status.set(StatusBit.NOT_READY);
 				status.set(StatusBit.LOST_DATA);
 			}
-		
-			//readCurrentTrackData();
-		}
-
-	}
-
-
-	/*	Find a sector ID on the track */
-	private boolean
-	FDCfindIDmarker()
-	{
-		ensureTrackMarkers();
-		int iters = trackMarkers.size();
-		while (iters-- > 0) {
-			if (!trackMarkerIter.hasNext()) {
-				trackMarkerIter = trackMarkers.iterator();
-			}
-			if (trackMarkerIter.hasNext()) {
-				currentMarker = trackMarkerIter.next();
-				if (command != RealDiskConsts.FDC_readIDmarker || currentMarker.sideid == sideReg)
-					return true;
-			}
 		}
 		
-		currentMarker = null;
-		return false;
-		
-	}
 
-	/*	Match the current ID with the desired track/sector id */
-	private boolean
-	FDCmatchIDmarker() {
-		dumper.info("FDC match ID marker: looking for T{0}, S{1}", trackReg, sectorReg);
-		
-		status.reset(StatusBit.REC_NOT_FOUND);
-		status.reset(StatusBit.CRC_ERROR);
-	
-		// FDC179x mode
-		//byte desiredSide = (byte) ((flags & fl_side_number) != 0 ? 1 : 0);
-	
-		ensureTrackMarkers();
-		
-		int tries = trackMarkers.size();
-		boolean found = false;
-		while (!found && tries-- > 0) {
-
-			addBusyTime(20);
-			
-			if (!FDCfindIDmarker())
-				break;
-			
-			if (currentMarker.trackid == trackReg
-				&& ((command & 0x02) == 0 || currentMarker.sideid == sideReg)  
-				&& currentMarker.sectorid == sectorReg
-				//&& crcid == crc
-				)
-			{
-				found = true;
-			}
-		}
-
-		if (!found) {
-			dumper.error("FDCmatchIDmarker failed");
-			status.set(StatusBit.REC_NOT_FOUND);
-			return false;
-		}
-		
-		dumper.info("FDCmatchIDmarker succeeded: track {0}, sector {1}, side {2}, size {3} (sector #{4})",
-				currentMarker.trackid, currentMarker.sectorid, 
-				currentMarker.sideid, currentMarker.sizeid, 
-				currentMarker.trackid * 9 + currentMarker.sectorid);
-		return true;
-	}
-
-	/**
-	 * 
-	 */
-	private void ensureTrackMarkers() {
-		if (trackMarkers == null || trackMarkers.isEmpty()) {
-			if (image != null)
-				trackMarkers = image.getTrackMarkers();
-			else
-				trackMarkers = Collections.<IdMarker>emptyList();
-			trackMarkerIter = trackMarkers.iterator();
-		}
-	}
-
-	private void updateSeek(byte track, byte side) throws IOException {
-		if (seektrack != track || seekside != side) {
-			// don't change anything until the track changes, 
-			// so we can fetch the hidden sectors with the same id as normal ones
-			
-			int stepTime = 0;
-			switch (flags & RealDiskConsts.fl_step_rate) {
-			case 0x00:
-			case 0x01:
-				stepTime = 6;
-				break;
-			case 0x02:
-				stepTime = 10;
-				break;
-			case 0x03:
-				stepTime = 20;
-				break;
-			}
-			addBusyTime(Math.abs(seektrack - track) * stepTime);
-
-			seektrack = track;
-			seekside = side;
-			
-			currentMarker = null;
-			trackMarkerIter = null;
-			trackMarkers = null;
-			
-			if (image != null)
-				image.seekToCurrentTrack(seektrack, seekside);
-		}
-	}
-
-	/**
-	 * @param ms
-	 */
-	public void addBusyTime(int ms) {
-		//status.set(StatusBit.BUSY);
-		if (commandBusyExpiration == 0) {
-			commandBusyExpiration = System.currentTimeMillis();
-		}
-		commandBusyExpiration += ms;
 	}
 
 	public void FDCrestore() throws IOException {
 		dumper.info("FDC restore");
+
+		if (drive == null)
+			return;
 		
 		trackReg = 0;
-		updateSeek(trackReg, sideReg);
 		
+		updateSeek(drive, trackReg);
+			
 		status.set(StatusBit.TRACK_0);
 		status.reset(StatusBit.REC_NOT_FOUND);
 		status.reset(StatusBit.CRC_ERROR);
 		status.reset(StatusBit.SEEK_ERROR);
 		
 		if ((flags & RealDiskConsts.fl_verify_track) != 0) {
-			verifyTrack(trackReg);
+			matchIDMarker(trackReg, (byte) -1, sideReg);
 		}
 		
-		currentMarker = null;
-		trackMarkerIter = null;
-		trackMarkers = null;
-		
-		if (image != null)
-			image.seekToCurrentTrack(seektrack, seekside);
-
+		drive.restore();
 	}
 
 	public void FDCseek() throws IOException {
 		dumper.info("FDC seek, T{0} s{1}", lastbyte, sideReg);
 
+		if (drive == null)
+			return;
+		
 		while (trackReg < lastbyte) {
 			trackReg++;
-			updateSeek(trackReg, sideReg);
+			updateSeek(drive, trackReg);
+
 		}
 		while (trackReg > lastbyte) {
 			trackReg--;
-			updateSeek(trackReg, sideReg);
+			updateSeek(drive, trackReg);
 		}
 		/*
 		trackReg = lastbyte;
@@ -318,58 +205,161 @@ public class FDC1771 implements IPersistable {
 			status.set(StatusBit.TRACK_0);
 
 		if ((flags & RealDiskConsts.fl_verify_track) != 0) {
-			verifyTrack(trackReg);
+			matchIDMarker(trackReg, (byte) -1, sideReg);
 		}
 		
 	}
 
 	/**
-	 * 
+	 * @throws IOException
 	 */
-	private void verifyTrack(byte track) {
-		ensureTrackMarkers();
-		
-		status.reset(StatusBit.SEEK_ERROR);
-		boolean found = false;
-		for (int tries = 0; tries < trackMarkers.size(); tries++) {
-			if (!FDCfindIDmarker())
-				break;
-			if (currentMarker.trackid == track) {
-				found = true;
-				break;
-			}
+	protected void updateSeek(FloppyDrive drive, byte newtrack) throws IOException {
+		int stepTime = 0;
+		switch (flags & RealDiskConsts.fl_step_rate) {
+		case 0x00:
+		case 0x01:
+			stepTime = 6;
+			break;
+		case 0x02:
+			stepTime = 10;
+			break;
+		case 0x03:
+			stepTime = 20;
+			break;
 		}
+		addBusyTime(Math.abs(newtrack - drive.getSeekTrack()) * stepTime);
 		
-		if (!found) {
-			status.set(StatusBit.SEEK_ERROR);
-			dumper.error("FDC seek, could not find marker for track {0}", track);
-		}
+		drive.setTrack(newtrack);
 
 	}
-
 	/**
 	 * @throws IOException 
 	 * 
 	 */
 	public void FDCstep() throws IOException {
 
-		byte newtrack = (byte) (seektrack + (stepout ? -1 : 1));
-		if ((flags & RealDiskConsts.fl_update_track) != 0)
-			trackReg = newtrack;
+		if (drive == null)
+			return;
 		
-		dumper.info("FDC step {2}, T{0} s{1}", newtrack, sideReg,
+		byte track = (byte) (drive.getSeekTrack() + (stepout ? -1 : 1));
+		dumper.info("FDC step {2}, T{0} s{1}", track, sideReg,
 				stepout ? "out" : "in");
 		
+		if ((flags & RealDiskConsts.fl_update_track) != 0)
+			trackReg = track;
+		
 		status.reset(StatusBit.TRACK_0);
-		if (newtrack == 0)
+		if (track == 0)
 			status.set(StatusBit.TRACK_0);
 		
-		updateSeek(newtrack, sideReg);
+		updateSeek(drive, track);
 		
 		if ((flags & RealDiskConsts.fl_verify_track) != 0) {
-			verifyTrack(newtrack);
+			//ensureTrackMarkers();
+			
+			status.reset(StatusBit.SEEK_ERROR);
+			
+			IdMarker marker = matchIDMarker(track, (byte) -1, sideReg);
+			
+//			boolean found = false;
+//			
+//			for (int tries = 0; tries < trackMarkers.size(); tries++) {
+//				if (findIDMarker(command, sideReg) == null)
+//					break;
+//				if (currentMarker.trackid == track) {
+//					found = true;
+//					break;
+//				}
+//			}
+			
+			if (marker == null) {
+				status.set(StatusBit.SEEK_ERROR);
+				dumper.error("FDC seek, could not find marker for track {0}", track);
+			}
 		}
 	}
+
+
+	/**
+	 * @return
+	 */
+	protected IdMarker matchIDMarker(byte trackReg, byte sectorReg, byte sideReg) {
+
+		int command = getCommand() & 0xf0;
+		
+		boolean isSeek = command == RealDiskConsts.FDC_restore || 
+				command == RealDiskConsts.FDC_seek ||
+				command == RealDiskConsts.FDC_step ||
+				command == RealDiskConsts.FDC_stepin ||
+				command == RealDiskConsts.FDC_stepout;
+				
+		if (isSeek) {
+			status.reset(StatusBit.SEEK_ERROR);
+			if (drive == null) {
+				status.set(StatusBit.SEEK_ERROR);
+				return null;
+			}
+		} else {
+			status.reset(StatusBit.REC_NOT_FOUND);
+			status.reset(StatusBit.CRC_ERROR);
+			if (drive == null) {
+				status.set(StatusBit.NOT_READY);
+				status.set(StatusBit.REC_NOT_FOUND);
+				return null;
+			}
+		}
+	
+		
+		// FDC179x mode
+		//byte desiredSide = (byte) ((flags & fl_side_number) != 0 ? 1 : 0);
+	
+		IdMarker firstMarker = null;
+		//ensureTrackMarkers();
+		
+		//int tries = trackMarkers.size();
+		IdMarker matchedMarker = null;
+		while (matchedMarker == null) {
+			IdMarker currentMarker = null;
+
+			addBusyTime(20);
+			
+			if ((currentMarker = drive.findIDMarker()) == null)
+				break;
+			
+			if (currentMarker.trackid == trackReg
+				&& ((command & RealDiskConsts.fl_side_compare) == 0 || currentMarker.sideid == sideReg)  
+				&& (isSeek || currentMarker.sectorid == sectorReg)
+				//&& crcid == crc
+				)
+			{
+				matchedMarker = currentMarker;
+				break;
+			}
+			
+			if (firstMarker == null) {
+				firstMarker = currentMarker;
+			} else if (currentMarker.equals(firstMarker)) {
+				break;
+			}
+		}
+
+		if (matchedMarker == null) {
+			dumper.error("FDCmatchIDmarker failed");
+			if (isSeek)
+				status.set(StatusBit.SEEK_ERROR);
+			else
+				status.set(StatusBit.REC_NOT_FOUND);
+			return null;
+		}
+		
+		dumper.info("FDCmatchIDmarker succeeded: track {0}, sector {1}, side {2}, size {3} (sector #{4})",
+				matchedMarker.trackid, matchedMarker.sectorid, 
+				matchedMarker.sideid, matchedMarker.sizeid, 
+				matchedMarker.trackid * 9 + matchedMarker.sectorid);
+		
+		return matchedMarker;
+	}
+	
 
 	/**
 	 * @throws IOException 
@@ -377,32 +367,32 @@ public class FDC1771 implements IPersistable {
 	 */
 	public void FDCreadsector() throws IOException {
 		dumper.info("FDC read sector, T{0} S{1} s{2}", trackReg, sectorReg, sideReg);
-		
+
+		buflen = 0;
+		bufpos = 0;
+
 		status.reset(StatusBit.LOST_DATA);
 		status.reset(StatusBit.DRQ_PIN);
 		
-		if (image == null) {
-			status.set(StatusBit.REC_NOT_FOUND);
-			return;
-		}
-
-		if (!FDCmatchIDmarker()) {
-			status.set(StatusBit.REC_NOT_FOUND);
+		IdMarker currentMarker = matchIDMarker(trackReg, sectorReg, sideReg);
+		if (currentMarker == null) {
 			return;
 		}
 		
 		buflen = 128 << (currentMarker.sizeid & 0xff);
-		if (buflen > image.getTrackSize()) {
-			status.set(StatusBit.REC_NOT_FOUND);
-			return;
-		}
-		bufpos = 0;
+//		if (buflen > image.getTrackSize()) {
+//			status.set(StatusBit.REC_NOT_FOUND);
+//			return 0;
+//		}
+		buflen = Math.min(buflen, rwBuffer.length);
 		
 		addBusyTime(buflen * 80 / 1000);		// TODO: real timing
 		
-		image.readSectorData(currentMarker, rwBuffer, 0, buflen);
+		//image.readSectorData(currentMarker, rwBuffer, 0, buflen);
+		drive.getImage().readSectorData(currentMarker, rwBuffer, 0, buflen);
 		
 		status.set(StatusBit.DRQ_PIN);
+
 	}
 
 
@@ -413,16 +403,16 @@ public class FDC1771 implements IPersistable {
 	public void FDCwritesector() throws IOException {
 		dumper.info("FDC write sector, T{0} S{1} s{2}", trackReg, sectorReg, sideReg);
 
+		buflen = 0;
+		bufpos = 0;
+
 		status.reset(StatusBit.LOST_DATA);
 		status.reset(StatusBit.DRQ_PIN);
 		
-		if (image == null) {
-			status.set(StatusBit.REC_NOT_FOUND);
+		IdMarker currentMarker = matchIDMarker(trackReg, sectorReg, sideReg);
+		if (currentMarker == null) {
 			return;
 		}
-
-		if (!FDCmatchIDmarker()) 
-			return;
 		
 		// not sure this is true
 		// http://nouspikel.group.shef.ac.uk//ti99/disks.htm#Sector%20size%20code
@@ -431,24 +421,35 @@ public class FDC1771 implements IPersistable {
 		else
 			buflen = currentMarker.sizeid != 0 ? (currentMarker.sizeid & 0xff) * 16 : 4096;
 			
-		bufpos = 0;
-		
 		addBusyTime(buflen * 80 / 1000);	// TODO: real timing
 		
 		status.set(StatusBit.DRQ_PIN);
 		
-		if (image.isReadOnly())
+		if (drive.isReadOnly())
 			status.set(StatusBit.WRITE_PROTECT);
+
+
 	}
 
 	/**
 	 * 
 	 */
 	public void FDCreadIDmarker() {
+		if (drive == null)
+			return;
+
+		bufpos = 0;
+		buflen = 0;
+		
 		status.reset(StatusBit.LOST_DATA);
 		status.reset(StatusBit.REC_NOT_FOUND);
-		
-		if (!FDCfindIDmarker()) {
+
+		IdMarker currentMarker = drive.findIDMarker();
+		if (currentMarker == null) {
+			status.set(StatusBit.REC_NOT_FOUND);
+			return;
+		}
+		if ((command & RealDiskConsts.fl_side_compare) != 0 && (currentMarker.sideid != sideReg)) {
 			status.set(StatusBit.REC_NOT_FOUND);
 			return;
 		}
@@ -463,14 +464,12 @@ public class FDC1771 implements IPersistable {
 		rwBuffer[ptr++] = (byte) (currentMarker.crcid & 0xff);
 
 		buflen = 6;
-		bufpos = 0;
 
 		// the detected track is copied into the sector register (!)
-		sectorReg = currentMarker.trackid;
+		sectorReg = drive.getCurrentMarker().trackid;
 		
 		dumper.info("FDC read ID marker: track={0} sector={1} side={2} size={3}",
 				currentMarker.trackid, currentMarker.sectorid, currentMarker.sideid, currentMarker.sizeid);
-
 		
 	}
 
@@ -481,9 +480,8 @@ public class FDC1771 implements IPersistable {
 	public void FDCinterrupt() throws IOException {
 		dumper.info("FDC interrupt");
 		
-		if (image != null)
-			image.setMotorTimeout(0);
 		commandBusyExpiration = 0;
+
 		status.clear();
 		
 		FDCflush();
@@ -492,51 +490,41 @@ public class FDC1771 implements IPersistable {
 	}
 
 	public void FDCwritetrack() {
-		dumper.info("FDC write track, #{0}", seektrack);
-
-		status.reset(StatusBit.LOST_DATA);
+		dumper.info("FDC write track, #{0}", drive != null ? drive.getSeekTrack() : -1);
 		
-		buflen = RealDiskConsts.DSKbuffersize;  
-			
+		if (drive == null)
+			return;
+		
 		bufpos = 0;
+		buflen = drive.writeTrack(); 
 		
-		addBusyTime(buflen * 10 / 1000);
-		
-		if (image != null && image.isReadOnly())
-			status.set(StatusBit.WRITE_PROTECT);
+
 	}
 
 	public void FDCreadtrack() throws IOException {
-		dumper.info("FDC read track, #{0}", seektrack);
+		dumper.info("FDC read track, #{0}", drive != null ? drive.getSeekTrack() : -1);
 
+		if (drive == null)
+			return;
+
+		
 		status.reset(StatusBit.LOST_DATA);
-		
-		bufpos = 0;
-		if (image != null) {
-			buflen = image.getTrackSize();
-			if (!image.isMotorRunning())
-				status.set(StatusBit.BUSY);
-			image.readTrackData(rwBuffer, 0, buflen);
-		} else {
-			buflen = 0;
-		}
-		
 
-		addBusyTime(buflen * 10 / 1000);
+		bufpos = 0;
+		buflen = drive.readTrack(rwBuffer);
+		
+		if (!isMotorAtTargetSpeed())
+			status.set(StatusBit.BUSY);
+
 	}
 
 	public void saveState(ISettingSection section) {
 	}
 
 	public void loadState(ISettingSection section) {
-		if (image != null) {
-			try {
-				image.closeDiskImage();
-			} catch (IOException e) {
-				dumper.error(e.getMessage());
-			}
+		for (FloppyDrive drive : drives) {
+			drive.reset();
 		}
-		image = null;
 	}
 
 	/**
@@ -545,7 +533,7 @@ public class FDC1771 implements IPersistable {
 	public byte readByte() {
 		byte ret = 0;
 
-		if (hold && image != null && image.isMotorRunning() && buflen != 0) {
+		if (hold && buflen != 0 && drive != null && drive.isMotorAtTargetSpeed()) {
 			ret = rwBuffer[bufpos++];
 			crcAlg.feed(ret);
 			if (bufpos >= buflen) {
@@ -561,7 +549,7 @@ public class FDC1771 implements IPersistable {
 	 * @param val
 	 */
 	public void writeByte(byte val) {
-		if (buflen != 0 && image != null && image.isMotorRunning()) {
+		if (buflen != 0 && drive != null && drive.isMotorAtTargetSpeed()) {
 			/* fill circular buffer */
 			if (bufpos < buflen) {
 				rwBuffer[bufpos++] = val;
@@ -578,36 +566,25 @@ public class FDC1771 implements IPersistable {
 	 * @throws IOException 
 	 */
 	public void setSide(byte side) throws IOException {
+		// side affects all drives
 		dumper.info("Select side {0}", side);
-		updateSeek(seektrack, side);
 		sideReg = side;
-	}
-
-	/**
-	 * @return
-	 */
-	public IDiskImage getImage() {
-		return image;
+		for (FloppyDrive drive : drives) {
+			drive.setSide(side);
+		}
 	}
 
 	public void setHold(boolean hold) {
+		try {
+			FDChold(hold);
+		} catch (IOException e) {
+			dumper.error(e.getMessage());
+		}
 		this.hold = hold;
 	}
 
 	public boolean isHold() {
 		return hold;
-	}
-
-	public void setHeads(boolean heads) {
-		this.heads = heads;
-	}
-
-	public boolean isHeads() {
-		return heads;
-	}
-
-	public void setStatus(FDCStatus status) {
-		this.status = status;
 	}
 
 	public FDCStatus getStatus() {
@@ -616,6 +593,8 @@ public class FDC1771 implements IPersistable {
 
 	public void setCommand(int command) {
 		this.command = command;
+		
+		setCommandBusyExpiration(System.currentTimeMillis() + 1);
 	}
 
 	public int getCommand() {
@@ -624,17 +603,21 @@ public class FDC1771 implements IPersistable {
 
 	public void setTrackReg(byte trackReg) {
 		this.trackReg = trackReg;
+		dumper.info(("FDC write track addr " + trackReg + " >" + HexUtils.toHex2(trackReg)));
 	}
 
 	public byte getTrackReg() {
+		dumper.info(("FDC read track " + trackReg + " >" + HexUtils.toHex2(trackReg)));
 		return trackReg;
 	}
 
 	public void setSectorReg(byte sectorReg) {
 		this.sectorReg = sectorReg;
+		dumper.info(("FDC write sector addr " + sectorReg + " >" + HexUtils.toHex2(sectorReg)));
 	}
 
 	public byte getSectorReg() {
+		dumper.info(("FDC read sector " + sectorReg + " >" + HexUtils.toHex2(sectorReg)));
 		return sectorReg;
 	}
 
@@ -685,6 +668,244 @@ public class FDC1771 implements IPersistable {
 
 	public boolean isStepout() {
 		return stepout;
+	}
+
+	public int getSelectedDisk() {
+		return selectedDisk;
+	}
+
+	public void selectDisk(int newnum, boolean on) {
+		//module_logger(&realDiskDSR, _L|L_1, _("CRU disk select, #%d\n"), newnum);
+		
+		if (on) {
+			selectedDisk = (byte) newnum;
+			drive = drives[newnum - 1];
+			drive.activate();
+
+		} else {
+			if (newnum == selectedDisk) {
+				if (drive != null)
+					drive.reset();
+				
+				selectedDisk = 0;
+				drive = null;
+			}
+		}
+				
+	}
+
+	/**
+	 * @param b
+	 */
+	public void setHeads(boolean b) {
+		if (drive != null)
+			drive.setHeads(b);
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isHeads() {
+		if (drive != null)
+			return drive.isHeads();
+		return false;
+	}
+	
+
+	public void setDiskMotor(boolean on) {
+		if (drive == null)
+			return;
+		
+		drive.setMotor(on);
+	}
+
+	public boolean isMotorAtTargetSpeed() {
+		if (drive != null)
+			return drive.isMotorAtTargetSpeed();
+		else
+			return false;
+	}
+
+
+
+
+	/**
+	 * @return
+	 */
+	public byte readStatus() {
+		byte ret = getStatus().calculate(getCommand());
+		
+		if (drive != null) {
+			if (!drive.isMotorAtTargetSpeed()
+				|| getCommandBusyExpiration() > System.currentTimeMillis())
+				ret |= StatusBit.BUSY.getVal();
+		}
+		
+		if (ret != lastStatus) {
+			StringBuilder status = new StringBuilder();
+			getStatus().toString(getCommand());
+			dumper.info(("FDC read status >" + HexUtils.toHex2(ret) + " : " + status));
+		}
+		lastStatus = ret;
+
+		return ret;
+	}
+
+	/**
+	 * @param key
+	 * @return
+	 */
+	public IDeviceIndicatorProvider getDrive(String key) {
+		return null;
+	}
+
+	/**
+	 * @param val
+	 */
+	public void writeData(byte val) {
+		if (!isHold())
+			dumper.info(("FDC write data ("+getBufpos()+") >"+HexUtils.toHex2(val))); 
+		//			   (u8) val);
+		if (!isHold()) {
+			setLastbyte(val);
+		} else {
+			getStatus().set(StatusBit.DRQ_PIN);;
+			
+			if (getCommand() == RealDiskConsts.FDC_writesector) {
+				// normal write
+				writeByte(val);
+				
+
+			} else if (getCommand() == RealDiskConsts.FDC_writetrack) {
+				if (true /* is FM */) {
+					// for FM write, >F5 through >FE are special
+					if (val == (byte) 0xf5 || val == (byte) 0xf6) {
+						getStatus().reset(StatusBit.REC_NOT_FOUND);;
+					} else if (val == (byte) 0xf7) {
+						// write CRC
+						writeByte((byte) (getCrc() >> 8));
+						writeByte((byte) (getCrc() & 0xff));
+					} else if (val >= (byte) 0xf8 && val <= (byte) 0xfb) {
+						resetCrc();
+						writeByte(val);
+					} else {
+						writeByte(val);
+					}
+				} else {
+					writeByte(val);
+				}
+			} else {
+				dumper.info(("Unexpected data write >" + HexUtils.toHex2(val) + " for command >" + HexUtils.toHex2(getCommand())));
+			}
+		}
+		
+	}
+
+	/**
+	 * @param val
+	 */
+	public void writeCommand(byte val) {
+		try {
+			if (getStatus().is(StatusBit.BUSY) && (val & 0xf0) != 0xf0) {
+				dumper.info(("FDC writing command >" + HexUtils.toHex2(val) + " while busy!"));
+				//return;
+			}
+			
+			FDCflush();
+			setBuflen(setBufpos(0));
+			
+			dumper.info(("FDC command >" + HexUtils.toHex2(val)));
+			//module_logger(&realDiskDSR, _L|L_1, _("FDC command >%02X\n"), val);
+			
+			setCommand(val & 0xF0);
+			
+			// standardize commands
+			if (getCommand() == 0x30 || getCommand() == 0x50 || getCommand() == 0x70
+					|| getCommand() == (byte)0x90 || getCommand() == (byte)0xA0)
+				setCommand(getCommand() & (~0x10));
+			
+			setFlags((byte) (val & 0x1F));
+		
+			getStatus().reset(StatusBit.BUSY);
+			
+			switch (getCommand()) {
+			case RealDiskConsts.FDC_restore:
+				FDCrestore();
+				break;
+			case RealDiskConsts.FDC_seek:
+				FDCseek();
+				break;
+			case RealDiskConsts.FDC_step:
+				FDCstep();
+				break;
+			case RealDiskConsts.FDC_stepin:
+				setStepout(false);
+				FDCstep();
+				break;
+			case RealDiskConsts.FDC_stepout:
+				setStepout(true);
+				FDCstep();
+				break;
+			case RealDiskConsts.FDC_readsector:
+				FDCreadsector();
+				break;
+			case RealDiskConsts.FDC_writesector:
+				FDCwritesector();
+				break;
+			case RealDiskConsts.FDC_readIDmarker:
+				FDCreadIDmarker();
+				break;
+			case RealDiskConsts.FDC_interrupt:
+				FDCinterrupt();
+				break;
+			case RealDiskConsts.FDC_writetrack:
+				FDCwritetrack();
+				break;
+			case RealDiskConsts.FDC_readtrack:
+				FDCreadtrack();
+				break;
+			default:
+				//module_logger(&realDiskDSR, _L|L_1, _("unknown FDC command >%02X\n"), val);
+				dumper.info(("Unknown FDC command >" + HexUtils.toHex2(val)));
+			}
+		} catch (IOException e) {
+			dumper.error(e.getMessage());
+		}  catch(Throwable t) {
+			dumper.error(t.getMessage());
+		}
+		
+	}
+	/**
+	 * @return the commandBusyExpiration
+	 */
+	public long getCommandBusyExpiration() {
+		return commandBusyExpiration;
+	}
+
+	/**
+	 * @param ms
+	 */
+	public void addBusyTime(int ms) {
+		//status.set(StatusBit.BUSY);
+		if (commandBusyExpiration == 0) {
+			commandBusyExpiration = System.currentTimeMillis();
+		}
+		commandBusyExpiration += settingRealTime.getBoolean() ? ms : 0;
+	}
+
+
+	/**
+	 * @param l
+	 */
+	public void setCommandBusyExpiration(long l) {
+		this.commandBusyExpiration = l;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isMotorRunning() {
+		return drive != null && drive.isMotorRunning();
 	}
 
 }

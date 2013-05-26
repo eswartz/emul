@@ -14,11 +14,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
- * Volume description record
+ * Volume information block
  * @author ejs
  *
  */
-public class VDR {
+public class VIB {
 	public static final int OFFS_NAME = 0;
 	public static final int OFFS_NUM_SECS = 0xA;
 	public static final int OFFS_SECS_PER_TRACK = 0xc;
@@ -33,22 +33,22 @@ public class VDR {
 
 	public static final int VDRSIZE = 256;
 
-    public static VDR createVDR(byte[] data, int offset) {
-        VDR vdr = new VDR();
+    public static VIB createVIB(byte[] data, int offset) {
+        VIB vib = new VIB();
         
-    	System.arraycopy(data, offset + OFFS_NAME, vdr.volname, 0, vdr.volname.length);
-    	System.arraycopy(data, offset + OFFS_NUM_SECS, vdr.numSecs, 0, vdr.numSecs.length);
-    	vdr.secsPerTrack = data[offset + OFFS_SECS_PER_TRACK] & 0xff;
-    	System.arraycopy(data, offset + OFFS_DSR_MARK, vdr.dsrMark, 0, vdr.dsrMark.length);
-        vdr.protection = (char) data[offset + OFFS_PROTECTION];
-        vdr.tracksPerSide = data[offset + OFFS_TRACKS_PER_SIDE] & 0xff;
-        vdr.sides = data[offset + OFFS_SIDES] & 0xff;
-        vdr.density = data[offset + OFFS_DENSITY] & 0xff;
-        System.arraycopy(data, offset + OFFS_RESERVED_14, vdr.reserved14, 0, vdr.reserved14.length);
-        System.arraycopy(data, offset + OFFS_SECTOR_BITMAP, vdr.secBitMap, 0, vdr.secBitMap.length);
-        System.arraycopy(data, offset + OFFS_RESERVED_EC, vdr.reservedEC, 0, vdr.reservedEC.length);
+    	System.arraycopy(data, offset + OFFS_NAME, vib.volname, 0, vib.volname.length);
+    	System.arraycopy(data, offset + OFFS_NUM_SECS, vib.numSecs, 0, vib.numSecs.length);
+    	vib.secsPerTrack = data[offset + OFFS_SECS_PER_TRACK] & 0xff;
+    	System.arraycopy(data, offset + OFFS_DSR_MARK, vib.dsrMark, 0, vib.dsrMark.length);
+        vib.protection = (char) data[offset + OFFS_PROTECTION];
+        vib.tracksPerSide = data[offset + OFFS_TRACKS_PER_SIDE] & 0xff;
+        vib.sides = data[offset + OFFS_SIDES] & 0xff;
+        vib.density = data[offset + OFFS_DENSITY] & 0xff;
+        System.arraycopy(data, offset + OFFS_RESERVED_14, vib.reserved14, 0, vib.reserved14.length);
+        System.arraycopy(data, offset + OFFS_SECTOR_BITMAP, vib.secBitMap, 0, vib.secBitMap.length);
+        System.arraycopy(data, offset + OFFS_RESERVED_EC, vib.reservedEC, 0, vib.reservedEC.length);
         
-        return vdr;
+        return vib;
     }
     
     /** 10 bytes, padded with spaces */
@@ -69,7 +69,7 @@ public class VDR {
     protected final byte[] secBitMap = new byte[0xB4];
     protected final byte[] reservedEC = new byte[0x14];
     
-    public VDR() {
+    public VIB() {
     	
     }
    

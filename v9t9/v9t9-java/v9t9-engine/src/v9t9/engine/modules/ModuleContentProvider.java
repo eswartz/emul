@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import v9t9.common.client.IEmulatorContentSource;
 import v9t9.common.client.IEmulatorContentSourceProvider;
 import v9t9.common.machine.IMachine;
@@ -29,8 +27,6 @@ import v9t9.common.modules.ModuleContentSource;
  *
  */
 public class ModuleContentProvider implements IEmulatorContentSourceProvider {
-
-	private static final Logger log = Logger.getLogger(ModuleContentProvider.class);
 	
 	private IMachine machine;
 

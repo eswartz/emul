@@ -393,12 +393,12 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	@Override
 	public RawInstruction getCurrentInstruction() {
 		ICpu cpu = machine.getCpu();
-		CycleCounts origCounts = cpu.getCycleCounts().clone();
+		cpu.getCycleCounts().saveState();
 		
 		RawInstruction inst = machine.getInstructionFactory().decodeInstruction(
 				cpu.getState().getPC(), machine.getConsole());
 		
-		origCounts.copyTo(cpu.getCycleCounts());
+		cpu.getCycleCounts().restoreState();
 
 		return inst;
 	}

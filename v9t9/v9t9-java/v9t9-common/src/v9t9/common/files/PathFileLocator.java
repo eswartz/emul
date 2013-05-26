@@ -419,15 +419,16 @@ public class PathFileLocator implements IPathFileLocator {
 		}
 		
 		if (cachedListing != null && !directory.equals(rwPathProperty)) {
-			// never update JAR cache
-			if ("jar".equals(directory.getScheme())) 
-				return cachedListing;
-			
-			// don't update cache more than once a second
-			Long listingTime = cachedListingTime.get(directory);
-			if (listingTime != null && listingTime + 1 * 1000 > System.currentTimeMillis()) {
-				return cachedListing;
-			}
+			return cachedListing;
+//			// never update JAR cache
+//			if ("jar".equals(directory.getScheme())) 
+//				return cachedListing;
+//			
+//			// don't update cache more than twice a minute
+//			Long listingTime = cachedListingTime.get(directory);
+//			if (listingTime != null && listingTime + 1 * 30*1000 > System.currentTimeMillis()) {
+//				return cachedListing;
+//			}
 		}
 		
 		Pair<Long, Map<String, FileInfo>> info = fetchDirectoryListing(directory);
@@ -921,13 +922,18 @@ public class PathFileLocator implements IPathFileLocator {
 	@Override
 	public InputStream createInputStream(URI uri) throws IOException {
 
-		InputStream is = null; 
-		URLConnection connection = connect(uri, false);
-		is = connection.getInputStream();
-		
-		if (is == null)
-			throw new FileNotFoundException("failed to connect to " + uri);
-		return is;
+		try {
+			return new BufferedInputStream(new FileInputStream(new File(uri)));
+		} catch (IllegalArgumentException e) 
+		{
+			InputStream is = null; 
+			URLConnection connection = connect(uri, false);
+			is = connection.getInputStream();
+			
+			if (is == null)
+				throw new FileNotFoundException("failed to connect to " + uri);
+			return is;
+		}
 	}
 
 	
@@ -952,8 +958,13 @@ public class PathFileLocator implements IPathFileLocator {
 	 */
 	@Override
 	public long getLastModified(URI uri) throws IOException {
-		URLConnection connection = connect(uri, false);
-		return connection.getLastModified();
+		try {
+			File file = new File(uri);
+			return file.lastModified();
+		} catch (IllegalArgumentException e) {
+			URLConnection connection = connect(uri, false);
+			return connection.getLastModified();
+		}
 	}
 	
 	

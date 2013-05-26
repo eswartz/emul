@@ -14,6 +14,7 @@ import java.util.Map;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.swt.SWT;
 
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
@@ -66,6 +67,16 @@ public class ROMSetupTreeContentProvider implements ITreeContentProvider {
 			refreshThread = new Thread() {
 				@Override
 				public void run() {
+					if (viewer != null) {
+						viewer.getControl().getDisplay().asyncExec(new Runnable() {
+							public void run() {
+								if (viewer != null && !viewer.getControl().isDisposed()) {
+									viewer.getControl().setCursor(viewer.getControl().getDisplay().getSystemCursor(SWT.CURSOR_WAIT));
+								}
+							}
+						});
+					}
+
 					synchronized (ROMSetupTreeContentProvider.this) {
 						needsRefresh = false;
 						detectedModules.clear();
@@ -86,6 +97,7 @@ public class ROMSetupTreeContentProvider implements ITreeContentProvider {
 						if (viewer != null) {
 							viewer.getControl().getDisplay().asyncExec(new Runnable() {
 								public void run() {
+									viewer.getControl().setCursor(null);
 									if (viewer != null && !viewer.getControl().isDisposed()) {
 										viewer.refresh();
 										((TreeViewer) viewer).expandToLevel(2);
@@ -93,6 +105,7 @@ public class ROMSetupTreeContentProvider implements ITreeContentProvider {
 								}
 							});
 						}
+						
 						refreshThread = null;
 						if (needsRefresh) {
 							refresh();

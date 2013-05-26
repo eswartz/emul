@@ -22,6 +22,11 @@ public class CycleCounts {
 	private AtomicInteger store = new AtomicInteger();
 	private AtomicInteger execute = new AtomicInteger();
 	private AtomicInteger overhead = new AtomicInteger();
+	private int fetches;
+	private int executes;
+	private int loads;
+	private int stores;
+	private int overheads;
 	
 	public CycleCounts() {
 	}
@@ -94,11 +99,27 @@ public class CycleCounts {
 		return load.getAndSet(0);
 	}
 	
-	public CycleCounts clone() {
-		CycleCounts c = new CycleCounts();
-		copyTo(c);
-		return c;
+	public void saveState() {
+		this.fetches = fetch.get();
+		this.executes = execute.get();
+		this.loads = load.get();
+		this.stores = store.get();
+		this.overheads = overhead.get();
 	}
+	
+	public void restoreState() {
+		fetch.set(fetches);
+		execute.set(executes);
+		load.set(loads);
+		store.set(stores);
+		overhead.set(overheads);
+	}
+	
+//	public CycleCounts clone() {
+//		CycleCounts c = new CycleCounts();
+//		copyTo(c);
+//		return c;
+//	}
 	public void copyTo(CycleCounts c) {
 		c.fetch.set(fetch.get());
 		c.execute.set(execute.get());

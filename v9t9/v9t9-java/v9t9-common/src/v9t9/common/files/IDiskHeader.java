@@ -17,6 +17,7 @@ package v9t9.common.files;
 public interface IDiskHeader {
 	String getPath();
 	
+	int getSecsPerTrack();
 	/** tracks per side */
 	int getTracks();		
 	/** 1 or 2 */
@@ -27,8 +28,16 @@ public interface IDiskHeader {
 	int getTrack0Offset();
 	/** estimate image size */
 	long getImageSize();
-	int getTrackOffset(int num);
+	int getTrackOffset(int num, int side);
 
-	int getSecsPerTrack();
+	void setSides(int sides);
+	void setTracks(int tracks);
+	void setSecsPerTrack(int secsPerTrack);
+	void setTrackSize(int tracksize);
+	void setTrack0Offset(int track0offs);
+	void setPath(String path);
+
+	boolean isInvertedSide2();
+	void setInvertedSide2(boolean invertedSide2);
 
 }

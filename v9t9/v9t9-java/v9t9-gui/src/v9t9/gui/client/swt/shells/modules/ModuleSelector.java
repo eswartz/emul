@@ -523,8 +523,11 @@ public class ModuleSelector extends Composite {
 		} else {
 			lastFilter = text;
 		}
-		if (lastFilter != prev && (lastFilter == null || ! lastFilter.equals(prev)))
+		if (lastFilter != prev && (lastFilter == null || ! lastFilter.equals(prev))) {
 			viewer.refresh();
+			if (lastFilter != null)
+				viewer.expandAll();
+		}
 	}
 	/**
 	 * @param moduleManager

@@ -370,10 +370,11 @@ public class InterpreterF99b implements IInterpreter {
 		int pc = cpu.getPC() & 0xffff;
 		InstructionF99b inst = cachedInstrs[pc];
 		if (inst == null) {
-			CycleCounts counts = cycleCounts.clone();
+			cycleCounts.saveState();
+			int total = cycleCounts.getTotal();
 			inst = (InstructionF99b) instructionFactory.decodeInstruction(pc, memory);
-			inst.fetchCycles = cycleCounts.getTotal() - counts.getTotal();
-			counts.copyTo(cycleCounts);
+			inst.fetchCycles = cycleCounts.getTotal() - total;
+			cycleCounts.restoreState();
 			cachedInstrs[pc] = inst;
 			cachedInstrCount++;
 			instrMap.set(pc, pc + inst.getSize());

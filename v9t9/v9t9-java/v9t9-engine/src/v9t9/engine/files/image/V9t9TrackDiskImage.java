@@ -53,13 +53,13 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 		getHandle().seek(0);
 		getHandle().write(TRACK_MAGIC.getBytes());
 		getHandle().write(TRACK_VERSION);
-		getHandle().write(hdr.tracks);
-		getHandle().write(hdr.sides);
-		getHandle().write(hdr.secsPerTrack);
-		getHandle().write(hdr.tracksize >> 8);
-		getHandle().write(hdr.tracksize & 0xff);
-		getHandle().write(hdr.track0offs >> 8);
-		getHandle().write(hdr.track0offs & 0xff);
+		getHandle().write(hdr.getTracks());
+		getHandle().write(hdr.getSides());
+		getHandle().write(hdr.getSecsPerTrack());
+		getHandle().write(hdr.getTrackSize() >> 8);
+		getHandle().write(hdr.getTrackSize() & 0xff);
+		getHandle().write(hdr.getTrack0Offset() >> 8);
+		getHandle().write(hdr.getTrack0Offset() & 0xff);
 
 		/* maintain invariants */
 		growImageForContent(); 
@@ -86,20 +86,22 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 		byte[] magic = new byte[TRACK_MAGIC.length()];
 		getHandle().read(magic);
 		byte version = getHandle().readByte();
-		hdr.tracks = getHandle().readByte() & 0xff;
-		hdr.sides = getHandle().readByte() & 0xff;
+		hdr.setTracks(getHandle().readByte() & 0xff);
+		hdr.setSides(getHandle().readByte() & 0xff);
 		byte spt = getHandle().readByte(); 
-		hdr.tracksize =  (((getHandle().read() & 0xff) << 8) | (getHandle().read() & 0xff));
+		hdr.setTrackSize((((getHandle().read() & 0xff) << 8) | (getHandle().read() & 0xff)));
 		if (spt == 0) {
-			spt = (byte) (hdr.tracksize / 256);
+			spt = (byte) (hdr.getTrackSize() / 256);
 			if (spt < 18)
 				spt = 9;
 			else
 				spt = 18;
 		}
-		hdr.secsPerTrack = spt & 0xff;
-		hdr.track0offs = (((getHandle().read() & 0xff) << 8) | (getHandle().read() & 0xff));
+		hdr.setSecsPerTrack(spt & 0xff);
+		hdr.setTrack0Offset((((getHandle().read() & 0xff) << 8) | (getHandle().read() & 0xff)));
 
+		hdr.setSide2DirectionKnown(false);
+		
 		/* verify */
 		if (!Arrays.equals(TRACK_MAGIC.getBytes(), magic)) {
 			throw new IOException(MessageFormat.format("DOAD server:  disk image ''{0}'' has unknown type (got {1}, expected {2})",
@@ -113,14 +115,14 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 						  spec, version, TRACK_VERSION));
 		}
 		
-		if (hdr.tracksize < 0) {
+		if (hdr.getTrackSize() < 0) {
 			throw new IOException(MessageFormat.format("DOAD server:  disk image ''{0}'' has invalid track size {1}\n",
-					  spec, hdr.tracksize));
+					  spec, hdr.getTrackSize()));
 		}
 
-		if (hdr.tracksize > RealDiskConsts.DSKbuffersize) {
+		if (hdr.getTrackSize() > RealDiskConsts.DSKbuffersize) {
 			throw new IOException(MessageFormat.format("Disk image has too large track size ({0} > {1})",
-						  hdr.tracksize, RealDiskConsts.DSKbuffersize));
+						  hdr.getTrackSize(), RealDiskConsts.DSKbuffersize));
 		}
 	}
 	

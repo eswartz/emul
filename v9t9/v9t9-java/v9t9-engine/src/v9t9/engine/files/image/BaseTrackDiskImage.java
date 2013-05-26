@@ -121,12 +121,12 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 			for (IdMarker marker : mfmMarkers) {
 				totMfmSize += marker.getSectorSize();
 			}
-			if (totFmSize < hdr.tracksize / 2 && mfmMarkers.size() == 0) {
-				dumper.info("found only " + fmMarkers.size() + " FM sectors on track " + seektrack  +" in disk image " 
+			if (totFmSize < hdr.getTrackSize() / 2 && mfmMarkers.size() == 0) {
+				dumper.info("found only " + fmMarkers.size() + " FM sectors on track " + track +" in disk image " 
 						+ spec);
 			}
-			else if (totMfmSize < hdr.tracksize / 2 && fmMarkers.size() == 0) {
-				dumper.info("found only " + mfmMarkers.size() + " MFM sectors on track " + seektrack  +" in disk image " 
+			else if (totMfmSize < hdr.getTrackSize() / 2 && fmMarkers.size() == 0) {
+				dumper.info("found only " + mfmMarkers.size() + " MFM sectors on track " + track  +" in disk image " 
 						+ spec);
 			}
 			if (fmMarkers.size() > mfmMarkers.size()) {

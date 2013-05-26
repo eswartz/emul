@@ -468,7 +468,8 @@ public class TestRealDiskImage  {
 		image.openDiskImage();
 		image.writeImageHeader();
 		
-		image.seekToCurrentTrack(0, 0);
+		image.setTrack(0);
+		image.setSide(0);
 		image.writeTrackData(stockBuffer, 0, stockBuffer.length);
 		image.commitTrack();
 		

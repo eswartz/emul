@@ -10,10 +10,8 @@
  */
 package v9t9.machine.ti99.interpreter;
 
-import java.util.HashMap;
 import java.util.Map;
-
-import ejs.base.utils.ListenerList;
+import java.util.WeakHashMap;
 
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
@@ -31,12 +29,13 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.InstTable9900;
+import v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator;
 import v9t9.machine.ti99.cpu.Instruction9900;
 import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;
 import v9t9.machine.ti99.cpu.MachineOperand9900;
 import v9t9.machine.ti99.cpu.Status9900;
-import v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator;
 import v9t9.machine.ti99.machine.TI99Machine;
+import ejs.base.utils.ListenerList;
 
 /**
  * This class interprets 9900 instructions one by one.
@@ -65,7 +64,7 @@ public class Interpreter9900 implements IInterpreter {
         this.cpu = (Cpu9900) machine.getCpu();
         this.memory = machine.getCpu().getConsole();
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
-        parsedInstructions = new HashMap<IMemoryArea, Instruction9900[]>();
+        parsedInstructions = new WeakHashMap<IMemoryArea, Instruction9900[]>();
         iblock = new InstructionWorkBlock9900(cpu.getState());
         status = (Status9900) cpu.getState().createStatus();
         cycleCounts = cpu.getCycleCounts();
@@ -206,7 +205,7 @@ public class Interpreter9900 implements IInterpreter {
 		Instruction9900 ins;
 	    int pc = cpu.getPC() & 0xfffe;
 	    
-	    CycleCounts counts = cpu.getCycleCounts().clone();
+	    cpu.getCycleCounts().saveState();
 	    
 	    short op;
 	    IMemoryDomain console = cpu.getConsole();
@@ -232,7 +231,7 @@ public class Interpreter9900 implements IInterpreter {
 	    }
 
 		// restore
-		counts.copyTo(cpu.getCycleCounts());
+		cpu.getCycleCounts().restoreState();
 
 		return ins;
 	}

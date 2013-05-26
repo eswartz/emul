@@ -77,10 +77,10 @@ class ViewerUpdater extends Thread {
 
 							if (toRefresh) {
 								moduleSelector.getViewer().refresh(true);
+							}
+							if (!firstRefresh) {
 								moduleSelector.getViewer().expandToLevel(2);
 							}
-							// the node may have been filtered out
-							//refreshFilters();
 							
 							if (firstRefresh) {
 								firstRefresh = false;

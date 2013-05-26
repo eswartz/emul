@@ -75,7 +75,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 	private ICruWriter cruwRealDiskMotor = new ICruWriter() {
 		public int write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU Motor %s\n"), data ? "on" : "off");
-			setDiskMotor(data != 0);
+			fdc.setDiskMotor(data != 0);
 			return 0;
 		}
 	};
@@ -87,7 +87,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		public int write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU hold %s\n"), data ? "on" : "off");
 		
-			setDiskHold(data != 0);
+			fdc.setHold(data != 0);
 			
 			return 0;
 		}
@@ -97,7 +97,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		public int write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU Heads %s\n"), data ? "on" : "off");
 	
-			setDiskHeads(data != 0);
+			fdc.setHeads(data != 0);
 			return 0;
 		}
 	};
@@ -106,7 +106,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		public int write(int addr, int data, int num) {
 			byte newnum = (byte) (((addr - 0x1108) >> 1) + 1);
 	
-			selectDisk(newnum, data != 0);
+			fdc.selectDisk(newnum, data != 0);
 			
 			return 0;
 		}
@@ -123,13 +123,13 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 	private ICruReader crurRealDiskPoll = new ICruReader() {
 		public int read(int addr, int data, int num) {
 			byte newnum = (byte) (((addr - 0x1102) >> 1) + 1);
-			return isPolledDisk(newnum) ? 1 : 0;
+			return fdc.getSelectedDisk() == (int) newnum ? 1 : 0;
 		}
 	};
 
 	private ICruReader crurRealDiskMotor = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			return isMotorRunning() ? 1 : 0;
+			return fdc.isMotorRunning() ? 1 : 0;
 			
 		}
 	};
@@ -217,19 +217,22 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 
 			switch ((addr - 0x5ff0) >> 1) {
 			case R_RDSTAT:
-				ret = readStatus();
+				byte ret1 = fdc.readStatus();
+				ret = ret1;
 				break;
 
 			case R_RTADDR:
-				ret = readTrackAddr();
+				byte ret2 = fdc.getTrackReg();
+				ret = ret2;
 				break;
 
 			case R_RSADDR:
-				ret = readSectorAddr();
+				byte ret3 = fdc.getSectorReg();
+				ret = ret3;
 				break;
 
 			case R_RDDATA:
-				ret = readData();
+				ret = fdc.readByte();
 				break;
 
 			case W_WTCMD:
@@ -267,19 +270,21 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 				break;
 
 			case W_WTCMD:
-				writeCommand(val);
+				fdc.writeCommand(val);
 				break;
 
 			case W_WTADDR:
-				writeTrackAddr(val);
+				fdc.setTrackReg(val);
+				//DSK.status &= ~fdc_LOSTDATA;
 				break;
 
 			case W_WSADDR:
-				writeSectorAddr(val);
+				fdc.setSectorReg(val);
+				//DSK.status &= ~fdc_LOSTDATA;
 				break;
 
 			case W_WTDATA:
-				writeData(val);
+				fdc.writeData(val);
 			}
 		
 			

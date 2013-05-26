@@ -68,32 +68,35 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 			throw new IOException(MessageFormat.format("RawTrackDiskImage:  disk image ''{0}'' does not appear to be a raw track image",
 					spec));
 
-		hdr.sides = sector[0x12] & 0xff;
-		hdr.tracks = sector[0x11] & 0xff;
-		hdr.secsPerTrack = sector[0x0C] & 0xff;
+		hdr.setSides(sector[0x12] & 0xff);
+		hdr.setTracks(sector[0x11] & 0xff);
+		hdr.setSecsPerTrack(sector[0x0C] & 0xff);
 		
-		if (hdr.tracks == 0 || hdr.sides == 0 ||
+		if (hdr.getTracks() == 0 || hdr.getSides() == 0 ||
 				'D' != sector[0x0D] || 'S' != sector[0x0E] || 'K' != sector[0x0F])
 			throw new IOException(MessageFormat.format("RawTrackDiskImage:  disk image ''{0}'' does not appear to be formatted",
 					spec));
 		
-		hdr.tracksize = (short) (getHandle().length() / hdr.tracks / hdr.sides);
-		if (hdr.sides == 1 && hdr.tracksize > 5000) {
-			hdr.tracksize /= 2;
-			hdr.sides++;
+		hdr.setTrackSize((int) (getHandle().length() / hdr.getTracks() / hdr.getSides()));
+		if (hdr.getSides() == 1 && hdr.getTrackSize() > 5000) {
+			hdr.setTrackSize(hdr.getTrackSize() / 2);
+			hdr.setSides(hdr.getSides() + 1);
 		}
 		
-		hdr.track0offs = 0;
+		hdr.setTrack0Offset(0);
 
-		if (hdr.tracksize <= 0) {
+		hdr.setSide2DirectionKnown(false);
+		
+		if (hdr.getTrackSize() <= 0) {
 			throw new IOException(MessageFormat.format("RawTrackDiskImage:  disk image ''{0}'' has invalid track size {1}\n",
-					  spec, hdr.tracksize));
+					  spec, hdr.getTrackSize()));
 		}
 
-		if (hdr.tracksize > RealDiskConsts.DSKbuffersize) {
+		if (hdr.getTrackSize() > RealDiskConsts.DSKbuffersize) {
 			throw new IOException(MessageFormat.format("RawTrackDiskImage: disk image ''{0}'' has too large track size ({1} > {2})",
-					spec, hdr.tracksize, RealDiskConsts.DSKbuffersize));
+					spec, hdr.getTrackSize(), RealDiskConsts.DSKbuffersize));
 		}
+		
 	}
 	
 	/**

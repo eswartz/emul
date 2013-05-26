@@ -1014,7 +1014,9 @@ public class TI99Machine extends MachineBase {
 				addr = next;
 			} while (next >= baseAddr);		/* else not really module? */
 			
-			String suffix = (content[offs + 1] < 0) ? " (auto-start)" : "";
+			String suffix = "";
+			if (content[offs + 1] < 0) 
+				suffix = " (auto-start)";
 			if (isASCII(name)) {
 				log.debug("Using name: " + name) ;
 				
