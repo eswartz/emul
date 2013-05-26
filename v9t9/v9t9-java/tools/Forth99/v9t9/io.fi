@@ -62,7 +62,7 @@
     'DSKFLG c@  AND
 ;
 
-: motor ( on? -- 0|err )
+: motor ( on? -- )
     #dskFlgMotor dsk-flg!
 ;
 
@@ -88,8 +88,6 @@
     
     trk 'DSKDAT c!
     #dskCmdSeek seek-command
-    
-    \ keep motor going in case of xfers 
 ;
 
 
@@ -141,7 +139,7 @@ chars/block bytes-per-sector u/  constant secs-per-block
     drop
 
     false #dskFlgHold dsk-flg!
-    \ keep motor going in case of further xfers
+    false motor
 ;
 
 \ read/write block on current disk 

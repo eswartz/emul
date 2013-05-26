@@ -18,6 +18,7 @@ import java.util.Map;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.IMemoryIOHandler;
+import v9t9.engine.files.image.FloppyDrive;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 
@@ -180,7 +181,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 		 */
 			
 		for (Map.Entry<String, IProperty> entry : imageMapper.getDiskSettingsMap().entrySet()) {
-			IDeviceIndicatorProvider drive = fdc.getDrive(entry.getKey());
+			FloppyDrive drive = fdc.getDrive(entry.getKey());
 			if (drive != null) {
 				IProperty activeProperty = drive.getActiveProperty(); 
 				DiskMotorIndicatorProvider provider = new DiskMotorIndicatorProvider(entry.getKey(), 

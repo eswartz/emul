@@ -50,7 +50,7 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 				});
 			}
 		};
-		provider.getActiveProperty().addListener(listener);
+		provider.getActiveProperty().addListenerAndFire(listener);
 		
 
 		final ControlListener resizeListener = new ControlListener() {

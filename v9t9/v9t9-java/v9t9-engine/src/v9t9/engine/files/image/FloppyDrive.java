@@ -59,6 +59,8 @@ public class FloppyDrive {
 	private FDC1771 fdc;
 
 	private boolean motorRequest;
+
+	private IProperty activeProperty;
 	
 	public FloppyDrive(IMachine machine, Dumper dumper_, FDCStatus status_, int num_, IProperty motorProperty_,
 			FDC1771 fdc) {
@@ -68,6 +70,7 @@ public class FloppyDrive {
 //		this.motorProperty = motorProperty_;
 		this.fdc = fdc;
 
+		this.activeProperty = motorProperty_;
 
 		settingRealTime = machine.getSettings().get(RealDiskDsrSettings.diskImageRealTime);
 
@@ -116,6 +119,8 @@ public class FloppyDrive {
 				dumper.info("DSK{0}: motor starting", num);
 				motorTimeout = now + (realTime ? 1500 : 0);
 				spinState = SpinState.SPINNING_UP;
+				
+				activeProperty.setBoolean(true);
 
 			} else if (spinState == SpinState.SPINNING_UP || spinState == SpinState.SPINNING_DOWN) {
 				if (spinState != SpinState.SPINNING_UP)
@@ -141,6 +146,8 @@ public class FloppyDrive {
 					dumper.info("DSK{0}: motor off", num);
 					spinState = SpinState.STOPPED;
 					motorTimeout = 0;
+					
+					activeProperty.setBoolean(false);
 				}
 			}
 		}
@@ -383,5 +390,8 @@ public class FloppyDrive {
 		
 	}
 
+	public IProperty getActiveProperty() {
+		return activeProperty;
+	}
 
 }

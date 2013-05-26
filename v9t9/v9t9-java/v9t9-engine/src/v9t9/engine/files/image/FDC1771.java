@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.files.IdMarker;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchemaProperty;
@@ -506,7 +505,6 @@ public class FDC1771 implements IPersistable {
 
 		if (drive == null)
 			return;
-
 		
 		status.reset(StatusBit.LOST_DATA);
 
@@ -755,8 +753,9 @@ public class FDC1771 implements IPersistable {
 	 * @param key
 	 * @return
 	 */
-	public IDeviceIndicatorProvider getDrive(String key) {
-		return null;
+	public FloppyDrive getDrive(String key) {
+		FloppyDrive drive = driveMap.get(key);
+		return drive;
 	}
 
 	/**
