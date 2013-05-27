@@ -247,6 +247,18 @@ public class CruManager implements ICruHandler {
 
         return val;
     }
-    
+
+    /**
+	 * @return the readers
+	 */
+	public Map<Integer, ICruReader> getReaders() {
+		return readers;
+	}
+	/**
+	 * @return the writers
+	 */
+	public Map<Integer, ICruWriter> getWriters() {
+		return writers;
+	}
     
 }

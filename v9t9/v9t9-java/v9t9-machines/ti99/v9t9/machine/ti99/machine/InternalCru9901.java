@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.sound.ICassetteVoice;
@@ -439,5 +440,18 @@ public class InternalCru9901 extends BaseCruChip {
     /** Access the registration object for CRU handlers */
     public CruManager getCruManager() {
     	return manager;
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.hardware.BaseCruChip#reset()
+     */
+    @Override
+    public void reset() {
+    	if (manager != null) {
+	    	for (Map.Entry<Integer, ICruWriter> ent : manager.getWriters().entrySet()) {
+	    		ent.getValue().write(ent.getKey(), 0, 1);
+	    	}
+    	}
+    	super.reset();
     }
 }
