@@ -12,6 +12,7 @@ package v9t9.gui.client.swt;
 
 import java.util.TimerTask;
 
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTError;
 import org.eclipse.swt.SWTException;
@@ -43,7 +44,7 @@ import v9t9.gui.client.swt.fileimport.DoNothingFileExecutor;
 import v9t9.gui.client.swt.handlers.DemoContentHandler;
 import v9t9.gui.client.swt.handlers.FileExecutorContentHandler;
 import v9t9.gui.client.swt.handlers.ModuleContentHandler;
-import v9t9.gui.client.swt.shells.ROMSetupDialog;
+import v9t9.gui.client.swt.wizards.SetupWizard;
 import v9t9.gui.sound.JavaSoundHandler;
 import ejs.base.timer.FastTimer;
 
@@ -272,7 +273,10 @@ public abstract class BaseSwtJavaClient implements IClient {
 	@Override
 	public void start() {
         if (settingsHandler.get(settingNewConfiguration).getBoolean()) {
-        	ROMSetupDialog dialog = ROMSetupDialog.createDialog(window.getShell(), machine, window);
+//        	ROMSetupDialog dialog = ROMSetupDialog.createDialog(window.getShell(), machine, window);
+//        	dialog.open();
+        	SetupWizard wizard = new SetupWizard(machine, window, true);
+        	WizardDialog dialog = new WizardDialog(window.getShell(), wizard);
         	dialog.open();
         }
 	}

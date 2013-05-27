@@ -188,7 +188,9 @@ public class KeyboardDialog extends Composite implements IKeyboardModeListener, 
 			byte shiftLockMask = (byte) (machine.getKeyboardState().getShiftMask()
 					| machine.getKeyboardState().getLockMask());
 			
-			int keycode = currentMode.getKeycode(shiftLockMask, key);
+			int keycode = KeyboardConstants.KEY_UNKNOWN; 
+			if (currentMode != null)
+				keycode = currentMode.getKeycode(shiftLockMask, key);
 			if (keycode != KeyboardConstants.KEY_UNKNOWN)
 				machine.getKeyboardState().stickyApplyKey(keycode, set);
 			

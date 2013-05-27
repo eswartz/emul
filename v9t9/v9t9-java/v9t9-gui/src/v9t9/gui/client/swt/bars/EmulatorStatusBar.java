@@ -98,12 +98,14 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		deviceImageProvider = createDeviceImageProvider(swtWindow.getShell());
 
 		createButton(IconConsts.ROM_SETUP,
-				"Setup ROMs", new SelectionAdapter() {
+				"Setup V9t9", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						ROMSetupDialog dialog = ROMSetupDialog.createDialog(
-								swtWindow.getShell(), machine, swtWindow);
-			        	dialog.open();
+//						ROMSetupDialog dialog = ROMSetupDialog.createDialog(
+//								swtWindow.getShell(), machine, swtWindow);
+//			        	dialog.open();
+						swtWindow.toggleToolShell(ROMSetupDialog.ROM_SETUP_TOOL_ID,
+								ROMSetupDialog.getToolShellFactory(machine, swtWindow));
 					}
 				}
 			);

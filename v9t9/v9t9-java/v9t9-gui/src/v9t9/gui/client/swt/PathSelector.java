@@ -195,7 +195,7 @@ public class PathSelector extends Composite {
 	private void createButtons() {
 		buttons = new Composite(this, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(1).margins(3, 3).applyTo(buttons);
-		GridDataFactory.fillDefaults().grab(false, true).applyTo(buttons);
+		GridDataFactory.fillDefaults().grab(false, true).minSize(-1, 64).applyTo(buttons);
 		
 		final Button add = new Button(buttons, SWT.PUSH);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(add);

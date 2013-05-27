@@ -56,6 +56,7 @@ import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
@@ -112,7 +113,7 @@ import v9t9.gui.client.swt.shells.IToolShellFactory;
 import v9t9.gui.client.swt.shells.LazyImageLoader;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageAdjuster;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
-import v9t9.gui.client.swt.shells.ROMSetupDialog;
+import v9t9.gui.client.swt.wizards.SetupWizard;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.FileUtils;
@@ -267,7 +268,8 @@ public class ModuleSelector extends Composite {
 		configureButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				ROMSetupDialog dialog = ROMSetupDialog.createDialog(window.getShell(), machine, window);
+				SetupWizard wizard = new SetupWizard(machine, window, false);
+				WizardDialog dialog = new WizardDialog(getShell(), wizard);
 	        	dialog.open();
 			}
 		});
