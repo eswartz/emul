@@ -67,9 +67,10 @@ public abstract class BaseGuiEventNotifier implements IEventNotifierListener {
 					}
 					NotifyEvent event = null;
 
-					event = notifier.fetchEvent(position++);
+					event = notifier.fetchEvent(position);
 					if (event != null) {
 						consumeEvent(event);
+						position++;
 					}
 				}
 			}
