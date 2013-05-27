@@ -283,24 +283,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 				return false;
 			}
 		});
-//			/* (non-Javadoc)
-//			 * @see v9t9.gui.client.swt.bars.ImageButton#isEventOverMenu(org.eclipse.swt.events.MouseEvent)
-//			 */
-//			@Override
-//			protected boolean isEventOverMenu(MouseEvent e) {
-//				if (super.isEventOverMenu(e))
-//					return true;
-//				
-//				if (recordSetting.getBoolean() || playSetting.getBoolean()) {
-//					// upper-left corner toggles these
-//					if (isPointOverDemoControlIcon(getSize(), e.x, e.y)) {
-//						return true;
-//					}
-//				}
-//				
-//				return false;
-//			}
-//		};
 
 		IPropertyListener demoButtonStateListener = new IPropertyListener() {
 			
@@ -461,6 +443,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 						} catch (NotifyException ex) {
 							machine.getEventNotifier().notifyEvent(ex.getEvent());
 						}
+						machine.setPaused(false);
 					}
 	
 				});
