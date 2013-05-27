@@ -135,13 +135,13 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 		if (addr != other.addr) {
 			return false;
 		}
-		if (area == null) {
-			if (other.area != null) {
-				return false;
-			}
-		} else if (!area.equals(other.area)) {
-			return false;
-		}
+//		if (area == null) {
+//			if (other.area != null) {
+//				return false;
+//			}
+//		} else if (!area.equals(other.area)) {
+//			return false;
+//		}
 		if (bWordAccess != other.bWordAccess) {
 			return false;
 		}
