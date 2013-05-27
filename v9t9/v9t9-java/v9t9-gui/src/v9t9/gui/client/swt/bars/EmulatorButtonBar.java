@@ -22,6 +22,7 @@ import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
@@ -248,16 +249,53 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 					));
 		}
 		
-		createButton(IconConsts.SCREENSHOT, "Take screenshot",
+		ImageButton screenshotButton = createButton(IconConsts.SCREENSHOT, "Take screenshot",
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						File file = swtWindow.screenshot();
-						if (file != null) {
-							swtWindow.getEventNotifier().notifyEvent(e, Level.INFO, "Recorded screenshot to " + file);
-						}
+						takeScreenshot(e, false);
 					}
 			});
+		screenshotButton.addAreaHandler(new ImageButtonMenuAreaHandler(imageProvider,
+				new IMenuHandler() {
+					
+					@Override
+					public void fillMenu(Menu menu) {
+						String cur = machine.getSettings().get(BaseEmulatorWindow.settingScreenShotsBase).getString();
+						if (!TextUtils.isEmpty(cur)) {
+							MenuItem current = new MenuItem(menu, SWT.NONE);
+							current.setEnabled(false);
+							current.setText("Base path: " + cur);
+						}
+						
+						MenuItem saveAs = new MenuItem(menu, SWT.PUSH);
+						saveAs.setText("Save as...");
+						saveAs.addSelectionListener(new SelectionAdapter() {
+							@Override
+							public void widgetSelected(SelectionEvent e) {
+								takeScreenshot(e, true);
+							}
+						});
+						
+						final IProperty prop = machine.getSettings().get(
+								BaseEmulatorWindow.settingScreenshotPlain);
+
+						MenuItem plainBitmap = new MenuItem(menu, SWT.CHECK);
+						plainBitmap.setText("Save plain bitmap");
+						plainBitmap.setSelection(prop.getBoolean());
+						
+						plainBitmap.addSelectionListener(new SelectionAdapter() {
+							@Override
+							public void widgetSelected(SelectionEvent e) {
+								prop.setBoolean(!prop.getBoolean());
+								
+							}
+						}); 
+						
+					}
+				}));
+
+		
 	
 
 		final SwtImageImportSupport imageSupport = new SwtImageImportSupport(
@@ -390,6 +428,20 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 			}
 		});
 
+	}
+
+	/**
+	 * @param saveAs
+	 */
+	protected void takeScreenshot(TypedEvent e, boolean saveAs) {
+		if (saveAs)
+			machine.getSettings().get(BaseEmulatorWindow.settingScreenShotsBase).setValue("");
+
+		File file = swtWindow.screenshot();
+		if (file != null) {
+			swtWindow.getEventNotifier().notifyEvent(e, Level.INFO, "Recorded screenshot to " + file);
+		}
+		
 	}
 
 	/*

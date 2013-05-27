@@ -42,7 +42,8 @@ public interface ISwtVideoRenderer extends IVideoRenderer {
 	 */
 	void reblit();
 
-	ImageData getScreenshotImageData();
+	ImageData getPlainScreenshotImageData();
+	ImageData getActualScreenshotImageData();
 	
 	void addSprite(ISwtSprite sprite);
 	void removeSprite(ISwtSprite sprite);

@@ -599,7 +599,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 		canvas.requestFocus();
 	}
 
-	public synchronized void saveScreenShot(File file) throws IOException {
+	public synchronized void saveScreenShot(File file, boolean plainBitmap) throws IOException {
 		synchronized (vdpCanvas) {
 			WritableRaster raster = surface.copyData(null);
 			BufferedImage saveImage = new BufferedImage(surface.getColorModel(), raster, false, null);

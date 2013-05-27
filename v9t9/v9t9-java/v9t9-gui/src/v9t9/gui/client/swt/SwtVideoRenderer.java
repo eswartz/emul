@@ -544,21 +544,23 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		}
 	}
 
-	public void saveScreenShot(File file) throws IOException {
+	public void saveScreenShot(File file, boolean plainBitmap) throws IOException {
 		synchronized (vdpCanvas) {
 			ImageLoader imageLoader = new ImageLoader();
-			ImageData data = getScreenshotImageData();
+			ImageData data = plainBitmap ? getPlainScreenshotImageData() 
+					: getActualScreenshotImageData();
 			if (data == null)
 				throw new IOException("Sorry, this renderer has no image to save");
 			imageLoader.data = new ImageData[] { data };
-			imageLoader.save(new FileOutputStream(file), SWT.IMAGE_PNG);
+			imageLoader.save(new FileOutputStream(file),
+					SWT.IMAGE_PNG);
 		}
 	}
 
 	/**
 	 * @return
 	 */
-	public ImageData getScreenshotImageData() {
+	public ImageData getPlainScreenshotImageData() {
 		synchronized (vdpCanvas) {
 			if (vdpCanvas instanceof BitmapVdpCanvas) {
 				Buffer buffer = ((BitmapVdpCanvas) vdpCanvas).getBuffer();
@@ -574,6 +576,22 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 			}
 		}
 		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.ISwtVideoRenderer#getActualScreenshotImageData()
+	 */
+	@Override
+	public ImageData getActualScreenshotImageData() {
+		Rectangle rect = canvas.getClientArea();
+		Image image = new Image(getControl().getDisplay(), 
+				ImageUtils.createStandard24BitImageData(rect.width, rect.height));
+		GC gc = new GC(image);
+		doRepaint(gc, rect);
+		ImageData data = image.getImageData();
+		gc.dispose();
+		image.dispose();
+		return data;
 	}
 
 	public void addMouseEventListener(MouseListener listener) {

@@ -1343,7 +1343,7 @@ public class ModuleSelector extends Composite {
 				true,
 				new String[] { "*.png|PNG" });
 		if (targFile != null) {
-			ImageData data = ((ISwtVideoRenderer) window.getVideoRenderer()).getScreenshotImageData();
+			ImageData data = ((ISwtVideoRenderer) window.getVideoRenderer()).getPlainScreenshotImageData();
 			try {
 				ImageIO.write(ImageUtils.convertToBufferedImage(data).image, "png", new File(targFile));
 				

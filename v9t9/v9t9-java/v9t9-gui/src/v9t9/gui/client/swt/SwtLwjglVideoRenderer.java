@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.opengl.GLCanvas;
 import org.eclipse.swt.opengl.GLData;
@@ -52,6 +53,7 @@ import v9t9.gui.client.swt.gl.MonitorParams;
 import v9t9.gui.client.swt.gl.SimpleCurvedCrtMonitorRender;
 import v9t9.gui.client.swt.gl.StandardMonitorRender;
 import v9t9.gui.client.swt.gl.TextureLoader;
+import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.video.IGLDataCanvas;
 import v9t9.video.common.CanvasFormat;
@@ -732,5 +734,55 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	@Override
 	public IMonitorEffectSupport getMonitorEffectSupport() {
 		return monitorEffectSupport;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.SwtVideoRenderer#getActualScreenshotImageData()
+	 */
+	@Override
+	public ImageData getActualScreenshotImageData() {
+		int shotTexture = glGenTextures();
+		
+		try {
+			Rectangle bounds = glCanvas.getClientArea();
+			int w = bounds.width, h = bounds.height;
+
+			glEnable(GL_TEXTURE_2D);
+			glActiveTexture(GL_TEXTURE0);
+
+			glGetError();
+			
+			glBindTexture(GL_TEXTURE_2D, shotTexture);
+			glViewport(0, 0, w, h);
+			glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, w, h, 0);
+			
+			if (glGetError() != 0) {
+				w = 1; while (w <= bounds.width) w += w;
+				h = 1; while (h <= bounds.height) h += h;
+				glViewport(0, 0, w, h);
+				glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, bounds.width, bounds.height, 0);
+				if (glGetError() != 0) {
+					return null;
+				}
+			}
+			
+			int span = bounds.width * 3;
+			int length = h * span;
+			ByteBuffer pixels = ByteBuffer.allocateDirect(length);
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+			
+			ImageData data = ImageUtils.createStandard24BitImageData(
+					bounds.width, bounds.height);
+			pixels.rewind();
+			for (int r = bounds.height; r-- > 0; ) {
+				pixels.get(data.data, r * span, span);
+			}
+			
+			return data;
+			
+		} finally {
+			glDeleteTextures(shotTexture);
+		}
+		
 	}
 }

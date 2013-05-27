@@ -119,7 +119,7 @@ final class ScreenshotSelectorDialog extends Dialog {
 		renderedImage = new Image(composite.getDisplay(), 32, 32);
 		renderedImageLabel.setImage(renderedImage);
 		
-		screenshot = new Image(composite.getDisplay(), ((ISwtVideoRenderer) videoRenderer).getScreenshotImageData());
+		screenshot = new Image(composite.getDisplay(), ((ISwtVideoRenderer) videoRenderer).getPlainScreenshotImageData());
 		imageLabel.setImage(screenshot);
 		
 		updateRenderedImage();

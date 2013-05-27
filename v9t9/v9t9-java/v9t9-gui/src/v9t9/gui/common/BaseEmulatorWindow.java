@@ -67,6 +67,9 @@ public abstract class BaseEmulatorWindow {
 	static public final SettingSchema settingShowRnDBar = new SettingSchema(
 			ISettingsHandler.MACHINE,
 			"ShowRnDBar", Boolean.FALSE);
+	static public final SettingSchema settingScreenshotPlain = new SettingSchema(
+			ISettingsHandler.MACHINE,
+			"SavePlainScreenshot", Boolean.FALSE);
 
 	// not persisted
 	static public final SettingSchema settingMachineStatePath = new SettingSchema(
@@ -97,10 +100,8 @@ public abstract class BaseEmulatorWindow {
 		return videoRenderer;
 	}
 
-	protected String selectFile(String title, SettingSchema configVarSchema, String defaultSubdir,
+	protected String selectFile(String title, IProperty configVar, String defaultSubdir,
 			String fileName, boolean isSave, boolean ifUndefined, String[] extensions) {
-		
-		IProperty configVar = Settings.get(machine, configVarSchema);
 		
 		boolean isUndefined = false;
 		IStoredSettings workspace = machine.getSettings().getMachineSettings();
@@ -166,7 +167,9 @@ public abstract class BaseEmulatorWindow {
 
 	public void loadMachineState() {
 		String filename = selectFile(
-				"Select saved machine state", settingMachineStatePath, "saves", 
+				"Select saved machine state", 
+				Settings.get(machine, settingMachineStatePath), 
+				"saves", 
 				null, false, false, MACHINE_SAVE_FILE_EXTENSIONS);
 		
 		if (filename != null) {
@@ -265,7 +268,8 @@ public abstract class BaseEmulatorWindow {
 		machine.saveState(settings);
 		
 		String filename = selectFile(
-				"Select location to save machine state", settingMachineStatePath, 
+				"Select location to save machine state", 
+				Settings.get(machine, settingMachineStatePath), 
 				"saves", "save0.sav", true, false, MACHINE_SAVE_FILE_EXTENSIONS);
 		
 		if (filename != null) {
@@ -290,20 +294,28 @@ public abstract class BaseEmulatorWindow {
 	}
 
 	public File screenshot() {
-		
+		boolean plain = machine.getSettings().get(BaseEmulatorWindow.settingScreenshotPlain).getBoolean();
+
+		IProperty screenShotsBase = machine.getSettings().get(BaseEmulatorWindow.settingScreenShotsBase);
 		String filenameBase = selectFile(
-				"Select screenshot file", settingScreenShotsBase, "screenshots", "screen.png", true, true, 
-				new String[] { "*.png|PNG file" });
+				"Select screenshot file", 
+				screenShotsBase, 
+				"screenshots", 
+				"screen.png", 
+				true, true, 
+				new String[] { "*.png|PNG file" }
+				);
+		
 		if (filenameBase != null) {
 			File saveFile = getUniqueFile(filenameBase);
 			if (saveFile == null) {
 				machine.notifyEvent(Level.ERROR, 
 						"Too many screenshots here!");
-				machine.getSettings().getUserSettings().clearConfigVar("ScreenShotsBase");
+				screenShotsBase.setString("");
 				return screenshot();
 			} else {
 				try {
-					videoRenderer.saveScreenShot(saveFile);
+					videoRenderer.saveScreenShot(saveFile, plain);
 					return saveFile;
 				} catch (Throwable e) {
 					showErrorMessage("Save error", 

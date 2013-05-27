@@ -46,7 +46,7 @@ public interface IVideoRenderer {
 	
 	boolean isIdle();
 
-	void saveScreenShot(File file) throws IOException;
+	void saveScreenShot(File file, boolean plainBitmap) throws IOException;
 
 	/**
 	 * 
