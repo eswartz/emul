@@ -75,6 +75,17 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
+<li>2013/05/26: fix memory leak causing emulator performance to be slower
+than needed when accelerating speed
+</li>
+<li>2013/05/26: fix issues handling double-sided disks by detecting the track
+order on side 2 
+</li>
+<li>2013/05/26: make screenshot function WYIWYG, with plain 256x192
+bitmap as option 
+</li>
+<li>2013/05/26: <a href="https://github.com/eswartz/emul/issues/1">fix colors in screenshots</a> 
+</li>
 <li>2013/05/18: runs on Windows XP again 
 </li>
 <li>2013/05/18: auto-detection of modules (including Mini Memory) and P-Code DSRs works again 
