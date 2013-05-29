@@ -408,8 +408,37 @@ public class TI99Machine extends MachineBase {
 		} catch (IOException e) {
 			return false;
 		}
+
+		String domain = null;
+
+		char last = getV9t9ModuleTypePart(fname);
+		switch (last) {
+		case 'C':
+		case 'c':
+		case 'D':
+		case 'd':
+			domain = IMemoryDomain.NAME_CPU;
+			break;
+
+		case 'G':
+		case 'g':
+			domain = IMemoryDomain.NAME_GRAPHICS;
+			break;
 		
-		String moduleName = readHeaderName(fname, content, 0x6000);
+		default:
+			log.debug("Unknown file naming for " + fname);
+			if (looksLikeBankedOr9900Code(content)) {
+				log.debug("Assuming content is module ROM");
+				domain = IMemoryDomain.NAME_CPU; 
+			} else {
+				log.debug("Assuming content is module GROM");
+				domain = IMemoryDomain.NAME_GRAPHICS; 
+			}
+			break;
+		}
+		
+		
+		String moduleName = readHeaderName(fname, content, 0x6000, domain);
 	
 		if (moduleName == null) {
 			return false;
@@ -431,38 +460,20 @@ public class TI99Machine extends MachineBase {
 
 		MemoryEntryInfo info = null;
 
-		char last = getV9t9ModuleTypePart(fname);
-		switch (last) {
-		case 'C':
-		case 'c': {
-			
-			info = injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length);
-			
-			break;
-		}
-		case 'D':
-		case 'd': {
-			info = injectModuleBank2Rom(module, databaseURI, moduleName, fname, 0);
-			
-			break;
-		}
-
-		case 'G':
-		case 'g': {
-			info = injectModuleGrom(module, databaseURI, moduleName, fname, 0);
-			break;
-		}
-		
-		default:
-			log.debug("Unknown file naming for " + fname);
-			if (looksLikeBankedOr9900Code(content)) {
-				log.debug("Assuming content is module ROM");
+		if (domain.equals(IMemoryDomain.NAME_CPU)) {
+			switch (last) {
+			case 'C':
+			case 'c':
+			default:
 				info = injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length);
-			} else {
-				log.debug("Assuming content is module GROM");
-				info = injectModuleGrom(module, databaseURI, moduleName, fname, 0);
+				break;
+			case 'D':
+			case 'd':
+				info = injectModuleBank2Rom(module, databaseURI, moduleName, fname, 0);
+				break;
 			}
-			break;
+		} else {
+			info = injectModuleGrom(module, databaseURI, moduleName, fname, 0);
 		}
 		
 		if (info != null && hasId(content)) {
@@ -954,10 +965,11 @@ public class TI99Machine extends MachineBase {
 	}
 	
 	/**
+	 * @param domain 
 	 * @param file
 	 * @return
 	 */
-	private String readHeaderName(String fname, byte[] content, int baseAddr) {
+	private String readHeaderName(String fname, byte[] content, int baseAddr, String domain) {
 		// too large (even with accidental cruft)
 		if (content.length > 0xA100)
 			return null;
@@ -1015,7 +1027,7 @@ public class TI99Machine extends MachineBase {
 			} while (next >= baseAddr);		/* else not really module? */
 			
 			String suffix = "";
-			if (content[offs + 1] < 0) 
+			if (content[offs + 1] < 0 && IMemoryDomain.NAME_GRAPHICS.equals(domain)) 
 				suffix = " (auto-start)";
 			if (isASCII(name)) {
 				log.debug("Using name: " + name) ;
