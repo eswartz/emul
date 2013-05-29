@@ -185,7 +185,11 @@ public abstract class AbstractProperty implements IProperty {
         setValue(val);
     }
     public void setList(List<?> val) {
+    	Object old = getList();
     	setValue(val);
+    	if (old == val) {
+			firePropertyChange();
+		}
     }
 
 	/* (non-Javadoc)

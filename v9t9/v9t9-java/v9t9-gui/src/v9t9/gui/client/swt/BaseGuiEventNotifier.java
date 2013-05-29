@@ -72,6 +72,12 @@ public abstract class BaseGuiEventNotifier implements IEventNotifierListener {
 						consumeEvent(event);
 						position++;
 					}
+					
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						return;
+					}
 				}
 			}
 		};

@@ -255,4 +255,10 @@ public class ROMSetupTreeContentProvider implements ITreeContentProvider {
 		return getParent(element) == REQUIRED_ROMS;
 	}
 
+	/**
+	 * @return the detectedModules
+	 */
+	public List<IModule> getDetectedModules() {
+		return detectedModules;
+	}
 }

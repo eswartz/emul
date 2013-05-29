@@ -95,6 +95,14 @@ public class Module implements IModule {
 	}
 	
 	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModule#setDatabaseURI(java.net.URI)
+	 */
+	@Override
+	public void setDatabaseURI(URI uri) {
+		databaseURI = uri;
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.engine.modules.IModule#getName()
 	 */
 	public String getName() {

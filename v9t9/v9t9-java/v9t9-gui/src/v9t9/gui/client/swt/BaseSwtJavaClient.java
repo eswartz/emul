@@ -275,7 +275,7 @@ public abstract class BaseSwtJavaClient implements IClient {
         if (settingsHandler.get(settingNewConfiguration).getBoolean()) {
 //        	ROMSetupDialog dialog = ROMSetupDialog.createDialog(window.getShell(), machine, window);
 //        	dialog.open();
-        	SetupWizard wizard = new SetupWizard(machine, window, true);
+        	SetupWizard wizard = new SetupWizard(machine, window, SetupWizard.Page.INTRO);
         	WizardDialog dialog = new WizardDialog(window.getShell(), wizard);
         	dialog.open();
         }

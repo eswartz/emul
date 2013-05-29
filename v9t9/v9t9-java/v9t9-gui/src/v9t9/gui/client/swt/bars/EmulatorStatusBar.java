@@ -98,7 +98,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		deviceImageProvider = createDeviceImageProvider(swtWindow.getShell());
 
 		createButton(IconConsts.ROM_SETUP,
-				"Setup V9t9", new SelectionAdapter() {
+				"Setup ROMs and Modules", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
 //						ROMSetupDialog dialog = ROMSetupDialog.createDialog(

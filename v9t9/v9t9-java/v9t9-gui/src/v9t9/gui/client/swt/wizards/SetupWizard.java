@@ -24,19 +24,26 @@ import v9t9.gui.client.swt.SwtWindow;
  *
  */
 public class SetupWizard extends Wizard {
-	private boolean showStartPage;
+	public enum Page {
+		INTRO,
+		PATHS,
+		MODULES
+	}
+	
+	private Page startPage;
 	private IMachine machine;
 	private boolean wasPaused;
 	private PathSetupPage pathSetupPage;
 	private SwtWindow window;
 	private boolean romsChanged;
 	private IPathChangeListener pathListener;
+	private ModuleListPage moduleListPage;
 
 
-	public SetupWizard(IMachine machine, SwtWindow window, boolean showStartPage) {
+	public SetupWizard(IMachine machine, SwtWindow window, Page startPage) {
 		this.machine = machine;
 		this.window = window;
-		this.showStartPage = showStartPage;
+		this.startPage = startPage;
 		
 		wasPaused = machine.setPaused(true);
 		
@@ -62,6 +69,8 @@ public class SetupWizard extends Wizard {
 		addPage(new SetupIntroPage(machine));
 		pathSetupPage = new PathSetupPage(machine, window); 
 		addPage(pathSetupPage);
+		moduleListPage = new ModuleListPage(machine, window); 
+		addPage(moduleListPage);
 	}
 	
 	/* (non-Javadoc)
@@ -69,8 +78,11 @@ public class SetupWizard extends Wizard {
 	 */
 	@Override
 	public IWizardPage getStartingPage() {
-		if (!showStartPage) {
+		if (startPage == Page.PATHS) {
 			return pathSetupPage;
+		}
+		if (startPage == Page.MODULES) {
+			return moduleListPage;
 		}
 		return super.getStartingPage();
 	}
@@ -82,6 +94,10 @@ public class SetupWizard extends Wizard {
 	public boolean performFinish() {
 
 		machine.getRomPathFileLocator().removeListener(pathListener);
+		
+		if (!moduleListPage.save())
+			return false;
+		
 		
 		if (romsChanged) {
 			machine.getMemoryModel().loadMemory(machine.getEventNotifier());

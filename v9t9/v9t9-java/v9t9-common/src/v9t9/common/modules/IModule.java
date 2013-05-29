@@ -24,6 +24,7 @@ import v9t9.common.memory.MemoryEntryInfo;
  */
 public interface IModule {
 	URI getDatabaseURI();
+	void setDatabaseURI(URI uri);
 	
 	String getName();
 	void setName(String name);

@@ -12,6 +12,8 @@ package v9t9.gui.client.swt.shells;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -20,6 +22,7 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.ModifyEvent;
@@ -41,6 +44,7 @@ import v9t9.common.files.DataFiles;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.modules.IModule;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.gui.client.swt.PathSelector;
@@ -91,16 +95,21 @@ public class PathSetupComposite extends Composite {
 		this.requiredRoms = machine.getMemoryModel().getRequiredRomMemoryEntries();
 		this.optionalRoms = machine.getMemoryModel().getOptionalRomMemoryEntries();
 
-		Composite composite = this;
+		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(this);
+		SashForm sash = new SashForm(this, SWT.VERTICAL);
 		
-		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(composite);
+		GridLayoutFactory.fillDefaults().applyTo(sash);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(sash);
 		
-		createROMTable(composite);
+		createROMTable(sash);
+		
 		
 		bootRomsPath = Settings.get(machine, DataFiles.settingBootRomsPath);
-		createPathSelector(composite, bootRomsPath);
+		createPathSelector(sash, bootRomsPath);
 
-		composite.addDisposeListener(new DisposeListener() {
+		sash.setWeights(new int[] { 66, 33 } );
+		
+		this.addDisposeListener(new DisposeListener() {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
@@ -349,6 +358,10 @@ public class PathSetupComposite extends Composite {
 			listener.allRequiredRomsFound(allRequiredRomsFound);
 	}
 
+	public List<IModule> getDetectedModules() {
+		return romTreeContentProvider != null ?
+				 romTreeContentProvider.getDetectedModules() : Collections.<IModule>emptyList();
+	}
 	
 
 }

@@ -311,16 +311,20 @@ public class ModuleManager implements IModuleManager {
 	public void reload() {
 		URI databaseURI;
 		
-		// first, get stock module database
 		machine.getModuleManager().clearModules();
-		databaseURI = machine.getRomPathFileLocator().findFile("stock_modules.xml");
-		if (databaseURI != null) {
-			registerModules(databaseURI);
-		} else {
-			//throw new AssertionError("missing stock_modules.xml");
-			log.error("failed to find stock_modules.xml");
-			return;
-		}
+		
+		// first, get stock module database
+//		URL databaseURL = getStockDatabaseURL();
+//		if (databaseURL != null) {
+//			try {
+//				registerModules(databaseURL.toURI());
+//			} catch (URISyntaxException e) {
+//				e.printStackTrace();
+//			}
+//		} else {
+//			log.error("failed to find stock_modules.xml");
+//			return;
+//		}
 		
 		// then load any user entries
 		IProperty moduleList = Settings.get(machine, IModuleManager.settingUserModuleLists);

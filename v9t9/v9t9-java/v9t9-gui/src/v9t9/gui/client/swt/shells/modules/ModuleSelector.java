@@ -179,7 +179,7 @@ public class ModuleSelector extends Composite {
 	private URI builtinImagesURI;
 	private ILazyImageAdjuster moduleImageResizer;
 
-	private Button addButton;
+//	private Button addButton;
 
 	private Image modulesListImage;
 	private Image noModuleImage;
@@ -194,9 +194,9 @@ public class ModuleSelector extends Composite {
 	 * @param window 
 	 * 
 	 */
-	public ModuleSelector(Shell shell, IMachine machine_, IModuleManager moduleManager, SwtWindow window_) {
+	public ModuleSelector(Shell shell, IMachine machine_, IModuleManager moduleManager_, SwtWindow window_) {
 		super(shell, SWT.NONE);
-		this.moduleManager = moduleManager;
+		this.moduleManager = moduleManager_;
 		this.window = window_;
 		this.machine = machine_;
 		
@@ -212,8 +212,6 @@ public class ModuleSelector extends Composite {
 		
 		wasPaused = machine.setPaused(true);
 
-		//moduleManager.reload();
-		
 		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(this);
 		
 		
@@ -264,47 +262,44 @@ public class ModuleSelector extends Composite {
 		
 		final Button configureButton = new Button(buttonBar, SWT.PUSH | SWT.NO_FOCUS);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).hint(128, -1).applyTo(configureButton);
-		configureButton.setText("Setup ROMs...");
+		configureButton.setText("Setup...");
 		configureButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				SetupWizard wizard = new SetupWizard(machine, window, false);
+				SetupWizard wizard = new SetupWizard(machine, window, SetupWizard.Page.PATHS);
 				WizardDialog dialog = new WizardDialog(getShell(), wizard);
-	        	dialog.open();
+	        	int ret = dialog.open();
+	        	
+	        	if (ret == Window.OK)
+	        		reloadModules(null);
 			}
 		});
 		
-		addButton = new Button(buttonBar, SWT.PUSH);
-		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).hint(128, -1).applyTo(addButton);
-		
-		addButton.setText("Add...");
-		addButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				ModuleAddDialog dialog = new ModuleAddDialog(window.getShell(), machine, window);
-				int ret = dialog.open();
-				if (ret == Window.OK) {
-					List<String> curDbs = modDbList.getList();
-					final URI moduleDatabaseURI = dialog.getModuleDatabase().toURI();
-					if (!curDbs.contains(dialog.getModuleDatabase().getAbsolutePath())
-							&& !curDbs.contains(moduleDatabaseURI.toString())) {
-						curDbs.add(moduleDatabaseURI.toString());
-						loadModuleList(moduleDatabaseURI.toString());
-						modDbList.setList(curDbs);
-					}
-					
-					revertModules();
-					synchronized (knownStates) {
-						knownStates.clear();
-					}
-					viewer.refresh(true);
-					viewer.expandToLevel(moduleDatabaseURI, 2);
-					viewer.setSelection(new StructuredSelection(moduleDatabaseURI));
-				}
-			}
-		});
-		
-		
+//		addButton = new Button(buttonBar, SWT.PUSH);
+//		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).hint(128, -1).applyTo(addButton);
+//		
+//		addButton.setText("Add...");
+//		addButton.addSelectionListener(new SelectionAdapter() {
+//			@Override
+//			public void widgetSelected(SelectionEvent e) {
+//				ModuleAddDialog dialog = new ModuleAddDialog(window.getShell(), machine, window);
+//				int ret = dialog.open();
+//				if (ret == Window.OK) {
+//					List<String> curDbs = modDbList.getList();
+//					final URI moduleDatabaseURI = dialog.getModuleDatabase().toURI();
+//					if (!curDbs.contains(dialog.getModuleDatabase().getAbsolutePath())
+//							&& !curDbs.contains(moduleDatabaseURI.toString())) {
+//						curDbs.add(moduleDatabaseURI.toString());
+//						loadModuleList(moduleDatabaseURI.toString());
+//						modDbList.setList(curDbs);
+//					}
+//					
+//					reloadModules(moduleDatabaseURI);
+//				}
+//			}
+//		});
+//		
+//		
 		
 		Label filler = new Label(buttonBar, SWT.NONE);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).applyTo(filler);
@@ -381,6 +376,26 @@ public class ModuleSelector extends Composite {
 	}
 
 	
+
+	/**
+	 * 
+	 */
+	protected void reloadModules(URI moduleDatabaseURI) {
+		revertModules();
+		synchronized (knownStates) {
+			knownStates.clear();
+		}
+		viewer.refresh(true);
+		if (moduleDatabaseURI != null) {
+			viewer.expandToLevel(moduleDatabaseURI, 2);
+			viewer.setSelection(new StructuredSelection(moduleDatabaseURI));
+		} else {
+			viewer.expandToLevel(2);
+		}
+		
+	}
+
+
 
 	/**
 	 * 
@@ -761,7 +776,7 @@ public class ModuleSelector extends Composite {
 		moduleMap.clear();
 		List<String> modDbs = modDbList.getList();
 		modDbs = new ArrayList<String>(modDbs);		// copy -- no change intended
-		modDbs.add(0, moduleManager.getStockDatabaseURL().toString());
+		//modDbs.add(0, moduleManager.getStockDatabaseURL().toString());
 		for (String modDb : modDbs) {
 			loadModuleList(modDb);
 		}
