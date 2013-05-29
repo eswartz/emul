@@ -40,7 +40,6 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.CellLabelProvider;
-import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -136,7 +135,7 @@ public class ModuleSelector extends Composite {
 
 	final int MAX = 64;
 
-	private static boolean allowEditing = true;
+	private static boolean allowEditing = false;
 	
 	static String NAME_PROPERTY = "name";
 	static String[] NAME_PROPERTY_ARRAY = { NAME_PROPERTY };
@@ -189,6 +188,8 @@ public class ModuleSelector extends Composite {
 	protected IProperty modDbList;
 
 	private IPathChangeListener pathChangeListener;
+
+	private ModuleNameEditingSupport editingSupport;
 	
 	/**
 	 * @param window 
@@ -251,6 +252,8 @@ public class ModuleSelector extends Composite {
 						promptSave();
 					}
 					isEditing = enableEdit.getSelection();
+					editingSupport.setCanEdit(isEditing);
+					
 					viewer.refresh();
 				}
 			});
@@ -729,7 +732,7 @@ public class ModuleSelector extends Composite {
 		TreeViewerColumn nameViewerColumn = new TreeViewerColumn(viewer, nameColumn);
 		nameViewerColumn.setLabelProvider(cellLabelProvider);
 		
-		EditingSupport editingSupport = new ModuleNameEditingSupport(this, viewer);
+		editingSupport = new ModuleNameEditingSupport(viewer, dirtyModuleLists);
 		nameViewerColumn.setEditingSupport(editingSupport);
 		
 

@@ -10,6 +10,9 @@
  */
 package v9t9.gui.client.swt.shells.modules;
 
+import java.net.URI;
+import java.util.Collection;
+
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ColumnViewer;
 import org.eclipse.jface.viewers.EditingSupport;
@@ -23,13 +26,14 @@ import v9t9.common.modules.IModule;
  *
  */
 final class ModuleNameEditingSupport extends EditingSupport {
-	private final ModuleSelector moduleSelector;
+	private boolean canEdit;
+	private Collection<URI> dirtyLists;
 
 	/**
 	 */
-	ModuleNameEditingSupport(ModuleSelector moduleSelector, ColumnViewer viewer) {
+	public ModuleNameEditingSupport(ColumnViewer viewer, Collection<URI> dirtyModuleLists) {
 		super(viewer);
-		this.moduleSelector = moduleSelector;
+		this.dirtyLists = dirtyModuleLists;
 	}
 
 	@Override
@@ -38,13 +42,14 @@ final class ModuleNameEditingSupport extends EditingSupport {
 			IModule module = (IModule) element;
 			if (!value.toString().equals(module.getName())) {
 				module.setName(value.toString());
-				this.moduleSelector.dirtyModuleLists.add(module.getDatabaseURI());
+				if (dirtyLists != null)
+					dirtyLists.add(module.getDatabaseURI());
 				getViewer().refresh(module);
 				//viewer.setSelection(new StructuredSelection(module), true);
 			}
 		}
 	}
-
+	
 	@Override
 	protected Object getValue(Object element) {
 		if (element instanceof IModule)
@@ -62,6 +67,13 @@ final class ModuleNameEditingSupport extends EditingSupport {
 
 	@Override
 	protected boolean canEdit(Object element) {
-		return this.moduleSelector.isEditing;
+		return canEdit;
+	}
+	
+
+
+	public void setCanEdit(boolean canEdit) {
+		this.canEdit = canEdit;
+		
 	}
 }

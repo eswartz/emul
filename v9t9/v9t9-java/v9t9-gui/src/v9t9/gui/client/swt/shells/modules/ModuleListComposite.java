@@ -99,6 +99,8 @@ public class ModuleListComposite extends Composite {
 
 	private IStatusListener statusListener;
 
+	private ModuleNameEditingSupport editingSupport;
+
 	public ModuleListComposite(Composite parent, IMachine machine, SwtWindow window,
 			IStatusListener statusListener) {
 		super(parent, SWT.NONE);
@@ -254,6 +256,12 @@ public class ModuleListComposite extends Composite {
 		
 		discoveredList.setLabelProvider(new DiscoveredModuleLabelProvider(machine.getRomPathFileLocator()));
 		discoveredList.setContentProvider(new ArrayContentProvider());
+		
+		Collection<URI> dirtyModuleLists = new ArrayList<URI>();
+		editingSupport = new ModuleNameEditingSupport(discoveredList, dirtyModuleLists);
+		nameColumn.setEditingSupport(editingSupport);
+		editingSupport.setCanEdit(true);
+		
 		discoveredList.setInput(discoveredModules);
 		
 		Composite buttons = new Composite(listArea, SWT.NONE);
