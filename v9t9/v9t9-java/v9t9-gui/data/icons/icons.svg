@@ -15,7 +15,7 @@
    height="2048"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.48.3.1 r9886"
+   inkscape:version="0.48.4 r9939"
    version="1.0"
    sodipodi:docname="icons.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
@@ -34,10 +34,10 @@
      inkscape:pageshadow="2"
      inkscape:zoom="4"
      inkscape:cx="48.49925"
-     inkscape:cy="349.95877"
+     inkscape:cy="1087.9588"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
-     showgrid="false"
+     showgrid="true"
      inkscape:window-width="1130"
      inkscape:window-height="939"
      inkscape:window-x="426"
@@ -2932,7 +2932,7 @@
     <g
        style="opacity:0.87999998;stroke:#000000;stroke-opacity:1;filter:url(#filter21777)"
        id="g21770"
-       transform="matrix(0.93155194,0,0,0.93155129,4.607621,-957.7839)">
+       transform="matrix(0.87425711,0,0,0.86698125,4.450988,-900.12366)">
       <path
          d="m 61.164738,927.8335 c 0,16.01149 -12.979883,28.99137 -28.991379,28.99137 -16.011496,0 -28.9913789,-12.97988 -28.9913789,-28.99137 0,-16.0115 12.9798829,-28.99138 28.9913789,-28.99138 16.011496,0 28.991379,12.97988 28.991379,28.99138 z"
          sodipodi:ry="28.991379"
@@ -2949,7 +2949,7 @@
          inkscape:connector-curvature="0" />
     </g>
     <g
-       transform="matrix(0.93155194,0,0,0.93155129,2.6076196,-959.7839)"
+       transform="matrix(0.87425711,0,0,0.86698125,2.5739961,-901.98503)"
        id="g21766">
       <path
          sodipodi:type="arc"
