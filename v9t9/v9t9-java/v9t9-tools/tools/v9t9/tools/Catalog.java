@@ -105,12 +105,16 @@ public class Catalog extends BaseDiskUtil {
 					catalog.volumeName, catalog.usedSectors, catalog.totalSectors);
 		}
 		for (CatalogEntry entry : catalog.getEntries()) {
-			if (!showTextFiles && entry.getFile() instanceof NativeTextFile)
-				continue;
 			if (pattern != null 
-					&& entry.getFile().getFileName().matches(pattern))
+					&& !entry.getFile().getFileName().matches("(?i)"+pattern))
 				continue;
-			
+
+			if (!showTextFiles && entry.getFile() instanceof NativeTextFile) {
+				if (pattern != null)
+					System.err.println("skipping matching entry '" + entry.fileName + "' since it is a non-V9t9 file (use -t to see)");
+				continue;
+			}
+
 			String reclen = entry.typeCode != CatalogEntry.TYPE_PROGRAM ? 
 					String.valueOf(entry.recordLength) : "";
 			out.println(String.format("%-10s  %5d  %7s %3s  %s",
