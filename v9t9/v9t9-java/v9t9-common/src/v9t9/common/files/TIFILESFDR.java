@@ -66,7 +66,10 @@ public class TIFILESFDR extends FDR {
 	        fdr.crtime = (stream.read() << 24 | stream.read() << 16 | stream.read() << 8 | stream.read());
 	        
 	        fdr.unused = new byte[112];
-	        stream.read(fdr.unused, 0, 112);
+	        int cnt = stream.read(fdr.unused, 0, 112);
+	        
+	        if (cnt < 112)
+	        	throw new InvalidFDRException("File header is too short; expected 128 bytes");
         } finally {
         	stream.close();
         }

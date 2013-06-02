@@ -54,7 +54,11 @@ public class V9t9FDR extends TIFDR {
 	        fdr.reclen = stream.read();
 	        fdr.numrecs = stream.read() | (stream.read() << 8);
 	        stream.read(fdr.rec20);
-	        stream.read(fdr.dcpb);
+	        int cnt = stream.read(fdr.dcpb);
+	        
+	        if (cnt != fdr.dcpb.length)
+	        	throw new InvalidFDRException("File header is too short; expected 128 bytes");
+
         } finally { 
         	stream.close();
         }
