@@ -137,9 +137,19 @@ public class V9t9FDR extends TIFDR {
 	protected int[] fetchContentSectors() {
 		int[] secs = new int[getSectorsUsed()];
     	for (int i = 0; i < secs.length; i++) {
-    		secs[i] = i * 256;
+    		secs[i] = 32 + i;
     	}
     	return secs;
 	}
+	
+    /* (non-Javadoc)
+     * @see v9t9.common.files.FDR#setContentSectors(int[])
+     */
+    @Override
+    public void setContentSectors(int[] secs) throws IOException {
+    	throw new IOException("cannot allocate sectors for V9t9 files");
+    }
+    
+
 	
 }

@@ -19,6 +19,7 @@ import java.util.List;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.tools.cycler.CycleCounter;
+import v9t9.tools.utils.Category;
 import v9t9.tools.utils.ToolUtils;
 import ejs.base.logging.LoggingUtils;
 import ejs.base.utils.HexUtils;
@@ -29,6 +30,7 @@ import gnu.getopt.Getopt;
  * @author ejs
  *
  */
+@Category(Category.DEVELOPMENT)
 public class CountCycles {
 	private static final String PROGNAME = CountCycles.class.getSimpleName();
 	

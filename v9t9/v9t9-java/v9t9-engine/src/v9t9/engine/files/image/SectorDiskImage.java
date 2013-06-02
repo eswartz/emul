@@ -70,7 +70,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		/* no header: guess */
 		sz = getHandle().length();
 		if (sz < 256)
-			throw new IOException("Disk size for '" + spec + "' is too small to be a disk file");
+			throw new IOException("Disk size for '" + spec + "' is too small to be a disk file: " + sz);
 
 		/* read sector 0 */
 		getHandle().seek(0);

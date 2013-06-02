@@ -243,7 +243,7 @@ public abstract class FDR implements IFDRInfo {
         // fixed files have 256/reclen records per sector
         if ((flags & ff_program) == 0
             && (flags & ff_variable) == 0) {
-            if (reclen != 0 && 256 / reclen != recspersec) 
+            if (reclen > 0 && 256 / reclen != recspersec) 
             {
                 throw new InvalidFDRException("record length "+reclen+" / records per sector "+recspersec+" invalid for FIXED file: " + this);
             }
@@ -251,7 +251,7 @@ public abstract class FDR implements IFDRInfo {
         
         // variable files have 255/(reclen+1) records per sector
         if ((flags & ff_program) == 0) {
-            if (reclen != 0 && 255 / (reclen + 1) != recspersec 
+            if (reclen > 0 && 255 / (reclen + 1) != recspersec 
                  // known problem that older v9t9s used this calculation
                 && 256 / reclen != recspersec)
             {
@@ -303,6 +303,13 @@ public abstract class FDR implements IFDRInfo {
 	 * @return array, size is {@link #getContentSectors()}
 	 */
 	protected abstract int[] fetchContentSectors();
+
+
+	/**
+	 * Set the sectors that compose the file content.
+	 * @throws IOException 
+	 */
+	public abstract void setContentSectors(int[] secs) throws IOException;
 
 	public String getType() {
 		return getType(flags);

@@ -12,7 +12,9 @@
 NORMSCRIPT=$(echo $0 | sed 's/\\/\//g')
 BASEDIR=$(dirname "$NORMSCRIPT")
 
-JAVA=java
+if [ -z "$JAVA" ]; then
+	JAVA=java
+fi	
 VMARGS="-Xmx256M"
 
 if [ "$1" = "-debug" ]; then
@@ -26,12 +28,11 @@ if [ "$OS" = "Darwin" ]; then
     VMARGS="$VMARGS -XstartOnFirstThread"
 fi
 
-VMARGS="$VMARGS -Dlog4j.configuration=jar:file:./v9t9j.jar!/log4j.properties"
-#VMARGS="$VMARGS -Dlog4j.configuration=jar:file:./v9t9j.jar!/debug.properties"
+VMARGS="$VMARGS -Dlog4j.configuration=jar:file:$BASEDIR/v9t9j.jar!/log4j.properties"
+#VMARGS="$VMARGS -Dlog4j.configuration=jar:file:$BASEDIR/v9t9j.jar!/debug.properties"
 
 VMARGS="$VMARGS $V9T9_VMARGS"
   
-cd "$BASEDIR"
-"$JAVA" $VMARGS  -jar v9t9j.jar "$@"
+"$JAVA" $VMARGS -cp "$BASEDIR"  -jar $BASEDIR/v9t9j.jar "$@"
 
 

@@ -26,7 +26,9 @@ import v9t9.engine.memory.MemoryEntryFactory;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.FileContentEntry;
 import v9t9.tools.asm.inst9900.Assembler9900;
+import v9t9.tools.utils.Category;
 
+@Category(Category.DEVELOPMENT)
 public class Assemble {
 
     private static final String PROGNAME = Assemble.class.getName();

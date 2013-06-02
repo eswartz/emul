@@ -104,19 +104,19 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 		
 		/* verify */
 		if (!Arrays.equals(TRACK_MAGIC.getBytes(), magic)) {
-			throw new IOException(MessageFormat.format("DOAD server:  disk image ''{0}'' has unknown type (got {1}, expected {2})",
+			throw new IOException(MessageFormat.format("Disk image ''{0}'' has unknown type (got {1}, expected {2})",
 					spec,
 					new String(magic),
 					TRACK_MAGIC));
 		}	
 
 		if (version < 1 || version > TRACK_VERSION) {
-			throw new IOException(MessageFormat.format("DOAD server:  disk image ''{0}'' has too new version ({1} > {2})\n",
+			throw new IOException(MessageFormat.format("Disk image ''{0}'' has too new version ({1} > {2})\n",
 						  spec, version, TRACK_VERSION));
 		}
 		
 		if (hdr.getTrackSize() < 0) {
-			throw new IOException(MessageFormat.format("DOAD server:  disk image ''{0}'' has invalid track size {1}\n",
+			throw new IOException(MessageFormat.format("Disk image ''{0}'' has invalid track size {1}\n",
 					  spec, hdr.getTrackSize()));
 		}
 

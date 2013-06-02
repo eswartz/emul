@@ -103,4 +103,11 @@ public interface IDiskImage extends IPersistable, IEmulatedDisk {
 	int getTrack();
 	void setTrack(int i) throws IOException;
 
+	/**
+	 * @param start
+	 * @return
+	 * @throws IOException
+	 */
+	int allocateSector(int start) throws IOException;
+
 }

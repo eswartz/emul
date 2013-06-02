@@ -13,10 +13,15 @@ package v9t9.tools;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import v9t9.common.files.IPathFileLocator.FileInfo;
 import v9t9.common.files.PathFileLocator;
+import v9t9.tools.utils.Category;
 import ejs.base.logging.LoggingUtils;
 
 /**
@@ -46,14 +51,45 @@ public class ToolHelp {
 		PathFileLocator loc = new PathFileLocator();
 		Map<String, FileInfo> ents = loc.getDirectoryListing(helpDirURL.toURI());
 		
-		for (String ent : ents.keySet()) {
-			if (ent.endsWith(".class")) {
-				String toolName = packageName + ent.substring(0, ent.length() - ".class".length());
-				if (!toolName.equals(ToolHelp.class.getName())) {
-					if (toolName.startsWith(packageName))
-						toolName = toolName.substring(packageName.length());
-					System.out.println("\t" + toolName);
+		List<String> entArr = new ArrayList<String>(ents.keySet());
+		Collections.sort(entArr);
+		
+		Map<String, List<String>> categories= new HashMap<String, List<String>>();
+		
+		for (String ent : entArr) {
+			String catName = Category.OTHER;
+			String klassName = ent;
+			try {
+				if (!ent.endsWith(".class")) 
+					continue;
+				klassName = packageName + ent.substring(0, ent.length() - ".class".length());
+				if (klassName.equals(ToolHelp.class.getName())) 
+					continue;
+				
+				Class<?> klass = Class.forName(klassName);
+				Category cat = klass.getAnnotation(Category.class);
+				if (cat != null) {
+					catName = cat.value();
 				}
+			} catch (ClassNotFoundException e) {
+				// hmmph
+			}
+			List<String> catEnts = categories.get(catName);
+			if (catEnts == null) {
+				catEnts = new ArrayList<String>();
+				categories.put(catName, catEnts);
+			}
+			catEnts.add(klassName);
+		}
+		
+		
+		for (Map.Entry<String, List<String>> catEnt : categories.entrySet()) {
+			System.out.println(catEnt.getKey() + ":");
+			for (String toolName : catEnt.getValue()) {
+				if (toolName.startsWith(packageName)) {
+					toolName = toolName.substring(packageName.length());
+				}
+				System.out.println("\t" + toolName);
 			}
 		}
 		

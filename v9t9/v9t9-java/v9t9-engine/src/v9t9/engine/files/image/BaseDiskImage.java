@@ -195,7 +195,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	public BaseDiskImage( String name, File spec, ISettingsHandler settings) {
 		this.name = name;
 		this.spec = spec;
-		
+
 		dumper = new Dumper(settings,
 				RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
 		fmFormat = new FMFormat(dumper);
@@ -600,7 +600,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		readCurrentTrackData();
 		
 		byte tracksec = (byte) (sector % hdr.getSecsPerTrack());
-		for (IdMarker marker : trackMarkers) {
+		for (IdMarker marker : getTrackMarkers()) {
 			if (marker.sectorid == tracksec && marker.trackid == track) {
 				readSectorData(marker, rwBuffer, start, buflen);
 				return marker;
@@ -841,7 +841,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			}
 		}
 		
-		final int indexSector = allocateSector(32);
+		final int indexSector = allocateSector(2);
 		if (indexSector < 0)
 			throw new IOException("no sectors free");
 		
@@ -862,6 +862,11 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		
 		final DiskImageFDR diskfdr = new DiskImageFDR();
 		diskfdr.copyFrom(fdr);
+
+		diskfdr.setSectorsUsed(0);
+		
+		// get sectors for storage
+		diskfdr.allocateSectors(this, fdr.getSectorsUsed());
 		
 		// dump FDR to sector
 		updateSector(indexSector, new SectorUpdater() {
@@ -900,7 +905,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	/**
 	 * @return
 	 */
-	private int allocateSector(final int start) throws IOException {
+	public int allocateSector(final int start) throws IOException {
 		final int[] num = { -1 };
 		updateSector(0, new SectorUpdater() {
 			

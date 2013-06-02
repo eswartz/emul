@@ -27,8 +27,10 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.tools.asm.decomp.Decompiler;
 import v9t9.tools.asm.decomp.Decompiler9900;
+import v9t9.tools.utils.Category;
 import v9t9.tools.utils.ToolUtils;
 
+@Category(Category.DEVELOPMENT)
 public class Decompile {
 
     private static final String PROGNAME = Decompile.class.getName();

@@ -14,6 +14,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DiskImageFDR extends TIFDR {
 
@@ -165,4 +167,96 @@ public class DiskImageFDR extends TIFDR {
     	return secs;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.FDR#setContentSectors(int[])
+	 */
+	@Override
+	public void setContentSectors(int[] secs) throws IOException {
+
+    	int clusOffs = 0;
+    	
+    	int startSec = -1;
+    	int prevSec = -1;
+    	int ofs = 0;
+		for (int i = 0; i < secs.length; i++) {
+			if (startSec < 0) {
+				startSec = secs[i];
+			} else if (prevSec + 1 == secs[i]) {
+				// ok
+			} else {
+				clusOffs = addContentRange(clusOffs, startSec, ofs);
+				startSec = secs[i];
+			}
+			prevSec = secs[i];
+			ofs++;
+		}
+		if (prevSec >= 0) {
+			clusOffs = addContentRange(clusOffs, startSec, ofs);
+		}
+	}
+	
+	/**
+	 * @param clusOffs
+	 * @param startSec
+	 * @param i
+	 * @return
+	 */
+	protected int addContentRange(int clusOffs, int num, int ofs) throws IOException {
+		// encode cluster list:
+    	//
+    	// >1C-FF 	Cluster list 	>UM >SN >OF == >NUM >OFS
+
+		if (clusOffs + 3 > dcpb.length) 
+			throw new IOException("cannot encode sectors for file; disk is too fragmented: " + this);
+		
+		int um = num & 0xff;
+		dcpb[clusOffs++] = (byte) um;
+		
+		int sn = ((ofs << 4) & 0xf0) | ((num >> 8) & 0xf);
+		dcpb[clusOffs++] = (byte) sn;
+		
+		int of = (ofs >> 4);
+		dcpb[clusOffs++] = (byte) of;
+		
+		return clusOffs;
+	}
+	/**
+	 * @param cnt 
+	 * @throws IOException 
+	 * 
+	 */
+	public void allocateSectors(IDiskImage image, int cnt) throws IOException {
+		for (int s = 0; s < cnt; s++) {
+			int sec = image.allocateSector(32);
+			addContentSector(sec);
+			setSectorsUsed(getSectorsUsed() + 1);
+		}
+	}
+	/**
+	 * @param sec
+	 * @throws IOException 
+	 */
+	public void addContentSector(int sec) throws IOException {
+		int[] secs = getContentSectors();
+		List<Integer> secList = new ArrayList<Integer>(secs.length);
+		for (int s : secs) {
+			secList.add(s);
+		}
+		
+		if (secList.contains(sec)) {
+			throw new IOException("sector " + sec + " already allocated to file: " + this);
+		}
+		
+		int idx = secList.indexOf(-1);
+		if (idx >= 0)
+			secList.set(idx, sec);
+		else
+			secList.add(sec);
+		
+		int[] newSecs = new int[secList.size()];
+		for (int i = 0; i < newSecs.length; i++)
+			newSecs[i] = secList.get(i);
+		
+		setContentSectors(newSecs);
+	}
 }

@@ -89,7 +89,7 @@ public class EmulatedDiskImageFile extends EmulatedBaseFDRFile implements IEmula
 		int left = length;
 		int offset = startOffset;
 		while (left > 0) {
-			int toWrite = Math.min(255 - offset % 256, left);
+			int toWrite = Math.min(256 - offset % 256, left);
 			int sec = secs[offset / 256];
 			if (sec < 0) {
 				throw new IOException("corrupt FDR: not enough sectors allocated at position " + offset);

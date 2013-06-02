@@ -24,8 +24,10 @@ import java.util.List;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.tools.asm.decomp.Disassembler;
+import v9t9.tools.utils.Category;
 import v9t9.tools.utils.ToolUtils;
 
+@Category(Category.DEVELOPMENT)
 public class Disassemble {
 
     private static final String PROGNAME = Disassemble.class.getName();
@@ -62,7 +64,7 @@ public class Disassemble {
     public static void main(String[] args) throws IOException {
 		LoggingUtils.setupNullLogging();
         
-       Getopt getopt;
+		Getopt getopt;
         
         IMachine machine  = ToolUtils.createMachine();
         Disassembler dc = new Disassembler(machine);
