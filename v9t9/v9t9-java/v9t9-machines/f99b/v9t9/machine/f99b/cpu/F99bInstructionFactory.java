@@ -217,4 +217,12 @@ public class F99bInstructionFactory implements IRawInstructionFactory {
 	public int getChunkSize() {
 		return 1;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.asm.IRawInstructionFactory#getMaxInstrLength()
+	 */
+	@Override
+	public int getMaxInstrLength() {
+		return 5;	// LIT.D
+	}
 }

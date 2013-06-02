@@ -11,7 +11,6 @@
 package v9t9.tools;
 
 import ejs.base.logging.LoggingUtils;
-import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
 import gnu.getopt.Getopt;
 
@@ -19,29 +18,27 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
-
-import v9t9.common.asm.IDecompilePhase;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.tools.asm.decomp.Decompiler;
-import v9t9.tools.asm.decomp.Decompiler9900;
+import v9t9.tools.asm.decomp.Disassembler;
 import v9t9.tools.utils.ToolUtils;
 
-public class Decompile {
+public class Disassemble {
 
-    private static final String PROGNAME = Decompile.class.getName();
+    private static final String PROGNAME = Disassemble.class.getName();
     
     private static void help(IMachine machine) {
-	   System.out
+	    System.out
 	            .println("\n"
-	                    + "V9t9 Decompiler v0.1\n"
+	                    + "V9t9 Disassembler v2.0\n"
 	                    + "\n"
 	                    + "Usage:   " + PROGNAME + " [options] { -r from:to -d from:to }\n"
 	                    + "\t{-m<domain> <address> <raw file>} {<FIAD memory image>}\n" 
 	                    + "\n"
-	                    + PROGNAME + " will 'decompile' programs (higher-level than Disassemble)\n"
+	                    + PROGNAME + " will disassemble 99/4A files or binaries\n"
 	                    + "\n"
 	                    + "-m<domain> <address> <raw file>: load <raw file> into memory at <address>\n"
 	    				+ "Domains:");
@@ -54,9 +51,7 @@ public class Decompile {
 	                    + "Options:\n"
 	                    + "\t\t-?        -- this help\n"
 	                    + "\t\t-o <file> -- send output to <file> (else stdout)\n"
-	                    + "\t\t-r <addr>:<addr> -- specify range to disassemble\n"
-	                    + "\t\t-d <addr>:<addr> -- specify range to treat as data\n"
-	                    + "\t\t-s <addr> -- add new REF/DEF symbol table address (end of table)\n"
+	                    + "\t\t-p        -- show plain instructions, no addresses or opcodes\n"
 	                    + "\n");
 	
 	}
@@ -67,19 +62,18 @@ public class Decompile {
     public static void main(String[] args) throws IOException {
 		LoggingUtils.setupNullLogging();
         
-        Getopt getopt;
+       Getopt getopt;
         
-        IMachine machine = ToolUtils.createMachine();
-        Decompiler dc = new Decompiler9900(machine);
+        IMachine machine  = ToolUtils.createMachine();
+        Disassembler dc = new Disassembler(machine);
 
-        List<Integer> refDefTables = new ArrayList<Integer>();
-        
-        List<Pair<Integer, Integer>> ranges = new ArrayList<Pair<Integer,Integer>>();
-        
         boolean gotFile = false;
-        getopt = new Getopt(PROGNAME, args, "?o:r:d:s:m:::");
+        
+        getopt = new Getopt(PROGNAME, args, "?o:m:::p");
         String outfilename = null;
 		int opt;
+		
+		List<Pair<Integer, Integer>> ranges = new ArrayList<Pair<Integer,Integer>>();
 		
 		while ((opt = getopt.getopt()) != -1) {
 			switch (opt) {
@@ -107,24 +101,16 @@ public class Decompile {
             case 'o':
             	outfilename = getopt.getOptarg();
                 break;
-            case 'r':
-                dc.addRangeFromArgv(getopt.getOptarg(), true /* code */);
-                break;
-            case 'd':
-                dc.addRangeFromArgv(getopt.getOptarg(), false /* code */);
-                break;
-            case 's': {
-                int addr = HexUtils.parseHexInt(getopt.getOptarg());
-                refDefTables.add(new Integer(addr));
-                break;
-            }
+            case 'p':
+            	dc.setShowPlain(true);
+            	break;
             default:
                 throw new AssertionError();
     
             }
         }
         
-	    // leftover files are FIAD
+        // leftover files are FIAD
         int idx = getopt.getOptind();
         while (idx < args.length) {
         	String name = args[idx++];
@@ -142,26 +128,14 @@ public class Decompile {
         	System.err.println("no files specified");
     		System.exit(1);
         }		
-                
-        if (dc.getHighLevel().getMemoryRanges().isEmpty()) {
-        	if (ranges.isEmpty()) {
-        		help(machine);
-        		System.err.println(PROGNAME + ": no code sections defined: use -r or -d options to delineate");
-        		System.exit(1);
-        	} else {
-        		System.err.println(PROGNAME + ": assuming all memory is code; use -r or -d options to delineate code and data");
-	        	for (Pair<Integer, Integer> ent : ranges) {
-	        		dc.addRange(ent.first, ent.second, true);
-	        	}
-        	}
+        
+        BitSet codeAddrs = new BitSet();
+        for (Pair<Integer, Integer> ent : ranges) {
+        	codeAddrs.set(ent.first, ent.first + ent.second);
         }
-
-        dc.getOptions().refDefTables = refDefTables;
-
-        IDecompilePhase phase = dc.decompile();
         
         PrintStream os = outfilename != null ? new PrintStream(new File(outfilename)) : System.out;
-        phase.dumpRoutines(os);
+        dc.dumpCode(codeAddrs, os);
         if (outfilename != null)
         	os.close();
     }

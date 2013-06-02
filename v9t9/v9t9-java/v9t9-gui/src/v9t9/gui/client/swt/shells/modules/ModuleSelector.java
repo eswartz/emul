@@ -190,6 +190,8 @@ public class ModuleSelector extends Composite {
 	private IPathChangeListener pathChangeListener;
 
 	private ModuleNameEditingSupport editingSupport;
+
+	private ArrayList<Object> flatModuleList;
 	
 	/**
 	 * @param window 
@@ -230,8 +232,8 @@ public class ModuleSelector extends Composite {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				showMissingModules = showUnloadable.getSelection();
-				viewer.refresh(true);
 				dialogSettings.put(SHOW_MISSING_MODULES, showMissingModules);
+				updateFilter(lastFilter);
 			}
 		});
 		
@@ -544,6 +546,7 @@ public class ModuleSelector extends Composite {
 			lastFilter = text;
 		}
 		if (lastFilter != prev && (lastFilter == null || ! lastFilter.equals(prev))) {
+			flatModuleList = null;
 			viewer.refresh();
 			if (lastFilter != null)
 				viewer.expandAll();
@@ -889,6 +892,7 @@ public class ModuleSelector extends Composite {
 				}
 				dialogSettings.put(SORT_ENABLED, sortModules);
 				dialogSettings.put(SORT_DIRECTION, sortDirection);
+				flatModuleList = null;
 				viewer.refresh();
 			}
 		});
@@ -1137,9 +1141,7 @@ public class ModuleSelector extends Composite {
 	 * @param i
 	 */
 	protected void traverseTree(int step) {
-		ITreeContentProvider cp = ((ITreeContentProvider) viewer.getContentProvider());
-		List<Object> flatList = new ArrayList<Object>();
-		addToList(cp, viewer.getInput(), flatList);
+		List<Object> flatList = getFlatModuleList();
 		
 		IStructuredSelection sel = (IStructuredSelection) viewer.getSelection();
 		int index = 0;
@@ -1152,15 +1154,33 @@ public class ModuleSelector extends Composite {
 		}
 	}
 
+	protected List<Object> getFlatModuleList() {
+		if (flatModuleList == null) {
+			flatModuleList = new ArrayList<Object>();
+			ITreeContentProvider cp = ((ITreeContentProvider) viewer.getContentProvider());
+			addToList(cp, viewer.getFilters(), null, viewer.getInput(), flatModuleList);
+		}
+		return flatModuleList;
+	}
 
-	private void addToList(ITreeContentProvider cp, Object parent,
-			List<Object> flatList) {
-		flatList.add(parent);
-		Object[] kids = cp.getChildren(parent);
+
+	private void addToList(ITreeContentProvider cp, ViewerFilter[] filters,
+			Object parent, Object ent, List<Object> flatList) {
+		boolean excl = false;
+		for (ViewerFilter filt : filters) {
+			if (!filt.select(viewer, parent, ent)) {
+				excl = true;
+				break;
+			}
+		}
+		if (!excl) {
+			flatList.add(ent);
+		}
+		Object[] kids = cp.getChildren(ent);
 		if (kids == null)
 			return;
 		for (Object kid : kids) {
-			addToList(cp, kid, flatList);
+			addToList(cp, filters, ent, kid, flatList);
 		}
 	}
 

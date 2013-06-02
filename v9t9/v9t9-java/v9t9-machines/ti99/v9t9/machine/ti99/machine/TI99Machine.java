@@ -551,6 +551,8 @@ public class TI99Machine extends MachineBase {
 		try {
 			String fileName = info.getFilename() != null ? info.getFilename() : info.getFilename2();
 			URI uri = getRomPathFileLocator().findFile(fileName);
+			if (uri == null)
+				return;
 			md5 = getRomPathFileLocator().getContentMD5(uri);
 			
 			if (info.getFilename2() != null) {

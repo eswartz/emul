@@ -1118,8 +1118,8 @@ public class InstTable9900 {
         } else {
             // Finish reading operand immediates
             pc += 2;
-            pc = mop1.fetchOperandImmediates(domain, (short)pc);
-            pc = mop2.fetchOperandImmediates(domain, (short)pc);
+            pc = mop1.fetchOperandImmediates(domain, pc);
+            pc = mop2.fetchOperandImmediates(domain, pc);
             inst.setSize(pc - inst.pc);
             inst.setName(InstTable9900.getInstName(inst.getInst()));
         }

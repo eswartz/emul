@@ -352,7 +352,8 @@ public class PathFileLocator implements IPathFileLocator {
 		if (file.contains("/")) {
 			try {
 				URI resolved = URI.create(file);
-				if (resolved.isOpaque() || resolved.isAbsolute())
+				if (!"jar".equals(resolved.getScheme()) && 
+						(resolved.isOpaque() || resolved.isAbsolute()))
 					return resolved;
 			} catch (IllegalArgumentException e) {
 				
@@ -801,12 +802,29 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @return URI or <code>null</code>
 	 */
 	public URI resolveInsideURI(URI uri, String string) {
+		if (uri == null)
+			return URI.create(string);
+		
 		URI resolved = null;
 		if (string.contains("/")) {
 			try {
 				resolved = URI.create(string);
-				if (resolved.isOpaque())
-					return resolved;
+				if (resolved.isOpaque()) {
+					if (!"jar".equals(resolved.getScheme())) 
+						return resolved;
+					URI ssp = URI.create(resolved.getSchemeSpecificPart());
+					if ("file".equals(ssp.getScheme()) && !ssp.getSchemeSpecificPart().startsWith("/")) {
+						String path = uri.getSchemeSpecificPart() + ssp.getSchemeSpecificPart();
+						int idx  =path.lastIndexOf('!');
+						if (idx >= 0)
+							path = path.substring(0, idx);
+						if (new File(path).exists()) {
+							resolved = URI.create("jar:" + uri + ssp.getSchemeSpecificPart());
+							return resolved;
+						}
+					}
+				}
+				
 			} catch (IllegalArgumentException e) {
 				
 			}

@@ -46,6 +46,7 @@ import org.eclipse.swt.widgets.Label;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
@@ -100,6 +101,8 @@ public class ModuleListComposite extends Composite {
 	private IStatusListener statusListener;
 
 	private ModuleNameEditingSupport editingSupport;
+
+	private ArrayList<URI> dirtyModuleLists;
 
 	public ModuleListComposite(Composite parent, IMachine machine, SwtWindow window,
 			IStatusListener statusListener) {
@@ -257,7 +260,7 @@ public class ModuleListComposite extends Composite {
 		discoveredList.setLabelProvider(new DiscoveredModuleLabelProvider(machine.getRomPathFileLocator()));
 		discoveredList.setContentProvider(new ArrayContentProvider());
 		
-		Collection<URI> dirtyModuleLists = new ArrayList<URI>();
+		dirtyModuleLists = new ArrayList<URI>();
 		editingSupport = new ModuleNameEditingSupport(discoveredList, dirtyModuleLists);
 		nameColumn.setEditingSupport(editingSupport);
 		editingSupport.setCanEdit(true);
@@ -417,7 +420,6 @@ public class ModuleListComposite extends Composite {
 				selected = new ArrayList<IModule>();
 			}
 			selectedModuleMap.put(dbFile, selected);
-			
 		}
 		
 		System.out.println(dbFile + " => " + selected);
@@ -490,6 +492,7 @@ public class ModuleListComposite extends Composite {
 			for (IModule module : ents) {
 				IModule exist = machine.getModuleManager().findModuleByName(module.getName(), true);
 				if (exist == null) {
+					shortenPaths(module);
 					discoveredModules.add(module);
 				} else if (exist.getDatabaseURI().equals(databaseURI)) {
 					discoveredModules.add(exist);
@@ -508,6 +511,39 @@ public class ModuleListComposite extends Composite {
 		reset();
 	}
 	
+	/**
+	 * @param module
+	 */
+	private void shortenPaths(IModule module) {
+		for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
+			shortenPath(info, MemoryEntryInfo.FILENAME);
+			shortenPath(info, MemoryEntryInfo.FILENAME2);
+		}
+	}
+
+	/**
+	 * @param info
+	 * @param prop
+	 */
+	private void shortenPath(MemoryEntryInfo info, String prop) {
+		Object path = info.getProperties().get(prop);
+		if (path == null)
+			return;
+		String replPathStr = null; 
+		String pathStr = path.toString();
+		for (URI searchURI : machine.getRomPathFileLocator().getSearchURIs()) {
+			String searchStr = searchURI.toString();
+			int idx = searchStr.indexOf(':');
+			if (idx > 0)
+				searchStr = searchStr.substring(idx+1);
+			String newPathStr = pathStr.replace(searchStr, "");
+			if (!newPathStr.equals(pathStr) && (replPathStr == null || newPathStr.length() < replPathStr.length())) {
+				replPathStr = newPathStr;
+				info.getProperties().put(prop, newPathStr);
+			}
+		}
+	}
+
 	public IStatus getStatus() {
 		return status;
 	}
@@ -521,23 +557,26 @@ public class ModuleListComposite extends Composite {
 			populateUnique();
 		} else {
 			selectedModules.clear();
+			List<IModule> matched = new ArrayList<IModule>();
 			for (IModule module : orig) {
 				boolean found = false;
-				int cnt = 0;
 				for (IModule disc : discoveredModules.toArray(new IModule[discoveredModules.size()])) {
 					if (module.getName().equals(disc.getName())) {
 						selectedModules.add(disc);
+						shortenPaths(disc);
 						discoveredModules.remove(disc);
-						discoveredModules.add(cnt++, disc);
+						matched.add(disc);
 						found = true;
 						break;
 					}
 				}
 				if (!found) {
-					discoveredModules.add(cnt++, module);
+					shortenPaths(module);
+					matched.add(module);
 					selectedModules.add(module);
 				}
 			}
+			discoveredModules.addAll(0, matched);
 		}
 		
 		discoveredList.refresh();
@@ -631,7 +670,7 @@ public class ModuleListComposite extends Composite {
 		// see if any changes...
 		List<IModule> newList = selectedModuleMap.get(dbase);
 		
-		if (newList.equals(origModuleMap.get(dbase))) {
+		if (!dirtyModuleLists.contains(dbase.toURI()) && newList.equals(origModuleMap.get(dbase))) {
 			return true;
 		}
 		

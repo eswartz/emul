@@ -19,6 +19,7 @@ import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.swt.widgets.Composite;
 
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 
 /**
@@ -41,6 +42,11 @@ final class ModuleNameEditingSupport extends EditingSupport {
 		if (element instanceof IModule) {
 			IModule module = (IModule) element;
 			if (!value.toString().equals(module.getName())) {
+				String orig = module.getName();
+				for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
+					info.getProperties().put(MemoryEntryInfo.NAME,
+							info.getName().replace(orig, value.toString()));
+				}
 				module.setName(value.toString());
 				if (dirtyLists != null)
 					dirtyLists.add(module.getDatabaseURI());

@@ -38,4 +38,12 @@ public class RawInstructionFactory9900 implements IRawInstructionFactory {
 	public int getChunkSize() {
 		return 2;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.asm.IRawInstructionFactory#getMaxInstrLength()
+	 */
+	@Override
+	public int getMaxInstrLength() {
+		return 6;
+	}
 }

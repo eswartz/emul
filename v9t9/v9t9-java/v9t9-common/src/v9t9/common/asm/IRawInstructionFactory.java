@@ -17,7 +17,10 @@ import v9t9.common.memory.IMemoryDomain;
  *
  */
 public interface IRawInstructionFactory {
+	/** Get the basic instruction size in bytes */
 	int getChunkSize();
+	/** Get the maximum instruction size in bytes */
+	int getMaxInstrLength();
 	/** Fetch and decode an instruction without examining operands */
 	RawInstruction decodeInstruction(int pc, IMemoryDomain domain);
 }

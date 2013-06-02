@@ -209,7 +209,7 @@ public class Module implements IModule {
 		} catch (IllegalArgumentException e) {
 			if (uri.getScheme().equals("jar")) {
 				uri = URI.create(uri.getSchemeSpecificPart());
-				if (uri.getScheme().equals("file")) {
+				if ("file".equals(uri.getScheme())) {
 					String ssp = uri.getSchemeSpecificPart();
 					int idx = ssp.lastIndexOf('!');
 					if (idx >= 0)

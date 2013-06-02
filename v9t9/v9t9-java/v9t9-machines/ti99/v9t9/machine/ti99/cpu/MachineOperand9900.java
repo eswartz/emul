@@ -214,7 +214,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	 *            workspace pointer
 	 * @return new address
 	 */
-    public short fetchOperandImmediates(IMemoryDomain domain, short addr) {
+    public int fetchOperandImmediates(IMemoryDomain domain, int addr) {
     	switch (type) {
     	case MachineOperand9900.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
     		immed = domain.readWord(addr); 

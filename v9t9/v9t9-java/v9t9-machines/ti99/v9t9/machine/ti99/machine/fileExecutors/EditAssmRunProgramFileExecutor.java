@@ -54,7 +54,8 @@ public class EditAssmRunProgramFileExecutor implements IFileExecutor {
 	public void run(IMachine machine) throws NotifyException {
 		machine.getModuleManager().switchModule(module);
 		machine.reset();
-		machine.getKeyboardHandler().pasteText(" 2"+	// space for title, 2 for extended basic
+		machine.getKeyboardHandler().pasteText(IKeyboardHandler.WAIT_VIDEO + " "+
+				IKeyboardHandler.WAIT_VIDEO + "2"+	// space for title, 2 for E/A
 				IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_VIDEO + 
 				"5" + devicePath + "\n");
 	}

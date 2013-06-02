@@ -12,8 +12,6 @@ package v9t9.tools.cycler;
 
 import java.io.PrintStream;
 
-import ejs.base.utils.HexUtils;
-
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CycleCounts;
@@ -25,40 +23,30 @@ import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.machine.IMachine;
 import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.machine.ti99.cpu.CpuState9900;
+import v9t9.tools.utils.ToolUtils;
 
 /**
  * @author ejs
  *
  */
 public class CycleCounter {
-	private PrintStream out;
+	private PrintStream out = System.out;
 	private IExecutor executor;
 	private int stopAddr;
 	private ICpuState state;
 	private ICpu cpu;
 	private int numInstrs;
-	private int maxLength;
+	private boolean stopAtSelfJump = true; 
+	
 	private boolean total;
+	private IMachine machine;
+	private int startAddr;
 
-	public CycleCounter(IMachine machine, int startAddr, int stopAddr,
-			int numInstrs, boolean total, PrintStream out) {
-		this.stopAddr = stopAddr;
-		this.numInstrs = numInstrs;
-		this.total = total;
-		this.out = out;
-		
+	public CycleCounter(IMachine machine) {
+		this.machine = machine;
 		executor = machine.getExecutor();
 		state = machine.getCpu().getState();
 		cpu = machine.getCpu();
-
-		if (machine.getCpu() instanceof Cpu9900) {
-			((CpuState9900) state).setWP((short) 0x83e0);
-			cpu.getConsole().writeWord(0x83e0 + 11 * 2, (short) 0);
-			maxLength = 6; 
-		}  else {
-			maxLength = 2;
-		}
-		state.setPC((short) startAddr);
 		executor.addInstructionListener(new IInstructionListener() {
 			
 			@Override
@@ -72,17 +60,27 @@ public class CycleCounter {
 			}
 		});
 	}
+	
 
 	public void run() {
+		if (machine.getCpu() instanceof Cpu9900) {
+			((CpuState9900) state).setWP((short) 0x83e0);
+			cpu.getConsole().writeWord(0x83e0 + 11 * 2, (short) 0);
+		}
+		state.setPC((short) startAddr);
+		
 		CycleCounts counts = cpu.getCycleCounts();
 		StringBuilder sb = new StringBuilder();
 		int totalNum = 0;
+		int prevPC = state.getPC();
+		
 		while (true) {
+			RawInstruction instr = null;
 			if (stopAddr != 0 && (state.getPC() & 0xffff) == stopAddr)
 				break;
 			
 			try {
-				RawInstruction instr = cpu.getCurrentInstruction();
+				instr = cpu.getCurrentInstruction();
 				if (!total)
 					execInstrAndDump(counts, sb, instr);
 				else
@@ -95,21 +93,29 @@ public class CycleCounter {
 			
 			totalNum++;
 			
-			if (numInstrs != 0) {
+			if (stopAtSelfJump) {
+				if (state.getPC() == prevPC)
+					break;
+			}
+			else if (numInstrs != 0) {
 				if (totalNum >= numInstrs) {
 					break;
 				}
 			}
+			
+			prevPC = state.getPC();
 		}
 		
 		if (total) {
-			sb.append("# instructions=").append(totalNum);
+			sb.append("count=").append(totalNum);
 			sb.append("; F=").append(counts.getFetch());
 			sb.append("; L=").append(counts.getLoad());
 			sb.append("; S=").append(counts.getStore());
 			sb.append("; E=").append(counts.getExecute());
 			sb.append("; O=").append(counts.getOverhead());
-			sb.append("; total=").append(counts.getAndResetTotal());
+			int total = counts.getAndResetTotal();
+			sb.append("; total=").append(total);
+			sb.append("; time=").append(Double.valueOf(total)/machine.getCpu().getBaseCyclesPerSec()).append(" sec");
 			out.println(sb);
 		}
 	}
@@ -118,25 +124,8 @@ public class CycleCounter {
 			RawInstruction instr) {
 		sb.setLength(0);
 		sb.append(state).append("; ");
-		
-		int pc;
-		if (cpu.getConsole().isWordAccess()) {
-			for (pc = instr.pc; pc < instr.pc + instr.getSize(); pc += 2) {
-				sb.append(HexUtils.toHex4(cpu.getConsole().flatReadWord(pc))).append(' ');
-			}
-			while (pc < instr.pc + maxLength) {
-				sb.append("     ");
-				pc += 2;
-			}
-		} else {
-			for (pc = instr.pc; pc < instr.pc + instr.getSize(); pc ++) {
-				sb.append(HexUtils.toHex2(cpu.getConsole().flatReadByte(pc))).append(' ');
-			}
-			while (pc < instr.pc + maxLength) {
-				sb.append("   ");
-				pc ++;
-			}
-		}
+
+		ToolUtils.appendInstructionCode(machine, sb, instr);
 		sb.append("\t").append(instr);
 		
 		counts.getAndResetTotal();
@@ -148,6 +137,45 @@ public class CycleCounter {
 		sb.append("; O=").append(counts.getOverhead());
 		sb.append("; total=").append(counts.getAndResetTotal());
 		out.println(sb);
+	}
+
+	/**
+	 * @param addr
+	 */
+	public void setStartAddress(int addr) {
+		this.startAddr = addr;
+	}
+
+	/**
+	 * @param parseHexInt
+	 */
+	public void setStopAddress(int addr) {
+		this.stopAddr = addr;
+		stopAtSelfJump = false;
+	}
+
+	/**
+	 * @param out2
+	 */
+	public void setPrintStream(PrintStream out) {
+		this.out = out;
+		
+	}
+
+	/**
+	 * @param count
+	 */
+	public void setInstructionCount(int count) {
+		numInstrs = count;
+		stopAtSelfJump = count != 0;
+	}
+
+	/**
+	 * @param total
+	 */
+	public void setShowTotal(boolean total) {
+		this.total = total;
+		
 	}
 
 }
