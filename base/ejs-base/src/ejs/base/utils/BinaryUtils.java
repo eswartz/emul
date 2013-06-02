@@ -36,4 +36,26 @@ public class BinaryUtils {
 		return mask;
 	}
 
+	/**
+	 * @param val2
+	 * @return
+	 */
+	public static int numberOfBits(int val_) {
+		int cnt = 0;
+		int val = val_;
+		while (val != 0) {
+			cnt++;
+			val &= (val - 1);
+		}
+		return cnt;
+	}
+	public static int maxBitNumber(int val_) {
+		int cnt = 0;
+		int val = val_;
+		while (val > 0) {
+			cnt++;
+			val >>= 1;
+		}
+		return cnt;
+	}
 }

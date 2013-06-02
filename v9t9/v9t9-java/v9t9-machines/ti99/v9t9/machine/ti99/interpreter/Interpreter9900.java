@@ -664,20 +664,13 @@ public class Interpreter9900 implements IInterpreter {
             // manually read second reg
             if ((iblock.val1 & 0xffff) > (iblock.val2 & 0xffff)) {
                 int low = iblock.val3 & 0xffff;
-                //short low = memory.readWord(block.op2.ea + 2);
                 long dval = ((iblock.val2 & 0xffff) << 16
                         | (low & 0xffff)) & 0xffffffffL;
                 try {
                     iblock.val2 = (short) (dval / (iblock.val1 & 0xffff));
                     iblock.val3 = (short) (dval % (iblock.val1 & 0xffff));
                 } catch (ArithmeticException e) {
-                	//cycleCounts.addExecute((124 + 92) / 2 - 16);
                 }
-                //memory.writeWord(block.op2.ea + 2,
-                //        (short) (val % (block.val1 & 0xffff)));
-                //inst.op2.value = (short) val;
-            } else {
-            	//cycleCounts.addExecute((124 + 92) / 2 - 16);
             }
             break;
 

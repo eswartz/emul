@@ -20,6 +20,8 @@ import static v9t9.machine.ti99.cpu.InstPattern9900.REG;
 import java.util.HashMap;
 import java.util.Map;
 
+import ejs.base.utils.BinaryUtils;
+
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.InstTableCommon;
@@ -499,7 +501,23 @@ public class InstTable9900 {
 					if ((((InstructionWorkBlock9900) block).st & Status9900.ST_O) != 0) {
 						counts.addExecute(16);
 					} else {
-						counts.addExecute((92+124)/2);		// FIXME
+						int a;
+						int b;
+						a = ((InstructionWorkBlock9900) origBlock).val2 & 0xffff;
+						b = ((InstructionWorkBlock9900) origBlock).val3 & 0xffff;
+//						a = ((InstructionWorkBlock9900) block).val2 & 0xffff;
+//						b = ((InstructionWorkBlock9900) block).val3 & 0xffff;
+//						counts.addExecute(124);
+//						counts.addExecute(92);
+//						counts.addExecute(92 
+//								+ BinaryUtils.numberOfBits(a) 
+//								+ BinaryUtils.numberOfBits(b));
+						counts.addExecute(92 + 
+								+ BinaryUtils.maxBitNumber((a << 16) | b)); 
+//						counts.addExecute((92+124)/2); 
+//						counts.addExecute(92 
+//								+ BinaryUtils.numberOfBits(((InstructionWorkBlock9900) origBlock).val1 & 0xffff)*2); 
+							
 					}
 				}
 			})
