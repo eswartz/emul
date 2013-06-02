@@ -10,6 +10,9 @@ import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.IEmulatedDisk;
 import v9t9.common.files.IEmulatedFile;
 import v9t9.common.files.IEmulatedFileHandler;
+import v9t9.common.files.NativeFDRFile;
+import v9t9.common.files.NativeFile;
+import v9t9.common.files.NativeFileFactory;
 import v9t9.common.machine.IMachine;
 import ejs.base.utils.Pair;
 
@@ -36,6 +39,15 @@ public class BaseDiskUtil {
 	}
 	
 	protected Pair<IEmulatedDisk, String> decode(String arg) throws IOException {
+		// see if the file is a FIAD entry
+		try {
+			File fiadFile = new File(arg);
+			NativeFileFactory.INSTANCE.createNativeFile(fiadFile);
+			return new Pair<IEmulatedDisk, String>(resolveDisk(fiadFile.getParent()), fiadFile.getName());
+		} catch (IOException e) {
+			
+		}
+		
 		IEmulatedDisk disk;
 		String pattern = null;
 		
@@ -55,10 +67,14 @@ public class BaseDiskUtil {
 
 	protected void getSrcFiles(List<IEmulatedFile> srcFiles, IEmulatedDisk disk,
 			String pattern) throws IOException {
+		if (!disk.isFormatted())
+			return;
+		
 		Catalog catalog = disk.readCatalog();
 		for (CatalogEntry entry : catalog.getEntries()) {
 			if (pattern == null 
-					|| entry.getFile().getFileName().matches(pattern)) {
+					|| entry.getFile().getFileName().matches("(?i)" + pattern)) {
+				
 				srcFiles.add(entry.getFile());
 			}
 		}

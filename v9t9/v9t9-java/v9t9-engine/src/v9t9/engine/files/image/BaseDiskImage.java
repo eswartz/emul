@@ -304,9 +304,13 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			}
 		} else {
 			readonly = readOnly;
-			createDiskImage();
-			closeDiskImage();
-			return;
+			if (!readonly) {
+				createDiskImage();
+				closeDiskImage();
+				return;
+			} else {
+				throw new FileNotFoundException("no disk image file exists: " + spec.toString());
+			}
 		}
 	
 		/* get disk info */
@@ -587,6 +591,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	protected abstract void fetchFormatAndTrackMarkers();
 
 	public IdMarker readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException {
+		if (hdr.getSecsPerTrack() == 0)
+			throw new IOException("unformatted disk");
+		
 		int track = (sector / hdr.getSecsPerTrack());
 		byte side = (byte) (track >= 40 ? 1 : 0);
 
@@ -716,6 +723,8 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 				VIB vib = VIB.createVIB(sec0, 0);
 				
 				return vib.isFormatted();
+			} catch (FileNotFoundException e) {
+				return false;
 			} catch (IOException e) {
 				e.printStackTrace();
 				return false;
