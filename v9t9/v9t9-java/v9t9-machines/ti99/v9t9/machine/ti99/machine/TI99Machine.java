@@ -541,21 +541,21 @@ public class TI99Machine extends MachineBase {
 				.withOffset(fileOffset)
 				.withSize(-0xA000)
 				.create(moduleName);
-		fetchMD5(module, info);
+		fetchMD5(module, info, false);
 		module.addMemoryEntryInfo(info);
 		return info;
 	}
 
-	private void fetchMD5(IModule module, MemoryEntryInfo info) {
+	private void fetchMD5(IModule module, MemoryEntryInfo info, boolean bank2) {
 		String md5;
 		try {
-			String fileName = info.getFilename() != null ? info.getFilename() : info.getFilename2();
+			String fileName = bank2 ? info.getFilename2() : info.getFilename();
 			URI uri = getRomPathFileLocator().findFile(fileName);
 			if (uri == null)
 				return;
 			md5 = getRomPathFileLocator().getContentMD5(uri);
 			
-			if (info.getFilename2() != null) {
+			if (bank2) {
 				info.getProperties().put(MemoryEntryInfo.FILE2_MD5, md5);
 			} else {
 				info.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
@@ -576,7 +576,7 @@ public class TI99Machine extends MachineBase {
 				ex.getProperties().put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
 				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
 				ex.getProperties().put(MemoryEntryInfo.SIZE, -0x2000);
-				fetchMD5(module, ex);
+				fetchMD5(module, ex, false);
 				found = true;
 				info = ex;
 				break;
@@ -598,7 +598,7 @@ public class TI99Machine extends MachineBase {
 						.create(moduleName);
 			}
 			
-			fetchMD5(module, info);
+			fetchMD5(module, info, false);
 			module.addMemoryEntryInfo(info);
 		}
 		return info;
@@ -615,7 +615,7 @@ public class TI99Machine extends MachineBase {
 				ex.getProperties().put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
 				ex.getProperties().put(MemoryEntryInfo.SIZE, -0x2000);
 				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
-				fetchMD5(module, ex);
+				fetchMD5(module, ex, true);
 				found = true;
 				info = ex;
 				break;
@@ -628,7 +628,7 @@ public class TI99Machine extends MachineBase {
 					.withOffset2(fileOffset)
 					.withBankClass(StdMultiBankedMemoryEntry.class)
 					.create(moduleName);
-			fetchMD5(module, info);
+			fetchMD5(module, info, true);
 			module.addMemoryEntryInfo(info);
 		}
 		return info;

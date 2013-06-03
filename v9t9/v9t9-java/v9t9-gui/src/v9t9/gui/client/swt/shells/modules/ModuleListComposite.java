@@ -47,6 +47,7 @@ import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.memory.StoredMemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
@@ -492,7 +493,7 @@ public class ModuleListComposite extends Composite {
 			for (IModule module : ents) {
 				IModule exist = machine.getModuleManager().findModuleByName(module.getName(), true);
 				if (exist == null) {
-					shortenPaths(module);
+					fixupProperties(module);
 					discoveredModules.add(module);
 				} else if (exist.getDatabaseURI().equals(databaseURI)) {
 					discoveredModules.add(exist);
@@ -514,10 +515,18 @@ public class ModuleListComposite extends Composite {
 	/**
 	 * @param module
 	 */
-	private void shortenPaths(IModule module) {
+	private void fixupProperties(IModule module) {
 		for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
 			shortenPath(info, MemoryEntryInfo.FILENAME);
 			shortenPath(info, MemoryEntryInfo.FILENAME2);
+			
+			try {
+				StoredMemoryEntryInfo storedInfo = StoredMemoryEntryInfo.createStoredMemoryEntryInfo(
+						machine.getRomPathFileLocator(), machine.getSettings(), machine.getMemory(), info);
+				info.getProperties().put(MemoryEntryInfo.FILE_MD5, storedInfo.md5);
+			} catch (IOException e) {
+				//e.printStackTrace();
+			}	
 		}
 	}
 
@@ -563,7 +572,7 @@ public class ModuleListComposite extends Composite {
 				for (IModule disc : discoveredModules.toArray(new IModule[discoveredModules.size()])) {
 					if (module.getName().equals(disc.getName())) {
 						selectedModules.add(disc);
-						shortenPaths(disc);
+						fixupProperties(disc);
 						discoveredModules.remove(disc);
 						matched.add(disc);
 						found = true;
@@ -571,7 +580,7 @@ public class ModuleListComposite extends Composite {
 					}
 				}
 				if (!found) {
-					shortenPaths(module);
+					fixupProperties(module);
 					matched.add(module);
 					selectedModules.add(module);
 				}
