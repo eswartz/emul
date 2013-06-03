@@ -47,7 +47,6 @@ import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
-import v9t9.common.memory.StoredMemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
@@ -519,14 +518,6 @@ public class ModuleListComposite extends Composite {
 		for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
 			shortenPath(info, MemoryEntryInfo.FILENAME);
 			shortenPath(info, MemoryEntryInfo.FILENAME2);
-			
-			try {
-				StoredMemoryEntryInfo storedInfo = StoredMemoryEntryInfo.createStoredMemoryEntryInfo(
-						machine.getRomPathFileLocator(), machine.getSettings(), machine.getMemory(), info);
-				info.getProperties().put(MemoryEntryInfo.FILE_MD5, storedInfo.md5);
-			} catch (IOException e) {
-				//e.printStackTrace();
-			}	
 		}
 	}
 
@@ -542,13 +533,27 @@ public class ModuleListComposite extends Composite {
 		String pathStr = path.toString();
 		for (URI searchURI : machine.getRomPathFileLocator().getSearchURIs()) {
 			String searchStr = searchURI.toString();
-//			int idx = searchStr.indexOf(':');
-//			if (idx > 0)
-//				searchStr = searchStr.substring(idx+1);
+			// remove e.g. file:/foo/bar from jar:file:/foo/bar
 			String newPathStr = pathStr.replace(searchStr, "");
-			if (!newPathStr.equals(pathStr) && (replPathStr == null || newPathStr.length() < replPathStr.length())) {
-				replPathStr = newPathStr;
-				info.getProperties().put(prop, newPathStr);
+			if (!newPathStr.equals(pathStr)) {
+				if (replPathStr == null || newPathStr.length() < replPathStr.length()) {
+					replPathStr = newPathStr;
+					info.getProperties().put(prop, newPathStr);
+				}
+			} else {
+				int idx = searchStr.indexOf(':');
+				if (idx > 0) {
+					// remove e.g. /foo/bar from file:/foo/bar
+					searchStr = searchStr.substring(idx+1);
+					newPathStr = pathStr.replace(searchStr, "");
+					if (!newPathStr.equals(pathStr)) {
+						if (replPathStr == null || newPathStr.length() < replPathStr.length()) {
+							replPathStr = newPathStr;
+							info.getProperties().put(prop, newPathStr);
+						}
+					}
+				}
+				
 			}
 		}
 	}
