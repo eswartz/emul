@@ -10,8 +10,6 @@ import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.IEmulatedDisk;
 import v9t9.common.files.IEmulatedFile;
 import v9t9.common.files.IEmulatedFileHandler;
-import v9t9.common.files.NativeFDRFile;
-import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
 import v9t9.common.machine.IMachine;
 import ejs.base.utils.Pair;
