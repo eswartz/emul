@@ -115,7 +115,6 @@ import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
 import v9t9.gui.client.swt.wizards.SetupWizard;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
-import ejs.base.utils.FileUtils;
 
 /**
  * Dialog for examining, running, and editing modules
@@ -645,7 +644,7 @@ public class ModuleSelector extends Composite {
 			public void update(ViewerCell cell) {
 				if (cell.getElement()  instanceof URI) {
 					URI uri = (URI) cell.getElement();
-					String text = FileUtils.abbreviateURI(uri, 20);
+					String text = machine.getRomPathFileLocator().splitFileName(uri).second;
 					
 					cell.setText(text);
 					cell.setImage(getModuleListImage());

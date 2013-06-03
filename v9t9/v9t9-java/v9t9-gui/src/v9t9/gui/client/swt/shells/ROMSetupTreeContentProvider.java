@@ -239,7 +239,7 @@ public class ROMSetupTreeContentProvider implements ITreeContentProvider {
 	 */
 	public File[] getPathsFor(IModule module) {
 		File[] paths = modulePathMap.get(module);
-		if (paths == null) {
+		if (paths == null || paths.length == 0) {
 			Collection<File> usedFiles = module.getUsedFiles(machine.getRomPathFileLocator());
 			paths = (File[]) usedFiles.toArray(new File[usedFiles.size()]);
 			modulePathMap.put(module, paths);

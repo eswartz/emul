@@ -813,16 +813,21 @@ public class PathFileLocator implements IPathFileLocator {
 					if (!"jar".equals(resolved.getScheme())) 
 						return resolved;
 					URI ssp = URI.create(resolved.getSchemeSpecificPart());
-					if ("file".equals(ssp.getScheme()) && !ssp.getSchemeSpecificPart().startsWith("/")) {
-						String path = uri.getSchemeSpecificPart() + ssp.getSchemeSpecificPart();
-						int idx  =path.lastIndexOf('!');
-						if (idx >= 0)
-							path = path.substring(0, idx);
-						if (new File(path).exists()) {
-							resolved = URI.create("jar:" + uri + ssp.getSchemeSpecificPart());
+					if ("file".equals(ssp.getScheme()) || ssp.getScheme() == null) {
+						if (("file".equals(ssp.getScheme()) && !ssp.getSchemeSpecificPart().startsWith("/")
+								|| (ssp.getScheme() == null && !ssp.getPath().startsWith("/")))) {
+							String path = uri.getSchemeSpecificPart() + ssp.getSchemeSpecificPart();
+							int idx  =path.lastIndexOf('!');
+							if (idx >= 0)
+								path = path.substring(0, idx);
+							if (new File(path).exists()) {
+								resolved = URI.create("jar:" + uri + ssp.getSchemeSpecificPart());
+								return resolved;
+							}
+						} else {
 							return resolved;
 						}
-					}
+					} 
 				}
 				
 			} catch (IllegalArgumentException e) {

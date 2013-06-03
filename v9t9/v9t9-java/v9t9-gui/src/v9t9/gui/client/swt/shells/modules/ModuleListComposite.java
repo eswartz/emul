@@ -533,9 +533,9 @@ public class ModuleListComposite extends Composite {
 		String pathStr = path.toString();
 		for (URI searchURI : machine.getRomPathFileLocator().getSearchURIs()) {
 			String searchStr = searchURI.toString();
-			int idx = searchStr.indexOf(':');
-			if (idx > 0)
-				searchStr = searchStr.substring(idx+1);
+//			int idx = searchStr.indexOf(':');
+//			if (idx > 0)
+//				searchStr = searchStr.substring(idx+1);
 			String newPathStr = pathStr.replace(searchStr, "");
 			if (!newPathStr.equals(pathStr) && (replPathStr == null || newPathStr.length() < replPathStr.length())) {
 				replPathStr = newPathStr;
