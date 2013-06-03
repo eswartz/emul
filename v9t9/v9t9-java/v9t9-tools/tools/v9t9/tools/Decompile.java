@@ -90,9 +90,13 @@ public class Decompile {
                 break;
             case 'm': {
             	String domainName = getopt.getOptarg();
-            	String addrStr = args[getopt.getOptind()];
-            	String fileName = args[getopt.getOptind()+1];
-            	getopt.setOptind(getopt.getOptind()+2);
+            	int idx = getopt.getOptind();
+            	if (domainName == null) {
+            		domainName = args[idx++];
+            	}
+            	String addrStr = args[idx];
+            	String fileName = args[idx+1];
+            	getopt.setOptind(idx+2);
             	
             	try {
 					ToolUtils.loadMemory(machine, domainName, fileName, addrStr, ranges);
@@ -159,6 +163,8 @@ public class Decompile {
         }
 
         dc.getOptions().refDefTables = refDefTables;
+
+        machine.getMemoryModel().loadMemory(machine.getEventNotifier());
 
         IDecompilePhase phase = dc.decompile();
         

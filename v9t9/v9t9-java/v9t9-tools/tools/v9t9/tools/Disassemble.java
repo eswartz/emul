@@ -84,9 +84,13 @@ public class Disassemble {
                 break;
             case 'm': {
             	String domainName = getopt.getOptarg();
-            	String addrStr = args[getopt.getOptind()];
-            	String fileName = args[getopt.getOptind()+1];
-            	getopt.setOptind(getopt.getOptind()+2);
+            	int idx = getopt.getOptind();
+            	if (domainName == null) {
+            		domainName = args[idx++];
+            	}
+            	String addrStr = args[idx];
+            	String fileName = args[idx+1];
+            	getopt.setOptind(idx+2);
             	
             	try {
 					ToolUtils.loadMemory(machine, domainName, fileName, addrStr, ranges);
@@ -135,6 +139,8 @@ public class Disassemble {
         for (Pair<Integer, Integer> ent : ranges) {
         	codeAddrs.set(ent.first, ent.first + ent.second);
         }
+        
+        machine.getMemoryModel().loadMemory(machine.getEventNotifier());
         
         PrintStream os = outfilename != null ? new PrintStream(new File(outfilename)) : System.out;
         dc.dumpCode(codeAddrs, os);

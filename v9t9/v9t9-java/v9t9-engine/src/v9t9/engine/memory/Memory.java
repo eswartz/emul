@@ -103,6 +103,8 @@ public class Memory implements IMemory {
 	 */
 	@Override
 	public IMemoryDomain getDomain(String key) {
+		if (key == null)
+			return null;
 		return domains.get(key);
 	}
 	
