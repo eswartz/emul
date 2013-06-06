@@ -502,7 +502,7 @@ public class EmuDiskPabHandler extends PabHandler {
 		ByteMemoryAccess access = xfer.getVdpMemory(pab.bufaddr);
 		try {
 			int read = openFile.getNativeFile().readContents(access.memory, access.offset, 
-					0, pab.recnum);
+					0, Math.min(openFile.getNativeFile().getFileSize(), pab.recnum));
 			xfer.dirtyVdpMemory(pab.bufaddr, read);
 			
 			if (dumper.isEnabled())

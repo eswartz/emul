@@ -12,6 +12,7 @@ package v9t9.server.client;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Map;
 
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -19,9 +20,11 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
+import v9t9.common.files.IPathFileLocator;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
+import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.IStoredSettings;
 import v9t9.engine.demos.DemoHandler;
 import v9t9.engine.memory.GplMmio;
@@ -94,7 +97,18 @@ public abstract class EmulatorServerBase {
 		machine.reload();
 		
 		if (client.getEventNotifier().getErrorCount() > barrier) {
-			settings.get(IClient.settingNewConfiguration).setValue(true);
+			boolean anyReqdMissing = false;
+			IPathFileLocator locator = machine.getRomPathFileLocator();
+			for (MemoryEntryInfo info : machine.getMemoryModel().getRequiredRomMemoryEntries()) {
+				URI uri = locator.findFile(machine.getSettings(), info);
+				if (uri == null) {
+					anyReqdMissing = true;
+					break;
+				}
+			}
+			if (anyReqdMissing) {
+				settings.get(IClient.settingNewConfiguration).setValue(true);
+			}
 		}
 	}
 	

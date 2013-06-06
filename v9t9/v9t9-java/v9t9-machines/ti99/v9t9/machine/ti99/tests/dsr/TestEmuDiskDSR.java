@@ -194,7 +194,7 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 		xfer.assertTouched(0x0, 0x1234, 0x2000);
 		
 		for (int i = 0; i < 0x1234; i++) {
-			assertEquals(xfer.readVdpByte(bufaddr + i), xfer.readVdpByte(bufrdaddr + i));
+			assertEquals(""+i,xfer.readVdpByte(bufaddr + i), xfer.readVdpByte(bufrdaddr + i));
 		}
 	}
 	

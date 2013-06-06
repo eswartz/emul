@@ -23,7 +23,7 @@ import ejs.base.utils.HexUtils;
  * @author ejs
  *
  */
-public class TestCRC {
+public class ManualTestCRC {
 
 	public static class CRC16_b implements ICRCAlgorithm {
 
@@ -91,7 +91,7 @@ public class TestCRC {
 	private Map<Integer, Integer> crcMatches = new HashMap<Integer, Integer>();
 	
 	public static void main(String[] args) {
-		TestCRC crc = new TestCRC();
+		ManualTestCRC crc = new ManualTestCRC();
 		for (int i = 1; i < 0xffff; i+=2) {
 //			crc.run(new CRC16(0x11021));
 //			crc.run(new CRC16(0x8048));

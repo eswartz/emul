@@ -109,13 +109,14 @@ public class BaseEmuDiskDSRTest {
 			Arrays.fill(vdpTouched, false);
 		}
 
-		public void assertTouched(int addr, int count, int notbeyond) {
+		public void assertTouched(int addr0, int count, int notbeyond) {
+			int addr = addr0;
 			int start = -1;
 			int end = -1;
 			int fin = addr + count;
 			int finboundary = addr + notbeyond;
 			while (addr < fin) {
-				if (!vdpTouched[addr]) {
+				if (vdpTouched[addr]) {
 					if (start < 0)
 						start = addr;
 					end = addr;
@@ -125,17 +126,13 @@ public class BaseEmuDiskDSRTest {
 				}
 				addr++;
 			}
+			if (start < 0)
+				fail("VDP not touched: " + HexUtils.toHex4(addr0) + "-" + HexUtils.toHex4(fin));
+
 			
-			start = end = -1;
 			while (addr < finboundary) {
-				if (vdpTouched[addr]) {
-					if (start < 0)
-						start = addr;
-					end = addr;
-				} else {
-					if (start  >= 0)
-						fail("VDP touched: " + HexUtils.toHex4(start) + "-" + HexUtils.toHex4(end));
-				}
+				if (vdpTouched[addr])
+					fail("VDP touched: " + HexUtils.toHex4(addr));
 				addr++;
 			}
 		}
