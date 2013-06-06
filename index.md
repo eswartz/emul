@@ -75,6 +75,13 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
+<li>2013/06/05: changed module list setup.  Instead of showing only modules
+registered in a central database, V9t9 will prompt you to establish a
+modules.xml file containing a custom list of modules detected on your
+ROM paths.
+</li>
+<li>2013/06/05: more accurate DIV cycle counting
+</li>
 <li>2013/05/26: fix memory leak causing emulator performance to be slower
 than needed when accelerating speed
 </li>
