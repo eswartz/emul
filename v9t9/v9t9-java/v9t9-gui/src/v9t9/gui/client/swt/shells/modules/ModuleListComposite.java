@@ -683,21 +683,23 @@ public class ModuleListComposite extends Composite {
 	protected boolean saveModuleList(File dbase) {
 		// see if any changes...
 		List<IModule> newList = selectedModuleMap.get(dbase);
+		if (newList == null)
+			return true;
 		
 		if (!dirtyModuleLists.contains(dbase.toURI()) && newList.equals(origModuleMap.get(dbase))) {
 			return true;
 		}
 		
-		if (!dbase.canWrite()) {
-			if (false == MessageDialog.openQuestion(getShell(), "Cannot write file", 
-					"The module list has changes but '"+dbase+"' is read-only.  Make writeable and overwrite?")) {
-				return true;
-			}
-			dbase.setWritable(true);
-		}
 		
 		if (dbase.exists()) {
-			if (false == MessageDialog.openQuestion(getShell(), "File exists", 
+			if (!dbase.canWrite()) {
+				if (false == MessageDialog.openQuestion(getShell(), "Cannot write file", 
+						"The module list has changes but '"+dbase+"' is read-only.  Make writeable and overwrite?")) {
+					return true;
+				}
+				dbase.setWritable(true);
+			}
+			else if (false == MessageDialog.openQuestion(getShell(), "File exists", 
 					"V9t9 detected changes to the file '" + dbase + "'.  Overwrite it?")) {
 				return true;
 			}
