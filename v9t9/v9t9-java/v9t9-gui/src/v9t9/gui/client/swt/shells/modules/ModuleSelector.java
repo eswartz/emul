@@ -232,7 +232,9 @@ public class ModuleSelector extends Composite {
 			public void widgetSelected(SelectionEvent e) {
 				showMissingModules = showUnloadable.getSelection();
 				dialogSettings.put(SHOW_MISSING_MODULES, showMissingModules);
+				viewer.refresh(true);
 				updateFilter(lastFilter);
+				viewer.expandAll();
 			}
 		});
 		
