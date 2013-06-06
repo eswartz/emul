@@ -10,6 +10,8 @@
  */
 package ejs.base.winmm;
 
+import java.nio.ByteBuffer;
+
 import com.sun.jna.Pointer;
 
 /**

@@ -32,7 +32,7 @@ import ejs.base.sound.ISoundVoice;
  */
 public class CassetteSoundGenerator extends BaseSoundGenerator implements ISoundGenerator, IRegisterAccess.IRegisterWriteListener {
 	
-	private static final AudioFormat format = new AudioFormat(22000, 8, 1, false, false);
+	private static final AudioFormat format = new AudioFormat(24000, 8, 1, false, false);
 		// pulse freaks out with 22050 :(
 	
 	protected final Map<Integer, SoundVoice> regIdToVoices = 

@@ -25,7 +25,7 @@ import ejs.base.sound.ISoundOutput;
  */
 public abstract class BaseSoundChipSoundGenerator extends BaseSoundGenerator {
 
-	private static final AudioFormat format = new AudioFormat(55930, 16, 2, true, false);
+	private static final AudioFormat format = new AudioFormat(48000, 16, 2, true, false);
 	
 	protected int active;
 	protected final ISoundChip soundChip;

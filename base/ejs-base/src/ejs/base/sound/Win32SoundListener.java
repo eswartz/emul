@@ -158,7 +158,9 @@ public class Win32SoundListener implements ISoundEmitter {
 					wfx, 
 					null,
 					0, 
-					WinMMLibrary.CALLBACK_NULL | (blocking ? WinMMLibrary.WAVE_ALLOWSYNC : 0));
+					WinMMLibrary.CALLBACK_NULL | (blocking ? WinMMLibrary.WAVE_ALLOWSYNC : 0) | WinMMLibrary.WAVE_FORMAT_DIRECT
+//					WinMMLibrary.CALLBACK_FUNCTION | (blocking ? WinMMLibrary.WAVE_ALLOWSYNC : 0)
+					);
 		if (res != WinMMLibrary.MMSYSERR_NOERROR) {
 			wHandle = 0;
 			throw new IllegalArgumentException("Could not open a wave device:" +
@@ -190,7 +192,7 @@ public class Win32SoundListener implements ISoundEmitter {
 					if (chunk.soundData != null) {
 						//logger.debug("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
 						int size = chunk.soundData.length;
-						
+
 						WAVEHDR hdr = null;
 						
 						synchronized (hdrs) {
@@ -199,7 +201,7 @@ public class Win32SoundListener implements ISoundEmitter {
 							if (hdr != null) {
 								waitForHeader(hdr);
 								
-								if (((Memory) hdr.lpData).size() != size) {
+								if (((Memory) hdr.lpData).size() < size) {
 									WinMMLibrary.INSTANCE.waveOutUnprepareHeader(
 											wHandle, hdr, hdr.size());
 									hdr = null;
@@ -215,13 +217,15 @@ public class Win32SoundListener implements ISoundEmitter {
 								}
 								hdrs.set(hdrIndex, hdr);
 							}
-							
 							hdrIndex = (hdrIndex + 1) % hdrs.size();
 						}
-						
+
+						hdr.dwBufferLength = size;
+						hdr.dwLoops = 2;
 						hdr.lpData.write(0, chunk.soundData, 0, size);
 
-						//WinMMLibrary.INSTANCE.waveOutPause(wHandle);
+						hdr.autoWrite();
+						
 						int res = WinMMLibrary.INSTANCE.waveOutWrite(
 								wHandle, hdr, hdr.size());
 						if (res != WinMMLibrary.MMSYSERR_NOERROR) {
@@ -229,7 +233,7 @@ public class Win32SoundListener implements ISoundEmitter {
 							WinMMLibrary.INSTANCE.waveOutReset(wHandle);
 							soundQueue.clear();
 						}
-						//WinMMLibrary.INSTANCE.waveOutRestart(wHandle);
+//						WinMMLibrary.INSTANCE.waveOutRestart(wHandle);
 					}
 				}
 			}
@@ -245,13 +249,9 @@ public class Win32SoundListener implements ISoundEmitter {
 			logger.error("Could not restart sound: " + getError(res));
 		}
 
+		soundWritingThread.setPriority(Thread.MAX_PRIORITY);
 		soundWritingThread.setDaemon(true);
 		soundWritingThread.start();
-
-
-		//soundGeneratorLine.start();
-		
-		//soundSamplesPerTick = soundFormat.getFrameSize() * soundFramesPerTick / 2;
 	}
 
 	protected void waitForHeader(WAVEHDR hdr) {
@@ -259,7 +259,7 @@ public class Win32SoundListener implements ISoundEmitter {
 		while ((hdr.dwFlags & WinMMLibrary.WHDR_DONE) == 0) {
 			//Kernel32Library.INSTANCE.SleepEx(10, true);
 			try {
-				Thread.sleep(100);
+				Thread.sleep(10);
 			} catch (InterruptedException e) {
 			}
 			hdr.autoRead();
@@ -281,9 +281,8 @@ public class Win32SoundListener implements ISoundEmitter {
 	 */
 	public void played(ISoundView view) {
 		try {
-			soundQueue.drainTo(new ArrayList<AudioChunk>(1), SOUND_QUEUE_SIZE - 1);
-//			if (soundQueue.remainingCapacity() == 0)
-//				soundQueue.remove();
+			if (!blocking && soundQueue.remainingCapacity() == 0)
+				soundQueue.remove();
 			// will block if sound is too fast
 			AudioChunk o = new AudioChunk(view, volume);
 			soundQueue.put(o);
@@ -291,10 +290,6 @@ public class Win32SoundListener implements ISoundEmitter {
 		}
 	}
 
-	protected void playChunk() {}
-	/**
-	 * 
-	 */
 	public void waitUntilEmpty() {
 		if (wHandle != 0) {
 			while (!soundQueue.isEmpty()) {
@@ -326,12 +321,15 @@ public class Win32SoundListener implements ISoundEmitter {
 		WAVEHDR hdr;
 		hdr = new WAVEHDR();
 		hdr.lpData = new Memory(size);
-		hdr.dwFlags = 0; //WinMMLibrary.WHDR_DONE;
 		hdr.dwLoops = 0;
 		hdr.dwBufferLength = size;
+		hdr.autoWrite();
 		
 		int res = WinMMLibrary.INSTANCE.waveOutPrepareHeader(
 				wHandle, hdr, hdr.size());
+		hdr.autoRead();
+		
+		hdr.dwFlags |= WinMMLibrary.WHDR_DONE;
 		if (res != WinMMLibrary.MMSYSERR_NOERROR) {
 			throw new IOException("failed in waveOutPrepareHeader: " + getError(res));
 		}
