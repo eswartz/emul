@@ -37,15 +37,6 @@ public class BaseDiskUtil {
 	}
 	
 	protected Pair<IEmulatedDisk, String> decode(String arg) throws IOException {
-		// see if the file is a FIAD entry
-		try {
-			File fiadFile = new File(arg);
-			NativeFileFactory.INSTANCE.createNativeFile(fiadFile);
-			return new Pair<IEmulatedDisk, String>(resolveDisk(fiadFile.getParent()), fiadFile.getName());
-		} catch (IOException e) {
-			
-		}
-		
 		IEmulatedDisk disk;
 		String pattern = null;
 		
@@ -58,9 +49,16 @@ public class BaseDiskUtil {
 		} else {
 			path = arg;
 		}
-		disk = resolveDisk(path);
 		
-		return new Pair<IEmulatedDisk, String>(disk, pattern);
+		try {
+			disk = resolveDisk(path);
+			return new Pair<IEmulatedDisk, String>(disk, pattern);
+		} catch (IOException e) {
+			// see if the file is a FIAD entry
+			File fiadFile = new File(arg);
+			/*NativeFile nativeFile =*/ NativeFileFactory.INSTANCE.createNativeFile(fiadFile);
+			return new Pair<IEmulatedDisk, String>(resolveDisk(fiadFile.getParent()), fiadFile.getName());
+		}
 	}
 
 	protected void getSrcFiles(List<IEmulatedFile> srcFiles, IEmulatedDisk disk,
