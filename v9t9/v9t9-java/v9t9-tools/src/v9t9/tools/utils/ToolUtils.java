@@ -4,13 +4,8 @@
 package v9t9.tools.utils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
-
-import ejs.base.utils.FileUtils;
-import ejs.base.utils.HexUtils;
-import ejs.base.utils.Pair;
 
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.files.NativeFile;
@@ -18,10 +13,11 @@ import v9t9.common.files.NativeFileFactory;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.memory.MemoryEntryInfo;
-import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.NativeFileMemoryEntry;
 import v9t9.server.EmulatorLocalServer;
 import v9t9.server.client.EmulatorServerBase;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
 
 /**
  * @author ejs
@@ -85,9 +81,9 @@ public class ToolUtils {
 				throw new IOException("malformed memory image header: addr + size > 64k");
 			}
 			
-			for (int o = 0; o < size; o++) {
-				machine.getConsole().flatWriteByte(addr + o, contents[o + 6]);
-			}
+			IMemoryDomain console = machine.getConsole();
+			IMemoryEntry ramEntry = NativeFileMemoryEntry.newMemoryFromFile(addr, name, console, file, 0); 
+			console.mapEntry(ramEntry);
 			
 			codeRanges.add(new Pair<Integer, Integer>(addr, size));
 			
@@ -105,32 +101,16 @@ public class ToolUtils {
     	
     	File file = new File(fileName);
     	int addr = HexUtils.parseHexInt(addrStr);
-    	IMemoryEntry userEntry = domain.getEntryAt(addr);
-    	if (userEntry == null) {
-        	MemoryEntryInfo userEntryInfo = new MemoryEntryInfoBuilder(
-    			domain.isWordAccess() ? 2 : 1)
-        		.withDomain(domainName)
-        		.withAddress(HexUtils.parseHexInt(addrStr))
-        		.withSize((int) file.length())
-        		.storable(false)
-        		.create(domainName);
-        	
-			try {
-				userEntry = machine.getMemory().getMemoryEntryFactory().newMemoryEntry(userEntryInfo);
-				System.out.println("loading " + fileName);
-				machine.getMemory().addAndMap(userEntry);
-			} catch (IOException e) {
-				throw new IOException("could not load memory to '"+ domainName +"' from '" + fileName +"'", e);
-			}
-    	}
     	
     	try {
-    		byte[] contents = FileUtils.readInputStreamContentsAndClose(new FileInputStream(file));
-    		for (int o = 0; o < contents.length; o++) {
-    			machine.getConsole().flatWriteByte(addr + o, contents[o]);
-    		}
+    		NativeFile nativeFile = NativeFileFactory.INSTANCE.createNativeFile(file);
+    		IMemoryDomain console = machine.getConsole();
+			IMemoryEntry ramEntry = NativeFileMemoryEntry.newMemoryFromFile(
+					addr, file.getName(), console, nativeFile, 0); 
+			console.mapEntry(ramEntry);
+
 			if (IMemoryDomain.NAME_CPU.equals(domainName)) {
-				codeRanges.add(new Pair<Integer, Integer>(addr, contents.length));
+				codeRanges.add(new Pair<Integer, Integer>(addr, nativeFile.getFileSize()));
 			}
 
     	} catch (IOException e) {

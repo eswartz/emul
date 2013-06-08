@@ -76,7 +76,7 @@ public class Decompiler implements ICodeProvider {
 	}
 	public void addFile(String filename, int baseAddr) throws IOException {
 	    NativeFile file = NativeFileFactory.INSTANCE.createNativeFile(new File(filename));
-	    MemoryEntry entry = NativeFileMemoryEntry.newWordMemoryFromFile(baseAddr, filename, 
+	    MemoryEntry entry = NativeFileMemoryEntry.newMemoryFromFile(baseAddr, filename, 
 	            consoleMemory, file, 0x0);
 	    memory.addAndMap(entry);
 	    highLevel.getMemoryRanges().addRange(baseAddr, entry.getSize(), true);

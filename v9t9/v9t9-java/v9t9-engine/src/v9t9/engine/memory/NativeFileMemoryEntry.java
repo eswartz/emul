@@ -38,16 +38,18 @@ public class NativeFileMemoryEntry extends MemoryEntry {
         this.filesize = filesize;
     }
 
-    public static MemoryEntry newWordMemoryFromFile(int addr, String name, IMemoryDomain domain, 
-            NativeFile file, int fileoffs) throws IOException {
-        int filesize = file.getFileSize();
-        NativeFileMemoryEntry entry = new NativeFileMemoryEntry(
-                new WordMemoryArea(domain.getLatency(addr)), 
-                addr, filesize, name, domain, file, fileoffs, filesize);
-
-        entry.updateMemoryArea();
-        
-        return entry;
+    public static MemoryEntry newMemoryFromFile(int addr, String name, IMemoryDomain domain, 
+    		NativeFile file, int fileoffs) throws IOException {
+    	int filesize = file.getFileSize();
+    	int roundedSize = (IMemoryDomain.AREASIZE - 1 + filesize) & ~(IMemoryDomain.AREASIZE - 1);
+    	NativeFileMemoryEntry entry = new NativeFileMemoryEntry(
+    			domain.isWordAccess() ? new WordMemoryArea(domain.getLatency(addr)) : 
+    					new ByteMemoryArea(domain.getLatency(addr)), 
+    			addr, roundedSize, name, domain, file, fileoffs, filesize);
+    	
+    	entry.updateMemoryArea();
+    	
+    	return entry;
     }
 
     /** Update the memory area given these parameters.

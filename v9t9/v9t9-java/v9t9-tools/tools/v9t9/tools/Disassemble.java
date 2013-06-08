@@ -140,8 +140,6 @@ public class Disassemble {
         	codeAddrs.set(ent.first, ent.first + ent.second);
         }
         
-        machine.getMemoryModel().loadMemory(machine.getEventNotifier());
-        
         PrintStream os = outfilename != null ? new PrintStream(new File(outfilename)) : System.out;
         dc.dumpCode(codeAddrs, os);
         if (outfilename != null)
