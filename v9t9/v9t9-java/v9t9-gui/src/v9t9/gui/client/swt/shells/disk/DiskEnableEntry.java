@@ -11,7 +11,6 @@
 package v9t9.gui.client.swt.shells.disk;
 
 import org.eclipse.jface.layout.GridDataFactory;
-import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -31,10 +30,7 @@ class DiskEnableEntry extends DiskSettingEntry {
 	 */
 	@Override
 	protected void createControls(Composite parent) {
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(this);
-
-
-		final Button checkbox = new Button(parent, SWT.CHECK);
+		final Button checkbox = new Button(this, SWT.CHECK);
 		checkbox.setText(setting.getLabel());
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(checkbox);
 		

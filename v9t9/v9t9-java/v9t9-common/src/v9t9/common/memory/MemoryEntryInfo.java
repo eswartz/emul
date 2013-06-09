@@ -69,6 +69,11 @@ public class MemoryEntryInfo {
 	public static final String DESCRIPTION = "description";
 	/** SettingsSchema */
 	public static final String FILENAME_PROPERTY = "fileProperty";
+	/** SettingsSchema */
+	public static final String FILENAME2_PROPERTY = "file2Property";
+
+	/** int: bank size */
+	public final static String BANK_SIZE = "bankSize";
 
 	/** Boolean: whether bank order is reversed */
 	public final static String REVERSED = "reversed";
@@ -163,6 +168,11 @@ public class MemoryEntryInfo {
 
 	public SettingSchema getFilenameProperty() {
 		return (SettingSchema) properties.get(MemoryEntryInfo.FILENAME_PROPERTY);
+	}
+	
+	
+	public SettingSchema getFilename2Property() {
+		return (SettingSchema) properties.get(MemoryEntryInfo.FILENAME2_PROPERTY);
 	}
 	
 	public String getFileMD5() {
@@ -290,8 +300,6 @@ public class MemoryEntryInfo {
 			return true;
 		if (getFileMD5() == null || storedInfo.md5.equals(getFileMD5())) 
 			return true;
-//		if (getFile2MD5() != null && storedInfo.md5.equals(getFile2MD5()))
-//			return true;
 		return false;
 	}
 
@@ -301,6 +309,10 @@ public class MemoryEntryInfo {
 	 */
 	public boolean isReversed() {
 		return getBool(REVERSED);
+	}
+
+	public int getBankSize() {
+		return getInt(BANK_SIZE);
 	}
 
 	public MemoryEntryInfo asBank(int number, int offset) {
@@ -320,6 +332,7 @@ public class MemoryEntryInfo {
 		props.remove(FILE2_MD5);
 		props.remove(FILE2_MD5_LIMIT);
 		props.remove(FILE2_MD5_OFFSET);
+		props.remove(FILENAME2_PROPERTY);
 		return copy;
 	}
 	
@@ -327,12 +340,13 @@ public class MemoryEntryInfo {
 		MemoryEntryInfo copy = asBank(1, 0);
 		Map<String, Object> props = copy.getProperties();
 		move(props, FILENAME, getFilename2());
-		move(props, ADDRESS, getAddress2());
+		move(props, ADDRESS, getAddress2() != 0 ? getAddress2() : getAddress());
 		move(props, SIZE, getSize2() != 0 ? getSize2() : getSize());
 		move(props, OFFSET, getOffset2());
 		move(props, FILE_MD5, getFile2MD5());
 		move(props, FILE_MD5_OFFSET, getFile2Md5Offset());
 		move(props, FILE_MD5_LIMIT, getFile2Md5Limit());
+		move(props, FILENAME_PROPERTY, getFilename2Property());
 		return copy;
 	}
 
@@ -344,4 +358,5 @@ public class MemoryEntryInfo {
 				props.remove(key.substring(0, 4) + "2" + key.substring(4));
 		}
 	}
+
 }

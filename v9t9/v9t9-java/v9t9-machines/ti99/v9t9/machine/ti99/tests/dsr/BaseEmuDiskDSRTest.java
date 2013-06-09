@@ -40,7 +40,7 @@ import v9t9.engine.files.directory.EmuDiskConsts;
 import v9t9.engine.files.directory.EmuDiskSettings;
 import v9t9.engine.files.directory.EmuDiskPabHandler;
 import v9t9.engine.files.image.Dumper;
-import v9t9.engine.files.image.RealDiskDsrSettings;
+import v9t9.engine.files.image.RealDiskSettings;
 import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 
 /**
@@ -148,7 +148,7 @@ public class BaseEmuDiskDSRTest {
 		settings = new BasicSettingsHandler();
 		
 
-		diskImageDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
+		diskImageDsrEnabled = settings.get(RealDiskSettings.diskImagesEnabled);
 		diskImageDsrEnabled.setBoolean(false);
 		
 		emuDiskDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
@@ -174,7 +174,7 @@ public class BaseEmuDiskDSRTest {
 		
 		mymapper.unregisterDiskSetting("DSK3");
 		
-		dumper = new Dumper(settings, RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions); 
+		dumper = new Dumper(settings, RealDiskSettings.diskImageDebug, ICpu.settingDumpFullInstructions); 
 		dsr.handleDSR(xfer, (short) EmuDiskConsts.D_INIT);
 	}
 

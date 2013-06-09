@@ -31,7 +31,7 @@ import v9t9.common.files.IdMarker;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.engine.files.image.DiskImageFactory;
 import v9t9.engine.files.image.MissingSectorException;
-import v9t9.engine.files.image.RealDiskDsrSettings;
+import v9t9.engine.files.image.RealDiskSettings;
 import v9t9.engine.files.image.SectorDiskImage;
 import v9t9.engine.files.image.V9t9TrackDiskImage;
 import ejs.base.properties.IProperty;
@@ -54,8 +54,8 @@ public class TestRealDiskImage  {
 
 	@BeforeClass
 	public static void setupRealDisk() {
-		diskImageDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
-		debugDiskImage = settings.get(RealDiskDsrSettings.diskImageDebug);
+		diskImageDsrEnabled = settings.get(RealDiskSettings.diskImagesEnabled);
+		debugDiskImage = settings.get(RealDiskSettings.diskImageDebug);
 
 		wasRealDisk = diskImageDsrEnabled.getBoolean();
 		diskImageDsrEnabled.setBoolean(true);

@@ -69,5 +69,4 @@ public class CircularByteIter implements Iterator<Byte> {
 	public int getStart() {
 		return start;
 	}
-	
 }

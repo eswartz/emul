@@ -19,11 +19,11 @@ import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.common.settings.SettingSchema;
 import v9t9.engine.files.directory.EmuDiskSettings;
-import v9t9.engine.files.image.RealDiskDsrSettings;
+import v9t9.engine.files.image.RealDiskSettings;
 
 class EmuDiskSetting extends IconSettingProperty implements IDiskDriveSetting {
 	private IProperty emuDiskDsrEnabled;
-	private IProperty diskImageDsrEnabled;
+	private IProperty diskImagesEnabled;
 	private int drive;
 
 	public EmuDiskSetting(ISettingsHandler settings, String name, Object storage, URL iconPath) {
@@ -36,8 +36,8 @@ class EmuDiskSetting extends IconSettingProperty implements IDiskDriveSetting {
 
 		emuDiskDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
 		addEnablementDependency(emuDiskDsrEnabled);
-		diskImageDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
-		addEnablementDependency(diskImageDsrEnabled);
+		diskImagesEnabled = settings.get(RealDiskSettings.diskImagesEnabled);
+		addEnablementDependency(diskImagesEnabled);
 	}
 	
 	/* (non-Javadoc)
@@ -47,7 +47,7 @@ class EmuDiskSetting extends IconSettingProperty implements IDiskDriveSetting {
 	public boolean isEnabled() {
 		if (!emuDiskDsrEnabled.getBoolean())
 			return false;
-		if (!diskImageDsrEnabled.getBoolean())
+		if (!diskImagesEnabled.getBoolean())
 			return true;
 		
 		// only DSK3 + are real disks if emu disk also enabled

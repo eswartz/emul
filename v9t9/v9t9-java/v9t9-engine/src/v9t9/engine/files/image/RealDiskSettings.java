@@ -22,7 +22,7 @@ import v9t9.engine.EmulatorEngineData;
  * @author ejs
  *
  */
-public class RealDiskDsrSettings {
+public class RealDiskSettings {
 
 
 	public static final SettingSchema diskImageDebug = new SettingSchema(
@@ -41,14 +41,23 @@ public class RealDiskDsrSettings {
 			);
 	
 	public static final URL diskImageIconPath = EmulatorEngineData.getDataURL("icons/disk_image.png");
-	public static final SettingSchema diskImageDsrEnabled = new IconSettingSchema(
+	public static final SettingSchema diskImagesEnabled = new IconSettingSchema(
 			ISettingsHandler.MACHINE,
-			"DiskImageDSREnabled",
+			"DiskImagesEnabled",
 			"Disk Image Support",
-			"This implements a drive (like DSK1) in a disk image on your host.\n\n"+
-			"Either sector image or track image disks are supported.\n\n"+
+			"This allows access to disk images on your host.\n\n"+
+			"Either sector image (*.dsk) or track image (*.trk) disks are supported.\n\n"+
 			"A track image can support copy-protected disks, while a sector image cannot.",
 			Boolean.TRUE, diskImageIconPath
+			);
+	
+	public static final SettingSchema diskController = new SettingSchema(
+			ISettingsHandler.MACHINE,
+			"DiskImageController",
+			"Disk Image Controller",
+			"Select the controller that manages disk images.  This affects which DSR ROMs are " +
+			"used and whether double-density disk images are supported.",
+					FDCControllers.WDC1771
 			);
 	
 	public static File defaultDiskRootDir;

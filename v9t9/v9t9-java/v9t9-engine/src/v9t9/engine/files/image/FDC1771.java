@@ -66,11 +66,10 @@ public class FDC1771 implements IPersistable {
 	 * @param machine 
 	 * 
 	 */
-	public FDC1771(IMachine machine, Dumper dumper, int numDrives,
-			IProperty dsrEnabledProperty) {
+	public FDC1771(IMachine machine, Dumper dumper, int numDrives) {
 		
 		this.dumper = dumper;
-		settingRealTime = machine.getSettings().get(RealDiskDsrSettings.diskImageRealTime);
+		settingRealTime = machine.getSettings().get(RealDiskSettings.diskImageRealTime);
 		
 		drives = new FloppyDrive[numDrives];
 		
@@ -78,12 +77,14 @@ public class FDC1771 implements IPersistable {
 		
 		for (int num = 1; num <= drives.length; num++) {
 
-			String name = RealDiskDsrSettings.getDiskImageSetting(num);
+			String name = RealDiskSettings.getDiskImageSetting(num);
 
 			IProperty motorProperty = new SettingSchemaProperty(name + "Motor", Boolean.FALSE);
-			motorProperty.addEnablementDependency(dsrEnabledProperty);
+			motorProperty.addEnablementDependency(machine.getSettings()
+					.get(RealDiskSettings.diskImagesEnabled));
 			
-			drives[num - 1] = new FloppyDrive(machine, dumper, status, num, motorProperty, this);
+			drives[num - 1] = new FloppyDrive(machine,  
+					dumper, status, num, motorProperty, this);
 			
 			driveMap.put(name, drives[num - 1]);
 		}
@@ -343,7 +344,7 @@ public class FDC1771 implements IPersistable {
 		}
 
 		if (matchedMarker == null) {
-			dumper.error("FDCmatchIDmarker failed");
+			dumper.error("FDCmatchIDmarker failed for T=" + trackReg+"; S=" + sectorReg + "; s="+ sideReg);
 			if (isSeek)
 				status.set(StatusBit.SEEK_ERROR);
 			else

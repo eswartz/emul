@@ -14,6 +14,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import v9t9.common.settings.SettingSchema;
+
+
 import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
 
@@ -42,11 +45,12 @@ public interface IDiskImageMapper extends IPersistable {
 
 	/**
 	 * Register a new disk image property
+	 * @param enabledProperty 
 	 * @param name
 	 * @param defaultPath
 	 * @return new property
 	 */
-	IProperty registerDiskImageSetting(String device, String initialPath);
+	IProperty registerDiskImageSetting(SettingSchema enabledProperty, String device, String initialPath);
 
 	/**
 	 * Get the current disk property to disk image map

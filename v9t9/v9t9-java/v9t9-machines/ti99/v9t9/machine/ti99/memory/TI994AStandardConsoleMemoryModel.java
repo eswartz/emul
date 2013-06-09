@@ -29,7 +29,8 @@ import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.speech.SpeechTMS5220;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
-import v9t9.machine.ti99.dsr.realdisk.RealDiskImageDsr;
+import v9t9.machine.ti99.dsr.realdisk.CorcompDiskImageDsr;
+import v9t9.machine.ti99.dsr.realdisk.TIDiskImageDsr;
 import v9t9.machine.ti99.memory.mmio.ConsoleGramWriteArea;
 import v9t9.machine.ti99.memory.mmio.ConsoleGromReadArea;
 import v9t9.machine.ti99.memory.mmio.ConsoleSoundArea;
@@ -176,7 +177,9 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 	public MemoryEntryInfo[] getOptionalRomMemoryEntries() {
 		return new MemoryEntryInfo[] { 
 				SpeechTMS5220.speechRomInfo,
-				RealDiskImageDsr.dsrRomInfo,
+				TIDiskImageDsr.dsrRomInfo,
+				CorcompDiskImageDsr.dsrRomBank1Info,
+				CorcompDiskImageDsr.dsrRomBank2Info,
 				PCodeDsr.pcodeDsrRomBankAMemoryEntryInfo,
 				PCodeDsr.pcodeDsrRomBankBMemoryEntryInfo,
 				PCodeDsr.pcodeGromMemoryEntryInfo,

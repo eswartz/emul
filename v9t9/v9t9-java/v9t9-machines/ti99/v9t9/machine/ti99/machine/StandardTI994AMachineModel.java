@@ -14,6 +14,7 @@ package v9t9.machine.ti99.machine;
 import java.net.URL;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.dsr.ISelectableDsrHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.KeyboardConstants;
@@ -21,13 +22,16 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.Settings;
+import v9t9.engine.files.image.FDCControllers;
+import v9t9.engine.files.image.RealDiskSettings;
 import v9t9.engine.modules.ModuleManager;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
-import v9t9.machine.ti99.dsr.realdisk.RealDiskImageDsr;
+import v9t9.machine.ti99.dsr.realdisk.CorcompDiskImageDsr;
+import v9t9.machine.ti99.dsr.realdisk.TIDiskImageDsr;
 import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 
 /**
@@ -89,15 +93,25 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.setCru(new InternalCru9901(machine));
 			
-			EmuDiskDsr emudsr = new EmuDiskDsr(Settings.getSettings(machine), 
+			EmuDiskDsr emuDsr = new EmuDiskDsr(Settings.getSettings(machine), 
 					machine.getEmulatedFileHandler().getFilesInDirectoryMapper(),
 					machine.getEventNotifier());
-			machine.getDsrManager().registerDsr(emudsr);
-			RealDiskImageDsr diskdsr = new RealDiskImageDsr(machine, (short) 0x1100);
-			machine.getDsrManager().registerDsr(diskdsr);
+			machine.getDsrManager().registerDsr(emuDsr);
 			
-			PCodeDsr pcodedsr = new PCodeDsr(machine);
-			machine.getDsrManager().registerDsr(pcodedsr);
+//			TIDiskImageDsr diskdsr = new TIDiskImageDsr(machine, (short) 0x1100);
+//			machine.getDsrManager().registerDsr(diskdsr);
+//			
+//			CorcompDiskImageDsr ccdiskdsr = new CorcompDiskImageDsr(machine, (short) 0x1100);
+//			machine.getDsrManager().registerDsr(ccdiskdsr);
+			
+			ISelectableDsrHandler diskDsr = new Selectable9900Dsr(machine, 
+					machine.getSettings().get(RealDiskSettings.diskController),
+					FDCControllers.WDC1771, new TIDiskImageDsr(machine, (short) 0x1100),
+					FDCControllers.WDC1791, new CorcompDiskImageDsr(machine, (short) 0x1100));
+			machine.getDsrManager().registerDsr(diskDsr);
+			
+			PCodeDsr pcodeDsr = new PCodeDsr(machine);
+			machine.getDsrManager().registerDsr(pcodeDsr);
 		}
 	}
 

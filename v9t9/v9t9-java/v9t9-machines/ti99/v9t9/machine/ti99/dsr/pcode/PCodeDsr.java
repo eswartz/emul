@@ -51,12 +51,67 @@ import ejs.base.settings.ISettingSection;
 public class PCodeDsr implements IDsrHandler9900 {
 	private static URL pcodeIconPath = EmulatorMachinesData.getDataURL("icons/pcode_system.png");
 
+	public static final String PCODE = "PCODE";
+
 	static public final IconSettingSchema settingPcodeCardEnabled = new IconSettingSchema(
 			ISettingsHandler.MACHINE,
 			"PCodeCardEnabled", "Enable P-Code Card", 
 			"Enables the UCSD Pascal P-Code card.",
 			Boolean.FALSE,
 			pcodeIconPath);
+	private static MemoryEntryInfo pcodeDsrRomMemoryEntryInfo = MemoryEntryInfoBuilder
+		.wordMemoryEntry()
+		.withFilename("pcode_r0.bin")
+		.withAddress(0x4000)
+		.withSize(0x1000)
+		.withFileMD5("4CC461030701A1F2D2E209644F8DEB9C")
+		.create("P-Code DSR ROM");
+
+	private static MemoryEntryInfo pcodeDsrRomBankedMemoryEntryInfo = MemoryEntryInfoBuilder
+		.wordMemoryEntry()
+		.withFilename("pcode_r1.bin")
+		.withAddress(0x5000)
+		.withSize(0x1000)
+		.withFileMD5("ABE55D238E3925D20B17CC859AD43D36")
+		.withFileMD5Limit(0x0BFC)  // there are two MMIO areas here and at the end; don't be too picky
+		.withFilename2("pcode_r1.bin")
+		.withAddress2(0x5000)
+		.withSize2(0x1000)
+		.withOffset2(0x1000)
+		.withFile2MD5("7ED0D59B05752007CB0777531F19300C")
+		.withFile2MD5Offset(0x1000)
+		.withFile2MD5Limit(0x0BFC)  // there are two MMIO areas here and at the end; don't be too picky 
+		.withBankClass(PCodeDsrRomBankedMemoryEntry.class)
+		.create("P-Code DSR ROM (bank 2)");
+
+	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
+	public static MemoryEntryInfo pcodeDsrRomBankAMemoryEntryInfo = MemoryEntryInfoBuilder
+		.wordMemoryEntry()
+		.withFilename("pcode_r0.bin")
+		.withAddress(0x4000)
+		.withSize(0x1000)
+		.withFileMD5("4CC461030701A1F2D2E209644F8DEB9C")
+		.create("P-Code DSR ROM");
+
+	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
+	public static MemoryEntryInfo pcodeDsrRomBankBMemoryEntryInfo = MemoryEntryInfoBuilder
+		.wordMemoryEntry()
+		.withFilename("pcode_r1.bin")
+		.withAddress(0x4000)
+		.withSize(0x2000)
+		.withFileMD5("2E4D62D3984FA705252000851C594CEE")
+		.withFileMD5Limit(0x2000)
+		.create("P-Code DSR ROM (banks)");
+
+	public static MemoryEntryInfo pcodeGromMemoryEntryInfo = MemoryEntryInfoBuilder
+		.byteMemoryEntry()
+		.withDomain(PCODE)
+		.withAddress(0x0)
+		.withSize(0x10000)
+		.withFilename("pCodeGroms.bin")
+		.withFileMD5("1ABC9091E58B0A1E9300EC214FF89EFE")
+		.create("P-Code GROM");
+
 	private IMemoryEntry dsrCommonMemoryEntry;
 	private PCodeDsrRomBankedMemoryEntry dsrBankedMemoryEntry;
 	private TI99Machine machine;
@@ -69,7 +124,6 @@ public class PCodeDsr implements IDsrHandler9900 {
 
 	private IProperty pcodeCardEnabled;
 
-	public static final String PCODE = "PCODE";
 	/**
 	 * @param machine
 	 */
@@ -98,6 +152,25 @@ public class PCodeDsr implements IDsrHandler9900 {
 	}
 
 	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IDsrHandler#init()
+	 */
+	@Override
+	public void init() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#dispose()
+	 */
+	@Override
+	public void dispose() {
+
+	}
+
+
+	
+	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#activate(v9t9.engine.memory.MemoryDomain)
 	 */
 	@Override
@@ -121,60 +194,6 @@ public class PCodeDsr implements IDsrHandler9900 {
 		memory.addAndMap(gromMemoryEntry);
 	}
 
-	private static MemoryEntryInfo pcodeDsrRomMemoryEntryInfo = MemoryEntryInfoBuilder
-		.wordMemoryEntry()
-		.withFilename("pcode_r0.bin")
-		.withAddress(0x4000)
-		.withSize(0x1000)
-		.withFileMD5("4CC461030701A1F2D2E209644F8DEB9C")
-		.create("P-Code DSR ROM");
-
-	private static MemoryEntryInfo pcodeDsrRomBankedMemoryEntryInfo = MemoryEntryInfoBuilder
-		.wordMemoryEntry()
-		.withFilename("pcode_r1.bin")
-		.withAddress(0x5000)
-		.withSize(0x1000)
-		.withFileMD5("ABE55D238E3925D20B17CC859AD43D36")
-		.withFileMD5Limit(0x0BFC)  // there are two MMIO areas here and at the end; don't be too picky
-		.withFilename2("pcode_r1.bin")
-		.withAddress2(0x5000)
-		.withSize2(0x1000)
-		.withOffset2(0x1000)
-		.withFile2MD5("7ED0D59B05752007CB0777531F19300C")
-		.withFile2MD5Offset(0x1000)
-		.withFile2MD5Limit(0x0BFC)  // there are two MMIO areas here and at the end; don't be too picky 
-		.withBankClass(PCodeDsrRomBankedMemoryEntry.class)
-		.create("P-Code DSR ROM (bank 2)");
-		
-
-	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
-	public static MemoryEntryInfo pcodeDsrRomBankAMemoryEntryInfo = MemoryEntryInfoBuilder
-		.wordMemoryEntry()
-		.withFilename("pcode_r0.bin")
-		.withAddress(0x4000)
-		.withSize(0x1000)
-		.withFileMD5("4CC461030701A1F2D2E209644F8DEB9C")
-		.create("P-Code DSR ROM");
-
-	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
-	public static MemoryEntryInfo pcodeDsrRomBankBMemoryEntryInfo = MemoryEntryInfoBuilder
-		.wordMemoryEntry()
-		.withFilename("pcode_r1.bin")
-		.withAddress(0x4000)
-		.withSize(0x2000)
-		.withFileMD5("2E4D62D3984FA705252000851C594CEE")
-		.withFileMD5Limit(0x2000)
-		.create("P-Code DSR ROM (banks)");
-	
-	public static MemoryEntryInfo pcodeGromMemoryEntryInfo = MemoryEntryInfoBuilder
-		.byteMemoryEntry()
-		.withDomain(PCODE)
-		.withAddress(0x0)
-		.withSize(0x10000)
-		.withFilename("pCodeGroms.bin")
-		.withFileMD5("1ABC9091E58B0A1E9300EC214FF89EFE")
-		.create("P-Code GROM");
-	
 	private void ensureSetup(IMemoryEntryFactory memoryEntryFactory) throws IOException {
 		IMemory memory = machine.getMemory();
 		IMemoryDomain console = machine.getConsole();
@@ -236,14 +255,6 @@ public class PCodeDsr implements IDsrHandler9900 {
 		}
 		
 		pcodeActive.setBoolean(false);
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#dispose()
-	 */
-	@Override
-	public void dispose() {
-
 	}
 
 	/* (non-Javadoc)

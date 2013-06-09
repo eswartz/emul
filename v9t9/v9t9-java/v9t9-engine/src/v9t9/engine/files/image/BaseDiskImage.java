@@ -197,7 +197,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		this.spec = spec;
 
 		dumper = new Dumper(settings,
-				RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
+				RealDiskSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
 		fmFormat = new FMFormat(dumper);
 		mfmFormat = new MFMFormat(dumper);
 	}
@@ -465,6 +465,15 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			hdr.setTracks(track);
 			newHeader = true;
 		}
+		if (trackMarkers.size() > hdr.getSecsPerTrack()) {
+			int cnt = trackMarkers.size();
+			if (cnt <= 9)
+				hdr.setSecsPerTrack(9);
+			else
+				hdr.setSecsPerTrack(18);
+			hdr.setTrackSize(hdr.getSecsPerTrack() * (256 + 100));	// TODO: scan for actual markers
+			newHeader = true;
+		}
 		if (newHeader) {
 			writeImageHeader();
 		}
@@ -489,7 +498,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	}
 
 	public void loadState(ISettingSection section) {
-		spec = RealDiskDsrSettings.getDefaultDiskImage(name);
+		spec = RealDiskSettings.getDefaultDiskImage(name);
 		if (section == null)
 			return;
 		String path = section.get("FilePath");

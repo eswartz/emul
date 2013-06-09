@@ -69,8 +69,9 @@ public class FloppyDrive {
 
 	private IProperty activeProperty;
 	
-	public FloppyDrive(IMachine machine, Dumper dumper_, FDCStatus status_, int num_, IProperty motorProperty_,
-			FDC1771 fdc) {
+	public FloppyDrive(IMachine machine, 
+			Dumper dumper_, FDCStatus status_, int num_, 
+			IProperty motorProperty_, FDC1771 fdc) {
 		this.dumper = dumper_;
 		this.status = status_;
 		this.num = num_;
@@ -79,13 +80,15 @@ public class FloppyDrive {
 
 		this.activeProperty = motorProperty_;
 
-		settingRealTime = machine.getSettings().get(RealDiskDsrSettings.diskImageRealTime);
+		settingRealTime = machine.getSettings().get(RealDiskSettings.diskImageRealTime);
 
 		imageMapper = machine.getEmulatedFileHandler().getDiskImageMapper();
 		
-		final String name = RealDiskDsrSettings.getDiskImageSetting(num);
-		File defaultDiskImage = RealDiskDsrSettings.getDefaultDiskImage(name);
-		imageMapper.registerDiskImageSetting(name, defaultDiskImage.getAbsolutePath());
+		final String name = RealDiskSettings.getDiskImageSetting(num);
+		File defaultDiskImage = RealDiskSettings.getDefaultDiskImage(name);
+		imageMapper.registerDiskImageSetting(
+				RealDiskSettings.diskImagesEnabled, 
+				name, defaultDiskImage.getAbsolutePath());
 		
 		imageMapper.addListener(new IDiskImageListener() {
 			

@@ -10,6 +10,7 @@
  */
 package v9t9.gui.client.swt.shells.disk;
 
+import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
@@ -33,6 +34,10 @@ abstract class DiskSettingEntry extends Composite {
 	
 	public DiskSettingEntry(final Composite parent, IMachine machine, IProperty setting_, int style) {
 		super(parent, style);
+		
+		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(this);
+
+		
 		this.machine = machine;
 		
 		this.setting = setting_;
@@ -72,6 +77,9 @@ abstract class DiskSettingEntry extends Composite {
 	}
 	
 	protected void updateSetting() {
+		if (isDisposed())
+			return;
+		
 		boolean enabled = !(setting instanceof ISettingProperty) || 
 			((ISettingProperty) setting).isEnabled();
 		setVisible(enabled);

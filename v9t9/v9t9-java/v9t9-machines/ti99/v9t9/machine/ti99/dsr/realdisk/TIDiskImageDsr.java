@@ -14,21 +14,18 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.memory.MemoryEntryInfo;
-import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.dsr.realdisk.BaseDiskImageDsr;
+import v9t9.engine.files.image.FDC1771;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruReader;
 import v9t9.engine.hardware.ICruWriter;
@@ -37,6 +34,8 @@ import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.machine.ti99.dsr.IDsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * This DSR handler assumes the TI-99/4A model where some control is
@@ -44,18 +43,29 @@ import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
  * @author ejs
  *
  */
-public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 {
+public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 {
 	private IMemoryEntry romMemoryEntry;
+
+//	public static final SettingSchema tiDiskControllerEnabled = new IconSettingSchema(
+//			ISettingsHandler.MACHINE,
+//			"TIDiskControllerEnabled",
+//			"TI Disk Controller",
+//			"This implements a drive (like DSK1) in a disk image on your host, "+
+//			"supporting three drives, single or double sided operation, and single density disks.\n\n"+
+//			"Either sector image or track image disks are supported.\n\n"+
+//			"A track image can support copy-protected disks, while a sector image cannot.",
+//			Boolean.TRUE, RealDiskSettings.diskImageIconPath
+//			);
 	
 	public static SettingSchema settingDsrRomFileName = new SettingSchema(
 			ISettingsHandler.MACHINE,
-			"RealDiskDsrFileName",
+			"TIDiskDsrFileName",
 			"tidiskdsr.bin");
 
 	public static MemoryEntryInfo dsrRomInfo = MemoryEntryInfoBuilder
 			.standardDsrRom(null)
 			.withFilenameProperty(settingDsrRomFileName)
-			.withDescription("TI Disk Controller ROM")
+			.withDescription("TI Disk Controller ROM (double-sided, single-density)")
 			.withFileMD5("C9A737D6930F5FD1D96829FD89359CF1")
 			.withFileMD5Limit(0x1FF0)
 			.create("TI Disk DSR ROM");
@@ -155,21 +165,24 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 
 	private short base;
 
-	protected IProperty realDiskDsrActiveSetting;
+	protected IProperty tiDiskDsrActiveSetting;
 
-	public RealDiskImageDsr(TI99Machine machine, short base) {
+	public TIDiskImageDsr(TI99Machine machine, short base) {
 		super(machine);
 		this.base = base;
 
+		fdc = new FDC1771(machine, dumper, 3);
+		
+//		IProperty enabled = settings.get(tiDiskControllerEnabled);
+//		enabled.addEnablementDependency(settings.get(RealDiskSettings.diskImagesEnabled));
+		
 		if (!imageMapper.getDiskSettingsMap().isEmpty()) {
 			
 			// one setting for entire DSR
-			realDiskDsrActiveSetting = new SettingSchemaProperty(getName(), Boolean.FALSE);
-			realDiskDsrActiveSetting.addEnablementDependency(settingDsrEnabled);
+			tiDiskDsrActiveSetting = new SettingSchemaProperty(getName(), Boolean.FALSE);
+			tiDiskDsrActiveSetting.addEnablementDependency(settingImagesEnabled);
 			
-			
-			settingDsrEnabled.addListener(new IPropertyListener() {
-				
+			settingImagesEnabled.addListener(new IPropertyListener() {
 				@Override
 				public void propertyChanged(IProperty property) {
 					settings.get(IDeviceIndicatorProvider.settingDevicesChanged).firePropertyChange();
@@ -178,7 +191,9 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 
 		}
 		
-		CruManager cruManager = machine.getCruManager();
+	}
+	protected void enableCRU() {
+		CruManager cruManager = ((TI99Machine) machine).getCruManager();
 		cruManager.add(base + 0x2, 1, cruwRealDiskMotor);
 		cruManager.add(base + 0x4, 1, cruwRealDiskHold);
 		cruManager.add(base + 0x6, 1, cruwRealDiskHeads);
@@ -193,6 +208,23 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		cruManager.add(base + 0xA, 1, crurRealDiskZero);
 		cruManager.add(base + 0xC, 1, crurRealDiskOne);
 		cruManager.add(base + 0xE, 1, crurRealDiskSide);
+	}
+	protected void disableCRU() {
+		CruManager cruManager = ((TI99Machine) machine).getCruManager();
+		cruManager.removeWriter(base + 0x2, 1);
+		cruManager.removeWriter(base + 0x4, 1);
+		cruManager.removeWriter(base + 0x6, 1);
+		cruManager.removeWriter(base + 0x8, 1);
+		cruManager.removeWriter(base + 0xA, 1);
+		cruManager.removeWriter(base + 0xC, 1);
+		cruManager.removeWriter(base + 0xE, 1);
+		cruManager.removeReader(base + 0x2, 1);
+		cruManager.removeReader(base + 0x4, 1);
+		cruManager.removeReader(base + 0x6, 1);
+		cruManager.removeReader(base + 0x8, 1);
+		cruManager.removeReader(base + 0xA, 1);
+		cruManager.removeReader(base + 0xC, 1);
+		cruManager.removeReader(base + 0xE, 1);
 	}
 
 	private class DiskMMIOMemoryArea extends ConsoleMmioArea {
@@ -211,7 +243,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 
 			byte ret = 0;
 
-			if (!settingDsrEnabled.getBoolean())
+			if (!settingImagesEnabled.getBoolean())
 				return ret;
 
 
@@ -256,7 +288,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 				return;
 			}
 			
-			if (!settingDsrEnabled.getBoolean())
+			if (!settingImagesEnabled.getBoolean())
 				return;
 
 			val = (byte) ~val;
@@ -320,10 +352,10 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 
 
 	public void activate(IMemoryDomain console, IMemoryEntryFactory memoryEntryFactory) throws IOException {
-		if (!settingDsrEnabled.getBoolean() || realDiskDsrActiveSetting.getBoolean())
+		if (!settingImagesEnabled.getBoolean() || tiDiskDsrActiveSetting.getBoolean())
 			return;
 		
-		realDiskDsrActiveSetting.setBoolean(true);
+		tiDiskDsrActiveSetting.setBoolean(true);
 		
 		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(dsrRomInfo);
 		
@@ -341,7 +373,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 		console.unmapEntry(ioMemoryEntry);
 		console.unmapEntry(romMemoryEntry);
 		
-		realDiskDsrActiveSetting.setBoolean(false);
+		tiDiskDsrActiveSetting.setBoolean(false);
 	}
 	
 	/* (non-Javadoc)
@@ -350,11 +382,11 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler990
 	@Override
 	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
 		
-		if (!settingDsrEnabled.getBoolean())
+		if (!settingImagesEnabled.getBoolean())
 			return Collections.emptyList();
 		
 		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
-				realDiskDsrActiveSetting, 
+				tiDiskDsrActiveSetting, 
 				"Disk image activity",
 				IDevIcons.DSR_DISK_IMAGE, IDevIcons.DSR_LIGHT);
 		return Collections.<IDeviceIndicatorProvider>singletonList(deviceIndicatorProvider);

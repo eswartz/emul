@@ -18,7 +18,9 @@ import java.util.Map;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.IMemoryIOHandler;
+import v9t9.engine.files.image.FDC1771;
 import v9t9.engine.files.image.FloppyDrive;
+import v9t9.engine.files.image.RealDiskSettings;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 
@@ -64,7 +66,10 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 		this.baseAddr = baseAddr;
 		flags = 0;
 		
-		settingDsrEnabled.addListener(new IPropertyListener() {
+		fdc = new FDC1771(machine, dumper, 3);
+		
+		settingImagesEnabled = machine.getSettings().get(RealDiskSettings.diskImagesEnabled);
+		settingImagesEnabled.addListener(new IPropertyListener() {
 			
 			@Override
 			public void propertyChanged(IProperty property) {
@@ -156,7 +161,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	 */
 	@Override
 	public boolean handlesAddress(int addr) {
-		return settingDsrEnabled.getBoolean() && addr >= baseAddr && addr <= baseAddr + DSK;
+		return settingImagesEnabled.getBoolean() && addr >= baseAddr && addr <= baseAddr + DSK;
 	}
 
 	/**
@@ -164,7 +169,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	 */
 	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
 
-		if (!settingDsrEnabled.getBoolean())
+		if (!settingImagesEnabled.getBoolean())
 			return Collections.emptyList();
 		
 		if (imageMapper.getDiskSettingsMap().isEmpty())

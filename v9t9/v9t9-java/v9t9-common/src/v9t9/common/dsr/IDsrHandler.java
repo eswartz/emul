@@ -17,7 +17,7 @@ import ejs.base.properties.IPersistable;
 
 
 /**
- * Java code that handles the work of a DSR through the Idsr instruction.
+ * Java code that handles the work of a device service handler.
  * @author ejs
  *
  */
@@ -26,6 +26,7 @@ public interface IDsrHandler extends IPersistable, IDeviceSettings {
 	String GROUP_DSR_SELECTION = "Device Selection";
 	String GROUP_DISK_CONFIGURATION = "Disk Configuration";
 
+	void init();
 	void dispose();
 
 	String getName();

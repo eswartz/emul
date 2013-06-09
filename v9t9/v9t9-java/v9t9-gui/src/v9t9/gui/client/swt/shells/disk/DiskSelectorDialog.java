@@ -10,14 +10,15 @@
  */
 package v9t9.gui.client.swt.shells.disk;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -71,40 +72,41 @@ public class DiskSelectorDialog extends Composite {
 		
 		shell.setText("Disk Selector");
 
-		GridLayoutFactory.fillDefaults().applyTo(this);
+		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(this);
 
 		Map<String, Group> groups = new HashMap<String, Group>();
-		Map<String, List<IProperty>> allSettings = new LinkedHashMap<String, List<IProperty>>();
+		Map<String, Set<IProperty>> allSettings = new LinkedHashMap<String, Set<IProperty>>();
 		
-
 		for (IDeviceSettings setting : list) {
 			Map<String, Collection<IProperty>> settings = setting.getEditableSettingGroups();
 			for (Map.Entry<String, Collection<IProperty>> entry : settings.entrySet()) {
-				List<IProperty> groupSettings = allSettings.get(entry.getKey());
+				Set<IProperty> groupSettings = allSettings.get(entry.getKey());
 				if (groupSettings == null) {
-					groupSettings = new ArrayList<IProperty>();
+					groupSettings = new LinkedHashSet<IProperty>();
 					allSettings.put(entry.getKey(), groupSettings);
 				}
 				groupSettings.addAll(entry.getValue());
 			}
 		}
 		
-		for (Map.Entry<String, List<IProperty>> entry : allSettings.entrySet()) {
+		for (Map.Entry<String, Set<IProperty>> entry : allSettings.entrySet()) {
 			String name = entry.getKey();
 			Group group = groups.get(name);
 			
-			List<IProperty> groupSettings = entry.getValue();
-			Collections.sort(groupSettings,
-					new Comparator<IProperty>() {
+			Set<IProperty> groupSettings = entry.getValue();
+			IProperty[] groupSettingsArr = groupSettings.toArray(new IProperty[groupSettings.size()]);
+			Arrays.sort(groupSettingsArr,
+				new Comparator<IProperty>() {
 
-						public int compare(IProperty o1, IProperty o2) {
-							if (o1 instanceof IconSettingProperty && o2 instanceof IconSettingProperty)
-								return o1.getLabel().compareTo(o2.getLabel());
-							else
-								return 0;
-						}
-				
+					public int compare(IProperty o1, IProperty o2) {
+						if (o1 instanceof IconSettingProperty && o2 instanceof IconSettingProperty)
+							return o1.getLabel().compareTo(o2.getLabel());
+						else
+							return 0;
+					}
 			});
+			groupSettings.clear();
+			groupSettings.addAll(Arrays.asList(groupSettingsArr));
 			
 			if (group == null) {
 				Composite section = new Composite(this, SWT.NONE);
@@ -128,6 +130,8 @@ public class DiskSelectorDialog extends Composite {
 					comp = new DiskEntry(group, machine, setting);
 				} else if (setting.getValue() instanceof Boolean) {
 					comp = new DiskEnableEntry(group, machine, setting);
+				} else if (setting.getValue() != null && setting.getType().isEnum()) {
+					comp = new DiskComboEntry(group, machine, setting);
 				}
 				if (comp != null) {
 					GridDataFactory.fillDefaults().grab(true, false).applyTo(comp);

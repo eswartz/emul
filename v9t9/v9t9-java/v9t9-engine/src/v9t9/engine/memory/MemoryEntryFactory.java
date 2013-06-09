@@ -135,7 +135,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 		if (klass == null)
 			throw new IOException("no 'class' specified for banked memory in " + info);
 		
-		if (info.getFilename2() == null) {
+		if (info.getFilename2() == null && info.getFilename2Property() == null) {
 			return newMultiBankedMemoryFromFile(info);
 		}
 		
@@ -169,7 +169,10 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 
     	StoredMemoryEntryInfo storedInfo = resolveMemoryEntry(info);
 
-    	int bankSize = 0x2000;
+    	int bankSize = info.getBankSize();
+    	if (bankSize == 0)
+    		bankSize = 0x2000;
+    	
     	int numBanks = storedInfo.size / bankSize;
     	
     	IMemoryEntry[] entries = new IMemoryEntry[numBanks];

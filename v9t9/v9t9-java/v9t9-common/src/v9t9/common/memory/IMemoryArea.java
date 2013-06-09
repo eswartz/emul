@@ -61,6 +61,7 @@ public interface IMemoryArea extends Comparable<IMemoryArea> {
 	 */
 	void copyFromBytes(byte[] array);
 
+	int getLatency();
 	void setLatency(int latency);
 
 }

@@ -18,6 +18,7 @@ import java.util.Map;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.IDiskImage;
 import v9t9.common.files.IDiskImageMapper;
+import v9t9.common.settings.SettingSchema;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
@@ -93,11 +94,11 @@ public class DiskImageMapper implements IDiskImageMapper {
 		return disks.get(name);
 	}
 
-	public IProperty registerDiskImageSetting(String device, String initialPath) {
+	public IProperty registerDiskImageSetting(SettingSchema enabledProperty, String device, String initialPath) {
 		DiskImageSetting diskSetting = settings.get(ISettingsHandler.MACHINE,
-				new DiskImageSetting(settings, 
+				new DiskImageSetting(settings, enabledProperty,
 						device, initialPath,
-						RealDiskDsrSettings.diskImageIconPath));
+						RealDiskSettings.diskImageIconPath));
 	
 		diskSettingsMap.put(device, diskSetting); 
 		diskSetting.addListener(new IPropertyListener() {
@@ -169,6 +170,6 @@ public class DiskImageMapper implements IDiskImageMapper {
 	 */
 	@Override
 	public IProperty getImageSupportProperty() {
-		return settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
+		return settings.get(RealDiskSettings.diskImagesEnabled);
 	}
 }

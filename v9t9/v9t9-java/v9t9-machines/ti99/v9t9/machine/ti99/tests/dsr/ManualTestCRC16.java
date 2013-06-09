@@ -23,75 +23,12 @@ import ejs.base.utils.HexUtils;
  * @author ejs
  *
  */
-public class ManualTestCRC {
+public class ManualTestCRC16 {
 
-	public static class CRC16_b implements ICRCAlgorithm {
-
-		private short crc;
-		private int poly;
-		private int crcmask;
-
-		/**
-		 * @param poly 
-		 * 
-		 */
-		public CRC16_b(int poly) {
-			reset();
-			setPoly(poly);
-		}
-		/* (non-Javadoc)
-		 * @see v9t9.machine.ti99.tests.dsr.TestCRC.ICRCAlgorithm#reset()
-		 */
-		@Override
-		public void reset() {
-			crc = (short) 0xffff;
-		}
-
-		/* (non-Javadoc)
-		 * @see v9t9.machine.ti99.tests.dsr.TestCRC.ICRCAlgorithm#setPoly(int)
-		 */
-		@Override
-		public void setPoly(int poly) {
-			this.poly = poly;
-			crcmask = 1;
-			while (crcmask+crcmask < poly)
-				crcmask <<= 1;
-		}
-		/**
-		 * @return the poly
-		 */
-		@Override
-		public int getPoly() {
-			return poly;
-		}
-
-		/* (non-Javadoc)
-		 * @see v9t9.machine.ti99.tests.dsr.TestCRC.ICRCAlgorithm#feed(byte)
-		 */
-		@Override
-		public short feed(byte b) {
-			for (int j = 0; j < 8; j++) {
-				if ((crc & crcmask) != 0) 
-					crc = (short) ((crc << 1) ^ poly);
-				else
-					crc = (short) ((crc << 1) | ((b >> 7) & 1));
-				b <<= 1;
-			}
-			return crc;
-		}
-		/* (non-Javadoc)
-		 * @see v9t9.engine.dsr.realdisk.ICRCAlgorithm#read()
-		 */
-		@Override
-		public short read() {
-			return crc;
-		}
-		
-	}
 	private Map<Integer, Integer> crcMatches = new HashMap<Integer, Integer>();
 	
 	public static void main(String[] args) {
-		ManualTestCRC crc = new ManualTestCRC();
+		ManualTestCRC16 crc = new ManualTestCRC16();
 		for (int i = 1; i < 0xffff; i+=2) {
 //			crc.run(new CRC16(0x11021));
 //			crc.run(new CRC16(0x8048));

@@ -24,7 +24,7 @@ import v9t9.common.keyboard.IPasteListener;
 import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
 import v9t9.engine.files.directory.EmuDiskSettings;
-import v9t9.engine.files.image.RealDiskDsrSettings;
+import v9t9.engine.files.image.RealDiskSettings;
 import v9t9.machine.EmulatorMachinesData;
 import ejs.base.properties.IProperty;
 import ejs.base.utils.FileUtils;
@@ -123,7 +123,7 @@ public class ArchiverExtractFileExecutor implements IFileExecutor {
 	public void run(final IMachine machine) throws NotifyException {
 		final IProperty emuDskProp = machine.getSettings().get(EmuDiskSettings.emuDiskDsrEnabled);
 		emuDskProp.setBoolean(true);
-		final IProperty realDskProp = machine.getSettings().get(RealDiskDsrSettings.diskImageDsrEnabled);
+		final IProperty realDskProp = machine.getSettings().get(RealDiskSettings.diskImagesEnabled);
 		if (driveNum < 3 && realDskProp.getBoolean()) {
 			realDskProp.setBoolean(false);
 			machine.reset();

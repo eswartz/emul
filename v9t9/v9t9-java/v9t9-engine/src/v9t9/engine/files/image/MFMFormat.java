@@ -24,9 +24,10 @@ import ejs.base.utils.HexUtils;
  */
 public class MFMFormat implements IDiskFormat {
 
-	private static final byte DATA_MARK = (byte) 0xfb;
 	private static final byte ID_MARK = (byte) 0xfe;
-	private CRC16 crcAlg;
+	private static final byte DATA_MARK = (byte) 0xfb;
+	
+	private ICRCAlgorithm crcAlg;
 	private Dumper dumper;
 
 	/**
@@ -52,22 +53,22 @@ public class MFMFormat implements IDiskFormat {
 	public List<IdMarker> fetchIdMarkers(byte[] trackBuffer, int trackSize, boolean formatting) {
 		List<IdMarker> markers = new ArrayList<IdMarker>();
 		int n4eCount = 0;
-		int na1Count = 0;
+//		int na1Count = 0;
 		for (int startoffset = 0; startoffset < trackSize; startoffset++) {
 			byte b = trackBuffer[startoffset];
 			if (b == (byte) 0x4e) {
 				n4eCount++;
 				continue;
 			}
-			if (b == (byte) 0xa1) {
-				na1Count++;
-				continue;
-			}
+//			if (b == (byte) 0xa1) {
+//				na1Count++;
+//				continue;
+//			}
 			if (b != ID_MARK)
 				continue;
-			if (n4eCount < 32 || na1Count < 3) {
+			if (n4eCount < 32 /*|| na1Count < 3*/) {
 				n4eCount = 0;
-				na1Count = 0;
+//				na1Count = 0;
 				continue;
 			}
 			
@@ -91,14 +92,29 @@ public class MFMFormat implements IDiskFormat {
 			marker.crcid = (short) (iter.next()<<8); marker.crcid |= iter.next() & 0xff;
 			marker.dataCode = DATA_MARK;
 			
-			if (marker.crcid != (short) 0xf7f7)	{	// "please calculate CRC for me"
-				crcAlg.feed(marker.idCode);
-				crcAlg.feed((byte) marker.trackid);
-				crcAlg.feed((byte) marker.sideid);
-				crcAlg.feed((byte) marker.sectorid);
-				crcAlg.feed((byte) marker.sizeid);
-	
+			crcAlg.feed(marker.idCode);
+			crcAlg.feed(marker.trackid);
+			crcAlg.feed(marker.sideid);
+			crcAlg.feed(marker.sectorid);
+			crcAlg.feed(marker.sizeid);
+
+			boolean matched = marker.crcid == (short) 0xf7f7; 	// marker for 'please calculate CRC for me'
+						//|| (marker.crcid & 0xff) == 0;	// same for CorComp
+			if (!matched) {
 				short crc = crcAlg.read();
+				if (formatting) {
+					crcAlg.feed((byte) (crc >> 8));
+					crcAlg.feed((byte) (crc & 0xff));
+					if (crcAlg.read() != 0) {
+						dumper.info("FDCfindIDmarker: failed ID CRC check on format (>{0} != >{1})",
+								HexUtils.toHex4(crcAlg.read()), HexUtils.toHex4(0));
+						continue;
+					}
+					marker.crcid = crc;
+					trackBuffer[marker.idoffset + 1 + 4] = (byte) (crc >> 8);
+					trackBuffer[marker.idoffset + 1 + 5] = (byte) (crc & 0xff);
+				}
+				
 				if (crc != marker.crcid)
 				{
 					dumper.info("FDCfindIDmarker: failed ID CRC check (>{0} != >{1})",
@@ -116,13 +132,13 @@ public class MFMFormat implements IDiskFormat {
 					iter.next();
 					continue;
 				}
-				if (b == (byte) 0xa1) {
-					na1Count++;
-					iter.next();
-					continue;
-				}
+//				if (b == (byte) 0xa1) {
+//					na1Count++;
+//					iter.next();
+//					continue;
+//				}
 				if (b == ID_MARK) {
-					if (n4eCount >= 32 && na1Count >= 3) {
+					if (n4eCount >= 32 /*&& na1Count >= 3*/) {
 						foundAnotherId = true;
 						break;
 					}
@@ -134,10 +150,11 @@ public class MFMFormat implements IDiskFormat {
 			if (foundAnotherId)
 				continue;
 			
-			if (iter.hasNext())
+			if (iter.hasNext()) {
 				marker.dataoffset = iter.getPointer() + iter.getStart();
-			else
+			} else {
 				marker.dataoffset = -1;
+			}
 			
 			markers.add(marker);
 		}
@@ -152,7 +169,7 @@ public class MFMFormat implements IDiskFormat {
 	public boolean doesFormatMatch(byte[] trackBuffer, int trackSize) {
 		IdMarker marker = new IdMarker();
 		int n4eCount = 0;
-		int na1Count = 0;
+//		int na1Count = 0;
 		int secCount = 0;
 		for (int startoffset = 0; startoffset < trackSize; startoffset++) {
 			byte b = trackBuffer[startoffset];
@@ -160,15 +177,15 @@ public class MFMFormat implements IDiskFormat {
 				n4eCount++;
 				continue;
 			}
-			if (b == (byte) 0xa1) {
-				na1Count++;
-				continue;
-			}
+//			if (b == (byte) 0xa1) {
+//				na1Count++;
+//				continue;
+//			}
 			if (b != ID_MARK)
 				continue;
-			if (n4eCount < 32 || na1Count < 3) {
+			if (n4eCount < 32 /* || na1Count < 3*/) {
 				n4eCount = 0;
-				na1Count = 0;
+//				na1Count = 0;
 				continue;
 			}
 			
@@ -192,7 +209,8 @@ public class MFMFormat implements IDiskFormat {
 			marker.dataCode = DATA_MARK;
 			
 			boolean matched = false;
-			if (marker.crcid == (short) 0xf7f7)	{	// "please calculate CRC for me"
+			if (marker.crcid == (short) 0xf7f7	// "please calculate CRC for me"
+						|| (marker.crcid & 0xff) == 0) { // same for CorComp
 				matched = true;
 			} else {
 				crcAlg.feed(marker.idCode);
@@ -218,11 +236,11 @@ public class MFMFormat implements IDiskFormat {
 					iter.next();
 					continue;
 				}
-				if (b == (byte) 0xa1) {
-					na1Count++;
-					iter.next();
-					continue;
-				}
+//				if (b == (byte) 0xa1) {
+//					na1Count++;
+//					iter.next();
+//					continue;
+//				}
 				iter.next();
 			}
 		}

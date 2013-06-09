@@ -24,7 +24,8 @@ public class DiskImageSetting extends IconSettingProperty implements IDiskDriveS
 	private IProperty emuDsrEnabled;
 	private int drive;
 
-	public DiskImageSetting(ISettingsHandler settings, String name, Object storage, URL iconPath) {
+	public DiskImageSetting(ISettingsHandler settings, SettingSchema dsrEnabled, 
+			String name, Object storage, URL iconPath) {
 		super(new SettingSchema(ISettingsHandler.TRANSIENT,
 				name, "DSK" + name.charAt(name.length() - 1) + " Image",
 				"Specify the full path of the image for this disk.\n\n"+
@@ -33,12 +34,12 @@ public class DiskImageSetting extends IconSettingProperty implements IDiskDriveS
 		
 		drive = Integer.parseInt(name.substring(name.length() - 1));
 		
-		realDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
+		realDsrEnabled = settings.get(dsrEnabled);
 		emuDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
 		addEnablementDependency(emuDsrEnabled);
 		addEnablementDependency(realDsrEnabled);
-		addEnablementDependency(settings.get(RealDiskDsrSettings.diskImageRealTime));
-		addEnablementDependency(settings.get(RealDiskDsrSettings.diskImageDebug));
+		addEnablementDependency(settings.get(RealDiskSettings.diskImageRealTime));
+		addEnablementDependency(settings.get(RealDiskSettings.diskImageDebug));
 	}
 
 	@Override
@@ -49,7 +50,7 @@ public class DiskImageSetting extends IconSettingProperty implements IDiskDriveS
 			return true;
 		
 		// only DSK1 and DSK2 are real disks if emu disk also enabled
-		return getName().compareTo(RealDiskDsrSettings.getDiskImageSetting(3)) < 0;
+		return getName().compareTo(RealDiskSettings.getDiskImageSetting(3)) < 0;
 	}
 	
 	public int getDrive() {

@@ -167,7 +167,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
     	case MachineOperand9900.OP_OFFS_R12: {
     		//byte offs = (byte) ((val >> 1) & 0xff);
     		byte offs = (byte) (val & 0xff);
-    	    return ">" + (offs < 0 ? "-" : "") +Integer.toHexString(offs < 0 ? -offs : offs);
+    	    return ">" + (offs < 0 ? "-" : "") +Integer.toHexString(offs < 0 ? -offs : offs).toUpperCase();
     	}
 
     	case MachineOperand9900.OP_REG0_SHIFT_COUNT:

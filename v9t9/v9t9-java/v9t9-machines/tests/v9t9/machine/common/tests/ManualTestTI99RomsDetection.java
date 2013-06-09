@@ -25,7 +25,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
-import v9t9.machine.ti99.dsr.realdisk.RealDiskImageDsr;
+import v9t9.machine.ti99.dsr.realdisk.TIDiskImageDsr;
 import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
 
 /**
@@ -51,13 +51,13 @@ public class ManualTestTI99RomsDetection {
 	public void testDiskDsrResolve() throws Exception {
 		// either should work (last 16 bytes differ)
 		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms" },
-				RealDiskImageDsr.dsrRomInfo,
+				TIDiskImageDsr.dsrRomInfo,
 				"disk.bin", "diskgarbage.bin");
 	
 		// different MD5 -- use it
-		settings.get(RealDiskImageDsr.settingDsrRomFileName).setString("mydisk.bin");
+		settings.get(TIDiskImageDsr.settingDsrRomFileName).setString("mydisk.bin");
 		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms" },
-				RealDiskImageDsr.dsrRomInfo,
+				TIDiskImageDsr.dsrRomInfo,
 				"mydisk.bin");
 	}
 

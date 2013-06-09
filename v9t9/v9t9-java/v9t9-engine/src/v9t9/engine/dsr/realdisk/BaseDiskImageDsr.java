@@ -29,7 +29,7 @@ import v9t9.common.settings.Settings;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.files.image.Dumper;
 import v9t9.engine.files.image.FDC1771;
-import v9t9.engine.files.image.RealDiskDsrSettings;
+import v9t9.engine.files.image.RealDiskSettings;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 
@@ -39,7 +39,7 @@ import ejs.base.settings.ISettingSection;
  * @author ejs
  *
  */
-public abstract class BaseDiskImageDsr implements IDeviceSettings {
+public abstract class BaseDiskImageDsr implements IDeviceSettings, IDsrHandler {
 
 	
 	protected FDC1771 fdc;
@@ -47,15 +47,26 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	/** note: the side is global to all disks, though we propagate it to all DiskInfos */
 	protected byte side;
 	
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IDsrHandler#init()
+	 */
+	@Override
+	public void init() {
+		// TODO Auto-generated method stub
+		
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#dispose()
 	 */
+	@Override
 	public void dispose() {
 	}
 
 
 	private IProperty settingRealTime;
-	protected IProperty settingDsrEnabled;
+	protected IProperty settingImagesEnabled;
+	protected IProperty settingDiskController;
 	private IProperty settingDebug;
 
 	protected Dumper dumper;
@@ -64,23 +75,27 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 
 	protected IDiskImageMapper imageMapper;
 
+	protected IMachine machine;
+
 
 	public BaseDiskImageDsr(IMachine machine) {
+		this.machine = machine;
 		imageMapper = machine.getEmulatedFileHandler().getDiskImageMapper();
 		settings = Settings.getSettings(machine);
 		dumper = new Dumper(settings,
-				RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
+				RealDiskSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
 
 		// register
-		settingDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
-		settingRealTime = settings.get(RealDiskDsrSettings.diskImageRealTime);
-		settingDebug = settings.get(RealDiskDsrSettings.diskImageDebug);
+		settingImagesEnabled = settings.get(RealDiskSettings.diskImagesEnabled);
+		settingDiskController = settings.get(RealDiskSettings.diskController);
+		settingRealTime = settings.get(RealDiskSettings.diskImageRealTime);
+		settingDebug = settings.get(RealDiskSettings.diskImageDebug);
 		
-		fdc = new FDC1771(machine, dumper, 3, settingDsrEnabled);
+		settingDiskController.addEnablementDependency(settings.get(RealDiskSettings.diskImagesEnabled));
 		
     	String diskImageRootPath = settings.getMachineSettings().getConfigDirectory() + "disks";
-    	RealDiskDsrSettings.defaultDiskRootDir = new File(diskImageRootPath);
-    	RealDiskDsrSettings.defaultDiskRootDir.mkdirs();
+    	RealDiskSettings.defaultDiskRootDir = new File(diskImageRootPath);
+    	RealDiskSettings.defaultDiskRootDir.mkdirs();
 	}
 	
 	public void setDiskSide(int side_) {
@@ -119,9 +134,11 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	 */
 	public Map<String, Collection<IProperty>> getEditableSettingGroups() {
 		Map<String, Collection<IProperty>> map = new LinkedHashMap<String, Collection<IProperty>>();
+		Collection<IProperty> settings;
 		
-		Collection<IProperty> settings = new ArrayList<IProperty>();
-		settings.add(settingDsrEnabled);
+		settings = new ArrayList<IProperty>(2);
+		settings.add(this.settings.get(RealDiskSettings.diskImagesEnabled));
+		settings.add(this.settings.get(RealDiskSettings.diskController));
 		map.put(IDsrHandler.GROUP_DSR_SELECTION, settings);
 		
 		settings = new ArrayList<IProperty>(imageMapper.getDiskSettingsMap().values());
@@ -131,18 +148,18 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 		
 		return map;
 	}
+	
 	public void saveState(ISettingSection section) {
-		settingDsrEnabled.saveState(section);
+		settingImagesEnabled.saveState(section);
 		fdc.saveState(section.addSection("FDC1771"));
 		imageMapper.saveState(section);
 	}
 	
 	public void loadState(ISettingSection section) {
 		if (section == null) return;
-		settingDsrEnabled.loadState(section);
+		settingImagesEnabled.loadState(section);
 		fdc.loadState(section.getSection("FDC1771"));
 		imageMapper.loadState(section);
-	
 	}
 
 	class DiskMotorIndicatorProvider implements IDeviceIndicatorProvider {

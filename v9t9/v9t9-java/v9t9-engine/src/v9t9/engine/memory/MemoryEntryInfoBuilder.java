@@ -93,6 +93,10 @@ public class MemoryEntryInfoBuilder {
 		if (schema != null) props.put(MemoryEntryInfo.FILENAME_PROPERTY, schema);
 		return this;
 	}
+	public MemoryEntryInfoBuilder withFilename2Property(SettingSchema schema) {
+		if (schema != null) props.put(MemoryEntryInfo.FILENAME2_PROPERTY, schema);
+		return this;
+	}
 
 
 	public MemoryEntryInfoBuilder withSize(int size) {
@@ -132,6 +136,13 @@ public class MemoryEntryInfoBuilder {
 	
 	public MemoryEntryInfoBuilder withBankClass(Class<? extends BankedMemoryEntry> klass) {
 		if (klass != null) props.put(MemoryEntryInfo.CLASS, klass);
+		return this;
+	}
+	public MemoryEntryInfoBuilder withBankSize(int size) {
+		if (size != 0)
+			props.put(MemoryEntryInfo.BANK_SIZE, size);
+		else
+			props.remove(MemoryEntryInfo.BANK_SIZE);
 		return this;
 	}
 

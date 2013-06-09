@@ -133,6 +133,14 @@ public abstract class MemoryArea implements IMemoryArea {
 	protected byte getLatency(int addr) {
 		return latency;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryArea#getLatency()
+	 */
+	@Override
+	public int getLatency() {
+		return latency;
+	}
 
 	public void saveContents(ISettingSection section, IMemoryEntry entry) {
 		ISettingSection contents = section.addSection("Contents");
