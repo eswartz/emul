@@ -19,12 +19,11 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
-import v9t9.common.machine.IMachine;
 import ejs.base.properties.IProperty;
 
 class DiskComboEntry extends DiskSettingEntry {
-	public DiskComboEntry(final Composite parent, IMachine machine, IProperty setting_) {
-		super(parent, machine, setting_, SWT.NONE);
+	public DiskComboEntry(DiskSelectorDialog dialog, final Composite parent, IProperty setting_) {
+		super(dialog, parent, setting_, SWT.NONE);
 	}
 
 	/* (non-Javadoc)

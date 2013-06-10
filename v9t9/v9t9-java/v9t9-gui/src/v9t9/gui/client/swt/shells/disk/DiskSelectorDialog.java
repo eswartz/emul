@@ -20,9 +20,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
@@ -44,6 +47,8 @@ import ejs.base.properties.IProperty;
 public class DiskSelectorDialog extends Composite {
 
 	public static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
+	private IMachine machine;
+	private boolean needReset;
 
 	public static IToolShellFactory getToolShellFactory(final IMachine machine, final ImageCanvas buttonBar) {
 		return new IToolShellFactory() {
@@ -64,9 +69,10 @@ public class DiskSelectorDialog extends Composite {
 	}
 
 	
-	public DiskSelectorDialog(Shell shell, IMachine machine) {
+	public DiskSelectorDialog(Shell shell, IMachine machine_) {
 		
 		super(shell, SWT.NONE);
+		this.machine = machine_;
 		
 		List<IDeviceSettings> list = machine.getModel().getDeviceSettings(machine);
 		
@@ -127,11 +133,11 @@ public class DiskSelectorDialog extends Composite {
 			for (IProperty setting : groupSettings) {
 				DiskSettingEntry comp = null;
 				if (setting.getValue() instanceof String) {
-					comp = new DiskEntry(group, machine, setting);
+					comp = new DiskEntry(this, group, setting);
 				} else if (setting.getValue() instanceof Boolean) {
-					comp = new DiskEnableEntry(group, machine, setting);
+					comp = new DiskEnableEntry(this, group, setting);
 				} else if (setting.getValue() != null && setting.getType().isEnum()) {
-					comp = new DiskComboEntry(group, machine, setting);
+					comp = new DiskComboEntry(this, group, setting);
 				}
 				if (comp != null) {
 					GridDataFactory.fillDefaults().grab(true, false).applyTo(comp);
@@ -141,6 +147,34 @@ public class DiskSelectorDialog extends Composite {
 		}
 		
 		this.pack();
+		
+		getShell().addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				if (needReset)
+					machine.reset();
+			}
+		});
 	}
 
+	/**
+	 * @return the machine
+	 */
+	public IMachine getMachine() {
+		return machine;
+	}
+
+
+	/**
+	 * 
+	 */
+	public void warnResetNeeded() {
+		if (!needReset) {
+			needReset = true;
+			MessageDialog.openInformation(getShell(), "Reset Needed", 
+					"Changing this setting requires restarting the emulated machine.\n\n"+
+					"This will happen when this dialog is closed.");
+		}
+	}
 }

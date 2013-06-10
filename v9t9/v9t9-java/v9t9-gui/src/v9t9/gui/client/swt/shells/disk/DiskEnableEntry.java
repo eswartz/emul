@@ -17,12 +17,11 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
-import v9t9.common.machine.IMachine;
 import ejs.base.properties.IProperty;
 
 class DiskEnableEntry extends DiskSettingEntry {
-	public DiskEnableEntry(final Composite parent, IMachine machine, IProperty setting_) {
-		super(parent, machine, setting_, SWT.NONE);
+	public DiskEnableEntry(DiskSelectorDialog dialog, final Composite parent, IProperty setting_) {
+		super(dialog, parent, setting_, SWT.NONE);
 	}
 
 	/* (non-Javadoc)

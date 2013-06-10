@@ -10,6 +10,7 @@
  */
 package v9t9.gui.client.swt.shells.disk;
 
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
@@ -21,6 +22,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
+import v9t9.common.dsr.IDsrEnablementSetting;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.ISettingDecorator;
 import ejs.base.properties.IProperty;
@@ -31,14 +33,15 @@ abstract class DiskSettingEntry extends Composite {
 	protected final IProperty setting;
 	private IPropertyListener enableListener;
 	protected IMachine machine;
+	private DiskSelectorDialog dialog;
 	
-	public DiskSettingEntry(final Composite parent, IMachine machine, IProperty setting_, int style) {
+	public DiskSettingEntry(DiskSelectorDialog dialog_, final Composite parent, IProperty setting_, int style) {
 		super(parent, style);
 		
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(this);
 
-		
-		this.machine = machine;
+		this.dialog = dialog_;
+		this.machine = dialog_.getMachine();
 		
 		this.setting = setting_;
 		
@@ -46,6 +49,9 @@ abstract class DiskSettingEntry extends Composite {
 			
 			public void propertyChanged(IProperty setting) {
 				updateSetting();
+				if (setting instanceof IDsrEnablementSetting) {
+					dialog.warnResetNeeded();
+				}
 			}
 		};
 		setting.addListener(enableListener);
@@ -69,8 +75,10 @@ abstract class DiskSettingEntry extends Composite {
 				}
 			});
 			
+			GridDataFactory.fillDefaults().applyTo(icon);
 		} else {
-			new Label(this, SWT.NONE);
+			Label label = new Label(this, SWT.NONE);
+			GridDataFactory.fillDefaults().applyTo(label);
 		}
 		
 		createControls(this);
@@ -82,6 +90,7 @@ abstract class DiskSettingEntry extends Composite {
 		
 		boolean enabled = !(setting instanceof ISettingProperty) || 
 			((ISettingProperty) setting).isEnabled();
+		
 		setVisible(enabled);
 		GridData data = (GridData) getLayoutData();
 		data.exclude = !enabled;
@@ -91,7 +100,6 @@ abstract class DiskSettingEntry extends Composite {
 		Point sz = getShell().computeSize(SWT.DEFAULT, 500, true);
 		getShell().setSize(Math.max(cursz.x, sz.x),
 				Math.max(cursz.y, sz.y));
-				
 	}
 
 	protected String[] getHistory(String name) {
