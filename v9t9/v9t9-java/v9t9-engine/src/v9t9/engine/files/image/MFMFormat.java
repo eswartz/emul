@@ -66,12 +66,11 @@ public class MFMFormat implements IDiskFormat {
 //			}
 			if (b != ID_MARK)
 				continue;
-			if (n4eCount < 32 /*|| na1Count < 3*/) {
+			if (n4eCount < 24 && startoffset >= 32) {
 				n4eCount = 0;
-//				na1Count = 0;
 				continue;
 			}
-			
+
 			CircularByteIter iter = new CircularByteIter(trackBuffer, trackSize);
 			
 			iter.setPointers(0, startoffset);
