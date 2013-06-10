@@ -96,11 +96,12 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 			.standardDsrRom(null)
 			.withDescription("Corcomp Disk Controller ROM (double-sided, double-density)")
 			.withFilenameProperty(settingDsrRom1FileName)
-			.withFileMD5("F022FAB6F5353DD169FCC4AE742D8122")
-			.withFileMD5Limit(0x1FF0)
+			.withFileMD5("956B78A3AAC982BE9829523042E7CBAB")
+			.withFileMD5Limit(0x2000 - 0x80)
 			.withFilename2Property(settingDsrRom2FileName)
-			.withFile2MD5("7017AC40BCFDD7D3106EEEF7694FD49A")
-			.withFile2MD5Limit(0x1FF0)
+			.withFile2MD5("B9C53C584842387B3AEC668B856EC8AD")
+			.withFile2MD5Offset(0x80)
+			.withFile2MD5Limit(0x2000 - 0x80 - 0x80)
 			.withBankClass(CorcompDsrRomBankedMemoryEntry.class)
 			.create("Corcomp Disk DSR ROM");
 
@@ -109,8 +110,8 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 			.standardDsrRom(null)
 			.withDescription("Corcomp Disk Controller ROM (double-sided, double-density)")
 			.withFilenameProperty(settingDsrRom1FileName)
-			.withFileMD5("F022FAB6F5353DD169FCC4AE742D8122")
-			.withFileMD5Limit(0x1000)
+			.withFileMD5("956B78A3AAC982BE9829523042E7CBAB")
+			.withFileMD5Limit(0x2000 - 0x80)
 			.create("Corcomp Disk DSR ROM (bank 1)");
 	
 	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
@@ -118,8 +119,9 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 			.standardDsrRom(null)
 			.withDescription("Corcomp Disk Controller ROM (double-sided, double-density)")
 			.withFilenameProperty(settingDsrRom2FileName)
-			.withFileMD5("7017AC40BCFDD7D3106EEEF7694FD49A")
-			.withFileMD5Limit(0x1000)
+			.withFileMD5("B9C53C584842387B3AEC668B856EC8AD")
+			.withFileMD5Offset(0x80)
+			.withFileMD5Limit(0x2000 - 0x80 - 0x80)
 			.create("Corcomp Disk DSR ROM (bank 2)");
 
 	private ICruWriter cruwRealDiskMotor = new ICruWriter() {
