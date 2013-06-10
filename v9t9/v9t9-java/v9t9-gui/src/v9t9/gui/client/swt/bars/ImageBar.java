@@ -188,7 +188,7 @@ public class ImageBar extends ImageCanvas implements IImageBar {
 			int num = kids.length; //getIncludedKids(kids);
 			
 			Point curSize;
-			if (!flushCache) {
+			if (true||!flushCache) {
 				Rectangle cli = composite.getClientArea();
 				curSize = new Point(cli.width,
 						cli.height);
