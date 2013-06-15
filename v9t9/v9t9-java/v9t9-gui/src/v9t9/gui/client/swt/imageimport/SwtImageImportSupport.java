@@ -12,7 +12,9 @@ package v9t9.gui.client.swt.imageimport;
 
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.client.IVideoRenderer;
@@ -41,6 +43,7 @@ public class SwtImageImportSupport extends ImageImportHandler {
 	private IMachine machine;
 	private Thread importJob;
 	private boolean importAgain;
+	private ImageImportOptionsDialog dialog;
 	public SwtImageImportSupport(IMachine machine, IEventNotifier eventNotifier, IVideoRenderer videoRenderer) {
 		this.machine = machine;
 		if (eventNotifier == null || videoRenderer == null)
@@ -54,9 +57,12 @@ public class SwtImageImportSupport extends ImageImportHandler {
 	 * @param shell2
 	 * @return
 	 */
-	public ImageImportOptionsDialog createImageImportDialog(Shell shell, SwtWindow window) {
-		return new ImageImportOptionsDialog(shell, SWT.NONE, window, 
-				this, importPropertyListener);
+	public ImageImportOptionsDialog getImageImportDialog(Shell shell, SwtWindow window) {
+		if (dialog == null || dialog.isDisposed()) {
+			dialog = new ImageImportOptionsDialog(shell, SWT.NONE, window, 
+					this, importPropertyListener);
+		}
+		return dialog;
 	}
 
 	public void setImageImportDnDControl(final Control control) {
@@ -78,23 +84,40 @@ public class SwtImageImportSupport extends ImageImportHandler {
 					this);
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.imageimport.ImageImportHandler#importImageAndDisplay(v9t9.video.imageimport.ImageImport)
+	 */
+	@Override
+	protected void importImageAndDisplay(ImageImport importer) {
+		try {
+			markBusy(true);
+			super.importImageAndDisplay(importer);
+		} finally {
+			markBusy(false);
+		}
+	}
 	/**
 	 * 
 	 */
-	protected void scheduleImportJob() {
+	protected synchronized void scheduleImportJob() {
 		if (importJob == null) {
 			importJob = new Thread() {
 				public void run() {
 					// in case, e.g., mode changed
 					ImageImport importer = createImageImport();
+					stopRendering();
 					try {
 						importImageAndDisplay(importer);
 					} catch (Throwable t) {
 						t.printStackTrace();
 					}
-					importJob = null;
-					if (importAgain) {
-						scheduleImportJob();
+					synchronized (SwtImageImportSupport.this) {
+						importJob = null;
+						if (!interrupted() && importAgain) {
+							importAgain = false;
+							scheduleImportJob();
+						}
 					}
 				}
 			};
@@ -104,6 +127,21 @@ public class SwtImageImportSupport extends ImageImportHandler {
 		}
 	}
 	
+	/**
+	 * @param busy
+	 */
+	protected void markBusy(final boolean busy) {
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				Cursor cursor = busy ? Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT) : null;
+				if (dialog != null && !dialog.isDisposed())
+					dialog.setCursor(cursor);
+				if (getVideoRenderer() instanceof ISwtVideoRenderer)
+					((ISwtVideoRenderer) getVideoRenderer()).getControl().
+						setCursor(cursor);
+			}
+		});
+	}
 	public void addImageImportDnDControl(Control control) {
 		if (getVideoRenderer() == null)
 			throw new IllegalStateException();
@@ -148,6 +186,23 @@ public class SwtImageImportSupport extends ImageImportHandler {
 		ISwtVideoRenderer renderer = (ISwtVideoRenderer) getVideoRenderer();
 		final IVdpChip vdp = renderer.getVdpHandler();
 		return vdp;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.imageimport.IImageImportHandler#dispose()
+	 */
+	@Override
+	public synchronized void dispose() {
+		importAgain = false;
+		if (importJob != null) {
+			importJob.interrupt();
+			try {
+				importJob.join(500);
+			} catch (InterruptedException e) {
+			}
+			importJob = null;
+		}
+		super.dispose();
 	}
 }
 

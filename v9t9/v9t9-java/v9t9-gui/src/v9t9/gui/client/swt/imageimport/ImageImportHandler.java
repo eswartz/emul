@@ -141,7 +141,7 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 			//if (DEBUG) System.out.println("Graphics mode: " + targWidth*((targHeight+7)&~0x7));
 		}
 
-		stopRendering();
+		//stopRendering();
 		
 		ImageFrame[] frames = imageImportOptions.getImages();
 		if (frames == null)
@@ -172,23 +172,34 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 		VdpImageImporter vdpImporter = new VdpImageImporter(
 				getVdpHandler(), getCanvas(), 
 				getCanvasRenderer());
-		renderThread = new RenderThread(vdpImporter, datas);
-		renderThread.start();
+		
+		synchronized (this) {
+			stopRendering();
+			renderThread = new RenderThread(vdpImporter, datas);
+			renderThread.start();
+		}
 	}
 
 	/**
 	 * 
 	 */
-	public void stopRendering() {
+	public synchronized void stopRendering() {
 		if (renderThread != null) {
 			renderThread.cancel();
 			try {
-				renderThread.join(500);
+				renderThread.join();
 			} catch (InterruptedException e) {
 			}
 			renderThread = null;
 		}
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.imageimport.IImageImportHandler#dispose()
+	 */
+	@Override
+	public void dispose() {
+		stopRendering();
+	}
 
 }

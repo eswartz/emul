@@ -28,4 +28,8 @@ public interface IImageImportHandler {
 	void importImage(ImageFrame[] frames);
 	
 	Collection<String> getHistory();
+	/**
+	 * 
+	 */
+	void dispose();
 }

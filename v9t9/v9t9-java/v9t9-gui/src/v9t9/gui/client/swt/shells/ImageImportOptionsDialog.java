@@ -29,6 +29,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
@@ -46,6 +47,7 @@ import v9t9.gui.client.swt.imageimport.ImageClipDecorator;
 import v9t9.gui.client.swt.imageimport.ImageLabel;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
+import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
 import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
 import ejs.base.properties.IProperty;
@@ -77,7 +79,11 @@ public class ImageImportOptionsDialog extends Composite {
 
 		@Override
 		public void propertyChanged(IProperty property) {
-			updateImage();
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					updateImage();
+				}
+			});
 		}
 
 		public void updateImage() {
@@ -104,6 +110,8 @@ public class ImageImportOptionsDialog extends Composite {
 			img = null;
 		}
 	}
+
+	private static Thread importImageThread;
 
 	private IPropertySource propertySource;
 	public static final String IMAGE_IMPORTER_ID = "swt.image.importer";
@@ -222,7 +230,7 @@ public class ImageImportOptionsDialog extends Composite {
 			 */
 			@Override
 			public void shellClosed(ShellEvent e) {
-				imageImportHandler.stopRendering();
+				imageImportHandler.dispose();
 			}
 		});
 		
@@ -246,7 +254,7 @@ public class ImageImportOptionsDialog extends Composite {
 				behavior.dismissOnClickOutside = true;
 			}
 			public Control createContents(Shell shell) {
-				ImageImportOptionsDialog dialog = imageSupport.createImageImportDialog(shell, window);
+				ImageImportOptionsDialog dialog = imageSupport.getImageImportDialog(shell, window);
 				imageSupport.addImageImportDnDControl(dialog);
 				return dialog;
 			}
@@ -291,20 +299,58 @@ public class ImageImportOptionsDialog extends Composite {
 				hitem.addSelectionListener(new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						try {
-							ImageFrame[] frames = SwtDragDropHandler.loadImageFromFile(file);
-							
-							if (frames != null) {
-								imageSupport.importImage(frames);
-								((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
-							}
-						} catch (NotifyException ex) {
-							window.getEventNotifier().notifyEvent(ex.getEvent());
-						}
+						doImportImage(window, imageSupport, file);
 					}
 				});
 			}
 		}
+	}
+
+	/**
+	 * @param file
+	 */
+	protected static void doImportImage(final SwtWindow window, final IImageImportHandler imageSupport, final String file) {
+		window.getShell().setCursor(
+				window.getShell().getDisplay().getSystemCursor(SWT.CURSOR_WAIT));
+
+		synchronized (ImageImportOptionsDialog.class) {
+			if (importImageThread != null) {
+				importImageThread.interrupt();
+				try {
+					importImageThread.wait();
+				} catch (InterruptedException e) {
+				}
+			}
+		}
+		
+		importImageThread = new Thread() {
+			public void run() {
+				try {
+					ImageFrame[] frames = SwtDragDropHandler.loadImageFromFile(file);
+					
+					if (frames != null && !interrupted()) {
+						imageSupport.importImage(frames);
+					}
+				} catch (final NotifyException ex) {
+					Display.getDefault().asyncExec(new Runnable() {
+						public void run() {
+							window.getEventNotifier().notifyEvent(ex.getEvent());
+						}
+					});
+				} finally {
+					Display.getDefault().asyncExec(new Runnable() {
+						public void run() {
+							((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
+							window.getShell().setCursor(null);
+						}
+					});
+					synchronized (ImageImportOptionsDialog.class) {
+						importImageThread = null;
+					}
+				}
+			}
+		};
+		importImageThread.start();
 	}
 
 	/**
@@ -326,19 +372,8 @@ public class ImageImportOptionsDialog extends Composite {
 		String file = window.openFileSelectionDialog("Open Image", lastDir, null, false, 
 				new String[] { "*.jpg;*.jpeg;*.gif;*.png;*.bmp;*.tga;*.tif;*.tiff;*.svg|Images", "*|Other files" });
 		if (file != null) {
-			try {
-				ImageFrame[] frames = SwtDragDropHandler.loadImageFromFile(file);
-			
-				imageSupport.importImage(frames);
-				((ISwtVideoRenderer) window.getVideoRenderer()).setFocus();
-				
-				fileHistory.add(file);
-			} catch (NotifyException e) {
-				window.getEventNotifier().notifyEvent(e.getEvent());
-			} catch (Throwable e) {
-				e.printStackTrace();
-				MessageDialog.openError(null, "Problem Occurred", e.getMessage());
-			}
+			doImportImage(window, imageSupport, file);
+			fileHistory.add(file);
 		}
 	}
 
