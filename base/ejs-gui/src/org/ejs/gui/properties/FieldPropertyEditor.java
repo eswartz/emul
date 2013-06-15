@@ -10,19 +10,26 @@
  */
 package org.ejs.gui.properties;
 
+import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Scale;
 import org.eclipse.swt.widgets.Text;
+import org.ejs.gui.common.FontUtils;
 
 import ejs.base.properties.FieldProperty;
-import ejs.base.properties.FieldUtils;
+import ejs.base.properties.PropertyUtils;
+import ejs.base.properties.Range;
 
 
 /**
@@ -57,37 +64,99 @@ public class FieldPropertyEditor implements
 		
 		final Class<?> klass = property.getField().getType();
 		if (Number.class.isInstance(value)) {
-			final Text text = new Text(parent, SWT.BORDER);
-			text.setText("" + value);
-			final ModifyListener modifyListener = new ModifyListener() {
-
-				public void modifyText(ModifyEvent e) {
-					try {
-						setValueFromString(text.getText());
-					} catch (Throwable t) {
-						t.printStackTrace();
+			Range range = property.getField().getAnnotation(Range.class);
+			if (range == null) {
+				final Text text = new Text(parent, SWT.BORDER);
+				text.setText(String.valueOf(value));
+				final ModifyListener modifyListener = new ModifyListener() {
+	
+					public void modifyText(ModifyEvent e) {
+						try {
+							setValueFromString(text.getText());
+						} catch (Throwable t) {
+							t.printStackTrace();
+						}
 					}
-				}
-				
-			};
-			text.addModifyListener(modifyListener);
-			return new IPropertyEditorControl() {
-
-				@Override
-				public Control getControl() {
-					return text;
-				}
-
-				@Override
-				public void reset() {
-					text.removeModifyListener(modifyListener);
 					
-					text.setText(property.getString());
-
-					text.addModifyListener(modifyListener);
-				}
+				};
+				text.addModifyListener(modifyListener);
+				return new IPropertyEditorControl() {
+	
+					@Override
+					public Control getControl() {
+						return text;
+					}
+	
+					@Override
+					public void reset() {
+						text.removeModifyListener(modifyListener);
+						
+						text.setText(property.getString());
+	
+						text.addModifyListener(modifyListener);
+					}
+					
+				};
+			} else {
+				final Composite comp = new Composite(parent, SWT.NONE);
+				GridLayoutFactory.fillDefaults().numColumns(2).applyTo(comp);
 				
-			};
+				final Scale scale = new Scale(comp, SWT.HORIZONTAL);
+				GridDataFactory.fillDefaults().grab(true, false).applyTo(scale);
+				
+				final Label label = new Label(comp, SWT.NONE);
+				label.setText(String.valueOf(value));
+				GridDataFactory.fillDefaults().grab(false, false).
+					minSize(FontUtils.measureText(comp.getDisplay(), comp.getFont(), "-100.0!")).
+					applyTo(label);
+				
+				final float add = range.minimum();
+				final float mul = (range.maximum() - range.minimum());
+
+				scale.setMinimum(0);
+				scale.setMaximum(1000);
+				scale.setSelection((int) ((((Number) value).doubleValue() - add) * 1000 / mul));
+				
+				final SelectionListener selectListener = new SelectionAdapter() {
+					/* (non-Javadoc)
+					 * @see org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+					 */
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						try {
+							double value = (scale.getSelection() * mul / 1000.) + add; 
+							property.setValue(PropertyUtils.convertStringToValue(
+									String.valueOf(value), 
+									property.getType()));
+							label.setText(String.valueOf(value));
+						} catch (Throwable t) {
+							t.printStackTrace();
+						}
+					}
+					
+				};
+				scale.addSelectionListener(selectListener);
+				return new IPropertyEditorControl() {
+	
+					@Override
+					public Control getControl() {
+						return comp;
+					}
+	
+					@Override
+					public void reset() {
+						scale.removeSelectionListener(selectListener);
+						
+						double value = property.getDouble();
+						scale.setSelection((int) ((value - add) * 1000 / mul));
+						label.setText(String.valueOf(value));
+						
+						scale.addSelectionListener(selectListener);
+					}
+					
+				};
+				
+			}
 		} else if (Boolean.class.isInstance(value)) {
 			final Button check = new Button(parent, SWT.CHECK);
 			check.setSelection(Boolean.TRUE.equals(value));
@@ -190,8 +259,9 @@ public class FieldPropertyEditor implements
 	}
 
 	protected void setValueFromString(final String txt) {
-		
-		FieldUtils.setValueFromString(property.getField(), property.getObject(), txt);
+		Object value = PropertyUtils.convertStringToValue(txt, property.getType());
+		property.setValue(value);
+		//FieldUtils.setValueFromString(property.getField(), property.getObject(), txt);
 	}
 
 
