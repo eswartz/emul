@@ -176,6 +176,14 @@ public class OpenFile {
 		if (position >= emulFile.getFileSize())
 			throw new DsrException(PabConstants.e_endoffile, "End of file: " + emulFile);
 		
+		if (byteoffs + size > sector.length)
+			throw new DsrException(PabConstants.e_endoffile, "Reading past end of sector: " + 
+						byteoffs + " + " + size);
+		
+		if (access.offset + size > access.memory.length)
+			throw new DsrException(PabConstants.e_endoffile, "Reading past end of memory: " + 
+					access.offset + " + " + size + " > " + access.memory.length);
+		
 		System.arraycopy(sector, byteoffs, access.memory, access.offset, size);
 		position += size;
 		byteoffs += size;
