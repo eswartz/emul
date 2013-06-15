@@ -21,7 +21,6 @@ import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
-import v9t9.common.settings.Settings;
 import v9t9.engine.files.image.FDCControllers;
 import v9t9.engine.files.image.RealDiskSettings;
 import v9t9.engine.modules.ModuleManager;
@@ -93,14 +92,12 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.setCru(new InternalCru9901(machine));
 			
-			EmuDiskDsr emuDsr = new EmuDiskDsr(Settings.getSettings(machine), 
-					machine.getEmulatedFileHandler().getFilesInDirectoryMapper(),
-					machine.getEventNotifier());
+			EmuDiskDsr emuDsr = new EmuDiskDsr(machine, 0x1000);
 			machine.getDsrManager().registerDsr(emuDsr);
 			
 //			TIDiskImageDsr diskdsr = new TIDiskImageDsr(machine, (short) 0x1100);
 //			machine.getDsrManager().registerDsr(diskdsr);
-//			
+			
 //			CorcompDiskImageDsr ccdiskdsr = new CorcompDiskImageDsr(machine, (short) 0x1100);
 //			machine.getDsrManager().registerDsr(ccdiskdsr);
 			

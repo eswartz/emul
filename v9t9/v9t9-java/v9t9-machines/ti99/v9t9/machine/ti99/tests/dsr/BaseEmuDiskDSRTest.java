@@ -157,7 +157,7 @@ public class BaseEmuDiskDSRTest {
 		
 		xfer.writeParamWord(0x70, (short) 0x3fff);
 		
-		dsr = new EmuDiskDsr(settings, mymapper, new BaseEventNotifier());
+		dsr = new EmuDiskDsr(0x1000, settings, mymapper, new BaseEventNotifier());
 		
 
 		URL url = BaseEmuDiskDSRTest.class.getResource("/data/df80");

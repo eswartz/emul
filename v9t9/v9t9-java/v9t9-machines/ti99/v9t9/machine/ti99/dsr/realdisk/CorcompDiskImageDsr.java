@@ -184,7 +184,7 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 
 	private ICruReader crurRealDiskPoll = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			byte newnum = (byte) (((addr - 0x1102) >> 1) + 1);
+			byte newnum = (byte) (((addr - base - 2) >> 1) + 1);
 			return fdc.getSelectedDisk() == (int) newnum ? 1 : 0;
 		}
 	};
@@ -226,6 +226,8 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 	
 	protected IMemoryDomain console;
 
+	private boolean inited;
+
 	public CorcompDiskImageDsr(TI99Machine machine, short base) {
 		super(machine);
 		
@@ -253,7 +255,6 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 			});
 
 		}
-		
 	}
 	
 	/* (non-Javadoc)
@@ -261,6 +262,11 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 	 */
 	@Override
 	public void init() {
+		if (inited)
+			return;
+		
+		inited = true;
+
 		super.init();
 		
 		CruManager cruManager = ((TI99Machine) machine).getCruManager();
@@ -436,6 +442,8 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 	public void activate(IMemoryDomain console, IMemoryEntryFactory memoryEntryFactory) throws IOException {
 		if (!settingImagesEnabled.getBoolean() || corcompDiskDsrActiveSetting.getBoolean())
 			return;
+
+		init();
 		
 		corcompDiskDsrActiveSetting.setBoolean(true);
 		

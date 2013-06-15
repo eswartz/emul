@@ -34,12 +34,14 @@ import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.DsrException;
 import v9t9.common.files.IFilesInDirectoryMapper;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.Settings;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.files.directory.DirectDiskHandler;
@@ -72,8 +74,15 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 	private Dumper dumper;
 	private final ISettingsHandler settings;
 	private IEventNotifier eventNotifier;
+	private short base;
 
-	public EmuDiskDsr(ISettingsHandler settings_, IFilesInDirectoryMapper mapper, IEventNotifier eventNotifier) {
+	public EmuDiskDsr(IMachine machine, int base) {
+		this(base, Settings.getSettings(machine), 
+				machine.getEmulatedFileHandler().getFilesInDirectoryMapper(),
+				machine.getEventNotifier());
+	}
+	public EmuDiskDsr(int base, ISettingsHandler settings_, IFilesInDirectoryMapper mapper, IEventNotifier eventNotifier) {
+		this.base = (short) base;
 		this.settings = settings_;
 		this.eventNotifier = eventNotifier;
 		//emuDiskDsrEnabled.setBoolean(true);
@@ -148,7 +157,7 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 				
 	}
 	public short getCruBase() {
-		return 0x1000;
+		return base;
 	}
 	
 	public static SettingSchema settingDsrRomFileName = new SettingSchema(

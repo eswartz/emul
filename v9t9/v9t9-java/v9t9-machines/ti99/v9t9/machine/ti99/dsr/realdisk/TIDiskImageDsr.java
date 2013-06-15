@@ -132,7 +132,7 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 	
 	private ICruReader crurRealDiskPoll = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			byte newnum = (byte) (((addr - 0x1102) >> 1) + 1);
+			byte newnum = (byte) (((addr - base - 2) >> 1) + 1);
 			return fdc.getSelectedDisk() == (int) newnum ? 1 : 0;
 		}
 	};
@@ -167,6 +167,8 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 
 	protected IProperty tiDiskDsrActiveSetting;
 
+	private boolean inited;
+
 	public TIDiskImageDsr(TI99Machine machine, short base) {
 		super(machine);
 		this.base = base;
@@ -192,7 +194,17 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 		}
 		
 	}
-	protected void enableCRU() {
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.dsr.realdisk.BaseDiskImageDsr#init()
+	 */
+	@Override
+	public void init() {
+		if (inited)
+			return;
+		
+		inited = true;
+		super.init();
 		CruManager cruManager = ((TI99Machine) machine).getCruManager();
 		cruManager.add(base + 0x2, 1, cruwRealDiskMotor);
 		cruManager.add(base + 0x4, 1, cruwRealDiskHold);
@@ -208,8 +220,14 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 		cruManager.add(base + 0xA, 1, crurRealDiskZero);
 		cruManager.add(base + 0xC, 1, crurRealDiskOne);
 		cruManager.add(base + 0xE, 1, crurRealDiskSide);
+
 	}
-	protected void disableCRU() {
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.dsr.realdisk.BaseDiskImageDsr#dispose()
+	 */
+	@Override
+	public void dispose() {
 		CruManager cruManager = ((TI99Machine) machine).getCruManager();
 		cruManager.removeWriter(base + 0x2, 1);
 		cruManager.removeWriter(base + 0x4, 1);
@@ -225,6 +243,7 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 		cruManager.removeReader(base + 0xA, 1);
 		cruManager.removeReader(base + 0xC, 1);
 		cruManager.removeReader(base + 0xE, 1);
+		super.dispose();
 	}
 
 	private class DiskMMIOMemoryArea extends ConsoleMmioArea {
@@ -355,9 +374,10 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 		if (!settingImagesEnabled.getBoolean() || tiDiskDsrActiveSetting.getBoolean())
 			return;
 		
-		tiDiskDsrActiveSetting.setBoolean(true);
-		enableCRU();
+		init();
 		
+		tiDiskDsrActiveSetting.setBoolean(true);
+
 		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(dsrRomInfo);
 		
 		if (ioMemoryEntry == null) {
@@ -374,7 +394,6 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 		console.unmapEntry(ioMemoryEntry);
 		console.unmapEntry(romMemoryEntry);
 		
-		disableCRU();
 		tiDiskDsrActiveSetting.setBoolean(false);
 	}
 	
