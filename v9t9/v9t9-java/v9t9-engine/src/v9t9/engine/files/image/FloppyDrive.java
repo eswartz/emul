@@ -54,7 +54,7 @@ public class FloppyDrive {
 
 	private Dumper dumper;
 
-	private FDCStatus status;
+	//private FDCStatus status;
 
 	private IDiskImageMapper imageMapper;
 
@@ -70,10 +70,9 @@ public class FloppyDrive {
 	private IProperty activeProperty;
 	
 	public FloppyDrive(IMachine machine, 
-			Dumper dumper_, FDCStatus status_, int num_, 
+			Dumper dumper_, int num_, 
 			IProperty motorProperty_, FDC1771 fdc) {
 		this.dumper = dumper_;
-		this.status = status_;
 		this.num = num_;
 //		this.motorProperty = motorProperty_;
 		this.fdc = fdc;
@@ -140,7 +139,7 @@ public class FloppyDrive {
 					spinState = SpinState.SPINNING;
 					dumper.info("DSK{0}: motor spinning", num);
 					
-					status.reset(StatusBit.BUSY);
+					//status.reset(StatusBit.BUSY);
 					this.motorTimeout = System.currentTimeMillis() + 4320;
 				}
 			} else if (spinState == SpinState.SPINNING) {
@@ -159,6 +158,8 @@ public class FloppyDrive {
 					
 					activeProperty.setBoolean(false);
 				}
+			} else {
+//				status.reset(StatusBit.BUSY);
 			}
 		}
 		
@@ -272,14 +273,7 @@ public class FloppyDrive {
 	 * @return
 	 */
 	public int writeTrack() {
-
-		status.reset(StatusBit.LOST_DATA);
-		
 		int buflen = RealDiskConsts.DSKbuffersize;  
-
-		if (image != null && image.isReadOnly())
-			status.set(StatusBit.WRITE_PROTECT);
-	
 
 		fdc.addBusyTime(buflen * 10 / 1000);
 		return buflen;

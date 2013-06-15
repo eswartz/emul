@@ -29,10 +29,12 @@ public class Dumper {
 	public Dumper(IProperty dump, IProperty dumpFull) {
 		settingDump = dump;
 		settingDumpFull = dumpFull;
+        Logging.registerLog(settingDump, "disk_debug.txt");
+        Logging.registerLog(settingDumpFull, "disk_debug.txt");
+
 	}
 	public Dumper(ISettingsHandler settings, SettingSchema dump, SettingSchema dumpFull) {
-		settingDump = settings.get(dump);
-		settingDumpFull = settings.get(dumpFull);
+		this(settings.get(dump), settings.get(dumpFull));
 	}
 
 	public void error(String fmt, Object... args) {
@@ -41,11 +43,15 @@ public class Dumper {
 
 	public void info(String string) {
 		PrintWriter full = Logging.getLog(settingDumpFull);
-		if (full != null)
+		if (full != null) {
 			full.println(string);
+			full.flush();
+		}
 		PrintWriter dump = Logging.getLog(settingDump);
-		if (dump != null)
+		if (dump != null) {
 			dump.println(string);
+			dump.flush();
+		}
 		
 	}
 

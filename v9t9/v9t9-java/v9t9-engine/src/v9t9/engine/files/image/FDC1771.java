@@ -84,7 +84,7 @@ public class FDC1771 implements IPersistable {
 					.get(RealDiskSettings.diskImagesEnabled));
 			
 			drives[num - 1] = new FloppyDrive(machine,  
-					dumper, status, num, motorProperty, this);
+					dumper, num, motorProperty, this);
 			
 			driveMap.put(name, drives[num - 1]);
 		}
@@ -495,6 +495,12 @@ public class FDC1771 implements IPersistable {
 		if (drive == null)
 			return;
 		
+		status.reset(StatusBit.LOST_DATA);
+		
+		if (drive.getImage() != null && drive.getImage().isReadOnly())
+			status.set(StatusBit.WRITE_PROTECT);
+	
+		
 		bufpos = 0;
 		buflen = drive.writeTrack(); 
 		
@@ -735,8 +741,9 @@ public class FDC1771 implements IPersistable {
 		byte ret = getStatus().calculate(getCommand());
 		
 		if (drive != null) {
+			long currentTimeMillis = System.currentTimeMillis();
 			if (!drive.isMotorAtTargetSpeed()
-				|| getCommandBusyExpiration() > System.currentTimeMillis())
+				|| getCommandBusyExpiration() > currentTimeMillis)
 				ret |= StatusBit.BUSY.getVal();
 		}
 		
