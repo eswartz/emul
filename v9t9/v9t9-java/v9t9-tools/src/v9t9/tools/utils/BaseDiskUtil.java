@@ -27,13 +27,22 @@ public class BaseDiskUtil {
 		this.out = out;
 	}
 
-	protected IEmulatedDisk resolveDisk(String path) throws IOException {
+	protected IEmulatedDisk resolveDisk(String path, boolean shouldBeFormatted) throws IOException {
 		File target = new File(path);
 		IEmulatedFileHandler handler = machine.getEmulatedFileHandler();
+		IEmulatedDisk image;
 		if (target.isDirectory())
-			return handler.getFilesInDirectoryMapper().createDiskDirectory(target);
+			image = handler.getFilesInDirectoryMapper().createDiskDirectory(target);
 		else
-			return handler.getDiskImageMapper().createDiskImage(target);
+			image = handler.getDiskImageMapper().createDiskImage(target);
+		if (!image.isFormatted())
+			throw new IOException("disk image not formatted: " + path);
+		return image;
+	}
+	
+	
+	protected IEmulatedDisk resolveDisk(String path) throws IOException {
+		return resolveDisk(path, true);
 	}
 	
 	protected Pair<IEmulatedDisk, String> decode(String arg) throws IOException {
