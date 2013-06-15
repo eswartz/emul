@@ -225,4 +225,13 @@ public class SectorDiskImage extends BaseDiskImage  {
 		System.arraycopy(trackBuffer, currentMarker.dataoffset + 1, rwBuffer, 0, buflen);
 		RealDiskUtils.dumpBuffer(dumper, rwBuffer, 0, 256);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.files.image.BaseDiskImage#discoverSide2TrackOrdering()
+	 */
+	@Override
+	protected void discoverSide2TrackOrdering() {
+		hdr.setInvertedSide2(true);
+		hdr.setSide2DirectionKnown(true);
+	}
 }

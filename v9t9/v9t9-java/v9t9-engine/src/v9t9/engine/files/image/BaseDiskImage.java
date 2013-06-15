@@ -140,7 +140,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		}
 		public int getTrackOffset(int track, int side) {
 			int effTrack = side == 0 ? track : 
-				(invertedSide2 ? tracks * 2 - track - 1 : tracks + track);
+				(invertedSide2 ? (tracks * 2 - track - 1) : (tracks + track));
 			return getTrackOffset(effTrack);
 		}
 
@@ -527,46 +527,18 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			this.side = side;
 			
 			if (side == 1 && !hdr.isSide2DirectionKnown()) {
-				// detect the side 2 ordering
-				int origTrack = track;
-				try {
-					setTrack(0);
-					
-					fetchFormatAndTrackMarkers();
-					boolean any = false;
-					for (IdMarker marker : trackMarkers) {
-						if (marker.sideid != 1)
-							continue;
-						
-						if (marker.trackid == hdr.getTracks() - 1) {
-							any = true;
-							hdr.setInvertedSide2(true);
-							break;
-						}
-						else if (marker.trackid == 0) {
-							any = true;
-							hdr.setInvertedSide2(false);
-							break;
-						}
-					}
-					if (any) {
-						hdr.setSide2DirectionKnown(true);
-					}
-				} catch (IOException e) {
-					// ok, leave it alone for now
-				} finally {
-					try {
-						setTrack(origTrack);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
+				discoverSide2TrackOrdering();
 			}
 			
 			updateDiskSize();
 		}
 		
 	}
+	/**
+	 *	Set the {@link IDiskHeader#setInvertedSide2(boolean)} flag 
+	 */
+	abstract protected void discoverSide2TrackOrdering();
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.files.IDiskImage#getSide()
 	 */
@@ -602,12 +574,30 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	public IdMarker readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException {
 		if (hdr.getSecsPerTrack() == 0)
 			throw new IOException("unformatted disk");
+
+		int secsPerTrack = hdr.getSecsPerTrack();
+		boolean gotSector0 = false;
 		
-		int track = (sector / hdr.getSecsPerTrack());
-		byte side = (byte) (track >= 40 ? 1 : 0);
+		if (sector != 0) {
+			// try again if the sector 0 information differs
+			byte[] sec0 = new byte[256];
+			readSector(0, sec0, 0, 256);
+			VIB vib = VIB.createVIB(sec0, 0);
+			if (vib.isFormatted()) {
+				secsPerTrack = vib.getSecsPerTrack();
+				gotSector0 = true;
+			}
+		}
+		
+		int track;
+		byte side;
+		byte tracksec;
+		
+		track = (sector / secsPerTrack);
+		side = (byte) (track >= 40 ? 1 : 0);
 
 		track %= 40;
-		if (side > 0)
+		if (side > 0 && hdr.isInvertedSide2())
 			track = 39 - track;
 
 		setTrack(track);
@@ -615,13 +605,41 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		
 		readCurrentTrackData();
 		
-		byte tracksec = (byte) (sector % hdr.getSecsPerTrack());
+		tracksec = (byte) (sector % secsPerTrack);
 		for (IdMarker marker : getTrackMarkers()) {
 			if (marker.sectorid == tracksec && marker.trackid == track) {
 				readSectorData(marker, rwBuffer, start, buflen);
 				return marker;
 			}
 		}
+		
+		if (!gotSector0 && secsPerTrack == 18 
+				&& getTrackMarkers().size() > 0 && getTrackMarkers().size() < 18) {
+			// recalc -- maybe we were wrong
+			secsPerTrack = 9;
+			
+			track = (sector / secsPerTrack);
+			side = (byte) (track >= 40 ? 1 : 0);
+
+			track %= 40;
+			if (side > 0)
+				track = 39 - track;
+
+			setTrack(track);
+			setSide(side);
+			
+			readCurrentTrackData();
+			
+			tracksec = (byte) (sector % secsPerTrack);
+			for (IdMarker marker : getTrackMarkers()) {
+				if (marker.sectorid == tracksec && marker.trackid == track) {
+					readSectorData(marker, rwBuffer, start, buflen);
+					return marker;
+				}
+			}
+
+		}
+		
 		throw new MissingSectorException(sector, getTrackDiskOffset(),
 				spec+": sector " + tracksec + " not found on track " + track + ", side " + side, null);
 	}

@@ -42,8 +42,6 @@ public interface IDiskImage extends IPersistable, IEmulatedDisk {
 	String getDiskType();
 	int getHeaderSize();
 	
-	IdMarker readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException;
-
 	void writeTrackData(byte[] rwBuffer, int start,
 			int buflen);
 
@@ -90,18 +88,18 @@ public interface IDiskImage extends IPersistable, IEmulatedDisk {
 	 */
 	void readTrackData(byte[] rwBuffer, int i, int buflen) throws IOException;
 
-	/**
-	 * @param i
-	 * @param sectorUpdater
-	 * @throws IOException 
-	 */
-	void updateSector(int i, SectorUpdater sectorUpdater) throws IOException;
 
 	void setSide(int side) throws IOException;
 	int getSide();
 
 	int getTrack();
 	void setTrack(int i) throws IOException;
+
+
+	void updateSector(int sector, SectorUpdater sectorUpdater) throws IOException;
+	
+	/** stupid sector reader */
+	IdMarker readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException;
 
 	/**
 	 * @param start

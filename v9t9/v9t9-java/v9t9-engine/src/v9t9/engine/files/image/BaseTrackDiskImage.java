@@ -140,4 +140,46 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 			}
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.files.image.BaseDiskImage#discoverSide2TrackOrdering()
+	 */
+	@Override
+	protected void discoverSide2TrackOrdering() {
+		// detect the side 2 ordering
+		int origTrack = track;
+		try {
+			setTrack(0);
+			
+			fetchFormatAndTrackMarkers();
+			boolean any = false;
+			for (IdMarker marker : trackMarkers) {
+				if (marker.sideid != 1)
+					continue;
+				
+				if (marker.trackid == hdr.getTracks() - 1) {
+					any = true;
+					hdr.setInvertedSide2(true);
+					break;
+				}
+				else if (marker.trackid == 0) {
+					any = true;
+					hdr.setInvertedSide2(false);
+					break;
+				}
+			}
+			if (any) {
+				hdr.setSide2DirectionKnown(true);
+			}
+		} catch (IOException e) {
+			// ok, leave it alone for now
+		} finally {
+			try {
+				setTrack(origTrack);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+	}
 }

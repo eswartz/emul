@@ -40,4 +40,14 @@ public interface IDiskHeader {
 	boolean isInvertedSide2();
 	void setInvertedSide2(boolean invertedSide2);
 
+	/**
+	 * @return
+	 */
+	boolean isSide2DirectionKnown();
+
+	/**
+	 * @param b
+	 */
+	void setSide2DirectionKnown(boolean b);
+
 }
