@@ -114,7 +114,7 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 	
 	private ICruWriter cruwRealDiskSel = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			byte newnum = (byte) (((addr - 0x1108) >> 1) + 1);
+			byte newnum = (byte) (((addr - base - 8) >> 1) + 1);
 	
 			fdc.selectDisk(newnum, data != 0);
 			
@@ -356,6 +356,7 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 			return;
 		
 		tiDiskDsrActiveSetting.setBoolean(true);
+		enableCRU();
 		
 		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(dsrRomInfo);
 		
@@ -373,6 +374,7 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 		console.unmapEntry(ioMemoryEntry);
 		console.unmapEntry(romMemoryEntry);
 		
+		disableCRU();
 		tiDiskDsrActiveSetting.setBoolean(false);
 	}
 	
