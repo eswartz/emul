@@ -19,6 +19,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
+import v9t9.common.dsr.IDeviceLabel;
 import ejs.base.properties.IProperty;
 
 class DiskComboEntry extends DiskSettingEntry {
@@ -43,10 +44,13 @@ class DiskComboEntry extends DiskSettingEntry {
 		
 		for (final Object enm : enms) {
 			final Button radio = new Button(all, SWT.RADIO);
-			radio.setText(enm.toString());
+			radio.setText(enm instanceof IDeviceLabel ?
+					((IDeviceLabel) enm).getLabel() : enm.toString());
+			
 			GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.CENTER).applyTo(radio);
 			
-			radio.setToolTipText(setting.getDescription());
+			radio.setToolTipText(enm instanceof IDeviceLabel ?
+					((IDeviceLabel) enm).getTooltip() : setting.getDescription());
 			
 			radio.setSelection(setting.getValue() == enm);
 			
