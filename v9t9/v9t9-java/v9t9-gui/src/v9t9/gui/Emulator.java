@@ -182,6 +182,9 @@ public class Emulator {
 		server.setSettings(settings);
 		
 		runServer(server);
+		
+		// in some OSes, AWT does not want to die
+		System.exit(0);
 	}
 
 

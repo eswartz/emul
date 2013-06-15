@@ -254,19 +254,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 				machine.getClient().close();
 				
 				dispose();
-				
-				// FIXME:  AWT doesn't want to quit all the time... force it after a reasonable time 
-				Thread reallyQuit = new Thread() {
-					public void run() {
-						try {
-							Thread.sleep(1000);
-							System.exit(0);
-						} catch (InterruptedException e) {
-						}
-					}
-				};
-				reallyQuit.setDaemon(true);
-				reallyQuit.start();
 			}
 		});
 		
