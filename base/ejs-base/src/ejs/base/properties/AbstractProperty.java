@@ -389,6 +389,16 @@ public abstract class AbstractProperty implements IProperty {
 				section.put(propertyName, items);
 			} else if (value instanceof String[]) {
 				section.put(propertyName, (String[]) value);
+			} else if (value instanceof Boolean) {
+				section.put(propertyName, (Boolean) value);
+			} else if (value instanceof Float) {
+				section.put(propertyName, ((Float) value).doubleValue());
+			} else if (value instanceof Double) {
+				section.put(propertyName, (Double) value);
+			} else if (value instanceof Integer) {
+				section.put(propertyName, (Integer) value);
+			} else if (value instanceof Number) {
+				section.put(propertyName, ((Number) value).intValue());
 			} else {
 				section.put(propertyName, value.toString());
 			}
