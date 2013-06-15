@@ -376,11 +376,11 @@ public class PathFileLocator implements IPathFileLocator {
 				return null;
 			}
 			
-			int idx = uri.toString().lastIndexOf('/');
-			String baseFile = uri.toString().substring(idx+1); 
+			Pair<URI, String> dirAndName = splitFileName(uri);
+			String baseFile = dirAndName.second; 
 			//logger.debug("\t" +uri + " base = " + baseFile);
 		
-			URI dirURI = URI.create(uri.toString().substring(0, idx+1));
+			URI dirURI = dirAndName.first;
 			Collection<String> listing;
 			try {
 				listing = getDirectoryListing(dirURI).keySet();
@@ -817,7 +817,7 @@ public class PathFileLocator implements IPathFileLocator {
 						if (("file".equals(ssp.getScheme()) && !ssp.getSchemeSpecificPart().startsWith("/")
 								|| (ssp.getScheme() == null && !ssp.getPath().startsWith("/")))) {
 							String path = uri.getSchemeSpecificPart() + ssp.getSchemeSpecificPart();
-							int idx  =path.lastIndexOf('!');
+							int idx = path.lastIndexOf('!');
 							if (idx >= 0)
 								path = path.substring(0, idx);
 							if (new File(path).exists()) {
