@@ -595,13 +595,15 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		
 		track = (sector / secsPerTrack);
 		side = (byte) (track >= 40 ? 1 : 0);
+		
+		// ensure we have the inverted flag set
+		setSide(side);
 
 		track %= 40;
 		if (side > 0 && hdr.isInvertedSide2())
 			track = 39 - track;
 
 		setTrack(track);
-		setSide(side);
 		
 		readCurrentTrackData();
 		
