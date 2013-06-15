@@ -583,7 +583,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			byte[] sec0 = new byte[256];
 			readSector(0, sec0, 0, 256);
 			VIB vib = VIB.createVIB(sec0, 0);
-			if (vib.isFormatted()) {
+			if (vib.isFormatted() && vib.getSecsPerTrack() > 0) {
 				secsPerTrack = vib.getSecsPerTrack();
 				gotSector0 = true;
 			}

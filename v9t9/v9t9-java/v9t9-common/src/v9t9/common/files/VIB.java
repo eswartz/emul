@@ -90,7 +90,7 @@ public class VIB {
     		char ch = (char) volname[i];
     		if (ch != ' ')
     			len = i;
-    		builder.append(Character.toUpperCase(ch));
+    		builder.append(ch);
     	}
     	builder.setLength(len + 1);
 		return builder.toString();
@@ -173,5 +173,13 @@ public class VIB {
         }
         return os.toByteArray();
     }
+
+
+	/**
+	 * @return
+	 */
+	public int getSecsPerTrack() {
+		return secsPerTrack;
+	}
 
 }
