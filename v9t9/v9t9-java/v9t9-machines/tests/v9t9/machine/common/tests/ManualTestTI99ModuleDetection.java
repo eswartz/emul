@@ -90,7 +90,7 @@ public class ManualTestTI99ModuleDetection {
 	}
 	
 
-	protected void testDirectory(String path, final String pattern, final String... ignore) {
+	protected Collection<IModule> testDirectory(String path, final String pattern, final String... ignore) {
 		File dir = new File(path);
 		assertTrue(dir.exists());
 		
@@ -122,6 +122,8 @@ public class ManualTestTI99ModuleDetection {
 			System.err.print(sb);
 			fail(sb.toString());
 		}
+		
+		return modules;
 	}
 
 	/**
@@ -155,8 +157,31 @@ public class ManualTestTI99ModuleDetection {
 	private void verifySpecificModule(IModule module) {
 		if (verifyMiniMemory(module))
 			return;
+		if (verifyEASuperCart(module))
+			return;
 	}
 
+	/**
+	 * @param module
+	 * @return
+	 */
+	private boolean verifyEASuperCart(IModule module) {
+		if (module.getName().equalsIgnoreCase("EA/8K Super Cart")) {
+			boolean foundGraphics = false; 
+			// make sure it has the nonvolatile RAM
+			MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
+			for (MemoryEntryInfo info : infos) {
+				if (info.getDomainName().equals(IMemoryDomain.NAME_GRAPHICS)
+						&& info.getAddress() == 0x6000) {
+					foundGraphics = true;
+				}
+			}
+			assertTrue(foundGraphics);
+			assertEquals(2, infos.length);
+			return true;
+		}
+		return false;
+	}
 	/**
 	 * @param module
 	 * @return

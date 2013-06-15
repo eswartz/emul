@@ -72,9 +72,7 @@ import ejs.base.utils.XMLUtils;
 
 public class TI99Machine extends MachineBase {
 
-	/**
-	 * 
-	 */
+	private static final String EA_8K_SUPER_CART = "EA/8K Super Cart";
 	private static final String MINI_MEMORY = "Mini Memory";
 
 	private static final Logger log = Logger.getLogger(TI99Machine.class);
@@ -299,6 +297,17 @@ public class TI99Machine extends MachineBase {
 					}
 				}
 			}
+			else if (module.getName().equalsIgnoreCase(EA_8K_SUPER_CART)) {
+				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
+				if (infos.length == 1) {
+					MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleRom("ea+8kr.bin")
+							.withAddress(0x6000)
+							.withSize(0x2000)
+							.storable(true)
+							.create("EA/8K Super Cart Non-Volatile RAM");
+					module.addMemoryEntryInfo(info);
+				}
+			}
 		}
 		List<IModule> modules = new ArrayList<IModule>(moduleMap.values());
 		Collections.sort(modules, new Comparator<IModule>() {
@@ -505,7 +514,10 @@ public class TI99Machine extends MachineBase {
 	 */
 	private boolean looksLikeBankedOr9900Code(byte[] content) {
 		int insts = 0;
-		for (int addr = 0; addr < content.length; addr += 2) {
+		
+		// assume that real content is in the first half (e.g. for E/A where
+		// content for console is in latter half)
+		for (int addr = 0; addr < content.length / 2; addr += 2) {
 			int word = readAddr(content, addr);
 			if (word == 0x45b /* RT */ 
 					|| word == 0x8300  /* CPU RAM base */

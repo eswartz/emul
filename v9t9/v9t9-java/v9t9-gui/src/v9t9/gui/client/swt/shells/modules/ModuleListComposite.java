@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -495,7 +496,10 @@ public class ModuleListComposite extends Composite {
 					fixupProperties(module);
 					discoveredModules.add(module);
 				} else if (exist.getDatabaseURI().equals(databaseURI)) {
-					discoveredModules.add(exist);
+					if (Arrays.equals(exist.getMemoryEntryInfos(), module.getMemoryEntryInfos()))
+						discoveredModules.add(exist);
+					else
+						discoveredModules.add(module);	// in case detection changed
 				} else if (showAllModules) {
 					discoveredModules.add(exist);
 				}
