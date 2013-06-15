@@ -19,6 +19,7 @@ import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.VdpFormat;
 import ejs.base.properties.FieldProperty;
 import ejs.base.properties.PropertySource;
+import ejs.base.properties.Range;
 
 /**
  * @author ejs
@@ -66,12 +67,18 @@ public class ImageImportOptions {
 	protected boolean ditherMono;
 	protected boolean isMonoMode;
 	protected Dither ditherType = Dither.NONE;
-	
+	@Range(minimum=-100, maximum=100f)
+	protected float gamma = 0f;
+	protected boolean equalize;
+
 	protected ColorOctree octree;
 	
 	private FieldProperty paletteOptionProperty;
 	private FieldProperty ditheringProperty;
 	private FieldProperty ditherMonoProperty;
+	private FieldProperty equalizeProperty;
+	private FieldProperty gammaProperty;
+
 	protected IVdpCanvas canvas;
 	protected IVdpChip vdp;
 	private boolean canSetPalette;
@@ -87,14 +94,17 @@ public class ImageImportOptions {
 		paletteOptionProperty = new FieldProperty(this, "paletteOption", "Palette Selection");
 		ditheringProperty = new FieldProperty(this, "ditherType", "Dithering");
 		ditherMonoProperty = new FieldProperty(this, "ditherMono", "Dither Monochrome");
+		equalizeProperty = new FieldProperty(this, "equalize", "Equalize?");
+		gammaProperty = new FieldProperty(this, "gamma", "Gamma % Delta");
+
 	}
-	/**
-	 * @return
-	 */
+
 	public void addToPropertySource(PropertySource ps) {
 		ps.addProperty(paletteOptionProperty);
 		ps.addProperty(ditheringProperty);
 		ps.addProperty(ditherMonoProperty);
+		ps.addProperty(equalizeProperty);
+		ps.addProperty(gammaProperty);
 	}
 	
 	public boolean isAsGreyScale() {
@@ -154,6 +164,9 @@ public class ImageImportOptions {
 		setDitherType(format == VdpFormat.COLOR16_8x1 ? Dither.ORDERED : Dither.FS);
 		
 		octree = null;
+		
+		gamma = 0f;
+		equalize = false;
 	}
 	
 	/**
@@ -184,4 +197,20 @@ public class ImageImportOptions {
 	public void setOctree(ColorOctree octree) {
 		this.octree = octree;
 	}
+
+	
+	public float getGamma() {
+		return gamma;
+	}
+	public void setGamma(float gamma) {
+		this.gamma = gamma;
+	}
+	public boolean isEqualize() {
+		return equalize;
+	}
+	public void setEqualize(boolean equalize) {
+		this.equalize = equalize;
+	}
+	
+	
 }

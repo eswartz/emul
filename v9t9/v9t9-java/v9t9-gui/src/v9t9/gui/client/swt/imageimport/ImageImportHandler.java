@@ -169,7 +169,8 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 			datas[i] = data;
 		}
 
-		VdpImageImporter vdpImporter = new VdpImageImporter(getVdpHandler(), getCanvas(), 
+		VdpImageImporter vdpImporter = new VdpImageImporter(
+				getVdpHandler(), getCanvas(), 
 				getCanvasRenderer());
 		renderThread = new RenderThread(vdpImporter, datas);
 		renderThread.start();

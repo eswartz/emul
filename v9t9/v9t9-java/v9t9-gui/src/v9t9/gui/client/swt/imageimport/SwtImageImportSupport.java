@@ -39,6 +39,8 @@ public class SwtImageImportSupport extends ImageImportHandler {
 	private Control imageDndControl;
 	private IPropertyListener importPropertyListener;
 	private IMachine machine;
+	private Thread importJob;
+	private boolean importAgain;
 	public SwtImageImportSupport(IMachine machine, IEventNotifier eventNotifier, IVideoRenderer videoRenderer) {
 		this.machine = machine;
 		if (eventNotifier == null || videoRenderer == null)
@@ -57,21 +59,14 @@ public class SwtImageImportSupport extends ImageImportHandler {
 				this, importPropertyListener);
 	}
 
-	public void setImageImportDnDControl(Control control) {
+	public void setImageImportDnDControl(final Control control) {
 		this.imageDndControl = control;
 		if (getVideoRenderer() != null) {
 			importPropertyListener = new IPropertyListener() {
-
 				@Override
 				public void propertyChanged(IProperty property) {
 					if (property == null || !property.isHidden()) {
-						// in case, e.g., mode changed
-						ImageImport importer = createImageImport();
-						try {
-							importImageAndDisplay(importer);
-						} catch (Throwable t) {
-							t.printStackTrace();
-						}
+						scheduleImportJob();
 					}
 				}
 			};
@@ -83,6 +78,32 @@ public class SwtImageImportSupport extends ImageImportHandler {
 					this);
 		}
 	}
+	/**
+	 * 
+	 */
+	protected void scheduleImportJob() {
+		if (importJob == null) {
+			importJob = new Thread() {
+				public void run() {
+					// in case, e.g., mode changed
+					ImageImport importer = createImageImport();
+					try {
+						importImageAndDisplay(importer);
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
+					importJob = null;
+					if (importAgain) {
+						scheduleImportJob();
+					}
+				}
+			};
+			importJob.start();
+		} else {
+			importAgain = true;
+		}
+	}
+	
 	public void addImageImportDnDControl(Control control) {
 		if (getVideoRenderer() == null)
 			throw new IllegalStateException();

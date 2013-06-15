@@ -42,6 +42,8 @@ public class ImageImportDialogOptions extends ImageImportOptions {
 		this.keepAspect = keepAspect;
 	}
 	
+
+
 	private ImageFrame[] frames;
 	private Rectangle clip;
 	

@@ -155,9 +155,13 @@ public class ImageImport {
 
 	private boolean convertGreyScale;
 
-private boolean isBitmap;
+	private boolean isBitmap;
 
-private IPaletteMapper mapColor;
+	private IPaletteMapper mapColor;
+
+	private float gamma = 1.0f;
+
+	private boolean equalize;
 
 	public ImageImport(IVdpCanvas canvas, boolean supportsSetPalette) {
 //		this.canvas = canvas;
@@ -403,7 +407,11 @@ private IPaletteMapper mapColor;
 		flatten(img);
 		
 		if (!importDirectMappedImage(img)) {
-			 equalize(img);
+			if (equalize)
+				equalize(img);
+			
+			if (gamma != 1.0f)
+				gammaCorrect(img);
 			
 //			reduceNoise(img);
 			
@@ -668,6 +676,28 @@ private IPaletteMapper mapColor;
 	}
 
 	/**
+	 * Gamma correct an image 
+	 * @return middle luminance
+	 */
+	private void gammaCorrect(BufferedImage img) {
+		int[] prgb = { 0, 0, 0 };
+		float[] hsv = { 0, 0, 0 };
+		
+		for (int y = 0; y < img.getHeight(); y++) {
+			for (int x = 0; x < img.getWidth(); x++) {
+				int pixel = img.getRGB(x, y);
+				ColorMapUtils.pixelToRGB(pixel, prgb);
+				ColorMapUtils.rgbToHsv(prgb, hsv);
+				hsv[2] = (float) Math.pow(hsv[2], gamma);
+				ColorMapUtils.hsvToRgb(hsv[0], hsv[1], hsv[2], prgb);
+				
+				img.setRGB(x, y, ColorMapUtils.rgb8ToPixel(prgb) | (pixel & 0xff000000));
+			}
+		}
+	}
+
+
+	/**
 	 * Equalize an image so it has a full range of 
 	 * saturation and value
 	 * @return middle luminance
@@ -709,17 +739,18 @@ private IPaletteMapper mapColor;
 		float satDiff = maxSat - minSat;
 		float valDiff = maxVal - minVal;
 		
-		if ((satDiff > 0.1 && satDiff < 0.5) && (valDiff > 64 && valDiff < 128)) {
+		//if ((satDiff > 0.1 && satDiff < 0.5) && (valDiff > 64 && valDiff < 128)) 
+		{
 			for (int y = 0; y < img.getHeight(); y++) {
 				for (int x = 0; x < img.getWidth(); x++) {
 					int pixel = img.getRGB(x, y);
 					ColorMapUtils.pixelToRGB(pixel, prgb);
 					ColorMapUtils.rgbToHsv(prgb, hsv);
 					
-					if (satDiff > 0.1 && satDiff < 0.5)
-						hsv[1] = ((hsv[1] - minSat) / satDiff) * satScale + minSat;
-					if (valDiff < 128)
-						hsv[2] = ((hsv[2] - minVal) / valDiff) * valScale + minVal;
+					//if (satDiff > 0.1 && satDiff < 0.5)
+					hsv[1] = ((hsv[1] - minSat) / satDiff) * satScale + minSat;
+					//if (valDiff < 128)
+					hsv[2] = ((hsv[2] - minVal) / valDiff) * valScale + minVal;
 	
 					ColorMapUtils.hsvToRgb(hsv[0], hsv[1], hsv[2], prgb);
 					
@@ -1528,7 +1559,9 @@ private IPaletteMapper mapColor;
 		}
 
 		convertGreyScale = options.isAsGreyScale();
-
+		gamma = 1.0f + (options.getGamma() / 100f);
+		equalize = options.isEqualize();
+		
 		// get original mapping
 		updatePaletteMapping();
 		

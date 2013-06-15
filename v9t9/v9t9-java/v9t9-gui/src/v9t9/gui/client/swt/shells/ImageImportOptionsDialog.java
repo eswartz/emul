@@ -193,7 +193,7 @@ public class ImageImportOptionsDialog extends Composite {
 				Control parent = (Control) e.widget;
 				Menu menu = new Menu(parent);
 				fillImageImportMenu(window, imageImportHandler, menu);
-				window.runMenu(parent, e.x, e.y, menu);
+				window.runMenu(null, e.x, e.y, menu);
 			}
 		});
 		
