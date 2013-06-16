@@ -17,7 +17,6 @@ import java.awt.image.WritableRaster;
 
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.IVdpCanvas;
-import v9t9.common.video.VdpFormat;
 import ejs.base.properties.FieldProperty;
 import ejs.base.properties.PropertySource;
 
@@ -142,15 +141,17 @@ public class ImageImportDialogOptions extends ImageImportOptions {
 		super.resetOptions();
 		
 		///////
-		VdpFormat format = canvas.getFormat();
-		boolean isLowColor = false;
+//		VdpFormat format = canvas.getFormat();
+//		boolean isLowColor = false;
+//		
+//		if (format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938) {
+//			if (!canvas.getColorMgr().isGreyscale())
+//				isLowColor = true;
+//		}
+//		
+//		setScaleSmooth(!isLowColor);
 		
-		if (format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938) {
-			if (!canvas.getColorMgr().isGreyscale())
-				isLowColor = true;
-		}
-		
-		setScaleSmooth(!isLowColor);
+		setScaleSmooth(true);
 	}
 	
 	

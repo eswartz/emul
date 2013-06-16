@@ -69,14 +69,12 @@ public class ImageImportOptions {
 	protected Dither ditherType = Dither.NONE;
 	@Range(minimum=-100, maximum=100f)
 	protected float gamma = 0f;
-	protected boolean equalize;
 
 	protected ColorOctree octree;
 	
 	private FieldProperty paletteOptionProperty;
 	private FieldProperty ditheringProperty;
 	private FieldProperty ditherMonoProperty;
-	private FieldProperty equalizeProperty;
 	private FieldProperty gammaProperty;
 
 	protected IVdpCanvas canvas;
@@ -94,7 +92,6 @@ public class ImageImportOptions {
 		paletteOptionProperty = new FieldProperty(this, "paletteOption", "Palette Selection");
 		ditheringProperty = new FieldProperty(this, "ditherType", "Dithering");
 		ditherMonoProperty = new FieldProperty(this, "ditherMono", "Dither Monochrome");
-		equalizeProperty = new FieldProperty(this, "equalize", "Equalize?");
 		gammaProperty = new FieldProperty(this, "gamma", "Gamma % Delta");
 
 	}
@@ -103,7 +100,6 @@ public class ImageImportOptions {
 		ps.addProperty(paletteOptionProperty);
 		ps.addProperty(ditheringProperty);
 		ps.addProperty(ditherMonoProperty);
-		ps.addProperty(equalizeProperty);
 		ps.addProperty(gammaProperty);
 	}
 	
@@ -166,7 +162,6 @@ public class ImageImportOptions {
 		octree = null;
 		
 		gamma = 0f;
-		equalize = false;
 	}
 	
 	/**
@@ -205,12 +200,5 @@ public class ImageImportOptions {
 	public void setGamma(float gamma) {
 		this.gamma = gamma;
 	}
-	public boolean isEqualize() {
-		return equalize;
-	}
-	public void setEqualize(boolean equalize) {
-		this.equalize = equalize;
-	}
-	
 	
 }

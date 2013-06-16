@@ -161,8 +161,6 @@ public class ImageImport {
 
 	private float gamma = 1.0f;
 
-	private boolean equalize;
-
 	public ImageImport(IVdpCanvas canvas, boolean supportsSetPalette) {
 //		this.canvas = canvas;
 //		this.supportsSetPalette = supportsSetPalette;
@@ -407,9 +405,6 @@ public class ImageImport {
 		flatten(img);
 		
 		if (!importDirectMappedImage(img)) {
-			if (equalize)
-				equalize(img);
-			
 			if (gamma != 1.0f)
 				gammaCorrect(img);
 			
@@ -694,72 +689,6 @@ public class ImageImport {
 				img.setRGB(x, y, ColorMapUtils.rgb8ToPixel(prgb) | (pixel & 0xff000000));
 			}
 		}
-	}
-
-
-	/**
-	 * Equalize an image so it has a full range of 
-	 * saturation and value
-	 * @return middle luminance
-	 */
-	private int equalize(BufferedImage img) {
-		float minSat = Float.MAX_VALUE, maxSat = Float.MIN_VALUE;
-		float minVal = Float.MAX_VALUE, maxVal = Float.MIN_VALUE;
-		
-		int[] prgb = { 0, 0, 0 };
-		float[] hsv = { 0, 0, 0 };
-		
-		int[] valCount = new int[16];
-		
-		for (int y = 0; y < img.getHeight(); y++) {
-			for (int x = 0; x < img.getWidth(); x++) {
-				int pixel = img.getRGB(x, y);
-				ColorMapUtils.pixelToRGB(pixel, prgb);
-				ColorMapUtils.rgbToHsv(prgb, hsv);
-				minSat = Math.min(hsv[1], minSat);
-				maxSat = Math.max(hsv[1], maxSat);
-				minVal = Math.min(hsv[2], minVal);
-				maxVal = Math.max(hsv[2], maxVal);
-				valCount[(int) (hsv[2] / 16)]++;
-			}
-		}
-		
-		int maxPt = -1;
-		for (int i = 1; i < 15; i++) {
-			if (maxPt == -1 || valCount[i] >= valCount[maxPt]) {
-				maxPt = i;
-			}
-		}
-		
-		int valueMidpoint = maxPt * 16;
-		
-		if (DEBUG) System.out.println("Equalize: sat = "+minSat+" to " +maxSat+"; val = " + minVal + " to " + maxVal+"; value midpoint = " + valueMidpoint);
-		float satScale = 1.0f - minSat;
-		float valScale = 255 - minVal;
-		float satDiff = maxSat - minSat;
-		float valDiff = maxVal - minVal;
-		
-		//if ((satDiff > 0.1 && satDiff < 0.5) && (valDiff > 64 && valDiff < 128)) 
-		{
-			for (int y = 0; y < img.getHeight(); y++) {
-				for (int x = 0; x < img.getWidth(); x++) {
-					int pixel = img.getRGB(x, y);
-					ColorMapUtils.pixelToRGB(pixel, prgb);
-					ColorMapUtils.rgbToHsv(prgb, hsv);
-					
-					//if (satDiff > 0.1 && satDiff < 0.5)
-					hsv[1] = ((hsv[1] - minSat) / satDiff) * satScale + minSat;
-					//if (valDiff < 128)
-					hsv[2] = ((hsv[2] - minVal) / valDiff) * valScale + minVal;
-	
-					ColorMapUtils.hsvToRgb(hsv[0], hsv[1], hsv[2], prgb);
-					
-					img.setRGB(x, y, ColorMapUtils.rgb8ToPixel(prgb) | (pixel & 0xff000000));
-				}
-			}
-		}
-		
-		return (int) ((minVal + maxVal) / 2);
 	}
 
 
@@ -1560,7 +1489,6 @@ public class ImageImport {
 
 		convertGreyScale = options.isAsGreyScale();
 		gamma = 1.0f + (options.getGamma() / 100f);
-		equalize = options.isEqualize();
 		
 		// get original mapping
 		updatePaletteMapping();
