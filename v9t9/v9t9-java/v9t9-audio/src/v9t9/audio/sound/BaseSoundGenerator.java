@@ -43,6 +43,13 @@ public abstract class BaseSoundGenerator implements ISoundGenerator, IRegisterAc
 	public BaseSoundGenerator(IMachine machine) {
 		this.machine = machine;
 	}
+	
+	/**
+	 * @return the machine
+	 */
+	public IMachine getMachine() {
+		return machine;
+	}
 
 	public ISoundVoice[] getSoundVoices() {
 		if (soundVoices == null || soundVoices.length != soundVoicesList.size()) {

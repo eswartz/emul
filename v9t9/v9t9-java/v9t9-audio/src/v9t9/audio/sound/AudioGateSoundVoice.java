@@ -12,17 +12,47 @@ package v9t9.audio.sound;
 
 import java.util.Arrays;
 
+import javax.sound.sampled.AudioFormat;
+
 import ejs.base.settings.ISettingSection;
 import ejs.base.sound.IFlushableSoundVoice;
 
+/**
+ * Produce sound on the audio gate, which has two states: on and off.
+ * This gate can be toggled at the CPU cycle rate, leading to interesting
+ * issues:
+ * <ul>
+ * <li>the gate may be toggled much faster than the sound generation rate</li>
+ * <li>the gate's changes won't sync with the sound generation rate</li>
+ * <li>the gate may be toggled much slower than the generation window</li>
+ * </ul>
+ * <p>
+ * The first two issues mean we must antialias the gate's output:  instead of
+ * containing pure 1's and 0's, it will contain up to two samples at the transition
+ * to approximate the proportion of the cycle count when the sample changed.
+ * </p>
+ * <p>The last issue means we must track transitions that span generation windows.
+ * This holds in general in any case, since transitions aren't expected to line
+ * up with the generation window either.</p>  
+ * <p>
+ * The AudioGateVoice driver will invoke {@link #setState(float, boolean)} with
+ * each transition from the CPU side.  The float is a delta from the last
+ * change, in terms of seconds.  We store these transitions in 'deltas', scaled
+ * by the sound clock (e.g. moving them to frame lengths).  
+ * @author ejs
+ *
+ */
 public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVoice {
 
 	private boolean wasSet;
 	private boolean state;
 	private boolean origState;
-	private int[] deltas = new int[0];
+	private float prevCycleRemainder;
+	private float frac;
+	private float[] deltas = new float[0];
 	private int deltaIdx = 0;
 	private long timeout;
+	private float soundClock;
 	
 	public AudioGateSoundVoice(String name) {
 		super("Audio Gate");
@@ -35,54 +65,39 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	}
 
 	/* (non-Javadoc)
-	 * @see org.ejs.emul.core.sound.ISoundVoice#setSoundClock(int)
-	 */
-	public void setSoundClock(int soundClock) {
-		
-	}
-	
-	/* (non-Javadoc)
 	 * @see org.ejs.emul.core.sound.ISoundVoice#reset()
 	 */
-	public void reset() {
+	public synchronized void reset() {
 		wasSet = false;
 		origState = false;
 		deltaIdx = 0;
+		prevCycleRemainder = 0;
+		frac = 0;
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.engine.sound.SoundVoice#isActive()
-	 */
-	@Override
-	public boolean isActive() {
-		return super.isActive();
-	}
-	public synchronized void setState(int curr) {
-		boolean newState = curr >= 0;
+	public synchronized void setState(float seconds, boolean newState) {
 		if (state != newState) {
-//			System.out.println(curr);
-			int offs = absp1(curr);
 			state = newState;
-			appendPos(state ? offs : -offs-1);
+			appendPos((newState ? seconds : -seconds) * soundClock);
 		}
 	}
 
 	/**
-	 * @param pos
+	 * @param offs
 	 * @throws AssertionError
 	 */
-	protected void appendPos(int pos) throws AssertionError {
-		if (deltaIdx > 0 && deltas[deltaIdx - 1] == pos)
-			return;
-		
+	protected void appendPos(float offs) throws AssertionError {
 		if (deltaIdx >= deltas.length) {
-			int newlen = deltas.length * 2;
-			if (newlen < 16)
-				newlen = 16;
+			int newlen = Math.max(16, deltas.length * 2);
 			deltas = Arrays.copyOf(deltas, newlen);
 		}
+
+		// ignore long "off" periods when we've already been silent
+		if (offs < 0 && deltaIdx == 0 && prevCycleRemainder == 0 && timeout == 0)
+			return;
 		
-		deltas[deltaIdx++] = pos;
+//		System.out.println(offs);
+		deltas[deltaIdx++] = offs;
 		
 		// don't keep a high audio gate on all the time
 		timeout = System.currentTimeMillis() + 1000;
@@ -96,78 +111,133 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	}
 
 	/* (non-Javadoc)
+	 * @see v9t9.audio.sound.SoundVoice#setFormat(javax.sound.sampled.AudioFormat)
+	 */
+	@Override
+	public void setFormat(AudioFormat format) {
+		super.setFormat(format);
+		this.soundClock = format.getFrameRate();
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.base.sound.ITimeAdjustSoundVoice#flushAudio(float[], int, int)
 	 */
 	@Override
 	public synchronized boolean flushAudio(float[] soundGeneratorWorkBuffer, int from,
 			int to, int total_unused) {
 		boolean generated = false;
-		if (from < to && System.currentTimeMillis() < timeout) {
+		if (origState && System.currentTimeMillis() >= timeout) {
+			deltaIdx = 0;
+			prevCycleRemainder = 0;
+			frac = 0;
+			origState = false;
+			timeout = 0;
+		}
+		
+		if (from < to && (deltaIdx > 0 || origState)) {
 			
 			generated = true;
 			int ratio = 128 + balance;
 			float sampleL = ((256 - ratio) * 1f) / 128.f;
 			float sampleR = (ratio * 1f) / 128.f;
-			
-			
-			int totalSamps = to - from;
-			
-			int total = 0;
-			for (int i = 0; i < deltaIdx; i++)
-				total += absp1(deltas[i]);
-
-			if (total == 0)
-				total = 1;
-
-			//StringBuilder sb = new StringBuilder();
-			
-			int idx = 0;
-			int consumed = deltaIdx > 0 ? absp1(deltas[idx]) : 0;
-			int next = from + (int) ((long) (consumed * totalSamps + total / 2 ) / total);
-			idx++;
-			//sb.append(next - from).append(',');
-			
+		
 			boolean on = origState;
-			while (from < to) {
-				if (on) {
-					soundGeneratorWorkBuffer[from++] += sampleL;
-					soundGeneratorWorkBuffer[from++] += sampleR;
-				} else {
-					from += 2;
-				}
-				if (from >= next) {
-					if (idx < deltaIdx) {
-						on = (deltas[idx] > 0);
-						consumed += absp1(deltas[idx++]);
-						next = (int) ((long) (consumed * totalSamps + total / 2 ) / total);
-						origState = on;
-					} else {
-						on = state;
-						next = to;
-						if (deltaIdx > 0)
-							origState = !on;	// actually changed
-						else
-							origState = state;	// nope, still handling this one
+
+			// frame count
+			float fpos = from / 2 + frac;
+			float fto = to / 2;
+
+			int idx = 0;
+			while (fpos < fto) {
+				float flen;
+				float fnext;
+				
+//				if (idx == -1) {
+//					if (prevCycleRemainder != 0) {
+//						// account for remainder of previous cycle
+//						flen = prevCycleRemainder;
+//					} else {
+//						idx++;
+//						continue;
+//					}
+//				}
+//				else 
+				if (idx < deltaIdx) {
+					flen = Math.abs(deltas[idx]);
+
+					on = deltas[idx] >= 0;
+
+					if (origState != on && flen > 0 && frac != 0 && fpos < fto) {
+						// handle transition from previous
+						float alpha = frac;
+						if (on) {
+							alpha = 1 - alpha;
+						}
+						int spos = ((int) fpos) * 2;
+						soundGeneratorWorkBuffer[spos] += alpha * sampleL; 
+						soundGeneratorWorkBuffer[spos + 1] += alpha * sampleR;
+						fpos++;
+						flen--;
 					}
-					//sb.append(next - from).append(',');
+					
+					origState = on;
+					
+				} else {
+					// fill remainder of transition
+					flen = fto - fpos;
 				}
 				
+				fnext = fpos + flen;
+				if (fnext > fto) {
+					// only getting part of this one --
+					// bite off what we can chew
+					
+					//prevCycleRemainder = (fnext - fto);
+					fnext = fto;
+					flen = fnext - fpos;
+					
+					//System.out.println(idx+": "+flen);
+					if (idx >= 0) {
+						if (on) {
+							deltas[idx] -= flen;
+						} else {
+							deltas[idx] += flen;
+						}
+					}
+				} else {
+//					prevCycleRemainder = 0;
+					// will get it all!
+					idx++;
+				}
+
+				frac = fnext - (int) fnext;
+				
+
+				// fill integral positions
+				if (on) {
+					int spos = ((int) fpos) * 2;
+					int snext = ((int) fnext) * 2;
+					while (spos < snext) {
+						soundGeneratorWorkBuffer[spos] += sampleL; 
+						soundGeneratorWorkBuffer[spos + 1] += sampleR;
+						spos += 2;
+					}
+				}
+				
+				fpos = fnext;
+			}
+			
+			if (idx < deltaIdx) {
+				System.arraycopy(deltas, idx, deltas, 0, deltaIdx - idx);
+				deltaIdx -= idx;
+			} else {
+				deltaIdx = 0;
 			}
 		}
-		
-		deltaIdx = 0;
 		
 		return generated;
 	}
 	
-	/**
-	 * @param i
-	 * @return
-	 */
-	private int absp1(int i) {
-		return i < 0 ? -(i+1) : i;
-	}
-
 	@Override
 	public void loadState(ISettingSection settings) {
 		if (settings == null) return;

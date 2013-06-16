@@ -17,10 +17,12 @@ package v9t9.audio.sound;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.cpu.ICpu;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.machine.IRegisterAccess.RegisterInfo;
 import v9t9.common.sound.TMS9919Consts;
+import ejs.base.properties.IProperty;
 import ejs.base.sound.ISoundVoice;
 
 /**
@@ -105,12 +107,16 @@ public class SoundTMS9919Generator extends BaseSoundChipSoundGenerator {
 		
 		regIdToVoices.put(regBase + TMS9919Consts.REG_OFFS_AUDIO_GATE, voice);
 
+		final IProperty cyclesPerSecond = getMachine().getSettings().get(ICpu.settingCyclesPerSecond);
+		
 		regIdToListener.put(regBase + TMS9919Consts.REG_OFFS_AUDIO_GATE,
 			new IRegisterAccess.IRegisterWriteListener() {
 				
 				@Override
 				public void registerChanged(int reg, int value) {
-					voice.setState(value);
+					float pos = (value < 0) ? (-value + 1) : value;
+					voice.setState(pos / cyclesPerSecond.getInt(), 
+							value >= 0);
 				}
 			});
 				
