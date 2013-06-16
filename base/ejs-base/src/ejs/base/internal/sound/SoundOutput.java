@@ -56,7 +56,7 @@ public class SoundOutput implements ISoundOutput {
 		this.format = format;
 		mutators = new ListenerList<ISoundMutator>();
 		emitters = new ListenerList<ISoundEmitter>();
-		int b = (int) (format.getFrameSize() * format.getFrameRate() / tickRate);
+		int b = (int) (format.getChannels() * format.getFrameRate() / tickRate);
 		this.bufferSize = (b + 3) & ~3;
 		soundGeneratorWorkBuffer = new float[bufferSize];
 		soundClock = (int) format.getSampleRate();
