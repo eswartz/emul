@@ -30,7 +30,7 @@ public class Dumper {
 		settingDump = dump;
 		settingDumpFull = dumpFull;
         Logging.registerLog(settingDump, "disk_debug.txt");
-        Logging.registerLog(settingDumpFull, "disk_debug.txt");
+        Logging.registerLog(settingDumpFull, "instrs_full.txt");
 
 	}
 	public Dumper(ISettingsHandler settings, SettingSchema dump, SettingSchema dumpFull) {

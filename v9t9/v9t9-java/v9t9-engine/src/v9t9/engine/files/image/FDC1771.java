@@ -749,7 +749,7 @@ public class FDC1771 implements IPersistable {
 		
 		if (ret != lastStatus) {
 			StringBuilder status = new StringBuilder();
-			getStatus().toString(getCommand());
+			status.append(getStatus().toString(getCommand()));
 			dumper.info(("FDC read status >" + HexUtils.toHex2(ret) + " : " + status));
 		}
 		lastStatus = ret;
