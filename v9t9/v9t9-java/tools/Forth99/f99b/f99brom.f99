@@ -110,6 +110,7 @@ include ../v9t9/boot.fi
     again
 ;
 
+0 [if]
 
 : snd ( i -- ) 
     dup  swpb dup  9 crshift  XOR swap  $7 and $40 + c! 
@@ -142,6 +143,7 @@ loop
 : hang
     ints-off (idle)
 ; 
+[endif]
 
 export>
 

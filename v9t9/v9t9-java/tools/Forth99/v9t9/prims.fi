@@ -32,11 +32,11 @@
     val scale  u/mod  nip scale u*    
 ;
 
-| : w>l.h ( w -- lo hi )
+: w>l.h ( w -- lo hi )
     dup  $ff and  swap  8 urshift  
 ;
 
-| : l.h>w ( lo hi -- w )
+: l.h>w ( lo hi -- w )
     8  LSHIFT  OR  
 ;
 

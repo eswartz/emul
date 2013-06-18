@@ -43,9 +43,9 @@ $0000       constant    I/O
 $0082       constant    'KBD
 $0083       constant    'KBDA
 
-$0084       constant    'GATE
+|+ $0084    constant    'GATE
 
-$0087       constant    'RND
+|+ $0087    constant    'RND
 
 $0088       constant    'DSK 
 

@@ -14,6 +14,7 @@ import static v9t9.common.keyboard.KeyboardConstants.MASK_CAPS_LOCK;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.IMemoryIOHandler;
@@ -38,10 +39,14 @@ public class InternalCruF99 extends BaseCruChip {
 	public final static int KBDA = CRU_BASE + 3;
 	/** audio gate */
 	public final static int GATE = CRU_BASE + 4;
+	/** random number */
+	public final static int RND = CRU_BASE + 7;
 	/** floppy controller */
 	public static final int DISK_BASE = CRU_BASE + 8;	// 8, 9, 10, 11, 12, 13
 	
 	protected List<IMemoryIOHandler> ioHandlers = new ArrayList<IMemoryIOHandler>();
+
+	private Random random;
 	
 	/**
 	 * @param machine
@@ -54,6 +59,7 @@ public class InternalCruF99 extends BaseCruChip {
     	intVdp = CpuF99b.INT_VDP;
     	intClock = -1;
 
+    	random = new Random(0);
 	}
 	
 	public void handleWrite(int addr, byte val) {
@@ -92,7 +98,11 @@ public class InternalCruF99 extends BaseCruChip {
 		case GATE:
 			getMachine().getSound().setAudioGate(addr, val != 0);
 			break;
-			
+
+		case RND:
+			random.setSeed(val);
+			break;
+
 		default:
 			for (IMemoryIOHandler handler : ioHandlers) {
 				if (handler.handlesAddress(addr)) {
@@ -125,6 +135,10 @@ public class InternalCruF99 extends BaseCruChip {
 			getMachine().getKeyboardHandler().setProbe();
 			boolean isCaps = (getMachine().getKeyboardState().getLockMask() & MASK_CAPS_LOCK) != 0;
 			return (byte) (isCaps ? 1 : 0);
+			
+		case RND:
+			return (byte) random.nextInt(256);
+			
 		default:
 			for (IMemoryIOHandler handler : ioHandlers) {
 				if (handler.handlesAddress(addr)) {
