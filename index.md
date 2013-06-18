@@ -75,6 +75,19 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
+<li>2013/06/17: added support for Corcomp double-density disk controller
+</li>
+<li>2013/06/17: make audio gate more consistent
+</li>
+<li>2013/06/17: fix double-sided disk detection with *.dsk files
+</li>
+<li>2013/06/17: add EA/8K Super Cart support
+</li>
+<li>2013/06/17: fixed bug losing history from disk selector dialog
+</li>
+<li>2013/06/17: fixed bug leading to appearance that module list setup could not find 
+all the required files
+</li>
 <li>2013/06/05: changed module list setup.  Instead of showing only modules
 registered in a central database, V9t9 will prompt you to establish a
 modules.xml file containing a custom list of modules detected on your
