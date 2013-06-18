@@ -44,7 +44,7 @@ cell    RamVar    vdp-timeout
     \ timer
     1. vdp-ticks d+!
 
-    \ timeout
+    \ screen timeout
     1 vdp-timeout +!
     vdp-timeout @ 0= if
         false vid-show
@@ -54,7 +54,6 @@ cell    RamVar    vdp-timeout
     kbdtimer c@ 1+ kbdtimer c!    
     
     \ scan keyboard
-    
     kbd-scan
     
     \ do other (expensive) things if interrupts allow

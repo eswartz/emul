@@ -47,6 +47,7 @@ public class InstF99b {
 	public static final int Iqdup = Istack_start + 5;
 	public static final int Ispidx = Istack_start + 6;
 	
+	// [[GAP]] Imisc_start + 7 
 	
 	public static final int ItoR = Istack_start + 8;
 	public static final int IRfrom = Istack_start + 9;
@@ -114,7 +115,19 @@ public class InstF99b {
 	/** ( mask val -- val&~mask ) */
 	public static final int Inand = Ilog_start + 6;
 
-	public static final int Icmp = Ilog_start + 8;	// ... 15
+	// [[GAP]] Ilog_start + 7 
+
+
+	public static final int CMP_LT = 0;
+	public static final int CMP_LE = 1;
+	public static final int CMP_GT = 2;
+	public static final int CMP_GE = 3;
+	public static final int CMP_ULT = 4;
+	public static final int CMP_ULE = 5;
+	public static final int CMP_UGT = 6;
+	public static final int CMP_UGE = 7;
+	
+	public static final int Icmp = Ilog_start + 8;	// ... 15 (CMP_...); note Iequ and I0equ handle those
 	
 	public static final int Imem_start = 0x60;
 	
@@ -155,7 +168,81 @@ public class InstF99b {
 	public static final int Iexecute = Imisc_start + 2;
 	public static final int Idovar = Imisc_start + 3;
 	
+	/** Idle until interrupt */
+	public static final int SYSCALL_IDLE = 0;
+	/** Start tracing */
+	public static final int SYSCALL_DEBUG_ON = 1;
+	/** Stop tracing */
+	public static final int SYSCALL_DEBUG_OFF = 2;
+	/** Register the given xt in the symbol table 
+	 * ( name xt -- )  
+	 */
+	public static final int SYSCALL_REGISTER_SYMBOL = 3;
+	/** Lookup the given string in the RAM dictionary
+	 * ( caddr lfa -- caddr 0 | xt -1=immed | xt 1 ) 
+	 */
+	public static final int SYSCALL_FIND = 4;
+	/** Lookup the given string in the GROM dictionary 
+	 *
+	 * ( caddr gDictEnd gDict -- caddr 0 | xt 1 | xt -1 )
+	 */
+	public static final int SYSCALL_GFIND = 5;
+	/**
+	 * Parse a number (>NUMBER), raw digits only
+	 * 
+	 * ( ud1 c-addr1 u1 base -- ud2 c-addr2 u2 )
+	 */
+	public static final int SYSCALL_NUMBER = 6;
+	/**
+	 * Parse a number (NUMBER) with sign, base conversions
+	 * 
+	 * ( c-addr1 u1 base -- ud  dpl t | f )
+	 */
+	public static final int SYSCALL_DECORATED_NUMBER = 7;
+	/** 
+	 * Spin for N cycles (cheap idle)
+	 * 
+	 * ( n -- )
+	 */
+	public static final int SYSCALL_SPIN = 8;
+	
+	public static final String[] syscallStrings = {
+		"IDLE",
+		"+DBG",
+		"-DBG",
+		"REGSYM",
+		"FIND",
+		"GFIND",
+		">NUMBER",
+		"(NUMBER)",
+		"SPIN"
+	};
+
 	public static final int Isyscall = Imisc_start + 4;
+
+	// [[GAP]] Imisc_start + 5 
+
+	public static final int CTX_SP = 0;
+	public static final int CTX_SP0 = 1;
+	public static final int CTX_RP = 2;
+	public static final int CTX_RP0 = 3;
+	public static final int CTX_UP = 4;
+	public static final int CTX_LP = 5;
+	public static final int CTX_PC = 6;
+	public static final int CTX_INT = 7;
+	public static final int CTX_SR = 8;
+	
+	public static final String[] ctxStrings = {
+		"SP",
+		"SP0",
+		"RP",
+		"RP0",
+		"UP",
+		"LP",
+		"PC",
+		"INT",
+		"SR"
+	};
 
 	/** @see CTX_... */
 	public static final int IcontextFrom = Imisc_start + 6;
@@ -284,87 +371,6 @@ public class InstF99b {
 	/** next doubleword is pushed */
 	public static final int IlitD_d = Idimm_start + 1;
 
-	public static final int CMP_LT = 0;
-	public static final int CMP_LE = 1;
-	public static final int CMP_GT = 2;
-	public static final int CMP_GE = 3;
-	public static final int CMP_ULT = 4;
-	public static final int CMP_ULE = 5;
-	public static final int CMP_UGT = 6;
-	public static final int CMP_UGE = 7;
-	
-	
-	public static final int CTX_SP = 0;
-	public static final int CTX_SP0 = 1;
-	public static final int CTX_RP = 2;
-	public static final int CTX_RP0 = 3;
-	public static final int CTX_UP = 4;
-	public static final int CTX_LP = 5;
-	public static final int CTX_PC = 6;
-	public static final int CTX_INT = 7;
-	public static final int CTX_SR = 8;
-	
-	public static final String[] ctxStrings = {
-		"SP",
-		"SP0",
-		"RP",
-		"RP0",
-		"UP",
-		"LP",
-		"PC",
-		"INT",
-		"SR"
-	};
-
-	/** Idle until interrupt */
-	public static final int SYSCALL_IDLE = 0;
-	/** Start tracing */
-	public static final int SYSCALL_DEBUG_ON = 1;
-	/** Stop tracing */
-	public static final int SYSCALL_DEBUG_OFF = 2;
-	/** Register the given xt in the symbol table 
-	 * ( name xt -- )  
-	 */
-	public static final int SYSCALL_REGISTER_SYMBOL = 3;
-	/** Lookup the given string in the RAM dictionary
-	 * ( caddr lfa -- caddr 0 | xt -1=immed | xt 1 ) 
-	 */
-	public static final int SYSCALL_FIND = 4;
-	/** Lookup the given string in the GROM dictionary 
-	 *
-	 * ( caddr gDictEnd gDict -- caddr 0 | xt 1 | xt -1 )
-	 */
-	public static final int SYSCALL_GFIND = 5;
-	/**
-	 * Parse a number (>NUMBER), raw digits only
-	 * 
-	 * ( ud1 c-addr1 u1 base -- ud2 c-addr2 u2 )
-	 */
-	public static final int SYSCALL_NUMBER = 6;
-	/**
-	 * Parse a number (NUMBER) with sign, base conversions
-	 * 
-	 * ( c-addr1 u1 base -- ud  dpl t | f )
-	 */
-	public static final int SYSCALL_DECORATED_NUMBER = 7;
-	/** 
-	 * Spin for N cycles (cheap idle)
-	 * 
-	 * ( n -- )
-	 */
-	public static final int SYSCALL_SPIN = 8;
-	
-	public static final String[] syscallStrings = {
-		"IDLE",
-		"+DBG",
-		"-DBG",
-		"REGSYM",
-		"FIND",
-		"GFIND",
-		">NUMBER",
-		"(NUMBER)",
-		"SPIN"
-	};
 	
 	/** for each inst:  SP read, SP left
 	 *	RP read, RP left;
@@ -639,9 +645,6 @@ public class InstF99b {
 		instNames.put(IfromLocals, "LOCALS>");
 	}
 
-	public static void main(String[] args) {
-		
-	}
 	/**
 	 * @param inst
 	 * @return

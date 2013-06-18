@@ -153,7 +153,7 @@
 ;
 
 : bit-set-color-reg
-    v-colors @  6   URSHIFT   w>b
+    v-colors @  6   URSHIFT   w>l.h
     v-pob c@  OR
     10 (vr!)
     v-mono c@  0= if  $7f OR  then

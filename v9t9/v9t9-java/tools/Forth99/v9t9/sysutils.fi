@@ -47,7 +47,7 @@
 ;
 
 :   g@  ( addr -- )
-    gwaddr  GPLRD c@  8 lshift  GPLRD c@  or 
+    gwaddr  GPLRD c@  GPLRD c@  swap l.h>w
 ;
 :   g!  ( ch addr -- )
     gwaddr  dup swpb GPLWD c!  GPLWD c!

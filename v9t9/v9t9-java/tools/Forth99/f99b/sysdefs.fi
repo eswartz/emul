@@ -45,6 +45,8 @@ $0083       constant    'KBDA
 
 $0084       constant    'GATE
 
+$0087       constant    'RND
+
 $0088       constant    'DSK 
 
 \   0: write: cmd; read: status
@@ -167,6 +169,7 @@ $8000       Constant    >gram_disk_base
 3           constant    CTX_RP0       
 4           constant    CTX_UP       
 5           constant    CTX_LP       
+6           constant    CTX_PC        
 7           constant    CTX_INT        
 8           constant    CTX_SR        
 

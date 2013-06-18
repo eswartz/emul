@@ -620,7 +620,7 @@ here  edittab -  Constant  editsz
     else
         \ try for function
         edittab editsz over + swap do
-            i @ w>b swap      ( flags keycode ) 
+            i @ w>l.h swap      ( flags keycode ) 
             key' = if               ( flags )
                 fl|
                 i cell+ @  execute  

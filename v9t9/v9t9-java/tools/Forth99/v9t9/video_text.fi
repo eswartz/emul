@@ -201,7 +201,7 @@ Create TextModeParams
 :: (txt2-hchar-colors) ( len offs -- )    
      offs >txt2-coloraddr  
             :> caddr   
-            dup 8 lshift OR  :> mask
+            dup l.h>w  :> mask
 
     v-blink c@  if ['] OR else ['] NAND then :> func
     

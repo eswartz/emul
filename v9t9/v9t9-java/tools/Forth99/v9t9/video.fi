@@ -130,7 +130,7 @@ $00B    constant    last-video-mode
     dup  
     vwaddr
     dup $9000 < if
-        $7fff and w>b   >vr
+        $7fff and w>l.h   >vr
     else
         drop
     then
@@ -142,7 +142,7 @@ $00B    constant    last-video-mode
     2dup >vr
     
     \ write VDP addr
-    8 lshift $8000 OR  OR  vwaddr
+    $8000  swap l.h>w   OR  vwaddr
 ;
 
 
@@ -182,7 +182,7 @@ export>
 ;
 
 : std-set-color-reg
-    v-colors @  6 URSHIFT   w>b
+    v-colors @  6 URSHIFT   w>l.h
     v-pob c@  OR
     $7 and  10 (vr!)
             3  (vr!)
@@ -195,7 +195,7 @@ export>
 ;
 
 : std-set-sprite-reg
-    v-sprites @  7 URSHIFT   w>b
+    v-sprites @  7 URSHIFT   w>l.h
     
     v-pob c@  1 URSHIFT OR
     11 (vr!)
@@ -265,7 +265,7 @@ export>
     fg c@ 4 lshift  bg c@ $f and  or
 ;
 : color-word
-    fg c@ 8 lshift  bg c@ $ff and  or
+    bg c@  $ff and  fg c@  l.h>w
 ;
 
 : v-refresh-colors

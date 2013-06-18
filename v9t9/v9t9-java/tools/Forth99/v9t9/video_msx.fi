@@ -84,7 +84,7 @@ Create msx-stdpalette
 ;    
 
 : msx-cmd-word ( w -- )
-    w>b  swap  VDPWI c! VDPWI c!
+    w>l.h  swap  VDPWI c! VDPWI c!
 ;
 
 : msx-setup-cursor-DXDY ( x y -- )
@@ -299,7 +299,7 @@ false Constant msx-use-drawchar-accel
         v-fntheight c@  0 do
             dup !vwaddr
             GPLRD c@
-            dup 8 lshift OR  
+            dup l.h>w  
             width 0 do
                 \ write <fg|bg>|<fg|bg> for two consecutive bits
                 -2 crshift
@@ -333,7 +333,7 @@ false Constant msx-use-drawchar-accel
         v-fntheight c@  0 do
             dup !vwaddr
             GPLRD c@
-            dup 8 lshift OR  
+            dup l.h>w  
             
             \ write four colors for four consecutive bits
             -4 crshift
@@ -373,7 +373,7 @@ false Constant msx-use-drawchar-accel
         v-fntheight c@  0 do
             dup !vwaddr
             GPLRD c@
-            dup 8 lshift OR  
+            dup l.h>w  
             width 0 do
                 \ write one byte
                 -1 crshift

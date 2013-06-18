@@ -105,8 +105,7 @@
     count
     base @  
     [ Isyscall c, #decorated-number c, ]
-
 ;
 
-
+: (rnd) 'RND c@  'RND c@  l.h>w ;
 
