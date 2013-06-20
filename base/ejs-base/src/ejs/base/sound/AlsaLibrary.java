@@ -53,8 +53,8 @@ public interface AlsaLibrary extends Library {
 			}
 		}
 	}
-	AlsaLibrary INSTANCE = (AlsaLibrary) Native.loadLibrary("asound",
-			AlsaLibrary.class);
+	AlsaLibrary INSTANCE = (AlsaLibrary) Native.synchronizedLibrary(
+			(AlsaLibrary) Native.loadLibrary("asound", AlsaLibrary.class));
 	
 	public static final int SND_PCM_NONBLOCK = 1;
 	
