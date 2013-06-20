@@ -96,6 +96,8 @@ include ../v9t9/boot.fi
 \ -------------------------------
 
 1 <export
+
+0 [if]
 :   cycle
     \ hex $1F2E3D4C. d.d 10 demit decimal
     \ 256 0 do i .d 10 demit loop
@@ -110,7 +112,6 @@ include ../v9t9/boot.fi
     again
 ;
 
-0 [if]
 
 : snd ( i -- ) 
     dup  swpb dup  9 crshift  XOR swap  $7 and $40 + c! 
