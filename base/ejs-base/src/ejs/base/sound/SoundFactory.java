@@ -30,7 +30,7 @@ public class SoundFactory {
 	public static ISoundEmitter createAudioListener() {
 		if (System.getProperty("os.name").equals("Linux"))
 			// TODO: fix crashes using pulse....
-			if (isPulseRunning())
+			if (false&&isPulseRunning())
 				return new PulseSoundListener(100);
 			else
 				return new AlsaSoundListener(null);

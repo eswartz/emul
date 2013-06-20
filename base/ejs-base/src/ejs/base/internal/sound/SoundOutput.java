@@ -80,11 +80,11 @@ public class SoundOutput implements ISoundOutput {
 	
 	public void addEmitter(ISoundEmitter listener) {
 		emitters.add(listener);
-		try {
-			listener.started(format);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+//		try {
+//			listener.started(format);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 	}
 	public void removeEmitter(ISoundEmitter listener) {
 		try {

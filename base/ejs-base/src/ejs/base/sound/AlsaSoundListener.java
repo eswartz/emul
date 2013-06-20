@@ -285,6 +285,8 @@ public class AlsaSoundListener implements ISoundEmitter {
 	 * 
 	 */
 	public synchronized void played(ISoundView view) {
+		if (handle == null)
+			return;
 		try {
 			if (!blocking && soundQueue.remainingCapacity() == 0)
 				soundQueue.remove();
