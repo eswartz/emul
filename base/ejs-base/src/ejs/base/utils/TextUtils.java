@@ -639,4 +639,20 @@ public class TextUtils {
 		}
 		return string;
 	}
+
+	/**
+	 * @param string
+	 * @param count
+	 * @return
+	 */
+	public static String repeatString(String string, int count) {
+		if (count == 0)
+			return "";
+		else if (count == 1)
+			return string;
+		StringBuilder sb = new StringBuilder();
+		while (count-- > 0)
+			sb.append(string);
+		return sb.toString();
+	}
 }

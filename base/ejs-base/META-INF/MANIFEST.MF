@@ -58,6 +58,5 @@ Export-Package: com.google.gson,
  org.objectweb.asm.util
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
-Require-Bundle: org.junit4;bundle-version="4.8.1",
- org.junit,
+Require-Bundle: org.junit,
  org.eclipse.jface
