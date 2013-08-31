@@ -10,8 +10,7 @@
 	<classpathentry kind="lib" path="libs/google-gson-2.0/gson-2.0.jar" sourcepath="libs/google-gson-2.0/gson-2.0-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/asm-4.0/asm-4.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/asm-4.0/asm-util-4.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/org.hamcrest.core.source_1.1.0.v20090501071000.jar"/>
+	<classpathentry kind="lib" path="libs/asm-4.0/asm-4.1-w-src.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
