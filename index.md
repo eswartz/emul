@@ -7,28 +7,29 @@ Introduction
 ============
 
 
-<div class='lookyhere' style='width:inherit'>
+<div class='lookyhere' style='width:33%'>
 <p>
 	<a href='images/v9t9-window.png'>
 	<img alt="V9t9 image" src="images/v9t9-window_th.png" width="232" height="157"></img>
 	</a>
+
 </p>
-<div class='lookyhere' style='text-align:left'>
-Sound samples:
-<ul>
-	<li><a href='audio/jawbreaker.mp3' type='audio/mpeg'>Jawbreaker theme (45s)</a></li>
-	<li><a href='audio/cassette-recording.mp3' type='audio/mpeg'>Cassette recording (11s)</a></li>
-	<li><a href='audio/parsec-speech.wav' type='audio/x-wav'>Parsec speech</a></li>
-	<li><a href='audio/teii-speech.wav' type='audio/x-wav'>Terminal Emulator II speech</a></li>
-</ul>
-</div>
+
+
+<a href="http://s3.amazonaws.com/V9t9/data/v9t9.zip">
+<img src="images/v9t9-webstart-button.png" />
+<p>
+<i>Download v9t9.zip</i>
+</p>
+</a>
+<span class="timestamp"> </span>
+
 </div>
 
 
 <div style='width:80%;'>
 <p>
-V9t9 emulates the TI-99/4A (by default) though it can support other
-machines -- only made-up ones for now, using much of the same hardware.
+V9t9 emulates the TI-99/4A on your computer.
 </p>
 
 <p>
@@ -55,18 +56,70 @@ It supports:
 	
 </div>
 
+Running
+========
+
+
+Setup
+-----
+
+Have Java 6 or newer installed on your system.  
+
+You will need ROMs to actually use the emulator.  I don't provide these but 
+**[this page](v9t9-roms.html)** will give you some instructions.
+
+
+Installation
+----------
+
+Download the <code>v9t9.zip</code> archive and unzip it somewhere on your system.
+
+
+Running from Windows
+----------
+
+Launch V9t9 by double-clicking the `v9t9.bat` file.  
+
+If this exits immediately, be sure `java` is on your `PATH`.
+
+Alternately, run a `Command Prompt` and type:
+
+    cd \path\to\extracted\v9t9
+    v9t9.bat
+
+Running from OS X or Linux
+------------
+
+Launch V9t9 by double-clicking the `v9t9.sh` file.
+  
+If this exits immediately, be sure `java` is on your `PATH`.
+
+Alternately, run a `Terminal` and type:
+
+    cd /path/to/extracted/v9t9
+    ./v9t9.sh
+
+
 <hr/>
 
-History
--------- 
+Examples
+---------
 
-I've been working on this in various forms since 1992.  The Java port
-was quite nastily ported directly from the C port starting 2005.  The C
-port never really saw the light of day (it was a bit way too geeky for
-the average user to understand, and only built against GNU C in Linux
-and Metrowerks Codewarrior in Windows).  The C port was written from 
-the assembly port which formed the original V9t9, back when it was 
-still being sold.
+<p>
+Sound samples:
+<ul>
+	<li><a href='audio/jawbreaker.mp3' type='audio/mpeg'>Jawbreaker theme (45s)</a></li>
+	<li><a href='audio/cassette-recording.mp3' type='audio/mpeg'>Cassette recording (11s)</a></li>
+	<li><a href='audio/parsec-speech.wav' type='audio/x-wav'>Parsec speech</a></li>
+	<li><a href='audio/teii-speech.wav' type='audio/x-wav'>Terminal Emulator II speech</a></li>
+</ul>
+</p>
+
+
+Contact
+=======
+
+Please see <a href="contact.html">this page</a> for details.
 
 
 Recent Changes
@@ -75,6 +128,8 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
+<li>2013/09/01: fix launching for Win 7 
+</li>
 <li>2013/06/17: added support for Corcomp double-density disk controller
 </li>
 <li>2013/06/17: make audio gate more consistent
@@ -141,59 +196,17 @@ filenames instead of content, as promised (!).
 </li>
 
 </ul>
-Running
-========
 
-Setup
------
+History
+-------- 
 
-Have Java 6 or newer installed on your system.  
-
-You will need ROMs to actually use the emulator.  I don't provide these but 
-**[this page](v9t9-roms.html)** will give you some instructions.
-
-
-Installation
-----------
-
-<div class='lookyhere'>
-<a href="http://s3.amazonaws.com/V9t9/data/v9t9.zip">
-<img src="images/v9t9-webstart-button.png" />
-<p>
-v9t9.zip
-</p><p>
-<i>Download</i>
-</p>
-</a>
-<span class="timestamp"> </span>
-</div>
-
-Download the archive to the right and unzip it somewhere on your system.
-
-
-Running from Windows
-----------
-
-Launch V9t9 by double-clicking the `v9t9.bat` file.  
-
-If this exits immediately, be sure `java` is on your `PATH`.
-
-Alternately, run a `Command Prompt` and type:
-
-    cd \path\to\extracted\v9t9
-    v9t9.bat
-
-Running from OS X or Linux
-------------
-
-Launch V9t9 by double-clicking the `v9t9.sh` file.
-  
-If this exits immediately, be sure `java` is on your `PATH`.
-
-Alternately, run a `Terminal` and type:
-
-    cd /path/to/extracted/v9t9
-    ./v9t9.sh
+I've been working on this in various forms since 1992.  The Java port
+was quite nastily ported directly from the C port starting 2005.  The C
+port never really saw the light of day (it was a bit way too geeky for
+the average user to understand, and only built against GNU C in Linux
+and Metrowerks Codewarrior in Windows).  The C port was written from 
+the assembly port which formed the original V9t9, back when it was 
+still being sold.
 
 
 Advanced
@@ -201,11 +214,6 @@ Advanced
 
 Please see <a href="advanced.html">this page</a> for advanced usage and 
 configuration.
-
-Contact
-=======
-
-Please see <a href="contact.html">this page</a> for details.
 
 
 License
