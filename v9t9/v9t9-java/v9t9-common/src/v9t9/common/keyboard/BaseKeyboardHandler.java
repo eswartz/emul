@@ -612,9 +612,9 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 //					try {
 //						on = !Toolkit.getDefaultToolkit().getLockingKeyState(KeyEvent.VK_NUM_LOCK);
 //					} catch (UnsupportedOperationException e) {
-						on = (keyboardState.getLockMask() & MASK_NUM_LOCK) == 0;
+						on = (keyboardState.getLockMask() & MASK_SCROLL_LOCK) == 0;
 //					}
-					keyboardState.changeLocks(on, MASK_NUM_LOCK);
+					keyboardState.changeLocks(on, MASK_SCROLL_LOCK);
 					notifyNumpadInfo();
 				}
 				return true;
