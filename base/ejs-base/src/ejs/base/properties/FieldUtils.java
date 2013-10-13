@@ -23,11 +23,11 @@ public class FieldUtils {
 	 */
 	public static void setValue(Field field, Object obj, Object value) {
 		try {
-			//field.setAccessible(true);
-			field.set(obj, value);
-			//if (obj instanceof IPropertyProvider)
-			//	((IPropertyProvider) obj).updateFromPropertyChange();
-			
+			if (value instanceof String && !String.class.equals(field.getType())) {
+				setValueFromString(field, obj, String.valueOf(value));
+			} else {
+				field.set(obj, value);
+			}
 		} catch (Exception e) {
 			if  (value != null)
 				new Exception("Setting " + field.getName() + " in " + obj + " with " + value,
