@@ -575,7 +575,11 @@ public class Executor implements IExecutor {
             		synchronized (executionLock) {
 	            		while (runnableList.size() > 0) {
 	            			runnable = runnableList.remove(0);
-	            			runnable.run();
+	            			try {
+	            				runnable.run();
+	            			} catch (Throwable t) {
+	            				t.printStackTrace();
+	            			}
 	            		}
             		}
 //        	        	
@@ -659,7 +663,6 @@ public class Executor implements IExecutor {
 	@Override
 	public void asyncExec(Runnable runnable) {
 		runnableList.add(runnable);
-		
 	}
 	
 	/* (non-Javadoc)
