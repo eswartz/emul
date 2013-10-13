@@ -14,12 +14,12 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sound.sampled.AudioFormat;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import v9t9.audio.sound.ClockedSoundVoice;
 import v9t9.common.sound.TMS9919Consts;
-
 import ejs.base.internal.sound.SoundOutput;
 import ejs.base.sound.ISoundEmitter;
 import ejs.base.sound.ISoundOutput;
@@ -46,11 +46,16 @@ public class BaseSoundTest {
 		soundOutput.addEmitter(soundListener);
 	}
 
-	@AfterClass
-	public static void tearDown() {
-		soundOutput.dispose();
+	@After
+	public void tearDown() {
 		soundListener.waitUntilSilent();
 		soundListener.stopped();
+		soundOutput.dispose();
+	}
+
+	@AfterClass
+	public static void tearDownClass() {
+		soundOutput.dispose();
 	}
 
 	/**

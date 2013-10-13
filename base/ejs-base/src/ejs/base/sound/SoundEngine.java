@@ -15,7 +15,6 @@ import java.util.Arrays;
 
 import javax.sound.sampled.AudioFormat;
 
-import ejs.base.sound.AlsaSoundListener;
 import ejs.base.sound.ISoundEmitter;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
@@ -54,8 +53,8 @@ public class SoundEngine {
 		
 		output = SoundFactory.createSoundOutput(format, mutateRate);
 		
-		iSoundListener = new AlsaSoundListener(null);
-		((AlsaSoundListener)iSoundListener).setBlockMode(true);
+		iSoundListener = SoundFactory.createAudioListener();
+		iSoundListener.setBlockMode(true);
 		
 		fileRecorder = new SoundFileListener();
 		

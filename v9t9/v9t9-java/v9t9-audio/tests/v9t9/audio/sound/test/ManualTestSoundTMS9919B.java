@@ -261,24 +261,24 @@ public class ManualTestSoundTMS9919B extends BaseSoundTest {
 		
 		// up
 		voice.getEffectsController().setSweepTarget(period / 2);
-		voice.getEffectsController().setSweepTime(500);
+		voice.getEffectsController().setSweepTime(3000);
 		voice2.getEffectsController().setSweepTarget(period2 / 2);
-		voice2.getEffectsController().setSweepTime(500);
-		generate(toSamples(TimeUnit.SECONDS, 1), voice, voice2);
+		voice2.getEffectsController().setSweepTime(3000);
+		generate(toSamples(TimeUnit.SECONDS, 3), voice, voice2);
 		
 		// back
 		voice.getEffectsController().setSweepTarget(period);
-		voice.getEffectsController().setSweepTime(500);
+		voice.getEffectsController().setSweepTime(1000);
 		voice2.getEffectsController().setSweepTarget(period2);
-		voice2.getEffectsController().setSweepTime(500);
+		voice2.getEffectsController().setSweepTime(1000);
 		generate(toSamples(TimeUnit.SECONDS, 1), voice, voice2);
 
 		// down
 		voice.getEffectsController().setSweepTarget(period * 2);
-		voice.getEffectsController().setSweepTime(500);
+		voice.getEffectsController().setSweepTime(2000);
 		voice2.getEffectsController().setSweepTarget(period2 * 2);
-		voice2.getEffectsController().setSweepTime(500);
-		generate(toSamples(TimeUnit.SECONDS, 1), voice, voice2);
+		voice2.getEffectsController().setSweepTime(2000);
+		generate(toSamples(TimeUnit.SECONDS, 2), voice, voice2);
 		
 	}
 	
