@@ -17,6 +17,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
 import v9t9.common.client.IVideoRenderer;
+import v9t9.gui.common.BaseEmulatorWindow;
 
 /**
  * Interface implemented by SWT-compatible video renderers.
@@ -24,7 +25,7 @@ import v9t9.common.client.IVideoRenderer;
  *
  */
 public interface ISwtVideoRenderer extends IVideoRenderer {
-	Control createControl(Composite parent, int flags);
+	Control createControl(BaseEmulatorWindow window, Composite parent, int flags);
 	
 	Control getControl();
 	
@@ -47,4 +48,6 @@ public interface ISwtVideoRenderer extends IVideoRenderer {
 	
 	void addSprite(ISwtSprite sprite);
 	void removeSprite(ISwtSprite sprite);
+	
+	BaseEmulatorWindow getWindow();
 }

@@ -10,7 +10,6 @@
  */
 package v9t9.gui.client.swt.bars;
 
-import java.io.File;
 import java.util.Map;
 
 import org.eclipse.swt.SWT;
@@ -437,11 +436,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		if (saveAs)
 			machine.getSettings().get(BaseEmulatorWindow.settingScreenShotsBase).setValue("");
 
-		File file = swtWindow.screenshot();
-		if (file != null) {
-			swtWindow.getEventNotifier().notifyEvent(e, Level.INFO, "Recorded screenshot to " + file);
-		}
-		
+		swtWindow.screenshot();
 	}
 
 	/*

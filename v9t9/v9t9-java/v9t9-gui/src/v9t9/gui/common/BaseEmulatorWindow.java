@@ -293,7 +293,7 @@ public abstract class BaseEmulatorWindow {
 		}
 	}
 
-	public File screenshot() {
+	public void screenshot() {
 		boolean plain = machine.getSettings().get(BaseEmulatorWindow.settingScreenshotPlain).getBoolean();
 
 		IProperty screenShotsBase = machine.getSettings().get(BaseEmulatorWindow.settingScreenShotsBase);
@@ -312,19 +312,19 @@ public abstract class BaseEmulatorWindow {
 				machine.notifyEvent(Level.ERROR, 
 						"Too many screenshots here!");
 				screenShotsBase.setString("");
-				return screenshot();
+				screenshot();
 			} else {
 				try {
 					videoRenderer.saveScreenShot(saveFile, plain);
-					return saveFile;
+					
+					machine.getEventNotifier().notifyEvent(
+							null, Level.INFO, "Recorded screenshot to " + saveFile);
 				} catch (Throwable e) {
 					showErrorMessage("Save error", 
 						"Failed to write file:\n\n" + e.getMessage());
-					return null;
 				}
 			}
 		}
-		return null;
 	}
 	
 	protected File getUniqueFile(String filenameBase) {

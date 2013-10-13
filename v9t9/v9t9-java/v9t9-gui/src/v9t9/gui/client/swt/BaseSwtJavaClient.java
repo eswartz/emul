@@ -78,7 +78,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 	protected FastTimer videoTimer;
 	protected FastTimer keyTimer;
 	private FastTimer soundTimer;
-	private SwtWindow window;
+	protected SwtWindow window;
 
 	protected IKeyboardHandler keyboardHandler;
 

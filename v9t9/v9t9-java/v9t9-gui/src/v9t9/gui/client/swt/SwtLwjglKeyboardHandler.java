@@ -17,7 +17,6 @@ import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.ControllerEvent;
 import net.java.games.input.ControllerListener;
-
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 

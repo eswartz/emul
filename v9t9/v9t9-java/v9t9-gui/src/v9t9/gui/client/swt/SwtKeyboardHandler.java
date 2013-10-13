@@ -26,9 +26,12 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.client.IVideoRenderer;
+import v9t9.common.cpu.ICpu;
 import v9t9.common.keyboard.BaseKeyboardHandler;
 import v9t9.common.keyboard.IKeyboardState;
+import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.machine.IMachine;
+import v9t9.gui.common.BaseEmulatorWindow;
 import ejs.base.utils.HexUtils;
 
 /**
@@ -55,7 +58,6 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 
 	public SwtKeyboardHandler(IKeyboardState keyboardState, IMachine machine) {
 		super(keyboardState, machine);
-		
 	}
 
 	/**
@@ -146,7 +148,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 	}
 	private void updateKey(boolean pressed, int stateMask, int keyCode, boolean keyPad) {
 		
-		//System.out.println("keyCode="+keyCode+"; stateMask="+stateMask+"; pressed="+pressed);
+		System.out.println("keyCode="+keyCode+"; stateMask="+stateMask+"; pressed="+pressed);
 		byte shiftMask = 0;
 		
 		// separately pressed keys show up in keycode sometimes
@@ -182,7 +184,31 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.keyboard.BaseKeyboardHandler#handleActionKey(boolean, int)
+	 */
+	@Override
+	protected boolean handleActionKey(boolean pressed, int key) {
+		if (key == KEY_PRINT_SCREEN) {
+			if (pressed) {
+				byte shiftMask = machine.getKeyboardState().getShiftMask();
+				if (shiftMask == 0) {
+					Display.getDefault().asyncExec(new Runnable() {
+						public void run() {
+							window.screenshot();
+						}
+					});
+				} else if ((shiftMask & KeyboardConstants.MASK_ALT + KeyboardConstants.MASK_CONTROL) != 0) {
+					machine.getSettings().get(ICpu.settingDebugging).setBoolean(true);
+				}
+			}
+			return true;
+		}
+		return super.handleActionKey(pressed, key);
+	}
+	
 	private int lastKeyPressedCode = -1;
+	protected BaseEmulatorWindow window;
 	
 	public void init(IVideoRenderer renderer) {
 		final Control control = ((ISwtVideoRenderer) renderer).getControl();
@@ -234,7 +260,8 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			}
 			
 		});
-		
+
+		window = ((ISwtVideoRenderer) renderer).getWindow();
 	}
 
 	public static void main(String[] args) {

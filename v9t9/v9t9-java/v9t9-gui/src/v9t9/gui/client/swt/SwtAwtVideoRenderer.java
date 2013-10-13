@@ -37,7 +37,6 @@ import org.eclipse.swt.widgets.Shell;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.timer.FastTimer;
-
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.client.awt.AwtVideoRenderer;
@@ -63,6 +62,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private boolean isVisible;
 	
 	protected List<ISwtSprite> sprites = new ArrayList<ISwtSprite>(1);
+	private BaseEmulatorWindow window;
 	
 	public SwtAwtVideoRenderer(IMachine machine, FastTimer timer) {
 		super(machine, timer);
@@ -80,7 +80,8 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.ISwtVideoRenderer#createControl(org.eclipse.swt.widgets.Composite)
 	 */
-	public Control createControl(Composite parent, int flags) {
+	public Control createControl(BaseEmulatorWindow window, Composite parent, int flags) {
+		this.window = window;
 		shell = parent.getShell();
 		
 		isVisible = true;
@@ -402,5 +403,13 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	@Override
 	public void removeSprite(ISwtSprite sprite) {
 		sprites.remove(sprite);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.ISwtVideoRenderer#getWindow()
+	 */
+	@Override
+	public BaseEmulatorWindow getWindow() {
+		return window;
 	}
 }

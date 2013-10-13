@@ -76,8 +76,10 @@ public interface IKeyboardState {
 
 	boolean isSet(byte shift, int key);
 
+	/** get shift, see {@link KeyboardConstants#MASK_...} */
 	byte getShiftMask();
 
+	/** get current locks, see {@link KeyboardConstants#MASK_...} */
 	byte getLockMask();
 	boolean isLock(byte locks);
 

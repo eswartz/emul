@@ -311,9 +311,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 		machine.getEventNotifier().addListener(eventListener);
 
 		setVideoRenderer(videoRenderer);
-		
 
-		this.videoControl = videoRenderer.createControl(videoRendererComposite, SWT.NONE);
+		this.videoControl = videoRenderer.createControl(this, videoRendererComposite, SWT.NONE);
 		
 		GridDataFactory.swtDefaults()
 			.indent(0, 0)

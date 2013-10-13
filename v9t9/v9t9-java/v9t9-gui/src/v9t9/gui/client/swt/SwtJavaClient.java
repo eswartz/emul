@@ -32,8 +32,8 @@ public class SwtJavaClient extends BaseSwtJavaClient {
 	 */
 	protected void setupRenderer() {
 		videoRenderer = createSwtVideoRenderer(display);
-		keyboardHandler = new SwtKeyboardHandler(
-				machine.getKeyboardState(), machine);
+		keyboardHandler = new SwtKeyboardHandler(machine.getKeyboardState(),
+				machine);
 	}
     
 }

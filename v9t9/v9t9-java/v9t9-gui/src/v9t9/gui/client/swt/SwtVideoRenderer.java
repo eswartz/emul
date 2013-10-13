@@ -100,6 +100,8 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	private IPropertyListener canvasFormatListener;
 
 	private ListenerList<IVideoRenderListener> listeners;
+
+	private BaseEmulatorWindow window;
 	
 	public SwtVideoRenderer(IMachine machine) {
 		this.listeners = new ListenerList<IVideoRenderListener>();
@@ -139,7 +141,8 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 * @param parent
 	 * @return
 	 */
-	final public Control createControl(Composite parent, int flags) {
+	final public Control createControl(BaseEmulatorWindow window, Composite parent, int flags) {
+		this.window = window;
 		this.shell = parent.getShell();
 		
 		this.canvas = createCanvasControl(parent, flags);
@@ -667,4 +670,13 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	public void removeListener(IVideoRenderListener listener) {
 		listeners.remove(listener);
 	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.ISwtVideoRenderer#getWindow()
+	 */
+	@Override
+	public BaseEmulatorWindow getWindow() {
+		return window;
+	}
+	
 }
