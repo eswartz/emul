@@ -107,13 +107,10 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 			int pasteDelay = handler.getMachine().getSettings().get(IKeyboardHandler.settingPasteKeyDelay).getInt();
 			
 			if (index <= chs.length) {
-				// only send chars as fast as the machine is reading
-//				if (!keyboardState.wasKeyboardProbed())
-//					return;
-
 				//System.out.println("ch="+ch+"; prevCh="+prevCh);
 				handler.flushCurrentGroup();
 				
+				char wasPrevCh = prevCh;
 				if (prevCh != 0 && !holdingDown) {
 					handler.postCharacter(false, prevShift, prevCh);
 					prevCh = 0;
@@ -191,9 +188,9 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 					if (!holdingDown) {
 						handler.postCharacter(false, shift, ch);
 					}
-					
-					if (ch == prevCh) {
-						prevCh = 0;
+
+					// watch for repeats
+					if (ch == wasPrevCh) {
 						nextTime += pasteDelay;
 						return;
 					}

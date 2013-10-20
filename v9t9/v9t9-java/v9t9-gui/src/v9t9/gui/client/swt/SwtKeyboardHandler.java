@@ -148,7 +148,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 	}
 	private void updateKey(boolean pressed, int stateMask, int keyCode, boolean keyPad) {
 		
-		System.out.println("keyCode="+keyCode+"; stateMask="+stateMask+"; pressed="+pressed);
+		//System.out.println("keyCode="+keyCode+"; stateMask="+stateMask+"; pressed="+pressed);
 		byte shiftMask = 0;
 		
 		// separately pressed keys show up in keycode sometimes
