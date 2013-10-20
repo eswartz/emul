@@ -31,6 +31,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
@@ -296,7 +297,11 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 	 */
 	@Override
 	public void breakpointChanged(IBreakpoint bp, boolean added) {
-		redrawLines();
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				redrawLines();
+			}
+		});
 	}
 	
 
