@@ -132,6 +132,10 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
+<li>2013/10/20: fix bug with joystick 'fire' detection in hand-coded assembly  
+</li>
+<li>2013/10/20: add breakpoint support to debugger (right-click on an instruction to set/reset)  
+</li>
 <li>2013/09/09: fix bug using numeric keypad as joysticks (use Num Lock + Scroll Lock) 
 </li>
 <li>2013/09/01: fix launching for Win 7 
