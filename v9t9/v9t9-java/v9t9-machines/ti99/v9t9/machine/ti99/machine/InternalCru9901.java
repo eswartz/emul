@@ -199,6 +199,8 @@ public class InternalCru9901 extends BaseCruChip {
 	
 	private ICruReader crur9901_KS = new ICruReader() {
 
+		private int prevKeyBit;
+
 		public int read(int addr, int data, int num) {
 			int bit = addr / 2;
 
@@ -210,6 +212,11 @@ public class InternalCru9901 extends BaseCruChip {
 				if (bit >= 3 && bit < 11) {
 					if (bit == 10)
 						checkKeyscanPattern(4);
+					
+					if (bit == prevKeyBit)
+						getMachine().getKeyboardHandler().resetProbe();
+						
+					prevKeyBit = bit;
 					
 					int alphamask = 0;
 					
