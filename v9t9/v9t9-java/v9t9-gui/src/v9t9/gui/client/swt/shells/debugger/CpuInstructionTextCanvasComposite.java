@@ -23,15 +23,23 @@ import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
 import org.ejs.gui.common.FontUtils;
+import org.ejs.gui.common.SwtUtils;
 
+import v9t9.common.cpu.BreakpointManager;
+import v9t9.common.cpu.IBreakpoint;
+import v9t9.common.cpu.IBreakpointListener;
 import v9t9.common.cpu.IInstructionEffectLabelProvider.Column;
 import v9t9.common.machine.IMachine;
 
@@ -39,7 +47,7 @@ import v9t9.common.machine.IMachine;
  * @author ejs
  *
  */
-public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
+public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite implements IBreakpointListener {
 	
 	private StyledText text;
 	private int numRows;
@@ -48,8 +56,10 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 	private TextStyle baseTextStyle;
 	private TextStyle bg1Style;
 	private TextStyle bg2Style;
+	private TextStyle bpStyle;
 	private InstLabelProvider instLabelProvider;
 	private Font smallerFont;
+	private int topRow;
 	
 	public CpuInstructionTextCanvasComposite(Composite parent, int style, IMachine machine) {
 		super(parent, style | SWT.V_SCROLL, machine);
@@ -71,6 +81,9 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 		bg2Style = new TextStyle(baseTextStyle);
 		bg2Style.background = getDisplay().getSystemColor(SWT.COLOR_WIDGET_LIGHT_SHADOW);
 
+		bpStyle = new TextStyle(baseTextStyle);
+		bpStyle.background = getDisplay().getSystemColor(SWT.COLOR_RED);
+
 		text.addLineStyleListener(new LineStyleListener() {
 			
 			@Override
@@ -85,6 +98,20 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 	}
 
 	protected StyleRange[] layoutStyles(int offset) {
+		int rowN = topRow + text.getLineAtOffset(offset);
+		synchronized (instHistory) {
+			if (rowN >= 0 && rowN < instHistory.size()) {
+				InstRow row = instHistory.get(rowN);
+				IBreakpoint bp = machine.getExecutor().getBreakpoints().findBreakpoint(row.getBefore().inst.pc);
+				if (bp != null) {
+					StyleRange range = new StyleRange(bpStyle);
+					range.start = offset;  
+					range.length = text.getLine(rowN - topRow).length();
+					return new StyleRange[] { range };
+				}
+			}
+		}
+
 		StyleRange[] ranges = new StyleRange[instLabelProvider.getColumnCount()];
 		boolean oddOp = true;
 		int rangeIdx = 0;
@@ -136,6 +163,29 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 				getVerticalBar().setPageIncrement(numRows);
 			}
 		});
+		
+		text.addMenuDetectListener(new MenuDetectListener() {
+			
+			@Override
+			public void menuDetected(MenuDetectEvent e) {
+				Point pt = getDisplay().map(null, text, e.x, e.y);
+				int rowN = pt.y / text.getLineHeight() + topRow;
+				synchronized (instHistory) {
+					if (rowN >= 0 && rowN < instHistory.size()) {
+						InstRow row = instHistory.get(rowN);
+						System.out.println(row.getBeforeInst());
+						final int pc = row.getBefore().inst.pc & 0xffff;
+						
+						Menu menu = new Menu(text);
+						
+						DebuggerWindow.addBreakpointActions(machine, menu, pc);
+						
+						SwtUtils.runMenu(null, e.x, e.y, menu);
+					}
+				}
+			}
+		});
+		
 		getVerticalBar().addSelectionListener(new SelectionAdapter() {
 			
 			@Override
@@ -143,11 +193,15 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 				redrawLines();
 			}
 		});
+		
+		machine.getExecutor().getBreakpoints().addListener(CpuInstructionTextCanvasComposite.this);
+
 		addDisposeListener(new DisposeListener() {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
 				machine.getFastMachineTimer().cancelTask(refreshTask);
+				machine.getExecutor().getBreakpoints().removeListener(CpuInstructionTextCanvasComposite.this);
 				smallerFont.dispose();
 			}
 		});
@@ -180,6 +234,7 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 		int rowIndex = getVerticalBar().getSelection();
 		synchronized (text) {
 			synchronized (instHistory) {
+				final BreakpointManager bpMgr = machine.getExecutor().getBreakpoints();
 				StringBuilder sb = new StringBuilder();
 				int numCols = instLabelProvider.getColumnCount();
 				Column[] cols = instLabelProvider.getColumns();
@@ -187,7 +242,15 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 				int start = Math.min(rowIndex, instHistory.size());
 				int end = Math.min(rowIndex + visible, instHistory.size());
 				List<InstRow> subList = instHistory.subList(start, end);
+				topRow = rowIndex;
 				for (InstRow row : subList) {
+					IBreakpoint bp = bpMgr.findBreakpoint(row.getBeforeInst().pc);
+					if (bp == null) {
+						sb.append("  ");
+					} else {
+						sb.append("• ");
+					}
+					
 					for (int i = 0; i < numCols; i++) {
 						sb.append(' ');
 						sb.append(fieldOf(instLabelProvider.getColumnText(row, i), cols[i].width));
@@ -226,6 +289,14 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite {
 			return str.substring(0, len);
 		}
 		return str;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IBreakpointListener#breakpointAdded(v9t9.common.cpu.IBreakpoint)
+	 */
+	@Override
+	public void breakpointChanged(IBreakpoint bp, boolean added) {
+		redrawLines();
 	}
 	
 

@@ -12,7 +12,9 @@ package v9t9.gui.client.swt.shells.debugger;
 
 import org.eclipse.jface.viewers.BaseLabelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.ITableColorProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 
 import ejs.base.utils.HexUtils;
@@ -22,7 +24,7 @@ import ejs.base.utils.HexUtils;
  *
  */
 public class DecodedTableLabelProvider extends BaseLabelProvider implements
-		ITableLabelProvider {
+		ITableLabelProvider, ITableColorProvider {
 
 	private final ILabelProvider contentLabelProvider;
 	private final int chunkSize;
@@ -58,6 +60,26 @@ public class DecodedTableLabelProvider extends BaseLabelProvider implements
 			return sb.toString();
 		}
 		return contentLabelProvider.getText(content);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.ITableColorProvider#getForeground(java.lang.Object, int)
+	 */
+	@Override
+	public Color getForeground(Object element, int columnIndex) {
+		if (contentLabelProvider instanceof ITableColorProvider)
+			return ((ITableColorProvider) contentLabelProvider).getForeground(element, columnIndex);
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.ITableColorProvider#getBackground(java.lang.Object, int)
+	 */
+	@Override
+	public Color getBackground(Object element, int columnIndex) {
+		if (contentLabelProvider instanceof ITableColorProvider)
+			return ((ITableColorProvider) contentLabelProvider).getBackground(element, columnIndex);
+		return null;
 	}
 
 }

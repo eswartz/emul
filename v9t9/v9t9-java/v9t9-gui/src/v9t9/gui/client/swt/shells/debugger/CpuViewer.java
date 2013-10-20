@@ -111,6 +111,8 @@ public class CpuViewer extends Composite implements IInstructionListener {
 				machine.asyncExec(new Runnable() {
 					public void run() {
 						//partialInst = null;
+						machine.getExecutor().getBreakpoints().tempDisableBreakpoint(
+								machine.getCpu().getCurrentInstruction().pc);
 						pauseMachine.setBoolean(!pauseMachine.getBoolean());
 						//resizeTable();
 					}
@@ -143,6 +145,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 //							if (tracker != null)
 //								tracker.updateForInstruction();
 							instructionComposite.refresh();
+							instructionComposite.flush();
 						}
 					}
 				});
@@ -164,6 +167,9 @@ public class CpuViewer extends Composite implements IInstructionListener {
 					public void run() {
 						//if (!Machine.settingPauseMachine.getBoolean())
 						//	resizeTable();
+						RawInstruction curInst = machine.getCpu().getCurrentInstruction();
+						machine.getExecutor().getBreakpoints().tempDisableBreakpoint(curInst.pc);
+						
 						singleStep.setBoolean(true);
 						pauseMachine.setBoolean(false);
 					}
@@ -188,6 +194,8 @@ public class CpuViewer extends Composite implements IInstructionListener {
 						RawInstruction curInst = machine.getCpu().getCurrentInstruction();
 						int bpPc = (curInst.pc + curInst.getSize());
 
+						machine.getExecutor().getBreakpoints().tempDisableBreakpoint(curInst.pc);
+						
 						IBreakpoint bp = new SimpleBreakpoint(bpPc & 0xffff, true);
 						machine.getExecutor().getBreakpoints().addBreakpoint(bp);
 						pauseMachine.setBoolean(false);

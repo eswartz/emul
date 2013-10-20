@@ -18,11 +18,18 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.asm.IDecompilePhase;
+import v9t9.common.cpu.BreakpointManager;
+import v9t9.common.cpu.IBreakpoint;
+import v9t9.common.cpu.SimpleBreakpoint;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
@@ -78,7 +85,7 @@ public class DebuggerWindow extends Composite implements IMemoryWriteListener {
 		
 		memoryViewers = new MemoryViewer[NUM_MEMORY_VIEWERS];
 		for (int v = 0; v < memoryViewers.length; v++) {
-			memoryViewers[v] = new MemoryViewer(vertSash, SWT.BORDER, machine.getMemory(), 
+			memoryViewers[v] = new MemoryViewer(vertSash, SWT.BORDER, machine, 
 					memoryDecoderProvider, timer);
 			cpuViewer.addTracker(memoryViewers[v]);
 
@@ -164,7 +171,8 @@ public class DebuggerWindow extends Composite implements IMemoryWriteListener {
 					if (true||cpuDecoder == null) {
 						IDecompilePhase decompiler = machine.getCpu().createDecompiler();
 						if (decompiler != null) {
-							cpuDecoder = new DisassemblerDecoder(entry.getDomain(), 
+							cpuDecoder = new DisassemblerDecoder(machine ,
+									entry.getDomain(), 
 									machine.getCpu().getRawInstructionFactory(),
 									machine.getCpu().createDecompiler());
 						}
@@ -200,4 +208,39 @@ public class DebuggerWindow extends Composite implements IMemoryWriteListener {
 			}
 		};
 	}
+
+	/**
+	 * @param machine2
+	 * @param menu
+	 * @param pc
+	 */
+	public static void addBreakpointActions(IMachine machine, Menu menu, final int pc) {
+
+		final BreakpointManager bpMgr = machine.getExecutor().getBreakpoints();
+		final IBreakpoint exBreakPt = bpMgr.findBreakpoint(pc);
+		
+		MenuItem item = new MenuItem(menu, SWT.PUSH);
+		if (exBreakPt != null) {
+			item.setText("Remove breakpoint");
+			item.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					bpMgr.removeBreakpoint(exBreakPt);
+				}
+			});
+			
+		} else {
+			item.setText("Set breakpoint");
+			item.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					IBreakpoint bp = new SimpleBreakpoint(pc, false);
+					bpMgr.addBreakpoint(bp);
+				}
+			});
+		}
+				
+	}
+	
+	
 }

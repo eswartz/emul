@@ -13,6 +13,7 @@ package v9t9.gui.client.swt.shells.debugger;
 import org.eclipse.jface.viewers.ILazyContentProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.swt.widgets.Menu;
 
 import v9t9.gui.common.IMemoryDecoder;
 
@@ -114,6 +115,13 @@ public class DecodedMemoryContentProvider implements ILazyContentProvider {
 		firstIndex = decoderProvider.getFirstItemIndex(range.getAddress());
 		tableViewer.setItemCount(decoderProvider.getItemCount(range.getAddress(), range.getSize()));
 		tableViewer.refresh();
+	}
+	/**
+	 * @param menu 
+	 * @param row
+	 */
+	public void fillMenu(Menu menu, DecodedRow row) {
+		decoderProvider.fillMenu(menu, row.getContent());
 	}
 	
 	

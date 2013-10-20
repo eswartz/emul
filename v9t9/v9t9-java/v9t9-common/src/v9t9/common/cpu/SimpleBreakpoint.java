@@ -24,6 +24,34 @@ public class SimpleBreakpoint implements IBreakpoint {
 		this.oneShot = oneShot;
 	}
 	
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (oneShot ? 1231 : 1237);
+		result = prime * result + pc;
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SimpleBreakpoint other = (SimpleBreakpoint) obj;
+		if (oneShot != other.oneShot)
+			return false;
+		if (pc != other.pc)
+			return false;
+		return true;
+	}
+
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.cpu.IBreakpoint#getPc()
 	 */

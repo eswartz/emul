@@ -54,6 +54,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.ejs.gui.common.DirectoryDialogHelper;
 import org.ejs.gui.common.SwtPrefUtils;
+import org.ejs.gui.common.SwtUtils;
 
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
@@ -516,7 +517,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		});
 		
-		runMenu(null, 0, 0, menu);
+		SwtUtils.runMenu(null, 0, 0, menu);
 		menuShell.dispose();	
 		shell.forceActive();
 		focusRestorer.restoreFocus();
@@ -834,27 +835,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 		return toolUiTimer;
 	}
 
-	public void runMenu(final Control parent, final int x, final int y,
-			final Menu menu) {
-		if (parent != null) {
-			Point loc = parent.toDisplay(x, y); 
-			menu.setLocation(loc);
-		}
-		//System.out.println("position: " + menu.getParent().getLocation());
-		menu.setVisible(true);
-		
-		//System.out.println("Running menu");
-		final Shell menuShell = getShell();
-		Display display = menuShell.getDisplay();
-		while (display.readAndDispatch()) /**/ ;
-
-		while (!menu.isDisposed() && menu.isVisible()) {
-			if (!display.readAndDispatch())
-				display.sleep();
-		}
-		
-	}
-
 	public void addExitMenuItem(final Menu menu) {
 		MenuItem exit = new MenuItem(menu, SWT.NONE);
 		exit.setText("E&xit");
@@ -937,7 +917,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	
 
 	public void showMenu(Menu menu, final Control parent, final int x, final int y) {
-		runMenu(parent, x, y, menu);
+		SwtUtils.runMenu(parent, x, y, menu);
 		menu.dispose();		
 	}
 

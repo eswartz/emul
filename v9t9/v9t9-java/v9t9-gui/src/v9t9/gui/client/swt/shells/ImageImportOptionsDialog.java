@@ -33,6 +33,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.gui.common.SwtUtils;
 import org.ejs.gui.properties.EditGroup;
 import org.ejs.gui.properties.FieldPropertyEditorProvider;
 import org.ejs.gui.properties.PropertySourceEditor;
@@ -47,7 +48,6 @@ import v9t9.gui.client.swt.imageimport.ImageClipDecorator;
 import v9t9.gui.client.swt.imageimport.ImageLabel;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
-import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
 import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
 import ejs.base.properties.IProperty;
@@ -201,7 +201,7 @@ public class ImageImportOptionsDialog extends Composite {
 				Control parent = (Control) e.widget;
 				Menu menu = new Menu(parent);
 				fillImageImportMenu(window, imageImportHandler, menu);
-				window.runMenu(null, e.x, e.y, menu);
+				SwtUtils.runMenu(null, e.x, e.y, menu);
 			}
 		});
 		

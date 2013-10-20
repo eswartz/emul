@@ -16,7 +16,11 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.jface.viewers.ITableColorProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Menu;
 
 import v9t9.common.asm.Block;
 import v9t9.common.asm.IDecompilePhase;
@@ -24,6 +28,7 @@ import v9t9.common.asm.IHighLevelInstruction;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.Routine;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.gui.common.IMemoryDecoder;
 
@@ -33,6 +38,43 @@ import v9t9.gui.common.IMemoryDecoder;
  */
 public class DisassemblerDecoder implements IMemoryDecoder {
 
+	/**
+	 * @author ejs
+	 *
+	 */
+	private final class DisassemblerDecoderLabelProvider extends LabelProvider implements ITableColorProvider {
+		private Color RED = new Color(Display.getDefault(), 255, 0, 0);
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
+		 */
+		@Override
+		public String getText(Object element) {
+			return ((IDecodedContent) element).getContent().toString();
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableColorProvider#getForeground(java.lang.Object, int)
+		 */
+		@Override
+		public Color getForeground(Object element, int columnIndex) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITableColorProvider#getBackground(java.lang.Object, int)
+		 */
+		@Override
+		public Color getBackground(Object element, int columnIndex) {
+			int pc = ((DecodedRow) element).getContent().getAddr();
+			if (machine.getExecutor().getBreakpoints().findBreakpoint(pc) != null) {
+				return RED;
+			}
+			return null;
+		}
+	}
+
 	private final int chunkSize;
 	final IMemoryDomain domain;
 	private boolean dirty = true;
@@ -40,12 +82,15 @@ public class DisassemblerDecoder implements IMemoryDecoder {
 	private int[] indexToAddrMap;
 	private TreeMap<Integer, IHighLevelInstruction> addrToInstrMap = new TreeMap<Integer, IHighLevelInstruction>();
 	private final IDecompilePhase decompilePhase;
+	private IMachine machine;
 	
 	/**
 	 * @param entry 
 	 * @param instructionFactory
 	 */
-	public DisassemblerDecoder(IMemoryDomain domain, IRawInstructionFactory instructionFactory, IDecompilePhase decompilePhase) {
+	public DisassemblerDecoder(IMachine machine,
+			IMemoryDomain domain, IRawInstructionFactory instructionFactory, IDecompilePhase decompilePhase) {
+		this.machine = machine;
 		this.domain = domain;
 		this.decompilePhase = decompilePhase;
 		this.chunkSize = instructionFactory.getChunkSize();
@@ -56,15 +101,7 @@ public class DisassemblerDecoder implements IMemoryDecoder {
 	 */
 	@Override
 	public ILabelProvider getLabelProvider() {
-		return new LabelProvider() {
-			/* (non-Javadoc)
-			 * @see org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
-			 */
-			@Override
-			public String getText(Object element) {
-				return ((IDecodedContent) element).getContent().toString();
-			}
-		};
+		return new DisassemblerDecoderLabelProvider();
 	}
 
 	/* (non-Javadoc)
@@ -227,6 +264,13 @@ public class DisassemblerDecoder implements IMemoryDecoder {
 		final RawInstruction instr = hl.getInst();
 		return new IDecodedContent() {
 
+			/* (non-Javadoc)
+			 * @see java.lang.Object#toString()
+			 */
+			@Override
+			public String toString() {
+				return "instr: " + instr;
+			}
 			@Override
 			public int getAddr() {
 				return instr.getPc();
@@ -245,5 +289,14 @@ public class DisassemblerDecoder implements IMemoryDecoder {
 		};
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.gui.common.IMemoryDecoder#fillMenu(org.eclipse.swt.widgets.Menu, v9t9.gui.client.swt.shells.debugger.IDecodedContent)
+	 */
+	@Override
+	public void fillMenu(Menu menu, IDecodedContent content) {
+		final int pc = content.getAddr();
+		
+		DebuggerWindow.addBreakpointActions(machine, menu, pc);
+	}
 	
 }

@@ -12,11 +12,13 @@ package v9t9.common.cpu;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import ejs.base.properties.IProperty;
-
+import ejs.base.utils.ListenerList;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 
@@ -30,6 +32,8 @@ public class BreakpointManager implements IInstructionListener {
 	private Map<Integer, IBreakpoint> pcToBps = new HashMap<Integer, IBreakpoint>();
 	private final IMachine machine;
 	private IProperty debugging;
+	private Set<IBreakpoint> tempDisableSet = new HashSet<IBreakpoint>();
+	private ListenerList<IBreakpointListener> listeners = new ListenerList<IBreakpointListener>();
 	
 	public BreakpointManager(IMachine machine) {
 		this.machine = machine;
@@ -43,6 +47,9 @@ public class BreakpointManager implements IInstructionListener {
 	public synchronized boolean preExecute(InstructionWorkBlock before) {
 		IBreakpoint bp = pcToBps.get(before.inst.pc & 0xffff);
 		if (bp == null)
+			return true;
+		
+		if (tempDisableSet.remove(bp))
 			return true;
 		
 		boolean continueRunning = bp.execute(before.cpu);
@@ -65,7 +72,7 @@ public class BreakpointManager implements IInstructionListener {
 	public void executed(InstructionWorkBlock before, InstructionWorkBlock after) {
 	}
 
-	public synchronized IBreakpoint addBreakpoint(IBreakpoint bp) {
+	public synchronized IBreakpoint addBreakpoint(final IBreakpoint bp) {
 		IBreakpoint origBp = pcToBps.get(bp.getPc());
 		if (origBp != null) {
 			removeBreakpoint(origBp);
@@ -77,17 +84,37 @@ public class BreakpointManager implements IInstructionListener {
 		if (bps.size() == 1) {
 			machine.getExecutor().addInstructionListener(this);
 		}
-		
+
+		listeners.fire(new ListenerList.IFire<IBreakpointListener>() {
+			/* (non-Javadoc)
+			 * @see ejs.base.utils.ListenerList.IFire#fire(java.lang.Object)
+			 */
+			@Override
+			public void fire(IBreakpointListener listener) {
+				listener.breakpointChanged(bp, true);
+			}
+		});
+
 		return bp;
 	}
 
-	public synchronized void removeBreakpoint(IBreakpoint bp) {
+	public synchronized void removeBreakpoint(final IBreakpoint bp) {
 		bps.remove(bp);
 		pcToBps.remove(bp.getPc());
 		
 		if (bps.isEmpty()) {
 			machine.getExecutor().removeInstructionListener(this);
 		}
+		
+		listeners.fire(new ListenerList.IFire<IBreakpointListener>() {
+			/* (non-Javadoc)
+			 * @see ejs.base.utils.ListenerList.IFire#fire(java.lang.Object)
+			 */
+			@Override
+			public void fire(IBreakpointListener listener) {
+				listener.breakpointChanged(bp, false);
+			}
+		});
 
 	}
 
@@ -96,6 +123,31 @@ public class BreakpointManager implements IInstructionListener {
 	 */
 	public boolean isEmpty() {
 		return bps.isEmpty();
+	}
+
+	/**
+	 * @param pc
+	 * @return
+	 */
+	public IBreakpoint findBreakpoint(int pc) {
+		return pcToBps.get(pc);
+	}
+
+	/**
+	 * @param pc
+	 */
+	public void tempDisableBreakpoint(int pc) {
+		IBreakpoint bp = findBreakpoint(pc);
+		if (bp != null) {
+			tempDisableSet.add(bp);
+		}
+	}
+	
+	public void addListener(IBreakpointListener listener) {
+		listeners.add(listener);
+	}
+	public void removeListener(IBreakpointListener listener) {
+		listeners.remove(listener);
 	}
 
 }

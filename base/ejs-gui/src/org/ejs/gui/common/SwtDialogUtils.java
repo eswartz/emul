@@ -17,10 +17,8 @@ import java.util.TimerTask;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
@@ -89,27 +87,8 @@ public class SwtDialogUtils {
 	}
 
 	public static void showMenu(Menu menu, final Control parent, final int x, final int y) {
-		runMenu(parent, x, y, menu);
+		SwtUtils.runMenu(parent, x, y, menu);
 		menu.dispose();		
-	}
-
-	public static void runMenu(final Control parent, final int x, final int y,
-			final Menu menu) {
-		if (parent != null) {
-			Point loc = parent.toDisplay(x, y); 
-			menu.setLocation(loc);
-		}
-		System.out.println("position: " + menu.getParent().getLocation());
-		menu.setVisible(true);
-		
-		Display display = parent.getShell().getDisplay();
-		while (display.readAndDispatch()) /**/ ;
-	
-		while (!menu.isDisposed() && menu.isVisible()) {
-			if (!display.readAndDispatch())
-				display.sleep();
-		}
-		
 	}
 
 	/**

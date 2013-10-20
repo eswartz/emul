@@ -13,6 +13,7 @@ package v9t9.gui.common;
 import java.util.BitSet;
 
 import org.eclipse.jface.viewers.ILabelProvider;
+import org.eclipse.swt.widgets.Menu;
 
 import v9t9.gui.client.swt.shells.debugger.IDecodedContent;
 
@@ -62,4 +63,9 @@ public interface IMemoryDecoder {
 	 * @return content to render at addr.
 	 */
 	IDecodedContent decodeItem(int addr);
+	/**
+	 * @param menu
+	 * @param row
+	 */
+	void fillMenu(Menu menu, IDecodedContent content);
 }

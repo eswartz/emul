@@ -39,6 +39,8 @@ import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseTrackAdapter;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -60,7 +62,11 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.ejs.gui.common.FontUtils;
+import org.ejs.gui.common.SwtUtils;
 
+import v9t9.common.cpu.IBreakpoint;
+import v9t9.common.cpu.IBreakpointListener;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
@@ -78,7 +84,7 @@ import ejs.base.utils.Pair;
  * @author Ed
  *
  */
-public class MemoryViewer extends Composite implements IPersistable, ICpuTracker {
+public class MemoryViewer extends Composite implements IPersistable, ICpuTracker, IBreakpointListener {
 	final int BYTES = 16;
 
 	private StackLayout tableLayout;
@@ -105,11 +111,11 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 	private DecodedMemoryContentProvider decodedContentProvider;
 	private ByteMemoryContentProvider byteContentViewer;
 
-	public MemoryViewer(Composite parent, int style, IMemory memory, 
+	public MemoryViewer(Composite parent, int style, final IMachine machine, 
 			IMemoryDecoderProvider decoderProvider,
 			final Timer timer) {
 		super(parent, style);
-		this.memory = memory;
+		this.memory = machine.getMemory();
 		memoryDecoderProvider = decoderProvider;
 
 		setLayout(new GridLayout(2, false));
@@ -147,11 +153,13 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 //		};
 //		timer.schedule(refreshTask, 0, 250);
 		
+		machine.getExecutor().getBreakpoints().addListener(MemoryViewer.this);
 		addDisposeListener(new DisposeListener() {
 
 			public void widgetDisposed(DisposeEvent e) {
 //				refreshTask.cancel();		
 				tableFont.dispose();
+				machine.getExecutor().getBreakpoints().removeListener(MemoryViewer.this);
 			}
 			
 		});
@@ -456,7 +464,23 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		decodedTableViewer.setColumnProperties(props);
 		//byteTableViewer.setCellModifier(new ByteMemoryCellModifier(byteTableViewer));
 		//byteTableViewer.setCellEditors(editors);
-		
+
+		table.addMenuDetectListener(new MenuDetectListener() {
+			
+			@Override
+			public void menuDetected(MenuDetectEvent e) {
+				Point pt = getDisplay().map(null, table, e.x, e.y);
+				TableItem item = table.getItem(new Point(pt.x, pt.y));
+				if (item != null) {
+					DecodedRow row = (DecodedRow) item.getData();
+					if (row != null && decodedContentProvider != null) {
+						Menu menu = new Menu(table);
+						decodedContentProvider.fillMenu(menu, row);
+						SwtUtils.runMenu(null, e.x, e.y, menu);
+					}
+				}
+			}
+		});
 	}
 
 	protected void createByteTableViewer(Composite parent) {
@@ -759,6 +783,18 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 	public boolean contains(IMemoryEntry entry, int addr) {
 		return currentRange != null && currentRange.contains(entry, addr);
 				
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IBreakpointListener#breakpointChanged(v9t9.common.cpu.IBreakpoint, boolean)
+	 */
+	@Override
+	public void breakpointChanged(IBreakpoint bp, boolean added) {
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				decodedTableViewer.refresh();				
+			}
+		});
 	}
 	
 }

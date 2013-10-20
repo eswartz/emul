@@ -15,9 +15,8 @@ import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.Shell;
+import org.ejs.gui.common.SwtUtils;
 
 /**
  * @author ejs
@@ -43,7 +42,7 @@ public class ImageButtonMenuAreaHandler extends BaseImageButtonAreaHandler {
 				menuHandler.fillMenu(menu);
 				if (!menu.isDisposed()) {
 					if (menu.getItemCount() > 0) {
-						runMenu(parent, e.x, e.y, menu);
+						SwtUtils.runMenu(null, e.x, e.y, menu);
 					}
 					menu.dispose();		
 				}
@@ -52,25 +51,6 @@ public class ImageButtonMenuAreaHandler extends BaseImageButtonAreaHandler {
 
 	}
 
-	protected void runMenu(final Control parent, final int x, final int y,
-			final Menu menu) {
-		if (parent != null) {
-			Point loc = parent.toDisplay(x, y); 
-			menu.setLocation(loc);
-		}
-		menu.setVisible(true);
-		
-		final Shell menuShell = parent.getShell();
-		Display display = menuShell.getDisplay();
-		while (display.readAndDispatch()) /**/ ;
-
-		while (!menu.isDisposed() && menu.isVisible()) {
-			if (!display.readAndDispatch())
-				display.sleep();
-		}
-		
-	}
-	
 	@Override
 	public boolean isInBounds(int x, int y, Point size) {
 		return x >= size.x - size.x / 3 && y >= size.y - size.y / 3; 
