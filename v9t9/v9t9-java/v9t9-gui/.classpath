@@ -46,8 +46,8 @@
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${target.os}"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="libs/lwjgl/jar/lwjgl.jar"/>
-	<classpathentry kind="lib" path="libs/lwjgl/jar/lwjgl_util.jar" sourcepath="libs/lwjgl-source-2.8.3.zip">
+	<classpathentry kind="lib" path="libs/lwjgl/jar/lwjgl.jar" sourcepath="libs/lwjgl-source-2.9.1.zip"/>
+	<classpathentry kind="lib" path="libs/lwjgl/jar/lwjgl_util.jar" sourcepath="libs/lwjgl-source-2.9.1.zip">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${target.os}"/>
 		</attributes>
