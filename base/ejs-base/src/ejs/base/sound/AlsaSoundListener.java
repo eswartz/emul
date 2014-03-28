@@ -21,7 +21,6 @@ import javax.sound.sampled.AudioSystem;
 
 import org.apache.log4j.Logger;
 
-
 import com.sun.jna.ptr.IntByReference;
 
 import ejs.base.sound.AlsaLibrary.snd_pcm_sw_params_t;
@@ -71,21 +70,25 @@ public class AlsaSoundListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public synchronized void stopped() {
-		stopped = true;
-		waitUntilSilent();
+	public void stopped() {
+		synchronized (this) {
+			stopped = true;
+			waitUntilSilent();
 		
-		if (handle != null) {
-			INSTANCE.snd_pcm_close(handle);
-			handle = null;
+			if (handle != null) {
+				INSTANCE.snd_pcm_close(handle);
+				handle = null;
+			}
 		}
 		
 		if (soundWritingThread != null) {
 			soundWritingThread.interrupt();
-			try {
-				soundWritingThread.join();
-			} catch (InterruptedException e) {
-				
+			while (soundWritingThread.isAlive()) {
+				try {
+					soundWritingThread.join(100);
+				} catch (InterruptedException e) {
+					break;
+				}
 			}
 			soundWritingThread = null;
 		}
@@ -217,54 +220,71 @@ public class AlsaSoundListener implements ISoundEmitter {
 					}
 					*/
 
-					if (handle == null || stopped)
-						return;
+					synchronized (AlsaSoundListener.this) {
+						if (handle == null || stopped)
+							return;
+					}
 					
 					if (chunk.soundData != null) {
 						//logger.debug("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
 						int size = chunk.soundData.length / soundFormat.getFrameSize();
-						do {
-							if (stopped)
-								return;
-							int err = INSTANCE.snd_pcm_writei(
-									handle, chunk.soundData, size);
-							if (err < 0 ) {
-								if (err == -32) /* EPIPE */ {
-									// underrun
-									/*try {
-										soundQueue.add(chunk);
-									} catch (IllegalStateException e) {
-										
-									}*/
-									err = AlsaLibrary.INSTANCE.snd_pcm_recover(handle, err, 0);
-								} else {
-									err = AlsaLibrary.INSTANCE.snd_pcm_recover(handle, err, 0);
-								}
-								if (err == 0)
-									continue;
-								if (err == -11) /* EAGAIN */ {
-									// going too fast
-									if (!blocking) {
-										while (chunk != null && soundQueue.size() > 2) {
-											chunk = soundQueue.poll();
-										}
-									}
-									try {
-										Thread.sleep(50);
-									} catch (InterruptedException e) {
-									}
-									continue;
-								}
-								if (err < 0) {
-									logger.error("snd_pcm_writei failed: " + AlsaLibrary.INSTANCE.snd_strerror(err));
-									err = AlsaLibrary.INSTANCE.snd_pcm_prepare(handle);
-									err = AlsaLibrary.INSTANCE.snd_pcm_start(handle);
-								}
-				    		}
-				    		break;
-						} while (true);
+						synchronized (AlsaSoundListener.this) {
+							do {
+								if (stopped)
+									return;
+								if (sendChunk(chunk, size))
+									break;
+							} while (true);
+							
+							
+						}
 					}
 				}
+			}
+
+			/**
+			 * @param chunk
+			 * @param size
+			 */
+			protected boolean sendChunk(AudioChunk chunk, int size) {
+				int err = INSTANCE.snd_pcm_writei(
+						handle, chunk.soundData, size);
+				if (err >= 0)
+					return true;
+				
+				if (err == -32) /* EPIPE */ {
+					// underrun
+					/*try {
+						soundQueue.add(chunk);
+					} catch (IllegalStateException e) {
+						
+					}*/
+					err = AlsaLibrary.INSTANCE.snd_pcm_recover(handle, err, 0);
+				} else {
+					err = AlsaLibrary.INSTANCE.snd_pcm_recover(handle, err, 0);
+				}
+				if (err == 0)
+					return true;
+				if (err == -11) /* EAGAIN */ {
+					// going too fast
+					if (!blocking) {
+						while (chunk != null && soundQueue.size() > 2) {
+							chunk = soundQueue.poll();
+						}
+					}
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+					}
+					return false;
+				}
+				if (err < 0 && handle != null) {
+					String snd_strerror = AlsaLibrary.INSTANCE.snd_strerror(err);
+					logger.error("snd_pcm_writei failed: " + snd_strerror);
+					err = AlsaLibrary.INSTANCE.snd_pcm_prepare(handle);
+					err = AlsaLibrary.INSTANCE.snd_pcm_start(handle);
+				}
+				return false;
 			}
 
 			
@@ -284,9 +304,11 @@ public class AlsaSoundListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public synchronized void played(ISoundView view) {
-		if (handle == null)
-			return;
+	public void played(ISoundView view) {
+		synchronized (this) {
+			if (handle == null)
+				return;
+		}
 		try {
 			if (!blocking && soundQueue.remainingCapacity() == 0)
 				soundQueue.remove();
@@ -300,7 +322,7 @@ public class AlsaSoundListener implements ISoundEmitter {
 	/**
 	 * 
 	 */
-	public void waitUntilEmpty() {
+	public synchronized void waitUntilEmpty() {
 		if (handle != null) {
 			soundQueue.clear();
 			while (!soundQueue.isEmpty()) {
@@ -317,7 +339,7 @@ public class AlsaSoundListener implements ISoundEmitter {
 	/**
 	 * 
 	 */
-	public void waitUntilSilent() {
+	public synchronized void waitUntilSilent() {
 		if (handle == null)
 			return;
 		INSTANCE.snd_pcm_drain(handle);

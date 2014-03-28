@@ -222,6 +222,8 @@ public class PulseSoundListener implements ISoundEmitter {
 			if (!block) {
 				soundQueue.drainTo(new ArrayList<AudioChunk>(1), SOUND_QUEUE_SIZE - 1);
 			}
+			if (simple == null)
+				return;
 			// will block if sound is too fast
 			AudioChunk o = new AudioChunk(view, volume);
 			soundQueue.put(o);

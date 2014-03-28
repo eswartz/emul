@@ -141,7 +141,7 @@ public class ManualTestSoundTMS9919B extends BaseSoundTest {
 					voice.setFrequency(hz << i);
 				voice.setVolume(128);
 			}
-			generate(toSamples(TimeUnit.SECONDS, 2), voices);
+			generate(toSamples(TimeUnit.SECONDS, 1), voices);
 		}
 
 		
@@ -214,7 +214,7 @@ public class ManualTestSoundTMS9919B extends BaseSoundTest {
 					((ClockedSoundVoice) voices[i]).setFrequency(hz << i);
 				((SoundVoice) voices[i]).setVolume(128);
 			}
-			generate(toSamples(TimeUnit.SECONDS, 2), voices);
+			generate(toSamples(TimeUnit.SECONDS, 1), voices);
 		}
 	}
 	

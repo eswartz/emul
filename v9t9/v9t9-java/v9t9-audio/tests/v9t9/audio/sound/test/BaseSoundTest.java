@@ -16,6 +16,7 @@ import javax.sound.sampled.AudioFormat;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import v9t9.audio.sound.ClockedSoundVoice;
@@ -46,11 +47,14 @@ public class BaseSoundTest {
 		soundOutput.addEmitter(soundListener);
 	}
 
+	@Before
+	public void setupPer() {
+		soundListener.started(format);
+	}
 	@After
 	public void tearDown() {
 		soundListener.waitUntilSilent();
 		soundListener.stopped();
-		soundOutput.dispose();
 	}
 
 	@AfterClass
