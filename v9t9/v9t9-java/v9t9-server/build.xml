@@ -22,10 +22,10 @@
         <path refid="Plug-in Dependencies.libraryclasspath"/>
         <pathelement location="${ejs-base.location}/bin"/>
         <pathelement location="${ejs-base.location}/libs/jna.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.commands.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.runtime.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.equinox.common.jar"/>
         <pathelement location="${ejs-base.location}/libs/google-gson-2.0/gson-2.0.jar"/>
         <pathelement location="${ejs-base.location}/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
     </path>
@@ -33,7 +33,7 @@
         <pathelement location="${v9t9-common.location}/bin"/>
         <pathelement location="${ejs-base.location}/libs/jna.jar"/>
         <path refid="ejs-base.classpath"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.jar"/>
     </path>
     <path id="SWT.userclasspath">
         <pathelement location="../../../../../../../ejs-base/libs/swt/org.eclipse.swt.gtk.linux.x86_64.jar"/>
@@ -41,13 +41,13 @@
     <path id="v9t9-engine.classpath">
         <pathelement location="${v9t9-engine.location}/bin"/>
         <path refid="ejs-base.classpath"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.runtime.source_3.6.0.v20100505.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.equinox.common.source_3.6.0.v20100503.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.commands.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.runtime.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.runtime.source.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.equinox.common.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.equinox.common.source.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.source.jar"/>
         <path refid="v9t9-common.classpath"/>
         <pathelement location="${ejs-base.location}/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
         <pathelement location="${ejs-base.location}/libs/bcel-5.2.jar"/>
@@ -59,7 +59,7 @@
         <path refid="ejs-base.classpath"/>
         <path refid="v9t9-common.classpath"/>
         <path refid="v9t9-engine.classpath"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.jar"/>
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar"/>
         <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
         <pathelement location="${ejs-base.location}/libs/bcel-5.2.jar"/>

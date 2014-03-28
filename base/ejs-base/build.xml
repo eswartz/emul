@@ -4,45 +4,34 @@
               To include a user specific buildfile here, simply create one in the same
               directory with the processing instruction <?eclipse.ant.import?>
               as the first entry and export the buildfile again. -->
-<project basedir="." default="build" name="v9t9-common">
+<project basedir="." default="build" name="ejs-base">
     <property environment="env"/>
-    <property name="ejs-base.location" value="../../../base/ejs-base"/>
-    <property name="ejs-gui.location" value="../../../base/ejs-gui"/>
-    <property name="v9t9-audio.location" value="../v9t9-audio"/>
-    <property name="v9t9-engine.location" value="../v9t9-engine"/>
-    <property name="v9t9-gui.location" value="../v9t9-gui"/>
-    <property name="v9t9-machines.location" value="../v9t9-machines"/>
-    <property name="v9t9-remote.location" value="../v9t9-remote"/>
-    <property name="v9t9-server.location" value="../v9t9-server"/>
-    <property name="v9t9-tools.location" value="../v9t9-tools"/>
-    <property name="v9t9-video.location" value="../v9t9-video"/>
-    <property name="ECLIPSE_HOME" value="../../../../orbit/plugins"/>
+    <property name="v9t9-audio.location" value="../../v9t9/v9t9-java/v9t9-audio"/>
+    <property name="v9t9-common.location" value="../../v9t9/v9t9-java/v9t9-common"/>
+    <property name="v9t9-engine.location" value="../../v9t9/v9t9-java/v9t9-engine"/>
+    <property name="v9t9-gui.location" value="../../v9t9/v9t9-java/v9t9-gui"/>
+    <property name="v9t9-machines.location" value="../../v9t9/v9t9-java/v9t9-machines"/>
+    <property name="v9t9-remote.location" value="../../v9t9/v9t9-java/v9t9-remote"/>
+    <property name="v9t9-server.location" value="../../v9t9/v9t9-java/v9t9-server"/>
+    <property name="v9t9-tools.location" value="../../v9t9/v9t9-java/v9t9-tools"/>
+    <property name="v9t9-video.location" value="../../v9t9/v9t9-java/v9t9-video"/>
+    <property name="ECLIPSE_HOME" value="../../../orbit/plugins"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.6"/>
     <property name="source" value="1.6"/>
     <path id="Plug-in Dependencies.libraryclasspath"/>
     <path id="ejs-base.classpath">
         <path refid="Plug-in Dependencies.libraryclasspath"/>
-        <pathelement location="${ejs-base.location}/bin"/>
-        <pathelement location="${ejs-base.location}/libs/jna.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.commands.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.core.runtime.jar"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.equinox.common.jar"/>
-        <pathelement location="${ejs-base.location}/libs/google-gson-2.0/gson-2.0.jar"/>
-        <pathelement location="${ejs-base.location}/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
-        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
-    </path>
-	<path id="ejs-gui.classpath">
-	        <pathelement location="${ejs-gui.location}/bin"/>
-	    </path>
-    <path id="v9t9-common.classpath">
         <pathelement location="bin"/>
-        <pathelement location="${ejs-base.location}/libs/jna.jar"/>
-        <path refid="ejs-base.classpath"/>
-        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.jface.jar"/>
-        <pathelement location="${ejs-base.location}/libs/junit/junit-4.8.1.jar"/>
-        <path refid="ejs-gui.classpath"/>
+        <pathelement location="libs/jna.jar"/>
+        <pathelement location="libs/swt/org.eclipse.jface.jar"/>
+        <pathelement location="libs/swt/org.eclipse.core.commands.jar"/>
+        <pathelement location="libs/swt/org.eclipse.core.runtime.jar"/>
+        <pathelement location="libs/swt/org.eclipse.equinox.common.jar"/>
+        <pathelement location="libs/google-gson-2.0/gson-2.0.jar"/>
+        <pathelement location="libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
+        <pathelement location="libs/junit/junit-4.8.1.jar"/>
+        <pathelement location="libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>
@@ -52,31 +41,51 @@
                 <exclude name="**/*.java"/>
             </fileset>
         </copy>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="HRTimer">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="Base64-2.2.2">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+                <exclude name="api/"/>
+            </fileset>
+        </copy>
     </target>
     <target name="clean">
         <delete dir="bin"/>
     </target>
-    <target depends="clean" name="cleanall">
-        <ant antfile="build.xml" dir="${ejs-base.location}" inheritAll="false" target="clean"/>
-    </target>
+    <target depends="clean" name="cleanall"/>
     <target depends="build-subprojects,build-project" name="build"/>
-    <target name="build-subprojects">
-        <ant antfile="build.xml" dir="${ejs-base.location}" inheritAll="false" target="build-project">
-            <propertyset>
-                <propertyref name="build.compiler"/>
-            </propertyset>
-        </ant>
-    </target>
+    <target name="build-subprojects"/>
     <target depends="init" name="build-project">
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="HRTimer"/>
+            <classpath refid="ejs-base.classpath"/>
+        </javac>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="Base64-2.2.2"/>
+            <exclude name="api/"/>
+            <classpath refid="ejs-base.classpath"/>
+        </javac>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="src"/>
-            <classpath refid="v9t9-common.classpath"/>
+            <classpath refid="ejs-base.classpath"/>
         </javac>
     </target>
     <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects">
         <ant antfile="build.xml" dir="${v9t9-audio.location}" inheritAll="false" target="clean"/>
         <ant antfile="build.xml" dir="${v9t9-audio.location}" inheritAll="false" target="build">
+            <propertyset>
+                <propertyref name="build.compiler"/>
+            </propertyset>
+        </ant>
+        <ant antfile="build.xml" dir="${v9t9-common.location}" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="${v9t9-common.location}" inheritAll="false" target="build">
             <propertyset>
                 <propertyref name="build.compiler"/>
             </propertyset>
@@ -139,11 +148,11 @@
     </target>
 	
 
-	<import file="../v9t9-gui/common.properties"/>
+	<import file="../ejs-base/common.properties"/>	
 
     <target name="build-jar" depends="build-project">
-	  <jar destfile="${bin.v9t9.jar.dir}/v9t9-common.jar">
+	  <jar destfile="${bin.v9t9.jar.dir}/ejs-base.jar">
 	     <fileset dir="bin"/>
 	  </jar>
-    </target>		
+    </target>	
 </project>

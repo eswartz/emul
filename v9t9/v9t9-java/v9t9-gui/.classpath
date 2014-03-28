@@ -6,13 +6,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/SWT"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ejs-base"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.runtime.source_3.6.0.v20100505.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.equinox.common.source_3.6.0.v20100503.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar" sourcepath="/ejs-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/jna.jar"/>
 	<classpathentry kind="src" path="data"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
@@ -53,5 +46,9 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/ejs-base/libs/svgSalamander.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.commands.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.runtime.jar"/>
+	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.equinox.common.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

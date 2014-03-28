@@ -162,7 +162,7 @@ public class SettingsDialog extends Composite implements IPropertyListener {
 					}
 					ComboBoxViewerCellEditor ce = new ComboBoxViewerCellEditor(
 							(Composite) viewer.getControl(), SWT.READ_ONLY);
-					ce.setContenProvider(new ArrayContentProvider());
+					ce.setContentProvider(new ArrayContentProvider());
 					ce.setInput(items);
 					return ce;
 				} else {
