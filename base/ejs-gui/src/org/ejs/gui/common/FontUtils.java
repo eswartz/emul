@@ -46,5 +46,24 @@ public class FontUtils  {
 		gc.dispose();
 		return extent;
 	}
-	
+
+	  /**
+     * Create a new font based on another font
+     * @param baseFont
+     * @param height
+     * @param style
+     * @return new Font
+     */
+    public static Font createResizedFont(Font baseFont, int height, int style) {
+        if (height < 1) {
+                height = 1;
+        }
+        FontData[] fds = baseFont.getFontData();
+        for (FontData fd : fds) {
+                fd.setHeight(height);
+                fd.setStyle(style);
+        }
+        return new Font(baseFont.getDevice(), fds);
+    }
+
 }
