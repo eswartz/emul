@@ -123,7 +123,7 @@ public class RS232 {
 	public byte receiveData() {
 		// Get char from buffer, or last one if empty.
 		byte ch = recvBuffer.take();
-		dumper.info(String.format("RS232: Received char %02X (%c)"), ch, (char) ch);
+		dumper.info(String.format("RS232: Received char %02x (%c)"), ch, (char) ch);
 		return ch;
 	}
 
