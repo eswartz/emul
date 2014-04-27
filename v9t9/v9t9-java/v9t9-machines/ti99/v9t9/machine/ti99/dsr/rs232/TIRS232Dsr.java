@@ -28,7 +28,6 @@ import v9t9.engine.Dumper;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.dsr.rs232.RS232;
-import v9t9.engine.dsr.rs232.RS232Settings;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruReader;
 import v9t9.engine.hardware.ICruWriter;
@@ -37,7 +36,7 @@ import v9t9.machine.ti99.dsr.IDsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
-import static v9t9.engine.dsr.rs232.RS232Constants.*;
+import static v9t9.machine.ti99.dsr.rs232.RS232Constants.*;
 /**
  * @author ejs
  *
@@ -72,8 +71,8 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 
 	protected IMachine machine;
 
-	private Map<String, RS232> deviceMap = new HashMap<String, RS232>();
-	private Map<Integer, RS232> devices = new HashMap<Integer, RS232>();
+	private Map<String, RS232Regs> deviceMap = new HashMap<String, RS232Regs>();
+	private Map<Integer, RS232Regs> devices = new HashMap<Integer, RS232Regs>();
 	
 	public TIRS232Dsr(IMachine machine, short base) {
 		this.machine = machine;
@@ -120,15 +119,15 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 */
 	private ICruWriter cruwRealRS232_0_10 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			RS232 rs = getDeviceForAddr(addr);
+			RS232Regs regs = getDeviceForAddr(addr);
 			int bit = 1 << ((addr & 0x1f) >> 1);
 			
 			if (bit >= 0x100) {
 				dumper.info(String.format("RealRS232_0_10_w: %d / %d", (addr & 0x3f) / 2, data));
 			}
-			rs.setReadPort(rs.getReadPort() & ~RS_FLAG);
-			rs.setWriteBits(data != 0 ? (rs.getWriteBits() | bit) : (rs.getWriteBits() &~ bit));
-			rs.triggerChange(0, bit);
+			regs.setReadPort(regs.getReadPort() & ~RS_FLAG);
+			regs.setWriteBits(data != 0 ? (regs.getWriteBits() | bit) : (regs.getWriteBits() &~ bit));
+			regs.triggerChange(bit);
 			return 0;
 		}
 	};
@@ -138,14 +137,14 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 */
 	private ICruWriter cruwRealRS232_11_14 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			RS232 rs = getDeviceForAddr(addr);
+			RS232Regs regs = getDeviceForAddr(addr);
 			int bit = 1 << (((addr & 0x1f) >> 1) - 11);
 			
 			dumper.info(String.format("RealRS232_11_14_w: %d / %d", (addr & 0x3f) / 2, data));
 			
-			rs.setReadPort(rs.getReadPort() | RS_FLAG);
+			regs.setReadPort(regs.getReadPort() | RS_FLAG);
 			
-			rs.setRegisterSelect(data != 0 ? (rs.getRegisterSelect() | bit) : (rs.getRegisterSelect() &~ bit));
+			regs.setRegisterSelect(data != 0 ? (regs.getRegisterSelect() | bit) : (regs.getRegisterSelect() &~ bit));
 			
 			//rs.triggerChange(bit, 0);
 			
@@ -159,15 +158,16 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 */
 	private ICruWriter cruwRealRS232_16_21 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			RS232 rs = getDeviceForAddr(addr);
+			RS232Regs regs = getDeviceForAddr(addr);
+			RS232 rs = regs.getRS232();
 			int bit = 1 << ((addr & 0x3f) >> 1);
 			
 			dumper.info(String.format("RealRS232_16_21_w: %d / %d", (addr & 0x3f) / 2, data));
 			
-			int old = rs.getWritePort();
-			rs.setWritePort(data != 0 ? (rs.getWritePort() | bit) : (rs.getWritePort() &~ bit));
+			int old = regs.getWritePort();
+			regs.setWritePort(data != 0 ? (regs.getWritePort() | bit) : (regs.getWritePort() &~ bit));
 			
-			rs.dump();
+			regs.dump();
 			rs.setControlBits(old, bit);
 			
 			return 0;
@@ -176,32 +176,14 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	
 	private ICruWriter cruwRealRS232_Reset = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			RS232 rs = getDeviceForAddr(addr);
-
+			RS232Regs regs = getDeviceForAddr(addr);
+			
 			dumper.info(String.format("RealRS232_Reset_w: %d", data));
 
 			if (data != 0) {
-//		#if BUFFERED_RS232
-//				if (rs232_interrupt_tag)
-//					TM_ResetEvent(rs232_interrupt_tag);
-//		#endif
 				
-				rs.clear();
-				rs.setRegisterSelect(0xf);
-				rs.setCTRLRegister();
-				rs.setINVLRegister();
-				rs.setRCVRATERegister();
-				rs.setXMITRATERegister();
-//				Reset_RS232_SysDeps(rs);
-				rs.dump();
-				
-//		#if BUFFERED_RS232
-//				if (!rs232_interrupt_tag)
-//					rs232_interrupt_tag = TM_UniqueTag();
-//
-//				TM_SetEvent(rs232_interrupt_tag, TM_HZ, 0, TM_FUNC | TM_REPEAT,
-//							RS232_Monitor);
-//		#endif
+				regs.clear();
+			
 			}
 			
 			return 0;
@@ -214,15 +196,16 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 */
 	private ICruReader crurRealRS232_0_7 = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			RS232 rs = getDeviceForAddr(addr);
+			RS232Regs regs = getDeviceForAddr(addr);
+			RS232 rs = regs.getRS232();
 			int bit = 1 << ((addr & 0xf) >> 1);
 
 			if (bit == 1) {
 				rs.receiveData();
-				rs.dump();
+				regs.dump();
 			}
 
-			int ret = (rs.getReadPort() & bit) != 0 ? 1 : 0;
+			int ret = (regs.getReadPort() & bit) != 0 ? 1 : 0;
 
 			if (bit >= 0x100) {
 				dumper.info(String.format("RealRS232_0_7_r: %04X / %d", addr, ret));
@@ -238,19 +221,20 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 */
 	private ICruReader crurRealRS232_9_31 = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			RS232 rs = getDeviceForAddr(addr);
+			RS232Regs regs = getDeviceForAddr(addr);
+			RS232 rs = regs.getRS232();
 			int bit = 1 << ((addr & 0x3f) >> 1);
 
 			rs.readStatusBits();
 			
 			// force DSR while buffer is nonempty
-			if (!rs.getRegisters().isRecvBufferEmpty()) {
-				rs.setReadPort(rs.getReadPort() | RS_DSR);
+			if (!rs.isRecvBufferEmpty()) {
+				regs.setReadPort(regs.getReadPort() | RS_DSR);
 			}
 			
-			rs.dump();
+			regs.dump();
 			
-			int ret = (rs.getReadPort() & bit) != 0 ? 1 : 0;
+			int ret = (regs.getReadPort() & bit) != 0 ? 1 : 0;
 			
 
 			//  turn off bit once read
@@ -295,7 +279,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	}
 
 
-	protected RS232 getDeviceForAddr(int addr) {
+	protected RS232Regs getDeviceForAddr(int addr) {
 		return getDevice((addr - base) / 0x40);
 	}
 
@@ -328,15 +312,15 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	}
 
 	protected void registerDevice(int index, String name) {
-		RS232 rs = new RS232(dumper);
+		RS232Regs rs = new RS232Regs(new RS232(dumper), dumper);
 		deviceMap.put(name, rs);
 		devices.put(index, rs);
 	}
 
-	protected RS232 getDevice(String name) {
+	protected RS232Regs getDevice(String name) {
 		return deviceMap.get(name);
 	}
-	protected RS232 getDevice(int index) {
+	protected RS232Regs getDevice(int index) {
 		return devices.get(index);
 	}
 

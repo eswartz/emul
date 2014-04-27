@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.engine.dsr.rs232;
+package v9t9.machine.ti99.dsr.rs232;
 
 /**
  * @author ejs

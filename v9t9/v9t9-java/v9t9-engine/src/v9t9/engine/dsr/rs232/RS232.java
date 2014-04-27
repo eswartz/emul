@@ -3,236 +3,72 @@
  */
 package v9t9.engine.dsr.rs232;
 
+import java.util.Arrays;
+
 import v9t9.engine.Dumper;
-import v9t9.engine.dsr.rs232.RS232Regs.RegisterSelect;
-import static v9t9.engine.dsr.rs232.RS232Constants.*;
 /**
- * This maintains the state of RS232 registers and manages high-level emulation.
+ * This manages high-level emulation of the RS232.
  * @author ejs
  *
  */
 public class RS232 {
-	private RS232Regs regs = new RS232Regs();
 	private Dumper dumper;
 	
 	public RS232(Dumper dumper) {
 		this.dumper = dumper;
-		
-	}
-	
-	public void dump()
-	{
-		StringBuilder sb = new StringBuilder(); 
-		sb.append(String.format(("* regsel=%s\t\n"), deriveRegisterSelect()));
-		if (regs.regsel >= 8) {
-			sb.append("* ");
-			sb.append(String.format(("ctrl=%02X\nrcl0=%b,rcl1=%b, clk4m=%b, Podd=%b,Penb=%b, SBS2=%b,SBS1=%b\t"),
-				 regs.ctrl, 
-				 0 != (regs.ctrl & RS232Constants.CTRL_RCL0), 
-				 0 != (regs.ctrl & RS232Constants.CTRL_RCL1),
-				 0 != (regs.ctrl & RS232Constants.CTRL_CLK4M), 
-				 0 != (regs.ctrl & RS232Constants.CTRL_Podd),
-				 0 != (regs.ctrl & RS232Constants.CTRL_Penb), 
-				 0 != (regs.ctrl & RS232Constants.CTRL_SBS2),
-				 0 != (regs.ctrl & RS232Constants.CTRL_SBS1)));
-		}
-		if (regs.regsel < 8 && regs.regsel >= 4) {
-			sb.append("* ");
-			sb.append(String.format(("invl=%03X\t"), regs.invl));
-		}
-		if (regs.regsel < 4 && regs.regsel >= 2) {
-			sb.append("* ");
-			sb.append(String.format(("rcvrate=%03X\t"), regs.rcvrate));
-		}
-		if (regs.regsel < 2 && regs.regsel >= 1) {
-			sb.append("* ");
-			sb.append(String.format(("xmitrate=%03X\t"), regs.xmitrate));
-		}
-		if (regs.regsel < 1) {
-			sb.append("* ");
-			sb.append(String.format(("txchar=%02X (%c)\t"), regs.txchar, regs.txchar));
-		}
-		sb.append(String.format(("recvbps=%d, xmitbps=%d\n"), regs.recvbps, regs.xmitbps));
-	
-		sb.append(String.format(("Write buffer: %d/%d  Read buffer: %d/%d\n"),
-			 regs.t_st, regs.t_en, regs.r_st, regs.r_en));
-	
-	/*	module_logger(&realRS232DSR, _L | L_3,("rtson=%d, brkon=%d, rienb=%d, xbienb=%d, timenb=%d, dscenb=%d\n"),
-			!!(regs.wrport&RS_RTSON), !!(regs.wrport&RS_BRKON), !!(regs.wrport&RS_RIENB),
-			!!(regs.wrport&RS_XBIENB), !!(regs.wrport&RS_TIMEMB), !!(regs.wrport&RS_DSCENB));
-	
-		module_logger(&realRS232DSR, _L | L_3,("rcverr=%d,rper=%d,rover=%d,rfer=%d,rfbd=%d,rsbd=%d,rin=%d\n"),
-			!!(regs.rdport&RS_RCVERR), !!(regs.rdport&RS_RPER), !!(regs.rdport&RS_ROVER),
-			!!(regs.rdport&RS_RFER), !!(regs.rdport&RS_RFBD), !!(regs.rdport&RS_RSBD),
-			!!(regs.rdport&RS_RIN));
-		module_logger(&realRS232DSR, _L | L_3,("rbint=%d,xbint=%d,timint=%d,dscint=%d,rbrl=%d,xbre=%d,xsre=%d\n"),
-			!!(regs.rdport&RS_RBINT), !!(regs.rdport&RS_XBINT), !!(regs.rdport&RS_TIMINT), !!(regs.rdport&RS_DSCINT),
-			!!(regs.rdport&RS_RBRL), !!(regs.rdport&RS_XBRE), !!(regs.rdport&RS_XSRE));
-		module_logger(&realRS232DSR, _L | L_3,("timerr=%d,timelp=%d,rts=%d,dsr=%d,cts=%d,dsch=%d,flag=%d,int=%d\n"),
-			!!(regs.rdport&RS_TIMERR), !!(regs.rdport&RS_TIMELP), !!(regs.rdport&RS_RTS),
-			!!(regs.rdport&RS_DSR), !!(regs.rdport&RS_CTS), !!(regs.rdport&RS_DSCH),
-			!!(regs.rdport&RS_FLAG), !!(regs.rdport&RS_INT));
-	*/
-		dumper.info(sb.toString());
-	}
-
-	public void setReadPort(int flags) {
-		regs.rdport = flags;
-	}
-	public int getReadPort() {
-		return regs.rdport;
-	}
-	public void setWritePort(int flags) {
-		regs.wrport = flags;
-	}
-	public int getWritePort() {
-		return regs.wrport;
-	}
-	public void setWriteBits(int flags) {
-		regs.wrbits = (short) flags;
-	}
-	public int getWriteBits() {
-		return regs.wrbits;
-	}
-	/*	
-	 *	Flag bits for registers multiplexed through loadctrl
-	 */
-
-	int FLAG_TXCHAR() { return (1<<(regs.getWordSize()-1)); }
-	static final int FLAG_XMITRATE =	(1<<10);
-	static final int FLAG_RCVRATE =	(1<<10);
-	static final int FLAG_INVL =		(1<<7);
-	static final int FLAG_CTRL =		(1<<7);
-
-	/**
-	 * Propagate register changes once (1) the first or last 
-	 * control bit is set or (2) data is set.
-	 * 
-	 * @param i
-	 * @param bit
-	 */
-	public void triggerChange(int cbit, int dbit) {
-		RegisterSelect sel = deriveRegisterSelect();
-		
-		boolean complete = false;
-		switch (sel) {
-		case CONTROL:
-			if (dbit == FLAG_CTRL) { 
-				regs.ctrl = (short) (regs.wrbits & 0x7ff);
-				dump();
-				setCTRLRegister();
-				flushBuffers();
-				regs.regsel &= ~8;
-			}
-			break;
-		case INTERVAL:
-			if (dbit == FLAG_INVL) { 
-				regs.invl = (short) (regs.wrbits & 0xff);
-				dump();
-				setINVLRegister();
-				flushBuffers();
-				regs.regsel &= ~4;
-			}
-			break;
-		case RECVRATE:
-			if (dbit == FLAG_RCVRATE) { 
-				regs.rcvrate = (short) (regs.wrbits & 0x7ff);
-				regs.recvbps = calcBPSRate(regs.rcvrate);
-				dump();
-				setRCVRATERegister();
-				flushBuffers();
-				regs.regsel &= ~2;
-				complete = (regs.regsel & 1) != 0;
-			}
-			// fall through: can set both RECV and XMIT rate at same time
-		case XMITRATE:
-			if (sel == RegisterSelect.XMITRATE && dbit == FLAG_XMITRATE) 
-				complete = true;
-			if (complete) {
-				regs.xmitrate = (short) (regs.wrbits & 0x7ff);
-				regs.xmitbps = calcBPSRate(regs.xmitrate);
-				dump();
-				setXMITRATERegister();
-				flushBuffers();
-				regs.regsel &= ~1;
-			}
-			break;
-		case EMIT:
-			if (dbit == FLAG_TXCHAR()) {
-				regs.txchar = (short) (regs.wrbits & (0xff >> (8 - regs.getWordSize())));
-				dump();
-				transmitChar();
-			}
-			break;
-		}		
 	}
 
 	/**
-	 * @return
+	 * @return the dumper
 	 */
-	protected RegisterSelect deriveRegisterSelect() {
-		RegisterSelect sel = null;
-		if ((regs.regsel & 8) != 0) 
-			sel = RegisterSelect.CONTROL;
-		else if ((regs.regsel & 4) != 0) 
-			sel = RegisterSelect.INTERVAL;
-		else if ((regs.regsel & 2) != 0) 
-			sel = RegisterSelect.RECVRATE;
-		else if ((regs.regsel & 1) != 0) 
-			sel = RegisterSelect.XMITRATE;
-		else
-			sel = RegisterSelect.EMIT;
-		return sel;
+	public Dumper getDumper() {
+		return dumper;
 	}
 
+	
+	// (500000/5/TM_HZ)		// max possible rate to deal with
+	static final int BUF_SIZ = 1024;
+	static final int BUF_MASK = 1023;
+
+	public boolean isXmitBufferEmpty() {
+		return t_st == t_en;
+	}
+	public boolean isXmitBufferFull() {
+		return t_st == ((t_en + 1) & BUF_MASK);
+	}
+	public int getXmitBufferLeft() {
+		return ((BUF_SIZ - t_st + t_en) & BUF_MASK);
+	}
+	public boolean isRecvBufferEmpty() {
+		return r_st == r_en;
+	}
+	public boolean isRecvBufferFull() {
+		return r_st == ((r_en + 1) & BUF_MASK);
+	}
+	public int getRecvBufferLeft() {
+		return ((BUF_SIZ - r_st + r_en) & BUF_MASK);
+	}
+
+	byte	xmit[] = new byte[BUF_SIZ], recv[] = new byte[BUF_SIZ];
+	int	t_st,t_en, r_st, r_en;			// pointers to ring
 	/**
 	 * 
 	 */
-	private void transmitChar() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	/**
-	 * @param rcvrate
-	 * @return
-	 */
-	private int calcBPSRate(short rate) {
-		int bps;
-		
-		// BPS = 3 MHz / ((CLK4M ? 4 : 3) * 2 * rate x 8*DIV8)
-		int         div;
-
-		// input speed
-		div = (((regs.ctrl & CTRL_CLK4M) != 0 ? 4 : 3) * 2
-			   * (rate & RATE_MASK) * ((rate & RATE_DIV8) != 0 ? 8 : 1));
-		if (div == 0)
-			bps = 50;
-		else
-			bps = (3000000 /*baseclockhz*/ / div);
-
-		dumper.info(String.format("Calc_BPS_Rate:  *bps = %d", bps));
-		return bps;
-	}
-
-	/**
-	 * 
-	 */
-	private void flushBuffers() {
+	public void flushBuffers() {
 		dumper.info("*** Flushing buffers");
 		
 		// lose all readable data
-		regs.r_st = regs.r_en = 0;
+		r_st = r_en = 0;
 
 		// send all writeable data
 		// (don't loop here!)
 		transmitChars();
 
-		if (!regs.isXmitBufferEmpty()) { 
+		if (!isXmitBufferEmpty()) { 
 			dumper.info("*** Transmit buffer was not empty");
 		}
-		regs.t_st = regs.t_en = 0;
-		dump();		
+		t_st = t_en = 0;
+		//dump();		
 	}
 
 	/**
@@ -244,14 +80,13 @@ public class RS232 {
 	}
 
 	/**
-	 * @return
+	 * 
 	 */
-	public short getRegisterSelect() {
-		return regs.regsel;
+	public void transmitChar() {
+		// TODO Auto-generated method stub
+		
 	}
-	public void setRegisterSelect(int regsel) {
-		regs.regsel = (short) regsel;
-	}
+
 
 	/**
 	 * @param old
@@ -270,12 +105,6 @@ public class RS232 {
 		
 	}
 
-	/**
-	 * @return
-	 */
-	public RS232Regs getRegisters() {
-		return regs;
-	}
 
 	/**
 	 * 
@@ -285,11 +114,45 @@ public class RS232 {
 		
 	}
 
+	public void dump()
+	{
+		StringBuilder sb = new StringBuilder(); 
+	
+		sb.append(String.format(("Write buffer: %d/%d  Read buffer: %d/%d\n"),
+			 t_st, t_en, r_st, r_en));
+	
+		dumper.info(sb.toString());
+	}
+
 	/**
 	 * 
 	 */
 	public void clear() {
-		regs.clear();
+//		#if BUFFERED_RS232
+//		if (rs232_interrupt_tag)
+//			TM_ResetEvent(rs232_interrupt_tag);
+//#endif
+
+		//regs.clear();
+
+		Arrays.fill(xmit, (byte) 0);
+		Arrays.fill(recv, (byte) 0);
+		t_st = t_en = r_st = r_en = 0;
+		
+		setCTRLRegister();
+		setINVLRegister();
+		setRCVRATERegister();
+		setXMITRATERegister();
+//		Reset_RS232_SysDeps(rs);
+		dump();
+		
+//		#if BUFFERED_RS232
+//				if (!rs232_interrupt_tag)
+//					rs232_interrupt_tag = TM_UniqueTag();
+//
+//				TM_SetEvent(rs232_interrupt_tag, TM_HZ, 0, TM_FUNC | TM_REPEAT,
+//							RS232_Monitor);
+//		#endif
 	}
 
 	/**
@@ -321,6 +184,21 @@ public class RS232 {
 	 */
 	public void setXMITRATERegister() {
 		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * @param x
+	 */
+	public void setTransmitRate(int bps) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * @param recvbps
+	 */
+	public void setReceiveRate(int recvbps) {
 		
 	}
 

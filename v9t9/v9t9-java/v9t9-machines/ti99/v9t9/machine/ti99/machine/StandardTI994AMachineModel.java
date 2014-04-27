@@ -21,7 +21,6 @@ import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
-import v9t9.engine.dsr.rs232.RS232Constants;
 import v9t9.engine.files.image.FDCControllers;
 import v9t9.engine.files.image.RealDiskSettings;
 import v9t9.engine.modules.ModuleManager;
@@ -32,6 +31,7 @@ import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
 import v9t9.machine.ti99.dsr.realdisk.CorcompDiskImageDsr;
 import v9t9.machine.ti99.dsr.realdisk.TIDiskImageDsr;
+import v9t9.machine.ti99.dsr.rs232.RS232Constants;
 import v9t9.machine.ti99.dsr.rs232.TIRS232Dsr;
 import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 
