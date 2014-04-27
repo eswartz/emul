@@ -31,7 +31,7 @@ import v9t9.common.files.NativeFileFactory;
 import v9t9.common.files.PabConstants;
 import v9t9.common.files.V9t9FDR;
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.engine.files.image.Dumper;
+import v9t9.engine.Dumper;
 import ejs.base.utils.HexUtils;
 
 public class DirectDiskHandler {

@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.engine.files.image;
+package v9t9.engine;
 
 import java.io.PrintWriter;
 import java.text.MessageFormat;
@@ -29,7 +29,7 @@ public class Dumper {
 	public Dumper(IProperty dump, IProperty dumpFull) {
 		settingDump = dump;
 		settingDumpFull = dumpFull;
-        Logging.registerLog(settingDump, "disk_debug.txt");
+        Logging.registerLog(settingDump, "instrs.txt");
         Logging.registerLog(settingDumpFull, "instrs_full.txt");
 
 	}
@@ -57,6 +57,10 @@ public class Dumper {
 
 	public void info(String fmt, Object... args) {
 		info(MessageFormat.format(fmt, args));
+		
+	}
+	public void infof(String fmt, Object... args) {
+		info(String.format(fmt, args));
 		
 	}
 

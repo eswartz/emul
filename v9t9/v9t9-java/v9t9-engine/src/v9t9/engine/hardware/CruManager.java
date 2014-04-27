@@ -10,6 +10,7 @@
  */
 package v9t9.engine.hardware;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -40,14 +41,13 @@ public class CruManager implements ICruHandler {
         if (base >= 0x2000) {
             throw new AssertionError("invalid CRU address "+Integer.toHexString(base));
         }
-        if (range != 1) {
-            throw new AssertionError("only single-bit ranges allowed, got " + Integer.toHexString(range));
+        for (int x = 0; x < range; x++) {
+	        Integer baseObj = base + x * 2;
+	        if (readers.get(baseObj) != null) {
+	            throw new AssertionError("overlapping I/O at "+Integer.toHexString(base));
+	        }
+	        readers.put(baseObj, access);
         }
-        Integer baseObj = new Integer(base);
-        if (readers.get(baseObj) != null) {
-            throw new AssertionError("overlapping I/O at "+Integer.toHexString(base));
-        }
-        readers.put(baseObj, access);
         ensureReaderArray();
     }
 
@@ -55,14 +55,23 @@ public class CruManager implements ICruHandler {
         if (base >= 0x2000) {
             throw new AssertionError("invalid CRU address "+Integer.toHexString(base));
         }
-        if (range != 1) {
-            throw new AssertionError("only single-bit ranges allowed, got " + Integer.toHexString(range));
+        for (int x = 0; x < range; x++) {
+	        Integer baseObj = base + x * 2;
+	        
+	        ICruWriter exist = writers.get(baseObj);
+	        if (exist != null) {
+	        	if (exist instanceof MultiCruWriter) {
+	        		((MultiCruWriter) exist).addWriter(access);
+	        	} else {
+	        		MultiCruWriter mw = new MultiCruWriter();
+	        		mw.addWriter(exist);
+	        		mw.addWriter(access);
+	        		writers.put(baseObj, mw);
+	        	}
+	        } else {
+	        	writers.put(baseObj, access);
+	        }
         }
-        Integer baseObj = new Integer(base);
-        if (writers.get(baseObj) != null) {
-            throw new AssertionError("overlapping I/O at "+Integer.toHexString(base));
-        }
-        writers.put(baseObj, access);
         ensureWriterArray();
     }
 
@@ -70,10 +79,9 @@ public class CruManager implements ICruHandler {
         if (base >= 0x2000) {
             throw new AssertionError("invalid CRU address "+Integer.toHexString(base));
         }
-        if (range != 1) {
-            throw new AssertionError("only single-bit ranges allowed, got " + Integer.toHexString(range));
+        for (int x = 0; x < range; x++) {
+        	readers.remove(base + x * 2);
         }
-        readers.remove(new Integer(base));
         ensureReaderArray();
     }
 
@@ -81,10 +89,14 @@ public class CruManager implements ICruHandler {
         if (base >= 0x2000) {
             throw new AssertionError("invalid CRU address "+Integer.toHexString(base));
         }
-        if (range != 1) {
-            throw new AssertionError("only single-bit ranges allowed, got " + Integer.toHexString(range));
+        for (int x = 0; x < range; x++) {
+        	ICruWriter access = writers.remove(base + x * 2);
+        	if (access instanceof MultiCruWriter) {
+        		if (((MultiCruWriter) access).removeLast()) {
+        			writers.put(base + x * 2, access);
+        		}
+        	}
         }
-        writers.remove(new Integer(base));
         ensureWriterArray();
     }
 
@@ -113,7 +125,10 @@ public class CruManager implements ICruHandler {
     }
 
 	private void ensureWriterArray() {
-		writerArray = new ICruWriter[0x1000];
+		if (writerArray == null)
+			writerArray = new ICruWriter[0x1000];
+		else
+			Arrays.fill(writerArray, null);
 		for (Map.Entry<Integer, ICruWriter> entry : writers.entrySet()) {
 			writerArray[entry.getKey() / 2] = entry.getValue();
 		}
@@ -149,7 +164,10 @@ public class CruManager implements ICruHandler {
     }
 
 	private void ensureReaderArray() {
-		readerArray = new ICruReader[0x1000];
+		if (readerArray == null)
+			readerArray = new ICruReader[0x1000];
+		else
+			Arrays.fill(readerArray, null);
 		for (Map.Entry<Integer, ICruReader> entry : readers.entrySet()) {
 			readerArray[entry.getKey() / 2] = entry.getValue();
 		}

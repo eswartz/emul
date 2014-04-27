@@ -10,6 +10,7 @@
  */
 package v9t9.engine.files.image;
 
+import v9t9.engine.Dumper;
 import ejs.base.utils.HexUtils;
 
 /**

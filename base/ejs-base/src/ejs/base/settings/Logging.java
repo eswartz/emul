@@ -42,6 +42,9 @@ public class Logging {
 	 * unless absolute
 	 */
 	public static void registerLog(IProperty setting, String logFileName) {
+		if (setting == null)
+			return;
+		
 		if (settingToFilenameMap.containsKey(setting))
 			return;
 			

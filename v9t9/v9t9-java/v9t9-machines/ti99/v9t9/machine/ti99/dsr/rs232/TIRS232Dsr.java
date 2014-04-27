@@ -1,0 +1,390 @@
+/**
+ * 
+ */
+package v9t9.machine.ti99.dsr.rs232;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.cpu.ICpu;
+import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.dsr.IDeviceSettings;
+import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.machine.IMachine;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryEntryFactory;
+import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.SettingSchemaProperty;
+import v9t9.common.settings.Settings;
+import v9t9.engine.Dumper;
+import v9t9.engine.dsr.DeviceIndicatorProvider;
+import v9t9.engine.dsr.IDevIcons;
+import v9t9.engine.dsr.rs232.RS232;
+import v9t9.engine.dsr.rs232.RS232Settings;
+import v9t9.engine.hardware.CruManager;
+import v9t9.engine.hardware.ICruReader;
+import v9t9.engine.hardware.ICruWriter;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.machine.ti99.dsr.IDsrHandler9900;
+import v9t9.machine.ti99.machine.TI99Machine;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
+import static v9t9.engine.dsr.rs232.RS232Constants.*;
+/**
+ * @author ejs
+ *
+ */
+public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
+	private IMemoryEntry romMemoryEntry;
+
+
+	public static SettingSchema settingDsrRomFileName = new SettingSchema(
+			ISettingsHandler.MACHINE,
+			"RS232DsrFileName",
+			"rs232.bin");
+
+	
+	public static MemoryEntryInfo dsrRomInfo = MemoryEntryInfoBuilder
+			.standardDsrRom(null)
+			.withFilenameProperty(settingDsrRomFileName)
+			.withDescription("RS232 Controller ROM")
+			.withFileMD5("4E4E08FF10D23B799AAA990344553E2E")
+			//.withFileMD5Limit(0x1FF0)
+			.create("TI RS232 DSR ROM");
+	
+	
+
+	private short base;
+
+	private Dumper dumper;
+
+	private boolean inited;
+
+	protected IProperty rs232ActiveSetting;
+
+	protected IMachine machine;
+
+	private Map<String, RS232> deviceMap = new HashMap<String, RS232>();
+	private Map<Integer, RS232> devices = new HashMap<Integer, RS232>();
+	
+	public TIRS232Dsr(IMachine machine, short base) {
+		this.machine = machine;
+		this.base = base;
+		
+		rs232ActiveSetting = new SettingSchemaProperty(getName(), Boolean.FALSE);
+		
+		this.dumper = new Dumper(Settings.getSettings(machine),
+				RS232Settings.settingRS232Debug, ICpu.settingDumpFullInstructions);
+		
+	
+	}
+	
+	public void activate(IMemoryDomain console, IMemoryEntryFactory memoryEntryFactory) throws IOException {
+		init();
+		
+		rs232ActiveSetting.setBoolean(true);
+
+		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(dsrRomInfo);
+		
+		console.mapEntry(romMemoryEntry);
+		
+		machine.getCpu().settingDumpFullInstructions().setBoolean(true);
+	}
+	
+	public void deactivate(IMemoryDomain console) {
+		console.unmapEntry(romMemoryEntry);
+		
+		rs232ActiveSetting.setBoolean(false);
+		
+		machine.getCpu().settingDumpFullInstructions().setBoolean(false);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.dsr.IDsrHandler9900#getCruBase()
+	 */
+	@Override
+	public short getCruBase() {
+		return base;
+	}
+	
+	/** 
+	 *	Writes of low register bits
+	 */
+	private ICruWriter cruwRealRS232_0_10 = new ICruWriter() {
+		public int write(int addr, int data, int num) {
+			RS232 rs = getDeviceForAddr(addr);
+			int bit = 1 << ((addr & 0x1f) >> 1);
+			
+			if (bit >= 0x100) {
+				dumper.info(String.format("RealRS232_0_10_w: %d / %d", (addr & 0x3f) / 2, data));
+			}
+			rs.setReadPort(rs.getReadPort() & ~RS_FLAG);
+			rs.setWriteBits(data != 0 ? (rs.getWriteBits() | bit) : (rs.getWriteBits() &~ bit));
+			rs.triggerChange(0, bit);
+			return 0;
+		}
+	};
+	
+	/**
+	 *	Load control register bits
+	 */
+	private ICruWriter cruwRealRS232_11_14 = new ICruWriter() {
+		public int write(int addr, int data, int num) {
+			RS232 rs = getDeviceForAddr(addr);
+			int bit = 1 << (((addr & 0x1f) >> 1) - 11);
+			
+			dumper.info(String.format("RealRS232_11_14_w: %d / %d", (addr & 0x3f) / 2, data));
+			
+			rs.setReadPort(rs.getReadPort() | RS_FLAG);
+			
+			rs.setRegisterSelect(data != 0 ? (rs.getRegisterSelect() | bit) : (rs.getRegisterSelect() &~ bit));
+			
+			//rs.triggerChange(bit, 0);
+			
+			return 0;
+		}
+	};
+	
+	/**
+	 *	Remaining write ports
+	 *
+	 */
+	private ICruWriter cruwRealRS232_16_21 = new ICruWriter() {
+		public int write(int addr, int data, int num) {
+			RS232 rs = getDeviceForAddr(addr);
+			int bit = 1 << ((addr & 0x3f) >> 1);
+			
+			dumper.info(String.format("RealRS232_16_21_w: %d / %d", (addr & 0x3f) / 2, data));
+			
+			int old = rs.getWritePort();
+			rs.setWritePort(data != 0 ? (rs.getWritePort() | bit) : (rs.getWritePort() &~ bit));
+			
+			rs.dump();
+			rs.setControlBits(old, bit);
+			
+			return 0;
+		}
+	};
+	
+	private ICruWriter cruwRealRS232_Reset = new ICruWriter() {
+		public int write(int addr, int data, int num) {
+			RS232 rs = getDeviceForAddr(addr);
+
+			dumper.info(String.format("RealRS232_Reset_w: %d", data));
+
+			if (data != 0) {
+//		#if BUFFERED_RS232
+//				if (rs232_interrupt_tag)
+//					TM_ResetEvent(rs232_interrupt_tag);
+//		#endif
+				
+				rs.clear();
+				rs.setRegisterSelect(0xf);
+				rs.setCTRLRegister();
+				rs.setINVLRegister();
+				rs.setRCVRATERegister();
+				rs.setXMITRATERegister();
+//				Reset_RS232_SysDeps(rs);
+				rs.dump();
+				
+//		#if BUFFERED_RS232
+//				if (!rs232_interrupt_tag)
+//					rs232_interrupt_tag = TM_UniqueTag();
+//
+//				TM_SetEvent(rs232_interrupt_tag, TM_HZ, 0, TM_FUNC | TM_REPEAT,
+//							RS232_Monitor);
+//		#endif
+			}
+			
+			return 0;
+		}
+	};
+	
+	/**
+	 *	Read character
+	 *
+	 */
+	private ICruReader crurRealRS232_0_7 = new ICruReader() {
+		public int read(int addr, int data, int num) {
+			RS232 rs = getDeviceForAddr(addr);
+			int bit = 1 << ((addr & 0xf) >> 1);
+
+			if (bit == 1) {
+				rs.receiveData();
+				rs.dump();
+			}
+
+			int ret = (rs.getReadPort() & bit) != 0 ? 1 : 0;
+
+			if (bit >= 0x100) {
+				dumper.info(String.format("RealRS232_0_7_r: %04X / %d", addr, ret));
+			}
+
+			return ret;
+		}
+	};
+	
+	/**
+	 *	Read status bit
+	 *
+	 */
+	private ICruReader crurRealRS232_9_31 = new ICruReader() {
+		public int read(int addr, int data, int num) {
+			RS232 rs = getDeviceForAddr(addr);
+			int bit = 1 << ((addr & 0x3f) >> 1);
+
+			rs.readStatusBits();
+			
+			// force DSR while buffer is nonempty
+			if (!rs.getRegisters().isRecvBufferEmpty()) {
+				rs.setReadPort(rs.getReadPort() | RS_DSR);
+			}
+			
+			rs.dump();
+			
+			int ret = (rs.getReadPort() & bit) != 0 ? 1 : 0;
+			
+
+			//  turn off bit once read
+		//  if (bit == RS_INT || bit == RS_RBINT || bit == RS_XBINT || 
+//		      bit == RS_TIMINT || bit == RS_DSCINT) 
+//		      rs->rdport &= ~bit;
+
+			dumper.info(String.format("RealRS232_9_31_r: %d / %d", (addr & 0x3f) / 2, ret));
+			return ret;
+		}
+	};
+
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.dsr.rs232.BaseRS232Dsr#init()
+	 */
+	@Override
+	public void init() {
+		if (inited)
+			return;
+		
+		inited = true;
+		
+		registerDevice(1, "RS232/1");
+		registerDevice(2, "RS232/2");
+		
+		CruManager cruManager = ((TI99Machine) machine).getCruManager();
+		
+		for (int dev = 1; dev <= 2; dev++) {
+			short base = (short) (this.base + dev * 0x40);
+			
+			cruManager.add(base + 2*0, 11, cruwRealRS232_0_10);
+			cruManager.add(base + 2*11, 4, cruwRealRS232_11_14);
+			cruManager.add(base + 2*16, 6, cruwRealRS232_16_21);
+			cruManager.add(base + 2*31, 1, cruwRealRS232_Reset);
+			
+			cruManager.add(base + 2*0, 8, crurRealRS232_0_7);
+			cruManager.add(base + 2*9, 23, crurRealRS232_9_31);
+		}
+
+	}
+
+
+	protected RS232 getDeviceForAddr(int addr) {
+		return getDevice((addr - base) / 0x40);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.dsr.realRS232.BaseRS232ImageDsr#dispose()
+	 */
+	@Override
+	public void dispose() {
+		CruManager cruManager = ((TI99Machine) machine).getCruManager();
+		for (int dev = 1; dev <= 2; dev++) {
+			short base = (short) (this.base + dev * 0x40);
+			
+			cruManager.removeWriter(base + 2*0, 11);
+			cruManager.removeWriter(base + 2*11, 4);
+			cruManager.removeWriter(base + 2*16, 6);
+			cruManager.removeWriter(base + 2*31, 1);
+			
+			cruManager.removeReader(base + 2*0, 8);
+			cruManager.removeReader(base + 2*9, 23);
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.machine.ti99.dsr.IDsrHandler9900#handleDSR(v9t9.common.dsr.IMemoryTransfer, short)
+	 */
+	@Override
+	public boolean handleDSR(IMemoryTransfer xfer, short code) {
+		dumper.info(("RealRS232DSR: ignoring code = " + code));
+		return false;
+	}
+
+	protected void registerDevice(int index, String name) {
+		RS232 rs = new RS232(dumper);
+		deviceMap.put(name, rs);
+		devices.put(index, rs);
+	}
+
+	protected RS232 getDevice(String name) {
+		return deviceMap.get(name);
+	}
+	protected RS232 getDevice(int index) {
+		return devices.get(index);
+	}
+
+	@Override
+	public String getName() {
+		return "RS232 DSR";
+	}
+
+	@Override
+	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
+		
+		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
+				rs232ActiveSetting, 
+				"RS232 activity",
+				// TODO get real icon
+				IDevIcons.DSR_USCD, IDevIcons.DSR_LIGHT);
+		return Collections.<IDeviceIndicatorProvider>singletonList(deviceIndicatorProvider);
+	}
+
+	@Override
+	public Map<String, Collection<IProperty>> getEditableSettingGroups() {
+			// TODO Auto-generated method stub
+			Map<String, Collection<IProperty>> map = new LinkedHashMap<String, Collection<IProperty>>();
+	//		Collection<IProperty> settings;
+	//		
+	//		settings = new ArrayList<IProperty>(2);
+	//		settings.add(this.settings.get(RealDiskSettings.diskImagesEnabled));
+	//		settings.add(this.settings.get(RealDiskSettings.diskController));
+	//		map.put(IDsrHandler.GROUP_DSR_SELECTION, settings);
+	//		
+	//		settings = new ArrayList<IProperty>(imageMapper.getDiskSettingsMap().values());
+	//		settings.add(settingRealTime);
+	//		settings.add(settingDebug);
+	//		map.put(IDsrHandler.GROUP_DISK_CONFIGURATION, settings);
+			
+			return map;
+		}
+
+	@Override
+	public void loadState(ISettingSection section) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void saveState(ISettingSection section) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

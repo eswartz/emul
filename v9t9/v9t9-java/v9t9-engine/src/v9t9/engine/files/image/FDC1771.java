@@ -17,6 +17,7 @@ import java.util.Map;
 import v9t9.common.files.IdMarker;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchemaProperty;
+import v9t9.engine.Dumper;
 import v9t9.engine.dsr.realdisk.CRC16;
 import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;

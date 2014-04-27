@@ -23,6 +23,7 @@
 /*
   $Id$
  */
+#define BUFFERED_RS232 1
 
 #include <fcntl.h>
 #include <stdio.h>

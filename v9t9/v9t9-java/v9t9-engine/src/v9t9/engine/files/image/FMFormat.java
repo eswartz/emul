@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import v9t9.common.files.IdMarker;
+import v9t9.engine.Dumper;
 import v9t9.engine.dsr.realdisk.CRC16;
 import v9t9.engine.dsr.realdisk.ICRCAlgorithm;
 import ejs.base.utils.HexUtils;

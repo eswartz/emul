@@ -30,6 +30,7 @@ import v9t9.common.files.IEmulatedFile;
 import v9t9.common.files.IdMarker;
 import v9t9.common.files.IndexSector;
 import v9t9.common.files.VIB;
+import v9t9.engine.Dumper;
 import v9t9.engine.dsr.realdisk.ICRCAlgorithm;
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;

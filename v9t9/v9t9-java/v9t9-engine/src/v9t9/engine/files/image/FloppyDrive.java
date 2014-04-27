@@ -22,6 +22,7 @@ import v9t9.common.files.IDiskImageMapper;
 import v9t9.common.files.IDiskImageMapper.IDiskImageListener;
 import v9t9.common.files.IdMarker;
 import v9t9.common.machine.IMachine;
+import v9t9.engine.Dumper;
 import ejs.base.properties.IProperty;
 
 /**

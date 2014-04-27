@@ -29,9 +29,9 @@ import v9t9.common.files.NativeTextFile;
 import v9t9.common.files.PabConstants;
 import v9t9.common.files.V9t9FDR;
 import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.engine.Dumper;
 import v9t9.engine.dsr.PabHandler;
 import v9t9.engine.dsr.PabStruct;
-import v9t9.engine.files.image.Dumper;
 import ejs.base.utils.HexUtils;
 
 public class EmuDiskPabHandler extends PabHandler {
