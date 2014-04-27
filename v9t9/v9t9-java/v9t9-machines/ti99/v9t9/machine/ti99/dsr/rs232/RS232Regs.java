@@ -18,7 +18,7 @@ public class RS232Regs {
 	private RS232 rs232;
 	
 	//	WRITE:
-	private short	regsel;			//	0..0xf of 
+	private byte regsel;			//	0..0xf of 
 	private short	wrbits;			//	bits written to register
 
 	//	wrbits copied here
@@ -68,10 +68,6 @@ public class RS232Regs {
 	public short getRegisterSelect() {
 		return regsel;
 	}
-	public void setRegisterSelect(int regsel) {
-		this.regsel = (short) regsel;
-	}
-
 	/**
 	 * @param rcvrate
 	 * @return
@@ -131,53 +127,56 @@ public class RS232Regs {
 	 * Apply register changes once the last bit in a register is set.
 	 */
 	public void triggerChange(int dbit) {
-		RS232 rs = rs232;
 		RegisterSelect sel = deriveRegisterSelect();
 		
 		boolean complete = false;
 		switch (sel) {
 		case CONTROL:
 			if (dbit == FLAG_CTRL) { 
-				setControl((short) (getWriteBits() & 0x7ff));
+				this.ctrl = (short) (getWriteBits() & 0x7ff);
 				dump();
-				rs.setCTRLRegister();
-				rs.flushBuffers();
-				setRegisterSelect(getRegisterSelect() & ~8);
+				rs232.setCTRLRegister();
+				rs232.flushBuffers();
+				this.regsel = (byte) (regsel & ~8);
 			}
 			break;
 		case INTERVAL:
 			if (dbit == FLAG_INVL) { 
-				setInterval((short) (getWriteBits() & 0xff));
+				this.invl = (short) (getWriteBits() & 0xff);
 				dump();
-				rs.setINVLRegister();
-				rs.flushBuffers();
-				setRegisterSelect(getRegisterSelect() & ~4);
+				rs232.setINVLRegister();
+				rs232.flushBuffers();
+				this.regsel = (byte) (regsel & ~4);
 			}
 			break;
 		case RECVRATE:
 			if (dbit == FLAG_RCVRATE) { 
-				setReceiveRate((short) (getWriteBits() & 0x7ff));
-				rs.setRCVRATERegister();
-				rs.flushBuffers();
-				setRegisterSelect(getRegisterSelect() & ~2);
-				complete = (getRegisterSelect() & 1) != 0;
+				rcvrate = ((short) (getWriteBits() & 0x7ff));
+				recvbps = calcBPSRate(rcvrate);
+				dump();
+				rs232.setReceiveRate(recvbps);
+				rs232.flushBuffers();
+				this.regsel = (byte) (regsel & ~2);
+				complete = (regsel & 1) != 0;
 			}
 			// fall through: can set both RECV and XMIT rate at same time
 		case XMITRATE:
 			if (sel == RegisterSelect.XMITRATE && dbit == FLAG_XMITRATE) 
 				complete = true;
 			if (complete) {
-				setTransmitRate((short) (getWriteBits() & 0x7ff));
-				rs.setXMITRATERegister();
-				rs.flushBuffers();
-				setRegisterSelect(getRegisterSelect() & ~1);
+				xmitrate = ((short) (getWriteBits() & 0x7ff));
+				xmitbps = calcBPSRate(xmitrate);
+				dump();
+				rs232.setTransmitRate(xmitbps);
+				rs232.flushBuffers();
+				this.regsel = (byte) (regsel & ~1);
 			}
 			break;
 		case EMIT:
 			if (dbit == FLAG_TXCHAR()) {
-				setTransmitChar((short) (getWriteBits() & (0xff >> (8 - getWordSize()))));
+				this.txchar = (short) (getWriteBits() & (0xff >> (8 - getWordSize())));
 				dump();
-				rs.transmitChar();
+				rs232.transmitChar((byte) txchar);
 			}
 			break;
 		}		
@@ -236,8 +235,8 @@ public class RS232Regs {
 		dumper.info(sb.toString());
 	}
 
-	public void setReadPort(int flags) {
-		rdport = flags;
+	public void setReadPort(int rdport) {
+		this.rdport = rdport;
 	}
 	public int getReadPort() {
 		return rdport;
@@ -254,53 +253,53 @@ public class RS232Regs {
 	public int getWriteBits() {
 		return wrbits;
 	}
-	/**
-	 * @param s
-	 */
-	public void setControl(short s) {
-		this.ctrl = s;
-	}
-	/**
-	 * @param s
-	 */
-	public void setInterval(short s) {
-		this.invl = s;
-	}
-	/**
-	 * @param s
-	 */
-	public void setTransmitRate(short s) {
-		this.xmitrate = s;
-		xmitbps = calcBPSRate(s);
-		dump();
-		rs232.setTransmitRate(xmitbps);
-	}
-	public void setReceiveRate(short s) {
-		this.rcvrate = s;
-		recvbps = calcBPSRate(s);
-		dump();
-		rs232.setReceiveRate(recvbps);
-	}
-	/**
-	 * @return
-	 */
-	public short getReceiveRate() {
-		return rcvrate;
-	}
-	
-	public short getTransmitRate() {
-		return xmitrate;
-	}
-	public void setTransmitChar(short s) {
-		this.txchar = s;
-	}
-
-
-	/**
-	 * @return
-	 */
 	public RS232 getRS232() {
 		return rs232;
+	}
+
+
+	/**
+	 * @param i
+	 */
+	public void setRegisterSelect(int i) {
+		regsel = (byte) i;
+	}
+
+
+	/**
+	 * @param data
+	 * @param bit
+	 */
+	public void updateRegisterSelect(int data, int bit) {
+		if (data != 0)
+			regsel |= bit;
+		else
+			regsel &= ~bit;
+				
+	}
+
+
+	/**
+	 * @param data
+	 * @param bit
+	 */
+	public void updateWriteBits(int data, int bit) {
+		if (data != 0)
+			wrbits |= bit;
+		else
+			wrbits &= ~bit;
+	}
+
+
+	/**
+	 * @param data
+	 * @param bit
+	 */
+	public void updateWritePort(int data, int bit) {
+		if (data != 0)
+			wrport |= bit;
+		else
+			wrport &= ~bit;
 	}
 
 

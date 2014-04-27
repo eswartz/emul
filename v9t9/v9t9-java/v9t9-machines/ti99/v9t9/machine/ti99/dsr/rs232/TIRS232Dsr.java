@@ -126,7 +126,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 				dumper.info(String.format("RealRS232_0_10_w: %d / %d", (addr & 0x3f) / 2, data));
 			}
 			regs.setReadPort(regs.getReadPort() & ~RS_FLAG);
-			regs.setWriteBits(data != 0 ? (regs.getWriteBits() | bit) : (regs.getWriteBits() &~ bit));
+			regs.updateWriteBits(data, bit);
 			regs.triggerChange(bit);
 			return 0;
 		}
@@ -144,7 +144,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			
 			regs.setReadPort(regs.getReadPort() | RS_FLAG);
 			
-			regs.setRegisterSelect(data != 0 ? (regs.getRegisterSelect() | bit) : (regs.getRegisterSelect() &~ bit));
+			regs.updateRegisterSelect(data, bit);
 			
 			//rs.triggerChange(bit, 0);
 			
@@ -165,7 +165,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			dumper.info(String.format("RealRS232_16_21_w: %d / %d", (addr & 0x3f) / 2, data));
 			
 			int old = regs.getWritePort();
-			regs.setWritePort(data != 0 ? (regs.getWritePort() | bit) : (regs.getWritePort() &~ bit));
+			regs.updateWritePort(data, bit);
 			
 			regs.dump();
 			rs.setControlBits(old, bit);
@@ -201,7 +201,8 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			int bit = 1 << ((addr & 0xf) >> 1);
 
 			if (bit == 1) {
-				rs.receiveData();
+				byte ch = rs.receiveData();
+				regs.setReadPort(ch);
 				regs.dump();
 			}
 
@@ -225,16 +226,17 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			RS232 rs = regs.getRS232();
 			int bit = 1 << ((addr & 0x3f) >> 1);
 
-			rs.readStatusBits();
+			int bits = rs.readStatusBits();
 			
 			// force DSR while buffer is nonempty
 			if (!rs.isRecvBufferEmpty()) {
-				regs.setReadPort(regs.getReadPort() | RS_DSR);
+				bits |= RS_DSR;
 			}
+			regs.setReadPort(bits);
 			
 			regs.dump();
 			
-			int ret = (regs.getReadPort() & bit) != 0 ? 1 : 0;
+			int ret = (bits & bit) != 0 ? 1 : 0;
 			
 
 			//  turn off bit once read
@@ -335,8 +337,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
 				rs232ActiveSetting, 
 				"RS232 activity",
-				// TODO get real icon
-				IDevIcons.DSR_USCD, IDevIcons.DSR_LIGHT);
+				IDevIcons.DSR_RS232, IDevIcons.DSR_LIGHT);
 		return Collections.<IDeviceIndicatorProvider>singletonList(deviceIndicatorProvider);
 	}
 

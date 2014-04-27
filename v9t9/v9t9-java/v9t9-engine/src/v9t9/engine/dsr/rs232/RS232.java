@@ -80,9 +80,10 @@ public class RS232 {
 	}
 
 	/**
+	 * @param txchar 
 	 * 
 	 */
-	public void transmitChar() {
+	public void transmitChar(byte ch) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -98,20 +99,20 @@ public class RS232 {
 	}
 
 	/**
+	 * @return 
 	 * 
 	 */
-	public void receiveData() {
-		// TODO Auto-generated method stub
-		
+	public byte receiveData() {
+		return 0;
 	}
 
 
 	/**
+	 * @return 
 	 * 
 	 */
-	public void readStatusBits() {
-		// TODO Auto-generated method stub
-		
+	public int readStatusBits() {
+		return 0;
 	}
 
 	public void dump()
@@ -141,8 +142,8 @@ public class RS232 {
 		
 		setCTRLRegister();
 		setINVLRegister();
-		setRCVRATERegister();
-		setXMITRATERegister();
+		setReceiveRate(0);
+		setTransmitRate(0);
 //		Reset_RS232_SysDeps(rs);
 		dump();
 		
@@ -167,22 +168,6 @@ public class RS232 {
 	 * 
 	 */
 	public void setINVLRegister() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	/**
-	 * 
-	 */
-	public void setRCVRATERegister() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	/**
-	 * 
-	 */
-	public void setXMITRATERegister() {
 		// TODO Auto-generated method stub
 		
 	}

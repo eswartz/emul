@@ -59,10 +59,6 @@ public class Dumper {
 		info(MessageFormat.format(fmt, args));
 		
 	}
-	public void infof(String fmt, Object... args) {
-		info(String.format(fmt, args));
-		
-	}
 
 	public void error(String string) {
 		PrintWriter full = Logging.getLog(settingDumpFull);
