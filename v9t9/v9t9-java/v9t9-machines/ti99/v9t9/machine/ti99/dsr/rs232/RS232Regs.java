@@ -3,9 +3,15 @@
  */
 package v9t9.machine.ti99.dsr.rs232;
 
-import static v9t9.machine.ti99.dsr.rs232.RS232Constants.*;
+import v9t9.common.cpu.ICpu;
+import v9t9.common.dsr.IRS232Handler.DataSize;
+import v9t9.common.dsr.IRS232Handler.Parity;
+import v9t9.common.dsr.IRS232Handler.Stop;
+import v9t9.common.machine.IMachine;
 import v9t9.engine.Dumper;
 import v9t9.engine.dsr.rs232.RS232;
+import v9t9.machine.ti99.cpu.Cpu9900;
+import ejs.base.properties.IProperty;
 
 /** The RS232 device is characterized by a dense packing of registers
 	into a small number of bits.  Depending on the settings of CRU
@@ -15,6 +21,88 @@ import v9t9.engine.dsr.rs232.RS232;
 	the register.  This saves us a bit of time. */
 public class RS232Regs {
 
+	static final public short CRU_BASE = 0x1300;
+
+	static final public int RATE_DIV8 = 0x400;
+
+	static final public int RATE_MASK = 0x3ff;
+
+	static final public int CTRL_RCL0 = 1;
+
+	static final public int CTRL_RCL1 = 2;
+
+	static final public int CTRL_CLK4M = 8;
+
+	static final public int CTRL_Podd = 16;
+
+	static final public int CTRL_Penb = 32;
+
+	static final public int CTRL_SBS2 = 64;		//	00 = 1.5, 01 = 2, 1X = 1
+
+	static final public int CTRL_SBS1 = 128;		//
+
+	static final public int RS_RTSON = (1<<16);	//	[16] request to send
+
+	static final public int RS_BRKON = (1<<17);	//	[17] break on
+
+	static final public int RS_RIENB = (1<<18);	//	[18] receive interrupt enable
+
+	static final public int RS_XBIENB = (1<<19);	//	[19] xmit buffer interrupt enable
+
+	static final public int RS_TIMENB = (1<<20);	//	[20] timer interrupt enable
+
+	static final public int RS_DSCENB = (1<<21);	//	[21] data status change interrupt enable
+	//	[22-30] unused
+
+	static final public int RS_RESET = (1<<31);	//	[31] reset
+
+	static final public int RS_RXCHAR = (0xff);	//	[0-7] received char
+
+	//	[8] always zero
+	static final public int RS_RCVERR = (1<<9);	//	[9] receive error
+
+	static final public int RS_RPER = (1<<10);	//	[10] receive parity error
+
+	static final public int RS_ROVER = (1<<11);	//	[11] receive overrun error
+
+	static final public int RS_RFER = (1<<12);	//	[12] receive framing error
+
+	static final public int RS_RFBD = (1<<13);	//	[13] receive full bit detect
+
+	static final public int RS_RSBD = (1<<14);	//	[14] receive start bit detect
+
+	static final public int RS_RIN = (1<<15);	//	[15] receive input
+
+	static final public int RS_RBINT = (1<<16);	//	[16] receiver interrupt (rbrl - rienb)
+
+	static final public int RS_XBINT = (1<<17);	//	[17] transmitter interrupt (xbre - xbienb)
+
+	//	[18] always zero
+	static final public int RS_TIMINT = (1<<19);	//	[19] timer interrupt (timelp - timenb)
+
+	static final public int RS_DSCINT = (1<<20);	//	[20] data set status change interrupt (dsch - dscenb)
+
+	static final public int RS_RBRL = (1<<21);	//	[21] receive buffer register loaded
+
+	static final public int RS_XBRE = (1<<22);	//	[22] transmit buffer register empty
+
+	static final public int RS_XSRE = (1<<23);	//	[23] transmit shift register empty
+
+	static final public int RS_TIMERR = (1<<24);	//	[24] time error
+
+	static final public int RS_TIMELP = (1<<25);	//	[25] timer elapsed
+
+	static final public int RS_RTS = (1<<26);	//	[26] request to send
+
+	static final public int RS_DSR = (1<<27);	//	[27] data set ready
+
+	static final public int RS_CTS = (1<<28);	//	[28] clear to send
+
+	static final public int RS_DSCH = (1<<29);	//	[29] data set status change
+
+	static final public int RS_FLAG = (1<<30);	//	[30] register load control flag set
+
+	static final public int RS_INT = (1<<31);	//	[31] interrupt
 	private RS232 rs232;
 	
 	//	WRITE:
@@ -39,18 +127,25 @@ public class RS232Regs {
 	private int	rdport;			//	bitmap for read registers
 
 	private Dumper dumper;
+
+	private IMachine machine;
+
+	private IProperty cyclesPerSecond;
+
 	
 	/**
 	 * 
 	 */
-	public RS232Regs(RS232 rs232, Dumper dumper) {
+	public RS232Regs(IMachine machine, RS232 rs232, Dumper dumper) {
+		this.machine = machine;
 		this.rs232 = rs232;
 		this.dumper = dumper;
+		cyclesPerSecond = machine.getSettings().get(ICpu.settingCyclesPerSecond);
 	}
 	
 
 	public int getWordSize() {
-		return ((ctrl & (RS232Constants.CTRL_RCL0 + RS232Constants.CTRL_RCL1)) + 5);
+		return ((ctrl & (RS232Regs.CTRL_RCL0 + RS232Regs.CTRL_RCL1)) + 5);
 	}
 	/**
 	 * 
@@ -68,10 +163,6 @@ public class RS232Regs {
 	public short getRegisterSelect() {
 		return regsel;
 	}
-	/**
-	 * @param rcvrate
-	 * @return
-	 */
 	private int calcBPSRate(short rate) {
 		int bps;
 		
@@ -79,16 +170,31 @@ public class RS232Regs {
 		int         div;
 
 		// input speed
-		div = (((ctrl & CTRL_CLK4M) != 0 ? 4 : 3) * 2
-			   * (rate & RATE_MASK) * ((rate & RATE_DIV8) != 0 ? 8 : 1));
+		div = (((ctrl & RS232Regs.CTRL_CLK4M) != 0 ? 4 : 3) * 2
+			   * (rate & RS232Regs.RATE_MASK) * ((rate & RS232Regs.RATE_DIV8) != 0 ? 8 : 1));
 		if (div == 0)
 			bps = 50;
 		else
-			bps = (3000000 /*baseclockhz*/ / div);
+			bps = (cyclesPerSecond.getInt() / div);
 
 		return bps;
 	}
-	
+	private int calcIntervalRate(short rate) {
+		int hz;
+		
+		// BPS = 3 MHz / rate
+		int         div;
+
+		// input speed
+		div = ((ctrl & RS232Regs.CTRL_CLK4M) != 0 ? 4 : 3) * 64
+				* (rate & 0xff);
+		if (div == 0)
+			hz = 0;
+		else
+			hz = (cyclesPerSecond.getInt() / div);
+
+		return hz;
+	}
 
 	public enum RegisterSelect {
 		CONTROL,
@@ -123,80 +229,158 @@ public class RS232Regs {
 	static final int FLAG_INVL =		(1<<7);
 	static final int FLAG_CTRL =		(1<<7);
 	
+	
 	/**
-	 * Apply register changes once the last bit in a register is set.
+	 * Apply register changes once the last bit in a register is set (dbit == 1<<bit)
+	 * or when a register select bit is changed (dbit == 0).
 	 */
 	public void triggerChange(int dbit) {
 		RegisterSelect sel = deriveRegisterSelect();
 		
-		boolean complete = false;
-		switch (sel) {
-		case CONTROL:
-			if (dbit == FLAG_CTRL) { 
+		if (sel == RegisterSelect.CONTROL) {
+			if (dbit == 0 || dbit == FLAG_CTRL) { 
 				this.ctrl = (short) (getWriteBits() & 0x7ff);
 				dump();
-				rs232.setCTRLRegister();
+				
+				rs232.setControlBits(getDataSize(), getParity(), getStop());
 				rs232.flushBuffers();
-				this.regsel = (byte) (regsel & ~8);
+				if (dbit != 0) {
+					this.regsel = (byte) ((regsel & ~8) | 4);
+				}
 			}
-			break;
-		case INTERVAL:
-			if (dbit == FLAG_INVL) { 
+		}
+		if (sel == RegisterSelect.INTERVAL) {
+			if (dbit == 0 || dbit == FLAG_INVL) { 
 				this.invl = (short) (getWriteBits() & 0xff);
 				dump();
-				rs232.setINVLRegister();
+				int rate = calcIntervalRate(invl);
+				rs232.setIntervalRate(rate);
 				rs232.flushBuffers();
-				this.regsel = (byte) (regsel & ~4);
+				if (dbit != 0) {
+					this.regsel = (byte) ((regsel & ~4) | 2);
+				}
 			}
-			break;
-		case RECVRATE:
-			if (dbit == FLAG_RCVRATE) { 
+		}
+		if (sel == RegisterSelect.RECVRATE) {
+			if (dbit == 0 || dbit == FLAG_RCVRATE) { 
 				rcvrate = ((short) (getWriteBits() & 0x7ff));
 				recvbps = calcBPSRate(rcvrate);
 				dump();
 				rs232.setReceiveRate(recvbps);
 				rs232.flushBuffers();
-				this.regsel = (byte) (regsel & ~2);
-				complete = (regsel & 1) != 0;
+				if (dbit != 0) {
+					if ((regsel & 1) != 0)
+						sel = RegisterSelect.XMITRATE;	// auto-set next
+					this.regsel = (byte) ((regsel & ~2) | 1);
+				}
 			}
-			// fall through: can set both RECV and XMIT rate at same time
-		case XMITRATE:
-			if (sel == RegisterSelect.XMITRATE && dbit == FLAG_XMITRATE) 
-				complete = true;
-			if (complete) {
+		}
+		if (sel == RegisterSelect.XMITRATE) {
+			if (dbit == 0 || dbit == FLAG_XMITRATE) { 
 				xmitrate = ((short) (getWriteBits() & 0x7ff));
 				xmitbps = calcBPSRate(xmitrate);
 				dump();
 				rs232.setTransmitRate(xmitbps);
 				rs232.flushBuffers();
-				this.regsel = (byte) (regsel & ~1);
+				if (dbit != 0)
+					this.regsel = (byte) (regsel & ~1);	
 			}
-			break;
-		case EMIT:
+		}
+		if (sel == RegisterSelect.EMIT) {
 			if (dbit == FLAG_TXCHAR()) {
 				this.txchar = (short) (getWriteBits() & (0xff >> (8 - getWordSize())));
 				dump();
 				rs232.transmitChar((byte) txchar);
+				updateFlagsAndInts();
 			}
-			break;
 		}		
 	}
 	
+
+	//  Update status bits when buffer state changes,
+	//  possibly triggering an interrupt.
+	public void updateFlagsAndInts()
+	{
+		boolean        interruptible = false;
+	
+		// all buffered chars are immediately
+		// available to be read.
+		//
+		if (!rs232.getRecvBuffer().isEmpty()) {
+			rdport |= RS_RBRL;
+	
+			// trigger interrupt?
+			if ((wrport & RS_RIENB) != 0) {
+				rdport |= RS_RBINT;
+				interruptible = true;
+			}
+		} else {
+			rdport &= ~(RS_RBRL | RS_RBINT);
+		}
+	
+		// contrary to popular opinion, we will set RS_XBRE
+		// here if the buffer is NOT FULL, so the 99/4A
+		// can continue to stuff the buffer.
+		//
+		if (!rs232.getXmitBuffer().isFull()) {
+			rdport |= RS_XBRE;
+	
+			// trigger interrupt?
+			if ((wrport & RS_XBIENB) != 0) {
+				rdport |= RS_XBINT;
+				interruptible = true;
+			}
+		} else {
+			rdport &= ~(RS_XBRE | RS_XBINT);
+		}
+
+		// TODO: data lines
+		
+		//  NOTE:  when buffering, the DSR state can change physically
+		//  while interrupts should still be generated logically.
+		//  Be sure to bias the DSR state by the buffer state.
+		//
+		//  The typical routine for RS_RIENB goes like this:
+		//  
+		//  <interrupt>
+		//  test bit 31     -- must be 1 else RESET
+		//  test bit RBINT  -- must be 1 else RESET
+		//  test bit DSR    -- must be 1 else RESET
+		//  test bit RBRL   -- must be 1 else RESET
+		//  read char
+		//  set bit RIENB   -- ACK; this resets RBRL
+		// 
+		//  We will immediately set RBRL and RBINT again if needed.
+		//  We won't reset the interrupt state until all the bits
+		//  are off.
+	
+		if (interruptible) {
+			dumper.info("RS232: *** Interrupt ***");
+			rdport |= RS_INT;
+			
+			machine.getCru().triggerInterrupt(Cpu9900.INTLEVEL_INTREQ);
+		} else {
+			rdport &= ~RS_INT;
+			machine.getCru().acknowledgeInterrupt(Cpu9900.INTLEVEL_INTREQ);
+		}
+	}
+
 	public void dump()
 	{
-		StringBuilder sb = new StringBuilder(); 
+		StringBuilder sb = new StringBuilder();
+		sb.append("RS232:\n");
 		sb.append(String.format(("* regsel=%s\t\n"), deriveRegisterSelect()));
 		if (regsel >= 8) {
 			sb.append("* ");
 			sb.append(String.format(("ctrl=%02X\nrcl0=%b,rcl1=%b, clk4m=%b, Podd=%b,Penb=%b, SBS2=%b,SBS1=%b\t"),
 				 ctrl, 
-				 0 != (ctrl & RS232Constants.CTRL_RCL0), 
-				 0 != (ctrl & RS232Constants.CTRL_RCL1),
-				 0 != (ctrl & RS232Constants.CTRL_CLK4M), 
-				 0 != (ctrl & RS232Constants.CTRL_Podd),
-				 0 != (ctrl & RS232Constants.CTRL_Penb), 
-				 0 != (ctrl & RS232Constants.CTRL_SBS2),
-				 0 != (ctrl & RS232Constants.CTRL_SBS1)));
+				 0 != (ctrl & RS232Regs.CTRL_RCL0), 
+				 0 != (ctrl & RS232Regs.CTRL_RCL1),
+				 0 != (ctrl & RS232Regs.CTRL_CLK4M), 
+				 0 != (ctrl & RS232Regs.CTRL_Podd),
+				 0 != (ctrl & RS232Regs.CTRL_Penb), 
+				 0 != (ctrl & RS232Regs.CTRL_SBS2),
+				 0 != (ctrl & RS232Regs.CTRL_SBS1)));
 		}
 		if (regsel < 8 && regsel >= 4) {
 			sb.append("* ");
@@ -300,6 +484,58 @@ public class RS232Regs {
 			wrport |= bit;
 		else
 			wrport &= ~bit;
+	}
+
+
+	/**
+	 * @return
+	 */
+	public DataSize getDataSize() {
+		switch ((ctrl & CTRL_RCL0 + CTRL_RCL1) >> 0) {
+		case 0:
+			return DataSize.FIVE;
+		case 1:
+			return DataSize.SIX;
+		case 2:
+			return DataSize.SEVEN;
+		case 3:
+		default:
+			return DataSize.EIGHT;
+		}
+	}
+
+
+	/**
+	 * @return
+	 */
+	public Parity getParity() {
+		switch ((ctrl & CTRL_Penb + CTRL_Podd) >> 4) {
+		default:
+		case 0:
+		case 1:
+			return Parity.NONE;
+		case 2:
+			return Parity.EVEN;
+		case 3:
+			return Parity.ODD;
+		}
+	}
+
+
+	/**
+	 * @return
+	 */
+	public Stop getStop() {
+		switch ((ctrl & CTRL_SBS1 + CTRL_SBS2) >> 6) {
+		case 0:
+			return Stop.STOP_1_5;
+		case 1:
+			return Stop.STOP_2; 
+		case 2:
+		case 3:
+		default:
+			return Stop.STOP_1;
+		}
 	}
 
 

@@ -31,7 +31,7 @@ import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
 import v9t9.machine.ti99.dsr.realdisk.CorcompDiskImageDsr;
 import v9t9.machine.ti99.dsr.realdisk.TIDiskImageDsr;
-import v9t9.machine.ti99.dsr.rs232.RS232Constants;
+import v9t9.machine.ti99.dsr.rs232.RS232Regs;
 import v9t9.machine.ti99.dsr.rs232.TIRS232Dsr;
 import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 
@@ -103,7 +103,7 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 					FDCControllers.WDC1791, new CorcompDiskImageDsr(machine, (short) 0x1100));
 			machine.getDsrManager().registerDsr(diskDsr);
 			
-			TIRS232Dsr rs232Dsr = new TIRS232Dsr(machine, RS232Constants.CRU_BASE);
+			TIRS232Dsr rs232Dsr = new TIRS232Dsr(machine, RS232Regs.CRU_BASE);
 			machine.getDsrManager().registerDsr(rs232Dsr);
 			
 			PCodeDsr pcodeDsr = new PCodeDsr(machine);

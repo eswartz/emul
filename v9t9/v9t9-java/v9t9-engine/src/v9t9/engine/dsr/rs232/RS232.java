@@ -3,8 +3,11 @@
  */
 package v9t9.engine.dsr.rs232;
 
-import java.util.Arrays;
-
+import v9t9.common.dsr.IRS232Handler;
+import v9t9.common.dsr.IRS232Handler.Buffer;
+import v9t9.common.dsr.IRS232Handler.DataSize;
+import v9t9.common.dsr.IRS232Handler.Parity;
+import v9t9.common.dsr.IRS232Handler.Stop;
 import v9t9.engine.Dumper;
 /**
  * This manages high-level emulation of the RS232.
@@ -13,9 +16,23 @@ import v9t9.engine.Dumper;
  */
 public class RS232 {
 	private Dumper dumper;
+	private IRS232Handler handler;
 	
 	public RS232(Dumper dumper) {
 		this.dumper = dumper;
+	}
+	
+	/**
+	 * @param handler the handler to set
+	 */
+	public void setHandler(IRS232Handler handler) {
+		this.handler = handler;
+	}
+	/**
+	 * @return the handler
+	 */
+	public IRS232Handler getHandler() {
+		return handler;
 	}
 
 	/**
@@ -25,77 +42,78 @@ public class RS232 {
 		return dumper;
 	}
 
+	private Buffer xmitBuffer = new Buffer(), recvBuffer = new Buffer();
 	
-	// (500000/5/TM_HZ)		// max possible rate to deal with
-	static final int BUF_SIZ = 1024;
-	static final int BUF_MASK = 1023;
-
-	public boolean isXmitBufferEmpty() {
-		return t_st == t_en;
-	}
-	public boolean isXmitBufferFull() {
-		return t_st == ((t_en + 1) & BUF_MASK);
-	}
-	public int getXmitBufferLeft() {
-		return ((BUF_SIZ - t_st + t_en) & BUF_MASK);
-	}
-	public boolean isRecvBufferEmpty() {
-		return r_st == r_en;
-	}
-	public boolean isRecvBufferFull() {
-		return r_st == ((r_en + 1) & BUF_MASK);
-	}
-	public int getRecvBufferLeft() {
-		return ((BUF_SIZ - r_st + r_en) & BUF_MASK);
-	}
-
-	byte	xmit[] = new byte[BUF_SIZ], recv[] = new byte[BUF_SIZ];
-	int	t_st,t_en, r_st, r_en;			// pointers to ring
+	private DataSize dataSize = DataSize.FIVE;
+	private Stop stop = Stop.STOP_1_5;
+	private Parity parity = Parity.NONE;
+	private int recvbps;
+	private int xmitbps;
+	private int intervalHz;
+	
 	/**
 	 * 
 	 */
 	public void flushBuffers() {
-		dumper.info("*** Flushing buffers");
+		dumper.info("RS232: *** Flushing buffers");
 		
 		// lose all readable data
-		r_st = r_en = 0;
+		recvBuffer.clear();
 
 		// send all writeable data
 		// (don't loop here!)
-		transmitChars();
+		if (handler != null)
+			handler.transmitChars(xmitBuffer);
 
-		if (!isXmitBufferEmpty()) { 
-			dumper.info("*** Transmit buffer was not empty");
+		if (!xmitBuffer.isEmpty()) { 
+			dumper.info("RS232: *** Transmit buffer was not empty");
 		}
-		t_st = t_en = 0;
+		xmitBuffer.clear();
 		//dump();		
 	}
 
-	/**
-	 * 
-	 */
-	private void transmitChars() {
-		// TODO Auto-generated method stub
-		
-	}
-
+	
 	/**
 	 * @param txchar 
 	 * 
 	 */
 	public void transmitChar(byte ch) {
-		// TODO Auto-generated method stub
-		
+		dumper.info(String.format("RS232: Buffering char %02X (%c)", ch, (char) ch));
+
+		xmitBuffer.add(ch);
 	}
 
+	/**
+	 * @return the parity
+	 */
+	public Parity getParity() {
+		return parity;
+	}
+	/**
+	 * @return the size
+	 */
+	public DataSize getDataSize() {
+		return dataSize;
+	}
+	/**
+	 * @return the stop
+	 */
+	public Stop getStopBits() {
+		return stop;
+	}
 
 	/**
 	 * @param old
 	 * @param bit
 	 */
-	public void setControlBits(int old, int bit) {
-		// TODO Auto-generated method stub
+	public void setControlBits(DataSize size, Parity parity, Stop stop) {
+		this.dataSize = size;
+		this.parity = parity;
+		this.stop = stop;
 		
+		if (handler != null) {
+			handler.updateControl(this.dataSize, this.parity, this.stop);
+		}
 	}
 
 	/**
@@ -103,7 +121,10 @@ public class RS232 {
 	 * 
 	 */
 	public byte receiveData() {
-		return 0;
+		// Get char from buffer, or last one if empty.
+		byte ch = recvBuffer.take();
+		dumper.info(String.format("RS232: Received char %02X (%c)"), ch, (char) ch);
+		return ch;
 	}
 
 
@@ -119,8 +140,8 @@ public class RS232 {
 	{
 		StringBuilder sb = new StringBuilder(); 
 	
-		sb.append(String.format(("Write buffer: %d/%d  Read buffer: %d/%d\n"),
-			 t_st, t_en, r_st, r_en));
+		sb.append(String.format("RS232: Write buffer: %s  Read buffer: %s",
+			 xmitBuffer, recvBuffer));
 	
 		dumper.info(sb.toString());
 	}
@@ -136,12 +157,12 @@ public class RS232 {
 
 		//regs.clear();
 
-		Arrays.fill(xmit, (byte) 0);
-		Arrays.fill(recv, (byte) 0);
-		t_st = t_en = r_st = r_en = 0;
+		xmitBuffer.clear();
+		recvBuffer.clear();
+
+		setControlBits(DataSize.FIVE, Parity.NONE, Stop.STOP_1_5);
 		
-		setCTRLRegister();
-		setINVLRegister();
+		setIntervalRate(0);
 		setReceiveRate(0);
 		setTransmitRate(0);
 //		Reset_RS232_SysDeps(rs);
@@ -156,19 +177,12 @@ public class RS232 {
 //		#endif
 	}
 
-	/**
-	 * 
-	 */
-	public void setCTRLRegister() {
-		// TODO Auto-generated method stub
-		
-	}
 
 	/**
 	 * 
 	 */
-	public void setINVLRegister() {
-		// TODO Auto-generated method stub
+	public void setIntervalRate(int intervalHz) {
+		this.intervalHz = intervalHz;
 		
 	}
 
@@ -176,15 +190,50 @@ public class RS232 {
 	 * @param x
 	 */
 	public void setTransmitRate(int bps) {
-		// TODO Auto-generated method stub
-		
+		this.xmitbps = bps;
+		if (handler != null)
+			handler.setTransmitRate(bps);
+	}
+	/**
+	 * @return the xmitbps
+	 */
+	public int getTransmitRate() {
+		return xmitbps;
 	}
 
 	/**
 	 * @param recvbps
 	 */
 	public void setReceiveRate(int recvbps) {
-		
+		this.recvbps = recvbps;
+		if (handler != null)
+			handler.setReceiveRate(recvbps);
+	}
+	/**
+	 * @return the recvbps
+	 */
+	public int getReceiveRate() {
+		return recvbps;
+	}
+
+	/**
+	 * @return
+	 */
+	public Buffer getRecvBuffer() {
+		return recvBuffer;
+	}
+	/**
+	 * @return the xmitBuffer
+	 */
+	public Buffer getXmitBuffer() {
+		return xmitBuffer;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getIntervalRate() {
+		return intervalHz;
 	}
 
 }
