@@ -31,11 +31,11 @@
      objecttolerance="10"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6568542"
+     inkscape:zoom="7.9999999"
      inkscape:cx="34.948224"
-     inkscape:cy="1192.4755"
+     inkscape:cy="1194.9755"
      inkscape:document-units="px"
-     inkscape:current-layer="text42613"
+     inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:window-width="1130"
      inkscape:window-height="936"
@@ -57,6 +57,17 @@
   </sodipodi:namedview>
   <defs
      id="defs4">
+    <linearGradient
+       id="linearGradient21351">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop21353" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop21355" />
+    </linearGradient>
     <linearGradient
        id="linearGradient79173">
       <stop
@@ -85533,6 +85544,37 @@
          offset="1"
          style="stop-color:#313131;stop-opacity:1;" />
     </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient21351"
+       id="linearGradient21731"
+       gradientUnits="userSpaceOnUse"
+       x1="20.187214"
+       y1="347.94305"
+       x2="22.318586"
+       y2="350.05728" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient21351"
+       id="radialGradient24941"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(-0.38837188,1.2572436,-1.2931863,-0.39947595,477.18686,460.97968)"
+       cx="19.858288"
+       cy="348.31808"
+       fx="19.858288"
+       fy="348.31808"
+       r="4" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient21351"
+       id="radialGradient24945"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(-0.48085158,1.2905215,-1.2213011,-0.45506248,456.88011,472.2805)"
+       cx="25.493713"
+       cy="348.34866"
+       fx="25.493713"
+       fy="348.34866"
+       r="4" />
   </defs>
   <metadata
      id="metadata7">
@@ -86168,17 +86210,17 @@
        sodipodi:nodetypes="sssss" />
     <path
        sodipodi:type="arc"
-       style="fill:#000000;fill-opacity:0.87843137;stroke:none;display:inline"
+       style="fill:url(#radialGradient24945);fill-opacity:1;stroke:none;display:inline"
        id="path41783"
        sodipodi:cx="20"
        sodipodi:cy="348"
        sodipodi:rx="4"
        sodipodi:ry="4.0000081"
        d="m 24,348 a 4,4.0000081 0 1 1 -8,0 4,4.0000081 0 1 1 8,0 z"
-       transform="matrix(0.5,0,0,0.49999899,5.8232237,-338.28734)" />
+       transform="matrix(0.625,0,0,0.62499873,3.5732237,-381.47475)" />
     <path
        transform="matrix(0.46487087,0,0,0.3577024,38.434081,93.725523)"
-       d="m 24,348 a 4,4.0000081 0 1 1 -8,0 4,4.0000081 0 1 1 8,0 z"
+       d="m 24,348 c 0,2.20914 -1.790861,4.00001 -4,4.00001 -2.209139,0 -4,-1.79087 -4,-4.00001 0,-2.20914 1.790861,-4.00001 4,-4.00001 2.209139,0 4,1.79087 4,4.00001 z"
        sodipodi:ry="4.0000081"
        sodipodi:rx="4"
        sodipodi:cy="348"
@@ -86187,14 +86229,14 @@
        style="fill:#000000;fill-opacity:0.87843137;stroke:none;display:inline"
        sodipodi:type="arc" />
     <path
-       transform="matrix(0.5,0,0,0.49999899,10.353554,-330.37573)"
+       transform="matrix(0.625,0,0,0.62499873,8.3232243,-372.99956)"
        d="m 24,348 a 4,4.0000081 0 1 1 -8,0 4,4.0000081 0 1 1 8,0 z"
        sodipodi:ry="4.0000081"
        sodipodi:rx="4"
        sodipodi:cy="348"
        sodipodi:cx="20"
        id="path42575"
-       style="fill:#000000;fill-opacity:0.87843137;stroke:none;display:inline"
+       style="fill:url(#radialGradient24941);fill-opacity:1;stroke:none;display:inline"
        sodipodi:type="arc" />
     <use
        style="display:inline"
@@ -86210,7 +86252,7 @@
        y="0"
        xlink:href="#path41783"
        id="use42793"
-       transform="translate(8.0303307,5.9938737e-6)"
+       transform="translate(8.0303307,6.0045062e-6)"
        width="64"
        height="1536" />
     <use
@@ -86218,7 +86260,7 @@
        y="0"
        xlink:href="#use42793"
        id="use42795"
-       transform="translate(8.0303302,5.9938737e-6)"
+       transform="translate(8.0303302,6.0045063e-6)"
        width="64"
        height="1536" />
     <use
@@ -86226,7 +86268,7 @@
        y="0"
        xlink:href="#use42795"
        id="use42797"
-       transform="translate(8.0303269,-6.0061263e-6)"
+       transform="translate(8.0303269,-5.9954937e-6)"
        width="64"
        height="1536" />
     <use
@@ -86234,7 +86276,7 @@
        y="0"
        xlink:href="#use42797"
        id="use42799"
-       transform="translate(8.0303321,-0.17678101)"
+       transform="translate(7.8357885,-0.024814)"
        width="64"
        height="1536" />
     <use
@@ -86242,7 +86284,7 @@
        y="0"
        xlink:href="#path42575"
        id="use42801"
-       transform="translate(8.0589251,0)"
+       transform="translate(8.0589251,-4.6384659e-8)"
        width="64"
        height="1536" />
     <use
@@ -86250,7 +86292,7 @@
        y="0"
        xlink:href="#use42801"
        id="use42803"
-       transform="translate(8.0589257,0)"
+       transform="translate(8.0589257,-4.6384602e-8)"
        width="64"
        height="1536" />
     <use
@@ -86258,7 +86300,7 @@
        y="0"
        xlink:href="#use42803"
        id="use42805"
-       transform="translate(8.0589249,0)"
+       transform="translate(8.0589249,-4.6384602e-8)"
        width="64"
        height="1536" />
   </g>
