@@ -27,6 +27,7 @@ import v9t9.engine.modules.ModuleManager;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.machine.EmulatorMachinesData;
+import v9t9.machine.printer.RS232PrinterImageHandler;
 import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
 import v9t9.machine.ti99.dsr.realdisk.CorcompDiskImageDsr;
@@ -104,7 +105,11 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 			machine.getDsrManager().registerDsr(diskDsr);
 			
 			TIRS232Dsr rs232Dsr = new TIRS232Dsr(machine, RS232Regs.CRU_BASE);
+			rs232Dsr.init();
+			RS232PrinterImageHandler handler = new RS232PrinterImageHandler();
+			rs232Dsr.getDevice(1).getRS232().setHandler(handler);
 			machine.getDsrManager().registerDsr(rs232Dsr);
+			machine.addRS232Handler(handler);
 			
 			PCodeDsr pcodeDsr = new PCodeDsr(machine);
 			machine.getDsrManager().registerDsr(pcodeDsr);

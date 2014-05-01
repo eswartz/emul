@@ -29,6 +29,8 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.demos.DemoContentSource;
+import v9t9.common.dsr.IPrinterImageHandler;
+import v9t9.common.dsr.IRS232Handler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.EmulatedDiskContentSource;
 import v9t9.common.files.IFileExecutionHandler;
@@ -44,6 +46,7 @@ import v9t9.gui.client.swt.fileimport.DoNothingFileExecutor;
 import v9t9.gui.client.swt.handlers.DemoContentHandler;
 import v9t9.gui.client.swt.handlers.FileExecutorContentHandler;
 import v9t9.gui.client.swt.handlers.ModuleContentHandler;
+import v9t9.gui.client.swt.shells.PrinterImageShell;
 import v9t9.gui.client.swt.wizards.SetupWizard;
 import v9t9.gui.sound.JavaSoundHandler;
 import ejs.base.timer.FastTimer;
@@ -198,6 +201,14 @@ public abstract class BaseSwtJavaClient implements IClient {
 				soundTimer.invoke(speechDoneTask);
 			}
 		});
+
+        // TODO
+        for (IRS232Handler handler : machine.getRS232Handlers()) {
+        	if (handler instanceof IPrinterImageHandler) {
+        		PrinterImageShell rsshell = new PrinterImageShell();
+        		((IPrinterImageHandler) handler).getEngine().addListener(rsshell);
+        	}
+        }
 	}
 	
 	/* (non-Javadoc)

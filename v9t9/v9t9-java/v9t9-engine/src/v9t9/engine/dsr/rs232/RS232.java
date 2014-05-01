@@ -3,6 +3,9 @@
  */
 package v9t9.engine.dsr.rs232;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import v9t9.common.dsr.IRS232Handler;
 import v9t9.common.dsr.IRS232Handler.Buffer;
 import v9t9.common.dsr.IRS232Handler.DataSize;
@@ -17,11 +20,42 @@ import v9t9.engine.Dumper;
 public class RS232 {
 	private Dumper dumper;
 	private IRS232Handler handler;
+	private Timer timer;
 	
 	public RS232(Dumper dumper) {
 		this.dumper = dumper;
+		timer = new Timer(true);
+		timer.schedule(new TimerTask() {
+
+			@Override
+			public void run() {
+				rs232Monitor();
+			}
+			
+		}, 0, 1000 / 50);
 	}
 	
+	/*	Timer event which periodically checks the RS232 devices for
+	activity, reading into buffers and writing from buffers.
+	It is not efficient anywhere to call the OS for each status bit
+	read, which is why we eat up the buffers the OS is storing for us. 	*/
+	protected void rs232Monitor() {
+		if (handler != null) {
+			// transmit buffered chars.
+			handler.transmitChars(xmitBuffer);
+	
+//			// receive characters from the OS.
+//			// these are available for reading immediately.
+//			Receive_Chars(rs);
+//	
+//			// update modem lines
+//			Update_Modem_Lines(rs);
+//	
+//			// update status flags and interrupt if needed
+//			Update_Flags_And_Ints(rs);
+		}
+	}
+
 	/**
 	 * @param handler the handler to set
 	 */

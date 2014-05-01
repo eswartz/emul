@@ -31,6 +31,7 @@ import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
+import v9t9.common.dsr.IRS232Handler;
 import v9t9.common.events.BaseEventNotifier;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
@@ -132,6 +133,8 @@ abstract public class MachineBase implements IMachine {
 	private IEventNotifier eventNotifier;
 
 	private List<IEmulatorContentSourceProvider> contentProviders = new ArrayList<IEmulatorContentSourceProvider>(1);
+
+	private List<IRS232Handler> rs232Handlers = new ArrayList<IRS232Handler>(1);
 
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -845,6 +848,17 @@ abstract public class MachineBase implements IMachine {
 	public void addEmulatorContentProvider(IEmulatorContentSourceProvider provider) {
 		if (!contentProviders.contains(provider))
 			contentProviders.add(provider);
+	}
+	
+	public void addRS232Handler(IRS232Handler handler) {
+		rs232Handlers.add(handler);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getRS232Handlers()
+	 */
+	@Override
+	public IRS232Handler[] getRS232Handlers() {
+		return rs232Handlers.toArray(new IRS232Handler[rs232Handlers.size()]);
 	}
 }
 
