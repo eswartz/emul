@@ -12,15 +12,24 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Transform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Scrollable;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
 
 import v9t9.common.dsr.IPrinterImageListener;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
@@ -36,6 +45,8 @@ public class PrinterImageShell implements IPrinterImageListener {
 	
 	// all for the current page; old pages are abandoned
 	private Canvas canvas;
+	
+	private double zoom = 1.0;
 	
 	protected int pageNum;
 	
@@ -56,15 +67,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 	 */
 	private void newShell() {
 		shell = new Shell(SWT.TOOL | SWT.RESIZE);
-		
-		GridLayoutFactory.fillDefaults().applyTo(shell);
-		
-		tabFolder = new CTabFolder(shell, SWT.TOP);
-		tabFolderData = GridDataFactory.fillDefaults().grab(true, true).create();
-		tabFolder.setLayoutData(tabFolderData);
-		
-		GridLayoutFactory.fillDefaults().applyTo(tabFolder);
-		
+
 		shell.setText("Printer Output");
 		shell.setSize(400, 400);
 		
@@ -79,6 +82,76 @@ public class PrinterImageShell implements IPrinterImageListener {
 			}
 		});
 		
+		GridLayoutFactory.fillDefaults().applyTo(shell);
+		
+		tabFolder = new CTabFolder(shell, SWT.TOP);
+		tabFolderData = GridDataFactory.fillDefaults().grab(true, true).create();
+		tabFolder.setLayoutData(tabFolderData);
+		
+		GridLayoutFactory.fillDefaults().applyTo(tabFolder);
+		tabFolder.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				CTabItem item = tabFolder.getSelection();
+				if (item != null) {
+					Scrollable scrollable = (Scrollable) item.getControl();
+					if (scrollable != null) {
+						scrollable.getVerticalBar().setSelection(0);
+					}
+				}
+			}
+		});
+	
+		ToolBar toolbar = new ToolBar(tabFolder, SWT.NONE);
+		tabFolder.setTopRight(toolbar);
+		final ToolItem zoomIn = new ToolItem(toolbar, SWT.PUSH);
+		zoomIn.setText("+");
+		zoomIn.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				zoom(zoom * 2);
+			}
+		});
+		final ToolItem zoomOut = new ToolItem(toolbar, SWT.PUSH);
+		zoomOut.setText("-");
+		zoomOut.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				zoom(zoom / 2);
+			}
+		});
+		final ToolItem zoomReset = new ToolItem(toolbar, SWT.PUSH);
+		zoomReset.setText("=");
+		zoomReset.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				zoom(1.0);
+			}
+		});
+	}
+
+
+	protected void zoom(double toZoom) {
+		this.zoom = toZoom;
+		updatePageZooms();
+	}
+
+	/**
+	 * 
+	 */
+	private void updatePageZooms() {
+		CTabItem[] items = tabFolder.getItems();
+		for (int i = 0; i < items.length; i++) {
+			CTabItem item = items[i];
+			ScrolledComposite scrolled = (ScrolledComposite) item.getControl();
+			Composite canvas = (Composite) scrolled.getContent();
+			BufferedImage image = bufferedImages.get(i + 1);
+			if (image != null) {
+				canvas.setSize(new Point((int) (image.getWidth() * zoom), (int) (image.getHeight() * zoom)));
+	            canvas.layout();
+			}
+		}
+		tabFolder.redraw();
 	}
 
 	/* (non-Javadoc)
@@ -122,21 +195,36 @@ public class PrinterImageShell implements IPrinterImageListener {
 					shell.open();
 				}
 				
-				tabFolderData.widthHint = image.getWidth();
-				tabFolderData.heightHint = image.getHeight();
+//				tabFolderData.widthHint = (int) (image.getWidth() * zoom);
+//				tabFolderData.heightHint = (int) (image.getHeight() * zoom);
 				
 				CTabItem item = new CTabItem(tabFolder, SWT.NONE);
 				
 				bufferedImages.put(thisPage, image);
 				
-				canvas = new Canvas(tabFolder, SWT.BORDER);
-				item.setControl(canvas);
+				ScrolledComposite scrolled = new ScrolledComposite(tabFolder, SWT.V_SCROLL | SWT.H_SCROLL);
+				scrolled.setAlwaysShowScrollBars(false);
+				item.setControl(scrolled);
+				GridLayoutFactory.swtDefaults().applyTo(scrolled);
+				
+				canvas = new Canvas(scrolled, SWT.BORDER);
+				
+				scrolled.setContent(canvas);
 		
 				GridDataFactory.fillDefaults().grab(true, true).applyTo(canvas);
-
+				
 				item.setText("Page " + thisPage);
 				
+				if (pageNum == 1) {
+					zoom = 1.0;
+					while (zoom * image.getHeight() > shell.getDisplay().getBounds().height)
+						zoom /= 2;
+					
+				}
+				
+				updatePageZooms();
 				shell.pack();
+				
 				
 				canvas.addPaintListener(new PaintListener() {
 					
@@ -149,8 +237,17 @@ public class PrinterImageShell implements IPrinterImageListener {
 							pageImages.put(thisPage, swtImage);
 						}
 						
+						e.gc.setAntialias(SWT.ON);
+						e.gc.setInterpolation(SWT.HIGH);
 						if (swtImage != null) {
+							//							Rectangle bounds = swtImage.getBounds();
+//							e.gc.drawImage(swtImage, 0, 0, bounds.width, bounds.height, 
+//									0, 0, (int) (bounds.width * zoom), (int) (bounds.height * zoom));
+							Transform xfrm = new Transform(e.gc.getDevice());
+							xfrm.scale((float) zoom, (float) zoom);
+							e.gc.setTransform(xfrm);
 							e.gc.drawImage(swtImage, 0, 0);
+							xfrm.dispose();
 						} else {
 							e.gc.fillRectangle(e.x, e.y, e.width, e.height);
 						}

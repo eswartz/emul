@@ -24,4 +24,10 @@ public interface IPrinterImageEngine {
 	 */
 	void flushPage();
 
+	/**
+	 * @param i
+	 * @param j
+	 */
+	void setDpi(int i, int j);
+
 }

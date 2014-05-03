@@ -18,7 +18,7 @@ public class RS232PrinterImageHandler implements IRS232Handler, IPrinterImageHan
 	private Parity parity;
 	private Stop stop;
 
-	private IPrinterImageEngine engine = new EpsonPrinterImageEngine(100, 75);
+	private IPrinterImageEngine engine = new EpsonPrinterImageEngine(100, 72);
 	
 	@Override
 	public IPrinterImageEngine getEngine() {

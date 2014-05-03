@@ -34,23 +34,40 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private int vertDpi;
 
 	private Map<Character, CharacterMatrix> font = new HashMap<Character, CharacterMatrix>();
-	private int column;
-	private int row;
-	private int px, py;
+	private int charColumn;
+	private int charRow;
+	/** positions in 1/72 in */
+	private int posX, posY;
 	
 	private int leftPixel, rightPixel;
 	private int pixelWidth;
 	private int pixelHeight;
 	private int topPixel;
 	private int bottomPixel;
-	private int rowPixelHeight;
-	private int charPixelWidth;
+//	private int charPixelHeight;
+//	private int charPixelWidth;
+	private int charMatrixHeight;
+	private int charMatrixWidth;
+	private double paperHeightInches;
+	private double paperWidthInches;
+	/** character size in 1/72 in */
+	private int paperWidthDots;
+	private int paperHeightDots;
+	/** character size in 1/72 in */
+	private double charWidthDots = 5; //8. * 72 / 80;
+	private int charAdvanceDots = 7;
+	private int charsPerLine = 80;
+	/** character size in 1/72 in */
+	private int lineHeightDots = 72 / 6;
+	private Graphics2D g2d;
 	/**
 	 * 
 	 */
 	public EpsonPrinterImageEngine(int horizDpi, int vertDpi) {
-		this.horizDpi = horizDpi;
-		this.vertDpi = vertDpi;
+		setPaperSize(8.5, 11.0);
+		setDpi(100, 100);
+		
+		
 		try {
 			loadFont(EmulatorMachinesData.getResourceDataURL("printers/rx80_font.txt"), 9, 9);
 		} catch (IOException e) {
@@ -58,11 +75,23 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		}
 		initPage();
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IPrinterImageEngine#setDpi(int, int)
+	 */
+	@Override
+	public void setDpi(int horizDpi, int vertDpi) {
+		this.horizDpi = horizDpi;
+		this.vertDpi = vertDpi;
+		initPage();
+	}
 	/**
 	 * @param dataURL
 	 * @throws IOException 
 	 */
 	private void loadFont(URL dataURL, int width, int height) throws IOException {
+		charMatrixWidth = width;
+		charMatrixHeight = height;
 		BufferedReader reader = new BufferedReader(new InputStreamReader(dataURL.openStream()));
 		String line;
 		while ((line = reader.readLine()) != null) {
@@ -138,6 +167,9 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	 * 
 	 */
 	protected void firePageUpdated() {
+		if (g2d != null)
+			g2d.dispose();
+		g2d = image.createGraphics();
 		listeners.fire(new ListenerList.IFire<IPrinterImageListener>() {
 
 			@Override
@@ -147,27 +179,35 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		});
 	}
 	
+	public void setPaperSize(double widthInches, double heightInches){
+		this.paperWidthInches = widthInches;
+		this.paperHeightInches = heightInches;
+		paperHeightDots = (int) (paperHeightInches * 72);
+		paperWidthDots = (int) (paperWidthInches * 72);
+	}
 	/**
 	 * 
 	 */
 	protected void initPage() {
-		pixelWidth = (int) (8.5 * horizDpi);
-		pixelHeight = (int)(11 * vertDpi);
+		pixelWidth = (int) (paperWidthInches * horizDpi);
+		pixelHeight = (int)(paperHeightInches * vertDpi);
 		
 		image = new BufferedImage(pixelWidth, pixelHeight, BufferedImage.TYPE_BYTE_GRAY);
-		Graphics2D g2d = image.createGraphics();
+		
+		g2d = image.createGraphics();
 		g2d.setBackground(Color.white);
 		g2d.clearRect(0, 0, image.getWidth(), image.getHeight());
+		g2d.dispose();
 		
-		leftPixel = (int) (0.5 * horizDpi);
+		leftPixel = (int) (0.25 * horizDpi);
 		rightPixel = pixelWidth - leftPixel;
 		topPixel  = (int) (0.5 * vertDpi);
 		bottomPixel  = pixelHeight - topPixel;
 		
-		rowPixelHeight = 9;
-		charPixelWidth = 9;
+//		charPixelWidth = (int) ((rightPixel - leftPixel) / 80);
+//		charPixelHeight = (int) ((bottomPixel - topPixel) / 66);
 		
-		py = topPixel;
+		posY = topPixel * paperHeightDots / pixelHeight;
 		
 		carriageReturn();
 		pageDirty = false;
@@ -203,12 +243,12 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			newLine();
 			break;
 		case '\t':  {
-			int space = (tabSize - column % tabSize) * charPixelWidth;
-			if (space + px >= rightPixel) {
+			int space = (int) ((tabSize - charColumn % tabSize) * charWidthDots);
+			if (space + posX >= rightPixel) {
 				carriageReturn();
 				newLine();
 			} else {
-				px += space; 
+				posX += space; 
 			}
 			break;
 		}
@@ -219,7 +259,6 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			
 		default:
 			drawChar(ch);
-			column++;
 			break;
 		}
 	}
@@ -229,14 +268,13 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private void drawChar(char ch) {
 		CharacterMatrix matrix = font.get(ch);
 		if (matrix != null) {
-			for (int x = 0; x < charPixelWidth; x++) {
-				for (int y = 0; y < rowPixelHeight; y++) {
-					boolean s = matrix.isSet(y, x);
+			for (int cx = 0; cx < charMatrixWidth; cx++) {
+				double x = mapX(posX + cx * charWidthDots / charMatrixWidth);
+				for (int cy = 0; cy < charMatrixHeight; cy++) {
+					int y = mapY(posY + cy);
+					boolean s = matrix.isSet(cy, cx);
 					if (s) {
-						if (x % 2 == 0)
-							image.setRGB(px + x / 2, py + y, 0x000000);
-						else
-							image.setRGB(px + x / 2, py + y, 0xff808080);
+						dot(x, y);
 					}
 				}
 			}
@@ -246,39 +284,62 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		firePageUpdated();
 	}
 	/**
+	 * @param x
+	 * @param y
+	 */
+	private void dot(double x, double y) {
+		int pixel = 0;
+		if ((horizDpi | vertDpi) < 200) {
+			if (x - (int) x < 0.5 && y - (int) y < 0.5)
+				pixel = 0;
+			else
+				pixel = 0x808080;
+			image.setRGB((int) x, (int) y, pixel);
+		}
+		else {
+			g2d.setColor(Color.black);
+			g2d.fillOval((int) x, (int) y, horizDpi/75, vertDpi/75);
+		}
+		
+	}
+
+	private double mapX(double pos72) {
+		return (pos72 * pixelWidth / paperWidthDots);
+	}
+	private int mapY(double pos72) {
+		return (int) (pos72 * pixelHeight / paperHeightDots);
+	}
+	/**
 	 * 
 	 */
 	private void advanceChar() {
-		px += charPixelWidth;
-		if (px >= rightPixel) {
+		charColumn++;
+		if (charColumn >= charsPerLine) {
+			carriageReturn();
+			newLine();
+			return;
+		}
+		posX += charAdvanceDots;
+		if (posX + charWidthDots >= paperWidthDots) {
 			carriageReturn();
 			newLine();
 		}
 				
 	}
-	/**
-	 * 
-	 */
 	protected void newLine() {
-		py += rowPixelHeight;
-		if (py >= bottomPixel) {
+		posY += lineHeightDots;
+		if (posY + lineHeightDots >= paperHeightDots) {
 			newPage();
 		}
 	}
-	/**
-	 * @param ch
-	 */
 	private void handleEsc(char ch) {
 		switch (ch) {
 		
 		}
 	}
-	/**
-	 * 
-	 */
 	private void carriageReturn() {
-		column = 0;
-		px = leftPixel;
+		charColumn = 0;
+		posX = leftPixel * paperWidthDots / pixelWidth;
 		firePageUpdated();
 	}
 
