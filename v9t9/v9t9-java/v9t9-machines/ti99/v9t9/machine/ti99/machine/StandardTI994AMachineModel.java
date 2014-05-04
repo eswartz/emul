@@ -27,13 +27,13 @@ import v9t9.engine.modules.ModuleManager;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.machine.EmulatorMachinesData;
-import v9t9.machine.printer.RS232PrinterImageHandler;
+import v9t9.machine.printer.PIOPrinterImageHandler;
 import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
 import v9t9.machine.ti99.dsr.realdisk.CorcompDiskImageDsr;
 import v9t9.machine.ti99.dsr.realdisk.TIDiskImageDsr;
 import v9t9.machine.ti99.dsr.rs232.RS232Regs;
-import v9t9.machine.ti99.dsr.rs232.TIRS232Dsr;
+import v9t9.machine.ti99.dsr.rs232.TIRS232PIODsr;
 import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 
 /**
@@ -104,12 +104,19 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 					FDCControllers.WDC1791, new CorcompDiskImageDsr(machine, (short) 0x1100));
 			machine.getDsrManager().registerDsr(diskDsr);
 			
-			TIRS232Dsr rs232Dsr = new TIRS232Dsr(machine, RS232Regs.CRU_BASE);
-			rs232Dsr.init();
-			RS232PrinterImageHandler handler = new RS232PrinterImageHandler();
-			rs232Dsr.getDevice(1).getRS232().setHandler(handler);
-			machine.getDsrManager().registerDsr(rs232Dsr);
-			machine.addRS232Handler(handler);
+//			TIRS232Dsr rs232Dsr = new TIRS232Dsr(machine, RS232Regs.CRU_BASE);
+//			rs232Dsr.init();
+//			RS232PrinterImageHandler handler = new RS232PrinterImageHandler();
+//			rs232Dsr.getRS232Device(1).getRS232().setHandler(handler);
+//			machine.getDsrManager().registerDsr(rs232Dsr);
+//			machine.addRS232Handler(handler);
+			
+			TIRS232PIODsr rs232PioDsr = new TIRS232PIODsr(machine, RS232Regs.CRU_BASE);
+			rs232PioDsr.init();
+			PIOPrinterImageHandler handler = new PIOPrinterImageHandler();
+			rs232PioDsr.getPIODevice(1).getPIO().setHandler(handler);
+			machine.getDsrManager().registerDsr(rs232PioDsr);
+			machine.addPIOHandler(handler);
 			
 			PCodeDsr pcodeDsr = new PCodeDsr(machine);
 			machine.getDsrManager().registerDsr(pcodeDsr);

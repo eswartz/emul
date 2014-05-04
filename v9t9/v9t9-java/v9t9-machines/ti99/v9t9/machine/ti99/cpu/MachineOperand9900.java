@@ -167,7 +167,10 @@ public class MachineOperand9900 extends BaseMachineOperand {
     	case MachineOperand9900.OP_OFFS_R12: {
     		//byte offs = (byte) ((val >> 1) & 0xff);
     		byte offs = (byte) (val & 0xff);
-    	    return ">" + (offs < 0 ? "-" : "") +Integer.toHexString(offs < 0 ? -offs : offs).toUpperCase();
+    		if (offs < 0)
+    			return ">-" + Integer.toHexString(-offs).toUpperCase();
+    		else
+    			return ">" + Integer.toHexString(offs).toUpperCase();
     	}
 
     	case MachineOperand9900.OP_REG0_SHIFT_COUNT:
@@ -241,15 +244,15 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	 * @see v9t9.engine.cpu.MachineOperand#valueString(short, short)
 	 */
     public String valueString(short ea, short theValue) {
-       if (type == OP_NONE) {
-		return null;
+		if (type == OP_NONE) {
+			return null;
+		}
+		if (byteop) {
+			theValue &= 0xff;
+		}
+		return Integer.toHexString(theValue & 0xffff).toUpperCase() + "(@"
+				+ Integer.toHexString(ea & 0xffff).toUpperCase() + ")";
 	}
-       if (byteop) {
-		theValue &= 0xff;
-	}
-        return Integer.toHexString(theValue & 0xffff).toUpperCase()
-        	+"(@"+Integer.toHexString(ea & 0xffff).toUpperCase()+")"; 
-    }
 
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.MachineOperand#getEA(v9t9.engine.memory.MemoryDomain, int, short)

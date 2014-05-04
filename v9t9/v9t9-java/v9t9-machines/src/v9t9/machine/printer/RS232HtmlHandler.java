@@ -3,6 +3,7 @@
  */
 package v9t9.machine.printer;
 
+import v9t9.common.dsr.IOBuffer;
 import v9t9.common.dsr.IPrinterHtmlEngine;
 import v9t9.common.dsr.IRS232Handler;
 
@@ -54,10 +55,10 @@ public class RS232HtmlHandler implements IRS232Handler {
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IRS232Handler#transmitChars(v9t9.common.dsr.IRS232Handler.Buffer)
+	 * @see v9t9.common.dsr.IRS232Handler#transmitChars(v9t9.common.dsr.IRS232Handler.IOBuffer)
 	 */
 	@Override
-	public void transmitChars(Buffer buf) {
+	public void transmitChars(IOBuffer buf) {
 		while (!buf.isEmpty()) {
 			char ch = (char) buf.take();
 			engine.sendChar(ch);

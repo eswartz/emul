@@ -19,6 +19,7 @@ import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
+import v9t9.common.dsr.IPIOHandler;
 import v9t9.common.dsr.IRS232Handler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.IEmulatedFileHandler;
@@ -123,8 +124,6 @@ public interface IMachine extends IBaseMachine {
 	 */
 	void addEmulatorContentProvider(IEmulatorContentSourceProvider provider);
 
-	/**
-	 * @return
-	 */
 	IRS232Handler[] getRS232Handlers();
+	IPIOHandler[] getPIOHandlers();
 }

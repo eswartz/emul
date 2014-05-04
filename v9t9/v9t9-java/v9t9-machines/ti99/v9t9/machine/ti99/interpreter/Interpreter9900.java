@@ -630,7 +630,7 @@ public class Interpreter9900 implements IInterpreter {
 
         case Inst9900.Itb:
         	iblock.val1 = (short) machine.getCruManager().readBits(iblock.val1<<1, 1);
-        	iblock.val2 = 0;
+        	iblock.val2 = 1;
             break;
 
         case Inst9900.Icoc:

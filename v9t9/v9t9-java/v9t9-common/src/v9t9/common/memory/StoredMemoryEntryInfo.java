@@ -78,7 +78,12 @@ public class StoredMemoryEntryInfo {
     	if (!info.isStored()) {
     		uri = locator.findFile(settings, info);
     		if (uri == null) {
-    			throw new FileNotFoundException(filename);
+    			if (info.getFileMD5() != null) {
+    				uri = locator.findFileByMD5(info.getFileMD5(), info.getFileMd5Offset(), info.getFileMd5Limit());
+    			}
+    			if (uri == null) {
+    				throw new FileNotFoundException(filename);
+    			}
     		}
     		
     		filesize = locator.getContentLength(uri);

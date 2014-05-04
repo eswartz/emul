@@ -3,7 +3,6 @@
  */
 package v9t9.common.dsr;
 
-import java.awt.image.BufferedImage;
 
 /**
  * @author ejs
@@ -11,6 +10,8 @@ import java.awt.image.BufferedImage;
  */
 public interface IPrinterImageListener {
 
-	void updated();
-	void newPage(BufferedImage image);
+	/** either BufferedImage or Image */
+	void newPage(Object image);
+	/** either BufferedImage or Image */
+	void updated(Object image);
 }

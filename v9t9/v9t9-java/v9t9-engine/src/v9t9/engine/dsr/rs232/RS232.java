@@ -6,8 +6,8 @@ package v9t9.engine.dsr.rs232;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import v9t9.common.dsr.IOBuffer;
 import v9t9.common.dsr.IRS232Handler;
-import v9t9.common.dsr.IRS232Handler.Buffer;
 import v9t9.common.dsr.IRS232Handler.DataSize;
 import v9t9.common.dsr.IRS232Handler.Parity;
 import v9t9.common.dsr.IRS232Handler.Stop;
@@ -76,7 +76,7 @@ public class RS232 {
 		return dumper;
 	}
 
-	private Buffer xmitBuffer = new Buffer(), recvBuffer = new Buffer();
+	private IOBuffer xmitBuffer = new IOBuffer(1024), recvBuffer = new IOBuffer(1024);
 	
 	private DataSize dataSize = DataSize.FIVE;
 	private Stop stop = Stop.STOP_1_5;
@@ -253,13 +253,13 @@ public class RS232 {
 	/**
 	 * @return
 	 */
-	public Buffer getRecvBuffer() {
+	public IOBuffer getRecvBuffer() {
 		return recvBuffer;
 	}
 	/**
 	 * @return the xmitBuffer
 	 */
-	public Buffer getXmitBuffer() {
+	public IOBuffer getXmitBuffer() {
 		return xmitBuffer;
 	}
 

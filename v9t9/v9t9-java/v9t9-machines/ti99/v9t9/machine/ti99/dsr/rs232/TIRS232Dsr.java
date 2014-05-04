@@ -41,38 +41,38 @@ import ejs.base.settings.ISettingSection;
  *
  */
 public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
-	private IMemoryEntry romMemoryEntry;
+	protected IMemoryEntry romMemoryEntry;
 
 
-	public static SettingSchema settingDsrRomFileName = new SettingSchema(
+	public static SettingSchema settingRS232DsrRomFileName = new SettingSchema(
 			ISettingsHandler.MACHINE,
 			"RS232DsrFileName",
-			"rs232.bin");
+			"rs232pio.bin");
 
 	
-	public static MemoryEntryInfo dsrRomInfo = MemoryEntryInfoBuilder
+	public static MemoryEntryInfo rs232DsrRomInfo = MemoryEntryInfoBuilder
 			.standardDsrRom(null)
-			.withFilenameProperty(settingDsrRomFileName)
+			.withFilenameProperty(settingRS232DsrRomFileName)
 			.withDescription("RS232 Controller ROM")
-			.withFileMD5("4E4E08FF10D23B799AAA990344553E2E")
-			//.withFileMD5Limit(0x1FF0)
+//			.withFileMD5("4E4E08FF10D23B799AAA990344553E2E")
+			.withFileMD5("A5467BE2E6BD04E1B9CF1DE8FA507541")
 			.create("TI RS232 DSR ROM");
 	
 	
 
-	private short base;
+	protected short base;
 
-	private Dumper dumper;
+	protected Dumper dumper;
 
-	private boolean inited;
+	protected boolean inited;
 
-	protected IProperty rs232ActiveSetting;
+	private IProperty rs232ActiveSetting;
 
 	protected IMachine machine;
 
-	private Map<String, RS232Regs> deviceMap = new HashMap<String, RS232Regs>();
-	private Map<Integer, RS232Regs> devices = new HashMap<Integer, RS232Regs>();
-	
+	private Map<String, RS232Regs> rs232DeviceMap = new HashMap<String, RS232Regs>();
+	private Map<Integer, RS232Regs> rs232Devices = new HashMap<Integer, RS232Regs>();
+
 	public TIRS232Dsr(IMachine machine, short base) {
 		this.machine = machine;
 		this.base = base;
@@ -90,19 +90,33 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 		
 		rs232ActiveSetting.setBoolean(true);
 
-		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(dsrRomInfo);
-		
-		console.mapEntry(romMemoryEntry);
-		
+		initDevice(memoryEntryFactory);
+	}
+
+	/**
+	 * @param memoryEntryFactory
+	 * @throws IOException
+	 */
+	protected void initDevice(IMemoryEntryFactory memoryEntryFactory)
+			throws IOException {
+		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(rs232DsrRomInfo);
+		machine.getConsole().mapEntry(romMemoryEntry);
 		machine.getCpu().settingDumpFullInstructions().setBoolean(true);
 	}
 	
 	public void deactivate(IMemoryDomain console) {
 		console.unmapEntry(romMemoryEntry);
 		
-		rs232ActiveSetting.setBoolean(false);
+		termDevice();
 		
+	}
+
+	/**
+	 * 
+	 */
+	protected void termDevice() {
 		machine.getCpu().settingDumpFullInstructions().setBoolean(false);
+		rs232ActiveSetting.setBoolean(false);
 	}
 
 	/* (non-Javadoc)
@@ -118,7 +132,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 */
 	private ICruWriter cruwRealRS232_0_10 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			RS232Regs regs = getDeviceForAddr(addr);
+			RS232Regs regs = getRS232DeviceForAddr(addr);
 			int bit = 1 << ((addr & 0x1f) >> 1);
 			
 			if (bit >= 0x100) {
@@ -136,7 +150,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 */
 	private ICruWriter cruwRealRS232_11_14 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			RS232Regs regs = getDeviceForAddr(addr);
+			RS232Regs regs = getRS232DeviceForAddr(addr);
 			int bit = 1 << (((addr & 0x1f) >> 1) - 11);
 			
 			dumper.info(String.format("RealRS232_11_14_w: %d / %d", (addr & 0x3f) / 2, data));
@@ -157,7 +171,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 */
 	private ICruWriter cruwRealRS232_16_21 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			RS232Regs regs = getDeviceForAddr(addr);
+			RS232Regs regs = getRS232DeviceForAddr(addr);
 			int bit = 1 << ((addr & 0x3f) >> 1);
 			
 			dumper.info(String.format("RealRS232_16_21_w: %d / %d", (addr & 0x3f) / 2, data));
@@ -174,7 +188,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	
 	private ICruWriter cruwRealRS232_Reset = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			RS232Regs regs = getDeviceForAddr(addr);
+			RS232Regs regs = getRS232DeviceForAddr(addr);
 			
 			dumper.info(String.format("RealRS232_Reset_w: %d", data));
 
@@ -194,7 +208,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 */
 	private ICruReader crurRealRS232_0_7 = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			RS232Regs regs = getDeviceForAddr(addr);
+			RS232Regs regs = getRS232DeviceForAddr(addr);
 			RS232 rs = regs.getRS232();
 			int bit = 1 << ((addr & 0xf) >> 1);
 
@@ -221,7 +235,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 */
 	private ICruReader crurRealRS232_9_31 = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			RS232Regs regs = getDeviceForAddr(addr);
+			RS232Regs regs = getRS232DeviceForAddr(addr);
 			RS232 rs = regs.getRS232();
 			int bit = 1 << ((addr & 0x3f) >> 1);
 
@@ -260,8 +274,16 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 		
 		inited = true;
 		
-		registerDevice(1, "RS232/1");
-		registerDevice(2, "RS232/2");
+		registerDevicesAndCRUs();
+
+	}
+
+	/**
+	 * 
+	 */
+	protected void registerDevicesAndCRUs() {
+		registerRS232Device(1, "RS232/1");
+		registerRS232Device(2, "RS232/2");
 		
 		CruManager cruManager = ((TI99Machine) machine).getCruManager();
 		
@@ -276,12 +298,11 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			cruManager.add(base + 2*0, 8, crurRealRS232_0_7);
 			cruManager.add(base + 2*9, 23, crurRealRS232_9_31);
 		}
-
 	}
 
 
-	protected RS232Regs getDeviceForAddr(int addr) {
-		return getDevice((addr - base) / 0x40);
+	protected RS232Regs getRS232DeviceForAddr(int addr) {
+		return getRS232Device((addr - base) / 0x40);
 	}
 
 	/* (non-Javadoc)
@@ -312,17 +333,17 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 		return false;
 	}
 
-	protected void registerDevice(int index, String name) {
+	protected void registerRS232Device(int index, String name) {
 		RS232Regs rs = new RS232Regs(machine, new RS232(dumper), dumper);
-		deviceMap.put(name, rs);
-		devices.put(index, rs);
+		rs232DeviceMap.put(name, rs);
+		rs232Devices.put(index, rs);
 	}
 
-	public RS232Regs getDevice(String name) {
-		return deviceMap.get(name);
+	public RS232Regs getRS232Device(String name) {
+		return rs232DeviceMap.get(name);
 	}
-	public RS232Regs getDevice(int index) {
-		return devices.get(index);
+	public RS232Regs getRS232Device(int index) {
+		return rs232Devices.get(index);
 	}
 
 	@Override

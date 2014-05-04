@@ -35,7 +35,7 @@ public class TestRS232Regs {
 		dsr = new TIRS232Dsr(machine, (short) 0x1300);
 //		dsr.activate(machine.getConsole(), machine.getMemory().getMemoryEntryFactory());
 		dsr.init();
-		rs232 = dsr.getDevice(1).getRS232();
+		rs232 = dsr.getRS232Device(1).getRS232();
 		assertNotNull(rs232);
 	}
 	

@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.dsr.IPIOHandler;
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageHandler;
 import v9t9.common.dsr.IRS232Handler;
@@ -34,10 +35,15 @@ import v9t9.server.MachineModelFactory;
  *
  */
 public class ManualTestPrinter {
+	private final static String ESC = "" + (char) 27;
+
 
 	private Display display;
 	private PrinterImageShell printerShell;
 	private IPrinterImageEngine engine;
+
+
+	private Shell controlShell;
 
 	/**
 	 * @param i
@@ -55,8 +61,13 @@ public class ManualTestPrinter {
         for (IRS232Handler handler : machine.getRS232Handlers()) {
         	if (handler instanceof IPrinterImageHandler) {
         		engine = ((IPrinterImageHandler) handler).getEngine();
-        		printerShell = new PrinterImageShell();
-        		engine.addListener(printerShell);
+        		printerShell = new PrinterImageShell(engine);
+        	}
+        }
+        for (IPIOHandler handler : machine.getPIOHandlers()) {
+        	if (handler instanceof IPrinterImageHandler) {
+        		engine = ((IPrinterImageHandler) handler).getEngine();
+        		printerShell = new PrinterImageShell(engine);
         	}
         }
 		
@@ -76,10 +87,11 @@ public class ManualTestPrinter {
 	private void run() {
 		 
         engine.setDpi(300, 300);
+        engine.newPage();
         
         makeControlPanel();
         
-		while (!printerShell.getShell().isDisposed()) {
+		while (!controlShell.isDisposed()) {
 			if (!display.readAndDispatch())
 				display.sleep();
 		}
@@ -111,7 +123,7 @@ public class ManualTestPrinter {
 	 * 
 	 */
 	private void makeControlPanel() {
-		Shell controlShell = new Shell();
+		controlShell = new Shell();
 		GridLayoutFactory.fillDefaults().applyTo(controlShell);
 		
 		final ListViewer list = new ListViewer(controlShell, SWT.V_SCROLL);
@@ -156,11 +168,45 @@ public class ManualTestPrinter {
 	 * @param items
 	 */
 	private void initControlItems(List<ControlItem> items) {
+		items.add(new ControlItem("Character Widths", new Runnable() {
+			public void run() {
+				printCharWidths("WHEE");
+			}
+		}));
+		items.add(new ControlItem("Character Widths Emphasized", new Runnable() {
+			public void run() {
+				engine.print(ESC + "E");
+				printCharWidths("EMPHASIZED");
+				engine.print(ESC + "F");
+			}
+		}));
 		items.add(new ControlItem("Print Stuff", new Runnable() {
 			public void run() {
 				printStuff();
 			}
 		}));
+		
+		items.add(new ControlItem("Print Single-Density Graphics", new Runnable() {
+			public void run() {
+				printDensityWave("K");
+			}
+
+		}));
+		
+		items.add(new ControlItem("Print Double-Density Graphics", new Runnable() {
+			public void run() {
+				printDensityWave("L");
+			}
+			
+		}));
+	}
+
+	protected void printCharWidths(String string) {
+		engine.print("With Normal text. " + string + "\r\n");
+		engine.print("" + (char) 15 + "With Condensed text. " + string + (char) 18 + "\r\n");
+		engine.print("" + (char) 14 + "With Expanded S/% text. " + string + (char) 20 + "\r\n");
+		engine.print("" + (char) 14 + (char) 15+ "With Condensed-Enlarged text. " + string + (char) 18 + (char) 20 + "\r\n");
+		engine.print(ESC + "E");
 	}
 
 	/**
@@ -183,5 +229,46 @@ public class ManualTestPrinter {
 				engine.print((char) ((off + col) % 96 + 32));
 			}
 		}
+	}
+
+	private void printDensityWave(String format) {
+		engine.print("\r" + ESC + "0");
+		
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < 360 * 2; i++) {
+			sb.append((char) 255);
+		}
+		engine.print(ESC + format + length16(sb.length()) + sb + "\r\n");
+		
+		for (int l = 1; l <= 2; l++) {
+			for (int j = 0; j < 2; j++) {
+				String str = subWave(l, j);
+				engine.print(ESC + format + length16(str.length()) + str);
+			}
+			engine.print("\r\n");
+		}
+		engine.print("\r\n");
+	}
+
+	/**
+	 * @param length
+	 * @return
+	 */
+	private String length16(int length) {
+		return "" + (char) (length & 0xff) + (char) ((length >> 16) & 0xff);
+	}
+
+	private String subWave(int l, int j) {
+		StringBuilder sb = new StringBuilder();
+		for (int x = 1; x <= 6; x++) {
+			int y = j == 0 ? x : 7 - x;
+			for (int z = 0; z <= y; z++) {
+				int n = j == 0 ? z : y - z;
+				if (l == 2)
+					n = 7 - n;
+				sb.append((char) (1<<n));
+			}					
+		}
+		return sb.toString();
 	}
 }

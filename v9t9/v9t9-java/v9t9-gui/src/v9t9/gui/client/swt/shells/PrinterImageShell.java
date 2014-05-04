@@ -7,6 +7,8 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.print.attribute.standard.MediaSize.Engineering;
+
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
@@ -21,6 +23,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.graphics.Transform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
@@ -31,6 +34,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
+import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageListener;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
 
@@ -51,15 +55,18 @@ public class PrinterImageShell implements IPrinterImageListener {
 	protected int pageNum;
 	
 	private Map<Integer, Image> pageImages = new HashMap<Integer, Image>();
-	private Map<Integer, BufferedImage> bufferedImages = new HashMap<Integer, BufferedImage>();
 	protected long nextUpdateTime;
 	private GridData tabFolderData;
+	private IPrinterImageEngine engine;
 
 	/**
+	 * @param engine 
 	 * 
 	 */
-	public PrinterImageShell() {
+	public PrinterImageShell(IPrinterImageEngine engine) {
+		this.engine = engine;
 		newShell();
+		engine.addListener(this);
 	}
 	
 	/**
@@ -104,6 +111,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 	
 		ToolBar toolbar = new ToolBar(tabFolder, SWT.NONE);
 		tabFolder.setTopRight(toolbar);
+		
 		final ToolItem zoomIn = new ToolItem(toolbar, SWT.PUSH);
 		zoomIn.setText("+");
 		zoomIn.addSelectionListener(new SelectionAdapter() {
@@ -128,6 +136,14 @@ public class PrinterImageShell implements IPrinterImageListener {
 				zoom(1.0);
 			}
 		});
+		final ToolItem newPage = new ToolItem(toolbar, SWT.PUSH);
+		newPage.setText("FF");
+		newPage.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				engine.newPage();
+			}
+		});
 	}
 
 
@@ -145,9 +161,10 @@ public class PrinterImageShell implements IPrinterImageListener {
 			CTabItem item = items[i];
 			ScrolledComposite scrolled = (ScrolledComposite) item.getControl();
 			Composite canvas = (Composite) scrolled.getContent();
-			BufferedImage image = bufferedImages.get(i + 1);
+			Image image = pageImages.get(i + 1);
 			if (image != null) {
-				canvas.setSize(new Point((int) (image.getWidth() * zoom), (int) (image.getHeight() * zoom)));
+				Rectangle bounds = image.getBounds();
+				canvas.setSize(new Point((int) (bounds.width * zoom), (int) (bounds.height * zoom)));
 	            canvas.layout();
 			}
 		}
@@ -158,9 +175,10 @@ public class PrinterImageShell implements IPrinterImageListener {
 	 * @see v9t9.common.dsr.IRS232HtmlListener#updated(java.lang.String)
 	 */
 	@Override
-	public void updated() {
-		if (canvas == null)
-			return;
+	public void updated(Object imageObj) {
+		if (canvas == null) {
+			newPage(imageObj);
+		}
 		
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
@@ -168,10 +186,6 @@ public class PrinterImageShell implements IPrinterImageListener {
 					return;
 				long now = System.currentTimeMillis();
 				if (now >= nextUpdateTime) {
-					Image swtImage = pageImages.remove(pageNum);
-					if (swtImage != null) {
-						swtImage.dispose();
-					}
 					canvas.redraw();
 					nextUpdateTime = now + 500;
 				}
@@ -183,9 +197,11 @@ public class PrinterImageShell implements IPrinterImageListener {
 	 * @see v9t9.common.dsr.IRS232HtmlListener#newPage()
 	 */
 	@Override
-	public void newPage(final BufferedImage image) {
+	public void newPage(final Object imageObj) {
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
+				
+				Image image = (Image) imageObj;
 				
 				final int thisPage = ++pageNum;
 				
@@ -198,9 +214,9 @@ public class PrinterImageShell implements IPrinterImageListener {
 //				tabFolderData.widthHint = (int) (image.getWidth() * zoom);
 //				tabFolderData.heightHint = (int) (image.getHeight() * zoom);
 				
-				CTabItem item = new CTabItem(tabFolder, SWT.NONE);
+				CTabItem item = new CTabItem(tabFolder, SWT.NONE | SWT.CLOSE);
 				
-				bufferedImages.put(thisPage, image);
+				pageImages.put(thisPage, image);
 				
 				ScrolledComposite scrolled = new ScrolledComposite(tabFolder, SWT.V_SCROLL | SWT.H_SCROLL);
 				scrolled.setAlwaysShowScrollBars(false);
@@ -217,40 +233,49 @@ public class PrinterImageShell implements IPrinterImageListener {
 				
 				if (pageNum == 1) {
 					zoom = 1.0;
-					while (zoom * image.getHeight() > shell.getDisplay().getBounds().height)
+					Rectangle bounds = image.getBounds();
+					while (zoom * bounds.height > shell.getDisplay().getBounds().height)
 						zoom /= 2;
 					
 				}
 				
 				updatePageZooms();
-				shell.pack();
+				if (pageNum == 1)
+					shell.pack();
 				
 				
 				canvas.addPaintListener(new PaintListener() {
 					
 					@Override
 					public void paintControl(PaintEvent e) {
-						// TODO: move this to a thread!
 						Image swtImage = pageImages.get(thisPage);
 						if (swtImage == null) {
-							swtImage = ImageUtils.convertAwtImage(shell.getDisplay(), bufferedImages.get(thisPage));
-							pageImages.put(thisPage, swtImage);
+							return;
 						}
+						
+						Rectangle bounds = canvas.getBounds();
 						
 						e.gc.setAntialias(SWT.ON);
 						e.gc.setInterpolation(SWT.HIGH);
+						Transform xfrm = new Transform(e.gc.getDevice());
+						xfrm.scale((float) zoom, (float) zoom);
+						e.gc.setTransform(xfrm);
 						if (swtImage != null) {
-							//							Rectangle bounds = swtImage.getBounds();
-//							e.gc.drawImage(swtImage, 0, 0, bounds.width, bounds.height, 
-//									0, 0, (int) (bounds.width * zoom), (int) (bounds.height * zoom));
-							Transform xfrm = new Transform(e.gc.getDevice());
-							xfrm.scale((float) zoom, (float) zoom);
-							e.gc.setTransform(xfrm);
 							e.gc.drawImage(swtImage, 0, 0);
-							xfrm.dispose();
 						} else {
 							e.gc.fillRectangle(e.x, e.y, e.width, e.height);
 						}
+						e.gc.setTransform(null);
+						xfrm.dispose();
+						
+						double rowPerc = engine.getPageRowPercentage();
+						double colPerc = engine.getPageColumnPercentage();
+						int pixX = (int) (colPerc * bounds.width);
+						int pixY = (int) (rowPerc * bounds.height);
+						
+						e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
+						e.gc.drawLine(0, pixY, bounds.width, pixY);
+						e.gc.drawLine(pixX, pixY, pixX, pixY + 16);
 					}
 				});
 				

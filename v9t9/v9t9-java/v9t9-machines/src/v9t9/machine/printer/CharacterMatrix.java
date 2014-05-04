@@ -50,4 +50,23 @@ public class CharacterMatrix {
 		if (col >= width || row >= height) return false; 
 		return set[col][row];
 	}
+
+
+
+	/**
+	 * @param cx
+	 * @return
+	 */
+	public int getColumn(int cx) {
+		int by = 0;
+		int mask = 1 << height;
+		for (int cy = 0; cy < height; cy++) {
+			boolean s = isSet(cy, cx);
+			if (s) {
+				by |= mask;
+			}
+			mask >>= 1;
+		}
+		return by;
+	}
 }

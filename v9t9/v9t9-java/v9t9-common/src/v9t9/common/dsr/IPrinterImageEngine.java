@@ -30,4 +30,15 @@ public interface IPrinterImageEngine {
 	 */
 	void setDpi(int i, int j);
 
+	/**
+	 * Get the location of the print head vertically on the page, from 0.0 to 1.0
+	 * @return
+	 */
+	double getPageRowPercentage();
+	/**
+	 * Get the location of the print head horizontally on the page, from 0.0 to 1.0
+	 * @return
+	 */
+	double getPageColumnPercentage();
+
 }
