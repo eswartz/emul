@@ -3,11 +3,8 @@
  */
 package v9t9.gui.client.swt.shells;
 
-import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.print.attribute.standard.MediaSize.Engineering;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -36,7 +33,6 @@ import org.eclipse.swt.widgets.ToolItem;
 
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageListener;
-import v9t9.gui.client.swt.imageimport.ImageUtils;
 
 /**
  * @author ejs
@@ -267,15 +263,17 @@ public class PrinterImageShell implements IPrinterImageListener {
 						}
 						e.gc.setTransform(null);
 						xfrm.dispose();
-						
-						double rowPerc = engine.getPageRowPercentage();
-						double colPerc = engine.getPageColumnPercentage();
-						int pixX = (int) (colPerc * bounds.width);
-						int pixY = (int) (rowPerc * bounds.height);
-						
-						e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
-						e.gc.drawLine(0, pixY, bounds.width, pixY);
-						e.gc.drawLine(pixX, pixY, pixX, pixY + 16);
+
+						if (thisPage == pageImages.size() ) {
+							double rowPerc = engine.getPageRowPercentage();
+							double colPerc = engine.getPageColumnPercentage();
+							int pixX = (int) (colPerc * bounds.width);
+							int pixY = (int) (rowPerc * bounds.height);
+							
+							e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
+							e.gc.drawLine(0, pixY, bounds.width, pixY);
+							e.gc.drawLine(pixX, pixY, pixX, pixY + 16);
+						}
 					}
 				});
 				

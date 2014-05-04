@@ -245,6 +245,14 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			if (!rs.getRecvBuffer().isEmpty()) {
 				bits |= RS232Regs.RS_DSR;
 			}
+			if (!rs.getXmitBuffer().isFull()) {
+				bits |= RS232Regs.RS_DSR;
+			} else {
+				bits |= RS232Regs.RS_CTS;
+			}
+			if (!rs.getXmitBuffer().isFull()) {
+				bits |= RS232Regs.RS_XBRE | RS232Regs.RS_XSRE;
+			}
 			regs.setReadPort(bits);
 			
 			regs.dump();

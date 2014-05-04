@@ -17,7 +17,7 @@ import v9t9.common.dsr.IPrinterImageHandler;
  */
 public class PIOPrinterImageHandler implements IPIOHandler, IPrinterImageHandler {
 
-	private IPrinterImageEngine engine = new EpsonPrinterImageEngine(100, 72);
+	private IPrinterImageEngine engine = new EpsonPrinterImageEngine(360, 360);
 	
 	@Override
 	public IPrinterImageEngine getEngine() {

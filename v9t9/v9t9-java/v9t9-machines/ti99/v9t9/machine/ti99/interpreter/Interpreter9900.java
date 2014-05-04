@@ -629,6 +629,7 @@ public class Interpreter9900 implements IInterpreter {
             break;
 
         case Inst9900.Itb:
+        	// set EQ bit to value read -- we use CMP, so val1==val2 is EQ when val1==1 and val2==1
         	iblock.val1 = (short) machine.getCruManager().readBits(iblock.val1<<1, 1);
         	iblock.val2 = 1;
             break;

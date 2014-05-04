@@ -25,10 +25,10 @@ public interface IPrinterImageEngine {
 	void flushPage();
 
 	/**
-	 * @param i
-	 * @param j
+	 * @param horizDpi
+	 * @param vertDpi
 	 */
-	void setDpi(int i, int j);
+	void setDpi(int horizDpi, int vertDpi);
 
 	/**
 	 * Get the location of the print head vertically on the page, from 0.0 to 1.0

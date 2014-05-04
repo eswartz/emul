@@ -30,6 +30,10 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	/**
 	 * 
 	 */
+	private static final int DOTS_PER_PIN = 5;
+	/**
+	 * 
+	 */
 	private static final int DOTS = 360;
 	private ListenerList<IPrinterImageListener> listeners = new ListenerList<IPrinterImageListener>();
 	private boolean firstPage = true;
@@ -59,7 +63,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private int paperWidthDots;
 	private int paperHeightDots;
 	/** character size in 1/DOTS in */
-	private int columnAdvanceDots = 4;
+	private int columnAdvanceDots = 3;
 	/** character size in 1/DOTS in */
 	private double charWidthDots = DOTS / 10.; //8. * 72 / 80;
 	//private int charAdvanceDots = (int) (DOTS * 9. / 7 / 10.);
@@ -84,7 +88,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	 */
 	public EpsonPrinterImageEngine(int horizDpi, int vertDpi) {
 		setPaperSize(8.5, 11.0);
-		setDpi(300, 300);
+		setDpi(horizDpi, vertDpi);
 		
 		
 		try {
@@ -224,7 +228,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		
 		marginLeftDots = (int) (0.25 * DOTS);
 		marginRightDots = paperWidthDots - marginLeftDots;
-		marginTopDots  = (int) (0.5 * DOTS);
+		marginTopDots  = (int) (0.25 * DOTS);
 		marginBottomDots  = paperHeightDots - marginTopDots;
 		
 //		charPixelWidth = (int) ((rightPixel - leftPixel) / 80);
@@ -493,11 +497,11 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		byte[] bytes = commandBytes.toByteArray();
 		switch (command) {
 		case LINE_SPACING_1_6:
-			lineHeightDots = DOTS / 6;
+			lineHeightDots = DOTS * 8 / 9 / 6;
 			command = null;
 			break;
 		case LINE_SPACING_1_8:
-			lineHeightDots = DOTS / 8;
+			lineHeightDots = DOTS * 8 / 9 / 8;
 			command = null;
 			break;
 		case LINE_SPACING:
@@ -513,12 +517,10 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			command = null;
 			break;
 		case GRAPHICS_SINGLE_DENSITY:
-			columnAdvanceDots = 6;
 			bufferToFill = (bytes[0] & 0xff) | ((bytes[1] & 0xff) << 8);
 			bufferToFill %= paperWidthDots;
 			break;
 		case GRAPHICS_DOUBLE_DENSITY:
-			columnAdvanceDots = 3;
 			bufferToFill = (bytes[0] & 0xff) | ((bytes[1] & 0xff) << 8);
 			bufferToFill %= paperWidthDots;
 			break;
@@ -535,14 +537,14 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			for (byte by : bytes) {
 				drawDots(0, by, 8);
 //				previousHeadDots = by;
-				posX += columnAdvanceDots;
+				posX += 6;
 			}
 			break;
 		case GRAPHICS_DOUBLE_DENSITY:
 			for (byte by : bytes) {
 				drawDots(0, by, 8);
 //				previousHeadDots = by;
-				posX += columnAdvanceDots;
+				posX += 3;
 			}
 			break;
 		default:
@@ -557,12 +559,12 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		double x = mapX(posX + dotColumnOffs);
 		int mask = 1 << height;
 		for (int cy = 0; cy < height; cy++) {
-			int y = mapY(posY + cy * 6);
+			int y = mapY(posY + cy * DOTS_PER_PIN);
 			if ((columnMask & mask) != 0) {
 				dot(x, y);
 				if (emphasized) {
 //					dot(x2, y);
-					int y2 = mapY(posY + cy * 6 + 3);
+					int y2 = mapY(posY + cy * DOTS_PER_PIN + 2.5);
 					dot(x, y2);
 //					dot(x2, y2);
 				}

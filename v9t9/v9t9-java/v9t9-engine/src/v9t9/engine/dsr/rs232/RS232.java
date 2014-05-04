@@ -53,6 +53,8 @@ public class RS232 {
 //	
 //			// update status flags and interrupt if needed
 //			Update_Flags_And_Ints(rs);
+		} else {
+			xmitBuffer.clear();
 		}
 	}
 

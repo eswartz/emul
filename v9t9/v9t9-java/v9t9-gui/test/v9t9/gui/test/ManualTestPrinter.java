@@ -86,7 +86,7 @@ public class ManualTestPrinter {
 	 */
 	private void run() {
 		 
-        engine.setDpi(300, 300);
+        engine.setDpi(360, 360);
         engine.newPage();
         
         makeControlPanel();
@@ -170,6 +170,7 @@ public class ManualTestPrinter {
 	private void initControlItems(List<ControlItem> items) {
 		items.add(new ControlItem("Character Widths", new Runnable() {
 			public void run() {
+				engine.print(ESC + "F");
 				printCharWidths("WHEE");
 			}
 		}));
@@ -206,7 +207,7 @@ public class ManualTestPrinter {
 		engine.print("" + (char) 15 + "With Condensed text. " + string + (char) 18 + "\r\n");
 		engine.print("" + (char) 14 + "With Expanded S/% text. " + string + (char) 20 + "\r\n");
 		engine.print("" + (char) 14 + (char) 15+ "With Condensed-Enlarged text. " + string + (char) 18 + (char) 20 + "\r\n");
-		engine.print(ESC + "E");
+		engine.print(ESC + "F");
 	}
 
 	/**
@@ -234,11 +235,17 @@ public class ManualTestPrinter {
 	private void printDensityWave(String format) {
 		engine.print("\r" + ESC + "0");
 		
-		StringBuilder sb = new StringBuilder();
+		engine.print(ESC + format + length16(360*2));
+		
 		for (int i = 0; i < 360 * 2; i++) {
-			sb.append((char) 255);
+			engine.print((char) 255);
 		}
-		engine.print(ESC + format + length16(sb.length()) + sb + "\r\n");
+		engine.print("\r\n");
+		engine.print(ESC + format + length16(360*2)); 
+		for (int i = 0; i < 360 * 2; i++) {
+			engine.print((char) 255);
+		}
+		engine.print("\r\n");
 		
 		for (int l = 1; l <= 2; l++) {
 			for (int j = 0; j < 2; j++) {
@@ -255,7 +262,7 @@ public class ManualTestPrinter {
 	 * @return
 	 */
 	private String length16(int length) {
-		return "" + (char) (length & 0xff) + (char) ((length >> 16) & 0xff);
+		return "" + (char) (length & 0xff) + (char) ((length >> 8) & 0xff);
 	}
 
 	private String subWave(int l, int j) {
