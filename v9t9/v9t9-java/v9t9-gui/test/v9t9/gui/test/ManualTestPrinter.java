@@ -170,15 +170,17 @@ public class ManualTestPrinter {
 	private void initControlItems(List<ControlItem> items) {
 		items.add(new ControlItem("Character Widths", new Runnable() {
 			public void run() {
-				engine.print(ESC + "F");
-				printCharWidths("WHEE");
+				printCharWidths(ESC + "F", "WHEE");
 			}
 		}));
-		items.add(new ControlItem("Character Widths Emphasized", new Runnable() {
+		items.add(new ControlItem("Character Widths Vertical Emphasized", new Runnable() {
 			public void run() {
-				engine.print(ESC + "E");
-				printCharWidths("EMPHASIZED");
-				engine.print(ESC + "F");
+				printCharWidths(ESC + "E", "EMPHASIZED");
+			}
+		}));
+		items.add(new ControlItem("Character Widths Horizontal Emphasized", new Runnable() {
+			public void run() {
+				printCharWidths(ESC + "G", "EMPHASIZED");
 			}
 		}));
 		items.add(new ControlItem("Print Stuff", new Runnable() {
@@ -202,11 +204,25 @@ public class ManualTestPrinter {
 		}));
 	}
 
-	protected void printCharWidths(String string) {
-		engine.print("With Normal text. " + string + "\r\n");
-		engine.print("" + (char) 15 + "With Condensed text. " + string + (char) 18 + "\r\n");
-		engine.print("" + (char) 14 + "With Expanded S/% text. " + string + (char) 20 + "\r\n");
-		engine.print("" + (char) 14 + (char) 15+ "With Condensed-Enlarged text. " + string + (char) 18 + (char) 20 + "\r\n");
+	protected void printCharWidths(String ctrl, String string) {
+		engine.print(ctrl + "With Normal text. " + string + "\r\n");
+		engine.print(ctrl + (char) 15 + "With Condensed text. " + string + (char) 18 + "\r\n");
+		engine.print(ctrl + (char) 14 + "With Expanded S/% text. " + string + (char) 20 + "\r\n");
+		engine.print(ctrl + (char) 14 + (char) 15+ "With Condensed-Enlarged text. " + string + (char) 18 + (char) 20 + "\r\n");
+		
+		engine.print(ctrl + 
+				//         1         2         3         4         5         6         7         8
+				"01234567890123456789012345678901234567890123456789012345678901234567890123456789\r\n");
+		engine.print(ctrl + (char) 15 + 
+				//         1         2         3         4         5         6         7         8         9        10        11        12        13
+				"012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901" + (char) 18 + "\r\n");
+		engine.print(ctrl + (char) 14 + 
+				//         1         2         3         4
+				"0123456789012345678901234567890123456789" + (char) 20 + "\r\n");
+		engine.print(ctrl + (char) 14 + (char) 15+ 
+				//         1         2         3         4         5         6     
+				"012345678901234567890123456789012345678901234567890123456789012345" + (char) 18 + (char) 20 + "\r\n");
+		
 		engine.print(ESC + "F");
 	}
 

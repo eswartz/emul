@@ -64,7 +64,7 @@ public class RS232PrinterImageHandler implements IRS232Handler, IPrinterImageHan
 	 */
 	@Override
 	public void transmitChars(final IOBuffer buf) {
-		Display.getDefault().syncExec(new Runnable() {
+		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
 				while (!buf.isEmpty()) {
 					char ch = (char) buf.take();

@@ -28,11 +28,11 @@ import ejs.base.utils.ListenerList;
 public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	
 	/**
-	 * 
+	 * 1/72"
 	 */
 	private static final int DOTS_PER_PIN = 5;
 	/**
-	 * 
+	 * common factor for graphics & text
 	 */
 	private static final int DOTS = 360;
 	private ListenerList<IPrinterImageListener> listeners = new ListenerList<IPrinterImageListener>();
@@ -46,9 +46,8 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 
 	private Map<Character, CharacterMatrix> font = new HashMap<Character, CharacterMatrix>();
 	private int charColumn;
-	private int charRow;
 	/** positions in 1/360 in */
-	private int posX, posY;
+	private double posX, posY;
 
 	
 	private int pixelWidth;
@@ -63,11 +62,10 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private int paperWidthDots;
 	private int paperHeightDots;
 	/** character size in 1/DOTS in */
-	private int columnAdvanceDots = 3;
+	private double columnAdvanceDots = 4;
 	/** character size in 1/DOTS in */
 	private double charWidthDots = DOTS / 10.; //8. * 72 / 80;
 	//private int charAdvanceDots = (int) (DOTS * 9. / 7 / 10.);
-	private int charsPerLine = 80;
 	/** character size in 1/72 in */
 	private int lineHeightDots = DOTS / 6;
 	
@@ -80,8 +78,10 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private int bufferToFill;
 	private int previousColumnMask;
 	private boolean enlarged;
-	private boolean emphasized;
+	private boolean emphasizedHorizontal;
+	private boolean emphasizedVertical;
 	private boolean condensed;
+	private boolean blocked;
 	
 	/**
 	 * 
@@ -226,7 +226,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			}
 		});
 		
-		marginLeftDots = (int) (0.25 * DOTS);
+		marginLeftDots = (int) (0.125 * DOTS);
 		marginRightDots = paperWidthDots - marginLeftDots;
 		marginTopDots  = (int) (0.25 * DOTS);
 		marginBottomDots  = paperHeightDots - marginTopDots;
@@ -258,13 +258,16 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	public enum Command {
 		GRAPHICS_LINE_SPACING_1_8(0),
 		LINE_SPACING_1_8('0'),
-		LINE_SPACING_1_6('2'),
-		//LINE_SPACING_DEFAULT('2'),
+		//LINE_SPACING_1_6('2'),
+		LINE_SPACING_DEFAULT('2'),
 		LINE_SPACING('A', 1),
-		EMPHASIZED_ON('E'),
-		EMPHASIZED_OFF('F'),
+		VERTICAL_EMPHASIZED_ON('E'),
+		VERTICAL_EMPHASIZED_OFF('F'),
+		HORIZONTAL_EMPHASIZED_ON('G'),
+		HORIZONTAL_EMPHASIZED_OFF('H'),
 		GRAPHICS_SINGLE_DENSITY('K', 2),
 		GRAPHICS_DOUBLE_DENSITY('L', 2),
+		COLUMN_WIDTH('Q', 1),
 		;
 		private char ch;
 		private int count;
@@ -291,6 +294,13 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	}
 	
 	public void print(char ch) {
+		if (ch == 17) {
+			blocked = false;
+			return;
+		} else if (blocked) {
+			return;
+		}
+
 		if (command != null) {
 			if (bufferToFill > 0) {
 				buffer.write((byte) ch);
@@ -328,25 +338,11 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		}
 
 		switch (ch) {
-		case 14:
-			enlarged = true;
-			break;
-		case 15:
-			condensed = true;
-			break;
-		case 18:
-			condensed = false;
-			break;
-		case 20:
-			enlarged = false;
-			break;
-		case '\r':
-			carriageReturn();
-			break;
-		case '\n':
-			newLine();
+		case 8:
+			// TODO: buffer a line so we can delete a char
 			break;
 		case '\t':  {
+			// TODO: remember and use; note, when enlarged, tabs are ignored
 			int space = (int) ((tabSize - charColumn % tabSize) * charWidthDots);
 			if (space + posX >= marginRightDots) {
 				carriageReturn();
@@ -356,6 +352,45 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			}
 			break;
 		}
+		case 14:
+			enlarged = true;
+			updateColumnAdvance();
+			break;
+		case 15:
+			condensed = true;
+			updateColumnAdvance();
+			break;
+//		case 17:
+//			blocked = false;
+//			break;
+		case 19:
+			blocked = true;
+			break;
+		case 18:
+			condensed = false;
+			updateColumnAdvance();
+			break;
+		case 20:
+			enlarged = false;
+			updateColumnAdvance();
+			break;
+		case '\r':
+			carriageReturn();
+			condensed = enlarged = emphasizedHorizontal = emphasizedVertical = false;
+			updateColumnAdvance();
+			break;
+		case 12:
+			newPage();
+			break;
+		case 11:
+			// VT
+			newLine();
+			break;
+		case '\n':
+			newLine();
+			condensed = enlarged = emphasizedHorizontal = emphasizedVertical = false;
+			updateColumnAdvance();
+			break;
 		case 27: {
 			atEsc = true;
 			break;
@@ -365,6 +400,36 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			drawChar(ch);
 			break;
 		}
+	}
+
+	/**
+	 * 
+	 */
+	private void updateColumnAdvance() {
+		if (!enlarged && !condensed) {
+			columnAdvanceDots = 3;
+		} else if (enlarged && condensed) {
+			columnAdvanceDots = 1.8181818;
+		} else if (enlarged) {
+			columnAdvanceDots = 6 / 2.;
+		} else if (condensed) {
+			columnAdvanceDots = 1.8181818;
+		}
+	}
+
+	/**
+	 * 
+	 */
+	private void advanceChar() {
+		charColumn++;
+		posX += columnAdvanceDots * 2;
+		if (enlarged)
+			posX += columnAdvanceDots * 2;
+		if (posX + charWidthDots >= paperWidthDots) {
+			carriageReturn();
+			newLine();
+		}
+				
 	}
 
 	/**
@@ -395,18 +460,14 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	 * @param by
 	 */
 	private void drawCharColumn(final int by) {
-		drawDots(0, by, 9);
+		drawDots(0, by, charMatrixHeight);
 		
-		if (emphasized) {
-			drawDots(columnAdvanceDots / 2, by, 9);
+		if (emphasizedHorizontal) {
+			drawDots(columnAdvanceDots / 2, by, charMatrixHeight);
 			
 		}
 		
-		if (condensed) {
-			posX += columnAdvanceDots / 2.;
-		} else {
-			posX += columnAdvanceDots;
-		}
+		posX += columnAdvanceDots;
 		
 	}
 
@@ -432,7 +493,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 				double w1 = horizDpi / 60., h1 = vertDpi / 60.;
 				gc.setAlpha(192);
 //				gc.fillOval((int) Math.round(x - w1/2.0), (int) Math.round(y - h1/2.0), (int) w1, (int) h1);
-				w1 = horizDpi / 75.; h1 = vertDpi / 75.;
+				w1 = horizDpi / 72.; h1 = vertDpi / 72.;
 				gc.fillOval((int) Math.round(x - w1/2.0), (int) Math.round(y - h1/2.0), (int) w1, (int) h1);
 			}
 		} finally {
@@ -447,26 +508,8 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private int mapY(double pos) {
 		return (int) (pos * pixelHeight / paperHeightDots);
 	}
-	/**
-	 * 
-	 */
-	private void advanceChar() {
-		charColumn++;
-		if (charColumn >= charsPerLine) {
-			carriageReturn();
-			newLine();
-			return;
-		}
-		posX += columnAdvanceDots * 2;
-		//posX += charAdvanceDots;
-		if (posX + charWidthDots >= paperWidthDots) {
-			carriageReturn();
-			newLine();
-		}
-				
-	}
 	protected void newLine() {
-		charRow++;
+//		charRow++;
 		posY += lineHeightDots;
 		if (posY + lineHeightDots >= marginBottomDots) {
 			newPage();
@@ -496,7 +539,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private void handleCommand() {
 		byte[] bytes = commandBytes.toByteArray();
 		switch (command) {
-		case LINE_SPACING_1_6:
+		case LINE_SPACING_DEFAULT:
 			lineHeightDots = DOTS * 8 / 9 / 6;
 			command = null;
 			break;
@@ -508,12 +551,20 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			lineHeightDots = DOTS * (bytes[0] & 0xff) / 72;
 			command = null;
 			break;
-		case EMPHASIZED_ON:
-			emphasized = true;
+		case HORIZONTAL_EMPHASIZED_ON:
+			emphasizedHorizontal = true;
 			command = null;
 			break;
-		case EMPHASIZED_OFF:
-			emphasized = false;
+		case HORIZONTAL_EMPHASIZED_OFF:
+			emphasizedHorizontal = false;
+			command = null;
+			break;
+		case VERTICAL_EMPHASIZED_ON:
+			emphasizedVertical = true;
+			command = null;
+			break;
+		case VERTICAL_EMPHASIZED_OFF:
+			emphasizedVertical = false;
 			command = null;
 			break;
 		case GRAPHICS_SINGLE_DENSITY:
@@ -523,6 +574,10 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		case GRAPHICS_DOUBLE_DENSITY:
 			bufferToFill = (bytes[0] & 0xff) | ((bytes[1] & 0xff) << 8);
 			bufferToFill %= paperWidthDots;
+			break;
+		case COLUMN_WIDTH:
+			// use stock char width?
+			marginRightDots = (int) (marginLeftDots + (bytes[1] & 0xff) * (DOTS / 10.));
 			break;
 		default:
 			System.err.println("unhandled command: " + command);
@@ -555,14 +610,14 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	/**
 	 * @param columnMask
 	 */
-	private void drawDots(int dotColumnOffs, int columnMask, int height) {
+	private void drawDots(double dotColumnOffs, int columnMask, int height) {
 		double x = mapX(posX + dotColumnOffs);
 		int mask = 1 << height;
 		for (int cy = 0; cy < height; cy++) {
 			int y = mapY(posY + cy * DOTS_PER_PIN);
 			if ((columnMask & mask) != 0) {
 				dot(x, y);
-				if (emphasized) {
+				if (emphasizedVertical) {
 //					dot(x2, y);
 					int y2 = mapY(posY + cy * DOTS_PER_PIN + 2.5);
 					dot(x, y2);
