@@ -157,7 +157,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 			CTabItem item = items[i];
 			ScrolledComposite scrolled = (ScrolledComposite) item.getControl();
 			Composite canvas = (Composite) scrolled.getContent();
-			Image image = pageImages.get(i + 1);
+			Image image = pageImages.get(item.getData());
 			if (image != null) {
 				Rectangle bounds = image.getBounds();
 				canvas.setSize(new Point((int) (bounds.width * zoom), (int) (bounds.height * zoom)));
@@ -202,8 +202,9 @@ public class PrinterImageShell implements IPrinterImageListener {
 				final int thisPage = ++pageNum;
 				
 				if (canvas == null || canvas.isDisposed()) {
-					if (shell.isDisposed())
+					if (shell.isDisposed()) {
 						newShell();
+					}
 					shell.open();
 				}
 				
@@ -211,6 +212,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 //				tabFolderData.heightHint = (int) (image.getHeight() * zoom);
 				
 				CTabItem item = new CTabItem(tabFolder, SWT.NONE | SWT.CLOSE);
+				item.setData(thisPage);
 				
 				pageImages.put(thisPage, image);
 				
