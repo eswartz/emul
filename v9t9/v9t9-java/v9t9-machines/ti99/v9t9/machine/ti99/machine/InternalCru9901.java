@@ -369,6 +369,9 @@ public class InternalCru9901 extends BaseCruChip {
 			}
 		}
 
+		if (keyscanPattern.size() > 16) {
+			keyscanPattern.subList(0, keyscanPattern.size() - 16).clear();
+		}
 		keyscanPattern.add(addr);
 		
 		// check for a repeat
