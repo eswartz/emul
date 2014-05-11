@@ -1324,12 +1324,15 @@ public class PathFileLocator implements IPathFileLocator {
 		// note: if stored, this finds the user's copy first or the original template
 		URI uri = null;
 
-		// default is to match by content unless filename is overridden...
-		boolean searchByContent = info.getFileMD5() != null && info.isDefaultFilename(settings);
+		boolean searchByContent = info.getFileMD5() != null;
 			
 		String theFilename = info.getResolvedFilename(settings);
 		
-		if (searchByContent) {
+		if (uri == null && theFilename != null) {
+			uri = findFile(theFilename);
+		}
+		
+		if (uri == null && searchByContent) {
 			uri = findFileByMD5(info.getFileMD5(), info.getFileMd5Offset(), 
 					info.getFileMd5Limit() != 0 ? info.getFileMd5Limit() : info.getSize());
 			if (uri != null) {
@@ -1337,10 +1340,7 @@ public class PathFileLocator implements IPathFileLocator {
 				theFilename = splitFileName(uri).second;
 			}
 		}
-		
-		if (uri == null && theFilename != null) {
-			uri = findFile(theFilename);
-		}
+
 			
 		if (uri == null && theFilename != null) {
 			if (info.isStored()) {
