@@ -387,6 +387,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			newLine();
 			break;
 		case '\n':
+			carriageReturn();
 			newLine();
 			condensed = enlarged = emphasizedHorizontal = emphasizedVertical = false;
 			updateColumnAdvance();

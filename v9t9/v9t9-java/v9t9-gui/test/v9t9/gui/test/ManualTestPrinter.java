@@ -245,6 +245,8 @@ public class ManualTestPrinter {
 			for (int col = 0; col < 80; col++) {
 				engine.print((char) ((off + col) % 96 + 32));
 			}
+			engine.print('\r');
+			engine.print('\n');
 		}
 	}
 
