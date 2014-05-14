@@ -33,6 +33,7 @@ import org.eclipse.swt.widgets.ToolItem;
 
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageListener;
+import v9t9.gui.EmulatorGuiData;
 
 /**
  * @author ejs
@@ -107,9 +108,9 @@ public class PrinterImageShell implements IPrinterImageListener {
 	
 		ToolBar toolbar = new ToolBar(tabFolder, SWT.NONE);
 		tabFolder.setTopRight(toolbar);
-		
+
 		final ToolItem zoomIn = new ToolItem(toolbar, SWT.PUSH);
-		zoomIn.setText("+");
+		zoomIn.setImage(EmulatorGuiData.loadImage(tabFolder.getDisplay(), "icons/zoom_plus.gif"));
 		zoomIn.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -117,7 +118,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 			}
 		});
 		final ToolItem zoomOut = new ToolItem(toolbar, SWT.PUSH);
-		zoomOut.setText("-");
+		zoomOut.setImage(EmulatorGuiData.loadImage(tabFolder.getDisplay(), "icons/zoom_minus.gif"));
 		zoomOut.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -125,7 +126,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 			}
 		});
 		final ToolItem zoomReset = new ToolItem(toolbar, SWT.PUSH);
-		zoomReset.setText("=");
+		zoomReset.setImage(EmulatorGuiData.loadImage(tabFolder.getDisplay(), "icons/zoom_equal.gif"));
 		zoomReset.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -133,13 +134,14 @@ public class PrinterImageShell implements IPrinterImageListener {
 			}
 		});
 		final ToolItem newPage = new ToolItem(toolbar, SWT.PUSH);
-		newPage.setText("FF");
+		newPage.setImage(EmulatorGuiData.loadImage(tabFolder.getDisplay(), "icons/formfeed.gif"));
 		newPage.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				engine.newPage();
 			}
 		});
+		tabFolder.setTabHeight(28);
 	}
 
 
