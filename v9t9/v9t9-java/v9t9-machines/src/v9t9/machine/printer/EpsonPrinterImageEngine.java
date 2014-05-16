@@ -614,13 +614,14 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private void drawDots(double dotColumnOffs, int columnMask, int height) {
 		double x = mapX(posX + dotColumnOffs);
 		int mask = 1 << height;
+		double swerve = 1.05 * Math.sin(posX * Math.PI / 3 / horizDpi);
 		for (int cy = 0; cy < height; cy++) {
-			int y = mapY(posY + cy * DOTS_PER_PIN);
+			int y = mapY(posY + cy * DOTS_PER_PIN + swerve);
 			if ((columnMask & mask) != 0) {
 				dot(x, y);
 				if (emphasizedVertical) {
 //					dot(x2, y);
-					int y2 = mapY(posY + cy * DOTS_PER_PIN + 2.5);
+					int y2 = mapY(posY + cy * DOTS_PER_PIN + swerve + 2.5);
 					dot(x, y2);
 //					dot(x2, y2);
 				}

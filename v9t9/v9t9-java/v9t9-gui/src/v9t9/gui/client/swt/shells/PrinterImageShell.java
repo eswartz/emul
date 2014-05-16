@@ -216,6 +216,14 @@ public class PrinterImageShell implements IPrinterImageListener {
 				CTabItem item = new CTabItem(tabFolder, SWT.NONE | SWT.CLOSE);
 				item.setData(thisPage);
 				
+				item.addDisposeListener(new DisposeListener() {
+					
+					@Override
+					public void widgetDisposed(DisposeEvent e) {
+						pageImages.remove(thisPage);
+					}
+				});
+				
 				pageImages.put(thisPage, image);
 				
 				ScrolledComposite scrolled = new ScrolledComposite(tabFolder, SWT.V_SCROLL | SWT.H_SCROLL);
