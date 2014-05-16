@@ -157,7 +157,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	 */
 	@Override
 	public void flushPage() {
-		if (firstPage || pageDirty) {
+		if (pageDirty) {
 			newPage();
 		}
 	}
@@ -376,8 +376,6 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			break;
 		case '\r':
 			carriageReturn();
-			condensed = enlarged = emphasizedHorizontal = emphasizedVertical = false;
-			updateColumnAdvance();
 			break;
 		case 12:
 			newPage();
@@ -389,8 +387,6 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		case '\n':
 			carriageReturn();
 			newLine();
-			condensed = enlarged = emphasizedHorizontal = emphasizedVertical = false;
-			updateColumnAdvance();
 			break;
 		case 27: {
 			atEsc = true;
@@ -529,9 +525,13 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		}
 	}
 	private void carriageReturn() {
-		charColumn = 0;
 		posX = marginLeftDots;
-		firePageUpdated();
+		charColumn = 0;
+		if (pageDirty) {
+			firePageUpdated();
+		}
+		condensed = enlarged = emphasizedHorizontal = emphasizedVertical = false;
+		updateColumnAdvance();
 	}
 
 	/**

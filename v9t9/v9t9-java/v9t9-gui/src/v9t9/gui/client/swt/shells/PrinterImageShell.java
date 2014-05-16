@@ -173,13 +173,12 @@ public class PrinterImageShell implements IPrinterImageListener {
 	 * @see v9t9.common.dsr.IRS232HtmlListener#updated(java.lang.String)
 	 */
 	@Override
-	public void updated(Object imageObj) {
-		if (canvas == null) {
-			newPage(imageObj);
-		}
-		
+	public void updated(final Object imageObj) {
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
+				if (canvas == null) {
+					newPage(imageObj);
+				}
 				if (canvas == null || canvas.isDisposed())
 					return;
 				long now = System.currentTimeMillis();
@@ -196,100 +195,12 @@ public class PrinterImageShell implements IPrinterImageListener {
 	 */
 	@Override
 	public void newPage(final Object imageObj) {
-		Display.getDefault().asyncExec(new Runnable() {
+		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
 				
 				Image image = (Image) imageObj;
 				
-				final int thisPage = ++pageNum;
-				
-				if (canvas == null || canvas.isDisposed()) {
-					if (shell.isDisposed()) {
-						newShell();
-					}
-					shell.open();
-				}
-				
-//				tabFolderData.widthHint = (int) (image.getWidth() * zoom);
-//				tabFolderData.heightHint = (int) (image.getHeight() * zoom);
-				
-				CTabItem item = new CTabItem(tabFolder, SWT.NONE | SWT.CLOSE);
-				item.setData(thisPage);
-				
-				item.addDisposeListener(new DisposeListener() {
-					
-					@Override
-					public void widgetDisposed(DisposeEvent e) {
-						pageImages.remove(thisPage);
-					}
-				});
-				
-				pageImages.put(thisPage, image);
-				
-				ScrolledComposite scrolled = new ScrolledComposite(tabFolder, SWT.V_SCROLL | SWT.H_SCROLL);
-				scrolled.setAlwaysShowScrollBars(false);
-				item.setControl(scrolled);
-				GridLayoutFactory.swtDefaults().applyTo(scrolled);
-				
-				canvas = new Canvas(scrolled, SWT.BORDER);
-				
-				scrolled.setContent(canvas);
-		
-				GridDataFactory.fillDefaults().grab(true, true).applyTo(canvas);
-				
-				item.setText("Page " + thisPage);
-				
-				if (pageNum == 1) {
-					zoom = 1.0;
-					Rectangle bounds = image.getBounds();
-					while (zoom * bounds.height > shell.getDisplay().getBounds().height)
-						zoom /= 2;
-					
-				}
-				
-				updatePageZooms();
-				if (pageNum == 1)
-					shell.pack();
-				
-				
-				canvas.addPaintListener(new PaintListener() {
-					
-					@Override
-					public void paintControl(PaintEvent e) {
-						Image swtImage = pageImages.get(thisPage);
-						if (swtImage == null) {
-							return;
-						}
-						
-						Rectangle bounds = canvas.getBounds();
-						
-						e.gc.setAntialias(SWT.ON);
-						e.gc.setInterpolation(SWT.HIGH);
-						Transform xfrm = new Transform(e.gc.getDevice());
-						xfrm.scale((float) zoom, (float) zoom);
-						e.gc.setTransform(xfrm);
-						if (swtImage != null) {
-							e.gc.drawImage(swtImage, 0, 0);
-						} else {
-							e.gc.fillRectangle(e.x, e.y, e.width, e.height);
-						}
-						e.gc.setTransform(null);
-						xfrm.dispose();
-
-						if (thisPage == pageImages.size() ) {
-							double rowPerc = engine.getPageRowPercentage();
-							double colPerc = engine.getPageColumnPercentage();
-							int pixX = (int) (colPerc * bounds.width);
-							int pixY = (int) (rowPerc * bounds.height);
-							
-							e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
-							e.gc.drawLine(0, pixY, bounds.width, pixY);
-							e.gc.drawLine(pixX, pixY, pixX, pixY + 16);
-						}
-					}
-				});
-				
-				tabFolder.setSelection(item);
+				createNewPage(image);
 			}
 		});
 	}
@@ -299,6 +210,101 @@ public class PrinterImageShell implements IPrinterImageListener {
 	 */
 	public Shell getShell() {
 		return shell;
+	}
+
+	/**
+	 * @param image
+	 */
+	protected void createNewPage(Image image) {
+		final int thisPage = ++pageNum;
+		
+		if (canvas == null || canvas.isDisposed()) {
+			if (shell.isDisposed()) {
+				newShell();
+			}
+			shell.open();
+		}
+		
+//				tabFolderData.widthHint = (int) (image.getWidth() * zoom);
+//				tabFolderData.heightHint = (int) (image.getHeight() * zoom);
+		
+		CTabItem item = new CTabItem(tabFolder, SWT.NONE | SWT.CLOSE);
+		item.setData(thisPage);
+		
+		item.addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				pageImages.remove(thisPage);
+			}
+		});
+		
+		pageImages.put(thisPage, image);
+		
+		ScrolledComposite scrolled = new ScrolledComposite(tabFolder, SWT.V_SCROLL | SWT.H_SCROLL);
+		scrolled.setAlwaysShowScrollBars(false);
+		item.setControl(scrolled);
+		GridLayoutFactory.swtDefaults().applyTo(scrolled);
+		
+		canvas = new Canvas(scrolled, SWT.BORDER);
+		
+		scrolled.setContent(canvas);
+
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(canvas);
+		
+		item.setText("Page " + thisPage);
+		
+		if (pageNum == 1) {
+			zoom = 1.0;
+			Rectangle bounds = image.getBounds();
+			while (zoom * bounds.height > shell.getDisplay().getBounds().height)
+				zoom /= 2;
+			
+		}
+		
+		updatePageZooms();
+		if (pageNum == 1)
+			shell.pack();
+		
+		
+		canvas.addPaintListener(new PaintListener() {
+			
+			@Override
+			public void paintControl(PaintEvent e) {
+				Image swtImage = pageImages.get(thisPage);
+				if (swtImage == null) {
+					return;
+				}
+				
+				Rectangle bounds = canvas.getBounds();
+				
+				e.gc.setAntialias(SWT.ON);
+				e.gc.setInterpolation(SWT.HIGH);
+				Transform xfrm = new Transform(e.gc.getDevice());
+				xfrm.scale((float) zoom, (float) zoom);
+				e.gc.setTransform(xfrm);
+				if (swtImage != null) {
+					e.gc.drawImage(swtImage, 0, 0);
+				} else {
+					e.gc.fillRectangle(e.x, e.y, e.width, e.height);
+				}
+				e.gc.setTransform(null);
+				xfrm.dispose();
+
+				if (thisPage == pageNum) {
+					double rowPerc = engine.getPageRowPercentage();
+					double colPerc = engine.getPageColumnPercentage();
+					int pixX = (int) (colPerc * bounds.width);
+					int pixY = (int) (rowPerc * bounds.height);
+					
+					e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
+					e.gc.drawLine(0, pixY, bounds.width, pixY);
+					e.gc.drawLine(pixX, pixY, pixX, pixY + 16);
+				}
+			}
+		});
+		
+		tabFolder.setSelection(item);
 	}
 
 }
