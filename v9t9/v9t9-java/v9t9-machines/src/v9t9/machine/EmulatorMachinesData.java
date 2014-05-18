@@ -20,7 +20,6 @@ import java.net.URL;
 import org.apache.log4j.Logger;
 
 import v9t9.common.EmulatorLocations;
-import v9t9.engine.EmulatorEngineData;
 
 /**
  * @author ejs
@@ -43,9 +42,5 @@ public class EmulatorMachinesData {
 			e.printStackTrace();
 			return null;
 		}
-	}
-
-	public static URL getResourceDataURL(String string) {
-		return EmulatorEngineData.class.getClassLoader().getResource(string);
 	}
 }

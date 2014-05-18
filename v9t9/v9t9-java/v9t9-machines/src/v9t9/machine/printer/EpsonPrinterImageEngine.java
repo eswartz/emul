@@ -5,6 +5,7 @@ package v9t9.machine.printer;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -92,7 +93,11 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		
 		
 		try {
-			loadFont(EmulatorMachinesData.getResourceDataURL("printers/rx80_font.txt"), 9, 9);
+			URL dataURL = EmulatorMachinesData.getDataURL("printers/rx80_font.txt");
+			if (dataURL == null)
+				throw new FileNotFoundException("printers/rx80_font.txt");
+
+			loadFont(dataURL, 9, 9);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

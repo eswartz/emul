@@ -45,6 +45,8 @@ public class EmulatorGuiData {
 	
 	public static Image loadImage(Device device, String path) {
 		URL iconFile = getDataURL(path);
+		if (iconFile == null)
+			logger.error("Failed to find image: " + path);
 		if (iconFile != null) {
 			InputStream is = null;
 			try {

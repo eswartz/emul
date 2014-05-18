@@ -61,6 +61,10 @@
         <pathelement location="${ejs-base.location}/libs/bcel-5.2.jar"/>
         <pathelement location="${ejs-base.location}/libs/junit/junit-4.8.1.jar"/>
     </path>
+    <path id="SWT.userclasspath">
+		<!-- this builds against one SWT but runs against others at runtime; ensure all access is API! -->
+        <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.swt.gtk.linux.x86_64.jar"/>
+    </path>
     <target name="init">
         <mkdir dir="bin"/>
         <copy includeemptydirs="false" todir="bin">
