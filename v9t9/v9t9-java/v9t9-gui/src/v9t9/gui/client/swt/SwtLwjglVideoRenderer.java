@@ -10,8 +10,63 @@
  */
 package v9t9.gui.client.swt;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL11.GL_CLAMP;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_COMPILE;
+import static org.lwjgl.opengl.GL11.GL_FALSE;
+import static org.lwjgl.opengl.GL11.GL_FLAT;
+import static org.lwjgl.opengl.GL11.GL_LINEAR;
+import static org.lwjgl.opengl.GL11.GL_MODELVIEW;
+import static org.lwjgl.opengl.GL11.GL_NEAREST;
+import static org.lwjgl.opengl.GL11.GL_PROJECTION;
+import static org.lwjgl.opengl.GL11.GL_REPEAT;
+import static org.lwjgl.opengl.GL11.GL_REPLACE;
+import static org.lwjgl.opengl.GL11.GL_RGB;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_ENV;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_ENV_MODE;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T;
+import static org.lwjgl.opengl.GL11.GL_UNPACK_ALIGNMENT;
+import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
+import static org.lwjgl.opengl.GL11.GL_VERSION;
+import static org.lwjgl.opengl.GL11.glBindTexture;
+import static org.lwjgl.opengl.GL11.glCallList;
+import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengl.GL11.glClearColor;
+import static org.lwjgl.opengl.GL11.glClearDepth;
+import static org.lwjgl.opengl.GL11.glCopyTexImage2D;
+import static org.lwjgl.opengl.GL11.glDeleteLists;
+import static org.lwjgl.opengl.GL11.glDeleteTextures;
+import static org.lwjgl.opengl.GL11.glDisable;
+import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL11.glEndList;
+import static org.lwjgl.opengl.GL11.glFlush;
+import static org.lwjgl.opengl.GL11.glGenLists;
+import static org.lwjgl.opengl.GL11.glGenTextures;
+import static org.lwjgl.opengl.GL11.glGetError;
+import static org.lwjgl.opengl.GL11.glGetString;
+import static org.lwjgl.opengl.GL11.glGetTexImage;
+import static org.lwjgl.opengl.GL11.glLoadIdentity;
+import static org.lwjgl.opengl.GL11.glMatrixMode;
+import static org.lwjgl.opengl.GL11.glNewList;
+import static org.lwjgl.opengl.GL11.glPixelStorei;
+import static org.lwjgl.opengl.GL11.glScalef;
+import static org.lwjgl.opengl.GL11.glShadeModel;
+import static org.lwjgl.opengl.GL11.glTexCoord2f;
+import static org.lwjgl.opengl.GL11.glTexEnvf;
+import static org.lwjgl.opengl.GL11.glTexImage2D;
+import static org.lwjgl.opengl.GL11.glTexParameteri;
+import static org.lwjgl.opengl.GL11.glVertex2f;
+import static org.lwjgl.opengl.GL11.glViewport;
+import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
+import static org.lwjgl.opengl.GL13.GL_TEXTURE1;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
+import static org.lwjgl.opengl.GL13.glMultiTexCoord2f;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,8 +93,10 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.ARBFragmentShader;
 import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.ARBVertexShader;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GLContext;
+import org.lwjgl.opengl.Util;
 import org.lwjgl.util.glu.GLU;
 
 import v9t9.common.client.IMonitorEffectSupport;
@@ -67,6 +124,7 @@ import ejs.base.utils.FileUtils;
  *
  */
 public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IPropertyListener {
+	public static float glVersion;
 
 	private static final String EFFECT_STANDARD_CRT1 = "standardCrt1";
 	private static final String EFFECT_STANDARD_CRT2 = "standardCrt2";
@@ -157,7 +215,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private IGLDataCanvas glDataCanvas;
 	private int vdpCanvasTexture;
 	
-	private boolean supportsShaders = true;
+	private boolean supportsShaders = false;
 	
 	private int fragShader;
 	private int vertexShader;
@@ -179,7 +237,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private int frames;
 	@SuppressWarnings("unused")
 	private long frameTimes;
-
+	private boolean supportsMultiTexture;
 
 	public SwtLwjglVideoRenderer(IMachine machine) {
 		super(machine);
@@ -207,6 +265,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			format = CanvasFormat.RGB16_5_6_5;	// V9938
 		else
 			format = CanvasFormat.RGB8_3_3_2;	// TMS9918A
+		
+		if (format.getMinGLVersion() > glVersion)
+			format = CanvasFormat.RGB24;	
 		return format;
 	}
 
@@ -291,7 +352,13 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			e.printStackTrace(); 
 			return null;
 		}
+
+		String glVersionStr = glGetString(GL_VERSION);
+		int idx = glVersionStr.indexOf('.', glVersionStr.indexOf('.') + 1);
+		glVersion = Float.parseFloat(glVersionStr.substring(0, idx));
 		
+		supportsMultiTexture = glVersion >= 1.3;
+		supportsShaders = glVersion >= 1.4;
 		
 		glShadeModel(GL_FLAT);
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -482,19 +549,19 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		updateProgramVariables();
 		
-
-		glActiveTexture(GL_TEXTURE1);
+		if (supportsMultiTexture) {
+			glActiveTexture(GL_TEXTURE1);
 		
-		glMatrixMode(GL_TEXTURE);
+			glMatrixMode(GL_TEXTURE);
+			
+			glLoadIdentity();
+			glScalef(vdpCanvas.getVisibleWidth() > 256 ? vdpCanvas.getVisibleWidth() / 2 : vdpCanvas.getVisibleWidth(), 
+					vdpCanvas.isInterlacedEvenOdd() ? vdpCanvas.getVisibleHeight() / 2 : vdpCanvas.getVisibleHeight(), 1.0f);
+	
+			glMatrixMode(GL_MODELVIEW);
 		
-		glLoadIdentity();
-		glScalef(vdpCanvas.getVisibleWidth() > 256 ? vdpCanvas.getVisibleWidth() / 2 : vdpCanvas.getVisibleWidth(), 
-				vdpCanvas.isInterlacedEvenOdd() ? vdpCanvas.getVisibleHeight() / 2 : vdpCanvas.getVisibleHeight(), 1.0f);
-
-		glMatrixMode(GL_MODELVIEW);
-		
-		glActiveTexture(GL_TEXTURE0);
-
+			glActiveTexture(GL_TEXTURE0);
+		}
 		
 		for (Integer displayList : displayListMap.values()) {
 			glDeleteLists(displayList, 1);
@@ -594,22 +661,33 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		glEnable(GL_TEXTURE_2D);
 		
+		Util.checkGLError();
 		/*
 		 * Main texture: the VDP canvas
 		 */
-		glActiveTexture(GL_TEXTURE0);
+		if (supportsMultiTexture)
+			glActiveTexture(GL_TEXTURE0);
 		
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, params.getMagFilter());
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, params.getMinFilter());
 
+		Util.checkGLError();
 		int border = 0;
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		
+		if (supportsMultiTexture) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		} else {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+			
+		}
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		
 		glBindTexture(GL_TEXTURE_2D, vdpCanvasTexture);
 
+		Util.checkGLError();
+		
 		Buffer vdpCanvasBuffer = glDataCanvas.getBuffer();
 		
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -618,12 +696,26 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		int imageCanvasType = glDataCanvas.getImageType();
 
 		int texFmt = glDataCanvas.getInternalFormat();
+		
+		int sx = 1;
+		while (sx < vdpCanvas.getVisibleWidth())
+			sx <<= 1;
+		int sy;
+		if (glVersion >= 1.3f) {
+			sy = vdpCanvas.getVisibleHeight() + border * 2;
+		} else {
+			sy = 1;
+			while (sy < vdpCanvas.getVisibleHeight())
+				sy <<= 1;
+		}
+		
+			
+		Util.checkGLError();
 		if (updated) {
 			if (vdpCanvasBuffer instanceof ByteBuffer) {
 				glTexImage2D(GL_TEXTURE_2D, 0, 
 						texFmt,
-						vdpCanvas.getVisibleWidth(),
-						vdpCanvas.getVisibleHeight()+border*2,
+						sx, sy,
 						border, 
 						imageCanvasFormat,
 						imageCanvasType, 
@@ -631,8 +723,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			} else if (vdpCanvasBuffer instanceof ShortBuffer) {
 				glTexImage2D(GL_TEXTURE_2D, 0, 
 						texFmt,
-						vdpCanvas.getVisibleWidth(),
-						vdpCanvas.getVisibleHeight()+border*2,
+						sx, sy,
 						border, 
 						imageCanvasFormat,
 						imageCanvasType, 
@@ -640,8 +731,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			} else if (vdpCanvasBuffer instanceof IntBuffer) {
 				glTexImage2D(GL_TEXTURE_2D, 0, 
 						texFmt,
-						vdpCanvas.getVisibleWidth(),
-						vdpCanvas.getVisibleHeight()+border*2,
+						sx, sy,
 						border, 
 						imageCanvasFormat,
 						imageCanvasType, 
@@ -649,39 +739,47 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			}	
 		}
 		
-		/*
-		 * Second texture: the monitor overlay
-		 */
-		glActiveTexture(GL_TEXTURE1);
-		if (params.getTexture() != null) {
-			try {
-				textureLoader.getTexture(params.getTexture()).bind();
-			} catch (IOException e) {
-				e.printStackTrace();
+		Util.checkGLError();
+		if (supportsMultiTexture) {
+			/*
+			 * Second texture: the monitor overlay
+			 */
+			glActiveTexture(GL_TEXTURE1);
+			if (params.getTexture() != null) {
+				try {
+					textureLoader.getTexture(params.getTexture()).bind();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+	
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+				
+			} else {
+				glBindTexture(GL_TEXTURE_2D, 0);
 			}
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 			
-		} else {
-			glBindTexture(GL_TEXTURE_2D, 0);
+			glActiveTexture(GL_TEXTURE0);
 		}
-		
-		glActiveTexture(GL_TEXTURE0);
 		
 		Integer displayList = displayListMap.get(effect);
 		if (displayList == null) {
 			effect.getRender().init();
 			
-			if (displayList != null)
-				glDeleteLists(displayList, 1);
-			
 			displayList = glGenLists(1);
 			glNewList(displayList, GL_COMPILE);
+			
+			GL11.glPushMatrix();
+			if (glVersion < 1.3f) {
+				glScalef(1, (float) sy / vdpCanvas.getVisibleHeight(), 1);
+			}
 			effect.getRender().render();
+			GL11.glPopMatrix();
+			
+			
 			glEndList();
 			displayListMap.put(effect, displayList);
 		}
@@ -689,13 +787,14 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		glDisable(GL_TEXTURE_2D);
 
-		ARBShaderObjects.glUniform1iARB(
-				ARBShaderObjects.glGetUniformLocationARB(programObject, "time"), 
-				(int) System.currentTimeMillis());
-		
-		if (programObject != 0) {
-			ARBShaderObjects.glUseProgramObjectARB(0); 
-		
+		if (supportsShaders) {
+			ARBShaderObjects.glUniform1iARB(
+					ARBShaderObjects.glGetUniformLocationARB(programObject, "time"), 
+					(int) System.currentTimeMillis());
+			
+			if (programObject != 0) {
+				ARBShaderObjects.glUseProgramObjectARB(0); 
+			}
 		}
 
 //		for (ISwtSprite sprite : sprites) {
@@ -728,6 +827,26 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		}
 	}
 	
+
+	protected void drawQuad(float cx, float cy, float cx2, float cy2,
+			float tx, float ty, float tx2, float ty2) {
+		if (supportsMultiTexture)
+			glMultiTexCoord2f(GL_TEXTURE1, tx, ty);
+		glTexCoord2f(tx, ty);		
+		glVertex2f(cx, cy);
+		if (supportsMultiTexture)
+			glMultiTexCoord2f(GL_TEXTURE1, tx, ty2);
+		glTexCoord2f(tx, ty2);		
+		glVertex2f(cx, cy2);
+		if (supportsMultiTexture)
+			glMultiTexCoord2f(GL_TEXTURE1, tx2, ty2);
+		glTexCoord2f(tx2, ty2);		
+		glVertex2f(cx2, cy2);
+		if (supportsMultiTexture)
+			glMultiTexCoord2f(GL_TEXTURE1, tx2, ty);
+		glTexCoord2f(tx2, ty);		
+		glVertex2f(cx2, cy);
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.gui.client.swt.SwtVideoRenderer#getMonitorEffectSupport()
 	 */
@@ -748,7 +867,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			int w = bounds.width, h = bounds.height;
 
 			glEnable(GL_TEXTURE_2D);
-			glActiveTexture(GL_TEXTURE0);
+			if (supportsMultiTexture) {
+				glActiveTexture(GL_TEXTURE0);
+			}
 
 			glGetError();
 			

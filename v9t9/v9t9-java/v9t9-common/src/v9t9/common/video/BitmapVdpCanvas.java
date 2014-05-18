@@ -116,8 +116,16 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 	protected Buffer copyBytes(Buffer buffer, byte[] data, int bytesPerLine, int bpp) {
 		int vw = getVisibleWidth();
 		int vh = getVisibleHeight();
-		if (buffer == null || buffer.capacity() < bytesPerLine * vh)
-			buffer = ByteBuffer.allocateDirect(bytesPerLine * vh);
+		
+		int vw2 = bytesPerLine;
+		while (vw2 < vw)
+			vw2 <<= 1;
+		int vh2 = 1;
+		while (vh2 < vh)
+			vh2 <<= 1;
+		
+		if (buffer == null || buffer.capacity() < vw2 * vh2)
+			buffer = ByteBuffer.allocateDirect(vw2 * vh2);
 
 		buffer.rewind();
 		int offs = getBitmapOffset(0, 0);
