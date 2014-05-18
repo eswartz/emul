@@ -16,6 +16,7 @@ public interface IPrinterImageEngine {
 
 	void newPage();
 
+	void print(byte ch);
 	void print(char ch);
 	void print(String text);
 

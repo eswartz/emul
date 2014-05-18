@@ -5,19 +5,34 @@ package v9t9.machine.printer;
 
 import org.eclipse.swt.widgets.Display;
 
-import v9t9.common.dsr.IOBuffer;
-import v9t9.common.dsr.IPIOHandler;
+import v9t9.common.dsr.IPIOListener;
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageHandler;
+import v9t9.common.machine.IMachine;
 
 /**
  * This handles 
  * @author ejs
  *
  */
-public class PIOPrinterImageHandler implements IPIOHandler, IPrinterImageHandler {
+public class PIOPrinterImageHandler implements IPIOListener, IPrinterImageHandler {
 
 	private IPrinterImageEngine engine = new EpsonPrinterImageEngine(360, 360);
+	private int printerId;
+	
+	public PIOPrinterImageHandler(IMachine machine, int printerId) {
+		this.printerId = printerId;
+		machine.getDemoManager().registerActorProvider(new PrinterImageActorProvider(printerId));
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IPrinterImageHandler#getPrinterId()
+	 */
+	@Override
+	public int getPrinterId() {
+		return printerId;
+	}
+	
 	
 	@Override
 	public IPrinterImageEngine getEngine() {
@@ -25,15 +40,14 @@ public class PIOPrinterImageHandler implements IPIOHandler, IPrinterImageHandler
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IRS232Handler#transmitChars(v9t9.common.dsr.IRS232Handler.Buffer)
+	 * @see v9t9.common.dsr.IPIOListener#charsTransmitted(byte[])
 	 */
 	@Override
-	public void transmitChars(final IOBuffer buf) {
+	public void charsTransmitted(final byte[] buffer) {
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
-				while (!buf.isEmpty()) {
-					char ch = (char) buf.take();
-					engine.print(ch);
+				for (byte b : buffer) {
+					engine.print((char) b);
 				}
 			}
 		});

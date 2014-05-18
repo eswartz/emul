@@ -5,23 +5,40 @@ package v9t9.machine.printer;
 
 import org.eclipse.swt.widgets.Display;
 
-import v9t9.common.dsr.IOBuffer;
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageHandler;
-import v9t9.common.dsr.IRS232Handler;
+import v9t9.common.dsr.IRS232Handler.DataSize;
+import v9t9.common.dsr.IRS232Handler.Parity;
+import v9t9.common.dsr.IRS232Handler.Stop;
+import v9t9.common.dsr.IRS232Listener;
+import v9t9.common.machine.IMachine;
 
 /**
  * This handles 
  * @author ejs
  *
  */
-public class RS232PrinterImageHandler implements IRS232Handler, IPrinterImageHandler {
-
-	private DataSize dataSize;
-	private Parity parity;
-	private Stop stop;
+public class RS232PrinterImageHandler implements IRS232Listener, IPrinterImageHandler {
 
 	private IPrinterImageEngine engine = new EpsonPrinterImageEngine(360, 360);
+	private int printerId;
+	
+	/**
+	 * @param machine
+	 * @param i
+	 */
+	public RS232PrinterImageHandler(IMachine machine, int printerId) {
+		this.printerId = printerId;
+		machine.getDemoManager().registerActorProvider(new PrinterImageActorProvider(printerId));
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IPrinterImageHandler#getPrinterId()
+	 */
+	@Override
+	public int getPrinterId() {
+		return printerId;
+	}
 	
 	@Override
 	public IPrinterImageEngine getEngine() {
@@ -29,45 +46,38 @@ public class RS232PrinterImageHandler implements IRS232Handler, IPrinterImageHan
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IRS232Handler#updateControl(v9t9.common.dsr.IRS232Handler.DataSize, v9t9.common.dsr.IRS232Handler.Parity, v9t9.common.dsr.IRS232Handler.Stop)
+	 * @see v9t9.common.dsr.IRS232Handler.IRS232Listener#receiveRateSet(int)
 	 */
 	@Override
-	public void updateControl(DataSize dataSize, Parity parity, Stop stop) {
-		// ignore unless changing
-		if (this.dataSize != dataSize || this.parity != parity || this.stop != stop) {
-			this.dataSize = dataSize;
-			this.parity = parity;
-			this.stop = stop;
-
-			engine.flushPage();
-		}
+	public void receiveRateSet(int recvrate) {
+		// ignore
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IRS232Handler#setTransmitRate(int)
+	 * @see v9t9.common.dsr.IRS232Handler.IRS232Listener#transmitRateSet(int)
 	 */
 	@Override
-	public void setTransmitRate(int bps) {
+	public void transmitRateSet(int xmitrate) {
 		// ignore
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IRS232Handler.IRS232Listener#updatedControl(v9t9.common.dsr.IRS232Handler.DataSize, v9t9.common.dsr.IRS232Handler.Parity, v9t9.common.dsr.IRS232Handler.Stop)
+	 */
+	@Override
+	public void updatedControl(DataSize size, Parity parity, Stop stop) {
+		engine.flushPage();
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IRS232Handler#setReceiveRate(int)
+	 * @see v9t9.common.dsr.IRS232Handler.IRS232Listener#charsTransmitted(byte[])
 	 */
 	@Override
-	public void setReceiveRate(int bps) {
-		// ignore
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IRS232Handler#transmitChars(v9t9.common.dsr.IRS232Handler.IOBuffer)
-	 */
-	@Override
-	public void transmitChars(final IOBuffer buf) {
+	public void charsTransmitted(final byte[] buffer) {
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
-				while (!buf.isEmpty()) {
-					char ch = (char) buf.take();
+				for (byte b : buffer) {
+					char ch = (char) b;
 					engine.print(ch);
 				}
 			}

@@ -23,6 +23,7 @@ public class RS232 {
 	private Timer timer;
 	
 	public RS232(Dumper dumper) {
+		this.handler = new RS232Handler();
 		this.dumper = dumper;
 		timer = new Timer(true);
 		timer.schedule(new TimerTask() {

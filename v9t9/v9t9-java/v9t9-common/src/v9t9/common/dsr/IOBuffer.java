@@ -3,6 +3,7 @@
  */
 package v9t9.common.dsr;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
 public class IOBuffer {
@@ -95,5 +96,17 @@ public class IOBuffer {
 			ch = buf[(st - 1 + bufSiz) & bufMask];
 		}
 		return ch;
+	}
+
+	/**
+	 * @return
+	 */
+	public byte[] takeAll() {
+		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		while (!isEmpty()) {
+			byte b = take();
+			bos.write(b);
+		}
+		return bos.toByteArray();
 	}
 }

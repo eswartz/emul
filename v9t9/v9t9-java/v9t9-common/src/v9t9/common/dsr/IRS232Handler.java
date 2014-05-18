@@ -31,6 +31,9 @@ public interface IRS232Handler {
 		EIGHT
 	}
 	
+	void addListener(IRS232Listener listener);
+	void removeListener(IRS232Listener listener);
+	
 	/**
 	 * Update control parameters
 	 * @param dataSize

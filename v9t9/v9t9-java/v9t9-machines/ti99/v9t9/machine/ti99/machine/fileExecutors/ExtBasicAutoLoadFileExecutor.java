@@ -10,6 +10,7 @@
  */
 package v9t9.machine.ti99.machine.fileExecutors;
 
+import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.machine.IMachine;
@@ -53,7 +54,9 @@ public class ExtBasicAutoLoadFileExecutor implements IFileExecutor {
 	public void run(IMachine machine) throws NotifyException {
 		machine.getModuleManager().switchModule(module);
 		machine.reset();
-		machine.getKeyboardHandler().pasteText(" 2");	// space for title, 2 for extended basic
+		machine.getKeyboardHandler().pasteText(
+				IKeyboardHandler.WAIT_FOR_FLUSH + IKeyboardHandler.WAIT_FOR_FLUSH + 
+				" 2");	// space for title, 2 for extended basic
 	}
 
 }

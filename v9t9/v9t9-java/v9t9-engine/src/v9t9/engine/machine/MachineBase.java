@@ -31,8 +31,7 @@ import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.demos.IDemoHandler;
 import v9t9.common.demos.IDemoManager;
-import v9t9.common.dsr.IPIOHandler;
-import v9t9.common.dsr.IRS232Handler;
+import v9t9.common.dsr.IPrinterImageHandler;
 import v9t9.common.events.BaseEventNotifier;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
@@ -135,8 +134,7 @@ abstract public class MachineBase implements IMachine {
 
 	private List<IEmulatorContentSourceProvider> contentProviders = new ArrayList<IEmulatorContentSourceProvider>(1);
 
-	private List<IRS232Handler> rs232Handlers = new ArrayList<IRS232Handler>(1);
-	private List<IPIOHandler> pioHandlers = new ArrayList<IPIOHandler>(1);
+	private List<IPrinterImageHandler> printerImageHandlers = new ArrayList<IPrinterImageHandler>(1);
 
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -852,25 +850,15 @@ abstract public class MachineBase implements IMachine {
 			contentProviders.add(provider);
 	}
 	
-	public void addRS232Handler(IRS232Handler handler) {
-		rs232Handlers.add(handler);
+	public void addPrinterImageHandler(IPrinterImageHandler handler) {
+		printerImageHandlers.add(handler);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IMachine#getRS232Handlers()
 	 */
 	@Override
-	public IRS232Handler[] getRS232Handlers() {
-		return rs232Handlers.toArray(new IRS232Handler[rs232Handlers.size()]);
-	}
-	public void addPIOHandler(IPIOHandler handler) {
-		pioHandlers.add(handler);
-	}
-	/* (non-Javadoc)
-	 * @see v9t9.common.machine.IMachine#getRS232Handlers()
-	 */
-	@Override
-	public IPIOHandler[] getPIOHandlers() {
-		return pioHandlers.toArray(new IPIOHandler[pioHandlers.size()]);
+	public IPrinterImageHandler[] getPrinterImageHandlers() {
+		return printerImageHandlers.toArray(new IPrinterImageHandler[printerImageHandlers.size()]);
 	}
 }
 

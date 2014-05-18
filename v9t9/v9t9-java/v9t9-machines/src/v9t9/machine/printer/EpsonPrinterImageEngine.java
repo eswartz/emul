@@ -63,7 +63,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private int paperWidthDots;
 	private int paperHeightDots;
 	/** character size in 1/DOTS in */
-	private double columnAdvanceDots = 4;
+	private double columnAdvanceDots;
 	/** character size in 1/DOTS in */
 	private double charWidthDots = DOTS / 10.; //8. * 72 / 80;
 	//private int charAdvanceDots = (int) (DOTS * 9. / 7 / 10.);
@@ -83,11 +83,13 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private boolean emphasizedVertical;
 	private boolean condensed;
 	private boolean blocked;
+	private ByteArrayOutputStream processedBytes = new ByteArrayOutputStream();
 	
 	/**
 	 * 
 	 */
 	public EpsonPrinterImageEngine(int horizDpi, int vertDpi) {
+		
 		setPaperSize(8.5, 11.0);
 		setDpi(horizDpi, vertDpi);
 		
@@ -183,6 +185,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	protected void fireNewPage() {
 		pageDirty = false;
 		firstPage = false;
+		fireBytesProcessed();
 		listeners.fire(new ListenerList.IFire<IPrinterImageListener>() {
 			
 			@Override
@@ -194,7 +197,27 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	/**
 	 * 
 	 */
+	protected void fireBytesProcessed() {
+		if (processedBytes.size() > 0) {
+			final byte[] bytes = processedBytes.toByteArray();
+			listeners.fire(new ListenerList.IFire<IPrinterImageListener>() {
+				
+				@Override
+				public void fire(IPrinterImageListener listener) {
+					listener.bytesProcessed(bytes);
+				}
+			});
+			processedBytes.reset();
+		}
+		
+	}
+
+	/**
+	 * 
+	 */
 	protected void firePageUpdated() {
+		fireBytesProcessed();
+		
 		if (firstPage) {
 			fireNewPage();
 		}
@@ -231,7 +254,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			}
 		});
 		
-		marginLeftDots = (int) (0.125 * DOTS);
+		marginLeftDots = (int) (0.25 * DOTS);
 		marginRightDots = paperWidthDots - marginLeftDots;
 		marginTopDots  = (int) (0.25 * DOTS);
 		marginBottomDots  = paperHeightDots - marginTopDots;
@@ -290,8 +313,8 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			this.ch = ch;
 			this.count = count;
 		}
-		public char getCh() {
-			return ch;
+		public byte getCh() {
+			return (byte) ch;
 		}
 		public int getCount() {
 			return count;
@@ -299,6 +322,16 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	}
 	
 	public void print(char ch) {
+		print((byte) ch);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IPrinterImageEngine#print(byte)
+	 */
+	@Override
+	public void print(byte ch) {
+		processedBytes .write(ch);
+		
 		if (ch == 17) {
 			blocked = false;
 			return;
@@ -399,7 +432,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		}
 			
 		default:
-			drawChar(ch);
+			drawChar((char) ch);
 			break;
 		}
 	}
@@ -424,9 +457,9 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	 */
 	private void advanceChar() {
 		charColumn++;
-		posX += columnAdvanceDots * 2;
+		posX += columnAdvanceDots * 3;
 		if (enlarged)
-			posX += columnAdvanceDots * 2;
+			posX += columnAdvanceDots * 3;
 		if (posX + charWidthDots >= paperWidthDots) {
 			carriageReturn();
 			newLine();
@@ -517,7 +550,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			newPage();
 		}
 	}
-	private void getCommand(char ch) {
+	private void getCommand(byte ch) {
 		command = null;
 		for (Command c : Command.values()) {
 			if (c.getCh() == ch) {

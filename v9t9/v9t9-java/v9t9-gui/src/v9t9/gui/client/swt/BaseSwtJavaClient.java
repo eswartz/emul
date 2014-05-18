@@ -29,9 +29,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.demos.DemoContentSource;
-import v9t9.common.dsr.IPIOHandler;
 import v9t9.common.dsr.IPrinterImageHandler;
-import v9t9.common.dsr.IRS232Handler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.EmulatedDiskContentSource;
 import v9t9.common.files.IFileExecutionHandler;
@@ -204,15 +202,9 @@ public abstract class BaseSwtJavaClient implements IClient {
 		});
 
         // TODO
-        for (IRS232Handler handler : machine.getRS232Handlers()) {
-        	if (handler instanceof IPrinterImageHandler) {
-        		PrinterImageShell rsshell = new PrinterImageShell(((IPrinterImageHandler) handler).getEngine());
-        	}
-        }
-        for (IPIOHandler handler : machine.getPIOHandlers()) {
-        	if (handler instanceof IPrinterImageHandler) {
-        		PrinterImageShell rsshell = new PrinterImageShell(((IPrinterImageHandler) handler).getEngine());
-        	}
+        for (IPrinterImageHandler handler : machine.getPrinterImageHandlers()) {
+        	@SuppressWarnings("unused")
+			PrinterImageShell rsshell = new PrinterImageShell(((IPrinterImageHandler) handler).getEngine());
         }
 	}
 	

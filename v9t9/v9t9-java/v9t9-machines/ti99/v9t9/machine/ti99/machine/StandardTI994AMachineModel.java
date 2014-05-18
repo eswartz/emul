@@ -114,13 +114,15 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 			
 			TIRS232PIODsr rs232PioDsr = new TIRS232PIODsr(machine, RS232Regs.CRU_BASE);
 			rs232PioDsr.init();
-			PIOPrinterImageHandler handler = new PIOPrinterImageHandler();
-			rs232PioDsr.getPIODevice(1).getPIO().setHandler(handler);
 			machine.getDsrManager().registerDsr(rs232PioDsr);
-			machine.addPIOHandler(handler);
-			RS232PrinterImageHandler rsHandler = new RS232PrinterImageHandler();
-			rs232PioDsr.getRS232Device(1).getRS232().setHandler(rsHandler);
-			machine.addRS232Handler(rsHandler);
+			
+			PIOPrinterImageHandler handler = new PIOPrinterImageHandler(machine, 0);
+			machine.addPrinterImageHandler(handler);
+			rs232PioDsr.getPIODevice(1).getPIO().getHandler().addListener(handler);
+			
+			RS232PrinterImageHandler rsHandler = new RS232PrinterImageHandler(machine, 1);
+			machine.addPrinterImageHandler(rsHandler);
+			rs232PioDsr.getRS232Device(1).getRS232().getHandler().addListener(rsHandler);
 			
 			PCodeDsr pcodeDsr = new PCodeDsr(machine);
 			machine.getDsrManager().registerDsr(pcodeDsr);

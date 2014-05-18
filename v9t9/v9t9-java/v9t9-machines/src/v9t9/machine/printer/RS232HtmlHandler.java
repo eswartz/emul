@@ -3,19 +3,17 @@
  */
 package v9t9.machine.printer;
 
-import v9t9.common.dsr.IOBuffer;
 import v9t9.common.dsr.IPrinterHtmlEngine;
-import v9t9.common.dsr.IRS232Handler;
+import v9t9.common.dsr.IRS232Handler.DataSize;
+import v9t9.common.dsr.IRS232Handler.Parity;
+import v9t9.common.dsr.IRS232Handler.Stop;
+import v9t9.common.dsr.IRS232Listener;
 
 /**
  * @author ejs
  *
  */
-public class RS232HtmlHandler implements IRS232Handler {
-	
-	private DataSize dataSize;
-	private Parity parity;
-	private Stop stop;
+public class RS232HtmlHandler implements IRS232Listener {
 
 	private IPrinterHtmlEngine engine = new EpsonPrinterHtmlEngine();
 	
@@ -24,43 +22,36 @@ public class RS232HtmlHandler implements IRS232Handler {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IRS232Handler#updateControl(v9t9.common.dsr.IRS232Handler.DataSize, v9t9.common.dsr.IRS232Handler.Parity, v9t9.common.dsr.IRS232Handler.Stop)
+	 * @see v9t9.common.dsr.IRS232Handler.IRS232Listener#updatedControl(v9t9.common.dsr.IRS232Handler.DataSize, v9t9.common.dsr.IRS232Handler.Parity, v9t9.common.dsr.IRS232Handler.Stop)
 	 */
 	@Override
-	public void updateControl(DataSize dataSize, Parity parity, Stop stop) {
-		// ignore unless changing
-		if (this.dataSize != dataSize || this.parity != parity || this.stop != stop) {
-			this.dataSize = dataSize;
-			this.parity = parity;
-			this.stop = stop;
-
-			engine.newPage();
-		}
+	public void updatedControl(DataSize size, Parity parity, Stop stop) {
+		engine.newPage();
 	}
-	
+
 	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IRS232Handler#setTransmitRate(int)
+	 * @see v9t9.common.dsr.IRS232Handler.IRS232Listener#receiveRateSet(int)
 	 */
 	@Override
-	public void setTransmitRate(int bps) {
+	public void receiveRateSet(int recvrate) {
 		// ignore
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IRS232Handler#setReceiveRate(int)
+	 * @see v9t9.common.dsr.IRS232Handler.IRS232Listener#transmitRateSet(int)
 	 */
 	@Override
-	public void setReceiveRate(int bps) {
+	public void transmitRateSet(int xmitrate) {
 		// ignore
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IRS232Handler#transmitChars(v9t9.common.dsr.IRS232Handler.IOBuffer)
+	 * @see v9t9.common.dsr.IRS232Handler.IRS232Listener#charsTransmitted(byte[])
 	 */
 	@Override
-	public void transmitChars(IOBuffer buf) {
-		while (!buf.isEmpty()) {
-			char ch = (char) buf.take();
+	public void charsTransmitted(byte[] buffer) {
+		for (byte b : buffer) {
+			char ch = (char) b;
 			engine.sendChar(ch);
 		}
 	}

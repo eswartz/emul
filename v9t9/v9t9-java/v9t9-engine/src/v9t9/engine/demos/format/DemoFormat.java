@@ -46,6 +46,7 @@ public class DemoFormat {
 	public static final String SOUND_DATA = "soundData";
 
 	private static final String V9938_ACCEL = "v9938Accel";
+	private static final String PRINTER_DATA = "printerData";
 	
 	public static IDemoFormatterRegistry FORMATTER_REGISTRY = new DemoFormatterRegistry();
 	
@@ -178,6 +179,7 @@ public class DemoFormat {
 		FORMATTER_REGISTRY.registerDemoEventFormatter(new SoundRegisterEventFormatter(SOUND_REGS));
 		FORMATTER_REGISTRY.registerDemoEventFormatter(new SpeechEventFormatter(SPEECH_DATA));
 		FORMATTER_REGISTRY.registerDemoEventFormatter(new VdpV9938AccelCommandEventFormatter(V9938_ACCEL));
+		FORMATTER_REGISTRY.registerDemoEventFormatter(new PrinterImageDataEventFormatter(PRINTER_DATA));
 	}
 
 }

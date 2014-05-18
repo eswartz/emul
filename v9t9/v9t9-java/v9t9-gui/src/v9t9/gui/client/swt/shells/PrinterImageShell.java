@@ -170,6 +170,14 @@ public class PrinterImageShell implements IPrinterImageListener {
 	}
 
 	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IPrinterImageListener#bytesProcessed(byte[])
+	 */
+	@Override
+	public void bytesProcessed(byte[] bytes) {
+		// ignore
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.common.dsr.IRS232HtmlListener#updated(java.lang.String)
 	 */
 	@Override

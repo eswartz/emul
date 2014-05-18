@@ -1,0 +1,1 @@
+Shows printing to the TI Impact Printer (Epson RX-80) with Draw & Plot.

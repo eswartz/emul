@@ -22,6 +22,7 @@ public class PIO {
 	private IOBuffer xmitBuffer = new IOBuffer(256), recvBuffer = new IOBuffer(256);
 	
 	public PIO(Dumper dumper) {
+		this.handler = new PIOHandler();
 		this.dumper = dumper;
 		timer = new Timer(true);
 		timer.schedule(new TimerTask() {

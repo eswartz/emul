@@ -20,10 +20,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.dsr.IPIOHandler;
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageHandler;
-import v9t9.common.dsr.IRS232Handler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.gui.client.swt.shells.PrinterImageShell;
@@ -58,17 +56,9 @@ public class ManualTestPrinter {
 		// TODO
 		ISettingsHandler settings = new BasicSettingsHandler();  
 		IMachine machine = MachineModelFactory.INSTANCE.createModel("StandardTI994A").createMachine(settings);
-        for (IRS232Handler handler : machine.getRS232Handlers()) {
-        	if (handler instanceof IPrinterImageHandler) {
-        		engine = ((IPrinterImageHandler) handler).getEngine();
-        		printerShell = new PrinterImageShell(engine);
-        	}
-        }
-        for (IPIOHandler handler : machine.getPIOHandlers()) {
-        	if (handler instanceof IPrinterImageHandler) {
-        		engine = ((IPrinterImageHandler) handler).getEngine();
-        		printerShell = new PrinterImageShell(engine);
-        	}
+        for (IPrinterImageHandler handler : machine.getPrinterImageHandlers()) {
+        	engine = ((IPrinterImageHandler) handler).getEngine();
+        	printerShell = new PrinterImageShell(engine);
         }
 		
         if (printerShell == null || engine == null)

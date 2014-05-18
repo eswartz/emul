@@ -16,16 +16,16 @@ import java.io.IOException;
 import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoInputEventBuffer;
 import v9t9.common.demos.IDemoOutputEventBuffer;
-import v9t9.engine.demos.events.SoundWriteDataEvent;
+import v9t9.engine.demos.events.PrinterImageWriteDataEvent;
 
 /**
  * @author ejs
  *
  */
-public class SoundDataEventFormatter extends BaseEventFormatter {
+public class PrinterImageDataEventFormatter extends BaseEventFormatter {
 
-	public SoundDataEventFormatter(String bufferId) {
-		super(bufferId, SoundWriteDataEvent.ID);
+	public PrinterImageDataEventFormatter(String bufferId) {
+		super(bufferId, PrinterImageWriteDataEvent.ID);
 	}
 
 	/* (non-Javadoc)
@@ -34,8 +34,8 @@ public class SoundDataEventFormatter extends BaseEventFormatter {
 	@Override
 	public IDemoEvent readEvent(IDemoInputEventBuffer buffer)
 			throws IOException {
-		// blast all the data to the same address
-		return new SoundWriteDataEvent(0x8400, buffer.readRest());
+		int printerId = buffer.read() & 0xff;
+		return new PrinterImageWriteDataEvent(printerId, buffer.readRest());
 	}
 
 	/* (non-Javadoc)
@@ -44,9 +44,10 @@ public class SoundDataEventFormatter extends BaseEventFormatter {
 	@Override
 	public void writeEvent(IDemoOutputEventBuffer buffer, IDemoEvent event)
 			throws IOException {
-		SoundWriteDataEvent ev = (SoundWriteDataEvent) event;
+		PrinterImageWriteDataEvent ev = (PrinterImageWriteDataEvent) event;
+		buffer.push((byte) ev.getPrinterId());
 		byte[] data = ev.getData();
-		buffer.pushData(data, 0, ev.getLength());	
+		buffer.pushData(data, 0, ev.getData().length);	
 	}
 
 }
