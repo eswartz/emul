@@ -225,9 +225,6 @@ public class PrinterImageShell implements IPrinterImageListener {
 			shell.open();
 		}
 		
-//				tabFolderData.widthHint = (int) (image.getWidth() * zoom);
-//				tabFolderData.heightHint = (int) (image.getHeight() * zoom);
-		
 		CTabItem item = new CTabItem(tabFolder, SWT.NONE | SWT.CLOSE);
 		item.setData(thisPage);
 		
@@ -265,8 +262,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 		updatePageZooms();
 		if (pageNum == 1)
 			shell.pack();
-		
-		
+
 		canvas.addPaintListener(new PaintListener() {
 			
 			@Override
