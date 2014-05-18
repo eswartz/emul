@@ -28,7 +28,6 @@ public class RS232PrinterImageHandler implements IRS232Listener, IPrinterImageHa
 	 */
 	public RS232PrinterImageHandler(IMachine machine, IPrinterImageEngine engine) {
 		this.engine = engine;
-		machine.getDemoManager().registerActorProvider(new PrinterImageActorProvider(engine.getPrinterId()));
 	}
 	
 	/* (non-Javadoc)
@@ -76,8 +75,7 @@ public class RS232PrinterImageHandler implements IRS232Listener, IPrinterImageHa
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
 				for (byte b : buffer) {
-					char ch = (char) b;
-					engine.print(ch);
+					engine.print(b);
 				}
 			}
 		});

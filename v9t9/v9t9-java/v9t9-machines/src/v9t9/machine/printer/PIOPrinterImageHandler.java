@@ -11,7 +11,7 @@ import v9t9.common.dsr.IPrinterImageHandler;
 import v9t9.common.machine.IMachine;
 
 /**
- * This handles 
+ * This handles printer data coming from PIO
  * @author ejs
  *
  */
@@ -21,7 +21,6 @@ public class PIOPrinterImageHandler implements IPIOListener, IPrinterImageHandle
 	
 	public PIOPrinterImageHandler(IMachine machine, IPrinterImageEngine engine) {
 		this.engine = engine;
-		machine.getDemoManager().registerActorProvider(new PrinterImageActorProvider(engine.getPrinterId()));
 	}
 	
 	/* (non-Javadoc)
@@ -46,7 +45,7 @@ public class PIOPrinterImageHandler implements IPIOListener, IPrinterImageHandle
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
 				for (byte b : buffer) {
-					engine.print((char) b);
+					engine.print(b);
 				}
 			}
 		});

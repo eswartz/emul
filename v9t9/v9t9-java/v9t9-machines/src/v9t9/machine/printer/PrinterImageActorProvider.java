@@ -7,7 +7,7 @@ import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoRecordingActor;
 import v9t9.common.demos.IDemoReversePlaybackActor;
-import v9t9.engine.demos.events.PrinterImageWriteDataEvent;
+import v9t9.engine.demos.events.PrinterImageEvent;
 
 /**
  * @author ejs
@@ -53,7 +53,7 @@ public class PrinterImageActorProvider implements IDemoActorProvider {
 	 */
 	@Override
 	public String getEventIdentifier() {
-		return PrinterImageWriteDataEvent.ID;
+		return PrinterImageEvent.ID;
 	}
 
 }

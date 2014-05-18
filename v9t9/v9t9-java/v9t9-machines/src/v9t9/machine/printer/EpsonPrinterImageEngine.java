@@ -352,14 +352,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	 */
 	@Override
 	public void print(byte ch) {
-		processedBytes .write(ch);
-		
-		if (ch == 17) {
-			blocked = false;
-			return;
-		} else if (blocked) {
-			return;
-		}
+		processedBytes.write(ch);
 
 		if (command != null) {
 			if (bufferToFill > 0) {
@@ -397,6 +390,14 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			return;
 		}
 
+
+		if (ch == 17) {
+			blocked = false;
+			return;
+		} else if (blocked) {
+			return;
+		}
+		
 		switch (ch) {
 		case 8:
 			// TODO: buffer a line so we can delete a char

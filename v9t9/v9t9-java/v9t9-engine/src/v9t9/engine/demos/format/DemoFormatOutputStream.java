@@ -63,6 +63,7 @@ public class DemoFormatOutputStream extends BaseDemoOutputStream implements IDem
 			}
 			else {
 				// callers should invoke #registerBuffer
+				System.out.println(bufferId);
 			}
 		}
 

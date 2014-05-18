@@ -29,6 +29,7 @@ import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.printer.EpsonPrinterImageEngine;
 import v9t9.machine.printer.PIOPrinterImageHandler;
+import v9t9.machine.printer.PrinterImageActorProvider;
 import v9t9.machine.printer.RS232PrinterImageHandler;
 import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
@@ -106,18 +107,13 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 					FDCControllers.WDC1791, new CorcompDiskImageDsr(machine, (short) 0x1100));
 			machine.getDsrManager().registerDsr(diskDsr);
 			
-//			TIRS232Dsr rs232Dsr = new TIRS232Dsr(machine, RS232Regs.CRU_BASE);
-//			rs232Dsr.init();
-//			RS232PrinterImageHandler handler = new RS232PrinterImageHandler();
-//			rs232Dsr.getRS232Device(1).getRS232().setHandler(handler);
-//			machine.getDsrManager().registerDsr(rs232Dsr);
-//			machine.addRS232Handler(handler);
-			
 			TIRS232PIODsr rs232PioDsr = new TIRS232PIODsr(machine, RS232Regs.CRU_BASE);
 			rs232PioDsr.init();
 			machine.getDsrManager().registerDsr(rs232PioDsr);
 			
 			EpsonPrinterImageEngine engine = new EpsonPrinterImageEngine();
+			machine.getDemoManager().registerActorProvider(new PrinterImageActorProvider(engine.getPrinterId()));
+			
 			PIOPrinterImageHandler handler = new PIOPrinterImageHandler(machine, engine);
 			machine.addPrinterImageHandler(handler);
 			rs232PioDsr.getPIODevice(1).getPIO().getHandler().addListener(handler);

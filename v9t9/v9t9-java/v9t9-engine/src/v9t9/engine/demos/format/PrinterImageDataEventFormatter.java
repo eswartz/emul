@@ -16,7 +16,7 @@ import java.io.IOException;
 import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoInputEventBuffer;
 import v9t9.common.demos.IDemoOutputEventBuffer;
-import v9t9.engine.demos.events.PrinterImageWriteDataEvent;
+import v9t9.engine.demos.events.PrinterImageEvent;
 
 /**
  * @author ejs
@@ -25,7 +25,7 @@ import v9t9.engine.demos.events.PrinterImageWriteDataEvent;
 public class PrinterImageDataEventFormatter extends BaseEventFormatter {
 
 	public PrinterImageDataEventFormatter(String bufferId) {
-		super(bufferId, PrinterImageWriteDataEvent.ID);
+		super(bufferId, PrinterImageEvent.ID);
 	}
 
 	/* (non-Javadoc)
@@ -34,7 +34,13 @@ public class PrinterImageDataEventFormatter extends BaseEventFormatter {
 	@Override
 	public IDemoEvent readEvent(IDemoInputEventBuffer buffer)
 			throws IOException {
-		return new PrinterImageWriteDataEvent(buffer.readRest());
+		int type = buffer.read();
+		if (type == PrinterImageEvent.DATA)
+			return PrinterImageEvent.writeData(buffer.readRest());
+		else if (type == PrinterImageEvent.NEW_PAGE)
+			return PrinterImageEvent.newPage();
+		else
+			throw new IOException("unhandled printer event type: " + type);
 	}
 
 	/* (non-Javadoc)
@@ -43,8 +49,16 @@ public class PrinterImageDataEventFormatter extends BaseEventFormatter {
 	@Override
 	public void writeEvent(IDemoOutputEventBuffer buffer, IDemoEvent event)
 			throws IOException {
-		PrinterImageWriteDataEvent ev = (PrinterImageWriteDataEvent) event;
-		buffer.pushData(ev.getData());	
+		PrinterImageEvent ev = (PrinterImageEvent) event;
+		buffer.push(ev.getType());
+		if (ev.getType() == PrinterImageEvent.DATA) {
+			buffer.pushData(ev.getData());
+		} else if (ev.getType() == PrinterImageEvent.NEW_PAGE) {
+			;
+		} else {
+			throw new IOException("unhandled printer event type: " + ev.getType());
+		}
+			
 	}
 
 }

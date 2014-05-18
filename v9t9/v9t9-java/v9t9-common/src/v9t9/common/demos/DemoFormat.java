@@ -44,6 +44,8 @@ public class DemoFormat {
 
 	public static final String V9938_ACCEL = "v9938Accel";
 	public static final String PRINTER_DATA = "printerData";
+
+	public static final String PRINTER_NEW_PAGE = "printerNewPage";
 	
 	/**
 	 * Write a variable-length signed integer (UTF-8)

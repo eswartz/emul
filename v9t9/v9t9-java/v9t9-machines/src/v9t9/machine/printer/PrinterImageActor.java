@@ -19,14 +19,14 @@ import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageHandler;
 import v9t9.common.dsr.IPrinterImageListener;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.demos.events.PrinterImageWriteDataEvent;
+import v9t9.engine.demos.events.PrinterImageEvent;
 
 /**
  * @author ejs
  *
  */
 public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActor {
-
+	
 	private String printerId;
 	private IPrinterImageListener printerImageListener;
 	private IDemoRecorder recorder;
@@ -44,7 +44,7 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 	 */
 	@Override
 	public String getEventIdentifier() {
-		return PrinterImageWriteDataEvent.ID;
+		return PrinterImageEvent.ID;
 	}
 
 	/* (non-Javadoc)
@@ -61,13 +61,21 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 			
 			@Override
 			public void newPage(Object image) {
-				// ignore
+				try {
+					if (recorder != null) {
+						recorder.getOutputStream().writeEvent(PrinterImageEvent.newPage());
+					}
+				} catch (IOException e) {
+					recorder.fail(e);
+				}
 			}
 			
 			@Override
 			public void bytesProcessed(byte[] bytes) {
 				try {
-					writePrinterData(bytes);
+					if (recorder != null) {
+						recorder.getOutputStream().writeEvent(PrinterImageEvent.writeData(bytes));
+					}
 				} catch (IOException e) {
 					recorder.fail(e);
 				}
@@ -80,12 +88,6 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 				imageEngines.add(handler.getEngine());
 			}
 		}
-	}
-
-	protected void writePrinterData(byte[] bytes) throws IOException {
-		if (recorder != null) {
-			recorder.getOutputStream().writeEvent(new PrinterImageWriteDataEvent(bytes));
-		}		
 	}
 
 	/* (non-Javadoc)
@@ -132,9 +134,6 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 	 */
 	@Override
 	public void setupPlayback(IDemoPlayer player) {
-		for (IPrinterImageEngine engine : imageEngines) {
-			engine.flushPage();
-		}
 	}
 
 	/* (non-Javadoc)
@@ -143,13 +142,19 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 	@Override
 	public void executeEvent(IDemoPlayer player, IDemoEvent event)
 			throws IOException {
-		final PrinterImageWriteDataEvent ev = (PrinterImageWriteDataEvent) event;
+		final PrinterImageEvent ev = (PrinterImageEvent) event;
 
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
-				for (byte b : ev.getData()) {
+				if (ev.getType() == PrinterImageEvent.NEW_PAGE) {
 					for (IPrinterImageEngine engine : imageEngines) {
-						engine.print((char) b);
+						engine.newPage();
+					}
+				} else if (ev.getType() == PrinterImageEvent.DATA) {
+					for (byte b : ev.getData()) {
+						for (IPrinterImageEngine engine : imageEngines) {
+							engine.print(b);
+						}
 					}
 				}
 			}
