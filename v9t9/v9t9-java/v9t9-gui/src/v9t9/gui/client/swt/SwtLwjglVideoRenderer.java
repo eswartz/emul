@@ -77,6 +77,8 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
@@ -354,8 +356,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		}
 
 		String glVersionStr = glGetString(GL_VERSION);
-		int idx = glVersionStr.indexOf('.', glVersionStr.indexOf('.') + 1);
-		glVersion = Float.parseFloat(glVersionStr.substring(0, idx));
+		Matcher m = Pattern.compile("(\\d+\\.\\d+).*").matcher(glVersionStr);
+		if (!m.matches())
+			throw new IllegalStateException();
+		glVersion = Float.parseFloat(m.group(1));
 		
 		supportsMultiTexture = glVersion >= 1.3;
 		supportsShaders = glVersion >= 1.4;
@@ -661,7 +665,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		glEnable(GL_TEXTURE_2D);
 		
-		Util.checkGLError();
 		/*
 		 * Main texture: the VDP canvas
 		 */
@@ -674,7 +677,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		Util.checkGLError();
 		int border = 0;
 		
-		if (supportsMultiTexture) {
+		if (glVersion >= 1.3) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		} else {
@@ -697,18 +700,19 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 		int texFmt = glDataCanvas.getInternalFormat();
 		
-		int sx = 1;
-		while (sx < vdpCanvas.getVisibleWidth())
-			sx <<= 1;
-		int sy;
-		if (glVersion >= 1.3f) {
-			sy = vdpCanvas.getVisibleHeight() + border * 2;
-		} else {
+		int sx,sy;
+		
+		if (glVersion < 1.3f) {
+			sx = 1;
+			while (sx < vdpCanvas.getVisibleWidth())
+				sx <<= 1;
 			sy = 1;
 			while (sy < vdpCanvas.getVisibleHeight())
 				sy <<= 1;
+		} else {
+			sx = vdpCanvas.getVisibleWidth();
+			sy = vdpCanvas.getVisibleHeight() + border * 2;
 		}
-		
 			
 		Util.checkGLError();
 		if (updated) {
