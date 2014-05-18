@@ -10,6 +10,11 @@ package v9t9.common.dsr;
  */
 public interface IPrinterImageEngine {
 
+	/**
+	 * Get the id of the printer (e.g. make/model emulated)
+	 */
+	String getPrinterId();
+
 	void addListener(IPrinterImageListener listener);
 
 	void removeListener(IPrinterImageListener listener);

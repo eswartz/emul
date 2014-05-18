@@ -15,12 +15,12 @@ import v9t9.engine.demos.events.PrinterImageWriteDataEvent;
  */
 public class PrinterImageActorProvider implements IDemoActorProvider {
 
-	private int printerId;
+	private String printerId;
 
 	/**
 	 * @param printerId
 	 */
-	public PrinterImageActorProvider(int printerId) {
+	public PrinterImageActorProvider(String printerId) {
 		this.printerId = printerId;
 	}
 

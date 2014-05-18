@@ -9,7 +9,7 @@ package v9t9.common.dsr;
  */
 public interface IPrinterImageHandler {
 
-	int getPrinterId();
+	String getPrinterId();
 	
 	IPrinterImageEngine getEngine();
 }

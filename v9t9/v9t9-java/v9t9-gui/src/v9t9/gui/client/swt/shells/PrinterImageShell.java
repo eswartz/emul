@@ -56,10 +56,6 @@ public class PrinterImageShell implements IPrinterImageListener {
 	private GridData tabFolderData;
 	private IPrinterImageEngine engine;
 
-	/**
-	 * @param engine 
-	 * 
-	 */
 	public PrinterImageShell(IPrinterImageEngine engine) {
 		this.engine = engine;
 		newShell();

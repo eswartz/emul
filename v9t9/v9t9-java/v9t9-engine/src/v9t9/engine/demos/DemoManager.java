@@ -24,10 +24,12 @@ import org.apache.log4j.Logger;
 
 import v9t9.common.client.IEmulatorContentSource;
 import v9t9.common.demos.DemoContentSource;
+import v9t9.common.demos.DemoFormat;
 import v9t9.common.demos.DemoHeader;
 import v9t9.common.demos.IDemo;
 import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEventFormatter;
+import v9t9.common.demos.IDemoFormatterRegistry;
 import v9t9.common.demos.IDemoInputStream;
 import v9t9.common.demos.IDemoManager;
 import v9t9.common.demos.IDemoOutputStream;
@@ -41,9 +43,14 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.engine.demos.actors.TimerTickActor;
 import v9t9.engine.demos.events.TimerTick;
-import v9t9.engine.demos.format.DemoFormat;
 import v9t9.engine.demos.format.DemoFormatInputStream;
 import v9t9.engine.demos.format.DemoFormatOutputStream;
+import v9t9.engine.demos.format.SoundDataEventFormatter;
+import v9t9.engine.demos.format.SoundRegisterEventFormatter;
+import v9t9.engine.demos.format.SpeechEventFormatter;
+import v9t9.engine.demos.format.VdpV9938AccelCommandEventFormatter;
+import v9t9.engine.demos.format.VideoDataEventFormatter;
+import v9t9.engine.demos.format.VideoRegisterEventFormatter;
 import v9t9.engine.demos.format.old.OldDemoFormat;
 import v9t9.engine.demos.format.old.OldDemoFormatInputStream;
 import v9t9.engine.demos.format.old.OldDemoFormatOutputStream;
@@ -70,6 +77,19 @@ public class DemoManager implements IDemoManager {
 		locator.setReadWritePathProperty(Settings.get(machine, IDemoManager.settingRecordedDemosPath));
 		
 		registerActorProvider(new TimerTickActor.Provider());
+		
+		IDemoFormatterRegistry.INSTANCE.registerDemoEventFormatter(
+				new VideoDataEventFormatter(DemoFormat.VIDEO_DATA));
+		IDemoFormatterRegistry.INSTANCE.registerDemoEventFormatter(
+				new VideoRegisterEventFormatter(DemoFormat.VIDEO_REGS));
+		IDemoFormatterRegistry.INSTANCE.registerDemoEventFormatter(
+				new SoundDataEventFormatter(DemoFormat.SOUND_DATA));
+		IDemoFormatterRegistry.INSTANCE.registerDemoEventFormatter(
+				new SoundRegisterEventFormatter(DemoFormat.SOUND_REGS));
+		IDemoFormatterRegistry.INSTANCE.registerDemoEventFormatter(
+				new SpeechEventFormatter(DemoFormat.SPEECH_DATA));
+		IDemoFormatterRegistry.INSTANCE.registerDemoEventFormatter(
+				new VdpV9938AccelCommandEventFormatter(DemoFormat.V9938_ACCEL));
 	}
 
 	/* (non-Javadoc)
@@ -176,13 +196,13 @@ public class DemoManager implements IDemoManager {
 	public IDemoInputStream createDemoReader(URI uri) throws IOException,
 			NotifyException {
 		InputStream is = locator.createInputStream(uri);
-		byte[] header = new byte[4];
-		is.read(header);
+		byte[] magic = new byte[4];
+		is.read(magic);
 		
-		if (Arrays.equals(header, DemoFormat.DEMO_MAGIC_HEADER_V9t9)) {
-			DemoFormatInputStream inputStream = new DemoFormatInputStream(machine.getModel(), is);
+		if (DemoHeader.isV9t9jFormat(magic)) {
+			DemoFormatInputStream inputStream = new DemoFormatInputStream(machine.getModel(), magic, is);
 			return inputStream;
-		} else if (Arrays.equals(header, OldDemoFormat.DEMO_MAGIC_HEADER_V910)) {
+		} else if (Arrays.equals(magic, OldDemoFormat.DEMO_MAGIC_HEADER_V910)) {
 			return new OldDemoFormatInputStream(is);
 		}
 		
@@ -196,13 +216,13 @@ public class DemoManager implements IDemoManager {
 	public IDemoOutputStream createDemoWriter(URI uri) throws IOException,
 			NotifyException {
 		if (! Settings.get(machine, settingUseDemoOldFormat).getBoolean()) {
-			DemoHeader header = new DemoHeader();
+			DemoHeader header = new DemoHeader(DemoHeader.DEMO_MAGIC_HEADER_V9t9);
 			header.setMachineModel(machine.getModel().getIdentifier());
 			for (IDemoActorProvider actor : actorProviders.values()) {
 				if (actor.getEventIdentifier().equals(TimerTick.ID))
 					continue;
 				
-				IDemoEventFormatter formatter = DemoFormat.FORMATTER_REGISTRY.findFormatterByEvent(
+				IDemoEventFormatter formatter = IDemoFormatterRegistry.INSTANCE.findFormatterByEvent(
 						actor.getEventIdentifier());
 				if (formatter != null) {
 					header.findOrAllocateIdentifier(formatter.getBufferIdentifer());

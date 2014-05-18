@@ -14,11 +14,17 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DemoHeader {
-	// private byte[4] magic;
+	
+	/** original Java format */
+	public static final byte[] DEMO_MAGIC_HEADER_V9t9 = { 'V','9','7','0' };
+	
+	private byte[] magic;
 	
 	// ASCIIZ string
 	private String machineModel;
@@ -30,6 +36,17 @@ public class DemoHeader {
 	// as ID byte followed by ASCIIZ string;
 	// ID of 0 terminates list
 	private Map<Integer, String> bufferIdentifiers = new HashMap<Integer, String>();
+	
+	// as ID byte followed by ASCIIZ string;
+	// ID of 0 terminates list
+	private Map<String, List<String>> streamIdentifiers = new HashMap<String, List<String>>();
+	
+	/**
+	 * 
+	 */
+	public DemoHeader(byte[] magic) {
+		this.magic = magic;
+	}
 	
 	public String getMachineModel() {
 		return machineModel;
@@ -61,10 +78,15 @@ public class DemoHeader {
 	public Map<Integer, String> getBufferIdentifierMap() {
 		return bufferIdentifiers;
 	}
+	
+	public Map<String, List<String>> getStreamIdentifierMap() {
+		return streamIdentifiers;
+	}
+	
 	public void read(InputStream is) throws IOException {
-		// expect machine identifier
-		if (is.read() != 0x7f)
-			throw new IOException("unexpected format: wanted 0x7f");
+		if (is.read() != 0x7f) {
+			throw new IOException("unexpected format: wanted 0x80 or 0x7f");
+		}
 		
 		setMachineModel(readString(is));
 
@@ -89,6 +111,10 @@ public class DemoHeader {
 		setTimerRate(rate);
 		
 		// read TOC
+		readTOC(is);
+	}
+
+	private void readTOC(InputStream is) throws IOException {
 		int id;
 		while ((id = is.read()) != 0) {
 			if (id < 0)
@@ -99,7 +125,6 @@ public class DemoHeader {
 			}
 		}
 	}
-	
 	
 	private String readString(InputStream is) throws IOException {
 		StringBuilder sb = new StringBuilder();
@@ -115,6 +140,8 @@ public class DemoHeader {
 	
 	public void write(OutputStream os) throws IOException {
 		// machine ID token
+		if (bufferIdentifiers.isEmpty())
+			os.write(0x7f);
 		os.write(0x7f);
 
 		// machine identifier
@@ -132,7 +159,7 @@ public class DemoHeader {
 		// timer rate (ticks per sec)
 		os.write(getTimerRate());
 		
-		// read TOC
+		// write TOC
 		for (Map.Entry<Integer, String> entry : bufferIdentifiers.entrySet()) {
 			if ((entry.getKey() & 0xff) != entry.getKey())
 				throw new IOException("invalid buffer identifier: " + entry.getKey());
@@ -140,10 +167,8 @@ public class DemoHeader {
 			writeString(os, entry.getValue());
 		}
 		os.write(0);
-		
 	}
 	
-
 	private void writeString(OutputStream os, String str) throws IOException {
 		if (str != null)
 			os.write(str.getBytes());
@@ -168,6 +193,22 @@ public class DemoHeader {
 			throw new IOException("no identifier space left for " + id);
 		bufferIdentifiers.put(max, id);
 		return max;
+	}
+
+	/**
+	 * @return
+	 */
+	public byte[] getMagic() {
+		return magic;
+	}
+
+	/**
+	 * Tell if the magic is one of the V9t9j formats 
+	 * @param magic
+	 * @return
+	 */
+	public static boolean isV9t9jFormat(byte[] magic) {
+		return Arrays.equals(magic, DEMO_MAGIC_HEADER_V9t9);
 	}
 	
 }

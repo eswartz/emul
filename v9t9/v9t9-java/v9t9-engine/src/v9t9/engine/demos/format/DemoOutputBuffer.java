@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import ejs.base.utils.RleSegmenter;
-
+import v9t9.common.demos.DemoFormat;
 import v9t9.engine.demos.stream.BaseDemoOutputBuffer;
 
 /**

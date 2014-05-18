@@ -10,6 +10,8 @@
  */
 package v9t9.gui.client.swt;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.TimerTask;
 
 import org.eclipse.jface.wizard.WizardDialog;
@@ -29,6 +31,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.demos.DemoContentSource;
+import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.EmulatedDiskContentSource;
@@ -202,9 +205,13 @@ public abstract class BaseSwtJavaClient implements IClient {
 		});
 
         // TODO
+        Set<IPrinterImageEngine> engines = new HashSet<IPrinterImageEngine>();
         for (IPrinterImageHandler handler : machine.getPrinterImageHandlers()) {
-        	@SuppressWarnings("unused")
-			PrinterImageShell rsshell = new PrinterImageShell(((IPrinterImageHandler) handler).getEngine());
+        	IPrinterImageEngine engine = ((IPrinterImageHandler) handler).getEngine();
+        	if (engines.add(engine)) {
+				@SuppressWarnings("unused")
+				PrinterImageShell rsshell = new PrinterImageShell(engine);
+        	}
         }
 	}
 	

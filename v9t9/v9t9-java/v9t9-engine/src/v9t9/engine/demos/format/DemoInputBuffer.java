@@ -13,6 +13,8 @@ package v9t9.engine.demos.format;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+
+import v9t9.common.demos.DemoFormat;
 import v9t9.engine.demos.stream.BaseDemoInputBuffer;
 
 /**

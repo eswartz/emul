@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import v9t9.common.demos.DemoHeader;
 import v9t9.common.demos.IDemoActorProvider;
 import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoHandler;
@@ -29,7 +30,6 @@ import v9t9.common.settings.Settings;
 import v9t9.common.speech.ILPCParameters;
 import v9t9.common.speech.ILPCParametersListener;
 import v9t9.engine.demos.events.SpeechEvent;
-import v9t9.engine.demos.format.DemoFormat;
 import v9t9.engine.speech.LPCParameters;
 import v9t9.engine.speech.SpeechTMS5220;
 import ejs.base.properties.IProperty;
@@ -94,7 +94,7 @@ public class SpeechDemoActor extends BaseDemoActor implements IDemoReversePlayba
 	 */
 	@Override
 	public boolean shouldRecordFor(byte[] header) {
-		return DemoFormat.DEMO_MAGIC_HEADER_V9t9.equals(header);
+		return DemoHeader.isV9t9jFormat(header);
 	}
 	
 	/* (non-Javadoc)

@@ -16,15 +16,18 @@ import v9t9.common.demos.IDemoEvent;
  * @author ejs
  *
  */
-public class PrinterImageWriteDataEvent implements IDemoEvent {
+public class PrinterSelectEvent implements IDemoEvent {
 
 	public static final String ID = "PrinterWriteData";
 	private byte[] data;
 
-	public PrinterImageWriteDataEvent(byte[] data) {
+	public PrinterSelectEvent(byte[] data) {
 		this.data = data;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.demo.IDemoEvent#getIdentifier()
+	 */
 	@Override
 	public String getIdentifier() {
 		return ID;

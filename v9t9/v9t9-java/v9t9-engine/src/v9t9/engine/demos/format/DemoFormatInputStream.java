@@ -21,6 +21,7 @@ import java.util.Set;
 import v9t9.common.demos.DemoHeader;
 import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoEventFormatter;
+import v9t9.common.demos.IDemoFormatterRegistry;
 import v9t9.common.demos.IDemoInputEventBuffer;
 import v9t9.common.demos.IDemoInputStream;
 import v9t9.common.events.NotifyException;
@@ -42,10 +43,10 @@ public class DemoFormatInputStream extends BaseDemoInputStream implements IDemoI
 
 	private Set<Integer> unknownBuffers = new HashSet<Integer>();
 	
-	public DemoFormatInputStream(IMachineModel machineModel, InputStream is_) throws IOException, NotifyException {
+	public DemoFormatInputStream(IMachineModel machineModel, byte[] magic, InputStream is_) throws IOException, NotifyException {
 		super(is_);
 
-		header = new DemoHeader();
+		header = new DemoHeader(magic);
 		header.read(is);
 		
 		if (!machineModel.isModelCompatible(header.getMachineModel())) {
@@ -55,7 +56,7 @@ public class DemoFormatInputStream extends BaseDemoInputStream implements IDemoI
 		}
 		
 		for (Map.Entry<Integer, String> ent : header.getBufferIdentifierMap().entrySet()) {
-			final IDemoEventFormatter formatter = DemoFormat.FORMATTER_REGISTRY.findFormatterByBuffer(
+			final IDemoEventFormatter formatter = IDemoFormatterRegistry.INSTANCE.findFormatterByBuffer(
 					ent.getValue());
 			DemoInputEventBuffer buffer;
 			if (formatter != null) {
@@ -142,6 +143,4 @@ public class DemoFormatInputStream extends BaseDemoInputStream implements IDemoI
 			queuedEvents.add(new TimerTick(getElapsedTime()));
 		}
 	}
-	
-
 }

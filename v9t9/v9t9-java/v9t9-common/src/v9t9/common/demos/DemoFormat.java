@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.engine.demos.format;
+package v9t9.common.demos;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -33,9 +33,6 @@ import java.io.OutputStream;
  * handler.
  */
 public class DemoFormat {
-
-	public static final byte[] DEMO_MAGIC_HEADER_V9t9 = { 'V','9','7','0' };
-	
 	/** tick byte, followed by byte count, splits frames */
 	public static final int TICK = 0;
 	
@@ -45,10 +42,8 @@ public class DemoFormat {
 	public static final String SPEECH_DATA = "speechParams";
 	public static final String SOUND_DATA = "soundData";
 
-	private static final String V9938_ACCEL = "v9938Accel";
-	private static final String PRINTER_DATA = "printerData";
-	
-	public static IDemoFormatterRegistry FORMATTER_REGISTRY = new DemoFormatterRegistry();
+	public static final String V9938_ACCEL = "v9938Accel";
+	public static final String PRINTER_DATA = "printerData";
 	
 	/**
 	 * Write a variable-length signed integer (UTF-8)
@@ -172,14 +167,5 @@ public class DemoFormat {
 	}
 	
 
-	static {
-		FORMATTER_REGISTRY.registerDemoEventFormatter(new VideoDataEventFormatter(VIDEO_DATA));
-		FORMATTER_REGISTRY.registerDemoEventFormatter(new VideoRegisterEventFormatter(VIDEO_REGS));
-		FORMATTER_REGISTRY.registerDemoEventFormatter(new SoundDataEventFormatter(SOUND_DATA));
-		FORMATTER_REGISTRY.registerDemoEventFormatter(new SoundRegisterEventFormatter(SOUND_REGS));
-		FORMATTER_REGISTRY.registerDemoEventFormatter(new SpeechEventFormatter(SPEECH_DATA));
-		FORMATTER_REGISTRY.registerDemoEventFormatter(new VdpV9938AccelCommandEventFormatter(V9938_ACCEL));
-		FORMATTER_REGISTRY.registerDemoEventFormatter(new PrinterImageDataEventFormatter(PRINTER_DATA));
-	}
 
 }

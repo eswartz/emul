@@ -57,5 +57,4 @@ public interface IDemoOutputStream extends Closeable {
 	 * Get the elapsed time of the demo (after the previous event) in ms.
 	 */
 	long getElapsedTime();
-
 }

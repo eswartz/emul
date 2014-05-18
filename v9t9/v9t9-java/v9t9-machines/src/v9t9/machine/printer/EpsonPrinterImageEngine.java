@@ -17,8 +17,10 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 
+import v9t9.common.demos.IDemoFormatterRegistry;
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageListener;
+import v9t9.engine.demos.format.PrinterImageDataEventFormatter;
 import v9t9.machine.EmulatorMachinesData;
 import ejs.base.utils.ListenerList;
 
@@ -27,6 +29,11 @@ import ejs.base.utils.ListenerList;
  *
  */
 public class EpsonPrinterImageEngine implements IPrinterImageEngine {
+	public static final String ID = "tiImagePrinter";
+	static {
+		IDemoFormatterRegistry.INSTANCE.registerDemoEventFormatter(
+				new PrinterImageDataEventFormatter(ID));
+	}
 	
 	/**
 	 * 1/72"
@@ -104,6 +111,21 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			e.printStackTrace();
 		}
 		initPage();
+	}
+	
+	/**
+	 * 
+	 */
+	public EpsonPrinterImageEngine() {
+		this(360, 360);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IPrinterImageEngine#getPrinterId()
+	 */
+	@Override
+	public String getPrinterId() {
+		return ID;
 	}
 	
 	/* (non-Javadoc)

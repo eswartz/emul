@@ -20,24 +20,23 @@ import v9t9.common.machine.IMachine;
  */
 public class RS232PrinterImageHandler implements IRS232Listener, IPrinterImageHandler {
 
-	private IPrinterImageEngine engine = new EpsonPrinterImageEngine(360, 360);
-	private int printerId;
+	private IPrinterImageEngine engine;
 	
 	/**
 	 * @param machine
 	 * @param i
 	 */
-	public RS232PrinterImageHandler(IMachine machine, int printerId) {
-		this.printerId = printerId;
-		machine.getDemoManager().registerActorProvider(new PrinterImageActorProvider(printerId));
+	public RS232PrinterImageHandler(IMachine machine, IPrinterImageEngine engine) {
+		this.engine = engine;
+		machine.getDemoManager().registerActorProvider(new PrinterImageActorProvider(engine.getPrinterId()));
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.common.dsr.IPrinterImageHandler#getPrinterId()
 	 */
 	@Override
-	public int getPrinterId() {
-		return printerId;
+	public String getPrinterId() {
+		return engine.getPrinterId();
 	}
 	
 	@Override

@@ -4,19 +4,22 @@
 package v9t9.machine.printer;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.swt.widgets.Display;
 
+import v9t9.common.demos.DemoHeader;
 import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoPlaybackActor;
 import v9t9.common.demos.IDemoPlayer;
 import v9t9.common.demos.IDemoRecorder;
 import v9t9.common.demos.IDemoRecordingActor;
+import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageHandler;
 import v9t9.common.dsr.IPrinterImageListener;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.demos.events.PrinterImageWriteDataEvent;
-import v9t9.engine.demos.format.DemoFormat;
 
 /**
  * @author ejs
@@ -24,15 +27,15 @@ import v9t9.engine.demos.format.DemoFormat;
  */
 public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActor {
 
-	private int printerId;
+	private String printerId;
 	private IPrinterImageListener printerImageListener;
 	private IDemoRecorder recorder;
-	private IPrinterImageHandler printerImageHandler;
+	private Set<IPrinterImageEngine> imageEngines = new HashSet<IPrinterImageEngine>();
 
 	/**
 	 * @param printerId
 	 */
-	public PrinterImageActor(int printerId) {
+	public PrinterImageActor(String printerId) {
 		this.printerId = printerId;
 	}
 
@@ -49,46 +52,39 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 	 */
 	@Override
 	public void setup(IMachine machine) {
+		printerImageListener = new IPrinterImageListener() {
+			
+			@Override
+			public void updated(Object image) {
+				// ignore
+			}
+			
+			@Override
+			public void newPage(Object image) {
+				// ignore
+			}
+			
+			@Override
+			public void bytesProcessed(byte[] bytes) {
+				try {
+					writePrinterData(bytes);
+				} catch (IOException e) {
+					recorder.fail(e);
+				}
+			}
+		};
+		
+		imageEngines.clear();
 		for (IPrinterImageHandler handler : machine.getPrinterImageHandlers()) {
-			if (handler.getPrinterId() == printerId) {
-				this.printerImageHandler = handler;
-				printerImageListener = new IPrinterImageListener() {
-					
-					@Override
-					public void updated(Object image) {
-						// ignore
-					}
-					
-					@Override
-					public void newPage(Object image) {
-						// ignore
-					}
-					
-					@Override
-					public void bytesProcessed(byte[] bytes) {
-						try {
-							writePrinterData(bytes);
-						} catch (IOException e) {
-							recorder.fail(e);
-						}
-					}
-				};
-				handler.getEngine().addListener(printerImageListener);
-				break;
+			if (handler.getPrinterId().equals(printerId)) {
+				imageEngines.add(handler.getEngine());
 			}
 		}
-
 	}
 
-	/**
-	 * @param bytes
-	 * @throws IOException 
-	 */
 	protected void writePrinterData(byte[] bytes) throws IOException {
 		if (recorder != null) {
-			recorder.getOutputStream().writeEvent(
-					new PrinterImageWriteDataEvent(
-							printerId, bytes));
+			recorder.getOutputStream().writeEvent(new PrinterImageWriteDataEvent(bytes));
 		}		
 	}
 
@@ -96,8 +92,8 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 	 * @see v9t9.common.demos.IDemoRecordingActor#shouldRecordFor(byte[])
 	 */
 	@Override
-	public boolean shouldRecordFor(byte[] header) {
-		return DemoFormat.DEMO_MAGIC_HEADER_V9t9.equals(header);
+	public boolean shouldRecordFor(byte[] magic) {
+		return DemoHeader.isV9t9jFormat(magic);
 	}
 
 	/* (non-Javadoc)
@@ -105,9 +101,9 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 	 */
 	@Override
 	public void connectForRecording(IDemoRecorder recorder) throws IOException {
-		if (this.printerImageHandler != null) { 
-			this.recorder = recorder;
-			this.printerImageHandler.getEngine().addListener(printerImageListener);
+		this.recorder = recorder;
+		for (IPrinterImageEngine engine : imageEngines) {
+			engine.addListener(printerImageListener);
 		}
 	}
 
@@ -124,8 +120,9 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 	@Override
 	public void disconnectFromRecording(IDemoRecorder recorder) {
 		this.recorder = null;
-		if (printerImageHandler != null) { 
-			printerImageHandler.getEngine().removeListener(printerImageListener);
+
+		for (IPrinterImageEngine engine : imageEngines) {
+			engine.removeListener(printerImageListener);
 		}
 
 	}
@@ -135,8 +132,8 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 	 */
 	@Override
 	public void setupPlayback(IDemoPlayer player) {
-		if (printerImageHandler != null)  {
-			printerImageHandler.getEngine().flushPage();
+		for (IPrinterImageEngine engine : imageEngines) {
+			engine.flushPage();
 		}
 	}
 
@@ -147,15 +144,13 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 	public void executeEvent(IDemoPlayer player, IDemoEvent event)
 			throws IOException {
 		final PrinterImageWriteDataEvent ev = (PrinterImageWriteDataEvent) event;
-		if (ev.getPrinterId() != printerId)
-			return;
-		if (printerImageHandler == null) 
-			return;
-			
+
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
 				for (byte b : ev.getData()) {
-					printerImageHandler.getEngine().print((char) b);
+					for (IPrinterImageEngine engine : imageEngines) {
+						engine.print((char) b);
+					}
 				}
 			}
 		});

@@ -8,12 +8,10 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.engine.demos.format;
+package v9t9.common.demos;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import v9t9.common.demos.IDemoEventFormatter;
 
 /**
  * @author ejs

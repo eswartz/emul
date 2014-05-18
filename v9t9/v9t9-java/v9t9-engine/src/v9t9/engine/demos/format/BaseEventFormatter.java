@@ -20,12 +20,7 @@ public abstract class BaseEventFormatter implements IDemoEventFormatter {
 
 	private final String bufferId;
 	private final String eventId;
-	
-	/**
-	 * @param bufferId TODO
-	 * @param eventId 
-	 * 
-	 */
+
 	public BaseEventFormatter(String bufferId, String eventId) {
 		this.bufferId = bufferId;
 		this.eventId = eventId;

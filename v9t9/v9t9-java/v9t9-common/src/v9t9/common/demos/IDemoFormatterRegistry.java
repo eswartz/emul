@@ -8,9 +8,8 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.engine.demos.format;
+package v9t9.common.demos;
 
-import v9t9.common.demos.IDemoEventFormatter;
 
 /**
  * @author ejs
@@ -18,6 +17,7 @@ import v9t9.common.demos.IDemoEventFormatter;
  */
 public interface IDemoFormatterRegistry {
 
+	public static IDemoFormatterRegistry INSTANCE = new DemoFormatterRegistry();
 	void registerDemoEventFormatter(IDemoEventFormatter formatter);
 
 	IDemoEventFormatter findFormatterByBuffer(String bufferId);

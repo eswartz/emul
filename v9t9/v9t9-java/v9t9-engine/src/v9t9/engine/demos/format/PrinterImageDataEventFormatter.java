@@ -34,8 +34,7 @@ public class PrinterImageDataEventFormatter extends BaseEventFormatter {
 	@Override
 	public IDemoEvent readEvent(IDemoInputEventBuffer buffer)
 			throws IOException {
-		int printerId = buffer.read() & 0xff;
-		return new PrinterImageWriteDataEvent(printerId, buffer.readRest());
+		return new PrinterImageWriteDataEvent(buffer.readRest());
 	}
 
 	/* (non-Javadoc)
@@ -45,9 +44,7 @@ public class PrinterImageDataEventFormatter extends BaseEventFormatter {
 	public void writeEvent(IDemoOutputEventBuffer buffer, IDemoEvent event)
 			throws IOException {
 		PrinterImageWriteDataEvent ev = (PrinterImageWriteDataEvent) event;
-		buffer.push((byte) ev.getPrinterId());
-		byte[] data = ev.getData();
-		buffer.pushData(data, 0, ev.getData().length);	
+		buffer.pushData(ev.getData());	
 	}
 
 }

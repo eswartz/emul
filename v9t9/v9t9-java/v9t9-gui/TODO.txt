@@ -1,4 +1,7 @@
 
+-- switching disk DSRs does not reset properly (even with hard reset); need to restart
+
+
 Fix keyboard implementation:
 
 -- too close a tie between the host keyboard and the 99/4A CRU map

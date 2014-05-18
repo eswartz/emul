@@ -15,9 +15,11 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.demos.DemoFormat;
 import v9t9.common.demos.DemoHeader;
 import v9t9.common.demos.IDemoEvent;
 import v9t9.common.demos.IDemoEventFormatter;
+import v9t9.common.demos.IDemoFormatterRegistry;
 import v9t9.common.demos.IDemoOutputBuffer;
 import v9t9.common.demos.IDemoOutputEventBuffer;
 import v9t9.common.demos.IDemoOutputStream;
@@ -46,13 +48,13 @@ public class DemoFormatOutputStream extends BaseDemoOutputStream implements IDem
 		super(os_);
 		this.header = header;
 		
-		this.magic = DemoFormat.DEMO_MAGIC_HEADER_V9t9; 
-		os.write(DemoFormat.DEMO_MAGIC_HEADER_V9t9);
+		this.magic = header.getMagic(); 
+		os.write(magic);
 		timerTicks = 0;
 		
 		for (Map.Entry<Integer, String> ent : header.getBufferIdentifierMap().entrySet()) {
 			String bufferId = ent.getValue();
-			final IDemoEventFormatter formatter = DemoFormat.FORMATTER_REGISTRY.findFormatterByBuffer(bufferId);
+			final IDemoEventFormatter formatter = IDemoFormatterRegistry.INSTANCE.findFormatterByBuffer(bufferId);
 			if (formatter != null) {
 				int code = header.findOrAllocateIdentifier(bufferId);
 				DemoOutputEventBuffer buffer = new DemoFormatterOutputEventBuffer(os, code,
@@ -140,5 +142,4 @@ public class DemoFormatOutputStream extends BaseDemoOutputStream implements IDem
 		++timerTicks;
 		ticks++;
 	}
-	
 }
