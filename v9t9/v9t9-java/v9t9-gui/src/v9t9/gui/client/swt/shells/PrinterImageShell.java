@@ -70,7 +70,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 	 * 
 	 */
 	private void newShell() {
-		shell = new Shell(SWT.TOOL | SWT.RESIZE);
+		shell = new Shell(SWT.TOOL | SWT.TITLE | SWT.RESIZE | SWT.CLOSE);
 
 		shell.setText("Printer Output");
 		shell.setSize(400, 400);
@@ -246,7 +246,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 		item.setControl(scrolled);
 		GridLayoutFactory.swtDefaults().applyTo(scrolled);
 		
-		canvas = new Canvas(scrolled, SWT.BORDER);
+		canvas = new Canvas(scrolled, SWT.BORDER | SWT.DOUBLE_BUFFERED);
 		
 		scrolled.setContent(canvas);
 
@@ -273,6 +273,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 			public void paintControl(PaintEvent e) {
 				Image swtImage = pageImages.get(thisPage);
 				if (swtImage == null) {
+					e.gc.fillRectangle(e.x, e.y, e.width, e.height);
 					return;
 				}
 				
@@ -283,11 +284,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 				Transform xfrm = new Transform(e.gc.getDevice());
 				xfrm.scale((float) zoom, (float) zoom);
 				e.gc.setTransform(xfrm);
-				if (swtImage != null) {
-					e.gc.drawImage(swtImage, 0, 0);
-				} else {
-					e.gc.fillRectangle(e.x, e.y, e.width, e.height);
-				}
+				e.gc.drawImage(swtImage, 0, 0);
 				e.gc.setTransform(null);
 				xfrm.dispose();
 
