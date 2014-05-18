@@ -103,14 +103,12 @@ public abstract class BaseEmulatorWindow {
 	protected String selectFile(String title, IProperty configVar, String defaultSubdir,
 			String fileName, boolean isSave, boolean ifUndefined, String[] extensions) {
 		
-		boolean isUndefined = false;
 		IStoredSettings workspace = machine.getSettings().getMachineSettings();
 		ISettingSection settings = workspace.getSettings();
 		configVar.loadState(settings);
 		String configPath = configVar.getString();
 		if (configPath == null || configPath.length() == 0) {
 			configPath = workspace.getConfigDirectory() + defaultSubdir + File.separatorChar + fileName;
-			isUndefined = true;
 			File saveDir = new File(configPath);
 			saveDir.getParentFile().mkdirs();
 		} else if (ifUndefined) {
@@ -123,8 +121,8 @@ public abstract class BaseEmulatorWindow {
 		
 		String filename = openFileSelectionDialog(title, dir.getAbsolutePath(), fileName, 
 				isSave, extensions);
-		if (filename != null && isUndefined) {
-			configVar.setString(filename);
+		if (filename != null) {
+			configVar.setString(new File(filename).getParent());
 		}
 		return filename;
 	}
@@ -168,7 +166,7 @@ public abstract class BaseEmulatorWindow {
 	public void loadMachineState() {
 		String filename = selectFile(
 				"Select saved machine state", 
-				Settings.get(machine, settingMachineStatePath), 
+				Settings.get(machine, settingMachineStatePath),
 				"saves", 
 				null, false, false, MACHINE_SAVE_FILE_EXTENSIONS);
 		
