@@ -491,6 +491,9 @@ public class PathFileLocator implements IPathFileLocator {
 			if (ssp == null)
 				ssp = directory.getPath();
 			int dirIdx = ssp.lastIndexOf('!');
+			if (dirIdx < 0)
+				throw new IOException("Malformed URI: no '!' in spec: " + ssp);
+			
 			String zipPath = ssp.substring(0, dirIdx);
 			String entPrefix = ssp.substring(dirIdx + 2);	// skip '!' and '/'
 			ZipFile zf;
