@@ -247,6 +247,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	}
 
 	protected void createVdpCanvasHandler() {
+		
 		CanvasFormat format = (CanvasFormat) canvasFormat.getValue();
 		if (format == null || format == CanvasFormat.DEFAULT) {
 			format = getDefaultCanvasFormat();

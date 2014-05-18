@@ -362,6 +362,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			e.printStackTrace(); 
 			return null;
 		}
+		
+		checkGLError();
 
 		String glVersionStr = glGetString(GL_VERSION);
 		Matcher m = Pattern.compile("(\\d+\\.\\d+).*").matcher(glVersionStr);
@@ -369,15 +371,20 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			throw new IllegalStateException();
 		glVersion = Float.parseFloat(m.group(1));
 		
-		supportsMultiTexture = glVersion >= 1.3;
-		supportsShaders = glVersion >= 1.4;
+		supportsMultiTexture = glVersion >= 1.3f;
+		supportsShaders = glVersion >= 1.5f;
+		
+		checkGLError();
 		
 		glShadeModel(GL_FLAT);
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClearDepth(1.0f);
 		
+		checkGLError();
+		
 		setupCanvasTexture();
 		
+		checkGLError();
 		return glCanvas;
 	}
 
@@ -800,11 +807,11 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glDisable(GL_TEXTURE_2D);
 
 		if (supportsShaders) {
-			ARBShaderObjects.glUniform1iARB(
-					ARBShaderObjects.glGetUniformLocationARB(programObject, "time"), 
-					(int) System.currentTimeMillis());
-			
 			if (programObject != 0) {
+				ARBShaderObjects.glUseProgramObjectARB(programObject); 
+				ARBShaderObjects.glUniform1iARB(
+						ARBShaderObjects.glGetUniformLocationARB(programObject, "time"), 
+						(int) System.currentTimeMillis());
 				ARBShaderObjects.glUseProgramObjectARB(0); 
 			}
 		}
@@ -872,7 +879,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	 */
 	@Override
 	public IMonitorEffectSupport getMonitorEffectSupport() {
-		return monitorEffectSupport;
+		if (supportsShaders)
+			return monitorEffectSupport;
+		return null;
 	}
 	
 	/* (non-Javadoc)
