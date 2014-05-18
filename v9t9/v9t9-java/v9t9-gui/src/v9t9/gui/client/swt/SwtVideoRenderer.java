@@ -459,7 +459,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 
 
 	protected void repaint(GC gc, Rectangle updateRect) {
-		if (canvas.isDisposed())
+		if (shell == null || canvas.isDisposed())
 			return;
 		
 		if (!canvas.isVisible() || !shell.isVisible())

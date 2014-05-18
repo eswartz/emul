@@ -98,6 +98,7 @@ import org.lwjgl.opengl.ARBVertexShader;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GLContext;
+import org.lwjgl.opengl.OpenGLException;
 import org.lwjgl.opengl.Util;
 import org.lwjgl.util.glu.GLU;
 
@@ -278,6 +279,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	 */
 	@Override
 	public void dispose() {
+		canvasFormat.removeListener(this);
 		monitorDrawing.removeListener(this);
 		monitorEffect.removeListener(this);
 		if (!glCanvas.isDisposed())
@@ -290,6 +292,11 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	 */
 	@Override
 	public void propertyChanged(IProperty property) {
+		if (property == canvasFormat) {
+			if (((CanvasFormat) property.getValue()).getMinGLVersion() > glVersion) {
+				property.setValue(getDefaultCanvasFormat());
+			}
+		}
 		if (property == monitorDrawing || property == monitorEffect
 				|| property == canvasFormat) {
 			updateShaders();
@@ -326,6 +333,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		monitorDrawing.addListener(this);
 		monitorEffect.addListener(this);
+		canvasFormat.addListener(this);
 
 		
 		resizeListener = new Listener() {
@@ -674,7 +682,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, params.getMagFilter());
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, params.getMinFilter());
 
-		Util.checkGLError();
+		checkGLError();
 		int border = 0;
 		
 		if (glVersion >= 1.3) {
@@ -689,7 +697,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		glBindTexture(GL_TEXTURE_2D, vdpCanvasTexture);
 
-		Util.checkGLError();
+		checkGLError();
 		
 		Buffer vdpCanvasBuffer = glDataCanvas.getBuffer();
 		
@@ -714,7 +722,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			sy = vdpCanvas.getVisibleHeight() + border * 2;
 		}
 			
-		Util.checkGLError();
+		checkGLError();
 		if (updated) {
 			if (vdpCanvasBuffer instanceof ByteBuffer) {
 				glTexImage2D(GL_TEXTURE_2D, 0, 
@@ -743,7 +751,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			}	
 		}
 		
-		Util.checkGLError();
+		checkGLError();
 		if (supportsMultiTexture) {
 			/*
 			 * Second texture: the monitor overlay
@@ -828,6 +836,14 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		if (params.isRefreshRealtime()) {
 			//getControl().redraw();
+		}
+	}
+
+	private void checkGLError() {
+		try {
+			Util.checkGLError();
+		} catch (OpenGLException e) {
+			e.printStackTrace();
 		}
 	}
 	
