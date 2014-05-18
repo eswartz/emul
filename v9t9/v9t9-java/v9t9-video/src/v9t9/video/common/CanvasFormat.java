@@ -23,22 +23,25 @@ import v9t9.video.ImageDataCanvasR3G3B2;
  *
  */
 public enum CanvasFormat {
-	DEFAULT(null),
-	RGB16_5_6_5(BitmapCanvasShort.class), 
-	RGB16_GREY(BitmapCanvasShortGreyscale.class), 
-	RGB8_3_3_2(ImageDataCanvasR3G3B2.class),
-	RGB24_8_8_8(BitmapCanvasInt.class),
-	RGB8(ImageDataCanvasPaletted.class),
-	RGB24(ImageDataCanvas24Bit.class);
+	DEFAULT(null, 0.0f),
+	RGB16_5_6_5(BitmapCanvasShort.class, 1.2f), 
+	RGB16_GREY(BitmapCanvasShortGreyscale.class, 1.2f), 
+	RGB8_3_3_2(ImageDataCanvasR3G3B2.class, 1.2f),
+	RGB24_8_8_8(BitmapCanvasInt.class, 1.2f),
+	RGB8(ImageDataCanvasPaletted.class, 1.0f),
+	RGB24(ImageDataCanvas24Bit.class, 1.0f);
 
 	
 	private Class<? extends BitmapVdpCanvas> klass;
+	private float minGLVersion;
 
-	/**
-	 * 
-	 */
-	private CanvasFormat(Class<? extends BitmapVdpCanvas> klass) {
+	private CanvasFormat(Class<? extends BitmapVdpCanvas> klass, float minGLVersion) {
 		this.klass = klass;
+		this.minGLVersion = minGLVersion;
+	}
+
+	public float getMinGLVersion() {
+		return minGLVersion;
 	}
 	
 	public BitmapVdpCanvas create() {

@@ -37,7 +37,7 @@ public class BitmapCanvasInt extends BitmapVdpCanvas implements IGLDataCanvas {
 	protected int[] colorRGBMap;
 	protected int[] spriteColorRGBMap;
 
-	private int[][] fourColorRGBMap;
+	protected int[][] fourColorRGBMap;
 	private Buffer vdpCanvasBuffer;
 	
 	public BitmapCanvasInt() {
