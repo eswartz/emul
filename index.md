@@ -217,13 +217,43 @@ filenames instead of content, as promised (!).
 History
 -------- 
 
-I've been working on this in various forms since 1992.  The Java port
-was quite nastily ported directly from the C port starting 2005.  The C
+I've been working on this in various forms since 1992, when I started working
+on the idea in Turbo Pascal as "tiemul.pas" in the computer lab, and once crashed the
+computer's server when I ran it there without permission.
+
+That next summer, I started rewriting the emulator in assembly for DOS and soon made the
+emulator into a product: "TI Emulator!" (yes, with the exclamation point).  It was
+my first venture into the world of business -- and copyright infringement.  (I had
+been shipping ROMs around, and TI reminded me that I should have a license agreement and
+be paying royalties.)
+
+This was an exciting time, interacting with people all over the
+world through letters and emails.  A loyal user suggested the name "V9t9" and the product
+was renamed and a few more versions were released.
+
+I got several requests to support then-current 
+custom hardware for the aging TI-99/4A, but unfortunately was not experienced enough to
+infer the operation of hardware without having it in person, so those efforts never got
+off the ground.
+
+A few years later, I moved from DOS to Linux and started porting V9t9 to C.
+This project was exciting, since it involved making the thing portable and capable
+of supporting multiple kinds of graphics, sound, and input APIs.  This 
 port never really saw the light of day (it was a bit way too geeky for
 the average user to understand, and only built against GNU C in Linux
-and Metrowerks Codewarrior in Windows).  The C port was written from 
-the assembly port which formed the original V9t9, back when it was 
-still being sold.
+and Metrowerks Codewarrior in Windows).
+
+Many years later, I started porting V9t9 to Java in 2005. The Java port
+was originally quite nastily ported directly from the C port, and I've
+been gradually rewriting chunks in a proper object oriented format ever since.
+
+I would be remiss not to mention the driving motivation for continuing to work
+on the emulator at all in the 2000's, after my original TI-99/4A became mostly unusable (no
+access to a TV or monitor with RCA connectors, for example) -- 
+Thierry Nouspikel's
+excellent compendium of technical data, <a href="http://www.nouspikel.com/ti99/titechpages.htm">The TI-99/4A Tech Pages</a>.  
+I have gone back to this site again and
+again over the years to refine my understanding of hardware I've not used in years.
 
 
 Advanced
