@@ -133,11 +133,11 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
+<li>2014/05/14: fix OS X support (for real?)
+</li>
 <li>2014/05/13: added initial RS232 &quot; PIO support with TI Impact Printer emulation (try the "Printer Example" demo)
 </li>
 <li>2014/05/13: fix Windows XP (pre-OpenGL 1.5) support
-</li>
-<li>2014/05/13: fix OS X support
 </li>
 <li>2013/10/20: fix bug with joystick 'fire' detection in hand-coded assembly  
 </li>
