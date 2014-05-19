@@ -167,10 +167,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			"No effect",
 			paramsSTANDARD,
 			StandardMonitorRender.INSTANCE);
-	
-	static {
-		if (VERBOSE) System.out.println(System.getProperty("java.library.path"));
-	}
 
 	static MonitorEffectSupport monitorEffectSupport = new MonitorEffectSupport(); 
 	static {

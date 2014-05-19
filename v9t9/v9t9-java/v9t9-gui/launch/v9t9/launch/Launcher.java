@@ -22,8 +22,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -57,7 +60,8 @@ public class Launcher {
 	}
 	private byte[] buffer = new byte[8192];
 	private File libDir;
-
+	private Set<String> javaLibPaths = new LinkedHashSet<String>();
+	
 	protected void launch(String[] args) throws InvocationTargetException, Throwable {
 		File tmpDir = getExtractDir();
 		libDir = new File(tmpDir, LIBS);
@@ -74,6 +78,11 @@ public class Launcher {
 		
 		JarFile jarFile = JarUtils.getJarFile(jarURL);
 
+		String oldJavaLibPath = System.getProperty("java.library.path");
+		if (oldJavaLibPath != null && !oldJavaLibPath.isEmpty()) {
+			javaLibPaths.addAll(Arrays.asList(oldJavaLibPath.split(System.getProperty("path.separator"))));
+		}
+		
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		if (jarFile != null) {
 			List<URL> jarURLs = new ArrayList<URL>();
@@ -119,6 +128,17 @@ public class Launcher {
 				break;
 			}
 		}
+		
+		StringBuilder newJavaLibPath = new StringBuilder();
+		
+		for (String path : javaLibPaths) {
+			if (newJavaLibPath.length() > 0)
+				newJavaLibPath.append(System.getProperty("path.separator"));
+			newJavaLibPath.append(path);
+		}
+		
+		System.out.println("Updating Java library path to: " + newJavaLibPath);
+		System.setProperty("java.library.path", newJavaLibPath.toString());
 		
 		Class<?> klass = classLoader.loadClass(mainClass);
 		Method main = klass.getMethod("main", String[].class);
@@ -189,11 +209,6 @@ public class Launcher {
 		return tmpDir;
 	}
 
-	/**
-	 * @param targetDir
-	 * @param jarURLs 
-	 * @return 
-	 */
 	protected void extractZipFileAndClose(String label, File targetDir, ZipFile zipFile, List<URL> jarURLs) {
 		boolean any = false;
 		
@@ -217,6 +232,7 @@ public class Launcher {
 			genericArch = "intel";
 		}
 		
+		//System.out.println("myOS="+myOS+"; myArch="+myArch);
 		
 		while (enm.hasMoreElements()) {
 			ZipEntry entry = enm.nextElement();
@@ -265,20 +281,22 @@ public class Launcher {
 					doCopy = false;
 				}
 			}
+
+			//System.out.println(name);
+			if (name.matches("(?i).*\\.(so|dylib|jnilib|dll)")) {
+				target.setExecutable(true, false);
+				javaLibPaths.add(target.getParent());
+			}
 			
 			if (doCopy) {
 				if (!any) {
 					System.out.println(label);
 					any = true;
 				}
-				
+					
 				try {
 					InputStream is = zipFile.getInputStream(entry);
 					extractFileAndClose(is, target);
-					
-					if (name.matches("(?i).*\\.(so|dylib|dll)")) {
-						target.setExecutable(true, false);
-					}
 					
 					target.setLastModified(entTime);
 				} catch (IOException e) {
@@ -290,10 +308,8 @@ public class Launcher {
 			if (doExtract) {
 				try {
 					File libDir = new File(targetDir, LIBS);
-					if (doCopy) {
-						extractZipFileAndClose("Extracting native libraries to " + targetDir + "...",
-								libDir, new ZipFile(target), jarURLs);
-					}
+					extractZipFileAndClose("Extracting native libraries to " + targetDir + "...",
+							libDir, new ZipFile(target), jarURLs);
 					jarURLs.add(libDir.toURI().toURL());
 				} catch (Exception e) {
 					e.printStackTrace();
