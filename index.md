@@ -40,6 +40,7 @@ V9t9 emulates the TI-99/4A on your computer.
 It supports:
 </p>
 <ul>
+    <li>RS232/PIO output and TI Impact Printer emulation</li>
 	<li>Drag and drop / auto-detection of modules, disks, demos, 99/4A files -- try it!</li>
 	<li>Ability to save/restore sessions</li>
 	<li>Module formats:  V9t9, MESS (.rpk/.zip) (new!)</li>
@@ -132,6 +133,12 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
+<li>2014/05/13: added initial RS232 &quot; PIO support with TI Impact Printer emulation (try the "Printer Example" demo)
+</li>
+<li>2014/05/13: fix Windows XP (pre-OpenGL 1.5) support
+</li>
+<li>2014/05/13: fix OS X support
+</li>
 <li>2013/10/20: fix bug with joystick 'fire' detection in hand-coded assembly  
 </li>
 <li>2013/10/20: add breakpoint support to debugger (right-click on an instruction to set/reset)  
