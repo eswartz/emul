@@ -36,11 +36,11 @@ V9t9 emulates the TI-99/4A on your computer.
 It supports:
 </p>
 <ul>
-    <li>RS232/PIO output and TI Impact Printer emulation</li>
-	<li>Drag and drop / auto-detection of modules, disks, demos, 99/4A files -- try it!</li>
+    <li>RS232/PIO output and TI Impact Printer emulation (new!)</li>
+	<li>Drag and drop / auto-detection of modules, disks, demos, 99/4A files</li>
 	<li>Ability to save/restore sessions</li>
-	<li>Module formats:  V9t9, MESS (.rpk/.zip) (new!)</li>
-	<li>Disk support (files in native filesystem, sector images, track images (new!))</li>
+	<li>Module formats:  V9t9, MESS (.rpk/.zip)</li>
+	<li>Disk support (files in native filesystem, sector images, track images)</li>
 	<li>TMS 9918A video</li>
 	<li>TMS 9919 sound</li>
 	<li>TMS 5220 speech</li>
