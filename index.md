@@ -22,10 +22,6 @@ Introduction
 <i>Download v9t9.zip</i>
 </p>
 </a>
-<p style="font-size:smaller">
-NOTE: Google Chrome may tell you the file 
-<a href="http://blog.chromium.org/2012/01/all-about-safe-browsing.html">"appears malicious"</a> 
--- this really means "unknown."  I have no interest in being malicious.</p>
 <span class="timestamp"> </span>
 
 </div>
