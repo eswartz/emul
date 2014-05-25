@@ -17,13 +17,6 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.settings.ISettingSection;
-import ejs.base.settings.Logging;
-import ejs.base.utils.HexUtils;
-import ejs.base.utils.ListenerList;
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.ICruChip;
@@ -39,6 +32,12 @@ import v9t9.engine.demos.actors.VdpDataDemoActor;
 import v9t9.engine.demos.actors.VdpRegisterDemoActor;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.memory.VdpMmio;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.settings.ISettingSection;
+import ejs.base.settings.Logging;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.ListenerList;
 
 /**
  * This is the 99/4A VDP chip.

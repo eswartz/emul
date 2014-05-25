@@ -54,14 +54,14 @@ import v9t9.engine.files.image.DiskImageContentProvider;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.machine.MachineBase;
 import v9t9.engine.memory.GplMmio;
-import v9t9.engine.memory.MemoryEntryInfoBuilder;
-import v9t9.engine.memory.SpeechMmio;
-import v9t9.engine.memory.StdMultiBankedMemoryEntry;
-import v9t9.engine.memory.TIMemoryModel;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.engine.modules.ModuleContentProvider;
 import v9t9.machine.ti99.dsr.DsrManager;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
+import v9t9.machine.ti99.memory.mmio.SpeechMmio;
+import v9t9.machine.ti99.memory.mmio.StdMultiBankedMemoryEntry;
+import v9t9.machine.ti99.memory.mmio.TIMemoryModel;
+import v9t9.memory.MemoryEntryInfoBuilder;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.FileUtils;
 import ejs.base.utils.HexUtils;
@@ -143,7 +143,7 @@ public class TI99Machine extends MachineBase {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getSoundMmio()
 	 */
-	public v9t9.engine.memory.SoundMmio getSoundMmio() {
+	public v9t9.machine.ti99.memory.mmio.SoundMmio getSoundMmio() {
 	    return ((BaseTI994AMemoryModel) memoryModel).soundMmio;
 	}
 

@@ -80,7 +80,7 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     }
     
     /**
-     * @see v9t9.common.memory.Memory.IConsoleMmioReader#read
+     * @see v9t9.memory.Memory.IConsoleMmioReader#read
      */
     public byte read(int addr) {
     	byte ret;
@@ -119,7 +119,7 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
 	}
 
 	/**
-     * @see v9t9.common.memory.Memory.IConsoleMmioWriter#write 
+     * @see v9t9.memory.Memory.IConsoleMmioWriter#write 
      */
     public void write(int addr, byte val) {
     	if ((addr & 2) != 0) {				

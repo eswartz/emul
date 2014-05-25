@@ -18,12 +18,12 @@ import java.util.Stack;
 
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
 import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.cpu.CpuStateF99b;
 import v9t9.machine.f99b.memory.EnhancedRamByteArea;
+import v9t9.memory.MemoryDomain;
+import v9t9.memory.MemoryEntry;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
 import v9t9.tools.forthcomp.words.ExitI;
 import v9t9.tools.forthcomp.words.FieldComma;

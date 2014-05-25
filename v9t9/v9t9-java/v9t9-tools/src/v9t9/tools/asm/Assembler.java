@@ -29,14 +29,21 @@ import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.MemoryRanges;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.files.IPathFileLocator;
+import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.memory.Memory;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.StockRamArea;
+import v9t9.common.memory.IMemoryEntryFactory;
+import v9t9.common.settings.BasicSettingsHandler;
+import v9t9.machine.ti99.memory.TI994AMemoryEntryFactory;
+import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
+import v9t9.memory.DiskMemoryEntry;
+import v9t9.memory.Memory;
+import v9t9.memory.MemoryDomain;
+import v9t9.memory.MemoryEntry;
+import v9t9.memory.StockRamArea;
 import v9t9.tools.asm.directive.DescrDirective;
 import v9t9.tools.asm.directive.LabelDirective;
 import v9t9.tools.asm.transform.ConstPool;
@@ -242,6 +249,8 @@ public abstract class Assembler implements IAssembler {
 		super();
 		
 		memory = new Memory();
+		new TI994AMemoryEntryFactory(memory, new BasicSettingsHandler(),
+				new PathFileLocator());
 		memory.addDomain(IMemoryDomain.NAME_CPU, new MemoryDomain(IMemoryDomain.NAME_CPU, false));
 	}
 

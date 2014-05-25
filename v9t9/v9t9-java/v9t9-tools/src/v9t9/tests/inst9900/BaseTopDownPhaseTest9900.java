@@ -20,12 +20,12 @@ import v9t9.common.asm.MemoryRanges;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.Routine;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.StockRamArea;
 import v9t9.machine.ti99.asm.HighLevelCodeInfo;
 import v9t9.machine.ti99.asm.InstructionFactory9900;
 import v9t9.machine.ti99.asm.Phase;
 import v9t9.machine.ti99.cpu.CpuState9900;
+import v9t9.memory.MemoryEntry;
+import v9t9.memory.StockRamArea;
 import v9t9.tools.asm.ParseException;
 import v9t9.tools.asm.inst9900.AsmInstructionFactory9900;
 

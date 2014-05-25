@@ -19,7 +19,6 @@ import ejs.base.properties.IPersistable;
 public interface IMemory extends IPersistable {
 
 	IMemoryEntryFactory getMemoryEntryFactory();
-	void setMemoryEntryFactory(IMemoryEntryFactory factory);
 	
 	void addListener(IMemoryListener listener);
 

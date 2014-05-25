@@ -27,9 +27,9 @@ import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.StockMemoryModel;
 import v9t9.engine.speech.SpeechTMS5220;
+import v9t9.memory.MemoryDomain;
+import v9t9.memory.StockMemoryModel;
 
 /**
  * @author ejs

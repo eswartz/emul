@@ -11,6 +11,7 @@
 package v9t9.engine.memory;
 
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.memory.ByteMemoryArea;
 
 public class VdpRamArea extends ByteMemoryArea {
 	public VdpRamArea(int size) {

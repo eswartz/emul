@@ -24,10 +24,10 @@ import v9t9.common.files.NativeFileFactory;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.NativeFileMemoryEntry;
 import v9t9.machine.ti99.asm.HighLevelCodeInfo;
 import v9t9.machine.ti99.asm.TopDownPhase;
+import v9t9.memory.MemoryEntry;
+import v9t9.memory.NativeFileMemoryEntry;
 import ejs.base.utils.HexUtils;
 
 /**

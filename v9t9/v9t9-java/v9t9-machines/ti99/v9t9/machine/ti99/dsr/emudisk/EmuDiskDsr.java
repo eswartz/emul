@@ -51,8 +51,8 @@ import v9t9.engine.files.directory.EmuDiskSettings;
 import v9t9.engine.files.directory.EmuDiskPabHandler;
 import v9t9.engine.files.directory.PabInfoBlock;
 import v9t9.engine.files.image.RealDiskSettings;
-import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.machine.ti99.dsr.IDsrHandler9900;
+import v9t9.memory.MemoryEntryInfoBuilder;
 
 /**
  * This is a device handler which allows accessing files on the local filesystem.

@@ -13,7 +13,7 @@ import v9t9.common.files.NativeFileFactory;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.memory.NativeFileMemoryEntry;
+import v9t9.memory.NativeFileMemoryEntry;
 import v9t9.server.EmulatorLocalServer;
 import v9t9.server.client.EmulatorServerBase;
 import ejs.base.utils.HexUtils;

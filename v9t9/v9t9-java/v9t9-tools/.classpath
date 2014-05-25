@@ -13,5 +13,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-video"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-remote"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-server"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-memory"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

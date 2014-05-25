@@ -10,7 +10,7 @@
  */
 package v9t9.machine.f99b.memory;
 
-import v9t9.engine.memory.ByteMemoryArea;
+import v9t9.memory.ByteMemoryArea;
 
 
 /** Enhanced console RAM, byte-accessible */

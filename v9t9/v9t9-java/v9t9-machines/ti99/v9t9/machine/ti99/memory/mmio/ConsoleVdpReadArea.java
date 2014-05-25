@@ -14,6 +14,7 @@ import v9t9.engine.memory.VdpMmio;
 
 
 
+
 public class ConsoleVdpReadArea extends ConsoleMmioReadArea {
 	
     public ConsoleVdpReadArea(VdpMmio mmio) {

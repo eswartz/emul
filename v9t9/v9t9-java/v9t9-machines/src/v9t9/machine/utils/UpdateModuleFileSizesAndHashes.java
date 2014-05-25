@@ -28,8 +28,8 @@ import v9t9.common.modules.IModule;
 import v9t9.common.modules.ModuleDatabase;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.common.settings.SettingSchemaProperty;
-import v9t9.engine.memory.Memory;
-import v9t9.engine.memory.MemoryEntryFactory;
+import v9t9.machine.ti99.memory.TI994AMemoryEntryFactory;
+import v9t9.memory.Memory;
 import ejs.base.properties.IProperty;
 
 /**
@@ -65,7 +65,7 @@ public class UpdateModuleFileSizesAndHashes {
 		
 		settings = new BasicSettingsHandler();
 		
-		memory.setMemoryEntryFactory(new MemoryEntryFactory(settings, memory, locator));
+		memory.setMemoryEntryFactory(new TI994AMemoryEntryFactory(memory, settings, locator));
 	}
 	
 	protected void run(String[] args) throws IOException {

@@ -22,8 +22,8 @@ import v9t9.common.files.IPathFileLocator.FileInfo;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.common.settings.SettingSchemaProperty;
-import v9t9.engine.memory.Memory;
-import v9t9.engine.memory.MemoryEntryFactory;
+import v9t9.machine.ti99.memory.TI994AMemoryEntryFactory;
+import v9t9.memory.Memory;
 
 /**
  * @author ejs
@@ -58,7 +58,7 @@ public class FindDuplicateRomFiles {
 		
 		settings = new BasicSettingsHandler();
 		
-		memory.setMemoryEntryFactory(new MemoryEntryFactory(settings, memory, locator));
+		memory.setMemoryEntryFactory(new TI994AMemoryEntryFactory(memory, settings, locator));
 	}
 	
 	protected void run(String[] args) throws IOException, URISyntaxException {

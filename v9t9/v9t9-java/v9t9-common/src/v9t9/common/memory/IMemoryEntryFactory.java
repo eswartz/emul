@@ -20,11 +20,14 @@ import ejs.base.settings.ISettingSection;
 
 
 /**
+ * This class handles creating memory entries for a given memory handler.
  * @author ejs
  *
  */
 public interface IMemoryEntryFactory {
 
+	IMemory getMemory();
+	
 	/**
 	 * Read memory and create a memory entry with CPU byte ordering.
 	 * @param addr

@@ -29,14 +29,14 @@ import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.BasicSettingsHandler;
-import v9t9.engine.memory.Memory;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.StockRamArea;
-import v9t9.engine.memory.MemoryEntryFactory;
 import v9t9.machine.ti99.asm.HighLevelInstruction;
 import v9t9.machine.ti99.cpu.InstTable9900;
 import v9t9.machine.ti99.cpu.Instruction9900;
+import v9t9.machine.ti99.memory.TI994AMemoryEntryFactory;
+import v9t9.memory.Memory;
+import v9t9.memory.MemoryDomain;
+import v9t9.memory.MemoryEntry;
+import v9t9.memory.StockRamArea;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.AssemblerInstruction;
 import v9t9.tools.asm.DirectiveInstructionParserStage;
@@ -57,7 +57,7 @@ public abstract class BaseTest9900 extends TestCase {
 	protected DirectiveInstructionParserStage dtveStage = new DirectiveInstructionParserStage(stdInstStage.getOperandParser());
 	protected Assembler9900 stdAssembler = new Assembler9900();
 
-	protected MemoryEntryFactory memoryEntryFactory;
+	protected TI994AMemoryEntryFactory memoryEntryFactory;
 
 	protected PathFileLocator fileLocator;
 
@@ -87,7 +87,7 @@ public abstract class BaseTest9900 extends TestCase {
         		new StockRamArea(8192)));
 
         fileLocator = new PathFileLocator();
-		memoryEntryFactory = new MemoryEntryFactory(settings, memory, fileLocator	);
+		memoryEntryFactory = new TI994AMemoryEntryFactory(memory, settings, fileLocator	);
 	}
 	
 

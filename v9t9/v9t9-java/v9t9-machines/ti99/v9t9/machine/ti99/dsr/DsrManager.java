@@ -18,7 +18,6 @@ import org.apache.log4j.Logger;
 
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
-
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.dsr.IDsrHandler;
@@ -26,7 +25,6 @@ import v9t9.common.dsr.IDsrManager;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.dsr.ConsoleMemoryTransfer;
 import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;

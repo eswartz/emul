@@ -23,8 +23,8 @@ import v9t9.engine.files.image.DiskImageContentProvider;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.machine.MachineBase;
 import v9t9.engine.machine.NullFileExecutionHandler;
-import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.f99b.cpu.CpuF99b;
+import v9t9.machine.ti99.memory.mmio.TIMemoryModel;
 
 public class F99bMachine extends MachineBase {
 

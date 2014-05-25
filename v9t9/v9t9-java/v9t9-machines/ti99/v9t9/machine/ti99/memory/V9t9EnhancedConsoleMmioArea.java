@@ -14,9 +14,9 @@ import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryListener;
-import v9t9.engine.memory.MultiBankedMemoryEntry;
-import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
+import v9t9.machine.ti99.memory.mmio.TIMemoryModel;
+import v9t9.memory.MultiBankedMemoryEntry;
 
 /**
  * Enhanced memory-mapped I/O area, which is much compacted (and yes, sheds any 

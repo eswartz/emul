@@ -21,10 +21,9 @@ import java.util.TreeMap;
 
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
-
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.memory.MemoryDomain;
+import v9t9.memory.MemoryDomain;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.Context;
 import v9t9.tools.forthcomp.DictEntry;

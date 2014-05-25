@@ -15,10 +15,10 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.BasicSettingsHandler;
-import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.memory.MemoryEntryInfoBuilder;
-import v9t9.engine.memory.MemoryEntryFactory;
 import v9t9.machine.ti99.machine.TI994A;
+import v9t9.machine.ti99.memory.TI994AMemoryEntryFactory;
+import v9t9.memory.DiskMemoryEntry;
+import v9t9.memory.MemoryEntryInfoBuilder;
 
 /**
  * @author ejs
@@ -29,7 +29,7 @@ public class DiskMemoryEntryTest extends TestCase {
     
     String basedir = "/usr/local/src/v9t9-data/test/roms/";
 	private ISettingsHandler settings;
-	private MemoryEntryFactory memoryEntryFactory;
+	private TI994AMemoryEntryFactory memoryEntryFactory;
 
     public static void main(String[] args) {
         junit.textui.TestRunner.run(DiskMemoryEntryTest.class);
@@ -43,7 +43,7 @@ public class DiskMemoryEntryTest extends TestCase {
 	    super.setUp();
 	    settings = new BasicSettingsHandler();
 	    machine = new TI994A(settings);
-	    memoryEntryFactory = new MemoryEntryFactory(settings, machine.getMemory(), new PathFileLocator());
+	    memoryEntryFactory = new TI994AMemoryEntryFactory(machine.getMemory(), settings, new PathFileLocator());
         CPU = machine.getConsole();
 	    CPU.zero();
 	}

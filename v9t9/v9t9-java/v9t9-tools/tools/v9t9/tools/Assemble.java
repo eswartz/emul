@@ -21,8 +21,8 @@ import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchemaProperty;
-import v9t9.engine.memory.MemoryEntryInfoBuilder;
-import v9t9.engine.memory.MemoryEntryFactory;
+import v9t9.machine.ti99.memory.TI994AMemoryEntryFactory;
+import v9t9.memory.MemoryEntryInfoBuilder;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.FileContentEntry;
 import v9t9.tools.asm.inst9900.Assembler9900;
@@ -32,7 +32,7 @@ import v9t9.tools.utils.Category;
 public class Assemble {
 
     private static final String PROGNAME = Assemble.class.getName();
-	private static MemoryEntryFactory memoryEntryFactory;
+	private static TI994AMemoryEntryFactory memoryEntryFactory;
     
     /**
      * @param args
@@ -50,7 +50,7 @@ public class Assemble {
         assembler.setList(null);
         
         PathFileLocator locator = new PathFileLocator();
-		memoryEntryFactory = new MemoryEntryFactory(null, assembler.getMemory(), locator);
+		memoryEntryFactory = new TI994AMemoryEntryFactory(assembler.getMemory(), null, locator);
         locator.setReadWritePathProperty(new SettingSchemaProperty("Output", "."));
         
         boolean selectedProcessor = false;

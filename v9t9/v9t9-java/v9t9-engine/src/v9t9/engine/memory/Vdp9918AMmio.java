@@ -13,10 +13,6 @@ package v9t9.engine.memory;
 
 import java.io.PrintWriter;
 
-import ejs.base.properties.IProperty;
-import ejs.base.settings.Logging;
-import ejs.base.utils.HexUtils;
-
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.IVdpChip;
@@ -24,6 +20,11 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
+import v9t9.memory.BankedMemoryEntry;
+import v9t9.memory.MemoryEntry;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.Logging;
+import ejs.base.utils.HexUtils;
 
 
 
@@ -67,7 +68,7 @@ public class Vdp9918AMmio extends VdpMmio {
 	protected byte vdpreadahead;
     
     /**
-     * @see v9t9.common.memory.Memory.IConsoleMmioReader#read
+     * @see v9t9.memory.Memory.IConsoleMmioReader#read
      */
     public byte read(int addr) {
     	byte ret;
@@ -97,7 +98,7 @@ public class Vdp9918AMmio extends VdpMmio {
 	}
 
 	/**
-     * @see v9t9.common.memory.Memory.IConsoleMmioWriter#write 
+     * @see v9t9.memory.Memory.IConsoleMmioWriter#write 
      */
     public void write(int addr, byte val) {
     	if ((addr & 2) != 0) {
