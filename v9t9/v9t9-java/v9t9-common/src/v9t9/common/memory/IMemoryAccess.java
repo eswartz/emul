@@ -18,49 +18,49 @@ package v9t9.common.memory;
  */
 public interface IMemoryAccess {
 	/**
-	 * Read a word at the given 16-bit address, without side effects.
+	 * Read a word at the given address, without side effects.
 	 * @param addr address
 	 */
 	short flatReadWord(int addr);
 
 	/**
-	 * Read a byte at the given 16-bit address, without side effects.
+	 * Read a byte at the given address, without side effects.
 	 * @param addr address
 	 */
     byte flatReadByte(int addr);
 
 	/**
-	 * Write a word at the given 16-bit address, without side effects.
+	 * Write a word at the given address, without side effects.
 	 * @param addr address
 	 */
     void flatWriteWord(int addr, short val);
 
 	/**
-	 * Write a byte at the given 16-bit address, without side effects.
+	 * Write a byte at the given address, without side effects.
 	 * @param addr address
 	 */
     void flatWriteByte(int addr, byte val);
 
 	/**
-	 * Read a word at the given 16-bit address.
+	 * Read a word at the given address.
 	 * @param addr address
 	 */
     short readWord(int addr);
 
 	/**
-	 * Read a byte at the given 16-bit address.
+	 * Read a byte at the given address.
 	 * @param addr address
 	 */
     byte readByte(int addr);
 
 	/**
-	 * Write a word at the given 16-bit address.
+	 * Write a word at the given address.
 	 * @param addr address
 	 */
     void writeWord(int addr, short val);
 
 	/**
-	 * Write a byte at the given 16-bit address.
+	 * Write a byte at the given address.
 	 * @param addr address
 	 */
     void writeByte(int addr, byte val);

@@ -11,7 +11,6 @@
 package v9t9.memory;
 
 import v9t9.common.memory.IMemory;
-import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
 
 /**
@@ -35,10 +34,17 @@ public class MemoryAreaFactory {
 			area = new ByteMemoryArea();
 		} else {
 			area = new ByteMemoryArea() {
-	    		public void writeByte(IMemoryEntry entry, int addr, byte val) {
-	    			super.writeByte(entry, addr, val);
-	    			((DiskMemoryEntry) entry).setDirty(true);
-	    		}
+//				@Override
+//				@Deprecated
+//	    		public void writeByte(IMemoryEntry entry, int addr, byte val) {
+//	    			super.writeByte(entry, addr, val);
+//	    			((DiskMemoryEntry) entry).setDirty(true);
+//	    		}
+				@Override
+				public void writeByte(int addr, byte val) {
+					super.writeByte(addr, val);
+					setDirty(true);
+				}
     		};
 		}
     	
@@ -49,7 +55,8 @@ public class MemoryAreaFactory {
 		area.read = area.memory;
 		if (info.isStored())
 			area.write = area.memory;
-
+		area.setOffset(info.getAddress());
+		
 		return area;
 	}
 
@@ -60,14 +67,28 @@ public class MemoryAreaFactory {
 			area = new WordMemoryArea();
 		} else {
 			area = new WordMemoryArea() {
-	    		public void writeByte(IMemoryEntry entry, int addr, byte val) {
-	    			super.writeByte(entry, addr, val);
-	    			((DiskMemoryEntry) entry).setDirty(true);
+//				@Override
+//				@Deprecated
+//	    		public void writeByte(IMemoryEntry entry, int addr, byte val) {
+//	    			super.writeByte(entry, addr, val);
+//	    			((DiskMemoryEntry) entry).setDirty(true);
+//	    		}
+//	    		@Override
+//	    		@Deprecated
+//	    		public void writeWord(IMemoryEntry entry, int addr, short val) {
+//	    			super.writeWord(entry, addr, val);
+//	    			((DiskMemoryEntry) entry).setDirty(true);
+//	    		}
+	    		
+	    		@Override
+	    		public void writeByte(int addr, byte val) {
+	    			super.writeByte(addr, val);
+	    			setDirty(true);
 	    		}
 	    		@Override
-	    		public void writeWord(IMemoryEntry entry, int addr, short val) {
-	    			super.writeWord(entry, addr, val);
-	    			((DiskMemoryEntry) entry).setDirty(true);
+	    		public void writeWord(int addr, short val) {
+	    			super.writeWord(addr, val);
+	    			setDirty(true);
 	    		}
     		};
 		}
@@ -77,6 +98,8 @@ public class MemoryAreaFactory {
         if (info.isStored())
         	area.write = area.memory;
 
+        area.setOffset(info.getAddress());
+        
 		return area;
 	}
 

@@ -119,6 +119,7 @@ public abstract class BaseMemoryEntryFactory implements IMemoryEntryFactory {
             			);
     	}
         
+    	area.setOffset(info.getAddress());
         return area;
 	}
 
@@ -133,7 +134,7 @@ public abstract class BaseMemoryEntryFactory implements IMemoryEntryFactory {
     	DiskMemoryEntry entry = new DiskMemoryEntry(info, area, storedInfo);
     	
         entry.setArea(MemoryAreaFactory.createMemoryArea(memory, info)); 
-        
+
     	return entry;
     }
 

@@ -117,46 +117,110 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements IMem
     	}
 	}
 
-    @Override
-    public void writeByte(IMemoryEntry entry, int addr, byte val) {
-    	if (isRAMAddr(addr)) {
-    		underlyingMemory.getArea().flatWriteByte(underlyingMemory, addr, val);
-    		return;
-    	}
-    	if ((addr & 1) != 0)
-    		return;
-    	
-    	writeMmio(addr, val);
-    }
-
 	private boolean isRAMAddr(int addr) {
 		return addr < MMIO_BASE || addr >= NMI;
 	}
     
-	@Override
-    public void writeWord(IMemoryEntry entry, int addr, short val) {
-    	if (isRAMAddr(addr)) {
-    		underlyingMemory.getArea().flatWriteWord(underlyingMemory, addr, val);
-    		return;
-    	}
-    	writeByte(entry, addr, (byte) (val >> 8));
-    }
+
+//    @Override
+//    @Deprecated
+//    public void writeByte(IMemoryEntry entry, int addr, byte val) {
+//    	if (isRAMAddr(addr)) {
+//    		underlyingMemory.getArea().flatWriteByte(addr, val);
+//    		return;
+//    	}
+//    	if ((addr & 1) != 0)
+//    		return;
+//    	
+//    	writeMmio(addr, val);
+//    }
+//
+//	@Override
+//    @Deprecated
+//    public void writeWord(IMemoryEntry entry, int addr, short val) {
+//    	if (isRAMAddr(addr)) {
+//    		underlyingMemory.getArea().flatWriteWord(addr, val);
+//    		return;
+//    	}
+//    	writeByte(entry, addr, (byte) (val >> 8));
+//    }
+//
+//
+//	@Override
+//    @Deprecated
+//	public byte readByte(IMemoryEntry entry, int addr) {
+//		if (isRAMAddr(addr))
+//			return underlyingMemory.getArea().flatReadByte(underlyingMemory, addr);
+//    	if ((addr & 1) != 0)
+//    		return 0;
+//		return readMmio(addr);
+//	}
+//	
+//	@Override
+//    @Deprecated
+//	public short readWord(IMemoryEntry entry, int addr) {
+//		if (isRAMAddr(addr))
+//			return underlyingMemory.getArea().flatReadWord(underlyingMemory, addr);
+//		return (short) (readByte(entry, addr) << 8);
+//	}
+//
+//    @Override
+//    public void writeByte(int addr, byte val) {
+//    	if (isRAMAddr(addr)) {
+//    		underlyingMemory.getArea().flatWriteByte(underlyingMemory, addr, val);
+//    		return;
+//    	}
+//    	if ((addr & 1) != 0)
+//    		return;
+//    	
+//    	writeMmio(addr, val);
+//    }
+//
+//	@Override
+//    public void writeWord(int addr, short val) {
+//    	if (isRAMAddr(addr)) {
+//    		underlyingMemory.getArea().flatWriteWord(underlyingMemory, addr, val);
+//    		return;
+//    	}
+//    	writeByte(addr, (byte) (val >> 8));
+//    }
 
 
 	@Override
-	public byte readByte(IMemoryEntry entry, int addr) {
+	public byte readByte(int addr) {
 		if (isRAMAddr(addr))
-			return underlyingMemory.getArea().flatReadByte(underlyingMemory, addr);
+			return underlyingMemory.getArea().flatReadByte(addr);
     	if ((addr & 1) != 0)
     		return 0;
 		return readMmio(addr);
 	}
 	
 	@Override
-	public short readWord(IMemoryEntry entry, int addr) {
+	public short readWord(int addr) {
 		if (isRAMAddr(addr))
-			return underlyingMemory.getArea().flatReadWord(underlyingMemory, addr);
-		return (short) (readByte(entry, addr) << 8);
+			return underlyingMemory.getArea().flatReadWord(addr);
+		return (short) (readByte(addr) << 8);
+	}
+
+	@Override
+	public void writeByte(int addr, byte val) {
+		if (isRAMAddr(addr)) {
+			underlyingMemory.getArea().flatWriteByte(addr, val);
+			return;
+		}
+		if ((addr & 1) != 0)
+			return;
+
+		writeMmio(addr, val);
+	}
+
+	@Override
+	public void writeWord(int addr, short val) {
+		if (isRAMAddr(addr)) {
+			underlyingMemory.getArea().flatWriteWord(addr, val);
+			return;
+		}
+		writeByte(addr, (byte) (val >> 8));
 	}
 
     private void writeMmio(int addr, byte val) {
@@ -209,29 +273,29 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements IMem
 	}
 
 	@Override
-	public byte flatReadByte(IMemoryEntry entry, int addr) {
+	public byte flatReadByte(int addr) {
 		if (isRAMAddr(addr))
-			return super.flatReadByte(entry, addr);
+			return super.flatReadByte(addr);
 		return 0;
 	}
 	
 	@Override
-	public short flatReadWord(IMemoryEntry entry, int addr) {
+	public short flatReadWord(int addr) {
 		if (isRAMAddr(addr))
-			return super.flatReadWord(entry, addr);
+			return super.flatReadWord(addr);
 		return 0;
 	}
 	
 	@Override
-	public void flatWriteByte(IMemoryEntry entry, int addr, byte val) {
+	public void flatWriteByte(int addr, byte val) {
 		if (isRAMAddr(addr))
-			super.flatWriteByte(entry, addr, val);
+			super.flatWriteByte(addr, val);
 	}
 
 	@Override
-	public void flatWriteWord(IMemoryEntry entry, int addr, short val) {
+	public void flatWriteWord(int addr, short val) {
 		if (isRAMAddr(addr))
-			super.flatWriteWord(entry, addr, val);
+			super.flatWriteWord(addr, val);
 	}
 	
 	/* (non-Javadoc)

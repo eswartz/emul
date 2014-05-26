@@ -117,7 +117,8 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 	protected void reportLoadError(IEventNotifier eventNotifier, String file, IOException e) {
 		eventNotifier.notifyEvent(this, Level.ERROR, 
 				e instanceof FileNotFoundException ?
-				"Failed to find image '" + file +"' which is needed to start" : e.getMessage()); 
+				"Failed to find image '" + file +"' which is needed to start" 
+				: "Failed to load image '" + file + "': " + e.getMessage()); 
 	
 	}
 

@@ -33,6 +33,7 @@ public class CorcompDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 		IMemoryArea romArea = banks[1].getArea();
 		ramRomArea = new WordMemoryArea(romArea.getLatency());
 		ramRomArea.write = ramRomArea.read = ramRomArea.memory = new short[(RAM_END - 0x4000) / 2];
+		ramRomArea.setOffset(0x4000);
 	}
 
 	/* (non-Javadoc)
@@ -41,7 +42,7 @@ public class CorcompDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 	@Override
 	public byte readByte(int addr) {
 		if (addr < RAM_END && getCurrentBank() == 1)
-			return ramRomArea.readByte(this, addr);
+			return ramRomArea.readByte(addr);
 		return super.readByte(addr);
 	}
 	/* (non-Javadoc)
@@ -50,7 +51,7 @@ public class CorcompDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 	@Override
 	public short readWord(int addr) {
 		if (addr < RAM_END && getCurrentBank() == 1)
-			return ramRomArea.readWord(this, addr);
+			return ramRomArea.readWord(addr);
 		return super.readWord(addr);
 	}
 	
@@ -60,11 +61,11 @@ public class CorcompDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 	@Override
 	public void writeWord(int addr, short val) {
 		if (addr < RAM_END && getCurrentBank() == 1)
-			ramRomArea.writeWord(this, addr, val);
+			ramRomArea.writeWord(addr, val);
 	}
 	@Override
 	public void writeByte(int addr, byte val) {
 		if (addr < RAM_END && getCurrentBank() == 1)
-			ramRomArea.writeByte(this, addr, val);
+			ramRomArea.writeByte(addr, val);
 	}
 }

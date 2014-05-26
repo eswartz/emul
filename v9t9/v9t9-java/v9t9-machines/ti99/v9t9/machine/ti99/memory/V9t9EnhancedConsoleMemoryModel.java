@@ -66,6 +66,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 		MemoryEntryInfo gromInfo = MemoryEntryInfoBuilder.byteMemoryEntry()
 			.withDomain(IMemoryDomain.NAME_GRAPHICS)
 			.withAddress(0x6000)
+			.withSize(-0xA000)
 			.withFilename("nforthg.bin").create("FORTH");
 		
 		entry = loadMemory(eventNotifier, gromInfo);

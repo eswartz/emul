@@ -251,14 +251,22 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 			super(4);
 		}
 
-		/* (non-Javadoc)
-		 * @see v9t9.engine.memory.WordMemoryArea#readByte(v9t9.engine.memory.MemoryEntry, int)
-		 */
+//		@Override
+//		@Deprecated
+//		public byte readByte(IMemoryEntry entry, int addr) {
+//			return readByte(addr);
+//		}
+//		@Override
+//		@Deprecated
+//		public void writeByte(IMemoryEntry entry, int addr, byte val) {
+//			writeByte(addr, val);
+//		}
+		
 		@Override
-		public byte readByte(IMemoryEntry entry, int addr) {
+		public byte readByte(int addr) {
 			
 			if (addr < 0x5ff0)
-				return romMemoryEntry.getArea().flatReadByte(romMemoryEntry, addr);
+				return romMemoryEntry.getArea().flatReadByte(addr);
 
 			byte ret = 0;
 
@@ -301,9 +309,9 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 		 * @see v9t9.engine.memory.WordMemoryArea#writeByte(v9t9.engine.memory.MemoryEntry, int, byte)
 		 */
 		@Override
-		public void writeByte(IMemoryEntry entry, int addr, byte val) {
+		public void writeByte(int addr, byte val) {
 			if (addr < 0x5ff0) {
-				romMemoryEntry.getArea().flatWriteByte(romMemoryEntry, addr, val);
+				romMemoryEntry.getArea().flatWriteByte(addr, val);
 				return;
 			}
 			
@@ -341,22 +349,37 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 			
 		}
 		
+//		@Override
+//		@Deprecated
+//		public short readWord(IMemoryEntry entry, int addr) {
+//			return (short) ((readByte(entry, (addr & ~1)) << 8) 
+//			| (readByte(entry, (addr | 1)) & 0xff));
+//		}
+//		
+//		@Override
+//		@Deprecated
+//		public void writeWord(IMemoryEntry entry, int addr, short val) {
+//			writeByte(entry, (addr & ~1), (byte) (val >> 8));
+//			writeByte(entry, (addr | 1), (byte) (val & 0xff));
+//		}
+		
+
 		/* (non-Javadoc)
 		 * @see v9t9.engine.memory.WordMemoryArea#readWord(v9t9.engine.memory.MemoryEntry, int)
 		 */
 		@Override
-		public short readWord(IMemoryEntry entry, int addr) {
-			return (short) ((readByte(entry, (addr & ~1)) << 8) 
-			| (readByte(entry, (addr | 1)) & 0xff));
+		public short readWord(int addr) {
+			return (short) ((readByte((addr & ~1)) << 8) 
+			| (readByte((addr | 1)) & 0xff));
 		}
 		
 		/* (non-Javadoc)
 		 * @see v9t9.engine.memory.WordMemoryArea#writeWord(v9t9.engine.memory.MemoryEntry, int, short)
 		 */
 		@Override
-		public void writeWord(IMemoryEntry entry, int addr, short val) {
-			writeByte(entry, (addr & ~1), (byte) (val >> 8));
-			writeByte(entry, (addr | 1), (byte) (val & 0xff));
+		public void writeWord(int addr, short val) {
+			writeByte((addr & ~1), (byte) (val >> 8));
+			writeByte((addr | 1), (byte) (val & 0xff));
 		}
 		
 	}

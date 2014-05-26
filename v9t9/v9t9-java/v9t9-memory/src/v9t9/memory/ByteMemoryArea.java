@@ -88,40 +88,103 @@ public class ByteMemoryArea extends MemoryArea {
         System.arraycopy(memory, 0, array, 0, Math.min(array.length, memory.length));
     }
 
+//    @Override
+//    @Deprecated
+//	public short readWord(IMemoryEntry entry, int addr) {
+//		if (addr + 1 - entry.getAddr() < entry.getSize())
+//			return (short) ((readByte(entry, addr) << 8) | (readByte(entry, (addr + 1) & 0xffff) & 0xff));
+//		else
+//			return (short) ((readByte(entry, addr) << 8));
+//    }
+//
+//    @Override
+//    @Deprecated
+//	public byte readByte(IMemoryEntry entry, int addr) {
+//        if (read != null) {
+//			int offs = addr - entry.getAddr();
+//			if (offs >= 0 && offs < read.length)
+//				return read[offs];
+//		}
+//        return 0;
+//    }
+//
+//    @Override
+//    @Deprecated
+//	public void writeWord(IMemoryEntry entry, int addr, short val) {
+//    	writeByte(entry, addr, (byte) (val >> 8));
+//    	if (addr + 1 - entry.getAddr() < entry.getSize())
+//    		writeByte(entry, addr + 1, (byte) (val & 0xff));
+//    }
+//
+//    @Override
+//    @Deprecated
+//	public void writeByte(IMemoryEntry entry, int addr, byte val) {
+//        if (write != null) {
+//			int offs = addr - entry.getAddr();
+//			if (offs >= 0 && offs < write.length)
+//				write[offs] = val;
+//		}
+//    }
+
+    
     @Override
-	public short readWord(IMemoryEntry entry, int addr) {
-		if (addr + 1 - entry.getAddr() < entry.getSize())
-			return (short) ((readByte(entry, addr) << 8) | (readByte(entry, (addr + 1) & 0xffff) & 0xff));
-		else
-			return (short) ((readByte(entry, addr) << 8));
+	public short readWord(int addr) {
+    	return (short) ((readByte(addr) << 8) | (readByte(addr + 1) & 0xff));
     }
 
+    /* (non-Javadoc)
+     * @see v9t9.memory.MemoryArea#flatReadByte(int)
+     */
     @Override
-	public byte readByte(IMemoryEntry entry, int addr) {
+    public byte flatReadByte(int addr) {
+    	if (read != null) {
+	    	int offs = addr - offset;
+			if (offs >= 0 && offs < read.length) {
+				return readByte(addr);
+			}
+    	}
+		return 0;
+    }
+    
+    @Override
+	public byte readByte(int addr) {
         if (read != null) {
-			int offs = addr - entry.getAddr();
-			if (offs >= 0 && offs < read.length)
-				return read[offs];
+			int offs = addr - offset;
+			//if (offs >= 0 && offs < read.length)
+			return read[offs];
 		}
         return 0;
     }
 
     @Override
-	public void writeWord(IMemoryEntry entry, int addr, short val) {
-    	writeByte(entry, addr, (byte) (val >> 8));
-    	if (addr + 1 - entry.getAddr() < entry.getSize())
-    		writeByte(entry, addr + 1, (byte) (val & 0xff));
+	public void writeWord(int addr, short val) {
+    	writeByte(addr, (byte) (val >> 8));
+    	writeByte(addr + 1, (byte) (val & 0xff));
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.memory.MemoryArea#flatWriteByte(int, byte)
+     */
+    @Override
+    public void flatWriteByte(int addr, byte val) {
+    	if (write != null) {
+			int offs = addr - offset;
+			if (offs >= 0 && offs < write.length) {
+				writeByte(addr, val);
+			}
+    	}    	
     }
 
     @Override
-	public void writeByte(IMemoryEntry entry, int addr, byte val) {
+	public void writeByte(int addr, byte val) {
         if (write != null) {
-			int offs = addr - entry.getAddr();
-			if (offs >= 0 && offs < write.length)
-				write[offs] = val;
+			int offs = addr - offset;
+			//if (offs >= 0 && offs < write.length)
+			write[offs] = val;
 		}
     }
 
+    
     public ByteMemoryAccess getReadMemoryAccess(IMemoryEntry entry, int addr) {
     	return new ByteMemoryAccess(read, addr - entry.getAddr());
     }

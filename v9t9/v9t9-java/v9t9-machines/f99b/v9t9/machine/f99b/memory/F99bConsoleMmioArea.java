@@ -11,7 +11,6 @@
 package v9t9.machine.f99b.memory;
 
 import v9t9.common.machine.IMachine;
-import v9t9.common.memory.IMemoryEntry;
 import v9t9.machine.f99b.machine.InternalCruF99;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
 import v9t9.machine.ti99.memory.mmio.TIMemoryModel;
@@ -64,37 +63,37 @@ public class F99bConsoleMmioArea extends ConsoleMmioArea  {
 	}
 
     @Override
-    public void writeByte(IMemoryEntry entry, int addr, byte val) {
+    public void writeByte(int addr, byte val) {
     	writeMmio(addr, val);
     }
 
 	@Override
-    public void writeWord(IMemoryEntry entry, int addr, short val) {
+    public void writeWord(int addr, short val) {
 		if (addr == VDPWA) {
-			writeByte(entry, VDPWA, (byte) (val & 0xff));
-			writeByte(entry, VDPWA, (byte) (val >> 8));
+			writeByte(VDPWA, (byte) (val & 0xff));
+			writeByte(VDPWA, (byte) (val >> 8));
 		} else if (addr == GPLWA) {
-			writeByte(entry, GPLWA, (byte) (val >> 8));
-			writeByte(entry, GPLWA, (byte) (val & 0xff));
+			writeByte(GPLWA, (byte) (val >> 8));
+			writeByte(GPLWA, (byte) (val & 0xff));
 		} else {
-	    	writeByte(entry, addr, (byte) (val >> 8));
+	    	writeByte(addr, (byte) (val >> 8));
 		}
     }
 
 
 	@Override
-	public byte readByte(IMemoryEntry entry, int addr) {
+	public byte readByte(int addr) {
 		return readMmio(addr);
 	}
 	
 	@Override
-	public short readWord(IMemoryEntry entry, int addr) {
+	public short readWord(int addr) {
 		if (addr == GPLRA) {
-			byte hi = readByte(entry, addr);
-			byte lo = readByte(entry, addr);
+			byte hi = readByte(addr);
+			byte lo = readByte(addr);
 			return (short) ((hi << 8) | (lo & 0xff));
 		} else {
-			return (short) (readByte(entry, addr) << 8);
+			return (short) (readByte(addr) << 8);
 			
 		}
 	}
@@ -167,26 +166,23 @@ public class F99bConsoleMmioArea extends ConsoleMmioArea  {
 	 * @see v9t9.engine.memory.MemoryArea#clearMemoryOnLoad(v9t9.common.memory.IMemoryEntry)
 	 */
 	@Override
-	protected void clearMemoryOnLoad(IMemoryEntry memoryEntry) {
-		int end = memoryEntry.getAddr() + memoryEntry.getSize();
-		for (int addr = memoryEntry.getAddr(); addr < end; addr++) {
-			if (addr >= 0x100) {
-				memoryEntry.flatWriteByte(addr, (byte) 0);
-			}
+	protected void clearMemoryOnLoad() {
+		int end = getSize();
+		for (int addr = 0x100; addr < end; addr++) {
+			flatWriteByte(addr, (byte) 0);
 		}
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.engine.memory.MemoryArea#loadChunk(v9t9.common.memory.IMemoryEntry, int, byte[])
 	 */
 	@Override
-	protected void loadChunk(IMemoryEntry memoryEntry, int saveAddr,
-			byte[] chunk) {
+	protected void loadChunk(int saveAddr, byte[] chunk) {
 		if (saveAddr >= 0x100) {
-			super.loadChunk(memoryEntry, saveAddr, chunk);
+			super.loadChunk(saveAddr, chunk);
 		} else {
 			for (int addr = saveAddr; addr < saveAddr + chunk.length; addr++) {
 				if (addr >= 0x100) {
-					memoryEntry.flatWriteByte(addr, chunk[addr - saveAddr]);
+					flatWriteByte(addr, chunk[addr - saveAddr]);
 				}
 			}
 		}

@@ -15,7 +15,6 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.machine.IMachine;
-import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
@@ -60,7 +59,7 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 		 * @see v9t9.engine.memory.WordMemoryArea#readByte(v9t9.engine.memory.MemoryEntry, int)
 		 */
 		@Override
-		public byte readByte(IMemoryEntry entry, int addr) {
+		public byte readByte(int addr) {
 			if (activePIO != null) {
 				return activePIO.data;
 			}
@@ -71,7 +70,7 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 		 * @see v9t9.engine.memory.WordMemoryArea#writeByte(v9t9.engine.memory.MemoryEntry, int, byte)
 		 */
 		@Override
-		public void writeByte(IMemoryEntry entry, int addr, byte val) {
+		public void writeByte(int addr, byte val) {
 			if (activePIO != null) {
 				activePIO.data = val;
 			}
@@ -81,18 +80,18 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 		 * @see v9t9.engine.memory.WordMemoryArea#readWord(v9t9.engine.memory.MemoryEntry, int)
 		 */
 		@Override
-		public short readWord(IMemoryEntry entry, int addr) {
-			return (short) ((readByte(entry, (addr & ~1)) << 8) 
-			| (readByte(entry, (addr | 1)) & 0xff));
+		public short readWord(int addr) {
+			return (short) ((readByte((addr & ~1)) << 8) 
+			| (readByte((addr | 1)) & 0xff));
 		}
 		
 		/* (non-Javadoc)
 		 * @see v9t9.engine.memory.WordMemoryArea#writeWord(v9t9.engine.memory.MemoryEntry, int, short)
 		 */
 		@Override
-		public void writeWord(IMemoryEntry entry, int addr, short val) {
-			writeByte(entry, (addr & ~1), (byte) (val >> 8));
-			writeByte(entry, (addr | 1), (byte) (val & 0xff));
+		public void writeWord(int addr, short val) {
+			writeByte((addr & ~1), (byte) (val >> 8));
+			writeByte((addr | 1), (byte) (val & 0xff));
 		}
 		
 	}

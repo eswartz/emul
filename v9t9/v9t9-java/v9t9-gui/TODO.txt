@@ -1,4 +1,13 @@
 
+Refactoring:
+
+MEMORY
+
+-- verify stored memory (isDirty check)
+-- verify banks
+
+//////////////////
+
 -- switching disk DSRs does not reset properly (even with hard reset); need to restart
 
 -- loading machine images from another machine does not properly kill & restart client

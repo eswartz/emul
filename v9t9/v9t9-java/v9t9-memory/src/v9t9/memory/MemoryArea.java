@@ -12,9 +12,7 @@ package v9t9.memory;
 
 import ejs.base.settings.ISettingSection;
 import net.iHarder.Base64;
-
 import v9t9.common.memory.IMemoryArea;
-import v9t9.common.memory.IMemoryEntry;
 
 /**
  * A memory area is the smallest unit of contiguous memory which has the
@@ -31,15 +29,6 @@ public abstract class MemoryArea implements IMemoryArea {
 	private static int gIdentity;
     private int identity = gIdentity++;
 
-	public MemoryArea(int latency) {
-    	this.latency = (byte) latency;
-	}
-    
-    @Override
-    public int hashCode() {
-    	return identity;
-    }
-    
     /** The cycle count for accessing memory from this area. 
      * This is understood to be the "native bus" latency -- either
      * accessing a byte on an 8-bit bus or a word on a 16-bit bus.
@@ -47,7 +36,35 @@ public abstract class MemoryArea implements IMemoryArea {
      * so the latency does not depend on the unit size.  */
     private byte latency;
     
-    abstract protected int getSize();
+	protected int offset;
+    
+    private boolean isDirty;
+
+	public MemoryArea(int latency) {
+    	this.latency = (byte) latency;
+	}
+
+    @Override
+    public int hashCode() {
+    	return identity;
+    }
+
+	/**
+	 * @param offset the offset to set
+	 */
+	public void setOffset(int offset) {
+		this.offset = offset;
+	}
+	
+    public boolean isDirty() {
+		return isDirty;
+	}
+
+	public void setDirty(boolean isDirty) {
+		this.isDirty = isDirty;
+	}
+
+	abstract protected int getSize();
     
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryArea#hasWriteAccess()
@@ -61,65 +78,79 @@ public abstract class MemoryArea implements IMemoryArea {
 	@Override
 	abstract public boolean hasReadAccess();
 
+    /* (non-Javadoc)
+     * @see v9t9.common.memory.IMemoryArea#getOffset()
+     */
+    @Override
+    public int getOffset() {
+    	return offset;
+    }
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryArea#flatReadWord(v9t9.common.memory.MemoryEntry, int)
 	 */
 	@Override
-	public short flatReadWord(IMemoryEntry entry, int addr) {
-		return readWord(entry, addr);
+	public short flatReadWord(int addr) {
+		return readWord(addr);
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryArea#flatReadByte(v9t9.common.memory.MemoryEntry, int)
 	 */
     @Override
-	public byte flatReadByte(IMemoryEntry entry, int addr) {
-    	return readByte(entry, addr);
+	public byte flatReadByte(int addr) {
+    	return readByte(addr);
     }
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryArea#flatWriteWord(v9t9.common.memory.MemoryEntry, int, short)
 	 */
     @Override
-	public void flatWriteWord(IMemoryEntry entry, int addr, short val) {
-    	writeWord(entry, addr, val);
+	public void flatWriteWord(int addr, short val) {
+    	writeWord(addr, val);
     }
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryArea#flatWriteByte(v9t9.common.memory.MemoryEntry, int, byte)
 	 */
     @Override
-	public void flatWriteByte(IMemoryEntry entry, int addr, byte val) {
-    	writeByte(entry, addr, val);
+	public void flatWriteByte(int addr, byte val) {
+    	writeByte(addr, val);
     }
 
-	/**
-	 * Read a word at the given 16-bit address.
-	 * @param entry
-	 * @param addr address
-	 */
-    protected abstract short readWord(IMemoryEntry entry, int addr);
-
-	/**
-	 * Read a byte at the given 16-bit address.
-	 * @param entry
-	 * @param addr address
-	 */
-    protected abstract byte readByte(IMemoryEntry entry, int addr);
-
-	/**
-	 * Write a word at the given 16-bit address.
-	 * @param entry
-	 * @param addr address
-	 */
-    protected abstract void writeWord(IMemoryEntry entry, int addr, short val);
-
-	/**
-	 * Write a byte at the given 16-bit address.
-	 * @param entry
-	 * @param addr address
-	 */
-    protected abstract void writeByte(IMemoryEntry entry, int addr, byte val);
+    
+    
+//	/**
+//	 * Read a word at the given 16-bit address.
+//	 * @param entry
+//	 * @param addr address
+//	 */
+//    @Deprecated
+//    protected abstract short readWord(IMemoryEntry entry, int addr);
+//
+//	/**
+//	 * Read a byte at the given 16-bit address.
+//	 * @param entry
+//	 * @param addr address
+//	 */
+//    @Deprecated
+//    protected abstract byte readByte(IMemoryEntry entry, int addr);
+//
+//	/**
+//	 * Write a word at the given 16-bit address.
+//	 * @param entry
+//	 * @param addr address
+//	 */
+//    @Deprecated
+//    protected abstract void writeWord(IMemoryEntry entry, int addr, short val);
+//
+//	/**
+//	 * Write a byte at the given 16-bit address.
+//	 * @param entry
+//	 * @param addr address
+//	 */
+//    @Deprecated
+//    protected abstract void writeByte(IMemoryEntry entry, int addr, byte val);
 
 	@Override
 	public void setLatency(int latency) {
@@ -142,16 +173,16 @@ public abstract class MemoryArea implements IMemoryArea {
 		return latency;
 	}
 
-	public void saveContents(ISettingSection section, IMemoryEntry entry) {
+	public void saveContents(ISettingSection section) {
 		ISettingSection contents = section.addSection("Contents");
-		int endAddr = entry.getAddr() + getSize();
+		int endAddr = getOffset() + getSize();
 		byte[] chunk = new byte[256];
-		for(int saveAddr = entry.getAddr(); saveAddr < endAddr; saveAddr += 256) {
+		for(int saveAddr = getOffset(); saveAddr < endAddr; saveAddr += 256) {
 			int perLine = saveAddr + 256 < endAddr ? 256 : endAddr - saveAddr;
 			boolean allZero = true;
 			try {
 				for (int idx = 0; idx < perLine; idx++) {
-					byte byt = flatReadByte(entry, saveAddr + idx);
+					byte byt = flatReadByte(saveAddr + idx);
 					chunk[idx] = byt;
 					allZero &= (byt == 0);
 				}
@@ -165,17 +196,17 @@ public abstract class MemoryArea implements IMemoryArea {
 		}
 	}
 
-	public void loadContents(ISettingSection section, IMemoryEntry memoryEntry) {
+	public void loadContents(ISettingSection section) {
 		ISettingSection contents = section.getSection("Contents");
 		if (contents != null) {
 			// clear memory first
-			clearMemoryOnLoad(memoryEntry);
+			clearMemoryOnLoad();
 			
 			for (ISettingSection.SettingEntry entry : contents) {
 				try {
 					int saveAddr = Integer.parseInt(entry.name, 16);
 					byte[] chunk = Base64.decode(entry.value.toString(), Base64.GZIP);
-					loadChunk(memoryEntry, saveAddr, chunk);
+					loadChunk(saveAddr, chunk);
 				} catch (NumberFormatException e) {
 					// not a chunk
 				}
@@ -194,7 +225,7 @@ public abstract class MemoryArea implements IMemoryArea {
 					int saveAddr = Integer.parseInt(entry.substring(0, cidx), 16);
 					String encoded = entry.substring(cidx + 1);
 					byte[] chunk = Base64.decode(encoded, Base64.GZIP);
-					loadChunk(memoryEntry, saveAddr, chunk);
+					loadChunk(saveAddr, chunk);
 				} catch (NumberFormatException e) {
 					// not a chunk
 				}
@@ -203,23 +234,20 @@ public abstract class MemoryArea implements IMemoryArea {
 	}
 
 	/**
-	 * @param memoryEntry
 	 */
-	protected void clearMemoryOnLoad(IMemoryEntry memoryEntry) {
+	protected void clearMemoryOnLoad() {
 		for (int idx = 0; idx < getSize(); idx++) {
-			memoryEntry.flatWriteByte(memoryEntry.getAddr() + idx, (byte) 0);
+			flatWriteByte(offset + idx, (byte) 0);
 		}
 	}
 
 	/**
-	 * @param memoryEntry
 	 * @param saveAddr
 	 * @param chunk
 	 */
-	protected void loadChunk(IMemoryEntry memoryEntry, int saveAddr,
-			byte[] chunk) {
+	protected void loadChunk(int saveAddr, byte[] chunk) {
 		for (int idx = 0; idx < chunk.length; idx++) {
-			flatWriteByte(memoryEntry, saveAddr++, chunk[idx]);
+			flatWriteByte(saveAddr++, chunk[idx]);
 		}
 	}
 

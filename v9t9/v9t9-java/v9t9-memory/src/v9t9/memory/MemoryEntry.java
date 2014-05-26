@@ -96,6 +96,9 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
         this.domain = domain;
         this.area = area;
         this.isVolatile = area != null && area.hasWriteAccess();
+        
+        if (area != null)
+        	area.setOffset(addr);
     }
 
     
@@ -369,49 +372,7 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	public final IMemoryArea getArea() {
 		return area;
 	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryEntry#mapAddress(int)
-	 */
-	@Override
-	public final int mapAddress(int addr) {
-		return (addr & 0xffff) + addrOffset;
-	}
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryEntry#flatReadByte(int)
-	 */
-	@Override
-	public byte flatReadByte(int addr) {
-		return area.flatReadByte(this, mapAddress(addr));
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryEntry#flatReadWord(int)
-	 */
-	@Override
-	public short flatReadWord(int addr) {
-		return area.flatReadWord(this, mapAddress(addr));
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryEntry#flatWriteByte(int, byte)
-	 */
-	@Override
-	public void flatWriteByte(int addr, byte val) {
-		area.flatWriteByte(this, mapAddress(addr), val);
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryEntry#flatWriteWord(int, short)
-	 */
-	@Override
-	public void flatWriteWord(int addr, short val) {
-		area.flatWriteWord(this, mapAddress(addr), val);
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryEntry#hasReadAccess()
-	 */
+
 	@Override
 	public boolean hasReadAccess() {
 		return area.hasReadAccess();
@@ -425,41 +386,48 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 		return area.hasWriteAccess();
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryEntry#readByte(int)
-	 */
+	@Override
+	public final int mapAddress(int addr) {
+		return (addr + addrOffset) & 0xffff;
+	}
+	@Override
+	public byte flatReadByte(int addr) {
+		return area.flatReadByte(mapAddress(addr));
+	}
+	@Override
+	public short flatReadWord(int addr) {
+		return area.flatReadWord(mapAddress(addr));
+	}
+	@Override
+	public void flatWriteByte(int addr, byte val) {
+		area.flatWriteByte(mapAddress(addr), val);
+	}
+	@Override
+	public void flatWriteWord(int addr, short val) {
+		area.flatWriteWord(mapAddress(addr), val);
+	}
+	
 	@Override
 	public byte readByte(int addr) {
-		return area.readByte(this, mapAddress(addr));
+		return area.readByte(mapAddress(addr));
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryEntry#readWord(int)
-	 */
 	@Override
 	public short readWord(int addr) {
-		return area.readWord(this, mapAddress(addr));
+		return area.readWord(mapAddress(addr));
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryEntry#writeByte(int, byte)
-	 */
 	@Override
 	public void writeByte(int addr, byte val) {
-		area.writeByte(this, mapAddress(addr), val);
+		area.writeByte(mapAddress(addr), val);
 	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryEntry#writeWord(int, short)
-	 */
+
 	@Override
 	public void writeWord(int addr, short val) {
-		area.writeWord(this, mapAddress(addr), val);
+		area.writeWord(mapAddress(addr), val);
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryEntry#getLatency()
-	 */
+
 	@Override
 	public final byte getLatency(int addr) {
 		return area.getLatency(addr);
@@ -492,7 +460,7 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 
 	protected void saveMemoryContents(ISettingSection section) {
 		if (area.hasWriteAccess()) {
-			area.saveContents(section, this);
+			area.saveContents(section);
 		}
 	}
 
@@ -518,7 +486,7 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 
 	protected void loadMemoryContents(ISettingSection section) {
 		if (area.hasReadAccess()) {
-			area.loadContents(section, this);
+			area.loadContents(section);
 		}
 	}
 

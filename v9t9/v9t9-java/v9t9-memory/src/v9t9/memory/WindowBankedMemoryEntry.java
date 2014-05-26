@@ -49,13 +49,13 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 	
 	@Override
 	protected void doSaveBankEntries(ISettingSection section) {
-		area.saveContents(section, this);
+		area.saveContents(section);
 	}
 	
 	@Override
 	protected void doLoadBankEntries(ISettingSection section) {
 		if (section == null) return;
-		area.loadContents(section, this);
+		area.loadContents(section);
 	}
 	
 	@Override

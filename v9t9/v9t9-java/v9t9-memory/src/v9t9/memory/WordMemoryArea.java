@@ -10,12 +10,12 @@
  */
 package v9t9.memory;
 
-import v9t9.common.memory.IMemoryEntry;
-
 /**
- * Word memory is accessed in 9900 byte order but accessed with usual
+ * Word memory is accessed in big-endian byte order but accessed with usual
  * host endianness.
- * <p>
+ * <p/>
+ * The bus ignores the low bit of the address.
+ * <p/>
  * This area provides a basis for "traditional" memory which has a flat
  * array of bytes with read and/or write support.
  * @author ejs
@@ -105,15 +105,66 @@ public class WordMemoryArea extends MemoryArea {
         }
     }
     
+//	@Override
+//    @Deprecated
+//	public short readWord(IMemoryEntry entry, int addr) {
+//		if (read != null) {
+//			int addr1 = addr - entry.getAddr();
+//			addr1 &= 0xfffe;
+//			return read[addr1 >> 1];
+//		} else {
+//			return 0;
+//		}
+//	}
+//
+//    @Override
+//    @Deprecated
+//	public byte readByte(IMemoryEntry entry, int addr) {
+//		if (read != null) {
+//            int addr1 = addr - entry.getAddr();
+//			addr1 &= 0xfffe;
+//			short word = read[addr1 >> 1];
+//            if ((addr & 1) == 0) {
+//				return (byte)(word >> 8);
+//			} else {
+//				return (byte)word;
+//			}
+//        } else {
+//			return 0;
+//		}
+//	}
+//
+//    @Override
+//    @Deprecated
+//	public void writeWord(IMemoryEntry entry, int addr, short val) {
+//		if (write != null) {
+//			int addr1 = addr - entry.getAddr();
+//			addr1 &= 0xfffe;
+//			write[addr1 >> 1] = val;
+//		}
+//	}
+//
+//    @Override
+//    @Deprecated
+//	public void writeByte(IMemoryEntry entry, int addr, byte val) {
+//		if (write != null) {
+//            
+//            int addr1 = addr - entry.getAddr();
+//			addr1 &= 0xfffe;
+//			short word = write[addr1 >> 1];
+//            if ((addr & 1) == 0) {
+//				word = (short) (val << 8 | word & 0xff);
+//			} else {
+//				word = (short) (word & 0xff00 | val & 0xff);
+//			}
+//			write[addr1 >> 1] = word;
+//        }
+//	}
+//    
 	@Override
-	public short readWord(IMemoryEntry entry, int addr) {
+	public short readWord(int addr) {
 		if (read != null) {
-			int addr1 = addr - entry.getAddr();
-			/*
-			 * processor ignores word access on odd boundaries, and stores in
-			 * big-endian format
-			 */
-			addr1 &= 0xfffe;
+			int addr1 = addr - offset;
 			return read[addr1 >> 1];
 		} else {
 			return 0;
@@ -121,14 +172,9 @@ public class WordMemoryArea extends MemoryArea {
 	}
 
     @Override
-	public byte readByte(IMemoryEntry entry, int addr) {
+	public byte readByte(int addr) {
 		if (read != null) {
-            int addr1 = addr - entry.getAddr();
-			/*
-			 * processor ignores word access on odd boundaries, and stores in
-			 * big-endian format
-			 */
-			addr1 &= 0xfffe;
+            int addr1 = addr - offset;
 			short word = read[addr1 >> 1];
             if ((addr & 1) == 0) {
 				return (byte)(word >> 8);
@@ -141,28 +187,18 @@ public class WordMemoryArea extends MemoryArea {
 	}
 
     @Override
-	public void writeWord(IMemoryEntry entry, int addr, short val) {
+	public void writeWord(int addr, short val) {
 		if (write != null) {
-			int addr1 = addr - entry.getAddr();
-			/*
-			 * processor ignores word access on odd boundaries, and stores in
-			 * big-endian format
-			 */
-			addr1 &= 0xfffe;
+			int addr1 = addr - offset;
 			write[addr1 >> 1] = val;
 		}
 	}
 
     @Override
-	public void writeByte(IMemoryEntry entry, int addr, byte val) {
+	public void writeByte(int addr, byte val) {
 		if (write != null) {
             
-            int addr1 = addr - entry.getAddr();
-			/*
-			 * processor ignores word access on odd boundaries, and stores in
-			 * big-endian format
-			 */
-			addr1 &= 0xfffe;
+            int addr1 = addr - offset;
 			short word = write[addr1 >> 1];
             if ((addr & 1) == 0) {
 				word = (short) (val << 8 | word & 0xff);
@@ -172,4 +208,5 @@ public class WordMemoryArea extends MemoryArea {
 			write[addr1 >> 1] = word;
         }
 	}
+    
 }
