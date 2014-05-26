@@ -173,12 +173,19 @@ public class DiskMemoryEntry extends MemoryEntry {
     	bDirty = dirty;
     }
     
+	/**
+	 * @return the bDirty
+	 */
+	public boolean isDirty() {
+		return bDirty || (area != null && area.isDirty());
+	}
+	
     /* (non-Javadoc)
      * @see v9t9.MemoryEntry#save()
      */
     @Override
 	public void save() throws IOException {
-        if (info.isStored() && bDirty) {
+        if (info.isStored() && isDirty()) {
             byte[] data = new byte[getSize()];
             area.copyToBytes(data);
             
@@ -219,7 +226,9 @@ public class DiskMemoryEntry extends MemoryEntry {
             }
             FileUtils.writeOutputStreamContentsAndClose(
             		locator.createOutputStream(uri), data, getSize());
-            bDirty = false;
+            
+            setDirty(false);
+            area.setDirty(false);
         }
         super.save();
     }
