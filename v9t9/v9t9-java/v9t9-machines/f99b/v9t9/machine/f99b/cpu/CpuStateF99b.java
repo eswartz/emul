@@ -218,8 +218,8 @@ public class CpuStateF99b implements ICpuState {
 		return new StatusF99b();
 	}
 
-	public short getSP() {
-		return (short) getRegister(CpuF99b.SP);
+	public int getSP() {
+		return getRegister(CpuF99b.SP) & 0xffff;
 	}
 	
 	public void setSP(short sp) {
@@ -228,8 +228,8 @@ public class CpuStateF99b implements ICpuState {
 	}
 	
 
-	public short getRP() {
-		return (short) getRegister(CpuF99b.RP);
+	public int getRP() {
+		return getRegister(CpuF99b.RP) & 0xffff;
 	}
 	
 	public void setRP(short sp) {
@@ -237,8 +237,8 @@ public class CpuStateF99b implements ICpuState {
 	}
 	
 
-	public short getUP() {
-		return (short) getRegister(CpuF99b.UP);
+	public int getUP() {
+		return getRegister(CpuF99b.UP) & 0xffff;
 	}
 	
 	public void setUP(short up) {
@@ -286,16 +286,16 @@ public class CpuStateF99b implements ICpuState {
 		setRegister(CpuF99b.SR, st);
 	}
 
-	public final short getBaseSP() {
-		return (short) getRegister(CpuF99b.SP0);
+	public final int getBaseSP() {
+		return getRegister(CpuF99b.SP0) & 0xffff;
 	}
 	
 	public final void setBaseSP(short v) {
 		setRegister(CpuF99b.SP0, v);
 	}
 
-	public final short getBaseRP() {
-		return (short) getRegister(CpuF99b.RP0);
+	public final int getBaseRP() {
+		return getRegister(CpuF99b.RP0);
 	}
 	
 	public final void setBaseRP(short v) {
@@ -313,7 +313,7 @@ public class CpuStateF99b implements ICpuState {
 
 	final void push(short val) {
 		regs[CpuF99b.SP] -= 2;
-		short sp = regs[CpuF99b.SP];
+		int sp = regs[CpuF99b.SP] & 0xffff;
 		console.writeWord(sp, val);
 		
 		/*if (sp < regs[CpuF99b.SP0] - CpuF99b.MAX_STACK) {
@@ -324,7 +324,7 @@ public class CpuStateF99b implements ICpuState {
 	
 
 	final short pop(CpuF99b cpu) {
-		short val = console.readWord(regs[CpuF99b.SP]);
+		short val = console.readWord(regs[CpuF99b.SP] & 0xffff);
 		regs[CpuF99b.SP] += 2;
 		if (regs[CpuF99b.SP] > regs[CpuF99b.SP0]) {
 			System.err.println("Stack underflow!");
@@ -335,12 +335,12 @@ public class CpuStateF99b implements ICpuState {
 
 
 	public final short rpeek() {
-		return console.readWord(regs[CpuF99b.RP]);
+		return console.readWord(regs[CpuF99b.RP] & 0xffff);
 	}
 
 	final void rpush(short val) {
 		regs[CpuF99b.RP] -= 2;
-		short rp = regs[CpuF99b.RP];
+		int rp = regs[CpuF99b.RP] & 0xffff;
 		console.writeWord(rp, val);
 		/*if (rp < regs[CpuF99b.RP0] - CpuF99b.MAX_STACK) {
 			System.err.println("R-Stack overflow!");
@@ -349,7 +349,7 @@ public class CpuStateF99b implements ICpuState {
 				
 	}
 	final short rpop(CpuF99b cpu) {
-		short val = console.readWord(regs[CpuF99b.RP]);
+		short val = console.readWord(regs[CpuF99b.RP] & 0xffff);
 		regs[CpuF99b.RP] += 2;
 		if (regs[CpuF99b.RP] > regs[CpuF99b.RP0]) {
 			System.err.println("R-Stack underflow!");

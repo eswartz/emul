@@ -269,7 +269,7 @@ public class Interpreter9900 implements IInterpreter {
 			iblock.val2 = mop2.getValue(iblock, iblock.ea2);
 		}
         if (iblock.inst.getInst() == Inst9900.Idiv) {
-            iblock.val3 = memory.readWord(iblock.ea2 + 2);
+            iblock.val3 = memory.readWord((iblock.ea2 + 2) & 0xffff);
         }
     }
 
@@ -281,11 +281,11 @@ public class Interpreter9900 implements IInterpreter {
     	MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
         if (mop1.dest != IOperand.OP_DEST_FALSE) {
             if (mop1.byteop) {
-				memory.writeByte(iblock.ea1, (byte) iblock.val1);
+				memory.writeByte(iblock.ea1 & 0xffff, (byte) iblock.val1);
 			} else {
-				memory.writeWord(iblock.ea1, iblock.val1);
+				memory.writeWord(iblock.ea1 & 0xffff, iblock.val1);
 				if (ins.getInst() == InstTableCommon.Iticks) {
-					memory.writeWord(iblock.ea1 + 2, iblock.val2);
+					memory.writeWord((iblock.ea1 + 2) & 0xffff, iblock.val2);
 				}
 			}
 				
@@ -294,12 +294,12 @@ public class Interpreter9900 implements IInterpreter {
         	if (ins.getInst() == Inst9900.Icb)
         		mop2.dest = 1;
             if (mop2.byteop) {
-				memory.writeByte(iblock.ea2, (byte) iblock.val2);
+				memory.writeByte(iblock.ea2 & 0xffff, (byte) iblock.val2);
 			} else {
-                memory.writeWord(iblock.ea2, iblock.val2);
+                memory.writeWord(iblock.ea2 & 0xffff, iblock.val2);
                 if (ins.getInst() == Inst9900.Impy 
                 		|| ins.getInst() == Inst9900.Idiv) {
-                    memory.writeWord(iblock.ea2 + 2, iblock.val3);
+                    memory.writeWord((iblock.ea2 + 2) & 0xffff, iblock.val3);
                 }
             }
         }
@@ -459,9 +459,9 @@ public class Interpreter9900 implements IInterpreter {
             //cpu.rset(); // TODO
             break;
         case Inst9900.Irtwp:
-        	status.expand(memory.readWord(iblock.wp + 15 * 2));
-        	iblock.pc = memory.readWord(iblock.wp + 14 * 2);
-        	iblock.wp = memory.readWord(iblock.wp + 13 * 2);
+        	status.expand(memory.readWord((iblock.wp + 15 * 2) & 0xffff));
+        	iblock.pc = memory.readWord((iblock.wp + 14 * 2) & 0xffff);
+        	iblock.wp = memory.readWord((iblock.wp + 13 * 2) & 0xffff);
             break;
         case Inst9900.Ickon:
             // TODO
@@ -473,8 +473,8 @@ public class Interpreter9900 implements IInterpreter {
             // TODO
             break;
         case Inst9900.Iblwp:
-        	iblock.wp = memory.readWord(iblock.val1);
-        	iblock.pc = memory.readWord(iblock.val1 + 2);
+        	iblock.wp = memory.readWord(iblock.val1 & 0xffff);
+        	iblock.pc = memory.readWord((iblock.val1 + 2) & 0xffff);
             break;
 
         case Inst9900.Ib:
@@ -506,7 +506,7 @@ public class Interpreter9900 implements IInterpreter {
         	iblock.val1 -= 2;
             break;
         case Inst9900.Ibl:
-        	memory.writeWord(iblock.wp + 11 * 2, iblock.pc);
+        	memory.writeWord((iblock.wp + 11 * 2) & 0xffff, iblock.pc);
         	iblock.pc = iblock.val1;
             break;
         case Inst9900.Iswpb:
@@ -677,13 +677,13 @@ public class Interpreter9900 implements IInterpreter {
 
         case Inst9900.Ildcr:
         	machine.getCruManager().writeBits(
-                    memory.readWord(iblock.wp + 12 * 2), iblock.val1,
+                    memory.readWord((iblock.wp + 12 * 2) & 0xffff), iblock.val1,
                     iblock.val2);
             break;
 
         case Inst9900.Istcr:
         	iblock.val1 = (short) machine.getCruManager().readBits(
-        			memory.readWord(iblock.wp + 12 * 2), iblock.val2);
+        			memory.readWord((iblock.wp + 12 * 2) & 0xffff), iblock.val2);
             break;
         case Inst9900.Iszc:
         case Inst9900.Iszcb:

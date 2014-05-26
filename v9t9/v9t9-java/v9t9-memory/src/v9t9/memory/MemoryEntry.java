@@ -388,7 +388,7 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	
 	@Override
 	public final int mapAddress(int addr) {
-		return (addr + addrOffset) & 0xffff;
+		return addr + addrOffset;
 	}
 	@Override
 	public byte flatReadByte(int addr) {

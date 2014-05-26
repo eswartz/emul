@@ -39,24 +39,24 @@ public class ConsoleMemoryTransfer implements IMemoryTransfer {
 	 * @see v9t9.emulator.hardware.dsrs.MemoryTransfer#readParamWord(int)
 	 */
 	public short readParamWord(int offset) {
-		return console.readWord(rambase + offset);
+		return console.readWord((rambase + offset) & 0xffff);
 	}
 	
 	public byte readParamByte(int offset) {
-		return console.readByte(rambase + offset);
+		return console.readByte((rambase + offset) & 0xffff);
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.dsrs.MemoryTransfer#writeParamByte(int, byte)
 	 */
 	public void writeParamByte(int offset, byte val) {
-		console.writeByte(rambase + offset, val);
+		console.writeByte((rambase + offset) & 0xffff, val);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.dsrs.MemoryTransfer#writeParamWord(int, short)
 	 */
 	public void writeParamWord(int offset, short val) {
-		console.writeWord(rambase + offset, val);
+		console.writeWord((rambase + offset) & 0xffff, val);
 		
 	}
 	/**

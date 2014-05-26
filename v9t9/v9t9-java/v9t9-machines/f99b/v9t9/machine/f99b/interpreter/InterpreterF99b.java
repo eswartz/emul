@@ -222,17 +222,20 @@ public class InterpreterF99b implements IInterpreter {
 
 
 	public short getStackEntry(int i) {
-		return iblock.domain.readWord(cpuState.getSP() + i * 2);
+		int addr = (cpuState.getSP() + i * 2) & 0xffff;
+		return iblock.domain.readWord(addr);
 	}
 	public short getReturnStackEntry(int i) {
-		return iblock.domain.readWord(cpuState.getRP() + i * 2);
+		int addr = (cpuState.getRP() + i * 2) & 0xffff;
+		return iblock.domain.readWord(addr);
 	}
 	public short getLocalStackEntry(int i) {
-		return iblock.domain.readWord(cpuState.getLP() - (i + 1) * 2);
+		int addr = (cpuState.getLP() - (i + 1) * 2) & 0xffff;
+		return iblock.domain.readWord(addr);
 	}
 
 	private final void executeAndListen(ListenerList<IInstructionListener> instructionListeners) {
-		iblock.pc = cpu.getPC();
+		iblock.pc = (short) cpu.getPC();
 		
 		if ((iblock.pc & 0xffff) < 0x400) {
 			cpu.fault();
@@ -240,17 +243,17 @@ public class InterpreterF99b implements IInterpreter {
 		}
 		
 		iblock.cycles = cycleCounts.getTotal();
-		iblock.st = cpu.getST();
+		iblock.st = (short) cpu.getST();
 		
 		// get next instruction and advance
 	    InstructionF99b ins = getInstruction();
 		
 		//iblock.pc = cpu.getPC();	// do below, since PC was advanced
-		iblock.st = cpu.getST();
-		iblock.sp = cpuState.getSP();
-		iblock.rp = cpuState.getRP();
-		iblock.up = cpuState.getUP();
-		iblock.lp = cpuState.getLP();
+		iblock.st = (short) cpu.getST();
+		iblock.sp = (short) cpuState.getSP();
+		iblock.rp = (short) cpuState.getRP();
+		iblock.up = (short) cpuState.getUP();
+		iblock.lp = (short) cpuState.getLP();
 		iblock.inst = ins;
 		
 		InstructionWorkBlockF99b block = null;
@@ -287,19 +290,19 @@ public class InterpreterF99b implements IInterpreter {
 		}
 		
 		cpu.setPC(iblock.pc);
-		iblock.pc = cpu.getPC();
+		iblock.pc = (short) cpu.getPC();
 		
 		/* execute */
 		interpret(ins);
 		
 		/* notify listeners */
 		if (!instructionListeners.isEmpty()) {
-		    iblock.pc = cpu.getPC();
-		    iblock.st = cpu.getST();
-		    iblock.sp = cpuState.getSP();
-		    iblock.rp = cpuState.getRP();
-		    iblock.up = cpuState.getUP();
-		    iblock.lp = cpuState.getLP();
+		    iblock.pc = (short) cpu.getPC();
+		    iblock.st = (short) cpu.getST();
+		    iblock.sp = (short) cpuState.getSP();
+		    iblock.rp = (short) cpuState.getRP();
+		    iblock.up = (short) cpuState.getUP();
+		    iblock.lp = (short) cpuState.getLP();
 		
 		    iblock.cycles = cycleCounts.getTotal();
 			
@@ -460,28 +463,28 @@ public class InterpreterF99b implements IInterpreter {
         	return false;
 		}
         case Iload:
-        	cpu.push(memory.readWord(cpu.pop()));
+        	cpu.push(memory.readWord(cpu.pop() & 0xffff));
         	break;
         case Icload:
-        	cpu.push((short) (memory.readByte(cpu.pop()) & 0xff));
+        	cpu.push((short) (memory.readByte(cpu.pop() & 0xffff) & 0xff));
         	break;
         case Istore: {
-        	int addr = cpu.pop();
+        	int addr = cpu.pop() & 0xffff;
         	memory.writeWord(addr, cpu.pop());
         	break;
         }
         case Icstore: {
-        	int addr = cpu.pop();
+        	int addr = cpu.pop() & 0xffff;
         	memory.writeByte(addr, (byte) cpu.pop());
         	break;
         }
         case IplusStore: {
-        	short addr = cpu.pop();
+        	int addr = cpu.pop() & 0xffff;
         	iblock.domain.writeWord(addr, (short) (iblock.domain.readWord(addr) + cpu.pop()));
         	break;
         }
         case IcplusStore: {
-        	short addr = cpu.pop();
+        	int addr = cpu.pop() & 0xffff;
         	iblock.domain.writeByte(addr, (byte) (iblock.domain.readByte(addr) + cpu.pop()));
         	break;
         }
@@ -697,7 +700,7 @@ public class InterpreterF99b implements IInterpreter {
         	int step = cpu.pop();
         	byte ch = (byte) cpu.pop();
         	int len = cpu.pop() & 0xffff;
-        	int addr = cpu.pop();
+        	int addr = cpu.pop() & 0xffff;
         	while (len-- > 0) {
         		memory.writeByte(addr, ch);
         		addr += step;
@@ -745,25 +748,25 @@ public class InterpreterF99b implements IInterpreter {
         		cpu.push((short) cpuState.getStatus().getIntMask());
         		break;
         	case CTX_SP:
-        		cpu.push(cpuState.getSP());
+        		cpu.push((short) cpuState.getSP());
         		break;
         	case CTX_SP0:
-        		cpu.push(cpuState.getBaseSP());
+        		cpu.push((short) cpuState.getBaseSP());
         		break;
         	case CTX_RP:
-        		cpu.push(cpuState.getRP());
+        		cpu.push((short) cpuState.getRP());
         		break;
         	case CTX_RP0:
-        		cpu.push(cpuState.getBaseRP());
+        		cpu.push((short) cpuState.getBaseRP());
         		break;
         	case CTX_UP:
-        		cpu.push(cpuState.getUP());
+        		cpu.push((short) cpuState.getUP());
         		break;
         	case CTX_LP:
-        		cpu.push(cpuState.getLP());
+        		cpu.push((short) cpuState.getLP());
         		break;
         	case CTX_PC:
-        		cpu.push(cpu.getPC());
+        		cpu.push((short) cpu.getPC());
         		break;
         	case CTX_SR:
         		cpu.push(cpuState.getStatus().flatten());
@@ -1214,20 +1217,20 @@ public class InterpreterF99b implements IInterpreter {
         	return false;
 		}	
         case Iload: {
-        	int addr = cpu.pop();
+        	int addr = cpu.pop() & 0xffff;
         	cpu.push(memory.readWord(addr));
         	cpu.push(memory.readWord(addr + 2));
         	break;
         }
         case Istore: {
-        	int addr = cpu.pop();
+        	int addr = cpu.pop() & 0xffff;
         	memory.writeWord(addr + 2, cpu.pop());
         	memory.writeWord(addr, cpu.pop());
         	break;
         }
         	
         case IplusStore: {
-        	short addr = cpu.pop();
+        	int addr = cpu.pop() & 0xffff;
         	int add = cpu.popd();
         	int val = (iblock.domain.readWord(addr + 2) << 16) | (iblock.domain.readWord(addr) & 0xffff);
         	val += add;

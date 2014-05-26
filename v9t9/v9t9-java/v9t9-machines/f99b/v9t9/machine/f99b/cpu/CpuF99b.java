@@ -113,8 +113,8 @@ public class CpuF99b extends CpuBase {
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Cpu#getPC()
 	 */
-	public short getPC() {
-        return state.getPC();
+	public int getPC() {
+        return state.getPC() & 0xffff;
     }
 
     /* (non-Javadoc)
@@ -224,7 +224,7 @@ public class CpuF99b extends CpuBase {
     		
     		setIdle(false);
     		
-    		contextSwitch((short) 0x400);
+    		contextSwitch(0x400);
     		
     		machine.getExecutor().breakAfterExecution(0);
             machine.getExecutor().interpretOneInstruction();
@@ -332,16 +332,16 @@ public class CpuF99b extends CpuBase {
 			throw new AbortedException();
 		}
 
-		short oldrp = getState().getRP();
-		short oldsp = getState().getSP();
+		int oldrp = getState().getRP();
+		int oldsp = getState().getSP();
 		
 		getState().setBaseSP((short) 0xffe0);
 		getState().setSP((short) 0xffe0);
 		getState().setBaseRP((short) 0xffd0);
 		getState().setRP((short) 0xffd0);
 
-		push(oldrp);
-		push(oldsp);
+		push((short) oldrp);
+		push((short) oldsp);
 		
 		triggerInterrupt(INT_FAULT);
 		
@@ -356,8 +356,8 @@ public class CpuF99b extends CpuBase {
 		return true;
 	}
 
-	public short getST() {
-		return state.getST();
+	public int getST() {
+		return state.getST() & 0xffff;
 	}
 
 	public void setST(short st) {
@@ -369,7 +369,7 @@ public class CpuF99b extends CpuBase {
 	}
 	
 	public final short peek() {
-		return state.getConsole().readWord(stateF99b.getSP());
+		return state.getConsole().readWord(stateF99b.getSP() & 0xffff);
 	}
 
 	public final short pop() {
@@ -391,14 +391,14 @@ public class CpuF99b extends CpuBase {
 	 * @param intNmi
 	 * @return
 	 */
-	private short getIntVecAddr(int intNum) {
-		return (short) (INT_BASE + intNum * 2);
+	private int getIntVecAddr(int intNum) {
+		return (INT_BASE + intNum * 2);
 	}
 
 	/**
 	 * @param pc2
 	 */
-	public void contextSwitch(short vec) {
+	public void contextSwitch(int vec) {
 		rpush(state.getPC());
 		short addr = machine.getConsole().readWord(vec);
 		state.setPC(addr);
@@ -409,11 +409,11 @@ public class CpuF99b extends CpuBase {
 	 */
 	public void triggerInterrupt(int intr) {
 		idle = false;
-		rpush(getST());
+		rpush((short) getST());
 		((StatusF99b)state.getStatus()).setIntMask(0);
 		((StatusF99b)state.getStatus()).setCurrentInt(intr);
 		state.setRegister(SR, state.getStatus().flatten());		// TODO: why?
-		short addr = getIntVecAddr(intr);
+		int addr = getIntVecAddr(intr);
 		contextSwitch(addr);
 	}
 

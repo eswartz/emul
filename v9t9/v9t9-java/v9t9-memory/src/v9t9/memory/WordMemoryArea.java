@@ -105,62 +105,6 @@ public class WordMemoryArea extends MemoryArea {
         }
     }
     
-//	@Override
-//    @Deprecated
-//	public short readWord(IMemoryEntry entry, int addr) {
-//		if (read != null) {
-//			int addr1 = addr - entry.getAddr();
-//			addr1 &= 0xfffe;
-//			return read[addr1 >> 1];
-//		} else {
-//			return 0;
-//		}
-//	}
-//
-//    @Override
-//    @Deprecated
-//	public byte readByte(IMemoryEntry entry, int addr) {
-//		if (read != null) {
-//            int addr1 = addr - entry.getAddr();
-//			addr1 &= 0xfffe;
-//			short word = read[addr1 >> 1];
-//            if ((addr & 1) == 0) {
-//				return (byte)(word >> 8);
-//			} else {
-//				return (byte)word;
-//			}
-//        } else {
-//			return 0;
-//		}
-//	}
-//
-//    @Override
-//    @Deprecated
-//	public void writeWord(IMemoryEntry entry, int addr, short val) {
-//		if (write != null) {
-//			int addr1 = addr - entry.getAddr();
-//			addr1 &= 0xfffe;
-//			write[addr1 >> 1] = val;
-//		}
-//	}
-//
-//    @Override
-//    @Deprecated
-//	public void writeByte(IMemoryEntry entry, int addr, byte val) {
-//		if (write != null) {
-//            
-//            int addr1 = addr - entry.getAddr();
-//			addr1 &= 0xfffe;
-//			short word = write[addr1 >> 1];
-//            if ((addr & 1) == 0) {
-//				word = (short) (val << 8 | word & 0xff);
-//			} else {
-//				word = (short) (word & 0xff00 | val & 0xff);
-//			}
-//			write[addr1 >> 1] = word;
-//        }
-//	}
-//    
 	@Override
 	public short readWord(int addr) {
 		if (read != null) {

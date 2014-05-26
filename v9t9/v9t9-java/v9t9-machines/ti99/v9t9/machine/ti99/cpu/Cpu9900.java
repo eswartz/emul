@@ -123,9 +123,9 @@ public class Cpu9900 extends CpuBase {
         short oldpc = state.getPC();
         ((CpuState9900) state).setWP(newwp);
         state.setPC(newpc);
-        state.getConsole().writeWord(newwp + 13 * 2, oldwp);
-        state.getConsole().writeWord(newwp + 14 * 2, oldpc);
-        state.getConsole().writeWord(newwp + 15 * 2, getST());
+        state.getConsole().writeWord((newwp + 13 * 2) & 0xffff, oldwp);
+        state.getConsole().writeWord((newwp + 14 * 2) & 0xffff, oldpc);
+        state.getConsole().writeWord((newwp + 15 * 2) & 0xffff, getST());
         noIntCount = 2;
    }
 

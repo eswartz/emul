@@ -105,7 +105,7 @@ public class DsrManager implements IPersistable, IDsrManager {
 		InstructionWorkBlock9900 instructionWorkBlock = (InstructionWorkBlock9900) instructionWorkBlock_;
 		short callpc = (short) (instructionWorkBlock.pc - 2);
 		short rambase = (short) (instructionWorkBlock.wp - 0xe0);
-		short crubase = instructionWorkBlock.domain.readWord(instructionWorkBlock.wp + 12 * 2);
+		short crubase = instructionWorkBlock.domain.readWord((instructionWorkBlock.wp + 12 * 2) & 0xffff);
 	
 		if (callpc >= 0x4000 && callpc < 0x6000) {
 			
@@ -125,13 +125,13 @@ public class DsrManager implements IPersistable, IDsrManager {
 						rambase);
 				
 				int retreg = instructionWorkBlock.wp + 11 * 2;
-				short ret = instructionWorkBlock.domain.readWord(retreg);
+				short ret = instructionWorkBlock.domain.readWord(retreg & 0xffff);
 				short oper = (short) (((BaseMachineOperand)instructionWorkBlock.inst.getOp1()).val);
 				if (activeDsr.handleDSR(xfer, oper)) {
 					// success: skip next word (handling error)
 					ret += 2;
 				}
-				instructionWorkBlock.domain.writeWord(retreg, ret);
+				instructionWorkBlock.domain.writeWord(retreg & 0xffff, ret);
 				instructionWorkBlock.pc = ret;
 			}
 		}

@@ -270,13 +270,13 @@ public class MachineOperand9900 extends BaseMachineOperand {
     	case MachineOperand9900.OP_INC:	// *Rx+
     	case MachineOperand9900.OP_IND: {	// *Rx
     		short ad = (short)((val<<1) + wp);
-    		ea = block.domain.readWord(ad);
+    		ea = block.domain.readWord(ad & 0xffff);
 
     		/* update register if necessary */
     		this.cycles += 4;
     		if (type == MachineOperand9900.OP_INC) {
     		    this.cycles += byteop ? 2 : 4;
-    		    block.domain.writeWord(ad, (short)(ea + (byteop ? 1 : 2)));
+    		    block.domain.writeWord(ad & 0xffff, (short)(ea + (byteop ? 1 : 2)));
     		}
     		break;
     	}
@@ -286,7 +286,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
     		this.cycles += 8; //Instruction.getMemoryCycles(ad);
     		if (val != 0) {
     			ad = (short)((val<<1) + wp);
-    			ea += block.domain.readWord(ad);
+    			ea += block.domain.readWord(ad & 0xffff);
     		}
     		break;
     	}
@@ -330,9 +330,9 @@ public class MachineOperand9900 extends BaseMachineOperand {
 				value = ea;
 			} else
                 if (byteop) {
-					value = block.domain.readByte(ea);
+					value = block.domain.readByte(ea & 0xffff);
 				} else {
-					value = block.domain.readWord(ea);
+					value = block.domain.readWord(ea & 0xffff);
 				}
             break;
         case MachineOperand9900.OP_INC:    // *Rx+
@@ -341,9 +341,9 @@ public class MachineOperand9900 extends BaseMachineOperand {
 				value = ea;
 			} else
                 if (byteop) {
-					value = block.domain.readByte(ea);
+					value = block.domain.readByte(ea & 0xffff);
 				} else {
-					value = block.domain.readWord(ea);
+					value = block.domain.readWord(ea & 0xffff);
 				}
             break;
         }
@@ -352,9 +352,9 @@ public class MachineOperand9900 extends BaseMachineOperand {
 				value = ea;
 			} else
                 if (byteop) {
-					value = block.domain.readByte(ea);
+					value = block.domain.readByte(ea & 0xffff);
 				} else {
-					value = block.domain.readWord(ea);
+					value = block.domain.readWord(ea & 0xffff);
 				}
             break;
         }
@@ -365,10 +365,10 @@ public class MachineOperand9900 extends BaseMachineOperand {
             value = (short) val;
             break;
         case MachineOperand9900.OP_OFFS_R12:   // offset from R12
-            value = (short) ((block.domain.readWord(ea) >> 1) + val);
+            value = (short) ((block.domain.readWord(ea & 0xffff) >> 1) + val);
             break;
         case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
-            value = (short) (block.domain.readWord(ea) & 0xf);
+            value = (short) (block.domain.readWord(ea & 0xffff) & 0xf);
             if (value == 0) {
 				value = 16;
 			}
@@ -381,7 +381,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
             //TODO: NOTHING -- make sure we don't depend on this   
             break;
         case MachineOperand9900.OP_INST:
-            value = block.domain.readWord(ea);
+            value = block.domain.readWord(ea & 0xffff);
             break;      
         }
 

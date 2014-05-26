@@ -113,7 +113,7 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
 	 */
 	private byte readGrom() {
 		byte ret = buf;
-	    buf = domain.readByte(gromaddr);
+	    buf = domain.readByte(gromaddr & 0xffff);
 	    gromaddr = getNextAddr(gromaddr);
 		return ret;
 	}
@@ -137,7 +137,7 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     	    /* >9C00, data write */
     		gromraddrflag = gromwaddrflag = false;
 
-    		domain.writeByte(gromaddr - 1, val);
+    		domain.writeByte((gromaddr - 1) & 0xffff, val);
     		gromaddr = getNextAddr(gromaddr);
     	}   
     	
