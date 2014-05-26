@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.machine.ti99.tests;
+package v9t9.test;
 
 import junit.framework.TestCase;
 import v9t9.common.client.ISettingsHandler;
