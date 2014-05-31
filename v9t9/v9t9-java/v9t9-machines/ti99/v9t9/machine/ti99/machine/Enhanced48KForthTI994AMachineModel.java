@@ -21,15 +21,15 @@ import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.Settings;
 import v9t9.engine.hardware.ICruWriter;
+import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.VdpMmio;
+import v9t9.engine.memory.WindowBankedMemoryEntry;
 import v9t9.engine.sound.MultiSoundTMS9919B;
 import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 import v9t9.machine.ti99.memory.V9t9EnhancedConsoleMemoryModel;
-import v9t9.memory.BankedMemoryEntry;
-import v9t9.memory.WindowBankedMemoryEntry;
 
 /**
  * This is an enhanced machine model that has a more regular memory model as well.

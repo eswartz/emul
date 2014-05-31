@@ -12,6 +12,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/ejs-gui"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.runtime.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-memory"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

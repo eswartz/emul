@@ -15,6 +15,5 @@
 	<classpathentry kind="lib" path="/ejs-base/libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.swt.gtk.linux.x86_64.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-memory"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

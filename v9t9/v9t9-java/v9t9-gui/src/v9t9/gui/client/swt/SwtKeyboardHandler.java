@@ -195,7 +195,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 				if (shiftMask == 0) {
 					Display.getDefault().asyncExec(new Runnable() {
 						public void run() {
-							window.screenshot();
+							window.screenshot(false);
 						}
 					});
 				} else if ((shiftMask & KeyboardConstants.MASK_ALT + KeyboardConstants.MASK_CONTROL) != 0) {

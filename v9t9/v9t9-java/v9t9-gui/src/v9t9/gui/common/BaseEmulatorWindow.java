@@ -116,13 +116,15 @@ public abstract class BaseEmulatorWindow {
 		}
 		
 		File dir = new File(configPath);
-		if (!dir.isDirectory())
+		if (!dir.isDirectory()) {
+			fileName = dir.getName();
 			dir = dir.getParentFile();
+		}
 		
 		String filename = openFileSelectionDialog(title, dir.getAbsolutePath(), fileName, 
 				isSave, extensions);
 		if (filename != null) {
-			configVar.setString(new File(filename).getParent());
+			configVar.setString(filename);
 		}
 		return filename;
 	}
@@ -291,7 +293,7 @@ public abstract class BaseEmulatorWindow {
 		}
 	}
 
-	public void screenshot() {
+	public void screenshot(boolean saveAs) {
 		boolean plain = machine.getSettings().get(BaseEmulatorWindow.settingScreenshotPlain).getBoolean();
 
 		IProperty screenShotsBase = machine.getSettings().get(BaseEmulatorWindow.settingScreenShotsBase);
@@ -300,7 +302,7 @@ public abstract class BaseEmulatorWindow {
 				screenShotsBase, 
 				"screenshots", 
 				"screen.png", 
-				true, true, 
+				true, !saveAs, 
 				new String[] { "*.png|PNG file" }
 				);
 		
@@ -309,8 +311,7 @@ public abstract class BaseEmulatorWindow {
 			if (saveFile == null) {
 				machine.notifyEvent(Level.ERROR, 
 						"Too many screenshots here!");
-				screenShotsBase.setString("");
-				screenshot();
+				screenshot(true);
 			} else {
 				try {
 					videoRenderer.saveScreenShot(saveFile, plain);

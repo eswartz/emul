@@ -37,11 +37,11 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.compiler.CompileInfo;
 import v9t9.engine.compiler.CompiledCode;
+import v9t9.engine.memory.WordMemoryArea;
 import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.Instruction9900;
 import v9t9.machine.ti99.cpu.Status9900;
-import v9t9.memory.WordMemoryArea;
 
 /**
  * @author ejs

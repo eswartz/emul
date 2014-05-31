@@ -25,6 +25,9 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.Settings;
 import v9t9.engine.memory.GplMmio;
+import v9t9.engine.memory.Memory;
+import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.memory.Vdp9918AMmio;
 import v9t9.engine.memory.Vdp9938Mmio;
 import v9t9.engine.memory.VdpMmio;
@@ -32,9 +35,6 @@ import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.machine.ti99.memory.mmio.SoundMmio;
 import v9t9.machine.ti99.memory.mmio.SpeechMmio;
 import v9t9.machine.ti99.memory.mmio.TIMemoryModel;
-import v9t9.memory.Memory;
-import v9t9.memory.MemoryDomain;
-import v9t9.memory.MemoryEntryInfoBuilder;
 
 /**
  * @author ejs

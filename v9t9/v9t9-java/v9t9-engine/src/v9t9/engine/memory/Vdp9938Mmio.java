@@ -13,8 +13,6 @@ package v9t9.engine.memory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemory;
 import v9t9.engine.video.v9938.VdpV9938;
-import v9t9.memory.BankedMemoryEntry;
-import v9t9.memory.WindowBankedMemoryEntry;
 
 
 /** 

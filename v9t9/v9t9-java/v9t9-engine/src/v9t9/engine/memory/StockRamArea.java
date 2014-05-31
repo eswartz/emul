@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.memory;
+package v9t9.engine.memory;
 
 /**
  * This is RAM intended for testing purposes.  Its latency is 0 and it allows

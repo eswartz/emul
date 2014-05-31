@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.memory;
+package v9t9.engine.memory;
 
 import java.util.HashMap;
 import java.util.Map;

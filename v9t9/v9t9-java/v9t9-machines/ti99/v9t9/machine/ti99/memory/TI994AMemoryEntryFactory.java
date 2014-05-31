@@ -24,11 +24,11 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.memory.StoredMemoryEntryInfo;
+import v9t9.engine.memory.BankedMemoryEntry;
+import v9t9.engine.memory.BaseMemoryEntryFactory;
+import v9t9.engine.memory.MemoryAreaFactory;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.machine.ti99.memory.mmio.StdMultiBankedMemoryEntry;
-import v9t9.memory.BankedMemoryEntry;
-import v9t9.memory.BaseMemoryEntryFactory;
-import v9t9.memory.MemoryAreaFactory;
-import v9t9.memory.MemoryEntry;
 import ejs.base.utils.HexUtils;
 
 /**

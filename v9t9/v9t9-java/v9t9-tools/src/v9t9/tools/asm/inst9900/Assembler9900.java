@@ -16,12 +16,13 @@ import java.util.List;
 
 
 
+
 import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.StockRamArea;
 import v9t9.machine.ti99.cpu.InstTable9900;
-import v9t9.memory.MemoryEntry;
-import v9t9.memory.StockRamArea;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.AssemblerError;
 import v9t9.tools.asm.Equate;

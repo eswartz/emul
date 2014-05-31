@@ -15,8 +15,8 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.memory.GplMmio;
+import v9t9.engine.memory.MultiBankedMemoryEntry;
 import v9t9.machine.ti99.machine.TI99Machine;
-import v9t9.memory.MultiBankedMemoryEntry;
 
 /**
  * @author ejs

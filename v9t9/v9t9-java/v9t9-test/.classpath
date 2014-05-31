@@ -7,7 +7,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-server"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-memory"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-machines"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-engine"/>
 	<classpathentry kind="output" path="bin"/>

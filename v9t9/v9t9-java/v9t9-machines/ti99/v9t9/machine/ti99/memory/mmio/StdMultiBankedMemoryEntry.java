@@ -20,7 +20,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.memory.MultiBankedMemoryEntry;
+import v9t9.engine.memory.MultiBankedMemoryEntry;
 
 /**
  * This is a standard TI-99/4A style banked memory entry, where a write to

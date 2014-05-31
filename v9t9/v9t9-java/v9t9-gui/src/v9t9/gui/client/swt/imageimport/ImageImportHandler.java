@@ -100,7 +100,11 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 		
 		int realWidth = imageImportOptions.getWidth();
 		int realHeight = imageImportOptions.getHeight();
-		float aspect = (float) targWidth / targHeight / 256.f * 192.f;
+		float aspect = 1f;
+		if (targWidth > 256)
+			aspect *= 2.0f;
+		if (targHeight > 212)
+			aspect /= 2.0f;
 
 		
 		if (imageImportOptions.isKeepAspect()) {
@@ -126,8 +130,6 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 		if (format == VdpFormat.COLOR16_8x8) {
 			// make a maximum of 256 blocks  (256*64 = 16384)
 			// Reduces total screen real estate down by sqrt(3)
-			//targWidth = (int) (targWidth / 1.732) & ~7;
-			//targHeight = (int) (targHeight / 1.732) & ~7;
 			while ((targWidth & ~0x7) * 
 					 (((int)(targWidth * realHeight / realWidth / aspect) + 7) & ~0x7) > 16384) {
 				targWidth *= 0.99;
@@ -141,8 +143,6 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 			//if (DEBUG) System.out.println("Graphics mode: " + targWidth*((targHeight+7)&~0x7));
 		}
 
-		//stopRendering();
-		
 		ImageFrame[] frames = imageImportOptions.getImages();
 		if (frames == null)
 			return;

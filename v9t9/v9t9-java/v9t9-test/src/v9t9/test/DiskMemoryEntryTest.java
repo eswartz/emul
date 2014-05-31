@@ -15,10 +15,10 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.BasicSettingsHandler;
+import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.machine.ti99.machine.TI994A;
 import v9t9.machine.ti99.memory.TI994AMemoryEntryFactory;
-import v9t9.memory.DiskMemoryEntry;
-import v9t9.memory.MemoryEntryInfoBuilder;
 
 /**
  * @author ejs

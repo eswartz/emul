@@ -433,10 +433,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 	 * @param saveAs
 	 */
 	protected void takeScreenshot(TypedEvent e, boolean saveAs) {
-		if (saveAs)
-			machine.getSettings().get(BaseEmulatorWindow.settingScreenShotsBase).setValue("");
-
-		swtWindow.screenshot();
+		swtWindow.screenshot(saveAs);
 	}
 
 	/*

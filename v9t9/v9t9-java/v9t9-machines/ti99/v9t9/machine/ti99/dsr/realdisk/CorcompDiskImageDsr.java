@@ -19,12 +19,12 @@ import v9t9.engine.files.image.FDC1771;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruReader;
 import v9t9.engine.hardware.ICruWriter;
+import v9t9.engine.memory.BankedMemoryEntry;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.machine.ti99.dsr.IDsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
-import v9t9.memory.BankedMemoryEntry;
-import v9t9.memory.MemoryEntry;
-import v9t9.memory.MemoryEntryInfoBuilder;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 

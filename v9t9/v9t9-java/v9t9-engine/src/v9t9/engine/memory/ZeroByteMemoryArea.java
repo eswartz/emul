@@ -1,5 +1,5 @@
 /*
-  ZeroWordMemoryArea.java
+  ZeroByteMemoryArea.java
 
   (c) 2005-2011 Edward Swartz
 
@@ -8,21 +8,19 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.memory;
+package v9t9.engine.memory;
 
 /**
  * @author ejs
  */
-public class ZeroWordMemoryArea extends WordMemoryArea {
+public class ZeroByteMemoryArea extends ByteMemoryArea {
 	/* can neither read nor write directly */
 	/* for reads, return zero */
 	/* for writes, ignore */
-    public static short zeroes[] = new short[0x10000/2];
-    public ZeroWordMemoryArea() {
-		this(0);
-	}
-	public ZeroWordMemoryArea(int latency) {
-		super(latency);
+    static byte zeroes[] = new byte[0x10000];
+
+	public ZeroByteMemoryArea() {
+		super(1);
 		memory = zeroes;
 	}
 }

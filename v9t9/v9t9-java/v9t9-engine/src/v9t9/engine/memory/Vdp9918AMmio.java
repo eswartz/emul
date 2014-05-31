@@ -20,8 +20,6 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
-import v9t9.memory.BankedMemoryEntry;
-import v9t9.memory.MemoryEntry;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.Logging;
 import ejs.base.utils.HexUtils;

@@ -24,12 +24,12 @@ import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.LabelListOperand;
 import v9t9.common.asm.Routine;
 import v9t9.common.asm.RoutineOperand;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.machine.ti99.asm.ContextSwitchRoutine;
 import v9t9.machine.ti99.asm.HighLevelInstruction;
 import v9t9.machine.ti99.asm.LinkedRoutine;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.MachineOperand9900;
-import v9t9.memory.MemoryEntryInfoBuilder;
 import v9t9.tools.asm.ParseException;
 
 

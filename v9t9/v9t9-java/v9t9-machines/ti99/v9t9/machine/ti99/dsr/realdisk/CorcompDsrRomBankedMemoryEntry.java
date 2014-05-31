@@ -14,8 +14,8 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.memory.MultiBankedMemoryEntry;
-import v9t9.memory.WordMemoryArea;
+import v9t9.engine.memory.MultiBankedMemoryEntry;
+import v9t9.engine.memory.WordMemoryArea;
 
 /**
  * @author ejs
