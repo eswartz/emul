@@ -65,7 +65,7 @@ public class ColorMapUtils {
 	}
 
 	public static void hsvToRgb(float h, float s, float v, int[] rgb) {
-		float c = (Math.max(0f, Math.min(360f, v) / 256)) * Math.max(0f, Math.min(1f, s));
+		float c = (Math.max(0f, Math.min(256f, v) / 256)) * Math.max(0f, Math.min(1f, s));
 		float hprime = (Math.max(0f, Math.min(256f, h)) / 60);
 		float x = c * (1 - Math.abs(hprime % 2 - 1));
 

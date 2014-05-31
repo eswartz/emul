@@ -676,7 +676,9 @@ public class ImageImport {
 				int pixel = img.getRGB(x, y);
 				ColorMapUtils.pixelToRGB(pixel, prgb);
 				ColorMapUtils.rgbToHsv(prgb, hsv);
-				hsv[2] = (float) Math.pow(hsv[2], gamma);
+				if (gamma > 1.5f)
+					hsv[1] = (float) (hsv[1] - ((gamma - 1.5f) * 2));
+				hsv[2] = (float) Math.pow(Math.max(1f, hsv[2]), gamma);
 				ColorMapUtils.hsvToRgb(hsv[0], hsv[1], hsv[2], prgb);
 				
 				img.setRGB(x, y, ColorMapUtils.rgb8ToPixel(prgb) | (pixel & 0xff000000));
