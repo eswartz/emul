@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Stack;
 
 import ejs.base.utils.HexUtils;
-
 import v9t9.tools.forthcomp.words.AbortQuote;
 import v9t9.tools.forthcomp.words.Again;
 import v9t9.tools.forthcomp.words.Allot;
@@ -581,7 +580,6 @@ public class HostContext extends Context {
 	}
 	
 	public void pushCall(int pc) {
-		if (DEBUG) System.out.println("call " + pc);
 		callStack.push(hostPc);
 		hostPc = pc;
 	}
@@ -595,7 +593,7 @@ public class HostContext extends Context {
 		return hostDp;
 	}
 	public void compile(IWord word) {
-		if (DEBUG) System.out.println(hostDp +": "+ word);
+		if (DEBUG) System.out.println("H>" + hostDp +": "+ word);
 		assert !hostWords.containsKey((Integer)hostDp);
 		if (word instanceof BaseHostBranch)
 			word = (IWord) ((BaseHostBranch)word).clone();
@@ -610,7 +608,7 @@ public class HostContext extends Context {
 				throw hostContext.abort("broken dictionary entry at " + hostPc);
 			if (DEBUG) System.out.println(
 					//stack() + "\n" + 
-					"exec " + hostPc + ": " + word);
+					"H> exec " + hostPc + ": " + word);
 			hostPc++;
 			
 			/*
@@ -768,7 +766,7 @@ public class HostContext extends Context {
 	 * @return
 	 * @throws AbortException 
 	 */
-	public int readVariable(String string, TargetContext targetContext) throws AbortException {
+	public int readVariable(String string, ITargetContext targetContext) throws AbortException {
 		return ((HostVariable)require(string)).getValue();
 	}
 

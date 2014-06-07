@@ -66,18 +66,23 @@ public class HostPostponedWord extends BaseWord {
 						else
 							hostBehavior.getExecutionSemantics().execute(hostContext, targetContext);
 					} else {
-						if (hostContext.isCompiling() && targetWord.getExecutionSemantics() == null)
+						if (hostContext.isCompiling() && targetWord.getExecutionSemantics() == null) {
 							targetWord.getCompilationSemantics().execute(hostContext, targetContext);
-						else
+							hostWord.getCompilationSemantics().execute(hostContext, targetContext);
+						} else {
 							targetWord.getExecutionSemantics().execute(hostContext, targetContext);
+						}
 					}
-				} else if (hostWord != null)
-					if (hostContext.isCompiling())
-						hostWord.getCompilationSemantics().execute(hostContext, targetContext);
-					else
-						hostWord.getExecutionSemantics().execute(hostContext, targetContext);
-				else
+				} else if (hostWord != null) {
+//					if (hostContext.isCompiling()) {
+//						hostWord.getCompilationSemantics().execute(hostContext, targetContext);
+//					} else {
+//						hostWord.getExecutionSemantics().execute(hostContext, targetContext);
+//					}
+					hostContext.compileWord(targetContext, hostWord, targetWord);
+				} else {
 					throw hostContext.abort("cannot invoke POSTPONE'd word -- no host-only definition: " + targetWord.getName());
+				}
 			}
 		});
 	}

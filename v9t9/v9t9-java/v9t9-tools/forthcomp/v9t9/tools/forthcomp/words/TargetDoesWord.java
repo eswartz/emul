@@ -36,6 +36,9 @@ public class TargetDoesWord extends TargetWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
+				if (HostContext.DEBUG)
+					System.out.println("T> does> " + Integer.toHexString(var.getEntry().getParamAddr()) + "(" + doesPc + ")");
+				
 				hostContext.pushData(var.getEntry().getParamAddr());
 				hostContext.pushCall(doesPc);
 				hostContext.interpret(hostContext, targetContext);				

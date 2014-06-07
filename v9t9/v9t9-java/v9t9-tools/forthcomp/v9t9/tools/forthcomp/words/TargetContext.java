@@ -21,7 +21,6 @@ import java.util.TreeMap;
 
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
-
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryDomain;
@@ -30,6 +29,7 @@ import v9t9.tools.forthcomp.Context;
 import v9t9.tools.forthcomp.DictEntry;
 import v9t9.tools.forthcomp.ForwardRef;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.ITargetContext;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.IWord;
 import v9t9.tools.forthcomp.RelocEntry;
@@ -39,7 +39,7 @@ import v9t9.tools.forthcomp.RelocEntry.RelocType;
  * @author ejs
  *
  */
-public abstract class TargetContext extends Context {
+public abstract class TargetContext extends Context implements ITargetContext {
 
 	private final boolean littleEndian;
 	private final int charBits;
@@ -59,7 +59,7 @@ public abstract class TargetContext extends Context {
 	protected int cellSize;
 	private boolean export;
 	private int baseDP;
-	private PrintStream logfile = System.out;
+	protected PrintStream logfile = System.out;
 	private Map<String, ForwardRef> forwards;
 	private List<StubWord> stubWords = new ArrayList<StubWord>();
 	public DictEntry stubData;
@@ -80,10 +80,25 @@ public abstract class TargetContext extends Context {
 		stubData = defineStub("<<data space>>");
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#setHostContext(v9t9.tools.forthcomp.HostContext)
+	 */
+	@Override
 	public void setHostContext(HostContext hostCtx) {
 		this.hostCtx = hostCtx;
 	}
 
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.Context#define(java.lang.String, v9t9.tools.forthcomp.IWord)
+	 */
+	@Override
+	public IWord define(String string, IWord word) {
+		if (word instanceof TargetWord) {
+			logfile.println("T>"+Integer.toHexString(((TargetWord) word).getEntry().getAddr()) +" " + ((TargetWord) word).getClass().getSimpleName() + " " + string);
+		}
+		return super.define(string, word);
+	}
 	
 	protected DictEntry defineStub(String name) {
 		StubWord stubWord = new StubWord(name);
@@ -92,9 +107,16 @@ public abstract class TargetContext extends Context {
 		return stubWord.getEntry();
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineBuiltins()
+	 */
+	@Override
 	abstract public void defineBuiltins() throws AbortException;
 	
-	/** read the value in memory */
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#readCell(int)
+	 */
+	@Override
 	public int readCell(int addr) {
 		if (addr < 0) {
 			addr = resolveAddr(addr);
@@ -108,8 +130,10 @@ public abstract class TargetContext extends Context {
 		}
 	}
 	
-	/** read the addr in memory, which may be a relocation
-	 * @return negative value for relocation, else literal value */
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#readAddr(int)
+	 */
+	@Override
 	public int readAddr(int addr) {
 		if (addr < 0) {
 			addr = resolveAddr(addr);
@@ -127,6 +151,10 @@ public abstract class TargetContext extends Context {
 			throw new UnsupportedOperationException();
 		}
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#addRelocation(int, v9t9.tools.forthcomp.RelocEntry.RelocType, int)
+	 */
+	@Override
 	public int addRelocation(int addr, RelocType type, int target) {
 		RelocEntry reloc = new RelocEntry(addr, type, target);
 		assert !relocEntries.containsKey(addr);
@@ -135,17 +163,26 @@ public abstract class TargetContext extends Context {
 		return -relocs.size();
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#getDP()
+	 */
+	@Override
 	public int getDP() {
 		return dp;
 	}
 	
-	/**
-	 * @param dp the dp to set
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#setDP(int)
 	 */
+	@Override
 	public void setDP(int dp) {
 		this.dp = dp;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#alloc(int)
+	 */
+	@Override
 	public int alloc(int size) {
 		int old = dp;
 		// clear out alloc'd space in case another word wrote temp stuff here
@@ -155,18 +192,19 @@ public abstract class TargetContext extends Context {
 		return old;
 	}
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#allocCell()
 	 */
+	@Override
 	public int allocCell() {
 		stubData.use(cellSize);
 		return alloc(cellSize);
 	}
 
-	/**
-	 * @param relocIndex
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#resolveAddr(int)
 	 */
+	@Override
 	public int resolveAddr(int relocIndex) {
 		// read actual contents
 		RelocEntry reloc = relocs.get(-relocIndex - 1);
@@ -175,23 +213,35 @@ public abstract class TargetContext extends Context {
 		relocIndex = reloc.addr;
 		return relocIndex;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#findReloc(int)
+	 */
+	@Override
 	public int findReloc(int addr) {
 		RelocEntry reloc = relocEntries.get(addr);
 		if (reloc == null)
 			return 0;
 		return reloc.target;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#removeReloc(int)
+	 */
+	@Override
 	public void removeReloc(int addr) {
 		relocEntries.remove(addr);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#getRelocEntry(int)
+	 */
+	@Override
 	public RelocEntry getRelocEntry(int id) {
 		return relocs.get(-id - 1);
 	}
-	/**
-	 * @param name
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineEntry(java.lang.String)
 	 */
+	@Override
 	public DictEntry defineEntry(String name) {
 		alignDP();
 		int entryAddr = getDP();
@@ -250,9 +300,10 @@ public abstract class TargetContext extends Context {
 		return entry;
 	}
 
-	/**
-	 * @return the lastEntry
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#getLastEntry()
 	 */
+	@Override
 	public DictEntry getLastEntry() {
 		return lastEntry;
 	}
@@ -286,10 +337,10 @@ public abstract class TargetContext extends Context {
 	}
 
 
-	/**
-	 * @param token
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineForward(java.lang.String, java.lang.String)
 	 */
+	@Override
 	public IWord defineForward(String token, String location) {
 		token = token.toUpperCase();
 		ForwardRef ref = forwards.get(token);
@@ -307,7 +358,6 @@ public abstract class TargetContext extends Context {
 	private void resolveForward(ForwardRef ref, DictEntry entry) {
 		for (RelocEntry rel : relocs) {
 			if (rel.target == ref.getId()) {
-				//System.out.println(rel);
 				rel.target = entry.getContentAddr();
 				if (rel.type != RelocType.RELOC_FORWARD)
 					writeCell(rel.addr, entry.getContentAddr());
@@ -315,17 +365,26 @@ public abstract class TargetContext extends Context {
 		}
 	}
 
-	/**
-	 * 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#alignDP()
 	 */
+	@Override
 	public void alignDP() {
 		dp = getAlignedDP();
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#getAlignedDP()
+	 */
+	@Override
 	public int getAlignedDP() {
 		return (dp + cellSize - 1) & ~(cellSize - 1);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#align(int)
+	 */
+	@Override
 	public int align(int bytes) {
 		return (bytes + cellSize - 1) & ~(cellSize - 1);
 	}
@@ -333,12 +392,20 @@ public abstract class TargetContext extends Context {
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.words.TargetContext#convertCell(int)
 	 */
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#writeCell(byte[], int, int)
+	 */
+	@Override
 	public int writeCell(byte[] memory, int offs, int cell) {
 		memory[offs++] = (byte) (cell >> 8);
 		memory[offs++] = (byte) (cell & 0xff);
 		return offs;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#writeCell(int, int)
+	 */
+	@Override
 	public void writeCell(int addr, int cell) {
 		if (addr < 0)
 			addr = relocs.get(-addr - 1).target;
@@ -354,21 +421,37 @@ public abstract class TargetContext extends Context {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#writeChar(int, int)
+	 */
+	@Override
 	public void writeChar(int addr, int ch) {
 		if (charBits != 8) throw new UnsupportedOperationException();
 		memory[addr] = (byte) ch;
 	}
 
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#getCellSize()
+	 */
+	@Override
 	public int getCellSize() {
 		return cellSize;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#readChar(int)
+	 */
+	@Override
 	public int readChar(int addr) {
 		if (charBits != 8) throw new UnsupportedOperationException();
 		return memory[addr];
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#create(java.lang.String, int)
+	 */
+	@Override
 	public TargetVariable create(String name, int bytes) {
 		DictEntry entry = defineEntry(name);
 		int dp = entry.getContentAddr();
@@ -385,16 +468,24 @@ public abstract class TargetContext extends Context {
 
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineColonWord(java.lang.String)
+	 */
+	@Override
 	public TargetColonWord defineColonWord(String name) {
 		DictEntry entry = defineEntry(name);
-		logfile.println(name);
+//		logfile.println("T> : " + name);
 		initCode();
 		final TargetColonWord colon =  (TargetColonWord) define(name, new TargetColonWord(entry));
 		return colon;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineConstant(java.lang.String, int, int)
+	 */
+	@Override
 	public TargetConstant defineConstant(String name, int value, int cells) throws AbortException {
-		logfile.println(name);
+//		logfile.println("T> CONSTANT " + name);
 		
 		boolean mustDefine = currentExport();
 		if (!mustDefine) {
@@ -416,9 +507,13 @@ public abstract class TargetContext extends Context {
 		return constant;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineValue(java.lang.String, int, int)
+	 */
+	@Override
 	public TargetValue defineValue(String name, int value, int cells) throws AbortException {
 		DictEntry entry = defineEntry(name);
-		logfile.println(name);
+//		logfile.println("T> VALUE " + name);
 		
 		int origDp = entry.getContentAddr();
 		
@@ -434,31 +529,30 @@ public abstract class TargetContext extends Context {
 
 
 
-	/**
-	 * At runtime, push the # of cells to the stack from the current DP.
-	 * Return the location of the value.  The exact space must be allocated
-	 * so the value can change.
-	 * @param cells
-	 * @param value
-	 * @return DP of value
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compilePushValue(int, int)
 	 */
+	@Override
 	abstract public int compilePushValue(int cells, int value) throws AbortException;
 	
-	/** At runtime, push the value in the given # of cells to the stack. 
-	 * Can be optimized.
-	 * @param value
-	 * @param cells
-	 * @throws AbortException
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileDoConstant(int, int)
 	 */
+	@Override
 	abstract public void compileDoConstant(int value, int cells) throws AbortException;
-	/** At runtime, push the user variable for the given index. 
-	 * Can be optimized.
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileDoUser(int)
 	 */
+	@Override
 	abstract public void compileDoUser(int index) throws AbortException;
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineUser(java.lang.String, int)
+	 */
+	@Override
 	public TargetUserVariable defineUser(String name, int bytes) throws AbortException {
 		
-		logfile.println(name);
+//		logfile.println("T> USER " + name);
 		
 		// the "variable" will be frozen in ROM, a count of bytes
 		TargetVariable up = findOrCreateVariable("UP0");
@@ -493,21 +587,37 @@ public abstract class TargetContext extends Context {
 		return var;
 	}
 
-	abstract public void initCode();
-	abstract public void alignBranch();
-	/**
-	 * Compile a word onto the current dictionary entry
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#initCode()
 	 */
+	@Override
+	abstract public void initCode();
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#alignBranch()
+	 */
+	@Override
+	abstract public void alignBranch();
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compile(v9t9.tools.forthcomp.ITargetWord)
+	 */
+	@Override
 	abstract public void compile(ITargetWord word);
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileLiteral(int, boolean, boolean)
+	 */
+	@Override
 	abstract public void compileLiteral(int value, boolean isUnsigned, boolean optimize);
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileDoubleLiteral(int, int, boolean, boolean)
+	 */
+	@Override
 	abstract public void compileDoubleLiteral(int valueLo, int valiueHi, boolean isUnsigned, boolean optimize);
 
-	/**
-	 * Flatten memory and resolve addresses
-	 * @param console
-	 * @throws AbortException 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#exportMemory(v9t9.common.memory.IMemoryDomain)
 	 */
+	@Override
 	public void exportMemory(IMemoryDomain console) throws AbortException {
 		for (int i = baseDP; i < dp; i += cellSize) {
 			console.writeWord(i, (short) readCell(i));
@@ -528,10 +638,10 @@ public abstract class TargetContext extends Context {
 
 
 
-	/**
-	 * Flatten memory and resolve addresses
-	 * @param console
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#importMemory(v9t9.common.memory.IMemoryDomain)
 	 */
+	@Override
 	public void importMemory(IMemoryDomain console) {
 		for (int i = 0; i < memory.length; i += cellSize) {
 			RelocEntry reloc = relocEntries.get(i);
@@ -542,28 +652,39 @@ public abstract class TargetContext extends Context {
 		}
 	}
 
-	/**
-	 * here 0 ,
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#pushFixup(v9t9.tools.forthcomp.HostContext)
 	 */
+	@Override
 	abstract public void pushFixup(HostContext hostContext);
-	/**
-	 * here 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#pushHere(v9t9.tools.forthcomp.HostContext)
 	 */
+	@Override
 	abstract public int pushHere(HostContext hostContext);
 
-	/**
-	 * swap
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#swapFixup(v9t9.tools.forthcomp.HostContext)
 	 */
+	@Override
 	abstract public void swapFixup(HostContext hostContext);
 
-	/**
-	 * here over - swap !
-	 * @throws AbortException TODO
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#resolveFixup(v9t9.tools.forthcomp.HostContext)
 	 */
+	@Override
 	abstract public void resolveFixup(HostContext hostContext) throws AbortException;
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileBack(v9t9.tools.forthcomp.HostContext, boolean)
+	 */
+	@Override
 	abstract public void compileBack(HostContext hostContext, boolean conditional) throws AbortException;
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#clearDict()
+	 */
+	@Override
 	public void clearDict() {
 		super.clearDict();
 		dp = 0;
@@ -574,26 +695,64 @@ public abstract class TargetContext extends Context {
 		Arrays.fill(memory, (byte) 0);
 	}
 
-	/** compile cell value */
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileCell(int)
+	 */
+	@Override
 	abstract public void compileCell(int val);
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileChar(int)
+	 */
+	@Override
 	abstract public void compileChar(int val);
 	
-	/** compile address */
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileTick(v9t9.tools.forthcomp.ITargetWord)
+	 */
+	@Override
 	abstract public void compileTick(ITargetWord word);
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileWordParamAddr(v9t9.tools.forthcomp.words.TargetValue)
+	 */
+	@Override
 	abstract public void compileWordParamAddr(TargetValue word);
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#pushLeave(v9t9.tools.forthcomp.HostContext)
+	 */
+	@Override
 	abstract public void pushLeave(HostContext hostContext);
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#loopCompile(v9t9.tools.forthcomp.HostContext, v9t9.tools.forthcomp.ITargetWord)
+	 */
+	@Override
 	abstract public void loopCompile(HostContext hostCtx, ITargetWord loopCaller) throws AbortException;
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineCompilerWords(v9t9.tools.forthcomp.HostContext)
+	 */
+	@Override
 	abstract public void defineCompilerWords(HostContext hostContext);
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#setExport(boolean)
+	 */
+	@Override
 	public void setExport(boolean export) {
 		this.export = export;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#isExport()
+	 */
+	@Override
 	public boolean isExport() {
 		return export;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#setExportNext(boolean)
+	 */
+	@Override
 	public void setExportNext(boolean export) {
 		this.exportFlag = export;
 		this.exportFlagNext = true;
@@ -603,6 +762,10 @@ public abstract class TargetContext extends Context {
 		int readWord(int addr);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#dumpDict(java.io.PrintStream, int, int)
+	 */
+	@Override
 	public void dumpDict(PrintStream out, int from, int to) {
 		dumpMemory(out, from, to, new IMemoryReader() {
 
@@ -658,61 +821,98 @@ public abstract class TargetContext extends Context {
 		}
 	}
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#getBaseDP()
 	 */
+	@Override
 	public int getBaseDP() {
 		return baseDP;
 	}
 	
-	/**
-	 * @param baseDP the baseDP to set
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#setBaseDP(int)
 	 */
+	@Override
 	public void setBaseDP(int baseDP) {
 		this.baseDP = baseDP;
 		if (dp == 0)
 			dp = baseDP;
 	}
 
-	/**
-	 * @param logfile
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#setLog(java.io.PrintStream)
 	 */
+	@Override
 	public void setLog(PrintStream logfile) {
 		this.logfile = logfile != null ? logfile : System.out;
 	}
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#getForwardRefs()
 	 */
+	@Override
 	public Collection<ForwardRef> getForwardRefs() {
 		return forwards.values();
 	}
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#getTargetDictionary()
 	 */
+	@Override
 	public Map<String, DictEntry> getTargetDictionary() {
 		return dictEntryMap;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#isLocalSupportAvailable(v9t9.tools.forthcomp.HostContext)
+	 */
+	@Override
 	abstract public boolean isLocalSupportAvailable(HostContext hostContext) throws AbortException;
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#ensureLocalSupport(v9t9.tools.forthcomp.HostContext)
+	 */
+	@Override
 	abstract public void ensureLocalSupport(HostContext hostContext) throws AbortException;
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileSetupLocals(v9t9.tools.forthcomp.HostContext)
+	 */
+	@Override
 	abstract public void compileSetupLocals(HostContext hostContext) throws AbortException;
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileAllocLocals(int)
+	 */
+	@Override
 	abstract public void compileAllocLocals(int count) throws AbortException;
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileLocalAddr(int)
+	 */
+	@Override
 	abstract public void compileLocalAddr(int index);
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileFromLocal(int)
+	 */
+	@Override
 	abstract public void compileFromLocal(int index) throws AbortException;
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileToLocal(int)
+	 */
+	@Override
 	abstract public void compileToLocal(int index) throws AbortException;
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileCleanupLocals(v9t9.tools.forthcomp.HostContext)
+	 */
+	@Override
 	abstract public void compileCleanupLocals(HostContext hostContext) throws AbortException;
 
 	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.Context#find(java.lang.String)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#find(java.lang.String)
 	 */
 	@Override
 	public IWord find(String token) {
@@ -729,11 +929,10 @@ public abstract class TargetContext extends Context {
 	}
 	
 
-	/**
-	 * @param hostContext TODO
-	 * @throws AbortException 
-	 * 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileExit(v9t9.tools.forthcomp.HostContext)
 	 */
+	@Override
 	public void compileExit(HostContext hostContext) throws AbortException {
 		if (((ITargetWord) getLatest()).getEntry().hasLocals())
 			compileCleanupLocals(hostContext);
@@ -741,11 +940,10 @@ public abstract class TargetContext extends Context {
 		require(";S").getCompilationSemantics().execute(hostContext, this);
 	}
 
-	/**
-	 * @param hostContext TODO
-	 * @param word
-	 * @throws AbortException 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileToValue(v9t9.tools.forthcomp.HostContext, v9t9.tools.forthcomp.words.TargetValue)
 	 */
+	@Override
 	public void compileToValue(HostContext hostContext, TargetValue word) throws AbortException {
 		compileWordParamAddr(word);
 		//compile((ITargetWord) require("!"));
@@ -753,11 +951,19 @@ public abstract class TargetContext extends Context {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#createMemory()
+	 */
+	@Override
 	abstract public MemoryDomain createMemory();
 
 
 	protected abstract void doExportState(HostContext hostCtx, IBaseMachine machine,
 			int baseSp, int baseRp, int baseUp) throws AbortException;
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#exportState(v9t9.tools.forthcomp.HostContext, v9t9.common.machine.IBaseMachine, int, int, int)
+	 */
+	@Override
 	public void exportState(HostContext hostCtx, IBaseMachine machine,
 			int baseSp, int baseRp, int baseUp) throws AbortException {
 		
@@ -774,6 +980,10 @@ public abstract class TargetContext extends Context {
 
 	protected abstract void doImportState(HostContext hostCtx, IBaseMachine machine,
 			int baseSp, int baseRp);
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#importState(v9t9.tools.forthcomp.HostContext, v9t9.common.machine.IBaseMachine, int, int)
+	 */
+	@Override
 	public void importState(HostContext hostCtx, IBaseMachine machine,
 			int baseSp, int baseRp) {
 		doImportState(hostCtx, machine, baseSp, baseRp);
@@ -787,10 +997,10 @@ public abstract class TargetContext extends Context {
 
 
 
-	/**
-	 * @param string
-	 * @return pair of the address of start, plus the total length
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#writeLengthPrefixedString(java.lang.String)
 	 */
+	@Override
 	public Pair<Integer, Integer> writeLengthPrefixedString(String string) throws AbortException {
 		int length = string.length();
 		if (length > 255)
@@ -811,26 +1021,43 @@ public abstract class TargetContext extends Context {
 
 
 
-	/**
-	 * 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#markHostExecutionUnsupported()
 	 */
+	@Override
 	public void markHostExecutionUnsupported() {
 		((TargetWord) getLatest()).setHostDp(-1);
 	}
 
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileCall(v9t9.tools.forthcomp.ITargetWord)
+	 */
+	@Override
 	public abstract void compileCall(ITargetWord word);
 
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compilePostpone(v9t9.tools.forthcomp.ITargetWord)
+	 */
+	@Override
 	abstract public void compilePostpone(ITargetWord word) throws AbortException;
 
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileDoes(v9t9.tools.forthcomp.HostContext, v9t9.tools.forthcomp.DictEntry, int)
+	 */
+	@Override
 	abstract public void compileDoes(HostContext hostContext, DictEntry dictEntry, int targetDP) throws AbortException;
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileString(v9t9.tools.forthcomp.HostContext, java.lang.String)
+	 */
+	@Override
 	public void compileString(HostContext hostContext, String string) throws AbortException {
 		IWord parenString = require("(s\")");
 		compileCall((ITargetWord) parenString);
@@ -840,29 +1067,38 @@ public abstract class TargetContext extends Context {
 
 
 
-	/**
-	 * Prepare for DOES>
-	 * @param hostContext
-	 * @return target addr for DOES
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileDoDoes(v9t9.tools.forthcomp.HostContext)
 	 */
+	@Override
 	abstract public int compileDoDoes(HostContext hostContext) throws AbortException;
 
 
 
-	/**
-	 * @param opcode
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileOpcode(int)
 	 */
+	@Override
 	abstract public void compileOpcode(int opcode);
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileUser(v9t9.tools.forthcomp.words.TargetUserVariable)
+	 */
+	@Override
 	abstract public void compileUser(TargetUserVariable var);
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#getUP()
 	 */
+	@Override
 	public int getUP() {
 		TargetVariable up = findOrCreateVariable("UP0");
 		return readCell(up.getEntry().getParamAddr());
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#dumpStubs(java.io.PrintStream)
+	 */
+	@Override
 	public void dumpStubs(PrintStream logfile) {
 		logfile.println("Stub uses:");
 		for (StubWord word : stubWords) {
@@ -870,6 +1106,10 @@ public abstract class TargetContext extends Context {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#parseLiteral(java.lang.String)
+	 */
+	@Override
 	public IWord parseLiteral(String token) {
 		int radix = ((HostVariable) hostCtx.find("base")).getValue();
 		boolean isNeg = token.startsWith("-");

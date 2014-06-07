@@ -88,8 +88,8 @@ public class ForthComp {
         	targetContext = new F99bTargetContext(65536);
         
         if (gromOutFile != null) {
-        	if (targetContext instanceof F99bTargetContext) {
-        		((F99bTargetContext) targetContext).setUseGromDictionary(true);
+        	if (targetContext instanceof IGromTargetContext) {
+        		((IGromTargetContext) targetContext).setUseGromDictionary(true);
         		
         		MemoryDomain grom = new MemoryDomain(IMemoryDomain.NAME_GRAPHICS, false);
         		ByteMemoryArea memArea = new ByteMemoryArea(0, new byte[0x10000]); 
@@ -97,7 +97,7 @@ public class ForthComp {
         				memArea);
         		grom.mapEntry(bigRamEntry);
 
-        		((F99bTargetContext) targetContext).setGrom(grom);
+        		((IGromTargetContext) targetContext).setGrom(grom);
         	}
         	else {
         		System.err.println("Must use F99b for GROM dictionary");
@@ -132,7 +132,7 @@ public class ForthComp {
 //    	logfile.println("DP = " + HexUtils.toHex4(comp.getTargetContext().getDP()));
 //    	logfile.println("UP = " + HexUtils.toHex4(comp.getTargetContext().getUP()));
     	if (gromDictFile != null)
-    		logfile.println("GDP = " + HexUtils.toHex4(((F99bTargetContext)comp.getTargetContext()).getGP()));
+    		logfile.println("GDP = " + HexUtils.toHex4(((IGromTargetContext)comp.getTargetContext()).getGP()));
 	
     	comp.finish();
     	
@@ -388,7 +388,7 @@ public class ForthComp {
 		}
 			
 		if (gromOutFile != null) {
-			F99bTargetContext f99bCtx = (F99bTargetContext) targetContext;
+			IGromTargetContext f99bCtx = (IGromTargetContext) targetContext;
 			
 			final MemoryDomain gromMemory = f99bCtx.getGrom();
 			
@@ -409,7 +409,7 @@ public class ForthComp {
 		
 	}
 
-	public TargetContext getTargetContext() {
+	public ITargetContext getTargetContext() {
 		return targetContext;
 	}
 

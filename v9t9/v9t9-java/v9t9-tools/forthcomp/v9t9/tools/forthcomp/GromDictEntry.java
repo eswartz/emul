@@ -11,7 +11,6 @@
 package v9t9.tools.forthcomp;
 
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.tools.forthcomp.words.TargetContext;
 
 /**
  * @author ejs
@@ -48,7 +47,7 @@ public class GromDictEntry extends DictEntry {
 	 * @see v9t9.forthcomp.DictEntry#writeEntry(v9t9.forthcomp.words.TargetContext)
 	 */
 	@Override
-	public void writeEntry(TargetContext targetContext) {
+	public void writeEntry(ITargetContext targetContext) {
 		byte[] ent = doWriteEntry(targetContext);
 		
 		// ignore link

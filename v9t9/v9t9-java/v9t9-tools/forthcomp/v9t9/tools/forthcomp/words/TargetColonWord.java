@@ -33,6 +33,8 @@ public class TargetColonWord extends TargetWord implements ITargetWord {
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
 				if (getHostDp() >= 0 && !getEntry().isTargetOnly()) {
+					if (HostContext.DEBUG)
+						System.out.println("T> call " + Integer.toHexString(getEntry().getAddr()) + "(" + getHostDp() + ")");
 					hostContext.pushCall(getHostDp());
 					hostContext.interpret(hostContext, targetContext);
 				} else {

@@ -14,7 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import v9t9.tools.forthcomp.words.LocalVariable;
-import v9t9.tools.forthcomp.words.TargetContext;
 
 /**
  * @author ejs
@@ -62,7 +61,7 @@ public class DictEntry implements Comparable<DictEntry> {
 		this.endAddr = endAddr;
 	}
 
-	public int getSize(TargetContext context) {
+	public int getSize(ITargetContext context) {
 		if (endAddr != 0)
 			return endAddr - addr;
 		else
@@ -152,7 +151,7 @@ public class DictEntry implements Comparable<DictEntry> {
 	/**
 	 * @param targetContext
 	 */
-	public void writeEntry(TargetContext targetContext) {
+	public void writeEntry(ITargetContext targetContext) {
 		byte[] ent = doWriteEntry(targetContext);
 		
 		for (int i = 0; i < ent.length; i++)
@@ -160,7 +159,7 @@ public class DictEntry implements Comparable<DictEntry> {
 	}
 
 
-	protected byte[] doWriteEntry(TargetContext targetContext) {
+	protected byte[] doWriteEntry(ITargetContext targetContext) {
 		byte[] ent = new byte[headerSize];
 		int ad = 0;
 		
@@ -186,7 +185,7 @@ public class DictEntry implements Comparable<DictEntry> {
 	}
 	
 
-	public void setImmediate(TargetContext targetContext, boolean b) {
+	public void setImmediate(ITargetContext targetContext, boolean b) {
 		this.immediate = b;
 		if (isExport())
 			writeEntry(targetContext);

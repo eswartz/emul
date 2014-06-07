@@ -206,8 +206,8 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		parseString(
 				stockDictDefs +
 				compileLiteral +
-				compileMeta+
-				": make-adder: ( n -- ) : postpone literal postpone + 0 postpone ; drop ;\n "+
+				compileMeta +
+				": make-adder: ( n -- ) :  postpone literal  postpone +  0  postpone ; drop ;\n "+
 				"here swap\n"+
 				"100 make-adder: 100+\n"+
 				"100+");

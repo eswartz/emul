@@ -14,6 +14,7 @@ import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.DictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
+import v9t9.tools.forthcomp.ITargetContext;
 
 /**
  * @author ejs
@@ -61,7 +62,7 @@ public class TargetValue extends TargetWord {
 	/**
 	 * @param value
 	 */
-	public void setValue(TargetContext targetContext, int value) {
+	public void setValue(ITargetContext targetContext, int value) {
 		targetContext.writeCell(getEntry().getParamAddr(), value);
 	}
 

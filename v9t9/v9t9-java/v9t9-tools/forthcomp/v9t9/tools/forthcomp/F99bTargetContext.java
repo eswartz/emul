@@ -39,7 +39,7 @@ import ejs.base.utils.HexUtils;
  * @author ejs
  *
  */
-public class F99bTargetContext extends TargetContext {
+public class F99bTargetContext extends TargetContext implements IGromTargetContext {
 
 	private boolean useGromDictionary;
 	
@@ -392,6 +392,8 @@ public class F99bTargetContext extends TargetContext {
 	}
 
 	public void compileByte(int opcode) {
+		if (HostContext.DEBUG)
+			logfile.println("T>" + Integer.toHexString(getDP())+" C, " + Integer.toHexString(opcode));
 		writeChar(alloc(1), opcode);
 	}
 
@@ -1037,6 +1039,7 @@ public class F99bTargetContext extends TargetContext {
 		//compileCell(reloc);
 	}
 
+	@Override
 	public int getGP() {
 		return gp;
 	}
@@ -1044,6 +1047,7 @@ public class F99bTargetContext extends TargetContext {
 	/**
 	 * @param gp the gp to set
 	 */
+	@Override
 	public void setGP(int gp) {
 		this.gp = gp;
 	}
