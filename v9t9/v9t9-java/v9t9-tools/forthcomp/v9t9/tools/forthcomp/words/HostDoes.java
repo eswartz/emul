@@ -31,9 +31,8 @@ public class HostDoes extends BaseStdWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		int dp = targetContext.compileDoDoes(hostContext);
-		//hostContext.compile(new HostReturnRead());
-		hostContext.compile(new HostDoDoes(hostContext.getLocalDP() + 1, dp, false));
+		int dp = targetContext.buildDoDoes(hostContext);
+		hostContext.build(new HostDoDoes(hostContext.getLocalDP() + 1, dp, false));
 	}
 	
 	/* (non-Javadoc)

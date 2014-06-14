@@ -1,0 +1,275 @@
+\   f9900romtest.f99
+\ 
+\   (c) 2014 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+\   Memory layout
+
+$0		dp!
+
+\ Intvec 0: RESET
+0 ,  0 ,
+
+\ Intvec 1: VDP
+0 ,  0 ,
+
+$400    dp!
+
+\   cold address
+0 ,
+
+\   initial dictionary
+0 ,
+
+\   initial latest
+0 ,
+
+(define-prims)
+
+\   Be sure this ROM doesn't try to make variables in the dictionary
+undef Variable
+undef DVariable
+undef Value
+undef DValue
+
+0 <EXPORT
+
+include sysdefs.fi
+
+include ../v9t9/errcodes.fi
+
+include ../v9t9/ram.fi
+
+
+EXPORT>
+
+\ include sysprims.fi
+include syscomp.fi
+include cold.fi
+
+0 [if]
+		
+		include ../v9t9/sysutils.fi
+		
+		
+		include ../ans/exception.fi
+		 
+		0 <EXPORT
+		
+		include ../v9t9/video.fi
+		
+		include ../v9t9/sound.fi
+		
+		include ../v9t9/term.fi
+		
+		include ../v9t9/kbd.fi
+		
+		EXPORT>
+		
+		include sysprims.fi
+		
+		include ../v9t9/prims.fi
+		
+		include ../ans/kernel.fi
+		
+		include ../v9t9/errors.fi
+		
+		include ../ans/blocks.fi
+		
+		include ../ans/dict.fi
+		
+		include 9900.fi
+		
+		include ../ans/compile.fi
+		
+		include ../ans/dualstate.fi
+		
+		include ../ans/interp.fi
+		
+		include ../ans/alloc.fi
+		
+		include ../v9t9/utils.fi
+		
+		include ../v9t9/io.fi
+		
+		include ../v9t9/locals.fi
+		
+		\ include ../v9t9/editor.fi
+		include ../v9t9/char-editor.fi
+		
+		include cold.fi
+		
+		include ../v9t9/boot.fi
+		
+		\ -------------------------------
+		
+		1 <export
+		
+		0 [if]
+		:   cycle
+		    \ hex $1F2E3D4C. d.d 10 demit decimal
+		    \ 256 0 do i .d 10 demit loop
+		    begin
+		        42 demit
+		        256 0 do
+		            key? if key else i then
+		            chfill
+		            ints-check
+		            \ 0 0 do loop
+		        loop
+		    again
+		;
+		
+		
+		: snd ( i -- ) 
+		    dup  swpb dup  9 crshift  XOR swap  $7 and $40 + c! 
+		;
+		: delay 0 do uloop ;
+		
+		: blast0
+		0 0 do 
+		    0 0 do 
+		        j i xor snd $10 delay 
+		    loop
+		loop
+		;
+		: blast1
+		0 0 do 
+		    0 0 do 
+		        j i + snd $10 delay 
+		    loop
+		loop
+		;
+		
+		: square
+		    begin 
+		        $80 'GATE c!
+		        [ $00 c, ]
+		        $00 'GATE c!
+		    again
+		;
+		
+		: hang
+		    ints-off (idle)
+		; 
+		[endif]
+		
+		export>
+		
+		1 <export
+		
+		:   bye
+		
+		    regs-init
+		    
+		    exc-init
+		    
+		    ints-init
+		        
+		    kbd-init
+		    
+		    video-init
+		    
+		    sound-init
+		 
+		    cold-init
+		
+		    decimal 
+		 
+		    0 blk !
+		    0 state !
+		 
+		    empty-buffers
+		
+		[ [ifdef] init-locals ]    
+		    init-locals
+		[ [endif] ]    
+		
+		[ [ifdef] init-editor ]    
+		    init-editor
+		[ [endif] ]    
+		      
+		    1 load
+		     
+		    \ cycle
+		    quit
+		;
+		
+		export>
+		
+		
+		\ -------------------------------------------------
+		
+		0 <export
+		
+		include ../v9t9/ints.fi
+		
+		export>
+
+		
+		[ifdef] grom-dictionary
+		$0       (LATEST)   !
+		[else]
+		latest   (LATEST)   !
+		[endif]
+
+[else]
+	\ TEST
+	
+	\ ----------- [[[ STUBS
+	: ALIGNED   ( addr -- addr )
+	    #cell  1-  invert  swap over +  swap and
+	;
+	
+	: CONSTANT
+	; target-only
+	
+	: CREATE
+	; target-only
+	
+	: (
+	; immediate target-only
+	: \
+	; immediate target-only
+	
+	: immediate
+	; target-only
+	
+	\ ----------- STUBS ]]]
+	
+	: BYE
+		COLD
+	;
+	
+	: COLD
+		regs-init
+		cold-init
+		(COLD) @  EXECUTE
+	;
+	
+[endif]
+
+' bye   (BOOT)     !
+' cold  (COLD)     !
+here $3ff +  $3ff INVERT and  DP0        !
+
+ramptr @  1- aligned  constant (RAM0)
+
+|+ cell RamVar RAM
+
+\ set up int vecs
+StdWP  0  !		' (reset)  2  !   
+\ IntWP  4  !		' bye  6  !   
+
+hex
+here ." HERE = " u. cr
+up0 @ ." UP0 = " u. cr
+ramptr @ ." RAMPTR = " u. cr
+RamTop ." RAMTOP = " u. cr
+
+

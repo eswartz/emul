@@ -8,11 +8,13 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.tools.forthcomp.words;
+package v9t9.tools.forthcomp.f99b.words;
 
 import v9t9.tools.forthcomp.AbortException;
-import v9t9.tools.forthcomp.F99bTargetContext;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.f99b.F99bTargetContext;
+import v9t9.tools.forthcomp.words.BaseStdWord;
+import v9t9.tools.forthcomp.words.TargetContext;
 
 /**
  * @author ejs

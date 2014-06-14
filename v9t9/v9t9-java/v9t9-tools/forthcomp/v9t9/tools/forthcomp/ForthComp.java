@@ -29,6 +29,8 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.tools.forthcomp.f99b.F99bTargetContext;
+import v9t9.tools.forthcomp.ti99.TI99TargetContext;
 import v9t9.tools.forthcomp.words.HostVariable;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetConstant;
@@ -55,7 +57,7 @@ public class ForthComp {
 		PrintStream logfile = System.out;
 		boolean doHistogram = false;
 		
-        Getopt getopt = new Getopt(PROGNAME, args, "?c:l:bhg:d:");
+        Getopt getopt = new Getopt(PROGNAME, args, "?c:l:b9hg:d:");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -77,6 +79,9 @@ public class ForthComp {
             case 'b':
             	targetContext = new F99bTargetContext(65536);
             	break;
+            case '9':
+            	targetContext = new TI99TargetContext(65536);
+            	break;
             case 'h':
             	doHistogram = true;
             	break;
@@ -87,7 +92,7 @@ public class ForthComp {
         if (targetContext == null)
         	targetContext = new F99bTargetContext(65536);
         
-        if (gromOutFile != null) {
+        if (gromDictFile != null) {
         	if (targetContext instanceof IGromTargetContext) {
         		((IGromTargetContext) targetContext).setUseGromDictionary(true);
         		
@@ -116,7 +121,9 @@ public class ForthComp {
         } 
         
         if (gromDictFile != null) {
-        	targetContext.define("grom-dictionary", new TargetConstant("grom-dictionary", 1, targetContext.getCellSize()));
+        	targetContext.define("grom-dictionary", new TargetConstant(
+        			new DictEntry(0, 0, "grom-dictionary"), 
+        			1, targetContext.getCellSize()));
         }
         
     	int idx = getopt.getOptind();
@@ -257,68 +264,11 @@ public class ForthComp {
 	public void parse() throws AbortException {
 		String token;
 		try {
-			while ((token = tokenStream.read()) != null)
-				parse(token);
+			while ((token = tokenStream.read()) != null) {
+				targetContext.parse(token);
+			}
 		} catch (IOException e) {
 			throw abort(e.getMessage());
-		}
-	}
-
-	private void parse(String token) throws AbortException {
-		IWord word = null;
-		
-		int state = hostContext.readVar("state");
-		
-		if (state == 0) {
-			word = hostContext.find(token);
-			if (word == null) {
-				word = targetContext.find(token);
-			}
-			if (word == null) {
-				word = targetContext.parseLiteral(token);
-			}
-			if (word == null) {
-				throw abort("unknown word or literal: " + token);
-			}
-			
-			if (word.getInterpretationSemantics() == null)
-				throw abort(word.getName() + " has no interpretation semantics");
-			
-			word.getInterpretationSemantics().execute(hostContext, targetContext);
-		} else {
-			word = targetContext.find(token);
-			if (word == null) {
-				word = hostContext.find(token);
-			}
-			if (word == null) {
-				word = targetContext.parseLiteral(token);
-			}
-			if (word == null) {
-				word = targetContext.defineForward(token, hostContext.getStream().getLocation());
-			}
-		
-			ITargetWord targetWord = null;
-			IWord hostWord = null;
-			
-			if (word instanceof ITargetWord) {
-				targetWord = (ITargetWord) word;
-				hostWord = hostContext.find(token);
-				if (hostWord == null) 
-					hostWord = targetWord;
-			} else {
-				if (word.getCompilationSemantics() == null) {
-					throw hostContext.abort("host word " + token + " used instead of target word");
-				}
-				hostWord = word;
-				targetWord = null;
-				if (!word.isCompilerWord()) {
-					targetWord = (ITargetWord) targetContext.defineForward(token, 
-							hostContext.getStream().getLocation());
-					//throw hostContext.abort("host word " + token + " used instead of target word");
-				}
-			}		
-			
-			hostContext.compileWord(targetContext, hostWord, targetWord);
 		}
 	}
 

@@ -30,7 +30,7 @@ public class Leave extends BaseStdWord {
 		
 		targetContext.markHostExecutionUnsupported();
 		
-		ITargetWord branch = (ITargetWord) targetContext.require("branch");
+		ITargetWord branch = targetContext.require("branch");
 		branch.getCompilationSemantics().execute(hostContext, targetContext);
 		
 		targetContext.pushLeave(hostContext);

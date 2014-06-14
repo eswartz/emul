@@ -29,7 +29,7 @@ public class Comma extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
 		int val = hostContext.popData();
-		targetContext.compileCell(val);
+		targetContext.buildCell(val);
 	}
 
 	/* (non-Javadoc)

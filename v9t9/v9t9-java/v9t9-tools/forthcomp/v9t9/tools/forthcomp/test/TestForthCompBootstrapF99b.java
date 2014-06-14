@@ -132,7 +132,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 				": doit 123 Foo ! ; immediate\n"+
 				": push 11 Foo ! doit  ;\n");
 		
-		ITargetWord var = (ITargetWord) targCtx.require("Foo");
+		ITargetWord var = targCtx.require("Foo");
 		assertEquals(123, targCtx.readCell(var.getEntry().getParamAddr())); 
 		
 		parseString("push");
@@ -150,7 +150,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		
 		dumpDict();
 		
-		ITargetWord var = (ITargetWord) targCtx.require("Foo");
+		ITargetWord var = targCtx.require("Foo");
 		assertEquals(0, targCtx.readCell(var.getEntry().getParamAddr())); 
 		
 		parseString("push");
@@ -183,7 +183,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		assertEquals(-3, hostCtx.popData());
 		assertEquals(10, hostCtx.popData());
 
-		int dp = ((ITargetWord) targCtx.require("push")).getEntry().getContentAddr();
+		int dp = (targCtx.require("push")).getEntry().getContentAddr();
 		assertEquals(InstF99b.IlitB, targCtx.readChar(dp++));
 		assertEquals(10, targCtx.readChar(dp++));
 		assertEquals(InstF99b.IlitX | (-3 & 0xf), targCtx.readChar(dp++));
@@ -217,7 +217,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		
 		int dphere = hostCtx.popData();
 
-		DictEntry newEntry = ((ITargetWord) targCtx.require("100+")).getEntry();
+		DictEntry newEntry = (targCtx.require("100+")).getEntry();
 		int dp = newEntry.getContentAddr();
 
 		assertEquals(dp+"|"+dphere, dp, dphere + newEntry.getHeaderSize());
@@ -257,7 +257,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 
 
 		// make sure CREATE , DOES> has expected code in it
-		DictEntry creatorEntry = ((ITargetWord) targCtx.require("make-adder:")).getEntry();
+		DictEntry creatorEntry = (targCtx.require("make-adder:")).getEntry();
 		int dp = creatorEntry.getContentAddr();
 
 		// PUNT
@@ -276,7 +276,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		
 		int dphere = hostCtx.popData();
 		
-		DictEntry newEntry = ((ITargetWord) targCtx.require("100+")).getEntry();
+		DictEntry newEntry = (targCtx.require("100+")).getEntry();
 		dp = newEntry.getContentAddr();
 
 		assertEquals(dp+"|"+dphere, ((dphere + newEntry.getHeaderSize()+1)&~1), dp);
@@ -319,7 +319,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		
 		parseString("lala");
 		
-		DictEntry entry = ((ITargetWord) targCtx.require("lala")).getEntry();
+		DictEntry entry = (targCtx.require("lala")).getEntry();
 		int dp = entry.getContentAddr();
 		assertEquals(((ITargetWord)targCtx.require("(S\")")).getEntry().getContentAddr(), targCtx.findReloc(dp)); 
 		dp+=2;

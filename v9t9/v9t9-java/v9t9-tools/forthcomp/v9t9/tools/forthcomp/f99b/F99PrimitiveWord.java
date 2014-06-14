@@ -1,5 +1,5 @@
 /*
-  F99InlineWord.java
+  F99PrimitiveWord.java
 
   (c) 2010-2011 Edward Swartz
 
@@ -8,8 +8,12 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.tools.forthcomp;
+package v9t9.tools.forthcomp.f99b;
 
+import v9t9.tools.forthcomp.AbortException;
+import v9t9.tools.forthcomp.DictEntry;
+import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetWord;
@@ -18,25 +22,24 @@ import v9t9.tools.forthcomp.words.TargetWord;
  * @author ejs
  *
  */
-public class F99InlineWord extends TargetWord implements IPrimitiveWord {
+public class F99PrimitiveWord extends TargetWord implements IPrimitiveWord {
 
-	private final int[] opcodes;
+	private final int opcode;
 
 	/**
 	 * @param entry
 	 */
-	public F99InlineWord(DictEntry entry, int[] opcodes) {
+	public F99PrimitiveWord(final DictEntry entry, int opcode) {
 		super(entry);
-		this.opcodes = opcodes;
+		this.opcode = opcode;
 		
 		setCompilationSemantics(new ISemantics() {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				int[] opcodes = getOpcodes();
-				for (int opcode : opcodes)
-					targetContext.compileOpcode(opcode);		
-				getEntry().use();
+				int opcode = getOpcode();
+				((F99bTargetContext) targetContext).compileOpcode(opcode);
+				entry.use();
 			}
 		});
 	}
@@ -44,23 +47,15 @@ public class F99InlineWord extends TargetWord implements IPrimitiveWord {
 	/**
 	 * @return the opcode
 	 */
-	public int[] getOpcodes() {
-		return opcodes;
+	public int getOpcode() {
+		return opcode;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.IPrimitiveWord#getSize()
 	 */
 	@Override
 	public int getPrimitiveSize() {
-		int total = 0;
-		for (int opcode : opcodes) {
-			if (opcode < 0x80)
-				total++;
-			else
-				total += 2;
-		}
-		return total;
+		return opcode < 0x100 ? 1 : 2;
 	}
-
 }

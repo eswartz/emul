@@ -10,10 +10,12 @@
  */
 package v9t9.tools.asm.inst9900;
 
+import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
 import v9t9.machine.ti99.asm.InstructionFactory9900;
+import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.InstPattern9900;
 import v9t9.machine.ti99.cpu.InstTable9900;
 import v9t9.machine.ti99.cpu.MachineOperand9900;
@@ -41,16 +43,39 @@ public class AsmInstructionFactory9900 extends InstructionFactory9900 implements
 	@Override
 	public RawInstruction createRawInstruction(LLInstruction inst)
 			throws ResolveException {
+		
 		RawInstruction rawInst = new RawInstruction();
 		rawInst.pc = inst.getPc();
+		
 		rawInst.setInst(inst.getInst());
-		rawInst.setName(InstTable9900.getInstName(inst.getInst()));
-		rawInst.setOp1(inst.getOp1() != null ? 
+		
+		IMachineOperand mop1 = inst.getOp1() != null ? 
 				inst.getOp1().createMachineOperand(opFactory) :
-					MachineOperand9900.createEmptyOperand());
-		rawInst.setOp2(inst.getOp2() != null ? 
+					MachineOperand9900.createEmptyOperand();
+				
+		// clean up jumps
+		if (InstTable9900.isJumpInst(inst.getInst()) && mop1.isConstant()) {
+			int target = inst.getOp1().getImmediate();
+			int diff = target - inst.getPc();
+			if (diff >= -128 && diff <= 126) {
+				MachineOperand9900 rel = new MachineOperand9900(MachineOperand9900.OP_JUMP);
+				rel.val = diff;
+				mop1 = rel;
+			} else {
+				rawInst.setInst(Inst9900.Ib);
+				MachineOperand9900 addr = new MachineOperand9900(MachineOperand9900.OP_ADDR);
+				addr.immed = (short) target;
+				mop1 = addr;
+			}
+		}
+
+		rawInst.setOp1(mop1);
+		IMachineOperand mop2 = inst.getOp2() != null ? 
 				inst.getOp2().createMachineOperand(opFactory) :
-					MachineOperand9900.createEmptyOperand());
+					MachineOperand9900.createEmptyOperand();
+		rawInst.setOp2(mop2);
+		
+		rawInst.setName(InstTable9900.getInstName(rawInst.getInst()));
 		InstTable9900.coerceOperandTypes(rawInst);
 		InstTable9900.calculateInstructionSize(rawInst);
 		return rawInst;

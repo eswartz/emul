@@ -8,6 +8,11 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
+\   ---------   ans
+
+| 1			constant 	#CHAR
+| 2			constant 	#CELL
+
 \   ---------   memory map
 
 $0000       constant    I/O

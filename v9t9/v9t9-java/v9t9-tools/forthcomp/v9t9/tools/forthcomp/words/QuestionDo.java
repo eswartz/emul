@@ -30,7 +30,7 @@ public class QuestionDo extends BaseStdWord {
 		
 		targetContext.markHostExecutionUnsupported();
 		
-		ITargetWord qdoWord = (ITargetWord) targetContext.require("(?do)");
+		ITargetWord qdoWord = targetContext.require("(?do)");
 
 		qdoWord.getCompilationSemantics().execute(hostContext, targetContext);// ends in 0branch
 		

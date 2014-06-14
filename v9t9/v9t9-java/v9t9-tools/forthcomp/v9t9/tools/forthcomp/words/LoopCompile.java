@@ -34,7 +34,7 @@ public class LoopCompile extends BaseStdWord {
 		
 		targetContext.markHostExecutionUnsupported();
 		
-		ITargetWord word = (ITargetWord) targetContext.require(wordName);
+		ITargetWord word = targetContext.require(wordName);
 		
 		targetContext.loopCompile(hostContext, word);
 	}

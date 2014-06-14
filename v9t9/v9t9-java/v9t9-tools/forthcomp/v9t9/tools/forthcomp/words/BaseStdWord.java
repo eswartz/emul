@@ -51,7 +51,7 @@ public abstract class BaseStdWord extends BaseWord {
 				
 				public void execute(HostContext hostContext, TargetContext targetContext)
 						throws AbortException {
-					hostContext.compile(BaseStdWord.this);
+					hostContext.build(BaseStdWord.this);
 				}
 			});
 		}

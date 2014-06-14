@@ -30,7 +30,7 @@ public class CharComma extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
 		int val = hostContext.popData();
-		targetContext.compileChar(val);
+		targetContext.buildChar(val);
 	}
 
 	/* (non-Javadoc)

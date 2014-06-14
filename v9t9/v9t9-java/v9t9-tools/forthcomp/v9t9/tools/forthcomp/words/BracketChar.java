@@ -30,7 +30,7 @@ public class BracketChar extends BaseWord {
 					throws AbortException {
 				String name = hostContext.readToken();
 				
-				targetContext.compileLiteral(name.charAt(0), false, true);
+				targetContext.buildLiteral(name.charAt(0), true, true);
 			}
 		});
 		setExecutionSemantics(new ISemantics() {

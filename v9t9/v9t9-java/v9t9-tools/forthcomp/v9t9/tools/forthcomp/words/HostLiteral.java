@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp.words;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
+import v9t9.tools.forthcomp.ITargetWord;
 
 /**
  * @author ejs
@@ -33,8 +34,8 @@ public class HostLiteral extends BaseWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				hostContext.compile(HostLiteral.this);
-				targetContext.compileLiteral(val, isUnsigned, true);
+				hostContext.build(HostLiteral.this);
+				targetContext.buildLiteral(val, isUnsigned, true);
 			}
 		});
 		setExecutionSemantics(new ISemantics() {

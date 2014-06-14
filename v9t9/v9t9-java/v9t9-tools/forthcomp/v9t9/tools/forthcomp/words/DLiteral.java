@@ -36,7 +36,7 @@ public class DLiteral extends BaseWord {
 				int valL = hostContext.popData();
 				targetContext.compileDoubleLiteral(valL, valH, false, optimize);
 				
-				hostContext.compile(new HostDoubleLiteral(valL, valH, false));
+				hostContext.build(new HostDoubleLiteral(valL, valH, false));
 			}
 		});
 		setInterpretationSemantics(getCompilationSemantics());

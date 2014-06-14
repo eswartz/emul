@@ -1,0 +1,20 @@
+
+
+| : regs-init
+    (SP0) (UP0) (RP0)   (REGS) 
+;
+
+
+: cold-init
+    DP0 @       DP !
+			\ TODO    UP0 @       UDP !
+    		\ TODO    (LATEST) @  >latest !
+    
+		    \ TODO     >gram_dict_base  GDP !
+    
+    		\ TODO     GRAM
+    
+			\  TODO      gheap dict-hinit
+    
+    (RAM0)  RAM !
+;

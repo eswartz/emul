@@ -33,9 +33,10 @@ public class Literal extends BaseWord {
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
 				int val = hostContext.popData();
-				targetContext.compileLiteral(val, false, optimize);
 				
-				hostContext.compile(new HostLiteral(val, false));				
+				targetContext.buildLiteral(val, false, optimize);
+				
+				hostContext.build(new HostLiteral(val, false));				
 			}
 		});
 		setInterpretationSemantics(getCompilationSemantics());

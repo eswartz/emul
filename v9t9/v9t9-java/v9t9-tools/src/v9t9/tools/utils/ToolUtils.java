@@ -25,15 +25,16 @@ import ejs.base.utils.Pair;
  */
 public class ToolUtils {
 
-	/**
-	 * @return
-	 */
 	public static IMachine createMachine() {
-
-        EmulatorServerBase server = new EmulatorLocalServer();
-        String modelId = server.getMachineModelFactory().getDefaultModel();
-        IMachine machine = createMachine(server, modelId);
-        return machine;
+		return createMachine(null);
+	}
+	public static IMachine createMachine(String modelId) {
+		
+		EmulatorServerBase server = new EmulatorLocalServer();
+		if (modelId == null)
+			modelId = server.getMachineModelFactory().getDefaultModel();
+		IMachine machine = createMachine(server, modelId);
+		return machine;
 	}
 
 	/**

@@ -1,0 +1,111 @@
+\   sysprims.fi
+\ 
+\   (c) 2010-2011 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+
+:   ints-on
+    INT_KBD  [ ItoContext c, CTX_INT field, ] 
+;   target-only
+:   ints-off
+    0  [ ItoContext c,  CTX_INT field, ] 
+;   target-only
+
+
+: pick ( n -- v )
+    1+ cells [ IcontextFrom c, CTX_SP field, ] + @  
+;   target-only
+
+: rpick ( n -- v )
+    cells  [ IcontextFrom c, CTX_RP field, ] + @  
+;   target-only
+
+\ Move memory backward (src -> dst)
+: cmove              ( src dst # -- )  
+    1 1 [ Icmove c, ]
+;   target-only
+
+\ Move memory forward (src -> dst)
+: cmove>            ( src dst # -- )
+    -1 -1 [ Icmove c, ]
+;   target-only
+
+: m/mod      ( ud un -- un.r ud.q )
+    >r  s>d dup r>
+    s>d
+    [ Iudivmod_d , ]
+    2>r drop 2r>
+;   target-only
+
+: u/mod      ( u un -- ur uq ) 
+    0 swap
+    [ Iudivmod c, ]
+;   target-only
+: u/      ( ud un -- uq )
+    0 swap 
+    [ Iudivmod c, ] swap drop
+;   target-only
+: umod      ( u un -- ur )
+    0 swap 
+    [ Iudivmod c, ] drop
+;   target-only
+
+: u*        ( ua ub -- un )
+    [ Iumul c, ] drop
+;   target-only
+
+
+: U*/MOD       ( ua ub uc -- ua*b/c ua*b%c )
+    >r  [ Iumul c, ]  r>  [ Iudivmod c, ] swap
+;  target-only
+
+: U*/       ( ua ub uc -- ua*b/c )
+    U*/MOD  drop
+;  target-only
+
+: fill  ( addr n ch -- )
+    1 [ Icfill c, ]
+;   target-only
+
+: rp0
+    [ IcontextFrom c,  CTX_RP0 field, ] 
+;   target-only
+: sp0
+    [ IcontextFrom c, CTX_SP0 field, ] 
+;   target-only
+
+
+: (dbg)     Isyscall c, #dbg c, ; immediate
+: (dbgf)    Isyscall c, #dbgf c, ; immediate
+: (idle)    Isyscall c, #idle c, ; immediate
+: (register-symbol)    Isyscall c, #regsym c, ; immediate
+
+: (gfind)      ( c-addr gromdict gromdictEnd -- c-addr 0 | xt -1=immed | xt 1 ) 
+    [ Isyscall c,  #gfind c, ]    
+; 
+
+: (find)      ( c-addr lfa -- c-addr 0 | xt -1=immed | xt 1 ) 
+    \ find word in dictionary     
+    \ lfa is nfa-2
+
+    [ Isyscall c, #find  c, ]    
+; 
+
+: >NUMBER   ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )
+    base @  
+    [ Isyscall c, #number c, ]
+;
+
+: (NUMBER)  ( addr -- ud dpl t | f )
+    count
+    base @  
+    [ Isyscall c, #decorated-number c, ]
+;
+
+: (rnd) 'RND c@  'RND c@  l.h>w ;
+

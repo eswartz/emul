@@ -44,7 +44,7 @@ public class SQuote extends BaseWord {
 					throws AbortException {
 				StringBuilder sb = parseString(hostContext);
 
-				targetContext.compileString(hostContext, sb.toString());
+				targetContext.buildPushString(hostContext, sb.toString());
 			}
 		});
 	}

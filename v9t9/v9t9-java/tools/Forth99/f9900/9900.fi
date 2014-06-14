@@ -1,0 +1,189 @@
+\   9900.fi
+\ 
+\   (c) 2014 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+| : docol!  ( cfa -- )
+    drop 
+;
+
+| : docon, ( num -- )
+    postpone literal
+    Iexit c,
+;
+
+| : dovalue, ( num -- )
+    $79 c, ,
+    Iexit c,
+;
+| : do>to, ( addr -- addr' )
+    1+
+;
+
+| : dovar,  ( -- )
+    IbranchX c,
+    Idovar  c,
+;
+
+
+: >BODY ( xt -- a-addr )
+    \   a-addr is the data-field address corresponding to xt. An ambiguous condition exists if xt is not for a word defined via
+    \   CREATE.
+    2+
+; 
+
+| : douser,  ( idx -- )
+    dup $100 < if  Iupidx c, c,  else
+                    IlitW c,  ,  Iuser c, then
+    Iexit c,                    
+;
+
+| : dodoes,  ( -- )
+    align
+\    here 
+    IRfrom c,
+;
+
+
+| : xt! ( addr cfa -- )
+    !
+;
+
+\ called for creating words to inject :docol code into definition
+: docol,    ( addr -- )
+;
+
+| : dodefer!    ( cfa -- )
+    \ TODO
+    drop
+;
+
+\ --------------------------------------------
+
+
+[IFUNDEF] (compile)
+\   compile the following word in the IP stream
+\   (needed cross compiler)
+: (compile)
+    r> dup cell+ >r @ , 
+;
+[THEN]
+
+\ target
+| : jmpoffs, ( addr offs -- )
+    dup -129 128 within if
+        \ dup 0> if 1- else 1- then     \ branch opcode allocated
+        1-
+        swap c!
+    else
+        true err-out-of-range ?throw
+    then
+;
+| : jmpoffsalloc, ( diff opc -- )
+    swap dup -129 128 within if
+        dup 0> if 2- else 1- then       \ allocating now
+        swap compile, c,
+    else
+        true err-out-of-range ?throw
+    then
+;
+
+
+: >fixup
+    here 0 c,
+;
+
+: loop,
+\ loop opcode is one byte
+    c,  
+;
+
+
+( when creating a does> word )
+: (does>)  
+    r> lastxt              ( where dovar, was ) 
+    swap  >call swap !    ( call instead of dovar, )  
+; target-only
+
+( when compiling a creator word )
+: does> 
+    finish-locals
+
+    here 1 and  if 0 c, then    \ need aligned addr for CALL
+    postpone (does>) 
+    \ created word is here:  need to fetch PC now
+    IRfrom c,
+    \ ... and don't return to data of created word!
+    \ postpone rdrop 
+; immediate target-only
+
+0 <export
+
+: dodefer, ( -- )
+    ['] ;S  >call  ,
+    Iexit c,
+;
+
+: is-check ( "..." -- is-addr ) 
+    '  dup >r
+    @  $8000  >=
+    r@ cell+ c@  Iexit  =
+    and not  err-not-deferred ?throw 
+    r> 
+; 
+
+: is,  ( xt-addr is-addr -- )
+  >r  >call  r>   !  
+;
+
+: is?,  ( is-addr -- )
+    @  call>
+;
+
+\   Push locals
+: <locals,  ( --  )
+    Itolocals ,
+;
+
+\   Allocate num cells of locals
+: ^locals,  ( num --  )
+    Ilalloc c,
+    c,
+;
+
+\   Fixup local allocations
+: locals>,  ( -- )
+    IfromLocals ,
+;
+
+\   Compile local reference:
+\      -1: read
+\       0: address
+\       1: write
+: local, ( local# mode -- )
+    dup 0< if
+        drop  Ilpidx c,  c,
+    else
+        Ilocal c,  swap c,    
+        if
+            Istore c,        
+        then
+    then 
+;
+
+: (lfetch) ( num -- )
+    Ilpidx c,  c,
+;
+
+: (laddr) ( num -- )
+    Ilocal c,  c,
+;
+
+export>
+
+

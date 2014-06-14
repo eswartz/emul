@@ -16,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import ejs.base.utils.HexUtils;
 import v9t9.tools.forthcomp.words.AbortQuote;
 import v9t9.tools.forthcomp.words.Again;
 import v9t9.tools.forthcomp.words.Allot;
@@ -24,6 +23,7 @@ import v9t9.tools.forthcomp.words.BackSlash;
 import v9t9.tools.forthcomp.words.BarExportNext;
 import v9t9.tools.forthcomp.words.BarHideNext;
 import v9t9.tools.forthcomp.words.BaseHostBranch;
+import v9t9.tools.forthcomp.words.BaseStdWord;
 import v9t9.tools.forthcomp.words.BaseWord;
 import v9t9.tools.forthcomp.words.Begin;
 import v9t9.tools.forthcomp.words.BracketChar;
@@ -79,6 +79,7 @@ import v9t9.tools.forthcomp.words.HostTargetOnly;
 import v9t9.tools.forthcomp.words.HostType;
 import v9t9.tools.forthcomp.words.HostUnaryOp;
 import v9t9.tools.forthcomp.words.HostVariable;
+import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.If;
 import v9t9.tools.forthcomp.words.Immediate;
 import v9t9.tools.forthcomp.words.Include;
@@ -112,13 +113,14 @@ import v9t9.tools.forthcomp.words.User;
 import v9t9.tools.forthcomp.words.Value;
 import v9t9.tools.forthcomp.words.Variable;
 import v9t9.tools.forthcomp.words.While;
+import ejs.base.utils.HexUtils;
 
 /**
  * @author ejs
  *
  */
 public class HostContext extends Context {
-	public static boolean DEBUG = false;
+	public static boolean DEBUG = true;
 	
 	private Stack<Integer> dataStack;
 	private TokenStream tokenStream;
@@ -217,6 +219,7 @@ public class HostContext extends Context {
 		
 		
 		define(":", new Colon());
+//		define("HOST:", new HostOnlyColon());
 		define("::", new ColonColon());
 		define(":>", new ToLocal());
 		
@@ -298,7 +301,6 @@ public class HostContext extends Context {
 		define(">r", new HostPushReturn());
 		
 		define("target-only", new HostTargetOnly());
-		
 		
 		define("+", new HostBinOp("+") {
 			public int getResult(int l, int r) { return l+r; }
@@ -592,7 +594,7 @@ public class HostContext extends Context {
 	public int getLocalDP() {
 		return hostDp;
 	}
-	public void compile(IWord word) {
+	public void build(IWord word) {
 		if (DEBUG) System.out.println("H>" + hostDp +": "+ word);
 		assert !hostWords.containsKey((Integer)hostDp);
 		if (word instanceof BaseHostBranch)
@@ -657,7 +659,7 @@ public class HostContext extends Context {
 	 * 
 	 */
 	public void compileExit() {
-		compile(new HostExitWord());
+		build(new HostExitWord());
 	}
 
 	/**
@@ -741,20 +743,31 @@ public class HostContext extends Context {
 						hadSemantics = true;
 					}
 				}
+			} else {
+				targetContext.buildCall(targetWord);
 			}
-			else
-				targetContext.compile(targetWord);
 		}
 		if (hostWord != null) {
 			if (hostWord.getCompilationSemantics() != null) {
-				if (!hadSemantics)
+				if (!hadSemantics) {
 					hostWord.getCompilationSemantics().execute(this, targetContext);
-				else if (hostWord != targetWord || !targetWord.getEntry().isImmediate()) {
-					compile(hostWord);
+					
+					// feels hacky -- detect when ANS/compiler words are used in
+					// target definitions but never defined
+					if (targetWord == null 
+							&& !(hostWord instanceof BaseStdWord && ((BaseStdWord) hostWord).isImmediate())
+							&& hostWord.getName() != null
+							&& (getLatest() == null
+							|| !hostWord.getName().equals(getLatest().getName()))) {
+						targetContext.defineForward(hostWord.getName(), getStream().getLocation());
+					}
+					
+				} else if (hostWord != targetWord || !targetWord.getEntry().isImmediate()) {
+					build(hostWord);
 				}
 			}
 			else {
-				compile(hostWord);
+				build(hostWord);
 			}
 		}
 			

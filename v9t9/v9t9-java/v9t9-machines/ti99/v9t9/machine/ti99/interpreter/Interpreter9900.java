@@ -251,29 +251,29 @@ public class Interpreter9900 implements IInterpreter {
         status.expand(iblock.st);
         
         MachineOperand9900 mop1 = (MachineOperand9900) iblock.inst.getOp1();
-        MachineOperand9900 mop2 = (MachineOperand9900) iblock.inst.getOp2();
-
-        if (mop1.type != IMachineOperand.OP_NONE) {
-        	mop1.cycles = 0;
+		MachineOperand9900 mop2 = (MachineOperand9900) iblock.inst.getOp2();
+		
+		if (mop1.type != IMachineOperand.OP_NONE) {
+			mop1.cycles = 0;
 			iblock.ea1 = mop1.getEA(iblock);
 		}
-        if (mop2.type != IMachineOperand.OP_NONE) {
-        	mop2.cycles = 0;
+		if (mop2.type != IMachineOperand.OP_NONE) {
+			mop2.cycles = 0;
 			iblock.ea2 = mop2.getEA(iblock);
 		}
-        if (mop1.type != IMachineOperand.OP_NONE) {
-        	//if (ins.inst != InstructionTable.Ili)		// even LI will read in the real hardware
-        	iblock.val1 = mop1.getValue(iblock, iblock.ea1);
+		if (mop1.type != IMachineOperand.OP_NONE) {
+			//if (ins.inst != InstructionTable.Ili)		// even LI will read in the real hardware
+			iblock.val1 = mop1.getValue(iblock, iblock.ea1);
 		}
-        if (mop2.type != IMachineOperand.OP_NONE) {
+		if (mop2.type != IMachineOperand.OP_NONE) {
 			iblock.val2 = mop2.getValue(iblock, iblock.ea2);
 		}
-        if (iblock.inst.getInst() == Inst9900.Idiv) {
-            iblock.val3 = memory.readWord(iblock.ea2 + 2);
-        }
+		if (iblock.inst.getInst() == Inst9900.Idiv) {
+		    iblock.val3 = memory.readWord(iblock.ea2 + 2);
+		}
     }
 
-    /**
+	/**
      * 
      */
     private void flushOperands(Instruction9900 ins) {

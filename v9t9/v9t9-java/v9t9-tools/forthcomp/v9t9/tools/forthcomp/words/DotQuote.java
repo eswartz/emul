@@ -45,7 +45,7 @@ public class DotQuote extends BaseWord {
 
 				new SQuote().getCompilationSemantics().execute(hostContext, targetContext);
 				IWord hostType = hostContext.require("type");
-				ITargetWord type = (ITargetWord) targetContext.require("type");
+				ITargetWord type = targetContext.require("type");
 				hostContext.compileWord(targetContext, hostType, type);
 			}
 		});

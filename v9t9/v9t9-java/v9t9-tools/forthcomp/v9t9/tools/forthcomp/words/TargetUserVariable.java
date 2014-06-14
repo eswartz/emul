@@ -26,15 +26,19 @@ public class TargetUserVariable extends TargetWord {
 	 * @param index 
 	 * 
 	 */
-	public TargetUserVariable(String name, int index) {
-		super(new DictEntry(0, 0, name));
+	public TargetUserVariable(DictEntry entry, int index) {
+		super(entry);
 		this.index = index;
 		
 		setCompilationSemantics(new ISemantics() {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				targetContext.compileUser(TargetUserVariable.this);				
+				if (targetContext.isNativeDefinition()) {
+					targetContext.compileUser(TargetUserVariable.this);
+				} else {
+					targetContext.buildCall(TargetUserVariable.this);
+				}
 			}
 		});
 		setExecutionSemantics(new ISemantics() {

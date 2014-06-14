@@ -47,7 +47,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 		
 		parseString("Variable t");
 		dumpDict();
-		ITargetWord var = (ITargetWord) targCtx.require("T");
+		ITargetWord var = targCtx.require("T");
 
 		var.getExecutionSemantics().execute(hostCtx, targCtx);
 		assertEquals(var.getEntry().getParamAddr(), hostCtx.popData());
@@ -67,9 +67,9 @@ public class TestForthCompF99b extends BaseF99bTest {
 		
 		parseString("Variable t Variable ud");
 		
-		ITargetWord tvar = (ITargetWord) targCtx.require("T");
+		ITargetWord tvar = targCtx.require("T");
 		tvar.getExecutionSemantics().execute(hostCtx, targCtx);
-		ITargetWord uvar = (ITargetWord) targCtx.require("Ud");
+		ITargetWord uvar = targCtx.require("Ud");
 		uvar.getExecutionSemantics().execute(hostCtx, targCtx);
 		
 		int ud = hostCtx.popData();
@@ -96,7 +96,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 	@Test
 	public void testColon1() throws Exception {
 
-		ITargetWord semiS = (ITargetWord) targCtx.require(";S");
+		ITargetWord semiS = targCtx.require(";S");
 		assertNotNull(semiS);
 
 		parseString(": foo ;");
@@ -893,8 +893,8 @@ public class TestForthCompF99b extends BaseF99bTest {
 				": foo cls ;\n" +
 				": cls vfill ;\n");
 		
-		ITargetWord origCls = (ITargetWord) targCtx.require("cls");
-		ITargetWord origVfill = (ITargetWord) targCtx.require("vfill");
+		ITargetWord origCls = targCtx.require("cls");
+		ITargetWord origVfill = targCtx.require("vfill");
 		
 		parseString(
 				": vfill ; \n"+
@@ -916,12 +916,12 @@ public class TestForthCompF99b extends BaseF99bTest {
 		word = targCtx.readAddr(dp);
 		assertCall(origVfill, word);
 		
-		dp = ((ITargetWord) targCtx.require("foo2")).getEntry().getContentAddr();
+		dp = (targCtx.require("foo2")).getEntry().getContentAddr();
 		
 		word = targCtx.readAddr(dp );
 		assertCall("vfill", word);
 		
-		dp = ((ITargetWord) targCtx.require("lala")).getEntry().getContentAddr();
+		dp = (targCtx.require("lala")).getEntry().getContentAddr();
 		
 		word = targCtx.readAddr(dp);
 		assertCall("cls", word);
@@ -1179,7 +1179,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 		
 		interpret("fool");
 
-		ITargetWord var = (ITargetWord) targCtx.require("grade");
+		ITargetWord var = targCtx.require("grade");
 		assertEquals(97, targCtx.readCell(var.getEntry().getParamAddr())); 
 	}
 	
@@ -1192,7 +1192,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 		
 		interpret("fool");
 
-		ITargetWord var = (ITargetWord) targCtx.require("buffer");
+		ITargetWord var = targCtx.require("buffer");
 		assertEquals(var.getEntry().getParamAddr() + 50, hostCtx.popData()); 
 	}
 	@Test
@@ -1305,7 +1305,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 
 		dumpDict();
 
-		ITargetWord var = (ITargetWord) targCtx.require("0");
+		ITargetWord var = targCtx.require("0");
 		int dp = var.getEntry().getContentAddr();		
 		assertEquals(IlitX, targCtx.readChar(dp++));
 		assertEquals(Iexit, targCtx.readChar(dp++));

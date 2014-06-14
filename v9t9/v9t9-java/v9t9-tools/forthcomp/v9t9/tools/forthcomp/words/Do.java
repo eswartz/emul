@@ -30,10 +30,10 @@ public class Do extends BaseStdWord {
 		
 		targetContext.markHostExecutionUnsupported();
 		
-		ITargetWord word = (ITargetWord) targetContext.require("(do)");
+		ITargetWord word = targetContext.require("(do)");
 		word.getCompilationSemantics().execute(hostContext, targetContext);
 		
-		hostContext.compile(hostContext.find("(do)"));
+		hostContext.build(hostContext.find("(do)"));
 		
 		targetContext.pushHere(hostContext);
 		hostContext.pushData(0);		// not ?do

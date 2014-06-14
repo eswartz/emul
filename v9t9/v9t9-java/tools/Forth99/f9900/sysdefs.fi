@@ -1,0 +1,188 @@
+\   sysdefs.fi
+\ 
+\   (c) 2010-2013 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+\   ---------   ans
+
+| 1			constant 	#CHAR
+| 2			constant 	#CELL
+
+\ -----------   registers
+
+$1			constant	REG_TOS
+$2			constant	REG_T1
+$3			constant	REG_T2
+$13			constant	REG_RP
+$14			constant	REG_IP
+$15			constant	REG_SP
+
+
+\   ---------   memory map
+
+$0000       constant    I/O
+
+|+ $0000       constant    VDPRD
+|+ $0002       constant    VDPST
+|+ $0004       constant    VDPWD
+|+ $0006       constant    VDPWA       \ high then low
+|+ $0008       constant    VDPCL
+|+ $000A       constant    VDPWI
+
+|+ $0010       constant    GPLRD
+|+ $0012       constant    GPLRA       \ high then low
+|+ $0014       constant    GPLWD
+|+ $0016       constant    GPLWA
+|+ $0018       constant    SPCHRD
+|+ $001a       constant    SPCHWT
+
+|+ $0020       constant    KBD
+
+|+ $0040       constant    SOUND  \ ... 0x20!
+
+\   ---------  peripherals
+
+|+ $0080       constant    'INTS
+|+ $0081       constant    'INTSP
+    
+    $1      constant    M_INT_BKPT
+    $2      constant    M_INT_EXT
+    $4      constant    M_INT_VDP
+    $8      constant    M_INT_KBD
+
+$0082       constant    'KBD
+$0083       constant    'KBDA
+
+|+ $0084    constant    'GATE
+
+|+ $0087    constant    'RND
+
+$0088       constant    'DSK 
+
+\   0: write: cmd; read: status
+  'DSK 0 +  constant    'DSKCMD
+        $00 constant    #dskCmdRestore
+        $10 constant    #dskCmdSeek
+        $80 constant    #dskCmdReadSector
+        $A0 constant    #dskCmdWriteSector
+        $F0 constant    #dskCmdInterrupt
+        
+        $08 constant    #dskCmd'Head
+        $04 constant    #dskCmd'Verify
+        $02 constant    #dskCmd'10ms
+        
+\   0: write: cmd; read: status
+  'DSK 0 +  constant    'DSKST
+        $80 constant    #dskStRdy
+        $02 constant    #dskStDrq
+        $01 constant    #dskStBusy
+        
+\   1: write/read: track addr
+  'DSK 1 +  constant    'DSKTRK
+  
+\  2: write/read: sector addr
+  'DSK 2 +  constant    'DSKSEC
+  
+\  3: write/read: data
+  'DSK 3 +  constant    'DSKDAT
+  
+\  4: write/read: [0 | 0 | 0 | 0 | motor | hold | head | side ] 
+  'DSK 4 +  constant    'DSKFLG
+        $01 constant    #dskFlgSide
+        $02 constant    #dskFlgHead
+        $04 constant    #dskFlgHold
+        $08 constant    #dskFlgMotor
+  
+\  5: write/read: [0 | 0 | 0 | 0 | 0 | D2 | D1 | D0] 
+  'DSK 5 +  constant    'DSKNUM
+
+$00ff       constant    'DBG
+
+\   -----------------------    
+
+$0400       constant    ROM
+
+ROM         constant    (BOOT)
+ROM 2 +     constant    (COLD)
+ROM 4 +     constant    DP0
+ROM 6 +     constant    (LATEST)
+
+$ffa0       constant    FaultStacks \ ... 0x20
+
+$ffc0       constant    Workspaces \ ... 0x40
+	Workspaces $00 + 	constant StdWP
+	Workspaces $20 + 	constant IntWP
+
+|+ $0       constant    IntVecs     \ ... 0x40
+
+|+     0       constant    INT_RESET
+|+     1       constant    INT_VDP
+
+\ sizes of fixed areas
+$80         constant    (#RP)
+$80         constant    (#SP)
+
+\ minimum size is (2*n)+2 where n is cell size
+#cell 3 LSHIFT  2*  2+ 
+            constant   (#numbuf)
+$100        constant   (#slit-pad)
+$100        constant   #TIB
+
+|+ $400        constant    CHARS/BLOCK \ basic block size
+CHARS/BLOCK 
+    2 +     \ block # field (or 0x8000 for modified)
+            constant   (#blk)
+(#blk) 3 *  constant   (#blks)    \ total block space
+
+$80        constant   (#up)       \ global user space
+
+|+ Workspaces  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - #TIB - (#blks) - (#up) -
+             constant RamTop    \ grows down
+
+\ Arrange memory to minimize problems in case of overflow.
+RamTop                        constant (first)    \ grows up
+(first) (#blks) +             constant (limit)
+(limit)                       constant (up0)      \ grows up 
+(up0) (#up) + (#numbuf) +     constant (numbuf0)     \ grows down
+(numbuf0)                     constant (slit-pad0)    \ grows up
+(slit-pad0) (#slit-pad) +     constant TIB         \ grows up
+TIB #TIB + (#rp) +            constant (rp0)    \ grows down
+(rp0) (#sp) +                 constant (sp0)      \ grows down
+
+
+\ -----------   GROM addresses
+
+$0
+
+dup         constant    >grom_sig           2+
+dup         constant    >grom_dict          2+      \ note: build depends on this offset
+dup         constant    >grom_dictend       2+      \ note: build depends on this offset
+dup         constant    >grom_logo          2+
+dup         constant    >grom_kbdlist       2+
+dup         constant    >grom_font8x8       2+
+dup         constant    >grom_font5x6       2+
+dup         constant    >grom_errptrs       2+
+dup         constant    >grom_editorhelp    2+
+dup         constant    >grom_menubar       2+
+
+drop
+
+$4000       Constant    >gram_dict_base
+$8000       Constant    >gram_disk_base
+
+\ ----------    syscalls
+
+
+\ ---------     interrupt flag bits
+
+$80         constant    v-int-nosprmot
+$40         constant    v-int-nocursor
+$20         constant    v-int-noabort
+
+
+

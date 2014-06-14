@@ -43,6 +43,7 @@ public class DictEntry implements Comparable<DictEntry> {
 	protected int hostStackCount;
 	protected boolean targetOnly;
 	private boolean inline;
+	private boolean hostOnly;
 	
 	
 	
@@ -142,15 +143,18 @@ public class DictEntry implements Comparable<DictEntry> {
 		return targetOnly;
 	}
 	
-	/**
-	 * @return the hostStackCount
-	 */
+	
+	public void setHostOnly(boolean hostOnly) {
+		this.hostOnly = hostOnly;
+	}
+	
+	public boolean isHostOnly() {
+		return hostOnly;
+	}
+	
 	public int getHostStackCount() {
 		return hostStackCount;
 	}
-	/**
-	 * @param targetContext
-	 */
 	public void writeEntry(ITargetContext targetContext) {
 		byte[] ent = doWriteEntry(targetContext);
 		

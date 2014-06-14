@@ -8,12 +8,10 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.tools.forthcomp;
+package v9t9.tools.forthcomp.f99b;
 
 import static v9t9.machine.f99b.asm.InstF99b.*;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Stack;
 
 import v9t9.common.machine.IBaseMachine;
@@ -24,12 +22,19 @@ import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.cpu.CpuStateF99b;
 import v9t9.machine.f99b.memory.EnhancedRamByteArea;
+import v9t9.tools.forthcomp.AbortException;
+import v9t9.tools.forthcomp.BaseGromTargetContext;
+import v9t9.tools.forthcomp.DictEntry;
+import v9t9.tools.forthcomp.GromDictEntry;
+import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.RelocEntry;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
-import v9t9.tools.forthcomp.words.ExitI;
-import v9t9.tools.forthcomp.words.FieldComma;
+import v9t9.tools.forthcomp.f99b.words.ExitI;
+import v9t9.tools.forthcomp.f99b.words.FieldComma;
 import v9t9.tools.forthcomp.words.HostLiteral;
+import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
-import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetSQuote;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
 import v9t9.tools.forthcomp.words.TargetValue;
@@ -39,12 +44,8 @@ import ejs.base.utils.HexUtils;
  * @author ejs
  *
  */
-public class F99bTargetContext extends TargetContext implements IGromTargetContext {
+public class F99bTargetContext extends BaseGromTargetContext {
 
-	private boolean useGromDictionary;
-	
-	private List<Integer> leaves;
-	//private TargetUserVariable lpUser;
 	private DictEntry stub4BitLit;
 	private DictEntry stub8BitOpcode;
 	private DictEntry stub16BitOpcode;
@@ -55,10 +56,6 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 	private DictEntry stub16BitJump;
 	private DictEntry stub8BitJump;
 	private DictEntry stub4BitJump;
-
-	private int gp;
-
-	private MemoryDomain grom;
 
 	private DictEntry stub16BitU8Lit;
 	//private boolean localSupport;
@@ -81,7 +78,6 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 	 */
 	public F99bTargetContext(int memorySize) {
 		super(false, 8, 16, memorySize);
-		leaves = new LinkedList<Integer>();
 		
 		stub8BitOpcode = defineStub("<<8-bit opcode>>");
 		stub16BitOpcode = defineStub("<<16-bit opcode>>");
@@ -96,19 +92,6 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 		stub16BitJump = defineStub("<<16-bit jump>>");
 		stubCall = defineStub("<<call>>");
 		
-	}
-	
-	/**
-	 * @return the useGromDictionary
-	 */
-	public boolean useGromDictionary() {
-		return useGromDictionary;
-	}
-	/**
-	 * @param useGromDictionary the useGromDictionary to set
-	 */
-	public void setUseGromDictionary(boolean useGromDictionary) {
-		this.useGromDictionary = useGromDictionary;
 	}
 	
 	/* (non-Javadoc)
@@ -244,7 +227,8 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 		defineInlinePrim("DU>", Icmp_d+CMP_UGT);
 		defineInlinePrim("DU>=", Icmp_d+CMP_UGE);
 		
-		defineInlinePrim("(unloop)", IRfrom, Irdrop_d, ItoR);
+		defineInlinePrim("unloop", Irdrop_d);
+		//defineInlinePrim("(unloop)", IRfrom, Irdrop_d, ItoR);
 		defineInlinePrim("2rdrop", Irdrop_d);
 		defineInlinePrim("2/", I2div);
 		defineInlinePrim("2*", I2times);
@@ -327,20 +311,14 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 	public TargetColonWord defineColonWord(String name) {
 		TargetColonWord word = super.defineColonWord(name);
 		
-		leaves.clear();
-		
 		startColonWord = getDP();
 		
 		return word;
 	}
-	/**
-	 * Call addresses must be aligned
-	 */
-	public void initCode() {
+	
+	@Override
+	public void initWordEntry() {
 		alignDP();
-	}
-
-	public void alignBranch() {
 	}
 
 	/* (non-Javadoc)
@@ -356,25 +334,28 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 		}
 		return val;
 	}
-	public void compile(ITargetWord word) {
+	public void compile(ITargetWord word) throws AbortException {
 		word.getEntry().use();
-		compileCall(word);
+		if (word instanceof IPrimitiveWord)
+			word.getCompilationSemantics().execute(hostCtx, this);
+		else
+			compileCall(word);
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.words.TargetContext#compileLoad(int)
-	 */
-	@Override
-	protected void compileLoad(int bytes) {
-		if (bytes == 1)
-			compileOpcode(Icload);
-		else if (bytes == 2)
-			compileOpcode(Iload);
-		else if (bytes == 4)
-			compileOpcode(Iload_d);
-		else
-			assert false;
-	}
+//	/* (non-Javadoc)
+//	 * @see v9t9.forthcomp.words.TargetContext#compileLoad(int)
+//	 */
+//	@Override
+//	protected void compileLoad(int bytes) {
+//		if (bytes == 1)
+//			compileOpcode(Icload);
+//		else if (bytes == 2)
+//			compileOpcode(Iload);
+//		else if (bytes == 4)
+//			compileOpcode(Iload_d);
+//		else
+//			assert false;
+//	}
 	/**
 	 * @param opcode
 	 */
@@ -392,8 +373,8 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 	}
 
 	public void compileByte(int opcode) {
-		if (HostContext.DEBUG)
-			logfile.println("T>" + Integer.toHexString(getDP())+" C, " + Integer.toHexString(opcode));
+//		if (HostContext.DEBUG)
+//			logfile.println("T>" + Integer.toHexString(getDP())+" C, " + Integer.toHexString(opcode));
 		writeChar(alloc(1), opcode);
 	}
 
@@ -449,28 +430,14 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 		}
 	}
 	
-	
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#compileAddr(int)
-	 */
 	@Override
-	public void compileCell(int loc) {
-		doCompileCell(loc);
+	public void buildCell(int loc) {
+		super.buildCell(loc);
 		stub16BitLit.use();
 	}
-	
-	private void doCompileCell(int loc) {
-		int ptr = alloc(2);
-		writeCell(ptr, loc);
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#compileChar(int)
-	 */
 	@Override
-	public void compileChar(int val) {
-		int ptr = alloc(1);
-		writeChar(ptr, val);
+	public void buildChar(int val) {
+		super.buildChar(val);
 		stub8BitLit.use();
 	}
 	
@@ -540,62 +507,12 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 	 */
 	@Override
 	public void pushFixup(HostContext hostContext) {
-		// a fixup needs the memory loc of the offset to update
-		// as well as the original PC of the referring instruction
-		int nextDp = getDP();
-		hostContext.pushData(nextDp);
+		super.pushFixup(hostContext);
 		alloc(1);		// assume short branch
-		
-		hostContext.markFixup(nextDp);
 	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#pushHere(v9t9.forthcomp.HostContext)
-	 */
+
 	@Override
-	public int pushHere(HostContext hostContext) {
-		int nextDp = getDP();
-		hostContext.pushData(nextDp);
-		hostContext.markFixup(nextDp);
-		return nextDp;
-	}
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#swapFixup()
-	 */
-	@Override
-	public void swapFixup(HostContext hostContext) {
-		int d0 = hostContext.popData();
-		int e0 = hostContext.popData();
-		hostContext.pushData(d0);
-		hostContext.pushData(e0);
-	}
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#resolveFixup()
-	 */
-	public void resolveFixup(HostContext hostContext) throws AbortException {
-		int nextDp = getDP();
-		int opAddr = hostContext.popData();
-		int diff = nextDp - opAddr;
-		
-		writeJumpOffs(hostContext, opAddr, diff);
-		
-		hostContext.resolveFixup(opAddr, nextDp);
-
-	}
-
-
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#resolveFixup()
-	 */
-	public void compileBack(HostContext hostContext, boolean conditional) throws AbortException {
-		int nextDp = getDP();
-		int opAddr = hostContext.popData();
-		int diff = opAddr - nextDp;
-		
-		writeJumpOffsAlloc(diff, conditional ? I0branchX : IbranchX);
-	}
-
-	private int writeJumpOffs(HostContext hostContext, int opAddr, int diff)
+	protected int writeJumpOffs(HostContext hostContext, int opAddr, int diff)
 			throws AbortException {
 		
 		// Opcode is already compiled as 1-byte branch, so diff is relative to offset
@@ -627,8 +544,10 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 	}
 
 
-	private void writeJumpOffsAlloc(int diff, int baseOpcode)
+	@Override
+	protected void writeJumpOffsAlloc(int diff, boolean conditional)
 			throws AbortException {
+		int baseOpcode = conditional ? I0branchX : IbranchX;
 		if (diff < -130 || diff >= 128) {
 			stub16BitJump.use();
 			if (diff > 0)
@@ -647,56 +566,13 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 				diff--;
 			baseOpcode = baseOpcode == IbranchX ? IbranchB : I0branchB;
 			compileOpcode(baseOpcode);
-			compileChar((diff & 0xff));
+			compileByte((diff & 0xff));
 		}
 		else {
 			stub4BitJump.use();
 			diff--;
 			compileOpcode(baseOpcode | (diff & 0xf));
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#pushLeave(v9t9.forthcomp.HostContext)
-	 */
-	@Override
-	public void pushLeave(HostContext hostContext) {
-		// add fixup to a list
-		pushFixup(hostContext);
-		leaves.add(hostContext.popData());
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#loopCompile(v9t9.forthcomp.HostContext, v9t9.forthcomp.ITargetWord)
-	 */
-	@Override
-	public void loopCompile(HostContext hostCtx, ITargetWord loopCaller)
-			throws AbortException {
-		//compile(loopCaller);
-		loopCaller.getCompilationSemantics().execute(hostCtx, this);
-		
-		boolean isQDo = hostCtx.popData() != 0;
-		
-		int opAddr = hostCtx.popData();
-		int diff = opAddr - getDP();
-		
-		writeJumpOffsAlloc(diff, I0branchX);
-		
-		if (isQDo) {
-			// then comes here
-			resolveFixup(hostCtx);
-		}
-		
-		for (int i = 0; i < leaves.size(); i++) {
-			hostCtx.pushData(leaves.get(i));
-			resolveFixup(hostCtx);
-		}
-		leaves.clear();
-		
-		//ITargetWord unloop = (ITargetWord) require("unloop");
-		//unloop.getCompilationSemantics().execute(hostCtx, this);
-		compileOpcode(Irdrop_d);
-		
 	}
 
 	/* (non-Javadoc)
@@ -768,16 +644,16 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 		if (entry.hasLocals())
 			throw new AbortException("cannot add more locals now");
 		
-		compile((ITargetWord) require("(>LOCALS)"));
+		compile(require("(>LOCALS)"));
 		compileOpcode(ItoR);	// save old LP
 		
 	}
 
 	@Override
 	public void compileCleanupLocals() throws AbortException {
-		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
+		DictEntry entry = (getLatest()).getEntry();
 		if (entry.hasLocals()) {
-			compile((ITargetWord) require("(LOCALS>)"));
+			compile(require("(LOCALS>)"));
 		}
 	}
 	
@@ -828,20 +704,20 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 	@Override
 	public void compileAllocLocals(int count) throws AbortException {
 		compileOpcode(Ilalloc);
-		compileChar(count);
+		compileByte(count);
 	}
 	
 	@Override
 	public void compileLocalAddr(int index) {
 		compileOpcode(Ilocal);
-		compileChar(index);
+		compileByte(index);
 	}
 
 	
 	@Override
 	public void compileFromLocal(int index) throws AbortException {
 		compileOpcode(Ilpidx);
-		compileChar(index);
+		compileByte(index);
 	}
 
 	@Override
@@ -868,12 +744,12 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 	 * @see v9t9.forthcomp.TargetContext#compileDoUser(int)
 	 */
 	@Override
-	public void compileDoUser(int index) {
-		if (index < 256) {
+	public void compileDoUser(int offset) {
+		if (offset < 256) {
 			compileOpcode(Iupidx);
-			compileByte(index);
+			compileByte(offset);
 		} else {
-			doCompileLiteral(index, false, true);
+			doCompileLiteral(offset, false, true);
 			compileOpcode(Iuser);
 		}
 		compileOpcode(Iexit);
@@ -902,12 +778,12 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 			compileOpcode(IlitW);
 			loc = alloc(cellSize);
 			compileOpcode(Iexit);
-			//compile((ITargetWord) require("DOLIT"));
+			//compile(require("DOLIT"));
 		} else { 
 			compileOpcode(IlitD_d);
 			loc = alloc(cellSize * cells);
 			compileOpcode(Iexit);
-			//compile((ITargetWord) require("DODLIT"));
+			//compile(require("DODLIT"));
 		}
 		
 		
@@ -969,30 +845,6 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#createMemory()
-	 */
-	@Override
-	public MemoryDomain createMemory() {
-		MemoryDomain console = new MemoryDomain(IMemoryDomain.NAME_CPU, false);
-		EnhancedRamByteArea bigRamArea = new EnhancedRamByteArea(0, 0x10000); 
-		MemoryEntry bigRamEntry = new MemoryEntry("RAM", console, 0, MemoryDomain.PHYSMEMORYSIZE, 
-				bigRamArea);
-		console.mapEntry(bigRamEntry);
-		return console;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.words.TargetContext#compileComma(v9t9.forthcomp.ITargetWord)
-	 */
-	@Override
-	public void compilePostpone(ITargetWord word) throws AbortException {
-		compileTick(word);
-		//compile((ITargetWord) require("LITERAL"));
-		compile((ITargetWord) require("compile,"));
-		
-	}
-	
-	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.words.TargetContext#compileDoVar()
 	 */
 	@Override
@@ -1039,50 +891,6 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 		//compileCell(reloc);
 	}
 
-	@Override
-	public int getGP() {
-		return gp;
-	}
-	
-	/**
-	 * @param gp the gp to set
-	 */
-	@Override
-	public void setGP(int gp) {
-		this.gp = gp;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.words.TargetContext#createDictEntry(int, int, java.lang.String)
-	 */
-	@Override
-	protected DictEntry createDictEntry(int size, int entryAddr, String name, boolean doExport) {
-		
-		if (useGromDictionary && doExport) {
-
-			// link (=>xt), name
-			int dictSize = cellSize + 1 + name.length();
-			DictEntry entry = new GromDictEntry(dictSize, entryAddr, name, gp);
-			gp += dictSize;
-			return entry;
-		} else {
-			return super.createDictEntry(size, entryAddr, name, doExport);
-		}
-	}
-
-	/**
-	 * @param grom the grom to set
-	 */
-	public void setGrom(MemoryDomain grom) {
-		this.grom = grom;
-	}
-	/**
-	 * @return
-	 */
-	public MemoryDomain getGrom() {
-		return grom;
-	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.TargetContext#compileExit(v9t9.tools.forthcomp.HostContext)
 	 */
@@ -1183,5 +991,13 @@ public class F99bTargetContext extends TargetContext implements IGromTargetConte
 	 */
 	private void incDP(int i) {
 		setDP(getDP() + i);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetContext#isNativeDefinition()
+	 */
+	@Override
+	public boolean isNativeDefinition() {
+		return true;
 	}
 }

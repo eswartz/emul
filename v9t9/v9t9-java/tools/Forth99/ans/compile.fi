@@ -172,7 +172,7 @@ User csp
     ?csp
     [compile] ;s
     smudge postpone [
- ; immediate target-only  
+; immediate target-only  
 
 : ?pairs    ( i*x tag tag' -- )
     - err-control-nesting ?throw

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -24,6 +25,8 @@ import ejs.base.utils.Pair;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.machine.f99b.memory.EnhancedRamByteArea;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.Context;
 import v9t9.tools.forthcomp.DictEntry;
@@ -68,6 +71,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	//private boolean inlineFlagNext;
 	protected HostContext hostCtx;
 
+	private List<Integer> leaves;
+
+
+	
 	public TargetContext(boolean littleEndian, int charBits, int cellBits, int memorySize) {
 		this.littleEndian = littleEndian;
 		this.charBits = charBits;
@@ -76,6 +83,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		this.memory = new byte[memorySize];
 		this.forwards = new LinkedHashMap<String,ForwardRef>();
 		this.export = true;
+		leaves = new LinkedList<Integer>();
 		
 		stubData = defineStub("<<data space>>");
 	}
@@ -291,13 +299,27 @@ public abstract class TargetContext extends Context implements ITargetContext {
 
 		symbols.put(entry.getContentAddr(), name);
 
-		ForwardRef ref = forwards.get(name.toUpperCase());
-		if (ref != null) {
-			resolveForward(ref, entry);
-			forwards.remove(name.toUpperCase());
-		}
+		resolveForward(entry);
 
 		return entry;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.ITargetContext#resolveForward(v9t9.tools.forthcomp.DictEntry)
+	 */
+	@Override
+	public void resolveForward(DictEntry entry) {
+		String name = entry.getName().toUpperCase();
+		ForwardRef ref = forwards.get(name);
+		if (ref != null) {
+			resolveForward(ref, entry);
+			forwards.remove(name);
+		}
+		
+	}
+
+	public ITargetWord require(String token) throws AbortException {
+		return (ITargetWord) super.require(token);
 	}
 
 	/* (non-Javadoc)
@@ -455,7 +477,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	public TargetVariable create(String name, int bytes) {
 		DictEntry entry = defineEntry(name);
 		int dp = entry.getContentAddr();
-		initCode();
+		initWordEntry();
 		compileDoVar();
 		stubData.use(bytes);
 		int loc = alloc(bytes);
@@ -464,6 +486,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		return var;
 	}
 
+	/** Compile code that will push the parameter area's address */
 	abstract protected void compileDoVar();
 
 
@@ -473,11 +496,20 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	 */
 	@Override
 	public TargetColonWord defineColonWord(String name) {
-		DictEntry entry = defineEntry(name);
-//		logfile.println("T> : " + name);
-		initCode();
+		DictEntry entry = createColonEntry(name);
 		final TargetColonWord colon =  (TargetColonWord) define(name, new TargetColonWord(entry));
 		return colon;
+	}
+
+	/**
+	 * @param name
+	 * @return
+	 */
+	protected DictEntry createColonEntry(String name) {
+		DictEntry entry = defineEntry(name);
+		initWordEntry();
+		leaves.clear();
+		return entry;
 	}
 
 	/* (non-Javadoc)
@@ -494,16 +526,18 @@ public abstract class TargetContext extends Context implements ITargetContext {
 				System.err.println("*** WARNING: forward reference to : " +name + " forces dictionary definition");
 			}
 		}
+		DictEntry entry;
 		if (mustDefine) {
-			defineEntry(name);
-			initCode();
+			entry = defineEntry(name);
+			initWordEntry();
 			compileDoConstant(value, cells);
 		} else {
+			entry = new DictEntry(0, 0, name);
 			exportFlagNext = false;
 			// assume address
 			symbols.put(value, name);
 		}
-		final TargetConstant constant = (TargetConstant) define(name, new TargetConstant(name, value, 1));
+		final TargetConstant constant = (TargetConstant) define(name, new TargetConstant(entry, value, 1));
 		return constant;
 	}
 
@@ -525,27 +559,6 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		return tvalue;
 	}
 
-	abstract protected void compileLoad(int cells);
-
-
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compilePushValue(int, int)
-	 */
-	@Override
-	abstract public int compilePushValue(int cells, int value) throws AbortException;
-	
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileDoConstant(int, int)
-	 */
-	@Override
-	abstract public void compileDoConstant(int value, int cells) throws AbortException;
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileDoUser(int)
-	 */
-	@Override
-	abstract public void compileDoUser(int index) throws AbortException;
-
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineUser(java.lang.String, int)
 	 */
@@ -556,8 +569,8 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		
 		// the "variable" will be frozen in ROM, a count of bytes
 		TargetVariable up = findOrCreateVariable("UP0");
-		int index = readCell(up.getEntry().getParamAddr());
-		writeCell(up.getEntry().getParamAddr(), index + bytes);
+		int offset = readCell(up.getEntry().getParamAddr());
+		writeCell(up.getEntry().getParamAddr(), offset + bytes);
 
 
 		boolean mustDefine = currentExport();
@@ -567,16 +580,18 @@ public abstract class TargetContext extends Context implements ITargetContext {
 				System.err.println("*** WARNING: forward reference to : " +name + " forces dictionary definition");
 			}
 		}
+		DictEntry entry;
 		if (mustDefine) {
-			defineEntry(name);
-			initCode();
+			entry = defineEntry(name);
+			initWordEntry();
 			
-			compileDoUser(index);
+			compileDoUser(offset);
 		} else {
+			entry = new DictEntry(0, 0, name);
 			exportFlagNext = false;
 		}
 		
-		return (TargetUserVariable) define(name, new TargetUserVariable(name, index));
+		return (TargetUserVariable) define(name, new TargetUserVariable(entry, offset));
 	}
 
 	protected TargetVariable findOrCreateVariable(String name) {
@@ -587,36 +602,6 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		return var;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#initCode()
-	 */
-	@Override
-	abstract public void initCode();
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#alignBranch()
-	 */
-	@Override
-	abstract public void alignBranch();
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compile(v9t9.tools.forthcomp.ITargetWord)
-	 */
-	@Override
-	abstract public void compile(ITargetWord word);
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileLiteral(int, boolean, boolean)
-	 */
-	@Override
-	abstract public void compileLiteral(int value, boolean isUnsigned, boolean optimize);
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileDoubleLiteral(int, int, boolean, boolean)
-	 */
-	@Override
-	abstract public void compileDoubleLiteral(int valueLo, int valiueHi, boolean isUnsigned, boolean optimize);
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#exportMemory(v9t9.common.memory.IMemoryDomain)
-	 */
 	@Override
 	public void exportMemory(IMemoryDomain console) throws AbortException {
 		for (int i = baseDP; i < dp; i += cellSize) {
@@ -653,35 +638,6 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#pushFixup(v9t9.tools.forthcomp.HostContext)
-	 */
-	@Override
-	abstract public void pushFixup(HostContext hostContext);
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#pushHere(v9t9.tools.forthcomp.HostContext)
-	 */
-	@Override
-	abstract public int pushHere(HostContext hostContext);
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#swapFixup(v9t9.tools.forthcomp.HostContext)
-	 */
-	@Override
-	abstract public void swapFixup(HostContext hostContext);
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#resolveFixup(v9t9.tools.forthcomp.HostContext)
-	 */
-	@Override
-	abstract public void resolveFixup(HostContext hostContext) throws AbortException;
-	
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileBack(v9t9.tools.forthcomp.HostContext, boolean)
-	 */
-	@Override
-	abstract public void compileBack(HostContext hostContext, boolean conditional) throws AbortException;
-	
-	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#clearDict()
 	 */
 	@Override
@@ -694,46 +650,6 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		lastExportedEntry = null;
 		Arrays.fill(memory, (byte) 0);
 	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileCell(int)
-	 */
-	@Override
-	abstract public void compileCell(int val);
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileChar(int)
-	 */
-	@Override
-	abstract public void compileChar(int val);
-	
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileTick(v9t9.tools.forthcomp.ITargetWord)
-	 */
-	@Override
-	abstract public void compileTick(ITargetWord word);
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileWordParamAddr(v9t9.tools.forthcomp.words.TargetValue)
-	 */
-	@Override
-	abstract public void compileWordParamAddr(TargetValue word);
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#pushLeave(v9t9.tools.forthcomp.HostContext)
-	 */
-	@Override
-	abstract public void pushLeave(HostContext hostContext);
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#loopCompile(v9t9.tools.forthcomp.HostContext, v9t9.tools.forthcomp.ITargetWord)
-	 */
-	@Override
-	abstract public void loopCompile(HostContext hostCtx, ITargetWord loopCaller) throws AbortException;
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineCompilerWords(v9t9.tools.forthcomp.HostContext)
-	 */
-	@Override
-	abstract public void defineCompilerWords(HostContext hostContext);
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#setExport(boolean)
@@ -864,54 +780,6 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#isLocalSupportAvailable(v9t9.tools.forthcomp.HostContext)
-	 */
-	@Override
-	abstract public boolean isLocalSupportAvailable(HostContext hostContext) throws AbortException;
-	
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#ensureLocalSupport(v9t9.tools.forthcomp.HostContext)
-	 */
-	@Override
-	abstract public void ensureLocalSupport(HostContext hostContext) throws AbortException;
-	
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileSetupLocals(v9t9.tools.forthcomp.HostContext)
-	 */
-	@Override
-	abstract public void compileSetupLocals(HostContext hostContext) throws AbortException;
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileAllocLocals(int)
-	 */
-	@Override
-	abstract public void compileAllocLocals(int count) throws AbortException;
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileLocalAddr(int)
-	 */
-	@Override
-	abstract public void compileLocalAddr(int index);
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileFromLocal(int)
-	 */
-	@Override
-	abstract public void compileFromLocal(int index) throws AbortException;
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileToLocal(int)
-	 */
-	@Override
-	abstract public void compileToLocal(int index) throws AbortException;
-	
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileCleanupLocals(v9t9.tools.forthcomp.HostContext)
-	 */
-	@Override
-	abstract public void compileCleanupLocals(HostContext hostContext) throws AbortException;
-
-	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#find(java.lang.String)
 	 */
 	@Override
@@ -934,7 +802,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	 */
 	@Override
 	public void compileExit(HostContext hostContext) throws AbortException {
-		if (((ITargetWord) getLatest()).getEntry().hasLocals())
+		if (getLatest() != null && ((ITargetWord) getLatest()).getEntry().hasLocals())
 			compileCleanupLocals(hostContext);
 		
 		require(";S").getCompilationSemantics().execute(hostContext, this);
@@ -946,17 +814,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	@Override
 	public void compileToValue(HostContext hostContext, TargetValue word) throws AbortException {
 		compileWordParamAddr(word);
-		//compile((ITargetWord) require("!"));
+		//compile(require("!"));
 		require("!").getCompilationSemantics().execute(hostContext, this);
 
 	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#createMemory()
-	 */
-	@Override
-	abstract public MemoryDomain createMemory();
-
 
 	protected abstract void doExportState(HostContext hostCtx, IBaseMachine machine,
 			int baseSp, int baseRp, int baseUp) throws AbortException;
@@ -1029,63 +890,71 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		((TargetWord) getLatest()).setHostDp(-1);
 	}
 
-
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileCall(v9t9.tools.forthcomp.ITargetWord)
-	 */
-	@Override
-	public abstract void compileCall(ITargetWord word);
-
-
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compilePostpone(v9t9.tools.forthcomp.ITargetWord)
-	 */
-	@Override
-	abstract public void compilePostpone(ITargetWord word) throws AbortException;
-
-
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileDoes(v9t9.tools.forthcomp.HostContext, v9t9.tools.forthcomp.DictEntry, int)
-	 */
-	@Override
-	abstract public void compileDoes(HostContext hostContext, DictEntry dictEntry, int targetDP) throws AbortException;
-
-
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileString(v9t9.tools.forthcomp.HostContext, java.lang.String)
 	 */
 	@Override
-	public void compileString(HostContext hostContext, String string) throws AbortException {
-		IWord parenString = require("(s\")");
-		compileCall((ITargetWord) parenString);
+	public void buildPushString(HostContext hostContext, String string) throws AbortException {
+		ITargetWord parenString = (ITargetWord)require("(s\")");
+		buildCall((ITargetWord) parenString);
 		Pair<Integer, Integer> info = writeLengthPrefixedString(string);
 		setDP(getDP() + info.second);
 	}
+	
+	public void buildXt(ITargetWord word) {
+		if (isNativeDefinition()) {
+			compileTick(word);
+		} else {
+			int ptr = alloc(cellSize);
+			
+			logfile.println("T>" + HexUtils.toHex4(ptr) + " = " + word.getName());
+			int reloc = addRelocation(ptr, 
+					RelocType.RELOC_ABS_ADDR_16, 
+					word.getEntry().getContentAddr());
 
-
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileDoDoes(v9t9.tools.forthcomp.HostContext)
-	 */
-	@Override
-	abstract public int compileDoDoes(HostContext hostContext) throws AbortException;
-
-
-
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileOpcode(int)
-	 */
-	@Override
-	abstract public void compileOpcode(int opcode);
-	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileUser(v9t9.tools.forthcomp.words.TargetUserVariable)
-	 */
-	@Override
-	abstract public void compileUser(TargetUserVariable var);
-
+			writeCell(ptr, reloc);
+		}
+	}
+	public void buildCall(ITargetWord word) throws AbortException {
+		if (isNativeDefinition()) {
+			compile(word);
+		} else {
+			buildXt(word);
+		}
+	}
+	public void buildLiteral(int val, boolean isUnsigned, boolean optimize) throws AbortException {
+		if (isNativeDefinition()) {
+			compileLiteral(val, isUnsigned, optimize);
+		} else {
+			buildCall(require("DOLIT"));
+			buildCell(val);
+		}
+	}
+	public void buildDoubleLiteral(int valLo, int valHi, boolean isUnsigned, boolean optimize) throws AbortException {
+		if (isNativeDefinition()) {
+			compileDoubleLiteral(valLo, valHi, isUnsigned, optimize);
+		} else {
+			buildCall(require("DODLIT"));
+			buildCell(valLo);
+			buildCell(valHi);
+		}
+	}
+	public void buildTick(ITargetWord word) throws AbortException {
+		if (isNativeDefinition()) {
+			compileTick(word);
+		} else {
+			buildCall(require("DOLIT"));
+			buildXt(word);
+		}
+	}
+	public void buildUser(TargetUserVariable user) throws AbortException {
+		if (isNativeDefinition()) {
+			compileDoUser(user.getIndex() * 2);
+		} else {
+			buildCall(require("DOUSER"));
+			buildCell(user.getIndex() * 2);
+		}
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#getUP()
 	 */
@@ -1150,4 +1019,229 @@ public abstract class TargetContext extends Context implements ITargetContext {
 			return null;
 		}
 	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.TargetContext#pushLeave(v9t9.forthcomp.HostContext)
+	 */
+	@Override
+	public void pushLeave(HostContext hostContext) {
+		// add fixup to a list
+		pushFixup(hostContext);
+		leaves.add(hostContext.popData());
+	}
+	abstract protected int writeJumpOffs(HostContext hostContext, int opAddr, int diff)
+			throws AbortException;
+	abstract protected void writeJumpOffsAlloc(int diff, boolean conditional)
+			throws AbortException;
+
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.TargetContext#pushFixup()
+	 */
+	@Override
+	public void pushFixup(HostContext hostContext) {
+		// a fixup needs the memory loc of the offset to update
+		// as well as the original PC of the referring instruction
+		int nextDp = getDP();
+		hostContext.pushData(nextDp);
+		
+		hostContext.markFixup(nextDp);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.TargetContext#pushHere(v9t9.forthcomp.HostContext)
+	 */
+	@Override
+	public int pushHere(HostContext hostContext) {
+		int nextDp = getDP();
+		hostContext.pushData(nextDp);
+		hostContext.markFixup(nextDp);
+		return nextDp;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.TargetContext#swapFixup()
+	 */
+	@Override
+	public void swapFixup(HostContext hostContext) {
+		int d0 = hostContext.popData();
+		int e0 = hostContext.popData();
+		hostContext.pushData(d0);
+		hostContext.pushData(e0);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.TargetContext#resolveFixup()
+	 */
+	@Override
+	public void resolveFixup(HostContext hostContext) throws AbortException {
+		int nextDp = getDP();
+		int opAddr = hostContext.popData();
+		int diff = nextDp - opAddr;
+		
+		writeJumpOffs(hostContext, opAddr, diff);
+		
+		hostContext.resolveFixup(opAddr, nextDp);
+
+	}
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.TargetContext#resolveFixup()
+	 */
+	@Override
+	public void compileBack(HostContext hostContext, boolean conditional) throws AbortException {
+		int nextDp = getDP();
+		int opAddr = hostContext.popData();
+		int diff = opAddr - nextDp;
+		
+		writeJumpOffsAlloc(diff, conditional);
+	}
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.TargetContext#createMemory()
+	 */
+	@Override
+	public MemoryDomain createMemory() {
+		MemoryDomain console = new MemoryDomain(IMemoryDomain.NAME_CPU, false);
+		EnhancedRamByteArea bigRamArea = new EnhancedRamByteArea(0, 0x10000); 
+		MemoryEntry bigRamEntry = new MemoryEntry("RAM", console, 0, MemoryDomain.PHYSMEMORYSIZE, 
+				bigRamArea);
+		console.mapEntry(bigRamEntry);
+		return console;
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.TargetContext#compileAddr(int)
+	 */
+	@Override
+	public void buildCell(int loc) {
+		int ptr = alloc(cellSize);
+		writeCell(ptr, loc);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.TargetContext#compileChar(int)
+	 */
+	@Override
+	public void buildChar(int val) {
+		int ptr = alloc(1);
+		writeChar(ptr, val);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.ITargetContext#isNativeDefinition()
+	 */
+	@Override
+	public boolean isNativeDefinition() {
+		return getLatest() instanceof INativeCodeWord;
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.TargetContext#loopCompile(v9t9.forthcomp.HostContext, v9t9.forthcomp.ITargetWord)
+	 */
+	@Override
+	public void loopCompile(HostContext hostCtx, ITargetWord loopCaller)
+			throws AbortException {
+		loopCaller.getCompilationSemantics().execute(hostCtx, this);
+		
+		boolean isQDo = hostCtx.popData() != 0;
+		
+		int opAddr = hostCtx.popData();
+		int diff = opAddr - getDP();
+		
+		writeJumpOffsAlloc(diff, true);
+		
+		if (isQDo) {
+			// then comes here
+			resolveFixup(hostCtx);
+		}
+		
+		for (int i = 0; i < leaves.size(); i++) {
+			hostCtx.pushData(leaves.get(i));
+			resolveFixup(hostCtx);
+		}
+		leaves.clear();
+		
+		ITargetWord unloop = require("unloop");
+		unloop.getCompilationSemantics().execute(hostCtx, this);
+	}
+
+	/**
+	 * @param token
+	 * @param tokenStream
+	 * @throws AbortException 
+	 */
+	public void parse(String token) throws AbortException {
+		IWord word = null;
+		
+		int state = hostCtx.readVar("state");
+		
+		if (state == 0) {
+			word = hostCtx.find(token);
+			if (word == null) {
+				word = find(token);
+			}
+			if (word == null) {
+				word = parseLiteral(token);
+			}
+			if (word == null) {
+				throw abort("unknown word or literal: " + token);
+			}
+			
+			if (word.getInterpretationSemantics() == null)
+				throw abort(word.getName() + " has no interpretation semantics");
+			
+			word.getInterpretationSemantics().execute(hostCtx, this);
+		} else {
+			word = find(token);
+			if (word == null) {
+				word = hostCtx.find(token);
+			}
+			if (word == null) {
+				word = parseLiteral(token);
+			}
+			if (word == null) {
+				word = defineForward(token, hostCtx.getStream().getLocation());
+			}
+		
+			ITargetWord targetWord = null;
+			IWord hostWord = null;
+			
+			if (word instanceof ITargetWord) {
+				targetWord = (ITargetWord) word;
+				hostWord = hostCtx.find(token);
+				if (hostWord == null) 
+					hostWord = targetWord;
+			} else {
+				if (word.getCompilationSemantics() == null) {
+					throw hostCtx.abort("host word " + token + " used instead of target word");
+				}
+				hostWord = word;
+				targetWord = null;
+				if (!word.isCompilerWord()) {
+					targetWord = (ITargetWord) defineForward(token, 
+							hostCtx.getStream().getLocation());
+					//throw hostContext.abort("host word " + token + " used instead of target word");
+				}
+			}		
+			
+			hostCtx.compileWord(this, hostWord, targetWord);
+		}
+		
+	}
+
+	private AbortException abort(String string) {
+		return hostCtx.getStream().abort(string);
+	}
+	
+
+	public int buildDoDoes(HostContext hostContext) throws AbortException {
+//		buildCall(require(";S"));
+		
+		return compileDoDoes(hostContext);
+	}
+	
 }

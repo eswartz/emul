@@ -29,10 +29,10 @@ public class Else extends BaseStdWord {
 		hostContext.assertCompiling();
 		hostContext.assertPairs(2);
 		
-		ITargetWord word = (ITargetWord) targetContext.require("branch");
+		ITargetWord word = targetContext.require("branch");
 		word.getCompilationSemantics().execute(hostContext, targetContext);
 		
-		hostContext.compile(hostContext.require("branch"));
+		hostContext.build(hostContext.require("branch"));
 		
 		targetContext.pushFixup(hostContext);
 		targetContext.swapFixup(hostContext);

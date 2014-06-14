@@ -31,8 +31,8 @@ public class TargetSQuote extends TargetWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				//targetContext.compile((ITargetWord) targetContext.require("((s\"))"));
-				targetContext.compileCall((ITargetWord) targetContext.require("((s\"))"));
+				//targetContext.compile(targetContext.require("((s\"))"));
+				targetContext.compileCall(targetContext.require("((s\"))"));
 			}
 		});
 		

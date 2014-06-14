@@ -39,8 +39,6 @@ public class TargetValue extends TargetWord {
 					targetContext.compileLiteral(getEntry().getParamAddr(), false, true);
 				else
 					targetContext.compile(TargetValue.this);
-					
-				//targetContext.compileLoad(getCells() * targetContext.getCellSize());
 			}
 		});
 		setExecutionSemantics(new ISemantics() {

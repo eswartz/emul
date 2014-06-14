@@ -54,7 +54,7 @@ public class AbortQuote extends BaseWord {
 
 				new SQuote().getCompilationSemantics().execute(hostContext, targetContext);
 				
-				targetContext.compile((ITargetWord) targetContext.require("(abort\")"));
+				targetContext.compile(targetContext.require("(abort\")"));
 			}
 		});
 	}

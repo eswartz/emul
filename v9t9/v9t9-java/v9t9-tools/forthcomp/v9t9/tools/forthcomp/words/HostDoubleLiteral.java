@@ -37,7 +37,7 @@ public class HostDoubleLiteral extends BaseWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				hostContext.compile(HostDoubleLiteral.this);
+				hostContext.build(HostDoubleLiteral.this);
 				targetContext.compileDoubleLiteral(valLo, valHi, isUnsigned, true);
 			}
 		});

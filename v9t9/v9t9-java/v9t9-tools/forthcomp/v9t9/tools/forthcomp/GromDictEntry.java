@@ -51,7 +51,7 @@ public class GromDictEntry extends DictEntry {
 		byte[] ent = doWriteEntry(targetContext);
 		
 		// ignore link
-		MemoryDomain domain = ((F99bTargetContext) targetContext).getGrom();
+		MemoryDomain domain = ((IGromTargetContext) targetContext).getGrom();
 		int gp = dictAddr;
 		for (int i = 0; i < ent.length - targetContext.getCellSize(); i++) {
 			domain.writeByte(gp++, ent[i + targetContext.getCellSize()]);

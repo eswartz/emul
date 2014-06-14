@@ -70,7 +70,7 @@ include ../v9t9/errors.fi
 
 include ../ans/blocks.fi
 
-include ../ans/dict.fi
+include ../v9t9/gromdict.fi
 
 include f99b.fi
 
@@ -90,6 +90,8 @@ include ../v9t9/locals.fi
 
 \ include ../v9t9/editor.fi
 include ../v9t9/char-editor.fi
+
+include cold.fi
 
 include ../v9t9/boot.fi
 

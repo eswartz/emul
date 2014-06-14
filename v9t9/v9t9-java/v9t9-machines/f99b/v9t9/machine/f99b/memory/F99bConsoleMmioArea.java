@@ -53,7 +53,7 @@ public class F99bConsoleMmioArea extends ConsoleMmioArea  {
 	
 	private final IMachine machine;
 		
-	F99bConsoleMmioArea(IMachine machine) {
+	public F99bConsoleMmioArea(IMachine machine) {
 		super(0);
 		this.machine = machine;
     };

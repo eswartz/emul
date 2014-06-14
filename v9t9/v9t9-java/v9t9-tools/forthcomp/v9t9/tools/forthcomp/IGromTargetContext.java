@@ -36,4 +36,9 @@ public interface IGromTargetContext extends ITargetContext {
 	 */
 	void setUseGromDictionary(boolean b);
 
+	/**
+	 * @return
+	 */
+	boolean useGromDictionary();
+
 }

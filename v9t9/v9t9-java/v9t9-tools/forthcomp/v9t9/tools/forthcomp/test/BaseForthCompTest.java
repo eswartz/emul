@@ -138,7 +138,7 @@ public abstract class BaseForthCompTest {
 		
 		exportBinary();
 		
-		ITargetWord word = (ITargetWord) targCtx.require(name);
+		ITargetWord word = targCtx.require(name);
 		
 		int pc = word.getEntry().getContentAddr();
 		
@@ -166,7 +166,7 @@ public abstract class BaseForthCompTest {
 		assertEquals(word.getEntry().getContentAddr(), rel.target);
 	}
 	protected void assertCall(String string, int cell) throws AbortException {
-		ITargetWord word = (ITargetWord) targCtx.require(string);
+		ITargetWord word = targCtx.require(string);
 		assertCall(word, cell);
 	}
 	

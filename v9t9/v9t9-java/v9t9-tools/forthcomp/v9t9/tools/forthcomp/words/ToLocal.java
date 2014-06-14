@@ -38,9 +38,9 @@ public class ToLocal extends BaseStdWord {
 			
 			if (!targetContext.isLocalSupportAvailable(hostContext)) {
 
-				ITargetWord word = (ITargetWord) targetContext.require("branch");
+				ITargetWord word = targetContext.require("branch");
 				word.getCompilationSemantics().execute(hostContext, targetContext);
-				hostContext.compile(hostContext.require("branch"));
+				hostContext.build(hostContext.require("branch"));
 				
 				targetContext.pushFixup(hostContext);
 				

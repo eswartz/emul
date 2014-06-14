@@ -22,7 +22,8 @@ import v9t9.machine.f99b.cpu.DumpFullReporterF99b;
 import v9t9.machine.f99b.interpreter.InterpreterF99b;
 import v9t9.machine.f99b.machine.F99bMachine;
 import v9t9.machine.f99b.machine.F99bMachineModel;
-import v9t9.tools.forthcomp.F99bTargetContext;
+import v9t9.tools.forthcomp.BaseGromTargetContext;
+import v9t9.tools.forthcomp.f99b.F99bTargetContext;
 import v9t9.tools.forthcomp.words.TargetContext;
 
 /**
@@ -88,7 +89,7 @@ public class BaseF99bTest extends BaseForthCompTest {
 	 */
 	@Override
 	protected TargetContext createTargetContext() {
-		F99bTargetContext targCtx = new F99bTargetContext(4096);
+		BaseGromTargetContext targCtx = new F99bTargetContext(4096);
 		targCtx.setBaseDP(0x400);
 		return targCtx;
 	}
