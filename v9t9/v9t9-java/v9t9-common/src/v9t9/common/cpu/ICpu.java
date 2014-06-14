@@ -43,6 +43,10 @@ public interface ICpu extends IPersistable {
 			ISettingsHandler.TRANSIENT,
 			"Debugging", Boolean.FALSE);
 
+	SettingSchema settingRunForCount = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"RunForCount", new Integer(0));
+
 	
 	IProperty settingRealTime();
 	IProperty settingCyclesPerSecond();

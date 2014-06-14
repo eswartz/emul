@@ -512,8 +512,10 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	}
 
 	@Override
-	protected int writeJumpOffs(HostContext hostContext, int opAddr, int diff)
+	protected int writeJump(HostContext hostContext, int opAddr, int target)
 			throws AbortException {
+		
+		int diff = target - opAddr;
 		
 		// Opcode is already compiled as 1-byte branch, so diff is relative to offset
 		
@@ -545,8 +547,11 @@ public class F99bTargetContext extends BaseGromTargetContext {
 
 
 	@Override
-	protected void writeJumpOffsAlloc(int diff, boolean conditional)
+	protected void writeJumpAlloc(int opAddr, boolean conditional)
 			throws AbortException {
+		
+		int diff = opAddr - getDP();
+		
 		int baseOpcode = conditional ? I0branchX : IbranchX;
 		if (diff < -130 || diff >= 128) {
 			stub16BitJump.use();
@@ -852,11 +857,9 @@ public class F99bTargetContext extends BaseGromTargetContext {
 		compileOpcode(IbranchX|0);
 		compileOpcode(Idovar);
 	}
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.words.TargetContext#compileDoDoes(v9t9.forthcomp.HostContext)
-	 */
-	@Override
-	public int compileDoDoes(HostContext hostContext) throws AbortException {
+	
+
+	public int buildDoes(HostContext hostContext) throws AbortException {
 		// must be call'able
 		alignDP();
 		int addr = getDP();

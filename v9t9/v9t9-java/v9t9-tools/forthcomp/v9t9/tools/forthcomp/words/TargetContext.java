@@ -540,6 +540,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		final TargetConstant constant = (TargetConstant) define(name, new TargetConstant(entry, value, 1));
 		return constant;
 	}
+	
+	protected void defineSymbol(int addr, String name) {
+		symbols.put(addr, name);
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineValue(java.lang.String, int, int)
@@ -1030,9 +1034,9 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		pushFixup(hostContext);
 		leaves.add(hostContext.popData());
 	}
-	abstract protected int writeJumpOffs(HostContext hostContext, int opAddr, int diff)
+	abstract protected int writeJump(HostContext hostContext, int opAddr, int target)
 			throws AbortException;
-	abstract protected void writeJumpOffsAlloc(int diff, boolean conditional)
+	abstract protected void writeJumpAlloc(int target, boolean conditional)
 			throws AbortException;
 
 	/* (non-Javadoc)
@@ -1075,9 +1079,9 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	public void resolveFixup(HostContext hostContext) throws AbortException {
 		int nextDp = getDP();
 		int opAddr = hostContext.popData();
-		int diff = nextDp - opAddr;
+		//int diff = nextDp - opAddr;
 		
-		writeJumpOffs(hostContext, opAddr, diff);
+		writeJump(hostContext, opAddr, nextDp);
 		
 		hostContext.resolveFixup(opAddr, nextDp);
 
@@ -1089,11 +1093,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	 */
 	@Override
 	public void compileBack(HostContext hostContext, boolean conditional) throws AbortException {
-		int nextDp = getDP();
+		//int nextDp = getDP();
 		int opAddr = hostContext.popData();
-		int diff = opAddr - nextDp;
 		
-		writeJumpOffsAlloc(diff, conditional);
+		writeJumpAlloc(opAddr, conditional);
 	}
 
 
@@ -1150,9 +1153,9 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		boolean isQDo = hostCtx.popData() != 0;
 		
 		int opAddr = hostCtx.popData();
-		int diff = opAddr - getDP();
+		//int diff = opAddr - getDP();
 		
-		writeJumpOffsAlloc(diff, true);
+		writeJumpAlloc(opAddr, true);
 		
 		if (isQDo) {
 			// then comes here
@@ -1238,10 +1241,4 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	}
 	
 
-	public int buildDoDoes(HostContext hostContext) throws AbortException {
-//		buildCall(require(";S"));
-		
-		return compileDoDoes(hostContext);
-	}
-	
 }

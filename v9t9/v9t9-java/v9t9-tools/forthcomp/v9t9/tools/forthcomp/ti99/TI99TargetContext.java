@@ -82,6 +82,7 @@ import ejs.base.utils.TextUtils;
  *
  */
 public class TI99TargetContext extends TargetContext  {
+	private final boolean relBranches = true;
 
 	public static final int REG_TOS = 1;
 	public static final int REG_T1 = 2;
@@ -93,7 +94,6 @@ public class TI99TargetContext extends TargetContext  {
 	public static final int REG_DOVAR = 7;
 	public static final int REG_DODOES = 8;
 	
-	public static final int REG_RTOS = 9;
 	public static final int REG_UP = 10;
 	// RT = 11
 	// CRUBASE = 12
@@ -103,11 +103,11 @@ public class TI99TargetContext extends TargetContext  {
 	
 	
 	private enum StockInstruction {
+		/** save TOS on stack */
 		PUSH_TOS,
+		/** save TOS on stack underneath empty slot (i.e. prepare for another push) */
 		PUSH_TOS_ALLOC_2,
-		PUSH_RTOS,
-		POP_RTOS,
-		POP_2TOS,
+		/** pop from stack to TOS */
 		POP_TOS,
 		
 	}
@@ -217,20 +217,9 @@ public class TI99TargetContext extends TargetContext  {
 					break;
 					
 				case PUSH_TOS_ALLOC_2:
-					llInsts.add(createInstruction(Iai, reg(REG_SP), immed(-4)));	// make room for two
-					llInsts.add(createInstruction(Imov, TOS, regOffs(REG_SP, -2)));	// save TOS
+					llInsts.add(createInstruction(Iai, reg(REG_SP), immed(-cellSize * 2)));	// make room for two
+					llInsts.add(createInstruction(Imov, TOS, regOffs(REG_SP, -cellSize)));	// save TOS
 					addr += 8;
-					break;
-					
-				case PUSH_RTOS:
-					llInsts.add(createInstruction(Idect, reg(REG_RP)));
-					llInsts.add(createInstruction(Imov, TOS, regInd(REG_RP)));
-					addr += 4;
-					break;
-					
-				case POP_RTOS:
-					llInsts.add(createInstruction(Imov, regInc(REG_RP), TOS));
-					addr += 2;
 					break;
 					
 				default:
@@ -321,9 +310,9 @@ public class TI99TargetContext extends TargetContext  {
 		for (LLInstruction instr : llInsts) {
 			compileInstr(instr);
 		}
-		if (doCol != null) {
-			//writeInstruction(Ijmp, immed(interpLoop));
-			writeInstruction(Ib, regInd(11));
+		if (interpLoop > 0) {
+			writeInstruction(Ijmp, immed(interpLoop));
+			//writeInstruction(Ib, regInd(11));
 		}
 		return (IPrimitiveWord) word;
 	}
@@ -380,81 +369,64 @@ public class TI99TargetContext extends TargetContext  {
 				Imov, reg(11), reg(REG_IP));
 		
 		interpLoop = getDP();
+		defineSymbol(interpLoop, "@NEXT");
 		
 		// get the next XT
 		writeInstruction(Imov, regInc(REG_IP), T1);
-		// BL to it (for prims, they can RT; for others, they just jump back to interpLoop)
-		writeInstruction(Ibl, regInd(REG_T1));
-		
-		writeInstruction(Ijmp, immed(interpLoop));
-				
+		// B to it (everyone jumps back to interpLoop)
+		writeInstruction(Ib, regInd(REG_T1));
+
 //		threadOp = new LLImmedOperand(loop);
 		
 		definePrim(";S",
-				Imov, reg(REG_RTOS), reg(REG_IP),
-				
-				StockInstruction.POP_RTOS,
-				
-				Ijmp, immed(interpLoop)
+				Imov, regInc(REG_RP), reg(REG_IP)
 				);
 
 		definePrim("DOLIT",
 				StockInstruction.PUSH_TOS,
 				
-				Imov, regInc(REG_IP), TOS,	// get word
-				
-				Ijmp, immed(interpLoop)
+				Imov, regInc(REG_IP), TOS	// get word
 				);
 
 		doVar = definePrim("DOVAR",
 				StockInstruction.PUSH_TOS,
-				Imov, reg(11), TOS,
-				
-				Ijmp, immed(interpLoop)
+				Imov, reg(11), TOS
 				);
 		
 		definePrim("DODLIT",
 				StockInstruction.PUSH_TOS_ALLOC_2,
 				
 				Imov, regInc(11), regInd(REG_SP),	// get first word
-				Imov, regInc(11), TOS,		// and second word
-
-				Ijmp, immed(interpLoop)
+				Imov, regInc(11), TOS		// and second word
 				);
 		
 		doCon = definePrim("DOCON",
 				StockInstruction.PUSH_TOS,
 				
-				Imov, regInc(11), TOS,	// get word
-				
-				Ijmp, immed(interpLoop)
+				Imov, regInc(11), TOS	// get word
 				);
 		doDcon = definePrim("DODCON",
 				StockInstruction.PUSH_TOS_ALLOC_2,
 				
 				Imov, regInc(11), regInd(REG_SP),	// get first word
-				Imov, regInc(11), TOS,		// and second word
-				
-				Ijmp, immed(interpLoop)
+				Imov, regInc(11), TOS		// and second word
 				);
 				
 		doUser = definePrim("DOUSER",
 				StockInstruction.PUSH_TOS,
 				
 				Imov, regInc(11), TOS,	// offset follows
-				Ia, reg(REG_UP), TOS,	// add user base
-				
-				Ijmp, immed(interpLoop)		
+				Ia, reg(REG_UP), TOS	// add user base
 
 				);
 
 		doDoes = definePrim("DODOES",
 				StockInstruction.PUSH_TOS,
 
-				Imov, reg(11), TOS,			// addr
-				Iinct, reg(11),
+				Imov, regInc(11), T1,			// XT of DOES> target
+				Imov, reg(11), TOS,				// PFA
 
-				Ijmp, immed(interpLoop)		
+				Ib, regInd(REG_T1)
 
 				);
 
@@ -478,8 +450,8 @@ public class TI99TargetContext extends TargetContext  {
 				Imov, TOS, reg(REG_RP),
 				Imov, regInc(REG_SP), reg(REG_UP),
 				Imov, regInc(REG_SP), reg(REG_SP),
-				Imov, T1, reg(REG_RTOS),
-				Ib, regInd(11));
+				Idect, reg(REG_RP),
+				Imov, T1, regInd(REG_RP));
 		
 
 		doCol = docolPrim; // rest of words act normally 
@@ -551,13 +523,13 @@ public class TI99TargetContext extends TargetContext  {
 //		definePrim("2SWAP", Iswap_d);
 		definePrim("OVER", 
 				StockInstruction.PUSH_TOS,
-				Imov, regOffs(REG_SP, 2), TOS
+				Imov, regOffs(REG_SP, cellSize), TOS
 				);
 		
 //		definePrim("2OVER", Iover_d);
 		definePrim("ROT", // ( a b c -- b c a )
-				Imov, regOffs(REG_SP, 2), T1, // a
-				Imov, regInd(REG_SP), regOffs(REG_SP, 2),	// b
+				Imov, regOffs(REG_SP, cellSize), T1, // a
+				Imov, regInd(REG_SP), regOffs(REG_SP, cellSize),	// b
 				Imov, TOS, regInd(REG_SP),	// c
 				Imov, T1, TOS	// a
 				);
@@ -567,22 +539,21 @@ public class TI99TargetContext extends TargetContext  {
 //		definePrim("=", Iequ);
 //		definePrim("D=", Iequ_d);
 		definePrim("0BRANCH",
-				// get offset
-				Imov, regInc(11), T1,
+				// get target
+				Imov, regInc(REG_IP), T1,
 				// test val 
 				Imov, TOS, TOS,
 				Ijeq, ">0",
 				// not 0
 				Imov, regInc(REG_SP), TOS,
-				Ib, regInd(11),
+				Ijmp, immed(interpLoop),
 			"0",
 				Imov, regInc(REG_SP), TOS,
-				Ia, T1, reg(REG_IP)
+				relBranches ? Ia : Imov, T1, reg(REG_IP)
 				);
 				
 		definePrim("BRANCH", 
-				Ia, TOS, reg(REG_IP),
-				StockInstruction.POP_TOS
+				relBranches ? Ia : Imov, regInc(REG_IP), reg(REG_IP)
 				);
 		
 		definePrim("NEGATE", 
@@ -626,40 +597,42 @@ public class TI99TargetContext extends TargetContext  {
 //		definePrim("NAND", Inand);
 //		definePrim("DNAND", Inand_d);
 //		
-		definePrim(">R", 
-				StockInstruction.PUSH_RTOS
+		definePrim(">R",
+				Idect, reg(REG_RP),
+				Imov, TOS, regInd(REG_RP)
 				);
 				
 		definePrim("2>R", 
-				Iai, reg(REG_RP), immed(-4),
-				Imov, regInc(REG_SP), regOffs(REG_RP, 2),
-				Imov, regInc(REG_TOS), regOffs(REG_RP, 0),
+				Iai, reg(REG_RP), immed(-cellSize * 2),
+				Imov, regInc(REG_SP), regOffs(REG_RP, cellSize),
+				Imov, TOS, regOffs(REG_RP, 0),
 				StockInstruction.POP_TOS
 				);
-		definePrim("R>", 
-				StockInstruction.POP_RTOS
+		definePrim("R>",
+				StockInstruction.PUSH_TOS,
+				Imov, regInc(REG_RP), reg(REG_TOS)
 				);
 				
 		definePrim("2R>", 
-				Iai, reg(REG_SP), immed(-4),
-				Imov, regInc(REG_RP), regOffs(REG_SP, 2),
-				Imov, regInc(REG_RTOS), regOffs(REG_SP, 0),
-				StockInstruction.POP_RTOS
+				StockInstruction.PUSH_TOS_ALLOC_2,
+				Imov, regInc(REG_RP), regOffs(REG_SP, cellSize),
+				Imov, regInc(REG_RP), regOffs(REG_SP, 0),
+				Imov, regInc(REG_RP), TOS
 				);
 		
 		definePrim("RDROP",
-				StockInstruction.POP_RTOS
+				Iinct, reg(REG_RP)
 				);
 		
 		definePrim("R@", 
 				StockInstruction.PUSH_TOS,
-				Imov, reg(REG_RTOS), TOS
+				Imov, regInd(REG_RP), TOS
 				);
 		defineAlias("I", "R@");
 //		defineInlinePrim("I'", Irpidx, 1);
 		defineInlinePrim("J",
 				StockInstruction.PUSH_TOS,
-				Imov, regOffs(REG_RP, 2), TOS
+				Imov, regOffs(REG_RP, cellSize), TOS
 				);
 				
 //		defineInlinePrim("J'", Irpidx, 3);
@@ -681,7 +654,7 @@ public class TI99TargetContext extends TargetContext  {
 				Iclr, TOS,
 				
 				Iinc, regInd(REG_RP), // next
-				Imov, regOffs(REG_RP, 2), T1,	// lim
+				Imov, regOffs(REG_RP, cellSize), T1,	// lim
 				Ijne, ">0",
 				
 				// lim == 0 --> next > 0?
@@ -703,7 +676,7 @@ public class TI99TargetContext extends TargetContext  {
 				Iclr, TOS,
 				
 				Iinc, regInd(REG_RP), // next
-				Imov, regOffs(REG_RP, 2), T1,	// lim
+				Imov, regOffs(REG_RP, cellSize), T1,	// lim
 				Ijne, ">0",
 				
 				// lim == 0 --> next > 0?
@@ -725,7 +698,7 @@ public class TI99TargetContext extends TargetContext  {
 
 				Iclr, T1,	// flag
 				
-				Imov, regOffs(REG_RP, 2), T2,	// lim
+				Imov, regOffs(REG_RP, cellSize), T2,	// lim
 				Ijne, ">nonzero",
 				
 				// lim == 0 --> (next >= change) ? 0 : -1
@@ -759,7 +732,7 @@ public class TI99TargetContext extends TargetContext  {
 
 				Iclr, T1,	// flag
 				
-				Imov, regOffs(REG_RP, 2), T2,	// lim
+				Imov, regOffs(REG_RP, cellSize), T2,	// lim
 				Ijne, ">nonzero",
 				
 				// lim == 0 --> (next >= change) ? 0 : -1
@@ -810,14 +783,14 @@ public class TI99TargetContext extends TargetContext  {
 		define("(?DO)", qdo);
 		
 		definePrim("2DUP",
-				Iai, reg(REG_SP), immed(-4),
-				Imov, TOS, regOffs(REG_SP, -2),
-				Imov, regInd(REG_SP), regOffs(REG_SP, -4)
+				Iai, reg(REG_SP), immed(-cellSize * 2),
+				Imov, TOS, regOffs(REG_SP, -cellSize),
+				Imov, regInd(REG_SP), regOffs(REG_SP, -cellSize * 2)
 				);
 				
 		
 		definePrim("UNLOOP", 
-				Iai, reg(REG_RP), immed(4)	// note: RTOS is unchanged
+				Iai, reg(REG_RP), immed(cellSize * 2)	// note: RTOS is unchanged
 				);
 				
 		definePrim("?DUP", 
@@ -1017,7 +990,7 @@ public class TI99TargetContext extends TargetContext  {
 	@Override
 	public void buildCell(int loc) {
 		logfile.println("T>" + HexUtils.toHex4(dp) +" = " + HexUtils.toHex4(loc));
-		int ptr = alloc(2);
+		int ptr = alloc(cellSize);
 		writeCell(ptr, loc);
 	}
 	
@@ -1084,27 +1057,31 @@ public class TI99TargetContext extends TargetContext  {
 	@Override
 	public void pushFixup(HostContext hostContext) {
 		super.pushFixup(hostContext);
-		alloc(2);		// assume short
+		alloc(cellSize);		// assume short
 	}
 	
-	protected int writeJumpOffs(HostContext hostContext, int opAddr, int diff)
+	private int calcJump(int opAddr, int target) {
+		return target - (opAddr + cellSize);
+	}
+
+	
+	protected int writeJump(HostContext hostContext, int opAddr, int target)
 			throws AbortException {
 		
-		int offs = diff;
-		logfile.println("T>" + HexUtils.toHex4(opAddr) +" = " + HexUtils.toHex4(offs));
+		logfile.println("T>" + HexUtils.toHex4(opAddr) +" = " + HexUtils.toHex4(target));
 		
 		// Opcode is already compiled as 2-byte branch, so diff is relative to offset
-		writeCell(opAddr, offs);
+		writeCell(opAddr, calcJump(opAddr, target));
 		return 0;
 	}
 
 
-	protected void writeJumpOffsAlloc(int diff, boolean conditional)
+
+	protected void writeJumpAlloc(int opAddr, boolean conditional)
 			throws AbortException {
 
 		buildCall((conditional ? require("0BRANCH") : require("BRANCH")));
-		
-		buildCell(diff);
+		buildCell(calcJump(getDP(), opAddr));
 	}
 
 	/* (non-Javadoc)
@@ -1119,7 +1096,7 @@ public class TI99TargetContext extends TargetContext  {
 	public void compileUser(TargetUserVariable var) {
 		int index = var.getIndex();
 		pushTOS();
-		writeInstruction(Imov, regOffs(REG_UP, index * 2), TOS);
+		writeInstruction(Imov, regOffs(REG_UP, index * cellSize), TOS);
 	}
 
 	public boolean isLocalSupportAvailable(HostContext hostContext) throws AbortException {
@@ -1288,19 +1265,15 @@ public class TI99TargetContext extends TargetContext  {
 	 * @see v9t9.tools.forthcomp.words.TargetContext#buildDoDoes(v9t9.tools.forthcomp.HostContext)
 	 */
 	@Override
-	public int buildDoDoes(HostContext hostContext) throws AbortException {
+	public int buildDoes(HostContext hostContext) throws AbortException {
+		// host word exits now
 		buildCall(require(";S"));
-		return super.buildDoDoes(hostContext);
-	}
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.words.TargetContext#compileDoDoes(v9t9.forthcomp.HostContext)
-	 */
-	@Override
-	public int compileDoDoes(HostContext hostContext) throws AbortException {
+		
+		// in target, we will BL *DODOES
 		int addr = getDP();
 
 		// code
-		writeInstruction(Ibl, regInd(REG_DODOES));
+		writeInstruction(Ibl, regInd(REG_DOCOL));
 		
 		return addr;
 	}
@@ -1310,10 +1283,11 @@ public class TI99TargetContext extends TargetContext  {
 	 */
 	@Override
 	public void compileDoes(HostContext hostContext, DictEntry entry, int targetDP) throws AbortException {
-		dp -= 4;	// overwrite code
-		writeInstruction(Ibl, regInd(REG_DODOES));
-		dp += 2;	// skip cell with 
-		writeCell(alloc(2), targetDP);
+		dp -= cellSize * 2;	// step back to overwrite code from #compileDoVar()
+		writeInstruction(Ibl, regInd(REG_DODOES));	
+		int oldCell = readCell(dp);
+		buildCell(targetDP);
+		buildCell(oldCell);
 	}
 
 }

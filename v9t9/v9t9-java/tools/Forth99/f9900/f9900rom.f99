@@ -246,10 +246,23 @@ include cold.fi
 		COLD
 	;
 	
+	: b 1 ;
+	: a 2 ;
+	
 	: COLD
 		regs-init
 		cold-init
-		(COLD) @  EXECUTE
+		
+		10 0 do 
+			i  1 and  if
+				b
+			else
+				a
+			then
+			drop
+		loop
+		
+		bye
 	;
 	
 [endif]

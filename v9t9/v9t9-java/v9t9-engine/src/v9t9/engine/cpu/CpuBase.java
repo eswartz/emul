@@ -99,6 +99,10 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 
 	private Semaphore allocatedCycles;
 
+	private IProperty runForCountProp;
+
+	protected int runForCount;
+
 	public CpuBase(IMachine machine_, ICpuState state) {
 		this.machine = machine_;
 		this.state = state;
@@ -109,6 +113,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
         
         cyclesPerSecond = Settings.get(this, ICpu.settingCyclesPerSecond);
         realTime = Settings.get(this, ICpu.settingRealTime);
+        runForCountProp = Settings.get(this, ICpu.settingRunForCount);
         dumpFullInstructions = Settings.get(this, ICpu.settingDumpFullInstructions);
         dumpInstructions = Settings.get(this, ICpu.settingDumpInstructions);
         
@@ -143,6 +148,15 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 			}
         	
         });
+        
+        runForCountProp.addListenerAndFire(new IPropertyListener() {
+
+			public void propertyChanged(IProperty setting) {
+				runForCount = setting.getInt();
+			}
+        	
+        });
+
 	}
 
 	/* (non-Javadoc)
@@ -201,6 +215,10 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		applyCycles();
 		int tickCycles = currentcycles.getAndSet(0);
 		totalcurrentcycles += tickCycles;
+		
+		if (runForCount > 0 && totalcurrentcycles >= runForCount) {
+			getMachine().stop();
+		}
 		
 		int newTargetCycles = targetcycles;
 		

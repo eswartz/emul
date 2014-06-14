@@ -135,7 +135,7 @@ public class Emulator {
 					System.err.println("expected var=value for -s " + arg);
 					continue;
 				}
-				String var = arg.substring(0, idx-1);
+				String var = arg.substring(0, idx);
 				String val = arg.substring(idx+1);
 				settings.put(var, val);
 			}

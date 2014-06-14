@@ -319,18 +319,17 @@ public interface ITargetContext {
 	
 	void compileCall(ITargetWord word);
 
+	/** In CREATE'd word dictEntry, change the execution behavior to invoke targetDP 
+	 *
+	 * @param hostContext
+	 * @param dictEntry CREATE'd word
+	 * @param targetDP the XT of the DOES> behavior
+	 */
 	void compileDoes(HostContext hostContext, DictEntry dictEntry, int targetDP)
 			throws AbortException;
 
 	void buildPushString(HostContext hostContext, String string)
 			throws AbortException;
-
-	/**
-	 * Prepare for DOES>
-	 * @param hostContext
-	 * @return target addr for DOES
-	 */
-	int compileDoDoes(HostContext hostContext) throws AbortException;
 
 	void compileUser(TargetUserVariable var);
 
@@ -339,5 +338,12 @@ public interface ITargetContext {
 	void dumpStubs(PrintStream logfile);
 
 	IWord parseLiteral(String token);
+
+	/**
+	 * Prepare for DOES>
+	 * @param hostContext
+	 * @return target addr for DOES
+	 */
+	int buildDoes(HostContext hostContext) throws AbortException;
 
 }
