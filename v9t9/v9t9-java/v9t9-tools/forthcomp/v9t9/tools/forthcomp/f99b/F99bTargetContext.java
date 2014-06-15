@@ -15,17 +15,12 @@ import static v9t9.machine.f99b.asm.InstF99b.*;
 import java.util.Stack;
 
 import v9t9.common.machine.IBaseMachine;
-import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
 import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.cpu.CpuStateF99b;
-import v9t9.machine.f99b.memory.EnhancedRamByteArea;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.BaseGromTargetContext;
 import v9t9.tools.forthcomp.DictEntry;
-import v9t9.tools.forthcomp.GromDictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.RelocEntry;
@@ -181,8 +176,8 @@ public class F99bTargetContext extends BaseGromTargetContext {
 		definePrim("(do)", ItoR_d);
 		defineInlinePrim("(loop)", IloopUp);
 		defineInlinePrim("(+loop)", IplusLoopUp);
-		defineInlinePrim("(uloop)", IuloopUp);
-		defineInlinePrim("(u+loop)", IuplusLoopUp);
+//		defineInlinePrim("(uloop)", IuloopUp);
+//		defineInlinePrim("(u+loop)", IuplusLoopUp);
 		defineInlinePrim("(?do)", Idup_d, ItoR_d, Isub, I0branchB);
 		
 		definePrim("execute", Iexecute);
