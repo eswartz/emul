@@ -540,6 +540,13 @@ public class F99bTargetContext extends BaseGromTargetContext {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetContext#writeLoopJump(int)
+	 */
+	@Override
+	protected void writeLoopJump(int opAddr) throws AbortException {
+		writeJumpAlloc(opAddr, true);
+	}
 
 	@Override
 	protected void writeJumpAlloc(int opAddr, boolean conditional)

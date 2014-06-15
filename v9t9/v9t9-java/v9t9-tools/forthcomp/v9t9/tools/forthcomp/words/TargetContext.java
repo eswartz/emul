@@ -1151,11 +1151,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		loopCaller.getCompilationSemantics().execute(hostCtx, this);
 		
 		boolean isQDo = hostCtx.popData() != 0;
-		
+
 		int opAddr = hostCtx.popData();
-		//int diff = opAddr - getDP();
-		
-		writeJumpAlloc(opAddr, true);
+		writeLoopJump(opAddr);
+		//writeJumpAlloc(opAddr, true);
 		
 		if (isQDo) {
 			// then comes here
@@ -1171,6 +1170,8 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		ITargetWord unloop = require("unloop");
 		unloop.getCompilationSemantics().execute(hostCtx, this);
 	}
+
+	abstract protected void writeLoopJump(int opAddr) throws AbortException;
 
 	/**
 	 * @param token

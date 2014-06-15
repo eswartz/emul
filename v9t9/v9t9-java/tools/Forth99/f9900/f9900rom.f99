@@ -249,6 +249,8 @@ include cold.fi
 	: COLD
 		regs-init
 		cold-init
+
+		$103 $100 do  i drop  loop
 		
 		3 0 do  i drop  1 +loop
 		\ 0, 1, 2, [3]

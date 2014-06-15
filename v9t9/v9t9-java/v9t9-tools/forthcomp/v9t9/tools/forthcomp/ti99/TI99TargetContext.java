@@ -650,9 +650,9 @@ public class TI99TargetContext extends TargetContext  {
 		 
 		defineAlias("(DO)", "2>R");		
 		
-		definePrim("(LOOP)", // ( R: lim next -- lim next+1 ) ( S: -- done? )
+		definePrim("(LOOP)", // ( R: lim next -- lim next+1 ) ( S: -- ) + jump
 				StockInstruction.PUSH_TOS,
-				Iclr, TOS,
+				Imov, regInc(REG_IP), TOS,
 				
 				/*
 				 * Add one to the loop index. If the loop index is then equal to
@@ -662,12 +662,13 @@ public class TI99TargetContext extends TargetContext  {
 				 */
 				Iinc, regInd(REG_RP), // next
 				Ic, regInd(REG_RP), regOffs(REG_RP, cellSize),
-				Ijne, ">1",
-				Iseto, TOS,
+				Ijeq, ">1",
+				
+				Ia, TOS, reg(REG_IP),
 			"1"
 				);
 
-		definePrim("(+LOOP)", // ( R: lim cur -- lim next ) ( S: change -- done? )
+		definePrim("(+LOOP)", // ( R: lim cur -- lim next ) ( S: change -- ) + jump
 				/*
 				 * Add n to the loop index. If the loop index did not cross the
 				 * boundary between the loop limit minus one and the loop limit,
@@ -676,8 +677,10 @@ public class TI99TargetContext extends TargetContext  {
 				 * execution immediately following the loop.
 				 */
 				
-				Imov, regInd(REG_RP), T1,				// cur
-				
+				//Imov, regInd(REG_RP), T1,				// cur
+				Imov, regInc(REG_IP), T1,				// jump
+				Ia, T1, reg(REG_IP),
+
 				Imov, regOffs(REG_RP, cellSize), T2,	// lim
 				Ijne, ">nonzero",
 
@@ -686,17 +689,18 @@ public class TI99TargetContext extends TargetContext  {
 				
 				// zero: handle via carry
 				Ia, TOS, regInd(REG_RP),
-				Iclr, TOS,
 				Ijnc, ">exit",
-				
-				Iseto, TOS,
+
+				//Iseto, TOS,
+				Is, T1, reg(REG_IP),
+
 				Ijmp, immed(interpLoop),				// done
 				
 			"nonzero",
 				Ia, TOS, regInd(REG_RP),
 				
 				Imov, TOS, TOS,							// forward?
-				Iclr, TOS,
+				//Iclr, TOS,
 				Ijlt, ">neg",
 				
 				// lim < cur
@@ -704,7 +708,8 @@ public class TI99TargetContext extends TargetContext  {
 				
 				Ijl, ">exit",
 				
-				Iinv, TOS,
+				Is, T1, reg(REG_IP),
+
 				Ijmp, immed(interpLoop),				// done
 				
 			"neg",
@@ -712,34 +717,10 @@ public class TI99TargetContext extends TargetContext  {
 				
 				Ijgt, ">exit",
 				
-				Iinv, TOS,
+				Is, T1, reg(REG_IP),
 			"exit"
 
 				);
-
-//		definePrim("(U+LOOP)", // ( R: lim cur -- lim next ) ( S: change -- done? )
-//				/*
-//				 * Add n to the loop index. If the loop index did not cross the
-//				 * boundary between the loop limit minus one and the loop limit,
-//				 * continue execution at the beginning of the loop. Otherwise,
-//				 * discard the current loop control parameters and continue
-//				 * execution immediately following the loop.
-//				 */
-//				Imov, TOS, T1,
-//				
-//				Iclr, TOS,
-//
-//				Ia, T1, regInd(REG_RP),				// next
-//				
-//				Ic, regInd(REG_RP), regOffs(REG_RP, cellSize),
-//				Ijne, ">exit",
-//				
-//			"out",
-//				// crossed boundary forward
-//				Iinv, TOS,
-//
-//			"exit"
-//				);
 
 		DictEntry qdoEntry = defineEntry("(?DO)");
 		TargetWord qdo = new TargetWord(qdoEntry) {
@@ -1055,6 +1036,13 @@ public class TI99TargetContext extends TargetContext  {
 		return 0;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetContext#writeLoopJump(int)
+	 */
+	@Override
+	protected void writeLoopJump(int opAddr) throws AbortException {
+		buildCell(calcJump(getDP(), opAddr));
+	}
 
 
 	protected void writeJumpAlloc(int opAddr, boolean conditional)
