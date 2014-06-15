@@ -37,7 +37,7 @@
     ( addr cnt )
     0 ?do dup i + j execute dup $20 $7f within 0= 
             if drop [char] . then emit 
-    uloop drop
+    loop drop
     rdrop
     cr
 ;
@@ -51,7 +51,7 @@
         i per-line 
         j (dmpln)
         (pause?) if leave else per-line then
-    u+loop
+    +loop
     rdrop
     r> base !
 ;

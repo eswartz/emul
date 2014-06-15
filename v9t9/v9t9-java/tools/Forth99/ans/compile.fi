@@ -298,6 +298,7 @@ User csp
     ['] (+loop) loop-compile
 ; immediate target-only
 
+[IFDEF] (uloop)
 : ULOOP
     ?comp
     ['] (uloop) loop-compile
@@ -307,6 +308,8 @@ User csp
     ?comp
     ['] (u+loop) loop-compile
 ; immediate target-only
+[THEN]
+
 [THEN]
 
 [IFUNDEF] UNLOOP

@@ -181,8 +181,8 @@ public abstract class EmulatorServerBase {
 	        loadState();
 		}
 		
+		machine.reset();
         machine.start();
-        machine.reset();
         
         //machine.getExecutor().getBreakpoints().addBreakpoint(new SimpleBreakpoint(0x1404, true));
         

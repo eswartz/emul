@@ -246,25 +246,66 @@ include cold.fi
 		COLD
 	;
 	
-	: b 1 ;
-	: a 2 ;
-	
 	: COLD
 		regs-init
 		cold-init
 		
-		10 0 do 
-			i  1 and  if
-				b
-			else
-				a
-			then
-			drop
-		loop
+		3 0 do  i drop  1 +loop
+		\ 0, 1, 2, [3]
 		
-		bye
+		10 -1 do  i drop  3 +loop
+		\ 0, 3, 6, 9, [12]
+		
+		0 10 do  i drop  -3 +loop
+		\ 10, 7, 4, 1, [-2]
+		
+		
+		\ FIXME
+		$8002 $7ffe do  i drop  1 +loop
+		\ $8002 $7ffe do  i drop  1 u+loop
+		
+		\ FIXME
+		$a000 $3333 do  i drop  $3333 +loop
+		\ $a000 $3333 do  i drop  $3333 u+loop
+		\ $3333, $6666, $9999, [$cccc]
+		
+		0 0 do  i drop  $1000 +loop
+		\ 0, 1000, 2000, 3000, ... F000, [0000]
+		
+		\ 0 0 do  i drop  $1000 u+loop
+		\ 0, 1000, 2000, 3000, ... F000, [0000]
 	;
-	
+
+
+
+		: snd ( i -- ) 
+		    dup  swpb dup  9 crshift  XOR swap  $7 and $40 + c! 
+		;
+		: delay 0 do loop ;
+		
+		: blast0
+		0 0 do 
+		    0 0 do 
+		        j i xor snd $10 delay 
+		    loop
+		loop
+		;
+		: blast1
+		0 0 do 
+		    0 0 do 
+		        j i + snd $10 delay 
+		    loop
+		loop
+		;
+		
+		: square
+		    begin 
+		        $80 'GATE c!
+		        [ $00 c, ]
+		        $00 'GATE c!
+		    again
+		;
+			
 [endif]
 
 ' bye   (BOOT)     !

@@ -85,8 +85,8 @@ public class TI99TargetContext extends TargetContext  {
 	private final boolean relBranches = true;
 
 	public static final int REG_TOS = 1;
-	public static final int REG_T1 = 2;
-	public static final int REG_T2 = 3;
+	public static final int REG_T1 = 0;
+	public static final int REG_T2 = 2;
 	
 	public static final int REG_DOCOL = 4;
 	public static final int REG_DOCON = 5;
@@ -125,6 +125,7 @@ public class TI99TargetContext extends TargetContext  {
 	private final LLOperand TOS = reg(REG_TOS);
 	private final LLOperand T1 = reg(REG_T1);
 	private final LLOperand T2 = reg(REG_T2);
+	
 	private IPrimitiveWord doVar;
 	private int interpLoop;
 	private IPrimitiveWord doDoes;
@@ -653,114 +654,93 @@ public class TI99TargetContext extends TargetContext  {
 				StockInstruction.PUSH_TOS,
 				Iclr, TOS,
 				
+				/*
+				 * Add one to the loop index. If the loop index is then equal to
+				 * the loop limit, discard the loop parameters and continue
+				 * execution immediately following the loop. Otherwise continue
+				 * execution at the beginning of the loop.
+				 */
 				Iinc, regInd(REG_RP), // next
-				Imov, regOffs(REG_RP, cellSize), T1,	// lim
-				Ijne, ">0",
-				
-				// lim == 0 --> next > 0?
-				Ic, regInd(REG_RP), regInd(REG_RP),
-				Ijgt, ">1",
-				Ijmp, ">2",
-				
-			"0",
-				// lim != 0 --> next < lim
-				Ic, regInd(REG_RP), T1,
-				Ijlt, ">2",
-			"1",
+				Ic, regInd(REG_RP), regOffs(REG_RP, cellSize),
+				Ijne, ">1",
 				Iseto, TOS,
-			"2"
+			"1"
 				);
 
-		defineInlinePrim("(ULOOP)", 
-				StockInstruction.PUSH_TOS,
+		definePrim("(+LOOP)", // ( R: lim cur -- lim next ) ( S: change -- done? )
+				/*
+				 * Add n to the loop index. If the loop index did not cross the
+				 * boundary between the loop limit minus one and the loop limit,
+				 * continue execution at the beginning of the loop. Otherwise,
+				 * discard the current loop control parameters and continue
+				 * execution immediately following the loop.
+				 */
+				
+				Imov, regInd(REG_RP), T1,				// cur
+				
+				Imov, regOffs(REG_RP, cellSize), T2,	// lim
+				Ijne, ">nonzero",
+
+				Imov, TOS, TOS,							// forward?
+				Ijlt, ">nonzero",
+				
+				// zero: handle via carry
+				Ia, TOS, regInd(REG_RP),
 				Iclr, TOS,
+				Ijnc, ">exit",
 				
-				Iinc, regInd(REG_RP), // next
-				Imov, regOffs(REG_RP, cellSize), T1,	// lim
-				Ijne, ">0",
-				
-				// lim == 0 --> next > 0?
-				Ic, regInd(REG_RP), regInd(REG_RP),
-				Ijh, ">1",
-				Ijmp, ">2",
-				
-			"0",
-				// lim != 0 --> next < lim
-				Ic, regInd(REG_RP), T1,
-				Ijl, ">2",
-			"1",
 				Iseto, TOS,
-			"2"
-				);
-		
-		definePrim("(+LOOP)", // ( R: lim next -- lim next+change ) ( S: change -- done? )
-				Ia, TOS, regInd(REG_RP), // next
-
-				Iclr, T1,	// flag
-				
-				Imov, regOffs(REG_RP, cellSize), T2,	// lim
-				Ijne, ">nonzero",
-				
-				// lim == 0 --> (next >= change) ? 0 : -1
-				Ic, regInd(REG_RP), TOS,
-				Ijlt, ">1",
-				Iseto, T1,
-			"1",
-				Imov, T1, TOS,
-				Ib, regInd(11),
+				Ijmp, immed(interpLoop),				// done
 				
 			"nonzero",
-				// lim != 0 --> (change < 0 ? next > lim  : next < lim) ? 0 : -1
+				Ia, TOS, regInd(REG_RP),
+				
+				Imov, TOS, TOS,							// forward?
+				Iclr, TOS,
+				Ijlt, ">neg",
+				
+				// lim < cur
+				Ic, regInd(REG_RP), T2,					// next ? lim
+				
+				Ijl, ">exit",
+				
+				Iinv, TOS,
+				Ijmp, immed(interpLoop),				// done
+				
+			"neg",
+				Ic, regInd(REG_RP), T2,					// next ? lim
+				
+				Ijgt, ">exit",
+				
+				Iinv, TOS,
+			"exit"
 
-				// assume positive
-				Ic, regInd(REG_RP), T2, 
-				Ijlt, ">2",
-				Iseto, T1,
-				
-			"2",
-				// invert if negative
-				Imov, TOS, TOS,
-				Ijgt, ">3",
-				Iinv, T1,
-				
-			"3",
-				Imov, T1, TOS
 				);
 
-		definePrim("(U+LOOP)", // ( R: lim next -- lim next+change ) ( S: change -- done? )
-				Ia, TOS, regInd(REG_RP), // next
+//		definePrim("(U+LOOP)", // ( R: lim cur -- lim next ) ( S: change -- done? )
+//				/*
+//				 * Add n to the loop index. If the loop index did not cross the
+//				 * boundary between the loop limit minus one and the loop limit,
+//				 * continue execution at the beginning of the loop. Otherwise,
+//				 * discard the current loop control parameters and continue
+//				 * execution immediately following the loop.
+//				 */
+//				Imov, TOS, T1,
+//				
+//				Iclr, TOS,
+//
+//				Ia, T1, regInd(REG_RP),				// next
+//				
+//				Ic, regInd(REG_RP), regOffs(REG_RP, cellSize),
+//				Ijne, ">exit",
+//				
+//			"out",
+//				// crossed boundary forward
+//				Iinv, TOS,
+//
+//			"exit"
+//				);
 
-				Iclr, T1,	// flag
-				
-				Imov, regOffs(REG_RP, cellSize), T2,	// lim
-				Ijne, ">nonzero",
-				
-				// lim == 0 --> (next >= change) ? 0 : -1
-				Ic, regInd(REG_RP), TOS,
-				Ijl, ">1",
-				Iseto, T1,
-			"1",
-				Imov, T1, TOS,
-				Ib, regInd(11),
-				
-			"nonzero",
-				// lim != 0 --> (change < 0 ? next > lim  : next < lim) ? 0 : -1
-
-				// assume positive
-				Ic, regInd(REG_RP), T2, 
-				Ijl, ">2",
-				Iseto, T1,
-				
-			"2",
-				// invert if negative
-				Imov, TOS, TOS,
-				Ijgt, ">3",
-				Iinv, T1,
-				
-			"3",
-				Imov, T1, TOS
-				);
-				
 		DictEntry qdoEntry = defineEntry("(?DO)");
 		TargetWord qdo = new TargetWord(qdoEntry) {
 			{

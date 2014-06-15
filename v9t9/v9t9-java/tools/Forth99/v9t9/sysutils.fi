@@ -160,7 +160,7 @@
         use 
         cvmove
                 
-    use u+loop    
+    use +loop    
 ;
 
 : bitset ( on? mask val -- val )

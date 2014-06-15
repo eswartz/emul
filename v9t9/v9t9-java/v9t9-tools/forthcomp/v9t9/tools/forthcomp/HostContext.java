@@ -79,7 +79,6 @@ import v9t9.tools.forthcomp.words.HostTargetOnly;
 import v9t9.tools.forthcomp.words.HostType;
 import v9t9.tools.forthcomp.words.HostUnaryOp;
 import v9t9.tools.forthcomp.words.HostVariable;
-import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.If;
 import v9t9.tools.forthcomp.words.Immediate;
 import v9t9.tools.forthcomp.words.Include;
@@ -245,9 +244,9 @@ public class HostContext extends Context {
 	 	define("?do", new QuestionDo());
 	 	define("leave", new Leave());
 	 	define("loop", new LoopCompile("(loop)"));
-	 	define("uloop", new LoopCompile("(uloop)"));
+//	 	define("uloop", new LoopCompile("(uloop)"));
 	 	define("+loop", new LoopCompile("(+loop)"));
-	 	define("u+loop", new LoopCompile("(u+loop)"));
+//	 	define("u+loop", new LoopCompile("(u+loop)"));
 	 	define("exit", new Exit());
 
 	 	define("(", new Paren());
