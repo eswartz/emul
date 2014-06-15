@@ -248,6 +248,6 @@ User GDP              \ GROM dictionary pointer
     gdp !
 ;
 
-[endif]
+[THEN]
 
 

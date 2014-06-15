@@ -190,7 +190,6 @@ public class HostContext extends Context {
 		define("[ifundef]", new BracketIfndef());
 		define("[else]", new BracketElse());
 		define("[then]", new BracketThen());
-		define("[endif]", new BracketThen());
 		
 		define("<EXPORT", new PushExportState());
 		define("EXPORT>", new PopExportState());

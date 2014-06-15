@@ -11,7 +11,7 @@
 0 <EXPORT
 
 :   'quit
-    10 base !
+   	decimal
     
     begin
         key? if key emit 
@@ -25,6 +25,8 @@ EXPORT>
 :   cold
 
     regs-init   ints-init   kbd-init
+    
+    decimal
     
     quit
 ;

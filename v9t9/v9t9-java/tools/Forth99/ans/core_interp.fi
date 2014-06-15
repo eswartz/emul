@@ -1,0 +1,98 @@
+
+
+[IFUNDEF] WORD
+
+| : (parse-word)  ( ch -- caddr u )
+    (skip-spaces)
+    parse
+;
+
+
+| : (>c)      ( caddr u naddr -- )
+\   make counted string at naddr
+	over 255 > 	err-string-overflow ?throw
+	
+    2dup c!             \ set length byte
+    1+ swap cmove>      \ move data
+;
+
+
+
+: WORD  \   ( char "<chars>ccc<char>" -- c-addr )
+    (parse-word) 
+    2dup + bl swap c!   \ word ends with space
+    HERE (>c)           \ copy to word pad
+    HERE                \ leave addr
+;
+[THEN]
+
+
+
+| : (skip)
+    1 /string
+;
+
+[IFUNDEF] >NUMBER
+: dn* ( ud un -- ud )
+    \           hi.lo 
+    \       *       n
+    \   -------------
+    \   hi.lo*n lo.lo*n
+    \   lo.hi*n 0
+    dup rot     \ ( lo-d un un hi-d )
+    um*         \ ( lo-d un d.hiprod )
+    drop >r     \ save lo.hi*n
+    um*         \ ( d.loprod )
+    0 r>        \ create d.hiprod
+    d+ 
+;
+
+:   >digit ( base ch -- n | flag )
+    dup [char] 0 [ [char] 9 1+ literal ] within if
+        [char] 0 -  
+    else dup [char] a [ [char] z 1+ literal ] within if
+        [ char a -10 + literal ] -  
+    else dup [char] A [ [char] Z 1+ literal ] within if
+        [ char A -10 + literal ] -  
+    else
+        true or  
+    then then then
+    
+    swap over  U> 
+    
+;
+
+\   This ignores '+' and '-' and '.' and stops there.
+\   The outer NUMBER interpreter will detect leading signs
+\   and perform an initial 
+\   and then parse the number 
+\   continue parsing, setting dpl.
+: >NUMBER   \ CORE ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )
+    begin           \ ( ud1 c-addr1 u1 )
+        dup         \ chars left?
+        if
+            over c@     
+            base @
+            swap >digit      \ legal digit?
+        else
+            0
+        then        \ ( ud1 c-addr1 u1 # -1 | ud1 c-addr1 u1 0 )
+    while
+        >r          \ save digit
+        2swap       \ get accum
+        base @ dn*
+        r> s>d d+   \ add digit
+        2swap
+        (skip)      \ advance pointer   
+\       2dup . .
+    repeat
+;
+[THEN]
+
+\ |test : testnum s" 18446744069414584320" ;
+\ test" >number 0. testnum  >number 2drop 2dup d. 1. d+ or 0="
+\ |test : testnum s" 4294967295" ;
+\ test" >number 0. testnum  >number 2drop 2dup d. 1. d+ or 0="
+
+
+

@@ -1,0 +1,23 @@
+
+
+
+\   I/O words
+
+[IFUNDEF] EMIT
+: EMIT ( c -- )
+  drop
+;
+[THEN]
+
+
+[IFUNDEF] KEY
+: KEY ( -- k )
+	BEGIN AGAIN
+;
+[THEN]
+
+[IFUNDEF] KEY?
+: KEY? ( -- f )
+	0
+;
+[THEN]

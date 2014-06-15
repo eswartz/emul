@@ -85,8 +85,9 @@ public class TI99TargetContext extends TargetContext  {
 	private final boolean relBranches = true;
 
 	public static final int REG_TOS = 1;
-	public static final int REG_T1 = 0;
-	public static final int REG_T2 = 2;
+	public static final int REG_TMP = 0;
+	public static final int REG_R2 = 2;
+	public static final int REG_R3 = 3;
 	
 	public static final int REG_DOCOL = 4;
 	public static final int REG_DOCON = 5;
@@ -105,10 +106,10 @@ public class TI99TargetContext extends TargetContext  {
 	private enum StockInstruction {
 		/** save TOS on stack */
 		PUSH_TOS,
-		/** save TOS on stack underneath empty slot (i.e. prepare for another push) */
-		PUSH_TOS_ALLOC_2,
 		/** pop from stack to TOS */
 		POP_TOS,
+		/** pop two entries from stack, losing the top */
+		POP2_TOS,
 		
 	}
 	
@@ -117,14 +118,15 @@ public class TI99TargetContext extends TargetContext  {
 
 //	private LLImmedOperand threadOp;
 	
-	private IPrimitiveWord doCol;
+//	private IPrimitiveWord doCol;
 	private IPrimitiveWord doCon;
 	private IPrimitiveWord doDcon;
 	private IPrimitiveWord doUser;
 	
 	private final LLOperand TOS = reg(REG_TOS);
-	private final LLOperand T1 = reg(REG_T1);
-	private final LLOperand T2 = reg(REG_T2);
+	private final LLOperand TMP = reg(REG_TMP);
+	private final LLOperand R2 = reg(REG_R2);
+	private final LLOperand R3 = reg(REG_R3);
 	
 	private IPrimitiveWord doVar;
 	private int interpLoop;
@@ -217,10 +219,10 @@ public class TI99TargetContext extends TargetContext  {
 					addr += 2;
 					break;
 					
-				case PUSH_TOS_ALLOC_2:
-					llInsts.add(createInstruction(Iai, reg(REG_SP), immed(-cellSize * 2)));	// make room for two
-					llInsts.add(createInstruction(Imov, TOS, regOffs(REG_SP, -cellSize)));	// save TOS
-					addr += 8;
+				case POP2_TOS:
+					llInsts.add(createInstruction(Iinct, reg(REG_SP)));
+					llInsts.add(createInstruction(Imov, regInc(REG_SP), TOS));
+					addr += 4;
 					break;
 					
 				default:
@@ -288,14 +290,16 @@ public class TI99TargetContext extends TargetContext  {
 	}
 
 	private IPrimitiveWord definePrim(String string, Object... instsAndOpcodes) throws AbortException {
+		IWord word = define(string, new TI99PrimitiveWord(defineEntry(string), true));
 		LLInstruction[] llInsts = defineInstrs(instsAndOpcodes);
-		IWord word = define(string, new TI99PrimitiveWord(defineEntry(string), llInsts, true));
+		((TI99PrimitiveWord) word).setInsts(llInsts);
 		return layoutPrimitiveWord(llInsts, word);
 	}
 
 	private IPrimitiveWord defineInlinePrim(String string, Object... instsAndOpcodes) throws AbortException  {
+		IWord word = define(string, new TI99PrimitiveWord(defineEntry(string), true));
 		LLInstruction[] llInsts = defineInstrs(instsAndOpcodes);
-		IWord word = define(string, new TI99PrimitiveWord(defineEntry(string), llInsts, true)); 
+		((TI99PrimitiveWord) word).setInsts(llInsts);
 		return layoutPrimitiveWord(llInsts, word);
 	}
 	private IWord defineAlias(String name, String other) throws AbortException  {
@@ -353,9 +357,9 @@ public class TI99TargetContext extends TargetContext  {
 		writeInstruction(Imov, TOS, regInd(REG_SP));
 	}
 
-	private void popTOS() {
-		writeInstruction(Imov, regInc(REG_SP), TOS);
-	}
+//	private void popTOS() {
+//		writeInstruction(Imov, regInc(REG_SP), TOS);
+//	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.TargetContext#defineBuiltins()
@@ -372,10 +376,13 @@ public class TI99TargetContext extends TargetContext  {
 		interpLoop = getDP();
 		defineSymbol(interpLoop, "@NEXT");
 		
+		// debug
+		writeInstruction(Imov, reg(REG_SP), reg(REG_SP));
+		
 		// get the next XT
-		writeInstruction(Imov, regInc(REG_IP), T1);
+		writeInstruction(Imov, regInc(REG_IP), TMP);
 		// B to it (everyone jumps back to interpLoop)
-		writeInstruction(Ib, regInd(REG_T1));
+		writeInstruction(Ib, regInd(REG_TMP));
 
 //		threadOp = new LLImmedOperand(loop);
 		
@@ -389,16 +396,19 @@ public class TI99TargetContext extends TargetContext  {
 				Imov, regInc(REG_IP), TOS	// get word
 				);
 
+		definePrim("DODLIT",
+				Iai, reg(REG_SP), immed(-cellSize * 2),
+				Imov, TOS, regOffs(REG_SP, cellSize),
+				
+				Imov, regInc(REG_IP), regInd(REG_SP),	// get first word
+				Imov, regInc(REG_IP), TOS		// and second word
+				);
+
+		///////// CREATE'd words use R11 for their data
+		
 		doVar = definePrim("DOVAR",
 				StockInstruction.PUSH_TOS,
 				Imov, reg(11), TOS
-				);
-		
-		definePrim("DODLIT",
-				StockInstruction.PUSH_TOS_ALLOC_2,
-				
-				Imov, regInc(11), regInd(REG_SP),	// get first word
-				Imov, regInc(11), TOS		// and second word
 				);
 		
 		doCon = definePrim("DOCON",
@@ -407,7 +417,8 @@ public class TI99TargetContext extends TargetContext  {
 				Imov, regInc(11), TOS	// get word
 				);
 		doDcon = definePrim("DODCON",
-				StockInstruction.PUSH_TOS_ALLOC_2,
+				Iai, reg(REG_SP), immed(-cellSize * 2),
+				Imov, TOS, regOffs(REG_SP, cellSize),
 				
 				Imov, regInc(11), regInd(REG_SP),	// get first word
 				Imov, regInc(11), TOS		// and second word
@@ -424,13 +435,15 @@ public class TI99TargetContext extends TargetContext  {
 		doDoes = definePrim("DODOES",
 				StockInstruction.PUSH_TOS,
 
-				Imov, regInc(11), T1,			// XT of DOES> target
+				Imov, regInc(11), TMP,			// XT of DOES> target
 				Imov, reg(11), TOS,				// PFA
 
-				Ib, regInd(REG_T1)
+				Ib, regInd(REG_TMP)
 
 				);
 
+		/////////////////
+		
 		definePrim("(RESET)",
 				Ili, reg(REG_DOCOL), immed(docolPrim.getEntry().getContentAddr()),
 				Ili, reg(REG_DOUSER), immed(doUser.getEntry().getContentAddr()),
@@ -447,15 +460,15 @@ public class TI99TargetContext extends TargetContext  {
 		
 		
 		definePrim("(REGS)", // ( SP0 UP0 RP0 -- )
-				Imov, regInd(REG_RP), T1,
+				Imov, regInd(REG_RP), TMP,
 				Imov, TOS, reg(REG_RP),
 				Imov, regInc(REG_SP), reg(REG_UP),
 				Imov, regInc(REG_SP), reg(REG_SP),
 				Idect, reg(REG_RP),
-				Imov, T1, regInd(REG_RP));
+				Imov, TMP, regInd(REG_RP));
 		
 
-		doCol = docolPrim; // rest of words act normally 
+		//doCol = docolPrim; // rest of words act normally 
 		
 		
 		definePrim("@", 
@@ -466,14 +479,11 @@ public class TI99TargetContext extends TargetContext  {
 				);
 		definePrim("!", 
 				Imov, regInc(REG_SP), regInd(REG_TOS),
-				
 				StockInstruction.POP_TOS
 				);
 		definePrim("C!", 
-				Imov, regInc(REG_SP), T1,
-				Iswpb, T1, 
-				Imovb, T1, regInd(REG_TOS),
-				
+				Imovb, regOffs(REG_SP, 1), regInd(REG_TOS),
+				Iinct, reg(REG_SP),
 				StockInstruction.POP_TOS
 				);
 				
@@ -485,10 +495,8 @@ public class TI99TargetContext extends TargetContext  {
 				);
 				
 		definePrim("C+!", 
-				Imov, regInc(REG_SP), T1,
-				Iswpb, T1,
-				Iab, T1, regInd(REG_TOS),
-				
+				Iab, regOffs(REG_SP, 1), regInd(REG_TOS),
+				Iinct, reg(REG_SP),
 				StockInstruction.POP_TOS
 				);
 
@@ -516,9 +524,9 @@ public class TI99TargetContext extends TargetContext  {
 				);
 
 		definePrim("SWAP", 
-				Imov, TOS, T1,
+				Imov, TOS, TMP,
 				Imov, regInd(REG_SP), TOS,
-				Imov, T1, regInd(REG_SP)
+				Imov, TMP, regInd(REG_SP)
 				);
 				
 //		definePrim("2SWAP", Iswap_d);
@@ -529,19 +537,38 @@ public class TI99TargetContext extends TargetContext  {
 		
 //		definePrim("2OVER", Iover_d);
 		definePrim("ROT", // ( a b c -- b c a )
-				Imov, regOffs(REG_SP, cellSize), T1, // a
+				Imov, regOffs(REG_SP, cellSize), TMP, // a
 				Imov, regInd(REG_SP), regOffs(REG_SP, cellSize),	// b
 				Imov, TOS, regInd(REG_SP),	// c
-				Imov, T1, TOS	// a
+				Imov, TMP, TOS	// a
 				);
 //		definePrim("2ROT", Irot_d);
-//		definePrim("0=", I0equ);
+		definePrim("0=", 
+				Imov, TOS, TOS,
+				Iseto, TOS,
+				Ijeq, ">0",
+				Iclr, TOS,
+			"0"
+				);
+
 //		definePrim("D0=", I0equ_d);
 //		definePrim("=", Iequ);
-//		definePrim("D=", Iequ_d);
+		definePrim("D=",
+				Imov, TOS, TMP,
+				Iseto, TOS,
+				Ic, regOffs(REG_SP, cellSize*2), regInd(REG_SP), // low word more likely to differ
+				Ijne, ">1",
+				Ic, regOffs(REG_SP, cellSize), TMP,
+				Ijeq, ">2",
+			"1",
+				Iclr, TOS,
+			"2",
+				Iai, reg(REG_SP), immed(cellSize * 3)
+				);
+
 		definePrim("0BRANCH",
 				// get target
-				Imov, regInc(REG_IP), T1,
+				Imov, regInc(REG_IP), TMP,
 				// test val 
 				Imov, TOS, TOS,
 				Ijeq, ">0",
@@ -550,7 +577,7 @@ public class TI99TargetContext extends TargetContext  {
 				Ijmp, immed(interpLoop),
 			"0",
 				Imov, regInc(REG_SP), TOS,
-				relBranches ? Ia : Imov, T1, reg(REG_IP)
+				relBranches ? Ia : Imov, TMP, reg(REG_IP)
 				);
 				
 		definePrim("BRANCH", 
@@ -561,7 +588,6 @@ public class TI99TargetContext extends TargetContext  {
 				Ineg, TOS
 				);
 		
-//		definePrim("DNEGATE", Ineg_d);
 		definePrim("+", 
 				Ia, regInc(REG_SP), TOS
 				);
@@ -571,8 +597,42 @@ public class TI99TargetContext extends TargetContext  {
 				StockInstruction.POP_TOS
 				);
 //		definePrim("D-", Isub_d);
-//		definePrim("UM*", Iumul);
-//		defineInlinePrim("UM/MOD", Iudivmod);
+		
+		defineInlinePrim("*", 
+				Imov, regInc(REG_SP), R2,
+				Impy, TOS, R2,
+				Imov, R3, TOS
+				);
+
+		/*
+		 * ( u1 u2 -- ud )
+		 * 
+		 * Multiply u1 by u2, giving the unsigned double-cell product ud. All
+		 * values and arithmetic are unsigned.
+		 */
+		defineInlinePrim("UM*", 
+				Imov, regInd(REG_SP), R2,
+				Impy, TOS, R2,
+				Imov, R2, TOS,
+				Imov, R3, regInd(REG_SP)
+				);
+
+		/*
+		 * ( ud u1 -- u2 u3 )
+		 * 
+		 * Divide ud by u1, giving the quotient u3 and the remainder u2. All
+		 * values and arithmetic are unsigned. An ambiguous condition exists if
+		 * u1 is zero or if the quotient lies outside the range of a single-cell
+		 * unsigned integer.
+		 */
+		defineInlinePrim("UM/MOD", 
+				Imov, regInc(REG_SP), R2,
+				Imov, regInd(REG_SP), R3,
+				Idiv, TOS, R2,
+				Imov, R2, TOS,
+				Imov, R3, regInd(REG_SP)
+				);
+		
 //		
 //		defineInlinePrim("NIP", Iswap, Idrop);
 //		
@@ -587,20 +647,42 @@ public class TI99TargetContext extends TargetContext  {
 				);
 		
 //		definePrim("DOR", Ior_d);
-		definePrim("AND", 
-				Iszc, regInc(REG_SP), TOS
+		definePrim("AND",
+				Iinv, TOS,
+				Iszc, TOS, regInd(REG_SP),
+				StockInstruction.POP_TOS
 				);
 //		definePrim("DAND", Iand_d);
 		definePrim("XOR",
 				Ixor, regInc(REG_SP), TOS
 				);
 //		definePrim("DXOR", Ixor_d);
-//		definePrim("NAND", Inand);
+		definePrim("NAND", 
+				Iszc, regInc(REG_SP), TOS
+				);
+
 //		definePrim("DNAND", Inand_d);
 //		
+		
+		definePrim("DNEGATE",
+				Iinv, TOS,
+				Iinv, regInd(REG_SP),
+				Iinc, regInd(REG_SP),
+				Ijnc, ">0",
+				Iinc, TOS,
+			"0"
+				);
+		
+		int dnegateEntry = require("DNEGATE").getEntry().getContentAddr();
+		definePrim("DABS",
+				Imov, TOS, TOS,
+				Ijlt, immed(dnegateEntry)
+				);
+		
 		definePrim(">R",
 				Idect, reg(REG_RP),
-				Imov, TOS, regInd(REG_RP)
+				Imov, TOS, regInd(REG_RP),
+				StockInstruction.POP_TOS
 				);
 				
 		definePrim("2>R", 
@@ -615,8 +697,9 @@ public class TI99TargetContext extends TargetContext  {
 				);
 				
 		definePrim("2R>", 
-				StockInstruction.PUSH_TOS_ALLOC_2,
-				Imov, regInc(REG_RP), regOffs(REG_SP, cellSize),
+				Iai, reg(REG_SP), immed(-cellSize * 2),
+				Imov, TOS, regOffs(REG_SP, cellSize),
+
 				Imov, regInc(REG_RP), regOffs(REG_SP, 0),
 				Imov, regInc(REG_RP), TOS
 				);
@@ -640,10 +723,20 @@ public class TI99TargetContext extends TargetContext  {
 //		defineInlinePrim("K", Irpidx, 4);
 //		defineInlinePrim("K'", Irpidx, 5);
 //		
-//		defineInlinePrim("SP@", IcontextFrom, CTX_SP);
-//		defineInlinePrim("SP!", ItoContext, CTX_SP);
-//		defineInlinePrim("RP@", IcontextFrom, CTX_RP);
-//		defineInlinePrim("RP!", ItoContext, CTX_RP);
+		defineInlinePrim("SP@",
+				StockInstruction.PUSH_TOS,
+				Imov, reg(REG_SP), TOS
+				);
+		defineInlinePrim("SP!",
+				Imov, regInc(REG_SP), reg(REG_SP)
+				);
+		defineInlinePrim("RP@",
+				StockInstruction.PUSH_TOS,
+				Imov, reg(REG_RP), TOS
+				);
+		defineInlinePrim("RP!",
+				Imov, regInc(REG_SP), reg(REG_RP)
+				);
 //		defineInlinePrim("LP@", IcontextFrom, CTX_LP);
 //		defineInlinePrim("LP!", ItoContext, CTX_LP);
 //		
@@ -651,8 +744,7 @@ public class TI99TargetContext extends TargetContext  {
 		defineAlias("(DO)", "2>R");		
 		
 		definePrim("(LOOP)", // ( R: lim next -- lim next+1 ) ( S: -- ) + jump
-				StockInstruction.PUSH_TOS,
-				Imov, regInc(REG_IP), TOS,
+				Imov, regInc(REG_IP), TMP,
 				
 				/*
 				 * Add one to the loop index. If the loop index is then equal to
@@ -664,7 +756,7 @@ public class TI99TargetContext extends TargetContext  {
 				Ic, regInd(REG_RP), regOffs(REG_RP, cellSize),
 				Ijeq, ">1",
 				
-				Ia, TOS, reg(REG_IP),
+				Ia, TMP, reg(REG_IP),
 			"1"
 				);
 
@@ -677,11 +769,10 @@ public class TI99TargetContext extends TargetContext  {
 				 * execution immediately following the loop.
 				 */
 				
-				//Imov, regInd(REG_RP), T1,				// cur
-				Imov, regInc(REG_IP), T1,				// jump
-				Ia, T1, reg(REG_IP),
+				Imov, regInc(REG_IP), TMP,				// jump
+				Ia, TMP, reg(REG_IP),
 
-				Imov, regOffs(REG_RP, cellSize), T2,	// lim
+				Imov, regOffs(REG_RP, cellSize), R2,	// lim
 				Ijne, ">nonzero",
 
 				Imov, TOS, TOS,							// forward?
@@ -692,9 +783,9 @@ public class TI99TargetContext extends TargetContext  {
 				Ijnc, ">exit",
 
 				//Iseto, TOS,
-				Is, T1, reg(REG_IP),
+				Is, TMP, reg(REG_IP),
 
-				Ijmp, immed(interpLoop),				// done
+				Ijmp, ">exit",						// done
 				
 			"nonzero",
 				Ia, TOS, regInd(REG_RP),
@@ -704,22 +795,23 @@ public class TI99TargetContext extends TargetContext  {
 				Ijlt, ">neg",
 				
 				// lim < cur
-				Ic, regInd(REG_RP), T2,					// next ? lim
+				Ic, regInd(REG_RP), R2,					// next ? lim
 				
 				Ijl, ">exit",
 				
-				Is, T1, reg(REG_IP),
+				Is, TMP, reg(REG_IP),
 
-				Ijmp, immed(interpLoop),				// done
+				Ijmp, ">exit",						// done
 				
 			"neg",
-				Ic, regInd(REG_RP), T2,					// next ? lim
+				Ic, regInd(REG_RP), R2,					// next ? lim
 				
 				Ijgt, ">exit",
 				
-				Is, T1, reg(REG_IP),
-			"exit"
-
+				Is, TMP, reg(REG_IP),
+				
+			"exit",
+				StockInstruction.POP_TOS
 				);
 
 		DictEntry qdoEntry = defineEntry("(?DO)");
@@ -744,9 +836,9 @@ public class TI99TargetContext extends TargetContext  {
 		define("(?DO)", qdo);
 		
 		definePrim("2DUP",
-				Iai, reg(REG_SP), immed(-cellSize * 2),
 				Imov, TOS, regOffs(REG_SP, -cellSize),
-				Imov, regInd(REG_SP), regOffs(REG_SP, -cellSize * 2)
+				Imov, regInd(REG_SP), regOffs(REG_SP, -cellSize * 2),
+				Iai, reg(REG_SP), immed(-cellSize * 2)
 				);
 				
 		
@@ -765,9 +857,22 @@ public class TI99TargetContext extends TargetContext  {
 //		//definePrim("(>CONTEXT)", ItoContext);
 //		//definePrim("(USER)", Iuser);
 //
-//		defineInlinePrim("0<", IlitX, Icmp+CMP_LT);
+		defineInlinePrim("0<", 
+				Imov, TOS, TOS,
+				Iseto, TOS,
+				Ijlt, ">0",
+				Iclr, TOS,
+			"0"
+				);
+		defineInlinePrim("0>", 
+				Imov, TOS, TOS,
+				Iseto, TOS,
+				Ijgt, ">0",
+				Iclr, TOS,
+			"0"
+				);
+				
 //		defineInlinePrim("0<=", IlitX, Icmp+CMP_LE);
-//		defineInlinePrim("0>", IlitX, Icmp+CMP_GT);
 //		defineInlinePrim("0>=", IlitX, Icmp+CMP_GE);
 //		defineInlinePrim("0U<", IlitX, Icmp+CMP_ULT);
 //		defineInlinePrim("0U<=", IlitX, Icmp+CMP_ULE);
@@ -777,7 +882,13 @@ public class TI99TargetContext extends TargetContext  {
 //		defineInlinePrim("<=", Icmp+CMP_LE);
 //		defineInlinePrim(">", Icmp+CMP_GT);
 //		defineInlinePrim(">=", Icmp+CMP_GE);
-//		defineInlinePrim("U<", Icmp+CMP_ULT);
+		defineInlinePrim("U<", 
+				Ic, regInc(REG_SP), TOS,
+				Iseto, TOS,
+				Ijl, ">0",
+				Iclr, TOS,
+			"0"
+				);
 //		defineInlinePrim("U<=", Icmp+CMP_ULE);
 //		defineInlinePrim("U>", Icmp+CMP_UGT);
 //		defineInlinePrim("U>=", Icmp+CMP_UGE);
@@ -801,8 +912,12 @@ public class TI99TargetContext extends TargetContext  {
 //		
 //		defineInlinePrim("(unloop)", IRfrom, Irdrop_d, ItoR);
 //		defineInlinePrim("2rdrop", Irdrop_d);
-//		defineInlinePrim("2/", I2div);
-//		defineInlinePrim("2*", I2times);
+		defineInlinePrim("2/",
+				Isra, TOS, immed(1)
+				);
+		defineInlinePrim("2*", 
+				Isla, TOS, immed(1)
+				);
 //		
 		definePrim("LSHIFT", 
 				Imov, TOS, reg(0),
@@ -834,7 +949,7 @@ public class TI99TargetContext extends TargetContext  {
 //		defineInlinePrim("DURSHIFT", Irsh_d);
 //		defineInlinePrim("DCRSHIFT", Icsh_d);
 //		
-//		defineInlinePrim("*", Iumul, Idrop);
+		
 //
 //		defineInlinePrim("2DROP", Idrop_d);
 //		defineInlinePrim("D>Q", Idup, IlitX, Icmp + CMP_LT, Idup);
@@ -843,12 +958,12 @@ public class TI99TargetContext extends TargetContext  {
 //		defineInlinePrim("S>D", Idup, IlitX, Icmp+CMP_LT);
 
 		definePrim("EXECUTE",
-				Idect, reg(REG_RP),
-				Imov, reg(11), regInd(REG_RP),
-				Imov, TOS, T1,
+				//Idect, reg(REG_RP),
+				//Imov, reg(REG_IP), regInd(REG_RP),
+				Imov, TOS, TMP,
 				StockInstruction.POP_TOS,
-				Ibl, regInd(REG_T1),
-				Imov, regInc(REG_RP), reg(11)
+				Ibl, regInd(REG_TMP)
+				//Imov, regInc(REG_RP), reg(REG_IP)
 				);
 
 //		//defineInlinePrim("DOVAR", IbranchX|0, Idovar);
@@ -863,7 +978,43 @@ public class TI99TargetContext extends TargetContext  {
 				Iclr, TOS
 				);
 
-//		
+		/** Move memory backward (src -> dst)
+		( src dst # -- )
+		*/  
+		definePrim("CMOVE", 
+				Imov, TOS, R2,		// # bytes
+				Imov, regInd(REG_SP), TMP,	// dst
+				StockInstruction.POP2_TOS,	// src = TOS
+				Imov, R2, R2,			// 0 bytes?
+				Ijeq, ">1",
+			"2",
+				Imovb, regInc(REG_TOS), regInc(REG_TMP),
+				Idec, R2,
+				Ijne, ">2",
+			"1",
+				StockInstruction.POP_TOS
+				);
+		/** Move memory forward (dst -> src)
+		( src dst # -- )
+		*/  
+		definePrim("CMOVE>", 
+				Imov, TOS, R2,		// # bytes
+				Imov, regInd(REG_SP), TMP,	// dst
+				StockInstruction.POP2_TOS,	// src = TOS
+				Imov, R2, R2,			// 0 bytes?
+				Ijeq, ">1",
+				Ia, R2, TOS,
+				Ia, R2, TMP,
+			"2",
+				Idec, TOS,
+				Idec, TMP,
+				Imovb, regInd(REG_TOS), regInd(REG_TMP),
+				Idec, R2,
+				Ijne, ">2",
+			"1",
+				StockInstruction.POP_TOS
+				);
+
 //		defineInlinePrim("(FILL)", Ifill);
 //		defineInlinePrim("(CFILL)", Icfill);
 //		defineInlinePrim("(CMOVE)", Icmove);
@@ -882,7 +1033,12 @@ public class TI99TargetContext extends TargetContext  {
 //		defineInlinePrim("CELL", IlitX | 0x2);
 //		
 //		defineInlinePrim("0<>", I0equ, Inot); 
-//		defineInlinePrim("<>", Iequ, Inot); 
+//		defineInlinePrim("<>", Iequ, Inot);
+		
+		definePrim("HANG", 
+			"0", Ijmp, ">0"
+				);
+
 	}
 	
 	/**

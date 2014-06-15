@@ -12,14 +12,12 @@ package v9t9.tools.forthcomp.ti99;
 
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
-import v9t9.machine.ti99.asm.RawInstructionFactory9900;
 import v9t9.tools.asm.LLInstruction;
 import v9t9.tools.asm.inst9900.AsmInstructionFactory9900;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.DictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
-import v9t9.tools.forthcomp.words.INativeCodeWord;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetWord;
@@ -30,7 +28,7 @@ import v9t9.tools.forthcomp.words.TargetWord;
  */
 public class TI99PrimitiveWord extends TargetWord implements IPrimitiveWord {
 
-	private final LLInstruction[] insts;
+	private LLInstruction[] insts;
 	private AsmInstructionFactory9900 asmInstrFactory = new AsmInstructionFactory9900();
 	private boolean inline;
 
@@ -38,9 +36,8 @@ public class TI99PrimitiveWord extends TargetWord implements IPrimitiveWord {
 	 * @param entry
 	 */
 	public TI99PrimitiveWord(DictEntry entry, 
-			LLInstruction[] insts_, boolean inline_) {
+			boolean inline_) {
 		super(entry);
-		this.insts = insts_;
 		this.inline = inline_;
 		
 		setCompilationSemantics(new ISemantics() {
@@ -61,6 +58,13 @@ public class TI99PrimitiveWord extends TargetWord implements IPrimitiveWord {
 				getEntry().use();
 			}
 		});
+	}
+	
+	/**
+	 * @param insts the insts to set
+	 */
+	public void setInsts(LLInstruction[] insts) {
+		this.insts = insts;
 	}
 
 	/* (non-Javadoc)

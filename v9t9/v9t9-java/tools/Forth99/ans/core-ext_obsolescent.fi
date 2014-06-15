@@ -1,0 +1,48 @@
+
+[IFUNDEF] EXPECT
+\ Receive a string of at most +n characters. Display graphic characters as
+\ they are received. A program that depends on the presence or absence of
+\ non-graphic characters in the string has an environmental dependency. 
+\ The editing functions, if any, that the system performs in order to construct 
+\ the string of characters are implementation-defined.
+\
+\ Input terminates when an implementation-defined line terminator is received 
+\ or when the string is +n characters long. When input terminates, nothing 
+\ is appended to the string and the display is maintained in an implementation-defined way.
+\
+\ Store the string at c-addr and its length in SPAN.
+\ 
+\ Note: This word is obsolescent and is included as a concession to existing
+\ implementations. Its function is superseded by 6.1.0695 ACCEPT.
+\
+\ : EXPECT	( c-addr +n -- )
+\ ;
+[THEN]
+
+
+[IFUNDEF] CONVERT
+
+
+\ ud2 is the result of converting the characters within the text beginning at
+\ the first character after c-addr1 into digits, using the number in BASE, 
+\ and adding each digit to ud1 after multiplying ud1 by the number in BASE.
+\ Conversion continues until a character that is not convertible is encountered. 
+\ c-addr2 is the location of the first unconverted character. An ambiguous
+\ condition exists if ud2 overflows.
+\
+\ Note: This word is obsolescent and is included as a concession to existing 
+\ implementations. Its function is superseded by 6.1.0570 >NUMBER.
+\ : CONVERT ( ud1 c-addr1 -- ud2 c-addr2 )
+\ ;
+[THEN]
+
+
+
+[IFUNDEF] SPAN
+\ a-addr is the address of a cell containing the count of characters stored by the last execution of EXPECT.
+\
+\ Note: This word is obsolescent and is included as a concession to existing implementations.
+\ : SPAN ( -- a-addr )
+\ ;
+[THEN]
+

@@ -1,0 +1,8 @@
+
+[IFUNDEF] BLK
+User BLK
+[THEN]
+
+[IFUNDEF] C/L
+&64 constant C/L
+[THEN]

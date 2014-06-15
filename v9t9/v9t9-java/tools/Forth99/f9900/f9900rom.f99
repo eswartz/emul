@@ -48,16 +48,52 @@ include ../v9t9/ram.fi
 
 EXPORT>
 
-\ include sysprims.fi
+include sysprims.fi
 include syscomp.fi
 include cold.fi
+
+
+	\ ----------- [[[ STUBS
+	
+	
+	[IFUNDEF] CONSTANT
+	: CONSTANT
+	; target-only
+	[THEN]
+	
+	[IFUNDEF] CREATE
+	: CREATE
+	; target-only
+	[THEN]
+	
+	[IFUNDEF] (
+	: (
+	; immediate target-only
+	[THEN]
+	[IFUNDEF] \
+	: \
+	; immediate target-only
+	[THEN]
+	
+	[IFUNDEF] IMMEDIATE
+	: immediate
+	; target-only
+	[THEN]
+	
+	\ ----------- STUBS ]]]
+	
+
+include ../ans/core.fi
+include ../ans/core_unhosted.fi
+include ../ans/core-ext.fi
+
 
 0 [if]
 		
 		include ../v9t9/sysutils.fi
 		
 		
-		include ../ans/exception.fi
+		include ../ansold/exception.fi
 		 
 		0 <EXPORT
 		
@@ -75,23 +111,23 @@ include cold.fi
 		
 		include ../v9t9/prims.fi
 		
-		include ../ans/kernel.fi
+		include ../ansold/kernel.fi
 		
 		include ../v9t9/errors.fi
 		
-		include ../ans/blocks.fi
+		include ../ansold/blocks.fi
 		
-		include ../ans/dict.fi
+		include ../ansold/dict.fi
 		
 		include 9900.fi
 		
-		include ../ans/compile.fi
+		include ../ansold/compile.fi
 		
-		include ../ans/dualstate.fi
+		include ../ansold/dualstate.fi
 		
-		include ../ans/interp.fi
+		include ../ansold/interp.fi
 		
-		include ../ans/alloc.fi
+		include ../ansold/alloc.fi
 		
 		include ../v9t9/utils.fi
 		
@@ -157,7 +193,7 @@ include cold.fi
 		: hang
 		    ints-off (idle)
 		; 
-		[endif]
+		[THEN]
 		
 		export>
 		
@@ -188,11 +224,11 @@ include cold.fi
 		
 		[ [ifdef] init-locals ]    
 		    init-locals
-		[ [endif] ]    
+		[ [THEN] ]    
 		
 		[ [ifdef] init-editor ]    
 		    init-editor
-		[ [endif] ]    
+		[ [THEN] ]    
 		      
 		    1 load
 		     
@@ -216,31 +252,39 @@ include cold.fi
 		$0       (LATEST)   !
 		[else]
 		latest   (LATEST)   !
-		[endif]
+		[THEN]
 
 [else]
 	\ TEST
 	
-	\ ----------- [[[ STUBS
-	: ALIGNED   ( addr -- addr )
-	    #cell  1-  invert  swap over +  swap and
-	;
-	
-	: CONSTANT
-	; target-only
-	
-	: CREATE
-	; target-only
-	
-	: (
-	; immediate target-only
-	: \
-	; immediate target-only
-	
-	: immediate
-	; target-only
-	
-	\ ----------- STUBS ]]]
+test" loop-1  0 	
+		$103 $100 do  i +  loop
+		[ $100 $101 $102  + + ] LITERAL = "
+		
+test" +loop-1  0
+		3 0 do  i +  1 +loop
+		\ 0, 1, 2, [3]
+		[ 0 1 2  + + ] LITERAL = "
+
+test" +loop-3  0		
+		10 -1 do  i +  3 +loop
+		[ -1 2 5 8 + + + ] LITERAL = "
+
+test" +loop-3-2  0			
+		0 10 do  i +  -3 +loop
+		[ 10 7 4 1 + + + ] LITERAL  = "
+		
+test" +loop-uns1  0			
+		$8002 $7ffe do  i +  1 +loop
+		[ $7ffe $7fff $8000 $8001 + + + ] LITERAL = "
+		
+test" +loop-uns2  0			
+		$a000 $3333 do  i +  $3333 +loop
+		[ $3333 $6666 $9999  + + ] LITERAL = "
+		
+test" +loop-zero  0			
+		0 0 do  i drop  1+  $1000 +loop
+		16 = "
 	
 	: BYE
 		COLD
@@ -250,32 +294,9 @@ include cold.fi
 		regs-init
 		cold-init
 
-		$103 $100 do  i drop  loop
-		
-		3 0 do  i drop  1 +loop
-		\ 0, 1, 2, [3]
-		
-		10 -1 do  i drop  3 +loop
-		\ 0, 3, 6, 9, [12]
-		
-		0 10 do  i drop  -3 +loop
-		\ 10, 7, 4, 1, [-2]
-		
-		
-		\ FIXME
-		$8002 $7ffe do  i drop  1 +loop
-		\ $8002 $7ffe do  i drop  1 u+loop
-		
-		\ FIXME
-		$a000 $3333 do  i drop  $3333 +loop
-		\ $a000 $3333 do  i drop  $3333 u+loop
-		\ $3333, $6666, $9999, [$cccc]
-		
-		0 0 do  i drop  $1000 +loop
-		\ 0, 1000, 2000, 3000, ... F000, [0000]
-		
-		\ 0 0 do  i drop  $1000 u+loop
-		\ 0, 1000, 2000, 3000, ... F000, [0000]
+	    decimal
+
+		runtests
 	;
 
 
@@ -308,7 +329,7 @@ include cold.fi
 		    again
 		;
 			
-[endif]
+[THEN]
 
 ' bye   (BOOT)     !
 ' cold  (COLD)     !

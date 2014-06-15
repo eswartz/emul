@@ -1,0 +1,86 @@
+
+[IFUNDEF] 0<>
+: 0<> 0= 0=
+;
+[THEN]
+
+[IFUNDEF] 0>
+\ : 0>
+\ ;
+[THEN]
+
+[IFUNDEF] 2>R
+\ : 2>R
+\ ;
+[THEN]
+
+[IFUNDEF] 2R>
+\ : 2R>
+\ ;
+[THEN]
+
+[IFUNDEF] 2R@
+\ : 2R@
+\ ;
+[THEN]
+
+[IFUNDEF] <>
+: <>    \ core ext
+    = 0=
+;
+[THEN]
+
+[IFUNDEF] ERASE
+: ERASE
+    0 fill
+;
+[THEN]
+
+[IFUNDEF] FALSE
+0 constant FALSE
+[THEN]
+
+[IFUNDEF] NIP
+: NIP    ( a b -- b )
+    swap drop
+;
+[THEN]
+
+[IFUNDEF] PICK
+: PICK ( n -- v )
+	\ one for the N itself, one for SP@
+    2+ cells  SP@  +  @  
+;   target-only
+
+: RPICK ( n -- v )
+    cells  RP@  +  @  
+;   target-only
+[THEN]
+
+[IFUNDEF] ROLL
+\ : ROLL
+\ ;
+[THEN]
+
+[IFUNDEF] TRUE
+-1 constant TRUE
+[THEN]
+
+[IFUNDEF] TUCK
+: TUCK
+    dup >r swap r>
+;
+[THEN]
+
+
+[IFUNDEF] U>
+\ : U>
+\ ;
+[THEN]
+
+[IFUNDEF] WITHIN
+\ implementation from ANS FORTH spec that works with both signed and unsigned number ranges
+: WITHIN    ( test low high -- flag )   
+    over - >r - r> u<
+;
+[THEN]

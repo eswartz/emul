@@ -30,7 +30,6 @@ import v9t9.tools.forthcomp.f99b.words.FieldComma;
 import v9t9.tools.forthcomp.words.HostLiteral;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
-import v9t9.tools.forthcomp.words.TargetSQuote;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
 import v9t9.tools.forthcomp.words.TargetValue;
 import ejs.base.utils.HexUtils;
@@ -264,11 +263,11 @@ public class F99bTargetContext extends BaseGromTargetContext {
 		defineInlinePrim("(DLITERAL)", IlitD_d);
 		
 		//defineInlinePrim("(s\")", IcontextFrom, CTX_PC, IlitX | 5, Iadd, Idup, I1plus, Iswap, Icload);
-		defineInlinePrim("((s\"))", Irdrop, IatR, Idup, I1plus, Iswap, Icload, Idup, IRfrom, Iadd, I1plus, ItoR);
+//		defineInlinePrim("((s\"))", Irdrop, IatR, Idup, I1plus, Iswap, Icload, Idup, IRfrom, Iadd, I1plus, ItoR);
 		
-		define("(S\")", new TargetSQuote(defineEntry("(S\")")));
-		compileCall((ITargetWord) find("((s\"))"));
-		compileOpcode(Iexit);
+//		define("(S\")", new TargetSQuote(defineEntry("(S\")")));
+//		compileCall((ITargetWord) find("((s\"))"));
+//		compileOpcode(Iexit);
 		
 		defineInlinePrim("cell+", I2plus); 
 		defineInlinePrim("cell", IlitX | 0x2);

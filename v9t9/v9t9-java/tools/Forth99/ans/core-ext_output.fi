@@ -1,0 +1,36 @@
+[IFUNDEF] .R
+: .R
+    >r              \ field width
+    s>d             \ make double
+    dup >r          \ sign
+    dabs <# #S r> sign #>
+    r> over - spaces
+    type
+;
+[THEN]
+
+
+[IFUNDEF] HEX
+: HEX
+    $10 base !
+;
+[THEN]
+
+
+
+[IFUNDEF] U.R
+: U.R
+    >r 
+    0           \ make double
+    <# #S #>
+    r> over - spaces
+    type
+;
+[THEN]
+
+
+[IFUNDEF] PAD
+: PAD
+    HERE $100 +
+;
+[THEN]

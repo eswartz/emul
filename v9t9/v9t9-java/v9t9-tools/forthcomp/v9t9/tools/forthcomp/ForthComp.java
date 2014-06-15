@@ -11,12 +11,14 @@
 package v9t9.tools.forthcomp;
 
 import ejs.base.utils.HexUtils;
+import ejs.base.utils.TextUtils;
 import gnu.getopt.Getopt;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.LineNumberReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +38,7 @@ import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetConstant;
 import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetContext.IMemoryReader;
+import v9t9.tools.forthcomp.words.TestQuote;
 
 /**
  * This class compiles FORTH programs into ROM images for V9t9
@@ -56,8 +59,9 @@ public class ForthComp {
 		String gromOutFile = null;
 		PrintStream logfile = System.out;
 		boolean doHistogram = false;
+		boolean doTest = false;
 		
-        Getopt getopt = new Getopt(PROGNAME, args, "?c:l:b9hg:d:");
+        Getopt getopt = new Getopt(PROGNAME, args, "?c:l:b9hg:d:t");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -84,6 +88,9 @@ public class ForthComp {
             	break;
             case 'h':
             	doHistogram = true;
+            	break;
+            case 't':
+            	doTest = true;
             	break;
             	
             }
@@ -113,6 +120,8 @@ public class ForthComp {
         HostContext hostContext = new HostContext(targetContext);
         final ForthComp comp = new ForthComp(hostContext, targetContext);
         
+        comp.setTestMode(doTest);
+        
         comp.setLog(logfile);
         
         if (getopt.getOptind() >= args.length) {
@@ -140,8 +149,13 @@ public class ForthComp {
 //    	logfile.println("UP = " + HexUtils.toHex4(comp.getTargetContext().getUP()));
     	if (gromDictFile != null)
     		logfile.println("GDP = " + HexUtils.toHex4(((IGromTargetContext)comp.getTargetContext()).getGP()));
-	
-    	comp.finish();
+
+    	try {
+    		comp.finish();
+    	} catch (AbortException e) {
+    		System.err.println(e.getFile() +":" + e.getLine()+": " + e.getMessage());
+    	}
+    		
     	
     	if (comp.getErrors() > 0) {
     		System.err.println("Errors: " + comp.getErrors());
@@ -214,6 +228,8 @@ public class ForthComp {
 	private TokenStream tokenStream;
 	private int errors;
 
+	private TestQuote testQuote;
+
 	public ForthComp(HostContext hostContext, TargetContext targetContext) {
 		this.hostContext = hostContext;
 		this.targetContext = targetContext;
@@ -236,6 +252,12 @@ public class ForthComp {
 		hostContext.define("(state)", new HostVariable(0));
 	}
 
+	public void setTestMode(boolean doTest) throws AbortException {
+		testQuote = ((TestQuote) hostContext.require("TEST\"")); 
+		targetContext.setTestMode(doTest);
+		testQuote.setCompiler(this);
+	}
+		
 	/**
 	 * @return the hostContext
 	 */
@@ -252,14 +274,26 @@ public class ForthComp {
 		}
 	}
 
-	public void parseString(String text) throws AbortException {
-		tokenStream.push(text);
+	public void parseString(String name, String text) throws AbortException {
+		LineNumberReader reader = tokenStream.push(name, text);
 		try {
-			parse();
+			try {
+				String token;
+				while ((token = tokenStream.read()) != null) {
+					targetContext.parse(token);
+					if (tokenStream.getCurrentReader() != reader)
+						break;
+				}
+			} catch (IOException e) {
+				throw abort(e.getMessage());
+			}
 		} catch (AbortException e) {
 			errors++;
 			throw e;
 		}
+	}
+	public void parseString(String text) throws AbortException {
+		parseString("<string>", text);
 	}
 	public void parse() throws AbortException {
 		String token;
@@ -278,12 +312,22 @@ public class ForthComp {
 
 	
 	/**
+	 * @throws AbortException 
 	 * 
 	 */
-	public void finish() {
+	public void finish() throws AbortException {
+		if (testQuote != null) {
+			testQuote.finish(hostContext, targetContext);
+		}
+		
 		for (ForwardRef ref : targetContext.getForwardRefs()) {
 			logfile.println("*** Unresolved symbol: " + ref.getEntry().getName() + " (" + ref.getLocation() + ")");
 			System.err.println("*** Unresolved symbol: " + ref.getEntry().getName() + " (" + ref.getLocation() + ")");
+			errors++;
+		}
+		if (!hostContext.getDataStack().isEmpty()) {
+			System.err.println("*** Items left on stack: " + 
+					TextUtils.catenateStrings(hostContext.getDataStack(), ", "));
 			errors++;
 		}
 	}

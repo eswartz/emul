@@ -1,0 +1,55 @@
+
+\
+\   Double words
+\
+[IFUNDEF] DABS
+: DABS
+    dup 0< if DNEGATE then
+;
+[THEN]
+
+
+[IFUNDEF] D.    
+: D.R
+    >r              \ field width
+    dup >r          \ sign
+    dabs <# #S r> sign #>
+    r> over - spaces
+    type
+;
+: D.        \ DOUBLE
+    0 d.r space
+;
+[THEN]
+
+[IFUNDEF] UD.
+: UD.R  \ double
+    >r
+    <# #S #>
+    r> over - spaces
+    type
+;
+: UD.   \ double
+    0 UD.R
+    space
+;
+[THEN]
+
+[IFUNDEF] D-
+: D-
+    DNEGATE D+
+;
+[THEN]
+
+[IFUNDEF] D<
+: D<
+    D- D0<
+;
+[THEN]
+test" d< 20. 40. d<"
+test" d< 50. 40. d< 0="
+test" d< -20. -10. d<"
+test" d< -10. -20. d< 0="
+test" d< -10. 10. d<"
+test" d< 10. -10. d< 0="
+

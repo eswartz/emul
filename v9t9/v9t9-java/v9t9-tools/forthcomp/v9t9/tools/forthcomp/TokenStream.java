@@ -16,6 +16,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 /**
@@ -25,6 +27,7 @@ import java.util.Stack;
 public class TokenStream {
 	private Stack<LineNumberReader> streams;
 	private int line;
+	private Map<LineNumberReader, String> stringStreams = new HashMap<LineNumberReader, String>();
 	
 	class FileLineNumberReader extends LineNumberReader {
 
@@ -63,17 +66,18 @@ public class TokenStream {
 		streams.push(reader);		
 	}
 	
-	/**
-	 * @param text
-	 */
-	public void push(String text) {
+	public LineNumberReader push(String name, String text) {
 		LineNumberReader reader = new LineNumberReader(new StringReader(text));
 		reader.setLineNumber(1);
 		streams.push(reader);
+		stringStreams.put(reader, name);
+		return reader;
 	}
 	public void pop() {
 		try {
-			streams.pop().close();
+			LineNumberReader reader = streams.pop();
+			stringStreams.remove(reader);
+			reader.close();
 		} catch (IOException e) {
 		}
 	}
@@ -136,8 +140,13 @@ public class TokenStream {
 	 * @return
 	 */
 	public String getFile() {
-		return streams.peek() instanceof FileLineNumberReader 
-			? ((FileLineNumberReader) streams.peek()).getFile().toString() : "<string>";
+		LineNumberReader curReader = streams.peek();
+		if (curReader instanceof FileLineNumberReader) {
+			return ((FileLineNumberReader) curReader).getFile().toString();
+		} else {
+			String name = stringStreams.get(curReader);
+			return name != null ? name : "<string>";
+		}
 	}
 
 	/**
@@ -188,6 +197,13 @@ public class TokenStream {
 		} catch (IOException e) {
 			throw abort(e.toString());
 		}
+	}
+
+	/**
+	 * @return
+	 */
+	public LineNumberReader getCurrentReader() {
+		return streams.peek();
 	}
 
 	

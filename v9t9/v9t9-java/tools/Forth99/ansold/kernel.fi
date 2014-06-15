@@ -793,10 +793,10 @@ $20 constant BL
 \   I/O words
 
 [IFUNDEF] EMIT
-\ : EMIT
-\   drop
-\ ;
-error" need emit"
+: EMIT
+  drop
+;
+\ error" need emit"
 [THEN]
 
 [IFUNDEF] ENVIRONMENT?
@@ -806,9 +806,10 @@ error" need emit"
 [THEN]
 
 [IFUNDEF] KEY
-\ : KEY
-\ ;
-error" need key"
+: KEY
+	0
+;
+\ error" need key"
 [THEN]
 
 | : (quit?)
@@ -842,11 +843,11 @@ error" need key"
 
 [IFUNDEF] TIB
 \ : tib (tib0) ;
-[ENDIF]
+[THEN]
 
 [IFUNDEF] #TIB
 \ : #tib (#tib) ;
-[ENDIF]
+[THEN]
 
 [IFUNDEF] .(
 \ : .(
@@ -1006,7 +1007,7 @@ error" need key"
     (parse)
 ;
 
-[ENDIF]
+[THEN]
 
 \   Skip spaces in source
 | : (skip-spaces)   ( -- )

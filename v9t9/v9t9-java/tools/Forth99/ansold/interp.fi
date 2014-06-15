@@ -140,7 +140,7 @@ user >IN
 \   .s
 ;
 
-[ENDIF]
+[THEN]
 
 [IFUNDEF] NUMBER
 
@@ -158,7 +158,7 @@ user >IN
     then
 ;
 
-[ENDIF]
+[THEN]
 
 
 [IFUNDEF] RESTORE-INPUT
@@ -340,7 +340,7 @@ user >IN
             message cr
             recurse
         then then then
-[ [ENDIF] ]
+[ [THEN] ]
     repeat
     bye
 ;
@@ -384,7 +384,7 @@ user >IN
             IF 1+
             THEN
         ELSE
-            2dup s" [ENDIF]" str= >r
+            2dup s" [THEN]" str= >r
             s" [THEN]" str= r> or
             IF 1- THEN
         THEN
@@ -397,7 +397,7 @@ user >IN
   
 : [THEN] ( -- ) ; immediate  target-only
 
-: [ENDIF] ( -- ) ; immediate  target-only
+: [THEN] ( -- ) ; immediate  target-only
 
 : [IF] ( flag -- )
     0= IF postpone [ELSE] THEN ; immediate  target-only 

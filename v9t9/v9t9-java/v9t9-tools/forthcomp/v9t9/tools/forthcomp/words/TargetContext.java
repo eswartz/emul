@@ -72,6 +72,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	protected HostContext hostCtx;
 
 	private List<Integer> leaves;
+	private boolean testMode;
 
 
 	
@@ -1239,6 +1240,19 @@ public abstract class TargetContext extends Context implements ITargetContext {
 
 	private AbortException abort(String string) {
 		return hostCtx.getStream().abort(string);
+	}
+
+	/**
+	 * @param doTest
+	 */
+	public void setTestMode(boolean doTest) {
+		this.testMode = doTest;
+	}
+	/**
+	 * @return the testMode
+	 */
+	public boolean isTestMode() {
+		return testMode;
 	}
 	
 

@@ -8,7 +8,43 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-\ \\\\\\\\\\\\\
+\   Custom:  set a flag in a word
+: |!        ( mask addr -- )
+    swap over @ OR swap !     
+;
+
+: tolower ( ch -- ch )
+   dup [char] a [ [char] z 1+ literal ] within $20 and -
+;
+
+:: s<>     ( addr u addr' u' -- -1/0/1 )
+    u u' min 0 do
+        addr i + c@ tolower
+        addr' i + c@ tolower
+        - ?dup if unloop exit then
+    loop
+    u u' -  \ length is answer
+;
+
+( align 'val' to 'scale' )
+:: %- ( val scale -- val' )
+    val scale  u/mod  nip scale u*    
+;
+
+: w>l.h ( w -- lo hi )
+    dup  $ff and  swap  8 urshift  
+;
+
+: l.h>w ( lo hi -- w )
+    8  LSHIFT  OR  
+;
+
+: umax   ( u1 u2 -- u )
+    2dup U> if drop else nip then
+;
+: umin   ( u1 u2 -- u )
+    2dup U< if drop else nip then
+;
 
 : per-line
     \ 7 = 4 addr + = + space + NL
@@ -40,6 +76,38 @@
     loop drop
     rdrop
     cr
+;
+
+
+| : (quit?)
+    dup &81 = swap &113 = or
+;
+
+| : (pause?)  ( -- <t|f to quit> )
+    key? dup if            
+        ( t ) 
+        key (quit?) 0= if       \ not quit
+            \ pause and wait for something else 
+            drop key (quit?)
+        else
+            ( t )
+        then
+    \ else false, no key, so no quit        
+    then
+;
+
+
+
+:   digit ( n -- ch )
+    dup 9 > if 55 else 48 then + 
+;
+
+:   d.d  ( n -- )
+    <# sign # #s #> dtype
+;
+
+:   .d  ( n -- )
+    s>d d.d
 ;
 
 | : (dmp) ( addr cnt xt -- )

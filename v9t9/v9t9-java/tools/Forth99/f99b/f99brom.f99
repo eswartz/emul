@@ -46,7 +46,7 @@ EXPORT>
 
 include ../v9t9/sysutils.fi
 
-include ../ans/exception.fi
+include ../ansold/exception.fi
  
 0 <EXPORT
 
@@ -62,25 +62,23 @@ EXPORT>
 
 include sysprims.fi
 
-include ../v9t9/prims.fi
-
-include ../ans/kernel.fi
+include ../ansold/kernel.fi
 
 include ../v9t9/errors.fi
 
-include ../ans/blocks.fi
+include ../ansold/blocks.fi
 
 include ../v9t9/gromdict.fi
 
 include f99b.fi
 
-include ../ans/compile.fi
+include ../ansold/compile.fi
 
-include ../ans/dualstate.fi
+include ../ansold/dualstate.fi
 
-include ../ans/interp.fi
+include ../ansold/interp.fi
 
-include ../ans/alloc.fi
+include ../ansold/alloc.fi
 
 include ../v9t9/utils.fi
 
@@ -146,7 +144,7 @@ loop
 : hang
     ints-off (idle)
 ; 
-[endif]
+[THEN]
 
 export>
 
@@ -177,11 +175,11 @@ export>
 
 [ [ifdef] init-locals ]    
     init-locals
-[ [endif] ]    
+[ [THEN] ]    
 
 [ [ifdef] init-editor ]    
     init-editor
-[ [endif] ]    
+[ [THEN] ]    
       
     1 load
      
@@ -213,7 +211,7 @@ ramptr @  1- aligned  constant (RAM0)
 $0       (LATEST)   !
 [else]
 latest   (LATEST)   !
-[endif]
+[THEN]
 
 hex
 here ." HERE = " u. cr

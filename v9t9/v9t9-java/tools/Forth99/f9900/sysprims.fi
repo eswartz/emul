@@ -8,22 +8,41 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-
 :   ints-on
-    INT_KBD  [ ItoContext c, CTX_INT field, ] 
 ;   target-only
+
 :   ints-off
-    0  [ ItoContext c,  CTX_INT field, ] 
 ;   target-only
 
+:   demit ( ch -- )
+    'DBG c!
+;
 
-: pick ( n -- v )
-    1+ cells [ IcontextFrom c, CTX_SP field, ] + @  
+:   dtype ( c-addr len -- )
+    over + swap ?do
+        i c@ 'DBG c!
+    loop
+;
+
+
+: rp0
+    (RP0)
+;   target-only
+: sp0
+	(SP0)
+;
+
+: ((s")) rdrop r@ dup 1+ swap c@ dup r> + 1+  >r ;
+
+: (s") ((s")) ;
+
+: u/      ( u un -- uq )
+    0 swap  
+    UM/MOD swap drop
 ;   target-only
 
-: rpick ( n -- v )
-    cells  [ IcontextFrom c, CTX_RP field, ] + @  
-;   target-only
+		
+0 [IF]
 
 \ Move memory backward (src -> dst)
 : cmove              ( src dst # -- )  
@@ -46,10 +65,6 @@
     0 swap
     [ Iudivmod c, ]
 ;   target-only
-: u/      ( ud un -- uq )
-    0 swap 
-    [ Iudivmod c, ] swap drop
-;   target-only
 : umod      ( u un -- ur )
     0 swap 
     [ Iudivmod c, ] drop
@@ -71,14 +86,6 @@
 : fill  ( addr n ch -- )
     1 [ Icfill c, ]
 ;   target-only
-
-: rp0
-    [ IcontextFrom c,  CTX_RP0 field, ] 
-;   target-only
-: sp0
-    [ IcontextFrom c, CTX_SP0 field, ] 
-;   target-only
-
 
 : (dbg)     Isyscall c, #dbg c, ; immediate
 : (dbgf)    Isyscall c, #dbgf c, ; immediate
@@ -108,4 +115,6 @@
 ;
 
 : (rnd) 'RND c@  'RND c@  l.h>w ;
+
+[THEN]
 

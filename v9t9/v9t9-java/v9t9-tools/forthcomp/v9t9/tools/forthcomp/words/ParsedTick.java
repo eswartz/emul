@@ -36,8 +36,7 @@ public class ParsedTick extends BaseStdWord {
 		if (!(word instanceof ITargetWord))
 			throw hostContext.abort("cannot take address of host word " + name);
 		
-		targetContext.compileTick((ITargetWord)word);
-		//targetContext.compileLiteral(((ITargetWord)word).getEntry().getContentAddr(), true);
+		targetContext.buildTick((ITargetWord)word);
 		
 	}
 	

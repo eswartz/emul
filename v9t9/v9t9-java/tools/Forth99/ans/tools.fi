@@ -1,0 +1,30 @@
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+\
+\   TOOLS words
+\
+
+[IFUNDEF] .S
+: .S
+    ." <" depth dup 0 u.r [char] : emit abs $10 min 0 ?do
+        depth i - 1- pick u.
+    loop ." >"
+;
+[THEN]
+
+[IFUNDEF] r.S
+: r.S
+    rdepth >r
+    ." <" r@ 0 u.r [char] : emit 
+    r@ $20 min 0 ?do
+        j i - rpick u.
+    loop ." >" 
+    rdrop
+;
+[THEN]
+
+[IFUNDEF] ?
+: ? @ . ;
+[THEN]
+

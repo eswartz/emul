@@ -1,0 +1,35 @@
+
+\   string words
+
+[IFUNDEF] COUNT
+: COUNT
+    dup c@ swap 1+ swap
+;
+[THEN]
+
+
+
+\
+\   STRING words
+\
+
+[IFUNDEF] CMOVE
+\ : CMOVE
+\ ;
+[THEN]
+
+[IFUNDEF] CMOVE>
+\ : CMOVE>
+\ ;
+[THEN]
+
+[IFUNDEF] /STRING
+: /STRING    ( addr n delta -- addr+delta n-delta )
+    >r swap r@ + swap r> -
+;
+[THEN]
+
+[IFUNDEF] COMPARE
+\ : COMPARE
+\ ;
+[THEN]

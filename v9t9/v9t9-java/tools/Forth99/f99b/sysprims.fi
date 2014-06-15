@@ -9,6 +9,16 @@
 \ 
 
 
+:   demit ( ch -- )
+    'DBG c!
+;
+
+:   dtype ( c-addr len -- )
+    over + swap ?do
+        i c@ 'DBG c!
+    loop
+;
+
 :   ints-on
     INT_KBD  [ ItoContext c, CTX_INT field, ] 
 ;   target-only
@@ -46,7 +56,7 @@
     0 swap
     [ Iudivmod c, ]
 ;   target-only
-: u/      ( ud un -- uq )
+: u/      ( u un -- uq )
     0 swap 
     [ Iudivmod c, ] swap drop
 ;   target-only
@@ -109,3 +119,7 @@
 
 : (rnd) 'RND c@  'RND c@  l.h>w ;
 
+: ((s")) rdrop r@ dup 1+ swap c@ dup r> + 1+  >r ;
+
+: (s") ((s")) ;
+		

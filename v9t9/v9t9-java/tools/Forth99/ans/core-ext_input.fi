@@ -1,0 +1,138 @@
+
+
+| User BLK
+| User >source
+| User #source
+
+| User loadfile
+| User loadline
+
+[IFUNDEF] RESTORE-INPUT
+: RESTORE-INPUT ( xn ... x1 n -- )
+    6 <> abort" invalid restore-input"
+    >in !
+    blk !
+    #source !  >source !
+    loadline ! loadfile !
+;
+[THEN]
+
+[IFUNDEF] SAVE-INPUT
+: SAVE-INPUT    ( -- xn ... x1 n )
+    loadfile @ loadline @
+    >source @ #source @
+    blk @
+    >in @
+    6
+;
+[THEN]
+
+
+[IFUNDEF] \
+\ Compilation: Perform the execution semantics given below.
+\	Execution: ( "ccc<eol>"-- )
+\ Parse and discard the remainder of the parse area. \ is an immediate word.
+
+: \
+    blk @
+    if 
+        \ block file
+        \ >in @ c/l / 1+ c/l * >in ! exit
+        10 parse 2drop 
+    else
+        \ consume rest of buffer
+        source >in ! drop 
+    then
+; immediate target-only
+[THEN]
+
+
+\   Return bounds of remaining source
+: (src>)        ( -- caddr u )
+    source  
+    >in @ 
+    - 0 max
+    swap >in @ + swap
+;
+
+\   (>src) advances >in by u' bytes
+: (>src)            \ ( u' -- )
+    1+ >in +!       \ update >in
+;
+
+
+[IFUNDEF] SOURCE-ID
+: SOURCE-ID
+    loadline @ 0< if
+        -1
+    else
+        loadfile @
+    then
+;
+[THEN]
+
+
+[IFUNDEF] TIB
+\ : tib (tib0) ;
+[THEN]
+
+[IFUNDEF] #TIB
+\ : #tib (#tib) ;
+[THEN]
+
+[IFUNDEF] .(
+\ : .(
+\ ;
+[THEN]
+
+
+[IFUNDEF] (match)       
+
+\   Match 'char' inside [caddr..caddr+u) and return length of word
+| :: (match)       ( caddr len char xt -- u )
+
+    caddr
+    len 0 ?do
+        dup c@
+        char xt execute   ( caddr u t/f )
+        if  drop i unloop exit then
+        1+
+    loop
+
+    drop len
+;
+[THEN]
+
+\ : mystr s" 1111123456" ;
+\ test" (match) mystr $32 - (match) mystr drop swap type 1"
+
+:: (PARSE)     ( ch xt -- c-addr u )  \ "ccc<char>"
+\   Parse ccc delimited by the delimiter char.  Use xt to interpret 'ch'.
+\   c-addr is the address (within the input buffer) and u is the length of the parsed string. If the parse area was empty, the
+\   resulting string has a zero length.
+    (src>) over :> caddr 
+    ch xt (match)
+    dup (>src)
+    caddr swap
+;
+
+: PARSE     ( char "ccc<char>" -- c-addr u )
+\   Parse ccc delimited by the delimiter char.
+\   c-addr is the address (within the input buffer) and u is the length of the parsed string. If the parse area was empty, the
+\   resulting string has a zero length.
+    dup $20 = if ['] <= else ['] = then
+    (parse)
+;
+
+\   Skip spaces in source
+| : (skip-spaces)   ( -- )
+    (src>)
+    0 ?do
+        dup c@ bl > if
+            leave
+        else
+            1+ 1 >in +!
+        then
+    loop
+    drop
+;
