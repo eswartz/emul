@@ -8,17 +8,6 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-
-:   demit ( ch -- )
-    'DBG c!
-;
-
-:   dtype ( c-addr len -- )
-    over + swap ?do
-        i c@ 'DBG c!
-    loop
-;
-
 :   ints-on
     INT_KBD  [ ItoContext c, CTX_INT field, ] 
 ;   target-only
@@ -119,7 +108,4 @@
 
 : (rnd) 'RND c@  'RND c@  l.h>w ;
 
-: ((s")) rdrop r@ dup 1+ swap c@ dup r> + 1+  >r ;
-
-: (s") ((s")) ;
 		

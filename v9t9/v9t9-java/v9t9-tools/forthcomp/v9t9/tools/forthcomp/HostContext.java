@@ -46,6 +46,7 @@ import v9t9.tools.forthcomp.words.Create;
 import v9t9.tools.forthcomp.words.DConstant;
 import v9t9.tools.forthcomp.words.DLiteral;
 import v9t9.tools.forthcomp.words.DVariable;
+import v9t9.tools.forthcomp.words.Defer;
 import v9t9.tools.forthcomp.words.Do;
 import v9t9.tools.forthcomp.words.Dot;
 import v9t9.tools.forthcomp.words.DotQuote;
@@ -222,6 +223,9 @@ public class HostContext extends Context {
 		define(":>", new ToLocal());
 		
 		define(";", new SemiColon());
+		
+		define("DEFER", new Defer());
+
 		define("[CHAR]", new BracketChar());
 		define("CHAR", new Char());
 		
@@ -426,7 +430,22 @@ public class HostContext extends Context {
 		define("DROP", new HostDrop());
 		define("OVER", new HostOver());
 		define("ROT", new HostRot());
-		
+
+		define("(resolve-rdefers)", new BaseStdWord() {
+			@Override
+			public boolean isImmediate() {
+				return true;
+			}
+
+			@Override
+			public void execute(HostContext hostContext,
+					TargetContext targetContext) throws AbortException {
+				targetContext.resolveRomDefers();				
+			}
+			
+			
+		});
+
 	}
 
 	/**

@@ -1,4 +1,19 @@
 
+| : unhosted-EMIT ( ch -- )
+	drop
+;
+' unhosted-EMIT 	TO EMIT
+
+| : unhosted-KEY ( --  k )
+	begin again
+;
+' unhosted-KEY 		TO KEY
+
+| : unhosted-KEY? ( --  f )
+	false
+;
+' unhosted-KEY? 	TO KEY?
+
 [IFUNDEF] (ABORT")
 : (ABORT")
 	 HANG

@@ -14,14 +14,13 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import ejs.base.utils.HexUtils;
-import ejs.base.utils.Pair;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryDomain;
@@ -37,6 +36,8 @@ import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.IWord;
 import v9t9.tools.forthcomp.RelocEntry;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
 
 /**
  * @author ejs
@@ -47,7 +48,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	private final boolean littleEndian;
 	private final int charBits;
 	private final int cellBits;
-	private byte[] memory;
+	protected byte[] memory;
 
 	private Map<Integer, RelocEntry> relocEntries = new TreeMap<Integer, RelocEntry>();
 	private List<RelocEntry> relocs = new ArrayList<RelocEntry>();
@@ -74,6 +75,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	private List<Integer> leaves;
 	private boolean testMode;
 
+	protected IWord romDeferTableWord;
+	private TargetVariable numRomDefersWord;
+	private Map<TargetDefer, Integer> targetDefers = new HashMap<TargetDefer, Integer>();
+	
 
 	
 	public TargetContext(boolean littleEndian, int charBits, int cellBits, int memorySize) {
@@ -88,7 +93,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		
 		stubData = defineStub("<<data space>>");
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#setHostContext(v9t9.tools.forthcomp.HostContext)
 	 */
@@ -105,7 +110,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	public IWord define(String string, IWord word) {
 		if (word instanceof TargetWord) {
 			logfile.println("T>"+Integer.toHexString(((TargetWord) word).getEntry().getAddr()) +" " + ((TargetWord) word).getClass().getSimpleName() + " " + string);
+			resolveForward(((ITargetWord) word).getEntry());
 		}
+
+
 		return super.define(string, word);
 	}
 	
@@ -121,6 +129,19 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	 */
 	@Override
 	abstract public void defineBuiltins() throws AbortException;
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.ITargetContext#defineCompilerWords(v9t9.tools.forthcomp.HostContext)
+	 */
+	@Override
+	public void defineCompilerWords(HostContext hostContext) {
+		romDeferTableWord = find("(rdefertbl)");
+		if (romDeferTableWord == null) {
+			romDeferTableWord = defineForward("(rdefertbl)", "<builtin>");
+		}
+		numRomDefersWord = findOrCreateVariable("(#rdefers)");
+
+	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#readCell(int)
@@ -277,8 +298,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		}
 		
 		DictEntry existing = dictEntryMap.get(name.toUpperCase());
-		if (existing != null)
+		if (existing != null) {
 			logfile.println("*** Redefining " + name);
+			System.err.println("*** Redefining " + name);
+		}
 		dictEntryMap.put(name.toUpperCase(), entry);
 		
 		if (lastEntry != null) 
@@ -299,8 +322,6 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		}
 
 		symbols.put(entry.getContentAddr(), name);
-
-		resolveForward(entry);
 
 		return entry;
 	}
@@ -382,11 +403,13 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		for (RelocEntry rel : relocs) {
 			if (rel.target == ref.getId()) {
 				rel.target = entry.getContentAddr();
-				if (rel.type != RelocType.RELOC_FORWARD)
+				if (rel.type != RelocType.RELOC_FORWARD) {
 					writeCell(rel.addr, entry.getContentAddr());
+				}
 			}
 		}
 	}
+
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#alignDP()
@@ -599,9 +622,32 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		return (TargetUserVariable) define(name, new TargetUserVariable(entry, offset));
 	}
 
+
+	@Override
+	public TargetDefer defineRomDefer(String name) throws AbortException {
+		
+		// the defer location is an offset into a table initialized later
+		DictEntry entry;
+		entry = defineEntry(name);
+		initWordEntry();
+			
+		// the "variable" will be frozen in ROM, a count of bytes
+		int offset = readCell(numRomDefersWord.getEntry().getParamAddr());
+		writeCell(numRomDefersWord.getEntry().getParamAddr(), offset + getCellSize());
+		
+		compileDoRomDefer(offset);
+		
+		TargetDefer defer = new TargetDefer(entry, offset);
+		
+		targetDefers.put(defer, null);
+		
+		return (TargetDefer) define(name, defer);
+	}
+	
 	protected TargetVariable findOrCreateVariable(String name) {
 		TargetVariable var = (TargetVariable) find(name);
 		if (var == null) {
+			setExportNext(false);
 			var = create(name, getCellSize());
 		}
 		return var;
@@ -624,8 +670,11 @@ public abstract class TargetContext extends Context implements ITargetContext {
 			console.getEntryAt(symEntry.getKey()).defineSymbol(symEntry.getKey(), symEntry.getValue());
 		}
 	}
-	protected abstract int doResolveRelocation(RelocEntry reloc) throws AbortException;
-
+	protected int doResolveRelocation(RelocEntry reloc) throws AbortException {
+		if (reloc.type == RelocType.RELOC_ABS_ADDR_16)
+			return reloc.target;
+		throw abort("unhandled relocation: " + reloc);
+	}
 
 
 	/* (non-Javadoc)
@@ -819,9 +868,12 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	@Override
 	public void compileToValue(HostContext hostContext, TargetValue word) throws AbortException {
 		compileWordParamAddr(word);
-		//compile(require("!"));
 		require("!").getCompilationSemantics().execute(hostContext, this);
 
+	}
+	public void compileToRomDefer(HostContext hostContext, TargetDefer word) throws AbortException {
+		compileWordParamAddr(word);
+		require("!").getCompilationSemantics().execute(hostContext, this);
 	}
 
 	protected abstract void doExportState(HostContext hostCtx, IBaseMachine machine,
@@ -905,19 +957,27 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		Pair<Integer, Integer> info = writeLengthPrefixedString(string);
 		setDP(getDP() + info.second);
 	}
-	
+
+	public void buildXt(int addr) {
+		if (isNativeDefinition()) {
+			assert false;
+		} else {
+			int ptr = alloc(cellSize);
+			
+			int reloc = addRelocation(ptr, 
+					RelocType.RELOC_ABS_ADDR_16,
+					addr);
+
+			writeCell(ptr, reloc);
+		}
+	}
+
 	public void buildXt(ITargetWord word) {
 		if (isNativeDefinition()) {
 			compileTick(word);
 		} else {
-			int ptr = alloc(cellSize);
-			
-			logfile.println("T>" + HexUtils.toHex4(ptr) + " = " + word.getName());
-			int reloc = addRelocation(ptr, 
-					RelocType.RELOC_ABS_ADDR_16, 
-					word.getEntry().getContentAddr());
-
-			writeCell(ptr, reloc);
+			logfile.println("T>" + HexUtils.toHex4(getDP()) + " = " + word.getName());
+			buildXt(word.getEntry().getContentAddr());
 		}
 	}
 	public void buildCall(ITargetWord word) throws AbortException {
@@ -1254,6 +1314,34 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	public boolean isTestMode() {
 		return testMode;
 	}
-	
 
+	public void setDeferTarget(TargetDefer defer, int addr) {
+		targetDefers.put(defer, addr);
+	}
+	/**
+	 * 
+	 */
+	public void resolveRomDefers() throws AbortException {
+		ITargetWord to = null;
+		ITargetWord hang = null;
+		
+		for (Map.Entry<TargetDefer, Integer> defEnt : targetDefers.entrySet()) {
+			Integer target = defEnt.getValue();
+			if (target == null) {
+				System.err.println("DEFER'ed word " + defEnt.getKey() + " not assigned with TO");
+				if (hang == null) {
+					hang = require("HANG");
+				}
+				target = hang.getEntry().getContentAddr();
+			}
+			if (to == null) {
+				to = require("(TO)");
+			}
+			buildLiteral(target, true, false);
+			buildTick(defEnt.getKey());
+			buildCall(to);
+		}
+	}
+
+	
 }

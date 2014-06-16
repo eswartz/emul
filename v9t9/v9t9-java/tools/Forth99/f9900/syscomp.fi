@@ -13,10 +13,7 @@
 User STATE
 
 \ [[[... TEMP
-\ : ; ;S ; target-only immediate
 
-User dp
-: here dp @ ;
 : ,
 	HERE !
 	#CELL DP +!

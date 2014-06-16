@@ -30,8 +30,8 @@ import v9t9.tools.forthcomp.f99b.words.FieldComma;
 import v9t9.tools.forthcomp.words.HostLiteral;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
+import v9t9.tools.forthcomp.words.TargetSQuote;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
-import v9t9.tools.forthcomp.words.TargetValue;
 import ejs.base.utils.HexUtils;
 
 /**
@@ -263,11 +263,11 @@ public class F99bTargetContext extends BaseGromTargetContext {
 		defineInlinePrim("(DLITERAL)", IlitD_d);
 		
 		//defineInlinePrim("(s\")", IcontextFrom, CTX_PC, IlitX | 5, Iadd, Idup, I1plus, Iswap, Icload);
-//		defineInlinePrim("((s\"))", Irdrop, IatR, Idup, I1plus, Iswap, Icload, Idup, IRfrom, Iadd, I1plus, ItoR);
+		defineInlinePrim("((s\"))", Irdrop, IatR, Idup, I1plus, Iswap, Icload, Idup, IRfrom, Iadd, I1plus, ItoR);
 		
-//		define("(S\")", new TargetSQuote(defineEntry("(S\")")));
-//		compileCall((ITargetWord) find("((s\"))"));
-//		compileOpcode(Iexit);
+		define("(S\")", new TargetSQuote(defineEntry("(S\")")));
+		compileCall((ITargetWord) find("((s\"))"));
+		compileOpcode(Iexit);
 		
 		defineInlinePrim("cell+", I2plus); 
 		defineInlinePrim("cell", IlitX | 0x2);
@@ -320,13 +320,14 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	 */
 	@Override
 	protected int doResolveRelocation(RelocEntry reloc) throws AbortException {
-		int val = reloc.target;	// TODO
 		if (reloc.type == RelocType.RELOC_CALL_15S1) {
+			int val = reloc.target;
 			if ((val & 1) != 0)
 				throw new AbortException("Call address is odd: " + HexUtils.toHex4(val));
 			val = ((val >> 1) & 0x7fff) | 0x8000;
+			return val;
 		}
-		return val;
+		return super.doResolveRelocation(reloc);
 	}
 	public void compile(ITargetWord word) throws AbortException {
 		word.getEntry().use();
@@ -762,6 +763,10 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	}
 
 
+	public void compileDoRomDefer(int offset) {
+		throw new UnsupportedOperationException();
+	}
+
 	/**
 	 * @param hostContext TODO
 	 * @throws AbortException 
@@ -813,7 +818,7 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	 * @see v9t9.forthcomp.TargetContext#compileWordParamAddr(v9t9.forthcomp.TargetValue)
 	 */
 	@Override
-	public void compileWordParamAddr(TargetValue word) {
+	public void compileWordParamAddr(ITargetWord word) {
 		stub16BitLit.use();
 		doCompileLiteral(((ITargetWord)word).getEntry().getParamAddr(), true, true);		
 	}

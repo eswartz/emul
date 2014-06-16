@@ -812,23 +812,6 @@ $20 constant BL
 \ error" need key"
 [THEN]
 
-| : (quit?)
-    dup &81 = swap &113 = or
-;
-
-| : (pause?)  ( -- <t|f to quit> )
-    key? dup if            
-        ( t ) 
-        key (quit?) 0= if       \ not quit
-            \ pause and wait for something else 
-            drop key (quit?)
-        else
-            ( t )
-        then
-    \ else false, no key, so no quit        
-    then
-;
-
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 \   CORE EXT words

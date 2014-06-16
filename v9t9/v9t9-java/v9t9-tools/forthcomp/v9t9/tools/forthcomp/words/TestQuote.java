@@ -74,6 +74,9 @@ public class TestQuote extends BaseWord {
 	}
 
 	public void finish(HostContext hostContext, TargetContext targetContext) throws AbortException {
+		if (!targetContext.isTestMode())
+			return;
+		
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("| : RUNTEST ( addr -- ) ");

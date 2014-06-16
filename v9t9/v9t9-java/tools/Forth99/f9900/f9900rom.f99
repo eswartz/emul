@@ -66,15 +66,6 @@ include cold.fi
 	; target-only
 	[THEN]
 	
-	[IFUNDEF] (
-	: (
-	; immediate target-only
-	[THEN]
-	[IFUNDEF] \
-	: \
-	; immediate target-only
-	[THEN]
-	
 	[IFUNDEF] IMMEDIATE
 	: immediate
 	; target-only
@@ -291,6 +282,8 @@ test" +loop-zero  0
 	;
 	
 	: COLD
+		(resolve-rdefers)
+		
 		regs-init
 		cold-init
 

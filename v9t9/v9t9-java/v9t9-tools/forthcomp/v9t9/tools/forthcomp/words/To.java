@@ -43,11 +43,16 @@ public class To extends BaseWord {
 				if (word == null)
 					throw hostContext.abort(name + "?");
 				
-				if (!(word instanceof TargetValue))
+				if (word instanceof TargetValue) {
+					targetContext.markHostExecutionUnsupported();
+					targetContext.compileToValue(hostContext, (TargetValue) word);
+				} else if (word instanceof TargetDefer) {
+					targetContext.markHostExecutionUnsupported();
+					targetContext.compileToRomDefer(hostContext, (TargetDefer) word);
+				} else {
 					throw hostContext.abort("cannot handle " + name);
+				}
 				
-				targetContext.markHostExecutionUnsupported();
-				targetContext.compileToValue(hostContext, (TargetValue) word);
 				if (getEntry() != null)
 					getEntry().use();
 			}
@@ -63,10 +68,13 @@ public class To extends BaseWord {
 				if (word == null)
 					throw hostContext.abort(name + "?");
 				
-				if (!(word instanceof TargetValue))
+				if (word instanceof TargetValue) {
+					((TargetValue) word).setValue(targetContext, hostContext.popData());
+				} else if (word instanceof TargetDefer) {
+					targetContext.setDeferTarget((TargetDefer) word, hostContext.popData());
+				} else {
 					throw hostContext.abort("cannot handle " + name);
-				
-				((TargetValue) word).setValue(targetContext, hostContext.popData());
+				}
 			}
 		});
 	}

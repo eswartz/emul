@@ -13,9 +13,11 @@ import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
 import v9t9.tools.forthcomp.words.TargetColonWord;
 import v9t9.tools.forthcomp.words.TargetConstant;
+import v9t9.tools.forthcomp.words.TargetDefer;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
 import v9t9.tools.forthcomp.words.TargetValue;
 import v9t9.tools.forthcomp.words.TargetVariable;
+import v9t9.tools.forthcomp.words.TargetWord;
 import ejs.base.utils.Pair;
 
 /**
@@ -130,6 +132,12 @@ public interface ITargetContext {
 	
 	TargetUserVariable defineUser(String name, int bytes) throws AbortException;
 
+	/**
+	 * Define a deferred word, whose initial execution semantics cause an error.
+	 * @param name
+	 */
+	TargetDefer defineRomDefer(String name) throws AbortException;
+
 
 	/**
 	 * Compile code for (DOVALUE)
@@ -242,7 +250,7 @@ public interface ITargetContext {
 	void compileTick(ITargetWord word);
 
 	/** for TO value */
-	void compileWordParamAddr(TargetValue word);
+	void compileWordParamAddr(ITargetWord word);
 
 	void pushLeave(HostContext hostContext);
 
@@ -345,5 +353,18 @@ public interface ITargetContext {
 	 * @return target addr for DOES
 	 */
 	int buildDoes(HostContext hostContext) throws AbortException;
+
+	/**
+	 * @param offset
+	 */
+	void compileDoRomDefer(int offset);
+
+	/**
+	 * @param hostContext
+	 * @param word
+	 * @throws AbortException
+	 */
+	void compileToRomDefer(HostContext hostContext, TargetDefer word)
+			throws AbortException;
 
 }

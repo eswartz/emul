@@ -141,14 +141,20 @@ CHARS/BLOCK
 
 $80        constant   (#up)       \ global user space
 
-|+ Workspaces  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - #TIB - (#blks) - (#up) -
-             constant RamTop    \ grows down
+|+ Workspaces  
+	(#RP) - (#SP) - 
+	(#numbuf) - (#slit-pad) - 
+	#TIB - (#blks) - 
+	(#up) -
+	(#rdefers) -
+            				constant RamTop    \ grows down
 
 \ Arrange memory to minimize problems in case of overflow.
 RamTop                        constant (first)    \ grows up
 (first) (#blks) +             constant (limit)
 (limit)                       constant (up0)      \ grows up 
-(up0) (#up) + (#numbuf) +     constant (numbuf0)     \ grows down
+(up0) (#up) + (#numbuf) +     constant (rdefertbl)      
+(rdefertbl) (#rdefers) +      constant (numbuf0)     \ grows down
 (numbuf0)                     constant (slit-pad0)    \ grows up
 (slit-pad0) (#slit-pad) +     constant TIB         \ grows up
 TIB #TIB + (#rp) +            constant (rp0)    \ grows down

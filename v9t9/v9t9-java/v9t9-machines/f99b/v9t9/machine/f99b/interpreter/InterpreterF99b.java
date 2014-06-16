@@ -1114,8 +1114,6 @@ public class InterpreterF99b implements IInterpreter {
 		return true;
 	}
 
-	
-	
 	private void doCmove() {
 		cycleCounts.addExecute(2);
 		int tstep = cpu.pop();

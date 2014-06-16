@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import com.sun.corba.se.spi.ior.MakeImmutable;
 import com.sun.org.apache.bcel.internal.generic.SIPUSH;
 
 import static v9t9.machine.ti99.cpu.Inst9900.*;
@@ -122,6 +123,7 @@ public class TI99TargetContext extends TargetContext  {
 	private IPrimitiveWord doCon;
 	private IPrimitiveWord doDcon;
 	private IPrimitiveWord doUser;
+	private IPrimitiveWord doRomDefer;
 	
 	private final LLOperand TOS = reg(REG_TOS);
 	private final LLOperand TMP = reg(REG_TMP);
@@ -131,7 +133,9 @@ public class TI99TargetContext extends TargetContext  {
 	private IPrimitiveWord doVar;
 	private int interpLoop;
 	private IPrimitiveWord doDoes;
-	
+
+	private int romDeferOffsetAddr;
+
 	public TI99TargetContext(int memorySize) {
 		super(false, 8, 16, memorySize);
 		
@@ -432,6 +436,36 @@ public class TI99TargetContext extends TargetContext  {
 
 				);
 
+		// ROM deferral: points to an offset inside ROMDEFERS
+		doRomDefer = definePrim("DORDEFER",
+				StockInstruction.PUSH_TOS,
+				
+				Imov, regInc(11), R2,	// offset follows
+				Imov, regOffs(REG_R2, -1), R2,
+				
+				StockInstruction.POP_TOS,
+				Ib, regInd(REG_R2)
+				);
+		
+		romDeferOffsetAddr = doRomDefer.getEntry().getContentAddr() + 4 + 2 + 2;
+		addRelocation(romDeferOffsetAddr, RelocType.RELOC_CONSTANT, 
+				((ITargetWord)romDeferTableWord).getEntry().getContentAddr());
+
+		definePrim("(TO)",
+				Imov, regOffs(REG_TOS, getCellSize()), TMP,
+				Ici, TMP, immed(doRomDefer.getEntry().getContentAddr()),
+				
+			"0", 
+				Ijne, ">0",	// error
+				
+				// RDEFER
+				Imov, addr(romDeferOffsetAddr), TMP,	// addr of table
+				Ia, regOffs(REG_TOS, getCellSize() * 2), TMP,
+				Imov, regInc(REG_SP), regInd(REG_TMP),
+				
+				StockInstruction.POP_TOS
+				);
+				
 		doDoes = definePrim("DODOES",
 				StockInstruction.PUSH_TOS,
 
@@ -1040,7 +1074,7 @@ public class TI99TargetContext extends TargetContext  {
 				);
 
 	}
-	
+
 	/**
 	 * Call addresses must be aligned
 	 */
@@ -1063,14 +1097,6 @@ public class TI99TargetContext extends TargetContext  {
 		return word;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.words.TargetContext#doResolveRelocation(v9t9.forthcomp.RelocEntry)
-	 */
-	@Override
-	protected int doResolveRelocation(RelocEntry reloc) throws AbortException {
-		int val = reloc.target;
-		return val;
-	}
 	public void compile(ITargetWord word) {
 		word.getEntry().use();
 		compileCall(word);
@@ -1208,21 +1234,12 @@ public class TI99TargetContext extends TargetContext  {
 		buildCell(calcJump(getDP(), opAddr));
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#defineCompilerWords(v9t9.forthcomp.HostContext)
-	 */
-	@Override
-	public void defineCompilerWords(HostContext hostContext) {
-
-
-	}
-
 	public void compileUser(TargetUserVariable var) {
 		int index = var.getIndex();
 		pushTOS();
 		writeInstruction(Imov, regOffs(REG_UP, index * cellSize), TOS);
 	}
-
+	
 	public boolean isLocalSupportAvailable(HostContext hostContext) throws AbortException {
 		return false;
 	}
@@ -1274,6 +1291,17 @@ public class TI99TargetContext extends TargetContext  {
 //		compileLocalAddr(index);
 //		compileByte(Istore);
 	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetContext#doResolveRelocation(v9t9.tools.forthcomp.RelocEntry)
+	 */
+	@Override
+	protected int doResolveRelocation(RelocEntry reloc) throws AbortException {
+		if (reloc.type == RelocType.RELOC_CONSTANT)
+			return readCell(reloc.target + getCellSize());
+
+		return super.doResolveRelocation(reloc);
+	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.TargetContext#compileDoConstant(int, int)
@@ -1304,6 +1332,17 @@ public class TI99TargetContext extends TargetContext  {
 		buildCell(offset);
 	}
 
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.ITargetContext#compileDoDefer(int)
+	 */
+	@Override
+	public void compileDoRomDefer(int offset) {
+		writeInstruction(Ibl, addr(doRomDefer));
+		buildCell(offset);
+	}
+
+	
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.TargetContext#compileDoValue(int, int)
 	 */
@@ -1343,7 +1382,7 @@ public class TI99TargetContext extends TargetContext  {
 	 * @see v9t9.forthcomp.TargetContext#compileWordParamAddr(v9t9.forthcomp.TargetValue)
 	 */
 	@Override
-	public void compileWordParamAddr(TargetValue word) {
+	public void compileWordParamAddr(ITargetWord word) {
 		doCompileLiteral(((ITargetWord)word).getEntry().getParamAddr(), true, true);		
 	}
 	

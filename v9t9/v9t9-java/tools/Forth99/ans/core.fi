@@ -56,6 +56,36 @@
 \   swap then type u. u< um* um/mod unloop until variable
 \   while word xor [ ['] [char] ] 
 
+\ 	Define deferrals for words that change among wordsets.
+ 
+\ Core
+DEFER	SOURCE
+
+\ Block
+DEFER	REFILL
+DEFER	EVALUATE
+DEFER	\			target-only
+
+\ Exception
+DEFER	ABORT
+DEFER	ABORT"		target-only
+
+\ File
+DEFER	(			target-only
+DEFER	S"			target-only
+DEFER	SOURCE-ID
+\ DEFER	REFILL
+
+\ Float
+DEFER	(NUMBER)
+
+\ Locals
+DEFER	TO
+
+\ Search-Order
+DEFER	FIND
+
+
 include core_prims.fi
 include core_strings.fi
 include core_output.fi
