@@ -289,7 +289,9 @@ test" +loop-zero  0
 
 	    decimal
 
-		runtests
+		\ runtests
+		s" 100 200 300 + + ." evaluate
+		hang
 	;
 
 

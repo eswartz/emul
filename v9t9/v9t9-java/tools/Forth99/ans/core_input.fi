@@ -2,9 +2,7 @@
 | User >SOURCE
 | User #SOURCE
 
-[IFUNDEF] >IN
 user >IN
-[THEN]
 
 
 | : core-SOURCE    ( -- caddr u )

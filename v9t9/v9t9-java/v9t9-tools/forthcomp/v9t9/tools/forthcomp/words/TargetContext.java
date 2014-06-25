@@ -403,13 +403,11 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		for (RelocEntry rel : relocs) {
 			if (rel.target == ref.getId()) {
 				rel.target = entry.getContentAddr();
-				if (rel.type != RelocType.RELOC_FORWARD) {
+				if (rel.type != RelocType.RELOC_FORWARD)
 					writeCell(rel.addr, entry.getContentAddr());
-				}
 			}
 		}
 	}
-
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#alignDP()
@@ -554,13 +552,16 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		if (mustDefine) {
 			entry = defineEntry(name);
 			initWordEntry();
-			compileDoConstant(value, cells);
+			if (isNativeDefinition())
+				compileDoConstant(value, cells);
 		} else {
-			entry = new DictEntry(0, 0, name);
+			entry = new DictEntry(0, getDP(), name);
 			exportFlagNext = false;
 			// assume address
 			symbols.put(value, name);
 		}
+		if (!isNativeDefinition())
+			compileDoConstant(value, cells);
 		final TargetConstant constant = (TargetConstant) define(name, new TargetConstant(entry, value, 1));
 		return constant;
 	}
@@ -613,11 +614,14 @@ public abstract class TargetContext extends Context implements ITargetContext {
 			entry = defineEntry(name);
 			initWordEntry();
 			
-			compileDoUser(offset);
+			if (isNativeDefinition())
+				compileDoUser(offset);
 		} else {
-			entry = new DictEntry(0, 0, name);
+			entry = new DictEntry(0, getDP(), name);
 			exportFlagNext = false;
 		}
+		if (!isNativeDefinition())
+			compileDoUser(offset);
 		
 		return (TargetUserVariable) define(name, new TargetUserVariable(entry, offset));
 	}
@@ -991,8 +995,13 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		if (isNativeDefinition()) {
 			compileLiteral(val, isUnsigned, optimize);
 		} else {
-			buildCall(require("DOLIT"));
-			buildCell(val);
+			IWord word = find(Integer.toString(val));
+			if (word instanceof ITargetWord) {
+				buildCall((ITargetWord) word);
+			} else {
+				buildCall(require("DOLIT"));
+				buildCell(val);
+			}
 		}
 	}
 	public void buildDoubleLiteral(int valLo, int valHi, boolean isUnsigned, boolean optimize) throws AbortException {
@@ -1341,6 +1350,56 @@ public abstract class TargetContext extends Context implements ITargetContext {
 			buildTick(defEnt.getKey());
 			buildCall(to);
 		}
+	}
+
+	/**
+	 * @param index
+	 * @throws AbortException 
+	 */
+	public void buildFromLocal(int index) throws AbortException {
+		if (isNativeDefinition())
+			compileFromLocal(index);
+		else {
+			buildCall(require("(LOCAL@)"));
+			buildCell(index);
+		}
+	}
+	public void buildToLocal(int index) throws AbortException {
+		if (isNativeDefinition())
+			compileToLocal(index);
+		else {
+			buildCall(require("(LOCAL!)"));
+			buildCell(index);
+		}
+	}
+
+	/**
+	 * @param hostContext
+	 * @param word
+	 * @throws AbortException 
+	 */
+	public void buildToValue(HostContext hostContext, TargetValue word) throws AbortException {
+		if (isNativeDefinition())
+			compileToValue(hostContext, word);
+		else {
+			buildXt(word);
+			buildCall(require("(TO)"));
+		}
+	}
+
+	/**
+	 * @param hostContext
+	 * @param word
+	 * @throws AbortException 
+	 */
+	public void buildToRomDefer(HostContext hostContext, TargetDefer word) throws AbortException {
+		if (isNativeDefinition())
+			compileToRomDefer(hostContext, word);
+		else {
+			buildXt(word);
+			buildCall(require("(RDEFER!)"));
+		}
+		
 	}
 
 	

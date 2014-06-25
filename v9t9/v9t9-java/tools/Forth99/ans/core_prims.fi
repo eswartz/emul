@@ -305,6 +305,20 @@ error" need prim +"
 ;
 [THEN]
 
+[IFUNDEF] <=
+: <=
+    -  dup
+    0=  swap 0<  OR 
+;
+[THEN]
+
+[IFUNDEF] >=
+: >=
+    -  dup
+    0=  swap 0>  OR 
+;
+[THEN]
+
 [IFUNDEF] ABS
 : ABS
     dup 0< if negate then

@@ -35,7 +35,7 @@ public class TargetDefer extends TargetWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				targetContext.compile(TargetDefer.this);
+				targetContext.buildCall(TargetDefer.this);
 			}
 		});
 		setExecutionSemantics(new ISemantics() {

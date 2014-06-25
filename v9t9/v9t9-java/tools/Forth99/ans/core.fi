@@ -60,21 +60,21 @@
  
 \ Core
 DEFER	SOURCE
+DEFER	."			immediate  target-only
+DEFER	QUIT
 
 \ Block
 DEFER	REFILL
-DEFER	EVALUATE
-DEFER	\			target-only
+\ DEFER	\			target-only
 
 \ Exception
 DEFER	ABORT
 DEFER	ABORT"		target-only
 
 \ File
-DEFER	(			target-only
-DEFER	S"			target-only
-DEFER	SOURCE-ID
-\ DEFER	REFILL
+\ DEFER	(			immediate  target-only
+DEFER	S"			immediate  target-only
+\ DEFER	SOURCE-ID
 
 \ Float
 DEFER	(NUMBER)
@@ -83,7 +83,7 @@ DEFER	(NUMBER)
 DEFER	TO
 
 \ Search-Order
-DEFER	FIND
+\ DEFER	FIND
 
 
 include core_prims.fi
@@ -92,6 +92,7 @@ include core_output.fi
 include core_input.fi
 include core_terminal.fi
 include core_dict.fi
+include core_interp.fi
 
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

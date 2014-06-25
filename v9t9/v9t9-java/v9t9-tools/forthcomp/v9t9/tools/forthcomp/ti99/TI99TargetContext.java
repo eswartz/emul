@@ -293,15 +293,46 @@ public class TI99TargetContext extends TargetContext  {
 				(object instanceof String && ((String) object).startsWith(">"));
 	}
 
-	private IPrimitiveWord definePrim(String string, Object... instsAndOpcodes) throws AbortException {
-		IWord word = define(string, new TI99PrimitiveWord(defineEntry(string), true));
+	private IPrimitiveWord defineConstantPrim(String name, final int value) throws AbortException {
+		IWord word = define(name, new TI99PrimitiveWord(defineEntry(name), true));
+		LLInstruction[] llInsts;
+		if (value == 0) {
+			llInsts = defineInstrs(
+				StockInstruction.PUSH_TOS,
+				Iclr, TOS
+				);
+		} else if (value == -1) {
+			llInsts = defineInstrs(
+					StockInstruction.PUSH_TOS,
+					Iseto, TOS
+					);
+		} else {
+			llInsts = defineInstrs(
+					StockInstruction.PUSH_TOS,
+					Ili, TOS, immed(value)
+					);
+		}
+		((TI99PrimitiveWord) word).setInsts(llInsts);
+		word.setExecutionSemantics(new ISemantics() {
+			
+			@Override
+			public void execute(HostContext hostContext, TargetContext targetContext)
+					throws AbortException {
+				hostContext.pushData(value);
+			}
+		});
+		return layoutPrimitiveWord(llInsts, word);
+	}
+
+	private IPrimitiveWord definePrim(String name, Object... instsAndOpcodes) throws AbortException {
+		IWord word = define(name, new TI99PrimitiveWord(defineEntry(name), true));
 		LLInstruction[] llInsts = defineInstrs(instsAndOpcodes);
 		((TI99PrimitiveWord) word).setInsts(llInsts);
 		return layoutPrimitiveWord(llInsts, word);
 	}
 
-	private IPrimitiveWord defineInlinePrim(String string, Object... instsAndOpcodes) throws AbortException  {
-		IWord word = define(string, new TI99PrimitiveWord(defineEntry(string), true));
+	private IPrimitiveWord defineInlinePrim(String name, Object... instsAndOpcodes) throws AbortException  {
+		IWord word = define(name, new TI99PrimitiveWord(defineEntry(name), true));
 		LLInstruction[] llInsts = defineInstrs(instsAndOpcodes);
 		((TI99PrimitiveWord) word).setInsts(llInsts);
 		return layoutPrimitiveWord(llInsts, word);
@@ -504,6 +535,10 @@ public class TI99TargetContext extends TargetContext  {
 
 		//doCol = docolPrim; // rest of words act normally 
 		
+		defineConstantPrim("0", 0);
+		defineConstantPrim("1", 1);
+		defineConstantPrim("2", 2);
+		defineConstantPrim("-1", -1);
 		
 		definePrim("@", 
 				Imov, regInd(REG_TOS), TOS);
@@ -625,7 +660,16 @@ public class TI99TargetContext extends TargetContext  {
 		definePrim("+", 
 				Ia, regInc(REG_SP), TOS
 				);
-//		definePrim("D+", Iadd_d);
+		definePrim("D+", // ( lo2 hi2 lo1 hi1 -- lo hi )
+				Imov, TOS, R2,
+				Imov, regInc(REG_SP), TMP,
+				StockInstruction.POP_TOS,
+				Ia, R2, TOS,
+				Ia, TMP, regInd(REG_SP),
+				Ijnc, ">1",
+				Iinc, TOS,
+			"1"
+				);
 		definePrim("-", 
 				Is, TOS, regInd(REG_SP),
 				StockInstruction.POP_TOS
@@ -924,7 +968,13 @@ public class TI99TargetContext extends TargetContext  {
 			"0"
 				);
 //		defineInlinePrim("U<=", Icmp+CMP_ULE);
-//		defineInlinePrim("U>", Icmp+CMP_UGT);
+		defineInlinePrim("U>", 
+				Ic, regInc(REG_SP), TOS,
+				Iseto, TOS,
+				Ijh, ">0",
+				Iclr, TOS,
+			"0"
+				);
 //		defineInlinePrim("U>=", Icmp+CMP_UGE);
 //
 //		defineInlinePrim("D0<", IlitX_d, Icmp+CMP_LT);
@@ -1057,7 +1107,22 @@ public class TI99TargetContext extends TargetContext  {
 //		defineInlinePrim("(DLITERAL)", IlitD_d);
 //		
 //		//defineInlinePrim("(S\")", IcontextFrom, CTX_PC, IlitX | 5, Iadd, Idup, I1plus, Iswap, Icload);
-//		defineInlinePrim("((S\"))", Irdrop, IatR, Idup, I1plus, Iswap, Icload, Idup, IRfrom, Iadd, I1plus, ItoR);
+		definePrim("(S\")",
+				//rdrop r@ dup 1+ swap c@ dup r> + 1+  >r
+				Iai, reg(REG_SP), immed(-cellSize*2),
+				Imov, TOS, regOffs(REG_SP, -cellSize*2),
+				// get addr
+				Imov, reg(REG_IP), TMP,
+				// get length
+				Imovb, regInc(REG_TMP), TOS,
+				Isrl, TOS, immed(8),
+				// align
+				Ia, TOS, reg(REG_IP),
+				Iinc, reg(REG_IP),
+				Iandi, reg(REG_IP), immed(-2)
+				);
+				
+				
 //		
 //		define("(S\")", new TargetSQuote(defineEntry("(S\")")));
 //		compileCall((ITargetWord) find("((s\"))"));

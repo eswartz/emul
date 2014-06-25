@@ -35,7 +35,7 @@ public class To extends BaseWord {
 				
 				LocalVariableTriple triple = ((ITargetWord) targetContext.getLatest()).getEntry().findLocal(name);
 				if (triple != null) {
-					targetContext.compileToLocal(triple.var.getIndex());
+					targetContext.buildToLocal(triple.var.getIndex());
 					return;
 				}
 				
@@ -45,10 +45,10 @@ public class To extends BaseWord {
 				
 				if (word instanceof TargetValue) {
 					targetContext.markHostExecutionUnsupported();
-					targetContext.compileToValue(hostContext, (TargetValue) word);
+					targetContext.buildToValue(hostContext, (TargetValue) word);
 				} else if (word instanceof TargetDefer) {
 					targetContext.markHostExecutionUnsupported();
-					targetContext.compileToRomDefer(hostContext, (TargetDefer) word);
+					targetContext.buildToRomDefer(hostContext, (TargetDefer) word);
 				} else {
 					throw hostContext.abort("cannot handle " + name);
 				}

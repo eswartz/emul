@@ -36,7 +36,7 @@ public class LocalVariable extends BaseStdWord {
 	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		targetContext.compileFromLocal(index);
+		targetContext.buildFromLocal(index);
 	}
 	
 	/* (non-Javadoc)
