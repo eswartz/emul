@@ -103,6 +103,7 @@ import v9t9.tools.forthcomp.words.SemiColon;
 import v9t9.tools.forthcomp.words.SetDP;
 import v9t9.tools.forthcomp.words.TargetOnlyDoes;
 import v9t9.tools.forthcomp.words.TestQuote;
+import v9t9.tools.forthcomp.words.TestsStore;
 import v9t9.tools.forthcomp.words.Then;
 import v9t9.tools.forthcomp.words.Tick;
 import v9t9.tools.forthcomp.words.To;
@@ -285,6 +286,7 @@ public class HostContext extends Context {
 		
 		define("TEST\"", new TestQuote());
 		define("|TEST", new BarTest());
+		define("TESTS!", new TestsStore());
 		
 		define("ERROR\"", new ErrorQuote());
 		define("ABORT\"", new AbortQuote());
@@ -629,31 +631,8 @@ public class HostContext extends Context {
 				throw hostContext.abort("broken dictionary entry at " + hostPc);
 			if (DEBUG) System.out.println(
 					//stack() + "\n" + 
-					"H> exec " + hostPc + ": " + word);
+					"H> " + hostPc + ": exec " + word);
 			hostPc++;
-			
-			/*
-			if (word instanceof ITargetWord) {
-				ITargetWord targetWord = (ITargetWord) word;
-				IWord hostWord = targetWord.getEntry().getHostBehavior();
-				if (hostWord != null) {
-					if (DEBUG) System.out.println("On host: " + hostWord);
-
-					Stack<Integer> origDataStack = new Stack<Integer>(); 
-					origDataStack.addAll(dataStack);
-					Stack<Integer> origReturnStack = new Stack<Integer>();
-					origReturnStack.addAll(returnStack);
-					int dp = targetContext.getDP();
-					
-					hostWord.getExecutionSemantics().execute(hostContext, targetContext);
-					
-					targetContext.setDP(dp);
-					dataStack = origDataStack;
-					returnStack = origReturnStack;
-				}
-				
-			}
-			*/
 			
 			if (word.getExecutionSemantics() == null)
 				throw abort(word.getName() +  " has unknown runtime semantics");

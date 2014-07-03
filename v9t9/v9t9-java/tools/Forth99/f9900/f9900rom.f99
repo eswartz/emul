@@ -348,6 +348,9 @@ test" +loop-zero  0
 
 ' bye   (BOOT)     !
 ' cold  (COLD)     !
+
+TESTS!
+
 here $3ff +  $3ff INVERT and  DP0        !
 
 ramptr @  1- aligned  constant (RAM0)
@@ -364,6 +367,7 @@ StdWP  0  !		' (reset)  2  !
 
 hex
 here ." HERE = " u. cr
+dp0 @ ." DP0 = " u. cr
 up0 @ ." UP0 = " u. cr
 ramptr @ ." RAMPTR = " u. cr
 RamTop ." RAMTOP = " u. cr

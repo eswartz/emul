@@ -39,6 +39,7 @@ import v9t9.tools.forthcomp.words.HostVariable;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetConstant;
 import v9t9.tools.forthcomp.words.TestQuote;
+import v9t9.tools.forthcomp.words.TestsStore;
 
 /**
  * This class compiles FORTH programs into ROM images for V9t9
@@ -264,6 +265,10 @@ public class ForthComp {
 		
 		BarTest barTest = ((BarTest) hostContext.require("|TEST")); 
 		barTest.setUnitTests(unitTests);
+		
+		TestsStore testsStore = ((TestsStore) hostContext.require("TESTS!")); 
+		testsStore.setUnitTests(unitTests);
+		
 	}
 		
 	/**
@@ -325,10 +330,6 @@ public class ForthComp {
 	 * 
 	 */
 	public void finish() throws AbortException {
-		if (unitTests != null) {
-			unitTests.finish();
-		}
-		
 		for (ForwardRef ref : targetContext.getForwardRefs()) {
 			logfile.println("*** Unresolved symbol: " + ref.getEntry().getName() + " (" + ref.getLocation() + ")");
 			System.err.println("*** Unresolved symbol: " + ref.getEntry().getName() + " (" + ref.getLocation() + ")");

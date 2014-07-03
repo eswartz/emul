@@ -1298,6 +1298,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 			if (word.getInterpretationSemantics() == null)
 				throw abort(word.getName() + " has no interpretation semantics");
 			
+//			if (HostContext.DEBUG) System.out.println(
+//					//stack() + "\n" + 
+//					"H> exec " + word);
+
 			word.getInterpretationSemantics().execute(hostCtx, this);
 		} else {
 			word = find(token);

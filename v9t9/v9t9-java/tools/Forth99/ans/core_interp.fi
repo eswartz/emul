@@ -78,13 +78,15 @@
 
 : PARSE     ( char "ccc<char>" -- c-addr u )
 \   Parse ccc delimited by the delimiter char.
-\   c-addr is the address (within the input buffer) and u is the length of the parsed string. If the parse area was empty, the
-\   resulting string has a zero length.
+\   c-addr is the address (within the input buffer) and u is the length of the parsed string. 
+\ 	If the parse area was empty, the resulting string has a zero length.
 
-	>r	 ( r: ch)
+    (src>)		( ch caddr u )
+    
+    over >r		( R: caddr )   
 
-    (src>)  
-	
+	rot >r	 	( R: caddr ch)
+
     r@ $20 = if 
     	['] (match-spaces)  
     else
@@ -93,13 +95,13 @@
 
 	r>  swap execute
 	    
-    \ ( caddr' )
-    >r
+    r@				( caddr' caddr )
     
-    source  drop 	( caddr )
-    r>  over -		( caddr u )
+    -				( u )
     
     dup	(>src)
+    
+    r>	swap		( caddr u )
 ;
 
 [THEN]
@@ -475,7 +477,6 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
     postpone s" dup >r  here (>c)  r> 1+ aligned allot  
 ;
 
-[IFDEF] CATCH
 | : huh?  ( caddr -- )
     count type space
     err-undefined throw
@@ -488,19 +489,6 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
         err-empty-name throw
     then
 ;
-
-[ELSE]
-| : huh?  ( caddr -- )
-    count type space
-    [char] ? emit cr
-;
-\ Parse name, which must not be empty
-| : parse-name ( c"..."  -- caddr len )
-
-    parse-word
-;
-
-[THEN]
 
 | : interpreter
 \        ( i*x c-addr u -- j*x )

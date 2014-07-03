@@ -593,6 +593,10 @@ public class TI99TargetContext extends TargetContext  {
 		definePrim("DROP", 
 				StockInstruction.POP_TOS
 				);
+		definePrim("2DROP",
+				Iinct, reg(REG_SP),
+				StockInstruction.POP_TOS
+				);
 
 		definePrim("SWAP", 
 				Imov, TOS, TMP,
@@ -623,7 +627,15 @@ public class TI99TargetContext extends TargetContext  {
 				);
 
 //		definePrim("D0=", I0equ_d);
-//		definePrim("=", Iequ);
+		defineInlinePrim("=", 
+				Ic, regInc(REG_SP), TOS,
+				Iclr, TOS,
+				Ijne, ">0",
+				Iseto, TOS,
+			"0"
+				);
+
+		
 		definePrim("D=",
 				Imov, TOS, TMP,
 				Iseto, TOS,
@@ -971,8 +983,13 @@ public class TI99TargetContext extends TargetContext  {
 //		defineInlinePrim("0U<=", IlitX, Icmp+CMP_ULE);
 //		defineInlinePrim("0U>", IlitX, Icmp+CMP_UGT);
 //		defineInlinePrim("0U>=", IlitX, Icmp+CMP_UGE);
-//		defineInlinePrim("<", Icmp+CMP_LT);
-//		defineInlinePrim("<=", Icmp+CMP_LE);
+		defineInlinePrim("<=", 
+				Ic, regInc(REG_SP), TOS,
+				Iclr, TOS,
+				Ijgt, ">0",
+				Iseto, TOS,
+			"0"
+				);
 //		defineInlinePrim(">", Icmp+CMP_GT);
 //		defineInlinePrim(">=", Icmp+CMP_GE);
 		defineInlinePrim("U<", 
@@ -1004,6 +1021,7 @@ public class TI99TargetContext extends TargetContext  {
 				Iclr, TOS,
 			"0"
 				);
+		
 //		defineInlinePrim("U>=", Icmp+CMP_UGE);
 //
 //		defineInlinePrim("D0<", IlitX_d, Icmp+CMP_LT);
