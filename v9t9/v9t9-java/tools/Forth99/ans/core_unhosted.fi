@@ -25,63 +25,17 @@
 
 	hang
 	
-	 regs-init
-	 quit
+	regs-init
+	quit
 ;
 
 ' unhosted-ABORT	TO ABORT
-
-[IFUNDEF] ABORT"
-: ABORT"
-\        Compilation: ( "ccc<quote>" -- )
-\
-\   Parse ccc delimited by a " (double-quote). Append the run-time semantics
-\   given below to the current definition.
-\
-\        Run-time: ( i*x x1 --  | i*x ) ( R: j*x --  | j*x )
-\
-\   Remove x1 from the stack. If any bit of x1 is not zero, display ccc and
-\   perform an implementation-defined abort sequence that includes the
-\   function of ABORT.
-
-	postpone s"
-	2drop
-; immediate  target-only
-[THEN]
 
 : unhosted-S"
 	0 0
 ; immediate  target-only
 
 ' unhosted-S"		TO S"
-
-| : (ABORT")
-    rot if 
-        type cr 
-        abort
-    else  
-        2drop  
-    then
-;
-
-: unhosted-ABORT"
-\        Compilation: ( "ccc<quote>" -- )
-\
-\   Parse ccc delimited by a " (double-quote). Append the run-time semantics
-\   given below to the current definition.
-\
-\        Run-time: ( i*x x1 --  | i*x ) ( R: j*x --  | j*x )
-\
-\   Remove x1 from the stack. If any bit of x1 is not zero, display ccc and
-\   perform an implementation-defined abort sequence that includes the
-\   function of ABORT.
-
-    postpone s"
-    (ABORT")
-; immediate  target-only
-
-' unhosted-ABORT"	TO ABORT"
-
 
 [IFUNDEF] ."
 : ."

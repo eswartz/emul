@@ -404,11 +404,7 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
 [IFUNDEF] RESTORE-INPUT
 : RESTORE-INPUT ( xn ... x1 n -- )
     ( 6 ) 5 <> 
-    [ [IFUNDEF] catch ]
-    	if hang then
-    [ [ELSE] ]
-    	abort" invalid restore-input"
-    [ [THEN] ]
+	abort" invalid restore-input"
     >in !
     \ TODO block
     ( blk ! )
@@ -556,8 +552,6 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
     then
 ;
 
-[IFDEF] catch
-
 | : safe-interpret 
 	['] interpret catch
     dup 0= if
@@ -573,8 +567,6 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
     then then then
 ;
 
-[THEN]
-        
 : QUIT
     rp0 rp! 
     exc-init
@@ -584,9 +576,9 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
         ints-check
         refill
     while
-        interpret
-        ok-prompt?
-\        safe-interpret
+\        interpret
+\        ok-prompt?
+        safe-interpret
     repeat
     bye
 ;

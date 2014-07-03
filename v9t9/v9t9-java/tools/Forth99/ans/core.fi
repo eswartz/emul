@@ -99,6 +99,7 @@ include core_output.fi
 include core_input.fi
 include core_terminal.fi
 include core_dict.fi
+include core_abort.fi
 include core_interp.fi
 
 
