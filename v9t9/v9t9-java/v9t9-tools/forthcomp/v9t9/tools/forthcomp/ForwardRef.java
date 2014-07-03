@@ -10,7 +10,6 @@
  */
 package v9t9.tools.forthcomp;
 
-import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetWord;
 
 /**

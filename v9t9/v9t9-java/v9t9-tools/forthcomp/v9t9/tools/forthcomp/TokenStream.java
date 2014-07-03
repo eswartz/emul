@@ -197,14 +197,16 @@ public class TokenStream {
 	}
 
 	/**
+	 * @return 
 	 * 
 	 */
-	public void readToEOL() {
+	public String readToEOL() {
 		if (streams.isEmpty())
-			return;
+			return null;
 		try {
-			streams.peek().readLine();
+			return streams.peek().readLine();
 		} catch (IOException e) {
+			return null;
 		}
 	}
 

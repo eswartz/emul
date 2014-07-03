@@ -59,6 +59,7 @@ import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.IWord;
 import v9t9.tools.forthcomp.RelocEntry;
+import v9t9.tools.forthcomp.TargetContext;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
 import v9t9.tools.forthcomp.f99b.words.ExitI;
 import v9t9.tools.forthcomp.f99b.words.FieldComma;
@@ -66,7 +67,6 @@ import v9t9.tools.forthcomp.words.HostLiteral;
 import v9t9.tools.forthcomp.words.INativeCodeWord;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
-import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetInlineColonWord;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
 import v9t9.tools.forthcomp.words.TargetValue;
@@ -982,11 +982,25 @@ public class TI99TargetContext extends TargetContext  {
 				Iclr, TOS,
 			"0"
 				);
+		defineInlinePrim("<", 
+				Ic, regInc(REG_SP), TOS,
+				Iseto, TOS,
+				Ijlt, ">0",
+				Iclr, TOS,
+			"0"
+				);
 //		defineInlinePrim("U<=", Icmp+CMP_ULE);
 		defineInlinePrim("U>", 
 				Ic, regInc(REG_SP), TOS,
 				Iseto, TOS,
 				Ijh, ">0",
+				Iclr, TOS,
+			"0"
+				);
+		defineInlinePrim(">", 
+				Ic, regInc(REG_SP), TOS,
+				Iseto, TOS,
+				Ijgt, ">0",
 				Iclr, TOS,
 			"0"
 				);
@@ -1124,8 +1138,8 @@ public class TI99TargetContext extends TargetContext  {
 //		//defineInlinePrim("(S\")", IcontextFrom, CTX_PC, IlitX | 5, Iadd, Idup, I1plus, Iswap, Icload);
 		definePrim("(S\")",
 				//rdrop r@ dup 1+ swap c@ dup r> + 1+  >r
-				Iai, reg(REG_SP), immed(-cellSize*2),
-				Imov, TOS, regOffs(REG_SP, -cellSize*2),
+				Iai, reg(REG_SP), immed(-cellSize * 2),
+				Imov, TOS, regOffs(REG_SP, cellSize),
 				// get addr
 				Imov, reg(REG_IP), TMP,
 				// get length

@@ -4,18 +4,48 @@
 [IFUNDEF] (match)       
 
 \   Match 'char' inside [caddr..caddr+u) and return length of word
-| :: (match)       ( caddr len char xt -- u )
+\ | :: (match)       ( caddr len char xt -- u )
+\ 
+\     caddr
+\     len 0 ?do
+\         dup c@
+\         char xt execute   ( caddr u t/f )
+\         if  drop i unloop exit then
+\         1+
+\     loop
+\ 
+\     drop len
+\ ;
 
-    caddr
-    len 0 ?do
+\   Match 'char' inside [caddr..caddr+len) and return the address.
+\	if the end is reached, caddr' points to caddr+len.
+| : (match-spaces)       ( caddr len ch -- caddr' )
+
+	drop	( ignore ch )
+	0 ?do	( caddr' )
         dup c@
-        char xt execute   ( caddr u t/f )
-        if  drop i unloop exit then
-        1+
+        $20 <= if 
+        	unloop exit 
+        then
+        1+	( caddr' )
     loop
-
-    drop len
 ;
+
+| : (match-char)       ( caddr len ch -- caddr' )
+
+	>r  ( R: ch )
+	0 ?do	( caddr' )  ( R: ch loop-sys )
+        dup c@
+        j = if 
+        	unloop rdrop  exit 
+        then
+        1+	( caddr' )
+    loop
+    
+    rdrop	\ ch
+;
+
+
 [THEN]
 
 \ : mystr s" 1111123456" ;
@@ -26,7 +56,7 @@
     source  
     >in @ 
     - 0 max
-    swap >in @ + swap
+    swap  >in @ +  swap
 ;
 
 \   (>src) advances >in by u' bytes
@@ -35,22 +65,41 @@
 ;
 
 
-:: (PARSE)     ( ch xt -- c-addr u )  \ "ccc<char>"
-\   Parse ccc delimited by the delimiter char.  Use xt to interpret 'ch'.
-\   c-addr is the address (within the input buffer) and u is the length of the parsed string. If the parse area was empty, the
-\   resulting string has a zero length.
-    (src>) over :> caddr 
-    ch xt (match)
-    dup (>src)
-    caddr swap
-;
+\ :: (PARSE)     ( ch xt -- c-addr u )  \ "ccc<char>"
+\ \   Parse ccc delimited by the delimiter char.  Use xt to interpret 'ch'.
+\ \   c-addr is the address (within the input buffer) and u is the length of the parsed string. If the parse area was empty, the
+\ \   resulting string has a zero length.
+\     (src>) over :> caddr 
+\     ch xt (match)
+\     dup (>src)
+\     caddr swap
+\ ;
+
 
 : PARSE     ( char "ccc<char>" -- c-addr u )
 \   Parse ccc delimited by the delimiter char.
 \   c-addr is the address (within the input buffer) and u is the length of the parsed string. If the parse area was empty, the
 \   resulting string has a zero length.
-    dup $20 = if ['] <= else ['] = then
-    (parse)
+
+	>r	 ( r: ch)
+
+    (src>)  
+	
+    r@ $20 = if 
+    	['] (match-spaces)  
+    else
+    	['] (match-char)
+    then
+
+	r>  swap execute
+	    
+    \ ( caddr' )
+    >r
+    
+    source  drop 	( caddr )
+    r>  over -		( caddr u )
+    
+    dup	(>src)
 ;
 
 [THEN]
@@ -70,7 +119,6 @@
     drop
 ;
 
-
 | : (parse-word)  ( ch -- caddr u )
     (skip-spaces)
     parse
@@ -81,16 +129,11 @@
 \   make counted string at naddr
 	over 255 > 	
 	
-	[ [IFDEF] ?THROW ]
-		err-string-overflow ?throw
-	[ [ELSE] ]
-		hang
-	[ [THEN] ]
+	err-string-overflow ?throw
 	
     2dup c!             \ set length byte
     1+ swap cmove>      \ move data
 ;
-
 
 
 : WORD  \   ( char "<chars>ccc<char>" -- c-addr )
@@ -122,7 +165,8 @@
     d+ 
 ;
 
-:   >digit ( base ch -- n | flag )
+( Convert the given char to its numeric value ) 
+:   C>N ( ch -- u | -1 )
     dup [char] 0 [ [char] 9 1+ literal ] within if
         [char] 0 -  
     else dup [char] a [ [char] z 1+ literal ] within if
@@ -130,13 +174,35 @@
     else dup [char] A [ [char] Z 1+ literal ] within if
         [ char A -10 + literal ] -  
     else
-        true or  
+        -1 or
     then then then
-    
-    swap over  U> 
-    
 ;
 
+( Tell if the given char is a valid number in the given base )
+:   >digit ( base ch -- u true | false )
+	C>N  		( base n | base -1 )  
+	2dup U> if
+		nip true
+	else
+		2drop false
+	then		
+;
+
+test" >digit 123  10 [char] 9 >digit swap 9 = AND  		SWAP 123 = AND "
+test" >digit 123  10 [char] E >digit 0=   				SWAP 123 = AND "
+test" >digit 123  16 [char] E >digit swap &14 = AND   	SWAP 123 = AND "
+test" >digit 123  10 [char] * >digit 0=   				SWAP 123 = AND "
+
+(
+ud2 is the unsigned result of converting the characters within the string specified by 
+c-addr1 u1 into digits, using the number in BASE, and adding each into ud1 after 
+multiplying ud1 by the number in BASE. Conversion continues left-to-right until 
+a character that is not convertible, including any + or -, is encountered or the 
+string is entirely converted. c-addr2 is the location of the first unconverted 
+character or the first character past the end of the string if the string was 
+entirely converted. u2 is the number of unconverted characters in the string. 
+An ambiguous condition exists if ud2 overflows during the conversion. 
+)
 \   This ignores '+' and '-' and '.' and stops there.
 \   The outer NUMBER interpreter will detect leading signs
 \   and perform an initial 
@@ -164,10 +230,13 @@
 ;
 [THEN]
 
-\ |test : testnum s" 18446744069414584320" ;
-\ test" >number 0. testnum  >number 2drop 2dup d. 1. d+ or 0="
-\ |test : testnum s" 4294967295" ;
-\ test" >number 0. testnum  >number 2drop 2dup d. 1. d+ or 0="
+test" d+ $1111.2222 $9999.EEEE d+ $AAAB.1110 d="
+
+|test : testnum s" 4294967295" ;
+test" >number 0. testnum  >number 2drop 1. d+ or 0="
+
+|test : testnum s" 18446744069414584319" ;
+test" >number 0. testnum  >number 2drop  1. d+ or 0="
 
 
 
@@ -253,8 +322,6 @@
 \ ;
 [THEN]
 
-[IFUNDEF] (NUMBER)
-
 \   Interpret counted string as number,
 \   and store decimal point location in DPL.
 
@@ -262,7 +329,7 @@
 
 | User dpl
 
-: (number)    ( addr -- ud dpl t | f )
+: core-(number)    ( addr -- ud dpl t | f )
 \   .s
 
     0 0 rot
@@ -311,12 +378,12 @@
 \   .s
 ;
 
-[THEN]
+' core-(NUMBER)		TO (NUMBER)
 
 [IFUNDEF] NUMBER
 
 \ Parse a number and push it or compile it
-: number ( caddr -- n|d|... )
+: NUMBER ( caddr -- n|d|... )
     (number)
     if
         if
@@ -537,16 +604,16 @@
 ;
 [THEN]
 
-0 [IF]  \ [IFUNDEF] SOURCE
-: SOURCE    ( -- caddr u )
-    \ TODO block
-    ( blk @ ?dup if )
-    \   block  chars/block
-    \ else
-        >source @  #source @
-    \ then
-;
-[THEN]
+\ [IFUNDEF] SOURCE
+\ : SOURCE    ( -- caddr u )
+\     \ TODO block
+\     ( blk @ ?dup if )
+\     \   block  chars/block
+\     \ else
+\         >source @  #source @
+\     \ then
+\ ;
+\ [THEN]
 
 [IFUNDEF] [CHAR]
 : [CHAR]

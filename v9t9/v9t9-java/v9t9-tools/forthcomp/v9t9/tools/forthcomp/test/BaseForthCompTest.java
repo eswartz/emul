@@ -29,9 +29,9 @@ import v9t9.tools.forthcomp.ForthComp;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.RelocEntry;
+import v9t9.tools.forthcomp.TargetContext;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
-import v9t9.tools.forthcomp.words.TargetContext;
-import v9t9.tools.forthcomp.words.TargetContext.IMemoryReader;
+import v9t9.tools.forthcomp.TargetContext.IMemoryReader;
 
 /**
  * @author ejs

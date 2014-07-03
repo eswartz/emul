@@ -17,7 +17,6 @@ import v9t9.tools.forthcomp.words.TargetDefer;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
 import v9t9.tools.forthcomp.words.TargetValue;
 import v9t9.tools.forthcomp.words.TargetVariable;
-import v9t9.tools.forthcomp.words.TargetWord;
 import ejs.base.utils.Pair;
 
 /**
@@ -366,5 +365,10 @@ public interface ITargetContext {
 	 */
 	void compileToRomDefer(HostContext hostContext, TargetDefer word)
 			throws AbortException;
+
+	/**
+	 * @return
+	 */
+	boolean isTestMode();
 
 }

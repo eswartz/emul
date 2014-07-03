@@ -10,13 +10,11 @@
  */
 package v9t9.tools.forthcomp.words;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import v9t9.tools.forthcomp.AbortException;
-import v9t9.tools.forthcomp.ForthComp;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
+import v9t9.tools.forthcomp.TargetContext;
+import v9t9.tools.forthcomp.UnitTests;
 
 /**
  * @author ejs
@@ -24,9 +22,7 @@ import v9t9.tools.forthcomp.ISemantics;
  */
 public class TestQuote extends BaseWord {
 
-	protected int testNum;
-	protected List<String> testWords = new ArrayList<String>();
-	private ForthComp compiler;
+	private UnitTests unitTests;
 
 	public TestQuote() {
 		setInterpretationSemantics(new ISemantics() {
@@ -40,59 +36,24 @@ public class TestQuote extends BaseWord {
 				int leng = hostContext.popData();
 				int addr = hostContext.popData();
 				
-				if (targetContext.isTestMode()) {
-					StringBuilder bodysb = new StringBuilder();
-					
-					while (leng-- > 0) {
-						bodysb.append((char) targetContext.readChar(addr++));
-					}
-					
-					String[] bodyText = bodysb.toString().trim().split("\\s", 2);
-					
-					String name = "$test" + testNum++ + "-" + bodyText[0];
-					
-					StringBuilder sb = new StringBuilder(); 
-					sb.append("| : ").append(name).append(" ");
-					sb.append(bodyText[1]);
-					sb.append(" ;");
-					
-					System.out.println("TEST: " + sb + " \\ " + Integer.toHexString(targetContext.getDP()));
-					
-					compiler.parseString(
-							hostContext.getStream().getLocation() + " > " + name, 
-							sb.toString());
-					
-					testWords.add(name);
+				StringBuilder bodysb = new StringBuilder();
+				
+				while (leng-- > 0) {
+					bodysb.append((char) targetContext.readChar(addr++));
+				}
+
+				if (unitTests != null) {
+					unitTests.addTest(bodysb.toString());
 				}
 			}
 		});
 		
 	}
 
-	public void setCompiler(ForthComp compiler) {
-		this.compiler = compiler;
+	
+	public void setUnitTests(UnitTests unitTests) {
+		this.unitTests = unitTests;
+
 	}
 
-	public void finish(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		if (!targetContext.isTestMode())
-			return;
-		
-		StringBuilder sb = new StringBuilder();
-
-		sb.append("| : RUNTEST ( addr -- ) ");
-		sb.append(" EXECUTE  0= IF ABORT\" failed\" THEN \n");
-		sb.append(" ;\n");
-		
-		sb.append("| : RUNTESTS ");
-		for (String testWord : testWords) {
-			sb.append("['] ").append(testWord).append(" RUNTEST regs-init ");
-		}
-		sb.append(" tests-completed ;\n");
-		
-		compiler.parseString(
-				"RUNTESTS", 
-				sb.toString());
-
-		testWords.clear();
-	}
 }

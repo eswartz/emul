@@ -31,13 +31,13 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.tools.forthcomp.TargetContext.IMemoryReader;
 import v9t9.tools.forthcomp.f99b.F99bTargetContext;
 import v9t9.tools.forthcomp.ti99.TI99TargetContext;
+import v9t9.tools.forthcomp.words.BarTest;
 import v9t9.tools.forthcomp.words.HostVariable;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetConstant;
-import v9t9.tools.forthcomp.words.TargetContext;
-import v9t9.tools.forthcomp.words.TargetContext.IMemoryReader;
 import v9t9.tools.forthcomp.words.TestQuote;
 
 /**
@@ -228,7 +228,7 @@ public class ForthComp {
 	private TokenStream tokenStream;
 	private int errors;
 
-	private TestQuote testQuote;
+	private UnitTests unitTests;
 
 	public ForthComp(HostContext hostContext, TargetContext targetContext) {
 		this.hostContext = hostContext;
@@ -253,9 +253,17 @@ public class ForthComp {
 	}
 
 	public void setTestMode(boolean doTest) throws AbortException {
-		testQuote = ((TestQuote) hostContext.require("TEST\"")); 
+		if (unitTests == null) {
+			unitTests = new UnitTests();
+			unitTests.setCompiler(this);
+		}
 		targetContext.setTestMode(doTest);
-		testQuote.setCompiler(this);
+		
+		TestQuote testQuote = ((TestQuote) hostContext.require("TEST\"")); 
+		testQuote.setUnitTests(unitTests);
+		
+		BarTest barTest = ((BarTest) hostContext.require("|TEST")); 
+		barTest.setUnitTests(unitTests);
 	}
 		
 	/**
@@ -317,8 +325,8 @@ public class ForthComp {
 	 * 
 	 */
 	public void finish() throws AbortException {
-		if (testQuote != null) {
-			testQuote.finish(hostContext, targetContext);
+		if (unitTests != null) {
+			unitTests.finish();
 		}
 		
 		for (ForwardRef ref : targetContext.getForwardRefs()) {
@@ -455,5 +463,12 @@ public class ForthComp {
 			System.out.println("Merged dictionary into GROM, changed " + gromFile);
     	}
     	
+	}
+
+	/**
+	 * @return
+	 */
+	public UnitTests getUnitTests() {
+		return unitTests;
 	}
 }

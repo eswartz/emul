@@ -8,8 +8,11 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
+\	DP, HERE
 
-User    dp
+[IFUNDEF] HERE
+
+| User    dp
 
 \ addr is the data-space pointer.
 : HERE ( -- addr ) 
@@ -119,12 +122,6 @@ $1F constant width      \ max length of a name
 
 \   \\\\\\\\\\\\\\\\\
 
-\   dictionary words
-
-[IFUNDEF] DP
-User DP
-[THEN]
-
 [IFUNDEF] '
 : ' 
 \   Skip leading space delimiters. Parse name delimited by a space. Find name and return xt, the execution token for name. An
@@ -158,12 +155,6 @@ User DP
 [IFUNDEF] ALIGN
 : ALIGN
     here aligned dp !
-;
-[THEN]
-
-[IFUNDEF] ALIGNED
-: ALIGNED   ( addr -- addr )
-    #cell  1-  swap over +  swap and
 ;
 [THEN]
 

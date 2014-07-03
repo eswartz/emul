@@ -57,7 +57,14 @@
 \   while word xor [ ['] [char] ] 
 
 \ 	Define deferrals for words that change among wordsets.
- 
+\	The concept is, a DEFER'ed word is a vector to another word.
+\	A low-level file will define the word TO a given word.
+\	Another file can extend the word by referencing the target
+\	of the (presumed) lower-level word.  It should not, of course,
+\	reference the DEFER'ed word itself, which would be recursive.
+\	(Maybe we need a "super" or the like to let us access the current
+\	definition...?  Would be like "[ ' deferred >BODY @ compile,  ]" ...?) 
+
 \ Core
 DEFER	SOURCE
 DEFER	."			immediate  target-only
@@ -75,6 +82,7 @@ DEFER	ABORT"		target-only
 \ DEFER	(			immediate  target-only
 DEFER	S"			immediate  target-only
 \ DEFER	SOURCE-ID
+\ DEFER	REFILL	 	(above)
 
 \ Float
 DEFER	(NUMBER)
@@ -84,7 +92,6 @@ DEFER	TO
 
 \ Search-Order
 \ DEFER	FIND
-
 
 include core_prims.fi
 include core_strings.fi

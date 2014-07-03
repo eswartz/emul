@@ -68,9 +68,9 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		dumpFullEnd(after, before.cycles, (MachineOperand9900)after.inst.getOp1(), (MachineOperand9900)after.inst.getOp2(), dumpfull);
 	}
 
-	public void dumpFullStart(InstructionWorkBlock9900 iinstructionWorkBlock,
+	public void dumpFullStart(InstructionWorkBlock9900 wb,
 			RawInstruction ins, PrintWriter dumpfull) {
-		IMemoryEntry entry = iinstructionWorkBlock.domain.getEntryAt(ins.pc);
+		IMemoryEntry entry = wb.domain.getEntryAt(ins.pc);
 		String name = null;
 		if (entry != null) 
 			name = entry.lookupSymbol((short) ins.pc);
@@ -79,18 +79,18 @@ public class DumpFullReporter9900 implements IInstructionListener {
 			// HACK
 			if ("@NEXT".equals(name)) {
 				// show current word
-				int curIP = iinstructionWorkBlock.cpu.getRegister(14);
+				int curIP = wb.cpu.getRegister(14);
 				Pair<String, Short> info = entry.lookupSymbolNear((short) curIP, 128);
 				if (info != null && info.second >= 0x100 && info.second <= 0x4000) {
 					dumpfull.print(" in " + info.first);
 				}
 			}
 			else if (";S".equals(name)) {
-				dumpCallStack(dumpfull, entry, iinstructionWorkBlock);
-				dumpStack(dumpfull, entry, iinstructionWorkBlock);
+				dumpCallStack(dumpfull, entry, wb, true);
+				dumpStack(dumpfull, entry, wb);
 			} else if ("DOCOL".equals(name)) {
-				dumpCallStack(dumpfull, entry, iinstructionWorkBlock);
-				dumpStack(dumpfull, entry, iinstructionWorkBlock);
+				dumpCallStack(dumpfull, entry, wb, false);
+				dumpStack(dumpfull, entry, wb);
 				
 			}
 			dumpfull.println();
@@ -100,18 +100,26 @@ public class DumpFullReporter9900 implements IInstructionListener {
 	}
 	/**
 	 * @param dumpfull
-	 * @param iinstructionWorkBlock 
+	 * @param wb 
+	 * @param showCurrentIP 
 	 */
-	private void dumpCallStack(PrintWriter dumpfull, IMemoryEntry entry, InstructionWorkBlock9900 iinstructionWorkBlock) {
+	private void dumpCallStack(PrintWriter dumpfull, IMemoryEntry entry, InstructionWorkBlock9900 wb, boolean showCurrentIP) {
 		// walk stack
 		dumpfull.print(" [ ");
 		boolean first = true;
 		int unknown = 0;
-		int curRP = iinstructionWorkBlock.cpu.getRegister(13) & 0xffff;
+		int curRP = wb.cpu.getRegister(13) & 0xffff;
 		do {
 			int curIP;
-			if (curRP < 0xff40) {
-				curIP = iinstructionWorkBlock.domain
+			if (first) {
+				if (showCurrentIP)
+					curIP = (wb.val2 & 0xffff) - 2;	// MOV *R13+, R14 -- get old value
+				else
+					curIP = (wb.cpu.getRegister(11) & 0xffff);	// MOV *R13+, R14 -- get old value
+				first = false;
+			}
+			else if (curRP < 0xff40) {
+				curIP = wb.domain
 						.flatReadWord(curRP);
 				curRP += 2;
 				if (first)
@@ -136,59 +144,53 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		
 	}
 
-	private void dumpStack(PrintWriter dumpfull, IMemoryEntry entry, InstructionWorkBlock9900 iinstructionWorkBlock) {
+	private void dumpStack(PrintWriter dumpfull, IMemoryEntry entry, InstructionWorkBlock9900 wb) {
 		dumpfull.print(" (");
-		int count = 0;
-		boolean waitingForTOS = true;
-		int curSP = iinstructionWorkBlock.cpu.getRegister(15) & 0xfffe;
+		int curSP = wb.cpu.getRegister(15) & 0xfffe;
 		int topSP = Math.min(curSP + 4 * 2, 0xffc0);
-		do {
-			int curVal;
-			if (topSP > curSP) {
-				topSP -= 2;
-				curVal = iinstructionWorkBlock.domain.flatReadWord(topSP);
-			} else if (waitingForTOS) {
-				curVal = iinstructionWorkBlock.cpu.getRegister(1);	 // TOS
-				waitingForTOS = false;
-			} else {
-				break;
-			}
+		int curVal;
+		while (topSP > curSP) {
+			topSP -= 2;
+			curVal = wb.domain.flatReadWord(topSP);
 			dumpfull.print(" ");
 			dumpfull.print(HexUtils.toHex4(curVal));
-			count++;
-		} while (count < 4 && waitingForTOS);
+		}
+		curVal = wb.cpu.getRegister(1);	 // TOS
+		dumpfull.print(" ");
+		dumpfull.print(HexUtils.toHex4(curVal));
+
 		dumpfull.print(" )");
 		
 	}
 
-	private void dumpFullMid(InstructionWorkBlock9900 iinstructionWorkBlock,
+	private void dumpFullMid(InstructionWorkBlock9900 wb,
 			MachineOperand9900 mop1, MachineOperand9900 mop2,
 			PrintWriter dumpfull) {
 		String str;
 		if (mop1.type != IMachineOperand.OP_NONE
 		        && mop1.dest != IOperand.OP_DEST_KILLED) {
-		    str = mop1.valueString(iinstructionWorkBlock.ea1, iinstructionWorkBlock.val1);
+		    str = mop1.valueString(wb.ea1, wb.val1);
 		    if (str != null) {
 		        dumpfull.print("op1=" + str + " ");
 		    }
 		}
 		if (mop2.type != IMachineOperand.OP_NONE
 		        && mop2.dest != IOperand.OP_DEST_KILLED) {
-		    str = mop2.valueString(iinstructionWorkBlock.ea2, iinstructionWorkBlock.val2);
+		    str = mop2.valueString(wb.ea2, wb.val2);
 		    if (str != null) {
 				dumpfull.print("op2=" + str);
 			}
 		}
 		dumpfull.print(" || ");
 	}
-	public void dumpFullEnd(InstructionWorkBlock9900 iinstructionWorkBlock, 
+	public void dumpFullEnd(InstructionWorkBlock9900 wb, 
 			int origCycleCount, MachineOperand9900 mop1,
 			MachineOperand9900 mop2, PrintWriter dumpfull) {
 		String str;
 		if (mop1.type != IMachineOperand.OP_NONE
 		        && (mop1.dest != IOperand.OP_DEST_FALSE
 		        		|| mop1.type == MachineOperand9900.OP_INC)) {
-		    str = mop1.valueString(iinstructionWorkBlock.ea1, iinstructionWorkBlock.val1);
+		    str = mop1.valueString(wb.ea1, wb.val1);
 		    if (str != null) {
 		        dumpfull.print("op1=" + str + " ");
 		    }
@@ -196,7 +198,7 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		if (mop2.type != IMachineOperand.OP_NONE
 				&& (mop2.dest != IOperand.OP_DEST_FALSE
 		        		|| mop2.type == MachineOperand9900.OP_INC)) {
-		    str = mop2.valueString(iinstructionWorkBlock.ea2, iinstructionWorkBlock.val2);
+		    str = mop2.valueString(wb.ea2, wb.val2);
 		    if (str != null) {
 				dumpfull.print("op2=" + str + " ");
 			}
@@ -206,7 +208,7 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		                .toUpperCase() + " wp="
 		        + Integer.toHexString(((Cpu9900) cpu).getWP() & 0xffff).toUpperCase());
 		
-		int cycles = iinstructionWorkBlock.cycles - origCycleCount;
+		int cycles = wb.cycles - origCycleCount;
 		dumpfull.print(" @ " + cycles);
 		dumpfull.println();
 		dumpfull.flush();

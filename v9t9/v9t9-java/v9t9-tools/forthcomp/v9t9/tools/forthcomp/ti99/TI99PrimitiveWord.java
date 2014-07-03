@@ -18,8 +18,8 @@ import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.DictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
+import v9t9.tools.forthcomp.TargetContext;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
-import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetWord;
 
 /**

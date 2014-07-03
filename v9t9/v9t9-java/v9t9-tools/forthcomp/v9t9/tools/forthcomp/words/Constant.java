@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp.words;
 import ejs.base.utils.HexUtils;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs

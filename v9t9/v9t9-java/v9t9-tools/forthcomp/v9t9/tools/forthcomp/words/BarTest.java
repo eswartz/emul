@@ -1,5 +1,5 @@
 /*
-  Paren.java
+  TestQuote.java
 
   (c) 2010-2011 Edward Swartz
 
@@ -10,36 +10,42 @@
  */
 package v9t9.tools.forthcomp.words;
 
-import java.io.IOException;
-
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.TargetContext;
+import v9t9.tools.forthcomp.UnitTests;
 
 /**
+ * |TEST "content to eol..."
  * @author ejs
  *
  */
-public class Paren extends BaseWord {
-	public Paren() {
-		setExecutionSemantics(new ISemantics() {
+public class BarTest extends BaseWord {
+
+	private UnitTests unitTests;
+
+	public BarTest() {
+		setInterpretationSemantics(new ISemantics() {
 			
+			@Override
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				try {
-					hostContext.getStream().readThrough(')');
-				} catch (IOException e) {
-					throw hostContext.abort("did not find ')'");
+
+				String content = hostContext.getStream().readToEOL();
+
+				if (unitTests != null) {
+					unitTests.addText(content);
 				}
 			}
 		});
-		setCompilationSemantics(getExecutionSemantics());
+		
 	}
 
 	
-	@Override
-	public boolean isCompilerWord() {
-		return true;
+	public void setUnitTests(UnitTests unitTests) {
+		this.unitTests = unitTests;
+
 	}
+
 }

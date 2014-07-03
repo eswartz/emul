@@ -15,6 +15,7 @@ import v9t9.tools.forthcomp.DictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * This is colon definition (e.g. list of XTs) which are inlined into the colon definition.

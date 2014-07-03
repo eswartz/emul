@@ -22,6 +22,7 @@ import v9t9.tools.forthcomp.words.Allot;
 import v9t9.tools.forthcomp.words.BackSlash;
 import v9t9.tools.forthcomp.words.BarExportNext;
 import v9t9.tools.forthcomp.words.BarHideNext;
+import v9t9.tools.forthcomp.words.BarTest;
 import v9t9.tools.forthcomp.words.BaseHostBranch;
 import v9t9.tools.forthcomp.words.BaseStdWord;
 import v9t9.tools.forthcomp.words.BaseWord;
@@ -100,7 +101,6 @@ import v9t9.tools.forthcomp.words.Repeat;
 import v9t9.tools.forthcomp.words.SQuote;
 import v9t9.tools.forthcomp.words.SemiColon;
 import v9t9.tools.forthcomp.words.SetDP;
-import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetOnlyDoes;
 import v9t9.tools.forthcomp.words.TestQuote;
 import v9t9.tools.forthcomp.words.Then;
@@ -284,6 +284,8 @@ public class HostContext extends Context {
 		define("hex", new HostHex());
 		
 		define("TEST\"", new TestQuote());
+		define("|TEST", new BarTest());
+		
 		define("ERROR\"", new ErrorQuote());
 		define("ABORT\"", new AbortQuote());
 		

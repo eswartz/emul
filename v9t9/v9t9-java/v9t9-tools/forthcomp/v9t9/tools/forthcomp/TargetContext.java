@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.tools.forthcomp.words;
+package v9t9.tools.forthcomp;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -26,16 +26,19 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.machine.f99b.memory.EnhancedRamByteArea;
-import v9t9.tools.forthcomp.AbortException;
-import v9t9.tools.forthcomp.Context;
-import v9t9.tools.forthcomp.DictEntry;
-import v9t9.tools.forthcomp.ForwardRef;
-import v9t9.tools.forthcomp.HostContext;
-import v9t9.tools.forthcomp.ITargetContext;
-import v9t9.tools.forthcomp.ITargetWord;
-import v9t9.tools.forthcomp.IWord;
-import v9t9.tools.forthcomp.RelocEntry;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
+import v9t9.tools.forthcomp.words.HostDoubleLiteral;
+import v9t9.tools.forthcomp.words.HostLiteral;
+import v9t9.tools.forthcomp.words.HostVariable;
+import v9t9.tools.forthcomp.words.INativeCodeWord;
+import v9t9.tools.forthcomp.words.StubWord;
+import v9t9.tools.forthcomp.words.TargetColonWord;
+import v9t9.tools.forthcomp.words.TargetConstant;
+import v9t9.tools.forthcomp.words.TargetDefer;
+import v9t9.tools.forthcomp.words.TargetUserVariable;
+import v9t9.tools.forthcomp.words.TargetValue;
+import v9t9.tools.forthcomp.words.TargetVariable;
+import v9t9.tools.forthcomp.words.TargetWord;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
 

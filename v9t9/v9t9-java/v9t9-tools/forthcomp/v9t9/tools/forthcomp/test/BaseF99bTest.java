@@ -23,8 +23,8 @@ import v9t9.machine.f99b.interpreter.InterpreterF99b;
 import v9t9.machine.f99b.machine.F99bMachine;
 import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.tools.forthcomp.BaseGromTargetContext;
+import v9t9.tools.forthcomp.TargetContext;
 import v9t9.tools.forthcomp.f99b.F99bTargetContext;
-import v9t9.tools.forthcomp.words.TargetContext;
 
 /**
  * @author ejs

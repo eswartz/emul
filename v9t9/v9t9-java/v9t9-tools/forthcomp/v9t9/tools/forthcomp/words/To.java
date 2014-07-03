@@ -16,6 +16,7 @@ import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.IWord;
 import v9t9.tools.forthcomp.LocalVariableTriple;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * Placeholder for local used in a colon-colon def

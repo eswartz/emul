@@ -4,7 +4,6 @@
 package v9t9.tools.forthcomp;
 
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.tools.forthcomp.words.TargetContext;
 
 /**
  * @author ejs

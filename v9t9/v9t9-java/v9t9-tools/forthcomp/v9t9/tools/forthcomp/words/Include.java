@@ -16,6 +16,7 @@ import java.io.FileNotFoundException;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
