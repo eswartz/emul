@@ -25,7 +25,7 @@ $15			constant	REG_SP
 
 \   ---------   memory map
 
-$0000       constant    I/O
+$0040       constant    I/O
 
 |+ $0000       constant    VDPRD
 |+ $0002       constant    VDPST
@@ -38,12 +38,11 @@ $0000       constant    I/O
 |+ $0012       constant    GPLRA       \ high then low
 |+ $0014       constant    GPLWD
 |+ $0016       constant    GPLWA
+
 |+ $0018       constant    SPCHRD
 |+ $001a       constant    SPCHWT
 
-|+ $0020       constant    KBD
-
-|+ $0040       constant    SOUND  \ ... 0x20!
+|+ $0020       constant    SOUND  \ ... 0x20!
 
 \   ---------  peripherals
 
@@ -105,7 +104,7 @@ $00ff       constant    'DBG
 
 \   -----------------------    
 
-$0400       constant    ROM
+$0100       constant    ROM
 
 ROM         constant    (BOOT)
 ROM 2 +     constant    (COLD)
@@ -141,12 +140,14 @@ CHARS/BLOCK
 
 $80        constant   (#up)       \ global user space
 
+$20	      	constant	#maxrdefers		\ since we don't know ahead of time, make room for max # words
+ 
 |+ Workspaces  
 	(#RP) - (#SP) - 
 	(#numbuf) - (#slit-pad) - 
 	#TIB - (#blks) - 
 	(#up) -
-	(#rdefers) -
+	#maxrdefers -
             				constant RamTop    \ grows down
 
 \ Arrange memory to minimize problems in case of overflow.
@@ -154,7 +155,7 @@ RamTop                        constant (first)    \ grows up
 (first) (#blks) +             constant (limit)
 (limit)                       constant (up0)      \ grows up 
 (up0) (#up) + (#numbuf) +     constant (rdefertbl)      
-(rdefertbl) (#rdefers) +      constant (numbuf0)     \ grows down
+(rdefertbl) #maxrdefers +      constant (numbuf0)     \ grows down
 (numbuf0)                     constant (slit-pad0)    \ grows up
 (slit-pad0) (#slit-pad) +     constant TIB         \ grows up
 TIB #TIB + (#rp) +            constant (rp0)    \ grows down

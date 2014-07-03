@@ -76,7 +76,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	private boolean testMode;
 
 	protected IWord romDeferTableWord;
-	private TargetVariable numRomDefersWord;
+	private TargetConstant numRomDefersWord;
 	private Map<TargetDefer, Integer> targetDefers = new HashMap<TargetDefer, Integer>();
 	
 
@@ -127,22 +127,25 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineBuiltins()
 	 */
-	@Override
-	abstract public void defineBuiltins() throws AbortException;
+	public void defineBuiltins() throws AbortException {
+		romDeferTableWord = find("(rdefertbl)");
+		if (romDeferTableWord == null) {
+			romDeferTableWord = defineForward("(rdefertbl)", "<builtin>");
+		}
+		setExportNext(false);
+
+		numRomDefersWord = defineConstant("(#rdefers)", 0, 1);
+
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.ITargetContext#defineCompilerWords(v9t9.tools.forthcomp.HostContext)
 	 */
 	@Override
 	public void defineCompilerWords(HostContext hostContext) {
-		romDeferTableWord = find("(rdefertbl)");
-		if (romDeferTableWord == null) {
-			romDeferTableWord = defineForward("(rdefertbl)", "<builtin>");
-		}
-		numRomDefersWord = findOrCreateVariable("(#rdefers)");
-
+		
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#readCell(int)
 	 */
@@ -543,10 +546,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		
 		boolean mustDefine = currentExport();
 		if (!mustDefine) {
-			if (forwards.get(name.toUpperCase()) != null) {
-				mustDefine = true;
-				System.err.println("*** WARNING: forward reference to : " +name + " forces dictionary definition");
-			}
+			mustDefine = isForcedExport(name);
 		}
 		DictEntry entry;
 		if (mustDefine) {
@@ -562,10 +562,22 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		}
 		if (!isNativeDefinition())
 			compileDoConstant(value, cells);
+		
+		entry.setCodeSize(getDP() - entry.getAddr() - cells * cellSize);
 		final TargetConstant constant = (TargetConstant) define(name, new TargetConstant(entry, value, 1));
 		return constant;
 	}
 	
+	/**
+	 * @param name
+	 * @param forwardRef 
+	 */
+	protected void warnForcedWord(String name, ForwardRef forwardRef) {
+		System.err.println("*** WARNING: forward reference to : " +name + " forces dictionary definition from "
+				+ forwardRef.getLocation());
+		
+	}
+
 	protected void defineSymbol(int addr, String name) {
 		symbols.put(addr, name);
 	}
@@ -598,16 +610,14 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		
 		// the "variable" will be frozen in ROM, a count of bytes
 		TargetVariable up = findOrCreateVariable("UP0");
-		int offset = readCell(up.getEntry().getParamAddr());
-		writeCell(up.getEntry().getParamAddr(), offset + bytes);
+		int paramAddr = up.getEntry().getParamAddr();
+		int offset = readCell(paramAddr);
+		writeCell(paramAddr, offset + bytes);
 
 
 		boolean mustDefine = currentExport();
 		if (!mustDefine) {
-			if (forwards.get(name.toUpperCase()) != null) {
-				mustDefine = true;
-				System.err.println("*** WARNING: forward reference to : " +name + " forces dictionary definition");
-			}
+			mustDefine = isForcedExport(name);
 		}
 		DictEntry entry;
 		if (mustDefine) {
@@ -627,6 +637,19 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	}
 
 
+	/**
+	 * @param name
+	 * @return
+	 */
+	protected boolean isForcedExport(String name) {
+		ForwardRef forwardRef = forwards.get(name.toUpperCase());
+		if (forwardRef != null) {
+			warnForcedWord(name, forwardRef);
+			return true;
+		}
+		return false;
+	}
+
 	@Override
 	public TargetDefer defineRomDefer(String name) throws AbortException {
 		
@@ -636,8 +659,12 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		initWordEntry();
 			
 		// the "variable" will be frozen in ROM, a count of bytes
-		int offset = readCell(numRomDefersWord.getEntry().getParamAddr());
-		writeCell(numRomDefersWord.getEntry().getParamAddr(), offset + getCellSize());
+		int paramAddr = numRomDefersWord.getEntry().getParamAddr();
+		int offset = readCell(paramAddr);
+		int newOffset = offset + getCellSize();
+		writeCell(paramAddr, newOffset);
+		
+		numRomDefersWord.setValue(newOffset);
 		
 		compileDoRomDefer(offset);
 		

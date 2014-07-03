@@ -30,6 +30,7 @@ import v9t9.common.client.IClient;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.machine.TerminatedException;
 import v9t9.gui.client.ClientFactory;
+import v9t9.gui.client.ConsoleOnlyClient;
 import v9t9.gui.client.swt.SwtAwtJavaClient;
 import v9t9.gui.client.swt.SwtJavaClient;
 import v9t9.gui.client.swt.SwtLwjglJavaClient;
@@ -52,6 +53,8 @@ public class Emulator {
 		ClientFactory.INSTANCE.register(SwtJavaClient.ID, SwtJavaClient.class);
 		ClientFactory.INSTANCE.register(SwtAwtJavaClient.ID, SwtAwtJavaClient.class);
 		ClientFactory.INSTANCE.register(SwtLwjglJavaClient.ID, SwtLwjglJavaClient.class);
+		ClientFactory.INSTANCE.register(ConsoleOnlyClient.ID, ConsoleOnlyClient.class);
+		
 		ClientFactory.INSTANCE.setDefault(SwtLwjglJavaClient.ID);
 	}
 	

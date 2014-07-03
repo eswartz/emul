@@ -1,14 +1,14 @@
 /*
   F99bConsoleMmioArea.java
 
-  (c) 2009-2012 Edward Swartz
+  (c) 2014 Edward Swartz
 
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Public License v1.0
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.machine.f99b.memory;
+package v9t9.machine.ti99.memory.mmio;
 
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryEntry;
@@ -17,42 +17,43 @@ import v9t9.machine.f99b.machine.InternalCruF99;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
 
 /**
- * F99 memory-mapped I/O area
+ * Forth9900 memory-mapped I/O area
  * @author ejs
  *
  */
-public class F99bConsoleMmioArea extends ConsoleMmioArea  {
+public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	
-	// The VDP ports are intended to mostly fit in 1-byte IlitX instructions
-	public static final int VDPRD = 0x0;
-	public static final int VDPST = 0x2;
-	public static final int VDPWD = 0x4;
-	public static final int VDPWA = 0x6;
-	public static final int VDPWAL = 0x7;
-	public static final int VDPCL = 0x8;
-	public static final int VDPWI = 0xA;
-	
-	private static final int[] f99ToVdpPort = { 0, 1, 2, 3, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
+	public static final int VDPRD = 0x40;
+	public static final int VDPST = 0x42;
+	public static final int VDPWD = 0x44;
+	public static final int VDPWA = 0x46;
+	public static final int VDPWAL = 0x47;
+	public static final int VDPCL = 0x48;
+	public static final int VDPWI = 0x4A;
+	private static final int[] forth9900ToVdpPort = { 0, 1, 2, 3, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
 	
 	
-	public static final int GPLRD = 0x10;
-	public static final int GPLRA = 0x12;
-	public static final int GPLWD = 0x14;
-	public static final int GPLWA = 0x16;
-	public static final int SPCHWT = 0x18;
-	public static final int SPCHRD = 0x1A;
-
-	public static final int SOUND = 0x40;	// 0x20!
+	public static final int GPLRD = 0x50;
+	public static final int GPLRA = 0x52;
+	public static final int GPLWD = 0x54;
+	public static final int GPLWA = 0x56;
+	
+	public static final int SPCHWT = 0x58;
+	public static final int SPCHRD = 0x5A;
 	
 	// character outlet
-	public static final int DBG = 0xff;
+	public static final int DBG = 0x5E;
+	
+	public static final int SOUND = 0x60;	// 0x20!
 	
 	public static final int CRU_BASE = 0x80;
 	public static final int CRU_END = 0x100;
 	
+	public static final int COLD = 0x100;
+	
 	private final IMachine machine;
 		
-	public F99bConsoleMmioArea(IMachine machine) {
+	public Forth9900ConsoleMmioArea(IMachine machine) {
 		super(0);
 		this.machine = machine;
     };
@@ -109,7 +110,7 @@ public class F99bConsoleMmioArea extends ConsoleMmioArea  {
 	    	case VDPCL:
 	    	case VDPWI:
 	    	case VDPWA:
-	    		getTIMemoryModel().getVdpMmio().write(f99ToVdpPort[addr], val);
+	    		getTIMemoryModel().getVdpMmio().write(forth9900ToVdpPort[addr], val);
 	    		break;
 	    	case GPLWA:
 	    	case GPLWD:

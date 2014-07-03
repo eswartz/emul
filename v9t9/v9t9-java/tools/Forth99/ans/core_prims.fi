@@ -36,7 +36,7 @@ test" 2dup  1. 2. 2dup 2. d="
 test" 2over  $1234.5678 $9abc.def0 2over $1234.5678 d= "
 
 [IFUNDEF] 2SWAP
-: 2SWAP
+: 2SWAP  ( a b c d -- c d a b )
     rot >r rot r>
 ;
 [THEN]
@@ -101,6 +101,20 @@ error" need prim r>"
 ;
 [THEN]
 
+test" R@ 
+		$1111 $2222 >r >r
+		rdrop r@  $2222 = 
+		 rdrop " 	
+
+test" 2R@ 
+		$1111 $2222 >r >r
+		2r@
+		$1111 = 
+		swap $2222 = 
+		and  
+		rdrop rdrop " 	
+
+
 [IFUNDEF] SWAP
 \ : SWAP
 \ ;
@@ -142,18 +156,12 @@ test" +! base @ 2 base +! base @  $a base !  $c = swap $a = and"
 error" need prim @"
 [THEN]
 
-
-[IFUNDEF] ALIGN
-: ALIGN
-    here aligned dp !
-;
-[THEN]
-
 [IFUNDEF] ALIGNED
 : ALIGNED   ( addr -- addr )
     [ #cell 1- literal ] + [ #cell negate literal ] and
 ;
 [THEN]
+
 
 [IFUNDEF] C!
 \ : C!

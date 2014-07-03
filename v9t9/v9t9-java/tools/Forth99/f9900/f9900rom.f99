@@ -8,7 +8,7 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-\   Memory layout
+\   ROM Memory layout
 
 $0		dp!
 
@@ -18,7 +18,18 @@ $0		dp!
 \ Intvec 1: VDP
 0 ,  0 ,
 
-$400    dp!
+\ Remaining interrupt vectors
+14 4 *  allot
+
+\ MMIO @0x40
+$40 allot
+
+\ CRU @0x80
+$80 allot
+
+\ ................................
+
+$100    dp!
 
 \   cold address
 0 ,
@@ -50,7 +61,6 @@ EXPORT>
 
 include sysprims.fi
 include syscomp.fi
-include cold.fi
 
 
 	\ ----------- [[[ STUBS
@@ -78,6 +88,10 @@ include ../ans/core.fi
 include ../ans/core_unhosted.fi
 include ../ans/core-ext.fi
 
+include ../ans/exception.fi
+include ../ans/exception_minimal.fi
+
+include cold.fi
 
 0 [if]
 		
@@ -281,6 +295,11 @@ test" +loop-zero  0
 		COLD
 	;
 	
+	| : tests-completed
+		s" 100 200 300 + + ." evaluate
+		hang
+	;
+	
 	: COLD
 		(resolve-rdefers)
 		
@@ -289,8 +308,9 @@ test" +loop-zero  0
 
 	    decimal
 
-		\ runtests
-		s" 100 200 300 + + ." evaluate
+		runtests
+		
+		\ NOTREACHED
 		hang
 	;
 
@@ -337,6 +357,10 @@ ramptr @  1- aligned  constant (RAM0)
 \ set up int vecs
 StdWP  0  !		' (reset)  2  !   
 \ IntWP  4  !		' bye  6  !   
+
+\ make sure we're sane
+." # rom defers: " (#rdefers) . cr
+(#rdefers)	#maxrdefers  > 	abort" Too many ROM defers -- bump #maxrdefers "
 
 hex
 here ." HERE = " u. cr

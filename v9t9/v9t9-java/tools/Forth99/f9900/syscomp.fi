@@ -10,16 +10,9 @@
 
 1 <export
 
+\ [[[... TEMP
 User STATE
 
-\ [[[... TEMP
-
-: ,
-	HERE !
-	#CELL DP +!
-;
-
-\ ...]]]
 
 : compile, ( xt -- )
 	,
@@ -32,6 +25,8 @@ User STATE
 : dliteral ( d -- )
 	\ postpone DODLIT
 ; immediate target-only 
+
+\ ...]]]
 
 
 export>

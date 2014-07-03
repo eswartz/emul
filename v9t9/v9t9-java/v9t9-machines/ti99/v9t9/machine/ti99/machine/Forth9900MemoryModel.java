@@ -37,6 +37,7 @@ import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.f99b.memory.EnhancedRamByteArea;
 import v9t9.machine.f99b.memory.F99bConsoleMmioArea;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
+import v9t9.machine.ti99.memory.mmio.Forth9900ConsoleMmioArea;
 
 
 /**
@@ -80,7 +81,7 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 	
 	protected void defineMmioMemory(IBaseMachine machine) {
 		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0x0000, 0x0400,
-                new F99bConsoleMmioArea((IMachine) machine)));
+                new Forth9900ConsoleMmioArea((IMachine) machine)));
 	}
 	
 	private static MemoryEntryInfo f99bRomMemoryEntryInfo = MemoryEntryInfoBuilder

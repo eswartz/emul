@@ -22,7 +22,7 @@ import v9t9.tools.forthcomp.ITargetWord;
  */
 public class TargetConstant extends TargetWord implements ITargetWord {
 
-	private final int value;
+	private int value;
 	private final int width;
 
 	/**
@@ -69,5 +69,12 @@ public class TargetConstant extends TargetWord implements ITargetWord {
 	 */
 	public int getWidth() {
 		return width;
+	}
+
+	/**
+	 * @param value
+	 */
+	public void setValue(int value) {
+		this.value = value;
 	}
 }

@@ -87,7 +87,7 @@ public class TestQuote extends BaseWord {
 		for (String testWord : testWords) {
 			sb.append("['] ").append(testWord).append(" RUNTEST regs-init ");
 		}
-		sb.append(" HANG ;\n");
+		sb.append(" tests-completed ;\n");
 		
 		compiler.parseString(
 				"RUNTESTS", 

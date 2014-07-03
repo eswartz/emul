@@ -10,6 +10,7 @@
  */
 package v9t9.tools.forthcomp;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -82,9 +83,7 @@ public class TokenStream {
 		}
 	}
 
-	/**
-	 * @return
-	 */
+	/** read a forth token */
 	public String read() throws IOException {
 		int ch;
 		LineNumberReader fr = null;
@@ -111,7 +110,27 @@ public class TokenStream {
 		fr.reset();
 		return sb.toString();
 	}
+
 	
+	/** skip past the given character */
+	public void readThrough(char stop) throws IOException {
+		int ch;
+		LineNumberReader fr = null;
+		while (true) {
+			if (streams.isEmpty())
+				throw new EOFException();
+			fr = streams.peek();
+			while (true) {
+				ch = fr.read();
+				if (ch == stop)
+					return;
+				if (ch == -1) {
+					throw new EOFException();
+				}
+			}
+		}
+	}
+
 	public boolean isAtEol(int forLine) {
 		if (streams.isEmpty())
 			return true;
@@ -140,6 +159,9 @@ public class TokenStream {
 	 * @return
 	 */
 	public String getFile() {
+		if (streams.isEmpty())
+			return "<empty>";
+		
 		LineNumberReader curReader = streams.peek();
 		if (curReader instanceof FileLineNumberReader) {
 			return ((FileLineNumberReader) curReader).getFile().toString();

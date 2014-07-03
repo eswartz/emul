@@ -17,6 +17,7 @@ import ejs.base.settings.Logging;
 import ejs.base.utils.HexUtils;
 
 
+import ejs.base.utils.Pair;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.RawInstruction;
@@ -73,11 +74,93 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		String name = null;
 		if (entry != null) 
 			name = entry.lookupSymbol((short) ins.pc);
-		if (name != null)
-			dumpfull.println('"' + name + "\" ");
+		if (name != null) {
+			dumpfull.print('"' + name + "\"");
+			// HACK
+			if ("@NEXT".equals(name)) {
+				// show current word
+				int curIP = iinstructionWorkBlock.cpu.getRegister(14);
+				Pair<String, Short> info = entry.lookupSymbolNear((short) curIP, 128);
+				if (info != null && info.second >= 0x100 && info.second <= 0x4000) {
+					dumpfull.print(" in " + info.first);
+				}
+			}
+			else if (";S".equals(name)) {
+				dumpCallStack(dumpfull, entry, iinstructionWorkBlock);
+				dumpStack(dumpfull, entry, iinstructionWorkBlock);
+			} else if ("DOCOL".equals(name)) {
+				dumpCallStack(dumpfull, entry, iinstructionWorkBlock);
+				dumpStack(dumpfull, entry, iinstructionWorkBlock);
+				
+			}
+			dumpfull.println();
+		}
 		dumpfull.print(HexUtils.toHex4(ins.pc) + ": "
 		        + ins.toString() + " ==> ");
 	}
+	/**
+	 * @param dumpfull
+	 * @param iinstructionWorkBlock 
+	 */
+	private void dumpCallStack(PrintWriter dumpfull, IMemoryEntry entry, InstructionWorkBlock9900 iinstructionWorkBlock) {
+		// walk stack
+		dumpfull.print(" [ ");
+		boolean first = true;
+		int unknown = 0;
+		int curRP = iinstructionWorkBlock.cpu.getRegister(13) & 0xffff;
+		do {
+			int curIP;
+			if (curRP < 0xff40) {
+				curIP = iinstructionWorkBlock.domain
+						.flatReadWord(curRP);
+				curRP += 2;
+				if (first)
+					first = false;
+				else
+					dumpfull.print(" > ");
+			} else {
+				break;
+			}
+			Pair<String, Short> info = entry.lookupSymbolNear((short) curIP, 128);
+			if (info != null && info.second >= 0x100 && info.second <= 0x4000) {
+				dumpfull.print(info.first);
+				unknown = 0;
+				if ("EVALUATE".equals(info.first))
+					break;
+			} else {
+				dumpfull.print(HexUtils.toHex4(curIP));
+				unknown++;
+			}
+		} while (unknown < 4);
+		dumpfull.print(" ]");
+		
+	}
+
+	private void dumpStack(PrintWriter dumpfull, IMemoryEntry entry, InstructionWorkBlock9900 iinstructionWorkBlock) {
+		dumpfull.print(" (");
+		int count = 0;
+		boolean waitingForTOS = true;
+		int curSP = iinstructionWorkBlock.cpu.getRegister(15) & 0xfffe;
+		int topSP = Math.min(curSP + 4 * 2, 0xffc0);
+		do {
+			int curVal;
+			if (topSP > curSP) {
+				topSP -= 2;
+				curVal = iinstructionWorkBlock.domain.flatReadWord(topSP);
+			} else if (waitingForTOS) {
+				curVal = iinstructionWorkBlock.cpu.getRegister(1);	 // TOS
+				waitingForTOS = false;
+			} else {
+				break;
+			}
+			dumpfull.print(" ");
+			dumpfull.print(HexUtils.toHex4(curVal));
+			count++;
+		} while (count < 4 && waitingForTOS);
+		dumpfull.print(" )");
+		
+	}
+
 	private void dumpFullMid(InstructionWorkBlock9900 iinstructionWorkBlock,
 			MachineOperand9900 mop1, MachineOperand9900 mop2,
 			PrintWriter dumpfull) {

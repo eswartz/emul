@@ -22,6 +22,7 @@ import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.BaseGromTargetContext;
 import v9t9.tools.forthcomp.DictEntry;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.RelocEntry;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
@@ -30,8 +31,9 @@ import v9t9.tools.forthcomp.f99b.words.FieldComma;
 import v9t9.tools.forthcomp.words.HostLiteral;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
-import v9t9.tools.forthcomp.words.TargetSQuote;
+import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
+import v9t9.tools.forthcomp.words.TargetWord;
 import ejs.base.utils.HexUtils;
 
 /**
@@ -88,11 +90,33 @@ public class F99bTargetContext extends BaseGromTargetContext {
 		
 	}
 	
+	static class TargetSQuote extends TargetWord {
+		/**
+		 * @param entry
+		 */
+		public TargetSQuote(DictEntry entry) {
+			super(entry);
+			
+			setCompilationSemantics(new ISemantics() {
+				
+				public void execute(HostContext hostContext, TargetContext targetContext)
+						throws AbortException {
+					//targetContext.compile(targetContext.require("((s\"))"));
+					targetContext.buildCall(targetContext.require("((s\"))"));
+				}
+			});
+			
+		}
+
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.TargetContext#defineBuiltins()
 	 */
 	@Override
 	public void defineBuiltins() throws AbortException {
+		super.defineBuiltins();
+		
 		definePrim("cell", IlitX | 2);
 		defineInlinePrim("cells", IlitX | 1, Ilsh);
 		
@@ -273,7 +297,7 @@ public class F99bTargetContext extends BaseGromTargetContext {
 		defineInlinePrim("cell", IlitX | 0x2);
 		
 		defineInlinePrim("0<>", I0equ, Inot); 
-		defineInlinePrim("<>", Iequ, Inot); 
+		defineInlinePrim("<>", Iequ, Inot);
 	}
 	
 	private void definePrim(String string, int opcode) {

@@ -1,7 +1,10 @@
 
+DEFER	THROW	( k*x n -- k*x | i*x n )
+DEFER	CATCH	( i*x xt -- j*x 0 | i*x n )
+
 [IFUNDEF] ABORT
 
-: abort
+: ABORT
 \ EXCEPTION EXT
 \ 
 \ Extend the semantics of 6.1.0670 ABORT to be:
@@ -14,3 +17,11 @@
 ;
 
 [THEN]
+
+\ Extension
+
+: ?throw ( t|f code -- )
+    swap 0<> swap  AND  throw
+;
+
+

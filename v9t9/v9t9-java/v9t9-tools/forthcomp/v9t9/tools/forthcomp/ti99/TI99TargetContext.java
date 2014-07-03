@@ -36,6 +36,7 @@ import v9t9.machine.ti99.asm.RawInstructionFactory9900;
 import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.InstTable9900;
+import v9t9.machine.ti99.memory.mmio.Forth9900ConsoleMmioArea;
 import v9t9.tools.asm.LLInstruction;
 import v9t9.tools.asm.inst9900.AsmInstructionFactory9900;
 import v9t9.tools.asm.inst9900.Assembler9900;
@@ -67,7 +68,6 @@ import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
 import v9t9.tools.forthcomp.words.TargetContext;
 import v9t9.tools.forthcomp.words.TargetInlineColonWord;
-import v9t9.tools.forthcomp.words.TargetSQuote;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
 import v9t9.tools.forthcomp.words.TargetValue;
 import v9t9.tools.forthcomp.words.TargetWord;
@@ -401,6 +401,8 @@ public class TI99TargetContext extends TargetContext  {
 	 */
 	@Override
 	public void defineBuiltins() throws AbortException {
+		super.defineBuiltins();
+		
 		IPrimitiveWord docolPrim = definePrim("DOCOL",
 				// save off the IP
 				Idect, reg(REG_RP),
@@ -519,13 +521,13 @@ public class TI99TargetContext extends TargetContext  {
 				Ili, reg(REG_SP), immed(0xffc0),
 				Ili, reg(REG_RP), immed(0xffb0),
 				Ili, reg(REG_UP), immed(0xffa0),
-				Ili, reg(11), immed(0x400), 
+				Ili, reg(11), immed(Forth9900ConsoleMmioArea.COLD), 
 				Ib, regInd(REG_DOCOL)	// normally BL, but we set up R11 for this
 				);
 		
 		
 		definePrim("(REGS)", // ( SP0 UP0 RP0 -- )
-				Imov, regInd(REG_RP), TMP,
+				Imov, regInd(REG_RP), TMP,		// return addr
 				Imov, TOS, reg(REG_RP),
 				Imov, regInc(REG_SP), reg(REG_UP),
 				Imov, regInc(REG_SP), reg(REG_SP),
@@ -786,10 +788,23 @@ public class TI99TargetContext extends TargetContext  {
 				Iinct, reg(REG_RP)
 				);
 		
+		definePrim("2RDROP",
+				Iai, reg(REG_RP), immed(cellSize * 2)
+				);
+		
 		definePrim("R@", 
 				StockInstruction.PUSH_TOS,
 				Imov, regInd(REG_RP), TOS
 				);
+		
+		definePrim("2R@", 
+				Iai, reg(REG_SP), immed(-cellSize * 2),
+				Imov, TOS, regOffs(REG_SP, cellSize),
+
+				Imov, regOffs(REG_RP, 0), TOS,
+				Imov, regOffs(REG_RP, cellSize), regInd(REG_SP)
+				);
+
 		defineAlias("I", "R@");
 //		defineInlinePrim("I'", Irpidx, 1);
 		defineInlinePrim("J",
@@ -1116,10 +1131,14 @@ public class TI99TargetContext extends TargetContext  {
 				// get length
 				Imovb, regInc(REG_TMP), TOS,
 				Isrl, TOS, immed(8),
+				// save caddr
+				Imov, TMP, regInd(REG_SP),
 				// align
-				Ia, TOS, reg(REG_IP),
-				Iinc, reg(REG_IP),
-				Iandi, reg(REG_IP), immed(-2)
+				Ia, TOS, TMP,
+				Iinc, TMP,
+				Iandi, TMP, immed(-2),
+				
+				Imov, TMP, reg(REG_IP)
 				);
 				
 				
@@ -1137,7 +1156,6 @@ public class TI99TargetContext extends TargetContext  {
 		definePrim("HANG", 
 			"0", Ijmp, ">0"
 				);
-
 	}
 
 	/**
@@ -1518,4 +1536,13 @@ public class TI99TargetContext extends TargetContext  {
 		buildCell(oldCell);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetContext#buildPushString(v9t9.tools.forthcomp.HostContext, java.lang.String)
+	 */
+	@Override
+	public void buildPushString(HostContext hostContext, String string)
+			throws AbortException {
+		super.buildPushString(hostContext, string);
+		alignDP();
+	}
 }
