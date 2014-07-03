@@ -67,7 +67,9 @@ public class UnitTests extends BaseWord {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("| : RUNTEST ( addr -- ) ");
+		sb.append(" $abcd swap ");
 		sb.append(" EXECUTE  0= IF ABORT\" failed\" THEN \n");
+		sb.append(" $abcd  <> IF ABORT\" stack damage\" THEN \n");
 		sb.append(" ;\n");
 		
 		sb.append("| : RUNTESTS ");

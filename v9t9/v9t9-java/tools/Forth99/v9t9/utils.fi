@@ -13,19 +13,6 @@
     swap over @ OR swap !     
 ;
 
-: tolower ( ch -- ch )
-   dup [char] a [ [char] z 1+ literal ] within $20 and -
-;
-
-:: s<>     ( addr u addr' u' -- -1/0/1 )
-    u u' min 0 do
-        addr i + c@ tolower
-        addr' i + c@ tolower
-        - ?dup if unloop exit then
-    loop
-    u u' -  \ length is answer
-;
-
 ( align 'val' to 'scale' )
 :: %- ( val scale -- val' )
     val scale  u/mod  nip scale u*    

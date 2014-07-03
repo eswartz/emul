@@ -82,6 +82,8 @@ include ../ansold/alloc.fi
 
 include ../v9t9/utils.fi
 
+include ../v9t9/strings.fi
+
 include ../v9t9/io.fi
 
 include ../v9t9/locals.fi

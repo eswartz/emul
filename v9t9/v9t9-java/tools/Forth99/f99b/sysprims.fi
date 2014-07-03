@@ -108,4 +108,7 @@
 
 : (rnd) 'RND c@  'RND c@  l.h>w ;
 
-		
+\ checked automatically: do nothing 
+: ?stack ; IMMEDIATE
+
+

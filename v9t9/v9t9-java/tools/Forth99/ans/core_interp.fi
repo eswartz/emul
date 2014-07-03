@@ -106,8 +106,6 @@
 
 [THEN]
 
-[IFUNDEF] WORD
-
 \   Skip spaces in source
 | : (skip-spaces)   ( -- )
     (src>)
@@ -127,17 +125,7 @@
 ;
 
 
-| : (>c)      ( caddr u naddr -- )
-\   make counted string at naddr
-	over 255 > 	
-	
-	err-string-overflow ?throw
-	
-    2dup c!             \ set length byte
-    1+ swap cmove>      \ move data
-;
-
-
+[IFUNDEF] WORD
 : WORD  \   ( char "<chars>ccc<char>" -- c-addr )
     (parse-word) 
     2dup + bl swap c!   \ word ends with space
@@ -146,11 +134,6 @@
 ;
 [THEN]
 
-
-
-| : (skip)
-    1 /string
-;
 
 [IFUNDEF] >NUMBER
 : dn* ( ud un -- ud )
@@ -190,10 +173,15 @@
 	then		
 ;
 
-test" >digit 123  10 [char] 9 >digit swap 9 = AND  		SWAP 123 = AND "
-test" >digit 123  10 [char] E >digit 0=   				SWAP 123 = AND "
-test" >digit 123  16 [char] E >digit swap &14 = AND   	SWAP 123 = AND "
-test" >digit 123  10 [char] * >digit 0=   				SWAP 123 = AND "
+test" >digit 10 [char] 9 >digit swap 9 = AND "
+test" >digit 10 [char] E >digit 0= "
+test" >digit 16 [char] E >digit swap &14 = AND "
+test" >digit 10 [char] * >digit 0= "
+
+
+| : (skip)  ( caddr u -- caddr+1 u-1 )
+    1 /string
+;
 
 (
 ud2 is the unsigned result of converting the characters within the string specified by 
@@ -477,14 +465,6 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
     count type space
     err-undefined throw
 ;
-\ Parse name, which must not be empty
-| : parse-name ( c"..."  -- caddr len )
-
-    parse-word
-    ?dup 0= if
-        err-empty-name throw
-    then
-;
 
 | : interpreter
 \        ( i*x c-addr u -- j*x )
@@ -506,14 +486,32 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
 ;
 
 \ Parse word, which may be empty
-| : parse-word  ( -- caddr u )
+\ see DPANS94 A.6.2.2008
+| : PARSE-WORD  ( <spaces>name -- caddr u )
     bl (parse-word)
 ;
 
+\ Parse name, which must not be empty
+| : parse-name ( c"..."  -- caddr len )
+
+    parse-word
+    ?dup 0= if
+        err-empty-name throw
+    then
+;
+
+[IFUNDEF] ?STACK
+: ?stack
+   depth 0< if
+       ." stack empty!" cr
+       abort
+   then
+;
+[THEN]
 
 : interpret
     begin
-        \ ?stack        \ checked automatically
+        ?stack        
         parse-word
         dup
     while

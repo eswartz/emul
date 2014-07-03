@@ -26,14 +26,14 @@ test" 2drop  2. 3. 2drop 2. d="
     over over
 ;
 [THEN]
-test" 2dup  1. 2. 2dup 2. d="
+test" 2dup  $1234.5678 2dup  $1234.5678 d=  >r  2drop  r> "
 
 [IFUNDEF] 2OVER
 : 2OVER 
     2 pick 2 pick
 ;
 [THEN]
-test" 2over  $1234.5678 $9abc.def0 2over $1234.5678 d= "
+test" 2over  $1234.5678 $9abc.def0 2over $1234.5678 d=  >r 2drop 2drop r> "
 
 [IFUNDEF] 2SWAP
 : 2SWAP  ( a b c d -- c d a b )
@@ -412,7 +412,7 @@ test" min 6 -5 min -5 ="
     >r swap r> swap
 ;
 [THEN]
-test" rot 1 2 3 rot 1 = swap 3 = and swap 2 ="
+test" rot 1 2 3 rot 1 = swap 3 = and swap 2 =  and "
 
 [IFUNDEF] RSHIFT
 : RSHIFT

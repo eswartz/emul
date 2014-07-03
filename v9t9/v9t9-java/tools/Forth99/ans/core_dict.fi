@@ -184,24 +184,22 @@ $1F constant width      \ max length of a name
 
 
 
-[IFUNDEF] FIND
+[IFUNDEF] (lfind)
 
-| : (find)      ( c-addr lfa -- c-addr 0 | nfa 1 ) 
+| : (lfind)      ( c-addr lfa -- c-addr 0 | nfa 1 ) 
     \ find word in dictionary    ( c-addr lfa -- c-addr 0 | nfa 1 ) 
     \ lfa is nfa-2
     
-    \ dbg
-
     swap >r
     
     begin
         dup
     while
-        r@ over  2+             \ nfa
+        r@ over  cell+             \ nfa
         nfa=
         if
             rdrop
-            2+
+            cell+
             1
             exit
         else
@@ -209,37 +207,7 @@ $1F constant width      \ max length of a name
         then
     repeat
     drop r> 0
-    
-    \ dbgf
 ;
-
-
-: tolower ( ch -- ch )
-   dup [char] a [ [char] z 1+ literal ] within $20 and -
-;
-
-[IFDEF] ::
-:: s<>     ( addr u addr' u' -- -1/0/1 )
-    u u' min 0 do
-        addr i + c@ tolower
-        addr' i + c@ tolower
-        - ?dup if unloop exit then
-    loop
-    u u' -  \ length is answer
-;
-[ELSE]
-
-: s<>     ( addr u addr' u' -- -1/0/1 )
-	>r swap dup >r	 ( addr addr' ) ( R: u' u )  
-	2r@ min 0 do
-		2dup  i +  c@  tolower 
-		swap  i +  c@ tolower
-        - ?dup if unloop exit then
-    loop
-    r> r> swap - \ length is answer
-;
-
-[THEN]
 
 | : nfa=  ( caddr nfa -- 1 | 0 )
     dup c@  $80 and if   \ not hidden?
@@ -253,20 +221,18 @@ $1F constant width      \ max length of a name
     
 ;
 
+' (lfind)	TO	(find)
+
+[THEN]
+
 
 | : (lookup)      ( c-addr u -- caddr 0 | nfa 1|-1 )
     here (>c)   \ make counted string + NFA
 \ context @ @ (find) dup 0= if ... 
 
-[ 1 [if] ]
     here latest
     (find) 
-[ [else] ]
-    here find dup >r if xt>nfa else drop then r>
-    
-[ [then] ]
 ;
-
 
 : FIND  \ ( c-addr -- c-addr 0  |  xt 1  |  xt -1 )
 \   Find the definition named in the counted string at c-addr. If the definition is not found after searching all the word
@@ -274,18 +240,8 @@ $1F constant width      \ max length of a name
 \   also return one (1); otherwise also return minus-one (-1). For a given string, the values returned by FIND while compiling
 \   may differ from those returned while not compiling.
 
-[ 1 [if] ]
     latest          \ !!! need real wordlist
     (find)          \ ( c-addr 0 | nfa 1 )
-
-[ [else] ]
-
-\   Use hash table
-    forth-wordlist  \ !!! need latest wordlist
-    hash>find
-\   over .
-
-[ [then] ]
 
     if
         dup nfa>xt 
@@ -295,6 +251,6 @@ $1F constant width      \ max length of a name
         0
     then
 ;
-[THEN]
+
 \ |test : wordtofind s" _2*" ;
 \ test" find hex 21 wordtofind pad swap cmove pad 2 over c! find 2dup . . if execute 42 = else 0 then decimal "

@@ -1,0 +1,54 @@
+\   strings.fi
+\ 
+\   (c) 2014 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+[IFUNDEF] (>C)
+| : (>c)      ( caddr u naddr -- )
+\   make counted string at naddr
+	\ over 255 > 	
+	
+	\ err-string-overflow ?throw
+	
+    2dup c!             \ set length byte
+    1+ swap cmove>      \ move data
+;
+[THEN]
+
+
+[IFUNDEF] tolower
+
+: tolower ( ch -- ch )
+   dup [char] a [ [char] z 1+ literal ] within $20 and -
+;
+[THEN]
+
+\ Custom:  case-insensitive string comparison
+[IFUNDEF] S<>
+
+: s<>     ( addr u addr' u' -- -/0/+ )
+	>r swap >r	 ( addr addr' ) ( R: u' u )  
+	2r@ min  0 ?do
+		2dup  i +  c@  tolower 
+		swap  i +  c@  tolower
+        - ?dup if  nip nip negate unloop 2rdrop  exit then
+    loop
+    2drop
+    r> r> - 	\ length is answer
+;
+
+[THEN]
+
+|test : str1 s" abc" ;  : str2 s" def" ; : str3 s" abcd" ; : strn s" " ;
+test" s<>1  str1 str2 s<> 0< "
+test" s<>2  str1 str1 s<> 0= "
+test" s<>3a str3 str1 s<> 0> "
+test" s<>3b str1 str3 s<> 0< "
+test" s<>4  strn strn s<> 0= "
+test" s<>5  strn str3 s<> 0< "
+

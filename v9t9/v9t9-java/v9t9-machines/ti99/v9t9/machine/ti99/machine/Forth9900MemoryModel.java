@@ -35,7 +35,6 @@ import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.f99b.memory.EnhancedRamByteArea;
-import v9t9.machine.f99b.memory.F99bConsoleMmioArea;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 import v9t9.machine.ti99.memory.mmio.Forth9900ConsoleMmioArea;
 

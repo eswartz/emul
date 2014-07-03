@@ -92,6 +92,7 @@ DEFER	TO
 
 \ Search-Order
 \ DEFER	FIND
+DEFER	(FIND)
 
 include core_prims.fi
 include core_strings.fi

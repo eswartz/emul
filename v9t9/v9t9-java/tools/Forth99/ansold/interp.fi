@@ -229,13 +229,6 @@ user >IN
 ;
 
 
-\ : ?stack
-\    depth 0< if
-\        ." stack empty!" cr
-\        abort
-\    then
-\ ;
-
 : huh?  ( caddr -- )
     count type space
     \ [char] ? emit cr

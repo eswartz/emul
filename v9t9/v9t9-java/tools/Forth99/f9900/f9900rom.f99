@@ -91,6 +91,7 @@ include ../ans/core-ext.fi
 include ../ans/exception.fi
 include ../ans/exception_minimal.fi
 
+include ../v9t9/strings.fi
 include cold.fi
 
 0 [if]
@@ -253,12 +254,6 @@ include cold.fi
 		export>
 
 		
-		[ifdef] grom-dictionary
-		$0       (LATEST)   !
-		[else]
-		latest   (LATEST)   !
-		[THEN]
-
 [else]
 	\ TEST
 	
@@ -351,11 +346,19 @@ test" +loop-zero  0
 
 TESTS!
 
-here $3ff +  $3ff INVERT and  DP0        !
-
 ramptr @  1- aligned  constant (RAM0)
 
 |+ cell RamVar RAM
+
+\ align dictionary to a memory area, so memory images aren't often broken
+here $3ff +  $3ff INVERT and  DP0        !
+
+[ifdef] grom-dictionary
+$0       (LATEST)   !
+[else]
+latest   (LATEST)   !
+[THEN]
+
 
 \ set up int vecs
 StdWP  0  !		' (reset)  2  !   
@@ -368,6 +371,7 @@ StdWP  0  !		' (reset)  2  !
 hex
 here ." HERE = " u. cr
 dp0 @ ." DP0 = " u. cr
+(latest) @  ." (latest) = " u. cr
 up0 @ ." UP0 = " u. cr
 ramptr @ ." RAMPTR = " u. cr
 RamTop ." RAMTOP = " u. cr
