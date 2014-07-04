@@ -290,11 +290,13 @@ test" +loop-zero  0
 		COLD
 	;
 	
+s" TESTING" environment? [IF]	
 	| : tests-completed
 		s" 100 200 300 + + ." evaluate
 		hang
 	;
-	
+[THEN]
+
 	: COLD
 		(resolve-rdefers)
 		
@@ -344,7 +346,9 @@ test" +loop-zero  0
 ' bye   (BOOT)     !
 ' cold  (COLD)     !
 
+s" TESTING" environment? [IF] 
 TESTS!
+[THEN]
 
 ramptr @  1- aligned  constant (RAM0)
 

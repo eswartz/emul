@@ -597,7 +597,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 
 	@Test
 	public void testDoPlusLoopEx2() throws Exception {
-		parseString(": stack 0 do i 16384 u+loop ;");
+		parseString(": stack 0 do i 16384 +loop ;");
 
 		hostCtx.pushData(0);
 		interpret("stack");

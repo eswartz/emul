@@ -312,7 +312,7 @@ public class ForthComp {
 		String token;
 		try {
 			while ((token = tokenStream.read()) != null) {
-				//System.out.println("> " + token);
+//				System.out.println("> " + token);
 				targetContext.parse(token);
 			}
 		} catch (IOException e) {

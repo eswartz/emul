@@ -31,11 +31,11 @@ public class SQuote extends BaseWord {
 			@Override
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				StringBuilder sb = parseString(hostContext);
+				String str = parseString(hostContext);
 
-				Pair<Integer, Integer> addr = targetContext.writeLengthPrefixedString(sb.toString());
+				Pair<Integer, Integer> addr = targetContext.writeLengthPrefixedString(str);
 				hostContext.pushData(addr.first + 1);
-				hostContext.pushData(sb.length());
+				hostContext.pushData(str.length());
 			}
 		});
 		setCompilationSemantics(new ISemantics() {
@@ -43,34 +43,11 @@ public class SQuote extends BaseWord {
 			@Override
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				StringBuilder sb = parseString(hostContext);
+				String str = parseString(hostContext);
 
-				targetContext.buildPushString(hostContext, sb.toString());
+				targetContext.buildPushString(hostContext, str);
 			}
 		});
-	}
-	private StringBuilder parseString(HostContext hostContext)
-			throws AbortException {
-		StringBuilder sb = new StringBuilder();
-		while (true) {
-			char ch = hostContext.getStream().readChar();
-			if (ch == 0)
-				break;
-			if (ch == '"')
-				return sb;
-			if (!Character.isWhitespace(ch)) {
-				sb.append(ch);
-				break;
-			}
-		}
-		
-		while (true) {
-			char ch = hostContext.getStream().readChar();
-			if (ch == 0 || ch == '"')
-				break;
-			sb.append(ch);
-		}
-		return sb;
 	}
 	
 	/* (non-Javadoc)

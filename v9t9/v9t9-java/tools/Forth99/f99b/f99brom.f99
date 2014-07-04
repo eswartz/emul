@@ -148,9 +148,12 @@ loop
 ; 
 [THEN]
 
+s" TESTING" environment? [IF]
 | : tests-completed
+	1 load
 	quit
 ;
+[THEN]
 
 export>
 
@@ -187,8 +190,9 @@ export>
     init-editor
 [ [THEN] ]    
 
-
+[ s" TESTING" environment? [IF] ]
 	runtests
+[ [THEN] ]
 		      
     1 load
      

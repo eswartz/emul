@@ -91,6 +91,7 @@ public class TokenStream {
 			if (streams.isEmpty())
 				return null;
 			fr = streams.peek();
+			// skip initial whitespace
 			while (Character.isWhitespace(ch = fr.read())) /**/;
 			if (ch == -1) {
 				streams.pop().close();
@@ -107,7 +108,8 @@ public class TokenStream {
 			sb.append((char) ch);
 			fr.mark(1);
 		}
-		fr.reset();
+		if (ch == '\n' || ch == '\r')
+			fr.reset();
 		return sb.toString();
 	}
 

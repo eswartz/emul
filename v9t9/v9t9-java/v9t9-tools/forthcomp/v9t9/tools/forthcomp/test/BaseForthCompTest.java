@@ -123,7 +123,7 @@ public abstract class BaseForthCompTest {
 	protected void parseString(String text) throws AbortException {
 		System.out.println(text);
 		comp.parseString(text);
-		comp.finish();
+		//comp.finish();
 		assertEquals("errors when compiling", 0, comp.getErrors());
 	}
 	
