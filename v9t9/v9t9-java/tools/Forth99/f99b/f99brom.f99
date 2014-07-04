@@ -148,6 +148,10 @@ loop
 ; 
 [THEN]
 
+| : tests-completed
+	quit
+;
+
 export>
 
 1 <export
@@ -182,7 +186,10 @@ export>
 [ [ifdef] init-editor ]    
     init-editor
 [ [THEN] ]    
-      
+
+
+	runtests
+		      
     1 load
      
     \ cycle
@@ -202,7 +209,9 @@ export>
 
 ' bye   (BOOT)     !
 ' cold  (COLD)     !
-\ here   DP0        !
+
+TESTS!
+
 here $3ff +  $3ff INVERT and  DP0        !
 
 ramptr @  1- aligned  constant (RAM0)

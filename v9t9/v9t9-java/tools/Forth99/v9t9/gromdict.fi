@@ -62,8 +62,10 @@
     again
 ;
 
+[IFDEF] TRAVERSE
 test" xt>nfa ['] traverse xt>nfa c@ $88 = "
 test" nfa>xt ['] traverse dup xt>nfa nfa>xt = "
+[THEN]
 
 
 | : nfa>imm?  ( gnfa -- t/f )

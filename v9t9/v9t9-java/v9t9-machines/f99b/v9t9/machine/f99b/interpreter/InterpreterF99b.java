@@ -1268,7 +1268,15 @@ public class InterpreterF99b implements IInterpreter {
         	cpu.pushd(v);
         	break;
         }
-        
+        case Iover: {
+        	int x = cpu.popd();
+        	int y = cpu.popd();
+        	cpu.pushd(y);
+        	cpu.pushd(x);
+        	cpu.pushd(y);
+        	break;
+        }
+     
         case Iudivmod: {
         	int div = cpu.popd() & 0xffffffff;
         	int numHi = cpu.popd();
@@ -1325,7 +1333,13 @@ public class InterpreterF99b implements IInterpreter {
         	cpu.rpop();
         	cpu.rpop();
         	break;
-        	
+
+        case IatR: {
+        	cpu.push(getReturnStackEntry(1));
+        	cpu.push(getReturnStackEntry(0));
+        	break;
+        }
+
         case ItoLocals & 0xff: {
         	// LP@  	RP@ LP! ; \\ caller pushes R> 
         	short curLP = iblock.lp;

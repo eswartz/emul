@@ -7,7 +7,7 @@
 <listEntry value="1"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.tools.forthcomp.ForthComp"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-b f99b/f99brom.f99 -h -c ../../../build/forth99/f99brom.bin -g  ../../../build/forth99/f99bgrom.bin -d ../../../build/forth99/f99bgromdict.grm -l../../../build/forth99/f99brom.lst"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-b f99b/f99brom.f99 -h -c ../../../build/forth99/f99brom.bin -g  ../../../build/forth99/f99bgrom.bin -d ../../../build/forth99/f99bgromdict.grm -l../../../build/forth99/f99brom.lst -t"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="v9t9-tools"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:Forth99}"/>
 </launchConfiguration>

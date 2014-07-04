@@ -183,6 +183,7 @@ public class F99bTargetContext extends BaseGromTargetContext {
 		definePrim("rdrop", Irdrop);
 		definePrim("r@", IatR);
 		definePrim("i", IatR);
+		definePrim("2r@", IatR_d);
 		defineInlinePrim("i'", Irpidx, 1);
 		defineInlinePrim("j", Irpidx, 2);
 		defineInlinePrim("j'", Irpidx, 3);

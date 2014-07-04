@@ -99,14 +99,14 @@ test" 2drop  2. 3. 2drop 2. d="
     over over
 ;
 [THEN]
-test" 2dup  1. 2. 2dup 2. d="
+test" 2dup  1. 2. 2dup 2. d=  >r 2drop 2drop r> "
 
 [IFUNDEF] 2OVER
 : 2OVER 
     2 pick 2 pick
 ;
 [THEN]
-test" 2over  1. 2. 2over 1. d= "
+test" 2over  1. 2. 2over 1. d= 	>r 2drop 2drop r> "
 
 [IFUNDEF] 2SWAP
 : 2SWAP
@@ -403,8 +403,8 @@ error" need prim +"
     r> 0< IF  swap negate swap  THEN
 ;
 [THEN]
-test" fm/mod 1ff. f fm/mod 22 = swap 1 = and"
-test" fm/mod -1ff. f fm/mod -23 = swap e = and"
+test" fm/mod $1ff. $f fm/mod $22 = swap $1 = and"
+test" fm/mod $-1ff. $f fm/mod $-23 = swap $e = and"
 
 [IFUNDEF] INVERT
 : INVERT
@@ -465,7 +465,7 @@ test" min 6 -5 min -5 ="
     >r swap r> swap
 ;
 [THEN]
-test" rot 1 2 3 rot 1 = swap 3 = and swap 2 ="
+test" rot 1 2 3 rot 1 = swap 3 = and swap 2 = and "
 
 [IFUNDEF] RSHIFT
 : RSHIFT

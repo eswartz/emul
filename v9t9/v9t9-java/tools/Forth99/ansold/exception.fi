@@ -44,6 +44,14 @@
     then
 ;
 
+
+\ Extension
+
+: ?throw ( t|f code -- )
+    swap 0<> swap  AND  throw
+;
+
+
 0 <export
 
 : exc-init 
