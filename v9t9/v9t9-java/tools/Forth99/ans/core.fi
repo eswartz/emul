@@ -92,7 +92,7 @@ DEFER	TO
 
 \ Search-Order
 \ DEFER	FIND
-DEFER	(FIND)
+DEFER	(FIND)		( c-addr lfa -- c-addr 0 | xt -1=immed | xt 1 ) 
 
 include core_prims.fi
 include core_strings.fi

@@ -91,7 +91,8 @@ public class DumpFullReporter9900 implements IInstructionListener {
 			} else if ("DOCOL".equals(name)) {
 				dumpCallStack(dumpfull, entry, wb, false);
 				dumpStack(dumpfull, entry, wb);
-				
+			} else if ("EXECUTE".equals(name)) {
+				dumpStack(dumpfull, entry, wb);
 			}
 			dumpfull.println();
 		}

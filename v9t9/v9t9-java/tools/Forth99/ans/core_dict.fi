@@ -221,12 +221,13 @@ $1F constant width      \ max length of a name
     
 ;
 
-' (lfind)	TO	(find)
-
 [THEN]
 
+' (lfind)	TO	(find)
 
-| : (lookup)      ( c-addr u -- caddr 0 | nfa 1|-1 )
+
+
+| : (lookup)      ( c-addr u -- caddr 0 | xt 1|-1 )
     here (>c)   \ make counted string + NFA
 \ context @ @ (find) dup 0= if ... 
 
@@ -241,15 +242,15 @@ $1F constant width      \ max length of a name
 \   may differ from those returned while not compiling.
 
     latest          \ !!! need real wordlist
-    (find)          \ ( c-addr 0 | nfa 1 )
+    (find)          \ ( c-addr 0 | xt 1 )
 
-    if
-        dup nfa>xt 
-        swap c@ 
-        |immed and if 1 else -1 then
-    else
-        0
-    then
+    \ if
+    \     dup nfa>xt 
+    \     swap c@ 
+    \     |immed and if 1 else -1 then
+    \ else
+    \     0
+    \ then
 ;
 
 \ |test : wordtofind s" _2*" ;

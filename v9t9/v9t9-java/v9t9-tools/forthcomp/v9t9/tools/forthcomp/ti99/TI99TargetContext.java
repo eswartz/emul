@@ -1188,6 +1188,92 @@ public class TI99TargetContext extends TargetContext  {
 		definePrim("HANG", 
 			"0", Ijmp, ">0"
 				);
+		
+		definePrim("(lfind)",
+		        // find word in dictionary        ( c-addr lfa -- c-addr 0 | xt -1==immed | xt 1 )     
+		        // lfa is nfa - #cell
+
+				// save clobbered regs
+				Iai, reg(REG_RP), immed(-cellSize * 3),
+				Imov, reg(4), regOffs(REG_RP, cellSize * 2),
+				Imov, reg(5), regOffs(REG_RP, cellSize),
+				Imov, reg(12), regOffs(REG_RP, 0),
+				
+				Imov, TOS, TOS, 	// TOS=LFA
+				Ijeq, ">9",			// fail
+
+				// search list 
+
+				Iclr, reg(REG_R3),
+				Iclr, reg(4),
+		        
+		        Imov, regInd(REG_SP), reg(11), // R11=char ptr
+		        Iclr, reg(12),		
+		        Imovb, regInd(11), reg(12), // R12=length
+		        Ijmp, ">2",
+
+		"4",
+		    	Imov, regOffs(REG_TOS, -cellSize), TOS, // get LFA to new one...
+		    	Ijeq, ">9",                // if end... (unlikely)
+
+		"2",
+		        Iinct, TOS,                       // LFA>NFA
+		        Imov, TOS, TMP,                    // new NFA to check
+
+		        Imovb, regInc(REG_TMP), reg(REG_R3),
+		        Ijgt, ">4",                       // hidden word ($80 not set) (unlikely)
+
+		        Isb, reg(12), reg(REG_R3),
+		        Iandi, reg(REG_R3), immed(0x1F00),               // compare lengths 
+		        Ijne, ">4",  						//  nope (likely)
+
+		        Imov, reg(11), reg(REG_R2),
+		        Iinc, reg(REG_R2),
+		        Imov, reg(12), reg(5),
+		        Iswpb, reg(5),
+		        
+		   "3",
+		   		Imovb, regInc(REG_TMP), reg(REG_R3), 
+		   		Imovb, regInc(REG_R2), reg(4),
+		   		
+		   		Icb, reg(REG_R3), reg(4),
+		   		Ijeq, ">1",                     // exact match?
+
+		   		// see if they might be letters that differ in case only
+		   		Ixor, reg(REG_R3), reg(4),
+		        Ici, reg(4), immed(0x2000),              // differ in case bit?
+		        Ijne, ">4",
+		        
+		        // double-check they're really letters and not punctuation
+		        Iszc, reg(4), reg(REG_R3),                            // turn off case in matching char
+		        Ici, reg(REG_R3), immed(0x4100),
+		        Ijl, ">4",
+		        Ici, reg(REG_R3), immed(0x5A00),
+		        Ijh, ">4",
+		        
+		"1",
+		        Idec, reg(5),
+		        Ijgt, ">3",
+
+		        // convert to XT
+		        Isrl, reg(12), immed(8),
+		        Ia, reg(12), TOS,
+		        Iinct, TOS,
+		        Iandi, TOS, immed(-2),
+		        
+		        Imov, TOS, regInd(REG_SP),  // overwrite caddr with xt
+		        Iseto, TOS,
+		        Ijmp, ">99",
+		    
+		"9",    
+		    	Iclr, TOS,                 // failed
+		    	
+		"99",
+				// restore
+				Imov, regInc(REG_RP), reg(12),
+				Imov, regInc(REG_RP), reg(5),
+				Imov, regInc(REG_RP), reg(4)
+		);
 	}
 
 	/**
