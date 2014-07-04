@@ -8,8 +8,6 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-\	DP, HERE
-
 [IFUNDEF] HERE
 
 | User    dp
@@ -73,7 +71,7 @@ User >latest        \ latest definition
 
         0       ( addr count )
 
-        \ step back until we hit a byte /*with $80 set*/ whose length matches
+        \ step back until we hit a byte /*with |srch set*/ whose length matches
         \ don't check the $80 flag since this makes hidden defs hard to handle
         begin 
             over c@         ( addr len cur )
@@ -186,8 +184,8 @@ $1F constant width      \ max length of a name
 
 [IFUNDEF] (lfind)
 
-| : (lfind)      ( c-addr lfa -- c-addr 0 | nfa 1 ) 
-    \ find word in dictionary    ( c-addr lfa -- c-addr 0 | nfa 1 ) 
+| : (lfind)      ( c-addr lfa -- c-addr 0 | xt -1==immed | xt 1 ) 
+    \ find word in dictionary  
     \ lfa is nfa-2
     
     swap >r
@@ -200,7 +198,11 @@ $1F constant width      \ max length of a name
         if
             rdrop
             cell+
-            1
+            
+	        dup nfa>xt 
+	        swap c@ 
+	        |immed and if 1 else -1 then
+	        
             exit
         else
             @            
@@ -210,7 +212,7 @@ $1F constant width      \ max length of a name
 ;
 
 | : nfa=  ( caddr nfa -- 1 | 0 )
-    dup c@  $80 and if   \ not hidden?
+    dup c@  |srch and if   \ not hidden?
         2>r
         r@  1+  r>  c@ $3f and  \ nfa --> caddr n
         r@  1+  r>  c@          \ caddr -> caddr n
@@ -243,14 +245,6 @@ $1F constant width      \ max length of a name
 
     latest          \ !!! need real wordlist
     (find)          \ ( c-addr 0 | xt 1 )
-
-    \ if
-    \     dup nfa>xt 
-    \     swap c@ 
-    \     |immed and if 1 else -1 then
-    \ else
-    \     0
-    \ then
 ;
 
 \ |test : wordtofind s" _2*" ;

@@ -1190,7 +1190,7 @@ public class TI99TargetContext extends TargetContext  {
 				);
 		
 		definePrim("(lfind)",
-		        // find word in dictionary        ( c-addr lfa -- c-addr 0 | xt -1==immed | xt 1 )     
+		        // find word in dictionary        ( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )     
 		        // lfa is nfa - #cell
 
 				// save clobbered regs
@@ -1256,13 +1256,24 @@ public class TI99TargetContext extends TargetContext  {
 		        Ijgt, ">3",
 
 		        // convert to XT
+		        Imovb, regInc(REG_TOS), reg(5),		// save info
+		        
 		        Isrl, reg(12), immed(8),
 		        Ia, reg(12), TOS,
-		        Iinct, TOS,
+		        Iinc, TOS,
 		        Iandi, TOS, immed(-2),
 		        
 		        Imov, TOS, regInd(REG_SP),  // overwrite caddr with xt
+		        
+		        // assume not immediate
 		        Iseto, TOS,
+		        
+		        Iandi, reg(5), immed(0x4000),	// immediate?
+		        Ijeq, ">99",
+		        
+		        // immediate
+		        Ineg, TOS,
+		        
 		        Ijmp, ">99",
 		    
 		"9",    
