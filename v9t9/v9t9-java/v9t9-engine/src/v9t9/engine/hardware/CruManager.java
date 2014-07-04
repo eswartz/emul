@@ -106,6 +106,9 @@ public class CruManager implements ICruHandler {
      * @param bits
      */
     public final void writeBits(int addr, int val, int num) {
+    	if (writerArray == null)
+    		return;
+    	
     	addr &= 0x1fff;
         while (num > 0) {
         	if (addr >= 0x2000)
