@@ -453,6 +453,7 @@ public class Interpreter9900 implements IInterpreter {
         	// action due to ST_INT effect)
             break;
         case Inst9900.Iidle:
+        	machine.getCpu().setIdle(true);
             //cpu.idle(); // TODO
             break;
         case Inst9900.Irset:
