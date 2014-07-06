@@ -65,6 +65,7 @@ include syscomp.fi
 
 	\ ----------- [[[ STUBS
 	
+	User STATE
 	
 	[IFUNDEF] CONSTANT
 	: CONSTANT
@@ -81,8 +82,22 @@ include syscomp.fi
 	; target-only
 	[THEN]
 	
-	\ ----------- STUBS ]]]
 	
+	: compile, ( xt -- )
+		,
+	;
+	
+	: literal ( n -- )
+		postpone DOLIT  ,
+	; immediate target-only
+	 
+	: dliteral ( d -- )
+		postpone DODLIT  ,  ,
+	; immediate target-only 
+
+	\ ----------- STUBS ]]]
+
+\ include 9900.fi	
 
 include ../ans/core.fi
 include ../ans/core_unhosted.fi
@@ -94,9 +109,26 @@ include ../ans/exception_minimal.fi
 include ../v9t9/strings.fi
 include cold.fi
 
+\ TEMP
+
+\   Set the VDP RAM bank.
+\
+\   This directly sets VR14 without saving it off (unlike vwreg).
+\
+: vsetbank  ( vaddr -- addr-16k )
+    dup 14 urshift 
+    $8E00 OR  VDPWA !
+    $3fff AND
+;
+ 
+ 
+include ../v9t9/sysutils.fi
+
+include ../v9t9/errors.fi
+		
+
 0 [if]
 		
-		include ../v9t9/sysutils.fi
 		
 		
 		include ../ansold/exception.fi
@@ -119,13 +151,9 @@ include cold.fi
 		
 		include ../ansold/kernel.fi
 		
-		include ../v9t9/errors.fi
-		
 		include ../ansold/blocks.fi
 		
 		include ../ansold/dict.fi
-		
-		include 9900.fi
 		
 		include ../ansold/compile.fi
 		
@@ -134,8 +162,6 @@ include cold.fi
 		include ../ansold/interp.fi
 		
 		include ../ansold/alloc.fi
-		
-		include ../v9t9/utils.fi
 		
 		include ../v9t9/io.fi
 		
@@ -292,7 +318,8 @@ test" +loop-zero  0
 	
 s" TESTING" environment? [IF]	
 	| : tests-completed
-		s" 100 200 300 + + ." evaluate
+		\ s" 100 200 300 + + ." evaluate
+		s" : foo 1 2 ; foo + . " evaluate
 		hang
 	;
 [THEN]
@@ -370,7 +397,7 @@ StdWP  0  !		' (reset)  2  !
 
 \ make sure we're sane
 ." # rom defers: " (#rdefers) . cr
-(#rdefers)	#maxrdefers  > 	abort" Too many ROM defers -- bump #maxrdefers "
+(#rdefers)	#maxrdefers  >= 	abort" Too many ROM defers -- bump #maxrdefers "
 
 hex
 here ." HERE = " u. cr

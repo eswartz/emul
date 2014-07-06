@@ -222,6 +222,10 @@ ramptr @  1- aligned  constant (RAM0)
 
 |+ cell RamVar RAM
 
+\ make sure we're sane
+." # rom defers: " (#rdefers) . cr
+(#rdefers)	#maxrdefers  >= 	abort" Too many ROM defers -- bump #maxrdefers "
+
 [ifdef] grom-dictionary
 $0       (LATEST)   !
 [else]
