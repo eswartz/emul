@@ -10,9 +10,6 @@
  */
 package v9t9.tools.forthcomp;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import v9t9.tools.forthcomp.words.BaseWord;
 
 /**
@@ -22,7 +19,8 @@ import v9t9.tools.forthcomp.words.BaseWord;
 public class UnitTests extends BaseWord {
 
 	protected int testNum;
-	protected List<String> testWords = new ArrayList<String>();
+	protected StringBuilder testDefinitionText = new StringBuilder();
+	protected StringBuilder testWordText = new StringBuilder();
 	private ForthComp compiler;
 
 	public void setCompiler(ForthComp compiler) {
@@ -39,25 +37,27 @@ public class UnitTests extends BaseWord {
 		sb.append(bodyText[1]);
 		sb.append(" ;");
 		
-		HostContext hostContext = compiler.getHostContext();
 		ITargetContext targetContext = compiler.getTargetContext();
 		System.out.println("TEST: " + sb + " \\ " + Integer.toHexString(targetContext.getDP()));
 		
-		testWords.add(name);
+		testDefinitionText.append(sb.toString()).append("\n");
 		
-		compiler.parseString(
-				hostContext.getStream().getLocation() + " > " + name, 
-				sb.toString());
+//		compiler.parseString(
+//				hostContext.getStream().getLocation() + " > " + name, 
+//				sb.toString());
+//
 		
+		testWordText.append("['] ").append(name).append(" RUNTEST regs-init\n");
 	}
 
 
 	public void addText(String text) throws AbortException {
-		HostContext hostContext = compiler.getHostContext();
-		
-		compiler.parseString(
-				hostContext.getStream().getLocation() + " > " + text, 
-				text);
+		testDefinitionText.append("\n").append(text).append("\n");
+//		HostContext hostContext = compiler.getHostContext();
+//		
+//		compiler.parseString(
+//				hostContext.getStream().getLocation() + " > " + text, 
+//				text);
 	}
 
 	public void finish() throws AbortException {
@@ -65,6 +65,8 @@ public class UnitTests extends BaseWord {
 			return;
 		
 		StringBuilder sb = new StringBuilder();
+		
+		sb.append(testDefinitionText);
 
 		sb.append("| : RUNTEST ( addr -- ) ");
 		sb.append(" $abcd swap ");
@@ -73,15 +75,12 @@ public class UnitTests extends BaseWord {
 		sb.append(" ;\n");
 		
 		sb.append("| : RUNTESTS ");
-		for (String testWord : testWords) {
-			sb.append("['] ").append(testWord).append(" RUNTEST regs-init ");
-		}
+		sb.append(testWordText);
 		sb.append(" tests-completed ;\n");
 		
 		compiler.parseString(
 				"RUNTESTS", 
 				sb.toString());
 
-		testWords.clear();
 	}
 }

@@ -30,7 +30,16 @@ User >latest        \ latest definition
 ;
 
 
-\ $1F constant &nmask
+: lastnfa  ( -- gaddr )
+    latest
+;
+
+
+: lastxt    ( -- xt )
+    lastnfa nfa>xt
+;
+
+| $1F constant &nmask
 | $40 constant |immed
 | $80 constant |srch
 
@@ -249,3 +258,69 @@ $1F constant width      \ max length of a name
 
 \ |test : wordtofind s" _2*" ;
 \ test" find hex 21 wordtofind pad swap cmove pad 2 over c! find 2dup . . if execute 42 = else 0 then decimal "
+
+
+| : parse-def-name ( c"..."  -- caddr 0 | nfa 1|-1 ) \ "word
+    parse-name
+    (lookup)
+;
+
+| : name"  ( c"word" -- cstr ) 
+    \ Get name
+    parse-def-name
+    
+    if  msg-redefining message  drop  here
+    then 
+;
+
+
+\ Hide a word while compiling, to allow redefining a word in terms of the same name
+| : rom-SMUDGE
+    lastnfa 
+    dup c@ |srch xor swap c!
+;
+
+' rom-SMUDGE 	to SMUDGE
+
+| : rom-NAME, ( "name" -- )
+
+    \ Put LFA --> ptr to previous LFA
+    here 
+    latest ,
+
+    name"
+    
+    \ Get space for name
+    c@ &nmask min
+    1+ aligned allot
+
+	\ F99b only
+    \ here (register-symbol)
+    
+    \ current @ !       \ !!!
+    >latest !
+    
+;
+
+0 [IF] 
+| : grom-NAME, ( "name" -- )
+    name"
+    
+    \ Get space for name
+    DP @  >r 
+    c@ &nmask min    dup here c! 
+    1+  dup  DP +!
+    
+    \ Lay down name field
+    here r@ rot  cmove
+    
+    \ current @ !       \ !!!
+    r>  >latest !
+    
+    
+    \ lay down XT
+    here  GDP @  g!
+    cell GDP +! 
+;
+[THEN]
+

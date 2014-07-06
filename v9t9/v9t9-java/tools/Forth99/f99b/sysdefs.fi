@@ -132,7 +132,7 @@ CHARS/BLOCK
 
 $80        constant   (#up)       \ global user space
 
-$20	      	constant	#maxrdefers		\ since we don't know ahead of time, make room for max # words
+$24	      	constant	#maxrdefers		\ since we don't know ahead of time, make room for max # words
 
 |+ FaultStacks  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - #TIB - (#blks) - (#up) -
 			#maxrdefers -
@@ -142,8 +142,9 @@ $20	      	constant	#maxrdefers		\ since we don't know ahead of time, make room 
 RamTop                        constant (first)    \ grows up
 (first) (#blks) +             constant (limit)
 (limit)                       constant (up0)      \ grows up
-(up0) (#up) + (#numbuf) +     constant (rdefertbl)      
-(rdefertbl) #maxrdefers +      constant (numbuf0)     \ grows down
+(up0) (#up) +                 constant (rdefertbl)      
+(rdefertbl) #maxrdefers +  
+                (#numbuf) +   constant (numbuf0)     \ grows down
 (numbuf0)                     constant (slit-pad0)    \ grows up
 (slit-pad0) (#slit-pad) +     constant TIB         \ grows up
 TIB #TIB + (#rp) +            constant (rp0)    \ grows down

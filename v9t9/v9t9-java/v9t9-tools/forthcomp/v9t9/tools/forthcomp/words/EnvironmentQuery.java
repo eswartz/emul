@@ -33,6 +33,10 @@ public class EnvironmentQuery extends BaseStdWord {
 			hostContext.pushData(targetContext.isTestMode() ? -1 : 0);
 			return;
 		}
+		if ("LOCALS".equalsIgnoreCase(str)) {
+			hostContext.pushData(targetContext.isLocalSupportAvailable(hostContext) ? -1 : 0);
+			return;
+		}
 		hostContext.pushData(0);
 	}
 	

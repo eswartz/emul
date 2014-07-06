@@ -8,31 +8,6 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-1 <export
-
-\ [[[... TEMP
-User STATE
-
-
-: compile, ( xt -- )
-	,
-;
-
-: literal ( n -- )
-	\ postpone DOLIT
-; immediate target-only
- 
-: dliteral ( d -- )
-	\ postpone DODLIT
-; immediate target-only 
-
-\ ...]]]
-
-
-export>
-
-
-[then]
 
 : RamVar  ( n -- )    
 

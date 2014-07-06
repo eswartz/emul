@@ -61,8 +61,9 @@ import ejs.base.utils.TextUtils;
  *
  */
 public class TI99TargetContext extends TargetContext  {
-	private final boolean relBranches = true;
-
+	private final static boolean relBranches = true;
+	private final static boolean inlineNext = true;
+	
 	public static final int REG_TOS = 1;
 	public static final int REG_TMP = 0;
 	public static final int REG_R2 = 2;
@@ -111,6 +112,7 @@ public class TI99TargetContext extends TargetContext  {
 	private final LLOperand R3 = reg(REG_R3);
 
 	private IPrimitiveWord doVar;
+	private int interpLoop;
 	private IPrimitiveWord doDoes;
 
 	private int romDeferOffsetAddr;
@@ -265,10 +267,16 @@ public class TI99TargetContext extends TargetContext  {
 		Collection<LLInstruction> llInsts = new ArrayList<LLInstruction>(2);
 		switch ((StockInstruction) obj) {
 		case NEXT:
-			// get the next XT
-			llInsts.add(createInstruction(Imov, regInc(REG_IP), TMP));
-			// B to it
-			llInsts.add(createInstruction(Ib, regInd(REG_TMP)));
+			if (inlineNext) {
+				// get the next XT
+				llInsts.add(createInstruction(Imov, regInc(REG_IP), TMP));
+				// B to it
+				llInsts.add(createInstruction(Ib, regInd(REG_TMP)));
+			} else {
+				if (interpLoop > 0) {
+					llInsts.add(createInstruction(Ijmp, immed(interpLoop)));
+				}
+			}
 			break;
 			
 		case PUSH_TOS:
@@ -414,6 +422,19 @@ public class TI99TargetContext extends TargetContext  {
 				// get the new one from the XTs following the caller 
 				Imov, reg(11), reg(REG_IP));
 		
+		if (!inlineNext) {
+			interpLoop = getDP();
+			defineSymbol(interpLoop, "@NEXT");
+
+			// debug
+			writeInstruction(Imov, reg(REG_SP), reg(REG_SP));
+			
+			// get the next XT
+			writeInstruction(Imov, regInc(REG_IP), TMP);
+			// B to it (everyone jumps back to interpLoop)
+			writeInstruction(Ib, regInd(REG_TMP));
+		}
+		
 		definePrim(";S",
 				Imov, regInc(REG_RP), reg(REG_IP)
 				);
@@ -436,13 +457,13 @@ public class TI99TargetContext extends TargetContext  {
 		
 		doVar = definePrim("DOVAR",
 				StockInstruction.PUSH_TOS,
-				Imov, reg(11), TOS
+				Imov, reg(11), TOS	 	// addr
 				);
 		
 		doCon = definePrim("DOCON",
 				StockInstruction.PUSH_TOS,
 				
-				Imov, regInc(11), TOS	// get word
+				Imov, regInc(11), TOS
 				);
 		doDcon = definePrim("DODCON",
 				Iai, reg(REG_SP), immed(-cellSize * 2),
@@ -683,6 +704,11 @@ public class TI99TargetContext extends TargetContext  {
 //		definePrim("D-", Isub_d);
 		
 		defineInlinePrim("*", 
+				Imov, regInc(REG_SP), R2,
+				Impy, TOS, R2,
+				Imov, R3, TOS
+				);
+		defineInlinePrim("U*", 
 				Imov, regInc(REG_SP), R2,
 				Impy, TOS, R2,
 				Imov, R3, TOS
@@ -1101,40 +1127,108 @@ public class TI99TargetContext extends TargetContext  {
 				Iclr, TOS
 				);
 
-		/** Move memory backward (src -> dst)
-		( src dst # -- )
+//		/** Move memory backward (src -> dst)
+//		( src dst # -- )
+//		*/  
+//		definePrim("CMOVE", 
+//				Imov, TOS, R2,		// # bytes
+//				Imov, regInd(REG_SP), TMP,	// dst
+//				StockInstruction.POP2_TOS,	// src = TOS
+//				Imov, R2, R2,			// 0 bytes?
+//				Ijeq, ">1",
+//			"2",
+//				Imovb, regInc(REG_TOS), regInc(REG_TMP),
+//				Idec, R2,
+//				Ijne, ">2",
+//			"1",
+//				StockInstruction.POP_TOS
+//				);
+//		/** Move memory forward (dst -> src)
+//		( src dst # -- )
+//		*/  
+//		definePrim("CMOVE>", 
+//				Imov, TOS, R2,		// # bytes
+//				Imov, regInd(REG_SP), TMP,	// dst
+//				StockInstruction.POP2_TOS,	// src = TOS
+//				Imov, R2, R2,			// 0 bytes?
+//				Ijeq, ">1",
+//				Ia, R2, TOS,
+//				Ia, R2, TMP,
+//			"2",
+//				Idec, TOS,
+//				Idec, TMP,
+//				Imovb, regInd(REG_TOS), regInd(REG_TMP),
+//				Idec, R2,
+//				Ijne, ">2",
+//			"1",
+//				StockInstruction.POP_TOS
+//				);
+
+
+		/** Move memory from one area to another
+		 * ( src target len srcincr targetincr  )
 		*/  
-		definePrim("CMOVE", 
-				Imov, TOS, R2,		// # bytes
-				Imov, regInd(REG_SP), TMP,	// dst
-				StockInstruction.POP2_TOS,	// src = TOS
+		definePrim("(CMOVE)",
+				Idect, reg(REG_RP),  
+				Imov, reg(12), regOffs(REG_RP, 0),
+
+											// TOS: targetincr
+				Imov, regInc(REG_SP), reg(12),	// R12: srcincr
+				Imov, regInc(REG_SP), R2,	// R2: len
+				Imov, regInc(REG_SP), R3,	// R3: target
+				Imov, regInc(REG_SP), TMP,	// TMP: source
+				
+				Imov, TOS, TOS, // TOS: targetincr
+				Ijgt, ">t+",
+				
+				Is, R2, R3,
+				Iinc, R3,		// TODO: assuming TOS == -1
+				
+			"t+",
+			
+				Imov, reg(12), reg(12), 
+				Ijgt, ">f+",
+				
+				Is, R2, TMP,
+				Iinc, TMP,		// TODO: assuming TOS == -1
+				
+			"f+",
+				
 				Imov, R2, R2,			// 0 bytes?
 				Ijeq, ">1",
 			"2",
-				Imovb, regInc(REG_TOS), regInc(REG_TMP),
+				Imovb, regInd(REG_TMP), regInc(REG_R3),
+				Ia, TOS, R3,
+				Ia, reg(12), TMP,
 				Idec, R2,
 				Ijne, ">2",
 			"1",
+				
+				Imov, regInc(REG_RP), reg(12),
+				
 				StockInstruction.POP_TOS
 				);
-		/** Move memory forward (dst -> src)
-		( src dst # -- )
+
+		/** Fill memory
+		 * ( addr n ch targetincr )
 		*/  
-		definePrim("CMOVE>", 
-				Imov, TOS, R2,		// # bytes
-				Imov, regInd(REG_SP), TMP,	// dst
-				StockInstruction.POP2_TOS,	// src = TOS
+		definePrim("(CFILL)",
+											// TOS: targetincr
+				Imov, regInc(REG_SP), TMP,	// TMP: ch
+				Iswpb, TMP,
+
+				Imov, regInc(REG_SP), R2,	// R2: len
+				Imov, regInc(REG_SP), R3,	// R3: target
+				
 				Imov, R2, R2,			// 0 bytes?
 				Ijeq, ">1",
-				Ia, R2, TOS,
-				Ia, R2, TMP,
 			"2",
-				Idec, TOS,
-				Idec, TMP,
-				Imovb, regInd(REG_TOS), regInd(REG_TMP),
+				Imovb, TMP, regInd(REG_R3),
+				Ia, TOS, R3,
 				Idec, R2,
 				Ijne, ">2",
 			"1",
+			
 				StockInstruction.POP_TOS
 				);
 
@@ -1178,7 +1272,8 @@ public class TI99TargetContext extends TargetContext  {
 //		defineInlinePrim("<>", Iequ, Inot);
 		
 		definePrim("HANG", 
-			"0", Ijmp, ">0"
+			//"0", Ijmp, ">0"
+				Iidle
 				);
 		
 		definePrim("(lfind)",

@@ -252,4 +252,10 @@ User GDP              \ GROM dictionary pointer
 
 [THEN]
 
+\ Hide a word while compiling, to allow redefining a word in terms of the same name
+: smudge
+    lastnfa 
+    dup gc@ |srch xor swap gc!
+;
+
 

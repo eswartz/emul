@@ -94,6 +94,10 @@ DEFER	TO
 \ DEFER	FIND
 DEFER	(FIND)		( c-addr lfa -- c-addr 0 | xt 1=immed | xt -1 ) 
 
+\ Internal: dictionary definitions
+DEFER	SMUDGE		( -- )
+DEFER	NAME,		( "name" -- )
+
 include core_prims.fi
 include core_strings.fi
 include core_output.fi
@@ -102,6 +106,7 @@ include core_terminal.fi
 include core_dict.fi
 include core_abort.fi
 include core_interp.fi
+\ include core_compile.fi
 
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

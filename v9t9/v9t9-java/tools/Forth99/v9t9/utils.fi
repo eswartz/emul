@@ -8,31 +8,6 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-\   Custom:  set a flag in a word
-: |!        ( mask addr -- )
-    swap over @ OR swap !     
-;
-
-( align 'val' to 'scale' )
-:: %- ( val scale -- val' )
-    val scale  u/mod  nip scale u*    
-;
-
-: w>l.h ( w -- lo hi )
-    dup  $ff and  swap  8 urshift  
-;
-
-: l.h>w ( lo hi -- w )
-    8  LSHIFT  OR  
-;
-
-: umax   ( u1 u2 -- u )
-    2dup U> if drop else nip then
-;
-: umin   ( u1 u2 -- u )
-    2dup U< if drop else nip then
-;
-
 : per-line
     \ 7 = 4 addr + = + space + NL
     win-cx c@  7 -  2 urshift   1 nand  1 max

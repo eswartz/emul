@@ -8,6 +8,25 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
+
+\ Move memory backward (src -> dst)
+: cmove              ( src dst # -- )  
+    1 1 (cmove)
+;   target-only
+
+\ Move memory forward (src -> dst)
+: cmove>            ( src dst # -- )
+    -1 -1 (cmove)
+;   target-only
+
+: fill  ( addr n ch -- )
+    1 (cfill)
+;   target-only
+
+
+|test 10 RamVar Buf1  
+test" fill  Buf1 10 42 fill  Buf1 c@ 42 =   Buf1 9 + c@ 42 =  and "
+
 :   ints-on
 ;   target-only
 
@@ -37,7 +56,12 @@
     UM/MOD swap drop
 ;   target-only
 
-		
+
+: u/mod      ( u un -- ur uq ) 
+    0 swap
+    UM/MOD
+;   target-only
+
 0 [IF]
 
 
