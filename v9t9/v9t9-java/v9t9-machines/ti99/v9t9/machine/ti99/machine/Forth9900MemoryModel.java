@@ -19,8 +19,6 @@ import java.net.URL;
 
 import org.apache.log4j.Logger;
 
-import ejs.base.properties.IProperty;
-import ejs.base.utils.FileUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent.Level;
@@ -37,6 +35,8 @@ import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.f99b.memory.EnhancedRamByteArea;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 import v9t9.machine.ti99.memory.mmio.Forth9900ConsoleMmioArea;
+import ejs.base.properties.IProperty;
+import ejs.base.utils.FileUtils;
 
 
 /**

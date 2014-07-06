@@ -10,40 +10,26 @@
  */
 package v9t9.tools.forthcomp.ti99;
 
+import static v9t9.machine.ti99.cpu.Inst9900.*;
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import com.sun.corba.se.spi.ior.MakeImmutable;
-import com.sun.org.apache.bcel.internal.generic.SIPUSH;
-
-import static v9t9.machine.ti99.cpu.Inst9900.*;
-import v9t9.common.asm.ILabelDetector;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.machine.IBaseMachine;
-import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.machine.f99b.memory.EnhancedRamByteArea;
 import v9t9.machine.ti99.asm.InstructionFactory9900;
-import v9t9.machine.ti99.asm.RawInstructionFactory9900;
-import v9t9.machine.ti99.cpu.Cpu9900;
-import v9t9.machine.ti99.cpu.CpuState9900;
-import v9t9.machine.ti99.cpu.InstTable9900;
 import v9t9.machine.ti99.memory.mmio.Forth9900ConsoleMmioArea;
 import v9t9.tools.asm.LLInstruction;
 import v9t9.tools.asm.inst9900.AsmInstructionFactory9900;
-import v9t9.tools.asm.inst9900.Assembler9900;
-import v9t9.tools.asm.operand.hl.RegOffsOperand;
 import v9t9.tools.asm.operand.ll.LLAddrOperand;
 import v9t9.tools.asm.operand.ll.LLImmedOperand;
-import v9t9.tools.asm.operand.ll.LLOffsetOperand;
 import v9t9.tools.asm.operand.ll.LLOperand;
 import v9t9.tools.asm.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.operand.ll.LLRegIncOperand;
@@ -52,24 +38,16 @@ import v9t9.tools.asm.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.operand.ll.LLRegisterOperand;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.DictEntry;
-import v9t9.tools.forthcomp.GromDictEntry;
 import v9t9.tools.forthcomp.HostContext;
-import v9t9.tools.forthcomp.IGromTargetContext;
 import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.IWord;
 import v9t9.tools.forthcomp.RelocEntry;
-import v9t9.tools.forthcomp.TargetContext;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
-import v9t9.tools.forthcomp.f99b.words.ExitI;
-import v9t9.tools.forthcomp.f99b.words.FieldComma;
-import v9t9.tools.forthcomp.words.HostLiteral;
-import v9t9.tools.forthcomp.words.INativeCodeWord;
+import v9t9.tools.forthcomp.TargetContext;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
-import v9t9.tools.forthcomp.words.TargetInlineColonWord;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
-import v9t9.tools.forthcomp.words.TargetValue;
 import v9t9.tools.forthcomp.words.TargetWord;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.TextUtils;
@@ -105,12 +83,14 @@ public class TI99TargetContext extends TargetContext  {
 	
 	
 	private enum StockInstruction {
+		/** execute next word in threaded code */
+		NEXT,
 		/** save TOS on stack */
 		PUSH_TOS,
 		/** pop from stack to TOS */
 		POP_TOS,
 		/** pop two entries from stack, losing the top */
-		POP2_TOS,
+		POP2_TOS, 
 		
 	}
 	
@@ -129,9 +109,8 @@ public class TI99TargetContext extends TargetContext  {
 	private final LLOperand TMP = reg(REG_TMP);
 	private final LLOperand R2 = reg(REG_R2);
 	private final LLOperand R3 = reg(REG_R3);
-	
+
 	private IPrimitiveWord doVar;
-	private int interpLoop;
 	private IPrimitiveWord doDoes;
 
 	private int romDeferOffsetAddr;
@@ -177,6 +156,12 @@ public class TI99TargetContext extends TargetContext  {
 		llinst.setPc(getDP());
 		compileInstr(createInstr(llinst));
 	}
+	protected void compileInstr(StockInstruction stock) {
+		for (LLInstruction llinst : createInstructions(stock)) {
+			llinst.setPc(getDP());
+			compileInstr(createInstr(llinst));
+		}
+	}
 	protected void compileInstr(RawInstruction rawInstr) {
 		byte[] bytes = instrFactory.encodeInstruction(rawInstr);
 		int dp = rawInstr.getPc();
@@ -211,26 +196,13 @@ public class TI99TargetContext extends TargetContext  {
 				continue;
 			}
 			if (obj instanceof StockInstruction) {
-				switch ((StockInstruction) obj) {
-				case PUSH_TOS:
-					llInsts.add(createInstruction(Idect, reg(REG_SP)));
-					llInsts.add(createInstruction(Imov, TOS, regInd(REG_SP)));
-					addr += 4;
-					break;
-	
-				case POP_TOS:
-					llInsts.add(createInstruction(Imov, regInc(REG_SP), TOS));
-					addr += 2;
-					break;
-					
-				case POP2_TOS:
-					llInsts.add(createInstruction(Iinct, reg(REG_SP)));
-					llInsts.add(createInstruction(Imov, regInc(REG_SP), TOS));
-					addr += 4;
-					break;
-					
-				default:
-					throw new UnsupportedOperationException(obj.toString());
+				for (LLInstruction llinst : createInstructions((StockInstruction) obj)) {
+					llInsts.add(llinst);
+					try {
+						addr += asmInstrFactory.createRawInstruction(llinst).getSize();
+					} catch (ResolveException e) {
+						e.printStackTrace();
+					}
 				}
 				continue;
 			}
@@ -282,6 +254,41 @@ public class TI99TargetContext extends TargetContext  {
 			throw new AbortException("undefined labels: " + TextUtils.catenateStrings(fwds.keySet(), " "));
 		}
 		return llInsts.toArray(new LLInstruction[llInsts.size()]);
+	}
+
+	/**
+	 * @param obj
+	 * @return
+	 */
+	private Collection<LLInstruction> createInstructions(
+			StockInstruction obj) {
+		Collection<LLInstruction> llInsts = new ArrayList<LLInstruction>(2);
+		switch ((StockInstruction) obj) {
+		case NEXT:
+			// get the next XT
+			llInsts.add(createInstruction(Imov, regInc(REG_IP), TMP));
+			// B to it
+			llInsts.add(createInstruction(Ib, regInd(REG_TMP)));
+			break;
+			
+		case PUSH_TOS:
+			llInsts.add(createInstruction(Idect, reg(REG_SP)));
+			llInsts.add(createInstruction(Imov, TOS, regInd(REG_SP)));
+			break;
+
+		case POP_TOS:
+			llInsts.add(createInstruction(Imov, regInc(REG_SP), TOS));
+			break;
+			
+		case POP2_TOS:
+			llInsts.add(createInstruction(Iinct, reg(REG_SP)));
+			llInsts.add(createInstruction(Imov, regInc(REG_SP), TOS));
+			break;
+			
+		default:
+			throw new UnsupportedOperationException(obj.toString());
+		}
+		return llInsts;
 	}
 
 	/**
@@ -350,10 +357,7 @@ public class TI99TargetContext extends TargetContext  {
 		for (LLInstruction instr : llInsts) {
 			compileInstr(instr);
 		}
-		if (interpLoop > 0) {
-			writeInstruction(Ijmp, immed(interpLoop));
-			//writeInstruction(Ib, regInd(11));
-		}
+		compileInstr(StockInstruction.NEXT);
 		return (IPrimitiveWord) word;
 	}
 
@@ -409,19 +413,6 @@ public class TI99TargetContext extends TargetContext  {
 				Imov, reg(REG_IP), regInd(REG_RP),
 				// get the new one from the XTs following the caller 
 				Imov, reg(11), reg(REG_IP));
-		
-		interpLoop = getDP();
-		defineSymbol(interpLoop, "@NEXT");
-		
-		// debug
-		writeInstruction(Imov, reg(REG_SP), reg(REG_SP));
-		
-		// get the next XT
-		writeInstruction(Imov, regInc(REG_IP), TMP);
-		// B to it (everyone jumps back to interpLoop)
-		writeInstruction(Ib, regInd(REG_TMP));
-
-//		threadOp = new LLImmedOperand(loop);
 		
 		definePrim(";S",
 				Imov, regInc(REG_RP), reg(REG_IP)
@@ -657,7 +648,8 @@ public class TI99TargetContext extends TargetContext  {
 				Ijeq, ">0",
 				// not 0
 				Imov, regInc(REG_SP), TOS,
-				Ijmp, immed(interpLoop),
+				
+				StockInstruction.NEXT,
 			"0",
 				Imov, regInc(REG_SP), TOS,
 				relBranches ? Ia : Imov, TMP, reg(REG_IP)
@@ -1560,34 +1552,7 @@ public class TI99TargetContext extends TargetContext  {
 	 */
 	@Override
 	public int compilePushValue(int cells, int value) throws AbortException {
-		int loc;
-		if (cells == 1) {
-			compileOpcode(IlitW);
-			loc = alloc(cellSize);
-			compileOpcode(Iexit);
-			//compile(require("DOLIT"));
-		} else { 
-			compileOpcode(IlitD_d);
-			loc = alloc(cellSize * cells);
-			compileOpcode(Iexit);
-			//compile(require("DODLIT"));
-		}
-		
-		
-		if (cells == 1) {
-			writeCell(loc, value);
-			stub16BitLit.use();
-		} else if (cells == 2) {
-			writeCell(loc, value & 0xffff);
-			writeCell(loc + 2, value >> 16);
-			stub16BitLit.use();
-			stub16BitLit.use();
-		}
-		else
-			throw new AbortException("unhandled size: " +cells);
-		
-		return loc;
-
+		throw new UnsupportedOperationException();
 	}
 	
 	/* (non-Javadoc)
