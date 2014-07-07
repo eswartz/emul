@@ -454,7 +454,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 [IFUNDEF] USER
 : USER
     create UDP @ 
-    2 UDP +!
+    #cell UDP +!
     lastxt dp !  douser,
 ; target-only
 [THEN]

@@ -1169,11 +1169,8 @@ public class TI99TargetContext extends TargetContext  {
 		 * ( src target len srcincr targetincr  )
 		*/  
 		definePrim("(CMOVE)",
-				Idect, reg(REG_RP),  
-				Imov, reg(12), regOffs(REG_RP, 0),
-
 											// TOS: targetincr
-				Imov, regInc(REG_SP), reg(12),	// R12: srcincr
+				Imov, regInc(REG_SP), reg(11),	// R11: srcincr
 				Imov, regInc(REG_SP), R2,	// R2: len
 				Imov, regInc(REG_SP), R3,	// R3: target
 				Imov, regInc(REG_SP), TMP,	// TMP: source
@@ -1181,30 +1178,28 @@ public class TI99TargetContext extends TargetContext  {
 				Imov, TOS, TOS, // TOS: targetincr
 				Ijgt, ">t+",
 				
-				Is, R2, R3,
-				Iinc, R3,		// TODO: assuming TOS == -1
+				Ia, R2, R3,
+				Idec, R3,		// TODO: assuming TOS == -1
 				
 			"t+",
 			
-				Imov, reg(12), reg(12), 
+				Imov, reg(11), reg(11), 
 				Ijgt, ">f+",
 				
-				Is, R2, TMP,
-				Iinc, TMP,		// TODO: assuming TOS == -1
+				Ia, R2, TMP,
+				Idec, TMP,		// TODO: assuming TOS == -1
 				
 			"f+",
 				
 				Imov, R2, R2,			// 0 bytes?
 				Ijeq, ">1",
 			"2",
-				Imovb, regInd(REG_TMP), regInc(REG_R3),
+				Imovb, regInd(REG_TMP), regInd(REG_R3),
 				Ia, TOS, R3,
-				Ia, reg(12), TMP,
+				Ia, reg(11), TMP,
 				Idec, R2,
 				Ijne, ">2",
 			"1",
-				
-				Imov, regInc(REG_RP), reg(12),
 				
 				StockInstruction.POP_TOS
 				);
@@ -1260,17 +1255,6 @@ public class TI99TargetContext extends TargetContext  {
 				);
 				
 				
-//		
-//		define("(S\")", new TargetSQuote(defineEntry("(S\")")));
-//		compileCall((ITargetWord) find("((s\"))"));
-//		compileOpcode(Iexit);
-//		
-//		defineInlinePrim("CELL+", I2plus); 
-//		defineInlinePrim("CELL", IlitX | 0x2);
-//		
-//		defineInlinePrim("0<>", I0equ, Inot); 
-//		defineInlinePrim("<>", Iequ, Inot);
-		
 		definePrim("HANG", 
 			//"0", Ijmp, ">0"
 				Iidle
@@ -1345,8 +1329,10 @@ public class TI99TargetContext extends TargetContext  {
 		        // convert to XT
 		        Imovb, regInc(REG_TOS), reg(5),		// save info
 		        
-		        Isrl, reg(12), immed(8),
-		        Ia, reg(12), TOS,
+		        // we are at the end of the NFA in REG_TMP
+//		        Isrl, reg(12), immed(8),
+//		        Ia, reg(12), TOS,
+		        Imov, TMP, TOS,
 		        Iinc, TOS,
 		        Iandi, TOS, immed(-2),
 		        

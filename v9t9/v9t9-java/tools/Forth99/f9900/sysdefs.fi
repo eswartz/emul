@@ -16,8 +16,17 @@
 \ -----------   registers
 
 $1			constant	REG_TOS
-$2			constant	REG_T1
-$3			constant	REG_T2
+$0			constant	REG_TMP
+$2			constant	REG_R2
+$3			constant	REG_R3
+$4			constant	REG_DOCOL
+$5			constant	REG_DOCON
+$6			constant	REG_DOUSER
+$7			constant	REG_DOVAR
+$8			constant	REG_DODOES
+
+$10			constant	REG_UP
+
 $13			constant	REG_RP
 $14			constant	REG_IP
 $15			constant	REG_SP

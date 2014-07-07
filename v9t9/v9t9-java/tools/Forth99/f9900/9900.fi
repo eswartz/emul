@@ -14,20 +14,17 @@
 
 | : docon, ( num -- )
     postpone literal
-    Iexit c,
 ;
 
 | : dovalue, ( num -- )
-    $79 c, ,
-    Iexit c,
+	HANG      \ $79 c, ,     \ Iexit c,
 ;
 | : do>to, ( addr -- addr' )
     1+
 ;
 
 | : dovar,  ( -- )
-    IbranchX c,
-    Idovar  c,
+	postpone DOVAR
 ;
 
 
@@ -38,15 +35,15 @@
 ; 
 
 | : douser,  ( idx -- )
-    dup $100 < if  Iupidx c, c,  else
-                    IlitW c,  ,  Iuser c, then
-    Iexit c,                    
+	postpone DOUSER
+    \ dup $100 < if  Iupidx c, c,  else
+    \                IlitW c,  ,  Iuser c, then
+    \ Iexit c,                    
 ;
 
 | : dodoes,  ( -- )
     align
-\    here 
-    IRfrom c,
+    HANG \ IRfrom c,
 ;
 
 
@@ -56,11 +53,12 @@
 
 \ called for creating words to inject :docol code into definition
 : docol,    ( addr -- )
+	[ $690 REG_DOCOL + literal ] ,  
 ;
 
 | : dodefer!    ( cfa -- )
     \ TODO
-    drop
+    HANG
 ;
 
 \ --------------------------------------------
@@ -107,17 +105,20 @@
 ( when creating a does> word )
 : (does>)  
     r> lastxt              ( where dovar, was ) 
-    swap  >call swap !    ( call instead of dovar, )  
+    \ swap  >call swap !    ( call instead of dovar, )
+    !  
 ; target-only
 
 ( when compiling a creator word )
-: does> 
+: does>
+[ s" LOCALS" environment? [IF] ] 
     finish-locals
+[ [THEN] ]
 
     here 1 and  if 0 c, then    \ need aligned addr for CALL
     postpone (does>) 
     \ created word is here:  need to fetch PC now
-    IRfrom c,
+    HANG     \ IRfrom c,
     \ ... and don't return to data of created word!
     \ postpone rdrop 
 ; immediate target-only
@@ -125,26 +126,27 @@
 0 <export
 
 : dodefer, ( -- )
-    ['] ;S  >call  ,
-    Iexit c,
+	HANG    \ ['] ;S  >call  ,   \ Iexit c,
 ;
 
-: is-check ( "..." -- is-addr ) 
+: is-check ( "..." -- is-addr )
     '  dup >r
     @  $8000  >=
-    r@ cell+ c@  Iexit  =
-    and not  err-not-deferred ?throw 
+    r@ cell+ c@  
+    HANG \ Iexit  =	
+    and 0=  err-not-deferred ?throw 
     r> 
 ; 
 
 : is,  ( xt-addr is-addr -- )
-  >r  >call  r>   !  
+   !  
 ;
 
 : is?,  ( is-addr -- )
-    @  call>
+    @ 
 ;
 
+s" LOCALS" environment? [IF] 
 \   Push locals
 : <locals,  ( --  )
     Itolocals ,
@@ -183,6 +185,8 @@
 : (laddr) ( num -- )
     Ilocal c,  c,
 ;
+
+[THEN]
 
 export>
 

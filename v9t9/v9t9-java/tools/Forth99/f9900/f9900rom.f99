@@ -97,7 +97,7 @@ include syscomp.fi
 
 	\ ----------- STUBS ]]]
 
-\ include 9900.fi	
+include 9900.fi	
 
 include ../ans/core.fi
 include ../ans/core_unhosted.fi
@@ -379,7 +379,7 @@ TESTS!
 
 ramptr @  1- aligned  constant (RAM0)
 
-|+ cell RamVar RAM
+|+ #cell RamVar RAM
 
 \ align dictionary to a memory area, so memory images aren't often broken
 here $3ff +  $3ff INVERT and  DP0        !

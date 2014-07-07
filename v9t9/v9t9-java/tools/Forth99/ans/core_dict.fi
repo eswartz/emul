@@ -30,8 +30,8 @@ User >latest        \ latest definition
 ;
 
 
-: lastnfa  ( -- gaddr )
-    latest
+: lastnfa  ( -- addr )
+    latest  lfa>nfa
 ;
 
 
@@ -114,7 +114,7 @@ test" nfa>xt ['] traverse dup xt>nfa nfa>xt = "
 ;
 
 : lfa>nfa
-    2+
+    cell+
 ;
 
 : >id       ( nfa -- caddr u )
@@ -173,7 +173,7 @@ $1F constant width      \ max length of a name
 
 [IFUNDEF] C,
 : C,
-    here c!  1  dp +!
+    here c!  #char  dp +!
 ;
 [THEN]
 
@@ -269,7 +269,8 @@ $1F constant width      \ max length of a name
     \ Get name
     parse-def-name
     
-    if  msg-redefining message  drop  here
+    ( either name is defined already, 1/-1, or not yet ) 
+    if  msg-redefining message  drop  here		( TODO: assumption that name is at 'here' )
     then 
 ;
 
@@ -285,7 +286,7 @@ $1F constant width      \ max length of a name
 | : rom-NAME, ( "name" -- )
 
     \ Put LFA --> ptr to previous LFA
-    here 
+	here
     latest ,
 
     name"
@@ -294,13 +295,17 @@ $1F constant width      \ max length of a name
     c@ &nmask min
     1+ aligned allot
 
+[ [IFDEF] (register-symbol) ]
 	\ F99b only
-    \ here (register-symbol)
+    here (register-symbol)
+[ [THEN] ]
     
     \ current @ !       \ !!!
     >latest !
     
 ;
+
+' rom-NAME, 	to NAME,
 
 0 [IF] 
 | : grom-NAME, ( "name" -- )
@@ -309,7 +314,7 @@ $1F constant width      \ max length of a name
     \ Get space for name
     DP @  >r 
     c@ &nmask min    dup here c! 
-    1+  dup  DP +!
+    char+  dup  DP +!
     
     \ Lay down name field
     here r@ rot  cmove
@@ -320,7 +325,7 @@ $1F constant width      \ max length of a name
     
     \ lay down XT
     here  GDP @  g!
-    cell GDP +! 
+    #cell GDP +! 
 ;
 [THEN]
 

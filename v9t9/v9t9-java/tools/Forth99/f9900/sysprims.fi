@@ -25,7 +25,13 @@
 
 
 |test 10 RamVar Buf1  
-test" fill  Buf1 10 42 fill  Buf1 c@ 42 =   Buf1 9 + c@ 42 =  and "
+|test : bufMatches dup >r c@ 42 =   r> 9 + c@ 42 =  and ;
+test" fill  Buf1 10 42 fill  Buf1 bufMatches "
+
+|test 10 RamVar Buf2  
+test" cmove  Buf1 Buf2 10 cmove  Buf2 bufMatches "
+test" erase  Buf2 10 erase   Buf2 c@ 0=   Buf2 9 + c@ 0=  and ;
+
 
 :   ints-on
 ;   target-only
