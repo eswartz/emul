@@ -62,7 +62,6 @@ EXPORT>
 include sysprims.fi
 include syscomp.fi
 
-
 	\ ----------- [[[ STUBS
 	
 	User STATE
@@ -83,18 +82,6 @@ include syscomp.fi
 	[THEN]
 	
 	
-	: compile, ( xt -- )
-		,
-	;
-	
-	: literal ( n -- )
-		postpone DOLIT  ,
-	; immediate target-only
-	 
-	: dliteral ( d -- )
-		postpone DODLIT  ,  ,
-	; immediate target-only 
-
 	\ ----------- STUBS ]]]
 
 include 9900.fi	
@@ -316,10 +303,25 @@ test" +loop-zero  0
 		COLD
 	;
 	
+|test : eval1 s" 100 200 300 + + ." ;
+test" evaluate1 eval1 evaluate 	true "
+
+|test : eval2 s" : foo 1 2 + ; foo " ;
+test" evaluate2 eval2 evaluate  3 = "
+
+\ redefine message
+|test : eval3 s" : foo foo ; foo " ;
+test" evaluate3 eval3 evaluate  3 = "
+
+|test : eval4 s" : num 12345 ; num " ;
+test" evaluate4 eval4 evaluate 12345 = "
+
+|test : eval5 s" : bar foo 3 - ; bar " ;
+test" evaluate5 eval5 evaluate  0= "
+			
+			
 s" TESTING" environment? [IF]	
 	| : tests-completed
-		\ s" 100 200 300 + + ." evaluate
-		s" : foo 1 2 ; foo + . " evaluate
 		hang
 	;
 [THEN]

@@ -215,11 +215,11 @@ public class TokenStream {
 	/**
 	 * @return
 	 */
-	public char readChar() throws AbortException {
+	public int readChar() throws AbortException {
 		if (streams.isEmpty())
 			return 0;
 		try {
-			return (char) streams.peek().read();
+			return streams.peek().read();
 		} catch (IOException e) {
 			throw abort(e.toString());
 		}

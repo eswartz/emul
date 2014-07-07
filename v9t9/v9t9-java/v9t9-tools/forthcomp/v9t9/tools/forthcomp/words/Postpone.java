@@ -50,7 +50,7 @@ public class Postpone extends BaseStdWord {
 			if (targetWord.getEntry().isImmediate()) {
 				targetContext.buildCall(targetWord);
 			} else {
-				targetContext.buildXt(targetWord);
+				targetContext.buildTick(targetWord);
 				targetContext.buildXt(targetContext.require("compile,"));
 			}
 		}

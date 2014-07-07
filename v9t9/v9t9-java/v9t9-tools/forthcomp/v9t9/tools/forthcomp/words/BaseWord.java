@@ -97,12 +97,12 @@ public abstract class BaseWord implements IWord {
 		
 		StringBuilder sb = new StringBuilder();
 		while (true) {
-			char ch = hostContext.getStream().readChar();
-			if (ch == 0)
+			int ch = hostContext.getStream().readChar();
+			if (ch == 0 || ch == -1)
 				throw hostContext.abort("unterminated string at " + sb);
 			if (ch == '"')
 				return sb.toString();
-			sb.append(ch);
+			sb.append((char) ch);
 		}
 	}
 
