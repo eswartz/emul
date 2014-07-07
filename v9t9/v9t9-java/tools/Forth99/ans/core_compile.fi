@@ -231,10 +231,12 @@ User csp
     swap >r  \ ?do
     
     \ loop op
-    compile,
-    
-    \ branch follows
-    ['] 0branch  back
+\    compile,
+\    
+\    \ branch follows
+\    ['] 0branch  back
+
+	back
     
     \ for ?do, provide jump for exit
     r> if  here over - jmpoffs, then

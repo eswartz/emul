@@ -13,24 +13,36 @@
 	,
 ;
 
+\ called for creating words to inject :docol code into definition
+: docol,    ( addr -- )
+	[ $690 REG_DOCOL + literal ] ,  
+;
 
 | : docol!  ( cfa -- )
     drop 
 ;
 
-| : docon, ( num -- )
-    [compile] literal
+| : dovar,  ( -- )
+	[ $690 REG_DOVAR + literal ] ,
 ;
+
+| : docon, ( num -- )
+    [ $690 REG_DOCON + literal ] ,
+    ,  
+;
+
+\ TODO: double or not?
+| : douser,  ( idx -- )
+    [ $690 REG_DOUSER + literal ] ,
+    ,
+;
+
 
 | : dovalue, ( num -- )
 	HANG      \ $79 c, ,     \ Iexit c,
 ;
 | : do>to, ( addr -- addr' )
     1+
-;
-
-| : dovar,  ( -- )
-	[compile] DOVAR
 ;
 
 
@@ -40,13 +52,6 @@
     2+
 ; 
 
-| : douser,  ( idx -- )
-	postpone DOUSER
-    \ dup $100 < if  Iupidx c, c,  else
-    \                IlitW c,  ,  Iuser c, then
-    \ Iexit c,                    
-;
-
 | : dodoes,  ( -- )
     align
     HANG \ IRfrom c,
@@ -55,11 +60,6 @@
 
 | : xt! ( addr cfa -- )
     !
-;
-
-\ called for creating words to inject :docol code into definition
-: docol,    ( addr -- )
-	[ $690 REG_DOCOL + literal ] ,  
 ;
 
 | : dodefer!    ( cfa -- )
@@ -88,32 +88,25 @@
 [THEN]
 
 \ target
+
+\ target - (opAddr + cellSize);
 | : jmpoffs, ( addr offs -- )
-    dup -129 128 within if
-        \ dup 0> if 1- else 1- then     \ branch opcode allocated
-        1-
-        swap c!
-    else
-        true err-out-of-range ?throw
-    then
+	2-  
+	swap !
 ;
 | : jmpoffsalloc, ( diff opc -- )
-    swap dup -129 128 within if
-        dup 0> if 2- else 1- then       \ allocating now
-        swap compile, c,
-    else
-        true err-out-of-range ?throw
-    then
+	compile, 
+	2- 2-  ,
 ;
 
 
-: >fixup
-    here 0 c,
+: >fixup  ( -- addr )
+    here
+    0 ,
 ;
 
 : loop,
-\ loop opcode is one byte
-    c,  
+    ,  
 ;
 
 

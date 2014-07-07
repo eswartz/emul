@@ -62,28 +62,6 @@ EXPORT>
 include sysprims.fi
 include syscomp.fi
 
-	\ ----------- [[[ STUBS
-	
-	User STATE
-	
-	[IFUNDEF] CONSTANT
-	: CONSTANT
-	; target-only
-	[THEN]
-	
-	[IFUNDEF] CREATE
-	: CREATE
-	; target-only
-	[THEN]
-	
-	[IFUNDEF] IMMEDIATE
-	: immediate
-	; target-only
-	[THEN]
-	
-	
-	\ ----------- STUBS ]]]
-
 include 9900.fi	
 
 include ../ans/core.fi
@@ -307,19 +285,35 @@ test" +loop-zero  0
 test" evaluate1 eval1 evaluate 	true "
 
 |test : eval2 s" : foo 1 2 + ; foo " ;
-test" evaluate2 eval2 evaluate  3 = "
+test" evaluate-: eval2 evaluate  3 = "
 
 \ redefine message
 |test : eval3 s" : foo foo ; foo " ;
-test" evaluate3 eval3 evaluate  3 = "
+test" evaluate-redef eval3 evaluate  3 = "
 
 |test : eval4 s" : num 12345 ; num " ;
-test" evaluate4 eval4 evaluate 12345 = "
+test" evaluate-lit eval4 evaluate 12345 = "
 
 |test : eval5 s" : bar foo 3 - ; bar " ;
-test" evaluate5 eval5 evaluate  0= "
+test" evaluate2 eval5 evaluate  0= "
 			
-			
+|test : eval6 s" Variable var  12345 var !  var @ 12345 - " ;
+test" evaluate-var eval6 evaluate  0= "
+
+|test : eval7 s" 9999 Constant cn  9998 cn - " ;
+test" evaluate-var eval7 evaluate "
+
+|test : eval8 s" : loo 0  4 1 do  i  + loop ; loo  " ;
+test" evaluate-loop eval8 evaluate  6 = "
+
+|test : eval9 s" : ife if 1+ else 2- then ;  0  0 ife ( 1)  dup ife ( -1)  " ;
+test" evaluate-ifelse eval9 evaluate   "
+
+\ Make sure none of the above stomped on the dictionary
+|test : evalX s" var drop  bar drop  foo drop  num drop  cn drop  " ;
+test" evaluate-validateDictionary evalX evaluate  true "
+
+
 s" TESTING" environment? [IF]	
 	| : tests-completed
 		hang
