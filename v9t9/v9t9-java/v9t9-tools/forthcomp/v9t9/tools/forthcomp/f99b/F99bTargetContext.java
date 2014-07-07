@@ -117,7 +117,7 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	public void defineBuiltins() throws AbortException {
 		super.defineBuiltins();
 		
-		definePrim("cell", IlitX | 2);
+		defineInlinePrim("#CELL", IlitX | 2);
 		defineInlinePrim("cells", IlitX | 1, Ilsh);
 		
 		definePrim(";S", Iexit);
@@ -293,9 +293,6 @@ public class F99bTargetContext extends BaseGromTargetContext {
 		define("(S\")", new TargetSQuote(defineEntry("(S\")")));
 		compileCall((ITargetWord) find("((s\"))"));
 		compileOpcode(Iexit);
-		
-		defineInlinePrim("cell+", I2plus); 
-		defineInlinePrim("cell", IlitX | 0x2);
 		
 		defineInlinePrim("0<>", I0equ, Inot); 
 		defineInlinePrim("<>", Iequ, Inot);

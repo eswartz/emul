@@ -11,8 +11,8 @@
 User    base
 User    dp
 
-| cell RamVar (numbuf)
-| cell RamVar (spad)
+| #cell RamVar (numbuf)
+| #cell RamVar (spad)
 
 : here dp @ ;
 

@@ -95,7 +95,7 @@ User STATE
     
     \ lay down XT
     here  GDP @  g!
-    cell GDP +! 
+    #cell GDP +! 
     
     lastnfa id.
     

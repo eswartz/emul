@@ -220,7 +220,7 @@ here $3ff +  $3ff INVERT and  DP0        !
 
 ramptr @  1- aligned  constant (RAM0)
 
-|+ cell RamVar RAM
+|+ #cell RamVar RAM
 
 \ make sure we're sane
 ." # rom defers: " (#rdefers) . cr

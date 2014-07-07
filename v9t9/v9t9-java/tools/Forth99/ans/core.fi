@@ -11,8 +11,8 @@
 \ ANS Forth CORE Words
 
 
-| cell RamVar (numbuf)
-| cell RamVar (spad)
+| #cell RamVar (numbuf)
+| #cell RamVar (spad)
 
 \ -----------------------------------------
 
@@ -106,7 +106,7 @@ include core_terminal.fi
 include core_dict.fi
 include core_abort.fi
 include core_interp.fi
-\ include core_compile.fi
+include core_compile.fi
 
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

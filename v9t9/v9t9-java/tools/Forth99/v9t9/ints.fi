@@ -15,11 +15,11 @@
 \   Last VDP status
 |+ 1    RamVar vdp-status
 
-|+ cell RamVar 'vsprmot
+|+ #cell RamVar 'vsprmot
 
 \   Timer
 2 cells RamVar    vdp-ticks 
-cell    RamVar    vdp-timeout
+#cell    RamVar    vdp-timeout
 
 :   v-intflag-off?  ( mask -- t|f )
     v-intflags c@  AND  0=

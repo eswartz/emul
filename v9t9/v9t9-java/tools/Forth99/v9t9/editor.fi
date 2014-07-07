@@ -16,9 +16,9 @@
 4 constant tab-size
 
 \   Cursor column 
-cell RamVar 'col       ( 0 - c/l )
+#cell RamVar 'col       ( 0 - c/l )
 
-cell RamVar ovr        ( insert/overwrite flag )
+#cell RamVar ovr        ( insert/overwrite flag )
 
 \   Return number of columns left on the line
 : #left  ( -- left )
@@ -198,7 +198,7 @@ cell RamVar ovr        ( insert/overwrite flag )
 ; 
 
 \   Cursor line 
-cell RamVar 'line      ( 0 - l/blk )
+#cell RamVar 'line      ( 0 - l/blk )
 
 \ Convert the current line number to an address
 : >laddr    ( baddr -- laddr ) 
@@ -322,7 +322,7 @@ cell RamVar 'line      ( 0 - l/blk )
 \       $2: cursor moved OR redraw status
 \       $4: redraw block
 \       $8: move cursor to upper-left
-cell RamVar 'fl
+#cell RamVar 'fl
 
 : pause begin key? while key drop repeat  key drop ;
 : trace [char] ( emit r@ u. [char] ) emit space .s cr pause ;
@@ -566,9 +566,9 @@ here  edittab -  Constant  editsz
 \
 
 \ buffer for saved video state
-cell RamVar orig-video
-cell RamVar edit-video
-cell RamVar in-editor
+#cell RamVar orig-video
+#cell RamVar edit-video
+#cell RamVar in-editor
 
 : init-editor
     0 orig-video !
@@ -588,9 +588,9 @@ cell RamVar in-editor
     quit   
 ;
 
-cell RamVar 'lastscr
-cell RamVar 'lastline
-cell RamVar 'lastcol
+#cell RamVar 'lastscr
+#cell RamVar 'lastline
+#cell RamVar 'lastcol
 
 \ column for status
 &74 constant #statuscol
