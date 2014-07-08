@@ -9,13 +9,13 @@
     DP0 @       DP !
     (LATEST) @  >latest !
     
-			\ TODO    UP0 @       UDP !
-    
 		    \ TODO     >gram_dict_base  GDP !
     
     		\ TODO     GRAM
     
 			\  TODO      gheap dict-hinit
+    
+	UP0 @       UDP !
     
     (RAM0)  RAM !
     

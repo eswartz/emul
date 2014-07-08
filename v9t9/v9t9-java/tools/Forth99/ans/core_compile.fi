@@ -81,6 +81,11 @@ User STATE
 ; immediate target-only
 [THEN]
 
+[IFUNDEF] [']
+: [']
+    '  postpone LITERAL
+; immediate
+[THEN]
 
 
 User csp
@@ -450,12 +455,14 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 [THEN]
 
 [IFUNDEF] UDP
-2 RamVar UDP   target-only    
+#cell RamVar UDP   target-only    
 [THEN]
 
 [IFUNDEF] USER
 : USER
-    create UDP @ 
+    create
+    UDP @  
+    dup  (#up) >=  err-dict-overflow ?throw
     #cell UDP +!
     lastxt dp !  douser,
 ; target-only
@@ -497,4 +504,54 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 \ 0 ( has? standard-threading )     constant standard-threading 
 \ 1 ( has? inlining-next )  constant inlining-next
 \ has? profiling            constant profiling
+
+
+|test : eval2 s" : foo 1 2 + ; foo " ;
+test" evaluate-: eval2  evaluate  3 = "
+
+\ redefine message
+|test : eval3 s" : foo foo ; foo " ;
+test" evaluate-redef eval3  evaluate  3 = "
+
+|test : eval4 s" : num 12345 ; num " ;
+test" evaluate-lit eval4  evaluate 12345 = "
+
+|test : eval5 s" : bar foo 3 - ; bar " ;
+test" evaluate2 eval5  evaluate  0= "
+			
+|test : eval6 s" Variable var  12345 var !  var @ 12345 - " ;
+test" evaluate-var eval6  evaluate  0= "
+
+|test : eval7 s" 9999 Constant cn  9998 cn - " ;
+test" evaluate-var eval7  evaluate  -1 = "
+
+|test : eval7b s" -2 Constant cn  cn -2 = " ;
+test" evaluate-var  eval7b  evaluate   "
+
+|test : eval8 s" : loo 0  4 1 do  i  + loop ; loo  " ;
+test" evaluate-loop  eval8  evaluate  6 = "
+
+|test : eval8b s" : 2loo  0  4 1 do  5 2 do  i j * + loop loop ; 2loo  " ;
+test" evaluate-2loop  eval8b evaluate  $36 = "
+
+|test : eval9 s" : ife if 1+ else 2- then ;  0  0 ife ( 1)  dup ife ( -1)  " ;
+test" evaluate-ifelse  eval9 evaluate   "
+
+|test : eval10 s" : bwr 0 begin dup 10 < while 3 + repeat ; bwr  " ;
+test" evaluate-begin-while-repeat  eval10 evaluate  12 =  "
+
+|test : eval10b s" : bwr 0 begin  dup 10 <  while  dup   1 and if 3 else 2 then  +  repeat ; bwr  " ;
+test" evaluate-begin-while-repeat2  eval10b evaluate  10 =  "
+
+\ get the previous (eval10b) version
+|test : evaltick s" : et  ['] bwr execute ; et  " ;
+test" evaluate-tick evaltick  evaluate   10  =  "
+
+|test : evaluser s" User Flar  User Bar   1 Flar !  2 Bar !   Flar @ Bar @ -  " ;
+test" evaluate-user evaluser  evaluate  -1 = "
+
+
+\ Make sure none of the above stomped on the dictionary
+|test : evalX s" ' var drop " ;
+test" evaluate-validateDictionary evalX evaluate  true "
 

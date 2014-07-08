@@ -561,7 +561,8 @@ public abstract class TargetContext extends Context implements ITargetContext {
 			entry = new DictEntry(0, getDP(), name);
 			exportFlagNext = false;
 			// assume address
-			symbols.put(value, name);
+			if (isLikelyAddress(value))
+				symbols.put(value, name);
 		}
 		if (!isNativeDefinition())
 			compileDoConstant(value, cells);
@@ -571,6 +572,12 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		return constant;
 	}
 	
+	/**
+	 * @param value
+	 * @return
+	 */
+	abstract protected boolean isLikelyAddress(int value);
+
 	/**
 	 * @param name
 	 * @param forwardRef 

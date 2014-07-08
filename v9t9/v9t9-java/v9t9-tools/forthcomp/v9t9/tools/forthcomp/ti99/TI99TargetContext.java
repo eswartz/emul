@@ -839,7 +839,7 @@ public class TI99TargetContext extends TargetContext  {
 //		defineInlinePrim("I'", Irpidx, 1);
 		defineInlinePrim("J",
 				StockInstruction.PUSH_TOS,
-				Imov, regOffs(REG_RP, cellSize), TOS
+				Imov, regOffs(REG_RP, cellSize * 2), TOS
 				);
 				
 //		defineInlinePrim("J'", Irpidx, 3);
@@ -1719,5 +1719,13 @@ public class TI99TargetContext extends TargetContext  {
 			throws AbortException {
 		super.buildPushString(hostContext, string);
 		alignDP();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.TargetContext#isLikelyAddress(int)
+	 */
+	@Override
+	protected boolean isLikelyAddress(int value) {
+		return value >= 0x4000 && value <= 0xFF00;
 	}
 }

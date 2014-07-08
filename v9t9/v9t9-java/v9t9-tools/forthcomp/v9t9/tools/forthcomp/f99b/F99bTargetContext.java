@@ -1031,4 +1031,12 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	public boolean isNativeDefinition() {
 		return true;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.TargetContext#isLikelyAddress(int)
+	 */
+	@Override
+	protected boolean isLikelyAddress(int value) {
+		return value >= 0x4000 && value <= 0xFF00;
+	}
 }
