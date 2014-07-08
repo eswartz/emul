@@ -17,3 +17,5 @@
 ' minimal-CATCH 	TO CATCH
 
 
+: exc-init 
+;

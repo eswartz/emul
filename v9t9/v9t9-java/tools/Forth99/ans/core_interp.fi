@@ -259,8 +259,20 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
 ;
 [THEN]
 
-[IFUNDEF] REFILL
-: REFILL    ( -- flag )
+
+| : overstrike
+    8 emit bl emit 8 emit
+;
+
+| : clear ( n -- )
+    0 ?do  overstrike  loop
+;
+              
+\ : prompt ." type stuff> " ;
+\ test" accept prompt pad 5 accept pad swap $2a emit type $2a emit  1"
+
+
+: core-REFILL    ( -- flag )
 
 \   Attempt to fill the input buffer from the input source, returning
 \   a true flag if successful.
@@ -292,8 +304,7 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
         dup -1 = if         \ evaluate string
             drop false      \ end.
         else
-        	hang
-        ( ?dup 0= if         \ user input device
+         ?dup 0= if         \ user input device
             TIB #TIB  accept  #source !  TIB >source !
             0 >in ! 
             bl emit
@@ -301,11 +312,12 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
          else 
             \ fileid
             err-file-i/o ?throw
-        then ) 
+        then  
         then
     ( then )
 ;
-[THEN]
+
+' core-REFILL	TO	REFILL
 
 [IFUNDEF] QUERY
 \ : QUERY
@@ -536,13 +548,19 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
 [IFUNDEF] QUIT
 
 | : (clrsrc)
-    0 blk ! 0 loadfile ! 0 loadline !
-    0 'lfind !
+\ TODO block
+   ( 0 blk ! ) 
+    
+    0 loadfile ! 0 loadline !
+    \ 0 'lfind !		\ TODO: ?
 ;
 
 | : ok-prompt?
     \ print comments only when using user input
-    blk @ source-id and 0= if 
+\ TODO block    
+    ( blk @ source-id and 0= )
+    source-id 0= 
+    if 
         state @ 0= if
             msg-ok message  .s
         then
@@ -565,6 +583,24 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
     then then then
 ;
 
+
+[IFUNDEF] STATE
+User STATE
+[THEN]
+
+[IFUNDEF] [
+: [
+    0 state !
+; immediate target-only
+[THEN]
+
+[IFUNDEF] ]
+: ]
+    -1 state !
+; target-only
+[THEN]
+
+
 : QUIT
     rp0 rp! 
     exc-init
@@ -574,24 +610,12 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
         ints-check
         refill
     while
-\        interpret
-\        ok-prompt?
         safe-interpret
     repeat
     bye
 ;
 [THEN]
 
-\ [IFUNDEF] SOURCE
-\ : SOURCE    ( -- caddr u )
-\     \ TODO block
-\     ( blk @ ?dup if )
-\     \   block  chars/block
-\     \ else
-\         >source @  #source @
-\     \ then
-\ ;
-\ [THEN]
 
 [IFUNDEF] [CHAR]
 : [CHAR]
@@ -632,8 +656,6 @@ test" >number 0. testnum  >number 2drop  1. d+ or 0="
     UNTIL drop 
 ; immediate  target-only 
   
-: [THEN] ( -- ) ; immediate  target-only
-
 : [THEN] ( -- ) ; immediate  target-only
 
 : [IF] ( flag -- )

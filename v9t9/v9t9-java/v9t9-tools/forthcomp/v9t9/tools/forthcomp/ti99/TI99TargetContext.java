@@ -1076,6 +1076,11 @@ public class TI99TargetContext extends TargetContext  {
 				Iclr, TOS
 				);
 		
+		defineInlinePrim("INTS-CHECK", 
+				Ilimi, immed(1),
+				Ilimi, immed(0)
+				);
+		
 		// neat, but not enough uses to justify (one cell longer than FORTH)
 //		definePrim("WITHIN",   // ( test low high -- flag )
 //

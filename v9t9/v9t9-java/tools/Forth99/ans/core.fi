@@ -68,10 +68,10 @@
 \ Core
 DEFER	SOURCE
 DEFER	."			immediate  target-only
-DEFER	QUIT
 
-\ Block
+\ Block / Terminal
 DEFER	REFILL
+DEFER	ACCEPT
 \ DEFER	\			target-only
 
 \ Exception

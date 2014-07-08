@@ -66,12 +66,16 @@ include 9900.fi
 
 include ../ans/core.fi
 include ../ans/core_unhosted.fi
+include ../ans/core_accept_simple.fi
 include ../ans/core-ext.fi
 
 include ../ans/exception.fi
 include ../ans/exception_minimal.fi
 
 include ../v9t9/strings.fi
+
+include ../ans/tools.fi
+
 include cold.fi
 
 \ TEMP
@@ -286,7 +290,7 @@ test" evaluate1 eval1 evaluate 	true "
 
 s" TESTING" environment? [IF]	
 	| : tests-completed
-		hang
+		quit
 	;
 [THEN]
 
@@ -298,10 +302,14 @@ s" TESTING" environment? [IF]
 
 	    decimal
 
+[ s" TESTING" environment? [IF] ]
 		runtests
 		
-		\ NOTREACHED
-		hang
+		\ notreached -- tests-completed instead
+[ [ELSE] ]
+		quit
+[ [THEN] ]
+		
 	;
 
 

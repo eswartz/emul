@@ -5,7 +5,7 @@
 ' unhosted-EMIT 	TO EMIT
 
 | : unhosted-KEY ( --  k )
-	begin again
+	HANG
 ;
 ' unhosted-KEY 		TO KEY
 
@@ -13,11 +13,6 @@
 	false
 ;
 ' unhosted-KEY? 	TO KEY?
-
-: unhosted-QUIT ( -- )
-	BEGIN  KEY EMIT  AGAIN
-;
-' unhosted-QUIT		TO QUIT
 
 : unhosted-ABORT ( i*x -- ) ( R: j*x -- )
 \ Empty the data stack and perform the function of QUIT, which includes 
