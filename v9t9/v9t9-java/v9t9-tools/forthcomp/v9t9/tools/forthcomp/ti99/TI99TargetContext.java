@@ -976,18 +976,14 @@ public class TI99TargetContext extends TargetContext  {
 			"0"
 				);
 		
-//		//definePrim("(CONTEXT>)", IcontextFrom);
-//		//definePrim("(>CONTEXT)", ItoContext);
-//		//definePrim("(USER)", Iuser);
-//
-		defineInlinePrim("0<", 
+		definePrim("0<", 
 				Imov, TOS, TOS,
 				Iseto, TOS,
 				Ijlt, ">0",
 				Iclr, TOS,
 			"0"
 				);
-		defineInlinePrim("0>", 
+		definePrim("0>", 
 				Imov, TOS, TOS,
 				Iseto, TOS,
 				Ijgt, ">0",
@@ -995,44 +991,35 @@ public class TI99TargetContext extends TargetContext  {
 			"0"
 				);
 				
-//		defineInlinePrim("0<=", IlitX, Icmp+CMP_LE);
-//		defineInlinePrim("0>=", IlitX, Icmp+CMP_GE);
-//		defineInlinePrim("0U<", IlitX, Icmp+CMP_ULT);
-//		defineInlinePrim("0U<=", IlitX, Icmp+CMP_ULE);
-//		defineInlinePrim("0U>", IlitX, Icmp+CMP_UGT);
-//		defineInlinePrim("0U>=", IlitX, Icmp+CMP_UGE);
-		defineInlinePrim("<=", 
+		definePrim("<=", 
 				Ic, regInc(REG_SP), TOS,
 				Iclr, TOS,
 				Ijgt, ">0",
 				Iseto, TOS,
 			"0"
 				);
-//		defineInlinePrim(">", Icmp+CMP_GT);
-//		defineInlinePrim(">=", Icmp+CMP_GE);
-		defineInlinePrim("U<", 
+		definePrim("U<", 
 				Ic, regInc(REG_SP), TOS,
 				Iseto, TOS,
 				Ijl, ">0",
 				Iclr, TOS,
 			"0"
 				);
-		defineInlinePrim("<", 
+		definePrim("<", 
 				Ic, regInc(REG_SP), TOS,
 				Iseto, TOS,
 				Ijlt, ">0",
 				Iclr, TOS,
 			"0"
 				);
-//		defineInlinePrim("U<=", Icmp+CMP_ULE);
-		defineInlinePrim("U>", 
+		definePrim("U>", 
 				Ic, regInc(REG_SP), TOS,
 				Iseto, TOS,
 				Ijh, ">0",
 				Iclr, TOS,
 			"0"
 				);
-		defineInlinePrim(">", 
+		definePrim(">", 
 				Ic, regInc(REG_SP), TOS,
 				Iseto, TOS,
 				Ijgt, ">0",
@@ -1040,27 +1027,6 @@ public class TI99TargetContext extends TargetContext  {
 			"0"
 				);
 		
-//		defineInlinePrim("U>=", Icmp+CMP_UGE);
-//
-//		defineInlinePrim("D0<", IlitX_d, Icmp+CMP_LT);
-//		defineInlinePrim("D0<=", IlitX_d, Icmp+CMP_LE);
-//		defineInlinePrim("D0>", IlitX_d, Icmp+CMP_GT);
-//		defineInlinePrim("D0>=", IlitX_d, Icmp+CMP_GE);
-//		defineInlinePrim("DU0<", IlitX_d, Icmp+CMP_ULT);
-//		defineInlinePrim("DU0<=", IlitX_d, Icmp+CMP_ULE);
-//		defineInlinePrim("DU0>", IlitX_d, Icmp+CMP_UGT);
-//		defineInlinePrim("DU0>=", IlitX_d, Icmp+CMP_UGE);
-//		defineInlinePrim("D<", Icmp_d+CMP_LT);
-//		defineInlinePrim("D<=", Icmp_d+CMP_LE);
-//		defineInlinePrim("D>", Icmp_d+CMP_GT);
-//		defineInlinePrim("D>=", Icmp_d+CMP_GE);
-//		defineInlinePrim("DU<", Icmp_d+CMP_ULT);
-//		defineInlinePrim("DU<=", Icmp_d+CMP_ULE);
-//		defineInlinePrim("DU>", Icmp_d+CMP_UGT);
-//		defineInlinePrim("DU>=", Icmp_d+CMP_UGE);
-//		
-//		defineInlinePrim("(unloop)", IRfrom, Irdrop_d, ItoR);
-//		defineInlinePrim("2rdrop", Irdrop_d);
 		defineInlinePrim("2/",
 				Isra, TOS, immed(1)
 				);
@@ -1088,23 +1054,9 @@ public class TI99TargetContext extends TargetContext  {
 				StockInstruction.POP_TOS,
 				Isrc, TOS, immed(0)
 				);
-//		
 		defineInlinePrim("SWPB", 
 				Iswpb, TOS
 				);
-//		
-//		defineInlinePrim("DLSHIFT", Ilsh_d);
-//		defineInlinePrim("DRSHIFT", Iash_d);
-//		defineInlinePrim("DURSHIFT", Irsh_d);
-//		defineInlinePrim("DCRSHIFT", Icsh_d);
-//		
-		
-//
-//		defineInlinePrim("2DROP", Idrop_d);
-//		defineInlinePrim("D>Q", Idup, IlitX, Icmp + CMP_LT, Idup);
-//		defineInlinePrim("DUM/MOD", Iudivmod_d);
-//		
-//		defineInlinePrim("S>D", Idup, IlitX, Icmp+CMP_LT);
 
 		definePrim("EXECUTE",
 				//Idect, reg(REG_RP),
@@ -1115,9 +1067,6 @@ public class TI99TargetContext extends TargetContext  {
 				//Imov, regInc(REG_RP), reg(REG_IP)
 				);
 
-//		//defineInlinePrim("DOVAR", IbranchX|0, Idovar);
-//		//defineInlinePrim("DOLIT", IlitW, 0, 0, Iexit);
-//		
 		defineInlinePrim("TRUE", 
 				StockInstruction.PUSH_TOS,
 				Iseto, TOS
@@ -1126,6 +1075,25 @@ public class TI99TargetContext extends TargetContext  {
 				StockInstruction.PUSH_TOS,
 				Iclr, TOS
 				);
+		
+		// neat, but not enough uses to justify (one cell longer than FORTH)
+//		definePrim("WITHIN",   // ( test low high -- flag )
+//
+//				Imov, regInc(REG_SP), R3,
+//				Is, R3, TOS, 	// range: high - low
+//				Imov, regInc(REG_SP), TMP, 	// test
+//				Is, R3, TMP,
+//				Ic, TMP, TOS,
+//				
+//				Iseto, TOS,		// assume in range
+//				Ijl, ">1",
+//				
+//				Iclr, TOS,		// oops, not
+//				
+//			"1"
+//				);
+		
+		
 
 //		/** Move memory backward (src -> dst)
 //		( src dst # -- )
@@ -1227,14 +1195,6 @@ public class TI99TargetContext extends TargetContext  {
 				StockInstruction.POP_TOS
 				);
 
-//		defineInlinePrim("(FILL)", Ifill);
-//		defineInlinePrim("(CFILL)", Icfill);
-//		defineInlinePrim("(CMOVE)", Icmove);
-//		
-//		defineInlinePrim("(LITERAL)", IlitW);
-//		defineInlinePrim("(DLITERAL)", IlitD_d);
-//		
-//		//defineInlinePrim("(S\")", IcontextFrom, CTX_PC, IlitX | 5, Iadd, Idup, I1plus, Iswap, Icload);
 		definePrim("(S\")",
 				//rdrop r@ dup 1+ swap c@ dup r> + 1+  >r
 				Iai, reg(REG_SP), immed(-cellSize * 2),
@@ -1340,8 +1300,10 @@ public class TI99TargetContext extends TargetContext  {
 		        // convert to XT
 		        Imovb, regOffs(REG_TOS, cellSize), lengthAndFlags,		// save NFA flag bits
 		        Imov, TMP, TOS,
+		        
+		        // align
 		        Iinc, TOS,
-		        Iandi, TOS, immed(-2),
+		        Iandi, TOS, immed(-cellSize),		
 		        
 		        Imov, TOS, regInd(REG_SP),  // overwrite caddr with xt
 		        
