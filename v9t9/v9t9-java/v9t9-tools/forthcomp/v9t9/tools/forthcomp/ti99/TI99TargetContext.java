@@ -1260,15 +1260,21 @@ public class TI99TargetContext extends TargetContext  {
 				Iidle
 				);
 		
+		LLOperand lengthAndFlags = reg(12);  // should be saved
+		LLOperand charTemp = reg(4);	// must be saved
+		int REG_charPtr = 11;
+		LLOperand charPtr = reg(REG_charPtr);	// not saved
+		LLOperand counter = reg(5);	// must be saved
+
 		definePrim("(lfind)",
 		        // find word in dictionary        ( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )     
 		        // lfa is nfa - #cell
 
 				// save clobbered regs
 				Iai, reg(REG_RP), immed(-cellSize * 3),
-				Imov, reg(4), regOffs(REG_RP, cellSize * 2),
-				Imov, reg(5), regOffs(REG_RP, cellSize),
-				Imov, reg(12), regOffs(REG_RP, 0),
+				Imov, charTemp, regOffs(REG_RP, cellSize * 2),
+				Imov, counter, regOffs(REG_RP, cellSize),
+				Imov, lengthAndFlags, regOffs(REG_RP, 0),
 				
 				Imov, TOS, TOS, 	// TOS=LFA
 				Ijeq, ">failed",			// fail
@@ -1276,15 +1282,15 @@ public class TI99TargetContext extends TargetContext  {
 				// search list 
 
 				Iclr, reg(REG_R3),
-				Iclr, reg(4),
+				Iclr, charTemp,
 		        
-		        Imov, regInd(REG_SP), reg(11), // R11=char ptr
+		        Imov, regInd(REG_SP), charPtr,
 		        
-		        Imovb, regInd(11), TMP, // R12= [ expected byte | length ]
-		        Imovb, TMP, reg(12), 
-		        Iswpb, reg(12),
-		        Imovb, TMP, reg(12), 
-		        Iori, reg(12), immed(0x8000),		// not smudged
+		        Imovb, regInd(REG_charPtr), TMP, // [ expected byte | length ]
+		        Imovb, TMP, lengthAndFlags, 
+		        Iswpb, lengthAndFlags,
+		        Imovb, TMP, lengthAndFlags, 
+		        Iori, lengthAndFlags, immed(0x8000),		// not smudged
 		        
 		        Ijmp, ">wordStart",
 
@@ -1298,41 +1304,41 @@ public class TI99TargetContext extends TargetContext  {
 				// check length & flags
 				Imovb, regOffs(REG_TOS, 2), reg(REG_R3),  
 				Iandi, reg(REG_R3), immed(~0x4000), 	// keep all but immediate bit 
-		        Isb, reg(12), reg(REG_R3),				// subtract both smudge & length -- should be 0x00 or 0x40
+		        Isb, lengthAndFlags, reg(REG_R3),				// subtract both smudge & length -- should be 0x00 or 0x40
 				Ijne, ">wordLoop",
 				
 		        Imov, TOS, TMP,                    // new NFA to check
         		Iai, TMP, immed(3),
         		
-		        Imov, reg(11), reg(REG_R2),
+		        Imov, charPtr, reg(REG_R2),
 		        Iinc, reg(REG_R2),
-		        Imov, reg(12), reg(5),
-		        Iandi, reg(5), immed(0xFF),
+		        Imov, lengthAndFlags, counter,
+		        Iandi, counter, immed(0xFF),
 		        
 		   "charLoop",
 		   		Imovb, regInc(REG_TMP), reg(REG_R3), 
-		   		Imovb, regInc(REG_R2), reg(4),
+		   		Imovb, regInc(REG_R2), charTemp,
 		   		
-		   		Icb, reg(REG_R3), reg(4),
+		   		Icb, reg(REG_R3), charTemp,
 		   		Ijeq, ">match",                     // exact match?
 
 		   		// see if they might be letters that differ in case only
-		   		Ixor, reg(REG_R3), reg(4),
-		        Ici, reg(4), immed(0x2000),              // differ in case bit?
+		   		Ixor, reg(REG_R3), charTemp,
+		        Ici, charTemp, immed(0x2000),              // differ in case bit?
 		        Ijne, ">wordLoop",
 		        
 		        // okay, exclude matches in punctuation 
-		        Iszc, reg(4), reg(REG_R3),                            // turn off case in matching char
+		        Iszc, charTemp, reg(REG_R3),                            // turn off case in matching char
 		        Iai, reg(REG_R3), immed(-0x4100),
 		        Ici, reg(REG_R3), immed(0x5A00 - 0x4100),
 		        Ijhe, ">wordLoop",
 		        
 		"match",
-		        Idec, reg(5),
+		        Idec, counter,
 		        Ijgt, ">charLoop",
 
 		        // convert to XT
-		        Imovb, regOffs(REG_TOS, cellSize), reg(5),		// save NFA flag bits
+		        Imovb, regOffs(REG_TOS, cellSize), lengthAndFlags,		// save NFA flag bits
 		        Imov, TMP, TOS,
 		        Iinc, TOS,
 		        Iandi, TOS, immed(-2),
@@ -1342,7 +1348,7 @@ public class TI99TargetContext extends TargetContext  {
 		        // assume not immediate
 		        Iseto, TOS,
 		        
-		        Iandi, reg(5), immed(0x4000),	// immediate?
+		        Iandi, lengthAndFlags, immed(0x4000),	// immediate?
 		        Ijeq, ">reset",
 		        
 		        // immediate
@@ -1355,9 +1361,9 @@ public class TI99TargetContext extends TargetContext  {
 		    	
 		"reset",
 				// restore
-				Imov, regInc(REG_RP), reg(12),
-				Imov, regInc(REG_RP), reg(5),
-				Imov, regInc(REG_RP), reg(4)
+				Imov, regInc(REG_RP), lengthAndFlags,
+				Imov, regInc(REG_RP), counter,
+				Imov, regInc(REG_RP), charTemp
 		);
 	}
 
