@@ -1271,7 +1271,7 @@ public class TI99TargetContext extends TargetContext  {
 				Imov, reg(12), regOffs(REG_RP, 0),
 				
 				Imov, TOS, TOS, 	// TOS=LFA
-				Ijeq, ">9",			// fail
+				Ijeq, ">failed",			// fail
 
 				// search list 
 
@@ -1279,59 +1279,60 @@ public class TI99TargetContext extends TargetContext  {
 				Iclr, reg(4),
 		        
 		        Imov, regInd(REG_SP), reg(11), // R11=char ptr
-		        Iclr, reg(12),		
-		        Imovb, regInd(11), reg(12), // R12=length
-		        Ijmp, ">2",
+		        
+		        Imovb, regInd(11), TMP, // R12= [ expected byte | length ]
+		        Imovb, TMP, reg(12), 
+		        Iswpb, reg(12),
+		        Imovb, TMP, reg(12), 
+		        Iori, reg(12), immed(0x8000),		// not smudged
+		        
+		        Ijmp, ">wordStart",
 
-		"4",
-		    	Imov, regOffs(REG_TOS, -cellSize), TOS, // get LFA to new one...
-		    	Ijeq, ">9",                // if end... (unlikely)
+		"wordLoop",
+		    	Imov, regInd(REG_TOS), TOS, 	// get LFA to new one...
+		    	Ijeq, ">failed",                // if end... (unlikely)
 
-		"2",
-		        Iinct, TOS,                       // LFA>NFA
+		"wordStart",
+				// TOS = LFA, followed by [len] "name"
+		
+				// check length & flags
+				Imovb, regOffs(REG_TOS, 2), reg(REG_R3),  
+				Iandi, reg(REG_R3), immed(~0x4000), 	// keep all but immediate bit 
+		        Isb, reg(12), reg(REG_R3),				// subtract both smudge & length -- should be 0x00 or 0x40
+				Ijne, ">wordLoop",
+				
 		        Imov, TOS, TMP,                    // new NFA to check
-
-		        Imovb, regInc(REG_TMP), reg(REG_R3),
-		        Ijgt, ">4",                       // hidden word ($80 not set) (unlikely)
-
-		        Isb, reg(12), reg(REG_R3),
-		        Iandi, reg(REG_R3), immed(0x1F00),               // compare lengths 
-		        Ijne, ">4",  						//  nope (likely)
-
+        		Iai, TMP, immed(3),
+        		
 		        Imov, reg(11), reg(REG_R2),
 		        Iinc, reg(REG_R2),
 		        Imov, reg(12), reg(5),
-		        Iswpb, reg(5),
+		        Iandi, reg(5), immed(0xFF),
 		        
-		   "3",
+		   "charLoop",
 		   		Imovb, regInc(REG_TMP), reg(REG_R3), 
 		   		Imovb, regInc(REG_R2), reg(4),
 		   		
 		   		Icb, reg(REG_R3), reg(4),
-		   		Ijeq, ">1",                     // exact match?
+		   		Ijeq, ">match",                     // exact match?
 
 		   		// see if they might be letters that differ in case only
 		   		Ixor, reg(REG_R3), reg(4),
 		        Ici, reg(4), immed(0x2000),              // differ in case bit?
-		        Ijne, ">4",
+		        Ijne, ">wordLoop",
 		        
-		        // double-check they're really letters and not punctuation
+		        // okay, exclude matches in punctuation 
 		        Iszc, reg(4), reg(REG_R3),                            // turn off case in matching char
-		        Ici, reg(REG_R3), immed(0x4100),
-		        Ijl, ">4",
-		        Ici, reg(REG_R3), immed(0x5A00),
-		        Ijh, ">4",
+		        Iai, reg(REG_R3), immed(-0x4100),
+		        Ici, reg(REG_R3), immed(0x5A00 - 0x4100),
+		        Ijhe, ">wordLoop",
 		        
-		"1",
+		"match",
 		        Idec, reg(5),
-		        Ijgt, ">3",
+		        Ijgt, ">charLoop",
 
 		        // convert to XT
-		        Imovb, regInc(REG_TOS), reg(5),		// save info
-		        
-		        // we are at the end of the NFA in REG_TMP
-//		        Isrl, reg(12), immed(8),
-//		        Ia, reg(12), TOS,
+		        Imovb, regOffs(REG_TOS, cellSize), reg(5),		// save NFA flag bits
 		        Imov, TMP, TOS,
 		        Iinc, TOS,
 		        Iandi, TOS, immed(-2),
@@ -1342,17 +1343,17 @@ public class TI99TargetContext extends TargetContext  {
 		        Iseto, TOS,
 		        
 		        Iandi, reg(5), immed(0x4000),	// immediate?
-		        Ijeq, ">99",
+		        Ijeq, ">reset",
 		        
 		        // immediate
 		        Ineg, TOS,
 		        
-		        Ijmp, ">99",
+		        Ijmp, ">reset",
 		    
-		"9",    
+		"failed",    
 		    	Iclr, TOS,                 // failed
 		    	
-		"99",
+		"reset",
 				// restore
 				Imov, regInc(REG_RP), reg(12),
 				Imov, regInc(REG_RP), reg(5),
