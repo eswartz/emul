@@ -1,0 +1,57 @@
+
+;       V9T9 ROM!
+;
+;   This ROM is designed for use by FORTH.  Thus it consists mainly of
+;   primitive routines upon which more complex behavior can be implemented
+;   in FORTH.  
+;
+;   Also, this ROM is *banked* with FORTH.  Thus, the ROM range may
+;   either be this assembly ROM or the first part of the FORTH ROM based
+;   on the address last written to in the ROM area.  (Div by 4 = bank 0 =
+;   this ROM, not div by 4 = bank 1 = FORTH ROM.)  (This method of switching
+;   banks is a quite easy way to catch stray pointer accesses!)
+;
+;   The two ROMs communicate with each other only through XOP 1.
+;   Interrupts may also be triggered in either ROM.  Thus, the workspaces
+;   that XOP and FORTH use must be different, as must the interrupt 
+;   workspace.  
+;
+;   The general style of the ROM is to use a small number of workspaces
+;   and a set of stacks for register management (sysstack and vidstack). 
+;
+;   "StdWP" is used for startup and for FORTH operation thereafter.
+;   This ROM does not use that workspace again.
+;
+
+;==========================================================================
+;	ROM start (must match f9900rom.f99)
+;==========================================================================
+
+
+StdWP	equ	>FFC0
+IntWP	equ	>FFE0
+
+	aorg	>0
+
+resetv		dw	StdWP, INT0PC		; vector for RESET
+int1v		dw	IntWP, INT1PC		; vector for INTERRUPTS
+
+; Remaining interrupt vectors
+	bss		14 * 4
+
+MMIO 
+	bss 	>40
+
+CRU
+	bss		>80
+
+	aorg	>100
+	
+INT0PC
+	
+INT1PC
+
+	aorg 	>110
+	
+
+

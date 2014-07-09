@@ -564,7 +564,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 			if (isLikelyAddress(value))
 				symbols.put(value, name);
 		}
-		if (!isNativeDefinition())
+		if (!isNativeDefinition() && mustDefine)
 			compileDoConstant(value, cells);
 		
 		entry.setCodeSize(getDP() - entry.getAddr() - cells * cellSize);

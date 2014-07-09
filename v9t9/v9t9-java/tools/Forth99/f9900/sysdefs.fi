@@ -113,19 +113,6 @@ $00ff       constant    'DBG
 
 \   -----------------------    
 
-$0100       constant    ROM
-
-ROM         constant    (BOOT)
-ROM 2 +     constant    (COLD)
-ROM 4 +     constant    DP0
-ROM 6 +     constant    (LATEST)
-
-$ffa0       constant    FaultStacks \ ... 0x20
-
-$ffc0       constant    Workspaces \ ... 0x40
-	Workspaces $00 + 	constant StdWP
-	Workspaces $20 + 	constant IntWP
-
 |+ $0       constant    IntVecs     \ ... 0x40
 
 |+     0       constant    INT_RESET

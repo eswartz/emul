@@ -49,7 +49,7 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	public static final int CRU_BASE = 0x80;
 	public static final int CRU_END = 0x100;
 	
-	public static final int COLD = 0x100;
+	public static final int COLD = 0x114;
 	
 	private final IMachine machine;
 		

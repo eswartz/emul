@@ -8,36 +8,52 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-\   ROM Memory layout
+\   ROM Memory layout -- must match f9900rom.tsm
 
-$0		dp!
+0 <export
 
-\ Intvec 0: RESET
-0 ,  0 ,
+$0100		constant	SHARED
 
-\ Intvec 1: VDP
-0 ,  0 ,
+$0110       constant    ROM
 
-\ Remaining interrupt vectors
-14 4 *  allot
+ROM 0 +     constant    @RESET
+ROM 2 +     constant    @BYE
+ROM 4 +     constant    @COLD
+ROM 6 +     constant    @DP0
+ROM 8 +     constant    @LATEST
 
-\ MMIO @0x40
-$40 allot
+$ffc0       constant    Workspaces \ ... 0x40
+	Workspaces $00 + 	constant StdWP
+	Workspaces $20 + 	constant IntWP
 
-\ CRU @0x80
-$80 allot
+export>
 
 \ ................................
 
-$100    dp!
+\	Lay out INT 0 (note: the ASM ROM will construct this too, after this Forth ROM is built)
 
-\   cold address
+0			dp!
+
+\ int vecs
+StdWP ,  ' (RESET) ,
+
+\ ................................
+
+ROM  	  	dp!
+
+\ 	reset address @RESET
+0  ,
+
+\ 	bye address @BYE
+0  ,
+
+\   cold address @COLD
 0 ,
 
-\   initial dictionary
+\   initial dictionary @DP0
 0 ,
 
-\   initial latest
+\   initial latest @LATEST
 0 ,
 
 (define-prims)
@@ -50,7 +66,7 @@ undef DValue
 
 0 <EXPORT
 
-include sysdefs.fi
+include	sysdefs.fi
 
 include ../v9t9/errcodes.fi
 
@@ -344,8 +360,9 @@ s" TESTING" environment? [IF]
 			
 [THEN]
 
-' bye   (BOOT)     !
-' cold  (COLD)     !
+' (reset)	@reset	!   
+' bye   	@BYE	!
+' cold  	@COLD	!
 
 s" TESTING" environment? [IF] 
 TESTS!
@@ -356,18 +373,14 @@ ramptr @  1- aligned  constant (RAM0)
 |+ #cell RamVar RAM
 
 \ align dictionary to a memory area, so memory images aren't often broken
-here $3ff +  $3ff INVERT and  DP0        !
+here $3ff +  $3ff INVERT and  @DP0        !
 
 [ifdef] grom-dictionary
-$0       (LATEST)   !
+$0       @LATEST   !
 [else]
-latest   (LATEST)   !
+latest   @LATEST   !
 [THEN]
 
-
-\ set up int vecs
-StdWP  0  !		' (reset)  2  !   
-\ IntWP  4  !		' bye  6  !   
 
 \ make sure we're sane
 ." # rom defers: " (#rdefers) . cr
@@ -375,8 +388,8 @@ StdWP  0  !		' (reset)  2  !
 
 hex
 here ." HERE = " u. cr
-dp0 @ ." DP0 = " u. cr
-(latest) @  ." (latest) = " u. cr
+@dp0 @ ." @DP0 = " u. cr
+@latest @  ." @latest = " u. cr
 up0 @ ." UP0 = " u. cr
 ramptr @ ." RAMPTR = " u. cr
 RamTop ." RAMTOP = " u. cr

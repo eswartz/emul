@@ -6,8 +6,8 @@
 
 
 : cold-init
-    DP0 @       DP !
-    (LATEST) @  >latest !
+    @DP0 @       	DP  !
+    @LATEST @  		>latest !
     
 		    \ TODO     >gram_dict_base  GDP !
     
