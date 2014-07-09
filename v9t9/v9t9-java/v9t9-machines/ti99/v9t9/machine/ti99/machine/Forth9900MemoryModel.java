@@ -29,14 +29,17 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.engine.memory.GplMmio;
+import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.MultiBankedMemoryEntry;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.f99b.memory.EnhancedRamByteArea;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 import v9t9.machine.ti99.memory.mmio.Forth9900ConsoleMmioArea;
 import ejs.base.properties.IProperty;
 import ejs.base.utils.FileUtils;
+import ejs.base.utils.Pair;
 
 
 /**
@@ -44,6 +47,30 @@ import ejs.base.utils.FileUtils;
  * @author ejs
  */
 public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
+	public class Forth9900ConsoleMemoryEntry extends MemoryEntry {
+		private Forth9900ConsoleMemoryEntry(String name, IMemoryDomain domain,
+				int addr, int size, MemoryArea area) {
+			super(name, domain, addr, size, area);
+		}
+
+		@Override
+		public String lookupSymbol(short addr) {
+			String symb = super.lookupSymbol(addr);
+			if (symb == null)
+				symb = bankedRomMemoryEntry.lookupSymbol(addr);
+			return symb;
+		}
+
+		@Override
+		public Pair<String, Short> lookupSymbolNear(short addr,
+				int range) {
+			Pair<String, Short> info = super.lookupSymbolNear(addr, range);
+			if (info == null)
+				info = bankedRomMemoryEntry.lookupSymbolNear(addr, range);
+			return info;
+		}
+	}
+
 	private static final Logger log = Logger.getLogger(Forth9900MemoryModel.class);
 	
 	private MemoryEntry consoleEntry;
@@ -54,7 +81,14 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 
 	private IMemoryEntry gramMemoryEntry;
 
-	private IMemoryEntry cpuRomEntry;
+	private IMemoryEntry cpuForthRomEntry;
+	private IMemoryEntry cpuRomBankEntry;
+
+	private MemoryEntry mmioEntry;
+
+	private MultiBankedMemoryEntry bankedRomMemoryEntry;
+
+	private Forth9900ConsoleMmioArea mmioArea;
 
 	public Forth9900MemoryModel(IMachine machine) {
 		super(machine);
@@ -79,15 +113,22 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 	}
 	
 	protected void defineMmioMemory(IBaseMachine machine) {
-		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0x0000, 0x0400,
-                new Forth9900ConsoleMmioArea((IMachine) machine)));
+		//this.memory.addAndMap(mmioEntry);
+		mmioArea = new Forth9900ConsoleMmioArea((IMachine) machine);
+		mmioEntry = new Forth9900ConsoleMemoryEntry("MMIO", CPU, 0x0000, 0x0400, mmioArea);
 	}
 	
-	private static MemoryEntryInfo f99bRomMemoryEntryInfo = MemoryEntryInfoBuilder
-		.byteMemoryEntry()
+	private static MemoryEntryInfo f9900RomMemoryEntryInfo = MemoryEntryInfoBuilder
+		.wordMemoryEntry()
 		.withFilename("f9900rom.bin")
 		.withSize(-0x10000)
-		.create("Forth9900 CPU ROM");
+		.create("Forth9900 Forth ROM");
+
+	private static MemoryEntryInfo f9900BankedRomMemoryEntryInfo = MemoryEntryInfoBuilder
+			.wordMemoryEntry()
+			.withFilename("f9900rombank.bin")
+			.withSize(-0x10000)
+			.create("Forth9900 CPU ROM Bank");
 
 	private static String FORTH_GROM = "f9900grom.bin";
 	
@@ -119,25 +160,44 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 	@Override
 	public void loadMemory(IEventNotifier eventNotifier) {
     	try {
-			cpuRomEntry = memory.getMemoryEntryFactory().newMemoryEntry(
-					f99bRomMemoryEntryInfo);
-			cpuRomEntry.load();
-			cpuRomEntry.copySymbols(CPU);
+    		// get the FORTH ROM (biggest, bank #0)
+			cpuForthRomEntry = memory.getMemoryEntryFactory().newMemoryEntry(
+					f9900RomMemoryEntryInfo);
+			cpuForthRomEntry.load();
+			CPU.mapEntry(cpuForthRomEntry);
+			cpuForthRomEntry.copySymbols(CPU);
 			
-			// shrink RAM accordingly
-			int st = cpuRomEntry.getAddr() + 0x400 * ((cpuRomEntry.getSize() + 0x3ff) / 0x400);
-			int sz = 0x10000 - st;
+    		// get the CPU ROM (smaller, bank #1)
+			cpuRomBankEntry = memory.getMemoryEntryFactory().newMemoryEntry(
+					f9900BankedRomMemoryEntryInfo);
+			cpuRomBankEntry.load();
+			CPU.mapEntry(cpuRomBankEntry);
+			cpuRomBankEntry.copySymbols(CPU);
 			
-			memory.removeAndUnmap(cpuRomEntry);
+			memory.removeAndUnmap(cpuRomBankEntry);
+			memory.removeAndUnmap(cpuForthRomEntry);
 			memory.removeAndUnmap(consoleEntry);
 			
+			// Make the RAM area for the Forth RAM dictionary/etc., 
+			// which lives on the area boundary past the Forth ROM 
+			int st = cpuForthRomEntry.getAddr() + 0x400 * ((cpuForthRomEntry.getSize() + 0x3ff) / 0x400);
+			int sz = 0x10000 - st;
+
 			consoleEntry = new MemoryEntry("64K RAM", CPU, 
 					st, sz, new EnhancedRamByteArea(0, sz));
 			memory.addAndMap(consoleEntry);
+
+			// Make the bank-switching ROM
+			bankedRomMemoryEntry = new MultiBankedMemoryEntry(settings, memory, "Forth/ROM Bank",  
+					new IMemoryEntry[] { cpuForthRomEntry, cpuRomBankEntry });
+					
+			mmioArea.setBankedRomEntry(bankedRomMemoryEntry);
 			
-			memory.addAndMap(cpuRomEntry);
+			memory.addAndMap(bankedRomMemoryEntry);
+			
+			memory.addAndMap(mmioEntry);
     	} catch (IOException e) {
-    		reportLoadError(eventNotifier, f99bRomMemoryEntryInfo.getFilename(), e);
+    		reportLoadError(eventNotifier, f9900RomMemoryEntryInfo.getFilename(), e);
     	}
 
     //	loadGromAndGram(eventNotifier);
@@ -221,7 +281,7 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 	@Override
 	public MemoryEntryInfo[] getRequiredRomMemoryEntries() {
 		return new MemoryEntryInfo[] { 
-				f99bRomMemoryEntryInfo,
+				f9900RomMemoryEntryInfo,
 				f9900GromMemoryEntryInfo,
 				f9900DiskGramMemoryEntryInfo,
 				};

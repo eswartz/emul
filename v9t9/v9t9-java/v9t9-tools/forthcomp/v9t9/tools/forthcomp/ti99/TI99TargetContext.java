@@ -45,6 +45,7 @@ import v9t9.tools.forthcomp.IWord;
 import v9t9.tools.forthcomp.RelocEntry;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
 import v9t9.tools.forthcomp.TargetContext;
+import v9t9.tools.forthcomp.words.BaseStdWord;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
@@ -524,6 +525,26 @@ public class TI99TargetContext extends TargetContext  {
 		/////////////////
 		
 		definePrim("(RESET)",
+				Ilimi, immed(4),
+				
+//				Ili, reg(12), immed(0xc0),
+//				Isbz, immed(0),	// Interrupt mode
+//				Isbo, immed(1), // Enable external interrupts
+//				Isbo, immed(2), // Enable VDP interrupts
+//				Isbz, immed(3), // Disable clock interrupts
+				
+
+//			    $1      constant    M_INT_BKPT
+//			    $2      constant    M_INT_EXT
+//			    $4      constant    M_INT_VDP
+//			    $8      constant    M_INT_KBD
+//			    
+				
+				Ili, TMP, immed(0xF00),	// external + VDP
+				Imovb, TMP, addr(Forth9900ConsoleMmioArea.CRU_INTS),
+				Ili, TMP, immed(0x8120),	// turn on VDP interrupts (write R1_INT to VDP R1)
+				Imov, TMP, addr(Forth9900ConsoleMmioArea.VDPWA),
+				
 				Ili, reg(REG_DOCOL), immed(docolPrim.getEntry().getContentAddr()),
 				Ili, reg(REG_DOUSER), immed(doUser.getEntry().getContentAddr()),
 				Ili, reg(REG_DOCON), immed(doCon.getEntry().getContentAddr()),
@@ -533,7 +554,7 @@ public class TI99TargetContext extends TargetContext  {
 				Ili, reg(REG_SP), immed(0xffc0),
 				Ili, reg(REG_RP), immed(0xffb0),
 				Ili, reg(REG_UP), immed(0xffa0),
-				Ili, reg(11), immed(Forth9900ConsoleMmioArea.COLD), 
+				Ili, reg(11), immed(Forth9900ConsoleMmioArea.COLD),
 				Ib, regInd(REG_DOCOL)	// normally BL, but we set up R11 for this
 				);
 		
@@ -1331,6 +1352,40 @@ public class TI99TargetContext extends TargetContext  {
 				Imov, regInc(REG_RP), lengthAndFlags,
 				Imov, regInc(REG_RP), counter,
 				Imov, regInc(REG_RP), charTemp
+		);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.TargetContext#defineCompilerWords(v9t9.tools.forthcomp.HostContext)
+	 */
+	@Override
+	public void defineCompilerWords(HostContext hostContext) {
+		super.defineCompilerWords(hostContext);
+		
+		hostContext.define("(int1-redirect)", 
+			new BaseStdWord() {
+				
+				@Override
+				public boolean isImmediate() {
+					return false;
+				}
+				
+				@Override
+				public void execute(HostContext hostContext, TargetContext targetContext)
+						throws AbortException {
+					// turn off ints
+					writeInstruction(Ilimi, immed(0));
+					// switch to bank 1
+					writeInstruction(Iseto, addr(4));
+					// in normal ROM, jumps to interrupt
+					writeInstruction(Ijmp, immed(targetContext.getDP()));		// not used
+					// restore bank
+					writeInstruction(Iseto, addr(0));
+					// return from interrupt
+					writeInstruction(Irtwp);
+					// the shared ROM will have instructions here
+				}
+			}
 		);
 	}
 

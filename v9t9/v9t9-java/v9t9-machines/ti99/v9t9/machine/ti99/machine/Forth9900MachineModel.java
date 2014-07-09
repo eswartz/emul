@@ -113,9 +113,8 @@ public class Forth9900MachineModel implements IMachineModel {
 		machine_.getKeyboardState().registerMapping(KeyboardConstants.KEY_BACKSPACE,
 				new int[] { KeyboardConstants.KEY_CONTROL, 'H' });
 		
-		memoryDiskDsr = new MemoryDiskImageDsr(machine_, InternalCruF99.DISK_BASE);
-
-		InternalCruF99 cruAccess = new InternalCruF99(machine_);
+		InternalCruF99 cruAccess = new InternalCruF99(machine_, 0xC0);
+		memoryDiskDsr = new MemoryDiskImageDsr(machine_, InternalCruF99.DISK_BASE + cruAccess.getCruBase());
 		cruAccess.addIOHandler(memoryDiskDsr);
 
 		machine_.setCru(cruAccess);

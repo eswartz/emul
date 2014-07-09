@@ -12,6 +12,7 @@ package v9t9.machine.ti99.memory.mmio;
 
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.engine.memory.MultiBankedMemoryEntry;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.f99b.machine.InternalCruF99;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
@@ -22,41 +23,51 @@ import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
  *
  */
 public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
+	public static final int MMIO = 0x80;
 	
-	public static final int VDPRD = 0x40;
-	public static final int VDPST = 0x42;
-	public static final int VDPWD = 0x44;
-	public static final int VDPWA = 0x46;
-	public static final int VDPWAL = 0x47;
-	public static final int VDPCL = 0x48;
-	public static final int VDPWI = 0x4A;
+	public static final int VDPRD = MMIO + 0x0;
+	public static final int VDPST = MMIO + 0x2;
+	public static final int VDPWD = MMIO + 0x4;
+	public static final int VDPWA = MMIO + 0x6;
+	public static final int VDPWAL = MMIO + 0x7;
+	public static final int VDPCL = MMIO + 0x8;
+	public static final int VDPWI = MMIO + 0xA;
 	private static final int[] forth9900ToVdpPort = { 0, 1, 2, 3, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
 	
 	
-	public static final int GPLRD = 0x50;
-	public static final int GPLRA = 0x52;
-	public static final int GPLWD = 0x54;
-	public static final int GPLWA = 0x56;
+	public static final int GPLRD = MMIO + 0x10;
+	public static final int GPLRA = MMIO + 0x12;
+	public static final int GPLWD = MMIO + 0x14;
+	public static final int GPLWA = MMIO + 0x16;
 	
-	public static final int SPCHWT = 0x58;
-	public static final int SPCHRD = 0x5A;
+	public static final int SPCHWT = MMIO + 0x18;
+	public static final int SPCHRD = MMIO + 0x1A;
 	
 	// character outlet
-	public static final int DBG = 0x5E;
+	public static final int DBG = MMIO + 0x3F;
 	
-	public static final int SOUND = 0x60;	// 0x20!
+	public static final int SOUND = MMIO + 0x20;	// for 0x20
 	
-	public static final int CRU_BASE = 0x80;
+	public static final int CRU_BASE = 0xC0;
+	public static final int CRU_INTS = CRU_BASE + InternalCruF99.INTS;
+	
+
 	public static final int CRU_END = 0x100;
 	
-	public static final int COLD = 0x114;
-	
+	public static final int COLD = 0x112;
+
 	private final IMachine machine;
+
+	private MultiBankedMemoryEntry bankedRomEntry;
 		
 	public Forth9900ConsoleMmioArea(IMachine machine) {
 		super(0);
 		this.machine = machine;
     };
+    
+	public void setBankedRomEntry(MultiBankedMemoryEntry bankedRomEntry) {
+		this.bankedRomEntry = bankedRomEntry;
+	}
     
     @Override
 	public boolean hasReadAccess() {
@@ -65,11 +76,26 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 
     @Override
     public void writeByte(IMemoryEntry entry, int addr, byte val) {
+		if (addr < MMIO) {
+			int bankIdx = addr / 4;
+			if (bankedRomEntry != null && bankIdx < bankedRomEntry.getBankCount()) {
+				bankedRomEntry.selectBank(bankIdx);
+				return;
+			}
+		}
     	writeMmio(addr, val);
     }
 
 	@Override
     public void writeWord(IMemoryEntry entry, int addr, short val) {
+		if (addr < MMIO) {
+			int bankIdx = addr / 4;
+			if (bankedRomEntry != null && bankIdx < bankedRomEntry.getBankCount()) {
+				bankedRomEntry.selectBank(addr / 4);
+				return;
+			}
+		}
+
 		if (addr == VDPWA) {
 			writeByte(entry, VDPWA, (byte) (val & 0xff));
 			writeByte(entry, VDPWA, (byte) (val >> 8));
@@ -84,11 +110,17 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 
 	@Override
 	public byte readByte(IMemoryEntry entry, int addr) {
+		if (addr <= 0x40 || addr >= 0x100) {
+			return bankedRomEntry != null ? bankedRomEntry.readByte(addr) : 0;
+		}
 		return readMmio(addr);
 	}
 	
 	@Override
 	public short readWord(IMemoryEntry entry, int addr) {
+		if (addr <= 0x40 || addr >= 0x100) {
+			return bankedRomEntry != null ? bankedRomEntry.readWord(addr) : 0;
+		}
 		if (addr == GPLRA) {
 			byte hi = readByte(entry, addr);
 			byte lo = readByte(entry, addr);
@@ -110,7 +142,7 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	    	case VDPCL:
 	    	case VDPWI:
 	    	case VDPWA:
-	    		getTIMemoryModel().getVdpMmio().write(forth9900ToVdpPort[addr], val);
+	    		getTIMemoryModel().getVdpMmio().write(forth9900ToVdpPort[addr & 0xf], val);
 	    		break;
 	    	case GPLWA:
 	    	case GPLWD:

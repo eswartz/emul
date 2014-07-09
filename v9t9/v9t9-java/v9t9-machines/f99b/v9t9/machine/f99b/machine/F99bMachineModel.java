@@ -115,9 +115,8 @@ public class F99bMachineModel implements IMachineModel {
 		
 //		machine_.setKeyboardMapping(new F99bKeyboardMapping());
 		
-		memoryDiskDsr = new MemoryDiskImageDsr(machine_, InternalCruF99.DISK_BASE);
-
-		InternalCruF99 cruAccess = new InternalCruF99(machine_);
+		InternalCruF99 cruAccess = new InternalCruF99(machine_, 0x80);
+		memoryDiskDsr = new MemoryDiskImageDsr(machine_, InternalCruF99.DISK_BASE + cruAccess.getCruBase());
 		cruAccess.addIOHandler(memoryDiskDsr);
 
 		machine_.setCru(cruAccess);

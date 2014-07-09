@@ -34,43 +34,41 @@ $15			constant	REG_SP
 
 \   ---------   memory map
 
-$0040       constant    I/O
+|+ MMIO $00 +       constant    VDPRD
+|+ MMIO $02 +       constant    VDPST
+|+ MMIO $04 +       constant    VDPWD
+|+ MMIO $06 +       constant    VDPWA       \ high then low
+|+ MMIO $08 +       constant    VDPCL
+|+ MMIO $0A +       constant    VDPWI
 
-|+ $0000       constant    VDPRD
-|+ $0002       constant    VDPST
-|+ $0004       constant    VDPWD
-|+ $0006       constant    VDPWA       \ high then low
-|+ $0008       constant    VDPCL
-|+ $000A       constant    VDPWI
+|+ MMIO $10 +       constant    GPLRD
+|+ MMIO $12 +       constant    GPLRA       \ high then low
+|+ MMIO $14 +       constant    GPLWD
+|+ MMIO $16 +       constant    GPLWA
 
-|+ $0010       constant    GPLRD
-|+ $0012       constant    GPLRA       \ high then low
-|+ $0014       constant    GPLWD
-|+ $0016       constant    GPLWA
+|+ MMIO $18 +       constant    SPCHRD
+|+ MMIO $1a +       constant    SPCHWT
 
-|+ $0018       constant    SPCHRD
-|+ $001a       constant    SPCHWT
+|+ MMIO $20 +       constant    SOUND  \ ... 0x20!
 
-|+ $0020       constant    SOUND  \ ... 0x20!
+\   ---------  peripherals (CRU @ 0xC0)
 
-\   ---------  peripherals
-
-|+ $0080       constant    'INTS
-|+ $0081       constant    'INTSP
+|+ CRU $00 +       constant    'INTS
+|+ CRU $01 +       constant    'INTSP
     
     $1      constant    M_INT_BKPT
     $2      constant    M_INT_EXT
     $4      constant    M_INT_VDP
     $8      constant    M_INT_KBD
 
-$0082       constant    'KBD
-$0083       constant    'KBDA
+CRU $02 +       constant    'KBD
+CRU $03 +       constant    'KBDA
 
-|+ $0084    constant    'GATE
+|+ CRU $04 +    constant    'GATE
 
-|+ $0087    constant    'RND
+|+ CRU $07 +    constant    'RND
 
-$0088       constant    'DSK 
+CRU $08 +       constant    'DSK 
 
 \   0: write: cmd; read: status
   'DSK 0 +  constant    'DSKCMD

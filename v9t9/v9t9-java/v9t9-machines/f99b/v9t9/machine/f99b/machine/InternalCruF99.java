@@ -27,33 +27,34 @@ import v9t9.machine.f99b.cpu.CpuF99b;
  */
 public class InternalCruF99 extends BaseCruChip {
 
-	public final static int CRU_BASE = 0x80;
-	
 	/** enabled interrupts (r/w) */
-	public final static int INTS = CRU_BASE + 0;
+	public final static int INTS = 0;
 	/** pending interrupts (r) */
-	public final static int INTSP = CRU_BASE + 1;
+	private final static int INTSP = 1;
 	/** keyboard column (w) or bits (r) */
-	public final static int KBD = CRU_BASE + 2;
+	private final static int KBD = 2;
 	/** keyboard alpha */
-	public final static int KBDA = CRU_BASE + 3;
+	private final static int KBDA = 3;
 	/** audio gate */
-	public final static int GATE = CRU_BASE + 4;
+	private final static int GATE = 4;
 	/** random number */
-	public final static int RND = CRU_BASE + 7;
+	private final static int RND = 7;
 	/** floppy controller */
-	public static final int DISK_BASE = CRU_BASE + 8;	// 8, 9, 10, 11, 12, 13
+	public static final int DISK_BASE = 8;	// 8, 9, 10, 11, 12, 13
 	
 	protected List<IMemoryIOHandler> ioHandlers = new ArrayList<IMemoryIOHandler>();
 
 	private Random random;
+
+	private int cruBase;
 	
 	/**
 	 * @param machine
 	 * @param keyboardState
 	 */
-	public InternalCruF99(IMachine machine) {
+	public InternalCruF99(IMachine machine, int cruBase) {
 		super(machine, 8);
+		this.cruBase = cruBase;
 		
     	intExt = -1;
     	intVdp = CpuF99b.INT_VDP;
@@ -63,7 +64,7 @@ public class InternalCruF99 extends BaseCruChip {
 	}
 	
 	public void handleWrite(int addr, byte val) {
-		switch (addr) {
+		switch (addr - cruBase) {
 		case INTS:
 			enabledIntMask = val;
 			break;
@@ -115,7 +116,7 @@ public class InternalCruF99 extends BaseCruChip {
 	}
 	
 	public byte handleRead(int addr) {
-		switch (addr) {
+		switch (addr - cruBase) {
 		case INTS:
 			return (byte) (enabledIntMask);
 		case INTSP:
@@ -156,5 +157,12 @@ public class InternalCruF99 extends BaseCruChip {
 	 */
 	public void addIOHandler(IMemoryIOHandler ioHandler) {
 		ioHandlers.add(ioHandler);
+	}
+
+	/**
+	 * @return
+	 */
+	public int getCruBase() {
+		return cruBase;
 	}
 }

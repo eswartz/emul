@@ -12,13 +12,17 @@
 
 0 <export
 
+$0040		constant	XOPS
+$0080       constant    MMIO
+$00C0		constant	CRU
+
 $0100		constant	SHARED
 
 $0110       constant    ROM
 
 ROM 0 +     constant    @RESET
-ROM 2 +     constant    @BYE
-ROM 4 +     constant    @COLD
+ROM 2 +     constant    @COLD
+ROM 4 +     constant    @BYE
 ROM 6 +     constant    @DP0
 ROM 8 +     constant    @LATEST
 
@@ -36,6 +40,17 @@ export>
 
 \ int vecs
 StdWP ,  ' (RESET) ,
+
+IntWP ,  SHARED ,	
+
+
+\ ................................
+
+SHARED		dp!
+	
+	( shared entry for INT1 )
+	
+	(int1-redirect)
 
 \ ................................
 
