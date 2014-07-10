@@ -525,7 +525,7 @@ public class TI99TargetContext extends TargetContext  {
 		/////////////////
 		
 		definePrim("(RESET)",
-				Ilimi, immed(4),
+				Ilimi, immed(1),
 				
 //				Ili, reg(12), immed(0xc0),
 //				Isbz, immed(0),	// Interrupt mode
