@@ -1,0 +1,55 @@
+$0F	constant	rSP		\ stack pointer
+$0E	constant	rRP		\ return stack pointer
+$0D	constant	rIP		\ instruction pointer
+\ $0C not assigned: CRU stuff
+\ $0B not assigned: BL return val
+\ $0A not assigned: main WS stack pointer
+T has? standard-threading H [if]
+$09	constant	rWA		\ work address
+[else]
+$09	constant	rDOCOL	\ ptr to DOCOL
+$08 constant	rDOCON	\ ptr to DOCON
+$07 constant	rDODOES	\ ptr to DODOES
+[then]
+$06	constant	rNEXT	\ ptr to NEXT
+$05	constant	rT4		\ temp #4
+$04	constant	rT3		\ temp #3
+$03	constant	rT2		\ temp #2
+$02	constant	rT1		\ temp #1
+$01	constant	rTOS	\ top of stack
+
+\ XOPs
+1	constant	SYS^
+    0   constant    #vrstr
+	1	constant	#key?
+	2	constant	#rdkey
+	3	constant	#emit
+	4	constant	#emit8
+    5   constant    #gxy
+    6   constant    #cls
+    7   constant    #win
+    8   constant    #win?
+    9   constant    #mode
+    &10  constant    #fgbg!
+    &11  constant    #fgbg@
+    &12  constant    #line
+    &13  constant    #pixel
+    &14  constant    #vrst
+    &15  constant    #vintflags
+    &16  constant    #vbfnt
+    &17  constant    #rect
+    &18  constant    #random
+    &19 constant     #dsrln
+    &20 constant     #vtab
+    &21 constant     #vregw
+    &22 constant     #vregr
+    &23 constant     #vrwpage
+    &24 constant     #vpage
+    &25 constant     #pal 
+    &26 constant     #vsvrs
+    &27 constant     #xyad 
+    &28 constant     #xy
+    &29 constant     #type      \ type string: N.B.: not from ROM!
+    &30 constant     #rwblock 
+    &31 constant     #qtrk
+    

@@ -39,6 +39,8 @@ public class HostContext extends Context {
 	private int cellSize;
 
 	private final TargetContext targetContext;
+
+	private boolean hostMode;
 	
 	/**
 	 * @param targetContext 
@@ -102,6 +104,9 @@ public class HostContext extends Context {
 		define("EXPORT>", new PopExportState());
 		define("|", new BarHideNext());
 		define("|+", new BarExportNext());
+
+		define("<HOST", new HostModeStart());
+		define("HOST>", new HostModeStop());
 		
 		define("create", new Create());
 		define("variable", new Variable());
@@ -121,7 +126,11 @@ public class HostContext extends Context {
 		
 		define("!", new HostStore());
 		define("@", new HostFetch());
-		
+		define("cells", new HostLiteral(1, true));
+		define("cell+", new HostCellPlus(1));
+		define("R@", new HostRStackAt());
+		define("R>", new HostRStackFrom());
+		define(">R", new HostRToStack());
 		
 		define(":", new Colon());
 //		define("HOST:", new HostOnlyColon());
@@ -635,11 +644,13 @@ public class HostContext extends Context {
 						origDataStack.addAll(dataStack);
 						origReturnStack = new Stack<Integer>();
 						origReturnStack.addAll(returnStack);
-						dp = targetContext.getDP();
+						if (!isHostMode())
+							dp = targetContext.getDP();
 					}
 					targetWord.getCompilationSemantics().execute(this, targetContext);
 					if (saveState) {
-						targetContext.setDP(dp);
+						if (!isHostMode())
+							targetContext.setDP(dp);
 						dataStack = origDataStack;
 						returnStack = origReturnStack;
 					} else {
@@ -657,7 +668,8 @@ public class HostContext extends Context {
 					
 					// feels hacky -- detect when ANS/compiler words are used in
 					// target definitions but never defined
-					if (targetWord == null 
+					if (targetWord == null
+							&& targetContext != null
 							&& !(hostWord instanceof BaseStdWord && ((BaseStdWord) hostWord).isImmediate())
 							&& hostWord.getName() != null
 							&& (getLatest() == null
@@ -731,6 +743,122 @@ public class HostContext extends Context {
 		hostContext.hostPc = hostPc;
 		hostContext.hostDp = hostDp;
 		hostContext.fixupMap.putAll(fixupMap);
+	}
+
+	public boolean isHostMode() {
+		return hostMode;
+	}
+	public void setHostMode(boolean hostMode) {
+		this.hostMode = hostMode;
+	}
+
+	public IWord parseLiteral(String token) {
+		int radix = ((HostVariable) find("base")).getValue();
+		boolean isNeg = token.startsWith("-");
+		if (isNeg) {
+			token = token.substring(1);
+		}
+		if (token.startsWith("$")) {
+			radix = 16;
+			token = token.substring(1);
+		}
+		else if (token.startsWith("&")) {
+			radix = 10;
+			token = token.substring(1);
+		}
+		boolean isDouble = false;
+		if (token.contains(".")) {
+			isDouble = true;
+		}
+		token = token.replaceAll("\\.", "");
+		boolean isUnsigned = false;
+		if (token.toUpperCase().endsWith("U")) {
+			isUnsigned = true;
+			token = token.substring(0, token.length() - 1);
+		}
+		try {
+			long val = Long.parseLong(token, radix);
+			if (isNeg)
+				val = -val;
+			if (isDouble) {
+				return new HostDoubleLiteral((int)(val & 0xffffffff), (int)(val >> 32), isUnsigned);
+			}
+			else
+				return new HostLiteral((int) val, isUnsigned);
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Parse a word in <HOST ... HOST> mode.
+	 * @param token
+	 * @param tokenStream
+	 * @throws AbortException 
+	 */
+	public void parse(String token) throws AbortException {
+		IWord word = null;
+		
+		int state = readVar("state");
+		
+		if (state == 0) {
+			word = find(token);
+			if (word == null && targetContext != null) {
+				word = targetContext.find(token);
+			}
+			if (word == null) {
+				word = parseLiteral(token);
+			}
+			if (word == null) {
+				throw abort("unknown word or literal: " + token);
+			}
+			
+			if (word.getInterpretationSemantics() == null)
+				throw abort(word.getName() + " has no interpretation semantics");
+
+			word.getInterpretationSemantics().execute(this, null);
+		} else {
+			if (targetContext != null) {
+				word = targetContext.find(token);
+			}
+			if (word == null) {
+				word = find(token);
+			}
+			if (word == null) {
+				word = parseLiteral(token);
+			}
+			if (word == null) {
+				throw abort("no host word: " + token);
+				//word = defineForward(token, getStream().getLocation());
+			}
+		
+			ITargetWord targetWord = null;
+			IWord hostWord = null;
+			
+			if (word instanceof ITargetWord) {
+				targetWord = (ITargetWord) word;
+				hostWord = find(token);
+				if (hostWord == null) 
+					hostWord = targetWord;
+			} else {
+				hostWord = word;
+				targetWord = null;
+				if (!isHostMode() && !word.isCompilerWord()) {
+					throw abort("no host word: " + word);
+				}
+			}		
+			
+			compileWord(null, hostWord, targetWord);
+		}
+		
+	}
+
+	public IWord readHostCell(int addr) {
+		return hostWords.get(addr);
+	}
+	public void setHostCell(int addr, IWord val) {
+		hostWords.put(addr, val);
+		
 	}
 
 }
