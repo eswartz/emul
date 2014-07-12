@@ -221,19 +221,28 @@ public class DumpFullReporter9900 implements IInstructionListener {
 
 		if (symbol != null) {
 			if (symbol.equals(testSuccessSymbol.getString())) {
-				System.out.println("*** SUCCESS ***");
-				System.exit(0);
+				finish(0, "*** SUCCESS ***");
 			}
 			else if (symbol.equals(testFailureSymbol.getString())) {
-				System.out.println("*** FAILED ***");
-				System.exit(1);
+				finish(1, "*** FAILED ***");
 			}
 		}
 		
 		if (wb.inst.getInst() == InstTableCommon.Idata) {
-			System.out.println("*** CRASHED ***");
-			System.exit(2);
+			finish(2, "*** CRASHED ***");
 		}
+	}
+
+
+	/**
+	 * @param code
+	 * @param string
+	 */
+	private void finish(int code, String string) {
+		System.out.println(string);
+		System.out.println("cycles = " + cpu.getTotalCurrentCycleCount());
+		System.exit(code);
+		
 	}
 
 }

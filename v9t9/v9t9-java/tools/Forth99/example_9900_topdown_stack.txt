@@ -1,0 +1,96 @@
+"$test65-+loop-uns2"
+3C8C: BL *R4 ==> op1=122(@122)  || st=9401 wp=FFC0 @ 32
+"DOCOL" [ $test65-+loop-uns2 > RUNTEST > 3F42 ] ( FF40 ABCD )
+0122: DECT R13 ==> op1=FF3E(@FFDA)  || op1=FF3C(@FFDA) st=9401 wp=FFC0 @ 20
+0124: MOV R14,*R13 ==> op1=3D06(@FFDC)  || op2=3D06(@FF3C) st=D401 wp=FFC0 @ 36
+0126: MOV R11,R14 ==> op1=3C8E(@FFD6)  || op2=3C8E(@FFDC) st=D401 wp=FFC0 @ 28
+0128: MOV *R14+,R0 ==> op1=276(@3C8E)  || op1=276(@3C8E) op2=276(@FFC0) st=D401 wp=FFC0 @ 44
+012A: B *R0 ==> op1=276(@276)  || st=D401 wp=FFC0 @ 24
+"0"
+0276: DECT R15 ==> op1=FFBE(@FFDE)  || op1=FFBC(@FFDE) st=9401 wp=FFC0 @ 20
+0278: MOV R1,*R15 ==> op1=ABCD(@FFC2)  || op2=ABCD(@FFBC) st=9401 wp=FFC0 @ 36
+027A: CLR R1 ==>  || op1=0(@FFC2) st=9401 wp=FFC0 @ 20
+027C: MOV *R14+,R0 ==> op1=140(@3C90)  || op1=140(@3C90) op2=140(@FFC0) st=D401 wp=FFC0 @ 44
+027E: B *R0 ==> op1=140(@140)  || st=D401 wp=FFC0 @ 24
+"DOLIT"
+0140: DECT R15 ==> op1=FFBC(@FFDE)  || op1=FFBA(@FFDE) st=9401 wp=FFC0 @ 20
+0142: MOV R1,*R15 ==> op1=0(@FFC2)  || op2=0(@FFBA) st=3401 wp=FFC0 @ 36
+0144: MOV *R14+,R1 ==> op1=A000(@3C92)  || op1=A000(@3C92) op2=A000(@FFC2) st=9401 wp=FFC0 @ 44
+0146: MOV *R14+,R0 ==> op1=140(@3C94)  || op1=140(@3C94) op2=140(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=140(@140)  || st=D401 wp=FFC0 @ 24
+"DOLIT"
+0140: DECT R15 ==> op1=FFBA(@FFDE)  || op1=FFB8(@FFDE) st=9401 wp=FFC0 @ 20
+0142: MOV R1,*R15 ==> op1=A000(@FFC2)  || op2=A000(@FFB8) st=9401 wp=FFC0 @ 36
+0144: MOV *R14+,R1 ==> op1=A000(@3C92)  || op1=A000(@3C92) op2=A000(@FFC2) st=9401 wp=FFC0 @ 44
+0146: MOV *R14+,R0 ==> op1=140(@3C94)  || op1=140(@3C94) op2=140(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=140(@140)  || st=D401 wp=FFC0 @ 24
+"DOLIT"
+0140: DECT R15 ==> op1=FFBA(@FFDE)  || op1=FFB8(@FFDE) st=9401 wp=FFC0 @ 20
+0142: MOV R1,*R15 ==> op1=A000(@FFC2)  || op2=A000(@FFB8) st=9401 wp=FFC0 @ 36
+0144: MOV *R14+,R1 ==> op1=3333(@3C96)  || op1=3333(@3C96) op2=3333(@FFC2) st=D401 wp=FFC0 @ 44
+0146: MOV *R14+,R0 ==> op1=518(@3C98)  || op1=518(@3C98) op2=518(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=518(@518)  || st=D401 wp=FFC0 @ 24
+"2>R"
+0518: AI R13,>FFFC ==> op1=FF3C(@FFDA) op2=FFFC(@0) || op1=FF38(@FFDA) st=9401 wp=FFC0 @ 28
+051C: MOV *R15+,@>2(R13) ==> op1=A000(@FFB8)  || op1=A000(@FFB8) op2=A000(@FF3A) st=9401 wp=FFC0 @ 60
+0520: MOV R1,*R13 ==> op1=3333(@FFC2)  || op2=3333(@FF38) st=D401 wp=FFC0 @ 36
+0522: MOV *R15+,R1 ==> op1=0(@FFBA)  || op1=0(@FFBA) op2=0(@FFC2) st=3401 wp=FFC0 @ 44
+0524: MOV *R14+,R0 ==> op1=574(@3C9A)  || op1=574(@3C9A) op2=574(@FFC0) st=D401 wp=FFC0 @ 44
+0526: B *R0 ==> op1=574(@574)  || st=D401 wp=FFC0 @ 24
+"R@"
+0574: DECT R15 ==> op1=FFBC(@FFDE)  || op1=FFBA(@FFDE) st=9401 wp=FFC0 @ 20
+0576: MOV R1,*R15 ==> op1=0(@FFC2)  || op2=0(@FFBA) st=3401 wp=FFC0 @ 36
+0578: MOV *R13,R1 ==> op1=3333(@FF38)  || op2=3333(@FFC2) st=D401 wp=FFC0 @ 36
+057A: MOV *R14+,R0 ==> op1=422(@3C9C)  || op1=422(@3C9C) op2=422(@FFC0) st=D401 wp=FFC0 @ 44
+057C: B *R0 ==> op1=422(@422)  || st=D401 wp=FFC0 @ 24
+"+"
+0422: A *R15+,R1 ==> op1=0(@FFBA) op2=3333(@FFC2) || op1=0(@FFBA) op2=3333(@FFC2) st=C401 wp=FFC0 @ 44
+0424: MOV *R14+,R0 ==> op1=140(@3C9E)  || op1=140(@3C9E) op2=140(@FFC0) st=C401 wp=FFC0 @ 44
+0426: B *R0 ==> op1=140(@140)  || st=C401 wp=FFC0 @ 24
+"DOLIT"
+0140: DECT R15 ==> op1=FFBC(@FFDE)  || op1=FFBA(@FFDE) st=9401 wp=FFC0 @ 20
+0142: MOV R1,*R15 ==> op1=3333(@FFC2)  || op2=3333(@FFBA) st=D401 wp=FFC0 @ 36
+0144: MOV *R14+,R1 ==> op1=3333(@3CA0)  || op1=3333(@3CA0) op2=3333(@FFC2) st=D401 wp=FFC0 @ 44
+0146: MOV *R14+,R0 ==> op1=614(@3CA2)  || op1=614(@3CA2) op2=614(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=614(@614)  || st=D401 wp=FFC0 @ 24
+"(+LOOP)"
+0614: MOV *R14+,R0 ==> op1=FFF4(@3CA4)  || op1=FFF4(@3CA4) op2=FFF4(@FFC0) st=9401 wp=FFC0 @ 44
+0616: A R0,R14 ==> op1=FFF4(@FFC0) op2=3CA6(@FFDC) || op2=3C9A(@FFDC) st=D401 wp=FFC0 @ 28
+0618: MOV @>2(R13),R2 ==> op1=A000(@FF3A)  || op2=A000(@FFC4) st=9401 wp=FFC0 @ 44
+061C: JNE $+>E ==> op1=62A(@62A) op2=0(@0) || st=9401 wp=FFC0 @ 20
+062A: A R1,*R13 ==> op1=3333(@FFC2) op2=3333(@FF38) || op2=6666(@FF38) st=C401 wp=FFC0 @ 36
+062C: MOV R1,R1 ==> op1=3333(@FFC2)  || op2=3333(@FFC2) st=C401 wp=FFC0 @ 28
+062E: JLT $+>A ==> op1=638(@638) op2=0(@0) || st=C401 wp=FFC0 @ 16
+0630: C *R13,R2 ==> op1=6666(@FF38) op2=A000(@FFC4) || st=4401 wp=FFC0 @ 36
+0632: JL $+>C ==> op1=63E(@63E) op2=0(@0) || st=4401 wp=FFC0 @ 20
+063E: MOV *R15+,R1 ==> op1=3333(@FFBA)  || op1=3333(@FFBA) op2=3333(@FFC2) st=C401 wp=FFC0 @ 44
+0640: MOV *R14+,R0 ==> op1=574(@3C9A)  || op1=574(@3C9A) op2=574(@FFC0) st=C401 wp=FFC0 @ 44
+0642: B *R0 ==> op1=574(@574)  || st=C401 wp=FFC0 @ 24
+
+"DOUSER"
+01AC: DECT R15 ==> op1=FFBE(@FFDE)  || op1=FFBC(@FFDE) st=9001 wp=FFC0 @ 20
+01AE: MOV R1,*R15 ==> op1=ABCD(@FFC2)  || op2=ABCD(@FFBC) st=9001 wp=FFC0 @ 36
+01B0: MOV *R11+,R1 ==> op1=2(@1066)  || op1=2(@1066) op2=2(@FFC2) st=D001 wp=FFC0 @ 44
+01B2: A R10,R1 ==> op1=FBFA(@FFD4) op2=2(@FFC2) || op2=FBFC(@FFC2) st=8001 wp=FFC0 @ 28
+01B4: MOV *R14+,R0 ==> op1=2B4(@3504)  || op1=2B4(@3504) op2=2B4(@FFC0) st=C001 wp=FFC0 @ 44
+
+"-"
+0444: S R1,*R15 ==> op1=FCBB(@FFC2) op2=FCBF(@FFB8) || op2=4(@FFB8) st=D001 wp=FFC0 @ 36
+0446: MOV *R15+,R1 ==> op1=4(@FFB8)  || op1=4(@FFB8) op2=4(@FFC2) st=D001 wp=FFC0 @ 44
+0448: MOV *R14+,R0 ==> op1=132(@10E6)  || op1=132(@10E6) op2=132(@FFC0) st=D001 wp=FFC0 @ 44
+044A: B *R0 ==> op1=132(@132)  || st=D001 wp=FFC0 @ 24
+
+"C@"
+02C0: MOVB *R1,R1 ==> op1=2A(@EFE4)  || op2=2A(@FFC2) st=D401 wp=FFC0 @ 36
+02C2: SRL R1,8 ==> op1=2AE4(@FFC2) op2=8(@0) || op1=2A(@FFC2) st=D401 wp=FFC0 @ 56
+
+"R>"
+0534: DECT R15 ==> op1=FFBC(@FFDE)  || op1=FFBA(@FFDE) st=9401 wp=FFC0 @ 20
+0536: MOV R1,*R15 ==> op1=FFFF(@FFC2)  || op2=FFFF(@FFBA) st=9401 wp=FFC0 @ 36
+0538: MOV *R13+,R1 ==> op1=EFE4(@FF36)  || op1=EFE4(@FF36) op2=EFE4(@FFC2) st=9401 wp=FFC0 @ 44
+
+">R"
+050E: DECT R13 ==> op1=FF38(@FFDA)  || op1=FF36(@FFDA) st=9401 wp=FFC0 @ 20
+0510: MOV R1,*R13 ==> op1=EFE4(@FFC2)  || op2=EFE4(@FF36) st=9401 wp=FFC0 @ 36
+0512: MOV *R15+,R1 ==> op1=EFE4(@FFBA)  || op1=EFE4(@FFBA) op2=EFE4(@FFC2) st=9401 wp=FFC0 @ 44
+
