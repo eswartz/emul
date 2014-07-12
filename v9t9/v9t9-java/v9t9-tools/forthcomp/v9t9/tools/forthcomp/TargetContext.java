@@ -53,8 +53,8 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	private final int cellBits;
 	protected byte[] memory;
 
-	private Map<Integer, RelocEntry> relocEntries = new TreeMap<Integer, RelocEntry>();
-	private List<RelocEntry> relocs = new ArrayList<RelocEntry>();
+	protected Map<Integer, RelocEntry> relocEntries = new TreeMap<Integer, RelocEntry>();
+	protected List<RelocEntry> relocs = new ArrayList<RelocEntry>();
 	private Map<Integer, String> symbols = new TreeMap<Integer, String>();
 	protected int dp;
 	
@@ -128,9 +128,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineBuiltins()
+	 * @see v9t9.tools.forthcomp.ITargetContext#defineColonPrims()
 	 */
-	public void defineBuiltins() throws AbortException {
+	@Override
+	public void defineColonPrims() throws AbortException {
 		romDeferTableWord = find("(rdefertbl)");
 		if (romDeferTableWord == null) {
 			romDeferTableWord = defineForward("(rdefertbl)", "<builtin>");
@@ -138,6 +139,13 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		setExportNext(false);
 
 		numRomDefersWord = defineConstant("(#rdefers)", 0, 1);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineBuiltins()
+	 */
+	public void definePrims() throws AbortException {
+		
 
 	}
 
@@ -157,7 +165,9 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		if (addr < 0) {
 			addr = resolveAddr(addr);
 		}
-		
+		return readCell(memory, addr);
+	}
+	protected int readCell(byte[] memory, int addr) {
 		if (!littleEndian && cellBits == 16) {
 			addr &= 0xffff;
 			return (short) ((memory[addr] & 0xff) << 8) | (memory[addr + 1] & 0xff); 
@@ -347,7 +357,12 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	}
 
 	public ITargetWord require(String token) throws AbortException {
-		return (ITargetWord) super.require(token);
+		ITargetWord word = (ITargetWord) find(token);
+		if (word == null) {
+			word = defineForward(token, hostCtx.getStream().getLocation());
+		}
+		return word;
+		//return (ITargetWord) super.require(token);
 	}
 
 	/* (non-Javadoc)
@@ -391,7 +406,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#defineForward(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public IWord defineForward(String token, String location) {
+	public ITargetWord defineForward(String token, String location) {
 		token = token.toUpperCase();
 		ForwardRef ref = forwards.get(token);
 		if (ref == null) {
@@ -447,8 +462,12 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	 */
 	@Override
 	public int writeCell(byte[] memory, int offs, int cell) {
-		memory[offs++] = (byte) (cell >> 8);
-		memory[offs++] = (byte) (cell & 0xff);
+		if (!littleEndian && cellBits == 16) {
+			memory[offs++] = (byte) (cell >> 8);
+			memory[offs++] = (byte) (cell & 0xff);
+		} else {
+			throw new UnsupportedOperationException();
+		}
 		return offs;
 	}
 
@@ -463,13 +482,9 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		RelocEntry entry = relocEntries.get(addr);
 		if (entry != null)
 			cell = -relocs.indexOf(entry) - 1;		// flag
-		if (!littleEndian && cellBits == 16) {
-			memory[addr] = (byte) (cell >> 8);
-			memory[addr + 1] = (byte) (cell & 0xff);
-		} else {
-			throw new UnsupportedOperationException();
-		}
+		writeCell(memory, addr, cell);
 	}
+
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#writeChar(int, int)

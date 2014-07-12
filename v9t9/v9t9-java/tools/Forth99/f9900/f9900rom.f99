@@ -71,6 +71,10 @@ ROM  	  	dp!
 \   initial latest @LATEST
 0 ,
 
+(define-colon-prims)
+
+include asm99.fi
+
 (define-prims)
 
 \   Be sure this ROM doesn't try to make variables in the dictionary
@@ -319,31 +323,15 @@ test" +loop-zero  0
 |test : eval1 s" 100 200 300 + + ." ;
 test" evaluate1 eval1 evaluate 	true "
 
+s" TESTING" environment? [IF]	
 
+: defineConstPlus1000 create , does> @ $1000 + ;
+$123 defineConstPlus1000 N123
+test" defineConstPlus1000  N123 $1123 = " 
 
-include asm99.fi
+[THEN]
 
-
-: (test 
-	 here
-;
-: test)	( word... #words )
-	bl parse type space
-	dup 1+ pick 	( origdp word... #words origdp )
-	here - negate over cells <> 
-	if 
-		." bad # words generated" cr
-		0 do drop loop
-	else
-		0 do 
-			here i 1+ cells - swap over @ 	( word... addr word' )
-			<> if ." mismatch:" @ u. cr else drop then
-		loop
-	then
-	drop
-;
-
-\ include asm.fi
+include asmtests.fi
 
 s" TESTING" environment? [IF]	
 	| : tests-completed

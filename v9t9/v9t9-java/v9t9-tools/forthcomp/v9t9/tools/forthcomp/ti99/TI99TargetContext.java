@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
 import v9t9.common.cpu.ICpu;
@@ -408,14 +409,15 @@ public class TI99TargetContext extends TargetContext  {
 //	private void popTOS() {
 //		writeInstruction(Imov, regInc(REG_SP), TOS);
 //	}
-
+	
 	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#defineBuiltins()
+	 * @see v9t9.tools.forthcomp.TargetContext#defineColonPrims()
 	 */
 	@Override
-	public void defineBuiltins() throws AbortException {
-		super.defineBuiltins();
+	public void defineColonPrims() throws AbortException {
+		super.defineColonPrims();
 		
+
 		IPrimitiveWord docolPrim = definePrim("DOCOL",
 				// save off the IP
 				Idect, reg(REG_RP),
@@ -567,7 +569,68 @@ public class TI99TargetContext extends TargetContext  {
 				Idect, reg(REG_RP),
 				Imov, TMP, regInd(REG_RP));
 		
+		definePrim("0BRANCH",
+				// get target
+				Imov, regInc(REG_IP), TMP,
+				// test val 
+				Imov, TOS, TOS,
+				Ijeq, ">0",
+				// not 0
+				Imov, regInc(REG_SP), TOS,
+				
+				StockInstruction.NEXT,
+			"0",
+				Imov, regInc(REG_SP), TOS,
+				relBranches ? Ia : Imov, TMP, reg(REG_IP)
+				);
+				
+		definePrim("BRANCH", 
+				relBranches ? Ia : Imov, regInc(REG_IP), reg(REG_IP)
+				);
+		
+		definePrim("(S\")",
+				//rdrop r@ dup 1+ swap c@ dup r> + 1+  >r
+				Iai, reg(REG_SP), immed(-cellSize * 2),
+				Imov, TOS, regOffs(REG_SP, cellSize),
+				// get addr
+				Imov, reg(REG_IP), TMP,
+				// get length
+				Imovb, regInc(REG_TMP), TOS,
+				Isrl, TOS, immed(8),
+				// save caddr
+				Imov, TMP, regInd(REG_SP),
+				// align
+				Ia, TOS, TMP,
+				Iinc, TMP,
+				Iandi, TMP, immed(-2),
+				
+				Imov, TMP, reg(REG_IP)
+				);
+				
+				
+		definePrim("HANG", 
+				Iidle
+				);
+		definePrim("(EMITCHAR)", 
+				InstTableCommon.Iemitchar, immed(REG_TOS),
+				StockInstruction.POP_TOS
+				);
+		definePrim("~SUCCESS~", 
+				"0", Ijmp, ">0"
+					);
+		definePrim("~FAILURE~", 
+				"0", Ijmp, ">0"
+					);
 
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.TargetContext#defineBuiltins()
+	 */
+	@Override
+	public void definePrims() throws AbortException {
+		super.definePrims();
+		
 		//doCol = docolPrim; // rest of words act normally 
 		
 		defineConstantPrim("0", 0);
@@ -651,6 +714,24 @@ public class TI99TargetContext extends TargetContext  {
 				Imov, TMP, TOS	// a
 				);
 //		definePrim("2ROT", Irot_d);
+		
+		definePrim("PICK",		// ( xu ... x1 x0 u -- xu ... x1 x0 xu )
+				// Remove u. Copy the xu to the top of the stack. An ambiguous condition exists if there are 
+				// less than u+2 items on the stack before PICK is executed. 
+				Ia, TOS, TOS,
+				Ia, reg(REG_SP), TOS,
+				Imov, regInd(REG_TOS), TOS
+				);
+		definePrim("RPICK",		// ( u -- xu ) ( R: xu ... x1 x0 -- xu ... x1 x0 )
+				// Remove u. Copy the xu to the top of the stack. An ambiguous condition exists if there are 
+				// less than u+2 items on the stack before PICK is executed. 
+				Ia, TOS, TOS,
+				Ia, reg(REG_RP), TOS,
+				Imov, regInd(REG_TOS), TOS
+				);
+				
+
+		
 		definePrim("0=", 
 				Imov, TOS, TOS,
 				Iseto, TOS,
@@ -682,25 +763,6 @@ public class TI99TargetContext extends TargetContext  {
 				Iai, reg(REG_SP), immed(cellSize * 3)
 				);
 
-		definePrim("0BRANCH",
-				// get target
-				Imov, regInc(REG_IP), TMP,
-				// test val 
-				Imov, TOS, TOS,
-				Ijeq, ">0",
-				// not 0
-				Imov, regInc(REG_SP), TOS,
-				
-				StockInstruction.NEXT,
-			"0",
-				Imov, regInc(REG_SP), TOS,
-				relBranches ? Ia : Imov, TMP, reg(REG_IP)
-				);
-				
-		definePrim("BRANCH", 
-				relBranches ? Ia : Imov, regInc(REG_IP), reg(REG_IP)
-				);
-		
 		definePrim("NEGATE", 
 				Ineg, TOS
 				);
@@ -1222,35 +1284,6 @@ public class TI99TargetContext extends TargetContext  {
 				StockInstruction.POP_TOS
 				);
 
-		definePrim("(S\")",
-				//rdrop r@ dup 1+ swap c@ dup r> + 1+  >r
-				Iai, reg(REG_SP), immed(-cellSize * 2),
-				Imov, TOS, regOffs(REG_SP, cellSize),
-				// get addr
-				Imov, reg(REG_IP), TMP,
-				// get length
-				Imovb, regInc(REG_TMP), TOS,
-				Isrl, TOS, immed(8),
-				// save caddr
-				Imov, TMP, regInd(REG_SP),
-				// align
-				Ia, TOS, TMP,
-				Iinc, TMP,
-				Iandi, TMP, immed(-2),
-				
-				Imov, TMP, reg(REG_IP)
-				);
-				
-				
-		definePrim("HANG", 
-				Iidle
-				);
-		definePrim("~SUCCESS~", 
-				"0", Ijmp, ">0"
-					);
-		definePrim("~FAILURE~", 
-				"0", Ijmp, ">0"
-					);
 		
 		LLOperand lengthAndFlags = reg(12);  // should be saved
 		LLOperand charTemp = reg(4);	// must be saved
@@ -1739,11 +1772,40 @@ public class TI99TargetContext extends TargetContext  {
 	 */
 	@Override
 	public void compileDoes(HostContext hostContext, DictEntry entry, int targetDP) throws AbortException {
-		dp -= cellSize * 2;	// step back to overwrite code from #compileDoVar()
-		writeInstruction(Ibl, regInd(REG_DODOES));	
-		int oldCell = readCell(dp);
-		buildCell(targetDP);
-		buildCell(oldCell);
+		// replace the BL *DOVAR instruction with
+		// BL *DODOES  followed by the DOES> XT
+		int from = entry.getParamAddr();
+		int to = from + cellSize;
+		int len = getDP() - entry.getParamAddr();
+		
+		logfile.println("DODOES " + entry + ": moving " + HexUtils.toHex4(from) + "-" + HexUtils.toHex4(from + len) + " forward one cell");
+		alloc(cellSize);	// note: clears
+		
+		for (int offs = len - cellSize; offs >= 0; offs -= cellSize) {
+			int cell = readCell(memory, from + offs);
+			writeCell(memory, to + offs, cell);
+		}
+
+		for (int offs = len - cellSize; offs >= 0; offs -= cellSize) {
+			RelocEntry reloc = relocEntries.get(from + offs);
+			if (reloc != null) {
+				relocEntries.put(to + offs, reloc);
+				relocEntries.remove(from + offs);
+			}
+		}
+
+		logfile.println("T>" + HexUtils.toHex4(entry.getParamAddr()) + " = " + HexUtils.toHex4(targetDP)); 
+
+		writeCell(entry.getParamAddr(), targetDP);
+		
+		entry.setCodeSize(entry.getCodeSize() + cellSize);
+//		dp -= cellSize * 2;	// step back to overwrite code from #compileDoVar()
+//		writeInstruction(Ibl, regInd(REG_DODOES));	
+//		int oldCell = readCell(dp);
+//		buildCell(targetDP);
+//		buildCell(oldCell);
+//		alloc(cellSize);
+		writeCell(entry.getContentAddr(), 0x0690 + REG_DODOES);
 	}
 
 	/* (non-Javadoc)

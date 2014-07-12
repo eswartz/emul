@@ -46,17 +46,6 @@
 ;
 [THEN]
 
-[IFUNDEF] PICK
-: PICK ( n -- v )
-	\ one for the N itself, one for SP@
-    2+ cells  SP@  +  @  
-;   target-only
-
-: RPICK ( n -- v )
-    cells  RP@  +  @  
-;   target-only
-[THEN]
-
 [IFUNDEF] ROLL
 \ : ROLL
 \ ;

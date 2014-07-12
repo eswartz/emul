@@ -90,7 +90,7 @@ public abstract class BaseForthCompTest {
 		for (int i = 0; i <65536; i++)
 			cpu.getConsole().writeByte(i, (byte) 0);
 		
-		targCtx.defineBuiltins();
+		targCtx.definePrims();
 		//comp.parseString("User HERE User Base");
 
 		startDP = targCtx.getDP();

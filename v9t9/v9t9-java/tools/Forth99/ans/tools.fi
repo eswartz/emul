@@ -7,9 +7,12 @@
 
 [IFUNDEF] .S
 : .S
-    ." <" depth dup 0 u.r [char] : emit abs $10 min 0 ?do
-        depth i - 1- pick u.
-    loop ." >"
+    ." <" 
+    depth dup 0 u.r [char] : emit 
+    abs $10 min 0 ?do
+       	depth i - 1- pick u.
+    loop 
+    ." >"
 ;
 [THEN]
 
@@ -28,3 +31,101 @@
 : ? @ . ;
 [THEN]
 
+
+
+: per-line
+    \ 7 = 4 addr + = + space + NL
+    [ [IFDEF] win-cx ]
+    win-cx c@  7 -  2 urshift   1 nand  1 max
+    [ [ELSE] ]
+    &8
+    [ [THEN] ]
+;
+
+: 2u.
+    0 <# # # #> type
+;
+
+: 4u.
+    0 <# # # # # #> type
+;
+
+\ dump one line
+| : (dmpln) ( addr cnt xt -- )
+    >r  \ save xt
+    ( addr cnt )
+    over 4u.   [char] = emit  
+    2dup over + swap
+    do 
+        i j execute 2u. space
+    loop    
+    ( addr cnt )
+    per-line over ?do 3 spaces loop
+    ( addr cnt )
+    0 ?do dup i + j execute dup $20 $7f within 0= 
+            if drop [char] . then emit 
+    loop drop
+    rdrop
+    cr
+;
+
+
+| : (quit?)
+    dup &81 = swap &113 = or
+;
+
+| : (pause?)  ( -- <t|f to quit> )
+    key? dup if            
+        ( t ) 
+        key (quit?) 0= if       \ not quit
+            \ pause and wait for something else 
+            drop key (quit?)
+        else
+            ( t )
+        then
+    \ else false, no key, so no quit        
+    then
+;
+
+
+
+:   digit ( n -- ch )
+    dup 9 > if 55 else 48 then + 
+;
+
+:   d.d  ( n -- )
+    <# sign # #s #> dtype
+;
+
+:   .d  ( n -- )
+    s>d d.d
+;
+
+| : (dmp) ( addr cnt xt -- )
+    base @ >r hex
+    >r cr
+    over +   ( addr addr+cnt )
+    swap
+    do
+        i per-line 
+        j (dmpln)
+        (pause?) if leave else per-line then
+    +loop
+    rdrop
+    r> base !
+;
+
+[IFUNDEF] DUMP
+: DUMP
+    ['] c@ (dmp)
+;
+
+[THEN]
+
+: vdump
+    ['] +vc@ (dmp)
+;
+
+: gdump
+    ['] gc@ (dmp)
+;

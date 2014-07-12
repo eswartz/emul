@@ -155,9 +155,9 @@
     dup [char] 0 [ [char] 9 1+ literal ] within if
         [char] 0 -  
     else dup [char] a [ [char] z 1+ literal ] within if
-        [ char a -10 + literal ] -  
+        [ char a &-10 + literal ] -  
     else dup [char] A [ [char] Z 1+ literal ] within if
-        [ char A -10 + literal ] -  
+        [ char A &-10 + literal ] -  
     else
         -1 or
     then then then

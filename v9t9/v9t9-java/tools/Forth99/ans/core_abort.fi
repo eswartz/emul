@@ -2,7 +2,10 @@
 
 | : (ABORT")
     rot if 
-        type cr 
+        type cr
+        [ [IFDEF]  ~FAILURE~ ]
+         ~FAILURE~
+        [ [THEN] ] 
         abort
     else  
         2drop  

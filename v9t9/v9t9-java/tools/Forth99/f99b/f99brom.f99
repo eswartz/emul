@@ -24,6 +24,7 @@ $400    dp!
 \   initial latest
 0 ,
 
+(define-colon-prims)
 (define-prims)
 
 \   Be sure this ROM doesn't try to make variables in the dictionary

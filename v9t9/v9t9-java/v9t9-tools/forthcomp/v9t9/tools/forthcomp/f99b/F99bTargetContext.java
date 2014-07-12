@@ -114,8 +114,8 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	 * @see v9t9.forthcomp.TargetContext#defineBuiltins()
 	 */
 	@Override
-	public void defineBuiltins() throws AbortException {
-		super.defineBuiltins();
+	public void definePrims() throws AbortException {
+		super.definePrims();
 		
 		defineInlinePrim("#CELL", IlitX | 2);
 		defineInlinePrim("cells", IlitX | 1, Ilsh);

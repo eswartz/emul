@@ -506,6 +506,9 @@ test" evaluate2 eval5  evaluate  0= "
 |test : eval6 s" Variable var  12345 var !  var @ 12345 - " ;
 test" evaluate-var eval6  evaluate  0= "
 
+|test : eval6b s" : varr var @ - ; 12345 varr " ;
+test" evaluate-varb eval6b  evaluate  0= "
+
 |test : eval7 s" 9999 Constant cn  9998 cn - " ;
 test" evaluate-var eval7  evaluate  -1 = "
 

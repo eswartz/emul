@@ -1,6 +1,7 @@
 
 | : unhosted-EMIT ( ch -- )
-	drop
+	(EMITCHAR)
+	\ drop
 ;
 ' unhosted-EMIT 	TO EMIT
 

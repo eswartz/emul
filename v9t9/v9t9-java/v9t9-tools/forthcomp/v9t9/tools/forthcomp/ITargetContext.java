@@ -27,7 +27,10 @@ public interface ITargetContext {
 
 	void setHostContext(HostContext hostCtx);
 
-	void defineBuiltins() throws AbortException;
+	// define the minimal prims to be able to compile colon defs
+	void defineColonPrims() throws AbortException;
+	// define the remaining prims, for bootstrapping
+	void definePrims() throws AbortException;
 
 	int getCellSize();
 	
@@ -80,7 +83,7 @@ public interface ITargetContext {
 	 * @param token
 	 * @return
 	 */
-	IWord defineForward(String token, String location);
+	ITargetWord defineForward(String token, String location);
 	void resolveForward(DictEntry entry);
 
 	void alignDP();

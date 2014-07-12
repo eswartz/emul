@@ -18,7 +18,8 @@
 \	3 $:						\ definition
 \
 
-base @ hex
+base @ 
+hex
 
 [ifundef] T
 : T ; immediate
@@ -62,7 +63,7 @@ $ff	constant (J		\ jump (8 bits)
 		invert , ,					\ { opmask opcode }
 	does>		( op1 -- )
 		2dup @ and
-		if ." invalid arg" then
+		if abort" invalid arg" then
 		cell+ @ or
 		T , <A>
 ;
@@ -75,7 +76,7 @@ $ff	constant (J		\ jump (8 bits)
 	does>		( op1 op2 -- )
 		>r
 		r@ @ lshift or
-		r@ cell+ @ over and if ." invalid arg" then
+		r@ cell+ @ over and if abort" invalid arg" then
 		
 		r> 2 cells + @ or
 		T , <A>
@@ -89,90 +90,90 @@ $ff	constant (J		\ jump (8 bits)
 ;
 
 : DATA T , <A> ;
-0200	(R		 inst1:	LI
-0220	(R		 inst1:	AI
-0240	(R		 inst1:	ANDI
-0260	(R		 inst1:	ORI
-0280	(R		 inst1:	CI
-02A0	(R		 inst1:	STWP
-02C0	(R		 inst1:	STST
-02E0			 inst0:	LWPI
+$0200	(R		 inst1:	LI
+$0220	(R		 inst1:	AI
+$0240	(R		 inst1:	ANDI
+$0260	(R		 inst1:	ORI
+$0280	(R		 inst1:	CI
+$02A0	(R		 inst1:	STWP
+$02C0	(R		 inst1:	STST
+$02E0			 inst0:	LWPI
 
-0300			 inst0:	LIMI
-0340			 inst0:	IDLE
-0360			 inst0:	RSET
-0380			 inst0:	RTWP
-03A0			 inst0:	CKON
-03C0			 inst0:	CKOF
-03E0			 inst0:	LREX
+$0300			 inst0:	LIMI
+$0340			 inst0:	IDLE
+$0360			 inst0:	RSET
+$0380			 inst0:	RTWP
+$03A0			 inst0:	CKON
+$03C0			 inst0:	CKOF
+$03E0			 inst0:	LREX
 
-0400	(G		 inst1:	BLWP
-0440	(G		 inst1:	B
-0480	(G		 inst1:	X
-04C0	(G		 inst1:	CLR
-0500	(G		 inst1:	NEG
-0540	(G		 inst1:	INV
-0580	(G		 inst1:	INC
-05C0	(G		 inst1:	INCT
-0600	(G		 inst1:	DEC
-0640	(G		 inst1:	DECT
-0680	(G		 inst1:	BL_
-06C0	(G		 inst1:	SWPB_
-0700	(G		 inst1:	SETO
-0740	(G		 inst1:	ABS_
+$0400	(G		 inst1:	BLWP
+$0440	(G		 inst1:	B
+$0480	(G		 inst1:	X
+$04C0	(G		 inst1:	CLR
+$0500	(G		 inst1:	NEG
+$0540	(G		 inst1:	INV
+$0580	(G		 inst1:	INC
+$05C0	(G		 inst1:	INCT
+$0600	(G		 inst1:	DEC
+$0640	(G		 inst1:	DECT
+$0680	(G		 inst1:	BL_
+$06C0	(G		 inst1:	SWPB_
+$0700	(G		 inst1:	SETO
+$0740	(G		 inst1:	ABS_
 
-0800	(R	(C	inst2':	SRA
-0900	(R	(C	inst2':	SRL
-0A00	(R	(C	inst2':	SLA
-0B00	(R	(C	inst2':	SRC
+$0800	(R	(C	inst2':	SRA
+$0900	(R	(C	inst2':	SRL
+$0A00	(R	(C	inst2':	SLA
+$0B00	(R	(C	inst2':	SRC
 
-0C00	(C		 inst1:	DSR			\ v9t9
-0D40			 inst0:	KYSL		\ v9t9
-0D60	(R		 inst1:	TICKS		\ v9t9
-0DC0	(R		 inst1:	EMITCHAR	\ v9t9
-0DE0			 inst0:	DBG			\ v9t9
-0DE1			 inst0:	-DBG		\ v9t9
+\ $0C00	(C		 inst1:	DSR			\ v9t9
+\ $0D40			 inst0:	KYSL		\ v9t9
+\ $0D60	(R		 inst1:	TICKS		\ v9t9
+\ $0DC0	(R		 inst1:	EMITCHAR	\ v9t9
+\ $0DE0			 inst0:	DBG			\ v9t9
+\ $0DE1			 inst0:	-DBG		\ v9t9
 
-1000	(J		 inst1:	JMP
-1100	(J		 inst1:	JLT
-1200	(J		 inst1:	JLE
-1300	(J		 inst1:	JEQ
-1400	(J		 inst1:	JHE
-1500	(J		 inst1:	JGT
-1600	(J		 inst1:	JNE
-1700	(J		 inst1:	JNC
-1800	(J		 inst1:	JOC
-1900	(J		 inst1:	JNO
-1A00	(J		 inst1:	JL
-1B00	(J		 inst1:	JH
-1C00	(J		 inst1:	JOP
+$1000	(J		 inst1:	JMP
+$1100	(J		 inst1:	JLT
+$1200	(J		 inst1:	JLE
+$1300	(J		 inst1:	JEQ
+$1400	(J		 inst1:	JHE
+$1500	(J		 inst1:	JGT
+$1600	(J		 inst1:	JNE
+$1700	(J		 inst1:	JNC
+$1800	(J		 inst1:	JOC
+$1900	(J		 inst1:	JNO
+$1A00	(J		 inst1:	JL
+$1B00	(J		 inst1:	JH
+$1C00	(J		 inst1:	JOP
 
-1D00	(B		 inst1:	SBO
-1E00	(B		 inst1:	SBZ
-1F00	(B		 inst1:	TB
+$1D00	(B		 inst1:	SBO
+$1E00	(B		 inst1:	SBZ
+$1F00	(B		 inst1:	TB
 
-2000	(G	(R	inst2:	COC		
-2400	(G	(R	inst2:	CZC		
-2800	(G	(R	inst2:	XOR_	
-2C00	(G	(C	inst2:	XOP
+$2000	(G	(R	inst2:	COC		
+$2400	(G	(R	inst2:	CZC		
+$2800	(G	(R	inst2:	XOR_	
+$2C00	(G	(C	inst2:	XOP
 
-3000	(G	(C	inst2':	LDCR
-3400	(G	(C	inst2':	STCR
-3800	(G	(R	inst2':	MPY
-3C00	(G	(R	inst2':	DIV
+$3000	(G	(C	inst2':	LDCR
+$3400	(G	(C	inst2':	STCR
+$3800	(G	(R	inst2':	MPY
+$3C00	(G	(R	inst2':	DIV
 
-4000	(G	(G	inst2:	SZC
-5000	(G	(G	inst2:	SZCB
-6000	(G	(G	inst2:	S
-7000	(G	(G	inst2:	SB
-8000	(G	(G	inst2:	C
-9000	(G	(G	inst2:	CB
-A000	(G	(G	inst2:	A
-B000	(G	(G	inst2:	AB
-C000	 (G	(G	inst2:	MOV	
-D000	 (G	(G	inst2:	MOVB
-E000	 (G	(G	inst2:	SOC
-F000	 (G	(G	inst2:	SOCB
+$4000	(G	(G	inst2:	SZC
+$5000	(G	(G	inst2:	SZCB
+$6000	(G	(G	inst2:	S
+$7000	(G	(G	inst2:	SB
+$8000	(G	(G	inst2:	C
+$9000	(G	(G	inst2:	CB
+$A000	(G	(G	inst2:	A
+$B000	(G	(G	inst2:	AB
+$C000	 (G	(G	inst2:	MOV	
+$D000	 (G	(G	inst2:	MOVB
+$E000	 (G	(G	inst2:	SOC
+$F000	 (G	(G	inst2:	SOCB
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -193,7 +194,7 @@ F000	 (G	(G	inst2:	SOCB
 
 : *R ( reg# -- opflag )
 	r?
-	10 or			\ add *Rx mask
+	$10 or			\ add *Rx mask
 \	(G or
 ;
 
@@ -201,7 +202,7 @@ F000	 (G	(G	inst2:	SOCB
 
 : *R+ ( reg# -- opflag )
 	r?
-	30 or			\ add *Rx+ mask
+	$30 or			\ add *Rx+ mask
 \	(G or
 ;
 
@@ -209,12 +210,12 @@ F000	 (G	(G	inst2:	SOCB
 
 : @>(R) ( reg# -- opflag )
 	r?
-	20 or			\ add *Rx+ mask
+	$20 or			\ add *Rx+ mask
 \	(G or
 ;
 
 : @>	 ( -- )
-	20			  \ add @>xxxx mask
+	$20			  \ add @>xxxx mask
 \	(G or
 ;
 
@@ -238,7 +239,7 @@ F000	 (G	(G	inst2:	SOCB
 \	The label table contains, for each label, the known address (or 0)
 \	and the last unresolved reference (or 0).
 
-create #labs	10 2* cells dup allot	#labs swap erase
+create #labs	&10 2* cells dup allot	#labs swap erase
 
 : #>lab	( num -- laddr )
 	2* cells #labs +
@@ -277,7 +278,7 @@ create #labs	10 2* cells dup allot	#labs swap erase
 \	(relative to the instruction's address)
 \
 : op>j ( opc -- jump-offset )
-	ff and dup 80 >= if ff invert or then 2* 2 +
+	ff and dup $80 >= if $ff invert or then 2* 2 +
 ;
 
 \	For a given jump offset (relative to an instruction's
@@ -386,5 +387,3 @@ s" 99equs.fi" included
 s" 99code.fi" included
 
 base !
-
-\ s" asm99test.fi" included

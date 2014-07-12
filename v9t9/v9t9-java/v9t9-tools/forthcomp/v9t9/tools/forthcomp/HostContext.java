@@ -67,13 +67,25 @@ public class HostContext extends Context {
 	public void defineHostCompilerWords() {
 		define("csp", new HostVariable(0));
 		
+		define("(define-colon-prims)", new BaseWord() {
+			{
+				setExecutionSemantics(new ISemantics() {
+					
+					public void execute(HostContext hostContext, TargetContext targetContext)
+							throws AbortException {
+						targetContext.defineColonPrims();
+					}
+				});
+			}
+			
+		});
 		define("(define-prims)", new BaseWord() {
 			{
 				setExecutionSemantics(new ISemantics() {
 					
 					public void execute(HostContext hostContext, TargetContext targetContext)
 							throws AbortException {
-						targetContext.defineBuiltins();
+						targetContext.definePrims();
 					}
 				});
 			}
@@ -221,6 +233,7 @@ public class HostContext extends Context {
 		define("branch", new HostBranch());
 		
 		define("+!", new HostPlusStore());
+		define("ERASE", new HostErase());
 		define("FILL", new HostFill());
 		define("r>", new HostReturnPop());
 		define(">r", new HostPushReturn());
