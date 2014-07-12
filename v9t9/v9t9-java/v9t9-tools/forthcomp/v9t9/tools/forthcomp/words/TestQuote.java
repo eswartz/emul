@@ -30,7 +30,7 @@ public class TestQuote extends BaseWord {
 			@Override
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-
+				
 				new SQuote().getInterpretationSemantics().execute(hostContext, targetContext);
 				
 				int leng = hostContext.popData();

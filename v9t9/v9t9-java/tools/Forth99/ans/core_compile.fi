@@ -483,7 +483,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
     else
         nip 0
     then    
-;
+; target-only
 
 \ 0 ( has? standard-threading )     constant standard-threading 
 \ 1 ( has? inlining-next )  constant inlining-next

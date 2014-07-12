@@ -52,7 +52,7 @@ public class UnitTests extends BaseWord {
 
 
 	public void addText(String text) throws AbortException {
-		testDefinitionText.append("\n").append(text).append("\n");
+		testDefinitionText.append(" DECIMAL \n").append(text).append("\n");
 //		HostContext hostContext = compiler.getHostContext();
 //		
 //		compiler.parseString(
@@ -68,7 +68,7 @@ public class UnitTests extends BaseWord {
 		
 		sb.append(testDefinitionText);
 
-		sb.append("| : RUNTEST ( addr -- ) ");
+		sb.append("DECIMAL  | : RUNTEST ( addr -- ) ");
 		sb.append(" $abcd swap ");
 		sb.append(" EXECUTE  0= IF ABORT\" failed\" THEN \n");
 		sb.append(" $abcd  <> IF ABORT\" stack damage\" THEN \n");

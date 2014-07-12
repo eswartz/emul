@@ -166,16 +166,16 @@ public class ForthComp {
     	comp.getTargetContext().alignDP();
     	comp.saveMemory(consoleOutFile, gromDictFile);
     	
+    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getTargetDictionary().values());
+    	
+    	Collections.sort(sortedDict, new Comparator<DictEntry>() {
+	    		public int compare(DictEntry o1, DictEntry o2) {
+	    			return o2.getUses() - o1.getUses();
+	    		}
+	    	}
+		);
     	if (doHistogram) {
-	    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getTargetDictionary().values());
 	    	logfile.println("Top 100 word uses of " + sortedDict.size() +":");
-			
-	    	Collections.sort(sortedDict, new Comparator<DictEntry>() {
-					public int compare(DictEntry o1, DictEntry o2) {
-						return o2.getUses() - o1.getUses();
-					}
-				}
-	    	);
 			for (int i = 0; i < sortedDict.size() && i < 100; i++) {
 				DictEntry entry = sortedDict.get(i);
 				logfile.print("\t" + entry.getUses() +"\t" + entry.getName() );
@@ -205,17 +205,18 @@ public class ForthComp {
 	    	}
 	    	System.out.println("real size = " + realSize + "; if aligned = " + ifAlignedSize);
 	    	
-	    	int headerSizes = 0;
-	    	for (DictEntry entry : sortedDict) {
-	    		if (entry.getHeaderSize() > 0) {
-	    			System.out.println(": " + entry.getName());
-	    			headerSizes += entry.getHeaderSize();
-	    		}
-	    	}
-	    	System.out.println("headers size = " + headerSizes);
-	    	
 	    	targetContext.dumpStubs(logfile);
     	}
+    	
+
+    	int headerSizes = 0;
+    	for (DictEntry entry : sortedDict) {
+    		if (entry.getHeaderSize() > 0) {
+    			System.out.println(": " + entry.getName());
+    			headerSizes += entry.getHeaderSize();
+    		}
+    	}
+    	System.out.println("headers size = " + headerSizes);
     	
     	if (gromOutFile != null && gromDictFile != null)
     		comp.mergeGromDictionary(gromDictFile, gromOutFile);

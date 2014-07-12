@@ -42,6 +42,7 @@ $ff	constant (J		\ jump (8 bits)
 
 [ifundef] /CELLS
 : /CELLS 1 cells / ; 
+[then]
 
 \	Instruction words.  These take pre-baked operand
 \	data and do some validation then shift the contents
@@ -237,7 +238,7 @@ F000	 (G	(G	inst2:	SOCB
 \	The label table contains, for each label, the known address (or 0)
 \	and the last unresolved reference (or 0).
 
-create #labs	10 2* cells dup allot	#labs swap $0 fill
+create #labs	10 2* cells dup allot	#labs swap erase
 
 : #>lab	( num -- laddr )
 	2* cells #labs +
@@ -386,4 +387,4 @@ s" 99code.fi" included
 
 base !
 
-s" asm99test.fi" included
+\ s" asm99test.fi" included

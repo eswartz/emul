@@ -19,11 +19,11 @@ has? inlining-next [if]
 			rIP *R+	 0	mov
 			0 *R		b
 		;	immediate
-	[endif]
+	[then]
 [else]
 	: NEXT
 		rNEXT *R	b
 	; 	immediate
-[endif]
+[then]
 
 

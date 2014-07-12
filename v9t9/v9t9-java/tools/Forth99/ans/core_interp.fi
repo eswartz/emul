@@ -165,7 +165,7 @@
 
 ( Tell if the given char is a valid number in the given base )
 :   >digit ( base ch -- u true | false )
-	C>N  		( base n | base -1 )  
+	C>N  		( base n | base FFFF )  
 	2dup U> if
 		nip true
 	else
@@ -176,7 +176,7 @@
 test" >digit 10 [char] 9 >digit swap 9 = AND "
 test" >digit 10 [char] E >digit 0= "
 test" >digit 16 [char] E >digit swap &14 = AND "
-test" >digit 10 [char] * >digit 0= "
+test" >digit 10 [char] * >digit 0=  "
 
 
 | : (skip)  ( caddr u -- caddr+1 u-1 )

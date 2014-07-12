@@ -19,13 +19,13 @@ import v9t9.tools.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class Include extends BaseWord {
-	public Include() {
+public class Included extends BaseWord {
+	public Included() {
 		setExecutionSemantics(new ISemantics() {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				String filename = hostContext.readToken();
+				String filename = popString(hostContext, targetContext);
 				hostContext.include(filename);
 			}
 		});

@@ -10,6 +10,8 @@
  */
 package v9t9.tools.forthcomp;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -91,6 +93,7 @@ public class HostContext extends Context {
 			
 		});
 		define("include", new Include());
+		define("included", new Included());
 		
 		define("[if]", new BracketIf());
 		define("[ifdef]", new BracketIfdef());
@@ -99,6 +102,7 @@ public class HostContext extends Context {
 		define("[then]", new BracketThen());
 		
 		define("ENVIRONMENT?", new EnvironmentQuery());
+		define("HAS?", new HasQuestion());
 		
 		define("<EXPORT", new PushExportState());
 		define("EXPORT>", new PopExportState());
@@ -217,6 +221,7 @@ public class HostContext extends Context {
 		define("branch", new HostBranch());
 		
 		define("+!", new HostPlusStore());
+		define("FILL", new HostFill());
 		define("r>", new HostReturnPop());
 		define(">r", new HostPushReturn());
 		
@@ -858,6 +863,24 @@ public class HostContext extends Context {
 	}
 	public void setHostCell(int addr, IWord val) {
 		hostWords.put(addr, val);
+		
+	}
+
+	/**
+	 * @param filename
+	 * @throws AbortException 
+	 */
+	public void include(String filename) throws AbortException {
+		try {
+			File dir = new File(getStream().getFile()).getParentFile();
+			File file = new File(dir, filename);
+			if (file.exists())
+				getStream().push(file);
+			else
+				getStream().push(new File(filename));
+		} catch (FileNotFoundException e) {
+			throw abort(e.getMessage());
+		}				
 		
 	}
 

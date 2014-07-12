@@ -32,11 +32,21 @@ public class BarTest extends BaseWord {
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
 
-				String content = hostContext.getStream().readToEOL();
-
-				if (unitTests != null) {
-					unitTests.addText(content);
-				}
+				String content;
+				boolean more = false;
+				do {
+					content = hostContext.getStream().readToEOL();
+					if (content.endsWith("\\")) {
+						content = content.substring(0, content.length() - 1);
+						more = true;
+					} else {
+						more = false;
+					}
+					
+					if (unitTests != null) {
+						unitTests.addText(content);
+					}
+				} while (more);
 			}
 		});
 		
