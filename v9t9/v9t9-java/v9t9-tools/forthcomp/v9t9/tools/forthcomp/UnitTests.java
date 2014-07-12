@@ -70,13 +70,13 @@ public class UnitTests extends BaseWord {
 
 		sb.append("DECIMAL  | : RUNTEST ( addr -- ) ");
 		sb.append(" $abcd swap ");
-		sb.append(" EXECUTE  0= IF ABORT\" failed\" THEN \n");
-		sb.append(" $abcd  <> IF ABORT\" stack damage\" THEN \n");
+		sb.append(" EXECUTE  0= IF ~FAILURE~ THEN \n");
+		sb.append(" $abcd  <> IF ABORT\" stack damage\" ~FAILURE~ THEN \n");
 		sb.append(" ;\n");
 		
 		sb.append("| : RUNTESTS ");
 		sb.append(testWordText);
-		sb.append(" tests-completed ;\n");
+		sb.append(" ~SUCCESS~ ;\n");
 		
 		compiler.parseString(
 				"RUNTESTS", 

@@ -46,6 +46,12 @@ public interface ICpu extends IPersistable {
 	SettingSchema settingRunForCount = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"RunForCount", new Integer(0));
+	SettingSchema settingTestSuccessSymbol = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"TestSuccessSymbol", "");
+	SettingSchema settingTestFailureSymbol = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"TestFailureSymbol", "");
 
 	
 	IProperty settingRealTime();

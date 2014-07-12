@@ -35,6 +35,9 @@ public class DumpFullReporter9900 implements IInstructionListener {
 
 	private final Cpu9900 cpu;
 	private IProperty dumpSetting;
+	private IProperty testSuccessSymbol;
+	private IProperty testFailureSymbol;
+	private String symbol;
 
 	/**
 	 * 
@@ -42,7 +45,8 @@ public class DumpFullReporter9900 implements IInstructionListener {
 	public DumpFullReporter9900(Cpu9900 cpu) {
 		this.cpu = cpu;
 		dumpSetting = Settings.get(cpu, ICpu.settingDumpFullInstructions);
-
+		testFailureSymbol = Settings.get(cpu, ICpu.settingTestFailureSymbol);
+		testSuccessSymbol = Settings.get(cpu, ICpu.settingTestSuccessSymbol);
 	}
 	
 
@@ -71,13 +75,13 @@ public class DumpFullReporter9900 implements IInstructionListener {
 	public void dumpFullStart(InstructionWorkBlock9900 wb,
 			RawInstruction ins, PrintWriter dumpfull) {
 		IMemoryEntry entry = wb.domain.getEntryAt(ins.pc);
-		String name = null;
+		symbol = null;
 		if (entry != null) 
-			name = entry.lookupSymbol((short) ins.pc);
-		if (name != null) {
-			dumpfull.print('"' + name + "\"");
+			symbol = entry.lookupSymbol((short) ins.pc);
+		if (symbol != null) {
+			dumpfull.print('"' + symbol + "\"");
 			// HACK
-			if ("@NEXT".equals(name)) {
+			if ("@NEXT".equals(symbol)) {
 				// show current word
 				int curIP = wb.cpu.getRegister(14);
 				Pair<String, Short> info = entry.lookupSymbolNear((short) curIP, 128);
@@ -85,13 +89,13 @@ public class DumpFullReporter9900 implements IInstructionListener {
 					dumpfull.print(" in " + info.first);
 				}
 			}
-			else if (";S".equals(name)) {
+			else if (";S".equals(symbol)) {
 				dumpCallStack(dumpfull, entry, wb, true);
 				dumpStack(dumpfull, entry, wb);
-			} else if ("DOCOL".equals(name)) {
+			} else if ("DOCOL".equals(symbol)) {
 				dumpCallStack(dumpfull, entry, wb, false);
 				dumpStack(dumpfull, entry, wb);
-			} else if ("EXECUTE".equals(name)) {
+			} else if ("EXECUTE".equals(symbol)) {
 				dumpStack(dumpfull, entry, wb);
 			}
 			dumpfull.println();
@@ -213,6 +217,18 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		dumpfull.print(" @ " + cycles);
 		dumpfull.println();
 		dumpfull.flush();
+
+		if (symbol != null) {
+			if (symbol.equals(testSuccessSymbol.getString())) {
+				System.out.println("*** SUCCESS ***");
+				System.exit(0);
+			}
+			else if (symbol.equals(testFailureSymbol.getString())) {
+				System.out.println("*** FAILED ***");
+				System.exit(1);
+			}
+		}
+		
 	}
 
 }

@@ -1243,9 +1243,14 @@ public class TI99TargetContext extends TargetContext  {
 				
 				
 		definePrim("HANG", 
-			//"0", Ijmp, ">0"
 				Iidle
 				);
+		definePrim("~SUCCESS~", 
+				"0", Ijmp, ">0"
+					);
+		definePrim("~FAILURE~", 
+				"0", Ijmp, ">0"
+					);
 		
 		LLOperand lengthAndFlags = reg(12);  // should be saved
 		LLOperand charTemp = reg(4);	// must be saved
