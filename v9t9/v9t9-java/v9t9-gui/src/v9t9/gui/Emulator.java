@@ -92,13 +92,14 @@ public class Emulator {
 		boolean tcf = false;
 		
 		Getopt getopt = new Getopt(Emulator.class.getName(), args, 
-				"r:Cc:ts:d",
+				"r:Cc:tTs:d",
 				new LongOpt[] {
 					//new LongOpt("remote", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), 'r'),
 					new LongOpt("clean", LongOpt.NO_ARGUMENT, null, 'C'),
 					new LongOpt("configdir", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
 					new LongOpt("debug", LongOpt.NO_ARGUMENT, null, 'd'),
-					new LongOpt("tcf", LongOpt.NO_ARGUMENT, null, 't'),
+					new LongOpt("tcf", LongOpt.NO_ARGUMENT, null, 'T'),
+					new LongOpt("test", LongOpt.NO_ARGUMENT, null, 't'),
 					new LongOpt("set", LongOpt.REQUIRED_ARGUMENT, null, 's'),
 					new LongOpt("list-machines", LongOpt.NO_ARGUMENT, null, 0x101),
 					new LongOpt("list-clients", LongOpt.NO_ARGUMENT, null, 0x102),
@@ -128,8 +129,16 @@ public class Emulator {
 			else if (opt == 'd') {
 				debug = true;
 			}
-			else if (opt == 't') {
+			else if (opt == 'T') {
 				tcf = true;
+			}
+			else if (opt == 't') {
+				settings.put(ICpu.settingTestSuccessSymbol.getName(), "~SUCCESS~");
+				settings.put(ICpu.settingTestFailureSymbol.getName(), "~FAILURE~");
+				settings.put(ICpu.settingRunForCount.getName(), "20000000");
+				settings.put(ICpu.settingDetectCrash.getName(), "true");
+				debug = true;
+				
 			}
 			else if (opt == 's') {
 				String arg = getopt.getOptarg().trim();

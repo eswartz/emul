@@ -20,6 +20,7 @@ import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
+import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IInstructionListener;
@@ -229,6 +230,10 @@ public class DumpFullReporter9900 implements IInstructionListener {
 			}
 		}
 		
+		if (wb.inst.getInst() == InstTableCommon.Idata) {
+			System.out.println("*** CRASHED ***");
+			System.exit(2);
+		}
 	}
 
 }
