@@ -561,8 +561,8 @@ public abstract class TargetContext extends Context implements ITargetContext {
 			entry = new DictEntry(0, getDP(), name);
 			exportFlagNext = false;
 			// assume address
-			if (isLikelyAddress(value))
-				symbols.put(value, name);
+			//if (isLikelyAddress(value))
+			symbols.put(value, name);
 		}
 		if (!isNativeDefinition() && mustDefine)
 			compileDoConstant(value, cells);
@@ -624,7 +624,6 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		int offset = readCell(paramAddr);
 		writeCell(paramAddr, offset + bytes);
 
-
 		boolean mustDefine = currentExport();
 		if (!mustDefine) {
 			mustDefine = isForcedExport(name);
@@ -639,6 +638,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		} else {
 			entry = new DictEntry(0, getDP(), name);
 			exportFlagNext = false;
+			symbols.put(entry.getAddr(), name);
 		}
 		if (!isNativeDefinition())
 			compileDoUser(offset);
