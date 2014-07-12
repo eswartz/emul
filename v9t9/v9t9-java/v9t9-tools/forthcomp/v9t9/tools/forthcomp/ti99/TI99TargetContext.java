@@ -987,7 +987,8 @@ public class TI99TargetContext extends TargetContext  {
 				
 		
 		definePrim("UNLOOP", 
-				Iai, reg(REG_RP), immed(cellSize * 2)	// note: RTOS is unchanged
+				Iai, reg(REG_RP), immed(cellSize * 2)	
+				//Ic, regInc(REG_RP), regInc(REG_RP)		// space saving, but 2x slower!
 				);
 				
 		definePrim("?DUP", 
