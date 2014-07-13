@@ -321,9 +321,10 @@ s" TESTING" environment? [IF]
 $123 defineConstPlus1000 N123
 test" defineConstPlus1000  N123 $1123 = " 
 
+include asmtests.fi
+
 [THEN]
 
-include asmtests.fi
 
 s" TESTING" environment? [IF]	
 	| : tests-completed
