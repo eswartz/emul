@@ -45,7 +45,28 @@ public class SQuote extends BaseWord {
 					throws AbortException {
 				String str = parseString(hostContext);
 
-				targetContext.buildPushString(hostContext, str);
+				final Pair<Integer, Integer> info = targetContext.buildPushString(hostContext, str);
+
+				hostContext.build(new BaseStdWord() {
+					
+					@Override
+					public boolean isImmediate() {
+						return false;
+					}
+					
+					@Override
+					public void execute(HostContext hostContext, TargetContext targetContext)
+							throws AbortException {
+						int pc = hostContext.getHostPc();
+						int addr = ((HostLiteral) hostContext.readHostCell(pc++)).getValue();
+						int len = ((HostLiteral) hostContext.readHostCell(pc++)).getValue();
+						hostContext.pushData(addr);
+						hostContext.pushData(len);
+						hostContext.setHostPc(pc);
+					}
+				});
+				hostContext.build(new HostLiteral(info.first + 1, true));
+				hostContext.build(new HostLiteral(str.length(), true));
 			}
 		});
 	}

@@ -33,5 +33,5 @@ public abstract class BaseHostBranch extends BaseStdWord implements Cloneable {
 		return false;
 	}
 
-	public abstract Object clone(); 
+	public abstract BaseHostBranch clone(); 
 }

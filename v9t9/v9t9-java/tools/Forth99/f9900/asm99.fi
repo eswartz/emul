@@ -159,8 +159,8 @@ $2C00	(G	(C	inst2:	XOP
 
 $3000	(G	(C	inst2':	LDCR
 $3400	(G	(C	inst2':	STCR
-$3800	(G	(R	inst2':	MPY
-$3C00	(G	(R	inst2':	DIV
+$3800	(G	(R	inst2:	MPY
+$3C00	(G	(R	inst2:	DIV
 
 $4000	(G	(G	inst2:	SZC
 $5000	(G	(G	inst2:	SZCB
@@ -179,7 +179,7 @@ $F000	 (G	(G	inst2:	SOCB
 
 : r?
 	dup $0f invert and if
-		." reg?? " . cr
+		abort" reg?? "
 	then
 ;
 
@@ -222,7 +222,7 @@ $F000	 (G	(G	inst2:	SOCB
 \ \\\\
 
 : >#	( bit -- opflag )
-	dup $ff00 and if ." invalid range" then
+	dup $ff00 and if abort" invalid range" then
 ;
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -238,63 +238,53 @@ $F000	 (G	(G	inst2:	SOCB
 \
 \	The label table contains, for each label, the known address (or 0)
 \	and the last unresolved reference (or 0).
+\
+\	A first reference forward results in:
+\
+\
 
-create #labs	&10 2* cells dup allot	#labs swap erase
+Defer #labs
+: rom-#labs 	$F000 ;		\ while building, write to (likely) empty area
+
+' rom-#labs		TO #labs
 
 : #>lab	( num -- laddr )
-	2* cells #labs +
+	cells  #labs +
 ;
 
 : lab>#	( laddr -- num )
-	#labs - 2 cells /
+	#labs -  #cell U/
 ;
 
-\	Is the label unresolved?
-\
-: $>f? ( label -- t/f )
-	cell+ @
-;
-
-\	Set the label unresolved pointing to the given jumper address
-\
-: $>f! ( label addr --  )
-	swap cell+ !
-;
-
-\	Get the label's current address
-\
-\	Any forward references to a label clear its address.
-: $>a ( label -- addr )
-	@
-;
-
-\	Set the label's current address
-: $>a! ( label addr -- )
+: $>f! ( label -- )
+	here  1 OR 
 	swap !
-;
-
-
-\	For a given opcode, calculate its jump offset
-\	(relative to the instruction's address)
-\
-: op>j ( opc -- jump-offset )
-	ff and dup $80 >= if $ff invert or then 2* 2 +
 ;
 
 \	For a given jump offset (relative to an instruction's
 \	address), calculate its opcode bits
 \
 : j>op ( jump-offset -- opc )
-	1 cells -
-	/cells				 \ calc offset
+	2 - 2/			 \ calc offset
 	dup -$80 $7f within
 	0= if
-		." bad jump offset: " . cr
+		abort" bad jump offset"
 	then
 	$ff and
 ;
 
+\	For a given opcode, calculate its jump offset
+\	(relative to the instruction's address)
+\
+: op>j ( opc -- jump-offset )
+	\ ." op>j " dup u. 
 
+	$ff and 
+	dup $80 >= if [ $ff invert LITERAL ]  or then 2* 	\ note: use this pattern to restrict to word size
+	2 +
+	
+	\ ." = " dup u. cr
+;
 \	Generate opflag for jumping to 'targ' from 'addr'
 \	(assuming the jump instruction will be added next)
 \
@@ -302,88 +292,100 @@ create #labs	&10 2* cells dup allot	#labs swap erase
 	- j>op
 ;
 
-\	Fixup an existing unresolved jump to go to the given target
-\
-: $>fx	( refhead target -- )
-	over $ 		\ jump to here now	( refhead offs )
-	over @ 		( refhead offs opc )
-	$ff00 and or		\ new opcode		( refhead opc )
-	over !			\ rewrite			( refhead )
-	drop
+\	Patch an opcode with a new offset
+: $>off! ( iaddr offs -- )
+	swap 1+  c!
 ;
-
+ 
 \	resolve jumps to 'addr'
 \
-\	The refhead is the last instruction that wanted the
+\	The iaddr is the last instruction that wanted the
 \	target.  Each one jumps to the previous one that
 \	wanted it, until you hit one that jumps to itself.
 
-: $>res	( refhead -- )
+: $>fix ( iaddr -- iaddr' t | ?? f ) 
+	\ ." fixing: " .s cr
+	
+	dup @ >r	\ save old opcode 	( iaddr )
+	dup 
+		here over $ 	
+		$>off!	 	( iaddr )
+	
+	\ ." >>1 " .s cr
+	\ now go to previous address
+	r> op>j			( iaddr offs )
+	
+	over + 			( iaddr iaddr' )
+	\ ." >>2 " .s cr
+	swap over =			( nextref t/f )
+;
+
+\	Is the label unresolved?
+\
+: $>f? ( label -- t/f )
+	@ 1 AND
+;
+
+\	Get the last target of the label
+: $>f^ ( label -- iaddr )
+	@  [ 1 invert LITERAL ] AND
+;
+
+: $>res	( label -- )
 \	.s
-	begin
-		\ dup ." fixing: " u. cr
-		dup @ >r	\ save old opcode 	( refhead )
-		dup here $>fx 	( refhead )
-		
-		\ now go to previous address
-		r> $ff and	   ( refhead opc )
-		op>j			( refhead offs )
-		over + 			( refhead nextref )
-		swap over =		( nextref t/f )
-		\ .s key 81 = if drop false then
-	until
+	dup $>f? if  	( label )
+		\ ." $>res " .s cr
+		\ Step through list of refs
+		$>f^  		( iaddr )
+		begin
+			$>fix	( iaddr' flag )
+		until
+	then
 	drop
-\	.s
 ;
 
 \	define a label
 \	3 $:
 : $:	( num -- )
-	#>lab			\ get addr
-	dup $>f? ?dup if
-		$>res
-	then
-	dup 0 $>f!		\ now resolved
-	T here <A>		( label addr )
-	$>a!
+	\ ." $: " dup u. ." = " here u. cr
+	#>lab			( label )
+	dup $>res
+	here 		( label addr )
+	\ ." $:. " .s cr
+	swap !
 ;
 
 
 \ Get address of next jump
 \
-: '$	T here <A> cell+ ;
+\ : '$	here cell+ ;
 
 
 \ Get the opcode for jumping backward
 \
 : $-	( lab# -- opc )
 	#>lab		 \ get addr
-	$>a dup if 
- 	 	here $	\ jump
-	else
-		." undefined label"
-		$ff
+	dup $>f? if 
+		abort" undefined label"
 	then
+	@ here $	\ jump
 ;
 
 \ Make an unresolved forward reference
 \
 : $+ 	( lab# -- opc )
 	#>lab
-	dup $>f? ?dup 
-	if 
-		here $	\ jump to previous unresolved
-	else	
+	
+	dup $>f? if  
+		dup $>f^ here   
+		\ ." $+ new " .s cr
+		$		\ jump to previous unresolved
+	else
 		$ff			\ get "jump to self"
 	then
-	swap here $>f!	
-
+	
+	\ ." $+: " .s cr 
+	swap  $>f!
 ;
-
-\ \\\\\\\\\
-
-\ 	Set up some macros
-s" 99equs.fi" included
-s" 99code.fi" included
 
 base !

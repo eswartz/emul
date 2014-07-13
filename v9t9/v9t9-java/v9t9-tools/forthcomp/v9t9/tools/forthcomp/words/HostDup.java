@@ -43,7 +43,6 @@ public class HostDup extends BaseStdWord {
 	 * @see v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 	

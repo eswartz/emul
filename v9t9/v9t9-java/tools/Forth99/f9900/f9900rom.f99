@@ -74,6 +74,7 @@ ROM  	  	dp!
 (define-colon-prims)
 
 include asm99.fi
+include 99equs.fi
 
 (define-prims)
 
@@ -397,6 +398,10 @@ s" TESTING" environment? [IF]
 s" TESTING" environment? [IF] 
 TESTS!
 [THEN]
+
+\ assembly label table
+&10 2* cells RamVar	ram-#labs
+' ram-#labs		TO 	#labs
 
 ramptr @  1- aligned  constant (RAM0)
 

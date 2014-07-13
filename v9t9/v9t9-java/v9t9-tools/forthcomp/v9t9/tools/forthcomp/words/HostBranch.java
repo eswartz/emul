@@ -52,7 +52,7 @@ public class HostBranch extends BaseHostBranch {
 	 * @see java.lang.Object#clone()
 	 */
 	@Override
-	public Object clone() {
+	public HostBranch clone() {
 		return new HostBranch(target);
 	}
 

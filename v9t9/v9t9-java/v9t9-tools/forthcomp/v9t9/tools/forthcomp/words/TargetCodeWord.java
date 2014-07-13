@@ -21,26 +21,28 @@ import v9t9.tools.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class TargetColonWord extends TargetWord implements ITargetWord {
+public class TargetCodeWord extends TargetWord implements ITargetWord, IPrimitiveWord {
 
 	/**
 	 * @param entry
 	 */
-	public TargetColonWord(DictEntry entry) {
+	public TargetCodeWord(DictEntry entry) {
 		super(entry);
 		
+		entry.setTargetOnly(true);
+		
+//		setCompilationSemantics(new ISemantics() {
+//			
+//			public void execute(HostContext hostContext, TargetContext targetContext)
+//					throws AbortException {
+//				targetContext.buildCall(TargetCodeWord.this);
+//			}
+//		});
 		setExecutionSemantics(new ISemantics() {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				if (getHostDp() >= 0 && !getEntry().isTargetOnly()) {
-					if (HostContext.DEBUG)
-						System.out.println("T> call " + Integer.toHexString(getEntry().getAddr()) + "(" + getHostDp() + ")");
-					hostContext.pushCall(getHostDp());
-					hostContext.interpret(hostContext, targetContext);
-				} else {
-					throw hostContext.abort("cannot execute target word: " + getEntry().getName());
-				}		
+				throw hostContext.abort("cannot execute target word: " + getEntry().getName());
 			}
 		});
 	}
@@ -50,7 +52,15 @@ public class TargetColonWord extends TargetWord implements ITargetWord {
 	 */
 	@Override
 	public String toString() {
-		return ": " + entry.getName();
+		return "Code " + getEntry().getName();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.IPrimitiveWord#getPrimitiveSize()
+	 */
+	@Override
+	public int getPrimitiveSize() {
+		return getEntry().getCodeSize();
 	}
 
 }

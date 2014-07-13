@@ -1,5 +1,5 @@
 /*
-  Begin.java
+  HostRot.java
 
   (c) 2010-2011 Edward Swartz
 
@@ -18,26 +18,35 @@ import v9t9.tools.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class Begin extends BaseStdWord {
-	public Begin() {
+public class HostCells extends BaseStdWord {
+
+	private int cellSize;
+
+	/**
+	 * 
+	 */
+	public HostCells(int cellSize) {
+		this.cellSize = cellSize;
+	}
+	
+	@Override
+	public String toString() {
+		return "CELLS";
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.IContext)
+	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.HostContext, v9t9.forthcomp.words.TargetContext)
 	 */
-	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		hostContext.assertCompiling();
-		//targetContext.alignBranch();
-		targetContext.pushHere(hostContext);
-		hostContext.pushPairs(1);
-		
-		
+	public void execute(HostContext hostContext, TargetContext targetContext)
+			throws AbortException {
+		hostContext.pushData(hostContext.popData() * cellSize);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
+	
 }

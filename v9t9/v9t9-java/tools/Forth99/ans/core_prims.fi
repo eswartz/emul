@@ -54,7 +54,10 @@ test" 2swap  $1234.5678 $9abc.def0 2swap $1234.5678 d= >r $9abc.def0 d= r> and "
 ;
 [THEN]
 
+[IFUNDEF] /CELLS
 | : /cells [ cell<< ] literal rshift ;
+[THEN]
+
 | : (d) - negate /cells ;
 [IFUNDEF] DEPTH
 : DEPTH
@@ -339,6 +342,9 @@ error" need prim +"
 \ : AND
 \ ;
 [THEN]
+test" and $5555 $fa AND $50 = "
+test" nand $5555 $f NAND $5550 = "
+
 
 [IFUNDEF] FM/MOD
 : FM/MOD        \ d1 n1 -- n2-r n3-q          core            f_m_slash_mod
@@ -457,7 +463,7 @@ test" u< 2 -1 u<"
 \ ;
 error" need prim xor"
 [THEN]
-
+test" xor $5555 $aaab xor $fffe = "
 
 [IFUNDEF] EXECUTE
 \ : EXECUTE

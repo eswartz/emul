@@ -11,6 +11,7 @@ import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
+import v9t9.tools.forthcomp.words.TargetCodeWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
 import v9t9.tools.forthcomp.words.TargetConstant;
 import v9t9.tools.forthcomp.words.TargetDefer;
@@ -338,7 +339,7 @@ public interface ITargetContext {
 	void compileDoes(HostContext hostContext, DictEntry dictEntry, int targetDP)
 			throws AbortException;
 
-	void buildPushString(HostContext hostContext, String string)
+	Pair<Integer, Integer> buildPushString(HostContext hostContext, String string)
 			throws AbortException;
 
 	void compileUser(TargetUserVariable var);
@@ -373,5 +374,17 @@ public interface ITargetContext {
 	 * @return
 	 */
 	boolean isTestMode();
+
+	/**
+	 * @param name
+	 * @return
+	 */
+	TargetCodeWord defineCodeWord(String name);
+	void compileEndCode();
+
+	/**
+	 * @return
+	 */
+	PrintStream getLog();
 
 }

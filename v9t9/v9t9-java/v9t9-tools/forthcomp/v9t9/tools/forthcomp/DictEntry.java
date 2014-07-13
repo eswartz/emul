@@ -39,7 +39,7 @@ public class DictEntry implements Comparable<DictEntry> {
 	protected Map<String, LocalVariableTriple> locals;
 	protected Map<String, IWord> localDict;
 	protected IWord hostBehavior;
-	protected IWord targetWord;
+	protected ITargetWord targetWord;
 	protected int hostStackCount;
 	protected boolean targetOnly;
 	private boolean inline;
@@ -131,13 +131,13 @@ public class DictEntry implements Comparable<DictEntry> {
 	public IWord getHostBehavior() {
 		return hostBehavior;
 	}
-	public void setTargetWord(IWord targetWord) {
+	public void setTargetWord(ITargetWord targetWord) {
 		this.targetWord = targetWord;
 	}
 	/**
 	 * @return the targetWord
 	 */
-	public IWord getTargetWord() {
+	public ITargetWord getTargetWord() {
 		return targetWord;
 	}
 	

@@ -8,6 +8,7 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
+include 99prims_rev_tos.fi
 
 \ Move memory backward (src -> dst)
 : cmove              ( src dst # -- )  

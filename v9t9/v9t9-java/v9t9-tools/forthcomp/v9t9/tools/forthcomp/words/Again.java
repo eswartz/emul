@@ -28,7 +28,10 @@ public class Again extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		hostContext.assertCompiling();
 		hostContext.assertPairs(1);
-		
+
+		// TODO: why +1?
+		hostContext.build(new Host0Branch(hostContext.getFixupTarget(hostContext.peekData())+1));
+
 		targetContext.compileBack(hostContext, false);
 	}
 	

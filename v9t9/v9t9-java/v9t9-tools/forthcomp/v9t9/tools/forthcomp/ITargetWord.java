@@ -24,4 +24,5 @@ public interface ITargetWord extends IWord {
 	 */
 	void setHostDp(int localDP);
 
+	int getHostDp();
 }

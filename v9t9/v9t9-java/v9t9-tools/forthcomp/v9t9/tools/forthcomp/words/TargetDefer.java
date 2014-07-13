@@ -23,6 +23,7 @@ import v9t9.tools.forthcomp.TargetContext;
  */
 public class TargetDefer extends TargetWord {
 	private int offset;
+	private int hostPc;
 
 	/**
 	 * @param addr 
@@ -43,8 +44,9 @@ public class TargetDefer extends TargetWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-//				int addr = getEntry().getParamAddr();
-				throw new AbortException("cannot execute");
+				hostContext.pushCall(getHostPc());
+				hostContext.interpret(hostContext, targetContext);
+				//throw new AbortException("cannot execute");
 			}
 		});
 	}
@@ -61,6 +63,19 @@ public class TargetDefer extends TargetWord {
 	 */
 	public int getCells() {
 		return offset;
+	}
+	
+	/**
+	 * @param hostPc the hostPc to set
+	 */
+	public void setHostPc(int hostPc) {
+		this.hostPc = hostPc;
+	}
+	/**
+	 * @return the hostPc
+	 */
+	public int getHostPc() {
+		return hostPc;
 	}
 	
 }

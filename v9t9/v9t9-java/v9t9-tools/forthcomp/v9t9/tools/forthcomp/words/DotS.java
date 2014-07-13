@@ -1,5 +1,5 @@
 /*
-  Do.java
+  Dot.java
 
   (c) 2010-2011 Edward Swartz
 
@@ -12,40 +12,32 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
-import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
  *
  */
-public class Do extends BaseStdWord {
-	public Do() {
+public class DotS extends BaseStdWord {
+	public DotS() {
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		hostContext.assertCompiling();
-		
-		targetContext.markHostExecutionUnsupported();
-		
-		ITargetWord word = targetContext.require("(do)");
-		//word.getCompilationSemantics().execute(hostContext, targetContext);
-		hostContext.compileWord(targetContext, null, word);
-		
-		hostContext.build(hostContext.find("(do)"));
-		
-		targetContext.pushHere(hostContext);
-		hostContext.pushData(0);		// not ?do
-		hostContext.pushPairs(3);
+		System.out.print("<" + hostContext.getDataStack().size() + ":");
+		for (Integer i : hostContext.getDataStack()) {
+			System.out.print(Integer.toHexString(i));
+			System.out.print(" ");
+		}
+		System.out.print("> ");
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
 }

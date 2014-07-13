@@ -100,6 +100,8 @@ public class ForthComp {
         if (targetContext == null)
         	targetContext = new F99bTargetContext(65536);
         
+        targetContext.createMemory();
+
         if (gromDictFile != null) {
         	if (targetContext instanceof IGromTargetContext) {
         		((IGromTargetContext) targetContext).setUseGromDictionary(true);
@@ -359,7 +361,7 @@ public class ForthComp {
 	 */
 	private void saveMemory(String consoleOutFile, String gromOutFile) throws FileNotFoundException, IOException, AbortException {
 	
-		final IMemoryDomain console = targetContext.createMemory();
+		final IMemoryDomain console = targetContext.getMemory();
 		targetContext.exportMemory(console);
 		
 		TargetContext.dumpMemory(logfile, 0, targetContext.getDP(),

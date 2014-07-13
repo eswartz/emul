@@ -18,6 +18,7 @@ import v9t9.common.machine.IBaseMachine;
 import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.cpu.CpuStateF99b;
+import v9t9.machine.f99b.cpu.F99bInstructionFactory;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.BaseGromTargetContext;
 import v9t9.tools.forthcomp.DictEntry;
@@ -25,8 +26,8 @@ import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.RelocEntry;
-import v9t9.tools.forthcomp.TargetContext;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
+import v9t9.tools.forthcomp.TargetContext;
 import v9t9.tools.forthcomp.f99b.words.ExitI;
 import v9t9.tools.forthcomp.f99b.words.FieldComma;
 import v9t9.tools.forthcomp.words.HostLiteral;
@@ -64,7 +65,6 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	private ITargetWord cellWord;
 
 	private ITargetWord cellPlusWord;
-	
 
 	/**
 	 * @param littleEndian
@@ -74,6 +74,8 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	 */
 	public F99bTargetContext(int memorySize) {
 		super(false, 8, 16, memorySize);
+		
+		rawInstructionFactory = new F99bInstructionFactory();
 		
 		stub8BitOpcode = defineStub("<<8-bit opcode>>");
 		stub16BitOpcode = defineStub("<<16-bit opcode>>");
@@ -529,7 +531,7 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	}
 
 	@Override
-	protected int writeJump(HostContext hostContext, int opAddr, int target)
+	protected int writeJump(int opAddr, int target)
 			throws AbortException {
 		
 		int diff = target - opAddr;
@@ -538,7 +540,7 @@ public class F99bTargetContext extends BaseGromTargetContext {
 		
 		// When we jump backward, measure from inst.pc, else from inst.pc + inst.size
 		if (diff < -128 - 1 || diff >= 128) {
-			throw hostContext.abort("jump too long: " + diff);
+			throw hostCtx.abort("jump too long: " + diff);
 			//System.err.println("jump too long: " + diff);
 		}
 		
@@ -555,7 +557,7 @@ public class F99bTargetContext extends BaseGromTargetContext {
 			int newOp = readChar(opAddr - 1);
 			if (newOp == IbranchB) newOp = IbranchX;
 			else if (newOp == I0branchB) newOp = I0branchX;
-			else throw hostContext.abort("suspicious code sequence: " + Integer.toHexString(newOp));
+			else throw hostCtx.abort("suspicious code sequence: " + Integer.toHexString(newOp));
 			
 			writeChar(opAddr - 1, newOp | (diff & 0xf));
 			return 0;
@@ -933,6 +935,14 @@ public class F99bTargetContext extends BaseGromTargetContext {
 //		if (startColonWord != 0) {
 //			peephole(startColonWord, endDP);
 //		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.ITargetContext#compileEndCode(java.lang.String)
+	 */
+	@Override
+	public void compileEndCode() {
+		compileOpcode(Iexit);
 	}
 
 	/**

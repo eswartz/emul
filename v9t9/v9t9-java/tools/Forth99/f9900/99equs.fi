@@ -1,6 +1,6 @@
 $0F	constant	rSP		\ stack pointer
-$0E	constant	rRP		\ return stack pointer
-$0D	constant	rIP		\ instruction pointer
+$0E	constant	rIP		\ instruction pointer
+$0D	constant	rRP		\ return stack pointer
 \ $0C not assigned: CRU stuff
 \ $0B not assigned: BL return val
 $0A constant    rUP		\ user pointer
@@ -10,10 +10,9 @@ $06 constant	rDOUSER	\ ptr to DOUSER
 $07 constant	rDOVAR	\ ptr to DOVAR
 $08 constant	rDODOES	\ ptr to DODOES
 $06	constant	rNEXT	\ ptr to NEXT
-$04	constant	rR3		\ temp #3
-$03	constant	rR2		\ temp #2
-$02	constant	rTMP	\ temp #1
-$01	constant	rTOS	\ top of stack
+$03	constant	rR3		\ temp #3
+$02	constant	rR2		\ temp #2
+$00	constant	rTMP	\ temp #1
 
 0 [IF]
 

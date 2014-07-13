@@ -1,0 +1,406 @@
+\   99prims_rev_tos.fi
+\ 
+\   (c) 2014 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+\	The prims use a stack that grows up (DECT to push) and the TOS is stored in a register.
+
+$01	constant	rTOS	\ top of stack
+
+: PUSH
+	rSP 			dect
+	rTOS  rSP *R  	mov
+; immediate
+
+: POP
+	rSP *R+  rTOS	mov
+; immediate
+
+Code 0
+	PUSH
+	rTOS	CLR
+end-code
+
+Code 1
+	PUSH
+	rTOS	LI	$1 ,
+end-code
+
+Code 2
+	PUSH
+	rTOS	LI	$2 ,
+end-code
+
+Code -1
+	PUSH
+	rTOS	SETO
+end-code
+
+Code @
+	rTOS *R		rTOS	MOV
+end-code
+
+Code C@ 
+	rTOS *R		rTOS	MOVB
+	rTOS		8		SRL
+end-code
+
+Code !
+	rSP	*R+		rTOS *R	MOV
+	POP
+end-code
+
+Code C!
+	rSP @>(R)	rTOS *R	MOVB	1 ,
+	rSP					INCT
+	POP
+end-code
+
+Code +!
+	rSP *R+		rTOS *R		A
+	POP
+end-code
+
+Code C+!
+	rSP @>(R)	rTOS *R		A	1 ,
+	rSP						INCT
+	POP
+end-code
+			
+Code 1+
+	rTOS	INC
+end-code
+
+Code 2+
+	rTOS	INCT
+end-code
+
+Code 1-
+	rTOS	DEC
+end-code
+
+Code 2-
+	rTOS	DECT
+end-code
+
+Code DUP
+	PUSH
+end-code
+
+Code DROP
+	POP
+end-code
+
+Code 2DROP
+	rSP		INCT
+	POP
+end-code
+				
+Code SWAP
+	rTOS	rTMP    MOV
+	rSP *R	rTOS	MOV
+	rTMP	rSP *R	MOV
+end-code
+
+Code OVER
+	PUSH
+	rSP	@>(R)	rTOS		MOV		#CELL ,
+end-code
+
+Code ROT ( a b c -- b c a )
+	rSP	@>(R)	rTMP		MOV		#CELL ,
+	rSP *R		rSP	@>(R)	MOV		#CELL ,
+	rTOS		rSP	*R		MOV	
+	rTMP		rTOS		MOV
+end-code
+
+Code PICK  ( xu ... x1 x0 u -- xu ... x1 x0 xu )
+\ Remove u. Copy the xu to the top of the stack. An ambiguous condition exists if there are 
+\ less than u+2 items on the stack before PICK is executed.
+	rTOS		rTOS		A
+	rSP			rTOS		A
+	rTOS *R		rTOS		MOV
+end-code
+
+Code RPICK  ( u -- xu ) ( R: xu ... x1 x0 -- xu ... x1 x0 )
+\ Remove u. Copy the xu to the top of the R-stack. An ambiguous condition exists if there are 
+\ less than u+2 items on the R-stack before RPICK is executed.
+	rTOS		rTOS		A
+	rRP			rTOS		A
+	rTOS *R		rTOS		MOV 
+end-code
+
+Code 0=
+	rTOS		rTOS		MOV
+	rTOS					SETO
+	0 $+					JEQ
+	rTOS					CLR
+0 $:
+	end-code
+	
+Code =
+	rSP *R+		rTOS		C
+	rTOS					CLR
+	0 $+					JNE
+	rTOS					SETO
+0 $:
+	end-code
+
+Code D=
+	rTOS		rTMP		MOV
+	rTOS					SETO
+	rSP @>(R)	rSP *R		C		2 CELLS , 	\ low word likely to differ first
+	1 $+					JNE
+	rSP @>(R)	rTMP		C		#CELL ,
+	2 $+					JEQ
+1 $:	
+	rTOS					CLR
+2 $:
+	rSP						AI		3 CELLS ,
+	end-code
+
+Code NEGATE
+	rTOS					NEG
+	end-code
+
+Code +
+	rSP	*R+		rTOS		A
+	end-code
+		
+Code -
+	rTOS		rSP	*R		S
+	POP
+	end-code
+	
+Code D+ ( lo2 hi2 lo1 hi1 -- lo hi )
+	rTOS		rR2			MOV
+	rSP *R+		rTMP		MOV
+	POP
+	rR2			rTOS		A
+	rTMP		rSP *R		A
+	0 $+					JNC
+	rTOS					INC
+0 $:
+	end-code
+	
+Code *	( x y -- x*y )
+	rSP *R+		rR2			MOV
+	rTOS		rR2			MPY
+	rR3			rTOS		MOV
+	end-code
+	
+Code U*  ( x y -- x * y )
+	rSP *R+		rR2			MOV
+	rR2			rTOS		MPY
+	rR3			rTOS		MOV
+	end-code
+
+Code UM*  ( u1 u2 -- ud )
+ ( Multiply u1 by u2, giving the unsigned double-cell product ud. All
+  values and arithmetic are unsigned.
+ )
+ 	rSP *R		rR2			MOV
+ 	rTOS		rR2			MPY
+ 	rR2			rTOS		MOV
+ 	rR3			rSP *R		MOV
+	end-code
+
+Code UM/MOD 	( ud u1 -- u2 u3 )
+( Divide ud by u1, giving the quotient u3 and the remainder u2. All
+ values and arithmetic are unsigned. An ambiguous condition exists if
+ u1 is zero or if the quotient lies outside the range of a single-cell
+ unsigned integer. )
+ 	rSP *R+		rR2			MOV
+ 	rSP *R		rR3			MOV
+ 	rTOS		rR2			DIV
+ 	rR2			rTOS		MOV
+ 	rR3			rSP *R		MOV
+	end-code
+
+Code INVERT
+	rTOS					INV
+	end-code
+
+Code OR
+	rSP	*R+		rTOS		SOC
+	end-code
+
+Code AND
+	rTOS					INV
+	rTOS		rSP *R		SZC
+	POP
+	end-code
+
+Code NAND
+	rTOS		rSP *R		SZC
+	POP
+	end-code
+
+Code XOR
+	rSP *R+		rTOS		XOR_
+	end-code
+ 
+Code DNEGATE
+1 $:
+	rTOS					INV
+	rSP *R					INV
+	rSP *R					INC
+	0 $+					JNC
+	rTOS					INC
+0 $:
+	end-code
+
+Code DABS
+	rTOS		rTOS		MOV
+	1 $-					JLT		
+	end-code
+
+Code >R
+	rRP						DECT
+	rTOS		rRP *R		MOV
+	POP
+	end-code
+
+		
+Code (DO)
+0 $:
+	rRP						AI		2 CELLS NEGATE ,
+	rSP *R+		rRP @>(R)	MOV		#cell ,
+	rTOS		rRP *R		MOV
+	POP
+	end-code
+	
+Code 2>R
+	0 $-					JMP
+	
+Code R>
+	PUSH
+	rRP *R+		rTOS		MOV
+	end-code
+
+Code 2R>
+	rSP						AI		2 CELLS NEGATE ,
+	rTOS		rSP @>(R)	MOV		#cell ,				
+
+	rRP	*R+		rSP *R		MOV
+	rRP *R+		rTOS		MOV
+	end-code
+	
+Code RDROP
+	rRP						INCT		
+	end-code
+			
+Code 2RDROP
+	rRP						AI		2 CELLS ,		
+	end-code		
+
+Code I
+0 $:
+	PUSH
+	rRP *R		rTOS		MOV		
+	end-code
+
+Code R@
+	0 $-					JMP
+
+Code J
+	PUSH
+	rRP @>(R)	rTOS		MOV		2 CELLS ,
+	end-code
+	
+Code 2R@
+	rSP						AI		2 CELLS NEGATE ,
+	rTOS		rSP @>(R)	MOV		#CELL ,
+
+	rRP *R		rTOS		MOV
+	rRP @>(R)	rSP *R		MOV		#CELL ,
+	end-code
+	
+Code SP@
+	PUSH
+	rSP 		rTOS		MOV
+	end-code
+	
+Code SP!
+	rTOS		rSP			MOV
+	POP
+	end-code
+	
+Code RP@
+	PUSH
+	rRP			rTOS		MOV
+	end-code
+
+Code RP!
+	rTOS		rRP			MOV
+	POP
+	end-code	
+	
+Code (LOOP) ( R: lim next -- lim next+1 ) ( S: -- ) ( + jump )
+	rIP	*R+		rTMP		MOV
+	
+	( Add one to the loop index. If the loop index is then equal to
+	 the loop limit, discard the loop parameters and continue
+	 execution immediately following the loop. Otherwise continue
+	 execution at the beginning of the loop. )
+	 
+	rRP *R					INC		\ next
+	rRP *R		rRP @>(R)	C		#cell ,
+	1 $+					JEQ	
+
+	rTMP		rIP			A				
+1 $:
+	end-code
+	
+Code (+LOOP)  ( R: lim cur -- lim next ) ( S: change -- ) ( + jump )
+	( Add n to the loop index. If the loop index did not cross the
+	boundary between the loop limit minus one and the loop limit,
+	continue execution at the beginning of the loop. Otherwise,
+	discard the current loop control parameters and continue
+	execution immediately following the loop. )
+
+	rIP *R+		rTMP		MOV		\ jump
+	rTMP		rIP			A				
+
+	rRP @>(R)	rR2			MOV		#CELL ,		\ lim
+	
+	1 $+					JNE
+
+	rTOS		rTOS		MOV		\ forward?
+	1 $+					JLT	
+
+	( zero: handle via carry )
+	rTOS		rRP *R		A
+	9 $+					JNC
+
+	rTMP		rIP			S		\ undo jump	
+	9 $+					JMP
+
+1 $:
+	rTOS		rRP *R		A				
+	
+	rTOS  		rTOS		MOV		\ forward?
+	5 $+					JLT				
+				
+	( lim < cur )
+	rRP *R		rR2			C   	\ next ? lim
+	9 $+					JL				
+
+	rTMP 		rIP			S		\ undo jump				
+	9 $+					JMP
+
+5 $:
+	rRP *R		rR2			C		\ next ? lim				
+	9 $+					JGT				
+				
+	rTMP		rIP			S		\ undo jump	
+
+9 $:				
+	POP
+	end-code
+	

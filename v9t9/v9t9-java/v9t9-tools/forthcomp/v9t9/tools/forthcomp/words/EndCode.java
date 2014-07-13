@@ -1,5 +1,5 @@
 /*
-  Begin.java
+  Colon.java
 
   (c) 2010-2011 Edward Swartz
 
@@ -15,29 +15,31 @@ import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.TargetContext;
 
 /**
+ * Define CODE word
  * @author ejs
  *
  */
-public class Begin extends BaseStdWord {
-	public Begin() {
-	}
+public class EndCode extends BaseStdWord {
 
 	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.IContext)
+	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.HostContext, v9t9.forthcomp.TargetContext)
 	 */
-	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		hostContext.assertCompiling();
-		//targetContext.alignBranch();
-		targetContext.pushHere(hostContext);
-		hostContext.pushPairs(1);
+	public void execute(HostContext hostContext, TargetContext targetContext)
+			throws AbortException {
 		
+		TargetCodeWord word = (TargetCodeWord) targetContext.getLatest();
+		word.getEntry().setCodeSize(targetContext.getDP() - word.getEntry().getContentAddr());
+		targetContext.disassemble(word);
+		
+		targetContext.compileEndCode();
+		word.getEntry().setCodeSize(targetContext.getDP() - word.getEntry().getContentAddr());
 		
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
 }

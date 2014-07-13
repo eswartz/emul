@@ -43,6 +43,7 @@ public abstract class TargetWord extends BaseWord implements ITargetWord {
 	/**
 	 * @return the hostPc
 	 */
+	@Override
 	public int getHostDp() {
 		return hostPc;
 	}

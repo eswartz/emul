@@ -21,17 +21,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import v9t9.common.asm.IRawInstructionFactory;
+import v9t9.common.asm.RawInstruction;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.machine.f99b.memory.EnhancedRamByteArea;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
+import v9t9.tools.forthcomp.words.HostBranch;
 import v9t9.tools.forthcomp.words.HostDoubleLiteral;
 import v9t9.tools.forthcomp.words.HostLiteral;
 import v9t9.tools.forthcomp.words.HostVariable;
 import v9t9.tools.forthcomp.words.INativeCodeWord;
+import v9t9.tools.forthcomp.words.Literal;
 import v9t9.tools.forthcomp.words.StubWord;
+import v9t9.tools.forthcomp.words.TargetCodeWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
 import v9t9.tools.forthcomp.words.TargetConstant;
 import v9t9.tools.forthcomp.words.TargetDefer;
@@ -52,6 +57,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	private final int charBits;
 	private final int cellBits;
 	protected byte[] memory;
+	protected IRawInstructionFactory rawInstructionFactory;
 
 	protected Map<Integer, RelocEntry> relocEntries = new TreeMap<Integer, RelocEntry>();
 	protected List<RelocEntry> relocs = new ArrayList<RelocEntry>();
@@ -81,6 +87,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	protected IWord romDeferTableWord;
 	private TargetConstant numRomDefersWord;
 	private Map<TargetDefer, Integer> targetDefers = new HashMap<TargetDefer, Integer>();
+	private MemoryDomain console;
 	
 
 	
@@ -112,7 +119,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	@Override
 	public IWord define(String string, IWord word) {
 		if (word instanceof TargetWord) {
-			logfile.println("T>"+Integer.toHexString(((TargetWord) word).getEntry().getAddr()) +" " + ((TargetWord) word).getClass().getSimpleName() + " " + string);
+			logfile.println("T>"+Integer.toHexString(((TargetWord) word).getEntry().getAddr()) +" " 
+					//+ ((TargetWord) word).getClass().getSimpleName() + " " + string
+					+ word
+					);
 			resolveForward(((ITargetWord) word).getEntry());
 		}
 
@@ -872,6 +882,13 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	public void setLog(PrintStream logfile) {
 		this.logfile = logfile != null ? logfile : System.out;
 	}
+	
+	/**
+	 * @return the logfile
+	 */
+	public PrintStream getLog() {
+		return logfile;
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#getForwardRefs()
@@ -1007,11 +1024,12 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	 * @see v9t9.tools.forthcomp.words.ITargetContext#compileString(v9t9.tools.forthcomp.HostContext, java.lang.String)
 	 */
 	@Override
-	public void buildPushString(HostContext hostContext, String string) throws AbortException {
+	public Pair<Integer, Integer> buildPushString(HostContext hostContext, String string) throws AbortException {
 		ITargetWord parenString = (ITargetWord)require("(s\")");
 		buildCall((ITargetWord) parenString);
 		Pair<Integer, Integer> info = writeLengthPrefixedString(string);
 		setDP(getDP() + info.second);
+		return info;
 	}
 
 	public void buildXt(int addr) {
@@ -1156,7 +1174,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		pushFixup(hostContext);
 		leaves.add(hostContext.popData());
 	}
-	abstract protected int writeJump(HostContext hostContext, int opAddr, int target)
+	abstract protected int writeJump(int opAddr, int target)
 			throws AbortException;
 	abstract protected void writeJumpAlloc(int target, boolean conditional)
 			throws AbortException;
@@ -1203,7 +1221,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		int opAddr = hostContext.popData();
 		//int diff = nextDp - opAddr;
 		
-		writeJump(hostContext, opAddr, nextDp);
+		writeJump(opAddr, nextDp);
 		
 		hostContext.resolveFixup(opAddr, nextDp);
 
@@ -1219,6 +1237,8 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		int opAddr = hostContext.popData();
 		
 		writeJumpAlloc(opAddr, conditional);
+		
+		//hostContext.build(new Host0Branch(hostContext.require("0branch"));
 	}
 
 
@@ -1227,13 +1247,21 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	 */
 	@Override
 	public MemoryDomain createMemory() {
-		MemoryDomain console = new MemoryDomain(IMemoryDomain.NAME_CPU, false);
+		console = new MemoryDomain(IMemoryDomain.NAME_CPU, false);
 		EnhancedRamByteArea bigRamArea = new EnhancedRamByteArea(0, 0x10000); 
 		MemoryEntry bigRamEntry = new MemoryEntry("RAM", console, 0, MemoryDomain.PHYSMEMORYSIZE, 
 				bigRamArea);
 		console.mapEntry(bigRamEntry);
 		return console;
 	}
+
+	/**
+	 * @return
+	 */
+	public IMemoryDomain getMemory() {
+		return console;
+	}
+
 
 
 
@@ -1270,13 +1298,12 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	@Override
 	public void loopCompile(HostContext hostCtx, ITargetWord loopCaller)
 			throws AbortException {
-		loopCaller.getCompilationSemantics().execute(hostCtx, this);
+		hostCtx.compileWord(this, null, loopCaller);
 		
 		boolean isQDo = hostCtx.popData() != 0;
 
 		int opAddr = hostCtx.popData();
 		writeLoopJump(opAddr);
-		//writeJumpAlloc(opAddr, true);
 		
 		if (isQDo) {
 			// then comes here
@@ -1309,6 +1336,9 @@ public abstract class TargetContext extends Context implements ITargetContext {
 			word = hostCtx.find(token);
 			if (word == null) {
 				word = find(token);
+			} 
+			if (word instanceof ITargetWord && ((ITargetWord) word).getEntry().isTargetOnly()) {
+				word = null;
 			}
 			if (word == null) {
 				word = parseLiteral(token);
@@ -1381,6 +1411,12 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	}
 
 	public void setDeferTarget(TargetDefer defer, int addr) {
+		for (DictEntry entry : dictEntryMap.values()) {
+			if (entry.getContentAddr() == addr) {
+				defer.setHostPc(entry.getTargetWord().getHostDp());
+				break;
+			}
+		}
 		targetDefers.put(defer, addr);
 	}
 	/**
@@ -1457,6 +1493,30 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		}
 		
 	}
+
+
+	public TargetCodeWord defineCodeWord(String name) {
+		TargetCodeWord word = (TargetCodeWord) define(name, new TargetCodeWord(defineEntry(name)));
+		alignDP();
+//		word.setDP(getDP());
+		return word;
+	}
+
+	public void disassemble(TargetCodeWord word) {
+		int start = word.getEntry().getContentAddr();
+		int len = word.getEntry().getCodeSize();
+		int end = start + len;
+		for (int addr = start; addr < end; addr++) {
+			console.flatWriteByte(addr, (byte) readChar(addr));
+		}
+		for (int addr = start; addr < end; ) {
+			RawInstruction instr = rawInstructionFactory.decodeInstruction(addr, console);
+			logfile.println("T>" + HexUtils.toHex4(instr.pc) + " " + instr);
+			addr += instr.getSize();
+		}
+	}
+
+	
 
 	
 }

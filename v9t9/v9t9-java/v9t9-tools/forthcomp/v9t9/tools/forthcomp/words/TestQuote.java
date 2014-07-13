@@ -31,19 +31,11 @@ public class TestQuote extends BaseWord {
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
 				
-				new SQuote().getInterpretationSemantics().execute(hostContext, targetContext);
-				
-				int leng = hostContext.popData();
-				int addr = hostContext.popData();
-				
-				StringBuilder bodysb = new StringBuilder();
-				
-				while (leng-- > 0) {
-					bodysb.append((char) targetContext.readChar(addr++));
-				}
+				//new SQuote().getInterpretationSemantics().execute(hostContext, targetContext);
+				String str = parseString(hostContext);
 
 				if (unitTests != null) {
-					unitTests.addTest(bodysb.toString());
+					unitTests.addTest(str);
 				}
 			}
 		});

@@ -19,6 +19,9 @@
 \ Empty the data stack and perform the function of QUIT, which includes 
 \ emptying the return stack, without displaying a message.
 
+	[ [IFDEF] ~FAILURE~ ]
+	~FAILURE~
+	[ [THEN] ]
 	hang
 	
 	regs-init

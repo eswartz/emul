@@ -132,7 +132,7 @@ CHARS/BLOCK
 
 $80        constant   (#up)       \ global user space
 
-$24	      	constant	#maxrdefers		\ since we don't know ahead of time, make room for max # words
+$28	      	constant	#maxrdefers		\ since we don't know ahead of time, make room for max # words
 
 |+ FaultStacks  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - #TIB - (#blks) - (#up) -
 			#maxrdefers -

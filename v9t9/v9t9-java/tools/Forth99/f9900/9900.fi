@@ -8,6 +8,14 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
+: CODE
+	NAME" SMUDGE
+; target-only
+
+: END-CODE
+	rIP *R+  0  MOV
+	0 *R 		B
+; immediate target-only
 	
 : COMPILE, ( xt -- )
 	,
@@ -139,10 +147,10 @@
 
 : is-check ( "..." -- is-addr )
     '  dup >r
-    @  $8000  >=
+    \ @  $8000  >=
     r@ cell+ c@  
     HANG \ Iexit  =	
-    and 0=  err-not-deferred ?throw 
+    0=  err-not-deferred ?throw 
     r> 
 ; 
 

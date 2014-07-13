@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,7 +27,7 @@ import ejs.base.utils.HexUtils;
  *
  */
 public class HostContext extends Context {
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 	
 	private Stack<Integer> dataStack;
 	private TokenStream tokenStream;
@@ -141,12 +142,16 @@ public class HostContext extends Context {
 		define("[']", new ParsedTick());
 		
 		define("!", new HostStore());
+		define("C!", new HostCStore());
 		define("@", new HostFetch());
-		define("cells", new HostLiteral(1, true));
-		define("cell+", new HostCellPlus(1));
+		define("cells", new HostCells(targetContext.getCellSize()));
+		define("cell+", new HostCellPlus(targetContext.getCellSize()));
 		define("R@", new HostRStackAt());
 		define("R>", new HostRStackFrom());
 		define(">R", new HostRToStack());
+		
+		define("CODE", new Code());
+		define("END-CODE", new EndCode());
 		
 		define(":", new Colon());
 //		define("HOST:", new HostOnlyColon());
@@ -213,6 +218,7 @@ public class HostContext extends Context {
 		define("type", new HostType());
 		define("decimal", new HostDecimal());
 		define("hex", new HostHex());
+		define(".S", new DotS());
 		
 		define("TEST\"", new TestQuote());
 		define("|TEST", new BarTest());
@@ -361,11 +367,13 @@ public class HostContext extends Context {
 			public int getResult(int v) { return v/2; }
 		});
 		define("DUP", new HostDup());
+		define("?DUP", new HostQuestionDup());
 		define("2DUP", new Host2Dup());
 		define("SWAP", new HostSwap());
 		define("DROP", new HostDrop());
 		define("OVER", new HostOver());
 		define("ROT", new HostRot());
+		define("WITHIN", new HostWithin());
 
 		define("(resolve-rdefers)", new BaseStdWord() {
 			@Override
@@ -551,7 +559,7 @@ public class HostContext extends Context {
 		if (DEBUG) System.out.println("H>" + hostDp +": "+ word);
 		assert !hostWords.containsKey((Integer)hostDp);
 		if (word instanceof BaseHostBranch)
-			word = (IWord) ((BaseHostBranch)word).clone();
+			word = ((BaseHostBranch) word).clone();
 		hostWords.put(hostDp, word);
 		hostDp++;
 	}
@@ -636,6 +644,9 @@ public class HostContext extends Context {
 		//assert hostDp > 0 && hostWords.get(hostDp - 1) instanceof BaseHostBranch;
 		
 		fixupMap.put(dp, hostDp - 1);
+	}
+	public int getFixupTarget(int dp) {
+		return fixupMap.get(dp);
 	}
 
 	/**
@@ -895,6 +906,13 @@ public class HostContext extends Context {
 			throw abort(e.getMessage());
 		}				
 		
+	}
+
+	/**
+	 * @return
+	 */
+	public PrintStream getLog() {
+		return System.out;
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
-  Begin.java
+  HostStore.java
 
   (c) 2010-2011 Edward Swartz
 
@@ -10,6 +10,7 @@
  */
 package v9t9.tools.forthcomp.words;
 
+import ejs.base.utils.HexUtils;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.TargetContext;
@@ -18,26 +19,30 @@ import v9t9.tools.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class Begin extends BaseStdWord {
-	public Begin() {
+@HostWordPlaceholder("C!")
+public class HostCStore extends BaseStdWord {
+
+	@Override
+	public String toString() {
+		return "C!";
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.IContext)
+	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.HostContext, v9t9.forthcomp.TargetContext)
 	 */
-	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		hostContext.assertCompiling();
-		//targetContext.alignBranch();
-		targetContext.pushHere(hostContext);
-		hostContext.pushPairs(1);
+	public void execute(HostContext hostContext, TargetContext targetContext)
+			throws AbortException {
+		int addr = hostContext.popData();
+		int data = hostContext.popData();
+		targetContext.writeChar(addr, data);
 		
-		
+		hostContext.getLog().println("CSTORE ! " + HexUtils.toHex4(addr) + " = " + HexUtils.toHex4(data));
+
 	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
 }

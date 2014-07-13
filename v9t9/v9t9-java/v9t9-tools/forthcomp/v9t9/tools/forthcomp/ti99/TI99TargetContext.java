@@ -26,6 +26,7 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.machine.ti99.asm.InstructionFactory9900;
+import v9t9.machine.ti99.asm.RawInstructionFactory9900;
 import v9t9.machine.ti99.memory.mmio.Forth9900ConsoleMmioArea;
 import v9t9.tools.asm.LLInstruction;
 import v9t9.tools.asm.inst9900.AsmInstructionFactory9900;
@@ -52,6 +53,7 @@ import v9t9.tools.forthcomp.words.TargetColonWord;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
 import v9t9.tools.forthcomp.words.TargetWord;
 import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
 import ejs.base.utils.TextUtils;
 
 /**
@@ -124,6 +126,7 @@ public class TI99TargetContext extends TargetContext  {
 		
 		asmInstrFactory = new AsmInstructionFactory9900();
 		instrFactory = new InstructionFactory9900();
+		rawInstructionFactory = new RawInstructionFactory9900();
 	}
 
 	private void writeInstruction(int instCode, LLOperand... ops) {
@@ -310,36 +313,36 @@ public class TI99TargetContext extends TargetContext  {
 				(object instanceof String && ((String) object).startsWith(">"));
 	}
 
-	private IPrimitiveWord defineConstantPrim(String name, final int value) throws AbortException {
-		IWord word = define(name, new TI99PrimitiveWord(defineEntry(name), true));
-		LLInstruction[] llInsts;
-		if (value == 0) {
-			llInsts = defineInstrs(
-				StockInstruction.PUSH_TOS,
-				Iclr, TOS
-				);
-		} else if (value == -1) {
-			llInsts = defineInstrs(
-					StockInstruction.PUSH_TOS,
-					Iseto, TOS
-					);
-		} else {
-			llInsts = defineInstrs(
-					StockInstruction.PUSH_TOS,
-					Ili, TOS, immed(value)
-					);
-		}
-		((TI99PrimitiveWord) word).setInsts(llInsts);
-		word.setExecutionSemantics(new ISemantics() {
-			
-			@Override
-			public void execute(HostContext hostContext, TargetContext targetContext)
-					throws AbortException {
-				hostContext.pushData(value);
-			}
-		});
-		return layoutPrimitiveWord(llInsts, word);
-	}
+//	private IPrimitiveWord defineConstantPrim(String name, final int value) throws AbortException {
+//		IWord word = define(name, new TI99PrimitiveWord(defineEntry(name), true));
+//		LLInstruction[] llInsts;
+//		if (value == 0) {
+//			llInsts = defineInstrs(
+//				StockInstruction.PUSH_TOS,
+//				Iclr, TOS
+//				);
+//		} else if (value == -1) {
+//			llInsts = defineInstrs(
+//					StockInstruction.PUSH_TOS,
+//					Iseto, TOS
+//					);
+//		} else {
+//			llInsts = defineInstrs(
+//					StockInstruction.PUSH_TOS,
+//					Ili, TOS, immed(value)
+//					);
+//		}
+//		((TI99PrimitiveWord) word).setInsts(llInsts);
+//		word.setExecutionSemantics(new ISemantics() {
+//			
+//			@Override
+//			public void execute(HostContext hostContext, TargetContext targetContext)
+//					throws AbortException {
+//				hostContext.pushData(value);
+//			}
+//		});
+//		return layoutPrimitiveWord(llInsts, word);
+//	}
 
 	private IPrimitiveWord definePrim(String name, Object... instsAndOpcodes) throws AbortException {
 		IWord word = define(name, new TI99PrimitiveWord(defineEntry(name), true));
@@ -633,392 +636,390 @@ public class TI99TargetContext extends TargetContext  {
 		
 		//doCol = docolPrim; // rest of words act normally 
 		
-		defineConstantPrim("0", 0);
-		defineConstantPrim("1", 1);
-		defineConstantPrim("2", 2);
-		defineConstantPrim("-1", -1);
+//		defineConstantPrim("0", 0);
+//		defineConstantPrim("1", 1);
+//		defineConstantPrim("2", 2);
+//		defineConstantPrim("-1", -1);
 		
-		definePrim("@", 
-				Imov, regInd(REG_TOS), TOS);
-		definePrim("C@", 
-				Imovb, regInd(REG_TOS), TOS,
-				Isrl, TOS, immed(8)
-				);
-		definePrim("!", 
-				Imov, regInc(REG_SP), regInd(REG_TOS),
-				StockInstruction.POP_TOS
-				);
-		definePrim("C!", 
-				Imovb, regOffs(REG_SP, 1), regInd(REG_TOS),
-				Iinct, reg(REG_SP),
-				StockInstruction.POP_TOS
-				);
+//		definePrim("@", 
+//				Imov, regInd(REG_TOS), TOS);
+//		definePrim("C@", 
+//				Imovb, regInd(REG_TOS), TOS,
+//				Isrl, TOS, immed(8)
+//				);
+//		definePrim("!", 
+//				Imov, regInc(REG_SP), regInd(REG_TOS),
+//				StockInstruction.POP_TOS
+//				);
+//		definePrim("C!", 
+//				Imovb, regOffs(REG_SP, 1), regInd(REG_TOS),
+//				Iinct, reg(REG_SP),
+//				StockInstruction.POP_TOS
+//				);
 				
 //		definePrim("d@", Iload_d);
 //		definePrim("d!", Istore_d);
-		definePrim("+!", 
-				Ia, regInc(REG_SP), regInd(REG_TOS),
-				StockInstruction.POP_TOS
-				);
-				
-		definePrim("C+!", 
-				Iab, regOffs(REG_SP, 1), regInd(REG_TOS),
-				Iinct, reg(REG_SP),
-				StockInstruction.POP_TOS
-				);
+//		definePrim("+!", 
+//				Ia, regInc(REG_SP), regInd(REG_TOS),
+//				StockInstruction.POP_TOS
+//				);
+//				
+//		definePrim("C+!", 
+//				Iab, regOffs(REG_SP, 1), regInd(REG_TOS),
+//				Iinct, reg(REG_SP),
+//				StockInstruction.POP_TOS
+//				);
 
 //		definePrim("d+!", IplusStore_d);
 //		
-		definePrim("1+",
-				Iinc, TOS
-				);
-		definePrim("2+",
-				Iinct, TOS
-				);
-		definePrim("1-",
-				Idec, TOS
-				);
-		definePrim("2-",
-				Idect, TOS
-				);
+//		definePrim("1+",
+//				Iinc, TOS
+//				);
+//		definePrim("2+",
+//				Iinct, TOS
+//				);
+//		definePrim("1-",
+//				Idec, TOS
+//				);
+//		definePrim("2-",
+//				Idect, TOS
+//				);
 		
-		definePrim("DUP", 
-				StockInstruction.PUSH_TOS
-				);
-		
-		definePrim("DROP", 
-				StockInstruction.POP_TOS
-				);
-		definePrim("2DROP",
-				Iinct, reg(REG_SP),
-				StockInstruction.POP_TOS
-				);
+//		definePrim("DUP", 
+//				StockInstruction.PUSH_TOS
+//				);
+//		
+//		definePrim("DROP", 
+//				StockInstruction.POP_TOS
+//				);
+//		definePrim("2DROP",
+//				Iinct, reg(REG_SP),
+//				StockInstruction.POP_TOS
+//				);
 
-		definePrim("SWAP", 
-				Imov, TOS, TMP,
-				Imov, regInd(REG_SP), TOS,
-				Imov, TMP, regInd(REG_SP)
-				);
+//		definePrim("SWAP", 
+//				Imov, TOS, TMP,
+//				Imov, regInd(REG_SP), TOS,
+//				Imov, TMP, regInd(REG_SP)
+//				);
 				
 //		definePrim("2SWAP", Iswap_d);
-		definePrim("OVER", 
-				StockInstruction.PUSH_TOS,
-				Imov, regOffs(REG_SP, cellSize), TOS
-				);
-		
-//		definePrim("2OVER", Iover_d);
-		definePrim("ROT", // ( a b c -- b c a )
-				Imov, regOffs(REG_SP, cellSize), TMP, // a
-				Imov, regInd(REG_SP), regOffs(REG_SP, cellSize),	// b
-				Imov, TOS, regInd(REG_SP),	// c
-				Imov, TMP, TOS	// a
-				);
-//		definePrim("2ROT", Irot_d);
-		
-		definePrim("PICK",		// ( xu ... x1 x0 u -- xu ... x1 x0 xu )
-				// Remove u. Copy the xu to the top of the stack. An ambiguous condition exists if there are 
-				// less than u+2 items on the stack before PICK is executed. 
-				Ia, TOS, TOS,
-				Ia, reg(REG_SP), TOS,
-				Imov, regInd(REG_TOS), TOS
-				);
-		definePrim("RPICK",		// ( u -- xu ) ( R: xu ... x1 x0 -- xu ... x1 x0 )
-				// Remove u. Copy the xu to the top of the stack. An ambiguous condition exists if there are 
-				// less than u+2 items on the stack before PICK is executed. 
-				Ia, TOS, TOS,
-				Ia, reg(REG_RP), TOS,
-				Imov, regInd(REG_TOS), TOS
-				);
-				
+//		definePrim("OVER", 
+//				StockInstruction.PUSH_TOS,
+//				Imov, regOffs(REG_SP, cellSize), TOS
+//				);
+//		
+////		definePrim("2OVER", Iover_d);
+//		definePrim("ROT", // ( a b c -- b c a )
+//				Imov, regOffs(REG_SP, cellSize), TMP, // a
+//				Imov, regInd(REG_SP), regOffs(REG_SP, cellSize),	// b
+//				Imov, TOS, regInd(REG_SP),	// c
+//				Imov, TMP, TOS	// a
+//				);
+////		definePrim("2ROT", Irot_d);
+//		
+//		definePrim("PICK",		// ( xu ... x1 x0 u -- xu ... x1 x0 xu )
+//				// Remove u. Copy the xu to the top of the stack. An ambiguous condition exists if there are 
+//				// less than u+2 items on the stack before PICK is executed. 
+//				Ia, TOS, TOS,
+//				Ia, reg(REG_SP), TOS,
+//				Imov, regInd(REG_TOS), TOS
+//				);
+//		definePrim("RPICK",		// ( u -- xu ) ( R: xu ... x1 x0 -- xu ... x1 x0 )
+//				// Remove u. Copy the xu to the top of the stack. An ambiguous condition exists if there are 
+//				// less than u+2 items on the stack before PICK is executed. 
+//				Ia, TOS, TOS,
+//				Ia, reg(REG_RP), TOS,
+//				Imov, regInd(REG_TOS), TOS
+//				);
+//				
 
-		
-		definePrim("0=", 
-				Imov, TOS, TOS,
-				Iseto, TOS,
-				Ijeq, ">0",
-				Iclr, TOS,
-			"0"
-				);
+//		
+//		definePrim("0=", 
+//				Imov, TOS, TOS,
+//				Iseto, TOS,
+//				Ijeq, ">0",
+//				Iclr, TOS,
+//			"0"
+//				);
+//
+////		definePrim("D0=", I0equ_d);
+//		defineInlinePrim("=", 
+//				Ic, regInc(REG_SP), TOS,
+//				Iclr, TOS,
+//				Ijne, ">0",
+//				Iseto, TOS,
+//			"0"
+//				);
+//
+//		
+//		definePrim("D=",
+//				Imov, TOS, TMP,
+//				Iseto, TOS,
+//				Ic, regOffs(REG_SP, cellSize*2), regInd(REG_SP), // low word more likely to differ
+//				Ijne, ">1",
+//				Ic, regOffs(REG_SP, cellSize), TMP,
+//				Ijeq, ">2",
+//			"1",
+//				Iclr, TOS,
+//			"2",
+//				Iai, reg(REG_SP), immed(cellSize * 3)
+//				);
 
-//		definePrim("D0=", I0equ_d);
-		defineInlinePrim("=", 
-				Ic, regInc(REG_SP), TOS,
-				Iclr, TOS,
-				Ijne, ">0",
-				Iseto, TOS,
-			"0"
-				);
-
-		
-		definePrim("D=",
-				Imov, TOS, TMP,
-				Iseto, TOS,
-				Ic, regOffs(REG_SP, cellSize*2), regInd(REG_SP), // low word more likely to differ
-				Ijne, ">1",
-				Ic, regOffs(REG_SP, cellSize), TMP,
-				Ijeq, ">2",
-			"1",
-				Iclr, TOS,
-			"2",
-				Iai, reg(REG_SP), immed(cellSize * 3)
-				);
-
-		definePrim("NEGATE", 
-				Ineg, TOS
-				);
-		
-		definePrim("+", 
-				Ia, regInc(REG_SP), TOS
-				);
-		definePrim("D+", // ( lo2 hi2 lo1 hi1 -- lo hi )
-				Imov, TOS, R2,
-				Imov, regInc(REG_SP), TMP,
-				StockInstruction.POP_TOS,
-				Ia, R2, TOS,
-				Ia, TMP, regInd(REG_SP),
-				Ijnc, ">1",
-				Iinc, TOS,
-			"1"
-				);
-		definePrim("-", 
-				Is, TOS, regInd(REG_SP),
-				StockInstruction.POP_TOS
-				);
+//		definePrim("NEGATE", 
+//				Ineg, TOS
+//				);
+//		
+//		definePrim("+", 
+//				Ia, regInc(REG_SP), TOS
+//				);
+//		definePrim("D+", // ( lo2 hi2 lo1 hi1 -- lo hi )
+//				Imov, TOS, R2,
+//				Imov, regInc(REG_SP), TMP,
+//				StockInstruction.POP_TOS,
+//				Ia, R2, TOS,
+//				Ia, TMP, regInd(REG_SP),
+//				Ijnc, ">1",
+//				Iinc, TOS,
+//			"1"
+//				);
+//		definePrim("-", 
+//				Is, TOS, regInd(REG_SP),
+//				StockInstruction.POP_TOS
+//				);
 //		definePrim("D-", Isub_d);
-		
-		defineInlinePrim("*", 
-				Imov, regInc(REG_SP), R2,
-				Impy, TOS, R2,
-				Imov, R3, TOS
-				);
-		defineInlinePrim("U*", 
-				Imov, regInc(REG_SP), R2,
-				Impy, TOS, R2,
-				Imov, R3, TOS
-				);
-
-		/*
-		 * ( u1 u2 -- ud )
-		 * 
-		 * Multiply u1 by u2, giving the unsigned double-cell product ud. All
-		 * values and arithmetic are unsigned.
-		 */
-		defineInlinePrim("UM*", 
-				Imov, regInd(REG_SP), R2,
-				Impy, TOS, R2,
-				Imov, R2, TOS,
-				Imov, R3, regInd(REG_SP)
-				);
-
-		/*
-		 * ( ud u1 -- u2 u3 )
-		 * 
-		 * Divide ud by u1, giving the quotient u3 and the remainder u2. All
-		 * values and arithmetic are unsigned. An ambiguous condition exists if
-		 * u1 is zero or if the quotient lies outside the range of a single-cell
-		 * unsigned integer.
-		 */
-		defineInlinePrim("UM/MOD", 
-				Imov, regInc(REG_SP), R2,
-				Imov, regInd(REG_SP), R3,
-				Idiv, TOS, R2,
-				Imov, R2, TOS,
-				Imov, R3, regInd(REG_SP)
-				);
+//		
+//		defineInlinePrim("*", 
+//				Imov, regInc(REG_SP), R2,
+//				Impy, TOS, R2,
+//				Imov, R3, TOS
+//				);
+//		defineInlinePrim("U*", 
+//				Imov, regInc(REG_SP), R2,
+//				Impy, TOS, R2,
+//				Imov, R3, TOS
+//				);
+//
+//		/*
+//		 * ( u1 u2 -- ud )
+//		 * 
+//		 * Multiply u1 by u2, giving the unsigned double-cell product ud. All
+//		 * values and arithmetic are unsigned.
+//		 */
+//		defineInlinePrim("UM*", 
+//				Imov, regInd(REG_SP), R2,
+//				Impy, TOS, R2,
+//				Imov, R2, TOS,
+//				Imov, R3, regInd(REG_SP)
+//				);
+//
+//		/*
+//		 * ( ud u1 -- u2 u3 )
+//		 * 
+//		 * Divide ud by u1, giving the quotient u3 and the remainder u2. All
+//		 * values and arithmetic are unsigned. An ambiguous condition exists if
+//		 * u1 is zero or if the quotient lies outside the range of a single-cell
+//		 * unsigned integer.
+//		 */
+//		defineInlinePrim("UM/MOD", 
+//				Imov, regInc(REG_SP), R2,
+//				Imov, regInd(REG_SP), R3,
+//				Idiv, TOS, R2,
+//				Imov, R2, TOS,
+//				Imov, R3, regInd(REG_SP)
+//				);
 		
 //		
 //		defineInlinePrim("NIP", Iswap, Idrop);
 //		
-		definePrim("INVERT", 
-				Iinv, TOS
-				);
-//		definePrim("DINVERT", Iinv_d);
-//		definePrim("NOT", Inot);
-//		definePrim("DNOT", Inot_d);
-		definePrim("OR", 
-				Isoc, regInc(REG_SP), TOS
-				);
-		
-//		definePrim("DOR", Ior_d);
-		definePrim("AND",
-				Iinv, TOS,
-				Iszc, TOS, regInd(REG_SP),
-				StockInstruction.POP_TOS
-				);
-//		definePrim("DAND", Iand_d);
-		definePrim("XOR",
-				Ixor, regInc(REG_SP), TOS
-				);
-//		definePrim("DXOR", Ixor_d);
-		definePrim("NAND", 
-				Iszc, regInc(REG_SP), TOS
-				);
+//		definePrim("INVERT", 
+//				Iinv, TOS
+//				);
+////		definePrim("DINVERT", Iinv_d);
+////		definePrim("NOT", Inot);
+////		definePrim("DNOT", Inot_d);
+//		definePrim("OR", 
+//				Isoc, regInc(REG_SP), TOS
+//				);
+//		
+////		definePrim("DOR", Ior_d);
+//		definePrim("AND",
+//				Iinv, TOS,
+//				Iszc, TOS, regInd(REG_SP),
+//				StockInstruction.POP_TOS
+//				);
+////		definePrim("DAND", Iand_d);
+//		definePrim("XOR",
+//				Ixor, regInc(REG_SP), TOS
+//				);
+////		definePrim("DXOR", Ixor_d);
+//		definePrim("NAND", 
+//				Iszc, regInc(REG_SP), TOS
+//				);
 
 //		definePrim("DNAND", Inand_d);
 //		
 		
-		definePrim("DNEGATE",
-				Iinv, TOS,
-				Iinv, regInd(REG_SP),
-				Iinc, regInd(REG_SP),
-				Ijnc, ">0",
-				Iinc, TOS,
-			"0"
-				);
-		
-		int dnegateEntry = require("DNEGATE").getEntry().getContentAddr();
-		definePrim("DABS",
-				Imov, TOS, TOS,
-				Ijlt, immed(dnegateEntry)
-				);
-		
-		definePrim(">R",
-				Idect, reg(REG_RP),
-				Imov, TOS, regInd(REG_RP),
-				StockInstruction.POP_TOS
-				);
-				
-		definePrim("2>R", 
-				Iai, reg(REG_RP), immed(-cellSize * 2),
-				Imov, regInc(REG_SP), regOffs(REG_RP, cellSize),
-				Imov, TOS, regOffs(REG_RP, 0),
-				StockInstruction.POP_TOS
-				);
-		definePrim("R>",
-				StockInstruction.PUSH_TOS,
-				Imov, regInc(REG_RP), reg(REG_TOS)
-				);
-				
-		definePrim("2R>", 
-				Iai, reg(REG_SP), immed(-cellSize * 2),
-				Imov, TOS, regOffs(REG_SP, cellSize),
-
-				Imov, regInc(REG_RP), regOffs(REG_SP, 0),
-				Imov, regInc(REG_RP), TOS
-				);
-		
-		definePrim("RDROP",
-				Iinct, reg(REG_RP)
-				);
-		
-		definePrim("2RDROP",
-				Iai, reg(REG_RP), immed(cellSize * 2)
-				);
-		
-		definePrim("R@", 
-				StockInstruction.PUSH_TOS,
-				Imov, regInd(REG_RP), TOS
-				);
-		
-		definePrim("2R@", 
-				Iai, reg(REG_SP), immed(-cellSize * 2),
-				Imov, TOS, regOffs(REG_SP, cellSize),
-
-				Imov, regOffs(REG_RP, 0), TOS,
-				Imov, regOffs(REG_RP, cellSize), regInd(REG_SP)
-				);
-
-		defineAlias("I", "R@");
+//		definePrim("DNEGATE",
+//				Iinv, TOS,
+//				Iinv, regInd(REG_SP),
+//				Iinc, regInd(REG_SP),
+//				Ijnc, ">0",
+//				Iinc, TOS,
+//			"0"
+//				);
+//		
+//		int dnegateEntry = require("DNEGATE").getEntry().getContentAddr();
+//		definePrim("DABS",
+//				Imov, TOS, TOS,
+//				Ijlt, immed(dnegateEntry)
+//				);
+//		
+//		definePrim(">R",
+//				Idect, reg(REG_RP),
+//				Imov, TOS, regInd(REG_RP),
+//				StockInstruction.POP_TOS
+//				);
+//				
+//		definePrim("2>R", 
+//				Iai, reg(REG_RP), immed(-cellSize * 2),
+//				Imov, regInc(REG_SP), regOffs(REG_RP, cellSize),
+//				Imov, TOS, regOffs(REG_RP, 0),
+//				StockInstruction.POP_TOS
+//				);
+//		definePrim("R>",
+//				StockInstruction.PUSH_TOS,
+//				Imov, regInc(REG_RP), reg(REG_TOS)
+//				);
+//				
+//		definePrim("2R>", 
+//				Iai, reg(REG_SP), immed(-cellSize * 2),
+//				Imov, TOS, regOffs(REG_SP, cellSize),
+//
+//				Imov, regInc(REG_RP), regOffs(REG_SP, 0),
+//				Imov, regInc(REG_RP), TOS
+//				);
+//		
+//		definePrim("RDROP",
+//				Iinct, reg(REG_RP)
+//				);
+//		
+//		definePrim("2RDROP",
+//				Iai, reg(REG_RP), immed(cellSize * 2)
+//				);
+//		
+//		definePrim("R@", 
+//				StockInstruction.PUSH_TOS,
+//				Imov, regInd(REG_RP), TOS
+//				);
+//		
+//		definePrim("2R@", 
+//				Iai, reg(REG_SP), immed(-cellSize * 2),
+//				Imov, TOS, regOffs(REG_SP, cellSize),
+//
+//				Imov, regOffs(REG_RP, 0), TOS,
+//				Imov, regOffs(REG_RP, cellSize), regInd(REG_SP)
+//				);
+//
+//		defineAlias("I", "R@");
 //		defineInlinePrim("I'", Irpidx, 1);
-		defineInlinePrim("J",
-				StockInstruction.PUSH_TOS,
-				Imov, regOffs(REG_RP, cellSize * 2), TOS
-				);
+//		defineInlinePrim("J",
+//				StockInstruction.PUSH_TOS,
+//				Imov, regOffs(REG_RP, cellSize * 2), TOS
+//				);
 				
 //		defineInlinePrim("J'", Irpidx, 3);
 //		defineInlinePrim("K", Irpidx, 4);
 //		defineInlinePrim("K'", Irpidx, 5);
 //		
-		defineInlinePrim("SP@",
-				StockInstruction.PUSH_TOS,
-				Imov, reg(REG_SP), TOS
-				);
-		defineInlinePrim("SP!",
-				Imov, regInc(REG_SP), reg(REG_SP)
-				);
-		defineInlinePrim("RP@",
-				StockInstruction.PUSH_TOS,
-				Imov, reg(REG_RP), TOS
-				);
-		defineInlinePrim("RP!",
-				Imov, regInc(REG_SP), reg(REG_RP)
-				);
+//		defineInlinePrim("SP@",
+//				StockInstruction.PUSH_TOS,
+//				Imov, reg(REG_SP), TOS
+//				);
+//		defineInlinePrim("SP!",
+//				Imov, regInc(REG_SP), reg(REG_SP)
+//				);
+//		defineInlinePrim("RP@",
+//				StockInstruction.PUSH_TOS,
+//				Imov, reg(REG_RP), TOS
+//				);
+//		defineInlinePrim("RP!",
+//				Imov, regInc(REG_SP), reg(REG_RP)
+//				);
 //		defineInlinePrim("LP@", IcontextFrom, CTX_LP);
 //		defineInlinePrim("LP!", ItoContext, CTX_LP);
 //		
 		 
-		defineAlias("(DO)", "2>R");		
-		
-		definePrim("(LOOP)", // ( R: lim next -- lim next+1 ) ( S: -- ) + jump
-				Imov, regInc(REG_IP), TMP,
-				
-				/*
-				 * Add one to the loop index. If the loop index is then equal to
-				 * the loop limit, discard the loop parameters and continue
-				 * execution immediately following the loop. Otherwise continue
-				 * execution at the beginning of the loop.
-				 */
-				Iinc, regInd(REG_RP), // next
-				Ic, regInd(REG_RP), regOffs(REG_RP, cellSize),
-				Ijeq, ">1",
-				
-				Ia, TMP, reg(REG_IP),
-			"1"
-				);
-
-		definePrim("(+LOOP)", // ( R: lim cur -- lim next ) ( S: change -- ) + jump
-				/*
-				 * Add n to the loop index. If the loop index did not cross the
-				 * boundary between the loop limit minus one and the loop limit,
-				 * continue execution at the beginning of the loop. Otherwise,
-				 * discard the current loop control parameters and continue
-				 * execution immediately following the loop.
-				 */
-				
-				Imov, regInc(REG_IP), TMP,				// jump
-				Ia, TMP, reg(REG_IP),
-
-				Imov, regOffs(REG_RP, cellSize), R2,	// lim
-				Ijne, ">nonzero",
-
-				Imov, TOS, TOS,							// forward?
-				Ijlt, ">nonzero",
-				
-				// zero: handle via carry
-				Ia, TOS, regInd(REG_RP),
-				Ijnc, ">exit",
-
-				//Iseto, TOS,
-				Is, TMP, reg(REG_IP),
-
-				Ijmp, ">exit",						// done
-				
-			"nonzero",
-				Ia, TOS, regInd(REG_RP),
-				
-				Imov, TOS, TOS,							// forward?
-				//Iclr, TOS,
-				Ijlt, ">neg",
-				
-				// lim < cur
-				Ic, regInd(REG_RP), R2,					// next ? lim
-				
-				Ijl, ">exit",
-				
-				Is, TMP, reg(REG_IP),
-
-				Ijmp, ">exit",						// done
-				
-			"neg",
-				Ic, regInd(REG_RP), R2,					// next ? lim
-				
-				Ijgt, ">exit",
-				
-				Is, TMP, reg(REG_IP),
-				
-			"exit",
-				StockInstruction.POP_TOS
-				);
+//		definePrim("(LOOP)", // ( R: lim next -- lim next+1 ) ( S: -- ) + jump
+//				Imov, regInc(REG_IP), TMP,
+//				
+//				/*
+//				 * Add one to the loop index. If the loop index is then equal to
+//				 * the loop limit, discard the loop parameters and continue
+//				 * execution immediately following the loop. Otherwise continue
+//				 * execution at the beginning of the loop.
+//				 */
+//				Iinc, regInd(REG_RP), // next
+//				Ic, regInd(REG_RP), regOffs(REG_RP, cellSize),
+//				Ijeq, ">1",
+//				
+//				Ia, TMP, reg(REG_IP),
+//			"1"
+//				);
+//
+//		definePrim("(+LOOP)", // ( R: lim cur -- lim next ) ( S: change -- ) + jump
+//				/*
+//				 * Add n to the loop index. If the loop index did not cross the
+//				 * boundary between the loop limit minus one and the loop limit,
+//				 * continue execution at the beginning of the loop. Otherwise,
+//				 * discard the current loop control parameters and continue
+//				 * execution immediately following the loop.
+//				 */
+//				
+//				Imov, regInc(REG_IP), TMP,				// jump
+//				Ia, TMP, reg(REG_IP),
+//
+//				Imov, regOffs(REG_RP, cellSize), R2,	// lim
+//				Ijne, ">nonzero",
+//
+//				Imov, TOS, TOS,							// forward?
+//				Ijlt, ">nonzero",
+//				
+//				// zero: handle via carry
+//				Ia, TOS, regInd(REG_RP),
+//				Ijnc, ">exit",
+//
+//				//Iseto, TOS,
+//				Is, TMP, reg(REG_IP),
+//
+//				Ijmp, ">exit",						// done
+//				
+//			"nonzero",
+//				Ia, TOS, regInd(REG_RP),
+//				
+//				Imov, TOS, TOS,							// forward?
+//				//Iclr, TOS,
+//				Ijlt, ">neg",
+//				
+//				// lim < cur
+//				Ic, regInd(REG_RP), R2,					// next ? lim
+//				
+//				Ijl, ">exit",
+//				
+//				Is, TMP, reg(REG_IP),
+//
+//				Ijmp, ">exit",						// done
+//				
+//			"neg",
+//				Ic, regInd(REG_RP), R2,					// next ? lim
+//				
+//				Ijgt, ">exit",
+//				
+//				Is, TMP, reg(REG_IP),
+//				
+//			"exit",
+//				StockInstruction.POP_TOS
+//				);
 
 		DictEntry qdoEntry = defineEntry("(?DO)");
 		TargetWord qdo = new TargetWord(qdoEntry) {
@@ -1436,6 +1437,13 @@ public class TI99TargetContext extends TargetContext  {
 	}
 	
 	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.ITargetContext#compileEndCode(java.lang.String)
+	 */
+	@Override
+	public void compileEndCode() {
+		compileInstr(StockInstruction.NEXT);
+	}
+	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.words.TargetContext#defineColonWord(java.lang.String)
 	 */
 	@Override
@@ -1561,7 +1569,7 @@ public class TI99TargetContext extends TargetContext  {
 	}
 
 	
-	protected int writeJump(HostContext hostContext, int opAddr, int target)
+	protected int writeJump(int opAddr, int target)
 			throws AbortException {
 		
 		logfile.println("T>" + HexUtils.toHex4(opAddr) +" = " + HexUtils.toHex4(target));
@@ -1812,10 +1820,11 @@ public class TI99TargetContext extends TargetContext  {
 	 * @see v9t9.tools.forthcomp.words.TargetContext#buildPushString(v9t9.tools.forthcomp.HostContext, java.lang.String)
 	 */
 	@Override
-	public void buildPushString(HostContext hostContext, String string)
+	public Pair<Integer, Integer> buildPushString(HostContext hostContext, String string)
 			throws AbortException {
-		super.buildPushString(hostContext, string);
+		Pair<Integer, Integer> info = super.buildPushString(hostContext, string);
 		alignDP();
+		return info;
 	}
 	
 	/* (non-Javadoc)
