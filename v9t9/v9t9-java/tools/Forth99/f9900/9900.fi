@@ -13,8 +13,8 @@
 ; target-only
 
 : END-CODE
-	rIP *R+  0  MOV
-	0 *R 		B
+	rIP *R+  0  ,MOV
+	0 *R 		,B
 ; immediate target-only
 	
 : COMPILE, ( xt -- )

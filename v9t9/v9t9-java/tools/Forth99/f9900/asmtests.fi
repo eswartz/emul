@@ -25,27 +25,27 @@
 ;
 
 |test : asm1 s" \
-(test 1 li $234 , 		$201 $234 2 test) li		\
-(test lwpi $83e0 , 		$2e0 $83e0 2 test) lwpi		\
-(test rset				$360 1 test) rset			\
-(test @> blwp 0 , 		$420 0 2 test) blwp			\
+(test 1 ,li $234 , 		$201 $234 2 test) li		\
+(test ,lwpi $83e0 , 		$2e0 $83e0 2 test) lwpi		\
+(test ,rset				$360 1 test) rset			\
+(test @> ,blwp 0 , 		$420 0 2 test) blwp			\
 " ; 
 |test : asm2 s" \
-(test &11 *r b	  		$45b 1 test) b				\
-(Test 1 r clr			$4c1 1 test) clr			\
-(Test 1 clr				$4c1 1 test) clr2			\
-(test 1 8 srl			$981 1 test) srl			\
+(test &11 *r ,b	  		$45b 1 test) b				\
+(Test 1 r ,clr			$4c1 1 test) clr			\
+(Test 1 ,clr				$4c1 1 test) clr2			\
+(test 1 8 ,srl			$981 1 test) srl			\
 " ; 
 |test : asm3 s" \
-(test 3 2 a				$a083 1 test) a				\
-(test 2 $0f *r mov		$c7c2 1 test) mov			\
-(test $0f *R+  $1	mov	$c07f 1 test) mov2			\
+(test 3 2 ,a			$a083 1 test) a				\
+(test 2 $0f *r ,mov		$c7c2 1 test) mov			\
+(test $0f *R+  $1 ,mov	$c07f 1 test) mov2			\
 " ; 
 |test : asm4 s" \
-(test 2 1 xop			$2c42 1 test) xop			\
-(test rTOS 3 xor_		$28c1 1 test) xor			\
-(test 1 2 div			$3c81 1 test) div			\
-(test @> 4 mpy $83c0 , 	$3920 $83c0 2 test) mpy		\
+(test 2 1 ,xop			$2c42 1 test) xop			\
+(test rTOS 3 ,xor		$28c1 1 test) xor			\
+(test 1 2 ,div			$3c81 1 test) div			\
+(test @> 4 ,mpy $83c0 , 	$3920 $83c0 2 test) mpy		\
 " ; 
 
 test" asm  asm1 evaluate  asm2 evaluate  asm3 evaluate  asm4 evaluate  cr true "
