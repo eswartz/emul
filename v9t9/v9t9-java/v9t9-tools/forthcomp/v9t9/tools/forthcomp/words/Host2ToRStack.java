@@ -18,17 +18,17 @@ import v9t9.tools.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class HostRToStack extends BaseStdWord {
+public class Host2ToRStack extends BaseStdWord {
 
 	/**
 	 * 
 	 */
-	public HostRToStack() {
+	public Host2ToRStack() {
 	}
 	
 	@Override
 	public String toString() {
-		return ">R";
+		return "2>R";
 	}
 
 	/* (non-Javadoc)
@@ -37,7 +37,9 @@ public class HostRToStack extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
 		int a = hostContext.popData();
+		int b = hostContext.popData();
 		hostContext.getReturnStack().push(a);
+		hostContext.getReturnStack().push(b);
 	}
 
 	/* (non-Javadoc)

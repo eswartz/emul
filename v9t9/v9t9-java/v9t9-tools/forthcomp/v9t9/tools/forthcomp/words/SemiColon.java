@@ -31,7 +31,7 @@ public class SemiColon extends BaseStdWord {
 		
 		hostContext.stopCompiling();
 
-		targetContext.compileExit(hostContext);
+		targetContext.buildExit(hostContext);
 		
 		((ITargetWord) targetContext.getLatest()).getEntry().setHidden(false);
 	}

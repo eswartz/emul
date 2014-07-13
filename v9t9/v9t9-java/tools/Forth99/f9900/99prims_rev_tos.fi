@@ -13,14 +13,118 @@
 $01	constant	rTOS	\ top of stack
 
 : PUSH
-	rSP 			dect
-	rTOS  rSP *R  	mov
+	rSP 					dect
+	rTOS  	rSP *R  		mov
 ; immediate
 
 : POP
-	rSP *R+  rTOS	mov
+	rSP *R+  	rTOS		mov
 ; immediate
 
+
+Code 0BRANCH
+	\ get target
+	rIP *R+		rTMP		MOV
+	\ test
+	rTOS		rTOS		MOV
+	0 $+					JEQ
+	\ not 0
+	rSP *R+		rTOS		MOV
+	
+	end-code
+0 $:
+	rSP *R+		rTOS		MOV
+	rTMP		rIP			A
+	end-code
+	
+Code BRANCH
+	rIP *R+		rIP			A				
+	end-code
+	
+Code (REGS) ( SP0 UP0 RP0 -- )
+	rRP *R		rTMP		MOV		\ return
+	rTOS		rRP			MOV
+	rSP *R+		rUP			MOV
+	rSP *R+		rSP			MOV
+	rRP						DECT
+	rTMP		rRP *R		MOV
+	end-code
+
+
+Code DOLIT
+	PUSH
+	rIP	*R+		rTOS		MOV
+	end-code
+	
+Code DODLIT
+	rSP						AI		2 cells negate ,
+	rTOS		rSP @>(R)	MOV		#cell ,
+
+	rIP *R+		rSP *R		MOV		\ first word				
+	rIP *R+		rTOS		MOV		\ second				
+	end-code
+
+( CREATE'd words use R11 for their data )
+	
+Code DOVAR
+	PUSH
+	rRT			rTOS		MOV 
+	end-code
+
+Code DOCON
+	PUSH
+	rRT *R+		rTOS		MOV
+	end-code
+	
+Code DODCON
+	rSP						AI		2 cells negate ,
+	rTOS		rSP @>(R)	MOV		#cell , 
+
+	rRT *R+		rSP *R		MOV		\ first word				
+	rRT *R+		rTOS		MOV		\ second				
+	end-code
+	
+Code DOUSER
+	PUSH
+	
+	rRT *R+		rTOS		MOV		\ offset follows
+	rUP			rTOS		A		\ add user base				
+	end-code
+	
+Code DODOES
+	PUSH
+	
+	rRT *R+		rTMP		MOV		\ XT of DOES> target
+	rRT			rTOS		MOV		\ PFA
+	rTMP *R					B
+	end-code
+
+( ROM deferral: points to an offset inside ROMDEFERS )
+Code DORDEFER
+	PUSH
+
+	rRT *R+		rR2			MOV		\ offset follows
+	rR2 @>(R)	rR2			MOV		(rdefertbl) ,
+	
+	POP
+	rR2	*R					B				
+	end-code
+
+Code (TO)
+	rTOS @>(R)	rTMP		MOV		#cell ,
+	rTMP					CI		' DORDEFER ,
+	
+0 $:	
+	0 $-					JNE		\ error			
+				
+	\ RDEFER
+	rTMP					LI		(rdefertbl) ,	\ addr of table
+	rTOS @>(R)	rTMP		A		2 cells ,
+	rSP *R+		rTMP *R		MOV	
+
+	POP				
+	end-code
+	
 Code 0
 	PUSH
 	rTOS	CLR
@@ -295,9 +399,13 @@ Code RDROP
 	rRP						INCT		
 	end-code
 			
-Code 2RDROP
+Code UNLOOP
+0 $:
 	rRP						AI		2 CELLS ,		
 	end-code		
+
+Code 2RDROP
+	0 $-					JMP
 
 Code I
 0 $:
@@ -402,5 +510,337 @@ Code (+LOOP)  ( R: lim cur -- lim next ) ( S: change -- ) ( + jump )
 
 9 $:				
 	POP
+	end-code
+	
+Code 2DUP
+	rTOS		rSP @>(R)	MOV		#cell negate ,
+	rSP *R		rSP @>(R)	MOV		2 cells negate ,
+	rSP						AI		2 cells negate ,
+	end-code
+					
+Code ?DUP
+	rTOS		rTOS		MOV
+	0 $+					JEQ
+	PUSH
+0 $:				
+	end-code
+	
+Code 0<
+	rTOS		rTOS		MOV
+	rTOS					SETO
+	0 $+					JLT
+	rTOS					CLR
+0 $:
+	end-code
+	
+Code 0>
+	rTOS		rTOS		MOV
+	rTOS					SETO
+	0 $+					JGT
+	rTOS					CLR
+0 $:
+	end-code
+	
+Code <=
+	rSP *R+		rTOS		C
+	rTOS					CLR
+	0 $+					JGT
+	rTOS					SETO
+0 $:
+	end-code
+	
+Code U<
+	rSP *R+		rTOS		C
+	rTOS					SETO
+	0 $+					JL
+	rTOS					CLR
+0 $:
+	end-code
+	
+Code U<
+	rSP *R+		rTOS		C
+	rTOS					SETO
+	0 $+					JL
+	rTOS					CLR
+0 $:
+	end-code
+	
+Code <
+	rSP *R+		rTOS		C
+	rTOS					SETO
+	0 $+					JLT
+	rTOS					CLR
+0 $:
+	end-code
+
+Code U>
+	rSP *R+		rTOS		C
+	rTOS					SETO
+	0 $+					JH
+	rTOS					CLR
+0 $:
+	end-code
+	
+Code >
+	rSP *R+		rTOS		C
+	rTOS					SETO
+	0 $+					JGT
+	rTOS					CLR
+0 $:
+	end-code
+	
+Code 2/
+	rTOS		1			SRA
+	end-code		
+
+Code 2*
+	rTOS		1			SLA
+	end-code
+	
+Code LSHIFT
+	rTOS		0			MOV
+	POP
+	rTOS		0			SLA
+	end-code		
+	
+Code RSHIFT
+	rTOS		0			MOV
+	POP
+	rTOS		0			SRA
+	end-code		
+	
+Code URSHIFT
+	rTOS		0			MOV
+	POP
+	rTOS		0			SRL
+	end-code		
+	
+Code CRSHIFT
+	rTOS		0			MOV
+	POP
+	rTOS		0			SRC
+	end-code
+	
+Code swpb
+	rTOS					SWPB_
+	end-code
+
+Code EXECUTE
+	rTOS		rTMP		MOV
+	POP
+	rTMP *R					BL_
+	end-code
+	
+Code TRUE
+	PUSH
+	rTOS					SETO
+	end-code
+	
+Code FALSE
+	PUSH
+	rTOS					CLR
+	end-code
+		
+Code ints-check
+	LIMI	1 ,
+	LIMI	0 , 
+	end-code
+		
+	
+Code (S")
+	rSP						AI		2 cells negate ,
+	rTOS		rSP @>(R)	MOV		#cell ,
+	\ get addr
+	rIP			rTMP		MOV
+	\ get length
+	rTMP *R+	rTOS		MOVB
+	rTOS		8			SRL
+	\ save caddr
+	rTMP		rSP *R		MOV
+	\ align
+	rTOS		rTMP		A
+	rTMP					INC
+	rTMP					ANDI	-2 ,	
+
+	rTMP		rIP			MOV				
+	end-code
+					
+Code (EMITCHAR)
+	rTOS		EMITCHAR
+	POP
+	end-code
+	
+(  Move memory from one area to another )
+Code (cmove)	( src target len srcincr targetincr  )
+								\ TOS: targetincr
+	rSP *R+		rRT			MOV		\ R11: srcincr
+	rSP *R+		rR2			MOV		\ R2: len
+	rSP *R+		rR3			MOV		\ R3: target
+	rSP *R+		rTMP		MOV		\ TMP: source
+	
+	rTOS		rTOS		MOV		 \ TOS: targetincr
+	1 $+					JGT
+	
+	rR2			rR3			A
+	rR3						DEC		\ TODO: assuming TOS == -1
+	
+1 $:
+	rRT			rRT			MOV
+	2 $+					JGT
+	
+	rR2			rTMP		A
+	rTMP					DEC		\ TODO: assuming TOS == -1
+	
+2 $:
+	rR2			rR2			MOV		\ 0 bytes?
+	
+	3 $+					JEQ
+	
+4 $:
+	rTMP *R		rR3 *R		MOVB
+	rTOS		rR3			A
+	rRT			rTMP		A
+	rR2						DEC
+	4 $-					JNE
+
+3 $:
+	POP
+	end-code
+	
+( Fill memory )
+Code (CFILL)	( addr n ch targetincr )
+									\ TOS: targetincr
+	rSP *R+		rTMP		MOV 	\ TMP: ch
+	rTMP					SWPB_
+
+	rSP *R+		rR2			MOV		\ R2: len
+	rSP *R+		rR3			MOV 	\ R3: target
+	
+	rR2			rR2			MOV 	\ 0 bytes?
+	
+	1 $+					JEQ
+2 $:
+	rTMP		rR3 *R		MOVB
+	rTOS		rR3			A
+	rR2						DEC
+	2 $-					JNE
+1 $:
+	POP
+	end-code
+
+\ Registers
+| &12	constant lenAndFlags		\ should be saved
+| &4	constant charTemp 			\ must be saved
+| &11 	constant charPtr			\ not saved
+| &5	constant counter			\ must be saved
+
+\ Labels
+| 1 	constant	>failed
+| 2 	constant	>wordLoop
+| 3 	constant	>wordStart
+| 4 	constant	>charLoop
+| 5 	constant	>match
+| 9 	constant	>reset
+
+( find word in dictionary; lfa is nfa - #cell )            
+Code (lfind)		( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )
+	\ save clobbered regs
+	rRP						AI		3 cells negate ,
+	charTemp	rRP @>(R)	MOV		2 cells ,
+	counter		rRP @>(R)	MOV		#cell ,
+	lenAndFlags	rRP *R		MOV
+
+	rTOS		rTOS		MOV		\ TOS=LFA
+	
+	>failed $+				JEQ
+
+	\ search list 
+
+	rR3						CLR
+	charTemp				CLR
+
+	rSP *R		charPtr		MOV
+	charPtr *R	rTMP		MOVB	 \ [ expected byte | length ]
+	
+	rTMP		lenAndFlags	MOVB
+	lenAndFlags				SWPB_
+	rTMP		lenAndFlags	MOVB
+	lenAndFlags				ORI 	$8000 ,  	\ not smudged
+
+	>wordStart $+			JMP        
+
+>wordLoop $:
+	rTOS *R		rTOS		MOV 	\ get LFA to new one...
+	>failed $+				JEQ     \ if end... (unlikely)
+
+>wordStart $:
+	\ TOS = LFA, followed by [len] "name"
+
+	\ check length & flags
+	rTOS @>(R)	rR3			MOVB	#cell ,
+
+	rR3						ANDI	$4000 INVERT ,	\ keep all but immediate bit
+	lenAndFlags	rR3			SB				\ subtract both smudge & length -- should be 0x00 or 0x40
+	>wordLoop $-			JNE
+
+	rTOS		rTMP		MOV        \ new NFA to check
+	rTMP					AI		#cell 1+ ,
+
+	charPtr		rR2			MOV
+	rR2						INC
+	lenAndFlags	counter		MOV	
+	counter					ANDI 	$FF ,
+        
+>charLoop $:
+	rTMP *R+	rR3			MOVB
+	rR2	*R+		charTemp	MOVB
+
+	rR3			charTemp	CB   		
+	>match $+				JEQ                   \ exact match?
+
+	\ see if they might be letters that differ in case only
+	rR3			charTemp	XOR_
+	charTemp				CI		$2000 ,       \ differ in case bit?
+    >wordLoop $-			JNE
+    
+    \ okay, exclude matches in punctuation
+    charTemp	rR3			SZC                            \ turn off case in matching char
+    rR3						AI		-$4100 ,
+    rR3						CI		$5A00 $4100 - ,
+    >wordLoop $-			JHE
+
+>match $:
+	counter					DEC
+	>charLoop $-			JGT        
+
+    \ convert to XT
+    rTOS @>(R)	lenAndFlags MOVB	#cell ,	\ save NFA flag bits
+    rTMP		rTOS		MOV
+    
+    \ align
+    rTOS					INC
+    rTOS					ANDI 	#cell negate ,
+
+	rTOS		rSP *R		MOV		 \ overwrite caddr with xt
+    
+    \ assume not immediate
+    rTOS					SETO
+
+	lenAndFlags				ANDI 	$4000 ,	\ immediate?
+    >reset $+				JEQ
+    
+    \ immediate
+    rTOS					NEG
+
+	>reset $+				JMP    
+
+>failed $:
+	rTOS					CLR    
+
+>reset $:    	
+	\ restore
+	rRP *R+		lenAndFlags	MOV
+	rRP *R+		counter		MOV
+	rRP *R+		charTemp	MOV
 	end-code
 	

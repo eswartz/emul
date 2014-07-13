@@ -1,8 +1,14 @@
+
+\   ---------   ans
+
+| 1			constant 	#CHAR
+| 2			constant 	#CELL
+
 $0F	constant	rSP		\ stack pointer
 $0E	constant	rIP		\ instruction pointer
 $0D	constant	rRP		\ return stack pointer
 \ $0C not assigned: CRU stuff
-\ $0B not assigned: BL return val
+$0B constant	rRT		\ BL return val (system)
 $0A constant    rUP		\ user pointer
 $04	constant	rDOCOL	\ ptr to DOCOL
 $05 constant	rDOCON	\ ptr to DOCON

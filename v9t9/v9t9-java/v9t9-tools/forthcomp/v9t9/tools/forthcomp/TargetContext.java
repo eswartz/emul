@@ -29,12 +29,10 @@ import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.machine.f99b.memory.EnhancedRamByteArea;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
-import v9t9.tools.forthcomp.words.HostBranch;
 import v9t9.tools.forthcomp.words.HostDoubleLiteral;
 import v9t9.tools.forthcomp.words.HostLiteral;
 import v9t9.tools.forthcomp.words.HostVariable;
 import v9t9.tools.forthcomp.words.INativeCodeWord;
-import v9t9.tools.forthcomp.words.Literal;
 import v9t9.tools.forthcomp.words.StubWord;
 import v9t9.tools.forthcomp.words.TargetCodeWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
@@ -366,7 +364,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		
 	}
 
-	public ITargetWord require(String token) throws AbortException {
+	public ITargetWord require(String token) {
 		ITargetWord word = (ITargetWord) find(token);
 		if (word == null) {
 			word = defineForward(token, hostCtx.getStream().getLocation());
@@ -932,7 +930,8 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		if (getLatest() != null && ((ITargetWord) getLatest()).getEntry().hasLocals())
 			compileCleanupLocals(hostContext);
 		
-		require(";S").getCompilationSemantics().execute(hostContext, this);
+		//buildCall(require(";S"));
+		//require(";S").getCompilationSemantics().execute(hostContext, this);
 	}
 
 	/* (non-Javadoc)
@@ -1317,7 +1316,8 @@ public abstract class TargetContext extends Context implements ITargetContext {
 		leaves.clear();
 		
 		ITargetWord unloop = require("unloop");
-		unloop.getCompilationSemantics().execute(hostCtx, this);
+		hostCtx.compileWord(this, null, unloop);
+		//unloop.getCompilationSemantics().execute(hostCtx, this);
 	}
 
 	abstract protected void writeLoopJump(int opAddr) throws AbortException;
@@ -1513,6 +1513,18 @@ public abstract class TargetContext extends Context implements ITargetContext {
 			RawInstruction instr = rawInstructionFactory.decodeInstruction(addr, console);
 			logfile.println("T>" + HexUtils.toHex4(instr.pc) + " " + instr);
 			addr += instr.getSize();
+		}
+	}
+
+	/**
+	 * @param hostContext
+	 * @throws AbortException 
+	 */
+	public void buildExit(HostContext hostContext) throws AbortException {
+		if (isNativeDefinition()) {
+			compileExit(hostContext);
+		} else {
+			buildCall(require(";S"));
 		}
 	}
 

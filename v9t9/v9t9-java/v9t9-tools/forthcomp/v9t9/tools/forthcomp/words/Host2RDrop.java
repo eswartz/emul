@@ -1,5 +1,5 @@
 /*
-  If.java
+  HostRot.java
 
   (c) 2010-2011 Edward Swartz
 
@@ -18,26 +18,33 @@ import v9t9.tools.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class If extends BaseStdWord {
-	public If() {
+public class Host2RDrop extends BaseStdWord {
+
+	/**
+	 * 
+	 */
+	public Host2RDrop() {
+	}
+	
+	@Override
+	public String toString() {
+		return "2RDROP";
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.IContext)
+	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.HostContext, v9t9.forthcomp.words.TargetContext)
 	 */
-	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		hostContext.assertCompiling();
-		
-		hostContext.compileWord(targetContext, hostContext.require("0BRANCH"), targetContext.require("0BRANCH"));
-		
-		targetContext.pushFixup(hostContext);
-		hostContext.pushPairs(2);
+	public void execute(HostContext hostContext, TargetContext targetContext)
+			throws AbortException {
+		hostContext.getReturnStack().pop();
+		hostContext.getReturnStack().pop();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
+	
 }

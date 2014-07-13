@@ -78,6 +78,9 @@ public class UnitTests extends BaseWord {
 		sb.append(testWordText);
 		sb.append(" ~SUCCESS~ ;\n");
 		
+		compiler.getHostContext().getLog().println(sb);
+		compiler.getHostContext().getLog().flush();
+		
 		compiler.parseString(
 				"RUNTESTS", 
 				sb.toString());

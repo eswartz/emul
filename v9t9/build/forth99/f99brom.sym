@@ -1,6 +1,6 @@
 8000 >gram_disk_base
-EFF4 (first)
-FBFA (up0)
+EFF0 (first)
+FBF6 (up0)
 FCC0 (slit-pad0)
 FDC0 TIB
 FF40 (rp0)
@@ -25,7 +25,6 @@ FFC0 (sp0)
 001F &nmask
 0020 #GRAM
 0022 (#numbuf)
-0024 #maxrdefers
 0028 tracks-per-side
 0039 IRfrom
 003A IRdrop
@@ -292,6 +291,7 @@ FFC0 (sp0)
 098C l.h>w
 0992 umax
 099E umin
+09A9 handler
 09AA catch
 09C2 throw
 09E2 ?throw
@@ -747,6 +747,7 @@ FFC0 (sp0)
 2A50 [COMPILE]
 2A62 POSTPONE
 2A72 csp
+2A75 leave-list
 2A76 !csp
 2A80 ?csp
 2A8C :
@@ -790,6 +791,7 @@ FFC0 (sp0)
 2C5A (abort")
 2C6A ABORT"
 2C7C ."
+2C8D loadline
 2C8E (
 2C96 >IN
 2C9A CHAR
@@ -865,6 +867,7 @@ FFC0 (sp0)
 32E6 mfree
 32EE tolower
 32FA s<>
+332F >rwblk
 3330 wait4
 3348 fdc-ready
 3358 fdc-wait-ready
@@ -890,6 +893,7 @@ FFC0 (sp0)
 349A GRAM
 34A0 R/W
 34B2 io-init
+34B5 lcount
 34B6 reset-locals
 34CC init-locals
 34D4 (lfind)
@@ -904,6 +908,7 @@ FFC0 (sp0)
 35A6 finish-locals
 35B6 :>
 35CE ::
+361B 'lines
 361C redraw-block
 3622 fetch-block
 3648 baddrs!
@@ -917,6 +922,7 @@ FFC0 (sp0)
 3702 >curs
 370A delete-range
 374A insert-range
+379F 'fl
 37A0 fl|
 37A6 ^curs
 37C0 ^del
@@ -970,6 +976,7 @@ FFC0 (sp0)
 3AF6 edittab
 3B74 edit.char
 3B82 onkey
+3BC1 in-editor
 3BC2 init-editor
 3BD4 save-video
 3BE6 editor.exit

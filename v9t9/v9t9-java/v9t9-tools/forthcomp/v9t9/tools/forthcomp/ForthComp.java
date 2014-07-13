@@ -153,12 +153,13 @@ public class ForthComp {
     	if (gromDictFile != null)
     		logfile.println("GDP = " + HexUtils.toHex4(((IGromTargetContext)comp.getTargetContext()).getGP()));
 
-    	try {
-    		comp.finish();
-    	} catch (AbortException e) {
-    		System.err.println(e.getFile() +":" + e.getLine()+": " + e.getMessage());
+    	if (comp.getErrors() == 0) {
+	    	try {
+	    		comp.finish();
+	    	} catch (AbortException e) {
+	    		System.err.println(e.getFile() +":" + e.getLine()+": " + e.getMessage());
+	    	}
     	}
-    		
     	
     	if (comp.getErrors() > 0) {
     		System.err.println("Errors: " + comp.getErrors());

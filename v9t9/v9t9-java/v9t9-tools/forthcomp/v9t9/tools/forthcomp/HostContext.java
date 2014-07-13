@@ -148,7 +148,9 @@ public class HostContext extends Context {
 		define("cell+", new HostCellPlus(targetContext.getCellSize()));
 		define("R@", new HostRStackAt());
 		define("R>", new HostRStackFrom());
-		define(">R", new HostRToStack());
+		define(">R", new HostToRStack());
+		define("2>R", new Host2ToRStack());
+		define("2RDROP", new Host2ToRStack());
 		
 		define("CODE", new Code());
 		define("END-CODE", new EndCode());
@@ -686,8 +688,10 @@ public class HostContext extends Context {
 						hadSemantics = true;
 					}
 				}
-			} else {
+			} else if (targetContext != null) {
 				targetContext.buildCall(targetWord);
+				if (targetWord.getEntry().isTargetOnly())
+					hadSemantics = true;
 			}
 		}
 		if (hostWord != null) {

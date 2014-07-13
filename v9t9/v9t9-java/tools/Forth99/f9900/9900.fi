@@ -23,7 +23,7 @@
 
 \ called for creating words to inject :docol code into definition
 : docol,    ( addr -- )
-	[ $690 REG_DOCOL + literal ] ,  
+	[ $690 rDOCOL + literal ] ,  
 ;
 
 | : docol!  ( cfa -- )
@@ -31,17 +31,17 @@
 ;
 
 | : dovar,  ( -- )
-	[ $690 REG_DOVAR + literal ] ,
+	[ $690 rDOVAR + literal ] ,
 ;
 
 | : docon, ( num -- )
-    [ $690 REG_DOCON + literal ] ,
+    [ $690 rDOCON + literal ] ,
     ,  
 ;
 
 \ TODO: double or not?
 | : douser,  ( idx -- )
-    [ $690 REG_DOUSER + literal ] ,
+    [ $690 rDOUSER + literal ] ,
     ,
 ;
 

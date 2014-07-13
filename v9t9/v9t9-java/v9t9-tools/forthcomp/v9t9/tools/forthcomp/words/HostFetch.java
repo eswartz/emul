@@ -10,7 +10,6 @@
  */
 package v9t9.tools.forthcomp.words;
 
-import ejs.base.utils.HexUtils;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.TargetContext;
@@ -31,9 +30,9 @@ public class HostFetch extends BaseStdWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		hostContext.getLog().print("FETCH @ " + HexUtils.toHex4(hostContext.peekData()) + " = ");
+		//hostContext.getLog().print("FETCH @ " + HexUtils.toHex4(hostContext.peekData()) + " = ");
 		hostContext.pushData(targetContext.readCell(hostContext.popData() & 0x7fffffff));
-		hostContext.getLog().println(HexUtils.toHex4(hostContext.peekData()));
+		//hostContext.getLog().println(HexUtils.toHex4(hostContext.peekData()));
 	}
 
 	/* (non-Javadoc)

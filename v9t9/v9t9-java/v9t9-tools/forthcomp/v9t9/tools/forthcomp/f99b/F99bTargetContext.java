@@ -931,6 +931,7 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	public void compileExit(HostContext hostContext) throws AbortException {
 		super.compileExit(hostContext);
 		
+		require(";S").getCompilationSemantics().execute(hostContext, this);
 //		int endDP = getDP();
 //		if (startColonWord != 0) {
 //			peephole(startColonWord, endDP);

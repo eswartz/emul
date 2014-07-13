@@ -63,7 +63,7 @@ $ff	constant (J		\ jump (8 bits)
 		invert , ,					\ { opmask opcode }
 	does>		( op1 -- )
 		2dup @ and
-		if abort" invalid arg" then
+		if ." invalid arg" then
 		cell+ @ or
 		T , <A>
 ;
@@ -76,7 +76,7 @@ $ff	constant (J		\ jump (8 bits)
 	does>		( op1 op2 -- )
 		>r
 		r@ @ lshift or
-		r@ cell+ @ over and if abort" invalid arg" then
+		r@ cell+ @ over and if ." invalid arg" then
 		
 		r> 2 cells + @ or
 		T , <A>
@@ -130,7 +130,7 @@ $0B00	(R	(C	inst2':	SRC
 \ $0C00	(C		 inst1:	DSR			\ v9t9
 \ $0D40			 inst0:	KYSL		\ v9t9
 \ $0D60	(R		 inst1:	TICKS		\ v9t9
-\ $0DC0	(R		 inst1:	EMITCHAR	\ v9t9
+$0DC0	(R		 inst1:	EMITCHAR	\ v9t9
 \ $0DE0			 inst0:	DBG			\ v9t9
 \ $0DE1			 inst0:	-DBG		\ v9t9
 
@@ -179,7 +179,7 @@ $F000	 (G	(G	inst2:	SOCB
 
 : r?
 	dup $0f invert and if
-		abort" reg?? "
+		." reg?? "
 	then
 ;
 
@@ -222,7 +222,7 @@ $F000	 (G	(G	inst2:	SOCB
 \ \\\\
 
 : >#	( bit -- opflag )
-	dup $ff00 and if abort" invalid range" then
+	dup $ff00 and if ." invalid range" then
 ;
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -268,7 +268,7 @@ Defer #labs
 	2 - 2/			 \ calc offset
 	dup -$80 $7f within
 	0= if
-		abort" bad jump offset"
+		." bad jump offset"
 	then
 	$ff and
 ;
@@ -366,7 +366,7 @@ Defer #labs
 : $-	( lab# -- opc )
 	#>lab		 \ get addr
 	dup $>f? if 
-		abort" undefined label"
+		." undefined label"
 	then
 	@ here $	\ jump
 ;

@@ -27,7 +27,7 @@ public class Exit extends BaseStdWord {
 			throws AbortException {
 		hostContext.assertCompiling();
 		hostContext.compileExit();
-		targetContext.compileExit(hostContext);
+		targetContext.buildExit(hostContext);
 	}
 
 	/* (non-Javadoc)

@@ -43,15 +43,6 @@ StdWP ,  ' (RESET) ,
 
 IntWP ,  SHARED ,	
 
-
-\ ................................
-
-SHARED		dp!
-	
-	( shared entry for INT1 )
-	
-	(int1-redirect)
-
 \ ................................
 
 ROM  	  	dp!
@@ -390,6 +381,54 @@ s" TESTING" environment? [IF]
 			
 [THEN]
 
+Code (RESET)
+					LIMI		1 ,
+
+	rTMP			LI			M_INT_EXT M_INT_VDP +  8 LSHIFT ,
+	
+	rTMP	@>		MOVB		'INTS ,		
+
+	rTMP			LI			$8120 ,			\ turn on VDP interrupts (write R1_INT to VDP R1)
+	rTMP	@>		MOV			VDPWA ,
+
+	rDOCOL			LI			' DOCOL ,				
+	rDOUSER			LI			' DOUSER ,				
+	rDOCON			LI			' DOCON ,				
+	rDOVAR			LI			' DOVAR ,				
+	rDODOES			LI			' DODOES ,
+	
+	\ FFC0 is StdWP, FFE0 is IntWP; make tiny stacks before that inside FaultStacks
+	rSP				LI			$FFC0 ,
+	rRP				LI			$FFB0 ,
+	rUP				LI			$FFA0 ,
+	&11				LI			' COLD  cell+ ,
+	rDOCOL	*R		B			\ normally BL, but we set up R11 for this
+	end-code		
+
+
+\ ................................
+
+	HERE
+	
+SHARED		dp!
+	
+	( shared entry for INT1 )
+
+	\ turn off ints
+				LIMI	0 ,	
+	\ switch to bank 1
+	@>			SETO	4 ,
+	\ in normal ROM, jumps to interrupt
+	$ff			JMP							\ not reached
+	\ restore bank
+	@>			SETO	0 ,
+	\ return from interrupt
+				RTWP
+	\ the shared ROM will have instructions here
+
+	DP!
+			
+\ ................................
 
 ' (reset)	@reset	!   
 ' bye   	@BYE	!
