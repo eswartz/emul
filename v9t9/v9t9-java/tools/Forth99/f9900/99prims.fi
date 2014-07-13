@@ -9,8 +9,22 @@
 \ 
 
 \	The prims use a stack that grows up (DECT to push) and the TOS is stored in a register.
+\
+\	The alternative (using auto-increment, and/or no TOS) will not perform any better,
+\	since *R+ is a post-increment, meaning all items below TOS will be @-2(SP), etc., 
+\	and cost 8 extra cycles.  
 
 $01	constant	rTOS	\ top of stack
+
+Code HANG
+	IDLE
+
+s" TESTING" environment? [IF]	
+Code ~SUCCESS~
+	$ff			JMP
+Code ~FAILURE~
+	$ff			JMP
+[THEN]
 
 : PUSH
 	rSP 					dect
@@ -20,7 +34,6 @@ $01	constant	rTOS	\ top of stack
 : POP
 	rSP *R+  	rTOS		mov
 ; immediate
-
 
 Code 0BRANCH
 	\ get target
@@ -64,8 +77,22 @@ Code DODLIT
 	rIP *R+		rTOS		MOV		\ second				
 	end-code
 
+
 ( CREATE'd words use R11 for their data )
-	
+
+
+Code DOCOL
+	\ save off IP
+	rRP						DECT
+	rIP			rRP *R		MOV
+	\ get the new one from XT following the caller
+	&11			rIP			MOV
+	end-code
+
+Code ;S
+	rRP *R+		rIP			MOV
+	end-code
+
 Code DOVAR
 	PUSH
 	rRT			rTOS		MOV 

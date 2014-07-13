@@ -8,30 +8,7 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-Code DOCOL
-	\ save off IP
-	rRP						DECT
-	rIP			rRP *R		MOV
-	\ get the new one from XT following the caller
-	&11			rIP			MOV
-	end-code
-
-Code ;S
-	rRP *R+		rIP			MOV
-	end-code
-
-Code HANG
-	IDLE
-	end-code
-	
-Code ~SUCCESS~
-	$ff			JMP
-	end-code
-Code ~FAILURE~
-	$ff			JMP
-	end-code
-
-include 99prims_rev_tos.fi
+include 99prims.fi
 
 : (?do)
 	postpone 2dup 
