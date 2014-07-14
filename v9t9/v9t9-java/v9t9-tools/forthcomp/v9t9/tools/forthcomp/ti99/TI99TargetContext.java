@@ -38,13 +38,14 @@ import v9t9.tools.asm.operand.ll.LLRegIndOperand;
 import v9t9.tools.asm.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.operand.ll.LLRegisterOperand;
 import v9t9.tools.forthcomp.AbortException;
+import v9t9.tools.forthcomp.BaseGromTargetContext;
 import v9t9.tools.forthcomp.DictEntry;
+import v9t9.tools.forthcomp.F9900GromDictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.IWord;
 import v9t9.tools.forthcomp.RelocEntry;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
-import v9t9.tools.forthcomp.TargetContext;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
@@ -59,7 +60,7 @@ import ejs.base.utils.TextUtils;
  * @author ejs
  *
  */
-public class TI99TargetContext extends TargetContext  {
+public class TI99TargetContext extends BaseGromTargetContext  {
 	/**
 	 * 
 	 */
@@ -380,6 +381,7 @@ public class TI99TargetContext extends TargetContext  {
 	@Override
 	public void definePrims() throws AbortException {
 		super.definePrims();
+
 	}
 	
 	/* (non-Javadoc)
@@ -803,5 +805,18 @@ public class TI99TargetContext extends TargetContext  {
 	@Override
 	protected boolean isLikelyAddress(int value) {
 		return value >= 0x4000 && value <= 0xFF00;
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.BaseGromTargetContext#createGromDictEntry(int, int, java.lang.String)
+	 */
+	@Override
+	protected DictEntry createGromDictEntry(int size, int entryAddr, String name) {
+		// name, link (=>xt), byte
+		int dictSize = name.length() + cellSize + 1;
+		DictEntry entry = new F9900GromDictEntry(dictSize, entryAddr, name, gp);
+		gp += dictSize;
+		return entry;
 	}
 }

@@ -14,49 +14,37 @@ import v9t9.engine.memory.MemoryDomain;
 
 /**
  * @author ejs
- *
+ * 
  */
-public class GromDictEntry extends DictEntry {
+public class F99bGromDictEntry extends DictEntry {
 
 	private int dictAddr;
 
-	/**
-	 * @param headerSize
-	 * @param addr
-	 * @param name
-	 */
-	public GromDictEntry(int headerSize, int addr, String name, int gp) {
+	public F99bGromDictEntry(int headerSize, int addr, String name, int gp) {
 		super(headerSize, addr, name);
 		this.dictAddr = gp;
 	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.DictEntry#getContentAddr()
-	 */
+
 	@Override
 	public int getContentAddr() {
 		return addr;
 	}
-	/**
-	 * @return the dictAddr
-	 */
+
 	public int getDictAddr() {
 		return dictAddr;
 	}
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.DictEntry#writeEntry(v9t9.forthcomp.words.TargetContext)
-	 */
+
 	@Override
 	public void writeEntry(ITargetContext targetContext) {
 		byte[] ent = doWriteEntry(targetContext);
-		
+
 		// ignore link
 		MemoryDomain domain = ((IGromTargetContext) targetContext).getGrom();
 		int gp = dictAddr;
 		for (int i = 0; i < ent.length - targetContext.getCellSize(); i++) {
 			domain.writeByte(gp++, ent[i + targetContext.getCellSize()]);
 		}
-		
+
 		// place xt
 		targetContext.writeCell(ent, 0, getContentAddr());
 		for (int i = 0; i < targetContext.getCellSize(); i++) {

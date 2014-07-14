@@ -27,16 +27,8 @@ public class EnvironmentQuery extends BaseStdWord {
 	@Override
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		// a string is on the stack
+		@SuppressWarnings("unused")
 		String str = popString(hostContext, targetContext);
-		if ("TESTING".equalsIgnoreCase(str)) {
-			hostContext.pushData(targetContext.isTestMode() ? -1 : 0);
-			return;
-		}
-		if ("LOCALS".equalsIgnoreCase(str)) {
-			hostContext.pushData(targetContext.isLocalSupportAvailable(hostContext) ? -1 : 0);
-			return;
-		}
 		hostContext.pushData(0);
 	}
 	

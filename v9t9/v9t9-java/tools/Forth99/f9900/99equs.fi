@@ -1,9 +1,6 @@
 
 \   ---------   ans
 
-| 1			constant 	#CHAR
-| 2			constant 	#CELL
-
 $0F	constant	rSP		\ stack pointer
 $0E	constant	rIP		\ instruction pointer
 $0D	constant	rRP		\ return stack pointer

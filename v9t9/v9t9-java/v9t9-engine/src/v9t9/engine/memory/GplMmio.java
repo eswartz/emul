@@ -137,6 +137,14 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     	    /* >9C00, data write */
     		gromraddrflag = gromwaddrflag = false;
 
+    		if (dumpGplAccess.getBoolean() && dumpFullInstructions.getBoolean()) {
+    			PrintWriter pw = Logging.getLog(dumpFullInstructions);
+				if (pw != null)
+					pw.println(
+    					"Write GPL >" + HexUtils.toHex4(gromaddr - 1) + " = >" + HexUtils.toHex2(val));
+    		}
+
+    		
     		domain.writeByte(gromaddr - 1, val);
     		gromaddr = getNextAddr(gromaddr);
     	}   

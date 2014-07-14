@@ -16,7 +16,7 @@
 : HERE ( -- addr ) 
 	dp @ 
 ;
-
+[THEN]
 
 \   These cover memory spaces, threading and compiler issues
 \   related to structure of the dictionary.
@@ -43,89 +43,18 @@ User >latest        \ latest definition
 | $40 constant |immed
 | $80 constant |srch
 
-\   Dictionary entry:
-\
-\   [ word: previus entry ]
-\   [ NFA: byte flags + length; name; space terminator to align ]
-\   XT (under direct threading).  For code words, the code directly
-\   lives here.  Colon words contain "BL *DOCOL" (R8).
-\   Does words contain "BL *DODOES" (R7).
 
 
-\   \\\\\\\\\\\\\\
+\   \\\\\\\\\\\\\\\\\
 
-\   Custom dictionary stuff
+\	Dictionary headers may either be interleaved with code
+\	or placed in GROM/GRAM.
 
-[IFUNDEF] TRAVERSE
-: traverse  ( xt|nfa dir -- nfa|xt )
-\ traverse from one end of definition to the other
-\ dir < 0 means xt->nfa, dir>0 means nfa->xt
-
-    0> if
-        \ nfa -> xt
-
-        dup c@ $1f AND  \ get the length byte
-        + 1+ aligned
-
-        \ [ has? profiling [if] ] cell+ [ [then] ]
-    else
-        \ xt -> nfa
-        \ [ has? profiling [if] ] #cell - [ [then] ]
-
-        \ go from xt to nfa end
-        1-
-
-        \ step back over alignment space
-        dup c@ $20 = if 1- then 
-
-        0       ( addr count )
-
-        \ step back until we hit a byte /*with |srch set*/ whose length matches
-        \ don't check the $80 flag since this makes hidden defs hard to handle
-        begin 
-            over c@         ( addr len cur )
-            $1f and         ( addr len curlen )
-            over <>         ( addr len done! )
-        while
-            1+ swap 1- swap ( addr-1 len+1 )
-        repeat
-        
-        drop
-    then
-;
-
+has? GROM-DICT [IF]
+include core_dict_grom.fi
+[ELSE]
+include core_dict_ram.fi
 [THEN]
-
-
-: nfa>xt
-    1 traverse
-;
-
-: xt>nfa
-    -1 traverse
-;
-
-test" xt>nfa ['] traverse xt>nfa c@ $88 = "
-test" nfa>xt ['] traverse dup xt>nfa nfa>xt = "
-
-
-: nfa>imm?  ( nfa -- t/f )
-    c@ |immed and 0<>
-;
-
-: lfa>nfa
-    cell+
-;
-
-: >id       ( nfa -- caddr u )
-    count $1f and 
-;
-
-: id.       ( nfa -- )
-    >id type space
-;
-
-$1F constant width      \ max length of a name
 
 \   \\\\\\\\\\\\\\\\\
 
@@ -136,8 +65,8 @@ $1F constant width      \ max length of a name
 \
 \   Similarly, the use of ' and ['] with compiling words is unclear if the precise compilation behavior of those words is not
 \   specified, so ANS Forth does not permit a Standard Program to use ' or ['] with compiling words.
-    bl word find 
-    0= if count type ."  not found" 0 then      \ !!!
+    parse-def-name
+    0= if  count type  err-undefined message abort  then      \ !!!
 ;
 [THEN]
 
@@ -177,66 +106,11 @@ $1F constant width      \ max length of a name
 ;
 [THEN]
 
-[IFUNDEF] IMMEDIATE
-: IMMEDIATE
-    latest lfa>nfa dup c@ |immed or swap c!
-;
-[THEN]
-
 [IFUNDEF] UNUSED
 : UNUSED
     0 here -
 ;
 [THEN]
-
-
-
-[IFUNDEF] (lfind)
-
-| : (lfind)      ( c-addr lfa -- c-addr 0 | xt -1==immed | xt 1 ) 
-    \ find word in dictionary  
-    \ lfa is nfa-2
-    
-    swap >r
-    
-    begin
-        dup
-    while
-        r@ over  cell+             \ nfa
-        nfa=
-        if
-            rdrop
-            cell+
-            
-	        dup nfa>xt 
-	        swap c@ 
-	        |immed and if 1 else -1 then
-	        
-            exit
-        else
-            @            
-        then
-    repeat
-    drop r> 0
-;
-
-| : nfa=  ( caddr nfa -- 1 | 0 )
-    dup c@  |srch and if   \ not hidden?
-        2>r
-        r@  1+  r>  c@ $3f and  \ nfa --> caddr n
-        r@  1+  r>  c@          \ caddr -> caddr n
-        s<>  0=
-    else
-        2drop 0
-    then
-    
-;
-
-[THEN]
-
-' (lfind)	TO	(find)
-
-
 
 | : (lookup)      ( c-addr u -- caddr 0 | xt 1|-1 )
     here (>c)   \ make counted string + NFA
@@ -244,16 +118,6 @@ $1F constant width      \ max length of a name
 
     here latest
     (find) 
-;
-
-: FIND  \ ( c-addr -- c-addr 0  |  xt 1  |  xt -1 )
-\   Find the definition named in the counted string at c-addr. If the definition is not found after searching all the word
-\   lists in the search order, return c-addr and zero. If the definition is found, return xt. If the definition is immediate,
-\   also return one (1); otherwise also return minus-one (-1). For a given string, the values returned by FIND while compiling
-\   may differ from those returned while not compiling.
-
-    latest          \ !!! need real wordlist
-    (find)          \ ( c-addr 0 | xt 1 )
 ;
 
 \ |test : wordtofind s" _2*" ;
@@ -274,58 +138,23 @@ $1F constant width      \ max length of a name
     then 
 ;
 
+[IFUNDEF] FIND
+: FIND  \ ( c-addr -- c-addr 0  |  xt 1  |  xt -1 )
+\   Find the definition named in the counted string at c-addr. If the definition is not found after searching all the word
+\   lists in the search order, return c-addr and zero. If the definition is found, return xt. If the definition is immediate,
+\   also return one (1); otherwise also return minus-one (-1). For a given string, the values returned by FIND while compiling
+\   may differ from those returned while not compiling.
 
-\ Hide a word while compiling, to allow redefining a word in terms of the same name
-| : rom-SMUDGE
-    lastnfa 
-    dup c@ |srch xor swap c!
-;
 
-' rom-SMUDGE 	to SMUDGE
-
-| : rom-NAME, ( "name" -- )
-
-    \ Put LFA --> ptr to previous LFA
-	here
-    latest ,
-
-    name"
-    
-    \ Get space for name
-    c@ &nmask min
-    1+ aligned allot
-
-[ [IFDEF] (register-symbol) ]
-	\ F99b only
-    here (register-symbol)
+[ has? LOCALS [IF] ]  
+    \ search locals
+    'lfind @ ?dup if
+        execute
+        ?dup if rdrop exit then
+    then
 [ [THEN] ]
-    
-    \ current @ !       \ !!!
-    >latest !
-    
-;
 
-' rom-NAME, 	to NAME,
-
-0 [IF] 
-| : grom-NAME, ( "name" -- )
-    name"
-    
-    \ Get space for name
-    DP @  >r 
-    c@ &nmask min    dup here c! 
-    char+  dup  DP +!
-    
-    \ Lay down name field
-    here r@ rot  cmove
-    
-    \ current @ !       \ !!!
-    r>  >latest !
-    
-    
-    \ lay down XT
-    here  GDP @  g!
-    #cell GDP +! 
+    latest          \ !!! need real wordlist
+    (find)          \ ( c-addr 0 | xt 1 )
 ;
 [THEN]
-

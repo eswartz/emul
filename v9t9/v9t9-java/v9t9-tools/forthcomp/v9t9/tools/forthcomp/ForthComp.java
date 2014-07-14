@@ -37,7 +37,6 @@ import v9t9.tools.forthcomp.ti99.TI99TargetContext;
 import v9t9.tools.forthcomp.words.BarTest;
 import v9t9.tools.forthcomp.words.HostVariable;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
-import v9t9.tools.forthcomp.words.TargetConstant;
 import v9t9.tools.forthcomp.words.TestQuote;
 import v9t9.tools.forthcomp.words.TestsStore;
 
@@ -132,11 +131,11 @@ public class ForthComp {
         	System.exit(1);
         } 
         
-        if (gromDictFile != null) {
-        	targetContext.define("grom-dictionary", new TargetConstant(
-        			new DictEntry(0, 0, "grom-dictionary"), 
-        			1, targetContext.getCellSize()));
-        }
+//        if (gromDictFile != null) {
+//        	targetContext.define("grom-dictionary", new TargetConstant(
+//        			new DictEntry(0, 0, "grom-dictionary"), 
+//        			-1, targetContext.getCellSize()));
+//        }
         
     	int idx = getopt.getOptind();
     	while (idx < args.length) {
@@ -396,14 +395,14 @@ public class ForthComp {
 		}
 			
 		if (gromOutFile != null) {
-			IGromTargetContext f99bCtx = (IGromTargetContext) targetContext;
+			IGromTargetContext gromCtx = (IGromTargetContext) targetContext;
 			
-			final MemoryDomain gromMemory = f99bCtx.getGrom();
+			final MemoryDomain gromMemory = gromCtx.getGrom();
 			
 			System.out.println("Writing " + gromOutFile);
 			
 			DataFiles.writeMemoryImage(new File(gromOutFile), 
-					0, f99bCtx.getGP(), 
+					0, gromCtx.getGP(), 
 					gromMemory);
 
 		}

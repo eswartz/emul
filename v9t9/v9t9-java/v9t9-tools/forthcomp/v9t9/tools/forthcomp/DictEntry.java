@@ -169,6 +169,13 @@ public class DictEntry implements Comparable<DictEntry> {
 			targetContext.writeChar(addr + i, ent[i]);
 	}
 
+	/**
+	 * Write a standard entry:
+	 * 
+	 * [LINK] [LEN] name... 
+	 * @param targetContext
+	 * @return
+	 */
 
 	protected byte[] doWriteEntry(ITargetContext targetContext) {
 		byte[] ent = new byte[headerSize];

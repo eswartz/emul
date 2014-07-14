@@ -100,6 +100,7 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 			writeByte(entry, VDPWA, (byte) (val & 0xff));
 			writeByte(entry, VDPWA, (byte) (val >> 8));
 		} else if (addr == GPLWA) {
+			readByte(entry, GPLRA);
 			writeByte(entry, GPLWA, (byte) (val >> 8));
 			writeByte(entry, GPLWA, (byte) (val & 0xff));
 		} else {

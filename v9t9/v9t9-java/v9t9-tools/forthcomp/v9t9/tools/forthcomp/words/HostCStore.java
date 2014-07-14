@@ -10,7 +10,6 @@
  */
 package v9t9.tools.forthcomp.words;
 
-import ejs.base.utils.HexUtils;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.TargetContext;
@@ -36,7 +35,7 @@ public class HostCStore extends BaseStdWord {
 		int data = hostContext.popData();
 		targetContext.writeChar(addr, data);
 		
-		hostContext.getLog().println("CSTORE ! " + HexUtils.toHex4(addr) + " = " + HexUtils.toHex4(data));
+//		hostContext.getLog().println("CSTORE ! " + HexUtils.toHex4(addr) + " = " + HexUtils.toHex4(data));
 
 	}
 	/* (non-Javadoc)

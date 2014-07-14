@@ -10,49 +10,19 @@
  */
 package v9t9.gui.client;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TimerTask;
-
-import org.eclipse.jface.wizard.WizardDialog;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.SWTError;
-import org.eclipse.swt.SWTException;
-import org.eclipse.swt.events.ShellAdapter;
-import org.eclipse.swt.events.ShellEvent;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-
 import v9t9.common.client.IClient;
 import v9t9.common.client.IEmulatorContentHandler;
 import v9t9.common.client.IEmulatorContentSource;
-import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.client.IVideoRenderer;
-import v9t9.common.demos.DemoContentSource;
-import v9t9.common.dsr.IPrinterImageEngine;
-import v9t9.common.dsr.IPrinterImageHandler;
 import v9t9.common.events.BaseEventNotifier;
 import v9t9.common.events.IEventNotifier;
-import v9t9.common.files.EmulatedDiskContentSource;
-import v9t9.common.files.IFileExecutionHandler;
-import v9t9.common.files.IFileExecutor;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
-import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.machine.TerminatedException;
-import v9t9.common.modules.ModuleContentSource;
 import v9t9.common.settings.Settings;
-import v9t9.common.speech.ISpeechDataSender;
-import v9t9.gui.client.swt.fileimport.DoNothingFileExecutor;
-import v9t9.gui.client.swt.handlers.DemoContentHandler;
-import v9t9.gui.client.swt.handlers.FileExecutorContentHandler;
-import v9t9.gui.client.swt.handlers.ModuleContentHandler;
-import v9t9.gui.client.swt.shells.PrinterImageShell;
-import v9t9.gui.client.swt.wizards.SetupWizard;
 import v9t9.gui.sound.JavaSoundHandler;
-import ejs.base.timer.FastTimer;
 
 /**
  * @author ejs

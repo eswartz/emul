@@ -37,12 +37,10 @@
 
 
 :   gwaddr ( addr -- )
-    \ dup swpb GPLWA c! GPLWA c!
     GPLWA !
 ;
 
 :   graddr ( -- addr )
-    \ GPLRA c@ 8 lshift  GPLRA c@  or 1-
     GPLRA @ 1- 
 ;
 
@@ -130,7 +128,8 @@
     GPLWD swap   1 0 (cmove)
 ;
 
-:   >bit ( mask -- lowest bit# )
+[IFUNDEF] >bit
+:   >bit ( mask -- lowest bit# | -1 )
     16 0 do
         dup  1 and  if
             drop i unloop exit
@@ -140,6 +139,7 @@
     
     drop true
 ;
+[THEN]
 
 \ type null-terminated string
 : (gtypez) ( gaddr -- gaddr )
@@ -163,7 +163,7 @@
 ;
 
 \ copy VDP to VDP, using an auxiliary buffer
-s" LOCALS" environment? [IF]
+has? LOCALS [IF]
 :: vvmove ( vsrc vdst cnt buf n -- )
     0 :> use
     cnt 0 ?do
@@ -183,36 +183,51 @@ s" LOCALS" environment? [IF]
 ;
 [THEN]
 
+[IFUNDEF] bitset
 : bitset ( on? mask val -- val )
      rot ( mask val on? )  if  OR  else  swap NAND  then   
 ;
+[THEN]
  
+[IFUNDEF] |!
 \   Custom:  set a flag in a word
 : |!        ( mask addr -- )
     swap over @ OR swap !     
 ;
+[THEN]
 
+[IFUNDEF] %-
 ( align 'val' to 'scale' )
 : %- ( val scale -- val' )
 	dup >r  ( r: scale )
     u/mod  nip 
     r>  u*    
 ;
+[THEN]
 
+[IFUNDEF] w>l.h
 : w>l.h ( w -- lo hi )
     dup  $ff and  swap  8 urshift  
 ;
+[THEN]
 
+[IFUNDEF] l.h>w
 : l.h>w ( lo hi -- w )
     8  LSHIFT  OR  
 ;
+[THEN]
 
+[IFUNDEF] umax
 : umax   ( u1 u2 -- u )
     2dup U> if drop else nip then
 ;
+[THEN]
+[IFUNDEF] umin
 : umin   ( u1 u2 -- u )
     2dup U< if drop else nip then
 ;
+[THEN]
+
  
 
  

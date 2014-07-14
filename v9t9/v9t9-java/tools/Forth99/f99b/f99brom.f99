@@ -227,7 +227,7 @@ ramptr @  1- aligned  constant (RAM0)
 ." # rom defers: " (#rdefers) . cr
 (#rdefers)	#maxrdefers  >= 	abort" Too many ROM defers -- bump #maxrdefers "
 
-[ifdef] grom-dictionary
+has? GROM-DICT [if]
 $0       (LATEST)   !
 [else]
 latest   (LATEST)   !

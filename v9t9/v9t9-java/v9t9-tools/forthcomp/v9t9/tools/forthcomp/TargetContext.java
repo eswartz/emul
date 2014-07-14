@@ -117,7 +117,7 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	@Override
 	public IWord define(String string, IWord word) {
 		if (word instanceof TargetWord) {
-			logfile.println("T>"+Integer.toHexString(((TargetWord) word).getEntry().getAddr()) +" " 
+			logfile.println("T>"+ HexUtils.toHex4(((TargetWord) word).getEntry().getAddr()) +" " 
 					//+ ((TargetWord) word).getClass().getSimpleName() + " " + string
 					+ word
 					);
@@ -140,6 +140,16 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	 */
 	@Override
 	public void defineColonPrims() throws AbortException {
+		defineConstant("#CHAR", 1, 1);
+		defineConstant("#CELL", getCellSize(), 1);
+
+		setExportNext(false);
+		defineConstant("TESTING?", isTestMode() ? -1 : 0, 1);
+		
+		defineConstant("LOCALS", isLocalSupportAvailable(hostCtx) ? -1 : 0, 1);
+		defineConstant("GROM-DICT", this instanceof IGromTargetContext
+							&& ((BaseGromTargetContext) this).useGromDictionary() ? -1 : 0, 1);
+
 		romDeferTableWord = find("(rdefertbl)");
 		if (romDeferTableWord == null) {
 			romDeferTableWord = defineForward("(rdefertbl)", "<builtin>");

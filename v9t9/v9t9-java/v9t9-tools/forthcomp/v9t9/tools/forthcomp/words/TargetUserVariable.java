@@ -58,4 +58,12 @@ public class TargetUserVariable extends TargetWord {
 	public int getIndex() {
 		return index;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetWord#toString()
+	 */
+	@Override
+	public String toString() {
+		return "User " + super.toString();
+	}
 }

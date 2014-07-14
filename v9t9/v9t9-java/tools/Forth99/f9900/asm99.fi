@@ -21,11 +21,7 @@
 base @ 
 hex
 
-[ifundef] T
-: T ; immediate
-: H ; immediate
-: <A> ; immediate
-[then]
+0 <EXPORT
 
 \	the operand type tells what kind of operand to expect
 \	(where compatible ones AND its bitmask != 0) 
@@ -42,7 +38,7 @@ $ff	constant (J		\ jump (8 bits)
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 [ifundef] /CELLS
-: /CELLS 1 cells / ; 
++ : /CELLS 1 cells / ; 
 [then]
 
 \	Instruction words.  These take pre-baked operand
@@ -56,7 +52,7 @@ $ff	constant (J		\ jump (8 bits)
 	create
 		,	
 	does>		( -- )
-		@ T , <A>
+		@ , 
 ;
 : inst1:		( opc arg1 -- )
 	create
@@ -65,7 +61,7 @@ $ff	constant (J		\ jump (8 bits)
 		2dup @ and
 		if ." invalid arg" then
 		cell+ @ or
-		T , <A>
+		, 
 ;
 
 : (inst2:)		( opc arg1 arg2 bits -- )
@@ -79,7 +75,7 @@ $ff	constant (J		\ jump (8 bits)
 		r@ cell+ @ over and if ." invalid arg" then
 		
 		r> 2 cells + @ or
-		T , <A>
+		,
 ;
 
 : inst2:		( opc arg1 arg2 -- )
@@ -89,7 +85,17 @@ $ff	constant (J		\ jump (8 bits)
 	4 (inst2:)
 ;
 
-: DATA T , <A> ;
+: r?
+	dup $0f invert and if
+		." reg?? "
+	then
+;
+
+EXPORT>
+
+1 <EXPORT
+
+: ,DATA , ;
 $0200	(R		 inst1:	,LI
 $0220	(R		 inst1:	,AI
 $0240	(R		 inst1:	,ANDI
@@ -118,7 +124,7 @@ $05C0	(G		 inst1:	,INCT
 $0600	(G		 inst1:	,DEC
 $0640	(G		 inst1:	,DECT
 $0680	(G		 inst1:	,BL
-$06C0	(G		 inst1:	SWPB_
+$06C0	(G		 inst1:	,SWPB
 $0700	(G		 inst1:	,SETO
 $0740	(G		 inst1:	,ABS
 
@@ -175,35 +181,16 @@ $D000	 (G	(G	inst2:	,MOVB
 $E000	 (G	(G	inst2:	,SOC
 $F000	 (G	(G	inst2:	,SOCB
 
-\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-: r?
-	dup $0f invert and if
-		." reg?? "
-	then
-;
-
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-: R	( reg# -- opflag )
-	r?
-\	(R or
-;
-
-\ \\\\\\\\\\\\\\
 
 : *R ( reg# -- opflag )
 	r?
 	$10 or			\ add *Rx mask
-\	(G or
 ;
-
-\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 : *R+ ( reg# -- opflag )
 	r?
 	$30 or			\ add *Rx+ mask
-\	(G or
 ;
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -211,18 +198,10 @@ $F000	 (G	(G	inst2:	,SOCB
 : @>(R) ( reg# -- opflag )
 	r?
 	$20 or			\ add *Rx+ mask
-\	(G or
 ;
 
 : @>	 ( -- )
 	$20			  \ add @>xxxx mask
-\	(G or
-;
-
-\ \\\\
-
-: >#	( bit -- opflag )
-	dup $ff00 and if ." invalid range" then
 ;
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -243,7 +222,10 @@ $F000	 (G	(G	inst2:	,SOCB
 \
 \
 
+0 <EXPORT
+
 Defer #labs
+
 : rom-#labs 	$F000 ;		\ while building, write to (likely) empty area
 
 ' rom-#labs		TO #labs
@@ -344,6 +326,8 @@ Defer #labs
 	drop
 ;
 
+EXPORT>
+
 \	define a label
 \	3 $:
 : $:	( num -- )
@@ -354,11 +338,6 @@ Defer #labs
 	\ ." $:. " .s cr
 	swap !
 ;
-
-
-\ Get address of next jump
-\
-\ : '$	here cell+ ;
 
 
 \ Get the opcode for jumping backward

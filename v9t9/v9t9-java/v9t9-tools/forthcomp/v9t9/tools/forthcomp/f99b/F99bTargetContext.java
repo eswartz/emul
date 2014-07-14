@@ -22,6 +22,7 @@ import v9t9.machine.f99b.cpu.F99bInstructionFactory;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.BaseGromTargetContext;
 import v9t9.tools.forthcomp.DictEntry;
+import v9t9.tools.forthcomp.F99bGromDictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetWord;
@@ -1049,5 +1050,17 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	@Override
 	protected boolean isLikelyAddress(int value) {
 		return value >= 0x4000 && value <= 0xFF00;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.BaseGromTargetContext#createGromDictEntry(int, int, java.lang.String)
+	 */
+	@Override
+	protected DictEntry createGromDictEntry(int size, int entryAddr, String name) {
+		// link (=>xt), name
+		int dictSize = cellSize + 1 + name.length();
+		DictEntry entry = new F99bGromDictEntry(dictSize, entryAddr, name, gp);
+		gp += dictSize;
+		return entry;
 	}
 }

@@ -44,7 +44,7 @@ public class Host0Branch extends BaseHostBranch {
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
 		if (hostContext.popData() == 0) {
-			System.out.println(this);
+			//System.out.println(this);
 			hostContext.setHostPc(target);
 		}
 	}

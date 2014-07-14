@@ -30,7 +30,10 @@
 
     align
     
-    name,     
+    name,
+    
+    \ lay down XT
+    here  xt,
     
     lastnfa id.
     
@@ -102,7 +105,8 @@ User csp
     !csp
     create smudge ]
     lastxt dp !  docol,
-[ s" LOCALS" environment? [IF] ]    
+    
+[ has? LOCALS [IF] ]    
     reset-locals
 [ [THEN] ]    
    \ #(:) exec-hook
@@ -110,7 +114,7 @@ User csp
 
 : ;
    \ #(;) exec-hook
-[ s" LOCALS" environment? [IF] ]    
+[ has? LOCALS [IF] ]    
     finish-locals
 [ [THEN] ]
     ?csp
@@ -376,7 +380,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 [IFUNDEF] EXIT
 : EXIT
     ?comp
-[ s" LOCALS" environment? [IF] ]    
+[ has? LOCALS [IF] ]    
     exit-locals
 [ [THEN] ]     
     [compile] ;s

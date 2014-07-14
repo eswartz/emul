@@ -200,7 +200,7 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
     		reportLoadError(eventNotifier, f9900RomMemoryEntryInfo.getFilename(), e);
     	}
 
-    //	loadGromAndGram(eventNotifier);
+    	loadGromAndGram(eventNotifier);
 	}
 	
 	/**

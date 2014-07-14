@@ -18,8 +18,9 @@ $01	constant	rTOS	\ top of stack
 
 Code HANG
 	,IDLE
+	$ff			,JMP
 
-s" TESTING" environment? [IF]	
+has? TESTING? [IF]	
 Code ~SUCCESS~
 	$ff			,JMP
 Code ~FAILURE~
@@ -584,14 +585,6 @@ Code U<
 0 $:
 	end-code
 	
-Code U<
-	rSP *R+		rTOS		,C
-	rTOS					,SETO
-	0 $+					,JL
-	rTOS					,CLR
-0 $:
-	end-code
-	
 Code <
 	rSP *R+		rTOS		,C
 	rTOS					,SETO
@@ -649,7 +642,7 @@ Code CRSHIFT
 	end-code
 	
 Code swpb
-	rTOS					SWPB_
+	rTOS					,SWPB
 	end-code
 
 Code EXECUTE
@@ -707,6 +700,7 @@ Code (cmove)	( src target len srcincr targetincr  )
 	
 	rTOS		rTOS		,MOV		 \ TOS: targetincr
 	1 $+					,JGT
+	1 $+					,JEQ
 	
 	rR2			rR3			,A
 	rR3						,DEC		\ TODO: assuming TOS == -1
@@ -714,6 +708,7 @@ Code (cmove)	( src target len srcincr targetincr  )
 1 $:
 	rRT			rRT			,MOV
 	2 $+					,JGT
+	2 $+					,JEQ
 	
 	rR2			rTMP		,A
 	rTMP					,DEC		\ TODO: assuming TOS == -1
@@ -738,7 +733,7 @@ Code (cmove)	( src target len srcincr targetincr  )
 Code (CFILL)	( addr n ch targetincr )
 									\ TOS: targetincr
 	rSP *R+		rTMP		,MOV 	\ TMP: ch
-	rTMP					SWPB_
+	rTMP					,SWPB
 
 	rSP *R+		rR2			,MOV		\ R2: len
 	rSP *R+		rR3			,MOV 	\ R3: target
@@ -756,10 +751,9 @@ Code (CFILL)	( addr n ch targetincr )
 	end-code
 
 \ Registers
-| &12	constant lenAndFlags		\ should be saved
 | &4	constant charTemp 			\ must be saved
-| &11 	constant charPtr			\ not saved
 | &5	constant counter			\ must be saved
+| &12	constant lenAndFlags		\ should be saved
 
 \ Labels
 | 1 	constant	>failed
@@ -768,6 +762,129 @@ Code (CFILL)	( addr n ch targetincr )
 | 4 	constant	>charLoop
 | 5 	constant	>match
 | 9 	constant	>reset
+
+has? GROM-DICT [IF]
+
+| &11	constant 	prevNfa			\ not saved
+
+\ GROM version
+( find word in dictionary )
+( "name" XT[cell] NFA[flag byte] )            
+Code (gfind)  ( gDictEnd caddr nfa+1 -- caddr 0 | xt 1 | xt -1 )
+
+	\ save clobbered regs
+	rRP						,AI		3 cells negate ,
+	charTemp	rRP @>(R)	,MOV	2 cells ,
+	counter		rRP @>(R)	,MOV	#cell ,
+	lenAndFlags	rRP *R		,MOV
+
+	\ search list 
+
+	rR3						,CLR
+	charTemp				,CLR
+
+	rSP *R		rTMP		,MOV
+	rTMP *R	rTMP			,MOVB	 
+	
+	\ lenAndFlags = [ expected byte (mostly) | length ]
+	rTMP		lenAndFlags	,MOVB
+	lenAndFlags				,SWPB
+	rTMP		lenAndFlags	,MOVB
+	lenAndFlags				,ORI 	$8000 ,  	\ not smudged
+
+>wordLoop $:
+
+	rTOS		rSP @>(R)	,C		#cell ,		\ at start?
+	
+	>failed $+				,JLT     			\ (unlikely)
+	
+	rTOS					,DEC				\ back to length
+	rTOS		prevNfa		,MOV
+	
+	\ TOS = LFA, a [len] byte, preceded by XT and "name"
+
+	\ check length & flags
+	rTOS		@>			,MOV	GPLWA ,
+	@>			rR3			,MOVB	GPLRD ,
+
+	\ move TOS back to name
+	
+	rR3			rTMP		,MOVB
+	rTMP					,ANDI	$1F00 ,		\ to length
+	rTMP		8			,SRL				\ as word
+	rTMP					,INCT				\ skip XT
+	rTMP		rTOS		,S 					\ get name
+
+	rR3						,ANDI	$4000 INVERT ,	\ keep all but immediate bit
+	lenAndFlags	rR3			,SB				\ subtract both smudge & length -- should be 0x00 or 0x40
+	>wordLoop $-			,JNE
+
+	rSP *R		rR2			,MOV
+	rR2						,INC
+	lenAndFlags	counter		,MOV	
+	counter					,ANDI 	$FF ,
+
+	\ point to name
+	rTOS		@>			,MOV	GPLWA ,
+	        
+>charLoop $:
+	@>			rR3			,MOVB	GPLRD ,
+	rR2	*R+		charTemp	,MOVB
+
+	rR3			charTemp	,CB   		
+	>match $+				,JEQ                   \ exact match?
+
+	\ see if they might be letters that differ in case only
+	rR3			charTemp	,XOR
+	charTemp				,CI		$2000 ,       \ differ in case bit?
+    >wordLoop $-			,JNE
+    
+    \ okay, exclude matches in punctuation
+    charTemp	rR3			,SZC                            \ turn off case in matching char
+    rR3						,AI		-$4100 ,
+    rR3						,CI		$5A00 $4100 - ,
+    >wordLoop $-			,JHE
+
+>match $:
+	counter					,DEC
+	>charLoop $-			,JGT        
+
+    \ convert to XT
+    prevNfa		rTOS		,MOV
+    rTOS					,DECT
+    
+    rTOS		@>			,MOV		GPLWA ,
+    @>			rSP @>(R)	,MOVB		GPLRD ,	 #cell ,		\ high XT byte 	
+    @>			rSP @>(R)	,MOVB		GPLRD ,	 #cell 1+ ,		\ low XT byte 	
+    
+    \ assume not immediate
+    rTOS					,SETO
+
+    @>			rTMP		,MOVB		GPLRD ,	 			\ get flags back 	
+	rTMP					,ANDI 		$4000 ,	\ immediate?
+    >reset $+				,JEQ
+    
+    \ immediate
+    rTOS					,NEG
+
+	>reset $+				,JMP    
+
+>failed $:
+	rTOS					,CLR    
+	rSP *R		rSP @>(R)	,MOV	#cell ,		\ move caddr into return
+		
+>reset $:    	
+	\ restore
+	rRP *R+		lenAndFlags	,MOV
+	rRP *R+		counter		,MOV
+	rRP *R+		charTemp	,MOV
+	
+	rSP						,INCT
+	end-code
+	
+[ELSE]
+
+| &11 	constant charPtr			\ not saved
 
 ( find word in dictionary; lfa is nfa - #cell )            
 Code (lfind)		( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )
@@ -790,7 +907,7 @@ Code (lfind)		( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )
 	charPtr *R	rTMP		,MOVB	 \ [ expected byte | length ]
 	
 	rTMP		lenAndFlags	,MOVB
-	lenAndFlags				SWPB_
+	lenAndFlags				,SWPB
 	rTMP		lenAndFlags	,MOVB
 	lenAndFlags				,ORI 	$8000 ,  	\ not smudged
 
@@ -871,3 +988,5 @@ Code (lfind)		( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )
 	rRP *R+		charTemp	,MOV
 	end-code
 	
+
+[THEN]

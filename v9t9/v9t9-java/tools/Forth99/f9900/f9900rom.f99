@@ -315,7 +315,7 @@ test" +loop-zero  0
 |test : eval1 s" 100 200 300 + + ." ;
 test" evaluate1 eval1 evaluate 	true "
 
-s" TESTING" environment? [IF]	
+has? TESTING? [IF]
 
 : defineConstPlus1000 create , does> @ $1000 + ;
 $123 defineConstPlus1000 N123
@@ -326,7 +326,7 @@ include asmtests.fi
 [THEN]
 
 
-s" TESTING" environment? [IF]	
+has? TESTING? [IF]	
 	| : tests-completed
 		quit
 	;
@@ -340,7 +340,7 @@ s" TESTING" environment? [IF]
 
 	    decimal
 
-[ s" TESTING" environment? [IF] ]
+[ has? TESTING? [IF] ]
 		runtests
 		
 		\ notreached -- tests-completed instead
@@ -435,12 +435,12 @@ SHARED		dp!
 ' bye   	@BYE	!
 ' cold  	@COLD	!
 
-s" TESTING" environment? [IF] 
+has? TESTING? [IF] 
 TESTS!
 [THEN]
 
 \ assembly label table
-&10 2* cells RamVar	ram-#labs
+| &10 2* cells RamVar	ram-#labs
 ' ram-#labs		TO 	#labs
 
 ramptr @  1- aligned  constant (RAM0)
@@ -450,10 +450,10 @@ ramptr @  1- aligned  constant (RAM0)
 \ align dictionary to a memory area, so memory images aren't often broken
 here $3ff +  $3ff INVERT and  @DP0        !
 
-[ifdef] grom-dictionary
-$0       @LATEST   !
+has? GROM-DICT [if]
+0		   	@LATEST   !
 [else]
-latest   @LATEST   !
+latest   	@LATEST   !
 [THEN]
 
 

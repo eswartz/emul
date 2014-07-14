@@ -66,10 +66,12 @@ public class UnitTests extends BaseWord {
 		
 		StringBuilder sb = new StringBuilder();
 		
+		sb.append("DECIMAL 0 <EXPORT\n");
+		
 		sb.append(testDefinitionText);
 
-		sb.append("DECIMAL  | : RUNTEST ( addr -- ) ");
-		sb.append(" $abcd swap ");
+		sb.append(" : RUNTEST ( addr -- )\n");
+		sb.append(" $abcd swap\n");
 		sb.append(" EXECUTE  0= IF ~FAILURE~ THEN \n");
 		sb.append(" $abcd  <> IF ABORT\" stack damage\" ~FAILURE~ THEN \n");
 		sb.append(" ;\n");
@@ -77,6 +79,7 @@ public class UnitTests extends BaseWord {
 		sb.append("| : RUNTESTS ");
 		sb.append(testWordText);
 		sb.append(" ~SUCCESS~ ;\n");
+		sb.append("EXPORT>\n");
 		
 		compiler.getHostContext().getLog().println(sb);
 		compiler.getHostContext().getLog().flush();

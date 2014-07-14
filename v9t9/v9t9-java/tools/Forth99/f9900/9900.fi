@@ -121,13 +121,12 @@
 ( when creating a does> word )
 : (does>)  
     r> lastxt              ( where dovar, was ) 
-    \ swap  >call swap !    ( call instead of dovar, )
     !  
 ; target-only
 
 ( when compiling a creator word )
 : does>
-[ s" LOCALS" environment? [IF] ] 
+[ has? LOCALS [IF] ] 
     finish-locals
 [ [THEN] ]
 
@@ -162,7 +161,7 @@
     @ 
 ;
 
-s" LOCALS" environment? [IF] 
+has? LOCALS [IF] 
 \   Push locals
 : <locals,  ( --  )
     Itolocals ,

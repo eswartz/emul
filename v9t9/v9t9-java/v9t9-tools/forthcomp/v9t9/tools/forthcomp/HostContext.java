@@ -114,7 +114,7 @@ public class HostContext extends Context {
 		define("[else]", new BracketElse());
 		define("[then]", new BracketThen());
 		
-		define("ENVIRONMENT?", new EnvironmentQuery());
+		//define("ENVIRONMENT?", new EnvironmentQuery());
 		define("HAS?", new HasQuestion());
 		
 		define("<EXPORT", new PushExportState());

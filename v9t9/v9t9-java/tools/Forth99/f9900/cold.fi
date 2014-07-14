@@ -9,16 +9,18 @@
     @DP0 @       	DP  !
     @LATEST @  		>latest !
     
-		    \ TODO     >gram_dict_base  GDP !
+[ has? GROM-DICT [IF] ]    
+	>gram_dict_base  GDP !
+[ [THEN] ]
     
     		\ TODO     GRAM
     
 			\  TODO      gheap dict-hinit
     
-	UP0 @       UDP !
+	UP0 @       	UDP !
     
-    (RAM0)  RAM !
+    (RAM0) 	 		RAM !
     
-    (numbuf0) (numbuf) !
-    (slit-pad0) (spad) !
+    (numbuf0) 		(numbuf) !
+    (slit-pad0) 	(spad) !
 ;

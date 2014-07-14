@@ -58,6 +58,13 @@ public class TargetConstant extends TargetWord implements ITargetWord {
 		});
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetWord#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Constant " + super.toString();
+	}
 	/**
 	 * @return
 	 */

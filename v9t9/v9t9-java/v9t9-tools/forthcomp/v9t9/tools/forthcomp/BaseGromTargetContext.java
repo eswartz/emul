@@ -66,14 +66,18 @@ public abstract class BaseGromTargetContext extends TargetContext implements IGr
 		
 		if (useGromDictionary && doExport) {
 
-			// link (=>xt), name
-			int dictSize = cellSize + 1 + name.length();
-			DictEntry entry = new GromDictEntry(dictSize, entryAddr, name, gp);
-			gp += dictSize;
-			return entry;
+			return createGromDictEntry(size, entryAddr, name);
 		} else {
 			return super.createDictEntry(size, entryAddr, name, doExport);
 		}
 	}
+
+	/**
+	 * @param size
+	 * @param entryAddr
+	 * @param name
+	 * @return
+	 */
+	abstract protected DictEntry createGromDictEntry(int size, int entryAddr, String name);
 
 }

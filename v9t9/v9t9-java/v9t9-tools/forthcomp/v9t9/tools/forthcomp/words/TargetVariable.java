@@ -46,5 +46,12 @@ public class TargetVariable extends TargetWord {
 			}
 		});
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetWord#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Variable " + super.toString();
+	}
 }
