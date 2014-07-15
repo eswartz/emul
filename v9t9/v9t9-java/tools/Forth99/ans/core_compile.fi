@@ -20,6 +20,18 @@
     state @ 0= err-compile-only ?throw
 ;
 
+| : name"  ( c"word" -- cstr ) 
+    \ Get name
+    parse-def-name
+    
+    ( either name is defined already, 1/-1, or not yet ) 
+    if  
+    	msg-redefining message  
+		drop    	  
+    	here		( TODO: assumption that parsed name is at 'here' )
+    then 
+;
+
 
 \ Optionally pre-parse the string in the input stream and manipulate the dictionary
 \ before the definition is started.

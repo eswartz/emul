@@ -13,7 +13,7 @@ public abstract class BaseGromTargetContext extends TargetContext implements IGr
 
 	protected boolean useGromDictionary;
 	protected int gp;
-	private MemoryDomain grom;
+	protected MemoryDomain grom;
 
 	public BaseGromTargetContext(boolean littleEndian, int charBits,
 			int cellBits, int memorySize) {

@@ -41,4 +41,9 @@ public interface IGromTargetContext extends ITargetContext {
 	 */
 	boolean useGromDictionary();
 
+	/**
+	 * 
+	 */
+	void finishDict();
+
 }

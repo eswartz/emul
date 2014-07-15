@@ -765,12 +765,10 @@ Code (CFILL)	( addr n ch targetincr )
 
 has? GROM-DICT [IF]
 
-| &11	constant 	prevNfa			\ not saved
-
 \ GROM version
-( find word in dictionary )
-( "name" XT[cell] NFA[flag byte] )            
-Code (gfind)  ( gDictEnd caddr nfa+1 -- caddr 0 | xt 1 | xt -1 )
+( find word in dictionary -- search forward  )
+( [len|flags] "name" XT[cell]  )            
+Code (gfind)  ( gDictEnd caddr start -- caddr 0 | xt 1 | xt -1 )
 
 	\ save clobbered regs
 	rRP						,AI		3 cells negate ,
@@ -779,7 +777,6 @@ Code (gfind)  ( gDictEnd caddr nfa+1 -- caddr 0 | xt 1 | xt -1 )
 	lenAndFlags	rRP *R		,MOV
 
 	\ search list 
-
 	rR3						,CLR
 	charTemp				,CLR
 
@@ -794,26 +791,25 @@ Code (gfind)  ( gDictEnd caddr nfa+1 -- caddr 0 | xt 1 | xt -1 )
 
 >wordLoop $:
 
-	rTOS		rSP @>(R)	,C		#cell ,		\ at start?
+	rTOS		rSP @>(R)	,C		#cell ,		\ at end?
 	
-	>failed $+				,JLT     			\ (unlikely)
+	>failed $+				,JHE     			\ (unlikely)
 	
-	rTOS					,DEC				\ back to length
-	rTOS		prevNfa		,MOV
-	
-	\ TOS = LFA, a [len] byte, preceded by XT and "name"
+	\ TOS = LFA, a [len] byte, followed by "name" and XT
 
 	\ check length & flags
 	rTOS		@>			,MOV	GPLWA ,
 	@>			rR3			,MOVB	GPLRD ,
+
+	rR3			rRT			,MOVB				\ save flags
 
 	\ move TOS back to name
 	
 	rR3			rTMP		,MOVB
 	rTMP					,ANDI	$1F00 ,		\ to length
 	rTMP		8			,SRL				\ as word
-	rTMP					,INCT				\ skip XT
-	rTMP		rTOS		,S 					\ get name
+	rTMP					,AI		3 ,			\ skip XT & length
+	rTMP		rTOS		,A 					\ get name
 
 	rR3						,ANDI	$4000 INVERT ,	\ keep all but immediate bit
 	lenAndFlags	rR3			,SB				\ subtract both smudge & length -- should be 0x00 or 0x40
@@ -824,9 +820,7 @@ Code (gfind)  ( gDictEnd caddr nfa+1 -- caddr 0 | xt 1 | xt -1 )
 	lenAndFlags	counter		,MOV	
 	counter					,ANDI 	$FF ,
 
-	\ point to name
-	rTOS		@>			,MOV	GPLWA ,
-	        
+	( name follows )
 >charLoop $:
 	@>			rR3			,MOVB	GPLRD ,
 	rR2	*R+		charTemp	,MOVB
@@ -849,19 +843,14 @@ Code (gfind)  ( gDictEnd caddr nfa+1 -- caddr 0 | xt 1 | xt -1 )
 	counter					,DEC
 	>charLoop $-			,JGT        
 
-    \ convert to XT
-    prevNfa		rTOS		,MOV
-    rTOS					,DECT
-    
-    rTOS		@>			,MOV		GPLWA ,
+    ( matched: now read XT )
     @>			rSP @>(R)	,MOVB		GPLRD ,	 #cell ,		\ high XT byte 	
     @>			rSP @>(R)	,MOVB		GPLRD ,	 #cell 1+ ,		\ low XT byte 	
     
     \ assume not immediate
     rTOS					,SETO
 
-    @>			rTMP		,MOVB		GPLRD ,	 			\ get flags back 	
-	rTMP					,ANDI 		$4000 ,	\ immediate?
+	rRT						,ANDI 		$4000 ,	\ immediate?
     >reset $+				,JEQ
     
     \ immediate

@@ -24,7 +24,7 @@ public class F9900GromDictEntry extends DictEntry {
 		super(headerSize, addr, name);
 		this.dictAddr = gp;
 	}
-
+	
 	@Override
 	public int getContentAddr() {
 		return addr;
@@ -41,27 +41,22 @@ public class F9900GromDictEntry extends DictEntry {
 		MemoryDomain domain = ((IGromTargetContext) targetContext).getGrom();
 		
 		// ignore link
-		int entOffs = targetContext.getCellSize();
+		int cellSize = targetContext.getCellSize();
+		int entOffs = cellSize;
 		
-		// write name (no length)
 		int gp = dictAddr;
-		for (int i = 0; i < getName().length(); i++) {
-			domain.writeByte(gp++, ent[i + entOffs + 1]);
+
+		// write length, then name
+		for (int i = 0; i < 1 + getName().length(); i++) {
+			domain.writeByte(gp++, ent[i + entOffs]);
 		}
 
 		// place xt
-		//targetContext.writeCell(ent, 0, getContentAddr());
-		
-		if (targetContext.getCellSize() == 2) {
+		if (cellSize == 2) {
 			domain.writeByte(gp++, (byte) (getContentAddr() >> 8));
 			domain.writeByte(gp++, (byte) (getContentAddr() & 0xff));
 		} else {
 			
-		}
-
-		// write length byte
-		for (int i = 0; i < ent.length - targetContext.getCellSize(); i++) {
-			domain.writeByte(gp++, ent[targetContext.getCellSize()]);
 		}
 
 	}

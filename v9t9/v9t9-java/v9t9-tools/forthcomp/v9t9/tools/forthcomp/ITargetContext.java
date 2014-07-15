@@ -57,8 +57,10 @@ public interface ITargetContext {
 
 	void setDP(int dp);
 
+	/** add bytes, return addr of allocation */
 	int alloc(int size);
 
+	/** add #cell bytes, return addr of allocation */
 	int allocCell();
 
 	int resolveAddr(int relocIndex);

@@ -93,6 +93,14 @@ public class F99bTargetContext extends BaseGromTargetContext {
 		
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.IGromTargetContext#finishDict()
+	 */
+	@Override
+	public void finishDict() {
+		
+	}
+	
 	static class TargetSQuote extends TargetWord {
 		/**
 		 * @param entry

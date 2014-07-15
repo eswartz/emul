@@ -307,10 +307,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	 */
 	@Override
 	public DictEntry defineEntry(String name) {
+		boolean doExport = currentExport();
 		alignDP();
 		int entryAddr = getDP();
 		int size = 0;
-		boolean doExport = currentExport();
 		//boolean doInline = inlineFlagNext;
 		exportFlagNext = false;
 		//inlineFlagNext = false;

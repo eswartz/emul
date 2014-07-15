@@ -153,6 +153,7 @@ dup         constant    >grom_menubar       2+
 drop
 
 $4000       Constant    >gram_dict_base
+$8000       Constant    >gram_dict_end
 $8000       Constant    >gram_disk_base
 
 \ ----------    syscalls

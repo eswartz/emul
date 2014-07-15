@@ -94,14 +94,13 @@
 
 
 \ Hide a word while compiling, to allow redefining a word in terms of the same name
-| : rom-SMUDGE
-    lastnfa 
+| : rom-smudge  ( nfa -- )
     dup c@ |srch xor swap c!
 ;
 
-' rom-SMUDGE 	to SMUDGE
+' rom-smudge 	to smudge
 
-| : rom-NAME, ( "name" -- )
+| : rom-name, ( "name" -- )
 
     \ Put LFA --> ptr to previous LFA
 	here
@@ -127,4 +126,4 @@
 ;
 
 
-' rom-NAME, 	to NAME,
+' rom-name, 	to name,

@@ -8,9 +8,9 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-\	GROM:
-\   [ NFA_NAME: name ] [ word: addr of XT in RAM ] [ NFA: byte flags + length ]
-\	Organized this way for efficient reverse searching.
+\	GROM/GRAM:
+\   [ NFA: byte flags | length ] [ NFA_NAME: name ] [ word: addr of XT in RAM ]  
+\	Organized this way for efficient forward iteration.
 \   
 \	RAM:
 \   XT (under direct threading).  For code words, the code directly
@@ -25,7 +25,9 @@ User GDP              \ GROM dictionary pointer
 ;
 
 | : nfa>xt@ ( gaddr -- xtaddr )
-	#cell -
+	dup  
+	gc@ &nmask AND +  ( skip name )
+	1+ ( skip length ) 
 ;
 : nfa>xt ( gaddr -- xt )
     nfa>xt@  g@
@@ -37,10 +39,7 @@ User GDP              \ GROM dictionary pointer
 
 
 | : nfa>name	( gaddr -- gaddr )
-	dup  
-	gc@  &nmask AND	 ( len )  
-	cell+  ( XT )  
-	-	 
+	1+  
 ;
 
 : >id       ( gnfa -- caddr u )
@@ -69,49 +68,46 @@ User GDP              \ GROM dictionary pointer
     swap >r
     
     \ search GRAM dictionary
-    >gram_dict_base  r@		GDP @   (gfind)
+    >gram_dict_end  r@		GDP @   (gfind)
     ?dup if rot drop  rdrop exit then
     
     \ fall back to GROM dictionary
     2drop
-    >grom_dict g@  r>  >grom_dictend g@  (gfind)
+    >grom_dictend g@  r>  >grom_dict g@  (gfind)
 ;
 
 ' grom-(find)		TO (FIND)
 
 \ Hide a word while compiling, to allow redefining a word in terms of the same name
-| : grom-SMUDGE
-    lastnfa 
+| : grom-smudge ( nfa -- )
+	lastnfa
     dup gc@ |srch xor swap gc!
 ;
 
-' grom-SMUDGE 	to SMUDGE
+' grom-smudge 	to smudge
 
 | : gc, ( ch -- )
 	GDP @    gc!
 	1 GDP +!
 ;
 
-: grom-NAME, ( "name" -- )
+: grom-name, ( "name" -- )
     name"	( cstr )
     
-    \ Get space for name
-    GDP @  >r 
     dup c@ &nmask min		 ( cstr len )  
-    
-    \ dup here c!	( overwrite length byte if needed )
-    \ Step over XT 
-    dup  #cell +   GDP +!   
+
+    \ Get space for name -- reverse!
+    dup 1+  cell+  negate 	GDP +!		( step back )
+    GDP @ >r
     
     \ Lay down name field
-    swap 1+  r> ( len cstr+1 gaddr ) rot 
-    dup >r   ( R: len )
-    cgmove
+    1+ swap  
     
-    GDP @   >latest !		( points to NFA of last entry ) 
+    r>  ( gaddr )	dup  >latest !		( points to NFA of last entry )
+    rot ( cstr gaddr len ) dup >r  cgmove
     
-    \ Lay down length byte (real NFA start)
-    r>  gc,
+    \ r> GDP +!	( add length+1 bytes )
+    rdrop 
     
 [ [IFDEF] (register-symbol) ]
     here (register-symbol)
@@ -121,12 +117,14 @@ User GDP              \ GROM dictionary pointer
     
 ;
 
-' grom-NAME,		TO NAME,
+' grom-name,		TO name,
 
 : xt, ( xt -- )
+	GDP @  nfa>xt@
+	
     \ lay down XT
-    GDP @  [ #cell 1+ LITERAL ] - g!
-    \ [ #cell 1+ literal ] GDP +!		 ( XT word, length byte already written ) 
+    g! 
+    \ #cell  GDP +!
 ;
 
 [THEN]

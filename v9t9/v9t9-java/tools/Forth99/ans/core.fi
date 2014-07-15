@@ -95,8 +95,8 @@ DEFER	TO
 DEFER	(FIND)		( c-addr lfa -- c-addr 0 | xt 1=immed | xt -1 ) 
 
 \ Internal: dictionary definitions
-DEFER	SMUDGE		( -- )
-DEFER	NAME,		( "name" -- )
+DEFER	smudge		( -- )
+DEFER	name,		( "name" -- )
 
 include core_prims.fi
 include core_strings.fi

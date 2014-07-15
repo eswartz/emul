@@ -10,7 +10,8 @@
     @LATEST @  		>latest !
     
 [ has? GROM-DICT [IF] ]    
-	>gram_dict_base  GDP !
+	\ >gram_dict_base  GDP !
+	>gram_dict_end 1-  GDP !
 [ [THEN] ]
     
     		\ TODO     GRAM

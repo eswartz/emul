@@ -24,6 +24,7 @@ import v9t9.common.asm.ResolveException;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.engine.memory.MemoryDomain;
 import v9t9.machine.ti99.asm.InstructionFactory9900;
 import v9t9.machine.ti99.asm.RawInstructionFactory9900;
 import v9t9.tools.asm.LLInstruction;
@@ -116,6 +117,30 @@ public class TI99TargetContext extends BaseGromTargetContext  {
 		asmInstrFactory = new AsmInstructionFactory9900();
 		instrFactory = new InstructionFactory9900();
 		rawInstructionFactory = new RawInstructionFactory9900();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.BaseGromTargetContext#setGrom(v9t9.engine.memory.MemoryDomain)
+	 */
+	@Override
+	public void setGrom(MemoryDomain grom) {
+		super.setGrom(grom);
+
+		setGP(grom.getSize());
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.IGromTargetContext#finishDict()
+	 */
+	@Override
+	public void finishDict() {
+		// move content to start
+		int gp = getGP();
+		int len = grom.getSize() - gp;
+		for (int i = 0; i < len; i++) {
+			grom.writeByte(i, grom.readByte(gp + i));
+		}
+		setGP(len);
 	}
 
 	private void writeInstruction(int instCode, LLOperand... ops) {
@@ -807,7 +832,6 @@ public class TI99TargetContext extends BaseGromTargetContext  {
 		return value >= 0x4000 && value <= 0xFF00;
 	}
 	
-
 	/* (non-Javadoc)
 	 * @see v9t9.tools.forthcomp.BaseGromTargetContext#createGromDictEntry(int, int, java.lang.String)
 	 */
@@ -815,8 +839,8 @@ public class TI99TargetContext extends BaseGromTargetContext  {
 	protected DictEntry createGromDictEntry(int size, int entryAddr, String name) {
 		// name, link (=>xt), byte
 		int dictSize = name.length() + cellSize + 1;
+		gp -= dictSize;
 		DictEntry entry = new F9900GromDictEntry(dictSize, entryAddr, name, gp);
-		gp += dictSize;
 		return entry;
 	}
 }

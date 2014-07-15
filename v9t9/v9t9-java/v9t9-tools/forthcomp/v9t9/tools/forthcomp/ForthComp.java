@@ -397,6 +397,8 @@ public class ForthComp {
 		if (gromOutFile != null) {
 			IGromTargetContext gromCtx = (IGromTargetContext) targetContext;
 			
+			gromCtx.finishDict();
+			
 			final MemoryDomain gromMemory = gromCtx.getGrom();
 			
 			System.out.println("Writing " + gromOutFile);

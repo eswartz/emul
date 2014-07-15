@@ -23,7 +23,7 @@ public class DictEntry implements Comparable<DictEntry> {
 
 
 	protected int link;
-	protected int addr;
+	protected final int addr;
 	protected int endAddr;
 
 	

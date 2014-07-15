@@ -124,18 +124,9 @@ include core_dict_ram.fi
 \ test" find hex 21 wordtofind pad swap cmove pad 2 over c! find 2dup . . if execute 42 = else 0 then decimal "
 
 
-| : parse-def-name ( c"..."  -- caddr 0 | nfa 1|-1 ) \ "word
+| : parse-def-name ( c"..."  -- caddr 0 | xt 1|-1 ) \ "word
     parse-name
     (lookup)
-;
-
-| : name"  ( c"word" -- cstr ) 
-    \ Get name
-    parse-def-name
-    
-    ( either name is defined already, 1/-1, or not yet ) 
-    if  msg-redefining message  drop  here		( TODO: assumption that name is at 'here' )
-    then 
 ;
 
 [IFUNDEF] FIND
