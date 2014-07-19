@@ -231,6 +231,10 @@ Code CELL+
 	rTOS	,INCT
 end-code
 
+Code CELLS
+	rTOS	rTOS	,A
+end-code
+
 Code 1-
 	rTOS	,DEC
 end-code
