@@ -144,16 +144,20 @@ test" +! base @ 2 base +! base @  $a base !  $c = swap $a = and"
 
 
 [IFUNDEF] 2!
-: 2!  ( lo hi addr -- )
-	>r  swap r@  !  r>  cell+ !
+\ Store the cell pair x1 x2 at a-addr, with x2 at a-addr and x1 at the next consecutive cell.
+: 2!  ( x1 x2 a-addr -- )
+	SWAP OVER ! CELL+ !
 ;
 [THEN]
+test" 2!  $1234.5678 $a000 2!  $a000 @ $1234 =  $a002 @ $5678 =  and"
 
 [IFUNDEF] 2@
-: 2@
+\ Fetch the cell pair x1 x2 stored at a-addr. x2 is stored at a-addr and x1 at the next consecutive cell.
+: 2@	( a-addr -- x1 x2 )
     dup cell+ @ swap @
 ;
 [THEN]
+test" 2@  $eeee $a000 !  $ffff $a002 !  $a000 2@  $eeee.ffff d="
 
 [IFUNDEF] @
 \ : @
