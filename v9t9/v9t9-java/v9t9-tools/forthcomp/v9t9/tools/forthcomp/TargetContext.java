@@ -1102,10 +1102,10 @@ public abstract class TargetContext extends Context implements ITargetContext {
 	}
 	public void buildUser(TargetUserVariable user) throws AbortException {
 		if (isNativeDefinition()) {
-			compileDoUser(user.getIndex() * 2);
+			compileDoUser(user.getOffset());
 		} else {
 			buildCall(require("DOUSER"));
-			buildCell(user.getIndex() * 2);
+			buildCell(user.getOffset());
 		}
 	}
 	/* (non-Javadoc)

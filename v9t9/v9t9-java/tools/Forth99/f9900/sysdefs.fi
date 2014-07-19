@@ -108,8 +108,9 @@ CHARS/BLOCK
     2 +     \ block # field (or 0x8000 for modified)
             constant   (#blk)
 (#blk) 3 *  constant   (#blks)    \ total block space
+[THEN]
 
-$80        constant   (#up)       \ global user space
+$80        	constant   (#up)       \ global user space
 
 $28	      	constant	#maxrdefers		\ since we don't know ahead of time, make room for max # words
  
@@ -119,7 +120,7 @@ $28	      	constant	#maxrdefers		\ since we don't know ahead of time, make room 
 	#TIB - (#blks) - 
 	(#up) -
 	#maxrdefers -
-            				constant RamTop    \ grows down
+            					constant RamTop    \ grows down
 
 \ Arrange memory to minimize problems in case of overflow.
 RamTop							constant (first)    \ grows up

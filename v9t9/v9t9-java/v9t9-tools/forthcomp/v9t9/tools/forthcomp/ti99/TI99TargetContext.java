@@ -592,9 +592,9 @@ public class TI99TargetContext extends BaseGromTargetContext  {
 	}
 
 	public void compileUser(TargetUserVariable var) {
-		int index = var.getIndex();
+		int offset = var.getOffset();
 		pushTOS();
-		writeInstruction(Imov, regOffs(REG_UP, index * cellSize), TOS);
+		writeInstruction(Imov, regOffs(REG_UP, offset), TOS);
 	}
 	
 	public boolean isLocalSupportAvailable(HostContext hostContext) throws AbortException {

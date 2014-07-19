@@ -144,8 +144,8 @@ test" +! base @ 2 base +! base @  $a base !  $c = swap $a = and"
 
 
 [IFUNDEF] 2!
-: 2!
-    2dup ! cell+ !
+: 2!  ( lo hi addr -- )
+	>r  swap r@  !  r>  cell+ !
 ;
 [THEN]
 

@@ -22,14 +22,14 @@ import v9t9.tools.forthcomp.TargetContext;
  */
 public class TargetUserVariable extends TargetWord {
 
-	private int index;
+	private int offset;
 	/**
-	 * @param index 
+	 * @param offset 
 	 * 
 	 */
-	public TargetUserVariable(DictEntry entry, int index) {
+	public TargetUserVariable(DictEntry entry, int offset) {
 		super(entry);
-		this.index = index;
+		this.offset = offset;
 		
 		setCompilationSemantics(new ISemantics() {
 			
@@ -47,16 +47,13 @@ public class TargetUserVariable extends TargetWord {
 			@Override
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				hostContext.pushData(0xff00 + (TargetUserVariable.this.getIndex()) * targetContext.getCellSize());				
+				hostContext.pushData(0xff00 + (TargetUserVariable.this.getOffset()));				
 			}
 		});
 	}
 
-	/**
-	 * @return the index
-	 */
-	public int getIndex() {
-		return index;
+	public int getOffset() {
+		return offset;
 	}
 	
 	/* (non-Javadoc)

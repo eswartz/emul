@@ -39,9 +39,8 @@
     ,  
 ;
 
-\ TODO: double or not?
-| : douser,  ( idx -- )
-    [ $690 rDOUSER + literal ] ,
+| : douser,  ( offs -- )
+    [ $690 rDOUSER +  literal ] ,
     ,
 ;
 

@@ -24,4 +24,7 @@
     
     (numbuf0) 		(numbuf) !
     (slit-pad0) 	(spad) !
+    
+    \ setup NMI interrupt
+	IntWP  ['] abort  $fffc  2!
 ;

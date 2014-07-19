@@ -637,7 +637,7 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	}
 
 	public void compileUser(TargetUserVariable var) {
-		int index = var.getIndex();
+		int index = var.getOffset();
 		if (index < 256) {
 			compileOpcode(Iupidx);
 			compileByte(index);

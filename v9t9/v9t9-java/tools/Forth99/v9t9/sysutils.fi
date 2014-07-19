@@ -44,20 +44,26 @@
     GPLRA @ 1- 
 ;
 
+[IFUNDEF] g@
 :   g@  ( addr -- )
     gwaddr  GPLRD c@  GPLRD c@  swap l.h>w
 ;
+[THEN]
+[IFUNDEF] g!
 :   g!  ( ch addr -- )
     gwaddr  dup swpb GPLWD c!  GPLWD c!
 ;
-
+[THEN]
+[IFUNDEF] gc@
 :   gc@  ( addr -- )
     gwaddr  GPLRD c@
 ;
+[THEN]
+[IFUNDEF] gc!
 :   gc!  ( ch addr -- )
     gwaddr  GPLWD c!
 ;
-
+[THEN]
 :   vc@  ( addr -- )
     vwaddr  VDPRD c@
 ;

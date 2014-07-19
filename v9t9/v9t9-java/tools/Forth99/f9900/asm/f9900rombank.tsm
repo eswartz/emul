@@ -17,10 +17,12 @@
 ;   workspace.  
 ;
 ;   The general style of the ROM is to use a small number of workspaces
-;   and a set of stacks for register management (sysstack and vidstack). 
+;   and stacks (e.g. via Forth's SP and RP) for register management. 
 ;
 ;   "StdWP" is used for startup and for FORTH operation thereafter.
 ;   This ROM does not use that workspace again.
+;	"IntWP" is used for interrupt handling.
+;	"RomWP" is used for this ROM.  
 ;
 
 ;==========================================================================
@@ -28,6 +30,7 @@
 ;==========================================================================
 
 
+RomWP	equ	>FFA0
 StdWP	equ	>FFC0
 IntWP	equ	>FFE0
 
@@ -46,6 +49,10 @@ int1v
 
 XOPS
  	equ		>40
+xop0v		
+	dw		RomWP, xop0
+xop1v		
+	dw		RomWP, xop1
 
 MMIO
  	equ		>80
@@ -222,4 +229,9 @@ int1out:
 
 F_BANK1		data	>0100
 M_VDP		data	>0400
+
+xop0
+	RTWP
+xop1
+	RTWP
 	

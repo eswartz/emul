@@ -41,16 +41,14 @@ Code 0BRANCH
 	rIP *R+		rTMP		,MOV
 	\ test
 	rTOS		rTOS		,MOV
-	0 $+					,JEQ
-	\ not 0
-	rSP *R+		rTOS		,MOV
-	
+	0 $+					,JNE
+	rTMP		rIP			,A
+	POP
 	end-code
 0 $:
 	rSP *R+		rTOS		,MOV
-	rTMP		rIP			,A
 	end-code
-	
+
 Code BRANCH
 	rIP *R+		rIP			,A				
 	end-code
@@ -203,7 +201,24 @@ Code C+!
 	rSP						,INCT
 	POP
 end-code
-			
+		
+Code g@	( addr -- )
+	rTOS		@>			,MOV 	GPLWA ,
+	@>			rTOS		,MOVB 	GPLRD ,
+	rTOS					,SWPB
+	@>			rTOS		,MOVB 	GPLRD ,
+	rTOS					,SWPB
+end-code
+
+Code g!	( val addr -- )
+	rTOS		@>			,MOV 	GPLWA ,
+	POP
+	rTOS		@>			,MOVB 	GPLWD ,
+	rTOS					,SWPB
+	rTOS		@>			,MOVB 	GPLWD ,
+	POP
+end-code	
+	
 Code 1+
 	rTOS	,INC
 end-code
@@ -735,17 +750,29 @@ Code (CFILL)	( addr n ch targetincr )
 	rSP *R+		rTMP		,MOV 	\ TMP: ch
 	rTMP					,SWPB
 
-	rSP *R+		rR2			,MOV		\ R2: len
+	rSP *R+		rR2			,MOV	\ R2: len
 	rSP *R+		rR3			,MOV 	\ R3: target
 	
 	rR2			rR2			,MOV 	\ 0 bytes?
-	
 	1 $+					,JEQ
+	
+				rTOS		,CI		1 ,	\ byte step? 	
+	3 $+					,JEQ
+	
 2 $:
+	\ worst case 
 	rTMP		rR3 *R		,MOVB
 	rTOS		rR3			,A
 	rR2						,DEC
 	2 $-					,JNE
+	1 $+					,JMP
+	
+3 $:
+	\ best case: writing to sequential memory
+	rTMP		rR3 *R+		,MOVB
+	rR2						,DEC
+	3 $-					,JNE
+	
 1 $:
 	POP
 	end-code

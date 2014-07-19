@@ -226,7 +226,7 @@ $F000	 (G	(G	inst2:	,SOCB
 
 Defer #labs
 
-: rom-#labs 	$F000 ;		\ while building, write to (likely) empty area
+: rom-#labs 	$E000 ;		\ while building, write to (likely) empty area
 
 ' rom-#labs		TO #labs
 

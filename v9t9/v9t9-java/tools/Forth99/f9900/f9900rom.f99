@@ -26,9 +26,10 @@ ROM 4 +     constant    @BYE
 ROM 6 +     constant    @DP0
 ROM 8 +     constant    @LATEST
 
-$ffc0       constant    Workspaces \ ... 0x40
-	Workspaces $00 + 	constant StdWP
-	Workspaces $20 + 	constant IntWP
+$ff9c       constant    Workspaces \ ... 0x60 -> $fffc, with room for NMI
+	Workspaces $00 + 	constant RomWP
+	Workspaces $20 + 	constant StdWP
+	Workspaces $40 + 	constant IntWP
 
 export>
 
@@ -390,7 +391,7 @@ Code (RESET)
 	rTMP	@>		,MOVB		'INTS ,		
 
 	rTMP			,LI			$8120 ,			\ turn on VDP interrupts (write R1_INT to VDP R1)
-	rTMP	@>		,MOV			VDPWA ,
+	rTMP	@>		,MOV		VDPWA ,
 
 	rDOCOL			,LI			' DOCOL ,				
 	rDOUSER			,LI			' DOUSER ,				
@@ -398,10 +399,10 @@ Code (RESET)
 	rDOVAR			,LI			' DOVAR ,				
 	rDODOES			,LI			' DODOES ,
 	
-	\ FFC0 is StdWP, FFE0 is IntWP; make tiny stacks before that inside FaultStacks
-	rSP				,LI			$FFC0 ,
-	rRP				,LI			$FFB0 ,
-	rUP				,LI			$FFA0 ,
+	\ Make tiny stacks
+	rSP				,LI			StdWP ,
+	rRP				,LI			StdWP $10 - ,
+	rUP				,LI			StdWP $20 - ,
 	&11				,LI			' COLD  cell+ ,
 	rDOCOL	*R		,B			\ normally BL, but we set up R11 for this
 	end-code		
