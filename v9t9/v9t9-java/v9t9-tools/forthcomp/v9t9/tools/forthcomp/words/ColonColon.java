@@ -28,9 +28,6 @@ public class ColonColon extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
 		
-		
-		targetContext.ensureLocalSupport(hostContext);
-		
 		new Colon().execute(hostContext, targetContext);
 
 		// set up

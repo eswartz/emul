@@ -38,17 +38,9 @@ public class ToLocal extends BaseStdWord {
 			}
 			
 			if (!targetContext.isLocalSupportAvailable(hostContext)) {
-
-				ITargetWord word = targetContext.require("branch");
-				word.getCompilationSemantics().execute(hostContext, targetContext);
-				hostContext.build(hostContext.require("branch"));
-				
-				targetContext.pushFixup(hostContext);
-				
-				targetContext.ensureLocalSupport(hostContext);	// in the middle of a word!
-				
-				targetContext.resolveFixup(hostContext);
+				throw hostContext.abort("Locals not supported");
 			}
+			
 			targetContext.compileSetupLocals(hostContext);
 			theWord.getEntry().allocLocals();
 			

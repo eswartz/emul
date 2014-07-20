@@ -265,8 +265,6 @@ public interface ITargetContext {
 	boolean isLocalSupportAvailable(HostContext hostContext)
 			throws AbortException;
 
-	void ensureLocalSupport(HostContext hostContext) throws AbortException;
-
 	/** Compile code for (LOCALS:) */
 	void compileSetupLocals(HostContext hostContext) throws AbortException;
 

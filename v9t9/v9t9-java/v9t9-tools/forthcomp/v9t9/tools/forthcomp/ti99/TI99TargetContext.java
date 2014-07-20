@@ -602,10 +602,6 @@ public class TI99TargetContext extends BaseGromTargetContext  {
 	}
 	
 	@Override
-	public void ensureLocalSupport(HostContext hostContext) throws AbortException {
-	}
-	
-	@Override
 	public void compileSetupLocals(HostContext hostContext) throws AbortException {
 
 //		DictEntry entry = ((ITargetWord) getLatest()).getEntry();

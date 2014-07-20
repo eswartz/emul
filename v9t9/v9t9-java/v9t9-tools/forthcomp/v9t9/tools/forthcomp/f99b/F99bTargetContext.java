@@ -717,12 +717,6 @@ public class F99bTargetContext extends BaseGromTargetContext {
 	}
 	
 	@Override
-	public void ensureLocalSupport(HostContext hostContext) throws AbortException {
-		// ": (>LOCALS) LP@  	RP@ LP! ; \\ caller pushes R> \n" +
-		//			": (LOCALS>) R>  LP@ RP!   R>  LP!  >R ; \n" +
-	}
-	
-	@Override
 	public void compileSetupLocals(HostContext hostContext) throws AbortException {
 
 		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
