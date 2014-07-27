@@ -108,8 +108,8 @@ public class Cpu9900 extends CpuBase {
 	 * @see v9t9.emulator.runtime.Cpu#setInterruptRequest(byte)
 	 */
     public void setInterruptRequest(byte level) {
-    	pins |= PIN_INTREQ;
-    	ic = forceIcTo1.getBoolean() ? 1 : level;
+    	setPin(PIN_INTREQ);
+//    	ic = forceIcTo1.getBoolean() ? 1 : level;
     }
     
     /**
@@ -153,9 +153,7 @@ public class Cpu9900 extends CpuBase {
 	    	if (cruAccess.isInterruptWaiting()) {
 	    		ic = forceIcTo1.getBoolean() ? 1 : cruAccess.getInterruptLevel(); 
 	    		if (state.getStatus().getIntMask() >= ic) {
-	    			//System.out.println("Triggering interrupt... "+ic);
-	    			pins |= PIN_INTREQ;
-	    			//cruAccess.handledInterrupt();
+	    			cruAccess.handlingInterrupt();
 	    			return true;    		
 	    		} else {
 	    			//System.out.print('-');
@@ -200,7 +198,7 @@ public class Cpu9900 extends CpuBase {
             ic = 0;
             
             // ensure the startup code has enough time to clear memory
-            noIntCount = 10000;
+            //noIntCount = 10000;
             
             machine.getExecutor().interpretOneInstruction();
             //throw new AbortedException();
@@ -268,10 +266,10 @@ public class Cpu9900 extends CpuBase {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.Cpu#irq()
 	 */
-	@Override
-	public void irq() {
-		setPin(PIN_INTREQ);		
-	}
+//	@Override
+//	public void irq() {
+//		setPin(PIN_INTREQ);		
+//	}
 	
 	@Override
 	public boolean shouldDebugCompiledCode(short pc) {

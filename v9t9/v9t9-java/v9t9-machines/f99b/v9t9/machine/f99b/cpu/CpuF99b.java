@@ -138,7 +138,7 @@ public class CpuF99b extends CpuBase {
 	 * @see v9t9.emulator.runtime.Cpu#setInterruptRequest(byte)
 	 */
     public void setInterruptRequest(byte level) {
-    	pins |= PIN_INTREQ;
+    	setPin(PIN_INTREQ);
     }
     
 	/**
@@ -165,7 +165,7 @@ public class CpuF99b extends CpuBase {
 	    		int mask = state.getStatus().getIntMask();
     			if (mask >= ic) {
 	    			pins |= PIN_INTREQ;
-	    			cruAccess.handledInterrupt();
+	    			cruAccess.handlingInterrupt();
 	    			return true;    		
 	    		}
 	    	} 
@@ -211,7 +211,7 @@ public class CpuF99b extends CpuBase {
            // reset();
             
             // ensure the startup code has enough time to clear memory
-    		noIntCount += 10000;
+    		//noIntCount += 10000;
     		
     		state.setRegister(CpuF99b.SR, 0);
             
@@ -298,10 +298,10 @@ public class CpuF99b extends CpuBase {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.Cpu#irq()
 	 */
-	@Override
-	public void irq() {
-		setPin(PIN_INTREQ);		
-	}
+//	@Override
+//	public void irq() {
+//		setPin(PIN_INTREQ);		
+//	}
 	/**
 	 *	Issue a fault:  this places RP and SP on the stack under the
 	 *	pushed status and PC, on a new stack. 

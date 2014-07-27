@@ -66,7 +66,7 @@ public class InternalCru9901 extends BaseCruChip {
 				if (data == 0) {
 					enabledIntMask &= ~mask;
 				} else { 
-					if ((currentints & mask) != 0)
+					if ((currentInts & mask) != 0)
 						acknowledgeInterrupt(bit);
 					enabledIntMask |= mask;
 				}
@@ -173,7 +173,7 @@ public class InternalCru9901 extends BaseCruChip {
 			if (clockmode) {
 				return clockReadRegister & 1;
 			} else if ((enabledIntMask & (1 << intExt)) != 0) {
-				return (currentints & (1 << intExt)) == 0 ? 1 : 0;
+				return (currentInts & (1 << intExt)) == 0 ? 1 : 0;
 			} else {
 				return 0;
 			}
@@ -190,7 +190,7 @@ public class InternalCru9901 extends BaseCruChip {
 				// getMachine().getKeyboardHandler().resetProbe();
 				//checkKeyscanPattern(2);
 				//System.out.println("Checking VDP interrupt... "+currentints);
-				return (currentints & (1 << intVdp)) == 0 ? 1 : 0;
+				return (currentInts & (1 << intVdp)) == 0 ? 1 : 0;
 			} else {
 				return 0;
 			}
@@ -207,7 +207,7 @@ public class InternalCru9901 extends BaseCruChip {
 			if (clockmode) {
 				return (clockReadRegister >> (bit - 1)) & 0x1;	// addr 6, bit 3, start at 2
 			} else if ((enabledIntMask & (1 << bit)) != 0) {
-				return (currentints & (1 << bit)) == 0 ? 1 : 0;
+				return (currentInts & (1 << bit)) == 0 ? 1 : 0;
 			} else {
 				if (bit >= 3 && bit < 11) {
 					if (bit == 10)

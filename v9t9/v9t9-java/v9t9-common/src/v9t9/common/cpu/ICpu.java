@@ -167,7 +167,7 @@ public interface ICpu extends IPersistable {
 	/**
 	 * Set interrupt request interrupt line
 	 */
-	void irq();
+	//void irq();
 
 	IInstructionFactory getInstructionFactory();
 	IRawInstructionFactory getRawInstructionFactory();

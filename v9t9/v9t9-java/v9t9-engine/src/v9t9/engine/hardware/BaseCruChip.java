@@ -53,9 +53,11 @@ public class BaseCruChip implements ICruChip {
 	 * enabled in this mask will be ignored.
 	 */
 	protected int enabledIntMask;
-	/** Currently active interrupts.  These are fed to the TMS9900
-	 * via {@link Cpu9900#setInterruptRequest(byte)} in priority order. */
-	protected int currentints;
+	/** Pending interrupts fired by hardware. */
+	protected int pendingInts;
+	/** Currently active interrupts, for which we expect an interrupt handler to
+	 * run and acknowledge. */
+	protected int currentInts;
 
 	protected boolean intreq;
 
@@ -83,7 +85,8 @@ public class BaseCruChip implements ICruChip {
         intreq = false;
         ic = 0xf;
 		// 	XXX: reset software pins
-        currentints = 0;
+        currentInts = 0;
+        pendingInts = 0;
         clockRegister = 0;
         clockmode = false;
         prevCycles = machine.getCpu().getCurrentCycleCount();
@@ -153,19 +156,26 @@ public class BaseCruChip implements ICruChip {
 		}
 		
 		intreq = false;
-		if ((currentints & enabledIntMask) != 0) {
+		if ((pendingInts & enabledIntMask) != 0) {
 			int intlevel;
 			
 			intlevel = intCount - 1;
-			while (intlevel != 0 && ((currentints & enabledIntMask) & (1 << intlevel)) == 0)
+			while (intlevel != 0 &&
+					(((pendingInts & enabledIntMask) & (1 << intlevel)) == 0 ||
+					((currentInts & enabledIntMask) & (1 << intlevel)) != 0)) {
 				intlevel--;
+			}
 	
 			if (intlevel != 0) {
 				//System.out.println("Requesting interrupt... "+intlevel+"/"+currentints+"/"+currentints);
 
+//				this.currentInts |= 1 << intlevel;
+//				this.pendingInts &= ~(1 << intlevel);
+				
 				this.intreq = true;
-				this.ic = ((byte) intlevel);
-				cpu.irq();
+				this.ic = (byte) intlevel;
+				//cpu.irq();
+				cpu.setInterruptRequest(ic);
 			}
 		}
 	}
@@ -182,8 +192,8 @@ public class BaseCruChip implements ICruChip {
 	*/
 	public void triggerInterrupt(int level) {
 		if ((enabledIntMask & (1 << level)) != 0) {
-			if ((currentints & (1 << level)) == 0) {
-				currentints |= 1 << level;
+			if ((pendingInts & (1 << level)) == 0) {
+				pendingInts |= 1 << level;
 				machine.getCpu().setIdle(false);
 				//System.out.println("Hardware triggered interrupt... "+level+"/"+currentints);
 			}
@@ -191,18 +201,28 @@ public class BaseCruChip implements ICruChip {
 	}
 
 	public void acknowledgeInterrupt(int level) {
-		if ((currentints & (1 << level)) != 0) {
-			currentints &= ~(1 << level);
+		if ((currentInts & (1 << level)) != 0) {
+			currentInts &= ~(1 << level);
 			machine.getCpu().acknowledgeInterrupt(level);
 		} else {
 			//System.out.println(
 			//		"??? acknowledged unset interrupt... "+level+"/"+currentints+"/"+int9901);
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.ICruChip#handlingInterrupt()
+	 */
+	@Override
+	public void handlingInterrupt() {
+		currentInts |= 1 << ic;
+		pendingInts &= ~(1 << ic);
+	}
 
 	public void saveState(ISettingSection section) {
 		section.put("EnabledInterrupts", enabledIntMask);
-		section.put("CurrentInterrupts", currentints);
+		section.put("PendingInterrupts", pendingInts);
+		section.put("CurrentInterrupts", currentInts);
 		section.put("KeyboardColumn", crukeyboardcol);
 		section.put("ClockMode", clockmode);
 		section.put("ClockRegister", clockRegister);
@@ -219,7 +239,8 @@ public class BaseCruChip implements ICruChip {
 			return;
 		}
 		enabledIntMask = section.getInt("EnabledInterrupts");
-		currentints = section.getInt("CurrentInterrupts");
+		pendingInts = section.getInt("PendingInterrupts");
+		currentInts = section.getInt("CurrentInterrupts");
 		crukeyboardcol = section.getInt("KeyboardColumn");
 		clockmode = section.getBoolean("ClockMode");
 		clockReadRegister = section.getInt("ClockReadRegister");

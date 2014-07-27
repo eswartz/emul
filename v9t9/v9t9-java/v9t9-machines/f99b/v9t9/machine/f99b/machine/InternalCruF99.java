@@ -73,7 +73,7 @@ public class InternalCruF99 extends BaseCruChip {
 			for (int i = 0; i < 8; i++) {
 				int mask = (1 << i);
 				if ((val & mask) == 0) {
-					if ((currentints & mask) != 0)
+					if ((currentInts & mask) != 0)
 						acknowledgeInterrupt(i);
 					if (mask == (1 << CpuF99b.INT_KBD)) {
 						getMachine().getKeyboardHandler().resetProbe();
@@ -120,7 +120,8 @@ public class InternalCruF99 extends BaseCruChip {
 		case INTS:
 			return (byte) (enabledIntMask);
 		case INTSP:
-			return (byte) (currentints & enabledIntMask);
+			//return (byte) (currentInts & enabledIntMask);
+			return (byte) (currentInts & enabledIntMask);
 			
 		case KBD: {
 			int alphamask = 0;
