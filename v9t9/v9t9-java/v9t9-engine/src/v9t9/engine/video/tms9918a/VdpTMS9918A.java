@@ -231,6 +231,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		/* >8802, status read and acknowledge interrupt */
     	byte ret = vdpStatus;
     	setRegister(REG_ST, vdpStatus & ~VDP_INTERRUPT);
+    	machine.getCru().acknowledgeInterrupt(VDP_INTERRUPT);
 
         return ret;
     }
@@ -334,13 +335,10 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
     			}
     		}
     		
-    		// a real interrupt only occurs if wanted
+    		// a real interrupt only occurs if wanted, but always marked
+    		setRegister(REG_ST, vdpStatus | VDP_INTERRUPT);
     		if ((vdpregs[1] & R1_INT) != 0) {
-    			if ((vdpStatus & VDP_INTERRUPT) == 0) {
-    				setRegister(REG_ST, vdpStatus | VDP_INTERRUPT);
-    			}
     			triggerInterrupt();
-				//machine.getCpu().setIdle(false);
     		}
 		}
 		//System.out.print('!');
