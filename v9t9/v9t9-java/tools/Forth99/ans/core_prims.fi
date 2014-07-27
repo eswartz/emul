@@ -55,7 +55,7 @@ test" 2swap  $1234.5678 $9abc.def0 2swap $1234.5678 d= >r $9abc.def0 d= r> and "
 [THEN]
 
 [IFUNDEF] /CELLS
-| : /cells [ cell<< ] literal rshift ;
+| : /CELLS [ cell<< ] literal rshift ;
 [THEN]
 
 | : (d) - negate /cells ;

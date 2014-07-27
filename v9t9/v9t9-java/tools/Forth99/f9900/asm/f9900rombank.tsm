@@ -84,8 +84,8 @@ Int_Return_Bank0
 B1_int_reset
 	seto	@BANK1				; switch to ROM bank 
 	soc		#F_BANK1, R15		; flag; mark that we're in bank1 on return
-	bl		@int_reset
-	
+	jmp		int_reset
+B1_int_reset_exit	
 	seto	@BANK0
 	mov		@_RESET, 14
 	RTWP
@@ -109,28 +109,46 @@ B1_xop_video_ent
 ;	Reset
 ;==========================================================================
 int_reset
-	li SP, sysstack + sysstacksize
-	
-	PUSH	SP, 11
-	
 	limi	0
+
+    ;   clear memory
+    bl  	@clr
+    data    _RAM, _RAMEND - _RAM
 	
-;	bl	@sinit			; system init
-;   bl  @sndinit        ; sound init
-	bl	@xv_vinit		; video init
-	bl	@xt_tinit		; terminal init
-;	bl	@kinit			; keyboard init
-;	bl	@dinit			; device init
+	bl		@sinit			; system init
+;   bl  	@sndinit        ; sound init
+	bl		@xv_vinit		; video init
+	bl		@xt_tinit		; terminal init
+;	bl		@kinit			; keyboard init
+;	bl		@dinit			; device init
 ;
-;	bl	@diskinit		; disk init
+;	bl		@diskinit		; disk init
 
 	li		r0, (M_INT_EXT + M_INT_VDP) << 8		; external & VDP interrupts
 	movb	r0, @INTS
-	
-	POP		SP, 11
-	
-	rt				
+	jmp		B1_int_reset_exit				
 
+;   Clear memory from the two following words
+;   Does not preserve registers
+clr mov     *11+, 0
+    mov     *11+, 1
+$1: clr     *0+
+    dect    1
+    jgt     $1-
+    rt
+    
+sinit	
+	li SP,sysstack + sysstacksize
+	
+	; setup NMI interrupt
+	mov    #IntWS, @>fffc
+;	mov    #abort, @>fffe
+	mov    #B1_int_reset, @>fffe		; FIXME
+
+	li     0, >ACE1
+	mov    0,@randseed1
+
+	rt
 ;==========================================================================
 ;	VDP Interrupt
 ;==========================================================================

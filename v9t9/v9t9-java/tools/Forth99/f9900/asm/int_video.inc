@@ -11,6 +11,7 @@
 M_VDP		equ		>0400
 
 int_1
+	limi		0
 	
 	; clr		r12			; point to 9901
 	; tb		2			; VDP interrupt?

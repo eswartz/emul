@@ -371,6 +371,7 @@ public class HostContext extends Context {
 		define("DUP", new HostDup());
 		define("?DUP", new HostQuestionDup());
 		define("2DUP", new Host2Dup());
+		define("2DROP", new Host2Drop());
 		define("SWAP", new HostSwap());
 		define("DROP", new HostDrop());
 		define("OVER", new HostOver());

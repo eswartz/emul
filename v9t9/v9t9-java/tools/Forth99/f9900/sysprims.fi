@@ -41,11 +41,13 @@ test" cmove  Buf1 Buf2 10 cmove  Buf2 bufMatches "
 test" erase  Buf2 10 erase   Buf2 c@ 0=   Buf2 9 + c@ 0=  and "
 
 
-:   ints-on
-;   target-only
+Code   ints-on
+	,LIMI		1 ,
+end-code   target-only
 
-:   ints-off
-;   target-only
+Code   ints-off
+	,LIMI		0 ,
+end-code   target-only
 
 :   demit ( ch -- )
     'DBG c!

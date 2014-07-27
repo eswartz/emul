@@ -18,12 +18,12 @@ import v9t9.tools.forthcomp.TargetContext;
  * @author ejs
  *
  */
-public class Host2Dup extends BaseStdWord {
+public class Host2Drop extends BaseStdWord {
 
 	/**
 	 * 
 	 */
-	public Host2Dup() {
+	public Host2Drop() {
 	}
 	
 	/* (non-Javadoc)
@@ -31,12 +31,8 @@ public class Host2Dup extends BaseStdWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		int v1 = hostContext.popData();
-		int v2 = hostContext.popData();
-		hostContext.pushData(v2);
-		hostContext.pushData(v1);
-		hostContext.pushData(v2);
-		hostContext.pushData(v1);
+		hostContext.popData();
+		hostContext.popData();
 	}
 
 	/* (non-Javadoc)

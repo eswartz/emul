@@ -358,6 +358,8 @@ has? TESTING? [IF]
 [THEN]
 
 Code (RESET)
+					,LIMI		1 ,
+					
 					,LWPI		StdWS ,				( ensure proper WS -- likely so, just be sure )
 	rDOCOL			,LI			' DOCOL ,				
 	rDOUSER			,LI			' DOUSER ,				

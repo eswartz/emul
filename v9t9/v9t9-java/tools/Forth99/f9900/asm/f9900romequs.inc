@@ -34,9 +34,60 @@ SOUND		equ		MMIO + >20
 
 CRU			equ		>C0				; >40 bytes
 
-INTS		equ		CRU + >00
-INTSP		equ		CRU + >01
+INTS		equ		CRU + >00		; FORTH: 'INTS
+INTSP		equ		CRU + >01		; FORTH: 'INTSP
 
+M_INT_BKPT	equ		>1    
+M_INT_EXT	equ		>2    
+M_INT_VDP	equ		>4    
+M_INT_KBD	equ		>8    
+
+KBD			equ		CRU + >02		; FORTH: 'KBD
+KBDA		equ		CRU + >03		; FORTH: 'KBDA
+
+GATE		equ		CRU + >04		; FORTH: 'GATE
+RND			equ		CRU + >07		; FORTH: 'RND
+
+DSK			equ		CRU + >08		; FORTH: 'DSK
+
+;  write: cmd
+DSKCMD		equ		DSK + >0		; FORTH: 'DSKCMD
+dskCmdRestore 		equ	>00				; FORTH: #dskCmdRestore
+dskCmdSeek 			equ	>10				; FORTH: #dskCmdSeek
+dskCmdReadSector 	equ	>80				; FORTH: #dskCmdReadSector
+dskCmdWriteSector  equ	>A0				; FORTH: #dskCmdWriteSector
+dskCmdInterrupt  	equ	>F0				; FORTH: #dskCmdInterrupt
+
+dskCmdBitHead		equ	>08				; FORTH: #dskCmd'Head
+dskCmdBitVerify		equ	>04				; FORTH: #dskCmd'Verify
+dskCmdBit10ms		equ	>02				; FORTH: #dskCmd'10ms
+        
+;  read: status
+DSKST		equ		DSK + >0			; FORTH: 'DSKST
+dskStRdy			equ >80				; FORTH: #dskStRdy
+dskStDrq			equ >02				; FORTH: #dskStDrq
+dskStBusy			equ >01				; FORTH: #dskStBusy
+        
+;   1: write/read: track addr
+DSKTRK		equ		DSK + >1			; FORTH: 'DSKTRK
+  
+;  2: write/read: sector addr
+DSKSEC		equ		DSK + >2			; FORTH: 'DSKSEC
+  
+;  3: write/read: data
+DSKDAT		equ		DSK + >3			; FORTH: 'DSKDAT
+  
+;  4: write/read: [0 | 0 | 0 | 0 | motor | hold | head | side ] 
+DSKFLG		equ		DSK + >4			; FORTH: 'DSKFLG
+dskFlgSide			equ >01				; FORTH: #dskFlgSide
+dskFlgHead			equ >02				; FORTH: #dskFlgHead
+dskFlgHold			equ >04				; FORTH: #dskFlgHold
+dskFlgMotor			equ >08				; FORTH: #dskFlgMotor
+  
+;  5: write/read: [0 | 0 | 0 | 0 | 0 | D2 | D1 | D0]
+DSKNUM		equ		DSK + >5			; FORTH: 'DSKNUM 
+
+DBG			equ		>FF					; FORTH: 'DBG
 
 ;	Shared ROM start
 
