@@ -94,14 +94,14 @@
 
 
 \ Hide a word while compiling, to allow redefining a word in terms of the same name
-| : rom-smudge  ( nfa -- )
+| : rom-smudge  ( -- )
+	lastnfa
     dup c@ |srch xor swap c!
 ;
 
 ' rom-smudge 	to smudge
 
-| : rom-name, ( "name" -- )
-
+| : rom-NAME, ( "name" -- )
     \ Put LFA --> ptr to previous LFA
 	here
     latest ,
@@ -113,13 +113,14 @@
     1+ aligned allot
 
 [ [IFDEF] (register-symbol) ]
-    dup (register-symbol)
+	\ F99b only
+    here (register-symbol)
 [ [THEN] ]
     
     \ current @ !       \ !!!
     >latest !
-    
 ;
+
 
 : XT, ( xt -- )
 	drop

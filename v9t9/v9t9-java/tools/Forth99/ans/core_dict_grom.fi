@@ -79,7 +79,7 @@ User GDP              \ GROM dictionary pointer
 ' grom-(find)		TO (FIND)
 
 \ Hide a word while compiling, to allow redefining a word in terms of the same name
-| : grom-smudge ( nfa -- )
+| : grom-smudge ( -- )
 	lastnfa
     dup gc@ |srch xor swap gc!
 ;
