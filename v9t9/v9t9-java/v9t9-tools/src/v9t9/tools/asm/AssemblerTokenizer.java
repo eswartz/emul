@@ -105,9 +105,29 @@ public class AssemblerTokenizer {
 						break;
 					first = false;
 				} while (ch != -1);
+				if (first) {
+					if (ch == '=') {
+						return '≥';	 // 0x2265 greater-than or equal to
+					} else if (ch == '>') {
+						return '»';
+					} else {
+						reader.unread();
+						return '>';
+					}
+				}
 				if (neg) number = -number;
 				if (ch != -1) reader.unread();
 				return NUMBER;
+			} else if (ch == '<') {
+				ch = reader.read();
+				if (ch == '=') {
+					return '≤';	 // 0x2264 less-than or equal to
+				} else if (ch == '<') {
+					return '«';
+				} else if (ch != -1) {
+					reader.unread();
+				}
+				return '<';
 			} else if (isLetterChar(ch)) {
 				do {
 					image += (char) ch;

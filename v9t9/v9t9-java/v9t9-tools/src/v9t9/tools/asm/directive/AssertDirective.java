@@ -43,7 +43,8 @@ public class AssertDirective extends Directive {
 	@Override
 	public IInstruction[] resolve(IAssembler assembler, IInstruction previous,
 			boolean finalPass) throws ResolveException {
-
+		setPc(assembler.getPc());
+				
 		LLOperand lop = op.resolve(assembler, this); 
 		if (lop instanceof LLForwardOperand)
 			throw new ResolveException(op, "Values not known for assert");

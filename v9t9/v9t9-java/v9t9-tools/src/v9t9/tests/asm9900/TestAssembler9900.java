@@ -222,7 +222,7 @@ public class TestAssembler9900 extends BaseTest9900 {
 	private void assertBadInst(IInstructionParserStage instStage, String string) {
 		try {
 			assertInst(instStage, string);
-			fail();
+			fail("expected error: " + string);
 		} catch (IllegalArgumentException e) {
 			
 		} catch (ParseException e) {

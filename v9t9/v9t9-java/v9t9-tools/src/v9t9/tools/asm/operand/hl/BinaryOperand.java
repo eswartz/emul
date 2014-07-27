@@ -137,6 +137,8 @@ public class BinaryOperand extends BaseOperand {
 		case '=': return (l == r) ? 1 : 0;
 		case '≤': return (l <= r) ? 1 : 0;
 		case '≥': return (l >= r) ? 1 : 0;
+		case '«': return (l << r);
+		case '»': return (l >> r);
 		}
 		throw new IllegalStateException("unknown operation: " + (char)type);
 	}
