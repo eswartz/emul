@@ -219,26 +219,37 @@ Code g!	( val addr -- )
 	POP
 end-code	
 	
+( optimize )
 Code 1+
 	rTOS	,INC
 end-code
 
+( optimize )
 Code 2+
 	rTOS	,INCT
 end-code
 
+( optimize )
 Code CELL+
 	rTOS	,INCT
 end-code
 
+( optimize )
 Code CELLS
 	rTOS	rTOS	,A
 end-code
 
+( optimize )
+Code /CELLS
+	rTOS	1				,SRL
+	end-code
+
+( optimize )
 Code 1-
 	rTOS	,DEC
 end-code
 
+( optimize )
 Code 2-
 	rTOS	,DECT
 end-code
@@ -683,6 +694,12 @@ Code FALSE
 	PUSH
 	rTOS					,CLR
 	end-code
+
+
+Code /CELLS
+	rTOS	1				,SRL
+	end-code
+
 		
 Code ints-check
 	,LIMI	1 ,
@@ -816,7 +833,7 @@ Code (gfind)  ( gDictEnd caddr start -- caddr 0 | xt 1 | xt -1 )
 	charTemp				,CLR
 
 	rSP *R		rTMP		,MOV
-	rTMP *R	rTMP			,MOVB	 
+	rTMP *R		rTMP		,MOVB	 
 	
 	\ lenAndFlags = [ expected byte (mostly) | length ]
 	rTMP		lenAndFlags	,MOVB
@@ -827,7 +844,6 @@ Code (gfind)  ( gDictEnd caddr start -- caddr 0 | xt 1 | xt -1 )
 >wordLoop $:
 
 	rTOS		rSP @>(R)	,C		#cell ,		\ at end?
-	
 	>failed $+				,JHE     			\ (unlikely)
 	
 	\ TOS = LFA, a [len] byte, followed by "name" and XT
@@ -838,18 +854,19 @@ Code (gfind)  ( gDictEnd caddr start -- caddr 0 | xt 1 | xt -1 )
 
 	rR3			rRT			,MOVB				\ save flags
 
-	\ move TOS back to name
-	
-	rR3			rTMP		,MOVB
-	rTMP					,ANDI	$1F00 ,		\ to length
-	rTMP		8			,SRL				\ as word
-	rTMP					,AI		3 ,			\ skip XT & length
-	rTMP		rTOS		,A 					\ get name
-
 	rR3						,ANDI	$4000 INVERT ,	\ keep all but immediate bit
-	lenAndFlags	rR3			,SB				\ subtract both smudge & length -- should be 0x00 or 0x40
-	>wordLoop $-			,JNE
-
+	lenAndFlags	rR3			,CB
+	7 $+					,JEQ
+	
+8 $:	
+	\ move TOS to next name
+	rRT						,ANDI	$1F00 ,		\ to length
+	rRT						,SWPB				\ as word
+	rRT						,AI		3 ,			\ skip XT & length
+	rRT			rTOS		,A 					\ get name
+	>wordLoop $-			,JMP
+	
+7 $:
 	rSP *R		rR2			,MOV
 	rR2						,INC
 	lenAndFlags	counter		,MOV	
@@ -858,23 +875,23 @@ Code (gfind)  ( gDictEnd caddr start -- caddr 0 | xt 1 | xt -1 )
 	( name follows )
 >charLoop $:
 	@>			rR3			,MOVB	GPLRD ,
-	rR2	*R+		charTemp	,MOVB
+	rR2	*R		charTemp	,MOVB
 
-	rR3			charTemp	,CB   		
+	rR3			charTemp	,XOR				\ test zero and leave case bit otherwise (low bytes clear)
 	>match $+				,JEQ                   \ exact match?
 
 	\ see if they might be letters that differ in case only
-	rR3			charTemp	,XOR
 	charTemp				,CI		$2000 ,       \ differ in case bit?
-    >wordLoop $-			,JNE
+    8 $-					,JNE
     
     \ okay, exclude matches in punctuation
     charTemp	rR3			,SZC                            \ turn off case in matching char
     rR3						,AI		-$4100 ,
     rR3						,CI		$5A00 $4100 - ,
-    >wordLoop $-			,JHE
+	8 $-					,JHE
 
 >match $:
+	rR2						,INC				\ don't auto-incr (above) if it will be a waste
 	counter					,DEC
 	>charLoop $-			,JGT        
 
@@ -961,13 +978,12 @@ Code (lfind)		( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )
         
 >charLoop $:
 	rTMP *R+	rR3			,MOVB
-	rR2	*R+		charTemp	,MOVB
+	rR2	*R		charTemp	,MOVB
 
-	rR3			charTemp	,CB   		
+	rR3			charTemp	,XOR   		
 	>match $+				,JEQ                   \ exact match?
 
 	\ see if they might be letters that differ in case only
-	rR3			charTemp	,XOR
 	charTemp				,CI		$2000 ,       \ differ in case bit?
     >wordLoop $-			,JNE
     
@@ -978,6 +994,7 @@ Code (lfind)		( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )
     >wordLoop $-			,JHE
 
 >match $:
+	rR2						,INC
 	counter					,DEC
 	>charLoop $-			,JGT        
 
@@ -1011,6 +1028,14 @@ Code (lfind)		( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )
 	rRP *R+		counter		,MOV
 	rRP *R+		charTemp	,MOV
 	end-code
-	
 
 [THEN]
+
+( optimize )
+Code MAX
+	rSP *R+		rTMP		,MOV
+	rTOS		rTMP		,C
+	1 $+					,JGT
+	rTMP		rTOS		,MOV
+1 $:
+	end-code
