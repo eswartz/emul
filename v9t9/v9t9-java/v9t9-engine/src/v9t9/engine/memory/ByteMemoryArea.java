@@ -112,6 +112,23 @@ public class ByteMemoryArea extends MemoryArea {
     	if (addr + 1 - entry.getAddr() < entry.getSize())
     		writeByte(entry, addr + 1, (byte) (val & 0xff));
     }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.memory.MemoryArea#patchWord(v9t9.engine.memory.MemoryEntry, int, short)
+     */
+    @Override
+    public boolean patchWord(MemoryEntry entry, int addr, short value) {
+		int addr1 = addr - entry.getAddr();
+		byte hi = (byte) (value >> 8);
+    	byte lo = (byte) (value & 0xff);
+    	if (memory[addr1] != hi || memory[addr1+1] != lo) {
+	    	memory[addr1] = hi;
+			memory[addr1+1] = lo;
+			return true;
+    	}
+    	return false;
+    }
+
 
     @Override
 	public void writeByte(IMemoryEntry entry, int addr, byte val) {

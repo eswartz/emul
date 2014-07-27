@@ -45,77 +45,136 @@ BANK1
 	equ 	>4						; this bank
 
 resetv		
-	dw		StdWS, >FFFF			; vector for RESET (filled in from @RESET)
+	dw		StdWS, B1_int_reset		; vector for RESET
 int1v		
-	dw		IntWS, B0_INT1PC		; vector for INTERRUPTS
+	dw		IntWS, B1_int_1			; vector for INTERRUPTS
 
 ; XOP vectors
 
 	aorg	XOPS + (XOP_VIDEO * 4)
-	dw		RomWS, xop_video_ent
+	dw		RomWS, B1_xop_video_ent
 	
 	aorg	XOPS + (XOP_TERM * 4)
-	dw		RomWS, xop_term_ent
+	dw		RomWS, B1_xop_term_ent
 
-M_VDP		equ		>0400
 
-	aorg	>100
+	aorg	SharedROM
+
+;	[[[[ ------------------------------------------------------- content shared with bank 0 (FORTH)
+;
+;	The Forth9900MemoryModel loader will copy this region of code,
+;	but change the SETO instructions to point to the opposite bank for FORTH.
+;
+
+F_BANK1		equ		>0100			; this bit is enabled in R15 (ignored)
+
+;	All vectored code comes here to return
+Int_Return
+	; restore bank?
+	coc		#F_BANK1, R15
+	jeq		Int_Return_Bank0
 	
-;==========================================================================
-;	The VDP interrupt routine.
-;
-;	This handles clock, keyboard, etc.
-;
-;   This lives in the standard INT1 workspace, where R3 R4 R5 R6 are free
-;   and R0 is a random seed ... just leave it so
-;==========================================================================
-
-;	[[[[ ------------------------------------------------------- shared with f9900rom.f99
-
-	; shared entry for INT1
-B1_INT1PC
-	; not hit in this ROM, but matches Forth9900 ROM
-	limi	0
-	seto	@BANK1
-	jmp		INT1PC 
-
-intv_bank0
+	; stay in current ROM bank 
+	RTWP
+	
+Int_Return_Bank0
 	seto	@BANK0
 	RTWP
+	
+B1_int_reset
+	seto	@BANK1				; switch to ROM bank 
+	soc		#F_BANK1, R15		; flag; mark that we're in bank1 on return
+	bl		@int_reset
+	
+	seto	@BANK0
+	mov		@_RESET, 14
+	RTWP
+	
+B1_int_1
+	BankedIntHandler	int_1
 
+	; shared entry for XOP
+B1_xop_term_ent
+	BankedIntHandler	xop_term_ent
+
+B1_xop_video_ent
+	BankedIntHandler	xop_video_ent
+	
 ;	]]]] ------------------------------------------------------- end shared content
 
+	assert	$ <= ForthROM 
+
+
+;==========================================================================
+;	Reset
+;==========================================================================
+int_reset
+	li SP, sysstack + sysstacksize
+	
+	PUSH	SP, 11
+	
+	limi	0
+	
+;	bl	@sinit			; system init
+;   bl  @sndinit        ; sound init
+	bl	@xv_vinit		; video init
+	bl	@xt_tinit		; terminal init
+;	bl	@kinit			; keyboard init
+;	bl	@dinit			; device init
+;
+;	bl	@diskinit		; disk init
+
+	li		r0, (M_INT_EXT + M_INT_VDP) << 8		; external & VDP interrupts
+	movb	r0, @INTS
+	
+	POP		SP, 11
+	
+	rt				
+
+;==========================================================================
+;	VDP Interrupt
+;==========================================================================
 	incl	int_video.inc
 
 ; -----------
-	
-;	
+
+;==========================================================================
 ;	Terminal services XOP entry
 ;
 ;	R12: pointer to operand
 ;	*R14+: command (word)
 ;
+;==========================================================================
+
+xop_term_tbl
+	dw		xt_tinit, xt_emitchar 
+xop_term_tbl_end equ	$
+
 xop_term_ent
-	
-	RTWP
+	XopHandler xop_term_tbl 
 	
 	incl	term.inc
 	
-
-;
+;==========================================================================
 ; 	Video services XOP entry
 ;
 ;	R12: pointer to operand
 ;	*R14+: command (word)
-;	
+;==========================================================================
+
+xop_video_tbl
+	dw		xv_vinit 
+xop_video_tbl_end equ	$
+
 xop_video_ent
-	RTWP
+	XopHandler	xop_video_tbl
+
 	
 	incl	video.inc
 	
-	assert	_SharedEnd <= _WPs
+	assert	_SharedRAMEnd <= _WPs
 	assert	_RAMEND >= _RAM		; not overflowed 
-	assert	_RAMEND <= _Shared	; not overflowed
+	assert	_RAMEND <= _SharedRAM	; not overflowed
 	
 	consttable
 	

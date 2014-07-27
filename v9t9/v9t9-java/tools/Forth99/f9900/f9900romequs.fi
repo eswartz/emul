@@ -1,12 +1,14 @@
-\ This file was automatically generated from f9900romequs.inc and f9900rombank.sym by SymbolsToConstants; do not modify!
+\ This file was automatically generated from f9900romequs.inc and f9900rombank1.sym by SymbolsToConstants; do not modify!
 
-$0000	Constant	#t.tty
+$0000	Constant	#v.init
 $0000	Constant	INTVECS
 $0000	Constant	VIDEO^
-$0000	Constant	#v.mode
-$0000	Constant	#t.draw
+$0000	Constant	#t.init
+$0001	Constant	#t.tty
 $0001	Constant	TERM^
-$0001	Constant	#v.reset
+$0001	Constant	#v.mode
+$0002	Constant	#v.reset
+$0002	Constant	#t.draw
 $000A	Constant	_CPURAMSIZE
 $0010	Constant	v-int-nosound
 $0020	Constant	v-int-noabort
@@ -34,10 +36,16 @@ $00A0	Constant	SOUND
 $00C0	Constant	CRU
 $00C0	Constant	INTS
 $00C1	Constant	INTSP
-$0100	Constant	SHARED
+$0100	Constant	SharedROM
+$0148	Constant	@RESET
+$0148	Constant	ForthROM
+$014A	Constant	@COLD
+$014C	Constant	@BYE
+$014E	Constant	@DP0
+$0150	Constant	@LATEST
 $FB00	Constant	_RAM
+$FF00	Constant	_SharedRAM
 $FF00	Constant	vintflags
-$FF00	Constant	_Shared
 $FF01	Constant	vstatus
 $FF02	Constant	userint
 $FF04	Constant	timerisr
@@ -52,7 +60,7 @@ $FF0E	Constant	vpgrow
 $FF10	Constant	vtextpage
 $FF12	Constant	vidvarstart
 $FF14	Constant	vidvarsize
-$FF16	Constant	_SharedEnd
+$FF16	Constant	_SharedRAMEnd
 $FF9C	Constant	StdWS
 $FF9C	Constant	_WPs
 $FFBC	Constant	RomWS

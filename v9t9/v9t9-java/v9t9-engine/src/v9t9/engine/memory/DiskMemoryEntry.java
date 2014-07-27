@@ -10,16 +10,16 @@
  */
 package v9t9.engine.memory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 
-import ejs.base.settings.ISettingSection;
-import ejs.base.utils.FileUtils;
-
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.memory.StoredMemoryEntryInfo;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.FileUtils;
 
 /**
  * @author ejs
@@ -224,6 +224,15 @@ public class DiskMemoryEntry extends MemoryEntry {
         super.save();
     }
     
+    public void overwrite() throws FileNotFoundException, IOException {
+    	byte[] data = new byte[getSize()];
+        area.copyToBytes(data);
+        URI uri = locator.findFile(getFilepath());
+		FileUtils.writeOutputStreamContentsAndClose(
+				locator.createOutputStream(uri),data, getSize());
+
+    }
+    
     @Override
 	public void unload() {
         super.unload();
@@ -327,6 +336,12 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 */
 	public boolean isStorable() {
 		return storedInfo.info.isStored();
+	}
+	/**
+	 * @param b
+	 */
+	public void setStorable(boolean b) {
+		info.getProperties().put(MemoryEntryInfo.STORED, b);
 	}
 }
 

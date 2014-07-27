@@ -40,7 +40,17 @@ INTSP		equ		CRU + >01
 
 ;	Shared ROM start
 
-SHARED		equ		>0100
+SharedROM	equ		>0100
+
+ForthROM	equ		>0148
+
+			aorg	ForthROM
+			
+_RESET		bss		2				; FORTH: @RESET
+_COLD		bss		2				; FORTH: @COLD
+_BYE		bss		2				; FORTH: @BYE
+_DP0		bss		2				; FORTH: @DP0
+_LATEST		bss		2				; FORTH: @LATEST
 
 ;	------------------------------------------ RAM layout
 
@@ -50,9 +60,9 @@ _RAM		equ		>FB00
 
 ;   Special "system variables" that the FORTH can modify
 
-_Shared    equ    >FF00
+_SharedRAM  equ    >FF00
  
- 			aorg	_Shared
+ 			aorg	_SharedRAM
  			
 ; this block of variables is visible via equates to FORTH 
 
@@ -95,7 +105,7 @@ vidvarsize  bss 2       ; size of important video variables
 
 _CPURAMSIZE  equ $ - _CPURAMSTART
 
-_SharedEnd	equ	$		; checked later for conflict with _WPs
+_SharedRAMEnd	equ	$		; checked later for conflict with _WPs
 
 	; ---------		workspaces: +>60 -> >fffc, with room for NMI
 
@@ -110,10 +120,12 @@ VidWS		equ		_WPs + >40		; overlaps: ints turned off
 ;	XOPs
 
 XOP_VIDEO	equ		0			; FORTH: VIDEO^
-v_setmode			equ		0	; FORTH: #v.mode		( mode-number )
-v_reset				equ		1	; FORTH: #v.reset		( )
+v_init				equ		0	; FORTH: #v.init		( )
+v_setmode			equ		1	; FORTH: #v.mode		( mode-number )
+v_reset				equ		2	; FORTH: #v.reset		( )
 
 XOP_TERM	equ		1			; FORTH: TERM^
-t_ttychar			equ		0	; FORTH: #t.tty			( char )
-t_drawchar			equ		0	; FORTH: #t.draw		( char )
+t_init				equ		0	; FORTH: #t.init		( )
+t_ttychar			equ		1	; FORTH: #t.tty			( char )
+t_drawchar			equ		2	; FORTH: #t.draw		( char )
 

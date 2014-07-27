@@ -1,4 +1,4 @@
-\   f9900romtest.f99
+\   f9900romstandalone.f99
 \ 
 \   (c) 2014 Edward Swartz
 \ 
@@ -12,11 +12,13 @@
 
 0 <export
 
-include		f9900romequs.fi
+1				constant 	STANDALONE
+
+include		f9900romequs_standalone.fi
 include		f9900gromequs.fi
 
 
-SHARED $10 +    constant    ROM
+$100	   		constant    ROM
 
 ROM 0 +			constant    @RESET
 ROM 2 +     	constant    @COLD
@@ -28,7 +30,7 @@ export>
 
 \ ................................
 
-\	Lay out INT 0 (note: the ASM ROM will construct this too, after this Forth ROM is built)
+\	Lay out INT 0
 
 0			dp!
 
@@ -377,14 +379,14 @@ has? TESTING? [IF]
 [THEN]
 
 Code (RESET)
-					,LIMI		1 ,
+					,LIMI		0 ,				\ no VDP interrupt
 
-	rTMP			,LI			M_INT_EXT M_INT_VDP +  8 LSHIFT ,
-	
-	rTMP	@>		,MOVB		'INTS ,		
-
-	rTMP			,LI			$8120 ,			\ turn on VDP interrupts (write R1_INT to VDP R1)
-	rTMP	@>		,MOV		VDPWA ,
+\	rTMP			,LI			M_INT_EXT M_INT_VDP +  8 LSHIFT ,
+\	
+\	rTMP	@>		,MOVB		'INTS ,		
+\
+\	rTMP			,LI			$8120 ,			\ turn on VDP interrupts (write R1_INT to VDP R1)
+\	rTMP	@>		,MOV		VDPWA ,
 
 	rDOCOL			,LI			' DOCOL ,				
 	rDOUSER			,LI			' DOUSER ,				

@@ -31,9 +31,12 @@
 ;   how to map character coordinates to the screen (e.g.
 ;   fonts, number of pixels, etc).
 
+xt_tinit
+	; fallthrough
+	
 ;	Call after video mode is initialized.
 ;
-treset  	
+xt_treset  	
 	clr	   @vx			    ; upper-left corner
 	clr	   @vwx			    ; window starts upper-left
 	movb   @vwidth+1,@vwxs	; set dims to screen size
@@ -219,7 +222,6 @@ termclear1
     POP     SP,0,2,3,11
     rt        
     
-;	CALLED FROM FORTH!
 ;
 ;	Do a backspace.
 ;
@@ -245,11 +247,9 @@ bksp0	movb	1,@vx				; save
     POP SP, 1, 2, 11
 	rt
 
-;   Called from XOP
 ;
 ;   Do a carriage return.
 ;
-
 crlf    PUSH    SP, 1, 11
 
     bl      @vcursoroff         ; we're moving cursor
@@ -275,7 +275,6 @@ crlf1:
 
 
 
-;	CALLED FROM FORTH!
 ;
 ;	Do a tab.
 ;
@@ -308,13 +307,14 @@ clreol  PUSH    SP, 0, 2, 3, 11
     POP     SP, 0, 2, 3, 11
     rt
     
-
-;   CALLED FROM FORTH!
 ;
 ;   Emit a character, intepreting
 ;
-;   hi(R1) = char
-emit
+;	args: char (byte)
+;
+xt_emitchar
+	movb	*12, 1
+	
     cb      1,#>0d           ; enter?
     jeq     crlf
 
@@ -336,21 +336,24 @@ $1: cb      1,#>0B          ; vertical tab ( == clear to end of line )
 bell:    
     rt
 
-;  CALLED FROM FORTH!
 ;
 ;  Print a message, interpreting the chars
 ;   
-;   R2 = message
-;   R3 = length
+;  args: message-ptr, length
 ;
-type PUSH    SP,11
-    ai      SP,-4
+xt_type
+	PUSH    SP,11
+	
+	movb	*12+, 2
+	movb	*12, 3
+	
+    ai      SP,-4		; save regs
 $1: mov     3,3
     jeq     $2+
     movb    *2+,1
     mov     2, *SP
     mov     3, @2(SP)
-    bl      @emit
+    bl      @xt_emitchar
     mov     @2(SP), 3
     mov     *SP, 2
     dec     3

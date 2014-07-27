@@ -1,12 +1,16 @@
 
+;==========================================================================
+;	The VDP interrupt routine.
+;
+;	This handles clock, keyboard, etc.
+;
+;   This lives in the standard INT1 workspace, where R3 R4 R5 R6 are free
+;   and R0 is a random seed ... just leave it so
+;==========================================================================
 
-F_BANK1		equ		>0100
-	
-B0_INT1PC
-	limi	0		 	; disable interrupts
-	soc		#F_BANK1, R15 ; flag; mark that we're in bank1 on return
-	
-INT1PC
+M_VDP		equ		>0400
+
+int_1
 	
 	; clr		r12			; point to 9901
 	; tb		2			; VDP interrupt?
@@ -114,10 +118,4 @@ int1out:
     ;movb    #>8f, @VDPWA
 	movb	@VDPST, @vstatus ; clear interrupt
 
-	; restore bank
-	coc		#F_BANK1, R15
-	jne		intv_bank0
-	
-	; stay in bank 2
-	RTWP
-	
+	jmp		Int_Return

@@ -1,0 +1,417 @@
+\   f9900rombank.f99
+\ 
+\   (c) 2014 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+\	This ROM is built as a bank along with f9900rombank.tsm.
+
+\   ROM Memory layout
+
+0 <export
+
+include		f9900romequs.fi
+include		f9900gromequs.fi
+
+
+export>
+
+ForthROM  	  	dp!
+
+\ 	reset address @RESET
+0  ,
+
+\ 	bye address @BYE
+0  ,
+
+\   cold address @COLD
+0 ,
+
+\   initial dictionary @DP0
+0 ,
+
+\   initial latest @LATEST
+0 ,
+
+(define-colon-prims)
+
+include asm99.fi
+include 99equs.fi
+
+(define-prims)
+
+\   Be sure this ROM doesn't try to make variables in the dictionary
+undef Variable
+undef DVariable
+undef Value
+undef DValue
+
+0 <EXPORT
+
+include	sysdefs.fi
+
+include ../v9t9/errcodes.fi
+
+include ../v9t9/ram.fi
+
+
+EXPORT>
+
+include sysprims.fi
+include syscomp.fi
+
+include 9900.fi	
+
+include ../ans/core.fi
+include ../ans/core_unhosted.fi
+include ../ans/core_accept_simple.fi
+include ../ans/core-ext.fi
+
+include ../ans/exception.fi
+include ../ans/exception_minimal.fi
+
+include ../v9t9/strings.fi
+
+include ../ans/tools.fi
+
+include cold.fi
+
+\ TEMP
+
+\   Set the VDP RAM bank.
+\
+\   This directly sets VR14 without saving it off (unlike vwreg).
+\
+: vsetbank  ( vaddr -- addr-16k )
+    dup 14 urshift 
+    $8E00 OR  VDPWA !
+    $3fff AND
+;
+ 
+ 
+include ../v9t9/sysutils.fi
+
+include ../v9t9/errors.fi
+		
+
+0 [if]
+		
+		
+		
+		include ../ansold/exception.fi
+		 
+		0 <EXPORT
+		
+		include ../v9t9/video.fi
+		
+		include ../v9t9/sound.fi
+		
+		include ../v9t9/term.fi
+		
+		include ../v9t9/kbd.fi
+		
+		EXPORT>
+		
+		include sysprims.fi
+		
+		include ../v9t9/prims.fi
+		
+		include ../ansold/kernel.fi
+		
+		include ../ansold/blocks.fi
+		
+		include ../ansold/dict.fi
+		
+		include ../ansold/compile.fi
+		
+		include ../ansold/dualstate.fi
+		
+		include ../ansold/interp.fi
+		
+		include ../ansold/alloc.fi
+		
+		include ../v9t9/io.fi
+		
+		include ../v9t9/locals.fi
+		
+		\ include ../v9t9/editor.fi
+		include ../v9t9/char-editor.fi
+		
+		include cold.fi
+		
+		include ../v9t9/boot.fi
+		
+		\ -------------------------------
+		
+		1 <export
+		
+		0 [if]
+		:   cycle
+		    \ hex $1F2E3D4C. d.d 10 demit decimal
+		    \ 256 0 do i .d 10 demit loop
+		    begin
+		        42 demit
+		        256 0 do
+		            key? if key else i then
+		            chfill
+		            ints-check
+		            \ 0 0 do loop
+		        loop
+		    again
+		;
+		
+		
+		: snd ( i -- ) 
+		    dup  swpb dup  9 crshift  XOR swap  $7 and $40 + c! 
+		;
+		: delay 0 do uloop ;
+		
+		: blast0
+		0 0 do 
+		    0 0 do 
+		        j i xor snd $10 delay 
+		    loop
+		loop
+		;
+		: blast1
+		0 0 do 
+		    0 0 do 
+		        j i + snd $10 delay 
+		    loop
+		loop
+		;
+		
+		: square
+		    begin 
+		        $80 'GATE c!
+		        [ $00 c, ]
+		        $00 'GATE c!
+		    again
+		;
+		
+		: hang
+		    ints-off (idle)
+		; 
+		[THEN]
+		
+		export>
+		
+		1 <export
+		
+		:   bye
+		
+		    regs-init
+		    
+		    exc-init
+		    
+		    ints-init
+		        
+		    kbd-init
+		    
+		    video-init
+		    
+		    sound-init
+		 
+		    cold-init
+		
+		    decimal 
+		 
+		    0 blk !
+		    0 state !
+		 
+		    empty-buffers
+		
+		[ [ifdef] init-locals ]    
+		    init-locals
+		[ [THEN] ]    
+		
+		[ [ifdef] init-editor ]    
+		    init-editor
+		[ [THEN] ]    
+		      
+		    1 load
+		     
+		    \ cycle
+		    quit
+		;
+		
+		export>
+		
+		
+		\ -------------------------------------------------
+		
+		0 <export
+		
+		include ../v9t9/ints.fi
+		
+		export>
+
+		
+[else]
+	\ TEST
+	
+test" loop-1  0 	
+		$103 $100 do  i +  loop
+		[ $100 $101 $102  + + ] LITERAL = "
+		
+test" +loop-1  0
+		3 0 do  i +  1 +loop
+		\ 0, 1, 2, [3]
+		[ 0 1 2  + + ] LITERAL = "
+
+test" +loop-3  0		
+		10 -1 do  i +  3 +loop
+		[ -1 2 5 8 + + + ] LITERAL = "
+
+test" +loop-3-2  0			
+		0 10 do  i +  -3 +loop
+		[ 10 7 4 1 + + + ] LITERAL  = "
+		
+test" +loop-uns1  0			
+		$8002 $7ffe do  i +  1 +loop
+		[ $7ffe $7fff $8000 $8001 + + + ] LITERAL = "
+		
+test" +loop-uns2  0			
+		$a000 $3333 do  i +  $3333 +loop
+		[ $3333 $6666 $9999  + + ] LITERAL = "
+		
+test" +loop-zero  0			
+		0 0 do  i drop  1+  $1000 +loop
+		16 = "
+	
+	: BYE
+		COLD
+	;
+	
+|test : eval1 s" 100 200 300 + + ." ;
+test" evaluate1 eval1 evaluate 	true "
+
+has? TESTING? [IF]
+
+: defineConstPlus1000 create , does> @ $1000 + ;
+$123 defineConstPlus1000 N123
+test" defineConstPlus1000  N123 $1123 = " 
+
+include asmtests.fi
+
+[THEN]
+
+
+has? TESTING? [IF]	
+	| : tests-completed
+		quit
+	;
+[THEN]
+
+	: COLD
+		(resolve-rdefers)
+		
+		regs-init
+		cold-init
+
+	    decimal
+
+[ has? TESTING? [IF] ]
+		runtests
+		
+		\ notreached -- tests-completed instead
+[ [ELSE] ]
+		quit
+[ [THEN] ]
+		
+	;
+
+
+
+		: snd ( i -- ) 
+		    dup  swpb dup  9 crshift  XOR swap  $7 and $40 + c! 
+		;
+		: delay 0 do loop ;
+		
+		: blast0
+		0 0 do 
+		    0 0 do 
+		        j i xor snd $10 delay 
+		    loop
+		loop
+		;
+		: blast1
+		0 0 do 
+		    0 0 do 
+		        j i + snd $10 delay 
+		    loop
+		loop
+		;
+		
+		: square
+		    begin 
+		        $80 'GATE c!
+		        [ $00 c, ]
+		        $00 'GATE c!
+		    again
+		;
+			
+[THEN]
+
+Code (RESET)
+					,LWPI		StdWS ,				( ensure proper WS -- likely so, just be sure )
+	rDOCOL			,LI			' DOCOL ,				
+	rDOUSER			,LI			' DOUSER ,				
+	rDOCON			,LI			' DOCON ,				
+	rDOVAR			,LI			' DOVAR ,				
+	rDODOES			,LI			' DODOES ,
+	
+	\ Make tiny stacks
+	rSP				,STWP							( rSP				,LI			StdWS , )
+	rRP				,LI			StdWS $10 - ,
+	rUP				,LI			StdWS $20 - ,
+	&11				,LI			' COLD  cell+ ,
+	rDOCOL	*R		,B			\ normally BL, but we set up R11 for this
+	end-code		
+
+
+\ ................................
+
+' (reset)	@reset	!   
+' bye   	@BYE	!
+' cold  	@COLD	!
+
+has? TESTING? [IF] 
+TESTS!
+[THEN]
+
+\ assembly label table
+| &10 2* cells RamVar	ram-#labs
+' ram-#labs		TO 	#labs
+
+ramptr @  1- aligned  constant (RAM0)
+
+|+ #cell RamVar RAM
+
+\ align dictionary to a memory area, so memory images aren't often broken
+here $3ff +  $3ff INVERT and  @DP0        !
+
+has? GROM-DICT [if]
+0		   	@LATEST   !
+[else]
+latest   	@LATEST   !
+[THEN]
+
+
+\ make sure we're sane
+." # rom defers: " (#rdefers) . cr
+(#rdefers)	#maxrdefers  >= 	abort" Too many ROM defers -- bump #maxrdefers "
+
+hex
+here ." HERE = " u. cr
+@dp0 @ ." @DP0 = " u. cr
+@latest @  ." @latest = " u. cr
+up0 @ ." UP0 = " u. cr
+ramptr @ ." RAMPTR = " u. cr
+RamTop ." RAMTOP = " u. cr
+
+

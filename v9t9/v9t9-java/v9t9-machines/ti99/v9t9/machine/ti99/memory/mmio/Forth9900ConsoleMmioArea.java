@@ -119,7 +119,7 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	
 	@Override
 	public short readWord(IMemoryEntry entry, int addr) {
-		if (addr <= 0x40 || addr >= 0x100) {
+		if (addr <= 0x80 || addr >= 0x100) {
 			return bankedRomEntry != null ? bankedRomEntry.readWord(addr) : 0;
 		}
 		if (addr == GPLRA) {

@@ -4,6 +4,14 @@
     (SP0) (UP0) (RP0)   (REGS) 
 ;
 
+has? STANDALONE 0= [if]
+ 
+Code (COLD)
+	rTOS	VIDEO^		,XOP  	#v.init ,
+	rTOS	TERM^		,XOP  	#t.init ,
+end-code
+
+[then]
 
 : cold-init
     @DP0 @       	DP  !
@@ -27,4 +35,11 @@
     
     \ setup NMI interrupt
 	IntWS  ['] abort  $fffc  2!
+	
+[ has? STANDALONE 0= [if] ]
+	
+	\ reset system
+	(cold)
+	
+[ [then] ]
 ;

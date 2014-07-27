@@ -36,7 +36,7 @@ h07	data	7
 ;	Initialize video.  Defaults to text mode.
 ;
 
-vinit	  PUSH    SP, 0, 11
+xv_vinit	  PUSH    SP, 0, 11
 	
 	mov    #_VIDVARSTART, @vidvarstart
 	mov    #_VIDVARSIZE, @vidvarsize
@@ -53,7 +53,6 @@ vinit	  PUSH    SP, 0, 11
     clr     1
 	blwp   @vsetmode
 	bl     @vreset
-	;bl    @vrestoremode
 	bl     @vscreenon
 
 	POP    SP, 0, 11
@@ -663,7 +662,7 @@ vtts0:
 vreset
     PUSH SP,1,2,11    
     
-    bl @vtermsetup
+    ; bl 	@vtermsetup
     bl  @vcleartables
     
     movb @vidmode,1
@@ -726,7 +725,7 @@ vresetbitcommon:
 vresetout:
     clr     1
     bl      @vsetfont
-    bl      @termclear
+    ; bl      @termclear
     
     POP     SP,1,2,11
     rt
@@ -866,7 +865,7 @@ vsetfont1b
     swpb   0
     movb   0, @vheight
     
-    bl      @treset
+    bl      @xt_treset
 
 vsetfont2:    
     POP     SP,11

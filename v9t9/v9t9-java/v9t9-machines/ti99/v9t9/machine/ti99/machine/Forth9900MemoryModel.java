@@ -28,6 +28,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
+import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
@@ -61,6 +62,16 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 			return symb;
 		}
 
+		/* (non-Javadoc)
+		 * @see v9t9.engine.memory.MemoryEntry#findSymbol(java.lang.String)
+		 */
+		@Override
+		public Integer findSymbol(String name) {
+			Integer addr = super.findSymbol(name);
+			if (addr == null)
+				addr = bankedRomMemoryEntry.findSymbol(name);
+			return addr;
+		}
 		@Override
 		public Pair<String, Short> lookupSymbolNear(short addr,
 				int range) {
@@ -118,15 +129,15 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 		mmioEntry = new Forth9900ConsoleMemoryEntry("MMIO", CPU, 0x0000, 0x0400, mmioArea);
 	}
 	
-	private static MemoryEntryInfo f9900RomMemoryEntryInfo = MemoryEntryInfoBuilder
+	private static MemoryEntryInfo f9900ForthRomMemoryEntryInfo = MemoryEntryInfoBuilder
 		.wordMemoryEntry()
-		.withFilename("f9900rom.bin")
+		.withFilename("f9900rombank0.bin")
 		.withSize(-0x10000)
 		.create("Forth9900 Forth ROM");
 
 	private static MemoryEntryInfo f9900BankedRomMemoryEntryInfo = MemoryEntryInfoBuilder
 			.wordMemoryEntry()
-			.withFilename("f9900rombank.bin")
+			.withFilename("f9900rombank1.bin")
 			.withSize(-0x10000)
 			.create("Forth9900 CPU ROM Bank");
 
@@ -162,7 +173,7 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
     	try {
     		// get the FORTH ROM (biggest, bank #0)
 			cpuForthRomEntry = memory.getMemoryEntryFactory().newMemoryEntry(
-					f9900RomMemoryEntryInfo);
+					f9900ForthRomMemoryEntryInfo);
 			cpuForthRomEntry.load();
 			CPU.mapEntry(cpuForthRomEntry);
 			cpuForthRomEntry.copySymbols(CPU);
@@ -173,6 +184,21 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 			cpuRomBankEntry.load();
 			CPU.mapEntry(cpuRomBankEntry);
 			cpuRomBankEntry.copySymbols(CPU);
+			
+			// Get the meat of the ROM from the assembly bank
+			Integer endShared = cpuRomBankEntry.findSymbol("ForthROM");
+			if (endShared == null)
+				endShared = cpuRomBankEntry.findSymbol("_RESET");		// both symbols at same addr, one wins
+			if (endShared != null) {
+				boolean changed = false;
+				for (int addr = 0; addr < endShared; addr+=2) {
+					changed |= cpuForthRomEntry.patchWord(addr, cpuRomBankEntry.flatReadWord(addr));
+				}
+				if (changed) {
+					DiskMemoryEntry ent = (DiskMemoryEntry) cpuForthRomEntry;
+					ent.overwrite();
+				}
+			}
 			
 			memory.removeAndUnmap(cpuRomBankEntry);
 			memory.removeAndUnmap(cpuForthRomEntry);
@@ -197,7 +223,7 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 			
 			memory.addAndMap(mmioEntry);
     	} catch (IOException e) {
-    		reportLoadError(eventNotifier, f9900RomMemoryEntryInfo.getFilename(), e);
+    		reportLoadError(eventNotifier, f9900ForthRomMemoryEntryInfo.getFilename(), e);
     	}
 
     	loadGromAndGram(eventNotifier);
@@ -281,7 +307,7 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 	@Override
 	public MemoryEntryInfo[] getRequiredRomMemoryEntries() {
 		return new MemoryEntryInfo[] { 
-				f9900RomMemoryEntryInfo,
+				f9900ForthRomMemoryEntryInfo,
 				f9900GromMemoryEntryInfo,
 				f9900DiskGramMemoryEntryInfo,
 				};

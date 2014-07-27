@@ -69,6 +69,12 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 			return null;
 		return currentBank.lookupSymbol(addr);
 	}
+	@Override
+	public Integer findSymbol(String name) {
+		if (currentBank == null)
+			return null;
+		return currentBank.findSymbol(name);
+	}
 	
 	//@Override
 	//public MemoryArea getArea() {
