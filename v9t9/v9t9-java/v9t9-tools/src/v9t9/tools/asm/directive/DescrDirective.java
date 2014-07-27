@@ -13,6 +13,7 @@ package v9t9.tools.asm.directive;
 import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.IAssembler;
+import v9t9.tools.asm.SourceRef;
 
 /**
  * @author Ed
@@ -20,19 +21,15 @@ import v9t9.tools.asm.IAssembler;
  */
 public class DescrDirective extends Directive {
 
-	private final String content;
-	private final int line;
-	private final String filename;
+	private final SourceRef ref;
 
-	public DescrDirective(String filename, int line, String content) {
-		this.filename = filename;
-		this.line = line;
-		this.content = content;
+	public DescrDirective(SourceRef ref) {
+		this.ref = ref;
 	}
 
 	@Override
 	public String toString() {
-		return filename + ":" + line;
+		return ref.filename + ":" + ref.line;
 	}
 	
 	/* (non-Javadoc)
@@ -44,13 +41,20 @@ public class DescrDirective extends Directive {
 	}
 
 	public String getFilename() {
-		return filename;
+		return ref.filename;
 	}
 	public int getLine() {
-		return line;
+		return ref.lineno;
 	}
 	public String getContent() {
-		return content;
+		return ref.line;
+	}
+
+	/**
+	 * @return
+	 */
+	public SourceRef getRef() {
+		return ref;
 	}
 
 

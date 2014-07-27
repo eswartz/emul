@@ -132,6 +132,11 @@ public class BinaryOperand extends BaseOperand {
 		case '*': return (l * r);
 		case '/': if (r != 0) return (l / r); 
 			else throw new ResolveException(this, "Division by zero");
+		case '>': return (l > r) ? 1 : 0;
+		case '<': return (l < r) ? 1 : 0;
+		case '=': return (l == r) ? 1 : 0;
+		case '≤': return (l <= r) ? 1 : 0;
+		case '≥': return (l >= r) ? 1 : 0;
 		}
 		throw new IllegalStateException("unknown operation: " + (char)type);
 	}

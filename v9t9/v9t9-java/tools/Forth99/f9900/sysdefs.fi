@@ -114,7 +114,7 @@ $80        	constant   (#up)       \ global user space
 
 $28	      	constant	#maxrdefers		\ since we don't know ahead of time, make room for max # words
  
-|+ Workspaces  
+|+ _RAM 
 	(#RP) - (#SP) - 
 	(#numbuf) - (#slit-pad) - 
 	#TIB - (#blks) - 
@@ -135,36 +135,6 @@ RamTop							constant (first)    \ grows up
 TIB #TIB + (#rp) +				constant (rp0)    \ grows down
 (rp0) (#sp) +					constant (sp0)      \ grows down
 
-
-\ -----------   GROM addresses
-
-$0
-
-dup         constant    >grom_sig           2+
-dup         constant    >grom_dict          2+      \ note: build depends on this offset
-dup         constant    >grom_dictend       2+      \ note: build depends on this offset
-dup         constant    >grom_logo          2+
-dup         constant    >grom_kbdlist       2+
-dup         constant    >grom_font8x8       2+
-dup         constant    >grom_font5x6       2+
-dup         constant    >grom_errptrs       2+
-dup         constant    >grom_editorhelp    2+
-dup         constant    >grom_menubar       2+
-
-drop
-
-$4000       Constant    >gram_dict_base
-$8000       Constant    >gram_dict_end
-$8000       Constant    >gram_disk_base
-
-\ ----------    syscalls
-
-
-\ ---------     interrupt flag bits
-
-$80         constant    v-int-nosprmot
-$40         constant    v-int-nocursor
-$20         constant    v-int-noabort
 
 
 

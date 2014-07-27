@@ -11,7 +11,7 @@
 ;   this ROM, not div by 4 = bank 1 = FORTH ROM.)  (This method of switching
 ;   banks is a quite easy way to catch stray pointer accesses!)
 ;
-;   The two ROMs communicate with each other only through XOP 1.
+;   The two ROMs communicate with each other only through XOPs.
 ;   Interrupts may also be triggered in either ROM.  Thus, the workspaces
 ;   that XOP and FORTH use must be different, as must the interrupt 
 ;   workspace.  
@@ -19,21 +19,23 @@
 ;   The general style of the ROM is to use a small number of workspaces
 ;   and stacks (e.g. via Forth's SP and RP) for register management. 
 ;
-;   "StdWP" is used for startup and for FORTH operation thereafter.
-;   This ROM does not use that workspace again.
-;	"IntWP" is used for interrupt handling.
-;	"RomWP" is used for this ROM.  
+;   "StdWS" is used for startup and for FORTH operation thereafter.
+;   This ROM does not use that workspace again, except to fetch SP/RP.
+;	"IntWS" is used for interrupt handling.
+;	"RomWS" is used for this ROM.  
 ;
 
+	incl	f9900romequs.inc
+	incl	f9900gromequs.inc
+	
+	incl	regs.inc
+	incl	macros.inc
+
+	incl	ram.inc
+	
 ;==========================================================================
 ;	ROM start (must match f9900rom.f99)
 ;==========================================================================
-
-
-RomWP	equ	>FFA0
-StdWP	equ	>FFC0
-IntWP	equ	>FFE0
-
 	aorg	>0
 
 ; These addresses, when written, switch ROM to the given banks 
@@ -43,45 +45,19 @@ BANK1
 	equ 	>4						; this bank
 
 resetv		
-	dw		StdWP, >FFFF			; vector for RESET (filled in from @RESET)
+	dw		StdWS, >FFFF			; vector for RESET (filled in from @RESET)
 int1v		
-	dw		IntWP, B0_INT1PC		; vector for INTERRUPTS
+	dw		IntWS, B0_INT1PC		; vector for INTERRUPTS
 
-XOPS
- 	equ		>40
-xop0v		
-	dw		RomWP, xop0
-xop1v		
-	dw		RomWP, xop1
+; XOP vectors
 
-MMIO
- 	equ		>80
+	aorg	XOPS + (XOP_VIDEO * 4)
+	dw		RomWS, xop_video_ent
+	
+	aorg	XOPS + (XOP_TERM * 4)
+	dw		RomWS, xop_term_ent
 
-VDPRD	equ	MMIO + >00
-VDPST	equ	MMIO + >02
-VDPWD	equ	MMIO + >04
-VDPWA	equ	MMIO + >06       \ high then low
-VDPCL	equ	MMIO + >08
-VDPWI	equ MMIO + >0A
-
-GPLRD	equ	MMIO + >10
-GPLRA	equ	MMIO + >12       \ high then low
-GPLWD	equ	MMIO + >14
-GPLWA	equ	MMIO + >16
-
-SPCHRD	equ	MMIO + >18
-SPCHWT 	equ	MMIO + >1a
-
-SOUND	equ	MMIO + >20
-
-
-CRU
-	equ		>C0
-
-INTS	equ	CRU + >00
-INTSP	equ	CRU + >01
-
-;	------------------------------------------------------- shared with f9900rom.f99
+M_VDP		equ		>0400
 
 	aorg	>100
 	
@@ -94,6 +70,8 @@ INTSP	equ	CRU + >01
 ;   and R0 is a random seed ... just leave it so
 ;==========================================================================
 
+;	[[[[ ------------------------------------------------------- shared with f9900rom.f99
+
 	; shared entry for INT1
 B1_INT1PC
 	; not hit in this ROM, but matches Forth9900 ROM
@@ -104,134 +82,40 @@ B1_INT1PC
 intv_bank0
 	seto	@BANK0
 	RTWP
-	
-B0_INT1PC
-	limi	0		 	; disable interrupts
-	soc		@F_BANK1, R15 ; flag; mark that we're in bank1 on return
-	
-INT1PC
-	
-	; clr		r12			; point to 9901
-	; tb		2			; VDP interrupt?
-	movb	@INTSP, 0		; check interrupts
-	coc		@M_VDP, 0		; M_VDP set?
-	jeq		intvdp		; yup.
 
-;    tb      3           ; timer interrupt?
-;    jeq     $1+         ; nope, must be device
-;
-;    sbo     3           ; acknowledge
-;    
-;    mov     @timerisr, 3 ; does user hook the timer?
-;    jeq     $1+
-;    
-;    bl      *3          ; call user handler
-;    jmp     int1out
-;
-; $1:     
-;    ; device interrupt (some other bit)
-;
-;	lwpi	>83e0      	
-;	lwpi	intws
-	jmp		int1out		; don't handle device interrupts yet
+;	]]]] ------------------------------------------------------- end shared content
 
-intvdp:
-	; sbo	    2			; acknowledge VDP interrupt
-	szcb	@M_VDP, @INTSP
+	incl	int_video.inc
+
+; -----------
 	
-    movb    @VDPST, 3   ; acknowledge #2
-;     
-; 	inc		@uptime + 2	; time in 1/60 seconds
-; 	jnc		intv00		; overflow?
-;    	inc		@uptime	 	; more time accuracy
+;	
+;	Terminal services XOP entry
 ;
-; intv00:	
-;     movb    @vintflags,3    ; check our commands
-;     sla     3,1             ; suppress blinking/blanking?
-;    joc     intv01
-; 
-;     ; ----------------------- blink/blank
-;         
-; 	inct	@timeout	    ; blank screen?
-; 	jne		intv00b
-; 
-; 	bl     	@vscreenoff 
-; 
-; intv00b:
-; 	li		0,vcrstimer
-; 	ab		#1,*0			; cursor timer
-; 	cb		*0,@vcrsblink	; to blink or not to blink?
-; 	jl		intv01
-; 
-; 	sb		*0,*0			; clear
-; 	mov		@vcursor,0		; get ptr
-; 	blwp	*0				; blink it
-; 
-; intv01:
-;     sla     3,1             ; suppress keyboard scan?
-;     joc     intv02
-; 
-;     ; ----------------------- keyboard scan
-;    
-;     ab      #1,@kbdtimer    ; inc repeat delay
-;     bl      @scankbd        ; get keyboard, save char       TRASHES REGS
-; 
-; intv02:
-;     movb    @vintflags, 3   ; kbd trashed, so reread
-;     sla     3,3
-;     joc     intv03          ; suppress sprite motion?
-;     
-;     mov     @vsprmot, 0
-;     jeq     intv03          ; skip if no sprite motion table
-;     
-;     movb    @nsprmot, 0     ; or no sprites
-;     jeq     intv03
-;     
-;     blwp    @vspritemotion
-;     
-; intv03:
-;     sla     3,1
-;     joc     intv04          ; sound list?
-; 
-;     ; ------------------------ play sound list
-;     
-;     mov     @sndlist, 0
-;     jeq     intv04
-;     
-;     blwp    @soundlist
-;     
-; intv04:    
-;    blwp    @sound_sequencer
-;     
-;     ; ----------------------- user interrupt?
-;     
-; 	mov		@userint,0		
-; 	jeq		intv05
-; 
-; 	bl		*0				; execute user interrupt routine
-; 	lwpi	intws
-; 
-intv05:
-
-int1out:
-    ;movb    #>00, @VDPWA    ; point to SR0     ; the client must guarantee this
-    ;movb    #>8f, @VDPWA
-;	movb	@VDPST, @vstatus ; clear interrupt
-	movb	@VDPST, @VDPST ; clear interrupt
-
-	; restore bank
-	coc		@F_BANK1, R15
-	jne		intv_bank0
+;	R12: pointer to operand
+;	*R14+: command (word)
+;
+xop_term_ent
 	
-	; stay in bank 2
 	RTWP
 	
+	incl	term.inc
+	
 
-F_BANK1		data	>0100
-M_VDP		data	>0400
-
-xop0
+;
+; 	Video services XOP entry
+;
+;	R12: pointer to operand
+;	*R14+: command (word)
+;	
+xop_video_ent
 	RTWP
-xop1
-	RTWP
+	
+	incl	video.inc
+	
+	assert	_SharedEnd <= _WPs
+	assert	_RAMEND >= _RAM		; not overflowed 
+	assert	_RAMEND <= _Shared	; not overflowed
+	
+	consttable
 	

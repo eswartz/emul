@@ -20,6 +20,8 @@
 ;
 ;	$Id: nforth.gsm,v 1.7 2008-12-18 20:46:07 ejs Exp $
 
+	incl	../f9900/asm/f9900gromequs.inc
+
 	aorg	>0
 
 start	equ	$

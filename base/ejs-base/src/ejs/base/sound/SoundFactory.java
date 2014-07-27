@@ -39,9 +39,6 @@ public class SoundFactory {
 		return new JavaSoundListener(100);
 	}
 
-	/**
-	 * @return
-	 */
 	private static boolean isPulseRunning() {
 		ProcessBuilder pb = new ProcessBuilder("pulseaudio", "--check");
 		Process process;
@@ -55,4 +52,5 @@ public class SoundFactory {
 			return false;
 		}
 	}
+
 }

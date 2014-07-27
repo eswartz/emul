@@ -8,28 +8,21 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-\   ROM Memory layout -- must match f9900rom.tsm
+\   ROM Memory layout
 
 0 <export
 
-$0040		constant	XOPS
-$0080       constant    MMIO
-$00C0		constant	CRU
+include		f9900romequs.fi
+include		f9900gromequs.fi
 
-$0100		constant	SHARED
 
-$0110       constant    ROM
+SHARED $10 +    constant    ROM
 
-ROM 0 +     constant    @RESET
-ROM 2 +     constant    @COLD
-ROM 4 +     constant    @BYE
-ROM 6 +     constant    @DP0
-ROM 8 +     constant    @LATEST
-
-$ff9c       constant    Workspaces \ ... 0x60 -> $fffc, with room for NMI
-	Workspaces $00 + 	constant RomWP
-	Workspaces $20 + 	constant StdWP
-	Workspaces $40 + 	constant IntWP
+ROM 0 +			constant    @RESET
+ROM 2 +     	constant    @COLD
+ROM 4 +     	constant    @BYE
+ROM 6 +     	constant    @DP0
+ROM 8 +     	constant    @LATEST
 
 export>
 
@@ -40,9 +33,9 @@ export>
 0			dp!
 
 \ int vecs
-StdWP ,  ' (RESET) ,
+StdWS ,  ' (RESET) ,
 
-IntWP ,  SHARED ,	
+IntWS ,  SHARED ,	
 
 \ ................................
 
@@ -400,9 +393,9 @@ Code (RESET)
 	rDODOES			,LI			' DODOES ,
 	
 	\ Make tiny stacks
-	rSP				,LI			StdWP ,
-	rRP				,LI			StdWP $10 - ,
-	rUP				,LI			StdWP $20 - ,
+	rSP				,LI			StdWS ,
+	rRP				,LI			StdWS $10 - ,
+	rUP				,LI			StdWS $20 - ,
 	&11				,LI			' COLD  cell+ ,
 	rDOCOL	*R		,B			\ normally BL, but we set up R11 for this
 	end-code		
