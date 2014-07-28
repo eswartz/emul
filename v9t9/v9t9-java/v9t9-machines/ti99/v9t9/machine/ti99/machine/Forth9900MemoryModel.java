@@ -217,7 +217,7 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 			bankedRomMemoryEntry = new MultiBankedMemoryEntry(settings, memory, "Forth/ROM Bank",  
 					new IMemoryEntry[] { cpuForthRomEntry, cpuRomBankEntry });
 					
-			mmioArea.setBankedRomEntry(bankedRomMemoryEntry);
+			mmioArea.setUnderlyingRomEntry(bankedRomMemoryEntry);
 			
 			memory.addAndMap(bankedRomMemoryEntry);
 			

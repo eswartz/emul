@@ -12,7 +12,7 @@ package v9t9.machine.ti99.memory.mmio;
 
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.memory.MultiBankedMemoryEntry;
+import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.f99b.machine.InternalCruF99;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
@@ -58,15 +58,15 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 
 	private final IMachine machine;
 
-	private MultiBankedMemoryEntry bankedRomEntry;
+	private IMemoryEntry underlyingRomEntry;
 		
 	public Forth9900ConsoleMmioArea(IMachine machine) {
 		super(0);
 		this.machine = machine;
     };
     
-	public void setBankedRomEntry(MultiBankedMemoryEntry bankedRomEntry) {
-		this.bankedRomEntry = bankedRomEntry;
+	public void setUnderlyingRomEntry(IMemoryEntry bankedRomEntry) {
+		this.underlyingRomEntry = bankedRomEntry;
 	}
     
     @Override
@@ -78,8 +78,9 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
     public void writeByte(IMemoryEntry entry, int addr, byte val) {
 		if (addr < MMIO) {
 			int bankIdx = addr / 4;
-			if (bankedRomEntry != null && bankIdx < bankedRomEntry.getBankCount()) {
-				bankedRomEntry.selectBank(bankIdx);
+			if (underlyingRomEntry instanceof BankedMemoryEntry && 
+					bankIdx < ((BankedMemoryEntry) underlyingRomEntry).getBankCount()) {
+				((BankedMemoryEntry) underlyingRomEntry).selectBank(bankIdx);
 				return;
 			}
 		}
@@ -90,8 +91,9 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
     public void writeWord(IMemoryEntry entry, int addr, short val) {
 		if (addr < MMIO) {
 			int bankIdx = addr / 4;
-			if (bankedRomEntry != null && bankIdx < bankedRomEntry.getBankCount()) {
-				bankedRomEntry.selectBank(addr / 4);
+			if (underlyingRomEntry instanceof BankedMemoryEntry && 
+					bankIdx < ((BankedMemoryEntry) underlyingRomEntry).getBankCount()) {
+				((BankedMemoryEntry) underlyingRomEntry).selectBank(addr / 4);
 				return;
 			}
 		}
@@ -112,7 +114,7 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	@Override
 	public byte readByte(IMemoryEntry entry, int addr) {
 		if (addr <= 0x40 || addr >= 0x100) {
-			return bankedRomEntry != null ? bankedRomEntry.readByte(addr) : 0;
+			return underlyingRomEntry != null ? underlyingRomEntry.readByte(addr) : 0;
 		}
 		return readMmio(addr);
 	}
@@ -120,7 +122,7 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	@Override
 	public short readWord(IMemoryEntry entry, int addr) {
 		if (addr <= 0x80 || addr >= 0x100) {
-			return bankedRomEntry != null ? bankedRomEntry.readWord(addr) : 0;
+			return underlyingRomEntry != null ? underlyingRomEntry.readWord(addr) : 0;
 		}
 		if (addr == GPLRA) {
 			byte hi = readByte(entry, addr);

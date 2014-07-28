@@ -56,6 +56,10 @@ public class Forth9900StandaloneMemoryModel extends BaseTI994AMemoryModel {
 
 	private IMemoryEntry cpuRomEntry;
 
+	private Forth9900ConsoleMmioArea mmioArea;
+
+	private IMemoryEntry mmioEntry;
+
 	public Forth9900StandaloneMemoryModel(IMachine machine) {
 		super(machine);
 	}
@@ -79,8 +83,8 @@ public class Forth9900StandaloneMemoryModel extends BaseTI994AMemoryModel {
 	}
 	
 	protected void defineMmioMemory(IBaseMachine machine) {
-		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0x0000, 0x0400,
-                new Forth9900ConsoleMmioArea((IMachine) machine)));
+		mmioArea = new Forth9900ConsoleMmioArea((IMachine) machine);
+		mmioEntry = new MemoryEntry("MMIO", CPU, 0x0000, 0x0400, mmioArea);
 	}
 	
 	private static MemoryEntryInfo f99bRomMemoryEntryInfo = MemoryEntryInfoBuilder
@@ -89,7 +93,7 @@ public class Forth9900StandaloneMemoryModel extends BaseTI994AMemoryModel {
 		.withSize(-0x10000)
 		.create("Forth9900 CPU ROM");
 
-	private static String FORTH_GROM = "f9900grom.bin";
+	private static String FORTH_GROM = "f9900grom_s.bin";
 	
 	private static MemoryEntryInfo f9900GromMemoryEntryInfo = MemoryEntryInfoBuilder
 		.standardConsoleGrom(FORTH_GROM)
@@ -124,18 +128,23 @@ public class Forth9900StandaloneMemoryModel extends BaseTI994AMemoryModel {
 			cpuRomEntry.load();
 			cpuRomEntry.copySymbols(CPU);
 			
-			// shrink RAM accordingly
-			int st = cpuRomEntry.getAddr() + 0x400 * ((cpuRomEntry.getSize() + 0x3ff) / 0x400);
-			int sz = 0x10000 - st;
-			
 			memory.removeAndUnmap(cpuRomEntry);
 			memory.removeAndUnmap(consoleEntry);
 			
+			// Make the RAM area for the Forth RAM dictionary/etc., 
+			// which lives on the area boundary past the Forth ROM 
+			int st = cpuRomEntry.getAddr() + 0x400 * ((cpuRomEntry.getSize() + 0x3ff) / 0x400);
+			int sz = 0x10000 - st;
+
 			consoleEntry = new MemoryEntry("64K RAM", CPU, 
 					st, sz, new EnhancedRamByteArea(0, sz));
 			memory.addAndMap(consoleEntry);
 			
+			mmioArea.setUnderlyingRomEntry(cpuRomEntry);
+			
 			memory.addAndMap(cpuRomEntry);
+
+			memory.addAndMap(mmioEntry);
     	} catch (IOException e) {
     		reportLoadError(eventNotifier, f99bRomMemoryEntryInfo.getFilename(), e);
     	}

@@ -25,11 +25,11 @@ ForthROM  	  	dp!
 \ 	reset address @RESET
 0  ,
 
-\ 	bye address @BYE
-0  ,
-
 \   cold address @COLD
 0 ,
+
+\ 	bye address @BYE
+0  ,
 
 \   initial dictionary @DP0
 0 ,

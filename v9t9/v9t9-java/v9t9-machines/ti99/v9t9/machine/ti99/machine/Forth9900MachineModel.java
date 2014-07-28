@@ -38,7 +38,7 @@ import v9t9.machine.f99b.machine.InternalCruF99;
 import v9t9.machine.ti99.cpu.Cpu9900;
 
 /**
- * This is a machine model for F99b
+ * This is a machine model for Forth on a 9900 with alternate peripherals
  * @author ejs
  *
  */
