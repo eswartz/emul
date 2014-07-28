@@ -191,8 +191,23 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 				endShared = cpuRomBankEntry.findSymbol("_RESET");		// both symbols at same addr, one wins
 			if (endShared != null) {
 				boolean changed = false;
+				short prevValue = 0;
+				boolean invertSoc = false;
 				for (int addr = 0; addr < endShared; addr+=2) {
-					changed |= cpuForthRomEntry.patchWord(addr, cpuRomBankEntry.flatReadWord(addr));
+					short value = cpuRomBankEntry.flatReadWord(addr);
+					if (prevValue == 0x720) { // SETO @>
+						//String sym= cpuRomBankEntry.lookupSymbol((short) (addr - 2));
+						if (value == 4) {		// we're in bank 0
+							invertSoc = true;
+						}
+					} else if (invertSoc && value == (short) 0xe3e0) {	// SOC @>...,R15
+						value = 0x43e0;	// SZC @>...,R15
+						invertSoc = false;
+					} else {
+						invertSoc = false;
+					}
+					changed |= cpuForthRomEntry.patchWord(addr, value);
+					prevValue = value;
 				}
 				if (changed) {
 					DiskMemoryEntry ent = (DiskMemoryEntry) cpuForthRomEntry;

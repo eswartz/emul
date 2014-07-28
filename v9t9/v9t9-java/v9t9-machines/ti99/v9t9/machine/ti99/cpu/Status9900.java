@@ -172,7 +172,9 @@ public class Status9900 implements IStatus {
             }
         }
         lastparity = (byte) ((stat & Status9900.ST_P) != 0 ? 1 : 0);
-        bits = (short) ((bits & ~(ST_INTLEVEL + ST_C + ST_O + ST_X)) | (stat & ST_INTLEVEL + ST_C + ST_O + ST_X));
+        
+        // preserve reserved bits, e.g. for Forth9900 and its "bank" flag
+        //bits = (short) ((bits & ~(ST_INTLEVEL + ST_C + ST_O + ST_X)) | (stat & ST_INTLEVEL + ST_C + ST_O + ST_X));
     }
 
     /*

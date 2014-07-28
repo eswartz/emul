@@ -1,4 +1,32 @@
 
-DEFER	EMIT	( c -- )
-DEFER	KEY		( -- k )
-DEFER	KEY?	( -- f )
+
+: core-TYPE  ( caddr n -- )
+    0 ?do 
+        dup c@ emit 1+
+    loop
+    drop
+;
+' core-TYPE		TO TYPE
+
+[IFUNDEF] BL
+$20 constant BL
+[THEN]
+
+[IFUNDEF] CR
+: CR
+    $0D emit
+;
+[THEN]
+
+
+[IFUNDEF] SPACE
+: SPACE
+    bl emit
+;
+[THEN]
+
+[IFUNDEF] SPACES
+: SPACES
+    0 max 0 ?do bl emit loop
+;
+[THEN]

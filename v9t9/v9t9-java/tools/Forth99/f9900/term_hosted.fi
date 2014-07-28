@@ -1,6 +1,6 @@
 
 | Code rom-EMIT ( ch -- )
-	rTOS	TERM^		,XOP  	#t.tty ,
+	rTOS		TERM^	,XOP  	#t.tty ,
 	
 	rTOS				,SWPB
 	rTOS		@>		,MOVB	'DBG ,

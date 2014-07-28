@@ -108,41 +108,8 @@ user hld            \ address of number pad
 [THEN]
 test" . -640 . true"
 
-[IFUNDEF] BL
-$20 constant BL
-[THEN]
-
-[IFUNDEF] CR
-: CR
-    $0D emit
-;
-[THEN]
-
-
-[IFUNDEF] SPACE
-: SPACE
-    bl emit
-;
-[THEN]
-
-[IFUNDEF] SPACES
-: SPACES
-    0 max 0 ?do bl emit loop
-;
-[THEN]
-
 [IFUNDEF] U.
 : U.
     0 u.r space
 ;
 [THEN]
-
-[IFUNDEF] TYPE
-: TYPE  ( caddr n -- )
-    0 ?do 
-        dup c@ emit 1+
-    loop
-    drop
-;
-[THEN]
-

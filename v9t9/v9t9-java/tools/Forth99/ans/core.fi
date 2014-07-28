@@ -29,6 +29,11 @@ DEFER	SOURCE
 DEFER	."			immediate  target-only
 
 \ Block / Terminal
+DEFER	EMIT	( c -- )
+DEFER	KEY		( -- k )
+DEFER	KEY?	( -- f )
+DEFER 	TYPE	( caddr len -- )
+
 DEFER	REFILL
 DEFER	ACCEPT
 \ DEFER	\			target-only
@@ -66,7 +71,6 @@ include core_prims.fi
 include core_strings.fi
 include core_output.fi
 include core_input.fi
-include core_terminal.fi
 include core_dict.fi
 include core_abort.fi
 include core_interp.fi

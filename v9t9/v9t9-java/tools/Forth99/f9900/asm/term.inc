@@ -344,9 +344,10 @@ bell:
 ;
 ;  Print a message, interpreting the chars
 ;   
-;  args: message-ptr, length
+;  R2: message-ptr
+;  R3: length
 ;
-xt_type
+type
 	PUSH    SP,11
 	
 	mov		*12+, 2

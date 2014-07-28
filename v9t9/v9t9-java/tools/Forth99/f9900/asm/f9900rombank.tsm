@@ -83,7 +83,6 @@ Int_Return_Bank0
 	
 B1_int_reset
 	seto	@BANK1				; switch to ROM bank 
-	soc		#F_BANK1, R15		; flag; mark that we're in bank1 on return
 	jmp		int_reset
 B1_int_reset_exit	
 	seto	@BANK0
