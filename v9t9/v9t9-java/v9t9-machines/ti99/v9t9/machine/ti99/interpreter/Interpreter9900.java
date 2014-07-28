@@ -727,12 +727,6 @@ public class Interpreter9900 implements IInterpreter {
         case InstTableCommon.Idbg:
         	machine.getExecutor().debugCount(iblock.val1 == 0 ? 1 : -1);
         	break;
-        case InstTableCommon.Iemitchar:
-        	System.out.print((char) iblock.val1);
-        	System.out.flush();
-        	break;
-        	
-        	
         }
     }
     

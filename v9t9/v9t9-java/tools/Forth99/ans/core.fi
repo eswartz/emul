@@ -70,6 +70,7 @@ DEFER	name,		( "name" -- )
 include core_prims.fi
 include core_strings.fi
 include core_output.fi
+include core_terminal.fi
 include core_input.fi
 include core_dict.fi
 include core_abort.fi

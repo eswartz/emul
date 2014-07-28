@@ -44,7 +44,7 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	public static final int SPCHRD = MMIO + 0x1A;
 	
 	// character outlet
-	public static final int DBG = MMIO + 0x3F;
+	public static final int DBG = MMIO + 0x7F;
 	
 	public static final int SOUND = MMIO + 0x20;	// for 0x20
 	
@@ -157,6 +157,7 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	    		
 	    	case DBG:
 	    		System.out.print((char) val);
+	    		System.out.flush();
 	    		break;
     		default:
     			if (addr >= CRU_BASE && addr < CRU_END) {

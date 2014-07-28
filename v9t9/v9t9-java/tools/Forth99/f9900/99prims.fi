@@ -718,8 +718,9 @@ Code (S")
 	rTMP		rIP			,MOV				
 	end-code
 					
-Code (EMITCHAR)
-	rTOS		,EMITCHAR
+Code (DBG)
+	rTOS					,SWPB
+	rTOS		@>			,MOVB	'DBG ,
 	POP
 	end-code
 	

@@ -391,7 +391,7 @@ public class InstTable9900 {
 		InstBuilder.from("dsr", InstTableCommon.Idsr, 0x0c00, OFF_NONE, 0xcff).register();
 		InstBuilder.from("kysl", InstTableCommon.Ikysl, 0x0d40, NONE_NONE, 0xd40).register();
 		InstBuilder.from("ticks", InstTableCommon.Iticks, 0x0d60, REG_NONE, 0xd60).register();
-		InstBuilder.from("emitchar", InstTableCommon.Iemitchar, 0x0dc0, REG_NONE, 0xdcf).register();
+//		InstBuilder.from("emitchar", InstTableCommon.Iemitchar, 0x0dc0, REG_NONE, 0xdcf).register();
 		InstBuilder.from("dbg", InstTableCommon.Idbg, 0x0de0, NONE_NONE, 0xde0).register();
 		InstBuilder.from("dbgf", InstTableCommon.Idbgf, 0x0de1, NONE_NONE, 0xde1).register();
 
@@ -955,11 +955,11 @@ public class InstTable9900 {
                 mop1.val = (byte) (op & 0xf);
     			break;
   			// 0xdC0
-    		case 14:			/* EMITCHAR */
-    			inst.setInst(InstTableCommon.Iemitchar);
-    			mop1.type = MachineOperand9900.OP_REG;
-                mop1.val = (byte) (op & 0xf);
-    			break;
+//    		case 14:			/* EMITCHAR */
+//    			inst.setInst(InstTableCommon.Iemitchar);
+//    			mop1.type = MachineOperand9900.OP_REG;
+//                mop1.val = (byte) (op & 0xf);
+//    			break;
     		// 0xde0
     		case 15:			/* DBG, -DBG */
     			inst.setInst(InstTableCommon.Idbg);
@@ -967,7 +967,9 @@ public class InstTable9900 {
     			mop1.val = (byte) (op & 0xf);
     			break;
     			
-            // TODO: extended instructions
+			default:
+				// TODO: other extended instructions
+				assert false;
             }
     
         } else if (op < 0x2000) {

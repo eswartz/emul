@@ -136,7 +136,7 @@ $0B00	(R	(C	inst2':	,SRC
 \ $0C00	(C		 inst1:	,DSR			\ v9t9
 \ $0D40			 inst0:	,KYSL		\ v9t9
 \ $0D60	(R		 inst1:	,TICKS		\ v9t9
-$0DC0	(R		 inst1:	,EMITCHAR	\ v9t9
+\ $0DC0	(R		 inst1:	,EMITCHAR	\ v9t9
 \ $0DE0			 inst0:	,DBG			\ v9t9
 \ $0DE1			 inst0:	,-DBG		\ v9t9
 
