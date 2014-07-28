@@ -91,14 +91,17 @@ B1_int_reset_exit
 	RTWP
 	
 B1_int_1
-	BankedIntHandler	int_1
+	BankedIntHandler
+	jmp		int_1
 
 	; shared entry for XOP
 B1_xop_term_ent
-	BankedIntHandler	xop_term_ent
+	BankedXopHandler
+	b		@xop_term_ent
 
 B1_xop_video_ent
-	BankedIntHandler	xop_video_ent
+	BankedXopHandler	
+	b		@xop_video_ent
 	
 ;	]]]] ------------------------------------------------------- end shared content
 
@@ -165,7 +168,7 @@ sinit
 ;==========================================================================
 
 xop_term_tbl
-	dw		xt_tinit, xt_emitchar 
+	dw		xt_tinit, xt_emitchar, xt_drawchar
 xop_term_tbl_end equ	$
 
 xop_term_ent

@@ -1,6 +1,4 @@
 
-DEFER	THROW	( k*x n -- k*x | i*x n )
-DEFER	CATCH	( i*x xt -- j*x 0 | i*x n )
 
 [IFUNDEF] ABORT
 
@@ -23,5 +21,4 @@ DEFER	CATCH	( i*x xt -- j*x 0 | i*x n )
 : ?throw ( t|f code -- )
     swap 0<> swap  AND  throw
 ;
-
 

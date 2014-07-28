@@ -35,10 +35,3 @@
 ; immediate  target-only
 
 ' unhosted-S"		TO S"
-
-[IFUNDEF] ."
-: ."
-    postpone s"
-    type
-;    immediate target-only
-[THEN]

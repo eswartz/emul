@@ -106,12 +106,15 @@ wyhiokay:
 	rt
 
 
-;	(Called from XOP)
 ;
 ;	Print a character.
 ;
+xt_drawchar
+	mov		*12, 1
+	swpb	1
+	
 ;	hi(R1) = char
-
+;
 printchar PUSH  SP, 11
 	bl	    @vcursoroff			; we're movin', buddy!
 
@@ -313,8 +316,10 @@ clreol  PUSH    SP, 0, 2, 3, 11
 ;	args: char (byte)
 ;
 xt_emitchar
-	movb	*12, 1
-	
+	mov		*12, 1
+	swpb	1
+		
+emitchar
     cb      1,#>0d           ; enter?
     jeq     crlf
 
@@ -344,8 +349,8 @@ bell:
 xt_type
 	PUSH    SP,11
 	
-	movb	*12+, 2
-	movb	*12, 3
+	mov		*12+, 2
+	mov		*12, 3
 	
     ai      SP,-4		; save regs
 $1: mov     3,3

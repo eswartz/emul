@@ -154,7 +154,7 @@ vfetchfontchar
     srl     0,8
     sla     0,3
     a       @vfont,0
-    bl      @gwaddr             ; set GROM addr
+    mov 	0, @GPLWA
     
     movb    @vbsize+1,11
     srl     11,8

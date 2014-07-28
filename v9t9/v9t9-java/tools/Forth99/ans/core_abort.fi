@@ -25,8 +25,13 @@
 \   perform an implementation-defined abort sequence that includes the
 \   function of ABORT.
 
+
     postpone s"
-    (ABORT")
+    state @ if
+        postpone (abort")
+    else
+        (abort")
+    then
 ; immediate  target-only
 
 ' core-ABORT"	TO ABORT"

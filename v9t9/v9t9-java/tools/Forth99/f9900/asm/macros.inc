@@ -19,9 +19,9 @@ ${label}_entry:
  define XopHandler table [
  	limi 0
  	
- 	clr 1
- 	mov *14+, 1
- 	srl 1, 7
+ 	mov 11, 12
+ 	
+ 	a 1, 1
  	ci 1, (${table}_end - ${table})
  	jhe $
  	
@@ -32,10 +32,12 @@ ${label}_entry:
  	b @Int_Return
 ]
 
- define BankedIntHandler ent [
+ define BankedIntHandler [
 	seto	@BANK1				; switch to ROM bank 
 	soc		#F_BANK1, R15		; flag; mark that we're in bank1 on return
-	b		@${ent}
- 
 ]
  
+ define BankedXopHandler [
+	mov		*14+, 1
+	BankedIntHandler
+] 

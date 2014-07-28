@@ -7,7 +7,7 @@
 <listEntry value="1"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.gui.Emulator"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--machine Forth9900 --client ConsoleOnly --test"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--machine Forth9900 --test"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="v9t9-gui"/>
 <stringAttribute key="yk-options" value="&#10;additional-options2=onexit\=snapshot&#10;startup=6&#10;"/>
 </launchConfiguration>

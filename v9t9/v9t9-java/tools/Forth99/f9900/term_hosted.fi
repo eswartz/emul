@@ -1,0 +1,21 @@
+
+| Code rom-EMIT ( ch -- )
+	rTOS	TERM^		,XOP  	#t.tty ,
+	
+	rTOS				,SWPB
+	rTOS		@>		,MOVB	'DBG ,
+	POP
+end-code
+
+' rom-EMIT 	TO EMIT
+
+| : rom-KEY ( --  k )
+	HANG
+;
+' rom-KEY 		TO KEY
+
+| : rom-KEY? ( --  f )
+	false
+;
+' rom-KEY? 	TO KEY?
+

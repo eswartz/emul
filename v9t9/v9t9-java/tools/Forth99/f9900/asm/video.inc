@@ -183,27 +183,13 @@ vpageout:
 ;=========================================================================
 
 
-;	Set GROM write addr in R0
-;
-
-gwaddr	movb	0,@GPLWA
-	swpb	0
-	movb	0,@GPLWA
-	swpb	0
-	rt
-
-
-
 ;	Set VDP write/read addr in R0.
 ;   These are legacy versions which assume that the 
 ;   address is pre-masked to the 0->3FFF range.
 
 vwaddr	ori	0,>4000
 vraddr
-	swpb	0
-	movb	0,@VDPWA
-	swpb	0
-	movb	0,@VDPWA
+	mov		0,@VDPWA
 	andi    0,>3fff
 	rt
 	
@@ -273,9 +259,9 @@ vclr	dect SP
 
 ;    bl  @vsetbank  ; let caller do it
 	bl	@vwaddr
-vclr0	movb	1,@VDPWD
+_vclr0	movb	1,@VDPWD
 	dec	2
-	jne	vclr0
+	jne	_vclr0
 	
 	mov	*SP+,2
 	mov	*SP+,11
@@ -662,7 +648,7 @@ vtts0:
 vreset
     PUSH SP,1,2,11    
     
-    ; bl 	@vtermsetup
+    bl 	@vtermsetup
     bl  @vcleartables
     
     movb @vidmode,1
@@ -819,7 +805,14 @@ vsetfont PUSH SP,11
     
     mov    *1+, @vbsize
     mov    *1, 0
-    mov    0,@vfont
+    
+    mov    0, @GPLWA
+    movb   @GPLRD, 0
+    swpb   0
+    movb   @GPLRD, 0
+    swpb   0
+    
+    mov    0, @vfont
 
     cb     #M_bit, @vidmode
     jeq    vsetfont1
@@ -827,7 +820,7 @@ vsetfont PUSH SP,11
     jeq    vsetfont1
     
 vsetfont0:
-    bl      @gwaddr
+    mov 	0, @GPLWA
 
     mov     @vpatts, 0
     a       @vtextpage, 0

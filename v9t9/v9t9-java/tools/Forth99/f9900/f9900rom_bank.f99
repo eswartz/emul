@@ -67,7 +67,7 @@ include syscomp.fi
 include 9900.fi	
 
 include ../ans/core.fi
-include ../ans/core_unhosted.fi
+\ include ../ans/core_unhosted.fi
 include ../ans/core_accept_simple.fi
 include ../ans/core-ext.fi
 
@@ -77,6 +77,8 @@ include ../ans/exception_minimal.fi
 include ../v9t9/strings.fi
 
 include ../ans/tools.fi
+
+include term_hosted.fi
 
 include cold.fi
 

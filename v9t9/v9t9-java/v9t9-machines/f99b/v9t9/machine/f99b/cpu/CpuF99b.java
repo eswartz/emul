@@ -148,10 +148,10 @@ public class CpuF99b extends CpuBase {
     @Override
 	public final boolean doCheckInterrupts() {
     	// do not allow interrupts after some instructions
-	    if (noIntCount > 0) {
-	    	noIntCount--;
-	    	return false;
-	    }
+//	    if (noIntCount > 0) {
+//	    	noIntCount--;
+//	    	return false;
+//	    }
 	    
 	    vdp.syncVdpInterrupt(machine);
 	    

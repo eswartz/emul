@@ -1,17 +1,12 @@
-
-\   string words
+\
+\   STRING words
+\
 
 [IFUNDEF] COUNT 
 : COUNT  ( cstr -- caddr len )
     dup c@ swap 1+ swap
 ;
 [THEN]
-
-
-
-\
-\   STRING words
-\
 
 [IFUNDEF] CMOVE
 \ : CMOVE

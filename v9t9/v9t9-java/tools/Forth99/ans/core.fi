@@ -8,53 +8,12 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
-\ ANS Forth CORE Words
-
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 | #cell RamVar (numbuf)
 | #cell RamVar (spad)
 
-\ -----------------------------------------
-
-\   kernel.fs                   -- FORTH kernel
-\
-\   (c) 1996-2009 Edward Swartz
-\
-\   This program is free software; you can redistribute it and/or modify
-\   it under the terms of the GNU General Public License as published by
-\   the Free Software Foundation; either version 2 of the License, or
-\   (at your option) any later version.
-\ 
-\   This program is distributed in the hope that it will be useful, but
-\   WITHOUT ANY WARRANTY; without even the implied warranty of
-\   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-\   General Public License for more details.
-\ 
-\   You should have received a copy of the GNU General Public License
-\   along with this program; if not, write to the Free Software
-\   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-\   02111-1307, USA.  
-\
-\   $Id: kernel.fs,v 1.19 2009-01-11 17:46:42 ejs Exp $
-
-\
-\   Core words
-\
-
-\   Core words.  If primitives have been defined, these are not used.
-
-\   ! # #> #S ' ( * */ */MOD + +! +LOOP , - . ." / /MOD 
-\   0< 0= 1+ 1- 2! 2* 2/ 2@ 2drop 2dup 2over 2swap :
-\   ; < <# = > >body >in >number >r ?dup @ abort abort"
-\   abs accept align aligned allot and base begin bl c! c,
-\   c@ cell+ cells char char+ chars constant count cr create
-\   decimal depth do does> drop dup else emit environment?
-\   evaluate execute exit fill find fm/mod here hold i if
-\   immediate invert j key leave literal loop lshift m* max min
-\   mod move negate or over postpone quit r> r@ recurse
-\   repeat rot rshift s" s>d sign source space spaces state
-\   swap then type u. u< um* um/mod unloop until variable
-\   while word xor [ ['] [char] ] 
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 \ 	Define deferrals for words that change among wordsets.
 \	The concept is, a DEFER'ed word is a vector to another word.
@@ -78,6 +37,9 @@ DEFER	ACCEPT
 DEFER	ABORT
 DEFER	ABORT"		target-only
 
+DEFER	THROW	( k*x n -- k*x | i*x n )
+DEFER	CATCH	( i*x xt -- j*x 0 | i*x n )
+
 \ File
 \ DEFER	(			immediate  target-only
 DEFER	S"			immediate  target-only
@@ -98,6 +60,8 @@ DEFER	(FIND)		( c-addr lfa -- c-addr 0 | xt 1=immed | xt -1 )
 DEFER	smudge		( -- )
 DEFER	name,		( "name" -- )
 
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
 include core_prims.fi
 include core_strings.fi
 include core_output.fi
@@ -107,7 +71,7 @@ include core_dict.fi
 include core_abort.fi
 include core_interp.fi
 include core_compile.fi
-
+include core_dualstate.fi
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 

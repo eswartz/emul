@@ -151,9 +151,15 @@ public class DumpFullReporter9900 implements IInstructionListener {
 	}
 
 	private void dumpStack(PrintWriter dumpfull, IMemoryEntry entry, InstructionWorkBlock9900 wb) {
+		Integer sp0 = entry.findSymbol("sp0");
+		if (sp0 == null) {
+			return;
+		}
+		sp0 = 0xffff & entry.flatReadWord(sp0 + 4);	// BL *R4, DOLIT
+			
 		dumpfull.print(" (");
 		int curSP = wb.cpu.getRegister(15) & 0xfffe;
-		int topSP = Math.min(curSP + 8 * 2, 0xff9c);
+		int topSP = Math.min(curSP + 8 * 2, sp0);
 		int curVal;
 		while (topSP > curSP) {
 			topSP -= 2;
