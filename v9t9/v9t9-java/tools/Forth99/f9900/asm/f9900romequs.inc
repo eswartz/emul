@@ -93,7 +93,7 @@ DBG			equ		>FF					; FORTH: 'DBG
 
 SharedROM	equ		>0100
 
-ForthROM	equ		>0148
+ForthROM	equ		>0180
 
 			aorg	ForthROM
 			

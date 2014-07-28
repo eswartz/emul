@@ -66,12 +66,12 @@ int1v
 ;	but change the SETO instructions to point to the opposite bank for FORTH.
 ;
 
-F_BANK1		equ		>0100			; this bit is enabled in R15 (ignored)
+F_BANK1		data		>0100			; this bit is enabled in R15 (ignored)
 
 ;	All vectored code comes here to return
 Int_Return
 	; restore bank?
-	coc		#F_BANK1, R15
+	coc		@F_BANK1, R15
 	jeq		Int_Return_Bank0
 	
 	; stay in current ROM bank 

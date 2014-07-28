@@ -17,8 +17,6 @@ ${label}_entry:
  ]
  
  define XopHandler table [
- 	limi 0
- 	
  	mov 11, 12
  	
  	a 1, 1
@@ -33,11 +31,13 @@ ${label}_entry:
 ]
 
  define BankedIntHandler [
-	soc		#F_BANK1, R15		; flag; mark that we're in bank1 on return (SZC in bank 0 code!)
+	limi	0
+	soc		@F_BANK1, R15		; flag; mark that we're in bank1 on return (SZC in bank 0 code!)
 	seto	@BANK1				; switch to ROM bank 
 ]
  
  define BankedXopHandler [
+  	limi 	0
 	mov		*14+, 1
 	BankedIntHandler
 ] 
