@@ -16,10 +16,6 @@
 
 $01	constant	rTOS	\ top of stack
 
-Code HANG
-	,IDLE
-	$ff			,JMP
-
 has? TESTING? [IF]	
 Code ~SUCCESS~
 	$ff			,JMP
@@ -35,6 +31,14 @@ Code ~FAILURE~
 : POP
 	rSP *R+  	rTOS		,MOV
 ; immediate
+
+Code HANG
+	,IDLE
+	$ff			,JMP
+
+Code (IDLE)
+	,IDLE
+end-code
 
 Code 0BRANCH
 	\ get target

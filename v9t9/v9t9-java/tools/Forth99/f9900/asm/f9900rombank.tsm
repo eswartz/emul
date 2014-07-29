@@ -121,7 +121,7 @@ int_reset
 ;   bl  	@sndinit        ; sound init
 	bl		@xv_vinit		; video init
 	bl		@xt_tinit		; terminal init
-;	bl		@kinit			; keyboard init
+	bl		@kinit			; keyboard init
 ;	bl		@dinit			; device init
 ;
 ;	bl		@diskinit		; disk init
@@ -167,13 +167,14 @@ sinit
 ;==========================================================================
 
 xop_term_tbl
-	dw		xt_tinit, xt_emitchar, xt_drawchar
+	dw		xt_tinit, xt_emitchar, xt_drawchar, xt_readkey, xt_keypressed
 xop_term_tbl_end equ	$
 
 xop_term_ent
 	XopHandler xop_term_tbl 
 	
 	incl	term.inc
+	incl	kbd.inc
 	
 ;==========================================================================
 ; 	Video services XOP entry

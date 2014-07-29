@@ -9,13 +9,24 @@ end-code
 
 ' rom-EMIT 	TO EMIT
 
+| Code rom-KEY? ( --  f )
+	PUSH
+	rTOS		TERM^	,XOP  	#t.key? ,
+end-code
+' rom-KEY? 	TO KEY?
+
+| Code xop-key ( --  k | 0 )
+	PUSH
+	rTOS		TERM^	,XOP  	#t.rdkey ,
+end-code
+
 | : rom-KEY ( --  k )
-	HANG
+	begin
+		xop-key ?dup
+	\ 0= while
+	\	(idle)
+	\ repeat
+	until
 ;
 ' rom-KEY 		TO KEY
-
-| : rom-KEY? ( --  f )
-	false
-;
-' rom-KEY? 	TO KEY?
 

@@ -17,7 +17,9 @@ $0002	Constant	#v.reset
 $0002	Constant	#t.draw
 $0002	Constant	M_INT_EXT
 $0002	Constant	#dskStDrq
+$0003	Constant	#t.rdkey
 $0004	Constant	#dskCmd'Verify
+$0004	Constant	#t.key?
 $0004	Constant	M_INT_VDP
 $0004	Constant	#dskFlgHold
 $0008	Constant	M_INT_KBD
@@ -95,6 +97,6 @@ $FF14	Constant	vidvarsize
 $FF16	Constant	_SharedRAMEnd
 $FF9C	Constant	StdWS
 $FF9C	Constant	_WPs
+$FFBC	Constant	IntWS
 $FFBC	Constant	RomWS
 $FFDC	Constant	VidWS
-$FFDC	Constant	IntWS

@@ -79,7 +79,7 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		symbol = null;
 		if (entry != null) 
 			symbol = entry.lookupSymbol((short) ins.pc);
-		if (symbol != null) {
+		if (symbol != null && !symbol.startsWith("_")) {
 			dumpfull.print('"' + symbol + "\"");
 			// HACK
 			if ("@NEXT".equals(symbol)) {

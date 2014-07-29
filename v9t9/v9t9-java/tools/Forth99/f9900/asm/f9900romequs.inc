@@ -161,10 +161,10 @@ _SharedRAMEnd	equ	$		; checked later for conflict with _WPs
 	; ---------		workspaces: +>60 -> >fffc, with room for NMI
 
 _WPs		equ		>FF9C
-StdWS		equ		_WPs + >00
-RomWS		equ		_WPs + >20
-IntWS		equ		_WPs + >40
-VidWS		equ		_WPs + >40		; overlaps: ints turned off
+StdWS		equ		_WPs + >00		; for FORTH
+RomWS		equ		_WPs + >20		; for XOPs
+IntWS		equ		_WPs + >20		; for interrupts (mutex with XOPs)
+VidWS		equ		_WPs + >40		; for video operations
 
 
 
@@ -179,4 +179,6 @@ XOP_TERM	equ		1			; FORTH: TERM^
 t_init				equ		0	; FORTH: #t.init		( )
 t_ttychar			equ		1	; FORTH: #t.tty			( char )
 t_drawchar			equ		2	; FORTH: #t.draw		( char )
+t_readkey			equ		3	; FORTH: #t.rdkey		( char )
+t_keyavl			equ		4	; FORTH: #t.key?		( char )
 

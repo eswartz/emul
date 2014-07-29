@@ -36,63 +36,61 @@ int_1
 	jmp		int1out		; don't handle device interrupts yet
 
 intvdp:
-	; sbo	    2			; acknowledge VDP interrupt
-	szcb	#<M_VDP, @INTSP
+	szcb	#<M_VDP, @INTSP	; acknowledge VDP interrupt
 	
-;     
-; 	inc		@uptime + 2	; time in 1/60 seconds
-; 	jnc		intv00		; overflow?
-;    	inc		@uptime	 	; more time accuracy
-;
-; intv00:	
-;     movb    @vintflags,3    ; check our commands
-;     sla     3,1             ; suppress blinking/blanking?
-;    joc     intv01
-; 
-;     ; ----------------------- blink/blank
-;         
-; 	inct	@timeout	    ; blank screen?
-; 	jne		intv00b
-; 
-; 	bl     	@vscreenoff 
-; 
-; intv00b:
-; 	li		0,vcrstimer
-; 	ab		#1,*0			; cursor timer
-; 	cb		*0,@vcrsblink	; to blink or not to blink?
-; 	jl		intv01
-; 
-; 	sb		*0,*0			; clear
-; 	mov		@vcursor,0		; get ptr
-; 	blwp	*0				; blink it
-; 
-; intv01:
-;     sla     3,1             ; suppress keyboard scan?
-;     joc     intv02
-; 
-;     ; ----------------------- keyboard scan
-;    
-;     ab      #1,@kbdtimer    ; inc repeat delay
-;     bl      @scankbd        ; get keyboard, save char       TRASHES REGS
-; 
-; intv02:
-;     movb    @vintflags, 3   ; kbd trashed, so reread
-;     sla     3,3
-;     joc     intv03          ; suppress sprite motion?
-;     
-;     mov     @vsprmot, 0
-;     jeq     intv03          ; skip if no sprite motion table
-;     
-;     movb    @nsprmot, 0     ; or no sprites
-;     jeq     intv03
-;     
-;     blwp    @vspritemotion
-;     
-; intv03:
-;     sla     3,1
+ 	inc		@uptime + 2	; time in 1/60 seconds
+ 	jnc		intv00		; overflow?
+   	inc		@uptime	 	; more time accuracy
+
+intv00:	
+     movb    @vintflags,3    ; check our commands
+     sla     3,1             ; suppress blinking/blanking?
+    joc     intv01
+ 
+     ; ----------------------- blink/blank
+         
+ 	inct	@timeout	    ; blank screen?
+ 	jne		intv00b
+ 
+ 	bl     	@vscreenoff 
+ 
+intv00b:
+ 	li		0,vcrstimer
+ 	ab		#1,*0			; cursor timer
+ 	cb		*0,@vcrsblink	; to blink or not to blink?
+ 	jl		intv01
+ 
+ 	sb		*0,*0			; clear
+ 	mov		@vcursor,0		; get ptr
+ 	blwp	*0				; blink it
+ 
+intv01:
+    sla     3,1             ; suppress keyboard scan?
+	joc     intv02
+ 
+     ; ----------------------- keyboard scan
+    
+     ab      #1,@kbdtimer    ; inc repeat delay
+     bl      @scankbd        ; get keyboard, save char       TRASHES REGS
+ 
+intv02:
+     movb    @vintflags, 3   ; kbd trashed, so reread
+     sla     3,3
+     joc     intv03          ; suppress sprite motion?
+     
+     mov     @vsprmot, 0
+     jeq     intv03          ; skip if no sprite motion table
+     
+     movb    @nsprmot, 0     ; or no sprites
+     jeq     intv03
+     
+     blwp    @vspritemotion
+     
+intv03:
+;    sla     3,1
 ;     joc     intv04          ; sound list?
-; 
-;     ; ------------------------ play sound list
+ 
+     ; ------------------------ play sound list
 ;     
 ;     mov     @sndlist, 0
 ;     jeq     intv04
@@ -113,8 +111,6 @@ intvdp:
 intv05:
 
 int1out:
-    ;movb    #>00, @VDPWA    ; point to SR0     ; the client must guarantee this
-    ;movb    #>8f, @VDPWA
 	movb	@VDPST, @vstatus ; clear interrupt
 
-	jmp		Int_Return
+	b		@Int_Return
