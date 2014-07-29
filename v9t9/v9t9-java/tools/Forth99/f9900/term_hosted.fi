@@ -22,10 +22,8 @@ end-code
 
 | : rom-KEY ( --  k )
 	begin
+		ints-check
 		xop-key ?dup
-	\ 0= while
-	\	(idle)
-	\ repeat
 	until
 ;
 ' rom-KEY 		TO KEY

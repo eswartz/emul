@@ -17,10 +17,11 @@
 $01	constant	rTOS	\ top of stack
 
 has? TESTING? [IF]	
-Code ~SUCCESS~
-	$ff			,JMP
 Code ~FAILURE~
-	$ff			,JMP
+	$ff						,JMP
+Code ~SUCCESS~
+							,IDLE
+end-code
 [THEN]
 
 : PUSH

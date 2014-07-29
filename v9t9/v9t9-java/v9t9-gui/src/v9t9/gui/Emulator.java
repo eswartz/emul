@@ -135,7 +135,7 @@ public class Emulator {
 			else if (opt == 't') {
 				settings.put(ICpu.settingTestSuccessSymbol.getName(), "~SUCCESS~");
 				settings.put(ICpu.settingTestFailureSymbol.getName(), "~FAILURE~");
-				settings.put(ICpu.settingRunForCount.getName(), "30000000");
+				//settings.put(ICpu.settingRunForCount.getName(), "30000000");
 				settings.put(ICpu.settingDetectCrash.getName(), "true");
 				debug = true;
 				

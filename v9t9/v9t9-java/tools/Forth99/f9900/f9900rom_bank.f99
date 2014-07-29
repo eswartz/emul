@@ -319,14 +319,7 @@ has? TESTING? [IF]
 	    decimal
 
 [ has? TESTING? [IF] ]
-		begin
-			." Type something: " 
-			here 80 accept
-			cr cr
-			here 80 type
-		again
-		
-		\ runtests
+		runtests
 		
 		\ notreached -- tests-completed instead
 [ [ELSE] ]

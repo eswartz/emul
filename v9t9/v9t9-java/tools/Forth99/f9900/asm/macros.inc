@@ -37,7 +37,6 @@ ${label}_entry:
 ]
  
  define BankedXopHandler [
-  	limi 	0
 	mov		*14+, 1
 	BankedIntHandler
 ] 

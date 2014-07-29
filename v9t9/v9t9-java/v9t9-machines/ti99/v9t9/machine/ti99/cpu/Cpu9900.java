@@ -182,13 +182,18 @@ public class Cpu9900 extends CpuBase {
         	// this is ordinarily reset by external hardware, but
         	// we don't yet have a way to scan instruction execution
         	pins &= ~PIN_LOAD;
-        	
+
+            ic = 0;
+            
+        	setIdle(false);
             System.out.println("**** NMI ****");
             contextSwitch(0xfffc);
             
             cycleCounts.addExecute(22);
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
+        	setIdle(false);
+        	
             System.out.println("**** RESET ****");
             state.getStatus().expand((short) 0);
             contextSwitch(0);

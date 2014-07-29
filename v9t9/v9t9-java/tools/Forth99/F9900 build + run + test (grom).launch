@@ -11,7 +11,7 @@
 <stringAttribute key="org.eclipse.cdt.launch.launchGroup.2.action" value="WAIT_FOR_TERMINATION"/>
 <stringAttribute key="org.eclipse.cdt.launch.launchGroup.2.enabled" value="true"/>
 <stringAttribute key="org.eclipse.cdt.launch.launchGroup.2.mode" value="run"/>
-<stringAttribute key="org.eclipse.cdt.launch.launchGroup.2.name" value="f9900romBuild (GROM)"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.2.name" value="f9900romBuild (test) (GROM)"/>
 <stringAttribute key="org.eclipse.cdt.launch.launchGroup.3.action" value="NONE"/>
 <stringAttribute key="org.eclipse.cdt.launch.launchGroup.3.enabled" value="true"/>
 <stringAttribute key="org.eclipse.cdt.launch.launchGroup.3.mode" value="run"/>
