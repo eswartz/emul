@@ -99,12 +99,14 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 		case DATA:
 			fdc.writeData(val);
 			break;
-		case DSK:
-			if (val == 0)
+		case DSK: {
+			int num = Math.min(val, this.imageMapper.getDiskImageMap().size());
+			if (val == 0 || num <= 0)
 				fdc.selectDisk(0, false);
 			else
-				fdc.selectDisk(Math.max(val, this.imageMapper.getDiskImageMap().size()), true);
+				fdc.selectDisk(num, true);
 			break;
+		}
 		case FLAGS: {
 			byte oldflags = flags;
 			flags = val;
