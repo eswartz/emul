@@ -1,7 +1,8 @@
 
 | : minimal-THROW  ( k*x n -- k*x | i*x n )
 
-	if
+	?dup if
+		message cr
 		abort
 	then
 ;

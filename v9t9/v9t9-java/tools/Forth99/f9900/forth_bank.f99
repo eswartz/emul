@@ -14,9 +14,8 @@
 
 0 <export
 
-include		f9900romequs.fi
-include		f9900gromequs.fi
-
+include		rom_equs.fi
+include		grom_equs.fi
 
 export>
 
@@ -332,37 +331,35 @@ has? TESTING? [IF]
 		
 	;
 
-
-
-		: snd ( i -- ) 
-		    dup  swpb dup  9 crshift  XOR swap  $7 and $40 + c! 
-		;
-		: delay 0 do loop ;
-		
-		: blast0
-		0 0 do 
-		    0 0 do 
-		        j i xor snd $10 delay 
-		    loop
-		loop
-		;
-		: blast1
-		0 0 do 
-		    0 0 do 
-		        j i + snd $10 delay 
-		    loop
-		loop
-		;
-		
-		: square
-		    begin 
-		        $80 'GATE c!
-		        [ $00 c, ]
-		        $00 'GATE c!
-		    again
-		;
-			
 [THEN]
+
+: snd ( i -- ) 
+    dup  swpb dup  9 crshift  XOR swap  $7 and SOUND + c! 
+;
+: delay 0 do loop ;
+
+: blast0
+0 0 do 
+    0 0 do 
+        j i xor snd $10 delay 
+    loop
+loop
+;
+: blast1
+0 0 do 
+    0 0 do 
+        j i + snd $10 delay 
+    loop
+loop
+;
+
+: square
+    begin 
+        $80 'GATE c!
+        [ $00 c, ]
+        $00 'GATE c!
+    again
+;
 
 Code (RESET)
 					,LIMI		1 ,
@@ -402,7 +399,11 @@ ramptr @  1- aligned  constant (RAM0)
 |+ #cell RamVar RAM
 
 \ align dictionary to a memory area, so memory images aren't often broken
-here $3ff +  $3ff INVERT and  @DP0        !
+here $3ff +  $3ff INVERT and  @DP0  
+	\ eat up enough space to match ROM bank
+	swap drop $4000 swap
+
+      !
 
 has? GROM-DICT [if]
 0		   	@LATEST   !

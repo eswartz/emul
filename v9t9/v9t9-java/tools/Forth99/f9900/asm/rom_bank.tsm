@@ -25,8 +25,8 @@
 ;	"RomWS" is used for this ROM.  
 ;
 
-	incl	f9900romequs.inc
-	incl	f9900gromequs.inc
+	incl	rom_equs.inc
+	incl	grom_equs.inc
 	
 	incl	regs.inc
 	incl	macros.inc
@@ -126,7 +126,8 @@ int_reset
     data    _RAM, _RAMEND - _RAM
 	
 	bl		@sinit			; system init
-;   bl  	@sndinit        ; sound init
+   	bl  	@sndinit        ; sound init
+	;bl		@synthinit		; sound synth init   	
 	bl		@xv_vinit		; video init
 	bl		@xt_tinit		; terminal init
 	bl		@kinit			; keyboard init
@@ -200,6 +201,11 @@ xop_video_ent
 
 	
 	incl	video.inc
+	
+	incl	sound.inc
+	
+	
+;===========================================================================
 	
 	assert	_SharedRAMEnd <= _WPs
 	assert	_RAMEND >= _RAM		; not overflowed 

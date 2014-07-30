@@ -22,8 +22,9 @@
 [THEN]
 
 [IFUNDEF] UNUSED
-\ : UNUSED
-\ ;
+: UNUSED
+	RAM @  HERE  - 
+;
 [THEN]
 
 [IFUNDEF] VALUE

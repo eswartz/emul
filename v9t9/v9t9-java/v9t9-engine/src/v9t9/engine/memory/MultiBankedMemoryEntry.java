@@ -38,10 +38,21 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	}
 	public MultiBankedMemoryEntry(ISettingsHandler settings, IMemory memory,
 			String name, IMemoryEntry[] banks) {
-		this(settings, memory, name, banks[0].getDomain(), banks[0].getAddr(), banks[0].getSize(), banks.length);
+		this(settings, memory, name, banks[0].getDomain(), banks[0].getAddr(), 
+				maxBankSize(banks), banks.length);
 		this.currentBank = null;
 		setBanks(banks);
 		selectBank(0);
+	}
+	/**
+	 * @param banks2
+	 * @return
+	 */
+	protected static int maxBankSize(IMemoryEntry[] banks) {
+		int size = 0;
+		for (IMemoryEntry bank : banks)
+			size = Math.max(size, bank.getSize());
+		return size;
 	}
 	public MultiBankedMemoryEntry(ISettingsHandler settings, IMemory memory,
 			String name, IMemoryDomain domain, int addr, int size, int bankCount) {

@@ -21,7 +21,6 @@ import org.apache.log4j.Logger;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
-import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
@@ -171,14 +170,14 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 	@Override
 	public void loadMemory(IEventNotifier eventNotifier) {
     	try {
-    		// get the FORTH ROM (biggest, bank #0)
+    		// get the FORTH ROM (bank #0)
 			cpuForthRomEntry = memory.getMemoryEntryFactory().newMemoryEntry(
 					f9900ForthRomMemoryEntryInfo);
 			cpuForthRomEntry.load();
 			CPU.mapEntry(cpuForthRomEntry);
 			cpuForthRomEntry.copySymbols(CPU);
 			
-    		// get the CPU ROM (smaller, bank #1)
+    		// get the CPU ROM (bank #1)
 			cpuRomBankEntry = memory.getMemoryEntryFactory().newMemoryEntry(
 					f9900BankedRomMemoryEntryInfo);
 			cpuRomBankEntry.load();
@@ -289,8 +288,8 @@ public class Forth9900MemoryModel extends BaseTI994AMemoryModel {
 				FileUtils.writeOutputStreamContentsAndClose(os, content, content.length);
 			} catch (IOException e) {
 				log.error("Failed to copy initial disk image from " + shippingDiskImage + " to " + userDiskImage, e);
-				eventNotifier.notifyEvent(this, Level.ERROR, 
-						"Failed to copy initial disk image from " + shippingDiskImage + " to " + userDiskImage); 
+//				eventNotifier.notifyEvent(this, Level.ERROR, 
+//						"Failed to copy initial disk image from " + shippingDiskImage + " to " + userDiskImage); 
 			} finally {
 				try { if (is != null) is.close(); } catch (IOException e) { }
 				try { if (os != null) os.close(); } catch (IOException e) { }

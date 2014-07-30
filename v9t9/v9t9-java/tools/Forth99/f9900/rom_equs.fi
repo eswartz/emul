@@ -1,4 +1,4 @@
-\ This file was automatically generated from f9900romequs.inc and f9900rombank1.sym by SymbolsToConstants; do not modify!
+\ This file was automatically generated from rom_equs.inc and f9900rombank1.sym by SymbolsToConstants; do not modify!
 
 $0000	Constant	#dskCmdRestore
 $0000	Constant	#t.init

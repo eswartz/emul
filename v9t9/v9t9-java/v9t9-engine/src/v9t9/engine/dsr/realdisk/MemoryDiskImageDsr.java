@@ -103,7 +103,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 			if (val == 0)
 				fdc.selectDisk(0, false);
 			else
-				fdc.selectDisk(val, true);
+				fdc.selectDisk(Math.max(val, this.imageMapper.getDiskImageMap().size()), true);
 			break;
 		case FLAGS: {
 			byte oldflags = flags;

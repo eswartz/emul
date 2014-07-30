@@ -273,13 +273,16 @@ public class HostContext extends Context {
 			public int getResult(int l, int r) { return l^r; }
 		});
 		define("AND", new HostBinOp("AND") {
-			public int getResult(int l, int r) { return l&r; }
+			public int getResult(int l, int r) { 
+				return l&r; }
 		});
 		define("NEGATE", new HostUnaryOp("NEGATE") {
 			public int getResult(int v) { return -v; }
 		});
 		define("INVERT", new HostUnaryOp("INVERT") {
-			public int getResult(int v) { return ~v; }
+			public int getResult(int v) { 
+				return ~v; 
+			}
 		});
 		define("LSHIFT", new HostBinOp("LSHIFT") {
 			public int getResult(int l, int r) { return l << r; }

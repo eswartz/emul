@@ -491,9 +491,11 @@ Code 2R@
 Code SP@
 	PUSH
 	rSP 		rTOS		,MOV
+	rTOS					,INCT		( TOS itself isn't here )		
 	end-code
 	
 Code SP!
+	rTOS					,DECT		( TOS itself isn't here )		
 	rTOS		rSP			,MOV
 	POP
 	end-code

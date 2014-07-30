@@ -47,7 +47,7 @@ DEFER	CATCH	( i*x xt -- j*x 0 | i*x n )
 
 \ File
 \ DEFER	(			immediate  target-only
-DEFER	S"			immediate  target-only
+\ DEFER	S"			immediate  target-only
 \ DEFER	SOURCE-ID
 \ DEFER	REFILL	 	(above)
 
@@ -73,10 +73,10 @@ include core_output.fi
 include core_terminal.fi
 include core_input.fi
 include core_dict.fi
-include core_abort.fi
+include core_dualstate.fi
 include core_interp.fi
 include core_compile.fi
-include core_dualstate.fi
+include core_abort.fi
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 

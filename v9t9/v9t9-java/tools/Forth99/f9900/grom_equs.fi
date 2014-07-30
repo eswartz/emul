@@ -1,4 +1,4 @@
-\ This file was automatically generated from f9900gromequs.inc and f9900grom.sym by SymbolsToConstants; do not modify!
+\ This file was automatically generated from grom_equs.inc and f9900grom.sym by SymbolsToConstants; do not modify!
 
 $0000	Constant	>grom_sig
 $0002	Constant	>grom_dict

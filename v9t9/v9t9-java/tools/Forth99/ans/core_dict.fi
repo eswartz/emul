@@ -106,12 +106,6 @@ include core_dict_ram.fi
 ;
 [THEN]
 
-[IFUNDEF] UNUSED
-: UNUSED
-    0 here -
-;
-[THEN]
-
 | : (lookup)      ( c-addr u -- caddr 0 | xt 1|-1 )
     here (>c)   \ make counted string + NFA
 \ context @ @ (find) dup 0= if ... 
