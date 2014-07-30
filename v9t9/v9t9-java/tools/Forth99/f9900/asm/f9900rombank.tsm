@@ -38,12 +38,6 @@
 ;==========================================================================
 	aorg	>0
 
-; These addresses, when written, switch ROM to the given banks 
-BANK0
-	equ 	>0						; FORTH bank
-BANK1
-	equ 	>4						; this bank
-
 resetv		
 	dw		StdWS, B1_int_reset		; vector for RESET
 int1v		
@@ -93,6 +87,12 @@ B1_int_1
 	BankedIntHandler
 	jmp		int_1
 
+B1_int_nmi
+ 	lwpi	StdWS
+	seto	@BANK0				; runs in FORTH
+	jmp		int_nmi
+
+
 	; shared entry for XOP
 B1_xop_term_ent
 	BankedXopHandler
@@ -102,6 +102,14 @@ B1_xop_video_ent
 	BankedXopHandler	
 	b		@xop_video_ent
 	
+
+;==========================================================================
+;	NMI (LOAD) Interrupt
+;==========================================================================
+int_nmi
+	mov		@_ABORT, 0
+	b		*0
+
 ;	]]]] ------------------------------------------------------- end shared content
 
 	assert	$ <= ForthROM 
@@ -144,13 +152,13 @@ sinit
 	
 	; setup NMI interrupt
 	mov    #IntWS, @>fffc
-;	mov    #abort, @>fffe
-	mov    #B1_int_reset, @>fffe		; FIXME
+	mov    #B1_int_nmi, @>fffe
 
 	li     0, >ACE1
 	mov    0,@randseed1
 
 	rt
+	
 ;==========================================================================
 ;	VDP Interrupt
 ;==========================================================================

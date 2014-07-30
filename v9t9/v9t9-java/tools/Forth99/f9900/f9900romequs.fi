@@ -5,6 +5,7 @@ $0000	Constant	#t.init
 $0000	Constant	#v.init
 $0000	Constant	INTVECS
 $0000	Constant	VIDEO^
+$0000	Constant	BANK0
 $0001	Constant	#dskFlgSide
 $0001	Constant	#t.tty
 $0001	Constant	#v.mode
@@ -22,6 +23,7 @@ $0004	Constant	#dskCmd'Verify
 $0004	Constant	#t.key?
 $0004	Constant	M_INT_VDP
 $0004	Constant	#dskFlgHold
+$0004	Constant	BANK1
 $0008	Constant	M_INT_KBD
 $0008	Constant	#dskFlgMotor
 $0008	Constant	#dskCmd'Head
@@ -74,7 +76,7 @@ $0100	Constant	SharedROM
 $0180	Constant	ForthROM
 $0180	Constant	@RESET
 $0182	Constant	@COLD
-$0184	Constant	@BYE
+$0184	Constant	@ABORT
 $0186	Constant	@DP0
 $0188	Constant	@LATEST
 $FB00	Constant	_RAM

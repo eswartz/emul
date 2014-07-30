@@ -8,6 +8,10 @@
 
 ;	------------------------------------------ ROM/MMIO/hardware layout
 
+; These addresses, when written, switch ROM to the given banks 
+BANK0		equ 	>0						; FORTH bank
+BANK1		equ 	>4						; ROM bank
+
 INTVECS		equ		>00				; 16 vectors 
 
 XOPS		equ		>40				; 16 vectors
@@ -99,7 +103,7 @@ ForthROM	equ		>0180
 			
 _RESET		bss		2				; FORTH: @RESET
 _COLD		bss		2				; FORTH: @COLD
-_BYE		bss		2				; FORTH: @BYE
+_ABORT		bss		2				; FORTH: @ABORT
 _DP0		bss		2				; FORTH: @DP0
 _LATEST		bss		2				; FORTH: @LATEST
 

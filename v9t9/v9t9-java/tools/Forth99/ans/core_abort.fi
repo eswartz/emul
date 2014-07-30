@@ -13,6 +13,22 @@
 ;
 
 
+: core-ABORT ( i*x -- ) ( R: j*x -- )
+\ Empty the data stack and perform the function of QUIT, which includes 
+\ emptying the return stack, without displaying a message.
+
+	[ [IFDEF] ~FAILURE~ ]
+	~FAILURE~
+	hang
+	[ [THEN] ]
+	
+	regs-init
+	quit
+;
+
+' core-ABORT	TO ABORT
+
+
 : core-ABORT"
 \        Compilation: ( "ccc<quote>" -- )
 \

@@ -11,28 +11,28 @@
 0 <export
 
 \ see forth99.gsm : msgptrs
-0    Constant  err-none
--1   Constant  err-abort
--2   Constant  err-abort"
--9	 Constant  err-invalid-addr
--13  Constant  err-undefined
--33  Constant  err-block-read
--34  Constant  err-block-write
--35  Constant  err-inv-block-number
--14  Constant  err-compile-only
--16  Constant  err-empty-name
--22  Constant  err-control-nesting
--11  Constant  err-out-of-range
--37  Constant  err-file-i/o
--8   Constant  err-dict-overflow
--18  Constant  err-string-overflow
+&0    Constant  err-none
+&-1   Constant  err-abort
+&-2   Constant  err-abort"
+&-9	 Constant  err-invalid-addr
+&-13  Constant  err-undefined
+&-33  Constant  err-block-read
+&-34  Constant  err-block-write
+&-35  Constant  err-inv-block-number
+&-14  Constant  err-compile-only
+&-16  Constant  err-empty-name
+&-22  Constant  err-control-nesting
+&-11  Constant  err-out-of-range
+&-37  Constant  err-file-i/o
+&-8   Constant  err-dict-overflow
+&-18  Constant  err-string-overflow
 
--256 Constant  err-fault
--257 Constant  msg-ok
--258 Constant  msg-redefining
--259 Constant  err-loading-only
--260 Constant  err-not-deferred
--261 Constant  err-local-init
--262 Constant  err-no-memory
+&-256 Constant  err-fault
+&-257 Constant  msg-ok
+&-258 Constant  msg-redefining
+&-259 Constant  err-loading-only
+&-260 Constant  err-not-deferred
+&-261 Constant  err-local-init
+&-262 Constant  err-no-memory
 
 export>

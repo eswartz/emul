@@ -1,0 +1,37 @@
+
+\
+\   Double words
+\
+[IFUNDEF] DABS
+: DABS
+    dup 0< if DNEGATE then
+;
+[THEN]
+
+
+[IFUNDEF] D-
+: D-
+    DNEGATE D+
+;
+[THEN]
+
+[IFUNDEF] D<
+: D<
+    D- D0<
+;
+[THEN]
+
+[IFUNDEF] D0<
+: D0<  ( l h -- h )
+	\ keep high word
+    swap drop
+;
+[THEN]
+
+test" d< 20. 40. d<"
+test" d< 50. 40. d< 0="
+test" d< -20. -10. d<"
+test" d< -10. -20. d< 0="
+test" d< -10. 10. d<"
+test" d< 10. -10. d< 0="
+

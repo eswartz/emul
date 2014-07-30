@@ -69,7 +69,9 @@ User GDP              \ GROM dictionary pointer
     
     \ search GRAM dictionary
     >gram_dict_end  r@		GDP @   (gfind)
-    ?dup if rot drop  rdrop exit then
+    ?dup if 
+    	rot drop  rdrop exit  
+    then
     
     \ fall back to GROM dictionary
     2drop

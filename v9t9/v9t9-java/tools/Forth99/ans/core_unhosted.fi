@@ -15,21 +15,6 @@
 ;
 ' unhosted-KEY? 	TO KEY?
 
-: unhosted-ABORT ( i*x -- ) ( R: j*x -- )
-\ Empty the data stack and perform the function of QUIT, which includes 
-\ emptying the return stack, without displaying a message.
-
-	[ [IFDEF] ~FAILURE~ ]
-	~FAILURE~
-	[ [THEN] ]
-	hang
-	
-	regs-init
-	quit
-;
-
-' unhosted-ABORT	TO ABORT
-
 : unhosted-S"
 	0 0
 ; immediate  target-only

@@ -31,6 +31,9 @@ ForthROM  	  	dp!
 \ 	bye address @BYE
 0  ,
 
+\   abort address @ABORT
+0 ,
+
 \   initial dictionary @DP0
 0 ,
 
@@ -70,6 +73,7 @@ include ../ans/core.fi
 \ include ../ans/core_unhosted.fi
 include ../ans/core_accept_simple.fi
 include ../ans/core-ext.fi
+include ../ans/double.fi
 
 
 include ../ans/exception.fi
@@ -381,9 +385,9 @@ Code (RESET)
 
 \ ................................
 
-' (reset)	@reset	!   
-' bye   	@BYE	!
+' (reset)	@RESET	!   
 ' cold  	@COLD	!
+' abort  	@ABORT	!
 
 has? TESTING? [IF] 
 TESTS!

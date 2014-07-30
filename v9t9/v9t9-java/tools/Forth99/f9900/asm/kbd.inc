@@ -217,7 +217,7 @@ khstuff:
     
     clr     @kbdhead
     clr     @kbdflag
-    ;b       @ABORT
+    
     blwp	@>FFFC				; NMI
 
 khstuffit:

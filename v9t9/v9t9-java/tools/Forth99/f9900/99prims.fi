@@ -33,14 +33,6 @@ end-code
 	rSP *R+  	rTOS		,MOV
 ; immediate
 
-Code HANG
-	,IDLE
-	$ff			,JMP
-
-Code (IDLE)
-	,IDLE
-end-code
-
 Code 0BRANCH
 	\ get target
 	rIP *R+		rTMP		,MOV
@@ -821,6 +813,8 @@ has? GROM-DICT [IF]
 ( [len|flags] "name" XT[cell]  )            
 Code (gfind)  ( gDictEnd caddr start -- caddr 0 | xt 1 | xt -1 )
 
+							,LIMI	0 ,
+							
 	\ save clobbered regs
 	rRP						,AI		3 cells negate ,
 	charTemp	rRP @>(R)	,MOV	2 cells ,
@@ -919,6 +913,8 @@ Code (gfind)  ( gDictEnd caddr start -- caddr 0 | xt 1 | xt -1 )
 	rRP *R+		counter		,MOV
 	rRP *R+		charTemp	,MOV
 	
+							,LIMI	1 ,
+	
 	rSP						,INCT
 	end-code
 	
@@ -928,6 +924,8 @@ Code (gfind)  ( gDictEnd caddr start -- caddr 0 | xt 1 | xt -1 )
 
 ( find word in dictionary; lfa is nfa - #cell )            
 Code (lfind)		( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )
+							,LIMI	0 ,
+
 	\ save clobbered regs
 	rRP						,AI		3 cells negate ,
 	charTemp	rRP @>(R)	,MOV		2 cells ,
@@ -1026,6 +1024,9 @@ Code (lfind)		( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )
 	rRP *R+		lenAndFlags	,MOV
 	rRP *R+		counter		,MOV
 	rRP *R+		charTemp	,MOV
+	
+							,LIMI	1 ,
+	
 	end-code
 
 [THEN]
@@ -1038,3 +1039,27 @@ Code MAX
 	rTMP		rTOS		,MOV
 1 $:
 	end-code
+
+
+( optimize )
+Code MAX
+	rSP *R+		rTMP		,MOV
+	rTOS		rTMP		,C
+	1 $+					,JGT
+	rTMP		rTOS		,MOV
+1 $:
+	end-code
+	
+\ ------------------------------------------------------
+	
+Code HANG
+0	$:
+	,IDLE
+	0 $-					,JMP
+
+Code BYE
+	@>						,BLWP		0 ,
+	
+Code (IDLE)
+							,IDLE
+end-code
