@@ -337,8 +337,25 @@ $1: cb      1,#>0B          ; vertical tab ( == clear to end of line )
         
     b       @printchar
     
-;   Unhandled
-bell:    
+    
+beep
+    db      >00, 10
+    db		>38, >08, >48	; envelope, sustain=100% ; attack 0, decay 8 ; hold 4, release 8
+    db		>20				; atten: 0
+    db		>10, 96, >20	; note (C)
+    db      >00, 15
+    db		>24				; atten: 4
+    db		>10, 88, >20	; note (C)
+    db      >00, 0
+    even
+    
+bell:
+	PUSH	SP,11
+	
+	li		2, beep
+	bl		@xsnd_queue_track
+	
+	POP		SP,11
     rt
 
 ;

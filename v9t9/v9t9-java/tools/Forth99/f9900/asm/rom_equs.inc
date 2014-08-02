@@ -186,3 +186,6 @@ t_drawchar			equ		2	; FORTH: #t.draw		( char )
 t_readkey			equ		3	; FORTH: #t.rdkey		( char )
 t_keyavl			equ		4	; FORTH: #t.key?		( char )
 
+XOP_SOUND	equ		2			; FORTH: SOUND^
+s_init				equ		0	; FORTH: #s.init		( )
+s_queue				equ		1	; FORTH: #s.queue		( track )

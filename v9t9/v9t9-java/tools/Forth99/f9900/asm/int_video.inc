@@ -87,19 +87,19 @@ intv02:
      blwp    @vspritemotion
      
 intv03:
-;    sla     3,1
-;     joc     intv04          ; sound list?
+    sla     3,1
+     joc     intv04          ; sound list?
  
      ; ------------------------ play sound list
-;     
-;     mov     @sndlist, 0
-;     jeq     intv04
-;     
-;     blwp    @soundlist
-;     
-; intv04:    
-;    blwp    @sound_sequencer
-;     
+     
+     mov     @sndlist, 0
+     jeq     intv04
+     
+     blwp    @soundlist
+     
+intv04:    
+    blwp    @sound_sequencer
+     
 ;     ; ----------------------- user interrupt?
 ;     
 ; 	mov		@userint,0		

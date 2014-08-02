@@ -82,8 +82,12 @@ include ../v9t9/strings.fi
 
 include ../ans/tools.fi
 
+include ../v9t9/sysutils.fi
 
+include ../v9t9/errors.fi
+		
 include term_hosted.fi
+include sound.fi
 include cold.fi
 
 \ TEMP
@@ -98,11 +102,6 @@ include cold.fi
     $3fff AND
 ;
  
- 
-include ../v9t9/sysutils.fi
-
-include ../v9t9/errors.fi
-		
 
 0 [if]
 		
@@ -114,7 +113,6 @@ include ../v9t9/errors.fi
 		
 		include ../v9t9/video.fi
 		
-		include ../v9t9/sound.fi
 		
 		include ../v9t9/term.fi
 		
@@ -359,6 +357,22 @@ loop
         [ $00 c, ]
         $00 'GATE c!
     again
+;
+
+: def-beep 
+s" create Beep
+$00 c,  $20 c,  	
+$20 c,
+$38 c, $08 c, $4f c, ( env )
+$10 c, &96 c, $20 c,
+0 c, 0 c, Beep play " 
+	evaluate 
+	s" create NBeep
+$00 c,  $ff c,  	
+$2c c,
+$10 c, &96 c, $ff c,
+0 c, 0 c, " 
+	evaluate 
 ;
 
 Code (RESET)

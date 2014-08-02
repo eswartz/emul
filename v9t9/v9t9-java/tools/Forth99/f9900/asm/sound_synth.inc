@@ -21,7 +21,7 @@
 
 synthinit
     clr     @sndlist
-    jmp      @snd_seq_init
+    b       @snd_seq_init
 
 
 ; ======================================================== structured music API
@@ -331,16 +331,109 @@ snd_track_cmd_tempo:
     POP     SP, 11
     rt
 
+;
+;	Scale the 4 bits in hi(R0), which are interpreted
+;	as percentages where 0=0% and 15=100% of the current note
+;	length into the appropriate TMS9919B ADHR length
+;
+;	R0 = in: percentage in >0000 through >F000; out: ADHR nybble (>00->0F) 
+;	R4 = track 
+;
+snd_scale_to_length_16:
+	PUSH	SP, 1, 2, 3, 4
+	
+	;
+	; incr is bigger for shorter notes, scales from 0-65535
+	; which means times of [inf, 1092s, ..., 3/60s, 1/30s, 1/60s ].
+	;
+	; We want to convert incr to a ms value, e.g. incr==1 --> 1092266 ms
+	; via 64K * 1000 / incr / 60, or, roughly, (64K * 1000 / 60) / incr.
+	; The resulting values are too large for 16-bits, but, the maximum 
+	; envelope time is 3.2s anyway, so we treat overflows as >F.
+	;
+	; To account for R0, the "percentage" value,  We scale this by 4 and offset
+	; the original dividend by 15/16 to account for the distortion. 
+	;
+	; The end result after the division is, the quotient represents the 
+	; number of ms.  We watch this against the time table below to deduce
+	; the ADHR nybble. 
+	;
+	andi	r0, >f000
+;	ai		r0, >0fff				; 0 -> FFF, F -> FFFF
+	
+	mpy		#4, r0
+	;mov		r0, r1
+	;clr		r0						; r0:r1 = percentage-scaled incr ~ 1092266*15/16
+	
+	div		@pv_incr(r4), r0		; r0: ms
+	jno		$0+
+	seto	r0
+$0:
+	; search backwards to save effort calculating R3 (and because "si r1, effect_times" was/is broken)
+	li		r1, effect_times
+	li		r3, 15
+$2:
+	c		r0, *r1+
+	jhe		$3+
+	dec		r3
+	jgt		$2-
+$3:
+	swpb	r3
+	mov		r3, r0
+	
+	POP		SP, 1, 2, 3, 4
+	rt
+	
+; Milliseconds for ADHR values to take effect 
+;	final static int tickTimes[] = {
+;		0, 5, 10, 15,
+;		20, 30, 40, 50,
+;		60, 75, 100, 200,
+;		400, 800, 1600, 3200
+;	};
+effect_times:
+	dw		3200, 1600, 800, 400
+	dw		200, 100, 75, 60
+	dw		50, 40, 30, 20
+	dw		15, 10, 5, 0
+			
 snd_track_cmd_adhsr:
-    PUSH    SP, 11
+    PUSH    SP, 11, 2, 3, 6
     
     andi    r0, >F00
     movb    r0, @lt_sustain(r4)
     
-    movb    *r5+, @lt_a_d(r4)
-    movb    *r5+, @lt_h_r(r4)
+    ; convert each nybble to a note-sized chunk
+    movb	*r5, r0			; attack
+    bl		@snd_scale_to_length_16
+    sla		r0, 4
+    movb	r0, r6
     
-    POP     SP,11
+    movb	*r5+, r0		; decay
+    sla		r0, 4
+    bl		@snd_scale_to_length_16
+    soc		r0, r6
+    
+    movb	r6, @lt_a_d(r4)
+
+    movb	*r5, r0			; hold
+    bl		@snd_scale_to_length_16
+    sla		r0, 4
+    movb	r0, r6
+    
+    movb	*r5+, r0		; release
+    sla		r0, 4
+    bl		@snd_scale_to_length_16
+    soc		r0, r6
+    
+    movb	r6, @lt_h_r(r4)
+    
+    clr		r2
+    
+    ;movb    *r5+, @lt_a_d(r4)
+    ;movb    *r5+, @lt_h_r(r4)
+    
+    POP     SP, 11, 2, 3, 6
     rt
     
 snd_track_cmd_vibrato:
@@ -731,7 +824,14 @@ snd_seq_init
     bl      @snd_seq_tick
     rtwp    
 
-;   External entry
+;
+;	XOP entry
+;
+xs_queue
+	mov		*12, 2
+	; fallthrough
+	
+;	Queue a track
 ;
 ;   In:
 ;       R2 = track ptr
@@ -756,7 +856,7 @@ $1:
     bl      @snd_track_init    
     jmp     $2-
    
-    
+
 test_track0:
     db      >00, 16,  >28
     db      >00, 16,  >10, >40, 10

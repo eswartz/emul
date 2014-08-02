@@ -1,0 +1,214 @@
+
+V9t9 Music Engine
+====================
+
+MIDI-like, with "tracks" which hold notes that have volume, effects, envelopes, tempo in common.
+
+The music stream is encoded as small packets.  
+
+Each starts with a command byte, which has a command in the high nybble, and an optional
+parameter in the low nybble.  Arguments are following bytes, whose interpretation is based on 
+the command.
+
+Commands:
+
+    >00 = lump (defines a chord)
+    	parameter: none
+        arg: number of ticks (in the current tempo) to allocate for the note(s):
+                1 = 1/64 note
+                2 = 1/32 note
+                4 = 1/16 note
+                8 = 1/8 note
+                16 = 1/4 note
+                32 = 1/2 note
+                64 = whole note
+                128 = double-whole note
+                255 = quad-whole note
+    >1x = start note (queue a note at the current volume, envelope, effect)
+        parameter:
+            0 = normal note
+            1-8 = always use noise
+        args: note #, length
+    >2x = volume (set the volume)
+        parameter: attenuation (0=loudest, F=silent)
+    >3x = envelope  
+    	parameter: sustain % (0 disables)
+        args: ADHR  [A | D] [H | R]
+        The envelope is interpolated across a note's length, which is extended
+        if necessary to encompass the full A+D+R period.  A, D, H, and R are
+        treated as percentages from 0 to 100%.  
+        S is a percentage of the full volume at which the note is sustained
+        between H and R.  
+            
+    >40 = tempo (change interpretation of len #)
+    	parameter: none
+        arg: tempo (byte) in beats per minute (1/4 note is a beat)
+    >50 = set vibrato
+    	parameter: none 
+        arg: amount | rate
+    >60 = set tremolo
+    	parameter: none    
+        arg: amount | rate
+    >7x = set waveform 
+    	parameter: one of the following
+        0 = square
+        1 = sawtooth
+        2 = triangle
+        3 = sine
+        4 = half sawtooth
+        5 = half triangle
+        6 = half sine
+        7 = tangent  
+      
+    >8x = sweep to note (using current volume, envelope, effect)
+    	parameter:
+            0 = normal note
+            1-8 = always use noise
+        arg: note #, length
+          
+    ;;9 = note length adjustement
+        arg: staccato, legato...
+    ;;A = chorus (schedule another track to mirror a given one)
+    ;;    arg: [ src track ] ... ???  its own effect/vol/etc or just modifying them?
+        
+    E = jump (add offset to lump ptr)
+        arg: offset from this arg to the next command
+    F = reset track (set all volumes to 15, cut off envelopes, reset effects)
+        arg: # of tracks to reset in addition (so, $FF cancels sound)
+
+Multiple commands are processed at a time.  The best ordering would have the start note 
+command follow any other commands modifying that note (otherwise the commands affect
+playing notes).
+
+Sets of command packets are grouped into lumps.  A lump starts with a timeslot command.
+
+Lumps may be linked by virtue of the Jump command.
+
+-----------------
+
+A phrase is a set of (track, lump) tuples.  Each track in a phrase starts at the same
+time, and they step according to the same clock (relative to the track's tempo).
+
+Every track has its own settings for volume, envelope, scale, effects, chorus, etc.
+Commands only affect the note(s) on their own track.  
+
+A song is a list of phrases.
+
+--------------------
+        
+Note table:
+        0:      C
+        1:      C# / Db
+        2:      D
+        3:      D# / Eb
+        4:      E
+        5:      F 
+        6:      F# / Gb
+        7:      G 
+        8:      G# / Ab
+        9:      A
+        10:     A# / Bb
+        11:     B
+    
+================
+
+FORTH API
+
+We want music to be represented in a compact textual form.
+
+A lump is grouped by << ... >>.  Everything in it starts at the same time.  
+<< actually pushes a timeslot command.
+
+In forth, << accepts the length of the timeslot and sets up a default for the length 
+provided for every note defined therein.  But a note can have its own time as well:
+
+Q << C3 >> Q << E3 >> Q << G3 >> Q << R >> W << C3 E3 G3 C4 >>
+
+X (1/64), T (1/32), S (1/16), E (1/8), Q (1/4), H (1/2), W (1), D (2) as times... 
+With "." suffix as dotted notes...  With "3" suffix as triplets...
+
+Plays four quarter notes (three audible, one rest) and then a chord of four notes for a whole note.
+
+To play notes which start at the same time but have different lengths:
+
+H << E C3 D3 Q C2 H D2 >> W << G2 >>
+
+Starts C3, D3, C2, and H2 together, but C3 and D3 are short, C2 is half the length,
+and only D2 takes the full length.  (It could be specified first without a preceding 'H'.)
+Then, G2 starts after D2 finishes.
+
+        .
+        .
+        
+        ..
+        
+          ----
+
+A track is composed of series of lumps, with catenated sequences linked together.
+The TRACK word switches tracks.
+
+A phrase is a set of tracks which all start at the same time.
+
+In Forth, PHRASE:  and ;PHRASE define a name for and group the lumps of a phrase.
+
+PHRASE: part1
+0 TRACK  Q << C3 >> Q << E3 >> Q << C3 >> Q << E3 >>
+1 TRACK  H << C2 >> H << G2 >>
+0 TRACK  E << C#3 >> E << D3 >> E << F3 >> E << G3 >>
+1 TRACK  Q << E2 >> Q << B2 >>
+;PHRASE
+
+Usually, it's up to the programmer to ensure that tracks step evenly, but this isn't 
+required.
+
+================
+
+ROM routine will handle queueing and sequencing the packets, and allocating 
+notes and volumes to real voices.  There will be a main routine that advances
+the clock by a tick, and an XOP interface to run the clock through a given
+number of ticks.  The interrupt routine, later, will itself call this routine.
+
+Songs and scheduling
+----------------------
+
+The ROM will support a certain number of simultaneously playing songs.
+
+For each song, we will have pointers to the current phrase.
+
+For the current phrase of each song, we will keep structures for every track
+in the phrase.  
+
+For each track, we have a lump pointer, global track number, and lump timer.
+A track with logical number N will have a global number K, and this mapping
+is fixed per song.
+
+The lump pointers rest at a timeslot command for the next upcoming lump.
+The lump timer tells how many global ticks are used before advancing lumps.
+
+Track & Voice Allocation
+--------------------------
+
+We will have 16 tracks and 9 tone voices and 4 noise voices.  
+
+One note may use any number of voices -- e.g. a low-pitched sound uses voice 2+4k and voice
+3+4k, and perhaps some future kind of envelope may use more than one voice as well.
+
+A track, though, may also have multiple notes playing at the same time (so that we
+don't have to repeat volume, effects, etc. for every individual note played, or
+keep track of voices in the client).
+
+There will be an array of playing notes, whose size is 9 + 4, along with
+a global track index, and a timeout.  The clock tick routine, which operates after any
+lumps for this quantum are handled, merely iterates this array, adjusts note timeouts, 
+and dereferences the track to discover how the note is modulated over time (e.g. the 
+current effect, volume, envelope, etc).
+
+Allocating a note means looking for a free playing note entry (timeout == 0), filling
+its data, then starting it.  
+
+How would we handle polyphony where there are more notes queued than voices free? 
+It seems easiest to totally drop notes for which no voice is free (rather than keeping
+them around and hoping they'll find a place later). 
+
+
+

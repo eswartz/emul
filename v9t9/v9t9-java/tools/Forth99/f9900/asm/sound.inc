@@ -22,7 +22,12 @@
 snd_voice_ports
     dw      SOUND+>2, SOUND+>8, SOUND+>E, SOUND+>14
     
-
+;
+;	XOP entry
+;
+xs_sinit
+	; 	fallthrough
+	
 sndinit
     PUSH    SP, 11
     li     0, >9FBF
@@ -54,6 +59,7 @@ $1:
     
     rt
 
+	
 ; ========================================================  classic sound list API
 
 

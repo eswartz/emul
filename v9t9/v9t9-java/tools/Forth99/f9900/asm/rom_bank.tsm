@@ -51,6 +51,8 @@ int1v
 	aorg	XOPS + (XOP_TERM * 4)
 	dw		RomWS, B1_xop_term_ent
 
+	aorg	XOPS + (XOP_SOUND * 4)
+	dw		RomWS, B1_xop_sound_ent
 
 	aorg	SharedROM
 
@@ -102,6 +104,9 @@ B1_xop_video_ent
 	BankedXopHandler	
 	b		@xop_video_ent
 	
+B1_xop_sound_ent
+	BankedXopHandler	
+	b		@xop_sound_ent
 
 ;==========================================================================
 ;	NMI (LOAD) Interrupt
@@ -127,7 +132,7 @@ int_reset
 	
 	bl		@sinit			; system init
    	bl  	@sndinit        ; sound init
-	;bl		@synthinit		; sound synth init   	
+	bl		@synthinit		; sound synth init   	
 	bl		@xv_vinit		; video init
 	bl		@xt_tinit		; terminal init
 	bl		@kinit			; keyboard init
@@ -172,7 +177,6 @@ sinit
 ;
 ;	R12: pointer to operand
 ;	*R14+: command (word)
-;
 ;==========================================================================
 
 xop_term_tbl
@@ -201,8 +205,23 @@ xop_video_ent
 
 	
 	incl	video.inc
+
+;==========================================================================
+;	Sound services XOP entry
+;
+;	R12: pointer to operand
+;	*R14+: command (word)
+;==========================================================================
+
+xop_sound_tbl
+	dw		xs_sinit, xs_queue
+xop_sound_tbl_end equ	$
+
+xop_sound_ent
+	XopHandler xop_sound_tbl 
 	
 	incl	sound.inc
+	incl	sound_synth.inc
 	
 	
 ;===========================================================================
