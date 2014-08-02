@@ -143,14 +143,14 @@ public class Interpreter9900 implements IInterpreter {
 		if (executor.getInstructionListeners().isEmpty()) {
 			for (int i = 0; i < numinsts; i++) {
 				executeFast(null);
-				if (executor.breakAfterExecution(1)) 
+				if (executor.breakAfterExecution(1) || cpu.isIdle()) 
 					break;
 				
 			}
 		} else {
 			for (int i = 0; i < numinsts; i++) {
 				execute(null);
-				if (executor.breakAfterExecution(1)) 
+				if (executor.breakAfterExecution(1) || cpu.isIdle()) 
 					break;
 			}
 		}
@@ -194,6 +194,7 @@ public class Interpreter9900 implements IInterpreter {
         gatherCycles(block, iblock);
 
         iblock.cycles = cpu.getCurrentCycleCount() + cycleCounts.getTotal();
+//        iblock.cycles =  cycleCounts.getTotal();
         
         /* notify listeners */
         for (Object listener : instructionListeners.toArray()) {

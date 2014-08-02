@@ -43,8 +43,8 @@ intvdp:
    	inc		@uptime	 	; more time accuracy
 
 intv00:	
-     movb    @vintflags,3    ; check our commands
-     sla     3,1             ; suppress blinking/blanking?
+    movb    @vintflags,3    ; check our commands
+    sla     3,1             ; suppress blinking/blanking?
     joc     intv01
  
      ; ----------------------- blink/blank

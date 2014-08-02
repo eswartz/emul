@@ -22,7 +22,7 @@ import v9t9.engine.hardware.BaseCruChip;
 import v9t9.machine.f99b.cpu.CpuF99b;
 
 /**
- * CRU handlers for the F99 machine.
+ * CRU handlers for the F99 / Forth9900 machines.
  * @author ejs
  */
 public class InternalCruF99 extends BaseCruChip {
@@ -120,7 +120,6 @@ public class InternalCruF99 extends BaseCruChip {
 		case INTS:
 			return (byte) (enabledIntMask);
 		case INTSP:
-			//return (byte) (currentInts & enabledIntMask);
 			return (byte) (currentInts & enabledIntMask);
 			
 		case KBD: {

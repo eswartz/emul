@@ -1155,4 +1155,13 @@ public class TI99Machine extends MachineBase {
 	protected IFileExecutionHandler createFileExecutionHandler() {
 		return new TI99FileExecutionHandler();
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.machine.MachineBase#keyStateChanged()
+	 */
+	@Override
+	public void keyStateChanged() {
+		super.keyStateChanged();
+		getCpu().setIdle(false);
+	}
 }

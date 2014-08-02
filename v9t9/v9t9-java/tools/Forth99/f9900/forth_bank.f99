@@ -368,9 +368,9 @@ $10 c, &96 c, $20 c,
 0 c, 0 c, Beep play " 
 	evaluate 
 	s" create NBeep
-$00 c,  $ff c,  	
+$00 c,  $20 c,  	
 $2c c,
-$10 c, &96 c, $ff c,
+$10 c, &96 c, $20 c,
 0 c, 0 c, " 
 	evaluate 
 ;
