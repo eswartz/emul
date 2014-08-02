@@ -604,7 +604,7 @@ public class Executor implements IExecutor {
 	            			realTime = cpu.settingRealTime().getBoolean();
 	            					
 	            			if (!executing && machine.isAlive()) {
-	            				executionLock.wait(100);
+	            				executionLock.wait(1);	// need short delay here for 9900 ints ??
 	            			}
 	            			if (executing) {
 	            				usedCycles = execute();
