@@ -172,7 +172,10 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	}
 
 	protected void recalcInterruptTiming() {
-        vdpInterruptLimit = cyclesPerSecond.getInt() / vdpInterruptRate.getInt();
+		if (vdpInterruptRate.getInt() > 0)
+			vdpInterruptLimit = cyclesPerSecond.getInt() / vdpInterruptRate.getInt();
+		else
+			vdpInterruptLimit = Integer.MAX_VALUE;
         vdpInterruptFrac = 0;
         
         vdpScanlineLimit = vdpInterruptLimit / 192;
