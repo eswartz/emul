@@ -146,6 +146,9 @@ sndlist     bss 2       ; address of classic sound list (0 = none), incremented 
 snddur      bss 1       ; duration of current group
 
         even
+
+uptime		bss	4		; time in 1/60 seconds
+timeout		bss	2		; timeout counter
         
 ; this block of variables is included in a video mode save/restore 
 _CPURAMSTART equ $

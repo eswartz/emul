@@ -1065,3 +1065,29 @@ Code BYE
 Code (IDLE)
 							,IDLE
 end-code
+
+Code MS ( ms -- )
+	rR2						,LI			&60 ,
+	rTOS		rR2			,MPY		
+	rTOS					,LI			&1000 ,
+	rTOS		rR2			,DIV		( R2 / 60s delay )
+
+2 $:
+	@> 			rR3			,MOV		uptime cell+ ,
+	
+0 $:
+	rR2			rR2			,MOV
+	1 $+					,JEQ
+
+							,IDLE
+							
+	@> 			rR3			,C			uptime cell+ ,
+	0 $-					,JEQ
+	
+	rR2						,DEC
+	2 $-					,JMP
+	
+1 $:
+	POP
+end-code
+end-code

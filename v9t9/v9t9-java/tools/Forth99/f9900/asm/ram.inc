@@ -35,9 +35,6 @@ sysstacksize equ $ - sysstack
 
 ; _RAMSTART equ $ 
 
-uptime	bss	4			; time in 1/60 seconds
-timeout	bss	2			; timeout counter
-
 _VIDVARSTART equ $
 
 vscreen	bss	2			; VDP addr of screen
