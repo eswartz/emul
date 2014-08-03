@@ -73,7 +73,7 @@ Commands:
         
     E = jump (add offset to lump ptr)
         arg: offset from this arg to the next command
-    F = reset track (set all volumes to 15, cut off envelopes, reset effects)
+    F = reset track (set all attenuations to 15, cut off envelopes, reset effects)
         arg: # of tracks to reset in addition (so, $FF cancels sound)
 
 Multiple commands are processed at a time.  The best ordering would have the start note 

@@ -68,11 +68,8 @@ snd_track_init
 ;   In:
 ;       R4 = LiveTrack
 snd_track_reset
-    clr     @lt_a_d(r4)  ; + s_r
-    clr     r0
-    movb    r0, @lt_sustain(r4)
-    clr     @lt_vibrato(r4)  ; + lt_tremolo
-    mov     r0, @lt_waveform(r4) ; + lt_balance
+    clr     @lt_style(r4)  
+    clr     @lt_cmdptr(r4)  
     rt
 
 ;   Is a track done?
@@ -384,13 +381,6 @@ $3:
 	POP		SP, 1, 2, 3, 4
 	rt
 	
-; Milliseconds for ADHR values to take effect 
-;	final static int tickTimes[] = {
-;		0, 5, 10, 15,
-;		20, 30, 40, 50,
-;		60, 75, 100, 200,
-;		400, 800, 1600, 3200
-;	};
 effect_times:
 	dw		3200, 1600, 800, 400
 	dw		200, 100, 75, 60
@@ -839,7 +829,7 @@ xsnd_queue_track:
     PUSH    SP, 4, 11
     li      4, tracks
 $0:
-    mov     @lt_cmdptr(4), @lt_cmdptr(4)
+    mov     @lt_cmdptr(4), 11
     jeq     $1+
 
     ai      4, lt_size
