@@ -17,10 +17,8 @@
 ;	License along with this library; if not, write to the Free Software
 ;	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;	02111-1307, USA.
-;
-;	$Id: nforth.gsm,v 1.7 2008-12-18 20:46:07 ejs Exp $
 
-	incl	../f9900/asm/f9900gromequs.inc
+	incl	../f9900/asm/grom_equs.inc
 
 	aorg	>0
 
