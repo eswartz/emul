@@ -210,5 +210,77 @@ How would we handle polyphony where there are more notes queued than voices free
 It seems easiest to totally drop notes for which no voice is free (rather than keeping
 them around and hoping they'll find a place later). 
 
+===========================================================================
 
+Command language.  
+
+    'C' = lump (defines a chord)
+    	parameter: none
+        arg: number of ticks (in the current tempo) to allocate for the note(s):
+                1 = 1/64 note
+                2 = 1/32 note
+                4 = 1/16 note
+                8 = 1/8 note
+                16 = 1/4 note
+                32 = 1/2 note
+                64 = whole note
+                128 = double-whole note
+                255 = quad-whole note
+           "C32"
+    ',' = start note (queue a note at the current volume, envelope, effect)
+        parameter:
+            blank = normal note
+            1-8 + "%" = always use noise
+        args: note, optional ":" length
+          ",32" or ",32:4"  or ",6%32" or ",6%4:4"
+            
+Ex:  "C8,32,36,38"
+Ex:  "C8,32,36:4,38:4"
+Ex:  "C8,8,10,24%3"
+     
+    'A' = attenuation
+        parameter: attenuation (0=loudest, F=silent)
+          "A0" ... "A15"
+    'T' = tempo (change interpretation of len #)
+        arg: tempo (byte) in beats per minute (1/4 note is a beat)
+    'v' = set vibrato
+        arg: amount | rate
+    'e' = envelope  
+    	
+        args: A:D:S:H:R  
+        The envelope is interpolated across a note's length, which is extended
+        if necessary to encompass the full A+D+R period.  A, D, H, and R are
+        treated as percentages from 0 to 100%.  
+        S is a percentage of the full volume at which the note is sustained
+        between H and R.  
+        
+Ex: "e0:0:8:4:8"
+        
+    't' = set tremolo
+        amount ":" rate
+    'w' = set waveform 
+        0 '-' = square
+        1 'Z' = sawtooth
+        2 'V' = triangle
+        3 'S'= sine
+        4 'z' = half sawtooth
+        5 'v' = half triangle
+        6 's' = half sine
+        7 '\' = tangent  
+      
+    ;;'S' = sweep to note (using current volume, envelope, effect)
+    	parameter:
+            0 = normal note
+            1-8 = always use noise
+        arg: note #, length
+          
+    ;;'*' = note length adjustement
+        arg: staccato, legato...
+    ;;'&' = chorus (schedule another track to mirror a given one)
+    ;;    arg: [ src track ] ... ???  its own effect/vol/etc or just modifying them?
+      
+    'L' = label (mark label, 0-9)  
+    'G' = jump (add offset to lump ptr)
+        arg: label number
+    'Z' = reset track (set all attenuations to 15, cut off envelopes, reset effects)
 
