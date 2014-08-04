@@ -68,8 +68,11 @@ snd_track_init
 ;   In:
 ;       R4 = LiveTrack
 snd_track_reset
-    clr     @lt_style(r4)  
-    clr     @lt_cmdptr(r4)  
+    clr     @lt_a_d(r4)  ; + s_r
+    clr     r0
+    movb    r0, @lt_sustain(r4)
+    clr     @lt_vibrato(r4)  ; + lt_tremolo
+    clr     @lt_waveform(r4) ; + lt_balance
     rt
 
 ;   Is a track done?
