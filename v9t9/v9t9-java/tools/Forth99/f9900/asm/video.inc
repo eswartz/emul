@@ -477,6 +477,11 @@ vmodesetups
 
 	rtwp
 
+xv_mode
+	mov		*12, 1
+	blwp	@vsetmode
+	rt
+
 ; leaves R1 pointing to the address and word table
 vsetupregs:
     dect SP
@@ -645,6 +650,7 @@ vtts0:
 ;   -- reset terminal bounds
 ;   -- clear memory
 ;   -- load font (if needed)
+xv_reset
 vreset
     PUSH SP,1,2,11    
     

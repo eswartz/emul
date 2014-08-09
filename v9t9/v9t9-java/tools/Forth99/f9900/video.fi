@@ -1,0 +1,12 @@
+Code (mode) ( mode# -- )
+	rTOS		VIDEO^	,XOP  	#v.mode ,
+	POP
+end-code
+
+Code vreset ( )
+	rTOS		VIDEO^	,XOP  	#v.reset ,
+end-code
+
+: mode
+	(mode) vreset
+;

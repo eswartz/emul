@@ -197,7 +197,7 @@ xop_term_ent
 ;==========================================================================
 
 xop_video_tbl
-	dw		xv_vinit 
+	dw		xv_vinit, xv_mode, xv_reset 
 xop_video_tbl_end equ	$
 
 xop_video_ent

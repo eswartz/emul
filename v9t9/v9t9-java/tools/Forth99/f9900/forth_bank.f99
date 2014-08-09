@@ -87,7 +87,10 @@ include ../v9t9/sysutils.fi
 include ../v9t9/errors.fi
 		
 include term_hosted.fi
+
 include sound.fi
+include video.fi
+
 include cold.fi
 
 \ TEMP

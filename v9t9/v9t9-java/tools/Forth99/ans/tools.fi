@@ -36,10 +36,11 @@
 : per-line
     \ 7 = 4 addr + = + space + NL
     [ [IFDEF] win-cx ]
-    win-cx c@  7 -  2 urshift   1 nand  1 max
+    win-cx c@
     [ [ELSE] ]
-    &8
+    &32
     [ [THEN] ]
+      7 -  2 urshift   1 nand  1 max
 ;
 
 : 2u.
