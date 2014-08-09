@@ -219,7 +219,7 @@ public class Executor implements IExecutor {
     	if (cpu.isIdle() && cpu.settingRealTime().getBoolean()) {
     		if (nVdpInterrupts < vdpInterruptRate.getInt()) {
     			try {
-    				cpu.getCycleCounts().addOverhead(1);
+    				cpu.getCycleCounts().addOverhead(64);
     				cpu.checkInterrupts();
     			} catch (AbortedException e) {
     				cpu.handleInterrupts();
@@ -604,7 +604,7 @@ public class Executor implements IExecutor {
 	            			realTime = cpu.settingRealTime().getBoolean();
 	            					
 	            			if (!executing && machine.isAlive()) {
-	            				executionLock.wait(1);	// need short delay here for 9900 ints ??
+	            				executionLock.wait(50);	// need short delay here for 9900 ints ??
 	            			}
 	            			if (executing) {
 	            				usedCycles = execute();
