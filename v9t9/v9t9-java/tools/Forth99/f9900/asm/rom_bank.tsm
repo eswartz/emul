@@ -200,7 +200,7 @@ sinit
 ;==========================================================================
 
 xop_term_tbl
-	dw		xt_tinit, xt_emitchar, xt_drawchar, xt_readkey, xt_keypressed
+	dw		xt_tinit, xt_emitchar, xt_drawchar, xt_emitstr, xt_readkey, xt_keypressed
 xop_term_tbl_end equ	$
 
 xop_term_ent

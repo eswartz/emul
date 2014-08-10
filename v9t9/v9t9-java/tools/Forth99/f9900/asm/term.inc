@@ -318,8 +318,10 @@ clreol  PUSH    SP, 0, 2, 3, 11
 xt_emitchar
 	mov		*12, 1
 	swpb	1
-		
+	
 emitchar
+	movb	1, @DBG
+	
     cb      1,#>0d           ; enter?
     jeq     crlf
 
@@ -358,25 +360,26 @@ bell:
 	POP		SP,11
     rt
 
+xt_emitstr
+	mov		*12+, 2
+	mov		*12, 3
+
 ;
 ;  Print a message, interpreting the chars
 ;   
 ;  R2: message-ptr
 ;  R3: length
 ;
-type
+emitstr
 	PUSH    SP,11
 	
-	mov		*12+, 2
-	mov		*12, 3
-	
-    ai      SP,-4		; save regs
+    ai      SP,-4		; use stack as scratch
 $1: mov     3,3
     jeq     $2+
     movb    *2+,1
     mov     2, *SP
     mov     3, @2(SP)
-    bl      @xt_emitchar
+    bl      @emitchar
     mov     @2(SP), 3
     mov     *SP, 2
     dec     3

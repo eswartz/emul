@@ -193,9 +193,10 @@ v_reset				equ		2	; FORTH: #v.reset		( )
 XOP_TERM	equ		1			; FORTH: TERM^
 t_init				equ		0	; FORTH: #t.init		( )
 t_ttychar			equ		1	; FORTH: #t.tty			( char )
-t_drawchar			equ		2	; FORTH: #t.draw		( char )
-t_readkey			equ		3	; FORTH: #t.rdkey		( char )
-t_keyavl			equ		4	; FORTH: #t.key?		( char )
+t_drawchar			equ		2	; FORTH: #t.draw		( char )	( w/o interpret )
+t_ttystr			equ		3	; FORTH: #t.ttystr		( caddr len )
+t_readkey			equ		4	; FORTH: #t.rdkey		( char )
+t_keyavl			equ		5	; FORTH: #t.key?		( char )
 
 XOP_SOUND	equ		2			; FORTH: SOUND^
 s_init				equ		0	; FORTH: #s.init		( )

@@ -1,9 +1,6 @@
 
 | Code xop-EMIT ( ch -- )
 	rTOS		TERM^	,XOP  	#t.tty ,
-	
-	rTOS				,SWPB
-	rTOS		@>		,MOVB	'DBG ,
 	POP
 end-code
 
@@ -13,6 +10,25 @@ end-code
 ;
 
 ' rom-EMIT 	TO EMIT
+
+| Code xop-TYPE	( len caddr -- )
+	PUSH 	( get both args on stack )
+	
+	rSP	*R	TERM^	,XOP  	#t.ttystr ,
+	
+	rSP				,AI		2 cells ,
+	POP
+end-code
+
+| : rom-TYPE ( caddr len -- )
+	( can't read strings in Forth ROM from XOP )
+	over  @DP0 @  U> if
+		swap xop-TYPE
+	else
+		core-TYPE
+	then
+;
+' rom-TYPE	TO	TYPE
 
 | Code xop-KEY? ( --  f )
 	PUSH
