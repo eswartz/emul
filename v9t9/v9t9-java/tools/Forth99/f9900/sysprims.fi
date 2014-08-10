@@ -49,6 +49,11 @@ Code   ints-off
 	,LIMI		0 ,
 end-code   target-only
 
+Code ints-check
+	,LIMI		1 ,
+	,LIMI		0 ,
+end-code
+
 :   demit ( ch -- )
     'DBG c!
 ;
@@ -59,13 +64,20 @@ end-code   target-only
     loop
 ;
 
-
+has? TASKS 0= [IF] 
 : rp0
     (RP0)
 ;   target-only
+
 : sp0
 	(SP0)
 ;
+[THEN]
+
+Code up@
+	PUSH
+	rUP		rTOS	,MOV
+end-code
 
 : u/      ( u un -- uq )
     0 swap  

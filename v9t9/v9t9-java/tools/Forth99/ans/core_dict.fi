@@ -10,7 +10,7 @@
 
 [IFUNDEF] HERE
 
-| User    dp
+\ | #cell    RamVar	DP
 
 \ addr is the data-space pointer.
 : HERE ( -- addr ) 

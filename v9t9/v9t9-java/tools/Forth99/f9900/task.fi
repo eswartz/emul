@@ -1,0 +1,189 @@
+
+( Each task consists of a fresh workspace and RP, SP, UP areas )
+
+| 0 constant		>tlink 
+| 1 cells constant	>twp
+| 2 cells constant	>tpc
+| 3 cells constant	>tst
+
+| 4 cells 
+	$20 + 
+	(#RP) +  (#SP) +  
+	#TIB + (#up) +  		constant #task 
+
+| 4 cells 
+	$20 + 
+	(#RP) +  (#SP) +  
+	#TIB + 			 		constant >tuser 
+
+( Initialize and link task structure )
+Code (task)	( xt task -- )
+							,LIMI	0 ,
+	rTOS *R					,CLR					( link )
+	@>			rTMP		,MOV	'tasks ,
+	0 $+					,JEQ
+	
+	rTMP		rTOS *R		,MOV					( link to prev task )
+	
+0 $:
+	rTOS		@>			,MOV	'tasks ,		( set new head task )
+	
+	rTOS		rR3			,MOV
+	
+				rR3			,AI		4 cells ,		( new WS )
+	rR3			rTOS @>(R)	,MOV	>twp ,			( set new WP )
+	rSP *R+		rTOS @>(R)	,MOV	>tpc ,			( set new PC from XT )
+	rR2						,STST
+	rR2			rTOS @>(R)	,MOV	>tst ,			( set new ST )
+			
+	rR3			rR2			,MOV
+	rR2						,AI		(#rp) ,
+	rR2			rR3 @>(R)	,MOV	rRP 2* ,		( set new RP end )
+	rR2						,AI		(#sp) ,
+	rR2			rR3 @>(R)	,MOV	rSP 2* ,		( set new SP end )
+	rR2						,AI		#tib ,
+	rR2			rR3 @>(R)	,MOV	rUP 2* ,		( set new UP )
+	
+	rDOCOL		rR3 @>(R)	,MOV	rDOCOL 2* ,		( copy )
+	rDOCON		rR3 @>(R)	,MOV	rDOCON 2* ,		( copy )
+	rDOUSER		rR3 @>(R)	,MOV	rDOUSER 2* ,		( copy )
+	rDOVAR		rR3 @>(R)	,MOV	rDOVAR 2* ,		( copy )
+	rDODOES		rR3 @>(R)	,MOV	rDODOES 2* ,		( copy )
+
+
+	( copy user data )
+	rR3 @>(R)	rR3			,MOV	rUP 2* ,		( R3=target )
+	rUP			rTOS		,MOV					( TOS=src )
+	rTMP					,LI		(#up) ,
+0 $:
+	rTOS *R+	rR3 *R+		,MOV
+	rTMP					,DECT
+	0 $-					,JGT
+	
+	POP ( other is above )
+end-code
+
+: rp0
+	'me @ ?dup if
+		4 cells + (#rp) + 
+	else
+    	(rp0)
+    then
+;   target-only
+
+: sp0
+	'me @ ?dup if
+		4 cells + (#rp) + (#sp) +
+	else
+		(sp0)
+    then
+;
+
+
+( enter task )
+Code (enter) ( task -- )
+						,LIMI	0 ,
+	rTOS	@>			,MOV	'me ,			( set me' )
+	POP
+	
+	@>		@>			,MOV	uptime cell+ ,	'ticked ,	( remember last switch )
+	
+						,LWPI	RomWS ,
+	@>			1		,MOV	'me ,
+	1	@>(R)	&13		,MOV	>twp ,
+	1	@>(R)	&14		,MOV	>tpc ,
+	1	@>(R)	&15		,MOV	>tst ,
+	
+						,RTWP
+end-code
+
+( Enter given task )
+: enter ( task -- )
+	?dup  if (enter) then
+	( NOTREACHED )
+;
+
+
+Code ((save)) ( -- )
+	RomWS ,		here #cell + ,		( vector )
+
+						,LIMI	0 ,	
+	@>			1		,MOV	'me ,
+	0 $+				,JEQ
+	&13		1	@>(R)	,MOV	>twp ,
+	&14		1	@>(R)	,MOV	>tpc ,
+	&15		1	@>(R)	,MOV	>tst ,
+0 $:
+						,RTWP
+end-code
+
+( save task )
+Code (save) ( -- )
+	@>					,BLWP	' ((save)) ,
+end-code
+
+( Yield the current task if time elapsed )
+: yield
+	ints-check
+	'ticked @  uptime cell+ @  - if
+		(save)
+		robin
+	then
+;
+
+( Find next task )
+Code (robin)  ( -- task )
+	PUSH
+	@>		rTOS		,MOV	'me ,
+	1 $+				,JEQ
+	
+	rTOS *R	rTOS		,MOV	( link )
+	0 $+				,JNE
+1 $:
+	@>		rTOS		,MOV	'tasks ,
+0 $:
+
+end-code
+
+[IFUNDEF] (robin)
+: (robin)  ( -- task )
+	'me @
+	dup if  
+		@						( link )
+	then
+	?dup 0= if
+		'tasks @		 		( round robin )
+	then 
+;
+[THEN]
+
+( Invoke next task in round robin )
+: robin ( -- )
+	(robin)
+	enter
+;
+
+( Start a task using 'xt' )
+: task ( xt -- id )
+	\ Alloc spaces
+	here  aligned 	 		( xt task' )
+	#task allot
+	
+	(task)					( init, phase 1 )
+;
+
+
+: MS	( ms -- )
+	&60 &1000  */		( 1/60s delay )
+	?dup if
+		s>d uptime 2@  D+			( target )
+		begin
+			uptime 2@  2over D<
+		while
+			yield
+		repeat
+		2drop
+	else
+		yield
+	then
+;

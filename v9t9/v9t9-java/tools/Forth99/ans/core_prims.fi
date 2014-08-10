@@ -238,6 +238,7 @@ error" need prim c@"
     */mod swap drop
 ;
 [THEN]
+test" */  &2048  &60 &1000 */  &122 = "
 
 [IFUNDEF] */MOD 
 : */MOD ( n1 n2 n3 -- n4-r n5-q ) \ core    star-slash-mod

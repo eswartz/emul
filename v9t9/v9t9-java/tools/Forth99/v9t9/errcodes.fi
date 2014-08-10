@@ -10,10 +10,13 @@
 
 0 <export
 
+\ codes come from dpans9.htm#9.3.5
+
 \ see forth99.gsm : msgptrs
 &0    Constant  err-none
 &-1   Constant  err-abort
 &-2   Constant  err-abort"
+&-8	 Constant  err-dictionary-overflow
 &-9	 Constant  err-invalid-addr
 &-13  Constant  err-undefined
 &-33  Constant  err-block-read

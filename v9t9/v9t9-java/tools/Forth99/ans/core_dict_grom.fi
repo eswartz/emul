@@ -18,7 +18,7 @@
 \   Does words contain "BL *DODOES" (R7).  Etc.
 
 
-User GDP              \ GROM dictionary pointer
+| User GDP              \ GROM dictionary pointer
 
 | : lfa>nfa
 	( no change )

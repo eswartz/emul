@@ -187,6 +187,7 @@ public class Cpu9900 extends CpuBase {
             ic = 0;
             
         	setIdle(false);
+        	dumper.info("*** NMI ***");
             System.out.println("**** NMI ****");
             contextSwitch(0xfffc);
             
@@ -195,6 +196,7 @@ public class Cpu9900 extends CpuBase {
         	pins &= ~PIN_RESET;
         	setIdle(false);
         	
+        	dumper.info("*** RESET ***");
             System.out.println("**** RESET ****");
             state.getStatus().expand((short) 0);
             contextSwitch(0);

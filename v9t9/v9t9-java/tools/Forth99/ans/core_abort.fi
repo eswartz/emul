@@ -23,6 +23,9 @@
 	[ [THEN] ]
 	
 	regs-init
+	
+	begin key? while key drop repeat  cr
+	
 	quit
 ;
 

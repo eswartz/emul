@@ -1,5 +1,5 @@
 
-| Code rom-EMIT ( ch -- )
+| Code xop-EMIT ( ch -- )
 	rTOS		TERM^	,XOP  	#t.tty ,
 	
 	rTOS				,SWPB
@@ -7,13 +7,23 @@
 	POP
 end-code
 
+| : rom-EMIT	( ch -- )
+	xop-EMIT
+	yield
+;
+
 ' rom-EMIT 	TO EMIT
 
-| Code rom-KEY? ( --  f )
+| Code xop-KEY? ( --  f )
 	PUSH
 	rTOS		TERM^	,XOP  	#t.key? ,
 end-code
-' rom-KEY? 	TO KEY?
+' xop-KEY? 	TO KEY?
+
+| : rom-KEY? ( -- f )
+	yield
+	xop-KEY?
+;
 
 | Code xop-key ( --  k | 0 )
 	PUSH
@@ -22,7 +32,7 @@ end-code
 
 | : rom-KEY ( --  k )
 	begin
-		ints-check
+		yield
 		xop-key ?dup
 	until
 ;

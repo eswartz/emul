@@ -99,6 +99,10 @@ intv03:
      
 intv04:    
     blwp    @sound_sequencer
+
+    ; ----------------------- FORTH tick
+    
+   ; bl		@tick_forth	; FIXME: trashes R11
      
 ;     ; ----------------------- user interrupt?
 ;     

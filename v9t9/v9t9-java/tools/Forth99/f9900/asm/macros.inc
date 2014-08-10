@@ -23,7 +23,7 @@ ${label}_entry:
  	ci 1, (${table}_end - ${table})
  	jhe $
  	
- 	li SP, sysstack + sysstacksize 
+	li SP, sysstack + sysstacksize
  	mov @${table}(1), 1
  	bl *1
  	

@@ -18,6 +18,7 @@ $01	constant	rTOS	\ top of stack
 
 has? TESTING? [IF]	
 Code ~FAILURE~
+							,IDLE
 	$ff						,JMP
 Code ~SUCCESS~
 							,IDLE
@@ -50,6 +51,14 @@ Code BRANCH
 	rIP *R+		rIP			,A				
 	end-code
 	
+| Code ((DOERS))
+	rDOCOL					,LI			' DOCOL ,				
+	rDOUSER					,LI			' DOUSER ,				
+	rDOCON					,LI			' DOCON ,				
+	rDOVAR					,LI			' DOVAR ,				
+	rDODOES					,LI			' DODOES ,
+	&11	*R					,B
+
 Code (REGS) ( SP0 UP0 RP0 -- )
 	rRP *R		rTMP		,MOV		\ return
 	rTOS		rRP			,MOV
@@ -57,8 +66,9 @@ Code (REGS) ( SP0 UP0 RP0 -- )
 	rSP *R+		rSP			,MOV
 	rRP						,DECT
 	rTMP		rRP *R		,MOV
-	end-code
 
+	@>						,BL			' ((DOERS)) ,	
+	end-code
 
 Code DOLIT
 	PUSH
@@ -694,11 +704,6 @@ Code FALSE
 	rTOS					,CLR
 	end-code
 
-Code ints-check
-	,LIMI	1 ,
-	,LIMI	0 , 
-	end-code
-	
 Code (S")
 	rSP						,AI		2 cells negate ,
 	rTOS		rSP @>(R)	,MOV		#cell ,
@@ -1066,6 +1071,7 @@ Code (IDLE)
 							,IDLE
 end-code
 
+has? TASKS 0= [IF]
 Code MS ( ms -- )
 	rR2						,LI			&60 ,
 	rTOS		rR2			,MPY		
@@ -1090,4 +1096,14 @@ Code MS ( ms -- )
 1 $:
 	POP
 end-code
+
+[THEN]
+
+Code */		( val mul div -- scaled )
+	rSP @>(R)	rR2			,MOV		1 cells ,
+	rSP *R		rR2			,MPY		
+	rTOS		rR2			,DIV		
+	rSP						,AI			2 cells ,
+	rR2			rTOS		,MOV
 end-code
+

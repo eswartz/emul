@@ -97,11 +97,12 @@ DBG			equ		>FF					; FORTH: 'DBG
 
 SharedROM	equ		>0100
 
-ForthROM	equ		>0180
+ForthROM	equ		>0200
 
 			aorg	ForthROM
 			
 _RESET		bss		2				; FORTH: @RESET
+_TICK		bss		2				; FORTH: @TICK
 _COLD		bss		2				; FORTH: @COLD
 _ABORT		bss		2				; FORTH: @ABORT
 _DP0		bss		2				; FORTH: @DP0
@@ -149,6 +150,13 @@ snddur      bss 1       ; duration of current group
 
 uptime		bss	4		; time in 1/60 seconds
 timeout		bss	2		; timeout counter
+
+DP			bss	2		; current dictionary
+GDP			bss	2		; current GROM dictionary
+
+tasks		bss	2		; pointer to task list; FORTH: 'tasks
+me			bss	2		; current task; FORTH: 'me
+ticked		bss	2		; last switch time; FORTH: 'ticked
         
 ; this block of variables is included in a video mode save/restore 
 _CPURAMSTART equ $

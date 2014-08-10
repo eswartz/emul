@@ -19,7 +19,7 @@
 ;   The general style of the ROM is to use a small number of workspaces
 ;   and stacks (e.g. via Forth's SP and RP) for register management. 
 ;
-;   "StdWS" is used for startup and for FORTH operation thereafter.
+;   "StdWS" is used for startup and for FORTH operation (scheduler or main task) thereafter.
 ;   This ROM does not use that workspace again, except to fetch SP/RP.
 ;	"IntWS" is used for interrupt handling.
 ;	"RomWS" is used for this ROM.  
@@ -90,9 +90,11 @@ B1_int_1
 	jmp		int_1
 
 B1_int_nmi
- 	lwpi	StdWS
+	; continue in same WS as original -- keep all but the PC
+	seto	@BANK1				; fetch constant addr from ROM
+	mov		#int_nmi, 14
 	seto	@BANK0				; runs in FORTH
-	jmp		int_nmi
+	rtwp
 
 
 	; shared entry for XOP
@@ -115,6 +117,24 @@ int_nmi
 	mov		@_ABORT, 0
 	b		*0
 
+;==========================================================================
+;	Call (TICK) in FORTH
+;==========================================================================
+tick_forth
+	seto	@BANK0				; switch to FORTH bank
+	
+	lwpi	StdWS
+	
+	mov		@_tick, 11
+	jeq		$0+
+	
+	bl		*11
+$0:	
+	lwpi	RomWS
+	
+	seto	@BANK1				; back to our bank
+	rt
+	
 ;	]]]] ------------------------------------------------------- end shared content
 
 	assert	$ <= ForthROM 
@@ -154,7 +174,7 @@ $1: clr     *0+
     rt
     
 sinit	
-	li SP,sysstack + sysstacksize
+	li SP, sysstack + sysstacksize
 	
 	; setup NMI interrupt
 	mov    #IntWS, @>fffc

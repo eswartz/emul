@@ -24,6 +24,9 @@ ForthROM  	  	dp!
 \ 	reset address @RESET
 0  ,
 
+\	tick address @TICK
+0  ,
+
 \   cold address @COLD
 0 ,
 
@@ -51,6 +54,9 @@ undef Variable
 undef DVariable
 undef Value
 undef DValue
+
+
+| : TASKS true ;
 
 0 <EXPORT
 
@@ -90,6 +96,7 @@ include term_hosted.fi
 
 include sound.fi
 include video.fi
+include task.fi
 
 include cold.fi
 
@@ -308,24 +315,25 @@ include asmtests.fi
 [THEN]
 
 
-has? TESTING? [IF]	
-	| : tests-completed
-		quit
-	;
+has? TESTING? [IF] 
+TESTS!
 [THEN]
-
 	: COLD
+		regs-init
+		
 		(resolve-rdefers)
 		
-		regs-init
 		cold-init
 
 	    decimal
 
 [ has? TESTING? [IF] ]
-		runtests
-		
-		\ notreached -- tests-completed instead
+[ [IFDEF] task ]
+		['] runtests task  robin
+[ [ELSE] ]
+		runtests		
+[ [THEN] ]
+		\ notreached
 [ [ELSE] ]
 		quit
 [ [THEN] ]
@@ -337,7 +345,11 @@ has? TESTING? [IF]
 : snd ( i -- ) 
     dup  swpb dup  9 crshift  XOR swap  $7 and SOUND + c! 
 ;
-: delay 0 do loop ;
+: delay 0 do
+[ [IFDEF] yield ]  
+	i $ff and 0= if yield then
+[ [THEN] ]	 
+loop ;
 
 : blast0
 0 0 do 
@@ -378,34 +390,56 @@ $10 c, &96 c, $20 c,
 	evaluate 
 ;
 
+
+: liner
+	begin
+		8 0 do
+			&2304 i +
+			
+			dup vc@	>r  
+			\ $ff
+			$1010 1 rpick  crshift  
+			over vc!
+			100 ms 
+			r> swap vc!
+		loop
+	again	
+;
+
+\ ................................
+
 Code (RESET)
-					,LIMI		1 ,
+					,LIMI		0 ,
 					
 					,LWPI		StdWS ,				( ensure proper WS -- likely so, just be sure )
-	rDOCOL			,LI			' DOCOL ,				
-	rDOUSER			,LI			' DOUSER ,				
-	rDOCON			,LI			' DOCON ,				
-	rDOVAR			,LI			' DOVAR ,				
-	rDODOES			,LI			' DODOES ,
+
+	@>				,BL			' ((DOERS)) ,
 	
-	\ Make tiny stacks
-	rSP				,STWP							( rSP				,LI			StdWS , )
-	rRP				,LI			StdWS $10 - ,
-	rUP				,LI			StdWS $20 - ,
+	\ Make tiny stacks and initial areas
+	rSP				,LI			_RAM $10 - , 
+	rRP				,LI			_RAM $20 - ,
+	rUP				,LI			_RAM $20 (#UP) + - ,
+	
 	&11				,LI			' COLD  cell+ ,
-	rDOCOL	*R		,B			\ normally BL, but we set up R11 for this
+	rDOCOL *R		,B			\ normally BL, but we set up R11 for this
+	
 	end-code		
+
+Code (ABORT)
+	@>				,BL			' ((DOERS)) ,
+	@>				,B			' ABORT ,
+
+Code (tick)
+	( TODO: load WS from current task )
+	rRT *R		,B 
 
 
 \ ................................
 
 ' (reset)	@RESET	!   
+' (tick)  	@TICK	!
 ' cold  	@COLD	!
-' abort  	@ABORT	!
-
-has? TESTING? [IF] 
-TESTS!
-[THEN]
+' (abort)  	@ABORT	!
 
 \ assembly label table
 | &10 2* cells RamVar	ram-#labs
