@@ -24,6 +24,7 @@
 	
 	regs-init
 	
+	( dump keybuffer )
 	begin key? while key drop repeat  cr
 	
 	quit

@@ -59,6 +59,7 @@ Code BRANCH
 	rDODOES					,LI			' DODOES ,
 	&11	*R					,B
 
+has? TASKS [IF]
 Code (REGS) ( SP0 UP0 RP0 -- )
 	rRP *R		rTMP		,MOV		\ return
 	rTOS		rRP			,MOV
@@ -69,6 +70,7 @@ Code (REGS) ( SP0 UP0 RP0 -- )
 
 	@>						,BL			' ((DOERS)) ,	
 	end-code
+[THEN]
 
 Code DOLIT
 	PUSH

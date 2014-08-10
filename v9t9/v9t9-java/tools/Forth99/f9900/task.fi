@@ -46,9 +46,9 @@ Code (task)	( xt task -- )
 	
 	rDOCOL		rR3 @>(R)	,MOV	rDOCOL 2* ,		( copy )
 	rDOCON		rR3 @>(R)	,MOV	rDOCON 2* ,		( copy )
-	rDOUSER		rR3 @>(R)	,MOV	rDOUSER 2* ,		( copy )
+	rDOUSER		rR3 @>(R)	,MOV	rDOUSER 2* ,	( copy )
 	rDOVAR		rR3 @>(R)	,MOV	rDOVAR 2* ,		( copy )
-	rDODOES		rR3 @>(R)	,MOV	rDODOES 2* ,		( copy )
+	rDODOES		rR3 @>(R)	,MOV	rDODOES 2* ,	( copy )
 
 
 	( copy user data )
@@ -63,21 +63,70 @@ Code (task)	( xt task -- )
 	POP ( other is above )
 end-code
 
-: rp0
-	'me @ ?dup if
-		4 cells + (#rp) + 
-	else
-    	(rp0)
-    then
-;   target-only
 
-: sp0
-	'me @ ?dup if
-		4 cells + (#rp) + (#sp) +
-	else
-		(sp0)
-    then
-;
+| Code rp0
+	PUSH
+	
+	@>			rR2		,MOV	'me ,		
+	0 $+				,JEQ				( in a task? )
+
+	rR2			rTOS	,MOV
+	rTOS				,AI 	4 cells (#rp) +  ,						( RP )
+	
+	1 $+				,JMP
+	
+0 $:
+	rTOS				,LI 	(RP0) ,
+    		 
+1 $:
+end-code
+
+| Code sp0
+	PUSH
+	
+	@>			rR2		,MOV	'me ,		
+	0 $+				,JEQ				( in a task? )
+	
+	rR2			rTOS	,MOV
+	rTOS				,AI 	4 cells (#rp) + (#sp) + ,				( SP )
+	
+	1 $+				,JMP
+	
+0 $:
+	rTOS				,LI 	(SP0) ,
+    		 
+1 $:
+end-code
+
+| Code regs-init
+	rRP *R		rTOS	,MOV	( save R-entry )
+
+	@>		rR2			,MOV	'me ,		
+	0 $+				,JEQ				( in a task? )
+	
+	rR2			 rSP	,MOV 	
+	rSP					,AI 	4 cells (#rp) + (#sp) +  ,				( SP )
+	
+	rR2			 rUP	,MOV
+	rUP					,AI 	4 cells (#rp) + (#sp) +  #tib +  ,  	( UP )
+	
+	rR2			 rRP	,MOV
+	rRP					,AI 	4 cells (#rp) +  ,						( RP )
+	
+	1 $+				,JMP
+	
+0 $:
+	rSP					,LI 	(SP0) ,
+	rUP					,LI 	(UP0) ,
+	rRP					,LI 	(RP0) ,
+    		 
+1 $:
+	rRP					,DECT
+	rTOS 		rRP *R	,MOV	( restore R-entry )
+
+	@>					,BL		' ((DOERS)) ,	
+
+end-code
 
 
 ( enter task )
@@ -192,11 +241,10 @@ Code (die)  ( task -- next )
 2 $:
 end-code
 
-( End a task )
-: die ( err -- )
-	throw
-	
-	'me @  (die)  'me !
+
+( End a task and continue to the next )
+: bury ( task -- )
+	(die)  'me !
 	
 	( currently we are on a dead thread! )
 	
@@ -207,8 +255,16 @@ end-code
 	then
 ;
 
+( End a task )
+: die ( err -- )
+	\ TOD: need to propagate or hit unhandled handler TODO	\ throw
+	?dup if message then
+	
+	'me @  bury
+;
+
 ( Start a task using 'xt' )
-: task ( xt -- )
+: task ( xt -- task )
 	here  aligned >r	 		( xt  r: task' )
 	#task allot
 	
@@ -219,9 +275,16 @@ end-code
 	[compile] die
 	postpone ; 
 	 
-	r>
+	r@
 	
 	(task)					( init, phase 1 )
+	
+	r>
+;
+
+( Start a task using 'xt', discard result )
+: run ( xt -- )
+	task drop
 ;
 
 

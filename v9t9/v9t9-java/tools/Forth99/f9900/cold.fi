@@ -1,8 +1,10 @@
 
 
+[IFUNDEF] task
 | : regs-init
     (SP0) (UP0) (RP0)   (REGS) 
 ;
+[THEN]
 
 : cold-init
     @DP0 @       	DP  !
@@ -31,3 +33,15 @@
 	
 [ [then] ]
 ;
+
+: COLD
+	regs-init
+	
+	(resolve-rdefers)
+	
+	cold-init
+
+	(main)
+;
+
+
