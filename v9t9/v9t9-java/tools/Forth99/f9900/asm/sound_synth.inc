@@ -164,10 +164,14 @@ snd_scale_12_tone_octave_11:
 snd_tracks_tick
        PUSH SP, 11
        
+       socb	#nsoundlist, @vintflags		; pessisism 
+       
        li   r4, tracks
 $0:
        mov  @lt_cmdptr(r4), r0
        jeq  $1+
+       
+       szcb	#nsoundlist, @vintflags		; we live -- optimism! 
        
        bl   @snd_track_tick
 $1:
@@ -773,7 +777,7 @@ snd_seq_tick
     
     bl      @snd_voices_tick
     
-    ; for now
+    ; for now, all tracks play
     bl      @snd_tracks_tick
 
     POP     SP, 11
@@ -830,6 +834,9 @@ xs_queue
 ;       R2 = track ptr
 xsnd_queue_track:
     PUSH    SP, 4, 11
+    
+    szcb	#nsoundlist, @vintflags		; hear it! 
+    
     li      4, tracks
 $0:
     mov     @lt_cmdptr(4), 11

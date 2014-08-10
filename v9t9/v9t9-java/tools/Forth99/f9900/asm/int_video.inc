@@ -44,7 +44,7 @@ intvdp:
 
 intv00:	
     movb    @vintflags,3    ; check our commands
-    sla     3,1             ; suppress blinking/blanking?
+    sla     3,1             ; nvblnk: suppress blinking/blanking?
     joc     intv01
  
      ; ----------------------- blink/blank
@@ -65,41 +65,42 @@ intv00b:
  	blwp	*0				; blink it
  
 intv01:
-    sla     3,1             ; suppress keyboard scan?
+    sla     3,1             ; nvkeyscan: suppress keyboard scan?
 	joc     intv02
  
-     ; ----------------------- keyboard scan
+    ; ----------------------- keyboard scan
     
-     ab      #1,@kbdtimer    ; inc repeat delay
-     bl      @scankbd        ; get keyboard, save char       TRASHES REGS
+    ab      #1,@kbdtimer    ; inc repeat delay
+    bl      @scankbd        ; get keyboard, save char       TRASHES REGS
  
 intv02:
-     movb    @vintflags, 3   ; kbd trashed, so reread
-     sla     3,3
-     joc     intv03          ; suppress sprite motion?
+    movb    @vintflags, 3   ; kbd trashed, so reread
+    sla     3,3			 ; nvsprmot: suppress sprite motion?
+    joc     intv03          
      
-     mov     @vsprmot, 0
-     jeq     intv03          ; skip if no sprite motion table
+    mov     @vsprmot, 0
+    jeq     intv03          ; skip if no sprite motion table
      
-     movb    @nsprmot, 0     ; or no sprites
-     jeq     intv03
+    movb    @nsprmot, 0     ; or no sprites
+    jeq     intv03
      
-     blwp    @vspritemotion
+    blwp    @vspritemotion
      
 intv03:
-    sla     3,1
-     joc     intv04          ; sound list?
+    sla     3,1			 ; nsoundlist: play sound list/synth?
+    joc     intv04          
  
-     ; ------------------------ play sound list
+    ; ------------------------ play sound list
      
-     mov     @sndlist, 0
-     jeq     intv04
+    mov     @sndlist, 0
+    jeq     intv04b
      
-     blwp    @soundlist
-     
-intv04:    
-    blwp    @sound_sequencer
+    blwp    @soundlist
 
+intv04b:     
+	blwp    @sound_sequencer
+
+intv04:    
     ; ----------------------- FORTH tick
     
    ; bl		@tick_forth	; FIXME: trashes R11

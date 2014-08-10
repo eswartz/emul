@@ -131,7 +131,7 @@ nvblnk      equ >80     ;       1: suppress blink cursor and blank screen ; FORT
 nvkeyscan   equ >40     ;       1: suppress scan keyboard  ; FORTH: v-int-nokbd
 nvabort     equ >20     ;       1: suppress Ctrl-Fctn-Shift-Space ABORT support ; FORTH: v-int-noabort
 nvsprmot    equ >20     ;       1: suppress sprite motion ; FORTH: v-int-nosprmot
-nsoundlist  equ >10     ;       1: suppress sound list ; FORTH: v-int-nosound
+nsoundlist  equ >10     ;       1: suppress sound list and/or synth; FORTH: v-int-nosound
 
 vstatus     bss 1       ; VDP status last read during interrupt
 

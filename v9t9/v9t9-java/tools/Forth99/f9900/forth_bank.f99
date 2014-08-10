@@ -318,13 +318,13 @@ include asmtests.fi
 has? TESTING? [IF] 
 TESTS!
 [THEN]
-	: COLD
-		regs-init
-		
-		(resolve-rdefers)
-		
-		cold-init
 
+	Code ((main))
+						,LWPI	StdWS ,
+	end-code
+	
+	: (main)
+		((main))
 	    decimal
 
 [ has? TESTING? [IF] ]
@@ -337,6 +337,16 @@ TESTS!
 [ [ELSE] ]
 		quit
 [ [THEN] ]
+	;  
+
+	: COLD
+		regs-init
+		
+		(resolve-rdefers)
+		
+		cold-init
+
+		(main)
 		
 	;
 
@@ -406,6 +416,17 @@ $10 c, &96 c, $20 c,
 	again	
 ;
 
+: hexes
+	BASE @  hex
+	$20 0 do  [char] H emit  i . yield loop
+	BASE !
+;
+: deces
+	BASE @  decimal
+	$20 0 do  [char] D emit  i . yield loop
+	BASE !
+;
+
 \ ................................
 
 Code (RESET)
@@ -413,6 +434,9 @@ Code (RESET)
 					
 					,LWPI		StdWS ,				( ensure proper WS -- likely so, just be sure )
 
+	0				,LI			v-int-nosprmot v-int-nosound +  8 lshift  ,
+	0 		@>		,MOVB		vintflags ,			( turn off sprites/sound/b.s. )
+	
 	@>				,BL			' ((DOERS)) ,
 	
 	\ Make tiny stacks and initial areas
@@ -454,7 +478,7 @@ here $3ff +  $3ff INVERT and  @DP0
 	\ eat up enough space to match ROM bank
 	swap drop $4000 swap
 
-      !
+    !
 
 has? GROM-DICT [if]
 0		   	@LATEST   !

@@ -163,11 +163,63 @@ end-code
 	enter
 ;
 
+( Remove dead thread )
+Code (die)  ( task -- next )
+	( TODO: free memory! )
+	
+	rR2						,CLR				( previous task )
+	@>			rR3			,MOV	'tasks ,	( head )
+	
+0 $:
+	rTOS		rR3			,C					( match? )
+	1 $+					,JEQ
+	rR3			rR2			,MOV				( save prev )
+	rR3 *R		rR3			,MOV			 	( step )
+	2 $+					,JEQ				( no matches )
+	
+1 $:
+	rR2			rR2			,MOV				( me==head? )
+	3 $+					,JEQ
+	
+	rTOS *R		rTOS		,MOV				( next task )
+	rTOS 		rR2 *R		,MOV				( splice link )
+	2 $+					,JMP
+
+3 $:
+	rTOS *R		rTOS		,MOV				( next task )
+	rTOS		@>			,MOV	'tasks ,	( new head )
+	
+2 $:
+end-code
+
+( End a task )
+: die ( err -- )
+	throw
+	
+	'me @  (die)  'me !
+	
+	( currently we are on a dead thread! )
+	
+	'me @ ?dup if 
+		enter
+	else
+		(main)
+	then
+;
+
 ( Start a task using 'xt' )
-: task ( xt -- id )
-	\ Alloc spaces
-	here  aligned 	 		( xt task' )
+: task ( xt -- )
+	here  aligned >r	 		( xt  r: task' )
 	#task allot
+	
+	( xt )  >r
+	:noname
+	r> postpone literal
+	[compile] catch
+	[compile] die
+	postpone ; 
+	 
+	r>
 	
 	(task)					( init, phase 1 )
 ;
