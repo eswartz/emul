@@ -28,6 +28,23 @@
 ;   (This is good thinking anyway!)
 ;
 
+	
+;==========================================================================
+; 	Video services XOP entry
+;
+;	R12: pointer to operand
+;	*R14+: command (word)
+;==========================================================================
+
+xop_video_tbl
+	dw		xv_vinit, xv_mode, xv_reset, xv_blank
+xop_video_tbl_end equ	$
+
+xop_video_ent
+	XopHandler	xop_video_tbl
+
+
+
 h08	byte	8
 hunder	byte	"_"
 h07	data	7
@@ -284,7 +301,6 @@ _vclr0	movb	1,@VDPWD
 ;	NOTE:	TIMER & KBD interrupt call these.  
 ;	Don't change any registers or use the stack!
 ;
-
 vscreenoff
 	szcb 	#>40,@vregr1
 	jmp	vreg1set
@@ -294,6 +310,11 @@ vreg1set:
 	movb	@vregr1,@VDPWA
 	movb	#>81,@VDPWA
 	rt
+
+xv_blank
+	mov		*12, *12
+	jeq		vscreenon
+	jmp		vscreenoff
 
 ;-------------------------------------------------------------------------
 

@@ -96,6 +96,8 @@ include term_hosted.fi
 
 include sound.fi
 include video.fi
+include xutil.fi
+
 include task.fi
 
 include cold.fi
@@ -438,6 +440,36 @@ $10 c, &96 c, $20 c,
 	$20 0 do  [char] D emit  i . yield loop
 	BASE !
 ;
+
+create RptPit63		&14 c,  1 c,  &63 c,  
+create RptPit48		&12 c,  1 c,  &48 c,  
+create RptPit32		&10 c,  1 c,  &32 c,  
+create RptPit16		&9 c,  1 c,  &16 c,
+create RptPit1		&8 c,  1 c,  &1 c,
+  
+: spsay ( addr -- )
+	begin  $9a c@  $80 and  while ints-check repeat
+	yield
+	$9c !
+;
+: (sprand)  here spsay here spsay ;
+: sprand
+	&13 0 do  random  here i +  c!  loop
+	
+	63 0 do i here 2+ c!  (sprand) loop
+	 
+	\ RptPit63 spsay
+	\ RptPit48 spsay
+	\ RptPit32 spsay
+	\ RptPit16 spsay
+	\ RptPit1 spsay
+	\ here spsay
+	\ here spsay
+;
+: spchatter
+	begin sprand again
+;
+  
 
 \ ................................
 

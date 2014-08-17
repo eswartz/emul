@@ -2,6 +2,7 @@
 
 $0000	Constant	#dskCmdRestore
 $0000	Constant	#t.init
+$0000	Constant	#u.init
 $0000	Constant	#v.init
 $0000	Constant	INTVECS
 $0000	Constant	VIDEO^
@@ -10,6 +11,7 @@ $0000	Constant	BANK0
 $0001	Constant	#dskFlgSide
 $0001	Constant	#t.tty
 $0001	Constant	#v.mode
+$0001	Constant	#u.seed
 $0001	Constant	#s.queue
 $0001	Constant	#dskStBusy
 $0001	Constant	TERM^
@@ -19,15 +21,21 @@ $0002	Constant	#dskFlgHead
 $0002	Constant	#v.reset
 $0002	Constant	#t.draw
 $0002	Constant	M_INT_EXT
+$0002	Constant	#u.rand1
 $0002	Constant	SOUND^
 $0002	Constant	#dskStDrq
+$0003	Constant	UTIL^
 $0003	Constant	#t.ttystr
+$0003	Constant	#u.rand2
+$0003	Constant	#v.blank
 $0004	Constant	#dskCmd'Verify
-$0004	Constant	#t.rdkey
+$0004	Constant	#u.noise
 $0004	Constant	M_INT_VDP
+$0004	Constant	#t.clear
 $0004	Constant	#dskFlgHold
 $0004	Constant	BANK1
-$0005	Constant	#t.key?
+$0005	Constant	#t.rdkey
+$0006	Constant	#t.key?
 $0008	Constant	M_INT_KBD
 $0008	Constant	#dskFlgMotor
 $0008	Constant	#dskCmd'Head
@@ -57,6 +65,7 @@ $0094	Constant	GPLWD
 $0096	Constant	GPLWA
 $0098	Constant	SPCHRD
 $009A	Constant	SPCHWT
+$009C	Constant	SPCHDR
 $00A0	Constant	SOUND
 $00A0	Constant	#dskCmdWriteSector
 $00C0	Constant	CRU

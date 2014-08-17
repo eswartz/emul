@@ -2,7 +2,7 @@
 ( Each task consists of a fresh workspace and RP, SP, UP areas )
 
 | 0 constant		>tlink 
-| 1 cells constant	>twp
+| 1 cells constant	>twp		( 0 when unallocated )
 | 2 cells constant	>tpc
 | 3 cells constant	>tst
 
@@ -139,6 +139,7 @@ Code (enter) ( task -- )
 	
 						,LWPI	RomWS ,
 	@>			1		,MOV	'me ,
+	
 	1	@>(R)	&13		,MOV	>twp ,
 	1	@>(R)	&14		,MOV	>tpc ,
 	1	@>(R)	&15		,MOV	>tst ,
@@ -171,12 +172,17 @@ Code (save) ( -- )
 	@>					,BLWP	' ((save)) ,
 end-code
 
+( Yield the current task, always )
+: (yield)
+	(save)
+	robin
+;
+
 ( Yield the current task if time elapsed )
 : yield
 	ints-check
 	'ticked @  uptime cell+ @  - if
-		(save)
-		robin
+		(yield)
 	then
 ;
 
@@ -295,7 +301,7 @@ end-code
 		begin
 			uptime 2@  2over D<
 		while
-			yield
+			(yield)
 		repeat
 		2drop
 	else

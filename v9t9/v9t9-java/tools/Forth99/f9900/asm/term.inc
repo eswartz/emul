@@ -31,6 +31,23 @@
 ;   how to map character coordinates to the screen (e.g.
 ;   fonts, number of pixels, etc).
 
+
+;==========================================================================
+;	Terminal services XOP entry
+;
+;	R12: pointer to operand
+;	*R14+: command (word)
+;==========================================================================
+
+xop_term_tbl
+	dw		xt_tinit, xt_emitchar, xt_drawchar, xt_emitstr
+	dw		xt_clear
+	dw		xt_readkey, xt_keypressed
+xop_term_tbl_end equ	$
+
+xop_term_ent
+	XopHandler xop_term_tbl 
+
 xt_tinit
 	; fallthrough
 	
@@ -201,7 +218,7 @@ termscroll1
     POP     SP,11
     rt
 
-
+xt_clear
 termclear
     PUSH    SP,0,2,3,11
     clr     0

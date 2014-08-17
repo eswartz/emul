@@ -164,10 +164,10 @@ public class BitmapCanvasShort extends BitmapVdpCanvas implements IGLDataCanvas 
 		}
 		
 		for (int i = 0; i < 16; i++) {
-			colorRGBMap[i] = ColorMapUtils.getRGBToRGB565(getColorMgr().getRGB(colorMap[i]));
-			spriteColorRGBMap[i] = ColorMapUtils.getRGBToRGB565(getColorMgr().getRGB(spriteColorMap[i]));
-			fourColorRGBMap[0][i] = ColorMapUtils.getRGBToRGB565(getColorMgr().getRGB(fourColorMap[0][i]));
-			fourColorRGBMap[1][i] = ColorMapUtils.getRGBToRGB565(getColorMgr().getRGB(fourColorMap[1][i]));
+			colorRGBMap[i] = ColorMapUtils.getRGBToRGB565(getColorMgr().getRGB(colorMap[i]&0xff));
+			spriteColorRGBMap[i] = ColorMapUtils.getRGBToRGB565(getColorMgr().getRGB(spriteColorMap[i]&0xff));
+			fourColorRGBMap[0][i] = ColorMapUtils.getRGBToRGB565(getColorMgr().getRGB(fourColorMap[0][i]&0xff));
+			fourColorRGBMap[1][i] = ColorMapUtils.getRGBToRGB565(getColorMgr().getRGB(fourColorMap[1][i]&0xff));
 		}
 
 		// TODO: clean up between color manager, SwtLwjglVideoRenderer, etc in terms of how

@@ -32,6 +32,7 @@ GPLWA		equ		MMIO + >16
 
 SPCHRD		equ		MMIO + >18
 SPCHWT 		equ		MMIO + >1a
+SPCHDR 		equ		MMIO + >1c
 
 SOUND		equ		MMIO + >20
 
@@ -151,12 +152,16 @@ snddur      bss 1       ; duration of current group
 uptime		bss	4		; time in 1/60 seconds
 timeout		bss	2		; timeout counter
 
+;--------------------------------------
+
 DP			bss	2		; current dictionary
 GDP			bss	2		; current GROM dictionary
 
 tasks		bss	2		; pointer to task list; FORTH: 'tasks
 me			bss	2		; current task; FORTH: 'me
 ticked		bss	2		; last switch time; FORTH: 'ticked
+
+;--------------------------------------
         
 ; this block of variables is included in a video mode save/restore 
 _CPURAMSTART equ $
@@ -189,15 +194,25 @@ XOP_VIDEO	equ		0			; FORTH: VIDEO^
 v_init				equ		0	; FORTH: #v.init		( )
 v_setmode			equ		1	; FORTH: #v.mode		( mode-number )
 v_reset				equ		2	; FORTH: #v.reset		( )
+v_blank				equ		3	; FORTH: #v.blank		( t|f )
 
 XOP_TERM	equ		1			; FORTH: TERM^
 t_init				equ		0	; FORTH: #t.init		( )
 t_ttychar			equ		1	; FORTH: #t.tty			( char )
 t_drawchar			equ		2	; FORTH: #t.draw		( char )	( w/o interpret )
 t_ttystr			equ		3	; FORTH: #t.ttystr		( caddr len )
-t_readkey			equ		4	; FORTH: #t.rdkey		( char )
-t_keyavl			equ		5	; FORTH: #t.key?		( char )
+t_clear				equ		4	; FORTH: #t.clear		(  )
+t_readkey			equ		5	; FORTH: #t.rdkey		( char )
+t_keyavl			equ		6	; FORTH: #t.key?		( char )
 
 XOP_SOUND	equ		2			; FORTH: SOUND^
 s_init				equ		0	; FORTH: #s.init		( )
 s_queue				equ		1	; FORTH: #s.queue		( track )
+
+XOP_UTIL	equ		3			; FORTH: UTIL^
+u_init				equ		0	; FORTH: #u.init		( )
+u_seed				equ		1	; FORTH: #u.seed		( seed -- )
+u_rand1				equ		2	; FORTH: #u.rand1		( -- rnd )
+u_rand2				equ		3	; FORTH: #u.rand2		( -- rnd )
+u_noise				equ		4	; FORTH: #u.noise		( rnd -- rnd' )
+

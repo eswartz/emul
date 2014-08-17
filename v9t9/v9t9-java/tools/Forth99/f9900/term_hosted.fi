@@ -54,3 +54,10 @@ end-code
 ;
 ' rom-KEY 		TO KEY
 
+\ --------------------
+
+
+Code cls ( )
+	rTOS		TERM^	,XOP  	#t.clear ,
+end-code
+

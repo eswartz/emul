@@ -15,7 +15,6 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.f99b.machine.InternalCruF99;
-import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
 
 /**
  * Forth9900 memory-mapped I/O area
@@ -42,6 +41,7 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	
 	public static final int SPCHWT = MMIO + 0x18;
 	public static final int SPCHRD = MMIO + 0x1A;
+	public static final int SPCHDR = MMIO + 0x1C;
 	
 	// character outlet
 	public static final int DBG = MMIO + 0x7F;
@@ -105,6 +105,9 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 			readByte(entry, GPLRA);
 			writeByte(entry, GPLWA, (byte) (val >> 8));
 			writeByte(entry, GPLWA, (byte) (val & 0xff));
+		} else if (addr == SPCHDR) {
+			writeByte(entry, SPCHDR, (byte) (val >> 8));
+			writeByte(entry, SPCHDR+1, (byte) (val & 0xff));
 		} else {
 	    	writeByte(entry, addr, (byte) (val >> 8));
 		}
@@ -153,6 +156,10 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	    		break;
 	    	case SPCHWT:
 	    		getTIMemoryModel().getSpeechMmio().write(addr, val);
+	    		break;
+	    	case SPCHDR: 
+	    	case SPCHDR+1: 
+	    		getTIMemoryModel().getSpeechMmio().writeDirect(machine.getConsole(), addr, val);
 	    		break;
 	    		
 	    	case DBG:

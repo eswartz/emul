@@ -4,9 +4,19 @@ Code (mode) ( mode# -- )
 end-code
 
 Code vreset ( )
+	PUSH
 	rTOS		VIDEO^	,XOP  	#v.reset ,
+	POP
+end-code
+
+Code vblank ( t|f )
+	rTOS		VIDEO^	,XOP  	#v.blank ,
+	POP
 end-code
 
 : mode
-	(mode) vreset
+	(mode) 
+	vreset 
+	cls
+	false vblank
 ;

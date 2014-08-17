@@ -19,6 +19,23 @@
 ;
 ;   $Id: sound.i,v 1.11 2009-07-26 01:09:41 ejs Exp $
 
+
+;==========================================================================
+;	Sound services XOP entry
+;
+;	R12: pointer to operand
+;	*R14+: command (word)
+;==========================================================================
+
+xop_sound_tbl
+	dw		xs_sinit, xs_queue
+xop_sound_tbl_end equ	$
+
+xop_sound_ent
+	XopHandler xop_sound_tbl 
+	
+
+
 snd_voice_ports
     dw      SOUND+>2, SOUND+>8, SOUND+>E, SOUND+>14
     

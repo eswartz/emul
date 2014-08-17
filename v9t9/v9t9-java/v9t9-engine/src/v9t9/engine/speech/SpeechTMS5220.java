@@ -16,7 +16,6 @@ import static v9t9.common.speech.TMS5220Consts.GT_WCMD;
 import static v9t9.common.speech.TMS5220Consts.GT_WDAT;
 import static v9t9.common.speech.TMS5220Consts.SS_BE;
 import static v9t9.common.speech.TMS5220Consts.SS_BL;
-import static v9t9.common.speech.TMS5220Consts.SS_SPEAKING;
 import static v9t9.common.speech.TMS5220Consts.SS_TS;
 
 import java.io.IOException;
@@ -112,6 +111,8 @@ public class SpeechTMS5220 implements ISpeechChip {
 	private LPCParameters currentParams = new LPCParameters();
 
 	private byte lastRead;
+	private boolean speaking;
+	private ILPCDataFetcher userFetcher;
 	
 	public SpeechTMS5220(final IMachine machine,
 			final ISettingsHandler settings, final IMemoryDomain speech) {
@@ -243,7 +244,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 			Logging.writeLogLine(2, logSpeech,
 					"Speech command write: " + HexUtils.toHex2((val & 0xff)));
 			command(val);
-		} else {
+		} else if (userFetcher != null) {
 			Logging.writeLogLine(2, logSpeech,
 					"Speech data write: " + HexUtils.toHex2((val & 0xff)));
 			IFifoLpcDataFetcher fifoFetcher = (IFifoLpcDataFetcher) fetcher;
@@ -265,9 +266,22 @@ public class SpeechTMS5220 implements ISpeechChip {
 	}
 
 	/**
+	 * @param userFetcher the userFetcher to set
+	 */
+	public void setUserFetcher(ILPCDataFetcher userFetcher) {
+		if (this.userFetcher != null && userFetcher != null) {
+			waitSpeechComplete(5000);
+		}
+		this.userFetcher = userFetcher;
+		speakExternal();
+		status &= ~(SS_BL + SS_BE);
+	}
+	/**
 	 * @return
 	 */
 	private ILPCDataFetcher getDataFetcher() {
+		if (userFetcher != null)
+			return userFetcher;
 		return (gate & GT_WDAT) != 0 ? fifoFetcher : romFetcher;
 	}
 
@@ -285,8 +299,8 @@ public class SpeechTMS5220 implements ISpeechChip {
 	public byte read() {
 		byte ret;
 		if ((gate & GT_RSTAT) != 0) {
-			byte stat = (byte) (status & ~SS_SPEAKING);
-			if ((status & SS_SPEAKING) != 0)
+			byte stat = (byte) status;
+			if (speaking)
 				stat |= SS_TS;
 			ret = stat;
 			
@@ -371,6 +385,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 
 	
 	public void command(byte cmd) {
+		userFetcher = null;
 		command = (byte) (cmd & 0x70);
 		if (Logging.isSettingEnabled(3, logSpeech)) {
 			Logging.writeLogLine(3, logSpeech, "Cmd=" + HexUtils.toHex2(cmd)
@@ -455,7 +470,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 		}
 	}
 
-	private void speak() {
+	public void speak() {
 		
 		// SPEECHPLAY(vms_Speech, NULL, 0L, speech_hertz);
 
@@ -478,7 +493,8 @@ public class SpeechTMS5220 implements ISpeechChip {
 		romFetcher.reset();
 		fifoFetcher.reset();
 		
-		status |= SS_SPEAKING | SS_TS;
+		status |= SS_TS;
+		speaking = true;
 
 		SpeechOn();
 		
@@ -503,7 +519,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 		
 		SpeechOn(); /* call speech_intr every 25 ms */
 		
-		status |= SS_SPEAKING;
+		speaking = true;
 		timeout = getNumberTimeoutFrames();
 	}
 
@@ -572,7 +588,8 @@ public class SpeechTMS5220 implements ISpeechChip {
 		addr_pos = 0;
 		gate = GT_RSTAT | GT_WCMD;
 		SpeechOff();
-		status &= ~SS_SPEAKING;
+		speaking = false;
+		userFetcher = null;
 		timeout = getNumberTimeoutFrames();
 		lpc.init();
 		// in_speech_intr = 0;
@@ -625,7 +642,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 			Logging.writeLogLine(3, logSpeech, "Speech generating");
 		
 			equationFetcher.fetchEquation(getDataFetcher(), currentParams);
-			boolean last = currentParams.isLast();
+			boolean last = currentParams.isLast() || (userFetcher != null && userFetcher.isDone());
 			
 			lpc.frame(currentParams, getSamplesPerFrame());
 			
@@ -668,7 +685,9 @@ public class SpeechTMS5220 implements ISpeechChip {
 		lpc.stop();
 		if ((gate & GT_WDAT) == 0)
 			lpc.init();
-		status &= ~(SS_TS | SS_SPEAKING);
+		status &= ~SS_TS;
+		speaking = false;
+		userFetcher = null;
 		gate = (gate & ~GT_WDAT) | GT_WCMD;
 
 		senderList.fire(new IFire<ISpeechDataSender>() {
