@@ -282,7 +282,7 @@ public class RegisterViewer extends Composite {
 			updateTask = new Runnable() {
 				public void run() {
 					for (TableViewer v : regViewers) {
-						if (!v.getTable().isDisposed())
+						if (!v.getTable().isDisposed() && !v.isCellEditorActive())
 							v.refresh();
 					}
 					updateTask = null;
