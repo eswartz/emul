@@ -10,7 +10,6 @@
  */
 package ejs.base.sound;
 
-import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -36,7 +35,7 @@ public class PulseSoundListener implements ISoundEmitter {
 	/**
 	 * 
 	 */
-	private static final int SOUND_QUEUE_SIZE = 16;
+	private static final int SOUND_QUEUE_SIZE = 32;
 
 	private static final Logger logger = Logger.getLogger(PulseSoundListener.class);
 	
@@ -218,12 +217,17 @@ public class PulseSoundListener implements ISoundEmitter {
 	 * 
 	 */
 	public void played(ISoundView view) {
-		try {
-			if (!block) {
-				soundQueue.drainTo(new ArrayList<AudioChunk>(1), SOUND_QUEUE_SIZE - 1);
-			}
+		synchronized (this) {
 			if (simple == null)
 				return;
+		}
+		try {
+//			if (!block) {
+//				soundQueue.drainTo(new ArrayList<AudioChunk>(1), SOUND_QUEUE_SIZE - 1);
+//			}
+			if (!block && soundQueue.remainingCapacity() == 0)
+				soundQueue.remove();
+
 			// will block if sound is too fast
 			AudioChunk o = new AudioChunk(view, volume);
 			soundQueue.put(o);
