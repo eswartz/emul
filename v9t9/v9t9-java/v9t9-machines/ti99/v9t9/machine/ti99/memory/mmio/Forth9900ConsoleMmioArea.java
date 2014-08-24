@@ -41,7 +41,8 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	
 	public static final int SPCHWT = MMIO + 0x18;
 	public static final int SPCHRD = MMIO + 0x1A;
-	public static final int SPCHDR = MMIO + 0x1C;
+	public static final int SPCHDA = MMIO + 0x1C;
+	public static final int SPCHDL = MMIO + 0x1E;
 	
 	// character outlet
 	public static final int DBG = MMIO + 0x7F;
@@ -105,9 +106,12 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 			readByte(entry, GPLRA);
 			writeByte(entry, GPLWA, (byte) (val >> 8));
 			writeByte(entry, GPLWA, (byte) (val & 0xff));
-		} else if (addr == SPCHDR) {
-			writeByte(entry, SPCHDR, (byte) (val >> 8));
-			writeByte(entry, SPCHDR+1, (byte) (val & 0xff));
+		} else if (addr == SPCHDA) {
+			writeByte(entry, SPCHDA, (byte) (val >> 8));
+			writeByte(entry, SPCHDA+1, (byte) (val & 0xff));
+		} else if (addr == SPCHDL) {
+			writeByte(entry, SPCHDL, (byte) (val >> 8));
+			writeByte(entry, SPCHDL+1, (byte) (val & 0xff));
 		} else {
 	    	writeByte(entry, addr, (byte) (val >> 8));
 		}
@@ -157,10 +161,12 @@ public class Forth9900ConsoleMmioArea extends ConsoleMmioArea  {
 	    	case SPCHWT:
 	    		getTIMemoryModel().getSpeechMmio().write(addr, val);
 	    		break;
-	    	case SPCHDR: 
-	    	case SPCHDR+1: 
+	    	case SPCHDL: 
+	    	case SPCHDL+1: 
+	    	case SPCHDA: 
+	    	case SPCHDA+1: 
 	    		getTIMemoryModel().getSpeechMmio().writeDirect(machine.getConsole(), addr, val);
-	    		break;
+	    	break;
 	    		
 	    	case DBG:
 	    		System.out.print((char) val);

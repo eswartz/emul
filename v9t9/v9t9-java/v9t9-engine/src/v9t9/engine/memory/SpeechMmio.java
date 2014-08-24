@@ -24,7 +24,9 @@ public class SpeechMmio implements IConsoleMmioWriter, IConsoleMmioReader {
 
 
 	private final ISpeechChip speech;
-	private byte spchDrHi;
+	private byte spchDirectAddrHi;
+	private byte spchDirectAddrLo;
+	private byte spchDirectLenHi;
 
 	public SpeechMmio(final ISpeechChip speech) {
 		Check.checkArg(speech);
@@ -32,7 +34,9 @@ public class SpeechMmio implements IConsoleMmioWriter, IConsoleMmioReader {
     }
 
     public byte read(int addrMask) {
-    	spchDrHi = 0;
+    	spchDirectAddrHi = 0;
+    	spchDirectAddrLo = 0;
+    	spchDirectLenHi = 0;
     	return speech.read();
     }
     
@@ -40,7 +44,9 @@ public class SpeechMmio implements IConsoleMmioWriter, IConsoleMmioReader {
      * @see v9t9.common.memory.Memory.IConsoleMmioWriter#write 
      */
     public void write(int addr, byte val) {
-    	spchDrHi = 0;
+    	spchDirectAddrHi = 0;
+    	spchDirectAddrLo = 0;
+    	spchDirectLenHi = 0;
         speech.write(val);
     }
 
@@ -54,10 +60,15 @@ public class SpeechMmio implements IConsoleMmioWriter, IConsoleMmioReader {
 	 */
 	public void writeDirect(final IMemoryDomain domain, int addr, byte val) {
 		// direct equation, writing equation
-		if ((addr & 1) == 0) {
-			spchDrHi = val;
+		if ((addr & 3) == 0) {
+			spchDirectAddrHi = val;
+		} else if ((addr & 3) == 1) {
+			spchDirectAddrLo = val;
+		} else if ((addr & 3) == 2) {
+			spchDirectLenHi = val;
 		} else {
-			final int caddr_ = ((spchDrHi << 8) & 0xff00) | (val & 0xff); 
+			final int caddr_ = ((spchDirectAddrHi << 8) & 0xff00) | (spchDirectAddrLo & 0xff); 
+			final int len_ = ((spchDirectLenHi << 8) & 0xff00) | (val & 0xff); 
 			final SpeechTMS5220 speech = (SpeechTMS5220) this.speech;
 			
 //			final LPCParameters params = new LPCParameters();
@@ -84,20 +95,21 @@ public class SpeechMmio implements IConsoleMmioWriter, IConsoleMmioReader {
 //			}
 			
 			//speech.getLpcSpeech().frame(params, speech.getSamplesPerFrame());
-			speech.setUserFetcher(new BaseLpcDataFetcher() {
+			speech.speakUserPhrase(new BaseLpcDataFetcher() {
 				int caddr = caddr_;
-
+				int cnt = len_;
 				
 				@Override
 				public int fetch(int bits) {
-					byte byt = domain.readByte(caddr++); 
+					byte byt = domain.readByte(caddr++);
+					cnt--;
 					int mask = ~(~0 << bits);
 					return (byt & mask);
 				}
 				
 				@Override
 				public boolean isDone() {
-					return true;
+					return cnt <= 0;
 				}
 			});
 		}

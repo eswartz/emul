@@ -447,16 +447,17 @@ create RptPit32		&10 c,  1 c,  &32 c,
 create RptPit16		&9 c,  1 c,  &16 c,
 create RptPit1		&8 c,  1 c,  &1 c,
   
-: spsay ( addr -- )
+: spsay ( addr len -- )
 	begin  $9a c@  $80 and  while ints-check repeat
 	yield
-	$9c !
+	swap  $9c !  $9e ! 
 ;
-: (sprand)  here spsay here spsay ;
-: sprand
+: (sprand)  ( i ) here swap spsay ;
+
+: sprand1
 	&13 0 do  random  here i +  c!  loop
 	
-	63 0 do i here 2+ c!  (sprand) loop
+	63 0 do i here 2+ c!  13 (sprand) loop
 	 
 	\ RptPit63 spsay
 	\ RptPit48 spsay
@@ -466,8 +467,138 @@ create RptPit1		&8 c,  1 c,  &1 c,
 	\ here spsay
 	\ here spsay
 ;
+
+&511 constant SpLength
+
+: sprand2
+	SpLength 0 do  random  dup &15 and &15 = if 1- then    here i +  c!  loop
+	  
+	\ here &255  spsay here &255  spsay
+	\ &255 (sprand) 
+\	63 0 do i  here i + 2+ c!  &255 (sprand) 8 +loop
+	63 0 do i  here i + 2+ c+!  SpLength (sprand)  3 +loop
+
+;
+
+: rnd ( max -- rnd )
+	random swap  u/mod drop
+;
+
+: ,sp  ( idx val -- idx' )
+	over here +  c!
+	1+ 
+;
+
+: ,en ( idx -- idx' )
+	&13 rnd 1+ ,sp
+;
+
+: ,k0-3 ( idx -- idx' )
+	&32 rnd ,sp
+	&32 rnd ,sp
+	&16 rnd ,sp
+	&16 rnd ,sp
+;
+
+: ,k4-9 ( idx -- idx' )
+	&16 rnd ,sp
+	&16 rnd ,sp
+	&16 rnd ,sp
+	&8 rnd ,sp
+	&8 rnd ,sp
+	&8 rnd ,sp
+;
+: ,pitch ( idx -- idx' )
+	&63 rnd 1+ ,sp
+;
+
+: ,voiced ( idx -- idx' )
+	,en  ( energy ) 
+	0 ,sp       ( repeat )
+	,pitch
+	,k0-3
+	,k4-9
+;
+: ,unvoiced ( idx -- idx' )
+	,en		 ( energy ) 
+	0 ,sp       ( repeat )
+	0 ,sp   ( pitch )
+	,k0-3
+;
+: ,repeat ( i -- i' )
+	,en
+	1 ,sp
+	,pitch
+;
+: ,urepeat ( i -- i' )
+	,en
+	1 ,sp
+	0 ,sp ( pitch )
+;
+
+: +pitch ( idx offs -- )
+	swap  2+ here +  c+!
+;
+
+: skip ( idx -- idx' )
+	here +
+	1+   ( skip energy )  
+	dup  c@  1 and if 
+		2+ ( repeated, skip pitch )
+	else
+		dup 1+ c@ if
+			&10 +
+		else
+			&4 +
+		then  
+	then  
+	
+	here -
+;
+
+: ,uvvv ( idx -- idx' )
+	,unvoiced ,urepeat ,urepeat ,urepeat   ( 7 3 3 3 = 16 )
+	,voiced ,repeat ,repeat				( 11 3 3 = 17 )
+	,voiced ,repeat ,repeat ,repeat		( 11 3 3 3 = 20 )
+	,voiced ,repeat 					( 11 3 = 14 )
+;
+: ,vuu ( idx -- idx' )
+	,voiced ,repeat ,repeat				( 11 3 3 = 17 )
+	,unvoiced ,urepeat ,urepeat   		( 7 3 3 = 13 )
+	,unvoiced ,urepeat 			  		 ( 7 3 = 10 )
+;
+
+: sprand2b
+	0
+	begin
+		dup  SpLength <
+	while
+		,uvvv ,vuu ,uvvv
+	repeat	
+	drop
+	  
+	&63 0 do
+		0
+		&13 0 do
+			j +pitch skip
+		loop 
+		drop 
+		
+		SpLength (sprand)  
+	3 +loop
+
+;
+
+: sprand3
+	SpLength 0 do  random  dup &15 and &15 = if 1- then    here i +  c!  loop
+	  
+	&63 0 do   
+		SpLength 0 do  i  here i +  c!  7 +loop
+		SpLength (sprand)
+	3 +loop
+;
 : spchatter
-	begin sprand again
+	begin sprand2b again
 ;
   
 
