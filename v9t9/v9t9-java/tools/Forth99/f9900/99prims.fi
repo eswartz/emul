@@ -206,7 +206,7 @@ Code +!
 end-code
 
 Code C+!
-	rSP @>(R)	rTOS *R		,A	1 ,
+	rSP @>(R)	rTOS *R		,AB	1 ,
 	rSP						,INCT
 	POP
 end-code
