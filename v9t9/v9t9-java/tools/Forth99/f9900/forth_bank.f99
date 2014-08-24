@@ -468,7 +468,7 @@ create RptPit1		&8 c,  1 c,  &1 c,
 	\ here spsay
 ;
 
-&511 constant SpLength
+&255 constant SpLength
 
 : sprand2
 	SpLength 0 do  random  dup &15 and &15 = if 1- then    here i +  c!  loop
@@ -567,6 +567,11 @@ create RptPit1		&8 c,  1 c,  &1 c,
 	,unvoiced ,urepeat ,urepeat   		( 7 3 3 = 13 )
 	,unvoiced ,urepeat 			  		 ( 7 3 = 10 )
 ;
+: ,uuu ( idx -- idx' )
+	,unvoiced ,urepeat ,urepeat ,urepeat			
+	,unvoiced ,urepeat ,urepeat   		
+	,unvoiced ,urepeat 			  		
+;
 
 : sprand2b
 	0
@@ -585,7 +590,28 @@ create RptPit1		&8 c,  1 c,  &1 c,
 		drop 
 		
 		SpLength (sprand)  
-	3 +loop
+	7 +loop
+
+;
+
+: sprand2c
+	0
+	begin
+		dup  SpLength <
+	while
+		,uuu
+	repeat	
+	drop
+	  
+	&63 0 do
+		0
+		&3 0 do
+			j +pitch skip
+		loop 
+		drop 
+		
+		SpLength (sprand)  
+	8 +loop
 
 ;
 
@@ -598,7 +624,7 @@ create RptPit1		&8 c,  1 c,  &1 c,
 	3 +loop
 ;
 : spchatter
-	begin sprand2b again
+	begin sprand2c sprand2b again
 ;
   
 
