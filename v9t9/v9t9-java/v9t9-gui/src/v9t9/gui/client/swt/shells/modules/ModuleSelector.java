@@ -459,6 +459,7 @@ public class ModuleSelector extends Composite {
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(comp);
 
 		filterText = new Text(comp, SWT.BORDER);
+		filterText.setMessage("Search...");
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(filterText);
 		
 		filterText.addFocusListener(new FocusListener() {
@@ -479,16 +480,12 @@ public class ModuleSelector extends Composite {
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(clearButton);
 
 		clearButton.addSelectionListener(new SelectionAdapter() {
-			/* (non-Javadoc)
-			 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
-			 */
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				if (lastFilter != null && lastFilter.length() > 0 && !lastFilter.equals("Search...")) {
-					initFilter(null);
-					filterText.setFocus();
-					viewer.setSelection(new StructuredSelection(moduleManager.getLoadedModules()), true);
-				}
+				initFilter(null);
+				filterText.setFocus();
+				filterText.setText("");
+				viewer.setSelection(new StructuredSelection(moduleManager.getLoadedModules()), true);
 			}
 		});
 	}
@@ -502,16 +499,11 @@ public class ModuleSelector extends Composite {
 	}
 
 	protected void initFilter(String text) {
-		if (text == null || text.length() == 0) {
-			filterText.setText("Search...");
-			filterText.setForeground(getDisplay().getSystemColor(SWT.COLOR_TITLE_INACTIVE_FOREGROUND));
-		} else {
-			String curText = filterText.getText(); 
-			if (curText.equals("Search...") || curText.isEmpty()) {
-				filterText.setText(text);
-				filterText.selectAll();
-				filterText.setForeground(null);
-			}
+		String curText = filterText.getText(); 
+		if (curText.isEmpty()) {
+			filterText.setText(text != null ? text : "");
+			filterText.selectAll();
+			filterText.setForeground(null);
 		}
 		
 		refreshFilters();
@@ -612,7 +604,7 @@ public class ModuleSelector extends Composite {
 			
 			@Override
 			public int hashCode(Object element) {
-				return System.identityHashCode(element);
+				return element.hashCode();
 			}
 			
 			@Override
