@@ -244,7 +244,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 			Logging.writeLogLine(2, logSpeech,
 					"Speech command write: " + HexUtils.toHex2((val & 0xff)));
 			command(val);
-		} else if (userFetcher != null) {
+		} else if (userFetcher == null) {
 			Logging.writeLogLine(2, logSpeech,
 					"Speech data write: " + HexUtils.toHex2((val & 0xff)));
 			IFifoLpcDataFetcher fifoFetcher = (IFifoLpcDataFetcher) fetcher;
@@ -268,7 +268,7 @@ public class SpeechTMS5220 implements ISpeechChip {
 	/**
 	 * @param userFetcher the userFetcher to set
 	 */
-	public void setUserFetcher(ILPCDataFetcher userFetcher) {
+	public void speakUserPhrase(ILPCDataFetcher userFetcher) {
 		if (this.userFetcher != null && userFetcher != null) {
 			waitSpeechComplete(5000);
 		}
@@ -364,15 +364,15 @@ public class SpeechTMS5220 implements ISpeechChip {
 	 * @return
 	 */
 	private int getSpeechRate() {
-		return speechHertz / getSamplesPerFrame();
+		return speechHertz / getSamplesPerFrame();	// FIXME: only way to avoid stuttering?
 	}
 
 	public int getSamplesPerFrame() {
-		int length = (int) (speechHertz / 40 / talkRate.getDouble());
+		int length = (int) (speechHertz / 40. / talkRate.getDouble());
 		if (length < 1)
 			length = 1;
-		else if (length > speechHertz)
-			length = speechHertz;
+		else if (length > speechHertz / 2)
+			length = speechHertz / 2;
 		return length;
 	}
 
