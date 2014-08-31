@@ -156,6 +156,8 @@ int_reset
     ;   clear memory
     bl  	@clr
     data    _RAM, _RAMEND - _RAM
+    bl  	@clr
+    data    _SharedRAM, _SharedRAMEnd - _SharedRAM
 	
 	bl		@sinit			; system init
    	bl  	@sndinit        ; sound init

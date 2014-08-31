@@ -6,15 +6,13 @@
 | 2 cells constant	>tpc
 | 3 cells constant	>tst
 
-| 4 cells 
-	$20 + 
-	(#RP) +  (#SP) +  
-	#TIB + (#up) +  		constant #task 
+| 4 cells constant  >tws
 
-| 4 cells 
-	$20 + 
-	(#RP) +  (#SP) +  
-	#TIB + 			 		constant >tuser 
+| >tws  $20 + (#RP) + 		constant 	>trp
+| >trp (#SP) + 				constant 	>tsp
+| >tsp #TIB +				constant 	>tup
+
+| >tup (#up) +  			constant 	#task 
 
 ( Initialize and link task structure )
 Code (task)	( xt task -- )
@@ -29,19 +27,20 @@ Code (task)	( xt task -- )
 	rTOS		@>			,MOV	'tasks ,		( set new head task )
 	
 	rTOS		rR3			,MOV
-	
-				rR3			,AI		4 cells ,		( new WS )
+				rR3			,AI		>tws ,			( new WS )
 	rR3			rTOS @>(R)	,MOV	>twp ,			( set new WP )
 	rSP *R+		rTOS @>(R)	,MOV	>tpc ,			( set new PC from XT )
 	rR2						,STST
 	rR2			rTOS @>(R)	,MOV	>tst ,			( set new ST )
 			
-	rR3			rR2			,MOV
-	rR2						,AI		(#rp) ,
+	rTOS		rR2			,MOV
+	rR2						,AI		>trp ,
 	rR2			rR3 @>(R)	,MOV	rRP 2* ,		( set new RP end )
-	rR2						,AI		(#sp) ,
+	rTOS		rR2			,MOV
+	rR2						,AI		>tsp ,
 	rR2			rR3 @>(R)	,MOV	rSP 2* ,		( set new SP end )
-	rR2						,AI		#tib ,
+	rTOS		rR2			,MOV
+	rR2						,AI		>tup ,
 	rR2			rR3 @>(R)	,MOV	rUP 2* ,		( set new UP )
 	
 	rDOCOL		rR3 @>(R)	,MOV	rDOCOL 2* ,		( copy )
@@ -71,7 +70,7 @@ end-code
 	0 $+				,JEQ				( in a task? )
 
 	rR2			rTOS	,MOV
-	rTOS				,AI 	4 cells (#rp) +  ,						( RP )
+	rTOS				,AI 	>trp  ,		( RP )
 	
 	1 $+				,JMP
 	
@@ -88,7 +87,7 @@ end-code
 	0 $+				,JEQ				( in a task? )
 	
 	rR2			rTOS	,MOV
-	rTOS				,AI 	4 cells (#rp) + (#sp) + ,				( SP )
+	rTOS				,AI 	>tsp ,		( SP )
 	
 	1 $+				,JMP
 	
@@ -105,13 +104,13 @@ end-code
 	0 $+				,JEQ				( in a task? )
 	
 	rR2			 rSP	,MOV 	
-	rSP					,AI 	4 cells (#rp) + (#sp) +  ,				( SP )
+	rSP					,AI 	>tsp ,
 	
 	rR2			 rUP	,MOV
-	rUP					,AI 	4 cells (#rp) + (#sp) +  #tib +  ,  	( UP )
+	rUP					,AI 	>tup ,
 	
 	rR2			 rRP	,MOV
-	rRP					,AI 	4 cells (#rp) +  ,						( RP )
+	rRP					,AI 	>trp ,
 	
 	1 $+				,JMP
 	
@@ -149,15 +148,15 @@ end-code
 
 ( Enter given task )
 : enter ( task -- )
-	?dup  if (enter) then
-	( NOTREACHED )
+	?dup  if 
+		(enter)			( NOTREACHED ) 
+	then
 ;
 
 
 Code ((save)) ( -- )
 	RomWS ,		here #cell + ,		( vector )
 
-						,LIMI	0 ,	
 	@>			1		,MOV	'me ,
 	0 $+				,JEQ
 	&13		1	@>(R)	,MOV	>twp ,
@@ -169,6 +168,7 @@ end-code
 
 ( save task )
 Code (save) ( -- )
+						,LIMI	0 ,	
 	@>					,BLWP	' ((save)) ,
 end-code
 
@@ -190,9 +190,9 @@ end-code
 Code (robin)  ( -- task )
 	PUSH
 	@>		rTOS		,MOV	'me ,
-	1 $+				,JEQ
+	1 $+				,JEQ				( any task? )
 	
-	rTOS *R	rTOS		,MOV	( link )
+	rTOS *R	rTOS		,MOV				( link )
 	0 $+				,JNE
 1 $:
 	@>		rTOS		,MOV	'tasks ,
@@ -222,6 +222,8 @@ end-code
 Code (die)  ( task -- next )
 	( TODO: free memory! )
 	
+							,LIMI	0 ,
+							
 	rR2						,CLR				( previous task )
 	@>			rR3			,MOV	'tasks ,	( head )
 	
@@ -275,7 +277,7 @@ end-code
 	#task allot
 	
 	( xt )  >r
-	:noname
+	:noname						( create wrapper for task which catches exceptions and cleans up )
 	r> postpone literal
 	[compile] catch
 	[compile] die
@@ -283,7 +285,7 @@ end-code
 	 
 	r@
 	
-	(task)					( init, phase 1 )
+	(task)						( init, phase 1 )
 	
 	r>
 ;
@@ -301,6 +303,7 @@ end-code
 		begin
 			uptime 2@  2over D<
 		while
+			ints-check
 			(yield)
 		repeat
 		2drop
