@@ -86,13 +86,13 @@ include ../ans/exception_minimal.fi
 
 include ../v9t9/strings.fi
 
-include ../ans/tools.fi
-
 include ../v9t9/sysutils.fi
 
 include ../v9t9/errors.fi
 		
 include term_hosted.fi
+
+include ../ans/tools.fi
 
 include sound.fi
 include video.fi

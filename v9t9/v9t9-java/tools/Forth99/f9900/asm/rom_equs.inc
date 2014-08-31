@@ -204,6 +204,7 @@ t_ttystr			equ		3	; FORTH: #t.ttystr		( caddr len )
 t_clear				equ		4	; FORTH: #t.clear		(  )
 t_readkey			equ		5	; FORTH: #t.rdkey		( char )
 t_keyavl			equ		6	; FORTH: #t.key?		( char )
+t_getwin			equ		7	; FORTH: #t.win@		( x y w h )
 
 XOP_SOUND	equ		2			; FORTH: SOUND^
 s_init				equ		0	; FORTH: #s.init		( )

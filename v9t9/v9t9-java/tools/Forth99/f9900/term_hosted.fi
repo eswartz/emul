@@ -61,3 +61,13 @@ Code cls ( )
 	rTOS		TERM^	,XOP  	#t.clear ,
 end-code
 
+Code win@ ( --  x y w h )
+	PUSH
+	rSP					,AI		-4 cells ,		
+	rSP *R		TERM^	,XOP  	#t.win@ ,
+	POP
+end-code
+
+: win-cx	( -- cx )
+	win@ drop >r 2drop r>
+;

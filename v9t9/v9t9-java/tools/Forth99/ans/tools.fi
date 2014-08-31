@@ -36,7 +36,7 @@
 : per-line
     \ 7 = 4 addr + = + space + NL
     [ [IFDEF] win-cx ]
-    win-cx c@
+    win-cx \ c@
     [ [ELSE] ]
     &32
     [ [THEN] ]

@@ -82,8 +82,8 @@ vch	bss	1			; current char
 
 vcurschar bss	1			; char of cursor
 
-vwx	bss	1			; window left
-vwy	bss	1			; window right
+vwx		bss	1			; window left
+vwy		bss	1			; window right
 vwxs	bss	1			; width of window
 vwys	bss	1			; height of window
 vwcy	bss	1			; last cleared row

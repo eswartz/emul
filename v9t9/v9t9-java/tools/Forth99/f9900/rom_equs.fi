@@ -36,6 +36,7 @@ $0004	Constant	#dskFlgHold
 $0004	Constant	BANK1
 $0005	Constant	#t.rdkey
 $0006	Constant	#t.key?
+$0007	Constant	#t.win@
 $0008	Constant	M_INT_KBD
 $0008	Constant	#dskFlgMotor
 $0008	Constant	#dskCmd'Head

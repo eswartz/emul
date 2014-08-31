@@ -43,6 +43,7 @@ xop_term_tbl
 	dw		xt_tinit, xt_emitchar, xt_drawchar, xt_emitstr
 	dw		xt_clear
 	dw		xt_readkey, xt_keypressed
+	dw		xt_getwin
 xop_term_tbl_end equ	$
 
 xop_term_ent
@@ -59,6 +60,23 @@ xt_treset
 	movb   @vwidth+1,@vwxs	; set dims to screen size
 	movb   @vheight,@vwys	; set dims to screen size
 	rt
+	
+xt_getwin
+	stwp	1
+	clr		0
+	
+	movb	@vwys, @1(1)
+	mov		0, *12+		
+
+	movb	@vwxs, @1(1)
+	mov		0, *12+		
+	
+	movb	@vwy, @1(1)
+	mov		0, *12+		
+	
+	movb	@vwx, @1(1)
+	mov		0, *12+		
+	rt	
 
 ;   (Called from XOP)
 ;

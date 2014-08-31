@@ -93,9 +93,9 @@ B1_int_1
 	jmp		int_1
 
 B1_int_nmi
-	; continue in same WS as original -- keep all but the PC
 	seto	@BANK1				; fetch constant addr from ROM
 	mov		#int_nmi, 14
+	mov		#StdWS, 13			; could come from ROM or Forth, need to choose
 	seto	@BANK0				; runs in FORTH
 	rtwp
 
