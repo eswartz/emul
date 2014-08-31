@@ -448,8 +448,7 @@ create RptPit16		&9 c,  1 c,  &16 c,
 create RptPit1		&8 c,  1 c,  &1 c,
   
 : spsay ( addr len -- )
-	begin  $9a c@  $80 and  while ints-check repeat
-	yield
+	begin  $9a c@  $80 and  while yield repeat
 	swap  $9c !  $9e ! 
 ;
 : (sprand)  ( i ) here swap spsay ;
