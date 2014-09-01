@@ -48,6 +48,23 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements IVdpCanvas, ISp
 
 	private boolean isMono;
 
+	private int currentY;
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#getCurrentY()
+	 */
+	@Override
+	public int getCurrentY() {
+		return currentY;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#setCurrentY(int)
+	 */
+	@Override
+	public void setCurrentY(int y) {
+		this.currentY = y;
+		
+	}
 
 	public final void setSize(int x, int y) {
 		setSize(x, y, false);
@@ -65,6 +82,8 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements IVdpCanvas, ISp
 			this.isInterlacedEvenOdd = isInterlaced;
 			this.width = visibleToActualWidth(x);
 			this.height = y;
+			setMinY(0);
+			setMaxY(height);
 			markDirty();
 			doChangeSize();
 			if (listener != null)

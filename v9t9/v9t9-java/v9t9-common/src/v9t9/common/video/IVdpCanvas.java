@@ -18,7 +18,6 @@ import v9t9.common.memory.ByteMemoryAccess;
  *
  */
 public interface IVdpCanvas extends ICanvas {
-
 	VdpFormat getFormat();
 	
 	void setFormat(VdpFormat format);
@@ -40,8 +39,11 @@ public interface IVdpCanvas extends ICanvas {
 	void clearToEvenOddClearColors();
 
 	void setBlank(boolean b);
-
 	
+	/** Get the virtual scanline */
+	int getCurrentY();
+	/** Get the virtual scanline */
+	void setCurrentY(int y);
 
 	/**
 	 * Blit an 8x8 block defined by a pattern and a foreground/background color to the bitmap

@@ -358,7 +358,7 @@ TESTS!
 ;
 : delay 0 do
 [ [IFDEF] yield ]  
-	i $ff and 0= if yield then
+	yield
 [ [THEN] ]	 
 loop ;
 
@@ -426,6 +426,14 @@ $10 c, &96 c, $20 c,
 				or $ff and	or  
 			vwaddr
 			&1000 ms 
+		loop
+	again	
+;
+: supercycler
+	begin
+		&16 1 do
+			$8710 i +
+			vwaddr
 		loop
 	again	
 ;
@@ -626,6 +634,11 @@ create RptPit1		&8 c,  1 c,  &1 c,
 	begin sprand2c sprand2b again
 ;
   
+: vsplit 
+	$8010	vwaddr		( turn on IE1 )
+	$9380	vwaddr		( split in middle )
+	vintflags c@  vhorizint OR  vintflags c!
+;
 
 \ ................................
 

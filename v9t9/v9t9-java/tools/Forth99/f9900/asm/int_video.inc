@@ -11,32 +11,27 @@
 M_VDP		equ		>0400
 
 int_1
-	; clr		r12			; point to 9901
-	; tb		2			; VDP interrupt?
-	movb	@INTSP, 0		; check interrupts
-	coc		#M_VDP, 0		; M_VDP set?
-	jeq		intvdp		; yup.
-
-;    tb      3           ; timer interrupt?
-;    jeq     $1+         ; nope, must be device
-;
-;    sbo     3           ; acknowledge
-;    
-;    mov     @timerisr, 3 ; does user hook the timer?
-;    jeq     $1+
-;    
-;    bl      *3          ; call user handler
-;    jmp     int1out
-;
-; $1:     
-;    ; device interrupt (some other bit)
-;
-;	lwpi	>83e0      	
-;	lwpi	intws
-	jmp		int1out		; don't handle device interrupts yet
-
-intvdp:
 	szcb	#<M_VDP, @INTSP	; acknowledge VDP interrupt
+	
+    movb    @vintflags,3    ; check our commands
+	coc		#(256*vhorizint), 3	; check for horizontal scanning interrupt?
+	jne		intvnorm
+	
+	mov		#>8f01, @VDPWA	; set for status #1
+	movb    @VDPST,3 	    
+	coc		#>0100, 3		; is FH set?
+	jne		intvnorm
+	
+	movb	#>ff, @vhorizint  ; in horizontal interrupt
+	mov		#>87B1, @VDPWA
+	
+	mov		#>8f00, @VDPWA	; set for status #0
+	b		@Int_Return
+	
+intvnorm: 
+	movb	#0, @vhorizint	; not in horizontal interrupt
+	li		3, >8717
+	mov		3, @VDPWA
 	
  	inc		@uptime + 2	; time in 1/60 seconds
  	jnc		intv00		; overflow?
@@ -116,6 +111,7 @@ intv04:
 intv05:
 
 int1out:
+	mov		#>8f00, @VDPWA	; set for status #0
 	movb	@VDPST, @vstatus ; clear interrupt
 
 	b		@Int_Return

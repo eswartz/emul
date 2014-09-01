@@ -53,6 +53,8 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 		int screenBase = modeInfo.screen.base;
 		int pattBase = modeInfo.patt.base;
 
+		int minY = info.canvas.getMinY();
+		int maxY = info.canvas.getMaxY();
 		
 		for (int i = info.changes.screen.nextSetBit(0); 
 			i >= 0 && i < modeInfo.screen.size; 
@@ -63,6 +65,9 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 			RedrawBlock block = blocks[count++];
 			
 			block.r = (i >> 5) << 3;
+			if (block.r + 8 < minY || block.r >= maxY)
+				continue;
+
 			block.c = (i & 31) << 3;
 
 			int pattOffs = pattBase + (currchar << 3) + ((i >> 5) & 3) * 2;

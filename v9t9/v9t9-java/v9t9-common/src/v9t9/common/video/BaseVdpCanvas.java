@@ -35,6 +35,8 @@ public abstract class BaseVdpCanvas implements ICanvas {
 	protected int height;
 	protected ICanvasListener listener;
 	private VdpColorManager colorMgr;
+	private int minY;
+	private int maxY;
 	
 	public void setListener(ICanvasListener listener) {
 		this.listener = listener;
@@ -49,9 +51,32 @@ public abstract class BaseVdpCanvas implements ICanvas {
 		if (x != width || y != height) {
 			this.width = visibleToActualWidth(x);
 			this.height = y;
+			this.minY = 0;
+			this.maxY = height;
 			if (listener != null)
 				listener.canvasResized(this);
 		}
+	}
+
+
+	@Override
+	public int getMinY() {
+		return minY;
+	}
+
+	@Override
+	public void setMinY(int minY) {
+		this.minY = minY;
+	}
+
+	@Override
+	public int getMaxY() {
+		return maxY;
+	}
+
+	@Override
+	public void setMaxY(int maxY) {
+		this.maxY = maxY;
 	}
 
 	/** Convert the width displayed with the width in the canvas.
@@ -69,9 +94,9 @@ public abstract class BaseVdpCanvas implements ICanvas {
 			for (int i = 0; i < count; i++) {
 				RedrawBlock block = blocks[i];
 				if (block.c < dx1) dx1 = block.c;
-				if (block.r < dy1) dy1 = block.r;
+				if (block.r < dy1) dy1 = Math.max(block.r, minY);
 				if (block.c + 8 >= dx2) dx2 = block.c + 8;
-				if (block.r + 8 >= dy2) dy2 = block.r + 8;
+				if (block.r + 8 >= dy2) dy2 = Math.min(block.r + 8, maxY);
 			}
 		}
 		if (listener != null)
@@ -80,9 +105,10 @@ public abstract class BaseVdpCanvas implements ICanvas {
 	
 	public synchronized void markDirty() {
 		//Arrays.fill(dirtyBlocks, 0, dirtyBlocks.length, true);
-		dx1 = dy1 = 0;
+		dx1 = 0;
+		dy1 = minY;
 		dx2 = width;
-		dy2 = height;
+		dy2 = maxY;
 		if (listener != null)
 			listener.canvasDirtied(this);
 	}
@@ -91,7 +117,7 @@ public abstract class BaseVdpCanvas implements ICanvas {
 		//Arrays.fill(dirtyBlocks, 0, dirtyBlocks.length, false);
 		dx1 = width;
 		dy1 = height; 
-		dx2 = dy2 = 0;
+		dx2 = dy2 = minY;
 	}
 
 	public int getBlockCount() {

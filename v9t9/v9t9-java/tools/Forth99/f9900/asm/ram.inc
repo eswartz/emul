@@ -91,10 +91,11 @@ vwcy	bss	1			; last cleared row
 vmode	bss	1         ; last set video mode (not M_xxx)
 
     even
+    
 vtermptr bss 2          ; pointer to standard term stuff for mode
     
-vx	bss	1			; x-coord of cursor in window
-vy	bss	1			; y-coord of cursor in window
+vx		bss	1			; x-coord of cursor in window
+vy		bss	1			; y-coord of cursor in window
 
 vmono	bss	1
 vidmode	bss	1			; what mode are we in?  (M_xxxx)
@@ -113,7 +114,8 @@ vlinex	bss	2
 vliney	bss	2
 
 savedvregs bss 16       ; first 16 VRs set via vwreg
-vregr1    equ savedvregs + 1           ; VDP register 1
+vregr1  equ savedvregs + 1           ; VDP register 1
+vregr7  equ savedvregs + 7           ; VDP register 7
 
 _VIDVARSIZE  equ $ - _VIDVARSTART
 

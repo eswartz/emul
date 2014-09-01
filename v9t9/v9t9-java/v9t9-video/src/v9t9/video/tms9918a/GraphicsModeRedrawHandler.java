@@ -52,6 +52,9 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements IVdp
 		int count = 0;
 		int screenBase = modeInfo.screen.base;
 		
+		int minY = info.canvas.getMinY();
+		int maxY = info.canvas.getMaxY();
+		
 		for (int i = info.changes.screen.nextSetBit(0); 
 			i >= 0 && i < modeInfo.screen.size; 
 			i = info.changes.screen.nextSetBit(i+1)) 
@@ -61,6 +64,9 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements IVdp
 			RedrawBlock block = blocks[count++];
 			
 			block.r = (i >> 5) << 3;	/* for graphics mode */
+			if (block.r + 8 < minY || block.r >= maxY)
+				continue;
+			
 			block.c = (i & 31) << 3;
 			byte color = (byte) info.vdp.readAbsoluteVdpMemory(modeInfo.color.base + (currchar >> 3));
 

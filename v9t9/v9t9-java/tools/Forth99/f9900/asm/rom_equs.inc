@@ -125,14 +125,12 @@ _SharedRAM  equ    >FF00
 
 vintflags   bss 1       ; VDP interrupt flags
 
-nosprmot 	equ		>80		; 
-nocursor 	equ 	>40		
-noabort 	equ 	>20		
 nvblnk      equ >80     ;       1: suppress blink cursor and blank screen ; FORTH: v-int-nocursor
 nvkeyscan   equ >40     ;       1: suppress scan keyboard  ; FORTH: v-int-nokbd
 nvabort     equ >20     ;       1: suppress Ctrl-Fctn-Shift-Space ABORT support ; FORTH: v-int-noabort
 nvsprmot    equ >20     ;       1: suppress sprite motion ; FORTH: v-int-nosprmot
 nsoundlist  equ >10     ;       1: suppress sound list and/or synth; FORTH: v-int-nosound
+vhorizint	equ >08     ;       1: detect and honor horizontal scanning interrupt (FH via IE1)
 
 vstatus     bss 1       ; VDP status last read during interrupt
 
@@ -146,6 +144,8 @@ sndflags    bss 1       ; sound list flags
                         ;       $0f: tempo adjust (signed: -4 to 3) 
 sndlist     bss 2       ; address of classic sound list (0 = none), incremented on tick
 snddur      bss 1       ; duration of current group
+
+vinthoriz   bss 1	  	; set when in horizontal scanning interrupt (lower part of screen)
 
         even
 

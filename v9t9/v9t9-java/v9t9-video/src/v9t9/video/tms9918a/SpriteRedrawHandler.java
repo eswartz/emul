@@ -83,7 +83,6 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 
 	public SpriteRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
 		super(info, modeInfo);
-
 		init();
 	}
 

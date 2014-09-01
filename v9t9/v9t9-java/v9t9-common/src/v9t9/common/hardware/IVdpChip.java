@@ -123,11 +123,5 @@ public interface IVdpChip extends IPersistable, IRegisterAccess {
 	 */
 	BitSet getRecordableRegs();
 	
-	void setRealtimeCanvasRenderer(IVdpRealtimeCanvasRenderer renderer);
-	IVdpRealtimeCanvasRenderer getRealtimeCanvasRenderer();
-
-	/**
-	 * @return
-	 */
 	boolean isBlank();
 }
