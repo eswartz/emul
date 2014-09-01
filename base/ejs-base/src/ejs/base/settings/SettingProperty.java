@@ -85,7 +85,7 @@ public class SettingProperty extends AbstractProperty implements ISettingPropert
 	 */
 	public void setValue(Object value) {
 		boolean incompatible = value != null && !type.isAssignableFrom(value.getClass());
-		if (incompatible && Collection.class.isAssignableFrom(defaultValue.getClass())) {
+		if (incompatible && defaultValue != null && Collection.class.isAssignableFrom(defaultValue.getClass())) {
 			// make collection
 			try {
 				if (value.getClass().isArray()) {
