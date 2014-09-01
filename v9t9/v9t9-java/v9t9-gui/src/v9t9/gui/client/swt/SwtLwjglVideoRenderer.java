@@ -247,6 +247,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	protected void createVdpCanvasHandler() {
 		super.createVdpCanvasHandler();
 		if (false == vdpCanvas instanceof IGLDataCanvas) {
+			// must have GL data canvas -- reset (and come back here)
 			canvasFormat.setValue(getDefaultCanvasFormat());
 		} else {
 			glDataCanvas = (IGLDataCanvas) vdpCanvas;

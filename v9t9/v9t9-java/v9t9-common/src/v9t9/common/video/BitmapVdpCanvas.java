@@ -70,7 +70,6 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 			drawEightPixels(offs, mem, fg, bg);
 			offs += bytesPerLine;
 		}
-
 	}
 
 	/**
@@ -195,7 +194,9 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 		return displayAdjust;
 	}
 
+	/** Used for screenshots */
 	public abstract Buffer getBuffer();
 
+	/** Used for screenshots */
 	public abstract void getNextRGB(Buffer buffer, byte[] rgb);
 }

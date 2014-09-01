@@ -11,12 +11,12 @@
 package v9t9.video.common;
 
 import v9t9.common.video.BitmapVdpCanvas;
-import v9t9.video.BitmapCanvasInt;
-import v9t9.video.BitmapCanvasShort;
-import v9t9.video.BitmapCanvasShortGreyscale;
+import v9t9.video.BufferCanvasShortGreyscale;
+import v9t9.video.BufferCanvasByteR3G3B2;
+import v9t9.video.BufferCanvasInt;
+import v9t9.video.BufferCanvasShort;
 import v9t9.video.ImageDataCanvas24Bit;
 import v9t9.video.ImageDataCanvasPaletted;
-import v9t9.video.ImageDataCanvasR3G3B2;
 
 /**
  * @author ejs
@@ -24,10 +24,10 @@ import v9t9.video.ImageDataCanvasR3G3B2;
  */
 public enum CanvasFormat {
 	DEFAULT(null, 0.0f),
-	RGB16_5_6_5(BitmapCanvasShort.class, 1.2f), 
-	RGB16_GREY(BitmapCanvasShortGreyscale.class, 1.2f), 
-	RGB8_3_3_2(ImageDataCanvasR3G3B2.class, 1.2f),
-	RGB24_8_8_8(BitmapCanvasInt.class, 1.2f),
+	RGB16_5_6_5(BufferCanvasShort.class, 1.2f),
+	RGB16_GREY(BufferCanvasShortGreyscale.class, 1.2f), 
+	RGB8_3_3_2(BufferCanvasByteR3G3B2.class, 1.2f),
+	RGB24_8_8_8(BufferCanvasInt.class, 1.2f),
 	RGB8(ImageDataCanvasPaletted.class, 1.0f),
 	RGB24(ImageDataCanvas24Bit.class, 1.0f);
 

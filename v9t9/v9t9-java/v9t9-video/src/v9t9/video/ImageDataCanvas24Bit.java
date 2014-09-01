@@ -27,7 +27,7 @@ import v9t9.common.video.VdpFormat;
  * @author ejs
  *
  */
-public class ImageDataCanvas24Bit extends ImageDataCanvas implements IGLDataCanvas {
+public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	private static PaletteData stockPaletteData = new PaletteData(0xFF0000, 0xFF00, 0xFF);
 
 	protected byte[][] colorRGBMap;
@@ -482,29 +482,5 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas implements IGLDataCanv
 	@Override
 	public void getNextRGB(Buffer buffer, byte[] rgb) {
 		((ByteBuffer) buffer).get(rgb);
-	}
-	
-	
-	/* (non-Javadoc)
-	 * @see v9t9.video.IGLDataCanvas#getImageType()
-	 */
-	@Override
-	public int getImageType() {
-		return GL_UNSIGNED_BYTE;
-	}
-	/* (non-Javadoc)
-	 * @see v9t9.video.IGLDataCanvas#getImageFormat()
-	 */
-	@Override
-	public int getImageFormat() {
-		return GL_RGB;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.video.IGLDataCanvas#getInternalFormat()
-	 */
-	@Override
-	public int getInternalFormat() {
-		return GL_RGB8;
 	}
 }

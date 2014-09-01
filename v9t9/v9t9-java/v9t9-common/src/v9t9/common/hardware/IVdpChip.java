@@ -20,7 +20,6 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.settings.SettingSchema;
-import v9t9.common.video.IVdpRealtimeCanvasRenderer;
 
 /** 
  * Handle the work of a VDP chip.  This maintains the memory,
