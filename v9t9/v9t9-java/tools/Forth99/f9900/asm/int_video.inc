@@ -28,10 +28,12 @@ int_1
 	mov		#>8f00, @VDPWA	; set for status #0
 	b		@Int_Return
 	
-intvnorm: 
-	movb	#0, @vhorizint	; not in horizontal interrupt
+intvnorm0: 
 	li		3, >8717
 	mov		3, @VDPWA
+	
+intvnorm:	
+	movb	#0, @vhorizint	; not in horizontal interrupt
 	
  	inc		@uptime + 2	; time in 1/60 seconds
  	jnc		intv00		; overflow?
