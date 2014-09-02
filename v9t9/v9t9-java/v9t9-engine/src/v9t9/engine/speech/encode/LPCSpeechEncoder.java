@@ -11,16 +11,16 @@
 package v9t9.engine.speech.encode;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.LineUnavailableException;
 
+import uk.co.labbookpages.WavFile;
+import uk.co.labbookpages.WavFileException;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.settings.BasicSettingsHandler;
@@ -56,7 +56,8 @@ public class LPCSpeechEncoder {
 		
 		int len = Math.min(content.length, frameSize);
 		
-		filter.filter(content, 0, len, content, lpc.getY());
+		if (filter != null)
+			filter.filter(content, 0, len, content, lpc.getY());
 		
 		LPCAnalysisFrame results = lpc.analyze(content, 0, len);
 		
@@ -79,17 +80,21 @@ public class LPCSpeechEncoder {
 		return results;
 	}
 	
-	public static void main(String[] args) throws IOException, LineUnavailableException {
+	public static void main(String[] args) throws IOException, LineUnavailableException, WavFileException {
 		String fileName = args[0];
 		File theFile = new File(fileName);
 
-		AudioFormat format = new AudioFormat(44100, 16, 1, true, false);
-		AudioInputStream is = new AudioInputStream(
-				new FileInputStream(fileName),
-				format,
-				theFile.length());
-		
+//		AudioFormat format = new AudioFormat(16000, 16, 1, true, false);
+//		AudioInputStream is = new AudioInputStream(
+//				new FileInputStream(fileName),
+//				format,
+//				theFile.length());
 
+		WavFile wf = WavFile.openWavFile(theFile);
+		AudioFormat format = new AudioFormat(
+				wf.getSampleRate(), wf.getValidBits(), wf.getNumChannels(), 
+				true, false);
+				
 		// nominal speech reproduction rate
 		int playbackHz = 8000;
 		
@@ -99,43 +104,41 @@ public class LPCSpeechEncoder {
 		LPCEncoderParams params = new LPCEncoderParams(
 				(int) format.getFrameRate() , framesPerSecond, 10);
 		
+		ILPCFilter filter = null;
 //		ILPCFilter filter = new OpenLPCFilter(params);
 //		ILPCFilter filter = new SimpleLPCFilter(params);
-		ILPCFilter filter = new LowPassLPCFilter(params, new SimpleLPCFilter(params));
+		filter = new LowPassLPCFilter(params, new SimpleLPCFilter(params));
 //		ILPCFilter filter = new LowPassLPCFilter(params, new SimpleLPCFilter(params));
 		//ILPCFilter filter = new LowPassLPCFilter(params, null); //, new OpenLPCFilter(params));
 //		ILPCFilter filter = new LowPassLPCFilter(params, new OpenLPCFilter(params));
-		ILPCEngine engine = new RtLPCEngine(params);
-//		ILPCEngine engine = new OpenLPCEngine(params);
+//		ILPCEngine engine = new RtLPCEngine(params);
+		ILPCEngine engine = new OpenLPCEngine(params);
 		
-		byte[] buffer = new byte[params.getFrameSize() * format.getSampleSizeInBits() / 8];
-		float[] content = new float[params.getFrameSize()];
+		int frames = (int) format.getFrameRate() / framesPerSecond;
+		double[][] buffer = new double[format.getChannels()][frames];
+		float[] content = new float[frames];
 		
 		int len;
 		
 		
 		List<LPCAnalysisFrame> anaFrames = new ArrayList<LPCAnalysisFrame>();
 		
-		// HACK: ignore header
-		is.read(buffer, 0, 0x28);
-		
 		LPCSpeechEncoder encoder = new LPCSpeechEncoder(params, filter, engine);
 				
-		while ((len = is.read(buffer)) > 0) {
-			for (int i = 0; i < len; i += 2) {
-				int sample = buffer[i] & 0xff | (buffer[i + 1] & 0xff) << 8; 
-				content[i / 2] = (short) sample / 32768.0f;
+		int nc = format.getChannels();
+		while ((len = wf.readFrames(buffer, frames)) > 0) {
+			for (int i = 0; i < len; i += nc) {
+				content[i] = (float) buffer[0][i];
 			}
 			
 			LPCAnalysisFrame anaFrame = encoder.encode(content);
 			anaFrames.add(anaFrame);
 		}
 		
-		is.close();
+		wf.close();
 
 		SpeechDataSender sender = new SpeechDataSender(playbackHz, 20);
 		
-
 		final FileOutputStream fos = new FileOutputStream("/tmp/speech_out.raw");
 		
 		sender.setOutputStream(fos);
@@ -168,7 +171,7 @@ public class LPCSpeechEncoder {
 				engine.synthesize(out, 0, out.length, playbackHz, anaFrame);
 				
 				for (int o = 0; o < out.length; o++) {
-					sender.sendSample((short) (out[o] * 32767), o, out.length);
+					sender.sendSample((short) (Math.max(-1, Math.min(1, out[o])) * 32767), o, out.length);
 				}
 				
 			}
