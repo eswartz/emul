@@ -51,18 +51,6 @@ public class OpenLPCEngine implements ILPCEngine {
 
 	private int vuv;
 
-	private float[] xv1;
-
-	private float[] yv1;
-
-	private float[] xv3;
-
-	private float[] yv3;
-
-
-	/**
-	 * 
-	 */
 	public OpenLPCEngine(LPCEncoderParams params) {
 		this.params = params;
 		order = params.getOrder();
@@ -96,11 +84,6 @@ public class OpenLPCEngine implements ILPCEngine {
 			h[i] = (float) (WSCALE * (0.54f - 0.46f * Math.cos(2 * Math.PI * i
 					/ (buflen - 1))));
 		}
-
-		xv1 = new float[3];
-		yv1 = new float[3];
-		xv3 = new float[1];
-		yv3 = new float[3];    
 		
 		Oldper = 0;
 		OldG = 0;
@@ -332,72 +315,13 @@ public class OpenLPCEngine implements ILPCEngine {
 	@Override
 	public LPCAnalysisFrame analyze(float[] x, int offs, int len) {
 		LPCAnalysisFrame frame = new LPCAnalysisFrame(params.getOrder());
-		int i, j;
+		int i;
 		float w[] = new float[MAXWINDOW];
 		float r[] = new float[order + 1];
 		float per, gain;
 		float k[] = new float[order + 1];
 
-		float xv10, xv11, xv12, yv10, yv11, yv12,   
-        xv30, yv30, yv31, yv32;   
-		
-		xv10 = xv1[0];   
-	    xv11 = xv1[1];   
-	    xv12 = xv1[2];   
-	    yv10 = yv1[0];   
-	    yv11 = yv1[1];   
-	    yv12 = yv1[2];   
-	    xv30 = xv3[0];   
-	    yv30 = yv3[0];   
-	    yv31 = yv3[1];   
-	    yv32 = yv3[2];   
-		
-	    
-	    /* convert short data in buf[] to signed lin. data in s[] and prefilter */   
-	    for (i=0, j=buflen - framelen; i < framelen; i++, j++) {   
-	           
-	        float u = (float)(x[i+offs]);   
-	           
-	        /* Anti-hum 2nd order Butterworth high-pass, 100 Hz corner frequency */   
-	        /* Digital filter designed by mkfilter/mkshape/gencode   A.J. Fisher  
-	        mkfilter -Bu -Hp -o 2 -a 0.0125 -l -z */   
-	           
-	        xv10 = xv11;   
-	        xv11 = xv12;    
-	        xv12 = (float)(u * 0.94597831f); /* /GAIN */   
-	           
-	        yv10 = yv11;   
-	        yv11 = yv12;    
-	        yv12 = (float)((xv10 + xv12) - 2 * xv11   
-	            + ( -0.8948742499f * yv10) + ( 1.8890389823f * yv11));   
-	           
-	        u = s[j] = yv12; /* also affects input of next stage, to the LPC filter synth */   
-	           
-	        /* low-pass filter s[] -> y[] before computing pitch */   
-	        /* second-order Butterworth low-pass filter, corner at 300 Hz */   
-	        /* Digital filter designed by mkfilter/mkshape/gencode   A.J. Fisher  
-	        MKFILTER.EXE -Bu -Lp -o 2 -a 0.0375 -l -z */   
-	           
-	        /*xv3[0] = (float)(u / 2.127814584e+001);*/ /* GAIN */   
-	        xv30 = (float)(u * 0.04699658f); /* GAIN */   
-	        yv30 = yv31;   
-	        yv31 = yv32;    
-	        yv32 = xv30 + (float)(( -0.7166152306f * yv30) + (1.6696186545f * yv31));   
-	        y[j] = yv32;   
-	    }   
-	    xv1[0] = xv10;   
-	    xv1[1] = xv11;   
-	    xv1[2] = xv12;   
-	    yv1[0] = yv10;   
-	    yv1[1] = yv11;   
-	    yv1[2] = yv12;   
-	    xv3[0] = xv30;   
-	    yv3[0] = yv30;   
-	    yv3[1] = yv31;   
-	    yv3[2] = yv32;   
-	    
-		//////
-	    
+	    System.arraycopy(x, offs, s, 0, len);
 	       
 	    /* operate windowing s[] -> w[] */   
 	       

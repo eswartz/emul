@@ -105,9 +105,9 @@ public class LPCSpeechEncoder {
 				(int) format.getFrameRate() , framesPerSecond, 10);
 		
 		ILPCFilter filter = null;
-//		ILPCFilter filter = new OpenLPCFilter(params);
+		filter = new OpenLPCFilter(params);
 //		ILPCFilter filter = new SimpleLPCFilter(params);
-		filter = new LowPassLPCFilter(params, new SimpleLPCFilter(params));
+//		filter = new LowPassLPCFilter(params, new SimpleLPCFilter(params));
 //		ILPCFilter filter = new LowPassLPCFilter(params, new SimpleLPCFilter(params));
 		//ILPCFilter filter = new LowPassLPCFilter(params, null); //, new OpenLPCFilter(params));
 //		ILPCFilter filter = new LowPassLPCFilter(params, new OpenLPCFilter(params));
