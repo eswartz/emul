@@ -99,7 +99,8 @@ public class RtLPCEngine implements ILPCEngine {
 	    
 	    // find the autocorrelation of the signal, with pitch
 	    results.invPitch = autocorrelate( x, offs, len, corr );
-
+	    results.pitch = results.invPitch != 0 ? (results.invPitch * params.getPlaybackHz() / params.getHertz() ) : 0;
+	    
 	    // construct the R matrix
 	    for( i = 0; i < order; i++ )
 	        for( j = 0; j < order; j++ )

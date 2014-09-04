@@ -19,6 +19,7 @@ class LPCAnalysisFrame {
 		this.coefs = new float[i];
 	}
 	float invPitch;
+	float pitch;
 	float power;
 	float powerScale;
 	int coefsOffs;

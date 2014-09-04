@@ -189,7 +189,7 @@ public class SoundFileListener implements ISoundEmitter {
 					is = new AudioInputStream(
 							new FileInputStream(soundFileRaw),
 							format,
-							soundFileRaw.length());
+							soundFileRaw.length() / (format.getSampleSizeInBits() / 8));
 				} catch (IOException e) {
 					e.printStackTrace();
 					return;

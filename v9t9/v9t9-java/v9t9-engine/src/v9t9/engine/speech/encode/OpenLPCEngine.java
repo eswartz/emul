@@ -299,6 +299,7 @@ public class OpenLPCEngine implements ILPCEngine {
 		G = durbin(r, order, k);
 
 		frame.invPitch = per;
+		frame.pitch = per != 0 ? (frame.invPitch * params.getPlaybackHz() / params.getHertz() ) : 0;
 		frame.power = G;
 		frame.powerScale = 1.0f;
 		for (i = 0; i < order; i++) {
@@ -354,6 +355,7 @@ public class OpenLPCEngine implements ILPCEngine {
 //		gain = durbin(r, order, k);
 
 		frame.invPitch = per;
+		frame.pitch = per != 0 ? (frame.invPitch * params.getPlaybackHz() / params.getHertz() ) : 0;
 		frame.power = gain;
 		frame.powerScale = 1.0f;
 		for (i = 0; i < order; i++) {
