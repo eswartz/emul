@@ -65,6 +65,7 @@ public interface IMachineOperand extends IOperand {
 	 * (Memory cycles are accounted through the memory handler.)
 	 * @return
 	 */
+	@Deprecated
 	short getEA(InstructionWorkBlock block);
 
 	/**
@@ -72,6 +73,7 @@ public interface IMachineOperand extends IOperand {
 	 * @param memory
 	 * @return
 	 */
+	@Deprecated
 	short getValue(InstructionWorkBlock block, short ea);
 
 	void convertToImmedate();

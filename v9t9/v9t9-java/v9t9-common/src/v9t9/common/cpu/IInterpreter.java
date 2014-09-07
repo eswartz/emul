@@ -11,16 +11,17 @@
 package v9t9.common.cpu;
 
 public interface IInterpreter {
-	/**
-	 * Execute a chunk of instructions as quickly as possible, watching for
-	 * {@link Executor#interruptExecution} and updating {@link Executor#nInstructions}
-	 */
-	void executeChunk(int numinsts, IExecutor executor);
-
-	void dispose();
-
-	/**
-	 * 
-	 */
+	/** Reset any cached state */ 
 	void reset();
+	/** Remove any listeners on the CPU or memory */
+	void dispose();
+	/** Execute instruction(s) and apply changes to the CPU
+	 * @param maxCycles maximum number of cycles to attempt
+	 */
+	void execute(int maxCycles);
+	/** 
+	 * Determine how one instruction would be executed and return the
+	 * changes in the given change block.  Does not affect CPU or memory at all.
+	 */
+	ChangeBlock simulate();
 }

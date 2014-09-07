@@ -47,7 +47,7 @@ public class InstructionFactory9900 implements IInstructionFactory {
 	@Override
 	public RawInstruction decodeInstruction(int pc, IMemoryDomain domain) {
 		return new Instruction9900(
-				InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain), domain);
+				InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain));
 	}
 
 	public boolean isByteInst(int inst) {

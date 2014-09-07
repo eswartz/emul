@@ -16,6 +16,7 @@ import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryDomain;
 
@@ -217,14 +218,14 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	 *            workspace pointer
 	 * @return new address
 	 */
-    public int fetchOperandImmediates(IMemoryDomain domain, int addr) {
+    public int fetchOperandImmediates(IMemoryDomain domain, int addr, boolean load) {
     	switch (type) {
     	case MachineOperand9900.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
-    		immed = domain.readWord(addr); 
+    		immed = load ? domain.readWord(addr) : domain.flatReadWord(addr); 
     		addr += 2;
     		break;
     	case MachineOperand9900.OP_IMMED:	// immediate
-    		immed = domain.readWord(addr);
+    		immed = load ? domain.readWord(addr) : domain.flatReadWord(addr);
     		addr += 2;
     		break;
     	}
@@ -387,6 +388,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
 
         return value;
     }
+    
 
 	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.MachineOperand#convertToImmedate()
@@ -515,5 +517,6 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	public static MachineOperand9900 createEmptyOperand() {
 		return new MachineOperand9900(OP_NONE);
 	}
+
 
 }

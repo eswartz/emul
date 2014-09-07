@@ -62,7 +62,11 @@ public interface ICpu extends IPersistable {
 	IProperty settingCyclesPerSecond();
 	IProperty settingDumpInstructions();
 	IProperty settingDumpFullInstructions();
-
+	
+	
+	
+	
+	
 	void resetInterruptRequest();
 	
 	/**
@@ -82,6 +86,7 @@ public interface ICpu extends IPersistable {
 	 * Poll the interrupt controller to see if any interrupts are pending.
 	 * @throws AbortedException if interrupt waiting
 	 */
+	@InvokedByCompiledCode
 	void checkInterrupts();
 
 	/**
@@ -184,7 +189,8 @@ public interface ICpu extends IPersistable {
 	
 	IInstructionEffectLabelProvider createInstructionEffectLabelProvider();
 	/**
-	 * @return
+	 * Decode the instruction at the current PC.  Do not affect CPU state otherwise. 
+	 * @return new instruction
 	 */
 	RawInstruction getCurrentInstruction();
 

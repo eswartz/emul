@@ -15,7 +15,7 @@ import java.util.Map;
 
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.ListenerList;
-
+import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.cpu.InstructionWorkBlock;
@@ -49,14 +49,22 @@ public class CpuState9900 implements ICpuState {
 	/** workspace pointer */
 	protected short WP;
 	private IMemoryDomain console;
-	private IStatus status;
+	private Status9900 status;
 	private ListenerList<IRegisterWriteListener> listeners = new ListenerList<IRegisterAccess.IRegisterWriteListener>();
-
+	private CycleCounts cycleCounts = new CycleCounts();
+	 
 	public CpuState9900(IMemoryDomain console) {
 		this.console = console;
 		this.status = createStatus();
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpuState#getCycleCounts()
+	 */
+	@Override
+	public CycleCounts getCycleCounts() {
+		return cycleCounts;
+	}
 	
 
 	@Override
@@ -251,7 +259,7 @@ public class CpuState9900 implements ICpuState {
 	}
 
 	@Override
-	public IStatus createStatus() {
+	public Status9900 createStatus() {
 		return new Status9900();
 	}
 
@@ -267,7 +275,7 @@ public class CpuState9900 implements ICpuState {
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getStatus()
 	 */
 	@Override
-	public IStatus getStatus() {
+	public Status9900 getStatus() {
 		return status;
 	}
 
@@ -276,7 +284,7 @@ public class CpuState9900 implements ICpuState {
 	 */
 	@Override
 	public void setStatus(IStatus status) {
-		this.status = status;
+		this.status = (Status9900) status;
 	}
 
 	public short getST() {

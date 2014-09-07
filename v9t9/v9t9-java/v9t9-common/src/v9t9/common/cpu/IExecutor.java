@@ -39,7 +39,7 @@ public interface IExecutor {
 	 * Run an unbounded amount of code.  Some external factor
 	 * tells the execution unit when to stop.  The interpret/compile
 	 * setting is sticky until execution is interrupted.
-	 * @return TODO
+	 * @return number of cycles executed
 	 * @throws AbortedException when interrupt or other machine event stops execution
 	 */
 	int execute();

@@ -68,7 +68,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	protected long totaltargetcycles;
 	/** current cycles per tick */
 	protected final AtomicInteger currentcycles = new AtomicInteger();
-	protected final CycleCounts cycleCounts = new CycleCounts();
+	protected final CycleCounts cycleCounts;
 	/** total # current cycles executed */
 	protected long totalcurrentcycles;
 	/** State of the pins above  */
@@ -107,6 +107,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		this.machine = machine_;
 		this.state = state;
         this.state.getConsole().setAccessListener(this);
+        this.cycleCounts = state.getCycleCounts();
         
         allocatedCycles = new Semaphore(0);
         interruptWaiting = new Semaphore(0);

@@ -773,8 +773,9 @@ public class InstTable9900 {
      * @param domain
      *            provides read access to memory, to decode registers and
      *            instructions
+ * @param load 
      */
-    public static RawInstruction decodeInstruction(int op, int pc, IMemoryDomain domain) {
+    public static RawInstruction decodeInstruction(int op, int pc, IMemoryDomain domain, boolean load) {
     	RawInstruction inst = new RawInstruction();
     	inst.pc = pc;
     	
@@ -1126,8 +1127,8 @@ public class InstTable9900 {
         } else {
             // Finish reading operand immediates
             pc += 2;
-            pc = mop1.fetchOperandImmediates(domain, pc);
-            pc = mop2.fetchOperandImmediates(domain, pc);
+            pc = mop1.fetchOperandImmediates(domain, pc, load);
+            pc = mop2.fetchOperandImmediates(domain, pc, load);
             inst.setSize(pc - inst.pc);
             inst.setName(InstTable9900.getInstName(inst.getInst()));
         }

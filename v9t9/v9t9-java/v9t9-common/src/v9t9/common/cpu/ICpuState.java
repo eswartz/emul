@@ -29,14 +29,19 @@ public interface ICpuState extends IRegisterAccess {
 
 	IMemoryDomain getConsole();
 
+	/** Create a new status object */
 	IStatus createStatus();
 
+	/** Get the live status object */
 	IStatus getStatus();
+	/** Set the live status object */
 	void setStatus(IStatus status);
 
 	/**
 	 * @return
 	 */
 	InstructionWorkBlock createInstructionWorkBlock();
+
+	CycleCounts getCycleCounts();
 
 }

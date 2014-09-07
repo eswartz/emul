@@ -106,7 +106,39 @@ public class Status9900 implements IStatus {
         expand(val);
     }
 
-    /* (non-Javadoc)
+    
+    @Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + bits;
+		result = prime * result + lastcmp;
+		result = prime * result + lastparity;
+		result = prime * result + lastval;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Status9900 other = (Status9900) obj;
+		if (bits != other.bits)
+			return false;
+		if (lastcmp != other.lastcmp)
+			return false;
+		if (lastparity != other.lastparity)
+			return false;
+		if (lastval != other.lastval)
+			return false;
+		return true;
+	}
+
+	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#toString()
 	 */
     @Override

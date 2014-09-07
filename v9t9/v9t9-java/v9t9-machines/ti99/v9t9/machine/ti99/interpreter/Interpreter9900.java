@@ -23,9 +23,13 @@ import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.IInterpreter;
 import v9t9.common.cpu.IStatus;
+import v9t9.common.dsr.IDsrManager;
+import v9t9.common.hardware.ICruChip;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.engine.hardware.ICruHandler;
 import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.InstTable9900;
@@ -43,8 +47,10 @@ import ejs.base.utils.ListenerList;
  * @author ejs
  */
 public class Interpreter9900 implements IInterpreter {
-	TI99Machine machine;
-
+	final IMachine machine;
+	final ICruHandler cruHandler;
+	final IDsrManager dsrManager;
+	
     IMemoryDomain memory;
 
     // per-PC prebuilt instructions
@@ -59,8 +65,15 @@ public class Interpreter9900 implements IInterpreter {
 
 	private CycleCounts cycleCounts;
 
-    public Interpreter9900(TI99Machine machine) {
+    public Interpreter9900(IMachine machine) {
         this.machine = machine;
+        if (machine instanceof TI99Machine) {
+        	cruHandler = ((TI99Machine) machine).getCruManager();
+        	dsrManager = ((TI99Machine) machine).getDsrManager();
+        } else {
+        	cruHandler = null;
+        	dsrManager = null;
+        }
         this.cpu = (Cpu9900) machine.getCpu();
         this.memory = machine.getCpu().getConsole();
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
@@ -137,7 +150,6 @@ public class Interpreter9900 implements IInterpreter {
 	/* (non-Javadoc)
      * @see v9t9.emulator.runtime.interpreter.Interpreter#executeChunk(int, v9t9.emulator.runtime.cpu.Executor)
      */
-    @Override
     public void executeChunk(int numinsts, IExecutor executor) {
     	// pretend the realtime and instructionListeners settings don't change often
 		if (executor.getInstructionListeners().isEmpty()) {
@@ -212,7 +224,7 @@ public class Interpreter9900 implements IInterpreter {
 	    IMemoryDomain console = cpu.getConsole();
 		if (op_x != null) {
 	    	op = op_x;
-	    	ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console), console);
+	    	ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console));
 	    } else {
 	    	IMemoryEntry entry = console.getEntryAt(pc);
 	    	op = entry.flatReadWord(pc);
@@ -226,7 +238,7 @@ public class Interpreter9900 implements IInterpreter {
 	    		// expensive (10%)
 	    		ins = ins.update(op, pc, console);
 	    	} else {
-	    		ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console), console);
+	    		ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console));
 	    	}
 	    	instructions[pc/2] = ins;
 	    }
@@ -622,16 +634,19 @@ public class Interpreter9900 implements IInterpreter {
             break;
 
         case Inst9900.Isbo:
-        	machine.getCruManager().writeBits(iblock.val1<<1, 1, 1);
+        	if (cruHandler != null)
+        		cruHandler.writeBits(iblock.val1<<1, 1, 1);
             break;
 
         case Inst9900.Isbz:
-        	machine.getCruManager().writeBits(iblock.val1<<1, 0, 1);
+        	if (cruHandler != null)
+        		cruHandler.writeBits(iblock.val1<<1, 0, 1);
             break;
 
         case Inst9900.Itb:
         	// set EQ bit to value read -- we use CMP, so val1==val2 is EQ when val1==1 and val2==1
-        	iblock.val1 = (short) machine.getCruManager().readBits(iblock.val1<<1, 1);
+        	if (cruHandler != null)
+        		iblock.val1 = (short) cruHandler.readBits(iblock.val1<<1, 1);
         	iblock.val2 = 1;
             break;
 
@@ -677,13 +692,15 @@ public class Interpreter9900 implements IInterpreter {
             break;
 
         case Inst9900.Ildcr:
-        	machine.getCruManager().writeBits(
+        	if (cruHandler != null)
+        		cruHandler.writeBits(
                     memory.readWord(iblock.wp + 12 * 2), iblock.val1,
                     iblock.val2);
             break;
 
         case Inst9900.Istcr:
-        	iblock.val1 = (short) machine.getCruManager().readBits(
+        	if (cruHandler != null)
+        		iblock.val1 = (short) cruHandler.readBits(
         			memory.readWord(iblock.wp + 12 * 2), iblock.val2);
             break;
         case Inst9900.Iszc:
@@ -716,7 +733,8 @@ public class Interpreter9900 implements IInterpreter {
             break;
 
         case InstTableCommon.Idsr:
-        	machine.getDsrManager().handleDSR(iblock);
+        	if (dsrManager != null)
+        		dsrManager.handleDSR(iblock);
         	break;
         	
         case InstTableCommon.Iticks: {

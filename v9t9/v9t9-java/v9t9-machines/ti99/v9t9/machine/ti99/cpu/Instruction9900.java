@@ -62,9 +62,10 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 
     public Instruction9900(RawInstruction inst, IMemoryDomain domain) {
     	super(inst);
-    	completeInstruction(inst.pc, domain);
+    	completeInstruction(inst.pc);
+    	calculateFetchCycles(domain);
     }
-    public Instruction9900(Instruction9900 inst, IMemoryDomain domain) {
+    public Instruction9900(Instruction9900 inst) {
     	super(inst);
     	this.opcode = inst.opcode;
     	this.setInfo(inst.getInfo());
@@ -77,7 +78,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
      * cycle counts.
      *
      */
-    public void completeInstruction(int pc, IMemoryDomain domain) {
+    public void completeInstruction(int pc) {
     	InstInfo info = getInfo();
     	
 	    info.stsetBefore = IStatus.stset_NONE;
@@ -464,7 +465,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	        Check.checkArg((mop1.type != IMachineOperand.OP_NONE
 			&& mop1.type != MachineOperand9900.OP_IMMED));
 	        mop2.dest = IOperand.OP_DEST_TRUE;
-	        mop1.byteop = mop2.byteop = (getInst() - Inst9900.Iszc & 1) != 0;
+	        this.byteop = mop1.byteop = mop2.byteop = (getInst() - Inst9900.Iszc & 1) != 0;
 	
 	        switch (getInst()) {
 	        case Inst9900.Iszc:
@@ -549,7 +550,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	    this.setOp2(mop2);
 	    //super.completeInstruction(Pc);
 	    
-	    calculateFetchCycles(domain);
+	    
 	}
 
     /**
@@ -908,7 +909,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
      * @param wp2
      * @param status2
      */
-    public Instruction9900 update(short op, int thePc, IMemoryDomain domain) {
+    public Instruction9900 update(short op, int thePc, IMemoryDomain domain, boolean load) {
     	boolean isSame = true;
     	// obvious changes: this usually happens due to an X instruction and its generated instruction
         if (this.opcode != op || this.pc != thePc) {
@@ -945,7 +946,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
         if (false) 
         	System.out.println("need to regenerate instruction: >" + HexUtils.toHex4(thePc) + " "+ this);
         
-        return new Instruction9900(InstTable9900.decodeInstruction(op, thePc, domain), domain);
+        return new Instruction9900(InstTable9900.decodeInstruction(op, thePc, domain, load), domain);
 
     }
 
