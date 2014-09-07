@@ -12,6 +12,7 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * Placeholder for local used in a colon-colon def
@@ -36,7 +37,7 @@ public class LocalVariable extends BaseStdWord {
 	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		targetContext.compileFromLocal(index);
+		targetContext.buildFromLocal(index);
 	}
 	
 	/* (non-Javadoc)

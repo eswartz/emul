@@ -11,12 +11,14 @@
 package v9t9.tools.forthcomp;
 
 import ejs.base.utils.HexUtils;
+import ejs.base.utils.TextUtils;
 import gnu.getopt.Getopt;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.LineNumberReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,11 +31,14 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.tools.forthcomp.TargetContext.IMemoryReader;
+import v9t9.tools.forthcomp.f99b.F99bTargetContext;
+import v9t9.tools.forthcomp.ti99.TI99TargetContext;
+import v9t9.tools.forthcomp.words.BarTest;
 import v9t9.tools.forthcomp.words.HostVariable;
 import v9t9.tools.forthcomp.words.IPrimitiveWord;
-import v9t9.tools.forthcomp.words.TargetConstant;
-import v9t9.tools.forthcomp.words.TargetContext;
-import v9t9.tools.forthcomp.words.TargetContext.IMemoryReader;
+import v9t9.tools.forthcomp.words.TestQuote;
+import v9t9.tools.forthcomp.words.TestsStore;
 
 /**
  * This class compiles FORTH programs into ROM images for V9t9
@@ -54,8 +59,9 @@ public class ForthComp {
 		String gromOutFile = null;
 		PrintStream logfile = System.out;
 		boolean doHistogram = false;
+		boolean doTest = false;
 		
-        Getopt getopt = new Getopt(PROGNAME, args, "?c:l:bhg:d:");
+        Getopt getopt = new Getopt(PROGNAME, args, "?c:l:b9hg:d:t");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -77,8 +83,14 @@ public class ForthComp {
             case 'b':
             	targetContext = new F99bTargetContext(65536);
             	break;
+            case '9':
+            	targetContext = new TI99TargetContext(65536);
+            	break;
             case 'h':
             	doHistogram = true;
+            	break;
+            case 't':
+            	doTest = true;
             	break;
             	
             }
@@ -87,7 +99,9 @@ public class ForthComp {
         if (targetContext == null)
         	targetContext = new F99bTargetContext(65536);
         
-        if (gromOutFile != null) {
+        targetContext.createMemory();
+
+        if (gromDictFile != null) {
         	if (targetContext instanceof IGromTargetContext) {
         		((IGromTargetContext) targetContext).setUseGromDictionary(true);
         		
@@ -108,6 +122,8 @@ public class ForthComp {
         HostContext hostContext = new HostContext(targetContext);
         final ForthComp comp = new ForthComp(hostContext, targetContext);
         
+        comp.setTestMode(doTest);
+        
         comp.setLog(logfile);
         
         if (getopt.getOptind() >= args.length) {
@@ -115,9 +131,11 @@ public class ForthComp {
         	System.exit(1);
         } 
         
-        if (gromDictFile != null) {
-        	targetContext.define("grom-dictionary", new TargetConstant("grom-dictionary", 1, targetContext.getCellSize()));
-        }
+//        if (gromDictFile != null) {
+//        	targetContext.define("grom-dictionary", new TargetConstant(
+//        			new DictEntry(0, 0, "grom-dictionary"), 
+//        			-1, targetContext.getCellSize()));
+//        }
         
     	int idx = getopt.getOptind();
     	while (idx < args.length) {
@@ -133,8 +151,14 @@ public class ForthComp {
 //    	logfile.println("UP = " + HexUtils.toHex4(comp.getTargetContext().getUP()));
     	if (gromDictFile != null)
     		logfile.println("GDP = " + HexUtils.toHex4(((IGromTargetContext)comp.getTargetContext()).getGP()));
-	
-    	comp.finish();
+
+    	if (comp.getErrors() == 0) {
+	    	try {
+	    		comp.finish();
+	    	} catch (AbortException e) {
+	    		System.err.println(e.getFile() +":" + e.getLine()+": " + e.getMessage());
+	    	}
+    	}
     	
     	if (comp.getErrors() > 0) {
     		System.err.println("Errors: " + comp.getErrors());
@@ -144,16 +168,16 @@ public class ForthComp {
     	comp.getTargetContext().alignDP();
     	comp.saveMemory(consoleOutFile, gromDictFile);
     	
+    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getTargetDictionary().values());
+    	
+    	Collections.sort(sortedDict, new Comparator<DictEntry>() {
+	    		public int compare(DictEntry o1, DictEntry o2) {
+	    			return o2.getUses() - o1.getUses();
+	    		}
+	    	}
+		);
     	if (doHistogram) {
-	    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getTargetDictionary().values());
 	    	logfile.println("Top 100 word uses of " + sortedDict.size() +":");
-			
-	    	Collections.sort(sortedDict, new Comparator<DictEntry>() {
-					public int compare(DictEntry o1, DictEntry o2) {
-						return o2.getUses() - o1.getUses();
-					}
-				}
-	    	);
 			for (int i = 0; i < sortedDict.size() && i < 100; i++) {
 				DictEntry entry = sortedDict.get(i);
 				logfile.print("\t" + entry.getUses() +"\t" + entry.getName() );
@@ -183,17 +207,18 @@ public class ForthComp {
 	    	}
 	    	System.out.println("real size = " + realSize + "; if aligned = " + ifAlignedSize);
 	    	
-	    	int headerSizes = 0;
-	    	for (DictEntry entry : sortedDict) {
-	    		if (entry.getHeaderSize() > 0) {
-	    			System.out.println(": " + entry.getName());
-	    			headerSizes += entry.getHeaderSize();
-	    		}
-	    	}
-	    	System.out.println("headers size = " + headerSizes);
-	    	
 	    	targetContext.dumpStubs(logfile);
     	}
+    	
+
+    	int headerSizes = 0;
+    	for (DictEntry entry : sortedDict) {
+    		if (entry.getHeaderSize() > 0) {
+    			System.out.println(": " + entry.getName());
+    			headerSizes += entry.getHeaderSize();
+    		}
+    	}
+    	System.out.println("headers size = " + headerSizes);
     	
     	if (gromOutFile != null && gromDictFile != null)
     		comp.mergeGromDictionary(gromDictFile, gromOutFile);
@@ -206,6 +231,8 @@ public class ForthComp {
 	private TargetContext targetContext;
 	private TokenStream tokenStream;
 	private int errors;
+
+	private UnitTests unitTests;
 
 	public ForthComp(HostContext hostContext, TargetContext targetContext) {
 		this.hostContext = hostContext;
@@ -229,6 +256,24 @@ public class ForthComp {
 		hostContext.define("(state)", new HostVariable(0));
 	}
 
+	public void setTestMode(boolean doTest) throws AbortException {
+		if (unitTests == null) {
+			unitTests = new UnitTests();
+			unitTests.setCompiler(this);
+		}
+		targetContext.setTestMode(doTest);
+		
+		TestQuote testQuote = ((TestQuote) hostContext.require("TEST\"")); 
+		testQuote.setUnitTests(unitTests);
+		
+		BarTest barTest = ((BarTest) hostContext.require("|TEST")); 
+		barTest.setUnitTests(unitTests);
+		
+		TestsStore testsStore = ((TestsStore) hostContext.require("TESTS!")); 
+		testsStore.setUnitTests(unitTests);
+		
+	}
+		
 	/**
 	 * @return the hostContext
 	 */
@@ -245,80 +290,36 @@ public class ForthComp {
 		}
 	}
 
-	public void parseString(String text) throws AbortException {
-		tokenStream.push(text);
+	public void parseString(String name, String text) throws AbortException {
+		LineNumberReader reader = tokenStream.push(name, text);
 		try {
-			parse();
+			try {
+				String token;
+				while ((token = tokenStream.read()) != null) {
+					targetContext.parse(token);
+					if (tokenStream.getCurrentReader() != reader)
+						break;
+				}
+			} catch (IOException e) {
+				throw abort(e.getMessage());
+			}
 		} catch (AbortException e) {
 			errors++;
 			throw e;
 		}
 	}
+	public void parseString(String text) throws AbortException {
+		parseString("<string>", text);
+	}
 	public void parse() throws AbortException {
 		String token;
 		try {
-			while ((token = tokenStream.read()) != null)
-				parse(token);
+			while ((token = tokenStream.read()) != null) {
+//				System.out.println("> " + token);
+				targetContext.parse(token);
+			}
 		} catch (IOException e) {
 			throw abort(e.getMessage());
-		}
-	}
-
-	private void parse(String token) throws AbortException {
-		IWord word = null;
-		
-		int state = hostContext.readVar("state");
-		
-		if (state == 0) {
-			word = hostContext.find(token);
-			if (word == null) {
-				word = targetContext.find(token);
-			}
-			if (word == null) {
-				word = targetContext.parseLiteral(token);
-			}
-			if (word == null) {
-				throw abort("unknown word or literal: " + token);
-			}
-			
-			if (word.getInterpretationSemantics() == null)
-				throw abort(word.getName() + " has no interpretation semantics");
-			
-			word.getInterpretationSemantics().execute(hostContext, targetContext);
-		} else {
-			word = targetContext.find(token);
-			if (word == null) {
-				word = hostContext.find(token);
-			}
-			if (word == null) {
-				word = targetContext.parseLiteral(token);
-			}
-			if (word == null) {
-				word = targetContext.defineForward(token, hostContext.getStream().getLocation());
-			}
-		
-			ITargetWord targetWord = null;
-			IWord hostWord = null;
-			
-			if (word instanceof ITargetWord) {
-				targetWord = (ITargetWord) word;
-				hostWord = hostContext.find(token);
-				if (hostWord == null) 
-					hostWord = targetWord;
-			} else {
-				if (word.getCompilationSemantics() == null) {
-					throw hostContext.abort("host word " + token + " used instead of target word");
-				}
-				hostWord = word;
-				targetWord = null;
-				if (!word.isCompilerWord()) {
-					targetWord = (ITargetWord) targetContext.defineForward(token, 
-							hostContext.getStream().getLocation());
-					//throw hostContext.abort("host word " + token + " used instead of target word");
-				}
-			}		
-			
-			hostContext.compileWord(targetContext, hostWord, targetWord);
 		}
 	}
 
@@ -328,12 +329,18 @@ public class ForthComp {
 
 	
 	/**
+	 * @throws AbortException 
 	 * 
 	 */
-	public void finish() {
+	public void finish() throws AbortException {
 		for (ForwardRef ref : targetContext.getForwardRefs()) {
 			logfile.println("*** Unresolved symbol: " + ref.getEntry().getName() + " (" + ref.getLocation() + ")");
 			System.err.println("*** Unresolved symbol: " + ref.getEntry().getName() + " (" + ref.getLocation() + ")");
+			errors++;
+		}
+		if (!hostContext.getDataStack().isEmpty()) {
+			System.err.println("*** Items left on stack: " + 
+					TextUtils.catenateStrings(hostContext.getDataStack(), ", "));
 			errors++;
 		}
 	}
@@ -354,7 +361,7 @@ public class ForthComp {
 	 */
 	private void saveMemory(String consoleOutFile, String gromOutFile) throws FileNotFoundException, IOException, AbortException {
 	
-		final IMemoryDomain console = targetContext.createMemory();
+		final IMemoryDomain console = targetContext.getMemory();
 		targetContext.exportMemory(console);
 		
 		TargetContext.dumpMemory(logfile, 0, targetContext.getDP(),
@@ -388,14 +395,16 @@ public class ForthComp {
 		}
 			
 		if (gromOutFile != null) {
-			IGromTargetContext f99bCtx = (IGromTargetContext) targetContext;
+			IGromTargetContext gromCtx = (IGromTargetContext) targetContext;
 			
-			final MemoryDomain gromMemory = f99bCtx.getGrom();
+			gromCtx.finishDict();
+			
+			final MemoryDomain gromMemory = gromCtx.getGrom();
 			
 			System.out.println("Writing " + gromOutFile);
 			
 			DataFiles.writeMemoryImage(new File(gromOutFile), 
-					0, f99bCtx.getGP(), 
+					0, gromCtx.getGP(), 
 					gromMemory);
 
 		}
@@ -460,5 +469,12 @@ public class ForthComp {
 			System.out.println("Merged dictionary into GROM, changed " + gromFile);
     	}
     	
+	}
+
+	/**
+	 * @return
+	 */
+	public UnitTests getUnitTests() {
+		return unitTests;
 	}
 }

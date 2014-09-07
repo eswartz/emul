@@ -18,7 +18,9 @@ import v9t9.tools.asm.ParseException;
 import v9t9.tools.asm.Symbol;
 import v9t9.tools.asm.operand.hl.AddrOperand;
 import v9t9.tools.asm.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.operand.hl.BinaryOperand;
 import v9t9.tools.asm.operand.hl.ConstPoolRefOperand;
+import v9t9.tools.asm.operand.hl.ImmediateOperand;
 import v9t9.tools.asm.operand.hl.NumberOperand;
 import v9t9.tools.asm.operand.hl.RegIncOperand;
 import v9t9.tools.asm.operand.hl.RegIndOperand;
@@ -26,6 +28,7 @@ import v9t9.tools.asm.operand.hl.RegOffsOperand;
 import v9t9.tools.asm.operand.hl.StringOperand;
 import v9t9.tools.asm.operand.hl.SymbolOperand;
 import v9t9.tools.asm.operand.hl.UnaryOperand;
+import v9t9.tools.asm.operand.ll.LLImmedOperand;
 
 public class AssemblerOperandParserStage9900 extends
 		AssemblerOperandParserStage {
@@ -58,7 +61,16 @@ public class AssemblerOperandParserStage9900 extends
 			return parseAddr();
 		case '#': {
 			// const table
+			boolean isHigh = false;
+			if (tokenizer.nextToken() == '<') {
+				isHigh = true;
+			} else {
+				tokenizer.pushBack();
+			}
 			AssemblerOperand op = parseFactor();
+			if (isHigh) {
+				op = new BinaryOperand('/', op, new ImmediateOperand(new LLImmedOperand(256)));
+			}
 			return new ConstPoolRefOperand(op);
 		}
 		case AssemblerTokenizer.NUMBER:

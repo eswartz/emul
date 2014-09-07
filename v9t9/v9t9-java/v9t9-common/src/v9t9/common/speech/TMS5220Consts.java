@@ -22,9 +22,6 @@ public class TMS5220Consts {
 	/** buffer empty */
 	final public static int SS_BE	= 0x20;
 	
-	/** internal flag */
-	final public static int SS_SPEAKING = 1;	
-
 	/** write -> command */
 	final public static int GT_WCMD	= 0x1;		
 	/** write -> speech external data */

@@ -51,7 +51,7 @@ import v9t9.video.tms9918a.VdpTMS9918ACanvasRenderer;
  *
  */
 public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer {
-	boolean blinkOn;
+	private boolean blinkOn;
 	private int pageOffset;
 
 	private short[] palette = new short[16];
@@ -100,7 +100,7 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		
 		switch (reg) {
 		case 0:
-			if (CHANGED(old, val, R0_M4 + R0_M5)) {
+			if (CHANGED(old, val, R0_M4 + R0_M5 + R0_IE1)) {
 				redraw |= REDRAW_MODE;
 			}
 			break;
@@ -144,21 +144,26 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 			redraw |= REDRAW_MODE;
 			break;
 		case 12:
-			// text 2 blinky (pg 6)
+			// text 2 blink colors (pg 6)
 			redraw |= REDRAW_PALETTE;
 			break;
 			
 		case 13:
-			
+			// blink period
 			redraw |= REDRAW_PALETTE;
 			break;
-			
 			
 		case 18: {
 			// display adjust register (pg 6) / pan
 			updateOffset();
 			break;
 		}
+		
+		case 19:
+			// interrupt line
+			redraw |= REDRAW_MODE;
+			updateSplit();
+			break;
 		
 		case 20:
 		case 21:
@@ -174,9 +179,6 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		return redraw;
 	}
 
-	/**
-	 * 
-	 */
 	private void updateOffset() {
 		int xoffs = (byte)(vdpregs[18] << 4) >> 4;
 		int yoffs = ((vdpregs[18] & 0xf0) >> 4) + (vdpregs[23]);
@@ -184,7 +186,10 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		// V9990 reference says:
 		// (P1 and B1 by 1 pixel unit, P2, B2 and B3 by 2-pixel unit, B4, B5 and B6 by 4-pixel unit) 
 		forceRedraw();
-		
+	}
+	
+	private void updateSplit() {
+		forceRedraw();
 	}
 
 	/**
@@ -399,7 +404,10 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 	 */
 	@Override
 	public void registerChanged(int reg, int value) {
-		if (reg >= REG_PAL0 && reg < REG_PAL0 + 16) {
+		if (reg == REG_SCANLINE) {
+			onScanline(value);
+		}
+		else if (reg >= REG_PAL0 && reg < REG_PAL0 + 16) {
 			int color = reg - REG_PAL0;
 			palette[color] = (short) value;
 			setPaletteColor(color);
@@ -417,6 +425,13 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		}
 	}
 
+
+	/**
+	 * @param scanline
+	 */
+	protected void onScanline(int scanline) {
+		vdpCanvas.setCurrentY(scanline);
+	}
 
 	public boolean isBlinkOn() {
 		return blinkOn;

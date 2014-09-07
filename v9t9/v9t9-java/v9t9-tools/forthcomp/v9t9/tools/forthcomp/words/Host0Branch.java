@@ -12,6 +12,7 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -42,15 +43,17 @@ public class Host0Branch extends BaseHostBranch {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		if (hostContext.popData() == 0)
+		if (hostContext.popData() == 0) {
+			//System.out.println(this);
 			hostContext.setHostPc(target);
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#clone()
 	 */
 	@Override
-	public Object clone() {
+	public Host0Branch clone() {
 		return new Host0Branch(target);
 	}
 }

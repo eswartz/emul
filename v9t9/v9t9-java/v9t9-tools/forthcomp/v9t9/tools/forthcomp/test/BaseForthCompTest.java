@@ -29,9 +29,9 @@ import v9t9.tools.forthcomp.ForthComp;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.RelocEntry;
+import v9t9.tools.forthcomp.TargetContext;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
-import v9t9.tools.forthcomp.words.TargetContext;
-import v9t9.tools.forthcomp.words.TargetContext.IMemoryReader;
+import v9t9.tools.forthcomp.TargetContext.IMemoryReader;
 
 /**
  * @author ejs
@@ -90,7 +90,7 @@ public abstract class BaseForthCompTest {
 		for (int i = 0; i <65536; i++)
 			cpu.getConsole().writeByte(i, (byte) 0);
 		
-		targCtx.defineBuiltins();
+		targCtx.definePrims();
 		//comp.parseString("User HERE User Base");
 
 		startDP = targCtx.getDP();
@@ -123,7 +123,7 @@ public abstract class BaseForthCompTest {
 	protected void parseString(String text) throws AbortException {
 		System.out.println(text);
 		comp.parseString(text);
-		comp.finish();
+		//comp.finish();
 		assertEquals("errors when compiling", 0, comp.getErrors());
 	}
 	
@@ -138,7 +138,7 @@ public abstract class BaseForthCompTest {
 		
 		exportBinary();
 		
-		ITargetWord word = (ITargetWord) targCtx.require(name);
+		ITargetWord word = targCtx.require(name);
 		
 		int pc = word.getEntry().getContentAddr();
 		
@@ -166,7 +166,7 @@ public abstract class BaseForthCompTest {
 		assertEquals(word.getEntry().getContentAddr(), rel.target);
 	}
 	protected void assertCall(String string, int cell) throws AbortException {
-		ITargetWord word = (ITargetWord) targCtx.require(string);
+		ITargetWord word = targCtx.require(string);
 		assertCall(word, cell);
 	}
 	

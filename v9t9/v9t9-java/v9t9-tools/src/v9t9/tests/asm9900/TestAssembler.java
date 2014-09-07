@@ -25,6 +25,7 @@ import v9t9.tools.asm.inst9900.AssemblerOperandParserStage9900;
 import v9t9.tools.asm.inst9900.MachineOperandFactory9900;
 import v9t9.tools.asm.inst9900.MachineOperandParserStage9900;
 import v9t9.tools.asm.inst9900.StandardInstructionParserStage9900;
+import v9t9.tools.asm.operand.hl.BinaryOperand;
 import v9t9.tools.asm.operand.hl.NumberOperand;
 import v9t9.tools.asm.operand.ll.LLOperand;
 
@@ -91,6 +92,20 @@ public class TestAssembler extends BaseTest9900 {
 		testBadAsmOp("0x88");
 	}
 
+
+	public void testAsmOpParserExprs() throws Exception {
+		testAsmOp("1+5", new BinaryOperand('+', new NumberOperand(1), new NumberOperand(5)));
+		testAsmOp("3-2-1", 
+				new BinaryOperand('-', new BinaryOperand('-', new NumberOperand(3), new NumberOperand(2)), new NumberOperand(1)));
+		testAsmOp("3-4*8", 
+				new BinaryOperand('-', 
+						new NumberOperand(3),
+						new BinaryOperand('*', new NumberOperand(4), new NumberOperand(8))));
+		testAsmOp("3+1 >= 4-2", 
+				new BinaryOperand('≥', 
+						new BinaryOperand('+', new NumberOperand(3), new NumberOperand(1)),
+						new BinaryOperand('-', new NumberOperand(4), new NumberOperand(2))));
+	}
 
 	private IOperand parseOperand(IOperandParserStage opStage, String string) throws ParseException {
 		AssemblerTokenizer tokenizer = new AssemblerTokenizer(string);

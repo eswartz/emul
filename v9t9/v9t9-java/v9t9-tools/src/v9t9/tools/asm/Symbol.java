@@ -16,7 +16,7 @@ import ejs.base.utils.HexUtils;
  * @author ejs
  *
  */
-public class Symbol {
+public class Symbol implements Comparable<Symbol> {
 
 	private final String name;
 	private int addr;
@@ -36,6 +36,13 @@ public class Symbol {
 		this.defined = true;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	@Override
+	public int compareTo(Symbol o) {
+		return addr - o.addr;
+	}
 	public String getName() {
 		return name;
 	}

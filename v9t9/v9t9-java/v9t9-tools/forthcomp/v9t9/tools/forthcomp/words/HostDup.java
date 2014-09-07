@@ -12,6 +12,7 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -42,7 +43,6 @@ public class HostDup extends BaseStdWord {
 	 * @see v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 	

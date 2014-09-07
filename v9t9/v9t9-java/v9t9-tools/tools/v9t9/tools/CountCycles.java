@@ -76,11 +76,11 @@ public class CountCycles {
         	System.exit(0);
         }
 
-        CycleCounter cycler = new CycleCounter(machine);
+        CycleCounter cycler = new CycleCounter();
 
 		List<Pair<Integer, Integer>> ranges = new ArrayList<Pair<Integer,Integer>>();
 
-        Getopt getopt = new Getopt(PROGNAME, args, "?m:::e:o:s:n:t");
+        Getopt getopt = new Getopt(PROGNAME, args, "?m:::e:o:s:n:tM:");
         int opt;
         PrintStream out = null;
 		while ((opt = getopt.getopt()) != -1) {
@@ -140,12 +140,15 @@ public class CountCycles {
             case 't':
             	cycler.setShowTotal(true);
             	break;
+            case 'M':
+            	machine = ToolUtils.createMachine(getopt.getOptarg());
+            	break;
             default:
             	//throw new AssertionError();
     
             }
         }
-        
+
         // leftover files are FIAD
         int idx = getopt.getOptind();
         while (idx < args.length) {
@@ -160,8 +163,8 @@ public class CountCycles {
         }
         		
         if (!gotFile) {
-        	System.err.println("no files specified");
-    		System.exit(1);
+        	machine.reset();
+        	System.err.println("no files specified, using machine ROM");
         }
         if (!gotEntry) {
         	System.err.println("no entry point specified");
@@ -169,6 +172,8 @@ public class CountCycles {
         }
         
         machine.getMemoryModel().loadMemory(machine.getEventNotifier());
+
+		cycler.setMachine(machine);
 
         try {
 	        cycler.run();

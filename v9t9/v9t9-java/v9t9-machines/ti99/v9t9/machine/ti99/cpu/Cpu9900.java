@@ -108,8 +108,8 @@ public class Cpu9900 extends CpuBase {
 	 * @see v9t9.emulator.runtime.Cpu#setInterruptRequest(byte)
 	 */
     public void setInterruptRequest(byte level) {
-    	pins |= PIN_INTREQ;
-    	ic = forceIcTo1.getBoolean() ? 1 : level;
+    	setPin(PIN_INTREQ);
+//    	ic = forceIcTo1.getBoolean() ? 1 : level;
     }
     
     /**
@@ -153,9 +153,8 @@ public class Cpu9900 extends CpuBase {
 	    	if (cruAccess.isInterruptWaiting()) {
 	    		ic = forceIcTo1.getBoolean() ? 1 : cruAccess.getInterruptLevel(); 
 	    		if (state.getStatus().getIntMask() >= ic) {
-	    			//System.out.println("Triggering interrupt... "+ic);
 	    			pins |= PIN_INTREQ;
-	    			//cruAccess.handledInterrupt();
+	    			cruAccess.handlingInterrupt();
 	    			return true;    		
 	    		} else {
 	    			//System.out.print('-');
@@ -184,13 +183,20 @@ public class Cpu9900 extends CpuBase {
         	// this is ordinarily reset by external hardware, but
         	// we don't yet have a way to scan instruction execution
         	pins &= ~PIN_LOAD;
-        	
+
+            ic = 0;
+            
+        	setIdle(false);
+        	dumper.info("*** NMI ***");
             System.out.println("**** NMI ****");
             contextSwitch(0xfffc);
             
             cycleCounts.addExecute(22);
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
+        	setIdle(false);
+        	
+        	dumper.info("*** RESET ***");
             System.out.println("**** RESET ****");
             state.getStatus().expand((short) 0);
             contextSwitch(0);
@@ -200,25 +206,31 @@ public class Cpu9900 extends CpuBase {
             ic = 0;
             
             // ensure the startup code has enough time to clear memory
-            noIntCount = 10000;
+            //noIntCount = 10000;
             
             machine.getExecutor().interpretOneInstruction();
             //throw new AbortedException();
-        } else if ((pins & PIN_INTREQ) != 0 && state.getStatus().getIntMask() >= ic) {	// already checked int mask in status
-            // maskable
-        	pins &= ~PIN_INTREQ;
-        	
-        	//System.out.print('=');
-        	//interrupts++;
-            contextSwitch(0x4 * ic);
-            cycleCounts.addExecute(22);
-            
-            // no more interrupt until 9901 gives us another
-            ic = 0;
-                
-            // for now, we need to do this, otherwise the compiled code may check intlevel and immediately ... oh, I dunno
-            machine.getExecutor().interpretOneInstruction();
-        }
+        } else if ((pins & PIN_INTREQ) != 0) {
+//        	System.out.println(System.currentTimeMillis());
+			if (state.getStatus().getIntMask() >= ic) {	// already checked int mask in status
+			    // maskable
+				pins &= ~PIN_INTREQ;
+				
+				//System.out.print('=');
+				//interrupts++;
+			    contextSwitch(0x4 * ic);
+			    cycleCounts.addExecute(22);
+			    
+			    // no more interrupt until 9901 gives us another
+			    ic = 0;
+			    setIdle(false);
+			        
+			    // for now, we need to do this, otherwise the compiled code may check intlevel and immediately ... oh, I dunno
+			    machine.getExecutor().interpretOneInstruction();
+			} else {
+				System.out.print('?');
+			}
+		}
     }
 
 	public void saveState(ISettingSection section) {
@@ -268,10 +280,10 @@ public class Cpu9900 extends CpuBase {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.Cpu#irq()
 	 */
-	@Override
-	public void irq() {
-		setPin(PIN_INTREQ);		
-	}
+//	@Override
+//	public void irq() {
+//		setPin(PIN_INTREQ);		
+//	}
 	
 	@Override
 	public boolean shouldDebugCompiledCode(short pc) {

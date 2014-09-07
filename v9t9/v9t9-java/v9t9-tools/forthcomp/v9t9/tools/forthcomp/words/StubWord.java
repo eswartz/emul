@@ -31,6 +31,13 @@ public class StubWord extends BaseWord implements ITargetWord {
 	}
 	
 	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.ITargetWord#getHostDp()
+	 */
+	@Override
+	public int getHostDp() {
+		return 0;
+	}
+	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.IWord#getName()
 	 */
 	public String getName() {

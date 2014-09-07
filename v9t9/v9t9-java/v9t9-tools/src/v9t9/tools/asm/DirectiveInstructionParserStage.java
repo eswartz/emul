@@ -19,6 +19,7 @@ import java.util.Map;
 import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.IOperand;
 import v9t9.tools.asm.directive.AorgDirective;
+import v9t9.tools.asm.directive.AssertDirective;
 import v9t9.tools.asm.directive.BssDirective;
 import v9t9.tools.asm.directive.ConstPoolDirective;
 import v9t9.tools.asm.directive.DefineByteDirective;
@@ -64,6 +65,7 @@ public class DirectiveInstructionParserStage implements IInstructionParserStage 
 		dirMap.put("end", new DirectiveInfo(0, IgnoreDirective.class));
 		dirMap.put("rorg", new DirectiveInfo(0, IgnoreDirective.class));
 		
+		dirMap.put("assert", new DirectiveInfo(1, AssertDirective.class));
 	}
 	public DirectiveInstructionParserStage(OperandParser operandParser) {
 		this.operandParser = operandParser;

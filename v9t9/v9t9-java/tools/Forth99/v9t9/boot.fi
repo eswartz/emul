@@ -10,42 +10,8 @@
 
 0 <EXPORT
 
-: regs-init
-
-    \ set user area first, before setting user vars
-    (UP0) [ ItoContext c,  CTX_UP field, ]
-    
-    r>      \ remember return address before moving return stack
-    (rp0) [ ItoContext c,  CTX_RP0 field, ]    \ inlined since calling a word changes RP; sets RP0 and RP
-    >r
-    
-    (sp0) [ ItoContext c,  CTX_SP0 field, ] \ sets SP0 and SP 
-    
-    (numbuf0) (numbuf) !
-    (slit-pad0) (spad) !
-
-    
-;
-
-: cold-init
-    DP0 @       dp !
-\    UP0 @       [ ' UDP compile, ( UDP ) ]  !
-    UP0 @       UDP !
-    (LATEST) @  >latest !
-    >gram_dict_base  GDP !
-    
-    GRAM
-    
-    \ >grom_logo g@ gtypez cr
-    
-    \ gheap hinit
-    gheap dict-hinit
-    
-    (RAM0)  RAM !
-;
-
 :   'quit
-    10 base !
+   	decimal
     
     begin
         key? if key emit 
@@ -59,6 +25,8 @@ EXPORT>
 :   cold
 
     regs-init   ints-init   kbd-init
+    
+    decimal
     
     quit
 ;

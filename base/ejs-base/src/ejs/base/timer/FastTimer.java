@@ -75,11 +75,13 @@ public class FastTimer {
 				if (info.task == task)
 					return;
 			
-			RunnableInfo info = new RunnableInfo(task, 1000000000L / perSecond);
-			taskinfos.add(info);
+			if (perSecond != 0) {
+				RunnableInfo info = new RunnableInfo(task, 1000000000L / perSecond);
+				taskinfos.add(info);
 			
-			if (timerThread == null)
-				startTimer();
+				if (timerThread == null)
+					startTimer();
+			}
 		}
 	}
 

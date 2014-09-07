@@ -30,7 +30,16 @@ public interface ICanvas {
 	int getHeight();
 
 	int getVisibleHeight();
-	
+
+	/** Get minimum Y drawn for this canvas */
+	int getMinY();
+	/** Get maximum (exclusive) Y for this canvas */
+	int getMaxY();
+	/** Set minimum Y drawn for this canvas */
+	void setMinY(int minY);
+	/** Set maximum (exclusive) Y for this canvas */
+	void setMaxY(int maxY);
+
 
 	/** Get the delta for one pixel, in terms of the offset. 
 	 * @see #getBitmapOffset(int, int) 

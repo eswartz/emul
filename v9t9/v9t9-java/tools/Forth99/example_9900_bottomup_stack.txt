@@ -1,0 +1,88 @@
+// test with TOS
+
+"$test65-+loop-uns2"
+3C8C: BL *R4 ==> op1=122(@122)  || st=9401 wp=FFC0 @ 32
+"DOCOL" [ $test65-+loop-uns2 > RUNTEST > 3F42 ] ( FF40 ABCD )
+0122: DECT R13 ==> op1=FF3E(@FFDA)  || op1=FF3C(@FFDA) st=9401 wp=FFC0 @ 20
+0124: MOV R14,*R13 ==> op1=3D06(@FFDC)  || op2=3D06(@FF3C) st=D401 wp=FFC0 @ 36
+0126: MOV R11,R14 ==> op1=3C8E(@FFD6)  || op2=3C8E(@FFDC) st=D401 wp=FFC0 @ 28
+0128: MOV *R14+,R0 ==> op1=276(@3C8E)  || op1=276(@3C8E) op2=276(@FFC0) st=D401 wp=FFC0 @ 44
+012A: B *R0 ==> op1=276(@276)  || st=D401 wp=FFC0 @ 24
+"0"
+    MOV R1,*R15+         @ 44
+    CLR R1              @ 20    = 64
+    // vs 20+36+20 = 76
+027C: MOV *R14+,R0 ==> op1=140(@3C90)  || op1=140(@3C90) op2=140(@FFC0) st=D401 wp=FFC0 @ 44
+027E: B *R0 ==> op1=140(@140)  || st=D401 wp=FFC0 @ 24
+"DOLIT"
+    MOV R1,*R15+         @ 44
+    LI R1,>A000        @ 24     == 68
+// vs. 20+36+44 = 100
+0146: MOV *R14+,R0 ==> op1=140(@3C94)  || op1=140(@3C94) op2=140(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=140(@140)  || st=D401 wp=FFC0 @ 24
+"DOLIT"
+    MOV R1,*R15+         @ 44
+    LI R1,>A000        @ 24  == 68
+// vs. 20+36+44 = 100
+0146: MOV *R14+,R0 ==> op1=140(@3C94)  || op1=140(@3C94) op2=140(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=140(@140)  || st=D401 wp=FFC0 @ 24
+"DOLIT"
+    MOV R1,*R15+         @ 44
+    LI R1,>3333        @ 24  == 68
+// vs. 20+36+44 = 100
+0146: MOV *R14+,R0 ==> op1=518(@3C98)  || op1=518(@3C98) op2=518(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=518(@518)  || st=D401 wp=FFC0 @ 24
+"2>R"
+
+0518: AI R13,>FFFC ==> op1=FF3C(@FFDA) op2=FFFC(@0) || op1=FF38(@FFDA) st=9401 wp=FFC0 @ 28
+051C: MOV *R15+,@>2(R13) ==> op1=A000(@FFB8)  || op1=A000(@FFB8) op2=A000(@FF3A) st=9401 wp=FFC0 @ 60
+0520: MOV R1,*R13 ==> op1=3333(@FFC2)  || op2=3333(@FF38) st=D401 wp=FFC0 @ 36
+0522: MOV *R15+,R1 ==> op1=0(@FFBA)  || op1=0(@FFBA) op2=0(@FFC2) st=3401 wp=FFC0 @ 44
+
+    AI R13,>FFFC  @ 28
+    AI R15,>FFF8    @ 28  
+    MOV R1,*R13  @ 36
+    MOV *R15+,@>2(R13)  @ 60     
+    MOV *R15+,R1  @ 44      == 196
+// vs 168!
+
+    AI R13,>FFFC  @ 28
+    AI R15,>FFF8  @ 28
+    MOV R1,*R13  @ 36
+    MOV *R15,@>2(R13)  @ 52   
+    MOV @>2(R15),R1  @ 44      == 188
+
+// vs 168
+
+0524: MOV *R14+,R0 ==> op1=574(@3C9A)  || op1=574(@3C9A) op2=574(@FFC0) st=D401 wp=FFC0 @ 44
+0526: B *R0 ==> op1=574(@574)  || st=D401 wp=FFC0 @ 24
+"R@"
+    MOV R1,*R15+      @ 44
+    MOV *R13,R1      @ 36   == 80
+// vs 92
+
+057A: MOV *R14+,R0 ==> op1=422(@3C9C)  || op1=422(@3C9C) op2=422(@FFC0) st=D401 wp=FFC0 @ 44
+057C: B *R0 ==> op1=422(@422)  || st=D401 wp=FFC0 @ 24
+"+"
+    DECT R15            @ 20
+    A @>2(R15),R1     @ 44    = 64
+// vs 44
+
+0424: MOV *R14+,R0 ==> op1=140(@3C9E)  || op1=140(@3C9E) op2=140(@FFC0) st=C401 wp=FFC0 @ 44
+0426: B *R0 ==> op1=140(@140)  || st=C401 wp=FFC0 @ 24
+"DOLIT"
+    MOV R1,*R15+         @ 44
+    LI R1,>3333        @ 24  == 68
+// vs 100
+0146: MOV *R14+,R0 ==> op1=614(@3CA2)  || op1=614(@3CA2) op2=614(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=614(@614)  || st=D401 wp=FFC0 @ 24
+"(+LOOP)"
+// same:  316
+
+0640: MOV *R14+,R0 ==> op1=574(@3C9A)  || op1=574(@3C9A) op2=574(@FFC0) st=C401 wp=FFC0 @ 44
+0642: B *R0 ==> op1=574(@574)  || st=C401 wp=FFC0 @ 24
+
+
+/// Loop body in bottom-up is 212 cycles, vs. top-down is 236 cycles
+
+

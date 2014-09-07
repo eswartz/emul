@@ -12,6 +12,7 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -30,18 +31,10 @@ public class Repeat extends BaseStdWord {
 		int a = hostContext.popData();
 		int b = hostContext.popData();
 		
-		// HACK
-		//int c = 0;
-		//if (targetContext instanceof F99TargetContext)
-		//	c = hostContext.popData();
-		
 		new Again().execute(hostContext, targetContext);
-		
-		//if (targetContext instanceof F99TargetContext)
-		//	hostContext.pushData(c);
-		
+
 		hostContext.pushData(b);
-		hostContext.pushData(a - 2);
+		hostContext.pushData(a - targetContext.getCellSize());
 		
 		new Then().execute(hostContext, targetContext);
 	}

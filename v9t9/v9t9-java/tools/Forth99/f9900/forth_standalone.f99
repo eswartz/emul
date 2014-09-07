@@ -1,0 +1,282 @@
+\   f9900romstandalone.f99
+\ 
+\   (c) 2014 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+\   ROM Memory layout
+
+0 <export
+
+1				constant 	STANDALONE
+
+include		f9900romequs_standalone.fi
+include		f9900gromequs.fi
+
+
+$100	   		constant    ROM
+
+ROM 0 +			constant    @RESET
+ROM 2 +     	constant    @COLD
+ROM 4 +     	constant    @BYE
+ROM 6 +     	constant    @DP0
+ROM 8 +     	constant    @LATEST
+
+export>
+
+\ ................................
+
+\	Lay out INT 0
+
+0			dp!
+
+\ int vecs
+StdWS ,  ' (RESET) ,
+
+IntWS ,  SHARED ,	
+
+\ ................................
+
+ROM  	  	dp!
+
+\ 	reset address @RESET
+0  ,
+
+\   cold address @COLD
+0 ,
+
+\ 	bye address @BYE
+0  ,
+
+\   initial dictionary @DP0
+0 ,
+
+\   initial latest @LATEST
+0 ,
+
+(define-colon-prims)
+
+include asm99.fi
+include 99equs.fi
+
+(define-prims)
+
+\   Be sure this ROM doesn't try to make variables in the dictionary
+undef Variable
+undef DVariable
+undef Value
+undef DValue
+
+0 <EXPORT
+
+include	sysdefs.fi
+
+include ../v9t9/errcodes.fi
+
+include ../v9t9/ram.fi
+
+
+EXPORT>
+
+include sysprims.fi
+include syscomp.fi
+
+include 9900.fi	
+
+include ../ans/core.fi
+include ../ans/core_unhosted.fi
+include ../ans/core_accept_simple.fi
+include ../ans/core-ext.fi
+
+include ../ans/exception.fi
+include ../ans/exception_minimal.fi
+
+include ../v9t9/strings.fi
+
+include ../ans/tools.fi
+
+include cold.fi
+
+\ TEMP
+
+\   Set the VDP RAM bank.
+\
+\   This directly sets VR14 without saving it off (unlike vwreg).
+\
+: vsetbank  ( vaddr -- addr-16k )
+    dup 14 urshift 
+    $8E00 OR  VDPWA !
+    $3fff AND
+;
+ 
+ 
+include ../v9t9/sysutils.fi
+
+include ../v9t9/errors.fi
+		
+	\ TEST
+	
+test" loop-1  0 	
+		$103 $100 do  i +  loop
+		[ $100 $101 $102  + + ] LITERAL = "
+		
+test" +loop-1  0
+		3 0 do  i +  1 +loop
+		\ 0, 1, 2, [3]
+		[ 0 1 2  + + ] LITERAL = "
+
+test" +loop-3  0		
+		10 -1 do  i +  3 +loop
+		[ -1 2 5 8 + + + ] LITERAL = "
+
+test" +loop-3-2  0			
+		0 10 do  i +  -3 +loop
+		[ 10 7 4 1 + + + ] LITERAL  = "
+		
+test" +loop-uns1  0			
+		$8002 $7ffe do  i +  1 +loop
+		[ $7ffe $7fff $8000 $8001 + + + ] LITERAL = "
+		
+test" +loop-uns2  0			
+		$a000 $3333 do  i +  $3333 +loop
+		[ $3333 $6666 $9999  + + ] LITERAL = "
+		
+test" +loop-zero  0			
+		0 0 do  i drop  1+  $1000 +loop
+		16 = "
+	
+	: BYE
+		COLD
+	;
+	
+|test : eval1 s" 100 200 300 + + ." ;
+test" evaluate1 eval1 evaluate 	true "
+
+has? TESTING? [IF]
+
+: defineConstPlus1000 create , does> @ $1000 + ;
+$123 defineConstPlus1000 N123
+test" defineConstPlus1000  N123 $1123 = " 
+
+include asmtests.fi
+
+[THEN]
+
+
+has? TESTING? [IF]	
+	| : tests-completed
+		quit
+	;
+[THEN]
+
+	: COLD
+		(resolve-rdefers)
+		
+		regs-init
+		cold-init
+
+	    decimal
+
+[ has? TESTING? [IF] ]
+		runtests
+		
+		\ notreached -- tests-completed instead
+[ [ELSE] ]
+		quit
+[ [THEN] ]
+		
+	;
+
+
+Code (RESET)
+					,LIMI		0 ,				\ no VDP interrupt
+
+\	rTMP			,LI			M_INT_EXT M_INT_VDP +  8 LSHIFT ,
+\	
+\	rTMP	@>		,MOVB		'INTS ,		
+\
+\	rTMP			,LI			$8120 ,			\ turn on VDP interrupts (write R1_INT to VDP R1)
+\	rTMP	@>		,MOV		VDPWA ,
+
+	rDOCOL			,LI			' DOCOL ,				
+	rDOUSER			,LI			' DOUSER ,				
+	rDOCON			,LI			' DOCON ,				
+	rDOVAR			,LI			' DOVAR ,				
+	rDODOES			,LI			' DODOES ,
+	
+	\ Make tiny stacks
+	rSP				,LI			StdWS ,
+	rRP				,LI			StdWS $10 - ,
+	rUP				,LI			StdWS $20 - ,
+	&11				,LI			' COLD  cell+ ,
+	rDOCOL	*R		,B			\ normally BL, but we set up R11 for this
+	end-code		
+
+
+\ ................................
+
+	HERE
+	
+SHARED		dp!
+	
+	( shared entry for INT1 )
+
+	\ turn off ints
+				,LIMI	0 ,	
+	\ switch to bank 1
+	@>			,SETO	4 ,
+	\ in normal ROM, jumps to interrupt
+	$ff			,JMP							\ not reached
+	\ restore bank
+	@>			,SETO	0 ,
+	\ return from interrupt
+				,RTWP
+	\ the shared ROM will have instructions here
+
+	DP!
+			
+\ ................................
+
+' (reset)	@reset	!   
+' bye   	@BYE	!
+' cold  	@COLD	!
+
+has? TESTING? [IF] 
+TESTS!
+[THEN]
+
+\ assembly label table
+| &10 2* cells RamVar	ram-#labs
+' ram-#labs		TO 	#labs
+
+ramptr @  1- aligned  constant (RAM0)
+
+|+ #cell RamVar RAM
+
+\ align dictionary to a memory area, so memory images aren't often broken
+here $3ff +  $3ff INVERT and  @DP0        !
+
+has? GROM-DICT [if]
+0		   	@LATEST   !
+[else]
+latest   	@LATEST   !
+[THEN]
+
+
+\ make sure we're sane
+." # rom defers: " (#rdefers) . cr
+(#rdefers)	#maxrdefers  >= 	abort" Too many ROM defers -- bump #maxrdefers "
+
+hex
+here ." HERE = " u. cr
+@dp0 @ ." @DP0 = " u. cr
+@latest @  ." @latest = " u. cr
+up0 @ ." UP0 = " u. cr
+ramptr @ ." RAMPTR = " u. cr
+RamTop ." RAMTOP = " u. cr
+
+

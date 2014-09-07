@@ -51,4 +51,9 @@ public interface ICruChip extends IPersistable {
 	 * @param level
 	 */
 	void acknowledgeInterrupt(int level);
+
+	/**
+	 * 
+	 */
+	void handlingInterrupt();
 }

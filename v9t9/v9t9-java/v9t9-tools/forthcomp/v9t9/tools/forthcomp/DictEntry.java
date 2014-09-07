@@ -23,7 +23,7 @@ public class DictEntry implements Comparable<DictEntry> {
 
 
 	protected int link;
-	protected int addr;
+	protected final int addr;
 	protected int endAddr;
 
 	
@@ -39,10 +39,11 @@ public class DictEntry implements Comparable<DictEntry> {
 	protected Map<String, LocalVariableTriple> locals;
 	protected Map<String, IWord> localDict;
 	protected IWord hostBehavior;
-	protected IWord targetWord;
+	protected ITargetWord targetWord;
 	protected int hostStackCount;
 	protected boolean targetOnly;
 	private boolean inline;
+	private boolean hostOnly;
 	
 	
 	
@@ -56,6 +57,13 @@ public class DictEntry implements Comparable<DictEntry> {
 		this.name = name;
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return name + " @ " + Integer.toHexString(addr);
+	}
 	
 	public void setEndAddr(int endAddr) {
 		this.endAddr = endAddr;
@@ -123,13 +131,13 @@ public class DictEntry implements Comparable<DictEntry> {
 	public IWord getHostBehavior() {
 		return hostBehavior;
 	}
-	public void setTargetWord(IWord targetWord) {
+	public void setTargetWord(ITargetWord targetWord) {
 		this.targetWord = targetWord;
 	}
 	/**
 	 * @return the targetWord
 	 */
-	public IWord getTargetWord() {
+	public ITargetWord getTargetWord() {
 		return targetWord;
 	}
 	
@@ -142,15 +150,18 @@ public class DictEntry implements Comparable<DictEntry> {
 		return targetOnly;
 	}
 	
-	/**
-	 * @return the hostStackCount
-	 */
+	
+	public void setHostOnly(boolean hostOnly) {
+		this.hostOnly = hostOnly;
+	}
+	
+	public boolean isHostOnly() {
+		return hostOnly;
+	}
+	
 	public int getHostStackCount() {
 		return hostStackCount;
 	}
-	/**
-	 * @param targetContext
-	 */
 	public void writeEntry(ITargetContext targetContext) {
 		byte[] ent = doWriteEntry(targetContext);
 		
@@ -158,6 +169,13 @@ public class DictEntry implements Comparable<DictEntry> {
 			targetContext.writeChar(addr + i, ent[i]);
 	}
 
+	/**
+	 * Write a standard entry:
+	 * 
+	 * [LINK] [LEN] name... 
+	 * @param targetContext
+	 * @return
+	 */
 
 	protected byte[] doWriteEntry(ITargetContext targetContext) {
 		byte[] ent = new byte[headerSize];

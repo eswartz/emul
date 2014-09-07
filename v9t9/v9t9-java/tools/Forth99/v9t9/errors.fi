@@ -36,8 +36,3 @@
         ." ??? " .
     then
 ;
-
-: ?throw ( t|f code -- )
-    swap 0<> swap  AND  throw
-;
-

@@ -10,8 +10,11 @@
  */
 package v9t9.tools.forthcomp.words;
 
+import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.DictEntry;
+import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
+import v9t9.tools.forthcomp.ITargetContext;
 import v9t9.tools.forthcomp.IWord;
 
 /**
@@ -87,5 +90,28 @@ public abstract class BaseWord implements IWord {
 	@Override
 	public boolean isCompilerWord() {
 		return false;
+	}
+
+	protected String parseString(HostContext hostContext)
+			throws AbortException {
+		
+		StringBuilder sb = new StringBuilder();
+		while (true) {
+			int ch = hostContext.getStream().readChar();
+			if (ch == 0 || ch == -1)
+				throw hostContext.abort("unterminated string at " + sb);
+			if (ch == '"')
+				return sb.toString();
+			sb.append((char) ch);
+		}
+	}
+
+	protected String popString(HostContext hostContext, ITargetContext targetContext) {
+		int leng = hostContext.popData();
+		int addr = hostContext.popData();
+		StringBuilder sb = new StringBuilder();
+		while (leng-- > 0)
+			sb.append((char) targetContext.readChar(addr++));
+		return sb.toString();
 	}
 }

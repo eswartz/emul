@@ -23,7 +23,6 @@ import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
-
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryArea;
@@ -316,6 +315,19 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 		if (symbols == null) return null;
 		return symbols.get(addr);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#findSymbol(java.lang.String)
+	 */
+	@Override
+	public Integer findSymbol(String name) {
+		if (symbols == null) return null;
+		for (Map.Entry<Short, String> ent : symbols.entrySet()) {
+			if (ent.getValue().equals(name))
+				return (int) ent.getKey();
+		}
+		return null;
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryEntry#clearSymbols()
@@ -409,6 +421,13 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 		area.flatWriteWord(this, mapAddress(addr), val);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#patchWord(int, short)
+	 */
+	@Override
+	public boolean patchWord(int addr, short value) {
+		return area.patchWord(this, mapAddress(addr), value);
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryEntry#hasReadAccess()
 	 */

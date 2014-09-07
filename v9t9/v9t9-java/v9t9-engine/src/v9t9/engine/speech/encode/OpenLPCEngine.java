@@ -13,6 +13,7 @@ package v9t9.engine.speech.encode;
 import v9t9.engine.speech.RomTables;
 
 /**
+ * from http://read.pudn.com/downloads116/sourcecode/zip/491999/voice_compress/5213216/src/openlpc/openlpc.c__.htm
  * @author ejs
  * 
  */
@@ -20,20 +21,19 @@ public class OpenLPCEngine implements ILPCEngine {
 
 	private LPCEncoderParams params;
 
-	private static final int MAXWINDOW = 441000; /* Max analysis window length */
+	private static final int MAXWINDOW = 1000*44/8; /* Max analysis window length */
 	// private static final float FS = 8000.0f; /* Sampling rate */
 
 	private static int DOWN = 5; /* Decimation for pitch analyzer */
 	private static int PITCHORDER = 4; /* Model order for pitch analyzer */
 
-	private static float MINPIT = 40.0f; /* Minimum pitch */
-	private static float MAXPIT = 400.0f; /* Maximum pitch */
+	private static float MINPIT = 50.0f; /* Minimum pitch */
+	private static float MAXPIT = 1200.0f; /* Maximum pitch */
 
 	private static float WSCALE = 1.5863f; /* Energy loss due to windowing */
-
 	private int framelen, buflen;
 
-	float y[], h[];
+	float y[], h[], s[];
 	float u, u1;
 	float yp1, yp2;
 
@@ -51,11 +51,6 @@ public class OpenLPCEngine implements ILPCEngine {
 
 	private int vuv;
 
-
-
-	/**
-	 * 
-	 */
 	public OpenLPCEngine(LPCEncoderParams params) {
 		this.params = params;
 		order = params.getOrder();
@@ -66,6 +61,7 @@ public class OpenLPCEngine implements ILPCEngine {
 
 		y = new float[MAXWINDOW];
 		h = new float[MAXWINDOW];
+		s = new float[MAXWINDOW];
 		
 		Oldk = new float[order + 1];
 		b = new float[order + 1];
@@ -88,8 +84,7 @@ public class OpenLPCEngine implements ILPCEngine {
 			h[i] = (float) (WSCALE * (0.54f - 0.46f * Math.cos(2 * Math.PI * i
 					/ (buflen - 1))));
 		}
-
-
+		
 		Oldper = 0;
 		OldG = 0;
 		for (i = 1; i <= order; i++)
@@ -98,15 +93,23 @@ public class OpenLPCEngine implements ILPCEngine {
 			b[i] = bp[i] = f[i] = 0.0f;
 		pitchctr = 0;
 	}
-
-	private void auto_correl(float[] w, int n, int p, float[] r) {
-		int i, k, nk;
+	private void auto_correll(float[] w, int n, int p, float[] r) {
+		int i, k;
 
 		p = Math.min(r.length - 1, p);
-		for (k = 0; k <= p; k++) {
-			nk = n - k;
+		for (k = 0; k <= MAXPER; k++, n--) {
 			r[k] = 0.0f;
-			for (i = 0; i < nk; i++)
+			for (i = 0; i < n; i++)
+				r[k] += w[i] * w[i + k];
+		}
+	}
+	private void auto_correl2(float[] w, int n, int p, float[] r) {
+		int i, k;
+
+		p = Math.min(r.length - 1, p);
+		for (k = 0; k <= p; k++, n--) {
+			r[k] = 0.0f;
+			for (i = 0; i < n; i++)
 				r[k] += w[i] * w[i + k];
 		}
 	}
@@ -143,7 +146,8 @@ public class OpenLPCEngine implements ILPCEngine {
 		if (e < 0)
 			return 0;
 
-		return (float) Math.min(1.0f, Math.sqrt(e));
+//		return (float) Math.max(1.0f, Math.sqrt(e));
+		return (float) Math.sqrt(e);
 	}
 
 	private void inverse_filter(float[] w, float[] k) {
@@ -166,7 +170,7 @@ public class OpenLPCEngine implements ILPCEngine {
 		}
 	}
 
-	private float calc_pitch(float[] w) {
+	private float calc_pitch(float[] w, int offs, int len) {
 		int i, j, rpos;
 		float rmax;
 		float d[] = new float[MAXWINDOW / DOWN];
@@ -176,10 +180,10 @@ public class OpenLPCEngine implements ILPCEngine {
 		float a, b, c, x, y;
 
 		/* decimation */
-		for (i = 0, j = 0; i < buflen; i += DOWN)
-			d[j++] = w[i];
+		for (i = 0, j = 0; i < len; i += DOWN)
+			d[j++] = w[i+offs];
 
-		auto_correl(d, buflen / DOWN, MAXPER, r);
+		auto_correll(d, len / DOWN, MAXPER, r);
 
 		if (true) {
 			float vthresh;
@@ -223,7 +227,7 @@ public class OpenLPCEngine implements ILPCEngine {
 			x < MAXPER + 1 /* same story */
 			) {
 
-				vthresh = 0.4f;
+				vthresh = 0.6f;
 				if (r[0] > 0.002f) /* at low volumes (< 0.002), prefer unvoiced */
 					vthresh = 0.25f; /* drop threshold at high volumes */
 
@@ -235,7 +239,7 @@ public class OpenLPCEngine implements ILPCEngine {
 		} else {
 			durbin(r, PITCHORDER, k);
 			inverse_filter(d, k);
-			auto_correl(d, buflen / DOWN, MAXPER + 1, r);
+			auto_correll(d, len / DOWN, MAXPER + 1, r);
 			rpos = 0;
 			rmax = 0.0f;
 			for (i = MINPER; i < MAXPER; i++) {
@@ -279,8 +283,7 @@ public class OpenLPCEngine implements ILPCEngine {
 	 * 
 	 * @see v9t9.audio.speech.encode.ILPCEngine#analyze(float[], int, int)
 	 */
-	@Override
-	public LPCAnalysisFrame analyze(float[] x, int offs, int len) {
+	public LPCAnalysisFrame analyze_(float[] x, int offs, int len) {
 		LPCAnalysisFrame frame = new LPCAnalysisFrame(params.getOrder());
 		int i;
 		float w[] = new float[MAXWINDOW];
@@ -288,14 +291,15 @@ public class OpenLPCEngine implements ILPCEngine {
 		float per, G;
 		float k[] = new float[order + 1];
 
-		per = calc_pitch(y);
+		per = calc_pitch(x, offs, len);
 
 		for (i = 0; i < len; i++)
 			w[i] = x[i + offs] * h[i];
-		auto_correl(w, buflen, order, r);
+		auto_correl2(w, buflen, order, r);
 		G = durbin(r, order, k);
 
 		frame.invPitch = per;
+		frame.pitch = per != 0 ? (frame.invPitch * params.getPlaybackHz() / params.getHertz() ) : 0;
 		frame.power = G;
 		frame.powerScale = 1.0f;
 		for (i = 0; i < order; i++) {
@@ -308,7 +312,63 @@ public class OpenLPCEngine implements ILPCEngine {
 
 		return frame;
 	}
-	
+
+	@Override
+	public LPCAnalysisFrame analyze(float[] x, int offs, int len) {
+		LPCAnalysisFrame frame = new LPCAnalysisFrame(params.getOrder());
+		int i;
+		float w[] = new float[MAXWINDOW];
+		float r[] = new float[order + 1];
+		float per, gain;
+		float k[] = new float[order + 1];
+
+	    System.arraycopy(x, offs, s, 0, len);
+	       
+	    /* operate windowing s[] -> w[] */   
+	       
+	    for (i=0; i < buflen; i++)   
+	        w[i] = s[i] * h[i];   
+	    
+	    auto_correl2(w, buflen, order, r);
+		gain = durbin(r, order, k);
+	    
+	    ///
+		
+	    
+	    /* calculate pitch */   
+	    float per1 = calc_pitch(y, 0, framelen);                 /* first 2/3 of buffer */   
+	    float per2 = calc_pitch(y, buflen - framelen, framelen); /* last 2/3 of buffer */   
+	    if(per1 > 0 && per2 >0)   
+	        per = (per1+per2)/2;   
+	    else if(per1 > 0)   
+	        per = per1;   
+	    else if(per2 > 0)   
+	        per = per2;   
+	    else   
+	        per = 0;   
+	       
+//		per = calc_pitch(y);
+//
+//		for (i = 0; i < len; i++)
+//			w[i] = x[i + offs] * h[i];
+//		auto_correl2(w, buflen, order, r);
+//		gain = durbin(r, order, k);
+
+		frame.invPitch = per;
+		frame.pitch = per != 0 ? (frame.invPitch * params.getPlaybackHz() / params.getHertz() ) : 0;
+		frame.power = gain;
+		frame.powerScale = 1.0f;
+		for (i = 0; i < order; i++) {
+			// frame.coefs[i] = Math.max(-1f, Math.min(1f, k[i+1]));
+			frame.coefs[i] = k[i + 1];
+		}
+
+		//System.arraycopy(s, framelen, s, 0, buflen - framelen);
+		System.arraycopy(y, framelen, y, 0, buflen - framelen);
+
+		return frame;
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.engine.speech.encode.ILPCEngine#getY()
 	 */

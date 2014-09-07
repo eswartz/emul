@@ -152,6 +152,23 @@ public class WordMemoryArea extends MemoryArea {
 			write[addr1 >> 1] = val;
 		}
 	}
+    /* (non-Javadoc)
+     * @see v9t9.engine.memory.MemoryArea#patchWord(v9t9.engine.memory.MemoryEntry, int, short)
+     */
+    @Override
+    public boolean patchWord(MemoryEntry entry, int addr, short value) {
+		int addr1 = addr - entry.getAddr();
+		/*
+		 * processor ignores word access on odd boundaries, and stores in
+		 * big-endian format
+		 */
+		addr1 = (addr1 & 0xfffe) >> 1;
+		if (memory[addr1] != value) {
+			memory[addr1] = value;
+			return true;
+		}
+		return false;
+    }
 
     @Override
 	public void writeByte(IMemoryEntry entry, int addr, byte val) {

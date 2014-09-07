@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp.words;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -30,7 +31,7 @@ public class SemiColon extends BaseStdWord {
 		
 		hostContext.stopCompiling();
 
-		targetContext.compileExit(hostContext);
+		targetContext.buildExit(hostContext);
 		
 		((ITargetWord) targetContext.getLatest()).getEntry().setHidden(false);
 	}

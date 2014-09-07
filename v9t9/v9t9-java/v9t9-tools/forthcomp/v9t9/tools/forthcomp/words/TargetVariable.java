@@ -14,6 +14,7 @@ import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.DictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -32,9 +33,9 @@ public class TargetVariable extends TargetWord {
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
 				if (getEntry().canInline())
-					targetContext.compileLiteral(getEntry().getParamAddr(), false, true);
+					targetContext.buildLiteral(getEntry().getParamAddr(), false, true);
 				else
-					targetContext.compile(TargetVariable.this);
+					targetContext.buildCall(TargetVariable.this);
 			}
 		});
 		setExecutionSemantics(new ISemantics() {
@@ -45,5 +46,12 @@ public class TargetVariable extends TargetWord {
 			}
 		});
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetWord#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Variable " + super.toString();
+	}
 }

@@ -1,0 +1,43 @@
+\ This file was ONCE automatically generated from 
+\ f9900romequs.inc and f9900rombank.sym -- but now hand-edited
+
+$0000	Constant	INTVECS
+$0040	Constant	XOPS
+$0080	Constant	VDPRD
+$0080	Constant	MMIO
+$0082	Constant	VDPST
+$0084	Constant	VDPWD
+$0086	Constant	VDPWA
+$0088	Constant	VDPCL
+$008A	Constant	VDPWI
+$0090	Constant	GPLRD
+$0092	Constant	GPLRA
+$0094	Constant	GPLWD
+$0096	Constant	GPLWA
+$0098	Constant	SPCHRD
+$009A	Constant	SPCHWT
+$00A0	Constant	SOUND
+$00C0	Constant	CRU
+
+$00C0	Constant	'INTS
+$00C1	Constant	'INTSP
+$00C2	Constant	'KBD
+$00C3	Constant	'KBDA
+$00C4	Constant	'GATE
+$00C7	Constant	'RND
+$00C8	Constant	'DSKCMD
+$00C8	Constant	'DSKST
+$00C8	Constant	'DSK
+$00C9	Constant	'DSKTRK
+$00CA	Constant	'DSKSEC
+$00CB	Constant	'DSKDAT
+$00CC	Constant	'DSKFLG
+$00CD	Constant	'DSKNUM
+$00FF	Constant	'DBG
+
+$0100	Constant	SHARED
+$FF9C	Constant	StdWS
+$FFBC	Constant	RomWS
+$FFDC	Constant	IntWS
+
+$FF9C	Constant	_RAM

@@ -147,9 +147,9 @@ public class InstF99b {
 	
 	/** next full word is jump offset */
 	public static final int IloopUp = Iloop_start + 0;
-	public static final int IuloopUp = Iloop_start + 1;
+//	public static final int IuloopUp = Iloop_start + 1;
 	public static final int IplusLoopUp = Iloop_start + 2;
-	public static final int IuplusLoopUp = Iloop_start + 3;
+//	public static final int IuplusLoopUp = Iloop_start + 3;
 	
 	/** ( caddr len ch step ) */ 
 	public static final int Icfill = Iloop_start + 4;
@@ -360,9 +360,9 @@ public class InstF99b {
 	public static final int Idloop_start = (Idouble << 8) + 0x68;
 	
 	public static final int IloopUp_d = Idloop_start + 0;
-	public static final int IuloopUp_d = Idloop_start + 1;
+//	public static final int IuloopUp_d = Idloop_start + 1;
 	public static final int IplusLoopUp_d = Idloop_start + 2;
-	public static final int IuplusLoopUp_d = Idloop_start + 3;
+//	public static final int IuplusLoopUp_d = Idloop_start + 3;
 
 	public static final int Idimm_start = (Idouble << 8) + 0x78;
 
@@ -435,13 +435,13 @@ public class InstF99b {
 		IbranchW, 0, 0, 0, 0,
 		
 		IloopUp, 0, 1, 2, 2,
-		IuloopUp, 0, 1, 2, 2,
+//		IuloopUp, 0, 1, 2, 2,
 		IplusLoopUp, 1, 1, 2, 2,
-		IuplusLoopUp, 1, 1, 2, 2,
+//		IuplusLoopUp, 1, 1, 2, 2,
 		IloopUp_d, 0, 1, 2, 2,
-		IuloopUp_d, 0, 1, 2, 2,
+//		IuloopUp_d, 0, 1, 2, 2,
 		IplusLoopUp_d, 1, 1, 2, 2,
-		IuplusLoopUp_d, 1, 1, 2, 2,
+//		IuplusLoopUp_d, 1, 1, 2, 2,
 		
 		Icfill, 4, 0, 0, 0,
 		Ifill, 4, 0, 0, 0,
@@ -626,9 +626,9 @@ public class InstF99b {
 		instNames.put(IloopUp, "(LOOP)");
 		instNames.put(IloopUp_d, "(DLOOP)");
 		instNames.put(IplusLoopUp, "(+LOOP)");
-		instNames.put(IuplusLoopUp, "(U+LOOP)");
+//		instNames.put(IuplusLoopUp, "(U+LOOP)");
 		instNames.put(IplusLoopUp_d, "(D+LOOP)");
-		instNames.put(IuplusLoopUp_d, "(DU+LOOP)");
+//		instNames.put(IuplusLoopUp_d, "(DU+LOOP)");
 		
 		instNames.put(IcontextFrom, "(CONTEXT>)");
 		instNames.put(ItoContext, "(>CONTEXT)");

@@ -1,0 +1,27 @@
+
+
+[IFUNDEF] D.    
+: D.R
+    >r              \ field width
+    dup >r          \ sign
+    dabs <# #S r> sign #>
+    r> over - spaces
+    type
+;
+: D.        \ DOUBLE
+    0 d.r space
+;
+[THEN]
+
+[IFUNDEF] UD.
+: UD.R  \ double
+    >r
+    <# #S #>
+    r> over - spaces
+    type
+;
+: UD.   \ double
+    0 UD.R
+    space
+;
+[THEN]

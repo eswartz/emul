@@ -197,6 +197,7 @@ public class VdpColorManager {
 			idx = clearColor;
 		if (idx >= thePalette.length)
 			idx = 0;
+		idx &= thePalette.length - 1;
 		return thePalette[idx];
 	}
 
@@ -206,6 +207,7 @@ public class VdpColorManager {
 			idx = clearColor;
 		if (idx >= thePalette.length)
 			return null;
+		idx &= thePalette.length - 1;
 		return theSpritePalette[idx];
 	}
 
@@ -217,6 +219,7 @@ public class VdpColorManager {
 		colorPalette[idx][1] = rgb[1];
 		colorPalette[idx][2] = rgb[2];
 		
+		idx &= thePalette.length - 1;
 		greyPalette[idx] = ColorMapUtils.rgbToGrey(rgb);
 		
 		paletteMappingDirty = true;

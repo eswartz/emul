@@ -12,6 +12,7 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -31,9 +32,8 @@ public class TargetOnlyDoes extends BaseStdWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		int dp = targetContext.compileDoDoes(hostContext);
-		//hostContext.compile(new HostReturnRead());
-		hostContext.compile(new HostDoDoes(hostContext.getLocalDP() + 1, dp, true));
+		int dp = targetContext.buildDoes(hostContext);
+		hostContext.build(new HostDoDoes(hostContext.getLocalDP() + 1, dp, true));
 	}
 	
 	/* (non-Javadoc)

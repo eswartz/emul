@@ -12,6 +12,7 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -30,7 +31,7 @@ public class CharComma extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
 		int val = hostContext.popData();
-		targetContext.compileChar(val);
+		targetContext.buildChar(val);
 	}
 
 	/* (non-Javadoc)

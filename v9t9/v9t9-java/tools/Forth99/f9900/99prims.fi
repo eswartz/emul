@@ -1,0 +1,1111 @@
+\   99prims_rev_tos.fi
+\ 
+\   (c) 2014 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+\	The prims use a stack that grows up (DECT to push) and the TOS is stored in a register.
+\
+\	The alternative (using auto-increment, and/or no TOS) will not perform any better,
+\	since *R+ is a post-increment, meaning all items below TOS will be @-2(SP), etc., 
+\	and cost 8 extra cycles.  
+
+$01	constant	rTOS	\ top of stack
+
+has? TESTING? [IF]	
+Code ~FAILURE~
+							,IDLE
+	$ff						,JMP
+Code ~SUCCESS~
+							,IDLE
+end-code
+[THEN]
+
+: PUSH
+	rSP 					,DECT
+	rTOS  	rSP *R  		,MOV
+; immediate
+
+: POP
+	rSP *R+  	rTOS		,MOV
+; immediate
+
+Code 0BRANCH
+	\ get target
+	rIP *R+		rTMP		,MOV
+	\ test
+	rTOS		rTOS		,MOV
+	0 $+					,JNE
+	rTMP		rIP			,A
+	POP
+	end-code
+0 $:
+	rSP *R+		rTOS		,MOV
+	end-code
+
+Code BRANCH
+	rIP *R+		rIP			,A				
+	end-code
+	
+| Code ((DOERS))
+	rDOCOL					,LI			' DOCOL ,				
+	rDOUSER					,LI			' DOUSER ,				
+	rDOCON					,LI			' DOCON ,				
+	rDOVAR					,LI			' DOVAR ,				
+	rDODOES					,LI			' DODOES ,
+	&11	*R					,B
+
+has? TASKS [IF]
+Code (REGS) ( SP0 UP0 RP0 -- )
+	rRP *R		rTMP		,MOV		\ return
+	rTOS		rRP			,MOV
+	rSP *R+		rUP			,MOV
+	rSP *R+		rSP			,MOV
+	rRP						,DECT
+	rTMP		rRP *R		,MOV
+
+	@>						,BL			' ((DOERS)) ,	
+	end-code
+[THEN]
+
+Code DOLIT
+	PUSH
+	rIP	*R+		rTOS		,MOV
+	end-code
+	
+Code DODLIT
+	rSP						,AI		2 cells negate ,
+	rTOS		rSP @>(R)	,MOV		#cell ,
+
+	rIP *R+		rSP *R		,MOV		\ first word				
+	rIP *R+		rTOS		,MOV		\ second				
+	end-code
+
+
+( CREATE'd words use R11 for their data )
+
+
+Code DOCOL
+	\ save off IP
+	rRP						,DECT
+	rIP			rRP *R		,MOV
+	\ get the new one from XT following the caller
+	&11			rIP			,MOV
+	end-code
+
+Code ;S
+	rRP *R+		rIP			,MOV
+	end-code
+
+Code DOVAR
+	PUSH
+	rRT			rTOS		,MOV 
+	end-code
+
+Code DOCON
+	PUSH
+	rRT *R+		rTOS		,MOV
+	end-code
+	
+Code DODCON
+	rSP						,AI		2 cells negate ,
+	rTOS		rSP @>(R)	,MOV		#cell , 
+
+	rRT *R+		rSP *R		,MOV		\ first word				
+	rRT *R+		rTOS		,MOV		\ second				
+	end-code
+	
+Code DOUSER
+	PUSH
+	
+	rRT *R+		rTOS		,MOV		\ offset follows
+	rUP			rTOS		,A		\ add user base				
+	end-code
+	
+Code DODOES
+	PUSH
+	
+	rRT *R+		rTMP		,MOV		\ XT of DOES> target
+	rRT			rTOS		,MOV		\ PFA
+	rTMP *R					,B
+	end-code
+
+( ROM deferral: points to an offset inside ROMDEFERS )
+Code DORDEFER
+	PUSH
+
+	rRT *R+		rR2			,MOV		\ offset follows
+	rR2 @>(R)	rR2			,MOV		(rdefertbl) ,
+	
+	POP
+	rR2	*R					,B				
+	end-code
+
+Code (TO)
+	rTOS @>(R)	rTMP		,MOV		#cell ,
+	rTMP					,CI		' DORDEFER ,
+	
+0 $:	
+	0 $-					,JNE		\ error			
+				
+	\ RDEFER
+	rTMP					,LI		(rdefertbl) ,	\ addr of table
+	rTOS @>(R)	rTMP		,A		2 cells ,
+	rSP *R+		rTMP *R		,MOV	
+
+	POP				
+	end-code
+	
+Code 0
+	PUSH
+	rTOS	,CLR
+end-code
+
+Code 1
+	PUSH
+	rTOS	,LI	$1 ,
+end-code
+
+Code 2
+	PUSH
+	rTOS	,LI	$2 ,
+end-code
+
+Code -1
+	PUSH
+	rTOS	,SETO
+end-code
+
+Code @
+	rTOS *R		rTOS	,MOV
+end-code
+
+Code C@ 
+	rTOS *R		rTOS	,MOVB
+	rTOS		8		,SRL
+end-code
+
+Code !
+	rSP	*R+		rTOS *R	,MOV
+	POP
+end-code
+
+Code C!
+	rSP @>(R)	rTOS *R	,MOVB	1 ,
+	rSP					,INCT
+	POP
+end-code
+
+Code +!
+	rSP *R+		rTOS *R		,A
+	POP
+end-code
+
+Code C+!
+	rSP @>(R)	rTOS *R		,AB	1 ,
+	rSP						,INCT
+	POP
+end-code
+		
+Code g@	( addr -- )
+	rTOS		@>			,MOV 	GPLWA ,
+	@>			rTOS		,MOVB 	GPLRD ,
+	rTOS					,SWPB
+	@>			rTOS		,MOVB 	GPLRD ,
+	rTOS					,SWPB
+end-code
+
+Code g!	( val addr -- )
+	rTOS		@>			,MOV 	GPLWA ,
+	POP
+	rTOS		@>			,MOVB 	GPLWD ,
+	rTOS					,SWPB
+	rTOS		@>			,MOVB 	GPLWD ,
+	POP
+end-code	
+	
+( optimize )
+Code 1+
+	rTOS	,INC
+end-code
+
+( optimize )
+Code 2+
+	rTOS	,INCT
+end-code
+
+( optimize )
+Code CELL+
+	rTOS	,INCT
+end-code
+
+( optimize )
+Code CELLS
+	rTOS	rTOS	,A
+end-code
+
+( optimize )
+Code /CELLS
+	rTOS	1				,SRL
+	end-code
+
+( optimize )
+Code 1-
+	rTOS	,DEC
+end-code
+
+( optimize )
+Code 2-
+	rTOS	,DECT
+end-code
+
+Code DUP
+	PUSH
+end-code
+
+Code DROP
+	POP
+end-code
+
+Code 2DROP
+	rSP		,INCT
+	POP
+end-code
+				
+Code SWAP
+	rTOS	rTMP    ,MOV
+	rSP *R	rTOS	,MOV
+	rTMP	rSP *R	,MOV
+end-code
+
+Code OVER
+	PUSH
+	rSP	@>(R)	rTOS		,MOV		#CELL ,
+end-code
+
+Code ROT ( a b c -- b c a )
+	rSP	@>(R)	rTMP		,MOV		#CELL ,
+	rSP *R		rSP	@>(R)	,MOV		#CELL ,
+	rTOS		rSP	*R		,MOV	
+	rTMP		rTOS		,MOV
+end-code
+
+Code PICK  ( xu ... x1 x0 u -- xu ... x1 x0 xu )
+\ Remove u. Copy the xu to the top of the stack. An ambiguous condition exists if there are 
+\ less than u+2 items on the stack before PICK is executed.
+	rTOS		rTOS		,A
+	rSP			rTOS		,A
+	rTOS *R		rTOS		,MOV
+end-code
+
+Code RPICK  ( u -- xu ) ( R: xu ... x1 x0 -- xu ... x1 x0 )
+\ Remove u. Copy the xu to the top of the R-stack. An ambiguous condition exists if there are 
+\ less than u+2 items on the R-stack before RPICK is executed.
+	rTOS		rTOS		,A
+	rRP			rTOS		,A
+	rTOS *R		rTOS		,MOV 
+end-code
+
+Code 0=
+	rTOS		rTOS		,MOV
+	rTOS					,SETO
+	0 $+					,JEQ
+	rTOS					,CLR
+0 $:
+	end-code
+	
+Code =
+	rSP *R+		rTOS		,C
+	rTOS					,CLR
+	0 $+					,JNE
+	rTOS					,SETO
+0 $:
+	end-code
+
+Code D=
+	rTOS		rTMP		,MOV
+	rTOS					,SETO
+	rSP @>(R)	rSP *R		,C		2 CELLS , 	\ low word likely to differ first
+	1 $+					,JNE
+	rSP @>(R)	rTMP		,C		#CELL ,
+	2 $+					,JEQ
+1 $:	
+	rTOS					,CLR
+2 $:
+	rSP						,AI		3 CELLS ,
+	end-code
+
+Code NEGATE
+	rTOS					,NEG
+	end-code
+
+Code +
+	rSP	*R+		rTOS		,A
+	end-code
+		
+Code -
+	rTOS		rSP	*R		,S
+	POP
+	end-code
+	
+Code D+ ( lo2 hi2 lo1 hi1 -- lo hi )
+	rTOS		rR2			,MOV
+	rSP *R+		rTMP		,MOV
+	POP
+	rR2			rTOS		,A
+	rTMP		rSP *R		,A
+	0 $+					,JNC
+	rTOS					,INC
+0 $:
+	end-code
+	
+Code *	( x y -- x*y )
+	rSP *R+		rR2			,MOV
+	rTOS		rR2			,MPY
+	rR3			rTOS		,MOV
+	end-code
+	
+Code U*  ( x y -- x * y )
+	rSP *R+		rR2			,MOV
+	rR2			rTOS		,MPY
+	rR3			rTOS		,MOV
+	end-code
+
+Code UM*  ( u1 u2 -- ud )
+ ( Multiply u1 by u2, giving the unsigned double-cell product ud. All
+  values and arithmetic are unsigned.
+ )
+ 	rSP *R		rR2			,MOV
+ 	rTOS		rR2			,MPY
+ 	rR2			rTOS		,MOV
+ 	rR3			rSP *R		,MOV
+	end-code
+
+Code UM/MOD 	( ud u1 -- u2 u3 )
+( Divide ud by u1, giving the quotient u3 and the remainder u2. All
+ values and arithmetic are unsigned. An ambiguous condition exists if
+ u1 is zero or if the quotient lies outside the range of a single-cell
+ unsigned integer. )
+ 	rSP *R+		rR2			,MOV
+ 	rSP *R		rR3			,MOV
+ 	rTOS		rR2			,DIV
+ 	rR2			rTOS		,MOV
+ 	rR3			rSP *R		,MOV
+	end-code
+
+Code INVERT
+	rTOS					,INV
+	end-code
+
+Code OR
+	rSP	*R+		rTOS		,SOC
+	end-code
+
+Code AND
+	rTOS					,INV
+	rTOS		rSP *R		,SZC
+	POP
+	end-code
+
+Code NAND
+	rTOS		rSP *R		,SZC
+	POP
+	end-code
+
+Code XOR
+	rSP *R+		rTOS		,XOR
+	end-code
+ 
+Code DNEGATE
+1 $:
+	rTOS					,INV
+	rSP *R					,INV
+	rSP *R					,INC
+	0 $+					,JNC
+	rTOS					,INC
+0 $:
+	end-code
+
+Code DABS
+	rTOS		rTOS		,MOV
+	1 $-					,JLT		
+	end-code
+
+Code >R
+	rRP						,DECT
+	rTOS		rRP *R		,MOV
+	POP
+	end-code
+
+		
+Code (DO)
+0 $:
+	rRP						,AI		2 CELLS NEGATE ,
+	rSP *R+		rRP @>(R)	,MOV		#cell ,
+	rTOS		rRP *R		,MOV
+	POP
+	end-code
+	
+Code 2>R
+	0 $-					,JMP
+	
+Code R>
+	PUSH
+	rRP *R+		rTOS		,MOV
+	end-code
+
+Code 2R>
+	rSP						,AI		2 CELLS NEGATE ,
+	rTOS		rSP @>(R)	,MOV		#cell ,				
+
+	rRP	*R+		rSP *R		,MOV
+	rRP *R+		rTOS		,MOV
+	end-code
+	
+Code RDROP
+	rRP						,INCT		
+	end-code
+			
+Code UNLOOP
+0 $:
+	rRP						,AI		2 CELLS ,		
+	end-code		
+
+Code 2RDROP
+	0 $-					,JMP
+
+Code I
+0 $:
+	PUSH
+	rRP *R		rTOS		,MOV		
+	end-code
+
+Code R@
+	0 $-					,JMP
+
+Code J
+	PUSH
+	rRP @>(R)	rTOS		,MOV		2 CELLS ,
+	end-code
+	
+Code 2R@
+	rSP						,AI		2 CELLS NEGATE ,
+	rTOS		rSP @>(R)	,MOV		#CELL ,
+
+	rRP *R		rTOS		,MOV
+	rRP @>(R)	rSP *R		,MOV		#CELL ,
+	end-code
+	
+Code SP@
+	PUSH
+	rSP 		rTOS		,MOV
+	rTOS					,INCT		( TOS itself isn't here )		
+	end-code
+	
+Code SP!
+	rTOS					,DECT		( TOS itself isn't here )		
+	rTOS		rSP			,MOV
+	POP
+	end-code
+	
+Code RP@
+	PUSH
+	rRP			rTOS		,MOV
+	end-code
+
+Code RP!
+	rTOS		rRP			,MOV
+	POP
+	end-code	
+	
+Code (LOOP) ( R: lim next -- lim next+1 ) ( S: -- ) ( + jump )
+	rIP	*R+		rTMP		,MOV
+	
+	( Add one to the loop index. If the loop index is then equal to
+	 the loop limit, discard the loop parameters and continue
+	 execution immediately following the loop. Otherwise continue
+	 execution at the beginning of the loop. )
+	 
+	rRP *R					,INC		\ next
+	rRP *R		rRP @>(R)	,C		#cell ,
+	1 $+					,JEQ	
+
+	rTMP		rIP			,A				
+1 $:
+	end-code
+	
+Code (+LOOP)  ( R: lim cur -- lim next ) ( S: change -- ) ( + jump )
+	( Add n to the loop index. If the loop index did not cross the
+	boundary between the loop limit minus one and the loop limit,
+	continue execution at the beginning of the loop. Otherwise,
+	discard the current loop control parameters and continue
+	execution immediately following the loop. )
+
+	rIP *R+		rTMP		,MOV		\ jump
+	rTMP		rIP			,A				
+
+	rRP @>(R)	rR2			,MOV		#CELL ,		\ lim
+	
+	1 $+					,JNE
+
+	rTOS		rTOS		,MOV		\ forward?
+	1 $+					,JLT	
+
+	( zero: handle via carry )
+	rTOS		rRP *R		,A
+	9 $+					,JNC
+
+	rTMP		rIP			,S		\ undo jump	
+	9 $+					,JMP
+
+1 $:
+	rTOS		rRP *R		,A				
+	
+	rTOS  		rTOS		,MOV		\ forward?
+	5 $+					,JLT				
+				
+	( lim < cur )
+	rRP *R		rR2			,C   	\ next ? lim
+	9 $+					,JL				
+
+	rTMP 		rIP			,S		\ undo jump				
+	9 $+					,JMP
+
+5 $:
+	rRP *R		rR2			,C		\ next ? lim				
+	9 $+					,JGT				
+				
+	rTMP		rIP			,S		\ undo jump	
+
+9 $:				
+	POP
+	end-code
+	
+Code 2DUP
+	rTOS		rSP @>(R)	,MOV		#cell negate ,
+	rSP *R		rSP @>(R)	,MOV		2 cells negate ,
+	rSP						,AI		2 cells negate ,
+	end-code
+					
+Code ?DUP
+	rTOS		rTOS		,MOV
+	0 $+					,JEQ
+	PUSH
+0 $:				
+	end-code
+	
+Code 0<
+	rTOS		rTOS		,MOV
+	rTOS					,SETO
+	0 $+					,JLT
+	rTOS					,CLR
+0 $:
+	end-code
+	
+Code 0>
+	rTOS		rTOS		,MOV
+	rTOS					,SETO
+	0 $+					,JGT
+	rTOS					,CLR
+0 $:
+	end-code
+	
+Code <=
+	rSP *R+		rTOS		,C
+	rTOS					,CLR
+	0 $+					,JGT
+	rTOS					,SETO
+0 $:
+	end-code
+	
+Code U<
+	rSP *R+		rTOS		,C
+	rTOS					,SETO
+	0 $+					,JL
+	rTOS					,CLR
+0 $:
+	end-code
+	
+Code <
+	rSP *R+		rTOS		,C
+	rTOS					,SETO
+	0 $+					,JLT
+	rTOS					,CLR
+0 $:
+	end-code
+
+Code U>
+	rSP *R+		rTOS		,C
+	rTOS					,SETO
+	0 $+					,JH
+	rTOS					,CLR
+0 $:
+	end-code
+	
+Code >
+	rSP *R+		rTOS		,C
+	rTOS					,SETO
+	0 $+					,JGT
+	rTOS					,CLR
+0 $:
+	end-code
+	
+Code 2/
+	rTOS		1			,SRA
+	end-code		
+
+Code 2*
+	rTOS		1			,SLA
+	end-code
+	
+Code LSHIFT
+	rTOS		0			,MOV
+	POP
+	rTOS		0			,SLA
+	end-code		
+	
+Code RSHIFT
+	rTOS		0			,MOV
+	POP
+	rTOS		0			,SRA
+	end-code		
+	
+Code URSHIFT
+	rTOS		0			,MOV
+	POP
+	rTOS		0			,SRL
+	end-code		
+	
+Code CRSHIFT
+	rTOS		0			,MOV
+	POP
+	rTOS		0			,SRC
+	end-code
+	
+Code swpb
+	rTOS					,SWPB
+	end-code
+
+Code EXECUTE
+	rTOS		rTMP		,MOV
+	POP
+	rTMP *R					,BL
+	end-code
+	
+Code TRUE
+	PUSH
+	rTOS					,SETO
+	end-code
+	
+Code FALSE
+	PUSH
+	rTOS					,CLR
+	end-code
+
+Code (S")
+	rSP						,AI		2 cells negate ,
+	rTOS		rSP @>(R)	,MOV		#cell ,
+	\ get addr
+	rIP			rTMP		,MOV
+	\ get length
+	rTMP *R+	rTOS		,MOVB
+	rTOS		8			,SRL
+	\ save caddr
+	rTMP		rSP *R		,MOV
+	\ align
+	rTOS		rTMP		,A
+	rTMP					,INC
+	rTMP					,ANDI	-2 ,	
+
+	rTMP		rIP			,MOV				
+	end-code
+					
+Code (DBG)
+	rTOS					,SWPB
+	rTOS		@>			,MOVB	'DBG ,
+	POP
+	end-code
+	
+(  Move memory from one area to another )
+Code (cmove)	( src target len srcincr targetincr  )
+								\ TOS: targetincr
+	rSP *R+		rRT			,MOV		\ R11: srcincr
+	rSP *R+		rR2			,MOV		\ R2: len
+	rSP *R+		rR3			,MOV		\ R3: target
+	rSP *R+		rTMP		,MOV		\ TMP: source
+	
+	rTOS		rTOS		,MOV		 \ TOS: targetincr
+	1 $+					,JGT
+	1 $+					,JEQ
+	
+	rR2			rR3			,A
+	rR3						,DEC		\ TODO: assuming TOS == -1
+	
+1 $:
+	rRT			rRT			,MOV
+	2 $+					,JGT
+	2 $+					,JEQ
+	
+	rR2			rTMP		,A
+	rTMP					,DEC		\ TODO: assuming TOS == -1
+	
+2 $:
+	rR2			rR2			,MOV		\ 0 bytes?
+	
+	3 $+					,JEQ
+	
+4 $:
+	rTMP *R		rR3 *R		,MOVB
+	rTOS		rR3			,A
+	rRT			rTMP		,A
+	rR2						,DEC
+	4 $-					,JNE
+
+3 $:
+	POP
+	end-code
+	
+( Fill memory )
+Code (CFILL)	( addr n ch targetincr )
+									\ TOS: targetincr
+	rSP *R+		rTMP		,MOV 	\ TMP: ch
+	rTMP					,SWPB
+
+	rSP *R+		rR2			,MOV	\ R2: len
+	rSP *R+		rR3			,MOV 	\ R3: target
+	
+	rR2			rR2			,MOV 	\ 0 bytes?
+	1 $+					,JEQ
+	
+				rTOS		,CI		1 ,	\ byte step? 	
+	3 $+					,JEQ
+	
+2 $:
+	\ worst case 
+	rTMP		rR3 *R		,MOVB
+	rTOS		rR3			,A
+	rR2						,DEC
+	2 $-					,JNE
+	1 $+					,JMP
+	
+3 $:
+	\ best case: writing to sequential memory
+	rTMP		rR3 *R+		,MOVB
+	rR2						,DEC
+	3 $-					,JNE
+	
+1 $:
+	POP
+	end-code
+
+\ Registers
+| &4	constant charTemp 			\ must be saved
+| &5	constant counter			\ must be saved
+| &12	constant lenAndFlags		\ should be saved
+
+\ Labels
+| 1 	constant	>failed
+| 2 	constant	>wordLoop
+| 3 	constant	>wordStart
+| 4 	constant	>charLoop
+| 5 	constant	>match
+| 9 	constant	>reset
+
+has? GROM-DICT [IF]
+
+\ GROM version
+( find word in dictionary -- search forward  )
+( [len|flags] "name" XT[cell]  )            
+Code (gfind)  ( gDictEnd caddr start -- caddr 0 | xt 1 | xt -1 )
+
+							,LIMI	0 ,
+							
+	\ save clobbered regs
+	rRP						,AI		3 cells negate ,
+	charTemp	rRP @>(R)	,MOV	2 cells ,
+	counter		rRP @>(R)	,MOV	#cell ,
+	lenAndFlags	rRP *R		,MOV
+
+	\ search list 
+	rR3						,CLR
+	charTemp				,CLR
+
+	rSP *R		rTMP		,MOV
+	rTMP *R		rTMP		,MOVB	 
+	
+	\ lenAndFlags = [ expected byte (mostly) | length ]
+	rTMP		lenAndFlags	,MOVB
+	lenAndFlags				,SWPB
+	rTMP		lenAndFlags	,MOVB
+	lenAndFlags				,ORI 	$8000 ,  	\ not smudged
+
+>wordLoop $:
+
+	rTOS		rSP @>(R)	,C		#cell ,		\ at end?
+	>failed $+				,JHE     			\ (unlikely)
+	
+	\ TOS = LFA, a [len] byte, followed by "name" and XT
+
+	\ check length & flags
+	rTOS		@>			,MOV	GPLWA ,
+	@>			rR3			,MOVB	GPLRD ,
+
+	rR3			rRT			,MOVB				\ save flags
+
+	rR3						,ANDI	$4000 INVERT ,	\ keep all but immediate bit
+	lenAndFlags	rR3			,CB
+	7 $+					,JEQ
+	
+8 $:	
+	\ move TOS to next name
+	rRT						,ANDI	$1F00 ,		\ to length
+	rRT						,SWPB				\ as word
+	rRT						,AI		3 ,			\ skip XT & length
+	rRT			rTOS		,A 					\ get name
+	>wordLoop $-			,JMP
+	
+7 $:
+	rSP *R		rR2			,MOV
+	rR2						,INC
+	lenAndFlags	counter		,MOV	
+	counter					,ANDI 	$FF ,
+
+	( name follows )
+>charLoop $:
+	@>			rR3			,MOVB	GPLRD ,
+	rR2	*R		charTemp	,MOVB
+
+	rR3			charTemp	,XOR				\ test zero and leave case bit otherwise (low bytes clear)
+	>match $+				,JEQ                   \ exact match?
+
+	\ see if they might be letters that differ in case only
+	charTemp				,CI		$2000 ,       \ differ in case bit?
+    8 $-					,JNE
+    
+    \ okay, exclude matches in punctuation
+    charTemp	rR3			,SZC                            \ turn off case in matching char
+    rR3						,AI		-$4100 ,
+    rR3						,CI		$5A00 $4100 - ,
+	8 $-					,JHE
+
+>match $:
+	rR2						,INC				\ don't auto-incr (above) if it will be a waste
+	counter					,DEC
+	>charLoop $-			,JGT        
+
+    ( matched: now read XT )
+    @>			rSP @>(R)	,MOVB		GPLRD ,	 #cell ,		\ high XT byte 	
+    @>			rSP @>(R)	,MOVB		GPLRD ,	 #cell 1+ ,		\ low XT byte 	
+    
+    \ assume not immediate
+    rTOS					,SETO
+
+	rRT						,ANDI 		$4000 ,	\ immediate?
+    >reset $+				,JEQ
+    
+    \ immediate
+    rTOS					,NEG
+
+	>reset $+				,JMP    
+
+>failed $:
+	rTOS					,CLR    
+	rSP *R		rSP @>(R)	,MOV	#cell ,		\ move caddr into return
+		
+>reset $:    	
+	\ restore
+	rRP *R+		lenAndFlags	,MOV
+	rRP *R+		counter		,MOV
+	rRP *R+		charTemp	,MOV
+	
+							,LIMI	1 ,
+	
+	rSP						,INCT
+	end-code
+	
+[ELSE]
+
+| &11 	constant charPtr			\ not saved
+
+( find word in dictionary; lfa is nfa - #cell )            
+Code (lfind)		( c-addr lfa -- c-addr 0 | xt 1==immed | xt -1 )
+							,LIMI	0 ,
+
+	\ save clobbered regs
+	rRP						,AI		3 cells negate ,
+	charTemp	rRP @>(R)	,MOV		2 cells ,
+	counter		rRP @>(R)	,MOV		#cell ,
+	lenAndFlags	rRP *R		,MOV
+
+	rTOS		rTOS		,MOV		\ TOS=LFA
+	
+	>failed $+				,JEQ
+
+	\ search list 
+
+	rR3						,CLR
+	charTemp				,CLR
+
+	rSP *R		charPtr		,MOV
+	charPtr *R	rTMP		,MOVB	 \ [ expected byte | length ]
+	
+	rTMP		lenAndFlags	,MOVB
+	lenAndFlags				,SWPB
+	rTMP		lenAndFlags	,MOVB
+	lenAndFlags				,ORI 	$8000 ,  	\ not smudged
+
+	>wordStart $+			,JMP        
+
+>wordLoop $:
+	rTOS *R		rTOS		,MOV 	\ get LFA to new one...
+	>failed $+				,JEQ     \ if end... (unlikely)
+
+>wordStart $:
+	\ TOS = LFA, followed by [len] "name"
+
+	\ check length & flags
+	rTOS @>(R)	rR3			,MOVB	#cell ,
+
+	rR3						,ANDI	$4000 INVERT ,	\ keep all but immediate bit
+	lenAndFlags	rR3			,SB				\ subtract both smudge & length -- should be 0x00 or 0x40
+	>wordLoop $-			,JNE
+
+	rTOS		rTMP		,MOV        \ new NFA to check
+	rTMP					,AI		#cell 1+ ,
+
+	charPtr		rR2			,MOV
+	rR2						,INC
+	lenAndFlags	counter		,MOV	
+	counter					,ANDI 	$FF ,
+        
+>charLoop $:
+	rTMP *R+	rR3			,MOVB
+	rR2	*R		charTemp	,MOVB
+
+	rR3			charTemp	,XOR   		
+	>match $+				,JEQ                   \ exact match?
+
+	\ see if they might be letters that differ in case only
+	charTemp				,CI		$2000 ,       \ differ in case bit?
+    >wordLoop $-			,JNE
+    
+    \ okay, exclude matches in punctuation
+    charTemp	rR3			,SZC                            \ turn off case in matching char
+    rR3						,AI		-$4100 ,
+    rR3						,CI		$5A00 $4100 - ,
+    >wordLoop $-			,JHE
+
+>match $:
+	rR2						,INC
+	counter					,DEC
+	>charLoop $-			,JGT        
+
+    \ convert to XT
+    rTOS @>(R)	lenAndFlags ,MOVB	#cell ,	\ save NFA flag bits
+    rTMP		rTOS		,MOV
+    
+    \ align
+    rTOS					,INC
+    rTOS					,ANDI 	#cell negate ,
+
+	rTOS		rSP *R		,MOV		 \ overwrite caddr with xt
+    
+    \ assume not immediate
+    rTOS					,SETO
+
+	lenAndFlags				,ANDI 	$4000 ,	\ immediate?
+    >reset $+				,JEQ
+    
+    \ immediate
+    rTOS					,NEG
+
+	>reset $+				,JMP    
+
+>failed $:
+	rTOS					,CLR    
+
+>reset $:    	
+	\ restore
+	rRP *R+		lenAndFlags	,MOV
+	rRP *R+		counter		,MOV
+	rRP *R+		charTemp	,MOV
+	
+							,LIMI	1 ,
+	
+	end-code
+
+[THEN]
+
+( optimize )
+Code MAX
+	rSP *R+		rTMP		,MOV
+	rTOS		rTMP		,C
+	1 $+					,JGT
+	rTMP		rTOS		,MOV
+1 $:
+	end-code
+
+
+( optimize )
+Code MAX
+	rSP *R+		rTMP		,MOV
+	rTOS		rTMP		,C
+	1 $+					,JGT
+	rTMP		rTOS		,MOV
+1 $:
+	end-code
+	
+\ ------------------------------------------------------
+	
+Code HANG
+0	$:
+	,IDLE
+	0 $-					,JMP
+
+Code BYE
+	@>						,BLWP		0 ,
+	
+Code (IDLE)
+							,IDLE
+end-code
+
+has? TASKS 0= [IF]
+Code MS ( ms -- )
+	rR2						,LI			&60 ,
+	rTOS		rR2			,MPY		
+	rTOS					,LI			&1000 ,
+	rTOS		rR2			,DIV		( R2 / 60s delay )
+
+2 $:
+	@> 			rR3			,MOV		uptime cell+ ,
+	
+0 $:
+	rR2			rR2			,MOV
+	1 $+					,JEQ
+
+							,IDLE
+							
+	@> 			rR3			,C			uptime cell+ ,
+	0 $-					,JEQ
+	
+	rR2						,DEC
+	2 $-					,JMP
+	
+1 $:
+	POP
+end-code
+
+[THEN]
+
+Code */		( val mul div -- scaled )
+	rSP @>(R)	rR2			,MOV		1 cells ,
+	rSP *R		rR2			,MPY		
+	rTOS		rR2			,DIV		
+	rSP						,AI			2 cells ,
+	rR2			rTOS		,MOV
+end-code
+

@@ -19,13 +19,16 @@ public class LPCEncoderParams {
 	private int framesPerSecond;
 	private int hertz;
 	private int order;
+	private int playbackHz;
 	
 	/**
 	 * @param order 
+	 * @param i 
 	 * 
 	 */
-	public LPCEncoderParams(int hertz, int framesPerSecond, int order) {
+	public LPCEncoderParams(int hertz, int playbackHz, int framesPerSecond, int order) {
 		this.hertz = hertz;
+		this.playbackHz = playbackHz;
 		this.framesPerSecond = framesPerSecond;
 		this.order = order;
 	}
@@ -43,6 +46,12 @@ public class LPCEncoderParams {
 		this.hertz = hertz;
 	}
 
+	/**
+	 * @return the playbackHz
+	 */
+	public int getPlaybackHz() {
+		return playbackHz;
+	}
 	/**
 	 * @return
 	 */

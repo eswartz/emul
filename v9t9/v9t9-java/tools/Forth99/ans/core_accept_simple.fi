@@ -1,0 +1,39 @@
+: core-ACCEPT
+\        ( c-addr +n1 -- +n2 )
+\   Receive a string of at most +n1 characters. An ambiguous condition exists if +n1 is zero or greater than 32,767. Display
+\   graphic characters as they are received. A program that depends on the presence or absence of non-graphic characters in
+\   the string has an environmental dependency. The editing functions, if any, that the system performs in order to construct
+\   the string are implementation-defined.
+\
+\   (EJS: this one does not automatically abort at n1 chars.)
+    swap >r     \ store c-addr on R:
+    0           \ position
+    begin
+        key
+        dup $0d <>
+    while
+        dup 8 <> over &211 ( fctn-s ) <> and
+        if
+            >r          \ store key
+            \ go back if too many chars
+            2dup <= if 1- 8 emit then
+            \ show key
+            r@ emit     
+            \ store code
+            dup r> swap r@ + c! 
+            1+
+        else
+            \ don't go too far
+            drop dup 0 > if     
+                overstrike  \ backspace
+                1-
+            then
+        then
+    repeat
+    drop        \ key
+    min         \ lose max #chars
+    rdrop
+;
+
+
+' core-ACCEPT		TO ACCEPT

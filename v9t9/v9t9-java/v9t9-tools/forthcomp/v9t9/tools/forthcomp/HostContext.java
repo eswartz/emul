@@ -10,108 +10,17 @@
  */
 package v9t9.tools.forthcomp;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Stack;
 
+import v9t9.tools.forthcomp.words.*;
 import ejs.base.utils.HexUtils;
-import v9t9.tools.forthcomp.words.AbortQuote;
-import v9t9.tools.forthcomp.words.Again;
-import v9t9.tools.forthcomp.words.Allot;
-import v9t9.tools.forthcomp.words.BackSlash;
-import v9t9.tools.forthcomp.words.BarExportNext;
-import v9t9.tools.forthcomp.words.BarHideNext;
-import v9t9.tools.forthcomp.words.BaseHostBranch;
-import v9t9.tools.forthcomp.words.BaseWord;
-import v9t9.tools.forthcomp.words.Begin;
-import v9t9.tools.forthcomp.words.BracketChar;
-import v9t9.tools.forthcomp.words.BracketCompile;
-import v9t9.tools.forthcomp.words.BracketElse;
-import v9t9.tools.forthcomp.words.BracketIf;
-import v9t9.tools.forthcomp.words.BracketIfdef;
-import v9t9.tools.forthcomp.words.BracketIfndef;
-import v9t9.tools.forthcomp.words.BracketThen;
-import v9t9.tools.forthcomp.words.CR;
-import v9t9.tools.forthcomp.words.Char;
-import v9t9.tools.forthcomp.words.CharComma;
-import v9t9.tools.forthcomp.words.Cmove;
-import v9t9.tools.forthcomp.words.Colon;
-import v9t9.tools.forthcomp.words.ColonColon;
-import v9t9.tools.forthcomp.words.Comma;
-import v9t9.tools.forthcomp.words.CompileComma;
-import v9t9.tools.forthcomp.words.Constant;
-import v9t9.tools.forthcomp.words.Create;
-import v9t9.tools.forthcomp.words.DConstant;
-import v9t9.tools.forthcomp.words.DLiteral;
-import v9t9.tools.forthcomp.words.DVariable;
-import v9t9.tools.forthcomp.words.Do;
-import v9t9.tools.forthcomp.words.Dot;
-import v9t9.tools.forthcomp.words.DotQuote;
-import v9t9.tools.forthcomp.words.Else;
-import v9t9.tools.forthcomp.words.ErrorQuote;
-import v9t9.tools.forthcomp.words.Exit;
-import v9t9.tools.forthcomp.words.Here;
-import v9t9.tools.forthcomp.words.Host0Branch;
-import v9t9.tools.forthcomp.words.Host2Dup;
-import v9t9.tools.forthcomp.words.HostBehavior;
-import v9t9.tools.forthcomp.words.HostBinOp;
-import v9t9.tools.forthcomp.words.HostBranch;
-import v9t9.tools.forthcomp.words.HostDecimal;
-import v9t9.tools.forthcomp.words.HostDoes;
-import v9t9.tools.forthcomp.words.HostDrop;
-import v9t9.tools.forthcomp.words.HostDup;
-import v9t9.tools.forthcomp.words.HostEmit;
-import v9t9.tools.forthcomp.words.HostExitWord;
-import v9t9.tools.forthcomp.words.HostFetch;
-import v9t9.tools.forthcomp.words.HostHex;
-import v9t9.tools.forthcomp.words.HostLiteral;
-import v9t9.tools.forthcomp.words.HostOver;
-import v9t9.tools.forthcomp.words.HostPlusStore;
-import v9t9.tools.forthcomp.words.HostPushReturn;
-import v9t9.tools.forthcomp.words.HostRecurse;
-import v9t9.tools.forthcomp.words.HostReturnPop;
-import v9t9.tools.forthcomp.words.HostRot;
-import v9t9.tools.forthcomp.words.HostStore;
-import v9t9.tools.forthcomp.words.HostSwap;
-import v9t9.tools.forthcomp.words.HostTargetOnly;
-import v9t9.tools.forthcomp.words.HostType;
-import v9t9.tools.forthcomp.words.HostUnaryOp;
-import v9t9.tools.forthcomp.words.HostVariable;
-import v9t9.tools.forthcomp.words.If;
-import v9t9.tools.forthcomp.words.Immediate;
-import v9t9.tools.forthcomp.words.Include;
-import v9t9.tools.forthcomp.words.Inline;
-import v9t9.tools.forthcomp.words.LastXt;
-import v9t9.tools.forthcomp.words.Lbracket;
-import v9t9.tools.forthcomp.words.Leave;
-import v9t9.tools.forthcomp.words.Literal;
-import v9t9.tools.forthcomp.words.LoopCompile;
-import v9t9.tools.forthcomp.words.Paren;
-import v9t9.tools.forthcomp.words.ParsedTick;
-import v9t9.tools.forthcomp.words.PopExportState;
-import v9t9.tools.forthcomp.words.Postpone;
-import v9t9.tools.forthcomp.words.PushExportState;
-import v9t9.tools.forthcomp.words.QuestionDo;
-import v9t9.tools.forthcomp.words.Rbracket;
-import v9t9.tools.forthcomp.words.Repeat;
-import v9t9.tools.forthcomp.words.SQuote;
-import v9t9.tools.forthcomp.words.SemiColon;
-import v9t9.tools.forthcomp.words.SetDP;
-import v9t9.tools.forthcomp.words.TargetContext;
-import v9t9.tools.forthcomp.words.TargetOnlyDoes;
-import v9t9.tools.forthcomp.words.TestQuote;
-import v9t9.tools.forthcomp.words.Then;
-import v9t9.tools.forthcomp.words.Tick;
-import v9t9.tools.forthcomp.words.To;
-import v9t9.tools.forthcomp.words.ToLocal;
-import v9t9.tools.forthcomp.words.UDot;
-import v9t9.tools.forthcomp.words.Until;
-import v9t9.tools.forthcomp.words.User;
-import v9t9.tools.forthcomp.words.Value;
-import v9t9.tools.forthcomp.words.Variable;
-import v9t9.tools.forthcomp.words.While;
 
 /**
  * @author ejs
@@ -133,6 +42,8 @@ public class HostContext extends Context {
 	private int cellSize;
 
 	private final TargetContext targetContext;
+
+	private boolean hostMode;
 	
 	/**
 	 * @param targetContext 
@@ -157,13 +68,25 @@ public class HostContext extends Context {
 	public void defineHostCompilerWords() {
 		define("csp", new HostVariable(0));
 		
+		define("(define-colon-prims)", new BaseWord() {
+			{
+				setExecutionSemantics(new ISemantics() {
+					
+					public void execute(HostContext hostContext, TargetContext targetContext)
+							throws AbortException {
+						targetContext.defineColonPrims();
+					}
+				});
+			}
+			
+		});
 		define("(define-prims)", new BaseWord() {
 			{
 				setExecutionSemantics(new ISemantics() {
 					
 					public void execute(HostContext hostContext, TargetContext targetContext)
 							throws AbortException {
-						targetContext.defineBuiltins();
+						targetContext.definePrims();
 					}
 				});
 			}
@@ -183,18 +106,24 @@ public class HostContext extends Context {
 			
 		});
 		define("include", new Include());
+		define("included", new Included());
 		
 		define("[if]", new BracketIf());
 		define("[ifdef]", new BracketIfdef());
 		define("[ifundef]", new BracketIfndef());
 		define("[else]", new BracketElse());
 		define("[then]", new BracketThen());
-		define("[endif]", new BracketThen());
+		
+		//define("ENVIRONMENT?", new EnvironmentQuery());
+		define("HAS?", new HasQuestion());
 		
 		define("<EXPORT", new PushExportState());
 		define("EXPORT>", new PopExportState());
 		define("|", new BarHideNext());
 		define("|+", new BarExportNext());
+
+		define("<HOST", new HostModeStart());
+		define("HOST>", new HostModeStop());
 		
 		define("create", new Create());
 		define("variable", new Variable());
@@ -213,14 +142,28 @@ public class HostContext extends Context {
 		define("[']", new ParsedTick());
 		
 		define("!", new HostStore());
+		define("C!", new HostCStore());
 		define("@", new HostFetch());
+		define("cells", new HostCells(targetContext.getCellSize()));
+		define("cell+", new HostCellPlus(targetContext.getCellSize()));
+		define("R@", new HostRStackAt());
+		define("R>", new HostRStackFrom());
+		define(">R", new HostToRStack());
+		define("2>R", new Host2ToRStack());
+		define("2RDROP", new Host2ToRStack());
 		
+		define("CODE", new Code());
+		define("END-CODE", new EndCode());
 		
 		define(":", new Colon());
+//		define("HOST:", new HostOnlyColon());
 		define("::", new ColonColon());
 		define(":>", new ToLocal());
 		
 		define(";", new SemiColon());
+		
+		define("DEFER", new Defer());
+
 		define("[CHAR]", new BracketChar());
 		define("CHAR", new Char());
 		
@@ -242,9 +185,9 @@ public class HostContext extends Context {
 	 	define("?do", new QuestionDo());
 	 	define("leave", new Leave());
 	 	define("loop", new LoopCompile("(loop)"));
-	 	define("uloop", new LoopCompile("(uloop)"));
+//	 	define("uloop", new LoopCompile("(uloop)"));
 	 	define("+loop", new LoopCompile("(+loop)"));
-	 	define("u+loop", new LoopCompile("(u+loop)"));
+//	 	define("u+loop", new LoopCompile("(u+loop)"));
 	 	define("exit", new Exit());
 
 	 	define("(", new Paren());
@@ -277,8 +220,12 @@ public class HostContext extends Context {
 		define("type", new HostType());
 		define("decimal", new HostDecimal());
 		define("hex", new HostHex());
+		define(".S", new DotS());
 		
 		define("TEST\"", new TestQuote());
+		define("|TEST", new BarTest());
+		define("TESTS!", new TestsStore());
+		
 		define("ERROR\"", new ErrorQuote());
 		define("ABORT\"", new AbortQuote());
 		
@@ -294,11 +241,12 @@ public class HostContext extends Context {
 		define("branch", new HostBranch());
 		
 		define("+!", new HostPlusStore());
+		define("ERASE", new HostErase());
+		define("FILL", new HostFill());
 		define("r>", new HostReturnPop());
 		define(">r", new HostPushReturn());
 		
 		define("target-only", new HostTargetOnly());
-		
 		
 		define("+", new HostBinOp("+") {
 			public int getResult(int l, int r) { return l+r; }
@@ -325,13 +273,16 @@ public class HostContext extends Context {
 			public int getResult(int l, int r) { return l^r; }
 		});
 		define("AND", new HostBinOp("AND") {
-			public int getResult(int l, int r) { return l&r; }
+			public int getResult(int l, int r) { 
+				return l&r; }
 		});
 		define("NEGATE", new HostUnaryOp("NEGATE") {
 			public int getResult(int v) { return -v; }
 		});
 		define("INVERT", new HostUnaryOp("INVERT") {
-			public int getResult(int v) { return ~v; }
+			public int getResult(int v) { 
+				return ~v; 
+			}
 		});
 		define("LSHIFT", new HostBinOp("LSHIFT") {
 			public int getResult(int l, int r) { return l << r; }
@@ -421,12 +372,30 @@ public class HostContext extends Context {
 			public int getResult(int v) { return v/2; }
 		});
 		define("DUP", new HostDup());
+		define("?DUP", new HostQuestionDup());
 		define("2DUP", new Host2Dup());
+		define("2DROP", new Host2Drop());
 		define("SWAP", new HostSwap());
 		define("DROP", new HostDrop());
 		define("OVER", new HostOver());
 		define("ROT", new HostRot());
-		
+		define("WITHIN", new HostWithin());
+
+		define("(resolve-rdefers)", new BaseStdWord() {
+			@Override
+			public boolean isImmediate() {
+				return true;
+			}
+
+			@Override
+			public void execute(HostContext hostContext,
+					TargetContext targetContext) throws AbortException {
+				targetContext.resolveRomDefers();				
+			}
+			
+			
+		});
+
 	}
 
 	/**
@@ -592,11 +561,11 @@ public class HostContext extends Context {
 	public int getLocalDP() {
 		return hostDp;
 	}
-	public void compile(IWord word) {
+	public void build(IWord word) {
 		if (DEBUG) System.out.println("H>" + hostDp +": "+ word);
 		assert !hostWords.containsKey((Integer)hostDp);
 		if (word instanceof BaseHostBranch)
-			word = (IWord) ((BaseHostBranch)word).clone();
+			word = ((BaseHostBranch) word).clone();
 		hostWords.put(hostDp, word);
 		hostDp++;
 	}
@@ -608,31 +577,8 @@ public class HostContext extends Context {
 				throw hostContext.abort("broken dictionary entry at " + hostPc);
 			if (DEBUG) System.out.println(
 					//stack() + "\n" + 
-					"H> exec " + hostPc + ": " + word);
+					"H> " + hostPc + ": exec " + word);
 			hostPc++;
-			
-			/*
-			if (word instanceof ITargetWord) {
-				ITargetWord targetWord = (ITargetWord) word;
-				IWord hostWord = targetWord.getEntry().getHostBehavior();
-				if (hostWord != null) {
-					if (DEBUG) System.out.println("On host: " + hostWord);
-
-					Stack<Integer> origDataStack = new Stack<Integer>(); 
-					origDataStack.addAll(dataStack);
-					Stack<Integer> origReturnStack = new Stack<Integer>();
-					origReturnStack.addAll(returnStack);
-					int dp = targetContext.getDP();
-					
-					hostWord.getExecutionSemantics().execute(hostContext, targetContext);
-					
-					targetContext.setDP(dp);
-					dataStack = origDataStack;
-					returnStack = origReturnStack;
-				}
-				
-			}
-			*/
 			
 			if (word.getExecutionSemantics() == null)
 				throw abort(word.getName() +  " has unknown runtime semantics");
@@ -657,7 +603,7 @@ public class HostContext extends Context {
 	 * 
 	 */
 	public void compileExit() {
-		compile(new HostExitWord());
+		build(new HostExitWord());
 	}
 
 	/**
@@ -705,6 +651,9 @@ public class HostContext extends Context {
 		
 		fixupMap.put(dp, hostDp - 1);
 	}
+	public int getFixupTarget(int dp) {
+		return fixupMap.get(dp);
+	}
 
 	/**
 	 * @param targetContext
@@ -730,31 +679,47 @@ public class HostContext extends Context {
 						origDataStack.addAll(dataStack);
 						origReturnStack = new Stack<Integer>();
 						origReturnStack.addAll(returnStack);
-						dp = targetContext.getDP();
+						if (!isHostMode())
+							dp = targetContext.getDP();
 					}
 					targetWord.getCompilationSemantics().execute(this, targetContext);
 					if (saveState) {
-						targetContext.setDP(dp);
+						if (!isHostMode())
+							targetContext.setDP(dp);
 						dataStack = origDataStack;
 						returnStack = origReturnStack;
 					} else {
 						hadSemantics = true;
 					}
 				}
+			} else if (targetContext != null) {
+				targetContext.buildCall(targetWord);
+				if (targetWord.getEntry().isTargetOnly())
+					hadSemantics = true;
 			}
-			else
-				targetContext.compile(targetWord);
 		}
 		if (hostWord != null) {
 			if (hostWord.getCompilationSemantics() != null) {
-				if (!hadSemantics)
+				if (!hadSemantics) {
 					hostWord.getCompilationSemantics().execute(this, targetContext);
-				else if (hostWord != targetWord || !targetWord.getEntry().isImmediate()) {
-					compile(hostWord);
+					
+					// feels hacky -- detect when ANS/compiler words are used in
+					// target definitions but never defined
+					if (targetWord == null
+							&& targetContext != null
+							&& !(hostWord instanceof BaseStdWord && ((BaseStdWord) hostWord).isImmediate())
+							&& hostWord.getName() != null
+							&& (getLatest() == null
+							|| !hostWord.getName().equals(getLatest().getName()))) {
+						targetContext.defineForward(hostWord.getName(), getStream().getLocation());
+					}
+					
+				} else if (hostWord != targetWord || !targetWord.getEntry().isImmediate()) {
+					build(hostWord);
 				}
 			}
 			else {
-				compile(hostWord);
+				build(hostWord);
 			}
 		}
 			
@@ -815,6 +780,147 @@ public class HostContext extends Context {
 		hostContext.hostPc = hostPc;
 		hostContext.hostDp = hostDp;
 		hostContext.fixupMap.putAll(fixupMap);
+	}
+
+	public boolean isHostMode() {
+		return hostMode;
+	}
+	public void setHostMode(boolean hostMode) {
+		this.hostMode = hostMode;
+	}
+
+	public IWord parseLiteral(String token) {
+		int radix = ((HostVariable) find("base")).getValue();
+		boolean isNeg = token.startsWith("-");
+		if (isNeg) {
+			token = token.substring(1);
+		}
+		if (token.startsWith("$")) {
+			radix = 16;
+			token = token.substring(1);
+		}
+		else if (token.startsWith("&")) {
+			radix = 10;
+			token = token.substring(1);
+		}
+		boolean isDouble = false;
+		if (token.contains(".")) {
+			isDouble = true;
+		}
+		token = token.replaceAll("\\.", "");
+		boolean isUnsigned = false;
+		if (token.toUpperCase().endsWith("U")) {
+			isUnsigned = true;
+			token = token.substring(0, token.length() - 1);
+		}
+		try {
+			long val = Long.parseLong(token, radix);
+			if (isNeg)
+				val = -val;
+			if (isDouble) {
+				return new HostDoubleLiteral((int)(val & 0xffffffff), (int)(val >> 32), isUnsigned);
+			}
+			else
+				return new HostLiteral((int) val, isUnsigned);
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Parse a word in <HOST ... HOST> mode.
+	 * @param token
+	 * @param tokenStream
+	 * @throws AbortException 
+	 */
+	public void parse(String token) throws AbortException {
+		IWord word = null;
+		
+		int state = readVar("state");
+		
+		if (state == 0) {
+			word = find(token);
+			if (word == null && targetContext != null) {
+				word = targetContext.find(token);
+			}
+			if (word == null) {
+				word = parseLiteral(token);
+			}
+			if (word == null) {
+				throw abort("unknown word or literal: " + token);
+			}
+			
+			if (word.getInterpretationSemantics() == null)
+				throw abort(word.getName() + " has no interpretation semantics");
+
+			word.getInterpretationSemantics().execute(this, null);
+		} else {
+			if (targetContext != null) {
+				word = targetContext.find(token);
+			}
+			if (word == null) {
+				word = find(token);
+			}
+			if (word == null) {
+				word = parseLiteral(token);
+			}
+			if (word == null) {
+				throw abort("no host word: " + token);
+				//word = defineForward(token, getStream().getLocation());
+			}
+		
+			ITargetWord targetWord = null;
+			IWord hostWord = null;
+			
+			if (word instanceof ITargetWord) {
+				targetWord = (ITargetWord) word;
+				hostWord = find(token);
+				if (hostWord == null) 
+					hostWord = targetWord;
+			} else {
+				hostWord = word;
+				targetWord = null;
+				if (!isHostMode() && !word.isCompilerWord()) {
+					throw abort("no host word: " + word);
+				}
+			}		
+			
+			compileWord(null, hostWord, targetWord);
+		}
+		
+	}
+
+	public IWord readHostCell(int addr) {
+		return hostWords.get(addr);
+	}
+	public void setHostCell(int addr, IWord val) {
+		hostWords.put(addr, val);
+		
+	}
+
+	/**
+	 * @param filename
+	 * @throws AbortException 
+	 */
+	public void include(String filename) throws AbortException {
+		try {
+			File dir = new File(getStream().getFile()).getParentFile();
+			File file = new File(dir, filename);
+			if (file.exists())
+				getStream().push(file);
+			else
+				getStream().push(new File(filename));
+		} catch (FileNotFoundException e) {
+			throw abort(e.getMessage());
+		}				
+		
+	}
+
+	/**
+	 * @return
+	 */
+	public PrintStream getLog() {
+		return System.out;
 	}
 
 }

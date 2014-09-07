@@ -14,6 +14,7 @@ import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.IWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -36,8 +37,7 @@ public class ParsedTick extends BaseStdWord {
 		if (!(word instanceof ITargetWord))
 			throw hostContext.abort("cannot take address of host word " + name);
 		
-		targetContext.compileTick((ITargetWord)word);
-		//targetContext.compileLiteral(((ITargetWord)word).getEntry().getContentAddr(), true);
+		targetContext.buildTick((ITargetWord)word);
 		
 	}
 	

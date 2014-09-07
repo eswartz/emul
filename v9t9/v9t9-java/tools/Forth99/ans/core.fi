@@ -1,0 +1,83 @@
+\   core.fi
+\ 
+\   (c) 2014 Ed Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+| #cell RamVar (numbuf)
+| #cell RamVar (spad)
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+\ 	Define deferrals for words that change among wordsets.
+\	The concept is, a DEFER'ed word is a vector to another word.
+\	A low-level file will define the word TO a given word.
+\	Another file can extend the word by referencing the target
+\	of the (presumed) lower-level word.  It should not, of course,
+\	reference the DEFER'ed word itself, which would be recursive.
+\	(Maybe we need a "super" or the like to let us access the current
+\	definition...?  Would be like "[ ' deferred >BODY @ compile,  ]" ...?) 
+
+\ Core
+DEFER	SOURCE
+DEFER	."			immediate  target-only
+
+\ Block / Terminal
+DEFER	EMIT	( c -- )
+DEFER	KEY		( -- k )
+DEFER	KEY?	( -- f )
+DEFER 	TYPE	( caddr len -- )
+
+DEFER	REFILL
+DEFER	ACCEPT
+\ DEFER	\			target-only
+
+\ Exception
+DEFER	ABORT
+DEFER	ABORT"		target-only
+
+DEFER	THROW	( k*x n -- k*x | i*x n )
+DEFER	CATCH	( i*x xt -- j*x 0 | i*x n )
+
+\ File
+\ DEFER	(			immediate  target-only
+\ DEFER	S"			immediate  target-only
+\ DEFER	SOURCE-ID
+\ DEFER	REFILL	 	(above)
+
+\ Float
+DEFER	(NUMBER)
+
+\ Locals
+DEFER	TO
+
+\ Search-Order
+\ DEFER	FIND
+DEFER	(FIND)		( c-addr lfa -- c-addr 0 | xt 1=immed | xt -1 ) 
+
+\ Internal: dictionary definitions
+DEFER	smudge		( -- )
+DEFER	name,		( "name" -- )
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+include core_prims.fi
+include core_strings.fi
+include core_output.fi
+include core_terminal.fi
+include core_input.fi
+include core_dict.fi
+include core_dualstate.fi
+include core_interp.fi
+include core_compile.fi
+include core_abort.fi
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+

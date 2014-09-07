@@ -52,9 +52,9 @@ public class SpeechVoice implements ISpeechSoundVoice {
 	
 	public void reset() {
 		lastSample = 0;
-		synchronized (samples) { 
+		//synchronized (samples) { 
 			samples.clear();
-		}
+		//}
 	}
 	
 	public boolean isActive() {

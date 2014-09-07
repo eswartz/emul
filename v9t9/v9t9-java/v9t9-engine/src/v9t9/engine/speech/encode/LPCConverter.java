@@ -20,12 +20,7 @@ import v9t9.engine.speech.RomTables;
  */
 public class LPCConverter {
 
-	private int hertz;
-	private int origHz;
-	
-	public LPCConverter(int origHz, int hertz) {
-		this.origHz = origHz;
-		this.hertz = hertz;
+	public LPCConverter() {
 		
 	}
 	public ILPCParameters apply(LPCAnalysisFrame results) {
@@ -33,7 +28,8 @@ public class LPCConverter {
 		
 		LPCParameters params = new LPCParameters();
 		if (voiced) {
-			int pVal = (int) Math.max(0x1000, Math.min(0xA000, ((float)results.invPitch*hertz/origHz*256)));
+			//int pVal = (int) Math.max(0x1000, Math.min(0xA000, ((float)results.invPitch*hertz/origHz*256)));
+			int pVal = (int) Math.max(0x1000, Math.min(0xA000, results.pitch*256));
 			params.pitchParam = lookup(RomTables.pitchtable, pVal);
 			params.pitch = RomTables.pitchtable[params.pitchParam];
 		} else {
@@ -42,7 +38,7 @@ public class LPCConverter {
 		}
 		
 		int eVal = (int) (Math.min(0x7fc0, (int) (results.power * results.powerScale * 0x7fbf)));
-		params.energyParam = Math.min(14, lookup(RomTables.energytable, eVal));
+		params.energyParam = lookup(RomTables.energytable, eVal);
 		params.energy = RomTables.energytable[params.energyParam];
 		
 		int max = Math.min(results.coefs.length, voiced ? 10 : 4);

@@ -15,6 +15,7 @@ import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.IWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -45,7 +46,7 @@ public class DotQuote extends BaseWord {
 
 				new SQuote().getCompilationSemantics().execute(hostContext, targetContext);
 				IWord hostType = hostContext.require("type");
-				ITargetWord type = (ITargetWord) targetContext.require("type");
+				ITargetWord type = targetContext.require("type");
 				hostContext.compileWord(targetContext, hostType, type);
 			}
 		});

@@ -1,0 +1,59 @@
+
+
+| : (ABORT")
+    rot if 
+        type cr
+        [ [IFDEF]  ~FAILURE~ ]
+         ~FAILURE~
+        [ [THEN] ] 
+        abort
+    else  
+        2drop  
+    then
+;
+
+
+: core-ABORT ( i*x -- ) ( R: j*x -- )
+\ Empty the data stack and perform the function of QUIT, which includes 
+\ emptying the return stack, without displaying a message.
+
+	[ [IFDEF] ~FAILURE~ ]
+	~FAILURE~
+	hang
+	[ [THEN] ]
+	
+	regs-init
+	
+	( dump keybuffer )
+	begin key? while key drop repeat  cr
+	
+	quit
+;
+
+' core-ABORT	TO ABORT
+
+
+: core-ABORT"
+\        Compilation: ( "ccc<quote>" -- )
+\
+\   Parse ccc delimited by a " (double-quote). Append the run-time semantics
+\   given below to the current definition.
+\
+\        Run-time: ( i*x x1 --  | i*x ) ( R: j*x --  | j*x )
+\
+\   Remove x1 from the stack. If any bit of x1 is not zero, display ccc and
+\   perform an implementation-defined abort sequence that includes the
+\   function of ABORT.
+
+
+    postpone s"
+    state @ if
+        postpone (abort")
+    else
+        (abort")
+    then
+; immediate  target-only
+
+' core-ABORT"	TO ABORT"
+
+

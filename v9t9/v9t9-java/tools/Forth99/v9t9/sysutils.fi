@@ -37,29 +37,33 @@
 
 
 :   gwaddr ( addr -- )
-    \ dup swpb GPLWA c! GPLWA c!
     GPLWA !
 ;
 
 :   graddr ( -- addr )
-    \ GPLRA c@ 8 lshift  GPLRA c@  or 1-
     GPLRA @ 1- 
 ;
 
+[IFUNDEF] g@
 :   g@  ( addr -- )
     gwaddr  GPLRD c@  GPLRD c@  swap l.h>w
 ;
+[THEN]
+[IFUNDEF] g!
 :   g!  ( ch addr -- )
     gwaddr  dup swpb GPLWD c!  GPLWD c!
 ;
-
+[THEN]
+[IFUNDEF] gc@
 :   gc@  ( addr -- )
     gwaddr  GPLRD c@
 ;
+[THEN]
+[IFUNDEF] gc!
 :   gc!  ( ch addr -- )
     gwaddr  GPLWD c!
 ;
-
+[THEN]
 :   vc@  ( addr -- )
     vwaddr  VDPRD c@
 ;
@@ -91,34 +95,47 @@
 ;
 
 ( VDP to CPU move )
-::   vcmove ( vaddr addr len -- )
-    vaddr  +vwaddr
-    VDPRD addr len  0 1 (cmove)
+\ ::   vcmove ( vaddr addr len -- )
+\    vaddr  +vwaddr
+\    VDPRD addr len  0 1 (cmove)
+\ ;
+:   vcmove ( vaddr addr len -- )
+    rot  +vwaddr
+    VDPRD rot rot  0 1 (cmove)
 ;
+
 ( CPU to VDP move )
-::   cvmove ( addr vaddr len -- )
-    vaddr  +!vwaddr
-    addr VDPWD len  1 0 (cmove)
+\ ::   cvmove ( addr vaddr len -- )
+\    vaddr  +!vwaddr
+\    addr VDPWD len  1 0 (cmove)
+\ ;
+:   cvmove ( addr vaddr len -- )
+    swap +!vwaddr
+    VDPWD swap   1 0 (cmove)
 ;
 
 ( GPL to CPU move )
-::   gcmove ( gaddr addr len -- )
-    gaddr  gwaddr
-    GPLRD addr len  0 1 (cmove)
+\ ::   gcmove ( gaddr addr len -- )
+\    gaddr  gwaddr
+\    GPLRD addr len  0 1 (cmove)
+\ ;
+:   gcmove ( gaddr addr len -- )
+    rot gwaddr
+    GPLRD rot rot  0 1 (cmove)
 ;
+
 ( CPU to GPL move )
-::   cgmove ( addr gaddr len -- )
-    gaddr  gwaddr
-    addr GPLWD len  1 0 (cmove)
+\ ::   cgmove ( addr gaddr len -- )
+\    gaddr  gwaddr
+\    addr GPLWD len  1 0 (cmove)
+\ ;
+:   cgmove ( addr gaddr len -- )
+    swap  gwaddr
+    GPLWD swap   1 0 (cmove)
 ;
 
-\ Compare  (src -> dst)
-: cmp?         ( src dst # -- offs cmp )
-    1 1 [ Iccompare c, ]
-;   target-only
-
-
-:   >bit ( mask -- lowest bit# )
+[IFUNDEF] >bit
+:   >bit ( mask -- lowest bit# | -1 )
     16 0 do
         dup  1 and  if
             drop i unloop exit
@@ -128,6 +145,7 @@
     
     drop true
 ;
+[THEN]
 
 \ type null-terminated string
 : (gtypez) ( gaddr -- gaddr )
@@ -151,6 +169,7 @@
 ;
 
 \ copy VDP to VDP, using an auxiliary buffer
+has? LOCALS [IF]
 :: vvmove ( vsrc vdst cnt buf n -- )
     0 :> use
     cnt 0 ?do
@@ -166,10 +185,55 @@
         use 
         cvmove
                 
-    use u+loop    
+    use +loop    
 ;
+[THEN]
 
+[IFUNDEF] bitset
 : bitset ( on? mask val -- val )
      rot ( mask val on? )  if  OR  else  swap NAND  then   
 ;
+[THEN]
+ 
+[IFUNDEF] |!
+\   Custom:  set a flag in a word
+: |!        ( mask addr -- )
+    swap over @ OR swap !     
+;
+[THEN]
+
+[IFUNDEF] %-
+( align 'val' to 'scale' )
+: %- ( val scale -- val' )
+	dup >r  ( r: scale )
+    u/mod  nip 
+    r>  u*    
+;
+[THEN]
+
+[IFUNDEF] w>l.h
+: w>l.h ( w -- lo hi )
+    dup  $ff and  swap  8 urshift  
+;
+[THEN]
+
+[IFUNDEF] l.h>w
+: l.h>w ( lo hi -- w )
+    8  LSHIFT  OR  
+;
+[THEN]
+
+[IFUNDEF] umax
+: umax   ( u1 u2 -- u )
+    2dup U> if drop else nip then
+;
+[THEN]
+[IFUNDEF] umin
+: umin   ( u1 u2 -- u )
+    2dup U< if drop else nip then
+;
+[THEN]
+
+ 
+
  

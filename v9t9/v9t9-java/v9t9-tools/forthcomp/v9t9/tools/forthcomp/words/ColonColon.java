@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp.words;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  *  :: word ( local1 local2 ... -- ignored ... ) 
@@ -26,9 +27,6 @@ public class ColonColon extends BaseStdWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		
-		
-		targetContext.ensureLocalSupport(hostContext);
 		
 		new Colon().execute(hostContext, targetContext);
 

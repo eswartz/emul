@@ -184,6 +184,13 @@
     Ilocal c,  c,
 ;
 
+\ Compare  (src -> dst)
+: cmp?         ( src dst # -- offs cmp )
+    1 1 [ Iccompare c, ]
+;   target-only
+
+
+
 export>
 
 

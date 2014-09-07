@@ -378,6 +378,11 @@ public class VdpSpriteCanvas implements ISpriteCanvas {
 		
 		int x = sprite.getX();
 		int y = sprite.getY();
+		
+		int endY = y + charshifts[2*(numSpriteChars-1)]; 
+		if (endY < canvas.getMinY() || (y >= canvas.getMaxY() && endY % canvas.getHeight() > y))
+			return;
+		
 		int shift = sprite.getShift();
 		byte color = sprite.getColor();
 		ByteMemoryAccess tmpPattern = new ByteMemoryAccess(sprite.getPattern());

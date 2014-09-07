@@ -1,0 +1,33 @@
+
+[IFUNDEF] :NONAME
+\ : :NONAME
+\ ;
+[THEN]
+
+
+
+[IFUNDEF] C"
+\ : C"
+\ ;
+[THEN]
+
+[IFUNDEF] MARKER
+\ : MARKER
+\ ;
+[THEN]
+
+[IFUNDEF] TO
+\ : TO
+\ ;
+[THEN]
+
+[IFUNDEF] UNUSED
+: UNUSED
+	RAM @  HERE  - 
+;
+[THEN]
+
+[IFUNDEF] VALUE
+\ : VALUE
+\ ;
+[THEN]

@@ -1,0 +1,19 @@
+
+[IFUNDEF] BLK
+User BLK
+[THEN]
+
+[IFUNDEF] C/L
+&64 constant C/L
+[THEN]
+
+
+| : block-SOURCE    ( -- caddr u )
+    blk @ ?dup if
+        block  chars/block
+    else
+    	core-SOURCE
+    then
+;
+
+' block-SOURCE  TO	SOURCE

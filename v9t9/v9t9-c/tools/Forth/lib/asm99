@@ -40,6 +40,9 @@ $ff	constant (J		\ jump (8 bits)
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+[ifundef] /CELLS
+: /CELLS 1 cells / ; 
+
 \	Instruction words.  These take pre-baked operand
 \	data and do some validation then shift the contents
 \	into an opcode.
@@ -378,7 +381,7 @@ create #labs	10 2* cells dup allot	#labs swap $0 fill
 \ \\\\\\\\\
 
 \ 	Set up some macros
-s" dsk1.99equs" included
-s" dsk1.99code" included
+s" 99equs" included
+s" 99code" included
 
 base !

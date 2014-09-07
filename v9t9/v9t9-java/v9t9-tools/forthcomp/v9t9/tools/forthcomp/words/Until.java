@@ -12,6 +12,7 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -27,7 +28,11 @@ public class Until extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		hostContext.assertCompiling();
 		hostContext.assertPairs(1);
+		
+		// TODO: why +1?
+		hostContext.build(new Host0Branch(hostContext.getFixupTarget(hostContext.peekData())+1));
 		targetContext.compileBack(hostContext, true);
+		
 	}
 	
 	/* (non-Javadoc)

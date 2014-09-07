@@ -1,0 +1,145 @@
+\   core_dict.fi
+\ 
+\   (c) 2014 Ed Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+[IFUNDEF] HERE
+
+\ | #cell    RamVar	DP
+
+\ addr is the data-space pointer.
+: HERE ( -- addr ) 
+	dp @ 
+;
+[THEN]
+
+\   These cover memory spaces, threading and compiler issues
+\   related to structure of the dictionary.
+\
+
+User >latest        \ latest definition
+
+\   Return latest definition's nfa
+: latest
+    >latest @
+;
+
+
+: lastnfa  ( -- addr )
+    latest  lfa>nfa
+;
+
+
+: lastxt    ( -- xt )
+    lastnfa nfa>xt
+;
+
+| $1F constant &nmask
+| $40 constant |immed
+| $80 constant |srch
+
+
+
+\   \\\\\\\\\\\\\\\\\
+
+\	Dictionary headers may either be interleaved with code
+\	or placed in GROM/GRAM.
+
+has? GROM-DICT [IF]
+include core_dict_grom.fi
+[ELSE]
+include core_dict_ram.fi
+[THEN]
+
+\   \\\\\\\\\\\\\\\\\
+
+[IFUNDEF] '
+: ' 
+\   Skip leading space delimiters. Parse name delimited by a space. Find name and return xt, the execution token for name. An
+\   ambiguous condition exists if name is not found.
+\
+\   Similarly, the use of ' and ['] with compiling words is unclear if the precise compilation behavior of those words is not
+\   specified, so ANS Forth does not permit a Standard Program to use ' or ['] with compiling words.
+    parse-def-name
+    0= if  count type  err-undefined message abort  then      \ !!!
+;
+[THEN]
+
+[IFUNDEF] ,
+: ,
+\   Reserve one cell of data space and store x in the cell. If the data-space pointer is aligned when , begins execution, it
+\   will remain aligned when , finishes execution. An ambiguous condition exists if the data-space pointer is not aligned
+\   prior to execution of ,.
+    here ! #cell dp +!  
+;
+[THEN]
+
+[IFUNDEF] >BODY
+: >BODY
+\        ( xt -- a-addr )
+\   a-addr is the data-field address corresponding to xt. An ambiguous condition exists if xt is not for a word defined via
+\   CREATE.
+    2 cells +
+;
+[THEN]
+
+[IFUNDEF] ALIGN
+: ALIGN
+    here aligned dp !
+;
+[THEN]
+
+[IFUNDEF] ALLOT
+: ALLOT
+    here + dp !
+;
+[THEN]
+
+[IFUNDEF] C,
+: C,
+    here c!  #char  dp +!
+;
+[THEN]
+
+| : (lookup)      ( c-addr u -- caddr 0 | xt 1|-1 )
+    here (>c)   \ make counted string + NFA
+\ context @ @ (find) dup 0= if ... 
+
+    here latest
+    (find) 
+;
+
+\ |test : wordtofind s" _2*" ;
+\ test" find hex 21 wordtofind pad swap cmove pad 2 over c! find 2dup . . if execute 42 = else 0 then decimal "
+
+
+| : parse-def-name ( c"..."  -- caddr 0 | xt 1|-1 ) \ "word
+    parse-name
+    (lookup)
+;
+
+[IFUNDEF] FIND
+: FIND  \ ( c-addr -- c-addr 0  |  xt 1  |  xt -1 )
+\   Find the definition named in the counted string at c-addr. If the definition is not found after searching all the word
+\   lists in the search order, return c-addr and zero. If the definition is found, return xt. If the definition is immediate,
+\   also return one (1); otherwise also return minus-one (-1). For a given string, the values returned by FIND while compiling
+\   may differ from those returned while not compiling.
+
+
+[ has? LOCALS [IF] ]  
+    \ search locals
+    'lfind @ ?dup if
+        execute
+        ?dup if rdrop exit then
+    then
+[ [THEN] ]
+
+    latest          \ !!! need real wordlist
+    (find)          \ ( c-addr 0 | xt 1 )
+;
+[THEN]

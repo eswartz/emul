@@ -16,6 +16,7 @@ public class RelocEntry {
 	public enum RelocType {
 		RELOC_ABS_ADDR_16,
 		RELOC_CALL_15S1, 
+		RELOC_CONSTANT,
 		RELOC_FORWARD,
 	}
 	public RelocEntry(int addr, RelocType type, int target) {

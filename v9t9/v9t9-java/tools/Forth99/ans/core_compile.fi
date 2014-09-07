@@ -1,0 +1,560 @@
+\   core_compile.fi
+\ 
+\   (c) 2010-2014 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+\   Words required by cross-compiler, not in standard.
+
+[IFUNDEF] noop
+: noop ;
+[THEN]
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\
+
+: ?comp
+    state @ 0= err-compile-only ?throw
+;
+
+| : name"  ( c"word" -- cstr ) 
+    \ Get name
+    parse-def-name
+    
+    ( either name is defined already, 1/-1, or not yet ) 
+    if  
+    	msg-redefining message  
+		drop    	  
+    	here		( TODO: assumption that parsed name is at 'here' )
+    then 
+;
+
+
+\ Optionally pre-parse the string in the input stream and manipulate the dictionary
+\ before the definition is started.
+\ DeferROM (creat)  ( c"xxx" -- c"xxx" )
+
+: CREATE
+\    (creat)     
+
+    align
+    
+    name,
+    
+    \ lay down XT
+    here  xt,
+    
+    lastnfa id.
+    
+    smudge
+
+    \ lay down CFA
+    dovar,
+; target-only
+
+\ \\\\\\\\\\\\\\\\\\\\\\
+
+[IFUNDEF] [COMPILE]
+: [COMPILE]
+    bl word find
+    if
+        postpone literal compile,
+    else
+        huh?
+    then
+
+; immediate target-only
+[THEN]
+
+[IFUNDEF] POSTPONE
+: POSTPONE
+    bl word find
+    if
+        compile,
+    else
+        huh?
+    then        
+; immediate target-only
+[THEN]
+
+[IFUNDEF] [']
+: [']
+    '  postpone LITERAL
+; immediate
+[THEN]
+
+
+User csp
+
+| User leave-list       \ pointer to linked list of leaves, 
+                    \ @ branch pos of last leave
+
+
+: !csp
+    sp@ csp !
+    0 leave-list !
+; target-only
+
+: ?csp
+    sp@ csp @ - err-control-nesting ?throw
+; target-only
+
+\ Optionally add behavior at a colon definition
+\ User #(:)  ( -- )
+
+\ Optionally finish a definition at a semicolon
+\ User #(;) ( -- )
+
+\ | : exec-hook
+\    @ ?dup if execute then
+\ ;
+
+: :
+    \ ?exec
+    !csp
+    create smudge ]
+    lastxt dp !  docol,
+    
+[ has? LOCALS [IF] ]    
+    reset-locals
+[ [THEN] ]    
+   \ #(:) exec-hook
+; target-only
+
+: ;
+   \ #(;) exec-hook
+[ has? LOCALS [IF] ]    
+    finish-locals
+[ [THEN] ]
+    ?csp
+    [compile] ;s
+    smudge postpone [
+; immediate target-only  
+
+: ?pairs    ( i*x tag tag' -- )
+    - err-control-nesting ?throw
+;
+
+[IFUNDEF] BACK
+: BACK  ( addr opc -- )
+    >r here - 
+    r> jmpoffsalloc,
+; target-only
+[THEN]
+
+[IFUNDEF] IF
+: IF
+    ?comp
+    [compile] 0branch
+    >fixup
+     
+    2
+; immediate target-only
+
+: SKIP
+    ?comp
+    [compile] branch
+    >fixup
+     
+    2
+; immediate target-only
+[THEN]
+
+
+
+[IFUNDEF] THEN
+: THEN
+    ?comp 
+    2 ?pairs
+    here over - jmpoffs,
+; immediate target-only
+[THEN]
+
+[IFUNDEF] ELSE
+: ELSE
+    ?comp
+    2 ?pairs
+    [compile] branch
+    >fixup
+    swap 2
+    postpone then 2
+; immediate target-only
+[THEN]
+
+
+| : (leave)
+    [compile] branch  
+    >fixup
+    leave-list @ ,      \ store last fixup addr
+    leave-list !        \ store new addr
+; target-only
+
+[IFUNDEF] DO
+: DO
+    ?comp
+    POSTPONE 2>R
+    here 
+    0  \ not ?do 
+    3
+; immediate target-only
+
+: ?DO
+    ?comp
+    [compile] (?do)
+    
+    >fixup
+    
+    here -1    \ ?do
+    3
+; immediate target-only
+
+[THEN]
+
+[IFUNDEF] LOOP
+| : leave-resolve
+\   handle LEAVE references 
+
+    leave-list @
+    begin       
+        dup         \ ( pos pos )
+    while
+        dup @ swap          \ ( new-pos pos )
+        here over -         \ ( new-pos pos jmp )
+        jmpoffs,
+    repeat
+    leave-list !
+; target-only
+
+| : loop-compile ( offs opc -- )
+\   normal loop part
+
+    swap 3 ?pairs 
+    
+    swap >r  \ ?do
+    
+    \ loop op
+\    compile,
+\    
+\    \ branch follows
+\    ['] 0branch  back
+
+	back
+    
+    \ for ?do, provide jump for exit
+    r> if  here over - jmpoffs, then
+
+    leave-resolve
+    [compile] unloop
+; target-only
+
+: LOOP
+    ?comp
+    ['] (loop) loop-compile
+; immediate target-only
+
+: +LOOP
+    ?comp
+    ['] (+loop) loop-compile
+; immediate target-only
+
+[IFDEF] (uloop)
+: ULOOP
+    ?comp
+    ['] (uloop) loop-compile
+; immediate target-only
+
+: U+LOOP
+    ?comp
+    ['] (u+loop) loop-compile
+; immediate target-only
+[THEN]
+
+[THEN]
+
+[IFUNDEF] UNLOOP
+: UNLOOP
+    r> rdrop rdrop >r
+; target-only
+[THEN]
+test" unloop 3 >r 2 1 do loop r> 3 ="
+
+
+[IFUNDEF] LEAVE
+: LEAVE
+    ?comp
+
+    [compile] branch
+
+    (leave)
+; immediate target-only
+[THEN]
+
+[IFUNDEF] BEGIN
+: BEGIN
+    ?comp
+    here 1
+; immediate target-only
+[THEN]
+
+[IFUNDEF] UNTIL
+: UNTIL
+    ?comp
+    1 ?pairs
+    ['] 0branch back
+; immediate target-only
+[THEN]
+
+[IFUNDEF] AGAIN
+: AGAIN
+    ?comp
+    1 ?pairs
+    ['] branch back
+; immediate target-only
+[THEN]
+
+[IFUNDEF] WHILE
+: WHILE
+    postpone if
+    2+
+; immediate target-only
+[THEN]
+
+[IFUNDEF] REPEAT
+: REPEAT
+    ?comp
+    >r >r postpone again
+    r> r> 2- 
+    postpone then
+; immediate target-only
+[THEN]
+
+0 [if]
+    [IFUNDEF] CASE
+    : CASE
+        ?comp
+        csp @       \ save old params
+        !csp 
+        4
+    ; immediate target-only
+    [THEN]
+[then]
+    
+0 [if]
+    [IFUNDEF] OF
+    : OF
+        ?comp
+        4 ?pairs
+        [compile] (of)
+        >fixup 
+        5
+    ; immediate target-only
+    [THEN]
+[then]
+    
+0 [if]
+    [IFUNDEF] ENDOF
+    : ENDOF
+        ?comp
+        5 ?pairs
+        [compile] branch
+        >fixup
+        swap 2 postpone then
+        4
+    ; immediate target-only
+    [THEN]
+[then]
+    
+0 [if]
+    [IFUNDEF] ENDCASE
+    : ENDCASE
+        ?comp
+        4 ?pairs
+        [compile] drop
+        begin
+            sp@ csp @ = 0= 
+        while
+            2 postpone then
+        repeat
+        csp !
+    ; immediate target-only
+    [THEN]
+[then]
+
+[IFUNDEF] RECURSE
+: RECURSE
+    lastxt compile,
+; immediate target-only
+[THEN]
+
+[IFUNDEF] EXIT
+: EXIT
+    ?comp
+[ has? LOCALS [IF] ]    
+    exit-locals
+[ [THEN] ]     
+    [compile] ;s
+; immediate target-only
+[THEN]
+
+[IFUNDEF] DEFER
+: DEFER
+    create 
+    lastxt dp !  dodefer,
+; target-only
+[THEN]
+
+[IFUNDEF] IS
+: IS ( xt "deferred" -- )
+    is-check  is,
+; target-only
+: IS? ( "deferred" -- xt )
+    is-check  is?,
+; target-only
+[THEN]
+
+[IFUNDEF] CONSTANT
+: CONSTANT
+    create 
+    lastxt dp !
+    docon,
+; target-only
+[THEN]
+
+[IFUNDEF] VARIABLE
+: VARIABLE
+    create  0 , 
+; target-only
+[THEN]
+
+[IFUNDEF] VALUE
+: VALUE
+    create
+    lastxt dp !
+    dovalue, 
+; target-only
+[THEN]
+
+
+[IFUNDEF] TO
+: TO ( val "name" -- )
+    '
+    dup is-local if
+        to-local    
+    else
+        do>to,
+        state @ if
+            postpone literal  postpone !
+        else
+            !
+        then
+    then
+; immediate target-only
+[THEN]
+
+[IFUNDEF] UDP
+#cell RamVar UDP   target-only    
+[THEN]
+
+[IFUNDEF] USER
+: USER
+    create
+    UDP @  
+    dup  (#up) >=  err-dict-overflow ?throw
+    #cell UDP +!
+    lastxt dp !  douser,
+; target-only
+[THEN]
+
+[IFUNDEF] :NONAME
+: :NONAME
+    here
+
+    ]
+   
+    \ CFA
+    docol,
+
+    !csp
+; target-only
+[THEN]
+
+
+\ \\\\\\\
+
+\ variable envlast
+
+: env:  ( "name" value -- )
+    create , \ envlast @ ,      \ value, link to previous
+    \ latest envlast !
+    does> @
+;
+
+: has?
+    parse-def-name
+    if 
+        nfa>xt execute
+    else
+        nip 0
+    then    
+; target-only
+
+\ 0 ( has? standard-threading )     constant standard-threading 
+\ 1 ( has? inlining-next )  constant inlining-next
+\ has? profiling            constant profiling
+
+
+|test : eval2 s" : foo 1 2 + ; foo " ;
+test" evaluate-: eval2  evaluate  3 = "
+
+\ redefine message
+|test : eval3 s" : foo foo ; foo " ;
+test" evaluate-redef eval3  evaluate  3 = "
+
+|test : eval4 s" : num 12345 ; num " ;
+test" evaluate-lit eval4  evaluate 12345 = "
+
+|test : eval5 s" : bar foo 3 - ; bar " ;
+test" evaluate2 eval5  evaluate  0= "
+			
+|test : eval6 s" Variable var  12345 var !  var @ 12345 - " ;
+test" evaluate-var eval6  evaluate  0= "
+
+|test : eval6b s" : varr var @ - ; 12345 varr " ;
+test" evaluate-varb eval6b  evaluate  0= "
+
+|test : eval7 s" 9999 Constant cn  9998 cn - " ;
+test" evaluate-var eval7  evaluate  -1 = "
+
+|test : eval7b s" -2 Constant cn  cn -2 = " ;
+test" evaluate-var  eval7b  evaluate   "
+
+|test : eval8 s" : loo 0  4 1 do  i  + loop ; loo  " ;
+test" evaluate-loop  eval8  evaluate  6 = "
+
+|test : eval8b s" : 2loo  0  4 1 do  5 2 do  i j * + loop loop ; 2loo  " ;
+test" evaluate-2loop  eval8b evaluate  $36 = "
+
+|test : eval9 s" : ife if 1+ else 2- then ;  0  0 ife ( 1)  dup ife ( -1)  " ;
+test" evaluate-ifelse  eval9 evaluate   "
+
+|test : eval10 s" : bwr 0 begin dup 10 < while 3 + repeat ; bwr  " ;
+test" evaluate-begin-while-repeat  eval10 evaluate  12 =  "
+
+|test : eval10b s" : bwr 0 begin  dup 10 <  while  dup   1 and if 3 else 2 then  +  repeat ; bwr  " ;
+test" evaluate-begin-while-repeat2  eval10b evaluate  10 =  "
+
+\ get the previous (eval10b) version
+|test : evaltick s" : et  ['] bwr execute ; et  " ;
+test" evaluate-tick evaltick  evaluate   10  =  "
+
+|test : evaluser s" User Flar  User Bar   1 Flar !  2 Bar !   Flar @ Bar @ -  " ;
+test" evaluate-user evaluser  evaluate  -1 = "
+
+
+\ Make sure none of the above stomped on the dictionary
+|test : evalX s" ' var drop " ;
+test" evaluate-validateDictionary evalX evaluate  true "
+

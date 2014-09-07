@@ -12,7 +12,7 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
-import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -29,10 +29,7 @@ public class Else extends BaseStdWord {
 		hostContext.assertCompiling();
 		hostContext.assertPairs(2);
 		
-		ITargetWord word = (ITargetWord) targetContext.require("branch");
-		word.getCompilationSemantics().execute(hostContext, targetContext);
-		
-		hostContext.compile(hostContext.require("branch"));
+		hostContext.compileWord(targetContext, hostContext.require("BRANCH"), targetContext.require("BRANCH"));
 		
 		targetContext.pushFixup(hostContext);
 		targetContext.swapFixup(hostContext);

@@ -42,7 +42,10 @@ public class CycleCounter {
 	private IMachine machine;
 	private int startAddr;
 
-	public CycleCounter(IMachine machine) {
+	public CycleCounter() {
+	}
+	
+	public void setMachine(IMachine machine) {
 		this.machine = machine;
 		executor = machine.getExecutor();
 		state = machine.getCpu().getState();

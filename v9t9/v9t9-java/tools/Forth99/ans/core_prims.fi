@@ -1,0 +1,497 @@
+\   core_prims.fi
+\ 
+\   (c) 2014 Ed Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+
+\   stack words
+
+[IFUNDEF] 2DROP
+: 2DROP     \ core
+    drop drop 
+;
+[THEN]
+test" d= $2D. $1000.002D d= 0="
+test" d= 2938484. 2dup d="
+
+test" 2drop  2. 3. 2drop 2. d="
+
+[IFUNDEF] 2DUP
+: 2DUP      \ core
+    over over
+;
+[THEN]
+test" 2dup  $1234.5678 2dup  $1234.5678 d=  >r  2drop  r> "
+
+[IFUNDEF] 2OVER
+: 2OVER ( l1 h1 l0 h0 -- l1 h1 l0 h0 l1 h1 )
+    3 pick 3 pick		
+;
+[THEN]
+test" 2over  $1234.5678 $9abc.def0 2over $1234.5678 d=  >r 2drop 2drop r> "
+
+[IFUNDEF] 2SWAP
+: 2SWAP  ( a b c d -- c d a b )
+    rot >r rot r>
+;
+[THEN]
+test" 2swap  $1234.5678 $9abc.def0 2swap $1234.5678 d= >r $9abc.def0 d= r> and "
+
+
+[IFUNDEF] >R
+\ : >R
+\ ;
+[THEN]
+
+[IFUNDEF] ?DUP
+: ?DUP
+    dup if dup then
+;
+[THEN]
+
+[IFUNDEF] /CELLS
+| : /CELLS [ cell<< ] literal rshift ;
+[THEN]
+
+| : (d) - negate /cells ;
+[IFUNDEF] DEPTH
+: DEPTH
+    sp@ sp0 (d)
+;
+[THEN]
+
+[IFUNDEF] RDEPTH
+: RDEPTH
+    rp@ rp0 (d)
+;
+[THEN]
+
+[IFUNDEF] DROP
+: DROP
+    >r rdrop
+;
+[THEN]
+
+[IFUNDEF] DUP
+: DUP
+    >r r@ r>
+;
+[THEN]
+
+[IFUNDEF] OVER
+: OVER
+    2>r r@ 2r> swap
+;
+[THEN]
+test" over  1 2 over 1 = swap 2 = and swap 1 = and"
+
+[IFUNDEF] TUCK
+: TUCK swap over ;
+[THEN]
+
+[IFUNDEF] R>
+\ : R>
+\ ;
+error" need prim r>"
+[THEN]
+
+[IFUNDEF] R@
+: R@
+    r> dup >r
+;
+[THEN]
+
+test" R@ 
+		$1111 $2222 >r >r
+		rdrop r@  $2222 = 
+		 rdrop " 	
+
+test" 2R@ 
+		$1111 $2222 >r >r
+		2r@
+		$1111 = 
+		swap $2222 = 
+		and  
+		rdrop rdrop " 	
+
+
+[IFUNDEF] SWAP
+\ : SWAP
+\ ;
+error" need prim swap"
+[THEN]
+
+\   memory words
+
+
+[IFUNDEF] ! 
+\ : ! 
+\ ;
+error" need prim !"
+[THEN]
+
+[IFUNDEF] +!
+: +!
+    dup @ over + swap !
+;
+[THEN]
+test" +! base @ 2 base +! base @  $a base !  $c = swap $a = and"
+
+
+[IFUNDEF] 2!
+\ Store the cell pair x1 x2 at a-addr, with x2 at a-addr and x1 at the next consecutive cell.
+: 2!  ( x1 x2 a-addr -- )
+	SWAP OVER ! CELL+ !
+;
+[THEN]
+test" 2!  $1234.5678 $a000 2!  $a000 @ $1234 =  $a002 @ $5678 =  and"
+
+[IFUNDEF] 2@
+\ Fetch the cell pair x1 x2 stored at a-addr. x2 is stored at a-addr and x1 at the next consecutive cell.
+: 2@	( a-addr -- x1 x2 )
+    dup cell+ @ swap @
+;
+[THEN]
+test" 2@  $eeee $a000 !  $ffff $a002 !  $a000 2@  $eeee.ffff d="
+
+[IFUNDEF] @
+\ : @
+\ ;
+error" need prim @"
+[THEN]
+
+[IFUNDEF] ALIGNED
+: ALIGNED   ( addr -- addr )
+    [ #cell 1- literal ] + [ #cell negate literal ] and
+;
+[THEN]
+
+
+[IFUNDEF] C!
+\ : C!
+\ ;
+error" need prim c!"
+[THEN]
+
+[IFUNDEF] C@
+\ : C@
+\ ;
+error" need prim c@"
+[THEN]
+
+[IFUNDEF] CHAR+
+: CHAR+ 
+    #char + 
+;
+[THEN]
+
+[IFUNDEF] CHARS
+: CHARS 
+    #char * 
+;
+[THEN]
+
+[IFUNDEF] CELL+
+: CELL+
+    #cell +
+;
+[THEN]
+
+[IFUNDEF] CELLS
+: CELLS
+    #cell *
+;
+[THEN]
+
+[IFUNDEF] FILL
+: FILL
+    rot rot 
+    over + swap
+    ?do dup I c! loop drop
+;
+[THEN]
+
+
+[IFUNDEF] MOVE
+\ note: chars == address units
+: MOVE
+    >r 2dup u< if r> cmove> else r> cmove then
+;
+[THEN]
+
+
+\   math words
+
+[IFUNDEF] *
+: *
+    um* d>s
+;
+[THEN]
+
+[IFUNDEF] */
+: */
+    */mod swap drop
+;
+[THEN]
+test" */  &2048  &60 &1000 */  &122 = "
+
+[IFUNDEF] */MOD 
+: */MOD ( n1 n2 n3 -- n4-r n5-q ) \ core    star-slash-mod
+    >r m* r> sm/rem 
+;
+[THEN]
+
+[IFUNDEF] +
+\ : +
+\ ;
+error" need prim +"
+[THEN]
+
+[IFUNDEF] -
+: -
+    negate +
+;
+[THEN]
+
+[IFUNDEF] /
+: /
+    /mod swap drop
+;
+[THEN]
+
+[IFUNDEF] /MOD ( n1 n2 -- r q )
+: /MOD
+    >r s>d r> sm/rem
+;
+[THEN]
+
+[IFUNDEF] 0<
+\ : 0<
+\ ;
+[THEN]
+
+[IFUNDEF] 0=
+: 0=
+    if 0 else -1 then
+;
+[THEN]
+
+[IFUNDEF] 1+
+: 1+
+    1 +
+;
+[THEN]
+
+[IFUNDEF] 1-
+: 1-
+    1 -
+;
+[THEN]
+
+[IFUNDEF] 2*
+: 2*
+    dup +
+;
+[THEN]
+
+[IFUNDEF] 2/
+: 2/
+    1 rshift
+;
+[THEN]
+
+[IFUNDEF] <
+: <
+    - 0<
+;
+[THEN]
+
+[IFUNDEF] =
+: =
+    - 0=
+;
+[THEN]
+
+[IFUNDEF] >
+: >
+    - 0>
+;
+[THEN]
+
+[IFUNDEF] <=
+: <=
+    -  dup
+    0=  swap 0<  OR 
+;
+[THEN]
+
+[IFUNDEF] >=
+: >=
+    -  dup
+    0=  swap 0>  OR 
+;
+[THEN]
+
+[IFUNDEF] ABS
+: ABS
+    dup 0< if negate then
+;
+[THEN]
+
+[IFUNDEF] AND
+\ : AND
+\ ;
+[THEN]
+test" and $5555 $fa AND $50 = "
+test" nand $5555 $f NAND $5550 = "
+
+
+[IFUNDEF] FM/MOD
+: FM/MOD        \ d1 n1 -- n2-r n3-q          core            f_m_slash_mod
+\   floored division: d1 = n3*n1+n2, 0<=n2<n1 or n1<n2<=0
+
+    dup >r dup 0< IF  negate >r dnegate r>  THEN
+    over       0< IF  tuck + swap  THEN
+    um/mod
+    r> 0< IF  swap negate swap  THEN
+;
+[THEN]
+test" fm/mod $1ff. $f fm/mod $22 = swap 1 = and"
+test" fm/mod $-1ff. $f fm/mod $-23 = swap $e = and"
+
+[IFUNDEF] INVERT
+: INVERT
+    negate 1-
+;
+[THEN]
+
+[IFUNDEF] LSHIFT
+: LSHIFT
+    0 ?do dup + loop
+;
+[THEN]
+
+\ [IFUNDEF] M*
+: M*
+    2dup xor >r 
+    abs swap abs 
+    um* 
+    r> 0< if dnegate then
+;
+\ [THEN]
+test" m* 3 -4 m* -$c. d="
+test" m* -4 -3 m* $c. d="
+
+[IFUNDEF] MAX
+: MAX
+    2dup > if drop else nip then
+;
+[THEN]
+test" max -5 6 max 6 ="
+
+[IFUNDEF] MIN
+: MIN
+    2dup < if drop else nip then
+;
+[THEN]
+test" min 6 -5 min -5 ="
+
+[IFUNDEF] MOD
+: MOD
+    /mod drop
+;
+[THEN]
+
+[IFUNDEF] NEGATE
+: NEGATE
+    invert 1+
+;
+[THEN]
+
+[IFUNDEF] OR
+\ : OR
+\ ;
+[THEN]
+
+[IFUNDEF] ROT
+: ROT   \ a b c -- b c a
+    >r swap r> swap
+;
+[THEN]
+test" rot 1 2 3 rot 1 = swap 3 = and swap 2 =  and "
+
+[IFUNDEF] RSHIFT
+: RSHIFT
+    0 ?do 2/ loop
+;
+[THEN]
+
+[IFUNDEF] S>D
+\ both endians will have the high word on top
+: S>D
+    dup 0< if -1 else 0 then
+;
+[THEN]
+test" s>d 45 s>d 0= swap 45 = and"
+
+
+[IFUNDEF] SM/REM
+: SM/REM    ( d1 n1 -- n2-r n3-q )
+\ symmetric division: d1 = n3*n1+n2, sign(n2)=sign(d1) or 0
+    over >r 
+    dup >r abs 
+    rot rot
+    dabs rot um/mod
+    r> r@ xor 0< IF       negate       THEN
+    r>        0< IF  swap negate swap  THEN
+;
+[THEN]
+test" sm/rem -$1ff. $f sm/rem -$22 = swap -$1 = and"
+
+[IFUNDEF] U<
+\ : U<
+\ ;
+error" need prim u<"
+[THEN]
+test" u< 1 2 u<"
+test" u< 2 1 u< 0="
+test" u< -1 2 u< 0="
+test" u< 2 -1 u<"
+
+[IFUNDEF] XOR
+\ : XOR
+\ ;
+error" need prim xor"
+[THEN]
+test" xor $5555 $aaab xor $fffe = "
+
+[IFUNDEF] EXECUTE
+\ : EXECUTE
+\ ;
+error" need prim execute"
+[THEN]
+
+\ \\\\\\\\\\\\\\\
+
+[IFUNDEF] I
+\ : I
+\ ;
+[THEN]
+
+[IFUNDEF] J
+\ : J
+\ ;
+[THEN]
+
+
+[IFUNDEF] ENVIRONMENT?
+: ENVIRONMENT?
+    2drop 0
+;
+[THEN]
+

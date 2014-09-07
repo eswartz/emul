@@ -19,4 +19,6 @@ public interface ILPCDataFetcher {
 	void setPhraseListeners(ListenerList<ISpeechPhraseListener> listeners);
 
 	void reset();
+
+	boolean isDone();
 }

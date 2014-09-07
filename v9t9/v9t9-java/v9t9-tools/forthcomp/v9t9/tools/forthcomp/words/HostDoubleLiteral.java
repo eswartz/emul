@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp.words;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -37,8 +38,8 @@ public class HostDoubleLiteral extends BaseWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				hostContext.compile(HostDoubleLiteral.this);
-				targetContext.compileDoubleLiteral(valLo, valHi, isUnsigned, true);
+				hostContext.build(HostDoubleLiteral.this);
+				targetContext.buildDoubleLiteral(valLo, valHi, isUnsigned, true);
 			}
 		});
 		setExecutionSemantics(new ISemantics() {
@@ -49,6 +50,14 @@ public class HostDoubleLiteral extends BaseWord {
 				hostContext.pushData(valHi);
 			}
 		});
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.BaseWord#toString()
+	 */
+	@Override
+	public String toString() {
+		return "HostDoubleLiteral: " + Integer.toHexString(valHi)+":" + Integer.toHexString(valLo);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.IWord#getValue()

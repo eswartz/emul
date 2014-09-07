@@ -79,7 +79,9 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		boolean interlacedEvenOdd = vdp9938.isInterlacedEvenOdd();
 		int graphicsPageSize = vdp9938.getGraphicsPageSize();
 		
-		//System.out.println(pageOffset);
+		int minY = info.canvas.getMinY();
+		int maxY = info.canvas.getMaxY();
+		
 		int count = 0;
 		int screenSize = blockcount;
 		for (int i = info.changes.screen.nextSetBit(0); 
@@ -89,6 +91,9 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 			RedrawBlock block = blocks[count++];
 			
 			block.r = (i / blockstride) << 3;
+			if (block.r + 8 < minY || block.r >= maxY)
+				continue;
+			
 			block.c = (i % blockstride) << 3;
 
 			drawBlock(block, 0, false);

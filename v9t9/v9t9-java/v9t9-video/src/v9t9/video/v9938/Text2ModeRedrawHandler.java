@@ -87,6 +87,9 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		bbg = (byte) (info.vdpregs[12] & 0xf);
 		bfg = (byte) ((info.vdpregs[12] >> 4) & 0xf);
 
+		int minY = info.canvas.getMinY();
+		int maxY = info.canvas.getMaxY();
+		
 		for (int i = info.changes.screen.nextSetBit(0); 
 			i >= 0 && i < size; 
 			i = info.changes.screen.nextSetBit(i+1)) 
@@ -96,6 +99,9 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 			RedrawBlock block = blocks[count++];
 			
 			block.r = (i / 80) << 3;	
+			if (block.r + 8 < minY || block.r >= maxY)
+				continue;
+			
 			block.c = (i % 80) * 6 + (512 - 480) / 2;
 
 			int pattOffs = pattBase + (currchar << 3);

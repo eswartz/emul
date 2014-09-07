@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.cdt.launch.launchGroup">
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.0.action" value="WAIT_FOR_TERMINATION"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.0.enabled" value="true"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.0.mode" value="run"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.0.name" value="Assemble F9900 ROM"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.1.action" value="WAIT_FOR_TERMINATION"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.1.enabled" value="true"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.1.mode" value="run"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.1.name" value="Asm to Forth Constants"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.2.action" value="WAIT_FOR_TERMINATION"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.2.enabled" value="true"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.2.mode" value="run"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.2.name" value="f9900romBuild (test) (GROM)"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.3.action" value="NONE"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.3.enabled" value="false"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.3.mode" value="run"/>
+<stringAttribute key="org.eclipse.cdt.launch.launchGroup.3.name" value="Emulator (F9900)"/>
+<listAttribute key="org.eclipse.debug.ui.favoriteGroups">
+<listEntry value="org.eclipse.debug.ui.launchGroup.run"/>
+</listAttribute>
+</launchConfiguration>

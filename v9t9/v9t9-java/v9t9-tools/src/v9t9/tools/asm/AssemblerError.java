@@ -16,31 +16,19 @@ package v9t9.tools.asm;
  */
 public class AssemblerError {
 	private final Exception exception;
-	private final String filename;
-	private final int lineno;
-	private final String line;
+	private SourceRef ref;
 
-	public AssemblerError(Exception e, String filename, int lineno, String line) {
+	public AssemblerError(Exception e, SourceRef ref) {
 		this.exception = e;
-		this.filename = filename;
-		this.lineno = lineno;
-		this.line = line;
+		this.ref = ref;
 	}
 	
 	public String getDescr() {
-		return filename + ":" + lineno;
+		return ref.filename + ":" + ref.lineno;
 	}
 	
-	public String getFilename() {
-		return filename;
-	}
-	
-	public String getLine() {
-		return line;
-	}
-	
-	public int getLineno() {
-		return lineno;
+	public SourceRef getRef() {
+		return ref;
 	}
 	
 	public Exception getException() {

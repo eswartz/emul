@@ -10,6 +10,8 @@
  */
 package v9t9.common.sound;
 
+import javax.sound.sampled.AudioFormat;
+
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
@@ -40,11 +42,13 @@ public class SoundRecordingHelper implements ISoundRecordingHelper {
 	 * @param shell
 	 */
 	public SoundRecordingHelper(IMachine machine, ISoundOutput output, SettingSchema fileSchema,
+			AudioFormat format,
 			boolean includeSilence) {
 		this.output = output;
 		this.soundFileSetting = machine.getSettings().get(fileSchema);
 		this.machine = machine;
 		soundListener = new SoundFileListener();
+		soundListener.started(format);
 		soundListener.setIncludeSilence(includeSilence);
 		
 		soundListener.setPauseProperty(machine.getSettings().get(ISoundHandler.settingPauseSoundRecording));

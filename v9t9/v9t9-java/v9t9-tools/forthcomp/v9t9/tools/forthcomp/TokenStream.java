@@ -10,12 +10,15 @@
  */
 package v9t9.tools.forthcomp;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 /**
@@ -25,6 +28,7 @@ import java.util.Stack;
 public class TokenStream {
 	private Stack<LineNumberReader> streams;
 	private int line;
+	private Map<LineNumberReader, String> stringStreams = new HashMap<LineNumberReader, String>();
 	
 	class FileLineNumberReader extends LineNumberReader {
 
@@ -63,24 +67,23 @@ public class TokenStream {
 		streams.push(reader);		
 	}
 	
-	/**
-	 * @param text
-	 */
-	public void push(String text) {
+	public LineNumberReader push(String name, String text) {
 		LineNumberReader reader = new LineNumberReader(new StringReader(text));
 		reader.setLineNumber(1);
 		streams.push(reader);
+		stringStreams.put(reader, name);
+		return reader;
 	}
 	public void pop() {
 		try {
-			streams.pop().close();
+			LineNumberReader reader = streams.pop();
+			stringStreams.remove(reader);
+			reader.close();
 		} catch (IOException e) {
 		}
 	}
 
-	/**
-	 * @return
-	 */
+	/** read a forth token */
 	public String read() throws IOException {
 		int ch;
 		LineNumberReader fr = null;
@@ -88,6 +91,7 @@ public class TokenStream {
 			if (streams.isEmpty())
 				return null;
 			fr = streams.peek();
+			// skip initial whitespace
 			while (Character.isWhitespace(ch = fr.read())) /**/;
 			if (ch == -1) {
 				streams.pop().close();
@@ -104,10 +108,31 @@ public class TokenStream {
 			sb.append((char) ch);
 			fr.mark(1);
 		}
-		fr.reset();
+		if (ch == '\n' || ch == '\r')
+			fr.reset();
 		return sb.toString();
 	}
+
 	
+	/** skip past the given character */
+	public void readThrough(char stop) throws IOException {
+		int ch;
+		LineNumberReader fr = null;
+		while (true) {
+			if (streams.isEmpty())
+				throw new EOFException();
+			fr = streams.peek();
+			while (true) {
+				ch = fr.read();
+				if (ch == stop)
+					return;
+				if (ch == -1) {
+					throw new EOFException();
+				}
+			}
+		}
+	}
+
 	public boolean isAtEol(int forLine) {
 		if (streams.isEmpty())
 			return true;
@@ -136,8 +161,16 @@ public class TokenStream {
 	 * @return
 	 */
 	public String getFile() {
-		return streams.peek() instanceof FileLineNumberReader 
-			? ((FileLineNumberReader) streams.peek()).getFile().toString() : "<string>";
+		if (streams.isEmpty())
+			return "<empty>";
+		
+		LineNumberReader curReader = streams.peek();
+		if (curReader instanceof FileLineNumberReader) {
+			return ((FileLineNumberReader) curReader).getFile().toString();
+		} else {
+			String name = stringStreams.get(curReader);
+			return name != null ? name : "<string>";
+		}
 	}
 
 	/**
@@ -166,28 +199,37 @@ public class TokenStream {
 	}
 
 	/**
+	 * @return 
 	 * 
 	 */
-	public void readToEOL() {
+	public String readToEOL() {
 		if (streams.isEmpty())
-			return;
+			return null;
 		try {
-			streams.peek().readLine();
+			return streams.peek().readLine();
 		} catch (IOException e) {
+			return null;
 		}
 	}
 
 	/**
 	 * @return
 	 */
-	public char readChar() throws AbortException {
+	public int readChar() throws AbortException {
 		if (streams.isEmpty())
 			return 0;
 		try {
-			return (char) streams.peek().read();
+			return streams.peek().read();
 		} catch (IOException e) {
 			throw abort(e.toString());
 		}
+	}
+
+	/**
+	 * @return
+	 */
+	public LineNumberReader getCurrentReader() {
+		return streams.peek();
 	}
 
 	

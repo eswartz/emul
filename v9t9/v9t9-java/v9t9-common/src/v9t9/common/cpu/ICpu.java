@@ -43,6 +43,20 @@ public interface ICpu extends IPersistable {
 			ISettingsHandler.TRANSIENT,
 			"Debugging", Boolean.FALSE);
 
+	SettingSchema settingDetectCrash = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"DetectCrash", Boolean.FALSE);
+
+	SettingSchema settingRunForCount = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"RunForCount", new Integer(0));
+	SettingSchema settingTestSuccessSymbol = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"TestSuccessSymbol", "");
+	SettingSchema settingTestFailureSymbol = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"TestFailureSymbol", "");
+
 	
 	IProperty settingRealTime();
 	IProperty settingCyclesPerSecond();
@@ -153,7 +167,7 @@ public interface ICpu extends IPersistable {
 	/**
 	 * Set interrupt request interrupt line
 	 */
-	void irq();
+	//void irq();
 
 	IInstructionFactory getInstructionFactory();
 	IRawInstructionFactory getRawInstructionFactory();

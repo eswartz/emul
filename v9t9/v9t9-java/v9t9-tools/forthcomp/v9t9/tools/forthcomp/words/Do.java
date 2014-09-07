@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp.words;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -30,10 +31,11 @@ public class Do extends BaseStdWord {
 		
 		targetContext.markHostExecutionUnsupported();
 		
-		ITargetWord word = (ITargetWord) targetContext.require("(do)");
-		word.getCompilationSemantics().execute(hostContext, targetContext);
+		ITargetWord word = targetContext.require("(do)");
+		//word.getCompilationSemantics().execute(hostContext, targetContext);
+		hostContext.compileWord(targetContext, null, word);
 		
-		hostContext.compile(hostContext.find("(do)"));
+		hostContext.build(hostContext.find("(do)"));
 		
 		targetContext.pushHere(hostContext);
 		hostContext.pushData(0);		// not ?do

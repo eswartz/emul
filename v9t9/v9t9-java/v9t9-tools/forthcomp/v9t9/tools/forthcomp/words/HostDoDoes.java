@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp.words;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -26,7 +27,7 @@ public class HostDoDoes extends BaseStdWord {
 	/**
 	 * @param redirectDp
 	 * @param targetDP 
-	 * @param targetOnly TODO
+	 * @param targetOnly 
 	 * 
 	 */
 	public HostDoDoes(int redirectDp, int targetDP, boolean targetOnly) {
@@ -41,7 +42,7 @@ public class HostDoDoes extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
 		hostContext.popCall();
-		hostContext.compile(new HostBranch(redirectDp));
+		hostContext.build(new HostBranch(redirectDp));
 		
 		ITargetWord lastWord = (ITargetWord) targetContext.getLatest();
 		targetContext.redefine(lastWord, new TargetDoesWord(lastWord, redirectDp));
@@ -49,8 +50,6 @@ public class HostDoDoes extends BaseStdWord {
 		lastWord.getEntry().setDoesWord(true);
 
 		targetContext.compileDoes(hostContext, lastWord.getEntry(), targetDP);
-		
-		//hostContext.setHostPc(redirectDp);
 	}
 	
 	/* (non-Javadoc)

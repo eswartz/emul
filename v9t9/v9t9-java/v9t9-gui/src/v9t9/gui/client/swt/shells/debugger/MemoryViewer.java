@@ -729,7 +729,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 	}
 
 	protected void refreshViewer() {
-		if (!isDisposed() && isVisible() && currentRange != null) {
+		if (!isDisposed() && isVisible() && currentRange != null && !byteTableViewer.isCellEditorActive()) {
 			int lowRange, hiRange;
 			synchronized (currentRange) {
 				byteContentViewer.refresh();

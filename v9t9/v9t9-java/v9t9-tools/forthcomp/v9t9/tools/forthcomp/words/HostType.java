@@ -12,6 +12,7 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -24,10 +25,8 @@ public class HostType extends BaseStdWord {
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		int leng = hostContext.popData();
-		int addr = hostContext.popData();
-		while (leng-- > 0)
-			System.out.print((char) targetContext.readChar(addr++));
+		String str = popString(hostContext, targetContext);
+		System.out.print(str);
 	}
 	
 	/* (non-Javadoc)

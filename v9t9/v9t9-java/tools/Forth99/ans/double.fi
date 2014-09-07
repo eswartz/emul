@@ -1,0 +1,6 @@
+
+include double_core.fi
+
+[IFDEF] .
+include double_output.fi
+[THEN]

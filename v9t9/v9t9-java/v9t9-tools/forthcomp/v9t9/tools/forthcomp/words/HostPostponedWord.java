@@ -17,6 +17,7 @@ import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetWord;
 import v9t9.tools.forthcomp.IWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -66,12 +67,13 @@ public class HostPostponedWord extends BaseWord {
 						else
 							hostBehavior.getExecutionSemantics().execute(hostContext, targetContext);
 					} else {
-						if (hostContext.isCompiling() && targetWord.getExecutionSemantics() == null) {
-							targetWord.getCompilationSemantics().execute(hostContext, targetContext);
-							hostWord.getCompilationSemantics().execute(hostContext, targetContext);
-						} else {
-							targetWord.getExecutionSemantics().execute(hostContext, targetContext);
-						}
+//						if (hostContext.isCompiling() && targetWord.getExecutionSemantics() == null) {
+//							targetWord.getCompilationSemantics().execute(hostContext, targetContext);
+//							hostWord.getCompilationSemantics().execute(hostContext, targetContext);
+//						} else {
+//							targetWord.getExecutionSemantics().execute(hostContext, targetContext);
+//						}
+						hostContext.compileWord(targetContext, hostWord, targetWord);
 					}
 				} else if (hostWord != null) {
 //					if (hostContext.isCompiling()) {

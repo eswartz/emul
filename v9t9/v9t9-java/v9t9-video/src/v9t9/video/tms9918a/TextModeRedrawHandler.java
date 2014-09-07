@@ -51,6 +51,9 @@ public class TextModeRedrawHandler extends BaseRedrawHandler implements
 		bg = (byte) (info.vdpregs[7] & 0xf);
 		fg = (byte) ((info.vdpregs[7] >> 4) & 0xf);
 
+		int minY = info.canvas.getMinY();
+		int maxY = info.canvas.getMaxY();
+		
 		for (int i = info.changes.screen.nextSetBit(0); 
 			i >= 0 && i < modeInfo.screen.size; 
 			i = info.changes.screen.nextSetBit(i+1)) 
@@ -61,6 +64,9 @@ public class TextModeRedrawHandler extends BaseRedrawHandler implements
 			RedrawBlock block = blocks[count++];
 			
 			block.r = (i / 40) << 3;	
+			if (block.r + 8 < minY || block.r >= maxY)
+				continue;
+			
 			block.c = (i % 40) * 6 + (256 - 240) / 2;
 
 			int pattOffs = pattBase + (currchar << 3);

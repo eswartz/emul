@@ -1,0 +1,73 @@
+
+| Code xop-EMIT ( ch -- )
+	rTOS		TERM^	,XOP  	#t.tty ,
+	POP
+end-code
+
+| : rom-EMIT	( ch -- )
+	xop-EMIT
+	yield
+;
+
+' rom-EMIT 	TO EMIT
+
+| Code xop-TYPE	( len caddr -- )
+	PUSH 	( get both args on stack )
+	
+	rSP	*R	TERM^	,XOP  	#t.ttystr ,
+	
+	rSP				,AI		2 cells ,
+	POP
+end-code
+
+| : rom-TYPE ( caddr len -- )
+	( can't read strings in Forth ROM from XOP )
+	over  @DP0 @  U> if
+		swap xop-TYPE
+	else
+		core-TYPE
+	then
+;
+' rom-TYPE	TO	TYPE
+
+| Code xop-KEY? ( --  f )
+	PUSH
+	rTOS		TERM^	,XOP  	#t.key? ,
+end-code
+' xop-KEY? 	TO KEY?
+
+| : rom-KEY? ( -- f )
+	yield
+	xop-KEY?
+;
+
+| Code xop-key ( --  k | 0 )
+	PUSH
+	rTOS		TERM^	,XOP  	#t.rdkey ,
+end-code
+
+| : rom-KEY ( --  k )
+	begin
+		yield
+		xop-key ?dup
+	until
+;
+' rom-KEY 		TO KEY
+
+\ --------------------
+
+
+Code cls ( )
+	rTOS		TERM^	,XOP  	#t.clear ,
+end-code
+
+Code win@ ( --  x y w h )
+	PUSH
+	rSP					,AI		-4 cells ,		
+	rSP *R		TERM^	,XOP  	#t.win@ ,
+	POP
+end-code
+
+: win-cx	( -- cx )
+	win@ drop >r 2drop r>
+;

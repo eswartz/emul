@@ -58,6 +58,7 @@ public interface IMemoryEntry extends IMemoryAccess, Comparable<IMemoryEntry>, I
 
 	void defineSymbol(int addr, String name);
 
+	Integer findSymbol(String name );
 	String lookupSymbol(short addr);
 
 	void clearSymbols();
@@ -112,5 +113,13 @@ public interface IMemoryEntry extends IMemoryAccess, Comparable<IMemoryEntry>, I
 	 * 
 	 */
 	void reset();
+
+	/**
+	 * Write to memory that may be read-only
+	 * @param addr
+	 * @param value
+	 * @return true if changed
+	 */
+	boolean patchWord(int addr, short value);
 
 }

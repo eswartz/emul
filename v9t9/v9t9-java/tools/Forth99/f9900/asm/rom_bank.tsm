@@ -1,0 +1,222 @@
+
+;       V9T9 ROM!
+;
+;   This ROM is designed for use by FORTH.  Thus it consists mainly of
+;   primitive routines upon which more complex behavior can be implemented
+;   in FORTH.  
+;
+;   Also, this ROM is *banked* with FORTH.  Thus, the ROM range may
+;   either be this assembly ROM or the first part of the FORTH ROM based
+;   on the address last written to in the ROM area.  (Div by 4 = bank 0 =
+;   this ROM, not div by 4 = bank 1 = FORTH ROM.)  (This method of switching
+;   banks is a quite easy way to catch stray pointer accesses!)
+;
+;   The two ROMs communicate with each other only through XOPs.
+;   Interrupts may also be triggered in either ROM.  Thus, the workspaces
+;   that XOP and FORTH use must be different, as must the interrupt 
+;   workspace.  
+;
+;   The general style of the ROM is to use a small number of workspaces
+;   and stacks (e.g. via Forth's SP and RP) for register management. 
+;
+;   "StdWS" is used for startup and for FORTH operation (scheduler or main task) thereafter.
+;   This ROM does not use that workspace again, except to fetch SP/RP.
+;	"IntWS" is used for interrupt handling.
+;	"RomWS" is used for this ROM.  
+;
+
+	incl	rom_equs.inc
+	incl	grom_equs.inc
+	
+	incl	regs.inc
+	incl	macros.inc
+
+	incl	ram.inc
+	
+;==========================================================================
+;	ROM start (must match f9900rom.f99)
+;==========================================================================
+	aorg	>0
+
+resetv		
+	dw		StdWS, B1_int_reset		; vector for RESET
+int1v		
+	dw		IntWS, B1_int_1			; vector for INTERRUPTS
+
+; XOP vectors
+
+	aorg	XOPS + (XOP_VIDEO * 4)
+	dw		RomWS, B1_xop_video_ent
+	
+	aorg	XOPS + (XOP_TERM * 4)
+	dw		RomWS, B1_xop_term_ent
+
+	aorg	XOPS + (XOP_SOUND * 4)
+	dw		RomWS, B1_xop_sound_ent
+
+	aorg	XOPS + (XOP_UTIL * 4)
+	dw		RomWS, B1_xop_util_ent
+
+	aorg	SharedROM
+
+;	[[[[ ------------------------------------------------------- content shared with bank 0 (FORTH)
+;
+;	The Forth9900MemoryModel loader will copy this region of code,
+;	but change the SETO instructions to point to the opposite bank for FORTH.
+;
+
+F_BANK1		data		>0100			; this bit is enabled in R15 (ignored)
+
+;	All vectored code comes here to return
+Int_Return
+	; restore bank?
+	coc		@F_BANK1, R15
+	jeq		Int_Return_Bank0
+	
+	; stay in current ROM bank 
+	RTWP
+	
+Int_Return_Bank0
+	seto	@BANK0
+	RTWP
+	
+B1_int_reset
+	seto	@BANK1				; switch to ROM bank 
+	jmp		int_reset
+B1_int_reset_exit	
+	seto	@BANK0
+	mov		@_RESET, 14
+	RTWP
+	
+B1_int_1
+	BankedIntHandler
+	jmp		int_1
+
+B1_int_nmi
+	seto	@BANK1				; fetch constant addr from ROM
+	mov		#int_nmi, 14
+	mov		#StdWS, 13			; could come from ROM or Forth, need to choose
+	seto	@BANK0				; runs in FORTH
+	rtwp
+
+
+	; shared entry for XOP
+B1_xop_term_ent
+	BankedXopHandler
+	b		@xop_term_ent
+
+B1_xop_video_ent
+	BankedXopHandler	
+	b		@xop_video_ent
+	
+B1_xop_sound_ent
+	BankedXopHandler	
+	b		@xop_sound_ent
+
+B1_xop_util_ent
+	BankedXopHandler	
+	b		@xop_util_ent
+
+;==========================================================================
+;	NMI (LOAD) Interrupt
+;==========================================================================
+int_nmi
+	mov		@_ABORT, 0
+	b		*0
+
+;==========================================================================
+;	Call (TICK) in FORTH
+;==========================================================================
+tick_forth
+	seto	@BANK0				; switch to FORTH bank
+	
+	lwpi	StdWS
+	
+	mov		@_tick, 11
+	jeq		$0+
+	
+	bl		*11
+$0:	
+	lwpi	RomWS
+	
+	seto	@BANK1				; back to our bank
+	rt
+	
+;	]]]] ------------------------------------------------------- end shared content
+
+	assert	$ <= ForthROM 
+
+
+;==========================================================================
+;	Reset
+;==========================================================================
+int_reset
+	limi	0
+
+    ;   clear memory
+    bl  	@clr
+    data    _RAM, _RAMEND - _RAM
+    bl  	@clr
+    data    _SharedRAM, _SharedRAMEnd - _SharedRAM
+	
+	bl		@sinit			; system init
+   	bl  	@sndinit        ; sound init
+	bl		@synthinit		; sound synth init   	
+	bl		@xv_vinit		; video init
+	bl		@xt_tinit		; terminal init
+	bl		@kinit			; keyboard init
+;	bl		@dinit			; device init
+;
+;	bl		@diskinit		; disk init
+
+	li		r0, (M_INT_EXT + M_INT_VDP) << 8		; external & VDP interrupts
+	movb	r0, @INTS
+	jmp		B1_int_reset_exit				
+
+;   Clear memory from the two following words
+;   Does not preserve registers
+clr mov     *11+, 0
+    mov     *11+, 1
+$1: clr     *0+
+    dect    1
+    jgt     $1-
+    rt
+    
+sinit	
+	li SP, sysstack + sysstacksize
+	
+	; setup NMI interrupt
+	mov    #IntWS, @>fffc
+	mov    #B1_int_nmi, @>fffe
+
+	li     0, >ACE1
+	mov    0,@randseed1
+
+	rt
+	
+;==========================================================================
+;	VDP Interrupt
+;==========================================================================
+	incl	int_video.inc
+
+; -----------
+	
+	incl	term.inc
+	incl	kbd.inc
+	
+	incl	video.inc
+
+	incl	sound.inc
+	incl	sound_synth.inc
+	
+	incl	xutil.inc
+	
+	
+;===========================================================================
+	
+	assert	_SharedRAMEnd <= _WPs
+	assert	_RAMEND >= _RAM		; not overflowed 
+	assert	_RAMEND <= _SharedRAM	; not overflowed
+	
+	consttable
+	

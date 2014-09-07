@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Stack;
 import java.util.regex.Matcher;
@@ -201,17 +202,39 @@ public abstract class Assembler implements IAssembler {
 				break;
 			}
 			
-			ContentEntry entry = getLineFileContentEntry();
-			String filename = entry.getName();
-			int lineno = entry.getLine();
+			SourceRef ref = createSourceRef(line);
 			
 			try {
-				assembleInst(asmInsts, line, filename, lineno);
+				assembleInst(asmInsts, line, ref);
 			} catch (ParseException e) {
-				reportError(e, filename, lineno, line, e.getMessage());
+				reportError(e, ref, e.getMessage());
 			}
 		}
 		return asmInsts;
+	}
+
+	/**
+	 * @param line 
+	 * @return
+	 */
+	private SourceRef createSourceRef(String line) {
+		SourceRef top = null, prev = null;
+		ListIterator<ContentEntry> iter = getContentEntryStack().listIterator(getContentEntryStack().size());
+		while (iter.hasPrevious()) {
+			ContentEntry ent = iter.previous();
+			SourceRef nw = new SourceRef(ent.name, ent.getLine(), null);
+			if (prev != null) {
+				prev.from = nw;
+			} else {
+				top = nw;
+			}
+			if (new File(nw.filename).exists()) {
+				break;
+			}
+			prev = nw;
+		}
+		top.line = line;
+		return top;
 	}
 
 	/** Read the next line from the file stack */
@@ -245,61 +268,59 @@ public abstract class Assembler implements IAssembler {
 		memory.addDomain(IMemoryDomain.NAME_CPU, new MemoryDomain(IMemoryDomain.NAME_CPU, false));
 	}
 
-	private void assembleInst(List<IInstruction> asmInsts, String line_, String filename,
-			int lineno) throws ParseException {
-				//if (DEBUG>0) log.println(descr+" " +line);
-				
-				// remove comments
-				String line = line_.replaceAll(";.*", "");
-				
-				Matcher matcher = asmLinePattern.matcher(line);
-				if (!matcher.matches())
-					return;
-				
-				DescrDirective descr = new DescrDirective(filename, lineno, line_);
-				asmInsts.add(descr);
-				
-				if (matcher.group(1) != null) {
-					// label
-					Symbol label = parseLabel(matcher.group(1));
-					LabelDirective labelDir = new LabelDirective(label);
-					labelTable.put(label, labelDir);
-					asmInsts.add(labelDir);
-					//instDescrMap.put(labelDir, descr);
-					line = matcher.group(2);
-				} else {
-					line = matcher.group(3);
-				}
-				
-				// check for an instruction
-				line = line.trim();
-				if (line.length() == 0)
-					return;
-					
-				IInstruction[] instArray = instructionParser.parse(descr.toString(), line);
-				/*
-				for (IInstruction inst : instArray) {
-					instDescrMap.put(inst, descr);
-					if (DEBUG>0) log.println(inst);
-				}
-				*/
-				asmInsts.addAll(Arrays.asList(instArray));
-			}
+	private void assembleInst(List<IInstruction> asmInsts, String line_, SourceRef ref) throws ParseException {
+		//if (DEBUG>0) log.println(descr+" " +line);
+		
+		// remove comments
+		String line = line_.replaceAll(";.*", "");
+		
+		Matcher matcher = asmLinePattern.matcher(line);
+		if (!matcher.matches())
+			return;
+		
+		DescrDirective descr = new DescrDirective(ref);
+		asmInsts.add(descr);
+		
+		if (matcher.group(1) != null) {
+			// label
+			Symbol label = parseLabel(matcher.group(1));
+			LabelDirective labelDir = new LabelDirective(label);
+			labelTable.put(label, labelDir);
+			asmInsts.add(labelDir);
+			//instDescrMap.put(labelDir, descr);
+			line = matcher.group(2);
+		} else {
+			line = matcher.group(3);
+		}
+		
+		// check for an instruction
+		line = line.trim();
+		if (line.length() == 0)
+			return;
+			
+		IInstruction[] instArray = instructionParser.parse(descr.toString(), line);
+		/*
+		for (IInstruction inst : instArray) {
+			instDescrMap.put(inst, descr);
+			if (DEBUG>0) log.println(inst);
+		}
+		*/
+		asmInsts.addAll(Arrays.asList(instArray));
+	}
 
-	public void reportError(Exception e, String file, int lineno,
-			String line, String message) {
-				errorList.add(new AssemblerError(e, file, lineno, line));
-				errlog.println(file + ":" + lineno + ": " + message + "\nin " + line);
-			}
+	public void reportError(Exception e, SourceRef ref, String message) {
+		errorList.add(new AssemblerError(e, ref)); 
+		errlog.println(ref.format(message));
+	}
 
 	public void reportError(Exception e, DescrDirective descr, String line,
 			String message) {
-				errorList.add(new AssemblerError(e, descr.getFilename(), descr.getLine(), line));
-				errlog.println(descr.toString() + ": " + message + "\nin " + line);
-			}
+		errorList.add(new AssemblerError(e, descr.getRef()));
+		errlog.println(descr.getRef().format(message));
+	}
 
 	public void reportError(Exception e) {
-		errorList.add(new AssemblerError(e, null, 0, null));
+		errorList.add(new AssemblerError(e, new SourceRef(null, 0, null)));
 		errlog.println(e.getMessage());
 	}
 
@@ -534,72 +555,72 @@ public abstract class Assembler implements IAssembler {
 	 */
 	private void dumpLine(DescrDirective prev, DescrDirective cur, boolean showDescr,
 			int pc, byte[] mem) {
-				StringBuilder curLines = new StringBuilder();
-				for (int offs = 0; showDescr || offs < mem.length; ) {
-					if (showDescr) {
-						if (prev == null || !prev.getFilename().equals(cur.getFilename())) {
-							curLines.append("*** " + cur.getFilename() + "\n");
-						}
-						curLines.append(HexUtils.padString(("" + cur.getLine()),5) + " ");
-					} else {
-						curLines.append(HexUtils.padString("",6));
-					}
-					
-					if (pc >= 0) {
-						curLines.append('>');
-						curLines.append(HexUtils.toHex4((pc + offs)));
-						
-						curLines.append(offs < mem.length ? '=' : ' ');
-					} else {
-						curLines.append("      ");
-					}
-					
-					int cnt = 6;
-					while (cnt-- >= 0) {
-						if (offs < mem.length) {
-							if (basicSize == 2) {
-								// eat a word if we're aligned on a word
-								if (((pc + offs) & 1) == 0 && offs + 1 < mem.length) {
-									curLines.append('>');
-									curLines.append(HexUtils.toHex4((((mem[offs] & 0xff) << 8) | (mem[offs + 1] & 0xff))));
-									offs += 2;
-									cnt -= 2;
-								} else {
-									if (offs + 1 < mem.length)
-										curLines.append("  ");
-									curLines.append('>');
-									curLines.append(HexUtils.toHex2((mem[offs] & 0xff)));
-										
-									offs++;
-									cnt--;
-								}
-							} else {
-								curLines.append('>');
-								curLines.append(HexUtils.toHex2(mem[offs]));
-								offs++;
-								cnt--;
-							}
-							curLines.append(' ');
-						} else {
-							if (basicSize == 2) {
-								curLines.append("      ");
-								cnt -= 2;
-							} else {
-								curLines.append("    ");
-								cnt --;
-							}
-						}
-					}
-					
-					if (showDescr) {
-						curLines.append(cur.getContent());
-						showDescr = false;
-					}
-					
-					curLines.append('\n');
+		StringBuilder curLines = new StringBuilder();
+		for (int offs = 0; showDescr || offs < mem.length; ) {
+			if (showDescr) {
+				if (prev == null || !prev.getFilename().equals(cur.getFilename())) {
+					curLines.append("*** " + cur.getFilename() + "\n");
 				}
-				log.print(curLines);
+				curLines.append(HexUtils.padString(("" + cur.getLine()),5) + " ");
+			} else {
+				curLines.append(HexUtils.padString("",6));
 			}
+			
+			if (pc >= 0) {
+				curLines.append('>');
+				curLines.append(HexUtils.toHex4((pc + offs)));
+				
+				curLines.append(offs < mem.length ? '=' : ' ');
+			} else {
+				curLines.append("      ");
+			}
+			
+			int cnt = 6;
+			while (cnt-- >= 0) {
+				if (offs < mem.length) {
+					if (basicSize == 2) {
+						// eat a word if we're aligned on a word
+						if (((pc + offs) & 1) == 0 && offs + 1 < mem.length) {
+							curLines.append('>');
+							curLines.append(HexUtils.toHex4((((mem[offs] & 0xff) << 8) | (mem[offs + 1] & 0xff))));
+							offs += 2;
+							cnt -= 2;
+						} else {
+							if (offs + 1 < mem.length)
+								curLines.append("  ");
+							curLines.append('>');
+							curLines.append(HexUtils.toHex2((mem[offs] & 0xff)));
+								
+							offs++;
+							cnt--;
+						}
+					} else {
+						curLines.append('>');
+						curLines.append(HexUtils.toHex2(mem[offs]));
+						offs++;
+						cnt--;
+					}
+					curLines.append(' ');
+				} else {
+					if (basicSize == 2) {
+						curLines.append("      ");
+						cnt -= 2;
+					} else {
+						curLines.append("    ");
+						cnt --;
+					}
+				}
+			}
+			
+			if (showDescr) {
+				curLines.append(cur.getContent());
+				showDescr = false;
+			}
+			
+			curLines.append('\n');
+		}
+		log.print(curLines);
+	}
 
 	public MemoryRanges getMemoryRanges() {
 		return this.memoryRanges;
@@ -617,6 +638,13 @@ public abstract class Assembler implements IAssembler {
 		memoryRanges.addRange(entry.getAddr(), entry.getSize(), true);
 		memoryEntries.add(entry);
 		getWritableConsole().mapEntry(entry);
+	}
+	
+	/**
+	 * @return the memoryEntries
+	 */
+	public List<IMemoryEntry> getMemoryEntries() {
+		return memoryEntries;
 	}
 
 	private void saveMemory() {

@@ -14,6 +14,7 @@ import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.DictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -21,20 +22,24 @@ import v9t9.tools.forthcomp.ISemantics;
  */
 public class TargetUserVariable extends TargetWord {
 
-	private int index;
+	private int offset;
 	/**
-	 * @param index 
+	 * @param offset 
 	 * 
 	 */
-	public TargetUserVariable(String name, int index) {
-		super(new DictEntry(0, 0, name));
-		this.index = index;
+	public TargetUserVariable(DictEntry entry, int offset) {
+		super(entry);
+		this.offset = offset;
 		
 		setCompilationSemantics(new ISemantics() {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				targetContext.compileUser(TargetUserVariable.this);				
+				if (targetContext.isNativeDefinition()) {
+					targetContext.compileUser(TargetUserVariable.this);
+				} else {
+					targetContext.buildCall(TargetUserVariable.this);
+				}
 			}
 		});
 		setExecutionSemantics(new ISemantics() {
@@ -42,15 +47,20 @@ public class TargetUserVariable extends TargetWord {
 			@Override
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				hostContext.pushData(0xff00 + (TargetUserVariable.this.getIndex()) * targetContext.getCellSize());				
+				hostContext.pushData(0xff00 + (TargetUserVariable.this.getOffset()));				
 			}
 		});
 	}
 
-	/**
-	 * @return the index
+	public int getOffset() {
+		return offset;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetWord#toString()
 	 */
-	public int getIndex() {
-		return index;
+	@Override
+	public String toString() {
+		return "User " + super.toString();
 	}
 }

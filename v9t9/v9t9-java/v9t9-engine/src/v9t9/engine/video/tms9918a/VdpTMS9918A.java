@@ -34,7 +34,6 @@ import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.Settings;
-import v9t9.common.video.IVdpRealtimeCanvasRenderer;
 import v9t9.engine.demos.actors.VdpDataDemoActor;
 import v9t9.engine.demos.actors.VdpRegisterDemoActor;
 import v9t9.engine.hardware.BaseCruChip;
@@ -111,8 +110,6 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 
 	protected int modeNumber;
 
-	private IVdpRealtimeCanvasRenderer realtimeCanvasRenderer;
-
 	private int vdpScanline;
 
 	protected int width;
@@ -172,7 +169,10 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	}
 
 	protected void recalcInterruptTiming() {
-        vdpInterruptLimit = cyclesPerSecond.getInt() / vdpInterruptRate.getInt();
+		if (vdpInterruptRate.getInt() > 0)
+			vdpInterruptLimit = cyclesPerSecond.getInt() / vdpInterruptRate.getInt();
+		else
+			vdpInterruptLimit = Integer.MAX_VALUE;
         vdpInterruptFrac = 0;
         
         vdpScanlineLimit = vdpInterruptLimit / 192;
@@ -267,9 +267,6 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 				vdpInterruptDelta -= 65536;
 				
 				for (int row = 0; row < scanlineCount; row++) {
-					if (realtimeCanvasRenderer != null) {
-						realtimeCanvasRenderer.renderRow(row);
-					}
 					onScanline(row);
 				}
 				
@@ -300,10 +297,6 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 			if (vdpScanline >= scanlineCount)
 				vdpScanline -= scanlineCount;
 			
-			if (realtimeCanvasRenderer != null) {
-				realtimeCanvasRenderer.renderRow(vdpScanline);
-			}
-
 			onScanline(vdpScanline);
 			
 			vdpScanline++;
@@ -319,7 +312,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	/**
 	 */
 	protected void onScanline(int vdpScanline) {
-		
+		fireRegisterChanged(REG_SCANLINE, vdpScanline);
 	}
 
 	/**
@@ -343,23 +336,6 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		}
 		//System.out.print('!');
 		
-	}
-
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip#hookRealtimeCanvasRenderer(v9t9.common.video.IVdpRealtimeCanvasRenderer)
-	 */
-	@Override
-	public void setRealtimeCanvasRenderer(IVdpRealtimeCanvasRenderer renderer) {
-		this.realtimeCanvasRenderer = renderer;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip#getRealtimeCanvasRenderer()
-	 */
-	@Override
-	public IVdpRealtimeCanvasRenderer getRealtimeCanvasRenderer() {
-		return realtimeCanvasRenderer;
 	}
 	
 	/**

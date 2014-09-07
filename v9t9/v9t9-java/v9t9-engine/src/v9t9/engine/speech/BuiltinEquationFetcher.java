@@ -24,7 +24,6 @@ public class BuiltinEquationFetcher implements ILPCEquationFetcher {
 		LPCParameters params = (LPCParameters) params_;
 		
 		//params.repeat = false;
-		
 		params.energyParam = fetcher.fetch(4);
 		if (params.energyParam == 15) {
 			/* Last frame */

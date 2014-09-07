@@ -1,0 +1,15 @@
+\ This file was automatically generated from grom_equs.inc and f9900grom.sym by SymbolsToConstants; do not modify!
+
+$0000	Constant	>grom_sig
+$0002	Constant	>grom_dict
+$0004	Constant	>grom_dictend
+$0006	Constant	>grom_logo
+$0008	Constant	>grom_kbdlist
+$000A	Constant	>grom_font8x8
+$000C	Constant	>grom_font5x6
+$000E	Constant	>grom_errptrs
+$0010	Constant	>grom_editorhelp
+$0012	Constant	>grom_menuhelp
+$4000	Constant	>gram_dict_base
+$8000	Constant	>gram_dict_end
+$8000	Constant	>gram_disk_base

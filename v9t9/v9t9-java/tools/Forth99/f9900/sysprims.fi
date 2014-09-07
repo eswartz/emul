@@ -1,0 +1,103 @@
+\   sysprims.fi
+\ 
+\   (c) 2010-2011 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+include 99prims.fi
+
+: (?do)
+	postpone 2dup 
+	postpone 2>R
+	postpone -
+	postpone 0branch
+; immediate 
+
+\ Move memory backward (src -> dst)
+: cmove              ( src dst # -- )  
+    1 1 (cmove)
+;   target-only
+
+\ Move memory forward (src -> dst)
+: cmove>            ( src dst # -- )
+    -1 -1 (cmove)
+;   target-only
+
+: fill  ( addr n ch -- )
+    1 (cfill)
+;   target-only
+
+
+|test 10 RamVar Buf1  
+|test : bufMatches dup >r c@ 42 =   r> 9 + c@ 42 =  and ;
+test" fill  Buf1 10 42 fill  Buf1 bufMatches "
+
+|test 10 RamVar Buf2  
+test" cmove  Buf1 Buf2 10 cmove  Buf2 bufMatches "
+test" erase  Buf2 10 erase   Buf2 c@ 0=   Buf2 9 + c@ 0=  and "
+
+
+Code   ints-on
+	,LIMI		1 ,
+end-code   target-only
+
+Code   ints-off
+	,LIMI		0 ,
+end-code   target-only
+
+Code ints-check
+	,LIMI		1 ,
+	,LIMI		0 ,
+end-code
+
+:   demit ( ch -- )
+    'DBG c!
+;
+
+:   dtype ( c-addr len -- )
+    over + swap ?do
+        i c@ 'DBG c!
+    loop
+;
+
+has? TASKS 0= [IF] 
+: rp0
+    (RP0)
+;   target-only
+
+: sp0
+	(SP0)
+;
+[THEN]
+
+Code up@
+	PUSH
+	rUP		rTOS	,MOV
+end-code
+
+: u/      ( u un -- uq )
+    0 swap  
+    UM/MOD swap drop
+;   target-only
+
+
+: u/mod      ( u un -- ur uq ) 
+    0 swap
+    UM/MOD
+;   target-only
+
+0 [IF]
+
+
+: U*/       ( ua ub uc -- ua*b/c )
+    U*/MOD  drop
+;  target-only
+
+: (rnd) 'RND c@  'RND c@  l.h>w ;
+
+[THEN]
+

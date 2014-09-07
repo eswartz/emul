@@ -1,0 +1,22 @@
+
+| : unhosted-EMIT ( ch -- )
+	(DBG)
+	\ drop
+;
+' unhosted-EMIT 	TO EMIT
+
+| : unhosted-KEY ( --  k )
+	HANG
+;
+' unhosted-KEY 		TO KEY
+
+| : unhosted-KEY? ( --  f )
+	false
+;
+' unhosted-KEY? 	TO KEY?
+
+: unhosted-S"
+	0 0
+; immediate  target-only
+
+' unhosted-S"		TO S"

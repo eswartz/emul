@@ -8,6 +8,11 @@
 \   http://www.eclipse.org/legal/epl-v10.html
 \ 
 
+\   ---------   ans
+
+| 1			constant 	#CHAR
+| 2			constant 	#CELL
+
 \   ---------   memory map
 
 $0000       constant    I/O
@@ -127,14 +132,19 @@ CHARS/BLOCK
 
 $80        constant   (#up)       \ global user space
 
+$28	      	constant	#maxrdefers		\ since we don't know ahead of time, make room for max # words
+
 |+ FaultStacks  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - #TIB - (#blks) - (#up) -
+			#maxrdefers -
              constant RamTop    \ grows down
 
 \ Arrange memory to minimize problems in case of overflow.
 RamTop                        constant (first)    \ grows up
 (first) (#blks) +             constant (limit)
-(limit)                       constant (up0)      \ grows up 
-(up0) (#up) + (#numbuf) +     constant (numbuf0)     \ grows down
+(limit)                       constant (up0)      \ grows up
+(up0) (#up) +                 constant (rdefertbl)      
+(rdefertbl) #maxrdefers +  
+                (#numbuf) +   constant (numbuf0)     \ grows down
 (numbuf0)                     constant (slit-pad0)    \ grows up
 (slit-pad0) (#slit-pad) +     constant TIB         \ grows up
 TIB #TIB + (#rp) +            constant (rp0)    \ grows down
@@ -200,9 +210,7 @@ $63         constant    Icstore
 $66         constant    Iuser
 $67         constant    Iupidx
 $68         constant    IloopUp
-$69         constant    IuloopUp
 $6a         constant    IplusLoopUp
-$6b         constant    IuplusLoopUp
 $6c         constant    Icfill
 $6e         constant    Icmove
 $6f         constant    Iccompare

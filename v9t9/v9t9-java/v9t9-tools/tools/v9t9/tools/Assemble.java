@@ -10,9 +10,6 @@
  */
 package v9t9.tools;
 
-import ejs.base.logging.LoggingUtils;
-import gnu.getopt.Getopt;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -21,12 +18,15 @@ import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchemaProperty;
-import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntryFactory;
+import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.tools.asm.Assembler;
 import v9t9.tools.asm.FileContentEntry;
 import v9t9.tools.asm.inst9900.Assembler9900;
 import v9t9.tools.utils.Category;
+import ejs.base.logging.LoggingUtils;
+import gnu.getopt.Getopt;
 
 @Category(Category.DEVELOPMENT)
 public class Assemble {
@@ -122,15 +122,16 @@ public class Assemble {
             }
             case 'l':
             	String name = getopt.getOptarg();
-            	if (name.equals("-"))
-            		assembler.setList(System.out);
-            	else
-	            	try {
+            	if (name.equals("-")) {
+					assembler.setList(System.out);
+				} else {
+					try {
 	            		assembler.setList(new PrintStream(new File(name)));
 	            	} catch (IOException e) {
 	            		System.err.println("Failed to create list file: " + e.getMessage());
 	            		System.exit(1);
 	            	}
+				}
             	break;   
             case 'D': {
             	String equ = getopt.getOptarg();
@@ -185,6 +186,9 @@ public class Assemble {
         
         if (!assembler.assemble()) {
         	System.err.println("Errors during assembly");
+        	for (IMemoryEntry ent : assembler.getMemoryEntries()) {
+        		new File(((DiskMemoryEntry) ent).getSymbolFileName()).delete();
+        	}
         	System.exit(1);
         }
     }

@@ -11,8 +11,10 @@
 package v9t9.engine.memory;
 
 import ejs.base.settings.ISettingSection;
+import ejs.base.utils.Pair;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 
 
@@ -36,15 +38,30 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	}
 	public MultiBankedMemoryEntry(ISettingsHandler settings, IMemory memory,
 			String name, IMemoryEntry[] banks) {
-		super(memory, name, banks[0].getDomain(), banks[0].getAddr(), banks[0].getSize(), banks.length);
-		
-		this.banks = new MemoryEntry[banks.length];
-		System.arraycopy(banks, 0, this.banks, 0, banks.length);
-		
+		this(settings, memory, name, banks[0].getDomain(), banks[0].getAddr(), 
+				maxBankSize(banks), banks.length);
 		this.currentBank = null;
+		setBanks(banks);
 		selectBank(0);
 	}
-
+	/**
+	 * @param banks2
+	 * @return
+	 */
+	protected static int maxBankSize(IMemoryEntry[] banks) {
+		int size = 0;
+		for (IMemoryEntry bank : banks)
+			size = Math.max(size, bank.getSize());
+		return size;
+	}
+	public MultiBankedMemoryEntry(ISettingsHandler settings, IMemory memory,
+			String name, IMemoryDomain domain, int addr, int size, int bankCount) {
+		super(memory, name, domain, addr, size, bankCount);
+		
+		this.banks = new MemoryEntry[bankCount];
+		System.arraycopy(banks, 0, this.banks, 0, banks.length);
+	}
+	
 	@Override
 	protected void doSwitchBank(int bank) {
 		currentBank = banks[bank % bankCount];
@@ -62,6 +79,12 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 		if (currentBank == null)
 			return null;
 		return currentBank.lookupSymbol(addr);
+	}
+	@Override
+	public Integer findSymbol(String name) {
+		if (currentBank == null)
+			return null;
+		return currentBank.findSymbol(name);
 	}
 	
 	//@Override
@@ -104,5 +127,24 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	
 	public IMemoryEntry[] getBanks() {
 		return banks;
+	}
+	/**
+	 * @param cpuForthRomEntry
+	 * @param cpuRomBankEntry
+	 */
+	public void setBanks(IMemoryEntry... entries) {
+		System.arraycopy(entries, 0, this.banks, 0, entries.length);
+		memory.notifyListenersOfPhysicalChange(this);
+		selectBank(0);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.MemoryEntry#lookupSymbolNear(short, int)
+	 */
+	@Override
+	public Pair<String, Short> lookupSymbolNear(short addr, int range) {
+		if (currentBank == null)
+			return super.lookupSymbolNear(addr, range);
+		return currentBank.lookupSymbolNear(addr, range);
 	}
 }

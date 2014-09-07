@@ -14,7 +14,7 @@ import v9t9.common.speech.ISpeechPhraseListener;
 import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
 
-abstract class BaseLpcDataFetcher implements ILPCDataFetcher {
+public abstract class BaseLpcDataFetcher implements ILPCDataFetcher {
 	protected ILPCByteFetcher byteFetcher;
 	protected int bit;
 	private ListenerList<ISpeechPhraseListener> listeners;
@@ -100,4 +100,11 @@ abstract class BaseLpcDataFetcher implements ILPCDataFetcher {
 		
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.speech.ILPCDataFetcher#isDone()
+	 */
+	@Override
+	public boolean isDone() {
+		return false;
+	}
 }

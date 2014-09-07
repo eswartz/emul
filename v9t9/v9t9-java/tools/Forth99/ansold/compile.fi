@@ -1,0 +1,541 @@
+\   compile.fi
+\ 
+\   (c) 2010-2011 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+[IFUNDEF] STATE
+User STATE
+[THEN]
+
+[IFUNDEF] [
+: [
+    0 state !
+; immediate target-only
+[THEN]
+
+[IFUNDEF] ]
+: ]
+    -1 state !
+; target-only
+[THEN]
+
+
+: lastnfa  ( -- gaddr )
+    latest
+;
+
+
+: lastxt    ( -- xt )
+    lastnfa nfa>xt
+;
+
+\   Words required by cross-compiler, not in standard.
+
+[IFUNDEF] noop
+: noop ;
+[THEN]
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\
+
+: ?comp
+    state @ 0= err-compile-only ?throw
+;
+
+\ Hide a word while compiling, to allow redefining a word in terms of the same name
+: smudge
+    lastnfa 
+    dup gc@ |srch xor swap gc!
+;
+
+| : parse-def-name ( c"..."  -- caddr 0 | nfa 1|-1 ) \ "word
+    parse-name
+    (lookup)
+;
+
+| : name"  ( c"word" -- cstr ) 
+    \ Get name
+    parse-def-name
+    
+    if  msg-redefining message  drop  here
+    then 
+;
+
+: name, ( "name" -- )
+    name"
+    
+    \ Get space for name
+    GDP @  >r 
+    c@ &nmask min    dup here c! 
+    1+  dup  GDP +!
+    
+    \ Lay down name field
+    here r@ rot  cgmove
+    
+    here dup (register-symbol)
+    
+    \ current @ !       \ !!!
+    r>  >latest !
+;
+
+\ Optionally pre-parse the string in the input stream and manipulate the dictionary
+\ before the definition is started.
+\ DeferROM (creat)  ( c"xxx" -- c"xxx" )
+
+: CREATE
+\    (creat)     
+
+    align
+    
+    name,     
+    
+    \ lay down XT
+    here  GDP @  g!
+    #cell GDP +! 
+    
+    lastnfa id.
+    
+    smudge
+
+    \ lay down CFA
+    dovar,
+; target-only
+
+\ \\\\\\\\\\\\\\\\\\\\\\
+
+[IFUNDEF] [COMPILE]
+: [COMPILE]
+    bl word find
+    if
+        postpone literal compile,
+    else
+        huh?
+    then
+
+; immediate target-only
+[THEN]
+
+[IFUNDEF] POSTPONE
+: POSTPONE
+    bl word find
+    if
+        compile,
+    else
+        huh?
+    then        
+; immediate target-only
+[THEN]
+
+
+
+User csp
+
+| User leave-list       \ pointer to linked list of leaves, 
+                    \ @ branch pos of last leave
+
+
+: !csp
+    sp@ csp !
+    0 leave-list !
+; target-only
+
+: ?csp
+    sp@ csp @ - err-control-nesting ?throw
+; target-only
+
+\ Optionally add behavior at a colon definition
+\ User #(:)  ( -- )
+
+\ Optionally finish a definition at a semicolon
+\ User #(;) ( -- )
+
+\ | : exec-hook
+\    @ ?dup if execute then
+\ ;
+
+: :
+    \ ?exec
+    !csp
+    create smudge ]
+    lastxt dp !  docol,
+    reset-locals
+   \ #(:) exec-hook
+; target-only
+
+: ;
+   \ #(;) exec-hook
+    finish-locals
+    ?csp
+    [compile] ;s
+    smudge postpone [
+; immediate target-only  
+
+: ?pairs    ( i*x tag tag' -- )
+    - err-control-nesting ?throw
+;
+
+[IFUNDEF] BACK
+: BACK  ( addr opc -- )
+    >r here - 
+    r> jmpoffsalloc,
+; target-only
+[THEN]
+
+[IFUNDEF] IF
+: IF
+    ?comp
+    [compile] 0branch
+    >fixup
+     
+    2
+; immediate target-only
+
+: SKIP
+    ?comp
+    [compile] branch
+    >fixup
+     
+    2
+; immediate target-only
+[THEN]
+
+
+
+[IFUNDEF] THEN
+: THEN
+    ?comp 
+    2 ?pairs
+    here over - jmpoffs,
+; immediate target-only
+[THEN]
+
+[IFUNDEF] ELSE
+: ELSE
+    ?comp
+    2 ?pairs
+    [compile] branch
+    >fixup
+    swap 2
+    postpone then 2
+; immediate target-only
+[THEN]
+
+
+| : (leave)
+    [compile] branch  
+    >fixup
+    leave-list @ ,      \ store last fixup addr
+    leave-list !        \ store new addr
+; target-only
+
+[IFUNDEF] DO
+: DO
+    ?comp
+    ItoR_d ,
+    here 
+    0  \ not ?do 
+    3
+; immediate target-only
+
+: ?DO
+    ?comp
+    [compile] (?do)
+    
+    >fixup
+    
+    here -1    \ ?do
+    3
+; immediate target-only
+
+[THEN]
+
+[IFUNDEF] LOOP
+| : leave-resolve
+\   handle LEAVE references 
+
+    leave-list @
+    begin       
+        dup         \ ( pos pos )
+    while
+        dup @ swap          \ ( new-pos pos )
+        here over -         \ ( new-pos pos jmp )
+        jmpoffs,
+    repeat
+    leave-list !
+; target-only
+
+| : loop-compile ( offs opc -- )
+\   normal loop part
+
+    swap 3 ?pairs 
+    
+    swap >r  \ ?do
+    
+    \ loop op
+    compile,
+    
+    \ branch follows
+    ['] 0branch  back
+    
+    \ for ?do, provide jump for exit
+    r> if  here over - jmpoffs, then
+
+    leave-resolve
+    [compile] unloop
+; target-only
+
+: LOOP
+    ?comp
+    ['] (loop) loop-compile
+; immediate target-only
+
+: +LOOP
+    ?comp
+    ['] (+loop) loop-compile
+; immediate target-only
+
+[IFDEF] (uloop)
+: ULOOP
+    ?comp
+    ['] (uloop) loop-compile
+; immediate target-only
+
+: U+LOOP
+    ?comp
+    ['] (u+loop) loop-compile
+; immediate target-only
+[THEN]
+
+[THEN]
+
+[IFUNDEF] UNLOOP
+: UNLOOP
+    r> rdrop rdrop >r
+; target-only
+[THEN]
+test" unloop 3 >r 2 1 do loop r> 3 ="
+
+
+[IFUNDEF] LEAVE
+: LEAVE
+    ?comp
+
+    [compile] branch
+
+    (leave)
+; immediate target-only
+[THEN]
+
+[IFUNDEF] BEGIN
+: BEGIN
+    ?comp
+    here 1
+; immediate target-only
+[THEN]
+
+[IFUNDEF] UNTIL
+: UNTIL
+    ?comp
+    1 ?pairs
+    ['] 0branch back
+; immediate target-only
+[THEN]
+
+[IFUNDEF] AGAIN
+: AGAIN
+    ?comp
+    1 ?pairs
+    ['] branch back
+; immediate target-only
+[THEN]
+
+[IFUNDEF] WHILE
+: WHILE
+    postpone if
+    2+
+; immediate target-only
+[THEN]
+
+[IFUNDEF] REPEAT
+: REPEAT
+    ?comp
+    >r >r postpone again
+    r> r> 2- 
+    postpone then
+; immediate target-only
+[THEN]
+
+0 [if]
+    [IFUNDEF] CASE
+    : CASE
+        ?comp
+        csp @       \ save old params
+        !csp 
+        4
+    ; immediate target-only
+    [THEN]
+[then]
+    
+0 [if]
+    [IFUNDEF] OF
+    : OF
+        ?comp
+        4 ?pairs
+        [compile] (of)
+        >fixup 
+        5
+    ; immediate target-only
+    [THEN]
+[then]
+    
+0 [if]
+    [IFUNDEF] ENDOF
+    : ENDOF
+        ?comp
+        5 ?pairs
+        [compile] branch
+        >fixup
+        swap 2 postpone then
+        4
+    ; immediate target-only
+    [THEN]
+[then]
+    
+0 [if]
+    [IFUNDEF] ENDCASE
+    : ENDCASE
+        ?comp
+        4 ?pairs
+        [compile] drop
+        begin
+            sp@ csp @ = 0= 
+        while
+            2 postpone then
+        repeat
+        csp !
+    ; immediate target-only
+    [THEN]
+[then]
+
+[IFUNDEF] RECURSE
+: RECURSE
+    lastxt compile,
+; immediate target-only
+[THEN]
+
+[IFUNDEF] EXIT
+: EXIT
+    ?comp
+    exit-locals
+    [compile] ;s
+; immediate target-only
+[THEN]
+
+[IFUNDEF] DEFER
+: DEFER
+    create 
+    lastxt dp !  dodefer,
+; target-only
+[THEN]
+
+[IFUNDEF] IS
+: IS ( xt "deferred" -- )
+    is-check  is,
+; target-only
+: IS? ( "deferred" -- xt )
+    is-check  is?,
+; target-only
+[THEN]
+
+[IFUNDEF] CONSTANT
+: CONSTANT
+    create 
+    lastxt dp !
+    docon,
+; target-only
+[THEN]
+
+[IFUNDEF] VARIABLE
+: VARIABLE
+    create  0 , 
+; target-only
+[THEN]
+
+[IFUNDEF] VALUE
+: VALUE
+    create
+    lastxt dp !
+    dovalue, 
+; target-only
+[THEN]
+
+
+[IFUNDEF] TO
+: TO ( val "name" -- )
+    '
+    dup is-local if
+        to-local    
+    else
+        do>to,
+        state @ if
+            postpone literal  postpone !
+        else
+            !
+        then
+    then
+; immediate target-only
+[THEN]
+
+[IFUNDEF] UDP
+2 RamVar UDP   target-only    
+[THEN]
+
+[IFUNDEF] USER
+: USER
+    create UDP @ 
+    2 UDP +!
+    lastxt dp !  douser,
+; target-only
+[THEN]
+
+[IFUNDEF] :NONAME
+: :NONAME
+    here
+
+    ]
+   
+    \ CFA
+    docol,
+
+    !csp
+; target-only
+[THEN]
+
+
+\ \\\\\\\
+
+\ variable envlast
+
+: env:  ( "name" value -- )
+    create , \ envlast @ ,      \ value, link to previous
+    \ latest envlast !
+    does> @
+;
+
+: has?
+    parse-def-name
+    if 
+        nfa>xt execute
+    else
+        nip 0
+    then    
+; target-only
+
+\ 0 ( has? standard-threading )     constant standard-threading 
+\ 1 ( has? inlining-next )  constant inlining-next
+\ has? profiling            constant profiling
+

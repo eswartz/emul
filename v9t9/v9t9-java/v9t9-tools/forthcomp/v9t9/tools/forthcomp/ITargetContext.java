@@ -11,8 +11,10 @@ import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
+import v9t9.tools.forthcomp.words.TargetCodeWord;
 import v9t9.tools.forthcomp.words.TargetColonWord;
 import v9t9.tools.forthcomp.words.TargetConstant;
+import v9t9.tools.forthcomp.words.TargetDefer;
 import v9t9.tools.forthcomp.words.TargetUserVariable;
 import v9t9.tools.forthcomp.words.TargetValue;
 import v9t9.tools.forthcomp.words.TargetVariable;
@@ -26,35 +28,41 @@ public interface ITargetContext {
 
 	void setHostContext(HostContext hostCtx);
 
-	void defineBuiltins() throws AbortException;
+	// define the minimal prims to be able to compile colon defs
+	void defineColonPrims() throws AbortException;
+	// define the remaining prims, for bootstrapping
+	void definePrims() throws AbortException;
 
+	int getCellSize();
+	
 	/** read the value in memory */
 	int readCell(int addr);
+	void writeCell(int addr, int cell);
 
 	/** read the addr in memory, which may be a relocation
 	 * @return negative value for relocation, else literal value */
 	int readAddr(int addr);
 
+	int writeCell(byte[] memory, int offs, int cell);
+
+	int readChar(int addr);
+	void writeChar(int addr, int ch);
+
+
+
+
 	int addRelocation(int addr, RelocType type, int target);
 
 	int getDP();
 
-	/**
-	 * @param dp the dp to set
-	 */
 	void setDP(int dp);
 
+	/** add bytes, return addr of allocation */
 	int alloc(int size);
 
-	/**
-	 * @return
-	 */
+	/** add #cell bytes, return addr of allocation */
 	int allocCell();
 
-	/**
-	 * @param relocIndex
-	 * @return
-	 */
 	int resolveAddr(int relocIndex);
 
 	int findReloc(int addr);
@@ -78,29 +86,44 @@ public interface ITargetContext {
 	 * @param token
 	 * @return
 	 */
-	IWord defineForward(String token, String location);
+	ITargetWord defineForward(String token, String location);
+	void resolveForward(DictEntry entry);
 
-	/**
-	 * 
-	 */
 	void alignDP();
 
 	int getAlignedDP();
 
 	int align(int bytes);
 
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.words.TargetContext#convertCell(int)
+	void defineCompilerWords(HostContext hostContext);
+
+	void setExport(boolean export);
+
+	boolean isExport();
+
+	void setExportNext(boolean export);
+
+	void dumpDict(PrintStream out, int from, int to);
+
+	/**
+	 * @return
 	 */
-	int writeCell(byte[] memory, int offs, int cell);
+	int getBaseDP();
 
-	void writeCell(int addr, int cell);
+	/**
+	 * @param baseDP the baseDP to set
+	 */
+	void setBaseDP(int baseDP);
 
-	void writeChar(int addr, int ch);
+	/**
+	 * @param logfile
+	 */
+	void setLog(PrintStream logfile);
 
-	int getCellSize();
+	Collection<ForwardRef> getForwardRefs();
 
-	int readChar(int addr);
+	Map<String, DictEntry> getTargetDictionary();
+
 
 	TargetVariable create(String name, int bytes);
 
@@ -111,8 +134,19 @@ public interface ITargetContext {
 
 	TargetValue defineValue(String name, int value, int cells)
 			throws AbortException;
+	
+	TargetUserVariable defineUser(String name, int bytes) throws AbortException;
 
 	/**
+	 * Define a deferred word, whose initial execution semantics cause an error.
+	 * @param name
+	 */
+	TargetDefer defineRomDefer(String name) throws AbortException;
+
+
+	/**
+	 * Compile code for (DOVALUE)
+	 * 
 	 * At runtime, push the # of cells to the stack from the current DP.
 	 * Return the location of the value.  The exact space must be allocated
 	 * so the value can change.
@@ -122,7 +156,10 @@ public interface ITargetContext {
 	 */
 	int compilePushValue(int cells, int value) throws AbortException;
 
-	/** At runtime, push the value in the given # of cells to the stack. 
+	/** 
+	 * Compile code for (DOCONSTANT)
+	 * 
+	 * At runtime, push the value in the given # of cells to the stack. 
 	 * Can be optimized.
 	 * @param value
 	 * @param cells
@@ -130,24 +167,44 @@ public interface ITargetContext {
 	 */
 	void compileDoConstant(int value, int cells) throws AbortException;
 
-	/** At runtime, push the user variable for the given index. 
+	/** 
+	 * Compile code for (DOUSER)
+	 * 
+	 * At runtime, push the user variable for the given offset into the current user table. 
 	 * Can be optimized.
 	 */
-	void compileDoUser(int index) throws AbortException;
-
-	TargetUserVariable defineUser(String name, int bytes) throws AbortException;
-
-	void initCode();
-
-	void alignBranch();
+	void compileDoUser(int offset) throws AbortException;
 
 	/**
-	 * Compile a word onto the current dictionary entry
+	 * Initialize the current entry to accept code.  E.g. align the DP.
 	 */
-	void compile(ITargetWord word);
+	void initWordEntry();
 
+	/**
+	 * Compile the execution semantics of a word onto the current code entry.
+	 * @throws AbortException 
+	 */
+	void compile(ITargetWord word) throws AbortException;
+
+	/**
+	 * Compile code that pushes the given literal onto the stack.
+	 * @param value
+	 * @param isUnsigned
+	 * @param optimize if true, use whatever means to push the literal.
+	 * Otherwise, emit a well-known format where (for instance) the
+	 * literal can be changed later.
+	 */
 	void compileLiteral(int value, boolean isUnsigned, boolean optimize);
 
+	/**
+	 * Compile code that pushes the given literal as a double onto the stack.
+	 * @param valueLo next-to-top entry
+	 * @param valueHi top entry
+	 * @param isUnsigned
+	 * @param optimize if true, use whatever means to push the literal.
+	 * Otherwise, emit a well-known format where (for instance) the
+	 * literal can be changed later.
+	 */
 	void compileDoubleLiteral(int valueLo, int valiueHi, boolean isUnsigned,
 			boolean optimize);
 
@@ -181,80 +238,49 @@ public interface ITargetContext {
 
 	/**
 	 * here over - swap !
-	 * @throws AbortException TODO
 	 */
 	void resolveFixup(HostContext hostContext) throws AbortException;
 
-	void compileBack(HostContext hostContext, boolean conditional)
-			throws AbortException;
+	void compileBack(HostContext hostContext, boolean conditional) throws AbortException;
 
 	void clearDict();
 
-	/** compile cell value */
-	void compileCell(int val);
+	/** append cell value to dictionary */
+	void buildCell(int val);
 
-	void compileChar(int val);
+	/** append char value to dictionary */
+	void buildChar(int val);
 
-	/** compile address */
+	/** compile code that pushes the address of the word */
 	void compileTick(ITargetWord word);
 
-	void compileWordParamAddr(TargetValue word);
+	/** for TO value */
+	void compileWordParamAddr(ITargetWord word);
 
 	void pushLeave(HostContext hostContext);
 
 	void loopCompile(HostContext hostCtx, ITargetWord loopCaller)
 			throws AbortException;
 
-	void defineCompilerWords(HostContext hostContext);
-
-	void setExport(boolean export);
-
-	boolean isExport();
-
-	void setExportNext(boolean export);
-
-	void dumpDict(PrintStream out, int from, int to);
-
-	/**
-	 * @return
-	 */
-	int getBaseDP();
-
-	/**
-	 * @param baseDP the baseDP to set
-	 */
-	void setBaseDP(int baseDP);
-
-	/**
-	 * @param logfile
-	 */
-	void setLog(PrintStream logfile);
-
-	/**
-	 * @return
-	 */
-	Collection<ForwardRef> getForwardRefs();
-
-	/**
-	 * @return
-	 */
-	Map<String, DictEntry> getTargetDictionary();
-
 	boolean isLocalSupportAvailable(HostContext hostContext)
 			throws AbortException;
 
-	void ensureLocalSupport(HostContext hostContext) throws AbortException;
-
+	/** Compile code for (LOCALS:) */
 	void compileSetupLocals(HostContext hostContext) throws AbortException;
 
+	/** Compile code for (LOCALS.) */
 	void compileAllocLocals(int count) throws AbortException;
 
+	/** Compile code for (LOCAL) */
 	void compileLocalAddr(int index);
 
+	/** Compile code for (LOCAL@) */
 	void compileFromLocal(int index) throws AbortException;
 
+	/** Compile code for (LOCAL!) */
 	void compileToLocal(int index) throws AbortException;
 
+	/** Compile code for (;LOCALS) */
 	void compileCleanupLocals(HostContext hostContext) throws AbortException;
 
 	/* (non-Javadoc)
@@ -297,37 +323,68 @@ public interface ITargetContext {
 	 */
 	void markHostExecutionUnsupported();
 
+	boolean isNativeDefinition();
+	
+	/** Ensure the XT of the given word is appended to the dictionary entry */
+	void buildXt(ITargetWord word);
+	
 	void compileCall(ITargetWord word);
 
-	void compilePostpone(ITargetWord word) throws AbortException;
-
+	/** In CREATE'd word dictEntry, change the execution behavior to invoke targetDP 
+	 *
+	 * @param hostContext
+	 * @param dictEntry CREATE'd word
+	 * @param targetDP the XT of the DOES> behavior
+	 */
 	void compileDoes(HostContext hostContext, DictEntry dictEntry, int targetDP)
 			throws AbortException;
 
-	void compileString(HostContext hostContext, String string)
+	Pair<Integer, Integer> buildPushString(HostContext hostContext, String string)
 			throws AbortException;
+
+	void compileUser(TargetUserVariable var);
+
+	int getUP();
+
+	void dumpStubs(PrintStream logfile);
+
+	IWord parseLiteral(String token);
 
 	/**
 	 * Prepare for DOES>
 	 * @param hostContext
 	 * @return target addr for DOES
 	 */
-	int compileDoDoes(HostContext hostContext) throws AbortException;
+	int buildDoes(HostContext hostContext) throws AbortException;
 
 	/**
-	 * @param opcode
+	 * @param offset
 	 */
-	void compileOpcode(int opcode);
+	void compileDoRomDefer(int offset);
 
-	void compileUser(TargetUserVariable var);
+	/**
+	 * @param hostContext
+	 * @param word
+	 * @throws AbortException
+	 */
+	void compileToRomDefer(HostContext hostContext, TargetDefer word)
+			throws AbortException;
 
 	/**
 	 * @return
 	 */
-	int getUP();
+	boolean isTestMode();
 
-	void dumpStubs(PrintStream logfile);
+	/**
+	 * @param name
+	 * @return
+	 */
+	TargetCodeWord defineCodeWord(String name);
+	void compileEndCode();
 
-	IWord parseLiteral(String token);
+	/**
+	 * @return
+	 */
+	PrintStream getLog();
 
 }

@@ -265,7 +265,7 @@ public class VdpImageImporter {
 			mx = 256;
 			break;
 		default:
-			throw new IllegalStateException();	
+			return;
 		}
 		
 		int ystep = vdp.isInterlacedEvenOdd() ? 2 : 1;

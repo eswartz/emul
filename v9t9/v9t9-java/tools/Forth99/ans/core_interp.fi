@@ -1,0 +1,670 @@
+
+
+
+[IFUNDEF] (match)       
+
+\   Match 'char' inside [caddr..caddr+u) and return length of word
+\ | :: (match)       ( caddr len char xt -- u )
+\ 
+\     caddr
+\     len 0 ?do
+\         dup c@
+\         char xt execute   ( caddr u t/f )
+\         if  drop i unloop exit then
+\         1+
+\     loop
+\ 
+\     drop len
+\ ;
+
+\   Match 'char' inside [caddr..caddr+len) and return the address.
+\	if the end is reached, caddr' points to caddr+len.
+| : (match-spaces)       ( caddr len ch -- caddr' )
+
+	drop	( ignore ch )
+	0 ?do	( caddr' )
+        dup c@
+        $20 <= if 
+        	unloop exit 
+        then
+        1+	( caddr' )
+    loop
+;
+
+| : (match-char)       ( caddr len ch -- caddr' )
+
+	>r  ( R: ch )
+	0 ?do	( caddr' )  ( R: ch loop-sys )
+        dup c@
+        j = if 
+        	unloop rdrop  exit 
+        then
+        1+	( caddr' )
+    loop
+    
+    rdrop	\ ch
+;
+
+
+[THEN]
+
+\ : mystr s" 1111123456" ;
+\ test" (match) mystr $32 - (match) mystr drop swap type 1"
+
+\   Return bounds of remaining source
+: (src>)        ( -- caddr u )
+    source  
+    >in @ 
+    - 0 max
+    swap  >in @ +  swap
+;
+
+\   (>src) advances >in by u' bytes
+: (>src)            \ ( u' -- )
+    1+ >in +!       \ update >in
+;
+
+
+\ :: (PARSE)     ( ch xt -- c-addr u )  \ "ccc<char>"
+\ \   Parse ccc delimited by the delimiter char.  Use xt to interpret 'ch'.
+\ \   c-addr is the address (within the input buffer) and u is the length of the parsed string. If the parse area was empty, the
+\ \   resulting string has a zero length.
+\     (src>) over :> caddr 
+\     ch xt (match)
+\     dup (>src)
+\     caddr swap
+\ ;
+
+
+: PARSE     ( char "ccc<char>" -- c-addr u )
+\   Parse ccc delimited by the delimiter char.
+\   c-addr is the address (within the input buffer) and u is the length of the parsed string. 
+\ 	If the parse area was empty, the resulting string has a zero length.
+
+    (src>)		( ch caddr u )
+    
+    over >r		( R: caddr )   
+
+	rot >r	 	( R: caddr ch)
+
+    r@ $20 = if 
+    	['] (match-spaces)  
+    else
+    	['] (match-char)
+    then
+
+	r>  swap execute
+	    
+    r@				( caddr' caddr )
+    
+    -				( u )
+    
+    dup	(>src)
+    
+    r>	swap		( caddr u )
+;
+
+[THEN]
+
+\   Skip spaces in source
+| : (skip-spaces)   ( -- )
+    (src>)
+    0 ?do
+        dup c@ bl > if
+            leave
+        else
+            1+ 1 >in +!
+        then
+    loop
+    drop
+;
+
+| : (parse-word)  ( ch -- caddr u )
+    (skip-spaces)
+    parse
+;
+
+
+[IFUNDEF] WORD
+: WORD  \   ( char "<chars>ccc<char>" -- c-addr )
+    (parse-word) 
+    2dup + bl swap c!   \ word ends with space
+    HERE (>c)           \ copy to word pad
+    HERE                \ leave addr
+;
+[THEN]
+
+
+[IFUNDEF] >NUMBER
+: dn* ( ud un -- ud )
+    \           hi.lo 
+    \       *       n
+    \   -------------
+    \   hi.lo*n lo.lo*n
+    \   lo.hi*n 0
+    dup rot     \ ( lo-d un un hi-d )
+    um*         \ ( lo-d un d.hiprod )
+    drop >r     \ save lo.hi*n
+    um*         \ ( d.loprod )
+    0 r>        \ create d.hiprod
+    d+ 
+;
+
+( Convert the given char to its numeric value ) 
+:   C>N ( ch -- u | -1 )
+    dup [char] 0 [ [char] 9 1+ literal ] within if
+        [char] 0 -  
+    else dup [char] a [ [char] z 1+ literal ] within if
+        [ char a &-10 + literal ] -  
+    else dup [char] A [ [char] Z 1+ literal ] within if
+        [ char A &-10 + literal ] -  
+    else
+        -1 or
+    then then then
+;
+
+( Tell if the given char is a valid number in the given base )
+:   >digit ( base ch -- u true | false )
+	C>N  		( base n | base FFFF )  
+	2dup U> if
+		nip true
+	else
+		2drop false
+	then		
+;
+
+test" >digit 10 [char] 9 >digit swap 9 = AND "
+test" >digit 10 [char] E >digit 0= "
+test" >digit 16 [char] E >digit swap &14 = AND "
+test" >digit 10 [char] * >digit 0=  "
+
+
+| : (skip)  ( caddr u -- caddr+1 u-1 )
+    1 /string
+;
+
+(
+ud2 is the unsigned result of converting the characters within the string specified by 
+c-addr1 u1 into digits, using the number in BASE, and adding each into ud1 after 
+multiplying ud1 by the number in BASE. Conversion continues left-to-right until 
+a character that is not convertible, including any + or -, is encountered or the 
+string is entirely converted. c-addr2 is the location of the first unconverted 
+character or the first character past the end of the string if the string was 
+entirely converted. u2 is the number of unconverted characters in the string. 
+An ambiguous condition exists if ud2 overflows during the conversion. 
+)
+\   This ignores '+' and '-' and '.' and stops there.
+\   The outer NUMBER interpreter will detect leading signs
+\   and perform an initial 
+\   and then parse the number 
+\   continue parsing, setting dpl.
+: >NUMBER   \ CORE ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )
+    begin           \ ( ud1 c-addr1 u1 )
+        dup         \ chars left?
+        if
+            over c@     
+            base @
+            swap >digit      \ legal digit?
+        else
+            0
+        then        \ ( ud1 c-addr1 u1 # -1 | ud1 c-addr1 u1 0 )
+    while
+        >r          \ save digit
+        2swap       \ get accum
+        base @ dn*
+        r> s>d d+   \ add digit
+        2swap
+        (skip)      \ advance pointer   
+\       2dup . .
+    repeat
+;
+[THEN]
+
+test" d+ $1111.2222 $9999.EEEE d+ $AAAB.1110 d="
+
+|test : testnum s" 4294967295" ;
+test" >number 0. testnum  >number 2drop 1. d+ or 0="
+
+|test : testnum s" 18446744069414584319" ;
+test" >number 0. testnum  >number 2drop  1. d+ or 0="
+
+
+
+
+| User loadfile
+| User loadline
+
+: (
+    [char] )  parse 2drop
+;   immediate target-only
+
+: \
+	\ TODO block
+    ( blk @
+     if 
+        \ block file
+        \ >in @ c/l / 1+ c/l * >in ! exit
+        10 parse 2drop 
+     else )
+        \ consume rest of buffer
+        source >in ! drop 
+    ( then )
+; immediate target-only
+
+
+[IFUNDEF] CHAR
+: CHAR  ( -- c )
+    bl parse
+    drop c@
+;
+[THEN]
+
+
+| : overstrike
+    8 emit bl emit 8 emit
+;
+
+| : clear ( n -- )
+    0 ?do  overstrike  loop
+;
+              
+\ : prompt ." type stuff> " ;
+\ test" accept prompt pad 5 accept pad swap $2a emit type $2a emit  1"
+
+
+: core-REFILL    ( -- flag )
+
+\   Attempt to fill the input buffer from the input source, returning
+\   a true flag if successful.
+\
+\   When the input source is the user input device, attempt to receive
+\   input into the terminal input buffer. If successful, make the
+\   result the input buffer, set >IN to zero, and return true. Receipt
+\   of a line containing no characters is considered successful. If
+\   there is no input available from the current input source, return
+\   false.
+\
+\   When the input source is a string from EVALUATE, return false and
+\   perform no other action.
+\
+\   When the input source is a block, make the next block the input source
+\   and current input buffer by adding one to the value of BLK and setting
+\   >IN to zero. Return true if the new value of BLK is a valid block number,
+\    otherwise false.
+ 
+	\ TODO block
+   ( blk @ ?dup if
+        1 blk +!
+        block >source !  chars/block #source !
+        0 >in !
+        true
+    
+    else )
+        source-id
+        dup -1 = if         \ evaluate string
+            drop false      \ end.
+        else
+         ?dup 0= if         \ user input device
+            TIB #TIB  accept  #source !  TIB >source !
+            0 >in ! 
+            bl emit
+            true
+         else 
+            \ fileid
+            err-file-i/o ?throw
+        then  
+        then
+    ( then )
+;
+
+' core-REFILL	TO	REFILL
+
+[IFUNDEF] QUERY
+\ : QUERY
+\ ;
+[THEN]
+
+\   Interpret counted string as number,
+\   and store decimal point location in DPL.
+
+\ NOTE: when floating point is enabled, this definition of (NUMBER) is not ANS compatible -- double numbers may only have '.' at end, not embedded.
+
+| User dpl
+
+: core-(number)    ( addr -- ud dpl t | f )
+\   .s
+
+    0 0 rot
+    
+    base @ >r               \ save original base
+
+    count 
+
+    \ see if first char is '-'
+    over c@ [char] - = dup 
+    >r                      \ store sign flag
+    if (skip) then
+
+    \ check for base conversion
+    over c@ [char] $ = if
+        hex (skip)          \ use hex for '$'
+    else over c@ [char] & = if
+        decimal (skip)      \ use decimal for '&'
+    then then
+
+    -1 dpl !
+
+    >number
+    dup if      \ any invalid chars?
+        \ drop 
+        over c@ [char] . = if    \ did we stop at '.'?
+            over dpl !      \ don't store offset... too much work ;)
+            (skip)          \ skip '.'
+            >number         \ parse rest
+        then
+        dup if 
+            2drop 2drop 2rdrop false exit
+        then
+    then
+    2drop
+
+    r>              \ sign flag
+    if dnegate then
+
+    r> base !       \ original base
+
+    dpl @ 1+
+    
+    true
+    
+\   .s
+;
+
+' core-(NUMBER)		TO (NUMBER)
+
+[IFUNDEF] NUMBER
+
+\ Parse a number and push it or compile it
+: NUMBER ( caddr -- n|d|... )
+    (number)
+    if
+        if
+            state @ if  postpone dliteral  then 
+        else 
+            drop state @ if  postpone literal  then
+        then
+    else
+        here huh?  \ error
+    then
+;
+
+[THEN]
+
+
+[IFUNDEF] RESTORE-INPUT
+: RESTORE-INPUT ( xn ... x1 n -- )
+    ( 6 ) 5 <> 
+	abort" invalid restore-input"
+    >in !
+    \ TODO block
+    ( blk ! )
+    #source !  >source !
+    loadline ! loadfile !
+;
+[THEN]
+
+[IFUNDEF] SAVE-INPUT
+: SAVE-INPUT    ( -- xn ... x1 n )
+    loadfile @ loadline @
+    >source @ #source @
+    \ TODO block
+    ( blk @ )
+    >in @
+    ( 6 ) 5
+;
+[THEN]
+
+[IFUNDEF] SOURCE-ID
+: SOURCE-ID
+    loadline @ 0< if
+        -1
+    else
+        loadfile @
+    then
+;
+[THEN]
+
+[IFUNDEF] INTERPRET
+
+\   INTERPRETER
+\   ===========
+
+\   Source state is represented as follows:
+\   If blk=0, 'source-id' is 0 for keyboard, -1 for evaluate string, >0 for text file.
+\   else blk=blk # for source.
+\   For non-block stuff, we use loadfile/loadline to keep track of file source,
+\   and >source/#source for all input strings.
+\   loadfile=0 for user input, loadline<0 for evaluate string.
+
+\   Push the input state.
+: <input        ( xn ... x1 n -- R: xn ... x1 n )
+    r>
+    loadfile @ >r loadline @ >r
+    >source @ >r
+    #source @ >r
+    \ TODO block
+    ( blk @ >r )    
+    >in @ >r
+    >r  
+;
+
+: input>
+    r>
+    r> >in !
+    \ TODO block
+    ( r> blk ! )
+    r> #source !
+    r> >source !
+    r> loadline ! r> loadfile !
+    >r
+;
+
+: ,"
+    postpone s" dup >r  here (>c)  r> 1+ aligned allot  
+;
+
+| : huh?  ( caddr -- )
+    count type space
+    err-undefined throw
+;
+
+| : interpreter
+\        ( i*x c-addr u -- j*x )
+\
+\   Interpret one word
+    (lookup)        \ ( caddr 0 | xt 1=immed | xt -1 )
+    ?dup if
+        -1 =
+        state @ and     \ compiling and not immediate?
+        if
+            compile,
+        else
+            execute
+        then
+    else
+        \ must be a number
+        number
+    then
+;
+
+\ Parse word, which may be empty
+\ see DPANS94 A.6.2.2008
+| : PARSE-WORD  ( <spaces>name -- caddr u )
+    bl (parse-word)
+;
+
+\ Parse name, which must not be empty
+| : parse-name ( c"..."  -- caddr len )
+
+    parse-word
+    ?dup 0= if
+        err-empty-name throw
+    then
+;
+
+[IFUNDEF] ?STACK
+: ?stack
+   depth 0< if
+       ." stack empty!" cr
+       abort
+   then
+;
+[THEN]
+
+: interpret
+    begin
+        ?stack        
+        parse-word
+        dup
+    while
+        interpreter
+    repeat
+    2drop
+;
+
+: EVALUATE  ( i*x c-addr u -- j*x )
+    <input
+    -1 loadline !
+    0 loadfile !
+    \ TODO block
+    ( 0 blk ! )
+    #source !  >source !  
+    0 >in !
+    interpret
+    input>
+;
+[THEN]
+
+[IFUNDEF] QUIT
+
+| : (clrsrc)
+\ TODO block
+   ( 0 blk ! ) 
+    
+    0 loadfile ! 0 loadline !
+    \ 0 'lfind !		\ TODO: ?
+;
+
+| : ok-prompt?
+    \ print comments only when using user input
+\ TODO block    
+    ( blk @ source-id and 0= )
+    source-id 0= 
+    if 
+        state @ 0= if
+            msg-ok message  .s
+        then
+        cr
+    then
+;
+
+| : safe-interpret 
+	['] interpret catch
+    dup 0= if
+        drop  ok-prompt?        
+    else dup err-abort = if
+        err-abort message
+        abort
+    else dup err-abort" = if
+        \ ( abort" )
+    else
+        message cr
+        recurse
+    then then then
+;
+
+
+[IFUNDEF] STATE
+User STATE
+[THEN]
+
+[IFUNDEF] [
+: [
+    0 state !
+; immediate target-only
+[THEN]
+
+[IFUNDEF] ]
+: ]
+    -1 state !
+; target-only
+[THEN]
+
+
+: QUIT
+    rp0 rp! 
+    exc-init
+    (clrsrc)
+    postpone [  
+    begin   
+        ints-check
+        refill
+    while
+        safe-interpret
+    repeat
+    bye
+;
+[THEN]
+
+
+[IFUNDEF] [CHAR]
+: [CHAR]
+    char postpone literal ; immediate  target-only
+[THEN]
+
+[IFUNDEF] [IF]   ( i.e., should we define the directives? )
+
+: str=  s<> 0= ;
+
+| : comment? ( c-addr u -- c-addr u )
+        2dup s" (" str=
+        IF    postpone (
+        ELSE  2dup s" \" str= IF postpone \ THEN
+        THEN ;
+
+: [ELSE]
+    1 BEGIN
+    BEGIN bl word count dup WHILE
+        comment? 
+        2dup s" [IF]" str= >r 
+        2dup s" [IFUNDEF]" str= >r
+        2dup s" [IFDEF]" str= r> or r> or
+        IF   2drop 1+
+        ELSE 2dup s" [ELSE]" str=
+        IF   2drop 1- dup
+            IF 1+
+            THEN
+        ELSE
+            2dup s" [THEN]" str= >r
+            s" [THEN]" str= r> or
+            IF 1- THEN
+        THEN
+        THEN
+        ?dup 0= if exit then
+    REPEAT
+    2drop refill 0=
+    UNTIL drop 
+; immediate  target-only 
+  
+: [THEN] ( -- ) ; immediate  target-only
+
+: [IF] ( flag -- )
+    0= IF postpone [ELSE] THEN ; immediate  target-only 
+
+: defined? bl word find nip ;
+: [IFUNDEF] defined? 0= postpone [IF] ; immediate  target-only
+: [IFDEF] defined? postpone [IF] ; immediate  target-only
+
+[THEN]      ( done defining the directives )
+
+

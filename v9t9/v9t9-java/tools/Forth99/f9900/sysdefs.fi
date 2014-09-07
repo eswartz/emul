@@ -1,0 +1,55 @@
+\   sysdefs.fi
+\ 
+\   (c) 2010-2013 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+\ sizes of fixed areas
+$80         constant    (#RP)
+$80         constant    (#SP)
+
+\ minimum size is (2*n)+2 where n is cell size
+#cell 3 LSHIFT  2*  2+ 
+            constant   (#numbuf)
+$100        constant   (#slit-pad)
+$100        constant   #TIB
+
+|+ $400        constant    CHARS/BLOCK \ basic block size
+CHARS/BLOCK 
+    2 +     \ block # field (or 0x8000 for modified)
+            constant   (#blk)
+(#blk) 3 *  constant   (#blks)    \ total block space
+[THEN]
+
+$80        	constant   (#up)       \ global user space
+
+$28	      	constant	#maxrdefers		\ since we don't know ahead of time, make room for max # words
+ 
+|+ _RAM 
+	(#RP) - (#SP) - 
+	(#numbuf) - (#slit-pad) - 
+	#TIB - (#blks) - 
+	(#up) -
+	#maxrdefers -
+            					constant RamTop    \ grows down
+
+\ Arrange memory to minimize problems in case of overflow.
+RamTop							constant (first)    \ grows up
+(first) (#blks) +				constant (limit)
+(limit)							constant (up0)      \ grows up 
+(up0) (#up) +					constant (rdefertbl)      
+(rdefertbl) #maxrdefers +		
+	 (#numbuf) + 
+								constant (numbuf0)     \ grows down
+(numbuf0)						constant (slit-pad0)    \ grows up
+(slit-pad0) (#slit-pad) +		constant TIB         \ grows up
+TIB #TIB + (#rp) +				constant (rp0)    \ grows down
+(rp0) (#sp) +					constant (sp0)      \ grows down
+
+
+
+

@@ -44,39 +44,89 @@ public abstract class AssemblerOperandParserStage implements IOperandParserStage
 	}
 
 	/*
-	 * term ExprRest 
-	 * | '+' term ExprRest
-	 * | '-' term ExprRest
+	
+
+expr -> expr ('>' | '>=' | '<' | '<=') cond | cond
+cond -> cond ('+' | '-')  term | term
+term -> term '*' factor | factor
+factor -> '(' expr ')' | identifier | number
+
+	 */
+	/*
+	 * cond ExprRest 
+	 * | '>' cond ExprRest
+	 * | '<' cond ExprRest
+	 * | '==' cond ExprRest
+	 * | '>=' cond ExprRest
+	 * | '<=' cond ExprRest
 	 */
 	protected AssemblerOperand parseExpr() throws ParseException {
-		AssemblerOperand op = parseExprRest(parseTerm());
+		AssemblerOperand cond = parseCond();
+		AssemblerOperand op;
+		do {
+			op = parseExprRest(cond);
+			if (op == cond)
+				break;
+			cond = op;
+		} while (true);
 		return op;
 	}
 
-	private AssemblerOperand parseExprRest(AssemblerOperand term) throws ParseException {
+	private AssemblerOperand parseExprRest(AssemblerOperand cond) throws ParseException {
+		int t = tokenizer.nextToken();
+		if (t == '>' || t == '<' || t == '=' || t == '≥' || t == '≤') {
+			AssemblerOperand op = new BinaryOperand(t, cond, parseCond());
+			return op;
+		}
+		tokenizer.pushBack();
+		return cond;
+	}
+	
+	protected AssemblerOperand parseCond() throws ParseException {
+		AssemblerOperand term = parseTerm();
+		AssemblerOperand op;
+		do {
+			op = parseCondRest(term);
+			if (op == term)
+				break;
+			term = op;
+		} while (true);
+		return op;
+	}
+
+	private AssemblerOperand parseCondRest(AssemblerOperand cond) throws ParseException {
 		TokenizerState state = tokenizer.getState();
 		int t = tokenizer.nextToken();
 		if (t == '+' || t == '-') {
 			// HACK: the reg inc/dec format has a trailing + or -
 			try {
-				AssemblerOperand op = parseExprRest(new BinaryOperand(t, term, parseTerm()));
+				//AssemblerOperand op = parseCondRest(new BinaryOperand(t, cond, parseTerm()));
+				AssemblerOperand op = new BinaryOperand(t, cond, parseTerm());
 				return op;
 			} catch (ParseException e) {
 			}
 		}
 		tokenizer.setState(state);
-		return term;
+		return cond;
 	}
 
 	private AssemblerOperand parseTerm() throws ParseException {
-		AssemblerOperand op = parseTermRest(parseFactor());
+		AssemblerOperand factor = parseFactor();
+		AssemblerOperand op;
+		do {
+			op = parseTermRest(factor);
+			if (op == factor)
+				break;
+			factor = op;
+		} while (true);
 		return op;
 	}
 
 	private AssemblerOperand parseTermRest(AssemblerOperand factor) throws ParseException {
 		int t = tokenizer.nextToken();
-		if (t == '*' || t == '/') {
-			AssemblerOperand op = parseExprRest(new BinaryOperand(t, factor, parseFactor()));
+		if (t == '*' || t == '/' || t == '«' || t == '»') {
+			//AssemblerOperand op = parseExprRest(new BinaryOperand(t, factor, parseFactor()));
+			AssemblerOperand op = new BinaryOperand(t, factor, parseFactor());
 			return op;
 		}
 		tokenizer.pushBack();

@@ -1,0 +1,715 @@
+\   f9900rombank.f99
+\ 
+\   (c) 2014 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+\	This ROM is built as a bank along with f9900rombank.tsm.
+
+\   ROM Memory layout
+
+0 <export
+
+include		rom_equs.fi
+include		grom_equs.fi
+
+export>
+
+ForthROM  	  	dp!
+
+\ 	reset address @RESET
+0  ,
+
+\	tick address @TICK
+0  ,
+
+\   cold address @COLD
+0 ,
+
+\ 	bye address @BYE
+0  ,
+
+\   abort address @ABORT
+0 ,
+
+\   initial dictionary @DP0
+0 ,
+
+\   initial latest @LATEST
+0 ,
+
+(define-colon-prims)
+
+include asm99.fi
+include 99equs.fi
+
+(define-prims)
+
+\   Be sure this ROM doesn't try to make variables in the dictionary
+undef Variable
+undef DVariable
+undef Value
+undef DValue
+
+
+| : TASKS true ;
+
+0 <EXPORT
+
+include	sysdefs.fi
+
+include ../v9t9/errcodes.fi
+
+include ../v9t9/ram.fi
+
+
+EXPORT>
+
+include sysprims.fi
+include syscomp.fi
+
+include 9900.fi	
+
+include ../ans/core.fi
+\ include ../ans/core_unhosted.fi
+include ../ans/core_accept_simple.fi
+include ../ans/core-ext.fi
+include ../ans/double.fi
+
+
+include ../ans/exception.fi
+include ../ans/exception_minimal.fi
+
+include ../v9t9/strings.fi
+
+include ../v9t9/sysutils.fi
+
+include ../v9t9/errors.fi
+		
+include term_hosted.fi
+
+include ../ans/tools.fi
+
+include sound.fi
+include video.fi
+include xutil.fi
+
+include task.fi
+
+include cold.fi
+
+\ TEMP
+
+\   Set the VDP RAM bank.
+\
+\   This directly sets VR14 without saving it off (unlike vwreg).
+\
+: vsetbank  ( vaddr -- addr-16k )
+    dup 14 urshift 
+    $8E00 OR  VDPWA !
+    $3fff AND
+;
+ 
+
+0 [if]
+		
+		
+		
+		include ../ansold/exception.fi
+		 
+		0 <EXPORT
+		
+		include ../v9t9/video.fi
+		
+		
+		include ../v9t9/term.fi
+		
+		include ../v9t9/kbd.fi
+		
+		EXPORT>
+		
+		include sysprims.fi
+		
+		include ../v9t9/prims.fi
+		
+		include ../ansold/kernel.fi
+		
+		include ../ansold/blocks.fi
+		
+		include ../ansold/dict.fi
+		
+		include ../ansold/compile.fi
+		
+		include ../ansold/dualstate.fi
+		
+		include ../ansold/interp.fi
+		
+		include ../ansold/alloc.fi
+		
+		include ../v9t9/io.fi
+		
+		include ../v9t9/locals.fi
+		
+		\ include ../v9t9/editor.fi
+		include ../v9t9/char-editor.fi
+		
+		include cold.fi
+		
+		include ../v9t9/boot.fi
+		
+		\ -------------------------------
+		
+		1 <export
+		
+		0 [if]
+		:   cycle
+		    \ hex $1F2E3D4C. d.d 10 demit decimal
+		    \ 256 0 do i .d 10 demit loop
+		    begin
+		        42 demit
+		        256 0 do
+		            key? if key else i then
+		            chfill
+		            ints-check
+		            \ 0 0 do loop
+		        loop
+		    again
+		;
+		
+		
+		: snd ( i -- ) 
+		    dup  swpb dup  9 crshift  XOR swap  $7 and $40 + c! 
+		;
+		: delay 0 do uloop ;
+		
+		: blast0
+		0 0 do 
+		    0 0 do 
+		        j i xor snd $10 delay 
+		    loop
+		loop
+		;
+		: blast1
+		0 0 do 
+		    0 0 do 
+		        j i + snd $10 delay 
+		    loop
+		loop
+		;
+		
+		: square
+		    begin 
+		        $80 'GATE c!
+		        [ $00 c, ]
+		        $00 'GATE c!
+		    again
+		;
+		
+		: hang
+		    ints-off (idle)
+		; 
+		[THEN]
+		
+		export>
+		
+		1 <export
+		
+		:   bye
+		
+		    regs-init
+		    
+		    exc-init
+		    
+		    ints-init
+		        
+		    kbd-init
+		    
+		    video-init
+		    
+		    sound-init
+		 
+		    cold-init
+		
+		    decimal 
+		 
+		    0 blk !
+		    0 state !
+		 
+		    empty-buffers
+		
+		[ [ifdef] init-locals ]    
+		    init-locals
+		[ [THEN] ]    
+		
+		[ [ifdef] init-editor ]    
+		    init-editor
+		[ [THEN] ]    
+		      
+		    1 load
+		     
+		    \ cycle
+		    quit
+		;
+		
+		export>
+		
+		
+		\ -------------------------------------------------
+		
+		0 <export
+		
+		include ../v9t9/ints.fi
+		
+		export>
+
+		
+[else]
+	\ TEST
+	
+test" loop-1  0 	
+		$103 $100 do  i +  loop
+		[ $100 $101 $102  + + ] LITERAL = "
+		
+test" +loop-1  0
+		3 0 do  i +  1 +loop
+		\ 0, 1, 2, [3]
+		[ 0 1 2  + + ] LITERAL = "
+
+test" +loop-3  0		
+		10 -1 do  i +  3 +loop
+		[ -1 2 5 8 + + + ] LITERAL = "
+
+test" +loop-3-2  0			
+		0 10 do  i +  -3 +loop
+		[ 10 7 4 1 + + + ] LITERAL  = "
+		
+test" +loop-uns1  0			
+		$8002 $7ffe do  i +  1 +loop
+		[ $7ffe $7fff $8000 $8001 + + + ] LITERAL = "
+		
+test" +loop-uns2  0			
+		$a000 $3333 do  i +  $3333 +loop
+		[ $3333 $6666 $9999  + + ] LITERAL = "
+		
+test" +loop-zero  0			
+		0 0 do  i drop  1+  $1000 +loop
+		16 = "
+	
+	: BYE
+		COLD
+	;
+	
+|test : eval1 s" 100 200 300 + + ." ;
+test" evaluate1 eval1 evaluate 	true "
+
+has? TESTING? [IF]
+
+: defineConstPlus1000 create , does> @ $1000 + ;
+$123 defineConstPlus1000 N123
+test" defineConstPlus1000  N123 $1123 = " 
+
+include asmtests.fi
+
+[THEN]
+
+
+has? TESTING? [IF] 
+TESTS!
+[THEN]
+
+	Code ((main))
+						,LWPI	StdWS ,
+	end-code
+	
+[IFDEF] task
+	#cell RamVar	term
+[THEN]
+	
+	: (main)
+		((main))
+	    decimal
+
+[ [IFDEF] task ]
+	[ has? TESTING? [IF] ]
+		['] runtests
+	[ [ELSE] ]
+		['] quit
+	[ [THEN] ]
+	
+		task  term !  robin
+[ [ELSE] ]
+	[ has? TESTING? [IF] ]
+		runtests		
+	[ [ELSE] ]
+		quit
+	[ [THEN] ]
+[ [THEN] ]
+		( NOTREACHED )
+	;  
+
+[THEN]
+
+: snd ( i -- ) 
+    dup  swpb dup  9 crshift  XOR swap  $7 and SOUND + c! 
+;
+: delay 0 do
+[ [IFDEF] yield ]  
+	yield
+[ [THEN] ]	 
+loop ;
+
+: blast0
+0 0 do 
+    0 0 do 
+        j i xor snd $10 delay 
+    loop
+loop
+;
+: blast1
+0 0 do 
+    0 0 do 
+        j i + snd $10 delay 
+    loop
+loop
+;
+
+: square
+    begin 
+        $80 'GATE c!
+        [ $00 c, ]
+        $00 'GATE c!
+    again
+;
+
+: def-beep 
+s" create Beep
+$00 c,  $20 c,  	
+$20 c,
+$38 c, $08 c, $4f c, ( env )
+$10 c, &96 c, $20 c,
+0 c, 0 c, Beep play " 
+	evaluate 
+	s" create NBeep
+$00 c,  $20 c,  	
+$2c c,
+$10 c, &96 c, $20 c,
+0 c, 0 c, " 
+	evaluate 
+;
+
+
+: liner
+	begin
+		8 0 do
+			&2304 i +	 ( ASII 32 in pattern table )
+			
+			dup vc@	>r  
+			\ $ff
+			$1010 1 rpick  crshift  
+			over vc!
+			100 ms 
+			r> swap vc!
+		loop
+	again	
+;
+
+: cycler
+	begin
+		&16 0 do
+			$8700 		( vreg 7: color fg/bg )
+				i $5 +  4 lshift
+				i 
+				or $ff and	or  
+			vwaddr
+			&1000 ms 
+		loop
+	again	
+;
+: supercycler
+	begin
+		&16 1 do
+			$8710 i +
+			vwaddr
+		loop
+	again	
+;
+
+: hexes
+	BASE @  hex
+	$20 0 do  [char] H emit  i . yield loop
+	BASE !
+;
+: deces
+	BASE @  decimal
+	$20 0 do  [char] D emit  i . yield loop
+	BASE !
+;
+
+create RptPit63		&14 c,  1 c,  &63 c,  
+create RptPit48		&12 c,  1 c,  &48 c,  
+create RptPit32		&10 c,  1 c,  &32 c,  
+create RptPit16		&9 c,  1 c,  &16 c,
+create RptPit1		&8 c,  1 c,  &1 c,
+  
+: spsay ( addr len -- )
+	begin  $9a c@  $80 and  while yield repeat
+	swap  $9c !  $9e ! 
+;
+: (sprand)  ( i ) here swap spsay ;
+
+: sprand1
+	&13 0 do  random  here i +  c!  loop
+	
+	63 0 do i here 2+ c!  13 (sprand) loop
+	 
+	\ RptPit63 spsay
+	\ RptPit48 spsay
+	\ RptPit32 spsay
+	\ RptPit16 spsay
+	\ RptPit1 spsay
+	\ here spsay
+	\ here spsay
+;
+
+&255 constant SpLength
+
+: sprand2
+	SpLength 0 do  random  dup &15 and &15 = if 1- then    here i +  c!  loop
+	  
+	\ here &255  spsay here &255  spsay
+	\ &255 (sprand) 
+\	63 0 do i  here i + 2+ c!  &255 (sprand) 8 +loop
+	63 0 do i  here i + 2+ c+!  SpLength (sprand)  3 +loop
+
+;
+
+: rnd ( max -- rnd )
+	random swap  u/mod drop
+;
+
+: ,sp  ( idx val -- idx' )
+	over here +  c!
+	1+ 
+;
+
+: ,en ( idx -- idx' )
+	&13 rnd 1+ ,sp
+;
+
+: ,k0-3 ( idx -- idx' )
+	&32 rnd ,sp
+	&32 rnd ,sp
+	&16 rnd ,sp
+	&16 rnd ,sp
+;
+
+: ,k4-9 ( idx -- idx' )
+	&16 rnd ,sp
+	&16 rnd ,sp
+	&16 rnd ,sp
+	&8 rnd ,sp
+	&8 rnd ,sp
+	&8 rnd ,sp
+;
+: ,pitch ( idx -- idx' )
+	&63 rnd 1+ ,sp
+;
+
+: ,voiced ( idx -- idx' )
+	,en  ( energy ) 
+	0 ,sp       ( repeat )
+	,pitch
+	,k0-3
+	,k4-9
+;
+: ,unvoiced ( idx -- idx' )
+	,en		 ( energy ) 
+	0 ,sp       ( repeat )
+	0 ,sp   ( pitch )
+	,k0-3
+;
+: ,repeat ( i -- i' )
+	,en
+	1 ,sp
+	,pitch
+;
+: ,urepeat ( i -- i' )
+	,en
+	1 ,sp
+	0 ,sp ( pitch )
+;
+
+: +pitch ( idx offs -- )
+	swap  2+ here +  c+!
+;
+
+: skip ( idx -- idx' )
+	here +
+	1+   ( skip energy )  
+	dup  c@  1 and if 
+		2+ ( repeated, skip pitch )
+	else
+		dup 1+ c@ if
+			&10 +
+		else
+			&4 +
+		then  
+	then  
+	
+	here -
+;
+
+: ,uvvv ( idx -- idx' )
+	,unvoiced ,urepeat ,urepeat ,urepeat   ( 7 3 3 3 = 16 )
+	,voiced ,repeat ,repeat				( 11 3 3 = 17 )
+	,voiced ,repeat ,repeat ,repeat		( 11 3 3 3 = 20 )
+	,voiced ,repeat 					( 11 3 = 14 )
+;
+: ,vuu ( idx -- idx' )
+	,voiced ,repeat ,repeat				( 11 3 3 = 17 )
+	,unvoiced ,urepeat ,urepeat   		( 7 3 3 = 13 )
+	,unvoiced ,urepeat 			  		 ( 7 3 = 10 )
+;
+: ,uuu ( idx -- idx' )
+	,unvoiced ,urepeat ,urepeat ,urepeat			
+	,unvoiced ,urepeat ,urepeat   		
+	,unvoiced ,urepeat 			  		
+;
+
+: sprand2b
+	0
+	begin
+		dup  SpLength <
+	while
+		,uvvv ,vuu ,uvvv
+	repeat	
+	drop
+	  
+	&63 0 do
+		0
+		&13 0 do
+			j +pitch skip
+		loop 
+		drop 
+		
+		SpLength (sprand)  
+	7 +loop
+
+;
+
+: sprand2c
+	0
+	begin
+		dup  SpLength <
+	while
+		,uuu
+	repeat	
+	drop
+	  
+	&63 0 do
+		0
+		&3 0 do
+			j +pitch skip
+		loop 
+		drop 
+		
+		SpLength (sprand)  
+	8 +loop
+
+;
+
+: sprand3
+	SpLength 0 do  random  dup &15 and &15 = if 1- then    here i +  c!  loop
+	  
+	&63 0 do   
+		SpLength 0 do  i  here i +  c!  7 +loop
+		SpLength (sprand)
+	3 +loop
+;
+: spchatter
+	begin sprand2c sprand2b again
+;
+  
+: vsplit 
+	$8010	vwaddr		( turn on IE1 )
+	$9380	vwaddr		( split in middle )
+	vintflags c@  vhorizint OR  vintflags c!
+;
+
+\ ................................
+
+Code (RESET)
+					,LIMI		0 ,
+					
+					,LWPI		StdWS ,				( ensure proper WS -- likely so, just be sure )
+
+	0				,LI			v-int-nosprmot v-int-nosound +  8 lshift  ,
+	0 		@>		,MOVB		vintflags ,			( turn off sprites/sound/b.s. )
+	
+	@>				,BL			' ((DOERS)) ,
+	
+	\ Make tiny stacks and initial areas
+	rSP				,LI			_RAM $10 - , 
+	rRP				,LI			_RAM $20 - ,
+	rUP				,LI			_RAM $20 (#UP) + - ,
+	
+	&11				,LI			' COLD  cell+ ,
+	rDOCOL *R		,B			\ normally BL, but we set up R11 for this
+	
+	end-code		
+
+Code (ABORT)
+	@>				,BL			' ((DOERS)) ,
+	@>				,B			' ABORT ,
+
+Code (tick)
+	( TODO: load WS from current task )
+	rRT *R		,B 
+
+
+\ ................................
+
+' (reset)	@RESET	!   
+' (tick)  	@TICK	!
+' cold  	@COLD	!
+' (abort)  	@ABORT	!
+
+\ assembly label table
+| &10 2* cells RamVar	ram-#labs
+' ram-#labs		TO 	#labs
+
+ramptr @  1- aligned  constant (RAM0)
+
+|+ #cell RamVar RAM
+
+\ align dictionary to a memory area, so memory images aren't often broken
+here $3ff +  $3ff INVERT and  @DP0  
+	\ eat up enough space to match ROM bank
+	swap drop $4000 swap
+
+    !
+
+has? GROM-DICT [if]
+0		   	@LATEST   !
+[else]
+latest   	@LATEST   !
+[THEN]
+
+
+\ make sure we're sane
+." # rom defers: " (#rdefers) . cr
+(#rdefers)	#maxrdefers  >= 	abort" Too many ROM defers -- bump #maxrdefers "
+
+hex
+here ." HERE = " u. cr
+@dp0 @ ." @DP0 = " u. cr
+@latest @  ." @latest = " u. cr
+up0 @ ." UP0 = " u. cr
+ramptr @ ." RAMPTR = " u. cr
+RamTop ." RAMTOP = " u. cr
+
+

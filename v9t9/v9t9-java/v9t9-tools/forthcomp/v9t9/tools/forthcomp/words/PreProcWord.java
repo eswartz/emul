@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp.words;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.IWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -30,6 +31,8 @@ public abstract class PreProcWord extends BaseStdWord {
 		int levels = 1;
 		while (true) {
 			String word = hostContext.readToken();
+			if (word == null)
+				throw hostContext.abort("no end token found for [IF]");
 			//System.out.println("SKIP: " + word);
 			if ("(".equals(word) || "\\".equals(word)) {
 				IWord realword = hostContext.find(word);

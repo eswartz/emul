@@ -1,0 +1,47 @@
+
+
+[IFUNDEF] task
+| : regs-init
+    (SP0) (UP0) (RP0)   (REGS) 
+;
+[THEN]
+
+: cold-init
+    @DP0 @       	DP  !
+    @LATEST @  		>latest !
+    
+[ has? GROM-DICT [IF] ]    
+	\ >gram_dict_base  GDP !
+	>gram_dict_end 1-  GDP !
+[ [THEN] ]
+    
+    		\ TODO     GRAM
+    
+			\  TODO      gheap dict-hinit
+    
+	UP0 @       	UDP !
+    
+    (RAM0) 	 		RAM !
+    
+    (numbuf0) 		(numbuf) !
+    (slit-pad0) 	(spad) !
+    
+[ has? STANDALONE [if] ]
+
+    \ setup NMI interrupt
+	IntWS  ['] abort  $fffc  2!
+	
+[ [then] ]
+;
+
+: COLD
+	regs-init
+	
+	(resolve-rdefers)
+	
+	cold-init
+
+	(main)
+;
+
+

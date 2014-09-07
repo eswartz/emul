@@ -11,9 +11,10 @@
 package v9t9.tools.forthcomp.words;
 
 /**
+ * This marks words that are fully defined in target code.
  * @author ejs
  *
  */
-public interface IPrimitiveWord {
+public interface IPrimitiveWord extends INativeCodeWord {
 	int getPrimitiveSize();
 }

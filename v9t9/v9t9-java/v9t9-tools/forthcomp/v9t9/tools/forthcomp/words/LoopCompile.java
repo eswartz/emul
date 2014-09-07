@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp.words;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -34,7 +35,7 @@ public class LoopCompile extends BaseStdWord {
 		
 		targetContext.markHostExecutionUnsupported();
 		
-		ITargetWord word = (ITargetWord) targetContext.require(wordName);
+		ITargetWord word = targetContext.require(wordName);
 		
 		targetContext.loopCompile(hostContext, word);
 	}

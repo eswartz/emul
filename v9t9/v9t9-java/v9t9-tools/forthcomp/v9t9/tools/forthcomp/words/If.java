@@ -12,7 +12,7 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
-import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -28,10 +28,7 @@ public class If extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		hostContext.assertCompiling();
 		
-		ITargetWord word = (ITargetWord) targetContext.require("0branch");
-		word.getCompilationSemantics().execute(hostContext, targetContext);
-		
-		hostContext.compile(hostContext.require("0branch"));
+		hostContext.compileWord(targetContext, hostContext.require("0BRANCH"), targetContext.require("0BRANCH"));
 		
 		targetContext.pushFixup(hostContext);
 		hostContext.pushPairs(2);

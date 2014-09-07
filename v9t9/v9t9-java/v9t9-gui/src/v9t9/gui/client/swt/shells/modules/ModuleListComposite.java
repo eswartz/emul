@@ -410,7 +410,7 @@ public class ModuleListComposite extends Composite {
 		
 		List<IModule> selected = selectedModuleMap.get(dbFile);
 		if (selected == null) {
-			if (dbFile.exists()) {
+			if (dbFile.exists() && machine.getModuleManager() != null) {
 				try {
 					selected = machine.getModuleManager().readModules(dbFile.toURI());
 					origModuleMap.put(dbFile, new ArrayList<IModule>(selected));

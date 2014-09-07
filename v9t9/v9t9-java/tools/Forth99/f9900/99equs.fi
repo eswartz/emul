@@ -1,0 +1,58 @@
+
+\   ---------   ans
+
+$0F	constant	rSP		\ stack pointer
+$0E	constant	rIP		\ instruction pointer
+$0D	constant	rRP		\ return stack pointer
+\ $0C not assigned: CRU stuff
+$0B constant	rRT		\ BL return val (system)
+$0A constant    rUP		\ user pointer
+$04	constant	rDOCOL	\ ptr to DOCOL
+$05 constant	rDOCON	\ ptr to DOCON
+$06 constant	rDOUSER	\ ptr to DOUSER
+$07 constant	rDOVAR	\ ptr to DOVAR
+$08 constant	rDODOES	\ ptr to DODOES
+$06	constant	rNEXT	\ ptr to NEXT
+$03	constant	rR3		\ temp #3
+$02	constant	rR2		\ temp #2
+$00	constant	rTMP	\ temp #1
+
+0 [IF]
+
+\ XOPs
+1	constant	SYS^
+    0   constant    #vrstr
+	1	constant	#key?
+	2	constant	#rdkey
+	3	constant	#emit
+	4	constant	#emit8
+    5   constant    #gxy
+    6   constant    #cls
+    7   constant    #win
+    8   constant    #win?
+    9   constant    #mode
+    &10  constant    #fgbg!
+    &11  constant    #fgbg@
+    &12  constant    #line
+    &13  constant    #pixel
+    &14  constant    #vrst
+    &15  constant    #vintflags
+    &16  constant    #vbfnt
+    &17  constant    #rect
+    &18  constant    #random
+    &19 constant     #dsrln
+    &20 constant     #vtab
+    &21 constant     #vregw
+    &22 constant     #vregr
+    &23 constant     #vrwpage
+    &24 constant     #vpage
+    &25 constant     #pal 
+    &26 constant     #vsvrs
+    &27 constant     #xyad 
+    &28 constant     #xy
+    &29 constant     #type      \ type string: N.B.: not from ROM!
+    &30 constant     #rwblock 
+    &31 constant     #qtrk
+
+[THEN]
+    

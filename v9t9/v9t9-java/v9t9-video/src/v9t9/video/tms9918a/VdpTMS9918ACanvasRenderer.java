@@ -16,7 +16,8 @@ import java.util.Arrays;
 import java.util.BitSet;
 
 import ejs.base.properties.IProperty;
-
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpTMS9918A;
@@ -59,6 +60,8 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	protected final VdpChanges vdpChanges = new VdpChanges(getMaxRedrawblocks());
 	
 	protected IVdpTMS9918A vdpChip;
+	private IProperty pauseMachine;
+	
 	protected BlankModeRedrawHandler blankModeRedrawHandler;
 	protected VdpModeInfo vdpModeInfo;
 	protected VdpRedrawInfo vdpRedrawInfo;
@@ -69,13 +72,20 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 
 	protected final IVideoRenderer renderer;
 
-	private IProperty pauseMachine;
-	
 	private BitSet vdpTouches;
 
 	protected boolean colorsChanged;
-
 	private IColorListener colorListener;
+
+	private ListenerList<CanvasListener> listeners = new ListenerList<CanvasListener>();
+
+	private IFire<CanvasListener> modeChangedFirer = new ListenerList.IFire<IVdpCanvasRenderer.CanvasListener>() {
+
+		@Override
+		public void fire(CanvasListener listener) {
+			listener.modeChanged();
+		}
+	};
 
 	public VdpTMS9918ACanvasRenderer(ISettingsHandler settings, IVideoRenderer renderer) {
 		this.renderer = renderer;
@@ -538,6 +548,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	public synchronized void forceRedraw() {
 		vdpChanges.changed = true;
 		vdpChanges.fullRedraw = true;
+		listeners.fire(modeChangedFirer);
 	}
 	
 	/* (non-Javadoc)
@@ -574,6 +585,21 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	@Override
 	public void changed(IMemoryEntry entry, int addr, Number value) {
 		touchAbsoluteVdpMemory(addr, value);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvasRenderer#addListener(v9t9.common.video.IVdpCanvasRenderer.IVideoRenderListener)
+	 */
+	@Override
+	public void addListener(CanvasListener listener) {
+		listeners.add(listener);		
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvasRenderer#removeListener(v9t9.common.video.IVdpCanvasRenderer.IVideoRenderListener)
+	 */
+	@Override
+	public void removeListener(CanvasListener listener) {
+		listeners.remove(listener);
 	}
 	
 }

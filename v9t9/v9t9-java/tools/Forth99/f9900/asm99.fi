@@ -1,0 +1,370 @@
+\	This is a smaller assembler for actual use in V9t9 
+\
+\	syntax:
+\
+\	<operand> [ <operand> ] <opcode>
+\
+\	Assembler syntax:
+\
+\	reg	 = 0..15
+\	idx	 = 0..15 *R
+\	addr	= @> ... <opcode> ... <addr>
+\	idx+	= 0..15 *R+
+\	idx+addr= 0..15 @>(R) ... <opcode> ... <addr>
+\	imm/cnt	= 0..ffff 
+\
+\	Jump targets and labels:
+\		jmp 3 $f	jmp 3 $b	\ forward, backward
+\	3 $:						\ definition
+\
+
+base @ 
+hex
+
+0 <EXPORT
+
+\	the operand type tells what kind of operand to expect
+\	(where compatible ones AND its bitmask != 0) 
+\
+\	the general ones have only 2 bits, which plus 2 bits
+\	for "R/M" plus 4 bits for reg, makes 8 bits of op data
+
+$3f	 constant (G		\ general
+$0f	 constant (C		\ register or count
+$0f	 constant (R		\ register
+$ff	constant (B		\ bit field (8 bits)
+$ff	constant (J		\ jump (8 bits)
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+[ifundef] /CELLS
++ : /CELLS 1 cells / ; 
+[then]
+
+\	Instruction words.  These take pre-baked operand
+\	data and do some validation then shift the contents
+\	into an opcode.
+\
+\	We test validity merely by telling whether the
+\	opcode overlaps the baked operand.
+
+: inst0:		( opc -- )
+	create
+		,	
+	does>		( -- )
+		@ , 
+;
+: inst1:		( opc arg1 -- )
+	create
+		invert , ,					\ { opmask opcode }
+	does>		( op1 -- )
+		2dup @ and
+		if ." invalid arg" then
+		cell+ @ or
+		, 
+;
+
+: (inst2:)		( opc arg1 arg2 bits -- )
+	create
+		dup ,
+		lshift or invert ,
+		,			\ { bits opmask opcode }
+	does>		( op1 op2 -- )
+		>r
+		r@ @ lshift or
+		r@ cell+ @ over and if ." invalid arg" then
+		
+		r> 2 cells + @ or
+		,
+;
+
+: inst2:		( opc arg1 arg2 -- )
+	6 (inst2:)
+;
+: inst2':		( opc arg1 arg2 -- )
+	4 (inst2:)
+;
+
+: r?
+	dup $0f invert and if
+		." reg?? "
+	then
+;
+
+EXPORT>
+
+1 <EXPORT
+
+: ,DATA , ;
+$0200	(R		 inst1:	,LI
+$0220	(R		 inst1:	,AI
+$0240	(R		 inst1:	,ANDI
+$0260	(R		 inst1:	,ORI
+$0280	(R		 inst1:	,CI
+$02A0	(R		 inst1:	,STWP
+$02C0	(R		 inst1:	,STST
+$02E0			 inst0:	,LWPI
+
+$0300			 inst0:	,LIMI
+$0340			 inst0:	,IDLE
+$0360			 inst0:	,RSET
+$0380			 inst0:	,RTWP
+$03A0			 inst0:	,CKON
+$03C0			 inst0:	,CKOF
+$03E0			 inst0:	,LREX
+
+$0400	(G		 inst1:	,BLWP
+$0440	(G		 inst1:	,B
+$0480	(G		 inst1:	,X
+$04C0	(G		 inst1:	,CLR
+$0500	(G		 inst1:	,NEG
+$0540	(G		 inst1:	,INV
+$0580	(G		 inst1:	,INC
+$05C0	(G		 inst1:	,INCT
+$0600	(G		 inst1:	,DEC
+$0640	(G		 inst1:	,DECT
+$0680	(G		 inst1:	,BL
+$06C0	(G		 inst1:	,SWPB
+$0700	(G		 inst1:	,SETO
+$0740	(G		 inst1:	,ABS
+
+$0800	(R	(C	inst2':	,SRA
+$0900	(R	(C	inst2':	,SRL
+$0A00	(R	(C	inst2':	,SLA
+$0B00	(R	(C	inst2':	,SRC
+
+\ $0C00	(C		 inst1:	,DSR			\ v9t9
+\ $0D40			 inst0:	,KYSL		\ v9t9
+\ $0D60	(R		 inst1:	,TICKS		\ v9t9
+\ $0DC0	(R		 inst1:	,EMITCHAR	\ v9t9
+\ $0DE0			 inst0:	,DBG			\ v9t9
+\ $0DE1			 inst0:	,-DBG		\ v9t9
+
+$1000	(J		 inst1:	,JMP
+$1100	(J		 inst1:	,JLT
+$1200	(J		 inst1:	,JLE
+$1300	(J		 inst1:	,JEQ
+$1400	(J		 inst1:	,JHE
+$1500	(J		 inst1:	,JGT
+$1600	(J		 inst1:	,JNE
+$1700	(J		 inst1:	,JNC
+$1800	(J		 inst1:	,JOC
+$1900	(J		 inst1:	,JNO
+$1A00	(J		 inst1:	,JL
+$1B00	(J		 inst1:	,JH
+$1C00	(J		 inst1:	,JOP
+
+$1D00	(B		 inst1:	,SBO
+$1E00	(B		 inst1:	,SBZ
+$1F00	(B		 inst1:	,TB
+
+$2000	(G	(R	inst2:	,COC		
+$2400	(G	(R	inst2:	,CZC		
+$2800	(G	(R	inst2:	,XOR	
+$2C00	(G	(C	inst2:	,XOP
+
+$3000	(G	(C	inst2':	,LDCR
+$3400	(G	(C	inst2':	,STCR
+$3800	(G	(R	inst2:	,MPY
+$3C00	(G	(R	inst2:	,DIV
+
+$4000	(G	(G	inst2:	,SZC
+$5000	(G	(G	inst2:	,SZCB
+$6000	(G	(G	inst2:	,S
+$7000	(G	(G	inst2:	,SB
+$8000	(G	(G	inst2:	,C
+$9000	(G	(G	inst2:	,CB
+$A000	(G	(G	inst2:	,A
+$B000	(G	(G	inst2:	,AB
+$C000	 (G	(G	inst2:	,MOV	
+$D000	 (G	(G	inst2:	,MOVB
+$E000	 (G	(G	inst2:	,SOC
+$F000	 (G	(G	inst2:	,SOCB
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+: *R ( reg# -- opflag )
+	r?
+	$10 or			\ add *Rx mask
+;
+
+: *R+ ( reg# -- opflag )
+	r?
+	$30 or			\ add *Rx+ mask
+;
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+: @>(R) ( reg# -- opflag )
+	r?
+	$20 or			\ add *Rx+ mask
+;
+
+: @>	 ( -- )
+	$20			  \ add @>xxxx mask
+;
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+\	Jump target handling.
+\
+\	We keep a label table and allow forward or backward references
+\	to labels.  Backward references are resolved immediately (of course)
+\	while forward references are managed in code as a series of jumps
+\	to the previous unresolved reference.  (Thus, instead of jumping to
+\	the real target, these instructions jump to another jump.)  The
+\	tail of such a jump list jumps to self ($ff).
+\
+\	The label table contains, for each label, the known address (or 0)
+\	and the last unresolved reference (or 0).
+\
+\	A first reference forward results in:
+\
+\
+
+0 <EXPORT
+
+Defer #labs
+
+: rom-#labs 	$E000 ;		\ while building, write to (likely) empty area
+
+' rom-#labs		TO #labs
+
+: #>lab	( num -- laddr )
+	cells  #labs +
+;
+
+: lab>#	( laddr -- num )
+	#labs -  #cell U/
+;
+
+: $>f! ( label -- )
+	here  1 OR 
+	swap !
+;
+
+\	For a given jump offset (relative to an instruction's
+\	address), calculate its opcode bits
+\
+: j>op ( jump-offset -- opc )
+	2 - 2/			 \ calc offset
+	dup -$80 $7f within
+	0= if
+		." bad jump offset"
+	then
+	$ff and
+;
+
+\	For a given opcode, calculate its jump offset
+\	(relative to the instruction's address)
+\
+: op>j ( opc -- jump-offset )
+	\ ." op>j " dup u. 
+
+	$ff and 
+	dup $80 >= if [ $ff invert LITERAL ]  or then 2* 	\ note: use this pattern to restrict to word size
+	2 +
+	
+	\ ." = " dup u. cr
+;
+\	Generate opflag for jumping to 'targ' from 'addr'
+\	(assuming the jump instruction will be added next)
+\
+: $		( targ addr -- opflag )
+	- j>op
+;
+
+\	Patch an opcode with a new offset
+: $>off! ( iaddr offs -- )
+	swap 1+  c!
+;
+ 
+\	resolve jumps to 'addr'
+\
+\	The iaddr is the last instruction that wanted the
+\	target.  Each one jumps to the previous one that
+\	wanted it, until you hit one that jumps to itself.
+
+: $>fix ( iaddr -- iaddr' t | ?? f ) 
+	\ ." fixing: " .s cr
+	
+	dup @ >r	\ save old opcode 	( iaddr )
+	dup 
+		here over $ 	
+		$>off!	 	( iaddr )
+	
+	\ ." >>1 " .s cr
+	\ now go to previous address
+	r> op>j			( iaddr offs )
+	
+	over + 			( iaddr iaddr' )
+	\ ." >>2 " .s cr
+	swap over =			( nextref t/f )
+;
+
+\	Is the label unresolved?
+\
+: $>f? ( label -- t/f )
+	@ 1 AND
+;
+
+\	Get the last target of the label
+: $>f^ ( label -- iaddr )
+	@  [ 1 invert LITERAL ] AND
+;
+
+: $>res	( label -- )
+\	.s
+	dup $>f? if  	( label )
+		\ ." $>res " .s cr
+		\ Step through list of refs
+		$>f^  		( iaddr )
+		begin
+			$>fix	( iaddr' flag )
+		until
+	then
+	drop
+;
+
+EXPORT>
+
+\	define a label
+\	3 $:
+: $:	( num -- )
+	\ ." $: " dup u. ." = " here u. cr
+	#>lab			( label )
+	dup $>res
+	here 		( label addr )
+	\ ." $:. " .s cr
+	swap !
+;
+
+
+\ Get the opcode for jumping backward
+\
+: $-	( lab# -- opc )
+	#>lab		 \ get addr
+	dup $>f? if 
+		." undefined label"
+	then
+	@ here $	\ jump
+;
+
+\ Make an unresolved forward reference
+\
+: $+ 	( lab# -- opc )
+	#>lab
+	
+	dup $>f? if  
+		dup $>f^ here   
+		\ ." $+ new " .s cr
+		$		\ jump to previous unresolved
+	else
+		$ff			\ get "jump to self"
+	then
+	
+	\ ." $+: " .s cr 
+	swap  $>f!
+;
+
+base !

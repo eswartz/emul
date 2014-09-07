@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp.words;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  *  :> name -- new local
@@ -37,17 +38,9 @@ public class ToLocal extends BaseStdWord {
 			}
 			
 			if (!targetContext.isLocalSupportAvailable(hostContext)) {
-
-				ITargetWord word = (ITargetWord) targetContext.require("branch");
-				word.getCompilationSemantics().execute(hostContext, targetContext);
-				hostContext.compile(hostContext.require("branch"));
-				
-				targetContext.pushFixup(hostContext);
-				
-				targetContext.ensureLocalSupport(hostContext);	// in the middle of a word!
-				
-				targetContext.resolveFixup(hostContext);
+				throw hostContext.abort("Locals not supported");
 			}
+			
 			targetContext.compileSetupLocals(hostContext);
 			theWord.getEntry().allocLocals();
 			

@@ -10,6 +10,7 @@
  */
 package v9t9.tools.asm;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -89,7 +90,9 @@ public class SymbolTable {
 	}
 
 	public Symbol[] getSymbols() {
-		return (Symbol[]) nameTable.values().toArray(new Symbol[nameTable.values().size()]);
+		Symbol[] syms = (Symbol[]) nameTable.values().toArray(new Symbol[nameTable.values().size()]);
+		Arrays.sort(syms);
+		return syms;
 	}
 
 	public void undefineSymbols() {

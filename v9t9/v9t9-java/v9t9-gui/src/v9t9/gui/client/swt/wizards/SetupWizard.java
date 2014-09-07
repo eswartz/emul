@@ -69,8 +69,10 @@ public class SetupWizard extends Wizard {
 		addPage(new SetupIntroPage(machine));
 		pathSetupPage = new PathSetupPage(machine, window); 
 		addPage(pathSetupPage);
-		moduleListPage = new ModuleListPage(machine, window); 
-		addPage(moduleListPage);
+		if (machine.getModuleManager() != null) {
+			moduleListPage = new ModuleListPage(machine, window); 
+			addPage(moduleListPage);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -81,7 +83,7 @@ public class SetupWizard extends Wizard {
 		if (startPage == Page.PATHS) {
 			return pathSetupPage;
 		}
-		if (startPage == Page.MODULES) {
+		if (startPage == Page.MODULES && moduleListPage != null) {
 			return moduleListPage;
 		}
 		return super.getStartingPage();
@@ -95,7 +97,7 @@ public class SetupWizard extends Wizard {
 
 		machine.getRomPathFileLocator().removeListener(pathListener);
 		
-		if (!moduleListPage.save())
+		if (moduleListPage != null && !moduleListPage.save())
 			return false;
 		
 		

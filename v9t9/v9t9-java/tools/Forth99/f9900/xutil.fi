@@ -1,0 +1,24 @@
+
+
+Code seed ( seed -- )
+	rTOS		UTIL^	,XOP  	#u.seed ,
+	POP
+end-code
+
+Code (rand1) ( -- rnd )
+	PUSH
+	rTOS		UTIL^	,XOP  	#u.rand1 ,
+end-code
+
+Code (rand2) ( -- rnd )
+	PUSH
+	rTOS		UTIL^	,XOP  	#u.rand2 ,
+end-code
+
+Code (noise) ( rnd -- rnd )
+	rTOS		UTIL^	,XOP  	#u.noise ,
+end-code
+
+: random ( -- rnd )
+	(rand1) (rand2) XOR (noise) 
+;

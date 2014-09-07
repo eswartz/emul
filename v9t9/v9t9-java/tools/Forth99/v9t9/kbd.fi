@@ -28,7 +28,7 @@ kbdstate 6 + Constant kbdflag
 kbdstate 7 + Constant kbdtail
 kbdstate 8 + Constant kbdhead
 
-cell    RamVar    randnoise
+#cell    RamVar    randnoise
 
 :   read-row  ( col -- bits )
     'KBD c!   'KBD c@

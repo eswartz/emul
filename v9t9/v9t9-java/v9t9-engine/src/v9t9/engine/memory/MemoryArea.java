@@ -85,6 +85,9 @@ public abstract class MemoryArea implements IMemoryArea {
     	writeWord(entry, addr, val);
     }
 
+    abstract public boolean patchWord(MemoryEntry memoryEntry, int addr, short value);
+
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryArea#flatWriteByte(v9t9.common.memory.MemoryEntry, int, byte)
 	 */

@@ -13,7 +13,7 @@ package v9t9.tools.forthcomp.words;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
-import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -54,7 +54,7 @@ public class AbortQuote extends BaseWord {
 
 				new SQuote().getCompilationSemantics().execute(hostContext, targetContext);
 				
-				targetContext.compile((ITargetWord) targetContext.require("(abort\")"));
+				targetContext.compile(targetContext.require("(abort\")"));
 			}
 		});
 	}

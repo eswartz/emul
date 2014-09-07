@@ -1,0 +1,117 @@
+// test with no TOS
+
+"$test65-+loop-uns2"
+3C8C: BL *R4 ==> op1=122(@122)  || st=9401 wp=FFC0 @ 32
+"DOCOL" [ $test65-+loop-uns2 > RUNTEST > 3F42 ] ( FF40 ABCD )
+0122: DECT R13 ==> op1=FF3E(@FFDA)  || op1=FF3C(@FFDA) st=9401 wp=FFC0 @ 20
+0124: MOV R14,*R13 ==> op1=3D06(@FFDC)  || op2=3D06(@FF3C) st=D401 wp=FFC0 @ 36
+0126: MOV R11,R14 ==> op1=3C8E(@FFD6)  || op2=3C8E(@FFDC) st=D401 wp=FFC0 @ 28
+0128: MOV *R14+,R0 ==> op1=276(@3C8E)  || op1=276(@3C8E) op2=276(@FFC0) st=D401 wp=FFC0 @ 44
+012A: B *R0 ==> op1=276(@276)  || st=D401 wp=FFC0 @ 24
+"0"
+    CLR *R15+ ==>  || op1=0(@FFBA) st=D001 wp=FFC0 @ 36
+    // vs 20+36+20 = 76
+027C: MOV *R14+,R0 ==> op1=140(@3C90)  || op1=140(@3C90) op2=140(@FFC0) st=D401 wp=FFC0 @ 44
+027E: B *R0 ==> op1=140(@140)  || st=D401 wp=FFC0 @ 24
+"DOLIT"
+    LI R0,>A000        @ 24
+    MOV R0,*R15+       @ 44  == 68
+// vs. 20+36+44 = 100
+0146: MOV *R14+,R0 ==> op1=140(@3C94)  || op1=140(@3C94) op2=140(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=140(@140)  || st=D401 wp=FFC0 @ 24
+"DOLIT"
+    LI R0,>A000        @ 24
+    MOV R0,*R15+       @ 44  == 68
+// vs. 20+36+44 = 100
+0146: MOV *R14+,R0 ==> op1=140(@3C94)  || op1=140(@3C94) op2=140(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=140(@140)  || st=D401 wp=FFC0 @ 24
+"DOLIT"
+    LI R0,>3333        @ 24
+    MOV R0,*R15+       @ 44  == 68
+// vs. 20+36+44 = 100
+0146: MOV *R14+,R0 ==> op1=518(@3C98)  || op1=518(@3C98) op2=518(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=518(@518)  || st=D401 wp=FFC0 @ 24
+"2>R"
+
+0518: AI R13,>FFFC ==> op1=FF3C(@FFDA) op2=FFFC(@0) || op1=FF38(@FFDA) st=9401 wp=FFC0 @ 28
+051C: MOV *R15+,@>2(R13) ==> op1=A000(@FFB8)  || op1=A000(@FFB8) op2=A000(@FF3A) st=9401 wp=FFC0 @ 60
+0520: MOV R1,*R13 ==> op1=3333(@FFC2)  || op2=3333(@FF38) st=D401 wp=FFC0 @ 36
+0522: MOV *R15+,R1 ==> op1=0(@FFBA)  || op1=0(@FFBA) op2=0(@FFC2) st=3401 wp=FFC0 @ 44
+
+    AI R13,>FFFC  @ 28
+    AI R15,>FFF8    @ 28  
+    MOV *R15+,*R13  @ 52
+    MOV *R15+,@>2(R13)  @ 60    == 168 
+// vs 168!
+
+    AI R13,>FFFC  @ 28
+    AI R15,>FFFC  @ 28
+    MOV *R15,*R13  @ 44
+    MOV @>2(R15),@>2(R13)  @ 60    == 160
+// vs 168
+
+0524: MOV *R14+,R0 ==> op1=574(@3C9A)  || op1=574(@3C9A) op2=574(@FFC0) st=D401 wp=FFC0 @ 44
+0526: B *R0 ==> op1=574(@574)  || st=D401 wp=FFC0 @ 24
+"R@"
+    MOV *R13,*R15+      @ 52
+// vs 92
+
+057A: MOV *R14+,R0 ==> op1=422(@3C9C)  || op1=422(@3C9C) op2=422(@FFC0) st=D401 wp=FFC0 @ 44
+057C: B *R0 ==> op1=422(@422)  || st=D401 wp=FFC0 @ 24
+"+"
+    DECT R15            @ 20
+    A @>2(R15),*R15     @ 52    = 72
+// vs 44
+
+0424: MOV *R14+,R0 ==> op1=140(@3C9E)  || op1=140(@3C9E) op2=140(@FFC0) st=C401 wp=FFC0 @ 44
+0426: B *R0 ==> op1=140(@140)  || st=C401 wp=FFC0 @ 24
+"DOLIT"
+    LI R0,>3333        @ 24
+    MOV R0,*R15+       @ 44  == 68
+// vs 100
+0146: MOV *R14+,R0 ==> op1=614(@3CA2)  || op1=614(@3CA2) op2=614(@FFC0) st=D401 wp=FFC0 @ 44
+0148: B *R0 ==> op1=614(@614)  || st=D401 wp=FFC0 @ 24
+"(+LOOP)"
+// same:  316
+
+0640: MOV *R14+,R0 ==> op1=574(@3C9A)  || op1=574(@3C9A) op2=574(@FFC0) st=C401 wp=FFC0 @ 44
+0642: B *R0 ==> op1=574(@574)  || st=C401 wp=FFC0 @ 24
+
+
+/// Loop body in bottom-up is 192 cycles, vs. top-down is 236 cycles
+
+
+"DOUSER"
+01AC: DECT R15 ==> op1=FFBE(@FFDE)  || op1=FFBC(@FFDE) st=9001 wp=FFC0 @ 20
+01AE: MOV R1,*R15 ==> op1=4000(@FFC2)  || op2=4000(@FFBC) st=D001 wp=FFC0 @ 36
+01B0: MOV *R11+,R1 ==> op1=C(@123E)  || op1=C(@123E) op2=C(@FFC2) st=D001 wp=FFC0 @ 44
+01B2: A R10,R1 ==> op1=FBFA(@FFD4) op2=C(@FFC2) || op2=FC06(@FFC2) st=8001 wp=FFC0 @ 28
+    MOV *R11+,*R15+         @ 60
+    A R10,R1                @ 28      == 88
+// vs 100
+
+"DUP"
+    MOV *R15,*R15+      @ 52
+// vs 56
+
+"-"
+    S *R15,@>2(R15)        @ 52
+    DECT R15                @ 20    == 72
+// vs 80
+
+"C@"
+    MOV *R15,R1             @ 36
+    CLR *R15                @ 28
+    MOVB *R1,@>1(R15)      @ 52     == 116
+// vs 92
+
+
+"R>"
+     MOV *R13+,*R15+        @ 52
+// vs 100
+
+">R"
+    DECT R13  @ 20
+    MOV *R15,*R13  @ 36
+    DECT R15    @ 20        == 76
+// vs 100

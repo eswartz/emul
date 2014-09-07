@@ -13,6 +13,7 @@ package v9t9.tools.forthcomp.words;
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -30,7 +31,7 @@ public class QuestionDo extends BaseStdWord {
 		
 		targetContext.markHostExecutionUnsupported();
 		
-		ITargetWord qdoWord = (ITargetWord) targetContext.require("(?do)");
+		ITargetWord qdoWord = targetContext.require("(?do)");
 
 		qdoWord.getCompilationSemantics().execute(hostContext, targetContext);// ends in 0branch
 		

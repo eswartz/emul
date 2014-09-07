@@ -1,0 +1,115 @@
+
+
+[IFUNDEF] BASE
+User    BASE
+[THEN]
+
+[IFUNDEF] DECIMAL
+\ Set the numeric conversion radix to ten (decimal).
+: decimal 
+	$A base ! 
+;
+[THEN]
+
+[IFUNDEF] (#)
+
+	[IFUNDEF] M/MOD
+	: M/MOD ( ud un -- ur udq )
+	    \ divide high word by base
+	    >r 0 r@     ( ud.l ud.h:0 un | R: un ) 
+	    um/mod         ( ud. ud.h*10000%r:ud.h*10000/r | R: un ) 
+	    r> swap >r  ( ud.l:ud.h*10000%r un | R: ud.h*10000/r )
+	    um/mod          ( r q )
+	    r>          ( r q ud.h*10000/r )
+	;
+	[THEN]
+
+: (#)   ( ud base -- ud' ch )
+    m/mod       \ ( ur udq ) 
+    rot         \ ( udq ur )
+    $09 over <  \ ( udq 9<ur )
+    if $07 + then 
+    $30 + 
+;
+[THEN]
+
+[IFUNDEF] #
+: #     \   ( ud1 -- ud2 )
+\   Divide ud1 by the number in BASE giving the quotient ud2 and the remainder n. (n is the least-significant digit of ud1.)
+\   Convert n to external form and add the resulting character to the beginning of the pictured numeric output string. An
+\   ambiguous condition exists if # executes outside of a <# #> delimited number conversion.
+
+    base @  
+    (#)
+    hold
+;
+[THEN]
+
+[IFUNDEF] #>
+: #>    \   ( xd -- c-addr u )
+\   Drop xd. Make the pictured numeric output string available as a character string. c-addr and u specify the resulting
+\   character string. A program may replace characters within the string.
+    2drop hld @ -pad over -
+;
+[THEN]
+
+[IFUNDEF] #S
+: #S    \   ( ud1 -- ud2 )
+\   Convert one digit of ud1 according to the rule for #. Continue conversion until the quotient is zero. ud2 is zero. An
+\   ambiguous condition exists if #S executes outside of a <# #> delimited number conversion.
+    begin
+        #
+        2dup or 0=
+    until
+;
+[THEN]
+test" abs 394 abs 394 ="
+test" abs -395 abs 395 ="
+
+
+[IFUNDEF] SIGN
+: SIGN  \   ( n -- )        \ depends on high word being TOS
+    0< if
+        $2d hold
+    then
+;
+[THEN]
+
+
+\   printing words
+
+user hld            \ address of number pad
+
+[IFUNDEF] -pad
+: -pad
+    (numbuf) @ 1-
+;
+[THEN]
+
+[IFUNDEF] <#
+: <#    \    ( -- )
+\   Initialize the pictured numeric output conversion process.
+    -pad hld !
+;
+[THEN]
+
+[IFUNDEF] HOLD
+: HOLD  \   ( char -- )
+\   Add char to the beginning of the pictured numeric output string. An ambiguous condition exists if HOLD executes outside of
+\   a <# #> delimited number conversion.
+    -1 hld +! 
+    hld @ c!
+;
+
+[IFUNDEF] .
+: .
+    0 .r space
+;
+[THEN]
+test" . -640 . true"
+
+[IFUNDEF] U.
+: U.
+    0 u.r space
+;
+[THEN]

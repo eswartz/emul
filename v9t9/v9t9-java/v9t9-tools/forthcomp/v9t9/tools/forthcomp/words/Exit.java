@@ -12,6 +12,7 @@ package v9t9.tools.forthcomp.words;
 
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -26,7 +27,7 @@ public class Exit extends BaseStdWord {
 			throws AbortException {
 		hostContext.assertCompiling();
 		hostContext.compileExit();
-		targetContext.compileExit(hostContext);
+		targetContext.buildExit(hostContext);
 	}
 
 	/* (non-Javadoc)

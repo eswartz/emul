@@ -1,0 +1,22 @@
+
+| : minimal-THROW  ( k*x n -- k*x | i*x n )
+
+	?dup if
+		message cr
+		abort
+	then
+;
+
+| : minimal-CATCH	( i*x xt -- j*x 0 | i*x n )
+
+	execute
+	0
+;
+
+
+' minimal-THROW 	TO THROW
+' minimal-CATCH 	TO CATCH
+
+
+: exc-init 
+;

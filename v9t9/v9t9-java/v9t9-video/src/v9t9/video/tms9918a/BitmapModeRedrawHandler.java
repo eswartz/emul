@@ -76,8 +76,12 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 
 		int bpm = bitpattmask >> 3;
 		int bcm = bitcolormask >> 3;
-		for (int i = 0; i < 768; i++) {
-			int sector =  (i & 0x300);
+		
+		int minY = (info.canvas.getMinY() / 8) * 32;
+		int maxY = ((info.canvas.getMaxY() + 7) / 8) * 32;
+		
+		for (int i = minY; i < maxY; i++) {
+			int sector = (i & 0x300);
 			int currchar = info.vdp.readAbsoluteVdpMemory(modeInfo.screen.base + i) & 0xff;	/* char # to update */
 			if (info.changes.patt[(currchar + sector) & bpm] != 0
 					|| info.changes.color[(currchar + sector) & bcm] != 0) { /* if color or pattern changed */

@@ -1,0 +1,73 @@
+
+
+| User BLK
+| User >source
+| User #source
+
+| User loadfile
+| User loadline
+
+[IFUNDEF] RESTORE-INPUT
+: RESTORE-INPUT ( xn ... x1 n -- )
+    6 <> abort" invalid restore-input"
+    >in !
+    blk !
+    #source !  >source !
+    loadline ! loadfile !
+;
+[THEN]
+
+[IFUNDEF] SAVE-INPUT
+: SAVE-INPUT    ( -- xn ... x1 n )
+    loadfile @ loadline @
+    >source @ #source @
+    blk @
+    >in @
+    6
+;
+[THEN]
+
+
+[IFUNDEF] \
+\ Compilation: Perform the execution semantics given below.
+\	Execution: ( "ccc<eol>"-- )
+\ Parse and discard the remainder of the parse area. \ is an immediate word.
+
+: \
+    blk @
+    if 
+        \ block file
+        \ >in @ c/l / 1+ c/l * >in ! exit
+        10 parse 2drop 
+    else
+        \ consume rest of buffer
+        source >in ! drop 
+    then
+; immediate target-only
+[THEN]
+
+[IFUNDEF] SOURCE-ID
+: SOURCE-ID
+    loadline @ 0< if
+        -1
+    else
+        loadfile @
+    then
+;
+[THEN]
+
+
+[IFUNDEF] TIB
+\ : tib (tib0) ;
+[THEN]
+
+[IFUNDEF] #TIB
+\ : #tib (#tib) ;
+[THEN]
+
+[IFUNDEF] .(
+\ : .(
+\ ;
+[THEN]
+
+

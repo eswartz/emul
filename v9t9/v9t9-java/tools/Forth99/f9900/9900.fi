@@ -1,0 +1,207 @@
+\   9900.fi
+\ 
+\   (c) 2014 Edward Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+: CODE
+	NAME" SMUDGE
+; target-only
+
+: END-CODE
+	rIP *R+  0  ,MOV
+	0 *R 		,B
+; immediate target-only
+	
+: COMPILE, ( xt -- )
+	,
+;
+
+\ called for creating words to inject :docol code into definition
+: docol,    ( addr -- )
+	[ $690 rDOCOL + literal ] ,  
+;
+
+| : docol!  ( cfa -- )
+    drop 
+;
+
+| : dovar,  ( -- )
+	[ $690 rDOVAR + literal ] ,
+;
+
+| : docon, ( num -- )
+    [ $690 rDOCON + literal ] ,
+    ,  
+;
+
+| : douser,  ( offs -- )
+    [ $690 rDOUSER +  literal ] ,
+    ,
+;
+
+
+| : dovalue, ( num -- )
+	HANG      \ $79 c, ,     \ Iexit c,
+;
+| : do>to, ( addr -- addr' )
+    1+
+;
+
+
+: >BODY ( xt -- a-addr )
+    \   a-addr is the data-field address corresponding to xt. An ambiguous condition exists if xt is not for a word defined via
+    \   CREATE.
+    2+
+; 
+
+| : dodoes,  ( -- )
+    align
+    HANG \ IRfrom c,
+;
+
+
+| : xt! ( addr cfa -- )
+    !
+;
+
+| : dodefer!    ( cfa -- )
+    \ TODO
+    HANG
+;
+
+: literal ( n -- )
+	[compile] DOLIT  ,  
+; immediate target-only
+ 
+: dliteral ( d -- )  
+	[compile] DODLIT  ,  , 
+; immediate target-only 
+
+
+\ --------------------------------------------
+
+
+[IFUNDEF] (compile)
+\   compile the following word in the IP stream
+\   (needed cross compiler)
+: (compile)
+    r> dup cell+ >r @ , 
+;
+[THEN]
+
+\ target
+
+\ target - (opAddr + cellSize);
+| : jmpoffs, ( addr offs -- )
+	2-  
+	swap !
+;
+| : jmpoffsalloc, ( diff opc -- )
+	compile, 
+	2- 2-  ,
+;
+
+
+: >fixup  ( -- addr )
+    here
+    0 ,
+;
+
+: loop,
+    ,  
+;
+
+
+( when creating a does> word )
+: (does>)  
+    r> lastxt              ( where dovar, was ) 
+    !  
+; target-only
+
+( when compiling a creator word )
+: does>
+[ has? LOCALS [IF] ] 
+    finish-locals
+[ [THEN] ]
+
+    here 1 and  if 0 c, then    \ need aligned addr for CALL
+    postpone (does>) 
+    \ created word is here:  need to fetch PC now
+    HANG     \ IRfrom c,
+    \ ... and don't return to data of created word!
+    \ postpone rdrop 
+; immediate target-only
+
+0 <export
+
+: dodefer, ( -- )
+	HANG    \ ['] ;S  >call  ,   \ Iexit c,
+;
+
+: is-check ( "..." -- is-addr )
+    '  dup >r
+    \ @  $8000  >=
+    r@ cell+ c@  
+    HANG \ Iexit  =	
+    0=  err-not-deferred ?throw 
+    r> 
+; 
+
+: is,  ( xt-addr is-addr -- )
+   !  
+;
+
+: is?,  ( is-addr -- )
+    @ 
+;
+
+has? LOCALS [IF] 
+\   Push locals
+: <locals,  ( --  )
+    Itolocals ,
+;
+
+\   Allocate num cells of locals
+: ^locals,  ( num --  )
+    Ilalloc c,
+    c,
+;
+
+\   Fixup local allocations
+: locals>,  ( -- )
+    IfromLocals ,
+;
+
+\   Compile local reference:
+\      -1: read
+\       0: address
+\       1: write
+: local, ( local# mode -- )
+    dup 0< if
+        drop  Ilpidx c,  c,
+    else
+        Ilocal c,  swap c,    
+        if
+            Istore c,        
+        then
+    then 
+;
+
+: (lfetch) ( num -- )
+    Ilpidx c,  c,
+;
+
+: (laddr) ( num -- )
+    Ilocal c,  c,
+;
+
+[THEN]
+
+export>
+
+

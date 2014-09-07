@@ -1,0 +1,133 @@
+\   core_dict.fi
+\ 
+\   (c) 2014 Ed Swartz
+\ 
+\   All rights reserved. This program and the accompanying materials
+\   are made available under the terms of the Eclipse Public License v1.0
+\   which accompanies this distribution, and is available at
+\   http://www.eclipse.org/legal/epl-v10.html
+\ 
+
+\	GROM/GRAM:
+\   [ NFA: byte flags | length ] [ NFA_NAME: name ] [ word: addr of XT in RAM ]  
+\	Organized this way for efficient forward iteration.
+\   
+\	RAM:
+\   XT (under direct threading).  For code words, the code directly
+\   lives here.  Colon words contain "BL *DOCOL" (R8).
+\   Does words contain "BL *DODOES" (R7).  Etc.
+
+
+| User GDP              \ GROM dictionary pointer
+
+| : lfa>nfa
+	( no change )
+;
+
+| : nfa>xt@ ( gaddr -- xtaddr )
+	dup  
+	gc@ &nmask AND +  ( skip name )
+	1+ ( skip length ) 
+;
+: nfa>xt ( gaddr -- xt )
+    nfa>xt@  g@
+;
+
+| : nfa>imm?  ( gnfa -- t/f )
+    gc@ |immed and 0<>
+;
+
+
+| : nfa>name	( gaddr -- gaddr )
+	1+  
+;
+
+: >id       ( gnfa -- caddr u )
+    dup gc@ swap 
+    nfa>name swap
+;
+
+: id.       ( gnfa -- )
+    >id gtype space
+;
+
+
+[IFUNDEF] IMMEDIATE
+: IMMEDIATE
+    latest dup gc@ |immed or swap gc!
+;
+[THEN]
+
+: grom-(find)  ( c-addr lfa -- c-addr 0  |  xt 1  |  xt -1 )
+\   Find the definition named in the counted string at c-addr. If the definition is not found after searching all the word
+\   lists in the search order, return c-addr and zero. If the definition is found, return xt. If the definition is immediate,
+\   also return one (1); otherwise also return minus-one (-1). For a given string, the values returned by FIND while compiling
+\   may differ from those returned while not compiling.
+
+    \ remember caddr
+    swap >r
+    
+    \ search GRAM dictionary
+    >gram_dict_end  r@		GDP @   (gfind)
+    ?dup if 
+    	rot drop  rdrop exit  
+    then
+    
+    \ fall back to GROM dictionary
+    2drop
+    >grom_dictend g@  r>  >grom_dict g@  (gfind)
+;
+
+' grom-(find)		TO (FIND)
+
+\ Hide a word while compiling, to allow redefining a word in terms of the same name
+| : grom-smudge ( -- )
+	lastnfa
+    dup gc@ |srch xor swap gc!
+;
+
+' grom-smudge 	to smudge
+
+| : gc, ( ch -- )
+	GDP @    gc!
+	1 GDP +!
+;
+
+: grom-name, ( "name" -- )
+    name"	( cstr )
+    
+    dup c@ &nmask min		 ( cstr len )  
+
+    \ Get space for name -- reverse!
+    dup 1+  cell+  negate 	GDP +!		( step back )
+    GDP @ >r
+    
+    \ Lay down name field
+    1+ swap  
+    
+    r>  ( gaddr )	dup  >latest !		( points to NFA of last entry )
+    rot ( cstr gaddr len ) dup >r  cgmove
+    
+    \ r> GDP +!	( add length+1 bytes )
+    rdrop 
+    
+[ [IFDEF] (register-symbol) ]
+    here (register-symbol)
+[ [THEN] ]
+
+    \ current @ !       \ !!!
+    
+;
+
+' grom-name,		TO name,
+
+: xt, ( xt -- )
+	GDP @  nfa>xt@
+	
+    \ lay down XT
+    g! 
+    \ #cell  GDP +!
+;
+
+[THEN]
+

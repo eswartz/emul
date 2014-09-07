@@ -1,0 +1,12 @@
+
+| User >SOURCE
+| User #SOURCE
+
+user >IN
+
+
+| : core-SOURCE    ( -- caddr u )
+	>source @  #source @
+;
+
+' core-SOURCE  TO	SOURCE

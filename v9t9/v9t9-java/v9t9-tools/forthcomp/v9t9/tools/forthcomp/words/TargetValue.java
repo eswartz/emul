@@ -15,6 +15,7 @@ import v9t9.tools.forthcomp.DictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetContext;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -39,8 +40,6 @@ public class TargetValue extends TargetWord {
 					targetContext.compileLiteral(getEntry().getParamAddr(), false, true);
 				else
 					targetContext.compile(TargetValue.this);
-					
-				//targetContext.compileLoad(getCells() * targetContext.getCellSize());
 			}
 		});
 		setExecutionSemantics(new ISemantics() {

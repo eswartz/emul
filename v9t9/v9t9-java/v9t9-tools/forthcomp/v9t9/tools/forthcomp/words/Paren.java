@@ -10,9 +10,12 @@
  */
 package v9t9.tools.forthcomp.words;
 
+import java.io.IOException;
+
 import v9t9.tools.forthcomp.AbortException;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -24,12 +27,11 @@ public class Paren extends BaseWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				String tok;
-				do {
-					tok = hostContext.readToken();
-					if (tok == null)
-						throw hostContext.abort("end of file before )");
-				} while (!tok.equals(")"));				
+				try {
+					hostContext.getStream().readThrough(')');
+				} catch (IOException e) {
+					throw hostContext.abort("did not find ')'");
+				}
 			}
 		});
 		setCompilationSemantics(getExecutionSemantics());

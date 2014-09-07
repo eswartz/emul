@@ -11,6 +11,7 @@
 package v9t9.common.video;
 
 
+
 /**
  * @author ejs
  *
@@ -26,5 +27,11 @@ public interface IVdpCanvasRenderer {
 	IVdpCanvas getCanvas();
 	
 	void refresh();
-
+	
+	public interface CanvasListener {
+		void modeChanged();
+	}
+	
+	void addListener(CanvasListener listener);
+	void removeListener(CanvasListener listener);
 }

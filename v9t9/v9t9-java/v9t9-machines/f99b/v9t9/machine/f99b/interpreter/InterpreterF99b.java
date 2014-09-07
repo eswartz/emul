@@ -76,10 +76,8 @@ import static v9t9.machine.f99b.asm.InstF99b.ItoContext;
 import static v9t9.machine.f99b.asm.InstF99b.ItoLocals;
 import static v9t9.machine.f99b.asm.InstF99b.ItoR;
 import static v9t9.machine.f99b.asm.InstF99b.Iudivmod;
-import static v9t9.machine.f99b.asm.InstF99b.IuloopUp;
 import static v9t9.machine.f99b.asm.InstF99b.Iumul;
 import static v9t9.machine.f99b.asm.InstF99b.Iupidx;
-import static v9t9.machine.f99b.asm.InstF99b.IuplusLoopUp;
 import static v9t9.machine.f99b.asm.InstF99b.Iuser;
 import static v9t9.machine.f99b.asm.InstF99b.Ixor;
 import static v9t9.machine.f99b.asm.InstF99b.OP_1MINUS;
@@ -657,18 +655,18 @@ public class InterpreterF99b implements IInterpreter {
         	short lim = getReturnStackEntry(1);
     		cpu.rpop();
     		cpu.rpush(next);
-    		cpu.push((short) ((lim != 0 ? next < lim : next >= 1) ? 0 : -1));
+    		cpu.push((short) (lim != next ? 0 : -1));
         	break;
         }
-        case IuloopUp: {
-        	int next = (getReturnStackEntry(0) + 1) & 0xffff;
-        	short lim = getReturnStackEntry(1);
-        	cpu.rpop();
-        	cpu.rpush((short) next);
-        	cpu.push((short) ((lim != 0 ? next < (lim & 0xffff) 
-        			: next >= (1 & 0xffff)) ? 0 : -1));
-        	break;
-        }
+//        case IuloopUp: {
+//        	int next = (getReturnStackEntry(0) + 1) & 0xffff;
+//        	short lim = getReturnStackEntry(1);
+//        	cpu.rpop();
+//        	cpu.rpush((short) next);
+//        	cpu.push((short) ((lim != 0 ? next < (lim & 0xffff) 
+//        			: next >= (1 & 0xffff)) ? 0 : -1));
+//        	break;
+//        }
         case IplusLoopUp: {
         	short change = cpu.pop();
         	short cur = getReturnStackEntry(0);
@@ -676,21 +674,30 @@ public class InterpreterF99b implements IInterpreter {
         	short lim = getReturnStackEntry(1);
     		cpu.rpop();
     		cpu.rpush((short) next);
-    		cpu.push((short) ((lim != 0 ? (change < 0 ? next > lim  : next < lim)
-    					: next >= change) ? 0 : -1));
+    		short out;
+    		if (lim != 0) {
+    			if (change >= 0) {
+    				out = (short) ((next & 0xffff) < (lim & 0xffff) ? 0 : -1);
+    			} else {
+    				out = (short) (next > lim ? 0 : -1);
+    			}
+    		} else {
+    			out = (short) ((next < 0x10000) ? 0 : -1);
+    		}
+    		cpu.push(out);
         	break;
         }
-        case IuplusLoopUp: {
-        	short change = cpu.pop();
-        	short cur = getReturnStackEntry(0);
-        	int next = (cur & 0xffff) + change;
-        	short lim = getReturnStackEntry(1);
-        	cpu.rpop();
-        	cpu.rpush((short) next);
-        	cpu.push((short) ((lim != 0 ? (change < 0 ? next > (lim & 0xffff) : next < (lim & 0xffff)) 
-        			: (next & 0xffff)  >= (change & 0xffff)) ? 0 : -1));
-        	break;
-        }
+//        case IuplusLoopUp: {
+//        	short change = cpu.pop();
+//        	short cur = getReturnStackEntry(0);
+//        	int next = (cur & 0xffff) + change;
+//        	short lim = getReturnStackEntry(1);
+//        	cpu.rpop();
+//        	cpu.rpush((short) next);
+//        	cpu.push((short) ((lim != 0 ? (change < 0 ? next > (lim & 0xffff) : next < (lim & 0xffff)) 
+//        			: (next & 0xffff)  >= (change & 0xffff)) ? 0 : -1));
+//        	break;
+//        }
         
         case Icfill: {
         	cycleCounts.addExecute(4);
@@ -1107,8 +1114,6 @@ public class InterpreterF99b implements IInterpreter {
 		return true;
 	}
 
-	
-	
 	private void doCmove() {
 		cycleCounts.addExecute(2);
 		int tstep = cpu.pop();
@@ -1263,7 +1268,15 @@ public class InterpreterF99b implements IInterpreter {
         	cpu.pushd(v);
         	break;
         }
-        
+        case Iover: {
+        	int x = cpu.popd();
+        	int y = cpu.popd();
+        	cpu.pushd(y);
+        	cpu.pushd(x);
+        	cpu.pushd(y);
+        	break;
+        }
+     
         case Iudivmod: {
         	int div = cpu.popd() & 0xffffffff;
         	int numHi = cpu.popd();
@@ -1320,7 +1333,13 @@ public class InterpreterF99b implements IInterpreter {
         	cpu.rpop();
         	cpu.rpop();
         	break;
-        	
+
+        case IatR: {
+        	cpu.push(getReturnStackEntry(1));
+        	cpu.push(getReturnStackEntry(0));
+        	break;
+        }
+
         case ItoLocals & 0xff: {
         	// LP@  	RP@ LP! ; \\ caller pushes R> 
         	short curLP = iblock.lp;

@@ -15,6 +15,7 @@ import v9t9.tools.forthcomp.DictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -22,14 +23,14 @@ import v9t9.tools.forthcomp.ITargetWord;
  */
 public class TargetConstant extends TargetWord implements ITargetWord {
 
-	private final int value;
+	private int value;
 	private final int width;
 
 	/**
 	 * @param entry
 	 */
-	public TargetConstant(String name, int value_, int width_) {
-		super(new DictEntry(0, 0, name));
+	public TargetConstant(DictEntry entry, int value_, int width_) {
+		super(entry);
 		this.value = value_;
 		this.width = width_;
 		
@@ -37,16 +38,12 @@ public class TargetConstant extends TargetWord implements ITargetWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				if (getEntry().canInline()) {
-					if (getWidth() == 1)
-						targetContext.compileLiteral(getValue(), false, true);
-					else if (getWidth() == 2 && targetContext.getCellSize() == 2)
-						targetContext.compileDoubleLiteral(getValue() & 0xffff, getValue() >> 16, false, true);
-					else
-						assert false;
-				} else {
-					targetContext.compile(TargetConstant.this);
-				}
+				if (getWidth() == 1)
+					targetContext.buildLiteral(getValue(), false, true);
+				else if (getWidth() == 2 && targetContext.getCellSize() == 2)
+					targetContext.buildDoubleLiteral(getValue() & 0xffff, getValue() >> 16, false, true);
+				else
+					assert false;
 			}
 		});
 		setExecutionSemantics(new ISemantics() {
@@ -61,6 +58,13 @@ public class TargetConstant extends TargetWord implements ITargetWord {
 		});
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetWord#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Constant " + super.toString();
+	}
 	/**
 	 * @return
 	 */
@@ -73,5 +77,12 @@ public class TargetConstant extends TargetWord implements ITargetWord {
 	 */
 	public int getWidth() {
 		return width;
+	}
+
+	/**
+	 * @param value
+	 */
+	public void setValue(int value) {
+		this.value = value;
 	}
 }

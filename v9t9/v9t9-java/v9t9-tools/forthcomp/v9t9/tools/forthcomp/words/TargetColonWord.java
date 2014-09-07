@@ -15,6 +15,7 @@ import v9t9.tools.forthcomp.DictEntry;
 import v9t9.tools.forthcomp.HostContext;
 import v9t9.tools.forthcomp.ISemantics;
 import v9t9.tools.forthcomp.ITargetWord;
+import v9t9.tools.forthcomp.TargetContext;
 
 /**
  * @author ejs
@@ -42,6 +43,14 @@ public class TargetColonWord extends TargetWord implements ITargetWord {
 				}		
 			}
 		});
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.forthcomp.words.TargetWord#toString()
+	 */
+	@Override
+	public String toString() {
+		return ": " + entry.getName();
 	}
 
 }
