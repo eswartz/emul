@@ -21,6 +21,8 @@ public interface IStatus {
 
 	void copyTo(IStatus copy);
 
+	short get();
+	
 	short flatten();
 
 	void expand(short stat);

@@ -11,6 +11,6 @@ package v9t9.common.cpu;
  *
  */
 public interface IChangeElement {
-	void apply();
-	void revert();
+	void apply(ICpuState cpuState);
+	void revert(ICpuState cpuState);
 }

@@ -172,10 +172,17 @@ public class Status9900 implements IStatus {
     }
     
     /* (non-Javadoc)
+     * @see v9t9.common.cpu.IStatus#get()
+     */
+    @Override
+    public short get() {
+    	return bits;
+    }
+    /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#flatten()
 	 */
     public short flatten() {
-        bits = (short) (bits & ~(Status9900.ST_L + Status9900.ST_E + Status9900.ST_A + Status9900.ST_P)
+        bits = (short) (bits & ~(Status9900.ST_L + Status9900.ST_A + Status9900.ST_E + Status9900.ST_P)
                 | ((lastval & 0xffff) > (lastcmp & 0xffff) ? Status9900.ST_L : 0)
                 | (lastval > lastcmp ? Status9900.ST_A : 0)
                 | (lastval == lastcmp ? Status9900.ST_E : 0) 
@@ -207,7 +214,7 @@ public class Status9900 implements IStatus {
         
         // preserve reserved bits, e.g. for Forth9900 and its "bank" flag
         //bits = (short) ((bits & ~(ST_INTLEVEL + ST_C + ST_O + ST_X)) | (stat & ST_INTLEVEL + ST_C + ST_O + ST_X));
-        bits = (short) (stat & ~(ST_L + ST_A + ST_E));
+        bits = (short) stat;
     }
 
     /*

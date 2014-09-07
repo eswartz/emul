@@ -63,13 +63,13 @@ public abstract class ChangeBlock {
 		return elementIdx > 0 ? elements[elementIdx - 1] : null;
 	}
 	
-	public void apply() {
+	public void apply(ICpuState cpuState) {
 		for (int i = 0; i < elementIdx; i++)
-			elements[i].apply();
+			elements[i].apply(cpuState);
 	}
-	public void revert() {
+	public void revert(ICpuState cpuState) {
 		for (int i = elementIdx - 1; i >= 0; i--)
-			elements[i].revert();
+			elements[i].revert(cpuState);
 	}
 
 

@@ -232,7 +232,6 @@ public class CpuState9900 implements ICpuState {
 		fireRegisterChanged(reg, val);
 		return old & 0xffff;
 	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterTooltip(int)
 	 */
@@ -316,6 +315,21 @@ public class CpuState9900 implements ICpuState {
 	@Override
 	public InstructionWorkBlock createInstructionWorkBlock() {
 		return new InstructionWorkBlock9900(this);
+	}
+
+	/**
+	 * @param newwp
+	 * @param newpc
+	 */
+	public void contextSwitch(short newwp, short newpc) {
+        short oldwp = getWP();
+        short oldpc = getPC();
+        setWP(newwp);
+        setPC(newpc);
+        getConsole().writeWord(newwp + 13 * 2, oldwp);
+        getConsole().writeWord(newwp + 14 * 2, oldpc);
+        getConsole().writeWord(newwp + 15 * 2, getST());
+		
 	}
 
 }
