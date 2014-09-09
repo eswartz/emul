@@ -21,6 +21,23 @@ public final class Changes {
 				name = getClass().getSuperclass().getSimpleName();
 			return name;
 		}
+		@Override
+		public int hashCode() {
+			int result = 1;
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+//			BaseChangeElement other = (BaseChangeElement) obj;
+			return true;
+		}
+		
 	}
 	
 	protected abstract static class BaseOperandChangeElement extends BaseChangeElement {
@@ -30,7 +47,38 @@ public final class Changes {
 			super();
 			this.state = state;
 		}
+		
+		
 	
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = super.hashCode();
+			result = prime * result + ((state == null) ? 0 : state.hashCode());
+			return result;
+		}
+
+
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (!super.equals(obj))
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			BaseOperandChangeElement other = (BaseOperandChangeElement) obj;
+			if (state == null) {
+				if (other.state != null)
+					return false;
+			} else if (!state.equals(other.state))
+				return false;
+			return true;
+		}
+
+
+
 		protected abstract void doApply(ICpuState cpuState);
 		protected void doRevert(ICpuState cpuState) {
 			
@@ -148,96 +196,7 @@ public final class Changes {
 		}
 	}
 
-	public final static class ConditionalAdvancePC extends BaseChangeElement {
-		public final int value;
-		public final int inst;
-		int prev;
 
-		public ConditionalAdvancePC(int inst,int value) {
-			this.inst = inst;
-			this.value = value;
-		}
-
-		@Override
-		public void apply(ICpuState cpuState) {
-			prev = cpuState.getRegister(Cpu9900.REG_PC);
-			
-			int newPC = prev;
-			
-			Status9900 status = (Status9900) cpuState.getStatus();
-			switch (inst) {
-			case Inst9900.Ijlt:
-	        	if (status.isLT()) {
-	        		newPC += value;
-	        	}
-	            break;
-	        case Inst9900.Ijle:
-	        	if (status.isLE()) {
-	        		newPC += value;
-	        	}
-	            break;
-
-	        case Inst9900.Ijeq:
-	        	if (status.isEQ()) {
-	        		newPC += value;
-	        	}
-	            break;
-	        case Inst9900.Ijhe:
-	        	if (status.isHE()) {
-	        		newPC += value;
-	        	}
-	            break;
-	        case Inst9900.Ijgt:
-	        	if (status.isGT()) {
-	        		newPC += value;
-	        	}
-	            break;
-	        case Inst9900.Ijne:
-	        	if (status.isNE()) {
-	        		newPC += value;
-	        	}
-	            break;
-	        case Inst9900.Ijnc:
-	        	if (!status.isC()) {
-	        		newPC += value;
-	        	}
-	            break;
-	        case Inst9900.Ijoc:
-	        	if (status.isC()) {
-	        		newPC += value;
-	        	}
-	            break;
-	        case Inst9900.Ijno:
-	        	if (!status.isO()) {
-	        		newPC += value;
-	        	}
-	            break;
-	        case Inst9900.Ijl:
-	        	if (status.isL()) {
-	        		newPC += value;
-	        	}
-	            break;
-	        case Inst9900.Ijh:
-	        	if (status.isH()) {
-	        		newPC += value;
-	            }
-	            break;
-
-	        case Inst9900.Ijop:
-	            // jump on ODD parity
-	            if (status.isP()) {
-	        		newPC += value;
-	            }
-	            break;
-			}
-			cpuState.setRegister(Cpu9900.REG_PC, newPC);
-		}
-
-		@Override
-		public void revert(ICpuState cpuState) {
-			cpuState.setRegister(Cpu9900.REG_PC, prev);
-		}
-	}
 	public final static class ReadIndirectRegister extends BaseOperandChangeElement {
 		public ReadIndirectRegister(MachineOperandState state) {
 			super(state);
@@ -364,7 +323,6 @@ public final class Changes {
 		}
 	}
 	public static class Blwp extends SwitchContext {
-		protected int r11;
 		private MachineOperandState state;
 		
 		public Blwp(MachineOperandState state) {
@@ -414,35 +372,6 @@ public final class Changes {
 			cpuState.setST((short) cpuState.getRegister(15));
 			((CpuState9900) cpuState).setWP((short) cpuState.getRegister(13));
 		}
-	}
-	
-	public static final class SaveWP implements IChangeElement {
-		short wp;
-		
-		@Override
-		public void apply(ICpuState cpuState) {
-			wp = ((CpuState9900) cpuState).getWP();
-		}
-
-		@Override
-		public void revert(ICpuState cpuState) {
-			((CpuState9900) cpuState).setWP(wp);
-		}
-
-	}
-	public static final class SaveR11 implements IChangeElement {
-		short r11;
-		
-		@Override
-		public void apply(ICpuState cpuState) {
-			r11 = (short) cpuState.getRegister(11);
-		}
-		
-		@Override
-		public void revert(ICpuState cpuState) {
-			cpuState.setRegister(11, r11);
-		}
-		
 	}
 	public static final class WriteResult extends BaseOperandChangeElement {
 		public WriteResult(MachineOperandState state) {

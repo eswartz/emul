@@ -73,9 +73,6 @@ public abstract class ChangeBlock {
 	}
 
 
-	/**
-	 * @return
-	 */
 	public IChangeElement[] copyElements() {
 		if (elements != null && elementIdx == elements.length)
 			return elements;
@@ -89,5 +86,16 @@ public abstract class ChangeBlock {
 	}
 	public IChangeElement getElement(int index) {
 		return elements[index];
+	}
+	
+	public void insert(int pos, ChangeBlock newBlock) {
+		System.arraycopy(elements, pos, elements, pos + newBlock.elementIdx, elementIdx - pos);
+		System.arraycopy(newBlock.elements, 0, elements, pos, newBlock.elementIdx);
+		elementIdx += newBlock.elementIdx;
+	}
+
+	public void delete(int pos) {
+		System.arraycopy(elements, pos + 1, elements, pos, elementIdx - pos - 1);
+		elementIdx --;
 	}
 }

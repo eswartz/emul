@@ -16,7 +16,6 @@ import v9t9.common.machine.IMachineModel;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.machine.ti99.cpu.ChangeBlock9900;
 import v9t9.machine.ti99.cpu.Changes.AdvancePC;
-import v9t9.machine.ti99.cpu.Changes.ConditionalAdvancePC;
 import v9t9.machine.ti99.cpu.Changes.ReadIncrementRegister;
 import v9t9.machine.ti99.cpu.Changes.ReadIndirectRegister;
 import v9t9.machine.ti99.cpu.Changes.ReadRegister;
@@ -82,10 +81,6 @@ public class TestChangeBlock9900
 		}
 		else if (klass == ReadRegister.class) {
 			assertEquals(args[0] & 0xffff, ((MachineOperand9900)((ReadRegister) el).state.mop).val & 0xffff);
-		}
-		else if (klass == ConditionalAdvancePC.class) {
-			assertEquals(args[0] & 0xffff, ((ConditionalAdvancePC) el).value & 0xffff);
-			
 		}
 //		else if (klass == ReadWord.class) {
 //			if (args.length > 0)
@@ -314,30 +309,43 @@ public class TestChangeBlock9900
  		ChangeBlock9900 change = new ChangeBlock9900(cpu);
  		change.appendOperandFetch();
  		
- 		assertEquals(2, change.getCount());
+ 		assertEquals(1, change.getCount());
  		assertChange(change, 0, AdvancePC.class, 2);
- 		assertChange(change, 1, AdvancePC.class, -4);
  		
  		change.apply(cpu.getState());
  		
- 		assertEquals(0x3fe, (int) cpu.getState().getPC());
+ 		// not taken
+ 		assertEquals(0x402, (int) cpu.getState().getPC());
  		
  		change.revert(cpu.getState());
  		
  		assertEquals(0x400, (int) cpu.getState().getPC());
 
  	}
+	
+	@Test
+	public void testInstrJump() throws Exception {
+		writeInstruction(0x400, 0x10fe);	// JMP $-2
+		
+		ChangeBlock9900 change = new ChangeBlock9900(cpu);
+		change.generate();
+		
+		change.apply(cpu.getState());
+		
+		assertEquals(0x3fe, (int) cpu.getState().getPC());
+		
+		change.revert(cpu.getState());
+		
+		assertEquals(0x400, (int) cpu.getState().getPC());
+		
+	}
 
 	@Test
- 	public void testOpJumpCond() throws Exception {
+ 	public void testInstrJumpCond() throws Exception {
  		writeInstruction(0x400, 0x137f);	// JEQ $+256
 
  		ChangeBlock9900 change = new ChangeBlock9900(cpu);
- 		change.appendOperandFetch();
- 		
- 		assertEquals(2, change.getCount());
- 		assertChange(change, 0, AdvancePC.class, 2);
- 		assertChange(change, 1, ConditionalAdvancePC.class, 254);
+ 		change.generate();
  		
  		//// taken
  		
@@ -714,6 +722,187 @@ public class TestChangeBlock9900
  		assertEquals(0x11, cpu.getConsole().readWord(0x9000 + 13 * 2));
  		assertEquals(0x12, cpu.getConsole().readWord(0x9000 + 14 * 2));
  		assertEquals(0x13, cpu.getConsole().readWord(0x9000 + 15 * 2));
+
+ 	}
+ 	
+ 	@Test
+ 	public void testMpy() throws Exception {
+ 		writeInstruction(0x400, 0x38a0, 0xff00);	// MPY @>FF00, r2
+ 		
+ 		cpu.getConsole().writeWord(0xff00, (short) 0x90);
+ 		
+ 		cpu.getState().setRegister(2, 0x4001);
+ 		cpu.getState().setRegister(3, 0xffff);
+
+ 		ChangeBlock9900 change = new ChangeBlock9900(cpu);
+ 		change.generate();
+
+ 		cpu.getState().setST((short) 0x1034);
+ 		change.apply(cpu.getState());
+ 		
+ 		assertEquals((short) 0x1034, (int) cpu.getState().getST()); 	
+ 		
+ 		assertEquals((short) 0x24, cpu.getState().getRegister(2)); 	
+ 		assertEquals((short) 0x90, cpu.getState().getRegister(3));
+ 		
+ 		//
+ 		change.revert(cpu.getState());
+ 		
+ 		assertEquals((short) 0x4001, cpu.getState().getRegister(2)); 	
+ 		assertEquals((short) 0xffff, cpu.getState().getRegister(3)); 	
+
+ 	}
+ 	
+
+ 	@Test
+ 	public void testDiv1() throws Exception {
+ 		writeInstruction(0x400, 0x3c60, 0xff00);	// DIV @>FF00, r1
+ 		
+ 		cpu.getConsole().writeWord(0xff00, (short) 0x9012);
+ 		
+ 		cpu.getState().setRegister(1, 0x4001);
+ 		cpu.getState().setRegister(2, 0xffff);
+
+ 		ChangeBlock9900 change = new ChangeBlock9900(cpu);
+ 		change.generate();
+
+ 		cpu.getState().setST((short) 0x1034);
+ 		change.apply(cpu.getState());
+ 		
+ 		assertEquals((short) 0x1034, (int) cpu.getState().getST()); 	
+ 		
+ 		assertEquals((short) 0x71bc, cpu.getState().getRegister(1)); 	
+ 		assertEquals((short) 0x40c7, cpu.getState().getRegister(2));
+ 		
+ 		//
+ 		change.revert(cpu.getState());
+ 		
+ 		assertEquals((short) 0x4001, cpu.getState().getRegister(1)); 	
+ 		assertEquals((short) 0xffff, cpu.getState().getRegister(2)); 	
+
+ 	}
+
+ 	@Test
+ 	public void testDiv2() throws Exception {
+ 		writeInstruction(0x400, 0x3c60, 0xff00);	// DIV @>FF00, r1
+ 		
+ 		cpu.getConsole().writeWord(0xff00, (short) 0x90);
+ 		
+ 		cpu.getState().setRegister(1, 0x4001);
+ 		cpu.getState().setRegister(2, 0xffff);
+
+ 		ChangeBlock9900 change = new ChangeBlock9900(cpu);
+ 		change.generate();
+
+ 		cpu.getState().setST((short) 0x1034);
+ 		change.apply(cpu.getState());
+ 		
+ 		assertEquals((short) 0x1834, (int) cpu.getState().getST()); 	
+
+ 		assertEquals((short) 0x4001, cpu.getState().getRegister(1)); 	
+ 		assertEquals((short) 0xffff, cpu.getState().getRegister(2));
+ 		
+ 		//
+ 		change.revert(cpu.getState());
+ 		
+ 		assertEquals((short) 0x4001, cpu.getState().getRegister(1)); 	
+ 		assertEquals((short) 0xffff, cpu.getState().getRegister(2)); 	
+
+ 	}
+ 	
+
+ 	@Test
+ 	public void testX1() throws Exception {
+ 		writeInstruction(0x400, 0x484);	// X R4
+ 		
+ 		cpu.getState().setRegister(4, 0x603);	// DEC R3
+ 		cpu.getState().setRegister(3, 0);
+
+ 		ChangeBlock9900 change = new ChangeBlock9900(cpu);
+ 		change.generate();
+
+ 		cpu.getState().setST((short) 0x1034);
+ 		change.apply(cpu.getState());
+ 		
+ 		assertEquals((short) 0x603, cpu.getState().getRegister(4)); 	
+ 		assertEquals((short) 0xffff, cpu.getState().getRegister(3));
+ 		
+ 		assertEquals((short) 0x8034, (int) cpu.getState().getST()); 	
+ 		//
+ 		change.revert(cpu.getState());
+ 		
+ 		assertEquals((short) 0x603, cpu.getState().getRegister(4)); 	
+ 		assertEquals((short) 0x0, cpu.getState().getRegister(3)); 	
+
+ 	}
+ 	
+
+
+ 	@Test
+ 	public void testX2() throws Exception {
+ 		writeInstruction(0x400, 0x484, 0x1234);	// X R4
+ 		
+ 		cpu.getState().setRegister(4, 0x201);	// LI R1, ...
+ 		cpu.getState().setRegister(1, 0);
+
+ 		ChangeBlock9900 change = new ChangeBlock9900(cpu);
+ 		change.generate();
+
+ 		cpu.getState().setST((short) 0x1034);
+ 		change.apply(cpu.getState());
+ 		
+ 		assertEquals((short) 0x1234, cpu.getState().getRegister(1)); 	
+ 		assertEquals((short) 0x201, cpu.getState().getRegister(4));
+ 		
+ 		assertEquals((short) 0xd034, (int) cpu.getState().getST()); 	
+ 		//
+ 		change.revert(cpu.getState());
+ 		
+ 		assertEquals((short) 0x201, cpu.getState().getRegister(4)); 	
+ 		assertEquals((short) 0x0, cpu.getState().getRegister(1)); 	
+
+ 	}
+
+ 	@Test
+ 	public void testX3() throws Exception {
+ 		writeInstruction(0x400, 0x484, 0x1234);	// X R4
+ 		
+ 		cpu.getConsole().writeWord(0x1234, (short) 0x9000);
+ 		cpu.getState().setRegister(4, 0xc120);	// MOV @>...., R4
+
+ 		ChangeBlock9900 change = new ChangeBlock9900(cpu);
+ 		change.generate();
+
+ 		change.apply(cpu.getState());
+ 		
+ 		assertEquals((short) 0x9000, cpu.getState().getRegister(4)); 	
+ 		
+ 		//
+ 		change.revert(cpu.getState());
+ 		
+ 		assertEquals((short) 0xc120, cpu.getState().getRegister(4)); 	
+
+ 	}
+
+ 	@Test
+ 	public void testX4() throws Exception {
+ 		writeInstruction(0x400, 0x4b4, 0x1234);	// X *R4+
+ 		
+ 		cpu.getConsole().writeWord(0x1234, (short) 0x9000);
+ 		cpu.getConsole().writeWord(0xaaaa, (short) 0xc120);
+ 		cpu.getState().setRegister(4, 0xaaaa);	
+
+ 		ChangeBlock9900 change = new ChangeBlock9900(cpu);
+ 		change.generate();
+
+ 		change.apply(cpu.getState());
+ 		
+ 		assertEquals((short) 0x9000, cpu.getState().getRegister(4)); 	
+ 		
+ 		//
+ 		change.revert(cpu.getState());
+ 		
+ 		assertEquals((short) 0xaaaa, cpu.getState().getRegister(4)); 	
 
  	}
 }

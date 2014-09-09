@@ -24,4 +24,11 @@ public interface IInterpreter {
 	 * changes in the given change block.  Does not affect CPU or memory at all.
 	 */
 	ChangeBlock simulate();
+	
+	/**
+	 * Execute a chunk of instructions as quickly as possible, watching for
+	 * {@link Executor#interruptExecution} and updating {@link Executor#nInstructions}
+	 */
+	void executeChunk(int numinsts, IExecutor executor);
+
 }

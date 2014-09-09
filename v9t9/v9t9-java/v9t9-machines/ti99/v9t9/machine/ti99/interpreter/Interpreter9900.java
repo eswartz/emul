@@ -20,6 +20,7 @@ import v9t9.common.asm.InstTableCommon;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.IChangeElement;
+import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
@@ -33,6 +34,8 @@ import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.hardware.ICruHandler;
+import v9t9.machine.ti99.cpu.ChangeBlock9900;
+import v9t9.machine.ti99.cpu.Changes;
 import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.Inst9900;
@@ -229,7 +232,7 @@ public class Interpreter9900 implements IInterpreter {
 	    IMemoryDomain console = cpu.getConsole();
 		if (op_x != null) {
 	    	op = op_x;
-	    	ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console));
+	    	ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console, false), console);
 	    } else {
 	    	IMemoryEntry entry = console.getEntryAt(pc);
 	    	op = entry.flatReadWord(pc);
@@ -241,9 +244,9 @@ public class Interpreter9900 implements IInterpreter {
 	    	}
 	    	if ((ins = instructions[pc/2]) != null) {
 	    		// expensive (10%)
-	    		ins = ins.update(op, pc, console);
+	    		ins = ins.update(op, pc, console, false);
 	    	} else {
-	    		ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console));
+	    		ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console, false), console);
 	    	}
 	    	instructions[pc/2] = ins;
 	    }
@@ -762,359 +765,750 @@ public class Interpreter9900 implements IInterpreter {
     	parsedInstructions.clear();
     }
     
-    public static class Interpret implements IChangeElement {
-    	private Instruction9900 inst;
-    	private short prevST;
-		private MachineOperandState mos1;
-		private MachineOperandState mos2;
-		private MachineOperandState mos3;
+    public static abstract class BaseInterpret implements IChangeElement {
+    	protected final Instruction9900 inst;
+    	protected short prevST;
+    	protected final MachineOperandState mos1;
+    	protected final MachineOperandState mos2;
+		protected final MachineOperandState mos3;
 
-		public Interpret(Instruction9900 inst, MachineOperandState mos1, MachineOperandState mos2, MachineOperandState mos3) {
+		public BaseInterpret(Instruction9900 inst, MachineOperandState mos1, 
+				MachineOperandState mos2, MachineOperandState mos3) {
 			this.inst = inst;
 			this.mos1 = mos1;
 			this.mos2 = mos2;
 			this.mos3 = mos3;
 		}
 		
-		/* (non-Javadoc)
-		 * @see java.lang.Object#toString()
-		 */
+		public BaseInterpret(Instruction9900 inst, MachineOperandState mos1, 
+				MachineOperandState mos2) {
+			this(inst, mos1, mos2, null);
+		}
+		public BaseInterpret(Instruction9900 inst, MachineOperandState mos1) {
+			this(inst, mos1, null, null);
+		}
+		public BaseInterpret(Instruction9900 inst) {
+			this(inst, null, null, null);
+		}
+		
 		@Override
 		public String toString() {
 			return getClass().getSimpleName() + ": " + inst.toString();
 		}
 		
+		protected abstract void doApply(CpuState9900 cpuState, Status9900 status);
+		protected void doRevert(CpuState9900 cpuState, Status9900 status) {
+			
+		}
+		
 		@Override
-		public void apply(ICpuState cpuState_) {
+		public final void apply(ICpuState cpuState_) {
 			CpuState9900 cpuState = ((CpuState9900) cpuState_);
 			Status9900 status = cpuState.getStatus();
 			
 			prevST = cpuState.getStatus().get();		// raw value
 			
-	        switch (inst.getInst()) {
-	        case InstTableCommon.Idata:
-	            break;
-	        case Inst9900.Ili:
-	        	mos1.value = mos2.value;
-	        	status.set_LAE(mos1.value);
-	            break;
-	        case Inst9900.Iai:
-	        	status.set_ADD_LAECO(mos1.value, mos2.value);
-	        	mos1.value += mos2.value;
-	            break;
-	        case Inst9900.Iandi:
-	        	mos1.value &= mos2.value;
-	        	status.set_LAE(mos1.value);
-	            break;
-	        case Inst9900.Iori:
-	        	mos1.value |= mos2.value;
-	        	status.set_LAE(mos1.value);
-	            break;
-	        case Inst9900.Ici:
-	        	status.set_CMP(mos1.value, mos2.value);
-	            break;
-	        case Inst9900.Istwp:
-	        	mos1.value = cpuState.getWP();
-	            break;
-	        case Inst9900.Istst:
-	        	mos1.value = cpuState.getStatus().get();
-	            break;
-	        case Inst9900.Ilwpi:
-	        	cpuState.setWP(mos1.value);
-	            break;
-	        case Inst9900.Ilimi:
-	        	cpuState.getStatus().setIntMask(mos1.value);
-	            break;
-	        case Inst9900.Iidle:
-	        	throw new IllegalStateException();	// not handled here
-	        case Inst9900.Irset:
-	            //cpu.rset(); // TODO
-	            break;
-	        case Inst9900.Irtwp:
-	        	throw new IllegalStateException();	// not handled here
-	        case Inst9900.Ickon:
-	            // TODO
-	            break;
-	        case Inst9900.Ickof:
-	            // TODO
-	            break;
-	        case Inst9900.Ilrex:
-	            // TODO
-	            break;
-	        case Inst9900.Iblwp:
-	        	// should not get here
-	        	throw new IllegalStateException();
-
-	        case Inst9900.Ib:
-	        	cpuState.setPC(mos1.value);
-	            break;
-//	        case Inst9900.Ix: {
-//	        	execute(iblock.val1);
-//	            break;
-//	        }
-	        case Inst9900.Iclr:
-	        	mos1.value = 0;
-	            break;
-	        case Inst9900.Ineg:
-	        	mos1.value = (short) -mos1.value;
-	        	status.set_LAEO(mos1.value);
-	            break;
-	        case Inst9900.Iinv:
-	        	mos1.value = (short) ~mos1.value;
-	        	status.set_LAE(mos1.value);
-	            break;
-	        case Inst9900.Iinc:
-	        	status.set_ADD_LAECO(mos1.value, (short) 1);
-	        	mos1.value ++;
-	            break;
-	        case Inst9900.Iinct:
-	        	status.set_ADD_LAECO(mos1.value, (short) 2);
-	        	mos1.value += 2;
-	            break;
-	        case Inst9900.Idec:
-	        	status.set_ADD_LAECO(mos1.value, (short) -1);
-	        	mos1.value --;
-	            break;
-	        case Inst9900.Idect:
-	        	status.set_ADD_LAECO(mos1.value, (short) -2);
-	        	mos1.value -= 2;
-	            break;
-	        case Inst9900.Ibl:
-	        	cpuState.setRegister(11, cpuState.getPC());
-	        	cpuState.setPC(mos1.value);
-	            break;
-	        case Inst9900.Iswpb:
-	        	mos1.value = (short) (mos1.value >> 8 & 0xff | mos1.value << 8 & 0xff00);
-	            break;
-	        case Inst9900.Iseto:
-	        	mos1.value = -1;
-	            break;
-	        case Inst9900.Iabs:
-	        	status.set_LAEO(mos1.value);
-	        	if ((mos1.value & 0x8000) != 0) {
-	        		mos1.value = (short) -mos1.value;
-	        	}
-	            break;
-//	        case Inst9900.Isra:
-//	        	iblock.val1 = (short) (iblock.val1 >> iblock.val2);
-//	        	//cycleCounts.addExecute(iblock.val2 * 2);
-//	            break;
-//	        case Inst9900.Isrl:
-//	        	iblock.val1 = (short) ((iblock.val1 & 0xffff) >> iblock.val2);
-//	        	//cycleCounts.addExecute(iblock.val2 * 2);
-//	            break;
-//
-//	        case Inst9900.Isla:
-//	        	iblock.val1 = (short) (iblock.val1 << iblock.val2);
-//	        	//cycleCounts.addExecute(iblock.val2 * 2);
-//	            break;
-//
-//	        case Inst9900.Isrc:
-//	        	iblock.val1 = (short) ((iblock.val1 & 0xffff) >> iblock.val2 | (iblock.val1 & 0xffff) << 16 - iblock.val2);
-//	        	//cycleCounts.addExecute(iblock.val2 * 2);
-//	            break;
-//
-//	        case Inst9900.Ijmp:
-//	        	iblock.pc = iblock.val1;
-//	        	//cycleCounts.addExecute(2);
-//	            break;
-//	        case Inst9900.Ijlt:
-//	        	if (status.isLT()) {
-//	        		iblock.pc = iblock.val1;
-//	        		//cycleCounts.addExecute(2);
-//	        	}
-//	            break;
-//	        case Inst9900.Ijle:
-//	        	if (status.isLE()) {
-//	        		iblock.pc = iblock.val1;
-//	        		//cycleCounts.addExecute(2);
-//	        	}
-//	            break;
-//
-//	        case Inst9900.Ijeq:
-//	        	if (status.isEQ()) {
-//	        		iblock.pc = iblock.val1;
-//	        		//cycleCounts.addExecute(2);
-//	        	}
-//	            break;
-//	        case Inst9900.Ijhe:
-//	        	if (status.isHE()) {
-//	        		iblock.pc = iblock.val1;
-//	        		//cycleCounts.addExecute(2);
-//	        	}
-//	            break;
-//	        case Inst9900.Ijgt:
-//	        	if (status.isGT()) {
-//	        		iblock.pc = iblock.val1;
-//	        		//cycleCounts.addExecute(2);
-//	        	}
-//	            break;
-//	        case Inst9900.Ijne:
-//	        	if (status.isNE()) {
-//	        		iblock.pc = iblock.val1;
-//	        		//cycleCounts.addExecute(2);
-//	        	}
-//	            break;
-//	        case Inst9900.Ijnc:
-//	        	if (!status.isC()) {
-//	        		iblock.pc = iblock.val1;
-//	        		//cycleCounts.addExecute(2);
-//	        	}
-//	            break;
-//	        case Inst9900.Ijoc:
-//	        	if (status.isC()) {
-//	        		iblock.pc = iblock.val1;
-//	        		//cycleCounts.addExecute(2);
-//	        	}
-//	            break;
-//	        case Inst9900.Ijno:
-//	        	if (!status.isO()) {
-//	        		iblock.pc = iblock.val1;
-//	        		//cycleCounts.addExecute(2);
-//	        	}
-//	            break;
-//	        case Inst9900.Ijl:
-//	        	if (status.isL()) {
-//	        		iblock.pc = iblock.val1;
-//	        		//cycleCounts.addExecute(2);
-//	        	}
-//	            break;
-//	        case Inst9900.Ijh:
-//	        	if (status.isH()) {
-//	        		iblock.pc = iblock.val1;
-//	        		//cycleCounts.addExecute(2);
-//	            }
-//	            break;
-//
-//	        case Inst9900.Ijop:
-//	            // jump on ODD parity
-//	            if (status.isP()) {
-//					iblock.pc = iblock.val1;
-//					//cycleCounts.addExecute(2);
-//	            }
-//	            break;
-//
-//	        case Inst9900.Isbo:
-//	        	if (cruHandler != null)
-//	        		cruHandler.writeBits(iblock.val1<<1, 1, 1);
-//	            break;
-//
-//	        case Inst9900.Isbz:
-//	        	if (cruHandler != null)
-//	        		cruHandler.writeBits(iblock.val1<<1, 0, 1);
-//	            break;
-//
-//	        case Inst9900.Itb:
-//	        	// set EQ bit to value read -- we use CMP, so val1==val2 is EQ when val1==1 and val2==1
-//	        	if (cruHandler != null)
-//	        		iblock.val1 = (short) cruHandler.readBits(iblock.val1<<1, 1);
-//	        	iblock.val2 = 1;
-//	            break;
-//
-//	        case Inst9900.Icoc:
-//	        	iblock.val2 = (short) (iblock.val1 & iblock.val2);
-//	            break;
-//
-//	        case Inst9900.Iczc:
-//	        	iblock.val2 = (short) (iblock.val1 & ~iblock.val2);
-//	            break;
-//
-//	        case Inst9900.Ixor:
-//	        	iblock.val2 ^= iblock.val1;
-//	            break;
-//
-//	        case Inst9900.Ixop:
-//	        	iblock.wp = memory.readWord(iblock.val2 * 4 + 0x40);
-//	            iblock.pc = memory.readWord(iblock.val2 * 4 + 0x42);
-//	            memory.writeWord(iblock.wp + 11 * 2, iblock.ea1);
-//	            break;
-//
-//	        case Inst9900.Impy:
-//	            int val = (iblock.val1 & 0xffff)
-//	                    * (iblock.val2 & 0xffff);
-//	            // manually write second reg
-//	            iblock.val3 = (short) val;
-//	            //memory.writeWord(block.op2.ea + 2, (short) val);
-//	            iblock.val2 = (short) (val >> 16);
-//	            break;
-//
-//	        case Inst9900.Idiv:
-//	            // manually read second reg
-//	            if ((iblock.val1 & 0xffff) > (iblock.val2 & 0xffff)) {
-//	                int low = iblock.val3 & 0xffff;
-//	                long dval = ((iblock.val2 & 0xffff) << 16
-//	                        | (low & 0xffff)) & 0xffffffffL;
-//	                try {
-//	                    iblock.val2 = (short) (dval / (iblock.val1 & 0xffff));
-//	                    iblock.val3 = (short) (dval % (iblock.val1 & 0xffff));
-//	                } catch (ArithmeticException e) {
-//	                }
-//	            }
-//	            break;
-//
-//	        case Inst9900.Ildcr:
-//	        	if (cruHandler != null)
-//	        		cruHandler.writeBits(
-//	                    memory.readWord(iblock.wp + 12 * 2), iblock.val1,
-//	                    iblock.val2);
-//	            break;
-//
-//	        case Inst9900.Istcr:
-//	        	if (cruHandler != null)
-//	        		iblock.val1 = (short) cruHandler.readBits(
-//	        			memory.readWord(iblock.wp + 12 * 2), iblock.val2);
-//	            break;
-//	        case Inst9900.Iszc:
-//	        case Inst9900.Iszcb:
-//	        	iblock.val2 &= ~iblock.val1;
-//	            break;
-//
-//	        case Inst9900.Is:
-//	        case Inst9900.Isb:
-//	        	iblock.val2 -= iblock.val1;
-//	            break;
-//
-//	        case Inst9900.Ic:
-//	        case Inst9900.Icb:
-//	            break;
-//
-//	        case Inst9900.Ia:
-//	        case Inst9900.Iab:
-//	        	iblock.val2 += iblock.val1;
-//	            break;
-//
-//	        case Inst9900.Imov:
-//	        case Inst9900.Imovb:
-//	        	iblock.val2 = iblock.val1;
-//	            break;
-//
-//	        case Inst9900.Isoc:
-//	        case Inst9900.Isocb:
-//	        	iblock.val2 |= iblock.val1;
-//	            break;
-//
-//	        case InstTableCommon.Idsr:
-//	        	if (dsrManager != null)
-//	        		dsrManager.handleDSR(iblock);
-//	        	break;
-//	        	
-//	        case InstTableCommon.Iticks: {
-//	        	int count = machine.getCpu().getTickCount();
-//	        	iblock.val1 = (short) (count >> 16);
-//	        	iblock.val2 = (short) (count & 0xffff);
-//	        	break;
-//	        }
-//	        case InstTableCommon.Idbg:
-//	        	machine.getExecutor().debugCount(iblock.val1 == 0 ? 1 : -1);
-//	        	break;
-	        }
+			doApply(cpuState, status);
 		}
 
 		@Override
-		public void revert(ICpuState cpuState_) {
+		public final void revert(ICpuState cpuState_) {
 			CpuState9900 cpuState = (CpuState9900) cpuState_;
 			cpuState.getStatus().expand(prevST);
+			doRevert(cpuState, cpuState.getStatus());
 		}
+
+	}
+
+    public static abstract class BaseJump implements IChangeElement {
+    	protected Instruction9900 inst;
+    	protected MachineOperandState mos1;
+		private short prevPC;
+    	
+    	public BaseJump(Instruction9900 inst, MachineOperandState mos1) {
+    		this.inst = inst;
+    		this.mos1 = mos1;
+    	}
+    	
+    	@Override
+    	public String toString() {
+    		return getClass().getSimpleName() + ": " + inst.toString();
+    	}
+    	
+    	protected abstract boolean test(Status9900 status);
+    	
+    	@Override
+    	public final void apply(ICpuState cpuState_) {
+    		CpuState9900 cpuState = ((CpuState9900) cpuState_);
+    		Status9900 status = cpuState.getStatus();
+
+    		prevPC = cpuState.getPC();
+
+    		if (test(status)) {
+    			cpuState.setPC((short) (inst.pc + mos1.value));
+    		}
+    	}
+    	
+    	@Override
+    	public final void revert(ICpuState cpuState_) {
+    		cpuState_.setPC(prevPC);
+    	}
+    	
+    }
+    
+    public static void appendInterpret(Cpu9900 cpu, final ChangeBlock9900 changes,
+			Instruction9900 inst, MachineOperandState mos1,
+			MachineOperandState mos2, MachineOperandState mos3) {
+		
+    	final ICruHandler cruHandler = cpu.getMachine() instanceof TI99Machine
+    			? ((TI99Machine) cpu.getMachine()).getCruManager() : null;
+    			
+        switch (inst.getInst()) {
+        case InstTableCommon.Idata:
+            break;
+        case Inst9900.Ili:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos1.value = mos2.value;
+					status.set_LAE(mos1.value);
+				}
+			});
+            break;
+        case Inst9900.Iai:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_ADD_LAECO(mos1.value, mos2.value);
+					mos1.value += mos2.value;
+				}
+			});
+            break;
+        case Inst9900.Iandi:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos1.value &= mos2.value;
+					status.set_LAE(mos1.value);
+				}
+			});
+            break;
+        case Inst9900.Iori:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos1.value |= mos2.value;
+					status.set_LAE(mos1.value);
+				}
+			});
+            break;
+        case Inst9900.Ici:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_CMP(mos1.value, mos2.value);
+				}
+			});
+            break;
+        case Inst9900.Istwp:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos1.value = cpuState.getWP();
+				}
+			});
+            break;
+        case Inst9900.Istst:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos1.value = cpuState.getStatus().get();
+				}
+			});
+            break;
+        case Inst9900.Ilwpi:
+        	changes.push(new BaseInterpret(inst, mos1) {
+        		short prevWP;
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					prevWP = cpuState.getWP();
+					cpuState.setWP(mos1.value);
+				}
+				@Override
+				protected void doRevert(CpuState9900 cpuState, Status9900 status) {
+					super.doRevert(cpuState, status);
+					cpuState.setWP(prevWP);
+				}
+			});
+            break;
+        case Inst9900.Ilimi:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					cpuState.getStatus().setIntMask(mos1.value);
+				}
+			});
+            break;
+        case Inst9900.Iidle:
+        	changes.push(new BaseInterpret(inst) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					throw new IllegalStateException();	// not handled here
+					// TODO
+				}
+			});
+        	break;
+        case Inst9900.Irset:
+            //cpu.rset(); // TODO
+            break;
+        case Inst9900.Irtwp:
+			changes.push(new Changes.RestoreContext());
+			break;
+        case Inst9900.Ickon:
+        	changes.push(new BaseInterpret(inst) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					// TODO
+				}
+			});
+            break;
+        case Inst9900.Ickof:
+        	changes.push(new BaseInterpret(inst) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					// TODO
+				}
+			});
+            break;
+        case Inst9900.Ilrex:
+        	changes.push(new BaseInterpret(inst) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					// TODO
+				}
+			});
+            break;
+        case Inst9900.Iblwp:
+        	changes.push(new Changes.Blwp(mos1));
+        	break;
+
+        case Inst9900.Ib:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					cpuState.setPC(mos1.value);
+				}
+			});
+            break;
+        case Inst9900.Ix: {
+        	// placeholder for replacement instruction, after this one
+        	final int pos = changes.getCount() + 1;
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					ChangeBlock9900 newBlock = new ChangeBlock9900(changes.cpu, inst.pc, 
+							mos1.value);
+					newBlock.appendOperandFetch();
+					newBlock.appendInstructionExecute();
+					newBlock.appendOperandFlush();
+					changes.insert(pos, newBlock);
+				}
+			});
+            break;
+        }
+        
+        case Inst9900.Iclr:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos1.value = 0;
+				}
+			});
+            break;
+        case Inst9900.Ineg:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos1.value = (short) -mos1.value;
+					status.set_LAEO(mos1.value);
+				}
+			});
+            break;
+        case Inst9900.Iinv:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos1.value = (short) ~mos1.value;
+					status.set_LAE(mos1.value);
+				}
+			});
+            break;
+        case Inst9900.Iinc:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_ADD_LAECO(mos1.value, (short) 1);
+					mos1.value ++;
+				}
+			});
+            break;
+        case Inst9900.Iinct:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_ADD_LAECO(mos1.value, (short) 2);
+					mos1.value += 2;
+				}
+			});
+            break;
+        case Inst9900.Idec:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_ADD_LAECO(mos1.value, (short) -1);
+					mos1.value --;
+				}
+			});
+            break;
+        case Inst9900.Idect:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_ADD_LAECO(mos1.value, (short) -2);
+					mos1.value -= 2;
+				}
+			});
+            break;
+        case Inst9900.Ibl:
+        	changes.push(new BaseInterpret(inst, mos1) {
+        		int prevR11;
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					prevR11 = cpuState.getRegister(11);
+					cpuState.setRegister(11, cpuState.getPC());
+					cpuState.setPC(mos1.value);
+				}
+				@Override
+				protected void doRevert(CpuState9900 cpuState, Status9900 status) {
+					super.doRevert(cpuState, status);
+					cpuState.setRegister(11, prevR11);
+				}
+			});
+            break;
+        case Inst9900.Iswpb:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos1.value = (short) (mos1.value >> 8 & 0xff | mos1.value << 8 & 0xff00);
+				}
+			});
+            break;
+        case Inst9900.Iseto:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos1.value = -1;
+				}
+			});
+            break;
+        case Inst9900.Iabs:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_LAEO(mos1.value);
+					if ((mos1.value & 0x8000) != 0) {
+						mos1.value = (short) -mos1.value;
+					}
+				}
+			});
+            break;
+        case Inst9900.Isra:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_SHIFT_RIGHT_C(mos1.value, mos2.value);
+					mos1.value = (short) (mos1.value >> mos2.value);
+					status.set_LAE(mos1.value);
+				}
+			});
+            break;
+        case Inst9900.Isrl:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_SHIFT_RIGHT_C(mos1.value, mos2.value);
+					mos1.value = (short) ((mos1.value & 0xffff) >> mos2.value);
+					status.set_LAE(mos1.value);
+				}
+			});
+            break;
+
+        case Inst9900.Isla:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_SHIFT_LEFT_CO(mos1.value, mos2.value);
+					mos1.value = (short) (mos1.value << mos2.value);
+					status.set_LAE(mos1.value);
+				}
+			});
+            break;
+
+        case Inst9900.Isrc:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_SHIFT_RIGHT_C(mos1.value, mos2.value);
+					mos1.value = (short) ((mos1.value & 0xffff) >> mos2.value | (mos1.value & 0xffff) << 16 - mos2.value);
+					status.set_LAE(mos1.value);
+				}
+			});
+            break;
+
+        case Inst9900.Ijmp:
+        	changes.push(new Changes.AdvancePC(mos1.value - 2));
+            break;
+        case Inst9900.Ijlt:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			return status.isLT();
+        		}
+        	});
+        	break;
+        case Inst9900.Ijle:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			return status.isLE();
+        		}
+        	});
+        	break;
+
+        case Inst9900.Ijeq:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			return status.isEQ();
+        		}
+        	});
+            break;
+        case Inst9900.Ijhe:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			return status.isHE();
+        		}
+        	});
+            break;
+        case Inst9900.Ijgt:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			return status.isGT();
+        		}
+        	});
+            break;
+        case Inst9900.Ijne:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			return status.isNE();
+        		}
+        	});
+            break;
+        case Inst9900.Ijnc:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			return !status.isC();
+        		}
+        	});
+            break;
+        case Inst9900.Ijoc:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			return status.isC();
+        		}
+        	});
+            break;
+        case Inst9900.Ijno:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			return !status.isO();
+        		}
+        	});
+            break;
+        case Inst9900.Ijl:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			return status.isL();
+        		}
+        	});
+            break;
+        case Inst9900.Ijh:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			return status.isH();
+        		}
+        	});
+            break;
+
+        case Inst9900.Ijop:
+        	changes.push(new BaseJump(inst, mos1) {
+        		protected boolean test(Status9900 status) {
+        			// jump on ODD parity
+        			return (status.isP());
+        			
+        		}
+        	});
+            break;
+
+        case Inst9900.Isbo:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					if (cruHandler != null)
+						cruHandler.writeBits(mos1.value<<1, 1, 1);
+				}
+			});
+            break;
+
+        case Inst9900.Isbz:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					if (cruHandler != null)
+						cruHandler.writeBits(mos1.value<<1, 0, 1);
+				}
+			});
+            break;
+
+        case Inst9900.Itb:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					if (cruHandler != null) {
+						mos1.value = (short) cruHandler.readBits(mos1.value<<1, 1);
+					}
+					status.set_E(mos1.value == 1);
+				}
+			});
+            break;
+
+        case Inst9900.Icoc:
+          	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos2.value = (short) (mos1.value & mos2.value);
+					status.set_E(mos1.value == mos2.value);
+				}
+          	});
+            break;
+
+        case Inst9900.Iczc:
+          	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos2.value = (short) (mos1.value & ~mos2.value);
+					status.set_E(mos1.value == mos2.value);
+				}
+          	});
+            break;
+
+        case Inst9900.Ixor:
+        	changes.push(new BaseInterpret(inst, mos1) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos2.value ^= mos1.value;
+					status.set_LAE(mos2.value);
+				}
+          	});
+            break;
+
+        case Inst9900.Ixop:
+			changes.push(new Changes.Xop(mos1, mos2));
+            break;
+
+        case Inst9900.Impy:
+        	changes.push(new BaseInterpret(inst, mos1, mos2, mos3) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					int val = (mos1.value & 0xffff)
+							* (mos2.value & 0xffff);
+					mos3.value = (short) val;
+					mos2.value = (short) (val >> 16);
+				}
+          	});
+
+            break;
+
+        case Inst9900.Idiv:
+        	changes.push(new BaseInterpret(inst, mos1, mos2, mos3) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+		            if ((mos1.value & 0xffff) > (mos2.value & 0xffff)) {
+		                int low = mos3.value & 0xffff;
+		                long dval = ((mos2.value & 0xffff) << 16
+		                        | (low & 0xffff)) & 0xffffffffL;
+		                try {
+		                    mos2.value = (short) (dval / (mos1.value & 0xffff));
+		                    mos3.value = (short) (dval % (mos1.value & 0xffff));
+		                    status.set_O(false);
+		                } catch (ArithmeticException e) {
+		                	status.set_O(true);
+		                }
+		            } else {
+		            	status.set_O(true);
+		            }
+				}
+        	});
+            break;
+
+        case Inst9900.Ildcr:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					if (cruHandler != null)
+						cruHandler.writeBits(
+								cpuState.getConsole().readWord(cpuState.getWP() + 12 * 2), mos1.value,
+								mos2.value);
+				}
+			});
+            break;
+
+        case Inst9900.Istcr:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					if (cruHandler != null)
+						mos1.value = (short) cruHandler.readBits(
+								cpuState.getConsole().readWord(cpuState.getWP() + 12 * 2), mos2.value);
+				}
+			});
+            break;
+        case Inst9900.Iszc:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+        		@Override
+        		protected void doApply(CpuState9900 cpuState, Status9900 status) {
+        			mos2.value &= ~mos1.value;
+        			status.set_LAE(mos2.value);
+        		}
+        	});
+        	break;
+        case Inst9900.Iszcb:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos2.value &= ~mos1.value;
+					status.set_BYTE_LAEP((byte) mos2.value);
+				}
+			});
+            break;
+
+        case Inst9900.Is:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+        		@Override
+        		protected void doApply(CpuState9900 cpuState, Status9900 status) {
+        			status.set_SUB_LAECO(mos2.value, mos1.value);
+        			mos2.value -= mos1.value;
+        		}
+        	});
+        	break;
+        case Inst9900.Isb:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_SUB_BYTE_LAECOP((byte) mos2.value, (byte) mos1.value);
+					mos2.value -= mos1.value;
+				}
+			});
+            break;
+
+        case Inst9900.Ic:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+        		@Override
+        		protected void doApply(CpuState9900 cpuState, Status9900 status) {
+        			status.set_CMP(mos1.value, mos2.value);
+        		}
+        	});
+        	break;
+        case Inst9900.Icb:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_BYTE_CMP((byte) mos1.value, (byte) mos2.value);
+				}
+			});
+            break;
+
+        case Inst9900.Ia:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+        		@Override
+        		protected void doApply(CpuState9900 cpuState, Status9900 status) {
+        			status.set_ADD_LAECO(mos2.value, mos1.value);
+        			mos2.value += mos1.value;
+        		}
+        	});
+        	break;
+        case Inst9900.Iab:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					status.set_ADD_BYTE_LAECOP((byte) mos2.value, (byte) mos1.value);
+					mos2.value += mos1.value;
+				}
+			});
+            break;
+
+        case Inst9900.Imov:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+        		@Override
+        		protected void doApply(CpuState9900 cpuState, Status9900 status) {
+        			mos2.value = mos1.value;
+        			status.set_LAE(mos2.value);
+        		}
+        	});
+        	break;
+        case Inst9900.Imovb:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos2.value = mos1.value;
+					status.set_BYTE_LAEP((byte) mos2.value);
+				}
+			});
+            break;
+
+        case Inst9900.Isoc:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+        		@Override
+        		protected void doApply(CpuState9900 cpuState, Status9900 status) {
+        			mos2.value |= mos1.value;
+        			status.set_LAE(mos2.value);
+        		}
+        	});
+        	break;
+        case Inst9900.Isocb:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					mos2.value |= mos1.value;
+					status.set_BYTE_LAEP((byte) mos2.value);
+				}
+			});
+            break;
+
+//        case InstTableCommon.Idsr:
+//        	if (dsrManager != null)
+//        		dsrManager.handleDSR(iblock);
+//        	break;
+//        	
+//        case InstTableCommon.Iticks: {
+//        	int count = machine.getCpu().getTickCount();
+//        	mos1.value = (short) (count >> 16);
+//        	mos2.value = (short) (count & 0xffff);
+//        	break;
+//        }
+//        case InstTableCommon.Idbg:
+//        	machine.getExecutor().debugCount(mos1.value == 0 ? 1 : -1);
+//        	break;
+        default:
+            throw new IllegalStateException();
+        }
 
 	}
 }

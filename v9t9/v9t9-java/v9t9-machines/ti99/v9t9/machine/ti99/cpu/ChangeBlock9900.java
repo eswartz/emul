@@ -5,12 +5,17 @@ package v9t9.machine.ti99.cpu;
 
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
-import v9t9.common.asm.InstInfo;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.MachineOperandState;
-import v9t9.machine.ti99.cpu.Changes.*;
+import v9t9.machine.ti99.cpu.Changes.AdvancePC;
+import v9t9.machine.ti99.cpu.Changes.CalculateCruOffset;
+import v9t9.machine.ti99.cpu.Changes.CalculateShift;
+import v9t9.machine.ti99.cpu.Changes.ReadIncrementRegister;
+import v9t9.machine.ti99.cpu.Changes.ReadIndirectRegister;
+import v9t9.machine.ti99.cpu.Changes.ReadRegister;
+import v9t9.machine.ti99.cpu.Changes.ReadRegisterOffset;
 import v9t9.machine.ti99.interpreter.Interpreter9900;
 
 /**
@@ -36,23 +41,31 @@ public class ChangeBlock9900 extends ChangeBlock {
 		this(cpu, cpu.getState().getPC());
 	}
 	public ChangeBlock9900(ICpu cpu, int pc) {
+		this(cpu, pc, cpu.getConsole().flatReadWord(pc));
+		appendInstructionAdvance();
+	}
+	public ChangeBlock9900(ICpu cpu, int pc, short op) {
 		this.cpu = cpu;
 		cpuState = (CpuState9900) cpu.getState();
 		
 		inst = new Instruction9900(InstTable9900.decodeInstruction(
-				cpu.getConsole().flatReadWord(pc), 
+				op, 
 				pc, cpu.getConsole(), false), cpu.getConsole());
 	}
-
 	public void generate() {
 		appendOperandFetch();
 		appendInstructionExecute();
 		appendOperandFlush();
 	}
-
-	/** Fetch the current instruction and operands */
-	public void appendOperandFetch() {
+	/**
+	 * 
+	 */
+	public void appendInstructionAdvance() {
 		push(new AdvancePC(inst.getSize()));
+	}
+
+	/** Fetch the current instruction operands */
+	public void appendOperandFetch() {
 		
 //		if (inst.getInst() == Inst9900.Ix) {
 //    		ins.pc = this.inst.pc + this.inst.getSize() - 2;
@@ -71,12 +84,14 @@ public class ChangeBlock9900 extends ChangeBlock {
 					mop3.val = mop2.val + 1;
 					mop3.dest = MachineOperand9900.OP_DEST_KILLED;
 					mopState3 = nextMachineOperandState(mop3);
+					fetch(mop3, mopState3);
 				}
 				else if (inst.getInst() == Inst9900.Idiv) {
 					MachineOperand9900 mop3 = new MachineOperand9900(MachineOperand9900.OP_REG);
 					mop3.val = mop2.val + 1;
 					mop3.dest = MachineOperand9900.OP_DEST_TRUE;
 					mopState3 = nextMachineOperandState(mop3);
+					fetch(mop3, mopState3);
 				}
 			}
 		}
@@ -137,11 +152,7 @@ public class ChangeBlock9900 extends ChangeBlock {
 		    break;
     	
     	case MachineOperand9900.OP_JUMP:	// jump target
-    		if (inst.getInst() == Inst9900.Ijmp) {
-    			push(new AdvancePC(mop.val - 2));
-    		} else {
-    			push(new ConditionalAdvancePC(inst.getInst(), mop.val - 2));
-    		}
+    		state.value = (short) mop.val;
     		break;
     	case MachineOperand9900.OP_STATUS:	// status word
     		break;
@@ -152,30 +163,7 @@ public class ChangeBlock9900 extends ChangeBlock {
 
 	/** Add the change element for the interpretation */
 	public void appendInstructionExecute() {
-		if (inst.getInst() == Inst9900.Iblwp) {
-			push(new Changes.Blwp(mopState1));
-			return;
-		} 
-		if (inst.getInst() == Inst9900.Ixop) {
-			push(new Changes.Xop(mopState1, mopState2));
-			return;
-		}
-		if (inst.getInst() == Inst9900.Irtwp) {
-			push(new Changes.RestoreContext());
-			return;
-		}
-		if ((inst.getInfo().writes & InstInfo.INST_RSRC_WP) != 0) {
-			push(new Changes.SaveWP());
-		}
-		else if (inst.getInst() == Inst9900.Ibl) {
-			push(new Changes.SaveR11());
-		}
-		else if ((inst.getInfo().writes & InstInfo.INST_RSRC_ST) != 0) {
-			// every instruction does this, pretty much, so roll into the Interpret
-//			push(new Changes.SaveST());
-		}
-
-		push(new Interpreter9900.Interpret(inst, mopState1, mopState2, mopState3));
+		Interpreter9900.appendInterpret((Cpu9900) cpu, this, inst, mopState1, mopState2, mopState3);
 	}
 	
 	/** Add the change element for flushing operands */
