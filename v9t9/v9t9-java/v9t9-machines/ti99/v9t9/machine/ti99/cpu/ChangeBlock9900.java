@@ -7,6 +7,7 @@ import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.cpu.ChangeBlock;
+import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.MachineOperandState;
 import v9t9.machine.ti99.cpu.Changes.AdvancePC;
@@ -32,6 +33,7 @@ public class ChangeBlock9900 extends ChangeBlock {
 
     public final ICpu cpu;
     public final CpuState9900 cpuState;
+    public final CycleCounts counts;
 
 	private MachineOperandState mopState1;
 	private MachineOperandState mopState2;
@@ -47,6 +49,7 @@ public class ChangeBlock9900 extends ChangeBlock {
 	public ChangeBlock9900(ICpu cpu, int pc, short op) {
 		this.cpu = cpu;
 		cpuState = (CpuState9900) cpu.getState();
+		this.counts = new CycleCounts();
 		
 		inst = new Instruction9900(InstTable9900.decodeInstruction(
 				op, 
@@ -61,7 +64,7 @@ public class ChangeBlock9900 extends ChangeBlock {
 	 * 
 	 */
 	public void appendInstructionAdvance() {
-		push(new AdvancePC(inst.getSize()));
+		push(new AdvancePC(this, inst.getSize(), 0));
 	}
 
 	/** Fetch the current instruction operands */
@@ -108,42 +111,42 @@ public class ChangeBlock9900 extends ChangeBlock {
     		return;
     		
     	case MachineOperand9900.OP_REG:	// Rx
-    		state.cycles += 0;
-    		push(new ReadRegister(state));
+    		counts.addFetch(0);
+    		push(new ReadRegister(this, state));
     		break;
     		
     	case MachineOperand9900.OP_IND: {	// *Rx
-    		state.cycles += 4;
+    		counts.addFetch(4);
     		
-    		push(new ReadIndirectRegister(state));
+    		push(new ReadIndirectRegister(this, state));
     		break;
     	}
     	case MachineOperand9900.OP_INC:	{ // *Rx+
-    		state.cycles += 4;
-    		state.cycles += mop.byteop ? 2 : 4;
-    		push(new ReadIncrementRegister(state));
+    		counts.addFetch(4);
+    		counts.addFetch(mop.byteop ? 2 : 4);
+    		push(new ReadIncrementRegister(this, state));
     		break;
     	}
     	case MachineOperand9900.OP_ADDR: {	// @>xxxx or @>xxxx(Rx)
-    		state.cycles += 8;
-    		push(new ReadRegisterOffset(state));
+    		counts.addFetch(8);
+    		push(new ReadRegisterOffset(this, state));
             break;
     	}
     	case MachineOperand9900.OP_IMMED:	// immediate
-    		state.cycles += 0;
+    		counts.addFetch(0);
     		state.value = mop.immed;
     		break;
     	case MachineOperand9900.OP_CNT:	// shift count
-    		state.cycles += 0;
+    		counts.addFetch(0);
     		state.value = (short) mop.val;
     		break;
     	case MachineOperand9900.OP_OFFS_R12:	// offset from R12
-    		state.cycles += 0;
-    		push(new CalculateCruOffset(state));
+    		counts.addFetch(0);
+    		push(new CalculateCruOffset(this, state));
     		break;
     	case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
-    	    state.cycles += 8;
-    	    push(new CalculateShift(state));
+    		counts.addFetch(8);
+    	    push(new CalculateShift(this, state));
 		    break;
     	
     	case MachineOperand9900.OP_JUMP:	// jump target
@@ -164,34 +167,16 @@ public class ChangeBlock9900 extends ChangeBlock {
 	/** Add the change element for flushing operands */
 	public void appendFlush() {
         if (mopState1 != null && ((MachineOperand9900) mopState1.mop).dest != IOperand.OP_DEST_FALSE) {
-        	push(new Changes.WriteResult(mopState1));
+        	push(new Changes.WriteResult(this, mopState1));
         }
         if (mopState2 != null && ((MachineOperand9900) mopState2.mop).dest != IOperand.OP_DEST_FALSE) {
-        	push(new Changes.WriteResult(mopState2));
+        	push(new Changes.WriteResult(this, mopState2));
         }
         if (mopState3 != null && ((MachineOperand9900) mopState3.mop).dest != IOperand.OP_DEST_FALSE) {
-        	push(new Changes.WriteResult(mopState3));
+        	push(new Changes.WriteResult(this, mopState3));
         }
 
-    	push(new Changes.AddCycles(cpu.getCycleCounts(), mopState1, mopState2, mopState3, inst));
-
-//        if ((inst.getInfo().writes & InstInfo.INST_RSRC_ST) != 0) {
-//			//cpu.getState().setStatus(status);
-//        	cpu.getState().setStatus(status);
-//		}
-
-        /* do this after flushing status */
-//        if ((inst.getInfo().writes & InstInfo.INST_RSRC_CTX) != 0) {
-//            /* update PC first */
-//            cpu.setPC((short) (iblock.inst.pc + iblock.inst.getSize()));
-//            cpu.contextSwitch(iblock.wp, iblock.pc);
-//        } else {
-//            /* flush register changes */
-//            cpu.setPC(iblock.pc);
-//            if ((ins.getInfo().writes & InstInfo.INST_RSRC_WP) != 0) {
-//				((Cpu9900) cpu).setWP(iblock.wp);
-//			}
-//        }
+    	push(new Changes.AddCycles(this));
 	}
 
 }

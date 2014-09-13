@@ -42,12 +42,14 @@ import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.InstTable9900;
+import v9t9.machine.ti99.cpu.Changes.CalculateShift;
 import v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator;
 import v9t9.machine.ti99.cpu.Instruction9900;
 import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;
 import v9t9.machine.ti99.cpu.MachineOperand9900;
 import v9t9.machine.ti99.cpu.Status9900;
 import v9t9.machine.ti99.machine.TI99Machine;
+import ejs.base.utils.BinaryUtils;
 import ejs.base.utils.ListenerList;
 
 /**
@@ -71,9 +73,6 @@ public class NewInterpreter9900 implements IInterpreter {
 
 	private Cpu9900 cpu;
 
-	private Status9900 status;
-
-	private CycleCounts cycleCounts;
 
     public NewInterpreter9900(IMachine machine) {
         this.machine = machine;
@@ -89,8 +88,6 @@ public class NewInterpreter9900 implements IInterpreter {
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
         parsedInstructions = new WeakHashMap<IMemoryArea, Instruction9900[]>();
         iblock = new InstructionWorkBlock9900(cpu.getState());
-        status = (Status9900) cpu.getState().createStatus();
-        cycleCounts = cpu.getCycleCounts();
      }
 
     /* (non-Javadoc)
@@ -207,9 +204,11 @@ public class NewInterpreter9900 implements IInterpreter {
     	protected Instruction9900 inst;
     	protected MachineOperandState mos1;
 		private short prevPC;
+		private ChangeBlock9900 changes;
     	
-    	public BaseJump(Instruction9900 inst, MachineOperandState mos1) {
-    		this.inst = inst;
+    	public BaseJump(ChangeBlock9900 changes, Instruction9900 inst, MachineOperandState mos1) {
+    		this.changes = changes;
+			this.inst = inst;
     		this.mos1 = mos1;
     	}
     	
@@ -227,7 +226,9 @@ public class NewInterpreter9900 implements IInterpreter {
 
     		prevPC = cpuState.getPC();
 
+    		changes.counts.addExecute(8);
     		if (test(status)) {
+    			changes.counts.addExecute(2);
     			cpuState.setPC((short) (inst.pc + mos1.value));
     		}
     	}
@@ -505,6 +506,9 @@ public class NewInterpreter9900 implements IInterpreter {
 					status.set_LAEO(mos1.value);
 					if ((mos1.value & 0x8000) != 0) {
 						mos1.value = (short) -mos1.value;
+						changes.counts.addExecute(14);
+					} else {
+						changes.counts.addExecute(12);
 					}
 				}
 			});
@@ -516,6 +520,7 @@ public class NewInterpreter9900 implements IInterpreter {
 					status.set_SHIFT_RIGHT_C(mos1.value, mos2.value);
 					mos1.value = (short) (mos1.value >> mos2.value);
 					status.set_LAE(mos1.value);
+					countShifts(changes.counts, mos2.value, mos2.mop.isRegister());
 				}
 			});
             break;
@@ -526,6 +531,7 @@ public class NewInterpreter9900 implements IInterpreter {
 					status.set_SHIFT_RIGHT_C(mos1.value, mos2.value);
 					mos1.value = (short) ((mos1.value & 0xffff) >> mos2.value);
 					status.set_LAE(mos1.value);
+					countShifts(changes.counts, mos2.value, mos2.mop.isRegister());
 				}
 			});
             break;
@@ -537,6 +543,7 @@ public class NewInterpreter9900 implements IInterpreter {
 					status.set_SHIFT_LEFT_CO(mos1.value, mos2.value);
 					mos1.value = (short) (mos1.value << mos2.value);
 					status.set_LAE(mos1.value);
+					countShifts(changes.counts, mos2.value, mos2.mop.isRegister());
 				}
 			});
             break;
@@ -548,22 +555,23 @@ public class NewInterpreter9900 implements IInterpreter {
 					status.set_SHIFT_RIGHT_C(mos1.value, mos2.value);
 					mos1.value = (short) ((mos1.value & 0xffff) >> mos2.value | (mos1.value & 0xffff) << 16 - mos2.value);
 					status.set_LAE(mos1.value);
+					countShifts(changes.counts, mos2.value, mos2.mop.isRegister());
 				}
 			});
             break;
 
         case Inst9900.Ijmp:
-        	changes.push(new Changes.AdvancePC(mos1.value - 2));
+        	changes.push(new Changes.AdvancePC(changes, mos1.value - 2, 10));
             break;
         case Inst9900.Ijlt:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			return status.isLT();
         		}
         	});
         	break;
         case Inst9900.Ijle:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			return status.isLE();
         		}
@@ -571,63 +579,63 @@ public class NewInterpreter9900 implements IInterpreter {
         	break;
 
         case Inst9900.Ijeq:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			return status.isEQ();
         		}
         	});
             break;
         case Inst9900.Ijhe:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			return status.isHE();
         		}
         	});
             break;
         case Inst9900.Ijgt:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			return status.isGT();
         		}
         	});
             break;
         case Inst9900.Ijne:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			return status.isNE();
         		}
         	});
             break;
         case Inst9900.Ijnc:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			return !status.isC();
         		}
         	});
             break;
         case Inst9900.Ijoc:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			return status.isC();
         		}
         	});
             break;
         case Inst9900.Ijno:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			return !status.isO();
         		}
         	});
             break;
         case Inst9900.Ijl:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			return status.isL();
         		}
         	});
             break;
         case Inst9900.Ijh:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			return status.isH();
         		}
@@ -635,7 +643,7 @@ public class NewInterpreter9900 implements IInterpreter {
             break;
 
         case Inst9900.Ijop:
-        	changes.push(new BaseJump(inst, mos1) {
+        	changes.push(new BaseJump(changes, inst, mos1) {
         		protected boolean test(Status9900 status) {
         			// jump on ODD parity
         			return (status.isP());
@@ -735,11 +743,22 @@ public class NewInterpreter9900 implements IInterpreter {
 		                    mos2.value = (short) (dval / (mos1.value & 0xffff));
 		                    mos3.value = (short) (dval % (mos1.value & 0xffff));
 		                    status.set_O(false);
+		                    
+		                    
+		                    int a;
+							int b;
+							a = mos2.value & 0xffff;
+							b = mos3.value & 0xffff;
+							changes.counts.addExecute(92 + 
+									+ BinaryUtils.maxBitNumber((a << 16) | b)); 
 		                } catch (ArithmeticException e) {
 		                	status.set_O(true);
+		                	
+		                	changes.counts.addExecute(16);
 		                }
 		            } else {
 		            	status.set_O(true);
+		            	changes.counts.addExecute(16);
 		            }
 				}
         	});
@@ -753,6 +772,7 @@ public class NewInterpreter9900 implements IInterpreter {
 						cruHandler.writeBits(
 								cpuState.getConsole().readWord(cpuState.getWP() + 12 * 2), mos1.value,
 								mos2.value);
+					changes.counts.addExecute(20 + 2 * mos2.value);
 				}
 			});
             break;
@@ -764,6 +784,16 @@ public class NewInterpreter9900 implements IInterpreter {
 					if (cruHandler != null)
 						mos1.value = (short) cruHandler.readBits(
 								cpuState.getConsole().readWord(cpuState.getWP() + 12 * 2), mos2.value);
+					
+					int disp = mos2.value;
+					if (disp > 0 && disp <= 7)
+						changes.counts.addExecute(42);
+					else if (disp == 8)
+						changes.counts.addExecute(44);
+					else if (disp > 0 && disp <= 15)
+						changes.counts.addExecute(58);
+					else /* disp == 0 or 16 */
+						changes.counts.addExecute(60);
 				}
 			});
             break;
@@ -902,5 +932,20 @@ public class NewInterpreter9900 implements IInterpreter {
             throw new IllegalStateException();
         }
 
+	}
+
+	/**
+	 * @param counts
+	 * @param value
+	 * @param register
+	 */
+	protected static void countShifts(CycleCounts counts, short value,
+			boolean register) {
+		counts.addExecute(2 * value);
+		if (!register) {
+			counts.addExecute(12);
+		} else {
+			counts.addExecute(20);
+		}		
 	}
 }

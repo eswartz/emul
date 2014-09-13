@@ -323,8 +323,8 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		                .toUpperCase() + " wp="
 		        + Integer.toHexString(((Cpu9900) cpu).getWP() & 0xffff).toUpperCase());
 		
-//		int cycles = changes.cycles - origCycleCount;
-//		dumpfull.print(" @ " + cycles);
+		int cycles = changes.counts.getTotal();
+		dumpfull.print(" @ " + cycles);
 		dumpfull.println();
 		dumpfull.flush();
 

@@ -7,6 +7,7 @@ import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.MachineOperandState;
+import v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator;
 
 /**
  * @author ejs
@@ -15,6 +16,11 @@ import v9t9.common.cpu.MachineOperandState;
 public final class Changes {
 
 	protected abstract static class BaseChangeElement implements IChangeElement {
+		public final ChangeBlock9900 changeBlock;
+
+		public BaseChangeElement(ChangeBlock9900 changeBlock) {
+			this.changeBlock = changeBlock;
+		}
 		@Override
 		public String toString() {
 			String name = getClass().getSimpleName();
@@ -44,8 +50,8 @@ public final class Changes {
 	protected abstract static class BaseOperandChangeElement extends BaseChangeElement {
 		public final MachineOperandState state;
 	
-		public BaseOperandChangeElement(MachineOperandState state) {
-			super();
+		public BaseOperandChangeElement(ChangeBlock9900 changeBlock, MachineOperandState state) {
+			super(changeBlock);
 			this.state = state;
 		}
 		
@@ -87,16 +93,16 @@ public final class Changes {
 		
 		@Override
 		public final void apply(ICpuState cpuState) {
-			int before = cpuState.getCycleCounts().getTotal();
+			//int before = cpuState.getCycleCounts().getTotal();
 			doApply(cpuState);
-			int after = cpuState.getCycleCounts().getTotal();
-			state.cycles = after - before;
+			//int after = cpuState.getCycleCounts().getTotal();
+			//state.cycles = after - before;
 		}
 		
 		@Override
 		public final void revert(ICpuState cpuState) {
 			doRevert(cpuState);
-			cpuState.getCycleCounts().addLoad(-state.cycles);
+			//cpuState.getCycleCounts().addLoad(-state.cycles);
 		}
 	}
 	
@@ -120,8 +126,8 @@ public final class Changes {
 //	}
 	
 	public final static class ReadRegister extends BaseOperandChangeElement {
-		protected ReadRegister(MachineOperandState state) {
-			super(state);
+		protected ReadRegister(ChangeBlock9900 changeBlock, MachineOperandState state) {
+			super(changeBlock, state);
 		}
 		
 		@Override
@@ -152,8 +158,8 @@ public final class Changes {
 //	}
 //	
 	public final static class CalculateCruOffset extends BaseOperandChangeElement {
-		public CalculateCruOffset(MachineOperandState state) {
-			super(state);
+		public CalculateCruOffset(ChangeBlock9900 changes, MachineOperandState state) {
+			super(changes, state);
 		}
 	
 		@Override
@@ -164,8 +170,8 @@ public final class Changes {
 	}
 	
 	public final static class CalculateShift extends BaseOperandChangeElement {
-		public CalculateShift(MachineOperandState state) {
-			super(state);
+		public CalculateShift(ChangeBlock9900 changes, MachineOperandState state) {
+			super(changes, state);
 		}
 	
 		@Override
@@ -181,27 +187,32 @@ public final class Changes {
 	public final static class AdvancePC extends BaseChangeElement {
 		public final int value;
 		private int prev;
+		private int cycles;
 
-		public AdvancePC(int value) {
+		public AdvancePC(ChangeBlock9900 changes, int value, int cycles) {
+			super(changes);
 			this.value = value;
+			this.cycles = cycles;
 		}
 
 		@Override
 		public void apply(ICpuState cpuState) {
 			prev = cpuState.getRegister(Cpu9900.REG_PC);
 			cpuState.setRegister(Cpu9900.REG_PC, prev + value);
+			changeBlock.counts.addExecute(cycles);
 		}
 
 		@Override
 		public void revert(ICpuState cpuState) {
 			cpuState.setRegister(Cpu9900.REG_PC, prev);
+			changeBlock.counts.addExecute(-cycles);
 		}
 	}
 
 
 	public final static class ReadIndirectRegister extends BaseOperandChangeElement {
-		public ReadIndirectRegister(MachineOperandState state) {
-			super(state);
+		public ReadIndirectRegister(ChangeBlock9900 changes, MachineOperandState state) {
+			super(changes, state);
 		}
 	
 		@Override
@@ -225,8 +236,8 @@ public final class Changes {
 	}
 	
 	public final static class ReadIncrementRegister extends BaseOperandChangeElement {
-		public ReadIncrementRegister(MachineOperandState state) {
-			super(state);
+		public ReadIncrementRegister(ChangeBlock9900 changes, MachineOperandState state) {
+			super(changes, state);
 		}
 	
 		@Override
@@ -259,8 +270,8 @@ public final class Changes {
 	}
 	
 	public final static class ReadRegisterOffset extends BaseOperandChangeElement {
-		public ReadRegisterOffset(MachineOperandState state) {
-			super(state);
+		public ReadRegisterOffset(ChangeBlock9900 changes, MachineOperandState state) {
+			super(changes, state);
 		}
 	
 		@Override
@@ -387,8 +398,8 @@ public final class Changes {
 		}
 	}
 	public static final class WriteResult extends BaseOperandChangeElement {
-		public WriteResult(MachineOperandState state) {
-			super(state);
+		public WriteResult(ChangeBlock9900 changes, MachineOperandState state) {
+			super(changes, state);
 		}
 
 		@Override
@@ -420,22 +431,13 @@ public final class Changes {
 	}
 
 	public static class AddCycles implements IChangeElement {
-		private MachineOperandState mopState1;
-		private MachineOperandState mopState2;
-		private MachineOperandState mopState3;
-		private Instruction9900 inst;
+		public final ChangeBlock9900 changes;
+		private ICycleCalculator cycleCalculator;
 		private int cycles;
-		private CycleCounts counts;
 
-		public AddCycles(CycleCounts counts,
-				MachineOperandState mopState1,
-				MachineOperandState mopState2, MachineOperandState mopState3,
-				Instruction9900 inst) {
-			this.counts = counts;
-			this.mopState1 = mopState1;
-			this.mopState2 = mopState2;
-			this.mopState3 = mopState3;
-			this.inst = inst;
+		public AddCycles(ChangeBlock9900 changes) {
+			this.changes = changes;
+			this.cycleCalculator = InstTable9900.instCycles.get(changes.inst.getInst());
 		}
 
 		/* (non-Javadoc)
@@ -443,22 +445,15 @@ public final class Changes {
 		 */
 		@Override
 		public void apply(ICpuState cpuState) {
-			cycles = (mopState1 != null ? 
-					mopState1.cycles + (mopState2 != null ?
-							mopState2.cycles + (mopState3 != null ? 
-									mopState3.cycles 
-									: 0)
-							: 0)
-					: 0)
-				+ inst.fetchCycles;
-			
 //			ICycleCalculator calc = InstTable9900.instCycles.get(inst.getInst());
 //			if (calc == null)
 //				return;
 //			
-//			calc.addCycles(counts);
+			cycleCalculator.addCycles(changes);
 
-			counts.addExecute(cycles + 10);		// FIXME
+			//counts.addExecute(cycles + 10);		// FIXME
+			cycles = changes.counts.getTotal();
+			changes.cpu.applyCycles(cycles);
 		}
 
 		/* (non-Javadoc)
@@ -466,7 +461,7 @@ public final class Changes {
 		 */
 		@Override
 		public void revert(ICpuState cpuState) {
-			counts.addExecute(-cycles);
+			changes.cpu.applyCycles(-cycles);
 		}
 
 	}

@@ -333,7 +333,15 @@ public class Cpu9900 extends CpuBase {
 			vdp.addCpuCycles(cycleCounts.getTotal());
 		super.applyCycles();
 	}
-	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#applyCycles(int)
+	 */
+	@Override
+	public void applyCycles(int cycles) {
+		if (vdp != null)
+			vdp.addCpuCycles(cycles);
+		super.applyCycles(cycles);		
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.cpu.ICpu#getInstructionFactory()
 	 */

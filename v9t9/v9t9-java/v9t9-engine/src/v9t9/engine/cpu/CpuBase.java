@@ -389,6 +389,14 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	public void applyCycles() {
 		currentcycles.addAndGet(cycleCounts.getAndResetTotal());
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#applyCycles(int)
+	 */
+	@Override
+	public void applyCycles(int cycles) {
+		currentcycles.addAndGet(cycles);
+		
+	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.common.cpu.ICpu#addListener(v9t9.common.cpu.ICpuListener)

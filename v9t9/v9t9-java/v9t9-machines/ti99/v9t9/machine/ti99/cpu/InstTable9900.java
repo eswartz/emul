@@ -21,14 +21,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ejs.base.utils.BinaryUtils;
-
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.CycleCounts;
+import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.machine.ti99.cpu.Changes.CalculateShift;
 
 /**
  * This class takes an Instruction and generates its opcode.
@@ -64,6 +65,7 @@ public class InstTable9900 {
 
 	public interface ICycleCalculator {
 		void addCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts);
+		void addCycles(ChangeBlock9900 changes);
 		void setLoads(boolean b);
 		void setStores(boolean b);
 		boolean loads();
@@ -112,7 +114,7 @@ public class InstTable9900 {
 			
 			addCustomCycles(origBlock_, block_, counts);
 		}
-		
+
 		abstract protected void addCustomCycles(InstructionWorkBlock origBlock_,
 				InstructionWorkBlock block_, 
 				CycleCounts counts);
@@ -125,6 +127,13 @@ public class InstTable9900 {
 		public void addCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
 		}
 
+		/* (non-Javadoc)
+		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
+		 */
+		@Override
+		public void addCycles(ChangeBlock9900 changes) {
+			
+		}
 		/* (non-Javadoc)
 		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#setLoads(boolean)
 		 */
@@ -174,6 +183,10 @@ public class InstTable9900 {
 			counts.addExecute(exec);
 		}
 
+		@Override
+		public void addCycles(ChangeBlock9900 changes) {
+			changes.counts.addExecute(exec);
+		}
 	}
 
 	static class InstBuilder {
@@ -235,7 +248,12 @@ public class InstTable9900 {
 				counts.addExecute(8);
 			}
 		}
-		
+
+		@Override
+		public void addCycles(ChangeBlock9900 changes) {
+			// done in jump
+		}
+
 	}
 	
 	static class ShiftCycleCalculator extends BaseCycleCalculator {
@@ -252,6 +270,14 @@ public class InstTable9900 {
 			} else {
 				counts.addExecute(20);
 			}
+		}
+		/* (non-Javadoc)
+		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
+		 */
+		@Override
+		public void addCycles(ChangeBlock9900 changes) {
+			// done in interpreter
+			
 		}
 		
 	}
@@ -371,6 +397,12 @@ public class InstTable9900 {
 						counts.addExecute(14);
 					}
 				}
+				/* (non-Javadoc)
+				 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
+				 */
+				@Override
+				public void addCycles(ChangeBlock9900 changes) {
+				}
 			})
 			.source().destination()
 			.register();
@@ -469,6 +501,13 @@ public class InstTable9900 {
 				public void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
 					counts.addExecute(20 + 2 * ((InstructionWorkBlock9900) origBlock).val2);
 				}
+				/* (non-Javadoc)
+				 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
+				 */
+				@Override
+				public void addCycles(ChangeBlock9900 changes) {
+					// done in instruction
+				}
 			})
 			.source()
 			.register();
@@ -486,6 +525,10 @@ public class InstTable9900 {
 						counts.addExecute(58);
 					else /* disp == 0 or 16 */
 						counts.addExecute(60);
+				}
+				@Override
+				public void addCycles(ChangeBlock9900 changes) {
+					// done in instruction
 				}
 			})
 			.register();
@@ -519,6 +562,13 @@ public class InstTable9900 {
 //								+ BinaryUtils.numberOfBits(((InstructionWorkBlock9900) origBlock).val1 & 0xffff)*2); 
 							
 					}
+				}
+				/* (non-Javadoc)
+				 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
+				 */
+				@Override
+				public void addCycles(ChangeBlock9900 changes) {
+					// done in instruction
 				}
 			})
 			.source()

@@ -12,7 +12,7 @@ public class MachineOperandState {
 	/** operand */
 	public final IMachineOperand mop;
 	/** cycles used by the operand fetch */
-	public int cycles;
+//	public int cycles;
 	/** IChangeElement sets this */
 	public short ea;
 	/** IChangeElement sets this */
