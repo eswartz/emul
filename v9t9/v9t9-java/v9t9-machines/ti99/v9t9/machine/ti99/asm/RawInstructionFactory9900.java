@@ -28,7 +28,7 @@ public class RawInstructionFactory9900 implements IRawInstructionFactory {
 	 */
 	@Override
 	public RawInstruction decodeInstruction(int pc, IMemoryDomain domain) {
-		return InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain);
+		return InstTable9900.decodeInstruction(domain.readWord(pc), pc, domain, true);
 	}
 	
 	/* (non-Javadoc)

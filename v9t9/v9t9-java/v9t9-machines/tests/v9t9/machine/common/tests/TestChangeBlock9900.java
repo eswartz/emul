@@ -114,7 +114,7 @@ public class TestChangeBlock9900
  		
  		assertEquals((short)0xffff, cpu.getState().getRegister(4));	// no change yet
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		assertEquals((short)0xffff, cpu.getState().getRegister(4));	// still no change -- just operand fetches
  		
  		int newPC = cpu.getState().getPC();
@@ -142,7 +142,7 @@ public class TestChangeBlock9900
  		assertChange(change, 1, ReadRegister.class, 0);
  		assertChange(change, 2, ReadRegisterOffset.class, 0xc0);
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		int newPC = cpu.getState().getPC();
  		assertEquals(0x404, newPC);
@@ -169,7 +169,7 @@ public class TestChangeBlock9900
  		assertChange(change, 1, ReadRegisterOffset.class, 0xc0);
  		assertChange(change, 2, ReadRegisterOffset.class, 0xff00);
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		int newPC = cpu.getState().getPC();
  		assertEquals(0x406, newPC);
@@ -198,12 +198,12 @@ public class TestChangeBlock9900
  		assertChange(change, 1, ReadRegister.class, 3);
  		assertChange(change, 2, ReadIncrementRegister.class, origWP + 12 * 2);
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals(0x402, cpu.getState().getPC());
  		assertEquals((short)0x0001, cpu.getState().getRegister(12));
  		
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		assertEquals(0x400, cpu.getState().getPC());
  		assertEquals((short)-1, cpu.getState().getRegister(12));
  		
@@ -229,13 +229,13 @@ public class TestChangeBlock9900
  		assertChange(change, 1, ReadIncrementRegister.class, origWP + 1 * 2);
  		assertChange(change, 2, ReadIncrementRegister.class, origWP + 2 * 2);
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals(0x402, (int) cpu.getState().getPC());
  		assertEquals((short)0x0000, cpu.getState().getRegister(1));
  		assertEquals((short)0x0000, cpu.getState().getRegister(2));
  		
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		assertEquals(0x400, (int) cpu.getState().getPC());
  		assertEquals((short)-1, cpu.getState().getRegister(1));
  		assertEquals((short)-1, cpu.getState().getRegister(2));
@@ -256,12 +256,12 @@ public class TestChangeBlock9900
  		assertChange(change, 1, ReadIncrementRegister.class, origWP + 12 * 2);
  		assertChange(change, 2, ReadRegister.class, 12);
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals(0x402, (int) cpu.getState().getPC());
  		assertEquals((short)(origWP + 12*2), cpu.getState().getRegister(12));
  		
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		assertEquals(0x400, (int) cpu.getState().getPC());
  		assertEquals((short)(origWP + 12*2), cpu.getState().getRegister(12));
  	}
@@ -285,7 +285,7 @@ public class TestChangeBlock9900
  		assertChange(change, 1, ReadIncrementRegister.class, origWP + 12 * 2);
  		assertChange(change, 2, ReadIncrementRegister.class, origWP + 12 * 2);
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals(0x402, (int) cpu.getState().getPC());
  		assertEquals((short)(origWP + 14*2), cpu.getState().getRegister(12));
@@ -293,7 +293,7 @@ public class TestChangeBlock9900
  		
  		assertEquals((short)(origWP + 12*2), ((ReadIncrementRegister) change.getElement(1)).state.value);
  		
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals(0x400, (int) cpu.getState().getPC());
  		assertEquals((short)(origWP + 12*2), cpu.getState().getRegister(12));
@@ -312,12 +312,12 @@ public class TestChangeBlock9900
  		assertEquals(1, change.getCount());
  		assertChange(change, 0, AdvancePC.class, 2);
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		// not taken
  		assertEquals(0x402, (int) cpu.getState().getPC());
  		
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals(0x400, (int) cpu.getState().getPC());
 
@@ -330,11 +330,11 @@ public class TestChangeBlock9900
 		ChangeBlock9900 change = new ChangeBlock9900(cpu);
 		change.generate();
 		
-		change.apply(cpu.getState());
+		change.apply(cpu);
 		
 		assertEquals(0x3fe, (int) cpu.getState().getPC());
 		
-		change.revert(cpu.getState());
+		change.revert(cpu);
 		
 		assertEquals(0x400, (int) cpu.getState().getPC());
 		
@@ -350,11 +350,11 @@ public class TestChangeBlock9900
  		//// taken
  		
  		cpu.getState().setST((short) 0x2000);
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals(0x500, (int) cpu.getState().getPC());
  		
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals(0x400, (int) cpu.getState().getPC());
 
@@ -362,11 +362,11 @@ public class TestChangeBlock9900
  		//// not taken
  		
  		cpu.getState().setST((short) 0);
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals(0x402, (int) cpu.getState().getPC());
  		
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals(0x400, (int) cpu.getState().getPC());
  	}
@@ -383,11 +383,11 @@ public class TestChangeBlock9900
  		assertChange(change, 0, AdvancePC.class, 2);
  		assertChange(change, 1, ReadIndirectRegister.class, 11);
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
 // 		assertEquals(0x800, (int) cpu.getState().getPC());
  		
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals(0x400, (int) cpu.getState().getPC());
 
@@ -404,7 +404,7 @@ public class TestChangeBlock9900
  		
  		cpu.getState().setST((short) 0x0024);
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		assertEquals((short)0x123, cpu.getState().getRegister(4));	
  		assertEquals(0x404, (int) cpu.getState().getPC()); 	
  		
@@ -414,7 +414,7 @@ public class TestChangeBlock9900
  		assertEquals(4, cpu.getState().getStatus().getIntMask());
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		assertEquals((short)-1, cpu.getState().getRegister(4));	
  		assertEquals(0x400, (int) cpu.getState().getPC()); 	
  		
@@ -430,7 +430,7 @@ public class TestChangeBlock9900
  		
  		cpu.getState().setST((short) 0x0024);
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short)0x122, cpu.getState().getRegister(4));	
  		assertEquals(0x404, (int) cpu.getState().getPC()); 	
@@ -441,7 +441,7 @@ public class TestChangeBlock9900
  		assertEquals(4, cpu.getState().getStatus().getIntMask());
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		assertEquals((short)-1, cpu.getState().getRegister(4));	
  		assertEquals(0x400, (int) cpu.getState().getPC()); 	
  		
@@ -457,7 +457,7 @@ public class TestChangeBlock9900
  		
  		cpu.getState().setST((short) 0xe024);
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short)-1, cpu.getState().getRegister(4));	// no change	
  		assertEquals(0x404, (int) cpu.getState().getPC()); 	
@@ -468,7 +468,7 @@ public class TestChangeBlock9900
  		assertEquals(4, cpu.getState().getStatus().getIntMask());
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		assertEquals((short)-1, cpu.getState().getRegister(4));	
  		assertEquals(0x400, (int) cpu.getState().getPC()); 	
  		
@@ -483,13 +483,13 @@ public class TestChangeBlock9900
  		ChangeBlock9900 change = new ChangeBlock9900(cpu);
  		change.generate();
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short) 0xcc01, ((CpuState9900) cpu.getState()).getWP());		
  		assertEquals(0x404, (int) cpu.getState().getPC()); 	
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		assertEquals((short)origWP, ((CpuState9900) cpu.getState()).getWP());		
  		assertEquals(0x400, (int) cpu.getState().getPC()); 	
  	}
@@ -503,13 +503,13 @@ public class TestChangeBlock9900
  		ChangeBlock9900 change = new ChangeBlock9900(cpu);
  		change.generate();
  		
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short) 0x800, cpu.getState().getRegister(11));	// no change		
  		assertEquals(0x800, (int) cpu.getState().getPC()); 	
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) 0x800, cpu.getState().getRegister(11));			
  		assertEquals(0x400, (int) cpu.getState().getPC()); 	
@@ -524,13 +524,13 @@ public class TestChangeBlock9900
  		ChangeBlock9900 change = new ChangeBlock9900(cpu);
  		change.generate();
 
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short) 0x402, cpu.getState().getRegister(11));		
  		assertEquals(0xc00, (int) cpu.getState().getPC()); 	
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) 0x800, cpu.getState().getRegister(11));			
  		assertEquals(0x400, (int) cpu.getState().getPC()); 	
@@ -544,13 +544,13 @@ public class TestChangeBlock9900
  		ChangeBlock9900 change = new ChangeBlock9900(cpu);
  		change.generate();
 
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short) 0x402, cpu.getState().getRegister(11));		
  		assertEquals(0x800, (int) cpu.getState().getPC()); 	
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) 0x800, cpu.getState().getRegister(11));			
  		assertEquals(0x400, (int) cpu.getState().getPC()); 	
@@ -577,7 +577,7 @@ public class TestChangeBlock9900
  		change.generate();
 
  		cpu.getState().setST((short) 0x1034);
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		// no change
  		assertEquals(0x0, cpu.getConsole().readWord(origWP + 11 * 2));		
@@ -597,7 +597,7 @@ public class TestChangeBlock9900
  		assertEquals(0x1034, (int) cpu.getState().getRegister(15)); 	
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) origWP, ((CpuState9900) cpu.getState()).getWP()); 	
  		assertEquals(0x0, cpu.getState().getRegister(11));			
@@ -630,7 +630,7 @@ public class TestChangeBlock9900
  		change.generate();
 
  		cpu.getState().setST((short) 0x1034);
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		// no change
  		assertEquals(0x0, cpu.getConsole().readWord(origWP + 11 * 2));		
@@ -644,7 +644,7 @@ public class TestChangeBlock9900
  		assertEquals((short) 0xffff, cpu.getState().getStatus().get()); 	
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) origWP, ((CpuState9900) cpu.getState()).getWP()); 	
  		assertEquals(0x0, cpu.getState().getRegister(11));			
@@ -680,7 +680,7 @@ public class TestChangeBlock9900
  		change.generate();
 
  		cpu.getState().setST((short) 0x1034);
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		// no change
  		assertEquals(0x4000, cpu.getConsole().readWord(origWP + 10 * 2));		
@@ -704,7 +704,7 @@ public class TestChangeBlock9900
  		assertEquals((short) 0x4000, (int) cpu.getState().getRegister(11)); 	
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) origWP, ((CpuState9900) cpu.getState()).getWP()); 	
  		assertEquals((short) 0x1034, ((CpuState9900) cpu.getState()).getST()); 	
@@ -738,7 +738,7 @@ public class TestChangeBlock9900
  		change.generate();
 
  		cpu.getState().setST((short) 0x1034);
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short) 0x1034, (int) cpu.getState().getST()); 	
  		
@@ -746,7 +746,7 @@ public class TestChangeBlock9900
  		assertEquals((short) 0x90, cpu.getState().getRegister(3));
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) 0x4001, cpu.getState().getRegister(2)); 	
  		assertEquals((short) 0xffff, cpu.getState().getRegister(3)); 	
@@ -767,7 +767,7 @@ public class TestChangeBlock9900
  		change.generate();
 
  		cpu.getState().setST((short) 0x1034);
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short) 0x1034, (int) cpu.getState().getST()); 	
  		
@@ -775,7 +775,7 @@ public class TestChangeBlock9900
  		assertEquals((short) 0x40c7, cpu.getState().getRegister(2));
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) 0x4001, cpu.getState().getRegister(1)); 	
  		assertEquals((short) 0xffff, cpu.getState().getRegister(2)); 	
@@ -795,7 +795,7 @@ public class TestChangeBlock9900
  		change.generate();
 
  		cpu.getState().setST((short) 0x1034);
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short) 0x1834, (int) cpu.getState().getST()); 	
 
@@ -803,7 +803,7 @@ public class TestChangeBlock9900
  		assertEquals((short) 0xffff, cpu.getState().getRegister(2));
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) 0x4001, cpu.getState().getRegister(1)); 	
  		assertEquals((short) 0xffff, cpu.getState().getRegister(2)); 	
@@ -822,14 +822,14 @@ public class TestChangeBlock9900
  		change.generate();
 
  		cpu.getState().setST((short) 0x1034);
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short) 0x603, cpu.getState().getRegister(4)); 	
  		assertEquals((short) 0xffff, cpu.getState().getRegister(3));
  		
  		assertEquals((short) 0x8034, (int) cpu.getState().getST()); 	
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) 0x603, cpu.getState().getRegister(4)); 	
  		assertEquals((short) 0x0, cpu.getState().getRegister(3)); 	
@@ -849,14 +849,14 @@ public class TestChangeBlock9900
  		change.generate();
 
  		cpu.getState().setST((short) 0x1034);
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short) 0x1234, cpu.getState().getRegister(1)); 	
  		assertEquals((short) 0x201, cpu.getState().getRegister(4));
  		
  		assertEquals((short) 0xd034, (int) cpu.getState().getST()); 	
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) 0x201, cpu.getState().getRegister(4)); 	
  		assertEquals((short) 0x0, cpu.getState().getRegister(1)); 	
@@ -873,12 +873,12 @@ public class TestChangeBlock9900
  		ChangeBlock9900 change = new ChangeBlock9900(cpu);
  		change.generate();
 
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short) 0x9000, cpu.getState().getRegister(4)); 	
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) 0xc120, cpu.getState().getRegister(4)); 	
 
@@ -895,12 +895,12 @@ public class TestChangeBlock9900
  		ChangeBlock9900 change = new ChangeBlock9900(cpu);
  		change.generate();
 
- 		change.apply(cpu.getState());
+ 		change.apply(cpu);
  		
  		assertEquals((short) 0x9000, cpu.getState().getRegister(4)); 	
  		
  		//
- 		change.revert(cpu.getState());
+ 		change.revert(cpu);
  		
  		assertEquals((short) 0xaaaa, cpu.getState().getRegister(4)); 	
 

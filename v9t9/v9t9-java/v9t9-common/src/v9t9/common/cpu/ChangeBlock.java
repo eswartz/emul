@@ -51,7 +51,7 @@ public abstract class ChangeBlock {
 
 	public void push(IChangeElement element) {
 		if (elements == null) {
-			elements = new IChangeElement[8];
+			elements = new IChangeElement[12];
 //			element.setParent(getParent());
 		} else {
 //			element.setParent(elements[elementIdx - 1]);
@@ -63,13 +63,35 @@ public abstract class ChangeBlock {
 		return elementIdx > 0 ? elements[elementIdx - 1] : null;
 	}
 	
-	public void apply(ICpuState cpuState) {
+	public void apply(ICpu cpu) {
 		for (int i = 0; i < elementIdx; i++)
-			elements[i].apply(cpuState);
+			elements[i].apply(cpu.getState());
+		//pu.getCycleCounts().getAndResetTotal();
+		cpu.applyCycles();
 	}
-	public void revert(ICpuState cpuState) {
+	
+	public void applyReads(ICpu cpu) {
+		for (int i = 0; i < elementIdx; i++) {
+			if (false == elements[i] instanceof IWriteChangeElement)
+				elements[i].apply(cpu.getState());
+		}
+		//pu.getCycleCounts().getAndResetTotal();
+		cpu.applyCycles();
+	}
+
+	public void applyWrites(ICpu cpu) {
+		for (int i = 0; i < elementIdx; i++) {
+			if (elements[i] instanceof IWriteChangeElement)
+				elements[i].apply(cpu.getState());
+		}
+		//pu.getCycleCounts().getAndResetTotal();
+		cpu.applyCycles();
+	}
+	
+	
+	public void revert(ICpu cpu) {
 		for (int i = elementIdx - 1; i >= 0; i--)
-			elements[i].revert(cpuState);
+			elements[i].revert(cpu.getState());
 	}
 
 

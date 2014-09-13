@@ -11,14 +11,13 @@
 package v9t9.machine.ti99.cpu;
 
 
-import ejs.base.utils.Check;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.RawInstruction;
-import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryDomain;
+import ejs.base.utils.Check;
 
 /**
  * A machine operand, as parsed from the instruction.

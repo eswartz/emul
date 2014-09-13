@@ -3,6 +3,7 @@
  */
 package v9t9.machine.ti99.cpu;
 
+import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.MachineOperandState;
@@ -128,9 +129,9 @@ public final class Changes {
 			MachineOperand9900 mop = (MachineOperand9900) state.mop;
 			state.ea = (short) (((CpuState9900) cpuState).getWP() + (mop.val << 1));
 			if (mop.byteop)
-				state.value = (short) (cpuState.getConsole().readByte(state.ea) & 0xff);
+				state.prev = state.value = (short) (cpuState.getConsole().readByte(state.ea) & 0xff);
 			else
-				state.value = cpuState.getConsole().readWord(state.ea);
+				state.prev = state.value = cpuState.getConsole().readWord(state.ea);
 		}
 	}
 
@@ -158,7 +159,7 @@ public final class Changes {
 		@Override
 		protected void doApply(ICpuState cpuState) {
 			MachineOperand9900 mop = (MachineOperand9900) state.mop;
-			state.value = (short) ((cpuState.getRegister(12) >> 1) + mop.val);
+			state.prev = state.value = (short) ((cpuState.getRegister(12) >> 1) + mop.val);
 		}
 	}
 	
@@ -173,6 +174,7 @@ public final class Changes {
 		    if (state.value == 0) {
 		    	state.value = 16;
 			}
+		    state.prev = state.value;
 		}
 	}
 	
@@ -218,7 +220,7 @@ public final class Changes {
 				else
 					state.value = cpuState.getConsole().readWord(state.ea);
 			}
-	
+			state.prev = state.value;
 		}
 	}
 	
@@ -230,10 +232,18 @@ public final class Changes {
 		@Override
 		protected void doApply(ICpuState cpuState) {
 			MachineOperand9900 mop = (MachineOperand9900) state.mop;
-			state.ea = (short) (((CpuState9900) cpuState).getWP() + (mop.val << 1));
-			state.prev = cpuState.getConsole().flatReadWord(state.ea);
-			state.value = cpuState.getConsole().readWord(state.prev);
-			cpuState.getConsole().writeWord(state.ea, (short)(state.prev + (mop.byteop ? 1 : 2)));
+			short regAddr = (short) (((CpuState9900) cpuState).getWP() + (mop.val << 1));
+			state.prev = cpuState.getConsole().flatReadWord(regAddr);
+			state.ea = state.prev;
+			if (mop.bIsReference) {
+    			state.value = state.ea;
+    		} else {
+    			if (mop.byteop)
+    				state.value = (short) (cpuState.getConsole().readByte(state.ea) & 0xff);
+    			else
+    				state.value = cpuState.getConsole().readWord(state.ea);
+    		}
+			cpuState.getConsole().writeWord(regAddr, (short)(state.prev + (mop.byteop ? 1 : 2)));
 	
 		}
 		/* (non-Javadoc)
@@ -242,7 +252,9 @@ public final class Changes {
 		@Override
 		protected void doRevert(ICpuState cpuState) {
 			super.doRevert(cpuState);
-			cpuState.getConsole().flatWriteWord(state.ea, state.prev);
+			MachineOperand9900 mop = (MachineOperand9900) state.mop;
+			short regAddr = (short) (((CpuState9900) cpuState).getWP() + (mop.val << 1));
+			cpuState.getConsole().flatWriteWord(regAddr, state.prev);
 		}
 	}
 	
@@ -267,6 +279,7 @@ public final class Changes {
     			else
     				state.value = cpuState.getConsole().readWord(state.ea);
     		}
+    		state.prev = state.value;
 		}
 		
 	}
@@ -404,6 +417,58 @@ public final class Changes {
             super.doRevert(cpuState);
 		}
 		
+	}
+
+	public static class AddCycles implements IChangeElement {
+		private MachineOperandState mopState1;
+		private MachineOperandState mopState2;
+		private MachineOperandState mopState3;
+		private Instruction9900 inst;
+		private int cycles;
+		private CycleCounts counts;
+
+		public AddCycles(CycleCounts counts,
+				MachineOperandState mopState1,
+				MachineOperandState mopState2, MachineOperandState mopState3,
+				Instruction9900 inst) {
+			this.counts = counts;
+			this.mopState1 = mopState1;
+			this.mopState2 = mopState2;
+			this.mopState3 = mopState3;
+			this.inst = inst;
+		}
+
+		/* (non-Javadoc)
+		 * @see v9t9.common.cpu.IChangeElement#apply(v9t9.common.cpu.ICpuState)
+		 */
+		@Override
+		public void apply(ICpuState cpuState) {
+			cycles = (mopState1 != null ? 
+					mopState1.cycles + (mopState2 != null ?
+							mopState2.cycles + (mopState3 != null ? 
+									mopState3.cycles 
+									: 0)
+							: 0)
+					: 0)
+				+ inst.fetchCycles;
+			
+//			ICycleCalculator calc = InstTable9900.instCycles.get(inst.getInst());
+//			if (calc == null)
+//				return;
+//			
+//			calc.addCycles(counts);
+
+			counts.addExecute(cycles + 10);		// FIXME
+		}
+
+		/* (non-Javadoc)
+		 * @see v9t9.common.cpu.IChangeElement#revert(v9t9.common.cpu.ICpuState)
+		 */
+		@Override
+		public void revert(ICpuState cpuState) {
+			counts.addExecute(-cycles);
+		}
+
 	}
 
 

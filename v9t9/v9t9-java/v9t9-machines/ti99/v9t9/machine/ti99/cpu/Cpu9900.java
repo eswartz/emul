@@ -30,7 +30,7 @@ import v9t9.machine.ti99.asm.InstructionFactory9900;
 import v9t9.machine.ti99.asm.RawInstructionFactory9900;
 import v9t9.machine.ti99.asm.TopDownPhase;
 import v9t9.machine.ti99.compiler.Compiler9900;
-import v9t9.machine.ti99.interpreter.Interpreter9900;
+import v9t9.machine.ti99.interpreter.NewInterpreter9900;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
@@ -356,7 +356,8 @@ public class Cpu9900 extends CpuBase {
 	@Override
 	public IExecutor createExecutor() {
 		return new Executor(machine, this,  
-				new Interpreter9900((IMachine) getMachine()),
+//				new Interpreter9900((IMachine) getMachine()),
+				new NewInterpreter9900((IMachine) getMachine()),
 				new Compiler9900(this),
 				new CodeBlockCompilerStrategy(),
 				new DumpFullReporter9900(this), 

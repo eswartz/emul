@@ -12,21 +12,25 @@ package v9t9.machine.ti99.cpu;
 
 import java.io.PrintWriter;
 
-import ejs.base.properties.IProperty;
-import ejs.base.settings.Logging;
-import ejs.base.utils.HexUtils;
-
-
-import ejs.base.utils.Pair;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.ChangeBlock;
+import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.Settings;
+import v9t9.machine.ti99.cpu.Changes.BaseOperandChangeElement;
+import v9t9.machine.ti99.cpu.Changes.WriteResult;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.Logging;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
 
 /**
  * @author ejs
@@ -63,19 +67,19 @@ public class DumpFullReporter9900 implements IInstructionListener {
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionAction.Block, v9t9.engine.cpu.InstructionAction.Block)
 	 */
 	public void executed(InstructionWorkBlock before_, InstructionWorkBlock after_) {
-		PrintWriter dumpfull = Logging.getLog(dumpSetting);
-		if (dumpfull == null) return;
-		
-		InstructionWorkBlock9900 before = (InstructionWorkBlock9900) before_;
-		InstructionWorkBlock9900 after = (InstructionWorkBlock9900) after_;
-		dumpFullStart(before, before.inst, dumpfull);
-		dumpFullMid(before, (MachineOperand9900)before.inst.getOp1(), (MachineOperand9900)before.inst.getOp2(), dumpfull);
-		dumpFullEnd(after, before.cycles, (MachineOperand9900)after.inst.getOp1(), (MachineOperand9900)after.inst.getOp2(), dumpfull);
+//		PrintWriter dumpfull = Logging.getLog(dumpSetting);
+//		if (dumpfull == null) return;
+//		
+//		InstructionWorkBlock9900 before = (InstructionWorkBlock9900) before_;
+//		InstructionWorkBlock9900 after = (InstructionWorkBlock9900) after_;
+//		dumpFullStart(before, before.inst, dumpfull);
+//		dumpFullMid(before, (MachineOperand9900)before.inst.getOp1(), (MachineOperand9900)before.inst.getOp2(), dumpfull);
+//		dumpFullEnd(after, before.cycles, (MachineOperand9900)after.inst.getOp1(), (MachineOperand9900)after.inst.getOp2(), dumpfull);
 	}
 
-	public void dumpFullStart(InstructionWorkBlock9900 wb,
+	public void dumpFullStart(ICpuState cpu, IMemoryDomain domain,
 			RawInstruction ins, PrintWriter dumpfull) {
-		IMemoryEntry entry = wb.domain.getEntryAt(ins.pc);
+		IMemoryEntry entry = domain.getEntryAt(ins.pc);
 		symbol = null;
 		if (entry != null) 
 			symbol = entry.lookupSymbol((short) ins.pc);
@@ -84,20 +88,20 @@ public class DumpFullReporter9900 implements IInstructionListener {
 			// HACK
 			if ("@NEXT".equals(symbol)) {
 				// show current word
-				int curIP = wb.cpu.getRegister(14);
+				int curIP = cpu.getRegister(14);
 				Pair<String, Short> info = entry.lookupSymbolNear((short) curIP, 128);
 				if (info != null && info.second >= 0x100 && info.second <= 0x4000) {
 					dumpfull.print(" in " + info.first);
 				}
 			}
 			else if (";S".equals(symbol)) {
-				dumpCallStack(dumpfull, entry, wb, true);
-				dumpStack(dumpfull, entry, wb);
+				dumpCallStack(dumpfull, entry, cpu, true);
+				dumpStack(dumpfull, entry, cpu, cpu.getConsole());
 			} else if ("DOCOL".equals(symbol)) {
-				dumpCallStack(dumpfull, entry, wb, false);
-				dumpStack(dumpfull, entry, wb);
+				dumpCallStack(dumpfull, entry, cpu, false);
+				dumpStack(dumpfull, entry, cpu, cpu.getConsole());
 			} else if ("EXECUTE".equals(symbol)) {
-				dumpStack(dumpfull, entry, wb);
+				dumpStack(dumpfull, entry, cpu, cpu.getConsole());
 			}
 			dumpfull.println();
 		}
@@ -109,24 +113,23 @@ public class DumpFullReporter9900 implements IInstructionListener {
 	 * @param wb 
 	 * @param showCurrentIP 
 	 */
-	private void dumpCallStack(PrintWriter dumpfull, IMemoryEntry entry, InstructionWorkBlock9900 wb, boolean showCurrentIP) {
+	private void dumpCallStack(PrintWriter dumpfull, IMemoryEntry entry, ICpuState state, boolean showCurrentIP) {
 		// walk stack
 		dumpfull.print(" [ ");
 		boolean first = true;
 		int unknown = 0;
-		int curRP = wb.cpu.getRegister(13) & 0xffff;
+		int curRP = cpu.getState().getRegister(13) & 0xffff;
 		do {
 			int curIP;
 			if (first) {
-				if (showCurrentIP)
-					curIP = (wb.val2 & 0xffff) - 2;	// MOV *R13+, R14 -- get old value
-				else
-					curIP = (wb.cpu.getRegister(11) & 0xffff);	// MOV *R13+, R14 -- get old value
+//				if (showCurrentIP)
+//					curIP = (wb.val2 & 0xffff) - 2;	// MOV *R13+, R14 -- get old value
+//				else
+					curIP = (cpu.getState().getRegister(11) & 0xffff);	// MOV *R13+, R14 -- get old value
 				first = false;
 			}
 			else if (curRP < 0xff40) {
-				curIP = wb.domain
-						.flatReadWord(curRP);
+				curIP = cpu.getConsole().flatReadWord(curRP);
 				curRP += 2;
 				if (first)
 					first = false;
@@ -150,7 +153,7 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		
 	}
 
-	private void dumpStack(PrintWriter dumpfull, IMemoryEntry entry, InstructionWorkBlock9900 wb) {
+	private void dumpStack(PrintWriter dumpfull, IMemoryEntry entry, ICpuState cpu, IMemoryDomain domain) {
 		Integer sp0 = entry.findSymbol("sp0");
 		if (sp0 == null) {
 			return;
@@ -158,16 +161,16 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		sp0 = 0xffff & entry.flatReadWord(sp0 + 4);	// BL *R4, DOLIT
 			
 		dumpfull.print(" (");
-		int curSP = wb.cpu.getRegister(15) & 0xfffe;
+		int curSP = cpu.getRegister(15) & 0xfffe;
 		int topSP = Math.min(curSP + 8 * 2, sp0);
 		int curVal;
 		while (topSP > curSP) {
 			topSP -= 2;
-			curVal = wb.domain.flatReadWord(topSP);
+			curVal = domain.flatReadWord(topSP);
 			dumpfull.print(" ");
 			dumpfull.print(HexUtils.toHex4(curVal));
 		}
-		curVal = wb.cpu.getRegister(1);	 // TOS
+		curVal = cpu.getRegister(1);	 // TOS
 		dumpfull.print(" ");
 		dumpfull.print(HexUtils.toHex4(curVal));
 
@@ -252,6 +255,109 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		System.out.println("cycles = " + cpu.getTotalCurrentCycleCount());
 		System.exit(code);
 		
+	}
+
+	private void dumpFullMid(ChangeBlock9900 changes,
+			MachineOperand9900 mop1, MachineOperand9900 mop2,
+			PrintWriter dumpfull) {
+		String str;
+		if (mop1.type != IMachineOperand.OP_NONE
+		        && mop1.dest != IOperand.OP_DEST_KILLED) {
+			
+			str = getOperandValue(changes, mop1, false);
+		    if (str != null) {
+		        dumpfull.print("op1=" + str + " ");
+		    }
+		}
+		if (mop2.type != IMachineOperand.OP_NONE
+		        && mop2.dest != IOperand.OP_DEST_KILLED) {
+			str = getOperandValue(changes, mop2, false);
+		    if (str != null) {
+				dumpfull.print("op2=" + str);
+			}
+		}
+		dumpfull.print(" || ");
+	}
+	/**
+	 * @param changes
+	 * @param after
+	 * @return
+	 */
+	private String getOperandValue(ChangeBlock9900 changes, MachineOperand9900 mop, boolean after) {
+		for (int i = 0; i < changes.getCount(); i++) {
+			IChangeElement el = changes.getElement(i);
+			if (el instanceof BaseOperandChangeElement && (!after || el instanceof WriteResult)) {
+				BaseOperandChangeElement oel = (BaseOperandChangeElement) el;
+				if (oel.state.mop == mop) {
+					return mop.valueString(oel.state.ea, after ? oel.state.value : oel.state.prev);
+				}
+			}
+		}
+		return null;
+	}
+
+
+	public void dumpFullEnd(ChangeBlock9900 changes, 
+			//int origCycleCount, 
+			MachineOperand9900 mop1,
+			MachineOperand9900 mop2, PrintWriter dumpfull) {
+		String str;
+		if (mop1.type != IMachineOperand.OP_NONE
+		        && (mop1.dest != IOperand.OP_DEST_FALSE
+		        		|| mop1.type == MachineOperand9900.OP_INC)) {
+			str = getOperandValue(changes, mop1, true);
+		    if (str != null) {
+		        dumpfull.print("op1=" + str + " ");
+		    }
+		}
+		if (mop2.type != IMachineOperand.OP_NONE
+				&& (mop2.dest != IOperand.OP_DEST_FALSE
+		        		|| mop2.type == MachineOperand9900.OP_INC)) {
+		    str = getOperandValue(changes, mop2, true);
+		    if (str != null) {
+				dumpfull.print("op2=" + str + " ");
+			}
+		}
+		dumpfull.print("st="
+		        + Integer.toHexString(cpu.getST() & 0xffff)
+		                .toUpperCase() + " wp="
+		        + Integer.toHexString(((Cpu9900) cpu).getWP() & 0xffff).toUpperCase());
+		
+//		int cycles = changes.cycles - origCycleCount;
+//		dumpfull.print(" @ " + cycles);
+		dumpfull.println();
+		dumpfull.flush();
+
+		if (symbol != null) {
+			if (symbol.startsWith("$test")) {
+				System.out.println(symbol);
+			}
+			if (symbol.equals(testSuccessSymbol.getString())) {
+				finish(0, "*** SUCCESS ***");
+			}
+			else if (symbol.equals(testFailureSymbol.getString())) {
+				finish(1, "*** FAILED ***");
+			}
+		}
+		
+		if (changes.inst.getInst() == InstTableCommon.Idata) {
+			finish(2, "*** CRASHED ***");
+		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IInstructionListener#executed(v9t9.common.cpu.ChangeBlock)
+	 */
+	@Override
+	public void executed(ChangeBlock block_) {
+		PrintWriter dumpfull = Logging.getLog(dumpSetting);
+		if (dumpfull == null) return;
+		
+		ChangeBlock9900 block = (ChangeBlock9900) block_;
+		dumpFullStart(block.cpuState, block.cpu.getConsole(), block.inst, dumpfull);
+		dumpFullMid(block, (MachineOperand9900)block.inst.getOp1(), (MachineOperand9900)block.inst.getOp2(), dumpfull);
+		dumpFullEnd(block, (MachineOperand9900)block.inst.getOp1(), (MachineOperand9900)block.inst.getOp2(), dumpfull);		
 	}
 
 }

@@ -16,7 +16,7 @@ import v9t9.machine.ti99.cpu.Changes.ReadIncrementRegister;
 import v9t9.machine.ti99.cpu.Changes.ReadIndirectRegister;
 import v9t9.machine.ti99.cpu.Changes.ReadRegister;
 import v9t9.machine.ti99.cpu.Changes.ReadRegisterOffset;
-import v9t9.machine.ti99.interpreter.Interpreter9900;
+import v9t9.machine.ti99.interpreter.NewInterpreter9900;
 
 /**
  * 9900-specific change block
@@ -55,7 +55,7 @@ public class ChangeBlock9900 extends ChangeBlock {
 	public void generate() {
 		appendOperandFetch();
 		appendInstructionExecute();
-		appendOperandFlush();
+		appendFlush();
 	}
 	/**
 	 * 
@@ -66,11 +66,6 @@ public class ChangeBlock9900 extends ChangeBlock {
 
 	/** Fetch the current instruction operands */
 	public void appendOperandFetch() {
-		
-//		if (inst.getInst() == Inst9900.Ix) {
-//    		ins.pc = this.inst.pc + this.inst.getSize() - 2;
-//    	}
-        
         MachineOperand9900 mop1 = (MachineOperand9900) this.inst.getOp1();
 		MachineOperand9900 mop2 = (MachineOperand9900) this.inst.getOp2();
 		if (mop1 != null && mop1.type != IMachineOperand.OP_NONE) {
@@ -163,11 +158,11 @@ public class ChangeBlock9900 extends ChangeBlock {
 
 	/** Add the change element for the interpretation */
 	public void appendInstructionExecute() {
-		Interpreter9900.appendInterpret((Cpu9900) cpu, this, inst, mopState1, mopState2, mopState3);
+		NewInterpreter9900.appendInterpret((Cpu9900) cpu, this, inst, mopState1, mopState2, mopState3);
 	}
 	
 	/** Add the change element for flushing operands */
-	public void appendOperandFlush() {
+	public void appendFlush() {
         if (mopState1 != null && ((MachineOperand9900) mopState1.mop).dest != IOperand.OP_DEST_FALSE) {
         	push(new Changes.WriteResult(mopState1));
         }
@@ -177,6 +172,8 @@ public class ChangeBlock9900 extends ChangeBlock {
         if (mopState3 != null && ((MachineOperand9900) mopState3.mop).dest != IOperand.OP_DEST_FALSE) {
         	push(new Changes.WriteResult(mopState3));
         }
+
+    	push(new Changes.AddCycles(cpu.getCycleCounts(), mopState1, mopState2, mopState3, inst));
 
 //        if ((inst.getInfo().writes & InstInfo.INST_RSRC_ST) != 0) {
 //			//cpu.getState().setStatus(status);
