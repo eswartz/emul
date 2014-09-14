@@ -52,8 +52,15 @@ class ByteMemoryContentProvider implements ILazyContentProvider {
 	}
 
 	public void updateElement(int index) {
-		if (range == null)
+		MemoryRow row = getElementFor(index);
+		if (row == null)
 			return;
+		
+		tableViewer.replace(row, index);
+	}
+	public MemoryRow getElementFor(int index) {
+		if (range == null)
+			return null;
 		
 		//System.out.println(index);
 		int addr = index * size;
@@ -61,8 +68,9 @@ class ByteMemoryContentProvider implements ILazyContentProvider {
 		if (row == null || changes.isTouched(addr, addr + size))
 			row = new MemoryRow(addr, range);
 		
-		tableViewer.replace(row, index);
+		return row;
 	}
+
 
 	/**
 	 * 

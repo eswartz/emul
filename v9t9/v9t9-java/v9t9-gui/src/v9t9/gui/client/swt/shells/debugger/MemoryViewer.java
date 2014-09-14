@@ -39,6 +39,7 @@ import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.MouseEvent;
@@ -138,26 +139,10 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 			
 		});
 		
-//		refreshTask = new TimerTask() {
-//
-//			@Override
-//			public void run() {
-//				if (timer != null && autoRefresh && !isDisposed())
-//					getDisplay().asyncExec(new Runnable() {
-//						public void run() {
-//							refreshViewer();
-//						}
-//					});
-//			}
-//			
-//		};
-//		timer.schedule(refreshTask, 0, 250);
-		
 		machine.getExecutor().getBreakpoints().addListener(MemoryViewer.this);
 		addDisposeListener(new DisposeListener() {
 
 			public void widgetDisposed(DisposeEvent e) {
-//				refreshTask.cancel();		
 				tableFont.dispose();
 				machine.getExecutor().getBreakpoints().removeListener(MemoryViewer.this);
 			}
@@ -529,19 +514,129 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 			column.pack();
 		}
 		table.setHeaderVisible(true);
-		table.setLinesVisible(true);
+		table.setLinesVisible(false);
 		
-		CellEditor[] editors = new CellEditor[1+BYTES+BYTES];
+		setupByteEditors(table, props);
+		
+		setupByteTableContextMenu(table);
+
+		setupByteTableHovers(table);
+		
+	}
+
+	private void setupByteEditors(Table table, String[] props) {
+		final CellEditor[] editors = new CellEditor[1+BYTES+BYTES];
 		for (int i = 1; i < BYTES+1; i++) {
-			editors[i] = new TextCellEditor(table);
+			final int column = i;
+			editors[i] = new TextCellEditor(table) {
+				@Override
+				protected void keyReleaseOccured(KeyEvent keyEvent) {
+					if (keyEvent.character == SWT.ESC) {
+						keyEvent.doit = false;		// don't close window 		
+					}
+					else if (keyEvent.keyCode == SWT.ARROW_LEFT) {
+						fireApplyEditorValue();
+						advanceByteEditor(column, 0, -1);
+					}
+					else if (keyEvent.keyCode == SWT.ARROW_RIGHT || keyEvent.character == '\r' || keyEvent.character == ' ') {
+						fireApplyEditorValue();
+						advanceByteEditor(column, 0, 1);
+					}
+					else if (keyEvent.keyCode == SWT.ARROW_UP) {
+						fireApplyEditorValue();
+						advanceByteEditor(column, -1, 0);
+					}
+					else if (keyEvent.keyCode == SWT.PAGE_UP) {
+						fireApplyEditorValue();
+						advanceByteEditor(column, -16, 0);
+					}
+					else if (keyEvent.keyCode == SWT.ARROW_DOWN) {
+						fireApplyEditorValue();
+						advanceByteEditor(column, 1, 0);
+					}
+					else if (keyEvent.keyCode == SWT.PAGE_DOWN) {
+						fireApplyEditorValue();
+						advanceByteEditor(column, 16, 0);
+					}
+					super.keyReleaseOccured(keyEvent);
+				}
+			};
 		}
 		
 		byteTableViewer.setColumnProperties(props);
 		byteTableViewer.setCellModifier(new ByteMemoryCellModifier(byteTableViewer));
 		byteTableViewer.setCellEditors(editors);
 		
-		addTableContextMenu(table);
+	}
+
+	private void advanceByteEditor(int column, int rowDelta, int colDelta) {
+		MemoryRow row = (MemoryRow) ((IStructuredSelection) byteTableViewer.getSelection()).getFirstElement();
+		MemoryRow newRow;
+		int newColumn;
+		if (colDelta != 0) {
+			if (column + colDelta > 0 && column + colDelta < BYTES+1) {
+				newRow = row;
+				newColumn = column + colDelta;
+			} else {
+				int nextIndex = getMemoryRowIndex(row.getAddress() + colDelta * BYTES);
+				newRow = byteContentViewer.getElementFor(nextIndex);
+				newColumn = colDelta > 0 ? 1 : BYTES;
+			}
+		} else {
+			int rowIndex = getMemoryRowIndex(row.getAddress() + rowDelta * BYTES);
+			newRow = byteContentViewer.getElementFor(rowIndex);
+			newColumn = column;
+		}
+		if (newRow == null) {
+			newRow = row;
+		}
+		if (newRow != null) {
+			byteTableViewer.editElement(newRow, newColumn);
+		}
 		
+	}
+
+	private void setupByteTableContextMenu(final Table table) {
+		Menu menu = new Menu(table);
+		MenuItem item;
+		item = new MenuItem(menu, SWT.NONE);
+		item.setText("Set start range");
+		item.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (currentRange == null)
+					return;
+				int addr = table.getSelectionIndex() * BYTES;
+				restrictRange(currentRange.getAddress() + addr, currentRange.getAddress() + currentRange.getSize());
+			}
+		});
+		item = new MenuItem(menu, SWT.NONE);
+		item.setText("Set end range");
+		item.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (currentRange == null)
+					return;
+				int endAddr = (table.getSelectionIndex() + 1) * BYTES;
+				restrictRange(currentRange.getAddress(), currentRange.getAddress() + endAddr);
+			}
+		});
+		
+		item = new MenuItem(menu, SWT.NONE);
+		item.setText("Clear range");
+		item.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (currentRange == null)
+					return;
+				changeCurrentRange(new MemoryRange(currentRange.getEntry()));
+			}
+		});
+		table.setMenu(menu);
+	}
+	
+
+	private void setupByteTableHovers(final Table table) {
 		table.addMouseTrackListener(new MouseTrackAdapter() {
 			@Override
 			public void mouseHover(MouseEvent e) {
@@ -618,46 +713,7 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 				setToolTipText(null);
 			}
 		});
-	}
 
-
-	private void addTableContextMenu(final Table table) {
-		Menu menu = new Menu(table);
-		MenuItem item;
-		item = new MenuItem(menu, SWT.NONE);
-		item.setText("Set start range");
-		item.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if (currentRange == null)
-					return;
-				int addr = table.getSelectionIndex() * BYTES;
-				restrictRange(currentRange.getAddress() + addr, currentRange.getAddress() + currentRange.getSize());
-			}
-		});
-		item = new MenuItem(menu, SWT.NONE);
-		item.setText("Set end range");
-		item.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if (currentRange == null)
-					return;
-				int endAddr = (table.getSelectionIndex() + 1) * BYTES;
-				restrictRange(currentRange.getAddress(), currentRange.getAddress() + endAddr);
-			}
-		});
-		
-		item = new MenuItem(menu, SWT.NONE);
-		item.setText("Clear range");
-		item.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if (currentRange == null)
-					return;
-				changeCurrentRange(new MemoryRange(currentRange.getEntry()));
-			}
-		});
-		table.setMenu(menu);
 	}
 
 	protected void changeCurrentRange(MemoryRange range) {
