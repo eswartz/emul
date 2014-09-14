@@ -218,42 +218,42 @@ include cold.fi
 		
 		1 <export
 		
-		:   bye
-		
-		    regs-init
-		    
-		    exc-init
-		    
-		    ints-init
-		        
-		    kbd-init
-		    
-		    video-init
-		    
-		    sound-init
-		 
-		    cold-init
-		
-		    decimal 
-		 
-		    0 blk !
-		    0 state !
-		 
-		    empty-buffers
-		
-		[ [ifdef] init-locals ]    
-		    init-locals
-		[ [THEN] ]    
-		
-		[ [ifdef] init-editor ]    
-		    init-editor
-		[ [THEN] ]    
-		      
-		    1 load
-		     
-		    \ cycle
-		    quit
-		;
+\		:   bye
+\		
+\		    regs-init
+\		    
+\		    exc-init
+\		    
+\		    ints-init
+\		        
+\		    kbd-init
+\		    
+\		    video-init
+\		    
+\		    sound-init
+\		 
+\		    cold-init
+\		
+\		    decimal 
+\		 
+\		    0 blk !
+\		    0 state !
+\		 
+\		    empty-buffers
+\		
+\		[ [ifdef] init-locals ]    
+\		    init-locals
+\		[ [THEN] ]    
+\		
+\		[ [ifdef] init-editor ]    
+\		    init-editor
+\		[ [THEN] ]    
+\		      
+\		    1 load
+\		     
+\		    \ cycle
+\		    quit
+\		;
 		
 		export>
 		
@@ -299,9 +299,12 @@ test" +loop-zero  0
 		0 0 do  i drop  1+  $1000 +loop
 		16 = "
 	
-	: BYE
-		COLD
+	: WARM
+		(RESET)
 	;
+	Code BYE
+		@> 	,BLWP	0 ,
+	end-code
 	
 |test : eval1 s" 100 200 300 + + ." ;
 test" evaluate1 eval1 evaluate 	true "
