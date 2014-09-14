@@ -111,7 +111,7 @@ public class AssemblerTokenizer {
 					} else if (ch == '>') {
 						return '»';
 					} else {
-						reader.unread();
+						if (ch >= 0) reader.unread();
 						return '>';
 					}
 				}
