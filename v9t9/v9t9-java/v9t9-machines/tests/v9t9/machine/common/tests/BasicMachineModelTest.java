@@ -15,7 +15,6 @@ import java.util.Collections;
 import java.util.List;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.hardware.ICassetteChip;
@@ -25,16 +24,12 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
-import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
 import v9t9.engine.memory.ByteMemoryArea;
-import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StockMemoryModel;
-import v9t9.engine.speech.SpeechTMS5220;
-import v9t9.machine.ti99.memory.ConsoleMemoryArea;
 
 /**
  * @author ejs

@@ -14,11 +14,6 @@ import java.util.Arrays;
 public abstract class ChangeBlock {
     private static final IChangeElement[] NONE = new IChangeElement[0];
     
-    /** cycles consumed by fetching */
-//    public int fetchCycles;
-    /** cycles consumed by execution */
-//    public int executeCycles;
-    
     private IChangeElement[] elements;
     private int elementIdx;
     
@@ -51,9 +46,6 @@ public abstract class ChangeBlock {
 	public void push(IChangeElement element) {
 		if (elements == null) {
 			elements = new IChangeElement[12];
-//			element.setParent(getParent());
-		} else {
-//			element.setParent(elements[elementIdx - 1]);
 		}
 		elements[elementIdx++] = element;
 	}
@@ -65,8 +57,6 @@ public abstract class ChangeBlock {
 	public void apply(ICpu cpu) {
 		for (int i = 0; i < elementIdx; i++)
 			elements[i].apply(cpu.getState());
-		//pu.getCycleCounts().getAndResetTotal();
-		//cpu.applyCycles();
 	}
 	
 	public void revert(ICpu cpu) {
@@ -100,4 +90,6 @@ public abstract class ChangeBlock {
 		System.arraycopy(elements, pos + 1, elements, pos, elementIdx - pos - 1);
 		elementIdx --;
 	}
+	
+	abstract public int getPC();
 }

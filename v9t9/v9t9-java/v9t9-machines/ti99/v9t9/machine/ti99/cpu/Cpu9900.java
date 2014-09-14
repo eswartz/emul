@@ -74,6 +74,8 @@ public class Cpu9900 extends CpuBase {
     
 	private final IVdpChip vdp;
 	private Dumper dumper;
+
+	private int debugCount;
 	
     public Cpu9900(IMachine machine, IVdpChip vdp) {
     	super(machine, new CpuState9900(machine.getConsole()));
@@ -387,5 +389,12 @@ public class Cpu9900 extends CpuBase {
 	@Override
 	public IInstructionEffectLabelProvider createInstructionEffectLabelProvider() {
 		return new InstructionEffectLabelProvider9900();
+	}
+
+	public void addDebugCount(int i) {
+    	int oldCount = debugCount; 
+    	debugCount += i;
+    	if ((oldCount == 0) != (debugCount == 0))
+    		settingDumpFullInstructions().setBoolean(i > 0);
 	}
 }

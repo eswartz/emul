@@ -22,7 +22,6 @@ import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryDomain;
-import ejs.base.utils.BinaryUtils;
 
 /**
  * This class takes an Instruction and generates its opcode.
@@ -57,12 +56,12 @@ public class InstTable9900 {
 
 
 	public interface ICycleCalculator {
-		void addCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts);
-		void addCycles(ChangeBlock9900 changes);
+//		void addCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts);
 		void setLoads(boolean b);
 		void setStores(boolean b);
 		boolean loads();
 		boolean stores();
+		int getExecuteCycles();
 	}
 	public static abstract class BaseCycleCalculator implements ICycleCalculator {
 
@@ -86,28 +85,6 @@ public class InstTable9900 {
 			return stores;
 		}
 		
-		@Override
-		final public void addCycles(InstructionWorkBlock origBlock_,
-				InstructionWorkBlock block_, 
-				CycleCounts counts) {
-//			InstructionWorkBlock9900 origBlock = (InstructionWorkBlock9900) origBlock_;
-//			
-//			RawInstruction inst = origBlock.inst;
-//			counts.addFetch(origBlock.inst.fetchCycles);
-//			
-//			MachineOperand9900 op1 = (MachineOperand9900) inst.getOp1();
-//			MachineOperand9900 op2 = (MachineOperand9900) inst.getOp2();
-//			
-//			if (op1 != null) {
-//				counts.addFetch(op1.cycles);
-//				if (op2 != null) {
-//					counts.addFetch(op2.cycles);
-//				}
-//			}
-//			
-//			addCustomCycles(origBlock_, block_, counts);
-		}
-
 		abstract protected void addCustomCycles(InstructionWorkBlock origBlock_,
 				InstructionWorkBlock block_, 
 				CycleCounts counts);
@@ -116,16 +93,12 @@ public class InstTable9900 {
 	
 	
 	public static class NullCycleCalculator implements ICycleCalculator {
-		@Override
-		public void addCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
-		}
-
 		/* (non-Javadoc)
-		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
+		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#getExecuteCycles()
 		 */
 		@Override
-		public void addCycles(ChangeBlock9900 changes) {
-			
+		public int getExecuteCycles() {
+			return 0;
 		}
 		/* (non-Javadoc)
 		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#setLoads(boolean)
@@ -177,8 +150,8 @@ public class InstTable9900 {
 		}
 
 		@Override
-		public void addCycles(ChangeBlock9900 changes) {
-			changes.counts.addExecute(exec);
+		public int getExecuteCycles() {
+			return exec;
 		}
 	}
 
@@ -196,7 +169,7 @@ public class InstTable9900 {
 			instOpcodes.put(inst, opcode);
 			instMasks.put(inst, mask);
 			
-			b.cycleCounter = new NullCycleCalculator();
+			b.cycleCounter = new FixedCycleCalculator(0, 0);
 			b.inst = inst;
 			return b;
 		}
@@ -228,52 +201,47 @@ public class InstTable9900 {
 		}
 	}
 	
-	static class JumpCycleCounter extends BaseCycleCalculator {
-
-		public static final ICycleCalculator INSTANCE = new JumpCycleCounter();
-
-		@Override
-		protected void addCustomCycles(InstructionWorkBlock origBlock,
-				InstructionWorkBlock block, CycleCounts counts) {
-			if (block.pc != origBlock.pc) {
-				counts.addExecute(10);
-			} else {
-				counts.addExecute(8);
-			}
-		}
-
-		@Override
-		public void addCycles(ChangeBlock9900 changes) {
-			// done in jump
-		}
-
-	}
-	
-	static class ShiftCycleCalculator extends BaseCycleCalculator {
-		
-		public static final ICycleCalculator INSTANCE = new ShiftCycleCalculator();
-		
-		@Override
-		protected void addCustomCycles(InstructionWorkBlock origBlock,
-				InstructionWorkBlock block, CycleCounts counts) {
-			int disp = ((InstructionWorkBlock9900) block).val2;
-			counts.addExecute(2 * disp);
-			if (!((MachineOperand9900) origBlock.inst.getOp2()).isRegister()) {
-				counts.addExecute(12);
-			} else {
-				counts.addExecute(20);
-			}
-		}
-		/* (non-Javadoc)
-		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
-		 */
-		@Override
-		public void addCycles(ChangeBlock9900 changes) {
-			// done in interpreter
-			
-		}
-		
-	}
+//	static class JumpCycleCounter extends BaseCycleCalculator {
+//
+//		public static final ICycleCalculator INSTANCE = new JumpCycleCounter();
+//
+//		@Override
+//		protected void addCustomCycles(InstructionWorkBlock origBlock,
+//				InstructionWorkBlock block, CycleCounts counts) {
+//			if (block.pc != origBlock.pc) {
+//				counts.addExecute(10);
+//			} else {
+//				counts.addExecute(8);
+//			}
+//		}
+//
+//	}
+//	
+//	static class ShiftCycleCalculator extends BaseCycleCalculator {
+//		
+//		public static final ICycleCalculator INSTANCE = new ShiftCycleCalculator();
+//		
+//		@Override
+//		protected void addCustomCycles(InstructionWorkBlock origBlock,
+//				InstructionWorkBlock block, CycleCounts counts) {
+//			int disp = ((InstructionWorkBlock9900) block).val2;
+//			counts.addExecute(2 * disp);
+//			if (!((MachineOperand9900) origBlock.inst.getOp2()).isRegister()) {
+//				counts.addExecute(12);
+//			} else {
+//				counts.addExecute(20);
+//			}
+//		}
+//		/* (non-Javadoc)
+//		 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
+//		 */
+//		@Override
+//		public void addCycles(ChangeBlock9900 changes) {
+//			// done in interpreter
+//			
+//		}
+//		
+//	}
 	
 	static {
 		InstBuilder.from("data", InstTableCommon.Idata, 0x0000, IMM_NONE, 0xffff)
@@ -380,37 +348,37 @@ public class InstTable9900 {
 			.source()
 			.register();
 		InstBuilder.from("abs", Inst9900.Iabs, 0x0740, GEN_NONE)
-			.withCycleCalculator(new BaseCycleCalculator() {
-				
-				@Override
-				protected void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
-					if (((InstructionWorkBlock9900) origBlock).val1 >= 0) {
-						counts.addExecute(12);
-					} else {
-						counts.addExecute(14);
-					}
-				}
-				/* (non-Javadoc)
-				 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
-				 */
-				@Override
-				public void addCycles(ChangeBlock9900 changes) {
-				}
-			})
+//			.withCycleCalculator(new BaseCycleCalculator() {
+//				
+//				@Override
+//				protected void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
+//					if (((InstructionWorkBlock9900) origBlock).val1 >= 0) {
+//						counts.addExecute(12);
+//					} else {
+//						counts.addExecute(14);
+//					}
+//				}
+//				/* (non-Javadoc)
+//				 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
+//				 */
+//				@Override
+//				public void addCycles(ChangeBlock9900 changes) {
+//				}
+//			})
 			.source().destination()
 			.register();
 
 		InstBuilder.from("sra", Inst9900.Isra, 0x0800, REG_CNT)
-			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
+//			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
 			.register();
 		InstBuilder.from("srl", Inst9900.Isrl, 0x0900, REG_CNT)
-			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
+//			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
 			.register();
 		InstBuilder.from("sla", Inst9900.Isla, 0x0a00, REG_CNT)
-			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
+//			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
 			.register();
 		InstBuilder.from("src", Inst9900.Isrc, 0x0b00, REG_CNT)
-			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
+//			.withCycleCalculator(ShiftCycleCalculator.INSTANCE)
 			.register();
 
 		InstBuilder.from("dsr", InstTableCommon.Idsr, 0x0c00, OFF_NONE, 0xcff).register();
@@ -421,43 +389,43 @@ public class InstTable9900 {
 		InstBuilder.from("dbgf", InstTableCommon.Idbgf, 0x0de1, NONE_NONE, 0xde1).register();
 
 		InstBuilder.from("jmp", Inst9900.Ijmp, 0x1000, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("jlt", Inst9900.Ijlt, 0x1100, JMP_NONE)
-		.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//		.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("jle", Inst9900.Ijle, 0x1200, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("jeq", Inst9900.Ijeq, 0x1300, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+			//.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("jhe", Inst9900.Ijhe, 0x1400, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("jgt", Inst9900.Ijgt, 0x1500, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("jne", Inst9900.Ijne, 0x1600, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("jnc", Inst9900.Ijnc, 0x1700, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("joc", Inst9900.Ijoc, 0x1800, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("jno", Inst9900.Ijno, 0x1900, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("jl", Inst9900.Ijl, 0x1a00, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("jh", Inst9900.Ijh, 0x1b00, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 		InstBuilder.from("jop", Inst9900.Ijop, 0x1c00, JMP_NONE)
-			.withCycleCalculator(JumpCycleCounter.INSTANCE)
+//			.withCycleCalculator(JumpCycleCounter.INSTANCE)
 			.register();
 
 		InstBuilder.from("sbo", Inst9900.Isbo, 0x1d00, OFF_NONE)
@@ -488,82 +456,82 @@ public class InstTable9900 {
 			.register();
 		
 		InstBuilder.from("ldcr", Inst9900.Ildcr, 0x3000, GEN_CNT)
-			.withCycleCalculator(new BaseCycleCalculator() {
-				
-				@Override
-				public void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
-					counts.addExecute(20 + 2 * ((InstructionWorkBlock9900) origBlock).val2);
-				}
-				/* (non-Javadoc)
-				 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
-				 */
-				@Override
-				public void addCycles(ChangeBlock9900 changes) {
-					// done in instruction
-				}
-			})
+//			.withCycleCalculator(new BaseCycleCalculator() {
+//				
+//				@Override
+//				public void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
+//					counts.addExecute(20 + 2 * ((InstructionWorkBlock9900) origBlock).val2);
+//				}
+//				/* (non-Javadoc)
+//				 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
+//				 */
+//				@Override
+//				public void addCycles(ChangeBlock9900 changes) {
+//					// done in instruction
+//				}
+//			})
 			.source()
 			.register();
 		InstBuilder.from("stcr", Inst9900.Istcr, 0x3400, GEN_CNT)
-			.withCycleCalculator(new BaseCycleCalculator() {
-				
-				@Override
-				protected void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
-					int disp = ((InstructionWorkBlock9900) origBlock).val2;
-					if (disp > 0 && disp <= 7)
-						counts.addExecute(42);
-					else if (disp == 8)
-						counts.addExecute(44);
-					else if (disp > 0 && disp <= 15)
-						counts.addExecute(58);
-					else /* disp == 0 or 16 */
-						counts.addExecute(60);
-				}
-				@Override
-				public void addCycles(ChangeBlock9900 changes) {
-					// done in instruction
-				}
-			})
+//			.withCycleCalculator(new BaseCycleCalculator() {
+//				
+//				@Override
+//				protected void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
+//					int disp = ((InstructionWorkBlock9900) origBlock).val2;
+//					if (disp > 0 && disp <= 7)
+//						counts.addExecute(42);
+//					else if (disp == 8)
+//						counts.addExecute(44);
+//					else if (disp > 0 && disp <= 15)
+//						counts.addExecute(58);
+//					else /* disp == 0 or 16 */
+//						counts.addExecute(60);
+//				}
+//				@Override
+//				public void addCycles(ChangeBlock9900 changes) {
+//					// done in instruction
+//				}
+//			})
 			.register();
 		InstBuilder.from("mpy", Inst9900.Impy, 0x3800, GEN_REG)
 			.withCycles(52, 5)
 			.source()
 			.register();
 		InstBuilder.from("div", Inst9900.Idiv, 0x3c00, GEN_REG)
-			.withCycleCalculator(new BaseCycleCalculator() {
-				
-				@Override
-				public void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
-					if ((((InstructionWorkBlock9900) block).st & Status9900.ST_O) != 0) {
-						counts.addExecute(16);
-					} else {
-						int a;
-						int b;
-						a = ((InstructionWorkBlock9900) origBlock).val2 & 0xffff;
-						b = ((InstructionWorkBlock9900) origBlock).val3 & 0xffff;
-//						a = ((InstructionWorkBlock9900) block).val2 & 0xffff;
-//						b = ((InstructionWorkBlock9900) block).val3 & 0xffff;
-//						counts.addExecute(124);
-//						counts.addExecute(92);
-//						counts.addExecute(92 
-//								+ BinaryUtils.numberOfBits(a) 
-//								+ BinaryUtils.numberOfBits(b));
-						counts.addExecute(92 + 
-								+ BinaryUtils.maxBitNumber((a << 16) | b)); 
-//						counts.addExecute((92+124)/2); 
-//						counts.addExecute(92 
-//								+ BinaryUtils.numberOfBits(((InstructionWorkBlock9900) origBlock).val1 & 0xffff)*2); 
-							
-					}
-				}
-				/* (non-Javadoc)
-				 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
-				 */
-				@Override
-				public void addCycles(ChangeBlock9900 changes) {
-					// done in instruction
-				}
-			})
+//			.withCycleCalculator(new BaseCycleCalculator() {
+//				
+//				@Override
+//				public void addCustomCycles(InstructionWorkBlock origBlock, InstructionWorkBlock block, CycleCounts counts) {
+//					if ((((InstructionWorkBlock9900) block).st & Status9900.ST_O) != 0) {
+//						counts.addExecute(16);
+//					} else {
+//						int a;
+//						int b;
+//						a = ((InstructionWorkBlock9900) origBlock).val2 & 0xffff;
+//						b = ((InstructionWorkBlock9900) origBlock).val3 & 0xffff;
+////						a = ((InstructionWorkBlock9900) block).val2 & 0xffff;
+////						b = ((InstructionWorkBlock9900) block).val3 & 0xffff;
+////						counts.addExecute(124);
+////						counts.addExecute(92);
+////						counts.addExecute(92 
+////								+ BinaryUtils.numberOfBits(a) 
+////								+ BinaryUtils.numberOfBits(b));
+//						counts.addExecute(92 + 
+//								+ BinaryUtils.maxBitNumber((a << 16) | b)); 
+////						counts.addExecute((92+124)/2); 
+////						counts.addExecute(92 
+////								+ BinaryUtils.numberOfBits(((InstructionWorkBlock9900) origBlock).val1 & 0xffff)*2); 
+//							
+//					}
+//				}
+//				/* (non-Javadoc)
+//				 * @see v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator#addCycles(v9t9.machine.ti99.cpu.ChangeBlock9900)
+//				 */
+//				@Override
+//				public void addCycles(ChangeBlock9900 changes) {
+//					// done in instruction
+//				}
+//			})
 			.source()
 			.register();
 
@@ -812,13 +780,11 @@ public class InstTable9900 {
 	
    /**
      * Decode instruction with opcode 'op' at 'addr' into 'ins'.
-     * 
-     * @param domain
+ * @param domain
      *            provides read access to memory, to decode registers and
      *            instructions
- * @param load 
      */
-    public static RawInstruction decodeInstruction(int op, int pc, IMemoryDomain domain, boolean load) {
+    public static RawInstruction decodeInstruction(int op, int pc, IMemoryDomain domain) {
     	RawInstruction inst = new RawInstruction();
     	inst.pc = pc;
     	
@@ -1170,8 +1136,8 @@ public class InstTable9900 {
         } else {
             // Finish reading operand immediates
             pc += 2;
-            pc = mop1.fetchOperandImmediates(domain, pc, load);
-            pc = mop2.fetchOperandImmediates(domain, pc, load);
+            pc = mop1.fetchOperandImmediates(domain, pc);
+            pc = mop2.fetchOperandImmediates(domain, pc);
             inst.setSize(pc - inst.pc);
             inst.setName(InstTable9900.getInstName(inst.getInst()));
         }

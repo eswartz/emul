@@ -50,7 +50,6 @@ public class AllTests {
 		suite.addTestSuite(TestAssemblerOptimizer.class);
 		suite.addTestSuite(TestAssemblerJumpRanges.class);
 		suite.addTestSuite(MachineOperandParserTest9900.class);
-		suite.addTestSuite(InstructionTest9900.class);
 		suite.addTestSuite(TestAssemblerConstPool.class);
 		//$JUnit-END$
 		return suite;

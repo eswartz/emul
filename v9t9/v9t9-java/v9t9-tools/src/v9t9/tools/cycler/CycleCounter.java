@@ -14,13 +14,10 @@ import java.io.PrintStream;
 
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.AbortedException;
-import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;
-import v9t9.common.cpu.IInstructionListener;
-import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.machine.IMachine;
 import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.machine.ti99.cpu.CpuState9900;

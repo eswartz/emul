@@ -10,8 +10,6 @@
  */
 package v9t9.common.asm;
 
-import v9t9.common.cpu.InstructionWorkBlock;
-
 public interface IMachineOperand extends IOperand {
 
 	public static final int OP_NONE = -1;

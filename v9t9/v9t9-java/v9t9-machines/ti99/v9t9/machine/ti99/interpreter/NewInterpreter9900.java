@@ -35,7 +35,6 @@ import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.Instruction9900;
-import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;
 import v9t9.machine.ti99.cpu.Status9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import ejs.base.utils.BinaryUtils;
@@ -57,8 +56,6 @@ public class NewInterpreter9900 implements IInterpreter {
     // to allow bank support and avoid garbage for Shorts
     Map<IMemoryArea, ChangeBlock9900[]> parsedChangeBlocks; 
     
-    InstructionWorkBlock9900 iblock;
-
 	private Cpu9900 cpu;
 
 
@@ -89,7 +86,6 @@ public class NewInterpreter9900 implements IInterpreter {
 			}
 		});
         parsedChangeBlocks = new HashMap<IMemoryArea, ChangeBlock9900[]>();
-        iblock = new InstructionWorkBlock9900(cpu.getState());
      }
 
     protected int getCachedChangeIndex(IMemoryEntry entry, int addr) {
@@ -161,7 +157,7 @@ public class NewInterpreter9900 implements IInterpreter {
 	    		changes = getChangesForPC();
 	    		
 				for (Object listener : listeners) {
-	    			if (!((IInstructionListener) listener).preExecute(iblock)) {
+	    			if (!((IInstructionListener) listener).preExecute(changes)) {
 	    				throw new AbortedException();
 	    			}
 	    		}	
@@ -304,7 +300,7 @@ public class NewInterpreter9900 implements IInterpreter {
 			Instruction9900 inst, MachineOperandState mos1,
 			MachineOperandState mos2, MachineOperandState mos3) {
 		
-    	final ICruHandler cruHandler = cpu.getMachine() instanceof TI99Machine
+    	final ICruHandler cruHandler = (cpu != null && cpu.getMachine() instanceof TI99Machine)
     			? ((TI99Machine) cpu.getMachine()).getCruManager() : null;
     			
         switch (inst.getInst()) {
@@ -407,7 +403,12 @@ public class NewInterpreter9900 implements IInterpreter {
 			});
         	break;
         case Inst9900.Irset:
-            //cpu.rset(); // TODO
+        	changes.push(new BaseInterpret(inst) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					//cpu.rset(); // TODO
+				}
+			});
             break;
         case Inst9900.Irtwp:
 			changes.push(new Changes.RestoreContext());
@@ -982,7 +983,7 @@ public class NewInterpreter9900 implements IInterpreter {
 			});
         	
         	break;
-//        	
+        	
         case InstTableCommon.Iticks: {
         	changes.push(new BaseInterpret(inst, mos1, mos2) {
 				@Override
@@ -994,9 +995,22 @@ public class NewInterpreter9900 implements IInterpreter {
 			});
         	break;
         }
-//        case InstTableCommon.Idbg:
-//        	machine.getExecutor().debugCount(mos1.value == 0 ? 1 : -1);
-//        	break;
+        case InstTableCommon.Idbg: {
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					if (cpu != null)
+						cpu.addDebugCount(mos1.value == 0 ? 1 : -1);
+				}
+				@Override
+				protected void doRevert(CpuState9900 cpuState, Status9900 status) {
+					super.doRevert(cpuState, status);
+					if (cpu != null)
+						cpu.addDebugCount(mos1.value == 0 ? -1 : 1);
+				}
+			});
+        	break;
+        }
         default:
             throw new IllegalStateException();
         }

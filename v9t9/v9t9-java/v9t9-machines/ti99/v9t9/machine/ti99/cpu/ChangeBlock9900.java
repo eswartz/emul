@@ -8,9 +8,12 @@ import v9t9.common.asm.IOperand;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.CycleCounts;
+import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.MachineOperandState;
 import v9t9.machine.ti99.cpu.Changes.AdvancePC;
+import v9t9.machine.ti99.cpu.Changes.BaseOperandChangeElement;
 import v9t9.machine.ti99.cpu.Changes.CalculateCruOffset;
 import v9t9.machine.ti99.cpu.Changes.CalculateShift;
 import v9t9.machine.ti99.cpu.Changes.ReadIncrementRegister;
@@ -50,14 +53,33 @@ public class ChangeBlock9900 extends ChangeBlock {
 	public ChangeBlock9900(ICpu cpu, int pc) {
 		
 		this.cpu = cpu;
-		cpuState = (CpuState9900) cpu.getState();
+		this.cpuState = (CpuState9900) cpu.getState();
 		this.counts = cpu.getCycleCounts();
 		
 		counts.saveState();
 		counts.getAndResetTotal();
 		inst = new Instruction9900(InstTable9900.decodeInstruction(
 				cpu.getConsole().readWord(pc), 
-				pc, cpu.getConsole(), true), cpu.getConsole());
+				pc, cpu.getConsole()), cpu.getConsole());
+		instrFetchCycles = counts.getFetch() + counts.getLoad();
+		assert counts.getExecute() == 0;
+		assert counts.getStore() == 0;
+		assert counts.getOverhead() == 0;
+		counts.restoreState();
+		
+		appendInstructionAdvance();
+	}
+	public ChangeBlock9900(ICpuState cpuState, int pc) {
+		
+		this.cpu = null;
+		this.cpuState = (CpuState9900) cpuState;
+		this.counts = cpuState.getCycleCounts();
+		
+		counts.saveState();
+		counts.getAndResetTotal();
+		inst = new Instruction9900(InstTable9900.decodeInstruction(
+				cpuState.getConsole().readWord(pc), 
+				pc, cpuState.getConsole()), cpuState.getConsole());
 		instrFetchCycles = counts.getFetch() + counts.getLoad();
 		assert counts.getExecute() == 0;
 		assert counts.getStore() == 0;
@@ -72,20 +94,29 @@ public class ChangeBlock9900 extends ChangeBlock {
 	 */
 	public ChangeBlock9900(ICpu cpu, int pc, short op) {
 		this.cpu = cpu;
-		cpuState = (CpuState9900) cpu.getState();
-		this.counts = cpu.getCycleCounts();
+		this.cpuState = (CpuState9900) cpu.getState();
+		this.counts = cpuState.getCycleCounts();
 		
 		counts.saveState();
 		counts.getAndResetTotal();
 		inst = new Instruction9900(InstTable9900.decodeInstruction(
 				op, 
-				pc, cpu.getConsole(), true), cpu.getConsole());
+				pc, cpuState.getConsole()), cpuState.getConsole());
 		instrFetchCycles = counts.getFetch() + counts.getLoad();
 		assert counts.getExecute() == 0;
 		assert counts.getStore() == 0;
 		assert counts.getOverhead() == 0;
 		counts.restoreState();
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ChangeBlock#getPC()
+	 */
+	@Override
+	public int getPC() {
+		return inst.pc & 0xffff;
+	}
+	
 	public void generate() {
 		appendOperandFetch();
 		appendInstructionExecute();
@@ -211,5 +242,25 @@ public class ChangeBlock9900 extends ChangeBlock {
 		counts.addFetch(instrFetchCycles);
 		
 		super.apply(cpu);
+	}
+	/**
+	 * @param mop
+	 * @return
+	 */
+	public short getEA(IMachineOperand mop) {
+		for (int i = 0; i < getCount(); i++) {
+			IChangeElement el = getElement(i);
+			if (el instanceof Changes.AdvancePC) {
+				AdvancePC oel = (AdvancePC) el;
+				return (short) (oel.value + inst.pc - inst.getSize());
+			}
+			if (el instanceof BaseOperandChangeElement) {
+				BaseOperandChangeElement oel = (BaseOperandChangeElement) el;
+				if (oel.state.mop == mop) {
+					return oel.state.ea;
+				}
+			}
+		}
+		return 0;
 	}
 }

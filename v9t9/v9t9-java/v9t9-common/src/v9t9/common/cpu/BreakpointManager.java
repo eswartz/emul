@@ -44,15 +44,15 @@ public class BreakpointManager implements IInstructionListener {
 	 * @see v9t9.common.cpu.IInstructionListener#preExecute(v9t9.common.cpu.InstructionWorkBlock)
 	 */
 	@Override
-	public synchronized boolean preExecute(InstructionWorkBlock before) {
-		IBreakpoint bp = pcToBps.get(before.inst.pc & 0xffff);
+	public synchronized boolean preExecute(ChangeBlock block) {
+		IBreakpoint bp = pcToBps.get(block.getPC());
 		if (bp == null)
 			return true;
 		
 		if (tempDisableSet.remove(bp))
 			return true;
 		
-		boolean continueRunning = bp.execute(before.cpu);
+		boolean continueRunning = bp.execute(machine.getCpu().getState());
 		
 		if (!continueRunning) {
 			machine.setPaused(true);

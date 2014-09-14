@@ -383,13 +383,4 @@ public class CpuStateF99b implements ICpuState {
 	public void removeWriteListener(IRegisterWriteListener listener) {
 		listeners.remove(listener);
 	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.cpu.ICpuState#createInstructionWorkBlock()
-	 */
-	@Override
-	public InstructionWorkBlock createInstructionWorkBlock() {
-		return new InstructionWorkBlockF99b(this);
-	}
-
 }

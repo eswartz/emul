@@ -427,18 +427,6 @@ public class Executor implements IExecutor {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.engine.cpu.IExecutor#debugCount(int)
-	 */
-	@Override
-	public final void debugCount(int i) {
-    	int oldCount = debugCount; 
-    	debugCount += i;
-    	if ((oldCount == 0) != (debugCount == 0))
-    		cpu.settingDumpFullInstructions().setBoolean(i > 0);
-		
-	}
-	
-	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.IExecutor#vdpInterrupt()
 	 */
 	@Override

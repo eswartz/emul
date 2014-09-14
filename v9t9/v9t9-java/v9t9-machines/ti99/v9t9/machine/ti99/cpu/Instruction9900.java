@@ -905,11 +905,11 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	/** 
      * Update a previously decoded instruction, only rebuilding it
      * if its memory changed (self-modifying code).
-     * @param pc2
-     * @param wp2
-     * @param status2
+	 * @param pc2
+	 * @param wp2
+	 * @param status2
      */
-    public Instruction9900 update(short op, int thePc, IMemoryDomain domain, boolean load) {
+    public Instruction9900 update(short op, int thePc, IMemoryDomain domain) {
     	boolean isSame = true;
     	// obvious changes: this usually happens due to an X instruction and its generated instruction
         if (this.opcode != op || this.pc != thePc) {
@@ -946,7 +946,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
         if (false) 
         	System.out.println("need to regenerate instruction: >" + HexUtils.toHex4(thePc) + " "+ this);
         
-        return new Instruction9900(InstTable9900.decodeInstruction(op, thePc, domain, load), domain);
+        return new Instruction9900(InstTable9900.decodeInstruction(op, thePc, domain), domain);
 
     }
 

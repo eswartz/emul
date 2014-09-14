@@ -19,6 +19,7 @@ import ejs.base.utils.Pair;
 
 
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
@@ -50,7 +51,7 @@ public class DumpFullReporterF99b implements IInstructionListener {
 	 * @see v9t9.common.cpu.IInstructionListener#preExecute(v9t9.common.cpu.InstructionWorkBlock)
 	 */
 	@Override
-	public boolean preExecute(InstructionWorkBlock before) {
+	public boolean preExecute(ChangeBlock block) {
 		return true;
 	}
 	

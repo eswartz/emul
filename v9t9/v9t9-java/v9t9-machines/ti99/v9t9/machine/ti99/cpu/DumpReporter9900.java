@@ -18,9 +18,9 @@ import ejs.base.utils.HexUtils;
 
 
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IInstructionListener;
-import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.settings.Settings;
 import v9t9.machine.ti99.machine.TI99Machine;
 
@@ -45,18 +45,19 @@ public class DumpReporter9900 implements IInstructionListener {
 	 * @see v9t9.common.cpu.IInstructionListener#preExecute(v9t9.common.cpu.InstructionWorkBlock)
 	 */
 	@Override
-	public boolean preExecute(InstructionWorkBlock before) {
+	public boolean preExecute(ChangeBlock block) {
 		return true;
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionAction.Block, v9t9.engine.cpu.InstructionAction.Block)
+	 * @see v9t9.common.cpu.IInstructionListener#executed(v9t9.common.cpu.ChangeBlock)
 	 */
-	public void executed(InstructionWorkBlock before, InstructionWorkBlock after) {
+	@Override
+	public void executed(ChangeBlock block) {
 		PrintWriter dump = Logging.getLog(dumpSetting);
 		if (dump == null)
 			return;
-		RawInstruction ins = before.inst;
+		RawInstruction ins = ((ChangeBlock9900) block).inst;
 		if (cpu.getMachine() instanceof TI99Machine) {
 		    TI99Machine ti = (TI99Machine) cpu.getMachine();
 		    dump.println(HexUtils.toHex4(ins.pc) 

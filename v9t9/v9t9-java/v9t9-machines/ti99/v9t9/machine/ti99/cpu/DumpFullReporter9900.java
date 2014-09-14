@@ -60,7 +60,7 @@ public class DumpFullReporter9900 implements IInstructionListener {
 	 * @see v9t9.common.cpu.IInstructionListener#preExecute(v9t9.common.cpu.InstructionWorkBlock)
 	 */
 	@Override
-	public boolean preExecute(InstructionWorkBlock before) {
+	public boolean preExecute(ChangeBlock block) {
 		cyclesAtStart = cpu.getCycleCounts().getTotal();
 		return true;
 	}

@@ -18,7 +18,6 @@ import ejs.base.utils.ListenerList;
 import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
-import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.memory.IMemoryDomain;
 
@@ -309,18 +308,6 @@ public class CpuState9900 implements ICpuState {
 		listeners.remove(listener);
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.cpu.ICpuState#createInstructionWorkBlock()
-	 */
-	@Override
-	public InstructionWorkBlock createInstructionWorkBlock() {
-		return new InstructionWorkBlock9900(this);
-	}
-
-	/**
-	 * @param newwp
-	 * @param newpc
-	 */
 	public void contextSwitch(short newwp, short newpc) {
         short oldwp = getWP();
         short oldpc = getPC();
@@ -331,5 +318,4 @@ public class CpuState9900 implements ICpuState {
         getConsole().writeWord(newwp + 15 * 2, getST());
 		
 	}
-
 }

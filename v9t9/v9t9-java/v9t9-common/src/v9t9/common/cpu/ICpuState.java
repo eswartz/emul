@@ -37,11 +37,6 @@ public interface ICpuState extends IRegisterAccess {
 	/** Set the live status object */
 	void setStatus(IStatus status);
 
-	/**
-	 * @return
-	 */
-	InstructionWorkBlock createInstructionWorkBlock();
-
 	CycleCounts getCycleCounts();
 
 }

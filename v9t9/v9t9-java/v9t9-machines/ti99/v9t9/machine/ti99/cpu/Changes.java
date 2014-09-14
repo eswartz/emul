@@ -46,7 +46,7 @@ public final class Changes {
 		
 	}
 	
-	protected abstract static class BaseOperandChangeElement extends BaseChangeElement {
+	public abstract static class BaseOperandChangeElement extends BaseChangeElement {
 		public final MachineOperandState state;
 	
 		public BaseOperandChangeElement(ChangeBlock9900 changeBlock, MachineOperandState state) {
@@ -455,7 +455,8 @@ public final class Changes {
 		 */
 		@Override
 		public void apply(ICpuState cpuState) {
-			cycleCalculator.addCycles(changes);
+			//if (cycleCalculator.addCycles(changes);
+			changes.counts.addExecute(cycleCalculator.getExecuteCycles());
 
 			//changes.executeCycles = changes.counts.getTotal() - changes.cyclesAtStart;
 			

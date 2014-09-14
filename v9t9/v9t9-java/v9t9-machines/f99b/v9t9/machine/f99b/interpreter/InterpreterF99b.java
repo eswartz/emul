@@ -826,11 +826,11 @@ public class InterpreterF99b implements IInterpreter {
         case Isyscall:
         	switch (mop1.immed) {
 	        	case SYSCALL_DEBUG_OFF: {
-	        		machine.getExecutor().debugCount(-1);
+	        		cpu.addDebugCount(-1);
 	            	break;
 	        	}
 	        	case SYSCALL_DEBUG_ON: {
-	        		machine.getExecutor().debugCount(1);
+	        		cpu.addDebugCount(1);
 	        		break;
 	        	}
 	        	

@@ -15,7 +15,6 @@ import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.RawInstruction;
-import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryDomain;
 import ejs.base.utils.Check;
 
@@ -206,24 +205,24 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	/**
 	 * Read any extra immediates for an operand from the instruction stream.
 	 * Fills in Operand.size and Operand.immed.
-	 * 
-	 * @param w
 	 * @param addr
 	 *            is current address
+	 * @param w
 	 * @param pc
 	 *            address of instruction
 	 * @param wp
 	 *            workspace pointer
+	 * 
 	 * @return new address
 	 */
-    public int fetchOperandImmediates(IMemoryDomain domain, int addr, boolean load) {
+    public int fetchOperandImmediates(IMemoryDomain domain, int addr) {
     	switch (type) {
     	case MachineOperand9900.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
-    		immed = load ? domain.readWord(addr) : domain.flatReadWord(addr); 
+    		immed = domain.readWord(addr); 
     		addr += 2;
     		break;
     	case MachineOperand9900.OP_IMMED:	// immediate
-    		immed = load ? domain.readWord(addr) : domain.flatReadWord(addr);
+    		immed = domain.readWord(addr);
     		addr += 2;
     		break;
     	}

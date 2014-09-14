@@ -33,10 +33,13 @@ import v9t9.common.asm.Label;
 import v9t9.common.asm.MemoryRange;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.Routine;
+import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.machine.ti99.cpu.ChangeBlock9900;
+import v9t9.machine.ti99.cpu.Changes;
+import v9t9.machine.ti99.cpu.Changes.BaseOperandChangeElement;
 import v9t9.machine.ti99.cpu.Inst9900;
-import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;
 import v9t9.machine.ti99.cpu.MachineOperand9900;
 
 public abstract class Phase implements IDecompilePhase {
@@ -339,9 +342,9 @@ public abstract class Phase implements IDecompilePhase {
 	}
 
 	public short operandEffectiveAddress(IHighLevelInstruction inst, IMachineOperand mop) {
-		InstructionWorkBlock9900 block = new InstructionWorkBlock9900(state);
-		block.inst = inst.getInst();
-		return mop.getEA(block);
+		ChangeBlock9900 changes = new ChangeBlock9900(state, inst.getInst().pc);
+		changes.appendOperandFetch();
+		return changes.getEA(mop);
 	}
 
 	public boolean operandIsLabel(IHighLevelInstruction inst, IMachineOperand mop) {

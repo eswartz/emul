@@ -93,11 +93,6 @@ public interface IExecutor {
 	boolean breakAfterExecution(int count);
 
 	/**
-	 * @param i
-	 */
-	void debugCount(int i);
-
-	/**
 	 * 
 	 */
 	void vdpInterrupt();

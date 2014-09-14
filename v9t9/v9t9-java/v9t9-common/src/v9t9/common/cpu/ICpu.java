@@ -195,5 +195,9 @@ public interface ICpu extends IPersistable {
 	 * @return new instruction
 	 */
 	RawInstruction getCurrentInstruction();
+	/**
+	 * @param i
+	 */
+	void addDebugCount(int i);
 
 }
