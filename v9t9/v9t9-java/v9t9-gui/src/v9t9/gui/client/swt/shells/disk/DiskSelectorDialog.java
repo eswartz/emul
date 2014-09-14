@@ -10,6 +10,7 @@
  */
 package v9t9.gui.client.swt.shells.disk;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -33,6 +34,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.dsr.IDeviceSettings;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.gui.client.swt.bars.ImageCanvas;
@@ -152,6 +154,13 @@ public class DiskSelectorDialog extends Composite {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
+				try {
+					machine.getSettings().getUserSettings().save();
+				} catch (IOException e1) {
+					machine.getEventNotifier().notifyEvent(null, Level.WARNING, 
+							"Failed to save history: " + e1.getMessage());
+				}
+				
 				if (needReset)
 					machine.reset();
 			}
