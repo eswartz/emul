@@ -12,6 +12,7 @@ package v9t9.machine.ti99.interpreter;
 
 import static java.util.Collections.newSetFromMap;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -35,6 +36,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryWriteListener;
 import v9t9.engine.hardware.ICruHandler;
 import v9t9.machine.ti99.cpu.ChangeBlock9900;
 import v9t9.machine.ti99.cpu.Changes;
@@ -65,9 +67,9 @@ public class NewInterpreter9900 implements IInterpreter {
 	
     IMemoryDomain memory;
 
-    // per-PC prebuilt instructions
-    Map<IMemoryArea, Instruction9900[]> parsedInstructions; 
-    //Instruction[] instructions; 
+    // cache of previously parsed change blocks, grouped by memory area
+    // to allow bank support and avoid garbage for Shorts
+    Map<IMemoryArea, ChangeBlock9900[]> parsedChangeBlocks; 
     
     InstructionWorkBlock9900 iblock;
 
@@ -85,11 +87,51 @@ public class NewInterpreter9900 implements IInterpreter {
         }
         this.cpu = (Cpu9900) machine.getCpu();
         this.memory = machine.getCpu().getConsole();
+        memory.addWriteListener(new IMemoryWriteListener() {
+			
+			@Override
+			public void changed(IMemoryEntry entry, int addr, Number value) {
+				ChangeBlock9900[] blocks = parsedChangeBlocks.get(entry.getArea());
+				if (blocks != null) {
+					int index = getCachedChangeIndex(entry, addr);
+					ChangeBlock9900 removed = blocks[index];
+					if (removed != null) {
+						blocks[index] = null;
+						//System.out.println(removed.inst);
+					}
+				}
+			}
+		});
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
-        parsedInstructions = new WeakHashMap<IMemoryArea, Instruction9900[]>();
+        parsedChangeBlocks = new HashMap<IMemoryArea, ChangeBlock9900[]>();
         iblock = new InstructionWorkBlock9900(cpu.getState());
      }
 
+    protected int getCachedChangeIndex(IMemoryEntry entry, int addr) {
+    	return ((addr - entry.getAddr()) & 0xffff) / 2;
+		
+    }
+
+    protected ChangeBlock9900 getCachedChange(int addr) {
+    	IMemoryEntry entry = cpu.getConsole().getEntryAt(addr);
+		ChangeBlock9900[] changes = parsedChangeBlocks.get(entry.getArea());
+		if (changes == null)
+			return null;
+		int index = getCachedChangeIndex(entry, addr);
+		return changes[index];
+		
+    }
+    protected void putCachedChange(int addr, ChangeBlock9900 change) {
+    	IMemoryEntry entry = cpu.getConsole().getEntryAt(addr);
+    	ChangeBlock9900[] changes = parsedChangeBlocks.get(entry.getArea());
+    	int index = getCachedChangeIndex(entry, addr);
+    	if (changes == null) {
+    		changes = new ChangeBlock9900[entry.getSize() / 2];
+    		parsedChangeBlocks.put(entry.getArea(), changes);
+    	}
+    	changes[index] = change;
+    	
+    }
     /* (non-Javadoc)
      * @see v9t9.emulator.runtime.interpreter.Interpreter#dispose()
      */
@@ -97,7 +139,39 @@ public class NewInterpreter9900 implements IInterpreter {
     public void dispose() {
     	
     }
-    
+//    private Instruction9900 getInstruction(short op) {
+//		Instruction9900 ins;
+//	    int pc = cpu.getPC() & 0xfffe;
+//	    
+//	    cpu.getCycleCounts().saveState();
+//	    
+//	    IMemoryDomain console = cpu.getConsole();
+//		if (InstTable9900.isXOpcode(op)) {
+//			ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console, false), console);
+//	    } else {
+//	    	IMemoryEntry entry = console.getEntryAt(pc);
+//	    	op = entry.flatReadWord(pc);
+//	    	IMemoryArea area = entry.getArea();
+//	    	ChangeBlock9900[] blocks = parsedChangeBlocks.get(area);
+//	    	if (blocks == null) {
+//	    		blocks = new ChangeBlock9900[65536/2];
+//	    		parsedChangeBlocks.put(area, blocks);
+//	    	}
+//	    	if ((ins = blocks[pc/2]) != null) {
+//	    		// expensive (10%)
+//	    		ins = ins.update(op, pc, console, false);
+//	    	} else {
+//	    		ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console, false), console);
+//	    	}
+//	    	blocks[pc/2] = ins;
+//	    }
+//
+//		// restore
+//		cpu.getCycleCounts().restoreState();
+//
+//		return ins;
+//	}
+
     /* (non-Javadoc)
      * @see v9t9.emulator.runtime.interpreter.Interpreter#executeChunk(int, v9t9.emulator.runtime.cpu.Executor)
      */
@@ -106,8 +180,7 @@ public class NewInterpreter9900 implements IInterpreter {
     	//execute(numinsts);
     	Object[] listeners = executor.getInstructionListeners().toArray();
     	while (numinsts-- > 0) {
-    		ChangeBlock9900 changes = new ChangeBlock9900(cpu);
-    		changes.generate();
+    		ChangeBlock9900 changes = getChangesForPC();
     		
 			for (Object listener : listeners) {
     			if (!((IInstructionListener) listener).preExecute(iblock)) {
@@ -129,6 +202,25 @@ public class NewInterpreter9900 implements IInterpreter {
     	}
 
     }
+
+	/**
+	 * @return
+	 */
+	protected ChangeBlock9900 getChangesForPC() {
+		short pc = cpu.getState().getPC();
+		ChangeBlock9900 changes = null;
+		changes = getCachedChange(pc);
+		if (changes == null) {
+			changes = new ChangeBlock9900(cpu, pc);
+			changes.generate();
+			
+			if (changes.inst.getInst() != Inst9900.Ix) {
+				putCachedChange(pc, changes);
+			}
+		}
+		
+		return changes;
+	}
     
     /* (non-Javadoc)
      * @see v9t9.common.cpu.IInterpreter#execute(int)
@@ -142,7 +234,7 @@ public class NewInterpreter9900 implements IInterpreter {
      */
     @Override
     public void reset() {
-    	parsedInstructions.clear();
+    	parsedChangeBlocks.clear();
     }
     
     public static abstract class BaseInterpret implements IChangeElement {
@@ -657,7 +749,7 @@ public class NewInterpreter9900 implements IInterpreter {
 				@Override
 				protected void doApply(CpuState9900 cpuState, Status9900 status) {
 					if (cruHandler != null)
-						cruHandler.writeBits(mos1.value<<1, 1, 1);
+						cruHandler.writeBits((mos1.value<<1), 1, 1);
 				}
 			});
             break;
@@ -667,7 +759,7 @@ public class NewInterpreter9900 implements IInterpreter {
 				@Override
 				protected void doApply(CpuState9900 cpuState, Status9900 status) {
 					if (cruHandler != null)
-						cruHandler.writeBits(mos1.value<<1, 0, 1);
+						cruHandler.writeBits((mos1.value<<1), 0, 1);
 				}
 			});
             break;
@@ -677,7 +769,7 @@ public class NewInterpreter9900 implements IInterpreter {
 				@Override
 				protected void doApply(CpuState9900 cpuState, Status9900 status) {
 					if (cruHandler != null) {
-						mos1.value = (short) cruHandler.readBits(mos1.value<<1, 1);
+						mos1.value = (short) cruHandler.readBits((mos1.value<<1), 1);
 					}
 					status.set_E(mos1.value == 1);
 				}
@@ -768,10 +860,9 @@ public class NewInterpreter9900 implements IInterpreter {
         	changes.push(new BaseInterpret(inst, mos1, mos2) {
 				@Override
 				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					int cruAddr = cpuState.getRegister(12);
 					if (cruHandler != null)
-						cruHandler.writeBits(
-								cpuState.getConsole().readWord(cpuState.getWP() + 12 * 2), mos1.value,
-								mos2.value);
+						cruHandler.writeBits(cruAddr, mos1.value, mos2.value);
 					changes.counts.addExecute(20 + 2 * mos2.value);
 				}
 			});
@@ -781,9 +872,9 @@ public class NewInterpreter9900 implements IInterpreter {
         	changes.push(new BaseInterpret(inst, mos1, mos2) {
 				@Override
 				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					int cruAddr = cpuState.getRegister(12);
 					if (cruHandler != null)
-						mos1.value = (short) cruHandler.readBits(
-								cpuState.getConsole().readWord(cpuState.getWP() + 12 * 2), mos2.value);
+						mos1.value = (short) cruHandler.readBits(cruAddr, mos2.value);
 					
 					int disp = mos2.value;
 					if (disp > 0 && disp <= 7)
@@ -909,10 +1000,19 @@ public class NewInterpreter9900 implements IInterpreter {
 			});
             break;
 
-//        case InstTableCommon.Idsr:
-//        	if (dsrManager != null)
-//        		dsrManager.handleDSR(iblock);
-//        	break;
+        case InstTableCommon.Idsr:
+        	changes.push(new BaseInterpret(inst, mos1, mos2) {
+				@Override
+				protected void doApply(CpuState9900 cpuState, Status9900 status) {
+					IDsrManager dsrManager = null;
+					if (cpu.getMachine() instanceof TI99Machine)
+						dsrManager = ((TI99Machine) cpu.getMachine()).getDsrManager();
+					if (dsrManager != null)
+		        		dsrManager.handleDSR(cpuState, changes);
+				}
+			});
+        	
+        	break;
 //        	
         case InstTableCommon.Iticks: {
         	changes.push(new BaseInterpret(inst, mos1, mos2) {

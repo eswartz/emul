@@ -10,26 +10,19 @@
  */
 package v9t9.machine.ti99.cpu;
 
-import static v9t9.machine.ti99.cpu.InstPattern9900.CNT;
-import static v9t9.machine.ti99.cpu.InstPattern9900.GEN;
-import static v9t9.machine.ti99.cpu.InstPattern9900.IMM;
-import static v9t9.machine.ti99.cpu.InstPattern9900.NONE;
-import static v9t9.machine.ti99.cpu.InstPattern9900.OFF;
-import static v9t9.machine.ti99.cpu.InstPattern9900.REG;
+import static v9t9.machine.ti99.cpu.InstPattern9900.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import ejs.base.utils.BinaryUtils;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.CycleCounts;
-import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.machine.ti99.cpu.Changes.CalculateShift;
+import ejs.base.utils.BinaryUtils;
 
 /**
  * This class takes an Instruction and generates its opcode.
@@ -97,22 +90,22 @@ public class InstTable9900 {
 		final public void addCycles(InstructionWorkBlock origBlock_,
 				InstructionWorkBlock block_, 
 				CycleCounts counts) {
-			InstructionWorkBlock9900 origBlock = (InstructionWorkBlock9900) origBlock_;
-			
-			RawInstruction inst = origBlock.inst;
-			counts.addFetch(origBlock.inst.fetchCycles);
-			
-			MachineOperand9900 op1 = (MachineOperand9900) inst.getOp1();
-			MachineOperand9900 op2 = (MachineOperand9900) inst.getOp2();
-			
-			if (op1 != null) {
-				counts.addFetch(op1.cycles);
-				if (op2 != null) {
-					counts.addFetch(op2.cycles);
-				}
-			}
-			
-			addCustomCycles(origBlock_, block_, counts);
+//			InstructionWorkBlock9900 origBlock = (InstructionWorkBlock9900) origBlock_;
+//			
+//			RawInstruction inst = origBlock.inst;
+//			counts.addFetch(origBlock.inst.fetchCycles);
+//			
+//			MachineOperand9900 op1 = (MachineOperand9900) inst.getOp1();
+//			MachineOperand9900 op2 = (MachineOperand9900) inst.getOp2();
+//			
+//			if (op1 != null) {
+//				counts.addFetch(op1.cycles);
+//				if (op2 != null) {
+//					counts.addFetch(op2.cycles);
+//				}
+//			}
+//			
+//			addCustomCycles(origBlock_, block_, counts);
 		}
 
 		abstract protected void addCustomCycles(InstructionWorkBlock origBlock_,
@@ -1221,5 +1214,16 @@ public class InstTable9900 {
 	public static boolean isByteInst(int inst) {
 		return inst == Inst9900.Isocb || inst == Inst9900.Icb || inst == Inst9900.Iab 
 		|| inst == Inst9900.Isb || inst == Inst9900.Iszcb || inst == Inst9900.Imovb;
+	}
+
+	/**
+	 * Tell whether the opcode is X
+	 * @param op
+	 * @return
+	 */
+	public static boolean isXOpcode(short op_) {
+		int op = op_ & 0xffff;
+		return op >= 0x400 && op < 0x800 && 
+			((op & 0x3c0) >> 6) == 2;
 	}
 }

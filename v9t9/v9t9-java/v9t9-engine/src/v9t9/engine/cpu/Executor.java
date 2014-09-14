@@ -208,7 +208,7 @@ public class Executor implements IExecutor {
     @Override
 	public synchronized void interpretOneInstruction() {
         interp.executeChunk(1, this);
-        cpu.applyCycles();
+        //cpu.applyCycles();
     }
 
     /* (non-Javadoc)

@@ -18,7 +18,6 @@ package v9t9.common.cpu;
  */
 public interface IInstructionListener {
 	boolean preExecute(InstructionWorkBlock before);
-	void executed(InstructionWorkBlock before, InstructionWorkBlock after);
 	
 	void executed(ChangeBlock block);
 }

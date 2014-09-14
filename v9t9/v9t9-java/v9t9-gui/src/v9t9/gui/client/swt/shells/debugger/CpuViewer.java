@@ -30,6 +30,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.IBreakpoint;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IExecutor;
@@ -409,6 +410,35 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		//throw new AbortedException();
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.IInstructionListener#executed(v9t9.common.cpu.ChangeBlock)
+	 */
+	@Override
+	public void executed(ChangeBlock block) {
+		// FIXME
+		if (!isVisible)
+			return;
+		
+//		if (isWatching ) {
+//			instructionComposite.executed(before, after_);
+//		}
+		if (singleStep.getBoolean()) {
+			singleStep.setBoolean(false);
+			pauseMachine.setBoolean(true);
+			machine.getExecutor().interruptExecution();
+			
+			trackerList.fire(new IFire<ICpuTracker>() {
+
+				@Override
+				public void fire(ICpuTracker listener) {
+					listener.updateForInstruction();							
+				}
+				
+			});
+
+		}
+		
+	}
 	public void addTracker(ICpuTracker tracker) {
 		this.trackerList.add(tracker);
 	}

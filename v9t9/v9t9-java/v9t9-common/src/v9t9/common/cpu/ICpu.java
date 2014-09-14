@@ -96,13 +96,11 @@ public interface ICpu extends IPersistable {
 
 	void checkAndHandleInterrupts();
 
-	@Deprecated
 	CycleCounts getCycleCounts();
 	
 	/**
 	 * Flush CycleCounts into internal timing
 	 */
-	@Deprecated
 	void applyCycles();
 
 	void applyCycles(int cycles);

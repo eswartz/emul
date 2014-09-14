@@ -178,74 +178,6 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		
 	}
 
-	private void dumpFullMid(InstructionWorkBlock9900 wb,
-			MachineOperand9900 mop1, MachineOperand9900 mop2,
-			PrintWriter dumpfull) {
-		String str;
-		if (mop1.type != IMachineOperand.OP_NONE
-		        && mop1.dest != IOperand.OP_DEST_KILLED) {
-		    str = mop1.valueString(wb.ea1, wb.val1);
-		    if (str != null) {
-		        dumpfull.print("op1=" + str + " ");
-		    }
-		}
-		if (mop2.type != IMachineOperand.OP_NONE
-		        && mop2.dest != IOperand.OP_DEST_KILLED) {
-		    str = mop2.valueString(wb.ea2, wb.val2);
-		    if (str != null) {
-				dumpfull.print("op2=" + str);
-			}
-		}
-		dumpfull.print(" || ");
-	}
-	public void dumpFullEnd(InstructionWorkBlock9900 wb, 
-			int origCycleCount, MachineOperand9900 mop1,
-			MachineOperand9900 mop2, PrintWriter dumpfull) {
-		String str;
-		if (mop1.type != IMachineOperand.OP_NONE
-		        && (mop1.dest != IOperand.OP_DEST_FALSE
-		        		|| mop1.type == MachineOperand9900.OP_INC)) {
-		    str = mop1.valueString(wb.ea1, wb.val1);
-		    if (str != null) {
-		        dumpfull.print("op1=" + str + " ");
-		    }
-		}
-		if (mop2.type != IMachineOperand.OP_NONE
-				&& (mop2.dest != IOperand.OP_DEST_FALSE
-		        		|| mop2.type == MachineOperand9900.OP_INC)) {
-		    str = mop2.valueString(wb.ea2, wb.val2);
-		    if (str != null) {
-				dumpfull.print("op2=" + str + " ");
-			}
-		}
-		dumpfull.print("st="
-		        + Integer.toHexString(cpu.getST() & 0xffff)
-		                .toUpperCase() + " wp="
-		        + Integer.toHexString(((Cpu9900) cpu).getWP() & 0xffff).toUpperCase());
-		
-		int cycles = wb.cycles - origCycleCount;
-		dumpfull.print(" @ " + cycles);
-		dumpfull.println();
-		dumpfull.flush();
-
-		if (symbol != null) {
-			if (symbol.startsWith("$test")) {
-				System.out.println(symbol);
-			}
-			if (symbol.equals(testSuccessSymbol.getString())) {
-				finish(0, "*** SUCCESS ***");
-			}
-			else if (symbol.equals(testFailureSymbol.getString())) {
-				finish(1, "*** FAILED ***");
-			}
-		}
-		
-		if (wb.inst.getInst() == InstTableCommon.Idata) {
-			finish(2, "*** CRASHED ***");
-		}
-	}
-
-
 	/**
 	 * @param code
 	 * @param string
@@ -323,7 +255,7 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		                .toUpperCase() + " wp="
 		        + Integer.toHexString(((Cpu9900) cpu).getWP() & 0xffff).toUpperCase());
 		
-		int cycles = changes.counts.getTotal();
+		int cycles = changes.fetchCycles + changes.executeCycles;
 		dumpfull.print(" @ " + cycles);
 		dumpfull.println();
 		dumpfull.flush();
@@ -357,7 +289,7 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		ChangeBlock9900 block = (ChangeBlock9900) block_;
 		dumpFullStart(block.cpuState, block.cpu.getConsole(), block.inst, dumpfull);
 		dumpFullMid(block, (MachineOperand9900)block.inst.getOp1(), (MachineOperand9900)block.inst.getOp2(), dumpfull);
-		dumpFullEnd(block, (MachineOperand9900)block.inst.getOp1(), (MachineOperand9900)block.inst.getOp2(), dumpfull);		
+		dumpFullEnd(block, (MachineOperand9900)block.inst.getOp1(), (MachineOperand9900)block.inst.getOp2(), dumpfull);
 	}
 
 }

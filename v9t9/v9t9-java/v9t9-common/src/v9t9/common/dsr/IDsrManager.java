@@ -15,7 +15,8 @@ import java.util.List;
 import ejs.base.settings.ISettingSection;
 
 
-import v9t9.common.cpu.InstructionWorkBlock;
+import v9t9.common.cpu.ChangeBlock;
+import v9t9.common.cpu.ICpuState;
 
 public interface IDsrManager {
 
@@ -37,7 +38,8 @@ public interface IDsrManager {
 	 *	callbacks into V9t9 to handle subroutine calls.  This routine
 	 *	handles those opcodes by calling the DSR module 'filehandler'
 	 *	callback.
+	 * @param changeBlock TODO
 	 */
-	void handleDSR(InstructionWorkBlock instructionWorkBlock);
+	void handleDSR(ICpuState cpuState, ChangeBlock changeBlock);
 
 }

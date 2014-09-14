@@ -742,7 +742,7 @@ public class Interpreter9900 implements IInterpreter {
 
         case InstTableCommon.Idsr:
         	if (dsrManager != null)
-        		dsrManager.handleDSR(iblock);
+        		dsrManager.handleDSR(iblock, changeBlock);
         	break;
         	
         case InstTableCommon.Iticks: {

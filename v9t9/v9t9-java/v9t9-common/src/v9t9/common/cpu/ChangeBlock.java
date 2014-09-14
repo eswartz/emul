@@ -14,8 +14,10 @@ import java.util.Arrays;
 public abstract class ChangeBlock {
     private static final IChangeElement[] NONE = new IChangeElement[0];
     
-    /** cycles consumed by decoding instruction & operands (others from IChangeElements) */
-    public int cycles;
+    /** cycles consumed by fetching */
+    public int fetchCycles;
+    /** cycles consumed by execution */
+    public int executeCycles;
     
     private IChangeElement[] elements;
     private int elementIdx;
@@ -25,7 +27,6 @@ public abstract class ChangeBlock {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + elementIdx;
-		result = prime * result + cycles;
 		for (int i = 0; i < elementIdx; i++)
 			result = prime * result + elements[i].hashCode();
 		return result;
@@ -40,8 +41,6 @@ public abstract class ChangeBlock {
 			return false;
 		ChangeBlock other = (ChangeBlock) obj;
 		if (elementIdx != other.elementIdx)
-			return false;
-		if (cycles != other.cycles)
 			return false;
 		for (int i = 0; i < elementIdx; i++)
 			if (!elements[i].equals(other.elements[i]))
@@ -67,27 +66,8 @@ public abstract class ChangeBlock {
 		for (int i = 0; i < elementIdx; i++)
 			elements[i].apply(cpu.getState());
 		//pu.getCycleCounts().getAndResetTotal();
-		cpu.applyCycles();
+		//cpu.applyCycles();
 	}
-	
-	public void applyReads(ICpu cpu) {
-		for (int i = 0; i < elementIdx; i++) {
-			if (false == elements[i] instanceof IWriteChangeElement)
-				elements[i].apply(cpu.getState());
-		}
-		//pu.getCycleCounts().getAndResetTotal();
-		cpu.applyCycles();
-	}
-
-	public void applyWrites(ICpu cpu) {
-		for (int i = 0; i < elementIdx; i++) {
-			if (elements[i] instanceof IWriteChangeElement)
-				elements[i].apply(cpu.getState());
-		}
-		//pu.getCycleCounts().getAndResetTotal();
-		cpu.applyCycles();
-	}
-	
 	
 	public void revert(ICpu cpu) {
 		for (int i = elementIdx - 1; i >= 0; i--)

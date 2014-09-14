@@ -65,16 +65,16 @@ public interface IMachineOperand extends IOperand {
 	 * (Memory cycles are accounted through the memory handler.)
 	 * @return
 	 */
-	@Deprecated
-	short getEA(InstructionWorkBlock block);
+//	@Deprecated
+//	short getEA(InstructionWorkBlock block);
 
 	/**
 	 * Get the value of the operand with the given effective address
 	 * @param memory
 	 * @return
 	 */
-	@Deprecated
-	short getValue(InstructionWorkBlock block, short ea);
+//	@Deprecated
+//	short getValue(InstructionWorkBlock block, short ea);
 
 	void convertToImmedate();
 

@@ -32,8 +32,8 @@ public class ChangeBlock9900 extends ChangeBlock {
 	public Instruction9900 xInst;
 
     public final ICpu cpu;
-    public final CpuState9900 cpuState;
-    public final CycleCounts counts;
+    public final CpuState9900 cpuState;		// points to CPU
+    public final CycleCounts counts;		// points to CPU
 
 	private MachineOperandState mopState1;
 	private MachineOperandState mopState2;
@@ -43,22 +43,24 @@ public class ChangeBlock9900 extends ChangeBlock {
 		this(cpu, cpu.getState().getPC());
 	}
 	public ChangeBlock9900(ICpu cpu, int pc) {
-		this(cpu, pc, cpu.getConsole().flatReadWord(pc));
+		this(cpu, pc, cpu.getConsole().readWord(pc));
 		appendInstructionAdvance();
 	}
 	public ChangeBlock9900(ICpu cpu, int pc, short op) {
 		this.cpu = cpu;
 		cpuState = (CpuState9900) cpu.getState();
-		this.counts = new CycleCounts();
+		this.counts = cpu.getCycleCounts();
 		
 		inst = new Instruction9900(InstTable9900.decodeInstruction(
 				op, 
-				pc, cpu.getConsole(), false), cpu.getConsole());
+				pc, cpu.getConsole(), true), cpu.getConsole());
 	}
 	public void generate() {
+		//counts.getAndResetTotal();	// should be empty
 		appendOperandFetch();
 		appendInstructionExecute();
 		appendFlush();
+		fetchCycles = counts.getAndResetTotal();
 	}
 	/**
 	 * 
@@ -176,7 +178,7 @@ public class ChangeBlock9900 extends ChangeBlock {
         	push(new Changes.WriteResult(this, mopState3));
         }
 
-    	push(new Changes.AddCycles(this));
+    	push(new Changes.Flush(this));
 	}
 
 }

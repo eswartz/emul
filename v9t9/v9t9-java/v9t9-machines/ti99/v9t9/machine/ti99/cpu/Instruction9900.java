@@ -922,7 +922,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
         	int pcStep = (thePc + 2) & 0xfffe;
         	MachineOperand9900 mop1 = (MachineOperand9900)getOp1();
         	if (getInst() != InstTableCommon.Idata && mop1.type != IMachineOperand.OP_NONE) {
-        		mop1.cycles = 0;
+//        		mop1.cycles = 0;
 				if (mop1.hasImmediate()) {
 					if (domain.readWord(pcStep) != mop1.immed)
 						isSame = false;
@@ -933,7 +933,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
         				if (domain.readWord(pcStep) != mop2.immed) {
         					isSame = false;
         				}
-        				mop2.cycles = 0;
+//        				mop2.cycles = 0;
         			}
         		}
         	}

@@ -24,7 +24,6 @@ import ejs.base.utils.Check;
  * @author ejs
  */
 public class MachineOperand9900 extends BaseMachineOperand {
-	public int cycles = 0;
 	public boolean byteop = false;
 
     // Operand Type
@@ -65,7 +64,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
 		this.type = op.type;
 		this.bIsReference = op.bIsReference;
 		this.byteop = op.byteop;
-		this.cycles = op.cycles;
+//		this.cycles = op.cycles;
 		this.dest = op.dest;
 		this.immed = op.immed;
 		this.val = op.val;
@@ -254,139 +253,139 @@ public class MachineOperand9900 extends BaseMachineOperand {
 				+ Integer.toHexString(ea & 0xffff).toUpperCase() + ")";
 	}
 
-    /* (non-Javadoc)
-	 * @see v9t9.engine.cpu.MachineOperand#getEA(v9t9.engine.memory.MemoryDomain, int, short)
-	 */
-    public short getEA(InstructionWorkBlock block) {
-    	short wp = ((InstructionWorkBlock9900) block).wp;
-        short ea = 0;
-    	switch (type) {
-    	case IMachineOperand.OP_NONE:
-    		break;
-    	case MachineOperand9900.OP_REG:	// Rx
-    		ea = (short) ((val<<1) + wp);
-    		this.cycles += 0;
-    		break;
-    	case MachineOperand9900.OP_INC:	// *Rx+
-    	case MachineOperand9900.OP_IND: {	// *Rx
-    		short ad = (short)((val<<1) + wp);
-    		ea = block.domain.readWord(ad);
-
-    		/* update register if necessary */
-    		this.cycles += 4;
-    		if (type == MachineOperand9900.OP_INC) {
-    		    this.cycles += byteop ? 2 : 4;
-    		    block.domain.writeWord(ad, (short)(ea + (byteop ? 1 : 2)));
-    		}
-    		break;
-    	}
-    	case MachineOperand9900.OP_ADDR: {	// @>xxxx or @>xxxx(Rx)
-    	    short ad;
-    		ea = immed; 
-    		this.cycles += 8; //Instruction.getMemoryCycles(ad);
-    		if (val != 0) {
-    			ad = (short)((val<<1) + wp);
-    			ea += block.domain.readWord(ad);
-    		}
-    		break;
-    	}
-    	case MachineOperand9900.OP_IMMED:	// immediate
-    		this.cycles += 0;
-    		break;
-    	case MachineOperand9900.OP_CNT:	// shift count
-    		this.cycles += 0;
-    		break;
-    	case MachineOperand9900.OP_OFFS_R12:	// offset from R12
-    		this.cycles += 0;
-    		ea = (short) ((12<<1) + wp);
-    		break;
-    	case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
-    	    ea = wp;
-    	    this.cycles += 8;
-		    break;
-    	
-    	case MachineOperand9900.OP_JUMP:	// jump target
-    		ea = (short)(val + block.inst.pc);
-    		break;
-    	case MachineOperand9900.OP_STATUS:	// status word
-    		break;
-    	case MachineOperand9900.OP_INST:
-    		break;		
-    	}
-    	return ea;
-    }
-
-    /* (non-Javadoc)
-	 * @see v9t9.engine.cpu.MachineOperand#getValue(v9t9.engine.memory.MemoryDomain, short)
-	 */
-    public short getValue(InstructionWorkBlock block, short ea) {
-        short value = 0;
-
-        switch (type) {
-        case IMachineOperand.OP_NONE:
-            break;
-        case MachineOperand9900.OP_REG:    // Rx
-            if (bIsReference) {
-				value = ea;
-			} else
-                if (byteop) {
-					value = block.domain.readByte(ea);
-				} else {
-					value = block.domain.readWord(ea);
-				}
-            break;
-        case MachineOperand9900.OP_INC:    // *Rx+
-        case MachineOperand9900.OP_IND: {  // *Rx
-            if (bIsReference) {
-				value = ea;
-			} else
-                if (byteop) {
-					value = block.domain.readByte(ea);
-				} else {
-					value = block.domain.readWord(ea);
-				}
-            break;
-        }
-        case MachineOperand9900.OP_ADDR: { // @>xxxx or @>xxxx(Rx)
-            if (bIsReference) {
-				value = ea;
-			} else
-                if (byteop) {
-					value = block.domain.readByte(ea);
-				} else {
-					value = block.domain.readWord(ea);
-				}
-            break;
-        }
-        case MachineOperand9900.OP_IMMED:  // immediate
-            value = immed;
-            break;
-        case MachineOperand9900.OP_CNT:    // shift count
-            value = (short) val;
-            break;
-        case MachineOperand9900.OP_OFFS_R12:   // offset from R12
-            value = (short) ((block.domain.readWord(ea) >> 1) + val);
-            break;
-        case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
-            value = (short) (block.domain.readWord(ea) & 0xf);
-            if (value == 0) {
-				value = 16;
-			}
-            break;
-        
-        case MachineOperand9900.OP_JUMP:   // jump target
-            value = ea;
-            break;
-        case MachineOperand9900.OP_STATUS: // status word
-            //TODO: NOTHING -- make sure we don't depend on this   
-            break;
-        case MachineOperand9900.OP_INST:
-            value = block.domain.readWord(ea);
-            break;      
-        }
-
-        return value;
-    }
+//    /* (non-Javadoc)
+//	 * @see v9t9.engine.cpu.MachineOperand#getEA(v9t9.engine.memory.MemoryDomain, int, short)
+//	 */
+//    public short getEA(InstructionWorkBlock block) {
+//    	short wp = ((InstructionWorkBlock9900) block).wp;
+//        short ea = 0;
+//    	switch (type) {
+//    	case IMachineOperand.OP_NONE:
+//    		break;
+//    	case MachineOperand9900.OP_REG:	// Rx
+//    		ea = (short) ((val<<1) + wp);
+//    		this.cycles += 0;
+//    		break;
+//    	case MachineOperand9900.OP_INC:	// *Rx+
+//    	case MachineOperand9900.OP_IND: {	// *Rx
+//    		short ad = (short)((val<<1) + wp);
+//    		ea = block.domain.readWord(ad);
+//
+//    		/* update register if necessary */
+//    		this.cycles += 4;
+//    		if (type == MachineOperand9900.OP_INC) {
+//    		    this.cycles += byteop ? 2 : 4;
+//    		    block.domain.writeWord(ad, (short)(ea + (byteop ? 1 : 2)));
+//    		}
+//    		break;
+//    	}
+//    	case MachineOperand9900.OP_ADDR: {	// @>xxxx or @>xxxx(Rx)
+//    	    short ad;
+//    		ea = immed; 
+//    		this.cycles += 8; //Instruction.getMemoryCycles(ad);
+//    		if (val != 0) {
+//    			ad = (short)((val<<1) + wp);
+//    			ea += block.domain.readWord(ad);
+//    		}
+//    		break;
+//    	}
+//    	case MachineOperand9900.OP_IMMED:	// immediate
+//    		this.cycles += 0;
+//    		break;
+//    	case MachineOperand9900.OP_CNT:	// shift count
+//    		this.cycles += 0;
+//    		break;
+//    	case MachineOperand9900.OP_OFFS_R12:	// offset from R12
+//    		this.cycles += 0;
+//    		ea = (short) ((12<<1) + wp);
+//    		break;
+//    	case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
+//    	    ea = wp;
+//    	    this.cycles += 8;
+//		    break;
+//    	
+//    	case MachineOperand9900.OP_JUMP:	// jump target
+//    		ea = (short)(val + block.inst.pc);
+//    		break;
+//    	case MachineOperand9900.OP_STATUS:	// status word
+//    		break;
+//    	case MachineOperand9900.OP_INST:
+//    		break;		
+//    	}
+//    	return ea;
+//    }
+//
+//    /* (non-Javadoc)
+//	 * @see v9t9.engine.cpu.MachineOperand#getValue(v9t9.engine.memory.MemoryDomain, short)
+//	 */
+//    public short getValue(InstructionWorkBlock block, short ea) {
+//        short value = 0;
+//
+//        switch (type) {
+//        case IMachineOperand.OP_NONE:
+//            break;
+//        case MachineOperand9900.OP_REG:    // Rx
+//            if (bIsReference) {
+//				value = ea;
+//			} else
+//                if (byteop) {
+//					value = block.domain.readByte(ea);
+//				} else {
+//					value = block.domain.readWord(ea);
+//				}
+//            break;
+//        case MachineOperand9900.OP_INC:    // *Rx+
+//        case MachineOperand9900.OP_IND: {  // *Rx
+//            if (bIsReference) {
+//				value = ea;
+//			} else
+//                if (byteop) {
+//					value = block.domain.readByte(ea);
+//				} else {
+//					value = block.domain.readWord(ea);
+//				}
+//            break;
+//        }
+//        case MachineOperand9900.OP_ADDR: { // @>xxxx or @>xxxx(Rx)
+//            if (bIsReference) {
+//				value = ea;
+//			} else
+//                if (byteop) {
+//					value = block.domain.readByte(ea);
+//				} else {
+//					value = block.domain.readWord(ea);
+//				}
+//            break;
+//        }
+//        case MachineOperand9900.OP_IMMED:  // immediate
+//            value = immed;
+//            break;
+//        case MachineOperand9900.OP_CNT:    // shift count
+//            value = (short) val;
+//            break;
+//        case MachineOperand9900.OP_OFFS_R12:   // offset from R12
+//            value = (short) ((block.domain.readWord(ea) >> 1) + val);
+//            break;
+//        case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
+//            value = (short) (block.domain.readWord(ea) & 0xf);
+//            if (value == 0) {
+//				value = 16;
+//			}
+//            break;
+//        
+//        case MachineOperand9900.OP_JUMP:   // jump target
+//            value = ea;
+//            break;
+//        case MachineOperand9900.OP_STATUS: // status word
+//            //TODO: NOTHING -- make sure we don't depend on this   
+//            break;
+//        case MachineOperand9900.OP_INST:
+//            value = block.domain.readWord(ea);
+//            break;      
+//        }
+//
+//        return value;
+//    }
     
 
 	/* (non-Javadoc)

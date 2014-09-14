@@ -318,7 +318,7 @@ public class ModuleSelector extends Composite {
 		switchButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				switchModule((e.stateMask & SWT.SHIFT) != 0);
+				switchModule((e.stateMask & SWT.SHIFT + SWT.CTRL) != 0);
 			}
 		});
 		switchButton.setEnabled(false);
@@ -1186,9 +1186,7 @@ public class ModuleSelector extends Composite {
 	protected void switchModule(boolean softReset) {
 		try {
 			moduleManager.switchModule(selectedModule);
-			if (softReset)
-				machine.getCpu().reset();
-			else
+			if (!softReset)
 				machine.reset();
 
 			if (!isDisposed())

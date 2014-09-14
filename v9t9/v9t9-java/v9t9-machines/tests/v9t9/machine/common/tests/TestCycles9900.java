@@ -10,12 +10,13 @@
  */
 package v9t9.machine.common.tests;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.cpu.CycleCounts;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
@@ -145,7 +146,7 @@ public class TestCycles9900  {
 		// *R2 in slow 
 		assertCycles(0xa020, 0xA010, min + 4 + 4 + 8);
 	}
-	
+
 	@Test
 	public void testSrl() throws Exception {
 		console.writeWord(0x8300, (short) 0x942);	 // SRL R2, 4
@@ -301,10 +302,11 @@ public class TestCycles9900  {
 		cpuState.setWP((short) wp);
 		cpuState.setPC((short) pc);
 		
-		CycleCounts counts = machine.getCpu().getCycleCounts();
-		counts.getAndResetTotal();
+		//CycleCounts counts = machine.getCpu().getCycleCounts();
+		//counts.getAndResetTotal();
+		machine.getCpu().resetCycleCounts();
 		machine.getExecutor().getInterpreter().executeChunk(1, machine.getExecutor());
-		assertEquals(counts.toString(), expCycles, counts.getTotal());
+		assertEquals(expCycles, machine.getCpu().getCurrentCycleCount());
 		
 	}
 }

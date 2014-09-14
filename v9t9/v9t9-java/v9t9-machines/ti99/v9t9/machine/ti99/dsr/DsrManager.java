@@ -18,9 +18,9 @@ import org.apache.log4j.Logger;
 
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
-
 import v9t9.common.asm.BaseMachineOperand;
-import v9t9.common.cpu.InstructionWorkBlock;
+import v9t9.common.cpu.ChangeBlock;
+import v9t9.common.cpu.ICpuState;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IDsrManager;
 import v9t9.common.dsr.IMemoryTransfer;
@@ -29,6 +29,8 @@ import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.ConsoleMemoryTransfer;
 import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
+import v9t9.machine.ti99.cpu.ChangeBlock9900;
+import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 
@@ -103,11 +105,11 @@ public class DsrManager implements IPersistable, IDsrManager {
 	}
 	
 	
-	public void handleDSR(InstructionWorkBlock instructionWorkBlock_) {
-		InstructionWorkBlock9900 instructionWorkBlock = (InstructionWorkBlock9900) instructionWorkBlock_;
-		short callpc = (short) (instructionWorkBlock.pc - 2);
-		short rambase = (short) (instructionWorkBlock.wp - 0xe0);
-		short crubase = instructionWorkBlock.domain.readWord(instructionWorkBlock.wp + 12 * 2);
+	public void handleDSR(ICpuState cpuState, ChangeBlock changeBlock) {
+		short callpc = (short) (cpuState.getPC() - 2);
+		short wp = ((CpuState9900) cpuState).getWP();
+		short rambase = (short) (wp - 0xe0);
+		int crubase = cpuState.getRegister(12);
 	
 		if (callpc >= 0x4000 && callpc < 0x6000) {
 			
@@ -121,20 +123,20 @@ public class DsrManager implements IPersistable, IDsrManager {
 				// to scan CRU bases
 				
 				IMemoryTransfer xfer = new ConsoleMemoryTransfer(
-						instructionWorkBlock.domain,
+						cpuState.getConsole(),
 						machine.getVdp(),
 						((VdpTMS9918A) machine.getVdp()).getVdpMmio(),
 						rambase);
 				
-				int retreg = instructionWorkBlock.wp + 11 * 2;
-				short ret = instructionWorkBlock.domain.readWord(retreg);
-				short oper = (short) (((BaseMachineOperand)instructionWorkBlock.inst.getOp1()).val);
+				int retreg = wp + 11 * 2;
+				short ret = cpuState.getConsole().readWord(retreg);
+				short oper = (short) (((BaseMachineOperand)((ChangeBlock9900) changeBlock).inst.getOp1()).val);
 				if (activeDsr.handleDSR(xfer, oper)) {
 					// success: skip next word (handling error)
 					ret += 2;
 				}
-				instructionWorkBlock.domain.writeWord(retreg, ret);
-				instructionWorkBlock.pc = ret;
+				cpuState.getConsole().writeWord(retreg, ret);
+				cpuState.setPC(ret);
 			}
 		}
 	}

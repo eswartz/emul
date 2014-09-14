@@ -3,7 +3,6 @@
  */
 package v9t9.machine.ti99.cpu;
 
-import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.MachineOperandState;
@@ -430,12 +429,11 @@ public final class Changes {
 		
 	}
 
-	public static class AddCycles implements IChangeElement {
+	public static class Flush implements IChangeElement {
 		public final ChangeBlock9900 changes;
 		private ICycleCalculator cycleCalculator;
-		private int cycles;
 
-		public AddCycles(ChangeBlock9900 changes) {
+		public Flush(ChangeBlock9900 changes) {
 			this.changes = changes;
 			this.cycleCalculator = InstTable9900.instCycles.get(changes.inst.getInst());
 		}
@@ -445,15 +443,13 @@ public final class Changes {
 		 */
 		@Override
 		public void apply(ICpuState cpuState) {
-//			ICycleCalculator calc = InstTable9900.instCycles.get(inst.getInst());
-//			if (calc == null)
-//				return;
-//			
 			cycleCalculator.addCycles(changes);
 
-			//counts.addExecute(cycles + 10);		// FIXME
-			cycles = changes.counts.getTotal();
-			changes.cpu.applyCycles(cycles);
+			changes.executeCycles = changes.counts.getAndResetTotal();
+			changes.cpu.applyCycles(changes.fetchCycles + changes.executeCycles);
+			
+			if (changes.inst.getInst() != Inst9900.Irtwp)
+				changes.cpuState.getStatus().flatten();	// ensure status flushed
 		}
 
 		/* (non-Javadoc)
@@ -461,7 +457,7 @@ public final class Changes {
 		 */
 		@Override
 		public void revert(ICpuState cpuState) {
-			changes.cpu.applyCycles(-cycles);
+			changes.cpu.applyCycles(-(changes.fetchCycles + changes.executeCycles));
 		}
 
 	}
