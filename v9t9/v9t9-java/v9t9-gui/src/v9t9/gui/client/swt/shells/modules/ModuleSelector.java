@@ -125,7 +125,6 @@ public class ModuleSelector extends Composite {
 	private static final Logger logger = Logger.getLogger(ModuleSelector.class);
 	
 	public static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
-	static String lastFilter;
 
 	private static final String SECTION_MODULE_SELECTOR = "ModuleSelector";
 	private static final String SHOW_MISSING_MODULES = "ShowMissingModules";
@@ -160,7 +159,7 @@ public class ModuleSelector extends Composite {
 	protected boolean sortModules;
 	protected int sortDirection;
 	
-	private ViewerFilter filteredSearchFilter = new FilteredSearchFilter();
+	private FilteredSearchFilter filteredSearchFilter = new FilteredSearchFilter();
 	private final SwtWindow window;
 	private boolean wasPaused;
 	private ExecutorService executor;
@@ -233,7 +232,6 @@ public class ModuleSelector extends Composite {
 				showMissingModules = showUnloadable.getSelection();
 				dialogSettings.put(SHOW_MISSING_MODULES, showMissingModules);
 				viewer.refresh(true);
-				updateFilter(lastFilter);
 				viewer.expandAll();
 			}
 		});
@@ -458,7 +456,7 @@ public class ModuleSelector extends Composite {
 		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(2).equalWidth(false).applyTo(comp);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(comp);
 
-		filterText = new Text(comp, SWT.BORDER);
+		filterText = new Text(comp, SWT.BORDER | SWT.SEARCH);
 		filterText.setMessage("Search...");
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(filterText);
 		
@@ -485,7 +483,8 @@ public class ModuleSelector extends Composite {
 				initFilter(null);
 				filterText.setFocus();
 				filterText.setText("");
-				viewer.setSelection(new StructuredSelection(moduleManager.getLoadedModules()), true);
+				viewer.refresh();
+				viewer.setSelection(viewer.getSelection(), true);
 			}
 		});
 	}
@@ -516,12 +515,14 @@ public class ModuleSelector extends Composite {
 				if (!nameColumn.isDisposed())
 					nameColumn.setWidth(viewer.getControl().getSize().x);
 				
-				final IModule[] loadedModules = moduleManager.getLoadedModules();
-				viewer.setSelection(new StructuredSelection(loadedModules), true);
+				if (viewer.getSelection().isEmpty()) {
+					final IModule[] loadedModules = moduleManager.getLoadedModules();
+					viewer.setSelection(new StructuredSelection(loadedModules), true);
 				
-				if (loadedModules.length > 0) {
-					SwtDialogUtils.revealOncePopulated(machine.getMachineTimer(), 0, 
-							viewer, loadedModules[0]);
+					if (loadedModules.length > 0) {
+						SwtDialogUtils.revealOncePopulated(machine.getMachineTimer(), 0, 
+								viewer, loadedModules[0]);
+					}
 				}
 			}
 		});
@@ -532,17 +533,27 @@ public class ModuleSelector extends Composite {
 	 * @param text
 	 */
 	protected void updateFilter(final String text) {
-		String prev = lastFilter;
-		if (text == null || text.isEmpty() || text.equals("Search...")) {
-			lastFilter = null;
-		} else {
-			lastFilter = text;
-		}
-		if (lastFilter != prev && (lastFilter == null || ! lastFilter.equals(prev))) {
+		if (text != null && !text.isEmpty()) {
+			filteredSearchFilter.filter = text;
 			flatModuleList = null;
 			viewer.refresh();
-			if (lastFilter != null)
-				viewer.expandAll();
+			viewer.expandAll();
+			
+			for (URI uri : moduleMap.keySet()) {
+				Object[] modules = ((ITreeContentProvider) viewer.getContentProvider()).getChildren(uri);
+				if (modules == null || modules.length == 0)
+					continue;
+				for (ViewerFilter filter : viewer.getFilters()) {
+					modules = filter.filter(viewer, uri, modules);
+				}
+				if (modules.length > 0) {
+					viewer.setSelection(new StructuredSelection(modules[0]), true);
+					break;
+				}
+			}
+		} else {
+			filteredSearchFilter.filter = null;
+			
 		}
 	}
 	/**
@@ -550,7 +561,6 @@ public class ModuleSelector extends Composite {
 	 */
 	protected TreeViewer createTable() {
 		final TreeViewer viewer = new TreeViewer(this, SWT.READ_ONLY | SWT.BORDER | SWT.FULL_SELECTION);
-		
 
 		moduleImageResizer = new ILazyImageAdjuster() {
 			
@@ -706,6 +716,8 @@ public class ModuleSelector extends Composite {
 		
 		viewer.setSelection(new StructuredSelection(moduleManager.getLoadedModules()), true);
 
+		viewer.getControl().setFocus();
+		
 		tree.addKeyListener(new KeyAdapter() {
 			/* (non-Javadoc)
 			 * @see org.eclipse.swt.events.KeyAdapter#keyPressed(org.eclipse.swt.events.KeyEvent)
@@ -1095,12 +1107,6 @@ public class ModuleSelector extends Composite {
 				if (viewer.getControl().isDisposed())
 					return;
 
-				if (lastFilter == null) {
-					filterText.setForeground(null);
-					lastFilter = "";
-					filterText.setText("");
-				}
-				
 				if (e.keyCode == SWT.ARROW_DOWN) {
 					viewer.getControl().setFocus();
 				}
@@ -1122,9 +1128,9 @@ public class ModuleSelector extends Composite {
 			public void modifyText(ModifyEvent e) {
 				updateFilter(filterText.getText());
 				
-				if (lastFilter != null && viewer.getTree().getItemCount() > 0) {
-					viewer.setSelection(new StructuredSelection(viewer.getTree().getItems()[0].getData()), true);
-				}
+//				if (lastFilter != null && viewer.getTree().getItemCount() > 0) {
+//					viewer.setSelection(new StructuredSelection(viewer.getTree().getItems()[0].getData()), true);
+//				}
 			}
 		});
 		
@@ -1455,7 +1461,7 @@ public class ModuleSelector extends Composite {
 	 * 
 	 */
 	public void firstRefresh() {
-		initFilter(ModuleSelector.lastFilter);
+		initFilter(null);
 		hookActions();
 	}
 
