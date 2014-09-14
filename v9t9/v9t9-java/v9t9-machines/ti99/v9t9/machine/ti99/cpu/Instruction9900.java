@@ -63,7 +63,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
     public Instruction9900(RawInstruction inst, IMemoryDomain domain) {
     	super(inst);
     	completeInstruction(inst.pc);
-    	calculateFetchCycles(domain);
+//    	calculateFetchCycles(domain);
     }
     public Instruction9900(Instruction9900 inst) {
     	super(inst);
@@ -1037,17 +1037,17 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
         }
         return flags;
     }
-	/**
-	 * 
-	 */
-	public void calculateFetchCycles(IMemoryDomain console) {
-		fetchCycles = 0;
-		fetchCycles += console.getLatency(pc);
-		if (getSize() > 2) {
-			fetchCycles += console.getLatency(pc + 2);
-			if (getSize() > 4) {
-				fetchCycles += console.getLatency(pc + 4);
-			}
-		}
-	}
+//	/**
+//	 * 
+//	 */
+//	public void calculateFetchCycles(IMemoryDomain console) {
+//		fetchCycles = 0;
+//		fetchCycles += console.getLatency(pc);
+//		if (getSize() > 2) {
+//			fetchCycles += console.getLatency(pc + 2);
+//			if (getSize() > 4) {
+//				fetchCycles += console.getLatency(pc + 4);
+//			}
+//		}
+//	}
 }

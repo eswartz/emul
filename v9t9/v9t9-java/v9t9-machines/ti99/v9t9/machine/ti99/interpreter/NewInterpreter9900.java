@@ -10,28 +10,19 @@
  */
 package v9t9.machine.ti99.interpreter;
 
-import static java.util.Collections.newSetFromMap;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
 
-import v9t9.common.asm.IMachineOperand;
-import v9t9.common.asm.IOperand;
-import v9t9.common.asm.InstInfo;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.IChangeElement;
-import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.IInterpreter;
-import v9t9.common.cpu.IStatus;
 import v9t9.common.cpu.MachineOperandState;
 import v9t9.common.dsr.IDsrManager;
-import v9t9.common.hardware.ICruChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
@@ -43,16 +34,11 @@ import v9t9.machine.ti99.cpu.Changes;
 import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.Inst9900;
-import v9t9.machine.ti99.cpu.InstTable9900;
-import v9t9.machine.ti99.cpu.Changes.CalculateShift;
-import v9t9.machine.ti99.cpu.InstTable9900.ICycleCalculator;
 import v9t9.machine.ti99.cpu.Instruction9900;
 import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;
-import v9t9.machine.ti99.cpu.MachineOperand9900;
 import v9t9.machine.ti99.cpu.Status9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import ejs.base.utils.BinaryUtils;
-import ejs.base.utils.ListenerList;
 
 /**
  * This class interprets 9900 instructions one by one.
@@ -102,7 +88,6 @@ public class NewInterpreter9900 implements IInterpreter {
 				}
 			}
 		});
-        //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
         parsedChangeBlocks = new HashMap<IMemoryArea, ChangeBlock9900[]>();
         iblock = new InstructionWorkBlock9900(cpu.getState());
      }
@@ -137,70 +122,60 @@ public class NewInterpreter9900 implements IInterpreter {
      */
     @Override
     public void dispose() {
-    	
+    	parsedChangeBlocks.clear();
     }
-//    private Instruction9900 getInstruction(short op) {
-//		Instruction9900 ins;
-//	    int pc = cpu.getPC() & 0xfffe;
-//	    
-//	    cpu.getCycleCounts().saveState();
-//	    
-//	    IMemoryDomain console = cpu.getConsole();
-//		if (InstTable9900.isXOpcode(op)) {
-//			ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console, false), console);
-//	    } else {
-//	    	IMemoryEntry entry = console.getEntryAt(pc);
-//	    	op = entry.flatReadWord(pc);
-//	    	IMemoryArea area = entry.getArea();
-//	    	ChangeBlock9900[] blocks = parsedChangeBlocks.get(area);
-//	    	if (blocks == null) {
-//	    		blocks = new ChangeBlock9900[65536/2];
-//	    		parsedChangeBlocks.put(area, blocks);
-//	    	}
-//	    	if ((ins = blocks[pc/2]) != null) {
-//	    		// expensive (10%)
-//	    		ins = ins.update(op, pc, console, false);
-//	    	} else {
-//	    		ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console, false), console);
-//	    	}
-//	    	blocks[pc/2] = ins;
-//	    }
-//
-//		// restore
-//		cpu.getCycleCounts().restoreState();
-//
-//		return ins;
-//	}
 
     /* (non-Javadoc)
      * @see v9t9.emulator.runtime.interpreter.Interpreter#executeChunk(int, v9t9.emulator.runtime.cpu.Executor)
      */
     public void executeChunk(int numinsts, IExecutor executor) {
     	// pretend the realtime and instructionListeners settings don't change often
-    	//execute(numinsts);
+    	
+    	ChangeBlock9900 changes;
     	Object[] listeners = executor.getInstructionListeners().toArray();
-    	while (numinsts-- > 0) {
-    		ChangeBlock9900 changes = getChangesForPC();
-    		
-			for (Object listener : listeners) {
-    			if (!((IInstructionListener) listener).preExecute(iblock)) {
-    				throw new AbortedException();
-    			}
-//    			if (!((IInstructionListener) listener).preExecute(changes)) {
-//    				throw new AbortedException();
-//    			}
-    		}	
-    		
-    		changes.apply(cpu);
+    	if (listeners.length == 0) {
+    		// fast
+        	while (numinsts >= 4) {
+				changes = getChangesForPC();
+        		changes.apply(cpu);
+        		changes = getChangesForPC();
+        		changes.apply(cpu);
+        		changes = getChangesForPC();
+        		changes.apply(cpu);
+        		changes = getChangesForPC();
+        		changes.apply(cpu);
+        		numinsts -= 4;
+    	    	if (executor.breakAfterExecution(4) || cpu.isIdle()) 
+    				break;
+        	}
+        	while (numinsts-- > 0) {
+        		changes = getChangesForPC();
+        		changes.apply(cpu);
+        		if (executor.breakAfterExecution(1) || cpu.isIdle()) 
+        			break;
+        	}
 
-    		for (Object listener : listeners) {
-    			((IInstructionListener) listener).executed(changes);
-    		}	
-
-	    	if (executor.breakAfterExecution(1) || cpu.isIdle()) 
-				break;
+    	} else {
+    		// slow
+	    	while (numinsts-- > 0) {
+	    		changes = getChangesForPC();
+	    		
+				for (Object listener : listeners) {
+	    			if (!((IInstructionListener) listener).preExecute(iblock)) {
+	    				throw new AbortedException();
+	    			}
+	    		}	
+	    		
+	    		changes.apply(cpu);
+	
+	    		for (Object listener : listeners) {
+	    			((IInstructionListener) listener).executed(changes);
+	    		}	
+	
+		    	if (executor.breakAfterExecution(1) || cpu.isIdle()) 
+					break;
+	    	}
     	}
-
     }
 
 	/**
@@ -221,13 +196,6 @@ public class NewInterpreter9900 implements IInterpreter {
 		
 		return changes;
 	}
-    
-    /* (non-Javadoc)
-     * @see v9t9.common.cpu.IInterpreter#execute(int)
-     */
-    @Override
-    public void execute(int maxCycles) {
-    }
 
 	/* (non-Javadoc)
      * @see v9t9.engine.interpreter.IInterpreter#reset()
@@ -491,6 +459,7 @@ public class NewInterpreter9900 implements IInterpreter {
 					newBlock.appendOperandFetch();
 					newBlock.appendInstructionExecute();
 					newBlock.appendFlush();
+					changes.instrFetchCycles += newBlock.instrFetchCycles;
 					changes.insert(pos, newBlock);
 				}
 			});

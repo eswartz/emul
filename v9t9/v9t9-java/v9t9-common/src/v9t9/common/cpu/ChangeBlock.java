@@ -15,9 +15,9 @@ public abstract class ChangeBlock {
     private static final IChangeElement[] NONE = new IChangeElement[0];
     
     /** cycles consumed by fetching */
-    public int fetchCycles;
+//    public int fetchCycles;
     /** cycles consumed by execution */
-    public int executeCycles;
+//    public int executeCycles;
     
     private IChangeElement[] elements;
     private int elementIdx;

@@ -83,7 +83,7 @@ public class ToolUtils {
 			}
 			
 			IMemoryDomain console = machine.getConsole();
-			IMemoryEntry ramEntry = NativeFileMemoryEntry.newMemoryFromFile(addr, name, console, file, 0); 
+			IMemoryEntry ramEntry = NativeFileMemoryEntry.newMemoryFromFile(addr, name, console, file, 6); 
 			console.mapEntry(ramEntry);
 			
 			codeRanges.add(new Pair<Integer, Integer>(addr, size));

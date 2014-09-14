@@ -39,28 +39,57 @@ public class ChangeBlock9900 extends ChangeBlock {
 	private MachineOperandState mopState2;
 	private MachineOperandState mopState3;
 
+//	public int cyclesAtStart;
+
+	// ChangeBlocks are cached, so remember this in case we #generate only once
+	public int instrFetchCycles;
+
 	public ChangeBlock9900(ICpu cpu) {
 		this(cpu, cpu.getState().getPC());
 	}
 	public ChangeBlock9900(ICpu cpu, int pc) {
-		this(cpu, pc, cpu.getConsole().readWord(pc));
+		
+		this.cpu = cpu;
+		cpuState = (CpuState9900) cpu.getState();
+		this.counts = cpu.getCycleCounts();
+		
+		counts.saveState();
+		counts.getAndResetTotal();
+		inst = new Instruction9900(InstTable9900.decodeInstruction(
+				cpu.getConsole().readWord(pc), 
+				pc, cpu.getConsole(), true), cpu.getConsole());
+		instrFetchCycles = counts.getFetch() + counts.getLoad();
+		assert counts.getExecute() == 0;
+		assert counts.getStore() == 0;
+		assert counts.getOverhead() == 0;
+		counts.restoreState();
+		
 		appendInstructionAdvance();
 	}
+	/** 
+	 * This variant is for X only -- it assumes 'op' is already read and does not
+	 * add its cycles to the overhead 
+	 */
 	public ChangeBlock9900(ICpu cpu, int pc, short op) {
 		this.cpu = cpu;
 		cpuState = (CpuState9900) cpu.getState();
 		this.counts = cpu.getCycleCounts();
 		
+		counts.saveState();
+		counts.getAndResetTotal();
 		inst = new Instruction9900(InstTable9900.decodeInstruction(
 				op, 
 				pc, cpu.getConsole(), true), cpu.getConsole());
+		instrFetchCycles = counts.getFetch() + counts.getLoad();
+		assert counts.getExecute() == 0;
+		assert counts.getStore() == 0;
+		assert counts.getOverhead() == 0;
+		counts.restoreState();
 	}
 	public void generate() {
-		//counts.getAndResetTotal();	// should be empty
 		appendOperandFetch();
 		appendInstructionExecute();
 		appendFlush();
-		fetchCycles = counts.getAndResetTotal();
 	}
 	/**
 	 * 
@@ -113,41 +142,34 @@ public class ChangeBlock9900 extends ChangeBlock {
     		return;
     		
     	case MachineOperand9900.OP_REG:	// Rx
-    		counts.addFetch(0);
     		push(new ReadRegister(this, state));
     		break;
     		
     	case MachineOperand9900.OP_IND: {	// *Rx
-    		counts.addFetch(4);
-    		
     		push(new ReadIndirectRegister(this, state));
     		break;
     	}
     	case MachineOperand9900.OP_INC:	{ // *Rx+
-    		counts.addFetch(4);
-    		counts.addFetch(mop.byteop ? 2 : 4);
     		push(new ReadIncrementRegister(this, state));
     		break;
     	}
     	case MachineOperand9900.OP_ADDR: {	// @>xxxx or @>xxxx(Rx)
-    		counts.addFetch(8);
     		push(new ReadRegisterOffset(this, state));
             break;
     	}
     	case MachineOperand9900.OP_IMMED:	// immediate
-    		counts.addFetch(0);
+    		//counts.addFetch(0);
     		state.value = mop.immed;
     		break;
     	case MachineOperand9900.OP_CNT:	// shift count
-    		counts.addFetch(0);
+    		//counts.addFetch(0);
     		state.value = (short) mop.val;
     		break;
     	case MachineOperand9900.OP_OFFS_R12:	// offset from R12
-    		counts.addFetch(0);
+    		//counts.addFetch(0);
     		push(new CalculateCruOffset(this, state));
     		break;
     	case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
-    		counts.addFetch(8);
     	    push(new CalculateShift(this, state));
 		    break;
     	
@@ -181,4 +203,13 @@ public class ChangeBlock9900 extends ChangeBlock {
     	push(new Changes.Flush(this));
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ChangeBlock#apply(v9t9.common.cpu.ICpu)
+	 */
+	@Override
+	public void apply(ICpu cpu) {
+		counts.addFetch(instrFetchCycles);
+		
+		super.apply(cpu);
+	}
 }

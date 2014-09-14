@@ -30,7 +30,7 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
     
     private InstInfo info;
     
-    public int fetchCycles;
+//    public int fetchCycles;
     
 	public RawInstruction() {
 	}
@@ -45,7 +45,7 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 		this.op1 = other.op1;
 		this.op2 = other.op2;
 		this.op3 = other.op3;
-		this.fetchCycles = other.fetchCycles;
+//		this.fetchCycles = other.fetchCycles;
 	}
 	
 	public String getName() {

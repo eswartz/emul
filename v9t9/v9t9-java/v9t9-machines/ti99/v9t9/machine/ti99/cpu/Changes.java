@@ -131,6 +131,7 @@ public final class Changes {
 		
 		@Override
 		protected void doApply(ICpuState cpuState) {
+			changeBlock.counts.addFetch(0);
 			MachineOperand9900 mop = (MachineOperand9900) state.mop;
 			state.ea = (short) (((CpuState9900) cpuState).getWP() + (mop.val << 1));
 			if (mop.byteop)
@@ -175,6 +176,8 @@ public final class Changes {
 	
 		@Override
 		protected void doApply(ICpuState cpuState) {
+			changeBlock.counts.addFetch(8);
+
 			state.value = (short) (cpuState.getRegister(0) & 0xf);
 		    if (state.value == 0) {
 		    	state.value = 16;
@@ -216,6 +219,8 @@ public final class Changes {
 	
 		@Override
 		protected void doApply(ICpuState cpuState) {
+			changeBlock.counts.addFetch(4);
+			
 			MachineOperand9900 mop = (MachineOperand9900) state.mop;
 			state.ea = (short) (((CpuState9900) cpuState).getWP() + (mop.val << 1));
 			
@@ -242,6 +247,10 @@ public final class Changes {
 		@Override
 		protected void doApply(ICpuState cpuState) {
 			MachineOperand9900 mop = (MachineOperand9900) state.mop;
+			
+			changeBlock.counts.addFetch(4);
+			changeBlock.counts.addFetch(mop.byteop ? 2 : 4);
+			
 			short regAddr = (short) (((CpuState9900) cpuState).getWP() + (mop.val << 1));
 			state.prev = cpuState.getConsole().flatReadWord(regAddr);
 			state.ea = state.prev;
@@ -276,6 +285,9 @@ public final class Changes {
 		@Override
 		protected void doApply(ICpuState cpuState) {
 			MachineOperand9900 mop = (MachineOperand9900) state.mop;
+			
+    		changeBlock.counts.addFetch(8);
+    		
 			state.ea = mop.immed; 
     		if (mop.val != 0) {
     			int offs = cpuState.getRegister(mop.val);
@@ -445,8 +457,7 @@ public final class Changes {
 		public void apply(ICpuState cpuState) {
 			cycleCalculator.addCycles(changes);
 
-			changes.executeCycles = changes.counts.getAndResetTotal();
-			changes.cpu.applyCycles(changes.fetchCycles + changes.executeCycles);
+			//changes.executeCycles = changes.counts.getTotal() - changes.cyclesAtStart;
 			
 			if (changes.inst.getInst() != Inst9900.Irtwp)
 				changes.cpuState.getStatus().flatten();	// ensure status flushed
@@ -457,7 +468,7 @@ public final class Changes {
 		 */
 		@Override
 		public void revert(ICpuState cpuState) {
-			changes.cpu.applyCycles(-(changes.fetchCycles + changes.executeCycles));
+			//changes.cpu.applyCycles(-(changes.fetchCycles + changes.executeCycles));
 		}
 
 	}

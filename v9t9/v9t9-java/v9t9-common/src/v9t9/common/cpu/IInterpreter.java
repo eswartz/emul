@@ -15,15 +15,15 @@ public interface IInterpreter {
 	void reset();
 	/** Remove any listeners on the CPU or memory */
 	void dispose();
-	/** Execute instruction(s) and apply changes to the CPU
-	 * @param maxCycles maximum number of cycles to attempt
-	 */
-	void execute(int maxCycles);
-	/** 
-	 * Determine how one instruction would be executed and return the
-	 * changes in the given change block.  Does not affect CPU or memory at all.
-	 */
-	ChangeBlock simulate();
+//	/** Execute instruction(s) and apply changes to the CPU
+//	 * @param maxCycles maximum number of cycles to attempt
+//	 */
+//	void execute(int maxCycles);
+//	/** 
+//	 * Determine how one instruction would be executed and return the
+//	 * changes in the given change block.  Does not affect CPU or memory at all.
+//	 */
+//	ChangeBlock simulate();
 	
 	/**
 	 * Execute a chunk of instructions as quickly as possible, watching for

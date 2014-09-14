@@ -43,6 +43,7 @@ public class DumpFullReporter9900 implements IInstructionListener {
 	private IProperty testSuccessSymbol;
 	private IProperty testFailureSymbol;
 	private String symbol;
+	private int cyclesAtStart;
 
 	/**
 	 * 
@@ -60,6 +61,7 @@ public class DumpFullReporter9900 implements IInstructionListener {
 	 */
 	@Override
 	public boolean preExecute(InstructionWorkBlock before) {
+		cyclesAtStart = cpu.getCycleCounts().getTotal();
 		return true;
 	}
 	
@@ -255,7 +257,8 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		                .toUpperCase() + " wp="
 		        + Integer.toHexString(((Cpu9900) cpu).getWP() & 0xffff).toUpperCase());
 		
-		int cycles = changes.fetchCycles + changes.executeCycles;
+		//int cycles = changes.fetchCycles + changes.executeCycles;
+		int cycles = cpu.getCycleCounts().getTotal() - cyclesAtStart;
 		dumpfull.print(" @ " + cycles);
 		dumpfull.println();
 		dumpfull.flush();

@@ -14,6 +14,7 @@ import java.io.PrintStream;
 
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.AbortedException;
+import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
@@ -50,18 +51,18 @@ public class CycleCounter {
 		executor = machine.getExecutor();
 		state = machine.getCpu().getState();
 		cpu = machine.getCpu();
-		executor.addInstructionListener(new IInstructionListener() {
-			
-			@Override
-			public boolean preExecute(InstructionWorkBlock before) {
-				return true;
-			}
-			
-			@Override
-			public void executed(InstructionWorkBlock before, InstructionWorkBlock after) {
-				
-			}
-		});
+//		executor.addInstructionListener(new IInstructionListener() {
+//			
+//			@Override
+//			public boolean preExecute(InstructionWorkBlock before) {
+//				return true;
+//			}
+//			
+//			@Override
+//			public void executed(ChangeBlock block) {
+//				
+//			}
+//		});
 	}
 	
 

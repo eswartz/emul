@@ -66,10 +66,11 @@ public class BreakpointManager implements IInstructionListener {
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.common.cpu.IInstructionListener#executed(v9t9.common.cpu.InstructionWorkBlock, v9t9.common.cpu.InstructionWorkBlock)
+	 * @see v9t9.common.cpu.IInstructionListener#executed(v9t9.common.cpu.ChangeBlock)
 	 */
 	@Override
-	public void executed(InstructionWorkBlock before, InstructionWorkBlock after) {
+	public void executed(ChangeBlock block) {
+		
 	}
 
 	public synchronized IBreakpoint addBreakpoint(final IBreakpoint bp) {

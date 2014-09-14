@@ -459,8 +459,8 @@ public class Compiler9900 extends CompilerBase {
 
         
         // FIXME
-        int cycles = ins.fetchCycles
-        		+ ((MachineOperand9900) ins.getOp1()).cycles + ((MachineOperand9900) ins.getOp2()).cycles;
+        int cycles = 12;
+        	//ins.fetchCycles + ((MachineOperand9900) ins.getOp1()).cycles + ((MachineOperand9900) ins.getOp2()).cycles;
         
         ilist.append(new IINC(info.localCycles, cycles));
 
