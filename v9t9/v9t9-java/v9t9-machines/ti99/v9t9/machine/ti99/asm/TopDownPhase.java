@@ -118,6 +118,7 @@ public class TopDownPhase extends Phase {
 		
 		boolean changed;
 		
+		int loops = 0;
 		do {
 			changed = false;
 			
@@ -164,7 +165,7 @@ public class TopDownPhase extends Phase {
 			
 			analyzeRoutines();
 			
-		} while (changed);
+		} while (changed && ++loops < 10);
 		
 		//dumpInstructions();
 		//dumpBlocks();
