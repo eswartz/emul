@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Logger;
 
 import ejs.base.utils.HexUtils;
-
+import ejs.base.utils.Pair;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.DsrException;
@@ -35,9 +35,9 @@ import v9t9.engine.files.directory.OpenFile;
 import v9t9.machine.ti99.machine.fileExecutors.AdventureLoadFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.ArchiverExtractFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.EditAssmLoadAndRunFileExecutor;
-import v9t9.machine.ti99.machine.fileExecutors.EditAssmRunProgramFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.ExtBasicAutoLoadFileExecutor;
 import v9t9.machine.ti99.machine.fileExecutors.ExtBasicLoadAndRunFileExecutor;
+import v9t9.machine.ti99.machine.fileExecutors.Option5RunProgramFileExecutor;
 
 /**
  * This analyzes standard TI-99/4A file types
@@ -57,6 +57,7 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 
 		boolean sawExtBasic = false;
 		boolean sawEditAssm = false;
+		boolean sawSuperCart = false;
 		boolean sawAdventure = false;
 		
 		for (IModule module : machine.getModuleManager().getModules()) {
@@ -73,6 +74,13 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 				log.debug("Found Editor/Assembler match: " + module);
 				scanEditAssm(machine, drive, catalog, execs, module);
 				sawEditAssm = true;
+			}
+			else if (module.getName().toLowerCase().contains("super cart")) {
+				if (sawSuperCart)
+					continue;
+				log.debug("Found SuperCART match: " + module);
+				scanSuperCart(machine, drive, catalog, execs, module);
+				sawSuperCart = true;
 			}
 			else if (module.getName().toLowerCase().contains("scott adam's adventure")) {
 				if (sawAdventure)
@@ -161,13 +169,22 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 	private void scanEditAssm(IMachine machine, int drive, Catalog catalog,
 			List<IFileExecutor> execs, IModule module) {
 		
-		gatherMemoryImagePrograms(machine, catalog, execs, module);
+		gatherMemoryImagePrograms(machine, catalog, execs, module, true);
 		gatherArchives(machine, drive, catalog, execs, module);
 		gatherObjectFiles(machine, catalog, execs, module, true);
 		gatherObjectFiles(machine, catalog, execs, module, false);
 
 	}
 
+	private void scanSuperCart(IMachine machine, int drive, Catalog catalog,
+			List<IFileExecutor> execs, IModule module) {
+		
+		gatherMemoryImagePrograms(machine, catalog, execs, module, false);
+		gatherArchives(machine, drive, catalog, execs, module);
+		gatherObjectFiles(machine, catalog, execs, module, true);
+		gatherObjectFiles(machine, catalog, execs, module, false);
+
+	}
 	/**
 	 * Look for memory image programs, PROGRAM files in groups of one
 	 * or more with incrementing filenames.
@@ -177,30 +194,38 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 	 * @param module
 	 */
 	protected void gatherMemoryImagePrograms(IMachine machine, Catalog catalog,
-			List<IFileExecutor> execs, IModule module) {
+			List<IFileExecutor> execs, IModule module, boolean expMemoryOnly) {
 		// gather memory image segments
 		Map<String, CatalogEntry> memImgMap = new TreeMap<String, CatalogEntry>();
+		Map<String, Pair<Integer, Integer>> memImgAddrMap = new TreeMap<String, Pair<Integer,Integer>>();
 		
 		for (CatalogEntry ent : catalog.entries) {
-			if (ent.type.equals("PROGRAM") && isMemoryImageProgram(machine, ent)) {
-				String baseName = ent.fileName.substring(0, ent.fileName.length() - 1);
-				if (baseName.equals("ASSM") || baseName.equals("EDIT")) {
-					log.debug("Skipping ASSM/EDIT");
-					continue;
-				}
-				CatalogEntry old = memImgMap.put(baseName, ent);
-				// keep the lowest file
-				if (old != null) {
-					if (old.fileName.compareTo(ent.fileName) < 0) {
-						memImgMap.put(baseName, old);
-					}
-				}
+			if (!ent.type.equals("PROGRAM"))
+				continue;
+			Pair<Integer, Integer> span = isMemoryImageProgram(machine, ent);
+			if (span == null)
+				continue;
+			String baseName = ent.fileName.substring(0, ent.fileName.length() - 1);
+			if (baseName.equals("ASSM") || baseName.equals("EDIT")) {
+				log.debug("Skipping ASSM/EDIT");
+				continue;
+			}
+			CatalogEntry old = memImgMap.get(baseName);
+			// keep the lowest file
+			if (old == null || old.fileName.compareTo(ent.fileName) > 0) {
+				memImgMap.put(baseName, ent);
+				memImgAddrMap.put(baseName, span);
 			}
 		}
 
-		for (CatalogEntry ent : memImgMap.values()) {
-			execs.add(new EditAssmRunProgramFileExecutor(module,
-					catalog.deviceName + "." + ent.fileName));
+		for (Map.Entry<String, CatalogEntry> ent : memImgMap.entrySet()) {
+			Pair<Integer, Integer> span = memImgAddrMap.get(ent.getKey());
+			boolean ramOnly = machine.getConsole().hasRamAccess(span.first)
+					&& machine.getConsole().hasRamAccess(span.second);
+			if ((ramOnly && expMemoryOnly) || !expMemoryOnly) {
+				execs.add(new Option5RunProgramFileExecutor(module,
+						catalog.deviceName + "." + ent.getValue().fileName));
+			}
 		}
 	}
 	
@@ -215,15 +240,15 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 	 * </pre>
 	 * @param machine
 	 * @param ent
-	 * @return
+	 * @return load address or <code>null</code> if not memory image
 	 */
-	private boolean isMemoryImageProgram(IMachine machine, CatalogEntry ent) {
+	private Pair<Integer, Integer> isMemoryImageProgram(IMachine machine, CatalogEntry ent) {
 		int size = ent.getFile().getFileSize();
 		byte[] header = new byte[256];
 		try {
 			ent.getFile().readContents(header, 0, 0, header.length);
 		} catch (IOException e) {
-			return false;
+			return null;
 		}
 		int low = readShort(header, 0);
 		int binsize = readShort(header, 2);
@@ -238,11 +263,10 @@ public class TI99FileExecutionHandler implements IFileExecutionHandler {
 				|| (low & 0xff00) == 0xff00 || (low & 0xff00) == 0)
 				&& binsize <= size + 6
 				&& addr + binsize <= 0x10000
-				&& machine.getConsole().hasRamAccess(addr)
-				&& machine.getConsole().hasRamAccess(addr + binsize - 1)) {
-			return true;
+				) {
+			return new Pair<Integer, Integer>(addr, addr + binsize - 1);
 		}
-		return false;
+		return null;
 	}
 
 	/**
