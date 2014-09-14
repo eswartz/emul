@@ -1180,13 +1180,13 @@ public class ModuleSelector extends Composite {
 
 
 	/**
-	 * @param softReset if true, just reset CPU, else if false, reset whole machine 
+	 * @param noReset if false, reset machine, else do nothing 
 	 * 
 	 */
-	protected void switchModule(boolean softReset) {
+	protected void switchModule(boolean noReset) {
 		try {
 			moduleManager.switchModule(selectedModule);
-			if (!softReset)
+			if (!noReset)
 				machine.reset();
 
 			if (!isDisposed())
