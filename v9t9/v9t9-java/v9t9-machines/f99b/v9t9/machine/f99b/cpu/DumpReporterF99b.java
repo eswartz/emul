@@ -52,12 +52,11 @@ public class DumpReporterF99b implements IInstructionListener {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionAction.Block, v9t9.engine.cpu.InstructionAction.Block)
 	 */
-	public void executed(InstructionWorkBlock before, InstructionWorkBlock after) {
+	public void executed(ChangeBlock block) {
 		PrintWriter dump = Logging.getLog(dumpSetting);
 		if (dump == null)
 			return;
-		RawInstruction ins = before.inst;
-	    dump.println(HexUtils.toHex4(ins.pc) 
+	    dump.println(HexUtils.toHex4(block.getPC()) 
 	            + " "
 	            + HexUtils.toHex4(((CpuStateF99b)cpu.getState()).getSP())
 	            + " "

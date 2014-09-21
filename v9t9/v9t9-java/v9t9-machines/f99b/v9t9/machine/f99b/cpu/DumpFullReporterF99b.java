@@ -25,6 +25,7 @@ import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.Settings;
+import v9t9.machine.f99b.asm.ChangeBlockF99b;
 import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
 
@@ -55,17 +56,13 @@ public class DumpFullReporterF99b implements IInstructionListener {
 		return true;
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionAction.Block, v9t9.engine.cpu.InstructionAction.Block)
-	 */
-	public void executed(InstructionWorkBlock before_, InstructionWorkBlock after_) {
+	public void executed(ChangeBlock block_) {
 		PrintWriter dumpfull = dump != null ? dump : Logging.getLog(dumpSetting);
 		if (dumpfull == null) return;
-		InstructionWorkBlockF99b before = (InstructionWorkBlockF99b) before_;
-		InstructionWorkBlockF99b after = (InstructionWorkBlockF99b) after_;
-		dumpFullStart(before, before.inst, dumpfull);
+		ChangeBlockF99b block = (ChangeBlockF99b) block_;
+		dumpFullStart(block, block.inst, dumpfull);
 		StringBuilder sb = new StringBuilder();
-		dumpFullMid(before, 
+		dumpFullMid(block, 
 				(after.sp - before.sp) / 2,
 				(after.rp - before.rp) / 2,
 				sb);
@@ -75,13 +72,13 @@ public class DumpFullReporterF99b implements IInstructionListener {
 				sb, dumpfull);
 	}
 
-	private void dumpFullStart(InstructionWorkBlockF99b iblock,
+	private void dumpFullStart(ChangeBlockF99b block,
 			RawInstruction ins, PrintWriter dumpfull) {
-		IMemoryEntry entry = iblock.domain.getEntryAt(ins.pc);
+		IMemoryEntry entry = block.domain.getEntryAt(ins.pc);
 		String name = null;
 		if (entry != null) { 
 			name = entry.lookupSymbol((short) ins.pc);
-			if (name == null && iblock.showSymbol) {
+			if (name == null && block.showSymbol) {
 				Pair<String, Short> info = entry.lookupSymbolNear((short) ins.pc, 0x100);
 				if (info != null)
 					name = info.first;
@@ -89,7 +86,7 @@ public class DumpFullReporterF99b implements IInstructionListener {
 		}
 		if (name != null)
 			dumpfull.println('"' + name + "\" ");
-		iblock.showSymbol = false;
+		block.showSymbol = false;
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append(HexUtils.toHex4(ins.pc)).append(": ").append(' ').append(ins);

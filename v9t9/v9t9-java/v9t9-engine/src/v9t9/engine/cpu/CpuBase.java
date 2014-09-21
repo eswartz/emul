@@ -430,4 +430,15 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		return inst;
 	}
 	
+	private int debugCount;
+	
+
+	public void addDebugCount(int i) {
+    	int oldCount = debugCount; 
+    	debugCount += i;
+    	if ((oldCount == 0) != (debugCount == 0))
+    		settingDumpFullInstructions().setBoolean(i > 0);
+	}
+
+	
 }

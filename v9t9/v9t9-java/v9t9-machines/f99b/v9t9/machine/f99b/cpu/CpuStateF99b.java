@@ -16,7 +16,7 @@ import java.util.Map;
 
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.ListenerList;
-
+import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.cpu.InstructionWorkBlock;
@@ -64,10 +64,19 @@ public class CpuStateF99b implements ICpuState {
 	private short regs[] = new short[16];
 
 	private ListenerList<IRegisterWriteListener> listeners = new ListenerList<IRegisterAccess.IRegisterWriteListener>();
-	
+	private CycleCounts cycleCounts = new CycleCounts();
+
 	public CpuStateF99b(IMemoryDomain console) {
 		this.console = console;
 		this.status = createStatus();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpuState#getCycleCounts()
+	 */
+	@Override
+	public CycleCounts getCycleCounts() {
+		return cycleCounts;
 	}
 
 	/* (non-Javadoc)

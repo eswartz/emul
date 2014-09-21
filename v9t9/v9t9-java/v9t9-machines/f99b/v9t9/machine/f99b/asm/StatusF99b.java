@@ -61,6 +61,14 @@ public class StatusF99b implements IStatus {
     public short flatten() {
         return bits;
     }
+    
+    /* (non-Javadoc)
+     * @see v9t9.common.cpu.IStatus#get()
+     */
+    @Override
+    public short get() {
+    	return bits;
+    }
 
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#expand(short)

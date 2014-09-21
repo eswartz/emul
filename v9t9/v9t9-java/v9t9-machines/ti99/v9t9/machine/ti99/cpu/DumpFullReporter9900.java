@@ -65,20 +65,6 @@ public class DumpFullReporter9900 implements IInstructionListener {
 		return true;
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionAction.Block, v9t9.engine.cpu.InstructionAction.Block)
-	 */
-	public void executed(InstructionWorkBlock before_, InstructionWorkBlock after_) {
-//		PrintWriter dumpfull = Logging.getLog(dumpSetting);
-//		if (dumpfull == null) return;
-//		
-//		InstructionWorkBlock9900 before = (InstructionWorkBlock9900) before_;
-//		InstructionWorkBlock9900 after = (InstructionWorkBlock9900) after_;
-//		dumpFullStart(before, before.inst, dumpfull);
-//		dumpFullMid(before, (MachineOperand9900)before.inst.getOp1(), (MachineOperand9900)before.inst.getOp2(), dumpfull);
-//		dumpFullEnd(after, before.cycles, (MachineOperand9900)after.inst.getOp1(), (MachineOperand9900)after.inst.getOp2(), dumpfull);
-	}
-
 	public void dumpFullStart(ICpuState cpu, IMemoryDomain domain,
 			RawInstruction ins, PrintWriter dumpfull) {
 		IMemoryEntry entry = domain.getEntryAt(ins.pc);
