@@ -20,8 +20,9 @@ import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
+import v9t9.video.IVdpModeRedrawHandler;
 import v9t9.video.common.VdpModeInfo;
-import v9t9.video.tms9918a.VdpTMS9918ACanvasRenderer;
+import v9t9.video.tms9918a.BaseVdpTMS9918ACanvasRenderer;
 
 /**
  * This is a renderer for the V9938 video chip which renders to an IVdpCanvas.  
@@ -50,14 +51,14 @@ import v9t9.video.tms9918a.VdpTMS9918ACanvasRenderer;
  * @author ejs  
  *
  */
-public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer {
-	private boolean blinkOn;
-	private int pageOffset;
+public abstract class BaseVdpV9938CanvasRenderer extends BaseVdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer {
+	protected boolean blinkOn;
+	protected int pageOffset;
 
 	private short[] palette = new short[16];
 	private Runnable timerRunnable;
 
-	public VdpV9938CanvasRenderer(ISettingsHandler settings, IVideoRenderer renderer) {
+	public BaseVdpV9938CanvasRenderer(ISettingsHandler settings, IVideoRenderer renderer) {
 		super(settings, renderer);
 		
 		timerRunnable = new Runnable() {
@@ -251,20 +252,13 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 			super.setupBackdrop();
 		}
 	}
-	@Override
-	protected int getMaxRedrawblocks() {
-		return 80 * 27;
-	}
-	
 	
 	protected void setText2Mode() {
 		vdpCanvas.setFormat(VdpFormat.TEXT);
 		vdpCanvas.setSize(512, getVideoHeight());
 		vdpModeInfo = createText2ModeInfo();
-		vdpModeRedrawHandler = new Text2ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = null;
-		
-		initUpdateBlocks(6);
+		setModeRedrawHandler(new Text2ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo));
 	}
 
 	protected VdpModeInfo createText2ModeInfo() {
@@ -296,11 +290,8 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		vdpCanvas.setFormat(VdpFormat.COLOR16_1x1);
 		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics45ModeInfo();
-		vdpModeRedrawHandler = new Graphics4ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
-		
-		
-		initUpdateBlocks(8);
+		setModeRedrawHandler(new Graphics4ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo));
 	}
 
 	
@@ -328,22 +319,16 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		vdpCanvas.setFormat(VdpFormat.COLOR4_1x1);
 		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics45ModeInfo();
-		vdpModeRedrawHandler = new Graphics5ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(true);
-		
-		
-		initUpdateBlocks(8);
+		setModeRedrawHandler(new Graphics5ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo));
 	}
 
 	protected void setGraphics6Mode() {
 		vdpCanvas.setFormat(VdpFormat.COLOR16_1x1);
 		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics67ModeInfo();
-		vdpModeRedrawHandler = new Graphics6ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(true);
-		
-		
-		initUpdateBlocks(8);
+		setModeRedrawHandler(new Graphics6ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo));
 	}
 
 	protected VdpModeInfo createGraphics67ModeInfo() {
@@ -369,10 +354,8 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 		vdpCanvas.setFormat(VdpFormat.COLOR256_1x1);
 		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics67ModeInfo();
-		vdpModeRedrawHandler = new Graphics7ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
-		
-		initUpdateBlocks(8);
+		setModeRedrawHandler(new Graphics7ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo));
 	}
 
 	
@@ -404,10 +387,7 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 	 */
 	@Override
 	public void registerChanged(int reg, int value) {
-		if (reg == REG_SCANLINE) {
-			onScanline(value);
-		}
-		else if (reg >= REG_PAL0 && reg < REG_PAL0 + 16) {
+		if (reg >= REG_PAL0 && reg < REG_PAL0 + 16) {
 			int color = reg - REG_PAL0;
 			palette[color] = (short) value;
 			setPaletteColor(color);
@@ -418,20 +398,16 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 			} else if (reg == 13) {
 				blinkOn = value != 0 && (value & 0xf) == 0x0;
 			}
-			if (vdpModeRedrawHandler instanceof Text2ModeRedrawHandler) {
-				((Text2ModeRedrawHandler) vdpModeRedrawHandler).setBlink(blinkOn);
+			if (reg == 12 || reg == 13) {
+				if (getModeRedrawHandler() instanceof Text2ModeRedrawHandler) {
+					((Text2ModeRedrawHandler) getModeRedrawHandler()).setBlink(blinkOn);
+				}
 			}
 			super.registerChanged(reg, value);
 		}
 	}
-
-
-	/**
-	 * @param scanline
-	 */
-	protected void onScanline(int scanline) {
-		vdpCanvas.setCurrentY(scanline);
-	}
+	
+	protected abstract IVdpModeRedrawHandler getModeRedrawHandler();
 
 	public boolean isBlinkOn() {
 		return blinkOn;
@@ -444,7 +420,8 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 	 * 
 	 */
 	protected synchronized void doTick() {
-
+		IVdpModeRedrawHandler vdpModeRedrawHandler = getModeRedrawHandler();
+		
 		// The "blink" controls either the r7/r12 selection for text mode
 		// or the page selection for graphics 4-7 modes.
 		
@@ -484,5 +461,4 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 			((PackedBitmapGraphicsModeRedrawHandler) vdpModeRedrawHandler).setPageOffset(pageOffset);
 		}
 	}
-
 }

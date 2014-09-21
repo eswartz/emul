@@ -13,7 +13,8 @@ package v9t9.video.v9938;
 import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.video.RedrawBlock;
 import v9t9.video.BaseRedrawHandler;
-import v9t9.video.IVdpModeRedrawHandler;
+import v9t9.video.IVdpModeBlockRedrawHandler;
+import v9t9.video.IVdpModeRowRedrawHandler;
 import v9t9.video.VdpRedrawInfo;
 import v9t9.video.VdpTouchHandler;
 import v9t9.video.common.VdpModeInfo;
@@ -27,7 +28,8 @@ import v9t9.video.common.VdpModeInfo;
  * @author ejs
  *
  */
-public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHandler implements IVdpModeRedrawHandler {
+public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHandler 
+	implements IVdpModeBlockRedrawHandler, IVdpModeRowRedrawHandler {
 
 	protected int rowstride;
 	protected int blockshift;
@@ -55,6 +57,14 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		
 	protected abstract void init();
 	
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRedrawHandler#getCharsPerRow()
+	 */
+	@Override
+	public int getCharsPerRow() {
+		return blockstride;
+	}
+	
 	@Override
 	public boolean touch(int addr) {
 		boolean visible = false;
@@ -70,7 +80,7 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		return super.touch(addr) | visible;
 	}
 	public void prepareUpdate() {
-		// we directly detect screen changes already
+		// we directly detect screen & row changes already
 	}
 	
 	public int updateCanvas(RedrawBlock[] blocks) {
@@ -108,6 +118,38 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	}
 
 	abstract protected void drawBlock(RedrawBlock block, int pageOffset, boolean interlaced);
+	
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
+	 */
+	@Override
+	public void updateCanvas(int prevScanline, int currentScanline) {
+		/*  Redraw 8x8 blocks where pixels changed */
+		IVdpV9938 vdp9938 = (IVdpV9938)info.vdp;
+		boolean interlacedEvenOdd = vdp9938.isInterlacedEvenOdd();
+		int graphicsPageSize = vdp9938.getGraphicsPageSize();
+		
+//		System.out.println("packed: " + prevScanline + " - " + currentScanline);
+		
+		for (int y = prevScanline; y < currentScanline; y++) {
+			int roffs = (y >> 3) * blockstride;
+			for (int c = 0; c < blockstride; c++) {
+				int i = roffs + c;
+				if (!info.changes.screen.get(i)) 
+					continue;
+				
+				drawPixels(c * 8, y, 0, false);
+				
+				// when interlacing, each row is technically twice as wide
+				// and the interlaced rows are on the "right" side of the bitmap
+				if (interlacedEvenOdd) {
+					drawPixels(c * 8, y, pageOffset ^ graphicsPageSize, true);
+				}
+			}
+		}		
+	}
+	
+	abstract protected void drawPixels(int x, int y, int pageOffset, boolean interlaced);
 
 	/**
 	 * @param pageOffset the pageOffset to set

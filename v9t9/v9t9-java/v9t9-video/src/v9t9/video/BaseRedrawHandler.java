@@ -28,7 +28,7 @@ import v9t9.video.common.VdpModeInfo;
  * @author ejs
  *
  */
-public abstract class BaseRedrawHandler implements IVdpModeRedrawHandler {
+public abstract class BaseRedrawHandler implements IVdpModeBlockRedrawHandler {
 	
 	protected final VdpRedrawInfo info;
 	protected final VdpModeInfo modeInfo;
@@ -98,13 +98,14 @@ public abstract class BaseRedrawHandler implements IVdpModeRedrawHandler {
 		int size = modeInfo.screen.size;
 		for (int i = 0; i < size; i++) {
 			int currchar = info.vdp.readAbsoluteVdpMemory(modeInfo.screen.base + i) & 0xff;	/* char # to update */
-			if (info.changes.patt[currchar] != 0)	/* this pattern changed? */
+			if (info.changes.patt[currchar] != 0) {	/* this pattern changed? */
 				info.changes.screen.set(i);	/* then this char changed */
+			}
 		}
-		
 	}
 	
 	public void clear() {
 		info.canvas.clear();
 	}
+	
 }

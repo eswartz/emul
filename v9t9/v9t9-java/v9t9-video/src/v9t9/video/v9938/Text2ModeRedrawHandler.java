@@ -13,11 +13,11 @@ package v9t9.video.v9938;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.RedrawBlock;
 import v9t9.video.BaseRedrawHandler;
-import v9t9.video.IVdpModeRedrawHandler;
+import v9t9.video.IVdpModeBlockRedrawHandler;
+import v9t9.video.IVdpModeRowRedrawHandler;
 import v9t9.video.VdpRedrawInfo;
 import v9t9.video.VdpTouchHandler;
 import v9t9.video.common.VdpModeInfo;
-
 import static v9t9.common.hardware.VdpV9938Consts.*;
 
 /**
@@ -26,7 +26,7 @@ import static v9t9.common.hardware.VdpV9938Consts.*;
  *
  */
 public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
-		IVdpModeRedrawHandler {
+		IVdpModeBlockRedrawHandler, IVdpModeRowRedrawHandler {
 
 	protected VdpTouchHandler modify_color_text2 = new VdpTouchHandler() {
 		
@@ -152,5 +152,44 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 	public void setBlink(boolean blinkOn) {
 		this.blinkOn = blinkOn;
 		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRedrawHandler#getCharsPerRow()
+	 */
+	@Override
+	public int getCharsPerRow() {
+		return 80;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
+	 */
+	@Override
+	public void updateCanvas(int prevScanline, int currentScanline) {
+//		System.out.println("text2: " + prevScanline + " - " + currentScanline);
+		int screenBase = modeInfo.screen.base;
+		
+		byte fg, bg;
+		
+		bg = (byte) (info.vdpregs[7] & 0xf);
+		fg = (byte) ((info.vdpregs[7] >> 4) & 0xf);
+		
+		for (int y = prevScanline; y < currentScanline; y++) {
+			int roffs = (y >> 3) * 80;
+			for (int c = 0; c < 80; c++) {
+				int i = roffs + c;
+				if (!info.changes.screen.get(i)) 
+					continue;
+				
+				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
+				
+				int offs = info.canvas.getBitmapOffset(c * 6 + (512 - 480) / 2, y);
+				int pattAddr = (y & 7) + (modeInfo.patt.base + (currchar << 3));
+				info.canvas.drawSixPixels(
+						offs, info.vdp.readAbsoluteVdpMemory(pattAddr), 
+						fg, bg);
+			}
+		}
 	}
 }

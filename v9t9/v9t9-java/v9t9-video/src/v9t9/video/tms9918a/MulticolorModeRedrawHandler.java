@@ -13,7 +13,8 @@ package v9t9.video.tms9918a;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.RedrawBlock;
 import v9t9.video.BaseRedrawHandler;
-import v9t9.video.IVdpModeRedrawHandler;
+import v9t9.video.IVdpModeBlockRedrawHandler;
+import v9t9.video.IVdpModeRowRedrawHandler;
 import v9t9.video.VdpRedrawInfo;
 import v9t9.video.common.VdpModeInfo;
 
@@ -22,7 +23,7 @@ import v9t9.video.common.VdpModeInfo;
  *
  */
 public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
-		IVdpModeRedrawHandler {
+		IVdpModeBlockRedrawHandler, IVdpModeRowRedrawHandler {
 
 	public MulticolorModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
 		super(info, modeInfo);
@@ -83,5 +84,44 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 		}
 
 		return count;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#getCharsPerRow()
+	 */
+	@Override
+	public int getCharsPerRow() {
+		return 32;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
+	 */
+	@Override
+	public void updateCanvas(int prevScanline, int currentScanline) {
+//		System.out.println("multi: " + prevScanline + " - " + currentScanline);
+		
+		int screenBase = modeInfo.screen.base;
+		int pattBase = modeInfo.patt.base;
+		
+		for (int y = prevScanline; y < currentScanline; y++) {
+			int roffs = (y >> 3) << 5;
+			for (int c = 0; c < 32; c++) {
+				int i = roffs + c;
+				if (!info.changes.screen.get(i)) 
+					continue;
+				
+				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+				int pattOffs = pattBase + (currchar << 3) + ((i >> 5) & 3) * 2;
+				
+				byte mem = (byte) info.vdp.readAbsoluteVdpMemory(pattOffs + ((y & 7) >= 4 ? 1 : 0));
+				
+				int offs = info.canvas.getBitmapOffset(c * 8, y);
+				info.canvas.drawEightPixels(
+						offs, (byte) 0xf0, 
+						(byte) ((mem >> 4) & 0xf), (byte) (mem & 0xf));
+			}
+		}		
 	}
 }

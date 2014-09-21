@@ -249,7 +249,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
         	fireWriteEvent(entry, (addr + entry.getAddrOffset()), (Byte) val);
     }
 
-    private void fireWriteEvent(final IMemoryEntry entry, final int addr_, Number value) {
+    public void fireWriteEvent(final IMemoryEntry entry, final int addr_, Number value) {
     	final int addr = addr_ & sizeMask; 
     	for (Object listenerObj : writeListeners.toArray()) {
     		try {

@@ -44,7 +44,7 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements IVdpCanvas, ISp
 		return format;
 	}
 	
-	private boolean isBlank;
+//	private boolean isBlank;
 
 	private boolean isMono;
 
@@ -91,17 +91,17 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements IVdpCanvas, ISp
 		}
 	}
 	
-	public boolean isBlank() {
-		return isBlank;
-	}
-
-
-	public void setBlank(boolean b) {
-		if (b != isBlank) {
-			isBlank = b;
-			markDirty();
-		}
-	}
+//	public boolean isBlank() {
+//		return isBlank;
+//	}
+//
+//
+//	public void setBlank(boolean b) {
+//		if (b != isBlank) {
+//			isBlank = b;
+//			markDirty();
+//		}
+//	}
 
 
 	/** 

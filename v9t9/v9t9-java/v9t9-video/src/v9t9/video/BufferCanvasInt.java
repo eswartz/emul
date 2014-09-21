@@ -196,7 +196,7 @@ public class BufferCanvasInt extends BitmapVdpCanvas implements IGLDataCanvas {
 		}
 	}
 
-	protected void drawEightPixels(int offs, byte mem, byte fg, byte bg) {
+	public void drawEightPixels(int offs, byte mem, byte fg, byte bg) {
 		int fgRGB = colorRGBMap[fg];
 		int bgRGB = colorRGBMap[bg];
 		buffer.put(offs + 0, (mem & 0x80) != 0 ? fgRGB : bgRGB);
@@ -209,7 +209,7 @@ public class BufferCanvasInt extends BitmapVdpCanvas implements IGLDataCanvas {
 		buffer.put(offs + 7, (mem & 0x01) != 0 ? fgRGB : bgRGB);
 	}
 
-	protected void drawSixPixels(int offs, byte mem, byte fg, byte bg) {
+	public void drawSixPixels(int offs, byte mem, byte fg, byte bg) {
 		int fgRGB = colorRGBMap[fg];
 		int bgRGB = colorRGBMap[bg];
 		buffer.put(offs + 0, (mem & 0x80) != 0 ? fgRGB : bgRGB);
@@ -287,80 +287,70 @@ public class BufferCanvasInt extends BitmapVdpCanvas implements IGLDataCanvas {
 			mem <<= 1;
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#draw8x8BitmapTwoColorByte(int, int, v9t9.common.memory.ByteMemoryAccess)
+	 */
 	@Override
-	public void draw8x8BitmapTwoColorBlock(int x, int y,
-			ByteMemoryAccess access, int rowstride) {
-		int lineStride = getLineStride();
+	public void draw8x8BitmapTwoColorByte(int x, int y, ByteMemoryAccess access) {
 		int offs = getBitmapOffset(x, y);
-		for (int i = 0; i < 8; i++) {
-			byte mem;
+		byte mem;
 
-			mem = access.memory[access.offset + 0];
-			buffer.put(offs + 0, colorRGBMap[((mem >> 4) & 0xf)]);
-			buffer.put(offs + 1, colorRGBMap[(mem & 0xf)]);
-			
-			mem = access.memory[access.offset + 1];
-			buffer.put(offs + 2, colorRGBMap[((mem >> 4) & 0xf)]);
-			buffer.put(offs + 3, colorRGBMap[(mem & 0xf)]);
-			
-			mem = access.memory[access.offset + 2];
-			buffer.put(offs + 4, colorRGBMap[((mem >> 4) & 0xf)]);
-			buffer.put(offs + 5, colorRGBMap[(mem & 0xf)]);
-			
-			mem = access.memory[access.offset + 3];
-			buffer.put(offs + 6, colorRGBMap[((mem >> 4) & 0xf)]);
-			buffer.put(offs + 7, colorRGBMap[(mem & 0xf)]);
-			
-			offs += lineStride;
-			access.offset += rowstride;
-		}
+		mem = access.memory[access.offset + 0];
+		buffer.put(offs + 0, colorRGBMap[((mem >> 4) & 0xf)]);
+		buffer.put(offs + 1, colorRGBMap[(mem & 0xf)]);
+		
+		mem = access.memory[access.offset + 1];
+		buffer.put(offs + 2, colorRGBMap[((mem >> 4) & 0xf)]);
+		buffer.put(offs + 3, colorRGBMap[(mem & 0xf)]);
+		
+		mem = access.memory[access.offset + 2];
+		buffer.put(offs + 4, colorRGBMap[((mem >> 4) & 0xf)]);
+		buffer.put(offs + 5, colorRGBMap[(mem & 0xf)]);
+		
+		mem = access.memory[access.offset + 3];
+		buffer.put(offs + 6, colorRGBMap[((mem >> 4) & 0xf)]);
+		buffer.put(offs + 7, colorRGBMap[(mem & 0xf)]);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#draw8x8BitmapFourColorByte(int, int, v9t9.common.memory.ByteMemoryAccess)
+	 */
 	@Override
-	public void draw8x8BitmapFourColorBlock(int x, int y,
-			ByteMemoryAccess access, int rowstride) {
-		int lineStride = getLineStride();
+	public void draw8x8BitmapFourColorByte(int x, int y, ByteMemoryAccess access) {
 		int offs = getBitmapOffset(x, y);
-		for (int i = 0; i < 8; i++) {
-			byte mem;
-			
-			mem = access.memory[access.offset + 0];
+		byte mem;
+		
+		mem = access.memory[access.offset + 0];
 
-			buffer.put(offs + 0, colorRGBMap[((mem >> 6) & 0x3)]);
-			buffer.put(offs + 1, colorRGBMap[((mem >> 4) & 0x3)]);
-			buffer.put(offs + 2, colorRGBMap[((mem >> 2) & 0x3)]);
-			buffer.put(offs + 3, colorRGBMap[(mem & 0x3)]);
-			
-			mem = access.memory[access.offset + 1];
-			
-			buffer.put(offs + 4, colorRGBMap[((mem >> 6) & 0x3)]);
-			buffer.put(offs + 5, colorRGBMap[((mem >> 4) & 0x3)]);
-			buffer.put(offs + 6, colorRGBMap[((mem >> 2) & 0x3)]);
-			buffer.put(offs + 7, colorRGBMap[(mem & 0x3)]);
-			
-			offs += lineStride;
-			access.offset += rowstride;
-		}
+		buffer.put(offs + 0, colorRGBMap[((mem >> 6) & 0x3)]);
+		buffer.put(offs + 1, colorRGBMap[((mem >> 4) & 0x3)]);
+		buffer.put(offs + 2, colorRGBMap[((mem >> 2) & 0x3)]);
+		buffer.put(offs + 3, colorRGBMap[(mem & 0x3)]);
+		
+		mem = access.memory[access.offset + 1];
+		
+		buffer.put(offs + 4, colorRGBMap[((mem >> 6) & 0x3)]);
+		buffer.put(offs + 5, colorRGBMap[((mem >> 4) & 0x3)]);
+		buffer.put(offs + 6, colorRGBMap[((mem >> 2) & 0x3)]);
+		buffer.put(offs + 7, colorRGBMap[(mem & 0x3)]);
 	}
-	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#draw8x8BitmapRGB332ColorByte(int, int, v9t9.common.memory.ByteMemoryAccess)
+	 */
 	@Override
-	public void draw8x8BitmapRGB332ColorBlock(int x, int y,
-			ByteMemoryAccess access, int rowstride) {
-		int lineStride = getLineStride();
+	public void draw8x8BitmapRGB332ColorByte(int x, int y,
+			ByteMemoryAccess access) {
 		int offs = getBitmapOffset(x, y);
-		for (int i = 0; i < 8; i++) {
-			buffer.put(offs + 0, colorRGB332Map[access.memory[access.offset + 0] & 0xff]);
-			buffer.put(offs + 1, colorRGB332Map[access.memory[access.offset + 1] & 0xff]);
-			buffer.put(offs + 2, colorRGB332Map[access.memory[access.offset + 2] & 0xff]);
-			buffer.put(offs + 3, colorRGB332Map[access.memory[access.offset + 3] & 0xff]);
-			buffer.put(offs + 4, colorRGB332Map[access.memory[access.offset + 4] & 0xff]);
-			buffer.put(offs + 5, colorRGB332Map[access.memory[access.offset + 5] & 0xff]);
-			buffer.put(offs + 6, colorRGB332Map[access.memory[access.offset + 6] & 0xff]);
-			buffer.put(offs + 7, colorRGB332Map[access.memory[access.offset + 7] & 0xff]);
-			
-			offs += lineStride;
-			access.offset += rowstride;
-		}
+		buffer.put(offs + 0, colorRGB332Map[access.memory[access.offset + 0] & 0xff]);
+		buffer.put(offs + 1, colorRGB332Map[access.memory[access.offset + 1] & 0xff]);
+		buffer.put(offs + 2, colorRGB332Map[access.memory[access.offset + 2] & 0xff]);
+		buffer.put(offs + 3, colorRGB332Map[access.memory[access.offset + 3] & 0xff]);
+		buffer.put(offs + 4, colorRGB332Map[access.memory[access.offset + 4] & 0xff]);
+		buffer.put(offs + 5, colorRGB332Map[access.memory[access.offset + 5] & 0xff]);
+		buffer.put(offs + 6, colorRGB332Map[access.memory[access.offset + 6] & 0xff]);
+		buffer.put(offs + 7, colorRGB332Map[access.memory[access.offset + 7] & 0xff]);
 	}
 	
 	@Override

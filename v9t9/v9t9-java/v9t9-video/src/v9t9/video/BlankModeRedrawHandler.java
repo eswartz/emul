@@ -20,7 +20,7 @@ import v9t9.video.common.VdpModeInfo;
  *
  */
 public class BlankModeRedrawHandler extends BaseRedrawHandler implements
-		IVdpModeRedrawHandler {
+		IVdpModeBlockRedrawHandler, IVdpModeRowRedrawHandler {
 
 	public BlankModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
 		super(info, modeInfo);
@@ -35,20 +35,38 @@ public class BlankModeRedrawHandler extends BaseRedrawHandler implements
 	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#propagateTouches()
 	 */
 	public void prepareUpdate() {
-		
+		propagatePatternTouches();
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#updateCanvas(v9t9.emulator.clients.builtin.VdpCanvas, v9t9.emulator.clients.builtin.InternalVdp.RedrawBlock[])
 	 */
 	public int updateCanvas(RedrawBlock[] blocks) {
-		/*if (force) {
-			for (int i = 0; i < 768; i++) {
-				blocks[i].r = (i / 32) * 8;
-				blocks[i].c = (i % 32) * 8;
-			}
-			return 768;
-		}*/
 		return 0;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#getCharsPerRow()
+	 */
+	@Override
+	public int getCharsPerRow() {
+		return 32;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
+	 */
+	@Override
+	public void updateCanvas(int prevScanline, int currentScanline) {
+//		System.out.println("blank: " + prevScanline + " - " + currentScanline);
+		
+		byte bg = (byte) ((info.vdpregs[7] ) & 0xf);
+		for (int line = prevScanline; line < currentScanline; line++) {
+			int rowOffs = info.canvas.getBitmapOffset(0, line); 
+			for (int x = info.canvas.getWidth() - 8; x >= 0; x -= 8) {
+				info.canvas.drawEightPixels(rowOffs + x, (byte) 0xff, bg, bg);
+			}
+		}
 	}
 }

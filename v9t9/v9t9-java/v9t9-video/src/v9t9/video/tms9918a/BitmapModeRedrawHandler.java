@@ -13,7 +13,8 @@ package v9t9.video.tms9918a;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.video.RedrawBlock;
 import v9t9.video.BaseRedrawHandler;
-import v9t9.video.IVdpModeRedrawHandler;
+import v9t9.video.IVdpModeBlockRedrawHandler;
+import v9t9.video.IVdpModeRowRedrawHandler;
 import v9t9.video.VdpRedrawInfo;
 import v9t9.video.VdpTouchHandler;
 import v9t9.video.common.VdpModeInfo;
@@ -23,7 +24,7 @@ import v9t9.video.common.VdpModeInfo;
  *
  */
 public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
-		IVdpModeRedrawHandler {
+		IVdpModeBlockRedrawHandler, IVdpModeRowRedrawHandler {
 
 	protected VdpTouchHandler modify_color_bitmap = new VdpTouchHandler() {
 	
@@ -127,5 +128,52 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 		}
 
 		return count;
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#getCharsPerRow()
+	 */
+	@Override
+	public int getCharsPerRow() {
+		return 32;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
+	 */
+	@Override
+	public void updateCanvas(int prevScanline, int currentScanline) {
+//		System.out.println("bitmap: " + prevScanline + " - " + currentScanline);
+		
+		int screenBase = modeInfo.screen.base;
+		int pattBase = modeInfo.patt.base;
+		int colorBase = modeInfo.color.base;
+
+		for (int y = prevScanline; y < currentScanline; y++) {
+			int roffs = (y >> 3) << 5;
+			for (int c = 0; c < 32; c++) {
+				int i = roffs + c;
+				if (!info.changes.screen.get(i)) 
+					continue;
+	
+				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+	
+				int pp, cp;
+				
+				pp = cp = (currchar + (i & 0x300)) << 3;
+				pp &= bitpattmask;
+				cp &= bitcolormask;
+				
+				byte patt = (byte) info.vdp.readAbsoluteVdpMemory(pattBase + pp + (y & 7));
+				byte color = (byte) info.vdp.readAbsoluteVdpMemory(colorBase + cp + (y & 7));
+				
+				int offs = info.canvas.getBitmapOffset(c * 8, y);
+				info.canvas.drawEightPixels(
+						offs, patt, 
+						(byte) ((color >> 4) & 0xf), (byte) (color & 0xf));
+			}
+		}
+		
 	}
 }

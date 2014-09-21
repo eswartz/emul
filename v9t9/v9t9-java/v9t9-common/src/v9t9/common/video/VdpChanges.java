@@ -30,8 +30,11 @@ public class VdpChanges
 	public int 	sprite;				// (1<<x): sprite #x changed
 	/** Tell if the sprite pattern (8x8) was changed */
 	public byte	sprpat[] = new byte[256];		// 1: sprite pattern changed
+
+//	public BitSet	touchedRows;
 	
 	public VdpChanges(int maxRedrawblocks) {
 		screen = new BitSet(maxRedrawblocks);
+//		touchedRows = new BitSet(512);
 	}
 }

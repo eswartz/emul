@@ -46,4 +46,15 @@ public class Graphics6ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 					(modeInfo.patt.base + rowstride * block.r + (block.c >> 1)) ^ pageOffset),
 			rowstride);
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.video.v9938.PackedBitmapGraphicsModeRedrawHandler#drawPixels(int, int, int, boolean)
+	 */
+	@Override
+	protected void drawPixels(int x, int y, int pageOffset, boolean interlaced) {
+		info.canvas.draw8x8BitmapTwoColorByte(
+				x + (interlaced ? 512 : 0), y,
+			 info.vdp.getByteReadMemoryAccess(
+					(modeInfo.patt.base + rowstride * y + (x >> 1)) ^ pageOffset));
+		
+	}
 }

@@ -170,4 +170,11 @@ public interface IMemoryDomain {
 	 */
 	void reset();
 
+	/**
+	 * @param entry
+	 * @param addr_
+	 * @param value
+	 */
+	void fireWriteEvent(IMemoryEntry entry, int addr_, Number value);
+
 }

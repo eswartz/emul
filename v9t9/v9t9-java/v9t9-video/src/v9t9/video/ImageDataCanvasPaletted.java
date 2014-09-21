@@ -101,14 +101,14 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 		return imageData.bytesPerLine * (y) + (x);
 	}
 
-	protected void drawEightPixels(int offs, byte mem, byte fg, byte bg) {
+	public void drawEightPixels(int offs, byte mem, byte fg, byte bg) {
 		for (int i = 0; i < 8; i++) {
 			byte color = (mem & 0x80) != 0 ? fg : bg;
 			imageData.data[offs + i] = color;
 			mem <<= 1;
 		}
 	}
-	protected void drawSixPixels(int offs, byte mem, byte fg, byte bg) {
+	public void drawSixPixels(int offs, byte mem, byte fg, byte bg) {
 		for (int i = 0; i < 6; i++) {
 			byte color = (mem & 0x80) != 0 ? fg : bg;
 			imageData.data[offs + i] = color;
@@ -178,94 +178,83 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#draw8x8BitmapTwoColorByte(int, int, v9t9.common.memory.ByteMemoryAccess)
+	 */
 	@Override
-	public void draw8x8BitmapTwoColorBlock(int x, int y,
-			ByteMemoryAccess access, int rowstride) {
-		int lineStride = getLineStride();
+	public void draw8x8BitmapTwoColorByte(int x, int y, ByteMemoryAccess access) {
 		int offs = getBitmapOffset(x, y);
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 4; j++) {
-				byte mem;
-				
-				byte pix;
-
-				mem = access.memory[access.offset + j];
-
-				pix = (byte) ((mem >> 4) & 0xf);
-				imageData.data[offs] = pix;
-				
-				pix = (byte) (mem & 0xf);
-				imageData.data[offs + 1] = pix;
-				
-				offs += 2;
-			}
+		for (int j = 0; j < 4; j++) {
+			byte mem;
 			
-			offs += lineStride - 2 * 4;
-			access.offset += rowstride;
+			byte pix;
+
+			mem = access.memory[access.offset + j];
+
+			pix = (byte) ((mem >> 4) & 0xf);
+			imageData.data[offs] = pix;
+			
+			pix = (byte) (mem & 0xf);
+			imageData.data[offs + 1] = pix;
+			
+			offs += 2;
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#draw8x8BitmapFourColorByte(int, int, v9t9.common.memory.ByteMemoryAccess)
+	 */
 	@Override
-	public void draw8x8BitmapFourColorBlock(int x, int y,
-			ByteMemoryAccess access, int rowstride) {
-		int lineStride = getLineStride();
+	public void draw8x8BitmapFourColorByte(int x, int y, ByteMemoryAccess access) {
 		int offs = getBitmapOffset(x, y);
 
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 2; j++) {
-				byte mem;
-				
-				byte pix;
-
-				mem = access.memory[access.offset + j];
-
-				pix = (byte) ((mem >> 6) & 0x3);
-				imageData.data[offs] = fourColorMap[0][pix];
-				
-				pix = (byte) ((mem >> 4) & 0x3);
-				imageData.data[offs + 1] = fourColorMap[1][pix];
-				
-				pix = (byte) ((mem >> 2) & 0x3);
-				imageData.data[offs + 2] = fourColorMap[0][pix];
-				
-				pix = (byte) (mem & 0x3);
-				imageData.data[offs + 3] = fourColorMap[1][pix];
-				
-				offs += 4;
-			}
+		for (int j = 0; j < 2; j++) {
+			byte mem;
 			
-			offs += lineStride - 2 * 4;
-			access.offset += rowstride;
+			byte pix;
+
+			mem = access.memory[access.offset + j];
+
+			pix = (byte) ((mem >> 6) & 0x3);
+			imageData.data[offs] = fourColorMap[0][pix];
+			
+			pix = (byte) ((mem >> 4) & 0x3);
+			imageData.data[offs + 1] = fourColorMap[1][pix];
+			
+			pix = (byte) ((mem >> 2) & 0x3);
+			imageData.data[offs + 2] = fourColorMap[0][pix];
+			
+			pix = (byte) (mem & 0x3);
+			imageData.data[offs + 3] = fourColorMap[1][pix];
+			
+			offs += 4;
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.video.IVdpCanvas#draw8x8BitmapRGB332ColorByte(int, int, v9t9.common.memory.ByteMemoryAccess)
+	 */
 	@Override
-	public void draw8x8BitmapRGB332ColorBlock(int x, int y,
-			ByteMemoryAccess access, int rowstride) {
-		int lineStride = getLineStride();
+	public void draw8x8BitmapRGB332ColorByte(int x, int y,
+			ByteMemoryAccess access) {
 		int offs = getBitmapOffset(x, y);
 		RGB rgb = new RGB(0, 0, 0);
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 8; j++) {
-				byte mem;
-				
-				mem = access.memory[access.offset + j];
-				
-				int ri = (mem >> 5) & 0x7;
-				rgb.red = V99ColorMapUtils.rgb3to8[ri] & 0xff;
-				int gi = (mem >> 2) & 0x7;
-				rgb.green = V99ColorMapUtils.rgb3to8[gi] & 0xff;
-				//int b = ColorMapUtils.rgb2to8[mem & 0x3] & 0xff;
-				int bi = mem & 0x3;
-				rgb.blue = V99ColorMapUtils.rgb3to8[bi*2 + ((ri|gi) & 1)] & 0xff;
-				
-				// XXX: no palette
-				byte pix = (byte) imageData.palette.getPixel(rgb);
-				imageData.data[offs++] = pix;
-			}
+		for (int j = 0; j < 8; j++) {
+			byte mem;
 			
-			offs += lineStride - 8;
-			access.offset += rowstride;
+			mem = access.memory[access.offset + j];
+			
+			int ri = (mem >> 5) & 0x7;
+			rgb.red = V99ColorMapUtils.rgb3to8[ri] & 0xff;
+			int gi = (mem >> 2) & 0x7;
+			rgb.green = V99ColorMapUtils.rgb3to8[gi] & 0xff;
+			//int b = ColorMapUtils.rgb2to8[mem & 0x3] & 0xff;
+			int bi = mem & 0x3;
+			rgb.blue = V99ColorMapUtils.rgb3to8[bi*2 + ((ri|gi) & 1)] & 0xff;
+			
+			// XXX: no palette
+			byte pix = (byte) imageData.palette.getPixel(rgb);
+			imageData.data[offs++] = pix;
 		}
 	}
 	

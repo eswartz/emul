@@ -98,9 +98,22 @@ public abstract class BaseVdpCanvas implements ICanvas {
 				if (block.c + 8 >= dx2) dx2 = block.c + 8;
 				if (block.r + 8 >= dy2) dy2 = Math.min(block.r + 8, maxY);
 			}
+			if (listener != null)
+				listener.canvasDirtied(this);
 		}
-		if (listener != null)
-			listener.canvasDirtied(this);
+	}
+
+	public synchronized void markDirtyRows(int from, int to) {
+		dx1 = 0;
+		dx2 = width;
+		if (dy1 <= from && dy2 >= to) {
+			// already dirty
+		} else {
+			dy1 = Math.min(from, dy1);
+			dy2 = Math.max(to, dy2);
+			if (listener != null)
+				listener.canvasDirtied(this);
+		}
 	}
 	
 	public synchronized void markDirty() {

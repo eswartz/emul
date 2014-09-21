@@ -28,27 +28,6 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 		super();
 	}
 
-	/**
-	 * Draw eight pixels in a row, where pixels corresponding to an "on"
-	 * bit in "mem" are painted with the "fg" color, otherwise with the "bg" color.
-	 * @param offs
-	 * @param mem
-	 * @param fg foreground; use 16 for the vdpreg[7] fg 
-	 * @param bg background; use 0 for the vdpreg[7] bg
-	 * @see #getBitmapOffset(int, int)
-	 */
-	abstract protected void drawEightPixels(int offs, byte mem, byte fg, byte bg); 
-	/**
-	 * Draw six pixels in a row, where pixels corresponding to an "on"
-	 * bit in "mem" are painted with the "fg" color, otherwise with the "bg" color.
-	 * @param offs
-	 * @param mem
-	 * @param fg foreground; use 16 for the vdpreg[7] fg 
-	 * @param bg background; use 0 for the vdpreg[7] bg
-	 * @see #getBitmapOffset(int, int)
-	 */
-	abstract protected void drawSixPixels(int offs, byte mem, byte fg, byte bg); 
-
 	/** Get an implementation-defined offset into the bitmap */ 
 	public abstract int getBitmapOffset(int x, int y);
 
@@ -109,6 +88,31 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 			byte bg = (byte) (color & 0xf);
 			drawEightPixels(offs, mem, fg, bg);
 			offs += bytesPerLine;
+		}
+	}
+
+	@Override
+	public void draw8x8BitmapTwoColorBlock(int x, int y,
+			ByteMemoryAccess access, int rowstride) {
+		for (int i = 0; i < 8; i++) {
+			draw8x8BitmapTwoColorByte(x, y + i, access);
+			access.offset += rowstride;
+		}
+	}
+	@Override
+	public void draw8x8BitmapRGB332ColorBlock(int x, int y,
+			ByteMemoryAccess access, int rowstride) {
+		for (int i = 0; i < 8; i++) {
+			draw8x8BitmapRGB332ColorByte(x, y + i, access);
+			access.offset += rowstride;
+		}
+	}
+	@Override
+	public void draw8x8BitmapFourColorBlock(int x, int y,
+			ByteMemoryAccess access, int rowstride) {
+		for (int i = 0; i < 8; i++) {
+			draw8x8BitmapFourColorByte(x, y + i, access);
+			access.offset += rowstride;
 		}
 	}
 

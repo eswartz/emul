@@ -10,6 +10,8 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
+import v9t9.common.memory.IMemoryEntry;
+
 
 class MemoryRow {
 	private int baseaddr;
@@ -29,7 +31,11 @@ class MemoryRow {
 	}
 
 	public final void putByte(int column, byte byt) {
-		range.getEntry().getDomain().writeByte(getAddress() + column, byt);
+		// write to entry directly to avoid banking issues
+		int addr = getAddress() + column;
+		IMemoryEntry entry = range.getEntry();
+		entry.writeByte(addr, byt);
+		entry.getDomain().fireWriteEvent(entry, addr, byt);
 	}
 
 	public final char getChar(int column) {

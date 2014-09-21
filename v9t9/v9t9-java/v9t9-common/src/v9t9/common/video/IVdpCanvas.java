@@ -26,7 +26,7 @@ public interface IVdpCanvas extends ICanvas {
 
 	void setSize(int width, int height, boolean interlacedEvenOdd);
 
-	int getBitmapOffset(int i, int j);
+	int getBitmapOffset(int x, int y);
 
 	boolean isInterlacedEvenOdd();
 
@@ -38,13 +38,32 @@ public interface IVdpCanvas extends ICanvas {
 	void clear();
 	void clearToEvenOddClearColors();
 
-	void setBlank(boolean b);
+//	void setBlank(boolean b);
 	
 	/** Get the virtual scanline */
 	int getCurrentY();
 	/** Get the virtual scanline */
 	void setCurrentY(int y);
-
+	/**
+	 * Draw eight pixels in a row, where pixels corresponding to an "on"
+	 * bit in "mem" are painted with the "fg" color, otherwise with the "bg" color.
+	 * @param offs
+	 * @param mem
+	 * @param fg foreground; use 16 for the vdpreg[7] fg 
+	 * @param bg background; use 0 for the vdpreg[7] bg
+	 * @see #getBitmapOffset(int, int)
+	 */
+	void drawEightPixels(int offs, byte mem, byte fg, byte bg); 
+	/**
+	 * Draw six pixels in a row, where pixels corresponding to an "on"
+	 * bit in "mem" are painted with the "fg" color, otherwise with the "bg" color.
+	 * @param offs
+	 * @param mem
+	 * @param fg foreground; use 16 for the vdpreg[7] fg 
+	 * @param bg background; use 0 for the vdpreg[7] bg
+	 * @see #getBitmapOffset(int, int)
+	 */
+	void drawSixPixels(int offs, byte mem, byte fg, byte bg); 
 	/**
 	 * Blit an 8x8 block defined by a pattern and a foreground/background color to the bitmap
 	 * @param r
@@ -77,6 +96,35 @@ public interface IVdpCanvas extends ICanvas {
 	void draw8x8MultiColorBlock(int r, int c,
 			ByteMemoryAccess pattern, ByteMemoryAccess colors);
 
+
+	/**
+	 * Draw 8x1 pixels from the given memory, arranged as
+	 * &lt;color;&gt;&lt;color&gt; in nybbles. 
+	 * @param offs
+	 * @param offs
+	 * @param access
+	 */
+	void draw8x8BitmapTwoColorByte(
+			int x, int y,
+			ByteMemoryAccess access);
+
+	/**
+	 * Draw 8x1 pixels from the given memory, arranged as
+	 * &lt;color;&gt;&lt;color&gt;&lt;color;&gt;&lt;color&gt; in two-bit pieces. 
+	 * @param offs
+	 * @param access
+	 */
+	void draw8x8BitmapFourColorByte(int x, int y,
+			ByteMemoryAccess access);
+
+	/**
+	 * Draw 8x1 pixels from the given memory, arranged as
+	 * RGB 3-3-2 pixels. 
+	 * @param offset
+	 * @param access
+	 */
+	void draw8x8BitmapRGB332ColorByte(int x, int y,
+			ByteMemoryAccess access);
 
 	/**
 	 * Draw an 8x8 block of pixels from the given memory, arranged as
@@ -134,5 +182,6 @@ public interface IVdpCanvas extends ICanvas {
 	VdpColorManager getColorMgr();
 	void setClearColor(int c);
 	void syncColors();
+
 
 }

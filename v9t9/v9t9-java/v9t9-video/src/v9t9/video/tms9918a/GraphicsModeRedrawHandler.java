@@ -14,7 +14,8 @@ import java.util.Arrays;
 
 import v9t9.common.video.RedrawBlock;
 import v9t9.video.BaseRedrawHandler;
-import v9t9.video.IVdpModeRedrawHandler;
+import v9t9.video.IVdpModeBlockRedrawHandler;
+import v9t9.video.IVdpModeRowRedrawHandler;
 import v9t9.video.VdpRedrawInfo;
 import v9t9.video.VdpTouchHandler;
 import v9t9.video.common.VdpModeInfo;
@@ -24,7 +25,8 @@ import v9t9.video.common.VdpModeInfo;
  * @author ejs
  *
  */
-public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements IVdpModeRedrawHandler {
+public class GraphicsModeRedrawHandler extends BaseRedrawHandler 
+	implements IVdpModeBlockRedrawHandler, IVdpModeRowRedrawHandler {
 
 	protected VdpTouchHandler modify_color_graphics = new VdpTouchHandler() {
 	
@@ -42,7 +44,7 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements IVdp
 		info.touch.color = modify_color_graphics;
 		info.touch.patt = modify_patt_default;
 	}
-		
+	
 	public void prepareUpdate() {
 		propagatePatternTouches();
 	}
@@ -79,5 +81,45 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements IVdp
 		}
 		return count;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#getCharsPerRow()
+	 */
+	@Override
+	public int getCharsPerRow() {
+		return 32;
+	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
+	 */
+	@Override
+	public void updateCanvas(int prevScanline, int currentScanline) {
+//		System.out.println("graphics: " + prevScanline + " - " + currentScanline);
+		int screenBase = modeInfo.screen.base;
+		
+		for (int y = prevScanline; y < currentScanline; y++) {
+			int roffs = (y >> 3) << 5;
+			for (int c = 0; c < 32; c++) {
+				int i = roffs + c;
+				if (!info.changes.screen.get(i)) 
+					continue;
+				
+				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
+	
+				byte color = (byte) info.vdp.readAbsoluteVdpMemory(modeInfo.color.base + (currchar >> 3));
+	
+				byte fg, bg;
+				
+				bg = (byte) (color & 0xf);
+				fg = (byte) ((color >> 4) & 0xf);
+				
+				int offs = info.canvas.getBitmapOffset(c * 8, y);
+				int pattAddr = (y & 7) + (modeInfo.patt.base + (currchar << 3));
+				info.canvas.drawEightPixels(
+						offs, info.vdp.readAbsoluteVdpMemory(pattAddr), 
+						fg, bg);
+			}
+		}
+	}
 }

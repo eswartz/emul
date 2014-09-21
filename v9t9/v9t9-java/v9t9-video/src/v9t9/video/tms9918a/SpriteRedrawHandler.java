@@ -33,7 +33,7 @@ import static v9t9.common.hardware.VdpTMS9918AConsts.*;
  * The advantages of this are efficiency of redrawing.
  * 
  * 1) Changes in the background do not affect the sprite redraw -- when such
- * blocks are changed normally, then the correspoding blocks from the sprite
+ * blocks are changed normally, then the corresponding blocks from the sprite
  * canvas are merely reblitted on top. 
  *
  * 2) Appropriate video renderers can avoid reblitting the background
@@ -250,6 +250,14 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	/* not done for sprites */
 	public int updateCanvas(RedrawBlock[] blocks) {
 		return 0;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRedrawHandler#getCharsPerRow()
+	 */
+	@Override
+	public int getCharsPerRow() {
+		return 32;
 	}
 	
 }

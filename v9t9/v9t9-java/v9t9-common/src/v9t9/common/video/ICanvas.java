@@ -56,5 +56,6 @@ public interface ICanvas {
 	void markDirty();
 
 	void markDirty(RedrawBlock[] blocks, int count);
+	void markDirtyRows(int prevScanline, int currentScanline);
 
 }

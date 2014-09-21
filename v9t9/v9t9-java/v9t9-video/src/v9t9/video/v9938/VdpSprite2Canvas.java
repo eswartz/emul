@@ -265,6 +265,9 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	}
 	
 	protected void blitSpriteCanvas(IVdpCanvas canvas, boolean fourColorMode) {
+		if (screenSpriteChanges == null)
+			return;
+		
 		// where the screen changed, we need to draw our sprite blocks
 		int blockStride = canvas.getVisibleWidth() / 8;
 		// 1 or 2 if 256 or 512 mode
