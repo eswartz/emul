@@ -359,11 +359,11 @@ TESTS!
 : snd ( i -- ) 
     dup  swpb dup  9 crshift  XOR swap  $7 and SOUND + c! 
 ;
-: delay 0 do
+: delay 
 [ [IFDEF] yield ]  
 	yield
-[ [THEN] ]	 
-loop ;
+[ [THEN] ]
+0 do loop ;
 
 : blast0
 0 0 do 
