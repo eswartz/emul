@@ -94,32 +94,52 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler
 	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
 	 */
 	@Override
-	public void updateCanvas(int prevScanline, int currentScanline) {
+	public void updateCanvasRow(int row, int col) {
 //		System.out.println("graphics: " + prevScanline + " - " + currentScanline);
 		int screenBase = modeInfo.screen.base;
 		
-		for (int y = prevScanline; y < currentScanline; y++) {
-			int roffs = (y >> 3) << 5;
-			for (int c = 0; c < 32; c++) {
-				int i = roffs + c;
-				if (!info.changes.screen.get(i)) 
-					continue;
-				
-				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
-	
-				byte color = (byte) info.vdp.readAbsoluteVdpMemory(modeInfo.color.base + (currchar >> 3));
-	
-				byte fg, bg;
-				
-				bg = (byte) (color & 0xf);
-				fg = (byte) ((color >> 4) & 0xf);
-				
-				int offs = info.canvas.getBitmapOffset(c * 8, y);
-				int pattAddr = (y & 7) + (modeInfo.patt.base + (currchar << 3));
-				info.canvas.drawEightPixels(
-						offs, info.vdp.readAbsoluteVdpMemory(pattAddr), 
-						fg, bg);
-			}
+		int roffs = (row >> 3) << 5;
+		for (int c = 0; c < 32; c++) {
+			int i = roffs + c;
+			if (!info.changes.screen.get(i)) 
+				continue;
+			
+			int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
+
+			byte color = (byte) info.vdp.readAbsoluteVdpMemory(modeInfo.color.base + (currchar >> 3));
+
+			byte fg, bg;
+			
+			bg = (byte) (color & 0xf);
+			fg = (byte) ((color >> 4) & 0xf);
+			
+			int offs = info.canvas.getBitmapOffset(c * 8, row);
+			int pattAddr = (row & 7) + (modeInfo.patt.base + (currchar << 3));
+			info.canvas.drawEightPixels(
+					offs, info.vdp.readAbsoluteVdpMemory(pattAddr), 
+					fg, bg);
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvasBlockRow(int)
+	 */
+	@Override
+	public void updateCanvasBlock(int screenOffs, int col, int row) {
+		int screenBase = modeInfo.screen.base;
+		int pattBase = modeInfo.patt.base;
+		
+		int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + screenOffs) & 0xff;
+
+		byte color = (byte) info.vdp.readAbsoluteVdpMemory(modeInfo.color.base + (currchar >> 3));
+
+		byte fg, bg;
+		
+		bg = (byte) (color & 0xf);
+		fg = (byte) ((color >> 4) & 0xf);
+		
+		int pattOffs = pattBase + (currchar << 3);
+		info.canvas.draw8x8TwoColorBlock(row, col, 
+				info.vdp.getByteReadMemoryAccess(pattOffs), fg, bg);
 	}
 }

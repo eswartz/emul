@@ -143,37 +143,58 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
 	 */
 	@Override
-	public void updateCanvas(int prevScanline, int currentScanline) {
+	public void updateCanvasRow(int row, int col) {
 //		System.out.println("bitmap: " + prevScanline + " - " + currentScanline);
 		
 		int screenBase = modeInfo.screen.base;
 		int pattBase = modeInfo.patt.base;
 		int colorBase = modeInfo.color.base;
 
-		for (int y = prevScanline; y < currentScanline; y++) {
-			int roffs = (y >> 3) << 5;
-			for (int c = 0; c < 32; c++) {
-				int i = roffs + c;
-				if (!info.changes.screen.get(i)) 
-					continue;
-	
-				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
-	
-				int pp, cp;
-				
-				pp = cp = (currchar + (i & 0x300)) << 3;
-				pp &= bitpattmask;
-				cp &= bitcolormask;
-				
-				byte patt = (byte) info.vdp.readAbsoluteVdpMemory(pattBase + pp + (y & 7));
-				byte color = (byte) info.vdp.readAbsoluteVdpMemory(colorBase + cp + (y & 7));
-				
-				int offs = info.canvas.getBitmapOffset(c * 8, y);
-				info.canvas.drawEightPixels(
-						offs, patt, 
-						(byte) ((color >> 4) & 0xf), (byte) (color & 0xf));
-			}
+		int roffs = (row >> 3) << 5;
+		for (int c = 0; c < 32; c++) {
+			int i = roffs + c;
+			if (!info.changes.screen.get(i)) 
+				continue;
+
+			int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+
+			int pp, cp;
+			
+			pp = cp = (currchar + (i & 0x300)) << 3;
+			pp &= bitpattmask;
+			cp &= bitcolormask;
+			
+			byte patt = (byte) info.vdp.readAbsoluteVdpMemory(pattBase + pp + (row & 7));
+			byte color = (byte) info.vdp.readAbsoluteVdpMemory(colorBase + cp + (row & 7));
+			
+			int offs = info.canvas.getBitmapOffset(c * 8, row);
+			info.canvas.drawEightPixels(
+					offs, patt, 
+					(byte) ((color >> 4) & 0xf), (byte) (color & 0xf));
 		}
 		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvasBlockRow(int)
+	 */
+	@Override
+	public void updateCanvasBlock(int screenOffs, int col, int row) {
+
+		int screenBase = modeInfo.screen.base;
+		int pattBase = modeInfo.patt.base;
+		int colorBase = modeInfo.color.base;
+
+		int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + screenOffs) & 0xff;	/* char # to update */
+
+		int pp, cp;
+		
+		pp = cp = (currchar + (screenOffs & 0x300)) << 3;
+		pp &= bitpattmask;
+		cp &= bitcolormask;
+		
+		info.canvas.draw8x8MultiColorBlock(row, col, 
+				info.vdp.getByteReadMemoryAccess(pattBase + pp),
+				info.vdp.getByteReadMemoryAccess(colorBase + cp));
 	}
 }

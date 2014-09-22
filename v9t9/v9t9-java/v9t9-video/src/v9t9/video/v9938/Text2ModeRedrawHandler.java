@@ -166,30 +166,77 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
 	 */
 	@Override
-	public void updateCanvas(int prevScanline, int currentScanline) {
+	public void updateCanvasRow(int row, int col) {
 //		System.out.println("text2: " + prevScanline + " - " + currentScanline);
+		
 		int screenBase = modeInfo.screen.base;
 		
+		// normal text colors
+		byte tfg, tbg;
+		// blinky colors
+		byte bfg, bbg;
+		
+		tbg = (byte) (info.vdpregs[7] & 0xf);
+		tfg = (byte) ((info.vdpregs[7] >> 4) & 0xf);
+		
+		bbg = (byte) (info.vdpregs[12] & 0xf);
+		bfg = (byte) ((info.vdpregs[12] >> 4) & 0xf);
+		
+		int roffs = (row >> 3) * 80;
+		for (int c = 0; c < 80; c++) {
+			int i = roffs + c;
+			if (!info.changes.screen.get(i)) 
+				continue;
+			
+			int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
+			
+			int offs = info.canvas.getBitmapOffset(c * 6 + (512 - 480) / 2, row);
+			int pattAddr = (row & 7) + (modeInfo.patt.base + (currchar << 3));
+			
+			byte fg, bg;
+			fg = tfg; bg = tbg;
+
+			if (blinkOn) {
+				byte blinkMap = info.vdp.readAbsoluteVdpMemory(modeInfo.color.base + (i >> 3));
+				
+				if ((blinkMap & (0x80 >> (i & 7))) != 0) {
+					fg = bfg; bg = bbg;
+				}
+			}
+			
+			info.canvas.drawSixPixels(
+					offs, info.vdp.readAbsoluteVdpMemory(pattAddr), 
+					fg, bg);
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvasBlock(int, int, int)
+	 */
+	@Override
+	public void updateCanvasBlock(int screenOffs, int col, int row) {
+		int currchar = info.vdp.readAbsoluteVdpMemory(modeInfo.screen.base + screenOffs) & 0xff;	/* char # to update */
+		int pattOffs = modeInfo.patt.base + (currchar << 3);
+		
 		byte fg, bg;
-		
-		bg = (byte) (info.vdpregs[7] & 0xf);
-		fg = (byte) ((info.vdpregs[7] >> 4) & 0xf);
-		
-		for (int y = prevScanline; y < currentScanline; y++) {
-			int roffs = (y >> 3) * 80;
-			for (int c = 0; c < 80; c++) {
-				int i = roffs + c;
-				if (!info.changes.screen.get(i)) 
-					continue;
-				
-				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
-				
-				int offs = info.canvas.getBitmapOffset(c * 6 + (512 - 480) / 2, y);
-				int pattAddr = (y & 7) + (modeInfo.patt.base + (currchar << 3));
-				info.canvas.drawSixPixels(
-						offs, info.vdp.readAbsoluteVdpMemory(pattAddr), 
-						fg, bg);
+
+		boolean isBlink = false;
+		if (blinkOn) {
+			byte blinkMap = info.vdp.readAbsoluteVdpMemory(modeInfo.color.base + (screenOffs >> 3));
+			
+			if ((blinkMap & (0x80 >> (screenOffs & 7))) != 0) {
+				isBlink = true;
 			}
 		}
+		if (isBlink) {
+			bg = (byte) (info.vdpregs[12] & 0xf);
+			fg = (byte) ((info.vdpregs[12] >> 4) & 0xf);
+		} else {
+			bg = (byte) (info.vdpregs[7] & 0xf);
+			fg = (byte) ((info.vdpregs[7] >> 4) & 0xf);
+		}
+		info.canvas.draw8x6TwoColorBlock(row, col, 
+				info.vdp.getByteReadMemoryAccess(pattOffs), 
+				fg, bg);		
 	}
 }

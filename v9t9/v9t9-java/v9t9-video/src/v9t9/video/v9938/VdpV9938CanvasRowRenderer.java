@@ -10,8 +10,11 @@ import java.util.BitSet;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
+import v9t9.common.hardware.VdpTMS9918AConsts;
+import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.video.IVdpModeRedrawHandler;
 import v9t9.video.IVdpModeRowRedrawHandler;
+import v9t9.video.tms9918a.VdpTMS9918ACanvasRowRenderer;
 
 /**
  * @author ejs
@@ -128,7 +131,7 @@ public class VdpV9938CanvasRowRenderer extends BaseVdpV9938CanvasRenderer {
 					}
 				}
 				
-				if (scanlineWrapped) {
+				if (scanlineWrapped && prevScanline < vdpCanvas.getHeight()) {
 					updateRows(prevScanline, vdpCanvas.getHeight());
 					prevScanline = 0;
 				}
@@ -162,19 +165,20 @@ public class VdpV9938CanvasRowRenderer extends BaseVdpV9938CanvasRenderer {
 	}
 	
 
-	/**
-	 * @param prevScanline2
-	 * @param to
-	 */
 	private void updateRows(int from, int to) {
-		int per = vdpModeRedrawHandler.getCharsPerRow();
-		vdpModeRedrawHandler.updateCanvas(from, to);
-		
-		touchedRows.clear(from, to);
-		vdpCanvas.markDirtyRows(from, to);
-		for (int r = (from + 7)  >> 3; r < (to >> 3); r++) {
-			vdpChanges.screen.clear(r * per, (r + 1) * per);
-		}
+		VdpTMS9918ACanvasRowRenderer.updateRows(
+				vdpModeRedrawHandler, vdpCanvas, vdpChanges, vdpregs, touchedRows,
+				isTextMode(),
+					from, to);
+	}
+
+	/**
+	 * @return
+	 */
+	protected boolean isTextMode() {
+		return modeNumber == VdpV9938Consts.MODE_TEXT2
+				|| ((vdpregs[1] & VdpTMS9918AConsts.R1_M1) != 0
+					&& modeNumber <= VdpTMS9918AConsts.MODE_LAST_STANDARD); 
 	}
 
 }

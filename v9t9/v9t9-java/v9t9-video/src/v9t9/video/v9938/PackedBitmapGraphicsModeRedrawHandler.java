@@ -106,24 +106,24 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 			
 			block.c = (i % blockstride) << 3;
 
-			drawBlock(block, 0, false);
+			drawBlock(block.r, block.c, 0, false);
 			
 			// when interlacing, each row is technically twice as wide
 			// and the interlaced rows are on the "right" side of the bitmap
 			if (interlacedEvenOdd) {
-				drawBlock(block, pageOffset ^ graphicsPageSize, true);
+				drawBlock(block.r, block.c, pageOffset ^ graphicsPageSize, true);
 			}
 		}
 		return count;
 	}
 
-	abstract protected void drawBlock(RedrawBlock block, int pageOffset, boolean interlaced);
+	abstract protected void drawBlock(int r, int c, int pageOffset, boolean interlaced);
 	
 	/* (non-Javadoc)
 	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
 	 */
 	@Override
-	public void updateCanvas(int prevScanline, int currentScanline) {
+	public void updateCanvasRow(int row, int col) {
 		/*  Redraw 8x8 blocks where pixels changed */
 		IVdpV9938 vdp9938 = (IVdpV9938)info.vdp;
 		boolean interlacedEvenOdd = vdp9938.isInterlacedEvenOdd();
@@ -131,22 +131,38 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 		
 //		System.out.println("packed: " + prevScanline + " - " + currentScanline);
 		
-		for (int y = prevScanline; y < currentScanline; y++) {
-			int roffs = (y >> 3) * blockstride;
-			for (int c = 0; c < blockstride; c++) {
-				int i = roffs + c;
-				if (!info.changes.screen.get(i)) 
-					continue;
-				
-				drawPixels(c * 8, y, 0, false);
-				
-				// when interlacing, each row is technically twice as wide
-				// and the interlaced rows are on the "right" side of the bitmap
-				if (interlacedEvenOdd) {
-					drawPixels(c * 8, y, pageOffset ^ graphicsPageSize, true);
-				}
+		int roffs = (row >> 3) * blockstride;
+		for (int c = 0; c < blockstride; c++) {
+			int i = roffs + c;
+			if (!info.changes.screen.get(i)) 
+				continue;
+			
+			drawPixels(c * 8, row, 0, false);
+			
+			// when interlacing, each row is technically twice as wide
+			// and the interlaced rows are on the "right" side of the bitmap
+			if (interlacedEvenOdd) {
+				drawPixels(c * 8, row, pageOffset ^ graphicsPageSize, true);
 			}
-		}		
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvasBlock(int, int, int)
+	 */
+	@Override
+	public void updateCanvasBlock(int screenOffs, int col, int row) {
+		IVdpV9938 vdp9938 = (IVdpV9938)info.vdp;
+		boolean interlacedEvenOdd = vdp9938.isInterlacedEvenOdd();
+		int graphicsPageSize = vdp9938.getGraphicsPageSize();
+		
+		drawBlock(row, col, 0, false);
+		
+		// when interlacing, each row is technically twice as wide
+		// and the interlaced rows are on the "right" side of the bitmap
+		if (interlacedEvenOdd) {
+			drawBlock(row, col, pageOffset ^ graphicsPageSize, true);
+		}
 	}
 	
 	abstract protected void drawPixels(int x, int y, int pageOffset, boolean interlaced);

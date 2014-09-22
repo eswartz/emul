@@ -16,10 +16,7 @@ package v9t9.video;
  *
  */
 public interface IVdpModeRowRedrawHandler extends IVdpModeRedrawHandler {
-	/**
-	 * @param prevScanline
-	 * @param currentScanline
-	 */
-	void updateCanvas(int prevScanline, int currentScanline);
+	void updateCanvasRow(int row, int col);
+	void updateCanvasBlock(int screenOffs, int col, int row);
 
 }

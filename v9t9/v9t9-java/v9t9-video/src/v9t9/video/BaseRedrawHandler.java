@@ -10,6 +10,7 @@
  */
 package v9t9.video;
 
+import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.video.common.VdpModeInfo;
 
 
@@ -33,6 +34,13 @@ public abstract class BaseRedrawHandler implements IVdpModeBlockRedrawHandler {
 	protected final VdpRedrawInfo info;
 	protected final VdpModeInfo modeInfo;
 
+	protected static byte[] solidBlockMem = { 
+		(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff,
+		(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff,
+	};
+	public static ByteMemoryAccess solidBlockPattern = new ByteMemoryAccess(
+			solidBlockMem, 0);
+	
 	public BaseRedrawHandler(VdpRedrawInfo info, VdpModeInfo vdpModeInfo) {
 		this.info = info;
 		this.modeInfo = vdpModeInfo;

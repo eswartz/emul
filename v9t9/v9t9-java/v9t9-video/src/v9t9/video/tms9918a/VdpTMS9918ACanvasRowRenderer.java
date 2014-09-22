@@ -17,6 +17,10 @@ import java.util.BitSet;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
+import v9t9.common.hardware.VdpTMS9918AConsts;
+import v9t9.common.video.IVdpCanvas;
+import v9t9.common.video.VdpChanges;
+import v9t9.video.BaseRedrawHandler;
 import v9t9.video.IVdpModeRedrawHandler;
 import v9t9.video.IVdpModeRowRedrawHandler;
 
@@ -132,7 +136,7 @@ public class VdpTMS9918ACanvasRowRenderer extends BaseVdpTMS9918ACanvasRenderer 
 		if (!vdpChanges.changed)
 			return false;
 		//System.out.println(System.currentTimeMillis());
-		if (vdpModeRedrawHandler != null) {
+		if (vdpModeRedrawHandler != null && vdpModeInfo != null) {
 			//long start = System.currentTimeMillis();
 
 			// don't let video rendering happen in middle of updating
@@ -202,19 +206,94 @@ public class VdpTMS9918ACanvasRowRenderer extends BaseVdpTMS9918ACanvasRenderer 
 	}
 	
 
-	/**
-	 * @param prevScanline2
-	 * @param to
-	 */
 	private void updateRows(int from, int to) {
+		updateRows(vdpModeRedrawHandler, vdpCanvas, vdpChanges, vdpregs, touchedRows,
+				isTextMode(),
+				from, to);
+	}
+
+	/**
+	 * @return
+	 */
+	protected boolean isTextMode() {
+		return (vdpregs[1] & VdpTMS9918AConsts.R1_M1) != 0;
+	}
+
+	//	/**
+//	 * @param prevScanline2
+//	 * @param to
+//	 */
+//	private void updateRows(int from, int to) {
+//		int per = vdpModeRedrawHandler.getCharsPerRow();
+//		for (int y = from; y < to; y++) {
+//			vdpModeRedrawHandler.updateCanvasRow(y);
+//		}
+//		
+//		touchedRows.set(from, to, false);
+//		vdpCanvas.markDirtyRows(from, to);
+//		for (int r = (from + 7)  >> 3; r < (to >> 3); r++) {
+//			vdpChanges.screen.set(r * per, (r + 1) * per, false);
+//		}
+//	}
+	public static void updateRows(IVdpModeRowRedrawHandler vdpModeRedrawHandler,
+			IVdpCanvas vdpCanvas,
+			VdpChanges vdpChanges,
+			byte[] vdpregs,
+			BitSet touchedRows,
+			boolean isTextMode,
+			int from, int to) {
 		int per = vdpModeRedrawHandler.getCharsPerRow();
-		vdpModeRedrawHandler.updateCanvas(from, to);
+
+		int fromRow = ((from + 7) >> 3) << 3;
+		int toRow = (to >> 3) << 3;
 		
-		touchedRows.set(from, to, false);
-		vdpCanvas.markDirtyRows(from, to);
-		for (int r = (from + 7)  >> 3; r < (to >> 3); r++) {
-			vdpChanges.screen.set(r * per, (r + 1) * per, false);
+		int perCol = isTextMode ? 6 : 8; 
+		int colOffs = perCol == 6 ? (vdpCanvas.getWidth() - 6 * per) / 2 : 0;
+		
+		for (int c = 0; c < per; c++) {
+			int col = c * perCol + colOffs;
+			if (from < fromRow) {
+				int rowOffs = fromRow * per;
+				if (vdpChanges.screen.get(rowOffs + c)) {
+					for (int y = from; y < fromRow; y++) {
+						vdpModeRedrawHandler.updateCanvasRow(y, col);
+					}
+				}
+			}
+			if (to < toRow) {
+				int rowOffs = toRow * per;
+				if (vdpChanges.screen.get(rowOffs + c)) {
+					for (int y = toRow; y < to; y++) {
+						vdpModeRedrawHandler.updateCanvasRow(y, col);
+					}
+				}
+			}
+			byte bg = (byte) ((vdpregs[7]) & 0xf);
+			for (int y = fromRow; y < toRow; y += 8) {
+				int r = y >> 3;
+				int rowOffs = r * per;
+				if (vdpChanges.screen.get(rowOffs + c)) {
+					if (colOffs > 0) {
+						// backdrop?
+						if (c == 0) {
+							vdpCanvas.draw8x8TwoColorBlock(y, 0, BaseRedrawHandler.solidBlockPattern, bg, bg);
+							if (per > 40)
+								vdpCanvas.draw8x8TwoColorBlock(y, 8, BaseRedrawHandler.solidBlockPattern, bg, bg);
+						}
+						if (c == per - 1) {
+							vdpCanvas.draw8x8TwoColorBlock(y, col + perCol, BaseRedrawHandler.solidBlockPattern, bg, bg);
+							if (per > 40)
+								vdpCanvas.draw8x8TwoColorBlock(y, col + perCol + 8, BaseRedrawHandler.solidBlockPattern, bg, bg);
+						}
+					}
+					vdpModeRedrawHandler.updateCanvasBlock(rowOffs + c, col, y);
+					vdpChanges.screen.clear(rowOffs + c);
+				}
+			}
 		}
+		
+		touchedRows.clear(from, to);
+		vdpCanvas.markDirtyRows(from, to);
 	}
 
 	

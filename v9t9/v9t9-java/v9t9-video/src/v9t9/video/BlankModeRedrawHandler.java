@@ -10,6 +10,7 @@
  */
 package v9t9.video;
 
+import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.RedrawBlock;
 import v9t9.video.common.VdpModeInfo;
 
@@ -55,18 +56,28 @@ public class BlankModeRedrawHandler extends BaseRedrawHandler implements
 	}
 
 	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvasBlockRow(int)
+	 */
+	@Override
+	public void updateCanvasBlock(int screenOffs, int col, int row) {
+
+		byte bg = (byte) ((info.vdpregs[7] ) & 0xf);
+		for (int x = 0; x < getCharsPerRow(); x++) {
+			info.canvas.draw8x8TwoColorBlock(row, x * 8, solidBlockPattern, bg, bg);
+		}		
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
 	 */
 	@Override
-	public void updateCanvas(int prevScanline, int currentScanline) {
+	public void updateCanvasRow(int row, int col) {
 //		System.out.println("blank: " + prevScanline + " - " + currentScanline);
 		
 		byte bg = (byte) ((info.vdpregs[7] ) & 0xf);
-		for (int line = prevScanline; line < currentScanline; line++) {
-			int rowOffs = info.canvas.getBitmapOffset(0, line); 
-			for (int x = info.canvas.getWidth() - 8; x >= 0; x -= 8) {
-				info.canvas.drawEightPixels(rowOffs + x, (byte) 0xff, bg, bg);
-			}
+		int rowOffs = info.canvas.getBitmapOffset(0, row); 
+		for (int x = info.canvas.getWidth() - 8; x >= 0; x -= 8) {
+			info.canvas.drawEightPixels(rowOffs + x, (byte) 0xff, bg, bg);
 		}
 	}
 }

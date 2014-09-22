@@ -10,7 +10,6 @@
  */
 package v9t9.video.v9938;
 
-import v9t9.common.video.RedrawBlock;
 import v9t9.video.VdpRedrawInfo;
 import v9t9.video.common.VdpModeInfo;
 
@@ -40,12 +39,12 @@ public class Graphics5ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		colshift = 2; 
 	}
 	
-	protected void drawBlock(RedrawBlock block, int pageOffset, boolean interlaced) {
+	protected void drawBlock(int r, int c, int pageOffset, boolean interlaced) {
 		info.canvas.draw8x8BitmapFourColorBlock(
-				block.c + (interlaced ? 512 : 0), block.r,
+				c + (interlaced ? 512 : 0), r,
 			 info.vdp.getByteReadMemoryAccess(
 					(modeInfo.patt.base 
-					+ rowstride * block.r + (block.c >> 2)) ^ pageOffset),
+					+ rowstride * r + (c >> 2)) ^ pageOffset),
 			rowstride);
 	}
 	

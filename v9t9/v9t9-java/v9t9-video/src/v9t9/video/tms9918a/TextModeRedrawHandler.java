@@ -91,7 +91,7 @@ public class TextModeRedrawHandler extends BaseRedrawHandler implements
 	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvas(int, int)
 	 */
 	@Override
-	public void updateCanvas(int prevScanline, int currentScanline) {
+	public void updateCanvasRow(int row, int col) {
 //		System.out.println("text: " + prevScanline + " - " + currentScanline);
 		int screenBase = modeInfo.screen.base;
 		
@@ -101,35 +101,62 @@ public class TextModeRedrawHandler extends BaseRedrawHandler implements
 		fg = (byte) ((info.vdpregs[7] >> 4) & 0xf);
 		
 		int centerOffs = (256 - 240) / 2;
-		for (int y = prevScanline; y < currentScanline; y++) {
-			int roffs = (y >> 3) * 40;
-			boolean anyOnRow = false;
-			for (int c = 0; c < 40; c++) {
-				int i = roffs + c;
-				if (!info.changes.screen.get(i)) 
-					continue;
-				
-				if (!anyOnRow) {
-					// draw backdrop
-					anyOnRow = true;
-					info.canvas.drawEightPixels(
-							info.canvas.getBitmapOffset(0, y),
-							(byte) 0x00, 
-							fg, bg);
-					info.canvas.drawEightPixels(
-							info.canvas.getBitmapOffset(centerOffs + 240, y),
-							(byte) 0x00, 
-							fg, bg);
-				}
-				
-				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
-				
-				int offs = info.canvas.getBitmapOffset(c * 6 + centerOffs, y);
-				int pattAddr = (y & 7) + (modeInfo.patt.base + (currchar << 3));
-				info.canvas.drawSixPixels(
-						offs, info.vdp.readAbsoluteVdpMemory(pattAddr), 
+		int roffs = (row >> 3) * 40;
+		boolean anyOnRow = false;
+		for (int c = 0; c < 40; c++) {
+			int i = roffs + c;
+			if (!info.changes.screen.get(i)) 
+				continue;
+			
+			if (!anyOnRow) {
+				// draw backdrop
+				anyOnRow = true;
+				info.canvas.drawEightPixels(
+						info.canvas.getBitmapOffset(0, row),
+						(byte) 0x00, 
+						fg, bg);
+				info.canvas.drawEightPixels(
+						info.canvas.getBitmapOffset(centerOffs + 240, row),
+						(byte) 0x00, 
 						fg, bg);
 			}
+			
+			int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
+			
+			int offs = info.canvas.getBitmapOffset(c * 6 + centerOffs, row);
+			int pattAddr = (row & 7) + (modeInfo.patt.base + (currchar << 3));
+			info.canvas.drawSixPixels(
+					offs, info.vdp.readAbsoluteVdpMemory(pattAddr), 
+					fg, bg);
 		}
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.video.IVdpModeRowRedrawHandler#updateCanvasBlockRow(int)
+	 */
+	@Override
+	public void updateCanvasBlock(int screenOffs, int col, int row) {
+		int screenBase = modeInfo.screen.base;
+		int pattBase = modeInfo.patt.base;
+		
+		byte fg, bg;
+		
+		bg = (byte) (info.vdpregs[7] & 0xf);
+		fg = (byte) ((info.vdpregs[7] >> 4) & 0xf);
+		
+//		int centerOffs = (256 - 240) / 2;
+//		
+//		// draw backdrop
+//		if (col == 0)
+//			info.canvas.draw8x8TwoColorBlock(row, 0, solidBlockPattern, bg, bg);
+//		if (col == 240 - 6)
+//			info.canvas.draw8x8TwoColorBlock(row, centerOffs + 240, solidBlockPattern, bg, bg);
+//		
+		int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + screenOffs) & 0xff;
+		
+		int pattOffs = pattBase + (currchar << 3);
+		info.canvas.draw8x6TwoColorBlock(row, col, 
+				info.vdp.getByteReadMemoryAccess(pattOffs), fg, bg);
 	}
 }
