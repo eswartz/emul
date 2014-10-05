@@ -109,7 +109,7 @@ include cold.fi
 \   This directly sets VR14 without saving it off (unlike vwreg).
 \
 : vsetbank  ( vaddr -- addr-16k )
-    dup 14 urshift 
+    dup &14 urshift 
     $8E00 OR  VDPWA !
     $3fff AND
 ;
@@ -439,6 +439,36 @@ $10 c, &96 c, $20 c,
 			vwaddr
 		loop
 	again	
+;
+
+create Ball $3c7e , $ffff , $ffff , $7e3c ,
+
+: sprtest
+	1 mode
+	ints-off
+	
+	\ make a pattern
+	Ball  >vsprpat &132 8 * +  8 cvmove
+	
+	\ make random sprites
+	>vsprites !vwaddr
+	&32 0 do 
+		&192 rnd  ,vc
+		&255 rnd  ,vc 
+		&132      ,vc
+		&14 rnd 1+  ,vc
+	loop
+	
+	\ move some sprites
+	>vsprmot !vwaddr
+	&8 0 do 
+		$04 ,vc
+		$01 ,vc
+		0 ,vc 0 ,vc
+	loop
+		
+	ints-on  	
+	thaw
 ;
 
 : hexes

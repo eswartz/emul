@@ -1,3 +1,27 @@
+
+1  <EXPORT
+
+: >vscreen	vscreen @ ;
+: >vscreensz vscreensz @ ;
+: >vpatts vpatts @ ;
+: >vpattsz vpattsz @ ;
+: >vcolors vcolors @ ;
+: >vcolorsz vcolorsz @ ;
+: >vsprites vsprites @ ;
+: >vsprcol vsprcol @ ;
+: >vsprpat vsprpat @ ;
+: >vsprmot vsprmot @ ;
+: >vfree vfree @ ;
+
+EXPORT>
+
+| : vflagoff vintflags c@  swap nand  vintflags c! ;
+| : vflagon vintflags c@  or vintflags c! ;
+: thaw  v-int-nosprmot vflagoff  $20 nsprmot c! ;
+: freeze  v-int-nosprmot vflagon ;
+
+: ,vc  ( val -- ) VDPWD c! ; 
+
 Code (mode) ( mode# -- )
 	rTOS		VIDEO^	,XOP  	#v.mode ,
 	POP
@@ -20,3 +44,12 @@ end-code
 	cls
 	false vblank
 ;
+
+Code vfgbg! ( fg bg -- )
+	rTOS		rTMP	,MOV
+	POP
+	rTOS		8		,SLA
+	rTMP		rTOS	,SOC
+	rTOS		VIDEO^	,XOP  	#v.fgbg! ,
+	POP
+end-code

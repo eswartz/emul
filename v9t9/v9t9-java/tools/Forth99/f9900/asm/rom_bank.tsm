@@ -215,6 +215,7 @@ sinit
 ;===========================================================================
 	
 	assert	_SharedRAMEnd <= _WPs
+	assert	_SharedRAM < _SharedRAMEnd
 	assert	_RAMEND >= _RAM		; not overflowed 
 	assert	_RAMEND <= _SharedRAM	; not overflowed
 	
