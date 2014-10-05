@@ -139,7 +139,7 @@ public class ChangeBlock9900 extends ChangeBlock {
 			if (mop2 != null && mop2.type != IMachineOperand.OP_NONE) {
 				mopState2 = nextMachineOperandState(mop2);
 				fetch(mop2, mopState2);
-				if (inst.getInst() == Inst9900.Impy || inst.getInst() == InstTableCommon.Iticks) {
+				if (inst.getInst() == Inst9900.Impy) {
 					MachineOperand9900 mop3 = new MachineOperand9900(MachineOperand9900.OP_REG);
 					mop3.val = mop2.val + 1;
 					mop3.dest = MachineOperand9900.OP_DEST_KILLED;
@@ -153,6 +153,14 @@ public class ChangeBlock9900 extends ChangeBlock {
 					mopState3 = nextMachineOperandState(mop3);
 					fetch(mop3, mopState3);
 				}
+				else if (inst.getInst() == InstTableCommon.Iticks) {
+					mop2 = new MachineOperand9900(MachineOperand9900.OP_REG);
+					mop2.val = mop1.val + 1;
+					mop2.dest = MachineOperand9900.OP_DEST_KILLED;
+					mopState2 = nextMachineOperandState(mop2);
+					fetch(mop2, mopState2);
+				}
+
 			}
 		}
 	}
