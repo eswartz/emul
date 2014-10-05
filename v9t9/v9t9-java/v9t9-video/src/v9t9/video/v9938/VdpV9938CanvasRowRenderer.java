@@ -93,7 +93,7 @@ public class VdpV9938CanvasRowRenderer extends BaseVdpV9938CanvasRenderer {
 	public synchronized boolean update() {
 		// changes usually handled immediately
 		flushVdpChanges(vdpModeRedrawHandler);
-		if (!vdpChanges.changed)
+		if (!vdpChanges.changed || vdpModeInfo == null)
 			return false;
 		//System.out.println(System.currentTimeMillis());
 		if (vdpModeRedrawHandler != null) {

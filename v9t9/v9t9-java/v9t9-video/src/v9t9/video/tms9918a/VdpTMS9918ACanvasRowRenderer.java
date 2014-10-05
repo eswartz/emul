@@ -250,6 +250,60 @@ public class VdpTMS9918ACanvasRowRenderer extends BaseVdpTMS9918ACanvasRenderer 
 		int perCol = isTextMode ? 6 : 8; 
 		int colOffs = perCol == 6 ? (vdpCanvas.getWidth() - 6 * per) / 2 : 0;
 		
+		if (from < fromRow) {
+			int col = colOffs;
+			int rowOffs = fromRow * per;
+			for (int c = 0; c < per; c++) {
+				if (vdpChanges.screen.get(rowOffs + c)) {
+					for (int y = from; y < fromRow; y++) {
+						vdpModeRedrawHandler.updateCanvasRow(y, col);
+					}
+				}
+				col += perCol;
+			}
+		}
+		if (to < toRow) {
+			int col = colOffs;
+			int rowOffs = toRow * per;
+			for (int c = 0; c < per; c++) {
+				if (vdpChanges.screen.get(rowOffs + c)) {
+					for (int y = toRow; y < to; y++) {
+						vdpModeRedrawHandler.updateCanvasRow(y, col);
+					}
+				}
+				col += perCol;
+			}
+		}
+		byte bg = (byte) ((vdpregs[7]) & 0xf);
+		for (int c = 0; c < per; c++) {
+			int col = c * perCol + colOffs;
+			int r = fromRow >> 3;
+			int rowOffs = r * per;
+			for (int y = fromRow; y < toRow; y += 8) {
+				if (vdpChanges.screen.get(rowOffs + c)) {
+					if (colOffs > 0) {
+						// backdrop?
+						if (c == 0) {
+							vdpCanvas.draw8x8TwoColorBlock(y, 0, BaseRedrawHandler.solidBlockPattern, bg, bg);
+							if (per > 40)
+								vdpCanvas.draw8x8TwoColorBlock(y, 8, BaseRedrawHandler.solidBlockPattern, bg, bg);
+						}
+						if (c == per - 1) {
+							vdpCanvas.draw8x8TwoColorBlock(y, col + perCol, BaseRedrawHandler.solidBlockPattern, bg, bg);
+							if (per > 40)
+								vdpCanvas.draw8x8TwoColorBlock(y, col + perCol + 8, BaseRedrawHandler.solidBlockPattern, bg, bg);
+						}
+					}
+					vdpModeRedrawHandler.updateCanvasBlock(rowOffs + c, col, y);
+					vdpChanges.screen.clear(rowOffs + c);
+				}
+				r++;
+				rowOffs += per;
+			}
+		}
+		
+		/*
+
 		for (int c = 0; c < per; c++) {
 			int col = c * perCol + colOffs;
 			if (from < fromRow) {
@@ -292,6 +346,7 @@ public class VdpTMS9918ACanvasRowRenderer extends BaseVdpTMS9918ACanvasRenderer 
 			}
 		}
 		
+		 */
 		touchedRows.clear(from, to);
 		vdpCanvas.markDirtyRows(from, to);
 	}

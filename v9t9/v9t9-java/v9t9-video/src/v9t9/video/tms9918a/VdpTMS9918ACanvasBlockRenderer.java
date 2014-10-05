@@ -19,7 +19,6 @@ import v9t9.common.client.IVideoRenderer;
 import v9t9.common.video.RedrawBlock;
 import v9t9.video.IVdpModeBlockRedrawHandler;
 import v9t9.video.IVdpModeRedrawHandler;
-import v9t9.video.common.VdpModeInfo;
 
 /**
  * This is a renderer for the TI-99/4A VDP chip which renders to an IVdpCanvas
@@ -40,7 +39,7 @@ public class VdpTMS9918ACanvasBlockRenderer extends BaseVdpTMS9918ACanvasRendere
 	 */
 	@Override
 	protected void setModeRedrawHandler(IVdpModeRedrawHandler redrawHandler) {
-		this.vdpModeInfo = (VdpModeInfo) redrawHandler;
+		this.vdpModeRedrawHandler = (IVdpModeBlockRedrawHandler) redrawHandler;
 	}
 	/** preinitialize the update blocks with the sizes for this mode */
 	protected void initUpdateBlocks(int blockWidth) {
