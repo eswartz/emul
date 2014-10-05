@@ -979,7 +979,10 @@ public class InstTable9900 {
     			
 			default:
 				// TODO: other extended instructions
-				assert false;
+				inst.setInst(InstTableCommon.Idata);
+				mop1.type = MachineOperand9900.OP_IMMED;
+    			mop1.val = op;
+				break;
             }
     
         } else if (op < 0x2000) {
