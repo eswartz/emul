@@ -27,4 +27,8 @@ public interface IDeviceIndicatorProvider {
 	int getActiveIconIndex();
 	String getToolTip();
 	IProperty getActiveProperty();
+	
+	/** Get settings groups to edit for the provider, e.g. IDsrHandler#GROUP... */
+	String[] getGroups();
+	String getTitle();
 }

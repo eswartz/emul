@@ -1,5 +1,5 @@
 /*
-  DiskSelectorDialog.java
+  DeviceSelectorDialog.java
 
   (c) 2012 Edward Swartz
 
@@ -26,6 +26,7 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
@@ -40,27 +41,27 @@ import v9t9.gui.client.swt.shells.IToolShellFactory;
 import ejs.base.properties.IProperty;
 
 /**
- * Select and set up disks
+ * Edit settings from DSR groups
  * @author ejs
  *
  */
-public class DiskSelectorDialog extends Composite {
+public class DeviceSettingsDialog extends Composite implements IDeviceSelectorDialog {
 
-	public static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
-	private IMachine machine;
-	private boolean needReset;
+	public static final String DEVICE_SETTINGS_TOOL_ID = "device.settings";
 
-	public static IToolShellFactory getToolShellFactory(final IMachine machine, final ImageCanvas buttonBar) {
+	public static IToolShellFactory getToolShellFactory(final IMachine machine, final ImageCanvas buttonBar,
+			final String title, final String[] settingGroups) {
 		return new IToolShellFactory() {
 			Behavior behavior = new Behavior();
 			{
-				behavior.boundsPref = "DiskWindowBounds";
+				behavior.boundsPref = "DeviceWindowBounds." + title;
 				behavior.centering = Centering.INSIDE;
 				behavior.centerOverControl = buttonBar;
 				behavior.dismissOnClickOutside = true;
+				behavior.defaultBounds = new Rectangle(0, 0, 600, 300);
 			}
 			public Control createContents(Shell shell) {
-				return new DiskSelectorDialog(shell, machine);
+				return new DeviceSettingsDialog(shell, machine, title, settingGroups);
 			}
 			public Behavior getBehavior() {
 				return behavior;
@@ -69,14 +70,19 @@ public class DiskSelectorDialog extends Composite {
 	}
 
 	
-	public DiskSelectorDialog(Shell shell, IMachine machine_) {
+	protected IMachine machine;
+	protected boolean needReset;
+	private String[] settingGroups;
+	
+	public DeviceSettingsDialog(Shell shell, IMachine machine_, String title, String[] settingGroups) {
 		
 		super(shell, SWT.NONE);
 		this.machine = machine_;
+		this.settingGroups = settingGroups;
 		
 		List<IDeviceSettings> list = machine.getModel().getDeviceSettings(machine);
 		
-		shell.setText("Disk Selector");
+		shell.setText(title);
 
 		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(this);
 
@@ -86,6 +92,8 @@ public class DiskSelectorDialog extends Composite {
 		for (IDeviceSettings setting : list) {
 			Map<String, Collection<IProperty>> settings = setting.getEditableSettingGroups();
 			for (Map.Entry<String, Collection<IProperty>> entry : settings.entrySet()) {
+				if (!acceptsGroup(entry.getKey()))
+					continue;
 				Set<IProperty> groupSettings = allSettings.get(entry.getKey());
 				if (groupSettings == null) {
 					groupSettings = new LinkedHashSet<IProperty>();
@@ -156,6 +164,14 @@ public class DiskSelectorDialog extends Composite {
 					machine.reset();
 			}
 		});
+	}
+
+	protected boolean acceptsGroup(String key) {
+		for (String group : settingGroups) {
+			if (group.equals(key))
+				return true;
+		}
+		return false;
 	}
 
 	/**

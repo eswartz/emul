@@ -322,7 +322,8 @@ public class PCodeDsr implements IDsrHandler9900 {
 		
 		IDeviceIndicatorProvider provider= new DeviceIndicatorProvider(
 				pcodeActive, "USCD P-System Activity", 
-				IDevIcons.DSR_USCD, IDevIcons.DSR_LIGHT);
+				IDevIcons.DSR_USCD, IDevIcons.DSR_LIGHT,
+				null);
 		return Collections.singletonList(provider);
 	}
 }

@@ -20,6 +20,9 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 
 import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.machine.IMachine;
+import v9t9.gui.client.swt.SwtWindow;
+import v9t9.gui.client.swt.shells.disk.DeviceSettingsDialog;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 
@@ -27,14 +30,15 @@ import ejs.base.properties.IPropertyListener;
  * @author ejs
  *
  */
-public class ImageDeviceIndicator extends ImageIconCanvas {
+public class ImageDeviceIndicator extends ImageButton {
 
 	private Rectangle overlayBounds;
 	private final IDeviceIndicatorProvider provider;
 	private IPropertyListener listener;
 
 	public ImageDeviceIndicator(IImageBar parentDrawer, int style,
-			IImageProvider imageProvider, IDeviceIndicatorProvider provider) {
+			IImageProvider imageProvider, final IDeviceIndicatorProvider provider,
+			final IMachine machine, final SwtWindow window) {
 		super(parentDrawer, style, imageProvider, provider.getBaseIconIndex(), provider.getToolTip());
 		setOverlayBounds(imageProvider.imageIndexToBounds(provider.getActiveIconIndex()));
 		this.provider = provider;
@@ -52,7 +56,47 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 		};
 		provider.getActiveProperty().addListenerAndFire(listener);
 		
+		final String[] groups = provider.getGroups();
+		if (groups != null && groups.length > 0) {
+			addAreaHandler(new BaseImageButtonAreaHandler() {
 
+				@Override
+				public boolean isActive() {
+					return true;
+				}
+				
+				@Override
+				public String getTooltip() {
+					return groups.length == 1 ? groups[0] : "Edit settings";
+				}
+				
+				/* (non-Javadoc)
+				 * @see v9t9.gui.client.swt.bars.IImageButtonAreaHandler#isInBounds(int, int, org.eclipse.swt.graphics.Point)
+				 */
+				@Override
+				public boolean isInBounds(int x, int y, Point size) {
+					return true;
+				}
+				
+				/* (non-Javadoc)
+				 * @see v9t9.gui.client.swt.bars.BaseImageButtonAreaHandler#mouseClicked(int)
+				 */
+				@Override
+				public boolean mouseDown(int button) {
+					if (button == 1) {
+						window.toggleToolShell(DeviceSettingsDialog.DEVICE_SETTINGS_TOOL_ID, 
+								DeviceSettingsDialog.getToolShellFactory(
+										machine, window.getButtonBar().getButtonBar(),
+										provider.getTitle(), groups));
+
+						return true;
+					}
+					return false;
+				}
+			});
+		}
+
+		
 		final ControlListener resizeListener = new ControlListener() {
 
 			public void controlMoved(ControlEvent e) {
@@ -106,4 +150,5 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 		}
 	}
 
+	
 }

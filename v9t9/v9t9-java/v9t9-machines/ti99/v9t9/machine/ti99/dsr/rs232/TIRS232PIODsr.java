@@ -4,10 +4,8 @@
 package v9t9.machine.ti99.dsr.rs232;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -113,6 +111,9 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 		super(machine, base);
 	
 		pioActiveSetting = new SettingSchemaProperty(getName(), Boolean.FALSE);
+
+		registerPIODevice(1, "PIO/1");
+		
 	}
 	
 	/* (non-Javadoc)
@@ -184,24 +185,19 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
 				pioActiveSetting, 
 				"RS232/PIO activity",
-				IDevIcons.DSR_RS232, IDevIcons.DSR_LIGHT);
+				IDevIcons.DSR_RS232, IDevIcons.DSR_LIGHT,
+				null);
 		return Collections.<IDeviceIndicatorProvider>singletonList(deviceIndicatorProvider);
 	}
 
 	@Override
-	public Map<String, Collection<IProperty>> getEditableSettingGroups() {
-		Map<String, Collection<IProperty>> map = new LinkedHashMap<String, Collection<IProperty>>();
-		return map;
-	}
-
-	@Override
 	public void loadState(ISettingSection section) {
-		
+		super.loadState(section);
 	}
 
 	@Override
 	public void saveState(ISettingSection section) {
-		
+		super.saveState(section);
 	}
 
 	private ICruWriter cruwPIO_1 = new ICruWriter() {
@@ -302,15 +298,14 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 			return 0;
 		}
 	};
+	
 	/* (non-Javadoc)
 	 * @see v9t9.machine.ti99.dsr.rs232.TIRS232Dsr#registerDevicesAndCRUs()
 	 */
 	@Override
 	protected void registerDevicesAndCRUs() {
 		super.registerDevicesAndCRUs();
-		
-		registerPIODevice(1, "PIO/1");
-		
+
 		CruManager cruManager = ((TI99Machine) machine).getCruManager();
 		
 		cruManager.add(base + 2*1, 1, cruwPIO_1);
@@ -324,6 +319,7 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 		cruManager.add(base + 2*3, 1, crurPIO_3);
 		cruManager.add(base + 2*4, 1, crurPIO_4);
 		cruManager.add(base + 2*5, 2, crurPIO_5_6);
+
 	}
 
 	/* (non-Javadoc)

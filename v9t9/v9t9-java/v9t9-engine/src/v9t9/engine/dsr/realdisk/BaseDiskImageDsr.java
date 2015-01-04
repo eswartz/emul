@@ -144,7 +144,7 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings, IDsrHandler {
 		settings = new ArrayList<IProperty>(imageMapper.getDiskSettingsMap().values());
 		settings.add(settingRealTime);
 		settings.add(settingDebug);
-		map.put(IDsrHandler.GROUP_DISK_CONFIGURATION, settings);
+		map.put(IDsrHandler.GROUP_REAL_DISK_CONFIGURATION, settings);
 		
 		return map;
 	}
@@ -190,6 +190,15 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings, IDsrHandler {
 		@Override
 		public IProperty getActiveProperty() {
 			return activeProperty;
+		}
+		
+		@Override
+		public String getTitle() {
+			return null;
+		}
+		@Override
+		public String[] getGroups() {
+			return null;
 		}
 	}
 }

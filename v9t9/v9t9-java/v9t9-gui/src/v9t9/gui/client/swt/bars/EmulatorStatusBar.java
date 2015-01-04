@@ -43,6 +43,7 @@ import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
+import v9t9.common.dsr.IDsrHandler;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.shells.DemoProgressBar;
@@ -50,7 +51,7 @@ import v9t9.gui.client.swt.shells.DemoSelector;
 import v9t9.gui.client.swt.shells.EventLogDialog;
 import v9t9.gui.client.swt.shells.KeyboardDialog;
 import v9t9.gui.client.swt.shells.ROMSetupDialog;
-import v9t9.gui.client.swt.shells.disk.DiskSelectorDialog;
+import v9t9.gui.client.swt.shells.disk.DeviceSettingsDialog;
 import v9t9.gui.client.swt.shells.modules.ModuleSelector;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
@@ -129,12 +130,14 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			new BlankIcon(buttonBar, SWT.NONE);
 		}
 		
-		createButton(IconConsts.DISK_SETUP,
-			"Setup disks", new SelectionAdapter() {
+		createButton(IconConsts.DEVICE_SETUP,
+			"Setup devices", new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					swtWindow.toggleToolShell(DiskSelectorDialog.DISK_SELECTOR_TOOL_ID, 
-							DiskSelectorDialog.getToolShellFactory(machine, buttonBar));
+					swtWindow.toggleToolShell(DeviceSettingsDialog.DEVICE_SETTINGS_TOOL_ID,
+							DeviceSettingsDialog.getToolShellFactory(machine, buttonBar,
+									"Select devices", 
+									new String[] { IDsrHandler.GROUP_DSR_SELECTION }));
 				}
 			}
 		);		
@@ -726,7 +729,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 
 	public void addDeviceIndicatorProvider(IDeviceIndicatorProvider provider) {
 		ImageDeviceIndicator indic = new ImageDeviceIndicator(buttonBar, SWT.NONE, 
-				deviceImageProvider, provider);
+				deviceImageProvider, provider,
+				machine, swtWindow);
 		indic.moveAbove(indicatorsBlank);
 		indicators.add(indic);
 	}

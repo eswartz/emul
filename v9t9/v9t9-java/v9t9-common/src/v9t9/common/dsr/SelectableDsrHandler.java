@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import v9t9.common.machine.IMachine;
-
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;

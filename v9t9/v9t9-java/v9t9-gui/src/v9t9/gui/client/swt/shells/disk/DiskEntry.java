@@ -54,7 +54,7 @@ class DiskEntry extends DiskSettingEntry {
 	private Button runButton;
 	private Button catalogButton;
 	
-	public DiskEntry(DiskSelectorDialog dialog, final Composite parent, IProperty setting_) {
+	public DiskEntry(IDeviceSelectorDialog dialog, final Composite parent, IProperty setting_) {
 		super(dialog, parent, setting_, SWT.NONE);
 		doesNotExistImage = EmulatorGuiData.loadImage(getDisplay(), "icons/error.png");
 //		blankImage = new Image(getDisplay(), doesNotExistImage.getBounds());
@@ -219,6 +219,8 @@ class DiskEntry extends DiskSettingEntry {
 		File dir = new File(combo.getText());
 		String path = dir.getAbsolutePath();
 		switchPath(combo, path);
+		
+		updateSetting();
 	}
 
 	/**

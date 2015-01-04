@@ -24,7 +24,8 @@ import ejs.base.properties.IPersistable;
 public interface IDsrHandler extends IPersistable, IDeviceSettings {
 
 	String GROUP_DSR_SELECTION = "Device Selection";
-	String GROUP_DISK_CONFIGURATION = "Disk Configuration";
+	String GROUP_REAL_DISK_CONFIGURATION = "Disk Image Configuration";
+	String GROUP_EMU_DISK_CONFIGURATION = "Disk Directory Configuration";
 
 	void init();
 	void dispose();

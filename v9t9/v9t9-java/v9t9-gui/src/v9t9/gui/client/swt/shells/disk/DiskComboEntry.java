@@ -23,7 +23,7 @@ import v9t9.common.dsr.IDeviceLabel;
 import ejs.base.properties.IProperty;
 
 class DiskComboEntry extends DiskSettingEntry {
-	public DiskComboEntry(DiskSelectorDialog dialog, final Composite parent, IProperty setting_) {
+	public DiskComboEntry(IDeviceSelectorDialog dialog, final Composite parent, IProperty setting_) {
 		super(dialog, parent, setting_, SWT.NONE);
 	}
 

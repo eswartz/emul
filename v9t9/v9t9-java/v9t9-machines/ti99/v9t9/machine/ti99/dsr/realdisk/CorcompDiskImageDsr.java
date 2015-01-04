@@ -6,6 +6,7 @@ import java.util.List;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
@@ -485,7 +486,8 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
 				corcompDiskDsrActiveSetting, 
 				"Disk image activity",
-				IDevIcons.DSR_DISK_IMAGE, IDevIcons.DSR_LIGHT);
+				IDevIcons.DSR_DISK_IMAGE, IDevIcons.DSR_LIGHT,
+				"Edit disk images", IDsrHandler.GROUP_REAL_DISK_CONFIGURATION);
 		return Collections.<IDeviceIndicatorProvider>singletonList(deviceIndicatorProvider);
 	}
 	

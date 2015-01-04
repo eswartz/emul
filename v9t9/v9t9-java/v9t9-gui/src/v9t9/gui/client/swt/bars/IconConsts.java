@@ -22,6 +22,7 @@ public class IconConsts {
 	static final int CPU_LOGGING = 2;
 	static final int PASTE_KEYBOARD = 3;
 	static final int RESET = 4;
+	static final int DEVICE_SETUP = 5;
 	static final int DISK_SETUP = 5;
 	static final int LOAD_SAVE_STATE = 6;
 	static final int DEBUGGER = 7;
