@@ -132,7 +132,7 @@ public class VdpV9938Consts extends VdpTMS9918AConsts {
 	final public static int S8_BOR_HI = 8;
 	final public static int S9_BOR_LO = 9;
 
-	public static final int REG_COUNT = 1 + 48 /* base */ + 9 /* status */ + 16 /* palette */;
+	public static final int REG_COUNT = 2 /* status, scanline */ + 48 /* base */ + 9 /* status */ + 16 /* palette */;
 	
 	/** lightpen flag */
 	public static final int ST1_LP = 0x80;

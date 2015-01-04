@@ -441,14 +441,13 @@ $10 c, &96 c, $20 c,
 	again	
 ;
 
-create Ball $3c7e , $ffff , $ffff , $7e3c ,
+create Lump $1c7e , $7fff , $fffe , $7c38 ,
 
 : sprtest
-	1 mode
 	ints-off
 	
 	\ make a pattern
-	Ball  >vsprpat &132 8 * +  8 cvmove
+	Lump  >vsprpat &132 8 * +  8 cvmove
 	
 	\ make random sprites
 	>vsprites !vwaddr
@@ -463,12 +462,16 @@ create Ball $3c7e , $ffff , $ffff , $7e3c ,
 	>vsprmot !vwaddr
 	&8 0 do 
 		$04 ,vc
-		$01 ,vc
+		i ,vc
 		0 ,vc 0 ,vc
 	loop
 		
 	ints-on  	
 	thaw
+;
+
+: sprs
+	1 mode sprtest supercycler 
 ;
 
 : hexes

@@ -91,7 +91,6 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		info.touch.sprpat = modify_sprpat_default;
 		
 		spriteCanvas = new VdpSpriteCanvas(info.canvas, 4);
-		
 	}
 
 	@Override

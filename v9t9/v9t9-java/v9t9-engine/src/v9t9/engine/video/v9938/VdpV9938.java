@@ -54,6 +54,7 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	}
 	
 	static {
+		register(REG_SCANLINE, "SCAN");
 		register(REG_ST, "ST");
 		
 		for (int i = 0; i < 48; i++) {
@@ -1474,19 +1475,23 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 	@Override
 	public BitSet getRecordableRegs() {
 		BitSet bs = new BitSet();
+		int first = getFirstRegister();
+		
+		bs.set(REG_SCANLINE - first);
 		// mode/memory/accel relevant ones
-		bs.set(0, 20);
+		
+		bs.set(0 - first, 20);
 		
 		// these affect memory and are handled directly
-		bs.set(8, false);
-		bs.set(14, false);
-		bs.set(15, false);
+		bs.set(8 - first, false);
+		bs.set(14 - first, false);
+		bs.set(15 - first, false);
 		
 		// accel regs
-//		bs.set(20, 48);
+//		bs.set(20 - getFirstRegister(), 48);
 		
 		// and colors
-		bs.set(REG_PAL0, REG_PAL0 + 16);
+		bs.set(REG_PAL0 - first, REG_PAL0 + 16);
 		
 		// no status regs
 		return bs;

@@ -16,6 +16,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpV9938;
+import v9t9.common.hardware.VdpTMS9918AConsts;
 import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpColorManager;
@@ -461,4 +462,11 @@ public abstract class BaseVdpV9938CanvasRenderer extends BaseVdpTMS9918ACanvasRe
 			((PackedBitmapGraphicsModeRedrawHandler) vdpModeRedrawHandler).setPageOffset(pageOffset);
 		}
 	}
+
+	protected boolean isTextMode() {
+		return modeNumber == VdpV9938Consts.MODE_TEXT2
+				|| ((vdpregs[1] & VdpTMS9918AConsts.R1_M1) != 0
+					&& modeNumber <= VdpTMS9918AConsts.MODE_LAST_STANDARD); 
+	}
+
 }

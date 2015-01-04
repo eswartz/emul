@@ -22,7 +22,7 @@ public interface ISpriteCanvas {
 	 * @return
 	 */
 	VdpSprite[] getSprites();
-
+	
 	/**
 	 * @param numchars
 	 */

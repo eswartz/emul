@@ -57,8 +57,6 @@ import v9t9.engine.memory.VdpMmio;
  * @author ejs
  */
 public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
-	private static final int REG_COUNT = 8 /* base */ + 1 /* status */;
-
 	private final static Map<Integer, String> regNames = new HashMap<Integer, String>();
 	private final static Map<String, Integer> regIds = new HashMap<String, Integer>();
 	
@@ -72,6 +70,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 			register(i, "VR" + i);
 		}
 		register(REG_ST, "ST");
+		register(REG_SCANLINE, "SCAN");
 	}
 	
 	
@@ -115,6 +114,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	protected int width;
 
 	protected int scanlineCount;
+	private int scanline;
 	
 	public VdpTMS9918A(IMachine machine) {
 		this.machine = machine;
@@ -417,22 +417,38 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
      */
     @Override
     public int getFirstRegister() {
-    	return REG_ST;
+    	return REG_SCANLINE;
     }
 	/* (non-Javadoc)
 	 * @see v9t9.engine.VdpHandler#getRegisterCount()
 	 */
 	@Override
 	public int getRegisterCount() {
-		return REG_COUNT;
+		return 8 - getFirstRegister();
 	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip#getRecordableRegs()
+	 */
+	@Override
+	public BitSet getRecordableRegs() {
+		BitSet bs = new BitSet();
+		int first = getFirstRegister();
+		bs.set(REG_SCANLINE - first);
+		bs.set(0 - first, 8);
+		return bs;
+	}
+
 
 	/* (non-Javadoc)
 	 * @see v9t9.engine.VdpHandler#getRegister(int)
 	 */
 	@Override
 	public int getRegister(int reg) {
-		if (reg == REG_ST) {
+		if (reg == REG_SCANLINE) {
+			return scanline;
+		} else if (reg == REG_ST) {
 			return vdpStatus;
 		} else if (reg < vdpregs.length) {
 			return vdpregs[reg] & 0xff;
@@ -586,11 +602,13 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	@Override
 	public int setRegister(int reg, int value) {
 		int old;
-		if (reg == REG_ST) {
+		if (reg == REG_SCANLINE) {
+			old = scanline;
+			scanline = value;
+		} else if (reg == REG_ST) {
 			old = vdpStatus & 0xff;
 			vdpStatus = (byte) value;
-		}
-		else {
+		} else {
 			if (reg >= vdpregs.length)
 				return 0;
 			
@@ -606,7 +624,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
 			log("register " + (reg < 0 ? "ST" : ""+reg) + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(value));
 		
-		fireRegisterChanged(reg, value & 0xff);
+		fireRegisterChanged(reg, value);
 		return old;
 	}
 
@@ -871,15 +889,4 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		bs.set(base >>> granularityShift, 
 			(base + size + round) >>> granularityShift);
 	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.IVdpChip#getRecordableRegs()
-	 */
-	@Override
-	public BitSet getRecordableRegs() {
-		BitSet bs = new BitSet();
-		bs.set(0, 8);
-		return bs;
-	}
-
 }
