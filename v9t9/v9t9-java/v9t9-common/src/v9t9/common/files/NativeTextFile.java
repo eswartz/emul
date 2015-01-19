@@ -167,4 +167,12 @@ public class NativeTextFile implements NativeFile {
     	}
     	return secs;
     }
+    
+    /* (non-Javadoc)
+     * @see v9t9.common.files.IFDRInfo#getComment()
+     */
+    @Override
+    public String getComment() {
+    	return null;
+    }
 }

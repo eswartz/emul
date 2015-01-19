@@ -106,4 +106,12 @@ public class NativeFDRFile extends EmulatedBaseFDRFile implements NativeFile, IF
 			flags |= FDR.ff_protected;
 		return flags;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IFDRInfo#getComment()
+	 */
+	@Override
+	public String getComment() {
+		return fdr.getComment();
+	}
 }

@@ -62,5 +62,4 @@ public interface IEmulatedFile extends IFDRInfo, IEmulatedStorage {
 	 * @return
 	 */
 	IEmulatedDisk getDisk();
-
 }

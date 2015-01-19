@@ -21,6 +21,9 @@ import gnu.getopt.Getopt;
 @Category(Category.DISKUTILS)
 public class Catalog extends BaseDiskUtil {
 	private static final String PROGNAME = Catalog.class.getSimpleName();
+	
+	private static final String entryFormat = "%-10s  %5s  %7s %3s  %s %s\n";
+	
 	private boolean showTextFiles;
 
 	private static void help() {
@@ -103,6 +106,8 @@ public class Catalog extends BaseDiskUtil {
 			out.println("Catalog of " + catalog.getDisk().getPath() + "\n");
 			out.printf("Volume name:  %-10s  Used sectors: %5d  Total sectors: %5d\n\n",
 					catalog.volumeName, catalog.usedSectors, catalog.totalSectors);
+			out.printf(entryFormat,
+					"Name", "Secs", "Type", "Len", "P", "Comment");
 		}
 		for (CatalogEntry entry : catalog.getEntries()) {
 			if (pattern != null 
@@ -117,8 +122,9 @@ public class Catalog extends BaseDiskUtil {
 
 			String reclen = entry.typeCode != CatalogEntry.TYPE_PROGRAM ? 
 					String.valueOf(entry.recordLength) : "";
-			out.println(String.format("%-10s  %5d  %7s %3s  %s",
-					entry.fileName, entry.secs, entry.type, reclen, entry.isProtected ? "Y" : " "));
+			out.printf(entryFormat,
+					entry.fileName, entry.secs, entry.type, reclen, entry.isProtected ? "Y" : " ",
+							(entry.comment != null ? entry.comment : "")) ;
 		}
 		out.println();
 	}

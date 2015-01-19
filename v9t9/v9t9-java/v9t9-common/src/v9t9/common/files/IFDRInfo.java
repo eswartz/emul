@@ -49,4 +49,11 @@ public interface IFDRInfo {
      * @return array of sector numbers, size {@link #getSectorsUsed()}
      */
     public int[] getContentSectors();
+    
+	/**
+	 * Get any comment appearing past the content sectors area. 
+	 * @return string or <code>null</code>
+	 */
+	String getComment();
+
 }

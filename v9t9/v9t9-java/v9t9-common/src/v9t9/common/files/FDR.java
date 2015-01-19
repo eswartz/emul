@@ -331,7 +331,7 @@ public abstract class FDR implements IFDRInfo {
 		}
 		return ttype;
 	}
-
+	
 	/**
 	 * Copy info from another FDR (except sector allocation)
 	 * @param srcFdr

@@ -669,13 +669,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 				break;
 			readSector(sec, fdrSec, 0, 256);
 			DiskImageFDR fdr = DiskImageFDR.createFDR(fdrSec, 0);
-//				int sz = fdr.getSectorsUsed() + 1;
 			
 			entries.add(new CatalogEntry(sec, fdr.getFileName(), 
 					new EmulatedDiskImageFile(this, sec, fdr, fdr.getFileName())));
-//						sz, 
-//						fdr.getFlags(), fdr.getRecordLength(),
-//						(fdr.getFlags() & FDR.ff_protected) != 0));
 		}
 		return new Catalog(this, devname, volume, total, used, entries);
 	}
@@ -832,7 +828,8 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			if (!wasOpen)
 				openDiskImage(true);
 			
-			Catalog catalog = readCatalog("DSK" + name.charAt(name.length() - 1));
+			String devname = "DSK" + name.charAt(name.length() - 1);
+			Catalog catalog = readCatalog(devname);
 			
 			if (!wasOpen)
 				closeDiskImage();

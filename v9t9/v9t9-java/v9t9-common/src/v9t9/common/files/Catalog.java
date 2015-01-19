@@ -23,7 +23,7 @@ public class Catalog {
 	public final int totalSectors;
 	public final int usedSectors;
 	
-	public final  List<CatalogEntry> entries;
+	public final List<CatalogEntry> entries;
 	private IEmulatedDisk disk;
 
 	public Catalog(IEmulatedDisk disk, String deviceName, String volumeName, int totalSectors, int usedSectors,
@@ -40,9 +40,6 @@ public class Catalog {
 		return entries;
 	}
 
-	/**
-	 * @return
-	 */
 	public boolean isValid() {
 		return totalSectors > 0 && usedSectors >= 0;
 	}
@@ -56,11 +53,6 @@ public class Catalog {
 		return null;
 	}
 	
-	/**
-	 * @param string
-	 * @param ffProgram
-	 * @return
-	 */
 	public CatalogEntry findEntry(String name, String type, int reclen) {
 		for (CatalogEntry ent : entries) {
 			if (ent.fileName.equalsIgnoreCase(name)) {
@@ -72,9 +64,6 @@ public class Catalog {
 		return null;
 	}
 
-	/**
-	 * @return
-	 */
 	public IEmulatedDisk getDisk() {
 		return disk;
 	}
