@@ -24,7 +24,7 @@ import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.machine.MachineBase;
 import v9t9.engine.machine.NullFileExecutionHandler;
 import v9t9.engine.memory.TIMemoryModel;
-import v9t9.machine.f99b.cpu.CpuF99b;
+import v9t9.machine.ti99.machine.InternalCruF99;
 
 public class F99bMachine extends MachineBase {
 
@@ -96,7 +96,7 @@ public class F99bMachine extends MachineBase {
 		if (getKeyboardHandler().anyKeyAvailable()) {
 			ICruChip cru = getCru();
 			if (cru instanceof BaseCruChip) {
-				cru.triggerInterrupt(CpuF99b.INT_KBD);
+				cru.triggerInterrupt(InternalCruF99.INT_KBD);
 			}
 		}
 		getCpu().setIdle(false);

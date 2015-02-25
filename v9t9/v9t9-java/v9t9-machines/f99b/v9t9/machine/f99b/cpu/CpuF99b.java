@@ -31,6 +31,7 @@ import v9t9.engine.cpu.CpuBase;
 import v9t9.engine.cpu.Executor;
 import v9t9.machine.f99b.asm.StatusF99b;
 import v9t9.machine.f99b.interpreter.InterpreterF99b;
+import v9t9.machine.ti99.machine.InternalCruF99;
 
 /**
  * The F99b engine.
@@ -46,14 +47,6 @@ public class CpuF99b extends CpuBase {
 	public static final int PIN_INTREQ = 1 << 31;
     public static final int PIN_NMI = 1 << 3;
     public static final int PIN_RESET = 1 << 5;
-    
-    public static final int INT_RESET = 15;
-    public static final int INT_NMI = 14;
-    public static final int INT_FAULT = 13;
-    public static final int INT_KBD = 3;
-    public static final int INT_VDP = 2;
-    public static final int INT_BKPT = 0;
-    
     
     public static final int PC = 0;
 	public static final int SP = 1;
@@ -203,7 +196,7 @@ public class CpuF99b extends CpuBase {
         	
             System.out.println("**** NMI ****");
 
-            triggerInterrupt(INT_NMI);
+            triggerInterrupt(InternalCruF99.INT_NMI);
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
@@ -315,7 +308,7 @@ public class CpuF99b extends CpuBase {
 		}
 		
 		int currentInt = ((StatusF99b) stateF99b.getStatus()).getCurrentInt();
-		boolean doubleFault = currentInt == INT_FAULT || currentInt == INT_NMI;
+		boolean doubleFault = currentInt == InternalCruF99.INT_FAULT || currentInt == InternalCruF99.INT_NMI;
 		
     	PrintWriter dumpfull = Logging.getLog(this.settingDumpFullInstructions());
 		if (dumpfull != null) {
@@ -343,7 +336,7 @@ public class CpuF99b extends CpuBase {
 		push(oldrp);
 		push(oldsp);
 		
-		triggerInterrupt(INT_FAULT);
+		triggerInterrupt(InternalCruF99.INT_FAULT);
 		
 		throw new AbortedException();
 	}

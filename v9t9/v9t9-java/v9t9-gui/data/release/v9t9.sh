@@ -9,8 +9,10 @@
 #   http://www.eclipse.org/legal/epl-v10.html
 # 
 
-NORMSCRIPT=$(echo $0 | sed 's/\\/\//g')
-BASEDIR=$(dirname "$NORMSCRIPT")
+if [ -z "$BASEDIR" ] ; then
+	NORMSCRIPT=$(echo $0 | sed 's/\\/\//g')
+	BASEDIR=$(dirname "$NORMSCRIPT")
+fi
 
 if [ -z "$JAVA" ]; then
 	JAVA=java

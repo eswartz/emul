@@ -11,8 +11,7 @@ the assembly port which formed the original V9t9, back when it was
 still being sold.
 
 To build standalone, see v9t9/v9t9-java/Deploying.rtf.
-This will make a Java Web Start release in both local and web-hosted
-variants.
+This will make a standalone Java application launchable through a script.
 
 To build and develop in Eclipse, which is easier but requires Eclipse 3.6
 (not tested on anything newer), import base/ejs-base and v9t9/v9t9-java/*.

@@ -27,7 +27,7 @@ import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.machine.f99b.memory.EnhancedRamByteArea;
+import v9t9.machine.ti99.memory.EnhancedRamByteArea;
 import v9t9.tools.forthcomp.RelocEntry.RelocType;
 import v9t9.tools.forthcomp.words.HostDoubleLiteral;
 import v9t9.tools.forthcomp.words.HostLiteral;

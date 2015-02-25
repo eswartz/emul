@@ -34,7 +34,6 @@ import v9t9.engine.sound.MultiSoundTMS9919B;
 import v9t9.engine.speech.SpeechTMS5220;
 import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.machine.EmulatorMachinesData;
-import v9t9.machine.f99b.machine.InternalCruF99;
 import v9t9.machine.ti99.cpu.Cpu9900;
 
 /**

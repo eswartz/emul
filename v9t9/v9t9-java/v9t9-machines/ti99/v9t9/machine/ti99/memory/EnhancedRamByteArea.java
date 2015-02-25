@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.machine.f99b.memory;
+package v9t9.machine.ti99.memory;
 
 import v9t9.engine.memory.ByteMemoryArea;
 
