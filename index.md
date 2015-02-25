@@ -24,6 +24,20 @@ Introduction
 </a>
 <span class="timestamp"> </span>
 
+
+<!--  not rebuilt yet
+
+<p/>
+
+<a href="http://s3.amazonaws.com/V9t9/data/mac_v9t9.zip">
+<img src="images/v9t9-webstart-button.png" />
+<p>
+<i>Download mac_v9t9.zip</i>
+</p>
+</a>
+<span class="timestamp"> </span>
+-->
+
 </div>
 
 
@@ -36,7 +50,7 @@ V9t9 emulates the TI-99/4A on your computer.
 It supports:
 </p>
 <ul>
-    <li>RS232/PIO output and TI Impact Printer emulation (new!)</li>
+    <li>RS232/PIO output and TI Impact Printer emulation</li>
 	<li>Drag and drop / auto-detection of modules, disks, demos, 99/4A files</li>
 	<li>Ability to save/restore sessions</li>
 	<li>Module formats:  V9t9, MESS (.rpk/.zip)</li>
@@ -100,7 +114,6 @@ Alternately, run a `Terminal` and type:
     cd /path/to/extracted/v9t9
     ./v9t9.sh
 
-
 <hr/>
 
 Examples
@@ -129,6 +142,13 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
+<li>2015/02/25: try again to fix OS X class loading issues (thanks Scott S. and Michael R. for reminding me)
+</li> 
+<li>2015/02/25: revamped device configuration -- one button for selecting devices, then each device icon allows
+individual configuration
+</li>
+<li>2015/02/25: other GUI tweaks
+</li>
 <li>2014/05/14: fix OS X support (for real?)
 </li>
 <li>2014/05/13: added initial RS232 &quot; PIO support with TI Impact Printer emulation (try the "Printer Example" demo)
