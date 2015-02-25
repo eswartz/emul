@@ -47,7 +47,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/ejs-base/libs/svgSalamander.jar"/>
-	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.jface.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.commands.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.core.runtime.jar"/>
 	<classpathentry kind="lib" path="/ejs-base/libs/swt/org.eclipse.equinox.common.jar"/>

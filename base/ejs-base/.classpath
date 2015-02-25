@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry exported="true" kind="lib" path="libs/swt/org.eclipse.swt.gtk.linux.x86_64.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/junit/junit-4.8.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/swt/org.eclipse.jface.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/svgSalamander.jar" sourcepath="libs/svgSalamander-sources.jar">
