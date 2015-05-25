@@ -55,7 +55,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 
 	static public final IconSettingSchema settingPcodeCardEnabled = new IconSettingSchema(
 			ISettingsHandler.MACHINE,
-			"PCodeCardEnabled", "Enable P-Code Card", 
+			"PCodeCardEnabled", "P-Code Support", 
 			"Enables the UCSD Pascal P-Code card.",
 			Boolean.FALSE,
 			pcodeIconPath);
@@ -262,7 +262,7 @@ public class PCodeDsr implements IDsrHandler9900 {
 	 */
 	@Override
 	public Map<String, Collection<IProperty>> getEditableSettingGroups() {
-		return Collections.<String, Collection<IProperty>>singletonMap("UCSD P-System",
+		return Collections.<String, Collection<IProperty>>singletonMap(GROUP_DSR_SELECTION,
 				Collections.<IProperty>singletonList(pcodeCardEnabled));
 	}
 
