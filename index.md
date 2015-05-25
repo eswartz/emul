@@ -142,6 +142,8 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
+<li>2015/05/25: fix problem with USCD P-System option no longer being available (thanks to RvK for noticing)
+</li> 
 <li>2015/02/25: try again to fix OS X class loading issues (thanks Scott S. and Michael R. for reminding me)
 </li> 
 <li>2015/02/25: revamped device configuration -- one button for selecting devices, then each device icon allows
