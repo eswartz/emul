@@ -394,11 +394,15 @@ public abstract class ImageUtils {
 		if (!(scaledSize.x > 0 && scaledSize.y > 0))
 			throw new IllegalArgumentException("Invalid scaled size: " + scaledSize + " from " + newSize); //$NON-NLS-1$
 		
-		BufferedImage img = convertToBufferedImage(source).image;
-		img = AwtImageUtils.getScaledInstance(img, scaledSize.x, scaledSize.y, RenderingHints.VALUE_INTERPOLATION_BICUBIC, true);
-		//ImageData scaledImageData = source.scaledTo(scaledSize.x, scaledSize.y);
-		ImageData scaledImageData = convertAwtImageData(img);
-		
+		ImageData scaledImageData;
+		if (scaledSize.x <= 64) {
+			// workaround for AWT scaling bug :(
+			scaledImageData = source.scaledTo(scaledSize.x, scaledSize.y);
+		} else {
+			BufferedImage img = convertToBufferedImage(source).image;
+			img = AwtImageUtils.getScaledInstance(img, scaledSize.x, scaledSize.y, RenderingHints.VALUE_INTERPOLATION_BICUBIC, true);
+			scaledImageData = convertAwtImageData(img);
+		}
         if (padToSize && !newSize.equals(scaledSize)) {
         	ImageData paddedImageData = new ImageData(newSize.x, newSize.y,
         			scaledImageData.depth,
