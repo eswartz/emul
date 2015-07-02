@@ -169,7 +169,19 @@ public class AlsaSoundListener implements ISoundEmitter {
     			100000);
     	if (err < 0) {
     		logger.error(AlsaLibrary.INSTANCE.snd_strerror(err));
-    		System.exit(1);
+    		
+    		// maybe longer latency?
+    		err = AlsaLibrary.INSTANCE.snd_pcm_set_params(
+        			handle, pcmFormat, 
+        			AlsaLibrary.SND_PCM_ACCESS_RW_INTERLEAVED, 
+        			format.getChannels(), rate, 1, 
+        			500000);
+        	if (err < 0) {
+        		logger.error(AlsaLibrary.INSTANCE.snd_strerror(err));
+        		
+	    		handle = null;
+	    		return;
+        	}
     	}
     	
     	snd_pcm_sw_params_t.Ref paramsRef = new snd_pcm_sw_params_t.Ref();
