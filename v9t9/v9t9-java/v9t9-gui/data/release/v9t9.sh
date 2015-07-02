@@ -17,7 +17,7 @@ fi
 if [ -z "$JAVA" ]; then
 	JAVA=java
 fi	
-VMARGS="-Xmx256M"
+VMARGS="$VMARGS -Xmx256M"
 
 if [ "$1" = "-debug" ]; then
 	VMARGS="$VMARGS -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:8000"
@@ -30,6 +30,8 @@ if [ "$OS" = "Darwin" ]; then
     VMARGS="$VMARGS -XstartOnFirstThread"
 fi
 VMARGS="$VMARGS -Djna.nosys=true"
+
+# VMARGS="$VMARGS -Dv9t9.sound.rate=44100"
 
 VMARGS="$VMARGS -Dlog4j.configuration=jar:file:$BASEDIR/v9t9j.jar!/log4j.properties"
 #VMARGS="$VMARGS -Dlog4j.configuration=jar:file:$BASEDIR/v9t9j.jar!/debug.properties"
