@@ -25,7 +25,15 @@ import ejs.base.sound.ISoundOutput;
  */
 public abstract class BaseSoundChipSoundGenerator extends BaseSoundGenerator {
 
-	private static final AudioFormat format = new AudioFormat(48000, 16, 2, true, false);
+	static int soundRate = 48000;
+	static {
+		
+		String val = System.getProperty("v9t9.sound.rate");
+		if (val != null && !val.isEmpty()) {
+			soundRate = Integer.valueOf(val);
+		}
+	}
+	private static final AudioFormat format = new AudioFormat(soundRate, 16, 2, true, false);
 	
 	protected int active;
 	protected final ISoundChip soundChip;
