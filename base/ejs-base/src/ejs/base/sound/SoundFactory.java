@@ -15,6 +15,8 @@ import java.io.IOException;
 
 import javax.sound.sampled.AudioFormat;
 
+import org.apache.log4j.Logger;
+
 import ejs.base.internal.sound.SoundOutput;
 
 
@@ -23,20 +25,28 @@ import ejs.base.internal.sound.SoundOutput;
  *
  */
 public class SoundFactory {
+	private static final Logger logger = Logger.getLogger(SoundFactory.class);
+	
 	public static ISoundOutput createSoundOutput(AudioFormat format, int tickRate) {
 		return new SoundOutput(format, tickRate);
 	}
 	
 	public static ISoundEmitter createAudioListener() {
 		if (!"true".equals(System.getProperty("v9t9.sound.java"))) {
-			if (System.getProperty("os.name").equals("Linux"))
-				if (isPulseRunning())
+			if (System.getProperty("os.name").equals("Linux")) {
+				if (isPulseRunning()) {
+					logger.info("Using Pulse for sound");
 					return new PulseSoundListener(100);
-				else
+				} else {
+					logger.info("Using ALSA for sound");
 					return new AlsaSoundListener(null);
-			else if (File.separatorChar == '\\')
+				}
+			} else if (File.separatorChar == '\\') {
+				logger.info("Using Win32 multimedia for sound");
 				return new Win32SoundListener();
+			}
 		}
+		logger.info("Using JRE for sound");
 		return new JavaSoundListener(100);
 	}
 
