@@ -28,13 +28,15 @@ public class SoundFactory {
 	}
 	
 	public static ISoundEmitter createAudioListener() {
-		if (System.getProperty("os.name").equals("Linux"))
-			if (isPulseRunning())
-				return new PulseSoundListener(100);
-			else
-				return new AlsaSoundListener(null);
-		else if (File.separatorChar == '\\')
-			return new Win32SoundListener();
+		if (!"true".equals(System.getProperty("v9t9.sound.java"))) {
+			if (System.getProperty("os.name").equals("Linux"))
+				if (isPulseRunning())
+					return new PulseSoundListener(100);
+				else
+					return new AlsaSoundListener(null);
+			else if (File.separatorChar == '\\')
+				return new Win32SoundListener();
+		}
 		return new JavaSoundListener(100);
 	}
 
