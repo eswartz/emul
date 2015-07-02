@@ -142,7 +142,9 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
-<li>2015/07/02: add -Djna.nosys=true and allow -Dv9t9.sound.rate=... to change ALSA rate (possible fixes for <a href="https://github.com/eswartz/emul/issues/2">bug #2</a>)
+<li>2015/07/02: add -Djna.nosys=true to v9t9.sh by default.</li>
+<li>2015/07/02: allow VMARGS to be set outside v9t9.sh.</li>
+<li>2015/07/02: allow -Dv9t9.sound.rate=... to change ALSA rate and -Dv9t9.sound.java=true to bypass custom sound usage for Linux and Windows (possible fixes for <a href="https://github.com/eswartz/emul/issues/2">bug #2</a>)
 </li> 
 <li>2015/05/25: fix problem with USCD P-System option no longer being available (thanks to RvK for noticing)
 </li> 
