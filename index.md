@@ -142,6 +142,8 @@ Recent Changes
 <span class="timestamp"> </span>
 
 <ul>
+<li>2015/07/02: add -Djna.nosys=true and allow -Dv9t9.sound.rate=... to change ALSA rate (possible fixes for <a href="https://github.com/eswartz/emul/issues/2">bug #2</a>)
+</li> 
 <li>2015/05/25: fix problem with USCD P-System option no longer being available (thanks to RvK for noticing)
 </li> 
 <li>2015/02/25: try again to fix OS X class loading issues (thanks Scott S. and Michael R. for reminding me)
