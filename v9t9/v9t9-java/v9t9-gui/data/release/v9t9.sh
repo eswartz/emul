@@ -29,6 +29,7 @@ OS=$(uname)
 if [ "$OS" = "Darwin" ]; then
     VMARGS="$VMARGS -XstartOnFirstThread"
 fi
+VMARGS="$VMARGS -Djna.nosys=true"
 
 VMARGS="$VMARGS -Dlog4j.configuration=jar:file:$BASEDIR/v9t9j.jar!/log4j.properties"
 #VMARGS="$VMARGS -Dlog4j.configuration=jar:file:$BASEDIR/v9t9j.jar!/debug.properties"
