@@ -151,6 +151,11 @@ public class MemoryEntryInfoBuilder {
 		return this;
 	}
 
+	public MemoryEntryInfoBuilder withLatency(int latency) {
+		props.put(MemoryEntryInfo.LATENCY, latency);
+		return this;
+	}
+
 	public MemoryEntryInfo create(String name) {
 		props.put(MemoryEntryInfo.NAME, name);
 		MemoryEntryInfo info = new MemoryEntryInfo(props);

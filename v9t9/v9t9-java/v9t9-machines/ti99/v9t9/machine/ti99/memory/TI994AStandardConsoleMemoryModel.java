@@ -26,6 +26,7 @@ import v9t9.common.settings.Settings;
 import v9t9.engine.demos.actors.SoundMmioDataDemoActor;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.engine.memory.WordMemoryArea;
 import v9t9.engine.speech.SpeechTMS5220;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
@@ -57,6 +58,7 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 
 	static protected final MemoryEntryInfo cpuRomInfo = MemoryEntryInfoBuilder
 		.standardConsoleRom(null)
+		.withLatency(0)
 		.withFilenameProperty(settingRomFileName)
 		.withFileMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB")
 		.withDescription("TI-99/4A Console ROM")
@@ -134,10 +136,15 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 	    highRam.setVolatile(false);
 		memory.addAndMap(highRam);
 		
+		// module ROM is considered to live on the peripheral bus and is slower
+	    MemoryEntry bareModuleRom = new MemoryEntry("Module ROM Area", CPU, 0x6000,
+	            0x2000, new WordMemoryArea(4));
+	    bareModuleRom.setVolatile(false);
+		memory.addAndMap(bareModuleRom);
 	}
 
-   @Override
-   protected void defineMmioMemory(IBaseMachine machine) {
+	@Override
+	protected void defineMmioMemory(IBaseMachine machine) {
         
         this.memory.addAndMap(new MemoryEntry("Sound MMIO", CPU, 0x8400, 0x0400,
                 new ConsoleSoundArea(soundMmio)));

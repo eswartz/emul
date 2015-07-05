@@ -155,7 +155,13 @@ public class MemoryEntryInfo {
 		return s.booleanValue();
 	}
 
-
+	public int getLatency() {
+		Integer i = (Integer) properties.get(MemoryEntryInfo.LATENCY);
+		if (i == null)
+			return -1;
+		return (int) i;
+	}
+	
 	public boolean isStored() {
 		return getBool(MemoryEntryInfo.STORED);
 	}

@@ -59,6 +59,8 @@ public class Interpreter9900 implements IInterpreter {
 
 	private CycleCounts cycleCounts;
 
+	private InstructionWorkBlock9900 iblockPrev;
+
     public Interpreter9900(TI99Machine machine) {
         this.machine = machine;
         this.cpu = (Cpu9900) machine.getCpu();
@@ -66,6 +68,7 @@ public class Interpreter9900 implements IInterpreter {
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
         parsedInstructions = new WeakHashMap<IMemoryArea, Instruction9900[]>();
         iblock = new InstructionWorkBlock9900(cpu.getState());
+        iblockPrev = iblock.copy();
         status = (Status9900) cpu.getState().createStatus();
         cycleCounts = cpu.getCycleCounts();
      }
@@ -102,6 +105,9 @@ public class Interpreter9900 implements IInterpreter {
 
         /* get current operand values and instruction timings */
         fetchOperands(ins, op_x != null);
+        
+        iblock.cycles = cycleCounts.getTotal();
+        iblock.copyTo(iblockPrev);
 
         /* do pre-instruction status word updates */
         if (ins.getInfo().stsetBefore != IStatus.stset_NONE) {
@@ -119,14 +125,11 @@ public class Interpreter9900 implements IInterpreter {
         /* save any operands */
         flushOperands(ins);
         
-        //int cycles = ins.getInfo().cycles + mop1.cycles + mop2.cycles;
-		//cycleCounts.addExecute(cycles);
-        gatherCycles(iblock, iblock);
+        gatherCycles(iblockPrev, iblock);
 	}
     
 	private void gatherCycles(InstructionWorkBlock9900 before,
 			InstructionWorkBlock9900 after) {
-		//cycleCounts.addExecute(ins.getInfo().cycles + mop1.cycles + mop2.cycles);
 		ICycleCalculator calc = InstTable9900.instCycles.get(before.inst.getInst());
 		if (calc == null)
 			return;
@@ -162,7 +165,8 @@ public class Interpreter9900 implements IInterpreter {
 //        MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
 //        MachineOperand9900 mop2 = (MachineOperand9900) ins.getOp2();
 
-        iblock.cycles = cpu.getCurrentCycleCount() + cycleCounts.getTotal();
+        //iblock.cycles = cpu.getCurrentCycleCount() + cycleCounts.getTotal();
+        iblock.cycles =  cycleCounts.getTotal();
         
         /* get current operand values and instruction timings */
         fetchOperands(ins, op_x != null);
@@ -193,8 +197,8 @@ public class Interpreter9900 implements IInterpreter {
         
         gatherCycles(block, iblock);
 
-        iblock.cycles = cpu.getCurrentCycleCount() + cycleCounts.getTotal();
-//        iblock.cycles =  cycleCounts.getTotal();
+//        iblock.cycles = cpu.getCurrentCycleCount() + cycleCounts.getTotal();
+        iblock.cycles =  cycleCounts.getTotal();
         
         /* notify listeners */
         for (Object listener : instructionListeners.toArray()) {
