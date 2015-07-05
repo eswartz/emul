@@ -11,6 +11,7 @@
 package v9t9.gui.client.swt;
 
 import java.util.Collections;
+
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.ArrayContentProvider;

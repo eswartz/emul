@@ -13,8 +13,6 @@ package v9t9.common.client;
 import java.io.File;
 import java.io.IOException;
 
-import ejs.base.timer.FastTimer;
-
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
@@ -36,7 +34,7 @@ public interface IVideoRenderer {
 	
     /** Force redraw of screen from changes from VdpHandler#update, 
      * incorporating any resolution changes, blank/unblank state, etc. */
-    void redraw();
+    void queueRedraw();
     
     /** Synchronize so that screen updates are visible */
     void sync();
@@ -45,6 +43,8 @@ public interface IVideoRenderer {
 	long getLastUpdateTime();
 	
 	boolean isIdle();
+	
+	boolean isVisible();
 
 	void saveScreenShot(File file, boolean plainBitmap) throws IOException;
 
@@ -58,13 +58,6 @@ public interface IVideoRenderer {
 	IVdpChip getVdpHandler();
 
 	IVdpCanvasRenderer getCanvasHandler();
-
-	/**
-	 * A renderer should provide a timer for video update
-	 * activities
-	 * @return
-	 */
-	FastTimer getFastTimer();
 
 	IMonitorEffectSupport getMonitorEffectSupport();
 	

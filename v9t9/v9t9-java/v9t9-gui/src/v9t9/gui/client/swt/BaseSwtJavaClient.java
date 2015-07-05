@@ -38,12 +38,14 @@ import v9t9.common.files.EmulatedDiskContentSource;
 import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.files.IFileExecutor;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.hardware.VdpTMS9918AConsts;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.machine.TerminatedException;
 import v9t9.common.modules.ModuleContentSource;
 import v9t9.common.settings.Settings;
 import v9t9.common.speech.ISpeechDataSender;
+import v9t9.common.video.VideoThread;
 import v9t9.gui.client.swt.fileimport.DoNothingFileExecutor;
 import v9t9.gui.client.swt.handlers.DemoContentHandler;
 import v9t9.gui.client.swt.handlers.FileExecutorContentHandler;
@@ -68,24 +70,20 @@ public abstract class BaseSwtJavaClient implements IClient {
 	protected IMachine machine;
 	protected ISwtVideoRenderer videoRenderer;
 	protected Display display;
-	private long avgUpdateTime;
-	protected long expectedUpdateTime;
-	private int displaySkips;
 	
 	protected final int QUANTUM = 1000 / 60;
     protected final int soundTick = 100;
     protected final int clientTick = 100;
-    protected final int videoUpdateTick = 30;
 
 	protected IEventNotifier eventNotifier;
 	protected final ISettingsHandler settingsHandler;
 	protected ISoundHandler soundHandler;
-	protected FastTimer videoTimer;
 	protected FastTimer keyTimer;
 	private FastTimer soundTimer;
 	protected SwtWindow window;
 
 	protected IKeyboardHandler keyboardHandler;
+	private VideoThread videoThread;
 
 	/**
 	 * @param machine 
@@ -98,7 +96,6 @@ public abstract class BaseSwtJavaClient implements IClient {
     	this.machine = machine;
     	machine.setClient(this);
     	
-    	this.videoTimer = new FastTimer("Video Timer");
     	this.keyTimer = new FastTimer("Keyboard/Joystick Timer");
     	this.soundTimer = new FastTimer("Sound Timer");
     	
@@ -113,12 +110,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 
         keyboardHandler.setEventNotifier(eventNotifier);
         
-        //window.setSwtVideoRenderer((ISwtVideoRenderer) videoRenderer);
-
-        expectedUpdateTime = QUANTUM;
-        
-        //video.setCanvas(videoRenderer.getCanvas());
-
         Shell shell = window.getShell();
 		shell.addShellListener(new ShellAdapter() {
 			@Override
@@ -131,24 +122,22 @@ public abstract class BaseSwtJavaClient implements IClient {
 		
 		keyboardHandler.init(videoRenderer);
         
-//        TimerTask clientTask = new TimerTask() {
-//        	
-//        	@Override
-//        	public void run() {
-//        		//System.out.print('.');
-//				keyboardHandler.scan(machine.getKeyboardState());
-//        	}
-//        };
-//        keyTimer.scheduleTask(clientTask, clientTick);
-        
-        TimerTask videoUpdateTask = new TimerTask() {
-
-            @Override
-			public void run() {
-            	updateVideo();
-            }
-        };
-        videoTimer.scheduleTask(videoUpdateTask, videoUpdateTick);
+		videoThread = new VideoThread(videoRenderer);
+		videoThread.start();
+		
+		videoRenderer.getVdpHandler().addWriteListener(new IRegisterWriteListener() {
+			
+			@Override
+			public void registerChanged(int reg, int value) {
+				// VDP interrupt
+				if (reg == VdpTMS9918AConsts.REG_SCANLINE && value == -1) {
+					Object sync = videoThread.getSync();
+					synchronized (sync) {
+						sync.notifyAll();
+					}
+				}
+			}
+		});
         
         // update sound as often as registers change
         final TimerTask soundGenerateTask = new TimerTask() {
@@ -301,8 +290,14 @@ public abstract class BaseSwtJavaClient implements IClient {
 		if (soundHandler != null)
 			soundHandler.dispose();
 		
+		if (videoThread != null) {
+			videoThread.interrupt();
+			try {
+				videoThread.join();
+			} catch (InterruptedException e) {
+			}
+		}
 		keyTimer.cancel();
-		videoTimer.cancel();
 		try {
 			machine.stop();
 		} catch (TerminatedException e) {
@@ -321,50 +316,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 	protected void finalize() throws Throwable {
 		close();
 		super.finalize();
-	}
-
-	public void updateVideo() {
-		//long start = System.currentTimeMillis();
-		if (videoRenderer.isIdle() && videoRenderer.isVisible()) {
-			/*
-			try {
-				if (!video.update())
-					return;
-			} catch (Throwable t) {
-				t.printStackTrace();
-			}
-			*/
-			videoRenderer.getCanvasHandler().update();
-			videoRenderer.redraw();
-			// compensate for slow frames
-	    	long elapsed = videoRenderer.getLastUpdateTime() * 4;
-	    	//System.out.println(elapsed + " / " + expectedUpdateTime);
-			if (elapsed * 2 >= expectedUpdateTime) {
-				//System.out.println("slow :" + elapsed);
-				//displaySkips += (elapsed + 1000 / 60 - 1) / (1000 / 60);
-				expectedUpdateTime <<= 1;
-				if (expectedUpdateTime > 1000)
-					expectedUpdateTime = 1000;
-				displaySkips = 0;
-				//nextVideoUpdate = next + avgUpdateTime;
-			} else if (elapsed <= expectedUpdateTime / 2 && elapsed >= QUANTUM) {
-				displaySkips++;
-				if (displaySkips > 30) {
-					//System.out.println("fast :" + (elapsed));
-	    			expectedUpdateTime >>= 1;
-	    			if (expectedUpdateTime < QUANTUM)
-	    				expectedUpdateTime = QUANTUM;
-	    			displaySkips = 0;
-				}
-				//nextVideoUpdate = start + 1000 / 60;
-			} else {
-				displaySkips = 0;
-			}
-			//nextVideoUpdate = System.currentTimeMillis() + expectedUpdateTime * 4;
-			avgUpdateTime = (avgUpdateTime + elapsed * 9) / 10; 
-		} else {
-			//displaySkips--;
-		}
 	}
 
 	public void handleEvents() {

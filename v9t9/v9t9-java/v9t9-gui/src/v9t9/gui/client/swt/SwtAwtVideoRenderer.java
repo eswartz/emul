@@ -34,14 +34,13 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.timer.FastTimer;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.gui.client.awt.AwtVideoRenderer;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.video.ImageDataCanvas;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * AWT blitting is much faster than SWT's. 
@@ -64,8 +63,8 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	protected List<ISwtSprite> sprites = new ArrayList<ISwtSprite>(1);
 	private BaseEmulatorWindow window;
 	
-	public SwtAwtVideoRenderer(IMachine machine, FastTimer timer) {
-		super(machine, timer);
+	public SwtAwtVideoRenderer(IMachine machine) {
+		super(machine);
 	}
 	
 	/* (non-Javadoc)

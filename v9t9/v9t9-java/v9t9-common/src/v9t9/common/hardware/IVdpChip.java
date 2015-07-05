@@ -36,14 +36,10 @@ public interface IVdpChip extends IPersistable, IRegisterAccess {
 	SettingSchema settingDumpVdpAccess = new SettingSchema(
 			ISettingsHandler.TRANSIENT, "DumpVdpAccess", Boolean.FALSE);
 
-	/** Update video canvas periodically */
-    //boolean update();
-
-	//VdpMmio getVdpMmio();
-	//void setVdpMmio(VdpMmio mmio);
-
 	IMemoryDomain getVideoMemory();
 
+	IMachine getMachine();
+	
 	/** 60Hz timer.  Use this or syncVdpInterrupt / addCpuCycles */
 	void tick();
 	

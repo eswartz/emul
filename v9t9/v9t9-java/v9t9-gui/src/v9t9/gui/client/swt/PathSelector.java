@@ -38,7 +38,6 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
 import v9t9.common.files.IPathFileLocator;
-
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 

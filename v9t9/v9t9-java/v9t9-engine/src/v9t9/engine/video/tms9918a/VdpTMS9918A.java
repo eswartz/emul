@@ -163,6 +163,14 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		machine.getDemoManager().registerActorProvider(new VdpDataDemoActor.Provider());
 		machine.getDemoManager().registerActorProvider(new VdpRegisterDemoActor.Provider());
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip#getMachine()
+	 */
+	@Override
+	public IMachine getMachine() {
+		return machine;
+	}
 
 	public void initRegisters() {
 		// zeroes are fine
@@ -271,6 +279,8 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 				}
 				
 				doTick();
+				
+				onScanline(-1);
 			}
 		}
 		
@@ -290,52 +300,59 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 
 		if (vdpScanlineFrac < 0)
 			vdpScanlineFrac = 0;
-		
-		while (vdpScanlineFrac >= vdpScanlineLimit) {
-			vdpScanlineFrac -= vdpScanlineLimit;
-			
-			if (vdpScanline >= scanlineCount)
-				vdpScanline -= scanlineCount;
-			
-			onScanline(vdpScanline);
-			
-			vdpScanline++;
-		}
-		
+
+		boolean shouldTick = false;
 		if (vdpInterruptFrac >= vdpInterruptLimit) {
 			vdpInterruptFrac -= vdpInterruptLimit;
 			
+			log("INT: interrupt tick");
+			shouldTick = true;
+		}
+		else {
+			while (vdpScanlineFrac >= vdpScanlineLimit) {
+				vdpScanlineFrac -= vdpScanlineLimit;
+	
+				onScanline(vdpScanline + 1);
+			}
+			
+			if (vdpScanline >= scanlineCount) {
+				log("INT: scanline tick");
+				//shouldTick = true;
+				vdpScanline -= scanlineCount;
+			}
+		}
+		
+		
+		if (shouldTick) {
 			doTick();
+			onScanline(-1);
 		}
 	}
 	
 	/**
 	 */
 	protected void onScanline(int vdpScanline) {
-		fireRegisterChanged(REG_SCANLINE, vdpScanline);
+		setRegister(REG_SCANLINE, vdpScanline);
 	}
 
 	/**
 	 * 
 	 */
 	protected void doTick() {
-		if (true /*|| machine.getExecutor().nVdpInterrupts < settingVdpInterruptRate.getInt()*/) {
-    		if (throttleInterrupts.getBoolean()) {
-    			if (throttleCount-- < 0) {
-    				throttleCount = 6;
-    			} else {
-    				return;
-    			}
-    		}
-    		
-    		// a real interrupt only occurs if wanted, but always marked
-    		setRegister(REG_ST, vdpStatus | VDP_INTERRUPT);
-    		if ((vdpregs[1] & R1_INT) != 0) {
-    			triggerInterrupt();
-    		}
+		if (throttleInterrupts.getBoolean()) {
+			if (throttleCount-- < 0) {
+				throttleCount = 6;
+			} else {
+				return;
+			}
 		}
-		//System.out.print('!');
 		
+		// a real interrupt only occurs if wanted, but always marked
+		setRegister(REG_ST, vdpStatus | VDP_INTERRUPT);
+		
+		if ((vdpregs[1] & R1_INT) != 0) {
+			triggerInterrupt();
+		}
 	}
 	
 	/**
@@ -482,6 +499,8 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	
 	protected String getRegisterName(int reg) {
 		switch (reg) {
+		case REG_SCANLINE:
+			return "Scanline";
 		case REG_ST:
 			return "Status";
 		}
@@ -588,13 +607,18 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		int old;
 		if (reg == REG_ST) {
 			old = vdpStatus & 0xff;
+			value &= 0xff;
 			vdpStatus = (byte) value;
 		}
-		else {
+		else if (reg == REG_SCANLINE) {
+			old = vdpScanline;
+			vdpScanline = value;
+		} else {
 			if (reg >= vdpregs.length)
 				return 0;
 			
 			old = vdpregs[reg] & 0xff;
+			value &= 0xff;
 			vdpregs[reg] = (byte) value;
 			
 			doSetVdpReg(reg, (byte) old, (byte) value);
@@ -604,9 +628,9 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 		}
 		
 		if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
-			log("register " + (reg < 0 ? "ST" : ""+reg) + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(value));
+			log("register " + getRegisterName(reg) + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(value));
 		
-		fireRegisterChanged(reg, value & 0xff);
+		fireRegisterChanged(reg, value);
 		return old;
 	}
 
@@ -616,12 +640,13 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	 * @param val
 	 */
 	protected void doSetVdpReg(int reg, byte old, byte val) {
-//		/* if interrupts enabled, and interrupt was pending, trigger it */
-//		if ((val & R1_INT) != 0 
-//		&& 	(old & R1_INT) == 0) 
-//		{
-//			triggerInterrupt();
-//		}
+		/* if interrupts enabled, and interrupt was pending, trigger it */
+		if ((val & R1_INT) != 0 
+		&& 	(old & R1_INT) == 0
+		&&	(vdpStatus & VDP_INTERRUPT) != 0) 
+		{
+			triggerInterrupt();
+		}
 
 	}
 

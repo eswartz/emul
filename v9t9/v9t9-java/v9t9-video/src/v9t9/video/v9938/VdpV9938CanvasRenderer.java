@@ -12,6 +12,7 @@ package v9t9.video.v9938;
 
 
 import static v9t9.common.hardware.VdpV9938Consts.*;
+import ejs.base.timer.FastTimer;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
@@ -56,16 +57,17 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 
 	private short[] palette = new short[16];
 	private Runnable timerRunnable;
+	private FastTimer videoTimer;
 
 	public VdpV9938CanvasRenderer(ISettingsHandler settings, IVideoRenderer renderer) {
 		super(settings, renderer);
-		
 		timerRunnable = new Runnable() {
 			public void run() {
 				doTick();
 			}
 		};
-		renderer.getFastTimer().scheduleTask(
+		videoTimer = new FastTimer("V9938");
+		videoTimer.scheduleTask(
 				timerRunnable, settings.get(IVdpChip.settingVdpInterruptRate).getInt());
 	}
 	
@@ -74,7 +76,8 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 	 */
 	@Override
 	public void dispose() {
-		renderer.getFastTimer().cancelTask(timerRunnable);
+		videoTimer.cancelTask(timerRunnable);
+		videoTimer.cancel();
 		super.dispose();
 	}
 
@@ -406,6 +409,7 @@ public class VdpV9938CanvasRenderer extends VdpTMS9918ACanvasRenderer implements
 	public void registerChanged(int reg, int value) {
 		if (reg == REG_SCANLINE) {
 			onScanline(value);
+			super.registerChanged(reg, value);
 		}
 		else if (reg >= REG_PAL0 && reg < REG_PAL0 + 16) {
 			int color = reg - REG_PAL0;
