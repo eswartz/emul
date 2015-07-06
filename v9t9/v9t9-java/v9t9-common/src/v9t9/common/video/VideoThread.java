@@ -67,8 +67,6 @@ public class VideoThread extends Thread {
 			}
 			
 		}
-		
-		System.out.println("Exiting video thread");
 	}
 	
 	private void log(String msg) {
