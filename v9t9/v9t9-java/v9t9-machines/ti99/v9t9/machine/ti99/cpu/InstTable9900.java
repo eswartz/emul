@@ -969,7 +969,7 @@ public class InstTable9900 {
     			
 			default:
 				// TODO: other extended instructions
-				assert false;
+				inst.setInst(InstTableCommon.Idata);
             }
     
         } else if (op < 0x2000) {
