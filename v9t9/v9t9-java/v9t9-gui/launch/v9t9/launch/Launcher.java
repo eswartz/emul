@@ -138,7 +138,7 @@ public class Launcher {
 			newJavaLibPath.append(path);
 		}
 		
-		System.out.println("Updating Java library path to: " + newJavaLibPath);
+		System.err.println("Updating Java library path to: " + newJavaLibPath);
 		System.setProperty("java.library.path", newJavaLibPath.toString());
 
 		try {

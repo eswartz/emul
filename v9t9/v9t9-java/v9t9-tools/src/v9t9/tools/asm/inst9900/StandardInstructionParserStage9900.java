@@ -74,9 +74,12 @@ public class StandardInstructionParserStage9900 implements IInstructionParserSta
         if (name.equals("RT")) {
         	inst.setInst(Inst9900.Ib);
             op1 = new LLRegIndOperand(11);
-        } else if (name.equals("NOP") || name.equals("SPIN")) {
+        } else if (name.equals("NOP")) {
         	inst.setInst(Inst9900.Ijmp);
             op1 = new LLPCRelativeOperand(null, 2);
+        } else if (name.equals("SPIN")) {
+        	inst.setInst(Inst9900.Ijmp);
+            op1 = new LLPCRelativeOperand(null, 0);
         } else {
         	Integer instNum = InstTable9900.lookupInst(name);
         	if (instNum == null)

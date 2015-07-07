@@ -103,7 +103,8 @@ public class StoredMemoryEntryInfo {
     	}
 		String realMD5 = locator.getContentMD5(uri,  
 				info.getFileMd5Offset(),
-				info.getFileMd5Limit() != 0 ? info.getFileMd5Limit() : info.getSize());
+				info.getFileMd5Limit() != 0 ? info.getFileMd5Limit() : info.getSize(), 
+						!isStored);
     	
         return new StoredMemoryEntryInfo(info, settings, memory, locator, 
         		uri, filename, realMD5, name, fileoffs, filesize);

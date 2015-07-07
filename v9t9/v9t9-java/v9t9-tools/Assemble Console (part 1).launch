@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/v9t9-tools/tools/v9t9/tools/Assemble.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.tools.Assemble"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="/media/M/fun/ti994a/v60ugly/stuff/rom4a_1.tsm  -l /media/M/fun/ti994a/v60ugly/stuff/rom4a_1.tsm.lst -r /media/M/fun/ti994a/v60ugly/stuff/rom4a_1.bin -x"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="v9t9-tools"/>
+</launchConfiguration>

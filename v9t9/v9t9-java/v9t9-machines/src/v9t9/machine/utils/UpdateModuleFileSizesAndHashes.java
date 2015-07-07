@@ -142,7 +142,7 @@ public class UpdateModuleFileSizesAndHashes {
 		if (md5size == null)
 			md5size = size;
 		
-		String md5 = locator.getContentMD5(uri, md5offset, md5size);
+		String md5 = locator.getContentMD5(uri, md5offset, md5size, true);
 
 		System.out.println(filename + " ==> " + size + " & " + md5);
 		

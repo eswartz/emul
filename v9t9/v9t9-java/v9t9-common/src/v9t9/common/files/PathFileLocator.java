@@ -1103,7 +1103,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @see v9t9.common.files.IPathFileLocator#getContentMD5(java.net.URI)
 	 */
 	@Override
-	public String getContentMD5(URI uri, int offset, int length) throws IOException {
+	public String getContentMD5(URI uri, int offset, int length, boolean mustExist) throws IOException {
 		URI directory = resolveInsideURI(uri, ".");
 		Map<String, String> md5Dir = cachedUriToMD5Hashes.get(directory);
 		if (md5Dir == null) {
@@ -1113,7 +1113,7 @@ public class PathFileLocator implements IPathFileLocator {
 		String uriKey = getURIKey(uri, offset, length);
 		String md5 = md5Dir.get(uriKey);
 		if (md5 == null) {
-			md5 = fetchMD5(uri, offset, length);
+			md5 = fetchMD5(uri, offset, length, mustExist);
 			md5Dir.put(uriKey, md5);
 
 			// store reverse mapping too
@@ -1141,7 +1141,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @return
 	 * @throws IOException
 	 */
-	protected String fetchMD5(URI uri, int offset, int length)
+	protected String fetchMD5(URI uri, int offset, int length, boolean mustExist)
 			throws IOException {
 		String md5;
 		try {
@@ -1171,10 +1171,12 @@ public class PathFileLocator implements IPathFileLocator {
 			md5 = "";
 			logger.error("can't fetch MD5 for " + uri, e);
 		} catch (FileNotFoundException e) {
-			// this happens when invalid filenames are located and the
+			// this can happen when invalid filenames are located and the
 			// URI was not properly de/en-coded -- TODO
+			// ... or when the file actually doesn't exist...
 			md5 = "";
-			logger.error("can't fetch MD5 for " + uri, e);
+			if (mustExist)
+				logger.error("can't fetch MD5 for " + uri, e);
 		}
 		return md5;
 	}
@@ -1195,7 +1197,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 */
 	@Override
 	public String getContentMD5(URI uri) throws IOException {
-		return getContentMD5(uri, 0, -1);
+		return getContentMD5(uri, 0, -1, true);
 	}
 	
 	
@@ -1257,7 +1259,7 @@ public class PathFileLocator implements IPathFileLocator {
 					if (offset == 0 && (limit <= 0 || limit == info.length)) {
 						entMd5 = info.md5;
 					} else {
-						entMd5 = getContentMD5(uri, offset, limit);
+						entMd5 = getContentMD5(uri, offset, limit, true);
 					}
 					if (entMd5.equalsIgnoreCase(md5)) {
 						//System.out.println("\t" + entMd5 + " = " + uri);
