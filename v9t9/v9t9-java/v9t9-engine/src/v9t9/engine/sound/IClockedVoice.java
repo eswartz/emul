@@ -10,7 +10,7 @@
  */
 package v9t9.engine.sound;
 
-import v9t9.common.sound.IVoice;
+import v9t9.common.machine.IRegisterBank;
 
 /**
  * This represents the parameters controlling a single voice
@@ -18,7 +18,7 @@ import v9t9.common.sound.IVoice;
  * @author ejs
  *
  */
-public interface IClockedVoice extends IVoice {
+public interface IClockedVoice extends IRegisterBank {
 	/** Set the voice frequency */
 	void setPeriod(int hz);
 	/** Get the voice frequency */

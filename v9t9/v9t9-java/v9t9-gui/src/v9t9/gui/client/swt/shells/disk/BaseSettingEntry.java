@@ -28,13 +28,13 @@ import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingProperty;
 
-abstract class DiskSettingEntry extends Composite {
+abstract class BaseSettingEntry extends Composite {
 	protected final IProperty setting;
 	private IPropertyListener enableListener;
 	protected IMachine machine;
 	private IDeviceSelectorDialog dialog;
 	
-	public DiskSettingEntry(IDeviceSelectorDialog dialog_, final Composite parent, IProperty setting_, int style) {
+	public BaseSettingEntry(IDeviceSelectorDialog dialog_, final Composite parent, IProperty setting_, int style) {
 		super(parent, style);
 		
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(this);
@@ -79,8 +79,6 @@ abstract class DiskSettingEntry extends Composite {
 			Label label = new Label(this, SWT.NONE);
 			GridDataFactory.fillDefaults().applyTo(label);
 		}
-		
-		createControls(this);
 	}
 	
 	protected void updateSetting() {

@@ -33,9 +33,11 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.common.dsr.DeviceEditorIdConstants;
 import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.IconSettingProperty;
+import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.gui.client.swt.bars.ImageCanvas;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
 import ejs.base.properties.IProperty;
@@ -56,7 +58,7 @@ public class DeviceSettingsDialog extends Composite implements IDeviceSelectorDi
 			{
 				behavior.boundsPref = "DeviceWindowBounds." + title;
 				behavior.centering = Centering.INSIDE;
-				behavior.centerOverControl = buttonBar;
+				behavior.centerOverControl = null;
 				behavior.dismissOnClickOutside = true;
 				behavior.defaultBounds = new Rectangle(0, 0, 600, 300);
 			}
@@ -69,7 +71,6 @@ public class DeviceSettingsDialog extends Composite implements IDeviceSelectorDi
 		};
 	}
 
-	
 	protected IMachine machine;
 	protected boolean needReset;
 	private String[] settingGroups;
@@ -115,8 +116,12 @@ public class DeviceSettingsDialog extends Composite implements IDeviceSelectorDi
 					public int compare(IProperty o1, IProperty o2) {
 						if (o1 instanceof IconSettingProperty && o2 instanceof IconSettingProperty)
 							return o1.getLabel().compareTo(o2.getLabel());
+						else if (o1 instanceof IconSettingProperty)
+							return -1;
+						else if (o2 instanceof IconSettingProperty)
+							return 1;
 						else
-							return 0;
+							return 0; // keep original order
 					}
 			});
 			groupSettings.clear();
@@ -138,18 +143,35 @@ public class DeviceSettingsDialog extends Composite implements IDeviceSelectorDi
 				groups.put(name, group);
 			}
 			
+			
 			for (IProperty setting : groupSettings) {
-				DiskSettingEntry comp = null;
-				if (setting.getValue() instanceof String) {
-					comp = new DiskEntry(this, group, setting);
-				} else if (setting.getValue() instanceof Boolean) {
-					comp = new DiskEnableEntry(this, group, setting);
-				} else if (setting.getValue() != null && setting.getType().isEnum()) {
-					comp = new DiskComboEntry(this, group, setting);
+				if (setting.isHidden()) 
+					continue;
+				BaseSettingEntry comp = null;
+
+				String editorId = null;
+				if (setting instanceof SettingSchemaProperty) {
+					editorId = ((SettingSchemaProperty) setting).getSchema().getEditorId();
+				}
+				
+				if (editorId == null) {
+					if (setting.getValue() instanceof String || setting.getType() == String.class) {
+						editorId = DeviceEditorIdConstants.ID_TEXT;
+					} else if (setting.getValue() instanceof Boolean) {
+						editorId = DeviceEditorIdConstants.ID_CHECKBOX;
+					} else if (setting.getType().isEnum()) {
+						editorId = DeviceEditorIdConstants.ID_DROPDOWN;
+					}
+				}
+				if (editorId != null) {
+					comp = createEditor(editorId, group, setting);
 				}
 				if (comp != null) {
+					comp.createControls(comp);
 					GridDataFactory.fillDefaults().grab(true, false).applyTo(comp);
 					comp.updateSetting();
+				} else {		
+					System.err.println("cannot make editor for " + setting);
 				}
 			}
 		}
@@ -164,6 +186,26 @@ public class DeviceSettingsDialog extends Composite implements IDeviceSelectorDi
 					machine.reset();
 			}
 		});
+	}
+	
+	protected BaseSettingEntry createEditor(String editorId, Composite group, IProperty setting) {
+		if (DeviceEditorIdConstants.ID_DISK_IMAGE.equals(editorId)) {
+			return new DiskImageEntry(this, group, setting);
+		} else if (DeviceEditorIdConstants.ID_DISK_DIRECTORY.equals(editorId)) {
+			return new DiskDirectoryEntry(this, group, setting);
+		} else if (DeviceEditorIdConstants.ID_CASSETTE_INPUT_FILE.equals(editorId)) {
+			return new CassetteFileEntry(this, group, setting, SWT.OPEN);
+		} else if (DeviceEditorIdConstants.ID_CASSETTE_OUTPUT_FILE.equals(editorId)) {
+			return new CassetteFileEntry(this, group, setting, SWT.SAVE);
+		} else if (DeviceEditorIdConstants.ID_CHECKBOX.equals(editorId)) {
+			return new DiskEnableEntry(this, group, setting);
+		} else if (DeviceEditorIdConstants.ID_DROPDOWN.equals(editorId)) {
+			return new DiskComboEntry(this, group, setting);
+		} else if (DeviceEditorIdConstants.ID_PRESS_ENTER.equals(editorId)) {
+			return new PressEnterEntry(this, group, setting);
+		} else {
+			return null;
+		}
 	}
 
 	protected boolean acceptsGroup(String key) {

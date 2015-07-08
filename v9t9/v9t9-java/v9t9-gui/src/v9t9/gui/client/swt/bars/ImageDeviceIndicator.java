@@ -40,7 +40,8 @@ public class ImageDeviceIndicator extends ImageButton {
 			IImageProvider imageProvider, final IDeviceIndicatorProvider provider,
 			final IMachine machine, final SwtWindow window) {
 		super(parentDrawer, style, imageProvider, provider.getBaseIconIndex(), provider.getToolTip());
-		setOverlayBounds(imageProvider.imageIndexToBounds(provider.getActiveIconIndex()));
+		if (provider.getActiveIconIndex() >= 0)
+			setOverlayBounds(imageProvider.imageIndexToBounds(provider.getActiveIconIndex()));
 		this.provider = provider;
 		listener = new IPropertyListener() {
 			

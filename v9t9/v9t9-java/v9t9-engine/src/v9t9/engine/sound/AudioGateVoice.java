@@ -14,7 +14,7 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.sound.TMS9919Consts;
-
+import v9t9.engine.machine.BaseRegisterBank;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.ListenerList;
 
@@ -22,7 +22,7 @@ import ejs.base.utils.ListenerList;
  * @author ejs
  *
  */
-public class AudioGateVoice extends BaseVoice {
+public class AudioGateVoice extends BaseRegisterBank {
 
 	private boolean gate;
 	private IMachine machine;

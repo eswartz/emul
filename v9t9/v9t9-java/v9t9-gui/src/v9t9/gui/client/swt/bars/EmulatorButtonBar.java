@@ -329,11 +329,15 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 		multiSoundHandler = new MultiSoundOutputHandler(machine);
 		ISoundHandler handler = machine.getClient().getSoundHandler();
 		for (Map.Entry<ISoundGenerator, ISoundOutput> ent : handler.getGeneratorToOutputMap().entrySet()) {
+			ISoundGenerator generator = ent.getKey();
+			if (generator.getRecordingSettingSchema() == null)
+				continue;
+			
 			SoundRecordingHelper helper = new SwtSoundRecordingHelper(machine, ent.getValue(), 
-					ent.getKey().getRecordingSettingSchema(), 
-					ent.getKey().getName(),
-					ent.getKey().getAudioFormat(),
-					ent.getKey().isSilenceRecorded());
+					generator.getRecordingSettingSchema(), 
+					generator.getName(),
+					generator.getAudioFormat(),
+					generator.isSilenceRecorded());
 			multiSoundHandler.register(helper);
 		}
 

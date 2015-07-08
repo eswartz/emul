@@ -10,27 +10,126 @@
  */
 package v9t9.engine.sound;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFileFormat.Type;
+import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioFormat.Encoding;
 import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import v9t9.common.cassette.CassetteFileUtils;
+import v9t9.common.cassette.ICassetteChip;
+import v9t9.common.cassette.ICassetteDeck;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.BasicSettingsHandler;
-
 import ejs.base.properties.IProperty;
-import ejs.base.sound.ISoundOutput;
 
 
 /**
+
+From 99/4A console ROM:
+
+*
+* THIS IS A SET OF ROUTINES DEFINED FOR AUDIO CASSETTE
+* COMMUNICATION. THEY ARE ENTERED THROUGH A GRAPHICS
+* LANGUAGE PROGRAM, WHICH GIVES INFORMATION LIKE THE NO.
+* OF BLOCKS (=64 BYTES) TO BE WRITTEN, OR THE NUMBER OF
+* FREE BLOCKS IN CASE OF READ MODE; THE VDP START ADR.
+* AND THE BAUD RATE.
+*   THE ROUTINES TAKE CARE OF THE NECESSARY ENCODING/
+* DECODING AND THE ERROR CHECKING.
+*
+* THE BIPHASE FORMAT, USED IN THIS SET OF ROUTINES, HAS
+* THE FOLLOWING REPRESENTATIONS FOR THE BINARY DIGITS:
+*
+*     ---------------             ---------         ----
+*    |               |           |         |       |
+* ---                 ---     ---           -------
+*     <-----"0"----->            <---- "1"--------->
+*
+* REPRESENTATIONS OF THE BITS MAY BE CHANGED IN PHASE BY
+* 180 DEGREES, DEPENDING UPON THE VALUE OF THE BIT STREAM
+* AFTER THE PREVIOUS BIT.
+*
+*    PRINCIPLES OF OPERATION
+*
+*          WRITING
+*   THE ACTUAL IMPLEMENTATION OF THE BIPHASE RECORDING SCHEME
+* IS RELATIVELY SIMPLE. THE VALUE FOR THE DATA RATE, AS INDICATED
+* BY THE GRAPHICS LANGUAGE PROGRAM, IS USED AS A TIMER VALUE FOR
+* THE INTERNAL TMS9985 TIMER/COUNTER. IT IS USED AS A TIMER VALUE
+* FOR HALF A BIT CELL.
+*
+*      ------------                    ------        ----
+*     |            |                  |      |      |
+*  ---              ---            ---        ------
+*     |<----><---->                    <-----><----->
+*         DRATE                            DRATE
+*
+*   EACH BIT CELL THUS CONSISTS OF TWO TIMER INTERVALS. THE TIMER
+* INTERRUPT AT THE BEGINING OF EACH BIT CELL CAUSES THE OUTPUT LINE
+* TO CHANGE VALUE. THE NEXT TIMER INTERRUPT, IN THE MIDDLE OF THE
+* BIT CELL, ONLY CHANGES THE VALUE OF THE OUTPUT LINE IF THE BIT TO
+* BE OUTPUT EQUALS A BINARY "1".
+*
+*          READING
+*    ON READING BACK, THE BASIC TIMER INTERVAL TIME IS SET TO 1.5
+* TIMES THE DRATE OF THE WRITE SECTION. THE TIMER IS SYYNCHRONIZED
+* ON THE FLUX CHANGE AT THE BEGINING OF THE BIT CELL. AFTER THE TIMER
+* HAS GIVEN AN INTERRUPT, THE CURRENT INPUT LINE VALUE IS COMPARED TO
+* THE VALUE AT THE BEGINING OF THE BIT CELL. IF THIS VALUE HAS
+* CHANGED, THE BIT VALUE IS ASSUMED TO BE "1" IF NOT, IT WILL BE
+* A "0"
+*      TO PROVIDE A TIME-OUT MECHANISM THE TIMER AUTOMATICALLY
+* RESTARTS ITSELF WITH THE SAME RATE.  IF THE TIMER TIMES OUT BEFORE
+* THE NEXT FLUX CHANGE, AN ILLEGAL BIT LENGTH IS ASSUMED, AND AN
+* ERROR RETURN CODE IS PRODUCED.
+*
+*********************************************************************
+*
+*    CASSETTE WRITE ROUTINE
+*
+* WRITES N BLOCKS OF 64 BYTES TO THE AUDIO CASSETTE.
+*
+* THE OUTPUT FORMAT USED IS:
+*   - ZERO LEADER CONSISTING OF LDCNT ZEROES
+*   - SYNC BYTE (8 "1" BITS)
+*   - NUMBER OF BLOCKS TO FOLLOW (8 BITS)
+*   - CHECKSUM (8 BITS)
+*   - 2*N BLOCKS, CONSISTING OF:
+*      - 8 BYTES OF ZERO
+*      - 1 BYTE OF ONES
+*      - 64 BYTES OF INFORMATION
+*      - CHECKSUM (8 BITS)
+*   - EACH BLOCK IS REPEATED TWICE. THE LEADING ZEROES AND
+*     ONES ARE USED FOR TIMING AND TO R
+*   - TRAILER OF EIGHT "1" BITS
+*
+*********************************************************************
+*
+* CASSETTE READ ROUTINES
+*
+* DEVIATION OF UP TO -25 TO +50 PERCENT OF THE
+*    NOMINAL BAUD RATE IS PERMITTED
+*
+*********************************************************************
+*
+*  BIT INPUT ROUTINE
+*
+* READ ONE BIT FROM THE INPUT STREAM. RETURN TO CALLER+2
+* IF BIT READ IS "1"
+*     THE VALUE OF THE BIT CELL IS COMPUTED BY DETERMINING
+* THE INPUT LINE VALUE AT 3/4 OF THE BIT CELL LENGTH. IF THE
+* INPUT LINE LEVEL HAS CHANGED DURING THAT PERIOD, THE BIT
+* READ = "1"; IF NOT, THE BIT READ = "0"
+*     THE NEXT FLUX CHANGE SHOULD COME WITHIN 3/4 OF A BIT
+* CELL, IN ORDER TO ACCEPT THE BIT
+
  * @author ejs
  *
  */
@@ -39,24 +138,17 @@ public class CassetteReader {
 	public static void main(String[] args) throws UnsupportedAudioFileException, IOException {
 
 		File audioFile = new File(args[0]);
-		InputStream fis = new BufferedInputStream(new FileInputStream(audioFile));
-		AudioFileFormat format = AudioSystem.getAudioFileFormat(fis);
 		
-		AudioInputStream is = null;
+		AudioFileFormat format = CassetteFileUtils.scanAudioFile(audioFile);
 		
-		is = new AudioInputStream(
-				fis,
-				format.getFormat(),
-				audioFile.length());
-
 		final int BASE_CLOCK = 3000000;
 		final int POLL_CLOCK = 1378 * 3 / 2;
 		float secsPerPoll = (float) POLL_CLOCK / BASE_CLOCK;
 		
 		ISettingsHandler settings = new BasicSettingsHandler();
-		IProperty debug = settings.get(CassetteVoice.settingCassetteDebug);
+		IProperty debug = settings.get(ICassetteChip.settingCassetteDebug);
 		
-		CassetteReader reader = new CassetteReader(is, debug, null);
+		CassetteReader reader = new CassetteReader(audioFile, format, debug, null);
 		while (!reader.isDone()) {
 			
 			boolean val = reader.readBit(secsPerPoll);
@@ -82,27 +174,32 @@ public class CassetteReader {
 
 
 	private float samplesFrac;
-	private IProperty debug;
+	private ICassetteDeck deck;
+	private AudioFileFormat format;
+	private byte[] sampleBuf;
 
 	/**
-	 * @param is 
 	 * @param debug 
+	 * @param is 
+	 * @throws FileNotFoundException 
 	 * 
 	 */
-	public CassetteReader(AudioInputStream is, IProperty debug,
-			ISoundOutput output) {
-		this.is = is;
-		this.debug = debug;
+	public CassetteReader(File audioFile, AudioFileFormat format,
+			IProperty debug, ICassetteDeck deck) throws FileNotFoundException {
+		this.deck = deck;
+		this.format = format;
 		
+		this.is = new AudioInputStream(
+			new FileInputStream(audioFile),
+			format.getFormat(),
+			audioFile.length());
+
 		// why doesn't Java provide a way to skip the header!?!?
-		AudioFileFormat format;
 		try {
-			format = AudioSystem.getAudioFileFormat(is);
 			if (format.getType() == Type.WAVE) {
 				is.skip(44);
 			}
 		} catch (IOException e) {
-		} catch (UnsupportedAudioFileException e) {
 		}
 		
 		nch = is.getFormat().getChannels();
@@ -112,6 +209,12 @@ public class CassetteReader {
 		mag = 1.0f;
 		min = 1f;
 		max = -1f;
+		dcOffset = 0f;
+		
+		sampleBuf = new byte[is.getFormat().getFrameSize()];
+		
+		if (deck != null)
+			deck.setSampleRate((int) is.getFormat().getFrameRate());
 	}
 
 	/**
@@ -142,9 +245,8 @@ public class CassetteReader {
 		}
 		try {
 			float total = 0.f;
-			byte[] buf = new byte[is.getFormat().getFrameSize()];
-			int len = is.read(buf);
-			if (len != buf.length) {
+			int len = is.read(sampleBuf);
+			if (len != sampleBuf.length) {
 				if (!endOfTape) {
 					mag = 0f;
 					endOfTape = true;
@@ -156,27 +258,35 @@ public class CassetteReader {
 				int bufIdx = ch * sampSize;
 				int samp = 0;
 				if (sampSize == 1) {
-					samp = signed ? buf[bufIdx] : (byte) ((buf[bufIdx]) & 0xff);
+					samp = sampleBuf[bufIdx] & 0xff;
+					if (!signed)
+						samp -= 0x80;
+					else
+						samp = (byte) samp;
 					total += samp / 128f;
 				}
 				else if (sampSize == 2) {
 					if (bigEndian)
-						samp = ((buf[bufIdx] & 0xff) << 8) | (buf[bufIdx+1] & 0xff);
+						samp = ((sampleBuf[bufIdx] & 0xff) << 8) | (sampleBuf[bufIdx+1] & 0xff);
 					else
-						samp = ((buf[bufIdx+1] & 0xff) << 8) | (buf[bufIdx] & 0xff);
-					if (signed)
+						samp = ((sampleBuf[bufIdx+1] & 0xff) << 8) | (sampleBuf[bufIdx] & 0xff);
+					if (!signed)
+						samp -= 32768;
+					else
 						samp = (short) samp;
 					total += samp / 32768f;
 				}
 				else if (sampSize == 4) {
 					long lsamp;
 					if (bigEndian)
-						lsamp = ((buf[bufIdx+3] & 0xff) << 24) | ((buf[bufIdx+2] & 0xff) << 16) |
-							((buf[bufIdx+1] & 0xff) << 8) | (buf[bufIdx] & 0xff);
+						lsamp = ((sampleBuf[bufIdx+3] & 0xff) << 24) | ((sampleBuf[bufIdx+2] & 0xff) << 16) |
+							((sampleBuf[bufIdx+1] & 0xff) << 8) | (sampleBuf[bufIdx] & 0xff);
 					else
-						lsamp = ((buf[bufIdx] & 0xff) << 24) | ((buf[bufIdx+1] & 0xff) << 16) |
-							((buf[bufIdx+2] & 0xff) << 8) | (buf[bufIdx+3] & 0xff);
-					if (signed)
+						lsamp = ((sampleBuf[bufIdx] & 0xff) << 24) | ((sampleBuf[bufIdx+1] & 0xff) << 16) |
+							((sampleBuf[bufIdx+2] & 0xff) << 8) | (sampleBuf[bufIdx+3] & 0xff);
+					if (!signed)
+						lsamp -= 0x80000000L;
+					else
 						lsamp = (int) lsamp;
 
 					total += lsamp / (float)0x80000000L;
@@ -184,6 +294,10 @@ public class CassetteReader {
 			}
 			
 			float samp = total / nch;
+
+			if (deck != null) {
+				deck.addFloatSample(samp);
+			}
 			
 			float absSamp = Math.abs(samp);
 			if (absSamp >= mag) {
@@ -220,6 +334,7 @@ public class CassetteReader {
 		}
 		return polarity > 0;
 	}
+	
 	/**
 	 * Read the current polarity
 	 * @param secs amount of time, in seconds, to poll
@@ -229,7 +344,7 @@ public class CassetteReader {
 		if (samples > 48) {
 			samples = 48;
 		}
-		if (debug.getBoolean()) System.out.print(" @"+ samples+":");
+		//if (debug.getBoolean()) System.out.print(" @"+ samples+":");
 		
 		int newPolarity = polarity;
 		
@@ -266,6 +381,10 @@ public class CassetteReader {
 			
 		}
 		
+//		if (debug.getBoolean()) {
+//			System.out.println("[Cassette] "+ position + ": " + newPolarity);
+//		}
+		
 		return newPolarity;
 	}
 
@@ -278,6 +397,15 @@ public class CassetteReader {
 	public void close() {
 		try { is.close(); } catch (IOException e) { }
 		endOfTape = true;
+		if (deck != null)
+			deck.setSampleRate(0);
+	}
+
+	/**
+	 * @return
+	 */
+	public AudioFormat getFormat() {
+		return format.getFormat();
 	}
 
 

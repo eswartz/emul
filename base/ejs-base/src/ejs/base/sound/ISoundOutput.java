@@ -44,5 +44,11 @@ public interface ISoundOutput {
 	 * @return
 	 */
 	boolean isStarted();
+
+	/**
+	 * Tell whether any emitters are SoundFileListeners currently saving
+	 * @return
+	 */
+	boolean isRecording();
 }
 

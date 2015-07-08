@@ -11,9 +11,9 @@
 package v9t9.engine.sound;
 
 import v9t9.common.machine.IMachine;
-import v9t9.common.sound.IVoice;
+import v9t9.common.machine.IRegisterBank;
 import v9t9.common.sound.TMS9919BConsts;
-
+import v9t9.engine.machine.BaseRegisterBank;
 import static v9t9.common.sound.TMS9919BConsts.*;
 
 /**
@@ -42,7 +42,7 @@ public class SoundTMS9919B extends SoundTMS9919 {
 					name + " Voice " + i, 
 					listeners,
 					CMD_NUM_EFFECTS);
-			count = ((BaseVoice) voices[i]).initRegisters(regNames, regDescs, regIds, regBase);
+			count = ((BaseRegisterBank) voices[i]).initRegisters(regNames, regDescs, regIds, regBase);
 			mapRegisters(regBase, count, voices[i]);
 			regBase += count;
 		}
@@ -51,12 +51,12 @@ public class SoundTMS9919B extends SoundTMS9919 {
 				name + " Noise", 
 				listeners,
 				CMD_NUM_EFFECTS);
-		count = ((BaseVoice) voices[3]).initRegisters(regNames, regDescs, regIds, regBase);
+		count = ((BaseRegisterBank) voices[3]).initRegisters(regNames, regDescs, regIds, regBase);
 		mapRegisters(regBase, count, voices[3]);
 		regBase += count;
 		
 		audioGateVoice = new AudioGateVoice(id + "A", name + " Audio Gate", listeners, machine);
-		count = ((BaseVoice) audioGateVoice).initRegisters(regNames, regDescs, regIds, regBase);
+		count = ((BaseRegisterBank) audioGateVoice).initRegisters(regNames, regDescs, regIds, regBase);
 		mapRegisters(regBase, count, audioGateVoice);
 		regBase += count;
 //		
@@ -115,7 +115,7 @@ public class SoundTMS9919B extends SoundTMS9919 {
 	public void reset() {
 		super.reset();
 		
-		for (IVoice v : voices) {
+		for (IRegisterBank v : voices) {
 			IEnhancedVoice voice = (IEnhancedVoice) v;
 			
 			voice.setEffect(CMD_RESET, (byte) 0);

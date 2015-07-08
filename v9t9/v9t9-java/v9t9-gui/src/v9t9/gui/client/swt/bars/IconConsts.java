@@ -47,6 +47,6 @@ public class IconConsts {
 	static final int EVENT_LOG = 26;
 	static final int TO_UPPER_LEFT = 27;
 	static final int TO_LOWER_RIGHT = 28;
-	static final int KEYBOARD = 29;
+	static final int CASSETTE = 29;
 
 }

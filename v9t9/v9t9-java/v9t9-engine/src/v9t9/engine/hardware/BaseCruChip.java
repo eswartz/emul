@@ -92,13 +92,19 @@ public class BaseCruChip implements ICruChip {
         prevCycles = machine.getCpu().getCurrentCycleCount();
 	}
 
+    public int getClockRate() {
+    	if (clockRegister != 0)
+    		return (3000000 / clockRegister / 64);
+    	return 0;
+    }
+    
 	protected void resetClock() {
 		if (clockRegister != prevClockRegister) {
 			if (clockRegister != 0) {
 				log("new clock register: " + clockRegister+"; rate = " + 
-						(3000000 / clockRegister / 64) + " Hz");
+						getClockRate() + " Hz");
 				logger.info("new clock register: " + clockRegister+"; rate = " + 
-						(3000000 / clockRegister / 64) + " Hz");
+						getClockRate() + " Hz");
 			}
 			prevClockRegister = clockRegister;
 			prevCycles = machine.getCpu().getTotalCurrentCycleCount();

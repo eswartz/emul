@@ -41,5 +41,4 @@ public class SettingSchemaProperty extends SettingProperty {
 	public SettingSchema getSchema() {
 		return schema;
 	}
-
 }

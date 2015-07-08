@@ -14,6 +14,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.Collection;
 
+import v9t9.common.cassette.ICassetteChip;
 import v9t9.common.client.IEmulatorContentSourceProvider;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.cpu.IExecutor;
@@ -23,7 +24,6 @@ import v9t9.common.dsr.IPrinterImageHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IPathFileLocator;
-import v9t9.common.hardware.ICassetteChip;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
