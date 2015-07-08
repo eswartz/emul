@@ -11,6 +11,10 @@
 package v9t9.audio.sound;
 
 import java.util.Arrays;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import javax.sound.sampled.AudioFormat;
 
 import ejs.base.settings.ISettingSection;
 import ejs.base.sound.IFlushableSoundVoice;
@@ -56,15 +60,17 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 	private int[] deltas = new int[0];
 	private int deltaIdx = 0;
 	private int baseCycles;
-	private boolean motor2;
-	private boolean motor1;
+	private boolean motor;
 	private float prevV;
 	private float sign = 1f;
 	private int leftover;
 	private float dcOffset;
-	
+
+	private Queue<Float> samples = new LinkedBlockingQueue<Float>();
+	private AudioFormat sampleFormat;
+
 	public CassetteSoundVoice(String name) {
-		super("Cassette");
+		super(name);
 	}
 	
 	@Override
@@ -99,14 +105,15 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 	 */
 	@Override
 	public boolean isActive() {
-		return super.isActive();
+		return super.isActive() || !samples.isEmpty();
 	}
+	
 	public synchronized void setState(int curr) {
 		boolean newState = curr >= 0;
 		curr = absp1(curr);
 		
 		// always note a change; the speed is what counts
-		if (motor1 || motor2) 
+		if (motor) 
 		{
 			int offs = curr >= baseCycles ? curr - baseCycles : curr;
 			
@@ -134,10 +141,43 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 		deltas[deltaIdx++] = pos;
 	}
 
+	/**
+	 * Set the rate of raw audio data coming into the cassette
+	 * @param rate
+	 */
+	public void setSampleRate(float rate) {
+		if (rate <= 0)
+			this.sampleFormat = null;
+		else
+			this.sampleFormat = new AudioFormat(rate, 16, 1, true, false);
+	}
+
+	/**
+	 * Add a sample of raw audio data coming into the cassette
+	 * @param f
+	 */
+	public void addSample(float f) {
+		samples.add(f);
+	}
+	
+	
 	public boolean generate(float[] soundGeneratorWorkBuffer, int from,
 			int to) {
 		
-		//appendPos(state ? totalCount : -totalCount-1);
+		// playing back audio read from the cassette
+		if (!samples.isEmpty()) {
+			Object[] samps = samples.toArray(); 
+			samples.clear();
+			if (sampleFormat != null && soundClock > 0) {
+				float outIdx = 0;
+				float scale = sampleFormat.getFrameRate() / soundClock;
+				for (int i = 0; i < samps.length && from < to && outIdx < samps.length; i++) {
+					float sample = (Float) samps[(int) outIdx];
+					soundGeneratorWorkBuffer[from++] += sample;
+					outIdx += scale;
+				}
+			}
+		}
 		return wasSet;
 	}
 
@@ -147,6 +187,8 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 	@Override
 	public synchronized boolean flushAudio(float[] soundGeneratorWorkBuffer, int from,
 			int to, int totalCycles) {
+		
+		// constructing the (output) audio for the cassette
 		boolean generated = false;
 		if (from >= to || deltaIdx <= 0) {
 			dcOffset /= 1.1;
@@ -252,32 +294,21 @@ public class CassetteSoundVoice extends ClockedSoundVoice implements IFlushableS
 		if (settings == null) return;
 		super.loadState(settings);
 		setVolume((byte) (settings.getBoolean("State") ? MAX_VOLUME : 0));
-		motor1 = settings.getBoolean("Motor1");
-		motor2 = settings.getBoolean("Motor2");
+		motor = settings.getBoolean("Motor");
 	}
 	
 	@Override
 	public void saveState(ISettingSection settings) {
 		super.saveState(settings);
 		settings.put("State", Boolean.toString(getVolume() != 0));
-		settings.put("Motor1", Boolean.toString(motor1));
-		settings.put("Motor2", Boolean.toString(motor2));
+		settings.put("Motor", Boolean.toString(motor));
 	}
 
 	/**
 	 * @param b
 	 */
-	public void setMotor1(int curr, boolean b) {
-		motor1 = b;
+	public void setMotor(int curr, boolean b) {
+		motor = b;
 		baseCycles = curr;
 	}
-
-	/**
-	 * @param b
-	 */
-	public void setMotor2(int curr, boolean b) {
-		motor2 = b;
-		baseCycles = curr;
-	}
-	
 }

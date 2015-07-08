@@ -23,8 +23,20 @@ public class SettingSchema {
 	private final String description;
 	private final String context;
 	private final Class<?> klass;
+	private String editorId;
 	
-	
+
+	public SettingSchema(String context, String name, String label, String description,
+			String editorId,
+			Object storage, Class<?> klass) {
+		this.context = context;
+		this.name = name;
+		this.label = label;
+		this.description = description;
+		this.editorId = editorId;
+		this.defaultValue = storage;
+		this.klass = klass;
+	}
 	public SettingSchema(String context, String name, String label, String description,
 			Object storage, Class<?> klass) {
 		this.context = context;
@@ -39,7 +51,7 @@ public class SettingSchema {
 			Object storage) {
 		this(context, name, label, description, storage, null);
 	}
-	
+
 	public SettingSchema(String context, String name, Class<?> klass, Object value) {
 		this(context, name, null, null, value, klass);
 	}
@@ -86,11 +98,6 @@ public class SettingSchema {
 	public Class<?> getKlass() {
 		return klass;
 	}
-	
-	public IProperty createSetting() {
-		IProperty prop = new SettingSchemaProperty(this);
-		return prop;
-	}
 
 	/**
 	 * @return
@@ -99,5 +106,18 @@ public class SettingSchema {
 		return defaultValue;
 	}
 
+	/**
+	 *  This tells how to create editor UI for the setting.
+	 * By default, the type of the property's value is used to create UI.
+	 * @return <code>null</code> or id (e.g. DeviceEditorIdConstants)
+	 */
+	public String getEditorId() {
+		return editorId;
+	}
 	
+	
+	public IProperty createSetting() {
+		IProperty prop = new SettingSchemaProperty(this);
+		return prop;
+	}
 }

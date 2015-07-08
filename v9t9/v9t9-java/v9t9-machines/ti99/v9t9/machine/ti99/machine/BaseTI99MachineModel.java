@@ -11,20 +11,28 @@
 package v9t9.machine.ti99.machine;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import ejs.base.properties.IProperty;
+import v9t9.common.cassette.ICassetteChip;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IDsrManager;
-import v9t9.common.hardware.ICassetteChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.settings.Settings;
+import v9t9.engine.dsr.DeviceIndicatorProvider;
+import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.sound.CassetteChip;
+import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.speech.SpeechTMS5220;
 import v9t9.machine.ti99.cpu.Cpu9900;
 
@@ -53,6 +61,12 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 				settings.add(handler);
 			}
 		}
+		if (machine.getCassette() != null) {
+			IDeviceSettings csettings = machine.getCassette().getDeviceSettings();
+			if (settings != null) {
+				settings.add(csettings);
+			}
+		}
 		return settings;
 	}
 	
@@ -67,6 +81,15 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 			for (IDsrHandler handler : dsrManager.getDsrs()) {
 				list.addAll(handler.getDeviceIndicatorProviders());
 			}
+		}
+		if (machine instanceof TI99Machine) {
+			DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
+					machine.getSettings().get(ICassetteChip.settingCassetteEnabled), 
+					"Cassette handling",
+					IDevIcons.DEV_CASSETTE, -1,
+					"Cassette Configuration",
+					ICassetteChip.GROUP_CASSETTE);
+			list.add(deviceIndicatorProvider);
 		}
 		return list;
 	}
@@ -89,7 +112,11 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 	 */
 	@Override
 	public ICassetteChip createCassetteChip(IMachine machine) {
-		return new CassetteChip(machine, "Cassette", "Cassette", 0);
+		CassetteChip chip = new CassetteChip(machine, "Cassette", "Cassette", 0);
+		if (machine.getSound() instanceof SoundTMS9919) {
+			chip.setAudioGateVoice(((SoundTMS9919) machine.getSound()).getAudioGateVoice());
+		}
+		return chip;
 	}
 
 	/* (non-Javadoc)

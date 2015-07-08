@@ -10,13 +10,13 @@
  */
 package v9t9.engine.sound;
 
-import v9t9.common.sound.IVoice;
+import v9t9.common.machine.IRegisterBank;
 
 /**
  * @author ejs
  *
  */
-public interface IEnhancedVoice extends IVoice {
+public interface IEnhancedVoice extends IRegisterBank {
 
 	void setEffect(int effect, byte value);
 	byte getEffectValue(int effect);

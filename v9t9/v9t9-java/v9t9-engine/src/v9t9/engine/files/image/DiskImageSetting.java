@@ -13,6 +13,7 @@ package v9t9.engine.files.image;
 import java.net.URL;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.dsr.DeviceEditorIdConstants;
 import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.common.settings.SettingSchema;
@@ -30,7 +31,8 @@ public class DiskImageSetting extends IconSettingProperty implements IDiskDriveS
 				name, "DSK" + name.charAt(name.length() - 1) + " Image",
 				"Specify the full path of the image for this disk.\n\n"+
 				"The extension selects the image type when creating a new image.\n\nUse *.dsk for sector-image disks and *.trk for track image disks.",
-				storage), iconPath);
+				DeviceEditorIdConstants.ID_DISK_IMAGE,
+				storage, String.class), iconPath);
 		
 		drive = Integer.parseInt(name.substring(name.length() - 1));
 		

@@ -15,8 +15,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import v9t9.audio.sound.CassetteSoundGenerator;
 import v9t9.audio.sound.SoundGeneratorFactory;
 import v9t9.audio.speech.SpeechGeneratorFactory;
+import v9t9.common.cassette.CassetteConsts;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
@@ -51,7 +53,10 @@ public class JavaSoundHandler implements ISoundHandler {
 		
 		register(SoundGeneratorFactory.createSoundGenerator(machine));
 		register(SpeechGeneratorFactory.createSpeechGenerator(machine));
-		register(SoundGeneratorFactory.createCassetteGenerator(machine));
+		if (machine.getCassette() != null) {
+			register(new CassetteSoundGenerator(machine, machine.getCassette().getCassette1(), 0));
+			register(new CassetteSoundGenerator(machine, machine.getCassette().getCassette2(), CassetteConsts.REG_COUNT_CASSETTE));
+		}
 				
 		soundVolume = Settings.get(machine, ISoundHandler.settingSoundVolume);
 		playSound = Settings.get(machine, ISoundHandler.settingPlaySound);
@@ -75,12 +80,6 @@ public class JavaSoundHandler implements ISoundHandler {
 			}
 		});
 
-		// frames in ALSA means samples per channel, but raw freq in javax
-		//soundFramesPerTick = (int) ((soundFormat.getFrameRate()
-		//		+ machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
-//		soundFramesPerTick = soundOutput.getSamples((1000 + machine.getTicksPerSec() - 1) / machine.getTicksPerSec());
-//		cassetteFramesPerTick = cassetteOutput.getSamples((1000 + machine.getTicksPerSec() - 1) / machine.getTicksPerSec());
-		
 		playSound.addListenerAndFire(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
@@ -135,7 +134,8 @@ public class JavaSoundHandler implements ISoundHandler {
 	 */
 	protected boolean isRecording() {
 		for (ISoundGenerator generator : generators) {
-			if (machine.getSettings().get(generator.getRecordingSettingSchema()).getString() != null)
+			if (generator.getRecordingSettingSchema() != null && 
+					machine.getSettings().get(generator.getRecordingSettingSchema()).getString() != null)
 				return true;
 		}
 		return false;

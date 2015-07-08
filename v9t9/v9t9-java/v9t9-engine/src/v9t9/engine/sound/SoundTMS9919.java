@@ -21,8 +21,9 @@ import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
+import v9t9.common.machine.IRegisterBank;
 import v9t9.common.settings.Settings;
-import v9t9.common.sound.IVoice;
+import v9t9.engine.machine.BaseRegisterBank;
 import static v9t9.common.sound.TMS9919Consts.*;
 
 /**
@@ -51,7 +52,7 @@ public class SoundTMS9919 implements ISoundChip {
 	protected final Map<Integer, String> regDescs;
 	protected final Map<String, Integer> regIds;
 	
-	protected final Map<Integer, IVoice> regIdToVoice;
+	protected final Map<Integer, IRegisterBank> regIdToVoice;
 	
 	protected static int getOperationVoice(int op) {
 		return ( ((op) & 0x60) >> 5);
@@ -80,7 +81,7 @@ public class SoundTMS9919 implements ISoundChip {
 		regDescs = new HashMap<Integer, String>();
 		regIds = new HashMap<String, Integer>();
 		
-		regIdToVoice = new HashMap<Integer, IVoice>();
+		regIdToVoice = new HashMap<Integer, IRegisterBank>();
 		
 		initRegisters(id, name, regBase);
 		
@@ -96,25 +97,25 @@ public class SoundTMS9919 implements ISoundChip {
 		int count;
 		for (int i = 0; i < 3; i++) {
 			voices[i] = new ToneVoice(id + "V" + i, name + " Voice " + i, listeners);
-			count = ((BaseVoice) voices[i]).initRegisters(regNames, regDescs, regIds, regBase);
+			count = ((BaseRegisterBank) voices[i]).initRegisters(regNames, regDescs, regIds, regBase);
 			mapRegisters(regBase, count, voices[i]);
 			regBase += count;
 		}
 		
 		voices[3] = new NoiseVoice(id + "N", name + " Noise", listeners);
-		count = ((BaseVoice) voices[3]).initRegisters(regNames, regDescs, regIds, regBase);
+		count = ((BaseRegisterBank) voices[3]).initRegisters(regNames, regDescs, regIds, regBase);
 		mapRegisters(regBase, count, voices[3]);
 		regBase += count;
 		
 		audioGateVoice = new AudioGateVoice(id + "A", "Audio Gate", listeners, machine);
-		count = ((BaseVoice) audioGateVoice).initRegisters(regNames, regDescs, regIds, regBase);
+		count = ((BaseRegisterBank) audioGateVoice).initRegisters(regNames, regDescs, regIds, regBase);
 		mapRegisters(regBase, count, audioGateVoice);
 		regBase += count;
 		
 		return regBase;
 	}
 
-	protected void mapRegisters(int regBase, int count, IVoice voice) {
+	protected void mapRegisters(int regBase, int count, IRegisterBank voice) {
 		while (count-- > 0)
 			regIdToVoice.put(regBase++, voice);
 	}
@@ -200,7 +201,7 @@ public class SoundTMS9919 implements ISoundChip {
 	public void saveState(ISettingSection settings) {
 		Settings.get(machine, ISoundHandler.settingPlaySound).saveState(settings);
 		for (int vn = 0; vn < voices.length; vn++) {
-			IVoice v = voices[vn];
+			IRegisterBank v = voices[vn];
 			v.saveState(settings.addSection(v.getName()));
 		}
 		if (audioGateVoice != null)
@@ -211,7 +212,7 @@ public class SoundTMS9919 implements ISoundChip {
 		if (settings == null) return;
 		Settings.get(machine, ISoundHandler.settingPlaySound).loadState(settings);
 		for (int vn = 0; vn < voices.length; vn++) {
-			IVoice v = voices[vn];
+			IRegisterBank v = voices[vn];
 			String name = v.getName();
 			v.loadState(settings.getSection(name));
 		}
@@ -273,7 +274,7 @@ public class SoundTMS9919 implements ISoundChip {
 	 */
 	@Override
 	public int getRegister(int reg) {
-		IVoice voice = regIdToVoice.get(reg);
+		IRegisterBank voice = regIdToVoice.get(reg);
 		if (voice == null)
 			return 0;
 		return voice.getRegister(reg);
@@ -284,7 +285,7 @@ public class SoundTMS9919 implements ISoundChip {
 	 */
 	@Override
 	public int setRegister(int reg, int newValue) {
-		IVoice voice = regIdToVoice.get(reg);
+		IRegisterBank voice = regIdToVoice.get(reg);
 		if (voice == null)
 			return 0;
 		int old = voice.getRegister(reg);
@@ -321,9 +322,16 @@ public class SoundTMS9919 implements ISoundChip {
 	 */
 	@Override
 	public void reset() {
-		for (IVoice v : voices) {
+		for (IRegisterBank v : voices) {
 			v.setRegister(v.getBaseRegister() + REG_OFFS_ATTENUATION, 0xf);
 		}		
 		audioGateVoice.setGate(false);
+	}
+	
+	/**
+	 * @return the audioGateVoice
+	 */
+	public AudioGateVoice getAudioGateVoice() {
+		return audioGateVoice;
 	}
 }

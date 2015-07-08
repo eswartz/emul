@@ -22,7 +22,7 @@ import org.eclipse.swt.widgets.Label;
 import v9t9.common.dsr.IDeviceLabel;
 import ejs.base.properties.IProperty;
 
-class DiskComboEntry extends DiskSettingEntry {
+class DiskComboEntry extends BaseSettingEntry {
 	public DiskComboEntry(IDeviceSelectorDialog dialog, final Composite parent, IProperty setting_) {
 		super(dialog, parent, setting_, SWT.NONE);
 	}

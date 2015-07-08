@@ -21,6 +21,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import v9t9.common.asm.IRawInstructionFactory;
+import v9t9.common.cassette.ICassetteChip;
 import v9t9.common.client.IClient;
 import v9t9.common.client.IEmulatorContentSourceProvider;
 import v9t9.common.client.IKeyboardHandler;
@@ -42,7 +43,6 @@ import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.PathFileLocator;
-import v9t9.common.hardware.ICassetteChip;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;

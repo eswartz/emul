@@ -13,8 +13,8 @@ package v9t9.machine.ti99.dsr.emudisk;
 import java.net.URL;
 
 import ejs.base.properties.IProperty;
-
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.dsr.DeviceEditorIdConstants;
 import v9t9.common.files.IDiskDriveSetting;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.common.settings.SettingSchema;
@@ -30,7 +30,8 @@ class EmuDiskSetting extends IconSettingProperty implements IDiskDriveSetting {
 		super(new SettingSchema(ISettingsHandler.TRANSIENT,
 				name, "DSK" + name.charAt(name.length() - 1) + " Directory",
 				"Specify the full path of the directory representing this disk.",
-				storage), iconPath);
+				DeviceEditorIdConstants.ID_DISK_DIRECTORY,
+				storage, String.class), iconPath);
 		
 		drive = Integer.parseInt(name.substring(name.length() - 1));
 

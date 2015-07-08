@@ -48,7 +48,6 @@ public class SoundFileListener implements ISoundEmitter {
 
 	public SoundFileListener() {
 		silence = new byte[8192];
-		Arrays.fill(silence, (byte) 0);
 	}
 	
 	/**
@@ -108,6 +107,7 @@ public class SoundFileListener implements ISoundEmitter {
 		this.soundFormat = format;
 		
 
+		Arrays.fill(silence, (byte) (format.getEncoding() == AudioFormat.Encoding.PCM_SIGNED ? 0x0 : 0x80));
 	}
 	
 
