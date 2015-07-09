@@ -15,12 +15,14 @@ import static v9t9.common.sound.TMS9919Consts.GROUP_NAME;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import v9t9.common.cassette.ICassetteChip;
 import v9t9.common.cassette.ICassetteDeck;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.DeviceEditorIdConstants;
+import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.machine.IMachine;
@@ -30,6 +32,7 @@ import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.machine.BaseRegisterBank;
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.ListenerList;
 
@@ -56,10 +59,19 @@ public class CassetteChip implements ICassetteChip {
 	private CassetteDeck cassette1;
 	private CassetteDeck cassette2;
 
-	public CassetteChip(IMachine machine, String id, String name, int regBase) {
-		this.machine = machine;
+	public CassetteChip(IMachine machine_, String id, String name, int regBase) {
+		this.machine = machine_;
 		listeners = new ListenerList<IRegisterWriteListener>();
-		
+
+		IProperty cassetteEnabled = machine.getSettings().get(ICassetteChip.settingCassetteEnabled);
+		cassetteEnabled.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				machine.getSettings().get(IDeviceIndicatorProvider.settingDevicesChanged).firePropertyChange();
+			}
+		});
+
 		this.regBase = regBase;
 		
 		regNames = new HashMap<Integer, String>();
@@ -233,7 +245,7 @@ public class CassetteChip implements ICassetteChip {
 			@Override
 			public Map<String, Collection<IProperty>> getEditableSettingGroups() {
 				if (map == null) {
-					map = new HashMap<String, Collection<IProperty>>();
+					map = new LinkedHashMap<String, Collection<IProperty>>();
 					
 					Collection<IProperty> list;
 					

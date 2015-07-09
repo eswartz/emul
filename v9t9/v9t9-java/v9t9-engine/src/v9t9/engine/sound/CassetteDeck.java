@@ -112,7 +112,7 @@ public class CassetteDeck extends BaseRegisterBank implements ICassetteDeck {
 	 */
 	@Override
 	public boolean canPlay() {
-		return canPlay;
+		return canPlay && cassetteEnabled.getBoolean();
 	}
 	
 	/* (non-Javadoc)
@@ -120,7 +120,7 @@ public class CassetteDeck extends BaseRegisterBank implements ICassetteDeck {
 	 */
 	@Override
 	public boolean canRecord() {
-		return true;
+		return cassetteEnabled.getBoolean();
 	}
 	
 	protected void log(String msg) {
@@ -152,7 +152,7 @@ public class CassetteDeck extends BaseRegisterBank implements ICassetteDeck {
 				cassetteReader.close();
 		}
 	
-		if (audioFile != null) {
+		if (audioFile != null && cassetteEnabled.getBoolean()) {
 			try {
 				AudioFileFormat format = CassetteFileUtils.scanAudioFile(audioFile);
 				
@@ -200,7 +200,7 @@ public class CassetteDeck extends BaseRegisterBank implements ICassetteDeck {
 			stopCassette();
 		}
 		
-		if (generator == null || output == null)
+		if (generator == null || output == null || !cassetteEnabled.getBoolean())
 			return;
 		
 		synchronized (this) {

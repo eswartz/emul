@@ -11,14 +11,10 @@
 package v9t9.machine.ti99.machine;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import ejs.base.properties.IProperty;
 import v9t9.common.cassette.ICassetteChip;
-import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
@@ -83,14 +79,18 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 			}
 		}
 		if (machine instanceof TI99Machine) {
-			DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
-					machine.getSettings().get(ICassetteChip.settingCassetteEnabled), 
-					"Cassette handling",
-					IDevIcons.DEV_CASSETTE, -1,
-					"Cassette Configuration",
-					ICassetteChip.GROUP_CASSETTE_FILES,
-					ICassetteChip.GROUP_CASSETTE_OPTIONS);
-			list.add(deviceIndicatorProvider);
+			IProperty cassetteEnabled = machine.getSettings().get(ICassetteChip.settingCassetteEnabled);
+
+			if (cassetteEnabled.getBoolean()) {
+				DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
+						machine.getSettings().get(ICassetteChip.settingCassetteEnabled), 
+						"Cassette handling",
+						IDevIcons.DEV_CASSETTE, -1,
+						"Cassette Configuration",
+						ICassetteChip.GROUP_CASSETTE_FILES,
+						ICassetteChip.GROUP_CASSETTE_OPTIONS);
+				list.add(deviceIndicatorProvider);
+			}
 		}
 		return list;
 	}
