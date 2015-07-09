@@ -72,10 +72,12 @@ public class CassetteDeck extends BaseRegisterBank implements ICassetteDeck {
 	private ISoundOutput output;
 	
 	private SoundFileListener soundListener;
+	private boolean canPlay;
 
-	public CassetteDeck(String id, String name,
+	public CassetteDeck(String id, String name, boolean canPlay,
 			ListenerList<IRegisterWriteListener> listeners, IMachine machine_) {
 		super(id, name, listeners);
+		this.canPlay = canPlay;
 		this.machine = machine_;
 		
 		cassetteEnabled = machine.getSettings().get(ICassetteChip.settingCassetteEnabled);
@@ -105,6 +107,22 @@ public class CassetteDeck extends BaseRegisterBank implements ICassetteDeck {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.cassette.ICassetteDeck#canPlay()
+	 */
+	@Override
+	public boolean canPlay() {
+		return canPlay;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cassette.ICassetteDeck#canRecord()
+	 */
+	@Override
+	public boolean canRecord() {
+		return true;
+	}
+	
 	protected void log(String msg) {
 		if (cassetteDebug.getBoolean()) {
 			PrintWriter pw = Logging.getLog(dumpFullInstructions);
@@ -114,8 +132,6 @@ public class CassetteDeck extends BaseRegisterBank implements ICassetteDeck {
 		}
 	}
 	
-	
-
 	public void stopCassette() {
 		synchronized (CassetteDeck.this) {
 			if (cassetteReader != null)

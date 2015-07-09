@@ -29,11 +29,9 @@ import ejs.base.properties.IProperty;
  */
 public class CassetteFileEntry extends FileEntry {
 
-	private int mode;
 	private Button recordStopButton;
 	private Button playStopButton;
 	private ICassetteDeck deck;
-
 
 	/**
 	 * @param dialog_
@@ -42,11 +40,10 @@ public class CassetteFileEntry extends FileEntry {
 	 * @param style
 	 */
 	public CassetteFileEntry(IDeviceSelectorDialog dialog_, Composite parent,
-			IProperty setting_, int mode) {
+			IProperty setting_) {
 		super(dialog_, parent, setting_, SWT.NONE);
-		this.mode = mode;
 		
-		this.deck = setting_.getName().contains("Input") || setting_.getName().contains("1")
+		this.deck = setting_.getName().contains("1")
 				? machine.getCassette().getCassette1()
 				: machine.getCassette().getCassette2();
 	}
@@ -60,7 +57,7 @@ public class CassetteFileEntry extends FileEntry {
 		
 		int emSize = FontUtils.measureText(getDisplay(), getFont(), "M").x;
 		
-		if (mode == SWT.SAVE) {
+		if (deck.canRecord()) {
 			recordStopButton = new Button(parent, SWT.TOGGLE);
 			GridDataFactory.fillDefaults().hint(emSize*6, -1).grab(false, false).applyTo(recordStopButton);
 			
@@ -79,11 +76,14 @@ public class CassetteFileEntry extends FileEntry {
 						if (file.exists() && file.length() > 0) {
 							boolean ret = MessageDialog.openConfirm(getShell(), "Overwrite cassette?", 
 									"The cassette file already exists:\n\n" + file + "\n\nOverwrite?");
-							if (!ret)
-								return;
+							if (!ret) {
+								pressed = false;
+							}
 						}
 						
-						deck.recordCassette();
+						if (pressed) {
+							deck.recordCassette();
+						}
 						
 					} else {
 						deck.stopCassette();
@@ -93,34 +93,40 @@ public class CassetteFileEntry extends FileEntry {
 					
 				}
 			});
-		} else {
-			playStopButton = new Button(parent, SWT.TOGGLE);
-			GridDataFactory.fillDefaults().hint(emSize * 6, -1).grab(false, false).applyTo(playStopButton);
-			
-			updatePlayStop();
-			playStopButton.setToolTipText("Press to toggle using the given file as cassette input");
-			
-			playStopButton.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					boolean pressed = playStopButton.getSelection();
-					
-					if (pressed) {
-						File file = new File(setting.getString());
-						if (!file.exists()) {
-							MessageDialog.openError(getShell(), "No cassette", 
-									"No such file exists:\n\n" + file);
-						} else {
-							deck.setFile(new File(setting.getString()));
-							deck.playCassette();
-						}
+		}
+		
+		playStopButton = new Button(parent, SWT.TOGGLE);
+		GridDataFactory.fillDefaults().hint(emSize * 6, -1).grab(false, false).applyTo(playStopButton);
+		
+		updatePlayStop();
+		playStopButton.setToolTipText("Press to toggle using the given file as cassette input");
+		
+		playStopButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				boolean pressed = playStopButton.getSelection();
+				
+				if (pressed) {
+					File file = new File(setting.getString());
+					if (!file.exists()) {
+						MessageDialog.openError(getShell(), "No cassette", 
+								"No such file exists:\n\n" + file);
 					} else {
-						deck.stopCassette();
+						deck.setFile(new File(setting.getString()));
+						deck.playCassette();
 					}
-					
-					updatePlayStop();
+				} else {
+					deck.stopCassette();
 				}
-			});
+				
+				updatePlayStop();
+			}
+		});
+		
+		if (!deck.canPlay()) {
+			playStopButton.setToolTipText("This cassette deck cannot play back");
+			playStopButton.setEnabled(false);
+			playStopButton.setVisible(false);	// TODO: some caller enables everything recursively
 		}
 		
 //		Button enterButton = new Button(parent, SWT.PUSH);
@@ -164,25 +170,21 @@ public class CassetteFileEntry extends FileEntry {
 	 */
 	@Override
 	protected String validateFile(File file) {
-		if (mode == SWT.SAVE) {
-			if (file.isDirectory()) {
-				return "Path must be a file";
-			}
-			return null;
-		} else {
-			if (!file.exists()) {
-				return "File does not exist";
-			} else {
-				try {
-					CassetteFileUtils.scanAudioFile(file);
-				} catch (IOException e) {
-					return "Could not read file";
-				} catch (UnsupportedAudioFileException e) {
-					return "Audio format is not supported";
-				}
-			}
-			return null;
+		if (file.isDirectory()) {
+			return "Path must be a file";
 		}
+		if (file.exists()) {
+			try {
+				CassetteFileUtils.scanAudioFile(file);
+			} catch (IOException e) {
+				return "Could not read file";
+			} catch (UnsupportedAudioFileException e) {
+				return "Audio format is not supported";
+			}
+		}
+		
+		// don't complain about missing file here, but when playing
+		return null;
 	}
 
 	/* (non-Javadoc)
@@ -196,7 +198,7 @@ public class CassetteFileEntry extends FileEntry {
 
 	@Override
 	protected void handleBrowse(IProperty setting) {
-		FileDialog dialog =  new FileDialog(getShell(), mode);
+		FileDialog dialog =  new FileDialog(getShell(), SWT.SAVE);
 		dialog.setText("Select file for " + setting.getName());
 		String dir = new File(setting.getString()).getParent();
 		String filename = new File(setting.getString()).getName();
@@ -213,7 +215,7 @@ public class CassetteFileEntry extends FileEntry {
 		if (filename != null) {
 			switchPath(combo, filename);
 			combo.setText(filename);
-		}		
+		}
 	}
 
 

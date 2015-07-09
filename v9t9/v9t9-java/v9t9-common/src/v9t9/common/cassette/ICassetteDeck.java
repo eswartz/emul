@@ -32,10 +32,13 @@ public interface ICassetteDeck {
 	
 	void setMotor(boolean motor);
 	
-	void playCassette();
 	void stopCassette();
+	
+	boolean canPlay();
+	void playCassette();
 	boolean isPlaying();
 	
+	boolean canRecord();
 	void recordCassette();
 	boolean isRecording();
 	
@@ -51,4 +54,5 @@ public interface ICassetteDeck {
 	
 	void setSampleRate(int rate);
 	void addFloatSample(float samp);
+
 }

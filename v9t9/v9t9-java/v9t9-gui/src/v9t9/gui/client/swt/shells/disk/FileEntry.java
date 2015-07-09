@@ -56,8 +56,8 @@ public abstract class FileEntry extends BaseSettingEntry {
 
 	protected final void validatePath() {
 		String path = setting.getString();
-		File file = new File(path);
-		String err = validateFile(file);
+		File file = path != null ? new File(path) : null;
+		String err = file != null ? validateFile(file) : "Provide a file path";
 		
 		if (err == null) {
 			icon.setImage(blankImage);

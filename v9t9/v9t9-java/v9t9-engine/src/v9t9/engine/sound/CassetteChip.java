@@ -77,12 +77,12 @@ public class CassetteChip implements ICassetteChip {
 	public int initRegisters(String id, String name, int regBase) {
 		int count;
 		
-		cassette1 = new CassetteDeck(id + "C1", "CS1", listeners, machine);
+		cassette1 = new CassetteDeck(id + "C1", "CS1", true, listeners, machine);
 		count = ((BaseRegisterBank) cassette1).initRegisters(regNames, regDescs, regIds, regBase);
 		mapRegisters(regBase, count, cassette1);
 		regBase += count;
 
-		cassette2 = new CassetteDeck(id + "C2", "CS2", listeners, machine);
+		cassette2 = new CassetteDeck(id + "C2", "CS2", false, listeners, machine);
 		count = ((BaseRegisterBank) cassette2).initRegisters(regNames, regDescs, regIds, regBase);
 		mapRegisters(regBase, count, cassette2);
 		regBase += count;
@@ -238,9 +238,8 @@ public class CassetteChip implements ICassetteChip {
 					Collection<IProperty> list;
 					
 					list = new ArrayList<IProperty>();
-					list.add(msettings.get(ICassetteChip.settingCassetteInput));
-					list.add(msettings.get(ICassetteChip.settingCassette1OutputFile));
-					list.add(msettings.get(ICassetteChip.settingCassette2OutputFile));
+					list.add(msettings.get(ICassetteChip.settingCassette1File));
+					list.add(msettings.get(ICassetteChip.settingCassette2File));
 					
 					list.add(new SettingSchemaProperty(new SettingSchema(
 							ISettingsHandler.TRANSIENT,

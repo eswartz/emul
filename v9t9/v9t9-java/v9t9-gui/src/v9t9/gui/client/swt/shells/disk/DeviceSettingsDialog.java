@@ -193,10 +193,8 @@ public class DeviceSettingsDialog extends Composite implements IDeviceSelectorDi
 			return new DiskImageEntry(this, group, setting);
 		} else if (DeviceEditorIdConstants.ID_DISK_DIRECTORY.equals(editorId)) {
 			return new DiskDirectoryEntry(this, group, setting);
-		} else if (DeviceEditorIdConstants.ID_CASSETTE_INPUT_FILE.equals(editorId)) {
-			return new CassetteFileEntry(this, group, setting, SWT.OPEN);
-		} else if (DeviceEditorIdConstants.ID_CASSETTE_OUTPUT_FILE.equals(editorId)) {
-			return new CassetteFileEntry(this, group, setting, SWT.SAVE);
+		} else if (DeviceEditorIdConstants.ID_CASSETTE_FILE.equals(editorId)) {
+			return new CassetteFileEntry(this, group, setting);
 		} else if (DeviceEditorIdConstants.ID_CHECKBOX.equals(editorId)) {
 			return new DiskEnableEntry(this, group, setting);
 		} else if (DeviceEditorIdConstants.ID_DROPDOWN.equals(editorId)) {

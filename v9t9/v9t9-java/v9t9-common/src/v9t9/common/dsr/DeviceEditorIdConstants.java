@@ -11,8 +11,10 @@ package v9t9.common.dsr;
 public class DeviceEditorIdConstants {
 	public static final String ID_DISK_IMAGE = "disk.image";
 	public static final String ID_DISK_DIRECTORY = "disk.directory";
-	public static final String ID_CASSETTE_INPUT_FILE = "cassette.input.file";
-	public static final String ID_CASSETTE_OUTPUT_FILE = "cassette.output.file";
+	/** This type is a PREFIX for an output cassette property,
+	 * with ":&lt;name of input property, if allowed&ggt;" suffixed.
+	 */
+	public static final String ID_CASSETTE_FILE = "cassette.file";
 	
 	public static final String ID_TEXT = "text";
 	public static final String ID_CHECKBOX = "checkbox";

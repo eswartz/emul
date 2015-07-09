@@ -36,28 +36,20 @@ public interface ICassetteChip extends IPersistable, IRegisterAccess {
 			"Enable to log info to stdout about cassette reading",
 			false);
 
-	public static SettingSchema settingCassetteInput = new SettingSchema(
+	public static SettingSchema settingCassette1File = new SettingSchema(
 			ISettingsHandler.MACHINE,
-			"CassetteInput", 
-			"CS1 Input",
-			"Path to a *.wav file, recorded from a real cassette or by V9t9, that acts as CS1 data.",
-			DeviceEditorIdConstants.ID_CASSETTE_INPUT_FILE,
-			"", String.class);
-
-	public static SettingSchema settingCassette1OutputFile = new SettingSchema(
-			ISettingsHandler.MACHINE,
-			"Cassette1Output", 
-			"CS1 Output",
-			"Path to a *.wav file that records CS1 data.",
-			DeviceEditorIdConstants.ID_CASSETTE_OUTPUT_FILE,
+			"Cassette1File", 
+			"Cassette #1",
+			"Path to a *.wav file that provides or records CS1 data.",
+			DeviceEditorIdConstants.ID_CASSETTE_FILE,
 			null, String.class);
 	
-	public static SettingSchema settingCassette2OutputFile = new SettingSchema(
+	public static SettingSchema settingCassette2File = new SettingSchema(
 			ISettingsHandler.MACHINE,
-			"Cassette2Output", 
-			"CS2 Output",
-			"Path to a *.wav file that records CS2 data.",
-			DeviceEditorIdConstants.ID_CASSETTE_OUTPUT_FILE,
+			"Cassette2File", 
+			"Cassette #2",
+			"Path to a *.wav file that provides or records CS2 data.",
+			DeviceEditorIdConstants.ID_CASSETTE_FILE,
 			null, String.class);
 
 	public static SettingSchema settingCassetteCompressSilence = new SettingSchema(
