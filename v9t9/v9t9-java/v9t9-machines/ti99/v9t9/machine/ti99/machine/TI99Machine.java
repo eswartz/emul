@@ -447,8 +447,15 @@ public class TI99Machine extends MachineBase {
 		}
 		
 		
-		String moduleName = readHeaderName(fname, content, 0x6000, domain);
+		int baseAddr = 0x6000;
+		String moduleName = readHeaderName(fname, content, baseAddr, domain);
 	
+		if (moduleName == null) {
+			if (domain == IMemoryDomain.NAME_GRAPHICS) {
+				baseAddr = 0x2000;
+				moduleName = readHeaderName(fname, content, baseAddr, domain);
+			}
+		}
 		if (moduleName == null) {
 			return false;
 		}
@@ -482,7 +489,17 @@ public class TI99Machine extends MachineBase {
 				break;
 			}
 		} else {
-			info = injectModuleGrom(module, databaseURI, moduleName, fname, 0);
+			if (baseAddr == 0x6000)
+				info = injectModuleGrom(module, databaseURI, moduleName, fname, 0);
+			else {
+				info = MemoryEntryInfoBuilder.standardModuleGrom(fname)
+						.withAddress(baseAddr)
+						.withOffset(0)
+						.withSize(-0xA000)
+						.create(moduleName);
+				fetchMD5(module, info, false);
+				module.addMemoryEntryInfo(info);
+			}
 		}
 		
 		if (info != null && hasId(content)) {
@@ -1037,7 +1054,7 @@ public class TI99Machine extends MachineBase {
 				continue;
 			
 			// not a module-area ROM
-			if (addr < 0x6000)
+			if (addr < baseAddr)
 				return null;
 	
 			// get the last name (ordered reverse, non-English first)
