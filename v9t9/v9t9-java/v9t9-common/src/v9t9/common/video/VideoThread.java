@@ -54,8 +54,9 @@ public class VideoThread extends Thread {
 		synchronized (sync) {
 			while (!isInterrupted()) {
 				try {
-					// attempt update at least once a second even if the
-					// CPU and/or video threads are somehow frozen
+					// attempt update every so often if the CPU is 
+					// asleep (to make up for some unexpected expose events
+					// caused by tool windows opening/closing)
 					sync.wait(1000);
 					
 					// got notify
@@ -88,6 +89,8 @@ public class VideoThread extends Thread {
 		if (videoRenderer.isIdle() && videoRenderer.isVisible()) {
 			log("updating VDP canvas");
 			videoRenderer.getCanvasHandler().update();
+			
+			// always queue in case of real-time video effects
 			videoRenderer.queueRedraw();
 		}
 	}

@@ -476,12 +476,14 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		lastUpdateTime = Long.MAX_VALUE;
 		busy = true;
 		long started = System.currentTimeMillis();
-		doRepaint(gc, updateRect);
-
-		lastUpdateTime = System.currentTimeMillis() - started;
-		vdpCanvas.clearDirty();
-		busy = false;
-		
+		try {
+			doRepaint(gc, updateRect);
+	
+			vdpCanvas.clearDirty();
+		} finally {
+			lastUpdateTime = System.currentTimeMillis() - started;
+			busy = false;
+		}
 	}
 
 	protected void doRepaint(GC gc, Rectangle updateRect) {

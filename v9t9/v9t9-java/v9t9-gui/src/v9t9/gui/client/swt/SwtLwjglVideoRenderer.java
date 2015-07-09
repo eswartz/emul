@@ -579,12 +579,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	 */
 	@Override
 	protected void doCleanRedraw() {
-		IGLMonitorEffect effect = getEffect();
-		MonitorParams params = effect.getParams();
-		
-		if (params.isRefreshRealtime()) {
-			reblitGL(false);
-		}
+		reblitGL(false);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.SwtVideoRenderer#reblit()
