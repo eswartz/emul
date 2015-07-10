@@ -13,22 +13,25 @@ package v9t9.common.video;
 import java.io.PrintWriter;
 
 import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.Logging;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.machine.IMachine;
 
 /**
  * @author ejs
  *
  */
-public class VideoThread extends Thread {
+public class VideoThread extends Thread implements IPropertyListener {
 
 	private IVideoRenderer videoRenderer;
 	private Object sync;
 	private IProperty dumpVdpAccess;
 	private IProperty dumpFullInstructions;
+	private IProperty pauseMachine;
 
 	public VideoThread(IVideoRenderer videoRenderer) {
 		setName("Video Thread");
@@ -38,6 +41,8 @@ public class VideoThread extends Thread {
 		ISettingsHandler settings = videoRenderer.getVdpHandler().getMachine().getSettings();
 		dumpVdpAccess = settings.get(IVdpChip.settingDumpVdpAccess);
 		dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
+		pauseMachine = settings.get(IMachine.settingPauseMachine);
+		
 	}
 	
 	/**
@@ -51,6 +56,7 @@ public class VideoThread extends Thread {
 	
 	@Override
 	public void run() {
+		pauseMachine.addListener(this);
 		synchronized (sync) {
 			while (!isInterrupted()) {
 				try {
@@ -74,6 +80,18 @@ public class VideoThread extends Thread {
 				}
 			}
 			
+		}
+		pauseMachine.removeListener(this);
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.properties.IPropertyListener#propertyChanged(ejs.base.properties.IProperty)
+	 */
+	@Override
+	public void propertyChanged(IProperty property) {
+		synchronized (sync) {
+			if (property.getBoolean())
+				sync.notifyAll();
 		}
 	}
 	
