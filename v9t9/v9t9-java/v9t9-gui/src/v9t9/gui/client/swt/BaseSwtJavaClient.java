@@ -131,10 +131,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 			public void registerChanged(int reg, int value) {
 				// VDP interrupt
 				if (reg == VdpTMS9918AConsts.REG_SCANLINE && value == -1) {
-					Object sync = videoThread.getSync();
-					synchronized (sync) {
-						sync.notifyAll();
-					}
+					triggerVideoRefresh();
 				}
 			}
 		});
@@ -204,6 +201,16 @@ public abstract class BaseSwtJavaClient implements IClient {
         }
 	}
 	
+	/**
+	 * 
+	 */
+	protected void triggerVideoRefresh() {
+		Object sync = videoThread.getSync();
+		synchronized (sync) {
+			sync.notifyAll();
+		}		
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.client.IClient#tick()
 	 */
