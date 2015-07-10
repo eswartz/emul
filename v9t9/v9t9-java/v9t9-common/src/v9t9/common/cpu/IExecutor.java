@@ -148,5 +148,9 @@ public interface IExecutor {
 	 * 
 	 */
 	void reset();
+	/**
+	 * 
+	 */
+	void queueTick();
 
 }

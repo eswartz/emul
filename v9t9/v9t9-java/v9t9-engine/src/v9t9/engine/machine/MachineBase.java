@@ -289,7 +289,7 @@ abstract public class MachineBase implements IMachine {
         	public void run() {
 				if (client != null)
 					client.tick();
-				executor.tick();
+				executor.queueTick();
         	}
         };
         getFastMachineTimer().scheduleTask(baseTimingTask, getTicksPerSec());
