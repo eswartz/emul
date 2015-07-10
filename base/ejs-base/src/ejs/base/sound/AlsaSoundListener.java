@@ -339,7 +339,7 @@ public class AlsaSoundListener implements ISoundEmitter {
 			soundQueue.clear();
 			while (!soundQueue.isEmpty()) {
 				try {
-					Thread.sleep(50);
+					Thread.sleep(10);
 				} catch (InterruptedException e) {
 					break;
 				}

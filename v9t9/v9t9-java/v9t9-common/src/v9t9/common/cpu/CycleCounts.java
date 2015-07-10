@@ -10,18 +10,16 @@
  */
 package v9t9.common.cpu;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * @author ejs
  *
  */
 public class CycleCounts {
-	private AtomicInteger fetch = new AtomicInteger();
-	private AtomicInteger load = new AtomicInteger();
-	private AtomicInteger store = new AtomicInteger();
-	private AtomicInteger execute = new AtomicInteger();
-	private AtomicInteger overhead = new AtomicInteger();
+	private int fetch;
+	private int load;
+	private int store;
+	private int execute;
+	private int overhead;
 	private int fetches;
 	private int executes;
 	private int loads;
@@ -33,86 +31,86 @@ public class CycleCounts {
 	
 	@Override
 	public String toString() {
-		return "CycleCounts [fetch=" + fetch.get() + ", load=" + load.get()  + ", store="
-				+ store.get()  + ", execute=" + execute.get()  + ", overhead=" + overhead.get() 
+		return "CycleCounts [fetch=" + fetch + ", load=" + load  + ", store="
+				+ store  + ", execute=" + execute  + ", overhead=" + overhead 
 				+ "]";
 	}
 
 	public void addFetch(int cycles) {
-		fetch.addAndGet(cycles);
+		fetch += cycles;
 	}
 	
 	public void addLoad(int cycles) {
-		load.addAndGet(cycles);
+		load += cycles;
 	}
 	
 	public void addStore(int cycles) {
-		store.addAndGet(cycles);
+		store += cycles;
 	}
 	
 	public void addExecute(int cycles) {
-		execute.addAndGet(cycles);
+		execute += cycles;
 	}
 	
 	public void addOverhead(int cycles) {
-		overhead.addAndGet(cycles);
+		overhead += cycles;
 	}
 	
 	public int getAndResetTotal() {
-		return fetch.getAndSet(0) + load.getAndSet(0) 
-				+ store.getAndSet(0) + execute.getAndSet(0)
-				+ overhead.getAndSet(0);
+		int total = getTotal();
+		fetch = load = store = execute = overhead = 0;
+		return total;
 	}
 
 	public int getTotal() {
-		return fetch.get() + load.get() + store.get() + execute.get() + overhead.get();
+		return fetch + load + store + execute + overhead;
 	}
 	
 	public int getFetch() {
-		return fetch.get();
+		return fetch;
 	}
 	public int getLoad() {
-		return load.get();
+		return load;
 	}
 	public int getStore() {
-		return store.get();
+		return store;
 	}
 	public int getExecute() {
-		return execute.get();
+		return execute;
 	}
 	public int getOverhead() {
-		return overhead.get();
+		return overhead;
 	}
 
 	/**
 	 * 
 	 */
 	public void moveLoadToFetch() {
-		int loadC = load.getAndSet(0);
-		fetch.addAndGet(loadC);
+		int loadC = load = 0;
+		fetch += loadC;
 	}
 
 	/**
 	 * @return
 	 */
 	public int getAndResetLoad() {
-		return load.getAndSet(0);
+		return load = 0;
 	}
 	
 	public void saveState() {
-		this.fetches = fetch.get();
-		this.executes = execute.get();
-		this.loads = load.get();
-		this.stores = store.get();
-		this.overheads = overhead.get();
+		this.fetches = fetch;
+		this.executes = execute;
+		this.loads = load;
+		this.stores = store;
+		this.overheads = overhead;
 	}
 	
 	public void restoreState() {
-		fetch.set(fetches);
-		execute.set(executes);
-		load.set(loads);
-		store.set(stores);
-		overhead.set(overheads);
+		fetch = fetches;
+		execute = executes;
+		load = loads;
+		store = stores;
+		overhead = overheads;
 	}
 	
 //	public CycleCounts clone() {
@@ -121,10 +119,10 @@ public class CycleCounts {
 //		return c;
 //	}
 	public void copyTo(CycleCounts c) {
-		c.fetch.set(fetch.get());
-		c.execute.set(execute.get());
-		c.load.set(load.get());
-		c.store.set(store.get());
-		c.overhead.set(overhead.get());
+		c.fetch = fetch;
+		c.execute = execute;
+		c.load = load;
+		c.store = store;
+		c.overhead = overhead;
 	}
 }
