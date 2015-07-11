@@ -474,6 +474,13 @@ public class Executor implements IExecutor {
 
 	}
 	
+	/**
+	 * @return the executionLock
+	 */
+	public Object getExecutionLock() {
+		return executionLock;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.cpu.IExecutor#isExecuting()
 	 */

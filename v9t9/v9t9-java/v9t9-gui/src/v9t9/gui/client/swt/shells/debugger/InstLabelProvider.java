@@ -18,6 +18,7 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 
+import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IInstructionEffectLabelProvider;
 import v9t9.common.cpu.IInstructionEffectLabelProvider.Column;
 
@@ -26,8 +27,10 @@ public class InstLabelProvider extends BaseLabelProvider
 	implements ITableLabelProvider, ITableColorProvider, ITableFontProvider {
 
 	private Column[] columns;
+	private ICpu cpu;
 
-	public InstLabelProvider(IInstructionEffectLabelProvider effectProvider) {
+	public InstLabelProvider(ICpu cpu, IInstructionEffectLabelProvider effectProvider) {
+		this.cpu = cpu;
 		this.columns = effectProvider.getColumns();
 	}
 	
@@ -48,7 +51,7 @@ public class InstLabelProvider extends BaseLabelProvider
 	public String getColumnText(Object element, int columnIndex) {
 		InstRow row = (InstRow)element;
 		if (row == null || columnIndex >= getColumnCount()) return null;
-		return columns[columnIndex].getText(row.getBefore(), row.getAfter());
+		return columns[columnIndex].getText(cpu, row.getBlock(), row.isGeneric());
 	}
 
 	@Override

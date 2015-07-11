@@ -147,5 +147,9 @@ public interface IExecutor {
 	 * 
 	 */
 	void queueTick();
+	/**
+	 * @return
+	 */
+	Object getExecutionLock();
 
 }

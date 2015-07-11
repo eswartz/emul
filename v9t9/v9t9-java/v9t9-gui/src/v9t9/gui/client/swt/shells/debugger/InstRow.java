@@ -12,6 +12,7 @@ package v9t9.gui.client.swt.shells.debugger;
 
 
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.InstructionWorkBlock;
 
 /**
@@ -22,18 +23,12 @@ public class InstRow {
 
 	private static int gCounter;
 	private final int count = gCounter++;
-	private final InstructionWorkBlock before;
-	private final InstructionWorkBlock after;
+	private final ChangeBlock block;
 	private boolean isGeneric;
 	
-	public InstRow(InstructionWorkBlock before) {
-		this.before = before;
-		this.after = before;
-		this.isGeneric = true;
-	}
-	public InstRow(InstructionWorkBlock before, InstructionWorkBlock after) {
-		this.before = before;
-		this.after = after;
+	public InstRow(ChangeBlock block, boolean isGeneric) {
+		this.block = block;
+		this.isGeneric = isGeneric;
 	}
 
 	@Override
@@ -68,25 +63,10 @@ public class InstRow {
 	public boolean isGeneric() {
 		return isGeneric;
 	}
-	/**
-	 * @return
-	 */
-	public RawInstruction getBeforeInst() {
-		return before.inst;
+	public RawInstruction getInst() {
+		return block.inst;
 	}
-	public RawInstruction getAfterInst() {
-		return after.inst;
-	}
-	/**
-	 * @return the after
-	 */
-	public InstructionWorkBlock getAfter() {
-		return after;
-	}
-	/**
-	 * @return the before
-	 */
-	public InstructionWorkBlock getBefore() {
-		return before;
+	public ChangeBlock getBlock() {
+		return block;
 	}
 }

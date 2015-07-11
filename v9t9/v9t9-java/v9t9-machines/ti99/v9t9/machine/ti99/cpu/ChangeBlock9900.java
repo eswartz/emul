@@ -28,9 +28,6 @@ import v9t9.machine.ti99.interpreter.NewInterpreter9900;
  *
  */
 public class ChangeBlock9900 extends ChangeBlock {
-	/** decoded instruction */
-	public final Instruction9900 inst;
-	
 	/** if not <code>null</code>, this is what the X instruction decoded */
 	public Instruction9900 xInst;
 
@@ -88,6 +85,7 @@ public class ChangeBlock9900 extends ChangeBlock {
 		
 		appendInstructionAdvance();
 	}
+	
 	/** 
 	 * This variant is for X only -- it assumes 'op' is already read and does not
 	 * add its cycles to the overhead 
@@ -224,7 +222,8 @@ public class ChangeBlock9900 extends ChangeBlock {
 
 	/** Add the change element for the interpretation */
 	public void appendInstructionExecute() {
-		NewInterpreter9900.appendInterpret((Cpu9900) cpu, this, inst, mopState1, mopState2, mopState3);
+		NewInterpreter9900.appendInterpret((Cpu9900) cpu, this, 
+				(Instruction9900) inst, mopState1, mopState2, mopState3);
 	}
 	
 	/** Add the change element for flushing operands */

@@ -129,7 +129,7 @@ public class DsrManager implements IPersistable, IDsrManager {
 				
 				int retreg = wp + 11 * 2;
 				short ret = cpuState.getConsole().readWord(retreg);
-				short oper = (short) (((BaseMachineOperand)((ChangeBlock9900) changeBlock).inst.getOp1()).val);
+				short oper = (short) (((BaseMachineOperand)(changeBlock.inst.getOp1())).val);
 				if (activeDsr.handleDSR(xfer, oper)) {
 					// success: skip next word (handling error)
 					ret += 2;

@@ -21,6 +21,7 @@ import v9t9.common.asm.IDecompilePhase;
 import v9t9.common.asm.IInstructionFactory;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.AbortedException;
+import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionEffectLabelProvider;
 import v9t9.common.hardware.ICruChip;
@@ -29,8 +30,10 @@ import v9t9.common.machine.IMachine;
 import v9t9.engine.compiler.NullCompilerStrategy;
 import v9t9.engine.cpu.CpuBase;
 import v9t9.engine.cpu.Executor;
+import v9t9.machine.f99b.asm.ChangeBlockF99b;
 import v9t9.machine.f99b.asm.StatusF99b;
 import v9t9.machine.f99b.interpreter.InterpreterF99b;
+import v9t9.machine.ti99.cpu.ChangeBlock9900;
 import v9t9.machine.ti99.machine.InternalCruF99;
 
 /**
@@ -483,5 +486,13 @@ public class CpuF99b extends CpuBase {
 	public IInstructionEffectLabelProvider createInstructionEffectLabelProvider() {
 		return new InstructionEffectLabelProviderF99b();
 	}
+	
+	@Override
+	public ChangeBlock createChangeBlock(int pc) {
+		synchronized (machine.getExecutor().getExecutionLock()) {
+			return new ChangeBlockF99b(this, pc);
+		}
+	}
+
 	
 }

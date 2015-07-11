@@ -64,7 +64,8 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 	
 	public CpuInstructionTextCanvasComposite(Composite parent, int style, IMachine machine) {
 		super(parent, style | SWT.V_SCROLL, machine);
-		this.instLabelProvider = new InstLabelProvider(machine.getCpu().createInstructionEffectLabelProvider());
+		this.instLabelProvider = new InstLabelProvider(machine.getCpu(),
+				machine.getCpu().createInstructionEffectLabelProvider());
 		
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
@@ -101,9 +102,11 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 	protected StyleRange[] layoutStyles(int offset) {
 		int rowN = topRow + text.getLineAtOffset(offset);
 		synchronized (instHistory) {
+			// mark breakpoints
 			if (rowN >= 0 && rowN < instHistory.size()) {
 				InstRow row = instHistory.get(rowN);
-				IBreakpoint bp = machine.getExecutor().getBreakpoints().findBreakpoint(row.getBefore().inst.pc & 0xffff);
+				IBreakpoint bp = machine.getExecutor().getBreakpoints().findBreakpoint(
+						row.getInst().pc & 0xffff);
 				if (bp != null) {
 					StyleRange range = new StyleRange(bpStyle);
 					range.start = offset;  
@@ -113,6 +116,7 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 			}
 		}
 
+		// mark line style
 		StyleRange[] ranges = new StyleRange[instLabelProvider.getColumnCount()];
 		boolean oddOp = true;
 		int rangeIdx = 0;
@@ -120,8 +124,8 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 			TextStyle style;
 			switch (column.role) {
 			case UNKNOWN:
-			case SYMBOL:
 			case INSTRUCTION:
+			case SYMBOL:
 			default:
 				style = baseTextStyle;
 				break;
@@ -139,7 +143,7 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 			}
 			ranges[rangeIdx] = new StyleRange(style);
 			ranges[rangeIdx].start = offset;  
-			ranges[rangeIdx].length = column.width + 2;
+			ranges[rangeIdx].length = column.width + 2 + (rangeIdx == 0 ? 2 : 0);  // implicit breakpoint column
 			offset += ranges[rangeIdx].length;
 			rangeIdx++;
 		}
@@ -174,8 +178,8 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 				synchronized (instHistory) {
 					if (rowN >= 0 && rowN < instHistory.size()) {
 						InstRow row = instHistory.get(rowN);
-						System.out.println(row.getBeforeInst());
-						final int pc = row.getBefore().inst.pc & 0xffff;
+						System.out.println(row.getInst());
+						final int pc = row.getInst().pc & 0xffff;
 						
 						Menu menu = new Menu(text);
 						
@@ -245,7 +249,7 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 				List<InstRow> subList = instHistory.subList(start, end);
 				topRow = rowIndex;
 				for (InstRow row : subList) {
-					IBreakpoint bp = bpMgr.findBreakpoint(row.getBeforeInst().pc);
+					IBreakpoint bp = bpMgr.findBreakpoint(row.getInst().pc);
 					if (bp == null) {
 						sb.append("  ");
 					} else {
@@ -253,8 +257,9 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 					}
 					
 					for (int i = 0; i < numCols; i++) {
+						String field = fieldOf(instLabelProvider.getColumnText(row, i), cols[i].width);
 						sb.append(' ');
-						sb.append(fieldOf(instLabelProvider.getColumnText(row, i), cols[i].width));
+						sb.append(field);
 						sb.append(' ');
 					}
 					sb.append('\n');
@@ -279,6 +284,8 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 	 * @return
 	 */
 	private String fieldOf(String str, int len) {
+		if (str == null)
+			str = "";
 		if (str.length() == len)
 			return str;
 		if (str.length() < len) {

@@ -14,6 +14,7 @@ import v9t9.common.asm.IDecompilePhase;
 import v9t9.common.asm.IInstructionFactory;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionEffectLabelProvider;
 import v9t9.common.hardware.ICruChip;
@@ -389,5 +390,12 @@ public class Cpu9900 extends CpuBase {
 	@Override
 	public IInstructionEffectLabelProvider createInstructionEffectLabelProvider() {
 		return new InstructionEffectLabelProvider9900();
+	}
+	
+	@Override
+	public ChangeBlock createChangeBlock(int pc) {
+		synchronized (machine.getExecutor().getExecutionLock()) {
+			return new ChangeBlock9900(this, pc);
+		}
 	}
 }

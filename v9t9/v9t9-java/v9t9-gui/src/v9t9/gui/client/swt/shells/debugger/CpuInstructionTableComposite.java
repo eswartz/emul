@@ -52,7 +52,8 @@ public class CpuInstructionTableComposite extends CpuInstructionComposite {
 //		instTable.setLabelProvider(new InstLabelProvider(
 //				//getDisplay().getSystemColor(SWT.COLOR_RED)
 //				));
-		instLabelProvider = new InstLabelProvider(machine.getCpu().createInstructionEffectLabelProvider());
+		instLabelProvider = new InstLabelProvider(machine.getCpu(), 
+				machine.getCpu().createInstructionEffectLabelProvider());
 		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(instTable);
 		
 		FontDescriptor fontDescriptor = FontUtils.getFontDescriptor(JFaceResources.getTextFont());

@@ -5,6 +5,8 @@ package v9t9.common.cpu;
 
 import java.util.Arrays;
 
+import v9t9.common.asm.RawInstruction;
+
 /**
  * This represents the changes made by an instruction,
  * which may be applied and reverted from the CPU.
@@ -16,6 +18,8 @@ public abstract class ChangeBlock {
     
     private IChangeElement[] elements;
     private int elementIdx;
+    
+    public RawInstruction inst;
     
 	@Override
 	public int hashCode() {

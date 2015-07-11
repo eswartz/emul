@@ -200,4 +200,5 @@ public interface ICpu extends IPersistable {
 	 */
 	void addDebugCount(int i);
 
+	ChangeBlock createChangeBlock(int pc);
 }

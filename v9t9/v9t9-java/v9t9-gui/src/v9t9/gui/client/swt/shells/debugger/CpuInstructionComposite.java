@@ -18,6 +18,8 @@ import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.widgets.Composite;
 
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.ChangeBlock;
+import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.InstructionWorkBlock;
@@ -96,23 +98,37 @@ public abstract class CpuInstructionComposite extends Composite {
 	 */
 	abstract public void go();
 
+	private InstructionWorkBlock createBlock(ChangeBlock block) {
+		RawInstruction inst = block.inst;
+		
+		InstructionWorkBlock before = new InstructionWorkBlock(machine.getCpu().getState());
+		before.inst = inst;
+		before.pc = (short) (inst.pc + inst.getSize());
+		return before;
+	}
+
+	private InstructionWorkBlock createBefore(RawInstruction inst) {
+		InstructionWorkBlock before = new InstructionWorkBlock(machine.getCpu().getState());
+		before.inst = inst;
+		before.pc = (short) (inst.pc + inst.getSize());
+		return before;
+	}
+	
 	/**
 	 * @param before
 	 * @param after_
 	 */
-	public void executed(InstructionWorkBlock before,
-			InstructionWorkBlock after_) {
-
-		InstructionWorkBlock after = after_.copy();
+	public void executed(ChangeBlock block) {
         
-        InstRow row = new InstRow(before, after);
+        InstRow row = new InstRow(block, false);
         
         synchronized (instHistory) {
         	if (instHistory.size() >= MAX_INST_HISTORY) {
         		instHistory.subList(0, MAX_INST_HISTORY / 2).clear();
         	}
-	        if (instHistory.size() > 0 && instHistory.get(instHistory.size() - 1).isGeneric()) {
-	        	instHistory.remove(instHistory.size() - 1);
+        	InstRow last = instHistory.size() > 0 ? instHistory.get(instHistory.size() - 1) : null;
+			if (last != null && last.getInst().pc == row.getInst().pc && last.isGeneric()) {
+	        	instHistory.remove(last);
 	        }
 	        instHistory.add(row);
 	        
@@ -124,16 +140,12 @@ public abstract class CpuInstructionComposite extends Composite {
 	 * 
 	 */
 	public void refresh() {
-		RawInstruction inst = machine.getCpu().getCurrentInstruction();
+		ChangeBlock block = machine.getCpu().createChangeBlock(machine.getCpu().getState().getPC());
+		InstRow row = new InstRow(block, true);
 		
-		InstructionWorkBlock before = new InstructionWorkBlock(machine.getCpu().getState());
-		before.inst = inst;
-		before.pc = (short) (inst.pc + inst.getSize());
-		
-		InstRow row = new InstRow(before);
 		synchronized (instHistory) {
 			InstRow last = instHistory.size() > 0 ? instHistory.get(instHistory.size() - 1) : null;
-			if (last == null || last.getBeforeInst().pc != inst.pc) {
+			if (last == null || last.getInst().pc != row.getInst().pc) {
 				instHistory.add(row);
 				isDirty = true;
 			}

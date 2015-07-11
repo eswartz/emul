@@ -41,11 +41,10 @@ public interface IInstructionEffectLabelProvider {
 			this.width = width;
 		}
 		/** Get the text for this column 
-		 * @param before instruction state before invocation
-		 * @param after instruction state after invocation (may be <code>null</code> to
-		 * reflect state before execution)
+		 * @param block change block
+		 * @param preExecute calculate for before execution or after
 		 */
-		abstract public String getText(InstructionWorkBlock before, InstructionWorkBlock after);
+		abstract public String getText(ICpu cpu, ChangeBlock block, boolean preExecute);
 		
 	}
 	
@@ -56,9 +55,8 @@ public interface IInstructionEffectLabelProvider {
 		}
 
 		@Override
-		public String getText(InstructionWorkBlock before,
-				InstructionWorkBlock after) {
-			String addr = ">" + HexUtils.toHex4(before.inst.pc);
+		public String getText(ICpu cpu, ChangeBlock block, boolean preExecute) {
+			String addr = ">" + HexUtils.toHex4(block.inst.pc);
 			return addr;
 		}
 
@@ -71,11 +69,10 @@ public interface IInstructionEffectLabelProvider {
 		}
 
 		@Override
-		public String getText(InstructionWorkBlock before,
-				InstructionWorkBlock after) {
-			IMemoryEntry entry = before.domain.getEntryAt(before.inst.pc);
+		public String getText(ICpu cpu, ChangeBlock block, boolean preExecute) {
+			IMemoryEntry entry = cpu.getConsole().getEntryAt(block.inst.pc);
 			if (entry != null) { 
-				String name = entry.lookupSymbol((short) (before.inst.pc & 0xfffe));
+				String name = entry.lookupSymbol((short) (block.inst.pc & 0xfffe));
 				if (name != null) {
 					return name;
 				}
@@ -92,9 +89,8 @@ public interface IInstructionEffectLabelProvider {
 			super("Instruction", Role.INSTRUCTION, width);
 		}
 		@Override
-		public String getText(InstructionWorkBlock before,
-				InstructionWorkBlock after) {
-			return before.inst.toString();
+		public String getText(ICpu cpu, ChangeBlock block, boolean preExecute) {
+			return block.inst.toString();
 		}
 
 	}
