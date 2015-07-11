@@ -11,6 +11,7 @@
 package v9t9.video.v9938;
 
 
+import static v9t9.common.hardware.VdpTMS9918AConsts.REG_SCANLINE;
 import static v9t9.common.hardware.VdpV9938Consts.*;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
@@ -24,17 +25,7 @@ import v9t9.common.video.VdpFormat;
 import v9t9.video.IVdpModeRedrawHandler;
 import v9t9.video.common.VdpModeInfo;
 import v9t9.video.tms9918a.BaseVdpTMS9918ACanvasRenderer;
-import static v9t9.common.hardware.VdpV9938Consts.*;
 import ejs.base.timer.FastTimer;
-import v9t9.common.client.ISettingsHandler;
-import v9t9.common.client.IVideoRenderer;
-import v9t9.common.hardware.IVdpChip;
-import v9t9.common.hardware.IVdpV9938;
-import v9t9.common.hardware.VdpV9938Consts;
-import v9t9.common.video.IVdpCanvasRenderer;
-import v9t9.common.video.VdpColorManager;
-import v9t9.common.video.VdpFormat;
-import v9t9.video.common.VdpModeInfo;
 
 /**
  * This is a renderer for the V9938 video chip which renders to an IVdpCanvas.  

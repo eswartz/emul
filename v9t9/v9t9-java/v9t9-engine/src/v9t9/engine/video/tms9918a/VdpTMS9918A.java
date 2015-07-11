@@ -114,7 +114,6 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	protected int width;
 
 	protected int scanlineCount;
-	private int scanline;
 	
 	public VdpTMS9918A(IMachine machine) {
 		this.machine = machine;
@@ -464,7 +463,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	@Override
 	public int getRegister(int reg) {
 		if (reg == REG_SCANLINE) {
-			return scanline;
+			return vdpScanline;
 		} else if (reg == REG_ST) {
 			return vdpStatus;
 		} else if (reg < vdpregs.length) {
@@ -622,8 +621,8 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	public int setRegister(int reg, int value) {
 		int old;
 		if (reg == REG_SCANLINE) {
-			old = scanline;
-			scanline = value;
+			old = vdpScanline;
+			vdpScanline = value;
 		} else if (reg == REG_ST) {
 			old = vdpStatus & 0xff;
 			value &= 0xff;
