@@ -209,7 +209,6 @@ public class Executor implements IExecutor {
     @Override
 	public synchronized void interpretOneInstruction() {
         interp.executeChunk(1, this);
-        //cpu.applyCycles();
     }
 
     /* (non-Javadoc)
@@ -237,7 +236,7 @@ public class Executor implements IExecutor {
 			} else {
 				interruptExecution = Boolean.FALSE;
 				if (cpu.settingRealTime().getBoolean()) {
-					interp.executeChunk(25, this);
+					interp.executeChunk(24, this);
 				} else {
 					interp.executeChunk(100, this);
 				}

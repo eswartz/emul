@@ -19,7 +19,7 @@ import org.junit.runners.Suite.SuiteClasses;
  *
  */
 @RunWith(Suite.class)
-@SuiteClasses({ TestMemoryRanges.class , TestInsts9900.class, TestCycles9900.class })
+@SuiteClasses({ TestMemoryRanges.class , TestInsts9900.class, TestCycles9900.class, TestChangeBlock9900.class })
 public class AllTests {
 
 }
