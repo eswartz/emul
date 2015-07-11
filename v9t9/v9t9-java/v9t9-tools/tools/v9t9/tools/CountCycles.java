@@ -163,7 +163,7 @@ public class CountCycles {
         }
         		
         if (!gotFile) {
-        	machine.reset();
+        	machine.getCpu().reset();
         	System.err.println("no files specified, using machine ROM");
         }
         if (!gotEntry) {
