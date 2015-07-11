@@ -13,7 +13,7 @@ import v9t9.common.asm.RawInstruction;
  * @author ejs
  *
  */
-public abstract class ChangeBlock {
+public abstract class ChangeBlock /*implements Cloneable*/ {
     private static final IChangeElement[] NONE = new IChangeElement[0];
     
     private IChangeElement[] elements;
@@ -96,4 +96,17 @@ public abstract class ChangeBlock {
 	}
 	
 	abstract public int getPC();
+//	
+//	@Override
+//	public ChangeBlock clone() {
+//		try {
+//			ChangeBlock block = (ChangeBlock) super.clone();
+//			for (int i = 0; i < elementIdx; i++)
+//				block.elements[i] = block.elements[i].clone();
+//			return block;
+//		} catch (CloneNotSupportedException e) {
+//			assert false;
+//			return null;
+//		}
+//	}
 }

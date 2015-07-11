@@ -13,8 +13,10 @@ package v9t9.machine.ti99.cpu;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.cpu.ChangeBlock;
+import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IInstructionEffectLabelProvider;
+import v9t9.common.cpu.IOperandChangeElement;
 
 /**
  * @author ejs
@@ -30,11 +32,11 @@ public class InstructionEffectLabelProvider9900 implements
 		new Column("Op1", Role.OPERAND, 26) {
 			@Override
 			public String getText(ICpu cpu, ChangeBlock block, boolean beforeExecute) {
-				BaseMachineOperand mop1 = (BaseMachineOperand) block.inst.getOp1();
-				if (mop1 == null || mop1.type == IMachineOperand.OP_NONE) {
+				BaseMachineOperand mop = (BaseMachineOperand) block.inst.getOp1();
+				if (mop == null || mop.type == IMachineOperand.OP_NONE) {
 					return "";
 				}
-				return formatOpChange(1, cpu, block, beforeExecute);
+				return formatOpChange(mop, cpu, block, beforeExecute);
 			}
 		},
 		new Column("Op2", Role.OPERAND, 26) {
@@ -44,7 +46,7 @@ public class InstructionEffectLabelProvider9900 implements
 				if (mop == null || mop.type == IMachineOperand.OP_NONE) {
 					return "";
 				}
-				return formatOpChange(2, cpu, block, beforeExecute);
+				return formatOpChange(mop, cpu, block, beforeExecute);
 			}
 		},
 		new Column("Op3", Role.OPERAND, 24) {
@@ -54,7 +56,7 @@ public class InstructionEffectLabelProvider9900 implements
 				if (mop == null || mop.type == IMachineOperand.OP_NONE) {
 					return "";
 				}
-				return formatOpChange(3, cpu, block, beforeExecute);
+				return formatOpChange(mop, cpu, block, beforeExecute);
 			}
 		},
 	};
@@ -67,12 +69,16 @@ public class InstructionEffectLabelProvider9900 implements
 		return columns;
 	}
 
-	protected static String formatOpChange(int op, ICpu cpu, ChangeBlock block, boolean beforeExecute) {
-		if (beforeExecute) {
-			return block.inst.getOp(op).toString();
+	protected static String formatOpChange(BaseMachineOperand bop, ICpu cpu, ChangeBlock block, boolean beforeExecute) {
+		MachineOperand9900 mop = (MachineOperand9900) bop; 
+		for (int i = 0; i < block.getCount(); i++) {
+			IChangeElement el = block.getElement(i);
+			if (el instanceof IOperandChangeElement) {
+				String res = ((IOperandChangeElement) el).format(mop, beforeExecute);
+				if (res != null)
+					return res;
+			}
 		}
-		else {
-			return "???";
-		}
+		return "";
 	}
 }

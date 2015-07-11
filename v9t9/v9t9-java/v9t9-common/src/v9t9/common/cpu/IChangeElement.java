@@ -10,7 +10,8 @@ package v9t9.common.cpu;
  * @author ejs
  *
  */
-public interface IChangeElement {
+public interface IChangeElement /*extends Cloneable*/ {
 	void apply(ICpuState cpuState);
 	void revert(ICpuState cpuState);
+//	IChangeElement clone();
 }

@@ -13,6 +13,7 @@ package v9t9.machine.ti99.interpreter;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.asm.IOperand;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CycleCounts;
@@ -21,6 +22,7 @@ import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.IInterpreter;
+import v9t9.common.cpu.IOperandChangeElement;
 import v9t9.common.cpu.MachineOperandState;
 import v9t9.common.dsr.IDsrManager;
 import v9t9.common.machine.IMachine;
@@ -38,6 +40,7 @@ import v9t9.machine.ti99.cpu.Instruction9900;
 import v9t9.machine.ti99.cpu.Status9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import ejs.base.utils.BinaryUtils;
+import ejs.base.utils.HexUtils;
 
 /**
  * This class interprets 9900 instructions one by one.
@@ -154,7 +157,7 @@ public class NewInterpreter9900 implements IInterpreter {
     	} else {
     		// slow
 	    	while (numinsts-- > 0) {
-	    		changes = getChangesForPC();
+	    		changes = createChangesForPC();
 	    		
 				for (Object listener : listeners) {
 	    			if (!((IInstructionListener) listener).preExecute(changes)) {
@@ -174,9 +177,6 @@ public class NewInterpreter9900 implements IInterpreter {
     	}
     }
 
-	/**
-	 * @return
-	 */
 	protected ChangeBlock9900 getChangesForPC() {
 		short pc = cpu.getState().getPC();
 		ChangeBlock9900 changes = null;
@@ -192,7 +192,20 @@ public class NewInterpreter9900 implements IInterpreter {
 		
 		return changes;
 	}
-
+	
+	/** Slow version that forcibly recreates info (e.g. for debugger) */
+	protected ChangeBlock9900 createChangesForPC() {
+		short pc = cpu.getState().getPC();
+		ChangeBlock9900 changes = new ChangeBlock9900(cpu, pc);
+		changes.generate();
+			
+		if (changes.inst.getInst() != Inst9900.Ix) {
+			putCachedChange(pc, changes);
+		}
+		
+		return changes;
+	}
+	
 	/* (non-Javadoc)
      * @see v9t9.engine.interpreter.IInterpreter#reset()
      */
@@ -227,6 +240,17 @@ public class NewInterpreter9900 implements IInterpreter {
 			this(inst, null, null, null);
 		}
 		
+//		@Override
+//		public IChangeElement clone() {
+//			try {
+//				return (IChangeElement) super.clone();
+//			} catch (CloneNotSupportedException e) {
+//				assert false;
+//				return null;
+//			}
+//		}
+
+		
 		@Override
 		public String toString() {
 			return getClass().getSimpleName() + ": " + inst.toString();
@@ -256,7 +280,7 @@ public class NewInterpreter9900 implements IInterpreter {
 
 	}
 
-    public static abstract class BaseJump implements IChangeElement {
+    public static abstract class BaseJump implements IOperandChangeElement {
     	protected Instruction9900 inst;
     	protected MachineOperandState mos1;
 		private short prevPC;
@@ -268,6 +292,16 @@ public class NewInterpreter9900 implements IInterpreter {
     		this.mos1 = mos1;
     	}
     	
+//		@Override
+//		public IChangeElement clone() {
+//			try {
+//				return (IChangeElement) super.clone();
+//			} catch (CloneNotSupportedException e) {
+//				assert false;
+//				return null;
+//			}
+//		}
+		
     	@Override
     	public String toString() {
     		return getClass().getSimpleName() + ": " + inst.toString();
@@ -294,6 +328,25 @@ public class NewInterpreter9900 implements IInterpreter {
     		cpuState_.setPC(prevPC);
     	}
     	
+    	@Override
+    	public String format(IOperand op, boolean preExecute) {
+    		if (op != mos1.mop)
+    			return null;
+    		
+    		if (preExecute) {
+    			CpuState9900 cpuState = ((CpuState9900) changes.cpuState);
+        		Status9900 status = cpuState.getStatus();
+        		
+    			if (test(status)) {
+    				String target = HexUtils.toHex4(changes.inst.pc + mos1.value);
+    				return ">" + target;	
+    			} else {
+    				return "<< no jump >>";
+    			}
+    		}
+    		
+    		return "";
+    	}
     }
     
     public static void appendInterpret(final Cpu9900 cpu, final ChangeBlock9900 changes,
@@ -534,8 +587,8 @@ public class NewInterpreter9900 implements IInterpreter {
         		int prevR11;
 				@Override
 				protected void doApply(CpuState9900 cpuState, Status9900 status) {
-					prevR11 = cpuState.getRegister(11);
-					cpuState.setRegister(11, cpuState.getPC());
+					prevR11 = cpuState.readWorkspaceRegister(11);
+					cpuState.writeWorkspaceRegister(11, cpuState.getPC());
 					cpuState.setPC(mos1.value);
 				}
 				@Override
@@ -623,7 +676,7 @@ public class NewInterpreter9900 implements IInterpreter {
             break;
 
         case Inst9900.Ijmp:
-        	changes.push(new Changes.AdvancePC(changes, mos1.value - 2, 10));
+        	changes.push(new Changes.JumpPC(changes, mos1.value - 2, 10));
             break;
         case Inst9900.Ijlt:
         	changes.push(new BaseJump(changes, inst, mos1) {
@@ -830,7 +883,7 @@ public class NewInterpreter9900 implements IInterpreter {
         	changes.push(new BaseInterpret(inst, mos1, mos2) {
 				@Override
 				protected void doApply(CpuState9900 cpuState, Status9900 status) {
-					int cruAddr = cpuState.getRegister(12);
+					int cruAddr = cpuState.readWorkspaceRegister(12);
 					if (cruHandler != null)
 						cruHandler.writeBits(cruAddr, mos1.value, mos2.value);
 					changes.counts.addExecute(20 + 2 * mos2.value);
@@ -842,7 +895,7 @@ public class NewInterpreter9900 implements IInterpreter {
         	changes.push(new BaseInterpret(inst, mos1, mos2) {
 				@Override
 				protected void doApply(CpuState9900 cpuState, Status9900 status) {
-					int cruAddr = cpuState.getRegister(12);
+					int cruAddr = cpuState.readWorkspaceRegister(12);
 					if (cruHandler != null)
 						mos1.value = (short) cruHandler.readBits(cruAddr, mos2.value);
 					

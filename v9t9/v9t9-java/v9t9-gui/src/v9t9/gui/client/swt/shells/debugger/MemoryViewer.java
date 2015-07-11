@@ -128,6 +128,8 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 			public void physicalMemoryMapChanged(IMemoryEntry entry) {
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
+						if (isDisposed())
+							return;
 						refreshEntryCombo();
 						
 					}
@@ -213,6 +215,9 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 			
 			getDisplay().asyncExec(new Runnable() {
 				public void run() {
+					if (isDisposed())
+						return;
+					
 					refreshButton.setSelection(autoRefresh);
 					pinButton.setSelection(pinMemory);
 					filterButton.setSelection(filterMemory);
@@ -826,6 +831,8 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 	public void updateForInstruction() {
 		getDisplay().asyncExec(new Runnable() {
 			public void run() {
+				if (isDisposed())
+					return;
 				refreshViewer();
 			}
 		});

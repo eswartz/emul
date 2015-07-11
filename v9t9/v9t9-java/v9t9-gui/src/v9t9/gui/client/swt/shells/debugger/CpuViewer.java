@@ -411,7 +411,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		if (!isVisible)
 			return;
 		
-		if (isWatching ) {
+		if (isWatching) {
 			instructionComposite.executed(block);
 		}
 		if (singleStep.getBoolean()) {

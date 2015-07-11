@@ -17,12 +17,9 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.widgets.Composite;
 
-import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.ChangeBlock;
-import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IExecutor;
-import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import ejs.base.properties.IProperty;
@@ -93,33 +90,11 @@ public abstract class CpuInstructionComposite extends Composite {
 	
 	abstract public void setupEvents();
 
-	/**
-	 * 
-	 */
 	abstract public void go();
-
-	private InstructionWorkBlock createBlock(ChangeBlock block) {
-		RawInstruction inst = block.inst;
-		
-		InstructionWorkBlock before = new InstructionWorkBlock(machine.getCpu().getState());
-		before.inst = inst;
-		before.pc = (short) (inst.pc + inst.getSize());
-		return before;
-	}
-
-	private InstructionWorkBlock createBefore(RawInstruction inst) {
-		InstructionWorkBlock before = new InstructionWorkBlock(machine.getCpu().getState());
-		before.inst = inst;
-		before.pc = (short) (inst.pc + inst.getSize());
-		return before;
-	}
 	
-	/**
-	 * @param before
-	 * @param after_
-	 */
 	public void executed(ChangeBlock block) {
         
+		// copy block so operand effects are distinct for each
         InstRow row = new InstRow(block, false);
         
         synchronized (instHistory) {

@@ -395,7 +395,9 @@ public class Cpu9900 extends CpuBase {
 	@Override
 	public ChangeBlock createChangeBlock(int pc) {
 		synchronized (machine.getExecutor().getExecutionLock()) {
-			return new ChangeBlock9900(this, pc);
+			ChangeBlock9900 block = new ChangeBlock9900(this, pc);
+			block.generate();
+			return block;
 		}
 	}
 }

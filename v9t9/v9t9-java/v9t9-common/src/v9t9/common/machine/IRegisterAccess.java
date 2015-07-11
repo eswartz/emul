@@ -59,8 +59,12 @@ public interface IRegisterAccess {
 	int getFirstRegister();
 	int getRegisterCount();
 	RegisterInfo getRegisterInfo(int reg);
+	
+	/** Read register without any cycle side effects */
 	int getRegister(int reg);
+	/** Write register without any cycle side effects */
 	int setRegister(int reg, int newValue);
+	
 	String getRegisterTooltip(int reg);
 	
 	int getRegisterNumber(String id);

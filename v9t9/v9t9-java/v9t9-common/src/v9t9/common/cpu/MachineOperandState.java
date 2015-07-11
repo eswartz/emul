@@ -5,7 +5,7 @@ package v9t9.common.cpu;
 
 import v9t9.common.asm.IMachineOperand;
 
-public class MachineOperandState {
+public class MachineOperandState /*implements Cloneable*/ {
 	public MachineOperandState(IMachineOperand mop) {
 		this.mop = mop;
 	}
@@ -19,4 +19,13 @@ public class MachineOperandState {
 	public short value;
 	/** Original value for revert */
 	public short prev;
+	
+//	public MachineOperandState clone() {
+//		try {
+//			return (MachineOperandState) super.clone();
+//		} catch (CloneNotSupportedException e) {
+//			assert false;
+//			return null;
+//		}
+//	}
 }

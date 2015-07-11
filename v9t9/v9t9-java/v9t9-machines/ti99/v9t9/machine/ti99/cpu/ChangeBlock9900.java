@@ -16,6 +16,7 @@ import v9t9.machine.ti99.cpu.Changes.AdvancePC;
 import v9t9.machine.ti99.cpu.Changes.BaseOperandChangeElement;
 import v9t9.machine.ti99.cpu.Changes.CalculateCruOffset;
 import v9t9.machine.ti99.cpu.Changes.CalculateShift;
+import v9t9.machine.ti99.cpu.Changes.JumpPC;
 import v9t9.machine.ti99.cpu.Changes.ReadIncrementRegister;
 import v9t9.machine.ti99.cpu.Changes.ReadIndirectRegister;
 import v9t9.machine.ti99.cpu.Changes.ReadRegister;
@@ -107,6 +108,18 @@ public class ChangeBlock9900 extends ChangeBlock {
 		counts.restoreState();
 	}
 	
+//	/* (non-Javadoc)
+//	 * @see v9t9.common.cpu.ChangeBlock#clone()
+//	 */
+//	@Override
+//	public ChangeBlock clone() {
+//		ChangeBlock9900 c = (ChangeBlock9900) super.clone();
+//		c.mopState1 = mopState1 != null ? c.mopState1.clone() : null;
+//		c.mopState2 = mopState2 != null ? c.mopState2.clone() : null;
+//		c.mopState3 = mopState3 != null ? c.mopState3.clone() : null;
+//		return c;
+//	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.cpu.ChangeBlock#getPC()
 	 */
@@ -124,7 +137,7 @@ public class ChangeBlock9900 extends ChangeBlock {
 	 * 
 	 */
 	public void appendInstructionAdvance() {
-		push(new AdvancePC(this, inst.getSize(), 0));
+		push(new AdvancePC(this, inst.getSize()));
 	}
 
 	/** Fetch the current instruction operands */
@@ -259,6 +272,10 @@ public class ChangeBlock9900 extends ChangeBlock {
 			IChangeElement el = getElement(i);
 			if (el instanceof Changes.AdvancePC) {
 				AdvancePC oel = (AdvancePC) el;
+				return (short) (oel.value + inst.pc - inst.getSize());
+			}
+			if (el instanceof Changes.JumpPC) {
+				JumpPC oel = (JumpPC) el;
 				return (short) (oel.value + inst.pc - inst.getSize());
 			}
 			if (el instanceof BaseOperandChangeElement) {

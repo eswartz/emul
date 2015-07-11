@@ -194,9 +194,10 @@ public class CpuState9900 implements ICpuState {
 		return info;
 	}
 	
+	@Override
 	public int getRegister(int reg) {
-		if (reg < 16)
-			return console.readWord(WP + reg*2);
+		if (reg >= 0 && reg < 16)
+			return console.flatReadWord(WP + reg*2);
 		
 		if (reg == Cpu9900.REG_PC)
 			return PC;
@@ -208,12 +209,16 @@ public class CpuState9900 implements ICpuState {
 		return 0;
 	}
 
+	public int readWorkspaceRegister(int reg) {
+		return console.readWord(WP + reg*2);
+	}
+
 	@Override
 	public int setRegister(int reg, int val) {
 		int old;
-		if (reg < 16) {
+		if (reg >= 0 && reg < 16) {
 			old = console.flatReadWord(WP + reg*2);
-			console.writeWord(WP + reg*2, (short) val);
+			console.flatWriteWord(WP + reg*2, (short) val);
 		} else {
 			if (reg == Cpu9900.REG_PC) {
 				old = PC;
@@ -231,6 +236,15 @@ public class CpuState9900 implements ICpuState {
 		fireRegisterChanged(reg, val);
 		return old & 0xffff;
 	}
+	
+	public int writeWorkspaceRegister(int reg, int val) {
+		int old;
+		old = console.flatReadWord(WP + reg*2);
+		console.writeWord(WP + reg*2, (short) val);
+		fireRegisterChanged(reg, val);
+		return old & 0xffff;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterTooltip(int)
 	 */
