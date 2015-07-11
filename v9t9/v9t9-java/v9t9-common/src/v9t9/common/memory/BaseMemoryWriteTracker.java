@@ -42,7 +42,7 @@ public abstract class BaseMemoryWriteTracker {
 		while (size > 0) {
 			if (!trackedMemory.get(addr)) {
 				trackedMemory.set(addr);
-				recordChange(addr, null);
+				recordChange(addr, 1, domain.flatReadByte(addr));
 			}
 			size--;
 			addr++;
@@ -60,11 +60,11 @@ public abstract class BaseMemoryWriteTracker {
 		if (memoryWriteListener == null) {
 			memoryWriteListener = new IMemoryWriteListener() {
 	
-				public void changed(IMemoryEntry entry, int addr, final Number value) {
+				public void changed(IMemoryEntry entry, int addr, int size, final int value) {
 					synchronized (BaseMemoryWriteTracker.this) {
 						int xaddr = addr >>> granularityShift;
 						if (trackedMemory.get(xaddr)) {
-							recordChange(addr, value);
+							recordChange(addr, size, value);
 						}
 					}
 				}
@@ -76,7 +76,7 @@ public abstract class BaseMemoryWriteTracker {
 		}
 	}
 	
-	abstract protected void recordChange(int addr, Number val);
+	abstract protected void recordChange(int addr, int size, int val);
 
 	abstract public void clearChanges();
 	

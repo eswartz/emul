@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/v9t9-gui/src/v9t9/gui/Emulator.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.gui.Emulator"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--machine Forth99B -d"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="v9t9-gui"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx2g -Xinterp"/>
+<stringAttribute key="yk-options" value="&#10;additional-options2=onexit\=snapshot&#10;startup=6&#10;"/>
+</launchConfiguration>

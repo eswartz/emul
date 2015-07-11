@@ -183,7 +183,6 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final short flatReadWord(int addr) {
         IMemoryEntry entry = getEntryAt(addr);
-        //accessListener.read(entry);
         return entry.flatReadWord(addr);
     }
 
@@ -193,7 +192,6 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final byte flatReadByte(int addr) {
     	IMemoryEntry entry = getEntryAt(addr);
-        //accessListener.read(entry);
         return entry.flatReadByte(addr);
     }
 
@@ -203,7 +201,6 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final void flatWriteByte(int addr, byte val) {
     	IMemoryEntry entry = getEntryAt(addr);
-    	//accessListener.write(entry);
         entry.flatWriteByte(addr, val);
     }
 
@@ -213,7 +210,6 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     @Override
 	public final void flatWriteWord(int addr, short val) {
     	IMemoryEntry entry = getEntryAt(addr);
-        //accessListener.write(entry);
         entry.flatWriteWord(addr, val);
     }
 
@@ -246,14 +242,14 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
         accessListener.write(entry, addr);
         entry.writeByte(addr, val);
         if (!writeListeners.isEmpty())
-        	fireWriteEvent(entry, (addr + entry.getAddrOffset()), (Byte) val);
+        	fireWriteEvent(entry, addr, 1, val);
     }
 
-    private void fireWriteEvent(final IMemoryEntry entry, final int addr_, Number value) {
-    	final int addr = addr_ & sizeMask; 
+    private void fireWriteEvent(final IMemoryEntry entry, final int addr_, int size, int value) {
+    	final int addr = (addr_ + entry.getAddrOffset()) & sizeMask; 
     	for (Object listenerObj : writeListeners.toArray()) {
     		try {
-    			((IMemoryWriteListener) listenerObj).changed(entry, addr, value);
+    			((IMemoryWriteListener) listenerObj).changed(entry, addr, size, value);
     		} catch (Throwable t) {
     			t.printStackTrace();
     		}
@@ -269,7 +265,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
         accessListener.write(entry, addr);
         entry.writeWord(addr, val);
         if (!writeListeners.isEmpty())
-        	fireWriteEvent(entry, addr, (Short) val);
+        	fireWriteEvent(entry, addr, 2, val);
     }
 
     /* (non-Javadoc)
@@ -557,7 +553,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	public void touchMemory(int addr) {
 		if (!writeListeners.isEmpty()) {
 			IMemoryEntry entry = getEntryAt(addr);
-			fireWriteEvent(entry, addr, null);
+			fireWriteEvent(entry, addr, 1, entry.flatReadByte(addr));
 		}
 	}
 

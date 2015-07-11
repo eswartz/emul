@@ -144,7 +144,7 @@ public class DebuggerWindow extends Composite implements IMemoryWriteListener {
 	 * @see v9t9.common.memory.IMemoryWriteListener#changed(v9t9.common.memory.IMemoryEntry, int, java.lang.Number)
 	 */
 	@Override
-	public void changed(IMemoryEntry entry, int addr, Number value) {
+	public void changed(IMemoryEntry entry, int addr, int size, int value) {
 		if (machine.isPaused()) {
 			for (final MemoryViewer viewer : memoryViewers) {
 				if (viewer.contains(entry, addr)) {

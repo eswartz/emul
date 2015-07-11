@@ -189,10 +189,6 @@ public class RawInstruction extends BaseInstruction implements Comparable<RawIns
 		return size;
 	}
 
-	/**
-	 * @param op
-	 * @return
-	 */
 	public IMachineOperand getOp(int op) {
 		return (IMachineOperand) (op == 1 ? op1 : op == 2 ? op2 : op == 3 ? op3 : null);
 	}

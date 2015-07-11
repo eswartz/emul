@@ -583,7 +583,7 @@ public class VdpTMS9918ACanvasRenderer implements IVdpCanvasRenderer, IMemoryWri
 	 * @see v9t9.common.memory.IMemoryWriteListener#changed(v9t9.common.memory.IMemoryEntry, int, boolean)
 	 */
 	@Override
-	public void changed(IMemoryEntry entry, int addr, Number value) {
+	public void changed(IMemoryEntry entry, int addr, int size, int value) {
 		touchAbsoluteVdpMemory(addr, value);
 	}
 

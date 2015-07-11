@@ -29,15 +29,15 @@ public class FullMemoryWriteTracker extends BaseMemoryWriteTracker {
 	 * @see v9t9.common.memory.BaseMemoryWriteTracker#recordChange(int, java.lang.Number)
 	 */
 	@Override
-	protected void recordChange(int addr, Number value) {
+	protected void recordChange(int addr, int size, int value) {
 		synchronized (changes) {
-			if (value instanceof Byte) {
-				changes.add((addr << 24) | ((Byte) value & 0xff));
-			} else if (value == null) {
-				changes.add((addr << 24) | (domain.flatReadByte(addr) & 0xff));
-			} else if (value instanceof Short) {
-				changes.add((addr << 24) | (((Short) value >> 8) & 0xff));
-				changes.add(((addr + 1) << 24) | ((Short) value & 0xff));
+			if (size == 1) {
+				changes.add((addr << 24) | (value & 0xff));
+//			} else if (value == null) {
+//				changes.add((addr << 24) | (domain.flatReadByte(addr) & 0xff));
+			} else if (size == 2) {
+				changes.add((addr << 24) | ((value >> 8) & 0xff));
+				changes.add(((addr + 1) << 24) | (value & 0xff));
 			} else {
 				throw new AssertionError();
 			}

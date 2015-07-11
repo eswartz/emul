@@ -29,7 +29,7 @@ public class SimpleMemoryWriteTracker extends BaseMemoryWriteTracker {
 	 * @see v9t9.common.memory.BaseMemoryWriteTracker#recordChange(int, byte)
 	 */
 	@Override
-	protected void recordChange(int addr, Number value) {
+	protected void recordChange(int addr, int size, int value) {
 		synchronized (changedMemory) {
 			changedMemory.set(addr);
 		}

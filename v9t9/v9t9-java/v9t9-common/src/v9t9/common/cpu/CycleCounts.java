@@ -20,11 +20,13 @@ public class CycleCounts {
 	private int store;
 	private int execute;
 	private int overhead;
-	private int fetches;
-	private int executes;
-	private int loads;
-	private int stores;
-	private int overheads;
+	
+	// saved state
+	private int savedFetches;
+	private int savedExecutes;
+	private int savedLoads;
+	private int savedStores;
+	private int savedOverheads;
 	
 	public CycleCounts() {
 	}
@@ -98,19 +100,19 @@ public class CycleCounts {
 	}
 	
 	public void saveState() {
-		this.fetches = fetch;
-		this.executes = execute;
-		this.loads = load;
-		this.stores = store;
-		this.overheads = overhead;
+		this.savedFetches = fetch;
+		this.savedExecutes = execute;
+		this.savedLoads = load;
+		this.savedStores = store;
+		this.savedOverheads = overhead;
 	}
 	
 	public void restoreState() {
-		fetch = fetches;
-		execute = executes;
-		load = loads;
-		store = stores;
-		overhead = overheads;
+		fetch = savedFetches;
+		execute = savedExecutes;
+		load = savedLoads;
+		store = savedStores;
+		overhead = savedOverheads;
 	}
 	
 //	public CycleCounts clone() {

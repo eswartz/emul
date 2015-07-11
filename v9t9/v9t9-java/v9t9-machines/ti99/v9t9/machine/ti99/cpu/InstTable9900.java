@@ -98,17 +98,19 @@ public class InstTable9900 {
 			InstructionWorkBlock9900 origBlock = (InstructionWorkBlock9900) origBlock_;
 			
 			RawInstruction inst = origBlock.inst;
-			counts.addFetch(origBlock.inst.fetchCycles);
+			
+			int fetch = origBlock.inst.fetchCycles;
 			
 			MachineOperand9900 op1 = (MachineOperand9900) inst.getOp1();
-			MachineOperand9900 op2 = (MachineOperand9900) inst.getOp2();
-			
 			if (op1 != null) {
-				counts.addFetch(op1.cycles);
+				fetch += op1.cycles;
+				MachineOperand9900 op2 = (MachineOperand9900) inst.getOp2();
 				if (op2 != null) {
-					counts.addFetch(op2.cycles);
+					fetch += op2.cycles;
 				}
 			}
+			
+			counts.addFetch(fetch);
 			
 			addCustomCycles(origBlock_, block_, counts);
 		}

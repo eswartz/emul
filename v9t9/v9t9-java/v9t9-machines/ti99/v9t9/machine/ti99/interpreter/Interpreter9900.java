@@ -210,14 +210,14 @@ public class Interpreter9900 implements IInterpreter {
 		Instruction9900 ins;
 	    int pc = cpu.getPC() & 0xfffe;
 	    
-	    cpu.getCycleCounts().saveState();
-	    
 	    short op;
 	    IMemoryDomain console = cpu.getConsole();
 		if (op_x != null) {
 	    	op = op_x;
+	    	cpu.getCycleCounts().saveState();
 	    	ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console), console);
-	    } else {
+	    	cpu.getCycleCounts().restoreState();
+		} else {
 	    	IMemoryEntry entry = console.getEntryAt(pc);
 	    	op = entry.flatReadWord(pc);
 	    	IMemoryArea area = entry.getArea();
@@ -230,13 +230,12 @@ public class Interpreter9900 implements IInterpreter {
 	    		// expensive (10%)
 	    		ins = ins.update(op, pc, console);
 	    	} else {
+	    		cpu.getCycleCounts().saveState();
 	    		ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console), console);
+	    		cpu.getCycleCounts().restoreState();
 	    	}
 	    	instructions[pc/2] = ins;
 	    }
-
-		// restore
-		cpu.getCycleCounts().restoreState();
 
 		return ins;
 	}

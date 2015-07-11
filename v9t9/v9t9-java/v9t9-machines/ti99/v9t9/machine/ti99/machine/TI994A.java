@@ -46,10 +46,10 @@ public class TI994A extends TI99Machine {
     	keyboardModeListener = new IMemoryWriteListener() {
 
 			@Override
-			public void changed(IMemoryEntry entry, int addr, Number value) {
+			public void changed(IMemoryEntry entry, int addr, int size, int value) {
 				if ((addr & 0xffff) == 0x8374) {
-					if (currentMode != value.byteValue()) {
-						currentMode = value.byteValue();
+					if (currentMode != (byte) value) {
+						currentMode = (byte) value;
 						fireKeyboardModeChanged(keyboardModeArray[currentMode]);
 					}
 				}
