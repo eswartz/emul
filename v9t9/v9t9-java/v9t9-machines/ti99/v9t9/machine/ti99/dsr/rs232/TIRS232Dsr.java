@@ -1,9 +1,17 @@
-/**
- * 
+/*
+  TIRS232Dsr.java
+
+  (c) 2014-2015 Ed Swartz
+
+  All rights reserved. This program and the accompanying materials
+  are made available under the terms of the Eclipse Public License v1.0
+  which accompanies this distribution, and is available at
+  http://www.eclipse.org/legal/epl-v10.html
  */
 package v9t9.machine.ti99.dsr.rs232;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,6 +23,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
+import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
@@ -73,16 +82,21 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	private Map<String, RS232Regs> rs232DeviceMap = new HashMap<String, RS232Regs>();
 	private Map<Integer, RS232Regs> rs232Devices = new HashMap<Integer, RS232Regs>();
 
+
+	private ISettingsHandler settings;
+
 	public TIRS232Dsr(IMachine machine, short base) {
 		this.machine = machine;
 		this.base = base;
 		
 		rs232ActiveSetting = new SettingSchemaProperty(getName(), Boolean.FALSE);
 		
-		this.dumper = new Dumper(Settings.getSettings(machine),
+		this.settings = Settings.getSettings(machine);
+		this.dumper = new Dumper(settings,
 				RS232Settings.settingRS232Debug, ICpu.settingDumpFullInstructions);
-		
 	
+		registerRS232Device(1, "RS232/1");
+		registerRS232Device(2, "RS232/2");
 	}
 	
 	public void activate(IMemoryDomain console, IMemoryEntryFactory memoryEntryFactory) throws IOException {
@@ -108,7 +122,6 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 		console.unmapEntry(romMemoryEntry);
 		
 		termDevice();
-		
 	}
 
 	/**
@@ -290,9 +303,6 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 * 
 	 */
 	protected void registerDevicesAndCRUs() {
-		registerRS232Device(1, "RS232/1");
-		registerRS232Device(2, "RS232/2");
-		
 		CruManager cruManager = ((TI99Machine) machine).getCruManager();
 		
 		for (int dev = 1; dev <= 2; dev++) {
@@ -307,7 +317,6 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			cruManager.add(base + 2*9, 23, crurRealRS232_9_31);
 		}
 	}
-
 
 	protected RS232Regs getRS232DeviceForAddr(int addr) {
 		return getRS232Device((addr - base) / 0x40);
@@ -365,28 +374,23 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
 				rs232ActiveSetting, 
 				"RS232 activity",
-				IDevIcons.DSR_RS232, IDevIcons.DSR_LIGHT);
+				IDevIcons.DSR_RS232, IDevIcons.DSR_LIGHT,
+				null);
 		return Collections.<IDeviceIndicatorProvider>singletonList(deviceIndicatorProvider);
 	}
 
 	@Override
 	public Map<String, Collection<IProperty>> getEditableSettingGroups() {
-			// TODO Auto-generated method stub
-			Map<String, Collection<IProperty>> map = new LinkedHashMap<String, Collection<IProperty>>();
-	//		Collection<IProperty> settings;
-	//		
-	//		settings = new ArrayList<IProperty>(2);
-	//		settings.add(this.settings.get(RealDiskSettings.diskImagesEnabled));
-	//		settings.add(this.settings.get(RealDiskSettings.diskController));
-	//		map.put(IDsrHandler.GROUP_DSR_SELECTION, settings);
-	//		
-	//		settings = new ArrayList<IProperty>(imageMapper.getDiskSettingsMap().values());
-	//		settings.add(settingRealTime);
-	//		settings.add(settingDebug);
-	//		map.put(IDsrHandler.GROUP_DISK_CONFIGURATION, settings);
-			
-			return map;
-		}
+		Map<String, Collection<IProperty>> map = new LinkedHashMap<String, Collection<IProperty>>();
+		
+		Collection<IProperty> settings;
+		
+		settings = new ArrayList<IProperty>(2);
+		settings.add(this.settings.get(RS232Settings.rs232Controller));
+		map.put(IDsrHandler.GROUP_DSR_SELECTION, settings);
+		
+		return map;
+	}
 
 	@Override
 	public void loadState(ISettingSection section) {

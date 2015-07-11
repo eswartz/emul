@@ -19,8 +19,8 @@ import org.eclipse.swt.widgets.Composite;
 
 import ejs.base.properties.IProperty;
 
-class DiskEnableEntry extends DiskSettingEntry {
-	public DiskEnableEntry(DiskSelectorDialog dialog, final Composite parent, IProperty setting_) {
+class DiskEnableEntry extends BaseSettingEntry {
+	public DiskEnableEntry(IDeviceSelectorDialog dialog, final Composite parent, IProperty setting_) {
 		super(dialog, parent, setting_, SWT.NONE);
 	}
 

@@ -8,12 +8,12 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.engine.sound;
+package v9t9.engine.machine;
 
 import java.util.Map;
 
+import v9t9.common.machine.IRegisterBank;
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
-import v9t9.common.sound.IVoice;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.ListenerList;
 
@@ -21,7 +21,7 @@ import ejs.base.utils.ListenerList;
  * @author ejs
  *
  */
-public abstract class BaseVoice implements IVoice {
+public abstract class BaseRegisterBank implements IRegisterBank {
 
 	protected final String id;
 
@@ -41,7 +41,7 @@ public abstract class BaseVoice implements IVoice {
 	 * @param name 
 	 * 
 	 */
-	public BaseVoice(String id, String name, ListenerList<IRegisterWriteListener> listeners) {
+	public BaseRegisterBank(String id, String name, ListenerList<IRegisterWriteListener> listeners) {
 		this.id = id;
 		this.name = name;
 		this.listeners = listeners;

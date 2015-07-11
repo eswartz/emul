@@ -27,13 +27,6 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
-import ejs.base.timer.FastTimer;
-import ejs.base.utils.ListenerList;
-import ejs.base.utils.ListenerList.IFire;
-
-
 import v9t9.common.client.IMonitorEffectSupport;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
@@ -53,6 +46,10 @@ import v9t9.gui.jna.V9t9Render.AnalogTVData;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.ImageDataCanvas24Bit;
 import v9t9.video.VdpCanvasRendererFactory;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.ListenerList.IFire;
 
 /**
  * AWT has nice accelerated blit routines, which are superior to SWT on Linux/GTK and Windows.
@@ -105,18 +102,14 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	private IProperty monitorDrawing;
 	private IProperty monitorEffect;
 
-	private FastTimer fastTimer;
-
 	private MonitorEffectSupport monitorEffectSupport;
 
 	private ListenerList<IVideoRenderListener> listeners = new ListenerList<IVideoRenderListener>();
 	
-	public AwtVideoRenderer(IMachine machine, FastTimer timer) {
+	public AwtVideoRenderer(IMachine machine) {
 		this.machine = machine;
 		this.settings = machine.getSettings();
 		this.vdp = machine.getVdp();
-		
-		fastTimer = timer;
 		
 		monitorDrawing = Settings.get(machine, BaseEmulatorWindow.settingMonitorDrawing);
 		monitorEffect = Settings.get(machine, BaseEmulatorWindow.settingMonitorEffect);
@@ -160,7 +153,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 					synchronized (vdpCanvas) {
 						vdpCanvas.markDirty();
 					}
-					redraw();
+					queueRedraw();
 				}
 			}
 			
@@ -241,6 +234,14 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	public boolean isIdle() {
 		return true;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.IVideoRenderer#isVisible()
+	 */
+	@Override
+	public boolean isVisible() {
+		return true;
+	}
 
 	protected Rectangle logicalToPhysical(Rectangle logical) {
 		return logicalToPhysical(logical.x, logical.y, logical.width, logical.height);
@@ -275,7 +276,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#redraw()
 	 */
-	public synchronized void redraw() {
+	public synchronized void queueRedraw() {
 		if (!isDirty)
 			return;
 		
@@ -614,14 +615,6 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	@Override
 	public IVdpCanvasRenderer getCanvasHandler() {
 		return vdpCanvasRenderer;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.client.IVideoRenderer#getTimer()
-	 */
-	@Override
-	public FastTimer getFastTimer() {
-		return fastTimer;
 	}
 
 	/* (non-Javadoc)

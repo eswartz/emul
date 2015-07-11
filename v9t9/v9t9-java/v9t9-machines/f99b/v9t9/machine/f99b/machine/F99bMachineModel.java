@@ -14,11 +14,11 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
+import v9t9.common.cassette.ICassetteChip;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
-import v9t9.common.hardware.ICassetteChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
@@ -36,6 +36,7 @@ import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.machine.EmulatorMachinesData;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.memory.F99bMemoryModel;
+import v9t9.machine.ti99.machine.InternalCruF99;
 
 /**
  * This is a machine model for F99b

@@ -45,7 +45,6 @@ import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.graphics.ImageData;
 import org.ejs.gui.images.AwtImageUtils;
 
-
 import v9t9.common.video.ICanvas;
 import v9t9.gui.client.swt.svg.SVGException;
 import v9t9.gui.client.swt.svg.SVGSalamanderLoader;

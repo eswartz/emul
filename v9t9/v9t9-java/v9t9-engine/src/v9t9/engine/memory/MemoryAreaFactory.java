@@ -71,7 +71,12 @@ public class MemoryAreaFactory {
 	    		}
     		};
 		}
-        area.setLatency(info.getDomain(memory).getLatency(info.getAddress()));
+        
+        int latency = info.getLatency();
+        if (latency == -1)
+        	latency = info.getDomain(memory).getLatency(info.getAddress());
+        area.setLatency(latency);
+        
         area.memory = new short[Math.abs(info.getSize()) / 2];
         area.read = area.memory;
         if (info.isStored())

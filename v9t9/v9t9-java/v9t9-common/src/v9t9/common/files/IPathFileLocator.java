@@ -122,9 +122,10 @@ public interface IPathFileLocator {
 	 * @param uri
 	 * @param offset TODO
 	 * @param bytes number of bytes to consume (or <= 0 for all)
+	 * @param mustExist TODO
 	 * @return String
 	 */
-	String getContentMD5(URI uri, int offset, int bytes) throws IOException;
+	String getContentMD5(URI uri, int offset, int bytes, boolean mustExist) throws IOException;
 	
 
 	/**

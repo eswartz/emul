@@ -59,7 +59,6 @@ import v9t9.video.VdpCanvasRendererFactory;
 import v9t9.video.common.CanvasFormat;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
-import ejs.base.timer.FastTimer;
 import ejs.base.utils.ListenerList;
 
 /**
@@ -91,7 +90,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	private float zoomy;
 	private float zoomx;
 	private IProperty fullScreen;
-	private FastTimer fastTimer;
 	private boolean isVisible;
 	protected IProperty canvasFormat;
 	
@@ -102,6 +100,8 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	private ListenerList<IVideoRenderListener> listeners;
 
 	private BaseEmulatorWindow window;
+
+	private volatile boolean isRedrawQueued;
 	
 	public SwtVideoRenderer(IMachine machine) {
 		this.listeners = new ListenerList<IVideoRenderListener>();
@@ -114,7 +114,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		int z = Math.max(1, Math.min(xz, yz));
 		fixedAspectLayout = new FixedAspectLayout(256, 192, z, z, 1., 5);
 		zoomx = zoomy = 0.0f;
-		fastTimer = new FastTimer("Video Renderer");
 		canvasFormat = settings.get(settingCanvasFormat);
 	}
 
@@ -324,41 +323,52 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		return new Rectangle(x + vdpCanvas.getXOffset(), y, ex - x, ey - y ); 
 	}
 
-	public void redraw() {
+	public void queueRedraw() {
 		if (canvas == null) {
 			return;
 		}
 		
-		Display.getDefault().syncExec(new Runnable() {
+		if (isRedrawQueued) 
+			return;
+		
+		isRedrawQueued = true;
+		
+		Display.getDefault().asyncExec(new Runnable() {
 
 			public void run() {
-				synchronized (vdpCanvas) {
-					if (canvas.isDisposed())
-						return;
-
-					if (!isDirty) {
-						doCleanRedraw();
-						
-						// no firing
-					} else {
+				synchronized (SwtVideoRenderer.this) {
+					synchronized (vdpCanvas) {
 						try {
-							doTriggerRedraw();
-						} catch (Throwable t) {
-							t.printStackTrace();
-						}
-						
-						isDirty = false;
-						vdpCanvas.clearDirty();
-						
-						listeners.fire(new ListenerList.IFire<IVideoRenderListener>() {
-
-							@Override
-							public void fire(IVideoRenderListener listener) {
-								listener.finishedRedraw(getCanvas());
+							if (canvas.isDisposed())
+								return;
+		
+							if (!isDirty) {
+								doCleanRedraw();
+								
+								// no firing
+							} else {
+								try {
+									doTriggerRedraw();
+								} catch (Throwable t) {
+									t.printStackTrace();
+								}
+								
+								isDirty = false;
+								vdpCanvas.clearDirty();
+								
+								listeners.fire(new ListenerList.IFire<IVideoRenderListener>() {
+		
+									@Override
+									public void fire(IVideoRenderListener listener) {
+										listener.finishedRedraw(getCanvas());
+									}
+									
+								});
+		
 							}
-							
-						});
-
+						} finally {
+							isRedrawQueued = false;
+						}
 					}
 				}
 			}
@@ -466,12 +476,14 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		lastUpdateTime = Long.MAX_VALUE;
 		busy = true;
 		long started = System.currentTimeMillis();
-		doRepaint(gc, updateRect);
-
-		lastUpdateTime = System.currentTimeMillis() - started;
-		vdpCanvas.clearDirty();
-		busy = false;
-		
+		try {
+			doRepaint(gc, updateRect);
+	
+			vdpCanvas.clearDirty();
+		} finally {
+			lastUpdateTime = System.currentTimeMillis() - started;
+			busy = false;
+		}
 	}
 
 	protected void doRepaint(GC gc, Rectangle updateRect) {
@@ -621,14 +633,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	@Override
 	public IVdpCanvasRenderer getCanvasHandler() {
 		return vdpCanvasRenderer;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.client.IVideoRenderer#getTimer()
-	 */
-	@Override
-	public FastTimer getFastTimer() {
-		return fastTimer;
 	}
 	
 	/* (non-Javadoc)

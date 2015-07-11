@@ -455,7 +455,7 @@ public abstract class BaseVdpTMS9918ACanvasRenderer  implements IVdpCanvasRender
 	}
 
 	@Override
-	public void changed(IMemoryEntry entry, int addr, Number value) {
+	public void changed(IMemoryEntry entry, int addr, int size, int value) {
 		touchAbsoluteVdpMemory(addr, value);
 	}
 

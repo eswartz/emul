@@ -73,7 +73,7 @@ public class NewInterpreter9900 implements IInterpreter {
         memory.addWriteListener(new IMemoryWriteListener() {
 			
 			@Override
-			public void changed(IMemoryEntry entry, int addr, Number value) {
+			public void changed(IMemoryEntry entry, int addr, int size, int value) {
 				ChangeBlock9900[] blocks = parsedChangeBlocks.get(entry.getArea());
 				if (blocks != null) {
 					int index = getCachedChangeIndex(entry, addr);

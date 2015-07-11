@@ -103,7 +103,7 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 		synchronized (instHistory) {
 			if (rowN >= 0 && rowN < instHistory.size()) {
 				InstRow row = instHistory.get(rowN);
-				IBreakpoint bp = machine.getExecutor().getBreakpoints().findBreakpoint(row.getBefore().inst.pc);
+				IBreakpoint bp = machine.getExecutor().getBreakpoints().findBreakpoint(row.getBefore().inst.pc & 0xffff);
 				if (bp != null) {
 					StyleRange range = new StyleRange(bpStyle);
 					range.start = offset;  

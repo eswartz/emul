@@ -56,4 +56,9 @@ public interface ICruChip extends IPersistable {
 	 * 
 	 */
 	void handlingInterrupt();
+
+	/**
+	 * @return
+	 */
+	int getClockRate();
 }

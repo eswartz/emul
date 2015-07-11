@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.machine.f99b.machine;
+package v9t9.machine.ti99.machine;
 
 import static v9t9.common.keyboard.KeyboardConstants.MASK_CAPS_LOCK;
 
@@ -19,10 +19,11 @@ import java.util.Random;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.IMemoryIOHandler;
 import v9t9.engine.hardware.BaseCruChip;
-import v9t9.machine.f99b.cpu.CpuF99b;
 
 /**
  * CRU handlers for the F99 / Forth9900 machines.
+ * 
+ * (Lives here to avoid cyclic dependency)
  * @author ejs
  */
 public class InternalCruF99 extends BaseCruChip {
@@ -47,6 +48,12 @@ public class InternalCruF99 extends BaseCruChip {
 	private Random random;
 
 	private int cruBase;
+	public static final int INT_RESET = 15;
+	public static final int INT_NMI = 14;
+	public static final int INT_FAULT = 13;
+	public static final int INT_KBD = 3;
+	public static final int INT_VDP = 2;
+	public static final int INT_BKPT = 0;
 	
 	/**
 	 * @param machine
@@ -57,7 +64,7 @@ public class InternalCruF99 extends BaseCruChip {
 		this.cruBase = cruBase;
 		
     	intExt = -1;
-    	intVdp = CpuF99b.INT_VDP;
+    	intVdp = InternalCruF99.INT_VDP;
     	intClock = -1;
 
     	random = new Random(0);
@@ -75,12 +82,12 @@ public class InternalCruF99 extends BaseCruChip {
 				if ((val & mask) == 0) {
 					if ((currentInts & mask) != 0)
 						acknowledgeInterrupt(i);
-					if (mask == (1 << CpuF99b.INT_KBD)) {
+					if (mask == (1 << InternalCruF99.INT_KBD)) {
 						getMachine().getKeyboardHandler().resetProbe();
 					}
 				}
 				else {
-					if (mask == (1 << CpuF99b.INT_KBD) && getMachine().getKeyboardHandler().anyKeyAvailable()) {
+					if (mask == (1 << InternalCruF99.INT_KBD) && getMachine().getKeyboardHandler().anyKeyAvailable()) {
 						getMachine().getKeyboardHandler().resetProbe();
 					}
 

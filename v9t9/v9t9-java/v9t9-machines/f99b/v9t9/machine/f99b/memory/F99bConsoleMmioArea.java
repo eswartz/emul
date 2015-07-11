@@ -13,7 +13,7 @@ package v9t9.machine.f99b.memory;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.memory.TIMemoryModel;
-import v9t9.machine.f99b.machine.InternalCruF99;
+import v9t9.machine.ti99.machine.InternalCruF99;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
 
 /**

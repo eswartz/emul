@@ -15,13 +15,13 @@ import java.util.Map;
 
 import javax.sound.sampled.AudioFormat;
 
-import v9t9.common.hardware.CassetteConsts;
-import v9t9.common.hardware.ICassetteChip;
+import v9t9.common.cassette.CassetteConsts;
+import v9t9.common.cassette.ICassetteChip;
+import v9t9.common.cassette.ICassetteDeck;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.machine.IRegisterAccess.RegisterInfo;
 import v9t9.common.settings.SettingSchema;
-import v9t9.common.sound.ICassetteVoice;
 import v9t9.common.sound.ISoundGenerator;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
@@ -32,28 +32,36 @@ import ejs.base.sound.ISoundVoice;
  */
 public class CassetteSoundGenerator extends BaseSoundGenerator implements ISoundGenerator, IRegisterAccess.IRegisterWriteListener {
 	
-	private static final AudioFormat format = new AudioFormat(24000, 8, 1, false, false);
-		// pulse freaks out with 22050 :(
+	private static final AudioFormat format = new AudioFormat(44100, 8, 1, false, false);
 	
 	protected final Map<Integer, SoundVoice> regIdToVoices = 
 			new HashMap<Integer, SoundVoice>();
 	protected final Map<Integer, IRegisterAccess.IRegisterWriteListener> regIdToListener = 
 			new HashMap<Integer, IRegisterAccess.IRegisterWriteListener>();
 
-	private CassetteSoundVoice cassette1Voice;
+	private CassetteSoundVoice cassetteVoice;
 	private ICassetteChip cassetteChip;
+	private ICassetteDeck deck;
+	private ISoundVoice[] voices;
 
 	/**
 	 * @param baseReg 
 	 * 
 	 */
-	public CassetteSoundGenerator(IMachine machine) {
+	public CassetteSoundGenerator(IMachine machine, ICassetteDeck deck, int regOffs) {
 		super(machine);
+		this.deck = deck;
+		
 		this.cassetteChip = machine.getCassette();
 		cassetteChip.addWriteListener(this);
-		cassette1Voice = new CassetteSoundVoice("cs1");
-		setupCassetteVoice(0, cassette1Voice);
-		soundVoicesList.add(cassette1Voice);
+		
+		cassetteVoice = new CassetteSoundVoice("cs" + (1 + regOffs / CassetteConsts.REG_COUNT_CASSETTE));
+		setupCassetteVoice(regOffs, cassetteVoice);
+		soundVoicesList.add(cassetteVoice);
+		
+		voices = new ISoundVoice[] { cassetteVoice };
+		
+		deck.setGenerator(this);
 	}
 	
 	/* (non-Javadoc)
@@ -76,7 +84,7 @@ public class CassetteSoundGenerator extends BaseSoundGenerator implements ISound
 	 */
 	@Override
 	public SettingSchema getRecordingSettingSchema() {
-		return ICassetteVoice.settingCassette1OutputFile;
+		return null; //return ICassetteChip.settingCassette1OutputFile;
 	}
 	/**
 	 * @param regBase
@@ -84,11 +92,12 @@ public class CassetteSoundGenerator extends BaseSoundGenerator implements ISound
 	protected int setupCassetteVoice(int regBase, final CassetteSoundVoice voice) {
 		RegisterInfo info;
 		info = cassetteChip.getRegisterInfo(regBase);
-		assert info != null && info.id.endsWith("C:C");
+		assert info != null && info.id.endsWith(":C");
 		
 		regIdToVoices.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_OUTPUT, voice);
-		regIdToVoices.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_1, voice);
-		regIdToVoices.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_2, voice);
+		regIdToVoices.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_MOTOR, voice);
+		regIdToVoices.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_INPUT_SAMPLE, voice);
+		regIdToVoices.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_INPUT_RATE, voice);
 		
 		regIdToListener.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_OUTPUT,
 				new IRegisterAccess.IRegisterWriteListener() {
@@ -99,22 +108,34 @@ public class CassetteSoundGenerator extends BaseSoundGenerator implements ISound
 			}
 		});
 		
-		regIdToListener.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_1,
+		regIdToListener.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_MOTOR,
 				new IRegisterAccess.IRegisterWriteListener() {
 			
 			@Override
 			public void registerChanged(int reg, int value) {
-				voice.setMotor1(value, value >= 0);
+				voice.setMotor(value, value >= 0);
 			}
 		});
-		regIdToListener.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_MOTOR_2,
+		
+
+		regIdToListener.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_INPUT_SAMPLE,
 				new IRegisterAccess.IRegisterWriteListener() {
 			
 			@Override
 			public void registerChanged(int reg, int value) {
-				voice.setMotor2(value, value >= 0);
+				voice.addSample(value / (float) Integer.MAX_VALUE);
 			}
 		});
+		
+		regIdToListener.put(regBase + CassetteConsts.REG_OFFS_CASSETTE_INPUT_RATE,
+				new IRegisterAccess.IRegisterWriteListener() {
+			
+			@Override
+			public void registerChanged(int reg, int value) {
+				voice.setSampleRate(value);
+			}
+		});
+		
 		
 		return CassetteConsts.REG_COUNT_CASSETTE;
 	}
@@ -141,7 +162,7 @@ public class CassetteSoundGenerator extends BaseSoundGenerator implements ISound
 	 */
 	@Override
 	public ISoundVoice[] getSoundVoices() {
-		return new ISoundVoice[] { cassette1Voice };
+		return voices;
 	}
 
 	/* (non-Javadoc)
@@ -149,13 +170,21 @@ public class CassetteSoundGenerator extends BaseSoundGenerator implements ISound
 	 */
 	@Override
 	public void configureSoundOutput(ISoundOutput output) {
-		
+		deck.setOutput(output);
 	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.audio.sound.BaseSoundGenerator#isSilenceRecorded()
 	 */
 	@Override
 	public boolean isSilenceRecorded() {
 		return false;
+	}
+
+	/**
+	 * @return the deck
+	 */
+	public ICassetteDeck getCassetteDeck() {
+		return deck;
 	}
 }

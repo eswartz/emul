@@ -18,8 +18,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import v9t9.common.cassette.ICassetteDeck;
 import v9t9.common.keyboard.KeyboardConstants;
-import v9t9.common.sound.ICassetteVoice;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruReader;
@@ -137,7 +137,7 @@ public class InternalCru9901 extends BaseCruChip {
 
 	private ICruWriter cruwCassette1 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			getMachine().getCassette().getCassetteVoice().setMotor1(data != 0);
+			getMachine().getCassette().getCassette1().setMotor(data != 0);
 			//System.out.println(System.currentTimeMillis() + ": [CS1] " + (data != 0 ? "on" : "off"));
 			return 0;
 		}
@@ -146,7 +146,7 @@ public class InternalCru9901 extends BaseCruChip {
 	
 	private ICruWriter cruwCassette2 = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			getMachine().getCassette().getCassetteVoice().setMotor2(data != 0);
+			getMachine().getCassette().getCassette2().setMotor(data != 0);
 			//System.out.println(System.currentTimeMillis() + ": [CS2] " + (data != 0 ? "on" : "off"));
 			return 0;
 		}
@@ -155,7 +155,7 @@ public class InternalCru9901 extends BaseCruChip {
 	
 	private ICruWriter cruwCassetteOut = new ICruWriter() {
 		public int write(int addr, int data, int num) {
-			getMachine().getCassette().getCassetteVoice().setState(data != 0);
+			getMachine().getCassette().getCassette1().writeBit(data != 0);
 			return 0;
 		}
 		
@@ -260,8 +260,8 @@ public class InternalCru9901 extends BaseCruChip {
 
 	private ICruReader crurCassetteIn = new ICruReader() {
 		public int read(int addr, int data, int num) {
-			ICassetteVoice voice = getMachine().getCassette().getCassetteVoice();
-			int bit = voice.getState() ? 1 : 0;
+			ICassetteDeck deck = getMachine().getCassette().getCassette1();
+			int bit = deck.readBit() ? 1 : 0;
 			return bit;
 		}
 		

@@ -143,5 +143,12 @@ public class EmulatedDiskImageFile extends EmulatedBaseFDRFile implements IEmula
 		return indexSector;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IFDRInfo#getComment()
+	 */
+	@Override
+	public String getComment() {
+		return fdr.getComment();
+	}
 
 }

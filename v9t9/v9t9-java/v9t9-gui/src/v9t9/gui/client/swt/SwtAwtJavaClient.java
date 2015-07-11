@@ -32,7 +32,7 @@ public class SwtAwtJavaClient extends BaseSwtJavaClient {
 	 * 
 	 */
 	protected void setupRenderer() {
-		videoRenderer = new SwtAwtVideoRenderer(machine, videoTimer);
+		videoRenderer = new SwtAwtVideoRenderer(machine);
 	
 		keyboardHandler = new AwtKeyboardHandler(
     		machine.getKeyboardState(), machine);

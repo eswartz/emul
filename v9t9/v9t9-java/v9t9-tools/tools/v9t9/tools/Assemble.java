@@ -58,7 +58,7 @@ public class Assemble {
         
         boolean hadOutput = false;
         
-        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:D:e:L:H:v92");
+        Getopt getopt = new Getopt(PROGNAME, args, "?r:m:d:g:l:D:e:L:H:v92Ox");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -149,6 +149,9 @@ public class Assemble {
             	romStart = 0xf000;
             	romSize = 0x1000;
             	selectedProcessor = true;
+            	break;
+            case 'O':
+            	assembler.setOptimize(true);
             	break;
             case 'x':
             	assembler.setOptimize(false);

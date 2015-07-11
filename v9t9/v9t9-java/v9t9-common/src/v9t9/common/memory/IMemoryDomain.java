@@ -175,6 +175,6 @@ public interface IMemoryDomain {
 	 * @param addr_
 	 * @param value
 	 */
-	void fireWriteEvent(IMemoryEntry entry, int addr_, Number value);
+	void fireWriteEvent(IMemoryEntry entry, int addr_, int size, int value);
 
 }

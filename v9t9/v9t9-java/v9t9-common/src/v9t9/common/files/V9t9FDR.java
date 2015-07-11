@@ -153,7 +153,14 @@ public class V9t9FDR extends TIFDR {
     public void setContentSectors(int[] secs) throws IOException {
     	throw new IOException("cannot allocate sectors for V9t9 files");
     }
-    
+
+    /* (non-Javadoc)
+     * @see v9t9.common.files.IFDRInfo#getComment()
+     */
+    @Override
+    public String getComment() {
+    	return null;
+    }
 
 	
 }

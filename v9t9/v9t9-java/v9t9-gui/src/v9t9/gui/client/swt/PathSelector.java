@@ -38,7 +38,6 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
 import v9t9.common.files.IPathFileLocator;
-
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 
@@ -202,9 +201,20 @@ public class PathSelector extends Composite {
 		add.setText("Add...");
 		
 		add.addSelectionListener(new SelectionAdapter() {
-			String lastDirectory = property.getList().isEmpty() ? "." : (String) property.getList().get(0);
+			String lastDirectory;
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				IStructuredSelection sel = (IStructuredSelection) viewer.getSelection();
+				Object obj = sel.getFirstElement();
+				if (obj instanceof String) {
+					lastDirectory = (String) obj;
+				} else if (lastDirectory == null) {
+					if (!property.getList().isEmpty()) {
+						lastDirectory = (String) property.getList().get(0);
+					} else {
+						lastDirectory = ".";
+					}
+				}
 				String dir = window.openDirectorySelectionDialog("Add " + pathLabel, lastDirectory);
 				if (dir == null)
 					return;

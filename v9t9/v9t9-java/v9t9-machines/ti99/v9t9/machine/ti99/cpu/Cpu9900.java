@@ -188,6 +188,8 @@ public class Cpu9900 extends CpuBase {
         	
         	dumper.info("*** RESET ***");
             System.out.println("**** RESET ****");
+            
+            vdp.readVdpStatus();
             state.getStatus().expand((short) 0);
             contextSwitch(0);
             cycleCounts.addExecute(26);

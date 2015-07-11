@@ -7,7 +7,4 @@ Bundle-ClassPath: ejs-gui.jar
 Export-Package: org.ejs.gui.common,
  org.ejs.gui.images,
  org.ejs.gui.properties
-Require-Bundle: org.eclipse.swt,
- org.eclipse.jface,
- ejs-base;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

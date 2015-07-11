@@ -57,6 +57,8 @@ public class DiskCatalogDialog extends Dialog {
 	private static final int COLUMN_TYPE = 2;
 	private static final int COLUMN_RECLEN = 3;
 	private static final int COLUMN_PROT = 4;
+	private static final int COLUMN_COMMENT = 5;
+	
 	public static class CatalogLabelProvider extends LabelProvider implements ITableLabelProvider {
 
 
@@ -83,6 +85,8 @@ public class DiskCatalogDialog extends Dialog {
 				return entry.type.equals("PROGRAM") ? "" :  "" + entry.recordLength;
 			case COLUMN_PROT:
 				return entry.isProtected ? "P" : "";
+			case COLUMN_COMMENT:
+				return entry.comment != null ? entry.comment : "";
 			}
 			return null;
 		}
@@ -140,6 +144,9 @@ public class DiskCatalogDialog extends Dialog {
 				break;
 			case COLUMN_PROT:
 				rc = (p1.isProtected ? 1 : 0) - (p2.isProtected ? 1 : 0);
+				break;
+			case COLUMN_COMMENT:
+				rc = (p1.comment != null ? 1 : 0) - (p2.comment != null ? 1 : 0);
 				break;
 			}
 
@@ -235,6 +242,9 @@ public class DiskCatalogDialog extends Dialog {
 		TableColumn protColumn = new TableColumn(table, SWT.CENTER);
 		protColumn.setText("Prot?");
 		setSortListener(viewer, protColumn, COLUMN_PROT);
+		TableColumn commentColumn = new TableColumn(table, SWT.LEFT);
+		commentColumn.setText("Comment");
+		setSortListener(viewer, commentColumn, COLUMN_COMMENT);
 		
 		viewer.setInput(entries);
 		
@@ -242,7 +252,7 @@ public class DiskCatalogDialog extends Dialog {
 		sizeColumn.pack();
 		typeColumn.pack();
 		lenColumn.pack();
-		protColumn.pack();
+		commentColumn.pack();
 		
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			

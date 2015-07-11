@@ -39,7 +39,7 @@ public class CatalogEntry {
 	/** one of TYPE_ */
 	public final int typeCode;
 	public final boolean isProtected;
-
+	public final String comment;
 
 	private IEmulatedFile file;
 
@@ -74,6 +74,9 @@ public class CatalogEntry {
 		this.typeCode = code;
 		
 		this.recordLength = file.getRecordLength();
+		
+		this.comment = file.getComment();
+		
 	}
 
 	/* (non-Javadoc)

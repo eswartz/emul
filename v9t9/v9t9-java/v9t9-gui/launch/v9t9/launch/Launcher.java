@@ -1,7 +1,7 @@
 /*
   Launcher.java
 
-  (c) 2013 Ed Swartz
+  (c) 2013-2015 Ed Swartz
 
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Public License v1.0
@@ -16,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -137,8 +138,18 @@ public class Launcher {
 			newJavaLibPath.append(path);
 		}
 		
-		System.out.println("Updating Java library path to: " + newJavaLibPath);
+		System.err.println("Updating Java library path to: " + newJavaLibPath);
 		System.setProperty("java.library.path", newJavaLibPath.toString());
+
+		try {
+			// ugly hack to force re-loading the path
+			Field fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
+			fieldSysPath.setAccessible(true);
+			fieldSysPath.set(null, null);
+		} catch (Throwable t) {
+			t.printStackTrace();
+			System.err.println("\nCould not modify java.library.path: please invoke:\n\n\texport V9T9_VMARGS=\"-Djava.library.path=" + newJavaLibPath + "\"'\n\nand try again.");
+		}
 		
 		Class<?> klass = classLoader.loadClass(mainClass);
 		Method main = klass.getMethod("main", String[].class);

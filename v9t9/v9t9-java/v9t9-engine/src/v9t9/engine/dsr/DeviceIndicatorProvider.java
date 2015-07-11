@@ -24,13 +24,18 @@ public class DeviceIndicatorProvider implements IDeviceIndicatorProvider {
 	private final int activeIconIndex;
 	private final IProperty activeProperty;
 	private final String tooltip;
+	private String title;
+	private String[] groups;
 
 	public DeviceIndicatorProvider(IProperty activeProperty, String tooltip, 
-			int baseIconIndex, int activeIconIndex) {
+			int baseIconIndex, int activeIconIndex,
+			String title, String... groups) {
 		this.activeProperty = activeProperty;
 		this.tooltip = tooltip;
 		this.baseIconIndex = baseIconIndex;
 		this.activeIconIndex = activeIconIndex;
+		this.title = title;
+		this.groups = groups;
 		
 	}
 	/* (non-Javadoc)
@@ -65,4 +70,18 @@ public class DeviceIndicatorProvider implements IDeviceIndicatorProvider {
 		return activeProperty;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IDeviceIndicatorProvider#getTitle()
+	 */
+	@Override
+	public String getTitle() {
+		return title;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IDeviceIndicatorProvider#getGroups()
+	 */
+	@Override
+	public String[] getGroups() {
+		return groups;
+	}
 }

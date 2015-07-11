@@ -456,9 +456,9 @@ public class Status9900 implements IStatus {
         return isOddParity(lastparity);
     }
 
+    static final byte parity[] = { 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1,
+    	1, 0 };
     static boolean isOddParity(byte val) {
-        final byte parity[] = { 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1,
-                1, 0 };
 
         // determine parity of an 8-bit byte, 0=even, 1=odd
         return ((parity[(val & 0xf)] ^ parity[val >> 4 & 0xf]) & 1) != 0;

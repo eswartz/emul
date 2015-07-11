@@ -1,7 +1,7 @@
 /*
   FileExecutorComposite.java
 
-  (c) 2013 Ed Swartz
+  (c) 2013-2015 Ed Swartz
 
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Public License v1.0
@@ -11,6 +11,7 @@
 package v9t9.gui.client.swt;
 
 import java.util.Collections;
+
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.ArrayContentProvider;

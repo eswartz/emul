@@ -159,6 +159,8 @@ public class ManualTestTI99ModuleDetection {
 			return;
 		if (verifyEASuperCart(module))
 			return;
+		if (verifyParsec(module))
+			return;
 	}
 
 	/**
@@ -201,6 +203,34 @@ public class ManualTestTI99ModuleDetection {
 				}
 			}
 			assertEquals(3, infos.length);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @param module
+	 * @return
+	 */
+	private boolean verifyParsec(IModule module) {
+		if (module.getName().equalsIgnoreCase("Parsec")) {
+			// make sure it has banked ROM and GROM
+			MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
+			int cpus = 0;
+			int gpls = 0;
+			for (MemoryEntryInfo info : infos) {
+				if (info.getDomainName().equals(IMemoryDomain.NAME_CPU)
+						&& info.getAddress() == 0x6000) {
+					cpus++;
+				}
+				else if (info.getDomainName().equals(IMemoryDomain.NAME_GRAPHICS)
+						&& info.getAddress() == 0x6000) {
+					gpls++;
+				}
+			}
+			assertEquals(1, gpls);
+			assertEquals(1, cpus);
+			assertEquals(2, infos.length);
 			return true;
 		}
 		return false;

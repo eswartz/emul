@@ -924,13 +924,13 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
         	if (getInst() != InstTableCommon.Idata && mop1.type != IMachineOperand.OP_NONE) {
 //        		mop1.cycles = 0;
 				if (mop1.hasImmediate()) {
-					if (domain.readWord(pcStep) != mop1.immed)
+					if (domain.flatReadWord(pcStep) != mop1.immed)
 						isSame = false;
 					pcStep += 2;
         		} else {
         			MachineOperand9900 mop2 = (MachineOperand9900)getOp2();
         			if (mop2.type != IMachineOperand.OP_NONE && mop2.hasImmediate()) {
-        				if (domain.readWord(pcStep) != mop2.immed) {
+        				if (domain.flatReadWord(pcStep) != mop2.immed) {
         					isSame = false;
         				}
 //        				mop2.cycles = 0;

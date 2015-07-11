@@ -17,9 +17,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 
 import v9t9.common.dsr.IDsrEnablementSetting;
@@ -29,13 +28,13 @@ import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingProperty;
 
-abstract class DiskSettingEntry extends Composite {
+abstract class BaseSettingEntry extends Composite {
 	protected final IProperty setting;
 	private IPropertyListener enableListener;
 	protected IMachine machine;
-	private DiskSelectorDialog dialog;
+	private IDeviceSelectorDialog dialog;
 	
-	public DiskSettingEntry(DiskSelectorDialog dialog_, final Composite parent, IProperty setting_, int style) {
+	public BaseSettingEntry(IDeviceSelectorDialog dialog_, final Composite parent, IProperty setting_, int style) {
 		super(parent, style);
 		
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(this);
@@ -80,8 +79,6 @@ abstract class DiskSettingEntry extends Composite {
 			Label label = new Label(this, SWT.NONE);
 			GridDataFactory.fillDefaults().applyTo(label);
 		}
-		
-		createControls(this);
 	}
 	
 	protected void updateSetting() {
@@ -91,15 +88,34 @@ abstract class DiskSettingEntry extends Composite {
 		boolean enabled = !(setting instanceof ISettingProperty) || 
 			((ISettingProperty) setting).isEnabled();
 		
-		setVisible(enabled);
-		GridData data = (GridData) getLayoutData();
-		data.exclude = !enabled;
+		recurseSetEnabled(this, enabled, false);
 		
-		getShell().layout(true, true);
-		Point cursz = getShell().getSize();
-		Point sz = getShell().computeSize(SWT.DEFAULT, 500, true);
-		getShell().setSize(Math.max(cursz.x, sz.x),
-				Math.max(cursz.y, sz.y));
+//		setVisible(enabled);
+//		GridData data = (GridData) getLayoutData();
+//		data.exclude = !enabled;
+//		
+//		getShell().layout(true, true);
+//		Point cursz = getShell().getSize();
+//		Point sz = getShell().computeSize(SWT.DEFAULT, 500, true);
+//		getShell().setSize(Math.max(cursz.x, sz.x),
+//				Math.max(cursz.y, sz.y));
+	}
+
+	/**
+	 * @param enabled
+	 */
+	private void recurseSetEnabled(Control control, boolean enabled, boolean top) {
+		if (!top) {
+			control.setEnabled(enabled);
+			if (!enabled) {
+				control.setToolTipText("These entries are disabled (other devices may provide these entries)");
+			}
+		}
+		if (control instanceof Composite) {
+			for (Control c : ((Composite) control).getChildren()) {
+				recurseSetEnabled(c, enabled, false);
+			}
+		}
 	}
 
 	protected String[] getHistory(String name) {

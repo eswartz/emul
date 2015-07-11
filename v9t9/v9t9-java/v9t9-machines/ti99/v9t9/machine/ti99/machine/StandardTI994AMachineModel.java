@@ -21,6 +21,7 @@ import v9t9.common.keyboard.KeyboardConstants;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
+import v9t9.engine.dsr.rs232.RS232Controllers;
 import v9t9.engine.files.image.FDCControllers;
 import v9t9.engine.files.image.RealDiskSettings;
 import v9t9.engine.modules.ModuleManager;
@@ -36,6 +37,8 @@ import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
 import v9t9.machine.ti99.dsr.realdisk.CorcompDiskImageDsr;
 import v9t9.machine.ti99.dsr.realdisk.TIDiskImageDsr;
 import v9t9.machine.ti99.dsr.rs232.RS232Regs;
+import v9t9.machine.ti99.dsr.rs232.RS232Settings;
+import v9t9.machine.ti99.dsr.rs232.TIRS232Dsr;
 import v9t9.machine.ti99.dsr.rs232.TIRS232PIODsr;
 import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 
@@ -107,9 +110,14 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 					FDCControllers.WDC1791, new CorcompDiskImageDsr(machine, (short) 0x1100));
 			machine.getDsrManager().registerDsr(diskDsr);
 			
+			TIRS232Dsr rs232Dsr = new TIRS232Dsr(machine, RS232Regs.CRU_BASE);
 			TIRS232PIODsr rs232PioDsr = new TIRS232PIODsr(machine, RS232Regs.CRU_BASE);
-			rs232PioDsr.init();
-			machine.getDsrManager().registerDsr(rs232PioDsr);
+
+			ISelectableDsrHandler rsDsr = new Selectable9900Dsr(machine, 
+					machine.getSettings().get(RS232Settings.rs232Controller),
+					RS232Controllers.RS232_ONLY, rs232Dsr,
+					RS232Controllers.RS232_PIO, rs232PioDsr);
+			machine.getDsrManager().registerDsr(rsDsr);
 			
 			EpsonPrinterImageEngine engine = new EpsonPrinterImageEngine();
 			machine.getDemoManager().registerActorProvider(new PrinterImageActorProvider(engine.getPrinterId()));

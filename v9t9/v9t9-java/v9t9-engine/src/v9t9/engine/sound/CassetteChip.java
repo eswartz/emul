@@ -12,14 +12,27 @@ package v9t9.engine.sound;
 
 import static v9t9.common.sound.TMS9919Consts.GROUP_NAME;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-import v9t9.common.hardware.ICassetteChip;
+import v9t9.common.cassette.ICassetteChip;
+import v9t9.common.cassette.ICassetteDeck;
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.dsr.DeviceEditorIdConstants;
+import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.dsr.IDeviceSettings;
+import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterAccess;
-import v9t9.common.sound.ICassetteVoice;
-import v9t9.common.sound.IVoice;
+import v9t9.common.machine.IRegisterBank;
+import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.SettingSchemaProperty;
+import v9t9.engine.machine.BaseRegisterBank;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.ListenerList;
 
@@ -34,7 +47,7 @@ public class CassetteChip implements ICassetteChip {
 	protected final Map<Integer, String> regDescs;
 	protected final Map<String, Integer> regIds;
 	
-	protected final Map<Integer, IVoice> regIdToVoice;
+	protected final Map<Integer, IRegisterBank> regIdToVoice;
 
 	protected final IMachine machine;
 
@@ -43,19 +56,29 @@ public class CassetteChip implements ICassetteChip {
 	protected int regBase;
 	protected IClockedVoice[] voices = new IClockedVoice[4];
 	protected AudioGateVoice audioGateVoice;
-	private CassetteVoice cassetteVoice;
+	private CassetteDeck cassette1;
+	private CassetteDeck cassette2;
 
-	public CassetteChip(IMachine machine, String id, String name, int regBase) {
-		this.machine = machine;
+	public CassetteChip(IMachine machine_, String id, String name, int regBase) {
+		this.machine = machine_;
 		listeners = new ListenerList<IRegisterWriteListener>();
-		
+
+		IProperty cassetteEnabled = machine.getSettings().get(ICassetteChip.settingCassetteEnabled);
+		cassetteEnabled.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				machine.getSettings().get(IDeviceIndicatorProvider.settingDevicesChanged).firePropertyChange();
+			}
+		});
+
 		this.regBase = regBase;
 		
 		regNames = new HashMap<Integer, String>();
 		regDescs = new HashMap<Integer, String>();
 		regIds = new HashMap<String, Integer>();
 		
-		regIdToVoice = new HashMap<Integer, IVoice>();
+		regIdToVoice = new HashMap<Integer, IRegisterBank>();
 		
 		initRegisters(id, name, regBase);
 		
@@ -66,25 +89,31 @@ public class CassetteChip implements ICassetteChip {
 	public int initRegisters(String id, String name, int regBase) {
 		int count;
 		
-		cassetteVoice = new CassetteVoice(id + "C", "Cassette", listeners, machine);
-		count = ((BaseVoice) cassetteVoice).initRegisters(regNames, regDescs, regIds, regBase);
-		mapRegisters(regBase, count, cassetteVoice);
+		cassette1 = new CassetteDeck(id + "C1", "CS1", true, listeners, machine);
+		count = ((BaseRegisterBank) cassette1).initRegisters(regNames, regDescs, regIds, regBase);
+		mapRegisters(regBase, count, cassette1);
 		regBase += count;
-		
+
+		cassette2 = new CassetteDeck(id + "C2", "CS2", false, listeners, machine);
+		count = ((BaseRegisterBank) cassette2).initRegisters(regNames, regDescs, regIds, regBase);
+		mapRegisters(regBase, count, cassette2);
+		regBase += count;
+
 		return regBase;
 	}
 
-	protected void mapRegisters(int regBase, int count, IVoice voice) {
+	protected void mapRegisters(int regBase, int count, IRegisterBank voice) {
 		while (count-- > 0)
 			regIdToVoice.put(regBase++, voice);
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.common.hardware.ICassetteChip#getCassetteVoice()
-	 */
 	@Override
-	public ICassetteVoice getCassetteVoice() {
-		return cassetteVoice;
+	public ICassetteDeck getCassette1() {
+		return cassette1;
+	}
+	@Override
+	public ICassetteDeck getCassette2() {
+		return cassette2;
 	}
 
 	/* (non-Javadoc)
@@ -92,19 +121,22 @@ public class CassetteChip implements ICassetteChip {
 	 */
 	@Override
 	public void reset() {
-		cassetteVoice.setState(false);
+		cassette1.writeBit(false);
+		cassette2.writeBit(false);
 //		cassetteVoice.setMotor1(false);
 //		cassetteVoice.setMotor2(false);		
 	}
 	
 
 	public void saveState(ISettingSection settings) {
-		cassetteVoice.saveState(settings.addSection(cassetteVoice.getName()));
+		cassette1.saveState(settings.addSection(cassette1.getName()));
+		cassette2.saveState(settings.addSection(cassette2.getName()));
 
 	}
 	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
-		cassetteVoice.loadState(settings.getSection(cassetteVoice.getName()));
+		cassette1.loadState(settings.getSection(cassette1.getName()));
+		cassette2.loadState(settings.getSection(cassette2.getName()));
 	}
 
 	/* (non-Javadoc)
@@ -145,10 +177,10 @@ public class CassetteChip implements ICassetteChip {
 	 */
 	@Override
 	public RegisterInfo getRegisterInfo(int reg) {
-		IVoice voice = regIdToVoice.get(reg);
+		IRegisterBank voice = regIdToVoice.get(reg);
 		RegisterInfo info = new RegisterInfo(regNames.get(reg), 
 				IRegisterAccess.FLAG_ROLE_GENERAL,
-				voice instanceof CassetteVoice ? 4 : 1,
+				voice instanceof CassetteDeck ? 4 : 1,
 				regDescs.get(reg));
 		return info;
 	}
@@ -158,7 +190,7 @@ public class CassetteChip implements ICassetteChip {
 	 */
 	@Override
 	public int getRegister(int reg) {
-		IVoice voice = regIdToVoice.get(reg);
+		IRegisterBank voice = regIdToVoice.get(reg);
 		if (voice == null)
 			return 0;
 		return voice.getRegister(reg);
@@ -169,7 +201,7 @@ public class CassetteChip implements ICassetteChip {
 	 */
 	@Override
 	public int setRegister(int reg, int newValue) {
-		IVoice voice = regIdToVoice.get(reg);
+		IRegisterBank voice = regIdToVoice.get(reg);
 		if (voice == null)
 			return 0;
 		int old = voice.getRegister(reg);
@@ -201,4 +233,53 @@ public class CassetteChip implements ICassetteChip {
 		listeners.remove(listener);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.ICassetteChip#getDeviceSettings()
+	 */
+	@Override
+	public IDeviceSettings getDeviceSettings() {
+		final ISettingsHandler msettings = machine.getSettings();
+		
+		IDeviceSettings cassette = new IDeviceSettings() {
+			private Map<String, Collection<IProperty>> map;
+			@Override
+			public Map<String, Collection<IProperty>> getEditableSettingGroups() {
+				if (map == null) {
+					map = new LinkedHashMap<String, Collection<IProperty>>();
+					
+					Collection<IProperty> list;
+					
+					list = new ArrayList<IProperty>();
+					list.add(msettings.get(ICassetteChip.settingCassette1File));
+					list.add(msettings.get(ICassetteChip.settingCassette2File));
+					
+					list.add(new SettingSchemaProperty(new SettingSchema(
+							ISettingsHandler.TRANSIENT,
+							"_PressEnter", 
+							"Press Enter", "Yes",
+							DeviceEditorIdConstants.ID_PRESS_ENTER,
+							false, Boolean.class)));
+					map.put(ICassetteChip.GROUP_CASSETTE_FILES, list);
+					
+					list = new ArrayList<IProperty>();
+					list.add(msettings.get(ICassetteChip.settingCassetteCompressSilence));
+					list.add(msettings.get(ICassetteChip.settingCassetteDebug));
+					map.put(ICassetteChip.GROUP_CASSETTE_OPTIONS, list);
+					
+					list = new ArrayList<IProperty>();
+					list.add(msettings.get(ICassetteChip.settingCassetteEnabled));
+					map.put(IDsrHandler.GROUP_DSR_SELECTION, list);
+				}
+				return map;
+			}
+		};
+		return cassette;
+	}
+	
+	/**
+	 * @param audioGateVoice the audioGateVoice to set
+	 */
+	public void setAudioGateVoice(AudioGateVoice audioGateVoice) {
+		this.audioGateVoice = audioGateVoice;
+	}
 }

@@ -65,10 +65,10 @@ public class TIFILESFDR extends FDR {
 	        fdr.exthdr = (stream.read() << 8 | stream.read());
 	        fdr.crtime = (stream.read() << 24 | stream.read() << 16 | stream.read() << 8 | stream.read());
 	        
-	        fdr.unused = new byte[112];
-	        int cnt = stream.read(fdr.unused, 0, 112);
+	        fdr.unused = new byte[104];
+	        int cnt = stream.read(fdr.unused, 0, fdr.unused.length);
 	        
-	        if (cnt < 112)
+	        if (cnt < fdr.unused.length)
 	        	throw new InvalidFDRException("File header is too short; expected 128 bytes");
         } finally {
         	stream.close();
@@ -128,6 +128,14 @@ public class TIFILESFDR extends FDR {
     	this.name = name;
     }
     
+    @Override
+    public String getComment() {
+    	String possibleComment = new String(unused).trim();
+    	if (possibleComment.length() > 0)
+			return possibleComment;
+    	return null;
+    }
+    
     /* (non-Javadoc)
      * @see v9t9.common.files.FDR#fetchContentSectors()
      */
@@ -172,6 +180,5 @@ public class TIFILESFDR extends FDR {
 	@Override
 	public void copyAllocation(FDR srcFdr) throws IOException {
 		throw new IOException("unsupported");
-		
 	}
 }

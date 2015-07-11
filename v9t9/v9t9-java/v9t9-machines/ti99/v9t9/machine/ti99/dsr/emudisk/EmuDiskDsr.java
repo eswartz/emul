@@ -421,7 +421,7 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 		map.put(IDsrHandler.GROUP_DSR_SELECTION, settings);
 		
 		settings = Arrays.asList(mapper.getSettings());
-		map.put(IDsrHandler.GROUP_DISK_CONFIGURATION, settings);
+		map.put(IDsrHandler.GROUP_EMU_DISK_CONFIGURATION, settings);
 		
 		return map;
 	}
@@ -447,7 +447,8 @@ public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
 				emuDiskDsrActiveSetting, 
 				"Disk directory activity",
-				IDevIcons.DSR_DISK_DIR, IDevIcons.DSR_LIGHT);
+				IDevIcons.DSR_DISK_DIR, IDevIcons.DSR_LIGHT,
+				"Edit disk paths", IDsrHandler.GROUP_EMU_DISK_CONFIGURATION);
 		return Collections.<IDeviceIndicatorProvider>singletonList(deviceIndicatorProvider);
 	}
 }

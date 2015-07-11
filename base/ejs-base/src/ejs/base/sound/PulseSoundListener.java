@@ -251,7 +251,7 @@ public class PulseSoundListener implements ISoundEmitter {
 			soundQueue.clear();
 		while (!soundQueue.isEmpty()) {
 			try {
-				Thread.sleep(100);
+				Thread.sleep(50);
 			} catch (InterruptedException e) {
 				break;
 			}

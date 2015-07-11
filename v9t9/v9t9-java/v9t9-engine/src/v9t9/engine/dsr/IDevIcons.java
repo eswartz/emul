@@ -23,6 +23,7 @@ public interface IDevIcons {
 	int DSR_USCD = 3;
 	int DISK_IMAGE = 4;
 	int DSR_RS232 = 5;
+	int DEV_CASSETTE = 6;
 	int LIGHT_OFF = 8;
 	int LIGHT_ON = 9;
 }

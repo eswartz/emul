@@ -171,7 +171,7 @@ public abstract class Assembler implements IAssembler {
 			return false;
 		
 		insts = resolve(asmInsts);
-		if (!optimize)
+		if (optimize)
 			insts = optimize(insts);
 		if (errorList.size() >0)
 			return false;

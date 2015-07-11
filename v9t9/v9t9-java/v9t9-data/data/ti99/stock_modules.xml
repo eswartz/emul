@@ -1233,4 +1233,15 @@
       <romModuleEntry fileName="ea+8kr.bin" stored="true"/>
     </memoryEntries>
   </module>
+  <module name="TI Workshop 379">
+    <memoryEntries>
+      <bankedModuleEntry fileMd5="4B81D33C1A7C0A7F99146CCC5ED37C45" fileName="tiworkshop379.bin" reversed="true" size="-8192"/>
+    </memoryEntries>
+  </module>
+   <module name="Pitfall!">
+    <memoryEntries>
+      <bankedModuleEntry fileMd5="B47416B90801F6FE557E97D3D33E741D" fileName="PITFALL.bin" reversed="true" size="-8192"/>
+    </memoryEntries>
+  </module>
+  
 </modules>

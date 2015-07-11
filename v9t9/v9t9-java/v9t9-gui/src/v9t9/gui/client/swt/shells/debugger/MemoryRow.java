@@ -35,7 +35,7 @@ class MemoryRow {
 		int addr = getAddress() + column;
 		IMemoryEntry entry = range.getEntry();
 		entry.writeByte(addr, byt);
-		entry.getDomain().fireWriteEvent(entry, addr, byt);
+		entry.getDomain().fireWriteEvent(entry, addr, 1, byt);
 	}
 
 	public final char getChar(int column) {

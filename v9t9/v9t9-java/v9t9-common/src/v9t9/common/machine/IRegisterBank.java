@@ -1,5 +1,5 @@
 /*
-  IVoice.java
+  IRegisterBank.java
 
   (c) 2011-2012 Edward Swartz
 
@@ -8,16 +8,17 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.common.sound;
+package v9t9.common.machine;
 
 import ejs.base.properties.IPersistable;
 
 /**
- * This represents the parameters controlling a single voice
+ * This represents a set of registers controlling a single
+ * entity, which may exist in multiple copies.
  * @author ejs
  *
  */
-public interface IVoice extends IPersistable {
+public interface IRegisterBank extends IPersistable {
 	/** Get the identifier for the voice, in register naming */
 	String getId();
 	/**

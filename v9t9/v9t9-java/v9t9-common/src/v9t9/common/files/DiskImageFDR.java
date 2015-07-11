@@ -37,7 +37,8 @@ public class DiskImageFDR extends TIFDR {
                                # sectors for VARIABLE file,
                                0 for program 
     u8          rec20[8];   // reserved 
-    u8          dcpb[228];  // sector layout of file, in >UM >SN >OF == >NUM >OFS format
+    u8          dcpb[192];  // sector layout of file, in >UM >SN >OF == >NUM >OFS format
+    u8          comment[36];  // used for comments
      */
 
     public DiskImageFDR() {
@@ -57,6 +58,7 @@ public class DiskImageFDR extends TIFDR {
 	        fdr.numrecs = stream.read() | (stream.read() << 8);
 	        stream.read(fdr.rec20);
 	        stream.read(fdr.dcpb);
+	        stream.read(fdr.comment);
         } finally { 
         	stream.close();
         }
@@ -78,6 +80,7 @@ public class DiskImageFDR extends TIFDR {
         fdr.numrecs = (data[offset + 0x12] & 0xff) | ((data[offset + 0x13] & 0xff) << 8);
         System.arraycopy(data, offset + 0x14, fdr.rec20, 0, fdr.rec20.length);
         System.arraycopy(data, offset + 0x1C, fdr.dcpb, 0, fdr.dcpb.length);
+        System.arraycopy(data, offset + 0xDC, fdr.comment, 0, fdr.comment.length);
         
         return fdr;
     }
@@ -112,6 +115,7 @@ public class DiskImageFDR extends TIFDR {
 	    	os.write(numrecs >> 8);
 	    	os.write(rec20);
 	        os.write(dcpb);
+	        os.write(comment);
 	        
 	        os.close();
     	} catch (IOException e) {
@@ -258,5 +262,16 @@ public class DiskImageFDR extends TIFDR {
 			newSecs[i] = secList.get(i);
 		
 		setContentSectors(newSecs);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IFDRInfo#getComment()
+	 */
+	@Override
+	public String getComment() {
+		String str = new String(comment).trim();
+		if (str.length() > 0)
+			return str;
+		return null;
 	}
 }

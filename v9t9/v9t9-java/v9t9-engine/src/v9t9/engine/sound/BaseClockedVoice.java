@@ -13,6 +13,7 @@ package v9t9.engine.sound;
 
 import v9t9.common.machine.IRegisterAccess.IRegisterWriteListener;
 import v9t9.common.sound.TMS9919Consts;
+import v9t9.engine.machine.BaseRegisterBank;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.ListenerList;
 
@@ -20,7 +21,7 @@ import ejs.base.utils.ListenerList;
  * @author ejs
  *
  */
-public abstract class BaseClockedVoice extends BaseVoice implements IClockedVoice {
+public abstract class BaseClockedVoice extends BaseRegisterBank implements IClockedVoice {
 
 	private int period;
 	private int att;

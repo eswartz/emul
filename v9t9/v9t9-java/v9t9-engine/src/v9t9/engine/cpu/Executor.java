@@ -92,6 +92,7 @@ public class Executor implements IExecutor {
 	private Thread videoRunner;
 
 	private Thread cpuRunner;
+	private volatile boolean needsTick;
 
     public Executor(IMachine machine, ICpu cpu, 
     		IInterpreter interpreter, ICompiler compiler, 
@@ -236,7 +237,7 @@ public class Executor implements IExecutor {
 			} else {
 				interruptExecution = Boolean.FALSE;
 				if (cpu.settingRealTime().getBoolean()) {
-					interp.executeChunk(10, this);
+					interp.executeChunk(25, this);
 				} else {
 					interp.executeChunk(100, this);
 				}
@@ -518,6 +519,10 @@ public class Executor implements IExecutor {
 			machine.getVdp().tick();
 		}    					
 	}
+	
+	public void queueTick() {
+		needsTick = true;
+	}
 	@Override
 	public void start() {
 		
@@ -569,21 +574,14 @@ public class Executor implements IExecutor {
 	            				t.printStackTrace();
 	            			}
 	            		}
+
+	    	            if (needsTick) {
+	    	            	needsTick = false;
+	    	            	tick();
+	    	            }
             		}
-//        	        	
-//        	        	// delay if going too fast
-//        				if (realTime.getBoolean()) {
-//        					if (cpu.isThrottled() && cpu.getMachine().isAlive()) {
-//        						// Just sleep.  Another timer thread will reset the throttle.
-//        						try {
-//        							Thread.sleep(1000 / 200);		// expected clock: 100Hz
-//        							continue;
-//        						} catch (InterruptedException e) {
-//        							return;
-//        						}
-//        					}
-//        				}
-//        				
+            		
+
     	            try {
     	            	// synchronize on events like debugging, loading/saving, etc
     	            	int usedCycles = 0;
@@ -592,14 +590,21 @@ public class Executor implements IExecutor {
 	            			realTime = cpu.settingRealTime().getBoolean();
 	            					
 	            			if (!executing && machine.isAlive()) {
-	            				executionLock.wait(50);	// need short delay here for 9900 ints ??
+	            				executionLock.wait(10);	// need short delay here for 9900 ints ??
 	            			}
 	            			if (executing) {
 	            				usedCycles = execute();
 	            			}
 	            		}
+	            		
             			if (usedCycles >= 0 && realTime) {
-            				cpu.getAllocatedCycles().acquire(Math.min(usedCycles, cpu.getCurrentTargetCycleCount()));
+            				int count = Math.min(usedCycles, cpu.getCurrentTargetCycleCount());
+            				while (false == cpu.getAllocatedCycles().tryAcquire(count)) {
+        	    	            if (needsTick) {
+        	    	            	needsTick = false;
+        	    	            	tick();
+        	    	            }
+            				}
             			}
 	            		
     	            } catch (AbortedException e) {
@@ -610,6 +615,7 @@ public class Executor implements IExecutor {
     	            	machine.stop();
     	            	break;
     	            }
+
     	        }
         	}
         };
@@ -619,11 +625,7 @@ public class Executor implements IExecutor {
 
         videoRunner.start();
         
-        synchronized (executionLock) {
-			executing = !pauseMachine.getBoolean();
-			executionLock.notifyAll();
-		}
-
+        setExecuting(!pauseMachine.getBoolean());
 	}
 	
 	/* (non-Javadoc)
@@ -631,11 +633,8 @@ public class Executor implements IExecutor {
 	 */
 	@Override
 	public void stop() {
-		interruptExecution();
-		synchronized (executionLock) {
-			executing = false;
-			executionLock.notifyAll();
-		}
+		setExecuting(false);
+		
 		cpuRunner.interrupt();
 		videoRunner.interrupt();
 		try {

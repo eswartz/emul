@@ -22,6 +22,7 @@ import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundView;
 import ejs.base.sound.ISoundVoice;
 import ejs.base.sound.SoundChunk;
+import ejs.base.sound.SoundFileListener;
 import ejs.base.utils.ListenerList;
 
 
@@ -256,5 +257,17 @@ public class SoundOutput implements ISoundOutput {
 			anyChanged = false;
 		}
 		return chunk;
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundOutput#isRecording()
+	 */
+	@Override
+	public boolean isRecording() {
+		for (ISoundEmitter emitter : emitters) {
+			if (emitter instanceof SoundFileListener && ((SoundFileListener) emitter).isStarted())
+				return true;
+		}
+		return false;
 	}
 }

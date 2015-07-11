@@ -54,6 +54,12 @@
                 <exclude name="api/"/>
             </fileset>
         </copy>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="WavFile">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
     </target>
     <target name="clean">
         <delete dir="bin"/>
@@ -70,6 +76,10 @@
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="Base64-2.2.2"/>
             <exclude name="api/"/>
+            <classpath refid="ejs-base.classpath"/>
+        </javac>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="WavFile"/>
             <classpath refid="ejs-base.classpath"/>
         </javac>
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">

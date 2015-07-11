@@ -286,7 +286,7 @@ public class TI99Machine extends MachineBase {
 							URI uri = getRomPathFileLocator().findFile(xinfo.getFilename());
 							try {
 								int limit = 0x1000;
-								String md5 = getRomPathFileLocator().getContentMD5(uri, 0, limit);
+								String md5 = getRomPathFileLocator().getContentMD5(uri, 0, limit, true);
 								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
 								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5_LIMIT, limit);
 							} catch (IOException e) {
@@ -409,7 +409,7 @@ public class TI99Machine extends MachineBase {
 				} catch (InvalidFDRException e) {
 					// okay, not likely an errant disk image
 				}
-				content = DataFiles.readMemoryImage(file, 0, 0xA000);
+				content = DataFiles.readMemoryImage(file, 0, 0x10000);
 			} catch (IllegalArgumentException e) {
 				// not file
 				content = FileUtils.readInputStreamContentsAndClose(uri.toURL().openStream());
@@ -447,8 +447,15 @@ public class TI99Machine extends MachineBase {
 		}
 		
 		
-		String moduleName = readHeaderName(fname, content, 0x6000, domain);
+		int baseAddr = 0x6000;
+		String moduleName = readHeaderName(fname, content, baseAddr, domain);
 	
+		if (moduleName == null) {
+			if (domain == IMemoryDomain.NAME_GRAPHICS) {
+				baseAddr = 0x2000;
+				moduleName = readHeaderName(fname, content, baseAddr, domain);
+			}
+		}
 		if (moduleName == null) {
 			return false;
 		}
@@ -482,7 +489,17 @@ public class TI99Machine extends MachineBase {
 				break;
 			}
 		} else {
-			info = injectModuleGrom(module, databaseURI, moduleName, fname, 0);
+			if (baseAddr == 0x6000)
+				info = injectModuleGrom(module, databaseURI, moduleName, fname, 0);
+			else {
+				info = MemoryEntryInfoBuilder.standardModuleGrom(fname)
+						.withAddress(baseAddr)
+						.withOffset(0)
+						.withSize(-0xA000)
+						.create(moduleName);
+				fetchMD5(module, info, false);
+				module.addMemoryEntryInfo(info);
+			}
 		}
 		
 		if (info != null && hasId(content)) {
@@ -714,7 +731,7 @@ public class TI99Machine extends MachineBase {
 					InputStream mis = null;
 					try {
 						lis = zf.getInputStream(layout);
-						mis = zf.getInputStream(metainf);
+						mis = metainf != null ? zf.getInputStream(metainf) : null;
 						module = convertLayoutMetainf(databaseURI, file.toURI(), lis, mis);
 					} finally {
 						if (lis != null)
@@ -896,19 +913,29 @@ public class TI99Machine extends MachineBase {
 		IModule module;
 
 		StreamXMLStorage layout = readXMLAndClose(lis, "romset", "layout.xml");
-		StreamXMLStorage metainf = readXMLAndClose(mis, "meta-inf", "meta-inf.xml");
+		StreamXMLStorage metainf = mis != null ? readXMLAndClose(mis, "meta-inf", "meta-inf.xml") : null;
 		
-		if (metainf == null || layout == null) {
+		if (layout == null) {
 			log.error("problem parsing layout.xml or meta-inf.xml from " + zipUri);
 			return null;
 		}
 		
-		Element moduleNameEl = XMLUtils.getChildElementNamed(metainf.getDocumentElement(), "name");
-		if (moduleNameEl == null) {
-			log.debug("unexpected format, no <name>");
-			return null;
+		String moduleName = null;
+		if (metainf != null) {
+			Element moduleNameEl = XMLUtils.getChildElementNamed(metainf.getDocumentElement(), "name");
+			if (moduleNameEl != null) {
+				moduleName = moduleNameEl.getTextContent().trim();
+			} else {
+				log.debug("unexpected format, no <name>");
+			}
 		}
-		String moduleName = moduleNameEl.getTextContent().trim();
+		if (moduleName == null) {
+			// missing meta-inf, use filename as module name
+			String path = zipUri.toString();
+			int sidx = path.lastIndexOf('/');
+			int qidx = path.lastIndexOf('?');
+			moduleName = path.substring(Math.max(qidx, sidx) + 1);
+		}
 		module = new Module(databaseURI, moduleName);
 
 		Element resources = XMLUtils.getChildElementNamed(layout.getDocumentElement(),  "resources");
@@ -985,7 +1012,7 @@ public class TI99Machine extends MachineBase {
 	 */
 	private String readHeaderName(String fname, byte[] content, int baseAddr, String domain) {
 		// too large (even with accidental cruft)
-		if (content.length > 0xA100)
+		if (content.length > 0x10100)
 			return null;
 		
 		for (int offs = 0; offs < content.length; offs += 0x2000) {
@@ -1027,7 +1054,7 @@ public class TI99Machine extends MachineBase {
 				continue;
 			
 			// not a module-area ROM
-			if (addr < 0x6000)
+			if (addr < baseAddr)
 				return null;
 	
 			// get the last name (ordered reverse, non-English first)
