@@ -13,14 +13,15 @@ package v9t9.engine.memory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
 
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.BinaryUtils;
 import ejs.base.utils.ListenerList;
-
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryAccess;
 import v9t9.common.memory.IMemoryAccessListener;
@@ -444,9 +445,10 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	@Override
 	public void saveState(ISettingSection section) {
 		int idx = 0;
-		for (IMemoryEntry entry : mappedEntries) {
-			if (entry != zeroMemoryEntry && !isEntryFullyUnmapped(entry)) {
-				entry.saveState(section.addSection(""+ idx));
+		Set<IMemoryEntry> handled = new HashSet<IMemoryEntry>();
+		for (IMemoryEntry entry : entries) {
+			if (entry != zeroMemoryEntry && !isEntryFullyUnmapped(entry) && handled.add(entry)) {
+				entry.saveState(section.addSection(String.format("%03d", idx)));
 				idx++;
 			}
 		}
