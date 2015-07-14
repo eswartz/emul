@@ -13,6 +13,7 @@ package v9t9.gui.client.swt.shells;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
@@ -47,7 +48,8 @@ import v9t9.gui.EmulatorGuiData;
  *
  */
 public class PrinterImageShell implements IPrinterImageListener {
-
+	private static Logger log = Logger.getLogger(PrinterImageShell.class);
+	
 	private Shell shell; 
 	private CTabFolder tabFolder;
 	
@@ -64,6 +66,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 	private IPrinterImageEngine engine;
 
 	public PrinterImageShell(IPrinterImageEngine engine) {
+		log.info("creating shell for engine " + engine.getPrinterId());
 		this.engine = engine;
 		newShell();
 		engine.addListener(this);
@@ -228,6 +231,8 @@ public class PrinterImageShell implements IPrinterImageListener {
 	 */
 	protected void createNewPage(Image image) {
 		final int thisPage = ++pageNum;
+		
+		log.info("new page: " + thisPage + " for canvas: " + canvas);
 		
 		if (canvas == null || canvas.isDisposed()) {
 			if (shell.isDisposed()) {
