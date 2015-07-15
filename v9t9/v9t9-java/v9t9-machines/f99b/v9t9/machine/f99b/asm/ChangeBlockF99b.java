@@ -17,14 +17,14 @@ public class ChangeBlockF99b extends ChangeBlock {
 	private CpuStateF99b state;
 	
 	public ChangeBlockF99b(ICpu cpu) {
+		this(cpu, cpu.getState().getPC());
+	}
+	public ChangeBlockF99b(ICpu cpu, int pc) {
 		this.state = (CpuStateF99b) cpu.getState();
-		RawInstruction rawInst = F99bInstructionFactory.INSTANCE.decodeInstruction(state.getPC(), state.getConsole());
+		RawInstruction rawInst = F99bInstructionFactory.INSTANCE.decodeInstruction(pc, state.getConsole());
 		inst = new InstructionF99b(rawInst);
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.cpu.ChangeBlock#getPC()
-	 */
 	@Override
 	public int getPC() {
 		return inst.pc;

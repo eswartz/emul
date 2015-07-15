@@ -33,7 +33,6 @@ import v9t9.engine.cpu.Executor;
 import v9t9.machine.f99b.asm.ChangeBlockF99b;
 import v9t9.machine.f99b.asm.StatusF99b;
 import v9t9.machine.f99b.interpreter.InterpreterF99b;
-import v9t9.machine.ti99.cpu.ChangeBlock9900;
 import v9t9.machine.ti99.machine.InternalCruF99;
 
 /**

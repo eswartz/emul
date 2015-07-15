@@ -118,14 +118,20 @@
             <src path="src"/>
             <classpath refid="v9t9-machines.classpath"/>
         	<exclude name="v9t9/machine/utils/**"/>
+            <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter"
+    			line="${v9t9.compilerargs}"/>
         </javac>
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="ti99"/>
             <classpath refid="v9t9-machines.classpath"/>
+            <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter"
+    			line="${v9t9.compilerargs}"/>
         </javac>
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="f99b"/>
             <classpath refid="v9t9-machines.classpath"/>
+            <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter"
+    			line="${v9t9.compilerargs}"/>
         </javac>
     </target>
     <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects">

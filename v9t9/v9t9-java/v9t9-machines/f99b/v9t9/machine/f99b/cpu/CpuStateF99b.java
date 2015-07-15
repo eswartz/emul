@@ -19,10 +19,8 @@ import ejs.base.utils.ListenerList;
 import v9t9.common.cpu.CycleCounts;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
-import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
 import v9t9.machine.f99b.asm.StatusF99b;
 
 /**

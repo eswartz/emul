@@ -106,6 +106,7 @@ import static v9t9.machine.f99b.asm.InstF99b.SYSCALL_SPIN;
 
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -121,6 +122,7 @@ import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.IInterpreter;
 import v9t9.common.machine.IMachine;
+import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
@@ -131,6 +133,7 @@ import v9t9.machine.f99b.asm.MachineOperandF99b;
 import v9t9.machine.f99b.asm.StatusF99b;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.cpu.CpuStateF99b;
+import v9t9.machine.ti99.cpu.ChangeBlock9900;
 
 /**
  * This class interprets F99b instructions one by one.
@@ -150,7 +153,10 @@ public class InterpreterF99b implements IInterpreter {
 	private CpuStateF99b cpuState;
 
 	//private TreeMap<Integer, InstructionF99b> cachedInstrs = new TreeMap<Integer, InstructionF99b>();
-	private InstructionF99b[] cachedInstrs = new InstructionF99b[65536];
+	//private InstructionF99b[] cachedInstrs = new InstructionF99b[65536];
+	
+	private Map<IMemoryArea, ChangeBlockF99b[]> parsedChangeBlocks = new HashMap<IMemoryArea, ChangeBlock9900[]>();
+    
 	private int cachedInstrCount;
 	private IMemoryWriteListener memoryWriteListener;
 
@@ -177,7 +183,8 @@ public class InterpreterF99b implements IInterpreter {
 			
 			@Override
 			public void changed(IMemoryEntry entry, int addr, int size, int value) {
-				invalidateInstructionCache(addr);
+				while (size-- > 0)
+					invalidateInstructionCache(addr++);
 			}
 		};
 		memory.addWriteListener(memoryWriteListener);
