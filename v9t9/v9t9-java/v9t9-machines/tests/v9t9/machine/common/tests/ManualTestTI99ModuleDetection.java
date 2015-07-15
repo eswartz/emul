@@ -61,7 +61,7 @@ public class ManualTestTI99ModuleDetection {
 		for (IModule stock : stocks) {
 			String md5 = stock.getMD5();
 			IModule old = md5Map.put(md5, stock);
-			if (old != null) {
+			if (old != null && old.getKeywords().equals(stock.getKeywords())) {
 				fail(stock.getMD5() + " -> " + stock.getName() + " / " + old.getName());
 			}
 		}

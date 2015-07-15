@@ -48,4 +48,19 @@ public interface IModule {
 	 * @return
 	 */
 	String getMD5();
+	/** Identify the module uniquely by the kind of memory entries it has,
+	 * but nothing specific like the module name (which sometimes must 
+	 * be detected or disambiguated) or filenames (which are arbitrary). 
+	 * @return
+	 */
+	void setMD5(String moduleMd5);
+
+	/**
+	 * Tell whether the module starts automatically
+	 */
+	boolean isAutoStart();
+	/**
+	 * Tell whether the module starts automatically
+	 */
+	void setAutoStart(boolean autoStart);
 }

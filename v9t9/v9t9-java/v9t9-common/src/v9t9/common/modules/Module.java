@@ -35,6 +35,8 @@ public class Module implements IModule {
 	// not used for equality
 	private List<String> keywords = new ArrayList<String>(1);
 	private ModuleInfo info;
+	private String md5;
+	private boolean isAutoStart;
 //	private String imagePath;
 	
 	public Module(URI uri, String name) {
@@ -133,6 +135,7 @@ public class Module implements IModule {
 	
 	public void setMemoryEntryInfos(List<MemoryEntryInfo> entries) {
 		this.entries = entries;
+		this.md5 = null;
 	}
 	
 	/* (non-Javadoc)
@@ -226,6 +229,29 @@ public class Module implements IModule {
 	 */
 	@Override
 	public String getMD5() {
-		return ModuleMD5Sums.createMD5(this);
+		if (md5 == null) {
+			md5 = ModuleMD5Sums.createMD5(this);
+		}
+		return md5;
+	}
+
+	/**
+	 * @param moduleMd5
+	 */
+	@Override
+	public void setMD5(String moduleMd5) {
+		this.md5 = moduleMd5;
+	}
+
+	@Override
+	public boolean isAutoStart() {
+		return isAutoStart;
+	}
+	
+	
+	@Override
+	public void setAutoStart(boolean autoStart) {
+		this.isAutoStart = autoStart;
+		
 	}
 }

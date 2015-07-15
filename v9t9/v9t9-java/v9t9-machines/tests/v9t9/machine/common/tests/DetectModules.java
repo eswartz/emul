@@ -92,6 +92,11 @@ public class DetectModules {
 					if (info.isBanked())
 						System.out.print(", banked");
 					System.out.println();
+					
+					System.out.print("\t\t" + info.getFileMD5Algorithm() + " = " + info.getFileMD5());
+					if (info.getFile2MD5() != null)
+						System.out.print("\n\t\t, " + info.getFile2MD5Algorithm() + " = " + info.getFile2MD5());
+					System.out.println();
 				}
 			}
 			System.out.println();

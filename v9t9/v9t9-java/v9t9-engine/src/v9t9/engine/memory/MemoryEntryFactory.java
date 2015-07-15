@@ -23,6 +23,7 @@ import ejs.base.utils.HexUtils;
 import ejs.base.utils.XMLUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.IPathFileLocator;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
@@ -293,6 +294,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_GRAPHICS);
 					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
 					properties.put(MemoryEntryInfo.SIZE, -0xA000);
+					properties.put(MemoryEntryInfo.FILE_MD5_ALGORITHM, MD5FilterAlgorithms.ALGORITHM_GROM);
 				}
 				else if (el.getNodeName().equals("bankedModuleEntry")) {
 					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_CPU);
@@ -315,10 +317,15 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				
 				getStringAttribute(el, MemoryEntryInfo.FILENAME, info);
 				getStringAttribute(el, MemoryEntryInfo.FILENAME2, info);
+				
 				getStringAttribute(el, MemoryEntryInfo.FILE_MD5, info);
+				getStringAttribute(el, MemoryEntryInfo.FILE_MD5_ALGORITHM, info);
 				getIntAttribute(el, MemoryEntryInfo.FILE_MD5_LIMIT, info);
+				
 				getStringAttribute(el, MemoryEntryInfo.FILE2_MD5, info);
+				getStringAttribute(el, MemoryEntryInfo.FILE2_MD5_ALGORITHM, info);
 				getIntAttribute(el, MemoryEntryInfo.FILE2_MD5_LIMIT, info);
+				
 				getStringAttribute(el, MemoryEntryInfo.DOMAIN, info);
 				getIntAttribute(el, MemoryEntryInfo.ADDRESS, info);
 				getIntAttribute(el, MemoryEntryInfo.SIZE, info);
@@ -407,11 +414,17 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				entry.setAttribute(MemoryEntryInfo.FILENAME, properties.get(MemoryEntryInfo.FILENAME).toString());
 			if (properties.containsKey(MemoryEntryInfo.FILE_MD5))
 				entry.setAttribute(MemoryEntryInfo.FILE_MD5, properties.get(MemoryEntryInfo.FILE_MD5).toString());
+			if (properties.containsKey(MemoryEntryInfo.FILE_MD5_ALGORITHM)) {
+				setMd5Algorithm(properties, MemoryEntryInfo.FILE_MD5_ALGORITHM, entry);
+			}
 			
 			if (properties.containsKey(MemoryEntryInfo.FILENAME2))
 				entry.setAttribute(MemoryEntryInfo.FILENAME2, properties.get(MemoryEntryInfo.FILENAME2).toString());
 			if (properties.containsKey(MemoryEntryInfo.FILE2_MD5))
 				entry.setAttribute(MemoryEntryInfo.FILE2_MD5, properties.get(MemoryEntryInfo.FILE2_MD5).toString());
+			if (properties.containsKey(MemoryEntryInfo.FILE2_MD5_ALGORITHM)) {
+				setMd5Algorithm(properties, MemoryEntryInfo.FILE2_MD5_ALGORITHM, entry);
+			}
 			
 			if (properties.containsKey(MemoryEntryInfo.OFFSET) && ((Number) properties.get(MemoryEntryInfo.OFFSET)).intValue() != 0)
 				entry.setAttribute(MemoryEntryInfo.OFFSET, 
@@ -423,6 +436,28 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 
 			memoryEntriesEl.appendChild(entry);
 		}
+	}
+
+
+	/**
+	 * @param properties
+	 * @param entry
+	 */
+	private void setMd5Algorithm(Map<String, Object> properties,
+			String propName,
+			Element entry) {
+		String alg = properties.get(propName).toString();
+		if ((MD5FilterAlgorithms.ALGORITHM_GROM.equals(alg) 
+				&& IMemoryDomain.NAME_GRAPHICS.equals(properties.get(MemoryEntryInfo.DOMAIN)))) {
+			// ignore
+			return;
+		}
+		if ((MD5FilterAlgorithms.ALGORITHM_FULL.equals(alg) 
+				&& false == IMemoryDomain.NAME_GRAPHICS.equals(properties.get(MemoryEntryInfo.DOMAIN)))) {
+			// ignore
+			return;
+		}
+		entry.setAttribute(propName, alg);
 	}
 
 	private void getClassAttribute(Element el, String name, Class<?> baseKlass,

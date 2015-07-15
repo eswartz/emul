@@ -13,6 +13,7 @@ package v9t9.engine.memory;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
@@ -192,6 +193,7 @@ public class MemoryEntryInfoBuilder {
 			.withDomain(IMemoryDomain.NAME_GRAPHICS)
 			.withAddress(0)
 			.withSize(0x6000)
+			.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_GROM)
 			.withFilename(filename);
 	}
 
@@ -207,6 +209,7 @@ public class MemoryEntryInfoBuilder {
 		return byteMemoryEntry()
 			.withDomain(IMemoryDomain.NAME_GRAPHICS)
 			.withAddress(0x6000)
+			.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_GROM)
 			.withFilename(filename);
 
 	}
