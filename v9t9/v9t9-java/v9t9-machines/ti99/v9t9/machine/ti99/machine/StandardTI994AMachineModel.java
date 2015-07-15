@@ -119,6 +119,7 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 					RS232Controllers.RS232_PIO, rs232PioDsr);
 			machine.getDsrManager().registerDsr(rsDsr);
 			
+			// printer works on PIO or RS232/1 for either DSR
 			EpsonPrinterImageEngine engine = new EpsonPrinterImageEngine();
 			machine.getDemoManager().registerActorProvider(new PrinterImageActorProvider(engine.getPrinterId()));
 			
@@ -129,6 +130,8 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 			RS232PrinterImageHandler rsHandler = new RS232PrinterImageHandler(machine, engine); 
 			machine.addPrinterImageHandler(rsHandler);
 			rs232PioDsr.getRS232Device(1).getRS232().getHandler().addListener(rsHandler);
+			
+			rs232Dsr.getRS232Device(1).getRS232().getHandler().addListener(rsHandler);
 			
 			PCodeDsr pcodeDsr = new PCodeDsr(machine);
 			machine.getDsrManager().registerDsr(pcodeDsr);

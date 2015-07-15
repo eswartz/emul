@@ -16,11 +16,11 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
+import java.util.Collection;
 import java.util.Map;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.MemoryEntryInfo;
-
 import ejs.base.properties.IProperty;
 import ejs.base.utils.Pair;
 
@@ -42,6 +42,45 @@ public interface IPathFileLocator {
 		}
 		
 	}
+	
+	public class FilterSegment {
+		public FilterSegment(int offs, int count) {
+			this.offs = offs;
+			this.count = count;
+		}
+		public int offs;
+		public int count;
+	}
+	
+	/**
+	 * This interface defines which content from a candidate file 
+	 * is summed to make MD5 matches.
+	 * 
+	 * This should define #equals and #hashCode for use in 
+	 * repeated lookups. 
+	 * @author ejs
+	 *
+	 */
+	public interface IMD5SumFilter {
+		/** Fill in the segments that should be considered from the given URI */
+		void fillSegments(URI uri, int contentLength, Collection<FilterSegment> segments);
+
+	}
+	
+	public class FullContentFilter implements IMD5SumFilter {
+		public static final FullContentFilter INSTANCE = new FullContentFilter();
+
+		private FullContentFilter() { }
+		
+		@Override
+		public void fillSegments(URI uri, int contentLength,
+				Collection<FilterSegment> segments) {
+			segments.add(new FilterSegment(0, contentLength));
+		}
+		
+	}
+	
+
 	
 	void addReadOnlyPathProperty(IProperty property);
 
@@ -88,6 +127,14 @@ public interface IPathFileLocator {
 	URI findFileByMD5(String md5, int offset, int limit);
 
 	/**
+	 * Find a file along the search paths with the given MD5 hash.
+	 * @param md5
+	 * @param filter filter for considering portions of content for digesting
+	 * @return URI or <code>null</code> if no match is found
+	 */
+	URI findFileByMD5(String md5, IMD5SumFilter filter);
+
+	/**
 	 * Get the listing of entries in this URI 
 	 * @param uri
 	 * @return map of filenames to their info
@@ -126,6 +173,16 @@ public interface IPathFileLocator {
 	 * @return String
 	 */
 	String getContentMD5(URI uri, int offset, int bytes, boolean mustExist) throws IOException;
+	
+
+	/**
+	 * Get the MD5 of the first given bytes of content, as a hex-encoded string
+	 * @param uri
+	 * @param filter filter for considering portions of content for digesting
+	 * @param mustExist if false, don't throw error for missing content
+	 * @return String
+	 */
+	String getContentMD5(URI uri, IMD5SumFilter filter, boolean mustExist) throws IOException;
 	
 
 	/**

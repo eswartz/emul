@@ -10,16 +10,26 @@
  */
 package v9t9.common.modules;
 
+import java.io.EOFException;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 import v9t9.common.files.IPathFileLocator;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
+import ejs.base.utils.FileUtils;
+import ejs.base.utils.HexUtils;
 import ejs.base.utils.TextUtils;
 
 /**
@@ -219,5 +229,66 @@ public class Module implements IModule {
 			}
 			return null;
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModule#getMD5()
+	 */
+	@Override
+	public String getMD5() {
+		MemoryEntryInfo[] ents = entries.toArray(new MemoryEntryInfo[entries.size()]);
+		Arrays.sort(ents, new Comparator<MemoryEntryInfo>() {
+
+			@Override
+			public int compare(MemoryEntryInfo arg0, MemoryEntryInfo arg1) {
+				int diff = arg0.getDomainName().compareTo(arg1.getDomainName());
+				if (diff != 0)
+					return diff;
+				
+				diff = arg0.getAddress() - arg1.getAddress();
+				if (diff != 0)
+					return diff;
+				
+				diff = arg0.getAddress2() - arg1.getAddress2();
+				if (diff != 0)
+					return diff;
+				
+				diff = arg0.getBankSize() - arg1.getBankSize();
+				if (diff != 0)
+					return diff;
+				
+				diff = arg0.getSize() - arg1.getSize();
+				if (diff != 0)
+					return diff;
+				
+				return arg0.getName().compareTo(arg1.getName());
+			}
+			
+		});
+		
+		MessageDigest digest;
+		try {
+			digest = MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e) {
+			return "";
+		}
+		
+		for (MemoryEntryInfo ent : ents) {
+			digest.update(ent.getDomainName().getBytes());
+			digest.update((byte) (ent.getAddress() & 0xff));
+			digest.update((byte) (ent.getAddress() >> 8 & 0xff));
+			digest.update((byte) (ent.getAddress2() & 0xff));
+			digest.update((byte) (ent.getAddress2() >> 8 & 0xff));
+			if (ent.getFileMD5() != null)
+				digest.update(ent.getFileMD5().getBytes());
+			if (ent.getFile2MD5() != null)
+				digest.update(ent.getFile2MD5().getBytes());
+		}
+
+		StringBuilder sb = new StringBuilder();
+		for (byte b : digest.digest()) {
+			sb.append(HexUtils.toHex2(b));
+		}
+		return sb.toString();
 	}
 }

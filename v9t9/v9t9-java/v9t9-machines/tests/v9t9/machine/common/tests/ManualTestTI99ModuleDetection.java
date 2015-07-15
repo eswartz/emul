@@ -15,9 +15,13 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Before;
@@ -90,7 +94,7 @@ public class ManualTestTI99ModuleDetection {
 	}
 	
 
-	protected Collection<IModule> testDirectory(String path, final String pattern, final String... ignore) {
+	protected List<IModule> testDirectory(String path, final String pattern, final String... ignore) {
 		File dir = new File(path);
 		assertTrue(dir.exists());
 		
@@ -99,16 +103,19 @@ public class ManualTestTI99ModuleDetection {
 		URI databaseURI = URI.create("test.xml");
 		Collection<IModule> modules = machine.scanModules(databaseURI, dir);
 		
+		List<IModule> matches = new ArrayList<IModule>();
 		System.out.println("Found " + modules.size() + " modules in " + dir);
 		for (IModule module : modules) {
-			System.out.println(module);
 			
 			Collection<File> files = module.getUsedFiles(locator);
 			assertFalse(files.isEmpty());
-			for (File file : files) {
-				System.out.println("\t" + file);
+			if (allFiles.removeAll(files)) {
+				System.out.println(module);
+				for (File file : files) {
+					System.out.println("\t" + file);
+				}
+				matches.add(module);
 			}
-			allFiles.removeAll(files);
 			
 			verifySpecificModule(module);
 		}
@@ -123,7 +130,7 @@ public class ManualTestTI99ModuleDetection {
 			fail(sb.toString());
 		}
 		
-		return modules;
+		return matches;
 	}
 
 	/**
@@ -274,4 +281,157 @@ public class ManualTestTI99ModuleDetection {
 		}
 	}
 
+
+	@Test
+	public void testMilliken() throws Exception {
+		List<IModule> mods = testDirectory("/usr/local/src/v9t9-data/modules/mess",
+				"(?i)(phm309.|phm310.)g\\.bin" 
+				);
+		assertEquals(11, mods.size());
+		
+		for (IModule mod : mods) {
+			assertFalse(mod.toString(), mod.getName().isEmpty());
+		}
+		
+		boolean anyEqual = false;
+		for (int i = 0; i < mods.size(); i++) {
+			IModule mod = mods.get(i);
+			for (int j = i+1; j < mods.size(); j++) {
+				IModule amod = mods.get(j);
+				if (mod.equals(amod)) {
+					// if equal, must have identical files & contents
+					System.out.println(mod.getName() + " == " + amod.getName() + "\n");
+					anyEqual = true;
+				}
+			}
+		}
+		if (anyEqual)
+			System.out.println("Some modules are equal");
+	}
+	/**
+	 * @param mods
+	 * @param md5Map
+	 */
+	private void addModuleHashes(List<IModule> mods, 
+			Map<String, IModule> md5Map, 
+			Map<String, String> nameToMd5Map, 
+			StringBuilder fails) {
+		// these have no unique name header, so the filename is used
+		final String millikens = "phm(3027|3028|3029|3043|3046|3049|3051|3093)";
+		// these are the exact same product sold under two PHMs
+		final String divisors = "phm3093|phm3049";
+		for (IModule mod : mods) {
+			String md5 = mod.getMD5();
+			System.out.println(mod.getName() + " -> " + md5);
+			IModule old = md5Map.put(md5, mod);
+			if (old != null && !old.equals(mod) && !old.getName().equals(mod.getName())) {
+				System.out.println("\tconflicts with " + old.getName());
+				if (old.getName().matches(millikens) && mod.getName().matches(millikens)) {
+					if (old.getName().matches(divisors) && mod.getName().matches(divisors)) {
+						// okay
+						continue;
+					}
+				}
+				else if (old.getName().matches(millikens) || mod.getName().matches(millikens)) {
+					// fine
+					continue;
+				}
+				fails.append(mod.getName());
+				fails.append(" conflicts with ");
+				fails.append(old.getName());
+				fails.append("\n");
+			}
+			
+			String oldMd5 = nameToMd5Map.put(mod.getName(), md5);
+			if (oldMd5 != null && !oldMd5.equals(md5)) {
+				fails.append(mod.getName()).append(" has two MD5s: ").
+					append(oldMd5).append(" and ").append(md5).append('\n');
+			}
+		}
+	}
+	
+
+	/**
+	 * Most modules can be detected fine, but some cause problems since their
+	 * headers are all the same or are auto-start.  We have a hard-coded database
+	 * to cover these.
+	 * @throws Exception
+	 */
+	@Test
+	public void testModuleDatabase() throws Exception {
+		List<IModule> mods = testDirectory("/usr/local/src/v9t9-data/modules/mess",
+				"(?i)(phm.*)\\.bin" 
+				);
+		assertEquals(121, mods.size());
+		
+		for (IModule mod : mods) {
+			assertFalse(mod.toString(), mod.getName().isEmpty());
+		}
+		
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < mods.size(); i++) {
+			IModule mod = mods.get(i);
+			System.out.println(mod);
+			if (mod.getName().equals("") || mod.getName().matches("phm.*")) {
+				sb.append(mod.toString()).append('\n');
+			}
+		}
+		if (sb.length() > 0) {
+			System.err.println(sb);
+			fail(sb.toString());
+		}
+	}
+	
+	/**
+	 * The module hashes -- which include titles -- are meant to
+	 * uniquely identify a module by content, excising anything about
+	 * its filename, but retaining the number of files and their
+	 * memory mappings.
+	 * @throws Exception
+	 */
+	@Test
+	public void testHashes() throws Exception {
+		Map<String, IModule> md5Map = new HashMap<String, IModule>();
+		Map<String, String> nameToMd5Map = new HashMap<String, String>();
+
+		StringBuilder sb = new StringBuilder();
+		List<IModule> mods;
+		
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/mess",
+				"(?i).*\\.bin",
+				"forthc.bin", "nforthc.bin", "0forth.bin"
+				);
+		
+		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
+		
+		
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/tosec",
+				"(?i).*\\.bin", "Forthc (19xx)(-)(Unknown).bin",
+				"Supercart (19xx)(Texas Instruments).bin",		// nothing
+				"Sneggit (1982)(Texas Instruments)(File 1 of 2)(Sneggitc).bin"	// no #2
+				);
+		
+		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
+		
+		mods = testDirectory("/usr/local/src/v9t9-data/modules",
+				"(?i).*\\.bin",
+				"c.bin", "g.bin", 
+				"forthc.bin", "nforthc.bin", "0forth.bin",
+				"TI-EXTBC.BIN","TI-EXTBD.BIN", "cp01.bin",
+				"xxxxxxxg.bin"
+				);
+
+		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
+
+		// These are named according to whim and are mostly wrong
+//		mods = testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk",
+//					"(?i).*\\.rpk");
+//		
+//		addModuleHashes(mods, md5Map);
+
+		if (sb.length() > 0)
+			fail(sb.toString());
+	}
+
+	
 }

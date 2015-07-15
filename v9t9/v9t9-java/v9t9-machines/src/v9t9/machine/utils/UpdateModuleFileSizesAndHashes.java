@@ -128,11 +128,12 @@ public class UpdateModuleFileSizesAndHashes {
 	
 		int size = locator.getContentLength(uri);
 		if (size >= 0x1000) {
+//			if (info.getDomainName().equals(IMemoryDomain.NAME_GRAPHICS)) {
+//				// only 6k of each 8k is used -- but always the same garbage there
+//				if ((size & 0x7ff) == 0)
+//					size -= 0x800;
+//			}
 			size &= ~0x7ff;
-			if (info.getDomainName().equals(IMemoryDomain.NAME_GRAPHICS)) {
-				if ((size & 0x7ff) == 0)
-					size -= 0x800;
-			}
 		}
 		
 		Integer md5offset = (Integer) info.getProperties().get(md5OffsetProperty);

@@ -15,9 +15,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +28,7 @@ import org.apache.log4j.Logger;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
@@ -41,6 +44,7 @@ import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
+import ejs.base.utils.Pair;
 
 /**
  * @author ejs
@@ -54,15 +58,25 @@ public class ModuleManager implements IModuleManager {
 	
 	private List<IModule> loadedModules = new ArrayList<IModule>();
 	
+	/** The name of the module (may not be unique) */
 	public static SettingSchema settingLastLoadedModule = new SettingSchema(
 			ISettingsHandler.MACHINE,
 			"LastLoadedModule", "");
-	
+
+	/** The hash of the module (may should be unique) */
+	public static SettingSchema settingLastLoadedModuleHash = new SettingSchema(
+			ISettingsHandler.MACHINE,
+			"LastLoadedModuleHash", "");
+
 	private Map<IMemoryEntry, IModule> memoryEntryModules = new HashMap<IMemoryEntry, IModule>();
-	private IProperty lastLoadedModule;
 	private final String stockModuleDatabase;
 
 	private ModuleInfoDatabase moduleInfoDb;
+	
+	private IProperty lastLoadedModule;
+	private IProperty lastLoadedModuleHash;
+
+	private List<IModule> stockModuleList;
 
 	public ModuleManager(IMachine machine, String stockModuleDatabase) {
 		this.machine = machine;
@@ -72,6 +86,9 @@ public class ModuleManager implements IModuleManager {
 		this.moduleInfoDb = ModuleInfoDatabase.loadModuleInfo(machine);
 		
 		lastLoadedModule = Settings.get(machine, settingLastLoadedModule);
+		lastLoadedModuleHash = Settings.get(machine, settingLastLoadedModuleHash);
+		
+		stockModuleList = null;
 	}
 	
 	/* (non-Javadoc)
@@ -161,8 +178,10 @@ public class ModuleManager implements IModuleManager {
 			loadedModules.add(module);
 			
 			lastLoadedModule.setString(module.getName());
+			lastLoadedModuleHash.setString(module.getMD5());
 		} else {
 			lastLoadedModule.setString(null);
+			lastLoadedModuleHash.setString(null);
 		}
 		
 	}
@@ -188,6 +207,7 @@ public class ModuleManager implements IModuleManager {
 		
 		loadedModules.remove(loaded);
 		lastLoadedModule.setString(null);
+		lastLoadedModuleHash.setString(null);
 	}
 	
 	/* (non-Javadoc)
@@ -206,6 +226,27 @@ public class ModuleManager implements IModuleManager {
 		}
 		return null;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#findModuleByNameAndHash(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public IModule findModuleByNameAndHash(String name, String md5) {
+		IModule nameCand = null;
+		IModule md5Cand = null;
+		for (IModule module : modules) {
+			if (module.getMD5().equals(md5)) {
+				md5Cand = module;
+				if (module.getName().equals(name))
+					break;
+			}
+			else if (module.getName().equals(name)) {
+				nameCand = module;
+			}
+		}
+		return md5Cand != null ? md5Cand : nameCand;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.engine.modules.IModuleManager#getLoadedModules()
 	 */
@@ -214,10 +255,28 @@ public class ModuleManager implements IModuleManager {
 		return loadedModules.toArray(new IModule[loadedModules.size()]);
 	}
 
+
+	protected Pair<String, String> getModuleNameHash(String saved) {
+		int idx = saved.indexOf(':');
+		if (idx >= 0) {
+			return new Pair<String, String>(saved.substring(0, idx), saved.substring(idx+1));
+		} else {
+			return new Pair<String, String>(saved, "");
+		}
+	}
+
+	protected String getModuleNameHash(IModule module) {
+		if (module == null)
+			return null;
+		
+		return module.getName() + ":" + module.getMD5();
+	}
+	
+	
 	public void saveState(ISettingSection section) {
 		String[] moduleNames = new String[loadedModules.size()];
 		for (int i = 0; i < moduleNames.length; i++)
-			moduleNames[i] = loadedModules.get(i).getName();
+			moduleNames[i] = getModuleNameHash(loadedModules.get(i));
 		section.put("LoadedModules", moduleNames);
 	}
 	
@@ -228,9 +287,19 @@ public class ModuleManager implements IModuleManager {
 		String[] loaded = section.getArray("LoadedModules");
 		if (loaded == null)
 			return;
-		for (String name : loaded) {
+		for (String hashOrName : loaded) {
 			try {
-				loadModule(findModuleByName(name, true));
+				IModule mod;
+				
+				Pair<String, String> nameAndMd5 = getModuleNameHash(hashOrName);
+				if (nameAndMd5 != null) {
+					mod = findModuleByNameAndHash(nameAndMd5.first, nameAndMd5.second);
+					if (mod != null) {
+						loadModule(mod);
+					} else {
+						throw new NotifyException(this, "No registered module matches '" + hashOrName +"'");
+					}
+				}
 			} catch (NotifyException e) {
 				machine.notifyEvent(e.getEvent());
 			}
@@ -308,23 +377,18 @@ public class ModuleManager implements IModuleManager {
 	 * @see v9t9.common.modules.IModuleManager#reload()
 	 */
 	@Override
-	public void reload() {
+	public void reloadDatabase() {
 		URI databaseURI;
 		
 		machine.getModuleManager().clearModules();
 		
 		// first, get stock module database
-//		URL databaseURL = getStockDatabaseURL();
-//		if (databaseURL != null) {
-//			try {
-//				registerModules(databaseURL.toURI());
-//			} catch (URISyntaxException e) {
-//				e.printStackTrace();
-//			}
-//		} else {
-//			log.error("failed to find stock_modules.xml");
-//			return;
-//		}
+		try {
+			ensureStockModules();
+		} catch (NotifyException e) {
+			log.error("failed to load stock modules", e);
+			machine.getEventNotifier().notifyEvent(e.getEvent());
+		}
 		
 		// then load any user entries
 		IProperty moduleList = Settings.get(machine, IModuleManager.settingUserModuleLists);
@@ -340,6 +404,47 @@ public class ModuleManager implements IModuleManager {
 		}
 	}
 	
+	/**
+	 * 
+	 */
+	private void ensureStockModules() throws NotifyException {
+		if (stockModuleList != null)
+			return;
+		
+		URL databaseURL = getStockDatabaseURL();
+		if (databaseURL != null) {
+			try {
+				stockModuleList = readModules(databaseURL.toURI());
+//			} catch (NotifyException e) {
+//				throw e;
+			} catch (Exception e) {
+				throw new NotifyException(this, "failed to load stock_modules.xml", e);
+			}
+		} else {
+			throw new NotifyException(this, "failed to find stock_modules.xml");
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#reloadState()
+	 */
+	@Override
+	public void reloadModules(IEventNotifier notifier) {
+		IModule[] loadedModules = getLoadedModules();
+		
+		unloadAllModules();
+		
+		for (IModule loaded : loadedModules) {
+			try {
+				loadModule(loaded);
+			} catch (NotifyException e) {
+				notifier.notifyEvent(e.getEvent());
+			}		
+		}		
+	}
+	
+	
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.modules.IModuleManager#removeModule(v9t9.common.modules.IModule)
 	 */
@@ -351,7 +456,25 @@ public class ModuleManager implements IModuleManager {
 	/**
 	 * @return the moduleInfoDb
 	 */
+	@Override
 	public ModuleInfoDatabase getModuleInfoDatabase() {
 		return moduleInfoDb;
+	}
+	
+	@Override
+	public IModule findStockModuleMatching(IModule mod) {
+		try {
+			ensureStockModules();
+		} catch (NotifyException e) {
+			return null;
+		}
+		
+		String modMd5 = mod.getMD5();
+		for (IModule stock : stockModuleList) {
+			if (modMd5.equals(stock.getMD5())) {
+				return stock;
+			}
+		}
+		return null;
 	}
 }

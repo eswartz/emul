@@ -521,6 +521,10 @@ public class PathFileLocator implements IPathFileLocator {
 							} else {
 								continue;
 							}
+							
+							if (entry.isDirectory() && !name.endsWith("/"))
+								name += "/";
+								
 							URI fileURI;
 							fileURI = resolveInsideURI(directory, name);
 							String md5 = "";
@@ -1099,6 +1103,7 @@ public class PathFileLocator implements IPathFileLocator {
 		return (IProperty[]) props.toArray(new IProperty[props.size()]);
 	}
 
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.files.IPathFileLocator#getContentMD5(java.net.URI)
 	 */
@@ -1118,6 +1123,29 @@ public class PathFileLocator implements IPathFileLocator {
 
 			// store reverse mapping too
 			String mdKey = getMd5Key(md5, offset, length);
+			cachedMD5HashesToURIs.put(mdKey, uri);
+		}
+		return md5;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#getContentMD5(java.net.URI)
+	 */
+	@Override
+	public String getContentMD5(URI uri, IMD5SumFilter filter, boolean mustExist) throws IOException {
+		URI directory = resolveInsideURI(uri, ".");
+		Map<String, String> md5Dir = cachedUriToMD5Hashes.get(directory);
+		if (md5Dir == null) {
+			md5Dir = new LinkedHashMap<String, String>(); 
+			cachedUriToMD5Hashes.put(directory, md5Dir);
+		}
+		String uriKey = getURIKey(uri, filter);
+		String md5 = md5Dir.get(uriKey);
+		if (md5 == null) {
+			md5 = fetchMD5(uri, filter, mustExist);
+			md5Dir.put(uriKey, md5);
+
+			// store reverse mapping too
+			String mdKey = getMd5Key(md5, filter);
 			cachedMD5HashesToURIs.put(mdKey, uri);
 		}
 		return md5;
@@ -1145,6 +1173,12 @@ public class PathFileLocator implements IPathFileLocator {
 			throws IOException {
 		String md5;
 		try {
+			if (uri.toString().endsWith("/")) {
+				// ignore directories
+				md5 = "";
+				return md5;
+			}
+
 			int size = getContentLength(uri);
 			if (size < 0 || size > MAX_FILE_SIZE) {
 				// ignore huge files -- probably bogus
@@ -1192,6 +1226,17 @@ public class PathFileLocator implements IPathFileLocator {
 		return mdKey;
 	}
 	
+	/**
+	 * @param md5
+	 * @param offset
+	 * @param length
+	 * @return
+	 */
+	protected String getMd5Key(String md5, IMD5SumFilter filter) {
+		String mdKey = md5 + ":" + filter.getId();
+		return mdKey;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.files.IPathFileLocator#getContentMD5(java.net.URI)
 	 */
@@ -1200,7 +1245,7 @@ public class PathFileLocator implements IPathFileLocator {
 		return getContentMD5(uri, 0, -1, true);
 	}
 	
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.files.IPathFileLocator#findFileByMD5(java.lang.String)
 	 */
@@ -1213,6 +1258,47 @@ public class PathFileLocator implements IPathFileLocator {
 		}
 		if (offset == 0 && limit > 0) {
 			md5Key = getMd5Key(md5, 0, -1);
+			if (cachedMD5HashesToURIs.containsKey(md5Key)) {
+				URI uri = cachedMD5HashesToURIs.get(md5Key);
+				if (uri == null)
+					return null;	// already tried
+				try {
+					int length = getContentLength(uri);
+					if (length == limit) {
+						return uri;
+					}
+				} catch (IOException e) {
+					// nope
+					cachedMD5HashesToURIs.put(md5Key, null);
+				}
+			}
+		}
+
+		// if we are summing a portion, need to explicitly find a match
+		if (offset != 0 || limit > 0) {
+			for (URI directory : getSearchURIs()) {
+				URI uri = findFileByMD5(directory, md5, offset, limit);
+				if (uri != null)
+					return uri;
+			}
+		}
+		
+		// nope... 
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.files.IPathFileLocator#findFileByMD5(java.lang.String)
+	 */
+	@Override
+	public URI findFileByMD5(String md5, IMD5SumFilter filter) {
+		String md5Key;
+		md5Key = getMd5Key(md5, filter);
+		if (cachedMD5HashesToURIs.containsKey(md5Key)) {
+			return cachedMD5HashesToURIs.get(md5Key);	// if null, we already tried
+		}
+		if (filter != FullContentFilter.INSTANCE) {
+			md5Key = getMd5Key(md5, FullContentFilter.INSTANCE);
 			if (cachedMD5HashesToURIs.containsKey(md5Key)) {
 				URI uri = cachedMD5HashesToURIs.get(md5Key);
 				if (uri == null)

@@ -690,7 +690,7 @@ public class ModuleListComposite extends Composite {
 		}
 		moduleList.setList(ents);
 		
-		machine.getModuleManager().reload();
+		machine.getModuleManager().reloadDatabase();
 		return true;
 	}
 	

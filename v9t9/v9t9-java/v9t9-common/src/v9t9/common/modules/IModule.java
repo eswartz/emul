@@ -41,4 +41,11 @@ public interface IModule {
 	void setInfo(ModuleInfo info);
 
 	Collection<File> getUsedFiles(IPathFileLocator locator);
+	
+	/** Identify the module uniquely by the kind of memory entries it has,
+	 * but nothing specific like the module name (which sometimes must 
+	 * be detected or disambiguated) or filenames (which are arbitrary). 
+	 * @return
+	 */
+	String getMD5();
 }

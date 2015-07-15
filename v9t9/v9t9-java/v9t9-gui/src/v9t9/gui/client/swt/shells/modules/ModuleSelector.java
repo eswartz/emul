@@ -413,7 +413,7 @@ public class ModuleSelector extends Composite {
 			if (doSave) {
 				saveModules();
 			} else {
-				moduleManager.reload();
+				moduleManager.reloadDatabase();
 			}
 		}
 
@@ -1185,11 +1185,16 @@ public class ModuleSelector extends Composite {
 	 */
 	protected void switchModule(boolean softReset) {
 		try {
-			moduleManager.switchModule(selectedModule);
+			// FIXME: other uses will switch before reset anyway
+			
+			// reset tries to reload the current module by name, which may be ambiguous
 			if (softReset)
 				machine.getCpu().reset();
 			else
-				machine.reset();
+				machine.reset();			
+			
+			// but this will set the record straight(ish)
+			moduleManager.switchModule(selectedModule);
 
 			if (!isDisposed())
 				getShell().dispose();

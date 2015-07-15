@@ -37,7 +37,6 @@ import v9t9.common.events.BaseEventNotifier;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyEvent.Level;
-import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
 import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IFileExecutionHandler;
@@ -68,7 +67,6 @@ import v9t9.engine.files.directory.EmuDiskSettings;
 import v9t9.engine.files.image.DiskImageMapper;
 import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.modules.ModuleManager;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
@@ -325,6 +323,24 @@ abstract public class MachineBase implements IMachine {
 		keyboardState.resetKeyboard();
 		executor.getCompilerStrategy().reset();
 		
+		unloadAndClear();
+		
+		reload();
+		
+		if (cru != null)
+			cru.reset();
+				
+		cpu.reset();
+		
+		setPaused(wasPaused);
+
+	}
+	
+	/**
+	 * 
+	 */
+	private void unloadAndClear() {
+		// fully reload any ROMs in case they've changed 
 		IMemoryDomain domain = getMemory().getDomain(IMemoryDomain.NAME_CPU);
 		for (IMemoryEntry entry : domain.getFlattenedMemoryEntries()) {
 			if (entry.isVolatile()) {
@@ -338,17 +354,8 @@ abstract public class MachineBase implements IMachine {
 			}
 		}
 		
-		reload();
-		
-		if (cru != null)
-			cru.reset();
-				
-		cpu.reset();
-		
-		setPaused(wasPaused);
-
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.IMachine#getCpu()
 	 */
@@ -487,8 +494,10 @@ abstract public class MachineBase implements IMachine {
 
 	protected void doLoadState(ISettingSection section) {
 		memory.getModel().resetMemory();
-		if (moduleManager != null)
+		if (moduleManager != null) {
 			moduleManager.loadState(section.getSection("Modules"));
+			moduleManager.loadState(section.getSection("Modules"));
+		}
 		memory.loadState(section.getSection("Memory"));
 		cpu.loadState(section.getSection("CPU"));
 		vdp.loadState(section.getSection("VDP"));
@@ -816,21 +825,9 @@ abstract public class MachineBase implements IMachine {
 			memoryModel.loadMemory(client.getEventNotifier());
 		}
 		
-		if (getModuleManager() != null) {
-			getModuleManager().reload();
-			
-			// reset state
-			try {
-				String lastModuleName = settings.get(ModuleManager.settingLastLoadedModule).getString();
-				if (lastModuleName.length() > 0) {
-					IModule lastModule = getModuleManager().findModuleByName(lastModuleName, true);
-					if (lastModule != null) {
-						getModuleManager().switchModule(lastModule);
-					}
-				}
-			} catch (NotifyException e) {
-				notifyEvent(e.getEvent());
-			}		
+		if (moduleManager != null) {
+			moduleManager.reloadDatabase();
+			moduleManager.reloadModules(client.getEventNotifier());
 		}
 		
 	}

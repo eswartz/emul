@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.List;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.SettingSchema;
@@ -70,12 +71,22 @@ public interface IModuleManager extends IPersistable {
 	void unloadModule(IModule loaded);
 
 	/**
-	 * Find the module with this name
+	 * Find the first module with this name
 	 * @param string
 	 * @param exact
 	 * @return
 	 */
 	IModule findModuleByName(String string, boolean exact);
+	
+	/**
+	 * Find the first module with this MD5 
+	 * which also matches the name, or, fall back to the first
+	 * with this name
+	 * @param name human-readable name
+	 * @param md5 from IModule#getMD5()
+	 * @return first match or <code>null</code>
+	 */
+	IModule findModuleByNameAndHash(String name, String md5);
 
 	/**
 	 * @return
@@ -96,9 +107,14 @@ public interface IModuleManager extends IPersistable {
 	void registerModules(URI databaseURI);
 
 	/**
-	 * 
+	 * Reload module entries from databases 
 	 */
-	void reload();
+	void reloadDatabase();
+
+	/**
+	 * Reload current loaded modules
+	 */
+	void reloadModules(IEventNotifier notifier);
 
 	/**
 	 * @param module
@@ -109,4 +125,10 @@ public interface IModuleManager extends IPersistable {
 	 * @return
 	 */
 	ModuleInfoDatabase getModuleInfoDatabase();
+
+	/**
+	 * @param module
+	 * @return
+	 */
+	IModule findStockModuleMatching(IModule module);
 }

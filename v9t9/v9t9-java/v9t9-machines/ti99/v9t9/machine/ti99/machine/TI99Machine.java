@@ -308,7 +308,14 @@ public class TI99Machine extends MachineBase {
 					module.addMemoryEntryInfo(info);
 				}
 			}
+			
+			// Replace the name of any stock module
+			IModule stock = moduleManager.findStockModuleMatching(module);
+			if (stock != null) {
+				module.setName(stock.getName());
+			}
 		}
+		
 		List<IModule> modules = new ArrayList<IModule>(moduleMap.values());
 		Collections.sort(modules, new Comparator<IModule>() {
 
