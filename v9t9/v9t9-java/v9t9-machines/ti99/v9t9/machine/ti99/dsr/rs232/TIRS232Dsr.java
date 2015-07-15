@@ -115,7 +115,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			throws IOException {
 		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(rs232DsrRomInfo);
 		machine.getConsole().mapEntry(romMemoryEntry);
-		machine.getCpu().settingDumpFullInstructions().setBoolean(true);
+		//machine.getCpu().settingDumpFullInstructions().setBoolean(true);
 	}
 	
 	public void deactivate(IMemoryDomain console) {
@@ -128,7 +128,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 * 
 	 */
 	protected void termDevice() {
-		machine.getCpu().settingDumpFullInstructions().setBoolean(false);
+		//machine.getCpu().settingDumpFullInstructions().setBoolean(false);
 		rs232ActiveSetting.setBoolean(false);
 	}
 
@@ -351,7 +351,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	}
 
 	protected void registerRS232Device(int index, String name) {
-		RS232Regs rs = new RS232Regs(machine, new RS232(dumper), dumper);
+		RS232Regs rs = new RS232Regs(machine, new RS232(machine.getFastMachineTimer(), dumper), dumper);
 		rs232DeviceMap.put(name, rs);
 		rs232Devices.put(index, rs);
 	}

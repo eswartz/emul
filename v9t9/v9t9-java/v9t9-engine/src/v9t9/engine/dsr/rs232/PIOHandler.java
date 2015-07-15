@@ -10,11 +10,14 @@
  */
 package v9t9.engine.dsr.rs232;
 
+import org.apache.log4j.Logger;
+
 import v9t9.common.dsr.IOBuffer;
 import v9t9.common.dsr.IPIOHandler;
 import v9t9.common.dsr.IPIOListener;
 import ejs.base.utils.ListenerList;
 import ejs.base.utils.ListenerList.IFire;
+import ejs.base.utils.TextUtils;
 
 /**
  * This handles 
@@ -22,7 +25,8 @@ import ejs.base.utils.ListenerList.IFire;
  *
  */
 public class PIOHandler implements IPIOHandler {
-
+	private static Logger log = Logger.getLogger(PIOHandler.class);
+	
 	private ListenerList<IPIOListener> listeners = new ListenerList<IPIOListener>();
 
 	/* (non-Javadoc)
@@ -46,6 +50,13 @@ public class PIOHandler implements IPIOHandler {
 	@Override
 	public void transmitChars(final IOBuffer buf) {
 		final byte[] buffer = buf.takeAll();
+		try {
+			log.debug("PIOHandler::transmitChars: " + new String(buffer));
+		} catch (Throwable t) {
+			log.debug("PIOHandler::transmitChars: #" + buffer.length);
+		}
+		log.debug("PIOHandler::listeners: " + TextUtils.catenateStrings(listeners.toArray(), ","));
+		
 		listeners.fire(new IFire<IPIOListener>() {
 
 			@Override

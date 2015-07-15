@@ -9,43 +9,49 @@ WIN=1
 endif
 
 ifeq "$(WIN)" "1"
-# For Windows builds, we expect Cygwin to launch 'make' and MinGW to build the library.
-
-#GCCPATH=c:/cygwin/bin
-ifeq "$(PROCESSOR_ARCHITEW6432)" "AMD64"
-GCCPATH=c:/mingw_w64/bin
-CC=$(GCCPATH)/x86_64-w64-mingw32-gcc
-SOEXT=64.dll
-else
-#GCCPATH=c:/mingw/bin
-#CC=$(GCCPATH)/mingw32-gcc
-CC=gcc
-SOEXT=32.dll
-endif
-CFLAGS=-g  -I. $(JAVAINC) -O6 #-mno-cygwin 
-LDFLAGS=-shared #-mno-cygwin -Wl,--no-allow-shlib-undefined -Wl,--kill-at -shared 
-OBJEXT=.obj
-LIB=
+	# For Windows builds, we expect Cygwin to launch 'make' and MinGW to build the library.
+	
+	ifeq "$(PROCESSOR_ARCHITEW6432)" "AMD64"
+	ARCH=64
+	else
+	ARCH=32
+	endif
+	
+	#GCCPATH=c:/cygwin/bin
+	ifeq "$(ARCH)" "64"
+		GCCPATH=c:/mingw_w64/bin
+		CC=$(GCCPATH)/x86_64-w64-mingw32-gcc
+	else
+		#GCCPATH=c:/mingw/bin
+		#CC=$(GCCPATH)/mingw32-gcc
+		CC=gcc -m32
+	endif
+	
+	CFLAGS=-g  -I. $(JAVAINC) -O6 #-mno-cygwin 
+	LDFLAGS=-shared #-mno-cygwin -Wl,--no-allow-shlib-undefined -Wl,--kill-at -shared 
+	OBJEXT=-$(ARCH).obj
+	LIB=
+	SOEXT=$(ARCH).dll
 	
 else 	# Linux/OS X/etc
 
-JAVAC=javac
-JAR=jar
+	M=$(shell /bin/uname -m)
+	ifeq "$(M)" "i686"
+	ARCH=32
+	CC=gcc -m32
+	else
+	ARCH=64
+	CC=gcc -m64
+	endif
 
-CC=gcc
-CFLAGS=-g -O6 -fPIC  
-LDFLAGS=-fPIC -Wl,-zdefs -shared
-LIBS=-lm
-OBJEXT=.o
-LIB=lib
-
-ARCH=$(shell /bin/uname -m)
-
-ifeq "$(ARCH)" "i686"
-SOEXT=32.so
-else
-SOEXT=64.so
-endif
+	CC=gcc -m$(ARCH)
+	CFLAGS=-g -O6 -fPIC  
+	LDFLAGS=-fPIC -Wl,-zdefs -shared
+	LIBS=-lm
+	OBJEXT=-$(ARCH).o
+	LIB=lib
+	
+	SOEXT=$(ARCH).so
 
 endif
 

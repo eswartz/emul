@@ -10,9 +10,9 @@
  */
 package v9t9.engine.dsr.rs232;
 
-import java.util.Timer;
 import java.util.TimerTask;
 
+import ejs.base.timer.FastTimer;
 import v9t9.common.dsr.IOBuffer;
 import v9t9.common.dsr.IRS232Handler;
 import v9t9.common.dsr.IRS232Handler.DataSize;
@@ -27,20 +27,18 @@ import v9t9.engine.Dumper;
 public class RS232 {
 	private Dumper dumper;
 	private IRS232Handler handler;
-	private Timer timer;
 	
-	public RS232(Dumper dumper) {
+	public RS232(FastTimer timer, Dumper dumper) {
 		this.handler = new RS232Handler();
 		this.dumper = dumper;
-		timer = new Timer(true);
-		timer.schedule(new TimerTask() {
+		timer.scheduleTask(new TimerTask() {
 
 			@Override
 			public void run() {
 				rs232Monitor();
 			}
 			
-		}, 0, 1000 / 50);
+		}, 50);
 	}
 	
 	/*	Timer event which periodically checks the RS232 devices for

@@ -38,6 +38,14 @@ public class ListenerList<T> implements Iterable<T>, Serializable {
 		listenerArray = NO_LISTENERS;
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return listenerArray.length + " listeners";
+	}
+	
 	/**
 	 * Add a listener, ignoring duplicates
 	 * @param listener
