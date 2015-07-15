@@ -50,6 +50,46 @@ public class VdpColorManager {
 
 	private int fg;
 
+
+	/** from Thierry's ti99/tms9918a.htm#Colors */
+	protected static final float[][] stock9918YRyBy = {
+		/* 0 */ { 0, 0.47f, 0.47f }, 
+		/* 1 */ { 0, 0.47f, 0.47f },
+		/* 2 */ { 0.53f, 0.07f, 0.20f }, 
+		/* 3 */ { 0.67f, 0.17f, 0.27f },
+		/* 4 */ { 0.40f, 0.40f, 1.0f }, 
+		/* 5 */ { 0.53f, 0.43f, 0.93f },
+		/* 6 */ { 0.47f, 0.83f, 0.30f }, 
+		/* 7 */ { 0.73f, 0.00f, 0.70f },
+		/* 8 */ { 0.53f, 0.93f, 0.27f }, 
+		/* 9 */ { 0.67f, 0.93f, 0.27f },
+		/* 10 */ { 0.73f, 0.57f, 0.07f },
+		/* 11 */ { 0.80f, 0.57f, 0.17f }, 
+		/* 12 */ { 0.47f, 0.13f, 0.23f },
+		/* 13 */ { 0.53f, 0.73f, 0.67f },
+		/* 14 */ { 0.80f, 0.47f, 0.47f },
+		/* 15 */ { 1.0f, 0.47f, 0.47f }, 
+	};
+	public static final byte[][] stockPaletteYRyBy = {
+		/* 0 */ { 0x00, 0x00, 0x00 }, 
+		/* 1 */ { 0x00, 0x00, 0x00 },
+		/* 2 */ { 0x00, 0x00, 0x00 }, 
+		/* 3 */ { 0x00, 0x00, 0x00 }, 
+		/* 4 */ { 0x00, 0x00, 0x00 }, 
+		/* 5 */ { 0x00, 0x00, 0x00 }, 
+		/* 6 */ { 0x00, 0x00, 0x00 }, 
+		/* 7 */ { 0x00, 0x00, 0x00 }, 
+		/* 8 */ { 0x00, 0x00, 0x00 }, 
+		/* 9 */ { 0x00, 0x00, 0x00 }, 
+		/* 10 */ { 0x00, 0x00, 0x00 }, 
+		/* 11 */ { 0x00, 0x00, 0x00 }, 
+		/* 12 */ { 0x00, 0x00, 0x00 }, 
+		/* 13 */ { 0x00, 0x00, 0x00 }, 
+		/* 14 */ { 0x00, 0x00, 0x00 }, 
+		/* 15 */ { 0x00, 0x00, 0x00 }, 
+	};
+
+		
 	protected static final byte[][] stockPaletteEd = {
 		/* 0 */ { 0x00, 0x00, 0x00 }, 
 		/* 1 */ { 0x00, 0x00, 0x00 },
@@ -159,19 +199,58 @@ public class VdpColorManager {
 	public static byte[][][] allPalettes() {
 		return new byte[][][] {
 			stockPalette,
+			stockPaletteYRyBy,
 			stockPaletteEd,
 			stockPaletteV9938,
 			stockPaletteWashed
 		};
 	}
 	
-	/**
-	 * @param vdp 
-	 * 
-	 */
+	static float clamp(float x) {
+		return Math.min(1.0f, Math.max(0.f, x));
+	}
+	static {
+		// convert luminance/chrominance to palette via
+		//  http://www.poynton.com/PDFs/coloureq.pdf
+		// section 10.2
+		//	http://www.iasj.net/iasj?func=fulltext&aId=10348
+
+		// BTW I HAVE NO IDEA WHAT I'M DOING
+		
+		for (int i = 0; i < 16; i++) {
+			float[] s = stock9918YRyBy[i];
+//			float r = s[0] + s[1]; 
+//			float g = s[0] - 0.51f * s[1] - 0.186f * s[2]; 
+//			float b = s[0] + s[2];
+			
+			// remove color burst
+			float ryb, byb;
+			if (s[0] > 0.5f) {
+				ryb = 0.73f;
+				byb = 0.20f;
+			} else {
+				ryb = 0.47f;
+				byb = 0.10f;
+			}
+						
+			float y = s[0];
+			float u = 0.493f * (s[2] - byb);
+			float v = 0.877f * (s[1] - ryb);
+			
+			float r = y + 1.140f * v;
+			float g = y - 0.395f * u - 0.581f * v;
+			float b = y + 2.032f * u;
+			
+			stockPaletteYRyBy[i][0] = (byte) (clamp(r)*255); 
+			stockPaletteYRyBy[i][1] = (byte) (clamp(g)*255);
+			stockPaletteYRyBy[i][2] = (byte) (clamp(b)*255);
+		}
+	}
+	
 	public VdpColorManager() {
 
 		colorPalette = new byte[16][];
+		
     	byte[][] stockpalette = stockPalette;
 		for (int i = 0; i < 16; i++)
     		colorPalette[i] = Arrays.copyOf(stockpalette[i], 3); 
