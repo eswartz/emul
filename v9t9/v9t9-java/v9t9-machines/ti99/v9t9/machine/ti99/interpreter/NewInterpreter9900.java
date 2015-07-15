@@ -47,7 +47,7 @@ import ejs.base.utils.HexUtils;
  * 
  * @author ejs
  */
-public class NewInterpreter9900 implements IInterpreter {
+public class Interpreter9900 implements IInterpreter {
 
 	final IMachine machine;
 	final ICruHandler cruHandler;
@@ -62,7 +62,7 @@ public class NewInterpreter9900 implements IInterpreter {
 	private Cpu9900 cpu;
 
 
-    public NewInterpreter9900(IMachine machine) {
+    public Interpreter9900(IMachine machine) {
         this.machine = machine;
         if (machine instanceof TI99Machine) {
         	cruHandler = ((TI99Machine) machine).getCruManager();

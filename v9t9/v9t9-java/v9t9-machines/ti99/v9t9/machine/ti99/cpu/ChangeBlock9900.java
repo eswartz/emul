@@ -21,7 +21,7 @@ import v9t9.machine.ti99.cpu.Changes.ReadIncrementRegister;
 import v9t9.machine.ti99.cpu.Changes.ReadIndirectRegister;
 import v9t9.machine.ti99.cpu.Changes.ReadRegister;
 import v9t9.machine.ti99.cpu.Changes.ReadRegisterOffset;
-import v9t9.machine.ti99.interpreter.NewInterpreter9900;
+import v9t9.machine.ti99.interpreter.Interpreter9900;
 
 /**
  * 9900-specific change block
@@ -235,7 +235,7 @@ public class ChangeBlock9900 extends ChangeBlock {
 
 	/** Add the change element for the interpretation */
 	public void appendInstructionExecute() {
-		NewInterpreter9900.appendInterpret((Cpu9900) cpu, this, 
+		Interpreter9900.appendInterpret((Cpu9900) cpu, this, 
 				(Instruction9900) inst, mopState1, mopState2, mopState3);
 	}
 	
