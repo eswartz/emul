@@ -43,6 +43,8 @@ import java.util.zip.ZipFile;
 import org.apache.log4j.Logger;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.files.MD5FilterAlgorithms.FileSegmentFilter;
+import v9t9.common.files.MD5FilterAlgorithms.FullContentFilter;
 import v9t9.common.memory.MemoryEntryInfo;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
@@ -608,197 +610,8 @@ public class PathFileLocator implements IPathFileLocator {
 		
 		return new Pair<Long, Map<String,FileInfo>>(dir.lastModified(), cachedListing);
 		
-//		logger.info("\tok, trying URL instead");
-//		// do the hard work
-//		long time;
-//		URLConnection connection = null;
-//		try {
-//			connection = connect(directory, false);
-//		} catch (SocketTimeoutException e) {
-//			synchronized (this) {
-//				cachedSlowURIs.add(directory);
-//			}
-//			throw e;
-//		}
-//
-//		// JAR?
-//		if (connection instanceof JarURLConnection) {
-//			String ssp = directory.getSchemeSpecificPart();
-//			if (ssp == null)
-//				ssp = directory.getPath();
-//			cachedListing = getJarDirectoryListing(directory.toURL(),
-//					ssp.substring(ssp.lastIndexOf('!') + 1));
-//
-//			synchronized (this) {
-//				cachedListings.put(directory, cachedListing);
-//				cachedListingModifiedTime.put(directory, connection.getLastModified());
-//			}
-//		}
-//		else  {
-//			if (!connection.getContentType().equals("text/plain")) {
-//				logger.error("!!! Unexpected directory content at " + directory + ":  " +
-//							connection.getContentType());
-//
-//				throw new IOException("unexpected content at " + directory);
-//			}
-//		
-//			// only re-read if the directory changed
-//			time = connection.getLastModified();
-//	
-//			synchronized (this) {
-//				if (cachedListing == null
-//						|| directory.equals(cachedWriteURI) 
-//						|| ! ((Long) time).equals(cachedListingModifiedTime.get(directory))) {
-//					String[] entries;
-//					InputStream is = connection.getInputStream();
-//					try {
-//						String content = FileUtils.readInputStreamTextAndClose(is);
-//						entries = content.split("\r\n|\n");
-//					} catch (IOException e) {
-//						throw e;
-//					}
-//					
-//					time = connection.getLastModified();
-//					
-//					cachedListing = new HashSet<String>(Arrays.asList(entries));
-//					
-//					cachedListings.put(directory, cachedListing);
-//					cachedListingModifiedTime.put(directory, time);
-//				}
-//			}
-//		}
-//		
-//		synchronized (this) {
-//			cachedListingTime.put(directory, System.currentTimeMillis());
-//			logger.info("\tlisting: " + cachedListing.size() + " entries");
-//		}
-//		return cachedListing;
 	}
 	
-
-	/**
-	 * Fetch a directory listing from a JAR (ZIP) file and cache all the
-	 * directories underneath, and give them infinite timeouts (since JARs are read-only) 
-	 * @param jar
-	 * @param substring
-	 * @return
-	 */
-//	private Map<String, FileInfo> getJarDirectoryListing(URL jar, String dir) throws IOException {
-//		
-//		if (dir.startsWith("/"))
-//			dir = dir.substring(1);
-//		if (dir.endsWith("/"))
-//			dir = dir.substring(0, dir.length() - 1);
-//		
-//		Map<String, Collection<String>> subdirs = cachedJarListings.get(jar);
-//		
-//		if (subdirs == null) {
-//			subdirs = new TreeMap<String, Collection<String>>();
-//
-//			URL localJar = resolveToOwningZipFile(jar);
-//			
-//			boolean delete = false;
-//			File file;
-//			try {
-//				file = new File(localJar.toURI());
-//			} catch (IllegalArgumentException e) {
-//				// okay, not a file... urgh... download it?
-//				logger.info("Getting local copy of jar at " + jar + " for listing");
-//
-//				// TODO: sigh... if it's http://, we must have already downloaded it via Java Web Start -- how to find the cache?
-//				File tmpFile = File.createTempFile("jar", ".jar");
-//
-//				InputStream is = jar.openStream();
-//				byte[] content = FileUtils.readInputStreamContentsAndClose(is);
-//				OutputStream os = new FileOutputStream(tmpFile);
-//				FileUtils.writeOutputStreamContentsAndClose(os, content, content.length);
-//				
-//				file = tmpFile;
-//				delete = true;
-//			} catch (URISyntaxException e) {
-//				throw new IOException(e);
-//			}
-//			
-//			ZipFile zf = new ZipFile(file);
-//			for (Enumeration<? extends ZipEntry> e = zf.entries(); e.hasMoreElements();) {
-//				ZipEntry ent = e.nextElement();
-//				
-//				File entFile = new File(ent.getName());
-//				String entDir = entFile.getParent();
-//				if (entDir == null)
-//					entDir = "";
-//				else
-//					entDir = entDir.replace('\\', '/');  /// Windows
-//				Collection<String> directory = subdirs.get(entDir);
-//				if (directory == null) {
-//					directory = new ArrayList<String>();
-//					subdirs.put(entDir, directory);
-//				}
-//				
-//				directory.add(entFile.getName());
-//			}
-//			zf.close();
-//			
-//			if (delete)
-//				file.delete();
-//			
-//			cachedJarListings.put(jar, subdirs);
-//		}
-//		
-//		Collection<String> list = subdirs.get(dir);
-//		if (list == null)
-//			list = Collections.emptyList();
-//		return list;
-//	}
-
-	/**
-	 * Get the local zip file that provides the given URL
-	 * @param zip
-	 * @return
-	 */
-//	private URL resolveToOwningZipFile(URL zip) {
-//		String baseURL = zip.toExternalForm();
-//		int idx = baseURL.lastIndexOf('!');
-//		if (idx >= 0)
-//			baseURL = baseURL.substring(0, idx) + "!/";
-//		URL localJar;
-//		try {
-//			localJar = resolveToLocalJarFile(new URL(baseURL));
-//		} catch (MalformedURLException e) {
-//			logger.error("malformed URL for " + baseURL, e);
-//			e.printStackTrace();
-//			return zip;
-//		}
-//		
-//		// remove "jar:" prefix
-//		String filePrefix = localJar.toExternalForm().substring(localJar.getProtocol().length() + 1);
-//		// and suffix
-//		int idx2 = filePrefix.lastIndexOf('!');
-//		if (idx2 >= 0)
-//			filePrefix = filePrefix.substring(0, idx2);
-//		
-//		try {
-//			return new URL(filePrefix);
-//		} catch (MalformedURLException e) {
-//			logger.error("malformed URL for " + filePrefix, e);
-//			e.printStackTrace();
-//			return zip;
-//		}
-//
-//	}
-
-	/**
-	 * 
-	 * from <a href="http://www.objectdefinitions.com/odblog/2008/workaround-for-bug-id-6753651-find-path-to-jar-in-cache-under-webstart/">this post</a>
-	 * @param jar
-	 * @return
-	 */
-//	private URL resolveToLocalJarFile(URL jar) {
-//		URL url = JarUtils.convertToJarFileURL(jar);
-//		logger.debug("Resolved " + jar + " to " + url);
-//		return url;
-//	}
-
 	private URL resolveToLocalZipFile(URL zip) {
 		return zip;
 	}
@@ -1151,25 +964,22 @@ public class PathFileLocator implements IPathFileLocator {
 		return md5;
 	}
 
-	/**
-	 * @param uri
-	 * @param offset
-	 * @param length
-	 * @return
-	 */
 	protected String getURIKey(URI uri, int offset, int length) {
 		String key = uri + ":" + offset + ":" + (length <= 0 ? -1 : length);
+		return key;
+	}
+	protected String getURIKey(URI uri, IMD5SumFilter filter) {
+		String key = uri + (filter != null ? ":" + filter.getId() : "");
 		return key;
 	}
 
 	/**
 	 * @param uri
-	 * @param offset
-	 * @param length
+	 * @param filter
 	 * @return
 	 * @throws IOException
 	 */
-	protected String fetchMD5(URI uri, int offset, int length, boolean mustExist)
+	protected String fetchMD5(URI uri, IMD5SumFilter filter, boolean mustExist)
 			throws IOException {
 		String md5;
 		try {
@@ -1192,10 +1002,7 @@ public class PathFileLocator implements IPathFileLocator {
 				
 				InputStream is = createInputStream(uri);
 				try {
-					FileUtils.skipFully(is, offset);
-					byte[] content = FileUtils.readInputStreamContentsAndClose(is, 
-							length > 0 ? length : size - offset);
-					md5 = FileUtils.getMD5Hash(content);
+					md5 = MD5SumEngine.createMD5(filter, is, size);
 				} catch (EOFException e) {
 					md5 = "";
 				}
@@ -1213,6 +1020,21 @@ public class PathFileLocator implements IPathFileLocator {
 				logger.error("can't fetch MD5 for " + uri, e);
 		}
 		return md5;
+	}
+
+	/**
+	 * @param uri
+	 * @param offset
+	 * @param length
+	 * @return
+	 * @throws IOException
+	 */
+	protected String fetchMD5(URI uri, int offset, int length, boolean mustExist)
+			throws IOException {
+		if (offset == 0 && length == -1)
+			return fetchMD5(uri, FullContentFilter.INSTANCE, mustExist);
+		else
+			return fetchMD5(uri, new FileSegmentFilter(offset, length), mustExist);
 	}
 
 	/**
@@ -1297,7 +1119,9 @@ public class PathFileLocator implements IPathFileLocator {
 		if (cachedMD5HashesToURIs.containsKey(md5Key)) {
 			return cachedMD5HashesToURIs.get(md5Key);	// if null, we already tried
 		}
-		if (filter != FullContentFilter.INSTANCE) {
+		if (filter instanceof FileSegmentFilter) {
+			// quickly see if we have a match where the "segment" 
+			// covers the entire file
 			md5Key = getMd5Key(md5, FullContentFilter.INSTANCE);
 			if (cachedMD5HashesToURIs.containsKey(md5Key)) {
 				URI uri = cachedMD5HashesToURIs.get(md5Key);
@@ -1305,7 +1129,7 @@ public class PathFileLocator implements IPathFileLocator {
 					return null;	// already tried
 				try {
 					int length = getContentLength(uri);
-					if (length == limit) {
+					if (length == ((FileSegmentFilter) filter).getLength()) {
 						return uri;
 					}
 				} catch (IOException e) {
@@ -1315,10 +1139,10 @@ public class PathFileLocator implements IPathFileLocator {
 			}
 		}
 
-		// if we are summing a portion, need to explicitly find a match
-		if (offset != 0 || limit > 0) {
+		// cache loss, need to sum according to the filter
+		if (filter != FullContentFilter.INSTANCE) {
 			for (URI directory : getSearchURIs()) {
-				URI uri = findFileByMD5(directory, md5, offset, limit);
+				URI uri = findFileByMD5(directory, md5, filter);
 				if (uri != null)
 					return uri;
 			}
@@ -1327,13 +1151,14 @@ public class PathFileLocator implements IPathFileLocator {
 		// nope... 
 		return null;
 	}
+	
 
 	/**
 	 * @param directory
 	 * @param md5
 	 * @param limit
 	 */
-	protected URI findFileByMD5(URI directory, String md5, int offset, int limit) {
+	protected URI findFileByMD5(URI directory, String md5, IMD5SumFilter filter) {
 		try {
 //			System.out.println("searching " + directory + " for " + md5);
 			Map<String, FileInfo> direct = getDirectoryListing(directory);
@@ -1342,10 +1167,13 @@ public class PathFileLocator implements IPathFileLocator {
 					FileInfo info = ent.getValue();
 					URI uri = info.uri;
 					String entMd5;
-					if (offset == 0 && (limit <= 0 || limit == info.length)) {
+					if (filter == FullContentFilter.INSTANCE
+							|| (filter instanceof FileSegmentFilter
+									&& ((FileSegmentFilter) filter).getOffset() == 0 
+									&& ((FileSegmentFilter) filter).getLength() == info.length)) {
 						entMd5 = info.md5;
 					} else {
-						entMd5 = getContentMD5(uri, offset, limit, true);
+						entMd5 = getContentMD5(uri, filter, true);
 					}
 					if (entMd5.equalsIgnoreCase(md5)) {
 						//System.out.println("\t" + entMd5 + " = " + uri);
@@ -1358,7 +1186,7 @@ public class PathFileLocator implements IPathFileLocator {
 						uri = findFileByMD5(
 								zipURI,
 								md5, 
-								offset, limit);
+								filter);
 						if (uri != null) {
 							//System.out.println("\t" + entMd5 + " = " + uri);
 							return uri;
@@ -1378,6 +1206,10 @@ public class PathFileLocator implements IPathFileLocator {
 			logger.error("MD5 search error", e);
 		}
 		return null;
+	}
+
+	protected URI findFileByMD5(URI directory, String md5, int offset, int limit) {
+		return findFileByMD5(directory, md5, new FileSegmentFilter(offset, limit));
 	}
 
 	/* (non-Javadoc)
@@ -1441,61 +1273,6 @@ public class PathFileLocator implements IPathFileLocator {
 		return uri;
 	}
 	
-
-	public static void main(String[] args) throws URISyntaxException, IOException {
-		URL url = new URL("file:///home/ejs/path/to/files/");
-		URI root = url.toURI();
-		System.out.println(root);
-		URI same = root.resolve(".");
-		System.out.println(same);
-		URI parent = root.resolve("..");
-		System.out.println(parent);
-		URI parentParent = root.resolve("../../");
-		if (parentParent.getScheme().equals("file"))
-			System.out.println(new File(parentParent));
-		
-		System.out.println(url);
-		System.out.println(new URL(url, ".."));
-		System.out.println(new URL(url, "."));
-		
-		URI another = new URI("jar:///tmp/foo.jar!/in/and/out/");
-		System.out.println(another);
-		URI anotherParent = another.resolve("..");
-		System.out.println(anotherParent);
-		anotherParent = anotherParent.resolve("..");
-		if (anotherParent.getScheme().equals("file"))
-			System.out.println(new File(anotherParent));
-		System.out.println(anotherParent);
-		anotherParent = anotherParent.resolve("..");
-		System.out.println(anotherParent);
-		
-		URI query = new URI("http://foo.bar.com/path/to/something/?query=bar");
-		System.out.println(query);
-		URI queryPlus = query.resolve("foo/la/dee");
-		System.out.println(queryPlus);
-		URI queryPlus2 = query.resolve("foo/la/dee" + "?"+ query.getQuery());
-		System.out.println(queryPlus2);
-		
-		query = new URI("https://foo.bar.com/path/to/something/?query=bar");
-		System.out.println(query);
-		queryPlus = query.resolve("foo/la/dee");
-		System.out.println(queryPlus);
-		queryPlus2 = query.resolve("foo/la/dee" + "?"+ query.getQuery());
-		System.out.println(queryPlus2);
-		
-		try {
-			URL dir = new URL("file:/tmp");
-			URLConnection connection = dir.openConnection();
-			connection.connect();
-			System.out.println(connection.getContentType());
-			System.out.println(connection.getContentLength());
-			InputStream is = connection.getInputStream();
-			System.out.println(FileUtils.readInputStreamTextAndClose(is));
-			is.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.files.IPathFileLocator#addListener(v9t9.common.files.IPathFileLocator.IPathChangeListener)

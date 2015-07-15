@@ -27,6 +27,7 @@ import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleDetector;
 
 /**
  * @author ejs
@@ -90,14 +91,17 @@ public class ROMSetupTreeContentProvider implements ITreeContentProvider {
 						infoPathMap.clear();
 						modulePathMap.clear();
 					}
+					
+					IModuleDetector detector = machine.createModuleDetector(databaseURI);
 					for (URI uri : machine.getRomPathFileLocator().getSearchURIs()) {
 						try {
-							Collection<IModule> modules = machine.scanModules(databaseURI, new File(uri));
-							detectedModules.addAll(modules);
+							detector.scan(new File(uri));
 						} catch (IllegalArgumentException e) {
 							// ignore
 						}
 					}
+					detectedModules.addAll(detector.getModules());
+					
 					synchronized (ROMSetupTreeContentProvider.this) {
 						ROMSetupTreeContentProvider.this.notifyAll();
 						

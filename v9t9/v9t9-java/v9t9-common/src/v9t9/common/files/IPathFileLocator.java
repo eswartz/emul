@@ -16,7 +16,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
-import java.util.Collection;
 import java.util.Map;
 
 import v9t9.common.client.ISettingsHandler;
@@ -42,45 +41,6 @@ public interface IPathFileLocator {
 		}
 		
 	}
-	
-	public class FilterSegment {
-		public FilterSegment(int offs, int count) {
-			this.offs = offs;
-			this.count = count;
-		}
-		public int offs;
-		public int count;
-	}
-	
-	/**
-	 * This interface defines which content from a candidate file 
-	 * is summed to make MD5 matches.
-	 * 
-	 * This should define #equals and #hashCode for use in 
-	 * repeated lookups. 
-	 * @author ejs
-	 *
-	 */
-	public interface IMD5SumFilter {
-		/** Fill in the segments that should be considered from the given URI */
-		void fillSegments(URI uri, int contentLength, Collection<FilterSegment> segments);
-
-	}
-	
-	public class FullContentFilter implements IMD5SumFilter {
-		public static final FullContentFilter INSTANCE = new FullContentFilter();
-
-		private FullContentFilter() { }
-		
-		@Override
-		public void fillSegments(URI uri, int contentLength,
-				Collection<FilterSegment> segments) {
-			segments.add(new FilterSegment(0, contentLength));
-		}
-		
-	}
-	
-
 	
 	void addReadOnlyPathProperty(IProperty property);
 

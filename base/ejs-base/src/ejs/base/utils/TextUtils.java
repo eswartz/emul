@@ -655,4 +655,15 @@ public class TextUtils {
 			sb.append(string);
 		return sb.toString();
 	}
+	
+	public static String binaryToString(byte[] content) {
+		return binaryToString(content, 0, content.length);
+	}
+	public static String binaryToString(byte[] content, int offset, int length) {
+		StringBuilder sb = new StringBuilder();
+		for (int o = 0; o < length; o++) {
+			sb.append(HexUtils.toHex2(content[offset + o]));
+		}
+		return sb.toString();
+	}
 }

@@ -21,6 +21,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.events.NotifyEvent.Level;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
@@ -72,15 +73,20 @@ public class PCodeDsr implements IDsrHandler9900 {
 		.withFilename("pcode_r1.bin")
 		.withAddress(0x5000)
 		.withSize(0x1000)
+		
+		// there are two MMIO areas here and at the end; don't be too picky
 		.withFileMD5("ABE55D238E3925D20B17CC859AD43D36")
-		.withFileMD5Limit(0x0BFC)  // there are two MMIO areas here and at the end; don't be too picky
+		.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":0000+0BFC") 
+		
 		.withFilename2("pcode_r1.bin")
 		.withAddress2(0x5000)
 		.withSize2(0x1000)
 		.withOffset2(0x1000)
+		
+		// there are two MMIO areas here and at the end; don't be too picky
 		.withFile2MD5("7ED0D59B05752007CB0777531F19300C")
-		.withFile2MD5Offset(0x1000)
-		.withFile2MD5Limit(0x0BFC)  // there are two MMIO areas here and at the end; don't be too picky 
+		.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":1000+0BFC")
+		
 		.withBankClass(PCodeDsrRomBankedMemoryEntry.class)
 		.create("P-Code DSR ROM (bank 2)");
 
@@ -99,8 +105,8 @@ public class PCodeDsr implements IDsrHandler9900 {
 		.withFilename("pcode_r1.bin")
 		.withAddress(0x4000)
 		.withSize(0x2000)
-		.withFileMD5("2E4D62D3984FA705252000851C594CEE")
-		.withFileMD5Limit(0x2000)
+		.withFileMD5("76803BED5C497E2B930E207A9480A6EF")
+		.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":0000+0BFC:1000+0BFC")
 		.create("P-Code DSR ROM (banks)");
 
 	public static MemoryEntryInfo pcodeGromMemoryEntryInfo = MemoryEntryInfoBuilder
@@ -109,7 +115,8 @@ public class PCodeDsr implements IDsrHandler9900 {
 		.withAddress(0x0)
 		.withSize(0x10000)
 		.withFilename("pCodeGroms.bin")
-		.withFileMD5("1ABC9091E58B0A1E9300EC214FF89EFE")
+		.withFileMD5("C4A3557EDC999381DFC0D6F7370D0A0F")
+		.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_GROM)
 		.create("P-Code GROM");
 
 	private IMemoryEntry dsrCommonMemoryEntry;

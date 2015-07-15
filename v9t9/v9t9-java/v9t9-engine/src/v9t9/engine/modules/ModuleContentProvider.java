@@ -20,6 +20,7 @@ import v9t9.common.client.IEmulatorContentSource;
 import v9t9.common.client.IEmulatorContentSourceProvider;
 import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleDetector;
 import v9t9.common.modules.ModuleContentSource;
 
 /**
@@ -46,8 +47,8 @@ public class ModuleContentProvider implements IEmulatorContentSourceProvider {
 			return IEmulatorContentSource.EMPTY;
 		}
 		
-		Collection<IModule> ents;
-		ents = machine.scanModules(databaseURI, file);
+		IModuleDetector detector = machine.createModuleDetector(databaseURI);
+		Collection<IModule> ents = detector.scan(file);
 		if (ents.isEmpty())
 			return IEmulatorContentSource.EMPTY;
 					

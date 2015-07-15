@@ -32,6 +32,7 @@ import v9t9.common.keyboard.IKeyboardMapping;
 import v9t9.common.keyboard.IKeyboardModeListener;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleDetector;
 import v9t9.common.modules.IModuleManager;
 
 /**
@@ -100,14 +101,10 @@ public interface IMachine extends IBaseMachine {
 	IKeyboardHandler getKeyboardHandler();
 	void setKeyboardHandler(IKeyboardHandler keyboardHandler);
 
-
 	/**
-	 * Scan the directory or a file for modules
-	 * @param databaseURI uri of module database
-	 * @param base directory or file
-	 * @return array of entries
+	 * Create a module detector
 	 */
-	Collection<IModule> scanModules(URI databaseURI, File base);
+	IModuleDetector createModuleDetector(URI databaseURI);
 
 	/**
 	 * Reload machine (e.g. re-read ROMs and re-set module)

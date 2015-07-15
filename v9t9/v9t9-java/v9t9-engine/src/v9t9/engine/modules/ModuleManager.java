@@ -477,4 +477,17 @@ public class ModuleManager implements IModuleManager {
 		}
 		return null;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#getStockModules()
+	 */
+	@Override
+	public IModule[] getStockModules() {
+		try {
+			ensureStockModules();
+		} catch (NotifyException e) {
+			return new IModule[0];
+		}
+		
+		return stockModuleList.toArray(new IModule[stockModuleList.size()]);
+	}
 }

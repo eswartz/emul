@@ -32,12 +32,16 @@ public class MemoryEntryInfo {
 	public final static String FILENAME2 = "fileName2";
 	/** String, hex-encoded */
 	public final static String FILE_MD5 = "fileMd5";
+	/** String */
+	public final static String FILE_MD5_ALGORITHM = "fileMd5Algorithm";
 	/** integer */
 	public final static String FILE_MD5_LIMIT = "fileMd5Limit";
 	/** integer */
 	public final static String FILE_MD5_OFFSET = "fileMd5Offset";
 	/** String, hex-encoded */
 	public final static String FILE2_MD5 = "file2Md5";
+	/** String */
+	public final static String FILE2_MD5_ALGORITHM = "file2Md5Algorithm";
 	/** integer */
 	public final static String FILE2_MD5_LIMIT = "file2Md5Limit";
 	/** integer */
@@ -185,6 +189,9 @@ public class MemoryEntryInfo {
 		return getString(MemoryEntryInfo.FILE_MD5);
 	}
 
+	public String getFileMD5Algorithm() {
+		return getString(MemoryEntryInfo.FILE_MD5_ALGORITHM);
+	}
 
 	public String getDomainName() {
 		return getString(MemoryEntryInfo.DOMAIN);
@@ -220,6 +227,9 @@ public class MemoryEntryInfo {
 	}
 	public String getFile2MD5() {
 		return getString(MemoryEntryInfo.FILE2_MD5);
+	}
+	public String getFile2MD5Algorithm() {
+		return getString(MemoryEntryInfo.FILE2_MD5_ALGORITHM);
 	}
 
 	public int getOffset() {

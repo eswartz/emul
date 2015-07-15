@@ -53,6 +53,19 @@ public class ManualTestTI99ModuleDetection {
 		locator = machine.getRomPathFileLocator();
 	}
 	
+	/** Make sure stock modules don't overlap */
+	@Test
+	public void testStockModules() throws Exception {
+		IModule[] stocks = machine.getModuleManager().getStockModules();
+		Map<String, IModule> md5Map = new HashMap<String, IModule>();
+		for (IModule stock : stocks) {
+			String md5 = stock.getMD5();
+			IModule old = md5Map.put(md5, stock);
+			if (old != null) {
+				fail(stock.getMD5() + " -> " + stock.getName() + " / " + old.getName());
+			}
+		}
+	}
 	@Test
 	public void testMyModules() throws Exception {
 		testDirectory("/usr/local/src/v9t9-data/modules", 
@@ -93,7 +106,6 @@ public class ManualTestTI99ModuleDetection {
 				"(?i).*\\.rpk");
 	}
 	
-
 	protected List<IModule> testDirectory(String path, final String pattern, final String... ignore) {
 		File dir = new File(path);
 		assertTrue(dir.exists());
@@ -101,7 +113,7 @@ public class ManualTestTI99ModuleDetection {
 		Set<File> allFiles = getAllFiles(pattern, dir, ignore); 
 		
 		URI databaseURI = URI.create("test.xml");
-		Collection<IModule> modules = machine.scanModules(databaseURI, dir);
+		Collection<IModule> modules = machine.createModuleDetector(databaseURI).scan(dir);
 		
 		List<IModule> matches = new ArrayList<IModule>();
 		System.out.println("Found " + modules.size() + " modules in " + dir);
@@ -255,7 +267,7 @@ public class ManualTestTI99ModuleDetection {
 		assertTrue(dir.exists());
 		
 		URI databaseURI = URI.create("test.xml");
-		Collection<IModule> modules = machine.scanModules(databaseURI, dir);
+		Collection<IModule> modules = machine.createModuleDetector(databaseURI).scan(dir);
 		
 		System.out.println("Found " + modules.size() + " modules in " + dir);
 		
@@ -432,6 +444,11 @@ public class ManualTestTI99ModuleDetection {
 		if (sb.length() > 0)
 			fail(sb.toString());
 	}
-
 	
+	{
+		// 2FDCBBCBA6585BA68EA1FFD0C19FF30B maps to Mancala or The Great Word Race
+		
+		// why "TI invaders" instead of "TI Invaders" for A4BDDA62ADFC49141573A424B54F6344
+	}
+
 }

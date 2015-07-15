@@ -59,6 +59,7 @@ import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleDetector;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
 import v9t9.common.settings.Settings;
@@ -499,7 +500,9 @@ public class ModuleListComposite extends Composite {
 				continue;
 			}
 					
-			Collection<IModule> ents = machine.scanModules(databaseURI, dir);
+			IModuleDetector detector = machine.createModuleDetector(databaseURI);
+			Collection<IModule> ents = detector.scan(dir);
+			
 			for (IModule module : ents) {
 				IModule exist = machine.getModuleManager().findModuleByName(module.getName(), true);
 				if (exist == null) {

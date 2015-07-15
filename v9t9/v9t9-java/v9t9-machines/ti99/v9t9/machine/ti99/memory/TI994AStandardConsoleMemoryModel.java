@@ -17,6 +17,8 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.demos.IDemoManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.DataFiles;
+import v9t9.common.files.IPathFileLocator;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryEntry;
@@ -67,7 +69,8 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 	static protected final MemoryEntryInfo cpuGromInfo = MemoryEntryInfoBuilder
 		.standardConsoleGrom(null)
 		.withFilenameProperty(settingGromFileName)
-		.withFileMD5("ED8FF714542BA850BDEC686840A79217")
+		.withFileMD5("1317F64698745028A2DCF7C0F2954EB3")
+		.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_GROM)
 		.withDescription("TI-99/4A Console GROM")
 		.create("CPU GROM");
 	

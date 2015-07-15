@@ -131,4 +131,10 @@ public interface IModuleManager extends IPersistable {
 	 * @return
 	 */
 	IModule findStockModuleMatching(IModule module);
+
+	/**
+	 * Get all the stock modules
+	 * @return
+	 */
+	IModule[] getStockModules();
 }
