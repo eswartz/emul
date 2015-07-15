@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.MessageFormat;
 
+import org.apache.log4j.Logger;
+
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
@@ -40,7 +42,8 @@ import ejs.base.settings.SettingsSection;
 import ejs.base.settings.XMLSettingStorage;
 
 public abstract class BaseEmulatorWindow {
-
+	private static final Logger log = Logger.getLogger(BaseEmulatorWindow.class);
+	
 	/**
 	 * 
 	 */
@@ -211,6 +214,7 @@ public abstract class BaseEmulatorWindow {
 				}
 
 			} catch (Throwable e1) {
+				log.error("Failed to load machine state", e1);
 				machine.notifyEvent(Level.ERROR, 
 						"Failed to load machine state:\n\n" + e1.getMessage());
 			
