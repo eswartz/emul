@@ -38,21 +38,18 @@ else 	# Linux/OS X/etc
 	M=$(shell /bin/uname -m)
 	ifeq "$(M)" "i686"
 	ARCH=32
+	CC=gcc -m32
 	else
 	ARCH=64
+	CC=gcc -m64
 	endif
 
-	JAVAC=javac
-	JAR=jar
-	
-	CC=gcc
+	CC=gcc -m$(ARCH)
 	CFLAGS=-g -O6 -fPIC  
 	LDFLAGS=-fPIC -Wl,-zdefs -shared
 	LIBS=-lm
 	OBJEXT=-$(ARCH).o
 	LIB=lib
-	
-	ARCH=$(shell /bin/uname -m)
 	
 	SOEXT=$(ARCH).so
 
