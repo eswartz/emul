@@ -19,6 +19,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
@@ -30,6 +31,7 @@ import v9t9.common.dsr.IPrinterImageListener;
 import v9t9.engine.demos.format.PrinterImageDataEventFormatter;
 import v9t9.machine.EmulatorMachinesData;
 import ejs.base.utils.ListenerList;
+import ejs.base.utils.TextUtils;
 
 /**
  * @author ejs
@@ -41,6 +43,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		IDemoFormatterRegistry.INSTANCE.registerDemoEventFormatter(
 				new PrinterImageDataEventFormatter(ID));
 	}
+	private static Logger log = Logger.getLogger(EpsonPrinterImageEngine.class);
 	
 	/**
 	 * 1/72"
@@ -115,6 +118,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 
 			loadFont(dataURL, 9, 9);
 		} catch (IOException e) {
+			log.error("failed to load printer font", e);
 			e.printStackTrace();
 		}
 		initPage();
@@ -212,6 +216,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	 * 
 	 */
 	protected void fireNewPage() {
+		log.info("new Epson printer page");
 		pageDirty = false;
 		firstPage = false;
 		fireBytesProcessed();
@@ -229,6 +234,9 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	protected void fireBytesProcessed() {
 		if (processedBytes.size() > 0) {
 			final byte[] bytes = processedBytes.toByteArray();
+			
+			log.info("EpsonPrinterImageEngine: fireBytesProcessed #" + bytes.length + " to " 
+					+ TextUtils.catenateStrings(listeners.toArray(), ","));
 			listeners.fire(new ListenerList.IFire<IPrinterImageListener>() {
 				
 				@Override
@@ -264,6 +272,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		this.paperHeightInches = heightInches;
 		paperHeightDots = (int) (paperHeightInches * DOTS);
 		paperWidthDots = (int) (paperWidthInches * DOTS);
+		log.info("Epson printer page size: " + paperHeightDots + "x" + paperWidthDots + " (dots)");
 	}
 	/**
 	 * 
