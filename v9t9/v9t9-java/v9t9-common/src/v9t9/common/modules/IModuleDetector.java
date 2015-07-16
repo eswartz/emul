@@ -38,7 +38,13 @@ public interface IModuleDetector {
 	 * From all the detected modules, group them by module MD5.
 	 * @return map of MD5 to modules
 	 */
-	Map<String, List<IModule>> gatherDuplicates();
+	Map<String, List<IModule>> gatherDuplicatesByMD5();
+
+	/**
+	 * From all the detected modules, group them by module name.
+	 * @return map of name to modules
+	 */
+	Map<String, List<IModule>> gatherDuplicatesByName();
 
 	/**
 	 * From all the detected modules, return a list of the

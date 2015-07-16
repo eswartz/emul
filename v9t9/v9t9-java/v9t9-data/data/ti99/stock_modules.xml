@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <modules>
-  <module md5="BC0639AFE3EFF74CFF738B5BB42747F7" name="Mini Memory" replaceMd5="BA3392B946E8D91D43305C9B59E04B31">
+  <module md5="56553D48F15399DDC642016146291EDB" name="Mini Memory" replaceMd5="BA3392B946E8D91D43305C9B59E04B31">
     <memoryEntries>
       <gromModuleEntry fileMd5="972D4BF73609DBFA3CF056A829701FC1" fileName="minig.bin"/>
-      <romModuleEntry fileMd5="98CE13A825349736CBA2343BBD948B46" fileName="minic.bin" size="0x1000"/>
+      <romModuleEntry fileMd5="9BCF230E42BB280199A04F0E0C4797C1" fileName="minic.bin" size="0x1000"/>
       <memoryEntry address="0x7000" domain="CPU" fileName="minir.bin" size="0x1000" stored="true"/>
     </memoryEntries>
   </module>
@@ -58,7 +58,7 @@
       <gromModuleEntry fileMd5="74DE12232ED0016B07AA4280CBE962B3" fileName="phm3145g.bin"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" md5="8C3CD895D285D846EA4CFBF047E32C6F" name="Space Bandits">
+  <module autoStart="true" md5="C59026CCE1B09E311AE2814679F0611A" name="Space Bandits">
     <memoryEntries>
       <romModuleEntry fileMd5="A26296E493B563D0AEBC6B11A6F79BCD" fileName="phm3149c.bin"/>
       <gromModuleEntry fileMd5="F93D5FD265F6FE000037AAA810756DE2" fileName="phm3149g.bin"/>
@@ -191,9 +191,9 @@
       <gromModuleEntry fileMd5="85A155E6BCCBF999113D5DB8F644FD9D" fileName="phm3116g.bin"/>
     </memoryEntries>
   </module>
-  <module md5="69D6BACFFF42A78F127D9F7D2EDF2A93" name="Word Invasion" replaceMd5="69D6BACFFF42A78F127D9F7D2EDF2A93">
+  <module md5="0E1F96CF0E8B6222E0FA711B0614A57C" name="Word Invasion" replaceMd5="69D6BACFFF42A78F127D9F7D2EDF2A93">
     <memoryEntries>
-      <gromModuleEntry fileMd5="9BE522A7387F3DD9E5B03587F56C05B6" fileName="phm3169g.bin"/>
+      <gromModuleEntry fileMd5="868EE08248E58A0C9CB00EDEC95D15C8" fileName="phm3169g.bin"/>
     </memoryEntries>
   </module>
   <module md5="BBC781224C11648780CC6AEC6B209BC0" name="Computer Math Games I">
@@ -253,21 +253,30 @@
       <romModuleEntry fileMd5="9B5C4BA24A4FA53E0CFB3959E96632A8" fileName="phm3060c.bin"/>
     </memoryEntries>
   </module>
-  <module md5="2A904E23E1315B1958D0AF6AC2969C51" name="Scholastic Spelling - Level 6">
+  <module md5="6819494F043AE629B947C6D0395353A3" name="Scholastic Spelling - Level 5">
     <memoryEntries>
-      <gromModuleEntry fileMd5="F394C7A591F65C92F297B6E44D0726D9" fileName="phm3062g.bin"/>
-      <romModuleEntry fileMd5="9B5C4BA24A4FA53E0CFB3959E96632A8" fileName="phm3062c.bin"/>
+      <gromModuleEntry fileMd5="CA5FB86B2F8927B2430C3DE4FA300F2E" fileName="phm3061g.bin"/>
+      <romModuleEntry fileMd5="9302AB1B2213C8AC4D5014F266300308" fileName="phm3061c.bin"
+      file2Md5="7F4F90383F2C714631E2925673536691" fileName2="phm3061d.bin"/>
     </memoryEntries>
   </module>
-  <module md5="2174B7B791DAFAB804926EAE301A3D28" name="Frogger">
+  <module md5="EA43A4F181DBE0AF7C3760B3A04378EB" name="Scholastic Spelling - Level 6">
     <memoryEntries>
-      <gromModuleEntry fileMd5="AE24692BB8325DC8B90FEE0EA51EA0D6" fileName="froggerg.bin"/>
+      <gromModuleEntry fileMd5="F394C7A591F65C92F297B6E44D0726D9" fileName="phm3062g.bin"/>
+      <bankedModuleEntry fileMd5="9B5C4BA24A4FA53E0CFB3959E96632A8" fileName="phm3062c.bin"
+      file2Md5="952770D3772331F441079FE8B01C5676" fileName2="phm3062d.bin"
+      />
+    </memoryEntries>
+  </module>
+  <module keywords="Parker Brothers' Game" md5="22871C610957851D514D73285B404B4D" name="Frogger">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="1601F7F9FB394BB206374FB1EF95DDC8" fileName="froggerg.bin"/>
       <romModuleEntry fileMd5="411FB78E6E0F0CEE77EB0BE91D6FCCFB" fileName="froggerc.bin"/>
     </memoryEntries>
   </module>
-  <module md5="B70C02505C78BFDF77EFCF08E809F1C9" name="Q*Bert">
+  <module keywords="Parker Brothers' Game" md5="549100FFAD06AD9F06E6D5647A6532F5" name="Q*Bert">
     <memoryEntries>
-      <gromModuleEntry fileMd5="0FDAE9B5E2BE3021382C68B0281E8D22" fileName="qbertg.bin"/>
+      <gromModuleEntry fileMd5="660CDD001129E26B9EDA8C93FEC4AD73" fileName="qbertg.bin"/>
       <romModuleEntry fileMd5="30C841DE638C9E976B1E5FE495D6B722" fileName="qbertc.bin"/>
     </memoryEntries>
   </module>
@@ -381,9 +390,9 @@
       <gromModuleEntry fileMd5="ECE5AE8ED55CAFF17101B314F1F21616" fileName="rdcheerg.bin"/>
     </memoryEntries>
   </module>
-  <module md5="DD9629BDEF598B598B11E9F333A8C42C" name="Popeye">
+  <module keywords="Parker Brothers' Game" md5="64799C13333782E3814030FC835AB93B" name="Popeye">
     <memoryEntries>
-      <gromModuleEntry fileMd5="B36BB1CD6956509080936BC5FFB9D4BC" fileName="popeyeg.bin"/>
+      <gromModuleEntry fileMd5="C3AF57E17E75FA2DB2B5D8623F249784" fileName="popeyeg.bin"/>
       <romModuleEntry fileMd5="6382C3CB552793EA1BCB5C5B04C3EB7D" fileName="popeyec.bin"/>
     </memoryEntries>
   </module>
@@ -441,9 +450,14 @@
       <gromModuleEntry fileMd5="67C0870C27EDA34FE5F358BA3EF3FA35" fileName="reafligg.bin"/>
     </memoryEntries>
   </module>
-  <module md5="A287868570A94CBAC81390C342C22C1D" name="Typoman">
+  <module md5="9736785519C922E8E8A48CBDA20997A0" name="Typoman">
     <memoryEntries>
-      <gromModuleEntry fileMd5="7C85D30F35663D13E0F758FB172F3EAB" fileName="typomanc.bin"/>
+      <gromModuleEntry fileMd5="7B35104A24F5F255DDC1F9174F2FADD2" fileName="typomanc.bin"/>
+    </memoryEntries>
+  </module>
+  <module md5="D4741F78F6FF21034BAD4647C420FD67" name="Typo II">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="7940EA1EE9AF275C3A7C046F430EC705" fileName="typoiic.bin"/>
     </memoryEntries>
   </module>
   <module md5="F8C255B224D6111DF309755E0EBB9E38" name="Personal Report Generator">

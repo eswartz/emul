@@ -194,7 +194,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 								int limit = 0x1000;
 								String md5 = fileLocator.getContentMD5(uri, 0, limit, true);
 								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
-								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5_LIMIT, limit);
+								xinfo.getProperties().put(MemoryEntryInfo.SIZE, limit);
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -217,6 +217,23 @@ public class TI99ModuleDetector implements IModuleDetector {
 			
 			// Replace the name of any stock module
 			if (!ignoreStock) {
+				IModule replacedStock = moduleManager.findReplacedStockModuleByMd5(module.getMD5());
+				if (replacedStock != null) {
+					// this detected module is "really" another one, which has different
+					// memory entries
+					boolean added = false;
+					for (MemoryEntryInfo info : replacedStock.getMemoryEntryInfos()) {
+						if (info.isStored() || info.getAddress() != 0x6000) {
+							module.addMemoryEntryInfo(new MemoryEntryInfo(info.getProperties()));
+							added = true;
+						}
+					}
+					if (added)
+						assert replacedStock.getMD5().equals(module.getMD5());
+					else
+						module.setName(replacedStock.getName());
+				}
+				
 				IModule stock = moduleManager.findStockModuleByMd5(module.getMD5());
 				if (stock != null) {
 					if (stock.getMemoryEntryInfos().length == module.getMemoryEntryInfos().length) {
@@ -1182,7 +1199,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 	}
 
 	@Override
-	public Map<String, List<IModule>> gatherDuplicates() {
+	public Map<String, List<IModule>> gatherDuplicatesByMD5() {
 		Map<String, List<IModule>> md5ToModules = new TreeMap<String, List<IModule>>();
 		for (IModule module : modules.values()) {
 			String md5 = module.getMD5();
@@ -1195,7 +1212,22 @@ public class TI99ModuleDetector implements IModuleDetector {
 		}
 		return md5ToModules;
 	}
-	
+
+	@Override
+	public Map<String, List<IModule>> gatherDuplicatesByName() {
+		Map<String, List<IModule>> nameToModules = new TreeMap<String, List<IModule>>();
+		for (IModule module : modules.values()) {
+			String name = module.getName();
+			List<IModule> mods = nameToModules.get(name);
+			if (mods == null) {
+				mods = new ArrayList<IModule>();
+				nameToModules.put(name, mods);
+			}
+			mods.add(module);
+		}
+		return nameToModules;
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.modules.IModuleDetector#simplifyModules()
 	 */
@@ -1203,7 +1235,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 	public List<IModule> simplifyModules() {
 		List<IModule> simpleModules = new ArrayList<IModule>();
 		
-		for (Map.Entry<String, List<IModule>> ent : gatherDuplicates().entrySet()) {
+		for (Map.Entry<String, List<IModule>> ent : gatherDuplicatesByMD5().entrySet()) {
 			String name = null;
 			
 			IModule stock;

@@ -15,11 +15,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -470,8 +468,23 @@ public class ModuleManager implements IModuleManager {
 		}
 		
 		for (IModule stock : stockModuleList) {
-			if (modMd5.equals(stock.getMD5())
-					|| modMd5.equals(stock.getReplaceMD5())) {
+			if (modMd5.equals(stock.getMD5())) {
+				return stock;
+			}
+		}
+		return null;
+	}
+	
+	@Override
+	public IModule findReplacedStockModuleByMd5(String modMd5) {
+		try {
+			ensureStockModules();
+		} catch (NotifyException e) {
+			return null;
+		}
+		
+		for (IModule stock : stockModuleList) {
+			if (modMd5.equals(stock.getReplaceMD5())) {
 				return stock;
 			}
 		}

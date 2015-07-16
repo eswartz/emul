@@ -146,6 +146,7 @@ public class Module implements IModule {
 	@Override
 	public void addMemoryEntryInfo(MemoryEntryInfo info) {
 		entries.add(info);
+		this.md5 = null;
 	}
 	
 	public void setMemoryEntryInfos(List<MemoryEntryInfo> entries) {

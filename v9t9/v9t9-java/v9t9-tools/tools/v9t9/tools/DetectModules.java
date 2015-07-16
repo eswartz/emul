@@ -153,11 +153,15 @@ public class DetectModules {
 		
 	}
 	public void list() {
-		Map<String, List<IModule>> md5ToModules = detector.gatherDuplicates();
+		Map<String, List<IModule>> md5ToModules = detector.gatherDuplicatesByMD5();
 		for (Map.Entry<String, List<IModule>> ent : md5ToModules.entrySet()) {
 			System.out.println(ent.getKey() + ":");
 			for (IModule module : ent.getValue()) {
-				System.out.println("\t" + module.getName());
+				System.out.print("\t" + module.getName());
+				if (machine.getModuleManager().findStockModuleByMd5(ent.getKey()) != null)
+					System.out.print(" [stock]");
+				System.out.println();
+					
 				for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
 					System.out.print("\t\t" + info.getFilename());
 					if (info.getFilename2() != null)
@@ -165,11 +169,13 @@ public class DetectModules {
 					if (info.isBanked())
 						System.out.print(", banked");
 					System.out.println();
-					
-					System.out.print("\t\t" + info.getFileMD5Algorithm() + " = " + info.getFileMD5());
-					if (info.getFile2MD5() != null)
-						System.out.print(",\n\t\t" + info.getFile2MD5Algorithm() + " = " + info.getFile2MD5());
-					System.out.println();
+
+					if (!info.isStored()) {
+						System.out.print("\t\t\t" + info.getFileMD5Algorithm() + " = " + info.getFileMD5());
+						if (info.getFile2MD5() != null)
+							System.out.print(",\n\t\t\t" + info.getFile2MD5Algorithm() + " = " + info.getFile2MD5());
+						System.out.println();
+					}
 				}
 			}
 			System.out.println();

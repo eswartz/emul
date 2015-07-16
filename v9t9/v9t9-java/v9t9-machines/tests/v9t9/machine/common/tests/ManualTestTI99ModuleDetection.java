@@ -27,12 +27,14 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
+import ejs.base.utils.TextUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleDetector;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
 
@@ -52,20 +54,50 @@ public class ManualTestTI99ModuleDetection {
 		machine = new StandardTI994AMachineModel().createMachine(settings);
 		locator = machine.getRomPathFileLocator();
 	}
-	
-	/** Make sure stock modules don't overlap */
+
+	/**
+	 * Make sure we detect all the stock modules in our library
+	 * @throws Exception
+	 */
 	@Test
 	public void testStockModules() throws Exception {
+		
+		URI databaseURI = URI.create("test.xml");
+		IModuleDetector detector = machine.createModuleDetector(databaseURI);
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/mess"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/tosec"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/rpk"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/rpk.old"));
+		
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/zip"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted"));
+		
+		Map<String, List<IModule>> md5ToModules = detector.gatherDuplicatesByMD5();
+		Map<String, List<IModule>> nameToModules = detector.gatherDuplicatesByName();
+
 		IModule[] stocks = machine.getModuleManager().getStockModules();
-		Map<String, IModule> md5Map = new HashMap<String, IModule>();
+		
+		StringBuilder sb = new StringBuilder();
 		for (IModule stock : stocks) {
 			String md5 = stock.getMD5();
-			IModule old = md5Map.put(md5, stock);
-			if (old != null && old.getKeywords().equals(stock.getKeywords())) {
-				fail(stock.getMD5() + " -> " + stock.getName() + " / " + old.getName());
+			
+			if (!md5ToModules.containsKey(md5)) {
+				sb.append("did not find ").append(stock.getMD5()).append(" = ").append(stock.getName()).append('\n');
+				
+				List<IModule> nameMatches = nameToModules.get(stock.getName());
+				if (nameMatches != null) {
+					sb.append("\tbut found: ").append(
+							TextUtils.catenateStrings(nameMatches, "\n\t\t")).append('\n');
+				}
 			}
 		}
+		
+		if (sb.length() > 0)
+			fail(sb.toString());
 	}
+	
 	@Test
 	public void testMyModules() throws Exception {
 		testDirectory("/usr/local/src/v9t9-data/modules", 
@@ -217,7 +249,7 @@ public class ManualTestTI99ModuleDetection {
 			for (MemoryEntryInfo info : infos) {
 				if (info.getDomainName().equals(IMemoryDomain.NAME_CPU)
 						&& info.getAddress() == 0x6000) {
-					assertEquals(0x1000, info.getFileMd5Limit());
+					assertEquals(0x1000, info.getSize());
 					assertEquals("9BCF230E42BB280199A04F0E0C4797C1", info.getFileMD5());
 				}
 			}
@@ -328,26 +360,12 @@ public class ManualTestTI99ModuleDetection {
 			Map<String, IModule> md5Map, 
 			Map<String, String> nameToMd5Map, 
 			StringBuilder fails) {
-		// these have no unique name header, so the filename is used
-		final String millikens = "phm(3027|3028|3029|3043|3046|3049|3051|3093)";
-		// these are the exact same product sold under two PHMs
-		final String divisors = "phm3093|phm3049";
 		for (IModule mod : mods) {
 			String md5 = mod.getMD5();
 			System.out.println(mod.getName() + " -> " + md5);
 			IModule old = md5Map.put(md5, mod);
 			if (old != null && !old.equals(mod) && !old.getName().equals(mod.getName())) {
 				System.out.println("\tconflicts with " + old.getName());
-				if (old.getName().matches(millikens) && mod.getName().matches(millikens)) {
-					if (old.getName().matches(divisors) && mod.getName().matches(divisors)) {
-						// okay
-						continue;
-					}
-				}
-				else if (old.getName().matches(millikens) || mod.getName().matches(millikens)) {
-					// fine
-					continue;
-				}
 				fails.append(mod.getName());
 				fails.append(" conflicts with ");
 				fails.append(old.getName());
@@ -443,12 +461,6 @@ public class ManualTestTI99ModuleDetection {
 
 		if (sb.length() > 0)
 			fail(sb.toString());
-	}
-	
-	{
-		// 2FDCBBCBA6585BA68EA1FFD0C19FF30B maps to Mancala or The Great Word Race
-		
-		// why "TI invaders" instead of "TI Invaders" for A4BDDA62ADFC49141573A424B54F6344
 	}
 
 }

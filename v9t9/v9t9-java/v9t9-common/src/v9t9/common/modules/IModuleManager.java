@@ -129,10 +129,18 @@ public interface IModuleManager extends IPersistable {
 	/**
 	 * Find a stock module with the same module MD5
 	 * @param moduleMd5 md5 to match
-	 * @return
+	 * @return stock module or <code>null</code>
 	 */
 	IModule findStockModuleByMd5(String moduleMd5);
 
+	/**
+	 * Find the stock module that replaces the one with the given MD5.
+	 * The distinction is, replacement stock modules have extra memory entries.
+	 * @param moduleMd5 md5 to match
+	 * @return stock module or <code>null</code>
+	 */
+	IModule findReplacedStockModuleByMd5(String moduleMd5);
+	
 	/**
 	 * Get all the stock modules
 	 * @return
