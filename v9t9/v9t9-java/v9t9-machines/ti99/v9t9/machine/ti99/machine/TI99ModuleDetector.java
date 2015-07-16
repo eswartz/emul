@@ -175,7 +175,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 			}
 
 			// Mini Memory often "ships" as an 8k ROM, which
-			// makes no sense.  Reduce the size 
+			// makes no sense.  Reduce the size so we get a valid MD5 sum on its ROM.
 			if (moduleName.equalsIgnoreCase(MINI_MEMORY)) {
 				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
 				if (infos.length == 2) {
@@ -527,12 +527,12 @@ public class TI99ModuleDetector implements IModuleDetector {
 		MemoryEntryInfo info = null;
 		boolean found = false;
 		
-		// the Mini Memory ROM sometimes ships as 8k,
-		// which is incorrect.
-		if (MINI_MEMORY.equals(module.getName())) {
-			fileSize = 0x1000;
-		}
-		
+//		// the Mini Memory ROM sometimes ships as 8k,
+//		// which is incorrect.
+//		if (MINI_MEMORY.equals(module.getName())) {
+//			fileSize = 0x1000;
+//		}
+//		
 		for (MemoryEntryInfo ex : module.getMemoryEntryInfos()) {
 			// modify a banked entry
 			if (ex.isBanked() && ex.getAddress() == 0x6000 && IMemoryDomain.NAME_CPU.equals(ex.getDomainName())) {

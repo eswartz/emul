@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.files.IMD5SumFilter;
 import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.settings.SettingSchema;
 
@@ -201,10 +202,20 @@ public class MemoryEntryInfo {
 	public String getFileMD5Algorithm() {
 		return getString(MemoryEntryInfo.FILE_MD5_ALGORITHM);
 	}
+	
+	public int getDefaultFileSize() {
+		if (IMemoryDomain.NAME_CPU.equals(getDomainName()))
+			return 0x2000;
+		return 0;
+	}
 	public String getEffectiveFileMD5Algorithm() {
 		String alg = getFileMD5Algorithm();
 		if (alg == null || alg.isEmpty()) {
-			alg = getDefaultMD5Algorithm();
+			if (getOffset() != 0 || (getSize() > 0 && getSize() != getDefaultFileSize()))
+				alg = MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":" + 
+					new IMD5SumFilter.FilterSegment(getOffset(), getSize()).toString();
+			else
+				alg = getDefaultMD5Algorithm();
 		}
 		return alg;
 	}
@@ -250,7 +261,11 @@ public class MemoryEntryInfo {
 	public String getEffectiveFile2MD5Algorithm() {
 		String alg = getFile2MD5Algorithm();
 		if (alg == null || alg.isEmpty()) {
-			alg = getDefaultMD5Algorithm();
+			if (getOffset2() != 0 || (getSize2() > 0 && getSize2() != getDefaultFileSize()))
+				alg = MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":" + 
+					new IMD5SumFilter.FilterSegment(getOffset2(), getSize2()).toString();
+			else
+				alg = getDefaultMD5Algorithm();
 		}
 		return alg;
 	}

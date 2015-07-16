@@ -118,6 +118,7 @@ public class UpdateModuleXmlMd5Hashes {
 							info.getFile2MD5(), info.getFile2MD5Algorithm());
 				}
 				module.setMD5(null);
+				
 			}
 			
 			File backup = new File(outfile.getAbsolutePath() + "~");
@@ -155,13 +156,15 @@ public class UpdateModuleXmlMd5Hashes {
 		info.getProperties().remove(MemoryEntryInfo.FILE2_MD5_OFFSET);
 		info.getProperties().remove(MemoryEntryInfo.FILE_MD5_OFFSET);
 		info.getProperties().remove(MemoryEntryInfo.FILE_MD5_LIMIT);
-		info.getProperties().remove(MemoryEntryInfo.SIZE);
-		info.getProperties().remove(MemoryEntryInfo.SIZE2);
+		if (info.getSize() < 0)
+			info.getProperties().remove(MemoryEntryInfo.SIZE);
+		if (info.getSize2() < 0)
+			info.getProperties().remove(MemoryEntryInfo.SIZE2);
 		
 		URI uri = locator.findFile(filename);
 		if (uri == null) {
-			if (info.getProperties().get(md5Prop) == null)
-				System.err.println("Cannot find " + filename);
+//			if (info.getProperties().get(md5Prop) == null)
+			System.err.println("Cannot find " + filename);
 			return;
 		}
 		

@@ -367,11 +367,13 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			Integer size = (Integer) properties.get(MemoryEntryInfo.SIZE);
 			if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))
 					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000
-					&& (size == null || Math.abs(size) == 0x2000)
+					&& (size == null || Math.abs(size) <= 0x2000)
 					&& (offset == null || offset == 0)
 					&& !isBanked) {
 				entry = root.getOwnerDocument().createElement("romModuleEntry");
-				needAddress = needSize = needDomain = false;
+				needAddress = needDomain = false;
+				if (size == null || Math.abs(size) == 0x2000)
+					needSize = false;
 			}
 			else if (IMemoryDomain.NAME_GRAPHICS.equals(properties.get(MemoryEntryInfo.DOMAIN))
 					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000) {
