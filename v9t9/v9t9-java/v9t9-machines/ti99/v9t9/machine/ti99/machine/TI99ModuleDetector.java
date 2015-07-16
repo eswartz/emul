@@ -35,6 +35,7 @@ import v9t9.common.files.IMD5SumFilter;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.InvalidFDRException;
 import v9t9.common.files.MD5FilterAlgorithms;
+import v9t9.common.files.IMD5SumFilter.FilterSegment;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
@@ -45,6 +46,7 @@ import v9t9.engine.memory.MemoryEntryInfoBuilder;
 import v9t9.engine.memory.StdMultiBankedMemoryEntry;
 import ejs.base.utils.FileUtils;
 import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
 import ejs.base.utils.StorageException;
 import ejs.base.utils.StreamXMLStorage;
 import ejs.base.utils.TextUtils;
@@ -228,10 +230,11 @@ public class TI99ModuleDetector implements IModuleDetector {
 							added = true;
 						}
 					}
-					if (added)
+					if (added) {
 						assert replacedStock.getMD5().equals(module.getMD5());
-					else
-						module.setName(replacedStock.getName());
+					}
+					module.setName(replacedStock.getName());
+					module.setMD5(replacedStock.getMD5());
 				}
 				
 				IModule stock = moduleManager.findStockModuleByMd5(module.getMD5());
@@ -521,22 +524,56 @@ public class TI99ModuleDetector implements IModuleDetector {
 			if (uri == null)
 				return;
 			
-			IMD5SumFilter filter;
-			if (IMemoryDomain.NAME_GRAPHICS.equals(info.getDomainName())) {
-				filter = MD5FilterAlgorithms.GromFilter.INSTANCE;
-			} else {
-				filter = MD5FilterAlgorithms.FullContentFilter.INSTANCE;
-			}
+			int contentLength = fileLocator.getContentLength(uri);
+			
+			Pair<IMD5SumFilter, Integer> minfo = getEffectiveMD5AndSize(info, contentLength);
+			IMD5SumFilter filter = minfo.first;
+			contentLength = minfo.second;
 			md5 = fileLocator.getContentMD5(uri, filter, true);
 			
 			if (bank2) {
 				info.getProperties().put(MemoryEntryInfo.FILE2_MD5, md5);
+				info.getProperties().put(MemoryEntryInfo.SIZE2, contentLength);
 			} else {
 				info.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
+				info.getProperties().put(MemoryEntryInfo.SIZE, contentLength);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Get the canonical algorithm for summing this entry and the
+	 * effective size relevant for such summing.
+	 * @param info
+	 * @param contentLength 
+	 * @param bank2
+	 * @return MD5 algorithm id and size
+	 */
+	private Pair<IMD5SumFilter, Integer> getEffectiveMD5AndSize(MemoryEntryInfo info, int contentLength) {
+		IMD5SumFilter filter;
+		if (IMemoryDomain.NAME_GRAPHICS.equals(info.getDomainName())) {
+			filter = MD5FilterAlgorithms.GromFilter.INSTANCE;
+		} else {
+			filter = MD5FilterAlgorithms.FullContentFilter.INSTANCE;
+		}
+
+		// tweak the filter if the segments are not what the filter
+		// would have naturally selected
+		List<FilterSegment> segments = new ArrayList<IMD5SumFilter.FilterSegment>();
+		filter.fillSegments(contentLength, segments);
+		
+		if (!segments.isEmpty()) {
+			FilterSegment last = segments.get(segments.size() - 1);
+			int filteredContentLength = last.offset + last.length;
+			
+			if (filteredContentLength != contentLength) {
+				contentLength = filteredContentLength;
+			}
+		}
+		
+		return new Pair<IMD5SumFilter, Integer>(filter, contentLength);
 	}
 
 	private MemoryEntryInfo injectModuleRom(IModule module, URI databaseURI,

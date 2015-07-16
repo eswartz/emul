@@ -10,12 +10,9 @@
  */
 package v9t9.engine.machine;
 
-import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -57,7 +54,7 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleDetector;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.demos.DemoManager;
@@ -804,11 +801,11 @@ abstract public class MachineBase implements IMachine {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.machine.IMachine#scanModules(java.net.URI, java.io.File)
+	 * @see v9t9.common.machine.IMachine#createModuleDetector(java.net.URI)
 	 */
 	@Override
-	public Collection<IModule> scanModules(URI databaseURI, File base) {
-		return Collections.emptyList();
+	public IModuleDetector createModuleDetector(URI databaseURI) {
+		return null;
 	}
 	
 	/* (non-Javadoc)

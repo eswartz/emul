@@ -60,7 +60,7 @@ public class ManualTestTI99ModuleDetection {
 	 * @throws Exception
 	 */
 	@Test
-	public void testStockModules() throws Exception {
+	public void testStockModules1() throws Exception {
 		
 		URI databaseURI = URI.create("test.xml");
 		IModuleDetector detector = machine.createModuleDetector(databaseURI);
@@ -74,6 +74,46 @@ public class ManualTestTI99ModuleDetection {
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk"));
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted"));
 		
+		validateStockModules(detector, true);
+	}
+
+	/**
+	 * Make sure we detect all the stock modules in our library
+	 * @throws Exception
+	 */
+	@Test
+	public void testStockModules2() throws Exception {
+		
+		URI databaseURI = URI.create("test.xml");
+		IModuleDetector detector = machine.createModuleDetector(databaseURI);
+		
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/zip"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted"));
+		
+		validateStockModules(detector, false);
+	}
+
+	/**
+	 * Make sure we detect all the stock modules in our library
+	 * @throws Exception
+	 */
+	@Test
+	public void testStockModules3() throws Exception {
+		
+		URI databaseURI = URI.create("test.xml");
+		IModuleDetector detector = machine.createModuleDetector(databaseURI);
+		
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/mess"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/tosec"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules"));
+		
+		validateStockModules(detector, false);
+	}
+	/**
+	 * @param detector
+	 */
+	private void validateStockModules(IModuleDetector detector, boolean mustExist) {
 		Map<String, List<IModule>> md5ToModules = detector.gatherDuplicatesByMD5();
 		Map<String, List<IModule>> nameToModules = detector.gatherDuplicatesByName();
 
@@ -84,12 +124,18 @@ public class ManualTestTI99ModuleDetection {
 			String md5 = stock.getMD5();
 			
 			if (!md5ToModules.containsKey(md5)) {
-				sb.append("did not find ").append(stock.getMD5()).append(" = ").append(stock.getName()).append('\n');
-				
 				List<IModule> nameMatches = nameToModules.get(stock.getName());
+				if (!mustExist) {
+					if (nameMatches == null)
+						continue;
+				}
+				sb.append("did not find ").append(stock.getMD5()).append(" = ").append(stock.getName()).append('\n');
 				if (nameMatches != null) {
-					sb.append("\tbut found: ").append(
-							TextUtils.catenateStrings(nameMatches, "\n\t\t")).append('\n');
+					
+					sb.append("\tbut found: ");
+					for (IModule name : nameMatches)
+						sb.append(name.getMD5()).append(" = ").append(name.getName()).append("\n\t\t");
+					sb.append('\n');
 				}
 			}
 		}

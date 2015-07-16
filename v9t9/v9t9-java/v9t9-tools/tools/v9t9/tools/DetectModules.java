@@ -50,6 +50,7 @@ public class DetectModules {
 	                    +"-o [file]:  write new modules.xml file\n"
 	                    +"-n:  do not update modules from stock module database\n"
 						+"-r:  read headers from ROM instead of replying on .rpk metadata\n"
+						+"-v:  print verbose description of module\n"
 	                    + "\n");
 	}
 
@@ -59,11 +60,12 @@ public class DetectModules {
 
         Getopt getopt;
         
-        getopt = new Getopt(PROGNAME, args, "?nro:");
+        getopt = new Getopt(PROGNAME, args, "?nro:v");
 		int opt;
 		
 		boolean noStock = false;
 		boolean readHeaders = false;
+		boolean verbose = false;
 		String outfile = null;
 		
 		while ((opt = getopt.getopt()) != -1) {
@@ -80,13 +82,16 @@ public class DetectModules {
             case 'o':
             	outfile = getopt.getOptarg();
             	break;
+            case 'v':
+            	verbose = true;
+            	break;
             default:
                 throw new AssertionError();
     
             }
         }
 		
-		DetectModules modules = new DetectModules(noStock, readHeaders);
+		DetectModules modules = new DetectModules(noStock, readHeaders, verbose);
 		int i = getopt.getOptind();
         while (i < args.length) {
 			String arg = args[i++];
@@ -102,9 +107,11 @@ public class DetectModules {
 	
 	private IMachine machine;
 	private IModuleDetector detector;
+	private boolean verbose;
 
-	public DetectModules(boolean noStock, boolean readHeader) {
-        machine = ToolUtils.createMachine();
+	public DetectModules(boolean noStock, boolean readHeader, boolean verbose) {
+        this.verbose = verbose;
+		machine = ToolUtils.createMachine();
 		
 		URI databaseURI = URI.create("test.xml");
 		detector = machine.createModuleDetector(databaseURI);
@@ -161,20 +168,24 @@ public class DetectModules {
 				if (machine.getModuleManager().findStockModuleByMd5(ent.getKey()) != null)
 					System.out.print(" [stock]");
 				System.out.println();
-					
+				
 				for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-					System.out.print("\t\t" + info.getFilename());
-					if (info.getFilename2() != null)
-						System.out.print(", " + info.getFilename2());
-					if (info.isBanked())
-						System.out.print(", banked");
-					System.out.println();
-
-					if (!info.isStored()) {
-						System.out.print("\t\t\t" + info.getFileMD5Algorithm() + " = " + info.getFileMD5());
-						if (info.getFile2MD5() != null)
-							System.out.print(",\n\t\t\t" + info.getFile2MD5Algorithm() + " = " + info.getFile2MD5());
+					if (verbose) {
+						System.out.println("\t\t" + info);
+					} else {
+						System.out.print("\t\t" + info.getFilename());
+						if (info.getFilename2() != null)
+							System.out.print(", " + info.getFilename2());
+						if (info.isBanked())
+							System.out.print(", banked");
 						System.out.println();
+						
+						if (!info.isStored()) {
+							System.out.print("\t\t\t" + info.getFileMD5Algorithm() + " = " + info.getFileMD5());
+							if (info.getFile2MD5() != null)
+								System.out.print(",\n\t\t\t" + info.getFile2MD5Algorithm() + " = " + info.getFile2MD5());
+							System.out.println();
+						}
 					}
 				}
 			}
