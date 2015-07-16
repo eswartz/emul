@@ -460,16 +460,15 @@ public class ModuleManager implements IModuleManager {
 	public ModuleInfoDatabase getModuleInfoDatabase() {
 		return moduleInfoDb;
 	}
-	
+
 	@Override
-	public IModule findStockModuleMatching(IModule mod) {
+	public IModule findStockModuleByMd5(String modMd5) {
 		try {
 			ensureStockModules();
 		} catch (NotifyException e) {
 			return null;
 		}
 		
-		String modMd5 = mod.getMD5();
 		for (IModule stock : stockModuleList) {
 			if (modMd5.equals(stock.getMD5())) {
 				return stock;
@@ -477,6 +476,7 @@ public class ModuleManager implements IModuleManager {
 		}
 		return null;
 	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.modules.IModuleManager#getStockModules()
 	 */

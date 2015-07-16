@@ -103,6 +103,7 @@ public interface IMachine extends IBaseMachine {
 
 	/**
 	 * Create a module detector
+	 * @param databaseURI the URI into which the entries will ostensibly go 
 	 */
 	IModuleDetector createModuleDetector(URI databaseURI);
 

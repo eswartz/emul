@@ -127,10 +127,11 @@ public interface IModuleManager extends IPersistable {
 	ModuleInfoDatabase getModuleInfoDatabase();
 
 	/**
-	 * @param module
+	 * Find a stock module with the same module MD5
+	 * @param moduleMd5 md5 to match
 	 * @return
 	 */
-	IModule findStockModuleMatching(IModule module);
+	IModule findStockModuleByMd5(String moduleMd5);
 
 	/**
 	 * Get all the stock modules

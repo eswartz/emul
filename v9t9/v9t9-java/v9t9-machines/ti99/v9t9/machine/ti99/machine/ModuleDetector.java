@@ -69,11 +69,21 @@ public class ModuleDetector implements IModuleDetector {
 
 	private IPathFileLocator fileLocator;
 
+	private boolean readHeaders;
+	private boolean ignoreStock;
+
 	public ModuleDetector(URI databaseURI, IPathFileLocator fileLocator, IModuleManager moduleManager) {
 		this.databaseURI = databaseURI;
 		this.fileLocator = fileLocator;
 		this.moduleManager = moduleManager;
 		this.modules = new HashMap<String, IModule>();
+	}
+	
+	public void setReadHeaders(boolean readHeaders) {
+		this.readHeaders = readHeaders;
+	}
+	public void setIgnoreStock(boolean ignoreStock) {
+		this.ignoreStock = ignoreStock;
 	}
 
 	@Override
@@ -157,53 +167,55 @@ public class ModuleDetector implements IModuleDetector {
 				continue;
 			}
 			
-			// fixup specific modules
-			if (moduleName.equalsIgnoreCase(MINI_MEMORY)) {
-				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
-				if (infos.length == 2) {
-					MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleRom("minir.bin")
-							.withAddress(0x7000)
-							.withSize(0x1000)
-							.storable(true)
-							.create("Mini Memory Non-Volatile RAM");
-					module.addMemoryEntryInfo(info);
-					
-					// fixup earlier entry if present
-					for (MemoryEntryInfo xinfo : infos) {
-						if (xinfo.getDomainName().equals(IMemoryDomain.NAME_CPU)) {
-							URI uri = fileLocator.findFile(xinfo.getFilename());
-							try {
-								int limit = 0x1000;
-								String md5 = fileLocator.getContentMD5(uri, 0, limit, true);
-								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
-								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5_LIMIT, limit);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-
-						}
-					}
-				}
-			}
-			else if (module.getName().equalsIgnoreCase(EA_8K_SUPER_CART)) {
-				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
-				if (infos.length == 1) {
-					MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleRom("ea+8kr.bin")
-							.withAddress(0x6000)
-							.withSize(0x2000)
-							.storable(true)
-							.create("EA/8K Super Cart Non-Volatile RAM");
-					module.addMemoryEntryInfo(info);
-				}
-			}
+//			// fixup specific modules
+//			if (moduleName.equalsIgnoreCase(MINI_MEMORY)) {
+//				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
+//				if (infos.length == 2) {
+//					MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleRom("minir.bin")
+//							.withAddress(0x7000)
+//							.withSize(0x1000)
+//							.storable(true)
+//							.create("Mini Memory Non-Volatile RAM");
+//					module.addMemoryEntryInfo(info);
+//					
+//					// fixup earlier entry if present
+//					for (MemoryEntryInfo xinfo : infos) {
+//						if (xinfo.getDomainName().equals(IMemoryDomain.NAME_CPU)) {
+//							URI uri = fileLocator.findFile(xinfo.getFilename());
+//							try {
+//								int limit = 0x1000;
+//								String md5 = fileLocator.getContentMD5(uri, 0, limit, true);
+//								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
+//								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5_LIMIT, limit);
+//							} catch (IOException e) {
+//								e.printStackTrace();
+//							}
+//
+//						}
+//					}
+//				}
+//			}
+//			else if (module.getName().equalsIgnoreCase(EA_8K_SUPER_CART)) {
+//				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
+//				if (infos.length == 1) {
+//					MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleRom("ea+8kr.bin")
+//							.withAddress(0x6000)
+//							.withSize(0x2000)
+//							.storable(true)
+//							.create("EA/8K Super Cart Non-Volatile RAM");
+//					module.addMemoryEntryInfo(info);
+//				}
+//			}
 			
 			// Replace the name of any stock module
-			IModule stock = moduleManager.findStockModuleMatching(module);
-			if (stock != null) {
-				if (stock.getMemoryEntryInfos().length == module.getMemoryEntryInfos().length) {
-					module.setName(stock.getName());
-				} else {
-					module.setName(stock.getName() + " (possibly broken)");
+			if (!ignoreStock) {
+				IModule stock = moduleManager.findStockModuleByMd5(module.getMD5());
+				if (stock != null) {
+					if (stock.getMemoryEntryInfos().length == module.getMemoryEntryInfos().length) {
+						module.setName(stock.getName());
+					} else {
+						module.setName(stock.getName() + " (possibly broken)");
+					}
 				}
 			}
 		}
@@ -655,16 +667,18 @@ public class ModuleDetector implements IModuleDetector {
 			if (module != null) {
 				moduleMap.put(file.getName(), module);
 				
-//				// turn this on to get a real name and detect auto-start modules
-//				for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-//					String name = readHeaderName(module.getName(), zf, info.getFilename(), info.getDomainName());
-//					if (name != null && !name.isEmpty()) {
-//						if (!name.equals(module.getName())) {
-//							System.out.println("--> " + module.getName() + "; MD5=" + module.getMD5());
-//							module.setName(name);
-//						}
-//					}
-//				}
+				if (readHeaders) {
+					// get a real name and detect auto-start modules
+					for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
+						String name = readHeaderName(module.getName(), zf, info.getFilename(), info.getDomainName());
+						if (name != null && !name.isEmpty()) {
+							if (!name.equals(module.getName())) {
+								System.out.println("--> " + module.getName() + "; MD5=" + module.getMD5());
+								module.setName(name);
+							}
+						}
+					}
+				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

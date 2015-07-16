@@ -45,16 +45,52 @@ import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
  */
 public class DetectModules {
 
+	public static void main(String[] args) {
+		if (args.length == 0) {
+			System.err.println("Run as DetectModules [-n] [-r] [path...]\n"
+					+"\n"
+					+"-n:  do not look up modules against stock module database"
+					+"-r:  read headers from ROM"
+					);
+			return;
+		}
+		boolean noStock = false;
+		boolean readHeaders = false;
+		int i = 0;
+		while (true) {
+			if ("-n".equals(args[i])) {
+				noStock = true;
+				i++;
+			}
+			else if ("-r".equals(args[i])) {
+				readHeaders = true;
+				i++;
+			}
+			else
+				break;
+		}
+		DetectModules modules = new DetectModules(noStock, readHeaders);
+		for (; i < args.length; i++) {
+			String arg = args[i];
+			System.out.println("[" + arg + "]");
+			modules.scan(arg);
+		}
+		modules.list();
+	}
+
+	
 	private ISettingsHandler settings;
 	private IMachine machine;
 	private IModuleDetector detector;
 
-	public DetectModules() {
+	public DetectModules(boolean noStock, boolean readHeader) {
 		settings = new BasicSettingsHandler();  
 		machine = new StandardTI994AMachineModel().createMachine(settings);
 		
 		URI databaseURI = URI.create("test.xml");
 		detector = machine.createModuleDetector(databaseURI);
+		detector.setIgnoreStock(noStock);
+		detector.setReadHeaders(readHeader);
 	}
 	
 	public void scan(String path) {
@@ -103,17 +139,5 @@ public class DetectModules {
 		}
 	}
 
-	public static void main(String[] args) {
-		if (args.length == 0) {
-			System.err.println("Run as DetectModules [path...]");
-			return;
-		}
-		DetectModules modules = new DetectModules();
-		for (String arg : args) {
-			System.out.println("[" + arg + "]");
-			modules.scan(arg);
-		}
-		modules.list();
-	}
 	
 }
