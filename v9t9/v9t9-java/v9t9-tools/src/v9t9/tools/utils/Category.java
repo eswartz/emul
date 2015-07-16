@@ -25,5 +25,6 @@ public @interface Category {
 	String value();
 	String DEVELOPMENT = "Development";
 	String DISKUTILS = "Disk Utilities";
+	String SETUP = "Setup";
 	String OTHER = "Other";
 }

@@ -117,6 +117,7 @@ public class UpdateModuleXmlMd5Hashes {
 							info, info.getFilename2(), 
 							info.getFile2MD5(), info.getFile2MD5Algorithm());
 				}
+				module.setMD5(null);
 			}
 			
 			File backup = new File(outfile.getAbsolutePath() + "~");

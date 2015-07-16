@@ -34,6 +34,7 @@ public interface IModule {
 	
 	MemoryEntryInfo[] getMemoryEntryInfos();
 	void addMemoryEntryInfo(MemoryEntryInfo info);
+	int getMemoryEntryInfoCount();
 	
 	List<String> getKeywords();
 
@@ -48,12 +49,22 @@ public interface IModule {
 	 * @return
 	 */
 	String getMD5();
+	
 	/** Identify the module uniquely by the kind of memory entries it has,
 	 * but nothing specific like the module name (which sometimes must 
 	 * be detected or disambiguated) or filenames (which are arbitrary). 
 	 * @return
 	 */
 	void setMD5(String moduleMd5);
+	
+	/**
+	 * If set, this is an MD5 of a (stock) module that may be incorrectly
+	 * reported.  For example, Mini Memory and EA/8K Super Cart need to
+	 * have the stored memory entries to make sense.
+	 * @return MD5 of a module to replace with the receiver
+	 */
+	String getReplaceMD5();
+
 
 	/**
 	 * Tell whether the module starts automatically
@@ -63,4 +74,23 @@ public interface IModule {
 	 * Tell whether the module starts automatically
 	 */
 	void setAutoStart(boolean autoStart);
+	
+	/**
+	 * Simplify the paths in the given module, assuming the files
+	 * will eventually be detected on the search path.
+	 */
+	void removePathsFromFiles(IPathFileLocator locator);
+	
+	/**
+	 * Remove filenames from the module (except database URI),
+	 * ensuring that file MD5s are in place.
+	 * @param fileLocator 
+	 */
+	void simplifyContent(IPathFileLocator fileLocator);
+
+	/**
+	 * Make a deep copy of this module.
+	 * @return
+	 */
+	IModule copy();
 }

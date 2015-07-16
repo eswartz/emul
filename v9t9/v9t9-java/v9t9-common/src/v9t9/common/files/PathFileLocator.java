@@ -981,7 +981,12 @@ public class PathFileLocator implements IPathFileLocator {
 	 */
 	protected String fetchMD5(URI uri, IMD5SumFilter filter, boolean mustExist)
 			throws IOException {
+		
 		String md5;
+		if (uri == null) {
+			throw new IOException("null URI for md5");
+		}
+
 		try {
 			if (uri.toString().endsWith("/")) {
 				// ignore directories

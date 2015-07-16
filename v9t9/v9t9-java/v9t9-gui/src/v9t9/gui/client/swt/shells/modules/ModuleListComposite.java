@@ -506,7 +506,7 @@ public class ModuleListComposite extends Composite {
 			for (IModule module : ents) {
 				IModule exist = machine.getModuleManager().findModuleByName(module.getName(), true);
 				if (exist == null) {
-					fixupProperties(module);
+					module.removePathsFromFiles(machine.getRomPathFileLocator());
 					discoveredModules.add(module);
 				} else if (exist.getDatabaseURI().equals(databaseURI)) {
 					if (Arrays.equals(exist.getMemoryEntryInfos(), module.getMemoryEntryInfos()))
@@ -528,53 +528,6 @@ public class ModuleListComposite extends Composite {
 		reset();
 	}
 	
-	/**
-	 * @param module
-	 */
-	private void fixupProperties(IModule module) {
-		for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-			shortenPath(info, MemoryEntryInfo.FILENAME);
-			shortenPath(info, MemoryEntryInfo.FILENAME2);
-		}
-	}
-
-	/**
-	 * @param info
-	 * @param prop
-	 */
-	private void shortenPath(MemoryEntryInfo info, String prop) {
-		Object path = info.getProperties().get(prop);
-		if (path == null)
-			return;
-		String replPathStr = null; 
-		String pathStr = path.toString();
-		for (URI searchURI : machine.getRomPathFileLocator().getSearchURIs()) {
-			String searchStr = searchURI.toString();
-			// remove e.g. file:/foo/bar from jar:file:/foo/bar
-			String newPathStr = pathStr.replace(searchStr, "");
-			if (!newPathStr.equals(pathStr)) {
-				if (replPathStr == null || newPathStr.length() < replPathStr.length()) {
-					replPathStr = newPathStr;
-					info.getProperties().put(prop, newPathStr);
-				}
-			} else {
-				int idx = searchStr.indexOf(':');
-				if (idx > 0) {
-					// remove e.g. /foo/bar from file:/foo/bar
-					searchStr = searchStr.substring(idx+1);
-					newPathStr = pathStr.replace(searchStr, "");
-					if (!newPathStr.equals(pathStr)) {
-						if (replPathStr == null || newPathStr.length() < replPathStr.length()) {
-							replPathStr = newPathStr;
-							info.getProperties().put(prop, newPathStr);
-						}
-					}
-				}
-				
-			}
-		}
-	}
-
 	public IStatus getStatus() {
 		return status;
 	}
@@ -594,7 +547,7 @@ public class ModuleListComposite extends Composite {
 				for (IModule disc : discoveredModules.toArray(new IModule[discoveredModules.size()])) {
 					if (module.getName().equals(disc.getName())) {
 						selectedModules.add(disc);
-						fixupProperties(disc);
+						disc.removePathsFromFiles(machine.getRomPathFileLocator());
 						discoveredModules.remove(disc);
 						matched.add(disc);
 						found = true;
@@ -602,7 +555,7 @@ public class ModuleListComposite extends Composite {
 					}
 				}
 				if (!found) {
-					fixupProperties(module);
+					module.removePathsFromFiles(machine.getRomPathFileLocator());
 					matched.add(module);
 					selectedModules.add(module);
 				}

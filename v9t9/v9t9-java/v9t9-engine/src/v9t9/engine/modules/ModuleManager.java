@@ -470,7 +470,8 @@ public class ModuleManager implements IModuleManager {
 		}
 		
 		for (IModule stock : stockModuleList) {
-			if (modMd5.equals(stock.getMD5())) {
+			if (modMd5.equals(stock.getMD5())
+					|| modMd5.equals(stock.getReplaceMD5())) {
 				return stock;
 			}
 		}

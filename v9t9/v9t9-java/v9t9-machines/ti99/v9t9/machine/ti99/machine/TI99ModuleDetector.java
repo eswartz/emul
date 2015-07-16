@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -55,11 +56,17 @@ import ejs.base.utils.XMLUtils;
  * @author ejs
  *
  */
-public class ModuleDetector implements IModuleDetector {
+public class TI99ModuleDetector implements IModuleDetector {
 
-	private static final Logger log = Logger.getLogger(ModuleDetector.class);
+	private static final String[] ACRONYMS_AND_ROMAN_NUMERALS = new String[] { "Ti", 
+		"Ii", "Iii", "Iv", "Vi", "Vii", "Viii", "Ix", 
+		"Xi", "Xii", "Xiii", "Xiv", "Xv", "Xvi", "Xvii", "Xviii", "Xix" };
+	private static final String[] PREPOSITIONS = new String[] { "And", "Or", "Of", "In", "For", "The" };
 
-	private static final String EA_8K_SUPER_CART = "EA/8K Super Cart";
+	private static final Logger log = Logger.getLogger(TI99ModuleDetector.class);
+
+//	private static final String EA_8K_SUPER_CART = "EA/8K Super Cart";
+	private static final String EASY_BUG = "Easy Bug";
 	private static final String MINI_MEMORY = "Mini Memory";
 	
 	private URI databaseURI;
@@ -72,7 +79,7 @@ public class ModuleDetector implements IModuleDetector {
 	private boolean readHeaders;
 	private boolean ignoreStock;
 
-	public ModuleDetector(URI databaseURI, IPathFileLocator fileLocator, IModuleManager moduleManager) {
+	public TI99ModuleDetector(URI databaseURI, IPathFileLocator fileLocator, IModuleManager moduleManager) {
 		this.databaseURI = databaseURI;
 		this.fileLocator = fileLocator;
 		this.moduleManager = moduleManager;
@@ -87,7 +94,7 @@ public class ModuleDetector implements IModuleDetector {
 	}
 
 	@Override
-	public Collection<IModule> getModules() {
+	public Collection<IModule> getAllModules() {
 		List<IModule> modules = new ArrayList<IModule>(this.modules.values());
 		Collections.sort(modules, new Comparator<IModule>() {
 
@@ -166,35 +173,36 @@ public class ModuleDetector implements IModuleDetector {
 				iter.remove();
 				continue;
 			}
-			
-//			// fixup specific modules
-//			if (moduleName.equalsIgnoreCase(MINI_MEMORY)) {
-//				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
-//				if (infos.length == 2) {
-//					MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleRom("minir.bin")
-//							.withAddress(0x7000)
-//							.withSize(0x1000)
-//							.storable(true)
-//							.create("Mini Memory Non-Volatile RAM");
-//					module.addMemoryEntryInfo(info);
-//					
-//					// fixup earlier entry if present
-//					for (MemoryEntryInfo xinfo : infos) {
-//						if (xinfo.getDomainName().equals(IMemoryDomain.NAME_CPU)) {
-//							URI uri = fileLocator.findFile(xinfo.getFilename());
-//							try {
-//								int limit = 0x1000;
-//								String md5 = fileLocator.getContentMD5(uri, 0, limit, true);
-//								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
-//								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5_LIMIT, limit);
-//							} catch (IOException e) {
-//								e.printStackTrace();
-//							}
-//
-//						}
-//					}
-//				}
-//			}
+
+			// Mini Memory often "ships" as an 8k ROM, which
+			// makes no sense.  Reduce the size 
+			if (moduleName.equalsIgnoreCase(MINI_MEMORY)) {
+				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
+				if (infos.length == 2) {
+					MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleRom("minir.bin")
+							.withAddress(0x7000)
+							.withSize(0x1000)
+							.storable(true)
+							.create("Mini Memory Non-Volatile RAM");
+					module.addMemoryEntryInfo(info);
+					
+					// fixup earlier entry if present
+					for (MemoryEntryInfo xinfo : infos) {
+						if (xinfo.getDomainName().equals(IMemoryDomain.NAME_CPU)) {
+							URI uri = fileLocator.findFile(xinfo.getFilename());
+							try {
+								int limit = 0x1000;
+								String md5 = fileLocator.getContentMD5(uri, 0, limit, true);
+								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
+								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5_LIMIT, limit);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+
+						}
+					}
+				}
+			}
 //			else if (module.getName().equalsIgnoreCase(EA_8K_SUPER_CART)) {
 //				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
 //				if (infos.length == 1) {
@@ -216,6 +224,8 @@ public class ModuleDetector implements IModuleDetector {
 					} else {
 						module.setName(stock.getName() + " (possibly broken)");
 					}
+					module.setAutoStart(stock.isAutoStart());
+					module.getKeywords().addAll(stock.getKeywords());
 				}
 			}
 		}
@@ -381,8 +391,7 @@ public class ModuleDetector implements IModuleDetector {
 			module = new Module(databaseURI, key);
 		}
 		if (moduleName.length() > 0) {
-			// HACK
-			if ("Easy Bug".equalsIgnoreCase(moduleName)) {
+			if (EASY_BUG.equalsIgnoreCase(moduleName)) {
 				moduleName = MINI_MEMORY;
 			}
 			module.setName(moduleName);
@@ -409,7 +418,6 @@ public class ModuleDetector implements IModuleDetector {
 				info = MemoryEntryInfoBuilder.standardModuleGrom(fname)
 						.withAddress(baseAddr)
 						.withOffset(0)
-						.withSize(-0xA000)
 						.create(moduleName);
 				fetchMD5(module, info, false);
 				module.addMemoryEntryInfo(info);
@@ -482,7 +490,6 @@ public class ModuleDetector implements IModuleDetector {
 			String moduleName, String fileName, int fileOffset) {
 		MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleGrom(fileName)
 				.withOffset(fileOffset)
-				.withSize(-0xA000)
 				.create(moduleName);
 		fetchMD5(module, info, false);
 		module.addMemoryEntryInfo(info);
@@ -519,13 +526,20 @@ public class ModuleDetector implements IModuleDetector {
 			String moduleName, String fileName, int fileOffset, int fileSize) {
 		MemoryEntryInfo info = null;
 		boolean found = false;
+		
+		// the Mini Memory ROM sometimes ships as 8k,
+		// which is incorrect.
+		if (MINI_MEMORY.equals(module.getName())) {
+			fileSize = 0x1000;
+		}
+		
 		for (MemoryEntryInfo ex : module.getMemoryEntryInfos()) {
 			// modify a banked entry
 			if (ex.isBanked() && ex.getAddress() == 0x6000 && IMemoryDomain.NAME_CPU.equals(ex.getDomainName())) {
 				ex.getProperties().put(MemoryEntryInfo.FILENAME, fileName);
 				ex.getProperties().put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
 				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
-				ex.getProperties().put(MemoryEntryInfo.SIZE, -0x2000);
+				ex.getProperties().put(MemoryEntryInfo.SIZE, fileSize);
 				fetchMD5(module, ex, false);
 				found = true;
 				info = ex;
@@ -538,13 +552,12 @@ public class ModuleDetector implements IModuleDetector {
 				info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
 						.withOffset(fileOffset)
 						.withBankClass(StdMultiBankedMemoryEntry.class)
-						.withSize(-0x2000)
 						.isReversed(true)
 						.create(moduleName);
 			} else {
 				info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
 						.withOffset(fileOffset)
-						.withSize(-0x2000)
+						.withSize(fileSize)
 						.create(moduleName);
 			}
 			
@@ -563,7 +576,6 @@ public class ModuleDetector implements IModuleDetector {
 			if (ex.getAddress() == 0x6000 && IMemoryDomain.NAME_CPU.equals(ex.getDomainName())) {
 				ex.getProperties().put(MemoryEntryInfo.FILENAME2, fileName);
 				ex.getProperties().put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
-				ex.getProperties().put(MemoryEntryInfo.SIZE, -0x2000);
 				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
 				fetchMD5(module, ex, true);
 				found = true;
@@ -653,7 +665,7 @@ public class ModuleDetector implements IModuleDetector {
 					try {
 						lis = zf.getInputStream(layout);
 						mis = metainf != null ? zf.getInputStream(metainf) : null;
-						module = convertLayoutMetainf(databaseURI, file.toURI(), lis, mis);
+						module = convertLayoutMetainf(zf, databaseURI, file.toURI(), lis, mis);
 					} finally {
 						if (lis != null)
 							lis.close();
@@ -665,7 +677,7 @@ public class ModuleDetector implements IModuleDetector {
 			}
 			
 			if (module != null) {
-				moduleMap.put(file.getName(), module);
+				moduleMap.put(file.getPath(), module);
 				
 				if (readHeaders) {
 					// get a real name and detect auto-start modules
@@ -725,13 +737,15 @@ public class ModuleDetector implements IModuleDetector {
 					
 					if (oneModule) {
 						// associate with zip file's module
-						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), file.getName(), newModules)) {
+						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), 
+								file.getPath(), newModules)) {
 							log.debug("Matched " + ent.getName() + " from " + file.getName());
 							// nice
 						}
 					} else {
 						// associate with appropriate module
-						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), file.getName(), newModules)) {
+						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), 
+								file.getPath(), newModules)) {
 							log.debug("Matched " + ent.getName() + " from " + file.getName());
 							// nice
 						}
@@ -748,14 +762,15 @@ public class ModuleDetector implements IModuleDetector {
 			if (!newModules.isEmpty()) {
 				moduleMap.putAll(newModules);
 				
-				for (IModule module : newModules.values()) {
-					// turn this on to get a real name and detect auto-start modules
-					for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-						String name = readHeaderName(module.getName(), zf, info.getFilename(), info.getDomainName());
-						if (name != null && !name.isEmpty()) {
-							if (!name.equals(module.getName())) {
-								System.out.println("--> " + module.getName() + "; MD5=" + module.getMD5());
-								module.setName(name);
+				if (readHeaders) {
+					for (IModule module : newModules.values()) {
+						for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
+							String name = readHeaderName(module.getName(), zf, info.getFilename(), info.getDomainName());
+							if (name != null && !name.isEmpty()) {
+								if (!name.equals(module.getName())) {
+									log.info("--> " + module.getName() + "; MD5=" + module.getMD5() + " == " + name);
+									module.setName(name);
+								}
 							}
 						}
 					}
@@ -863,7 +878,7 @@ public class ModuleDetector implements IModuleDetector {
 	 * @param is
 	 * @return
 	 */
-	private IModule convertLayoutMetainf(URI databaseURI, URI zipUri, InputStream lis,
+	private IModule convertLayoutMetainf(ZipFile zf, URI databaseURI, URI zipUri, InputStream lis,
 			InputStream mis) {
 		IModule module;
 
@@ -901,7 +916,15 @@ public class ModuleDetector implements IModuleDetector {
 
 		Map<String, String> imgToFile = new HashMap<String, String>();
 		for (Element romEl : XMLUtils.getChildElementsNamed(resources,  "rom")) {
-			imgToFile.put(romEl.getAttribute("id"), romEl.getAttribute("file"));
+			String file = romEl.getAttribute("file");
+			if (null == zf.getEntry(file)) {
+				// some entries have lowercase/uppercase mismatches
+				if (null != zf.getEntry(file.toUpperCase())) 
+					file = file.toUpperCase();
+				else if (null != zf.getEntry(file.toLowerCase())) 
+					file = file.toLowerCase();
+			}
+			imgToFile.put(romEl.getAttribute("id"), file);
 		}
 		
 		Element config = XMLUtils.getChildElementNamed(layout.getDocumentElement(),  "configuration");
@@ -920,11 +943,12 @@ public class ModuleDetector implements IModuleDetector {
 
 		for (Element socketEl : XMLUtils.getChildElementsNamed(pcb,  "socket")) {
 			String type = socketEl.getAttribute("id");
-			String uri = makeZipUriString(zipUri, imgToFile.get(socketEl.getAttribute("uses")));
+			String filename = imgToFile.get(socketEl.getAttribute("uses"));
+			String uri = makeZipUriString(zipUri, filename);
 
 			if (type.equals("rom_socket")) {
 				injectModuleRom(module, databaseURI, moduleName, uri,
-						0, -0x2000
+						0, (int) zf.getEntry(filename).getSize()
 						);
 			}
 			else if (type.equals("rom2_socket")) {
@@ -1130,25 +1154,132 @@ public class ModuleDetector implements IModuleDetector {
 		String titledName = sb.toString();
 		
 		// lowercase prepositions
-		for (String prep : new String[] { "And", "Or", "Of", "In", "For", "The" }) {
+		for (String prep : PREPOSITIONS) {
 			titledName = replaceWord(titledName, prep, prep.toLowerCase(), false);
 		}
-				
+
 		// uppercase common acronyms
-		for (String acr : new String[] { "Ti", "Ii", "Iii" }) {
+		for (String acr : ACRONYMS_AND_ROMAN_NUMERALS) {
 			titledName = replaceWord(titledName, acr, acr.toUpperCase(), true);
 		}
 				
 		return titledName;		
 	}
 
+	private boolean isSpaceOrSep(char ch) {
+		return Character.isWhitespace(ch) || ch == '-' || ch == '/';
+	}
 	private String replaceWord(String str, String word, String repl, boolean allowAtStart) {
 		int idx = str.indexOf(word);
 		if (idx > (allowAtStart ? -1 : 0)) {
-			str = str.substring(0, idx) + repl + str.substring(idx + word.length());
+			if ((idx == 0 || isSpaceOrSep(str.charAt(idx-1)))
+					&& (idx + word.length() >= str.length() || isSpaceOrSep(str.charAt(idx+word.length())))) {
+				str = str.substring(0, idx) + repl + str.substring(idx + word.length());
+			}
 		}
 
 		return str;
 	}
+
+	@Override
+	public Map<String, List<IModule>> gatherDuplicates() {
+		Map<String, List<IModule>> md5ToModules = new TreeMap<String, List<IModule>>();
+		for (IModule module : modules.values()) {
+			String md5 = module.getMD5();
+			List<IModule> mods = md5ToModules.get(md5);
+			if (mods == null) {
+				mods = new ArrayList<IModule>();
+				md5ToModules.put(md5, mods);
+			}
+			mods.add(module);
+		}
+		return md5ToModules;
+	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleDetector#simplifyModules()
+	 */
+	@Override
+	public List<IModule> simplifyModules() {
+		List<IModule> simpleModules = new ArrayList<IModule>();
+		
+		for (Map.Entry<String, List<IModule>> ent : gatherDuplicates().entrySet()) {
+			String name = null;
+			
+			IModule stock;
+			
+			// fetch name in case of problems
+			stock = moduleManager.findStockModuleByMd5(ent.getValue().get(0).getMD5());
+			if (stock != null) {
+				name = stock.getName();
+			} 
+			else {
+				// prefer a name that comes straight from .bin files, which will
+				// have the more reliable name than .rpk, which a person typed in
+				for (IModule m : ent.getValue()) {
+					Collection<File> usedFiles = m.getUsedFiles(fileLocator);
+					for (File file : usedFiles) {
+						if (file.getName().toLowerCase().endsWith(".bin")) {
+							if (!TextUtils.isEmpty(m.getName())) {
+								name = m.getName();
+								break;
+							}
+						}
+					}
+					if (name != null)
+						break;
+				}
+			}
+	
+			// prefer contents that come from .rpk files, which will
+			// have the more reliable grouping of entries
+			
+			int stockEntries = stock != null ? stock.getMemoryEntryInfos().length : 0;
+			IModule mod = null;
+			for (IModule m : ent.getValue()) {
+				// if we know how many entries are expected, ignore any detected one that doesn't match
+				if (stock == null || m.getMemoryEntryInfoCount() == stockEntries) {
+					
+					boolean isRPK = false;
+					for (MemoryEntryInfo info : m.getMemoryEntryInfos()) {
+						if (info.getFilename().startsWith("jar:") && info.getFilename().toLowerCase().contains(".rpk")) {
+							mod = m;
+							isRPK = true;
+							break;
+						}
+					}
+					
+					if (isRPK) {
+						break;
+					} else {
+						// candidate since # entries matched
+						mod = m;
+						if (!TextUtils.isEmpty(m.getName()))
+							name = m.getName();
+					}
+					
+				}
+			}
+			if (mod == null) {
+				if (stock != null) {
+					mod = stock;
+				} else {
+					mod = ent.getValue().get(0);
+					log.error("possibly broken module: " + mod); 
+				}
+			}
+			
+			IModule simple = mod.copy();
+			
+			if (name != null && !name.isEmpty()) {
+				simple.setName(name);
+			}
+			
+			simple.simplifyContent(fileLocator);
+			
+			simpleModules.add(simple);
+		}
+		
+		return simpleModules;
+	}
 }

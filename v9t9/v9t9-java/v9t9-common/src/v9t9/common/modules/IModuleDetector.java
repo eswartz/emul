@@ -5,6 +5,8 @@ package v9t9.common.modules;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author ejs
@@ -16,7 +18,7 @@ public interface IModuleDetector {
 	Collection<IModule> scan(File base);
 	
 	/** Get the cumulative detected modules after or more invocations of #scan() */
-	Collection<IModule> getModules();
+	Collection<IModule> getAllModules();
 
 	/**
 	 * If set, read the ROM headers even if there is another name
@@ -31,5 +33,18 @@ public interface IModuleDetector {
 	 * @param ignoreStock
 	 */
 	void setIgnoreStock(boolean ignoreStock);
+
+	/**
+	 * From all the detected modules, group them by module MD5.
+	 * @return map of MD5 to modules
+	 */
+	Map<String, List<IModule>> gatherDuplicates();
+
+	/**
+	 * From all the detected modules, return a list of the
+	 * unique modules, and remove any filename or URI information.
+	 * @return
+	 */
+	List<IModule> simplifyModules();
 
 }

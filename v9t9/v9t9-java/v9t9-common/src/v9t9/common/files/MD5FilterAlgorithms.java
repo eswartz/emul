@@ -33,6 +33,11 @@ public class MD5FilterAlgorithms {
 		
 		@Override
 		public void fillSegments(int contentLength, Collection<FilterSegment> segments) {
+			int fragment = contentLength & 0x0fff;
+			if (fragment > 0 && fragment < 0x400) {
+				// remove cruft bolted to the end
+				contentLength -= fragment;
+			}
 			segments.add(new FilterSegment(0, contentLength));
 		}
 		
@@ -115,6 +120,12 @@ public class MD5FilterAlgorithms {
 		
 		@Override
 		public void fillSegments(int contentLength, Collection<FilterSegment> segments) {
+			int fragment = contentLength & 0x0fff;
+			if (fragment > 0 && fragment < 0x400) {
+				// remove cruft bolted to the end
+				contentLength -= fragment;
+			}
+			
 			for (int offs = 0; offs < contentLength; offs += 0x2000) {
 				int limit = Math.min(offs + 0x1800, contentLength);
 				segments.add(new FilterSegment(offs, limit - offs));

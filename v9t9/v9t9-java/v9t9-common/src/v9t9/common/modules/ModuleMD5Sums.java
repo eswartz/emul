@@ -60,11 +60,11 @@ public class ModuleMD5Sums {
 			if (ent.getAddress2() != 0)
 				sb.append(HexUtils.toHex4(ent.getAddress2()));
 			if (ent.getFileMD5() != null) {
-				sb.append(ent.getFileMD5Algorithm());
+				sb.append(ent.getEffectiveFileMD5Algorithm());
 				sb.append(ent.getFileMD5());
 			}
 			if (ent.getFile2MD5() != null) {
-				sb.append(ent.getFile2MD5Algorithm());
+				sb.append(ent.getEffectiveFile2MD5Algorithm());
 				sb.append(ent.getFile2MD5());
 			}
 		}

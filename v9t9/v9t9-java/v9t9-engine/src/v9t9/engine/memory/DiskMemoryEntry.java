@@ -276,6 +276,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 			info = (isWordAccess() ? MemoryEntryInfoBuilder.wordMemoryEntry() : MemoryEntryInfoBuilder.byteMemoryEntry())
 				.withFilename(section.get("FileName") != null ? section.get("FileName") : section.get("FilePath"))
 				.withFileMD5(section.get("FileMD5"))
+				.withFileMD5Algorithm(section.get("FileMD5Algorithm"))
 				.withOffset(section.getInt("FileOffs"))
 				.withSize(section.getInt("Size"))
 				.withAddress(getAddr())

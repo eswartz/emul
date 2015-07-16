@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -34,9 +35,12 @@ import ejs.base.utils.XMLUtils;
  *
  */
 public class ModuleDatabase {
+	private static final String ELEMENT_MODULES = "modules";
 	private static final String ELEMENT_MODULE = "module";
+	
 	private static final String ATTR_NAME = "name";
 	private static final String ATTR_MD5 = "md5";
+	private static final String ATTR_REPLACE_MD5 = "replaceMd5";
 	private static final String ATTR_KEYWORDS = "keywords";
 	private static final String ATTR_AUTO_START = "autoStart";
 	
@@ -52,7 +56,7 @@ public class ModuleDatabase {
 		storage.setInputStream(is);
 		List<IModule> modules = new ArrayList<IModule>();
 		try {
-			storage.load("modules");
+			storage.load(ELEMENT_MODULES);
 		} catch (StorageException e) {
 			logger.error("failed to load module database", e);
 			if (e.getCause() instanceof StorageException)
@@ -90,6 +94,11 @@ public class ModuleDatabase {
 					module.setMD5(moduleMd5);
 				}
 				
+				String replaceModuleMd5 = moduleElement.getAttribute(ATTR_REPLACE_MD5);
+				if (replaceModuleMd5 != null && !replaceModuleMd5.isEmpty()) {
+					module.setReplaceMD5(replaceModuleMd5);
+				}
+				
 				String keywordStr = moduleElement.getAttribute(ATTR_KEYWORDS);
 				if (keywordStr != null && keywordStr.length() > 0) {
 					String[] kws = keywordStr.split("\\s+");
@@ -113,13 +122,15 @@ public class ModuleDatabase {
 	}
 	
 
-	public static void saveModuleListAndClose(IMemory memory, OutputStream os, URI databaseURI, List<IModule> modules) throws NotifyException {
+	public static void saveModuleListAndClose(IMemory memory, OutputStream os, 
+			URI databaseURI, 
+			Collection<IModule> modules) throws NotifyException {
 		
 		StreamXMLStorage storage = new StreamXMLStorage();
 		storage.setOutputStream(os);
 		
 		try {
-			storage.create("modules");
+			storage.create(ELEMENT_MODULES);
 		} catch (StorageException e1) {
 			throw new NotifyException(null, "Error creating module XML", e1.getCause());
 		}
@@ -140,6 +151,8 @@ public class ModuleDatabase {
 			}
 
 			moduleElement.setAttribute(ATTR_MD5, module.getMD5());
+			if (module.getReplaceMD5() != null)
+				moduleElement.setAttribute(ATTR_REPLACE_MD5, module.getReplaceMD5());
 			
 			if (module.isAutoStart())
 				moduleElement.setAttribute(ATTR_AUTO_START, "true");
@@ -158,5 +171,4 @@ public class ModuleDatabase {
 		}
 
 	}
-	
 }

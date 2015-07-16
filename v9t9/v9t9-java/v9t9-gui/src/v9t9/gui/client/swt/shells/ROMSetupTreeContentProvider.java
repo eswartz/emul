@@ -100,7 +100,7 @@ public class ROMSetupTreeContentProvider implements ITreeContentProvider {
 							// ignore
 						}
 					}
-					detectedModules.addAll(detector.getModules());
+					detectedModules.addAll(detector.getAllModules());
 					
 					synchronized (ROMSetupTreeContentProvider.this) {
 						ROMSetupTreeContentProvider.this.notifyAll();

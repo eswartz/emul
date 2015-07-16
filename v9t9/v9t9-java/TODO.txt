@@ -1,0 +1,37 @@
+
+Module types:
+
+-- simple CPU-only module
+-- GROM-only module
+-- CPU+GROM module
+-- CPU banked-only module
+-- CPU Banked + GROM module
+-- module w/storage
+
+Save states:
+
+-- each of the above
+
+Module selector:
+
+-- show only one instance of a module with the same module MD5
+-- configuration page should group matches, maybe with Advanced to reveal details
+-- remember/re-match selection when re-opening for each of the module types
+
+Module detector:
+
+-- ensure that all modules in my dirs can be detected
+-- ensure that any files left over are really misplaced
+-- make detector into real V9t9 tool
+
+-- ensure that in a new user's config, module scan is done once (maybe per dir which is on the path)
+-- ensure modules.xml written properly
+-- ensure that in existing configs, modules.xml provides fast path and no detecting is done
+
+-- fix drag'n'drop
+
+Non-volatile RAM:
+
+-- implement approach from blog
+
+

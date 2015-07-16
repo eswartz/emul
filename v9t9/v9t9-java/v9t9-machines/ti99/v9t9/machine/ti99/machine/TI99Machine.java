@@ -166,7 +166,7 @@ public class TI99Machine extends MachineBase {
 	 */
 	@Override
 	public IModuleDetector createModuleDetector(URI databaseURI) {
-		return new ModuleDetector(databaseURI, getRomPathFileLocator(), getModuleManager());
+		return new TI99ModuleDetector(databaseURI, getRomPathFileLocator(), getModuleManager());
 	}
 	
 	/* (non-Javadoc)

@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.settings.SettingSchema;
 
 /**
@@ -189,8 +190,23 @@ public class MemoryEntryInfo {
 		return getString(MemoryEntryInfo.FILE_MD5);
 	}
 
+	public String getDefaultMD5Algorithm() {
+		if (IMemoryDomain.NAME_GRAPHICS.equals(getDomainName())) {
+			return MD5FilterAlgorithms.ALGORITHM_GROM;
+		} else {
+			return MD5FilterAlgorithms.ALGORITHM_FULL;
+		}
+	}
+	
 	public String getFileMD5Algorithm() {
 		return getString(MemoryEntryInfo.FILE_MD5_ALGORITHM);
+	}
+	public String getEffectiveFileMD5Algorithm() {
+		String alg = getFileMD5Algorithm();
+		if (alg == null || alg.isEmpty()) {
+			alg = getDefaultMD5Algorithm();
+		}
+		return alg;
 	}
 
 	public String getDomainName() {
@@ -230,6 +246,13 @@ public class MemoryEntryInfo {
 	}
 	public String getFile2MD5Algorithm() {
 		return getString(MemoryEntryInfo.FILE2_MD5_ALGORITHM);
+	}
+	public String getEffectiveFile2MD5Algorithm() {
+		String alg = getFile2MD5Algorithm();
+		if (alg == null || alg.isEmpty()) {
+			alg = getDefaultMD5Algorithm();
+		}
+		return alg;
 	}
 
 	public int getOffset() {
@@ -346,6 +369,7 @@ public class MemoryEntryInfo {
 		props.remove(ADDRESS2);
 		props.remove(SIZE2);
 		props.remove(FILE2_MD5);
+		props.remove(FILE2_MD5_ALGORITHM);
 		props.remove(FILE2_MD5_LIMIT);
 		props.remove(FILE2_MD5_OFFSET);
 		props.remove(FILENAME2_PROPERTY);
@@ -360,6 +384,7 @@ public class MemoryEntryInfo {
 		move(props, SIZE, getSize2() != 0 ? getSize2() : getSize());
 		move(props, OFFSET, getOffset2());
 		move(props, FILE_MD5, getFile2MD5());
+		move(props, FILE_MD5_ALGORITHM, getFile2MD5Algorithm());
 		move(props, FILE_MD5_OFFSET, getFile2Md5Offset());
 		move(props, FILE_MD5_LIMIT, getFile2Md5Limit());
 		move(props, FILENAME_PROPERTY, getFilename2Property());
