@@ -157,7 +157,9 @@ public class ManualTestTI99ModuleDetection {
 	@Test
 	public void testMessModules() throws Exception {
 		testDirectory("/usr/local/src/v9t9-data/modules/mess",
-				"(?i).*\\.bin", "forthc.bin" 
+				"(?i).*\\.bin", "forthc.bin", 
+				"weightc.bin", "weightd.bin", 
+				"phm3021c.bin", "phm3021d.bin" 
 				);
 	}
 	@Test
@@ -198,7 +200,6 @@ public class ManualTestTI99ModuleDetection {
 		for (IModule module : modules) {
 			
 			Collection<File> files = module.getUsedFiles(locator);
-			assertFalse(files.isEmpty());
 			if (allFiles.removeAll(files)) {
 				System.out.println(module);
 				for (File file : files) {
@@ -408,7 +409,7 @@ public class ManualTestTI99ModuleDetection {
 			StringBuilder fails) {
 		for (IModule mod : mods) {
 			String md5 = mod.getMD5();
-			System.out.println(mod.getName() + " -> " + md5);
+			System.out.println(mod.getName() + " -> " + md5 + " @ " + mod.getMemoryEntryInfos()[0]);
 			IModule old = md5Map.put(md5, mod);
 			if (old != null && !old.equals(mod) && !old.getName().equals(mod.getName())) {
 				System.out.println("\tconflicts with " + old.getName());
@@ -436,7 +437,9 @@ public class ManualTestTI99ModuleDetection {
 	@Test
 	public void testModuleDatabase() throws Exception {
 		List<IModule> mods = testDirectory("/usr/local/src/v9t9-data/modules/mess",
-				"(?i)(phm.*)\\.bin" 
+				"(?i)(phm.*)\\.bin",
+				"weightc.bin", "weightd.bin", 
+				"phm3021c.bin", "phm3021d.bin"
 				);
 		assertEquals(121, mods.size());
 		
@@ -449,7 +452,7 @@ public class ManualTestTI99ModuleDetection {
 			IModule mod = mods.get(i);
 			System.out.println(mod);
 			if (mod.getName().equals("") || mod.getName().matches("phm.*")) {
-				sb.append(mod.toString()).append('\n');
+				sb.append(mod.getMD5() + " = " + mod.toString()).append('\n');
 			}
 		}
 		if (sb.length() > 0) {
@@ -475,7 +478,9 @@ public class ManualTestTI99ModuleDetection {
 		
 		mods = testDirectory("/usr/local/src/v9t9-data/modules/mess",
 				"(?i).*\\.bin",
-				"forthc.bin", "nforthc.bin", "0forth.bin"
+				"forthc.bin", "nforthc.bin", "0forth.bin",
+				"weightc.bin", "weightd.bin", 
+				"phm3021c.bin", "phm3021d.bin"
 				);
 		
 		addModuleHashes(mods, md5Map, nameToMd5Map, sb);

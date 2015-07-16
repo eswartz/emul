@@ -223,18 +223,49 @@ public class TI99ModuleDetector implements IModuleDetector {
 				if (replacedStock != null) {
 					// this detected module is "really" another one, which has different
 					// memory entries
-					boolean added = false;
+					
+					Map<String, MemoryEntryInfo> stockInfos = new HashMap<String, MemoryEntryInfo>();
 					for (MemoryEntryInfo info : replacedStock.getMemoryEntryInfos()) {
-						if (info.isStored() || info.getAddress() != 0x6000) {
-							module.addMemoryEntryInfo(new MemoryEntryInfo(info.getProperties()));
-							added = true;
+						stockInfos.put(info.getDomainName() + ":" + info.getAddress(), info);
+					}
+					
+					Map<String, MemoryEntryInfo> curInfos = new HashMap<String, MemoryEntryInfo>();
+					for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
+						curInfos.put(info.getDomainName() + ":" + info.getAddress(), info);
+					}
+					
+					boolean changed = false;
+					
+					for (Map.Entry<String, MemoryEntryInfo> ent : stockInfos.entrySet()) {
+						if (!curInfos.containsKey(ent.getKey())) {
+							module.addMemoryEntryInfo(new MemoryEntryInfo(ent.getValue().getProperties()));
+							changed = true;
+						}
+						else if (ent.getValue().isStored()) {
+							// detected one may be bogus
+							MemoryEntryInfo info = curInfos.get(ent.getKey());
+							module.removeMemoryEntryInfo(info);
+							MemoryEntryInfo stockInfo = new MemoryEntryInfo(ent.getValue().getProperties());
+							stockInfo.getProperties().put(MemoryEntryInfo.FILENAME, info.getFilename());
+							stockInfo.getProperties().put(MemoryEntryInfo.FILENAME2, info.getFilename2());
+							module.addMemoryEntryInfo(stockInfo);
+							changed = true;
 						}
 					}
-					if (added) {
-						assert replacedStock.getMD5().equals(module.getMD5());
+					for (Map.Entry<String, MemoryEntryInfo> ent : curInfos.entrySet()) {
+						if (!stockInfos.containsKey(ent.getKey())) {
+							module.removeMemoryEntryInfo(ent.getValue());
+							changed = true;
+						}
 					}
 					module.setName(replacedStock.getName());
-					module.setMD5(replacedStock.getMD5());
+					
+					if (!TextUtils.isEmpty(replacedStock.getMD5())) {
+						if (changed) {
+							assert replacedStock.getMD5().equals(module.getMD5());
+						}
+						module.setMD5(replacedStock.getMD5());
+					}
 				}
 				
 				IModule stock = moduleManager.findStockModuleByMd5(module.getMD5());
@@ -478,14 +509,16 @@ public class TI99ModuleDetector implements IModuleDetector {
 		// content for console is in latter half)
 		for (int addr = 0; addr < content.length / 2; addr += 2) {
 			int word = readAddr(content, addr);
-			if (word == 0x45b /* RT */ 
-					|| word == 0x8300  /* CPU RAM base */
-					|| word == 0x83e0  /* GPLWS */
-					|| word == 0x8c00  /* VDPWA */
-					|| word == 0x8c02  /* VDPWD */
-					|| word == 0x8400  /* SOUND */
-					|| word == 0x380)  /* RTWP */
-				{
+			if (word == 0x45b /* RT */
+				|| word == 0xD820  /* */
+				|| word == 0x380  /* RTWP */
+				|| word == 0x8300  /* CPU RAM base */
+				|| word == 0x83e0  /* GPLWS */
+				|| word == 0x8c00  /* VDPWA */
+				|| word == 0x8c02  /* VDPWD */
+				|| word == 0x8400  /* SOUND */
+				)
+			{
 				insts++;
 			}
 		}

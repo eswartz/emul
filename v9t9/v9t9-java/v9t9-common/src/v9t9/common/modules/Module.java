@@ -149,6 +149,15 @@ public class Module implements IModule {
 		this.md5 = null;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModule#removeMemoryEntryInfo(v9t9.common.memory.MemoryEntryInfo)
+	 */
+	@Override
+	public void removeMemoryEntryInfo(MemoryEntryInfo info) {
+		entries.remove(info);
+		this.md5 = null;
+	}
+	
 	public void setMemoryEntryInfos(List<MemoryEntryInfo> entries) {
 		this.entries = entries;
 		this.md5 = null;

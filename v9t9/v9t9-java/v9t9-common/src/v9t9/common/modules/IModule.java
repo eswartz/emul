@@ -34,6 +34,7 @@ public interface IModule {
 	
 	MemoryEntryInfo[] getMemoryEntryInfos();
 	void addMemoryEntryInfo(MemoryEntryInfo info);
+	void removeMemoryEntryInfo(MemoryEntryInfo info);
 	int getMemoryEntryInfoCount();
 	
 	List<String> getKeywords();
@@ -58,9 +59,10 @@ public interface IModule {
 	void setMD5(String moduleMd5);
 	
 	/**
-	 * If set, this is an MD5 of a (stock) module that may be incorrectly
+	 * If set, this is an MD5 of one or more stock modules that may be incorrectly
 	 * reported.  For example, Mini Memory and EA/8K Super Cart need to
-	 * have the stored memory entries to make sense.
+	 * have the stored memory entries to make sense.  Vice versa, some
+	 * packages may ship the RAM as ROM.
 	 * @return MD5 of a module to replace with the receiver
 	 */
 	String getReplaceMD5();

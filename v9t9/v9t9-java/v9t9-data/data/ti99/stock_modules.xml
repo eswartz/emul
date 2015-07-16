@@ -7,9 +7,15 @@
       <memoryEntry address="0x7000" domain="CPU" fileName="minir.bin" size="0x1000" stored="true"/>
     </memoryEntries>
   </module>
-  <module md5="1A597C04D8A690C00CFF84A89272DEBB" name="EA/8K Super Cart" replaceMd5="B6361EDB8C4C5A87F7421ACF4519ED08">
+  <module md5="1A597C04D8A690C00CFF84A89272DEBB" name="EA/8K Super Cart (alt)" replaceMd5="B6361EDB8C4C5A87F7421ACF4519ED08">
     <memoryEntries>
       <gromModuleEntry fileMd5="279D2753816651D492B906BA76F9599E" fileName="ea+8k.bin" size="0x2000"/>
+      <romModuleEntry fileName="ea+8kr.bin" stored="true"/>
+    </memoryEntries>
+  </module>
+  <module md5="BC4DB63BAF7F5453DD91A7FD9112AC1F" name="EA/8K Super Cart" replaceMd5="CCE8DDA81172ACF48B581DF8113D74C9">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="710FF00A2D5C61DE3EE4065988993BF0" fileName="supcartg.bin" size="0x1800"/>
       <romModuleEntry fileName="ea+8kr.bin" stored="true"/>
     </memoryEntries>
   </module>
@@ -19,12 +25,12 @@
       <gromModuleEntry fileMd5="74DE12232ED0016B07AA4280CBE962B3" fileName="hopperg.bin" size="0x2000"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" md5="4711BF9F86BC0643952733C8A97FB1F5" name="Addition and Subtraction #1">
+  <module autoStart="true" md5="4711BF9F86BC0643952733C8A97FB1F5" name="Addition and Subtraction #1" replaceMd5="B1F32AABA68BD69657CBF8FA0F212B70">
     <memoryEntries>
       <gromModuleEntry fileMd5="9480B80314415EA3967CC581916910BF" fileName="addsub1g.bin" size="0x6000"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" md5="C722203F1987AE9FDA361B49F38DC970" name="Addition and Subtraction #2">
+  <module autoStart="true" md5="C722203F1987AE9FDA361B49F38DC970" name="Addition and Subtraction #2" replaceMd5="D2842FEE6DD5E90F8D82C18EB138C8DC">
     <memoryEntries>
       <gromModuleEntry fileMd5="BACC723478F974B9F20CCC60C449C095" fileName="addsub2g.bin" size="0x6000"/>
     </memoryEntries>
@@ -265,13 +271,13 @@
       <bankedModuleEntry file2Md5="952770D3772331F441079FE8B01C5676" fileMd5="9B5C4BA24A4FA53E0CFB3959E96632A8" fileName="phm3062c.bin" fileName2="phm3062d.bin"/>
     </memoryEntries>
   </module>
-  <module keywords="Parker Brothers' Game" md5="22871C610957851D514D73285B404B4D" name="Frogger">
+  <module keywords="Parker Brothers' Game" md5="22871C610957851D514D73285B404B4D" name="Frogger" replaceMd5="2174B7B791DAFAB804926EAE301A3D28">
     <memoryEntries>
       <gromModuleEntry fileMd5="AE24692BB8325DC8B90FEE0EA51EA0D6" fileName="froggerg.bin" size="0xA000"/>
       <romModuleEntry fileMd5="411FB78E6E0F0CEE77EB0BE91D6FCCFB" fileName="froggerc.bin"/>
     </memoryEntries>
   </module>
-  <module keywords="Parker Brothers' Game" md5="549100FFAD06AD9F06E6D5647A6532F5" name="Q*Bert">
+  <module keywords="Parker Brothers' Game" md5="549100FFAD06AD9F06E6D5647A6532F5" name="Q*Bert" replaceMd5="B70C02505C78BFDF77EFCF08E809F1C9">
     <memoryEntries>
       <gromModuleEntry fileMd5="0FDAE9B5E2BE3021382C68B0281E8D22" fileName="qbertg.bin" size="0xA000"/>
       <romModuleEntry fileMd5="30C841DE638C9E976B1E5FE495D6B722" fileName="qbertc.bin"/>
@@ -387,7 +393,7 @@
       <gromModuleEntry fileMd5="ECE5AE8ED55CAFF17101B314F1F21616" fileName="rdcheerg.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module keywords="Parker Brothers' Game" md5="64799C13333782E3814030FC835AB93B" name="Popeye">
+  <module keywords="Parker Brothers' Game" md5="64799C13333782E3814030FC835AB93B" name="Popeye" replaceMd5="DD9629BDEF598B598B11E9F333A8C42C">
     <memoryEntries>
       <gromModuleEntry fileMd5="B36BB1CD6956509080936BC5FFB9D4BC" fileName="popeyeg.bin" size="0x9800"/>
       <romModuleEntry fileMd5="6382C3CB552793EA1BCB5C5B04C3EB7D" fileName="popeyec.bin"/>
@@ -484,5 +490,147 @@
       <gromModuleEntry fileMd5="40DD846291FE722A62FBE7F8F72641A8" fileName="metbelg.bin" size="0x6FBA"/>
     </memoryEntries>
   </module>
-  
+  <module md5="A3DB028D79B61C161AE50FC3660E340B" name="Disk Manager 1 (?)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="80F4287F652CB8CC5B1084EAF2B0E280" fileName="maxdmg.bin" size="0x3800"/>
+    </memoryEntries>
+  </module>
+  <module md5="C99313DDCDD62D48093050390B56AD11" name="Disk Manager 1">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="0F40495D8E03F9DC6F52B89439C653A6" fileName="phm3019g.bin" size="0x3800"/>
+    </memoryEntries>
+  </module>
+  <module md5="690B1BF9FD4EC283E91135B67039559D" name="Disk Manager 2">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="3080484EC0FEDBA7D1FE9D0731C3270E" fileName="dsrmgr3g.bin" size="0x3800"/>
+    </memoryEntries>
+  </module>
+  <module md5="1D5D0B8E255465BC97BB1021C8B41520" name="Disk Manager 3">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="22671AA6BD2A81AFE8E3906CD977BD06" fileName="dsrmgr3g.bin" size="0x3800"/>
+    </memoryEntries>
+  </module>
+  <module md5="7C93CBE2B1597BA42D239D5ADB1EB203" name="Demon Attack (Tursi)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="63B1E09C9334DFD10649FB3FBCAF52BF" size="0x87AA"/>
+    </memoryEntries>
+  </module>
+  <module md5="7DE7CBE2315249482B1933E75852992D" name="Demon Attack (beta)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="B9F750E08F97919BBD2595AFD37BDCEF" fileName="demonbetag.bin" size="0x87AA"/>
+    </memoryEntries>
+  </module>
+  <module keywords="super" md5="E1533D21B0BD4F6877317ABDCA56F5CA" name="Demon Attack">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="1B23D798654CB19CF8A2BFF643EDBC99" fileName="demonattg.bin" size="0x5800"/>
+      <romModuleEntry fileMd5="E77327A7231AED5F0D9FBE279C56BE60" fileName="demonattc.bin"/>
+    </memoryEntries>
+  </module>
+  <module md5="407D5AA6B72237165C02D8BFDA12CAFA" name="Computer War">
+    <memoryEntries>
+      <bankedModuleEntry fileMd5="DB6BAE76B56BAD0A873E773CD4F92BDF" fileName="compwarc.bin"
+       file2Md5="F9948DFCEFDC8BEB85C9A1CC01B4467C" fileName2="compward.bin"
+      />
+    </memoryEntries>
+  </module>
+  <module md5="6E8D6652FFA6B34E08646E62811D3171" name="Computer War (Tursi)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="F762F51590F97E4CA11FF3D91FB71A3A" fileName="computerwarg.bin" size="0x5000"/>
+    </memoryEntries>
+  </module>
+  <module md5="4E2F79E6DAFE28D48C2C2F9584CF6EA3" name="Editor/Assembler">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="710FF00A2D5C61DE3EE4065988993BF0" fileName="phm3055g.bin" size="0x1800"/>
+    </memoryEntries>
+  </module>
+  <module md5="ADC7B95FB1E66B3FFC983BF3CEE4232C" name="Treasure Island" replaceMd5="CA5135A72668756E6660C1FA7E9593DD">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="C6C528FD207A222E323287C4461A2383" fileName="phm3168g.bin" size="0x5800"/>
+      <bankedModuleEntry fileMd5="9B18657FA51604B5653B000D94F03E32" fileName="phm3168c.bin"
+      file2Md5="A3BE305C8457FD39B9F914EC0F3AEAF5" fileName2="phm3168d.bin"/>
+    </memoryEntries>
+  </module>
+  <module md5="2B65D8E34177E80351910BE1B72E6771" name="Treasure Island (beta) FIXME">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="C042843F3EABB1CAD39C6A159FD93F8A" fileName="treasurebetag.bin" size="0x5000"/>
+    </memoryEntries>
+  </module>
+  <module md5="CD0CDF094746E13C51F15675B7633FD3" name="Treasure Island (beta) (alt) FIXME">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="D7967119EA37A21CDC74D9F5CD6E8BFA" fileName="treasurebetag.bin" size="0x5000"/>
+    </memoryEntries>
+  </module>
+  <module md5="83C9B6C614AE6E00086CFC87C72A9BDC" name="Miniwriter V1.6" replaceMd5="228CF21BED2349884A41410808DD3DC7">
+    <memoryEntries>
+      <romModuleEntry fileMd5="08FCCFE5EAD285C9E9D93ED1927C69E5" fileName="miniwric.bin"/>
+    </memoryEntries>
+  </module>
+  <module md5="5E79576F6E4E7B76CB64B6F22B2C14F0" name="Miniwriter V1.0">
+    <memoryEntries>
+      <romModuleEntry fileMd5="E85054607F6E46B4F6CAE49375D7E72E" fileName="miniw10c.bin"/>
+    </memoryEntries>
+  </module>
+  <module md5="C4ABD81E3CAEBD5509FB718C0CA80DDC" name="Super X-Basic">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="6BF58547858B83818534C0881CC88342" fileName="superxbg.bin" size="0x9800"/>
+      <bankedModuleEntry fileMd5="09DE45506BBF08692BEEB5CB49D03B7B" fileName="superxbc.bin"
+      file2Md5="A3BE305C8457FD39B9F914EC0F3AEAF5" fileName2="superxbd.bin"/>
+    </memoryEntries>
+  </module>
+  <module md5="A78971F2C908285B464A677F58BA009B" name="Mind Challengers">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="6494139511B4E84E6C3673C3F8C2A5B6" fileName="mindchag.bin" size="0x1800"/>
+    </memoryEntries>
+  </module>
+  <module md5="3159CDCB1E6B26078309697871D05537" name="Video Games 1">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="64FE3532EDDFC54D46DEC1AE071BE8E6" fileName="phm3025g.bin" size="0x3800"/>
+    </memoryEntries>
+  </module>
+  <module md5="1DE772EB8B60FD719A6C0FD7648EC0A8" name="Video Games 2">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="D30E18DFDC70C265A70EA414E91F77A8" fileName="phm3025g.bin" size="0x1800"/>
+    </memoryEntries>
+  </module>
+  <module md5="4A078322CCE4988E13EFE88E353E6C03" name="Yahtzee" replaceMd5="BAC61DB7F62C8C04B85E33CBB72E0B3B">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="2BA44663F2A7FBF2E0EFD1FCA16F1DD5" fileName="yahtzeeg.bin" size="0x1800"/>
+    </memoryEntries>
+  </module>
+  <module md5="380C045D2A0062B08F275B585F6EF87B" name="Connect Four" replaceMd5="3F374C71DFB70A95FC3744F9F81E6F81">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="B6EFA155388D25E69C9D07918B69C606" fileName="phm3038g.bin" size="0x3800"/>
+    </memoryEntries>
+  </module>
+  <module md5="23869D629764960C1CFD75E34102C54C" name="Weight &amp; Nutrition" replaceMd5="F5EA382AE0B2FBB31B23488ABD6EEB19">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="A330573D1476286D9AC061825F8228AE" fileName="phm3021g.bin" size="0x9800"/>
+    </memoryEntries>
+  </module>
+  <module md5="4BFA6F8E089D998ECAFF122DD0C742F4" name="Weight &amp; Nutrition (alt)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="BBF89E5B8D13A578B09FFFAD2D2A44FF" fileName="weightg.bin" size="0x9800"/>
+    </memoryEntries>
+  </module>
+   
+  <module md5="D400A721880B79DBC9073891CD5A0353" name="Donkey Kong" replaceMd5="57666BB6E7BB5BE1C445DAED5A3367A2">
+    <memoryEntries>
+      <romModuleEntry fileMd5="E7917D25BD71EA15BB3C8DE4BE5AEB17" fileName="donkeyc.bin"
+       file2Md5="8DBB00ADA548E24183B2AD9611ADA98E" fileName2="donkeyd.bin"
+      />
+    </memoryEntries>
+  </module>
+  <module md5="8A760726D6853261420C1D679DDAF395" name="Munch-Man" replaceMd5="0D7BB9999C182F5C24BF2CD45C6A2B5F">
+    <memoryEntries>
+      <romModuleEntry fileMd5="E1971B8089C1AA26B7CA0042AA079F7A" fileName="mnchmanc.bin"/>
+      <gromModuleEntry fileMd5="8A928A480802F068EA3C73E192F502B0" fileName="mnchmang.bin" size="0x1800"/>
+    </memoryEntries>
+  </module>
+  <module md5="13C596ABA062877D1C82D27E4C2B2CC2" name="TI Extended Basic v100">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="E82352EFCA88714DB6E6CA454AEF8487" fileName="phm3026_v100g.bin" size="0x7800"/>
+      <bankedModuleEntry fileMd5="47D06A352C458BAF709F4D86DE7D1F86" fileName="phm3026_v100c.bin"
+      file2Md5="D71D47CBA10FA57AE95942A391BBA30C" fileName2="phm3026_v100d.bin"/>
+    </memoryEntries>
+  </module>
 </modules>
