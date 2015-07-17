@@ -1,7 +1,7 @@
 /*
-  ManualTestTI99ModuleDetection.java
+  DetectModules.java
 
-  (c) 2013 Ed Swartz
+  (c) 2015 Ed Swartz
 
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Public License v1.0
@@ -102,10 +102,18 @@ public class DetectModules {
 		
 		DetectModules modules = new DetectModules(noStockLookup, readHeaders, verbose, noStockOutput);
 		int i = getopt.getOptind();
+		boolean any = false;
         while (i < args.length) {
+        	any = true;
 			String arg = args[i++];
 			modules.scan(arg);
 		}
+        
+        if (!any) {
+        	help();
+        	return;
+        }
+
         
         if (outfile != null)
         	modules.write(outfile);
@@ -231,9 +239,9 @@ public class DetectModules {
 						System.out.println();
 						
 						if (!info.isStored()) {
-							System.out.print("\t\t\t" + info.getFileMD5Algorithm() + " = " + info.getFileMD5());
+							System.out.print("\t\t\t" + info.getEffectiveFileMD5Algorithm() + " = " + info.getFileMD5());
 							if (info.getFile2MD5() != null)
-								System.out.print(",\n\t\t\t" + info.getFile2MD5Algorithm() + " = " + info.getFile2MD5());
+								System.out.print(",\n\t\t\t" + info.getEffectiveFile2MD5Algorithm() + " = " + info.getFile2MD5());
 							System.out.println();
 						}
 					}

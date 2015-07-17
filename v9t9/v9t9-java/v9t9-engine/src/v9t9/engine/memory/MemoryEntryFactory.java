@@ -182,7 +182,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
     	
     	for (int bank = 0; bank < entries.length; bank++) {
     		int entryIdx = reversed ? entries.length - bank - 1 : bank;
-    		entries[entryIdx] = newFromFile(info.asBank(entryIdx, info.getOffset() + bank * bankSize), 
+    		entries[entryIdx] = newFromFile(info.asBank(entryIdx, info.getOffset() + bank * bankSize, bankSize), 
     				MemoryAreaFactory.createMemoryArea(memory, info));
     	}
 		

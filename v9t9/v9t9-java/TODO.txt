@@ -7,6 +7,7 @@ Module types:
 -- CPU banked-only module
 -- CPU Banked + GROM module
 -- module w/storage
+-- superbank module
 
 Save states:
 
@@ -33,5 +34,6 @@ Module detector:
 Non-volatile RAM:
 
 -- implement approach from blog
+
 
 

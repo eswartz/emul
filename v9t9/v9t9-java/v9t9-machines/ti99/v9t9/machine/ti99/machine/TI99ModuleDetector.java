@@ -60,11 +60,6 @@ import ejs.base.utils.XMLUtils;
  */
 public class TI99ModuleDetector implements IModuleDetector {
 
-	private static final String[] ACRONYMS_AND_ROMAN_NUMERALS = new String[] { "Ti", 
-		"Ii", "Iii", "Iv", "Vi", "Vii", "Viii", "Ix", 
-		"Xi", "Xii", "Xiii", "Xiv", "Xv", "Xvi", "Xvii", "Xviii", "Xix" };
-	private static final String[] PREPOSITIONS = new String[] { "And", "Or", "Of", "In", "For", "The" };
-
 	private static final Logger log = Logger.getLogger(TI99ModuleDetector.class);
 
 //	private static final String EA_8K_SUPER_CART = "EA/8K Super Cart";
@@ -160,7 +155,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 			log.info("module: " + module);
 			
 			String moduleName = module.getName();
-			if (TextUtils.isEmpty(moduleName) || !isASCII(moduleName)) {
+			if (TextUtils.isEmpty(moduleName) || !TI99RomUtils.isASCII(moduleName)) {
 				iter.remove();
 				continue;
 			}
@@ -405,7 +400,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 				File file = new File(uri);
 				try {
 					FDR fdr = FDRFactory.createFDR(file);
-					if (fdr != null && isASCII(fdr.getFileName())) {
+					if (fdr != null && TI99RomUtils.isASCII(fdr.getFileName())) {
 						fdr.validate();
 						// hmm, likely a file, and not a module
 						log.debug("Not treating " + fname + " as module since it looks like a file: " + fdr);
@@ -441,7 +436,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 		
 		default:
 			log.debug("Unknown file naming for " + fname);
-			if (looksLikeBankedOr9900Code(content)) {
+			if (TI99RomUtils.looksLikeBankedOr9900Code(content)) {
 				log.debug("Assuming content is module ROM");
 				domain = IMemoryDomain.NAME_CPU; 
 			} else {
@@ -505,7 +500,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 			}
 		}
 		
-		if (info != null && hasId(content)) {
+		if (info != null && TI99RomUtils.hasId(content)) {
 			info.getProperties().put(MemoryEntryInfo.HAS_HEADER, true);
 		}
 		
@@ -516,60 +511,6 @@ public class TI99ModuleDetector implements IModuleDetector {
 		}
 
 		return true;
-	}
-
-	/**
-	 * @param content
-	 * @return
-	 */
-	private boolean hasId(byte[] content) {
-		for (int addr = 0 ; addr < content.length; addr += 0x2000) {
-			if (content[addr] == (byte) 0xaa) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * @param content
-	 * @return
-	 */
-	private boolean looksLikeBankedOr9900Code(byte[] content) {
-		int insts = 0;
-		
-		// assume that real content is in the first half (e.g. for E/A where
-		// content for console is in latter half)
-		for (int addr = 0; addr < content.length / 2; addr += 2) {
-			int word = readAddr(content, addr);
-			if (word == 0x45b /* RT */
-				|| word == 0xD820  /* */
-				|| word == 0x380  /* RTWP */
-				|| word == 0x8300  /* CPU RAM base */
-				|| word == 0x83e0  /* GPLWS */
-				|| word == 0x8c00  /* VDPWA */
-				|| word == 0x8c02  /* VDPWD */
-				|| word == 0x8400  /* SOUND */
-				)
-			{
-				insts++;
-			}
-		}
-		
-		boolean allIded = true;
-		for (int addr = 0 ; addr < content.length; addr += 0x2000) {
-			if (content[addr] != (byte) 0xaa) {
-				allIded = false;
-			}
-		}
-		if (content.length > 0x2000 && allIded)
-			insts *= 2;
-		
-		boolean isROMCode = insts > content.length / 256;
-		
-		log.debug("# insts = " + insts +"; all banks have IDs: " + allIded);
-		
-		return isROMCode;
 	}
 
 	private MemoryEntryInfo injectModuleGrom(IModule module, URI databaseURI,
@@ -603,10 +544,12 @@ public class TI99ModuleDetector implements IModuleDetector {
 			
 			if (bank2) {
 				info.getProperties().put(MemoryEntryInfo.FILE2_MD5, md5);
-				info.getProperties().put(MemoryEntryInfo.SIZE2, contentLength);
+				if (!info.isBanked())
+					info.getProperties().put(MemoryEntryInfo.SIZE2, contentLength);
 			} else {
 				info.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
-				info.getProperties().put(MemoryEntryInfo.SIZE, contentLength);
+				if (!info.isBanked())
+					info.getProperties().put(MemoryEntryInfo.SIZE, contentLength);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -663,7 +606,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 				ex.getProperties().put(MemoryEntryInfo.FILENAME, fileName);
 				ex.getProperties().put(MemoryEntryInfo.CLASS, StdMultiBankedMemoryEntry.class);
 				ex.getProperties().put(MemoryEntryInfo.OFFSET, fileOffset);
-				ex.getProperties().put(MemoryEntryInfo.SIZE, fileSize);
+				//ex.getProperties().put(MemoryEntryInfo.SIZE, fileSize);	// leave the size as before
 				fetchMD5(module, ex, false);
 				found = true;
 				info = ex;
@@ -1155,7 +1098,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 			// check non-module signs
 			
 			// ROMs
-			addr = readAddr(content, offs);
+			addr = TI99RomUtils.readAddr(content, offs);
 			if (addr == 0x83e0)
 				return null;	// console ROM
 			
@@ -1165,21 +1108,21 @@ public class TI99ModuleDetector implements IModuleDetector {
 			}
 			
 			// powerup
-			addr = readAddr(content, offs + 0x4);
+			addr = TI99RomUtils.readAddr(content, offs + 0x4);
 			if (addr != 0 && addr >= 0x1000 && addr < 0x6000)
 				return null;
 			
 			// DSR headers?
-			addr = readAddr(content, offs + 0x8);
+			addr = TI99RomUtils.readAddr(content, offs + 0x8);
 			if (addr != 0 && addr >= 0x4000 && addr < 0x6000)
 				return null;
 			
-			addr = readAddr(content, offs + 0xA);
+			addr = TI99RomUtils.readAddr(content, offs + 0xA);
 			if (addr != 0 && addr >= 0x1000 && addr < 0x6000)
 				return null;
 			
 			// program list
-			addr = readAddr(content, offs + 0x6);
+			addr = TI99RomUtils.readAddr(content, offs + 0x6);
 			log.debug("Program list @ " + HexUtils.toHex4(offs) + ": " + HexUtils.toHex4(addr));
 			if (addr == 0)
 				continue;
@@ -1192,8 +1135,8 @@ public class TI99ModuleDetector implements IModuleDetector {
 			String name;
 			int next;
 			do {
-				next = readAddr(content, (addr - baseAddr));
-				name = readString(content, (addr - baseAddr) + 4);
+				next = TI99RomUtils.readAddr(content, (addr - baseAddr));
+				name = TI99RomUtils.readString(content, (addr - baseAddr) + 4);
 				log.debug("Fetched name: " + name) ;
 				addr = next;
 			} while (next >= baseAddr);		/* else not really module? */
@@ -1201,10 +1144,10 @@ public class TI99ModuleDetector implements IModuleDetector {
 			String suffix = "";
 			if (content[offs + 1] < 0 && IMemoryDomain.NAME_GRAPHICS.equals(domain)) 
 				suffix = " (auto-start)";
-			if (isASCII(name)) {
+			if (TI99RomUtils.isASCII(name)) {
 				log.debug("Using name: " + name) ;
 				
-				return cleanupTitle(name) + suffix;
+				return TI99RomUtils.cleanupTitle(name) + suffix;
 			}
 			
 			// see if it's auto-start
@@ -1216,102 +1159,6 @@ public class TI99ModuleDetector implements IModuleDetector {
 		
 		return "";
 	}
-
-	/**
-	 * @param name
-	 * @return
-	 */
-	private boolean isASCII(String name) {
-		for (char ch : name.toCharArray()) {
-			if (ch < 0x20 || ch >= 127)
-				return false;
-		}
-		return true;
-	}
-
-	/**
-	 * @param addr
-	 * @return
-	 */
-	private String readString(byte[] content, int addr) {
-		if (addr < 0 || addr >= content.length)
-			return "";
-		int len = content[addr++] & 0xff;
-		StringBuilder sb = new StringBuilder();
-		while (len != 0 && addr >= 0 && addr < content.length) {
-			sb.append((char) content[addr++]);
-			len--;
-		}
-		return sb.toString();
-	}
-
-	/**
-	 * @param content
-	 * @param addr
-	 * @return
-	 */
-	private int readAddr(byte[] content, int addr) {
-		if (addr >= 0 && addr < content.length - 1)
-			return ((content[addr] << 8) & 0xff00) | (content[addr+1] & 0xff);
-		else
-			return 0;
-	}
-	
-	private String cleanupTitle(String allCaps) {
-		allCaps = allCaps.trim();
-		
-		// remove spurious quotes
-		allCaps = TextUtils.unquote(allCaps, '"');
-		
-		// capitalize each word
-		StringBuilder sb = new StringBuilder();
-		boolean newWord = true;
-		for (char ch : allCaps.toCharArray()) {
-			
-			if (Character.isLetter(ch)) {
-				if (newWord) {
-					ch = Character.toUpperCase(ch);
-					newWord = false;
-				} else {
-					ch = Character.toLowerCase(ch);
-				}
-			} else {
-				newWord = true;
-			}
-				
-			sb.append(ch);
-		}
-		
-		String titledName = sb.toString();
-		
-		// lowercase prepositions
-		for (String prep : PREPOSITIONS) {
-			titledName = replaceWord(titledName, prep, prep.toLowerCase(), false);
-		}
-
-		// uppercase common acronyms
-		for (String acr : ACRONYMS_AND_ROMAN_NUMERALS) {
-			titledName = replaceWord(titledName, acr, acr.toUpperCase(), true);
-		}
-				
-		return titledName;		
-	}
-
-	private boolean isSpaceOrSep(char ch) {
-		return Character.isWhitespace(ch) || ch == '-' || ch == '/';
-	}
-	private String replaceWord(String str, String word, String repl, boolean allowAtStart) {
-		int idx = str.indexOf(word);
-		if (idx > (allowAtStart ? -1 : 0)) {
-			if ((idx == 0 || isSpaceOrSep(str.charAt(idx-1)))
-					&& (idx + word.length() >= str.length() || isSpaceOrSep(str.charAt(idx+word.length())))) {
-				str = str.substring(0, idx) + repl + str.substring(idx + word.length());
-			}
-		}
-
-		return str;
-	}
-
 	@Override
 	public Map<String, List<IModule>> gatherDuplicatesByMD5() {
 		Map<String, List<IModule>> md5ToModules = new TreeMap<String, List<IModule>>();

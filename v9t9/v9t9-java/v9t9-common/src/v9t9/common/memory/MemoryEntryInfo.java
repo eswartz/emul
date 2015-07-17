@@ -369,15 +369,17 @@ public class MemoryEntryInfo {
 		return getInt(BANK_SIZE);
 	}
 
-	public MemoryEntryInfo asBank(int number, int offset) {
+	public MemoryEntryInfo asBank(int number, int offset, int size) {
 		MemoryEntryInfo copy = new MemoryEntryInfo(new HashMap<String, Object>(properties));
 		copy.getProperties().put(NAME, getName() + " (bank " + number + ")"); 
-		copy.getProperties().put(OFFSET, offset); 
+		copy.getProperties().put(OFFSET, offset);
+		if (size > 0)
+			copy.getProperties().put(SIZE, size); 
 		return copy;
 	}
 
 	public MemoryEntryInfo asFirstBank() {
-		MemoryEntryInfo copy = asBank(0, 0);
+		MemoryEntryInfo copy = asBank(0, 0, 0x2000);
 		Map<String, Object> props = copy.getProperties();
 		props.remove(FILENAME2);
 		props.remove(OFFSET2);
@@ -392,7 +394,7 @@ public class MemoryEntryInfo {
 	}
 	
 	public MemoryEntryInfo asSecondBank() {
-		MemoryEntryInfo copy = asBank(1, 0);
+		MemoryEntryInfo copy = asBank(1, 0, 0x2000);
 		Map<String, Object> props = copy.getProperties();
 		move(props, FILENAME, getFilename2());
 		move(props, ADDRESS, getAddress2() != 0 ? getAddress2() : getAddress());

@@ -51,7 +51,8 @@ public class PathSetupPage extends WizardPage {
 			
 			@Override
 			public void allRequiredRomsFound(boolean found) {
-				setPageComplete(found);
+				setPageComplete(found || true);
+				//setPageComplete(found);
 			}
 		});
 	}

@@ -1261,8 +1261,8 @@ public class PathFileLocator implements IPathFileLocator {
 		}
 		
 		if (uri == null && searchByContent) {
-			uri = findFileByMD5(info.getFileMD5(), info.getFileMd5Offset(), 
-					info.getFileMd5Limit() != 0 ? info.getFileMd5Limit() : info.getSize());
+			uri = findFileByMD5(info.getFileMD5(), 
+					MD5FilterAlgorithms.create(info.getEffectiveFileMD5Algorithm()));
 			if (uri != null) {
 				logger.info("*** Found matching entry by MD5: " + uri);
 				theFilename = splitFileName(uri).second;
