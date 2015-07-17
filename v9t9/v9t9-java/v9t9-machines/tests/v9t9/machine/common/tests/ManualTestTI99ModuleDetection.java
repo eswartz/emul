@@ -159,7 +159,9 @@ public class ManualTestTI99ModuleDetection {
 		testDirectory("/usr/local/src/v9t9-data/modules/mess",
 				"(?i).*\\.bin", "forthc.bin", 
 				"weightc.bin", "weightd.bin", 
-				"phm3021c.bin", "phm3021d.bin" 
+				"phm3021c.bin", "phm3021d.bin",
+				"taxc.bin", "taxd.bin",
+				"phm3016c.bin", "phm3016d.bin"
 				);
 	}
 	@Test
@@ -438,8 +440,8 @@ public class ManualTestTI99ModuleDetection {
 	public void testModuleDatabase() throws Exception {
 		List<IModule> mods = testDirectory("/usr/local/src/v9t9-data/modules/mess",
 				"(?i)(phm.*)\\.bin",
-				"weightc.bin", "weightd.bin", 
-				"phm3021c.bin", "phm3021d.bin"
+				"phm3021c.bin", "phm3021d.bin",
+				"phm3016c.bin", "phm3016d.bin"
 				);
 		assertEquals(121, mods.size());
 		
@@ -480,7 +482,9 @@ public class ManualTestTI99ModuleDetection {
 				"(?i).*\\.bin",
 				"forthc.bin", "nforthc.bin", "0forth.bin",
 				"weightc.bin", "weightd.bin", 
-				"phm3021c.bin", "phm3021d.bin"
+				"phm3021c.bin", "phm3021d.bin",
+				"taxc.bin", "taxd.bin",
+				"phm3016c.bin", "phm3016d.bin"
 				);
 		
 		addModuleHashes(mods, md5Map, nameToMd5Map, sb);

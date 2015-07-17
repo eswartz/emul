@@ -139,7 +139,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 				continue;
 
 			if (analyzeV9t9ModuleFile(databaseURI, file.toURI(), file.getAbsolutePath(), 
-					getModuleBaseFile(file.getName()),
+					file.getParentFile().getAbsolutePath() + '/' + getModuleBaseFile(file.getName()),
 					moduleMap))
 				continue;
 			
@@ -247,9 +247,33 @@ public class TI99ModuleDetector implements IModuleDetector {
 							module.removeMemoryEntryInfo(info);
 							MemoryEntryInfo stockInfo = new MemoryEntryInfo(ent.getValue().getProperties());
 							stockInfo.getProperties().put(MemoryEntryInfo.FILENAME, info.getFilename());
-							stockInfo.getProperties().put(MemoryEntryInfo.FILENAME2, info.getFilename2());
+							if (info.getFilename2() != null)
+								stockInfo.getProperties().put(MemoryEntryInfo.FILENAME2, info.getFilename2());
 							module.addMemoryEntryInfo(stockInfo);
 							changed = true;
+						}
+						else {
+							// ensure the offset/size/etc are the same
+							MemoryEntryInfo stockInfo = ent.getValue();
+							MemoryEntryInfo info = curInfos.get(ent.getKey());
+							
+							if (stockInfo.getOffset() > 0)
+								info.getProperties().put(MemoryEntryInfo.OFFSET, stockInfo.getOffset());
+							if (stockInfo.getSize() > 0)
+								info.getProperties().put(MemoryEntryInfo.SIZE, stockInfo.getSize());
+							if (stockInfo.getOffset2() > 0)
+								info.getProperties().put(MemoryEntryInfo.OFFSET2, stockInfo.getOffset2());
+							if (stockInfo.getSize2() > 0)
+								info.getProperties().put(MemoryEntryInfo.SIZE2, stockInfo.getSize2());
+							
+							if (stockInfo.getFileMD5() != null)
+								info.getProperties().put(MemoryEntryInfo.FILE_MD5, stockInfo.getFileMD5());
+							if (stockInfo.getFileMD5Algorithm() != null)
+								info.getProperties().put(MemoryEntryInfo.FILE_MD5_ALGORITHM, stockInfo.getFileMD5Algorithm());
+							if (stockInfo.getFile2MD5() != null)
+								info.getProperties().put(MemoryEntryInfo.FILE2_MD5, stockInfo.getFile2MD5());
+							if (stockInfo.getFile2MD5Algorithm() != null)
+								info.getProperties().put(MemoryEntryInfo.FILE2_MD5_ALGORITHM, stockInfo.getFile2MD5Algorithm());
 						}
 					}
 					for (Map.Entry<String, MemoryEntryInfo> ent : curInfos.entrySet()) {
@@ -262,7 +286,9 @@ public class TI99ModuleDetector implements IModuleDetector {
 					
 					if (!TextUtils.isEmpty(replacedStock.getMD5())) {
 						if (changed) {
-							assert replacedStock.getMD5().equals(module.getMD5());
+							if (!replacedStock.getMD5().equals(module.getMD5())) {
+								log.error("replaced stock module '" + module.getName() + "' doesn't match MD5: expected " + replacedStock.getMD5() + "; got " + module.getMD5());
+							}
 						}
 						module.setMD5(replacedStock.getMD5());
 					}
@@ -289,8 +315,12 @@ public class TI99ModuleDetector implements IModuleDetector {
 				return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
 			}
 		});
-		
-		this.modules.putAll(moduleMap);
+
+		for (Map.Entry<String, IModule> ent : moduleMap.entrySet()) {
+			if (this.modules.containsKey(ent.getKey()))
+				log.error("searched same file twice: " + ent.getKey());
+			this.modules.put(ent.getKey(), ent.getValue());
+		}
 		
 		return modules;
 	}
@@ -480,7 +510,10 @@ public class TI99ModuleDetector implements IModuleDetector {
 		}
 		
 		// register/update module
-		moduleMap.put(key, module);
+		IModule old = moduleMap.put(key, module);
+		if (old != null && old != module) {
+			log.error("searched same file twice: " + key);
+		}
 
 		return true;
 	}
@@ -552,6 +585,10 @@ public class TI99ModuleDetector implements IModuleDetector {
 	private void fetchMD5(IModule module, MemoryEntryInfo info, boolean bank2) {
 		String md5;
 		try {
+			md5 = (String) info.getProperties().get(bank2 ? MemoryEntryInfo.FILE2_MD5 : MemoryEntryInfo.FILE_MD5);
+			if (!TextUtils.isEmpty(md5))
+				return;
+				
 			String fileName = bank2 ? info.getFilename2() : info.getFilename();
 			URI uri = fileLocator.findFile(fileName);
 			if (uri == null)
@@ -764,7 +801,10 @@ public class TI99ModuleDetector implements IModuleDetector {
 			}
 			
 			if (module != null) {
-				moduleMap.put(file.getPath(), module);
+				IModule old = moduleMap.put(file.getPath(), module);
+				if (old != null && old != module) {
+					log.error("searched same file twice: " + file.getPath());
+				}
 				
 				if (readHeaders) {
 					// get a real name and detect auto-start modules
@@ -847,7 +887,11 @@ public class TI99ModuleDetector implements IModuleDetector {
 			}
 			
 			if (!newModules.isEmpty()) {
-				moduleMap.putAll(newModules);
+				for (Map.Entry<String, IModule> ent : newModules.entrySet()) {
+					IModule old = moduleMap.put(ent.getKey(), ent.getValue());
+					if (old != null && old != ent.getValue())
+						log.error("searched same file twice: " + ent.getKey());
+				}
 				
 				if (readHeaders) {
 					for (IModule module : newModules.values()) {
