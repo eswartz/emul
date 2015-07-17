@@ -67,7 +67,7 @@ public class ModuleManager implements IModuleManager {
 			"LastLoadedModuleHash", "");
 
 	private Map<IMemoryEntry, IModule> memoryEntryModules = new HashMap<IMemoryEntry, IModule>();
-	private final String stockModuleDatabase;
+	private final String[] stockModuleDatabases;
 
 	private ModuleInfoDatabase moduleInfoDb;
 	
@@ -76,9 +76,9 @@ public class ModuleManager implements IModuleManager {
 
 	private List<IModule> stockModuleList;
 
-	public ModuleManager(IMachine machine, String stockModuleDatabase) {
+	public ModuleManager(IMachine machine, String[] stockModuleDatabases) {
 		this.machine = machine;
-		this.stockModuleDatabase = stockModuleDatabase;
+		this.stockModuleDatabases = stockModuleDatabases;
 		this.modules = new ArrayList<IModule>();
 		
 		this.moduleInfoDb = ModuleInfoDatabase.loadModuleInfo(machine);
@@ -89,19 +89,6 @@ public class ModuleManager implements IModuleManager {
 		stockModuleList = null;
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.modules.IModuleManager#getStockDatabaseURL()
-	 */
-	@Override
-	public URL getStockDatabaseURL() {
-		try {
-			return new URL(machine.getModel().getDataURL(), stockModuleDatabase);
-		} catch (MalformedURLException e) {
-			log.error("could not find " + stockModuleDatabase, e);
-			return null;
-		}
-	}
-
 	/* (non-Javadoc)
 	 * @see v9t9.common.modules.IModuleManager#clearModules()
 	 */
@@ -409,17 +396,22 @@ public class ModuleManager implements IModuleManager {
 		if (stockModuleList != null)
 			return;
 		
-		URL databaseURL = getStockDatabaseURL();
-		if (databaseURL != null) {
+		for (String stockDB : stockModuleDatabases) {
+			URL url;
 			try {
-				stockModuleList = readModules(databaseURL.toURI());
-//			} catch (NotifyException e) {
-//				throw e;
+				url = new URL(machine.getModel().getDataURL(), stockDB);
+				if (url == null) {
+					throw new NotifyException(this, "failed to find " + stockDB);
+				}
+			} catch (MalformedURLException e) {
+				log.error("could not find " + stockDB, e);
+				continue;
+			}
+			try {
+				stockModuleList = readModules(url.toURI());
 			} catch (Exception e) {
 				throw new NotifyException(this, "failed to load stock_modules.xml", e);
 			}
-		} else {
-			throw new NotifyException(this, "failed to find stock_modules.xml");
 		}
 	}
 

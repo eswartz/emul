@@ -11,19 +11,13 @@
 package v9t9.machine.ti99.machine;
 
 
-import java.io.File;
 import java.net.URI;
-import java.util.Collection;
-
-import org.apache.log4j.Logger;
-
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDsrManager;
 import v9t9.common.files.IFileExecutionHandler;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleDetector;
 import v9t9.engine.demos.DemoContentProvider;
 import v9t9.engine.files.directory.FileDirectoryContentProvider;

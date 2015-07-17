@@ -12,7 +12,6 @@ package v9t9.common.modules;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -34,8 +33,6 @@ public interface IModuleManager extends IPersistable {
 			ISettingsHandler.MACHINE,
 			"UserModuleLists", String.class, new ArrayList<String>());
 
-	URL getStockDatabaseURL();
-	
 	void clearModules();
 	void addModules(Collection<IModule> modList);
 

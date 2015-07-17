@@ -12,7 +12,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
 import v9t9.common.settings.BasicSettingsHandler;
@@ -26,13 +25,11 @@ public class TestStockModules {
 
 	private ISettingsHandler settings;
 	private IMachine machine;
-	private IPathFileLocator locator;
 
 	@Before
 	public void setup() throws Exception {
 		settings = new BasicSettingsHandler();  
 		machine = new StandardTI994AMachineModel().createMachine(settings);
-		locator = machine.getRomPathFileLocator();
 	}
 	
 	/** Make sure stock modules don't overlap */

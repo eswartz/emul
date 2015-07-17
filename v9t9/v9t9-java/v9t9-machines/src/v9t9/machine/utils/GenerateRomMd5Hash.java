@@ -10,24 +10,13 @@
  */
 package v9t9.machine.utils;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
-
-import v9t9.common.events.NotifyException;
 import v9t9.common.files.IMD5SumFilter;
 import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.files.PathFileLocator;
-import v9t9.common.memory.MemoryEntryInfo;
-import v9t9.common.modules.IModule;
-import v9t9.common.modules.ModuleDatabase;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.memory.Memory;

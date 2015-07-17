@@ -57,7 +57,6 @@ import org.eclipse.swt.widgets.Label;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
-import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleDetector;
 import v9t9.common.modules.IModuleManager;

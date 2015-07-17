@@ -23,7 +23,6 @@ import java.util.List;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.files.PathFileLocator;
-import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.ModuleDatabase;

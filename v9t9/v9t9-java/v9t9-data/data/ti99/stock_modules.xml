@@ -560,14 +560,24 @@
       <gromModuleEntry fileMd5="D7967119EA37A21CDC74D9F5CD6E8BFA" fileName="treasurebetag.bin" size="0x5000"/>
     </memoryEntries>
   </module>
-  <module md5="83C9B6C614AE6E00086CFC87C72A9BDC" name="Miniwriter V1.6" replaceMd5="228CF21BED2349884A41410808DD3DC7">
+  <module md5="83C9B6C614AE6E00086CFC87C72A9BDC" name="Miniwriter v1.6" replaceMd5="228CF21BED2349884A41410808DD3DC7">
     <memoryEntries>
       <romModuleEntry fileMd5="08FCCFE5EAD285C9E9D93ED1927C69E5" fileName="miniwric.bin"/>
     </memoryEntries>
   </module>
-  <module md5="5E79576F6E4E7B76CB64B6F22B2C14F0" name="Miniwriter V1.0">
+  <module md5="5E79576F6E4E7B76CB64B6F22B2C14F0" name="Miniwriter v1.0">
     <memoryEntries>
       <romModuleEntry fileMd5="E85054607F6E46B4F6CAE49375D7E72E" fileName="miniw10c.bin"/>
+    </memoryEntries>
+  </module>
+  <module md5="F3068675F6A827AA25CB39CE45BFD534" name="Console Writer v1">
+    <memoryEntries>
+      <romModuleEntry fileMd5="84F38486578F55D4E0A799FD8B080237" fileName="cw11c.bin"/>
+    </memoryEntries>
+  </module>
+  <module md5="2423B3968DF3CD5388C8395F0B4600B1" name="Console Writer v2.1">
+    <memoryEntries>
+      <romModuleEntry fileMd5="C90FABBAFEC9500C5F1D6E039C74BC41" fileName="conswr2c.bin"/>
     </memoryEntries>
   </module>
   <module md5="C4ABD81E3CAEBD5509FB718C0CA80DDC" name="Super X-Basic">
@@ -617,7 +627,52 @@
       <gromModuleEntry fileMd5="44057321110ECB94A1376AEB9F7E1233" fileName="taxg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-   
+  <module md5="DBE290B5E0C0C8479B7E380AFF7D7201" name="Espial (Tursi)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="C8AB8E0184A37925AE49C80C9D06FA57" fileName="espialg.bin" size="0x5000"/>
+    </memoryEntries>
+  </module>
+   <module md5="F3C3E514FE515B890DE389C6F03FC58E" name="Lasso (Tursi)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="17F27E0ED3B5130D24939CC247CA346F" fileName="lassog.bin" size="0x7800"/>
+    </memoryEntries>
+  </module>
+  <module md5="5B5EB3EB555298F00C571C75AA86D5EF" name="Lobster Bay (Tursi)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="9E61615DB8AF305B0F18B1E1D8F4372F" fileName="lobsterg.bin" size="0x5000"/>
+    </memoryEntries>
+  </module>
+  <module md5="80CC1C78B41BD07B22705241EF42E559" name="River Rescue (Tursi)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="680BB7E61A67A6ED13BCAA7BD290042E" fileName="riverrescueg.bin" size="0x3800"/>
+    </memoryEntries>
+  </module>
+  <module md5="3957D7CE22F86AC9F16F5086C667FEBD" name="Springer (Tursi)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="1A853A665D102636572E6D525EFAF849" fileName="springerg.bin" size="0x3000"/>
+    </memoryEntries>
+  </module>
+  <module md5="E0EE2715A02BC1F9F81AFB2D42E274D2" name="Submarine Battle (Tursi)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="75868D36B857A6CDEE172923E3C30731" fileName="subbattleg.bin" size="0x3000"/>
+    </memoryEntries>
+  </module>
+  <module md5="9A45478FB9F15AB2C8B6856EACDCEAAC" name="Submarine Commander (Tursi)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="95E4D4F8FD91BFCBED400774406A80A4" fileName="subcomg.bin" size="0x5000"/>
+    </memoryEntries>
+  </module>
+  <module md5="9980868207B7979B94FEDAB8DAD2D37D" name="Picture Parts" replaceMd5="3525C12D2AE0FB6D6D25F44062500539">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="4A26E697B9ECD62BBF962E0422251798" fileName="picpartg.bin" size="0x7800"/>
+    </memoryEntries>
+  </module>
+    <module md5="71B38E8F22414AA4BAA5C43A7BB3C7EA" name="The Attack (beta)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="99FF2D121336D09EDB727AB6C798DCD3" fileName="attackbetag.bin" size="0x1800"/>
+    </memoryEntries>
+  </module>
+ 
   <module md5="D400A721880B79DBC9073891CD5A0353" name="Donkey Kong" replaceMd5="57666BB6E7BB5BE1C445DAED5A3367A2">
     <memoryEntries>
       <romModuleEntry fileMd5="E7917D25BD71EA15BB3C8DE4BE5AEB17" fileName="donkeyc.bin"
@@ -636,6 +691,12 @@
       <gromModuleEntry fileMd5="E82352EFCA88714DB6E6CA454AEF8487" fileName="phm3026_v100g.bin" size="0x7800"/>
       <bankedModuleEntry fileMd5="47D06A352C458BAF709F4D86DE7D1F86" fileName="phm3026_v100c.bin"
       file2Md5="D71D47CBA10FA57AE95942A391BBA30C" fileName2="phm3026_v100d.bin"/>
+    </memoryEntries>
+  </module>
+  <module md5="2BDDDF6F50B5E690CB119BA306E7B4DE" name="Micro Tennis">
+    <memoryEntries>
+      <bankedModuleEntry fileMd5="52154F4548447A89E5994E184F8CDDAC" fileName="mtennisc.bin"
+      file2Md5="804DCE32581ED0F35B1C18518F4561C0" fileName2="mtennisd.bin"/>
     </memoryEntries>
   </module>
 </modules>

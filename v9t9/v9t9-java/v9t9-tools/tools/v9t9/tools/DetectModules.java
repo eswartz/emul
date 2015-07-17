@@ -16,8 +16,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
@@ -27,6 +30,7 @@ import v9t9.common.modules.ModuleDatabase;
 import v9t9.tools.utils.Category;
 import v9t9.tools.utils.ToolUtils;
 import ejs.base.logging.LoggingUtils;
+import ejs.base.utils.HexUtils;
 import gnu.getopt.Getopt;
 
 /**
@@ -50,6 +54,7 @@ public class DetectModules {
 	                    +"-o [file]:  write new modules.xml file\n"
 	                    +"-n:  do not update modules from stock module database\n"
 						+"-r:  read headers from ROM instead of replying on .rpk metadata\n"
+						+"-s:  do not include stock modules in the output\n"
 						+"-v:  print verbose description of module\n"
 	                    + "\n");
 	}
@@ -60,12 +65,13 @@ public class DetectModules {
 
         Getopt getopt;
         
-        getopt = new Getopt(PROGNAME, args, "?nro:v");
+        getopt = new Getopt(PROGNAME, args, "?nro:vs");
 		int opt;
 		
-		boolean noStock = false;
+		boolean noStockLookup = false;
 		boolean readHeaders = false;
 		boolean verbose = false;
+		boolean noStockOutput = false;
 		String outfile = null;
 		
 		while ((opt = getopt.getopt()) != -1) {
@@ -74,7 +80,7 @@ public class DetectModules {
                 help();
                 break;
             case 'n': 
-            	noStock = true;
+            	noStockLookup = true;
             	break;
             case 'r':
             	readHeaders = true;
@@ -85,13 +91,16 @@ public class DetectModules {
             case 'v':
             	verbose = true;
             	break;
+            case 's': 
+            	noStockOutput = true;
+            	break;
             default:
                 throw new AssertionError();
     
             }
         }
 		
-		DetectModules modules = new DetectModules(noStock, readHeaders, verbose);
+		DetectModules modules = new DetectModules(noStockLookup, readHeaders, verbose, noStockOutput);
 		int i = getopt.getOptind();
         while (i < args.length) {
 			String arg = args[i++];
@@ -108,9 +117,11 @@ public class DetectModules {
 	private IMachine machine;
 	private IModuleDetector detector;
 	private boolean verbose;
+	private boolean noStockOutput;
 
-	public DetectModules(boolean noStock, boolean readHeader, boolean verbose) {
+	public DetectModules(boolean noStock, boolean readHeader, boolean verbose, boolean noStockOutput) {
         this.verbose = verbose;
+		this.noStockOutput = noStockOutput;
 		machine = ToolUtils.createMachine();
 		
 		URI databaseURI = URI.create("test.xml");
@@ -129,12 +140,15 @@ public class DetectModules {
 		Collection<IModule> modules = detector.scan(dir);
 		System.out.println("Found " + modules.size() + " modules in " + dir);
 	}
-	
-	
+
 	public void write(String path) {
 		System.out.println("Writing to " + path + "...");
 
 		List<IModule> simpleModules = detector.simplifyModules();
+		
+		if (noStockOutput) {
+			removeStocks(simpleModules);
+		}
 		
 		File outfile = new File(path);
 		File backup = new File(outfile.getAbsolutePath() + "~");
@@ -159,8 +173,39 @@ public class DetectModules {
 		}
 		
 	}
+
+
+	/**
+	 * @return
+	 */
+	private Set<String> getStockMD5s() {
+		Set<String> stockMd5s = new HashSet<String>();
+		for (IModule mod : machine.getModuleManager().getStockModules()) {
+			stockMd5s.add(mod.getMD5());
+		}
+		return stockMd5s;
+	}
+	
+	private void removeStocks(List<IModule> modules) {
+		Set<String> stockMd5s = getStockMD5s();
+
+		for (Iterator<IModule> iterator = modules.iterator(); iterator
+				.hasNext();) {
+			IModule module = iterator.next();
+			if (stockMd5s.contains(module.getMD5()))
+				iterator.remove();
+		}
+	}
 	public void list() {
 		Map<String, List<IModule>> md5ToModules = detector.gatherDuplicatesByMD5();
+		
+		if (noStockOutput) {
+			Set<String> stockMd5s = getStockMD5s();
+			for (String md5 : stockMd5s)
+				md5ToModules.remove(md5);
+		}
+
+		
 		for (Map.Entry<String, List<IModule>> ent : md5ToModules.entrySet()) {
 			System.out.println(ent.getKey() + ":");
 			for (IModule module : ent.getValue()) {
@@ -174,8 +219,13 @@ public class DetectModules {
 						System.out.println("\t\t" + info);
 					} else {
 						System.out.print("\t\t" + info.getFilename());
-						if (info.getFilename2() != null)
+						if (info.getSize() > 0)
+							 System.out.print(" @ " + HexUtils.toHex4(info.getSize()));
+						if (info.getFilename2() != null) {
 							System.out.print(", " + info.getFilename2());
+							if (info.getSize2() > 0)
+								 System.out.print(" @ " + HexUtils.toHex4(info.getSize2()));
+						}
 						if (info.isBanked())
 							System.out.print(", banked");
 						System.out.println();
@@ -192,6 +242,4 @@ public class DetectModules {
 			System.out.println();
 		}
 	}
-
-	
 }

@@ -27,7 +27,6 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
-import ejs.base.utils.TextUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
@@ -279,7 +278,7 @@ public class ManualTestTI99ModuleDetection {
 				}
 			}
 			assertTrue(foundGraphics);
-			assertEquals(2, infos.length);
+			assertEquals(module.toString(), 2, infos.length);
 			return true;
 		}
 		return false;
@@ -302,7 +301,7 @@ public class ManualTestTI99ModuleDetection {
 					assertEquals("9BCF230E42BB280199A04F0E0C4797C1", info.getFileMD5());
 				}
 			}
-			assertEquals(3, infos.length);
+			assertEquals(module.toString(), 3, infos.length);
 			return true;
 		}
 		return false;
@@ -508,11 +507,22 @@ public class ManualTestTI99ModuleDetection {
 
 		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
 
-		// These are named according to whim and are mostly wrong
-//		mods = testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk",
-//					"(?i).*\\.rpk");
-//		
-//		addModuleHashes(mods, md5Map);
+		//[[[
+		
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk",
+					"(?i).*\\.rpk");
+		
+		// These are named according to whim and are mostly wrong,
+		// so use well-known names for this test
+		for (IModule mod : mods) {
+			IModule ex = md5Map.get(mod.getMD5());
+			if (ex != null)
+				mod.setName(ex.getName());
+		}
+		
+		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
+		
+		//]]]
 
 		if (sb.length() > 0)
 			fail(sb.toString());

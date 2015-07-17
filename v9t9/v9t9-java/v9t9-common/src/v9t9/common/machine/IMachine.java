@@ -10,10 +10,7 @@
  */
 package v9t9.common.machine;
 
-import java.io.File;
 import java.net.URI;
-import java.util.Collection;
-
 import v9t9.common.cassette.ICassetteChip;
 import v9t9.common.client.IEmulatorContentSourceProvider;
 import v9t9.common.client.IKeyboardHandler;
@@ -31,7 +28,6 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardMapping;
 import v9t9.common.keyboard.IKeyboardModeListener;
 import v9t9.common.keyboard.IKeyboardState;
-import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleDetector;
 import v9t9.common.modules.IModuleManager;
 
