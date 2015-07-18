@@ -75,7 +75,7 @@ public class GenerateRomMd5Hash {
 		if (filter == null)
 			throw new IOException("unknown filter: " + algorithm);
 			
-		String md5 = locator.getContentMD5(uri, filter, true);
+		String md5 = locator.getContentMD5(uri, filter);
 		System.out.println(uri + " @ " + filter.getId() + " = " + md5);
 	}
 }

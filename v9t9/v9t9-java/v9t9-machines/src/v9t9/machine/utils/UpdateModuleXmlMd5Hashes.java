@@ -175,7 +175,7 @@ public class UpdateModuleXmlMd5Hashes {
 			md5Alg = MD5FilterAlgorithms.ALGORITHM_FULL; 
 		}
 		
-		String md5 = locator.getContentMD5(uri, MD5FilterAlgorithms.create(md5Alg), true);
+		String md5 = locator.getContentMD5(uri, MD5FilterAlgorithms.create(md5Alg));
 		
 		System.out.println(filename + " ==> " + md5);
 		info.getProperties().put(md5Prop, md5);

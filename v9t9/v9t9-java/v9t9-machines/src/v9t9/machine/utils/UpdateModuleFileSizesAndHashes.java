@@ -140,8 +140,7 @@ public class UpdateModuleFileSizesAndHashes {
 				? info.getEffectiveFileMD5Algorithm() : info.getEffectiveFile2MD5Algorithm();
 		
 		String md5 = locator.getContentMD5(uri, 
-				MD5FilterAlgorithms.create(alg),
-				true);
+				MD5FilterAlgorithms.create(alg));
 
 		System.out.println(filename + " ==> " + size + " & " + md5);
 		

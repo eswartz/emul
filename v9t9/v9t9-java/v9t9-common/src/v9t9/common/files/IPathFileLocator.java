@@ -119,10 +119,9 @@ public interface IPathFileLocator {
 	 * Get the MD5 of the first given bytes of content, as a hex-encoded string
 	 * @param uri
 	 * @param filter filter for considering portions of content for digesting
-	 * @param mustExist if false, don't throw error for missing content
 	 * @return String
 	 */
-	String getContentMD5(URI uri, IMD5SumFilter filter, boolean mustExist) throws IOException;
+	String getContentMD5(URI uri, IMD5SumFilter filter) throws IOException;
 	
 
 	/**

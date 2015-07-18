@@ -97,7 +97,7 @@ public class TI99RomUtils {
 			Pair<IMD5SumFilter, Integer> minfo = getEffectiveMD5AndSize(info, contentLength);
 			IMD5SumFilter filter = minfo.first;
 			contentLength = minfo.second;
-			md5 = fileLocator.getContentMD5(uri, filter, true);
+			md5 = fileLocator.getContentMD5(uri, filter);
 			
 			if (bank2) {
 				info.getProperties().put(MemoryEntryInfo.FILE2_MD5, md5);

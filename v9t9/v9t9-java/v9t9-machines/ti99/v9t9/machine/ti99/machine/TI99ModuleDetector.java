@@ -186,8 +186,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 						try {
 							int limit = 0x1000;
 							String md5 = fileLocator.getContentMD5(uri, 
-									new MD5FilterAlgorithms.FileSegmentFilter(0, limit),
-									true);
+									new MD5FilterAlgorithms.FileSegmentFilter(0, limit));
 							xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
 							xinfo.getProperties().put(MemoryEntryInfo.SIZE, limit);
 						} catch (IOException e) {
@@ -562,7 +561,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 			Pair<IMD5SumFilter, Integer> minfo = getEffectiveMD5AndSize(info, contentLength);
 			IMD5SumFilter filter = minfo.first;
 			contentLength = minfo.second;
-			md5 = fileLocator.getContentMD5(uri, filter, true);
+			md5 = fileLocator.getContentMD5(uri, filter);
 			
 			if (bank2) {
 				info.getProperties().put(MemoryEntryInfo.FILE2_MD5, md5);

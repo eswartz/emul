@@ -107,9 +107,11 @@ public class StoredMemoryEntryInfo {
     		if (info.getSize() < 0)
     			throw new IOException("negative size not allowed for stored files (in file '" + filename +"' for '" + name + "')");
     	}
-		String realMD5 = locator.getContentMD5(uri,
-				MD5FilterAlgorithms.create(info.getEffectiveFileMD5Algorithm()), 
-				!isStored);
+    	
+		String realMD5 = "";
+		if (!isStored)
+			realMD5 = locator.getContentMD5(uri,
+				MD5FilterAlgorithms.create(info.getEffectiveFileMD5Algorithm()));
     	
         return new StoredMemoryEntryInfo(info, settings, memory, locator, 
         		uri, filename, 

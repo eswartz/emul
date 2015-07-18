@@ -110,7 +110,7 @@ public class ComputeMD5 {
 		
 		String md5;
 		try {
-			md5 = machine.getRomPathFileLocator().getContentMD5(file.toURI(), filter, true);
+			md5 = machine.getRomPathFileLocator().getContentMD5(file.toURI(), filter);
 		} catch (IOException e) {
 			log.error("failed to compute MD5 from " + file, e);
 			return;

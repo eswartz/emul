@@ -383,7 +383,7 @@ public class Module implements IModule {
 						alg = algObj.toString();
 					
 					String md5 = locator.getContentMD5(uri,
-							MD5FilterAlgorithms.create(alg), true);
+							MD5FilterAlgorithms.create(alg));
 					
 					if (md5.isEmpty())
 						log.error(getName() + ": could not fetch MD5 for " + info.getFilename());

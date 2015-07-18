@@ -921,7 +921,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @see v9t9.common.files.IPathFileLocator#getContentMD5(java.net.URI)
 	 */
 	@Override
-	public String getContentMD5(URI uri, IMD5SumFilter filter, boolean mustExist) throws IOException {
+	public String getContentMD5(URI uri, IMD5SumFilter filter) throws IOException {
 		URI directory = resolveInsideURI(uri, ".");
 		Map<String, String> md5Dir = cachedUriToMD5Hashes.get(directory);
 		if (md5Dir == null) {
@@ -931,7 +931,7 @@ public class PathFileLocator implements IPathFileLocator {
 		String uriKey = getURIKey(uri, filter);
 		String md5 = md5Dir.get(uriKey);
 		if (md5 == null) {
-			md5 = fetchMD5(uri, filter, mustExist);
+			md5 = fetchMD5(uri, filter);
 			md5Dir.put(uriKey, md5);
 
 			// store reverse mapping too
@@ -952,7 +952,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 * @return
 	 * @throws IOException
 	 */
-	protected String fetchMD5(URI uri, IMD5SumFilter filter, boolean mustExist)
+	protected String fetchMD5(URI uri, IMD5SumFilter filter)
 			throws IOException {
 		
 		String md5;
@@ -994,8 +994,7 @@ public class PathFileLocator implements IPathFileLocator {
 			// URI was not properly de/en-coded -- TODO
 			// ... or when the file actually doesn't exist...
 			md5 = "";
-			if (mustExist)
-				logger.error("can't fetch MD5 for " + uri, e);
+			logger.error("can't fetch MD5 for " + uri, e);
 		}
 		return md5;
 	}
@@ -1010,7 +1009,7 @@ public class PathFileLocator implements IPathFileLocator {
 	 */
 	@Override
 	public String getContentMD5(URI uri) throws IOException {
-		return getContentMD5(uri, MD5FilterAlgorithms.FullContentFilter.INSTANCE, true);
+		return getContentMD5(uri, MD5FilterAlgorithms.FullContentFilter.INSTANCE);
 	}
 	
 	/* (non-Javadoc)
@@ -1078,7 +1077,7 @@ public class PathFileLocator implements IPathFileLocator {
 									&& ((FileSegmentFilter) filter).getLength() == info.length)) {
 						entMd5 = info.md5;
 					} else {
-						entMd5 = getContentMD5(uri, filter, true);
+						entMd5 = getContentMD5(uri, filter);
 					}
 					if (entMd5.equalsIgnoreCase(md5)) {
 						//System.out.println("\t" + entMd5 + " = " + uri);
