@@ -164,7 +164,7 @@ public class PathSetupComposite extends Composite {
 				if (label2 == null)
 					label2 = "";
 				
-				rc = label1.compareTo(label2);
+				rc = label1.compareToIgnoreCase(label2);
 				
 				// If descending order, flip the direction
 				if (direction < 0) {
