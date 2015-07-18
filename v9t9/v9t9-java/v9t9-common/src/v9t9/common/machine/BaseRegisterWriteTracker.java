@@ -58,7 +58,7 @@ public abstract class BaseRegisterWriteTracker {
 				 */
 				@Override
 				public void registerChanged(int reg, int value) {
-					if (!regbits.get(reg - baseReg))
+					if (reg < baseReg || !regbits.get(reg - baseReg))
 						return;
 					
 					synchronized (BaseRegisterWriteTracker.this) {
