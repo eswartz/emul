@@ -185,7 +185,9 @@ public class TI99ModuleDetector implements IModuleDetector {
 						URI uri = fileLocator.findFile(xinfo.getFilename());
 						try {
 							int limit = 0x1000;
-							String md5 = fileLocator.getContentMD5(uri, 0, limit, true);
+							String md5 = fileLocator.getContentMD5(uri, 
+									new MD5FilterAlgorithms.FileSegmentFilter(0, limit),
+									true);
 							xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
 							xinfo.getProperties().put(MemoryEntryInfo.SIZE, limit);
 						} catch (IOException e) {

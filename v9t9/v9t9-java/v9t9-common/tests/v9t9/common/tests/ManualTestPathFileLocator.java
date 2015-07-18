@@ -26,6 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import v9t9.common.files.IPathFileLocator;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.files.IPathFileLocator.FileInfo;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.settings.SettingSchemaProperty;
@@ -125,11 +126,14 @@ public class ManualTestPathFileLocator {
 		
 		bootRoms.getList().add(MODULE_PATH);
 		
-		uri = locator.findFileByMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB", 0, -1);
+		uri = locator.findFileByMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB",
+				MD5FilterAlgorithms.FullContentFilter.INSTANCE);
 		assertNotNull(uri);
-		uri = locator.findFileByMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB", 0, 8192);
+		uri = locator.findFileByMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB", 
+				new MD5FilterAlgorithms.FileSegmentFilter(0, 8192));
 		assertNotNull(uri);
-		uri = locator.findFileByMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB", 1, 8192);
+		uri = locator.findFileByMD5("6CC4BC2B6B3B0C33698E6A03759A4CAB", 
+				new MD5FilterAlgorithms.FileSegmentFilter(1, 8192));
 		assertNull(uri);
 		uri = locator.findFile("wumpusg.bin");
 		assertNotNull(uri);

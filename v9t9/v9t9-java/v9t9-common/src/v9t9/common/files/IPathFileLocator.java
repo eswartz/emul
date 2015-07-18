@@ -80,15 +80,6 @@ public interface IPathFileLocator {
 	/**
 	 * Find a file along the search paths with the given MD5 hash.
 	 * @param md5
-	 * @param offset TODO
-	 * @param limit maximum number of bytes to read (or <= 0 for all)
-	 * @return URI or <code>null</code> if no match is found
-	 */
-	URI findFileByMD5(String md5, int offset, int limit);
-
-	/**
-	 * Find a file along the search paths with the given MD5 hash.
-	 * @param md5
 	 * @param filter filter for considering portions of content for digesting
 	 * @return URI or <code>null</code> if no match is found
 	 */
@@ -124,17 +115,6 @@ public interface IPathFileLocator {
 	 */
 	String getContentMD5(URI uri) throws IOException;
 	
-	/**
-	 * Get the MD5 of the first given bytes of content, as a hex-encoded string
-	 * @param uri
-	 * @param offset TODO
-	 * @param bytes number of bytes to consume (or <= 0 for all)
-	 * @param mustExist TODO
-	 * @return String
-	 */
-	String getContentMD5(URI uri, int offset, int bytes, boolean mustExist) throws IOException;
-	
-
 	/**
 	 * Get the MD5 of the first given bytes of content, as a hex-encoded string
 	 * @param uri
