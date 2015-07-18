@@ -46,7 +46,7 @@
       <gromModuleEntry fileMd5="746ED03FB299D5815F185872F82EB395" fileName="metbelg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" md5="6A72C69E9D8A31B956B20DE6CAECA923" name="Championship Baseball">
+  <module autoStart="true" md5="6A72C69E9D8A31B956B20DE6CAECA923" name="Championship Baseball (MBX)">
     <memoryEntries>
       <romModuleEntry fileMd5="4A8B1ED3EF3855ED2D51FE66D96C0340" fileName="phm3148c.bin"/>
       <gromModuleEntry fileMd5="DA51B8B6BC02679EC87B1431D9B4F50A" fileName="phm3148g.bin" size="0x5800"/>
@@ -76,7 +76,7 @@
       <gromModuleEntry fileMd5="4D75A753DA97BE015617012448DB3652" fileName="phm3150g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" md5="3BFAF089B29FD58BFD074B6D92948102" name="I'm Hiding">
+  <module autoStart="true" md5="3BFAF089B29FD58BFD074B6D92948102" name="I'm Hiding (MBX)">
     <memoryEntries>
       <romModuleEntry fileMd5="A852E0B046B0E0E061D5D1100F27C756" fileName="phm3155c.bin"/>
       <gromModuleEntry fileMd5="C625558FE0B1379E0024996550635480" fileName="phm3155g.bin" size="0x3800"/>
@@ -120,32 +120,32 @@
       <gromModuleEntry fileMd5="36B06DCA65F2D7683146F0D97EACCF4B" fileName="schachg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" keywords="Milliken" md5="E3C087C6FD2B852448799C4E7C78F081" name="Addition">
+  <module keywords="Milliken" md5="E3C087C6FD2B852448799C4E7C78F081" name="Addition">
     <memoryEntries>
       <gromModuleEntry fileMd5="619FB9EA4F9E79A876D3B115BF40FC36" fileName="phm3090g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" keywords="Milliken" md5="4FE9D6BB31BF45457D8657A7BEEB8DB6" name="Decimals">
+  <module keywords="Milliken" md5="4FE9D6BB31BF45457D8657A7BEEB8DB6" name="Decimals">
     <memoryEntries>
       <gromModuleEntry fileMd5="BAC7853672410652837DF3692ED36144" fileName="phm3096g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" keywords="Milliken" md5="879847761A8A72DC019E8CC36E17FD4F" name="Division">
+  <module keywords="Milliken" md5="879847761A8A72DC019E8CC36E17FD4F" name="Division">
     <memoryEntries>
       <gromModuleEntry fileMd5="ECBAF79D54AA141B0A4917F0D608B805" fileName="divseqg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" keywords="Milliken" md5="A0A08477BCAA0657D66F8C88AF67CF82" name="Equations">
+  <module keywords="Milliken" md5="A0A08477BCAA0657D66F8C88AF67CF82" name="Equations">
     <memoryEntries>
       <gromModuleEntry fileMd5="7778F649AC109BE3E218AC1A8A0EEDB3" fileName="phm3100g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" keywords="Milliken" md5="9987CC788CC44707D777BEEA9075C9F9" name="Fractional Numbers">
+  <module keywords="Milliken" md5="9987CC788CC44707D777BEEA9075C9F9" name="Fractional Numbers">
     <memoryEntries>
       <gromModuleEntry fileMd5="C0723051245BA14D8BBE0DBB4F91C1DC" fileName="phm3095g.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" keywords="Milliken" md5="8B41C077070309283AB1C90E088534D2" name="Integers">
+  <module keywords="Milliken" md5="8B41C077070309283AB1C90E088534D2" name="Integers">
     <memoryEntries>
       <gromModuleEntry fileMd5="2337EC1C9164C58413B569649DC1A7D8" fileName="phm3094g.bin" size="0x3800"/>
     </memoryEntries>
@@ -155,28 +155,28 @@
       <gromModuleEntry fileMd5="658ACB640C2CB4A4D11DA569D5FAF847" fileName="phm3099g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" keywords="Milliken" md5="6551557B640F637762E08B8CA5C4F787" name="Measurement Formulas">
+  <module keywords="Milliken" md5="6551557B640F637762E08B8CA5C4F787" name="Measurement Formulas">
     <memoryEntries>
       <bankedModuleEntry file2Md5="CC56D91EAAEB2B1E8A19BB5900D9D1FC" fileMd5="E5086188A0B880875EE22BC3FB2CFE57" fileName="phm3101c.bin" fileName2="phm3101d.bin"/>
       <gromModuleEntry fileMd5="46DBE296B9B0B3F8BDE0493B90CFF6EB" fileName="phm3101g.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" keywords="Milliken" md5="8F2C29EDF02C9F1C25B8029EFD0C4DD5" name="Multiplication">
+  <module keywords="Milliken" md5="8F2C29EDF02C9F1C25B8029EFD0C4DD5" name="Multiplication">
     <memoryEntries>
       <gromModuleEntry fileMd5="2584206DE287106C918F83CA46C09CE4" fileName="phm3092g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" keywords="Milliken" md5="F555610BF45291DA78346AE1ABC6B97D" name="Number Readiness">
+  <module keywords="Milliken" md5="F555610BF45291DA78346AE1ABC6B97D" name="Number Readiness">
     <memoryEntries>
       <gromModuleEntry fileMd5="7407BD589773BCF3583A30F2FB90BC57" fileName="phm3098g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" keywords="Milliken" md5="A8098DB5C0049F768D3AC61BBAEB3053" name="Percents">
+  <module keywords="Milliken" md5="A8098DB5C0049F768D3AC61BBAEB3053" name="Percents">
     <memoryEntries>
       <gromModuleEntry fileMd5="AA07E9C2765CA1E573FC8919F99AEAC8" fileName="phm3097g.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" keywords="Milliken" md5="D461103B031700569F1F02FDEF68EAF6" name="Subtraction">
+  <module keywords="Milliken" md5="D461103B031700569F1F02FDEF68EAF6" name="Subtraction">
     <memoryEntries>
       <gromModuleEntry fileMd5="023486504C4B6F3354ACC654B57187B6" fileName="phm3091g.bin" size="0x3800"/>
     </memoryEntries>
