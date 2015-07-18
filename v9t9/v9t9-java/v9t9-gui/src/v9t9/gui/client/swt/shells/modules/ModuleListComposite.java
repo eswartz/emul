@@ -278,7 +278,7 @@ public class ModuleListComposite extends Composite {
 
 		public ColumnComparator() {
 			this.propertyIndex = 0;
-			direction = 0;
+			direction = 1;
 		}
 
 		public int getDirection() {
@@ -350,7 +350,6 @@ public class ModuleListComposite extends Composite {
 		
 		treeViewer.getTree().setHeaderVisible(true);
 		
-
 		comparator = new ColumnComparator();
 		treeViewer.setComparator(comparator);
 		
@@ -361,6 +360,9 @@ public class ModuleListComposite extends Composite {
 		nameColumn = new TreeViewerColumn(treeViewer, SWT.LEFT | SWT.RESIZE);
 		nameColumn.getColumn().addSelectionListener(createColumnSelectionListener(nameColumn.getColumn(), 1));
 		nameColumn.getColumn().setText("Name");
+
+		comparator.direction = 1;
+		comparator.propertyIndex = 1;
 		
 		labelProvider = new DiscoveredModuleLabelProvider();
 		treeViewer.setLabelProvider(labelProvider);
