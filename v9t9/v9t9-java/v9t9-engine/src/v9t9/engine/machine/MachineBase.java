@@ -493,7 +493,6 @@ abstract public class MachineBase implements IMachine {
 		memory.getModel().resetMemory();
 		if (moduleManager != null) {
 			moduleManager.loadState(section.getSection("Modules"));
-			moduleManager.loadState(section.getSection("Modules"));
 		}
 		memory.loadState(section.getSection("Memory"));
 		cpu.loadState(section.getSection("CPU"));
