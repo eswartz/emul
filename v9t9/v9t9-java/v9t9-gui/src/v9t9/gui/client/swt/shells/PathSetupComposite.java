@@ -20,6 +20,8 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.custom.SashForm;
@@ -29,6 +31,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
@@ -85,6 +88,10 @@ public class PathSetupComposite extends Composite {
 		void allRequiredRomsFound(boolean found);
 	}
 	private ListenerList<IPathSetupListener> listeners = new ListenerList<PathSetupComposite.IPathSetupListener>();
+
+	private ROMSetupLabelProvider romTreeLabelProvider;
+
+	private ColumnComparator comparator;
 	
 	public PathSetupComposite(Composite parent, IMachine machine_, SwtWindow window) {
 		super(parent, SWT.NONE);
@@ -120,9 +127,71 @@ public class PathSetupComposite extends Composite {
 		
 	}
 
-	/**
-	 * 
-	 */
+
+	public class ColumnComparator extends ViewerComparator {
+		private int propertyIndex;
+		private int direction = 1;
+
+		public ColumnComparator() {
+			this.propertyIndex = 0;
+			direction = 1;
+		}
+
+		public int getDirection() {
+			return direction == 1 ? SWT.DOWN : SWT.UP;
+		}
+
+		public void setColumn(int column) {
+			if (column == this.propertyIndex) {
+				// Same column as last sort; toggle the direction
+				direction = -direction;
+			} else {
+				// New column; do an ascending sort
+				this.propertyIndex = column;
+				direction = 1;
+			}
+		}
+
+		@Override
+		public int compare(Viewer viewer, Object e1, Object e2) {
+			int rc = 0;
+			
+			if (e1 instanceof IModule && e2 instanceof IModule) {
+				String label1 = romTreeLabelProvider.getColumnText(e1, propertyIndex);
+				if (label1 == null)
+					label1 = "";
+				String label2 = romTreeLabelProvider.getColumnText(e2, propertyIndex);
+				if (label2 == null)
+					label2 = "";
+				
+				rc = label1.compareTo(label2);
+				
+				// If descending order, flip the direction
+				if (direction < 0) {
+					rc = -rc;
+				}
+			}
+			
+			return rc;
+		}
+
+	}
+
+	private SelectionListener createColumnSelectionListener(final TreeColumn column,
+			final int index) {
+		SelectionAdapter selectionAdapter = new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				comparator.setColumn(index);
+				int dir = comparator.getDirection();
+				viewer.getTree().setSortDirection(dir);
+				viewer.getTree().setSortColumn(column);
+				viewer.refresh();
+			}
+		};
+		return selectionAdapter;
+	}
+
 	private void createROMTable(Composite parent) {
 		viewer = new TreeViewer(parent);
 		
@@ -135,18 +204,25 @@ public class PathSetupComposite extends Composite {
 		tree.setHeaderVisible(true);
 		tree.setLinesVisible(true);
 		
+		comparator = new ColumnComparator();
+		viewer.setComparator(comparator);
+		
 		TreeViewerColumn nameColumn = new TreeViewerColumn(viewer, SWT.LEFT);
 		nameColumn.getColumn().setText("Name");
+		nameColumn.getColumn().addSelectionListener(createColumnSelectionListener(nameColumn.getColumn(), 0));
 		
 		TreeViewerColumn fileColumn = new TreeViewerColumn(viewer, SWT.LEFT);  
 		fileColumn.getColumn().setText("File(s)");
+		fileColumn.getColumn().addSelectionListener(createColumnSelectionListener(fileColumn.getColumn(), 1));
 		
 		TreeViewerColumn dirColumn = new TreeViewerColumn(viewer, SWT.LEFT);  
 		dirColumn.getColumn().setText("Path(s)");
+		dirColumn.getColumn().addSelectionListener(createColumnSelectionListener(dirColumn.getColumn(), 2));
 		
 		romTreeContentProvider = new ROMSetupTreeContentProvider(requiredRoms, optionalRoms, machine);
+		romTreeLabelProvider = new ROMSetupLabelProvider(machine, romTreeContentProvider);
 		viewer.setContentProvider(romTreeContentProvider);
-		viewer.setLabelProvider(new ROMSetupLabelProvider(machine, romTreeContentProvider));
+		viewer.setLabelProvider(romTreeLabelProvider);
 		viewer.setInput(new Object());
 	}
 

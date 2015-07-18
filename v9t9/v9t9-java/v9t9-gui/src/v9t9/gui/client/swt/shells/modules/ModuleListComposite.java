@@ -41,6 +41,8 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -48,14 +50,15 @@ import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.TableColumn;
 
 import v9t9.common.events.NotifyException;
-import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleDetector;
@@ -115,6 +118,10 @@ public class ModuleListComposite extends Composite {
 
 	private ArrayList<URI> dirtyModuleLists;
 
+	private HashMap<IModule, String> discoveredFiles;
+
+	private ColumnComparator comparator;
+
 	public ModuleListComposite(Composite parent, IMachine machine, SwtWindow window,
 			IStatusListener statusListener) {
 		super(parent, SWT.NONE);
@@ -126,6 +133,8 @@ public class ModuleListComposite extends Composite {
 		
 		settings = machine.getSettings().getMachineSettings().getHistorySettings().findOrAddSection(SECTION_MODULE_MANAGER);
 
+		discoveredFiles = new HashMap<IModule, String>();
+		
 		Composite composite = this;
 		
 		/*spacer*/ new Label(composite, SWT.NONE);
@@ -203,13 +212,8 @@ public class ModuleListComposite extends Composite {
 		return new DialogSettingsWrapper(settings);
 	}
 
-	static class DiscoveredModuleLabelProvider extends BaseLabelProvider implements ITableLabelProvider {
-		private IPathFileLocator locator;
-		/**
-		 * 
-		 */
-		public DiscoveredModuleLabelProvider(IPathFileLocator locator) {
-			this.locator = locator;
+	class DiscoveredModuleLabelProvider extends BaseLabelProvider implements ITableLabelProvider {
+		public DiscoveredModuleLabelProvider() {
 		}
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
@@ -220,14 +224,7 @@ public class ModuleListComposite extends Composite {
 			if (columnIndex == 0) {
 				return module.getName();
 			} else {
-				Collection<File> coveredFiles = module.getUsedFiles(locator);
-				StringBuilder sb = new StringBuilder();
-				for (File file : coveredFiles) {
-					if (sb.length() > 0)
-						sb.append(", ");
-					sb.append(file.getName());
-				}
-				return sb.toString();
+				return discoveredFiles.get(module);
 			}
 		}
 		/* (non-Javadoc)
@@ -238,7 +235,59 @@ public class ModuleListComposite extends Composite {
 			return null;
 		}
 	}
-	
+
+	public class ColumnComparator extends ViewerComparator {
+		private int propertyIndex;
+		private int direction = 1;
+
+		public ColumnComparator() {
+			this.propertyIndex = 0;
+			direction = 1;
+		}
+
+		public int getDirection() {
+			return direction == 1 ? SWT.DOWN : SWT.UP;
+		}
+
+		public void setColumn(int column) {
+			if (column == this.propertyIndex) {
+				// Same column as last sort; toggle the direction
+				direction = -direction;
+			} else {
+				// New column; do an ascending sort
+				this.propertyIndex = column;
+				direction = 1;
+			}
+		}
+
+		@Override
+		public int compare(Viewer viewer, Object e1, Object e2) {
+			IModule p1 = (IModule) e1;
+			IModule p2 = (IModule) e2;
+			int rc = 0;
+			switch (propertyIndex) {
+			case 0:
+				rc = p1.getName().compareTo(p2.getName());
+				break;
+			case 1:
+			{
+				String dis1 = discoveredFiles.get(p1);
+				String dis2 = discoveredFiles.get(p2);
+				rc = dis1.compareTo(dis2);
+				break;
+			}
+			default:
+				rc = 0;
+			}
+			// If descending order, flip the direction
+			if (direction < 0) {
+				rc = -rc;
+			}
+			return rc;
+		}
+
+	}
+
 	/**
 	 * @param composite
 	 */
@@ -262,19 +311,26 @@ public class ModuleListComposite extends Composite {
 		
 		discoveredList.getTable().setHeaderVisible(true);
 		
+
+		comparator = new ColumnComparator();
+		discoveredList.setComparator(comparator);
+		
 		nameColumn = new TableViewerColumn(discoveredList, SWT.LEFT | SWT.RESIZE);
+		nameColumn.getColumn().addSelectionListener(createColumnSelectionListener(nameColumn.getColumn(), 0));
 		nameColumn.getColumn().setText("Name");
 		
 		filesColumn = new TableViewerColumn(discoveredList, SWT.LEFT | SWT.RESIZE);
+		filesColumn.getColumn().addSelectionListener(createColumnSelectionListener(filesColumn.getColumn(), 1));
 		filesColumn.getColumn().setText("Files");
 		
-		discoveredList.setLabelProvider(new DiscoveredModuleLabelProvider(machine.getRomPathFileLocator()));
+		discoveredList.setLabelProvider(new DiscoveredModuleLabelProvider());
 		discoveredList.setContentProvider(new ArrayContentProvider());
 		
 		dirtyModuleLists = new ArrayList<URI>();
 		editingSupport = new ModuleNameEditingSupport(discoveredList, dirtyModuleLists);
 		nameColumn.setEditingSupport(editingSupport);
 		editingSupport.setCanEdit(true);
+		
 		
 		discoveredList.setInput(discoveredModules);
 		
@@ -347,6 +403,21 @@ public class ModuleListComposite extends Composite {
 			}
 		});
 
+	}
+
+	private SelectionListener createColumnSelectionListener(final TableColumn column,
+			final int index) {
+		SelectionAdapter selectionAdapter = new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				comparator.setColumn(index);
+				int dir = comparator.getDirection();
+				discoveredList.getTable().setSortDirection(dir);
+				discoveredList.getTable().setSortColumn(column);
+				discoveredList.refresh();
+			}
+		};
+		return selectionAdapter;
 	}
 
 	/**
@@ -487,6 +558,7 @@ public class ModuleListComposite extends Composite {
 
 	public void refresh() {
 		discoveredModules.clear();
+		discoveredFiles.clear();
 		
 		URI databaseURI = dbFile != null ? dbFile.toURI() : nonameDatabaseURI;
 		
@@ -515,6 +587,16 @@ public class ModuleListComposite extends Composite {
 				} else if (showAllModules) {
 					discoveredModules.add(exist);
 				}
+				
+				StringBuilder sb = new StringBuilder();
+				for (File file : module.getUsedFiles(machine.getRomPathFileLocator())) {
+					if (sb.length() > 0)
+						sb.append(", ");
+					sb.append(file.getName());
+				}
+				discoveredFiles.put(module, sb.toString());
+				
+
 			}
 		}
 
