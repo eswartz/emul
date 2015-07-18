@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <modules>
-  <module md5="56553D48F15399DDC642016146291EDB" name="Mini Memory" replaceMd5="BA3392B946E8D91D43305C9B59E04B31">
+  <module md5="56553D48F15399DDC642016146291EDB" name="Mini Memory" replaceMd5="EDD1C51FA748F1D7B07A438412B9FC15">
     <memoryEntries>
       <gromModuleEntry fileMd5="972D4BF73609DBFA3CF056A829701FC1" fileName="minig.bin" size="0x1800"/>
-      <romModuleEntry fileMd5="98CE13A825349736CBA2343BBD948B46" fileName="minic.bin"/>
+      <romModuleEntry fileMd5="9BCF230E42BB280199A04F0E0C4797C1" fileName="minic.bin" size="0x1000"/>
       <memoryEntry address="0x7000" domain="CPU" fileName="minir.bin" size="0x1000" stored="true"/>
     </memoryEntries>
   </module>
