@@ -628,7 +628,8 @@ public class ModuleListComposite extends Composite {
 				module.removePathsFromFiles(machine.getRomPathFileLocator());
 				discoveredModules.add(module);
 			} else if (exist.getDatabaseURI().equals(databaseURI)) {
-				discoveredModules.add(module);
+				// keep my version in case name,etc. were edited
+				discoveredModules.add(exist);
 			} else if (showAllModules) {
 				discoveredModules.add(exist);
 			}
