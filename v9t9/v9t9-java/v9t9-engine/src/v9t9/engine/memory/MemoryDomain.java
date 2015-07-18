@@ -466,7 +466,8 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 
 		for (ISettingSection entryStore : section.getSections()) {
 			String name = entryStore.get("Name");
-			IMemoryEntry entry = findMappedEntry(name);
+			int addr = entryStore.getInt("Address");
+			IMemoryEntry entry = findMappedEntry(name, addr);
 			if (entry != null) {
 				entry.loadState(entryStore);
 			} else {
@@ -480,27 +481,22 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 		
 	}
 
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryDomain#findFullyMappedEntry(java.lang.String)
-	 */
-	@Override
-	public IMemoryEntry findFullyMappedEntry(String name) {
+	protected IMemoryEntry findFullyMappedEntry(String name, int addr) {
 		for (IMemoryEntry entry : mappedEntries) {
-			if (entry.getName().equals(name) && isEntryFullyMapped(entry)) {
+			if (entry.getName().equals(name) && 
+					entry.getAddr() == addr &&
+					isEntryFullyMapped(entry)) {
 				return entry;
 			}
 		}
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryDomain#findMappedEntry(java.lang.String)
-	 */
-	@Override
-	public IMemoryEntry findMappedEntry(String name) {
+	protected IMemoryEntry findMappedEntry(String name, int addr) {
 		for (IMemoryEntry entry : mappedEntries) {
-			if (entry.getName().equals(name) && !isEntryFullyUnmapped(entry)) {
+			if (entry.getName().equals(name) && 
+					entry.getAddr() == addr &&
+					!isEntryFullyUnmapped(entry)) {
 				return entry;
 			}
 		}

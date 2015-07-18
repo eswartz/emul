@@ -127,10 +127,6 @@ public interface IMemoryDomain {
 
 	void loadState(ISettingSection section);
 
-	IMemoryEntry findFullyMappedEntry(String name);
-
-	IMemoryEntry findMappedEntry(String name);
-
 	void unmapAll();
 
 	IMemoryEntry[] getMemoryEntries();
