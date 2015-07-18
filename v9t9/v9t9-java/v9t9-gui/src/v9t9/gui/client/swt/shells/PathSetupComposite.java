@@ -199,7 +199,7 @@ public class PathSetupComposite extends Composite {
 		
 		Tree tree = viewer.getTree();
 		
-		GridDataFactory.fillDefaults().grab(true, true).minSize(-1, 96).applyTo(tree);
+		GridDataFactory.fillDefaults().grab(true, true).minSize(-1, 96).hint(-1, 500).applyTo(tree);
 		
 		tree.setHeaderVisible(true);
 		tree.setLinesVisible(true);

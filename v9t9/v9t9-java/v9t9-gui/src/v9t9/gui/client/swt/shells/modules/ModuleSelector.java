@@ -191,7 +191,35 @@ public class ModuleSelector extends Composite {
 	private ModuleNameEditingSupport editingSupport;
 
 	private ArrayList<Object> flatModuleList;
+
+	static class FilteredSearchFilter extends ViewerFilter {
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.viewers.ViewerFilter#isFilterProperty(java.lang.Object, java.lang.String)
+	 */
+	@Override
+	public boolean isFilterProperty(Object element, String property) {
+		return ModuleSelector.NAME_PROPERTY.equals(property);
+	}
 	
+	@Override
+	public boolean select(Viewer viewer, Object parentElement, Object element) {
+		if (ModuleSelector.lastFilter != null) {
+			// note: instanceof excludes "<No module>" entry too
+			if (element instanceof URI)
+				return true;
+			if (false == element instanceof IModule)
+				return false;
+			IModule mod = (IModule) element;
+			String lowSearch = ModuleSelector.lastFilter.toLowerCase();
+			return mod.getName().toLowerCase().contains(lowSearch)
+					|| mod.getKeywords().contains(lowSearch)
+					|| ("auto-start".startsWith(lowSearch) && mod.isAutoStart());
+		}
+		return true;
+	}
+}
+
 	/**
 	 * @param window 
 	 * 
@@ -274,6 +302,7 @@ public class ModuleSelector extends Composite {
 			public void widgetSelected(SelectionEvent e) {
 				SetupWizard wizard = new SetupWizard(machine, window, SetupWizard.Page.PATHS);
 				WizardDialog dialog = new WizardDialog(getShell(), wizard);
+				dialog.setPageSize(SWT.DEFAULT, 500);
 	        	int ret = dialog.open();
 	        	
 	        	if (ret == Window.OK)
@@ -528,9 +557,6 @@ public class ModuleSelector extends Composite {
 
 	}
 
-	/**
-	 * @param text
-	 */
 	protected void updateFilter(final String text) {
 		String prev = lastFilter;
 		if (text == null || text.isEmpty() || text.equals("Search...")) {

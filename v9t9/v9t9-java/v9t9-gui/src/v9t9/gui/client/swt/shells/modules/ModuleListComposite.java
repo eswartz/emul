@@ -41,11 +41,17 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
+import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -55,6 +61,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.Text;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
@@ -63,6 +70,7 @@ import v9t9.common.modules.IModuleDetector;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
 import v9t9.common.settings.Settings;
+import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.SwtWindow;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.DialogSettingsWrapper;
@@ -88,7 +96,7 @@ public class ModuleListComposite extends Composite {
 	private IMachine machine;
 	private ComboViewer dbSelector;
 	
-	private CheckboxTableViewer discoveredList;
+	private CheckboxTableViewer viewer;
 
 	private List<IModule> discoveredModules = new ArrayList<IModule>();
 	
@@ -123,6 +131,32 @@ public class ModuleListComposite extends Composite {
 
 	private DiscoveredModuleLabelProvider labelProvider;
 
+	class FilteredSearchFilter extends ViewerFilter {
+
+		@Override
+		public boolean isFilterProperty(Object element, String property) {
+			return true;
+		}
+		
+		@Override
+		public boolean select(Viewer viewer, Object parentElement, Object element) {
+			if (lastFilter != null) {
+				if (false == element instanceof IModule)
+					return true;
+				IModule mod = (IModule) element;
+				String lowSearch = lastFilter.toLowerCase();
+				return mod.getName().toLowerCase().contains(lowSearch)
+						|| mod.getKeywords().contains(lowSearch)
+						|| ("auto-start".startsWith(lowSearch) && mod.isAutoStart());
+			}
+			return true;
+		}
+	}
+
+	private ViewerFilter filteredSearchFilter = new FilteredSearchFilter();
+	private Text filterText;
+	protected String lastFilter;
+
 	public ModuleListComposite(Composite parent, IMachine machine, SwtWindow window,
 			IStatusListener statusListener) {
 		super(parent, SWT.NONE);
@@ -140,7 +174,7 @@ public class ModuleListComposite extends Composite {
 
 		Composite threeColumns = new Composite(composite, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(3).applyTo(threeColumns);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(threeColumns);
+		GridDataFactory.fillDefaults().grab(true, true).hint(-1, 500).applyTo(threeColumns);
 		
 		createDatabaseRow(threeColumns);
 		
@@ -285,6 +319,124 @@ public class ModuleListComposite extends Composite {
 
 	}
 
+	private Composite createSearchFilter(Composite parent) {
+		
+		Composite comp = new Composite(parent, SWT.NONE);
+		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(2).equalWidth(false).applyTo(comp);
+
+		filterText = new Text(comp, SWT.BORDER | SWT.SEARCH | SWT.ICON_SEARCH);
+		filterText.setMessage("Search...");
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(filterText);
+		
+		filterText.addFocusListener(new FocusListener() {
+			
+			@Override
+			public void focusLost(FocusEvent e) {
+				filterText.selectAll();				
+			}
+			
+			@Override
+			public void focusGained(FocusEvent e) {
+				filterText.selectAll();				
+			}
+		});
+		
+		final Button clearButton = new Button(comp, SWT.PUSH | SWT.NO_FOCUS);
+		clearButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/icon_search_clear.png"));
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(clearButton);
+
+		clearButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				initFilter(null);
+				filterText.setFocus();
+				filterText.setText("");
+			}
+		});
+		
+		filterText.addKeyListener(new KeyAdapter() {
+			public void keyPressed(KeyEvent e) {
+				if (viewer.getControl().isDisposed())
+					return;
+
+				if (lastFilter == null) {
+					filterText.setForeground(null);
+					lastFilter = "";
+					filterText.setText("");
+				}
+				
+				if (e.keyCode == SWT.ARROW_DOWN) {
+					viewer.getControl().setFocus();
+				}
+				
+				if (e.keyCode == '\r') {
+					viewer.getControl().setFocus();
+//					e.doit = false;
+				}
+			}
+		});
+
+		filterText.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				updateFilter(filterText.getText());
+				
+				if (lastFilter != null && viewer.getTable().getItemCount() > 0) {
+					viewer.setSelection(new StructuredSelection(viewer.getTable().getItems()[0].getData()), true);
+				}
+			}
+		});
+		
+
+		return comp;
+	}
+	
+	protected void refreshFilters() {
+		viewer.setFilters(new ViewerFilter[] { 
+				filteredSearchFilter
+			}
+		);
+	}
+
+	private void initFilter(String text) {
+		String curText = filterText.getText(); 
+		if (curText.isEmpty()) {
+			filterText.setText(text != null ? text : "");
+			filterText.selectAll();
+			filterText.setForeground(null);
+		}
+		
+		refreshFilters();
+
+		updateFilter(text);
+
+		// re-apply checked state, which is lost
+		// see https://www.eclipse.org/forums/index.php/t/403879/
+		if (selectedModules != null)
+			viewer.setCheckedElements(selectedModules.toArray());
+
+		getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				if (!nameColumn.getColumn().isDisposed())
+					nameColumn.getColumn().setWidth(viewer.getControl().getSize().x);
+			}
+		});
+
+	}
+
+	protected void updateFilter(final String text) {
+		String prev = lastFilter;
+		if (text == null || text.isEmpty() || text.equals("Search...")) {
+			lastFilter = null;
+		} else {
+			lastFilter = text;
+		}
+		if (lastFilter != prev && (lastFilter == null || ! lastFilter.equals(prev))) {
+			viewer.refresh();
+		}
+	}
+
 	/**
 	 * @param composite
 	 */
@@ -297,25 +449,30 @@ public class ModuleListComposite extends Composite {
 		
 		label = new Label(composite, SWT.NONE);
 		label.setText("Select modules for list:");
-		GridDataFactory.fillDefaults().grab(true, false).span(2, 1).applyTo(label);
+		GridDataFactory.fillDefaults().grab(true, false).span(3, 1).applyTo(label);
 		
 		Composite listArea = new Composite(composite, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(listArea);
 		GridDataFactory.fillDefaults().grab(true, true).span(3, 1).indent(12, 0).applyTo(listArea);
+
+		Composite c = createSearchFilter(listArea);
+		GridDataFactory.fillDefaults().grab(true, false).span(1, 1).applyTo(c);
+		label = new Label(listArea, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(false, false).span(1, 1).applyTo(label);
 		
-		discoveredList = CheckboxTableViewer.newCheckList(listArea, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL | SWT.CHECK);
-		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(discoveredList.getControl());
+		viewer = CheckboxTableViewer.newCheckList(listArea, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL | SWT.CHECK);
+		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).hint(-1, 400).applyTo(viewer.getControl());
 		
-		discoveredList.getTable().setHeaderVisible(true);
+		viewer.getTable().setHeaderVisible(true);
 		
 		comparator = new ColumnComparator();
-		discoveredList.setComparator(comparator);
+		viewer.setComparator(comparator);
 		
-		checkedColumn = new TableViewerColumn(discoveredList, SWT.LEFT | SWT.RESIZE);
+		checkedColumn = new TableViewerColumn(viewer, SWT.LEFT | SWT.RESIZE);
 		checkedColumn.getColumn().addSelectionListener(createColumnSelectionListener(checkedColumn.getColumn(), 0));
 		checkedColumn.getColumn().setText("Use");
 		
-		nameColumn = new TableViewerColumn(discoveredList, SWT.LEFT | SWT.RESIZE);
+		nameColumn = new TableViewerColumn(viewer, SWT.LEFT | SWT.RESIZE);
 		nameColumn.getColumn().addSelectionListener(createColumnSelectionListener(nameColumn.getColumn(), 1));
 		nameColumn.getColumn().setText("Name");
 
@@ -323,15 +480,15 @@ public class ModuleListComposite extends Composite {
 		comparator.propertyIndex = 1;
 		
 		labelProvider = new DiscoveredModuleLabelProvider();
-		discoveredList.setLabelProvider(labelProvider);
-		discoveredList.setContentProvider(new ArrayContentProvider());
+		viewer.setLabelProvider(labelProvider);
+		viewer.setContentProvider(new ArrayContentProvider());
 		
 		dirtyModuleLists = new ArrayList<URI>();
-		editingSupport = new ModuleNameEditingSupport(discoveredList, dirtyModuleLists);
+		editingSupport = new ModuleNameEditingSupport(viewer, dirtyModuleLists);
 		nameColumn.setEditingSupport(editingSupport);
 		editingSupport.setCanEdit(true);
 		
-		discoveredList.setInput(discoveredModules);
+		viewer.setInput(discoveredModules);
 		
 		Composite buttons = new Composite(listArea, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(buttons);
@@ -352,7 +509,7 @@ public class ModuleListComposite extends Composite {
 		selectAllButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				discoveredList.setAllChecked(true);
+				viewer.setAllChecked(true);
 				selectedModules.clear();
 				
 				selectedModules.addAll(discoveredModules);
@@ -362,7 +519,7 @@ public class ModuleListComposite extends Composite {
 		selectNoneButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				discoveredList.setAllChecked(false);
+				viewer.setAllChecked(false);
 				selectedModules.clear();
 				validate();
 			}
@@ -374,7 +531,7 @@ public class ModuleListComposite extends Composite {
 			}
 		});
 		
-		discoveredList.addCheckStateListener(new ICheckStateListener() {
+		viewer.addCheckStateListener(new ICheckStateListener() {
 			
 			@Override
 			public void checkStateChanged(CheckStateChangedEvent event) {
@@ -406,6 +563,8 @@ public class ModuleListComposite extends Composite {
 				refresh();
 			}
 		});
+		
+		initFilter(null);
 
 	}
 
@@ -416,9 +575,9 @@ public class ModuleListComposite extends Composite {
 			public void widgetSelected(SelectionEvent e) {
 				comparator.setColumn(index);
 				int dir = comparator.getDirection();
-				discoveredList.getTable().setSortDirection(dir);
-				discoveredList.getTable().setSortColumn(column);
-				discoveredList.refresh();
+				viewer.getTable().setSortDirection(dir);
+				viewer.getTable().setSortColumn(column);
+				viewer.refresh();
 			}
 		};
 		return selectionAdapter;
@@ -593,8 +752,8 @@ public class ModuleListComposite extends Composite {
 			}
 		}
 		
-		discoveredList.setAllChecked(false);
-		discoveredList.refresh();
+		viewer.setAllChecked(false);
+		viewer.refresh();
 		
 		checkedColumn.getColumn().pack();
 		nameColumn.getColumn().pack();
@@ -636,8 +795,8 @@ public class ModuleListComposite extends Composite {
 			}
 		}
 		
-		discoveredList.refresh();
-		discoveredList.setCheckedElements(selectedModules.toArray());
+		viewer.refresh();
+		viewer.setCheckedElements(selectedModules.toArray());
 		
 		validate();
 	}
@@ -660,8 +819,8 @@ public class ModuleListComposite extends Composite {
 			}
 		}
 
-		discoveredList.refresh();
-		discoveredList.setCheckedElements(selectedModules.toArray());
+		viewer.refresh();
+		viewer.setCheckedElements(selectedModules.toArray());
 		
 		validate();
 	}
