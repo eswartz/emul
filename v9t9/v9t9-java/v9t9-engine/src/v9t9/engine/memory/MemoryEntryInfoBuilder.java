@@ -62,7 +62,7 @@ public class MemoryEntryInfoBuilder {
 	}
 	
 	public MemoryEntryInfoBuilder withFileMD5(String fileMD5) {
-		if (fileMD5 != null) props.put(MemoryEntryInfo.FILE_MD5, fileMD5);
+		if (fileMD5 != null && fileMD5.length() > 0) props.put(MemoryEntryInfo.FILE_MD5, fileMD5);
 		return this;
 	}
 	public MemoryEntryInfoBuilder withFileMD5Algorithm(String algorithm) {
@@ -80,7 +80,7 @@ public class MemoryEntryInfoBuilder {
 	}
 	
 	public MemoryEntryInfoBuilder withFile2MD5(String file2MD5) {
-		if (file2MD5 != null) props.put(MemoryEntryInfo.FILE2_MD5, file2MD5);
+		if (file2MD5 != null && file2MD5.length() > 0) props.put(MemoryEntryInfo.FILE2_MD5, file2MD5);
 		return this;
 	}
 	public MemoryEntryInfoBuilder withFile2MD5Algorithm(String algorithm) {
