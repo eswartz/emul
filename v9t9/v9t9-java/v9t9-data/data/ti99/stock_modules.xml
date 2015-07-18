@@ -550,12 +550,12 @@
       file2Md5="A3BE305C8457FD39B9F914EC0F3AEAF5" fileName2="phm3168d.bin"/>
     </memoryEntries>
   </module>
-  <module md5="2B65D8E34177E80351910BE1B72E6771" name="Treasure Island (beta) FIXME">
+  <module md5="2B65D8E34177E80351910BE1B72E6771" name="Treasure Island (beta)">
     <memoryEntries>
       <gromModuleEntry fileMd5="C042843F3EABB1CAD39C6A159FD93F8A" fileName="treasurebetag.bin" size="0x5000"/>
     </memoryEntries>
   </module>
-  <module md5="CD0CDF094746E13C51F15675B7633FD3" name="Treasure Island (beta) (alt) FIXME">
+  <module md5="CD0CDF094746E13C51F15675B7633FD3" name="Treasure Island (beta) (Tursi)">
     <memoryEntries>
       <gromModuleEntry fileMd5="D7967119EA37A21CDC74D9F5CD6E8BFA" fileName="treasurebetag.bin" size="0x5000"/>
     </memoryEntries>
