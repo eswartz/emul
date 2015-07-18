@@ -231,12 +231,6 @@
       <gromModuleEntry fileMd5="DEB92A465E2BAAED55277F0C9E95F7D4" fileName="phm3131g.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module md5="49EEBE6857486A145A359784319D9768" name="RJ Parsec">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="AE4230B379EC22B07BD4125BF4ED9E2E" fileName="rjparsecg.bin" size="0x5800"/>
-      <romModuleEntry fileMd5="B048C71EF0E813D2A05C88E92241FD94" fileName="rjparsecc.bin"/>
-    </memoryEntries>
-  </module>
   <module md5="D021C9A3388AB5CE30DBC6690E1C7F40" name="Meteor Multiplication">
     <memoryEntries>
       <gromModuleEntry fileMd5="3CE854964A8B2EBBEA4C4010A4524A5B" fileName="phm3119g.bin" size="0x3800"/>
