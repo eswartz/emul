@@ -178,7 +178,7 @@ public class DiskMemoryEntry extends MemoryEntry {
      */
     @Override
 	public void save() throws IOException {
-        if (info.isStored() && bDirty) {
+        if (info != null && info.isStored() && bDirty) {
             byte[] data = new byte[getSize()];
             area.copyToBytes(data);
             
@@ -296,8 +296,9 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 */
 	@Override
 	public void loadState(ISettingSection section) {
-		super.loadState(section);
 		bLoaded = false;
+		info = null;
+		super.loadState(section);
 		load();
 	}
 	
@@ -305,7 +306,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 * @param section  
 	 */
 	protected void loadMemoryContents(ISettingSection section) {
-		if (storedInfo != null) {
+		if (storedInfo != null || storedInfo.info.isStored() != isStorable()) {
 			try {
 				area = (MemoryArea) memory.getMemoryEntryFactory().createMemoryArea(storedInfo.info);
 			} catch (IOException e) {

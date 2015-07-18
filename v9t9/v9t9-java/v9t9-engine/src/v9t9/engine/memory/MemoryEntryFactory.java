@@ -94,23 +94,22 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			throws IOException {
 		MemoryArea area;
     	
-    	if (info.getResolvedFilename(settings) != null) {
-    		if (info.isByteSized())
-        		area = new ByteMemoryArea();
-        	else
-        		area = new WordMemoryArea();
-    	}
-    	else {
-    		int size = Math.abs(info.getSize());
-			if (info.isByteSized())
-        		area = new ByteMemoryArea(info.getDomain(memory).getLatency(info.getAddress()),
-        			new byte[size]	
-        			);
-        	else
-        		area = new WordMemoryArea(info.getDomain(memory).getLatency(info.getAddress()),
-            			new short[size / 2]	
-            			);
-    	}
+		int latency = info.getDomain(memory).getLatency(info.getAddress());
+
+		boolean hasFile = info.getResolvedFilename(settings) != null && !info.isStored();
+		int size = Math.abs(info.getSize());
+		
+		if (info.isByteSized()) {
+			ByteMemoryArea bma = new ByteMemoryArea(latency, hasFile ? null : new byte[size]);
+			if (info.isStored())
+	        	bma.write = bma.memory;
+			area = bma;
+		} else {
+			WordMemoryArea wma = new WordMemoryArea(latency, hasFile ? null : new short[size/2]);
+			if (info.isStored())
+	        	wma.write = wma.memory;
+			area = wma;
+		}
         
         return area;
 	}
@@ -255,7 +254,10 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			
 			entry.setLocator(locator);
 			entry.setDomain(domain);
-			entry.setWordAccess(domain.getIdentifier().equals(IMemoryDomain.NAME_CPU));	// TODO
+			if (entryStore.get("WordAccess") != null)
+				entry.setWordAccess(entryStore.getBoolean("WordAccess"));
+			else
+				entry.setWordAccess(domain.getIdentifier().equals(IMemoryDomain.NAME_CPU));	// TODO
 			int latency = domain.getLatency(entryStore.getInt("Address"));
 			if (entry.isWordAccess())
 				entry.setArea(new WordMemoryArea(latency));
