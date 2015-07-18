@@ -458,7 +458,7 @@ public class ModuleSelector extends Composite {
 		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(2).equalWidth(false).applyTo(comp);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(comp);
 
-		filterText = new Text(comp, SWT.BORDER);
+		filterText = new Text(comp, SWT.BORDER | SWT.SEARCH | SWT.ICON_SEARCH);
 		filterText.setMessage("Search...");
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(filterText);
 		
