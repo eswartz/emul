@@ -50,6 +50,9 @@ public class PIOHandler implements IPIOHandler {
 	@Override
 	public void transmitChars(final IOBuffer buf) {
 		final byte[] buffer = buf.takeAll();
+		if (buffer.length == 0)
+			return;
+			
 		try {
 			log.debug("PIOHandler::transmitChars: " + new String(buffer));
 		} catch (Throwable t) {
