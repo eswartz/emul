@@ -175,30 +175,50 @@ public class TI99ModuleDetector implements IModuleDetector {
 			// makes no sense.  Reduce the size so we get a valid MD5 sum on its ROM.
 			if (moduleName.equalsIgnoreCase(MINI_MEMORY)) {
 				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
-				if (infos.length == 2) {
-					MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleRom("minir.bin")
-							.withAddress(0x7000)
-							.withSize(0x1000)
-							.storable(true)
-							.create("Mini Memory Non-Volatile RAM");
-					module.addMemoryEntryInfo(info);
-					
-					// fixup earlier entry if present
-					for (MemoryEntryInfo xinfo : infos) {
-						if (xinfo.getDomainName().equals(IMemoryDomain.NAME_CPU)) {
-							URI uri = fileLocator.findFile(xinfo.getFilename());
-							try {
-								int limit = 0x1000;
-								String md5 = fileLocator.getContentMD5(uri, 0, limit, true);
-								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
-								xinfo.getProperties().put(MemoryEntryInfo.SIZE, limit);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
 
+				// fixup earlier entry if present
+				for (MemoryEntryInfo xinfo : infos) {
+					if (xinfo.getDomainName().equals(IMemoryDomain.NAME_CPU)
+							&& xinfo.getAddress() == 0x6000
+							&& (xinfo.getSize() < 0 || xinfo.getSize() > 0x1000)) 
+					{
+						URI uri = fileLocator.findFile(xinfo.getFilename());
+						try {
+							int limit = 0x1000;
+							String md5 = fileLocator.getContentMD5(uri, 0, limit, true);
+							xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
+							xinfo.getProperties().put(MemoryEntryInfo.SIZE, limit);
+						} catch (IOException e) {
+							e.printStackTrace();
 						}
+
 					}
 				}
+				
+//				if (infos.length == 2) {
+//					MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleRom("minir.bin")
+//							.withAddress(0x7000)
+//							.withSize(0x1000)
+//							.storable(true)
+//							.create("Mini Memory Non-Volatile RAM");
+//					module.addMemoryEntryInfo(info);
+//					
+//					// fixup earlier entry if present
+//					for (MemoryEntryInfo xinfo : infos) {
+//						if (xinfo.getDomainName().equals(IMemoryDomain.NAME_CPU)) {
+//							URI uri = fileLocator.findFile(xinfo.getFilename());
+//							try {
+//								int limit = 0x1000;
+//								String md5 = fileLocator.getContentMD5(uri, 0, limit, true);
+//								xinfo.getProperties().put(MemoryEntryInfo.FILE_MD5, md5);
+//								xinfo.getProperties().put(MemoryEntryInfo.SIZE, limit);
+//							} catch (IOException e) {
+//								e.printStackTrace();
+//							}
+//
+//						}
+//					}
+//				}
 			}
 //			else if (module.getName().equalsIgnoreCase(EA_8K_SUPER_CART)) {
 //				MemoryEntryInfo[] infos = module.getMemoryEntryInfos();
