@@ -15,8 +15,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,16 +29,17 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.BaseLabelProvider;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
-import org.eclipse.jface.viewers.CheckboxTableViewer;
+import org.eclipse.jface.viewers.CheckboxTreeViewer;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
@@ -56,7 +55,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TreeColumn;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
@@ -86,12 +85,15 @@ public class ModuleListComposite extends Composite {
 	
 	private static final String SHOW_ALL = "show.all";
 	private static final String LAST_DB_FILE = "last.db";
-	
+
 	private IMachine machine;
 	private ComboViewer dbSelector;
 	
-	private CheckboxTableViewer discoveredList;
+	private CheckboxTreeViewer treeViewer;
+
 	private List<IModule> discoveredModules = new ArrayList<IModule>();
+	
+	/** current database */
 	private File dbFile;
 	
 	private Map<File, List<IModule>> origModuleMap = new HashMap<File, List<IModule>>();
@@ -100,9 +102,8 @@ public class ModuleListComposite extends Composite {
 
 	private ISettingSection settings;
 
-	private TableViewerColumn nameColumn;
-
-	private TableViewerColumn filesColumn;
+	private TreeViewerColumn checkedColumn;
+	private TreeViewerColumn nameColumn;
 
 	private IStatus status;
 
@@ -118,9 +119,10 @@ public class ModuleListComposite extends Composite {
 
 	private ArrayList<URI> dirtyModuleLists;
 
-	private HashMap<IModule, String> discoveredFiles;
 
 	private ColumnComparator comparator;
+
+	private DiscoveredModuleLabelProvider labelProvider;
 
 	public ModuleListComposite(Composite parent, IMachine machine, SwtWindow window,
 			IStatusListener statusListener) {
@@ -133,8 +135,6 @@ public class ModuleListComposite extends Composite {
 		
 		settings = machine.getSettings().getMachineSettings().getHistorySettings().findOrAddSection(SECTION_MODULE_MANAGER);
 
-		discoveredFiles = new HashMap<IModule, String>();
-		
 		Composite composite = this;
 		
 		/*spacer*/ new Label(composite, SWT.NONE);
@@ -145,7 +145,7 @@ public class ModuleListComposite extends Composite {
 		
 		createDatabaseRow(threeColumns);
 		
-		createDiscoveredList(threeColumns);
+		createTreeViewer(threeColumns);
 
 		boolean wasShowAll = settings.getBoolean(SHOW_ALL);
 		showAllButton.setSelection(wasShowAll);
@@ -215,25 +215,61 @@ public class ModuleListComposite extends Composite {
 	class DiscoveredModuleLabelProvider extends BaseLabelProvider implements ITableLabelProvider {
 		public DiscoveredModuleLabelProvider() {
 		}
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
-		 */
 		@Override
 		public String getColumnText(Object element, int columnIndex) {
-			IModule module = (IModule) element;
-			if (columnIndex == 0) {
-				return module.getName();
-			} else {
-				return discoveredFiles.get(module);
+			if (element instanceof IModule) {
+				if (columnIndex == 0) {
+					return "";
+				}
+				return ((IModule) element).getName();
 			}
+			return "";
 		}
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
-		 */
 		@Override
 		public Image getColumnImage(Object element, int columnIndex) {
 			return null;
 		}
+	}
+	
+	protected class DiscoveredModuleTreeContentProvider implements ITreeContentProvider {
+
+		@Override
+		public void dispose() {
+			
+		}
+
+		@Override
+		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+			
+		}
+
+		@Override
+		public Object[] getElements(Object inputElement) {
+			return discoveredModules.toArray();
+		}
+
+		@Override
+		public Object[] getChildren(Object parentElement) {
+//			if (parentElement instanceof IModule) {
+//				return discoveredFiles.get(((IModule) parentElement).getMD5()).toArray();
+//			}
+			return null;
+		}
+		
+		@Override
+		public Object getParent(Object element) {
+//			if (element instanceof ModuleMatch)
+//				return discoveredModules.get(((ModuleMatch) element).md5);
+			if (element instanceof IModule)
+				return treeViewer.getInput();
+			return null;
+		}
+
+		@Override
+		public boolean hasChildren(Object element) {
+			return false; //return element instanceof IModule;
+		}
+		
 	}
 
 	public class ColumnComparator extends ViewerComparator {
@@ -242,7 +278,7 @@ public class ModuleListComposite extends Composite {
 
 		public ColumnComparator() {
 			this.propertyIndex = 0;
-			direction = 1;
+			direction = 0;
 		}
 
 		public int getDirection() {
@@ -251,8 +287,11 @@ public class ModuleListComposite extends Composite {
 
 		public void setColumn(int column) {
 			if (column == this.propertyIndex) {
-				// Same column as last sort; toggle the direction
-				direction = -direction;
+				// flip between ascending/descending/none
+				if (direction == 0)
+					direction = 1;
+				else
+					direction = -direction;
 			} else {
 				// New column; do an ascending sort
 				this.propertyIndex = column;
@@ -262,23 +301,23 @@ public class ModuleListComposite extends Composite {
 
 		@Override
 		public int compare(Viewer viewer, Object e1, Object e2) {
-			IModule p1 = (IModule) e1;
-			IModule p2 = (IModule) e2;
-			int rc = 0;
-			switch (propertyIndex) {
-			case 0:
-				rc = p1.getName().compareTo(p2.getName());
-				break;
-			case 1:
-			{
-				String dis1 = discoveredFiles.get(p1);
-				String dis2 = discoveredFiles.get(p2);
-				rc = dis1.compareTo(dis2);
-				break;
+			if (direction == 0)
+				return 0;
+			
+			int rc;
+			if (propertyIndex == 0) {
+				// checkbox
+				boolean sel1 = selectedModules.contains(e1);
+				boolean sel2 = selectedModules.contains(e2);
+				rc = (sel1 ? 0 : 1) - (sel2 ? 0 : 1);
 			}
-			default:
-				rc = 0;
+			else {
+				String lab1 = labelProvider.getColumnText(e1, propertyIndex);
+				String lab2 = labelProvider.getColumnText(e2, propertyIndex);
+				
+				rc = lab1.compareToIgnoreCase(lab2);
 			}
+			
 			// If descending order, flip the direction
 			if (direction < 0) {
 				rc = -rc;
@@ -291,7 +330,7 @@ public class ModuleListComposite extends Composite {
 	/**
 	 * @param composite
 	 */
-	private void createDiscoveredList(Composite composite) {
+	private void createTreeViewer(Composite composite) {
 
 		Label label;
 		
@@ -306,33 +345,33 @@ public class ModuleListComposite extends Composite {
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(listArea);
 		GridDataFactory.fillDefaults().grab(true, true).span(3, 1).indent(12, 0).applyTo(listArea);
 		
-		discoveredList = CheckboxTableViewer.newCheckList(listArea, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL | SWT.CHECK);
-		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(discoveredList.getControl());
+		treeViewer = new CheckboxTreeViewer(listArea, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL | SWT.CHECK);
+		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(treeViewer.getControl());
 		
-		discoveredList.getTable().setHeaderVisible(true);
+		treeViewer.getTree().setHeaderVisible(true);
 		
 
 		comparator = new ColumnComparator();
-		discoveredList.setComparator(comparator);
+		treeViewer.setComparator(comparator);
 		
-		nameColumn = new TableViewerColumn(discoveredList, SWT.LEFT | SWT.RESIZE);
-		nameColumn.getColumn().addSelectionListener(createColumnSelectionListener(nameColumn.getColumn(), 0));
+		checkedColumn = new TreeViewerColumn(treeViewer, SWT.LEFT | SWT.RESIZE);
+		checkedColumn.getColumn().addSelectionListener(createColumnSelectionListener(checkedColumn.getColumn(), 0));
+		checkedColumn.getColumn().setText("Use");
+		
+		nameColumn = new TreeViewerColumn(treeViewer, SWT.LEFT | SWT.RESIZE);
+		nameColumn.getColumn().addSelectionListener(createColumnSelectionListener(nameColumn.getColumn(), 1));
 		nameColumn.getColumn().setText("Name");
 		
-		filesColumn = new TableViewerColumn(discoveredList, SWT.LEFT | SWT.RESIZE);
-		filesColumn.getColumn().addSelectionListener(createColumnSelectionListener(filesColumn.getColumn(), 1));
-		filesColumn.getColumn().setText("Files");
-		
-		discoveredList.setLabelProvider(new DiscoveredModuleLabelProvider());
-		discoveredList.setContentProvider(new ArrayContentProvider());
+		labelProvider = new DiscoveredModuleLabelProvider();
+		treeViewer.setLabelProvider(labelProvider);
+		treeViewer.setContentProvider(new DiscoveredModuleTreeContentProvider());
 		
 		dirtyModuleLists = new ArrayList<URI>();
-		editingSupport = new ModuleNameEditingSupport(discoveredList, dirtyModuleLists);
+		editingSupport = new ModuleNameEditingSupport(treeViewer, dirtyModuleLists);
 		nameColumn.setEditingSupport(editingSupport);
 		editingSupport.setCanEdit(true);
 		
-		
-		discoveredList.setInput(discoveredModules);
+		treeViewer.setInput(discoveredModules);
 		
 		Composite buttons = new Composite(listArea, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(buttons);
@@ -353,8 +392,9 @@ public class ModuleListComposite extends Composite {
 		selectAllButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				discoveredList.setAllChecked(true);
+				treeViewer.setSubtreeChecked(treeViewer.getInput(), true);
 				selectedModules.clear();
+				
 				selectedModules.addAll(discoveredModules);
 				validate();
 			}
@@ -362,7 +402,7 @@ public class ModuleListComposite extends Composite {
 		selectNoneButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				discoveredList.setAllChecked(false);
+				treeViewer.setSubtreeChecked(treeViewer.getInput(), false);
 				selectedModules.clear();
 				validate();
 			}
@@ -374,15 +414,19 @@ public class ModuleListComposite extends Composite {
 			}
 		});
 		
-		discoveredList.addCheckStateListener(new ICheckStateListener() {
+		treeViewer.addCheckStateListener(new ICheckStateListener() {
 			
 			@Override
 			public void checkStateChanged(CheckStateChangedEvent event) {
-				IModule module = (IModule) event.getElement();
-				if (event.getChecked()) {
-					selectedModules.add(module);
-				} else {
-					selectedModules.remove(module);
+				if (selectedModules != null) {
+					if (event.getElement() instanceof IModule) {
+						IModule module = (IModule) event.getElement();
+						if (event.getChecked()) {
+							selectedModules.add(module);
+						} else {
+							selectedModules.remove(module);
+						}
+					}
 				}
 				validate();
 			}
@@ -405,16 +449,16 @@ public class ModuleListComposite extends Composite {
 
 	}
 
-	private SelectionListener createColumnSelectionListener(final TableColumn column,
+	private SelectionListener createColumnSelectionListener(final TreeColumn column,
 			final int index) {
 		SelectionAdapter selectionAdapter = new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				comparator.setColumn(index);
 				int dir = comparator.getDirection();
-				discoveredList.getTable().setSortDirection(dir);
-				discoveredList.getTable().setSortColumn(column);
-				discoveredList.refresh();
+				treeViewer.getTree().setSortDirection(dir);
+				treeViewer.getTree().setSortColumn(column);
+				treeViewer.refresh();
 			}
 		};
 		return selectionAdapter;
@@ -558,10 +602,10 @@ public class ModuleListComposite extends Composite {
 
 	public void refresh() {
 		discoveredModules.clear();
-		discoveredFiles.clear();
 		
 		URI databaseURI = dbFile != null ? dbFile.toURI() : nonameDatabaseURI;
 		
+		IModuleDetector detector = machine.createModuleDetector(databaseURI);
 		for (URI uri : machine.getRomPathFileLocator().getSearchURIs()) {
 			File dir;
 			try {
@@ -571,40 +615,28 @@ public class ModuleListComposite extends Composite {
 				continue;
 			}
 					
-			IModuleDetector detector = machine.createModuleDetector(databaseURI);
-			Collection<IModule> ents = detector.scan(dir);
-			
-			for (IModule module : ents) {
-				IModule exist = machine.getModuleManager().findModuleByName(module.getName(), true);
-				if (exist == null) {
-					module.removePathsFromFiles(machine.getRomPathFileLocator());
-					discoveredModules.add(module);
-				} else if (exist.getDatabaseURI().equals(databaseURI)) {
-					if (Arrays.equals(exist.getMemoryEntryInfos(), module.getMemoryEntryInfos()))
-						discoveredModules.add(exist);
-					else
-						discoveredModules.add(module);	// in case detection changed
-				} else if (showAllModules) {
-					discoveredModules.add(exist);
-				}
-				
-				StringBuilder sb = new StringBuilder();
-				for (File file : module.getUsedFiles(machine.getRomPathFileLocator())) {
-					if (sb.length() > 0)
-						sb.append(", ");
-					sb.append(file.getName());
-				}
-				discoveredFiles.put(module, sb.toString());
-				
-
-			}
+			detector.scan(dir);
 		}
 
-		discoveredList.setAllChecked(false);
-		discoveredList.refresh();
+		for (Map.Entry<String, List<IModule>> ent : detector.gatherDuplicatesByMD5().entrySet()) {
+			IModule module = ent.getValue().get(0);
+			
+			IModule exist = machine.getModuleManager().findModuleByNameAndHash(module.getName(), module.getMD5());
+			if (exist == null) {
+				module.removePathsFromFiles(machine.getRomPathFileLocator());
+				discoveredModules.add(module);
+			} else if (exist.getDatabaseURI().equals(databaseURI)) {
+				discoveredModules.add(module);
+			} else if (showAllModules) {
+				discoveredModules.add(exist);
+			}
+		}
 		
+		treeViewer.setSubtreeChecked(treeViewer.getInput(), false);
+		treeViewer.refresh();
+		
+		checkedColumn.getColumn().pack();
 		nameColumn.getColumn().pack();
-		filesColumn.getColumn().pack();
 		
 		reset();
 	}
@@ -621,50 +653,54 @@ public class ModuleListComposite extends Composite {
 		if (orig == null) {
 			populateUnique();
 		} else {
+			// select the modules previously assigned to this database,
+			// sorting them to the top
 			selectedModules.clear();
-			List<IModule> matched = new ArrayList<IModule>();
 			for (IModule module : orig) {
 				boolean found = false;
-				for (IModule disc : discoveredModules.toArray(new IModule[discoveredModules.size()])) {
-					if (module.getName().equals(disc.getName())) {
+				for (IModule disc : discoveredModules) {
+					if (module.getMD5().equals(disc.getMD5())) {
 						selectedModules.add(disc);
 						disc.removePathsFromFiles(machine.getRomPathFileLocator());
-						discoveredModules.remove(disc);
-						matched.add(disc);
 						found = true;
 						break;
 					}
 				}
 				if (!found) {
 					module.removePathsFromFiles(machine.getRomPathFileLocator());
-					matched.add(module);
 					selectedModules.add(module);
+					if (!discoveredModules.contains(module)) 
+						discoveredModules.add(module);
 				}
 			}
-			discoveredModules.addAll(0, matched);
 		}
 		
-		discoveredList.refresh();
-		discoveredList.setCheckedElements(selectedModules.toArray());
+		treeViewer.refresh();
+		treeViewer.setCheckedElements(selectedModules.toArray());
 		
 		validate();
 	}
 		
-	public void populateUnique() {
+	/**
+	 * Select all the modules not already selected, e.g.
+	 * to populate a new module database.
+	 */
+	protected void populateUnique() {
 		if (selectedModules == null)
 			return;
 		
 		selectedModules.clear();
 		
 		for (IModule module : discoveredModules) {
-			IModule exist = machine.getModuleManager().findModuleByName(module.getName(), true);
+			IModule exist = machine.getModuleManager().findModuleByNameAndHash(
+					module.getName(), module.getMD5());
 			if (exist == null) {
 				selectedModules.add(module);
 			}
 		}
 
-		discoveredList.refresh();
-		discoveredList.setCheckedElements(selectedModules.toArray());
+		treeViewer.refresh();
+		treeViewer.setCheckedElements(selectedModules.toArray());
 		
 		validate();
 	}
@@ -677,16 +713,9 @@ public class ModuleListComposite extends Composite {
 //				selectedModules.add(module);
 //			}
 //		}
-//		discoveredList.setCheckedElements(selectedModules.toArray());
+//		treeViewer.setCheckedElements(selectedModules.toArray());
 //	}
 	
-	/**
-	 * @return the discoveredModules
-	 */
-	public List<IModule> getDiscoveredModules() {
-		return discoveredModules;
-	}
-
 	public File getModuleDatabase() {
 		return dbFile;
 	}
