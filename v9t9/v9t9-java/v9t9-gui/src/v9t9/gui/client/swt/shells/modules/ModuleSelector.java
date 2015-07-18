@@ -644,7 +644,12 @@ public class ModuleSelector extends Composite {
 					cell.setImage(getModuleListImage());
 				} else if (cell.getElement() instanceof IModule) {
 					IModule module = (IModule) cell.getElement();
-					cell.setText(module.getName());
+					
+					String text = module.getName();
+					if (module.isAutoStart())
+						text += " (auto-start)";
+					cell.setText(text);
+					
 					ModuleInfo info = module.getInfo();
 					cell.setForeground(isModuleLoadable(module) ? null : viewer.getControl().getDisplay().getSystemColor(SWT.COLOR_TITLE_INACTIVE_FOREGROUND));
 					cell.setImage(getOrLoadModuleImage(module, module, info != null ? info.getImagePath() : null));

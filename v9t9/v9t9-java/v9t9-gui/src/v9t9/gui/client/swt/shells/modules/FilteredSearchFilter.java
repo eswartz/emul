@@ -38,7 +38,8 @@ class FilteredSearchFilter extends ViewerFilter {
 			IModule mod = (IModule) element;
 			String lowSearch = ModuleSelector.lastFilter.toLowerCase();
 			return mod.getName().toLowerCase().contains(lowSearch)
-					|| mod.getKeywords().contains(lowSearch);
+					|| mod.getKeywords().contains(lowSearch)
+					|| ("auto-start".startsWith(lowSearch) && mod.isAutoStart());
 		}
 		return true;
 	}
