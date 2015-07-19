@@ -23,6 +23,7 @@ import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -35,6 +36,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.ScrollBar;
 import org.ejs.gui.common.FontUtils;
 import org.ejs.gui.common.SwtUtils;
 
@@ -91,6 +93,32 @@ public class CpuInstructionTextCanvasComposite extends CpuInstructionComposite i
 			public void lineGetStyle(LineStyleEvent event) {
 				StyleRange[] ranges = layoutStyles(event.lineOffset);
 				event.styles = ranges;
+			}
+		});
+		
+
+		text.addKeyListener(new KeyAdapter() {
+			public void keyPressed(org.eclipse.swt.events.KeyEvent e) {
+				//System.out.println(text.getParent().getVerticalBar().getThumb());
+				ScrollBar bar = text.getParent().getVerticalBar();
+				if (e.keyCode == SWT.PAGE_DOWN) {
+					bar.setSelection(bar.getSelection() + bar.getPageIncrement());
+				} else if (e.keyCode == SWT.PAGE_UP) {
+					bar.setSelection(bar.getSelection() - bar.getPageIncrement());
+				} else if (e.keyCode == SWT.ARROW_DOWN) {
+					bar.setSelection(bar.getSelection() + 1);
+				} else if (e.keyCode == SWT.ARROW_UP) {
+					bar.setSelection(bar.getSelection() - 1);
+				} else if (e.keyCode == SWT.END && (e.stateMask & SWT.CTRL) != 0) {
+					bar.setSelection(bar.getMaximum());
+				} else if (e.keyCode == SWT.HOME && (e.stateMask & SWT.CTRL) != 0) {
+					bar.setSelection(bar.getMinimum());
+				} else {
+					return;
+				}
+				redrawLines();
+				e.doit = false;
+
 			}
 		});
 		
