@@ -4,6 +4,9 @@
 package v9t9.gui.client.swt.shells.disk;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
@@ -22,6 +25,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.ejs.gui.common.FontUtils;
 
@@ -32,12 +36,14 @@ import ejs.base.properties.IProperty;
  * @author ejs
  *
  */
-public abstract class FileEntry extends BaseSettingEntry {
+public abstract class FileEntry extends BaseSettingEntry implements IEntryHistoryListener {
 
 	protected Combo combo;
 	protected Label icon;
 	protected Image doesNotExistImage;
 	protected Image blankImage;
+	protected EntryHistory entryHistory;
+	private String historyId;
 
 	/**
 	 * @param dialog_
@@ -50,7 +56,9 @@ public abstract class FileEntry extends BaseSettingEntry {
 		super(dialog_, parent, setting_, style);
 		doesNotExistImage = EmulatorGuiData.loadImage(getDisplay(), "icons/error.png");
 //		blankImage = new Image(getDisplay(), doesNotExistImage.getBounds());
-
+		
+		entryHistory = dialog_.getEntryHistory();
+		historyId = "DiskSelector." + getHistoryName();
 	}
 
 
@@ -66,7 +74,7 @@ public abstract class FileEntry extends BaseSettingEntry {
 //			if (combo.indexOf(path) < 0 && file.exists()) {
 //				// only store history for real places
 //				combo.add(path);
-//				setHistory(getHistoryName(), combo.getItems());
+//				setHistory(historyId, combo.getItems());
 //			}
 			
 		} else {
@@ -99,6 +107,7 @@ public abstract class FileEntry extends BaseSettingEntry {
 					blankImage.dispose();
 				doesNotExistImage = null;
 				blankImage = null;
+				entryHistory.removeListener(FileEntry.this);
 			}
 		});
 		
@@ -119,10 +128,12 @@ public abstract class FileEntry extends BaseSettingEntry {
 		
 		combo.setToolTipText(setting.getDescription());
 		
-		String[] history = getHistory(getHistoryName());
+		String[] history = entryHistory.getItems(historyId);
 		if (history != null) {
 			combo.setItems(history);
 		}
+		
+		entryHistory.addListener(this);
 		
 		String str = setting.getString();
 		combo.setText(str != null ? str : "");
@@ -164,13 +175,22 @@ public abstract class FileEntry extends BaseSettingEntry {
 
 		final Button eject = new Button(parent, SWT.PUSH);
 		eject.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/icon_clear.gif"));
-		eject.setToolTipText("Clear the entry");
+		eject.setToolTipText("Clear the entry and remove from history");
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(eject);
 
 		eject.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				String current = combo.getText();
 				combo.setText("");
+				
+				String[] items = entryHistory.getItems(historyId);
+				
+				List<String> l = new ArrayList<String>(Arrays.asList(items));
+				l.remove(current);
+				
+				entryHistory.setHistory(historyId, l.toArray(new String[l.size()]));
+				
 				updateEntry();
 			}
 		});
@@ -199,16 +219,37 @@ public abstract class FileEntry extends BaseSettingEntry {
 		updateSetting();
 	}
 	protected void commitEntry() {
+		String text = combo.getText();
+		if (text.isEmpty())
+			return;
 		File dir = new File(combo.getText());
 		String path = dir.getAbsolutePath();
 		if (combo.indexOf(path) < 0) {
 			combo.add(path);
-			setHistory(getHistoryName(), combo.getItems());
+			entryHistory.setHistory(historyId, combo.getItems());
 		}
 	}
 
 	protected abstract void switchPath(Combo combo, String path);
 
 	protected abstract String getHistoryName();
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.shells.disk.IEntryHistoryListener#historyChanged(java.lang.String, java.lang.String[])
+	 */
+	@Override
+	public void historyChanged(final String historyId, final String[] items) {
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				if (isDisposed())
+					return;
+				if (historyId.equals(FileEntry.this.historyId)) {
+					String current = combo.getText();
+					combo.setItems(items);
+					combo.setText(current);
+				}
+			}
+		});
+	}
 
 }
