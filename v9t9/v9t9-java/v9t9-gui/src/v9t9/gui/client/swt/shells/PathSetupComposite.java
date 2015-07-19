@@ -274,6 +274,7 @@ public class PathSetupComposite extends Composite {
 			
 			@Override
 			public void propertyChanged(IProperty property) {
+				machine.getModuleDetector().clear();
 				getDisplay().asyncExec(new Runnable() {
 					public void run() {
 						if (!getShell().isDisposed()) {

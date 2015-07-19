@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -137,8 +136,7 @@ public class DetectModules {
 		this.noFilenames = noFilenames;
 		machine = ToolUtils.createMachine();
 		
-		URI databaseURI = URI.create("test.xml");
-		detector = machine.createModuleDetector(databaseURI);
+		detector = machine.getModuleDetector();
 		detector.setIgnoreStock(noStock);
 		detector.setReadHeaders(readHeader);
 	}

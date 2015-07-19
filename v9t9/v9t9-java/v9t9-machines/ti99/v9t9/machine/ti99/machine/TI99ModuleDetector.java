@@ -60,14 +60,25 @@ import ejs.base.utils.XMLUtils;
  */
 public class TI99ModuleDetector implements IModuleDetector {
 
+	/**
+	 * @author ejs
+	 *
+	 */
+	private final class CaseInsensitiveNameSort implements Comparator<IModule> {
+		@Override
+		public int compare(IModule o1, IModule o2) {
+			return o1.getName().toLowerCase().compareToIgnoreCase(o2.getName().toLowerCase());
+		}
+	}
+
 	private static final Logger log = Logger.getLogger(TI99ModuleDetector.class);
 
 //	private static final String EA_8K_SUPER_CART = "EA/8K Super Cart";
 	private static final String EASY_BUG = "Easy Bug";
 	private static final String MINI_MEMORY = "Mini Memory";
 	
-	private URI databaseURI;
 	private Map<String, IModule> modules;
+	private Map<File, Collection<IModule>> dirToModules;
 
 	private IModuleManager moduleManager;
 
@@ -76,11 +87,11 @@ public class TI99ModuleDetector implements IModuleDetector {
 	private boolean readHeaders;
 	private boolean ignoreStock;
 
-	public TI99ModuleDetector(URI databaseURI, IPathFileLocator fileLocator, IModuleManager moduleManager) {
-		this.databaseURI = databaseURI;
+	public TI99ModuleDetector(IPathFileLocator fileLocator, IModuleManager moduleManager) {
 		this.fileLocator = fileLocator;
 		this.moduleManager = moduleManager;
 		this.modules = new HashMap<String, IModule>();
+		this.dirToModules = new HashMap<File, Collection<IModule>>();
 	}
 	
 	public void setReadHeaders(boolean readHeaders) {
@@ -89,23 +100,53 @@ public class TI99ModuleDetector implements IModuleDetector {
 	public void setIgnoreStock(boolean ignoreStock) {
 		this.ignoreStock = ignoreStock;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleDetector#reset()
+	 */
+	@Override
+	public void clear() {
+		log.info("Clearing module detector");
+		dirToModules.clear();
+		modules.clear();
+	}
 
 	@Override
 	public Collection<IModule> getAllModules() {
-		List<IModule> modules = new ArrayList<IModule>(this.modules.values());
-		Collections.sort(modules, new Comparator<IModule>() {
-
-			@Override
-			public int compare(IModule o1, IModule o2) {
-				return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
-			}
-		});
+		List<IModule> modules = new ArrayList<IModule>(this.modules.size());
+		for (IModule mod : this.modules.values()) {
+			modules.add(mod.copy());
+		}
+		
+		Collections.sort(modules, new CaseInsensitiveNameSort());
 		
 		return modules;
 	}
 	
 	@Override
 	public Collection<IModule> scan(File base) {
+		try {
+			base = base.getCanonicalFile();
+		} catch (IOException e) {
+		}
+		Collection<IModule> modules = dirToModules.get(base);
+		if (modules == null) {
+			modules = doScan(base);
+			dirToModules.put(base, modules);
+		} else {
+			log.info("Using cache for " + base);
+		}
+		
+		List<IModule> modCopies = new ArrayList<IModule>(modules.size());
+		for (IModule mod : modules) {
+			modCopies.add(mod.copy());
+		}
+		return modCopies;
+	}
+	
+	protected Collection<IModule> doScan(File base) {
+		log.info("Scanning " + base);
+		
 		File[] files = null;
 		if (base.isDirectory()) {
 			files = base.listFiles();
@@ -133,18 +174,18 @@ public class TI99ModuleDetector implements IModuleDetector {
 			if (file.isDirectory())
 				continue;
 
-			if (analyzeV9t9ModuleFile(databaseURI, file.toURI(), file.getAbsolutePath(), 
+			if (analyzeV9t9ModuleFile(file.toURI(), file.getAbsolutePath(), 
 					file.getParentFile().getAbsolutePath() + '/' + getModuleBaseFile(file.getName()),
 					moduleMap))
 				continue;
 			
-			if (analyzeGRAMKrackerModuleFile(databaseURI, file, moduleMap))
+			if (analyzeGRAMKrackerModuleFile(file, moduleMap))
 				continue;
 			
-			if (analyzeRPKModuleFile(databaseURI, file, moduleMap))
+			if (analyzeRPKModuleFile(file, moduleMap))
 				continue;
 			
-			if (analyzeZipModuleFile(databaseURI, file, moduleMap))
+			if (analyzeZipModuleFile(file, moduleMap))
 				continue;
 		}
 
@@ -324,13 +365,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 		}
 		
 		List<IModule> modules = new ArrayList<IModule>(moduleMap.values());
-		Collections.sort(modules, new Comparator<IModule>() {
-
-			@Override
-			public int compare(IModule o1, IModule o2) {
-				return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
-			}
-		});
+		Collections.sort(modules, new CaseInsensitiveNameSort());
 
 		for (Map.Entry<String, IModule> ent : moduleMap.entrySet()) {
 			if (this.modules.containsKey(ent.getKey()))
@@ -393,7 +428,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 	 * by the final filename letter ('C' = console module ROM, 'D' = console module ROM,
 	 * bank #2, 'G' = module GROM). 
 	 */
-//	private boolean analyzeV9t9ModuleFile(URI databaseURI, URI uri,
+//	private boolean analyzeV9t9ModuleFile(URI uri,
 //			String fname, String key,
 //			Map<String, IModule> moduleMap) {
 //		if (!fname.toLowerCase().endsWith(".bin"))
@@ -401,7 +436,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 //		
 ////		String key = getModuleBaseFile(fname);
 //		
-//		return analyzeV9t9ModuleFile(databaseURI, uri, fname, key, moduleMap);
+//		return analyzeV9t9ModuleFile(uri, fname, key, moduleMap);
 //	}
 
 	/**
@@ -409,7 +444,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 	 * by the final filename letter ('C' = console module ROM, 'D' = console module ROM,
 	 * bank #2, 'G' = module GROM). 
 	 */
-	private boolean analyzeV9t9ModuleFile(URI databaseURI, URI uri,
+	private boolean analyzeV9t9ModuleFile(URI uri,
 			String fname, String key,
 			Map<String, IModule> moduleMap) {
 		if (!fname.toLowerCase().endsWith(".bin"))
@@ -485,7 +520,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 		
 		IModule module = moduleMap.get(key);
 		if (module == null) {
-			module = new Module(databaseURI, key);
+			module = new Module(null, key);
 		}
 		if (moduleName.length() > 0) {
 			if (EASY_BUG.equalsIgnoreCase(moduleName)) {
@@ -501,16 +536,16 @@ public class TI99ModuleDetector implements IModuleDetector {
 			case 'C':
 			case 'c':
 			default:
-				info = injectModuleRom(module, databaseURI, moduleName, fname, 0, content.length);
+				info = injectModuleRom(module, moduleName, fname, 0, content.length);
 				break;
 			case 'D':
 			case 'd':
-				info = injectModuleBank2Rom(module, databaseURI, moduleName, fname, 0);
+				info = injectModuleBank2Rom(module, moduleName, fname, 0);
 				break;
 			}
 		} else {
 			if (baseAddr == 0x6000)
-				info = injectModuleGrom(module, databaseURI, moduleName, fname, 0);
+				info = injectModuleGrom(module, moduleName, fname, 0);
 			else {
 				info = MemoryEntryInfoBuilder.standardModuleGrom(fname)
 						.withAddress(baseAddr)
@@ -534,7 +569,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 		return true;
 	}
 
-	private MemoryEntryInfo injectModuleGrom(IModule module, URI databaseURI,
+	private MemoryEntryInfo injectModuleGrom(IModule module, 
 			String moduleName, String fileName, int fileOffset) {
 		MemoryEntryInfo info = MemoryEntryInfoBuilder.standardModuleGrom(fileName)
 				.withOffset(fileOffset)
@@ -613,7 +648,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 		return new Pair<IMD5SumFilter, Integer>(filter, contentLength);
 	}
 
-	private MemoryEntryInfo injectModuleRom(IModule module, URI databaseURI,
+	private MemoryEntryInfo injectModuleRom(IModule module, 
 			String moduleName, String fileName, int fileOffset, int fileSize) {
 		MemoryEntryInfo info = null;
 		boolean found = false;
@@ -660,7 +695,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 		return info;
 	}
 
-	private MemoryEntryInfo injectModuleBank2Rom(IModule module, URI databaseURI,
+	private MemoryEntryInfo injectModuleBank2Rom(IModule module, 
 			String moduleName, String fileName, int fileOffset) {
 		MemoryEntryInfo info = null;
 		boolean found = false;
@@ -701,7 +736,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 	 * @param moduleMap
 	 * @return
 	 */
-	private boolean analyzeGRAMKrackerModuleFile(URI databaseURI, File file,
+	private boolean analyzeGRAMKrackerModuleFile(File file,
 			Map<String, IModule> moduleMap) {
 		
 		
@@ -717,7 +752,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 	 * @param moduleMap
 	 * @return
 	 */
-	private boolean analyzeRPKModuleFile(URI databaseURI, File file,
+	private boolean analyzeRPKModuleFile(File file,
 			Map<String, IModule> moduleMap) {
 		
 		if (!file.getName().toLowerCase().endsWith(".rpk")) {
@@ -743,7 +778,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 				log.debug("Handling softlist.xml");
 				InputStream is = zf.getInputStream(softlist);
 				try {
-					module = convertSoftList(databaseURI, file.toURI(), is);
+					module = convertSoftList(file.toURI(), is);
 				} finally {
 					is.close();
 				}
@@ -758,7 +793,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 					try {
 						lis = zf.getInputStream(layout);
 						mis = metainf != null ? zf.getInputStream(metainf) : null;
-						module = convertLayoutMetainf(zf, databaseURI, file.toURI(), lis, mis);
+						module = convertLayoutMetainf(zf, file.toURI(), lis, mis);
 					} finally {
 						if (lis != null)
 							lis.close();
@@ -809,7 +844,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 	 * @param moduleMap
 	 * @return
 	 */
-	private boolean analyzeZipModuleFile(URI databaseURI, File file,
+	private boolean analyzeZipModuleFile(File file,
 			Map<String, IModule> moduleMap) {
 		
 		ZipFile zf;
@@ -833,14 +868,14 @@ public class TI99ModuleDetector implements IModuleDetector {
 					
 					if (oneModule) {
 						// associate with zip file's module
-						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), 
+						if (analyzeV9t9ModuleFile(uri, uri.toString(), 
 								file.getPath(), newModules)) {
 							log.debug("Matched " + ent.getName() + " from " + file.getName());
 							// nice
 						}
 					} else {
 						// associate with appropriate module
-						if (analyzeV9t9ModuleFile(databaseURI, uri, uri.toString(), 
+						if (analyzeV9t9ModuleFile(uri, uri.toString(), 
 								file.getPath(), newModules)) {
 							log.debug("Matched " + ent.getName() + " from " + file.getName());
 							// nice
@@ -891,13 +926,13 @@ public class TI99ModuleDetector implements IModuleDetector {
 	 * @param is
 	 * @return
 	 */
-	private IModule convertSoftList(URI databaseURI, URI zipUri, InputStream is) {
+	private IModule convertSoftList(URI zipUri, InputStream is) {
 		IModule module;
 		
 		StreamXMLStorage storage = readXMLAndClose(is, "software", "softlist.xml");
 		
 		String moduleName = storage.getDocumentElement().getAttribute("name");
-		module = new Module(databaseURI, moduleName);
+		module = new Module(null, moduleName);
 		
 		for (Element el : XMLUtils.getChildElements(storage.getDocumentElement())) {
 			if (el.getNodeName().equals("description")) {
@@ -921,7 +956,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 				String name = dataArea.getAttribute("name");
 				if (name.equals("rom_socket")) {
 					for (Element rom : XMLUtils.getChildElementsNamed(dataArea, "rom")) {
-						injectModuleRom(module, databaseURI, moduleName, 
+						injectModuleRom(module, moduleName, 
 								makeZipUriString(zipUri, rom.getAttribute("name")),
 								HexUtils.parseInt(rom.getAttribute("offset")),
 								HexUtils.parseInt(rom.getAttribute("size"))
@@ -931,14 +966,14 @@ public class TI99ModuleDetector implements IModuleDetector {
 				}
 				else if (name.equals("rom2_socket")) {
 					for (Element rom : XMLUtils.getChildElementsNamed(dataArea, "rom")) {
-						injectModuleBank2Rom(module, databaseURI, moduleName, 
+						injectModuleBank2Rom(module, moduleName, 
 								makeZipUriString(zipUri, rom.getAttribute("name")),
 								HexUtils.parseInt(rom.getAttribute("offset")));
 					}
 				}
 				else if (name.equals("grom_socket")) {
 					for (Element rom : XMLUtils.getChildElementsNamed(dataArea, "rom")) {
-						injectModuleGrom(module, databaseURI, moduleName, 
+						injectModuleGrom(module, moduleName, 
 								makeZipUriString(zipUri, rom.getAttribute("name")),
 								HexUtils.parseInt(rom.getAttribute("offset")));
 					}
@@ -978,7 +1013,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 	 * @param is
 	 * @return
 	 */
-	private IModule convertLayoutMetainf(ZipFile zf, URI databaseURI, URI zipUri, InputStream lis,
+	private IModule convertLayoutMetainf(ZipFile zf, URI zipUri, InputStream lis,
 			InputStream mis) {
 		IModule module;
 
@@ -1006,7 +1041,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 			int qidx = path.lastIndexOf('?');
 			moduleName = path.substring(Math.max(qidx, sidx) + 1);
 		}
-		module = new Module(databaseURI, moduleName);
+		module = new Module(null, moduleName);
 
 		Element resources = XMLUtils.getChildElementNamed(layout.getDocumentElement(),  "resources");
 		if (resources == null) {
@@ -1047,17 +1082,17 @@ public class TI99ModuleDetector implements IModuleDetector {
 			String uri = makeZipUriString(zipUri, filename);
 
 			if (type.equals("rom_socket")) {
-				injectModuleRom(module, databaseURI, moduleName, uri,
+				injectModuleRom(module, moduleName, uri,
 						0, (int) zf.getEntry(filename).getSize()
 						);
 			}
 			else if (type.equals("rom2_socket")) {
-				injectModuleBank2Rom(module, databaseURI, moduleName, uri, 
+				injectModuleBank2Rom(module, moduleName, uri, 
 						0
 						);
 			}
 			else if (type.equals("grom_socket")) {
-				injectModuleGrom(module, databaseURI, moduleName, uri,
+				injectModuleGrom(module, moduleName, uri,
 						0);
 			}
 			
@@ -1195,7 +1230,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 				mods = new ArrayList<IModule>();
 				md5ToModules.put(md5, mods);
 			}
-			mods.add(module);
+			mods.add(module.copy());
 		}
 		return md5ToModules;
 	}
@@ -1210,7 +1245,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 				mods = new ArrayList<IModule>();
 				nameToModules.put(name, mods);
 			}
-			mods.add(module);
+			mods.add(module.copy());
 		}
 		return nameToModules;
 	}
@@ -1299,13 +1334,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 			simpleModules.add(simple);
 		}
 		
-		Collections.sort(simpleModules, new Comparator<IModule>() {
-
-			@Override
-			public int compare(IModule arg0, IModule arg1) {
-				return arg0.getName().compareToIgnoreCase(arg1.getName());
-			}
-		});
+		Collections.sort(simpleModules, new CaseInsensitiveNameSort());
 		
 		return simpleModules;
 	}

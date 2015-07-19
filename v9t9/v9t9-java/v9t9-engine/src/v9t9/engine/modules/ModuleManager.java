@@ -160,6 +160,11 @@ public class ModuleManager implements IModuleManager {
 				} catch (AbortedException e) {
 					// ignore
 				}
+				try {
+					entry.load();
+				} catch (IOException e) {
+					throw new NotifyException(this, e.getMessage());
+				}
 				memoryEntryModules.put(entry, module);
 			}
 			loadedModules.add(module);

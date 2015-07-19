@@ -13,8 +13,11 @@ import java.util.Map;
  *
  */
 public interface IModuleDetector {
+	
+	/** Clear collected results and start over.  Does not reset #set...() calls. */
+	void clear();
 
-	/** Scan the given directory and return modules found */
+	/** Scan the given directory and return modules found in that location */
 	Collection<IModule> scan(File base);
 	
 	/** Get the cumulative detected modules after or more invocations of #scan() */

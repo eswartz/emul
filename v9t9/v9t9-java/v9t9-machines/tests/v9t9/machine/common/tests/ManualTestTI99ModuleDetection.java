@@ -14,7 +14,6 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -61,8 +60,7 @@ public class ManualTestTI99ModuleDetection {
 	@Test
 	public void testStockModules1() throws Exception {
 		
-		URI databaseURI = URI.create("test.xml");
-		IModuleDetector detector = machine.createModuleDetector(databaseURI);
+		IModuleDetector detector = machine.createModuleDetector();
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/mess"));
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/tosec"));
 		detector.scan(new File("/usr/local/src/v9t9-data/modules"));
@@ -73,7 +71,7 @@ public class ManualTestTI99ModuleDetection {
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk"));
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted"));
 		
-		validateStockModules(detector, true);
+		validateStockModules(detector);
 	}
 
 	/**
@@ -83,14 +81,13 @@ public class ManualTestTI99ModuleDetection {
 	@Test
 	public void testStockModules2() throws Exception {
 		
-		URI databaseURI = URI.create("test.xml");
-		IModuleDetector detector = machine.createModuleDetector(databaseURI);
+		IModuleDetector detector = machine.createModuleDetector();
 		
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/zip"));
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk"));
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted"));
 		
-		validateStockModules(detector, false);
+		validateStockModules(detector);
 	}
 
 	/**
@@ -100,19 +97,18 @@ public class ManualTestTI99ModuleDetection {
 	@Test
 	public void testStockModules3() throws Exception {
 		
-		URI databaseURI = URI.create("test.xml");
-		IModuleDetector detector = machine.createModuleDetector(databaseURI);
+		IModuleDetector detector = machine.createModuleDetector();
 		
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/mess"));
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/tosec"));
 		detector.scan(new File("/usr/local/src/v9t9-data/modules"));
 		
-		validateStockModules(detector, false);
+		validateStockModules(detector);
 	}
 	/**
 	 * @param detector
 	 */
-	private void validateStockModules(IModuleDetector detector, boolean mustExist) {
+	private void validateStockModules(IModuleDetector detector) {
 		Map<String, List<IModule>> md5ToModules = detector.gatherDuplicatesByMD5();
 		Map<String, List<IModule>> nameToModules = detector.gatherDuplicatesByName();
 
@@ -124,10 +120,9 @@ public class ManualTestTI99ModuleDetection {
 			
 			if (!md5ToModules.containsKey(md5)) {
 				List<IModule> nameMatches = nameToModules.get(stock.getName());
-				if (!mustExist) {
-					if (nameMatches == null)
-						continue;
-				}
+				if (nameMatches == null)
+					continue;
+				
 				sb.append("did not find ").append(stock.getMD5()).append(" = ").append(stock.getName()).append('\n');
 				if (nameMatches != null) {
 					
@@ -193,8 +188,7 @@ public class ManualTestTI99ModuleDetection {
 		
 		Set<File> allFiles = getAllFiles(pattern, dir, ignore); 
 		
-		URI databaseURI = URI.create("test.xml");
-		Collection<IModule> modules = machine.createModuleDetector(databaseURI).scan(dir);
+		Collection<IModule> modules = machine.createModuleDetector().scan(dir);
 		
 		List<IModule> matches = new ArrayList<IModule>();
 		System.out.println("Found " + modules.size() + " modules in " + dir);
@@ -346,8 +340,7 @@ public class ManualTestTI99ModuleDetection {
 		File dir = new File(path);
 		assertTrue(dir.exists());
 		
-		URI databaseURI = URI.create("test.xml");
-		Collection<IModule> modules = machine.createModuleDetector(databaseURI).scan(dir);
+		Collection<IModule> modules = machine.createModuleDetector().scan(dir);
 		
 		System.out.println("Found " + modules.size() + " modules in " + dir);
 		

@@ -50,12 +50,15 @@ public class TestStockModules {
 	public void testNoDuplicateNameStockModules() throws Exception {
 		IModule[] stocks = machine.getModuleManager().getStockModules();
 		Map<String, IModule> nameMap = new HashMap<String, IModule>();
+		StringBuilder sb = new StringBuilder();
 		for (IModule stock : stocks) {
 			IModule old = nameMap.put(stock.getName(), stock);
 			if (old != null && old.getKeywords().equals(stock.getKeywords())) {
-				fail(stock.getMD5() + " -> " + stock.getName() + " / " + old.getName());
+				sb.append(stock.getMD5() + " -> " + stock.getName() + " / " + old.getName() + '\n');
 			}
 		}
+		if (sb.length() > 0)
+			fail(sb.toString());
 	}
 
 }

@@ -36,10 +36,6 @@ public class ModuleContentProvider implements IEmulatorContentSourceProvider {
 	}
 
 	public IEmulatorContentSource[] analyze(URI uri) {
-		URI databaseURI;
-	
-		databaseURI = URI.create("temp_modules.xml");
-		
 		File file;
 		try {
 			file = new File(uri);
@@ -47,7 +43,7 @@ public class ModuleContentProvider implements IEmulatorContentSourceProvider {
 			return IEmulatorContentSource.EMPTY;
 		}
 		
-		IModuleDetector detector = machine.createModuleDetector(databaseURI);
+		IModuleDetector detector = machine.getModuleDetector();
 		Collection<IModule> ents = detector.scan(file);
 		if (ents.isEmpty())
 			return IEmulatorContentSource.EMPTY;

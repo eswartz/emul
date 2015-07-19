@@ -805,7 +805,7 @@ public class ModuleListComposite extends Composite {
 		
 		URI databaseURI = dbFile != null ? dbFile.toURI() : nonameDatabaseURI;
 		
-		IModuleDetector detector = machine.createModuleDetector(databaseURI);
+		IModuleDetector detector = machine.getModuleDetector();
 		for (URI uri : machine.getRomPathFileLocator().getSearchURIs()) {
 			File dir;
 			try {

@@ -296,7 +296,7 @@ public class ModuleSelector extends Composite {
 		configureButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				SetupWizard wizard = new SetupWizard(machine, window, SetupWizard.Page.PATHS);
+				SetupWizard wizard = new SetupWizard(machine, window, SetupWizard.Page.MODULES);
 				WizardDialog dialog = new WizardDialog(getShell(), wizard);
 				dialog.setPageSize(SWT.DEFAULT, 500);
 	        	int ret = dialog.open();

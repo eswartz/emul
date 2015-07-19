@@ -10,7 +10,6 @@
  */
 package v9t9.engine.machine;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -131,6 +130,8 @@ abstract public class MachineBase implements IMachine {
 	private List<IEmulatorContentSourceProvider> contentProviders = new ArrayList<IEmulatorContentSourceProvider>(1);
 
 	private List<IPrinterImageHandler> printerImageHandlers = new ArrayList<IPrinterImageHandler>(1);
+
+	private IModuleDetector moduleDetector;
 
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -804,10 +805,20 @@ abstract public class MachineBase implements IMachine {
 	 * @see v9t9.common.machine.IMachine#createModuleDetector(java.net.URI)
 	 */
 	@Override
-	public IModuleDetector createModuleDetector(URI databaseURI) {
+	public IModuleDetector getModuleDetector() {
+		if (moduleDetector == null) {
+			moduleDetector = createModuleDetector();
+		}
+		return moduleDetector;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#createModuleDetector()
+	 */
+	@Override
+	public IModuleDetector createModuleDetector() {
 		return null;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IMachine#reload()
 	 */
@@ -867,6 +878,7 @@ abstract public class MachineBase implements IMachine {
 	public IPrinterImageHandler[] getPrinterImageHandlers() {
 		return printerImageHandlers.toArray(new IPrinterImageHandler[printerImageHandlers.size()]);
 	}
+	
 }
 
 

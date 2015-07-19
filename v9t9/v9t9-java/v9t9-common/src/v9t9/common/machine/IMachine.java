@@ -10,7 +10,6 @@
  */
 package v9t9.common.machine;
 
-import java.net.URI;
 import v9t9.common.cassette.ICassetteChip;
 import v9t9.common.client.IEmulatorContentSourceProvider;
 import v9t9.common.client.IKeyboardHandler;
@@ -98,10 +97,13 @@ public interface IMachine extends IBaseMachine {
 	void setKeyboardHandler(IKeyboardHandler keyboardHandler);
 
 	/**
-	 * Create a module detector
-	 * @param databaseURI the URI into which the entries will ostensibly go 
+	 * Get the module detector
 	 */
-	IModuleDetector createModuleDetector(URI databaseURI);
+	IModuleDetector getModuleDetector();
+	/**
+	 * Create a new module detector
+	 */
+	IModuleDetector createModuleDetector();
 
 	/**
 	 * Reload machine (e.g. re-read ROMs and re-set module)

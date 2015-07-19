@@ -11,7 +11,6 @@
 package v9t9.machine.ti99.machine;
 
 
-import java.net.URI;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDsrManager;
@@ -156,13 +155,12 @@ public class TI99Machine extends MachineBase {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.machine.IMachine#createModuleDetector(java.net.URI)
+	 * @see v9t9.common.machine.IMachine#createModuleDetector()
 	 */
 	@Override
-	public IModuleDetector createModuleDetector(URI databaseURI) {
-		return new TI99ModuleDetector(databaseURI, getRomPathFileLocator(), getModuleManager());
+	public IModuleDetector createModuleDetector() {
+		return new TI99ModuleDetector(getRomPathFileLocator(), getModuleManager());
 	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.engine.machine.MachineBase#createFileExecutionHandler()
 	 */

@@ -92,7 +92,7 @@ public class ROMSetupTreeContentProvider implements ITreeContentProvider {
 						modulePathMap.clear();
 					}
 					
-					IModuleDetector detector = machine.createModuleDetector(databaseURI);
+					IModuleDetector detector = machine.getModuleDetector();
 					for (URI uri : machine.getRomPathFileLocator().getSearchURIs()) {
 						try {
 							detector.scan(new File(uri));
