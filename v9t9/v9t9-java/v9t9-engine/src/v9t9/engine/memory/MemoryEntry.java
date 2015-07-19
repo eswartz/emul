@@ -23,6 +23,7 @@ import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryArea;
@@ -211,7 +212,6 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
     
     /** Map entry into address space */
     public void onMap() {
-    	//domain.mapEntry(this);
         load();
     }
 
@@ -223,8 +223,6 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 			e.printStackTrace();
 		}
         unload();
-        //domain.unmapEntry(this);
-        //domain.setArea(addr, size, new WordMemoryArea());
     }
 
     /* (non-Javadoc)
@@ -517,16 +515,23 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 
 
 	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#loadMemory(v9t9.common.events.IEventNotifier, ejs.base.settings.ISettingSection)
+	 */
+	@Override
+	public void loadMemory(IEventNotifier notifier, ISettingSection section) {
+		loadFields(notifier, section);
+		loadMemoryContents(section);
+	}
+	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryEntry#loadState(v9t9.base.settings.ISettingSection)
 	 */
 	@Override
-	public void loadState(ISettingSection section) {
-		loadFields(section);
-		loadMemoryContents(section);
+	public final void loadState(ISettingSection section) {
+		loadMemory(null, section);
 	}
 
 
-	protected void loadFields(ISettingSection section) {
+	protected void loadFields(IEventNotifier notifier, ISettingSection section) {
 		name = section.get("Name");
 		addr = section.getInt("Address");
 		addrOffset = section.getInt("AddressOffset");

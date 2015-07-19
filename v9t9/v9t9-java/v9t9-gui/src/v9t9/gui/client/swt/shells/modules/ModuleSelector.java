@@ -1216,15 +1216,11 @@ public class ModuleSelector extends Composite {
 	 */
 	protected void switchModule(boolean softReset) {
 		try {
-			// FIXME: other uses will switch before reset anyway
-			
-			// reset tries to reload the current module by name, which may be ambiguous
 			if (softReset)
 				machine.getCpu().reset();
 			else
 				machine.reset();			
 			
-			// but this will set the record straight(ish)
 			moduleManager.switchModule(selectedModule);
 
 			if (!isDisposed())

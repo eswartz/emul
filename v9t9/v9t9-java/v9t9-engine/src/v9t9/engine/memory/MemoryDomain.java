@@ -22,6 +22,8 @@ import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.BinaryUtils;
 import ejs.base.utils.ListenerList;
+import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryAccess;
 import v9t9.common.memory.IMemoryAccessListener;
@@ -455,10 +457,10 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryDomain#loadState(v9t9.base.settings.ISettingSection)
+	 * @see v9t9.common.memory.IMemoryDomain#loadMemory(v9t9.common.events.IEventNotifier, ejs.base.settings.ISettingSection)
 	 */
 	@Override
-	public void loadState(ISettingSection section) {
+	public void loadMemory(IEventNotifier notifier, ISettingSection section) {
 		//unmapAll();
 		if (section == null) {
 			return;
@@ -469,16 +471,26 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 			int addr = entryStore.getInt("Address");
 			IMemoryEntry entry = findMappedEntry(name, addr);
 			if (entry != null) {
-				entry.loadState(entryStore);
+				entry.loadMemory(notifier, entryStore);
 			} else {
-				entry = getMemory().getMemoryEntryFactory().createEntry(this, entryStore);
+				entry = getMemory().getMemoryEntryFactory().createEntry(this, notifier, entryStore);
 				if (entry != null)
 					mapEntry(entry);
+				else if (notifier != null)
+					notifier.notifyEvent(this, Level.ERROR, "Cannot create memory entry: " + name);
 				else
-					System.err.println("Cannot find memory entry: " + name);
+					System.err.println("Cannot created memory entry: " + name);
 			}
 		}
 		
+	}
+	
+	/* (non-Javadoc)
+	 * @see ejs.base.properties.IPersistable#loadState(ejs.base.settings.ISettingSection)
+	 */
+	@Override
+	public void loadState(ISettingSection section) {
+		loadMemory(null, section);
 	}
 
 	protected IMemoryEntry findFullyMappedEntry(String name, int addr) {

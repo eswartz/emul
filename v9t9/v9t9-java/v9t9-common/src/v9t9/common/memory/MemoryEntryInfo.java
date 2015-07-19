@@ -308,7 +308,7 @@ public class MemoryEntryInfo {
 	}
 
 	public String getResolvedFilename(ISettingsHandler settings) {
-		if (getFilenameProperty() != null)
+		if (getFilenameProperty() != null && settings != null)
 			return settings.get(getFilenameProperty()).getString();
 		else
 			return getFilename();

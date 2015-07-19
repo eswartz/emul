@@ -11,6 +11,7 @@
 package v9t9.engine.memory;
 
 import ejs.base.settings.ISettingSection;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 
@@ -102,19 +103,20 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 		doSaveBankEntries(section.addSection("Banks"));
 	}
 	
-
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.MemoryEntry#loadMemory(v9t9.common.events.IEventNotifier, ejs.base.settings.ISettingSection)
+	 */
 	@Override
-	public void loadState(ISettingSection section) {
-		super.loadState(section);
-
-		doLoadBankEntries(section.getSection("Banks"));
+	public void loadMemory(IEventNotifier notifier, ISettingSection section) {
+		super.loadMemory(notifier, section);
+		
+		doLoadBankEntries(notifier, section.getSection("Banks"));
 		
 		selectBank(section.getInt("CurrentBankIndex"));
-		
 	}
 	
 	abstract protected void doSaveBankEntries(ISettingSection section);
-	abstract protected void doLoadBankEntries(ISettingSection section);
+	abstract protected void doLoadBankEntries(IEventNotifier notifier, ISettingSection section);
 
 	@Override
 	protected void saveMemoryContents(ISettingSection section) {

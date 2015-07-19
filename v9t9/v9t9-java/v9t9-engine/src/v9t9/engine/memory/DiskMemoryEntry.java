@@ -16,6 +16,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 
+import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyEvent.Level;
+import v9t9.common.files.URIUtils;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.memory.StoredMemoryEntryInfo;
 import ejs.base.settings.ISettingSection;
@@ -270,8 +273,8 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 * @see v9t9.engine.memory.MemoryEntry#loadFields(org.eclipse.jface.dialogs.IDialogSettings)
 	 */
 	@Override
-	protected void loadFields(ISettingSection section) {
-		super.loadFields(section);
+	protected void loadFields(IEventNotifier notifier, ISettingSection section) {
+		super.loadFields(notifier, section);
 		if (info == null) {
 			info = (isWordAccess() ? MemoryEntryInfoBuilder.wordMemoryEntry() : MemoryEntryInfoBuilder.byteMemoryEntry())
 				.withFilename(section.get("FileName") != null ? section.get("FileName") : section.get("FilePath"))
@@ -287,18 +290,49 @@ public class DiskMemoryEntry extends MemoryEntry {
 		try {
 			storedInfo = memory.getMemoryEntryFactory().resolveMemoryEntry(info);
 		} catch (IOException e) {
-			e.printStackTrace();
+			// if failed to load essential ROM/GROM, just fill in from model
+			for (MemoryEntryInfo rinfo : memory.getModel().getRequiredRomMemoryEntries()) {
+				if (rinfo.getDomainName().equals(info.getDomainName())
+						&& rinfo.getAddress() == info.getAddress()) {
+					
+					try {
+						storedInfo = memory.getMemoryEntryFactory().resolveMemoryEntry(rinfo);
+						
+						String message = "Loaded '"
+								+ URIUtils.splitFileName(storedInfo.uri).second
+								+ "' instead of missing ROM file '" 
+								+ info.getFilename() + "'";
+						if (notifier != null) {
+							notifier.notifyEvent(null, Level.WARNING, message);
+						} else {
+							System.err.println(message);
+						}
+						
+						info = rinfo;
+					} catch (IOException e2) {
+						if (notifier != null) {
+							notifier.notifyEvent(null, Level.ERROR, 
+									e2 instanceof FileNotFoundException ? 
+											"Failed to load ROM file '" + info.getResolvedFilename(null) +
+											"' and fallback ROM file '" + rinfo.getFilename() + "'"
+									: e2.getMessage());
+						} else {
+							e2.printStackTrace();
+						}
+					}
+				}
+			}
 		}
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.engine.memory.MemoryEntry#loadState(v9t9.base.core.settings.ISettingSection)
+	 * @see v9t9.engine.memory.MemoryEntry#loadMemory(v9t9.common.events.IEventNotifier, ejs.base.settings.ISettingSection)
 	 */
 	@Override
-	public void loadState(ISettingSection section) {
+	public void loadMemory(IEventNotifier notifier, ISettingSection section) {
 		bLoaded = false;
 		info = null;
-		super.loadState(section);
+		super.loadMemory(notifier, section);
 		load();
 	}
 	
@@ -306,7 +340,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 * @param section  
 	 */
 	protected void loadMemoryContents(ISettingSection section) {
-		if (storedInfo != null || storedInfo.info.isStored() != isStorable()) {
+		if (storedInfo != null) {
 			try {
 				area = (MemoryArea) memory.getMemoryEntryFactory().createMemoryArea(storedInfo.info);
 			} catch (IOException e) {

@@ -143,4 +143,8 @@ public interface IModuleManager extends IPersistable {
 	 * @return
 	 */
 	IModule[] getStockModules();
+	/**
+	 * Load the last loaded module (after startup)
+	 */
+	void restoreLastModule() throws NotifyException;
 }

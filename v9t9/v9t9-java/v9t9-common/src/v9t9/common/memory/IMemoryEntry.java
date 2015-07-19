@@ -14,7 +14,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
+import v9t9.common.events.IEventNotifier;
 import ejs.base.properties.IPersistable;
+import ejs.base.settings.ISettingSection;
 import ejs.base.utils.Pair;
 
 
@@ -43,6 +45,8 @@ public interface IMemoryEntry extends IMemoryAccess, Comparable<IMemoryEntry>, I
 
 	/** Unload entry, if applicable */
 	void unload();
+
+	void loadMemory(IEventNotifier notifier, ISettingSection section);
 
 	/** Load symbols from file in the form:
 	 * 

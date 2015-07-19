@@ -13,6 +13,7 @@ package v9t9.engine.memory;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.Pair;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
@@ -70,6 +71,8 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	
 	@Override
 	public void load() {
+		if (banks == null)
+			return;
 		for (IMemoryEntry bank : banks)
 			bank.load();
 	}
@@ -101,7 +104,7 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	}
 
 	@Override
-	protected void doLoadBankEntries(ISettingSection section) {
+	protected void doLoadBankEntries(IEventNotifier notifier, ISettingSection section) {
 		if (section == null) return;
 		if (banks == null) {
 			bankCount = section.getSections().length;
@@ -114,7 +117,7 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 				((MemoryEntry) entry).setMemory(memory);
 				entry.loadState(entryStore);
 			} else {
-				entry = memory.getMemoryEntryFactory().createEntry(getDomain(), entryStore);
+				entry = memory.getMemoryEntryFactory().createEntry(getDomain(), notifier, entryStore);
 				banks[idx] = entry;
 			}
 		}		

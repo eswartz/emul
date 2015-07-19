@@ -34,6 +34,7 @@ import v9t9.common.events.BaseEventNotifier;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.NotifyEvent.Level;
+import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
 import v9t9.common.files.IEmulatedFileHandler;
 import v9t9.common.files.IFileExecutionHandler;
@@ -322,7 +323,7 @@ abstract public class MachineBase implements IMachine {
 		
 		unloadAndClear();
 		
-		reload();
+		doReload();
 		
 		if (cru != null)
 			cru.reset();
@@ -494,7 +495,7 @@ abstract public class MachineBase implements IMachine {
 		if (moduleManager != null) {
 			moduleManager.loadState(section.getSection("Modules"));
 		}
-		memory.loadState(section.getSection("Memory"));
+		memory.loadMemory(eventNotifier, section.getSection("Memory"));
 		cpu.loadState(section.getSection("CPU"));
 		vdp.loadState(section.getSection("VDP"));
 		if (sound != null)
@@ -813,6 +814,18 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public void reload() {
 		
+		doReload();
+
+		if (moduleManager != null) {
+			try {
+				moduleManager.restoreLastModule();
+			} catch (NotifyException e) {
+				notifyEvent(e.getEvent());
+			}		
+		}
+	}
+	
+	protected void doReload() {
 		getExecutor().reset();
 		
 		memory.reset();
@@ -823,9 +836,8 @@ abstract public class MachineBase implements IMachine {
 		
 		if (moduleManager != null) {
 			moduleManager.reloadDatabase();
-			moduleManager.reloadModules(client.getEventNotifier());
+			//moduleManager.reloadModules(client.getEventNotifier());
 		}
-		
 	}
 	
 	/* (non-Javadoc)

@@ -22,6 +22,7 @@ import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.XMLUtils;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.memory.IMemory;
@@ -227,7 +228,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 	 * @param entryStore
 	 * @return
 	 */
-	public IMemoryEntry createEntry(IMemoryDomain domain, ISettingSection entryStore) {
+	public IMemoryEntry createEntry(IMemoryDomain domain, IEventNotifier notifier, ISettingSection entryStore) {
 		MemoryEntry entry = null;
 		String klazzName = entryStore.get("Class");
 		if (klazzName != null) {
@@ -266,7 +267,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			
 			entry.setMemory(domain.getMemory());
 			
-			entry.loadState(entryStore);
+			entry.loadMemory(notifier, entryStore);
 		}
 		return entry;
 	}

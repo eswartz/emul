@@ -12,6 +12,7 @@ package v9t9.common.memory;
 
 import java.io.IOException;
 
+import v9t9.common.events.IEventNotifier;
 import ejs.base.settings.ISettingSection;
 
 
@@ -142,10 +143,8 @@ public interface IMemoryDomain {
 	String getIdentifier();
 	String getName();
 
-	/**
-	 * @throws IOException 
-	 * 
-	 */
+	void loadMemory(IEventNotifier notifier, ISettingSection dSection);
+
 	void save();
 
 	/**
@@ -156,14 +155,7 @@ public interface IMemoryDomain {
 	int getSize();
 	void setSize(int size);
 
-	/**
-	 * @return
-	 */
 	boolean isWordAccess();
 
-	/**
-	 * 
-	 */
 	void reset();
-
 }

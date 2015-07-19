@@ -124,6 +124,9 @@ public class ModuleManager implements IModuleManager {
 	public void switchModule(IModule module) throws NotifyException {
 		unloadAllModules();
 		
+		lastLoadedModule.setString(null);
+		lastLoadedModuleHash.setString(null);
+
 		loadModule(module);
 	}
 	/* (non-Javadoc)
@@ -139,7 +142,6 @@ public class ModuleManager implements IModuleManager {
 			}
 		}
 		loadedModules.clear();
-		lastLoadedModule.setString(null);
 	}
 	
 	/* (non-Javadoc)
@@ -495,5 +497,30 @@ public class ModuleManager implements IModuleManager {
 		}
 		
 		return stockModuleList.toArray(new IModule[stockModuleList.size()]);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.modules.IModuleManager#restoreLastModule()
+	 */
+	@Override
+	public void restoreLastModule() throws NotifyException {
+		String lastModuleName = lastLoadedModule.getString();
+		String lastModuleHash = lastLoadedModuleHash.getString();
+		if (lastModuleHash.length() > 0) {
+			IModule lastModule = findModuleByNameAndHash(lastModuleName, lastModuleHash);
+			if (lastModule != null) {
+				switchModule(lastModule);
+			} else {
+				throw new NotifyException(this, "Could not reload module '" + lastModuleName + "' (MD5 " + lastModuleHash + ")");
+			}
+		}
+		else if (lastModuleName.length() > 0) {
+			IModule lastModule = findModuleByName(lastModuleName, true);
+			if (lastModule != null) {
+				switchModule(lastModule);
+			} else {
+				throw new NotifyException(this, "Could not reload module '" + lastModuleName + "'");
+			}
+		}
 	}
 }
