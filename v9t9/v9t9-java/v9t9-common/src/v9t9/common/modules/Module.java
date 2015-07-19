@@ -57,7 +57,7 @@ public class Module implements IModule {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((databaseURI == null) ? 0 : databaseURI.hashCode());
-		result = prime * result + ((entries == null) ? 0 : entries.hashCode());
+		result = prime * result + getMD5().hashCode();
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
@@ -75,10 +75,7 @@ public class Module implements IModule {
 				return false;
 		} else if (!databaseURI.equals(other.databaseURI))
 			return false;
-		if (entries == null) {
-			if (other.entries != null)
-				return false;
-		} else if (!entries.equals(other.entries))
+		if (!getMD5().equals(other.getMD5()))
 			return false;
 		if (name == null) {
 			if (other.name != null)
