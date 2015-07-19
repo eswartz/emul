@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.apache.log4j.Logger;
+
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
@@ -48,7 +50,9 @@ import v9t9.common.memory.IMemoryEntry;
  * @author ejs
  */
 public class MemoryEntry implements IPersistable, IMemoryEntry {
-    /** start address */
+	private static final Logger log = Logger.getLogger(MemoryEntry.class);
+	
+	    /** start address */
     private int addr;
 
     /** size in bytes */
@@ -212,7 +216,11 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
     
     /** Map entry into address space */
     public void onMap() {
-        load();
+    	try {
+    		load();
+		} catch (IOException e) {
+			log.error("failed to load memory for " + this, e);
+		}
     }
 
     /** Unmap entry from address space */
@@ -237,7 +245,7 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	 * @see v9t9.common.memory.IMemoryEntry#load()
 	 */
     @Override
-	public void load() {
+	public void load() throws IOException {
         /* nothing */
     }
 
@@ -518,7 +526,7 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	 * @see v9t9.common.memory.IMemoryEntry#loadMemory(v9t9.common.events.IEventNotifier, ejs.base.settings.ISettingSection)
 	 */
 	@Override
-	public void loadMemory(IEventNotifier notifier, ISettingSection section) {
+	public void loadMemory(IEventNotifier notifier, ISettingSection section) throws IOException {
 		loadFields(notifier, section);
 		loadMemoryContents(section);
 	}
@@ -527,7 +535,12 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	 */
 	@Override
 	public final void loadState(ISettingSection section) {
-		loadMemory(null, section);
+		try {
+			loadMemory(null, section);
+		} catch (IOException e) {
+			log.error("failed to load memory for " + this, e);
+		}
+
 	}
 
 
@@ -540,7 +553,7 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	}
 
 
-	protected void loadMemoryContents(ISettingSection section) {
+	protected void loadMemoryContents(ISettingSection section) throws IOException {
 		if (area.hasReadAccess()) {
 			area.loadContents(section, this);
 		}

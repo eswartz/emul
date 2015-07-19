@@ -40,13 +40,14 @@ public interface IMemoryEntry extends IMemoryAccess, Comparable<IMemoryEntry>, I
 	 * @throws IOException */
 	void save() throws IOException;
 
-	/** Load entry, if applicable */
-	void load();
+	/** Load entry, if applicable 
+	 * @throws IOException TODO*/
+	void load() throws IOException;
 
 	/** Unload entry, if applicable */
 	void unload();
 
-	void loadMemory(IEventNotifier notifier, ISettingSection section);
+	void loadMemory(IEventNotifier notifier, ISettingSection section) throws IOException;
 
 	/** Load symbols from file in the form:
 	 * 

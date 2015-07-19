@@ -10,6 +10,8 @@
  */
 package v9t9.engine.memory;
 
+import java.io.IOException;
+
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.Pair;
 import v9t9.common.client.ISettingsHandler;
@@ -70,7 +72,7 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	}
 	
 	@Override
-	public void load() {
+	public void load() throws IOException {
 		if (banks == null)
 			return;
 		for (IMemoryEntry bank : banks)

@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 
+import org.apache.log4j.Logger;
+
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.files.URIUtils;
@@ -28,7 +30,8 @@ import ejs.base.utils.FileUtils;
  * @author ejs
  */
 public class DiskMemoryEntry extends MemoryEntry {
-
+	private static Logger log = Logger.getLogger(DiskMemoryEntry.class);
+	
     /**	file path */
     private String filename;
     
@@ -90,48 +93,47 @@ public class DiskMemoryEntry extends MemoryEntry {
      * @see v9t9.MemoryEntry#load()
      */
     @Override
-	public void load() {
+	public void load() throws IOException {
         super.load();
         if (!bLoaded) {
-            try {
-            	URI uri = null;
-            	if (storedInfo != null) {
-					uri = locator.findFile(storedInfo.settings, info);
-				}
-            	if (uri == null) {
-                    // TODO: send alert
-            		return;
-            	}
+        	URI uri = null;
+        	if (storedInfo != null) {
+				uri = locator.findFile(storedInfo.settings, info);
+			}
+        	if (uri == null) {
+        		throw new IOException("Failed to locate " + (storedInfo != null ? storedInfo.uri : info.getFilename()) + " for " + this);
+        	}
 
-            	if (!info.isStored()) {
-            		filename = locator.splitFileName(uri).second;
-            	}
-            	
-            	int filesize = locator.getContentLength(uri);
-            	
-            	filesize = fixupFileSize(uri, filesize);
-            	
-                InputStream is = locator.createInputStream(uri);
-                FileUtils.skipFully(is, storedInfo.fileoffs);
-				byte[] data = FileUtils.readInputStreamContentsAndClose(is, 
-						filesize);
-                area.copyFromBytes(data);
+        	if (!info.isStored()) {
+        		filename = locator.splitFileName(uri).second;
+        	}
+        	
+        	int filesize = locator.getContentLength(uri);
+        	if (filesize == 0) {
+        		if (!locator.exists(uri))
+        			throw new IOException("Can no longer locate " + uri);
+        	}
+        	
+        	filesize = fixupFileSize(uri, filesize);
+        	
+            InputStream is = locator.createInputStream(uri);
+            FileUtils.skipFully(is, storedInfo.fileoffs);
+			byte[] data = FileUtils.readInputStreamContentsAndClose(is, 
+					filesize);
+            area.copyFromBytes(data);
 
-            	bLoaded = true;
-                
-                // see if it has symbols
-                String symbolFileName = getSymbolFileName();
-                URI symfile = locator.findFile(symbolFileName);
-            	if (symfile != null) {
-            		try {
-            			loadSymbolsAndClose(locator.createInputStream(symfile));
-            		} catch (IOException e) {
-            			// TODO: send alert
-            		}
-            	}
-            } catch (java.io.IOException e) {
-                // TODO: send alert
-            }
+        	bLoaded = true;
+            
+            // see if it has symbols
+            String symbolFileName = getSymbolFileName();
+            URI symfile = locator.findFile(symbolFileName);
+        	if (symfile != null) {
+        		try {
+        			loadSymbolsAndClose(locator.createInputStream(symfile));
+        		} catch (IOException e) {
+        			log.error("failed to load symbols from " + symfile, e);
+        		}
+        	}
         }
     }
 
@@ -161,7 +163,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 				filesize = 0x10000 - info.getAddress();
 			}
             
-        } catch (IOException e) {		// TODO
+        } catch (IOException e) {
             if (info.isStored()) {
 				filesize = size;	// not created yet
 			} else {
@@ -329,17 +331,22 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 * @see v9t9.engine.memory.MemoryEntry#loadMemory(v9t9.common.events.IEventNotifier, ejs.base.settings.ISettingSection)
 	 */
 	@Override
-	public void loadMemory(IEventNotifier notifier, ISettingSection section) {
+	public void loadMemory(IEventNotifier notifier, ISettingSection section) throws IOException {
 		bLoaded = false;
 		info = null;
 		super.loadMemory(notifier, section);
-		load();
+		try {
+			load();
+		} catch (IOException e) {
+			log.error("failed to load memory for " + this, e);
+			notifier.notifyEvent(this, Level.ERROR, e.getMessage());
+		}
 	}
 	
 	/**
 	 * @param section  
 	 */
-	protected void loadMemoryContents(ISettingSection section) {
+	protected void loadMemoryContents(ISettingSection section) throws IOException {
 		if (storedInfo != null) {
 			try {
 				area = (MemoryArea) memory.getMemoryEntryFactory().createMemoryArea(storedInfo.info);

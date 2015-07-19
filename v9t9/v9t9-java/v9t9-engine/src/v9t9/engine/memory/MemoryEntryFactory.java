@@ -23,6 +23,7 @@ import ejs.base.utils.HexUtils;
 import ejs.base.utils.XMLUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.memory.IMemory;
@@ -175,6 +176,8 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
     		bankSize = 0x2000;
     	
     	int numBanks = storedInfo.size / bankSize;
+    	if (numBanks == 0)
+    		throw new IOException("no banks found for " + info.getName());
     	
     	IMemoryEntry[] entries = new IMemoryEntry[numBanks];
     	
@@ -267,7 +270,11 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			
 			entry.setMemory(domain.getMemory());
 			
-			entry.loadMemory(notifier, entryStore);
+			try {
+				entry.loadMemory(notifier, entryStore);
+			} catch (IOException e) {
+				notifier.notifyEvent(this, Level.ERROR, e.getMessage());
+			}
 		}
 		return entry;
 	}

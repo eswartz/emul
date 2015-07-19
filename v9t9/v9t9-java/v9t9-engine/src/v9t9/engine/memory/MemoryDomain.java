@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
+
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.BinaryUtils;
@@ -35,7 +36,6 @@ import v9t9.common.memory.IMemoryWriteListener;
  * @author ejs
  */
 public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain {
-
 	static final int NUMAREAS = PHYSMEMORYSIZE >> AREASHIFT;
     
 	public IMemoryAccessListener nullMemoryAccessListener = new IMemoryAccessListener() {
@@ -460,7 +460,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	 * @see v9t9.common.memory.IMemoryDomain#loadMemory(v9t9.common.events.IEventNotifier, ejs.base.settings.ISettingSection)
 	 */
 	@Override
-	public void loadMemory(IEventNotifier notifier, ISettingSection section) {
+	public void loadMemory(IEventNotifier notifier, ISettingSection section)  {
 		//unmapAll();
 		if (section == null) {
 			return;
@@ -471,7 +471,11 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 			int addr = entryStore.getInt("Address");
 			IMemoryEntry entry = findMappedEntry(name, addr);
 			if (entry != null) {
-				entry.loadMemory(notifier, entryStore);
+				try {
+					entry.loadMemory(notifier, entryStore);
+				} catch (IOException e) {
+					notifier.notifyEvent(this, Level.ERROR, "Failed to load memory for: " + name + "\n\n" + e.getMessage());
+				}
 			} else {
 				entry = getMemory().getMemoryEntryFactory().createEntry(this, notifier, entryStore);
 				if (entry != null)

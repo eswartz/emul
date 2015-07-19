@@ -49,7 +49,7 @@ public interface IMemoryEntryFactory {
 	
 	/**
 	 * Create a memory entry from storage
-	 * @param notifier TODO
+	 * @param notifier 
 	 * @param entryStore
 	 * @return
 	 */

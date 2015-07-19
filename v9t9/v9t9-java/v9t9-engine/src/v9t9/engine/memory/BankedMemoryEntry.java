@@ -10,6 +10,8 @@
  */
 package v9t9.engine.memory;
 
+import java.io.IOException;
+
 import ejs.base.settings.ISettingSection;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.memory.IMemory;
@@ -107,7 +109,7 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	 * @see v9t9.engine.memory.MemoryEntry#loadMemory(v9t9.common.events.IEventNotifier, ejs.base.settings.ISettingSection)
 	 */
 	@Override
-	public void loadMemory(IEventNotifier notifier, ISettingSection section) {
+	public void loadMemory(IEventNotifier notifier, ISettingSection section) throws IOException {
 		super.loadMemory(notifier, section);
 		
 		doLoadBankEntries(notifier, section.getSection("Banks"));
