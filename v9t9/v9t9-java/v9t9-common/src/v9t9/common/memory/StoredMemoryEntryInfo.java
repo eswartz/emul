@@ -94,7 +94,8 @@ public class StoredMemoryEntryInfo {
     		
     		filesize = locator.getContentLength(uri);
     		if (info.getSize() > 0) {
-    			if (filesize < info.getSize()) {
+    			// 6k for 2k ROM bank and rounding of partial GROM rips
+    			if (filesize < info.getSize() - 0x1800) {
     				throw new IOException("file '" + filename + "'found for '" + name + "' is not the expected size (" + info.getSize() +" bytes); found " + filesize + " bytes at " + uri);
     			}
     		} else {
