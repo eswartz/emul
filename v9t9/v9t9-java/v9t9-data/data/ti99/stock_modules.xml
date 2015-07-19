@@ -35,9 +35,14 @@
       <gromModuleEntry fileMd5="BACC723478F974B9F20CCC60C449C095" fileName="addsub2g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" md5="1342641ECF41BC89FB8D6927F5AEFAEA" name="Addition and Subtraction #3">
+  <module autoStart="true" md5="0D09AE3FDE039BE91AF47E55F8C457E3" name="Addition and Subtraction #3">
     <memoryEntries>
-      <gromModuleEntry fileMd5="151F964D2FFB192E2BBABADEF02DEA08" fileName="addsub3g.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="4426B0BCD81A0DACAC86E439DAC3442E" fileName="addsub3g.bin" size="0x7800"/>
+    </memoryEntries>
+  </module>
+  <module md5="1342641ECF41BC89FB8D6927F5AEFAEA" name="Addition and Subtraction #3 (alt)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="151F964D2FFB192E2BBABADEF02DEA08" fileName="addsub3g_b.bin" size="0x7800"/>
     </memoryEntries>
   </module>
   <module autoStart="true" md5="CC10CF2CAECC0E25422EC600F62F4D7E" name="Meteor Belt">
@@ -693,4 +698,10 @@
       file2Md5="804DCE32581ED0F35B1C18518F4561C0" fileName2="mtennisd.bin"/>
     </memoryEntries>
   </module>
+  <module md5="1457979A534B8906409B2927536C8B44" name="Super Duper">
+    <memoryEntries>
+      <romModuleEntry fileMd5="EC482805E3C0D5EE34569497BE6DDF54" fileName="suprdupc.bin"/>
+    </memoryEntries>
+  </module>
+  
 </modules>
