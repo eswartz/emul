@@ -64,12 +64,10 @@ public class ManualTestTI99ModuleDetection {
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/mess"));
 		detector.scan(new File("/usr/local/src/v9t9-data/modules/tosec"));
 		detector.scan(new File("/usr/local/src/v9t9-data/modules"));
-		detector.scan(new File("/usr/local/src/v9t9-data/modules/rpk"));
-		detector.scan(new File("/usr/local/src/v9t9-data/modules/rpk.old"));
 		
-		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/zip"));
-		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk"));
-		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/zip"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk"));
+		//detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted"));
 		
 		validateStockModules(detector);
 	}
@@ -83,9 +81,9 @@ public class ManualTestTI99ModuleDetection {
 		
 		IModuleDetector detector = machine.createModuleDetector();
 		
-		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/zip"));
-		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk"));
-		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/zip"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk"));
+		//detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted"));
 		
 		validateStockModules(detector);
 	}
@@ -168,23 +166,23 @@ public class ManualTestTI99ModuleDetection {
 	}
 	@Test
 	public void testToWhtechZipModules() throws Exception {
-		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/zip",
+		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/zip",
 				"(?i).*\\.zip");
 	}
 	@Test
 	public void testToWhtechRpkModules() throws Exception {
-		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk",
+		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk",
 				"(?i).*\\.rpk");
 	}
 	@Test
 	public void testToWhtechRpkConvertedModules() throws Exception {
-		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted",
+		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com.ed/emulators/cartridges/rpk/converted",
 				"(?i).*\\.rpk");
 	}
 	
 	protected List<IModule> testDirectory(String path, final String pattern, final String... ignore) {
 		File dir = new File(path);
-		assertTrue(dir.exists());
+		assertTrue(path, dir.exists());
 		
 		Set<File> allFiles = getAllFiles(pattern, dir, ignore); 
 		
@@ -502,7 +500,7 @@ public class ManualTestTI99ModuleDetection {
 
 		//[[[
 		
-		mods = testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk",
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk",
 					"(?i).*\\.rpk");
 		
 		// These are named according to whim and are mostly wrong,
@@ -514,6 +512,21 @@ public class ManualTestTI99ModuleDetection {
 		}
 		
 		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
+		
+
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted",
+					"(?i).*\\.rpk");
+		
+		// These are named according to whim and are mostly wrong,
+		// so use well-known names for this test
+		for (IModule mod : mods) {
+			IModule ex = md5Map.get(mod.getMD5());
+			if (ex != null)
+				mod.setName(ex.getName());
+		}
+		
+		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
+		
 		
 		//]]]
 

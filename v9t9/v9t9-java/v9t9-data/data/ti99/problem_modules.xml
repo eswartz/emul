@@ -69,13 +69,13 @@
       <gromModuleEntry fileMd5="74DE12232ED0016B07AA4280CBE962B3" fileName="phm3145g.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" md5="8C3CD895D285D846EA4CFBF047E32C6F" name="Space Bandits">
+  <module autoStart="true" md5="8C3CD895D285D846EA4CFBF047E32C6F" name="Space Bandits (MBX)">
     <memoryEntries>
       <romModuleEntry fileMd5="A26296E493B563D0AEBC6B11A6F79BCD" fileName="phm3149c.bin"/>
       <gromModuleEntry fileMd5="F93D5FD265F6FE000037AAA810756DE2" fileName="phm3149g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module autoStart="true" md5="8C35C41EBE662B091CBB7DD2CDF5DB02" name="Sewermania">
+  <module autoStart="true" md5="8C35C41EBE662B091CBB7DD2CDF5DB02" name="Sewermania (MBX)">
     <memoryEntries>
       <romModuleEntry fileMd5="D1D13C100A5C0B0D25010D47EF470413" fileName="phm3150c.bin"/>
       <gromModuleEntry fileMd5="4D75A753DA97BE015617012448DB3652" fileName="phm3150g.bin" size="0x3800"/>

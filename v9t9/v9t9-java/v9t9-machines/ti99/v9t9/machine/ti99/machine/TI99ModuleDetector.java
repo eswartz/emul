@@ -929,7 +929,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 	private IModule convertSoftList(URI zipUri, InputStream is) {
 		IModule module;
 		
-		StreamXMLStorage storage = readXMLAndClose(is, "software", "softlist.xml");
+		StreamXMLStorage storage = readXMLAndClose(is, "software", zipUri + "/softlist.xml");
 		
 		String moduleName = storage.getDocumentElement().getAttribute("name");
 		module = new Module(null, moduleName);
@@ -1017,8 +1017,8 @@ public class TI99ModuleDetector implements IModuleDetector {
 			InputStream mis) {
 		IModule module;
 
-		StreamXMLStorage layout = readXMLAndClose(lis, "romset", "layout.xml");
-		StreamXMLStorage metainf = mis != null ? readXMLAndClose(mis, "meta-inf", "meta-inf.xml") : null;
+		StreamXMLStorage layout = readXMLAndClose(lis, "romset", zipUri + "/layout.xml");
+		StreamXMLStorage metainf = mis != null ? readXMLAndClose(mis, "meta-inf", zipUri + "/meta-inf.xml") : null;
 		
 		if (layout == null) {
 			log.error("problem parsing layout.xml or meta-inf.xml from " + zipUri);
