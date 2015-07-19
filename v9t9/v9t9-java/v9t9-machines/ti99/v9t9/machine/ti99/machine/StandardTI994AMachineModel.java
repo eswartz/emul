@@ -101,14 +101,14 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.setCru(new InternalCru9901(machine));
 			
-			EmuDiskDsr emuDsr = new EmuDiskDsr(machine, 0x1000);
-			machine.getDsrManager().registerDsr(emuDsr);
-			
 			ISelectableDsrHandler diskDsr = new Selectable9900Dsr(machine, 
 					machine.getSettings().get(RealDiskSettings.diskController),
 					FDCControllers.WDC1771, new TIDiskImageDsr(machine, (short) 0x1100),
 					FDCControllers.WDC1791, new CorcompDiskImageDsr(machine, (short) 0x1100));
 			machine.getDsrManager().registerDsr(diskDsr);
+			
+			EmuDiskDsr emuDsr = new EmuDiskDsr(machine, 0x1000);
+			machine.getDsrManager().registerDsr(emuDsr);
 			
 			TIRS232Dsr rs232Dsr = new TIRS232Dsr(machine, RS232Regs.CRU_BASE);
 			TIRS232PIODsr rs232PioDsr = new TIRS232PIODsr(machine, RS232Regs.CRU_BASE);

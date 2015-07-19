@@ -60,7 +60,7 @@ public class DeviceSettingsDialog extends Composite implements IDeviceSelectorDi
 				behavior.centering = Centering.INSIDE;
 				behavior.centerOverControl = null;
 				behavior.dismissOnClickOutside = true;
-				behavior.defaultBounds = new Rectangle(0, 0, 600, 300);
+				behavior.defaultBounds = new Rectangle(0, 0, 700, 300);
 			}
 			public Control createContents(Shell shell) {
 				return new DeviceSettingsDialog(shell, machine, title, settingGroups);

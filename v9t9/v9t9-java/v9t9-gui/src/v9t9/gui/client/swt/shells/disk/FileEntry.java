@@ -56,7 +56,7 @@ public abstract class FileEntry extends BaseSettingEntry {
 
 	protected final void validatePath() {
 		String path = setting.getString();
-		File file = path != null ? new File(path) : null;
+		File file = path != null && !path.isEmpty() ? new File(path) : null;
 		String err = file != null ? validateFile(file) : "Provide a file path";
 		
 		if (err == null) {
@@ -86,7 +86,7 @@ public abstract class FileEntry extends BaseSettingEntry {
 
 	@Override
 	protected void createControls(final Composite parent) {
-		GridLayoutFactory.fillDefaults().numColumns(7).applyTo(this);
+		GridLayoutFactory.fillDefaults().spacing(2,0).numColumns(8).applyTo(this);
 		int emSize = FontUtils.measureText(getDisplay(), getFont(), "M").x;
 		
 		addDisposeListener(new DisposeListener() {
@@ -103,8 +103,10 @@ public abstract class FileEntry extends BaseSettingEntry {
 		});
 		
 		Label label = new Label(parent, SWT.NONE);
-		label.setText(setting.getLabel() + ": ");
-		GridDataFactory.fillDefaults().hint(emSize*8, -1).align(SWT.LEFT, SWT.CENTER).applyTo(label);
+		// assume all the labels are the same size
+		String text = setting.getLabel() + ": ";
+		label.setText(text);
+		GridDataFactory.fillDefaults().hint(text.length()*emSize*2/3, -1).align(SWT.LEFT, SWT.CENTER).applyTo(label);
 		
 		label.setToolTipText(setting.getDescription());
 
@@ -159,6 +161,21 @@ public abstract class FileEntry extends BaseSettingEntry {
 			}
 		});			
 		
+
+		final Button eject = new Button(parent, SWT.PUSH);
+		eject.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/icon_clear.gif"));
+		eject.setToolTipText("Clear the entry");
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(eject);
+
+		eject.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				combo.setText("");
+				updateEntry();
+			}
+		});
+		
+		
 		getDisplay().asyncExec(new Runnable() {
 			public void run() {
 				updateEntry();
@@ -170,8 +187,14 @@ public abstract class FileEntry extends BaseSettingEntry {
 	protected abstract void handleBrowse(IProperty setting);
 
 	protected void updateEntry() {
-		File dir = new File(combo.getText());
-		String path = dir.getAbsolutePath();
+		String text = combo.getText();
+		String path;
+		if (!text.isEmpty()) {
+			File dir = new File(combo.getText());
+			path = dir.getAbsolutePath();
+		} else {
+			path = "";
+		}
 		switchPath(combo, path);
 		updateSetting();
 	}
