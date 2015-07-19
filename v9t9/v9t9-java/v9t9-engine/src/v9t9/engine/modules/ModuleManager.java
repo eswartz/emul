@@ -398,6 +398,7 @@ public class ModuleManager implements IModuleManager {
 		if (stockModuleList != null)
 			return;
 		
+		List<IModule> stocks = new ArrayList<IModule>();
 		for (String stockDB : stockModuleDatabases) {
 			URL url;
 			try {
@@ -410,11 +411,12 @@ public class ModuleManager implements IModuleManager {
 				continue;
 			}
 			try {
-				stockModuleList = readModules(url.toURI());
+				stocks.addAll(readModules(url.toURI()));
 			} catch (Exception e) {
 				throw new NotifyException(this, "failed to load stock_modules.xml", e);
 			}
 		}
+		stockModuleList = stocks; 
 	}
 
 	/* (non-Javadoc)

@@ -149,7 +149,7 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 	@Override
 	public IModuleManager createModuleManager(IMachine machine) {
 		return new ModuleManager(machine,
-				new String[] { "stock_modules.xml" });
+				new String[] { "stock_modules.xml", "problem_modules.xml" });
 	}
 	
 	/* (non-Javadoc)
