@@ -11,6 +11,7 @@
 package v9t9.gui.client.swt.shells.modules;
 
 import java.io.ByteArrayOutputStream;
+import java.net.URI;
 import java.util.Collections;
 
 import org.eclipse.jface.dialogs.Dialog;
@@ -25,6 +26,8 @@ import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
@@ -43,7 +46,6 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.ModuleDatabase;
 import v9t9.common.modules.ModuleInfo;
-import v9t9.gui.EmulatorGuiData;
 import ejs.base.settings.DialogSettingsWrapper;
 import ejs.base.utils.TextUtils;
 
@@ -54,6 +56,7 @@ final class ModuleInfoDialog extends Dialog {
 	private final ModuleSelector moduleSelector;
 	private final IModule module;
 	private IMachine machine;
+	private ModuleImages images;
 
 	ModuleInfoDialog(IMachine machine, ModuleSelector moduleSelector, Shell parentShell, IModule module) {
 		super(parentShell);
@@ -119,6 +122,15 @@ final class ModuleInfoDialog extends Dialog {
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
 		newShell.setText("Module Details");
+		this.images = new ModuleImages(newShell.getDisplay(), machine);
+		
+		newShell.addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				images.dispose();
+			}
+		});
 	}
 
 	protected IDialogSettings getDialogBoundsSettings() {
@@ -137,7 +149,7 @@ final class ModuleInfoDialog extends Dialog {
 			sz.x = 600;
 		return sz;
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
 	 */
@@ -148,17 +160,24 @@ final class ModuleInfoDialog extends Dialog {
 		///////////
 		
 		CLabel title = new CLabel(composite, SWT.NONE);
-		title.setText(module.getName());
+		title.setText(module.getName().replace("&", "&&"));
 		title.setFont(JFaceResources.getHeaderFont());
 
 		ModuleInfo info = module.getInfo();
+		String imagePath = null;
+		Image image = null;
 		if (moduleSelector != null) {
-			String imagePath = info != null ? info.getImagePath() : null;
-			title.setImage(this.moduleSelector.getOrLoadModuleImage(null, module, imagePath));
-		} else {
-			Image stock = EmulatorGuiData.loadImage(parent.getDisplay(), "icons/stock_module.png");
-			title.setImage(stock);
+			imagePath = info != null ? info.getImagePath() : null;
+			if (imagePath != null) {
+				URI imageURI = images.getImageURI(imagePath);
+				if (imageURI != null)
+					image = images.loadImage(imageURI);
+			}
 		}
+		if (image == null) {
+			image = images.loadImage("stock_module.png");
+		}
+		title.setImage(image);
 		
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(title);
 		

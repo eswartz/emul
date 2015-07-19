@@ -21,7 +21,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -32,7 +31,6 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -122,8 +120,7 @@ import ejs.base.settings.ISettingSection;
  *
  */
 public class ModuleSelector extends Composite {
-	private static final Logger logger = Logger.getLogger(ModuleSelector.class);
-	
+
 	public static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 	static String lastFilter;
 
@@ -174,15 +171,11 @@ public class ModuleSelector extends Composite {
 	private Map<URI, Collection<IModule>> moduleMap;
 	private LazyImageLoader lazyImageLoader;
 	private Image stockModuleImage;
-	private URI builtinImagesURI;
-	private ILazyImageAdjuster moduleImageResizer;
 
 //	private Button addButton;
 
 	private Image modulesListImage;
 	private Image noModuleImage;
-
-	private Map<String, Image> stockImages = new HashMap<String, Image>();
 
 	protected IProperty modDbList;
 
@@ -191,6 +184,9 @@ public class ModuleSelector extends Composite {
 	private ModuleNameEditingSupport editingSupport;
 
 	private ArrayList<Object> flatModuleList;
+
+	private ModuleImages images;
+	private ILazyImageAdjuster moduleImageResizer;
 
 	static class FilteredSearchFilter extends ViewerFilter {
 
@@ -577,7 +573,6 @@ public class ModuleSelector extends Composite {
 	protected TreeViewer createTable() {
 		final TreeViewer viewer = new TreeViewer(this, SWT.READ_ONLY | SWT.BORDER | SWT.FULL_SELECTION);
 		
-
 		moduleImageResizer = new ILazyImageAdjuster() {
 			
 			@Override
@@ -607,17 +602,10 @@ public class ModuleSelector extends Composite {
 		};
 		
 		
-		try {
-			builtinImagesURI = machine.getRomPathFileLocator().resolveInsideURI(
-					machine.getModel().getDataURL().toURI(), 
-					"images/");
-			logger.info("builtinImagesURI = " + builtinImagesURI);
-		} catch (URISyntaxException e3) {
-			logger.error("Failed to load stock module image", e3);
-		} 
-		
-		stockModuleImage = loadStockImage("stock_module_missing.png");
-		
+		images = new ModuleImages(getDisplay(), machine);
+
+		stockModuleImage = images.loadImage("stock_module_missing.png");
+
 		lazyImageLoader = new LazyImageLoader(viewer, executor, stockModuleImage);
 		
 		modulesListImage = EmulatorGuiData.loadImage(getDisplay(), "icons/module_list.png");
@@ -767,9 +755,6 @@ public class ModuleSelector extends Composite {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
-				for (Image image : stockImages.values())
-					image.dispose();
-				stockImages.clear();
 				if (modulesListImage != null)
 					modulesListImage.dispose();
 				if (noModuleImage != null)
@@ -777,6 +762,8 @@ public class ModuleSelector extends Composite {
 
 				if (tableFont != null)
 					tableFont.dispose();
+				
+				images.dispose();
 				/*for (Image image : loadedImages.values()) {
 					image.dispose();
 				}*/
@@ -794,6 +781,28 @@ public class ModuleSelector extends Composite {
 		
 
 		return viewer;
+	}
+
+
+	Image getOrLoadModuleImage(final Object element, final IModule module, String imagePath) {
+		URI imageURI = null;
+		
+		// see if user has an entry
+		
+		if (imagePath != null) {
+			imageURI = images.getImageURI(imagePath);
+		}
+		
+		if (imageURI == null) {
+			return images.loadImage(
+					module != null ? 
+							(isModuleLoadable(module) ? "stock_module.png" : "stock_module_missing.png")
+							: "stock_no_module.png");
+		}
+
+		Image image = lazyImageLoader.findOrLoadImage(element, imageURI, moduleImageResizer);
+		//System.out.println(System.currentTimeMillis() + "... " + module + ": " + image);
+		return image;
 	}
 
 
@@ -1273,69 +1282,6 @@ public class ModuleSelector extends Composite {
 		};
 	}
 	
-	Image getOrLoadModuleImage(final Object element, final IModule module, String imagePath) {
-		URI imageURI = null;
-		
-		// see if user has an entry
-		
-		if (imagePath != null) {
-			imageURI = getImageURI(imagePath);
-		}
-		
-		if (imageURI == null) {
-			return loadStockImage(
-					module != null ? 
-							(isModuleLoadable(module) ? "stock_module.png" : "stock_module_missing.png")
-							: "stock_no_module.png");
-		}
-
-		Image image = lazyImageLoader.findOrLoadImage(element, imageURI, moduleImageResizer);
-		//System.out.println(System.currentTimeMillis() + "... " + module + ": " + image);
-		return image;
-	}
-
-
-
-	/**
-	 * @param imagePath
-	 * @param imagesURI
-	 * @return
-	 */
-	protected URI getImageURI(String imagePath) {
-		URI imagesURI = builtinImagesURI;
-
-		URI imageURI;
-		imageURI = machine.getRomPathFileLocator().findFile(imagePath);
-
-		if (imageURI == null) {
-			// look inside distribution
-			
-				imageURI = machine.getRomPathFileLocator().resolveInsideURI(
-						imagesURI,
-						imagePath);
-				if (!machine.getRomPathFileLocator().exists(imageURI))
-					imageURI = null;
-			
-		}
-		return imageURI;
-	}
-
-
-	/**
-	 * @param string
-	 * @return
-	 */
-	private Image loadStockImage(String string) {
-		Image stock = stockImages .get(string);
-		if (stock == null) {
-			stock = EmulatorGuiData.loadImage(getDisplay(), "icons/" + string);
-			stockImages.put(string, stock);
-		}
-		return stock;
-	}
-
-
-
 	/**
 	 * @param module
 	 * @return
@@ -1418,7 +1364,7 @@ public class ModuleSelector extends Composite {
 					module.setInfo(info);
 				}
 				info.setImagePath(targFile.substring(targFile.lastIndexOf(File.separatorChar) + 1));
-				lazyImageLoader.resetImage(getImageURI(info.getImagePath()));
+				lazyImageLoader.resetImage(images.getImageURI(info.getImagePath()));
 				viewer.update(module, null);
 
 				machine.getModuleManager().getModuleInfoDatabase().register(module);

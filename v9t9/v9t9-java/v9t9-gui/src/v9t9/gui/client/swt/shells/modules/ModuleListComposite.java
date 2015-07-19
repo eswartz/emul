@@ -276,7 +276,7 @@ public class ModuleListComposite extends Composite {
 			if (element instanceof IModule) {
 				IModule stock = machine.getModuleManager().findStockModuleByMd5(((IModule) element).getMD5());
 				if (stock != null && false == stock.getName().equals(((IModule) element).getName())) 
-					return JFaceResources.getFontRegistry().getItalic(JFaceResources.DIALOG_FONT);
+					return JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
 			}
 			return null;
 		}
@@ -597,13 +597,15 @@ public class ModuleListComposite extends Composite {
 					if (stock != null && false == module.getName().equals(stock.getName())) {
 						final MenuItem nitem;
 						nitem = new MenuItem(menu, SWT.NONE);
-						nitem.setText("Reset name");
+						nitem.setText("Reset from stock module");
 						
 						nitem.addSelectionListener(new SelectionAdapter() {
 							@Override
 							public void widgetSelected(SelectionEvent e) {
 								menu.dispose();
 								module.setName(stock.getName());
+								module.setAutoStart(stock.isAutoStart());
+								module.getKeywords().addAll(stock.getKeywords());
 								viewer.refresh(module);
 							}
 						});
