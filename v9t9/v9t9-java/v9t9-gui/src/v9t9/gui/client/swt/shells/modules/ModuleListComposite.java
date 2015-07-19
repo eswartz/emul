@@ -405,7 +405,6 @@ public class ModuleListComposite extends Composite {
 				}
 			}
 		});
-		
 
 		return comp;
 	}
@@ -438,6 +437,8 @@ public class ModuleListComposite extends Composite {
 			public void run() {
 				if (!nameColumn.getColumn().isDisposed())
 					nameColumn.getColumn().setWidth(viewer.getControl().getSize().x);
+
+				filterText.setFocus();
 			}
 		});
 
@@ -839,6 +840,8 @@ public class ModuleListComposite extends Composite {
 		nameColumn.getColumn().pack();
 		
 		reset();
+		
+		filterText.setFocus();
 	}
 	
 	public IStatus getStatus() {
