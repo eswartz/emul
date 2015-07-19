@@ -55,6 +55,7 @@ public class DetectModules {
 	                    +"-n:  do not update modules from stock module database\n"
 						+"-r:  read headers from ROM instead of replying on .rpk metadata\n"
 						+"-s:  do not include stock modules in the output\n"
+						+"-f:  remove filenames from file output\n"
 						+"-v:  print verbose description of module\n"
 	                    + "\n");
 	}
@@ -65,20 +66,21 @@ public class DetectModules {
 
         Getopt getopt;
         
-        getopt = new Getopt(PROGNAME, args, "?nro:vs");
+        getopt = new Getopt(PROGNAME, args, "?nro:vsf");
 		int opt;
 		
 		boolean noStockLookup = false;
 		boolean readHeaders = false;
 		boolean verbose = false;
 		boolean noStockOutput = false;
+		boolean noFilenames = false;
 		String outfile = null;
 		
 		while ((opt = getopt.getopt()) != -1) {
 			switch (opt) {
             case '?':
                 help();
-                break;
+                return;
             case 'n': 
             	noStockLookup = true;
             	break;
@@ -94,13 +96,15 @@ public class DetectModules {
             case 's': 
             	noStockOutput = true;
             	break;
+            case 'f': 
+            	noFilenames = true;
+            	break;
             default:
                 throw new AssertionError();
-    
             }
         }
 		
-		DetectModules modules = new DetectModules(noStockLookup, readHeaders, verbose, noStockOutput);
+		DetectModules modules = new DetectModules(noStockLookup, readHeaders, verbose, noStockOutput, noFilenames);
 		int i = getopt.getOptind();
 		boolean any = false;
         while (i < args.length) {
@@ -114,7 +118,6 @@ public class DetectModules {
         	return;
         }
 
-        
         if (outfile != null)
         	modules.write(outfile);
         else
@@ -126,10 +129,12 @@ public class DetectModules {
 	private IModuleDetector detector;
 	private boolean verbose;
 	private boolean noStockOutput;
+	private boolean noFilenames;
 
-	public DetectModules(boolean noStock, boolean readHeader, boolean verbose, boolean noStockOutput) {
+	public DetectModules(boolean noStock, boolean readHeader, boolean verbose, boolean noStockOutput, boolean noFilenames) {
         this.verbose = verbose;
 		this.noStockOutput = noStockOutput;
+		this.noFilenames = noFilenames;
 		machine = ToolUtils.createMachine();
 		
 		URI databaseURI = URI.create("test.xml");
@@ -152,7 +157,7 @@ public class DetectModules {
 	public void write(String path) {
 		System.out.println("Writing to " + path + "...");
 
-		List<IModule> simpleModules = detector.simplifyModules();
+		List<IModule> simpleModules = detector.simplifyModules(noFilenames);
 		
 		if (noStockOutput) {
 			removeStocks(simpleModules);

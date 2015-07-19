@@ -1214,7 +1214,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 	 * @see v9t9.common.modules.IModuleDetector#simplifyModules()
 	 */
 	@Override
-	public List<IModule> simplifyModules() {
+	public List<IModule> simplifyModules(boolean removeFilenames) {
 		List<IModule> simpleModules = new ArrayList<IModule>();
 		
 		for (Map.Entry<String, List<IModule>> ent : gatherDuplicatesByMD5().entrySet()) {
@@ -1289,7 +1289,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 				simple.setName(name);
 			}
 			
-			simple.simplifyContent(fileLocator);
+			simple.simplifyContent(fileLocator, removeFilenames);
 			
 			simpleModules.add(simple);
 		}

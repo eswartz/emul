@@ -87,8 +87,9 @@ public interface IModule {
 	 * Remove filenames from the module (except database URI),
 	 * ensuring that file MD5s are in place.
 	 * @param fileLocator 
+	 * @param removeFilenames TODO
 	 */
-	void simplifyContent(IPathFileLocator fileLocator);
+	void simplifyContent(IPathFileLocator fileLocator, boolean removeFilenames);
 
 	/**
 	 * Make a deep copy of this module.

@@ -49,8 +49,9 @@ public interface IModuleDetector {
 	/**
 	 * From all the detected modules, return a list of the
 	 * unique modules, and remove any filename or URI information.
+	 * @param removeFilenames TODO
 	 * @return
 	 */
-	List<IModule> simplifyModules();
+	List<IModule> simplifyModules(boolean removeFilenames);
 
 }

@@ -342,12 +342,14 @@ public class Module implements IModule {
 	 * @see v9t9.common.modules.IModule#removeFilenames()
 	 */
 	@Override
-	public void simplifyContent(IPathFileLocator locator) {
+	public void simplifyContent(IPathFileLocator locator, boolean removeFilenames) {
 		for (MemoryEntryInfo info : getMemoryEntryInfos()) {
 			if (!info.isStored()) {
-				ensureFileMD5(locator, info, MemoryEntryInfo.FILENAME, 
+				ensureFileMD5(locator, info, removeFilenames, 
+						MemoryEntryInfo.FILENAME, 
 						MemoryEntryInfo.FILE_MD5, MemoryEntryInfo.FILE_MD5_ALGORITHM);
-				ensureFileMD5(locator, info, MemoryEntryInfo.FILENAME2, 
+				ensureFileMD5(locator, info, removeFilenames,
+						MemoryEntryInfo.FILENAME2, 
 						MemoryEntryInfo.FILE2_MD5, MemoryEntryInfo.FILE2_MD5_ALGORITHM);
 			}
 		}
@@ -356,12 +358,13 @@ public class Module implements IModule {
 
 	/**
 	 * @param locator
+	 * @param removeFilenames 
 	 * @param info2
 	 * @param filename2
 	 * @param file2Md5
 	 */
 	private void ensureFileMD5(IPathFileLocator locator, MemoryEntryInfo info,
-			String filenameProp, String fileMd5Prop, String md5AlgProp) {
+			boolean removeFilenames, String filenameProp, String fileMd5Prop, String md5AlgProp) {
 		Object filename = info.getProperties().get(filenameProp);
 		if (filename != null) {
 			if (info.getProperties().get(fileMd5Prop) == null) {
@@ -395,8 +398,10 @@ public class Module implements IModule {
 					log.error(getName() + ": no MD5 for " + info.getFilename(), e);
 				}
 			}
-			if (info.getProperties().get(fileMd5Prop) != null)
-				info.getProperties().remove(filenameProp);
+			if (removeFilenames) {
+				if (info.getProperties().get(fileMd5Prop) != null)
+					info.getProperties().remove(filenameProp);
+			}
 		}
 
 	}

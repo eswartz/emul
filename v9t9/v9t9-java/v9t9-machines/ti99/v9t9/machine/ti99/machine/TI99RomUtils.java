@@ -169,8 +169,11 @@ public class TI99RomUtils {
 		int len = content[addr++] & 0xff;
 		StringBuilder sb = new StringBuilder();
 		while (len != 0 && addr >= 0 && addr < content.length) {
-			sb.append((char) content[addr++]);
+			char c = (char) content[addr++];
 			len--;
+			if (c == 0)
+				continue;
+			sb.append(c);
 		}
 		return sb.toString();
 	}
