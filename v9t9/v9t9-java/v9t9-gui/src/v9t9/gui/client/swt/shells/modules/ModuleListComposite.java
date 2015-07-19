@@ -171,7 +171,7 @@ public class ModuleListComposite extends Composite {
 		super(parent, SWT.NONE);
 		this.statusListener = statusListener;
 		
-		GridLayoutFactory.fillDefaults().applyTo(this);
+		GridLayoutFactory.fillDefaults().margins(3, 3).applyTo(this);
 		
 		this.machine = machine;
 		
@@ -181,13 +181,11 @@ public class ModuleListComposite extends Composite {
 		
 		/*spacer*/ new Label(composite, SWT.NONE);
 
-		Composite threeColumns = new Composite(composite, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(3).applyTo(threeColumns);
-		GridDataFactory.fillDefaults().grab(true, true).hint(-1, 500).applyTo(threeColumns);
+		Composite dbRow = createDatabaseRow(composite);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(dbRow);
 		
-		createDatabaseRow(threeColumns);
-		
-		createTableViewer(threeColumns);
+		Composite tableComp = createTableViewer(composite);
+		GridDataFactory.fillDefaults().grab(true, true).hint(-1, 500).applyTo(tableComp);
 
 		boolean wasShowAll = settings.getBoolean(SHOW_ALL);
 		showAllButton.setSelection(wasShowAll);
@@ -235,9 +233,9 @@ public class ModuleListComposite extends Composite {
 			sel = defaultFile;
 		}
 			
-		dbSelector.setSelection(new StructuredSelection(sel));
-		
 		refresh();
+		
+		dbSelector.setSelection(new StructuredSelection(sel));
 		
 		composite.addDisposeListener(new DisposeListener() {
 			
@@ -459,8 +457,11 @@ public class ModuleListComposite extends Composite {
 	/**
 	 * @param composite
 	 */
-	private void createTableViewer(Composite composite) {
+	private Composite createTableViewer(Composite parent) {
+		Composite composite = new Composite(parent, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(3).applyTo(composite);
 
+		GridDataFactory.fillDefaults().grab(true, true).hint(-1, 500).applyTo(composite);
 		Label label;
 		
 		/*spacer*/ label = new Label(composite, SWT.NONE);
@@ -471,7 +472,7 @@ public class ModuleListComposite extends Composite {
 		GridDataFactory.fillDefaults().grab(true, false).span(3, 1).applyTo(label);
 		
 		Composite listArea = new Composite(composite, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(listArea);
+		GridLayoutFactory.fillDefaults().spacing(0, 0).numColumns(2).applyTo(listArea);
 		GridDataFactory.fillDefaults().grab(true, true).span(3, 1).indent(12, 0).applyTo(listArea);
 
 		Composite c = createSearchFilter(listArea);
@@ -632,7 +633,7 @@ public class ModuleListComposite extends Composite {
 		
 
 		showAllButton = new Button(listArea, SWT.CHECK);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(showAllButton);
+		GridDataFactory.fillDefaults().indent(0, 6).grab(true, false).applyTo(showAllButton);
 		
 		showAllButton.setText("Show all modules");
 		showAllButton.setToolTipText("When enabled, show all modules, even those recorded in other lists");
@@ -646,7 +647,7 @@ public class ModuleListComposite extends Composite {
 		});
 		
 		initFilter(null);
-
+		return composite;
 	}
 
 	private SelectionListener createColumnSelectionListener(final TableColumn column,
@@ -667,20 +668,19 @@ public class ModuleListComposite extends Composite {
 	/**
 	 * @param composite
 	 */
-	protected void createDatabaseRow(Composite dbRow) {
+	protected Composite createDatabaseRow(Composite parent) {
+		Composite dbRow = new Composite(parent, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(4).spacing(2, 0).applyTo(dbRow);
+		
 		Label label;
 		
 		label = new Label(dbRow, SWT.WRAP);
-		label.setText("List file:");
+		label.setText("List file: ");
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(label);
 		
 		dbSelector = new ComboViewer(dbRow, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(dbSelector.getControl());
 		dbSelector.getControl().setToolTipText("Specify a file to record the list of discovered modules.");
-		
-		final Button browseButton = new Button(dbRow, SWT.PUSH);
-		browseButton.setText("Browse...");
-		GridDataFactory.fillDefaults().hint(128, -1).applyTo(browseButton);
 		
 		dbSelector.getControl().addFocusListener(new FocusAdapter() {
 			@Override
@@ -699,12 +699,22 @@ public class ModuleListComposite extends Composite {
 					return;
 				}
 				Object o = ((IStructuredSelection) event.getSelection()).getFirstElement();
-				setDbFile((File) o);
+				
+				File dbFile = (File) o;
+				if (dbFile == ModuleListComposite.this.dbFile)
+					return;
+				
+				setDbFile(dbFile);
 				
 				validate();
 				reset();
 			}
 		});
+
+		final Button browseButton = new Button(dbRow, SWT.PUSH);
+		browseButton.setText("Browse...");
+		browseButton.setToolTipText("Locate and add a new modules.xml file.");
+		GridDataFactory.fillDefaults().hint(128, -1).applyTo(browseButton);
 		
 		browseButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -725,6 +735,32 @@ public class ModuleListComposite extends Composite {
 			}
 		});
 		
+
+		final Button removeButton = new Button(dbRow, SWT.PUSH);
+		removeButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/icon_clear.gif"));
+		removeButton.setToolTipText("Remove the current modules.xml file from V9t9 (does not delete)");
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(removeButton);
+
+		removeButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				selectedModuleMap.remove(dbFile);
+				if (selectedModuleMap.isEmpty()) {
+					setDbFile(null);
+				} else {
+					setDbFile(selectedModuleMap.keySet().iterator().next());
+				}
+				
+				reset();
+				dbSelector.refresh();
+				if (dbFile != null)
+					dbSelector.setSelection(new StructuredSelection(dbFile));
+				
+				validate();
+			}
+		});
+
+		return dbRow;
 	}
 
 	/**
@@ -733,22 +769,27 @@ public class ModuleListComposite extends Composite {
 	private void setDbFile(File dbFile) {
 		this.dbFile = dbFile;
 		
-		List<IModule> selected = selectedModuleMap.get(dbFile);
-		if (selected == null) {
-			if (dbFile.exists() && machine.getModuleManager() != null) {
-				try {
-					selected = machine.getModuleManager().readModules(dbFile.toURI());
-					origModuleMap.put(dbFile, new ArrayList<IModule>(selected));
-				} catch (IOException e) {
-				}
-			}
+		List<IModule> selected;
+		if (dbFile != null) {
+			selected = selectedModuleMap.get(dbFile);
 			if (selected == null) {
-				selected = new ArrayList<IModule>();
+				if (dbFile.exists() && machine.getModuleManager() != null) {
+					try {
+						selected = machine.getModuleManager().readModules(dbFile.toURI());
+						origModuleMap.put(dbFile, new ArrayList<IModule>(selected));
+					} catch (IOException e) {
+					}
+				}
+				if (selected == null) {
+					selected = new ArrayList<IModule>();
+				}
+				selectedModuleMap.put(dbFile, selected);
 			}
-			selectedModuleMap.put(dbFile, selected);
+		} else {
+			selected = new ArrayList<IModule>();
 		}
 		
-		System.out.println(dbFile + " => " + selected);
+		//System.out.println(dbFile + " => " + selected);
 		selectedModules = selected;
 		
 	}
@@ -859,18 +900,26 @@ public class ModuleListComposite extends Composite {
 			// select the modules previously assigned to this database,
 			// sorting them to the top
 			selectedModules.clear();
+			
+			Map<String, IModule> discMap = new HashMap<String, IModule>();
+			for (IModule disc : discoveredModules) {
+				discMap.put(disc.getMD5(), disc);
+			}
+			
 			for (IModule module : orig) {
 				boolean found = false;
-				for (IModule disc : discoveredModules) {
-					if (module.getMD5().equals(disc.getMD5())) {
-						selectedModules.add(disc);
-						disc.removePathsFromFiles(machine.getRomPathFileLocator());
-						found = true;
-						break;
-					}
+				IModule disc = discMap.get(module.getMD5());
+				if (disc != null) {
+					disc.setName(module.getName()); 	// preserve user edits
+					disc.setDatabaseURI(dbFile.toURI());
+					selectedModules.add(disc);
+					disc.removePathsFromFiles(machine.getRomPathFileLocator());
+					found = true;
 				}
 				if (!found) {
+					module = module.copy();
 					module.removePathsFromFiles(machine.getRomPathFileLocator());
+					module.setDatabaseURI(dbFile.toURI());
 					selectedModules.add(module);
 					if (!discoveredModules.contains(module)) 
 						discoveredModules.add(module);
