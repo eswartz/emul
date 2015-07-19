@@ -70,15 +70,6 @@ public class MemoryEntryInfoBuilder {
 		return this;
 	}
 
-	public MemoryEntryInfoBuilder withFileMD5Limit(int md5Limit) {
-		props.put(MemoryEntryInfo.FILE_MD5_LIMIT, md5Limit);
-		return this;
-	}
-	public MemoryEntryInfoBuilder withFileMD5Offset(int offs) {
-		props.put(MemoryEntryInfo.FILE_MD5_OFFSET, offs);
-		return this;
-	}
-	
 	public MemoryEntryInfoBuilder withFile2MD5(String file2MD5) {
 		if (file2MD5 != null && file2MD5.length() > 0) props.put(MemoryEntryInfo.FILE2_MD5, file2MD5);
 		return this;
@@ -87,16 +78,6 @@ public class MemoryEntryInfoBuilder {
 		if (algorithm != null) props.put(MemoryEntryInfo.FILE2_MD5_ALGORITHM, algorithm);
 		return this;
 	}
-
-	public MemoryEntryInfoBuilder withFile2MD5Limit(int md5Limit) {
-		props.put(MemoryEntryInfo.FILE2_MD5_LIMIT, md5Limit);
-		return this;
-	}
-	public MemoryEntryInfoBuilder withFile2MD5Offset(int md5Limit) {
-		props.put(MemoryEntryInfo.FILE2_MD5_OFFSET, md5Limit);
-		return this;
-	}
-	
 
 	public MemoryEntryInfoBuilder withFilenameProperty(SettingSchema schema) {
 		if (schema != null) props.put(MemoryEntryInfo.FILENAME_PROPERTY, schema);

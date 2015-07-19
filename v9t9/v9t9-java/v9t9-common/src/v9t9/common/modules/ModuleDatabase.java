@@ -35,7 +35,12 @@ import ejs.base.utils.XMLUtils;
  *
  */
 public class ModuleDatabase {
+	
+	private static final String VERSION = "2";
+	
 	private static final String ELEMENT_MODULES = "modules";
+	private static final String ATTR_VERSION = "version";
+	
 	private static final String ELEMENT_MODULE = "module";
 	
 	private static final String ATTR_NAME = "name";
@@ -68,25 +73,26 @@ public class ModuleDatabase {
 			} catch (IOException e) {
 			}
 		}
+		
+		boolean isOldStyle = false == VERSION.equals(storage.getDocumentElement().getAttribute(ATTR_VERSION));
+		
 		for (Element moduleElement : XMLUtils.getChildElementsNamed(storage.getDocumentElement(), ELEMENT_MODULE)) {
 			String name = moduleElement.getAttribute(ATTR_NAME);
 			logger.debug("Processing " + name);
 			
 			Module module = new Module(databaseURI, name);
 			
-			
-			// image?
-//			Element[] entries;
-//			entries = XMLUtils.getChildElementsNamed(moduleElement, "image");
-//			for (Element el : entries) {
-//				String image = el.getTextContent().trim();
-//				module.setImagePath(image);
-//			}
-			
 			// memory entries
 			List<MemoryEntryInfo> memoryEntries = memory.getMemoryEntryFactory().loadEntriesFrom(
 					name, moduleElement);
 			module.setMemoryEntryInfos(memoryEntries);
+			
+			if (isOldStyle) {
+				// remove obsolete MD5s
+				for (MemoryEntryInfo info : memoryEntries) {
+					info.updateProperties();
+				}
+			}
 			
 			if (!memoryEntries.isEmpty()) {
 				String moduleMd5 = moduleElement.getAttribute(ATTR_MD5);
@@ -136,6 +142,7 @@ public class ModuleDatabase {
 		}
 
 		Element doc = storage.getDocumentElement();
+		doc.setAttribute(ATTR_VERSION, VERSION);
 		
 		for (IModule module : modules) {
 			if (databaseURI != null && !module.getDatabaseURI().equals(databaseURI))

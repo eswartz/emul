@@ -417,4 +417,41 @@ public class MemoryEntryInfo {
 		}
 	}
 
+	/**
+	 * Update properties from an older version (e.g. the unnamed version "1" 
+	 * which used file MD5s, offsets, and limits, to the 
+	 * current version "2" which uses a single MD5 algorithm).
+	 */
+	public void updateProperties() {
+		boolean isGrom = IMemoryDomain.NAME_GRAPHICS.equals(getDomainName());
+		
+		int offset = getInt(FILE_MD5_OFFSET);
+		properties.remove(FILE_MD5_OFFSET);
+		int limit = getInt(FILE_MD5_LIMIT);
+		properties.remove(FILE_MD5_LIMIT);
+		if (properties.containsKey(FILE_MD5)) {
+			String algorithm = isGrom ? MD5FilterAlgorithms.ALGORITHM_FULL : null;
+			if (offset < limit) {
+				algorithm = new MD5FilterAlgorithms.FileSegmentFilter(offset, limit).getId();
+			}
+			if (algorithm != null) {
+				properties.put(FILE_MD5_ALGORITHM, algorithm);
+			}
+		}
+
+		offset = getInt(FILE2_MD5_OFFSET);
+		properties.remove(FILE2_MD5_OFFSET);
+		limit = getInt(FILE2_MD5_LIMIT);
+		properties.remove(FILE2_MD5_LIMIT);
+		if (properties.containsKey(FILE2_MD5)) {
+			String algorithm = isGrom ? MD5FilterAlgorithms.ALGORITHM_FULL : null;
+			if (offset < limit) {
+				algorithm = new MD5FilterAlgorithms.FileSegmentFilter(offset, limit).getId();
+			}
+			if (algorithm != null) {
+				properties.put(FILE2_MD5_ALGORITHM, algorithm);
+			}
+		}
+	}
+
 }
