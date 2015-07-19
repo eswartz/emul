@@ -22,6 +22,7 @@ import org.eclipse.jface.viewers.TreeNode;
 import org.eclipse.jface.viewers.TreeNodeContentProvider;
 
 import v9t9.common.files.IPathFileLocator;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.memory.StoredMemoryEntryInfo;
@@ -53,6 +54,9 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 	public Object createModuleContent(IModule module) {
 		List<TreeNode> kids = new ArrayList<TreeNode>();
 
+		TreeNode md5Sum = new TreeNode(new Pair<String, String>(
+				"Module MD5 Sum", module.getMD5()));
+		kids.add(md5Sum);
 		
 		TreeNode moduleDatabase = new TreeNode(new Pair<String, String>(
 				"Module Defined By", module.getDatabaseURI().toString()));
@@ -116,7 +120,9 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 			kids[1] = new ErrorTreeNode(new Pair<String, String>("File Size", "cannot read: " + e.toString()));
 		}
 		try {
-			kids[2] = new TreeNode(new Pair<String, String>("File MD5", ""+ pathFileLocator.getContentMD5(uri)));
+			kids[2] = new TreeNode(new Pair<String, String>("File MD5", ""+ pathFileLocator.getContentMD5(uri,
+					MD5FilterAlgorithms.create(info.info.getEffectiveFileMD5Algorithm())
+					)));
 		} catch (IOException e) {
 			kids[2] = new ErrorTreeNode(new Pair<String, String>("File MD5", "cannot read: " + e.toString()));
 		}
