@@ -558,6 +558,9 @@ public class TI99ModuleDetector implements IModuleDetector {
 			
 			int contentLength = fileLocator.getContentLength(uri);
 			
+			if (contentLength % 0x2000 != 0)
+				contentLength += 0x2000 - contentLength % 0x2000;
+			
 			Pair<IMD5SumFilter, Integer> minfo = getEffectiveMD5AndSize(info, contentLength);
 			IMD5SumFilter filter = minfo.first;
 			contentLength = minfo.second;
@@ -643,6 +646,8 @@ public class TI99ModuleDetector implements IModuleDetector {
 						.isReversed(true)
 						.create(moduleName);
 			} else {
+				if (fileSize % 0x2000 != 0)
+					fileSize += 0x2000 - fileSize % 0x2000;
 				info = MemoryEntryInfoBuilder.standardModuleRom(fileName)
 						.withOffset(fileOffset)
 						.withSize(fileSize)
@@ -1293,6 +1298,14 @@ public class TI99ModuleDetector implements IModuleDetector {
 			
 			simpleModules.add(simple);
 		}
+		
+		Collections.sort(simpleModules, new Comparator<IModule>() {
+
+			@Override
+			public int compare(IModule arg0, IModule arg1) {
+				return arg0.getName().compareToIgnoreCase(arg1.getName());
+			}
+		});
 		
 		return simpleModules;
 	}

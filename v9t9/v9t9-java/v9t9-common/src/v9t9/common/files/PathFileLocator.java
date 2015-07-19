@@ -813,11 +813,6 @@ public class PathFileLocator implements IPathFileLocator {
 				md5 = "";
 			}
 			else {
-//				// HACK: ignore trailing garbage
-//				if (uri.toString().endsWith(".bin") && size > 0x1000 && (size & 0x3ff) >= 0x200) {
-//					size &= ~0x3ff;
-//				}
-				
 				InputStream is = createInputStream(uri);
 				try {
 					md5 = MD5SumEngine.createMD5(filter, is, size);

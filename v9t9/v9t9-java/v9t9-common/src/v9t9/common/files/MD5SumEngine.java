@@ -70,6 +70,10 @@ public class MD5SumEngine {
 				pos += content.length;
 				
 				digest.update(content);
+				
+				if (content.length < segment.length) {
+					digest.update(new byte[segment.length - content.length]);
+				}
 			}
 			return TextUtils.binaryToString(digest.digest());
 		} finally {
