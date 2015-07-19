@@ -607,7 +607,8 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		if (pageDirty) {
 			firePageUpdated();
 		}
-		condensed = enlarged = emphasizedHorizontal = emphasizedVertical = false;
+		// not reset!
+		//condensed = enlarged = emphasizedHorizontal = emphasizedVertical = false;
 		updateColumnAdvance();
 	}
 
