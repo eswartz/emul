@@ -27,7 +27,6 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.memory.StoredMemoryEntryInfo;
 import v9t9.common.modules.IModule;
-import ejs.base.properties.IProperty;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
 
@@ -78,9 +77,9 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 		memInfoNode.setChildren(memNodes.toArray(new TreeNode[memNodes.size()]));
 		kids.add(memInfoNode);
 
-		for (IProperty prop : pathFileLocator.getSearchPathProperties()) {
-			kids.add(makeTreeNode(prop));
-		}
+//		for (IProperty prop : pathFileLocator.getSearchPathProperties()) {
+//			kids.add(makeTreeNode(prop));
+//		}
 		
 
 		return (TreeNode[]) kids.toArray(new TreeNode[kids.size()]);
@@ -158,23 +157,23 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 		return node;
 	}
 
-	private TreeNode makeTreeNode(IProperty pathProperty) {
-		TreeNode node = new TreeNode(pathProperty);
-		List<TreeNode> kids = new ArrayList<TreeNode>();
-		if (pathProperty.getValue() instanceof List) {
-			if (!pathProperty.getList().isEmpty()) {
-				for (Object path : pathProperty.getList()) {
-					kids.add(createPathNode(path));
-				}
-			} else {
-				kids.add(new InfoTreeNode(new Pair<String, String>("Empty", "")));				
-			}
-		} else {
-			kids.add(createPathNode(pathProperty.getValue()));
-		}
-		node.setChildren((TreeNode[]) kids.toArray(new TreeNode[kids.size()]));
-		return node;
-	}
+//	private TreeNode makeTreeNode(IProperty pathProperty) {
+//		TreeNode node = new TreeNode(pathProperty);
+//		List<TreeNode> kids = new ArrayList<TreeNode>();
+//		if (pathProperty.getValue() instanceof List) {
+//			if (!pathProperty.getList().isEmpty()) {
+//				for (Object path : pathProperty.getList()) {
+//					kids.add(createPathNode(path));
+//				}
+//			} else {
+//				kids.add(new InfoTreeNode(new Pair<String, String>("Empty", "")));				
+//			}
+//		} else {
+//			kids.add(createPathNode(pathProperty.getValue()));
+//		}
+//		node.setChildren((TreeNode[]) kids.toArray(new TreeNode[kids.size()]));
+//		return node;
+//	}
 
 	/**
 	 * @param kids

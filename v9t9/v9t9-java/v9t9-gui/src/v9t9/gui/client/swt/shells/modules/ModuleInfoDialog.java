@@ -18,6 +18,7 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -26,8 +27,10 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 
+import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.ModuleInfo;
+import v9t9.gui.EmulatorGuiData;
 import ejs.base.settings.DialogSettingsWrapper;
 import ejs.base.utils.TextUtils;
 
@@ -37,9 +40,11 @@ final class ModuleInfoDialog extends Dialog {
 	 */
 	private final ModuleSelector moduleSelector;
 	private final IModule module;
+	private IMachine machine;
 
-	ModuleInfoDialog(ModuleSelector moduleSelector, Shell parentShell, IModule module) {
+	ModuleInfoDialog(IMachine machine, ModuleSelector moduleSelector, Shell parentShell, IModule module) {
 		super(parentShell);
+		this.machine = machine;
 		this.moduleSelector = moduleSelector;
 		this.module = module;
 	}
@@ -71,6 +76,8 @@ final class ModuleInfoDialog extends Dialog {
 	}
 
 	protected IDialogSettings getDialogBoundsSettings() {
+		if (moduleSelector == null)
+			return super.getDialogBoundsSettings();
 		return new DialogSettingsWrapper(this.moduleSelector.getDialogSettings().findOrAddSection("ModuleInfo"));
 	}
 	
@@ -97,10 +104,15 @@ final class ModuleInfoDialog extends Dialog {
 		CLabel title = new CLabel(composite, SWT.NONE);
 		title.setText(module.getName());
 		title.setFont(JFaceResources.getHeaderFont());
-		
+
 		ModuleInfo info = module.getInfo();
-		String imagePath = info != null ? info.getImagePath() : null;
-		title.setImage(this.moduleSelector.getOrLoadModuleImage(null, module, imagePath));
+		if (moduleSelector != null) {
+			String imagePath = info != null ? info.getImagePath() : null;
+			title.setImage(this.moduleSelector.getOrLoadModuleImage(null, module, imagePath));
+		} else {
+			Image stock = EmulatorGuiData.loadImage(parent.getDisplay(), "icons/stock_module.png");
+			title.setImage(stock);
+		}
 		
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(title);
 		
@@ -121,16 +133,18 @@ final class ModuleInfoDialog extends Dialog {
 		
 		///////////
 		
-		CLabel summary = new CLabel(composite, SWT.WRAP);
-		if (this.moduleSelector.isModuleLoadable(module)) {
-			summary.setText("All module files resolved");
-			summary.setImage(getShell().getDisplay().getSystemImage(SWT.ICON_INFORMATION));
-		} else {
-			summary.setText("One or more module files are missing");
-			summary.setImage(getShell().getDisplay().getSystemImage(SWT.ICON_ERROR));
+		if (moduleSelector != null) {
+			CLabel summary = new CLabel(composite, SWT.WRAP);
+			if (this.moduleSelector.isModuleLoadable(module)) {
+				summary.setText("All module files resolved");
+				summary.setImage(getShell().getDisplay().getSystemImage(SWT.ICON_INFORMATION));
+			} else {
+				summary.setText("One or more module files are missing");
+				summary.setImage(getShell().getDisplay().getSystemImage(SWT.ICON_ERROR));
+			}
+			GridDataFactory.fillDefaults().grab(true, false).applyTo(summary);
 		}
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(summary);
-
+		
 		///////////
 		
 		final TreeViewer viewer = new TreeViewer(composite, SWT.BORDER);
@@ -144,15 +158,15 @@ final class ModuleInfoDialog extends Dialog {
 		final TreeColumn nameColumn = new TreeColumn(tree, SWT.RIGHT);
 		final TreeColumn infoColumn = new TreeColumn(tree, SWT.LEFT);
 
-		ModuleDetailsContentProvider contentProvider = new ModuleDetailsContentProvider(this.moduleSelector.getMachine());
+		ModuleDetailsContentProvider contentProvider = new ModuleDetailsContentProvider(machine);
 		viewer.setContentProvider(contentProvider);
 		viewer.setLabelProvider(new ModuleDetailsTreeLabelProvider());
 		
+		viewer.setAutoExpandLevel(3);
 		viewer.setInput(contentProvider.createModuleContent(module));
 		
 		composite.getDisplay().asyncExec(new Runnable() {
 			public void run() {
-				viewer.expandToLevel(2);
 				nameColumn.pack();
 				infoColumn.pack();
 			}

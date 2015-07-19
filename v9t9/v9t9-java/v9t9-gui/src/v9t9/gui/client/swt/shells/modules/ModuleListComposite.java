@@ -26,12 +26,14 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.BaseLabelProvider;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.ICheckStateListener;
+import org.eclipse.jface.viewers.IFontProvider;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -50,17 +52,24 @@ import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
 import v9t9.common.events.NotifyException;
@@ -245,7 +254,7 @@ public class ModuleListComposite extends Composite {
 		return new DialogSettingsWrapper(settings);
 	}
 
-	class DiscoveredModuleLabelProvider extends BaseLabelProvider implements ITableLabelProvider {
+	class DiscoveredModuleLabelProvider extends BaseLabelProvider implements ITableLabelProvider, IFontProvider {
 		public DiscoveredModuleLabelProvider() {
 		}
 		@Override
@@ -260,6 +269,15 @@ public class ModuleListComposite extends Composite {
 		}
 		@Override
 		public Image getColumnImage(Object element, int columnIndex) {
+			return null;
+		}
+		@Override
+		public Font getFont(Object element) {
+			if (element instanceof IModule) {
+				IModule stock = machine.getModuleManager().findStockModuleByMd5(((IModule) element).getMD5());
+				if (stock != null && false == stock.getName().equals(((IModule) element).getName())) 
+					return JFaceResources.getFontRegistry().getItalic(JFaceResources.DIALOG_FONT);
+			}
 			return null;
 		}
 	}
@@ -484,7 +502,7 @@ public class ModuleListComposite extends Composite {
 		viewer.setContentProvider(new ArrayContentProvider());
 		
 		dirtyModuleLists = new ArrayList<URI>();
-		editingSupport = new ModuleNameEditingSupport(viewer, dirtyModuleLists);
+		editingSupport = new ModuleNameEditingSupport(machine.getModuleManager(), viewer, dirtyModuleLists);
 		nameColumn.setEditingSupport(editingSupport);
 		editingSupport.setCanEdit(true);
 		
@@ -548,6 +566,66 @@ public class ModuleListComposite extends Composite {
 				validate();
 			}
 		});
+		
+		viewer.getControl().addMenuDetectListener(new MenuDetectListener() {
+			
+			@Override
+			public void menuDetected(MenuDetectEvent e) {
+				final TableItem item = viewer.getTable().getItem(
+						viewer.getTable().toControl(new Point(e.x, e.y))
+						);
+				if (item != null && item.getData() instanceof IModule) {
+					final IModule module = (IModule) item.getData();
+					
+					final IModule stock = machine.getModuleManager().findStockModuleByMd5(module.getMD5());
+
+					final Menu menu = new Menu(viewer.getControl());
+					
+					final MenuItem ditem;
+					ditem = new MenuItem(menu, SWT.NONE);
+					ditem.setText("Module details...");
+					
+					ditem.addSelectionListener(new SelectionAdapter() {
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							menu.dispose();
+							ModuleInfoDialog dialog = new ModuleInfoDialog(machine, null, getShell(), module);
+							dialog.open();
+						}
+					});
+					
+					if (stock != null) {
+						final MenuItem nitem;
+						nitem = new MenuItem(menu, SWT.NONE);
+						nitem.setText("Reset name");
+						
+						nitem.addSelectionListener(new SelectionAdapter() {
+							@Override
+							public void widgetSelected(SelectionEvent e) {
+								menu.dispose();
+								module.setName(stock.getName());
+								viewer.refresh(module);
+							}
+						});
+					}
+					
+					if (menu.getItemCount() == 0) {
+						menu.dispose();
+						return;
+					}
+					
+					menu.setLocation(e.x, e.y);
+					menu.setVisible(true);
+					
+					while (!menu.isDisposed() && menu.isVisible()) {
+						if (!getDisplay().readAndDispatch())
+							getDisplay().sleep();
+					}
+					
+				}
+			}
+		});
+		
 		
 
 		showAllButton = new Button(listArea, SWT.CHECK);

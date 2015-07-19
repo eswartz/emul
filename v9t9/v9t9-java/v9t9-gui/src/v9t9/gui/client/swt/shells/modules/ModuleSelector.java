@@ -759,7 +759,7 @@ public class ModuleSelector extends Composite {
 		TreeViewerColumn nameViewerColumn = new TreeViewerColumn(viewer, nameColumn);
 		nameViewerColumn.setLabelProvider(cellLabelProvider);
 		
-		editingSupport = new ModuleNameEditingSupport(viewer, dirtyModuleLists);
+		editingSupport = new ModuleNameEditingSupport(moduleManager, viewer, dirtyModuleLists);
 		nameViewerColumn.setEditingSupport(editingSupport);
 		
 
@@ -1450,7 +1450,7 @@ public class ModuleSelector extends Composite {
 	}
 
 	private void showModuleDetails(IModule module) {
-		ModuleInfoDialog dialog = new ModuleInfoDialog(this, window.getShell(), module);
+		ModuleInfoDialog dialog = new ModuleInfoDialog(getMachine(), this, window.getShell(), module);
 		
 		dialog.open();
 	}
