@@ -11,6 +11,7 @@
 package v9t9.common.files;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Arrays;
 
 
@@ -24,7 +25,14 @@ public class DirectoryInfo {
 		this.mapper = mapper;
 		
 		this.dir = file;
-		this.entries = file != null ? file.listFiles() : new File[0];
+		if (file != null)
+			entries = file.listFiles(new FilenameFilter() {
+				
+				@Override
+				public boolean accept(File dir, String name) {
+					return !name.startsWith(".");
+				}
+			});
 		if (entries == null)
 			entries = new File[0];
 		else
