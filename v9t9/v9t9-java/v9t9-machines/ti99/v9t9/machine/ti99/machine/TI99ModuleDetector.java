@@ -816,7 +816,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 						String name = readHeaderName(module.getName(), zf, info.getFilename(), info.getDomainName());
 						if (name != null && !name.isEmpty()) {
 							if (!name.equals(module.getName())) {
-								System.out.println("--> " + module.getName() + "; MD5=" + module.getMD5());
+								log.debug("replacing module name '" + module.getName() + "' with '" + name + "'; MD5=" + module.getMD5());
 								module.setName(name);
 							}
 						}
