@@ -594,7 +594,7 @@ public class ModuleListComposite extends Composite {
 						}
 					});
 					
-					if (stock != null) {
+					if (stock != null && false == module.getName().equals(stock.getName())) {
 						final MenuItem nitem;
 						nitem = new MenuItem(menu, SWT.NONE);
 						nitem.setText("Reset name");
@@ -608,7 +608,7 @@ public class ModuleListComposite extends Composite {
 							}
 						});
 					}
-					
+
 					if (menu.getItemCount() == 0) {
 						menu.dispose();
 						return;

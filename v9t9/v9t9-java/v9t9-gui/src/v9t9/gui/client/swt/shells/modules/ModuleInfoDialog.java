@@ -10,16 +10,27 @@
  */
 package v9t9.gui.client.swt.shells.modules;
 
+import java.io.ByteArrayOutputStream;
+import java.util.Collections;
+
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
@@ -27,8 +38,10 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 
+import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.modules.IModule;
+import v9t9.common.modules.ModuleDatabase;
 import v9t9.common.modules.ModuleInfo;
 import v9t9.gui.EmulatorGuiData;
 import ejs.base.settings.DialogSettingsWrapper;
@@ -62,6 +75,39 @@ final class ModuleInfoDialog extends Dialog {
 	 */
 	@Override
 	protected void createButtonsForButtonBar(Composite parent) {
+		final Button button = createButton(parent, IDialogConstants.CLIENT_ID,
+				"Copy module XML", false);
+		((GridData) button.getLayoutData()).horizontalAlignment = SWT.LEFT;
+		((GridData) button.getLayoutData()).grabExcessHorizontalSpace = true;
+		
+		button.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				Clipboard clipboard = new Clipboard(button.getDisplay());
+				
+				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				try {
+					ModuleDatabase.saveModuleListAndClose(machine.getMemory(), 
+							bos, null, 
+							Collections.singletonList(module));
+				} catch (NotifyException e1) {
+					e1.printStackTrace();
+					MessageDialog.openError(getShell(), "Error", "Failed to copy module text to clipboard");
+					return;
+				}
+				
+				String textData = bos.toString();
+				
+				TextTransfer textTransfer = TextTransfer.getInstance();
+				Transfer[] transfers = { textTransfer };
+				Object[] data = { textData };
+				clipboard.setContents(data, transfers);
+				
+				clipboard.dispose();
+			}
+		});
+
+		
 		createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL,
 				true);
 	}
