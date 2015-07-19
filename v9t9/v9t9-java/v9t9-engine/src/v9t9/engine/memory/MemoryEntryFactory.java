@@ -338,6 +338,9 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				getClassAttribute(el, MemoryEntryInfo.CLASS, MemoryEntry.class, info);
 				getBooleanAttribute(el, MemoryEntryInfo.REVERSED, info);
 
+				properties.put(MemoryEntryInfo.UNIT_SIZE, 
+						IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN)) ? 2 : 1);
+				
 				memoryEntries.add(info);
 			}
 		}
