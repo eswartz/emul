@@ -26,6 +26,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -252,6 +253,7 @@ public class ImageImportOptionsDialog extends Composite {
 				behavior.centering = Centering.OUTSIDE;
 				behavior.centerOverControl = buttonBar.getShell();
 				behavior.dismissOnClickOutside = true;
+				behavior.defaultBounds = new Rectangle(0, 0, 600, 600);
 			}
 			public Control createContents(Shell shell) {
 				ImageImportOptionsDialog dialog = imageSupport.getImageImportDialog(shell, window);

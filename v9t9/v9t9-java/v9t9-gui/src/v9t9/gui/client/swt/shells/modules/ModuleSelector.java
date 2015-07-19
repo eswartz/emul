@@ -1272,6 +1272,7 @@ public class ModuleSelector extends Composite {
 				behavior.centering = Centering.INSIDE;
 				behavior.centerOverControl = buttonBar;
 				behavior.dismissOnClickOutside = true;
+				behavior.defaultBounds = new Rectangle(0, 0, 500, 600);
 			}
 			public Control createContents(Shell shell) {
 				return new ModuleSelector(shell, machine, machine.getModuleManager(), window);
