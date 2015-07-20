@@ -18,7 +18,9 @@ import v9t9.common.machine.IMachine;
 import v9t9.engine.Dumper;
 import v9t9.engine.dsr.rs232.RS232;
 import v9t9.machine.ti99.cpu.Cpu9900;
+import ejs.base.properties.IPersistable;
 import ejs.base.properties.IProperty;
+import ejs.base.settings.ISettingSection;
 
 /** The RS232 device is characterized by a dense packing of registers
 	into a small number of bits.  Depending on the settings of CRU
@@ -26,7 +28,7 @@ import ejs.base.properties.IProperty;
 	to store these registers.  Also, certain bits are called "flag"
 	bits since writing their value instantiates the changes made to
 	the register.  This saves us a bit of time. */
-public class RS232Regs {
+public class RS232Regs implements IPersistable {
 
 	static final public short CRU_BASE = 0x1300;
 
@@ -545,5 +547,42 @@ public class RS232Regs {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see ejs.base.properties.IPersistable#loadState(ejs.base.settings.ISettingSection)
+	 */
+	@Override
+	public void loadState(ISettingSection section) {
+		if (section == null) return;
+		
+		regsel = (byte) section.getInt("RegisterSelect");
+		wrbits = (short) section.getInt("WriteBits");
+		txchar = (short) section.getInt("XmitChar");
+		xmitrate = (short) section.getInt("XmitRate");
+		rcvrate = (short) section.getInt("RecvRate");
+		recvbps = section.getInt("RecvBps");
+		xmitbps = section.getInt("XmitBps");
+		invl = (short) section.getInt("Interval");
+		ctrl = (short) section.getInt("Control");
+		wrport = (short) section.getInt("WritePort");
+		rdport = (short) section.getInt("ReadPort");
+	}
+	/* (non-Javadoc)
+	 * @see ejs.base.properties.IPersistable#saveState(ejs.base.settings.ISettingSection)
+	 */
+	@Override
+	public void saveState(ISettingSection section) {
+		section.put("RegisterSelect", regsel);
+		section.put("WriteBits", wrbits);
+		section.put("XmitChar", txchar);
+		section.put("XmitRate", xmitrate);
+		section.put("RecvRate", rcvrate);
+		section.put("RecvBps", recvbps);
+		section.put("XmitBps", xmitbps);
+		section.put("Interval", invl);
+		section.put("Control", ctrl);
+		section.put("WritePort", wrport);
+		section.put("ReadPort", rdport);
+		
+	}
 
 }

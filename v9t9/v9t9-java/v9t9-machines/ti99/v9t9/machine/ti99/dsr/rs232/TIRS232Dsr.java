@@ -394,13 +394,18 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 
 	@Override
 	public void loadState(ISettingSection section) {
-		// TODO Auto-generated method stub
-		
+		for (Map.Entry<String, RS232Regs> ent : rs232DeviceMap.entrySet()) {
+			ISettingSection rsSec = section.getSection(ent.getKey());
+			ent.getValue().loadState(rsSec);
+		}
 	}
 
 	@Override
 	public void saveState(ISettingSection section) {
-		// TODO Auto-generated method stub
+		for (Map.Entry<String, RS232Regs> ent : rs232DeviceMap.entrySet()) {
+			ISettingSection rsSec = section.addSection(ent.getKey());
+			ent.getValue().saveState(rsSec);
+		}
 		
 	}
 
