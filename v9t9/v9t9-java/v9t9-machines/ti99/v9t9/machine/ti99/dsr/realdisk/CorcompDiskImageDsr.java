@@ -17,6 +17,7 @@ import java.util.List;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDsrHandler;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
@@ -108,11 +109,10 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 			.withDescription("Corcomp Disk Controller ROM (double-sided, double-density)")
 			.withFilenameProperty(settingDsrRom1FileName)
 			.withFileMD5("956B78A3AAC982BE9829523042E7CBAB")
-			.withFileMD5Limit(0x2000 - 0x80)
+			.withFileMD5Algorithm(new MD5FilterAlgorithms.FileSegmentFilter(0, 0x2000 - 0x80).getId())
 			.withFilename2Property(settingDsrRom2FileName)
 			.withFile2MD5("B9C53C584842387B3AEC668B856EC8AD")
-			.withFile2MD5Offset(0x80)
-			.withFile2MD5Limit(0x2000 - 0x80 - 0x80)
+			.withFile2MD5Algorithm(new MD5FilterAlgorithms.FileSegmentFilter(0x80, 0x2000 - 0x80 - 0x80).getId())
 			.withBankClass(CorcompDsrRomBankedMemoryEntry.class)
 			.create("Corcomp Disk DSR ROM");
 
@@ -122,7 +122,7 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 			.withDescription("Corcomp Disk Controller ROM (double-sided, double-density)")
 			.withFilenameProperty(settingDsrRom1FileName)
 			.withFileMD5("956B78A3AAC982BE9829523042E7CBAB")
-			.withFileMD5Limit(0x2000 - 0x80)
+			.withFileMD5Algorithm(new MD5FilterAlgorithms.FileSegmentFilter(0, 0x2000 - 0x80).getId())
 			.create("Corcomp Disk DSR ROM (bank 1)");
 	
 	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
@@ -131,8 +131,7 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 			.withDescription("Corcomp Disk Controller ROM (double-sided, double-density)")
 			.withFilenameProperty(settingDsrRom2FileName)
 			.withFileMD5("B9C53C584842387B3AEC668B856EC8AD")
-			.withFileMD5Offset(0x80)
-			.withFileMD5Limit(0x2000 - 0x80 - 0x80)
+			.withFileMD5Algorithm(new MD5FilterAlgorithms.FileSegmentFilter(0x80, 0x2000 - 0x80 - 0x80).getId())
 			.create("Corcomp Disk DSR ROM (bank 2)");
 
 	private ICruWriter cruwRealDiskMotor = new ICruWriter() {

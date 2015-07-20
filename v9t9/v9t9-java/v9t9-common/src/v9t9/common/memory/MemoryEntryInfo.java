@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.files.IMD5SumFilter;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.settings.SettingSchema;
 
 /**
@@ -32,12 +34,16 @@ public class MemoryEntryInfo {
 	public final static String FILENAME2 = "fileName2";
 	/** String, hex-encoded */
 	public final static String FILE_MD5 = "fileMd5";
+	/** String */
+	public final static String FILE_MD5_ALGORITHM = "fileMd5Algorithm";
 	/** integer */
 	public final static String FILE_MD5_LIMIT = "fileMd5Limit";
 	/** integer */
 	public final static String FILE_MD5_OFFSET = "fileMd5Offset";
 	/** String, hex-encoded */
 	public final static String FILE2_MD5 = "file2Md5";
+	/** String */
+	public final static String FILE2_MD5_ALGORITHM = "file2Md5Algorithm";
 	/** integer */
 	public final static String FILE2_MD5_LIMIT = "file2Md5Limit";
 	/** integer */
@@ -185,6 +191,34 @@ public class MemoryEntryInfo {
 		return getString(MemoryEntryInfo.FILE_MD5);
 	}
 
+	public String getDefaultMD5Algorithm() {
+		if (IMemoryDomain.NAME_GRAPHICS.equals(getDomainName())) {
+			return MD5FilterAlgorithms.ALGORITHM_GROM;
+		} else {
+			return MD5FilterAlgorithms.ALGORITHM_FULL;
+		}
+	}
+	
+	public String getFileMD5Algorithm() {
+		return getString(MemoryEntryInfo.FILE_MD5_ALGORITHM);
+	}
+	
+	public int getDefaultFileSize() {
+		if (IMemoryDomain.NAME_CPU.equals(getDomainName()))
+			return 0x2000;
+		return 0;
+	}
+	public String getEffectiveFileMD5Algorithm() {
+		String alg = getFileMD5Algorithm();
+		if (alg == null || alg.isEmpty()) {
+			if (getOffset() != 0 || (getSize() > 0 && getSize() != getDefaultFileSize()))
+				alg = MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":" + 
+					new IMD5SumFilter.FilterSegment(getOffset(), getSize()).toString();
+			else
+				alg = getDefaultMD5Algorithm();
+		}
+		return alg;
+	}
 
 	public String getDomainName() {
 		return getString(MemoryEntryInfo.DOMAIN);
@@ -220,6 +254,20 @@ public class MemoryEntryInfo {
 	}
 	public String getFile2MD5() {
 		return getString(MemoryEntryInfo.FILE2_MD5);
+	}
+	public String getFile2MD5Algorithm() {
+		return getString(MemoryEntryInfo.FILE2_MD5_ALGORITHM);
+	}
+	public String getEffectiveFile2MD5Algorithm() {
+		String alg = getFile2MD5Algorithm();
+		if (alg == null || alg.isEmpty()) {
+			if (getOffset2() != 0 || (getSize2() > 0 && getSize2() != getDefaultFileSize()))
+				alg = MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":" + 
+					new IMD5SumFilter.FilterSegment(getOffset2(), getSize2()).toString();
+			else
+				alg = getDefaultMD5Algorithm();
+		}
+		return alg;
 	}
 
 	public int getOffset() {
@@ -260,7 +308,7 @@ public class MemoryEntryInfo {
 	}
 
 	public String getResolvedFilename(ISettingsHandler settings) {
-		if (getFilenameProperty() != null)
+		if (getFilenameProperty() != null && settings != null)
 			return settings.get(getFilenameProperty()).getString();
 		else
 			return getFilename();
@@ -321,21 +369,24 @@ public class MemoryEntryInfo {
 		return getInt(BANK_SIZE);
 	}
 
-	public MemoryEntryInfo asBank(int number, int offset) {
+	public MemoryEntryInfo asBank(int number, int offset, int size) {
 		MemoryEntryInfo copy = new MemoryEntryInfo(new HashMap<String, Object>(properties));
 		copy.getProperties().put(NAME, getName() + " (bank " + number + ")"); 
-		copy.getProperties().put(OFFSET, offset); 
+		copy.getProperties().put(OFFSET, offset);
+		if (size > 0)
+			copy.getProperties().put(SIZE, size); 
 		return copy;
 	}
 
 	public MemoryEntryInfo asFirstBank() {
-		MemoryEntryInfo copy = asBank(0, 0);
+		MemoryEntryInfo copy = asBank(0, 0, 0x2000);
 		Map<String, Object> props = copy.getProperties();
 		props.remove(FILENAME2);
 		props.remove(OFFSET2);
 		props.remove(ADDRESS2);
 		props.remove(SIZE2);
 		props.remove(FILE2_MD5);
+		props.remove(FILE2_MD5_ALGORITHM);
 		props.remove(FILE2_MD5_LIMIT);
 		props.remove(FILE2_MD5_OFFSET);
 		props.remove(FILENAME2_PROPERTY);
@@ -343,13 +394,14 @@ public class MemoryEntryInfo {
 	}
 	
 	public MemoryEntryInfo asSecondBank() {
-		MemoryEntryInfo copy = asBank(1, 0);
+		MemoryEntryInfo copy = asBank(1, 0, 0x2000);
 		Map<String, Object> props = copy.getProperties();
 		move(props, FILENAME, getFilename2());
 		move(props, ADDRESS, getAddress2() != 0 ? getAddress2() : getAddress());
 		move(props, SIZE, getSize2() != 0 ? getSize2() : getSize());
 		move(props, OFFSET, getOffset2());
 		move(props, FILE_MD5, getFile2MD5());
+		move(props, FILE_MD5_ALGORITHM, getFile2MD5Algorithm());
 		move(props, FILE_MD5_OFFSET, getFile2Md5Offset());
 		move(props, FILE_MD5_LIMIT, getFile2Md5Limit());
 		move(props, FILENAME_PROPERTY, getFilename2Property());
@@ -362,6 +414,43 @@ public class MemoryEntryInfo {
 			props.remove(key + "2");
 			if (key.length() > 4)
 				props.remove(key.substring(0, 4) + "2" + key.substring(4));
+		}
+	}
+
+	/**
+	 * Update properties from an older version (e.g. the unnamed version "1" 
+	 * which used file MD5s, offsets, and limits, to the 
+	 * current version "2" which uses a single MD5 algorithm).
+	 */
+	public void updateProperties() {
+		boolean isGrom = IMemoryDomain.NAME_GRAPHICS.equals(getDomainName());
+		
+		int offset = getInt(FILE_MD5_OFFSET);
+		properties.remove(FILE_MD5_OFFSET);
+		int limit = getInt(FILE_MD5_LIMIT);
+		properties.remove(FILE_MD5_LIMIT);
+		if (properties.containsKey(FILE_MD5)) {
+			String algorithm = isGrom ? MD5FilterAlgorithms.ALGORITHM_FULL : null;
+			if (offset < limit) {
+				algorithm = new MD5FilterAlgorithms.FileSegmentFilter(offset, limit).getId();
+			}
+			if (algorithm != null) {
+				properties.put(FILE_MD5_ALGORITHM, algorithm);
+			}
+		}
+
+		offset = getInt(FILE2_MD5_OFFSET);
+		properties.remove(FILE2_MD5_OFFSET);
+		limit = getInt(FILE2_MD5_LIMIT);
+		properties.remove(FILE2_MD5_LIMIT);
+		if (properties.containsKey(FILE2_MD5)) {
+			String algorithm = isGrom ? MD5FilterAlgorithms.ALGORITHM_FULL : null;
+			if (offset < limit) {
+				algorithm = new MD5FilterAlgorithms.FileSegmentFilter(offset, limit).getId();
+			}
+			if (algorithm != null) {
+				properties.put(FILE2_MD5_ALGORITHM, algorithm);
+			}
 		}
 	}
 

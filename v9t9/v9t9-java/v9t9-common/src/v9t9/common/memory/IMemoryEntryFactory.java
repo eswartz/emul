@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.w3c.dom.Element;
 
+import v9t9.common.events.IEventNotifier;
 import ejs.base.settings.ISettingSection;
 
 
@@ -48,9 +49,10 @@ public interface IMemoryEntryFactory {
 	
 	/**
 	 * Create a memory entry from storage
+	 * @param notifier 
 	 * @param entryStore
 	 * @return
 	 */
-	IMemoryEntry createEntry(IMemoryDomain domain, ISettingSection entryStore);
+	IMemoryEntry createEntry(IMemoryDomain domain, IEventNotifier notifier, ISettingSection entryStore);
 
 }

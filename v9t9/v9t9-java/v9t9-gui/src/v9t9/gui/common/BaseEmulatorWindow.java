@@ -40,6 +40,7 @@ import ejs.base.settings.ISettingSection;
 import ejs.base.settings.ISettingStorage;
 import ejs.base.settings.SettingsSection;
 import ejs.base.settings.XMLSettingStorage;
+import ejs.base.utils.TextUtils;
 
 public abstract class BaseEmulatorWindow {
 	private static final Logger log = Logger.getLogger(BaseEmulatorWindow.class);
@@ -216,7 +217,8 @@ public abstract class BaseEmulatorWindow {
 			} catch (Throwable e1) {
 				log.error("Failed to load machine state", e1);
 				machine.notifyEvent(Level.ERROR, 
-						"Failed to load machine state:\n\n" + e1.getMessage());
+						"Failed to load machine state:\n\n" + 
+									(!TextUtils.isEmpty(e1.getMessage()) ? e1.getMessage() : e1.getClass()));
 			
 			} finally {
 				if (fis != null) {

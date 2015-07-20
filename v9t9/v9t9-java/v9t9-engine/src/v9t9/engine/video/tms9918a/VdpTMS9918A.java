@@ -434,6 +434,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
      */
     @Override
     public int getFirstRegister() {
+    	// note: not REG_SCANLINE
     	return REG_ST;
     }
 	/* (non-Javadoc)
@@ -451,6 +452,8 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	public int getRegister(int reg) {
 		if (reg == REG_ST) {
 			return vdpStatus;
+		} else if (reg == REG_SCANLINE) {
+			return vdpScanline;
 		} else if (reg < vdpregs.length) {
 			return vdpregs[reg] & 0xff;
 		} else {

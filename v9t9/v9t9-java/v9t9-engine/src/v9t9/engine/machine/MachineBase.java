@@ -10,12 +10,8 @@
  */
 package v9t9.engine.machine;
 
-import java.io.File;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -58,7 +54,7 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleDetector;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.engine.demos.DemoManager;
@@ -68,7 +64,6 @@ import v9t9.engine.files.directory.EmuDiskSettings;
 import v9t9.engine.files.image.DiskImageMapper;
 import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.modules.ModuleManager;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
@@ -135,6 +130,8 @@ abstract public class MachineBase implements IMachine {
 	private List<IEmulatorContentSourceProvider> contentProviders = new ArrayList<IEmulatorContentSourceProvider>(1);
 
 	private List<IPrinterImageHandler> printerImageHandlers = new ArrayList<IPrinterImageHandler>(1);
+
+	private IModuleDetector moduleDetector;
 
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
     	this.settings = settings;
@@ -325,6 +322,24 @@ abstract public class MachineBase implements IMachine {
 		keyboardState.resetKeyboard();
 		executor.getCompilerStrategy().reset();
 		
+		unloadAndClear();
+		
+		doReload();
+		
+		if (cru != null)
+			cru.reset();
+				
+		cpu.reset();
+		
+		setPaused(wasPaused);
+
+	}
+	
+	/**
+	 * 
+	 */
+	private void unloadAndClear() {
+		// fully reload any ROMs in case they've changed 
 		IMemoryDomain domain = getMemory().getDomain(IMemoryDomain.NAME_CPU);
 		for (IMemoryEntry entry : domain.getFlattenedMemoryEntries()) {
 			if (entry.isVolatile()) {
@@ -338,17 +353,8 @@ abstract public class MachineBase implements IMachine {
 			}
 		}
 		
-		reload();
-		
-		if (cru != null)
-			cru.reset();
-				
-		cpu.reset();
-		
-		setPaused(wasPaused);
-
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.IMachine#getCpu()
 	 */
@@ -487,9 +493,10 @@ abstract public class MachineBase implements IMachine {
 
 	protected void doLoadState(ISettingSection section) {
 		memory.getModel().resetMemory();
-		if (moduleManager != null)
+		if (moduleManager != null) {
 			moduleManager.loadState(section.getSection("Modules"));
-		memory.loadState(section.getSection("Memory"));
+		}
+		memory.loadMemory(eventNotifier, section.getSection("Memory"));
 		cpu.loadState(section.getSection("CPU"));
 		vdp.loadState(section.getSection("VDP"));
 		if (sound != null)
@@ -795,19 +802,41 @@ abstract public class MachineBase implements IMachine {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.common.machine.IMachine#scanModules(java.net.URI, java.io.File)
+	 * @see v9t9.common.machine.IMachine#createModuleDetector(java.net.URI)
 	 */
 	@Override
-	public Collection<IModule> scanModules(URI databaseURI, File base) {
-		return Collections.emptyList();
+	public IModuleDetector getModuleDetector() {
+		if (moduleDetector == null) {
+			moduleDetector = createModuleDetector();
+		}
+		return moduleDetector;
 	}
-	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#createModuleDetector()
+	 */
+	@Override
+	public IModuleDetector createModuleDetector() {
+		return null;
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.common.machine.IMachine#reload()
 	 */
 	@Override
 	public void reload() {
 		
+		doReload();
+
+		if (moduleManager != null) {
+			try {
+				moduleManager.restoreLastModule();
+			} catch (NotifyException e) {
+				notifyEvent(e.getEvent());
+			}		
+		}
+	}
+	
+	protected void doReload() {
 		getExecutor().reset();
 		
 		memory.reset();
@@ -816,23 +845,10 @@ abstract public class MachineBase implements IMachine {
 			memoryModel.loadMemory(client.getEventNotifier());
 		}
 		
-		if (getModuleManager() != null) {
-			getModuleManager().reload();
-			
-			// reset state
-			try {
-				String lastModuleName = settings.get(ModuleManager.settingLastLoadedModule).getString();
-				if (lastModuleName.length() > 0) {
-					IModule lastModule = getModuleManager().findModuleByName(lastModuleName, true);
-					if (lastModule != null) {
-						getModuleManager().switchModule(lastModule);
-					}
-				}
-			} catch (NotifyException e) {
-				notifyEvent(e.getEvent());
-			}		
+		if (moduleManager != null) {
+			moduleManager.reloadDatabase();
+			//moduleManager.reloadModules(client.getEventNotifier());
 		}
-		
 	}
 	
 	/* (non-Javadoc)
@@ -862,6 +878,7 @@ abstract public class MachineBase implements IMachine {
 	public IPrinterImageHandler[] getPrinterImageHandlers() {
 		return printerImageHandlers.toArray(new IPrinterImageHandler[printerImageHandlers.size()]);
 	}
+	
 }
 
 

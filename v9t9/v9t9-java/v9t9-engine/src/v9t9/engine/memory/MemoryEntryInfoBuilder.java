@@ -13,6 +13,7 @@ package v9t9.engine.memory;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.SettingSchema;
@@ -61,33 +62,22 @@ public class MemoryEntryInfoBuilder {
 	}
 	
 	public MemoryEntryInfoBuilder withFileMD5(String fileMD5) {
-		if (fileMD5 != null) props.put(MemoryEntryInfo.FILE_MD5, fileMD5);
+		if (fileMD5 != null && fileMD5.length() > 0) props.put(MemoryEntryInfo.FILE_MD5, fileMD5);
 		return this;
 	}
-	
-	public MemoryEntryInfoBuilder withFileMD5Limit(int md5Limit) {
-		props.put(MemoryEntryInfo.FILE_MD5_LIMIT, md5Limit);
-		return this;
-	}
-	public MemoryEntryInfoBuilder withFileMD5Offset(int offs) {
-		props.put(MemoryEntryInfo.FILE_MD5_OFFSET, offs);
-		return this;
-	}
-	
-	public MemoryEntryInfoBuilder withFile2MD5(String file2MD5) {
-		if (file2MD5 != null) props.put(MemoryEntryInfo.FILE2_MD5, file2MD5);
+	public MemoryEntryInfoBuilder withFileMD5Algorithm(String algorithm) {
+		if (algorithm != null) props.put(MemoryEntryInfo.FILE_MD5_ALGORITHM, algorithm);
 		return this;
 	}
 
-	public MemoryEntryInfoBuilder withFile2MD5Limit(int md5Limit) {
-		props.put(MemoryEntryInfo.FILE2_MD5_LIMIT, md5Limit);
+	public MemoryEntryInfoBuilder withFile2MD5(String file2MD5) {
+		if (file2MD5 != null && file2MD5.length() > 0) props.put(MemoryEntryInfo.FILE2_MD5, file2MD5);
 		return this;
 	}
-	public MemoryEntryInfoBuilder withFile2MD5Offset(int md5Limit) {
-		props.put(MemoryEntryInfo.FILE2_MD5_OFFSET, md5Limit);
+	public MemoryEntryInfoBuilder withFile2MD5Algorithm(String algorithm) {
+		if (algorithm != null) props.put(MemoryEntryInfo.FILE2_MD5_ALGORITHM, algorithm);
 		return this;
 	}
-	
 
 	public MemoryEntryInfoBuilder withFilenameProperty(SettingSchema schema) {
 		if (schema != null) props.put(MemoryEntryInfo.FILENAME_PROPERTY, schema);
@@ -184,6 +174,7 @@ public class MemoryEntryInfoBuilder {
 			.withDomain(IMemoryDomain.NAME_GRAPHICS)
 			.withAddress(0)
 			.withSize(0x6000)
+			.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_GROM)
 			.withFilename(filename);
 	}
 
@@ -199,6 +190,7 @@ public class MemoryEntryInfoBuilder {
 		return byteMemoryEntry()
 			.withDomain(IMemoryDomain.NAME_GRAPHICS)
 			.withAddress(0x6000)
+			.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_GROM)
 			.withFilename(filename);
 
 	}

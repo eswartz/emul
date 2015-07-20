@@ -20,7 +20,6 @@ import java.util.Map;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.MemoryEntryInfo;
-
 import ejs.base.properties.IProperty;
 import ejs.base.utils.Pair;
 
@@ -81,11 +80,10 @@ public interface IPathFileLocator {
 	/**
 	 * Find a file along the search paths with the given MD5 hash.
 	 * @param md5
-	 * @param offset TODO
-	 * @param limit maximum number of bytes to read (or <= 0 for all)
+	 * @param filter filter for considering portions of content for digesting
 	 * @return URI or <code>null</code> if no match is found
 	 */
-	URI findFileByMD5(String md5, int offset, int limit);
+	URI findFileByMD5(String md5, IMD5SumFilter filter);
 
 	/**
 	 * Get the listing of entries in this URI 
@@ -120,12 +118,10 @@ public interface IPathFileLocator {
 	/**
 	 * Get the MD5 of the first given bytes of content, as a hex-encoded string
 	 * @param uri
-	 * @param offset TODO
-	 * @param bytes number of bytes to consume (or <= 0 for all)
-	 * @param mustExist TODO
+	 * @param filter filter for considering portions of content for digesting
 	 * @return String
 	 */
-	String getContentMD5(URI uri, int offset, int bytes, boolean mustExist) throws IOException;
+	String getContentMD5(URI uri, IMD5SumFilter filter) throws IOException;
 	
 
 	/**

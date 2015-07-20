@@ -13,14 +13,18 @@ package v9t9.engine.memory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
+
 
 import ejs.base.properties.IPersistable;
 import ejs.base.settings.ISettingSection;
 import ejs.base.utils.BinaryUtils;
 import ejs.base.utils.ListenerList;
-
+import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryAccess;
 import v9t9.common.memory.IMemoryAccessListener;
@@ -32,7 +36,6 @@ import v9t9.common.memory.IMemoryWriteListener;
  * @author ejs
  */
 public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain {
-
 	static final int NUMAREAS = PHYSMEMORYSIZE >> AREASHIFT;
     
 	public IMemoryAccessListener nullMemoryAccessListener = new IMemoryAccessListener() {
@@ -444,19 +447,20 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	@Override
 	public void saveState(ISettingSection section) {
 		int idx = 0;
-		for (IMemoryEntry entry : mappedEntries) {
-			if (entry != zeroMemoryEntry && !isEntryFullyUnmapped(entry)) {
-				entry.saveState(section.addSection(""+ idx));
+		Set<IMemoryEntry> handled = new HashSet<IMemoryEntry>();
+		for (IMemoryEntry entry : entries) {
+			if (entry != zeroMemoryEntry && !isEntryFullyUnmapped(entry) && handled.add(entry)) {
+				entry.saveState(section.addSection(String.format("%03d", idx)));
 				idx++;
 			}
 		}
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryDomain#loadState(v9t9.base.settings.ISettingSection)
+	 * @see v9t9.common.memory.IMemoryDomain#loadMemory(v9t9.common.events.IEventNotifier, ejs.base.settings.ISettingSection)
 	 */
 	@Override
-	public void loadState(ISettingSection section) {
+	public void loadMemory(IEventNotifier notifier, ISettingSection section)  {
 		//unmapAll();
 		if (section == null) {
 			return;
@@ -464,41 +468,51 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 
 		for (ISettingSection entryStore : section.getSections()) {
 			String name = entryStore.get("Name");
-			IMemoryEntry entry = findMappedEntry(name);
+			int addr = entryStore.getInt("Address");
+			IMemoryEntry entry = findMappedEntry(name, addr);
 			if (entry != null) {
-				entry.loadState(entryStore);
+				try {
+					entry.loadMemory(notifier, entryStore);
+				} catch (IOException e) {
+					notifier.notifyEvent(this, Level.ERROR, "Failed to load memory for: " + name + "\n\n" + e.getMessage());
+				}
 			} else {
-				entry = getMemory().getMemoryEntryFactory().createEntry(this, entryStore);
+				entry = getMemory().getMemoryEntryFactory().createEntry(this, notifier, entryStore);
 				if (entry != null)
 					mapEntry(entry);
+				else if (notifier != null)
+					notifier.notifyEvent(this, Level.ERROR, "Cannot create memory entry: " + name);
 				else
-					System.err.println("Cannot find memory entry: " + name);
+					System.err.println("Cannot created memory entry: " + name);
 			}
 		}
 		
 	}
-
-
+	
 	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryDomain#findFullyMappedEntry(java.lang.String)
+	 * @see ejs.base.properties.IPersistable#loadState(ejs.base.settings.ISettingSection)
 	 */
 	@Override
-	public IMemoryEntry findFullyMappedEntry(String name) {
+	public void loadState(ISettingSection section) {
+		loadMemory(null, section);
+	}
+
+	protected IMemoryEntry findFullyMappedEntry(String name, int addr) {
 		for (IMemoryEntry entry : mappedEntries) {
-			if (entry.getName().equals(name) && isEntryFullyMapped(entry)) {
+			if (entry.getName().equals(name) && 
+					entry.getAddr() == addr &&
+					isEntryFullyMapped(entry)) {
 				return entry;
 			}
 		}
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.common.memory.IMemoryDomain#findMappedEntry(java.lang.String)
-	 */
-	@Override
-	public IMemoryEntry findMappedEntry(String name) {
+	protected IMemoryEntry findMappedEntry(String name, int addr) {
 		for (IMemoryEntry entry : mappedEntries) {
-			if (entry.getName().equals(name) && !isEntryFullyUnmapped(entry)) {
+			if (entry.getName().equals(name) && 
+					entry.getAddr() == addr &&
+					!isEntryFullyUnmapped(entry)) {
 				return entry;
 			}
 		}

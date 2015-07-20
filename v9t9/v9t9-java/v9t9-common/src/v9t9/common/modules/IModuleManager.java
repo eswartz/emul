@@ -12,12 +12,12 @@ package v9t9.common.modules;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.SettingSchema;
@@ -33,8 +33,6 @@ public interface IModuleManager extends IPersistable {
 			ISettingsHandler.MACHINE,
 			"UserModuleLists", String.class, new ArrayList<String>());
 
-	URL getStockDatabaseURL();
-	
 	void clearModules();
 	void addModules(Collection<IModule> modList);
 
@@ -70,12 +68,22 @@ public interface IModuleManager extends IPersistable {
 	void unloadModule(IModule loaded);
 
 	/**
-	 * Find the module with this name
+	 * Find the first module with this name
 	 * @param string
 	 * @param exact
 	 * @return
 	 */
 	IModule findModuleByName(String string, boolean exact);
+	
+	/**
+	 * Find the first module with this MD5 
+	 * which also matches the name, or, fall back to the first
+	 * with this name
+	 * @param name human-readable name
+	 * @param md5 from IModule#getMD5()
+	 * @return first match or <code>null</code>
+	 */
+	IModule findModuleByNameAndHash(String name, String md5);
 
 	/**
 	 * @return
@@ -96,9 +104,14 @@ public interface IModuleManager extends IPersistable {
 	void registerModules(URI databaseURI);
 
 	/**
-	 * 
+	 * Reload module entries from databases 
 	 */
-	void reload();
+	void reloadDatabase();
+
+	/**
+	 * Reload current loaded modules
+	 */
+	void reloadModules(IEventNotifier notifier);
 
 	/**
 	 * @param module
@@ -109,4 +122,29 @@ public interface IModuleManager extends IPersistable {
 	 * @return
 	 */
 	ModuleInfoDatabase getModuleInfoDatabase();
+
+	/**
+	 * Find a stock module with the same module MD5
+	 * @param moduleMd5 md5 to match
+	 * @return stock module or <code>null</code>
+	 */
+	IModule findStockModuleByMd5(String moduleMd5);
+
+	/**
+	 * Find the stock module that replaces the one with the given MD5.
+	 * The distinction is, replacement stock modules have extra memory entries.
+	 * @param moduleMd5 md5 to match
+	 * @return stock module or <code>null</code>
+	 */
+	IModule findReplacedStockModuleByMd5(String moduleMd5);
+	
+	/**
+	 * Get all the stock modules
+	 * @return
+	 */
+	IModule[] getStockModules();
+	/**
+	 * Load the last loaded module (after startup)
+	 */
+	void restoreLastModule() throws NotifyException;
 }

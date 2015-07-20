@@ -11,6 +11,7 @@
 package v9t9.engine.memory;
 
 import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 
 /**
@@ -30,6 +31,9 @@ public class ByteMemoryArea extends MemoryArea {
 	}
     public ByteMemoryArea(int latency, byte[] memory) {
 		super(latency);
+		if (memory != null && memory.length % IMemoryDomain.AREASIZE != 0)
+			assert false : "memory area size not multiple of " + IMemoryDomain.AREASIZE;
+
 		this.memory = memory;
 		this.read = memory;
 		this.write = memory;

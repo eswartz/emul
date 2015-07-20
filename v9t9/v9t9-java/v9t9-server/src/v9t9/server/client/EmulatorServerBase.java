@@ -47,6 +47,9 @@ import ejs.base.properties.IProperty;
 public abstract class EmulatorServerBase {
 
 	static {
+		// FIXME workaround for ModuleSelector and mysterious error
+		System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
+		
 		MachineModelFactory.INSTANCE.register(
 				StandardTI994AMachineModel.ID, StandardTI994AMachineModel.class);
 		MachineModelFactory.INSTANCE.register(

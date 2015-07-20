@@ -68,6 +68,7 @@ public class DiskImageEntry extends BaseDiskEntry {
 		if (filename != null) {
 			switchPath(combo, filename);
 			combo.setText(filename);
+			commitEntry();
 		}		
 	}
 

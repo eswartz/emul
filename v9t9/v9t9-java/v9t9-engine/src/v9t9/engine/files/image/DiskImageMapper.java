@@ -106,8 +106,9 @@ public class DiskImageMapper implements IDiskImageMapper {
 			public void propertyChanged(final IProperty setting) {
 	
 				final IDiskImage oldImage = disks.get(setting.getName());
-				final IDiskImage newImage = DiskImageFactory.createDiskImage(settings, 
-						setting.getName(), new File(setting.getString()));
+				final IDiskImage newImage = setting.getString().trim().isEmpty() ? null : 
+						DiskImageFactory.createDiskImage(settings, 
+								setting.getName(), new File(setting.getString()));
 				
 				disks.put(setting.getName(), newImage);
 				

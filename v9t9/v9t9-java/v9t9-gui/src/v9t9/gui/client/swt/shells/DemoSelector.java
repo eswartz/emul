@@ -1051,6 +1051,7 @@ public class DemoSelector extends Composite {
 				behavior.boundsPref = "DemoWindowBounds";
 				behavior.centering = Centering.OUTSIDE;
 				behavior.dismissOnClickOutside = false;
+				behavior.defaultBounds = new Rectangle(0, 0, 800, 700);
 			}
 			public Control createContents(Shell shell) {
 				return new DemoSelector(shell, machine, machine.getDemoManager(), window);

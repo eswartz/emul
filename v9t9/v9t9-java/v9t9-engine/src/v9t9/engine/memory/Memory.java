@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import ejs.base.settings.ISettingSection;
-
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.PathFileLocator;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
@@ -154,6 +154,14 @@ public class Memory implements IMemory {
 	 */
 	@Override
 	public void loadState(ISettingSection section) {
+		loadMemory(null, section);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemory#loadMemory(v9t9.common.events.IEventNotifier, ejs.base.settings.ISettingSection)
+	 */
+	@Override
+	public void loadMemory(IEventNotifier notifier, ISettingSection section) {
 		if (section == null)
 			return;
 		
@@ -168,7 +176,7 @@ public class Memory implements IMemory {
 				addDomain(domainName, domain);
 			}
 			ISettingSection dSection = section.getSection(domainName);
-			domain.loadState(dSection);
+			domain.loadMemory(notifier, dSection);
 		}
 		
 		for (IMemoryDomain domain : domains.values()) {

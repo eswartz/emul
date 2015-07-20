@@ -63,5 +63,16 @@ public class ModuleInfo {
 	public String getDescription() {
 		return descr;
 	}
+
+	/**
+	 * @return
+	 */
+	public ModuleInfo copy() {
+		ModuleInfo copy = new ModuleInfo();
+		copy.name = name;
+		copy.imageName = imageName;
+		copy.descr = descr;
+		return copy;
+	}
 	
 }

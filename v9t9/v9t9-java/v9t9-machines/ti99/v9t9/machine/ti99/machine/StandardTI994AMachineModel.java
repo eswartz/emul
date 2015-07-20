@@ -101,14 +101,14 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.setCru(new InternalCru9901(machine));
 			
-			EmuDiskDsr emuDsr = new EmuDiskDsr(machine, 0x1000);
-			machine.getDsrManager().registerDsr(emuDsr);
-			
 			ISelectableDsrHandler diskDsr = new Selectable9900Dsr(machine, 
 					machine.getSettings().get(RealDiskSettings.diskController),
 					FDCControllers.WDC1771, new TIDiskImageDsr(machine, (short) 0x1100),
 					FDCControllers.WDC1791, new CorcompDiskImageDsr(machine, (short) 0x1100));
 			machine.getDsrManager().registerDsr(diskDsr);
+			
+			EmuDiskDsr emuDsr = new EmuDiskDsr(machine, 0x1000);
+			machine.getDsrManager().registerDsr(emuDsr);
 			
 			TIRS232Dsr rs232Dsr = new TIRS232Dsr(machine, RS232Regs.CRU_BASE);
 			TIRS232PIODsr rs232PioDsr = new TIRS232PIODsr(machine, RS232Regs.CRU_BASE);
@@ -119,6 +119,7 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 					RS232Controllers.RS232_PIO, rs232PioDsr);
 			machine.getDsrManager().registerDsr(rsDsr);
 			
+			// printer works on PIO or RS232/1 for either DSR
 			EpsonPrinterImageEngine engine = new EpsonPrinterImageEngine();
 			machine.getDemoManager().registerActorProvider(new PrinterImageActorProvider(engine.getPrinterId()));
 			
@@ -129,6 +130,8 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 			RS232PrinterImageHandler rsHandler = new RS232PrinterImageHandler(machine, engine); 
 			machine.addPrinterImageHandler(rsHandler);
 			rs232PioDsr.getRS232Device(1).getRS232().getHandler().addListener(rsHandler);
+			
+			rs232Dsr.getRS232Device(1).getRS232().getHandler().addListener(rsHandler);
 			
 			PCodeDsr pcodeDsr = new PCodeDsr(machine);
 			machine.getDsrManager().registerDsr(pcodeDsr);
@@ -145,7 +148,8 @@ public class StandardTI994AMachineModel extends BaseTI99MachineModel {
 	 */
 	@Override
 	public IModuleManager createModuleManager(IMachine machine) {
-		return new ModuleManager(machine, "stock_modules.xml");
+		return new ModuleManager(machine,
+				new String[] { "stock_modules.xml", "problem_modules.xml" });
 	}
 	
 	/* (non-Javadoc)

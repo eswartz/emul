@@ -361,6 +361,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 									savedPreDemoState = null;
 									
 									machinePauseSetting.removeListener(unpauseAfterDemoListener);
+
+									machine.getClient().getVideoRenderer().getCanvasHandler().refresh();
 									
 									// make sure still unpaused, in case demo playback
 									// stopping above reset the pause state

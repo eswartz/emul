@@ -50,20 +50,23 @@ public class FileUtils  {
 	}
 
 	public static byte[] readInputStreamContentsAndClose(InputStream is, int maxsize) throws IOException {
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		byte[] result = new byte[1024];
 		try {
-			int len;
-			int left = maxsize;
-			while (left > 0  && (len = is.read(result)) >= 0) {
-				int use = Math.min(len, left);
-				bos.write(result, 0, use);
-				left -= use;
-			}
+			return readInputStreamContents(is, maxsize);
 		} finally {
 			if (is != null) {
 				try { is.close(); } catch (IOException e) { } 
 			}
+		}
+	}
+	public static byte[] readInputStreamContents(InputStream is, int maxsize) throws IOException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		byte[] result = new byte[1024];
+		int len;
+		int left = maxsize;
+		while (left > 0  && (len = is.read(result, 0, Math.min(result.length, left))) >= 0) {
+			int use = Math.min(len, left);
+			bos.write(result, 0, use);
+			left -= use;
 		}
 		return bos.toByteArray();
 	}
@@ -100,12 +103,12 @@ public class FileUtils  {
 	 * @return String
 	 * @throws NoSuchAlgorithmException 
 	 */
-	public static String getMD5Hash(byte[] content) throws IOException {
+	public static String getMD5Hash(byte[] content) {
 		MessageDigest digest;
 		try {
 			digest = MessageDigest.getInstance("MD5");
 		} catch (NoSuchAlgorithmException e) {
-			throw new IOException(e);
+			return "";
 		}
 		byte[] md5 = digest.digest(content);
 		StringBuilder sb = new StringBuilder();

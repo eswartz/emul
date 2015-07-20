@@ -16,7 +16,6 @@ import org.ejs.gui.images.V99ColorMapUtils;
 
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
-import v9t9.common.hardware.VdpTMS9918AConsts;
 import v9t9.common.hardware.VdpV9938Consts;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.IVdpCanvas;
@@ -58,7 +57,8 @@ public class VdpImageImporter {
 			}
 		}
 		// pretend VDP interrupt
-		vdp.setRegister(VdpTMS9918AConsts.REG_SCANLINE, -1);
+		canvasRenderer.refresh();
+		//vdp.setRegister(VdpTMS9918AConsts.REG_SCANLINE, -1);
 	}
 
 	/**

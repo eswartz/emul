@@ -67,7 +67,7 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 	static protected final MemoryEntryInfo cpuGromInfo = MemoryEntryInfoBuilder
 		.standardConsoleGrom(null)
 		.withFilenameProperty(settingGromFileName)
-		.withFileMD5("ED8FF714542BA850BDEC686840A79217")
+		.withFileMD5("3B1138E1B713465CA6811DD8B96AD2B1")
 		.withDescription("TI-99/4A Console GROM")
 		.create("CPU GROM");
 	

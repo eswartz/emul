@@ -118,16 +118,6 @@ abstract class BaseSettingEntry extends Composite {
 		}
 	}
 
-	protected String[] getHistory(String name) {
-		return machine.getSettings().getUserSettings().
-			getHistorySettings().getArray("DiskSelector." + name);
-	}
-	protected void setHistory(String name, String[] history) {
-		machine.getSettings().getUserSettings().
-			getHistorySettings().put("DiskSelector." + name, history);
-		//EmulatorSettings.INSTANCE.save();
-	}
-
 	abstract protected void createControls(Composite parent);
 	
 }

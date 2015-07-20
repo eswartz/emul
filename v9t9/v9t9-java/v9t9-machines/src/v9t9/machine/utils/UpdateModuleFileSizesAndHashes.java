@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import v9t9.common.events.NotifyException;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.files.PathFileLocator;
-import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.ModuleDatabase;
@@ -57,9 +57,13 @@ public class UpdateModuleFileSizesAndHashes {
 		locator = new PathFileLocator();
 		
 		IProperty prop = new SettingSchemaProperty("Paths", String.class, new ArrayList<String>());
+		prop.getList().add("/usr/local/src/v9t9-data/roms");
 		prop.getList().add("/usr/local/src/v9t9-data/modules");
 		prop.getList().add("/usr/local/src/v9t9-data/modules/mess");
 		prop.getList().add("/usr/local/src/v9t9-data/modules/tosec");
+		prop.getList().add("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/zip");
+		prop.getList().add("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk");
+		prop.getList().add("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk.old");
 		
 		locator.addReadOnlyPathProperty(prop);
 		
@@ -123,26 +127,20 @@ public class UpdateModuleFileSizesAndHashes {
 		
 		URI uri = locator.findFile(filename);
 		if (uri == null) {
+			System.err.println("Could not find " + filename);
 			return;
 		}
 	
 		int size = locator.getContentLength(uri);
 		if (size >= 0x1000) {
 			size &= ~0x7ff;
-			if (info.getDomainName().equals(IMemoryDomain.NAME_GRAPHICS)) {
-				if ((size & 0x7ff) == 0)
-					size -= 0x800;
-			}
 		}
 		
-		Integer md5offset = (Integer) info.getProperties().get(md5OffsetProperty);
-		if (md5offset == null)
-			md5offset = 0;
-		Integer md5size =  (Integer) info.getProperties().get(md5SizeProperty);
-		if (md5size == null)
-			md5size = size;
+		String alg = md5Property.equals(MemoryEntryInfo.FILE_MD5_ALGORITHM)
+				? info.getEffectiveFileMD5Algorithm() : info.getEffectiveFile2MD5Algorithm();
 		
-		String md5 = locator.getContentMD5(uri, md5offset, md5size, true);
+		String md5 = locator.getContentMD5(uri, 
+				MD5FilterAlgorithms.create(alg));
 
 		System.out.println(filename + " ==> " + size + " & " + md5);
 		

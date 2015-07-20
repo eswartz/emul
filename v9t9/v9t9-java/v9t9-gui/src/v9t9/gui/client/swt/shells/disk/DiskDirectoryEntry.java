@@ -63,6 +63,7 @@ public class DiskDirectoryEntry extends BaseDiskEntry {
 		if (dirname != null) {
 			switchPath(combo, dirname);
 			combo.setText(dirname);
+			commitEntry();
 		}		
 	}
 
