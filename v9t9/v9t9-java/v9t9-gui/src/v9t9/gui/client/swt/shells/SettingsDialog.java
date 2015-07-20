@@ -260,7 +260,7 @@ public class SettingsDialog extends Composite implements IPropertyListener {
 			{
 				behavior.boundsPref = "SettingsDialogBounds";
 				behavior.centering = Centering.OUTSIDE;
-				behavior.centerOverControl = buttonBar.getShell();
+				behavior.centerOverControl = null;
 				behavior.dismissOnClickOutside = false;
 			}
 			public Control createContents(Shell shell) {
