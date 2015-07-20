@@ -669,7 +669,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			createAccelMenuItem(menu, 1.0 / div, "1/" + div);
 		}
 		
-		if (machine.getExecutor().getCompilerStrategy().canCompile()) {	
+		if (false && machine.getExecutor().getCompilerStrategy().canCompile()) {	
 			new MenuItem(menu, SWT.SEPARATOR);
 			item = new MenuItem(menu, SWT.CHECK);
 			item.setText("Compile to Bytecode");
