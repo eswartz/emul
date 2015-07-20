@@ -824,11 +824,13 @@ public class PathFileLocator implements IPathFileLocator {
 			// too many files open...
 			md5 = "";
 			logger.error("can't fetch MD5 for " + uri, e);
-		} catch (FileNotFoundException e) {
+		} catch (IOException e) {
 			// this can happen when invalid filenames are located and the
 			// URI was not properly de/en-coded -- TODO
 			// ... or when the file actually doesn't exist...
+			// ... or for other mysterious reasons ("bad file descriptor")... wtf?
 			md5 = "";
+			System.err.println("can't fetch MD5 for " + uri);
 			logger.error("can't fetch MD5 for " + uri, e);
 		}
 		return md5;
