@@ -11,7 +11,6 @@
 package v9t9.engine.compiler;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 import ejs.base.properties.IProperty;
 import ejs.base.utils.HexUtils;
@@ -43,6 +42,8 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
     byte[] bytecode;
     /** implementation */
     CompiledCode code;
+    boolean broken;
+    
     String baseName;
     private boolean running;
 	private IExecutor exec;
@@ -198,6 +199,12 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
         	exec.recordSwitch();
         	abort = e;
         }
+        catch (Throwable t) {
+        	// bug in compiler!
+        	t.printStackTrace();
+        	abort = (AbortedException) new AbortedException().initCause(t); 
+        	return false;
+        }
         finally {
         	
         	// throws due to AbortedException usually 
@@ -242,31 +249,21 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
 			return true;
 		}
             
-        if (bytecode == null) {
+        if (bytecode == null || broken) {
 			return false;
 		}
 
         // load and construct an instance of the class
-        Class<?> clas = loader.load(uniqueClassName, bytecode);
+        Class<?> clas = null;
         try {
+        	clas = loader.load(uniqueClassName, bytecode);
             Constructor<?> cons = clas.getConstructor(new Class[] { IExecutor.class });
             code = (CompiledCode)cons.newInstance(new Object[] { exec });
             return true;
-        } catch (InvocationTargetException ex) {
+        } catch (Throwable ex) {
             ex.printStackTrace(System.err);
-            System.exit(1);
-            return false;
-        } catch (NoSuchMethodException ex) {
-            ex.printStackTrace(System.err);
-            System.exit(1);
-            return false;
-        } catch (IllegalAccessException ex) {
-            ex.printStackTrace(System.err);
-            System.exit(1);
-            return false;
-        } catch (InstantiationException ex) {
-            ex.printStackTrace(System.err);
-            System.exit(1);
+            //System.exit(1);
+            broken = true;
             return false;
         }
     }

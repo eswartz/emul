@@ -41,6 +41,7 @@ import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.PUTFIELD;
+import org.apache.bcel.generic.ReferenceType;
 import org.apache.bcel.generic.TABLESWITCH;
 import org.apache.bcel.generic.Type;
 
@@ -48,13 +49,14 @@ import ejs.base.launch.CommandLauncher;
 import ejs.base.launch.ProcessClosure;
 import ejs.base.properties.IProperty;
 import ejs.base.utils.HexUtils;
-
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.compiler.ICompiler;
+import v9t9.common.cpu.CycleCounts;
+import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.memory.IMemoryDomain;
@@ -373,7 +375,7 @@ public class Compiler9900 extends CompilerBase {
      */
     public void generateInstruction(int pc, RawInstruction rawins,
             CompileInfo info, CompiledInstInfo ii) {
-    	Instruction9900 ins = new Instruction9900(rawins, cpu.getConsole());
+    	Instruction9900 ins = rawins instanceof Instruction9900 ? (Instruction9900) rawins : new Instruction9900(rawins, cpu.getConsole());
         InstructionList ilist = info.ilist;
 
         BaseMachineOperand mop1 = (BaseMachineOperand) ins.getOp1();
@@ -432,7 +434,7 @@ public class Compiler9900 extends CompilerBase {
             ilist.append(info.ifact.createInvoke(CompiledCode.class
                     .getName(), "dump", Type.VOID, new Type[] { Type.SHORT,
                     Type.SHORT,
-                    new ObjectType(IStatus.class.getName()),
+                    Type.getType(IStatus.class),
                     Type.INT, Type.INT}, Constants.INVOKEVIRTUAL));
         }
 
@@ -521,15 +523,15 @@ public class Compiler9900 extends CompilerBase {
         ilist.append(InstructionConstants.THIS);
         if (insString != null) {
             ilist.append(new PUSH(info.pgen, insString));
-            types = new Type[] { new ObjectType(String.class.getName()),
+            types = new Type[] { Type.STRING,
                     Type.SHORT, Type.SHORT,
-                    new ObjectType(IStatus.class.getName()),
+                    Type.getType(IStatus.class),
                     Type.SHORT, Type.SHORT, Type.SHORT, Type.SHORT, Type.INT,
                     Type.INT, Type.INT, Type.INT };
 
         } else {
 			types = new Type[] { Type.SHORT, Type.SHORT,
-                    new ObjectType(IStatus.class.getName()),
+                    Type.getType(IStatus.class),
                     Type.SHORT, Type.SHORT, Type.SHORT, Type.SHORT, Type.INT,
                     Type.INT, Type.INT, Type.INT };
 		}
@@ -741,33 +743,31 @@ public class Compiler9900 extends CompilerBase {
 		ConstantPoolGen pgen = cgen.getConstantPool();
 		InstructionList ilist;
 		MethodGen mgen;
-		// create instruction list for default constructor
-        ilist = new InstructionList();
-        ilist.append(InstructionConstants.THIS);
-        ilist.append(ifact.createInvoke(CompiledCode9900.class.getName(),
-                        "<init>", Type.VOID, Type.NO_ARGS,
-                        Constants.INVOKESPECIAL));
-        ilist.append(InstructionFactory.createReturn(Type.VOID));
-
-        // add public default constructor method to class
-        mgen = new MethodGen(Constants.ACC_PUBLIC, Type.VOID, Type.NO_ARGS,
-                new String[] {}, "<init>", className, ilist, pgen);
-        addMethod(mgen, cgen);
+//		// create instruction list for default constructor
+//        ilist = new InstructionList();
+//        ilist.append(InstructionConstants.THIS);
+//        ilist.append(ifact.createInvoke(CompiledCode9900.class.getName(),
+//                        "<init>", Type.VOID, Type.NO_ARGS,
+//                        Constants.INVOKESPECIAL));
+//        ilist.append(InstructionFactory.createReturn(Type.VOID));
+//
+//        // add public default constructor method to class
+//        mgen = new MethodGen(Constants.ACC_PUBLIC, Type.VOID, Type.NO_ARGS,
+//                new String[] {}, "<init>", className, ilist, pgen);
+//        addMethod(mgen, cgen);
 
         // create instruction list
         ilist = new InstructionList();
         ilist.append(InstructionConstants.THIS);
         ilist.append(InstructionConstants.ALOAD_1);
         ilist.append(ifact.createInvoke(CompiledCode9900.class.getName(),
-                "<init>", Type.VOID, new Type[] { new ObjectType(
-                        IExecutor.class.getName()) },
+                "<init>", Type.VOID, new Type[] { Type.getType(IExecutor.class) },
                 Constants.INVOKESPECIAL));
         ilist.append(InstructionFactory.createReturn(Type.VOID));
 
         // add constructor method to class
         mgen = new MethodGen(Constants.ACC_PUBLIC, Type.VOID,
-                new Type[] { new ObjectType(IExecutor.class
-                        .getName()) }, new String[] { "exec" }, "<init>",
+                new Type[] { Type.getType(IExecutor.class) }, new String[] { "exec" }, "<init>",
                 className, ilist, pgen);
         addMethod(mgen, cgen);
 	}
@@ -815,9 +815,14 @@ public class Compiler9900 extends CompilerBase {
         ilist.append(new GETFIELD(info.cpuIndex));
 	    ilist.append(info.ifact.createCheckCast(new ObjectType(Cpu9900.class.getName())));
 
+	    ilist.append(info.ifact.createInvoke(ICpu.class.getName(),
+        		"getCycleCounts", Type.getType(CycleCounts.class), 
+        		Type.NO_ARGS,
+                Constants.INVOKEINTERFACE));
+	    
         ilist.append(new ILOAD(info.localCycles));
-        ilist.append(info.ifact.createInvoke(Cpu9900.class.getName(),
-        		"addCycles", Type.VOID, new Type[] { Type.INT },
+        ilist.append(info.ifact.createInvoke(CycleCounts.class.getName(),
+        		"addExecute", Type.VOID, new Type[] { Type.INT },
                 Constants.INVOKEVIRTUAL));
         ilist.append(InstructionConstants.ICONST_0);
         ilist.append(new ISTORE(info.localCycles));
@@ -915,9 +920,9 @@ public class Compiler9900 extends CompilerBase {
         info.localVal2 = lg.getIndex();
         lg = mgen.addLocalVariable("val3", Type.SHORT, null, null);
         info.localVal3 = lg.getIndex();
-        lg = mgen.addLocalVariable("status", new ObjectType(Status9900.class.getName()), null, null);
+        lg = mgen.addLocalVariable("status", Type.getType(Status9900.class), null, null);
         info.localStatus = lg.getIndex();
-        lg = mgen.addLocalVariable("memory", new ObjectType(v9t9.common.memory.IMemoryDomain.class.getName()), null, null);
+        lg = mgen.addLocalVariable("memory", Type.getType(IMemoryDomain.class), null, null);
         info.localMemory = lg.getIndex();
         lg = mgen.addLocalVariable("nInsts", Type.INT, null, null);
         info.localInsts = lg.getIndex();
@@ -975,9 +980,9 @@ public class Compiler9900 extends CompilerBase {
 	    ilist.append(InstructionConstants.DUP);
 	    ilist.append(ifact.createInvoke(v9t9.common.cpu.ICpuState.class.getName(),
 	            "getStatus",
-	            new ObjectType(IStatus.class.getName()),
+	            Type.getType(IStatus.class),
 	            Type.NO_ARGS, Constants.INVOKEINTERFACE));
-	    ilist.append(ifact.createCheckCast(new ObjectType(Status9900.class.getName()))); 
+	    ilist.append(ifact.createCheckCast((ReferenceType) Type.getType(Status9900.class))); 
 	    ilist.append(new ASTORE(info.localStatus));
 	
 	    ilist.append(InstructionConstants.POP); // cpu

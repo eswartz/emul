@@ -353,6 +353,8 @@ public class OperandCompiler9900 {
 	 */
 	public static void compileReadRegWord(CompileInfo info,
 	        InstructionList ilist, int val, boolean saveAddr) {
+		// FIXME: add cycles
+		
 	    ilist.append(new ALOAD(info.localWpWordMemory));
 	    compileGetRegAddress(info, ilist, val);
 	    if (saveAddr) {
