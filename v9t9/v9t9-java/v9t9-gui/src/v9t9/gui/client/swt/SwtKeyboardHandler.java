@@ -55,9 +55,11 @@ import ejs.base.utils.HexUtils;
 public class SwtKeyboardHandler extends BaseKeyboardHandler {
 	
 	private Timer pasteTimer;
+	private long baseTime;
 
 	public SwtKeyboardHandler(IKeyboardState keyboardState, IMachine machine) {
 		super(keyboardState, machine);
+		baseTime = System.currentTimeMillis() & 0xFFFFFFFF00000000L;
 	}
 
 	/**
@@ -85,7 +87,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		}
 		
 		// immediately record it
-		updateKey(pressed, stateMask, keyCode, keyPad);
+		updateKey(baseTime + (keyEvent.time & 0xFFFFFFFFL), pressed, stateMask, keyCode, keyPad);
 	}
 	
 	private static final Map<Integer, Integer> swtKeycodeToKey = new HashMap<Integer, Integer>(); 
@@ -146,7 +148,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			swtKeycodeToKey.put(keycodesAndKeys[i], keycodesAndKeys[i+1]);
 		}
 	}
-	private void updateKey(boolean pressed, int stateMask, int keyCode, boolean keyPad) {
+	private void updateKey(long time, boolean pressed, int stateMask, int keyCode, boolean keyPad) {
 		
 		//System.out.println("keyCode="+keyCode+"; stateMask="+stateMask+"; pressed="+pressed);
 		byte shiftMask = 0;
@@ -163,7 +165,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		if ((keyCode & SWT.KEYCODE_BIT) == 0) {
 			keyCode &= 0xff;
 		
-			if (postCharacter(pressed, shiftMask, (char) keyCode)) {
+			if (postCharacter(time, pressed, shiftMask, (char) keyCode)) {
 				return;
 			}
 		}
@@ -171,13 +173,13 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		
 		if (keyCode == 0) {
-			pushShifts(pressed, shiftMask);
+			pushShifts(time, pressed, shiftMask);
 			return;
 		}
 		
 		Integer ikey = swtKeycodeToKey.get(keyCode);
 		if (ikey != null) {
-			handleSpecialKey(pressed, shiftMask, ikey, keyPad);
+			handleSpecialKey(time, pressed, shiftMask, ikey, keyPad);
 		}
 		else {
 			System.err.println("*** unhandled SWT keyCode: " + keyCode);
@@ -188,7 +190,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 	 * @see v9t9.common.keyboard.BaseKeyboardHandler#handleActionKey(boolean, int)
 	 */
 	@Override
-	protected boolean handleActionKey(boolean pressed, int key) {
+	protected boolean handleActionKey(long time, boolean pressed, int key) {
 		if (key == KEY_PRINT_SCREEN) {
 			if (pressed) {
 				byte shiftMask = machine.getKeyboardState().getShiftMask();
@@ -204,7 +206,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			}
 			return true;
 		}
-		return super.handleActionKey(pressed, key);
+		return super.handleActionKey(time, pressed, key);
 	}
 	
 	private int lastKeyPressedCode = -1;

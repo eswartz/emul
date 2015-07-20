@@ -56,7 +56,7 @@ public interface IKeyboardHandler {
 	
 	boolean anyKeyAvailable();
 
-	boolean postCharacter(boolean pressed, byte shift, char ch);
+	boolean postCharacter(long time, boolean pressed, byte shift, char ch);
 	/**
 	 * @return
 	 */
