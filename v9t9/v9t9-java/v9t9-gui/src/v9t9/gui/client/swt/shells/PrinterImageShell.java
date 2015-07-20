@@ -442,6 +442,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 						int pixY = (int) (rowPerc * bounds.height);
 						
 						e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
+						e.gc.setLineWidth(4);
 						e.gc.drawLine(0, pixY, bounds.width, pixY);
 						e.gc.drawLine(pixX, pixY, pixX, pixY + 16);
 					}
