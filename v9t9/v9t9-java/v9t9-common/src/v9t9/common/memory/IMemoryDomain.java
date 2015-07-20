@@ -10,8 +10,6 @@
  */
 package v9t9.common.memory;
 
-import java.io.IOException;
-
 import v9t9.common.events.IEventNotifier;
 import ejs.base.settings.ISettingSection;
 
