@@ -12,10 +12,13 @@ package v9t9.machine.printer;
 
 import org.eclipse.swt.widgets.Display;
 
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 import v9t9.common.dsr.IPIOListener;
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageHandler;
 import v9t9.common.machine.IMachine;
+import v9t9.machine.ti99.dsr.rs232.RS232Settings;
 
 /**
  * This handles printer data coming from PIO
@@ -25,9 +28,19 @@ import v9t9.common.machine.IMachine;
 public class PIOPrinterImageHandler implements IPIOListener, IPrinterImageHandler {
 
 	private IPrinterImageEngine engine;
+	private IProperty activeProperty;
 	
-	public PIOPrinterImageHandler(IMachine machine, IPrinterImageEngine engine) {
-		this.engine = engine;
+	public PIOPrinterImageHandler(IMachine machine, IPrinterImageEngine engine_) {
+		this.activeProperty = machine.getSettings().get(RS232Settings.settingPIOPrint);
+		this.engine = engine_;
+		
+		activeProperty.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				engine.flushPage();
+			}
+		});
 	}
 	
 	/* (non-Javadoc)
@@ -49,6 +62,9 @@ public class PIOPrinterImageHandler implements IPIOListener, IPrinterImageHandle
 	 */
 	@Override
 	public void charsTransmitted(final byte[] buffer) {
+		if (!activeProperty.getBoolean())
+			return;
+		
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
 				for (byte b : buffer) {

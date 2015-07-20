@@ -11,6 +11,7 @@
 package v9t9.gui.client.swt.shells;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -22,10 +23,13 @@ import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -34,11 +38,15 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Scrollable;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
+import org.ejs.gui.common.SwtUtils;
 
+import ejs.base.properties.IProperty;
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageListener;
 import v9t9.gui.EmulatorGuiData;
@@ -55,15 +63,23 @@ public class PrinterImageShell implements IPrinterImageListener {
 	
 	// all for the current page; old pages are abandoned
 	private Canvas canvas;
+	/** scaled image of current page */
+	private Image canvasImage; 
 	
 	private double zoom = 1.0;
 	
 	protected int pageNum;
 	
+	/** unscaled images with raw data */
 	private Map<Integer, Image> pageImages = new HashMap<Integer, Image>();
+	
+	
 	protected long nextUpdateTime;
+	protected long lastUpdateTime;
 	private GridData tabFolderData;
 	private IPrinterImageEngine engine;
+
+	protected boolean contentsChanged;
 
 	public PrinterImageShell(IPrinterImageEngine engine) {
 		log.info("creating shell for engine " + engine.getPrinterId());
@@ -89,6 +105,9 @@ public class PrinterImageShell implements IPrinterImageListener {
 					image.dispose();
 				}
 				pageImages.clear();
+				if (canvasImage != null)
+					canvasImage.dispose();
+				canvasImage = null;
 			}
 		});
 		
@@ -108,15 +127,25 @@ public class PrinterImageShell implements IPrinterImageListener {
 					if (scrollable != null) {
 						scrollable.getVerticalBar().setSelection(0);
 					}
+					contentsChanged = true;
 				}
 			}
 		});
 	
 		ToolBar toolbar = new ToolBar(tabFolder, SWT.NONE);
 		tabFolder.setTopRight(toolbar);
+		
+		tabFolder.addMenuDetectListener(new MenuDetectListener() {
+			
+			@Override
+			public void menuDetected(MenuDetectEvent e) {
+				populateMenu(e.x, e.y);
+			}
+		});
 
 		final ToolItem zoomIn = new ToolItem(toolbar, SWT.PUSH);
 		zoomIn.setImage(EmulatorGuiData.loadImage(tabFolder.getDisplay(), "icons/zoom_plus.gif"));
+		zoomIn.setToolTipText("Zoom In");
 		zoomIn.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -125,6 +154,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 		});
 		final ToolItem zoomOut = new ToolItem(toolbar, SWT.PUSH);
 		zoomOut.setImage(EmulatorGuiData.loadImage(tabFolder.getDisplay(), "icons/zoom_minus.gif"));
+		zoomOut.setToolTipText("Zoom Out");
 		zoomOut.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -133,23 +163,94 @@ public class PrinterImageShell implements IPrinterImageListener {
 		});
 		final ToolItem zoomReset = new ToolItem(toolbar, SWT.PUSH);
 		zoomReset.setImage(EmulatorGuiData.loadImage(tabFolder.getDisplay(), "icons/zoom_equal.gif"));
+		zoomReset.setToolTipText("Zoom to 1.0");
 		zoomReset.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				zoom(1.0);
 			}
 		});
-		final ToolItem newPage = new ToolItem(toolbar, SWT.PUSH);
+		final ToolItem newPage = new ToolItem(toolbar, SWT.DROP_DOWN);
 		newPage.setImage(EmulatorGuiData.loadImage(tabFolder.getDisplay(), "icons/formfeed.gif"));
+		newPage.setToolTipText("Start new page");
 		newPage.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				engine.newPage();
+				if (e.detail != SWT.ARROW)
+					engine.newPage();
+				else
+					populateMenu(e.x, e.y);
 			}
 		});
+		
 		tabFolder.setTabHeight(28);
 	}
 
+
+	/**
+	 * @param e
+	 */
+	protected void populateMenu(int x, int y) {
+		Menu menu = new Menu(tabFolder);
+		
+		MenuItem deleteItem = new MenuItem(menu, SWT.PUSH);
+		deleteItem.setText("Delete older pages");
+		deleteItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (tabFolder.getItemCount() > 0) {
+					CTabItem last = tabFolder.getItem(tabFolder.getItemCount() - 1);
+					for (CTabItem item : tabFolder.getItems()) {
+						if (item != last)
+							item.dispose();
+					}
+				}
+				for (Iterator<Map.Entry<Integer, Image>> iterator = pageImages.entrySet().iterator(); iterator
+						.hasNext();) {
+					Map.Entry<Integer, Image> ent = iterator.next();
+					if (ent.getKey() != pageNum) {
+						ent.getValue().dispose();
+						iterator.remove();
+					}
+				}
+				
+			}
+		});
+
+		MenuItem inkItem = new MenuItem(menu, SWT.CASCADE);
+		inkItem.setText("Ink Level");
+		
+		Menu inkMenu = new Menu(inkItem);
+		
+		addInkItem(inkMenu, "Low", 0.25);
+		addInkItem(inkMenu, "Medium", 0.5);
+		addInkItem(inkMenu, "High", 0.75);
+		addInkItem(inkMenu, "Black", 1.0);
+		
+		inkItem.setMenu(inkMenu);
+
+		SwtUtils.runMenu(null, x, y, menu);
+	}
+
+	/**
+	 * @param inkMenu
+	 * @param label
+	 * @param level
+	 */
+	private void addInkItem(Menu inkMenu, String label, final double level) {
+		final IProperty inkLevel = engine.getInkLevel();
+		MenuItem inkItem = new MenuItem(inkMenu, SWT.RADIO);
+		inkItem.setText(label);
+		inkItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				inkLevel.setDouble(level);
+			}
+		});
+		if (Math.abs(inkLevel.getDouble() - level) < 0.001) {
+			inkItem.setSelection(true);
+		}
+	}
 
 	protected void zoom(double toZoom) {
 		this.zoom = toZoom;
@@ -168,8 +269,14 @@ public class PrinterImageShell implements IPrinterImageListener {
 			Image image = pageImages.get(item.getData());
 			if (image != null) {
 				Rectangle bounds = image.getBounds();
-				canvas.setSize(new Point((int) (bounds.width * zoom), (int) (bounds.height * zoom)));
+				if (canvasImage != null)
+					canvasImage.dispose();
+				
+				Point sz = new Point((int) (bounds.width * zoom), (int) (bounds.height * zoom));
+				canvas.setSize(sz);
 	            canvas.layout();
+	            canvasImage = new Image(canvas.getDisplay(), sz.x, sz.y);
+	            contentsChanged = true;
 			}
 		}
 		tabFolder.redraw();
@@ -188,20 +295,45 @@ public class PrinterImageShell implements IPrinterImageListener {
 	 */
 	@Override
 	public void updated(final Object imageObj) {
+		contentsChanged = true;
+		
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
-				if (canvas == null) {
+				if (canvas == null || canvas.isDisposed() || tabFolder.getItemCount() == 0) {
 					newPage(imageObj);
 				}
-				if (canvas == null || canvas.isDisposed())
-					return;
 				long now = System.currentTimeMillis();
+				lastUpdateTime = now;
 				if (now >= nextUpdateTime) {
 					canvas.redraw();
 					nextUpdateTime = now + 500;
+					
+					queueRedrawSoon();
 				}
 			}
 		});
+	}
+
+	/**
+	 * 
+	 */
+	protected void queueRedrawSoon() {
+		Display.getDefault().timerExec(100, new Runnable() {
+			public void run() {
+				if (canvas == null || canvas.isDisposed())
+					return;
+				
+				// still printing?
+				long now = System.currentTimeMillis();
+				if (lastUpdateTime + 5000 > now) {
+					nextUpdateTime = now + 500;
+					if (lastUpdateTime + 1000 < now)
+						engine.flushBuffer();
+					canvas.redraw();
+					queueRedrawSoon();
+				}
+			}
+		});		
 	}
 
 	/* (non-Javadoc)
@@ -283,37 +415,70 @@ public class PrinterImageShell implements IPrinterImageListener {
 			
 			@Override
 			public void paintControl(PaintEvent e) {
-				Image swtImage = pageImages.get(thisPage);
-				if (swtImage == null) {
-					e.gc.fillRectangle(e.x, e.y, e.width, e.height);
-					return;
+				if (contentsChanged) {
+					reprintPage(thisPage);
+					contentsChanged = false;
 				}
-				
-				Rectangle bounds = canvas.getBounds();
-				
-				e.gc.setAntialias(SWT.ON);
-				e.gc.setInterpolation(SWT.HIGH);
-				Transform xfrm = new Transform(e.gc.getDevice());
-				xfrm.scale((float) zoom, (float) zoom);
-				e.gc.setTransform(xfrm);
-				e.gc.drawImage(swtImage, 0, 0);
-				e.gc.setTransform(null);
-				xfrm.dispose();
 
-				if (thisPage == pageNum) {
-					double rowPerc = engine.getPageRowPercentage();
-					double colPerc = engine.getPageColumnPercentage();
-					int pixX = (int) (colPerc * bounds.width);
-					int pixY = (int) (rowPerc * bounds.height);
+				if (canvasImage != null && !canvasImage.isDisposed()) {
+					Rectangle bounds = canvasImage.getBounds();
 					
-					e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
-					e.gc.drawLine(0, pixY, bounds.width, pixY);
-					e.gc.drawLine(pixX, pixY, pixX, pixY + 16);
+//					int cx1 = Math.max(0, e.x);
+//					int cy1 = Math.max(0, e.y);
+//					int cx2 = Math.min(bounds.width, e.x + e.width);
+//					int cy2 = Math.min(bounds.height, e.y + e.height);
+//					
+//					e.gc.drawImage(canvasImage, cx1, cy1, cx2-cx1, cy2-cy1, cx1, cy1, cx2-cx1, cy2-cy1);
+					
+					// FIXME
+					e.gc.drawImage(canvasImage, 0, 0);
+					
+					if (thisPage == pageNum) {
+						// draw "print head" in appropriate position
+						
+						double rowPerc = engine.getPageRowPercentage();
+						double colPerc = engine.getPageColumnPercentage();
+						int pixX = (int) (colPerc * bounds.width);
+						int pixY = (int) (rowPerc * bounds.height);
+						
+						e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_GREEN));
+						e.gc.drawLine(0, pixY, bounds.width, pixY);
+						e.gc.drawLine(pixX, pixY, pixX, pixY + 16);
+					}
+
 				}
 			}
 		});
 		
 		tabFolder.setSelection(item);
+	}
+
+	/**
+	 * @param thisPage
+	 * @param e
+	 */
+	protected void reprintPage(final int thisPage) {
+		GC gc = new GC(canvasImage);
+		
+		//System.out.println(System.currentTimeMillis() + ": start");
+		Image swtImage = pageImages.get(thisPage);
+		if (swtImage == null) {
+			gc.fillRectangle(canvasImage.getBounds());
+		} else {
+			if (zoom < 1) {
+				// these are very slow when zooming out
+				gc.setAntialias(SWT.ON);
+				gc.setInterpolation(SWT.DEFAULT);
+			}
+			Transform xfrm = new Transform(gc.getDevice());
+			xfrm.scale((float) zoom, (float) zoom);
+			gc.setTransform(xfrm);
+			gc.drawImage(swtImage, 0, 0);
+			gc.setTransform(null);
+			xfrm.dispose();
+		}
+		gc.dispose();
+		//System.out.println(System.currentTimeMillis() + ": end");
 	}
 
 }

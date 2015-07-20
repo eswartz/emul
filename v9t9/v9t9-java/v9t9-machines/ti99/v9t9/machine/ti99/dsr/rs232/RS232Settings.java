@@ -36,5 +36,21 @@ public class RS232Settings {
 			"used and whether parallel ports (PIO) are available.",
 					RS232Controllers.RS232_ONLY
 			);
+	
+	public static SettingSchema settingRS232Print = new SettingSchema(
+			ISettingsHandler.USER,
+			"RS232Print", 
+			"Redirect RS232 output to printer dialog",
+			"When enabled, RS232 output is treated as TI Printer/Epson RX-80 compatible output and 'printed' to images",
+			true);
+	
+	public static SettingSchema settingPIOPrint = new SettingSchema(
+			ISettingsHandler.USER,
+			"PIOPrint", 
+			"Redirect PIO output to printer dialog",
+			"When enabled, PIO output is treated as TI Printer/Epson RX-80 compatible output and 'printed' to images",
+			true);
+	
+
 
 }

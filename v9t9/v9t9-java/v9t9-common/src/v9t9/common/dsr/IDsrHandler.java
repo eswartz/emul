@@ -26,6 +26,8 @@ public interface IDsrHandler extends IPersistable, IDeviceSettings {
 	String GROUP_DSR_SELECTION = "Device Selection";
 	String GROUP_REAL_DISK_CONFIGURATION = "Disk Image Configuration";
 	String GROUP_EMU_DISK_CONFIGURATION = "Disk Directory Configuration";
+	String GROUP_RS232_CONFIGURATION = "RS232 (Serial) Configuration";
+	String GROUP_PIO_CONFIGURATION = "PIO (Parallel Port) Configuration";
 
 	void init();
 	void dispose();

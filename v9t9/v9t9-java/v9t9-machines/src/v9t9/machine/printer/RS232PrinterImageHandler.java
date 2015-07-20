@@ -12,6 +12,8 @@ package v9t9.machine.printer;
 
 import org.eclipse.swt.widgets.Display;
 
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageHandler;
 import v9t9.common.dsr.IRS232Handler.DataSize;
@@ -19,6 +21,7 @@ import v9t9.common.dsr.IRS232Handler.Parity;
 import v9t9.common.dsr.IRS232Handler.Stop;
 import v9t9.common.dsr.IRS232Listener;
 import v9t9.common.machine.IMachine;
+import v9t9.machine.ti99.dsr.rs232.RS232Settings;
 
 /**
  * This handles 
@@ -28,13 +31,23 @@ import v9t9.common.machine.IMachine;
 public class RS232PrinterImageHandler implements IRS232Listener, IPrinterImageHandler {
 
 	private IPrinterImageEngine engine;
+	private IProperty activeProperty;
 	
 	/**
 	 * @param machine
 	 * @param i
 	 */
-	public RS232PrinterImageHandler(IMachine machine, IPrinterImageEngine engine) {
-		this.engine = engine;
+	public RS232PrinterImageHandler(IMachine machine, IPrinterImageEngine engine_) {
+		this.activeProperty = machine.getSettings().get(RS232Settings.settingRS232Print);
+		this.engine = engine_;
+		
+		activeProperty.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				engine.flushPage();
+			}
+		});
 	}
 	
 	/* (non-Javadoc)
@@ -71,7 +84,8 @@ public class RS232PrinterImageHandler implements IRS232Listener, IPrinterImageHa
 	 */
 	@Override
 	public void updatedControl(DataSize size, Parity parity, Stop stop) {
-		engine.flushPage();
+		if (activeProperty.getBoolean())
+			engine.flushPage();
 	}
 
 	/* (non-Javadoc)
@@ -79,7 +93,10 @@ public class RS232PrinterImageHandler implements IRS232Listener, IPrinterImageHa
 	 */
 	@Override
 	public void charsTransmitted(final byte[] buffer) {
-		Display.getDefault().asyncExec(new Runnable() {
+		if (!activeProperty.getBoolean())
+			return;
+		
+		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
 				for (byte b : buffer) {
 					engine.print(b);

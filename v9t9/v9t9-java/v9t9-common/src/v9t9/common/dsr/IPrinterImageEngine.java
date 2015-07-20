@@ -10,6 +10,8 @@
  */
 package v9t9.common.dsr;
 
+import ejs.base.properties.IProperty;
+
 
 /**
  * @author ejs
@@ -53,5 +55,17 @@ public interface IPrinterImageEngine {
 	 * @return
 	 */
 	double getPageColumnPercentage();
+
+	/**
+	 * Flush any buffering, e.g. for a long line of graphics, so that a
+	 * new {@link IPrinterImageListener#updated(Object)} call will occur soon.
+	 */
+	void flushBuffer();
+
+	/**
+	 * Get the ink level property
+	 * @return
+	 */
+	IProperty getInkLevel();
 
 }

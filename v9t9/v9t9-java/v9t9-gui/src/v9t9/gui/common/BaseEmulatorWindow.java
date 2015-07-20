@@ -55,6 +55,8 @@ public abstract class BaseEmulatorWindow {
 	private static final String[] MACHINE_SAVE_FILE_EXTENSIONS = new String[] { "*.sav|V9t9 machine save file" };
 	protected IVideoRenderer videoRenderer;
 	protected final IMachine machine;
+
+	private String lastLoadedState;
 	static public final SettingSchema settingMonitorDrawing = new SettingSchema(
 			ISettingsHandler.MACHINE,
 			"MonitorDrawing", Boolean.TRUE);
@@ -171,10 +173,12 @@ public abstract class BaseEmulatorWindow {
 		String filename = selectFile(
 				"Select saved machine state", 
 				Settings.get(machine, settingMachineStatePath),
-				"saves", 
-				null, false, false, MACHINE_SAVE_FILE_EXTENSIONS);
+				"saves",
+				lastLoadedState,
+				false, false, MACHINE_SAVE_FILE_EXTENSIONS);
 		
 		if (filename != null) {
+			lastLoadedState = filename;
 			InputStream fis = null;
 			try {
 				ISettingStorage storage = new XMLSettingStorage(STATE);

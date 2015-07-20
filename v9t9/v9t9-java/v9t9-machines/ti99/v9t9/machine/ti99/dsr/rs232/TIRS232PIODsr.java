@@ -11,6 +11,8 @@
 package v9t9.machine.ti99.dsr.rs232;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.Map;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryEntry;
@@ -193,13 +196,28 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 				pioActiveSetting, 
 				"RS232/PIO activity",
 				IDevIcons.DSR_RS232, IDevIcons.DSR_LIGHT,
-				null);
+				"RS232/PIO Settings",
+				IDsrHandler.GROUP_PIO_CONFIGURATION, IDsrHandler.GROUP_RS232_CONFIGURATION);
 		return Collections.<IDeviceIndicatorProvider>singletonList(deviceIndicatorProvider);
 	}
 
+
+	@Override
+	public Map<String, Collection<IProperty>> getEditableSettingGroups() {
+		Map<String, Collection<IProperty>> map = super.getEditableSettingGroups();
+
+		List<IProperty> settings = new ArrayList<IProperty>(1);
+		settings.add(this.settings.get(RS232Settings.settingPIOPrint));
+		map.put(IDsrHandler.GROUP_PIO_CONFIGURATION, settings);
+		
+		return map;
+	}
+	
 	@Override
 	public void loadState(ISettingSection section) {
 		super.loadState(section);
+		if (section == null)
+			return;
 		
 		ISettingSection pioSec = section.getSection("PIO");
 		activePIO.loadState(pioSec);
