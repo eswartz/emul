@@ -186,7 +186,7 @@ public class ModuleSelector extends Composite {
 	private ILazyImageAdjuster moduleImageResizer;
 
 	static class FilteredSearchFilter extends ViewerFilter {
-		public String filter;
+		public static String filter;
 
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.viewers.ViewerFilter#isFilterProperty(java.lang.Object, java.lang.String)
@@ -555,7 +555,7 @@ public class ModuleSelector extends Composite {
 
 	protected void updateFilter(final String text) {
 		if (text != null && !text.isEmpty()) {
-			filteredSearchFilter.filter = text;
+			FilteredSearchFilter.filter = text;
 			flatModuleList = null;
 			viewer.refresh();
 			viewer.expandAll();
@@ -573,7 +573,7 @@ public class ModuleSelector extends Composite {
 				}
 			}
 		} else {
-			filteredSearchFilter.filter = null;
+			FilteredSearchFilter.filter = null;
 			
 		}
 	}
@@ -1442,7 +1442,7 @@ public class ModuleSelector extends Composite {
 	 * 
 	 */
 	public void firstRefresh() {
-		initFilter(null);
+		initFilter(FilteredSearchFilter.filter);
 		hookActions();
 	}
 
