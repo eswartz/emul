@@ -16,7 +16,6 @@ import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.hardware.IVdpV9938;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.video.tms9918a.VdpTMS9918ACanvasBlockRenderer;
-import v9t9.video.tms9918a.VdpTMS9918ACanvasRowRenderer;
 import v9t9.video.v9938.VdpV9938CanvasBlockRenderer;
 
 /**

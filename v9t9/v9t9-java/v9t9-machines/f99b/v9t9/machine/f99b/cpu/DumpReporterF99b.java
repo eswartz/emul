@@ -17,11 +17,9 @@ import ejs.base.settings.Logging;
 import ejs.base.utils.HexUtils;
 
 
-import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IInstructionListener;
-import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.settings.Settings;
 
 /**

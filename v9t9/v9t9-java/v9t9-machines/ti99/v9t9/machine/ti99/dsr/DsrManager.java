@@ -29,7 +29,6 @@ import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.ConsoleMemoryTransfer;
 import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
-import v9t9.machine.ti99.cpu.ChangeBlock9900;
 import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 

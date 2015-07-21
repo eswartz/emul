@@ -42,7 +42,6 @@ import v9t9.server.tcf.EmulatorTCFQueue;
 import v9t9.server.tcf.EmulatorTCFServiceProvider;
 import v9t9.server.tcf.services.IRegistersV2;
 import v9t9.server.tcf.services.ISettings;
-import v9t9.server.tcf.test.ServerPeer;
 import static org.junit.Assert.*;
 
 /**

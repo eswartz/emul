@@ -10,7 +10,6 @@
  */
 package v9t9.video;
 
-import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.RedrawBlock;
 import v9t9.video.common.VdpModeInfo;
 

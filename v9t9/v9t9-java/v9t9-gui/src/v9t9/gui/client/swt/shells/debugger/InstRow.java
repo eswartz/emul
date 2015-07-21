@@ -13,7 +13,6 @@ package v9t9.gui.client.swt.shells.debugger;
 
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.ChangeBlock;
-import v9t9.common.cpu.InstructionWorkBlock;
 
 /**
  * @author ejs

@@ -42,7 +42,6 @@ import v9t9.common.settings.IconSettingProperty;
 import v9t9.common.settings.SettingSchemaProperty;
 import v9t9.gui.client.swt.bars.ImageCanvas;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
-import v9t9.gui.client.swt.shells.IToolShellFactory.Centering;
 import ejs.base.properties.IProperty;
 
 /**
