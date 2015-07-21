@@ -31,6 +31,7 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
@@ -298,6 +299,22 @@ public class MemoryViewer extends Composite implements IPersistable, ICpuTracker
 		entryViewer = new ComboViewer(this, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.NO_FOCUS);
 		entryViewer.setContentProvider(new ArrayContentProvider());
 		entryViewer.setLabelProvider(new MemoryEntryLabelProvider());
+		entryViewer.setComparator(new ViewerComparator() {
+			@Override
+			public int compare(Viewer viewer, Object e1, Object e2) {
+				if (e1 instanceof IMemoryEntry && e2 instanceof IMemoryEntry) {
+					int diff;
+					IMemoryEntry m1 = (IMemoryEntry) e1;
+					IMemoryEntry m2 = (IMemoryEntry) e2;
+					diff = m1.getDomain().getName().compareTo(m2.getDomain().getName());
+					if (diff != 0)
+						return diff;
+					diff = m1.getAddr() - m2.getAddr();
+					return diff;
+				}
+				return super.compare(viewer, e1, e2);
+			}
+		});
 		entryViewer.setFilters(new ViewerFilter[] {
 			new ViewerFilter() {
 
