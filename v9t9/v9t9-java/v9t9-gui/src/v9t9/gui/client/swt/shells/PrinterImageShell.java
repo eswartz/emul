@@ -64,6 +64,7 @@ import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.settings.SettingSchema;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
+import v9t9.gui.common.BaseEmulatorWindow;
 
 /**
  * @author ejs
@@ -671,16 +672,19 @@ public class PrinterImageShell implements IPrinterImageListener {
 		}
 
 		String filename = saveImageBase + "." + saveImageExt;
-		if (filename.contains("%n"))
+		if (filename.contains("%n")) {
 			filename = filename.replace("%n", String.format("%04d", number));
-		if (filename.contains("%z"))
+		}
+		if (filename.contains("%z")) {
 			filename = filename.replace("%z", String.format("%d", zn));
+		}
 		if (filename.contains("%d")) {
 			SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd-HHmmss");
 			filename = filename.replace("%d", format.format(page.getDate()));
 		}
 		
-		//File file = nBaseEmulatorWindow.getUniqueFile(filename);
+		if (!filename.contains("%"))
+			filename = BaseEmulatorWindow.getUniqueFile(filename).getPath();
 
 		return filename;
 	}

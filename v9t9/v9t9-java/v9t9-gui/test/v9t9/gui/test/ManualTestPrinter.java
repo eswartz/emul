@@ -29,6 +29,7 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageHandler;
+import v9t9.common.events.BaseEventNotifier;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.gui.client.swt.shells.PrinterImageShell;
@@ -65,7 +66,7 @@ public class ManualTestPrinter {
 		IMachine machine = MachineModelFactory.INSTANCE.createModel("StandardTI994A").createMachine(settings);
         for (IPrinterImageHandler handler : machine.getPrinterImageHandlers()) {
         	engine = ((IPrinterImageHandler) handler).getEngine();
-        	printerShell = new PrinterImageShell(settings, engine);
+        	printerShell = new PrinterImageShell(new BaseEventNotifier(), settings, engine);
         	break;
         } 
 		
