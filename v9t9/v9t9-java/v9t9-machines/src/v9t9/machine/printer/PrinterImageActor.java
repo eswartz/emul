@@ -25,6 +25,7 @@ import v9t9.common.demos.IDemoRecordingActor;
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageHandler;
 import v9t9.common.dsr.IPrinterImageListener;
+import v9t9.common.dsr.PrinterPage;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.demos.events.PrinterImageEvent;
 
@@ -62,12 +63,12 @@ public class PrinterImageActor implements IDemoRecordingActor, IDemoPlaybackActo
 		printerImageListener = new IPrinterImageListener() {
 			
 			@Override
-			public void updated(Object image) {
+			public void updated(PrinterPage image) {
 				// ignore
 			}
 			
 			@Override
-			public void newPage(Object image) {
+			public void newPage(PrinterPage image) {
 				try {
 					if (recorder != null) {
 						recorder.getOutputStream().writeEvent(PrinterImageEvent.newPage());
