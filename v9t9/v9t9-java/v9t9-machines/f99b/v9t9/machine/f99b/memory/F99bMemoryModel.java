@@ -61,11 +61,13 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 
 	@Override
 	protected void initSettings(ISettingsHandler settings) {
+		IProperty shipPath = settings.get(DataFiles.settingShippingRomsPath);
+
 		URL dataURL;
 		dataURL = EmulatorMachinesData.getDataURL("../../../build/forth99");
-		DataFiles.addSearchPath(settings, dataURL.getPath());
+		DataFiles.addSearchPath(settings, dataURL.toString());
+		shipPath.getList().add(dataURL.toString());
 		
-		IProperty shipPath = settings.get(DataFiles.settingShippingRomsPath);
 		dataURL = EmulatorMachinesData.getDataURL("f99b/");
 		shipPath.getList().add(dataURL.toString());
 

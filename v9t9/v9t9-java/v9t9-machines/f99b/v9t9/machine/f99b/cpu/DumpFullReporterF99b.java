@@ -12,22 +12,19 @@ package v9t9.machine.f99b.cpu;
 
 import java.io.PrintWriter;
 
-import ejs.base.properties.IProperty;
-import ejs.base.settings.Logging;
-import ejs.base.utils.HexUtils;
-import ejs.base.utils.Pair;
-
-
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.ChangeBlock;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IInstructionListener;
-import v9t9.common.cpu.InstructionWorkBlock;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.Settings;
 import v9t9.machine.f99b.asm.ChangeBlockF99b;
 import v9t9.machine.f99b.asm.InstF99b;
-import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
+import ejs.base.properties.IProperty;
+import ejs.base.settings.Logging;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.Pair;
 
 /**
  * @author ejs
@@ -37,6 +34,7 @@ public class DumpFullReporterF99b implements IInstructionListener {
 
 	private final PrintWriter dump;
 	private IProperty dumpSetting;
+	private String prevName;
 
 	/**
 	 * @param cpu 
@@ -59,34 +57,45 @@ public class DumpFullReporterF99b implements IInstructionListener {
 	public void executed(ChangeBlock block_) {
 		PrintWriter dumpfull = dump != null ? dump : Logging.getLog(dumpSetting);
 		if (dumpfull == null) return;
+		
 		ChangeBlockF99b block = (ChangeBlockF99b) block_;
+		
 		dumpFullStart(block, block.inst, dumpfull);
 		StringBuilder sb = new StringBuilder();
-		dumpFullMid(block, 
-				(after.sp - before.sp) / 2,
-				(after.rp - before.rp) / 2,
+		dumpFullMid(block,
+				(block.cpu.getSP() - block.preExecute.sp) / 2,
+				(block.cpu.getRP() - block.preExecute.rp) / 2,
 				sb);
-		dumpFullEnd(after, before.cycles,
-				(before.sp - after.sp) / 2,
-				(before.rp - after.rp) / 2,
+		dumpFullEnd(block, block.cpu.getCycleCounts().getTotal() - block.preExecute.cycles,
+				(block.preExecute.sp - block.cpu.getSP()) / 2,
+				(block.preExecute.rp - block.cpu.getRP()) / 2,
 				sb, dumpfull);
 	}
 
 	private void dumpFullStart(ChangeBlockF99b block,
 			RawInstruction ins, PrintWriter dumpfull) {
-		IMemoryEntry entry = block.domain.getEntryAt(ins.pc);
+		IMemoryEntry entry = block.cpu.getConsole().getEntryAt(ins.pc);
 		String name = null;
+		int offs = 0;
 		if (entry != null) { 
 			name = entry.lookupSymbol((short) ins.pc);
-			if (name == null && block.showSymbol) {
+			if (name == null) {
 				Pair<String, Short> info = entry.lookupSymbolNear((short) ins.pc, 0x100);
-				if (info != null)
-					name = info.first;
+				if (info != null) {
+					if (!info.first.equals(prevName)) {
+						name = info.first;
+						offs = ins.pc - info.second;
+					}
+				}
 			}
 		}
-		if (name != null)
-			dumpfull.println('"' + name + "\" ");
-		block.showSymbol = false;
+		if (name != null) {
+			dumpfull.print('"' + name + "\"");
+			if (offs != 0)
+				dumpfull.print(" + " + offs);
+			dumpfull.println();
+			prevName = name; 
+		}
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append(HexUtils.toHex4(ins.pc)).append(": ").append(' ').append(ins);
@@ -100,7 +109,7 @@ public class DumpFullReporterF99b implements IInstructionListener {
 		sb.append('\t');
 		dumpfull.print(sb.toString());
 	}
-	private void dumpFullMid(InstructionWorkBlockF99b block,
+	private void dumpFullMid(ChangeBlockF99b block,
 			int spused,
 			int rpused,
 			StringBuilder sb) {
@@ -133,8 +142,8 @@ public class DumpFullReporterF99b implements IInstructionListener {
 	private String toStr(short stackEntry) {
 		return HexUtils.toHex4(stackEntry); // + " [" + stackEntry + "]";
 	}
-	private void dumpFullEnd(InstructionWorkBlockF99b block, 
-			int origCycleCount, 
+	private void dumpFullEnd(ChangeBlockF99b block, 
+			int cycles, 
 			int spadded, int rpadded,
 			StringBuilder sb,
 			PrintWriter dumpfull) {
@@ -142,8 +151,10 @@ public class DumpFullReporterF99b implements IInstructionListener {
 		if (fx != null)
 			spadded = Math.min(4, Math.max(fx.second, spadded));
 		
+		IMemoryDomain memory = block.cpu.getConsole();
+				
 		for (int i = 0; i < spadded; i++)
-			sb.append(toStr(block.domain.readWord(block.sp + i*2))).append(' ');
+			sb.append(toStr(memory.readWord(block.cpu.getSP() + i*2))).append(' ');
 		
 		fx = InstF99b.getReturnStackEffects(block.inst.getInst());
 		if (fx != null)
@@ -153,7 +164,7 @@ public class DumpFullReporterF99b implements IInstructionListener {
 
 			sb.append("R ");
 			for (int i = 0; i < rpadded; i++)
-				sb.append(toStr(block.domain.readWord(block.rp + i*2))).append(' ');
+				sb.append(toStr(memory.readWord(block.cpu.getRP() + i*2))).append(' ');
 		}
 		sb.append(")");
 
@@ -168,13 +179,12 @@ public class DumpFullReporterF99b implements IInstructionListener {
 		dumpfull.print(sb.toString());
 
 		dumpfull.print(   
-		        " sp=" + Integer.toHexString(block.sp & 0xffff).toUpperCase()
-		        + " rp=" + Integer.toHexString(block.rp & 0xffff).toUpperCase()
+		        " sp=" + Integer.toHexString(block.cpu.getSP() & 0xffff).toUpperCase()
+		        + " rp=" + Integer.toHexString(block.cpu.getRP() & 0xffff).toUpperCase()
 		        + " sr="
-		        + Integer.toHexString(block.st).toUpperCase()        
+		        + Integer.toHexString(block.cpu.getST()).toUpperCase()        
 		);
 		
-		int cycles = block.cycles - origCycleCount;
 		dumpfull.print(" @ " + cycles);
 		dumpfull.println();
 		dumpfull.flush();
