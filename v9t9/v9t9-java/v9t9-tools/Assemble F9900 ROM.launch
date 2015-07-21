@@ -7,7 +7,7 @@
 <listEntry value="1"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.tools.Assemble"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="${project_loc:Forth99}/f9900/asm/rom_bank.tsm   -r ../../../build/forth99/f9900rombank1.bin#16384 -l ../../../build/forth99/f9900rombank1.lst"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="${project_loc:Forth99}/f9900/asm/rom_bank.tsm   -r ../../../build/forth99/f9900rombank1.bin#16384 -l ../../../build/forth99/f9900rombank1.lst -O"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="v9t9-tools"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:Forth99}"/>
 </launchConfiguration>

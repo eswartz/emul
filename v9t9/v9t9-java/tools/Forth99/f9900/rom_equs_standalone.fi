@@ -51,3 +51,5 @@ $FFBC	Constant	RomWS
 $FFDC	Constant	IntWS
 
 $FF9C	Constant	_RAM
+
+$FE8C	Constant	uptime

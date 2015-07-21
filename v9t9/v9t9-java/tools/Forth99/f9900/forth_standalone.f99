@@ -14,8 +14,8 @@
 
 1				constant 	STANDALONE
 
-include		f9900romequs_standalone.fi
-include		f9900gromequs.fi
+include		rom_equs_standalone.fi
+include		grom_equs.fi
 
 
 $100	   		constant    ROM

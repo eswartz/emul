@@ -21,7 +21,6 @@ import v9t9.common.cpu.IChangeElement;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IInstructionListener;
-import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.Settings;
