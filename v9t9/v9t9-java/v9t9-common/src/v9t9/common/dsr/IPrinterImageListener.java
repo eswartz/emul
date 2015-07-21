@@ -16,12 +16,12 @@ package v9t9.common.dsr;
  *
  */
 public interface IPrinterImageListener {
-	/** either BufferedImage or Image */
-	void newPage(Object image);
+	/** new page being written; will be updated via #bytesProcessed and #updated */
+	void newPage(PrinterPage page);
 
 	/** bytes processed to cause next #updated */
 	void bytesProcessed(byte[] bytes);
 
-	/** either BufferedImage or Image */
-	void updated(Object image);
+	/** changes on this page */
+	void updated(PrinterPage page);
 }

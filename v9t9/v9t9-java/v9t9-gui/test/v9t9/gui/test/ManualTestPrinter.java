@@ -65,8 +65,9 @@ public class ManualTestPrinter {
 		IMachine machine = MachineModelFactory.INSTANCE.createModel("StandardTI994A").createMachine(settings);
         for (IPrinterImageHandler handler : machine.getPrinterImageHandlers()) {
         	engine = ((IPrinterImageHandler) handler).getEngine();
-        	printerShell = new PrinterImageShell(engine);
-        }
+        	printerShell = new PrinterImageShell(settings, engine);
+        	break;
+        } 
 		
         if (printerShell == null || engine == null)
         	System.exit(1);
@@ -83,7 +84,6 @@ public class ManualTestPrinter {
 	 */
 	private void run() {
 		 
-        engine.setDpi(360, 360);
         engine.newPage();
         
         makeControlPanel();

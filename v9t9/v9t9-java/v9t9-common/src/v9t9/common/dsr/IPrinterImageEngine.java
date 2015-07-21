@@ -43,7 +43,7 @@ public interface IPrinterImageEngine {
 	 * @param horizDpi
 	 * @param vertDpi
 	 */
-	void setDpi(int horizDpi, int vertDpi);
+	//void setDpi(int horizDpi, int vertDpi);
 
 	/**
 	 * Get the location of the print head vertically on the page, from 0.0 to 1.0

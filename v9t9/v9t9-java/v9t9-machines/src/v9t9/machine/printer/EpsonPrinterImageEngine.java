@@ -20,20 +20,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.widgets.Display;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.demos.IDemoFormatterRegistry;
 import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageListener;
+import v9t9.common.dsr.PrinterPage;
 import v9t9.common.settings.SettingSchema;
 import v9t9.engine.demos.format.PrinterImageDataEventFormatter;
 import v9t9.machine.EmulatorMachinesData;
 import ejs.base.properties.IProperty;
-import ejs.base.properties.IPropertyListener;
 import ejs.base.utils.ListenerList;
 import ejs.base.utils.TextUtils;
 
@@ -59,14 +55,6 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private static final int DOTS = 360;
 	
 
-	public static SettingSchema settingHorizDpi = new SettingSchema(
-			ISettingsHandler.USER,
-			"PrinterHorizontalDPI", 360); 
-
-	public static SettingSchema settingVertDpi = new SettingSchema(
-			ISettingsHandler.USER,
-			"PrinterVerticalDPI", 360); 
-
 	public static SettingSchema settingInkLevel = new SettingSchema(
 			ISettingsHandler.USER,
 			"PrinterInkLevel", 0.75); 
@@ -81,15 +69,13 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private boolean pageDirty = false;
 	private int tabSize = 8;
 	private boolean atEsc;
-	private Image image;
+	private PrinterPage page;
 
 	private Map<Character, CharacterMatrix> font = new HashMap<Character, CharacterMatrix>();
 	private int charColumn;
 	/** positions in 1/360 in */
 	private double posX, posY;
 	
-	private int pixelWidth;
-	private int pixelHeight;
 //	private int charPixelHeight;
 //	private int charPixelWidth;
 	private int charMatrixHeight;
@@ -122,7 +108,6 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	private boolean blocked;
 	private ByteArrayOutputStream processedBytes = new ByteArrayOutputStream();
 
-	private IProperty horizDpi, vertDpi;
 	private IProperty inkLevel;
 	private IProperty vertEccentricity;
 	
@@ -131,33 +116,12 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	 */
 	public EpsonPrinterImageEngine(ISettingsHandler settings) {
 		inkLevel = settings.get(settingInkLevel);
-		horizDpi = settings.get(settingHorizDpi);
-		vertDpi = settings.get(settingVertDpi);
+		
 		vertEccentricity = settings.get(settingVertEccentricity);
 		
 		setPaperSize(8.5, 11.0);
-		setDpi(horizDpi.getInt(), vertDpi.getInt());
+		//setDpi(horizDpi.getInt(), vertDpi.getInt());
 		
-		horizDpi.addListener(new IPropertyListener() {
-			
-			@Override
-			public void propertyChanged(IProperty property) {
-				resizePage();
-				fireNewPage();
-				posY = marginTopDots;
-				posX = marginLeftDots;
-			}
-		});
-		vertDpi.addListener(new IPropertyListener() {
-			
-			@Override
-			public void propertyChanged(IProperty property) {
-				resizePage();
-				fireNewPage();
-				posY = marginTopDots;
-				posX = marginLeftDots;
-			}
-		});
 		
 		
 		try {
@@ -170,7 +134,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			log.error("failed to load printer font", e);
 			e.printStackTrace();
 		}
-		resizePage();
+		//resizePage();
 		initPage();
 	}
 	
@@ -182,15 +146,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		return ID;
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IPrinterImageEngine#setDpi(int, int)
-	 */
-	@Override
-	public void setDpi(int horizDpi, int vertDpi) {
-		this.horizDpi.setInt(horizDpi);
-		this.vertDpi.setInt(vertDpi);
-		resizePage();
-	}
+	
 	/**
 	 * @param dataURL
 	 * @throws IOException 
@@ -267,7 +223,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 			
 			@Override
 			public void fire(IPrinterImageListener listener) {
-				listener.newPage(image);
+				listener.newPage(page);
 			}
 		});
 	}
@@ -305,7 +261,7 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 
 			@Override
 			public void fire(IPrinterImageListener listener) {
-				listener.updated(image);
+				listener.updated(page);
 			}
 		});
 	}
@@ -324,23 +280,9 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 		log.info("Epson printer page size: " + paperHeightDots + "x" + paperWidthDots + " (dots)");
 	}
 	
-	protected void resizePage() {
-		pixelWidth = (int) (paperWidthInches * horizDpi.getInt());
-		pixelHeight = (int)(paperHeightInches * vertDpi.getInt());
-		
-	}
 	protected void initPage() {
 
-		Display.getDefault().syncExec(new Runnable() {
-			public void run() {
-				image = new Image(Display.getDefault(), pixelWidth, pixelHeight);
-				GC gc = new GC(image);
-				gc.setBackground(image.getDevice().getSystemColor(SWT.COLOR_WHITE));
-				gc.fillRectangle(image.getBounds());
-				gc.dispose();
-				
-			}
-		});
+		page = new PrinterPage(this.paperWidthInches, paperHeightInches, paperWidthDots, paperHeightDots);
 		
 		posY = marginTopDots;
 		
@@ -592,41 +534,37 @@ public class EpsonPrinterImageEngine implements IPrinterImageEngine {
 	 * @param y
 	 */
 	private void dot(final double x, final double y) {
-		if (image == null || image.isDisposed()) {
+		if (page == null) {
 			newPage();
 		}
-		GC gc = new GC(image);
 		double inkLevel = this.inkLevel.getDouble();
-		gc.setAlpha((int) (255 * inkLevel));
-		try {
-			if ((horizDpi.getInt() | vertDpi.getInt()) < 80) {
-				if (x - (int) x < 0.5 && y - (int) y < 0.5)
-					gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
-				else
-					gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_GRAY));
-				
-				gc.drawPoint((int) x, (int) y);
-			}
-			else {
-				gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
-				double w1, h1;
-				//w1 = horizDpi / 60.; h1 = vertDpi / 60.;
-				gc.setAlpha((int) (255 * inkLevel));
-//				gc.fillOval((int) Math.round(x - w1/2.0), (int) Math.round(y - h1/2.0), (int) w1, (int) h1);
-				w1 = horizDpi.getInt() / 80.; h1 = vertDpi.getInt() / 80.;
-				gc.fillOval((int) Math.round(x - w1/2.0), (int) Math.round(y - h1/2.0), (int) Math.round(w1), (int) Math.round(h1));
-			}
-		} finally {
-			gc.dispose();
-		}
+		page.set(x, y, inkLevel);
+		
+//			if ((horizDpi.getInt() | vertDpi.getInt()) < 80) {
+//				if (x - (int) x < 0.5 && y - (int) y < 0.5)
+//					gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
+//				else
+//					gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_GRAY));
+//				
+//				gc.drawPoint((int) x, (int) y);
+//			}
+//			else {
+//				gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
+//				double w1, h1;
+//				//w1 = horizDpi / 60.; h1 = vertDpi / 60.;
+//				gc.setAlpha((int) (255 * inkLevel));
+////				gc.fillOval((int) Math.round(x - w1/2.0), (int) Math.round(y - h1/2.0), (int) w1, (int) h1);
+//				w1 = horizDpi.getInt() / 80.; h1 = vertDpi.getInt() / 80.;
+//				gc.fillOval((int) Math.round(x - w1/2.0), (int) Math.round(y - h1/2.0), (int) Math.round(w1), (int) Math.round(h1));
+//			}
 		
 	}
 
 	private double mapX(double pos) {
-		return (pos * pixelWidth / paperWidthDots);
+		return pos;
 	}
 	private double mapY(double pos) {
-		return (pos * pixelHeight / paperHeightDots);
+		return pos;
 	}
 	protected void newLine() {
 //		charRow++;

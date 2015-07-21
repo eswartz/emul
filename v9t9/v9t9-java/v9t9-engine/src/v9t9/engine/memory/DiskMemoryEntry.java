@@ -241,7 +241,10 @@ public class DiskMemoryEntry extends MemoryEntry {
     @Override
 	public void unload() {
         super.unload();
-        bLoaded = false;
+        if (isStorable())
+        	bLoaded = false;
+        else
+        	bLoaded = area != null && storedInfo != null;
     }
 
 	public String getFilepath() {
