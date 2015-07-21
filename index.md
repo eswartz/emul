@@ -103,7 +103,9 @@ Recent Changes
     <li>Improve emulation speed significantly (for lower-end machines) <a href="https://github.com/eswartz/emul/issues/2">(related to bug #2)</a></li>
     <li>Improve video updating synchronization for less tearing <a href="https://github.com/eswartz/emul/issues/2">(bug #3)</a></li>
     <li>Fix keyboard buffering that interfered with gameplay <a href="https://github.com/eswartz/emul/issues/2">(bug #4)</a></li>
-    <li>Fix cataloging and distinguishing of modules which are named the same <a href="https://github.com/eswartz/emul/issues/2">(bug #5)</a>.  This also reduces the number of duplicate modules V9t9 detects.  <b>NOTE:</b> the format of the <tt>modules.xml</tt> file has changed, so saving any changes with this version may not work with older releases.</li>
+    <li>Fix cataloging and distinguishing of modules which are named the same <a href="https://github.com/eswartz/emul/issues/2">(bug #5)</a>.<br/>
+    V9t9 knows about a large number of unnamed (auto-start) and ambiguously named modules ("Milliken", "For English") and names them for you.  V9t9 now also identifies and filters out duplicate modules. 
+    <br/><b>NOTE:</b> the format of the <tt>modules.xml</tt> file has changed, so saving any changes with this version may not work with older releases.</li>
     <li>Improve setup wizard load speed and make modules page simpler.</li>
     <li>Fix disk/device selector history (can easily swap directories/images between DSKx entries without opening/closing dialog)</li>
     <li>Ship <tt>v9t9render</tt> libraries.  <b>If V9t9 crashes on startup</b> for you, especially when running under VirtualBox, try passing <tt>--client SWTAWT</tt> to <tt>v9t9.sh</tt> or <tt>v9t9.bat</tt> to work around it.</li>
