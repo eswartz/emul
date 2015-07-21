@@ -93,14 +93,16 @@ public class ROMSetupTreeContentProvider implements ITreeContentProvider {
 					}
 					
 					IModuleDetector detector = machine.getModuleDetector();
-					for (URI uri : machine.getRomPathFileLocator().getSearchURIs()) {
-						try {
-							detector.scan(new File(uri));
-						} catch (IllegalArgumentException e) {
-							// ignore
+					if (detector != null) {
+						for (URI uri : machine.getRomPathFileLocator().getSearchURIs()) {
+							try {
+								detector.scan(new File(uri));
+							} catch (IllegalArgumentException e) {
+								// ignore
+							}
 						}
+						detectedModules.addAll(detector.getAllModules());
 					}
-					detectedModules.addAll(detector.getAllModules());
 					
 					synchronized (ROMSetupTreeContentProvider.this) {
 						ROMSetupTreeContentProvider.this.notifyAll();
