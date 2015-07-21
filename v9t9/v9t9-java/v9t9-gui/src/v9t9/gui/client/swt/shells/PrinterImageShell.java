@@ -10,6 +10,7 @@
  */
 package v9t9.gui.client.swt.shells;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -18,6 +19,7 @@ import org.apache.log4j.Logger;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.ScrolledComposite;
@@ -31,6 +33,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
@@ -54,6 +57,7 @@ import v9t9.common.dsr.PrinterPage;
 import v9t9.common.dsr.PrinterPage.Dot;
 import v9t9.common.settings.SettingSchema;
 import v9t9.gui.EmulatorGuiData;
+import v9t9.gui.client.swt.imageimport.ImageUtils;
 
 /**
  * @author ejs
@@ -61,7 +65,16 @@ import v9t9.gui.EmulatorGuiData;
  */
 public class PrinterImageShell implements IPrinterImageListener {
 	private static Logger log = Logger.getLogger(PrinterImageShell.class);
-	
+
+
+	public static SettingSchema settingHorizDpi = new SettingSchema(
+			ISettingsHandler.USER,
+			"PrinterHorizontalDPI", 360); 
+
+	public static SettingSchema settingVertDpi = new SettingSchema(
+			ISettingsHandler.USER,
+			"PrinterVerticalDPI", 360); 
+
 	private Shell shell; 
 	private CTabFolder tabFolder;
 	
@@ -90,14 +103,9 @@ public class PrinterImageShell implements IPrinterImageListener {
 
 	private int lastCurrentIndex;
 
-
-	public static SettingSchema settingHorizDpi = new SettingSchema(
-			ISettingsHandler.USER,
-			"PrinterHorizontalDPI", 360); 
-
-	public static SettingSchema settingVertDpi = new SettingSchema(
-			ISettingsHandler.USER,
-			"PrinterVerticalDPI", 360); 
+	private Image dotImage;
+	private float dotImageSize;
+	private float dotImageInk;
 
 	public PrinterImageShell(ISettingsHandler settings, IPrinterImageEngine engine) {
 		log.info("creating shell for engine " + engine.getPrinterId());
@@ -150,6 +158,9 @@ public class PrinterImageShell implements IPrinterImageListener {
 				if (canvasImage != null)
 					canvasImage.dispose();
 				canvasImage = null;
+				if (dotImage != null)
+					dotImage.dispose();
+				dotImage = null;
 			}
 		});
 		
@@ -358,7 +369,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 					canvas.redraw();
 					nextUpdateTime = now + 500;
 					
-					//queueRedrawSoon();
+					queueRedrawSoon();
 				}
 			}
 		});
@@ -469,11 +480,24 @@ public class PrinterImageShell implements IPrinterImageListener {
 			@Override
 			public void paintControl(PaintEvent e) {
 				if (contentsChanged && thisPage == pageNum) {
-					updatePage();
-					contentsChanged = false;
+					if (canvasImage == null) {
+						BusyIndicator.showWhile(canvas.getDisplay(), new Runnable() {
+							public void run() {
+								updatePage();
+								contentsChanged = false;
+							}
+						});
+					} else {
+						updatePage();
+						contentsChanged = false;
+					}
 				}
 				else if (canvasImage == null) {
-					reprintPage(thisPage);
+					BusyIndicator.showWhile(canvas.getDisplay(), new Runnable() {
+						public void run() {
+							reprintPage(thisPage);
+						}
+					});
 				}
 
 				if (canvasImage != null && !canvasImage.isDisposed()) {
@@ -515,7 +539,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 	 * @param e
 	 */
 	protected void reprintPage(final int thisPage) {
-		System.out.println(System.currentTimeMillis() + ": start");
+		//System.out.println(System.currentTimeMillis() + ": start");
 		PrinterPage page = indexToPages.get(thisPage);
 		if (page != null) {
 			int pixelWidth = (int) (page.getPageWidthInches() * horizDpi.getInt() * zoom);
@@ -527,18 +551,6 @@ public class PrinterImageShell implements IPrinterImageListener {
 		
 			GC gc = new GC(canvasImage);
 			gc.fillRectangle(canvasImage.getBounds());
-		
-//			if (zoom < 1) {
-//				// these are very slow when zooming out
-//				gc.setAntialias(SWT.ON);
-//				gc.setInterpolation(SWT.DEFAULT);
-//			}
-//			Transform xfrm = new Transform(gc.getDevice());
-//			xfrm.scale((float) zoom, (float) zoom);
-//			gc.setTransform(xfrm);
-//			gc.drawImage(swtImage, 0, 0);
-//			gc.setTransform(null);
-//			xfrm.dispose();
 			
 			double xs = (double) pixelWidth / page.getHorizontalDots();
 			double ys = (double) pixelHeight / page.getVerticalDots();
@@ -555,7 +567,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 			}
 			gc.dispose();
 		}
-		System.out.println(System.currentTimeMillis() + ": end");
+		//System.out.println(System.currentTimeMillis() + ": end");
 	}
 
 	/**
@@ -563,7 +575,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 	 * @param e
 	 */
 	protected void updatePage() {
-		System.out.println(System.currentTimeMillis() + ": update start");
+		//System.out.println(System.currentTimeMillis() + ": update start");
 		PrinterPage page = currentPage;
 		if (page != null) {
 			int pixelWidth = (int) (page.getPageWidthInches() * horizDpi.getInt() * zoom);
@@ -571,6 +583,7 @@ public class PrinterImageShell implements IPrinterImageListener {
 			
 			if (canvasImage == null) {
 				canvasImage = new Image(canvas.getDisplay(), pixelWidth, pixelHeight);
+				lastCurrentIndex = 0;
 			}
 		
 			GC gc = new GC(canvasImage);
@@ -589,31 +602,64 @@ public class PrinterImageShell implements IPrinterImageListener {
 			lastCurrentIndex = page.getDotCount();
 			gc.dispose();
 		}
-		System.out.println(System.currentTimeMillis() + ": update end");
+		//System.out.println(System.currentTimeMillis() + ": update end");
 	}
 
 
-	/**
-	 * @param x
-	 * @param y
-	 */
 	private void dot(GC gc, final double x, final double y, final double inkLevel, double w1, double h1) {
-		if (w1 < 1 || h1 < 1) {
+		double s = Math.max(w1, h1);
+		if (s <= 1) {
 			if (x - (int) x < 0.5 && y - (int) y < 0.5)
 				gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
 			else
 				gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_GRAY));
 			
 			gc.drawPoint((int) x, (int) y);
+			return;
 		}
-		else {
-			gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
-			//w1 = horizDpi / 60.; h1 = vertDpi / 60.;
-			gc.setAlpha((int) (255 * inkLevel));
-//				gc.fillOval((int) Math.round(x - w1/2.0), (int) Math.round(y - h1/2.0), (int) w1, (int) h1);
-			gc.fillOval((int) Math.round(x - w1/2.0), (int) Math.round(y - h1/2.0), (int) Math.round(w1), (int) Math.round(h1));
+		
+		if (dotImage == null || dotImage.isDisposed() || dotImageInk != inkLevel || dotImageSize != w1) {
+			if (dotImage != null && !dotImage.isDisposed())
+				dotImage.dispose();
+			
+			ImageData dotImageData = ImageUtils.createStandard32BitImageData(
+					(int) Math.round(w1*2), (int) Math.round(h1*2));
+			
+			//dotImageData.transparentPixel = dotImageData.palette.getPixel(new RGB(255, 255, 255));
+			dotImageData.setAlpha(0, 0, 0);
+			Arrays.fill(dotImageData.alphaData, (byte) 0);
+			
+			dotImage = new Image(gc.getDevice(), dotImageData);
+			dotImageInk = (float) inkLevel;
+			dotImageSize = (float) s;
+			
+			GC dotGC = new GC(dotImage);
+			
+			dotGC.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
+			dotGC.setAlpha((int) (255 * inkLevel));
+			dotGC.fillOval((int) Math.round(s/2 - w1/2.0), (int) Math.round(s/2 - h1/2.0), (int) Math.round(w1), (int) Math.round(h1));
 		}
-	
+
+		gc.drawImage(dotImage, (int) Math.round(x - w1/2), (int) Math.round(y - h1/2));
 	}
+	
+//	private void dot_(GC gc, final double x, final double y, final double inkLevel, double w1, double h1) {
+//		if (w1 < 1 || h1 < 1) {
+//			if (x - (int) x < 0.5 && y - (int) y < 0.5)
+//				gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
+//			else
+//				gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_DARK_GRAY));
+//			
+//			gc.drawPoint((int) x, (int) y);
+//		}
+//		else {
+//			gc.setBackground(gc.getDevice().getSystemColor(SWT.COLOR_BLACK));
+//			//w1 = horizDpi / 60.; h1 = vertDpi / 60.;
+//			gc.setAlpha((int) (255 * inkLevel));
+////				gc.fillOval((int) Math.round(x - w1/2.0), (int) Math.round(y - h1/2.0), (int) w1, (int) h1);
+//			gc.fillOval((int) Math.round(x - w1/2.0), (int) Math.round(y - h1/2.0), (int) Math.round(w1), (int) Math.round(h1));
+//		}
+//		
+//	}
 
 }
