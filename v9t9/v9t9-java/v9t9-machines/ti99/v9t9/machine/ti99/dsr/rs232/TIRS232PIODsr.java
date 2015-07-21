@@ -221,7 +221,8 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 			return;
 		
 		ISettingSection pioSec = section.getSection("PIO");
-		activePIO.loadState(pioSec);
+		if (pioSec != null)
+			activePIO.loadState(pioSec);
 	}
 
 	@Override
