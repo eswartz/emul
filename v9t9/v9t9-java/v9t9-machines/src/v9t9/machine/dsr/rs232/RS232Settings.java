@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.machine.ti99.dsr.rs232;
+package v9t9.machine.dsr.rs232;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.SettingSchema;

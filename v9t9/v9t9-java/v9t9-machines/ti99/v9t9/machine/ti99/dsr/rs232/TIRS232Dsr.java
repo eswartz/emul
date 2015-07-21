@@ -41,6 +41,7 @@ import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruReader;
 import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.memory.MemoryEntryInfoBuilder;
+import v9t9.machine.dsr.rs232.RS232Settings;
 import v9t9.machine.ti99.dsr.IDsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import ejs.base.properties.IProperty;

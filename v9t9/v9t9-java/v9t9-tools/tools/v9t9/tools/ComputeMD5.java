@@ -13,8 +13,6 @@ package v9t9.tools;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
-
 import v9t9.common.files.IMD5SumFilter;
 import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.machine.IMachine;
@@ -29,9 +27,6 @@ import gnu.getopt.Getopt;
  */
 @Category(Category.SETUP)
 public class ComputeMD5 {
-
-	private static final Logger log = Logger.getLogger(ComputeMD5.class);
-
     private static final String PROGNAME = ComputeMD5.class.getName();
     
     private static void help() {
@@ -112,7 +107,8 @@ public class ComputeMD5 {
 		try {
 			md5 = machine.getRomPathFileLocator().getContentMD5(file.toURI(), filter);
 		} catch (IOException e) {
-			log.error("failed to compute MD5 from " + file, e);
+			e.printStackTrace();
+			System.err.println("failed to compute MD5 from " + file);
 			return;
 		}
 		

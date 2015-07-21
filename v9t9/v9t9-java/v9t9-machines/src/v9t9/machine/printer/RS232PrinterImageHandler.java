@@ -21,7 +21,7 @@ import v9t9.common.dsr.IRS232Handler.Parity;
 import v9t9.common.dsr.IRS232Handler.Stop;
 import v9t9.common.dsr.IRS232Listener;
 import v9t9.common.machine.IMachine;
-import v9t9.machine.ti99.dsr.rs232.RS232Settings;
+import v9t9.machine.dsr.rs232.RS232Settings;
 
 /**
  * This handles 
