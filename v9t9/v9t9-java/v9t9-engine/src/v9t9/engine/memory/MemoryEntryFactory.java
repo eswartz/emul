@@ -102,14 +102,10 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 		int size = Math.abs(info.getSize());
 		
 		if (info.isByteSized()) {
-			ByteMemoryArea bma = new ByteMemoryArea(latency, hasFile ? null : new byte[size]);
-			if (info.isStored())
-	        	bma.write = bma.memory;
+			ByteMemoryArea bma = new ByteMemoryArea(latency, hasFile ? null : new byte[size], info.isStored());
 			area = bma;
 		} else {
-			WordMemoryArea wma = new WordMemoryArea(latency, hasFile ? null : new short[size/2]);
-			if (info.isStored())
-	        	wma.write = wma.memory;
+			WordMemoryArea wma = new WordMemoryArea(latency, hasFile ? null : new short[size/2], info.isStored());
 			area = wma;
 		}
         

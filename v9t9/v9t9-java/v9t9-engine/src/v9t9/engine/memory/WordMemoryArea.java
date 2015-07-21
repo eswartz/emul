@@ -29,13 +29,14 @@ public class WordMemoryArea extends MemoryArea {
     	super(latency);
 	}
     
-	public WordMemoryArea(int latency, short[] memory) {
+	public WordMemoryArea(int latency, short[] memory, boolean isStored) {
 		super(latency);
 		if (memory != null && memory.length % IMemoryDomain.AREASIZE != 0)
 			assert false : "memory area size not multiple of " + IMemoryDomain.AREASIZE;
 		this.memory = memory;
 		this.read = memory;
-		this.write = memory;
+		if (isStored)
+			this.write = memory;
 	}
 
 	public boolean bWordAccess = true;

@@ -42,9 +42,9 @@ public class MemoryAreaFactory {
         	size += IMemoryDomain.AREASIZE - size % IMemoryDomain.AREASIZE;
         
 		if (!info.isStored()) {
-			area = new ByteMemoryArea(latency, new byte[size]);
+			area = new ByteMemoryArea(latency, new byte[size], false);
 		} else {
-			area = new ByteMemoryArea(latency, new byte[size]) {
+			area = new ByteMemoryArea(latency, new byte[size], true) {
 	    		public void writeByte(IMemoryEntry entry, int addr, byte val) {
 	    			super.writeByte(entry, addr, val);
 	    			((DiskMemoryEntry) entry).setDirty(true);
@@ -70,9 +70,9 @@ public class MemoryAreaFactory {
         	size += IMemoryDomain.AREASIZE - size % IMemoryDomain.AREASIZE;
         
         if (!info.isStored()) {
-			area = new WordMemoryArea(latency, new short[size / 2]);
+			area = new WordMemoryArea(latency, new short[size / 2], false);
 		} else {
-			area = new WordMemoryArea(latency, new short[size / 2]) {
+			area = new WordMemoryArea(latency, new short[size / 2], true) {
 	    		public void writeByte(IMemoryEntry entry, int addr, byte val) {
 	    			super.writeByte(entry, addr, val);
 	    			((DiskMemoryEntry) entry).setDirty(true);

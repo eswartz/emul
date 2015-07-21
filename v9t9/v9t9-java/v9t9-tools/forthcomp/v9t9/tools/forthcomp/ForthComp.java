@@ -106,7 +106,7 @@ public class ForthComp {
         		((IGromTargetContext) targetContext).setUseGromDictionary(true);
         		
         		MemoryDomain grom = new MemoryDomain(IMemoryDomain.NAME_GRAPHICS, false);
-        		ByteMemoryArea memArea = new ByteMemoryArea(0, new byte[0x10000]); 
+        		ByteMemoryArea memArea = new ByteMemoryArea(0, new byte[0x10000], true); 
         		MemoryEntry bigRamEntry = new MemoryEntry("GRAM", grom, 0, MemoryDomain.PHYSMEMORYSIZE, 
         				memArea);
         		grom.mapEntry(bigRamEntry);

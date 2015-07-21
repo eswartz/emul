@@ -29,14 +29,15 @@ public class ByteMemoryArea extends MemoryArea {
 	public ByteMemoryArea(int latency) {
 		super(latency);
 	}
-    public ByteMemoryArea(int latency, byte[] memory) {
+    public ByteMemoryArea(int latency, byte[] memory, boolean isStored) {
 		super(latency);
 		if (memory != null && memory.length % IMemoryDomain.AREASIZE != 0)
 			assert false : "memory area size not multiple of " + IMemoryDomain.AREASIZE;
 
 		this.memory = memory;
 		this.read = memory;
-		this.write = memory;
+		if (isStored)
+			this.write = memory;
 	}
     
     
