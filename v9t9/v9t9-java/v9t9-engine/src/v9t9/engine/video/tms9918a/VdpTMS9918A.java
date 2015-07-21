@@ -315,7 +315,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 			}
 			
 			if (vdpScanline >= scanlineCount) {
-				log("INT: scanline tick");
+				//log("INT: scanline tick");
 				//shouldTick = true;
 				vdpScanline -= scanlineCount;
 			}
