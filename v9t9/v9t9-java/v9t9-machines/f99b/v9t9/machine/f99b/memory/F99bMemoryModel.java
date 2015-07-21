@@ -106,6 +106,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		.withDomain(IMemoryDomain.NAME_GRAPHICS)
 		.withAddress(0x4000)
 		.withSize(0x4000)
+		.storable(true)
 		.create("Forth99 16K GRAM Dictionary");
 	
 	private static MemoryEntryInfo f99bDiskGramMemoryEntryInfo = MemoryEntryInfoBuilder
