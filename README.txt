@@ -14,7 +14,7 @@ http://daringfireball.net/projects/markdown/syntax
 
 Enter the top-level "emul-web" directory, then run:
 
-jekyll --pygments --safe
+jekyll build
 
 Look at the site under /_site (which is not checked in; github does the same dance on push).
 

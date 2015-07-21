@@ -24,7 +24,6 @@ Introduction
 </a>
 <span class="timestamp"> </span>
 
-
 <!--  not rebuilt yet
 
 <p/>
@@ -51,9 +50,10 @@ It supports:
 </p>
 <ul>
     <li>RS232/PIO output and TI Impact Printer emulation</li>
+    <li>Reading/writing cassette recordings to files</li>
 	<li>Drag and drop / auto-detection of modules, disks, demos, 99/4A files</li>
 	<li>Ability to save/restore sessions</li>
-	<li>Module formats:  V9t9, MESS (.rpk/.zip)</li>
+	<li>Module formats:  V9t9, MESS (.rpk/.zip), PBX banked modules</li>
 	<li>Disk support (files in native filesystem, sector images, track images)</li>
 	<li>TMS 9918A video</li>
 	<li>TMS 9919 sound</li>
@@ -70,6 +70,117 @@ It supports:
 </p>
 	
 </div>
+
+
+
+Examples
+=======
+
+<p>
+Sound samples:
+<ul>
+	<li><a href='audio/jawbreaker.mp3' type='audio/mpeg'>Jawbreaker theme (45s)</a></li>
+	<li><a href='audio/cassette-recording.mp3' type='audio/mpeg'>Cassette recording (11s)</a></li>
+	<li><a href='audio/parsec-speech.wav' type='audio/x-wav'>Parsec speech</a></li>
+	<li><a href='audio/teii-speech.wav' type='audio/x-wav'>Terminal Emulator II speech</a></li>
+</ul>
+</p>
+
+
+Recent Changes
+===========
+
+<span class="timestamp"> </span>
+
+<h2>2015/07/21 <a href="http://s3.amazonaws.com/V9t9/data/v9t9-150721.zip">(download)</a></h2>
+<ul><b>New/published features:</b>
+    <li>Add RS232/PIO configuration -- for now, just determining whether the printer dialog opens or not</li>
+    <li>Improve printer dialog UI, allowing saving images to disk, and using less memory when multiple pages are printed</li>
+    <li>Add cassette reading/writing configuration button</li>
+    <li>Support PgUp/PgDn and Ctrl Home/End in debugger CPU instruction view</li>
+</ul>
+<ul><b>Bug fixes:</b>
+    <li>Improve emulation speed significantly (for lower-end machines) <a href="https://github.com/eswartz/emul/issues/2">(related to bug #2)</a></li>
+    <li>Improve video updating synchronization for less tearing <a href="https://github.com/eswartz/emul/issues/2">(bug #3)</a></li>
+    <li>Fix keyboard buffering that interfered with gameplay <a href="https://github.com/eswartz/emul/issues/2">(bug #4)</a></li>
+    <li>Fix cataloging and distinguishing of modules which are named the same <a href="https://github.com/eswartz/emul/issues/2">(bug #5)</a>.  This also reduces the number of duplicate modules V9t9 detects.  <b>NOTE:</b> the format of the <tt>modules.xml</tt> file has changed, so saving any changes with this version may not work with older releases.</li>
+    <li>Improve setup wizard load speed and make modules page simpler.</li>
+    <li>Fix disk/device selector history (can easily swap directories/images between DSKx entries without opening/closing dialog)</li>
+    <li>Ship <tt>v9t9render</tt> libraries.  <b>If V9t9 crashes on startup</b> for you, especially when running under VirtualBox, try passing <tt>--client SWTAWT</tt> to <tt>v9t9.sh</tt> or <tt>v9t9.bat</tt> to work around it.</li>
+</ul>
+<ul><b>Site features:</b>
+    <li>Added archives of older V9t9 builds.</li>
+</ul>
+
+<h2>2015/07/02 <a href="http://s3.amazonaws.com/V9t9/data/v9t9-150702.zip">(download)</a></h2>
+<ul>
+<li>add -Djna.nosys=true to v9t9.sh by default.</li>
+<li>allow VMARGS to be set outside v9t9.sh.</li>
+<li>allow -Dv9t9.sound.rate=... to change ALSA rate and -Dv9t9.sound.java=true to bypass custom sound usage for Linux and Windows (possible fixes for <a href="https://github.com/eswartz/emul/issues/2">bug #2</a>)
+</li> 
+<li>fix problem with USCD P-System option no longer being available (thanks to RvK for noticing)
+</li> 
+<li>try again to fix OS X class loading issues (thanks Scott S. and Michael R. for reminding me)
+</li> 
+<li>revamped device configuration -- one button for selecting devices, then each device icon allows
+individual configuration
+</li>
+<li>other GUI tweaks
+</li>
+</ul>
+
+<h2>2014/05/19 <a href="http://s3.amazonaws.com/V9t9/data/v9t9-140519.zip">(download)</a></h2>
+
+<ul>
+<li>fix OS X support (for real?)
+</li>
+<li>added initial RS232 &quot; PIO support with TI Impact Printer emulation (try the "Printer Example" demo)
+</li>
+<li>fix Windows XP (pre-OpenGL 1.5) support
+</li>
+</ul>
+
+<h2>2013/10/20 <a href="http://s3.amazonaws.com/V9t9/data/v9t9-131020.zip">(download)</a></h2>
+<ul>
+<li>fix bug with joystick 'fire' detection in hand-coded assembly  
+</li>
+<li>add breakpoint support to debugger (right-click on an instruction to set/reset)  
+</li>
+<li>fix bug using numeric keypad as joysticks (use Num Lock + Scroll Lock) 
+</li>
+<li>fix launching for Win 7 
+</li>
+</ul>
+
+<h2>2013/06/17 <a href="http://s3.amazonaws.com/V9t9/data/v9t9-130617.zip">(download)</a></h2>
+<ul>
+<li>added support for Corcomp double-density disk controller
+</li>
+<li>make audio gate more consistent
+</li>
+<li>fix double-sided disk detection with *.dsk files
+</li>
+<li>add EA/8K Super Cart support
+</li>
+<li>fixed bug losing history from disk selector dialog
+</li>
+<li>fixed bug leading to appearance that module list setup could not find 
+all the required files
+</li>
+<li>changed module list setup.  Instead of showing only modules
+registered in a central database, V9t9 will prompt you to establish a
+modules.xml file containing a custom list of modules detected on your
+ROM paths.
+</li>
+<li>more accurate DIV cycle counting
+</li>
+</ul>
+
+<h2>Older releases</h2>
+
+Well, I don't have any and can't rebuild them, since they use Java Web Start, which is essentially obsolete now
+and apparently impossible to build or use in new Java releases.
+
 
 Running
 ========
@@ -95,7 +206,8 @@ Running from Windows
 
 Launch V9t9 by double-clicking the `v9t9.bat` file.  
 
-If this exits immediately, be sure `java` is on your `PATH`.
+If this exits immediately, be sure `java` is on your `PATH`.  If it crashes
+under a VM, try passing <tt>--client SWTAWT</tt>.
 
 Alternately, run a `Command Prompt` and type:
 
@@ -107,7 +219,8 @@ Running from OS X or Linux
 
 Launch V9t9 by double-clicking the `v9t9.sh` file.
   
-If this exits immediately, be sure `java` is on your `PATH`.
+If this exits immediately, be sure `java` is on your `PATH`.  If it crashes
+under a VM, try passing <tt>--client SWTAWT</tt>.
 
 Alternately, run a `Terminal` and type:
 
@@ -116,125 +229,10 @@ Alternately, run a `Terminal` and type:
 
 <hr/>
 
-Examples
----------
-
-<p>
-Sound samples:
-<ul>
-	<li><a href='audio/jawbreaker.mp3' type='audio/mpeg'>Jawbreaker theme (45s)</a></li>
-	<li><a href='audio/cassette-recording.mp3' type='audio/mpeg'>Cassette recording (11s)</a></li>
-	<li><a href='audio/parsec-speech.wav' type='audio/x-wav'>Parsec speech</a></li>
-	<li><a href='audio/teii-speech.wav' type='audio/x-wav'>Terminal Emulator II speech</a></li>
-</ul>
-</p>
-
-
 Contact
 =======
 
 Please see <a href="contact.html">this page</a> for details.
-
-
-Recent Changes
-===========
-
-<span class="timestamp"> </span>
-
-<ul>
-<li>2015/07/02: add -Djna.nosys=true to v9t9.sh by default.</li>
-<li>2015/07/02: allow VMARGS to be set outside v9t9.sh.</li>
-<li>2015/07/02: allow -Dv9t9.sound.rate=... to change ALSA rate and -Dv9t9.sound.java=true to bypass custom sound usage for Linux and Windows (possible fixes for <a href="https://github.com/eswartz/emul/issues/2">bug #2</a>)
-</li> 
-<li>2015/05/25: fix problem with USCD P-System option no longer being available (thanks to RvK for noticing)
-</li> 
-<li>2015/02/25: try again to fix OS X class loading issues (thanks Scott S. and Michael R. for reminding me)
-</li> 
-<li>2015/02/25: revamped device configuration -- one button for selecting devices, then each device icon allows
-individual configuration
-</li>
-<li>2015/02/25: other GUI tweaks
-</li>
-<li>2014/05/14: fix OS X support (for real?)
-</li>
-<li>2014/05/13: added initial RS232 &quot; PIO support with TI Impact Printer emulation (try the "Printer Example" demo)
-</li>
-<li>2014/05/13: fix Windows XP (pre-OpenGL 1.5) support
-</li>
-<li>2013/10/20: fix bug with joystick 'fire' detection in hand-coded assembly  
-</li>
-<li>2013/10/20: add breakpoint support to debugger (right-click on an instruction to set/reset)  
-</li>
-<li>2013/09/09: fix bug using numeric keypad as joysticks (use Num Lock + Scroll Lock) 
-</li>
-<li>2013/09/01: fix launching for Win 7 
-</li>
-<li>2013/06/17: added support for Corcomp double-density disk controller
-</li>
-<li>2013/06/17: make audio gate more consistent
-</li>
-<li>2013/06/17: fix double-sided disk detection with *.dsk files
-</li>
-<li>2013/06/17: add EA/8K Super Cart support
-</li>
-<li>2013/06/17: fixed bug losing history from disk selector dialog
-</li>
-<li>2013/06/17: fixed bug leading to appearance that module list setup could not find 
-all the required files
-</li>
-<li>2013/06/05: changed module list setup.  Instead of showing only modules
-registered in a central database, V9t9 will prompt you to establish a
-modules.xml file containing a custom list of modules detected on your
-ROM paths.
-</li>
-<li>2013/06/05: more accurate DIV cycle counting
-</li>
-<li>2013/05/26: fix memory leak causing emulator performance to be slower
-than needed when accelerating speed
-</li>
-<li>2013/05/26: fix issues handling double-sided disks by detecting the track
-order on side 2 
-</li>
-<li>2013/05/26: make screenshot function WYIWYG, with plain 256x192
-bitmap as option 
-</li>
-<li>2013/05/26: <a href="https://github.com/eswartz/emul/issues/1">fix colors in screenshots</a> 
-</li>
-<li>2013/05/18: runs on Windows XP again 
-</li>
-<li>2013/05/18: auto-detection of modules (including Mini Memory) and P-Code DSRs works again 
-</li>
-<li>2013/05/12: revamped ROM Setup dialog so you can see, also, what modules will be detected 
-</li>
-<li>2013/04/28: added Event Log button to review notifications that you may have missed  
-</li>
-<li>2013/04/27: make buttons more uniform when they have menus; make Load/Save State button a bit more intuitive to use without a menu   
-</li>
-<li>2013/04/18: ship V9t9 as a zip file only
-</li>
-<li>2013/03/30: fix issue closing V9t9 in OS X 
-</li>
-<li>2013/03/13: support handling files encoded with Archiver 3 (e.g. from http://tigameshelf.net)
-</li>
-<li>2013/03/11: support drag'n'drop of module images into the emulator!
-</li>
-<li>2013/03/10: support drag'n'drop of disk images into the emulator to load
-the disk into the drive, and also to run programs on the disk -- try it out!
-(Also see the 'Run...' button in the Disk Selector.)
-</li>
-<li>2013/03/09: improve UI for Module Selector and allow adding user modules --
-RPK format supported as well!
-</li>
-<li>2013/03/03: split data out from V9t9 JAR to reduce download size
-</li>
-<li>2013/03/02: "file in a directory" disk access should work now, because the
-proper emulated ROMs are actually included (!).
-</li><li>2013/03/02: Module Selector should work now -- was incorrectly checking
-filenames instead of content, as promised (!).
-</li><li>2013/02/27: Make OS X build available -- unfortunately, only through a shell script.
-</li>
-
-</ul>
 
 History
 -------- 

@@ -90,24 +90,10 @@ so use at your own risk.  It can and will change unpredictably!
 Enabling
 ----------
 
-To enable this, you'll need the v9t9.zip file (not the web launcher).  Edit
-the `v9t9-local.jnlp` file and remove the comments (&lt;!-- and --&gt;) lines at the end
-around this &lt;argument&gt; node:
+In the `v9t9.sh` file, add `--machine Forth99B` to the command line:
 
 <pre>
-	&lt;application-desc 
-		main-class="v9t9.gui.Emulator"&gt;
-		...
-<b>            <argument>Forth99B</argument> </b>
-		...
-   	 &lt;/application-desc>
-    
-</pre>
-
-Or in the `v9t9.sh` file, add `Forth99B` to the command line:
-
-<pre>
-	"$JAVA" -cp "v9t9j.jar:$SWT:libs/*" -Djava.library.path=tmpdir $VMARGS  v9t9.gui.Emulator <b>Forth99B</b>
+	"$JAVA" -cp "v9t9j.jar:$SWT:libs/*" -Djava.library.path=tmpdir $VMARGS  v9t9.gui.Emulator <b>--machine Forth99B</b>
 </pre>
 
 Quick setup
@@ -252,8 +238,10 @@ The `entry` elements above may also include a plain &lt;memoryEntry&gt; element.
 
 * `fileName`:  filename, relative path, or absolute path to the file contents
 * `fileName2`:  second filename for two-banked modules where each ROM is in a separate file.  Relative path, or absolute path to the file contents for banked modules
-* `fileMD5`:  MD5 sum for fileName 
+* `fileMD5`:  MD5 sum for fileName
 * `file2MD5`:  MD5 sum for fileName2
+* `fileMD5Algorithm`: (2015/07/21) if specified, override default algorithm.  For `GRAPHICS` domains, the algorithm is `grom`, which sums every 6k of the 8k GROM banks.  Else the default is `full` which acts as before.  Alternate algorithms are `segment:addr+len[;addr+len...]` which sums up portions of a file.
+* `file2MD5Algorithm`: like `fileMD5Algorithm` for file 2
 * `domain`:  memory domain:  one of `'CPU'`, `'GRAPHICS'`, `'SPEECH'` or `'VIDEO'`
 * `address`:  load address of file
 * `size`:  size of memory region in bytes (can be negative to denote the maximum memory area,
