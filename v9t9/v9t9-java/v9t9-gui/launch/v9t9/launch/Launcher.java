@@ -109,7 +109,7 @@ public class Launcher {
 					+"\n"
 					+"To emulate a machine:\n"
 					+"\n"
-					+"v9t9.[sh|bat] [MachineName | --list-machines] [ClientName | --list-clients]\n"
+					+"v9t9.[sh|bat] [--machine MachineName | --list-machines] [--client ClientName | --list-clients]\n"
 					+"\n"
 					+"To use tools:\n"
 					+"\n"
