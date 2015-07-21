@@ -102,7 +102,7 @@ public class BaseF99bTest extends BaseForthCompTest {
 		((CpuF99b) cpu).rpush((short) 0);
 		CpuStateF99b state = (CpuStateF99b) cpu.getState();
 		state.setPC((short) pc);
-		((InterpreterF99b) interp).setShowSymbol();
+//		((InterpreterF99b) interp).setShowSymbol();
 		while (state.getPC() != 0)
 			((InterpreterF99b) interp).execute();
 		

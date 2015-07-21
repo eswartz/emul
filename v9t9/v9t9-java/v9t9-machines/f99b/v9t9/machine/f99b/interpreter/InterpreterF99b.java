@@ -10,130 +10,33 @@
  */
 package v9t9.machine.f99b.interpreter;
 
-import static v9t9.machine.f99b.asm.InstF99b.CTX_INT;
-import static v9t9.machine.f99b.asm.InstF99b.CTX_LP;
-import static v9t9.machine.f99b.asm.InstF99b.CTX_PC;
-import static v9t9.machine.f99b.asm.InstF99b.CTX_RP;
-import static v9t9.machine.f99b.asm.InstF99b.CTX_RP0;
-import static v9t9.machine.f99b.asm.InstF99b.CTX_SP;
-import static v9t9.machine.f99b.asm.InstF99b.CTX_SP0;
-import static v9t9.machine.f99b.asm.InstF99b.CTX_SR;
-import static v9t9.machine.f99b.asm.InstF99b.CTX_UP;
-import static v9t9.machine.f99b.asm.InstF99b.I0branchB;
-import static v9t9.machine.f99b.asm.InstF99b.I0branchW;
-import static v9t9.machine.f99b.asm.InstF99b.I0branchX;
-import static v9t9.machine.f99b.asm.InstF99b.I0equ;
-import static v9t9.machine.f99b.asm.InstF99b.IRfrom;
-import static v9t9.machine.f99b.asm.InstF99b.Iand;
-import static v9t9.machine.f99b.asm.InstF99b.IatR;
-import static v9t9.machine.f99b.asm.InstF99b.IbranchB;
-import static v9t9.machine.f99b.asm.InstF99b.IbranchW;
-import static v9t9.machine.f99b.asm.InstF99b.IbranchX;
-import static v9t9.machine.f99b.asm.InstF99b.Icall;
-import static v9t9.machine.f99b.asm.InstF99b.Iccompare;
-import static v9t9.machine.f99b.asm.InstF99b.Icfill;
-import static v9t9.machine.f99b.asm.InstF99b.Icload;
-import static v9t9.machine.f99b.asm.InstF99b.Icmove;
-import static v9t9.machine.f99b.asm.InstF99b.Icmp;
-import static v9t9.machine.f99b.asm.InstF99b.IcontextFrom;
-import static v9t9.machine.f99b.asm.InstF99b.IcplusStore;
-import static v9t9.machine.f99b.asm.InstF99b.Icstore;
-import static v9t9.machine.f99b.asm.InstF99b.Idmath_start;
-import static v9t9.machine.f99b.asm.InstF99b.Idouble;
-import static v9t9.machine.f99b.asm.InstF99b.Idovar;
-import static v9t9.machine.f99b.asm.InstF99b.Idrop;
-import static v9t9.machine.f99b.asm.InstF99b.Idup;
-import static v9t9.machine.f99b.asm.InstF99b.Iequ;
-import static v9t9.machine.f99b.asm.InstF99b.Iexecute;
-import static v9t9.machine.f99b.asm.InstF99b.Iexit;
-import static v9t9.machine.f99b.asm.InstF99b.Iexiti;
-import static v9t9.machine.f99b.asm.InstF99b.Ifill;
-import static v9t9.machine.f99b.asm.InstF99b.IfromLocals;
-import static v9t9.machine.f99b.asm.InstF99b.Ilalloc;
-import static v9t9.machine.f99b.asm.InstF99b.IlitB;
-import static v9t9.machine.f99b.asm.InstF99b.IlitW;
-import static v9t9.machine.f99b.asm.InstF99b.IlitX;
-import static v9t9.machine.f99b.asm.InstF99b.Iload;
-import static v9t9.machine.f99b.asm.InstF99b.Ilocal;
-import static v9t9.machine.f99b.asm.InstF99b.IloopUp;
-import static v9t9.machine.f99b.asm.InstF99b.Ilpidx;
-import static v9t9.machine.f99b.asm.InstF99b.Imath_start;
-import static v9t9.machine.f99b.asm.InstF99b.Inand;
-import static v9t9.machine.f99b.asm.InstF99b.Inot;
-import static v9t9.machine.f99b.asm.InstF99b.Ior;
-import static v9t9.machine.f99b.asm.InstF99b.Iover;
-import static v9t9.machine.f99b.asm.InstF99b.IplusLoopUp;
-import static v9t9.machine.f99b.asm.InstF99b.IplusStore;
-import static v9t9.machine.f99b.asm.InstF99b.Iqdup;
-import static v9t9.machine.f99b.asm.InstF99b.Irdrop;
-import static v9t9.machine.f99b.asm.InstF99b.Irot;
-import static v9t9.machine.f99b.asm.InstF99b.Irpidx;
-import static v9t9.machine.f99b.asm.InstF99b.Ispidx;
-import static v9t9.machine.f99b.asm.InstF99b.Istore;
-import static v9t9.machine.f99b.asm.InstF99b.Iswap;
-import static v9t9.machine.f99b.asm.InstF99b.Isyscall;
-import static v9t9.machine.f99b.asm.InstF99b.ItoContext;
-import static v9t9.machine.f99b.asm.InstF99b.ItoLocals;
-import static v9t9.machine.f99b.asm.InstF99b.ItoR;
-import static v9t9.machine.f99b.asm.InstF99b.Iudivmod;
-import static v9t9.machine.f99b.asm.InstF99b.Iumul;
-import static v9t9.machine.f99b.asm.InstF99b.Iupidx;
-import static v9t9.machine.f99b.asm.InstF99b.Iuser;
-import static v9t9.machine.f99b.asm.InstF99b.Ixor;
-import static v9t9.machine.f99b.asm.InstF99b.OP_1MINUS;
-import static v9t9.machine.f99b.asm.InstF99b.OP_1PLUS;
-import static v9t9.machine.f99b.asm.InstF99b.OP_2DIV;
-import static v9t9.machine.f99b.asm.InstF99b.OP_2MINUS;
-import static v9t9.machine.f99b.asm.InstF99b.OP_2PLUS;
-import static v9t9.machine.f99b.asm.InstF99b.OP_2TIMES;
-import static v9t9.machine.f99b.asm.InstF99b.OP_ADD;
-import static v9t9.machine.f99b.asm.InstF99b.OP_ASH;
-import static v9t9.machine.f99b.asm.InstF99b.OP_CSH;
-import static v9t9.machine.f99b.asm.InstF99b.OP_INV;
-import static v9t9.machine.f99b.asm.InstF99b.OP_LSH;
-import static v9t9.machine.f99b.asm.InstF99b.OP_NEG;
-import static v9t9.machine.f99b.asm.InstF99b.OP_RSH;
-import static v9t9.machine.f99b.asm.InstF99b.OP_SUB;
-import static v9t9.machine.f99b.asm.InstF99b.SYSCALL_DEBUG_OFF;
-import static v9t9.machine.f99b.asm.InstF99b.SYSCALL_DEBUG_ON;
-import static v9t9.machine.f99b.asm.InstF99b.SYSCALL_DECORATED_NUMBER;
-import static v9t9.machine.f99b.asm.InstF99b.SYSCALL_FIND;
-import static v9t9.machine.f99b.asm.InstF99b.SYSCALL_GFIND;
-import static v9t9.machine.f99b.asm.InstF99b.SYSCALL_IDLE;
-import static v9t9.machine.f99b.asm.InstF99b.SYSCALL_NUMBER;
-import static v9t9.machine.f99b.asm.InstF99b.SYSCALL_REGISTER_SYMBOL;
-import static v9t9.machine.f99b.asm.InstF99b.SYSCALL_SPIN;
+import static v9t9.machine.f99b.asm.InstF99b.*;
 
-import java.util.Arrays;
 import java.util.BitSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import ejs.base.utils.HexUtils;
-import ejs.base.utils.ListenerList;
-import ejs.base.utils.Pair;
-
-
-import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CycleCounts;
+import v9t9.common.cpu.IChangeElement;
+import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.IInterpreter;
 import v9t9.common.machine.IMachine;
-import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
+import v9t9.machine.f99b.asm.ChangeBlockF99b;
 import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.machine.f99b.asm.InstructionF99b;
-import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
 import v9t9.machine.f99b.asm.MachineOperandF99b;
 import v9t9.machine.f99b.asm.StatusF99b;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.cpu.CpuStateF99b;
-import v9t9.machine.ti99.cpu.ChangeBlock9900;
+import ejs.base.utils.HexUtils;
+import ejs.base.utils.ListenerList;
+import ejs.base.utils.Pair;
 
 /**
  * This class interprets F99b instructions one by one.
@@ -146,25 +49,19 @@ public class InterpreterF99b implements IInterpreter {
 	IMachine machine;
 
     IMemoryDomain memory;
-    
-    InstructionWorkBlockF99b iblock;
 
 	private CpuF99b cpu;
 	private CpuStateF99b cpuState;
 
-	//private TreeMap<Integer, InstructionF99b> cachedInstrs = new TreeMap<Integer, InstructionF99b>();
-	//private InstructionF99b[] cachedInstrs = new InstructionF99b[65536];
-	
-	private Map<IMemoryArea, ChangeBlockF99b[]> parsedChangeBlocks = new HashMap<IMemoryArea, ChangeBlock9900[]>();
+	private ChangeBlockF99b[] cachedInstrs = new ChangeBlockF99b[65536];
     
-	private int cachedInstrCount;
 	private IMemoryWriteListener memoryWriteListener;
 
 	private BitSet instrMap;
 
-	private IRawInstructionFactory instructionFactory;
-
 	private CycleCounts cycleCounts;
+
+	private int cachedInstrCount;
 	
     public InterpreterF99b(IMachine machine) {
         this.machine = machine;
@@ -172,10 +69,7 @@ public class InterpreterF99b implements IInterpreter {
         this.memory = machine.getCpu().getConsole();
         cycleCounts = cpu.getCycleCounts(); 
         
-        instructionFactory = machine.getInstructionFactory();
         cpuState = (CpuStateF99b)cpu.getState();
-		iblock = new InstructionWorkBlockF99b(cpuState);
-        iblock.showSymbol = true;
         
         instrMap = new BitSet();
         
@@ -227,38 +121,23 @@ public class InterpreterF99b implements IInterpreter {
 
 
 	public short getStackEntry(int i) {
-		return iblock.domain.readWord(cpuState.getSP() + i * 2);
+		return memory.readWord(cpuState.getSP() + i * 2);
 	}
 	public short getReturnStackEntry(int i) {
-		return iblock.domain.readWord(cpuState.getRP() + i * 2);
+		return memory.readWord(cpuState.getRP() + i * 2);
 	}
 	public short getLocalStackEntry(int i) {
-		return iblock.domain.readWord(cpuState.getLP() - (i + 1) * 2);
+		return memory.readWord(cpuState.getLP() - (i + 1) * 2);
 	}
 
 	private final void executeAndListen(ListenerList<IInstructionListener> instructionListeners) {
-		iblock.pc = cpu.getPC();
-		
-		if ((iblock.pc & 0xffff) < 0x400) {
+		if ((cpu.getPC() & 0xffff) < 0x400) {
 			cpu.fault();
 			return;
 		}
 		
-		iblock.cycles = cycleCounts.getTotal();
-		iblock.st = cpu.getST();
-		
-		// get next instruction and advance
-	    InstructionF99b ins = getInstruction();
-		
-		//iblock.pc = cpu.getPC();	// do below, since PC was advanced
-		iblock.st = cpu.getST();
-		iblock.sp = cpuState.getSP();
-		iblock.rp = cpuState.getRP();
-		iblock.up = cpuState.getUP();
-		iblock.lp = cpuState.getLP();
-		iblock.inst = ins;
-		
-		InstructionWorkBlockF99b block = null;
+		ChangeBlockF99b block = getInstruction();
+		InstructionF99b ins = (InstructionF99b) block.inst;
 		
 		if (!instructionListeners.isEmpty()) {
 		    Pair<Integer, Integer> fx = InstF99b.getStackEffects(ins.getInst());
@@ -266,54 +145,39 @@ public class InterpreterF99b implements IInterpreter {
 				int spused = fx.first;
 				if (spused < 0)
 					spused = 4;
-				iblock.inStack = new short[spused];
+				block.inStack = new short[spused];
 				for (int i = 0; i < spused; i++)
-					iblock.inStack[i] = getStackEntry(spused - i - 1);
+					block.inStack[i] = getStackEntry(spused - i - 1);
 			}
 		    fx = InstF99b.getReturnStackEffects(ins.getInst());
 			if (fx != null) {
 				int rpused = fx.first;
 				if (rpused < 0)
 					rpused = 4;
-				iblock.inReturnStack = new short[rpused];
+				block.inReturnStack = new short[rpused];
 				for (int i = 0; i < rpused; i++)
-					iblock.inReturnStack[i] = getReturnStackEntry(rpused - i - 1);
+					block.inReturnStack[i] = getReturnStackEntry(rpused - i - 1);
 			}
 			
-			block = new InstructionWorkBlockF99b(cpuState);
-
 			for (Object listener : instructionListeners.toArray()) {
-				if (!((IInstructionListener) listener).preExecute(iblock)) {
+				if (!((IInstructionListener) listener).preExecute(block)) {
 					throw new AbortedException();
 				}
 			}
-			
-			this.iblock.copyTo(block);
 		}
 		
-		cpu.setPC(iblock.pc);
-		iblock.pc = cpu.getPC();
+//		cpu.setPC(block.pc);
+//		block.pc = cpu.getPC();
 		
 		/* execute */
-		interpret(ins);
+		//interpret(ins);
+		block.apply(cpu);
 		
 		/* notify listeners */
 		if (!instructionListeners.isEmpty()) {
-		    iblock.pc = cpu.getPC();
-		    iblock.st = cpu.getST();
-		    iblock.sp = cpuState.getSP();
-		    iblock.rp = cpuState.getRP();
-		    iblock.up = cpuState.getUP();
-		    iblock.lp = cpuState.getLP();
-		
-		    iblock.cycles = cycleCounts.getTotal();
-			
 			for (Object listener : instructionListeners.toArray()) {
-				((IInstructionListener) listener).executed(block, iblock);
+				((IInstructionListener) listener).executed(block);
 			}
-			
-			iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Iexiti 
-					|| ins.getInst() == Icall || ins.getInst() == Iexecute);
 		}
 	}
 
@@ -357,9 +221,9 @@ public class InterpreterF99b implements IInterpreter {
 	}
 
 	private boolean doInvalidateInstructionCache(int addr, int target) {
-		InstructionF99b cached = cachedInstrs[addr];
+		ChangeBlockF99b cached = cachedInstrs[addr];
 		if (cached != null) {
-			int maxAddr = cached.pc + cached.getSize();
+			int maxAddr = cached.getPC() + cached.getSize();
 			if (addr <= target && maxAddr > target) {
 				cachedInstrs[addr] = null;
 				cachedInstrCount--;
@@ -371,50 +235,74 @@ public class InterpreterF99b implements IInterpreter {
 	}
 
 
-	private InstructionF99b getInstruction() {
+	private ChangeBlockF99b getInstruction() {
 		int pc = cpu.getPC() & 0xffff;
-		InstructionF99b inst = cachedInstrs[pc];
-		if (inst == null) {
-			cycleCounts.saveState();
-			int total = cycleCounts.getTotal();
-			inst = (InstructionF99b) instructionFactory.decodeInstruction(pc, memory);
-			inst.fetchCycles = cycleCounts.getTotal() - total;
-			cycleCounts.restoreState();
-			cachedInstrs[pc] = inst;
+		ChangeBlockF99b block = cachedInstrs[pc];
+		if (block == null) {
+			block = new ChangeBlockF99b(cpu);
+			
+			block.push(new Interpret(block));
+			//inst.fetchCycles = cycleCounts.getTotal() - total;
+			cachedInstrs[pc] = block;
 			cachedInstrCount++;
-			instrMap.set(pc, pc + inst.getSize());
+			instrMap.set(pc, pc + block.inst.getSize());
 			//System.out.println(HexUtils.toHex4(pc)+": " + inst+": " + inst.getSize());
 			refreshCache();
 		}
-		iblock.pc = (short) (pc + inst.getSize());
+		//block.pc = (short) (pc + block.inst.getSize());
 		
-	    cycleCounts.addFetch(inst.fetchCycles);
+	    cycleCounts.addFetch(block.fetchCycles);
 
-		return inst;
+		return block;
 	}
 
+	class Interpret implements IChangeElement {
+
+		private ChangeBlockF99b block;
+
+		public Interpret(ChangeBlockF99b block) {
+			this.block = block;
+		}
+		
+		/* (non-Javadoc)
+		 * @see v9t9.common.cpu.IChangeElement#apply(v9t9.common.cpu.ICpuState)
+		 */
+		@Override
+		public void apply(ICpuState cpuState) {
+			block.cpu.setPC((short) (block.preExecute.pc + block.inst.getSize()));
+			interpret(block, (InstructionF99b) block.inst);
+		}
+
+		/* (non-Javadoc)
+		 * @see v9t9.common.cpu.IChangeElement#revert(v9t9.common.cpu.ICpuState)
+		 */
+		@Override
+		public void revert(ICpuState cpuState) {
+			
+		}
+	}
 	/**
      * Execute an instruction
      * @param ins
      * @return true if jumped
      */
-    private final boolean interpret(InstructionF99b ins) {
+    private final boolean interpret(ChangeBlockF99b block, InstructionF99b ins) {
     	if (ins.getInst() < InstF99b.Iimm_start || ins.getInst() >= InstF99b.Iimm_start + 8)
 			cycleCounts.addExecute(ins.getSize());
 		else
 			cycleCounts.addExecute(1);
     	
 		if (ins.getInst() < 256) {
-			return interpretShort(ins);
+			return interpretShort(block, ins);
 		} else if ((ins.getInst() >> 8) ==  Idouble) {
-			return interpretDouble(ins);
+			return interpretDouble(block, ins);
 		} else {
-			return interpretExt(ins);
+			return interpretExt(block, ins);
 		}
     }
     
-    private final boolean interpretShort(InstructionF99b ins) {
-    	int fromPC = iblock.pc;
+    private final boolean interpretShort(ChangeBlockF99b block, InstructionF99b ins) {
+    	int fromPC = block.getPC() + ins.getSize();
     	MachineOperandF99b mop1 = (MachineOperandF99b)ins.getOp1();
 		switch (ins.getInst()) {
 		case Icmp:
@@ -482,12 +370,12 @@ public class InterpreterF99b implements IInterpreter {
         }
         case IplusStore: {
         	short addr = cpu.pop();
-        	iblock.domain.writeWord(addr, (short) (iblock.domain.readWord(addr) + cpu.pop()));
+        	memory.writeWord(addr, (short) (memory.readWord(addr) + cpu.pop()));
         	break;
         }
         case IcplusStore: {
         	short addr = cpu.pop();
-        	iblock.domain.writeByte(addr, (byte) (iblock.domain.readByte(addr) + cpu.pop()));
+        	memory.writeByte(addr, (byte) (memory.readByte(addr) + cpu.pop()));
         	break;
         }
         
@@ -609,17 +497,17 @@ public class InterpreterF99b implements IInterpreter {
 		}
 
         case Icall:
-        	cpu.rpush(iblock.pc);
+        	cpu.rpush(cpuState.getPC());
         	cpu.setPC(mop1.immed);
         	return true;
         case Iexecute:
-        	cpu.rpush(iblock.pc);
+        	cpu.rpush(cpuState.getPC());
         	cpu.setPC(cpu.pop());
         	return true;
         case Idovar:
     	{
     		short next = cpu.rpop();
-        	cpu.push(iblock.pc);
+        	cpu.push(cpuState.getPC());
         	cpu.setPC(next);
         	return true;
     	}
@@ -647,14 +535,14 @@ public class InterpreterF99b implements IInterpreter {
         	cpu.push(getLocalStackEntry(mop1.immed));
         	break;
         case Ilocal:
-        	cpu.push((short) (iblock.lp - (mop1.immed + 1) * 2));
+        	cpu.push((short) (cpuState.getLP() - (mop1.immed + 1) * 2));
         	break;
         	
         case Iupidx:
-        	cpu.push((short) (iblock.up + (mop1.val & 0xff)));
+        	cpu.push((short) (cpuState.getUP() + (mop1.val & 0xff)));
         	break;
         case Iuser:
-        	cpu.push((short) (iblock.up + cpu.pop()));
+        	cpu.push((short) (cpuState.getUP() + cpu.pop()));
         	break;
         	
         case IloopUp: {
@@ -742,14 +630,16 @@ public class InterpreterF99b implements IInterpreter {
         }
         
         case Ilalloc: {
-        	cpu.push((short) iblock.sp);
-        	cpu.push((short) (iblock.rp - mop1.immed * 2));
+        	int sp = cpuState.getSP();
+        	int rp = cpuState.getRP();
+        	cpu.push((short) sp);
+        	cpu.push((short) (rp - mop1.immed * 2));
         	cpu.push((short) (mop1.immed * 2));
         	cpu.push((short) -1);
         	cpu.push((short) -1);
         	doCmove();
-        	cpuState.setSP((short) (iblock.sp + mop1.immed * 2));
-        	cpuState.setRP((short) (iblock.rp - mop1.immed * 2));
+        	cpuState.setSP((short) (sp + mop1.immed * 2));
+        	cpuState.setRP((short) (rp - mop1.immed * 2));
         	break;
         }
 
@@ -849,12 +739,12 @@ public class InterpreterF99b implements IInterpreter {
 	        		int xt = cpu.pop();
 	        		int nfa = cpu.pop();
 	        		StringBuilder sb = new StringBuilder();
-	        		int len = iblock.domain.readByte(nfa++) & 0x1f;
+	        		int len = memory.readByte(nfa++) & 0x1f;
 	        		while (len-- > 0) {
-	        			char ch = (char) iblock.domain.readByte(nfa++);
+	        			char ch = (char) memory.readByte(nfa++);
 	        			sb.append(ch);
 	        		}
-	        		iblock.domain.getEntryAt(xt).defineSymbol(xt, sb.toString());
+	        		memory.getEntryAt(xt).defineSymbol(xt, sb.toString());
 	        		break;
 	        	}
 	        	
@@ -907,16 +797,16 @@ public class InterpreterF99b implements IInterpreter {
 		while (lfa != 0 && count-- > 0) {
 			cycleCounts.addExecute(3);
 			short nfa = (short) (lfa + 2);
-			if (nameMatches(iblock.domain, caddr, nfa, after)) {
+			if (nameMatches(memory, caddr, nfa, after)) {
 				short xt = (short) after[0];
 				if ((xt & 1) != 0)
 					xt++;
 				cpu.push(xt);
-				cpu.push((short) ((iblock.domain.readByte(nfa) & 0x40) != 0 ? 1 : -1));
+				cpu.push((short) ((memory.readByte(nfa) & 0x40) != 0 ? 1 : -1));
 				found = true;
 				break;
 			} else {
-				lfa = iblock.domain.readWord(lfa);
+				lfa = memory.readWord(lfa);
 			}
 		}
 		
@@ -937,7 +827,7 @@ public class InterpreterF99b implements IInterpreter {
 		int[] after = { 0 }; 
 		
 		if (DEBUG) {
-			String name = readCountedString(iblock.domain, caddr);
+			String name = readCountedString(memory, caddr);
 			System.out.println("Searching for >>>"+name+"<<<");
 		}
     		
@@ -989,7 +879,7 @@ public class InterpreterF99b implements IInterpreter {
 		int val = cpu.popd();
 
 		while (len > 0) {
-			char ch = (char) iblock.domain.readByte(caddr);
+			char ch = (char) memory.readByte(caddr);
 			ch = Character.toUpperCase(ch);
 			int v = BASESTR.indexOf(ch);
 			if (v < 0 || v >= base) {
@@ -1021,7 +911,7 @@ public class InterpreterF99b implements IInterpreter {
 			boolean neg = false;
 			boolean isDouble = false;
 
-			char ch = (char) iblock.domain.readByte(caddr);
+			char ch = (char) memory.readByte(caddr);
 			if (ch == '-') {
 				neg = true;
 				caddr++;
@@ -1029,7 +919,7 @@ public class InterpreterF99b implements IInterpreter {
 			}
 			
 			if (len > 0) {
-				ch = (char) iblock.domain.readByte(caddr);
+				ch = (char) memory.readByte(caddr);
 				if (ch == '$') {
 					base = 16;
 					caddr++;
@@ -1053,7 +943,7 @@ public class InterpreterF99b implements IInterpreter {
 			caddr = cpu.pop();
 			
 			if (len > 0) {
-				if (iblock.domain.readByte(caddr) == '.') {
+				if (memory.readByte(caddr) == '.') {
 					
 					isDouble = true;
 					
@@ -1100,7 +990,7 @@ public class InterpreterF99b implements IInterpreter {
 		cycleCounts.addExecute(10);
 		int caddr = caddr_;
 		short nfa = nfa_;
-		byte clen = iblock.domain.readByte(caddr++);
+		byte clen = memory.readByte(caddr++);
 		byte nlen = domain.readByte(nfa++);
 		
 		after[0] = nfa + (nlen & 0x1f);
@@ -1113,7 +1003,7 @@ public class InterpreterF99b implements IInterpreter {
 		
 		cycleCounts.addExecute(clen * 5);
 		while (clen-- > 0) {
-			char c = (char) iblock.domain.readByte(caddr++);
+			char c = (char) memory.readByte(caddr++);
 			char n = (char) domain.readByte(nfa++);
 			if (Character.toLowerCase(c) != Character.toLowerCase(n))
 				return false;
@@ -1173,7 +1063,7 @@ public class InterpreterF99b implements IInterpreter {
 		cpu.push((short) 0);
 	}
 
-    private final boolean interpretDouble(InstructionF99b ins) {
+    private final boolean interpretDouble(ChangeBlockF99b block, InstructionF99b ins) {
     	MachineOperandF99b mop1 = (MachineOperandF99b)ins.getOp1();
     	cycleCounts.addExecute(1);
     	int baseInst = ins.getInst() & 0xff;
@@ -1241,10 +1131,10 @@ public class InterpreterF99b implements IInterpreter {
         case IplusStore: {
         	short addr = cpu.pop();
         	int add = cpu.popd();
-        	int val = (iblock.domain.readWord(addr + 2) << 16) | (iblock.domain.readWord(addr) & 0xffff);
+        	int val = (memory.readWord(addr + 2) << 16) | (memory.readWord(addr) & 0xffff);
         	val += add;
-        	iblock.domain.writeWord(addr, (short) (val & 0xffff));
-        	iblock.domain.writeWord(addr + 2, (short) (val >> 16));
+        	memory.writeWord(addr, (short) (val & 0xffff));
+        	memory.writeWord(addr + 2, (short) (val >> 16));
         	break;
         }
         	
@@ -1349,14 +1239,14 @@ public class InterpreterF99b implements IInterpreter {
 
         case ItoLocals & 0xff: {
         	// LP@  	RP@ LP! ; \\ caller pushes R> 
-        	short curLP = iblock.lp;
-        	cpuState.setLP((short) (iblock.rp - 2));
+        	short curLP = cpuState.getLP();
+        	cpuState.setLP((short) (cpuState.getRP() - 2));
         	cpu.rpush(curLP);
         	break;
         }
         case IfromLocals & 0xff: {
         	//  R>  LP@ RP!   R>  LP!  >R
-        	cpuState.setRP((short) (iblock.lp));
+        	cpuState.setRP((short) (cpuState.getLP()));
         	short oldLP = cpu.rpop();
         	cpuState.setLP(oldLP);
         	break;
@@ -1369,7 +1259,7 @@ public class InterpreterF99b implements IInterpreter {
 		return false;
     }
 
-    private final boolean interpretExt(InstructionF99b ins) {
+    private final boolean interpretExt(ChangeBlockF99b block, InstructionF99b ins) {
     	cycleCounts.addExecute(1);
 		switch (ins.getInst()) {
         default:
@@ -1471,21 +1361,12 @@ public class InterpreterF99b implements IInterpreter {
 		}
 		return 0;
 	}
-
-	/**
-	 * 
-	 */
-	public void setShowSymbol() {
-		iblock.showSymbol = true;
-	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.engine.interpreter.IInterpreter#reset()
 	 */
 	@Override
 	public void reset() {
-    	Arrays.fill(cachedInstrs, null);
-    	cachedInstrCount = 0;
     	instrMap.clear();
 		
 	}
