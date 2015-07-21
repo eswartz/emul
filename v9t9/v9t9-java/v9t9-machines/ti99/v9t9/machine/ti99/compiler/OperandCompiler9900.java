@@ -55,7 +55,7 @@ public class OperandCompiler9900 {
         switch (op.type)
         {
         case MachineOperand9900.OP_REG:    // Rx
-            op.cycles += 0 * 4;
+            info.cycles += 0 * 4;
             // (short) ((val<<1) + wp);
             if (!(ins.getInst() == Inst9900.Impy /*&& ins.op2 == this*/)
                     && !(ins.getInst() == Inst9900.Idiv /*&& ins.op2 == this*/)
@@ -83,7 +83,7 @@ public class OperandCompiler9900 {
                 
                 // &Rxx
                 /* postincrement register */
-                op.cycles += op.byteop ? 2 : 4;
+            	info.cycles += op.byteop ? 2 : 4;
 
             } else {
                 //short ad = (short)((val<<1) + wp);
@@ -91,7 +91,7 @@ public class OperandCompiler9900 {
                 
                 // &Rxx
                 /* postincrement register */
-                op.cycles += op.byteop ? 2 : 4;
+                info.cycles += op.byteop ? 2 : 4;
                 
                 ilist.append(new DUP());    // &Rxx, &Rxx
                 OperandCompiler9900.compileReadWord(info, ilist); // &Rxx, regval 

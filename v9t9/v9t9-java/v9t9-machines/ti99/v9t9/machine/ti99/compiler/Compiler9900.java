@@ -457,11 +457,12 @@ public class Compiler9900 extends CompilerBase {
         ilist.append(new IINC(info.localInsts, 1));
 
         /* compose operand values and instruction timings */
+        info.cycles = 0;
         fetchOperands(ins, pc, info);
 
         
         // FIXME
-        int cycles = 12;
+        int cycles = 12 + info.cycles;
         	//ins.fetchCycles + ((MachineOperand9900) ins.getOp1()).cycles + ((MachineOperand9900) ins.getOp2()).cycles;
         
         ilist.append(new IINC(info.localCycles, cycles));

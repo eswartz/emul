@@ -44,6 +44,7 @@ public class CompileInfo {
 	public TABLESWITCH sw;
 	public InstructionHandle doneInst, breakInst, switchInst;
 	public ConstantPoolGen pgen;
+	public int cycles;
     
     // indexes of useful variables in generated class
     public int memoryIndex, cpuIndex, cpuStateIndex, nInstructionsIndex, nCyclesIndex;
