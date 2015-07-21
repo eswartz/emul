@@ -63,7 +63,7 @@ public class DeviceSettingsDialog extends Composite implements IDeviceSelectorDi
 				behavior.centering = Centering.INSIDE;
 				behavior.centerOverControl = null;
 				behavior.dismissOnClickOutside = true;
-				behavior.defaultBounds = new Rectangle(0, 0, 600, 300);
+				behavior.defaultBounds = new Rectangle(0, 0, 700, 300);
 			}
 			public Control createContents(Shell shell) {
 				return new DeviceSettingsDialog(shell, machine, title, settingGroups);
@@ -77,12 +77,14 @@ public class DeviceSettingsDialog extends Composite implements IDeviceSelectorDi
 	protected IMachine machine;
 	protected boolean needReset;
 	private String[] settingGroups;
+	private EntryHistory entryHistory;
 	
 	public DeviceSettingsDialog(Shell shell, IMachine machine_, String title, String[] settingGroups) {
 		
 		super(shell, SWT.NONE);
 		this.machine = machine_;
 		this.settingGroups = settingGroups;
+		this.entryHistory = new EntryHistory(machine.getSettings().getUserSettings());
 		
 		List<IDeviceSettings> list = machine.getModel().getDeviceSettings(machine);
 		
@@ -242,5 +244,13 @@ public class DeviceSettingsDialog extends Composite implements IDeviceSelectorDi
 					"Changing this setting requires restarting the emulated machine.\n\n"+
 					"This will happen when this dialog is closed.");
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.gui.client.swt.shells.disk.IDeviceSelectorDialog#getEntryHistory()
+	 */
+	@Override
+	public EntryHistory getEntryHistory() {
+		return entryHistory;
 	}
 }

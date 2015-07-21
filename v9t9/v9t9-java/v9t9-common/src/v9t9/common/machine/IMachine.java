@@ -10,10 +10,6 @@
  */
 package v9t9.common.machine;
 
-import java.io.File;
-import java.net.URI;
-import java.util.Collection;
-
 import v9t9.common.cassette.ICassetteChip;
 import v9t9.common.client.IEmulatorContentSourceProvider;
 import v9t9.common.client.IKeyboardHandler;
@@ -31,7 +27,7 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardMapping;
 import v9t9.common.keyboard.IKeyboardModeListener;
 import v9t9.common.keyboard.IKeyboardState;
-import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleDetector;
 import v9t9.common.modules.IModuleManager;
 
 /**
@@ -100,14 +96,14 @@ public interface IMachine extends IBaseMachine {
 	IKeyboardHandler getKeyboardHandler();
 	void setKeyboardHandler(IKeyboardHandler keyboardHandler);
 
-
 	/**
-	 * Scan the directory or a file for modules
-	 * @param databaseURI uri of module database
-	 * @param base directory or file
-	 * @return array of entries
+	 * Get the module detector
 	 */
-	Collection<IModule> scanModules(URI databaseURI, File base);
+	IModuleDetector getModuleDetector();
+	/**
+	 * Create a new module detector
+	 */
+	IModuleDetector createModuleDetector();
 
 	/**
 	 * Reload machine (e.g. re-read ROMs and re-set module)

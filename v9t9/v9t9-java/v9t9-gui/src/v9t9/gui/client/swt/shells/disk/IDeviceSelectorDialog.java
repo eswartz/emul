@@ -19,4 +19,6 @@ import v9t9.common.machine.IMachine;
 public interface IDeviceSelectorDialog {
 	void warnResetNeeded();
 	IMachine getMachine();
+	
+	EntryHistory getEntryHistory();
 }

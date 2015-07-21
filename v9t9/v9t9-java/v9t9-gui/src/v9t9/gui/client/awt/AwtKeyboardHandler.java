@@ -62,13 +62,13 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		component.addKeyListener(new KeyListener() {
 
 			public void keyPressed(KeyEvent e) {
-				handleKey(true, e.getModifiers(), e.getKeyCode(), 
-						e.getKeyChar(), e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD);
+				handleKey(e.getWhen(), true, e.getModifiers(), 
+						e.getKeyCode(), e.getKeyChar(), e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD);
 			}
 
 			public void keyReleased(KeyEvent e) {
-				handleKey(false, e.getModifiers(), e.getKeyCode(), 
-						e.getKeyChar(), e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD);
+				handleKey(e.getWhen(), false, e.getModifiers(), 
+						e.getKeyCode(), e.getKeyChar(), e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD);
 			}
 
 			public void keyTyped(KeyEvent e) {
@@ -138,7 +138,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		}
 	}
 	
-	protected void handleKey(boolean pressed, int modifiers, int keyCode, char ascii, boolean keyPad) {
+	protected void handleKey(long time, boolean pressed, int modifiers, int keyCode, char ascii, boolean keyPad) {
 		if (pressed && keyCode == KeyEvent.VK_ESCAPE) {
 			cancelPaste();
 			return;
@@ -171,7 +171,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				shiftMask &= ~MASK_SHIFT;
 			}
 			
-			if (postCharacter(pressed, shiftMask, ascii)) {
+			if (postCharacter(time, pressed, shiftMask, ascii)) {
 				return;
 			}
 		}
@@ -189,7 +189,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		}
 		
 		if (key != KEY_UNKNOWN) {
-			handleSpecialKey(pressed, shiftMask, key, keyPad);
+			handleSpecialKey(time, pressed, shiftMask, key, keyPad);
 		}
 		else {
 			System.out.println("*** Unhandled AWT keycode: " + keyCode);

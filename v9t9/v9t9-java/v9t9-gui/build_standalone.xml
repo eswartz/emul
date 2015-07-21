@@ -186,12 +186,10 @@
         	<fileset dir="${base.v9t9}/libs/lwjgl/native/linux">
     	       <include name="**"/>
     	    </fileset>
-        	<!--
     	    <fileset dir="${base}/libv9t9render">
     	      <include name="libv9t9render32.so"/>
     	      <include name="libv9t9render64.so"/>
     	    </fileset>
-    	    -->
   	    </jar>
     	
         <jar destfile="${bin.v9t9.jar.dir}/v9t9j-natives-win32-intel.jar">
@@ -201,12 +199,10 @@
         	<fileset dir="${base.v9t9}/libs/lwjgl/native/windows">
     	       <include name="**"/>
     	    </fileset>
-        	<!--
     	    <fileset dir="${base}/libv9t9render">
     	      <include name="v9t9render32.dll"/>
     	      <include name="v9t9render64.dll"/>
     	    </fileset>
-    	    -->
   	    </jar>    	
     	
         <jar destfile="${bin.v9t9.jar.dir}/v9t9j-natives-macosx-intel.jar">
@@ -216,12 +212,9 @@
         	<fileset dir="${base.v9t9}/libs/lwjgl/native/macosx">
     	       <include name="**"/>
     	    </fileset>
-    	       	<!--
     	     <fileset dir="${base}/libv9t9render">
-    	      <include name="libv9t9render32.dylib"/>
     	      <include name="libv9t9render64.dylib"/>
     	    </fileset>
-    	    -->
   	    </jar>    	
     	
 	</target>

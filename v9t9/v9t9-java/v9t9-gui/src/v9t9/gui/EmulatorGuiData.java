@@ -48,36 +48,46 @@ public class EmulatorGuiData {
 		if (iconFile == null)
 			logger.error("Failed to find image: " + path);
 		if (iconFile != null) {
-			InputStream is = null;
+			return loadImage(device, iconFile);
+		}
+		return new Image(device, 1, 1);
+	}
+
+	/**
+	 * @param device
+	 * @param iconFile
+	 * @return
+	 */
+	public static Image loadImage(Device device, URL iconFile) {
+		InputStream is = null;
+		try {
+			is = iconFile.openStream();
+			Image icon = new Image(device, is);
+			return icon;
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		} catch (Throwable e1) {
+			try {
+				if (is != null)
+					is.close();
+			} catch (IOException e) {
+			}
+			// try again -- SWT bug
 			try {
 				is = iconFile.openStream();
 				Image icon = new Image(device, is);
 				return icon;
-			} catch (IOException e1) {
+			} catch (Throwable e2) {
 				e1.printStackTrace();
-			} catch (Throwable e1) {
+			} finally {
 				try {
 					if (is != null)
 						is.close();
 				} catch (IOException e) {
 				}
-				// try again -- SWT bug
-				try {
-					is = iconFile.openStream();
-					Image icon = new Image(device, is);
-					return icon;
-				} catch (Throwable e2) {
-					e1.printStackTrace();
-				} finally {
-					try {
-						if (is != null)
-							is.close();
-					} catch (IOException e) {
-					}
-				}
 			}
 		}
-		return new Image(device, 1, 1);
+		return null;
 	}
 	
 }

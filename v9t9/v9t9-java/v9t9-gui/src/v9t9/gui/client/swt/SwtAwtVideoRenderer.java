@@ -72,7 +72,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	 */
 	@Override
 	public void dispose() {
-		frame.dispose();
+		//frame.dispose();
 		super.dispose();
 	}
 	

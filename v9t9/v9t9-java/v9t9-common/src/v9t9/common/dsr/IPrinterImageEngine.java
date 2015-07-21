@@ -10,6 +10,8 @@
  */
 package v9t9.common.dsr;
 
+import ejs.base.properties.IProperty;
+
 
 /**
  * @author ejs
@@ -41,7 +43,7 @@ public interface IPrinterImageEngine {
 	 * @param horizDpi
 	 * @param vertDpi
 	 */
-	void setDpi(int horizDpi, int vertDpi);
+	//void setDpi(int horizDpi, int vertDpi);
 
 	/**
 	 * Get the location of the print head vertically on the page, from 0.0 to 1.0
@@ -53,5 +55,17 @@ public interface IPrinterImageEngine {
 	 * @return
 	 */
 	double getPageColumnPercentage();
+
+	/**
+	 * Flush any buffering, e.g. for a long line of graphics, so that a
+	 * new {@link IPrinterImageListener#updated(Object)} call will occur soon.
+	 */
+	void flushBuffer();
+
+	/**
+	 * Get the ink level property
+	 * @return
+	 */
+	IProperty getInkLevel();
 
 }

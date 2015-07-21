@@ -610,6 +610,9 @@ public class Executor implements IExecutor {
         	    	            	needsTick = false;
         	    	            	tick();
         	    	            }
+        	    	            if (pauseMachine.getBoolean()) {
+        	    	            	Thread.sleep(50);
+        	    	            }
             				}
             			}
 	            		

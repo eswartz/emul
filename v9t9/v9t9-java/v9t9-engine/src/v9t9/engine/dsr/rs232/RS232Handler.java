@@ -10,10 +10,13 @@
  */
 package v9t9.engine.dsr.rs232;
 
+import org.apache.log4j.Logger;
+
 import v9t9.common.dsr.IOBuffer;
 import v9t9.common.dsr.IRS232Handler;
 import v9t9.common.dsr.IRS232Listener;
 import ejs.base.utils.ListenerList;
+import ejs.base.utils.TextUtils;
 import ejs.base.utils.ListenerList.IFire;
 
 /**
@@ -22,6 +25,7 @@ import ejs.base.utils.ListenerList.IFire;
  *
  */
 public class RS232Handler implements IRS232Handler {
+	private static Logger log = Logger.getLogger(RS232Handler.class);
 
 	private DataSize dataSize;
 	private Parity parity;
@@ -102,6 +106,16 @@ public class RS232Handler implements IRS232Handler {
 	@Override
 	public void transmitChars(final IOBuffer buf) {
 		final byte[] buffer = buf.takeAll();
+		if (buffer.length == 0)
+			return;
+		
+		try {
+			log.debug("RS232Handler::transmitChars: " + new String(buffer));
+		} catch (Throwable t) {
+			log.debug("RS232Handler::transmitChars: #" + buffer.length);
+		}
+		log.debug("RS232Handler::listeners: " + TextUtils.catenateStrings(listeners.toArray(), ","));
+
 		
 		listeners.fire(new IFire<IRS232Listener>() {
 
@@ -110,7 +124,6 @@ public class RS232Handler implements IRS232Handler {
 				listener.charsTransmitted(buffer);
 			}
 		});
-		
 	}
 
 }

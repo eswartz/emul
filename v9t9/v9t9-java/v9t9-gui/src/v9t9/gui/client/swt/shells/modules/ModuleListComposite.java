@@ -15,8 +15,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,12 +26,14 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.BaseLabelProvider;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.ICheckStateListener;
+import org.eclipse.jface.viewers.IFontProvider;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -41,27 +41,45 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
+import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.swt.widgets.Text;
 
 import v9t9.common.events.NotifyException;
-import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
-import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleDetector;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.ModuleDatabase;
 import v9t9.common.settings.Settings;
+import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.SwtWindow;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.DialogSettingsWrapper;
@@ -83,12 +101,15 @@ public class ModuleListComposite extends Composite {
 	
 	private static final String SHOW_ALL = "show.all";
 	private static final String LAST_DB_FILE = "last.db";
-	
+
 	private IMachine machine;
 	private ComboViewer dbSelector;
 	
-	private CheckboxTableViewer discoveredList;
+	private CheckboxTableViewer viewer;
+
 	private List<IModule> discoveredModules = new ArrayList<IModule>();
+	
+	/** current database */
 	private File dbFile;
 	
 	private Map<File, List<IModule>> origModuleMap = new HashMap<File, List<IModule>>();
@@ -97,9 +118,8 @@ public class ModuleListComposite extends Composite {
 
 	private ISettingSection settings;
 
+	private TableViewerColumn checkedColumn;
 	private TableViewerColumn nameColumn;
-
-	private TableViewerColumn filesColumn;
 
 	private IStatus status;
 
@@ -115,12 +135,43 @@ public class ModuleListComposite extends Composite {
 
 	private ArrayList<URI> dirtyModuleLists;
 
+
+	private ColumnComparator comparator;
+
+	private DiscoveredModuleLabelProvider labelProvider;
+
+	class FilteredSearchFilter extends ViewerFilter {
+
+		@Override
+		public boolean isFilterProperty(Object element, String property) {
+			return true;
+		}
+		
+		@Override
+		public boolean select(Viewer viewer, Object parentElement, Object element) {
+			if (lastFilter != null) {
+				if (false == element instanceof IModule)
+					return true;
+				IModule mod = (IModule) element;
+				String lowSearch = lastFilter.toLowerCase();
+				return mod.getName().toLowerCase().contains(lowSearch)
+						|| mod.getKeywords().contains(lowSearch)
+						|| ("auto-start".startsWith(lowSearch) && mod.isAutoStart());
+			}
+			return true;
+		}
+	}
+
+	private ViewerFilter filteredSearchFilter = new FilteredSearchFilter();
+	private Text filterText;
+	protected String lastFilter;
+
 	public ModuleListComposite(Composite parent, IMachine machine, SwtWindow window,
 			IStatusListener statusListener) {
 		super(parent, SWT.NONE);
 		this.statusListener = statusListener;
 		
-		GridLayoutFactory.fillDefaults().applyTo(this);
+		GridLayoutFactory.fillDefaults().margins(3, 3).applyTo(this);
 		
 		this.machine = machine;
 		
@@ -130,13 +181,11 @@ public class ModuleListComposite extends Composite {
 		
 		/*spacer*/ new Label(composite, SWT.NONE);
 
-		Composite threeColumns = new Composite(composite, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(3).applyTo(threeColumns);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(threeColumns);
+		Composite dbRow = createDatabaseRow(composite);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(dbRow);
 		
-		createDatabaseRow(threeColumns);
-		
-		createDiscoveredList(threeColumns);
+		Composite tableComp = createTableViewer(composite);
+		GridDataFactory.fillDefaults().grab(true, true).hint(-1, 500).applyTo(tableComp);
 
 		boolean wasShowAll = settings.getBoolean(SHOW_ALL);
 		showAllButton.setSelection(wasShowAll);
@@ -184,9 +233,9 @@ public class ModuleListComposite extends Composite {
 			sel = defaultFile;
 		}
 			
-		dbSelector.setSelection(new StructuredSelection(sel));
-		
 		refresh();
+		
+		dbSelector.setSelection(new StructuredSelection(sel));
 		
 		composite.addDisposeListener(new DisposeListener() {
 			
@@ -203,47 +252,216 @@ public class ModuleListComposite extends Composite {
 		return new DialogSettingsWrapper(settings);
 	}
 
-	static class DiscoveredModuleLabelProvider extends BaseLabelProvider implements ITableLabelProvider {
-		private IPathFileLocator locator;
-		/**
-		 * 
-		 */
-		public DiscoveredModuleLabelProvider(IPathFileLocator locator) {
-			this.locator = locator;
+	class DiscoveredModuleLabelProvider extends BaseLabelProvider implements ITableLabelProvider, IFontProvider {
+		public DiscoveredModuleLabelProvider() {
 		}
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
-		 */
 		@Override
 		public String getColumnText(Object element, int columnIndex) {
-			IModule module = (IModule) element;
-			if (columnIndex == 0) {
-				return module.getName();
-			} else {
-				Collection<File> coveredFiles = module.getUsedFiles(locator);
-				StringBuilder sb = new StringBuilder();
-				for (File file : coveredFiles) {
-					if (sb.length() > 0)
-						sb.append(", ");
-					sb.append(file.getName());
+			if (element instanceof IModule) {
+				if (columnIndex == 0) {
+					return "";
 				}
-				return sb.toString();
+				return ((IModule) element).getName();
 			}
+			return "";
 		}
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
-		 */
 		@Override
 		public Image getColumnImage(Object element, int columnIndex) {
 			return null;
 		}
+		@Override
+		public Font getFont(Object element) {
+			if (element instanceof IModule) {
+				IModule stock = machine.getModuleManager().findStockModuleByMd5(((IModule) element).getMD5());
+				if (stock != null && false == stock.getName().equals(((IModule) element).getName())) 
+					return JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
+			}
+			return null;
+		}
 	}
 	
+	public class ColumnComparator extends ViewerComparator {
+		private int propertyIndex;
+		private int direction = 1;
+
+		public ColumnComparator() {
+			this.propertyIndex = 0;
+			direction = 1;
+		}
+
+		public int getDirection() {
+			return direction == 1 ? SWT.DOWN : SWT.UP;
+		}
+
+		public void setColumn(int column) {
+			if (column == this.propertyIndex) {
+				// flip between ascending/descending/none
+				if (direction == 0)
+					direction = 1;
+				else
+					direction = -direction;
+			} else {
+				// New column; do an ascending sort
+				this.propertyIndex = column;
+				direction = 1;
+			}
+		}
+
+		@Override
+		public int compare(Viewer viewer, Object e1, Object e2) {
+			if (direction == 0)
+				return 0;
+			
+			int rc;
+			if (propertyIndex == 0) {
+				// checkbox
+				boolean sel1 = selectedModules.contains(e1);
+				boolean sel2 = selectedModules.contains(e2);
+				rc = (sel1 ? 0 : 1) - (sel2 ? 0 : 1);
+			}
+			else {
+				String lab1 = labelProvider.getColumnText(e1, propertyIndex);
+				String lab2 = labelProvider.getColumnText(e2, propertyIndex);
+				
+				rc = lab1.compareToIgnoreCase(lab2);
+			}
+			
+			// If descending order, flip the direction
+			if (direction < 0) {
+				rc = -rc;
+			}
+			return rc;
+		}
+
+	}
+
+	private Composite createSearchFilter(Composite parent) {
+		
+		Composite comp = new Composite(parent, SWT.NONE);
+		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(2).equalWidth(false).applyTo(comp);
+
+		filterText = new Text(comp, SWT.BORDER | SWT.SEARCH | SWT.ICON_SEARCH);
+		filterText.setMessage("Search...");
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(filterText);
+		
+		filterText.addFocusListener(new FocusListener() {
+			
+			@Override
+			public void focusLost(FocusEvent e) {
+				filterText.selectAll();				
+			}
+			
+			@Override
+			public void focusGained(FocusEvent e) {
+				filterText.selectAll();				
+			}
+		});
+		
+		final Button clearButton = new Button(comp, SWT.PUSH | SWT.NO_FOCUS);
+		clearButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/icon_search_clear.png"));
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(clearButton);
+
+		clearButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				initFilter(null);
+				filterText.setFocus();
+				filterText.setText("");
+			}
+		});
+		
+		filterText.addKeyListener(new KeyAdapter() {
+			public void keyPressed(KeyEvent e) {
+				if (viewer.getControl().isDisposed())
+					return;
+
+				if (lastFilter == null) {
+					filterText.setForeground(null);
+					lastFilter = "";
+					filterText.setText("");
+				}
+				
+				if (e.keyCode == SWT.ARROW_DOWN) {
+					viewer.getControl().setFocus();
+				}
+				
+				if (e.keyCode == '\r') {
+					viewer.getControl().setFocus();
+//					e.doit = false;
+				}
+			}
+		});
+
+		filterText.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				updateFilter(filterText.getText());
+				
+				if (lastFilter != null && viewer.getTable().getItemCount() > 0) {
+					viewer.setSelection(new StructuredSelection(viewer.getTable().getItems()[0].getData()), true);
+				}
+			}
+		});
+
+		return comp;
+	}
+	
+	protected void refreshFilters() {
+		viewer.setFilters(new ViewerFilter[] { 
+				filteredSearchFilter
+			}
+		);
+	}
+
+	private void initFilter(String text) {
+		String curText = filterText.getText(); 
+		if (curText.isEmpty()) {
+			filterText.setText(text != null ? text : "");
+			filterText.selectAll();
+			filterText.setForeground(null);
+		}
+		
+		refreshFilters();
+
+		updateFilter(text);
+
+		// re-apply checked state, which is lost
+		// see https://www.eclipse.org/forums/index.php/t/403879/
+		if (selectedModules != null)
+			viewer.setCheckedElements(selectedModules.toArray());
+
+		getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				if (!nameColumn.getColumn().isDisposed())
+					nameColumn.getColumn().setWidth(viewer.getControl().getSize().x);
+
+				filterText.setFocus();
+			}
+		});
+
+	}
+
+	protected void updateFilter(final String text) {
+		String prev = lastFilter;
+		if (text == null || text.isEmpty() || text.equals("Search...")) {
+			lastFilter = null;
+		} else {
+			lastFilter = text;
+		}
+		if (lastFilter != prev && (lastFilter == null || ! lastFilter.equals(prev))) {
+			viewer.refresh();
+		}
+	}
+
 	/**
 	 * @param composite
 	 */
-	private void createDiscoveredList(Composite composite) {
+	private Composite createTableViewer(Composite parent) {
+		Composite composite = new Composite(parent, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(3).applyTo(composite);
 
+		GridDataFactory.fillDefaults().grab(true, true).hint(-1, 500).applyTo(composite);
 		Label label;
 		
 		/*spacer*/ label = new Label(composite, SWT.NONE);
@@ -251,32 +469,46 @@ public class ModuleListComposite extends Composite {
 		
 		label = new Label(composite, SWT.NONE);
 		label.setText("Select modules for list:");
-		GridDataFactory.fillDefaults().grab(true, false).span(2, 1).applyTo(label);
+		GridDataFactory.fillDefaults().grab(true, false).span(3, 1).applyTo(label);
 		
 		Composite listArea = new Composite(composite, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(listArea);
+		GridLayoutFactory.fillDefaults().spacing(0, 0).numColumns(2).applyTo(listArea);
 		GridDataFactory.fillDefaults().grab(true, true).span(3, 1).indent(12, 0).applyTo(listArea);
+
+		Composite c = createSearchFilter(listArea);
+		GridDataFactory.fillDefaults().grab(true, false).span(1, 1).applyTo(c);
+		label = new Label(listArea, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(false, false).span(1, 1).applyTo(label);
 		
-		discoveredList = CheckboxTableViewer.newCheckList(listArea, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL | SWT.CHECK);
-		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(discoveredList.getControl());
+		viewer = CheckboxTableViewer.newCheckList(listArea, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL | SWT.CHECK);
+		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).hint(-1, 400).applyTo(viewer.getControl());
 		
-		discoveredList.getTable().setHeaderVisible(true);
+		viewer.getTable().setHeaderVisible(true);
 		
-		nameColumn = new TableViewerColumn(discoveredList, SWT.LEFT | SWT.RESIZE);
+		comparator = new ColumnComparator();
+		viewer.setComparator(comparator);
+		
+		checkedColumn = new TableViewerColumn(viewer, SWT.LEFT | SWT.RESIZE);
+		checkedColumn.getColumn().addSelectionListener(createColumnSelectionListener(checkedColumn.getColumn(), 0));
+		checkedColumn.getColumn().setText("Use");
+		
+		nameColumn = new TableViewerColumn(viewer, SWT.LEFT | SWT.RESIZE);
+		nameColumn.getColumn().addSelectionListener(createColumnSelectionListener(nameColumn.getColumn(), 1));
 		nameColumn.getColumn().setText("Name");
+
+		comparator.direction = 1;
+		comparator.propertyIndex = 1;
 		
-		filesColumn = new TableViewerColumn(discoveredList, SWT.LEFT | SWT.RESIZE);
-		filesColumn.getColumn().setText("Files");
-		
-		discoveredList.setLabelProvider(new DiscoveredModuleLabelProvider(machine.getRomPathFileLocator()));
-		discoveredList.setContentProvider(new ArrayContentProvider());
+		labelProvider = new DiscoveredModuleLabelProvider();
+		viewer.setLabelProvider(labelProvider);
+		viewer.setContentProvider(new ArrayContentProvider());
 		
 		dirtyModuleLists = new ArrayList<URI>();
-		editingSupport = new ModuleNameEditingSupport(discoveredList, dirtyModuleLists);
+		editingSupport = new ModuleNameEditingSupport(machine.getModuleManager(), viewer, dirtyModuleLists);
 		nameColumn.setEditingSupport(editingSupport);
 		editingSupport.setCanEdit(true);
 		
-		discoveredList.setInput(discoveredModules);
+		viewer.setInput(discoveredModules);
 		
 		Composite buttons = new Composite(listArea, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(buttons);
@@ -297,8 +529,9 @@ public class ModuleListComposite extends Composite {
 		selectAllButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				discoveredList.setAllChecked(true);
+				viewer.setAllChecked(true);
 				selectedModules.clear();
+				
 				selectedModules.addAll(discoveredModules);
 				validate();
 			}
@@ -306,7 +539,7 @@ public class ModuleListComposite extends Composite {
 		selectNoneButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				discoveredList.setAllChecked(false);
+				viewer.setAllChecked(false);
 				selectedModules.clear();
 				validate();
 			}
@@ -318,23 +551,89 @@ public class ModuleListComposite extends Composite {
 			}
 		});
 		
-		discoveredList.addCheckStateListener(new ICheckStateListener() {
+		viewer.addCheckStateListener(new ICheckStateListener() {
 			
 			@Override
 			public void checkStateChanged(CheckStateChangedEvent event) {
-				IModule module = (IModule) event.getElement();
-				if (event.getChecked()) {
-					selectedModules.add(module);
-				} else {
-					selectedModules.remove(module);
+				if (selectedModules != null) {
+					if (event.getElement() instanceof IModule) {
+						IModule module = (IModule) event.getElement();
+						if (event.getChecked()) {
+							selectedModules.add(module);
+						} else {
+							selectedModules.remove(module);
+						}
+					}
 				}
 				validate();
 			}
 		});
 		
+		viewer.getControl().addMenuDetectListener(new MenuDetectListener() {
+			
+			@Override
+			public void menuDetected(MenuDetectEvent e) {
+				final TableItem item = viewer.getTable().getItem(
+						viewer.getTable().toControl(new Point(e.x, e.y))
+						);
+				if (item != null && item.getData() instanceof IModule) {
+					final IModule module = (IModule) item.getData();
+					
+					final IModule stock = machine.getModuleManager().findStockModuleByMd5(module.getMD5());
+
+					final Menu menu = new Menu(viewer.getControl());
+					
+					final MenuItem ditem;
+					ditem = new MenuItem(menu, SWT.NONE);
+					ditem.setText("Module details...");
+					
+					ditem.addSelectionListener(new SelectionAdapter() {
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							menu.dispose();
+							ModuleInfoDialog dialog = new ModuleInfoDialog(machine, null, getShell(), module);
+							dialog.open();
+						}
+					});
+					
+					if (stock != null && false == module.getName().equals(stock.getName())) {
+						final MenuItem nitem;
+						nitem = new MenuItem(menu, SWT.NONE);
+						nitem.setText("Reset from stock module");
+						
+						nitem.addSelectionListener(new SelectionAdapter() {
+							@Override
+							public void widgetSelected(SelectionEvent e) {
+								menu.dispose();
+								module.setName(stock.getName());
+								module.setAutoStart(stock.isAutoStart());
+								module.getKeywords().addAll(stock.getKeywords());
+								viewer.refresh(module);
+							}
+						});
+					}
+
+					if (menu.getItemCount() == 0) {
+						menu.dispose();
+						return;
+					}
+					
+					menu.setLocation(e.x, e.y);
+					menu.setVisible(true);
+					
+					while (!menu.isDisposed() && menu.isVisible()) {
+						if (!getDisplay().readAndDispatch())
+							getDisplay().sleep();
+					}
+					
+				}
+			}
+		});
+		
+		
 
 		showAllButton = new Button(listArea, SWT.CHECK);
-		GridDataFactory.fillDefaults().grab(true, false).applyTo(showAllButton);
+		GridDataFactory.fillDefaults().indent(0, 6).grab(true, false).applyTo(showAllButton);
 		
 		showAllButton.setText("Show all modules");
 		showAllButton.setToolTipText("When enabled, show all modules, even those recorded in other lists");
@@ -346,26 +645,42 @@ public class ModuleListComposite extends Composite {
 				refresh();
 			}
 		});
+		
+		initFilter(null);
+		return composite;
+	}
 
+	private SelectionListener createColumnSelectionListener(final TableColumn column,
+			final int index) {
+		SelectionAdapter selectionAdapter = new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				comparator.setColumn(index);
+				int dir = comparator.getDirection();
+				viewer.getTable().setSortDirection(dir);
+				viewer.getTable().setSortColumn(column);
+				viewer.refresh();
+			}
+		};
+		return selectionAdapter;
 	}
 
 	/**
 	 * @param composite
 	 */
-	protected void createDatabaseRow(Composite dbRow) {
+	protected Composite createDatabaseRow(Composite parent) {
+		Composite dbRow = new Composite(parent, SWT.NONE);
+		GridLayoutFactory.fillDefaults().numColumns(4).spacing(2, 0).applyTo(dbRow);
+		
 		Label label;
 		
 		label = new Label(dbRow, SWT.WRAP);
-		label.setText("List file:");
+		label.setText("List file: ");
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(label);
 		
 		dbSelector = new ComboViewer(dbRow, SWT.BORDER);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(dbSelector.getControl());
 		dbSelector.getControl().setToolTipText("Specify a file to record the list of discovered modules.");
-		
-		final Button browseButton = new Button(dbRow, SWT.PUSH);
-		browseButton.setText("Browse...");
-		GridDataFactory.fillDefaults().hint(128, -1).applyTo(browseButton);
 		
 		dbSelector.getControl().addFocusListener(new FocusAdapter() {
 			@Override
@@ -384,12 +699,22 @@ public class ModuleListComposite extends Composite {
 					return;
 				}
 				Object o = ((IStructuredSelection) event.getSelection()).getFirstElement();
-				setDbFile((File) o);
+				
+				File dbFile = (File) o;
+				if (dbFile == ModuleListComposite.this.dbFile)
+					return;
+				
+				setDbFile(dbFile);
 				
 				validate();
 				reset();
 			}
 		});
+
+		final Button browseButton = new Button(dbRow, SWT.PUSH);
+		browseButton.setText("Browse...");
+		browseButton.setToolTipText("Locate and add a new modules.xml file.");
+		GridDataFactory.fillDefaults().hint(128, -1).applyTo(browseButton);
 		
 		browseButton.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -410,6 +735,32 @@ public class ModuleListComposite extends Composite {
 			}
 		});
 		
+
+		final Button removeButton = new Button(dbRow, SWT.PUSH);
+		removeButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/icon_clear.gif"));
+		removeButton.setToolTipText("Remove the current modules.xml file from V9t9 (does not delete)");
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(false, false).applyTo(removeButton);
+
+		removeButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				selectedModuleMap.remove(dbFile);
+				if (selectedModuleMap.isEmpty()) {
+					setDbFile(null);
+				} else {
+					setDbFile(selectedModuleMap.keySet().iterator().next());
+				}
+				
+				reset();
+				dbSelector.refresh();
+				if (dbFile != null)
+					dbSelector.setSelection(new StructuredSelection(dbFile));
+				
+				validate();
+			}
+		});
+
+		return dbRow;
 	}
 
 	/**
@@ -418,22 +769,27 @@ public class ModuleListComposite extends Composite {
 	private void setDbFile(File dbFile) {
 		this.dbFile = dbFile;
 		
-		List<IModule> selected = selectedModuleMap.get(dbFile);
-		if (selected == null) {
-			if (dbFile.exists() && machine.getModuleManager() != null) {
-				try {
-					selected = machine.getModuleManager().readModules(dbFile.toURI());
-					origModuleMap.put(dbFile, new ArrayList<IModule>(selected));
-				} catch (IOException e) {
-				}
-			}
+		List<IModule> selected;
+		if (dbFile != null) {
+			selected = selectedModuleMap.get(dbFile);
 			if (selected == null) {
-				selected = new ArrayList<IModule>();
+				if (dbFile.exists() && machine.getModuleManager() != null) {
+					try {
+						selected = machine.getModuleManager().readModules(dbFile.toURI());
+						origModuleMap.put(dbFile, new ArrayList<IModule>(selected));
+					} catch (IOException e) {
+					}
+				}
+				if (selected == null) {
+					selected = new ArrayList<IModule>();
+				}
+				selectedModuleMap.put(dbFile, selected);
 			}
-			selectedModuleMap.put(dbFile, selected);
+		} else {
+			selected = new ArrayList<IModule>();
 		}
 		
-		System.out.println(dbFile + " => " + selected);
+		//System.out.println(dbFile + " => " + selected);
 		selectedModules = selected;
 		
 	}
@@ -490,6 +846,7 @@ public class ModuleListComposite extends Composite {
 		
 		URI databaseURI = dbFile != null ? dbFile.toURI() : nonameDatabaseURI;
 		
+		IModuleDetector detector = machine.getModuleDetector();
 		for (URI uri : machine.getRomPathFileLocator().getSearchURIs()) {
 			File dir;
 			try {
@@ -499,79 +856,35 @@ public class ModuleListComposite extends Composite {
 				continue;
 			}
 					
-			Collection<IModule> ents = machine.scanModules(databaseURI, dir);
-			for (IModule module : ents) {
-				IModule exist = machine.getModuleManager().findModuleByName(module.getName(), true);
-				if (exist == null) {
-					fixupProperties(module);
-					discoveredModules.add(module);
-				} else if (exist.getDatabaseURI().equals(databaseURI)) {
-					if (Arrays.equals(exist.getMemoryEntryInfos(), module.getMemoryEntryInfos()))
-						discoveredModules.add(exist);
-					else
-						discoveredModules.add(module);	// in case detection changed
-				} else if (showAllModules) {
-					discoveredModules.add(exist);
-				}
-			}
+			detector.scan(dir);
 		}
 
-		discoveredList.setAllChecked(false);
-		discoveredList.refresh();
+		for (Map.Entry<String, List<IModule>> ent : detector.gatherDuplicatesByMD5().entrySet()) {
+			IModule module = ent.getValue().get(0);
+			
+			IModule exist = machine.getModuleManager().findModuleByNameAndHash(module.getName(), module.getMD5());
+			if (exist == null) {
+				module.removePathsFromFiles(machine.getRomPathFileLocator());
+				discoveredModules.add(module);
+			} else if (exist.getDatabaseURI().equals(databaseURI)) {
+				// keep my version in case name,etc. were edited
+				discoveredModules.add(exist);
+			} else if (showAllModules) {
+				discoveredModules.add(exist);
+			}
+		}
 		
+		viewer.setAllChecked(false);
+		viewer.refresh();
+		
+		checkedColumn.getColumn().pack();
 		nameColumn.getColumn().pack();
-		filesColumn.getColumn().pack();
 		
 		reset();
+		
+		filterText.setFocus();
 	}
 	
-	/**
-	 * @param module
-	 */
-	private void fixupProperties(IModule module) {
-		for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-			shortenPath(info, MemoryEntryInfo.FILENAME);
-			shortenPath(info, MemoryEntryInfo.FILENAME2);
-		}
-	}
-
-	/**
-	 * @param info
-	 * @param prop
-	 */
-	private void shortenPath(MemoryEntryInfo info, String prop) {
-		Object path = info.getProperties().get(prop);
-		if (path == null)
-			return;
-		String replPathStr = null; 
-		String pathStr = path.toString();
-		for (URI searchURI : machine.getRomPathFileLocator().getSearchURIs()) {
-			String searchStr = searchURI.toString();
-			// remove e.g. file:/foo/bar from jar:file:/foo/bar
-			String newPathStr = pathStr.replace(searchStr, "");
-			if (!newPathStr.equals(pathStr)) {
-				if (replPathStr == null || newPathStr.length() < replPathStr.length()) {
-					replPathStr = newPathStr;
-					info.getProperties().put(prop, newPathStr);
-				}
-			} else {
-				int idx = searchStr.indexOf(':');
-				if (idx > 0) {
-					// remove e.g. /foo/bar from file:/foo/bar
-					searchStr = searchStr.substring(idx+1);
-					newPathStr = pathStr.replace(searchStr, "");
-					if (!newPathStr.equals(pathStr)) {
-						if (replPathStr == null || newPathStr.length() < replPathStr.length()) {
-							replPathStr = newPathStr;
-							info.getProperties().put(prop, newPathStr);
-						}
-					}
-				}
-				
-			}
-		}
-	}
-
 	public IStatus getStatus() {
 		return status;
 	}
@@ -584,50 +897,62 @@ public class ModuleListComposite extends Composite {
 		if (orig == null) {
 			populateUnique();
 		} else {
+			// select the modules previously assigned to this database,
+			// sorting them to the top
 			selectedModules.clear();
-			List<IModule> matched = new ArrayList<IModule>();
+			
+			Map<String, IModule> discMap = new HashMap<String, IModule>();
+			for (IModule disc : discoveredModules) {
+				discMap.put(disc.getMD5(), disc);
+			}
+			
 			for (IModule module : orig) {
 				boolean found = false;
-				for (IModule disc : discoveredModules.toArray(new IModule[discoveredModules.size()])) {
-					if (module.getName().equals(disc.getName())) {
-						selectedModules.add(disc);
-						fixupProperties(disc);
-						discoveredModules.remove(disc);
-						matched.add(disc);
-						found = true;
-						break;
-					}
+				IModule disc = discMap.get(module.getMD5());
+				if (disc != null) {
+					disc.setName(module.getName()); 	// preserve user edits
+					disc.setDatabaseURI(dbFile.toURI());
+					selectedModules.add(disc);
+					disc.removePathsFromFiles(machine.getRomPathFileLocator());
+					found = true;
 				}
 				if (!found) {
-					fixupProperties(module);
-					matched.add(module);
+					module = module.copy();
+					module.removePathsFromFiles(machine.getRomPathFileLocator());
+					module.setDatabaseURI(dbFile.toURI());
 					selectedModules.add(module);
+					if (!discoveredModules.contains(module)) 
+						discoveredModules.add(module);
 				}
 			}
-			discoveredModules.addAll(0, matched);
 		}
 		
-		discoveredList.refresh();
-		discoveredList.setCheckedElements(selectedModules.toArray());
+		viewer.refresh();
+		viewer.setCheckedElements(selectedModules.toArray());
 		
 		validate();
 	}
 		
-	public void populateUnique() {
+	/**
+	 * Select all the modules not already selected, e.g.
+	 * to populate a new module database.
+	 */
+	protected void populateUnique() {
 		if (selectedModules == null)
 			return;
 		
 		selectedModules.clear();
 		
 		for (IModule module : discoveredModules) {
-			IModule exist = machine.getModuleManager().findModuleByName(module.getName(), true);
+			IModule exist = machine.getModuleManager().findModuleByNameAndHash(
+					module.getName(), module.getMD5());
 			if (exist == null) {
 				selectedModules.add(module);
 			}
 		}
 
-		discoveredList.refresh();
-		discoveredList.setCheckedElements(selectedModules.toArray());
+		viewer.refresh();
+		viewer.setCheckedElements(selectedModules.toArray());
 		
 		validate();
 	}
@@ -640,16 +965,9 @@ public class ModuleListComposite extends Composite {
 //				selectedModules.add(module);
 //			}
 //		}
-//		discoveredList.setCheckedElements(selectedModules.toArray());
+//		treeViewer.setCheckedElements(selectedModules.toArray());
 //	}
 	
-	/**
-	 * @return the discoveredModules
-	 */
-	public List<IModule> getDiscoveredModules() {
-		return discoveredModules;
-	}
-
 	public File getModuleDatabase() {
 		return dbFile;
 	}
@@ -690,7 +1008,7 @@ public class ModuleListComposite extends Composite {
 		}
 		moduleList.setList(ents);
 		
-		machine.getModuleManager().reload();
+		machine.getModuleManager().reloadDatabase();
 		return true;
 	}
 	

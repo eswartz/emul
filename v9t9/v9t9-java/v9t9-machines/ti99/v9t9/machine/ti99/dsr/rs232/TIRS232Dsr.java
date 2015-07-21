@@ -67,7 +67,6 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 //			.withFileMD5("A5467BE2E6BD04E1B9CF1DE8FA507541")
 			.create("TI RS232 DSR ROM");
 	
-	
 
 	protected short base;
 
@@ -83,7 +82,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	private Map<Integer, RS232Regs> rs232Devices = new HashMap<Integer, RS232Regs>();
 
 
-	private ISettingsHandler settings;
+	protected ISettingsHandler settings;
 
 	public TIRS232Dsr(IMachine machine, short base) {
 		this.machine = machine;
@@ -115,7 +114,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			throws IOException {
 		this.romMemoryEntry = memoryEntryFactory.newMemoryEntry(rs232DsrRomInfo);
 		machine.getConsole().mapEntry(romMemoryEntry);
-		machine.getCpu().settingDumpFullInstructions().setBoolean(true);
+		//machine.getCpu().settingDumpFullInstructions().setBoolean(true);
 	}
 	
 	public void deactivate(IMemoryDomain console) {
@@ -128,7 +127,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	 * 
 	 */
 	protected void termDevice() {
-		machine.getCpu().settingDumpFullInstructions().setBoolean(false);
+		//machine.getCpu().settingDumpFullInstructions().setBoolean(false);
 		rs232ActiveSetting.setBoolean(false);
 	}
 
@@ -351,7 +350,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 	}
 
 	protected void registerRS232Device(int index, String name) {
-		RS232Regs rs = new RS232Regs(machine, new RS232(dumper), dumper);
+		RS232Regs rs = new RS232Regs(machine, new RS232(machine.getFastMachineTimer(), dumper), dumper);
 		rs232DeviceMap.put(name, rs);
 		rs232Devices.put(index, rs);
 	}
@@ -375,7 +374,8 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 				rs232ActiveSetting, 
 				"RS232 activity",
 				IDevIcons.DSR_RS232, IDevIcons.DSR_LIGHT,
-				null);
+				"RS232 Settings",
+				IDsrHandler.GROUP_RS232_CONFIGURATION);
 		return Collections.<IDeviceIndicatorProvider>singletonList(deviceIndicatorProvider);
 	}
 
@@ -389,18 +389,29 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 		settings.add(this.settings.get(RS232Settings.rs232Controller));
 		map.put(IDsrHandler.GROUP_DSR_SELECTION, settings);
 		
+		settings = new ArrayList<IProperty>(1);
+		settings.add(this.settings.get(RS232Settings.settingRS232Print));
+		map.put(IDsrHandler.GROUP_RS232_CONFIGURATION, settings);
+		
 		return map;
 	}
 
 	@Override
 	public void loadState(ISettingSection section) {
-		// TODO Auto-generated method stub
-		
+		if (section == null)
+			return;
+		for (Map.Entry<String, RS232Regs> ent : rs232DeviceMap.entrySet()) {
+			ISettingSection rsSec = section.getSection(ent.getKey());
+			ent.getValue().loadState(rsSec);
+		}
 	}
 
 	@Override
 	public void saveState(ISettingSection section) {
-		// TODO Auto-generated method stub
+		for (Map.Entry<String, RS232Regs> ent : rs232DeviceMap.entrySet()) {
+			ISettingSection rsSec = section.addSection(ent.getKey());
+			ent.getValue().saveState(rsSec);
+		}
 		
 	}
 

@@ -196,7 +196,7 @@ public abstract class BaseSwtJavaClient implements IClient {
         	IPrinterImageEngine engine = ((IPrinterImageHandler) handler).getEngine();
         	if (engines.add(engine)) {
 				@SuppressWarnings("unused")
-				PrinterImageShell rsshell = new PrinterImageShell(engine);
+				PrinterImageShell rsshell = new PrinterImageShell(eventNotifier, settingsHandler, engine);
         	}
         }
 	}

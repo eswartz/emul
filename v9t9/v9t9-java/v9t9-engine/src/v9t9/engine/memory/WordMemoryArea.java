@@ -10,6 +10,7 @@
  */
 package v9t9.engine.memory;
 
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 
 /**
@@ -30,6 +31,8 @@ public class WordMemoryArea extends MemoryArea {
     
 	public WordMemoryArea(int latency, short[] memory) {
 		super(latency);
+		if (memory != null && memory.length % IMemoryDomain.AREASIZE != 0)
+			assert false : "memory area size not multiple of " + IMemoryDomain.AREASIZE;
 		this.memory = memory;
 		this.read = memory;
 		this.write = memory;

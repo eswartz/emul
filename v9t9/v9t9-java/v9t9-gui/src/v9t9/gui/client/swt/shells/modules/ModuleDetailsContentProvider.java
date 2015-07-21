@@ -22,11 +22,11 @@ import org.eclipse.jface.viewers.TreeNode;
 import org.eclipse.jface.viewers.TreeNodeContentProvider;
 
 import v9t9.common.files.IPathFileLocator;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.memory.StoredMemoryEntryInfo;
 import v9t9.common.modules.IModule;
-import ejs.base.properties.IProperty;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.Pair;
 
@@ -53,6 +53,9 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 	public Object createModuleContent(IModule module) {
 		List<TreeNode> kids = new ArrayList<TreeNode>();
 
+		TreeNode md5Sum = new TreeNode(new Pair<String, String>(
+				"Module MD5 Sum", module.getMD5()));
+		kids.add(md5Sum);
 		
 		TreeNode moduleDatabase = new TreeNode(new Pair<String, String>(
 				"Module Defined By", module.getDatabaseURI().toString()));
@@ -74,9 +77,9 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 		memInfoNode.setChildren(memNodes.toArray(new TreeNode[memNodes.size()]));
 		kids.add(memInfoNode);
 
-		for (IProperty prop : pathFileLocator.getSearchPathProperties()) {
-			kids.add(makeTreeNode(prop));
-		}
+//		for (IProperty prop : pathFileLocator.getSearchPathProperties()) {
+//			kids.add(makeTreeNode(prop));
+//		}
 		
 
 		return (TreeNode[]) kids.toArray(new TreeNode[kids.size()]);
@@ -116,7 +119,9 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 			kids[1] = new ErrorTreeNode(new Pair<String, String>("File Size", "cannot read: " + e.toString()));
 		}
 		try {
-			kids[2] = new TreeNode(new Pair<String, String>("File MD5", ""+ pathFileLocator.getContentMD5(uri)));
+			kids[2] = new TreeNode(new Pair<String, String>("File MD5", ""+ pathFileLocator.getContentMD5(uri,
+					MD5FilterAlgorithms.create(info.info.getEffectiveFileMD5Algorithm())
+					)));
 		} catch (IOException e) {
 			kids[2] = new ErrorTreeNode(new Pair<String, String>("File MD5", "cannot read: " + e.toString()));
 		}
@@ -152,23 +157,23 @@ public class ModuleDetailsContentProvider extends TreeNodeContentProvider {
 		return node;
 	}
 
-	private TreeNode makeTreeNode(IProperty pathProperty) {
-		TreeNode node = new TreeNode(pathProperty);
-		List<TreeNode> kids = new ArrayList<TreeNode>();
-		if (pathProperty.getValue() instanceof List) {
-			if (!pathProperty.getList().isEmpty()) {
-				for (Object path : pathProperty.getList()) {
-					kids.add(createPathNode(path));
-				}
-			} else {
-				kids.add(new InfoTreeNode(new Pair<String, String>("Empty", "")));				
-			}
-		} else {
-			kids.add(createPathNode(pathProperty.getValue()));
-		}
-		node.setChildren((TreeNode[]) kids.toArray(new TreeNode[kids.size()]));
-		return node;
-	}
+//	private TreeNode makeTreeNode(IProperty pathProperty) {
+//		TreeNode node = new TreeNode(pathProperty);
+//		List<TreeNode> kids = new ArrayList<TreeNode>();
+//		if (pathProperty.getValue() instanceof List) {
+//			if (!pathProperty.getList().isEmpty()) {
+//				for (Object path : pathProperty.getList()) {
+//					kids.add(createPathNode(path));
+//				}
+//			} else {
+//				kids.add(new InfoTreeNode(new Pair<String, String>("Empty", "")));				
+//			}
+//		} else {
+//			kids.add(createPathNode(pathProperty.getValue()));
+//		}
+//		node.setChildren((TreeNode[]) kids.toArray(new TreeNode[kids.size()]));
+//		return node;
+//	}
 
 	/**
 	 * @param kids

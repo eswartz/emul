@@ -22,7 +22,10 @@ import ejs.base.settings.ISettingSection;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.XMLUtils;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.files.IPathFileLocator;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
@@ -93,23 +96,22 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			throws IOException {
 		MemoryArea area;
     	
-    	if (info.getResolvedFilename(settings) != null) {
-    		if (info.isByteSized())
-        		area = new ByteMemoryArea();
-        	else
-        		area = new WordMemoryArea();
-    	}
-    	else {
-    		int size = Math.abs(info.getSize());
-			if (info.isByteSized())
-        		area = new ByteMemoryArea(info.getDomain(memory).getLatency(info.getAddress()),
-        			new byte[size]	
-        			);
-        	else
-        		area = new WordMemoryArea(info.getDomain(memory).getLatency(info.getAddress()),
-            			new short[size / 2]	
-            			);
-    	}
+		int latency = info.getDomain(memory).getLatency(info.getAddress());
+
+		boolean hasFile = info.getResolvedFilename(settings) != null && !info.isStored();
+		int size = Math.abs(info.getSize());
+		
+		if (info.isByteSized()) {
+			ByteMemoryArea bma = new ByteMemoryArea(latency, hasFile ? null : new byte[size]);
+			if (info.isStored())
+	        	bma.write = bma.memory;
+			area = bma;
+		} else {
+			WordMemoryArea wma = new WordMemoryArea(latency, hasFile ? null : new short[size/2]);
+			if (info.isStored())
+	        	wma.write = wma.memory;
+			area = wma;
+		}
         
         return area;
 	}
@@ -174,6 +176,8 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
     		bankSize = 0x2000;
     	
     	int numBanks = storedInfo.size / bankSize;
+    	if (numBanks == 0)
+    		throw new IOException("no banks found for " + info.getName());
     	
     	IMemoryEntry[] entries = new IMemoryEntry[numBanks];
     	
@@ -181,7 +185,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
     	
     	for (int bank = 0; bank < entries.length; bank++) {
     		int entryIdx = reversed ? entries.length - bank - 1 : bank;
-    		entries[entryIdx] = newFromFile(info.asBank(entryIdx, info.getOffset() + bank * bankSize), 
+    		entries[entryIdx] = newFromFile(info.asBank(entryIdx, info.getOffset() + bank * bankSize, bankSize), 
     				MemoryAreaFactory.createMemoryArea(memory, info));
     	}
 		
@@ -227,7 +231,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 	 * @param entryStore
 	 * @return
 	 */
-	public IMemoryEntry createEntry(IMemoryDomain domain, ISettingSection entryStore) {
+	public IMemoryEntry createEntry(IMemoryDomain domain, IEventNotifier notifier, ISettingSection entryStore) {
 		MemoryEntry entry = null;
 		String klazzName = entryStore.get("Class");
 		if (klazzName != null) {
@@ -254,7 +258,10 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			
 			entry.setLocator(locator);
 			entry.setDomain(domain);
-			entry.setWordAccess(domain.getIdentifier().equals(IMemoryDomain.NAME_CPU));	// TODO
+			if (entryStore.get("WordAccess") != null)
+				entry.setWordAccess(entryStore.getBoolean("WordAccess"));
+			else
+				entry.setWordAccess(domain.getIdentifier().equals(IMemoryDomain.NAME_CPU));	// TODO
 			int latency = domain.getLatency(entryStore.getInt("Address"));
 			if (entry.isWordAccess())
 				entry.setArea(new WordMemoryArea(latency));
@@ -263,7 +270,11 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			
 			entry.setMemory(domain.getMemory());
 			
-			entry.loadState(entryStore);
+			try {
+				entry.loadMemory(notifier, entryStore);
+			} catch (IOException e) {
+				notifier.notifyEvent(this, Level.ERROR, e.getMessage());
+			}
 		}
 		return entry;
 	}
@@ -293,6 +304,7 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_GRAPHICS);
 					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
 					properties.put(MemoryEntryInfo.SIZE, -0xA000);
+					properties.put(MemoryEntryInfo.FILE_MD5_ALGORITHM, MD5FilterAlgorithms.ALGORITHM_GROM);
 				}
 				else if (el.getNodeName().equals("bankedModuleEntry")) {
 					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_CPU);
@@ -315,10 +327,15 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				
 				getStringAttribute(el, MemoryEntryInfo.FILENAME, info);
 				getStringAttribute(el, MemoryEntryInfo.FILENAME2, info);
+				
 				getStringAttribute(el, MemoryEntryInfo.FILE_MD5, info);
+				getStringAttribute(el, MemoryEntryInfo.FILE_MD5_ALGORITHM, info);
 				getIntAttribute(el, MemoryEntryInfo.FILE_MD5_LIMIT, info);
+				
 				getStringAttribute(el, MemoryEntryInfo.FILE2_MD5, info);
+				getStringAttribute(el, MemoryEntryInfo.FILE2_MD5_ALGORITHM, info);
 				getIntAttribute(el, MemoryEntryInfo.FILE2_MD5_LIMIT, info);
+				
 				getStringAttribute(el, MemoryEntryInfo.DOMAIN, info);
 				getIntAttribute(el, MemoryEntryInfo.ADDRESS, info);
 				getIntAttribute(el, MemoryEntryInfo.SIZE, info);
@@ -328,6 +345,9 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				getClassAttribute(el, MemoryEntryInfo.CLASS, MemoryEntry.class, info);
 				getBooleanAttribute(el, MemoryEntryInfo.REVERSED, info);
 
+				properties.put(MemoryEntryInfo.UNIT_SIZE, 
+						IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN)) ? 2 : 1);
+				
 				memoryEntries.add(info);
 			}
 		}
@@ -360,23 +380,27 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 			Integer size = (Integer) properties.get(MemoryEntryInfo.SIZE);
 			if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))
 					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000
-					&& (size == null || size == 0x2000)
+					&& (size == null || Math.abs(size) <= 0x2000)
 					&& (offset == null || offset == 0)
 					&& !isBanked) {
 				entry = root.getOwnerDocument().createElement("romModuleEntry");
-				needAddress = needSize = needDomain = false;
+				needAddress = needDomain = false;
+				if (size == null || Math.abs(size) == 0x2000)
+					needSize = false;
 			}
 			else if (IMemoryDomain.NAME_GRAPHICS.equals(properties.get(MemoryEntryInfo.DOMAIN))
 					&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000) {
 				entry = root.getOwnerDocument().createElement("gromModuleEntry");
 				needAddress = needDomain = false;
+				if (size == null || size < 0)
+					needSize = false;
 			} else {
 				if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))
 						&& (Integer) properties.get(MemoryEntryInfo.ADDRESS) == 0x6000
 						&& isBanked) {
 					entry = root.getOwnerDocument().createElement("bankedModuleEntry");
 					needAddress = needDomain = false;
-					if ((size == null || size == 0x2000)
+					if ((size == null || Math.abs(size) == 0x2000)
 							&& (offset == null || offset == 0))
 						needSize = false;
 					
@@ -407,11 +431,17 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 				entry.setAttribute(MemoryEntryInfo.FILENAME, properties.get(MemoryEntryInfo.FILENAME).toString());
 			if (properties.containsKey(MemoryEntryInfo.FILE_MD5))
 				entry.setAttribute(MemoryEntryInfo.FILE_MD5, properties.get(MemoryEntryInfo.FILE_MD5).toString());
+			if (properties.containsKey(MemoryEntryInfo.FILE_MD5_ALGORITHM)) {
+				setMd5Algorithm(properties, MemoryEntryInfo.FILE_MD5_ALGORITHM, entry);
+			}
 			
 			if (properties.containsKey(MemoryEntryInfo.FILENAME2))
 				entry.setAttribute(MemoryEntryInfo.FILENAME2, properties.get(MemoryEntryInfo.FILENAME2).toString());
 			if (properties.containsKey(MemoryEntryInfo.FILE2_MD5))
 				entry.setAttribute(MemoryEntryInfo.FILE2_MD5, properties.get(MemoryEntryInfo.FILE2_MD5).toString());
+			if (properties.containsKey(MemoryEntryInfo.FILE2_MD5_ALGORITHM)) {
+				setMd5Algorithm(properties, MemoryEntryInfo.FILE2_MD5_ALGORITHM, entry);
+			}
 			
 			if (properties.containsKey(MemoryEntryInfo.OFFSET) && ((Number) properties.get(MemoryEntryInfo.OFFSET)).intValue() != 0)
 				entry.setAttribute(MemoryEntryInfo.OFFSET, 
@@ -423,6 +453,28 @@ public class MemoryEntryFactory implements IMemoryEntryFactory {
 
 			memoryEntriesEl.appendChild(entry);
 		}
+	}
+
+
+	/**
+	 * @param properties
+	 * @param entry
+	 */
+	private void setMd5Algorithm(Map<String, Object> properties,
+			String propName,
+			Element entry) {
+		String alg = properties.get(propName).toString();
+		if ((MD5FilterAlgorithms.ALGORITHM_GROM.equals(alg) 
+				&& IMemoryDomain.NAME_GRAPHICS.equals(properties.get(MemoryEntryInfo.DOMAIN)))) {
+			// ignore
+			return;
+		}
+		if ((MD5FilterAlgorithms.ALGORITHM_FULL.equals(alg) 
+				&& false == IMemoryDomain.NAME_GRAPHICS.equals(properties.get(MemoryEntryInfo.DOMAIN)))) {
+			// ignore
+			return;
+		}
+		entry.setAttribute(propName, alg);
 	}
 
 	private void getClassAttribute(Element el, String name, Class<?> baseKlass,

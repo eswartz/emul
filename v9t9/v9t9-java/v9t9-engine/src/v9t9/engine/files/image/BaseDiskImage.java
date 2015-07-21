@@ -289,7 +289,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		if (getHandle() != null)
 			closeDiskImage();
 	
-		if (spec.exists()) {
+		if (spec.isFile() && spec.exists()) {
 			hdr.setPath(spec.getPath());
 			if (readOnly) {
 				setHandle(new RandomAccessFile(spec, "r"));

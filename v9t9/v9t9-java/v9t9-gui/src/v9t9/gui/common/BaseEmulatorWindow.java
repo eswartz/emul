@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.MessageFormat;
 
+import org.apache.log4j.Logger;
+
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
@@ -38,9 +40,11 @@ import ejs.base.settings.ISettingSection;
 import ejs.base.settings.ISettingStorage;
 import ejs.base.settings.SettingsSection;
 import ejs.base.settings.XMLSettingStorage;
+import ejs.base.utils.TextUtils;
 
 public abstract class BaseEmulatorWindow {
-
+	private static final Logger log = Logger.getLogger(BaseEmulatorWindow.class);
+	
 	/**
 	 * 
 	 */
@@ -51,6 +55,8 @@ public abstract class BaseEmulatorWindow {
 	private static final String[] MACHINE_SAVE_FILE_EXTENSIONS = new String[] { "*.sav|V9t9 machine save file" };
 	protected IVideoRenderer videoRenderer;
 	protected final IMachine machine;
+
+	private String lastLoadedState;
 	static public final SettingSchema settingMonitorDrawing = new SettingSchema(
 			ISettingsHandler.MACHINE,
 			"MonitorDrawing", Boolean.TRUE);
@@ -167,10 +173,12 @@ public abstract class BaseEmulatorWindow {
 		String filename = selectFile(
 				"Select saved machine state", 
 				Settings.get(machine, settingMachineStatePath),
-				"saves", 
-				null, false, false, MACHINE_SAVE_FILE_EXTENSIONS);
+				"saves",
+				lastLoadedState,
+				false, false, MACHINE_SAVE_FILE_EXTENSIONS);
 		
 		if (filename != null) {
+			lastLoadedState = filename;
 			InputStream fis = null;
 			try {
 				ISettingStorage storage = new XMLSettingStorage(STATE);
@@ -211,8 +219,10 @@ public abstract class BaseEmulatorWindow {
 				}
 
 			} catch (Throwable e1) {
+				log.error("Failed to load machine state", e1);
 				machine.notifyEvent(Level.ERROR, 
-						"Failed to load machine state:\n\n" + e1.getMessage());
+						"Failed to load machine state:\n\n" + 
+									(!TextUtils.isEmpty(e1.getMessage()) ? e1.getMessage() : e1.getClass()));
 			
 			} finally {
 				if (fis != null) {
@@ -325,7 +335,7 @@ public abstract class BaseEmulatorWindow {
 		}
 	}
 	
-	protected File getUniqueFile(String filenameBase) {
+	public static File getUniqueFile(String filenameBase) {
 		File fileBase = new File(filenameBase);
 		File dir = fileBase.getParentFile();
 		String base = fileBase.getName();

@@ -42,8 +42,8 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 
 	private static final Logger log = Logger.getLogger(BaseKeyboardHandler.class);
 	
-	
 	public static boolean DEBUG = false;
+	
 	private static final long TIMEOUT = 500;
 
 	private IProperty useNumPadForJoystick;
@@ -112,7 +112,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 				
 				char wasPrevCh = prevCh;
 				if (prevCh != 0 && !holdingDown) {
-					handler.postCharacter(false, prevShift, prevCh);
+					handler.postCharacter(System.currentTimeMillis(), false, prevShift, prevCh);
 					prevCh = 0;
 				}
 				
@@ -186,7 +186,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 					}
 					
 					if (!holdingDown) {
-						handler.postCharacter(false, shift, ch);
+						handler.postCharacter(System.currentTimeMillis(), false, shift, ch);
 					}
 
 					// watch for repeats
@@ -197,7 +197,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 
 					handler.flushCurrentGroup();
 
-					handler.postCharacter(true, shift, ch);
+					handler.postCharacter(System.currentTimeMillis(), true, shift, ch);
 					
 					nextTime = now + pasteDelay;
 					index++;
@@ -235,7 +235,6 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	protected final IMachine machine;
 
 	protected IKeyboardState keyboardState;
-	private long nextResetTimeout;
 	
 	   /* Map of keys whose shifted/ctrled/fctned versions are being tracked */
 //    private byte fakemap[] = new byte[256];
@@ -271,26 +270,44 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 				return;
 		} else {
 			flushCurrentGroup();
-				
-			keyboardState.incrClearKeyboard();
-			List<KeyDelta> group = queuedKeys.remove();
+
+			// apply keys up to the current time, if the
+			// CPU was slow in reading.
 			
 			Set<Integer> keys = new HashSet<Integer>();
-			for (KeyDelta delta : group) {
-				if (delta.onoff) {
-					keys.add(delta.key);
+			do {
+				keyboardState.incrClearKeyboard();
+				List<KeyDelta> group = queuedKeys.remove();
+				
+				for (KeyDelta delta : group) {
+					if (delta.onoff) {
+						keys.add(delta.key);
+					}
 				}
-			}
-			keyboardState.setKeysFrom(keys);
+			} while (!isPasting() 
+					&& !queuedKeys.isEmpty() 
+					&& keysAreOlderThan(now - 1000 / 10, queuedKeys.iterator().next()));
 			
-//			for (KeyDelta delta : group) {
-//				keyboardState.incrSetKey(delta.onoff, delta.key);
-//			}
+			keyboardState.setKeysFrom(keys);
 		}
+		
 		lastChangeTime = now;
 		
 		keyboardState.applyIncrKeyState();
 
+	}
+
+	/**
+	 * Tell whether the keys in the deltas arrived earlier than "time"
+	 * @param deltas
+	 * @return
+	 */
+	private boolean keysAreOlderThan(long time, List<KeyDelta> deltas) {
+		for (KeyDelta delta : deltas) {
+			if (delta.time < time)
+				return true;
+		}
+		return false;
 	}
 
 	/**
@@ -316,16 +333,10 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	 */
 	@Override
 	public synchronized void resetProbe() {
-		long now = System.currentTimeMillis();
-		if (now < nextResetTimeout)
-			return;
-		
 		if (isPasting())
 			pasteTask.run();
 		else
 			applyKeyGroup();
-		
-		nextResetTimeout = now + 5;
 	}
 	
 	/* (non-Javadoc)
@@ -416,24 +427,19 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	 * @param onoff
 	 * @param shiftBits
 	 */
-	protected void pushShifts(boolean onoff, byte shiftBits) {
+	protected void pushShifts(long time, boolean onoff, byte shiftBits) {
 		int shiftVal = KEY_SHIFT;
 		while (shiftBits != 0) {
 			int shiftMask = 1 << shiftVal;
 			if ((shiftBits & shiftMask) != 0)
-				pushKey(onoff, shiftVal);
+				pushKey(time, onoff, shiftVal);
 			shiftBits &= ~shiftMask;
 			shiftVal++;
 		}
 	}
 
-	/**
-	 * @param onoff
-	 * @param shift
-	 * @param key
-	 */
-	protected synchronized void pushKey(boolean onoff, int key) {
-		KeyDelta delta = new KeyDelta(onoff, key);
+	protected synchronized void pushKey(long time, boolean onoff, int key) {
+		KeyDelta delta = new KeyDelta(time, onoff, key);
 		if (currentGroup == null) {
 			currentGroup = new ArrayList<KeyDelta>();
 		} else if (!delta.groupsWith(currentGroup)) {
@@ -452,10 +458,10 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	* to detect the patterns of real shift key presses and releases
 	 * @param shift extra shift keys
 	 * @param ch
-	* @return true if we could represent it as ASCII
+	 * @return true if we could represent it as ASCII
 	*/
-	public synchronized boolean postCharacter(boolean pressed, byte shift, char ch) {
-		if (DEBUG) System.out.println("==> post: ch=" + ch + "; shift="+ HexUtils.toHex2(shift)+"; pressed="+pressed);
+	public synchronized boolean postCharacter(long time, boolean pressed, byte shift, char ch) {
+		if (DEBUG) System.out.println("==> post: time="+time+"; ch=" + ch + "; shift="+ HexUtils.toHex2(shift)+"; pressed="+pressed);
 
 		if (Character.isLowerCase(ch)) {
 			ch = Character.toUpperCase(ch);
@@ -490,8 +496,8 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 					unshiftIt = false;
 			}
 			if (unshiftIt) {
-				pushShifts(pressed, (byte) (shift & ~MASK_SHIFT));
-				pushKey(pressed, ch);
+				pushShifts(time, pressed, (byte) (shift & ~MASK_SHIFT));
+				pushKey(time, pressed, ch);
 				return true;
 			}
 		}
@@ -508,8 +514,8 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		case KEY_PERIOD:
 		case KEY_SINGLE_QUOTE:
 		case KEY_SEMICOLON:
-			pushShifts(pressed, shift);
-			pushKey(pressed, ch);
+			pushShifts(time, pressed, shift);
+			pushKey(time, pressed, ch);
 			return true;
 
 			
@@ -535,19 +541,19 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		case KEY_GREATER:
 		case KEY_QUOTE:
 		case KEY_COLON:
-			pushShifts(pressed, (byte) (shift & ~MASK_SHIFT));
-			pushKey(pressed, ch);
+			pushShifts(time, pressed, (byte) (shift & ~MASK_SHIFT));
+			pushKey(time, pressed, ch);
 			return true;
 			
 		case KEY_QUIT:
-			pushShifts(pressed, (byte) (shift | MASK_ALT));
-			pushKey(pressed, KEY_EQUALS);
+			pushShifts(time, pressed, (byte) (shift | MASK_ALT));
+			pushKey(time, pressed, KEY_EQUALS);
 			return true;
 		}
 		
 		if (ch > 0 && keyboardState.isAsciiDirectKey(ch)) {
-			pushShifts(pressed, shift);
-			pushKey(pressed, ch);
+			pushShifts(time, pressed, shift);
+			pushKey(time, pressed, ch);
 			return true;
 		}
 		
@@ -556,11 +562,12 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	
 	/**
 	 * Act on a keypress which is not represented in the keyboard map.
+	 * @param time TODO
 	 * @param pressed
 	 * @param key
 	 * @return true if key should be ignored
 	 */
-	protected boolean handleActionKey(boolean pressed, int key) {
+	protected boolean handleActionKey(long time, boolean pressed, int key) {
 		
 		switch (key) { 
 			case KEY_BREAK:
@@ -739,8 +746,8 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		return key;
 	}
 
-	protected void handleSpecialKey(boolean pressed, byte shiftMask, int ikey, boolean keyPad) {
-		if (handleActionKey(pressed, ikey)) {
+	protected void handleSpecialKey(long time, boolean pressed, byte shiftMask, int ikey, boolean keyPad) {
+		if (handleActionKey(time, pressed, ikey)) {
 			return;
 		}
 
@@ -753,10 +760,10 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		}
 
 		if (shiftMask != 0)
-			pushShifts(pressed, shiftMask);
-		pushKey(pressed, ikey);
+			pushShifts(time, pressed, shiftMask);
+		pushKey(time, pressed, ikey);
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.client.IKeyboardHandler#getMachine()
 	 */

@@ -361,6 +361,8 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 									savedPreDemoState = null;
 									
 									machinePauseSetting.removeListener(unpauseAfterDemoListener);
+
+									machine.getClient().getVideoRenderer().getCanvasHandler().refresh();
 									
 									// make sure still unpaused, in case demo playback
 									// stopping above reset the pause state
@@ -667,7 +669,7 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 			createAccelMenuItem(menu, 1.0 / div, "1/" + div);
 		}
 		
-		if (machine.getExecutor().getCompilerStrategy().canCompile()) {	
+		if (false && machine.getExecutor().getCompilerStrategy().canCompile()) {	
 			new MenuItem(menu, SWT.SEPARATOR);
 			item = new MenuItem(menu, SWT.CHECK);
 			item.setText("Compile to Bytecode");

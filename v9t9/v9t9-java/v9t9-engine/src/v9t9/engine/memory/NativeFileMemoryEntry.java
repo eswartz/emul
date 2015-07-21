@@ -71,7 +71,7 @@ public class NativeFileMemoryEntry extends MemoryEntry {
      * @see v9t9.MemoryEntry#load()
      */
     @Override
-	public void load() {
+	public void load() throws IOException {
         super.load();
         if (!bLoaded) {
             try {

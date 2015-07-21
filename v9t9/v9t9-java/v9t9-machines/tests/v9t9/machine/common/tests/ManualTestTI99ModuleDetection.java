@@ -14,10 +14,13 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Before;
@@ -29,6 +32,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleDetector;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
 
@@ -48,6 +52,89 @@ public class ManualTestTI99ModuleDetection {
 		machine = new StandardTI994AMachineModel().createMachine(settings);
 		locator = machine.getRomPathFileLocator();
 	}
+
+	/**
+	 * Make sure we detect all the stock modules in our library
+	 * @throws Exception
+	 */
+	@Test
+	public void testStockModules1() throws Exception {
+		
+		IModuleDetector detector = machine.createModuleDetector();
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/mess"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/tosec"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules"));
+		
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/zip"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk"));
+		//detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted"));
+		
+		validateStockModules(detector);
+	}
+
+	/**
+	 * Make sure we detect all the stock modules in our library
+	 * @throws Exception
+	 */
+	@Test
+	public void testStockModules2() throws Exception {
+		
+		IModuleDetector detector = machine.createModuleDetector();
+		
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/zip"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk"));
+		//detector.scan(new File("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted"));
+		
+		validateStockModules(detector);
+	}
+
+	/**
+	 * Make sure we detect all the stock modules in our library
+	 * @throws Exception
+	 */
+	@Test
+	public void testStockModules3() throws Exception {
+		
+		IModuleDetector detector = machine.createModuleDetector();
+		
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/mess"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules/tosec"));
+		detector.scan(new File("/usr/local/src/v9t9-data/modules"));
+		
+		validateStockModules(detector);
+	}
+	/**
+	 * @param detector
+	 */
+	private void validateStockModules(IModuleDetector detector) {
+		Map<String, List<IModule>> md5ToModules = detector.gatherDuplicatesByMD5();
+		Map<String, List<IModule>> nameToModules = detector.gatherDuplicatesByName();
+
+		IModule[] stocks = machine.getModuleManager().getStockModules();
+		
+		StringBuilder sb = new StringBuilder();
+		for (IModule stock : stocks) {
+			String md5 = stock.getMD5();
+			
+			if (!md5ToModules.containsKey(md5)) {
+				List<IModule> nameMatches = nameToModules.get(stock.getName());
+				if (nameMatches == null)
+					continue;
+				
+				sb.append("did not find ").append(stock.getMD5()).append(" = ").append(stock.getName()).append('\n');
+				if (nameMatches != null) {
+					
+					sb.append("\tbut found: ");
+					for (IModule name : nameMatches)
+						sb.append(name.getMD5()).append(" = ").append(name.getName()).append("\n\t\t");
+					sb.append('\n');
+				}
+			}
+		}
+		
+		if (sb.length() > 0)
+			fail(sb.toString());
+	}
 	
 	@Test
 	public void testMyModules() throws Exception {
@@ -62,7 +149,11 @@ public class ManualTestTI99ModuleDetection {
 	@Test
 	public void testMessModules() throws Exception {
 		testDirectory("/usr/local/src/v9t9-data/modules/mess",
-				"(?i).*\\.bin", "forthc.bin" 
+				"(?i).*\\.bin", "forthc.bin", 
+				"weightc.bin", "weightd.bin", 
+				"phm3021c.bin", "phm3021d.bin",
+				"taxc.bin", "taxd.bin",
+				"phm3016c.bin", "phm3016d.bin"
 				);
 	}
 	@Test
@@ -75,40 +166,40 @@ public class ManualTestTI99ModuleDetection {
 	}
 	@Test
 	public void testToWhtechZipModules() throws Exception {
-		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/zip",
+		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/zip",
 				"(?i).*\\.zip");
 	}
 	@Test
 	public void testToWhtechRpkModules() throws Exception {
-		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk",
+		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk",
 				"(?i).*\\.rpk");
 	}
 	@Test
 	public void testToWhtechRpkConvertedModules() throws Exception {
-		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/emulators/cartridges/rpk/converted",
+		testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com.ed/emulators/cartridges/rpk/converted",
 				"(?i).*\\.rpk");
 	}
 	
-
-	protected Collection<IModule> testDirectory(String path, final String pattern, final String... ignore) {
+	protected List<IModule> testDirectory(String path, final String pattern, final String... ignore) {
 		File dir = new File(path);
-		assertTrue(dir.exists());
+		assertTrue(path, dir.exists());
 		
 		Set<File> allFiles = getAllFiles(pattern, dir, ignore); 
 		
-		URI databaseURI = URI.create("test.xml");
-		Collection<IModule> modules = machine.scanModules(databaseURI, dir);
+		Collection<IModule> modules = machine.createModuleDetector().scan(dir);
 		
+		List<IModule> matches = new ArrayList<IModule>();
 		System.out.println("Found " + modules.size() + " modules in " + dir);
 		for (IModule module : modules) {
-			System.out.println(module);
 			
 			Collection<File> files = module.getUsedFiles(locator);
-			assertFalse(files.isEmpty());
-			for (File file : files) {
-				System.out.println("\t" + file);
+			if (allFiles.removeAll(files)) {
+				System.out.println(module);
+				for (File file : files) {
+					System.out.println("\t" + file);
+				}
+				matches.add(module);
 			}
-			allFiles.removeAll(files);
 			
 			verifySpecificModule(module);
 		}
@@ -123,7 +214,7 @@ public class ManualTestTI99ModuleDetection {
 			fail(sb.toString());
 		}
 		
-		return modules;
+		return matches;
 	}
 
 	/**
@@ -179,7 +270,7 @@ public class ManualTestTI99ModuleDetection {
 				}
 			}
 			assertTrue(foundGraphics);
-			assertEquals(2, infos.length);
+			assertEquals(module.toString(), 2, infos.length);
 			return true;
 		}
 		return false;
@@ -198,11 +289,11 @@ public class ManualTestTI99ModuleDetection {
 			for (MemoryEntryInfo info : infos) {
 				if (info.getDomainName().equals(IMemoryDomain.NAME_CPU)
 						&& info.getAddress() == 0x6000) {
-					assertEquals(0x1000, info.getFileMd5Limit());
+					assertEquals(0x1000, info.getSize());
 					assertEquals("9BCF230E42BB280199A04F0E0C4797C1", info.getFileMD5());
 				}
 			}
-			assertEquals(3, infos.length);
+			assertEquals(module.toString(), 3, infos.length);
 			return true;
 		}
 		return false;
@@ -247,8 +338,7 @@ public class ManualTestTI99ModuleDetection {
 		File dir = new File(path);
 		assertTrue(dir.exists());
 		
-		URI databaseURI = URI.create("test.xml");
-		Collection<IModule> modules = machine.scanModules(databaseURI, dir);
+		Collection<IModule> modules = machine.createModuleDetector().scan(dir);
 		
 		System.out.println("Found " + modules.size() + " modules in " + dir);
 		
@@ -271,6 +361,233 @@ public class ManualTestTI99ModuleDetection {
 		if (sb.length() > 0) {
 			System.err.print(sb);
 			fail(sb.toString());
+		}
+	}
+
+
+	@Test
+	public void testMilliken() throws Exception {
+		List<IModule> mods = testDirectory("/usr/local/src/v9t9-data/modules/mess",
+				"(?i)(phm309.|phm310.)g\\.bin" 
+				);
+		assertEquals(11, mods.size());
+		
+		for (IModule mod : mods) {
+			assertFalse(mod.toString(), mod.getName().isEmpty());
+		}
+		
+		boolean anyEqual = false;
+		for (int i = 0; i < mods.size(); i++) {
+			IModule mod = mods.get(i);
+			for (int j = i+1; j < mods.size(); j++) {
+				IModule amod = mods.get(j);
+				if (mod.equals(amod)) {
+					// if equal, must have identical files & contents
+					System.out.println(mod.getName() + " == " + amod.getName() + "\n");
+					anyEqual = true;
+				}
+			}
+		}
+		if (anyEqual)
+			System.out.println("Some modules are equal");
+	}
+	/**
+	 * @param mods
+	 * @param md5Map
+	 */
+	private void addModuleHashes(List<IModule> mods, 
+			Map<String, IModule> md5Map, 
+			Map<String, String> nameToMd5Map, 
+			StringBuilder fails) {
+		for (IModule mod : mods) {
+			String md5 = mod.getMD5();
+			System.out.println(mod.getName() + " -> " + md5 + " @ " + mod.getMemoryEntryInfos()[0]);
+			IModule old = md5Map.put(md5, mod);
+			if (old != null && !old.equals(mod) && !old.getName().equals(mod.getName())) {
+				System.out.println("\tconflicts with " + old.getName());
+				fails.append(mod.getName());
+				fails.append(" conflicts with ");
+				fails.append(old.getName());
+				fails.append("\n");
+			}
+			
+			String oldMd5 = nameToMd5Map.put(mod.getName(), md5);
+			if (oldMd5 != null && !oldMd5.equals(md5)) {
+				fails.append(mod.getName()).append(" has two MD5s: ").
+					append(oldMd5).append(" and ").append(md5).append('\n');
+			}
+		}
+	}
+	
+
+	/**
+	 * Most modules can be detected fine, but some cause problems since their
+	 * headers are all the same or are auto-start.  We have a hard-coded database
+	 * to cover these.
+	 * @throws Exception
+	 */
+	@Test
+	public void testModuleDatabase() throws Exception {
+		List<IModule> mods = testDirectory("/usr/local/src/v9t9-data/modules/mess",
+				"(?i)(phm.*)\\.bin",
+				"phm3021c.bin", "phm3021d.bin",
+				"phm3016c.bin", "phm3016d.bin"
+				);
+		assertEquals(121, mods.size());
+		
+		for (IModule mod : mods) {
+			assertFalse(mod.toString(), mod.getName().isEmpty());
+		}
+		
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < mods.size(); i++) {
+			IModule mod = mods.get(i);
+			System.out.println(mod);
+			if (mod.getName().equals("") || mod.getName().matches("phm.*")) {
+				sb.append(mod.getMD5() + " = " + mod.toString()).append('\n');
+			}
+		}
+		if (sb.length() > 0) {
+			System.err.println(sb);
+			fail(sb.toString());
+		}
+	}
+	
+	/**
+	 * The module hashes -- which include titles -- are meant to
+	 * uniquely identify a module by content, excising anything about
+	 * its filename, but retaining the number of files and their
+	 * memory mappings.
+	 * @throws Exception
+	 */
+	@Test
+	public void testHashes() throws Exception {
+		Map<String, IModule> md5Map = new HashMap<String, IModule>();
+		Map<String, String> nameToMd5Map = new HashMap<String, String>();
+
+		StringBuilder sb = new StringBuilder();
+		List<IModule> mods;
+		
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/mess",
+				"(?i).*\\.bin",
+				"forthc.bin", "nforthc.bin", "0forth.bin",
+				"weightc.bin", "weightd.bin", 
+				"phm3021c.bin", "phm3021d.bin",
+				"taxc.bin", "taxd.bin",
+				"phm3016c.bin", "phm3016d.bin"
+				);
+		
+		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
+		
+		
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/tosec",
+				"(?i).*\\.bin", "Forthc (19xx)(-)(Unknown).bin",
+				"Supercart (19xx)(Texas Instruments).bin",		// nothing
+				"Sneggit (1982)(Texas Instruments)(File 1 of 2)(Sneggitc).bin"	// no #2
+				);
+		
+		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
+		
+		mods = testDirectory("/usr/local/src/v9t9-data/modules",
+				"(?i).*\\.bin",
+				"c.bin", "g.bin", 
+				"forthc.bin", "nforthc.bin", "0forth.bin",
+				"TI-EXTBC.BIN","TI-EXTBD.BIN", "cp01.bin",
+				"xxxxxxxg.bin"
+				);
+
+		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
+
+		//[[[
+		
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk",
+					"(?i).*\\.rpk");
+		
+		// These are named according to whim and are mostly wrong,
+		// so use well-known names for this test
+		for (IModule mod : mods) {
+			IModule ex = md5Map.get(mod.getMD5());
+			if (ex != null)
+				mod.setName(ex.getName());
+		}
+		
+		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
+		
+
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted",
+					"(?i).*\\.rpk");
+		
+		// These are named according to whim and are mostly wrong,
+		// so use well-known names for this test
+		for (IModule mod : mods) {
+			IModule ex = md5Map.get(mod.getMD5());
+			if (ex != null)
+				mod.setName(ex.getName());
+		}
+		
+		addModuleHashes(mods, md5Map, nameToMd5Map, sb);
+		
+		
+		//]]]
+
+		if (sb.length() > 0)
+			fail(sb.toString());
+	}
+
+	@Test
+	public void testBanks() throws Exception {
+		StringBuilder sb = new StringBuilder();
+		
+		List<IModule> mods;
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/mess",
+				"(?i).*\\.bin",
+				"forthc.bin", "nforthc.bin", "0forth.bin",
+				"weightc.bin", "weightd.bin", 
+				"phm3021c.bin", "phm3021d.bin",
+				"taxc.bin", "taxd.bin",
+				"phm3016c.bin", "phm3016d.bin"
+				);
+		doTestBanks(mods, sb);
+		
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/tosec",
+				"(?i).*\\.bin", "Forthc (19xx)(-)(Unknown).bin",
+				"Supercart (19xx)(Texas Instruments).bin",		// nothing
+				"Sneggit (1982)(Texas Instruments)(File 1 of 2)(Sneggitc).bin"	// no #2
+				);
+		doTestBanks(mods, sb);	
+		
+		mods = testDirectory("/usr/local/src/v9t9-data/modules",
+				"(?i).*\\.bin",
+				"c.bin", "g.bin", 
+				"forthc.bin", "nforthc.bin", "0forth.bin",
+				"TI-EXTBC.BIN","TI-EXTBD.BIN", "cp01.bin",
+				"xxxxxxxg.bin"
+				);
+		doTestBanks(mods, sb);
+		
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/pitfall",
+					"(?i).*\\.bin");
+		doTestBanks(mods, sb);
+		mods = testDirectory("/usr/local/src/v9t9-data/modules/magic_memory_ti_workshop",
+				"(?i).*\\.bin");
+		doTestBanks(mods, sb);
+		
+		if (sb.length() > 0)
+			fail(sb.toString());
+	}
+
+	/**
+	 * @param mods
+	 */
+	private void doTestBanks(List<IModule> mods, StringBuilder sb) {
+		for (IModule mod : mods) {
+			for (MemoryEntryInfo info : mod.getMemoryEntryInfos()) {
+				if (info.isBanked()) {
+					if (info.getSize() > 0x2000 || info.getSize2() > 0x2000) {
+						sb.append("Invalid size for banked module: ").append(info).append('\n');
+					}
+				}
+			}
 		}
 	}
 

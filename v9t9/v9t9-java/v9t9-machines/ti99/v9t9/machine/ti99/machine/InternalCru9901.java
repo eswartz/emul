@@ -30,6 +30,13 @@ import v9t9.engine.hardware.ICruWriter;
  * @author ejs
  */
 public class InternalCru9901 extends BaseCruChip {
+	enum KeyscanStage {
+		WRITE_ALPHA,
+		WRITE_COLUMN_HI,
+		READ_ROW_HI,
+		READ_ROW_LOW
+	}
+
 	private CruManager manager;
 
 	private ICruWriter cruw9901_0 = new ICruWriter() {
@@ -89,7 +96,7 @@ public class InternalCru9901 extends BaseCruChip {
 
 		public int write(int addr, int data, int num) {
 			crukeyboardcol = (crukeyboardcol & 3) | (data << 2);
-			checkKeyscanPattern(3);
+			checkKeyscanPattern(KeyscanStage.WRITE_COLUMN_HI);
 			return 0;
 		}
 		
@@ -119,7 +126,7 @@ public class InternalCru9901 extends BaseCruChip {
 		public int write(int addr, int data, int num) {
 			if (data != 0) {
 				// first CRU bit set in TI ROM keyboard scanning routine, good place to paste
-				checkKeyscanPattern(1);
+				checkKeyscanPattern(KeyscanStage.WRITE_ALPHA);
 			}
 			alphaLockMask = data != 0;
 			return 0;
@@ -210,8 +217,10 @@ public class InternalCru9901 extends BaseCruChip {
 				return (currentInts & (1 << bit)) == 0 ? 1 : 0;
 			} else {
 				if (bit >= 3 && bit < 11) {
-					if (bit == 10)
-						checkKeyscanPattern(4);
+					if (bit == 3)
+						checkKeyscanPattern(KeyscanStage.READ_ROW_HI);
+					else if (bit == 10)
+						checkKeyscanPattern(KeyscanStage.READ_ROW_LOW);
 					
 					if (bit == prevKeyBit)
 						getMachine().getKeyboardHandler().resetProbe();
@@ -267,8 +276,8 @@ public class InternalCru9901 extends BaseCruChip {
 		
 	};
 
-	private List<Integer> knownKeyscanPattern = new LinkedList<Integer>();
-	private List<Integer> keyscanPattern = new LinkedList<Integer>();
+	private List<KeyscanStage> knownKeyscanPattern = new LinkedList<KeyscanStage>();
+	private List<KeyscanStage> keyscanPattern = new LinkedList<KeyscanStage>();
 
 	private long nextKeyscanPatternCheckTime;
 
@@ -331,17 +340,17 @@ public class InternalCru9901 extends BaseCruChip {
     }
     
 	/**
-	 * @param addr
+	 * @param stage
 	 */
-	protected synchronized void checkKeyscanPattern(int addr) {
+	protected synchronized void checkKeyscanPattern(KeyscanStage stage) {
 		
 		long now = System.currentTimeMillis();
 		
 		// always favor this one
-		if (addr == 1) {
+		if (stage == KeyscanStage.WRITE_ALPHA) {
 			// use this
 			knownKeyscanPattern.clear();
-			knownKeyscanPattern.add(1);
+			knownKeyscanPattern.add(stage);
 			
 			keyscanPattern.clear();
 			getMachine().getKeyboardHandler().resetProbe();
@@ -356,8 +365,8 @@ public class InternalCru9901 extends BaseCruChip {
 		
 		// we haven't seen the expected pattern in a while
 		if (!knownKeyscanPattern.isEmpty()) {
-			if (knownKeyscanPattern.indexOf(addr) == keyscanPattern.size()) {
-				keyscanPattern.add(addr);
+			if (knownKeyscanPattern.indexOf(stage) == keyscanPattern.size()) {
+				keyscanPattern.add(stage);
 				if (keyscanPattern.size() == knownKeyscanPattern.size()) {
 					keyscanPattern.clear();
 					getMachine().getKeyboardHandler().resetProbe();
@@ -372,25 +381,25 @@ public class InternalCru9901 extends BaseCruChip {
 		if (keyscanPattern.size() > 16) {
 			keyscanPattern.subList(0, keyscanPattern.size() - 16).clear();
 		}
-		keyscanPattern.add(addr);
+		keyscanPattern.add(stage);
 		
 		// check for a repeat
-		if (keyscanPattern.contains(3) && keyscanPattern.contains(4)) {
+		if (keyscanPattern.contains(KeyscanStage.WRITE_COLUMN_HI) && keyscanPattern.contains(KeyscanStage.READ_ROW_LOW)) {
 			for (int seqlen = 1; seqlen < keyscanPattern.size() / 2; seqlen++) {
 				int lastSeq = keyscanPattern.size() - seqlen;
-				List<Integer> seq = new ArrayList<Integer>(keyscanPattern.subList(lastSeq, lastSeq + seqlen)); 
+				List<KeyscanStage> seq = new ArrayList<KeyscanStage>(keyscanPattern.subList(lastSeq, lastSeq + seqlen)); 
 				if (Collections.lastIndexOfSubList(keyscanPattern.subList(0, lastSeq), seq) == lastSeq - seqlen) {
 					// found the sequence: now, bias toward the smallest address
-					List<Integer> expSeq = new ArrayList<Integer>(seq);
+					List<KeyscanStage> expSeq = new ArrayList<KeyscanStage>(seq);
 					int min = Integer.MAX_VALUE;
 					int minI = 0;
 					for (int i = 0; i < seqlen; i++) {
-						int v = seq.get(i);
-						if (v < min) {
+						KeyscanStage v = seq.get(i);
+						if (v.ordinal() < min) {
 							expSeq.clear();
 							expSeq.addAll(keyscanPattern.subList(lastSeq - i, lastSeq - i + seqlen));
 							minI = i;
-							min = v;
+							min = v.ordinal();
 						}
 					}
 

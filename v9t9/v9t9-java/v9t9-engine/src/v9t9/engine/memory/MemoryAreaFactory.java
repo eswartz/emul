@@ -11,6 +11,7 @@
 package v9t9.engine.memory;
 
 import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntryInfo;
 
@@ -31,10 +32,19 @@ public class MemoryAreaFactory {
 	public static ByteMemoryArea createByteMemoryArea(IMemory memory, MemoryEntryInfo info) {
 		ByteMemoryArea area;
         
+
+        int latency = info.getLatency();
+        if (latency == -1)
+        	latency = info.getDomain(memory).getLatency(info.getAddress());
+
+        int size = Math.abs(info.getSize());
+        if (size % IMemoryDomain.AREASIZE != 0)
+        	size += IMemoryDomain.AREASIZE - size % IMemoryDomain.AREASIZE;
+        
 		if (!info.isStored()) {
-			area = new ByteMemoryArea();
+			area = new ByteMemoryArea(latency, new byte[size]);
 		} else {
-			area = new ByteMemoryArea() {
+			area = new ByteMemoryArea(latency, new byte[size]) {
 	    		public void writeByte(IMemoryEntry entry, int addr, byte val) {
 	    			super.writeByte(entry, addr, val);
 	    			((DiskMemoryEntry) entry).setDirty(true);
@@ -42,11 +52,6 @@ public class MemoryAreaFactory {
     		};
 		}
     	
-		if (memory != null)
-			area.setLatency(info.getDomain(memory).getLatency(info.getAddress()));
-		
-		area.memory = new byte[Math.abs(info.getSize())];
-		area.read = area.memory;
 		if (info.isStored())
 			area.write = area.memory;
 
@@ -55,11 +60,19 @@ public class MemoryAreaFactory {
 
 	public static WordMemoryArea createWordMemoryArea(IMemory memory, MemoryEntryInfo info) {
 		WordMemoryArea area;
+
+        int latency = info.getLatency();
+        if (latency == -1)
+        	latency = info.getDomain(memory).getLatency(info.getAddress());
+
+        int size = Math.abs(info.getSize());
+        if (size % IMemoryDomain.AREASIZE != 0)
+        	size += IMemoryDomain.AREASIZE - size % IMemoryDomain.AREASIZE;
         
         if (!info.isStored()) {
-			area = new WordMemoryArea();
+			area = new WordMemoryArea(latency, new short[size / 2]);
 		} else {
-			area = new WordMemoryArea() {
+			area = new WordMemoryArea(latency, new short[size / 2]) {
 	    		public void writeByte(IMemoryEntry entry, int addr, byte val) {
 	    			super.writeByte(entry, addr, val);
 	    			((DiskMemoryEntry) entry).setDirty(true);
@@ -72,13 +85,6 @@ public class MemoryAreaFactory {
     		};
 		}
         
-        int latency = info.getLatency();
-        if (latency == -1)
-        	latency = info.getDomain(memory).getLatency(info.getAddress());
-        area.setLatency(latency);
-        
-        area.memory = new short[Math.abs(info.getSize()) / 2];
-        area.read = area.memory;
         if (info.isStored())
         	area.write = area.memory;
 

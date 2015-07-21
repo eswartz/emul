@@ -21,7 +21,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -32,7 +31,6 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -122,8 +120,7 @@ import ejs.base.settings.ISettingSection;
  *
  */
 public class ModuleSelector extends Composite {
-	private static final Logger logger = Logger.getLogger(ModuleSelector.class);
-	
+
 	public static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 
 	private static final String SECTION_MODULE_SELECTOR = "ModuleSelector";
@@ -173,15 +170,9 @@ public class ModuleSelector extends Composite {
 	private Map<URI, Collection<IModule>> moduleMap;
 	private LazyImageLoader lazyImageLoader;
 	private Image stockModuleImage;
-	private URI builtinImagesURI;
-	private ILazyImageAdjuster moduleImageResizer;
-
-//	private Button addButton;
 
 	private Image modulesListImage;
 	private Image noModuleImage;
-
-	private Map<String, Image> stockImages = new HashMap<String, Image>();
 
 	protected IProperty modDbList;
 
@@ -190,7 +181,39 @@ public class ModuleSelector extends Composite {
 	private ModuleNameEditingSupport editingSupport;
 
 	private ArrayList<Object> flatModuleList;
-	
+
+	private ModuleImages images;
+	private ILazyImageAdjuster moduleImageResizer;
+
+	static class FilteredSearchFilter extends ViewerFilter {
+		public String filter;
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ViewerFilter#isFilterProperty(java.lang.Object, java.lang.String)
+		 */
+		@Override
+		public boolean isFilterProperty(Object element, String property) {
+			return ModuleSelector.NAME_PROPERTY.equals(property);
+		}
+		
+		@Override
+		public boolean select(Viewer viewer, Object parentElement, Object element) {
+			if (filter != null) {
+				// note: instanceof excludes "<No module>" entry too
+				if (element instanceof URI)
+					return true;
+				if (false == element instanceof IModule)
+					return false;
+				IModule mod = (IModule) element;
+				String lowSearch = filter.toLowerCase();
+				return mod.getName().toLowerCase().contains(lowSearch)
+						|| mod.getKeywords().contains(lowSearch)
+						|| ("auto-start".startsWith(lowSearch) && mod.isAutoStart());
+			}
+			return true;
+		}
+	}
+
 	/**
 	 * @param window 
 	 * 
@@ -270,8 +293,9 @@ public class ModuleSelector extends Composite {
 		configureButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				SetupWizard wizard = new SetupWizard(machine, window, SetupWizard.Page.PATHS);
+				SetupWizard wizard = new SetupWizard(machine, window, SetupWizard.Page.MODULES);
 				WizardDialog dialog = new WizardDialog(getShell(), wizard);
+				dialog.setPageSize(SWT.DEFAULT, 500);
 	        	int ret = dialog.open();
 	        	
 	        	if (ret == Window.OK)
@@ -411,7 +435,7 @@ public class ModuleSelector extends Composite {
 			if (doSave) {
 				saveModules();
 			} else {
-				moduleManager.reload();
+				moduleManager.reloadDatabase();
 			}
 		}
 
@@ -456,7 +480,7 @@ public class ModuleSelector extends Composite {
 		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(2).equalWidth(false).applyTo(comp);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(comp);
 
-		filterText = new Text(comp, SWT.BORDER | SWT.SEARCH);
+		filterText = new Text(comp, SWT.BORDER | SWT.SEARCH | SWT.ICON_SEARCH);
 		filterText.setMessage("Search...");
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(filterText);
 		
@@ -529,9 +553,6 @@ public class ModuleSelector extends Composite {
 
 	}
 
-	/**
-	 * @param text
-	 */
 	protected void updateFilter(final String text) {
 		if (text != null && !text.isEmpty()) {
 			filteredSearchFilter.filter = text;
@@ -591,17 +612,10 @@ public class ModuleSelector extends Composite {
 		};
 		
 		
-		try {
-			builtinImagesURI = machine.getRomPathFileLocator().resolveInsideURI(
-					machine.getModel().getDataURL().toURI(), 
-					"images/");
-			logger.info("builtinImagesURI = " + builtinImagesURI);
-		} catch (URISyntaxException e3) {
-			logger.error("Failed to load stock module image", e3);
-		} 
-		
-		stockModuleImage = loadStockImage("stock_module_missing.png");
-		
+		images = new ModuleImages(getDisplay(), machine);
+
+		stockModuleImage = images.loadImage("stock_module_missing.png");
+
 		lazyImageLoader = new LazyImageLoader(viewer, executor, stockModuleImage);
 		
 		modulesListImage = EmulatorGuiData.loadImage(getDisplay(), "icons/module_list.png");
@@ -654,7 +668,12 @@ public class ModuleSelector extends Composite {
 					cell.setImage(getModuleListImage());
 				} else if (cell.getElement() instanceof IModule) {
 					IModule module = (IModule) cell.getElement();
-					cell.setText(module.getName());
+					
+					String text = module.getName();
+					if (module.isAutoStart())
+						text += " (auto-start)";
+					cell.setText(text);
+					
 					ModuleInfo info = module.getInfo();
 					cell.setForeground(isModuleLoadable(module) ? null : viewer.getControl().getDisplay().getSystemColor(SWT.COLOR_TITLE_INACTIVE_FOREGROUND));
 					cell.setImage(getOrLoadModuleImage(module, module, info != null ? info.getImagePath() : null));
@@ -740,7 +759,7 @@ public class ModuleSelector extends Composite {
 		TreeViewerColumn nameViewerColumn = new TreeViewerColumn(viewer, nameColumn);
 		nameViewerColumn.setLabelProvider(cellLabelProvider);
 		
-		editingSupport = new ModuleNameEditingSupport(viewer, dirtyModuleLists);
+		editingSupport = new ModuleNameEditingSupport(moduleManager, viewer, dirtyModuleLists);
 		nameViewerColumn.setEditingSupport(editingSupport);
 		
 
@@ -748,9 +767,6 @@ public class ModuleSelector extends Composite {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
-				for (Image image : stockImages.values())
-					image.dispose();
-				stockImages.clear();
 				if (modulesListImage != null)
 					modulesListImage.dispose();
 				if (noModuleImage != null)
@@ -758,6 +774,8 @@ public class ModuleSelector extends Composite {
 
 				if (tableFont != null)
 					tableFont.dispose();
+				
+				images.dispose();
 				/*for (Image image : loadedImages.values()) {
 					image.dispose();
 				}*/
@@ -775,6 +793,28 @@ public class ModuleSelector extends Composite {
 		
 
 		return viewer;
+	}
+
+
+	Image getOrLoadModuleImage(final Object element, final IModule module, String imagePath) {
+		URI imageURI = null;
+		
+		// see if user has an entry
+		
+		if (imagePath != null) {
+			imageURI = images.getImageURI(imagePath);
+		}
+		
+		if (imageURI == null) {
+			return images.loadImage(
+					module != null ? 
+							(isModuleLoadable(module) ? "stock_module.png" : "stock_module_missing.png")
+							: "stock_no_module.png");
+		}
+
+		Image image = lazyImageLoader.findOrLoadImage(element, imageURI, moduleImageResizer);
+		//System.out.println(System.currentTimeMillis() + "... " + module + ": " + image);
+		return image;
 	}
 
 
@@ -1189,11 +1229,14 @@ public class ModuleSelector extends Composite {
 	 * @param noReset if false, reset machine, else do nothing 
 	 * 
 	 */
-	protected void switchModule(boolean noReset) {
+	protected void switchModule(boolean softReset) {
 		try {
+			if (softReset)
+				machine.getCpu().reset();
+			else
+				machine.reset();			
+			
 			moduleManager.switchModule(selectedModule);
-			if (!noReset)
-				machine.reset();
 
 			if (!isDisposed())
 				getShell().dispose();
@@ -1235,6 +1278,7 @@ public class ModuleSelector extends Composite {
 				behavior.centering = Centering.INSIDE;
 				behavior.centerOverControl = buttonBar;
 				behavior.dismissOnClickOutside = true;
+				behavior.defaultBounds = new Rectangle(0, 0, 500, 600);
 			}
 			public Control createContents(Shell shell) {
 				return new ModuleSelector(shell, machine, machine.getModuleManager(), window);
@@ -1245,69 +1289,6 @@ public class ModuleSelector extends Composite {
 		};
 	}
 	
-	Image getOrLoadModuleImage(final Object element, final IModule module, String imagePath) {
-		URI imageURI = null;
-		
-		// see if user has an entry
-		
-		if (imagePath != null) {
-			imageURI = getImageURI(imagePath);
-		}
-		
-		if (imageURI == null) {
-			return loadStockImage(
-					module != null ? 
-							(isModuleLoadable(module) ? "stock_module.png" : "stock_module_missing.png")
-							: "stock_no_module.png");
-		}
-
-		Image image = lazyImageLoader.findOrLoadImage(element, imageURI, moduleImageResizer);
-		//System.out.println(System.currentTimeMillis() + "... " + module + ": " + image);
-		return image;
-	}
-
-
-
-	/**
-	 * @param imagePath
-	 * @param imagesURI
-	 * @return
-	 */
-	protected URI getImageURI(String imagePath) {
-		URI imagesURI = builtinImagesURI;
-
-		URI imageURI;
-		imageURI = machine.getRomPathFileLocator().findFile(imagePath);
-
-		if (imageURI == null) {
-			// look inside distribution
-			
-				imageURI = machine.getRomPathFileLocator().resolveInsideURI(
-						imagesURI,
-						imagePath);
-				if (!machine.getRomPathFileLocator().exists(imageURI))
-					imageURI = null;
-			
-		}
-		return imageURI;
-	}
-
-
-	/**
-	 * @param string
-	 * @return
-	 */
-	private Image loadStockImage(String string) {
-		Image stock = stockImages .get(string);
-		if (stock == null) {
-			stock = EmulatorGuiData.loadImage(getDisplay(), "icons/" + string);
-			stockImages.put(string, stock);
-		}
-		return stock;
-	}
-
-
-
 	/**
 	 * @param module
 	 * @return
@@ -1390,7 +1371,7 @@ public class ModuleSelector extends Composite {
 					module.setInfo(info);
 				}
 				info.setImagePath(targFile.substring(targFile.lastIndexOf(File.separatorChar) + 1));
-				lazyImageLoader.resetImage(getImageURI(info.getImagePath()));
+				lazyImageLoader.resetImage(images.getImageURI(info.getImagePath()));
 				viewer.update(module, null);
 
 				machine.getModuleManager().getModuleInfoDatabase().register(module);
@@ -1422,7 +1403,7 @@ public class ModuleSelector extends Composite {
 	}
 
 	private void showModuleDetails(IModule module) {
-		ModuleInfoDialog dialog = new ModuleInfoDialog(this, window.getShell(), module);
+		ModuleInfoDialog dialog = new ModuleInfoDialog(getMachine(), this, window.getShell(), module);
 		
 		dialog.open();
 	}

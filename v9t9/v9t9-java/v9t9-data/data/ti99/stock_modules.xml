@@ -1,1247 +1,837 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <modules>
-  <module name="TI Logo II">
+  <module md5="9A8EC06CB0AE54CB38A607C67CD3C19F" name="4A TALK v1.4 (TI)">
     <memoryEntries>
-      <romModuleEntry fileMd5="CDD830F51196BCE0C69B08E9744AB88F" fileName="logoc.bin"/>
-      <gromModuleEntry fileMd5="D55D6845A7FDEE6C951CB3155087F003" fileName="logog.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="CF98ED61CC40C6205824BA14069C768A" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/4a-talk.rpk!/4ATALKg.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module keywords="xb" name="TI Extended BASIC">
+  <module md5="6B84B44D74DEC54FB6784039D75A66BB" name="5 Card Draw">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="952770D3772331F441079FE8B01C5676" fileMd5="CBBA4B9C66981F69C6F4F588D394E233" fileName="tiextc.bin" fileName2="tiextd.bin"/>
-      <gromModuleEntry fileMd5="8DBA542906C12E3AD0A48BE5068CE0EF" fileName="tiextg.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="D7F342207C4DD65B64730DB452E4C708" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/5_card_draw.rpk!/CARDg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Jungle Hunt">
+  <module md5="8AD453445F3A569B7E1D7D783C4163A1" name="9900 Break thru">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="697D94197815A806D4994694C6504538" fileMd5="48DC56D7734C8D93DC86C3B8ABF08109" fileName="junglec.bin" fileName2="jungled.bin"/>
+      <gromModuleEntry fileMd5="3FECCA03799484E1D229E952E036EE6F" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/9900_break_thru.rpk!/BREAKg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="A-Maze-Ing">
+  <module md5="629E27A3F3989B8EB68DC3149C469435" name="9901 CRU TESTER 3.0">
     <memoryEntries>
-      <gromModuleEntry fileMd5="F78EA76D0A3011E62009E61CB8BAE3CF" fileName="amazeing.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="4A71E6246CF950EADFE0B0B48FE0CA18" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/cru_tester.rpk!/CRUg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Hunt the Wumpus">
+  <module md5="FBF8CFDAF87DE409F66E9C9D4F4EDA70" name="Ader Logiciel Graphique THD">
     <memoryEntries>
-      <gromModuleEntry fileMd5="0A54CC36DDBE7761BF3278B0C3984358" fileName="wumpusg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="75DEFDBE78589874CF3CC48F4E662AFF" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/Ader_Logiciel_Graphique.rpk!/CAOg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="The Attack">
+  <module md5="98F8402B88F50B0608F425506D0855D6" name="Air Wolf">
     <memoryEntries>
-      <gromModuleEntry fileMd5="A031584C2FBCC8AFD9A44097B5CF4E05" fileName="attackg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="6A12B7E88FB1FD4AB98FCC3C819072EC" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/air_wolf.rpk!/AWPg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Household Budget Management">
+  <module md5="54B8EDAAD79520A716DD4462A94979E0" name="Alien Rain (Beck)">
     <memoryEntries>
-      <gromModuleEntry fileMd5="0C3F23529B2B6261335B5D216D2A9AC2" fileName="budgetg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="B6E4C536AE12E6D817369F7D4A91DA43" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/alien_rain.rpk!/ARAINg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Car Wars">
+  <module md5="BF746A681D01399E9A3CD179F362CC5F" name="Aliens (Rainer)">
     <memoryEntries>
-      <gromModuleEntry fileMd5="A5E26113D27B1C6AB0A3FB75B044EFBF" fileName="carwarsg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="667AFCCE03734EE4AEF77EC270A9589F" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/aliens.rpk!/Aliensg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module keywords="e/a ea" name="Editor/Assembler">
+  <module md5="B20B1E07094298BF20DAAA3EF8032F54" name="Archie">
     <memoryEntries>
-      <gromModuleEntry fileMd5="710FF00A2D5C61DE3EE4065988993BF0" fileName="eag.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="E804296E4E4708AF56C50650D0FC389F" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/archie_archiver.rpk!/ARCHIEg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="TI Invaders">
+  <module md5="C77B8D47AEE2B6D143444FC8C4FCC5CD" name="Archiver II 24">
     <memoryEntries>
-      <gromModuleEntry fileMd5="09AAB20A47D9F840155650A601042561" fileName="invaderg.bin" size="0x1800"/>
-      <romModuleEntry fileMd5="F7F34BBB893D84A2643944BBBA914F75" fileName="invaderc.bin"/>
+      <gromModuleEntry fileMd5="70773C648AAA2D0D80EB9B0A90D8C081" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/archiver_2_24.rpk!/ARC24g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Munchman">
+  <module md5="DD42E9EB65ACAD4E1A742AEAA0224A03" name="Archiver II 303">
     <memoryEntries>
-      <gromModuleEntry fileMd5="7DD705028E0E8D09D63D942BA3A52819" fileName="mnchmang.bin" size="0x1800"/>
-      <romModuleEntry fileMd5="E1971B8089C1AA26B7CA0042AA079F7A" fileName="mnchmanc.bin"/>
+      <gromModuleEntry fileMd5="D91A33366BB26077A2DCCC91D0340FEB" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/archiver_2_303.rpk!/ARC303g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Music Maker">
+  <module md5="FE4958FD613EF7580EEDD46E74D8BBB0" name="Archiver II 302">
     <memoryEntries>
-      <gromModuleEntry fileMd5="C2ED95EF03F18E8B1188B63435BBEF94" fileName="musicmg.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="23E23E7B7C39CBA7EA3C58E2F14489CD" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/archiver_2_302.rpk!/ARC302g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Parsec">
+  <module md5="898DAC21CA3F49A0D5046BB5E652EEF9" name="Asteroids">
     <memoryEntries>
-      <gromModuleEntry fileMd5="7C10101151D417C7938CF5B9FDE26FC6" fileName="parsecg.bin" size="0x5800"/>
-      <romModuleEntry fileMd5="5799BDF54BB1D4EE323A8C0329604F53" fileName="parsecc.bin"/>
+      <gromModuleEntry fileMd5="A1A1DA52C5C9ED4DF093AABE4C21BDE7" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/jph_asteroids.rpk!/ASTERg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Indoor Soccer">
+  <module md5="66E40930123F9997431E69E06017B7ED" name="Attack of the Creepers">
     <memoryEntries>
-      <gromModuleEntry fileMd5="3353D9F2355A66C219E7F7B2F9D95237" fileName="soccerg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="52838A76731E85B08A22835C04B9EB40" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/attack_of_the_creepers.rpk!/ATCg.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module name="Personal Record Keeping">
+  <module md5="E6AE61911AB97A71DE7CA1B6A95D9727" name="Axel F.">
     <memoryEntries>
-      <gromModuleEntry fileMd5="5C7ED5D4DF960F872D478BDD3FEDDB68" fileName="prkg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="93333CE749361431EF8E6B0EE9E0E908" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/axel_f_soundtrack.rpk!/AXELFg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="TI Writer">
+  <module md5="80C1B1F00471BEB85E68040BC39A8920" name="Bad Walls">
     <memoryEntries>
-      <gromModuleEntry fileMd5="BC6285FE6D8CE160B5ECA034715D1871" fileName="tiwriteg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="A753548F693933F674F76FBB3B42A2E2" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/bad_walls.rpk!/BADWALLg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Tombstone City">
+  <module md5="9F94963A617D5905C44FC7171B853F1E" name="Bandit">
     <memoryEntries>
-      <gromModuleEntry fileMd5="0DD82E528A7AEA78C070F67010217A0A" fileName="tombg.bin" size="0x0C4E"/>
-      <romModuleEntry fileMd5="74F5FD9AA12B3F9272747C27895828BA" fileName="tombc.bin"/>
+      <gromModuleEntry fileMd5="C4132C3CC61816512F8589F9A666D44E" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/bandit.rpk!/BANDITg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Touch Typing Tutor">
+  <module md5="8FE69B7A370BAA8FB8D94F2C0E016EE9" name="Battleship">
     <memoryEntries>
-      <gromModuleEntry fileMd5="CAB9918CBFC1645AE7E1C7A81EEE7FCD" fileName="ttyping.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="83B684345E27095AB62C69068117E866" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/battleship.rpk!/BATSHIPg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Tunnels of Doom">
+  <module md5="0C85B3B7C5B68C7E322980CF05751F7F" name="Brain Buster">
     <memoryEntries>
-      <gromModuleEntry fileMd5="66B1E7FCC8E81F824EC695E5D137C92A" fileName="tunnelsg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="24FFEFE5E0378CB590C56D31C19D19F9" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/brain_buster.rpk!/BRAINBg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Yahtzee">
+  <module md5="F0C0B0F406203A96C1A4346FD02C54E1" name="Buzzard Bait">
     <memoryEntries>
-      <gromModuleEntry fileMd5="2BA44663F2A7FBF2E0EFD1FCA16F1DD5" fileName="yahtzeeg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="CE4F341D710B9F955A1C1E29F38AD58D" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/buzzard_bait.rpk!/BUZZARDg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Mini Memory">
+  <module md5="55458D326558ED5D3EBFD3088D5B13D6" name="C99 Invaders">
     <memoryEntries>
-      <gromModuleEntry fileMd5="972D4BF73609DBFA3CF056A829701FC1" fileName="minig.bin" size="0x1800"/>
-      <romModuleEntry fileMd5="98CE13A825349736CBA2343BBD948B46" fileName="minic.bin"/>
-      <memoryEntry address="0x7000" domain="CPU" fileName="minir.bin" size="0x1000" stored="true"/>
+      <gromModuleEntry fileMd5="A5282DF3C09358ABFAD91DDF022ED023" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/c99_invaders.rpk!/C99INVg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Demonstration">
+  <module md5="FA8529B0FB2B66F1CE62CEAD4218D861" name="Cache-Cache">
     <memoryEntries>
-      <gromModuleEntry fileMd5="2E6ADC828699E5C8B2BB9229B07A9BA8" fileName="demog.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="A4C7BA389C8C2089657988A219A2346B" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/cache-cache.rpk!/CACHEg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Jawbreaker">
+  <module md5="2E8FF36B83AFFDC3D8DE0322949EA418" name="Canada Mortgage and Loan">
     <memoryEntries>
-      <gromModuleEntry fileMd5="DC62230799F254E08B75D567AEBC7AAF" fileName="jawbreakg.bin" size="0x1800"/>
-      <romModuleEntry fileMd5="6A607A5651541139CA2FCDCDE638DA02" fileName="jwbreakc.bin"/>
+      <gromModuleEntry fileMd5="B5C29AF00B8E0347E81AFDA7F2799542" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/canada_mortgage.rpk!/MORTGAg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Scott Adam's Adventure">
+  <module md5="13885E39F907CA1718DCDE30B7D7A82F" name="Cassette Backup">
     <memoryEntries>
-      <gromModuleEntry fileMd5="14B770A7A3BD0E7E6FF15EE0C9AB3DB1" fileName="advg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="FB348545C1C4D67302827EC9A06D673E" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/cassette_backup_10.rpk!/BACKUPg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Multiplan">
+  <module md5="16664D9C53CF6A01CD01D5D508CE8860" name="Cataloging Library (Okidata)">
     <memoryEntries>
-      <gromModuleEntry fileMd5="2998F5D2CC0FD78090AD3F015FB1B1B5" fileName="multig.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="2346032D10A1FCACDBF20EC9C9C7C899" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/cataloging_library_oki.rpk!/CATLOKIg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Blackjack &amp; Poker">
+  <module md5="448B89924A50CFC1928C6BF949CBF72F" name="Cataloging Library">
     <memoryEntries>
-      <gromModuleEntry fileMd5="E0453E22010EA890B1BDE8D6342F86F1" fileName="blkjkg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="109DDEE9E08C670DBD08C4D3E664BF3D" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/cataloging_library.rpk!/CATLXXXg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Moon Patrol">
+  <module md5="953FAE3C20A99028783AD9B424891542" name="Cataloging Library (Epson)">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="D82D7013D4E65625E1E6EDE633D24203" fileMd5="AA7C9AB589664490C22338508D0E4EAE" fileName="moonc.bin" fileName2="moond.bin"/>
+      <gromModuleEntry fileMd5="C3E317D46577762EA5F4F93D62A8E323" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/cataloging_library_epson.rpk!/CATLEPSg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Popeye">
+  <module md5="26913739083B99A420EC7CF74A45EA2D" name="Caverns">
     <memoryEntries>
-      <gromModuleEntry fileMd5="9E765BDB8B1BDBC9819D3FA9E31586DE" fileName="popeyeg.bin" size="0x9000"/>
-      <romModuleEntry fileMd5="6382C3CB552793EA1BCB5C5B04C3EB7D" fileName="popeyec.bin"/>
+      <gromModuleEntry fileMd5="F27C825355FAE0AAB5A186D6D4ADFE00" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/caverns.rpk!/CAVERNg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Video Chess">
+  <module md5="C097B13CCCF2909D74B79552E36331F2" name="Cerberus">
     <memoryEntries>
-      <gromModuleEntry fileMd5="F07BB5B2724D2138AAD2D4122C7DBE8C" fileName="vchessg.bin" size="0x7800"/>
-      <romModuleEntry fileMd5="16C03FA43EDF0D9A9D907EB3F26FB2F9" fileName="vchessc.bin"/>
+      <gromModuleEntry fileMd5="31F3DD546E4E81C8F2A9A028FFD8D61E" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/cerberus.rpk!/CERBERg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="TI Logo">
+  <module md5="E8FEDD140F832FFC593EE778D6DEF62A" name="Chainlink Master Solitaire">
     <memoryEntries>
-      <gromModuleEntry fileMd5="9ACB89E744A0F6CD1A179DDCD820D9F5" fileName="tilogo1g.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="FFB2D187DD53E1BBA3A22695F9AF06E7" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/chainlink_master_solitaire.rpk!/CHAINg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Speech Editor">
+  <module md5="FD045DD6964CF5C3D3D6A6F71FF8B246" name="Clowns">
     <memoryEntries>
-      <gromModuleEntry fileMd5="20B8250664F08E0FB1C3ACE45E772B0A" fileName="speditg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="49247D6E802ABF9A16960745D7301E99" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/clowns.rpk!/CLOWNg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Demon Attack">
+  <module md5="ABC964A26B0A2E1599BFE5734D7E42D1" name="Compu-Car">
     <memoryEntries>
-      <gromModuleEntry fileMd5="8FA8CA08145A7635A2AAB0FCF0FA1506" fileName="demattg.bin" size="0x5800"/>
-      <romModuleEntry fileMd5="E77327A7231AED5F0D9FBE279C56BE60" fileName="demattc.bin"/>
+      <gromModuleEntry fileMd5="1779BCB7707F49216F9B67FBA9D903A5" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/compu-car.rpk!/COMPCARg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Tax Records">
+  <module md5="D721527BF9B206DCDA6365ADD483352A" name="Disk Catalog Utility">
     <memoryEntries>
-      <gromModuleEntry fileMd5="F06FA04387EF3ACCFD62B00E77CD3411" fileName="taxrecg.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="3D87E36692D8C900C748693D204F4B96" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_catalog_utility.rpk!/DSKCTLGg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Connect Four">
+  <module md5="0B21FC97CA39DB00DBDD58CFC6610967" name="Disk Catalogue System Input Module">
     <memoryEntries>
-      <gromModuleEntry fileMd5="61E4806969BC7B8B70CE083E53F4460F" fileName="conn4g.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="7EDF303037AA8782E185E800B40D925E" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_catalogue_system.rpk!/BALLYg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Number Magic">
+  <module md5="C5CDDF89E062253E8E07780AB3E464C5" name="Disk Copy Utility">
     <memoryEntries>
-      <gromModuleEntry fileMd5="91634D5BC473BDE3F35E817EC6094D4D" fileName="nummagg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="F7500D00D1F0EFC6D7383C3D008C29E5" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_copy_utility.rpk!/DSKCOPYg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Mind Challengers">
+  <module md5="164C4283A7A0429C006B36DD962130A8" name="Disk Manager 1000 3.8">
     <memoryEntries>
-      <gromModuleEntry fileMd5="6494139511B4E84E6C3673C3F8C2A5B6" fileName="mindchag.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="779AAF0E8B50AEF1FB12B82AA5CB4547" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_1000_38.rpk!/DM1K38g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Reading Flight">
+  <module md5="3364E6910B7E95C185DFB58552F1079D" name="Disk Manager 1000 4.0">
     <memoryEntries>
-      <gromModuleEntry fileMd5="2F8B2EB7883365D39C6D5B363A8B3515" fileName="reafligg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="7DFA5C3E8477DBABDC946724B48A7FBE" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_1000_40.rpk!/DM1K40g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Video-Graphs">
+  <module md5="54E2A14D796D341470A2FE8D668AF272" name="Disk Manager 1000 3.1">
     <memoryEntries>
-      <gromModuleEntry fileMd5="124337C19E49962DBB03B07FAE26E73D" fileName="vidgrafg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="5383F7160C36EF9B81F6A263C945AE48" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_1000_31.rpk!/DM1K31g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Statistics">
+  <module md5="57E1B4399E0007EAF1512499E1D0C913" name="Disk Manager 1000 3.5">
     <memoryEntries>
-      <gromModuleEntry fileMd5="BA198A6FC711FC987911CD5D6DC79B67" fileName="statg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="C2A2517CCD96FFD85733384C0F381829" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_1000_35.rpk!/DM1K35g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Early Reading">
+  <module md5="5E643D8B2875BFD701CAAC8273EEAFEB" name="Disk Manager 1000 3.5b">
     <memoryEntries>
-      <gromModuleEntry fileMd5="10C5661AAD48D78895E53F6A52F1A20F" fileName="earreadg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="FA1B6A42A3D6433D71032C104530AED3" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_1000_35b.rpk!/DM1K35Bg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Alpiner">
+  <module md5="97C58A408ACC53A4463A996F7FC198D1" name="Disk Manager 1000">
     <memoryEntries>
-      <gromModuleEntry fileMd5="BAD549D42F2C0659DD850A58810B2C6E" fileName="alpinerg.bin" size="0x7800"/>
-      <romModuleEntry fileMd5="6965F521F366FE312F31D1F88FD49214" fileName="alpinerc.bin"/>
+      <gromModuleEntry fileMd5="D0CD0F70BC59936AB359F0538B680324" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_1000.rpk!/DM1K0g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Picnic Paranoia">
+  <module md5="A6315B94DA716A3EDC1ECBD8EB675BB1" name="Disk Manager 1000 6.1">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="27CD895506441C04984C71CAFDADBA19" fileMd5="BF8DDAF924AA0B5191871D23993C3986" fileName="picnicc.bin" fileName2="picnicd.bin"/>
+      <gromModuleEntry fileMd5="38E7908D6F545F6942338580A9512057" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_1000_61.rpk!/DM1K61g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Terminal Emulator II">
+  <module md5="C71743502CBE7EA00E65FAD4B3D2F4BC" name="Disk Manager 1000 5.0">
     <memoryEntries>
-      <gromModuleEntry fileMd5="D0A7581FE9ABD2E93F8E61B5C9646434" fileName="teiig.bin" size="0x9800"/>
-      <romModuleEntry fileMd5="9B5C4BA24A4FA53E0CFB3959E96632A8" fileName="teiic.bin"/>
+      <gromModuleEntry fileMd5="D9E614F6E6A760933AA02EEE4B47ABCA" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_1000_50.rpk!/DM1K50g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Treasure Island">
+  <module md5="E8C6121332E33B8F545005F68A5F85D8" name="Disk Manager 1000 3.6">
     <memoryEntries>
-      <gromModuleEntry fileMd5="B2818B164FE24E4629AC70C9A375FD25" fileName="trsureg.bin" size="0x5800"/>
-      <romModuleEntry fileMd5="9B18657FA51604B5653B000D94F03E32" fileName="trsurec.bin"/>
+      <gromModuleEntry fileMd5="CC2055FDB8CCD3D756ABAD5D6079F7FB" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_1000_36.rpk!/DM1K36g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Addition and Subtraction #1">
+  <module md5="ED5DA324EA0216AC6C88DA911FB53BDD" name="Disk Manager 1000 6.0">
     <memoryEntries>
-      <gromModuleEntry fileMd5="657B53C4DD26313D1BFD7C056BFD31BE" fileName="addsub1g.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="6D0A8DD10306DA74E84D225E973732FF" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_1000_60.rpk!/DM1K60g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Addition and Subtraction #2">
+  <module md5="8C987893CDE93FD3B943C2D2F58DFC84" name="Disk Manager 1000 GK3">
     <memoryEntries>
-      <gromModuleEntry fileMd5="C67FC027B326EF03BDE2ECE82D6C994B" fileName="addsub2g.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="E39C0903D1A2B4E73C576713FF7FA304" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_1000_gk3.rpk!/DM1KGKg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Addition and Subtraction #3">
+  <module md5="AF14B13B15B3BF839AC4ED9DCBBDF396" name="Disk Manager 2000 2.2">
     <memoryEntries>
-      <gromModuleEntry fileMd5="F14F865AE136F581763E913C0E4F0D33" fileName="addsub3g.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="7E1D4F111FEE2C86D7E4FD71B6C62359" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_2000_22.rpk!/DM2K22g.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module name="Disk Manager">
+  <module md5="E4573C08BA9F6372872CAE0F49D47663" name="Disk Manager 2000 1.2">
     <memoryEntries>
-      <gromModuleEntry fileMd5="C8229FBB2600DCBF3240AEFCDB3F8E51" fileName="diskmang.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="A030F5EBBC2A5C9AE7DDB25FB099A53A" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_manager_2000_12.rpk!/DM2K12g.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Burger Time">
+  <module md5="288B555627BF4821D062932661A9BC40" name="Disk Master 1.6">
     <memoryEntries>
-      <romModuleEntry fileMd5="7906D46EAE8F26F9802B84E06033BDA5" fileName="burgerc.bin"/>
-      <gromModuleEntry fileMd5="D3749CDC1F7AD93C3498AFD7234A7178" fileName="burgerg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="FD2EF6A04FE1E923F454EC5DB8C7546B" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_master_16.rpk!/DMASTg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Donkey Kong">
+  <module md5="EF60706F244FB9CDB4DA32EB7B86864A" name="Disk Master 1.5">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="8DBB00ADA548E24183B2AD9611ADA98E" fileMd5="E7917D25BD71EA15BB3C8DE4BE5AEB17" fileName="kongc.bin" fileName2="kongd.bin"/>
-      <gromModuleEntry fileMd5="23F2A99233E8191D812AB21F34BBE94B" fileName="kongg.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="7ADD47C7C89E2A20C02185F110A73043" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_master_15.rpk!/MAST15g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Anteater">
+  <module md5="475EF54E298960BACA3F4E73EF2BAC47" name="Disk Master I">
     <memoryEntries>
-      <romModuleEntry fileMd5="998E402E518D83E0F2067CE15B947916" fileName="anteatec.bin"/>
+      <gromModuleEntry fileMd5="B9AA1EDEF5477B34258A5E94A263FDE8" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_master_1_47.rpk!/MASTERg.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module name="Buck Rogers">
+  <module md5="DBACE5E82B9A393B2F47AB19C23B9A4E" name="Disk Repair">
     <memoryEntries>
-      <romModuleEntry fileMd5="32A8BDE1A79F4D217F6601AF75D1DD64" fileName="buckrogc.bin"/>
-      <gromModuleEntry fileMd5="17B6C3AB6F08706C5791600D21F82B7B" fileName="buckrogg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="5F2C0B634AB168DF55846F2A211017CD" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_repair.rpk!/REPAIRg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Centipede">
+  <module md5="E9B18229D6ABEE4E971DF2DB068E3044" name="Disk To Cassette Utility">
     <memoryEntries>
-      <romModuleEntry fileMd5="D0D821908661A85A67E70D89EBE7ED05" fileName="centipec.bin"/>
+      <gromModuleEntry fileMd5="7B3B1C34D166BB18D61693BFC94B00B6" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_to_cassette_utility.rpk!/DSKCASg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Computer War">
+  <module md5="13CDCC29EAF3349D16DE685A96DB15E8" name="Disk Utilities 4.0a">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="F9948DFCEFDC8BEB85C9A1CC01B4467C" fileMd5="DB6BAE76B56BAD0A873E773CD4F92BDF" fileName="compwarc.bin" fileName2="compward.bin"/>
+      <gromModuleEntry fileMd5="D2AEF0A7831FA8845E1C253AD6D25763" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_utilities_40a.rpk!/DSKU40g.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Congo Bongo">
+  <module md5="5C4E858582874AD00EA43234F4B91C2A" name="Disk Utilities 4.12">
     <memoryEntries>
-      <romModuleEntry fileMd5="D652F5208EF61DC9505DCC903520161F" fileName="congoboc.bin"/>
-      <gromModuleEntry fileMd5="16BED7B801AFC240C5958BAF0EC40C00" fileName="congobog.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="571AA042860C2C813181976E394ACE02" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_utilities_412.rpk!/DSKU412g.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="DBMS">
+  <module md5="BDDCD76217177406287209B74A73EF2E" name="Disk Utilities 1.1">
     <memoryEntries>
-      <romModuleEntry fileMd5="C2844478B72546674351D10D240B7ABF" fileName="dbmsc.bin"/>
+      <gromModuleEntry fileMd5="ABC7D492AC36CE11BE4806CAFF662899" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_utilities_11_rs.rpk!/DISKO2g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Disk Fixer V2.0">
+  <module md5="C80D48AF09CD4F19AE51EF608C3DC155" name="Disk Utilities 2.0">
     <memoryEntries>
-      <romModuleEntry fileMd5="1AFD727C9D959DF8E7085FDE990486F5" fileName="diskfixc.bin"/>
+      <gromModuleEntry fileMd5="45172A53A5170D1329FD581A4C6D6BFA" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_utilities_20.rpk!/DSKU20g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Dig Dug">
+  <module md5="D07C69C9DDD6C500766B51BEE70654BB" name="Disk Utilities 1.1 PIO">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="FC9F26B5C4BB9BE52516F263C1281554" fileMd5="1D6CBB033D77CB53837A909A7E6D8C60" fileName="digdugc.bin" fileName2="digdugd.bin"/>
+      <gromModuleEntry fileMd5="2C9A38C1ADAAC36C70894001394BF6D0" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_utilities_11_pio.rpk!/DSKU11g.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Driving Demon">
+  <module md5="01A8AF188E0B37CA0B5289541DEF0D8D" name="Disk Utilities 2000 1.7">
     <memoryEntries>
-      <romModuleEntry fileMd5="6C58A8D41AFDA9CFF018B1B19B17E1F8" fileName="drivedec.bin"/>
+      <gromModuleEntry fileMd5="9AD4587ACF29BC1F2D31A40E61852674" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_utilities_2000_17.rpk!/DU2K17g.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module name="Frogger">
+  <module md5="993FFD1D4E6D3544A569FB71C8C3F42C" name="Disk Utilities 2000 1.8">
     <memoryEntries>
-      <romModuleEntry fileMd5="411FB78E6E0F0CEE77EB0BE91D6FCCFB" fileName="froggerc.bin"/>
-      <gromModuleEntry fileMd5="7D3F6C2534A20336DFBD182725CFE5B7" fileName="froggerg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="824B780B28ABF67B19AA5580D5C8C908" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk_utilities_2000_18.rpk!/DU2K18g.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module name="Video Games 1">
+  <module md5="73E158F2E5EBB220C680995534D00932" name="Disk+Aid">
     <memoryEntries>
-      <gromModuleEntry fileMd5="3B6340ED8486CE6B83DD5308BD278E7B" fileName="games1g.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="44E2ED9E10FF9C8A507F0938B56E367F" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/disk-aid.rpk!/DSKAIDg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Hustle">
+  <module md5="3DC761422237D973CC0B5AB309679F1E" name="DiskAssembler">
     <memoryEntries>
-      <gromModuleEntry fileMd5="668FE3E92538366A09A0D6DAE747B443" fileName="hustleg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="4689BF91F6E3806A6FE486492F036EE8" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/diskassembler.rpk!/DSKASSg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Hopper">
+  <module md5="F355B5E399A5FE6FFA92437AE9A52B40" name="Dragons">
     <memoryEntries>
-      <romModuleEntry fileMd5="270D7BCEB44F2AB1317092A1B15DAA88" fileName="hopperc.bin"/>
-      <gromModuleEntry fileMd5="74DE12232ED0016B07AA4280CBE962B3" fileName="hopperg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="C573685A0050390AF85EC105B4EB76A7" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/dragons.rpk!/DRAGOg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Moon Sweeper">
+  <module md5="9A9E678529154CD7665779FA8A30F253" name="Encode-It">
     <memoryEntries>
-      <romModuleEntry fileMd5="AC6A3ACEEFEC4793DB65273070DFFE6C" fileName="moonswec.bin"/>
-      <gromModuleEntry fileMd5="6B5E4058E05FEB9FBA2C2F6E00DE7B2E" fileName="moonsweg.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="74831BEBC79E5599F6385D78F80045C0" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/encode-it.rpk!/ENCODEg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Munchmobile">
+  <module md5="5F1192FD9A56AD2F1F182B73C9B7AD5F" name="Entrapment">
     <memoryEntries>
-      <romModuleEntry fileMd5="2A20ADFD12FCE9B7A1B908DFDB9EF744" fileName="munchmoc.bin"/>
-      <gromModuleEntry fileMd5="1F552024E23AD36341070FF20FC0B31D" fileName="munchmog.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="45CA45A536A29B5EB27132BF0893A009" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/entrapment.rpk!/ENTRAPg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Princess &amp; Frog">
+  <module md5="8220E180E7B8194FA29B6FB7E9CF139A" name="Fallschirmspringer">
     <memoryEntries>
-      <romModuleEntry fileMd5="D4AB8809FDA1F3D1FAB30081857E5D55" fileName="princsfc.bin"/>
+      <gromModuleEntry fileMd5="A6614AFBA39A7644A2C4EB00420FE660" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/fallschirmspringer.rpk!/SPRINGEg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Q*Bert">
+  <module md5="443F54FB15DB3DA12088FD4334F9D06B" name="Fast Copy">
     <memoryEntries>
-      <romModuleEntry fileMd5="30C841DE638C9E976B1E5FE495D6B722" fileName="qbertc.bin"/>
-      <gromModuleEntry fileMd5="9CAA3D6512525685BA570B12DB9BF646" fileName="qbertg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="EC18D9707168B1B0006F3809971C6951" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/fast_copy.rpk!/fastcyg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Report Generator">
+  <module md5="D1B7561D56508DD99513B63B0F6294AC" name="Fast Term 1.16">
     <memoryEntries>
-      <gromModuleEntry fileMd5="2E2D8A3A95110A91C15ECDF6128306C1" fileName="reptgeng.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="747BC059FF06494DACDD88226DD7BF5E" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/fast_term_116.rpk!/TERMg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Rotor Raiders">
+  <!-- 
+  <module md5="FDA0F0E1649938392E051603EA60C832" name="Fast Term 1.13PC">
     <memoryEntries>
-      <romModuleEntry fileMd5="8AC348BDD7B7D21CD326414C5BEDBFDE" fileName="rotorrac.bin"/>
+      <gromModuleEntry fileMd5="04784D9C9AFCB801D16665BB31674F71" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/fast_term_113pc.rpk!/FTRMg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Securities Analysis">
+   -->
+  <module md5="09A49DC6607E7B84040EF3EADE803F3E" name="File Understanding Cataloger">
     <memoryEntries>
-      <gromModuleEntry fileMd5="39088BCCF3D3C9B12699CEC568F05EC1" fileName="securitg.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="74F401D03B33D9245C5C2759F19C9BF8" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/file_understanding_cataloger.rpk!/FUCATg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Star Trek">
+  <module md5="70D08E536C7FA35F75B4042302D829A7" name="File Utilities">
     <memoryEntries>
-      <romModuleEntry fileMd5="B8D94E4A56014012C7152B4010689C77" fileName="startrec.bin"/>
-      <gromModuleEntry fileMd5="4514B335F11AC465A211C546591CE88F" fileName="startreg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="D2A273C5554BD86D769F40B5C0B98E01" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/file_utilities_12.rpk!/FILEUTg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Weight Control &amp; Nutrition">
+  <module md5="92A4359A2C244358B33CF04A7A7ECE03" name="Fireball">
     <memoryEntries>
-      <gromModuleEntry fileMd5="5300FD56A099FB8714DF0EF0643C85D7" fileName="weightg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="E9FA4DBD9C1E625719C18BB7CFF787AF" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/fireball.rpk!/FIRBALLg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Console Writer">
+  <module md5="A4DEE3D0A717ED158E4A12BF714D3395" name="Free Bee Copy">
     <memoryEntries>
-      <romModuleEntry fileMd5="2783F58028978D93813CB0A6553D8AF7" fileName="cnslwrtc.bin"/>
+      <gromModuleEntry fileMd5="3E3079A587980F1B035CC61F2881BE20" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/free_bee_xcopy.rpk!/XCOPYg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="M*A*S*H">
+  <module md5="2EF0C4B247AA1B4456B66022C51F3FA2" name="GBS v31f">
     <memoryEntries>
-      <romModuleEntry fileMd5="16E13A882175E9A7A19BB1E8D3EB9813" fileName="mashc.bin"/>
-      <gromModuleEntry fileMd5="FCFB6F38291906825AE1A910BF82E001" fileName="mashg.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="B6CCCA6B2205644CD2BD448BEC920250" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/gbs_31f.rpk!/GBS31g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Imagic Microsurgeon">
+  <module md5="9652D60333D05D5EF369228C49EC5EB1" name="GBS v31e">
     <memoryEntries>
-      <romModuleEntry fileMd5="AA2ADF82A33972F18FBEB1A9A7F44902" fileName="microsuc.bin"/>
-      <gromModuleEntry fileMd5="77275322D602EBBDA5C7425375A91674" fileName="microsug.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="85294F262C631D0578882D0479906F97" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/gbs_31e.rpk!/GBS31Eg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Return to Pirate's Isle">
+  <module md5="28D79E954097305B38D8A1213FD3C448" name="Ghost Spelling">
     <memoryEntries>
-      <romModuleEntry fileMd5="6B3C0A62CD9E81636021E19A72C88E75" fileName="rtpiratc.bin"/>
-      <gromModuleEntry fileMd5="AA65842A7D21BBCD79790482159B84C0" fileName="rtpiratg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="1329DB2F5DEDB5C3FE726B16FD7A96DA" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/ghost_spelling.rpk!/GHOSg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Story Machine">
+  <module md5="8F9797C990723F739C15287F00131B70" name="Ghostman 1">
     <memoryEntries>
-      <romModuleEntry fileMd5="C2AE6333EB047D8C9331D7027D861E38" fileName="strymacc.bin"/>
-      <gromModuleEntry fileMd5="FACA9E795334069ED03A36200EC7B919" fileName="strymacg.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="129F3730DCA976F2DCEDE71EB68845DD" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/ghostman_1.rpk!/GHOSTEg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Pole Position">
+  <module md5="4C9A886F3D1EFA060BA50A1505AE5530" name="Ghostman 2">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="5F90F7B979F35EB9475F973D9FC5A587" fileMd5="923A223ADEBE871353712C334EE3D286" fileName="poleposc.bin" fileName2="poleposd.bin"/>
-      <gromModuleEntry fileMd5="368F9D9E7BFBFCBB91741AE7EEF987E3" fileName="poleposg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="F907EB2D77EB079340C797BA122FC70F" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/ghostman_2.rpk!/GHOSTFg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="4A Flyer">
+  <module md5="E8F4D932A9087D9EFDEE5ECBAA07B56C" name="GPL Disassembler">
     <memoryEntries>
-      <bankedModuleEntry fileMd5="3BF9716A9327DE2A91D19289A12C27E6" fileName="4aflyerc.bin"/>
+      <gromModuleEntry fileMd5="2EA9231C59D11AA710F7F32E0F42C690" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/gpl_disassembler.rpk!/GPLDISSg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Activity Accountant">
+  <module md5="3AD7FECF83A655FC68F52AB0B29147A2" name="Gram Filler">
     <memoryEntries>
-      <gromModuleEntry fileMd5="8BF9303C3D230FDEF76D3149A5DA9360" fileName="actvactg.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="A3BD7CAC6D30B4AA76D752E47C24976D" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/gram_filler_20.rpk!/GRMFILg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Alien Addition">
+  <module md5="AE68FB98C56F8044469400079EE3663D" name="Graphic Editor">
     <memoryEntries>
-      <gromModuleEntry fileMd5="FAED81E922D8388DCB86CDFCC28C9D81" fileName="alienadg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="F4014E0A69E621B5CFF3E8116B442802" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/graphic_editor.rpk!/GRAPHg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Alligator Mix">
+  <module md5="C3151FA95C608499D65D8BA96855F5A5" name="Grom Master">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="CC56D91EAAEB2B1E8A19BB5900D9D1FC" fileMd5="E5086188A0B880875EE22BC3FB2CFE57" fileName="alligac.bin" fileName2="alligad.bin"/>
-      <gromModuleEntry fileMd5="F715189FD5895CD5A5875AAD2283312F" fileName="alligag.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="935652631C6C234C91E73A32B04F399F" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/grom_master_101.rpk!/GROMMASg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Ambulance">
+  <module md5="87F4C823B79AD517EAE8156B8F2969C1" name="Guardian">
     <memoryEntries>
-      <romModuleEntry fileMd5="F8C10B88B72843AE151588CC1B89DABA" fileName="ambulncc.bin"/>
+      <gromModuleEntry fileMd5="CBE05371B6DE080D68D1E710B3DE6E42" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/guardian.rpk!/GUARDIAg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Ant Colony 0.5">
+  <module md5="96A2FF732E3A468296525A9743AE9CFD" name="Guardian Space">
     <memoryEntries>
-      <romModuleEntry fileMd5="A7C1C29D9C86C9356D89BABDA7B82FE1" fileName="antc.bin"/>
+      <gromModuleEntry fileMd5="2C24D00EF06FF518082320AD578006C6" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/guardian_space.rpk!/GUARg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Barrage">
+  <module md5="5A96F772E81F2D84F1E277DB526AA927" name="Identifile (HD)">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="A3C0A75F74FE90ECAA2D4CDF9C632F46" fileMd5="A0E40F9217DD71AAEE6EBBD21FFB88CB" fileName="barragec.bin" fileName2="barraged.bin"/>
+      <gromModuleEntry fileMd5="CCDF19B00CEFE8549A90FE6FE510D88E" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/identifile_10_hd.rpk!/IDENTIWg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Beginning Grammar">
+  <module md5="77262758FD1D903380A7B63BC5536D0A" name="Identifile (RD)">
     <memoryEntries>
-      <gromModuleEntry fileMd5="700E5D985CAFD731F0159AC2F3D695F0" fileName="beggramg.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="70C367FB461840720F2C545D1F5099BE" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/identifile_10_rd.rpk!/IDENTIRg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Berlin">
+  <module md5="A3B735EC937ED663A75A409702CBE0FE" name="Intercept">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="A8225FA938B63F1778FEB8223E67A4F1" fileMd5="F6DC014997CE323C74C9AFC867CFF47A" fileName="berlinc.bin" fileName2="berlind.bin"/>
-      <gromModuleEntry fileMd5="A4C6AE1CC1774CAE5FD68EA5030CA160" fileName="berling.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="9D3EAEB9E048832273FC638AA6403435" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/intercept.rpk!/INTERCg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Beyond Parsec">
+  <module md5="7165782B859BDB0D8FA1A9F297B87B79" name="Jeu de billiard">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="F4E7A8F74170F0310772B975D27B103B" fileMd5="4F04EDB03CB6752EB7FACA4AD9D47525" fileName="beyparsc.bin" fileName2="beyparsd.bin"/>
+      <gromModuleEntry fileMd5="E35A551E377A5A401EB244FE83A90FCF" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/jeu_de_billiard.rpk!/BILLIARg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Black Hole">
+  <module md5="0CC1E7B0C9E08575DEF00063A2143006" name="Jim's Typing Tutor">
     <memoryEntries>
-      <romModuleEntry fileMd5="3B5EF6EAA60F1210E42632E3833E4676" fileName="blakholc.bin"/>
+      <gromModuleEntry fileMd5="42E230B0AD75E5E29E75E93FAD2C4716" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/jims_typing_tutor.rpk!/EA5TYPg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Blasto">
+  <module md5="322A19D382787C48A896C431D1BC9A35" name="Kaboom">
     <memoryEntries>
-      <gromModuleEntry fileMd5="2C1943B423044E5DF0BE89C60B485EE2" fileName="blastog.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="53F66DE9B93E95004B68491188ED361A" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/kaboom.rpk!/KABOOMg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Boxer">
+  <module md5="ACC3D9434E0986B840C0B4658906F062" name="Keyboard and Joystick Test">
     <memoryEntries>
-      <romModuleEntry fileMd5="D8BF28741F3BAC64CA95E75EA06CAB36" fileName="boxerc.bin"/>
+      <gromModuleEntry fileMd5="ADBF7219635F274F92795F62B8F43E2C" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/keyboard_joystick_test.rpk!/KJTESTg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Break Thru !!">
+  <module md5="0094ECB9CD6A51CD9D96EBB1ADB7674B" name="King Flow Chart Creator">
     <memoryEntries>
-      <romModuleEntry fileMd5="E9DAF2D607353BF1B60B64CD55748638" fileName="breakc.bin"/>
+      <gromModuleEntry fileMd5="C8B9ECABBD21137CCE91B0DD78A528BE" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/flow_chart_creator.rpk!/FCHARTg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Burger Builder">
+  <module md5="14BE62391AB2B7A6048D45ABDD4E8320" name="Kippy's Nightmare">
     <memoryEntries>
-      <romModuleEntry fileMd5="8E59AEF80B12B87F38611879A8E25311" fileName="burgbldc.bin"/>
+      <gromModuleEntry fileMd5="1CF38AD040AEFE62E5B27538CC422D78" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/kippys_nightmare.rpk!/KIPPYg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Card Sharp">
+  <module md5="4E8A91C7A87022682411830B28E8A55D" name="Krazy Koala">
     <memoryEntries>
-      <gromModuleEntry fileMd5="7713C05523EEAB9A4332B26F873EB29E" fileName="cardsg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="FE06E122D9087CE8CAE639A199DD989B" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/krazy_koala.rpk!/Koalag.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Video Vegas">
+  <module md5="16B3FBECAEF27554E48A1518BE06A9F6" name="Light Cycles">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="A8225FA938B63F1778FEB8223E67A4F1" fileMd5="AFBD995578DC21AC7800DEEC2459B82C" fileName="casinoc.bin" fileName2="casinod.bin"/>
-      <gromModuleEntry fileMd5="57790D9B3BF682B0D1C140E931DA62EF" fileName="casinog.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="02804F091C73CFE9BD6A18DA2E62F0E6" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/light_cycles.rpk!/CYCLEg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Chicken Coop">
+  <module md5="2F2FB16B1C28622A72BC57A7B9A7B5E9" name="Light Speed">
     <memoryEntries>
-      <romModuleEntry fileMd5="43B3BED72A95BED9480CDF30F0C92A1F" fileName="chicoopc.bin"/>
+      <gromModuleEntry fileMd5="24CE2A77F90FD2A5D35192E242EBC0CF" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/lightspeed.rpk!/Litespg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Chisholm Trail">
+  <module md5="969C341411FB6C6CEB9DE479AE80E56E" name="Lines">
     <memoryEntries>
-      <romModuleEntry fileMd5="67787495427145FBCB2231FEA35A199F" fileName="chishlmc.bin"/>
-      <gromModuleEntry fileMd5="4D7BFC3E31DBE3D9BBADEB6542047E55" fileName="chishlmg.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="64B5EF8CC0F8A02DCC3D526419D33E48" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/lines_demo.rpk!/LINESg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Class Data Recorder">
+  <module md5="4F7A3D05F24E60D45F2CD5E0AF2C2D78" name="Mass-Transfer">
     <memoryEntries>
-      <gromModuleEntry fileMd5="273E0605B79B936B17CEB13239351539" fileName="clasdatg.bin" size="0x9000"/>
+      <gromModuleEntry fileMd5="6CE923CDDD2F6A776246500A595651AC" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/mass_transfer_43.rpk!/Mass43g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Math Games II">
+  <module md5="0DD5A4AB4FF25F56267B8509850645FE" name="Math Catch">
     <memoryEntries>
-      <gromModuleEntry fileMd5="07B707CF8CE3CC90EB7137B73E2FD642" fileName="cmath2g.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="49778572B29B72E846DF7D8580207982" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/math_catch.rpk!/MATHg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Math Games VI">
+  <module md5="5EAA801AA9B8AE7DA430C05D37BE4A9E" name="Max RLE">
     <memoryEntries>
-      <gromModuleEntry fileMd5="05E91BFB9BCCA3752C3BAFAB6EB7D148" fileName="cmath6g.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="D83F592D3DCB7E004BFE6D23DD8DB14D" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/max_rle.rpk!/MAXRLEg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Course Manager">
+  <module md5="0A8E52D9FB8F3E3C635A1DA8AD9BC29F" name="MG Explorer">
     <memoryEntries>
-      <gromModuleEntry fileMd5="FB7AB28E87CB8F5DB312A372B3B56A85" fileName="crsmang.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="B409D79447E787D30C0D743521FF9626" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/mg_explorer.rpk!/MGEXPLg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Decimal Deli 2">
+  <module md5="5231A5BCF99CE3CB1F5BBD2205309DE8" name="Minimemory + Easy Debug + Monitor">
     <memoryEntries>
-      <gromModuleEntry fileMd5="42CB74649893C621178CA6751A7E9DE2" fileName="decdel2g.bin" size="0x7000"/>
+      <gromModuleEntry fileMd5="504D0E1DE21BEF28DAD87C61C9ED092F" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/super_minimem.rpk!/MM2SSg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Defender">
+  <module md5="CDE1EE64B7AD17ECBBDE78BFC6221C6A" name="Minimemory Plus 2.0 + Easy Debug">
     <memoryEntries>
-      <romModuleEntry fileMd5="532E459B83862F7E28D4C49F1B19AD24" fileName="defendc.bin"/>
+      <gromModuleEntry fileMd5="C93C67538EECD40660FE7C5E429D5AE8" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/mini_memory_plus_20.rpk!/MMP2g.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Art of Division 1">
+  <module md5="6ADBBB93190A578D71894FD533E37B45" name="Miniwriter II">
     <memoryEntries>
-      <gromModuleEntry fileMd5="D47804FB5C86D7286FBC1559820DE263" fileName="divis1g.bin" size="0x7800"/>
+      <romModuleEntry fileMd5="461A2040CBBD2301440A25A02A5F8856" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/db_miniwriter_2_14.rpk!/MINIW14c.bin"/>
     </memoryEntries>
   </module>
-  <module name="Division Sequence">
+  <module md5="BB8DD46E9EB8B93B37CC773AD9B8194D" name="Moon Base">
     <memoryEntries>
-      <gromModuleEntry fileMd5="54D1BBA6640EF44166C27CE34C341380" fileName="divseqg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="1773DCAE0956CED3DFB034568DC9E180" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/moon_base.rpk!/MOONBASg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Dragon Mix">
+  <module md5="48F1C4E4DFD4DCDFEEEE705155D918D6" name="Newton's Revenge">
     <memoryEntries>
-      <romModuleEntry fileMd5="27CC3D9849A8F4718AC3FCBD1F272B3A" fileName="dragonmc.bin"/>
-      <gromModuleEntry fileMd5="5B3B59E96CFF96470D3EE663E8C50460" fileName="dragonmg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="B9752E45546FECF4DF167B5033A626FA" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/newtons_revenge.rpk!/Newtong.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Von Drake's Molecular Mission">
+  <module md5="1AB375D4E32D63CCF209A62E7DA9B60B" name="Nibbler">
     <memoryEntries>
-      <romModuleEntry fileMd5="7F573B566C0B62900AF69F460E8A6007" fileName="drakec.bin"/>
-      <gromModuleEntry fileMd5="DE19D329C5C6BED5A39F5560BAEAB0AF" fileName="drakeg.bin" size="0x9000"/>
+      <gromModuleEntry fileMd5="2FEAD4309894F6524F633401E57C2120" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/nibbler.rpk!/nibbleg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="D-Station I">
+  <module md5="217FADBEA1BB9530CDEA12B56E15E088" name="Number Guess">
     <memoryEntries>
-      <romModuleEntry fileMd5="32E55E93669EAF0F6518DF07F82D1626" fileName="dstatn1c.bin"/>
+      <gromModuleEntry fileMd5="409E416FD35D6A2D3D1DCD7222E8923D" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/number_guess.rpk!/NUMGUESg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="D-Station II">
+  <module md5="9E4677C4F7BBDCC174D4AF4BC8EEB67F" name="Oh Mummy">
     <memoryEntries>
-      <romModuleEntry fileMd5="6B8B87D86ACF2B8B625B67927951CE55" fileName="dstatn2c.bin"/>
+      <gromModuleEntry fileMd5="7BB897CD97B3CD049F51F7D18699C7C7" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/oh_mummy.rpk!/MUMMYg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Early Logo Learning Fun">
+  <module md5="EDBBA07C2652F4408EDF1E4EC6D3CA0E" name="Orb">
     <memoryEntries>
-      <romModuleEntry fileMd5="090155F8403B08B519B8365EE530EA5B" fileName="earlyloc.bin"/>
-      <gromModuleEntry fileMd5="74DE12232ED0016B07AA4280CBE962B3" fileName="earlylog.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="8533410DC9CDFDF2E9235A99292CB301" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/orb.rpk!/Orbg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="LETTER WORLD  1.06">
+  <module md5="F51BAB5B6912BD553C4FCC983EA8901C" name="Panic">
     <memoryEntries>
-      <romModuleEntry fileMd5="44605012FF9C57F8753516B5DEC2966F" fileName="edupackc.bin"/>
+      <gromModuleEntry fileMd5="C74C33216F7D99EF3CA541A3E87EA24A" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/panic.rpk!/PANICg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Early Learning Fun">
+  <module md5="24A6628C37C830E1E9D623CE9E985230" name="PC Transfer">
     <memoryEntries>
-      <gromModuleEntry fileMd5="86169FC9E29A261A1DFE303DD8AFB5B8" fileName="erlnfung.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="8E7D553551E7D5D37278762B6BB58331" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/pc_transfer_10.rpk!/PCTRANg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Escape">
+  <module md5="7C734EFF59CB1BFB66EC328D1C5A5A87" name="Perfect Push">
     <memoryEntries>
-      <romModuleEntry fileMd5="9BC5658E38E768B70ABFB4867AF97C63" fileName="escapec.bin"/>
+      <gromModuleEntry fileMd5="F0ECAAFB226968B18CC2C2849B3060DF" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/perfect_push.rpk!/PUSHg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Espial™">
+  <module md5="704E09B5C8B253B743483B1CD678A97F" name="Phoenix 2001 Diskodex">
     <memoryEntries>
-      <gromModuleEntry fileMd5="EA5E86F3245D0380289FFE2B9303DB26" fileName="espialg.bin" size="0x4800"/>
+      <gromModuleEntry fileMd5="1FC58B18B9BFB380696AF7E2F888AECF" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/diskodex.rpk!/Dskdexg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="E.T.">
+  <module md5="C4E5BE5EAE75D5F60DDEC0CE6583B2A3" name="Ping Pong">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="F406D138C3DDA1507FA34FDAC0E8F417" fileMd5="A84EB37266151AD725A8D21F1E0BD1FB" fileName="etc.bin" fileName2="etd.bin"/>
-      <gromModuleEntry fileMd5="64DEAC5FC73411BED8455F27677F11BB" fileName="etg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="06F07624D5D5CA963AB1B2287BF2D49D" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/ping_pong.rpk!/PONGg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Super Disk Manager">
+  <module md5="7A96CCA03DC6DB2CD877D3BE3A178779" name="Pizza">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="D44C885E99B781FFFAFB5A6D537E8CD9" fileMd5="A0C68AEF6896A301AF5FDA8ACDDE5B24" fileName="etiwdmc.bin" fileName2="etiwdmd.bin"/>
-      <gromModuleEntry fileMd5="B01BD6BDB0BA465C7DAEF7A19ACE0A93" fileName="etiwdmg.bin" size="0x5000"/>
+      <gromModuleEntry fileMd5="BE88CFC66A7DF3470DE047B74CE0B741" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/pizza.rpk!/PIZZAg.bin" size="0x3800"/>
+      <bankedModuleEntry file2Md5="F406D138C3DDA1507FA34FDAC0E8F417" fileMd5="988F1415A8594882A2688880552FB5F5" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/pizza.rpk!/PIZZAc.bin" fileName2="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/pizza.rpk!/PIZZAd.bin"/>
     </memoryEntries>
   </module>
-  <module name="E.T. At Sea">
+  <module md5="8322BA08DBE7C8A226271D01AB6E439D" name="Plato Make a Sentence">
     <memoryEntries>
-      <romModuleEntry fileMd5="BB6DEB4FCF2DF3A87CF5137E5A6846F5" fileName="etseac.bin"/>
-      <gromModuleEntry fileMd5="90886D13297018DA72BB61C460F2385D" fileName="etseag.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="D8DF2442D9F54C51298F2C1DF343DF08" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/plato_make_a_sentence.rpk!/PLATOSEg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Face Maker">
+  <module md5="2D206D90510AF7146F63BA96004B2333" name="Printer Setup Utility">
     <memoryEntries>
-      <romModuleEntry fileMd5="E83A636D96FC06BE4AC507E969C71CE0" fileName="facemkrc.bin"/>
-      <gromModuleEntry fileMd5="9FD7FFE9C68B19047C5B33A271EC2851" fileName="facemkrg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="A685D7F456449A4BAA8AE20672FCA004" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/printer_setup.rpk!/PRTSETg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Fantastic Fractions">
+  <module md5="761F6AE1E43039AD8D32EAC6E0AC1E8B" name="Program File Compressor">
     <memoryEntries>
-      <gromModuleEntry fileMd5="490DBFB21CB306F14A3712FE9582390E" fileName="fanfracg.bin" size="0x9000"/>
+      <gromModuleEntry fileMd5="BB9FFF0F4C2530510501BB69CE8813E6" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/program_file_compressor.rpk!/PFCg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Fantasy">
+  <module md5="32FAB37485E8B3FF89CC48BE06E7391A" name="Q99 Quick Copier II">
     <memoryEntries>
-      <romModuleEntry fileMd5="7921EA5F20571D50C695F32EC17BF477" fileName="fantasyc.bin"/>
-      <gromModuleEntry fileMd5="459624BCD2AF6A25AC7ADF0A96648992" fileName="fantasyg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="862F6B26A10EB35869D720F2379F4B35" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/q99_quick_copier.rpk!/Q99QCg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Fathom">
+  <module md5="7F0F42AA4E466645C302913CD49D79D5" name="Quick Four Catalog (Epson)">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="409F4FC182F8A0BCBEAD411FF534E6CD" fileMd5="409F4FC182F8A0BCBEAD411FF534E6CD" fileName="fathomc.bin" fileName2="fathomd.bin"/>
-      <gromModuleEntry fileMd5="7612FD26A8BB34498EF1B04528D2A519" fileName="fathomg.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="9592F2F1985D3E1EECCF8B2154B97B1F" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/quick_four_catalog_epson.rpk!/Q4EPSg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Football!">
+  <module md5="C1C043214B49E389911B327EEAE3E84F" name="Quick Four Catalog (Okidata)">
     <memoryEntries>
-      <gromModuleEntry fileMd5="D748F768D098B5DC8E39D1BE40DD0AB6" fileName="footbalg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="FD44F973B195DD42E5D37C8F2B16D5BC" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/quick_four_catalog_oki.rpk!/Q4OKIg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Frog Jump">
+  <module md5="E2598E4D3DCA1A20B77EA72FDB4F8A78" name="Race">
     <memoryEntries>
-      <gromModuleEntry fileMd5="C5367288127520A7AC1FCF324EA47873" fileName="frogjmpg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="C9169B00A559AD686BFE1BA9ABFDE47D" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/race.rpk!/Raceg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="FLIPPER MIT HIGHSCORE ">
+  <module md5="7C78052B1446359231C4F5D646481A5A" name="Rapid Copy">
     <memoryEntries>
-      <gromModuleEntry fileMd5="EB2FD8F06CF555AD7FC46879A919F4CD" fileName="gamesg.bin" size="0x9000"/>
+      <gromModuleEntry fileMd5="109D64E4C6B8C9888D25EE869DF8268C" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/rapid_copy_10.rpk!/RAPCPYg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Germ Patrol">
+  <module md5="B9D7DE399EA551EC95AC7D144DDBDF55" name="Rectangles">
     <memoryEntries>
-      <romModuleEntry fileMd5="C3047D21B50B417FD0A9FD05024F5162" fileName="germptlc.bin"/>
-      <gromModuleEntry fileMd5="DB3891C9C0472309B021AD5EB146445F" fileName="germptlg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="7664CA5913240B45952EB0324E871EF3" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/rectangles_demo.rpk!/RECTAg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Hangman">
+  <module md5="673EC249A80D2BDFD24780D42A6F4286" name="Rediskit">
     <memoryEntries>
-      <romModuleEntry fileMd5="BEC7D77A21681B1C4AA4EC49A50EBF0E" fileName="hangmanc.bin"/>
-      <gromModuleEntry fileMd5="881FA0C9EA94B5B47ABF4F1B2F4F0FB0" fileName="hangmang.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="914F1A4B3AD4725C09A0765904AEE6EB" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/rediskit.rpk!/REDISKTg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Home Financial Decisions">
+  <module md5="70B3E8B1138CA7F9BE30357DC367E4BD" name="Robot Rampage">
     <memoryEntries>
-      <gromModuleEntry fileMd5="1A83F2227D8C94CB943E6EFBC4B1AFAE" fileName="homfdecg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="419FF5090654FEE11E632EFF875B2F61" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/robot_rampage.rpk!/ROBOTg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Homework Helper+">
+  <module md5="59D2563A31EC501734C741F16D648F73" name="Rock Runner">
     <memoryEntries>
-      <romModuleEntry fileMd5="A97C72514918BAA7839B68D4C2DF89D5" fileName="homhelpc.bin"/>
+      <gromModuleEntry fileMd5="FEA376E35B2D6D895E4F6DD42462D753" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/rock_runner.rpk!/ROCKg.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module name="Jumpy">
+  <module md5="E3558A1B31464232A25A204BD937B7B2" name="Sargon I">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="9D8BEA48AE2D2AA70762977DA26677C7" fileMd5="F0FB42CD39676860C91CF1DE834E7B8F" fileName="jumpyc.bin" fileName2="jumpyd.bin"/>
+      <gromModuleEntry fileMd5="0BF9139B1A59D61729E9D1B12204D41C" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/sargon_1.rpk!/Sargong.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Junkman Junior">
+  <module md5="E65F276EF93DE27F5B070F3EE6FB2B9C" name="Saturday Night Bingo">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="9A31598A20D32FAC2B1D3398C191EDA6" fileMd5="942781380DCB0245B866DF5FBD6C5FC7" fileName="junkmanc.bin" fileName2="junkmand.bin"/>
+      <gromModuleEntry fileMd5="7FC11207F69300B758E67FDF1D55E272" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/bingo.rpk!/BINGOg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Lasso">
+  <module md5="42766E0818C3D825C324F74329E4C30B" name="Scrabble">
     <memoryEntries>
-      <gromModuleEntry fileMd5="953557BE78A9510F6751D1458DB3AD8B" fileName="lassog.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="9024C1C019EB6D0F6E1C6CBAD795D761" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/scrabble.rpk!/SCRABBLg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="LINK V0.99">
+  <module md5="5D59740D333DB1E509B37781B59C88B5" name="SDL Editor">
     <memoryEntries>
-      <romModuleEntry fileMd5="EB63977E8F28EEB356481D41C41907F0" fileName="linkc.bin"/>
+      <gromModuleEntry fileMd5="28F3459E71945719FC95DB551C780F61" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/sdl_editor_20.rpk!/SDLEDg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Lobster Bay">
+  <module md5="556762BFB38C9518921A3F7E79D7B23B" name="Seahorse software demo">
     <memoryEntries>
-      <gromModuleEntry fileMd5="9297A4B252D4792C8E099582AB95C867" fileName="lobsterg.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="9EF28FD325F8A33B16FD487F720BBE43" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/seahorse_software_demo.rpk!/DEMOg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Mancala">
+  <module md5="C2E08C96297348D131F4F23B21E4E661" name="Sector One/40">
     <memoryEntries>
-      <romModuleEntry fileMd5="31AECC0323F1BAD4CA8D555D1CE31747" fileName="mancalac.bin"/>
-      <gromModuleEntry fileMd5="5F09577D57BF74EF3CB441A9DD40BA1C" fileName="mancalag.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="5534F12B147DDA9EB342633F69DDAF18" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/sector_one_11.rpk!/SECTOR1g.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="MULTIPLAN">
+  <module md5="7B7E0D245A01CA0847550D39E959DD24" name="Sewermania">
     <memoryEntries>
-      <gromModuleEntry fileMd5="2998F5D2CC0FD78090AD3F015FB1B1B5" fileName="micmultg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="9692DD6AFCBBEF1168B8A906BF91F667" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/mb_sewermania.rpk!/sewermaniag.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module name="Midnite Mason">
+  <module md5="71A4AF673E552368C211462EBD28BFBE" name="Snake">
     <memoryEntries>
-      <romModuleEntry fileMd5="808A7816635817F4BF98730A86601C9F" fileName="midmasoc.bin"/>
+      <gromModuleEntry fileMd5="1AA2A7765E1360E0E4CBDFD2229BAD94" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/jph_snake.rpk!/SNAKEg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Moon Mine">
+  <module md5="FB5668222054F880FDDD219BF10ABC9E" name="Solitaire">
     <memoryEntries>
-      <romModuleEntry fileMd5="FAECFAC225F9A064342FF9D49AAC68C9" fileName="minec.bin"/>
-      <gromModuleEntry fileMd5="8B756489014198FF832AF86CD8F1A473" fileName="mineg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="31D7333E0C7AED111BCA28D8B4E5A84D" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/solitaire.rpk!/SOLIg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Miner 2049er">
+  <module md5="E37EFA8995A51EE913C873B70A262DED" name="Space Agressor">
     <memoryEntries>
-      <gromModuleEntry fileMd5="0DFE70F2C7C2F2C853E3EA1D92A578B5" fileName="minerg.bin" size="0x4800"/>
+      <gromModuleEntry fileMd5="469BB938843A527AB1388FF2F6B7CD0D" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/space_agressor.rpk!/SPAGGRg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="MINIWRITER">
+  <module md5="FCAE35E9DEF0CD469388C058E79480D4" name="Space Bandits">
     <memoryEntries>
-      <romModuleEntry fileMd5="08FCCFE5EAD285C9E9D93ED1927C69E5" fileName="miniwric.bin"/>
+      <gromModuleEntry fileMd5="75973B7C198F2890BF227B245C62D55F" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/mb_space_bandits.rpk!/spacebanditsg.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module name="Minus Mission">
+  <module md5="9B58C098C1B4D018BEF1AAB55225D598" name="Spacestation Pheta">
     <memoryEntries>
-      <gromModuleEntry fileMd5="8864B3EEE2772D245FD0B0224C61DEF8" fileName="minusmsg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="C50E442D2D5F3F7CDA7351820F65A308" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/spacestation_pheta.rpk!/PHETAg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Mighty Multiplication 2">
+  <module md5="A9AA813719CC321E7E9686C346534192" name="Spad XIII">
     <memoryEntries>
-      <gromModuleEntry fileMd5="F1168B38C7E147F9A5E4C5EBAA13C82E" fileName="mitmultg.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="C392CF03D268FE4BB2D90CDFA2B53CEC" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/spad_xiii.rpk!/SPADg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Mousk-Attack">
+  <module md5="F5316910FA5F79B65EB23288D93C6079" name="Spot Shot">
     <memoryEntries>
-      <romModuleEntry fileMd5="726013056AB0B757AEFC989FC3FCAD06" fileName="mosatakc.bin"/>
-      <gromModuleEntry fileMd5="591FAAC37629CB452EAF2F1E3660378C" fileName="mosatakg.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="3466E54D79509928FDDD19EE6932F098" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/sm_spot_shot.rpk!/SPOTg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Ms. Pac-Man">
+  <module md5="27AA577EF5D16B1A2CA69A981EFADDF8" name="Star Force">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="9EC0667A10306ADF54588BEAD2EAC096" fileMd5="B94A489CE770A250B7CD46C0E4D20A44" fileName="mspacc.bin" fileName2="mspacd.bin"/>
+      <gromModuleEntry fileMd5="7094FB31305B83FD779F28F526774F94" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/star_force.rpk!/STARFORg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Tennis">
+  <module md5="2786CF5D2C2155B431610FA5EB0CDBE1" name="Star Fort">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="804DCE32581ED0F35B1C18518F4561C0" fileMd5="52154F4548447A89E5994E184F8CDDAC" fileName="mtennisc.bin" fileName2="mtennisd.bin"/>
+      <gromModuleEntry fileMd5="2690D95451A716BA7EAD1EB562C5CB42" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/star_fort.rpk!/STARFg.bin" size="0x5800"/>
     </memoryEntries>
   </module>
-  <module name="Magic of Multiplication 1">
+  <module md5="60526E00123BC640D575849535F0127F" name="Star Voyager">
     <memoryEntries>
-      <gromModuleEntry fileMd5="AF4DB824FB7F70E2C91CAD197C5DF458" fileName="multp-1g.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="A5FF49921ABCCF8E7F6A4D3F7F1F585E" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/star_voyager.rpk!/VOYAg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Munchman II">
+  <module md5="F048022AEA9911CEDA9EAAA56384EEC4" name="Super Disk Cataloger Utility">
     <memoryEntries>
-      <romModuleEntry fileMd5="99BE552849108181B02BEDE4EB34311D" fileName="munch2c.bin"/>
+      <gromModuleEntry fileMd5="4AFF9269CDCB240ADC792A96653F66F6" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/super_disk_cataloger.rpk!/Supcatg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="NUMBER BOWLING">
+  <module md5="98DAFDBFE8D4245A3DA72E43D2C36381" name="Super Disk Duplicator">
     <memoryEntries>
-      <gromModuleEntry fileMd5="D8C89C4CA826ED5D08FAC6F62F3FBAC4" fileName="numbowlg.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="40F4FA6A3068358CD7F2353793F8B7B9" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/super_disk_duplicator_41.rpk!/SDUP41g.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Pac-Man">
+  <module md5="9FC239848E6E61460766E4271AA3EF94" name="Superfly">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="EB71F10225CCDAE4E7201DBEE0FADD2D" fileMd5="A88F8069AED122B029E392827CABE91E" fileName="pacmanc.bin" fileName2="pacmand.bin"/>
+      <gromModuleEntry fileMd5="608010B6BAF8293B10DB6F36B56E1A97" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/mb_superfly.rpk!/superflyg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="PAYROLL ASSISTANT     ">
+  <module md5="40DAA430E62AF7A0128F159E0409BE9E" name="Tafara">
     <memoryEntries>
-      <gromModuleEntry fileMd5="2E1BF61C51DC1594691CA7C96BCD9BF4" fileName="payasstg.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="D1C986FEEEC20DE38C1436AE738E1467" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/tafara.rpk!/Tafarag.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Diagnostic Tests">
+  <module md5="56A41100084C893EE837AAA3FEC26F52" name="Terminal Emulator Utility">
     <memoryEntries>
-      <gromModuleEntry fileMd5="6328B5FBFC3E2791235069C269609827" fileName="phm3000g.bin" size="0x1800"/>
+      <gromModuleEntry fileMd5="A395A33D456BD4BAF45D533C6E5D39F1" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/terminal_emulator_utility.rpk!/TERMINg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Disk Manager (1.0)">
+  <module md5="49F9399B9D7E74E966E3BF0508C2169A" name="Terry Turtle's Adventure">
     <memoryEntries>
-      <gromModuleEntry fileMd5="4F12BACB796AA22D64E4D47C8953B489" fileName="phm3019g.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="2796FF302CD9E8429FECAE191F62564C" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/mbx_terry_turtle.rpk!/phm3154g.bin" size="0x5800"/>
+      <romModuleEntry fileMd5="D1D13C100A5C0B0D25010D47EF470413" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/mbx_terry_turtle.rpk!/phm3154c.bin"/>
     </memoryEntries>
   </module>
-  <module name="Personal Real Estate">
+  <module md5="660C52167386CD9F4A0A51BCBEED6DA7" name="Tetris">
     <memoryEntries>
-      <gromModuleEntry fileMd5="89E28B2664FB536752DE3468F3834DA8" fileName="phm3022g.bin" size="0x7800"/>
+      <gromModuleEntry fileMd5="E4C6D00872FCFDEB810C839D51689C4A" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/tetris.rpk!/TETRISg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="ZeroZap">
+  <module md5="8FEDE42A0649C93FEC4852E11B936148" name="The Explorer">
     <memoryEntries>
-      <gromModuleEntry fileMd5="1CA9FA07E2E0FCB4DC9EFA29651A532C" fileName="phm3036g.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="D04652B2BB8A1ECCE7E661664E9F8C3A" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/the_explorer_10.rpk!/EXPLORg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Reading Roundup">
+  <module md5="B068E708841478D05A49D8A973AA82F3" name="The Great Word Race">
     <memoryEntries>
-      <gromModuleEntry fileMd5="3263A64EFC6DD773762044E8E083B954" fileName="phm3047g.bin" size="0x9000"/>
+      <gromModuleEntry fileMd5="9B80335A2A2BBDAC2D8B779312E9A9D2" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/great_word_race.rpk!/WORDg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Reading Rally">
+  <module md5="8C2CA5D17CE46D288980E9A2F85E82E3" name="The Magic Music Box">
     <memoryEntries>
-      <gromModuleEntry fileMd5="A12943BCCB67690E289F78B86118C717" fileName="phm3048g.bin" size="0x9000"/>
+      <gromModuleEntry fileMd5="2390A85B6964D3000354BFB3740E6CC1" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/magic_music_box.rpk!/Songsg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Numeration 2">
+  <module md5="E8549480C3033AD6CF9325AFE65A8D80" name="TI Lander">
     <memoryEntries>
-      <gromModuleEntry fileMd5="7F6AA5DCBA5ED93B3BA21427E83BEB9B" fileName="phm3051g.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="AF8BCDA47FE0C9F6B1178432F1BE63BC" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/ti-lander.rpk!/TILANDg.bin" size="0x7800"/>
     </memoryEntries>
   </module>
-  <module name="Scholastic Spelling 3">
+  <module md5="45F3D08E5AD86C84A36016CE8F9D24F7" name="TI-Mazogz">
     <memoryEntries>
-      <romModuleEntry fileMd5="9B5C4BA24A4FA53E0CFB3959E96632A8" fileName="phm3059c.bin"/>
-      <gromModuleEntry fileMd5="E01C3AA03C25179EE9603904CEA43C09" fileName="phm3059g.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="467D6F79C41F960BE2F2491AD4AA8508" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/ti-mazogz.rpk!/MAZOGg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Scholastic Spelling 4">
+  <module md5="6C40E004144687DF11CE49844C888C81" name="TI-Tiler">
     <memoryEntries>
-      <romModuleEntry fileMd5="9B5C4BA24A4FA53E0CFB3959E96632A8" fileName="phm3060c.bin"/>
-      <gromModuleEntry fileMd5="045B963F514F3C60CCA228B1E1454361" fileName="phm3060g.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="4968973D84C3EE68EC284CF45F393790" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/ti-tiler.rpk!/TILERg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Scholastic Spelling 5">
+  <module md5="46148C0B7C0052D67760485FA5AEA97F" name="TI/Corcomp Trak Copy">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="7F4F90383F2C714631E2925673536691" fileMd5="9302AB1B2213C8AC4D5014F266300308" fileName="phm3061c.bin" fileName2="phm3061d.bin"/>
-      <gromModuleEntry fileMd5="A20E24B88656CCB308F36D8A728BA263" fileName="phm3061g.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="1B965E0D0E5932EDB8CB75162556148B" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/ti-corcomp_trak_copy.rpk!/RTRACKg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Scholastic Spelling 6">
+  <module md5="97A68CB9DC7498EB30DF768274285C7E" name="Track Master I">
     <memoryEntries>
-      <bankedModuleEntry file2Md5="952770D3772331F441079FE8B01C5676" fileMd5="9B5C4BA24A4FA53E0CFB3959E96632A8" fileName="phm3062c.bin" fileName2="phm3062d.bin"/>
-      <gromModuleEntry fileMd5="4DB72C0C6DA1ADD71BF6FD8960C17387" fileName="phm3062g.bin" size="0x9800"/>
+      <gromModuleEntry fileMd5="A65678A4952F871CEA6D5F7B45FE86A3" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/track_master_1.rpk!/TMSg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="VAT Accounting">
+  <module md5="A946F9408F784767112FA6BC572A0D7B" name="Track-Hack">
     <memoryEntries>
-      <gromModuleEntry fileMd5="A0C6CCAFBAAC245C687A0853E6A1EE7E" fileName="phm3066g.bin" size="0x7000"/>
+      <gromModuleEntry fileMd5="54C786ECA19493461CCE1C62F556A754" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/track-hack.rpk!/TRACKg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Othello">
+  <module md5="E8D684129F8E4A09397E9F802BB64094" name="Tron">
     <memoryEntries>
-      <romModuleEntry fileMd5="E15926B33ED43E3CAFE2E1343F9A4E64" fileName="phm3067c.bin"/>
-      <gromModuleEntry fileMd5="CF35E7BE2F321858E4EAD15E84C2E689" fileName="phm3067g.bin" size="0x1000"/>
+      <gromModuleEntry fileMd5="ECD8616A9E3AFB85707AA407842BDF4C" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/tron.rpk!/TRONg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Milliken Addition Sequence">
+  <module md5="9C238EB75A5BAEA83458719A5FB4652D" name="Turbo Copy">
     <memoryEntries>
-      <gromModuleEntry fileMd5="0597D1115BEFED1C0D24D52179B0BE3E" fileName="phm3090g.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="67F66E61C1248B0AADEAC21EED4258F6" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/turbo-copy.rpk!/Turbocpg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Milliken Subtraction Sequence">
+  <module md5="4A1BE5FF2BFD7FDA722E72EC63E73BB0" name="Vaders">
     <memoryEntries>
-      <gromModuleEntry fileMd5="5E5335D4BB93A6ADB502983B4194598A" fileName="phm3091g.bin" size="0x3800"/>
+      <gromModuleEntry fileMd5="7A6A8295119B0BB263259A0D35260F64" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/vaders.rpk!/VADERSg.bin" size="0x1800"/>
     </memoryEntries>
   </module>
-  <module name="Milliken Multiplication Sequence">
+  <module md5="36FA703359286ECF6B7B269B67DC54D2" name="Virus Attack">
     <memoryEntries>
-      <gromModuleEntry fileMd5="2C6DC52A20B8190088092AE38E8C1FE8" fileName="phm3092g.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="50D08AB9BB7066CC23573A0AC5A9EDB8" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/virus_attack.rpk!/VIRUSg.bin" size="0x9800"/>
     </memoryEntries>
   </module>
-  <module name="Milliken Decimals Sequence">
+  <module md5="1CD8DA0648F761677B3F9B1C7B913899" name="Worm Attack">
     <memoryEntries>
-      <gromModuleEntry fileMd5="34BED7F7190535B76A0C4C0B7C862F2B" fileName="phm3096g.bin" size="0x5800"/>
+      <gromModuleEntry fileMd5="8A89A6EFB3738EB88AE8A07D04579114" fileName="jar:file:/usr/local/src/v9t9-data/modules/ftp.whtech.com/Cartridges/rpk/converted/worm_attack.rpk!/WORMg.bin" size="0x3800"/>
     </memoryEntries>
   </module>
-  <module name="Milliken Percents Sequence">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="52BEF793F2936AC3B6559D5210373F26" fileName="phm3097g.bin" size="0x9800"/>
-    </memoryEntries>
-  </module>
-  <module name="Milliken Number Readiness Sequence">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="06C9BC52C65811F6E3A6310B6380D98D" fileName="phm3098g.bin" size="0x3000"/>
-    </memoryEntries>
-  </module>
-  <module name="Milliken Laws of Arithmetic Sequence">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="78CF7393D4D89D529F55C409DA344D62" fileName="phm3099g.bin" size="0x5800"/>
-    </memoryEntries>
-  </module>
-  <module name="Milliken Equations Sequence">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="A205EC3B1F17052D59D9FFC677B7C360" fileName="phm3100g.bin" size="0x3800"/>
-    </memoryEntries>
-  </module>
-  <module name="Milliken Measurement Formulas Sequence">
-    <memoryEntries>
-      <bankedModuleEntry file2Md5="CC56D91EAAEB2B1E8A19BB5900D9D1FC" fileMd5="E5086188A0B880875EE22BC3FB2CFE57" fileName="phm3101c.bin" fileName2="phm3101d.bin"/>
-      <gromModuleEntry fileMd5="4B5CD235C978E6534156C5B890451C1A" fileName="phm3101g.bin" size="0x9800"/>
-    </memoryEntries>
-  </module>
-  <module name="Meteor Multiplication">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="D8E8253BE0BC9B930110645A00A8CC51" fileName="phm3119g.bin" size="0x3800"/>
-    </memoryEntries>
-  </module>
-  <module name="Verb Viper">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="B3863DA4D03C7895FA0DF7453DDF4A31" fileName="phm3120g.bin" size="0x3000"/>
-    </memoryEntries>
-  </module>
-  <module name="phm3126">
-    <memoryEntries>
-      <romModuleEntry fileMd5="FAF9120511614722BDE9C267575C20DF" fileName="phm3126c.bin"/>
-      <gromModuleEntry fileMd5="5976F36EC915D4BF4EF9C7853E0CD6CD" fileName="phm3126g.bin" size="0x9800"/>
-    </memoryEntries>
-  </module>
-  <module name="Peter Pan's Space Odyssey">
-    <memoryEntries>
-      <romModuleEntry fileMd5="D70181C2FC39B4DA730B31C0ED714EF5" fileName="phm3132c.bin"/>
-      <gromModuleEntry fileMd5="9C3EEB2D932DB039DC56F340D3D97A32" fileName="phm3132g.bin" size="0x9000"/>
-    </memoryEntries>
-  </module>
-  <module name="Pinocchio's Great Escape">
-    <memoryEntries>
-      <romModuleEntry fileMd5="B7F0C151C1750C8E5A760059B640C910" fileName="phm3135c.bin"/>
-      <gromModuleEntry fileMd5="F1B86FD6485761A409FD4F49E994DFB4" fileName="phm3135g.bin" size="0x9000"/>
-    </memoryEntries>
-  </module>
-  <module name="Sneggit">
-    <memoryEntries>
-      <romModuleEntry fileMd5="77FE9FA8691AF02C167E7FBE1F50443C" fileName="phm3145c.bin"/>
-      <gromModuleEntry fileMd5="74DE12232ED0016B07AA4280CBE962B3" fileName="phm3145g.bin" size="0x1800"/>
-    </memoryEntries>
-  </module>
-  <module name="Starship Pegasus">
-    <memoryEntries>
-      <romModuleEntry fileMd5="6308DD61542E2B6A62AB54DA92768C52" fileName="phm3147c.bin"/>
-      <gromModuleEntry fileMd5="A41063883D1B0AFA6CB1C5214BAEFE0F" fileName="phm3147g.bin" size="0x3800"/>
-    </memoryEntries>
-  </module>
-  <module name="phm3148">
-    <memoryEntries>
-      <romModuleEntry fileMd5="4A8B1ED3EF3855ED2D51FE66D96C0340" fileName="phm3148c.bin"/>
-      <gromModuleEntry fileMd5="F5220717B21AECD5DB73FEBB42F70E2C" fileName="phm3148g.bin" size="0x5800"/>
-    </memoryEntries>
-  </module>
-  <module name="phm3149">
-    <memoryEntries>
-      <romModuleEntry fileMd5="A26296E493B563D0AEBC6B11A6F79BCD" fileName="phm3149c.bin"/>
-      <gromModuleEntry fileMd5="826C0B0240F676D437EADD2344CAC4CF" fileName="phm3149g.bin" size="0x3800"/>
-    </memoryEntries>
-  </module>
-  <module name="phm3155">
-    <memoryEntries>
-      <romModuleEntry fileMd5="A852E0B046B0E0E061D5D1100F27C756" fileName="phm3155c.bin"/>
-      <gromModuleEntry fileMd5="D2BAC0B41D2427F320EDA41A4DE9BD09" fileName="phm3155g.bin" size="0x3800"/>
-    </memoryEntries>
-  </module>
-  <module name="Word Invasion">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="59FD59DBE283A98F8930092FA2D1123F" fileName="phm3169g.bin" size="0x9800"/>
-    </memoryEntries>
-  </module>
-  <module name="Plant Genetics">
-    <memoryEntries>
-      <romModuleEntry fileMd5="E180802421B97ED86758AA5F83253D5E" fileName="phm3173c.bin"/>
-      <gromModuleEntry fileMd5="784CCBF7A2C358CE5E29FF1AF5D01BF0" fileName="phm3173g.bin" size="0x7000"/>
-    </memoryEntries>
-  </module>
-  <module name="Slymoids">
-    <memoryEntries>
-      <romModuleEntry fileMd5="191930B03D36C89EAFEE1A8D972D287B" fileName="phm3197c.bin"/>
-      <gromModuleEntry fileMd5="7D993C8703BC6278FE6A0D54E3B25B7D" fileName="phm3197g.bin" size="0x1800"/>
-    </memoryEntries>
-  </module>
-  <module name="WingWar">
-    <memoryEntries>
-      <romModuleEntry fileMd5="0094074B14A9009BF483D51D8265A601" fileName="phm3223c.bin"/>
-      <gromModuleEntry fileMd5="C47785E0DB858DCAEB32475048F0B104" fileName="phm3223g.bin" size="0x5000"/>
-    </memoryEntries>
-  </module>
-  <module name="Picture Parts">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="051AD49B64E851FC9B811C7E50D05D51" fileName="picpartg.bin" size="0x9000"/>
-    </memoryEntries>
-  </module>
-  <module name="Micro Pinball II">
-    <memoryEntries>
-      <bankedModuleEntry file2Md5="3D6E7EC837029081EFDF430CAC4ABAEA" fileMd5="AA0DB9BAAEFA2CDD8AB3E3BD5B0B2484" fileName="pinballc.bin" fileName2="pinballd.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="PAINT 'N PRINT GP-700">
-    <memoryEntries>
-      <romModuleEntry fileMd5="C00F3682C8CB312EAAB197D878F374F7" fileName="pntprntc.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Protector II">
-    <memoryEntries>
-      <bankedModuleEntry file2Md5="5D4EB0AF51610877EC0576173DF4DA8D" fileMd5="2100E36C0E7D392291C88E6ADF9B8B42" fileName="protectc.bin" fileName2="protectd.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="PRO TYPER">
-    <memoryEntries>
-      <romModuleEntry fileMd5="ED5674D2FA4DCD919D4FEB8C38C0F89A" fileName="protypec.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Pyramid Puzzler">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="BE9669A7D365A27C8FE8C889396CFFDE" fileName="pyramidg.bin" size="0x9000"/>
-    </memoryEntries>
-  </module>
-  <module name="Rabbit Trail">
-    <memoryEntries>
-      <romModuleEntry fileMd5="4E737039958BD283995E56AE3C5798D7" fileName="rabbittc.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Reading Cheers">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="093725E22D2FE7A7B85B6EB7B1D515E7" fileName="rdcheerg.bin" size="0x9000"/>
-    </memoryEntries>
-  </module>
-  <module name="Reading Power">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="C8790CFC3BAA20D871087D2469422DCF" fileName="rdpowerg.bin" size="0x9000"/>
-    </memoryEntries>
-  </module>
-  <module name="Reading Trail">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="C6766C018CB353E2C455A90DD69336B2" fileName="rdtrailg.bin" size="0x9000"/>
-    </memoryEntries>
-  </module>
-  <module name="Reading Wonders">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="D2932F65B0B27A43823C8E0DC4C2F7A5" fileName="rdwondrg.bin" size="0x9000"/>
-    </memoryEntries>
-  </module>
-  <module name="Reading Adventures">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="A7732A7F515A76F7E7A26F05D77BCC2E" fileName="readadvg.bin" size="0x9000"/>
-    </memoryEntries>
-  </module>
-  <module name="Reading Fun">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="DA4FF7EEAA300FD067DFB09ECF2AD6F9" fileName="readfung.bin" size="0x9800"/>
-    </memoryEntries>
-  </module>
-  <module name="Reading On">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="4DDC713D1C6D320481251099BCD7398F" fileName="readong.bin" size="0x9800"/>
-    </memoryEntries>
-  </module>
-  <module name="RIVER RESCUE">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="F69FD92CAA6CDAD6281BE5CF5E7F9B38" fileName="riverrescueg.bin" size="0x3800"/>
-    </memoryEntries>
-  </module>
-  <module name="ROMOX DEMO ">
-    <memoryEntries>
-      <romModuleEntry fileMd5="394D3EAF3CF33D5DA219097E78B2EA60" fileName="romoxc.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="RXB version 1005 ">
-    <memoryEntries>
-      <bankedModuleEntry file2Md5="D767B80A999E3B251AB88C744A350563" fileMd5="AFB3C4A185151810803F5707C513AF8F" fileName="rxbc.bin" fileName2="rxbd.bin"/>
-      <gromModuleEntry fileMd5="C66E9D0D69B075C8829F2A911655B68D" fileName="rxbg.bin" size="0x9800"/>
-    </memoryEntries>
-  </module>
-  <module name="Salary Planner">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="53F82FF7B2D98A6D10A78C703EF61D9F" fileName="salplang.bin" size="0x7800"/>
-    </memoryEntries>
-  </module>
-  <module name="School Mailer">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="49F1ABDB13423C4A6DBA7E563E7D3F9F" fileName="schmailg.bin" size="0x7800"/>
-    </memoryEntries>
-  </module>
-  <module name="Schnoz-Ola">
-    <memoryEntries>
-      <romModuleEntry fileMd5="4F124D22E0B5B4434DD945F96EE7FA39" fileName="schnozc.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Sewermania">
-    <memoryEntries>
-      <romModuleEntry fileMd5="D1D13C100A5C0B0D25010D47EF470413" fileName="sewermac.bin"/>
-      <gromModuleEntry fileMd5="31BE7D46B13FCBC44B32558440B242A5" fileName="sewermag.bin" size="0x3800"/>
-    </memoryEntries>
-  </module>
-  <module name="STAR GAZER I  ">
-    <memoryEntries>
-      <romModuleEntry fileMd5="38A0031433790823F17854B41AABFAA9" fileName="sgaze1c.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="STAR GAZER II ">
-    <memoryEntries>
-      <romModuleEntry fileMd5="471C29D94A7CC80FD312F10F4EB2AB8B" fileName="sgaze2c.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="STAR GAZER III">
-    <memoryEntries>
-      <romModuleEntry fileMd5="FA596C6B5FCD69C57525E7B751AFC3B1" fileName="sgaze3c.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Shamus">
-    <memoryEntries>
-      <bankedModuleEntry file2Md5="5492448C511778A0ED523AB722B63168" fileMd5="F4CC23997E89C20E1973D8B064899610" fileName="shamusc.bin" fileName2="shamusd.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Simon Says!">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="AAF5E15C743D2BB560886A2F71EDB18A" fileName="simong.bin" size="0x1000"/>
-    </memoryEntries>
-  </module>
-  <module name="SORGAN II">
-    <memoryEntries>
-      <bankedModuleEntry file2Md5="A96764DED8580756948A4E221B3B0774" fileMd5="0005A5CA62AF7A4BFC649249F7F7BCA4" fileName="sorgan2c.bin" fileName2="sorgan2d.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Space Journey">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="5E9932694A0B08C0077AA046D9B3465A" fileName="spajourg.bin" size="0x7000"/>
-    </memoryEntries>
-  </module>
-  <module name="Speed Reader">
-    <memoryEntries>
-      <romModuleEntry fileMd5="49AF889DEDECEFC87C1A678AACA948F0" fileName="spdreadc.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Springer">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="FC16E35858DD503370F02BE84B161158" fileName="springerg.bin" size="0x2800"/>
-    </memoryEntries>
-  </module>
-  <module name="Spy's Demise">
-    <memoryEntries>
-      <romModuleEntry fileMd5="ECFBA5554790B2C24911CD0B762F1696" fileName="spydemic.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Star Maze">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="FCD67F198F1C05F2686696173F95072E" fileName="starmazg.bin" size="0x7000"/>
-    </memoryEntries>
-  </module>
-  <module name="Star Runner">
-    <memoryEntries>
-      <bankedModuleEntry file2Md5="079C863364A30D2FE42F6C5183AF8F7A" fileMd5="284EBCACC90F069C435FB718282DC03B" fileName="starrunc.bin" fileName2="starrund.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="St. Nick (Funware Cartridge)">
-    <memoryEntries>
-      <romModuleEntry fileMd5="FC978CF0F9FBFCBFF2368D469CB1CF6B" fileName="stnickc.bin"/>
-      <gromModuleEntry fileMd5="692BFD63C5C33BB0F0E7B82E727A0B79" fileName="stnickg.bin" size="0x1800"/>
-    </memoryEntries>
-  </module>
-  <module name="Strike Three!">
-    <memoryEntries>
-      <bankedModuleEntry file2Md5="2EA9594A4AF15DBF6818D5D9F09BC8A0" fileMd5="A4587E9882BCAFDDF50955093B03A14D" fileName="strike3c.bin" fileName2="strike3d.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Submarine Battle">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="B5E38E8F301DB09E17EE6C599EDAD4AF" fileName="subbattleg.bin" size="0x2800"/>
-    </memoryEntries>
-  </module>
-  <module name="Submarine Commander">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="7597200784D060F707470C69E90F0E3C" fileName="subcomg.bin" size="0x4800"/>
-    </memoryEntries>
-  </module>
-  <module name="Super X-Basic">
-    <memoryEntries>
-      <bankedModuleEntry file2Md5="09DE45506BBF08692BEEB5CB49D03B7B" fileMd5="CBBA4B9C66981F69C6F4F588D394E233" fileName="superxbc.bin" fileName2="superxbd.bin"/>
-      <gromModuleEntry fileMd5="92A140B0071B9C578C394FA0058BDEAB" fileName="superxbg.bin" size="0x9800"/>
-    </memoryEntries>
-  </module>
-  <module name="Super Duper v1.1">
-    <memoryEntries>
-      <romModuleEntry fileMd5="EC482805E3C0D5EE34569497BE6DDF54" fileName="suprdupc.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="TI PLANNER">
-    <memoryEntries>
-      <romModuleEntry fileMd5="07FBA6DCDF9144FF00F25481D549DD01" fileName="tiplanc.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="TI-Toad">
-    <memoryEntries>
-      <romModuleEntry fileMd5="BFD35AFC0A3C9FF1B3631D0E63B5CAC7" fileName="titoadc.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Topper">
-    <memoryEntries>
-      <romModuleEntry fileMd5="3D6260AD7025077902954563B30FC601" fileName="topperc.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="Typo II">
-    <memoryEntries>
-      <romModuleEntry fileMd5="7940EA1EE9AF275C3A7C046F430EC705" fileName="typoiic.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="UBOAT">
-    <memoryEntries>
-      <bankedModuleEntry file2Md5="A8225FA938B63F1778FEB8223E67A4F1" fileMd5="F6DC014997CE323C74C9AFC867CFF47A" fileName="u-boatc.bin" fileName2="u-boatd.bin"/>
-      <gromModuleEntry fileMd5="367F675DA78A80281821824FC9CD5CC8" fileName="u-boatg.bin" size="0x9800"/>
-    </memoryEntries>
-  </module>
-  <module name="Extended Basic v2.5">
-    <memoryEntries>
-      <bankedModuleEntry file2Md5="09DE45506BBF08692BEEB5CB49D03B7B" fileMd5="CBBA4B9C66981F69C6F4F588D394E233" fileName="xb25c.bin" fileName2="xb25d.bin"/>
-      <gromModuleEntry fileMd5="3205C8D07B465C14E1B4A54594AC167A" fileName="xb25g.bin" size="0x9800"/>
-    </memoryEntries>
-  </module>
-  <module name="Plato Interpreter">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="FFA5371E015DDBE4D5594BEED8B788D2" fileName="platog.bin" size="0x7800"/>
-      <romModuleEntry fileMd5="3799C427F8ED71793D0D6C7FFBC83877" fileName="platoc.bin"/>
-    </memoryEntries>
-  </module>
-  <module name="EA/8K Super Cart">
-    <memoryEntries>
-      <gromModuleEntry fileMd5="B12B018824E332DBE5A35768174DE020" fileName="ea+8k.bin" size="0x2000"/>
-      <romModuleEntry fileName="ea+8kr.bin" stored="true"/>
-    </memoryEntries>
-  </module>
-  <module name="TI Workshop 379">
-    <memoryEntries>
-      <bankedModuleEntry fileMd5="4B81D33C1A7C0A7F99146CCC5ED37C45" fileName="tiworkshop379.bin" reversed="true" size="-8192"/>
-    </memoryEntries>
-  </module>
-   <module name="Pitfall!">
-    <memoryEntries>
-      <bankedModuleEntry fileMd5="B47416B90801F6FE557E97D3D33E741D" fileName="PITFALL.bin" reversed="true" size="-8192"/>
-    </memoryEntries>
-  </module>
-  
 </modules>

@@ -63,8 +63,10 @@ public class Gradient {
 	private void ensure(Device device, int sz) {
 		if (gradientLineData == null || gradientLineData.width < sz) {
 			PaletteData palette = new PaletteData (0xFF0000, 0xFF00, 0xFF);
-			gradientLineData = new ImageData(horizontal ? sz : 1, horizontal ? 1 : sz,
-					device.getDepth(), palette);
+			gradientLineData = new ImageData(
+					horizontal ? sz : 1, 
+					horizontal ? 1 : sz,
+					24, palette);
 			
 			int xd = horizontal ? 1 : 0;
 			int yd = horizontal ? 0 : 1;
@@ -110,7 +112,7 @@ public class Gradient {
 				gradientLine.dispose();
 				gradientLine = null;
 			}
-			
+
 			gradientLine = new Image(device, gradientLineData);
 		}
 	}

@@ -24,13 +24,13 @@ public class KeyDelta {
 	final public int key;
 	final public boolean onoff;
 	final public long time;
-	public KeyDelta(boolean onoff, int key) {
-		this.time = System.currentTimeMillis();
+	
+	public KeyDelta(long time, boolean onoff, int key) {
+		this.time = time; // System.currentTimeMillis();
 		this.key = key;
 		this.onoff = onoff;
 		//this.isShift = (shift != 0) && (key == 0);
 	}
-	
 	
 	@Override
 	public int hashCode() {

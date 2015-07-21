@@ -11,6 +11,7 @@
 package v9t9.engine.memory;
 
 import ejs.base.settings.ISettingSection;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 
@@ -53,7 +54,7 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 	}
 	
 	@Override
-	protected void doLoadBankEntries(ISettingSection section) {
+	protected void doLoadBankEntries(IEventNotifier notifier, ISettingSection section) {
 		if (section == null) return;
 		area.loadContents(section, this);
 	}

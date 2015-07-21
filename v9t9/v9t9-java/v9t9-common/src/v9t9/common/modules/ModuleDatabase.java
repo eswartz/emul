@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -34,6 +35,20 @@ import ejs.base.utils.XMLUtils;
  *
  */
 public class ModuleDatabase {
+	
+	private static final String VERSION = "2";
+	
+	private static final String ELEMENT_MODULES = "modules";
+	private static final String ATTR_VERSION = "version";
+	
+	private static final String ELEMENT_MODULE = "module";
+	
+	private static final String ATTR_NAME = "name";
+	private static final String ATTR_MD5 = "md5";
+	private static final String ATTR_REPLACE_MD5 = "replaceMd5";
+	private static final String ATTR_KEYWORDS = "keywords";
+	private static final String ATTR_AUTO_START = "autoStart";
+	
 	private static final Logger logger = Logger.getLogger(ModuleDatabase.class);
 
 	public static List<IModule> loadModuleListAndClose(IMemory memory, 
@@ -46,7 +61,7 @@ public class ModuleDatabase {
 		storage.setInputStream(is);
 		List<IModule> modules = new ArrayList<IModule>();
 		try {
-			storage.load("modules");
+			storage.load(ELEMENT_MODULES);
 		} catch (StorageException e) {
 			logger.error("failed to load module database", e);
 			if (e.getCause() instanceof StorageException)
@@ -58,32 +73,47 @@ public class ModuleDatabase {
 			} catch (IOException e) {
 			}
 		}
-		for (Element moduleElement : XMLUtils.getChildElementsNamed(storage.getDocumentElement(), "module")) {
-			String name = moduleElement.getAttribute("name");
+		
+		boolean isOldStyle = false == VERSION.equals(storage.getDocumentElement().getAttribute(ATTR_VERSION));
+		
+		for (Element moduleElement : XMLUtils.getChildElementsNamed(storage.getDocumentElement(), ELEMENT_MODULE)) {
+			String name = moduleElement.getAttribute(ATTR_NAME);
 			logger.debug("Processing " + name);
 			
 			Module module = new Module(databaseURI, name);
 			
-			
-			// image?
-//			Element[] entries;
-//			entries = XMLUtils.getChildElementsNamed(moduleElement, "image");
-//			for (Element el : entries) {
-//				String image = el.getTextContent().trim();
-//				module.setImagePath(image);
-//			}
-
 			// memory entries
 			List<MemoryEntryInfo> memoryEntries = memory.getMemoryEntryFactory().loadEntriesFrom(
 					name, moduleElement);
 			module.setMemoryEntryInfos(memoryEntries);
 			
+			if (isOldStyle) {
+				// remove obsolete MD5s
+				for (MemoryEntryInfo info : memoryEntries) {
+					info.updateProperties();
+				}
+			}
+			
 			if (!memoryEntries.isEmpty()) {
-				String keywordStr = moduleElement.getAttribute("keywords");
+				String moduleMd5 = moduleElement.getAttribute(ATTR_MD5);
+				if (moduleMd5 != null && !moduleMd5.isEmpty()) {
+					module.setMD5(moduleMd5);
+				}
 				
+				String replaceModuleMd5 = moduleElement.getAttribute(ATTR_REPLACE_MD5);
+				if (replaceModuleMd5 != null && !replaceModuleMd5.isEmpty()) {
+					module.setReplaceMD5(replaceModuleMd5);
+				}
+				
+				String keywordStr = moduleElement.getAttribute(ATTR_KEYWORDS);
 				if (keywordStr != null && keywordStr.length() > 0) {
 					String[] kws = keywordStr.split("\\s+");
 					module.getKeywords().addAll(Arrays.asList(kws));
+				}
+				
+				String autoStartStr = moduleElement.getAttribute(ATTR_AUTO_START);
+				if ("true".equals(autoStartStr)) {
+					module.setAutoStart(true);
 				}
 
 				if (moduleInfoDb != null)
@@ -98,33 +128,42 @@ public class ModuleDatabase {
 	}
 	
 
-	public static void saveModuleListAndClose(IMemory memory, OutputStream os, URI databaseURI, List<IModule> modules) throws NotifyException {
+	public static void saveModuleListAndClose(IMemory memory, OutputStream os, 
+			URI databaseURI, 
+			Collection<IModule> modules) throws NotifyException {
 		
 		StreamXMLStorage storage = new StreamXMLStorage();
 		storage.setOutputStream(os);
 		
 		try {
-			storage.create("modules");
+			storage.create(ELEMENT_MODULES);
 		} catch (StorageException e1) {
 			throw new NotifyException(null, "Error creating module XML", e1.getCause());
 		}
 
 		Element doc = storage.getDocumentElement();
+		doc.setAttribute(ATTR_VERSION, VERSION);
 		
 		for (IModule module : modules) {
 			if (databaseURI != null && !module.getDatabaseURI().equals(databaseURI))
 				continue;
 				
-			Element moduleElement = doc.getOwnerDocument().createElement("module");
+			Element moduleElement = doc.getOwnerDocument().createElement(ELEMENT_MODULE);
 			
-			moduleElement.setAttribute("name", module.getName());
+			moduleElement.setAttribute(ATTR_NAME, module.getName());
 			
 			if (!module.getKeywords().isEmpty()) {
 				String keywordStr = TextUtils.catenateStrings(module.getKeywords(), " ");
-				moduleElement.setAttribute("keywords", keywordStr);
+				moduleElement.setAttribute(ATTR_KEYWORDS, keywordStr);
 			}
 
+			moduleElement.setAttribute(ATTR_MD5, module.getMD5());
+			if (module.getReplaceMD5() != null)
+				moduleElement.setAttribute(ATTR_REPLACE_MD5, module.getReplaceMD5());
 			
+			if (module.isAutoStart())
+				moduleElement.setAttribute(ATTR_AUTO_START, "true");
+
 			memory.getMemoryEntryFactory().saveEntriesTo(
 					Arrays.asList(module.getMemoryEntryInfos()), moduleElement);
 			
@@ -139,5 +178,4 @@ public class ModuleDatabase {
 		}
 
 	}
-	
 }

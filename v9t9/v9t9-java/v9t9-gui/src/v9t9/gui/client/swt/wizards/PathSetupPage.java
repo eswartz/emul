@@ -37,7 +37,7 @@ public class PathSetupPage extends WizardPage {
 		setTitle("Setup Paths");
 		setDescription("Select paths on your system which contain system ROMs or modules.");
 		
-		setPageComplete(false);
+		setPageComplete(true);
 	}
 	
 	/* (non-Javadoc)
@@ -51,7 +51,8 @@ public class PathSetupPage extends WizardPage {
 			
 			@Override
 			public void allRequiredRomsFound(boolean found) {
-				setPageComplete(found);
+				setPageComplete(found || true);
+				//setPageComplete(found);
 			}
 		});
 	}

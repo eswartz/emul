@@ -17,6 +17,7 @@ import java.util.List;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDsrHandler;
+import v9t9.common.files.MD5FilterAlgorithms;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryEntryFactory;
@@ -68,7 +69,7 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 			.withFilenameProperty(settingDsrRomFileName)
 			.withDescription("TI Disk Controller ROM (double-sided, single-density)")
 			.withFileMD5("C9A737D6930F5FD1D96829FD89359CF1")
-			.withFileMD5Limit(0x1FF0)
+			.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":0+1FF0")
 			.create("TI Disk DSR ROM");
 
 

@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Composite;
 
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleManager;
 
 /**
  * @author ejs
@@ -29,11 +30,13 @@ import v9t9.common.modules.IModule;
 final class ModuleNameEditingSupport extends EditingSupport {
 	private boolean canEdit;
 	private Collection<URI> dirtyLists;
+	private IModuleManager manager;
 
 	/**
 	 */
-	public ModuleNameEditingSupport(ColumnViewer viewer, Collection<URI> dirtyModuleLists) {
+	public ModuleNameEditingSupport(IModuleManager manager, ColumnViewer viewer, Collection<URI> dirtyModuleLists) {
 		super(viewer);
+		this.manager = manager;
 		this.dirtyLists = dirtyModuleLists;
 	}
 
@@ -41,13 +44,22 @@ final class ModuleNameEditingSupport extends EditingSupport {
 	protected void setValue(Object element, Object value) {
 		if (element instanceof IModule) {
 			IModule module = (IModule) element;
-			if (!value.toString().equals(module.getName())) {
+			String newName = value.toString();
+			if (!newName.equals(module.getName())) {
+				if (newName.isEmpty()) {
+					IModule stock = manager.findStockModuleByMd5(module.getMD5());
+					if (stock != null) {
+						newName = stock.getName();
+					} else {
+						return;
+					}
+				}
 				String orig = module.getName();
 				for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
 					info.getProperties().put(MemoryEntryInfo.NAME,
-							info.getName().replace(orig, value.toString()));
+							info.getName().replace(orig, newName));
 				}
-				module.setName(value.toString());
+				module.setName(newName);
 				if (dirtyLists != null)
 					dirtyLists.add(module.getDatabaseURI());
 				getViewer().refresh(module);

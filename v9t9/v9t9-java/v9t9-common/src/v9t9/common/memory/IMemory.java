@@ -10,7 +10,9 @@
  */
 package v9t9.common.memory;
 
+import v9t9.common.events.IEventNotifier;
 import ejs.base.properties.IPersistable;
+import ejs.base.settings.ISettingSection;
 
 /**
  * @author ejs
@@ -18,6 +20,8 @@ import ejs.base.properties.IPersistable;
  */
 public interface IMemory extends IPersistable {
 
+	void loadMemory(IEventNotifier notifier, ISettingSection section);
+	
 	IMemoryEntryFactory getMemoryEntryFactory();
 	void setMemoryEntryFactory(IMemoryEntryFactory factory);
 	

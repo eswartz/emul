@@ -98,6 +98,8 @@
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="src"/>
             <classpath refid="v9t9-engine.classpath"/>
+            <compilerarg compiler="org.eclipse.jdt.core.JDTCompilerAdapter"
+    			line="${v9t9.compilerargs}"/>
         </javac>
     </target>
     <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects">
