@@ -302,7 +302,7 @@ public class InterpreterF99b implements IInterpreter {
     }
     
     private final boolean interpretShort(ChangeBlockF99b block, InstructionF99b ins) {
-    	int fromPC = block.getPC();
+    	int fromPC = block.getPC() + ins.getSize();
     	MachineOperandF99b mop1 = (MachineOperandF99b)ins.getOp1();
 		switch (ins.getInst()) {
 		case Icmp:
