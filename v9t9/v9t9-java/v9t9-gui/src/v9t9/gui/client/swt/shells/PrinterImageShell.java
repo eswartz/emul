@@ -10,6 +10,8 @@
  */
 package v9t9.gui.client.swt.shells;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -34,12 +36,14 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Scrollable;
@@ -55,6 +59,8 @@ import v9t9.common.dsr.IPrinterImageEngine;
 import v9t9.common.dsr.IPrinterImageListener;
 import v9t9.common.dsr.PrinterPage;
 import v9t9.common.dsr.PrinterPage.Dot;
+import v9t9.common.events.IEventNotifier;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.settings.SettingSchema;
 import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.imageimport.ImageUtils;
@@ -107,7 +113,23 @@ public class PrinterImageShell implements IPrinterImageListener {
 	private float dotImageSize;
 	private float dotImageInk;
 
-	public PrinterImageShell(ISettingsHandler settings, IPrinterImageEngine engine) {
+
+	private boolean saveImages;
+
+
+	protected String saveImageExt;
+
+
+	protected int saveImageType;
+
+
+	protected String saveImageBase;
+
+
+	private IEventNotifier notifier;
+
+	public PrinterImageShell(IEventNotifier notifier, ISettingsHandler settings, IPrinterImageEngine engine) {
+		this.notifier = notifier;
 		log.info("creating shell for engine " + engine.getPrinterId());
 		this.engine = engine;
 		newShell();
@@ -220,11 +242,16 @@ public class PrinterImageShell implements IPrinterImageListener {
 		});
 		final ToolItem zoomReset = new ToolItem(toolbar, SWT.PUSH);
 		zoomReset.setImage(EmulatorGuiData.loadImage(tabFolder.getDisplay(), "icons/zoom_equal.gif"));
-		zoomReset.setToolTipText("Zoom to 1.0");
+		zoomReset.setToolTipText("Zoom to Fit");
 		zoomReset.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				zoom(1.0);
+				zoom = 1.0;
+				int pixelHeight = 11 * vertDpi.getInt();
+				while (zoom * pixelHeight > shell.getDisplay().getBounds().height)
+					zoom /= 2;
+
+				updatePageZooms();
 			}
 		});
 		final ToolItem newPage = new ToolItem(toolbar, SWT.DROP_DOWN);
@@ -250,6 +277,93 @@ public class PrinterImageShell implements IPrinterImageListener {
 	protected void populateMenu(int x, int y) {
 		Menu menu = new Menu(tabFolder);
 		
+
+		MenuItem inkItem = new MenuItem(menu, SWT.CASCADE);
+		inkItem.setText("Ink Level");
+		
+		Menu inkMenu = new Menu(inkItem);
+		
+		addInkItem(inkMenu, "Low", 0.25);
+		addInkItem(inkMenu, "Medium", 0.5);
+		addInkItem(inkMenu, "High", 0.75);
+		addInkItem(inkMenu, "Black", 1.0);
+		
+		inkItem.setMenu(inkMenu);
+
+
+		MenuItem saveItem = new MenuItem(menu, SWT.CHECK);
+		saveItem.setText("Save Pages...");
+		if (saveImages) {
+			saveItem.setSelection(true);
+		}
+		saveItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (saveImages) {
+					shell.setText("Printer Output");
+					saveImages = false;
+					return;
+				}
+				
+				String filePath = promptSaveFilename();
+				if (filePath == null)
+					return;
+
+				int idx = filePath.lastIndexOf(File.separator)+1;
+				int dotIdx = filePath.lastIndexOf('.');
+				if (dotIdx > idx)
+					idx = dotIdx;
+				
+				if (idx > 0) {
+					saveImageExt = filePath.substring(idx+1);
+					if (saveImageExt.equalsIgnoreCase("png"))
+						saveImageType = SWT.IMAGE_PNG;
+					else if (saveImageExt.equalsIgnoreCase("jpg") || saveImageExt.equalsIgnoreCase("jpeg"))
+						saveImageType = SWT.IMAGE_JPEG;
+					else if (saveImageExt.equalsIgnoreCase("tif") || saveImageExt.equalsIgnoreCase("tiff"))
+						saveImageType = SWT.IMAGE_TIFF;
+					else if (saveImageExt.equalsIgnoreCase("bmp"))
+						saveImageType = SWT.IMAGE_BMP;
+					else if (saveImageExt.equalsIgnoreCase("gif"))
+						saveImageType = SWT.IMAGE_GIF;
+					else
+						saveImageType = SWT.IMAGE_PNG;
+					
+					saveImageBase = filePath.substring(0, idx);
+				} else {
+					saveImageExt = "png";
+					saveImageType = SWT.IMAGE_PNG;
+					saveImageBase = filePath;
+				}
+				
+				saveImages = true;
+				shell.setText("Printer Output (saving to " + saveImageBase + "." + saveImageExt + ")");
+				
+				BusyIndicator.showWhile(canvas.getDisplay(), new Runnable() {
+					public void run() {
+						
+						Image prevCanvasImage = canvasImage;
+						canvasImage = null;
+						
+						for (Map.Entry<Integer, PrinterPage> ent : indexToPages.entrySet()) {
+							if (ent.getValue() != currentPage) {
+								String filename = getPageFilename(ent.getKey(), ent.getValue());
+								if (!new File(filename).exists()) {
+									reprintPage(ent.getKey());
+									savePageImage(filename, ent.getValue());
+								}
+							}
+						}
+						
+						canvasImage = prevCanvasImage;
+					}
+				});
+				
+			}
+		});
+		
+
+		
 		MenuItem deleteItem = new MenuItem(menu, SWT.PUSH);
 		deleteItem.setText("Delete older pages");
 		deleteItem.addSelectionListener(new SelectionAdapter() {
@@ -273,19 +387,23 @@ public class PrinterImageShell implements IPrinterImageListener {
 			}
 		});
 
-		MenuItem inkItem = new MenuItem(menu, SWT.CASCADE);
-		inkItem.setText("Ink Level");
-		
-		Menu inkMenu = new Menu(inkItem);
-		
-		addInkItem(inkMenu, "Low", 0.25);
-		addInkItem(inkMenu, "Medium", 0.5);
-		addInkItem(inkMenu, "High", 0.75);
-		addInkItem(inkMenu, "Black", 1.0);
-		
-		inkItem.setMenu(inkMenu);
-
 		SwtUtils.runMenu(null, x, y, menu);
+	}
+
+	/**
+	 * @return
+	 */
+	protected String promptSaveFilename() {
+		FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+		if (saveImageBase != null)
+			dialog.setFileName(saveImageBase + "." + saveImageExt);
+		
+		dialog.setFilterExtensions(new String[] { ".png", ".jpg", ".jpeg", ".gif", ".tiff", ".tif", ".bmp" });
+		dialog.setFilterNames(new String[] { "PNG (*.png)", "JPEG (*.jpg)", "JPEG (*.jpeg)", "GIF (*.gif)", 
+				"TIFF (*.tiff)", "TIFF (*.tif)", "BMP (*.bmp)" });
+		dialog.setText("Enter path for saving image series.  Use %n for page number, %d for date/time, and %z for zoom level.");
+		
+		return dialog.open();
 	}
 
 	/**
@@ -404,7 +522,10 @@ public class PrinterImageShell implements IPrinterImageListener {
 	public void newPage(final PrinterPage page) {
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
-				
+				if (saveImages && currentPage != null) {
+					String filename = getPageFilename(pageNum, currentPage);
+					savePageImage(filename, currentPage);
+				}
 				createNewPage(page);
 			}
 		});
@@ -533,6 +654,57 @@ public class PrinterImageShell implements IPrinterImageListener {
 		
 		tabFolder.setSelection(item);
 	}
+	
+	protected String getPageFilename(int number, PrinterPage page) {
+		int zn = 1;
+		double z = zoom;
+		if (z > 1) {
+			while (z > 1) {
+				zn++;
+				z /= 2;
+			}
+		} else if (z < 1) {
+			while (z < 1) {
+				zn--;
+				z *= 2;
+			}
+		}
+
+		String filename = saveImageBase + "." + saveImageExt;
+		if (filename.contains("%n"))
+			filename = filename.replace("%n", String.format("%04d", number));
+		if (filename.contains("%z"))
+			filename = filename.replace("%z", String.format("%d", zn));
+		if (filename.contains("%d")) {
+			SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd-HHmmss");
+			filename = filename.replace("%d", format.format(page.getDate()));
+		}
+		
+		//File file = nBaseEmulatorWindow.getUniqueFile(filename);
+
+		return filename;
+	}
+
+	/**
+	 * @param key
+	 * @param value
+	 */
+	protected void savePageImage(String filename, PrinterPage page) {
+		if (canvasImage == null || canvasImage.isDisposed())
+			return;
+		
+		ImageLoader loader = new ImageLoader();
+		
+		try {
+			loader.data = new ImageData[] { canvasImage.getImageData() };
+			loader.save(filename, saveImageType);
+			notifier.notifyEvent(this, Level.INFO, "Saved page to '" + filename + "'");
+		} catch (Throwable e) {
+			log.error("Failed to save printer image to '" + filename + "'", e);
+			notifier.notifyEvent(this, Level.ERROR, "Failed to save printer image to '" + filename + "':\n\n" + e.getMessage());
+		} 
+	}
+
 
 	/**
 	 * @param thisPage
@@ -545,6 +717,11 @@ public class PrinterImageShell implements IPrinterImageListener {
 			int pixelWidth = (int) (page.getPageWidthInches() * horizDpi.getInt() * zoom);
 			int pixelHeight = (int)(page.getPageHeightInches() * vertDpi.getInt() * zoom);
 			
+			if (canvasImage != null && (canvasImage.getBounds().width < pixelWidth
+					|| canvasImage.getBounds().height < pixelHeight)) {
+				canvasImage.dispose();
+				canvasImage = null;
+			}
 			if (canvasImage == null) {
 				canvasImage = new Image(canvas.getDisplay(), pixelWidth, pixelHeight);
 			}

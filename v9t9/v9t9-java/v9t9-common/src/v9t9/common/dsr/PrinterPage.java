@@ -4,7 +4,9 @@
 package v9t9.common.dsr;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -36,8 +38,12 @@ public class PrinterPage {
 	
 	private TreeMap<Float, TreeMap<Float, Float>> dots;
 	private List<Dot> dotList;
+	
+	private Date date;
 
 	public PrinterPage(double horizInches, double vertInches, int horizDots, int vertDots) {
+		this.date = Calendar.getInstance().getTime();
+		
 		this.horizInches = horizInches;
 		this.vertInches = vertInches;
 		this.horizDots = horizDots;
@@ -46,6 +52,13 @@ public class PrinterPage {
 		dots = new TreeMap<Float, TreeMap<Float,Float>>();
 		
 		dotList = new ArrayList<Dot>();
+	}
+	
+	/**
+	 * @return the date
+	 */
+	public Date getDate() {
+		return date;
 	}
 	
 	/**

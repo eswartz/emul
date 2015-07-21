@@ -335,7 +335,7 @@ public abstract class BaseEmulatorWindow {
 		}
 	}
 	
-	protected File getUniqueFile(String filenameBase) {
+	public static File getUniqueFile(String filenameBase) {
 		File fileBase = new File(filenameBase);
 		File dir = fileBase.getParentFile();
 		String base = fileBase.getName();
