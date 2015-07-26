@@ -221,7 +221,7 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 			return;
 		
 		ISettingSection pioSec = section.getSection("PIO");
-		if (pioSec != null)
+		if (activePIO != null && pioSec != null)
 			activePIO.loadState(pioSec);
 	}
 
@@ -230,7 +230,8 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 		super.saveState(section);
 		
 		ISettingSection pioSec = section.addSection("PIO");
-		activePIO.saveState(pioSec);
+		if (activePIO != null)
+			activePIO.saveState(pioSec);
 	}
 
 	private ICruWriter cruwPIO_1 = new ICruWriter() {
