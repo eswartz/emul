@@ -46,7 +46,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 	
 	private static final long TIMEOUT = 500;
 
-	private IProperty useNumPadForJoystick;
+	protected IProperty useNumPadForJoystick;
 
 	protected PasteTask pasteTask;
 	private IEventNotifier eventNotifier;
@@ -639,7 +639,7 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		
 	}
 
-	protected int convertKeypadToKey(int kpKey, byte shiftMask) {
+	protected int convertKeypadToKey(int kpKey, boolean pressed, byte shiftMask) {
 		boolean isShifted = (shiftMask & MASK_SHIFT) != 0;
 		boolean isNumLock = (keyboardState.getLockMask() & MASK_NUM_LOCK) != 0;
 		boolean isScrollLock = (keyboardState.getLockMask() & MASK_SCROLL_LOCK) != 0;
@@ -668,40 +668,71 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 		}
 		
 		int key = kpKey;
-		if (!isNumLock && isScrollLock && useNumPadForJoystick.getBoolean()) {
+		if (isScrollLock && useNumPadForJoystick.getBoolean()) {
 			int joy = isShifted ? 1 : 0;
-			switch (kpKey) {
-			case KEY_KP_ENTER:
-			case KEY_KP_INSERT:
-			case KEY_KP_0:
-				key = KEY_JOYST_FIRE + joy; break;
-			case KEY_KP_END:
-			case KEY_KP_1:
-				key = KEY_JOYST_DOWN_LEFT + joy; break;
-			case KEY_KP_ARROW_DOWN:
-			case KEY_KP_2:
-				key = KEY_JOYST_DOWN + joy; break;
-			case KEY_KP_PAGE_DOWN:
-			case KEY_KP_3:
-				key = KEY_JOYST_DOWN_RIGHT + joy; break;
-			case KEY_KP_ARROW_LEFT:
-			case KEY_KP_4:
-				key = KEY_JOYST_LEFT + joy; break;
-			case KEY_KP_SHIFT_5:
-			case KEY_KP_5:
-				key = KEY_JOYST_IDLE + joy; break;
-			case KEY_KP_ARROW_RIGHT:
-			case KEY_KP_6:
-				key = KEY_JOYST_RIGHT + joy; break;
-			case KEY_KP_HOME:
-			case KEY_KP_7:
-				key = KEY_JOYST_UP_LEFT + joy; break;
-			case KEY_KP_ARROW_UP:
-			case KEY_KP_8:
-				key = KEY_JOYST_UP + joy; break;
-			case KEY_KP_PAGE_UP:
-			case KEY_KP_9:
-				key = KEY_JOYST_UP_RIGHT + joy; break;
+			
+			if (pressed) {
+				switch (kpKey) {
+				case KEY_KP_ENTER:
+				case KEY_KP_INSERT:
+				case KEY_KP_0:
+					key = KEY_JOYST_FIRE + joy; 
+					break;
+				case KEY_KP_END:
+				case KEY_KP_1:
+					key = KEY_JOYST_DOWN_LEFT + joy; break;
+				case KEY_KP_ARROW_DOWN:
+				case KEY_KP_2:
+					key = KEY_JOYST_DOWN + joy; break;
+				case KEY_KP_PAGE_DOWN:
+				case KEY_KP_3:
+					key = KEY_JOYST_DOWN_RIGHT + joy; break;
+				case KEY_KP_ARROW_LEFT:
+				case KEY_KP_4:
+					key = KEY_JOYST_LEFT + joy; break;
+				case KEY_KP_SHIFT_5:
+				case KEY_KP_5:
+					key = KEY_JOYST_IDLE + joy; break;
+				case KEY_KP_ARROW_RIGHT:
+				case KEY_KP_6:
+					key = KEY_JOYST_RIGHT + joy; break;
+				case KEY_KP_HOME:
+				case KEY_KP_7:
+					key = KEY_JOYST_UP_LEFT + joy; break;
+				case KEY_KP_ARROW_UP:
+				case KEY_KP_8:
+					key = KEY_JOYST_UP + joy; break;
+				case KEY_KP_PAGE_UP:
+				case KEY_KP_9:
+					key = KEY_JOYST_UP_RIGHT + joy; break;
+				}
+			} else {
+				switch (kpKey) {
+				case KEY_KP_ENTER:
+				case KEY_KP_INSERT:
+				case KEY_KP_0:
+					key = KEY_JOYST_FIRE_UP + joy; 
+					break;
+				case KEY_KP_END:
+				case KEY_KP_1:
+				case KEY_KP_ARROW_DOWN:
+				case KEY_KP_2:
+				case KEY_KP_PAGE_DOWN:
+				case KEY_KP_3:
+				case KEY_KP_ARROW_LEFT:
+				case KEY_KP_4:
+				case KEY_KP_SHIFT_5:
+				case KEY_KP_5:
+				case KEY_KP_ARROW_RIGHT:
+				case KEY_KP_6:
+				case KEY_KP_HOME:
+				case KEY_KP_7:
+				case KEY_KP_ARROW_UP:
+				case KEY_KP_8:
+				case KEY_KP_PAGE_UP:
+				case KEY_KP_9:
+					key = KEY_JOYST_IDLE + joy; break;
+				}
 			}
 		}
 		else if (isNumLock == isShifted) {
@@ -753,8 +784,9 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 
 		// convert keypad variants
 		if (keyPad) {
+			//System.out.println(ikey);
 			int prev = ikey;
-			ikey = convertKeypadToKey(ikey, shiftMask);
+			ikey = convertKeypadToKey(ikey, pressed, shiftMask);
 			if (ikey != prev)
 				shiftMask &= ~MASK_SHIFT;
 		}

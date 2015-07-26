@@ -40,7 +40,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 		void setFailedLast(boolean failedLast);
 	}
 	
-	static public class StupidControllerHandler implements ControllerHandler {
+	public static class StupidControllerHandler implements ControllerHandler {
 		protected final Controller controller;
 		private boolean failedLast;
 		private Component leftXAxis;
@@ -65,6 +65,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 				//rightYAxis = leftYAxis;
 			}
 		}
+		
 		/* (non-Javadoc)
 		 * @see v9t9.emulator.clients.builtin.swt.SwtLwjglKeyboardHandler.ControllerHandler#getController()
 		 */
@@ -81,7 +82,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			int x = (int) Math.signum(getXAxis(joy));
 			int y = (int) Math.signum(getYAxis(joy));
 			boolean fire = getButton(joy);
-			
+
 			state.setJoystick(joy, 
 					IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
 					x, y, fire);

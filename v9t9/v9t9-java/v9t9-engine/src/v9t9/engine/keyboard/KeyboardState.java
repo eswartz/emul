@@ -147,7 +147,6 @@ public class KeyboardState implements IKeyboardState {
     	Arrays.fill(crukeyboardmap, 0, 6, (byte)0);
     	realshift = 0;
 		if (DEBUG) System.out.println("===========");
-
     }
     
     /* (non-Javadoc)
@@ -161,7 +160,6 @@ public class KeyboardState implements IKeyboardState {
         pressedKeyCodes.clear();
         pressedKeyIds.clear();
         stickyKeys.clear();
-        
         //lastLocks = 0;	// keep these
     }
     
@@ -353,8 +351,11 @@ public class KeyboardState implements IKeyboardState {
 			}
 			else if (k >= KEY_JOYST_UP && k <= KEY_JOYST_IDLE) {
 				keys.remove(k);
+				
+				//System.out.println("k:" + k);
 				int joy = 1 + (k & 1);
 				k &= ~1;
+				
 				switch (k) {
 				case KEY_JOYST_DOWN:
 					setJoystick(joy, JOY_Y, 0, 1, false);
@@ -383,8 +384,11 @@ public class KeyboardState implements IKeyboardState {
 				case KEY_JOYST_FIRE:
 					changeJoyMatrix(joy, JOY_FIRE_R, true);
 					break;
+				case KEY_JOYST_FIRE_UP:
+					changeJoyMatrix(joy, JOY_FIRE_R, false);
+					break;
 				case KEY_JOYST_IDLE:
-					setJoystick(joy, JOY_X|JOY_Y|JOY_B, 0, 0, false);
+					setJoystick(joy, JOY_X|JOY_Y, 0, 0, false);
 					break;
 				}
 			}
@@ -503,6 +507,7 @@ public class KeyboardState implements IKeyboardState {
 		//changeKbdMatrix((byte) r, (byte)(JOY1_C+(j)-1), v);
 		
 		// do joystick immediately
+		//System.out.println("joy:"+j+","+row+"="+v);
 		byte mask = (byte) (0x80 >> row);
 		byte c = (byte) (JOY1_C+(j)-1);
 		if (v) {

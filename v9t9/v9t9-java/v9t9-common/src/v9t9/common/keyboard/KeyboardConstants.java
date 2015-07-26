@@ -155,6 +155,7 @@ public final class KeyboardConstants {
 	public static final int KEY_JOYST_DOWN_LEFT = 194;
 	public static final int KEY_JOYST_DOWN_RIGHT = 196;
 	public static final int KEY_JOYST_FIRE = 198;
-	public static final int KEY_JOYST_IDLE = 200;
+	public static final int KEY_JOYST_FIRE_UP = 200;
+	public static final int KEY_JOYST_IDLE = 202;
 
 }
