@@ -56,10 +56,12 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 				for (Component c : controller.getComponents())
 					System.out.println(c);
 			}
+			
 			leftXAxis = controller.getComponent(Identifier.Axis.X);
 			rightXAxis = controller.getComponent(Identifier.Axis.RX);
 			leftYAxis = controller.getComponent(Identifier.Axis.Y);
 			rightYAxis = controller.getComponent(Identifier.Axis.RY);
+			
 			if (rightXAxis == null || rightYAxis == null) {
 				//rightXAxis = leftXAxis;
 				//rightYAxis = leftYAxis;
@@ -93,8 +95,15 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			if (axis == null)
 				return 0;
 			float xAxis = axis.getPollData();
-			if (axis.isAnalog() && Math.abs(xAxis) <= 0.5)
+			if (axis.isAnalog() && Math.abs(xAxis) <= 0.125) {
+				if (DEBUG) {
+					System.out.println("ignoring noisy xAxis: " + xAxis);
+				}
 				xAxis = 0;
+			}
+			if (DEBUG && xAxis != 0) {
+				System.out.println("xAxis: " + xAxis);
+			}
 			return xAxis;
 		}
 		protected float getYAxis(int joy) {
@@ -102,8 +111,15 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			if (axis == null)
 				return 0;
 			float yAxis = axis.getPollData();
-			if (axis.isAnalog() && Math.abs(yAxis) <= 0.5)
+			if (axis.isAnalog() && Math.abs(yAxis) <= 0.125) {
+				if (DEBUG) {
+					System.out.println("ignoring noisy yAxis: " + yAxis);
+				}
 				yAxis = 0;
+			}
+			if (DEBUG && yAxis != 0) {
+				System.out.println("yAxis: " + yAxis);
+			}
 			return yAxis;
 		}
 		protected boolean getButton(int joy) {
@@ -161,12 +177,6 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			public void run() {
 				scanJoystick(keyboardState, joystick1Handler, 1);
 				scanJoystick(keyboardState, joystick2Handler, 2);
-				
-//				if ((joystick1Handler != null && joystick1Handler.isFailedLast())
-//						|| (joystick2Handler != null && joystick2Handler.isFailedLast())) {
-//					updateControllers();
-//				}
-				
 			}
 		};
 		machine.getFastMachineTimer().scheduleTask(scanTask, 10);
@@ -191,21 +201,25 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 	 * 
 	 */
 	private synchronized void updateControllers() {
+		System.out.println("Controllers changed, reassigning joysticks...");
+		
 		joystick1Handler = joystick2Handler = null;
 		
 		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
 			String name = controller.getName();
-			System.out.println("... controller: " + name);
+			System.out.println("... " + controller.getPortType() + ":" + controller.getPortNumber() + " controller: " + name);
 
 			if (controller.getComponent(Identifier.Axis.X) == null || 
 					controller.getComponent(Identifier.Axis.Y) == null ||
-					controller.getType() == Controller.Type.MOUSE)
+					controller.getType() == Controller.Type.MOUSE ||
+					controller.getPortType() == Controller.PortType.UNKNOWN)
 				continue;
 				
-			System.out.println("Using controller: " + name);
 			if (joystick1Handler == null) {
+				System.out.println("... using as joystick #1: " + name);
 				joystick1Handler = new StupidControllerHandler(controller);
 			} else if (joystick2Handler == null) {
+				System.out.println("... using as joystick #2: " + name);
 				joystick2Handler = new StupidControllerHandler(controller);
 				break;
 			}
@@ -226,8 +240,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			} else {
 				if (!joystickHandler.isFailedLast()) {
 					// maybe unplugged?
-					state.setJoystick(joy, IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
-							0, 0, false);
+					state.resetJoystick();
 					joystickHandler.setFailedLast(true);
 				}
 			}

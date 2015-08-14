@@ -272,6 +272,7 @@ public class KeyboardState implements IKeyboardState {
 		registerMapping(KEY_BACK_SLASH, KEY_ALT, 'Z');
 		registerMapping(KEY_BAR, KEY_ALT, 'A');
 		registerMapping(KEY_DELETE, KEY_ALT, '1');
+		
 		registerMapping(KEY_F1, KEY_ALT, '1');
 		registerMapping(KEY_F2, KEY_ALT, '2');
 		registerMapping(KEY_F3, KEY_ALT, '3');
@@ -287,8 +288,8 @@ public class KeyboardState implements IKeyboardState {
 		registerMapping(KEY_ARROW_LEFT, KEY_ALT, 'S');
 		registerMapping(KEY_ARROW_RIGHT, KEY_ALT, 'D');
 
-		registerMapping(KEY_PAGE_UP, KEY_ALT, '6');	// CLEAR  // (as per E/A and TI Writer)
-		registerMapping(KEY_PAGE_DOWN, KEY_ALT, '4');	// PROC'D  // (as per E/A and TI Writer)
+		registerMapping(KEY_PAGE_UP, KEY_ALT, '6');	// PROC'D  // (as per E/A and TI Writer)
+		registerMapping(KEY_PAGE_DOWN, KEY_ALT, '4');	// CLEAR  // (as per E/A and TI Writer)
 		registerMapping(KEY_HOME, KEY_ALT, '5');	// BEGIN
 		registerMapping(KEY_END, KEY_ALT, '0');	
 		registerMapping(KEY_INSERT, KEY_ALT, '2');	// INS	
@@ -299,8 +300,8 @@ public class KeyboardState implements IKeyboardState {
 		registerMapping(KEY_KP_ARROW_LEFT, KEY_ALT, 'S');
 		registerMapping(KEY_KP_ARROW_RIGHT, KEY_ALT, 'D');
 
-		registerMapping(KEY_KP_PAGE_UP, KEY_ALT, '6');	// CLEAR  // (as per E/A and TI Writer)
-		registerMapping(KEY_KP_PAGE_DOWN, KEY_ALT, '4');	// PROC'D  // (as per E/A and TI Writer)
+		registerMapping(KEY_KP_PAGE_UP, KEY_ALT, '6');	// PROC'D  // (as per E/A and TI Writer)
+		registerMapping(KEY_KP_PAGE_DOWN, KEY_ALT, '4');	// CLEAR  // (as per E/A and TI Writer)
 		registerMapping(KEY_KP_HOME, KEY_ALT, '5');	// BEGIN
 		registerMapping(KEY_KP_END, KEY_ALT, '0');	
 		registerMapping(KEY_KP_INSERT, KEY_ALT, '2');	// INS	
@@ -526,6 +527,8 @@ public class KeyboardState implements IKeyboardState {
 	 */
     @Override
 	public synchronized void setJoystick(final int joy, int mask, int x, int y, boolean fire) {
+    	System.out.println("setJoystick: " + joy + " mask:"+mask+" = " + x + "/" + y + "/" + fire);
+    	
     	int joyRow = JOY1_C+joy-1;
 		byte oldValue = crukeyboardmap[joyRow];
     	

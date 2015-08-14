@@ -676,6 +676,8 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 				case KEY_KP_ENTER:
 				case KEY_KP_INSERT:
 				case KEY_KP_0:
+				case KEY_KP_PLUS:
+				case KEY_KP_MINUS:
 					key = KEY_JOYST_FIRE + joy; 
 					break;
 				case KEY_KP_END:
