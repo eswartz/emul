@@ -9,6 +9,9 @@
   http://www.eclipse.org/legal/epl-v10.html
  */
 package v9t9.engine.hardware;
+
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.settings.SettingSchema;
 /*
  * (c) Ed Swartz, 2005
  * 
@@ -23,6 +26,10 @@ package v9t9.engine.hardware;
  * @author ejs
  */
 public interface ICruHandler {
+	SettingSchema settingDumpCruAccess = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"DumpCruAccess", Boolean.FALSE);
+
     public void writeBits(int addr, int val, int num);
     public int readBits(int addr, int num);
 }

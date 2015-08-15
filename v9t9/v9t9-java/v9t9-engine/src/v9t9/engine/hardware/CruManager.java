@@ -10,10 +10,17 @@
  */
 package v9t9.engine.hardware;
 
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
+
+import ejs.base.properties.IProperty;
+import ejs.base.settings.Logging;
+import ejs.base.utils.HexUtils;
+import v9t9.common.cpu.ICpu;
+import v9t9.common.machine.IMachine;
 
 
 /**
@@ -22,8 +29,14 @@ import java.util.TreeMap;
  */
 public class CruManager implements ICruHandler {
     
-    public CruManager() {
-        readers = new TreeMap<Integer, ICruReader>();
+	private IProperty dumpFullInstrs;
+	private IProperty dumpCruAccess;
+
+	public CruManager(IMachine machine) {
+        dumpCruAccess = machine.getSettings().get(settingDumpCruAccess);
+        dumpFullInstrs = machine.getSettings().get(ICpu.settingDumpFullInstructions);
+        
+		readers = new TreeMap<Integer, ICruReader>();
         writers = new TreeMap<Integer, ICruWriter>();
     }
 
@@ -33,6 +46,12 @@ public class CruManager implements ICruHandler {
 	private ICruWriter[] writerArray;
 	private ICruReader[] readerArray;
 	
+	private void log(String msg) {
+		PrintWriter pw = Logging.getLog(dumpFullInstrs);
+		if (pw != null)
+			pw.println("[CRU] " + msg);
+	}
+
     /*
      *  base is a base ADDRESS
      * 	range is in BITS, not address units:  base ... base + range*2
@@ -110,6 +129,11 @@ public class CruManager implements ICruHandler {
     		return;
     	
     	addr &= 0x1fff;
+
+    	if (dumpCruAccess.getBoolean()) {
+    		log("Writing >" + HexUtils.toHex4(val & ~(~0 << num)) + " (bits=" + num + ") to >" + HexUtils.toHex4(addr));
+    	}
+
         while (num > 0) {
         	if (addr >= 0x2000)
         		return;
@@ -142,12 +166,14 @@ public class CruManager implements ICruHandler {
      * @param value
      * @return
      */
-    public final int readBits(int addr, int num) {
+    public final int readBits(int origAddr, int origNum) {
     	int val = 0;
     	if (readerArray == null)
     		return val;
     	int shift = 0;
-    	addr &= 0x1fff;
+    	origAddr &= 0x1fff;
+    	int addr = origAddr;
+    	int num = origNum;
     	while (num > 0) {
     		if (addr >= 0x2000)
     			break;
@@ -165,6 +191,11 @@ public class CruManager implements ICruHandler {
             shift++;
             num --;
     	}
+    	
+    	if (dumpCruAccess.getBoolean()) {
+            log("Read >" + HexUtils.toHex4(val) + " (bits=" + origNum + ") from >" + HexUtils.toHex4(origAddr));
+    	}
+    	
         return val;
     }
 
