@@ -63,34 +63,35 @@ class ViewerUpdater extends Thread {
 			if (!avail.isEmpty() && !this.moduleSelector.getDisplay().isDisposed()) {
 				this.moduleSelector.getDisplay().asyncExec(new Runnable() {
 					public void run() {
-						if (!moduleSelector.getViewer().getControl().isDisposed()) {
-							Object[] availarray;
-							boolean toRefresh = false;
-							synchronized (avail) {
-								toRefresh = avail.remove(REFRESH);
-								availarray = avail.toArray();
-								avail.clear();
-							}
-							
-							moduleSelector.refreshFilters();
-							moduleSelector.getViewer().update(availarray, null);
+						if (moduleSelector.isDisposed()) 
+							return;
+						
+						Object[] availarray;
+						boolean toRefresh = false;
+						synchronized (avail) {
+							toRefresh = avail.remove(REFRESH);
+							availarray = avail.toArray();
+							avail.clear();
+						}
+						
+						moduleSelector.refreshFilters();
+						moduleSelector.getViewer().update(availarray, null);
 
-							if (toRefresh) {
-								moduleSelector.getViewer().refresh(true);
-							}
-							if (!firstRefresh) {
-								moduleSelector.getViewer().expandToLevel(2);
-							}
+						if (toRefresh) {
+							moduleSelector.getViewer().refresh(true);
+						}
+						if (!firstRefresh) {
+							moduleSelector.getViewer().expandToLevel(2);
+						}
+						
+						if (firstRefresh) {
+							firstRefresh = false;
 							
-							if (firstRefresh) {
-								firstRefresh = false;
-								
-								moduleSelector.firstRefresh();
+							moduleSelector.firstRefresh();
 //								moduleSelector.initFilter(ModuleSelector.lastFilter);
 //								moduleSelector.hookActions();
-							}								
-							
-						}
+						}								
+						
 					}
 				});
 			}
