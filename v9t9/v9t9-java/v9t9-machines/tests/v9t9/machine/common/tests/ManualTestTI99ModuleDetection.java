@@ -12,6 +12,7 @@ package v9t9.machine.common.tests;
 
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
@@ -27,12 +28,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.events.NotifyException;
 import v9t9.common.files.IPathFileLocator;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleDetector;
+import v9t9.common.modules.ModuleDatabase;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
 
@@ -415,6 +418,17 @@ public class ManualTestTI99ModuleDetection {
 			if (oldMd5 != null && !oldMd5.equals(md5)) {
 				fails.append(mod.getName()).append(" has two MD5s: ").
 					append(oldMd5).append(" and ").append(md5).append('\n');
+				
+				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				try {
+					ModuleDatabase.saveModuleListAndClose(
+								machine.getMemory(), bos, null,
+								old != null ? Arrays.asList(old, mod) : Arrays.asList(mod));
+				} catch (NotifyException e) {
+					e.printStackTrace();
+				}
+				fails.append('\t').append(bos.toString()).append('\n');
+				
 			}
 		}
 	}

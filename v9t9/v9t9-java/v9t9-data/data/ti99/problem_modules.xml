@@ -715,5 +715,11 @@
       <romModuleEntry fileMd5="EC482805E3C0D5EE34569497BE6DDF54" fileName="suprdupc.bin"/>
     </memoryEntries>
   </module>
+
+  <module md5="EFA611DC3498963583B8E869D323E87E" name="Driving Demon (Tursi)">
+    <memoryEntries>
+      <gromModuleEntry fileMd5="51A92979CE115205618E2DA088A1A07A" fileName="DRIVDEMg.bin" size="0x1800"/>
+    </memoryEntries>
+  </module>
   
 </modules>
