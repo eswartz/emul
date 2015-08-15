@@ -36,8 +36,15 @@ public class ComputeMD5 {
 	                    + "\n"
 	                    + "Usage:   " + PROGNAME + " filterAlgorithmId file[:offset+length]...\n"
 	                    + "\n"
-	                    + PROGNAME + " will apply the given filter algorithm to the given file(s) and report the results.\n"
-	                    + "A file may have a suffix of ':offset+length' (hex numbers) to sum up a segment of a file.\n"
+	                    + PROGNAME + " will apply the given filter algorithm to the given\n"
+                		+ "file(s) and report the results.\n"
+	                    + "\n"
+                		+ "Filter algorithms are 'full', 'segment:<hex offset>+<hex size>[:...]',\n"
+	                    + "and 'grom'.\n"
+	                    + "\n"
+	                    + "A file may have a suffix of ':offset+length' (hex numbers) to checksum\n"
+	                    + "only a segment of a file.  This is only needed if the content is embedded in\n"
+	                    + "a larger file; otherwise, the 'segment' filter algorithm should be used.\n"
 	                    + "\n");
 	}
 
