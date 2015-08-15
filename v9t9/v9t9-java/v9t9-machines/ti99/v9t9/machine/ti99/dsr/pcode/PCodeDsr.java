@@ -46,6 +46,30 @@ import ejs.base.properties.IPropertyListener;
 import ejs.base.settings.ISettingSection;
 
 /**
+ * Allow loading the P-Code ROMs and GROMs.
+ * 
+ * This case is confusing because the P-Code DSR ROMs are shipped 
+ * two different ways:
+ * 
+ * 1) pcode_c.bin, pcode_d.bin, pcode_g.bin
+ * 	c is 8k, has AA header, second 4k is 06A0 04178
+ *  d is 8k, also has header, but last 4k has rewind tape
+ *  
+ *  so, pcode_c = COMMON + B0
+ *      pcode_d = COMMON + B1
+ *      
+ * 2) pcode_r0.bin, pcode_r1.bin, pcode_g0.bin/pCodeGroms.bin
+ * 	r0 is 4k, has AA header
+ * 	r1 is pure code, first 4k is 06A0 4178, second bank has rewind tape (C180 0246)
+ * 
+ *  so, pcode_r0.bin has COMMON
+ *      pcode_r1.bin has B0 + B1
+ *      
+ * ==> this variant seems most common.  Dunno where c/d came from.
+ * 
+ * COMMON is always at 0x4000.  The two BANKS swap in at 0x5000.
+ * A CRU bit toggles the bank.  
+ *      
  * @author ejs
  *
  */
@@ -60,17 +84,19 @@ public class PCodeDsr implements IDsrHandler9900 {
 			"Enables the UCSD Pascal P-Code card.",
 			Boolean.FALSE,
 			pcodeIconPath);
-	private static MemoryEntryInfo pcodeDsrRomMemoryEntryInfo = MemoryEntryInfoBuilder
+	
+	public static MemoryEntryInfo pcodeDsrRomMemoryEntryInfo = MemoryEntryInfoBuilder
 		.wordMemoryEntry()
-		.withFilename("pcode_r0.bin")
+		.withFilename("pxcode_r0.bin")
 		.withAddress(0x4000)
 		.withSize(0x1000)
 		.withFileMD5("4CC461030701A1F2D2E209644F8DEB9C")
-		.create("P-Code DSR ROM");
+		.create("P-Code DSR ROM (common)");
 
-	private static MemoryEntryInfo pcodeDsrRomBankedMemoryEntryInfo = MemoryEntryInfoBuilder
+	/** This is where bank #1 is the first 4k of 8k banks file */
+	public static MemoryEntryInfo pcodeDsrRomBank1aMemoryEntryInfo = MemoryEntryInfoBuilder
 		.wordMemoryEntry()
-		.withFilename("pcode_r1.bin")
+		.withFilename("pxcode_r1.bin")
 		.withAddress(0x5000)
 		.withSize(0x1000)
 		
@@ -78,44 +104,63 @@ public class PCodeDsr implements IDsrHandler9900 {
 		.withFileMD5("ABE55D238E3925D20B17CC859AD43D36")
 		.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":0000+0BFC") 
 		
-		.withFilename2("pcode_r1.bin")
-		.withAddress2(0x5000)
-		.withSize2(0x1000)
-		.withOffset2(0x1000)
+		.create("P-Code DSR ROM (bank 1)");
+
+	/** This is where bank #1 is the second 4k of common + bank file */
+	public static MemoryEntryInfo pcodeDsrRomBank1bMemoryEntryInfo = MemoryEntryInfoBuilder
+		.wordMemoryEntry()
+		.withFilename("pxcode_d.bin")
+		.withAddress(0x5000)
+		.withSize(0x1000)
+		.withOffset(0x1000)
 		
 		// there are two MMIO areas here and at the end; don't be too picky
-		.withFile2MD5("7ED0D59B05752007CB0777531F19300C")
+		.withFileMD5("ABE55D238E3925D20B17CC859AD43D36")
+		.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":0000+0BFC") 
+		
+		.create("P-Code DSR ROM (bank 1, alternate)");
+
+	/** Bank #2 is always the second 4k of some file */
+	public static MemoryEntryInfo pcodeDsrRomBank2MemoryEntryInfo = MemoryEntryInfoBuilder
+		.wordMemoryEntry()
+		
+		.withFilename("pxcode_r1.bin")
+		.withAddress(0x5000)
+		.withSize(0x1000)
+		.withOffset(0x1000)
+		
+		// there are two MMIO areas here and at the end; don't be too picky
+		.withFileMD5("7ED0D59B05752007CB0777531F19300C")
 		.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":1000+0BFC")
 		
-		.withBankClass(PCodeDsrRomBankedMemoryEntry.class)
 		.create("P-Code DSR ROM (bank 2)");
 
-	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
-	public static MemoryEntryInfo pcodeDsrRomBankAMemoryEntryInfo = MemoryEntryInfoBuilder
-		.wordMemoryEntry()
-		.withFilename("pcode_r0.bin")
-		.withAddress(0x4000)
-		.withSize(0x1000)
-		.withFileMD5("4CC461030701A1F2D2E209644F8DEB9C")
-		.create("P-Code DSR ROM");
-
-	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
-	public static MemoryEntryInfo pcodeDsrRomBankBMemoryEntryInfo = MemoryEntryInfoBuilder
-		.wordMemoryEntry()
-		.withFilename("pcode_r1.bin")
-		.withAddress(0x4000)
-		.withSize(0x2000)
-		.withFileMD5("76803BED5C497E2B930E207A9480A6EF")
-		.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":0000+0BFC:1000+0BFC")
-		.create("P-Code DSR ROM (banks)");
+//	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
+//	public static MemoryEntryInfo pcodeDsrRomBankAMemoryEntryInfo = MemoryEntryInfoBuilder
+//		.wordMemoryEntry()
+//		.withFilename("pxcode_r0.bin")
+//		.withAddress(0x4000)
+//		.withSize(0x1000)
+//		.withFileMD5("4CC461030701A1F2D2E209644F8DEB9C")
+//		.create("P-Code DSR ROM");
+//
+//	/** this entry is only for discovery to avoid over-complicating the ROM setup dialog */ 
+//	public static MemoryEntryInfo pcodeDsrRomBankBMemoryEntryInfo = MemoryEntryInfoBuilder
+//		.wordMemoryEntry()
+//		.withFilename("pxcode_r1.bin")
+//		.withAddress(0x4000)
+//		.withSize(0x2000)
+//		.withFileMD5("F53F51C88608ED7A000BE394F6722BF0")
+//		.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":0000+0BFC:1000+0BFC")
+//		.create("P-Code DSR ROM (banks)");
 
 	public static MemoryEntryInfo pcodeGromMemoryEntryInfo = MemoryEntryInfoBuilder
 		.byteMemoryEntry()
 		.withDomain(PCODE)
 		.withAddress(0x0)
 		.withSize(0x10000)
-		.withFilename("pCodeGroms.bin")
-		.withFileMD5("C4A3557EDC999381DFC0D6F7370D0A0F")
+		.withFilename("pxcode_g.bin")
+		.withFileMD5("58A043220F96D25706A9ABDC220CDCEE")
 		.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_GROM)
 		.create("P-Code GROM");
 
@@ -213,8 +258,16 @@ public class PCodeDsr implements IDsrHandler9900 {
 			this.dsrCommonMemoryEntry = memoryEntryFactory.newMemoryEntry(pcodeDsrRomMemoryEntryInfo);
 		}
 		if (dsrBankedMemoryEntry == null) {
-			this.dsrBankedMemoryEntry = (PCodeDsrRomBankedMemoryEntry) 
-					memoryEntryFactory.newMemoryEntry(pcodeDsrRomBankedMemoryEntryInfo);
+			IMemoryEntry bank1 = null;
+			try {
+				bank1 = memoryEntryFactory.newMemoryEntry(pcodeDsrRomBank1aMemoryEntryInfo);
+			} catch (IOException e) {
+				bank1 = memoryEntryFactory.newMemoryEntry(pcodeDsrRomBank1bMemoryEntryInfo);
+			}
+			IMemoryEntry bank2 = memoryEntryFactory.newMemoryEntry(pcodeDsrRomBank2MemoryEntryInfo);
+			this.dsrBankedMemoryEntry = new PCodeDsrRomBankedMemoryEntry(
+					machine.getSettings(), memory, "P-Code DSR ROM (Banks)",
+					new IMemoryEntry[] { bank1, bank2 });
 		}
 		
 		pcodeDomain = memory.getDomain(PCODE);

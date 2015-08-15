@@ -187,8 +187,12 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
 				TIDiskImageDsr.dsrRomInfo,
 				CorcompDiskImageDsr.dsrRomBank1Info,
 				CorcompDiskImageDsr.dsrRomBank2Info,
-				PCodeDsr.pcodeDsrRomBankAMemoryEntryInfo,
-				PCodeDsr.pcodeDsrRomBankBMemoryEntryInfo,
+				PCodeDsr.pcodeDsrRomMemoryEntryInfo,
+				PCodeDsr.pcodeDsrRomBank1aMemoryEntryInfo,
+				PCodeDsr.pcodeDsrRomBank1bMemoryEntryInfo,
+				PCodeDsr.pcodeDsrRomBank2MemoryEntryInfo,
+//				PCodeDsr.pcodeDsrRomBankAMemoryEntryInfo,
+//				PCodeDsr.pcodeDsrRomBankBMemoryEntryInfo,
 				PCodeDsr.pcodeGromMemoryEntryInfo,
 		};
 	}

@@ -85,6 +85,21 @@ public interface IPathFileLocator {
 	 */
 	URI findFileByMD5(String md5, IMD5SumFilter filter);
 
+
+	/**
+	 * Find a file along the search paths whose given portion matches the
+	 * given MD5 hash.
+	 * <p/>
+	 * The filter applies to the given segment of the content (e.g. a "0000"
+	 * in the filter is 0 into the segment, not into the original URI).
+	 * @param md5
+	 * @param filter filter for considering portions of content for digesting
+	 * @param offset byte offset into file
+	 * @param size byte count from offset (-1 means "all")
+	 * @return URI or <code>null</code> if no match is found
+	 */
+	URI findFileByMD5(String md5, IMD5SumFilter filter, int offset, int size);
+
 	/**
 	 * Get the listing of entries in this URI 
 	 * @param uri
@@ -114,7 +129,19 @@ public interface IPathFileLocator {
 	 * @return String
 	 */
 	String getContentMD5(URI uri) throws IOException;
-	
+
+	/**
+	 * Get the MD5 of the given portion of the content, as a hex-encoded string.
+	 * The filter applies to the given segment of the content (e.g. a "0000"
+	 * in the filter is 0 into the segment, not into the original URI).
+	 * @param uri
+	 * @param offset byte offset into file
+	 * @param size byte count from offset (-1 means "all")
+	 * @return String
+	 */
+	String getContentMD5(URI uri, int offset, int size, IMD5SumFilter filter)
+			throws IOException;
+
 	/**
 	 * Get the MD5 of the first given bytes of content, as a hex-encoded string
 	 * @param uri

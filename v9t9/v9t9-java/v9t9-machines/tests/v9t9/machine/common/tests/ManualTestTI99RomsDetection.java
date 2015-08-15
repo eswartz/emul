@@ -25,6 +25,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.MemoryEntryInfo;
 import v9t9.common.settings.BasicSettingsHandler;
 import v9t9.machine.ti99.dsr.emudisk.EmuDiskDsr;
+import v9t9.machine.ti99.dsr.pcode.PCodeDsr;
 import v9t9.machine.ti99.dsr.realdisk.TIDiskImageDsr;
 import v9t9.machine.ti99.machine.StandardTI994AMachineModel;
 
@@ -110,5 +111,42 @@ public class ManualTestTI99RomsDetection {
 		}
 	}
 
+
+	@Test
+	public void testPCodeDsr1Resolve() throws Exception {
+		// test format 1, with pcode_r0/r1
+		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms/pcode" },
+				PCodeDsr.pcodeDsrRomMemoryEntryInfo,
+				"pcode_r0.bin");
+		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms/pcode" },
+				PCodeDsr.pcodeDsrRomBank1aMemoryEntryInfo,
+				"pcode_r1.bin");
+		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms/pcode" },
+				PCodeDsr.pcodeDsrRomBank1bMemoryEntryInfo,
+				"pcode_r1.bin");
+		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms/pcode" },
+				PCodeDsr.pcodeDsrRomBank2MemoryEntryInfo,
+				"pcode_r1.bin");
+		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms/pcode" },
+				PCodeDsr.pcodeGromMemoryEntryInfo,
+				"pcode_g0.bin");
+		
+		// test format 2, with _c/_d/
+		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms/pcodex" },
+				PCodeDsr.pcodeDsrRomMemoryEntryInfo,
+				"pcode_c.bin", "pcode_d.bin");
+//		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms/pcodex" },
+//				PCodeDsr.pcodeDsrRomBank1aMemoryEntryInfo,
+//				"pcode_c.bin");
+		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms/pcodex" },
+				PCodeDsr.pcodeDsrRomBank1bMemoryEntryInfo,
+				"pcode_c.bin");
+		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms/pcodex" },
+				PCodeDsr.pcodeDsrRomBank2MemoryEntryInfo,
+				"pcode_d.bin");
+		verifyLookup(new String[] { "/usr/local/src/v9t9-data/roms/pcodex" },
+				PCodeDsr.pcodeGromMemoryEntryInfo,
+				"pCodeGroms.bin");
+	}
 
 }

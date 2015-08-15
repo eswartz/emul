@@ -84,7 +84,8 @@ public class StoredMemoryEntryInfo {
     		if (uri == null) {
     			if (info.getFileMD5() != null) {
     				uri = locator.findFileByMD5(info.getFileMD5(),
-    						MD5FilterAlgorithms.create(info.getEffectiveFileMD5Algorithm()));
+    						MD5FilterAlgorithms.create(info.getEffectiveFileMD5Algorithm()),
+    						info.getOffset(), info.getSize());
     			}
     			if (uri == null) {
     				throw new FileNotFoundException(filename);
