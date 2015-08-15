@@ -34,9 +34,10 @@ public class ComputeMD5 {
 	            .println("\n"
 	                    + "V9t9 MD5 Computer\n"
 	                    + "\n"
-	                    + "Usage:   " + PROGNAME + " filterAlgorithmId file...\n"
+	                    + "Usage:   " + PROGNAME + " filterAlgorithmId file[:offset+length]...\n"
 	                    + "\n"
 	                    + PROGNAME + " will apply the given filter algorithm to the given file(s) and report the results.\n"
+	                    + "A file may have a suffix of ':offset+length' (hex numbers) to sum up a segment of a file.\n"
 	                    + "\n");
 	}
 
@@ -97,6 +98,17 @@ public class ComputeMD5 {
 	}
 	
 	public void compute(IMD5SumFilter filter, String path) {
+		int offset = 0;
+		int size = -1;
+		
+		int cidx = path.lastIndexOf(':');
+		int pidx = path.indexOf('+', cidx+1);
+		if (cidx > 0 && pidx > cidx) {
+			offset = Integer.parseInt(path.substring(cidx + 1, pidx), 16);
+			size = Integer.parseInt(path.substring(pidx+1), 16);
+			path = path.substring(0, cidx);
+		}
+		
 		File file = new File(path);
 		if (!file.isFile()) {
 			System.err.println("Not a file: " + path);
@@ -105,7 +117,7 @@ public class ComputeMD5 {
 		
 		String md5;
 		try {
-			md5 = machine.getRomPathFileLocator().getContentMD5(file.toURI(), filter);
+			md5 = machine.getRomPathFileLocator().getContentMD5(file.toURI(), offset, size, filter);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.err.println("failed to compute MD5 from " + file);
