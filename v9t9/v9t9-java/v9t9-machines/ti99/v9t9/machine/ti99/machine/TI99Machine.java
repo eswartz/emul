@@ -58,7 +58,7 @@ public class TI99Machine extends MachineBase {
 	protected void init(IMachineModel machineModel) {
 		super.init(machineModel);
 
-		cruManager = new CruManager();
+		cruManager = new CruManager(this);
 		dsrManager = new DsrManager(this);
 	}
 	
