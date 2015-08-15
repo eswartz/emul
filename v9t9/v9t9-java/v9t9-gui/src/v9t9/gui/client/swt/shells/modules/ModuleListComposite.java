@@ -71,6 +71,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+import org.ejs.gui.common.SwtUtils;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
@@ -613,19 +614,7 @@ public class ModuleListComposite extends Composite {
 						});
 					}
 
-					if (menu.getItemCount() == 0) {
-						menu.dispose();
-						return;
-					}
-					
-					menu.setLocation(e.x, e.y);
-					menu.setVisible(true);
-					
-					while (!menu.isDisposed() && menu.isVisible()) {
-						if (!getDisplay().readAndDispatch())
-							getDisplay().sleep();
-					}
-					
+					SwtUtils.runMenu(null, e.x, e.y, menu);
 				}
 			}
 		});

@@ -43,6 +43,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.ejs.gui.common.SwtUtils;
 
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.files.Catalog;
@@ -364,19 +365,7 @@ public class DiskCatalogDialog extends Dialog {
 					
 				}
 
-				if (menu.getItemCount() == 0) {
-					menu.dispose();
-					return;
-				}
-				
-				menu.setLocation(e.x, e.y);
-				menu.setVisible(true);
-				
-				while (!menu.isDisposed() && menu.isVisible()) {
-					if (!getShell().getDisplay().readAndDispatch())
-						getShell().getDisplay().sleep();
-				}
-
+				SwtUtils.runMenu(null, e.x, e.y, menu);
 			}
 		});
 

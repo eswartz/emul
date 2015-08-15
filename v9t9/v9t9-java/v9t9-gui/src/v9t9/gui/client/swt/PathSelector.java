@@ -26,16 +26,26 @@ import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.MenuDetectEvent;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Item;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.ejs.gui.common.SwtUtils;
 
 import v9t9.common.files.IPathFileLocator;
 import ejs.base.properties.IProperty;
@@ -158,6 +168,40 @@ public class PathSelector extends Composite {
 				column.pack();
 			}
 		});
+		
+		table.addMenuDetectListener(new MenuDetectListener() {
+			
+			@Override
+			public void menuDetected(MenuDetectEvent e) {
+				final Item item = table.getItem(
+						viewer.getControl().toControl(new Point(e.x, e.y))
+						);
+				if (item == null)
+					return;
+				
+				Menu menu = new Menu(viewer.getControl());
+
+				if (item.getData() instanceof String) {
+					
+					final MenuItem copyItem;
+					copyItem = new MenuItem(menu, SWT.NONE);
+					copyItem.setText("Copy");
+					
+					copyItem.addSelectionListener(new SelectionAdapter() {
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							Clipboard c = new Clipboard(getDisplay());
+							c.setContents(new Object[] { item.getData() }, new Transfer[] { TextTransfer.getInstance() });
+						}
+						
+					});
+				}
+
+				SwtUtils.runMenu(null, e.x, e.y, menu);
+
+			}
+		});
+
 		
 		viewer.addOpenListener(new IOpenListener() {
 			
