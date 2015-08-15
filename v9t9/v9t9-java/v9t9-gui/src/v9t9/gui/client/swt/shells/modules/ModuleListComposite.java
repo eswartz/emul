@@ -481,7 +481,7 @@ public class ModuleListComposite extends Composite {
 		label = new Label(listArea, SWT.NONE);
 		GridDataFactory.fillDefaults().grab(false, false).span(1, 1).applyTo(label);
 		
-		viewer = CheckboxTableViewer.newCheckList(listArea, SWT.BORDER | SWT.SINGLE | SWT.V_SCROLL | SWT.CHECK);
+		viewer = CheckboxTableViewer.newCheckList(listArea, SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION | SWT.V_SCROLL);
 		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).hint(-1, 400).applyTo(viewer.getControl());
 		
 		viewer.getTable().setHeaderVisible(true);
