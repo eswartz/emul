@@ -100,7 +100,9 @@ public class Launcher {
 			}
 		}
 
-		// run alternate main class
+		String toolName = null;
+		
+		// check for alternate main class
 		String mainClass = "v9t9.gui.Emulator";
 		for (int idx = 0; idx < args.length; idx++) {
 			if ("-help".equals(args[idx]) || "-h".equals(args[idx]) 
@@ -124,6 +126,7 @@ public class Launcher {
 					mainClass = args[idx];
 					args = remove(args, idx);
 				}
+				toolName = mainClass;
 				if (mainClass.indexOf('.') < 0)
 					mainClass = TOOL_PREFIX + mainClass;
 				break;
@@ -151,8 +154,19 @@ public class Launcher {
 			System.err.println("\nCould not modify java.library.path: please invoke:\n\n\texport V9T9_VMARGS=\"-Djava.library.path=" + newJavaLibPath + "\"'\n\nand try again.");
 		}
 		
-		Class<?> klass = classLoader.loadClass(mainClass);
-		Method main = klass.getMethod("main", String[].class);
+		Class<?> klass = null;
+		Method main = null;
+		try {
+			klass = classLoader.loadClass(mainClass);
+			main = klass.getMethod("main", String[].class);
+		} catch (Exception e) {
+			if (toolName != null) {
+				System.err.println("\nNo such tool is available: " + toolName + ";\nrun without an argument (e.g. \"-tool\") to see available tools");
+				return;
+			} else {
+				throw e;
+			}
+		}
 		main.invoke(null, new Object[] { args });
 	}
 
