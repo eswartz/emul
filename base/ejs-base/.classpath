@@ -8,7 +8,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="HRTimer"/>
 	<classpathentry excluding="api/" kind="src" path="Base64-2.2.2"/>
@@ -18,8 +17,8 @@
 	<classpathentry exported="true" kind="lib" path="libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/org.hamcrest.core.source_1.1.0.v20090501071000.jar"/>
-	<classpathentry kind="lib" path="libs/asm-4.0/asm-4.1-w-src.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/asm-4.0/asm-4.1-w-src.jar"/>
 	<classpathentry kind="src" path="WavFile"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/SWT"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.USER_LIBRARY/SWT"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
