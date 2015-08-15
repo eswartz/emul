@@ -133,20 +133,6 @@ public class Interpreter9900 implements IInterpreter {
     	ChangeBlock9900 changes;
     	Object[] listeners = executor.getInstructionListeners().toArray();
     	if (listeners.length == 0) {
-    		// fast
-        	while (numinsts >= 4) {
-				changes = getChangesForPC();
-        		changes.apply(cpu);
-        		changes = getChangesForPC();
-        		changes.apply(cpu);
-        		changes = getChangesForPC();
-        		changes.apply(cpu);
-        		changes = getChangesForPC();
-        		changes.apply(cpu);
-        		numinsts -= 4;
-    	    	if (executor.breakAfterExecution(4) || cpu.isIdle()) 
-    				break;
-        	}
         	while (numinsts-- > 0) {
         		changes = getChangesForPC();
         		changes.apply(cpu);
@@ -908,6 +894,8 @@ public class Interpreter9900 implements IInterpreter {
 						changes.counts.addExecute(58);
 					else /* disp == 0 or 16 */
 						changes.counts.addExecute(60);
+					
+					status.set_LAE(mos1.value);
 				}
 			});
             break;
