@@ -89,6 +89,13 @@ public class FastTimer {
 		timerThread = new Thread("FastTimer [" + name + "]") {
 			@Override
 			public void run() {
+				int iterations = 0;
+				
+				final long NS = 10000000 * 1000L;
+				
+				long nsstart = timer.getTimeNs();
+				long nextns = nsstart + NS;
+				
 				if (timer instanceof HRTimer) {
 					System.out.println("Minimum resolution is: " + HRTimer.getMinimumTimerResolution());
 					HRTimer.timeBeginPeriod(10);
@@ -158,6 +165,15 @@ public class FastTimer {
 							}
 							//prev = now;
 						}
+						
+						iterations++;
+						if (now >= nextns) {
+							double elapsed = (now - nsstart) / (double) NS;
+							System.out.println(iterations + " for " + 
+										elapsed + " seconds = " + (iterations / elapsed));
+							nextns += NS;
+						}
+								
 					}
 				} finally {
 					if (timer instanceof HRTimer) {
