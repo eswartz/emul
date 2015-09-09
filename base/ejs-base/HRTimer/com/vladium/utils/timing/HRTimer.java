@@ -92,8 +92,10 @@ final public class HRTimer implements ITimer, ITimerConstants
     private int m_state; // used to keep track of timer state
     private double m_data; // timing data
         
-    private static final String HRTIMER_LIB = "hrtlib";
-    
+    private static final String HRTIMER_LIB = 
+    		"hrtlib" +
+			(System.getProperty("os.arch").matches("x86_64|amd64") ? "64" : "32"); 
+
     static
     {
         try

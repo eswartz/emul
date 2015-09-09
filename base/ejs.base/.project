@@ -29,32 +29,32 @@
 		<link>
 			<name>Base64-2.2.2</name>
 			<type>2</type>
-			<location>/home/ejs/devel/emul/base/ejs-base/Base64-2.2.2</location>
+			<location>$%7BPARENT-1-PROJECT_LOC%7D/ejs-base/Base64-2.2.2</location>
 		</link>
 		<link>
 			<name>HRTimer</name>
 			<type>2</type>
-			<location>/home/ejs/devel/emul/base/ejs-base/HRTimer</location>
+			<location>$%7BPARENT-1-PROJECT_LOC%7D/ejs-base/HRTimer</location>
 		</link>
 		<link>
 			<name>WavFile</name>
 			<type>2</type>
-			<location>/home/ejs/devel/emul/base/ejs-base/WavFile</location>
+			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/ejs-base/WavFile</locationURI>
 		</link>
 		<link>
 			<name>libs</name>
 			<type>2</type>
-			<location>/home/ejs/devel/emul/base/ejs-base/libs</location>
+			<location>$%7BPARENT-1-PROJECT_LOC%7D/ejs-base/libs</location>
 		</link>
 		<link>
 			<name>src</name>
 			<type>2</type>
-			<location>/home/ejs/devel/emul/base/ejs-base/src</location>
+			<location>$%7BPARENT-1-PROJECT_LOC%7D/ejs-base/src</location>
 		</link>
 		<link>
 			<name>tests</name>
 			<type>2</type>
-			<location>/home/ejs/devel/emul/base/ejs-base/tests</location>
+			<location>$%7BPARENT-1-PROJECT_LOC%7D/ejs-base/tests</location>
 		</link>
 	</linkedResources>
 </projectDescription>
