@@ -10,11 +10,11 @@
  */
 package v9t9.engine.sound;
 
+import static v9t9.common.sound.TMS9919BConsts.*;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IRegisterBank;
 import v9t9.common.sound.TMS9919BConsts;
 import v9t9.engine.machine.BaseRegisterBank;
-import static v9t9.common.sound.TMS9919BConsts.*;
 
 /**
  * Controller for the TMS9919(B) sound chip.

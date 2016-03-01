@@ -10,10 +10,9 @@
  */
 package v9t9.audio.sound;
 
-import javax.sound.sampled.AudioFormat;
-
 import v9t9.common.sound.TMS9919Consts;
 import ejs.base.settings.ISettingSection;
+import ejs.base.sound.SoundFormat;
 
 /**
  * Help from http://www.smspower.org/Development/SN76489
@@ -37,17 +36,14 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 	 * @see v9t9.audio.sound.ClockedSoundVoice#setFormat(javax.sound.sampled.AudioFormat)
 	 */
 	@Override
-	public void setFormat(AudioFormat format) {
+	public void setFormat(SoundFormat format) {
 		// Noise works on effectively double the clock of tones,
 		// because tones split the clock for the up and down parts of
 		// one cycle, whereas noise works on every cycle.
-		AudioFormat dblFormat = new AudioFormat(
-				format.getEncoding(),
-				format.getSampleRate() * 2, 
-				format.getSampleSizeInBits(), format.getChannels(),
-				format.getFrameSize(),
-				format.getFrameRate(),
-				format.isBigEndian());
+		SoundFormat dblFormat = new SoundFormat(
+				format.getSampleRate() * 2,
+				format.getChannels(),
+				format.getType());
 		
 		super.setFormat(dblFormat);
 	}

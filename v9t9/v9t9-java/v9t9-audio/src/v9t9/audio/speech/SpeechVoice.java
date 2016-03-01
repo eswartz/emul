@@ -13,9 +13,8 @@ package v9t9.audio.speech;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import javax.sound.sampled.AudioFormat;
-
 import v9t9.common.speech.ISpeechSoundVoice;
+import ejs.base.sound.SoundFormat;
 
 public class SpeechVoice implements ISpeechSoundVoice {
 	
@@ -42,7 +41,7 @@ public class SpeechVoice implements ISpeechSoundVoice {
 	 * @see ejs.base.sound.ISoundVoice#setFormat(javax.sound.sampled.AudioFormat)
 	 */
 	@Override
-	public void setFormat(AudioFormat format) {
+	public void setFormat(SoundFormat format) {
 		this.soundClock = (int) format.getFrameRate();
 	}
 	

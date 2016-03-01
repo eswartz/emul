@@ -13,8 +13,6 @@ package v9t9.audio.sound;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.sound.sampled.AudioFormat;
-
 import v9t9.common.cassette.CassetteConsts;
 import v9t9.common.cassette.ICassetteChip;
 import v9t9.common.cassette.ICassetteDeck;
@@ -25,6 +23,7 @@ import v9t9.common.settings.SettingSchema;
 import v9t9.common.sound.ISoundGenerator;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
+import ejs.base.sound.SoundFormat;
 
 /**
  * @author ejs
@@ -32,7 +31,7 @@ import ejs.base.sound.ISoundVoice;
  */
 public class CassetteSoundGenerator extends BaseSoundGenerator implements ISoundGenerator, IRegisterAccess.IRegisterWriteListener {
 	
-	private static final AudioFormat format = new AudioFormat(44100, 8, 1, false, false);
+	private static final SoundFormat format = new SoundFormat(44100, 1, SoundFormat.Type.UNSIGNED_8);
 	
 	protected final Map<Integer, SoundVoice> regIdToVoices = 
 			new HashMap<Integer, SoundVoice>();
@@ -76,7 +75,7 @@ public class CassetteSoundGenerator extends BaseSoundGenerator implements ISound
 	 * @see v9t9.common.sound.ISoundGenerator#getAudioFormat()
 	 */
 	@Override
-	public AudioFormat getAudioFormat() {
+	public SoundFormat getSoundFormat() {
 		return format;
 	}
 	/* (non-Javadoc)

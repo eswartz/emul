@@ -18,7 +18,6 @@ import java.util.Arrays;
 
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFileFormat.Type;
-import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 
@@ -38,7 +37,7 @@ public class SoundFileListener implements ISoundEmitter {
 	
 	private FileOutputStream soundFos;
 	private String soundFile;
-	private AudioFormat soundFormat;
+	private SoundFormat soundFormat;
 
 	private IProperty pauseProperty;
 
@@ -103,11 +102,11 @@ public class SoundFileListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public void started(AudioFormat format) {
+	public void started(SoundFormat format) {
 		this.soundFormat = format;
 		
 
-		Arrays.fill(silence, (byte) (format.getEncoding() == AudioFormat.Encoding.PCM_SIGNED ? 0x0 : 0x80));
+		Arrays.fill(silence, (byte) (soundFormat.isSigned() ? 0x0 : 0x80));
 	}
 	
 
@@ -152,7 +151,7 @@ public class SoundFileListener implements ISoundEmitter {
 			}
 	}
 	
-	private void closeSoundDumpFile(FileOutputStream fos, AudioFormat format, String filename) {
+	private void closeSoundDumpFile(FileOutputStream fos, SoundFormat format, String filename) {
 		try {
 			fos.close();
 		} catch (IOException e) {
@@ -188,8 +187,8 @@ public class SoundFileListener implements ISoundEmitter {
 				try {
 					is = new AudioInputStream(
 							new FileInputStream(soundFileRaw),
-							format,
-							soundFileRaw.length() / (format.getSampleSizeInBits() / 8));
+							JavaSoundListener.toAudioFormat(format),
+							soundFileRaw.length() / format.getBytesPerSample());
 				} catch (IOException e) {
 					e.printStackTrace();
 					return;

@@ -10,7 +10,6 @@
  */
 package ejs.base.sound;
 
-import javax.sound.sampled.AudioFormat;
 
 /**
  * Float data for sound.
@@ -24,16 +23,16 @@ public class SoundChunk extends BaseSoundView implements IEditableSoundView {
 	 * @param soundData  data (should not be modified later!)
 	 * @param format
 	 */
-	public SoundChunk(float[] soundData, AudioFormat format) {
+	public SoundChunk(float[] soundData, SoundFormat format) {
 		this(0, soundData, 0, soundData.length, format);
 	}
-	public SoundChunk(int silentSamples, AudioFormat format) {
+	public SoundChunk(int silentSamples, SoundFormat format) {
 		this(0, null, 0, silentSamples, format);
 	}
-	public SoundChunk(int frameOffset, int silentSamples, AudioFormat format) {
+	public SoundChunk(int frameOffset, int silentSamples, SoundFormat format) {
 		this(frameOffset, null, 0, silentSamples, format);
 	}
-	public SoundChunk(int start, float[] soundData, int offset, int length, AudioFormat format) {
+	public SoundChunk(int start, float[] soundData, int offset, int length, SoundFormat format) {
 		super(start, length, format);
 		this.soundData = soundData;
 		this.offset = offset;

@@ -10,22 +10,22 @@
  */
 package v9t9.audio.speech;
 
-import javax.sound.sampled.AudioFormat;
-
-import ejs.base.sound.ISoundOutput;
-import ejs.base.sound.ISoundVoice;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.speech.ISpeechGenerator;
 import v9t9.common.speech.ISpeechSoundVoice;
+import ejs.base.sound.ISoundOutput;
+import ejs.base.sound.ISoundVoice;
+import ejs.base.sound.SoundFormat;
 
 /**
  * @author ejs
  *
  */
 public class SpeechTMS5220Generator implements ISpeechGenerator {
-	private static final AudioFormat format = new AudioFormat(8000 * 6, 16, 1, true, false);
+	private static final SoundFormat format = new SoundFormat(8000 * 6, 1, 
+			SoundFormat.Type.SIGNED_16_LE);
 	
 	private SpeechVoice[] speechVoices;
 
@@ -62,7 +62,7 @@ public class SpeechTMS5220Generator implements ISpeechGenerator {
 	 * @see v9t9.common.sound.ISoundGenerator#getAudioFormat()
 	 */
 	@Override
-	public AudioFormat getAudioFormat() {
+	public SoundFormat getSoundFormat() {
 		return format;
 	}
 
@@ -130,7 +130,7 @@ public class SpeechTMS5220Generator implements ISpeechGenerator {
 		if (count == 0)
 			return;
 
-		int realTotal = (int) (count * getAudioFormat().getFrameRate() / 8000.f);
+		int realTotal = (int) (count * getSoundFormat().getFrameRate() / 8000.f);
 		output.generate(vs, realTotal);
 		
 		

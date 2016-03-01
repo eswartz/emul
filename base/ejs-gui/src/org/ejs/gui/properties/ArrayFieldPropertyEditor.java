@@ -13,7 +13,6 @@ package org.ejs.gui.properties;
 import ejs.base.properties.FieldProperty;
 import ejs.base.properties.PropertyUtils;
 
-
 /**
  * @author ejs
  *

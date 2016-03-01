@@ -12,7 +12,6 @@ package v9t9.audio.sound.test;
 
 import java.util.concurrent.TimeUnit;
 
-
 import org.junit.Test;
 
 import v9t9.audio.sound.NoiseGeneratorVoice;

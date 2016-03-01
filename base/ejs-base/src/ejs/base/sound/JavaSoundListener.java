@@ -78,7 +78,7 @@ public class JavaSoundListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public void started(AudioFormat format) {
+	public void started(SoundFormat format) {
 		if (soundGeneratorLine != null) {
 			if (soundFormat.equals(format))
 				return;
@@ -87,7 +87,7 @@ public class JavaSoundListener implements ISoundEmitter {
 		
 		soundQueue = new LinkedBlockingQueue<AudioChunk>(20);
 
-		soundFormat = format;
+		soundFormat = toAudioFormat(format);
 		Line.Info slInfo = new DataLine.Info(SourceDataLine.class, soundFormat);
 		if (!AudioSystem.isLineSupported(slInfo)) {
 			logger.error("Line not supported: " + soundFormat);
@@ -146,6 +146,19 @@ public class JavaSoundListener implements ISoundEmitter {
 		soundWritingThread.start();
 
 		soundGeneratorLine.start();
+	}
+
+	/**
+	 * @param format
+	 * @return
+	 */
+	public static AudioFormat toAudioFormat(SoundFormat format) {
+		float sampleRate = format.getSampleRate();
+		int channels = format.getChannels();
+		int sampleSizeInBits = format.getBytesPerSample() * 8;
+		boolean signed = format.isSigned();
+		boolean bigEndian = format.isBigEndian();
+		return new AudioFormat(sampleRate, sampleSizeInBits, channels, signed, bigEndian);
 	}
 
 	/* (non-Javadoc)

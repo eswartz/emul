@@ -29,6 +29,7 @@ import v9t9.engine.speech.LPCParameters;
 import v9t9.engine.speech.LPCSpeech;
 import ejs.base.sound.ArraySoundView;
 import ejs.base.sound.SoundFileListener;
+import ejs.base.sound.SoundFormat;
 import ejs.base.utils.ListenerList;
 
 /**
@@ -89,15 +90,21 @@ public class LPCSpeechEncoder {
 		// nominal framerate (25 ms)
 		int framesPerSecond = 40;
 		
+		// go through eight cycles starting with a raw input .wav,
+		// encoding it to LPC, playing that back, then using
+		// that output as input.
 		int count = 0;
 		for (int i = 0; i < 8; i++) {
+			// analyze and construct LPC speech 
 			ArrayList<LPCAnalysisFrame> anaFrames = new ArrayList<LPCAnalysisFrame>();
 			ILPCEngine engine = analyze(theFile, framesPerSecond, playbackHz, anaFrames);
 			
+			// play it back and record to file 
 			File outFile = new File("/tmp/speech_out" + (count != 0 ? count : "") + ".wav");
 			count++;
 			playbackSpeech(outFile, playbackHz, framesPerSecond, anaFrames, engine);
 			
+			// read from that output on the next cycle
 			theFile = outFile;
 		}
 	}
@@ -174,7 +181,8 @@ public class LPCSpeechEncoder {
 		
 		//final FileOutputStream fos = new FileOutputStream("/tmp/speech_out.raw");
 		final SoundFileListener output = new SoundFileListener();
-		final AudioFormat outputFormat = new AudioFormat(playbackHz, 16, 1, true, false);
+		final SoundFormat outputFormat = new SoundFormat(playbackHz, 1, 
+				SoundFormat.Type.SIGNED_16_LE);
 		output.started(outputFormat);
 		
 		output.setIncludeSilence(true);

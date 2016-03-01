@@ -64,7 +64,7 @@ public class TIRS232Dsr implements IDsrHandler9900, IDeviceSettings {
 			.standardDsrRom(null)
 			.withFilenameProperty(settingRS232DsrRomFileName)
 			.withDescription("RS232 Controller ROM")
-			.withFileMD5("4E4E08FF10D23B799AAA990344553E2E")
+			.withFileMD5("4E4E08FF10Dx23B799AAA990344553E2E")
 //			.withFileMD5("A5467BE2E6BD04E1B9CF1DE8FA507541")
 			.create("TI RS232 DSR ROM");
 	

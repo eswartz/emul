@@ -108,10 +108,10 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 			.standardDsrRom(null)
 			.withDescription("Corcomp Disk Controller ROM (double-sided, double-density)")
 			.withFilenameProperty(settingDsrRom1FileName)
-			.withFileMD5("956B78A3AAC982BE9829523042E7CBAB")
+			.withFileMD5("956B78A3AAC982BxE9829523042E7CBAB")
 			.withFileMD5Algorithm(new MD5FilterAlgorithms.FileSegmentFilter(0, 0x2000 - 0x80).getId())
 			.withFilename2Property(settingDsrRom2FileName)
-			.withFile2MD5("B9C53C584842387B3AEC668B856EC8AD")
+			.withFile2MD5("B9C53C5848423x87B3AEC668B856EC8AD")
 			.withFile2MD5Algorithm(new MD5FilterAlgorithms.FileSegmentFilter(0x80, 0x2000 - 0x80 - 0x80).getId())
 			.withBankClass(CorcompDsrRomBankedMemoryEntry.class)
 			.create("Corcomp Disk DSR ROM");
@@ -121,7 +121,7 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 			.standardDsrRom(null)
 			.withDescription("Corcomp Disk Controller ROM (double-sided, double-density)")
 			.withFilenameProperty(settingDsrRom1FileName)
-			.withFileMD5("956B78A3AAC982BE9829523042E7CBAB")
+			.withFileMD5("956B78A3AAC982BEx9829523042E7CBAB")
 			.withFileMD5Algorithm(new MD5FilterAlgorithms.FileSegmentFilter(0, 0x2000 - 0x80).getId())
 			.create("Corcomp Disk DSR ROM (bank 1)");
 	
@@ -130,7 +130,7 @@ public class CorcompDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler
 			.standardDsrRom(null)
 			.withDescription("Corcomp Disk Controller ROM (double-sided, double-density)")
 			.withFilenameProperty(settingDsrRom2FileName)
-			.withFileMD5("B9C53C584842387B3AEC668B856EC8AD")
+			.withFileMD5("B9C53C584842387B3xAEC668B856EC8AD")
 			.withFileMD5Algorithm(new MD5FilterAlgorithms.FileSegmentFilter(0x80, 0x2000 - 0x80 - 0x80).getId())
 			.create("Corcomp Disk DSR ROM (bank 2)");
 

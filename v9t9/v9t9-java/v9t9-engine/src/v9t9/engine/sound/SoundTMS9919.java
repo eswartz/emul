@@ -12,11 +12,11 @@ package v9t9.engine.sound;
 
 
 
+import static v9t9.common.sound.TMS9919Consts.*;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import ejs.base.settings.ISettingSection;
-import ejs.base.utils.ListenerList;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
@@ -24,7 +24,8 @@ import v9t9.common.machine.IRegisterAccess;
 import v9t9.common.machine.IRegisterBank;
 import v9t9.common.settings.Settings;
 import v9t9.engine.machine.BaseRegisterBank;
-import static v9t9.common.sound.TMS9919Consts.*;
+import ejs.base.settings.ISettingSection;
+import ejs.base.utils.ListenerList;
 
 /**
  * Controller for the TMS9919 sound chip

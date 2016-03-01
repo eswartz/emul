@@ -10,7 +10,6 @@
  */
 package ejs.base.sound;
 
-import javax.sound.sampled.AudioFormat;
 
 /**
  * @author ejs
@@ -18,7 +17,7 @@ import javax.sound.sampled.AudioFormat;
  */
 public abstract class BaseSoundView  implements ISoundView {
 
-	protected final AudioFormat format;
+	protected final SoundFormat format;
 
 	protected final int numChannels;
 	protected final int sampleCount;
@@ -32,7 +31,7 @@ public abstract class BaseSoundView  implements ISoundView {
 	/**
 	 * 
 	 */
-	public BaseSoundView(int startFrame, int length, AudioFormat format) {
+	public BaseSoundView(int startFrame, int length, SoundFormat format) {
 		this.startFrame = startFrame;
 		this.sampleCount = length;
 		this.format = format;
@@ -50,7 +49,7 @@ public abstract class BaseSoundView  implements ISoundView {
 
 	
 	@Override
-	public AudioFormat getFormat() {
+	public SoundFormat getFormat() {
 		return format;
 	}
 	

@@ -10,11 +10,10 @@
  */
 package v9t9.common.sound;
 
-import javax.sound.sampled.AudioFormat;
-
 import v9t9.common.settings.SettingSchema;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
+import ejs.base.sound.SoundFormat;
 
 /**
  * @author ejs
@@ -27,7 +26,7 @@ public interface ISoundGenerator {
 	SettingSchema getRecordingSettingSchema();
 	boolean isSilenceRecorded();
 	
-	AudioFormat getAudioFormat();
+	SoundFormat getSoundFormat();
 	ISoundVoice[] getSoundVoices();
 	//void tick();
 	

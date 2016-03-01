@@ -12,9 +12,9 @@ package v9t9.audio.sound;
 
 import java.text.MessageFormat;
 
-import javax.sound.sampled.AudioFormat;
-
 import org.apache.log4j.Logger;
+
+import ejs.base.sound.SoundFormat;
 
 /**
  * This voice is the base of tone or noise generation against a frequency
@@ -94,7 +94,7 @@ public abstract class ClockedSoundVoice extends SoundVoice
 	 * @see v9t9.audio.sound.SoundVoice#setFormat(javax.sound.sampled.AudioFormat)
 	 */
 	@Override
-	public void setFormat(AudioFormat format) {
+	public void setFormat(SoundFormat format) {
 		super.setFormat(format);
 		this.soundClock = (int) format.getFrameRate();
 		setupVoice();

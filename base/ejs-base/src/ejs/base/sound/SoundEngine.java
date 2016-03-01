@@ -13,13 +13,6 @@ package ejs.base.sound;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import javax.sound.sampled.AudioFormat;
-
-import ejs.base.sound.ISoundEmitter;
-import ejs.base.sound.ISoundOutput;
-import ejs.base.sound.ISoundVoice;
-import ejs.base.sound.SoundFactory;
-import ejs.base.sound.SoundFileListener;
 import ejs.base.timer.FastTimer;
 
 
@@ -41,17 +34,17 @@ public class SoundEngine {
 
 	private ISoundOutput output;
 
-	private AudioFormat format;
+	private SoundFormat format;
 	
 	/**
 	 */
-	public SoundEngine(AudioFormat format, int mutateRate) {
+	public SoundEngine(SoundFormat format, ISoundOutput output) {
 		mutators = new IMutator[0];
 		voices = new ISoundVoice[0];
 		
 		this.format = format;
 		
-		output = SoundFactory.createSoundOutput(format, mutateRate);
+		this.output = output;
 		
 		iSoundListener = SoundFactory.createAudioListener();
 		iSoundListener.setBlockMode(true);

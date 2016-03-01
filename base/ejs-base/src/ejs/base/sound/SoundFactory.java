@@ -13,8 +13,6 @@ package ejs.base.sound;
 import java.io.File;
 import java.io.IOException;
 
-import javax.sound.sampled.AudioFormat;
-
 import org.apache.log4j.Logger;
 
 import ejs.base.internal.sound.SoundOutput;
@@ -27,12 +25,12 @@ import ejs.base.internal.sound.SoundOutput;
 public class SoundFactory {
 	private static final Logger logger = Logger.getLogger(SoundFactory.class);
 	
-	public static ISoundOutput createSoundOutput(AudioFormat format, int tickRate) {
+	public static ISoundOutput createSoundOutput(SoundFormat format, int tickRate) {
 		return new SoundOutput(format, tickRate);
 	}
 	
 	public static ISoundEmitter createAudioListener() {
-		if (!"true".equals(System.getProperty("v9t9.sound.java"))) {
+		if (false&&!"true".equals(System.getProperty("v9t9.sound.java"))) {
 			if (System.getProperty("os.name").equals("Linux")) {
 				if (isPulseRunning()) {
 					logger.info("Using Pulse for sound");

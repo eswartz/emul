@@ -79,7 +79,7 @@ public class ManualTestSpeech {
 		SpeechTMS5220 tms5220 = (SpeechTMS5220) machine.getSpeech();
 		
 		settings.get(ISpeechChip.settingLogSpeech).setInt(1);
-		settings.get(ISpeechChip.settingTalkSpeed).setDouble(1.5);
+		settings.get(ISpeechChip.settingTalkSpeed).setDouble(1.0);
 		
 		LPCSpeech speech = tms5220.getLpcSpeech();
 		speech.init();

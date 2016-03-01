@@ -13,8 +13,6 @@ package ejs.base.internal.sound;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sound.sampled.AudioFormat;
-
 import ejs.base.sound.IFlushableSoundVoice;
 import ejs.base.sound.ISoundEmitter;
 import ejs.base.sound.ISoundMutator;
@@ -23,6 +21,7 @@ import ejs.base.sound.ISoundView;
 import ejs.base.sound.ISoundVoice;
 import ejs.base.sound.SoundChunk;
 import ejs.base.sound.SoundFileListener;
+import ejs.base.sound.SoundFormat;
 import ejs.base.utils.ListenerList;
 
 
@@ -50,10 +49,10 @@ public class SoundOutput implements ISoundOutput {
 	
 	// samples * channels
 	private final int bufferSize;
-	private AudioFormat format;
+	private SoundFormat format;
 	private boolean wasStarted;
 
-	public SoundOutput(AudioFormat format, int tickRate) {
+	public SoundOutput(SoundFormat format, int tickRate) {
 		this.format = format;
 		mutators = new ListenerList<ISoundMutator>();
 		emitters = new ListenerList<ISoundEmitter>();

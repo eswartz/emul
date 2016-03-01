@@ -336,7 +336,7 @@ public class EmulatorButtonBar extends BaseEmulatorBar  {
 			SoundRecordingHelper helper = new SwtSoundRecordingHelper(machine, ent.getValue(), 
 					generator.getRecordingSettingSchema(), 
 					generator.getName(),
-					generator.getAudioFormat(),
+					generator.getSoundFormat(),
 					generator.isSilenceRecorded());
 			multiSoundHandler.register(helper);
 		}

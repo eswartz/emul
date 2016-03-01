@@ -10,8 +10,6 @@
  */
 package v9t9.common.sound;
 
-import javax.sound.sampled.AudioFormat;
-
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
@@ -19,6 +17,7 @@ import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.SoundFileListener;
+import ejs.base.sound.SoundFormat;
 
 
 /**
@@ -42,7 +41,7 @@ public class SoundRecordingHelper implements ISoundRecordingHelper {
 	 * @param shell
 	 */
 	public SoundRecordingHelper(IMachine machine, ISoundOutput output, SettingSchema fileSchema,
-			AudioFormat format,
+			SoundFormat format,
 			boolean includeSilence) {
 		this.output = output;
 		this.soundFileSetting = machine.getSettings().get(fileSchema);

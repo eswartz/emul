@@ -12,8 +12,6 @@ package v9t9.gui.sound;
 
 import java.io.File;
 
-import javax.sound.sampled.AudioFormat;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -28,6 +26,7 @@ import v9t9.common.settings.SettingSchema;
 import v9t9.common.sound.SoundRecordingHelper;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.SoundFileListener;
+import ejs.base.sound.SoundFormat;
 
 
 /**
@@ -41,7 +40,7 @@ public class SwtSoundRecordingHelper extends SoundRecordingHelper implements ISw
 
 
 	public SwtSoundRecordingHelper(IMachine machine, ISoundOutput output,
-			SettingSchema fileSchema, String label, AudioFormat format, boolean includeSilence) {
+			SettingSchema fileSchema, String label, SoundFormat format, boolean includeSilence) {
 		super(machine, output, fileSchema, format, includeSilence);
 		this.label = label;
 	}

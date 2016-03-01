@@ -68,7 +68,7 @@ public abstract class BaseSoundGenerator implements ISoundGenerator, IRegisterAc
 		
 		int framesPerTick = output.getSamples((1000 + machine.getTicksPerSec() - 1) / machine.getTicksPerSec());
 
-		long ticksPos = (long) (pos * framesPerTick * getAudioFormat().getChannels() );
+		long ticksPos = (long) (pos * framesPerTick * getSoundFormat().getChannels() );
 		int currentPos = (int) ((ticksPos + total - 1 ) / total);
 		if (currentPos < 0)
 			currentPos = 0;

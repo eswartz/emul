@@ -57,7 +57,7 @@ public class TIRS232PIODsr extends TIRS232Dsr {
 			.withFilenameProperty(settingPIODsrRomFileName)
 			.withDescription("RS232/PIO Controller ROM")
 //			.withFileMD5("4E4E08FF10D23B799AAA990344553E2E")
-			.withFileMD5("A5467BE2E6BD04E1B9CF1DE8FA507541")
+			.withFileMD5("A5467BE2E6BD04E1B9xCF1DE8FA507541")
 			.create("TI RS232/PIO DSR ROM");
 	
 	private class PIOMMIOMemoryArea extends ConsoleMmioArea {

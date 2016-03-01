@@ -77,6 +77,16 @@ public interface AlsaLibrary extends Library {
 	public static final int SND_PCM_FORMAT_S16_BE = 3;
 	public static final int SND_PCM_FORMAT_U16_LE = 4;
 	public static final int SND_PCM_FORMAT_U16_BE = 5;
+	public static final int SND_PCM_FORMAT_S24_LE = 6;
+	public static final int SND_PCM_FORMAT_S24_BE = 7;
+	public static final int SND_PCM_FORMAT_U24_LE = 8;
+	public static final int SND_PCM_FORMAT_U24_BE = 9;
+	public static final int SND_PCM_FORMAT_U32_LE = 10;
+	public static final int SND_PCM_FORMAT_U32_BE = 11;
+	public static final int SND_PCM_FORMAT_FLOAT_LE = 12;
+	public static final int SND_PCM_FORMAT_FLOAT_BE = 13;
+	public static final int SND_PCM_FORMAT_FLOAT64_LE = 14;
+	public static final int SND_PCM_FORMAT_FLOAT64_BE = 15;
 
 	int snd_pcm_open(snd_pcm_t.Ref pcm, String name,
 			int /* snd_pcm_stream_t */stream, int mode);

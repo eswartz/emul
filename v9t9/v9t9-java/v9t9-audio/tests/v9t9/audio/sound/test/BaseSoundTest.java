@@ -12,8 +12,6 @@ package v9t9.audio.sound.test;
 
 import java.util.concurrent.TimeUnit;
 
-import javax.sound.sampled.AudioFormat;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -26,6 +24,7 @@ import ejs.base.sound.ISoundEmitter;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
 import ejs.base.sound.SoundFactory;
+import ejs.base.sound.SoundFormat;
 
 /**
  * @author ejs
@@ -35,7 +34,9 @@ public class BaseSoundTest {
 
 	private static ISoundEmitter soundListener;
 	protected static ISoundOutput soundOutput;
-	protected static AudioFormat format = new AudioFormat(55930, 16, 2, true, false);
+	protected static SoundFormat format = new SoundFormat(55930, 
+			2, 
+			SoundFormat.Type.SIGNED_16_LE);
 
 	@BeforeClass
 	public static void setup() {

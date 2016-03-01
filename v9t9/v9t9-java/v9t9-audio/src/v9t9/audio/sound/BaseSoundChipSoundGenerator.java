@@ -10,14 +10,13 @@
  */
 package v9t9.audio.sound;
 
-import javax.sound.sampled.AudioFormat;
-
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.sound.TI99SoundSmoother;
 import ejs.base.sound.ISoundOutput;
+import ejs.base.sound.SoundFormat;
 
 /**
  * @author ejs
@@ -33,7 +32,7 @@ public abstract class BaseSoundChipSoundGenerator extends BaseSoundGenerator {
 			soundRate = Integer.valueOf(val);
 		}
 	}
-	private static final AudioFormat format = new AudioFormat(soundRate, 16, 2, true, false);
+	private static final SoundFormat format = new SoundFormat(soundRate, 2, SoundFormat.Type.SIGNED_16_LE);
 	
 	protected int active;
 	protected final ISoundChip soundChip;
@@ -60,7 +59,7 @@ public abstract class BaseSoundChipSoundGenerator extends BaseSoundGenerator {
 	}
 
 	@Override
-	public AudioFormat getAudioFormat() {
+	public SoundFormat getSoundFormat() {
 		return format;
 	}
 

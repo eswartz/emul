@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import javax.sound.sampled.AudioFileFormat;
-import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import v9t9.common.cassette.CassetteConsts;
@@ -38,6 +37,7 @@ import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundView;
 import ejs.base.sound.SoundChunk;
 import ejs.base.sound.SoundFileListener;
+import ejs.base.sound.SoundFormat;
 import ejs.base.utils.HexUtils;
 import ejs.base.utils.ListenerList;
 import ejs.base.utils.Pair;
@@ -205,7 +205,7 @@ public class CassetteDeck extends BaseRegisterBank implements ICassetteDeck {
 		
 		synchronized (this) {
 			soundListener = new SoundFileListener();
-			AudioFormat audioFormat = generator.getAudioFormat();
+			SoundFormat audioFormat = generator.getSoundFormat();
 			soundListener.started(audioFormat);
 			
 			updateRecordBlank();

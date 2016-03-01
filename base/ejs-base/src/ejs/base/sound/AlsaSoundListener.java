@@ -15,8 +15,6 @@ import static ejs.base.sound.AlsaLibrary.INSTANCE;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioFormat.Encoding;
 import javax.sound.sampled.AudioSystem;
 
 import org.apache.log4j.Logger;
@@ -38,7 +36,7 @@ public class AlsaSoundListener implements ISoundEmitter {
 	
 	private AlsaLibrary.snd_pcm_t handle;
 	private boolean stopped;
-	private AudioFormat soundFormat;
+	private SoundFormat soundFormat;
 
 	private Thread soundWritingThread;
 
@@ -97,7 +95,7 @@ public class AlsaSoundListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public synchronized void started(AudioFormat format) {
+	public synchronized void started(SoundFormat format) {
 		if (handle != null) {
 			if (soundFormat.equals(format))
 				return;
@@ -108,24 +106,21 @@ public class AlsaSoundListener implements ISoundEmitter {
 		soundFormat = format;
 		
 		int pcmFormat;
-		switch (format.getSampleSizeInBits()) {
-		case 8:
-			if (format.getEncoding() == Encoding.PCM_UNSIGNED)
-				pcmFormat = AlsaLibrary.SND_PCM_FORMAT_U8;
-			else
-				pcmFormat = AlsaLibrary.SND_PCM_FORMAT_S8;
+		switch (format.getType()) {
+		case SIGNED_8:
+			pcmFormat = AlsaLibrary.SND_PCM_FORMAT_S8;
 			break;
-		case 16:
-			if (format.getEncoding() == Encoding.PCM_UNSIGNED)
-				if (format.isBigEndian())
-					pcmFormat = AlsaLibrary.SND_PCM_FORMAT_U16_BE;
-				else
-					pcmFormat = AlsaLibrary.SND_PCM_FORMAT_U16_LE;
-			else
-				if (format.isBigEndian())
-					pcmFormat = AlsaLibrary.SND_PCM_FORMAT_S16_BE;
-				else
-					pcmFormat = AlsaLibrary.SND_PCM_FORMAT_S16_LE;
+		case UNSIGNED_8:
+			pcmFormat = AlsaLibrary.SND_PCM_FORMAT_U8;
+			break;
+		case SIGNED_16_LE:
+			pcmFormat = AlsaLibrary.SND_PCM_FORMAT_S16_LE;
+			break;
+		case SIGNED_16_BE:
+			pcmFormat = AlsaLibrary.SND_PCM_FORMAT_S16_BE;
+			break;
+		case FLOAT_32_LE:
+			pcmFormat = AlsaLibrary.SND_PCM_FORMAT_FLOAT_LE;
 			break;
 		default:
 			throw new IllegalArgumentException("Cannot handle format " + format);
@@ -239,7 +234,7 @@ public class AlsaSoundListener implements ISoundEmitter {
 					
 					if (chunk.soundData != null) {
 						//logger.debug("Wrt chunk " + chunk + " at " + System.currentTimeMillis());
-						int size = chunk.soundData.length / soundFormat.getFrameSize();
+						int size = chunk.soundData.length / soundFormat.getBytesPerFrame();
 						synchronized (AlsaSoundListener.this) {
 							do {
 								if (stopped)

@@ -10,7 +10,6 @@
  */
 package ejs.base.sound;
 
-import javax.sound.sampled.AudioFormat;
 
 /**
  * @author ejs
@@ -21,7 +20,7 @@ public class ArraySoundView extends BaseSoundView implements IEditableSoundView 
 	private float[] data;
 	private int offset;
 
-	public ArraySoundView(int start, float[] data, int offset, int length, AudioFormat format) {
+	public ArraySoundView(int start, float[] data, int offset, int length, SoundFormat format) {
 		super(start, length, format);
 		this.data = data;
 		this.offset = offset;

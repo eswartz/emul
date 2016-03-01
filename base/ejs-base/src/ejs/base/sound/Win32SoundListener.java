@@ -16,11 +16,9 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 
 import org.apache.log4j.Logger;
-
 
 import com.sun.jna.Memory;
 import com.sun.jna.ptr.IntByReference;
@@ -49,7 +47,7 @@ public class Win32SoundListener implements ISoundEmitter {
 	protected static final Logger logger = Logger.getLogger(Win32SoundListener.class);
 	
 	private boolean stopped;
-	private AudioFormat soundFormat;
+	private SoundFormat soundFormat;
 
 	private Thread soundWritingThread;
 
@@ -117,7 +115,7 @@ public class Win32SoundListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public synchronized void started(AudioFormat format) {
+	public synchronized void started(SoundFormat format) {
 		if (wHandle != 0) {
 			if (soundFormat.equals(format))
 				return;
@@ -135,9 +133,9 @@ public class Win32SoundListener implements ISoundEmitter {
 
 		wfx.wFormatTag = WinMMLibrary.WAVE_FORMAT_PCM;
 		wfx.nChannels = (short) format.getChannels();
-		wfx.wBitsPerSample = (short) format.getSampleSizeInBits();
+		wfx.wBitsPerSample = (short) (format.getBytesPerSample() * 8);
 		wfx.nSamplesPerSec = rate;
-		wfx.nBlockAlign = (short) (wfx.wBitsPerSample * wfx.nChannels / 8);
+		wfx.nBlockAlign = (short) format.getBytesPerFrame();
 		wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
 		wfx.cbSize = 0;
 

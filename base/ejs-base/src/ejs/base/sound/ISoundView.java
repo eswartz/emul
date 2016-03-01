@@ -10,7 +10,6 @@
  */
 package ejs.base.sound;
 
-import javax.sound.sampled.AudioFormat;
 
 /**
  * @author ejs
@@ -20,7 +19,7 @@ public interface ISoundView extends IArrayAccess {
 
 	ISoundView[] EMPTY_ARRAY = new ISoundView[0];
 
-	AudioFormat getFormat();
+	SoundFormat getFormat();
 
 	/**
 	 * Get the value of the frame (averaging channels)

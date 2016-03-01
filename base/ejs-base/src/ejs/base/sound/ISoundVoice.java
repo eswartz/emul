@@ -10,7 +10,6 @@
  */
 package ejs.base.sound;
 
-import javax.sound.sampled.AudioFormat;
 
 /**
  * @author ejs
@@ -21,7 +20,7 @@ public interface ISoundVoice {
 	 * Set the format for which the voice is generated.
 	 * @param soundClock
 	 */
-	void setFormat(AudioFormat format);
+	void setFormat(SoundFormat format);
 	
 	/** Generate samples from 'from' to 'to' in 'soundGeneratorWorkBuffer' 
 	 * @return true if sound generated

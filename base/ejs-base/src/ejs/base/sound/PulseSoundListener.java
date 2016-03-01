@@ -14,9 +14,6 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioFormat.Encoding;
-
 import org.apache.log4j.Logger;
 
 import com.sun.jna.ptr.IntByReference;
@@ -41,7 +38,7 @@ public class PulseSoundListener implements ISoundEmitter {
 	
 	private volatile PulseAudioLibrary.pa_simple simple;
 	private PulseAudioLibrary.pa_sample_spec sampleFormat;
-	private AudioFormat soundFormat;
+	private SoundFormat soundFormat;
 
 	private Thread soundWritingThread;
 
@@ -85,7 +82,7 @@ public class PulseSoundListener implements ISoundEmitter {
 	/* (non-Javadoc)
 	 * 
 	 */
-	public synchronized void started(AudioFormat format) {
+	public synchronized void started(SoundFormat format) {
 		if (simple != null) {
 			if (soundFormat.equals(format))
 				return;
@@ -96,19 +93,20 @@ public class PulseSoundListener implements ISoundEmitter {
 
 		soundFormat = format;
 		sampleFormat = new PulseAudioLibrary.pa_sample_spec();
-		switch (format.getSampleSizeInBits()) {
-		case 8:
+		switch (format.getType()) {
+		case UNSIGNED_8:
 			sampleFormat.format = PulseAudioLibrary.PA_SAMPLE_U8;
-			if (format.getEncoding() != Encoding.PCM_UNSIGNED)
-				throw new IllegalArgumentException("Cannot handle signed 8-bit");
 			break;
-		case 16:
-			if (format.getEncoding() == Encoding.PCM_UNSIGNED)
-				throw new IllegalArgumentException("Cannot handle unsigned 16-bit");
-			if (format.isBigEndian())
-				sampleFormat.format = PulseAudioLibrary.PA_SAMPLE_S16BE;
-			else
-				sampleFormat.format = PulseAudioLibrary.PA_SAMPLE_S16LE;
+		case SIGNED_8:
+			throw new IllegalArgumentException("Cannot handle signed 8-bit");
+		case SIGNED_16_BE:
+			sampleFormat.format = PulseAudioLibrary.PA_SAMPLE_S16BE;
+			break;
+		case SIGNED_16_LE:
+			sampleFormat.format = PulseAudioLibrary.PA_SAMPLE_S16LE;
+			break;
+		case FLOAT_32_LE:
+			sampleFormat.format = PulseAudioLibrary.PA_SAMPLE_FLOAT32LE;
 			break;
 		default:
 			throw new IllegalArgumentException("Cannot handle format " + format);

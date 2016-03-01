@@ -12,10 +12,9 @@ package v9t9.audio.sound;
 
 import java.util.Arrays;
 
-import javax.sound.sampled.AudioFormat;
-
 import ejs.base.settings.ISettingSection;
 import ejs.base.sound.IFlushableSoundVoice;
+import ejs.base.sound.SoundFormat;
 
 /**
  * Produce sound on the audio gate, which has two states: on and off.
@@ -114,7 +113,7 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	 * @see v9t9.audio.sound.SoundVoice#setFormat(javax.sound.sampled.AudioFormat)
 	 */
 	@Override
-	public void setFormat(AudioFormat format) {
+	public void setFormat(SoundFormat format) {
 		super.setFormat(format);
 		this.soundClock = format.getFrameRate();
 	}

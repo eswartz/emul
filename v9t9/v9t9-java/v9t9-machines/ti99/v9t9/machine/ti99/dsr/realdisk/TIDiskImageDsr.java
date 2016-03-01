@@ -68,7 +68,7 @@ public class TIDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 
 			.standardDsrRom(null)
 			.withFilenameProperty(settingDsrRomFileName)
 			.withDescription("TI Disk Controller ROM (double-sided, single-density)")
-			.withFileMD5("C9A737D6930F5FD1D96829FD89359CF1")
+			.withFileMD5("C9A737D6930F5FD1D9x6829FD89359CF1")
 			.withFileMD5Algorithm(MD5FilterAlgorithms.ALGORITHM_SEGMENT + ":0+1FF0")
 			.create("TI Disk DSR ROM");
 

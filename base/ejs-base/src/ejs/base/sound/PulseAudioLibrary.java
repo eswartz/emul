@@ -52,6 +52,7 @@ public interface PulseAudioLibrary extends Library {
 	public static final int PA_SAMPLE_U8 = 0;
 	public static final int PA_SAMPLE_S16LE = 3;
 	public static final int PA_SAMPLE_S16BE = 4;
+	public static final int PA_SAMPLE_FLOAT32LE = 5;
 	public static final int PA_STREAM_NODIRECTION = 0;
 	public static final int PA_STREAM_PLAYBACK = 1;
 	public static final int PA_STREAM_RECORD = 2;
