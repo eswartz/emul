@@ -43,6 +43,7 @@ public class SoundEngine {
 		this.format = format;
 		
 		output = SoundFactory.createSoundOutput(format, mutateRate);
+		this.mutatesPerSec = mutateRate;
 		
 		iSoundListener = emitter;
 		iSoundListener.setBlockMode(true);

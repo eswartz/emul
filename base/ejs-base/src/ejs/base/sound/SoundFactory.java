@@ -26,7 +26,7 @@ public class SoundFactory {
 	private static final Logger logger = Logger.getLogger(SoundFactory.class);
 	
 	public static ISoundOutput createSoundOutput(SoundFormat format, int tickRate) {
-		return new SoundOutput(format, tickRate);
+		return new SoundOutput(format, tickRate > 0 ? tickRate : 100);
 	}
 	
 	public static ISoundEmitter createAudioListener() {
