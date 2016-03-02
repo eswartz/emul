@@ -30,7 +30,7 @@ public class SoundFactory {
 	}
 	
 	public static ISoundEmitter createAudioListener() {
-		if (false&&!"true".equals(System.getProperty("v9t9.sound.java"))) {
+		if (!"true".equals(System.getProperty("v9t9.sound.java"))) {
 			if (System.getProperty("os.name").equals("Linux")) {
 				if (isPulseRunning()) {
 					logger.info("Using Pulse for sound");
