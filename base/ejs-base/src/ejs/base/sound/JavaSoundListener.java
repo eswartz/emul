@@ -14,6 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioFormat.Encoding;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Line;
@@ -153,12 +154,19 @@ public class JavaSoundListener implements ISoundEmitter {
 	 * @return
 	 */
 	public static AudioFormat toAudioFormat(SoundFormat format) {
+		AudioFormat.Encoding encoding = format.isIntegral() ? 
+				(format.isSigned() ? Encoding.PCM_SIGNED : Encoding.PCM_UNSIGNED)
+				: Encoding.PCM_FLOAT;
 		float sampleRate = format.getSampleRate();
 		int channels = format.getChannels();
 		int sampleSizeInBits = format.getBytesPerSample() * 8;
-		boolean signed = format.isSigned();
 		boolean bigEndian = format.isBigEndian();
-		return new AudioFormat(sampleRate, sampleSizeInBits, channels, signed, bigEndian);
+		AudioFormat fmt = new AudioFormat(
+				encoding, sampleRate, sampleSizeInBits, channels, 
+				format.getBytesPerFrame(), format.getFrameRate(),
+				bigEndian);
+		
+		return fmt;
 	}
 
 	/* (non-Javadoc)

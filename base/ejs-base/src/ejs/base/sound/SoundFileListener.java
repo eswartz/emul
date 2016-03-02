@@ -14,10 +14,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFileFormat.Type;
+import javax.sound.sampled.AudioFormat.Encoding;
+import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 
@@ -184,11 +187,12 @@ public class SoundFileListener implements ISoundEmitter {
 
 				AudioInputStream is = null;
 				
+				AudioFormat jformat = JavaSoundListener.toAudioFormat(format);
 				try {
 					is = new AudioInputStream(
 							new FileInputStream(soundFileRaw),
-							JavaSoundListener.toAudioFormat(format),
-							soundFileRaw.length() / format.getBytesPerSample());
+							jformat,
+							soundFileRaw.length() / format.getBytesPerFrame());
 				} catch (IOException e) {
 					e.printStackTrace();
 					return;
@@ -197,6 +201,23 @@ public class SoundFileListener implements ISoundEmitter {
 				try {
 					AudioSystem.write(is, fileType, soundFile);
 					is.close();
+					
+					if (jformat.getEncoding() == Encoding.PCM_FLOAT && fileType == Type.WAVE) {
+						// HACK because the JDK puts the wrong header on the file 
+						RandomAccessFile raf = new RandomAccessFile(soundFile, "rw");
+						raf.seek(20);
+						int fmt = raf.read();
+						if (fmt == 3) {
+							// great
+						} else {
+							assert fmt == 1;
+							raf.seek(20);
+							raf.write(3); // format code: PCM_FLOAT
+						}
+						raf.close();
+					}
+
+					
 					soundFileRaw.delete();
 					converted = true;
 				} catch (IOException e) {

@@ -78,6 +78,9 @@ public class AudioChunk {
 					float s = chunk.at(i);
 					if (s < -1.0f) s = -1.0f; else if (s > 1.0f) s = 1.0f;
 
+					if (s != 0.0)
+						isEmpty = false;
+					
 					int samp = Float.floatToIntBits(s);
 					soundData[i*4] = (byte) (samp & 0xff);
 					soundData[i*4+1] = (byte) (samp >> 8);
