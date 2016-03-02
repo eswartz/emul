@@ -192,6 +192,7 @@ public class TI99ModuleDetector implements IModuleDetector {
 		// remove spurious modules
 		for (Iterator<IModule> iter = moduleMap.values().iterator(); iter.hasNext(); ) {
 			IModule module = iter.next();
+			
 			//System.out.println("module: " + module);
 			log.info("module: " + module);
 			
@@ -275,92 +276,8 @@ public class TI99ModuleDetector implements IModuleDetector {
 //			}
 			
 			// Replace the name of any stock module
-			if (!ignoreStock) {
-				IModule replacedStock = moduleManager.findReplacedStockModuleByMd5(module.getMD5());
-				if (replacedStock != null) {
-					// this detected module is "really" another one, which has different
-					// memory entries
-					
-					Map<String, MemoryEntryInfo> stockInfos = new HashMap<String, MemoryEntryInfo>();
-					for (MemoryEntryInfo info : replacedStock.getMemoryEntryInfos()) {
-						stockInfos.put(info.getDomainName() + ":" + info.getAddress(), info);
-					}
-					
-					Map<String, MemoryEntryInfo> curInfos = new HashMap<String, MemoryEntryInfo>();
-					for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-						curInfos.put(info.getDomainName() + ":" + info.getAddress(), info);
-					}
-					
-					boolean changed = false;
-					
-					for (Map.Entry<String, MemoryEntryInfo> ent : stockInfos.entrySet()) {
-						if (!curInfos.containsKey(ent.getKey())) {
-							module.addMemoryEntryInfo(new MemoryEntryInfo(ent.getValue().getProperties()));
-							changed = true;
-						}
-						else if (ent.getValue().isStored()) {
-							// detected one may be bogus
-							MemoryEntryInfo info = curInfos.get(ent.getKey());
-							module.removeMemoryEntryInfo(info);
-							MemoryEntryInfo stockInfo = new MemoryEntryInfo(ent.getValue().getProperties());
-							stockInfo.getProperties().put(MemoryEntryInfo.FILENAME, info.getFilename());
-							if (info.getFilename2() != null)
-								stockInfo.getProperties().put(MemoryEntryInfo.FILENAME2, info.getFilename2());
-							module.addMemoryEntryInfo(stockInfo);
-							changed = true;
-						}
-						else {
-							// ensure the offset/size/etc are the same
-							MemoryEntryInfo stockInfo = ent.getValue();
-							MemoryEntryInfo info = curInfos.get(ent.getKey());
-							
-							if (stockInfo.getOffset() > 0)
-								info.getProperties().put(MemoryEntryInfo.OFFSET, stockInfo.getOffset());
-							if (stockInfo.getSize() > 0)
-								info.getProperties().put(MemoryEntryInfo.SIZE, stockInfo.getSize());
-							if (stockInfo.getOffset2() > 0)
-								info.getProperties().put(MemoryEntryInfo.OFFSET2, stockInfo.getOffset2());
-							if (stockInfo.getSize2() > 0)
-								info.getProperties().put(MemoryEntryInfo.SIZE2, stockInfo.getSize2());
-							
-							if (stockInfo.getFileMD5() != null)
-								info.getProperties().put(MemoryEntryInfo.FILE_MD5, stockInfo.getFileMD5());
-							if (stockInfo.getFileMD5Algorithm() != null)
-								info.getProperties().put(MemoryEntryInfo.FILE_MD5_ALGORITHM, stockInfo.getFileMD5Algorithm());
-							if (stockInfo.getFile2MD5() != null)
-								info.getProperties().put(MemoryEntryInfo.FILE2_MD5, stockInfo.getFile2MD5());
-							if (stockInfo.getFile2MD5Algorithm() != null)
-								info.getProperties().put(MemoryEntryInfo.FILE2_MD5_ALGORITHM, stockInfo.getFile2MD5Algorithm());
-						}
-					}
-					for (Map.Entry<String, MemoryEntryInfo> ent : curInfos.entrySet()) {
-						if (!stockInfos.containsKey(ent.getKey())) {
-							module.removeMemoryEntryInfo(ent.getValue());
-							changed = true;
-						}
-					}
-					module.setName(replacedStock.getName());
-					
-					if (!TextUtils.isEmpty(replacedStock.getMD5())) {
-						if (changed) {
-							if (!replacedStock.getMD5().equals(module.getMD5())) {
-								log.error("replaced stock module '" + module.getName() + "' doesn't match MD5: expected " + replacedStock.getMD5() + "; got " + module.getMD5());
-							}
-						}
-						module.setMD5(replacedStock.getMD5());
-					}
-				}
-				
-				IModule stock = moduleManager.findStockModuleByMd5(module.getMD5());
-				if (stock != null) {
-					if (stock.getMemoryEntryInfos().length == module.getMemoryEntryInfos().length) {
-						module.setName(stock.getName());
-					} else {
-						module.setName(stock.getName() + " (possibly broken)");
-					}
-					module.setAutoStart(stock.isAutoStart());
-					module.getKeywords().addAll(stock.getKeywords());
-				}
+			if (!ignoreStock && moduleManager != null) {
+				replaceStock(module);
 			}
 		}
 		
@@ -374,6 +291,97 @@ public class TI99ModuleDetector implements IModuleDetector {
 		}
 		
 		return modules;
+	}
+
+	/**
+	 * @param module
+	 */
+	protected void replaceStock(IModule module) {
+		IModule replacedStock = moduleManager.findReplacedStockModuleByMd5(module.getMD5());
+		if (replacedStock != null) {
+			// this detected module is "really" another one, which has different
+			// memory entries
+			
+			Map<String, MemoryEntryInfo> stockInfos = new HashMap<String, MemoryEntryInfo>();
+			for (MemoryEntryInfo info : replacedStock.getMemoryEntryInfos()) {
+				stockInfos.put(info.getDomainName() + ":" + info.getAddress(), info);
+			}
+			
+			Map<String, MemoryEntryInfo> curInfos = new HashMap<String, MemoryEntryInfo>();
+			for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
+				curInfos.put(info.getDomainName() + ":" + info.getAddress(), info);
+			}
+			
+			boolean changed = false;
+			
+			for (Map.Entry<String, MemoryEntryInfo> ent : stockInfos.entrySet()) {
+				if (!curInfos.containsKey(ent.getKey())) {
+					module.addMemoryEntryInfo(new MemoryEntryInfo(ent.getValue().getProperties()));
+					changed = true;
+				}
+				else if (ent.getValue().isStored()) {
+					// detected one may be bogus
+					MemoryEntryInfo info = curInfos.get(ent.getKey());
+					module.removeMemoryEntryInfo(info);
+					MemoryEntryInfo stockInfo = new MemoryEntryInfo(ent.getValue().getProperties());
+					stockInfo.getProperties().put(MemoryEntryInfo.FILENAME, info.getFilename());
+					if (info.getFilename2() != null)
+						stockInfo.getProperties().put(MemoryEntryInfo.FILENAME2, info.getFilename2());
+					module.addMemoryEntryInfo(stockInfo);
+					changed = true;
+				}
+				else {
+					// ensure the offset/size/etc are the same
+					MemoryEntryInfo stockInfo = ent.getValue();
+					MemoryEntryInfo info = curInfos.get(ent.getKey());
+					
+					if (stockInfo.getOffset() > 0)
+						info.getProperties().put(MemoryEntryInfo.OFFSET, stockInfo.getOffset());
+					if (stockInfo.getSize() > 0)
+						info.getProperties().put(MemoryEntryInfo.SIZE, stockInfo.getSize());
+					if (stockInfo.getOffset2() > 0)
+						info.getProperties().put(MemoryEntryInfo.OFFSET2, stockInfo.getOffset2());
+					if (stockInfo.getSize2() > 0)
+						info.getProperties().put(MemoryEntryInfo.SIZE2, stockInfo.getSize2());
+					
+					if (stockInfo.getFileMD5() != null)
+						info.getProperties().put(MemoryEntryInfo.FILE_MD5, stockInfo.getFileMD5());
+					if (stockInfo.getFileMD5Algorithm() != null)
+						info.getProperties().put(MemoryEntryInfo.FILE_MD5_ALGORITHM, stockInfo.getFileMD5Algorithm());
+					if (stockInfo.getFile2MD5() != null)
+						info.getProperties().put(MemoryEntryInfo.FILE2_MD5, stockInfo.getFile2MD5());
+					if (stockInfo.getFile2MD5Algorithm() != null)
+						info.getProperties().put(MemoryEntryInfo.FILE2_MD5_ALGORITHM, stockInfo.getFile2MD5Algorithm());
+				}
+			}
+			for (Map.Entry<String, MemoryEntryInfo> ent : curInfos.entrySet()) {
+				if (!stockInfos.containsKey(ent.getKey())) {
+					module.removeMemoryEntryInfo(ent.getValue());
+					changed = true;
+				}
+			}
+			module.setName(replacedStock.getName());
+			
+			if (!TextUtils.isEmpty(replacedStock.getMD5())) {
+				if (changed) {
+					if (!replacedStock.getMD5().equals(module.getMD5())) {
+						log.error("replaced stock module '" + module.getName() + "' doesn't match MD5: expected " + replacedStock.getMD5() + "; got " + module.getMD5());
+					}
+				}
+				module.setMD5(replacedStock.getMD5());
+			}
+		}
+		
+		IModule stock = moduleManager.findStockModuleByMd5(module.getMD5());
+		if (stock != null) {
+			if (stock.getMemoryEntryInfos().length == module.getMemoryEntryInfos().length) {
+				module.setName(stock.getName());
+			} else {
+				module.setName(stock.getName() + " (possibly broken)");
+			}
+			module.setAutoStart(stock.isAutoStart());
+			module.getKeywords().addAll(stock.getKeywords());
+		}
 	}
 
 	private static final Pattern tosecNaming = Pattern.compile("(?i).*\\([^)]+\\).*\\([^)]+\\).*\\([^)]+\\).*\\(([^)]+)\\)?");
