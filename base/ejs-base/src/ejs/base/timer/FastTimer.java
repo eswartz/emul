@@ -35,6 +35,10 @@ public class FastTimer {
 	private String name;
 	private static int gCnt;
 	
+	static final long NS = 1000000 * 1000L;
+	static boolean DEBUG = false;
+	
+	
 	class RunnableInfo {
 		public RunnableInfo(Runnable task, long delay) {
 			super();
@@ -76,7 +80,7 @@ public class FastTimer {
 					return;
 			
 			if (perSecond != 0) {
-				RunnableInfo info = new RunnableInfo(task, 1000000000L / perSecond);
+				RunnableInfo info = new RunnableInfo(task, NS / perSecond);
 				taskinfos.add(info);
 			
 				if (timerThread == null)
@@ -90,8 +94,6 @@ public class FastTimer {
 			@Override
 			public void run() {
 				int iterations = 0;
-				
-				final long NS = 10000000 * 1000L;
 				
 				long nsstart = timer.getTimeNs();
 				long nextns = nsstart + NS;
@@ -167,10 +169,10 @@ public class FastTimer {
 						}
 						
 						iterations++;
-						if (now >= nextns) {
+						if (DEBUG && now >= nextns) {
 							double elapsed = (now - nsstart) / (double) NS;
-							System.out.println(iterations + " for " + 
-										elapsed + " seconds = " + (iterations / elapsed));
+							System.out.println("timer profiling: " + iterations + " iterations in " + 
+										elapsed + " seconds = " + (iterations / elapsed) + " ns per iteration");
 							nextns += NS;
 						}
 								
