@@ -73,7 +73,17 @@ public class AudioChunk {
 					logger.error("Not handled: " + format);
 				}
 			} else {
-				logger.error("Not handled: " + format);
+				// float
+				for (int i = 0; i < length; i++) {
+					float s = chunk.at(i);
+					if (s < -1.0f) s = -1.0f; else if (s > 1.0f) s = 1.0f;
+
+					int samp = Float.floatToIntBits(s);
+					soundData[i*4] = (byte) (samp & 0xff);
+					soundData[i*4+1] = (byte) (samp >> 8);
+					soundData[i*4+2] = (byte) (samp >> 16);
+					soundData[i*4+3] = (byte) (samp >> 24);
+				}
 			}
 		}
 	}
