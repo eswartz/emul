@@ -25,6 +25,8 @@ public class FieldUtils {
 		try {
 			if (value instanceof String && !String.class.equals(field.getType())) {
 				setValueFromString(field, obj, String.valueOf(value));
+			} else if (field.getType() == float.class && value instanceof Double) {
+				field.set(obj, ((Double) value).floatValue());
 			} else {
 				field.set(obj, value);
 			}
