@@ -38,15 +38,15 @@ public class SoundEngine {
 	
 	/**
 	 */
-	public SoundEngine(SoundFormat format, ISoundOutput output) {
+	public SoundEngine(SoundFormat format, int mutateRate, ISoundEmitter emitter) {
 		mutators = new IMutator[0];
 		voices = new ISoundVoice[0];
 		
 		this.format = format;
 		
-		this.output = output;
+		output = SoundFactory.createSoundOutput(format, mutateRate);
 		
-		iSoundListener = SoundFactory.createAudioListener();
+		iSoundListener = emitter;
 		iSoundListener.setBlockMode(true);
 		
 		fileRecorder = new SoundFileListener();
