@@ -30,8 +30,6 @@ public class SoundEngine {
 	 */
 	private long clock;
 
-	private SoundFileListener fileRecorder;
-
 	private ISoundOutput output;
 
 	private SoundFormat format;
@@ -48,8 +46,6 @@ public class SoundEngine {
 		
 		iSoundListener = emitter;
 		iSoundListener.setBlockMode(true);
-		
-		fileRecorder = new SoundFileListener();
 		
 		output.addEmitter(iSoundListener);
 		//output.addListener(fileRecorder);
@@ -198,16 +194,16 @@ public class SoundEngine {
 	}
 
 	/**
-	 * @param diff
+	 * Generate sound for the given number of milliseconds.
 	 */
-	public void generate(int ticks) {
-		output.generate(voices, output.getSamples(ticks));
+	public void generate(int ms) {
+		output.generate(voices, output.getSamples(ms));
 		for (ISoundVoice voice : voices) {
 			if (voice.shouldDispose()) {
 				removeVoice(voice);
 			}
 		}
-		clock += ticks;
+		clock += ms;
 	}
 
 	/**
@@ -217,12 +213,6 @@ public class SoundEngine {
 		return (int) format.getFrameRate();
 	}
 
-	/**
-	 * @return the fileRecorder
-	 */
-	public SoundFileListener getFileRecorder() {
-		return fileRecorder;
-	}
 	/**
 	 * @return
 	 */
