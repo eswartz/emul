@@ -11,6 +11,7 @@
 package ejs.base.utils;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -144,4 +145,18 @@ public class ListenerList<T> implements Iterable<T>, Serializable {
 	public Object[] toArray() {
 		return listenerArray;
 	}
+	
+    /**
+     * Create an array of the given type.
+     * @param klass type of array element
+     * @param els the elements to insert, may be <code>null</code>
+     * @return new array whose element type is 'klass', or <code>null</code> if els is <code>null</code>
+     */
+    @SuppressWarnings("unchecked")
+    public T[] toArray(Class<? extends T> klass) {
+        T[] arr = (T[]) Array.newInstance(klass, listenerArray.length);
+        System.arraycopy(listenerArray, 0, arr, 0, listenerArray.length);
+        return arr;
+    }
+
 }
