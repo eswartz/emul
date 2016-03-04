@@ -87,7 +87,7 @@ public class GetterSetterProperty extends AbstractClassBasedProperty {
 	 */
 	@Override
 	protected Object doGetValue() throws Exception {
-		return getter.invoke(obj);
+		return getter != null ? getter.invoke(obj) : null;
 	}
 	
 	/* (non-Javadoc)
@@ -95,7 +95,8 @@ public class GetterSetterProperty extends AbstractClassBasedProperty {
 	 */
 	@Override
 	protected void doSetValue(Object value) throws Exception {
-		setter.invoke(obj, value);
+		if (setter != null) 
+			setter.invoke(obj, value);
 	}
 
 	public Object getObject() {
