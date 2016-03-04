@@ -103,5 +103,4 @@ public class PropertyUtils {
 		Object value = convertStringToValue(txt, arrayType.getComponentType());
 		setArrayValue(property, index, value);
 	}
-	
 }

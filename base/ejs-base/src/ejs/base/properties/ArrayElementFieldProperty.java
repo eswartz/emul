@@ -21,59 +21,27 @@ public class ArrayElementFieldProperty extends FieldProperty implements
 
 	public ArrayElementFieldProperty(
 			Object obj, String arrayFieldName,
-			int index, String name) {
-		super(null, obj, arrayFieldName, name);
+			int index, String indexName) {
+		super(arrayFieldName + "_" + indexName, obj, arrayFieldName);
 		this.index = index; 
 	}
 
 	/* (non-Javadoc)
-	 * 
+	 * @see ejs.base.properties.FieldProperty#doGetValue()
 	 */
 	@Override
-	public void setValueFromString(String txt) {
-		FieldUtils.setArrayValueFromString(field, index, obj, txt);
-		firePropertyChange();
-	}
-	
-	/* (non-Javadoc)
-	 * 
-	 */
-	@Override
-	public Object getValue() {
+	protected Object doGetValue() throws Exception {
 		return FieldUtils.getArrayValue(field, index, obj);
 	}
-	
 	/* (non-Javadoc)
-	 * 
+	 * @see ejs.base.properties.FieldProperty#doSetValue(java.lang.Object)
 	 */
 	@Override
-	public void setValue(Object value) {
+	protected void doSetValue(Object value) throws Exception {
 		FieldUtils.setArrayValue(field, index, obj, value);
-		firePropertyChange();
-	}
-
-	/* (non-Javadoc)
-	 * 
-	 */
-	@Override
-	public String getName() {
-		return fieldName + "_" + name;
 	}
 	
-	/**
-	 * @return
-	 */
 	public int getIndex() {
 		return index;
 	}
-
-	/* (non-Javadoc)
-	 * 
-	 */
-	/*
-	@Override
-	public IPropertyEditor createEditor() {
-		return new ArrayFieldPropertyEditor(this);
-	}
-	*/
 }

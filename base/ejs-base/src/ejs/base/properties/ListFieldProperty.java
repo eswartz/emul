@@ -27,12 +27,14 @@ public class ListFieldProperty extends FieldProperty {
 	private final String elementName;
 	private IClassPropertyFactory elementFactory;
 
-	public ListFieldProperty(IClassPropertyFactory factory, Object obj, String fieldName,
-			String elementName, IClassPropertyFactory elementFactory, 
-			String name) {
-		super(factory, obj, fieldName, name != null ? name : fieldName);
+	public ListFieldProperty(String name, Object obj, String fieldName,
+			String elementName) {
+		super(name, obj, fieldName);
 		this.elementName = elementName;
-		this.elementFactory = elementFactory;
+	}
+	public ListFieldProperty(Object obj, String fieldName,
+			String elementName) {
+		this(fieldName, obj, fieldName, elementName);
 	}
 
 
@@ -90,24 +92,14 @@ public class ListFieldProperty extends FieldProperty {
 		}
 		//setValue(obj);
 	}
-	
-	/* (non-Javadoc)
-	 * 
-	 */
-	/*
-	@Override
-	public IPropertyEditor createEditor() {
-		return new ListPropertyEditor(this);
-	}
-	*/
 
-	/**
-	 * @return
-	 */
 	public IClassPropertyFactory getElementClassFactory() {
 		return elementFactory;
 	}
 
+	public void setElementClassFactory(IClassPropertyFactory elementFactory) {
+		this.elementFactory = elementFactory;
+	}
 
 	/**
 	 * @return

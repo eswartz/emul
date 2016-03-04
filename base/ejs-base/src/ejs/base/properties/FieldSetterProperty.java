@@ -1,7 +1,7 @@
 /*
   FieldProperty.java
 
-  (c) 2010-2012 Edward Swartz
+  (c) 2010-2016 Edward Swartz
 
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Public License v1.0
@@ -11,43 +11,36 @@
 package ejs.base.properties;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
- * This kind of property reads/writes values directly upon
- * a Field in an Object.
+ * This kind of property reads values directly from
+ * a Field in an Object but writes them through a #set... method.
  * @author ejs
  *
  */
-public class FieldProperty extends AbstractClassBasedProperty {
+public class FieldSetterProperty extends AbstractClassBasedProperty {
+
 	
 	protected Field field;
+	private Method setter;
 
-	public FieldProperty(String name, Object obj, Field field) {
-		super(field.getType(), name, obj); 
+	public FieldSetterProperty(Class<?> type, String name, Object obj, Field field, Method setter) {
+		super(type, name, obj); 
+		this.setter = setter;
 		this.field = field;
 		field.setAccessible(true);
 	}
 	
 
-	public FieldProperty(String name, Object obj, String fieldName) {
-		super(Object.class /*placeholder*/, name, obj); 
-		this.field = FieldUtils.fetchField(obj, fieldName);
-		setType(field.getType());
-		field.setAccessible(true);
-	}
-	
-	public FieldProperty(Object obj, String fieldName) {
-		this(fieldName, obj, fieldName);
-	}	
-	
-	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + ((field == null) ? 0 : field.hashCode());
 		result = prime * result
-				+ ((field== null) ? 0 : field.hashCode());
+				+ ((field == null) ? 0 : field.hashCode());
+		result = prime * result + ((setter == null) ? 0 : setter.hashCode());
 		result = prime * result + ((obj == null) ? 0 : obj.hashCode());
 		return result;
 	}
@@ -65,7 +58,7 @@ public class FieldProperty extends AbstractClassBasedProperty {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		FieldProperty other = (FieldProperty) obj;
+		FieldSetterProperty other = (FieldSetterProperty) obj;
 		if (field == null) {
 			if (other.field != null) {
 				return false;
@@ -78,6 +71,13 @@ public class FieldProperty extends AbstractClassBasedProperty {
 				return false;
 			}
 		} else if (!field.equals(other.field)) {
+			return false;
+		}
+		if (this.setter == null) {
+			if (other.setter != null) {
+				return false;
+			}
+		} else if (!this.setter.equals(other.setter)) {
 			return false;
 		}
 		if (this.obj == null) {
@@ -90,8 +90,10 @@ public class FieldProperty extends AbstractClassBasedProperty {
 		return true;
 	}
 
-	protected FieldProperty getProperty() { return this; }
-
+	/* (non-Javadoc)
+	 * @see ejs.base.properties.AbstractClassBasedProperty#doGetValue()
+	 */
+	@Override
 	protected Object doGetValue() throws Exception {
 		return field.get(obj);
 	}
@@ -101,13 +103,19 @@ public class FieldProperty extends AbstractClassBasedProperty {
 	 */
 	@Override
 	protected void doSetValue(Object value) throws Exception {
-		field.set(obj, value);
+		setter.invoke(obj, value);
 	}
-	
+
 	public Field getField() {
 		return field;
+	}
+	
+	public Method getSetter() {
+		return setter;
 	}
 	public Object getObject() {
 		return obj;
 	}
+
+
 }

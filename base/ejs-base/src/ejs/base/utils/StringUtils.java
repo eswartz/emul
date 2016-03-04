@@ -51,7 +51,7 @@ public class StringUtils {
 	}
 	
 	/**
-	 * 
+	 * Convert a camelcased string to a label
 	 * @param name
 	 * @return
 	 */

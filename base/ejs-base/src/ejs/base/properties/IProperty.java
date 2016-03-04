@@ -21,7 +21,9 @@ import java.util.List;
  */
 public interface IProperty extends IXMLPersistable, IPersistable,
 	Comparable<IProperty>, Comparator<IProperty> {
+	/** get the property name (internal) */
 	String getName();
+	/** get the human-readable label */
 	String getLabel();
 	String getDescription();
 	

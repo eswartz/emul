@@ -18,25 +18,20 @@ import java.lang.reflect.Method;
  * @author ejs
  *
  */
-public class GetterSetterProperty extends AbstractProperty {
+public class GetterSetterProperty extends AbstractClassBasedProperty {
 
 	
 	protected final Method getter, setter;
-	protected final Object obj;
 
-	public GetterSetterProperty(IClassPropertyFactory factory, Object obj, 
-			Method getter, Method setter,
-			Class<?> type, String name) {
-		super(factory, obj.getClass(), name); 
-				//editorProvider != null ? editorProvider : new FieldPropertyEditorProvider());
-		this.obj = obj;
+	public GetterSetterProperty(Class<?> type, String name, Object obj, 
+			Method getter, Method setter) {
+		super(type, name, obj); 
 		this.getter = getter;
 		if (getter != null) 
 			getter.setAccessible(true);
 		this.setter = setter;
 		if (setter != null) 
 			setter.setAccessible(true);
-		setType(type);
 	}
 	
 	@Override
@@ -87,64 +82,36 @@ public class GetterSetterProperty extends AbstractProperty {
 		return true;
 	}
 
-
-
 	/* (non-Javadoc)
-	 * 
+	 * @see ejs.base.properties.AbstractClassBasedProperty#doGetValue()
 	 */
-	/*
-	public CellEditor createCellEditor(Composite composite) {
-		return new TextCellEditor(composite);
+	@Override
+	protected Object doGetValue() throws Exception {
+		return getter.invoke(obj);
 	}
-	*/
-	
-	protected GetterSetterProperty getProperty() { return this; }
 	
 	/* (non-Javadoc)
-	 * 
+	 * @see ejs.base.properties.BaseClassProperty#doSetValue(java.lang.Object)
 	 */
-	public Object getValue() {
-		try {
-			return getter.invoke(obj);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
+	@Override
+	protected void doSetValue(Object value) throws Exception {
+		setter.invoke(obj, value);
 	}
-
-
-	/* (non-Javadoc)
-	 * 
-	 */
-	public void setValue(Object value) {
-		try {
-			if (value instanceof String && type != String.class) {
-				setValueFromString((String) value);
-			} else if (value instanceof Double && type == float.class) {
-				setter.invoke(obj, ((Double) value).floatValue());
-				firePropertyChange();
-			} else {
-				setter.invoke(obj, value);
-				firePropertyChange();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public void setValueFromString(String txt) {
-		Object v = PropertyUtils.convertStringToValue(txt, type);
-		try {
-			setter.invoke(obj, v);
-			firePropertyChange();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 
 	public Object getObject() {
 		return obj;
 	}
 
+	/**
+	 * @return the getter
+	 */
+	public Method getGetter() {
+		return getter;
+	}
+	/**
+	 * @return the setter
+	 */
+	public Method getSetter() {
+		return setter;
+	}
 }

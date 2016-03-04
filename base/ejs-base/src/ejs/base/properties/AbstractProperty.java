@@ -35,7 +35,7 @@ public abstract class AbstractProperty implements IProperty {
 	private static final Logger logger = Logger.getLogger(AbstractProperty.class);
 	
 	protected final String name;
-	protected final IClassPropertyFactory factory;
+	protected IClassPropertyFactory factory;
 	protected Class<?> type;
 	//protected IPropertyEditorProvider editorProvider;
 	private String descr;
@@ -134,6 +134,13 @@ public abstract class AbstractProperty implements IProperty {
 	 */
 	public IClassPropertyFactory getClassFactory() {
 		return factory;
+	}
+	
+	/**
+	 * @param factory the factory to set
+	 */
+	public void setClassFactory(IClassPropertyFactory factory) {
+		this.factory = factory;
 	}
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()

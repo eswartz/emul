@@ -1,7 +1,7 @@
 /*
   SoundEngine.java
 
-  (c) 2012 Edward Swartz
+  (c) 2012, 2016 Edward Swartz
 
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Public License v1.0
@@ -10,19 +10,19 @@
  */
 package ejs.base.sound;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import ejs.base.timer.FastTimer;
+import ejs.base.utils.ListenerList;
 
 
 public class SoundEngine {
 	
 	private ISoundEmitter iSoundListener;
 
-	private ISoundVoice[] voices;
+	private ListenerList<ISoundVoice> voices;
+	private ISoundVoice[] voiceArray;
 	
-	private IMutator[] mutators;
+	private ListenerList<IMutator> mutators;
+	private IMutator[] mutatorArray;
 	
 	/** our driving clock, measured in ms, which may be faster than real time,
 	 * so we can generate sound quickly enough for the buffers to stay full.
@@ -33,12 +33,16 @@ public class SoundEngine {
 	private ISoundOutput output;
 
 	private SoundFormat format;
+
 	
 	/**
 	 */
 	public SoundEngine(SoundFormat format, int mutateRate, ISoundEmitter emitter) {
-		mutators = new IMutator[0];
-		voices = new ISoundVoice[0];
+		mutators = new ListenerList<IMutator>();
+		mutatorArray = mutators.toArray(IMutator.class);
+		
+		voices = new ListenerList<ISoundVoice>();
+		voiceArray = voices.toArray(ISoundVoice.class);
 		
 		this.format = format;
 		
@@ -58,20 +62,23 @@ public class SoundEngine {
 	 * @return
 	 */
 	public boolean isMutating() {
-		return mutators.length > 0;
+		return !mutators.isEmpty();
 	}
 
 	/**
 	 * @param mutator
 	 */
 	public void addMutator(IMutator mutator) {
-		synchronized (this) {
-			ArrayList<IMutator> moreMutators = new ArrayList<IMutator>(mutators.length + 1);
-			moreMutators.addAll(Arrays.asList(mutators));
-			moreMutators.add(mutator);
-			mutators = (IMutator[]) moreMutators
-					.toArray(new IMutator[moreMutators.size()]); 
-		}
+		mutators.add(mutator);
+		mutatorArray = mutators.toArray(IMutator.class);
+	}
+
+	/**
+	 * @param mutator
+	 */
+	public void removeMutator(IMutator mutator) {
+		mutators.remove(mutator);
+		mutatorArray = mutators.toArray(IMutator.class);
 	}
 
 	/**
@@ -80,32 +87,23 @@ public class SoundEngine {
 	public void addVoice(ISoundVoice voice) {
 		voice.setFormat(format);
 		
-		synchronized (this) {
-			ArrayList<ISoundVoice> moreVoices = new ArrayList<ISoundVoice>(voices.length + 1);
-			moreVoices.addAll(Arrays.asList(voices));
-			moreVoices.add(voice);
-			voices = (ISoundVoice[]) moreVoices
-					.toArray(new ISoundVoice[moreVoices.size()]); 
-		}
+		voices.add(voice);
+		voiceArray = voices.toArray(ISoundVoice.class);
 	}
 
 	/**
 	 * @param voice
 	 */
 	public void removeVoice(ISoundVoice voice) {
-		synchronized (this) {
-			ArrayList<ISoundVoice> fewerVoices = new ArrayList<ISoundVoice>(Arrays.asList(voices));
-			fewerVoices.remove(voice);
-			voices = (ISoundVoice[]) fewerVoices
-					.toArray(new ISoundVoice[fewerVoices.size()]); 
-		}
+		voices.remove(voice);
+		voiceArray = voices.toArray(ISoundVoice.class);
 	}
 	
 	/**
 	 * @return
 	 */
 	public ISoundVoice[] getVoices() {
-		return voices;
+		return voiceArray;
 	}
 
 	/**
@@ -160,9 +158,9 @@ public class SoundEngine {
 	 */
 	protected void mutate(int ticks) {
 		//System.out.println("mutators: " + mutators.length + "; voices = " + voices.length);
-		synchronized (this) {
-			for (IMutator mutator : mutators) {
-				if (!mutator.mutate(clock)) {
+		for (IMutator mutator : mutatorArray) {
+			if (!mutator.mutate(clock)) {
+				synchronized (this) {
 					removeMutator(mutator);
 				}
 			}
@@ -170,23 +168,10 @@ public class SoundEngine {
 		generate(ticks);
 	}
 
-	/**
-	 * @param mutator
-	 */
-	public void removeMutator(IMutator mutator) {
-		synchronized (this) {
-			ArrayList<IMutator> fewerMutators = new ArrayList<IMutator>(mutators.length);
-			fewerMutators.addAll(Arrays.asList(mutators));
-			fewerMutators.remove(mutator);
-			mutators = (IMutator[]) fewerMutators
-					.toArray(new IMutator[fewerMutators.size()]); 
-		}
-	}
-
 	public void stop() {
 		if (soundTimer != null)
 			soundTimer.cancel();
-		output.flushAudio(voices, output.getSamples(0));
+		output.flushAudio(voiceArray, output.getSamples(0));
 		output.stop();
 	}
 	
@@ -198,8 +183,8 @@ public class SoundEngine {
 	 * Generate sound for the given number of milliseconds.
 	 */
 	public void generate(int ms) {
-		output.generate(voices, output.getSamples(ms));
-		for (ISoundVoice voice : voices) {
+		output.generate(voiceArray, output.getSamples(ms));
+		for (ISoundVoice voice : voiceArray) {
 			if (voice.shouldDispose()) {
 				removeVoice(voice);
 			}
@@ -207,36 +192,34 @@ public class SoundEngine {
 		clock += ms;
 	}
 
-	/**
-	 * @return
-	 */
-	public int getSoundClock() {
-		return (int) format.getFrameRate();
+	public SoundFormat getSoundFormat() {
+		return format;
 	}
 
 	/**
+	 * Get the number of milliseconds each mutation is expected to take
+	 * (rounded down).
 	 * @return
 	 */
 	public int getMutateTime() {
 		return 1000 / mutatesPerSec;
 	}
 
-	/**
-	 * @return
-	 */
 	public ISoundOutput getSoundOutput() {
 		return output;
 	}
 
 	/**
-	 * 
+	 * Remove all the voices and mutators and set the clock to 0.
 	 */
 	public void reset() {
-		synchronized (this) {
-			voices = new ISoundVoice[0];
-			mutators = new IMutator[0];
-			clock = 0;
-		}
+		voices.clear();
+		voiceArray = voices.toArray(ISoundVoice.class);
+		
+		mutators.clear();
+		mutatorArray = mutators.toArray(IMutator.class);
+		
+		clock = 0;
 	}
 
 	
