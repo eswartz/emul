@@ -26,22 +26,14 @@ public interface ISoundGenerator {
 	SettingSchema getRecordingSettingSchema();
 	boolean isSilenceRecorded();
 	
+	/** Get the format the generator produces */
 	SoundFormat getSoundFormat();
 	ISoundVoice[] getSoundVoices();
 	//void tick();
 	
-	void generate(ISoundOutput output, int pos, int total);
-	/**
-	 * @param output
-	 */
+	/** Add any mutators, as needed */
 	void configureSoundOutput(ISoundOutput output);
-	/**
-	 * @param iSoundOutput
-	 * @param pos
-	 * @param total
-	 */
+	
+	void generate(ISoundOutput output, int pos, int total);
 	void flushAudio(ISoundOutput iSoundOutput, int pos, int total);
-	/**
-	 * @return
-	 */
 }

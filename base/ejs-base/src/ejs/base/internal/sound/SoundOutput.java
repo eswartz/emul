@@ -37,7 +37,6 @@ import ejs.base.utils.ListenerList;
 public class SoundOutput implements ISoundOutput {
 
 	private volatile float[] soundGeneratorWorkBuffer;
-	private int soundClock;
 
 	// private boolean audioSilence;
 
@@ -51,6 +50,8 @@ public class SoundOutput implements ISoundOutput {
 	private final int bufferSize;
 	private SoundFormat format;
 	private boolean wasStarted;
+	
+	private long clock;
 
 	public SoundOutput(SoundFormat format, int tickRate) {
 		this.format = format;
@@ -59,9 +60,30 @@ public class SoundOutput implements ISoundOutput {
 		int b = (int) (format.getChannels() * format.getFrameRate() / tickRate);
 		this.bufferSize = (b + 3) & ~3;
 		soundGeneratorWorkBuffer = new float[bufferSize];
-		soundClock = (int) format.getSampleRate();
+		clock  = 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundOutput#getSoundFormat()
+	 */
+	@Override
+	public SoundFormat getSoundFormat() {
+		return format;
 	}
 	
+	/* (non-Javadoc)
+	 * @see ejs.base.sound.ISoundOutput#getClock()
+	 */
+	@Override
+	public long getSampleClock() {
+		return clock;
+	}
+	/**
+	 * @param clock the clock to set
+	 */
+	public void setSampleClock(long clock) {
+		this.clock = clock;
+	}
 	/* (non-Javadoc)
 	 * @see ejs.base.sound.ISoundOutput#addMutator(ejs.base.sound.ISoundMutator)
 	 */
@@ -139,13 +161,6 @@ public class SoundOutput implements ISoundOutput {
 		}
 	}
 	
-	/**
-	 * @return the soundClock
-	 */
-	public int getSoundClock() {
-		return soundClock;
-	}
-
 	public void start() {
 		for (ISoundEmitter listener : emitters) {
 			try {
@@ -189,12 +204,10 @@ public class SoundOutput implements ISoundOutput {
 			return;
 		
 		synchronized (this) {
-			// ensure stereo-safe
-			int mask = ~(format.getChannels() - 1);
-			samples = (samples + format.getChannels() - 1) & mask;
-			while (samples > 0) {
-				int endPos = lastUpdatedPos + samples;
-				endPos &= mask;
+			int samplesLeft = samples * format.getChannels();
+			
+			while (samplesLeft > 0) {
+				int endPos = lastUpdatedPos + samplesLeft;
 				int to = endPos;
 				if (to > bufferSize)
 					to = bufferSize;
@@ -208,10 +221,10 @@ public class SoundOutput implements ISoundOutput {
 					}
 				}
 				int generated = to - lastUpdatedPos;
-				samples -= generated;
+				samplesLeft -= generated;
 				lastUpdatedPos += generated;
 				
-				if (samples > 0)
+				if (samplesLeft > 0)
 					flushAudio(voices, 0);
 			}
 		}

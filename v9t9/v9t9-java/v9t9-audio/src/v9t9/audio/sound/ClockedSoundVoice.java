@@ -14,6 +14,7 @@ import java.text.MessageFormat;
 
 import org.apache.log4j.Logger;
 
+import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.SoundFormat;
 
 /**
@@ -90,12 +91,13 @@ public abstract class ClockedSoundVoice extends SoundVoice
 		return soundClock;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.audio.sound.SoundVoice#setFormat(javax.sound.sampled.AudioFormat)
-	 */
 	@Override
+	public void setOutput(ISoundOutput output) {
+		super.setOutput(output);
+		setFormat(output.getSoundFormat());
+	}
+	
 	public void setFormat(SoundFormat format) {
-		super.setFormat(format);
 		this.soundClock = (int) format.getFrameRate();
 		setupVoice();
 	}

@@ -105,8 +105,9 @@ public class JavaSoundHandler implements ISoundHandler {
 		});
 		
 		for (ISoundGenerator gen : generators) {
+			ISoundOutput output = genToOutputMap.get(gen);
 			for (ISoundVoice voice : gen.getSoundVoices()) {
-				voice.setFormat(gen.getSoundFormat());
+				voice.setOutput(output);
 			}
 		}
 	}

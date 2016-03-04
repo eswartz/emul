@@ -14,7 +14,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import v9t9.common.speech.ISpeechSoundVoice;
-import ejs.base.sound.SoundFormat;
+import ejs.base.sound.ISoundOutput;
 
 public class SpeechVoice implements ISpeechSoundVoice {
 	
@@ -37,12 +37,9 @@ public class SpeechVoice implements ISpeechSoundVoice {
 		return false;
 	}
 	
-	/* (non-Javadoc)
-	 * @see ejs.base.sound.ISoundVoice#setFormat(javax.sound.sampled.AudioFormat)
-	 */
 	@Override
-	public void setFormat(SoundFormat format) {
-		this.soundClock = (int) format.getFrameRate();
+	public void setOutput(ISoundOutput output) {
+		this.soundClock = (int) output.getSoundFormat().getFrameRate();
 	}
 	
 	public void setSoundClock(int soundClock) {

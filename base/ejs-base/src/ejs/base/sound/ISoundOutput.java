@@ -18,11 +18,28 @@ package ejs.base.sound;
  * @author ejs
  */
 public interface ISoundOutput {
-	
+
+	/**
+	 * Get the format to which the output mixes
+	 * and to which all sound voices should generate.
+	 * @return
+	 */
+	SoundFormat getSoundFormat();
+
 	int getSamples(int ms);
 	
+	/**
+	 * Generate and mix content for the given voices
+	 * @param voices
+	 * @param samples # of samples (as a time measure, not based on channel count)
+	 */
 	void generate(ISoundVoice[] voices, int samples);
 	
+	/**
+	 * Ensure any data left in sound buffers is flushed
+	 * @param voices
+	 * @param totalCount FIXME, what is this for?
+	 */
 	void flushAudio(ISoundVoice[] voices, int totalCount);
 	
 	void dispose();
@@ -32,8 +49,6 @@ public interface ISoundOutput {
 	
 	void addMutator(ISoundMutator listener);
 	void removeMutator(ISoundMutator listener);
-	
-	int getSoundClock();
 	
 	void start();
 	void stop();
@@ -50,5 +65,17 @@ public interface ISoundOutput {
 	 * @return
 	 */
 	boolean isRecording();
+
+	/**
+	 * Get number of samples processed
+	 * @return
+	 */
+	long getSampleClock();
+
+	/**
+	 * Set number of samples processed
+	 * @param clock
+	 */
+	void setSampleClock(long clock);
 }
 

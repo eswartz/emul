@@ -11,8 +11,8 @@
 package v9t9.audio.sound;
 
 import ejs.base.settings.ISettingSection;
+import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.ISoundVoice;
-import ejs.base.sound.SoundFormat;
 
 /**
  * The base class for sounds.  This assumes 255 distinct volume settings
@@ -68,11 +68,8 @@ public abstract class SoundVoice implements ISoundVoice
 		return false;
 	}
 	
-	/* (non-Javadoc)
-	 * @see ejs.base.sound.ISoundVoice#setFormat(javax.sound.sampled.AudioFormat)
-	 */
 	@Override
-	public void setFormat(SoundFormat format) {
+	public void setOutput(ISoundOutput output) {
 		
 	}
 	

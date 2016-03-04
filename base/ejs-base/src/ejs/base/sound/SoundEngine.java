@@ -23,12 +23,6 @@ public class SoundEngine {
 	
 	private ListenerList<IMutator> mutators;
 	private IMutator[] mutatorArray;
-	
-	/** our driving clock, measured in ms, which may be faster than real time,
-	 * so we can generate sound quickly enough for the buffers to stay full.
-	 * (an int clock only lasts 25 days ;)
-	 */
-	private long clock;
 
 	private ISoundOutput output;
 
@@ -54,7 +48,6 @@ public class SoundEngine {
 		
 		output.addEmitter(iSoundListener);
 		//output.addListener(fileRecorder);
-		clock = 0;
 		
 	}
 	
@@ -85,7 +78,7 @@ public class SoundEngine {
 	 * @param voice
 	 */
 	public void addVoice(ISoundVoice voice) {
-		voice.setFormat(format);
+		voice.setOutput(output);
 		
 		voices.add(voice);
 		voiceArray = voices.toArray(ISoundVoice.class);
@@ -126,7 +119,7 @@ public class SoundEngine {
 		if (mutatesPerSec == 0)
 			return;
 		
-		clock = 0;
+		output.setSampleClock(0);
 		
 		// give some buffer to start with
 		//soundHandler.generate(new ISoundVoice[0], 500);
@@ -144,7 +137,7 @@ public class SoundEngine {
 		        // the task is expected to block some of the time 
 
 				//long start = System.currentTimeMillis();
-				mutate(1000 / mutatesPerSec);
+				mutate((int) (format.getSampleRate() / mutatesPerSec));
 				//long end = System.currentTimeMillis();
 				//System.out.println("elapsed: " + (end-start));
         	}
@@ -156,22 +149,22 @@ public class SoundEngine {
 	/**
 	 * 
 	 */
-	protected void mutate(int ticks) {
+	protected void mutate(int samples) {
 		//System.out.println("mutators: " + mutators.length + "; voices = " + voices.length);
 		for (IMutator mutator : mutatorArray) {
-			if (!mutator.mutate(clock)) {
+			if (!mutator.mutate(output.getSampleClock())) {
 				synchronized (this) {
 					removeMutator(mutator);
 				}
 			}
 		}
-		generate(ticks);
+		generateSamples(samples);
 	}
 
 	public void stop() {
 		if (soundTimer != null)
 			soundTimer.cancel();
-		output.flushAudio(voiceArray, output.getSamples(0));
+		output.flushAudio(voiceArray, 0);
 		output.stop();
 	}
 	
@@ -183,26 +176,24 @@ public class SoundEngine {
 	 * Generate sound for the given number of milliseconds.
 	 */
 	public void generate(int ms) {
-		output.generate(voiceArray, output.getSamples(ms));
+		generateSamples(output.getSamples(ms));
+	}
+	/**
+	 * Generate sound for the given number of samples (channel count ignored)
+	 */
+	public void generateSamples(int samples) {
+		
+		output.generate(voiceArray, samples);
+		
 		for (ISoundVoice voice : voiceArray) {
 			if (voice.shouldDispose()) {
 				removeVoice(voice);
 			}
 		}
-		clock += ms;
 	}
 
 	public SoundFormat getSoundFormat() {
 		return format;
-	}
-
-	/**
-	 * Get the number of milliseconds each mutation is expected to take
-	 * (rounded down).
-	 * @return
-	 */
-	public int getMutateTime() {
-		return 1000 / mutatesPerSec;
 	}
 
 	public ISoundOutput getSoundOutput() {
@@ -218,8 +209,6 @@ public class SoundEngine {
 		
 		mutators.clear();
 		mutatorArray = mutators.toArray(IMutator.class);
-		
-		clock = 0;
 	}
 
 	

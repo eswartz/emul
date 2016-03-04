@@ -17,10 +17,11 @@ package ejs.base.sound;
  */
 public interface ISoundVoice {
 	/**
-	 * Set the format for which the voice is generated.
-	 * @param soundClock
+	 * Set the target for the voice, encompassing the
+	 * sound format and a holder for the global clock.
+	 * @param output
 	 */
-	void setFormat(SoundFormat format);
+	void setOutput(ISoundOutput output);
 	
 	/** Generate samples from 'from' to 'to' in 'soundGeneratorWorkBuffer' 
 	 * @return true if sound generated
