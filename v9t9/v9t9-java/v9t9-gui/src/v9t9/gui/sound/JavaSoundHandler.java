@@ -104,6 +104,7 @@ public class JavaSoundHandler implements ISoundHandler {
 			
 		});
 		
+		// FIXME: this is fishy now -- shouldn't each generator hook up things when it creates them?
 		for (ISoundGenerator gen : generators) {
 			ISoundOutput output = genToOutputMap.get(gen);
 			for (ISoundVoice voice : gen.getSoundVoices()) {

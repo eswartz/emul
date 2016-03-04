@@ -191,9 +191,9 @@ public class SoundOutput implements ISoundOutput {
 		return wasStarted;
 	}
 	public int getSamples(int ms) {
-		int samples = (int) (((long) ms * format.getSampleRate() * format.getChannels() + 999) / 1000);
-		if (format.getChannels() > 1)
-			samples -= samples % format.getChannels();
+		int samples = (int) (((long) ms * format.getSampleRate() + 999) / 1000);
+//		if (format.getChannels() > 1)
+//			samples -= samples % format.getChannels();
 		return samples;
 	}
 	/**
