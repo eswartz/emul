@@ -10,6 +10,7 @@
  */
 package ejs.base.sound;
 
+import ejs.base.internal.sound.SoundOutput;
 import ejs.base.timer.FastTimer;
 import ejs.base.utils.ListenerList;
 
@@ -40,7 +41,8 @@ public class SoundEngine {
 		
 		this.format = format;
 		
-		output = SoundFactory.createSoundOutput(format, mutateRate);
+		//output = SoundFactory.createSoundOutput(format, mutateRate);
+		output = new SoundOutput(format, mutateRate > 0 ? mutateRate : 100);
 		this.mutatesPerSec = mutateRate;
 		
 		iSoundListener = emitter;
@@ -192,6 +194,27 @@ public class SoundEngine {
 		}
 	}
 
+
+    public void generateSamplesInto(int samples, float[] data) {
+		if (samples <= 0)
+			return;
+
+        int samplesLeft = samples * format.getChannels();
+        assert samplesLeft == data.length;
+
+        for (ISoundVoice v : voices) {
+            if (v != null && v.isActive()) {
+                v.generate(data, 0, samplesLeft);
+            }
+        }
+
+		for (ISoundVoice voice : voiceArray) {
+			if (voice.shouldDispose()) {
+				removeVoice(voice);
+			}
+		}
+    }
+
 	public SoundFormat getSoundFormat() {
 		return format;
 	}
@@ -211,5 +234,4 @@ public class SoundEngine {
 		mutatorArray = mutators.toArray(IMutator.class);
 	}
 
-	
 }

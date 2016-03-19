@@ -26,6 +26,43 @@ public abstract class AbstractClassBasedProperty extends AbstractProperty {
 		this.type = type;
 	}
 	
+	
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((obj == null) ? 0 : obj.hashCode());
+		return result;
+	}
+
+
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AbstractClassBasedProperty other = (AbstractClassBasedProperty) obj;
+		if (this.obj == null) {
+			if (other.obj != null)
+				return false;
+		} else if (!this.obj.equals(other.obj))
+			return false;
+		return true;
+	}
+
+
+
 	abstract protected Object doGetValue() throws Exception;
 	abstract protected void doSetValue(Object value) throws Exception;
 

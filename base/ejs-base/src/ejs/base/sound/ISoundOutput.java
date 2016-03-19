@@ -34,7 +34,7 @@ public interface ISoundOutput {
 	 * @param samples # of samples (as a time measure, not based on channel count)
 	 */
 	void generate(ISoundVoice[] voices, int samples);
-	
+
 	/**
 	 * Ensure any data left in sound buffers is flushed
 	 * @param voices
@@ -77,5 +77,6 @@ public interface ISoundOutput {
 	 * @param clock
 	 */
 	void setSampleClock(long clock);
+
 }
 

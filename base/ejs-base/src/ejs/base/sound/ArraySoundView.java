@@ -100,11 +100,16 @@ public class ArraySoundView extends BaseSoundView implements IEditableSoundView 
 			set(frameOffs * numChannels + i, value);
 	}
 
-	/* (non-Javadoc)
-	 * @see ejs.base.sound.IArrayAccess#size()
+	/**
+	 * @return the data
 	 */
-	@Override
-	public int size() {
-		return data.length;
+	public float[] getData() {
+		return data;
+	}
+	/**
+	 * @return the offset
+	 */
+	public int getOffset() {
+		return offset;
 	}
 }
