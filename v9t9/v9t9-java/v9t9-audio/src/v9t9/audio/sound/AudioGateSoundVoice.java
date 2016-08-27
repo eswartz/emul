@@ -14,6 +14,7 @@ import java.util.Arrays;
 
 import ejs.base.settings.ISettingSection;
 import ejs.base.sound.IFlushableSoundVoice;
+import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.SoundFormat;
 
 /**
@@ -55,6 +56,15 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 	
 	public AudioGateSoundVoice(String name) {
 		super("Audio Gate");
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.audio.sound.SoundVoice#setOutput(ejs.base.sound.ISoundOutput)
+	 */
+	@Override
+	public void setOutput(ISoundOutput output) {
+		super.setOutput(output);
+		soundClock = output.getSoundFormat().getFrameRate();
 	}
 	
 	@Override
@@ -109,15 +119,6 @@ public class AudioGateSoundVoice extends SoundVoice implements IFlushableSoundVo
 		return wasSet;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.audio.sound.SoundVoice#setFormat(javax.sound.sampled.AudioFormat)
-	 */
-	@Override
-	public void setFormat(SoundFormat format) {
-		super.setFormat(format);
-		this.soundClock = format.getFrameRate();
-	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.base.sound.ITimeAdjustSoundVoice#flushAudio(float[], int, int)
 	 */
