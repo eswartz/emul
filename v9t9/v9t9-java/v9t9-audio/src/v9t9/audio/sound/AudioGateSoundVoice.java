@@ -15,7 +15,6 @@ import java.util.Arrays;
 import ejs.base.settings.ISettingSection;
 import ejs.base.sound.IFlushableSoundVoice;
 import ejs.base.sound.ISoundOutput;
-import ejs.base.sound.SoundFormat;
 
 /**
  * Produce sound on the audio gate, which has two states: on and off.

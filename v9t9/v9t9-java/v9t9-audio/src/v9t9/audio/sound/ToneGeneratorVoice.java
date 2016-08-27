@@ -15,6 +15,8 @@ import ejs.base.settings.ISettingSection;
 public class ToneGeneratorVoice extends ClockedSoundVoice
 {
 	protected boolean out;
+	private float last;
+	
 	public ToneGeneratorVoice(String name, int number) {
 		super((name != null ? name + " " : "") + "Voice " + number);
 	}
@@ -28,6 +30,7 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 			
 			if (updateAccumulator()) {
 				out = !out;
+				last = 0f;
 			}
 			
 			float sampleMagnitude = getCurrentMagnitude();
@@ -49,7 +52,11 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 	@Override
 	public float getCurrentMagnitude() {
 		float mag = super.getCurrentMagnitude();
-		return out ? mag : -mag;
+		if (!out)
+			mag = -mag;
+		mag = (mag + last) / 4;
+		last = mag;
+		return mag;
 	}
 	
 	@Override
