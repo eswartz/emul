@@ -51,8 +51,16 @@ public class ImageLabel extends Composite implements PaintListener {
 			return style | SWT.DOUBLE_BUFFERED;
 		return style;
 	}
+
+	public Rectangle getClip() {
+		return clip;
+	}
 	
 	public void setClip(Rectangle clip) {
+		if (clip.width < 0)
+			clip.width = 0;
+		if (clip.height < 0)
+			clip.height = 0;
 		this.clip = clip;
 		redraw();
 	}
@@ -81,11 +89,4 @@ public class ImageLabel extends Composite implements PaintListener {
 					0, 0, imgScaledSize.x, imgScaledSize.y);
 		}
 	}
-
-	public Rectangle getClip() {
-		return clip;
-	}
-	
-	
-
 }

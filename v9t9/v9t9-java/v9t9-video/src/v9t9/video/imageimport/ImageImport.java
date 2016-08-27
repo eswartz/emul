@@ -520,8 +520,6 @@ public class ImageImport {
 			ditherFloydSteinberg(img, mapColor, hist);
 		} else if (ditherType == Dither.ORDERED) {
 			ditherOrdered(img, mapColor);
-//		} else if (ditherType == Dither.ORDERED2) {
-//			ditherOrderedBitmap(img, colorMapper);
 		} else {
 			ditherNone(img, mapColor);
 		}
@@ -632,17 +630,9 @@ public class ImageImport {
 	private BufferedImage createConvertedImage(BufferedImage img, int targWidth, int targHeight) {
 		int xoffs, yoffs;
 		
-		//Arrays.fill(canvasImageData.data, (byte) 0);
 		BufferedImage convertedImage = new BufferedImage(targWidth, targHeight, 
 				BufferedImage.TYPE_3BYTE_BGR);
-	
-//		if (format == VdpFormat.COLOR16_4x4) {
-//			xoffs = (64 - img.getWidth()) / 2;
-//			yoffs = (48 - img.getHeight()) / 2;
-//		} else {
-//			xoffs = (canvas.getVisibleWidth() - img.getWidth() + canvas.getXOffset()) / 2;
-//			yoffs = (canvas.getVisibleHeight() - img.getHeight() + canvas.getYOffset()) / 2;
-//		}
+
 		xoffs = (targWidth - img.getWidth()) / 2;
 		yoffs = (targHeight - img.getHeight()) / 2;
 	

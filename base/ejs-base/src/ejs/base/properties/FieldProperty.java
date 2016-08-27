@@ -21,6 +21,7 @@ import java.lang.reflect.Field;
 public class FieldProperty extends AbstractClassBasedProperty {
 	
 	protected Field field;
+	private String label;
 
 	public FieldProperty(String name, Object obj, Field field) {
 		super(field.getType(), name, obj); 
@@ -40,6 +41,11 @@ public class FieldProperty extends AbstractClassBasedProperty {
 		this(fieldName, obj, fieldName);
 	}	
 	
+
+	public FieldProperty(Object obj, String fieldName, String label) {
+		this(fieldName, obj, fieldName);
+		this.label = label;
+	}
 	
 	@Override
 	public int hashCode() {
@@ -90,6 +96,12 @@ public class FieldProperty extends AbstractClassBasedProperty {
 		return true;
 	}
 
+	@Override
+	public String getLabel() {
+		if (label != null)
+			return label;
+		return super.getLabel();
+	}
 	protected FieldProperty getProperty() { return this; }
 
 	protected Object doGetValue() throws Exception {

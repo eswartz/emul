@@ -154,9 +154,6 @@ public class VdpImageImporter {
 			p = 0;
 		
 		Integer c = data.getPaletteToIndex().get(p);
-//			if (c == null && format == VdpFormat.COLOR256_1x1) {
-//				c = paletteToIndex.get(paletteToIndex.ceilingKey(p));	// should be fixed now
-//			}
 		if (c == null) {
 			return 0;
 		}

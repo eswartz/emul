@@ -150,20 +150,10 @@ public class ImageClipDecorator implements PaintListener {
 			physClip = new Rectangle(mx, my, 0, 0);
 		} else {
 			int x, y, sx, sy;
-			if (origDrag.x < mx) {
-				x = origDrag.x;
-				sx = mx - x;
-			} else {
-				x = mx;
-				sx = origDrag.x - x;
-			}
-			if (origDrag.y < my) {
-				y = origDrag.y;
-				sy = my - y;
-			} else {
-				y = my;
-				sy = origDrag.y - y;
-			}
+			x = Math.min(origDrag.x, mx);
+			sx = Math.max(origDrag.x, mx) - x;
+			y = Math.min(origDrag.y, my);
+			sy = Math.max(origDrag.y, my) - y;
 			physClip = new Rectangle(x, y, sx, sy);
 			
 			if (boundsUpdater != null)
@@ -270,9 +260,9 @@ public class ImageClipDecorator implements PaintListener {
 		if (scaled.y < 0)
 			scaled.y = 0;
 		if (scaled.width + scaled.x > imageClientArea.width)
-			scaled.width = imageClientArea.width - scaled.x;
+			scaled.width = Math.max(0, imageClientArea.width - scaled.x);
 		if (scaled.height + scaled.y > imageClientArea.height)
-			scaled.height = imageClientArea.height - scaled.y;
+			scaled.height = Math.max(0, imageClientArea.height - scaled.y);
 		
 		return scaled;
 	}
