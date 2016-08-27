@@ -34,7 +34,7 @@ public class MD5FilterAlgorithms {
 		@Override
 		public void fillSegments(int contentLength, Collection<FilterSegment> segments) {
 			int fragment = contentLength & 0x0fff;
-			if (fragment > 0 && fragment < 0x400) {
+			if (fragment > 0 && fragment < 0x400 && contentLength >= 0x400) {
 				// remove cruft bolted to the end
 				contentLength -= fragment;
 			}
@@ -121,7 +121,7 @@ public class MD5FilterAlgorithms {
 		@Override
 		public void fillSegments(int contentLength, Collection<FilterSegment> segments) {
 			int fragment = contentLength & 0x0fff;
-			if (fragment > 0 && fragment < 0x400) {
+			if (fragment > 0 && fragment < 0x400 && contentLength > 0x400) {
 				// remove cruft bolted to the end
 				contentLength -= fragment;
 			}
