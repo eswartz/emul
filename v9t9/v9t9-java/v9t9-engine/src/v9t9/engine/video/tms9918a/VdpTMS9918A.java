@@ -452,7 +452,7 @@ public class VdpTMS9918A implements IVdpChip, IVdpTMS9918A {
 	public BitSet getRecordableRegs() {
 		BitSet bs = new BitSet();
 		int first = getFirstRegister();
-		bs.set(REG_SCANLINE - first);
+		//bs.set(REG_SCANLINE - first);
 		bs.set(0 - first, 8);
 		return bs;
 	}

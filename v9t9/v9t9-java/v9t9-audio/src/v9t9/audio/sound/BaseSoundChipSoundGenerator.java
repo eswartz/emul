@@ -14,7 +14,6 @@ import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
-import v9t9.common.sound.TI99SoundSmoother;
 import ejs.base.sound.ISoundOutput;
 import ejs.base.sound.SoundFormat;
 
@@ -68,7 +67,7 @@ public abstract class BaseSoundChipSoundGenerator extends BaseSoundGenerator {
 	 */
 	@Override
 	public void configureSoundOutput(ISoundOutput output) {
-		output.addMutator(new TI99SoundSmoother());
+//		output.addMutator(new TI99SoundSmoother());
 	}
 	
 	/* (non-Javadoc)

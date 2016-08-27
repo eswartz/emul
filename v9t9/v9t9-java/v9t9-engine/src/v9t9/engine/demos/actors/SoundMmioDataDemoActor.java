@@ -148,6 +148,7 @@ public class SoundMmioDataDemoActor extends BaseDemoActor implements IDemoRevers
 	 */
 	@Override
 	public void flushRecording(IDemoRecorder recorder) throws IOException {
+		if (soundDataListener == null) return;
 		synchronized (soundDataListener) {
 			List<Integer> changes = soundDataListener.getChanges();
 			synchronized (changes) {

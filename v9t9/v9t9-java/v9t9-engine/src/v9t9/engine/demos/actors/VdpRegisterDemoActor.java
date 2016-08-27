@@ -94,6 +94,7 @@ public class VdpRegisterDemoActor extends BaseDemoActor implements IDemoReverseP
 	 */
 	@Override
 	public void flushRecording(IDemoRecorder recorder) throws IOException {
+		if (vdpRegisterListener == null) return;
 		synchronized (vdpRegisterListener) {
 			Map<Integer, Integer> changes = vdpRegisterListener.getChanges();
 			synchronized (changes) {

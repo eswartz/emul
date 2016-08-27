@@ -132,6 +132,7 @@ public class SpeechDemoActor extends BaseDemoActor implements IDemoReversePlayba
 	 */
 	@Override
 	public synchronized void flushRecording(IDemoRecorder recorder) throws IOException {
+		if (currentPhraseParamsList == null) return;
 		for (ILPCParameters params : currentPhraseParamsList) {
 			recorder.getOutputStream().writeEvent(
 					new SpeechEvent(params));
