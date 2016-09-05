@@ -17,6 +17,8 @@ public enum VdpFormat {
 	COLOR16_8x8(16, false),
 	/** Bitmap mode, one color set per 8x1 block */
 	COLOR16_8x1(16, false),
+	/** Bitmap mode, two-color */
+	COLOR2_8x1(2, false),
 	/** Multicolor mode, one color set per 4x4 block */
 	COLOR16_4x4(16, false),
 	/** V9938 bitmap mode, one color set per 8x1 block, sprite mode 2, palette set */
@@ -46,5 +48,11 @@ public enum VdpFormat {
 	 */
 	public boolean isMsx2() {
 		return isMsx2;
+	}
+	/**
+	 * @return
+	 */
+	public boolean isBitmap() {
+		return this == COLOR16_8x1 || this == COLOR16_8x1_9938 || this == COLOR2_8x1;
 	}
 }

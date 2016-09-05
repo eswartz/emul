@@ -234,6 +234,8 @@ public class ConvertImages {
 		try {
 			int m = Integer.parseInt(mode);
 			switch (m) {
+			case 1:
+				return new Tuple(VdpFormat.COLOR16_8x8, 256, 192, 1, isGrey);
 			case 2:
 				return new Tuple(VdpFormat.COLOR16_8x1, 256, 192, 1, isGrey);
 			case 3:
@@ -246,10 +248,10 @@ public class ConvertImages {
 				return new Tuple(VdpFormat.COLOR16_1x1, 512, 192, 2f, isGrey);
 			case 7:
 				return new Tuple(VdpFormat.COLOR256_1x1, 256, 192, 1, isGrey);
-			case 8:
-				return new Tuple(VdpFormat.COLOR16_4x4, 64, 48, 1, isGrey);
 			case 9:
-				return new Tuple(VdpFormat.COLOR16_8x1, 256, 192, 1, isGrey);
+				return new Tuple(VdpFormat.COLOR2_8x1, 256, 192, 1, isGrey);
+			case 10:
+				return new Tuple(VdpFormat.COLOR16_4x4, 64, 48, 1, isGrey);
 			}
 		} catch (NumberFormatException e) {
 		}

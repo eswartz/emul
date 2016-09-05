@@ -235,7 +235,7 @@ public class ColorMapUtils {
 		if (phsv[1] < (phsv[0] >= 30 && phsv[0] < 75 ? 0.66f : 0.33f)) {
 			float[] hsv = { 0, 0, 0 };
 			int whiteColor = -1, blackColor = -1;
-			float whiteVal = Float.MAX_VALUE;
+			float whiteVal = -1;
 			float blackVal = Float.MAX_VALUE;
 			for (int c = first; c < count; c++) {
 				if (c != exceptFor) {

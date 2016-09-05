@@ -110,7 +110,6 @@ public class ColorOctree {
 
 	private LinkedList<InnerNode>[] reducibleLists;
 	private Comparator<InnerNode> comparator;
-	private final boolean usingHSV;
 	private int minRed;
 	private int minGreen;
 	private int minBlue;
@@ -120,7 +119,7 @@ public class ColorOctree {
 	private int componentMask;
 
 	@SuppressWarnings("unchecked")
-	public ColorOctree(int maxDepth, boolean removeDetail, boolean usingHSV) {
+	public ColorOctree(int maxDepth, boolean removeDetail) {
 		if (maxDepth < 2)
 			throw new IllegalArgumentException();
 		
@@ -129,7 +128,6 @@ public class ColorOctree {
 		root = new InnerNode(null);
 		comparator = (removeDetail ?
 				createLeastUsedFirstComparator() : createMostUsedFirstComparator());
-		this.usingHSV = usingHSV;
 		
 		reducibleLists = new LinkedList[maxDepth];
 		for (int i = 0; i < maxDepth; i++)
@@ -369,7 +367,7 @@ public class ColorOctree {
 		}
 
 		// bias towards extremes so dark and light are not lost
-		if (usingHSV && depth == 0) {
+		if (/*usingHSV &&*/ depth == 0) {
 			if (index == 0) {
 				newLeaf.reds = (minRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
 				newLeaf.greens = (minGreen * newLeaf.pixelCount + newLeaf.greens) / 2; 

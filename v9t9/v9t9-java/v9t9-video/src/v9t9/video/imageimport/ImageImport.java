@@ -354,7 +354,7 @@ public class ImageImport {
 		int[] rgbs = new int[width];
 		int[] prgb = { 0, 0, 0 };
 
-		ColorOctree octree = new ColorOctree(3, false, false);
+		ColorOctree octree = new ColorOctree(3, false);
 
 		int total = 0;
 		for (int y = 0; y < img.getHeight(); y++) {
@@ -708,7 +708,7 @@ public class ImageImport {
 				);
 		
 		if (paletteOption == Palette.OPTIMIZED) {
-			for (int i = interestingColors; i < thePalette.length; i++) {
+			for (int i = interestingColors + firstColor; i < thePalette.length; i++) {
 				thePalette[i][0] = 0;
 				thePalette[i][1] = 0;
 				thePalette[i][2] = 0;
@@ -1447,7 +1447,7 @@ public class ImageImport {
 	 */
 	public void prepareConversion(ImageImportOptions options) {
 		format = options.getFormat();
-		isBitmap = format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938; 
+		isBitmap = format.isBitmap(); 
 		paletteOption = options.getPalette();
 		ditherType = options.getDitherType();
 		ditherMono = options.isDitherMono();
@@ -1461,16 +1461,21 @@ public class ImageImport {
 		this.useColorMappedGreyScale = colorMgr.isGreyscale();
 		firstColor = (colorMgr.isClearFromPalette() ? 0 : 1);
 
-		if (format == VdpFormat.COLOR16_8x8) {
+		// enforce mode restrictions
+		if (format == VdpFormat.COLOR16_8x8 || format == VdpFormat.COLOR16_8x1) {
 			paletteOption = Palette.STANDARD;
+			options.setPalette(paletteOption);
+		}
+		if (format == VdpFormat.COLOR16_8x8 || format == VdpFormat.COLOR2_8x1) {
 			ditherMono = true;
+			options.setDitherMono(ditherMono);
 		}
 		
 		paletteMappingDirty = true;
 		paletteToIndex = null;
-		octree = new ColorOctree(3, true, false);
+		octree = new ColorOctree(3, true);
 		
-		if (paletteOption == Palette.STANDARD || options.isDitherMono()) {
+		if (paletteOption == Palette.STANDARD/* || options.isDitherMono()*/) {
 			byte[][] orig;
 			if (format.isMsx2()) {
 				orig = VdpColorManager.stockPaletteV9938;
@@ -1489,29 +1494,34 @@ public class ImageImport {
 		updatePaletteMapping();
 		
 		if (ditherMono) {
-			paletteOption = Palette.CURRENT;
+//			paletteOption = Palette.CURRENT;
 			Pair<Integer, Integer> darkInfo = ColorMapUtils.getClosestColorByLumDistance(thePalette, firstColor, format.getNumColors(), 0);
 			Pair<Integer, Integer> brightInfo = ColorMapUtils.getClosestColorByLumDistance(thePalette, firstColor, format.getNumColors(), 0xffffff);
+			
+			// don't pick the same color for both!
+			if (darkInfo.first == brightInfo.first)
+				darkInfo.first = brightInfo.first ^ 1;
+			
 			mapColor = new MonoMapColor(darkInfo.first, brightInfo.first);
 			firstColor = 0;
 		} else if (isBitmap || format == VdpFormat.COLOR16_4x4) {
 			if (paletteOption == Palette.OPTIMIZED) {
-				mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
+				mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
 			} else if (paletteOption == Palette.STANDARD) {
 				if (convertGreyScale)
 					mapColor = new TI16MapColor(thePalette, false, true);
 				else
-					mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
+					mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
 			}
 			else /* current */ {
-				mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
+				mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
 			}
 		}
 		else if (format == VdpFormat.COLOR16_1x1) {
-			mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
+			mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
 		}
 		else if (format == VdpFormat.COLOR4_1x1) {
-			mapColor = new UserPaletteMapColor(thePalette, firstColor, 4, useColorMappedGreyScale);
+			mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
 		}
 		else if (format == VdpFormat.COLOR256_1x1) {
 			paletteOption = Palette.STANDARD;
@@ -1603,7 +1613,8 @@ public class ImageImport {
 	public ImageImportData[] importImage(
 			ImageImportDialogOptions imageImportOptions, int targWidth,
 			int targHeight) {
-		boolean isBitmap = format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938;
+		format = imageImportOptions.getFormat();
+		boolean isBitmap = format.isBitmap();
 		int screenWidth = targWidth;
 		int screenHeight = targHeight;
 		
@@ -1615,7 +1626,6 @@ public class ImageImport {
 		int realWidth = imageImportOptions.getWidth();
 		int realHeight = imageImportOptions.getHeight();
 		float aspect = (float) targWidth / targHeight / 256.f * 192.f;
-
 		
 		if (imageImportOptions.isKeepAspect()) {
 			if (realWidth <= 0 || realHeight <= 0) {
