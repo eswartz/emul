@@ -13,7 +13,6 @@ package org.ejs.gui.images;
 
 abstract public class BasePaletteMapper implements IPaletteMapper {
 	private final boolean canSetPalette;
-//	private int minDist;
 	protected byte[][] palette;
 	protected int numColors;
 	protected int firstColor;
@@ -28,21 +27,6 @@ abstract public class BasePaletteMapper implements IPaletteMapper {
 		this.firstColor = firstColor;
 		this.numColors = numColors;
 		this.canSetPalette = canSetPalette;
-		
-//		minDist = Integer.MAX_VALUE;
-//		for (int c = 0; c < numColors; c++) {
-//			int cpixel = ColorMapUtils.rgb8ToPixel(palette[c]);
-//			for (int d = c + 1; d < numColors; d++) {
-//				int dist;
-//				if (!isGreyscale)
-//					dist = ColorMapUtils.getRGBDistance(palette[d], cpixel);
-//				else
-//					dist = ColorMapUtils.getRGBLumDistance(palette[d], cpixel);
-//				if (dist > 0 && dist < minDist)
-//					minDist = dist;
-//			}
-//		}
-		
 	}
 	
 
@@ -61,11 +45,7 @@ abstract public class BasePaletteMapper implements IPaletteMapper {
 	
 	@Override
 	public int getMinimalPaletteDistance() {
-		//if (canSetPalette)
-			// 0xff --> 0xe0 for R, G, B
-			return 0x20*0x20 * 3;
-
-		//return minDist;
+		return 0x20*0x20 * 3;
 	}
 	
 	protected boolean isFixedPalette() {

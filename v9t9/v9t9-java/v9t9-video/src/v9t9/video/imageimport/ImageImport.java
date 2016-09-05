@@ -159,6 +159,8 @@ public class ImageImport {
 
 	private float gamma = 1.0f;
 
+	private boolean tryDirectMapping = true;
+
 	public ImageImport(IVdpCanvas canvas) {
 		synchronized (canvas) {
 			this.colorMgr = canvas.getColorMgr();
@@ -453,7 +455,7 @@ public class ImageImport {
 	 * @return
 	 */
 	private boolean importDirectMappedImage(BufferedImage img) {
-		if (format == VdpFormat.COLOR256_1x1 || ditherMono || format == VdpFormat.COLOR16_8x8)
+		if (!tryDirectMapping || format == VdpFormat.COLOR256_1x1 || ditherMono || format == VdpFormat.COLOR16_8x8)
 			return false;
 		
 		int[] rgbs = new int[img.getWidth()];
@@ -570,16 +572,11 @@ public class ImageImport {
 			image.getRGB(0, y, rgbs.length, 1, rgbs, 0, rgbs.length);
 			for (int x = 0; x < rgbs.length; x++) {
 				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
-//					if (useColorMappedGreyScale)
-//						ColorMapUtils.rgbToGreyForGreyscaleMode(prgb, prgb);
-//					else if (convertGreyScale) 
-//						ColorMapUtils.rgbToGrey(prgb, prgb);
-				
 				octree.addColor(prgb);
 			}
 		}
-
 	}
+	
 	private void createOptimalPalette(int colorCount) {
 		int toAllocate = colorCount - firstColor;
 		
@@ -596,8 +593,8 @@ public class ImageImport {
 				V99ColorMapUtils.rgbToGreyForGreyscaleMode(repr, repr);
 			else if (convertGreyScale) 
 				ColorMapUtils.rgbToGrey(repr, repr);
-			else
-				V99ColorMapUtils.mapForRGB333(repr);
+//			else
+//				V99ColorMapUtils.mapForRGB333(repr);	// no, don't lose info until needed
 			
 			thePalette[index][0] = (byte) repr[0];
 			thePalette[index][1] = (byte) repr[1];
@@ -710,6 +707,13 @@ public class ImageImport {
 				+"; mapped="+mappedColors
 				);
 		
+		if (paletteOption == Palette.OPTIMIZED) {
+			for (int i = interestingColors; i < thePalette.length; i++) {
+				thePalette[i][0] = 0;
+				thePalette[i][1] = 0;
+				thePalette[i][2] = 0;
+			}
+		}
 		return hist;
 	}
 
@@ -1431,6 +1435,12 @@ public class ImageImport {
 		paletteMappingDirty = false;
 	}
 
+	public void setTryDirectMapping(boolean tryDirectMapping) {
+		this.tryDirectMapping = tryDirectMapping;
+	}
+	public boolean isTryDirectMapping() {
+		return tryDirectMapping;
+	}
 	/**
 	 * @param options
 	 * @param image
@@ -1451,14 +1461,10 @@ public class ImageImport {
 		this.useColorMappedGreyScale = colorMgr.isGreyscale();
 		firstColor = (colorMgr.isClearFromPalette() ? 0 : 1);
 
-
 		if (format == VdpFormat.COLOR16_8x8) {
 			paletteOption = Palette.STANDARD;
 			ditherMono = true;
 		}
-		
-		//new ColorOctree(3, toAllocate, true, false);
-		//octree = options.getOctree();
 		
 		paletteMappingDirty = true;
 		paletteToIndex = null;
@@ -1587,31 +1593,6 @@ public class ImageImport {
 		
 	}
 
-//	public byte getPixel(int x, int y) {
-//			
-//			int p;
-//			if (x < convertedImage.getWidth() && y < convertedImage.getHeight())
-//				p = convertedImage.getRGB(x, y) & 0xffffff;
-//			else
-//				p = 0;
-//			
-//			Integer c = paletteToIndex.get(p);
-//	//		if (c == null && format == VdpFormat.COLOR256_1x1) {
-//	//			c = paletteToIndex.get(paletteToIndex.ceilingKey(p));	// should be fixed now
-//	//		}
-//			if (c == null) {
-//				return 0;
-//			}
-//			return (byte) (int) c;
-//		}
-
-	/**
-	 * @return
-	 */
-	public VdpFormat getFormat() {
-		return format;
-	}
-
 	/**
 	 * @param imageImportOptions
 	 * @param targWidth
@@ -1675,6 +1656,9 @@ public class ImageImport {
 		ImageFrame[] frames = imageImportOptions.getImages();
 		if (frames == null)
 			return null;
+		
+		if (frames.length > 1)
+			setTryDirectMapping(false);
 		
 		prepareConversion(imageImportOptions);
 		

@@ -25,8 +25,6 @@ public class V99ColorMapUtils {
 		for (int i = 0; i < 8; i++) {
 			byte val = (byte) i;
 			byte val8 = (byte) (val << 5);
-			//if (val > 4)
-			//	val8 |= 0x1f;
 			val8 |= i * 0x1f / 7; 
 			V99ColorMapUtils.rgb3to8[i] = val8;
 		}
@@ -182,9 +180,12 @@ public class V99ColorMapUtils {
 				(byte) Math.min(255, ((rgb[2] & 0xe0) * 0xff / 0xe0)) };
 	}
 	public static void mapForRGB333(int[] rgb) {
-		rgb[0] = Math.min(255, ((rgb[0] & 0xe0) * 0xff / 0xe0));
-		rgb[1] = Math.min(255, ((rgb[1] & 0xe0) * 0xff / 0xe0));
-		rgb[2] = Math.min(255, ((rgb[2] & 0xe0) * 0xff / 0xe0));
+//		rgb[0] = Math.min(255, ((rgb[0] & 0xe0) * 0xff / 0xe0));
+//		rgb[1] = Math.min(255, ((rgb[1] & 0xe0) * 0xff / 0xe0));
+//		rgb[2] = Math.min(255, ((rgb[2] & 0xe0) * 0xff / 0xe0));
+		rgb[0] = Math.min(255, ((rgb[0] * 0xdf / 0xff) & 0xe0));
+		rgb[1] = Math.min(255, ((rgb[1] * 0xdf / 0xff) & 0xe0));
+		rgb[2] = Math.min(255, ((rgb[2] * 0xdf / 0xff) & 0xe0));
 	}
 	public static void mapForRGB555(int[] rgb) {
 		rgb[0] = Math.min(255, ((rgb[0] & 0xf8) * 0xff / 0xf8)); 

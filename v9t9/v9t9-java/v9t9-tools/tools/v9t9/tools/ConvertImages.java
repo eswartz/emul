@@ -78,6 +78,7 @@ public class ConvertImages {
 						+ "-p std|opt: select palette\n"
 						+ "-s 0|1: smooth scaling off or on\n"
 						+ "-g: convert to a greyscale image\n"
+						+ "-b val: modify brightness by the given value (-100 to 100)\n"
 						+ "-o DIR: write output to the given directory\n" + "");
 	}
 
@@ -92,7 +93,7 @@ public class ConvertImages {
 		IMachine machine = ToolUtils.createMachine();
 
 		Getopt getopt;
-		getopt = new Getopt(PROGNAME, args, "?o:r:a:d:p:s:m:g");
+		getopt = new Getopt(PROGNAME, args, "?o:r:a:d:p:s:m:gb:");
 
 		IVdpCanvas canvas = new ImageDataCanvas24Bit();
 
@@ -173,6 +174,15 @@ public class ConvertImages {
 			case 'g':
 				opts.setAsGreyScale(true);
 				break;
+			case 'b': {
+				String oa = getopt.getOptarg();
+				try {
+					opts.setGamma(Float.parseFloat(getopt.getOptarg()));
+				} catch (NumberFormatException e) {
+					System.err.println("Unexpected gamma argument: " + oa);
+					System.exit(1);			
+				}
+			}
 			}
 		}
 
@@ -281,6 +291,8 @@ public class ConvertImages {
 		}
 		
 		ImageImport importer = new ImageImport(colorMgr);
+		
+		importer.setTryDirectMapping(false);
 
 		ImageImportData[] datas = importer.importImage(opts, width, height);
 
