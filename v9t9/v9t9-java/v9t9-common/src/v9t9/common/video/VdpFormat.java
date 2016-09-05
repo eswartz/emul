@@ -36,13 +36,13 @@ public enum VdpFormat {
 		this.isMsx2 = isMsx2;
 	}
 	/**
-	 * @return the ncols
+	 * @return the number of colors in the mode
 	 */
 	public int getNumColors() {
 		return ncols;
 	}
 	/**
-	 * @return the isMsx2
+	 * @return true if the mode comes from the V9938 
 	 */
 	public boolean isMsx2() {
 		return isMsx2;

@@ -70,6 +70,8 @@ public class VdpColorManager {
 		/* 14 */ { 0.80f, 0.47f, 0.47f },
 		/* 15 */ { 1.0f, 0.47f, 0.47f }, 
 	};
+	
+	// initialized in static init from data above
 	public static final byte[][] stockPaletteYRyBy = {
 		/* 0 */ { 0x00, 0x00, 0x00 }, 
 		/* 1 */ { 0x00, 0x00, 0x00 },
@@ -304,6 +306,12 @@ public class VdpColorManager {
 		paletteMappingDirty = true;
 	}
 
+	public void setPalette(byte[][] pal) {
+		for (int i = 0; i < pal.length; i++)
+			setRGB(i, pal[i]);
+	}
+
+	
 	public void setRGB333(int idx, byte[] rgb) {
 		byte[] low = V99ColorMapUtils.getMapForRGB333(rgb);
 		setGRB333(idx, low[1] >> 5, low[0] >> 5, low[2] >> 5); 
@@ -488,4 +496,5 @@ public class VdpColorManager {
 			});
 		}
 	}
+
 }

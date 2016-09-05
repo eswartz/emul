@@ -12,7 +12,9 @@ package v9t9.tools;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorConvertOp;
 import java.io.File;
 import java.io.IOException;
 
@@ -52,6 +54,7 @@ public class ConvertImages {
 	private int width;
 	private int height;
 	private float aspect;
+	private VdpColorManager colorMgr;
 
 	private static void help() {
 		System.out
@@ -64,7 +67,7 @@ public class ConvertImages {
 						+ " [options] file...\n"
 						+ "\n"
 						+ "Options:\n"
-						+ "-m MODE: video mode\n"
+						+ "-m MODE: video mode; if MODE ends in 'g', assume greyscale\n"
 						+ "  2=256x192x16 (8x1), 3=256x192x16 (8x1+palette),\n"
 						+ "  4=256x192x16, 5=512x192x4,\n"
 						+ "  6=512x192x16, 7=256x192x256\n"
@@ -74,6 +77,7 @@ public class ConvertImages {
 						+ "-d none|ordered|fs: select dithering method\n"
 						+ "-p std|opt: select palette\n"
 						+ "-s 0|1: smooth scaling off or on\n"
+						+ "-g: convert to a greyscale image\n"
 						+ "-o DIR: write output to the given directory\n" + "");
 	}
 
@@ -88,7 +92,7 @@ public class ConvertImages {
 		IMachine machine = ToolUtils.createMachine();
 
 		Getopt getopt;
-		getopt = new Getopt(PROGNAME, args, "?o:r:a:d:p:s:m:");
+		getopt = new Getopt(PROGNAME, args, "?o:r:a:d:p:s:m:g");
 
 		IVdpCanvas canvas = new ImageDataCanvas24Bit();
 
@@ -163,8 +167,12 @@ public class ConvertImages {
 				width = (Integer) t.get(1);
 				height = (Integer) t.get(2);
 				aspect = ((Number) t.get(3)).floatValue();
+				canvas.getColorMgr().setGreyscale((Boolean) t.get(4));
 				break;
 			}
+			case 'g':
+				opts.setAsGreyScale(true);
+				break;
 			}
 		}
 
@@ -207,26 +215,31 @@ public class ConvertImages {
 		return false;
 	}
 
-	private static Tuple/* VdpFormat, Integer, Integer */readFormat(String mode) {
+	private static Tuple/* VdpFormat, Integer, Integer, Boolean */readFormat(String mode) {
+		boolean isGrey  = false;
+		if (mode.endsWith("g")) {
+			isGrey = true;
+			mode = mode.substring(0, mode.length() - 1);
+		}
 		try {
 			int m = Integer.parseInt(mode);
 			switch (m) {
 			case 2:
-				return new Tuple(VdpFormat.COLOR16_8x1, 256, 192, 1);
+				return new Tuple(VdpFormat.COLOR16_8x1, 256, 192, 1, isGrey);
 			case 3:
-				return new Tuple(VdpFormat.COLOR16_8x1_9938, 256, 192, 1);
+				return new Tuple(VdpFormat.COLOR16_8x1_9938, 256, 192, 1, isGrey);
 			case 4:
-				return new Tuple(VdpFormat.COLOR16_1x1, 256, 192, 1);
+				return new Tuple(VdpFormat.COLOR16_1x1, 256, 192, 1, isGrey);
 			case 5:
-				return new Tuple(VdpFormat.COLOR4_1x1, 512, 192, 2f);
+				return new Tuple(VdpFormat.COLOR4_1x1, 512, 192, 2f, isGrey);
 			case 6:
-				return new Tuple(VdpFormat.COLOR16_1x1, 512, 192, 2f);
+				return new Tuple(VdpFormat.COLOR16_1x1, 512, 192, 2f, isGrey);
 			case 7:
-				return new Tuple(VdpFormat.COLOR256_1x1, 256, 192, 1);
+				return new Tuple(VdpFormat.COLOR256_1x1, 256, 192, 1, isGrey);
 			case 8:
-				return new Tuple(VdpFormat.COLOR16_4x4, 64, 48, 1);
+				return new Tuple(VdpFormat.COLOR16_4x4, 64, 48, 1, isGrey);
 			case 9:
-				return new Tuple(VdpFormat.COLOR16_8x1, 256, 192, 1);
+				return new Tuple(VdpFormat.COLOR16_8x1, 256, 192, 1, isGrey);
 			}
 		} catch (NumberFormatException e) {
 		}
@@ -249,6 +262,7 @@ public class ConvertImages {
 	public ConvertImages(IMachine machine, IVdpCanvas canvas,
 			ImageImportDialogOptions opts, File in, int width, int height,
 			float aspect, File out) throws IOException {
+		this.colorMgr = canvas.getColorMgr();
 		this.opts = opts;
 		this.in = in;
 		this.width = width;
@@ -262,7 +276,10 @@ public class ConvertImages {
 
 		opts.setImages(frames);
 
-		VdpColorManager colorMgr = new VdpColorManager();
+		if (opts.getFormat().isMsx2()) {
+			colorMgr.setPalette(VdpColorManager.stockPaletteV9938);
+		}
+		
 		ImageImport importer = new ImageImport(colorMgr);
 
 		ImageImportData[] datas = importer.importImage(opts, width, height);
@@ -278,6 +295,13 @@ public class ConvertImages {
 			cvt = tmp;
 		}
 
+		if (colorMgr.isGreyscale()) {
+			ColorConvertOp op = new ColorConvertOp(cvt.getColorModel().getColorSpace(),
+					ColorSpace.getInstance(ColorSpace.CS_GRAY),
+					null);
+			op.filter(cvt, cvt);
+		}
+		
 		ImageIO.write(cvt, "png", out);
 
 		Runtime.getRuntime().exec(
