@@ -1,0 +1,3 @@
+*.fi linguist-language=Forth
+*.f99 linguist-language=Forth
+v9t9/v9t9-c/tools/Forth/lib/* linguist-language=Forth
