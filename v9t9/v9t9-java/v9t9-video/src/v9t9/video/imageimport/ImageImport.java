@@ -10,6 +10,7 @@
  */
 package v9t9.video.imageimport;
 
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +30,7 @@ import javax.imageio.ImageIO;
 import org.ejs.gui.images.ColorMapUtils;
 import org.ejs.gui.images.ColorOctree;
 import org.ejs.gui.images.ColorOctree.LeafNode;
+import org.ejs.gui.images.AwtImageUtils;
 import org.ejs.gui.images.FixedPaletteMapColor;
 import org.ejs.gui.images.Histogram;
 import org.ejs.gui.images.IPaletteColorMapper;
@@ -62,12 +64,10 @@ public class ImageImport {
 	private boolean ditherMono;
 	private Palette paletteOption;
 
-//	private final ImageDataCanvas canvas;
 	private final VdpColorManager colorMgr;
 	private boolean paletteMappingDirty;
 	//private final IVdpChip vdp;
 	private int firstColor;
-	private int[] rgbs;
 
 
 	/** mapping from RGB-32 pixel to each palette index */
@@ -151,8 +151,6 @@ public class ImageImport {
 		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
 	};
 
-//	private boolean supportsSetPalette;
-
 	private boolean convertGreyScale;
 
 	private boolean isBitmap;
@@ -161,25 +159,13 @@ public class ImageImport {
 
 	private float gamma = 1.0f;
 
-	public ImageImport(IVdpCanvas canvas, boolean supportsSetPalette) {
-//		this.canvas = canvas;
-//		this.supportsSetPalette = supportsSetPalette;
+	public ImageImport(IVdpCanvas canvas) {
 		synchronized (canvas) {
 			this.colorMgr = canvas.getColorMgr();
-			this.format = canvas.getFormat();
-	
-			isBitmap = format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938; 
-			byte[][] curPalette = colorMgr.getColorPalette();
-			this.thePalette = new byte[curPalette.length][];
-			for (int i = 0; i < thePalette.length; i++) {
-				thePalette[i] = Arrays.copyOf(curPalette[i], curPalette[i].length);
-			}
-			
-			this.useColorMappedGreyScale = colorMgr.isGreyscale();
 		}
-		
-		this.rgbs = new int[canvas.getWidth()];
-		
+	}
+	public ImageImport(VdpColorManager colorMgr) {
+		this.colorMgr = colorMgr;
 	}
 	
 	private final int clamp(int i) {
@@ -470,6 +456,8 @@ public class ImageImport {
 		if (format == VdpFormat.COLOR256_1x1 || ditherMono || format == VdpFormat.COLOR16_8x8)
 			return false;
 		
+		int[] rgbs = new int[img.getWidth()];
+
 		int numColors = format.getNumColors();
 		
 		// effective minimum distance for any mode
@@ -499,7 +487,7 @@ public class ImageImport {
 		
 		if (matched) {
 			for (int c = 0; c < numColors; c++) {
-				replaceColor(img, hist, c, ColorMapUtils.rgb8ToPixel(thePalette[c]), Integer.MAX_VALUE);
+				replaceColor(img, rgbs, hist, c, ColorMapUtils.rgb8ToPixel(thePalette[c]), Integer.MAX_VALUE);
 			}
 			
 			updatePaletteMapping();
@@ -730,14 +718,16 @@ public class ImageImport {
 	 * to ensure there will be an exact match so no dithering
 	 * occurs on the primary occurrences of this color.
 	 * @param img
+	 * @param rgbs2 
 	 * @param mappedColors
 	 * @param maxDist 
 	 * @param idx
 	 */
-	private int replaceColor(BufferedImage img, Histogram hist, int c, int newRGB, int maxDist) {
+	private int replaceColor(BufferedImage img, int[] rgbs, Histogram hist, int c, int newRGB, int maxDist) {
 		int replaced = 0;
 		int offs = 0;
 		int[] mappedColors = hist.mappedColors();
+		
 		for (int y = 0; y < img.getHeight(); y++) {
 			boolean changed = false;
 			img.getRGB(0, y, img.getWidth(), 1, rgbs, 0, rgbs.length);
@@ -1446,10 +1436,19 @@ public class ImageImport {
 	 * @param image
 	 */
 	public void prepareConversion(ImageImportOptions options) {
+		format = options.getFormat();
+		isBitmap = format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938; 
 		paletteOption = options.getPalette();
 		ditherType = options.getDitherType();
 		ditherMono = options.isDitherMono();
 
+		byte[][] curPalette = colorMgr.getColorPalette();
+		this.thePalette = new byte[curPalette.length][];
+		for (int i = 0; i < thePalette.length; i++) {
+			thePalette[i] = Arrays.copyOf(curPalette[i], curPalette[i].length);
+		}
+		
+		this.useColorMappedGreyScale = colorMgr.isGreyscale();
 		firstColor = (colorMgr.isClearFromPalette() ? 0 : 1);
 
 
@@ -1611,6 +1610,98 @@ public class ImageImport {
 	 */
 	public VdpFormat getFormat() {
 		return format;
+	}
+
+	/**
+	 * @param imageImportOptions
+	 * @param targWidth
+	 * @param targHeight
+	 * @param format2
+	 * @return
+	 */
+	public ImageImportData[] importImage(
+			ImageImportDialogOptions imageImportOptions, int targWidth,
+			int targHeight) {
+		boolean isBitmap = format == VdpFormat.COLOR16_8x1 || format == VdpFormat.COLOR16_8x1_9938;
+		int screenWidth = targWidth;
+		int screenHeight = targHeight;
+		
+		if (format == VdpFormat.COLOR16_4x4) {
+			targWidth = screenWidth = 64;
+			targHeight = screenHeight = 48;
+		}
+		
+		int realWidth = imageImportOptions.getWidth();
+		int realHeight = imageImportOptions.getHeight();
+		float aspect = (float) targWidth / targHeight / 256.f * 192.f;
+
+		
+		if (imageImportOptions.isKeepAspect()) {
+			if (realWidth <= 0 || realHeight <= 0) {
+				throw new IllegalArgumentException("image has zero or negative size");
+			}
+			if (realWidth != targWidth || realHeight != targHeight) {
+				if (realWidth * targHeight * aspect > realHeight * targWidth) {
+					targHeight = (int) Math.round(targWidth * realHeight / realWidth / aspect);
+				} else {
+					targWidth = (int) Math.round(targHeight * realWidth * aspect / realHeight);
+					
+					// make sure, for bitmap mode, that the size is a multiple of 8,
+					// otherwise the import into video memory will destroy the picture
+					if (isBitmap) {
+						targWidth &= ~7;
+						targHeight = (int) Math.round(targWidth * realHeight / realWidth / aspect);
+					}
+				}
+			}
+		}
+		
+		if (format == VdpFormat.COLOR16_8x8) {
+			// make a maximum of 256 blocks  (256*64 = 16384)
+			// Reduces total screen real estate down by sqrt(3)
+			//targWidth = (int) (targWidth / 1.732) & ~7;
+			//targHeight = (int) (targHeight / 1.732) & ~7;
+			while ((targWidth & ~0x7) * 
+					 (((int)(targWidth * realHeight / realWidth / aspect) + 7) & ~0x7) > 16384) {
+				targWidth *= 0.99;
+				targHeight *= 0.99;
+			}
+			targWidth &= ~0x7;
+			targHeight = (int) (targWidth * realHeight / realWidth / aspect);
+			
+			//if (DEBUG) System.out.println("Graphics mode: " + targWidth*((targHeight+7)&~0x7));
+		}
+
+		ImageFrame[] frames = imageImportOptions.getImages();
+		if (frames == null)
+			return null;
+		
+		prepareConversion(imageImportOptions);
+		
+		for (ImageFrame frame : frames) {
+			addImage(imageImportOptions, frame.image);
+		}
+
+		finishAddingImages();
+
+		Object hint = imageImportOptions.isScaleSmooth() ? RenderingHints.VALUE_INTERPOLATION_BILINEAR
+				:  RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
+
+		ImageImportData[] datas = new ImageImportData[frames.length];
+		for (int i = 0; i < datas.length; i++) {
+			// always scale even if same size since the option destroys the image
+			BufferedImage scaled = AwtImageUtils.getScaledInstance(
+					frames[i].image, targWidth, targHeight, 
+					hint,
+					false);
+			
+			ImageImportData data = convertImage(imageImportOptions, scaled,
+					screenWidth, screenHeight);
+			data.delayMs = frames[i].delayMs;
+			datas[i] = data;
+		}
+
+		return datas;		
 	}
 	
 }

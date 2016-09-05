@@ -17,6 +17,9 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+
+import v9t9.video.common.ImageUtils;
 
 
 /**
@@ -57,12 +60,18 @@ public class ImageLabel extends Composite implements PaintListener {
 	}
 	
 	public void setClip(Rectangle clip) {
-		if (clip.width < 0)
-			clip.width = 0;
-		if (clip.height < 0)
-			clip.height = 0;
+		if (clip != null) {
+			if (clip.width < 0)
+				clip.width = 0;
+			if (clip.height < 0)
+				clip.height = 0;
+		}
 		this.clip = clip;
-		redraw();
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				redraw();
+			}
+		});
 	}
 
 	public Image getImage() {

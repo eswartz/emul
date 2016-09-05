@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.gui.client.swt.svg;
+package v9t9.video.svg;
 
 import java.awt.image.BufferedImage;
 
@@ -21,7 +21,7 @@ import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 
-import v9t9.gui.client.swt.imageimport.ImageUtils;
+import v9t9.video.common.ImageUtils;
 
 /**
  * This class transcodes the output from the transcoder 

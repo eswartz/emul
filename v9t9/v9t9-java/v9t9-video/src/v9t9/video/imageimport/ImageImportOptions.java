@@ -62,6 +62,7 @@ public class ImageImportOptions {
 		}
 	}
 	
+	protected VdpFormat format = VdpFormat.COLOR16_8x1;
 	protected boolean asGreyScale;
 	protected Palette paletteOption = Palette.OPTIMIZED;
 	protected boolean ditherMono;
@@ -89,6 +90,8 @@ public class ImageImportOptions {
 	public ImageImportOptions(IVdpCanvas canvas, IVdpChip iVdpChip) {
 		this.canvas = canvas;
 		this.vdp = iVdpChip;
+		if (canvas.getFormat() != null)
+			format = canvas.getFormat();
 		paletteOptionProperty = new FieldProperty(this, "paletteOption", "Palette Selection");
 		ditheringProperty = new FieldProperty(this, "ditherType", "Dithering");
 		ditherMonoProperty = new FieldProperty(this, "ditherMono", "Dither Monochrome");
@@ -103,6 +106,12 @@ public class ImageImportOptions {
 		ps.addProperty(gammaProperty);
 	}
 	
+	public VdpFormat getFormat() {
+		return format;
+	}
+	public void setFormat(VdpFormat format) {
+		this.format = format;
+	}
 	public boolean isAsGreyScale() {
 		return asGreyScale;
 	}
@@ -200,5 +209,6 @@ public class ImageImportOptions {
 	public void setGamma(float gamma) {
 		this.gamma = gamma;
 	}
+	
 	
 }

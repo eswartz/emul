@@ -46,11 +46,11 @@ import org.eclipse.swt.graphics.ImageData;
 import org.ejs.gui.images.AwtImageUtils;
 
 import v9t9.common.video.ICanvas;
-import v9t9.gui.client.swt.svg.SVGException;
-import v9t9.gui.client.swt.svg.SVGSalamanderLoader;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
+import v9t9.video.svg.SVGException;
+import v9t9.video.svg.SVGSalamanderLoader;
 
 /**
  * Handle images copied in or out of the screen.

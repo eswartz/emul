@@ -28,6 +28,7 @@ import v9t9.gui.client.swt.SwtDragDropHandler;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.shells.ImageImportOptionsDialog;
 import v9t9.video.imageimport.ImageImport;
+import v9t9.video.imageimport.ImageImportData;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 
@@ -85,21 +86,6 @@ public class SwtImageImportSupport extends ImageImportHandler {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.gui.client.swt.imageimport.ImageImportHandler#importImageAndDisplay(v9t9.video.imageimport.ImageImport)
-	 */
-	@Override
-	protected void importImageAndDisplay(ImageImport importer) {
-		try {
-			markBusy(true);
-			super.importImageAndDisplay(importer);
-		} finally {
-			markBusy(false);
-		}
-	}
-	/**
-	 * 
-	 */
 	protected synchronized void scheduleImportJob() {
 		if (importJob == null) {
 			importJob = new Thread() {
@@ -108,9 +94,13 @@ public class SwtImageImportSupport extends ImageImportHandler {
 					ImageImport importer = createImageImport();
 					stopRendering();
 					try {
-						importImageAndDisplay(importer);
+						markBusy(true);
+						ImageImportData[] datas = importImage(importer);
+						displayImages(datas);
 					} catch (Throwable t) {
 						t.printStackTrace();
+					} finally {
+						markBusy(false);
 					}
 					synchronized (SwtImageImportSupport.this) {
 						importJob = null;

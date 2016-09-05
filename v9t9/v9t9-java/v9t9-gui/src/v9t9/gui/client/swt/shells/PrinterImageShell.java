@@ -63,8 +63,8 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent.Level;
 import v9t9.common.settings.SettingSchema;
 import v9t9.gui.EmulatorGuiData;
-import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.common.BaseEmulatorWindow;
+import v9t9.video.common.ImageUtils;
 
 /**
  * @author ejs

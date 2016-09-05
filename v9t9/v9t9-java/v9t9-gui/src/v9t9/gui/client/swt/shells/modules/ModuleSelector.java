@@ -106,12 +106,12 @@ import v9t9.gui.EmulatorGuiData;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageCanvas;
-import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
 import v9t9.gui.client.swt.shells.LazyImageLoader;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageAdjuster;
 import v9t9.gui.client.swt.shells.LazyImageLoader.ILazyImageLoadedListener;
 import v9t9.gui.client.swt.wizards.SetupWizard;
+import v9t9.video.common.ImageUtils;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
 

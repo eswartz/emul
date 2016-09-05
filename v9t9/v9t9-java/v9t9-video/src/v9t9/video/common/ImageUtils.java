@@ -8,11 +8,16 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.gui.client.swt.imageimport;
+package v9t9.video.common;
 
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
+
+import javax.imageio.ImageIO;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
@@ -21,6 +26,7 @@ import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
@@ -28,7 +34,11 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 import org.ejs.gui.images.AwtImageUtils;
 
+import v9t9.common.events.NotifyException;
+import v9t9.common.events.NotifyEvent.Level;
 import v9t9.video.imageimport.ImageFrame;
+import v9t9.video.svg.SVGException;
+import v9t9.video.svg.SVGSalamanderLoader;
 
 /**
  * Image utilities
@@ -1212,5 +1222,60 @@ public abstract class ImageUtils {
 		return alphaImg;
 	}
 
+
+	public static ImageFrame[] loadImageFromFile(String file) throws NotifyException {
+//		log.debug("attempting to load image: " + file);
+		ImageFrame[] info = null;
+		URL url;
+		try {
+			url = new File(file).toURI().toURL();
+		} catch (MalformedURLException e4) {
+			return null;
+		}
+		try {
+			ImageLoader imgLoader = new ImageLoader();
+			ImageData[] datas = imgLoader.load(file);
+			if (datas.length > 0) {
+				info = ImageUtils.convertToBufferedImages(datas);
+			}
+		} catch (SWTException e) {
+			BufferedImage img;
+			try {
+				img = ImageIO.read(url);
+				if (img != null)
+					info = new ImageFrame[] { new ImageFrame(img, true) };
+			} catch (Throwable e1) {
+				// IOException or IllegalArgumentException from broken file
+			}
+		}
+
+		if (info == null) {
+			SVGSalamanderLoader loader = new SVGSalamanderLoader(url);
+			try {
+				BufferedImage img = loader.getImageData(loader.getSize());
+				if (img != null) {
+					if (false) {
+						//BufferedImage img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+						info = new ImageFrame[] { new ImageFrame(img, true) };
+					} else {
+						// hmm... something about the AWT-ness makes it impossible to clip properly
+						ImageData data = ImageUtils.convertAwtImageData(img);
+						info = ImageUtils.convertToBufferedImages(new ImageData[] { data });
+					}
+				}
+			} catch (SVGException e2) {
+				throw new NotifyException(
+						Level.ERROR, 
+						"Could not load '" +
+								file + "' (" + e2.getMessage() + ")" , e2);
+			}
+		}
+		if (info == null)
+			throw new NotifyException(Level.ERROR, 
+					"Image format not recognized for '" +
+					file + "'" );
+
+		return info;
+	}
 
 }

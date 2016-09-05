@@ -73,10 +73,10 @@ import v9t9.gui.client.swt.bars.IImageProvider;
 import v9t9.gui.client.swt.bars.MultiImageSizeProvider;
 import v9t9.gui.client.swt.shells.IToolShellFactory;
 import v9t9.gui.client.swt.shells.ToolShell;
-import v9t9.gui.client.swt.svg.ISVGLoader;
 import v9t9.gui.client.swt.svg.SVGImageProvider;
-import v9t9.gui.client.swt.svg.SVGSalamanderLoader;
 import v9t9.gui.common.BaseEmulatorWindow;
+import v9t9.video.svg.ISVGLoader;
+import v9t9.video.svg.SVGSalamanderLoader;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 

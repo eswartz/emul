@@ -25,6 +25,27 @@
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.equinox.common.jar"/>
         <pathelement location="${ejs-base.location}/libs/google-gson-2.0/gson-2.0.jar"/>
         <pathelement location="${ejs-base.location}/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
+        <pathelement location="${ejs-base.location}/libs/svgSalamander.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.css_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.dom_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.dom.svg_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.ext.awt_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.extension_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.parser_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.svggen_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.swing_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.swing.source_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.transcoder_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.util_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.batik.xml_1.7.0.v201011041433.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.css.sac_1.3.1.v200903091627.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.smil_1.0.0.v200806040011.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.w3c.dom.svg_1.1.0.v201011041433.jar"/>
+    	
     </path>
     <path id="ejs-gui.classpath">
         <pathelement location="${ejs-gui.location}/bin"/>

@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.gui.client.swt.svg;
+package v9t9.video.svg;
 
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -29,7 +29,7 @@ import org.ejs.gui.images.AwtImageUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import v9t9.gui.client.swt.imageimport.ImageUtils;
+import v9t9.video.common.ImageUtils;
 
 /**
  * This class manages a reference to a loaded SVG document

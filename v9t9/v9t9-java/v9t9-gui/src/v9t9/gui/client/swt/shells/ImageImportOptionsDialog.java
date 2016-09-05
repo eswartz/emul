@@ -47,8 +47,8 @@ import v9t9.gui.client.swt.bars.ImageCanvas;
 import v9t9.gui.client.swt.imageimport.IImageImportHandler;
 import v9t9.gui.client.swt.imageimport.ImageClipDecorator;
 import v9t9.gui.client.swt.imageimport.ImageLabel;
-import v9t9.gui.client.swt.imageimport.ImageUtils;
 import v9t9.gui.client.swt.imageimport.SwtImageImportSupport;
+import v9t9.video.common.ImageUtils;
 import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
 import ejs.base.properties.IProperty;
@@ -328,7 +328,7 @@ public class ImageImportOptionsDialog extends Composite {
 		importImageThread = new Thread() {
 			public void run() {
 				try {
-					ImageFrame[] frames = SwtDragDropHandler.loadImageFromFile(file);
+					ImageFrame[] frames = ImageUtils.loadImageFromFile(file);
 					
 					if (frames != null && !interrupted()) {
 						imageSupport.importImage(frames);

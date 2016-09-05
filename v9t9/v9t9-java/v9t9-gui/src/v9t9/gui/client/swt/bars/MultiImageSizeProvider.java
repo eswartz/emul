@@ -22,7 +22,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 
-import v9t9.gui.client.swt.imageimport.ImageUtils;
+import v9t9.video.common.ImageUtils;
 import ejs.base.utils.Pair;
 
 

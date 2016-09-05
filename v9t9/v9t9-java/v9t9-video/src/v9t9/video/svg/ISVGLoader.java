@@ -8,7 +8,7 @@
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
  */
-package v9t9.gui.client.swt.svg;
+package v9t9.video.svg;
 
 import java.awt.image.BufferedImage;
 

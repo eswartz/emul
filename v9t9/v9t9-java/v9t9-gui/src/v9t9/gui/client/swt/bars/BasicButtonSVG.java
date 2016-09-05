@@ -32,9 +32,9 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Event;
 
-import v9t9.gui.client.swt.imageimport.ImageUtils;
-import v9t9.gui.client.swt.svg.ISVGLoader;
-import v9t9.gui.client.swt.svg.SVGException;
+import v9t9.video.common.ImageUtils;
+import v9t9.video.svg.ISVGLoader;
+import v9t9.video.svg.SVGException;
 
 class BasicButtonSVG extends ImageBarChild {
 

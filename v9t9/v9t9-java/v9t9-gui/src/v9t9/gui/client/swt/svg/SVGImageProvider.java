@@ -19,7 +19,9 @@ import org.eclipse.swt.widgets.Composite;
 
 import v9t9.gui.client.swt.bars.IImageCanvas;
 import v9t9.gui.client.swt.bars.MultiImageSizeProvider;
-import v9t9.gui.client.swt.imageimport.ImageUtils;
+import v9t9.video.common.ImageUtils;
+import v9t9.video.svg.ISVGLoader;
+import v9t9.video.svg.SVGException;
 import ejs.base.utils.Pair;
 
 

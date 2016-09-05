@@ -22,7 +22,9 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.graphics.Region;
+import org.eclipse.swt.widgets.Display;
 
+import v9t9.video.common.ImageUtils;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
 
@@ -85,7 +87,8 @@ public class ImageClipDecorator implements PaintListener {
 					updateClip(e.x, e.y);
 					imageLabel.redraw();
 					dragging = true;
-				} else if (!dragging) {
+					publishClip(null);
+				} else if (e.button == 1) {
 					setClip(null);
 					publishClip(null);
 				}
@@ -119,7 +122,11 @@ public class ImageClipDecorator implements PaintListener {
 					setClip(null);
 				else
 					setClip(getDestClip(new Rectangle(curClip.x, curClip.y, curClip.width, curClip.height)));
-				imageLabel.redraw();
+				Display.getDefault().asyncExec(new Runnable() {
+					public void run() {
+						imageLabel.redraw();
+					}
+				});
 			}
 		};
 		clipProperty.addListener(clipPropertyListener);
@@ -195,7 +202,11 @@ public class ImageClipDecorator implements PaintListener {
 	 */
 	public Rectangle setClip(Rectangle clip) {
 		imageLabel.setClip(clip);
-		imageLabel.redraw();
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				imageLabel.redraw();
+			}
+		});
 		return clip;
 	}
 

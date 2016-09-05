@@ -59,11 +59,11 @@ import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
 import v9t9.common.video.ICanvas;
 import v9t9.gui.client.swt.imageimport.IImageImportHandler;
-import v9t9.gui.client.swt.imageimport.ImageUtils;
-import v9t9.gui.client.swt.svg.SVGException;
-import v9t9.gui.client.swt.svg.SVGSalamanderLoader;
 import v9t9.video.ImageDataCanvas;
+import v9t9.video.common.ImageUtils;
 import v9t9.video.imageimport.ImageFrame;
+import v9t9.video.svg.SVGException;
+import v9t9.video.svg.SVGSalamanderLoader;
 import ejs.base.properties.IPropertyListener;
 
 /**
@@ -509,7 +509,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				return false;
 			
 			String theFile = file.getAbsolutePath();
-			frames = loadImageFromFile(theFile);
+			frames = ImageUtils.loadImageFromFile(theFile);
 			imageImportHandler.getHistory().add(theFile);
 
 		}
@@ -565,61 +565,6 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			}
 		}
 		return temp;
-	}
-
-	public static ImageFrame[] loadImageFromFile(String file) throws NotifyException {
-		log.debug("attempting to load image: " + file);
-		ImageFrame[] info = null;
-		URL url;
-		try {
-			url = new File(file).toURI().toURL();
-		} catch (MalformedURLException e4) {
-			return null;
-		}
-		try {
-			ImageLoader imgLoader = new ImageLoader();
-			ImageData[] datas = imgLoader.load(file);
-			if (datas.length > 0) {
-				info = ImageUtils.convertToBufferedImages(datas);
-			}
-		} catch (SWTException e) {
-			BufferedImage img;
-			try {
-				img = ImageIO.read(url);
-				if (img != null)
-					info = new ImageFrame[] { new ImageFrame(img, true) };
-			} catch (Throwable e1) {
-				// IOException or IllegalArgumentException from broken file
-			}
-		}
-
-		if (info == null) {
-			SVGSalamanderLoader loader = new SVGSalamanderLoader(url);
-			try {
-				BufferedImage img = loader.getImageData(loader.getSize());
-				if (img != null) {
-					if (false) {
-						//BufferedImage img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
-						info = new ImageFrame[] { new ImageFrame(img, true) };
-					} else {
-						// hmm... something about the AWT-ness makes it impossible to clip properly
-						ImageData data = ImageUtils.convertAwtImageData(img);
-						info = ImageUtils.convertToBufferedImages(new ImageData[] { data });
-					}
-				}
-			} catch (SVGException e2) {
-				throw new NotifyException(
-						Level.ERROR, 
-						"Could not load '" +
-								file + "' (" + e2.getMessage() + ")" , e2);
-			}
-		}
-		if (info == null)
-			throw new NotifyException(Level.ERROR, 
-					"Image format not recognized for '" +
-					file + "'" );
-
-		return info;
 	}
 
 }
