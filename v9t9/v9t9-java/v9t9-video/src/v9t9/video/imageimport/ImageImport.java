@@ -1660,6 +1660,8 @@ public class ImageImport {
 			targWidth &= ~0x7;
 			targHeight = (int) (targWidth * realHeight / realWidth / aspect);
 			
+			screenWidth = targWidth;
+			screenHeight = targHeight;
 			//if (DEBUG) System.out.println("Graphics mode: " + targWidth*((targHeight+7)&~0x7));
 		}
 
