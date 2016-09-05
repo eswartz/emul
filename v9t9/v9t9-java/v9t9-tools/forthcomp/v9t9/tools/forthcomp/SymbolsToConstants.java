@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -105,7 +106,7 @@ public class SymbolsToConstants {
 	protected static Map<String, Integer> findSymbolValues(File inputSymbolFile, Map<String, String> symbols)
 			throws FileNotFoundException, IOException {
 		
-		Map<String, Integer> constants = new HashMap<String, Integer>();
+		Map<String, Integer> constants = new LinkedHashMap<String, Integer>();
 		Pattern equPattern = Pattern.compile("^(\\S+)\\s+(\\S+)");
 		BufferedReader reader = new BufferedReader(new FileReader(inputSymbolFile));
 		
