@@ -192,7 +192,7 @@ public class ImageImportOptions {
 	 */
 	public ColorOctree getOctree() {
 		if (octree == null)
-			octree = new ColorOctree(3, true, false);
+			octree = new ColorOctree(3, true);
 		return octree;
 	}
 	/**

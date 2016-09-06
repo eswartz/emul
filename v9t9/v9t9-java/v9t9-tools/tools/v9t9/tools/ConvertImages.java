@@ -78,6 +78,7 @@ public class ConvertImages {
 						+ "-p std|opt: select palette\n"
 						+ "-s 0|1: smooth scaling off or on\n"
 						+ "-g: convert to a greyscale image\n"
+						+ "-M: dither monochrome\n"
 						+ "-b val: modify brightness by the given value (-100 to 100)\n"
 						+ "-o DIR: write output to the given directory\n" + "");
 	}
@@ -93,7 +94,7 @@ public class ConvertImages {
 		IMachine machine = ToolUtils.createMachine();
 
 		Getopt getopt;
-		getopt = new Getopt(PROGNAME, args, "?o:r:a:d:p:s:m:gb:");
+		getopt = new Getopt(PROGNAME, args, "?o:r:a:d:p:s:m:gMb:");
 
 		IVdpCanvas canvas = new ImageDataCanvas24Bit();
 
@@ -147,6 +148,9 @@ public class ConvertImages {
 				}
 				break;
 			}
+			case 'M':
+				opts.setDitherMono(true);
+				break;
 			case 'p': {
 				String oa = getopt.getOptarg();
 				if (oa.length() > 0 && oa.charAt(0) == 's') {
