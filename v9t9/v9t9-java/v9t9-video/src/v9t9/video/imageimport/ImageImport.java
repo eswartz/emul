@@ -370,10 +370,10 @@ public class ImageImport {
 		int numColors = 0;
 		int numPixels = total / 2;
 		for (LeafNode leaf : leaves) {
-				numColors++;
-				numPixels -= leaf.getPixelCount();
-				if (numPixels <= 0)
-					break;
+			numColors++;
+			numPixels -= leaf.getPixelCount();
+			if (numPixels <= 0)
+				break;
 		}
 		if (DEBUG) System.out.println("*** finding " + numColors + " apparent colors");
 		if (numColors > format.getNumColors()) //(format == VdpFormat.COLOR256_1x1 ? 256 : 16))
