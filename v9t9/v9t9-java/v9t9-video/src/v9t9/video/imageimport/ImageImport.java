@@ -580,7 +580,10 @@ public class ImageImport {
 	private void createOptimalPalette(int colorCount) {
 		int toAllocate = colorCount - firstColor;
 		
-		octree.reduceTree(toAllocate);
+		boolean perfect = octree.getLeafCount() <= toAllocate;
+		
+		if (!perfect)
+			octree.reduceTree(toAllocate);
 
 		int index = firstColor;
 		
@@ -699,6 +702,21 @@ public class ImageImport {
 		interestingColors = hist.size();
 		if (DEBUG) System.out.println("# interesting = " + interestingColors
 				+"; # mapped = " + mappedColors);
+		
+		if (mappedColors == img.getWidth() * img.getHeight() && hist.pixelToColor().size() <= numColors - firstColor) {
+			// perfect mapping!
+			if (DEBUG) System.out.println("Perfect mapping!");
+			int c = firstColor;
+			byte[] rgb = { 0, 0, 0 };
+			for (Map.Entry<Integer, Integer> ent : hist.pixelToColor().entrySet()) {
+				ColorMapUtils.pixelToRGB(ent.getKey(), rgb);
+				thePalette[c][0] = rgb[0];
+				thePalette[c][1] = rgb[1];
+				thePalette[c][2] = rgb[2];
+				c++;
+			}
+			interestingColors = numColors - firstColor;
+		}
 		
 		int usedColors = Math.min(numColors, interestingColors);
 		
@@ -1401,7 +1419,7 @@ public class ImageImport {
 
 	protected void updatePaletteMapping() {
 		int ncols = format.getNumColors();
-	
+		
 		paletteToIndex = new TreeMap<Integer, Integer>();
 		
 		if (ncols < 256) {

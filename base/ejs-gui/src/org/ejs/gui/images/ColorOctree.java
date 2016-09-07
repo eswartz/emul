@@ -176,6 +176,13 @@ public class ColorOctree {
 		//if (leafCount > maxLeafCount * maxLeafCount)
 		//reduceTree();
 	}
+	
+	/**
+	 * @return the leafCount
+	 */
+	public int getLeafCount() {
+		return leafCount;
+	}
 
 	/** Get the octree child index from the given bit of the RGB index */
 	private static int getIndex(int[] prgb, int depth) {

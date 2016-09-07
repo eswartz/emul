@@ -75,11 +75,12 @@ public class ConvertImages {
 						+ "-r WxH: resize image to the given width/height (else use mode)\n"
 						+ "-a 0|1: set preserve aspect ratio off or on\n"
 						+ "-d none|ordered|fs: select dithering method\n"
-						+ "-p std|opt: select palette\n"
+						+ "-p std|opt[+]: map to standard palette, or optimize (+ = set color 0)n"
 						+ "-s 0|1: smooth scaling off or on\n"
 						+ "-g: convert to a greyscale image\n"
 						+ "-M: dither monochrome\n"
 						+ "-b val: modify brightness by the given value (-100 to 100)\n"
+						+ "-S 0|1: set smooth scaling off or on (use off for line art)\n"
 						+ "-o DIR: write output to the given directory\n" + "");
 	}
 
@@ -94,7 +95,7 @@ public class ConvertImages {
 		IMachine machine = ToolUtils.createMachine();
 
 		Getopt getopt;
-		getopt = new Getopt(PROGNAME, args, "?o:r:a:d:p:s:m:gMb:");
+		getopt = new Getopt(PROGNAME, args, "?o:r:a:d:p:s:m:gMb:S:");
 
 		IVdpCanvas canvas = new ImageDataCanvas24Bit();
 
@@ -157,6 +158,9 @@ public class ConvertImages {
 					opts.setPalette(Palette.STANDARD);
 				} else if (oa.length() > 0 && oa.charAt(0) == 'o') {
 					opts.setPalette(Palette.OPTIMIZED);
+					if (oa.charAt(oa.length() - 1) == '+') {
+						canvas.getColorMgr().setClearFromPalette(true);
+					}
 				} else {
 					System.err.println("Unexpected -p argument: " + oa);
 					System.exit(1);
@@ -187,6 +191,9 @@ public class ConvertImages {
 					System.exit(1);			
 				}
 			}
+			case 'S':
+				opts.setScaleSmooth(readFlag(getopt.getOptarg()));
+				break;
 			}
 		}
 
