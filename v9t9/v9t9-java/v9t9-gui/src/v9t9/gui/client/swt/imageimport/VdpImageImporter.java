@@ -21,6 +21,7 @@ import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
 import v9t9.common.video.VdpFormat;
+import v9t9.common.video.VdpFormat.Layout;
 import v9t9.video.imageimport.ImageImportData;
 
 /**
@@ -89,13 +90,13 @@ public class VdpImageImporter {
 		
 		if (vdp instanceof IVdpTMS9918A) {
 			IVdpTMS9918A vdp99 = (IVdpTMS9918A) vdp;
-			if (format.isBitmap()) {
+			if (format.getLayout() == Layout.BITMAP_2_PER_8) {
 				setVideoMemoryBitmapMode(vdp99);
 			} 
-			else if (format == VdpFormat.COLOR16_8x8) {
+			else if (format.getLayout() == VdpFormat.Layout.PATTERN) {
 				setVideoMemoryGraphicsMode(vdp99);
 			}
-			else if (format== VdpFormat.COLOR16_4x4) {
+			else if (format.getLayout() == VdpFormat.Layout.MULTICOLOR) {
 				setVideoMemoryMulticolorMode(vdp99);
 			}
 			else if (format.isMsx2()) {

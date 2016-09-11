@@ -11,6 +11,8 @@
 package org.ejs.gui.images;
 
 
+import java.util.TreeMap;
+
 import ejs.base.utils.Pair;
 
 public class UserPaletteMapColor extends BasePaletteMapper {
@@ -54,5 +56,14 @@ public class UserPaletteMapColor extends BasePaletteMapper {
 	public int getClosestPaletteEntry(int x, int y, int pixel) {
 		Pair<Integer, Integer> info = getCloseColor(pixel);
 		return info.first;
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see org.ejs.gui.images.IPaletteMapper#getRGBToGreyMap()
+	 */
+	@Override
+	public TreeMap<Integer, byte[]> getGreyToRgbMap() {
+		return V99ColorMapUtils.getGreyToRgbMap332();
 	}
 }

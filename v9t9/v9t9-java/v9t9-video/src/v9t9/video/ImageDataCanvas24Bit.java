@@ -16,11 +16,8 @@ import java.util.Arrays;
 
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
-import org.ejs.gui.images.V99ColorMapUtils;
-
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ISpriteVdpCanvas;
-import v9t9.common.video.VdpFormat;
 
 /**
  * Render video content into an ImageData
@@ -85,13 +82,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	 */
 	@Override
 	public void clear() {
-		byte[] rgb;
-		if (getFormat() == VdpFormat.COLOR256_1x1) {
-			rgb = new byte[] { 0, 0, 0};
-			V99ColorMapUtils.getGRB332(rgb, (byte) getColorMgr().getClearColor(), getColorMgr().isGreyscale());
-		} else {
-			rgb = getColorMgr().getRGB(getColorMgr().getClearColor());
-		}
+		byte[] rgb = getClearRGB();
 		
 		int bpp = imageData.depth >> 3;
 		for (int i = 0; i < imageData.data.length; i += bpp) {

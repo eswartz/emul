@@ -15,46 +15,46 @@ import java.util.TreeMap;
 import org.ejs.gui.images.ColorMapUtils;
 import org.ejs.gui.images.V99ColorMapUtils;
 
-class RGB121MapColor extends RGBDirectMapColor {
+class RGB111MapColor extends RGBDirectMapColor {
 
 	static private TreeMap<Integer, byte[]> map;
 
-	public RGB121MapColor(boolean isGreyscale) {
-		super(createStock121Palette(), 0, 16, isGreyscale);
+	public RGB111MapColor(boolean isGreyscale) {
+		super(createStock111Palette(), 0, 8, isGreyscale);
 	}
 
-	/** Get the 8-bit RGB values from a packed 1-2-1 GRB byte */
-	private static void getGRB211(byte[] rgb, byte grb, boolean isGreyscale) {
-		int g = (grb >> 2) & 0x3;
+	/** Get the 8-bit RGB values from a packed 1-1-1 GRB byte */
+	private static void getGRB111(byte[] rgb, byte grb, boolean isGreyscale) {
+		int g = (grb >> 2) & 0x1;
 		int r = (grb >> 1) & 0x1;
 		int b = grb & 0x1;
 		rgb[0] = V99ColorMapUtils.rgb1to8[r];
-		rgb[1] = V99ColorMapUtils.rgb2to8[g];
+		rgb[1] = V99ColorMapUtils.rgb1to8[g];
 		rgb[2] = V99ColorMapUtils.rgb1to8[b];
 		if (isGreyscale) {
 			ColorMapUtils.rgbToGrey(rgb, rgb);
 		}
 	}
 	
-	private static byte[][] createStock121Palette() {
-		byte[][] pal = new byte[32][];
-		for (int i = 0; i < 16; i++) {
+	private static byte[][] createStock111Palette() {
+		byte[][] pal = new byte[8][];
+		for (int i = 0; i < 8; i++) {
 			 byte[] rgb = { 0, 0, 0 };
-			 getGRB211(rgb, (byte) i, false);
+			 getGRB111(rgb, (byte) i, false);
 			 pal[i] = rgb;
 		}
 		return pal;
 	}
 
-	/** Get the RGB triple for the 211 GRB. */
-	private static byte[] getGRB211(int g, int r, int b) {
+	/** Get the RGB triple for the 111 GRB. */
+	private static byte[] getGRB111(int g, int r, int b) {
 		return new byte[] { V99ColorMapUtils.rgb1to8[r&0x1], 
-				V99ColorMapUtils.rgb2to8[g&0x3], 
+				V99ColorMapUtils.rgb1to8[g&0x1], 
 				V99ColorMapUtils.rgb1to8[b&0x1] };
 	}
 	
-	protected byte[] getRGB121(int r, int g, int b) {
-		byte[] rgbs = getGRB211(g, r, b);
+	protected byte[] getRGB111(int r, int g, int b) {
+		byte[] rgbs = getGRB111(g, r, b);
 		if (isColorMappedGreyscale) {
 			rgbs = getRgbToGreyForGreyscaleMode(rgbs);
 		}
@@ -65,10 +65,10 @@ class RGB121MapColor extends RGBDirectMapColor {
 	@Override
 	public int mapColor(int pixel, int[] dist) {
 		int r = ((pixel & 0xff0000) >>> 16) >>> 7;
-		int g = ((pixel & 0x00ff00) >>>  8) >>> 6;
+		int g = ((pixel & 0x00ff00) >>>  8) >>> 7;
 		int b = ((pixel & 0x0000ff) >>>  0) >>> 7;
 		
-		byte[] rgbs = getRGB121(r, g, b);
+		byte[] rgbs = getRGB111(r, g, b);
 		
 		if (isColorMappedGreyscale)
 			dist[0] = ColorMapUtils.getRGBLumDistance(rgbs, pixel);
@@ -90,9 +90,9 @@ class RGB121MapColor extends RGBDirectMapColor {
 		}
 		
 		int r = ((pixel & 0xff0000) >>> 16) >>> 7;
-		int g = ((pixel & 0x00ff00) >>>  8) >>> 6;
+		int g = ((pixel & 0x00ff00) >>>  8) >>> 7;
 		int b = ((pixel & 0x0000ff) >>>  0) >>> 7;
-		return (g << 3) | (r << 1) | b;
+		return (g << 2) | (r << 1) | b;
 	}
 	
 	/* (non-Javadoc)
@@ -100,7 +100,7 @@ class RGB121MapColor extends RGBDirectMapColor {
 	 */
 	@Override
 	public int getMinimalPaletteDistance() {
-		return 0x40 * 0x40 + 0x80 * 0x80 * 2;
+		return 0x80 * 0x80 * 3;
 	}
 	
 	/* (non-Javadoc)
@@ -109,7 +109,7 @@ class RGB121MapColor extends RGBDirectMapColor {
 	@Override
 	public TreeMap<Integer, byte[]> getGreyToRgbMap() {
 		if (map == null) {
-			map = new V99ColorMapUtils.GreyRgbMapper(1, 2, 1).create();
+			map = new V99ColorMapUtils.GreyRgbMapper(1, 1, 1).create();
 		}
 		return map;
 
@@ -120,6 +120,6 @@ class RGB121MapColor extends RGBDirectMapColor {
 	 */
 	@Override
 	public void mapDirectColor(byte[] rgb, byte c) {
-		getGRB211(rgb, (byte) c, false);
+		getGRB111(rgb, (byte) c, false);
 	}
 }

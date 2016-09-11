@@ -12,8 +12,9 @@ package v9t9.video.imageimport;
 
 import org.ejs.gui.images.BasePaletteMapper;
 import org.ejs.gui.images.ColorMapUtils;
+import org.ejs.gui.images.IDirectColorMapper;
 
-abstract class RGBDirectMapColor extends BasePaletteMapper {
+abstract class RGBDirectMapColor extends BasePaletteMapper implements IDirectColorMapper {
 	/**
 	 * @param isGreyscale 
 	 * 

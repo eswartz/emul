@@ -11,8 +11,11 @@
 package v9t9.video.imageimport;
 
 
+import java.util.TreeMap;
+
 import org.ejs.gui.images.BasePaletteMapper;
 import org.ejs.gui.images.ColorMapUtils;
+import org.ejs.gui.images.V99ColorMapUtils;
 
 import ejs.base.utils.Pair;
 
@@ -166,5 +169,13 @@ class TI16MapColor extends BasePaletteMapper {
 	public int getMinimalPaletteDistance() {
 		//return super.getMinimalPaletteDistance();
 		return 0x10 * 0x20 * 3;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.gui.images.IPaletteMapper#getGreyToRgbMap()
+	 */
+	@Override
+	public TreeMap<Integer, byte[]> getGreyToRgbMap() {
+		return V99ColorMapUtils.getGreyToRgbMap332();
 	}
 }

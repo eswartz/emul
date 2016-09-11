@@ -40,45 +40,32 @@ public class V99ColorMapUtils {
 		V99ColorMapUtils.rgb1to8[1] = (byte) 0xff;
 	}
 	
-	public static TreeMap<Integer,byte[]> greyToRgbMap;
+	private static TreeMap<Integer,byte[]> greyToRgbMap332;
+	
 	/** Get the RGB triple for the 333 GRB. */
 	public static byte[] getGRB333(int g, int r, int b) {
 		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[b&0x7] };
 	}
 	/** Get the RGB triple for the 332 GRB. */
 	public static byte[] getGRB332(int g, int r, int b) {
-		//return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb2to8[b&0x3] };
-		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[(b&0x3)*2 + ((r|g) & 1)] };
+		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb2to8[b&0x3] };
+//		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[(b&0x3)*2 + ((r|g) & 1)] };
 	}
-	/** Get the RGB triple for the 211 GRB. */
-	public static byte[] getGRB211(int g, int r, int b) {
-		return new byte[] { rgb1to8[r&0x1], rgb2to8[g&0x3], rgb1to8[b&0x1] };
-	}
+	
 	/** Get the 8-bit RGB values from a packed 3-3-2 GRB byte */
 	public static void getGRB332(byte[] rgb, byte grb, boolean isGreyscale) {
-		int r = (grb >> 2) & 0x7;
 		int g = (grb >> 5) & 0x7;
+		int r = (grb >> 2) & 0x7;
 		int b = grb & 0x3;
 		rgb[0] = rgb3to8[r];
 		rgb[1] = rgb3to8[g];
-		//rgb[2] = rgb2to8[grb & 0x3];
-		rgb[2] = rgb3to8[b*2 + ((r|g) & 1)];
+		rgb[2] = rgb2to8[b];
+//		rgb[2] = rgb3to8[b*2 + ((r|g) & 1)];
 		if (isGreyscale) {
 			ColorMapUtils.rgbToGrey(rgb, rgb);
 		}
 	}
-	/** Get the 8-bit RGB values from a packed 2-1-1 GRB byte */
-	public static void getGRB211(byte[] rgb, byte grb, boolean isGreyscale) {
-		int r = (grb >> 1) & 0x1;
-		int g = (grb >> 2) & 0x3;
-		int b = grb & 0x1;
-		rgb[0] = rgb1to8[r];
-		rgb[1] = rgb2to8[g];
-		rgb[2] = rgb1to8[b];
-		if (isGreyscale) {
-			ColorMapUtils.rgbToGrey(rgb, rgb);
-		}
-	}
+
 	/**
 	 * Return an RGB triplet corresponding to the luminance
 	 * of the incoming color RGB triplet, in a mode where
@@ -92,8 +79,7 @@ public class V99ColorMapUtils {
 	 * @param rgb
 	 * @return
 	 */
-	public static void rgbToGreyForGreyscaleMode(int[] rgb, int[] out) {
-		TreeMap<Integer, byte[]> map = getGreyToRgbMap();
+	public static void rgbToGreyForGreyscaleMode(TreeMap<Integer, byte[]> map, int[] rgb, int[] out) {
 		int lum = ColorMapUtils.getRGBLum(rgb);
 		
 		Entry<Integer, byte[]> entry = map.floorEntry(lum);
@@ -121,11 +107,9 @@ public class V99ColorMapUtils {
 	 * 
 	 * @param rgb
 	 * @return
-	 */
-	public static byte[] getRgbToGreyForGreyscaleMode(byte[] rgb) {
-		TreeMap<Integer, byte[]> map = getGreyToRgbMap();
-		byte[] greys = ColorMapUtils.rgbToGrey(rgb);
-		int lum = greys[0] & 0xff;
+	*/
+	public static byte[] getRgbToGreyForGreyscaleMode(TreeMap<Integer, byte[]> map, byte[] rgb) {
+		int lum = ColorMapUtils.getRGBLum(rgb);
 		
 		Entry<Integer, byte[]> entry = map.ceilingEntry(lum);
 		if (entry == null) {
@@ -137,68 +121,53 @@ public class V99ColorMapUtils {
 		
 		return entry.getValue();
 	}
-	/**
-	 * Return an RGB triplet corresponding to the luminance
-	 * of the incoming color RGB triplet, in a mode where
-	 * all colors are rendered as greyscale.
-	 * 
-	 * Obviously, the incoming color trivially fulfills this requirement.
-	 * But the intent here is to return a canonical RGB triplet
-	 * which will allow reducing a full-color gamut into a
-	 * set of 199 RGB values to allow for better palette matching.
-	 * 
-	 * @param rgb
-	 * @return
-	 */
-	public static int getPixelForGreyscaleMode(int pixel) {
-		byte[] rgb = { 0, 0, 0 };
-		ColorMapUtils.pixelToRGB(pixel, rgb);
-		rgb = getRgbToGreyForGreyscaleMode(rgb);
-		return ColorMapUtils.rgb8ToPixel(rgb);
-	}
-	/**
-	 * @return
-	 */
-	private static TreeMap<Integer, byte[]> getGreyToRgbMap() {
-		if (greyToRgbMap == null) {
-			greyToRgbMap = new TreeMap<Integer, byte[]>();
-	
-			for (int g = 0; g < 256; g += 0x20) {
-				for (int r = 0; r < 256; r += 0x20) {
-					for (int b = 0; b < 256; b += 0x20) {
-						byte[] rgb = new byte[] { (byte) (r * 0xff / 0xe0), 
-								(byte) (g * 0xff / 0xe0), 
-								(byte) (b * 0xff / 0xe0) };
-						/*
-						byte[] rgb = new byte[] { (byte) (r), 
-								(byte) (g), 
-								(byte) (b) };
-								*/
+
+	public static class GreyRgbMapper {
+		private int rdelta;
+		private int gdelta;
+		private int bdelta;
+		private int rscale;
+		private int gscale;
+		private int bscale;
+
+		public GreyRgbMapper(int rbits, int gbits, int bbits) {
+			rdelta = 0x100 >> rbits;
+			gdelta = 0x100 >> gbits;
+			bdelta = 0x100 >> bbits;
+			
+			rscale = ~(0xff >> rbits) & 0xff;
+			gscale = ~(0xff >> gbits) & 0xff;
+			bscale = ~(0xff >> bbits) & 0xff;
+		}
+		
+		public TreeMap<Integer, byte[]> create() {
+			TreeMap<Integer, byte[]> map = new TreeMap<Integer, byte[]>();
+			for (int g = 0; g < 256; g += gdelta) {
+				for (int r = 0; r < 256; r += rdelta) {
+					for (int b = 0; b < 256; b += bdelta) {
+						byte[] rgb = new byte[] { (byte) (r * 0xff / rscale), 
+								(byte) (g * 0xff / gscale), 
+								(byte) (b * 0xff / bscale) };
 						byte[] greys = ColorMapUtils.rgbToGrey(rgb);
 						int lum = greys[0] & 0xff;
-						if (!greyToRgbMap.containsKey(lum)) {
-							greyToRgbMap.put(lum, rgb);
+						if (!map.containsKey(lum)) {
+							map.put(lum, rgb);
 						}
 					}
 				}
 			}
-			/*
-			for (Map.Entry<Integer, byte[]> ent : greyToRgbMap.entrySet()) {
-				System.out.printf("%d:\t%02x %02x %02x\n",
-						ent.getKey(), 
-						(ent.getValue()[0]) & 0xff,
-						(ent.getValue()[1]) & 0xff,
-						(ent.getValue()[2]) & 0xff);
-			}
-			*/
+			
+			return map;
 		}
-		return greyToRgbMap;
 	}
-	public static byte[] getMapForRGB333(byte[] rgb) {
-		return new byte[] { (byte) Math.min(255, ((rgb[0] & 0xe0) * 0xff / 0xe0)), 
-				(byte) Math.min(255, ((rgb[1] & 0xe0) * 0xff / 0xe0)), 
-				(byte) Math.min(255, ((rgb[2] & 0xe0) * 0xff / 0xe0)) };
+	
+	public static TreeMap<Integer, byte[]> getGreyToRgbMap332() {
+		if (greyToRgbMap332 == null) {
+			greyToRgbMap332 = new GreyRgbMapper(3, 3, 2).create();
+		}
+		return greyToRgbMap332;
 	}
+	
 	public static void mapForRGB333(int[] rgb) {
 		rgb[0] = Math.min(255, ((rgb[0] & 0xe0) * 0xff / 0xe0));
 		rgb[1] = Math.min(255, ((rgb[1] & 0xe0) * 0xff / 0xe0));

@@ -10,6 +10,8 @@
  */
 package org.ejs.gui.images;
 
+import java.util.TreeMap;
+
 
 public class FixedPaletteMapColor extends BasePaletteMapper {
 	public FixedPaletteMapColor(byte[][] thePalette, int firstColor, int numColors) {
@@ -42,5 +44,13 @@ public class FixedPaletteMapColor extends BasePaletteMapper {
 			}
 		}
 		return closest;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.gui.images.IPaletteMapper#getRGBToGreyMap()
+	 */
+	@Override
+	public TreeMap<Integer, byte[]> getGreyToRgbMap() {
+		return V99ColorMapUtils.getGreyToRgbMap332();
 	}
 }

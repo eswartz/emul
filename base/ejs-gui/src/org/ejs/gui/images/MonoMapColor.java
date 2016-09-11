@@ -10,6 +10,8 @@
  */
 package org.ejs.gui.images;
 
+import java.util.TreeMap;
+
 
 public class MonoMapColor implements IPaletteMapper {
 	private final int fg;
@@ -101,5 +103,28 @@ public class MonoMapColor implements IPaletteMapper {
 	@Override
 	public int getPalettePixel(int c) {
 		return c == fg ? 0 : -1;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.gui.images.IPaletteMapper#getPixelForGreyscaleMode(int)
+	 */
+	@Override
+	public int getPixelForGreyscaleMode(int pixel) {
+		return pixel;
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.gui.images.IPaletteMapper#getRgbToGreyForGreyscaleMode(byte[])
+	 */
+	@Override
+	public byte[] getRgbToGreyForGreyscaleMode(byte[] nrgb) {
+		return nrgb;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.ejs.gui.images.IPaletteMapper#getRGBToGreyMap()
+	 */
+	@Override
+	public TreeMap<Integer, byte[]> getGreyToRgbMap() {
+		return V99ColorMapUtils.getGreyToRgbMap332();
 	}
 }

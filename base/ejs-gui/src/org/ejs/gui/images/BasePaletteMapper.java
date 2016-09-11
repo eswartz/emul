@@ -10,6 +10,9 @@
  */
 package org.ejs.gui.images;
 
+import java.util.TreeMap;
+import java.util.Map.Entry;
+
 
 abstract public class BasePaletteMapper implements IPaletteMapper {
 	private final boolean canSetPalette;
@@ -68,7 +71,7 @@ abstract public class BasePaletteMapper implements IPaletteMapper {
 			for (int x = 0; x < numColors; x++) {
 				byte[] nrgb = palette[x];
 				if (isColorMappedGreyscale)
-					nrgb = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(nrgb);
+					nrgb = getRgbToGreyForGreyscaleMode(nrgb);
 				palettePixels[x] = ColorMapUtils.rgb8ToPixel(nrgb);
 			}
 		}
@@ -87,5 +90,34 @@ abstract public class BasePaletteMapper implements IPaletteMapper {
 	public int getClosestPalettePixel(int x, int y, int pixel) {
 		int v = getClosestPaletteEntry(x, y, pixel);
 		return v >= 0 ? getPalettePixel(v) : pixel;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.gui.images.IPaletteMapper#getPixelForGreyscaleMode(int)
+	 */
+	@Override
+	public int getPixelForGreyscaleMode(int pixel) {
+		byte[] rgb = { 0, 0, 0 };
+		ColorMapUtils.pixelToRGB(pixel, rgb);
+		rgb = getRgbToGreyForGreyscaleMode(rgb);
+		return ColorMapUtils.rgb8ToPixel(rgb);
+	}
+	/* (non-Javadoc)
+	 * @see org.ejs.gui.images.IPaletteMapper#getRgbToGreyForGreyscaleMode(byte[])
+	 */
+	@Override
+	public byte[] getRgbToGreyForGreyscaleMode(byte[] rgb) {
+		int lum = ColorMapUtils.getRGBLum(rgb);
+		
+		TreeMap<Integer, byte[]> map = getGreyToRgbMap();
+		Entry<Integer, byte[]> entry = map.ceilingEntry(lum);
+		if (entry == null) {
+			entry = map.floorEntry(lum);
+			if (entry == null) {
+				throw new AssertionError();
+			}
+		}
+		
+		return entry.getValue();
 	}
 }

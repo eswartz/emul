@@ -1,5 +1,5 @@
 /*
-  RGB121MapColor.java
+  RGB221MapColor.java
 
   (c) 2016 Edward Swartz
 
@@ -15,20 +15,19 @@ import java.util.TreeMap;
 import org.ejs.gui.images.ColorMapUtils;
 import org.ejs.gui.images.V99ColorMapUtils;
 
-class RGB121MapColor extends RGBDirectMapColor {
+class RGB221MapColor extends RGBDirectMapColor {
 
 	static private TreeMap<Integer, byte[]> map;
 
-	public RGB121MapColor(boolean isGreyscale) {
-		super(createStock121Palette(), 0, 16, isGreyscale);
+	public RGB221MapColor(boolean isGreyscale) {
+		super(createStock221Palette(), 0, 32, isGreyscale);
 	}
-
-	/** Get the 8-bit RGB values from a packed 1-2-1 GRB byte */
-	private static void getGRB211(byte[] rgb, byte grb, boolean isGreyscale) {
-		int g = (grb >> 2) & 0x3;
-		int r = (grb >> 1) & 0x1;
+	/** Get the 8-bit RGB values from a packed 2-2-1 GRB byte */
+	private static void getGRB221(byte[] rgb, byte grb, boolean isGreyscale) {
+		int g = (grb >> 3) & 0x3;
+		int r = (grb >> 1) & 0x3;
 		int b = grb & 0x1;
-		rgb[0] = V99ColorMapUtils.rgb1to8[r];
+		rgb[0] = V99ColorMapUtils.rgb2to8[r];
 		rgb[1] = V99ColorMapUtils.rgb2to8[g];
 		rgb[2] = V99ColorMapUtils.rgb1to8[b];
 		if (isGreyscale) {
@@ -36,25 +35,26 @@ class RGB121MapColor extends RGBDirectMapColor {
 		}
 	}
 	
-	private static byte[][] createStock121Palette() {
+	private static byte[][] createStock221Palette() {
 		byte[][] pal = new byte[32][];
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < 32; i++) {
 			 byte[] rgb = { 0, 0, 0 };
-			 getGRB211(rgb, (byte) i, false);
+			 getGRB221(rgb, (byte) i, false);
 			 pal[i] = rgb;
 		}
 		return pal;
 	}
 
-	/** Get the RGB triple for the 211 GRB. */
-	private static byte[] getGRB211(int g, int r, int b) {
-		return new byte[] { V99ColorMapUtils.rgb1to8[r&0x1], 
-				V99ColorMapUtils.rgb2to8[g&0x3], 
+	/** Get the RGB triple for the 221 GRB. */
+	private static byte[] getGRB221(int g, int r, int b) {
+		return new byte[] { 
+				V99ColorMapUtils.rgb2to8[r&0x3], 
+				V99ColorMapUtils.rgb2to8[g&0x3],
 				V99ColorMapUtils.rgb1to8[b&0x1] };
 	}
-	
-	protected byte[] getRGB121(int r, int g, int b) {
-		byte[] rgbs = getGRB211(g, r, b);
+
+	protected byte[] getRGB221(int r, int g, int b) {
+		byte[] rgbs = getGRB221(g, r, b);
 		if (isColorMappedGreyscale) {
 			rgbs = getRgbToGreyForGreyscaleMode(rgbs);
 		}
@@ -64,18 +64,18 @@ class RGB121MapColor extends RGBDirectMapColor {
 	
 	@Override
 	public int mapColor(int pixel, int[] dist) {
-		int r = ((pixel & 0xff0000) >>> 16) >>> 7;
+		int r = ((pixel & 0xff0000) >>> 16) >>> 6;
 		int g = ((pixel & 0x00ff00) >>>  8) >>> 6;
 		int b = ((pixel & 0x0000ff) >>>  0) >>> 7;
 		
-		byte[] rgbs = getRGB121(r, g, b);
+		byte[] rgbs = getRGB221(r, g, b);
 		
 		if (isColorMappedGreyscale)
 			dist[0] = ColorMapUtils.getRGBLumDistance(rgbs, pixel);
 		else
 			dist[0] = ColorMapUtils.getRGBDistance(rgbs, pixel);
-		
-		int c = (g << 2) | (r << 1) | b;
+
+		int c = (g << 3) | (r << 1) | b;
 		return c;
 	}
 
@@ -89,7 +89,7 @@ class RGB121MapColor extends RGBDirectMapColor {
 			pixel = getPixelForGreyscaleMode(pixel);
 		}
 		
-		int r = ((pixel & 0xff0000) >>> 16) >>> 7;
+		int r = ((pixel & 0xff0000) >>> 16) >>> 6;
 		int g = ((pixel & 0x00ff00) >>>  8) >>> 6;
 		int b = ((pixel & 0x0000ff) >>>  0) >>> 7;
 		return (g << 3) | (r << 1) | b;
@@ -100,7 +100,7 @@ class RGB121MapColor extends RGBDirectMapColor {
 	 */
 	@Override
 	public int getMinimalPaletteDistance() {
-		return 0x40 * 0x40 + 0x80 * 0x80 * 2;
+		return 0x40 * 0x40 * 2 + 0x80 * 0x80;
 	}
 	
 	/* (non-Javadoc)
@@ -109,10 +109,9 @@ class RGB121MapColor extends RGBDirectMapColor {
 	@Override
 	public TreeMap<Integer, byte[]> getGreyToRgbMap() {
 		if (map == null) {
-			map = new V99ColorMapUtils.GreyRgbMapper(1, 2, 1).create();
+			map = new V99ColorMapUtils.GreyRgbMapper(2, 2, 1).create();
 		}
 		return map;
-
 	}
 	
 	/* (non-Javadoc)
@@ -120,6 +119,6 @@ class RGB121MapColor extends RGBDirectMapColor {
 	 */
 	@Override
 	public void mapDirectColor(byte[] rgb, byte c) {
-		getGRB211(rgb, (byte) c, false);
+		getGRB221(rgb, (byte) c, false);
 	}
 }

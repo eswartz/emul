@@ -16,6 +16,8 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
+import org.ejs.gui.images.V99ColorMapUtils;
+
 import v9t9.common.memory.ByteMemoryAccess;
 
 /**
@@ -203,4 +205,19 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 
 	/** Used for screenshots */
 	public abstract void getNextRGB(Buffer buffer, byte[] rgb);
+
+	protected byte[] getClearRGB() {
+		byte[] rgb;
+		if (getFormat() != null && !getFormat().isPaletted()) {
+			rgb = new byte[] { 0, 0, 0};
+			if (getFormat().getNumColors() == 256) {
+				V99ColorMapUtils.getGRB332(rgb, (byte) getColorMgr().getClearColor(), getColorMgr().isGreyscale());
+			}
+		} else {
+			rgb = getColorMgr().getRGB(getColorMgr().getClearColor());
+		}
+		return rgb;
+	}
+		
+
 }

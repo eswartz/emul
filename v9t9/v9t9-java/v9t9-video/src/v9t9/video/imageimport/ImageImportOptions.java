@@ -145,18 +145,7 @@ public class ImageImportOptions {
 	public void resetOptions() {
 		VdpFormat format = canvas.getFormat();
 		
-		if (vdp.getRegisterCount() > 10) {
-			// hack: graphics mode 2 allows setting the palette too, 
-			// but for comparison shopping, pretend we can't.
-			if (format == VdpFormat.COLOR16_8x1) {
-				canSetPalette = false;
-			} else {
-				canSetPalette = format != VdpFormat.COLOR256_1x1;
-			}
-		} else {
-			canSetPalette = false;
-		}
-		
+		canSetPalette = format.canSetPalette();
 		
 		////
 		
@@ -166,7 +155,7 @@ public class ImageImportOptions {
 		isMonoMode = vdp instanceof IVdpTMS9918A && ((IVdpTMS9918A) vdp).isBitmapMonoMode();
 		
 		setDitherMono(isMonoMode);
-		setDitherType(format == VdpFormat.COLOR16_8x1 ? Dither.ORDERED : Dither.FS);
+		setDitherType(format.getLayout() == VdpFormat.Layout.BITMAP_2_PER_8 ? Dither.ORDERED : Dither.FS);
 		
 		octree = null;
 		

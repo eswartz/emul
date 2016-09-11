@@ -19,7 +19,6 @@ import org.ejs.gui.images.V99ColorMapUtils;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.BitmapVdpCanvas;
 import v9t9.common.video.ISpriteVdpCanvas;
-import v9t9.common.video.VdpFormat;
 
 /**
  * Render video content into a direct ByteBuffer
@@ -94,13 +93,7 @@ public class BufferCanvasByteR3G3B2 extends BitmapVdpCanvas implements IGLDataCa
 	 */
 	@Override
 	public void clear() {
-		byte[] rgb;
-		if (getFormat() == VdpFormat.COLOR256_1x1) {
-			rgb = new byte[] { 0, 0, 0};
-			V99ColorMapUtils.getGRB332(rgb, (byte) getColorMgr().getClearColor(), getColorMgr().isGreyscale());
-		} else {
-			rgb = getColorMgr().getRGB(getColorMgr().getClearColor());
-		}
+		byte[] rgb = getClearRGB();
 
 		byte col;
 		col = V99ColorMapUtils.getRGBToGRB332(rgb);

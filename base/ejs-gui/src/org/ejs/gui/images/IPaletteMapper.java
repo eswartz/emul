@@ -11,6 +11,7 @@
 package org.ejs.gui.images;
 
 import java.awt.image.BufferedImage;
+import java.util.TreeMap;
 
 public interface IPaletteMapper extends IPaletteColorMapper, IColorMapper {
 	/**
@@ -31,4 +32,30 @@ public interface IPaletteMapper extends IPaletteColorMapper, IColorMapper {
 	 * Get the minimal distance between colors in the palette.
 	 */
 	int getMinimalPaletteDistance();
+
+	/**
+	 * @return
+	 */
+	TreeMap<Integer, byte[]> getGreyToRgbMap();
+	
+	/**
+	 * Return an RGB triplet corresponding to the luminance
+	 * of the incoming color RGB triplet, in a mode where
+	 * all colors are rendered as greyscale.
+	 * 
+	 * Obviously, the incoming color trivially fulfills this requirement.
+	 * But the intent here is to return a canonical RGB triplet
+	 * which will allow reducing a full-color gamut into a
+	 * set of 199 RGB values to allow for better palette matching.
+	 * 
+	 * @param pixel
+	 * @return pixel which is greyscale but whose luminance matches @pixel 
+	 */
+	int getPixelForGreyscaleMode(int pixel);
+
+	/**
+	 * @param nrgb
+	 * @return
+	 */
+	byte[] getRgbToGreyForGreyscaleMode(byte[] nrgb);
 }

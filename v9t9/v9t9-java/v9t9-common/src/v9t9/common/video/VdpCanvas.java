@@ -33,7 +33,7 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements IVdpCanvas, ISp
 
 	public void setFormat(VdpFormat format) {
 		this.format = format;
-		getColorMgr().useAltSpritePalette(format == VdpFormat.COLOR256_1x1);
+		getColorMgr().useAltSpritePalette(format.isMsx2() && format.getNumColors() == 256);
 		setMono(false);
 	}
 	/* (non-Javadoc)

@@ -10,6 +10,8 @@
  */
 package v9t9.video.imageimport;
 
+import java.util.TreeMap;
+
 import org.ejs.gui.images.BasePaletteMapper;
 import org.ejs.gui.images.ColorMapUtils;
 import org.ejs.gui.images.V99ColorMapUtils;
@@ -45,13 +47,9 @@ class RGB333MapColor extends BasePaletteMapper {
 	}
 
 	protected byte[] getRGB33x(int r, int g, int b) {
-		byte[] rgbs;
-		if (!isColorMappedGreyscale) {
-			rgbs = V99ColorMapUtils.getGRB333(g, r, b);
-		} else {
-			// (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
-			rgbs = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(new byte[] { 
-					(byte) (r * 255 / 7), (byte) (g * 255 / 7), (byte) (b * 255 / 7) });
+		byte[] rgbs = V99ColorMapUtils.getGRB333(g, r, b);
+		if (isColorMappedGreyscale) {
+			rgbs = getRgbToGreyForGreyscaleMode(rgbs);
 		}
 			
 		return rgbs;
@@ -81,7 +79,7 @@ class RGB333MapColor extends BasePaletteMapper {
 				}
 			}
 		}
-		return getPalettePixels()[closest];
+		return closest;
 	}
 	
 	@Override
@@ -93,5 +91,13 @@ class RGB333MapColor extends BasePaletteMapper {
 		
 		byte[] rgbs = getRGB33x(r, g, b);
 		return ColorMapUtils.rgb8ToPixel(rgbs);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.ejs.gui.images.IPaletteMapper#getGreyToRgbMap()
+	 */
+	@Override
+	public TreeMap<Integer, byte[]> getGreyToRgbMap() {
+		return V99ColorMapUtils.getGreyToRgbMap332();
 	}
 }

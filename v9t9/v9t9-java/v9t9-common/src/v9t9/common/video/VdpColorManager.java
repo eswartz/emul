@@ -312,11 +312,6 @@ public class VdpColorManager {
 	}
 
 	
-	public void setRGB333(int idx, byte[] rgb) {
-		byte[] low = V99ColorMapUtils.getMapForRGB333(rgb);
-		setGRB333(idx, low[1] >> 5, low[0] >> 5, low[2] >> 5); 
-	}
-	
 	/** Set the RGB triple for the palette entry, using 3-bit RGB (usually from a palette). */
 	public void setGRB333(int idx, int g, int r, int b) {
 		setRGB(idx, V99ColorMapUtils.getGRB333(g, r, b));
