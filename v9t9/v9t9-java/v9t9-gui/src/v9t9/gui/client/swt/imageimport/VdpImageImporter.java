@@ -95,17 +95,11 @@ public class VdpImageImporter {
 			else if (format == VdpFormat.COLOR16_8x8) {
 				setVideoMemoryGraphicsMode(vdp99);
 			}
-			else if (format == VdpFormat.COLOR16_1x1) {
-				setVideoMemoryV9938BitmapMode(vdp99);
-			}
-			else if (format == VdpFormat.COLOR256_1x1) {
-				setVideoMemoryV9938BitmapMode(vdp99);
-			}
-			else if (format == VdpFormat.COLOR4_1x1) {
-				setVideoMemoryV9938BitmapMode(vdp99);
-			}
 			else if (format== VdpFormat.COLOR16_4x4) {
 				setVideoMemoryMulticolorMode(vdp99);
+			}
+			else if (format.isMsx2()) {
+				setVideoMemoryV9938BitmapMode(vdp99);
 			}
 		}
 	}

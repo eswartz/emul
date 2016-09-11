@@ -53,8 +53,8 @@ public class ConvertImages {
 	private ImageImportDialogOptions opts;
 	private int width;
 	private int height;
-	private float aspect;
 	private VdpColorManager colorMgr;
+	private float stretch;
 
 	private static void help() {
 		System.out
@@ -67,13 +67,14 @@ public class ConvertImages {
 						+ " [options] file...\n"
 						+ "\n"
 						+ "Options:\n"
-						+ "-m MODE: video mode; if MODE ends in 'g', assume greyscale\n"
-						+ "  2=256x192x16 (8x1), 3=256x192x16 (8x1+palette),\n"
-						+ "  4=256x192x16, 5=512x192x4,\n"
-						+ "  6=512x192x16, 7=256x192x256\n"
-						+ "  8=64x48x16, 9=256x192x2\n"
-						+ "-r WxH: resize image to the given width/height (else use mode)\n"
+						+ "-m WxHxC | MODE: video mode; if MODE ends in 'g', assume greyscale\n"
+						+ "  single numbers map to 9900 FORTH mode numbers:"
+						+ "    2=256x192x16 (8x1), 3=256x192x16 (8x1+palette),\n"
+						+ "    4=256x192x16, 5=512x192x4,\n"
+						+ "    6=512x192x16, 7=256x192x256\n"
+						+ "    8=64x48x16, 9=64x48x16, 10=256x192x2\n"
 						+ "-a 0|1: set preserve aspect ratio off or on\n"
+						+ "-A aspect: set expected aspect ratio\n"
 						+ "-d none|ordered|fs: select dithering method\n"
 						+ "-p std|opt[+]: map to standard palette, or optimize (+ = set color 0)n"
 						+ "-s 0|1: smooth scaling off or on\n"
@@ -95,7 +96,7 @@ public class ConvertImages {
 		IMachine machine = ToolUtils.createMachine();
 
 		Getopt getopt;
-		getopt = new Getopt(PROGNAME, args, "?o:r:a:d:p:s:m:gMb:S:");
+		getopt = new Getopt(PROGNAME, args, "?o:a:A:d:p:s:m:gMb:S:");
 
 		IVdpCanvas canvas = new ImageDataCanvas24Bit();
 
@@ -104,7 +105,7 @@ public class ConvertImages {
 
 		File outdir = null;
 		int width = 256, height = 192;
-		float aspect = 1f;
+		float stretch = 1f;
 
 		int opt;
 		while ((opt = getopt.getopt()) != -1) {
@@ -115,26 +116,19 @@ public class ConvertImages {
 			case 'o':
 				outdir = new File(getopt.getOptarg());
 				break;
-			case 'r': {
+			case 'a':
+				opts.setKeepAspect(readFlag(getopt.getOptarg()));
+				break;
+			case 'A': {
 				String oa = getopt.getOptarg();
-				int idx = oa.indexOf('x');
-				if (idx < 0) {
-					System.err.println("Unexpected -r WxH argument: " + oa);
-					System.exit(1);
-				}
 				try {
-					width = Integer.parseInt(oa.substring(0, idx));
-					height = Integer.parseInt(oa.substring(idx + 1));
+					opts.setAspect(Float.parseFloat(oa));
 				} catch (NumberFormatException e) {
-					System.err.println("Unexpected -r WxH argument: "
-							+ e.getMessage());
+					System.err.println("Unexpected -A argument: " + oa);
 					System.exit(1);
 				}
 				break;
 			}
-			case 'a':
-				opts.setKeepAspect(readFlag(getopt.getOptarg()));
-				break;
 			case 'd': {
 				String oa = getopt.getOptarg();
 				if (oa.length() > 0 && oa.charAt(0) == 'n') {
@@ -175,7 +169,7 @@ public class ConvertImages {
 				opts.setFormat((VdpFormat) t.get(0));
 				width = (Integer) t.get(1);
 				height = (Integer) t.get(2);
-				aspect = ((Number) t.get(3)).floatValue();
+				stretch = ((Number) t.get(3)).floatValue();
 				canvas.getColorMgr().setGreyscale((Boolean) t.get(4));
 				break;
 			}
@@ -214,7 +208,7 @@ public class ConvertImages {
 						: new File(in.getParentFile(), outname);
 
 				ConvertImages cvt = new ConvertImages(machine, canvas, opts,
-						in, width, height, aspect, out);
+						in, width, height, stretch, out);
 				cvt.importImage();
 			}
 		} catch (IOException e) {
@@ -236,11 +230,61 @@ public class ConvertImages {
 		return false;
 	}
 
-	private static Tuple/* VdpFormat, Integer, Integer, Boolean */readFormat(String mode) {
+	private static Tuple/* VdpFormat, Integer, Integer, Float, Boolean */readFormat(String mode) {
 		boolean isGrey  = false;
 		if (mode.endsWith("g")) {
 			isGrey = true;
 			mode = mode.substring(0, mode.length() - 1);
+		}
+		
+		if (mode.indexOf('x') != 0) {
+			// actual resolution + # colors
+			int idx = mode.indexOf('x');
+			try {
+				int w = Integer.parseInt(mode.substring(0, idx));
+				int idx2 = mode.indexOf('x', idx+1);
+				int h = Integer.parseInt(mode.substring(idx+1, idx2));
+				int c = Integer.parseInt(mode.substring(idx2+1));
+				
+				VdpFormat f = null;
+				switch (c) {
+				case 2:
+					f = VdpFormat.COLOR2_8x1;
+					break;
+				case 4:
+					f = VdpFormat.COLOR4_1x1;
+					break;
+				case 8:
+					f = VdpFormat.COLOR8_1x1;
+					break;
+				case 16:
+					f = VdpFormat.COLOR16_1x1;
+					break;
+				case 32:
+					f = VdpFormat.COLOR32_1x1;
+					break;
+				case 64:
+					f = VdpFormat.COLOR64_1x1;
+					break;
+				case 128:
+					f = VdpFormat.COLOR128_1x1;
+					break;
+				case 256:
+					f = VdpFormat.COLOR256_1x1;
+					break;
+				default:
+					System.err.println("Unexpected -m argument number of colors: " + c);
+					System.exit(1);
+					return null;
+				}
+				
+				return new Tuple(f, w, h, 1f, isGrey);
+				
+			} catch (NumberFormatException e) {
+				// fall through
+			} catch (StringIndexOutOfBoundsException e) {
+				// fall through
+			}
 		}
 		try {
 			int m = Integer.parseInt(mode);
@@ -284,13 +328,13 @@ public class ConvertImages {
 
 	public ConvertImages(IMachine machine, IVdpCanvas canvas,
 			ImageImportDialogOptions opts, File in, int width, int height,
-			float aspect, File out) throws IOException {
+			float stretch, File out) throws IOException {
+		this.stretch = stretch;
 		this.colorMgr = canvas.getColorMgr();
 		this.opts = opts;
 		this.in = in;
 		this.width = width;
 		this.height = height;
-		this.aspect = aspect;
 		this.out = out;
 	}
 
@@ -310,8 +354,9 @@ public class ConvertImages {
 		ImageImportData[] datas = importer.importImage(opts, width, height);
 
 		BufferedImage cvt = datas[0].getConvertedImage();
-		if (aspect != 1f) {
-			int newHeight = (int) Math.round(height * aspect);
+		
+		if (stretch != 1f) {
+			int newHeight = (int) Math.round(height * stretch);
 			BufferedImage tmp = new BufferedImage(width, newHeight, cvt.getType());
 			Graphics2D g2 = tmp.createGraphics();
 			g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
@@ -329,8 +374,18 @@ public class ConvertImages {
 		
 		ImageIO.write(cvt, "png", out);
 
-		Runtime.getRuntime().exec(
-				new String[] { "/usr/bin/display", "-sample", "200%x200%",
-						out.getPath() });
+		String[] args = { "/usr/bin/display", 
+				"-sample", 
+				"200%x200%",
+				out.getPath() 
+			}; 
+		
+		if (width >= 512) {
+			args[2] = "100%x100%";
+		} else if (opts.getFormat() == VdpFormat.COLOR16_4x4) {
+			args[2] = "800%x800%";
+		}
+		
+		Runtime.getRuntime().exec(args);
 	}
 }

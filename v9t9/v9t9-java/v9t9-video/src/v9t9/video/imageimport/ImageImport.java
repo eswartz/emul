@@ -176,7 +176,6 @@ public class ImageImport {
 
 	private void ditherFSPixel(BufferedImage img, IPaletteColorMapper mapColor,
 			Histogram hist, int x, int y) {
-
 		
 		int pixel = img.getRGB(x, y);
 
@@ -200,30 +199,27 @@ public class ImageImport {
 		}
 		
 		if ((r_error | g_error | b_error) != 0) {
-			int tot_err = Math.abs(r_error) | Math.abs(g_error) | Math.abs(b_error); 
 			if (x + 1 < img.getWidth()) {
 				// x+1, y
 				ditherFSApplyError(img, x + 1, y,  
-						7, r_error, g_error, b_error, tot_err);
+						7, r_error, g_error, b_error);
 			}
 			if (y + 1 < img.getHeight()) {
 				if (x > 0) {
 					ditherFSApplyError(img, x - 1, y + 1, 
-							3, r_error, g_error, b_error, tot_err);
+							3, r_error, g_error, b_error);
 				}
 				ditherFSApplyError(img, x, y + 1, 
-						5, r_error, g_error, b_error, tot_err);
+						5, r_error, g_error, b_error);
 				if (x + 1 < img.getWidth()) {
 					ditherFSApplyError(img, x + 1, y + 1, 
-							1, r_error, g_error, b_error, tot_err);
+							1, r_error, g_error, b_error);
 				}
 			}
 		}
 	}
 	
-	private void ditherFSApplyError(BufferedImage img, int x, int y, int sixteenths, int r_error, int g_error, int b_error, int tot_err) {
-		if (sixteenths * tot_err / 16 == 0)
-			return;
+	private void ditherFSApplyError(BufferedImage img, int x, int y, int sixteenths, int r_error, int g_error, int b_error) {
 		int pixel = img.getRGB(x, y);
 		int r = clamp(((pixel >> 16) & 0xff) + (sixteenths * r_error / 16));
 		int g = clamp(((pixel >> 8) & 0xff) + (sixteenths * g_error / 16));
@@ -232,10 +228,70 @@ public class ImageImport {
 	
 	}
 
-	private void ditherFloydSteinberg(BufferedImage img, IPaletteColorMapper mapColor, Histogram hist) {
-		for (int y = 0; y < img.getHeight(); y++) {
-			for (int x = 0; x < img.getWidth(); x++) {
+	private void ditherFS(BufferedImage img, IPaletteColorMapper mapColor, Histogram hist) {
+		int h = img.getHeight();
+		int w = img.getWidth();
+
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
 				ditherFSPixel(img, mapColor, hist, x, y);
+			}
+		}
+		
+	}
+
+	private void ditherFSPixelMono(BufferedImage img, IPaletteColorMapper mapColor,
+			Histogram hist, int x, int y) {
+		
+		int pixel = img.getRGB(x, y);
+		int lum = ColorMapUtils.getPixelLum(pixel);
+
+		int newC = mapColor.getClosestPaletteEntry(x, y, pixel);
+		
+		int newPixel = mapColor.getPalettePixel(newC);
+		int newLum = ColorMapUtils.getPixelLum(newPixel);
+
+		img.setRGB(x, y, newPixel | 0xff000000);
+		
+		int error = lum - newLum;
+		
+		if (error != 0) {
+			if (x + 1 < img.getWidth()) {
+				// x+1, y
+				ditherFSMonoApplyError(img, x + 1, y, 7, error);
+			}
+			if (y + 1 < img.getHeight()) {
+				if (x > 0) {
+					ditherFSMonoApplyError(img, x - 1, y + 1, 3, error);
+				}
+				ditherFSMonoApplyError(img, x, y + 1, 5, error);
+				if (x + 1 < img.getWidth()) {
+					ditherFSMonoApplyError(img, x + 1, y + 1, 1, error); 
+				}
+			}
+		}
+	}
+
+	private void ditherFSMonoApplyError(BufferedImage img, int x, int y, int sixteenths, int error) {
+		int offs = sixteenths * error / 16;
+		if (offs == 0)
+			return;
+
+		int pixel = img.getRGB(x, y);
+		int r = clamp(((pixel >> 16) & 0xff) + offs);
+		int g = clamp(((pixel >> 8) & 0xff) + offs);
+		int b = clamp(((pixel >> 0) & 0xff) + offs);
+		img.setRGB(x, y, (r << 16) | (g << 8) | b | 0xff000000);
+	
+	}
+
+	private void ditherFSMono(BufferedImage img, IPaletteColorMapper mapColor, Histogram hist) {
+		int h = img.getHeight();
+		int w = img.getWidth();
+		
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
+				ditherFSPixelMono(img, mapColor, hist, x, y);
 			}
 		}
 		
@@ -258,7 +314,6 @@ public class ImageImport {
 	private void ditherOrderedPixel(BufferedImage img, IPaletteColorMapper mapColor,
 			int x, int y, int[] prgb) {
 
-		
 		int pixel = img.getRGB(x, y);
 		ColorMapUtils.pixelToRGB(pixel, prgb);
 
@@ -283,9 +338,12 @@ public class ImageImport {
 	}
 	
 	private void ditherOrdered(BufferedImage img, IPaletteColorMapper mapColor) {
+		int h = img.getHeight();
+		int w = img.getWidth();
+
 		int[] prgb = { 0, 0, 0 };
-		for (int y = 0; y < img.getHeight(); y++) {
-			for (int x = 0; x < img.getWidth(); x++) {
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
 				ditherOrderedPixel(img, mapColor, x, y, prgb);
 			}
 		}
@@ -463,7 +521,7 @@ public class ImageImport {
 		int numColors = format.getNumColors();
 		
 		// effective minimum distance for any mode
-		int maxDist = 0x8*0x8 * 3;
+		int maxDist = mapColor.getMinimalPaletteDistance();
 		int numPixels = img.getWidth() * img.getHeight();
 		
 		boolean matched = false;
@@ -507,7 +565,10 @@ public class ImageImport {
 		updatePaletteMapping();
 
 		if (ditherType == Dither.FS) {
-			ditherFloydSteinberg(img, mapColor, hist);
+			if (ditherMono)
+				ditherFSMono(img, mapColor, hist);
+			else
+				ditherFS(img, mapColor, hist);
 		} else if (ditherType == Dither.ORDERED) {
 			ditherOrdered(img, mapColor);
 		} else {
@@ -621,8 +682,11 @@ public class ImageImport {
 		BufferedImage convertedImage = new BufferedImage(targWidth, targHeight, 
 				BufferedImage.TYPE_3BYTE_BGR);
 
-		xoffs = (targWidth - img.getWidth()) / 2;
-		yoffs = (targHeight - img.getHeight()) / 2;
+		int h = img.getHeight();
+		int w = img.getWidth();
+		
+		xoffs = (targWidth - w) / 2;
+		yoffs = (targHeight - h) / 2;
 	
 		if (isBitmap) {
 			// be sure we select the 8 pixel groups sensibly
@@ -637,9 +701,8 @@ public class ImageImport {
 			reduceBitmapMode(convertedImage, img, xoffs, yoffs);
 	
 		} else {
-	
-			for (int y = 0; y < img.getHeight(); y++) {
-				for (int x = 0; x < img.getWidth(); x++) {
+			for (int y = 0; y < h; y++) {
+				for (int x = 0; x < w; x++) {
 					convertedImage.setRGB(x + xoffs, y + yoffs, img.getRGB(x, y));
 				}
 			}
@@ -655,9 +718,12 @@ public class ImageImport {
 	private void gammaCorrect(BufferedImage img) {
 		int[] prgb = { 0, 0, 0 };
 		float[] hsv = { 0, 0, 0 };
-		
-		for (int y = 0; y < img.getHeight(); y++) {
-			for (int x = 0; x < img.getWidth(); x++) {
+
+		int h = img.getHeight();
+		int w = img.getWidth();
+
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
 				int pixel = img.getRGB(x, y);
 				ColorMapUtils.pixelToRGB(pixel, prgb);
 				ColorMapUtils.rgbToHsv(prgb, hsv);
@@ -750,10 +816,13 @@ public class ImageImport {
 		int offs = 0;
 		int[] mappedColors = hist.mappedColors();
 		
-		for (int y = 0; y < img.getHeight(); y++) {
+		int h = img.getHeight();
+		int w = img.getWidth();
+
+		for (int y = 0; y < h; y++) {
 			boolean changed = false;
-			img.getRGB(0, y, img.getWidth(), 1, rgbs, 0, rgbs.length);
-			for (int x = 0; x < img.getWidth(); x++) {
+			img.getRGB(0, y, w, 1, rgbs, 0, rgbs.length);
+			for (int x = 0; x < w; x++) {
 				if (mappedColors[offs] == c) {
 					int dist = useColorMappedGreyScale ?  ColorMapUtils.getPixelLumDistance(rgbs[x], newRGB)
 							: ColorMapUtils.getPixelDistance(rgbs[x], newRGB);
@@ -768,7 +837,7 @@ public class ImageImport {
 				offs++;
 			}
 			if (changed) {
-				img.setRGB(0, y, img.getWidth(), 1, rgbs, 0, rgbs.length);
+				img.setRGB(0, y, w, 1, rgbs, 0, rgbs.length);
 			}
 		}
 		
@@ -1422,7 +1491,7 @@ public class ImageImport {
 		
 		paletteToIndex = new TreeMap<Integer, Integer>();
 		
-		if (ncols < 256) {
+		if (format.isPaletted()) {
 			if (ditherMono) {
 				paletteToIndex.put(0x0, colorMgr.getForeground());
 				paletteToIndex.put(0xffffff, colorMgr.getBackground());
@@ -1487,6 +1556,7 @@ public class ImageImport {
 		if (format == VdpFormat.COLOR16_8x8 || format == VdpFormat.COLOR2_8x1) {
 			ditherMono = true;
 			options.setDitherMono(ditherMono);
+			this.useColorMappedGreyScale = true;
 		}
 		
 		paletteMappingDirty = true;
@@ -1535,15 +1605,26 @@ public class ImageImport {
 				mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
 			}
 		}
-		else if (format == VdpFormat.COLOR16_1x1) {
-			mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
-		}
-		else if (format == VdpFormat.COLOR4_1x1) {
-			mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
-		}
-		else if (format == VdpFormat.COLOR256_1x1) {
+		else if (!format.isPaletted()) {
 			paletteOption = Palette.STANDARD;
-			mapColor = new RGB332MapColor(useColorMappedGreyScale);
+			switch (format.getNumColors()) {
+			case 32:
+				// 5 bits, 1+2+1
+				mapColor = new RGB121MapColor(useColorMappedGreyScale);
+				break;
+			case 64:
+				mapColor = new RGB332MapColor(useColorMappedGreyScale);
+				break;
+			case 128:
+				mapColor = new RGB332MapColor(useColorMappedGreyScale);
+				break;
+			case 256:
+				mapColor = new RGB332MapColor(useColorMappedGreyScale);
+				break;
+			}
+		}
+		else if (format.isMsx2()) {
+			mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
 		}
 		else if (format == VdpFormat.COLOR16_8x8) {
 			paletteOption = Palette.STANDARD;
@@ -1610,8 +1691,7 @@ public class ImageImport {
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x++) {
 				int pixel = img.getRGB(x, y);
-				ColorMapUtils.pixelToRGB(pixel, rgb);
-				int lum = (299 * ((pixel >> 16) & 0xff) + 587 * ((pixel >> 8) & 0xff) + 114 * (pixel & 0xff)) / 1000;
+				int lum = ColorMapUtils.getPixelLum(pixel);
 				rgb[0] = rgb[1] = rgb[2] = lum;
 				int newPixel = ColorMapUtils.rgb8ToPixel(rgb);
 				img.setRGB(x, y, newPixel | (pixel & 0xff000000));
@@ -1636,14 +1716,9 @@ public class ImageImport {
 		int screenWidth = targWidth;
 		int screenHeight = targHeight;
 		
-		if (format == VdpFormat.COLOR16_4x4) {
-			targWidth = screenWidth = 64;
-			targHeight = screenHeight = 48;
-		}
-		
 		int realWidth = imageImportOptions.getWidth();
 		int realHeight = imageImportOptions.getHeight();
-		float aspect = (float) targWidth / targHeight / 256.f * 192.f;
+		float aspect = (float) targWidth / targHeight / imageImportOptions.getAspect();
 		
 		if (imageImportOptions.isKeepAspect()) {
 			if (realWidth <= 0 || realHeight <= 0) {
@@ -1670,13 +1745,18 @@ public class ImageImport {
 			// Reduces total screen real estate down by sqrt(3)
 			//targWidth = (int) (targWidth / 1.732) & ~7;
 			//targHeight = (int) (targHeight / 1.732) & ~7;
-			while ((targWidth & ~0x7) * 
-					 (((int)(targWidth * realHeight / realWidth / aspect) + 7) & ~0x7) > 16384) {
+			int testWidth, testHeight;
+			while (true) {
+				testWidth = targWidth &~ 0x7;
+				testHeight = ((int)(testWidth * realHeight / realWidth / aspect) + 7) & ~0x7;
+				if (testWidth * testHeight <= 16384)
+					break;
+				
 				targWidth *= 0.99;
 				targHeight *= 0.99;
 			}
-			targWidth &= ~0x7;
-			targHeight = (int) (targWidth * realHeight / realWidth / aspect);
+			targWidth = testWidth;
+			targHeight = testHeight;
 			
 			screenWidth = targWidth;
 			screenHeight = targHeight;

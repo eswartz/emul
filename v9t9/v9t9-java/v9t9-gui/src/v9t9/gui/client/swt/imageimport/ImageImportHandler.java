@@ -16,6 +16,7 @@ import java.util.LinkedHashSet;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
+import v9t9.common.video.VdpFormat;
 import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
 import v9t9.video.imageimport.ImageImportData;
@@ -79,9 +80,15 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 	 */
 	protected ImageImportData[] importImage(ImageImport importer) {
 		
-		imageImportOptions.setFormat(getCanvas().getFormat());
+		VdpFormat format = getCanvas().getFormat();
+		imageImportOptions.setFormat(format);
 		int targWidth = getCanvas().getVisibleWidth();
 		int targHeight = getCanvas().getVisibleHeight();
+		
+		if (format == VdpFormat.COLOR16_4x4) {
+			targWidth = 64;
+			targHeight = 48;
+		}
 		
 		return importer.importImage(imageImportOptions, targWidth, targHeight);
 	

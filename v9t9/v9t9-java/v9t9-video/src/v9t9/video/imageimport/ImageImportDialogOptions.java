@@ -27,6 +27,7 @@ import ejs.base.properties.PropertySource;
 public class ImageImportDialogOptions extends ImageImportOptions {
 	protected boolean scaleSmooth = true;
 	protected boolean keepAspect = true;
+	protected float aspect = 1.333333333333f;		// 256x192
 
 	public boolean isScaleSmooth() {
 		return scaleSmooth;
@@ -41,6 +42,18 @@ public class ImageImportDialogOptions extends ImageImportOptions {
 		this.keepAspect = keepAspect;
 	}
 	
+	/**
+	 * @param aspect the aspect to set
+	 */
+	public void setAspect(float aspect) {
+		this.aspect = aspect;
+	}
+	/**
+	 * @return the aspect
+	 */
+	public float getAspect() {
+		return aspect;
+	}
 
 
 	private ImageFrame[] frames;

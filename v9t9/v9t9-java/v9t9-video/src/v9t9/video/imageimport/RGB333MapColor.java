@@ -39,7 +39,6 @@ class RGB333MapColor extends BasePaletteMapper {
 		else
 			dist[0] = ColorMapUtils.getRGBDistance(rgbs, pixel);
 		
-		// not actual RGB332 index!
 		int c = (r << 6) | (g << 3) | b;
 		
 		return c;
@@ -51,9 +50,6 @@ class RGB333MapColor extends BasePaletteMapper {
 			rgbs = V99ColorMapUtils.getGRB333(g, r, b);
 		} else {
 			// (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
-			
-			//int l = (r * 299 + g * 587 + b * 114) / 1000;
-			//rgbs = ColorMapUtils.getGRB333(l, l, l);
 			rgbs = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(new byte[] { 
 					(byte) (r * 255 / 7), (byte) (g * 255 / 7), (byte) (b * 255 / 7) });
 		}

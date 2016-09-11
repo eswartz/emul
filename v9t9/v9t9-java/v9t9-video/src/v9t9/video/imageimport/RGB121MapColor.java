@@ -1,7 +1,7 @@
 /*
-  RGB332MapColor.java
+  RGB121MapColor.java
 
-  (c) 2011-2012 Edward Swartz
+  (c) 2016 Edward Swartz
 
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Public License v1.0
@@ -13,29 +13,28 @@ package v9t9.video.imageimport;
 import org.ejs.gui.images.ColorMapUtils;
 import org.ejs.gui.images.V99ColorMapUtils;
 
-class RGB332MapColor extends RGBDirectMapColor {
+class RGB121MapColor extends RGBDirectMapColor {
 
-	public RGB332MapColor(boolean isGreyscale) {
-		super(createStock332Palette(), 0, 256, isGreyscale);
+	public RGB121MapColor(boolean isGreyscale) {
+		super(createStock121Palette(), 0, 32, isGreyscale);
 	}
 	
-	private static byte[][] createStock332Palette() {
-		byte[][] pal = new byte[256][];
-		for (int i = 0; i < 256; i++) {
+	private static byte[][] createStock121Palette() {
+		byte[][] pal = new byte[32][];
+		for (int i = 0; i < 32; i++) {
 			 byte[] rgb = { 0, 0, 0 };
-			 V99ColorMapUtils.getGRB332(rgb, (byte) i, false);
+			 V99ColorMapUtils.getGRB211(rgb, (byte) i, false);
 			 pal[i] = rgb;
 		}
 		return pal;
 	}
 
 
-	protected byte[] getRGB332(int r, int g, int b) {
-		byte[] rgbs;
-		if (!isColorMappedGreyscale) {
-			rgbs = V99ColorMapUtils.getGRB332(g, r, b);
-		} else {
-			rgbs = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(V99ColorMapUtils.getGRB332(g, r, b));
+	protected byte[] getRGB121(int r, int g, int b) {
+		byte[] rgbs = V99ColorMapUtils.getGRB211(g, r, b);
+		if (isColorMappedGreyscale) {
+			// (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
+			rgbs = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(rgbs);
 		}
 			
 		return rgbs;
@@ -43,22 +42,22 @@ class RGB332MapColor extends RGBDirectMapColor {
 	
 	@Override
 	public int mapColor(int pixel, int[] dist) {
-		int r = ((pixel & 0xff0000) >>> 16) >>> 5;
-		int g = ((pixel & 0x00ff00) >>>  8) >>> 5;
-		int b = ((pixel & 0x0000ff) >>>  0) >>> 6;
+		int r = ((pixel & 0xff0000) >>> 16) >>> 7;
+		int g = ((pixel & 0x00ff00) >>>  8) >>> 6;
+		int b = ((pixel & 0x0000ff) >>>  0) >>> 7;
 		
-		byte[] rgbs = getRGB332(r, g, b);
+		byte[] rgbs = getRGB121(r, g, b);
 		
 		if (isColorMappedGreyscale)
 			dist[0] = ColorMapUtils.getRGBLumDistance(rgbs, pixel);
 		else
 			dist[0] = ColorMapUtils.getRGBDistance(rgbs, pixel);
 
-		if (dist[0] >= 0x8 * 0x8 * 3) {
-			return -1;
-		}
+//		if (dist[0] >= getMinimalPaletteDistance()) {
+//			return -1;
+//		}
 		
-		int c = (g << 5) | (r << 2) | b;
+		int c = (g << 2) | (r << 1) | b;
 		return c;
 	}
 
@@ -68,10 +67,10 @@ class RGB332MapColor extends RGBDirectMapColor {
 	@Override
 	public int getClosestPalettePixel(int x, int y, int pixel) {
 		// we don't need to trawl the palette here
-		int r = ((pixel & 0xff0000) >>> 16) >> 5;
-		int g = ((pixel & 0x00ff00) >>>  8) >> 5;
-		int b = ((pixel & 0x0000ff) >>>  0) >> 6;
-		byte[] rgb = getRGB332(r, g, b);
+		int r = ((pixel & 0xff0000) >>> 16) >> 7;
+		int g = ((pixel & 0x00ff00) >>>  8) >> 6;
+		int b = ((pixel & 0x0000ff) >>>  0) >> 7;
+		byte[] rgb = getRGB121(r, g, b);
 		return ColorMapUtils.rgb8ToPixel(rgb);
 	}
 	
@@ -85,10 +84,10 @@ class RGB332MapColor extends RGBDirectMapColor {
 			pixel = V99ColorMapUtils.getPixelForGreyscaleMode(pixel);
 		}
 		
-		int r = ((pixel & 0xff0000) >>> 16) >>> 5;
-		int g = ((pixel & 0x00ff00) >>>  8) >>> 5;
-		int b = ((pixel & 0x0000ff) >>>  0) >>> 6;
-		return (g << 5) | (r << 2) | b;
+		int r = ((pixel & 0xff0000) >>> 16) >>> 7;
+		int g = ((pixel & 0x00ff00) >>>  8) >>> 6;
+		int b = ((pixel & 0x0000ff) >>>  0) >>> 7;
+		return (g << 3) | (r << 1) | b;
 	}
 	
 	/* (non-Javadoc)
@@ -96,6 +95,6 @@ class RGB332MapColor extends RGBDirectMapColor {
 	 */
 	@Override
 	public int getMinimalPaletteDistance() {
-		return 0x10 * 0x10 * 2 + 0x20 * 0x20;
+		return 0x40 * 0x40 + 0x80 * 0x80 * 2;
 	}
 }

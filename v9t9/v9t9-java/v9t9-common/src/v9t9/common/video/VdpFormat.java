@@ -28,14 +28,29 @@ public enum VdpFormat {
 	/** V9938 4-color mode */
 	COLOR4_1x1(4, true),
 	/** V9938 256-color mode */
-	COLOR256_1x1(256, true);
+	COLOR256_1x1(256, true, true),
+	/** test 8-color mode */
+	COLOR8_1x1(8, true),
+	/** test 32-color mode */
+	COLOR32_1x1(32, true, true),
+	/** test 64-color mode */
+	COLOR64_1x1(64, true, true),
+	/** test 128-color mode */
+	COLOR128_1x1(128, true, true),
+	;
 	
 	private int ncols;
 	private boolean isMsx2;
+	private boolean pixelIsColor;
 
 	private VdpFormat(int ncols, boolean isMsx2) {
 		this.ncols = ncols;
 		this.isMsx2 = isMsx2;
+	}
+	private VdpFormat(int ncols, boolean isMsx2, boolean pixelIsColor) {
+		this.ncols = ncols;
+		this.isMsx2 = isMsx2;
+		this.pixelIsColor = pixelIsColor;
 	}
 	/**
 	 * @return the number of colors in the mode
@@ -54,5 +69,12 @@ public enum VdpFormat {
 	 */
 	public boolean isBitmap() {
 		return this == COLOR16_8x1 || this == COLOR16_8x1_9938 || this == COLOR2_8x1;
+	}
+	/**
+	 * @return true if a pixel maps to a palette entry and 
+	 * false if the pixel encodes its own color
+	 */
+	public boolean isPaletted() {
+		return !pixelIsColor;
 	}
 }

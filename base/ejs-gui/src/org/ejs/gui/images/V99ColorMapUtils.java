@@ -21,6 +21,7 @@ import java.util.TreeMap;
 public class V99ColorMapUtils {
 	public static byte[] rgb3to8 = new byte[8];
 	public static byte[] rgb2to8 = new byte[4];
+	public static byte[] rgb1to8 = new byte[2];
 	static {
 		for (int i = 0; i < 8; i++) {
 			byte val = (byte) i;
@@ -34,27 +35,46 @@ public class V99ColorMapUtils {
 			val8 |= i * 0x3f / 3;
 			V99ColorMapUtils.rgb2to8[i] = val8;
 		}
+		
+		V99ColorMapUtils.rgb1to8[0] = 0;
+		V99ColorMapUtils.rgb1to8[1] = (byte) 0xff;
 	}
 	
 	public static TreeMap<Integer,byte[]> greyToRgbMap;
-	/** Get the RGB triple for the 3-bit GRB. */
+	/** Get the RGB triple for the 333 GRB. */
 	public static byte[] getGRB333(int g, int r, int b) {
 		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[b&0x7] };
 	}
-	/** Get the RGB triple for the 3-bit GRB. */
+	/** Get the RGB triple for the 332 GRB. */
 	public static byte[] getGRB332(int g, int r, int b) {
 		//return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb2to8[b&0x3] };
 		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[(b&0x3)*2 + ((r|g) & 1)] };
 	}
+	/** Get the RGB triple for the 211 GRB. */
+	public static byte[] getGRB211(int g, int r, int b) {
+		return new byte[] { rgb1to8[r&0x1], rgb2to8[g&0x3], rgb1to8[b&0x1] };
+	}
 	/** Get the 8-bit RGB values from a packed 3-3-2 GRB byte */
 	public static void getGRB332(byte[] rgb, byte grb, boolean isGreyscale) {
-		int g = (grb >> 5) & 0x7;
 		int r = (grb >> 2) & 0x7;
+		int g = (grb >> 5) & 0x7;
+		int b = grb & 0x3;
 		rgb[0] = rgb3to8[r];
 		rgb[1] = rgb3to8[g];
 		//rgb[2] = rgb2to8[grb & 0x3];
-		int b = grb & 0x3;
 		rgb[2] = rgb3to8[b*2 + ((r|g) & 1)];
+		if (isGreyscale) {
+			ColorMapUtils.rgbToGrey(rgb, rgb);
+		}
+	}
+	/** Get the 8-bit RGB values from a packed 2-1-1 GRB byte */
+	public static void getGRB211(byte[] rgb, byte grb, boolean isGreyscale) {
+		int r = (grb >> 1) & 0x1;
+		int g = (grb >> 2) & 0x3;
+		int b = grb & 0x1;
+		rgb[0] = rgb1to8[r];
+		rgb[1] = rgb2to8[g];
+		rgb[2] = rgb1to8[b];
 		if (isGreyscale) {
 			ColorMapUtils.rgbToGrey(rgb, rgb);
 		}
