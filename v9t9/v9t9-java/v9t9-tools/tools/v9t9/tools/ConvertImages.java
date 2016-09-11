@@ -12,9 +12,7 @@ package v9t9.tools;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorConvertOp;
 import java.io.File;
 import java.io.IOException;
 
@@ -48,14 +46,27 @@ import gnu.getopt.Getopt;
 @Category(Category.OTHER)
 public class ConvertImages {
 	private static final String PROGNAME = ConvertImages.class.getSimpleName();
-	private File out;
-	private File in;
 	private ImageImportDialogOptions opts;
 	private int width;
 	private int height;
 	private VdpColorManager colorMgr;
 	private float stretch;
+	private boolean flattenGreyscale;
 
+
+	/** test 8-color mode */
+	static VdpFormat COLOR8_1x1 = new VdpFormat(VdpFormat.Layout.BITMAP, 8, true);
+	/** test 8-color mode */
+	static VdpFormat COLOR8_DIRECT_1x1 = new VdpFormat(VdpFormat.Layout.BITMAP, 8, true, true);
+	/** test 16-color mode */
+	static VdpFormat COLOR16_DIRECT_1x1 = new VdpFormat(VdpFormat.Layout.BITMAP, 16, true, true);
+	/** test 32-color mode */
+	static VdpFormat COLOR32_DIRECT_1x1 = new VdpFormat(VdpFormat.Layout.BITMAP, 32, true, true);
+	/** test 64-color mode */
+	static VdpFormat COLOR64_DIRECT_1x1 = new VdpFormat(VdpFormat.Layout.BITMAP, 64, true, true);
+	/** test 128-color mode */
+	static VdpFormat COLOR128_DIRECT_1x1 = new VdpFormat(VdpFormat.Layout.BITMAP, 128, true, true);
+	
 	private static void help() {
 		System.out
 				.println("\n"
@@ -86,6 +97,13 @@ public class ConvertImages {
 	}
 
 	public static void main(String[] args) {
+		
+		ConvertImages cvt = new ConvertImages();
+		cvt.run(args);
+		
+	}
+	
+	private void run(String[] args) {
 		LoggingUtils.setupNullLogging();
 
 		if (args.length == 0) {
@@ -96,16 +114,21 @@ public class ConvertImages {
 		IMachine machine = ToolUtils.createMachine();
 
 		Getopt getopt;
-		getopt = new Getopt(PROGNAME, args, "?o:a:A:d:p:s:m:gMb:S:");
+		getopt = new Getopt(PROGNAME, args, "?o:a:A:d:p:s:m:gMb:S:F:");
 
 		IVdpCanvas canvas = new ImageDataCanvas24Bit();
+		
+		colorMgr = canvas.getColorMgr();
 
-		ImageImportDialogOptions opts = new ImageImportDialogOptions(canvas,
+		opts = new ImageImportDialogOptions(canvas,
 				machine.getVdp());
 
 		File outdir = null;
-		int width = 256, height = 192;
-		float stretch = 1f;
+		width = 256;
+		height = 192;
+		stretch = 1f;
+		
+		flattenGreyscale = true;
 
 		int opt;
 		while ((opt = getopt.getopt()) != -1) {
@@ -143,9 +166,6 @@ public class ConvertImages {
 				}
 				break;
 			}
-			case 'M':
-				opts.setDitherMono(true);
-				break;
 			case 'p': {
 				String oa = getopt.getOptarg();
 				if (oa.length() > 0 && oa.charAt(0) == 's') {
@@ -170,11 +190,17 @@ public class ConvertImages {
 				width = (Integer) t.get(1);
 				height = (Integer) t.get(2);
 				stretch = ((Number) t.get(3)).floatValue();
-				canvas.getColorMgr().setGreyscale((Boolean) t.get(4));
+				colorMgr.setGreyscale((Boolean) t.get(4));
 				break;
 			}
+			case 'M':
+				opts.setDitherMono(true);
+				break;
 			case 'g':
 				opts.setAsGreyScale(true);
+				break;
+			case 'F':
+				flattenGreyscale = readFlag(getopt.getOptarg());
 				break;
 			case 'b': {
 				String oa = getopt.getOptarg();
@@ -207,9 +233,9 @@ public class ConvertImages {
 				File out = outdir != null ? new File(outdir, outname)
 						: new File(in.getParentFile(), outname);
 
-				ConvertImages cvt = new ConvertImages(machine, canvas, opts,
-						in, width, height, stretch, out);
-				cvt.importImage();
+//				ConvertImages cvt = new ConvertImages(machine, canvas, opts,
+//						in, width, height, stretch, out);
+				importImage(in, out);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -255,19 +281,19 @@ public class ConvertImages {
 					f = VdpFormat.COLOR4_1x1;
 					break;
 				case 8:
-					f = VdpFormat.COLOR8_1x1;
+					f = COLOR8_DIRECT_1x1;
 					break;
 				case 16:
-					f = VdpFormat.COLOR16_1x1;
+					f = COLOR16_DIRECT_1x1;
 					break;
 				case 32:
-					f = VdpFormat.COLOR32_1x1;
+					f = COLOR32_DIRECT_1x1;
 					break;
 				case 64:
-					f = VdpFormat.COLOR64_1x1;
+					f = COLOR64_DIRECT_1x1;
 					break;
 				case 128:
-					f = VdpFormat.COLOR128_1x1;
+					f = COLOR128_DIRECT_1x1;
 					break;
 				case 256:
 					f = VdpFormat.COLOR256_1x1;
@@ -326,19 +352,19 @@ public class ConvertImages {
 		return out + ".png";
 	}
 
-	public ConvertImages(IMachine machine, IVdpCanvas canvas,
-			ImageImportDialogOptions opts, File in, int width, int height,
-			float stretch, File out) throws IOException {
-		this.stretch = stretch;
-		this.colorMgr = canvas.getColorMgr();
-		this.opts = opts;
-		this.in = in;
-		this.width = width;
-		this.height = height;
-		this.out = out;
-	}
+//	public ConvertImages(IMachine machine, IVdpCanvas canvas,
+//			ImageImportDialogOptions opts, File in, int width, int height,
+//			float stretch, File out) throws IOException {
+//		this.stretch = stretch;
+//		this.colorMgr = canvas.getColorMgr();
+//		this.opts = opts;
+//		this.in = in;
+//		this.width = width;
+//		this.height = height;
+//		this.out = out;
+//	}
 
-	private void importImage() throws NotifyException, IOException {
+	private void importImage(File in, File out) throws NotifyException, IOException {
 		ImageFrame[] frames = ImageUtils.loadImageFromFile(in.getPath());
 
 		opts.setImages(frames);
@@ -350,6 +376,7 @@ public class ConvertImages {
 		ImageImport importer = new ImageImport(colorMgr);
 		
 		importer.setTryDirectMapping(false);
+		importer.setFlattenGreyscale(flattenGreyscale);
 
 		ImageImportData[] datas = importer.importImage(opts, width, height);
 
@@ -365,13 +392,6 @@ public class ConvertImages {
 			cvt = tmp;
 		}
 
-		if (colorMgr.isGreyscale()) {
-			ColorConvertOp op = new ColorConvertOp(cvt.getColorModel().getColorSpace(),
-					ColorSpace.getInstance(ColorSpace.CS_GRAY),
-					null);
-			op.filter(cvt, cvt);
-		}
-		
 		ImageIO.write(cvt, "png", out);
 
 		String[] args = { "/usr/bin/display", 
