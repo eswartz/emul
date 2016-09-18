@@ -92,7 +92,7 @@ class RGB121MapColor extends RGBDirectMapColor {
 		int r = ((pixel & 0xff0000) >>> 16) >>> 7;
 		int g = ((pixel & 0x00ff00) >>>  8) >>> 6;
 		int b = ((pixel & 0x0000ff) >>>  0) >>> 7;
-		return (g << 3) | (r << 1) | b;
+		return (g << 2) | (r << 1) | b;
 	}
 	
 	/* (non-Javadoc)
