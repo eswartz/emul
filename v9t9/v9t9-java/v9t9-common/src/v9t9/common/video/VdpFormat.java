@@ -64,6 +64,13 @@ public class VdpFormat {
 		canSetPalette = !pixelIsColor;
 	}
 
+	
+	@Override
+	public String toString() {
+		return "VdpFormat [layout=" + layout + ", ncols=" + ncols + ", isMsx2="
+				+ isMsx2 + ", pixelIsColor=" + pixelIsColor
+				+ ", canSetPalette=" + canSetPalette + "]";
+	}
 	/**
 	 * @return the layout
 	 */
