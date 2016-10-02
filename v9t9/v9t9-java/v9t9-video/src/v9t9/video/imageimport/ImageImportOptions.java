@@ -31,7 +31,9 @@ public class ImageImportOptions {
 		NONE("None"),
 		ORDERED("Ordered"),
 		//ORDERED2("Ordered2"),
-		FS("Floyd-Steinberg");
+		FS("Floyd-Steinberg"),
+		FSR("Floyd-Steinberg (reduced)")
+		;
 		
 		private final String label;
 

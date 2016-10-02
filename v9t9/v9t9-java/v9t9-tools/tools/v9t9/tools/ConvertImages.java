@@ -172,7 +172,7 @@ public class ConvertImages {
 						+ "    8=64x48x16, 9=64x48x16, 10=256x192x2\n"
 						+ "-a 0|1: set preserve aspect ratio off or on\n"
 						+ "-A aspect: set expected aspect ratio\n"
-						+ "-d none|ordered|fs: select dithering method\n"
+						+ "-d none|ordered|fs|fsr: select dithering method\n"
 						+ "-p std|18|38|20|vic|c64|zx|a2|opt[+]: map to palette, or optimize (+ = set color 0)\n"
 						+ "   std|18 = TMS19918A, 38 = V9938, vic = 6560 (VIC), c64 = 6567 (VIC-II), \n"
 						+ "   zx = ZX Spectrum, a2 = Apple ][\n"
@@ -248,7 +248,10 @@ public class ConvertImages {
 				} else if (oa.length() > 0 && oa.charAt(0) == 'o') {
 					opts.setDitherType(Dither.ORDERED);
 				} else if (oa.length() > 0 && oa.charAt(0) == 'f') {
-					opts.setDitherType(Dither.FS);
+					if (oa.charAt(oa.length() - 1) == 'r')
+						opts.setDitherType(Dither.FSR);
+					else
+						opts.setDitherType(Dither.FS);
 				} else {
 					System.err.println("Unexpected -d argument: " + oa);
 					System.exit(1);

@@ -120,6 +120,22 @@ public class ImageImport {
 		r_error = ((pixel >> 16) & 0xff) - ((newPixel >> 16) & 0xff);
 		g_error = ((pixel >> 8) & 0xff) - ((newPixel >> 8) & 0xff);
 		b_error = ((pixel >> 0) & 0xff) - ((newPixel >> 0) & 0xff);
+		
+		if (ditherType == Dither.FSR) {
+			// reduce bleed by ignoring some error
+			if (r_error < 0)
+				r_error = (r_error + 1) / 4;
+			else
+				r_error >>>= 2;
+			if (g_error < 0)
+				g_error = (g_error + 1) / 4;
+			else
+				g_error >>>= 2;
+			if (b_error < 0)
+				b_error = (b_error + 1) / 4;
+			else
+				b_error >>>= 2;
+		}
 
 		if (useColorMappedGreyScale) {
 			int lum = (299 * r_error + 587 * g_error + 114 * b_error) / 1000;
@@ -493,15 +509,20 @@ public class ImageImport {
 		
 		updatePaletteMapping();
 
-		if (ditherType == Dither.FS) {
+		switch (ditherType) {
+		case FS:
+		case FSR:
 			if (ditherMono)
 				ditherFSMono(img, mapColor, hist);
 			else
 				ditherFS(img, mapColor, hist);
-		} else if (ditherType == Dither.ORDERED) {
+			break;
+		case ORDERED:
 			ditherOrdered(img, mapColor);
-		} else {
+			break;
+		default:
 			ditherNone(img, mapColor);
+			break;
 		}
 	}
 
