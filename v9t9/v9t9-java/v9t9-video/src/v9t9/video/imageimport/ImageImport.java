@@ -1484,7 +1484,7 @@ public class ImageImport {
 		format = options.getFormat();
 		paletteOption = options.getPaletteUsage();
 		ditherType = options.getDitherType();
-		ditherMono = options.isDitherMono();
+		ditherMono = options.isDitherMono() || format.getNumColors() == 2;
 
 		byte[][] curPalette = colorMgr.getColorPalette();
 		this.thePalette = new byte[curPalette.length][];
