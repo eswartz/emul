@@ -45,14 +45,14 @@ public class ImageImportOptions {
 		}
 	}
 
-	public enum Palette {
-		STANDARD("Standard"),
+	public enum PaletteOption {
+		FIXED("Standard"),
 		CURRENT("Current"),
 		OPTIMIZED("Optimized");
 		
 		private final String label;
 
-		private Palette(String label) {
+		private PaletteOption(String label) {
 			this.label = label;
 		}
 		
@@ -64,7 +64,7 @@ public class ImageImportOptions {
 	
 	protected VdpFormat format = VdpFormat.COLOR16_8x1;
 	protected boolean asGreyScale;
-	protected Palette paletteOption = Palette.OPTIMIZED;
+	protected PaletteOption paletteOption = PaletteOption.OPTIMIZED;
 	protected boolean ditherMono;
 	protected boolean isMonoMode;
 	protected Dither ditherType = Dither.NONE;
@@ -118,10 +118,10 @@ public class ImageImportOptions {
 	public void setAsGreyScale(boolean asGreyScale) {
 		this.asGreyScale = asGreyScale;
 	}
-	public Palette getPalette() {
+	public PaletteOption getPaletteUsage() {
 		return paletteOption;
 	}
-	public void setPalette(Palette option) {
+	public void setPaletteUsage(PaletteOption option) {
 		this.paletteOption = option;
 	}
 	public Dither getDitherType() {
@@ -149,7 +149,7 @@ public class ImageImportOptions {
 		
 		////
 		
-		setPalette(canSetPalette ? Palette.OPTIMIZED : Palette.STANDARD);
+		setPaletteUsage(canSetPalette ? PaletteOption.OPTIMIZED : PaletteOption.FIXED);
 		
 		/////
 		isMonoMode = vdp instanceof IVdpTMS9918A && ((IVdpTMS9918A) vdp).isBitmapMonoMode();

@@ -45,7 +45,7 @@ import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
 import v9t9.common.video.VdpFormat.Layout;
 import v9t9.video.imageimport.ImageImportOptions.Dither;
-import v9t9.video.imageimport.ImageImportOptions.Palette;
+import v9t9.video.imageimport.ImageImportOptions.PaletteOption;
 import ejs.base.utils.Pair;
 
 /**
@@ -64,7 +64,7 @@ public class ImageImport {
 	private boolean useColorMappedGreyScale;
 	private Dither ditherType;
 	private boolean ditherMono;
-	private Palette paletteOption;
+	private PaletteOption paletteOption;
 
 	private final VdpColorManager colorMgr;
 	private boolean paletteMappingDirty;
@@ -78,81 +78,6 @@ public class ImageImport {
 
 	private ColorOctree octree;
 	
-
-	/* 
-	 * This palette adheres to the strict naming of the given colors
-	 * and is quite tacky visually, but helps in color selection, since
-	 * the colors cover a wider gamut.
-	 *  
-	 * 0 clear
-	 * 
-	 * 1 black
-	 * 
-	 * 2 medium green
-	 * 
-	 * 3 light green
-	 * 
-	 * 4 dark blue
-	 * 
-	 * 5 light blue
-	 * 
-	 * 6 dark red
-	 * 
-	 * 7 cyan
-	 * 
-	 * 8 medium red
-	 * 
-	 * 9 orange/skin
-	 * 
-	 * 10 yellow
-	 * 
-	 * 11 light yellow
-	 * 
-	 * 12 dark green
-	 * 
-	 * 13 purple
-	 * 
-	 * 14 grey
-	 * 
-	 * 15 white
-	 */
-	protected static final byte[][] stock16ColorPalette = {
-		/* 0 */ { 0x00, 0x00, 0x00 }, 
-		/* 1 */ { 0x00, 0x00, 0x00 },
-		/* 2 */ { 0x00, (byte) 0xc0, 0x00 }, 
-		/* 3 */ { 0x00, (byte) 0xff, 0x00 },
-		/* 4 */ { 0x00, 0x00, (byte) 0x80 }, 
-		/* 5 */ { 0x00, 0x00, (byte) 0xff },
-		/* 6 */ { (byte) 0xc0, 0x00, 0x00 }, 
-		/* 7 */ { 0x00, (byte) 0xff, (byte) 0xff },
-		/* 8 */ { (byte) 0xff, 0x00, 0x00 }, 
-		/* 9 */ { (byte) 0xff, (byte) 0xc0, 0x40 },
-		/* 10 */ { (byte) 0xc0, (byte) 0xc0, 0 },
-		/* 11 */ { (byte) 0xff, (byte) 0xff, 0x00 }, 
-		/* 12 */ { 0x00, (byte) 0x80, 0x00 },
-		/* 13 */ { (byte) 0xc0, 0x00, (byte) 0xc0 },
-		/* 14 */ { (byte) 0xc0, (byte) 0xc0, (byte) 0xc0 },
-		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
-	};
-	protected static final byte[][] niceColorPalette = {
-		/* 0 */ { 0x00, 0x00, 0x00 }, 
-		/* 1 */ { 0x00, 0x00, 0x00 },
-		/* 2 */ { 0x40, (byte) 0xb0, 0x40 }, 
-		/* 3 */ { 0x60, (byte) 0xc0, 0x60 },
-		/* 4 */ { 0x40, 0x40, (byte) 0xc0 }, 
-		/* 5 */ { 0x60, 0x60, (byte) 0xf0 },
-		/* 6 */ { (byte) 0xc0, 0x40, 0x40 }, 
-		/* 7 */ { 0x40, (byte) 0xf0, (byte) 0xf0 },
-		/* 8 */ { (byte) 0xf0, 0x40, 0x40 }, 
-		/* 9 */ { (byte) 0xff, (byte) 0x80, 0x60 },
-		/* 10 */ { (byte) 0xf0, (byte) 0xc0, 0x40 },
-		/* 11 */ { (byte) 0xff, (byte) 0xe0, 0x60 }, 
-		/* 12 */ { 0x40, (byte) 0x80, 0x40 },
-		/* 13 */ { (byte) 0xc0, 0x40, (byte) 0xc0 },
-		/* 14 */ { (byte) 0xd0, (byte) 0xd0, (byte) 0xd0 },
-		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
-	};
-
 	private boolean convertGreyScale;
 
 	private IPaletteMapper mapColor;
@@ -799,7 +724,7 @@ public class ImageImport {
 				+"; mapped="+mappedColors
 				);
 		
-		if (paletteOption == Palette.OPTIMIZED) {
+		if (paletteOption == PaletteOption.OPTIMIZED) {
 			for (int i = interestingColors + firstColor; i < thePalette.length; i++) {
 				thePalette[i][0] = 0;
 				thePalette[i][1] = 0;
@@ -1536,7 +1461,7 @@ public class ImageImport {
 	 */
 	public void prepareConversion(ImageImportOptions options) {
 		format = options.getFormat();
-		paletteOption = options.getPalette();
+		paletteOption = options.getPaletteUsage();
 		ditherType = options.getDitherType();
 		ditherMono = options.isDitherMono();
 
@@ -1549,32 +1474,9 @@ public class ImageImport {
 		this.useColorMappedGreyScale = colorMgr.isGreyscale();
 		firstColor = (colorMgr.isClearFromPalette() ? 0 : 1);
 
-		// enforce mode restrictions
-		if (!format.canSetPalette()) {
-			paletteOption = Palette.STANDARD;
-			options.setPalette(paletteOption);
-		}
-		if (format.getLayout() == VdpFormat.Layout.PATTERN || format.getNumColors() == 2) {
-			ditherMono = true;
-			options.setDitherMono(ditherMono);
-			this.useColorMappedGreyScale = true;
-		}
-		
 		paletteMappingDirty = true;
 		paletteToIndex = null;
 		octree = new ColorOctree(3, true);
-		
-		if (paletteOption == Palette.STANDARD/* || options.isDitherMono()*/) {
-			byte[][] orig;
-			if (format.isMsx2()) {
-				orig = VdpColorManager.stockPaletteV9938;
-			} else {
-				orig = VdpColorManager.stockPalette;
-			}
-			for (int i = 0; i < thePalette.length; i++) {
-				System.arraycopy(orig[i], 0, thePalette[i], 0, 3);
-			}
-		}
 
 		convertGreyScale = options.isAsGreyScale();
 		gamma = 1.0f + (options.getGamma() / 100f);
@@ -1595,8 +1497,7 @@ public class ImageImport {
 		
 			firstColor = 0;
 		}
-		else if (!format.isPaletted()) {
-			paletteOption = Palette.STANDARD;
+		else if (!format.isPaletted() && paletteOption == PaletteOption.FIXED) {
 			switch (format.getNumColors()) {
 			case 8:
 				// 3 bits, 1+1+1
@@ -1626,9 +1527,10 @@ public class ImageImport {
 			}
 		}
 		else  {
-			if (paletteOption == Palette.OPTIMIZED) {
+			// real or invented mode with palette flexibility
+			if (paletteOption == PaletteOption.OPTIMIZED) {
 				mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
-			} else if (paletteOption == Palette.STANDARD) {
+			} else if (paletteOption == PaletteOption.FIXED) {
 				if (convertGreyScale)
 					mapColor = new TI16MapColor(thePalette, false, true);
 				else
@@ -1650,7 +1552,7 @@ public class ImageImport {
 		if (format == null)
 			return;
 		
-		if (paletteOption == Palette.OPTIMIZED) {
+		if (paletteOption == PaletteOption.OPTIMIZED) {
 			addToOctree(image);
 //			else if (format.getNumColors() > 4)
 //				// note: in this mode, there is no point trying to use colors to

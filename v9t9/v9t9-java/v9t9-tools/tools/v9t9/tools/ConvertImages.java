@@ -32,10 +32,11 @@ import v9t9.video.imageimport.ImageImport;
 import v9t9.video.imageimport.ImageImportData;
 import v9t9.video.imageimport.ImageImportDialogOptions;
 import v9t9.video.imageimport.ImageImportOptions.Dither;
-import v9t9.video.imageimport.ImageImportOptions.Palette;
+import v9t9.video.imageimport.ImageImportOptions.PaletteOption;
 import ejs.base.logging.LoggingUtils;
 import ejs.base.utils.Tuple;
 import gnu.getopt.Getopt;
+import static v9t9.common.video.VdpColorManager.fromRGB8;
 
 /**
  * Access to converting images into renderings for VDP chips
@@ -46,6 +47,91 @@ import gnu.getopt.Getopt;
 @Category(Category.OTHER)
 public class ConvertImages {
 	private static final String PROGNAME = ConvertImages.class.getSimpleName();
+	
+	/* colors from http://fornaxvoid.com/colorpalettes/ */
+	
+	/** VIC-I (6561) colors */
+	private static final byte[][] stockPaletteVIC_I = new byte[][] { 
+		/* 0: black */ fromRGB8("000000"), 
+		/* 1: white */ fromRGB8("ffffff"),
+		/* 2: red */ fromRGB8("782922"), 
+		/* 3: cyan */ fromRGB8("87d6dd"),
+		/* 4: purple */ fromRGB8("aa5fb6"), 
+		/* 5: green */ fromRGB8("55a049"),
+		/* 6: blue */ fromRGB8("40318d"), 
+		/* 7: yellow */ fromRGB8("bfce72"),
+		
+		/*  8: orange */ fromRGB8("aa7449"), 
+		/*  9: light orange */ fromRGB8("eab489"),
+		/* 10: pink */ fromRGB8("b86962"), 
+		/* 11: light cyan */ fromRGB8("c7ffff"),
+		/* 12: light purple */ fromRGB8("ea9ff6"), 
+		/* 13: light green */ fromRGB8("94e089"),
+		/* 14: light blue */ fromRGB8("8071cc"), 
+		/* 15: light yellow */ fromRGB8("ffffb2"),
+		
+	};
+
+	private static final byte[][] stockPaletteVIC_II = new byte[][] { 
+		/* 0: black */ fromRGB8("000000"), 
+		/* 1: white */ fromRGB8("ffffff"),
+		/* 2: red */ fromRGB8("883932"), 
+		/* 3: cyan */ fromRGB8("67b6bd"),
+		/* 4: purple */ fromRGB8("8b3f96"), 
+		/* 5: green */ fromRGB8("55a049"),
+		/* 6: blue */ fromRGB8("40318d"), 
+		/* 7: yellow */ fromRGB8("bfce72"),
+		
+		/*  8: orange */ fromRGB8("8b5429"), 
+		/*  9: brown */ fromRGB8("574200"),
+		/* 10: pink */ fromRGB8("b86962"), 
+		/* 11: dark grey */ fromRGB8("505050"),
+		/* 12: grey */ fromRGB8("787878"), 
+		/* 13: light green */ fromRGB8("94e089"),
+		/* 14: light blue */ fromRGB8("7869c4"), 
+		/* 15: light grey */ fromRGB8("9f9f9f"),
+	};
+	
+	private static final byte[][] stockPaletteZX = new byte[][] { 
+		/* 0: black */ fromRGB8("000000"), 
+		/* 1: blue */ fromRGB8("0000c0"),
+		/* 2: red */ fromRGB8("c00000"), 
+		/* 3: purple */ fromRGB8("c000c0"),
+		/* 4: black */ fromRGB8("000000"), 
+		/* 5: light blue */ fromRGB8("0000ff"),
+		/* 6: light red */ fromRGB8("ff0000"), 
+		/* 7: light purple */ fromRGB8("ff00ff"),
+		
+		/*  8: green */ fromRGB8("00c000"), 
+		/*  9: cyan */ fromRGB8("00c0c0"),
+		/* 10: yellow */ fromRGB8("c0c000"), 
+		/* 11: grey */ fromRGB8("c0c0c0"),
+		/* 12: light green */ fromRGB8("00ff00"), 
+		/* 13: light cyan */ fromRGB8("00ffff"),
+		/* 14: light yellow */ fromRGB8("ffff00"), 
+		/* 15: white */ fromRGB8("ffffff"),
+	};
+	
+	private static final byte[][] stockPaletteAppleII = new byte[][] { 
+		/* 0: black */ fromRGB8("000000"), 
+		/* 1: magenta */ fromRGB8("6c2940"),
+		/* 2: dark blue */ fromRGB8("403578"), 
+		/* 3: purple */ fromRGB8("d93cf0"),
+		/* 4: dark green */ fromRGB8("135740"), 
+		/* 5: grey 1 */ fromRGB8("808080"),
+		/* 6: medium blue */ fromRGB8("2697f0"), 
+		/* 7: light blue */ fromRGB8("bfb4f8"),
+		
+		/*  8: brown */ fromRGB8("404b07"), 
+		/*  9: orange */ fromRGB8("d9680f"),
+		/* 10: grey 2 */ fromRGB8("808080"),  // yes, same as grey 1
+		/* 11: pink */ fromRGB8("eca8bf"),
+		/* 12: light green */ fromRGB8("26c30f"), 
+		/* 13: yellow */ fromRGB8("bfca87"),
+		/* 14: aquamarine */ fromRGB8("93d6bf"), 
+		/* 15: white */ fromRGB8("ffffff"),
+	};
+	
 	private ImageImportDialogOptions opts;
 	private int width;
 	private int height;
@@ -87,7 +173,9 @@ public class ConvertImages {
 						+ "-a 0|1: set preserve aspect ratio off or on\n"
 						+ "-A aspect: set expected aspect ratio\n"
 						+ "-d none|ordered|fs: select dithering method\n"
-						+ "-p std|opt[+]: map to standard palette, or optimize (+ = set color 0)n"
+						+ "-p std|18|38|20|vic|c64|zx|a2|opt[+]: map to palette, or optimize (+ = set color 0)\n"
+						+ "   std|18 = TMS19918A, 38 = V9938, vic = 6560 (VIC), c64 = 6567 (VIC-II), \n"
+						+ "   zx = ZX Spectrum, a2 = Apple ][\n"
 						+ "-s 0|1: smooth scaling off or on\n"
 						+ "-g: convert to a greyscale image\n"
 						+ "-M: dither monochrome\n"
@@ -122,6 +210,7 @@ public class ConvertImages {
 
 		opts = new ImageImportDialogOptions(canvas,
 				machine.getVdp());
+		opts.setPaletteUsage(PaletteOption.FIXED);
 
 		File outdir = null;
 		width = 256;
@@ -168,14 +257,38 @@ public class ConvertImages {
 			}
 			case 'p': {
 				String oa = getopt.getOptarg();
-				if (oa.length() > 0 && oa.charAt(0) == 's') {
-					opts.setPalette(Palette.STANDARD);
-				} else if (oa.length() > 0 && oa.charAt(0) == 'o') {
-					opts.setPalette(Palette.OPTIMIZED);
-					if (oa.charAt(oa.length() - 1) == '+') {
-						canvas.getColorMgr().setClearFromPalette(true);
+				boolean good = false;
+				if (oa.length() > 0) {
+					good = true;
+					char ch = oa.charAt(0);
+					if (ch == 's' || ch == '1') {
+						opts.setPaletteUsage(PaletteOption.CURRENT);
+						colorMgr.setPalette(VdpColorManager.stockPalette);
+					} else if (ch == '3') {
+						opts.setPaletteUsage(PaletteOption.CURRENT);
+						colorMgr.setPalette(VdpColorManager.stockPaletteV9938);
+					} else if ("vic".equals(oa)) {
+						opts.setPaletteUsage(PaletteOption.CURRENT);
+						colorMgr.setPalette(stockPaletteVIC_I);
+					} else if ("c64".equals(oa)) {
+						opts.setPaletteUsage(PaletteOption.CURRENT);
+						colorMgr.setPalette(stockPaletteVIC_II);
+					} else if ("zx".equals(oa)) {
+						opts.setPaletteUsage(PaletteOption.CURRENT);
+						colorMgr.setPalette(stockPaletteZX);
+					} else if (ch == 'a') {
+						opts.setPaletteUsage(PaletteOption.CURRENT);
+						colorMgr.setPalette(stockPaletteAppleII);
+					} else if (ch == 'o') {
+						opts.setPaletteUsage(PaletteOption.OPTIMIZED);
+						if (oa.charAt(oa.length() - 1) == '+') {
+							canvas.getColorMgr().setClearFromPalette(true);
+						}
+					} else {
+						good = false;
 					}
-				} else {
+				}
+				if (!good) {
 					System.err.println("Unexpected -p argument: " + oa);
 					System.exit(1);
 				}
@@ -369,8 +482,12 @@ public class ConvertImages {
 
 		opts.setImages(frames);
 
-		if (opts.getFormat().isMsx2()) {
-			colorMgr.setPalette(VdpColorManager.stockPaletteV9938);
+		if (opts.getPaletteUsage() == PaletteOption.FIXED) {
+			if (opts.getFormat().isMsx2()) {
+				colorMgr.setPalette(VdpColorManager.stockPaletteV9938);
+			} else {
+				colorMgr.setPalette(VdpColorManager.stockPalette);
+			}
 		}
 		
 		ImageImport importer = new ImageImport(colorMgr);

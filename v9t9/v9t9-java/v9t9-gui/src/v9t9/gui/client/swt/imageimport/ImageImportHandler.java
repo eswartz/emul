@@ -16,11 +16,13 @@ import java.util.LinkedHashSet;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.IVdpCanvasRenderer;
+import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
 import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
 import v9t9.video.imageimport.ImageImportData;
 import v9t9.video.imageimport.ImageImportDialogOptions;
+import v9t9.video.imageimport.ImageImportOptions.PaletteOption;
 
 public abstract class ImageImportHandler implements IImageImportHandler {
 
@@ -89,7 +91,32 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 			targWidth = 64;
 			targHeight = 48;
 		}
+
+		// enforce mode restrictions
+		if (!format.canSetPalette()) {
+			imageImportOptions.setPaletteUsage(PaletteOption.FIXED);
+		}
+		if (format.getLayout() == VdpFormat.Layout.PATTERN || format.getNumColors() == 2) {
+			imageImportOptions.setDitherMono(true);
+			//getCanvas().getColorMgr().setGreyscale(true);
+			//this.useColorMappedGreyScale = true; // FIXME
+		}
 		
+
+		if (imageImportOptions.getPaletteUsage() == PaletteOption.FIXED) {
+			byte[][] orig;
+			if (format.isMsx2()) {
+				orig = VdpColorManager.stockPaletteV9938;
+			} else {
+				orig = VdpColorManager.stockPalette;
+			}
+			byte[][] thePalette = getCanvas().getColorMgr().getColorPalette();
+			for (int i = 0; i < thePalette.length; i++) {
+				thePalette[i] = new byte[3];
+				System.arraycopy(orig[i], 0, thePalette[i], 0, 3);
+			}
+		}
+				
 		return importer.importImage(imageImportOptions, targWidth, targHeight);
 	
 

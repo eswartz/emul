@@ -3,7 +3,6 @@
  */
 package org.ejs.gui.images;
 
-import java.util.TreeMap;
 
 /**
  * @author ejs
