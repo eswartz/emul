@@ -401,6 +401,9 @@ public class ImageImport {
 			
 //			reduceNoise(img);
 			
+			// note: no matter what funky target mode we have, 
+			// always dither/etc. on each pixel as if the mode
+			// is a straight bitmap
 			convertImageToColorMap(img);
 		}
 	
@@ -414,7 +417,8 @@ public class ImageImport {
 			}
 		}
 		
-		return createConvertedImage(img, targWidth, targHeight);
+		// take care of special modes
+		return convertImageForMode(img, targWidth, targHeight);
 	}
 
 	/**
@@ -627,8 +631,15 @@ public class ImageImport {
 		}
 	}
 
-	
-	private BufferedImage createConvertedImage(BufferedImage img, int targWidth, int targHeight) {
+	/**
+	 * Take the image, which has been palette-mapped and/or dithered, and
+	 * create a version that follows the rules of the VdpFormat.
+	 * @param img
+	 * @param targWidth
+	 * @param targHeight
+	 * @return
+	 */
+	private BufferedImage convertImageForMode(BufferedImage img, int targWidth, int targHeight) {
 		int xoffs, yoffs;
 		
 		BufferedImage convertedImage = new BufferedImage(targWidth, targHeight, 
