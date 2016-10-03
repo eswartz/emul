@@ -23,6 +23,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
+import v9t9.common.video.VdpFormat.Layout;
 import v9t9.tools.utils.Category;
 import v9t9.tools.utils.ToolUtils;
 import v9t9.video.ImageDataCanvas24Bit;
@@ -450,6 +451,9 @@ public class ConvertImages {
 				return new Tuple(VdpFormat.COLOR2_8x1, 256, 192, 1, isGrey);
 			case 10:
 				return new Tuple(VdpFormat.COLOR16_4x4, 64, 48, 1, isGrey);
+			case 22:
+				return new Tuple(new VdpFormat(Layout.APPLE2_HIRES, 6, false), 280, 192, 1, isGrey);
+				
 			}
 		} catch (NumberFormatException e) {
 		}

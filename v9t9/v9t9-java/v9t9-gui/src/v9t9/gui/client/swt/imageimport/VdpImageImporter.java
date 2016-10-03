@@ -102,6 +102,9 @@ public class VdpImageImporter {
 			else if (format.isMsx2()) {
 				setVideoMemoryV9938BitmapMode(vdp99);
 			}
+			else {
+				throw new UnsupportedOperationException("cannot set memory for mode" + format);
+			}
 		}
 	}
 

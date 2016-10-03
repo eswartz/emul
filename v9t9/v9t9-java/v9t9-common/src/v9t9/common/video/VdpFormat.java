@@ -23,6 +23,8 @@ public class VdpFormat {
 		MULTICOLOR,
 		/** Free bitmap mode: any color in any pixel */ 
 		BITMAP,
+		/** Apple ][ hi-res mode */
+		APPLE2_HIRES,
 	};
 	
 	/** Text mode */
