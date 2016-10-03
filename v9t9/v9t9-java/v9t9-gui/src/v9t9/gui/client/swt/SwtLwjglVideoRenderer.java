@@ -74,6 +74,7 @@ import ejs.base.utils.FileUtils;
 public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IPropertyListener {
 	public static float glVersion;
 
+	private static final String EFFECT_STANDARD_CRT0 = "standardCrt0";
 	private static final String EFFECT_STANDARD_CRT1 = "standardCrt1";
 	private static final String EFFECT_STANDARD_CRT2 = "standardCrt2";
 	private static final String EFFECT_STANDARD_CRT3 = "standardCrt3";
@@ -88,9 +89,11 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private static boolean VERBOSE = false;
 	
 	static final MonitorParams paramsSTANDARD = new MonitorParams(
-		"shaders/std", null, GL_LINEAR, GL_NEAREST);
+		"shaders/std", null, GL_NEAREST, GL_NEAREST);
+	static final MonitorParams paramsCRT0 = new MonitorParams(
+		"shaders/crt0", null, GL_NEAREST, GL_NEAREST);
 	static final MonitorParams paramsCRT1 = new MonitorParams(
-		"shaders/crt", null, GL_LINEAR, GL_LINEAR);
+			"shaders/crt", null, GL_NEAREST, GL_LINEAR);
 	static final MonitorParams paramsCRT2 = new MonitorParams(
 		"shaders/crt2", "shaders/monitorRGB.png", GL_LINEAR, GL_LINEAR);
 	static final MonitorParams paramsCRT3 = new MonitorParams(
@@ -115,6 +118,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 	static MonitorEffectSupport monitorEffectSupport = new MonitorEffectSupport(); 
 	static {
+		monitorEffectSupport.registerEffect(EFFECT_STANDARD_CRT0, new MonitorEffect(
+				"Standard CRT #0",
+				paramsCRT0,
+				StandardMonitorRender.INSTANCE));
 		monitorEffectSupport.registerEffect(EFFECT_STANDARD_CRT1, new MonitorEffect(
 				"Standard CRT #1",
 				paramsCRT1,
@@ -708,8 +715,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 					e.printStackTrace();
 				}
 	
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
