@@ -153,6 +153,7 @@ public class VdpImageImporter {
 		
 		Integer c = data.getPaletteToIndex().get(p);
 		if (c == null) {
+			// should not get here!
 			return 0;
 		}
 		return (byte) (int) c;

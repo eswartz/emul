@@ -418,7 +418,20 @@ public class ImageImport {
 		}
 		
 		// take care of special modes
-		return convertImageForMode(img, targWidth, targHeight);
+		BufferedImage converted = convertImageForMode(img, targWidth, targHeight);
+		
+		if (false) {
+			File tempfile = new File(System.getProperty("java.io.tmpdir"), "dragged_cvt.png");
+			System.out.println("Temporary buffer to " + tempfile);
+			try {
+				ImageIO.write(img, "png", tempfile);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return converted;
+
 	}
 
 	/**
@@ -1505,13 +1518,17 @@ public class ImageImport {
 		ditherType = options.getDitherType();
 		ditherMono = options.isDitherMono() || format.getNumColors() == 2;
 
+		this.useColorMappedGreyScale = colorMgr.isGreyscale();
+		
 		byte[][] curPalette = colorMgr.getColorPalette();
 		this.thePalette = new byte[curPalette.length][];
 		for (int i = 0; i < thePalette.length; i++) {
 			thePalette[i] = Arrays.copyOf(curPalette[i], curPalette[i].length);
+			if (useColorMappedGreyScale) {
+				thePalette[i] = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(V99ColorMapUtils.getGreyToRgbMap332(), thePalette[i]);
+			}
 		}
 		
-		this.useColorMappedGreyScale = colorMgr.isGreyscale();
 		firstColor = (colorMgr.isClearFromPalette() ? 0 : 1);
 
 		paletteMappingDirty = true;
@@ -1519,6 +1536,7 @@ public class ImageImport {
 		octree = new ColorOctree(3, true);
 
 		convertGreyScale = options.isAsGreyScale();
+		
 		gamma = 1.0f + (options.getGamma() / 100f);
 		
 		if (ditherMono) {

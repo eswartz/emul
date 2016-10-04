@@ -102,7 +102,6 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 			//this.useColorMappedGreyScale = true; // FIXME
 		}
 		
-
 		if (imageImportOptions.getPaletteUsage() == PaletteOption.FIXED) {
 			byte[][] orig;
 			if (format.isMsx2()) {
@@ -116,9 +115,8 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 				System.arraycopy(orig[i], 0, thePalette[i], 0, 3);
 			}
 		}
-				
+		
 		return importer.importImage(imageImportOptions, targWidth, targHeight);
-	
 
 	}
 
