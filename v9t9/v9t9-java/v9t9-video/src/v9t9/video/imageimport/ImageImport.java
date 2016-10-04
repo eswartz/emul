@@ -1521,12 +1521,15 @@ public class ImageImport {
 		this.useColorMappedGreyScale = colorMgr.isGreyscale();
 		
 		byte[][] curPalette = colorMgr.getColorPalette();
-		this.thePalette = new byte[curPalette.length][];
-		for (int i = 0; i < thePalette.length; i++) {
+		this.thePalette = new byte[Math.max(curPalette.length, format.getNumColors())][];
+		for (int i = 0; i < curPalette.length; i++) {
 			thePalette[i] = Arrays.copyOf(curPalette[i], curPalette[i].length);
 			if (useColorMappedGreyScale) {
 				thePalette[i] = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(V99ColorMapUtils.getGreyToRgbMap332(), thePalette[i]);
 			}
+		}
+		for (int i = curPalette.length; i < thePalette.length; i++) {
+			thePalette[i] = new byte[3];
 		}
 		
 		firstColor = (colorMgr.isClearFromPalette() ? 0 : 1);
