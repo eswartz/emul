@@ -416,6 +416,12 @@ public class ConvertImages {
 				case 256:
 					f = VdpFormat.COLOR256_1x1;
 					break;
+				case 512:
+					f = new VdpFormat(Layout.BITMAP, 512, true, true);
+					break;
+				case 4096:
+					f = new VdpFormat(Layout.BITMAP, 4096, true, true);
+					break;
 				default:
 					System.err.println("Unexpected -m argument number of colors: " + c);
 					System.exit(1);

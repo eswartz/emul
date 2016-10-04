@@ -19,10 +19,17 @@ import java.util.TreeMap;
  *
  */
 public class V99ColorMapUtils {
+	public static byte[] rgb4to8 = new byte[16];
 	public static byte[] rgb3to8 = new byte[8];
 	public static byte[] rgb2to8 = new byte[4];
 	public static byte[] rgb1to8 = new byte[2];
 	static {
+		for (int i = 0; i < 16; i++) {
+			byte val = (byte) i;
+			byte val8 = (byte) (val << 4);
+			val8 |= i * 0xf / 15; 
+			V99ColorMapUtils.rgb4to8[i] = val8;
+		}
 		for (int i = 0; i < 8; i++) {
 			byte val = (byte) i;
 			byte val8 = (byte) (val << 5);

@@ -1536,7 +1536,8 @@ public class ImageImport {
 
 		paletteMappingDirty = true;
 		paletteToIndex = null;
-		octree = new ColorOctree(3, true);
+
+		octree = new ColorOctree(4, true);
 
 		convertGreyScale = options.isAsGreyScale();
 		
@@ -1584,6 +1585,14 @@ public class ImageImport {
 			default:
 				// 8 bits, 3+3+2
 				mapColor = new RGB332MapColor(useColorMappedGreyScale);
+				break;
+			case 512:
+				// 8 bits, 3+3+3
+				mapColor = new RGB333MapColor(useColorMappedGreyScale);
+				break;
+			case 4096:
+				// 16 bits, 4+4+4
+				mapColor = new RGB444MapColor(useColorMappedGreyScale);
 				break;
 			}
 		}
