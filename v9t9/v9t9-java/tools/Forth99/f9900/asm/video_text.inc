@@ -246,5 +246,6 @@ vtcout:
 vnopchar:
 vnopcursor:
     data VidWS, vtcout
+    
 vnopclearline:
-    rt    
+    rt 
