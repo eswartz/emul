@@ -527,8 +527,10 @@ public class ConvertImages {
 		
 		if (width >= 512) {
 			args[2] = "100%x100%";
-		} else if (opts.getFormat() == VdpFormat.COLOR16_4x4) {
+		} else if (opts.getFormat() == VdpFormat.COLOR16_4x4 || width <= 64 || height <= 48) {
 			args[2] = "800%x800%";
+		} else if (width <= 128 || height <= 96) {
+			args[2] = "400%x400%";
 		}
 		
 		Runtime.getRuntime().exec(args);
