@@ -57,7 +57,6 @@ import ejs.base.utils.Pair;
 public class ImageImport {
 	private boolean DEBUG = false;
 
-	//private BufferedImage convertedImage;
 	private VdpFormat format;
 	private byte[][] thePalette;
 
@@ -67,8 +66,6 @@ public class ImageImport {
 	private PaletteOption paletteOption;
 
 	private final VdpColorManager colorMgr;
-	private boolean paletteMappingDirty;
-	//private final IVdpChip vdp;
 	private int firstColor;
 
 
@@ -87,6 +84,12 @@ public class ImageImport {
 	private boolean tryDirectMapping = true;
 
 	private boolean flattenGreyScale;
+	
+	// # of meaningful bits in each palette channel
+	private int channelDepth = 3;
+	private int channelDepthMask;
+
+	private boolean clip;
 
 	public ImageImport(IVdpCanvas canvas) {
 		synchronized (canvas) {
@@ -392,6 +395,8 @@ public class ImageImport {
 			img.setRGB(0, y, width, 1, rgbs, 0, width);
 		}
 	}
+	
+
 	protected BufferedImage convertImageData(BufferedImage img, int targWidth, int targHeight) {
 		flatten(img);
 		
@@ -629,9 +634,9 @@ public class ImageImport {
 //			else
 //				V99ColorMapUtils.mapForRGB333(repr);	// no, don't lose info until needed
 			
-			thePalette[index][0] = (byte) repr[0];
-			thePalette[index][1] = (byte) repr[1];
-			thePalette[index][2] = (byte) repr[2];
+			thePalette[index][0] = clampChannel(repr[0]);
+			thePalette[index][1] = clampChannel(repr[1]);
+			thePalette[index][2] = clampChannel(repr[2]);
 
 			if (DEBUG) System.out.println("palette[" + index +"] = " 
 					+ Integer.toHexString(thePalette[index][0]&0xff) + "/" 
@@ -644,6 +649,13 @@ public class ImageImport {
 		}
 	}
 
+	private byte clampChannel(int i) {
+		if (useColorMappedGreyScale)
+			return (byte) i;
+		return (byte) (i & channelDepthMask);
+//		return (byte) Math.min(255, (i & channelDepthMask) * 0xff / channelDepthMask);
+	}
+	
 	/**
 	 * Take the image, which has been palette-mapped and/or dithered, and
 	 * create a version that follows the rules of the VdpFormat.
@@ -654,16 +666,16 @@ public class ImageImport {
 	 */
 	private BufferedImage convertImageForMode(BufferedImage img, int targWidth, int targHeight) {
 		int xoffs, yoffs;
-		
-		BufferedImage convertedImage = new BufferedImage(targWidth, targHeight, 
-				BufferedImage.TYPE_3BYTE_BGR);
 
 		int h = img.getHeight();
 		int w = img.getWidth();
 		
 		xoffs = (targWidth - w) / 2;
 		yoffs = (targHeight - h) / 2;
-	
+		
+		BufferedImage convertedImage = new BufferedImage(targWidth, targHeight, 
+						BufferedImage.TYPE_3BYTE_BGR);
+		
 		if (format.getLayout() == Layout.BITMAP_2_PER_8) {
 			// be sure we select the 8 pixel groups sensibly
 			if ((xoffs & 7) > 3)
@@ -673,7 +685,6 @@ public class ImageImport {
 		}
 		
 		if (format.getLayout() == Layout.BITMAP_2_PER_8 && !ditherMono) {
-			
 			reduceBitmapMode(convertedImage, img, xoffs, yoffs);
 	
 		} else if (format.getLayout() == Layout.APPLE2_HIRES) {
@@ -1473,7 +1484,7 @@ public class ImageImport {
 	}
 
 	protected void updatePaletteMapping() {
-		paletteMappingDirty = false;
+//		paletteMappingDirty = false;
 		
 		int ncols = format.getNumColors();
 		
@@ -1491,7 +1502,7 @@ public class ImageImport {
 		}
 		
 		byte[] rgb = { 0, 0, 0};
-		for (int c = 0; c < ncols; c++) {
+		for (int c = firstColor; c < ncols; c++) {
 			if (format.isPaletted()) {
 				rgb = thePalette[c];
 			} else if (mapColor instanceof IDirectColorMapper) {
@@ -1525,7 +1536,8 @@ public class ImageImport {
 		for (int i = 0; i < curPalette.length; i++) {
 			thePalette[i] = Arrays.copyOf(curPalette[i], curPalette[i].length);
 			if (useColorMappedGreyScale) {
-				thePalette[i] = V99ColorMapUtils.getRgbToGreyForGreyscaleMode(V99ColorMapUtils.getGreyToRgbMap332(), thePalette[i]);
+				thePalette[i] = Arrays.copyOf(
+						V99ColorMapUtils.getRgbToGreyForGreyscaleMode(V99ColorMapUtils.getGreyToRgbMap332(), thePalette[i]), 3);
 			}
 		}
 		for (int i = curPalette.length; i < thePalette.length; i++) {
@@ -1534,7 +1546,7 @@ public class ImageImport {
 		
 		firstColor = (colorMgr.isClearFromPalette() ? 0 : 1);
 
-		paletteMappingDirty = true;
+//		paletteMappingDirty = true;
 		paletteToIndex = null;
 
 		octree = new ColorOctree(4, true);
@@ -1558,41 +1570,50 @@ public class ImageImport {
 			}
 		
 			firstColor = 0;
+			setChannelDepth(8);
 		}
 		else if (!format.isPaletted() && paletteOption == PaletteOption.FIXED) {
 			switch (format.getNumColors()) {
 			case 8:
 				// 3 bits, 1+1+1
 				mapColor = new RGB111MapColor(useColorMappedGreyScale);
+				setChannelDepth(1);
 				break;
 			case 16:
 				// 4 bits, 1+2+1
 				mapColor = new RGB121MapColor(useColorMappedGreyScale);
+				setChannelDepth(2);
 				break;
 			case 32:
 				// 5 bits, 2+2+1
 				mapColor = new RGB221MapColor(useColorMappedGreyScale);
+				setChannelDepth(2);
 				break;
 			case 64:
 				// 6 bits, 2+2+2
 				mapColor = new RGB222MapColor(useColorMappedGreyScale);
+				setChannelDepth(2);
 				break;
 			case 128:
 				// 7 bits, 2+3+2
 				mapColor = new RGB232MapColor(useColorMappedGreyScale);
+				setChannelDepth(3);
 				break;
 			case 256:
 			default:
 				// 8 bits, 3+3+2
 				mapColor = new RGB332MapColor(useColorMappedGreyScale);
+				setChannelDepth(3);
 				break;
 			case 512:
 				// 8 bits, 3+3+3
 				mapColor = new RGB333MapColor(useColorMappedGreyScale);
+				setChannelDepth(3);
 				break;
 			case 4096:
 				// 16 bits, 4+4+4
 				mapColor = new RGB444MapColor(useColorMappedGreyScale);
+				setChannelDepth(4);
 				break;
 			}
 		}
@@ -1609,12 +1630,21 @@ public class ImageImport {
 			else /* current */ {
 				mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
 			}
+			setChannelDepth(3);
 		}
 		
 		// get original mapping
 		updatePaletteMapping();
 	}
 
+	/**
+	 * @param i
+	 */
+	private void setChannelDepth(int i) {
+		channelDepth = i;
+		channelDepthMask = (~(0xff >> channelDepth) & 0xff);
+	}
+	
 	public void addImage(ImageImportOptions options, BufferedImage image) {
 		if (image == null)
 			return;
@@ -1653,11 +1683,8 @@ public class ImageImport {
 
 		BufferedImage converted = convertImageData(image, targWidth, targHeight);
 		
-		if (paletteMappingDirty) {
-			// update mapping if palette was altered
-			updatePaletteMapping();
-		}
-
+		updatePaletteMapping();
+		
 		if (flattenGreyScale && colorMgr.isGreyscale()) {
 			int w = converted.getWidth();
 			int h = converted.getHeight();
@@ -1692,10 +1719,8 @@ public class ImageImport {
 				img.setRGB(x, y, newPixel | (pixel & 0xff000000));
 			}
 		}
-		
-		
 	}
-
+	
 	/**
 	 * @param imageImportOptions
 	 * @param targWidth
@@ -1784,7 +1809,8 @@ public class ImageImport {
 					false);
 			
 			ImageImportData data = convertImage(imageImportOptions, scaled,
-					screenWidth, screenHeight);
+					clip ? targWidth : screenWidth, 
+					clip ? targHeight : screenHeight);
 			data.delayMs = frames[i].delayMs;
 			datas[i] = data;
 		}
@@ -1794,6 +1820,9 @@ public class ImageImport {
 	
 	public void setFlattenGreyscale(boolean b) {
 		this.flattenGreyScale = b;
+	}
+	public void setClip(boolean clip) {
+		this.clip = clip;
 	}
 	
 }

@@ -62,6 +62,7 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 	
 	public void importImage(ImageFrame[] frames) {
 		ImageImport importer = createImageImport();
+		
 		ImageImportDialogOptions imageImportOptions = getImageImportOptions();
 		
 		imageImportOptions.updateFrom(frames);
@@ -116,6 +117,8 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 			}
 		}
 		
+//		importer.setFlattenGreyscale(true);
+
 		return importer.importImage(imageImportOptions, targWidth, targHeight);
 
 	}

@@ -35,6 +35,7 @@ import v9t9.video.imageimport.ImageImportDialogOptions;
 import v9t9.video.imageimport.ImageImportOptions.Dither;
 import v9t9.video.imageimport.ImageImportOptions.PaletteOption;
 import ejs.base.logging.LoggingUtils;
+import ejs.base.utils.Pair;
 import ejs.base.utils.Tuple;
 import gnu.getopt.Getopt;
 import static v9t9.common.video.VdpColorManager.fromRGB8;
@@ -140,6 +141,10 @@ public class ConvertImages {
 	private float stretch;
 	private boolean flattenGreyscale;
 
+	private boolean test;
+
+	private boolean clip;
+
 
 	/** test 8-color mode */
 	static VdpFormat COLOR8_1x1 = new VdpFormat(VdpFormat.Layout.BITMAP, 8, true);
@@ -183,7 +188,11 @@ public class ConvertImages {
 						+ "-M: dither monochrome\n"
 						+ "-b val: modify brightness by the given value (-100 to 100)\n"
 						+ "-S 0|1: set smooth scaling off or on (use off for line art)\n"
-						+ "-o DIR: write output to the given directory\n" + "");
+						+ "-o DIR: write output to the given directory\n" 
+						+ "-c: regardless of the mode, clip the output to actual side of the image\n"
+						+ "-t: test that reimporting the generated output is identical\n"
+						+ ""
+					);
 	}
 
 	public static void main(String[] args) {
@@ -204,7 +213,7 @@ public class ConvertImages {
 		IMachine machine = ToolUtils.createMachine();
 
 		Getopt getopt;
-		getopt = new Getopt(PROGNAME, args, "?o:a:A:d:p:s:m:gMb:S:F:");
+		getopt = new Getopt(PROGNAME, args, "?o:a:A:d:p:s:m:gMb:S:F:ct");
 
 		IVdpCanvas canvas = new ImageDataCanvas24Bit();
 		
@@ -220,6 +229,9 @@ public class ConvertImages {
 		stretch = 1f;
 		
 		flattenGreyscale = true;
+		
+		test = false;
+		clip = false;
 
 		int opt;
 		while ((opt = getopt.getopt()) != -1) {
@@ -332,6 +344,12 @@ public class ConvertImages {
 			case 'S':
 				opts.setScaleSmooth(readFlag(getopt.getOptarg()));
 				break;
+			case 't':
+				test = true;
+				break;
+			case 'c':
+				clip = true;
+				break;
 			}
 		}
 
@@ -351,9 +369,23 @@ public class ConvertImages {
 				File out = outdir != null ? new File(outdir, outname)
 						: new File(in.getParentFile(), outname);
 
-//				ConvertImages cvt = new ConvertImages(machine, canvas, opts,
-//						in, width, height, stretch, out);
-				importImage(in, out);
+				Pair<Integer, Integer> size = importImage(in, out);
+				
+				if (test) {
+					File out2 = outdir != null ? new File(outdir, outname+"_test")
+						: new File(in.getParentFile(), outname + "_test");
+					
+					// force no resize on next import
+					clip = false;
+					opts.setScaleSmooth(false);
+					opts.setKeepAspect(false);
+					width = size.first; height = size.second; 
+					importImage(out, out2);
+					
+//					File out3 = outdir != null ? new File(outdir, outname+"_test2")
+//						: new File(in.getParentFile(), outname + "_test2");
+//					importImage(out2, out3);
+				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -479,19 +511,7 @@ public class ConvertImages {
 		return out + ".png";
 	}
 
-//	public ConvertImages(IMachine machine, IVdpCanvas canvas,
-//			ImageImportDialogOptions opts, File in, int width, int height,
-//			float stretch, File out) throws IOException {
-//		this.stretch = stretch;
-//		this.colorMgr = canvas.getColorMgr();
-//		this.opts = opts;
-//		this.in = in;
-//		this.width = width;
-//		this.height = height;
-//		this.out = out;
-//	}
-
-	private void importImage(File in, File out) throws NotifyException, IOException {
+	private Pair<Integer, Integer> importImage(File in, File out) throws NotifyException, IOException {
 		ImageFrame[] frames = ImageUtils.loadImageFromFile(in.getPath());
 
 		opts.setImages(frames);
@@ -508,9 +528,28 @@ public class ConvertImages {
 		
 		importer.setTryDirectMapping(false);
 		importer.setFlattenGreyscale(flattenGreyscale);
+		importer.setClip(clip);
 
 		ImageImportData[] datas = importer.importImage(opts, width, height);
 
+		saveImage(datas, out);
+		
+		return new Pair<Integer, Integer>(datas[0].getConvertedImage().getWidth(), datas[0].getConvertedImage().getHeight());
+	}
+
+	/**
+	 * @param datas
+	 * @param out
+	 * @throws IOException 
+	 */
+	private void saveImage(ImageImportData[] datas, File out) throws IOException {
+
+		if (test) {
+			for (ImageImportData data : datas) {
+				System.out.println("Palette:\n" + dumpPalette(data.getThePalette()));
+			}
+		}
+		
 		BufferedImage cvt = datas[0].getConvertedImage();
 		
 		if (stretch != 1f) {
@@ -539,6 +578,18 @@ public class ConvertImages {
 			args[2] = "400%x400%";
 		}
 		
-		Runtime.getRuntime().exec(args);
+		Runtime.getRuntime().exec(args);		
+	}
+
+	private String dumpPalette(byte[][] thePalette) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < thePalette.length; i++) {
+			sb.append(Integer.toHexString(i)).append(": ");
+			sb.append(Integer.toHexString(thePalette[i][0] & 0xff)).append(" ");
+			sb.append(Integer.toHexString(thePalette[i][1] & 0xff)).append(" ");
+			sb.append(Integer.toHexString(thePalette[i][2] & 0xff)).append(" ");
+			sb.append('\n');
+		}
+		return sb.toString();
 	}
 }
