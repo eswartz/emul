@@ -137,7 +137,46 @@ public class ConvertImages {
 		/* 14: aquamarine */ fromRGB8("93d6bf"), 
 		/* 15: white */ fromRGB8("ffffff"),
 	};
-	
+
+	// from Graphics Gems, Frame Buffer Techniques (Mapping RGB Triples onto Four Bits)
+	static final byte[][] stockPalette14 = new byte[][] { 
+		/* 0: black */  fromRGB8("000000"), 
+		/* 1: olive*/   fromRGB8("808000"),
+		/* 2: purple */ fromRGB8("800080"), 
+		/* 3: red */    fromRGB8("ff0000"),
+		/* 4: aqua */   fromRGB8("008080"), 
+		/* 5: green */  fromRGB8("00ff00"),
+		/* 6: blue */   fromRGB8("0000ff"), 
+		/* 7: grey 1 */ fromRGB8("404040"),
+		/* 8: grey 2 */ fromRGB8("c0c0c0"), 
+		/* 9: yellow */ fromRGB8("ffff00"),
+		/* 10: magenta*/fromRGB8("ff00ff"),
+		/* 11: pink */  fromRGB8("ff8080"),
+		/* 12: cyan */  fromRGB8("00ffff"), 
+		/* 13: lime */  fromRGB8("80ff80"),
+		/* 14: sky*/    fromRGB8("8080ff"), 
+		/* 15: white */ fromRGB8("ffffff"),
+	};
+	// more subdued version of the above
+	private static final byte[][] stockPalette14b = new byte[][] { 
+		/* 0: black */  fromRGB8("000000"), 
+		/* 1: olive*/   fromRGB8("808040"),
+		/* 2: purple */ fromRGB8("804080"), 
+		/* 3: red */    fromRGB8("bf4040"),
+		/* 4: aqua */   fromRGB8("408080"), 
+		/* 5: green */  fromRGB8("40bf40"),
+		/* 6: blue */   fromRGB8("4040bf"), 
+		/* 7: grey 1 */ fromRGB8("404040"),
+		/* 8: grey 2 */ fromRGB8("c0c0c0"), 
+		/* 9: yellow */ fromRGB8("bfbf40"),
+		/* 10: magenta*/fromRGB8("bf40bf"),
+		/* 11: pink */  fromRGB8("bf8080"),
+		/* 12: cyan */  fromRGB8("40bfbf"), 
+		/* 13: lime */  fromRGB8("80bf80"),
+		/* 14: sky*/    fromRGB8("8080bf"), 
+		/* 15: white */ fromRGB8("ffffff"),
+	};
+
 	private ImageImportDialogOptions opts;
 	private int width;
 	private int height;
@@ -282,10 +321,10 @@ public class ConvertImages {
 				if (oa.length() > 0) {
 					good = true;
 					char ch = oa.charAt(0);
-					if (ch == 's' || ch == '1') {
+					if (ch == 's' || "18".equals(oa)) {
 						opts.setPaletteUsage(PaletteOption.CURRENT);
 						colorMgr.setPalette(VdpColorManager.stockPalette);
-					} else if (ch == '3') {
+					} else if ("38".equals(oa)) {
 						opts.setPaletteUsage(PaletteOption.CURRENT);
 						colorMgr.setPalette(VdpColorManager.stockPaletteV9938);
 					} else if ("vic".equals(oa)) {
@@ -300,6 +339,12 @@ public class ConvertImages {
 					} else if (ch == 'a') {
 						opts.setPaletteUsage(PaletteOption.CURRENT);
 						colorMgr.setPalette(stockPaletteAppleII);
+					} else if ("14".equals(oa)) {
+						opts.setPaletteUsage(PaletteOption.CURRENT);
+						colorMgr.setPalette(stockPalette14);
+					} else if ("14b".equals(oa)) {
+						opts.setPaletteUsage(PaletteOption.CURRENT);
+						colorMgr.setPalette(stockPalette14b);
 					} else if (ch == 'o') {
 						opts.setPaletteUsage(PaletteOption.OPTIMIZED);
 						if (oa.charAt(oa.length() - 1) == '+') {

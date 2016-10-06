@@ -634,6 +634,16 @@ public class ImageImport {
 //			else
 //				V99ColorMapUtils.mapForRGB333(repr);	// no, don't lose info until needed
 			
+//			byte[] grb333 = V99ColorMapUtils.getGRB333(repr[0] * 0x7 / 0xff,
+//					repr[1] * 0x7 / 0xff,
+//					repr[2] * 0x7 / 0xff);
+//			thePalette[index][0] = grb333[1];
+//			thePalette[index][1] = grb333[0];
+//			thePalette[index][2] = grb333[2];
+
+//			thePalette[index][0] = (byte) repr[0];
+//			thePalette[index][1] = (byte) repr[1];
+//			thePalette[index][2] = (byte) repr[2];
 			thePalette[index][0] = clampChannel(repr[0]);
 			thePalette[index][1] = clampChannel(repr[1]);
 			thePalette[index][2] = clampChannel(repr[2]);
@@ -653,6 +663,7 @@ public class ImageImport {
 		if (useColorMappedGreyScale)
 			return (byte) i;
 		return (byte) (i & channelDepthMask);
+//		return (byte) ((i * (channelDepthMask - 1) / 0xff) & channelDepthMask);
 //		return (byte) Math.min(255, (i & channelDepthMask) * 0xff / channelDepthMask);
 	}
 	
@@ -1616,19 +1627,21 @@ public class ImageImport {
 				setChannelDepth(4);
 				break;
 			}
+			
+			firstColor = 0;
 		}
 		else  {
 			// real or invented mode with palette flexibility
 			if (paletteOption == PaletteOption.OPTIMIZED) {
-				mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
+				mapColor = new UserPaletteMapColor(thePalette, 0, format.getNumColors(), useColorMappedGreyScale);
 			} else if (paletteOption == PaletteOption.FIXED) {
 				if (convertGreyScale)
 					mapColor = new TI16MapColor(thePalette, false, true);
 				else
-					mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
+					mapColor = new UserPaletteMapColor(thePalette, 0, format.getNumColors(), useColorMappedGreyScale);
 			}
 			else /* current */ {
-				mapColor = new UserPaletteMapColor(thePalette, firstColor, format.getNumColors(), useColorMappedGreyScale);
+				mapColor = new UserPaletteMapColor(thePalette, 0, format.getNumColors(), useColorMappedGreyScale);
 			}
 			setChannelDepth(3);
 		}
