@@ -10,6 +10,8 @@
  */
 package v9t9.tools;
 
+import static v9t9.common.video.VdpColorManager.fromRGB8;
+
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -17,6 +19,8 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+import javax.imageio.stream.FileImageOutputStream;
+import javax.imageio.stream.ImageOutputStream;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
@@ -28,6 +32,7 @@ import v9t9.tools.utils.Category;
 import v9t9.tools.utils.ToolUtils;
 import v9t9.video.ImageDataCanvas24Bit;
 import v9t9.video.common.ImageUtils;
+import v9t9.video.imageimport.GifSequenceWriter;
 import v9t9.video.imageimport.ImageFrame;
 import v9t9.video.imageimport.ImageImport;
 import v9t9.video.imageimport.ImageImportData;
@@ -38,7 +43,6 @@ import ejs.base.logging.LoggingUtils;
 import ejs.base.utils.Pair;
 import ejs.base.utils.Tuple;
 import gnu.getopt.Getopt;
-import static v9t9.common.video.VdpColorManager.fromRGB8;
 
 /**
  * Access to converting images into renderings for VDP chips
@@ -508,6 +512,9 @@ public class ConvertImages {
 		else
 			out = name + "_vdp";
 
+		if (name.toLowerCase().endsWith(".gif"))
+			return out + ".gif";
+		
 		return out + ".png";
 	}
 
@@ -550,8 +557,58 @@ public class ConvertImages {
 			}
 		}
 		
-		BufferedImage cvt = datas[0].getConvertedImage();
+		if (datas.length == 1) {
+			BufferedImage cvt = datas[0].getConvertedImage();
+			
+			cvt = stretchImage(cvt);
+	
+			ImageIO.write(cvt, "png", out);
+	
+			String[] args = { "/usr/bin/display", 
+					"-sample", 
+					"200%x200%",
+					out.getPath() 
+				}; 
+			
+			if (width >= 512) {
+				args[2] = "100%x100%";
+			} else if (opts.getFormat() == VdpFormat.COLOR16_4x4 || width <= 64 || height <= 48) {
+				args[2] = "800%x800%";
+			} else if (width <= 128 || height <= 96) {
+				args[2] = "400%x400%";
+			}
+			
+			Runtime.getRuntime().exec(args);
+			return;
+		}
 		
+		// animated GIF?
+		ImageOutputStream outs = new FileImageOutputStream(out);
+		GifSequenceWriter writer = new GifSequenceWriter(outs, 
+				datas[0].getConvertedImage().getType(), 
+				datas[0].delayMs,
+				true);
+				
+		for (int i = 0; i < datas.length; i++) {
+			BufferedImage frame = stretchImage(datas[i].getConvertedImage());
+			writer.writeToSequence(frame);
+		}
+		
+		writer.close();
+		outs.close();
+
+		String[] args = { "/usr/bin/eog", 
+				out.getPath() 
+			}; 
+		
+		Runtime.getRuntime().exec(args);
+	}
+
+	/**
+	 * @param cvt
+	 * @return
+	 */
+	protected BufferedImage stretchImage(BufferedImage cvt) {
 		if (stretch != 1f) {
 			int newHeight = (int) Math.round(height * stretch);
 			BufferedImage tmp = new BufferedImage(width, newHeight, cvt.getType());
@@ -561,24 +618,7 @@ public class ConvertImages {
 			g2.dispose();
 			cvt = tmp;
 		}
-
-		ImageIO.write(cvt, "png", out);
-
-		String[] args = { "/usr/bin/display", 
-				"-sample", 
-				"200%x200%",
-				out.getPath() 
-			}; 
-		
-		if (width >= 512) {
-			args[2] = "100%x100%";
-		} else if (opts.getFormat() == VdpFormat.COLOR16_4x4 || width <= 64 || height <= 48) {
-			args[2] = "800%x800%";
-		} else if (width <= 128 || height <= 96) {
-			args[2] = "400%x400%";
-		}
-		
-		Runtime.getRuntime().exec(args);		
+		return cvt;
 	}
 
 	private String dumpPalette(byte[][] thePalette) {
