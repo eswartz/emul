@@ -87,8 +87,6 @@ Create MultiModeParams
     'v-setupmode ,       ' multi-setupmode ,        
     'v-updatecolors ,    ' txt-updatecolors ,
     'v-drawchar ,        ' multi-drawchar ,
-    'v-setfont ,         ' drop ,
-    'v-blinkcursor ,     ' 2drop ,
     
     0 , 
 
@@ -115,7 +113,19 @@ Create MultiModeParams
     $800 v-patts @  0 vfill
 ;
 
+Create MultiFunctions 
+    'v-drawchar ,        ' txt-drawchar ,
+    'v-readchar ,        ' txt-readchar ,
+    'v-setfont ,         ' drop ,
+    'v-blinkcursor ,     ' 2drop ,
+    'v-clear ,           ' multi-setupmode ,
+    'v-hchar ,           ' txt-hchar ,
+    'v-vchar ,           ' txt-vchar ,
+    0 , 
+
+
 : multi-mode
+    MultiFunctions write-var-list
     GfxModeParamsCommon v-set-alloc-list
     MultiModeParams v-set-alloc-list
       
