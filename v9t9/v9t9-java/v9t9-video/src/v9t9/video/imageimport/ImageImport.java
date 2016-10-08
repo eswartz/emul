@@ -778,15 +778,19 @@ public class ImageImport {
 		Object hint = imageImportOptions.isScaleSmooth() ? RenderingHints.VALUE_INTERPOLATION_BILINEAR
 				:  RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
 		
+		boolean preScale = screenWidth < realWidth && screenHeight < realHeight;
+		
 		BufferedImage[] converted = new BufferedImage[frames.length];
 		
 		for (int i = 0; i < frames.length; i++) {
 			ImageFrame frame = frames[i];
-			// always scale even if same size since the option destroys the image
-			converted[i] = AwtImageUtils.getScaledInstance(
-					frame.image, targWidth, targHeight, 
-					hint,
-					false);
+			if (preScale)
+				converted[i] = AwtImageUtils.getScaledInstance(
+						frame.image, targWidth, targHeight, 
+						hint,
+						false);
+			else
+				converted[i] = frame.image;
 
 			addImage(imageImportOptions, converted[i]);
 		}
@@ -795,11 +799,11 @@ public class ImageImport {
 
 		ImageImportData[] datas = new ImageImportData[frames.length];
 		for (int i = 0; i < datas.length; i++) {
-			// always scale even if same size since the option destroys the image
-//			BufferedImage scaled = AwtImageUtils.getScaledInstance(
-//					frames[i].image, targWidth, targHeight, 
-//					hint,
-//					false);
+			if (!preScale)
+				converted[i] = AwtImageUtils.getScaledInstance(
+					converted[i], targWidth, targHeight, 
+					hint,
+					false);
 			
 			ImageImportData data = convertImage(imageImportOptions, 
 					converted[i],
