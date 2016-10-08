@@ -41,7 +41,6 @@ import org.ejs.gui.properties.PropertySourceEditor;
 
 import v9t9.common.events.NotifyException;
 import v9t9.gui.client.swt.ISwtVideoRenderer;
-import v9t9.gui.client.swt.SwtDragDropHandler;
 import v9t9.gui.client.swt.SwtWindow;
 import v9t9.gui.client.swt.bars.ImageCanvas;
 import v9t9.gui.client.swt.imageimport.IImageImportHandler;

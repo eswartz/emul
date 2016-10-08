@@ -1253,6 +1253,14 @@ public abstract class ImageUtils {
 		if (info == null) {
 			SVGSalamanderLoader loader = new SVGSalamanderLoader(url);
 			try {
+				while (!loader.isLoaded()) {
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						throw new SVGException("timed out waiting for load", e);
+					}
+				}
+					
 				BufferedImage img = loader.getImageData(loader.getSize());
 				if (img != null) {
 					if (false) {
