@@ -113,56 +113,12 @@ public class ImageImport {
 		return format != null && format.getLayout() != VdpFormat.Layout.TEXT;
 	}
 	
-//	protected void reduceNoise(BufferedImage img) {
-//		int width = img.getWidth();
-//		int[] rgbs = new int[width];
-//		int[] prgb = { 0, 0, 0 };
-//
-//		ColorOctree octree = new ColorOctree(3, false);
-//
-//		int total = 0;
-//		for (int y = 0; y < img.getHeight(); y++) {
-//			img.getRGB(0, y, width, 1, rgbs, 0, width);
-//			for (int x = 0; x < width; x++) {
-//				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
-//				octree.addColor(prgb);
-//				total++;
-//			}
-//		}
-//
-//		List<LeafNode> leaves = octree.gatherLeaves();
-//		int numColors = 0;
-//		int numPixels = total / 2;
-//		for (LeafNode leaf : leaves) {
-//			numColors++;
-//			numPixels -= leaf.getPixelCount();
-//			if (numPixels <= 0)
-//				break;
-//		}
-//		if (DEBUG) System.out.println("*** finding " + numColors + " apparent colors");
-//		if (numColors > format.getNumColors()) //(format == VdpFormat.COLOR256_1x1 ? 256 : 16))
-//			return;
-//		
-//		for (int y = 0; y < img.getHeight(); y++) {
-//			img.getRGB(0, y, width, 1, rgbs, 0, width);
-//			for (int x = 0; x < width; x++) {
-//				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
-//				V99ColorMapUtils.mapForRGB333(prgb);
-//				rgbs[x] = ColorMapUtils.rgb8ToPixel(prgb);
-//			}
-//			img.setRGB(0, y, width, 1, rgbs, 0, width);
-//		}
-//	}
-	
-
 	protected BufferedImage convertImageData(BufferedImage img, int targWidth, int targHeight) {
 		flatten(img);
 		
 		if (!importDirectMappedImage(img)) {
 			if (gamma != 1.0f)
 				gammaCorrect(img);
-			
-//			reduceNoise(img);
 			
 			// note: no matter what funky target mode we have, 
 			// always dither/etc. on each pixel as if the mode
@@ -338,9 +294,6 @@ public class ImageImport {
 			thePalette[index][0] = (byte) repr[0];
 			thePalette[index][1] = (byte) repr[1];
 			thePalette[index][2] = (byte) repr[2];
-//			thePalette[index][0] = clampChannel(repr[0]);
-//			thePalette[index][1] = clampChannel(repr[1]);
-//			thePalette[index][2] = clampChannel(repr[2]);
 
 			if (DEBUG) System.out.println("palette[" + index +"] = " 
 					+ Integer.toHexString(thePalette[index][0]&0xff) + "/" 
@@ -351,17 +304,6 @@ public class ImageImport {
 			index++;
 			
 		}
-	}
-
-	byte clampChannel(int i) {
-		if (true)
-			return (byte) i;
-		
-		if (useColorMappedGreyScale || ditherType == Dither.NONE)
-			return (byte) i;
-		return (byte) (i & channelDepthMask);
-//		return (byte) ((i * (channelDepthMask - 1) / 0xff) & channelDepthMask);
-//		return (byte) Math.min(255, (i & channelDepthMask) * 0xff / channelDepthMask);
 	}
 	
 	/**
@@ -1189,9 +1131,6 @@ public class ImageImport {
 		return data;
 	}
 
-	/**
-	 * @param img
-	 */
 	private void convertGreyscale(BufferedImage img) {
 		int[] rgb = new int[3];
 		for (int y = 0; y < img.getHeight(); y++) {
