@@ -1748,13 +1748,6 @@ public class ImageImport {
 		}
 	}
 	
-	/**
-	 * @param imageImportOptions
-	 * @param targWidth
-	 * @param targHeight
-	 * @param format2
-	 * @return
-	 */
 	public ImageImportData[] importImage(
 			ImageImportDialogOptions imageImportOptions, int targWidth,
 			int targHeight) {
@@ -1818,24 +1811,34 @@ public class ImageImport {
 		
 		prepareConversion(imageImportOptions);
 		
-		for (ImageFrame frame : frames) {
-			addImage(imageImportOptions, frame.image);
+		Object hint = imageImportOptions.isScaleSmooth() ? RenderingHints.VALUE_INTERPOLATION_BILINEAR
+				:  RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
+		
+		BufferedImage[] converted = new BufferedImage[frames.length];
+		
+		for (int i = 0; i < frames.length; i++) {
+			ImageFrame frame = frames[i];
+			// always scale even if same size since the option destroys the image
+			converted[i] = AwtImageUtils.getScaledInstance(
+					frame.image, targWidth, targHeight, 
+					hint,
+					false);
+
+			addImage(imageImportOptions, converted[i]);
 		}
 
 		finishAddingImages();
 
-		Object hint = imageImportOptions.isScaleSmooth() ? RenderingHints.VALUE_INTERPOLATION_BILINEAR
-				:  RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
-
 		ImageImportData[] datas = new ImageImportData[frames.length];
 		for (int i = 0; i < datas.length; i++) {
 			// always scale even if same size since the option destroys the image
-			BufferedImage scaled = AwtImageUtils.getScaledInstance(
-					frames[i].image, targWidth, targHeight, 
-					hint,
-					false);
+//			BufferedImage scaled = AwtImageUtils.getScaledInstance(
+//					frames[i].image, targWidth, targHeight, 
+//					hint,
+//					false);
 			
-			ImageImportData data = convertImage(imageImportOptions, scaled,
+			ImageImportData data = convertImage(imageImportOptions, 
+					converted[i],
 					clip ? targWidth : screenWidth, 
 					clip ? targHeight : screenHeight);
 			data.delayMs = frames[i].delayMs;
