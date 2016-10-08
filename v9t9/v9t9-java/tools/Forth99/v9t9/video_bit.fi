@@ -269,7 +269,7 @@ Create MonoModeParamsDiffs
     BitModeParams v-set-alloc-list
     MonoModeParamsDiffs v-set-alloc-list
         
-    $02A0 write-vmoderegs
+    $02D0 write-vmoderegs
 ;
 
 
