@@ -1226,6 +1226,11 @@ public abstract class ImageUtils {
 
 	public static ImageFrame[] loadImageFromFile(String file) throws NotifyException {
 //		log.debug("attempting to load image: " + file);
+		File f = new File(file);
+		if (!f.exists())
+			throw new NotifyException(
+					Level.ERROR, 
+					"No such file '" + file + "'");
 		ImageFrame[] info = null;
 		URL url;
 		try {
