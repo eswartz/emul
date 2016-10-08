@@ -127,4 +127,24 @@ public class MonoMapColor implements IPaletteMapper {
 	public TreeMap<Integer, byte[]> getGreyToRgbMap() {
 		return V99ColorMapUtils.getGreyToRgbMap332();
 	}
+
+	/**
+	 * @return
+	 */
+	public int getForeground() {
+		return fg;
+	}
+	/**
+	 * @return the bg
+	 */
+	public int getBackground() {
+		return bg;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getMidLum() {
+		return midLum;
+	}
 }

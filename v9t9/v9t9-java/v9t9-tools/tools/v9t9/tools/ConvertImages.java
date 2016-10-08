@@ -640,6 +640,34 @@ public class ConvertImages {
 		if (datas.length == 1) {
 			BufferedImage cvt = datas[0].getConvertedImage();
 			
+			if (opts.getPaletteUsage() == PaletteOption.OPTIMIZED) {
+				// flatten pixels, to account for loss of palette precision
+				
+				int w = cvt.getWidth();
+				int h = cvt.getHeight();
+				int[] rgb = { 0, 0, 0 };
+				int[] rgbs = new int[w];
+				for (int y = 0; y < h; y++) {
+					cvt.getRGB(0, y, w, 1, rgbs, 0, w);
+					for (int x = 0; x < w; x++) {
+						rgb[0] = (rgbs[x] & 0xff0000) >> 16;
+						rgb[1] = (rgbs[x] & 0xff00) >> 8;
+						rgb[2] = (rgbs[x] & 0xff);
+						
+						rgb[0] = (rgb[0] * 0xff / 0xdf);
+						rgb[1] = (rgb[1] * 0xff / 0xdf);
+						rgb[2] = (rgb[2] * 0xff / 0xdf);
+						
+						rgbs[x] = (Math.min(255, rgb[0]) << 16)
+								| (Math.min(255, rgb[1]) << 8)
+								| Math.min(255, rgb[2]);
+
+					}
+					//converted.setRGB(0, y, w, 1, rgbs, 0, w);
+				}
+			}
+			
+			
 			cvt = stretchImage(cvt);
 	
 			String out = outBase.getPath() + ".png";

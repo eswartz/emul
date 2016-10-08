@@ -192,22 +192,25 @@ public class ImageImport {
 		
 	}
 
-	// https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering
 	private void ditherFSPixelMono(BufferedImage img, IPaletteColorMapper mapColor,
 			Histogram hist, int x, int y) {
 		
 		int pixel = img.getRGB(x, y);
 		int lum = ColorMapUtils.getPixelLum(pixel);
 
-//		int newC = lum < 128 ? 0 : 1; //mapColor.getClosestPaletteEntry(x, y, pixel);
-		
-		int newPixel = lum < 128 ? 0 : 0xffffff; //mapColor.getPalettePixel(newC);
+		int newC = mapColor.getClosestPaletteEntry(x, y, pixel);
+		int newPixel = ColorMapUtils.rgb8ToPixel(thePalette[newC]); 
 		int newLum = ColorMapUtils.getPixelLum(newPixel);
 
 		img.setRGB(x, y, newPixel | 0xff000000);
 		
 		int error = lum - newLum;
-		
+
+		if (ditherType == Dither.FSR) {
+			// reduce bleed by ignoring some error
+			error = reduceBleed(error);
+		}
+
 		if (error != 0) {
 			if (x + 1 < img.getWidth()) {
 				// x+1, y
@@ -539,10 +542,11 @@ public class ImageImport {
 		switch (ditherType) {
 		case FS:
 		case FSR:
-			if (ditherMono)
+			if (ditherMono) {
 				ditherFSMono(img, mapColor, hist);
-			else
+			} else {
 				ditherFS(img, mapColor, hist);
+			}
 			break;
 		case ORDERED:
 			ditherOrdered(img, mapColor);
@@ -615,7 +619,7 @@ public class ImageImport {
 	}
 	
 	private void createOptimalPalette(int colorCount) {
-		int toAllocate = colorCount - firstColor;
+		int toAllocate = ditherMono ? 2 : colorCount - firstColor;
 		
 		boolean perfect = quantizer.getLeafCount() <= toAllocate;
 		
@@ -645,12 +649,12 @@ public class ImageImport {
 //			thePalette[index][1] = grb333[0];
 //			thePalette[index][2] = grb333[2];
 
-//			thePalette[index][0] = (byte) repr[0];
-//			thePalette[index][1] = (byte) repr[1];
-//			thePalette[index][2] = (byte) repr[2];
-			thePalette[index][0] = clampChannel(repr[0]);
-			thePalette[index][1] = clampChannel(repr[1]);
-			thePalette[index][2] = clampChannel(repr[2]);
+			thePalette[index][0] = (byte) repr[0];
+			thePalette[index][1] = (byte) repr[1];
+			thePalette[index][2] = (byte) repr[2];
+//			thePalette[index][0] = clampChannel(repr[0]);
+//			thePalette[index][1] = clampChannel(repr[1]);
+//			thePalette[index][2] = clampChannel(repr[2]);
 
 			if (DEBUG) System.out.println("palette[" + index +"] = " 
 					+ Integer.toHexString(thePalette[index][0]&0xff) + "/" 
@@ -663,11 +667,11 @@ public class ImageImport {
 		}
 	}
 
-	private byte clampChannel(int i) {
+	byte clampChannel(int i) {
 		if (true)
 			return (byte) i;
 		
-		if (useColorMappedGreyScale)
+		if (useColorMappedGreyScale || ditherType == Dither.NONE)
 			return (byte) i;
 		return (byte) (i & channelDepthMask);
 //		return (byte) ((i * (channelDepthMask - 1) / 0xff) & channelDepthMask);
@@ -702,7 +706,7 @@ public class ImageImport {
 				xoffs = xoffs & ~7;
 		}
 		
-		if (format.getLayout() == Layout.BITMAP_2_PER_8 && !ditherMono) {
+		if (format.getLayout() == Layout.BITMAP_2_PER_8) {
 			reduceBitmapMode(convertedImage, img, xoffs, yoffs);
 	
 		} else if (format.getLayout() == Layout.APPLE2_HIRES) {
@@ -801,7 +805,7 @@ public class ImageImport {
 				+"; mapped="+mappedColors
 				);
 		
-		if (paletteOption == PaletteOption.OPTIMIZED) {
+		if (paletteOption == PaletteOption.OPTIMIZED && !ditherMono) {
 			for (int i = interestingColors + firstColor; i < thePalette.length; i++) {
 				thePalette[i][0] = 0;
 				thePalette[i][1] = 0;
@@ -1508,16 +1512,16 @@ public class ImageImport {
 		
 		paletteToIndex = new TreeMap<Integer, Integer>();
 		
-		if (ditherMono) {
-			if (format.isPaletted()) {
-				paletteToIndex.put(0x0, colorMgr.getForeground());
-				paletteToIndex.put(0xffffff, colorMgr.getBackground());
-			} else {
-				paletteToIndex.put(0x0, 0);
-				paletteToIndex.put(0xffffff, ncols - 1);
-			}
-			return;
-		}
+//		if (ditherMono) {
+//			if (false&&format.isPaletted()) {
+//				paletteToIndex.put(0x0, colorMgr.getForeground());
+//				paletteToIndex.put(0xffffff, colorMgr.getBackground());
+//			} else {
+//				paletteToIndex.put(0x0, 0);
+//				paletteToIndex.put(0xffffff, ncols - 1);
+//			}
+//			return;
+//		}
 		
 		byte[] rgb = { 0, 0, 0};
 		for (int c = firstColor; c < ncols; c++) {
@@ -1545,7 +1549,9 @@ public class ImageImport {
 		format = options.getFormat();
 		paletteOption = options.getPaletteUsage();
 		ditherType = options.getDitherType();
-		ditherMono = options.isDitherMono() || format.getNumColors() == 2;
+		ditherMono = options.isDitherMono(); // || format.getNumColors() == 2;
+		if (ditherMono && ditherType == Dither.NONE) 
+			ditherType = Dither.FS;
 		useOctree = options.isUseOctree();
 
 		this.useColorMappedGreyScale = colorMgr.isGreyscale();
@@ -1585,7 +1591,7 @@ public class ImageImport {
 				
 				mapColor = new MonoMapColor(darkInfo.first, brightInfo.first);
 			} else {
-				mapColor = new MonoMapColor(0, 15);
+				mapColor = new MonoMapColor(0, format.getNumColors()-1);
 			}
 		
 			firstColor = 0;
