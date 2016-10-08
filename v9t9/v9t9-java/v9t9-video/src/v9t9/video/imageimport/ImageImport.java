@@ -292,55 +292,6 @@ public class ImageImport {
 		dither.run(img, mapColor, hist);
 	}
 
-
-	void createOptimalPaletteWithHSV(BufferedImage image, int colorCount) {
-		int toAllocate = colorCount - firstColor;
-			
-		int[] prgb = { 0, 0, 0 };
-		float[] hsv = { 0, 0, 0 };
-		int[] rgbs = new int[image.getWidth()];
-		for (int y = 0; y < image.getHeight(); y++) {
-			image.getRGB(0, y, rgbs.length, 1, rgbs, 0, rgbs.length);
-			for (int x = 0; x < rgbs.length; x++) {
-				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
-				ColorMapUtils.rgbToHsv(prgb, hsv);
-				prgb[0] = (int) (hsv[0] * 256 / 360);
-				prgb[1] = (int) (hsv[1] * 255);
-				prgb[2] = (int) hsv[2];
-				quantizer.addColor(rgbs[x], prgb);
-			}
-		}
-		
-		quantizer.reduceColors(colorCount);
-
-		int index = firstColor;
-		
-		List<ILeaf> leaves = quantizer.gatherLeaves();
-		if (leaves.size() > toAllocate)
-			throw new IllegalStateException();
-		
-		for (ILeaf node : leaves) {
-			int[] repr = node.reprRGB();
-			
-			hsv[0] = repr[0] * 360 / 256.f;
-			hsv[1] = repr[1] / 255.f;
-			hsv[2] = repr[2];
-			ColorMapUtils.hsvToRgb(hsv[0], hsv[1], hsv[2], repr);
-			
-			if (DEBUG) System.out.println("palette[" + index +"] = " 
-					+ Integer.toHexString(repr[0]) + "/" 
-					+ Integer.toHexString(repr[1]) + "/" 
-					+ Integer.toHexString(repr[2]));
-			
-			thePalette[index][0] = (byte) repr[0];
-			thePalette[index][1] = (byte) repr[1];
-			thePalette[index][2] = (byte) repr[2];
-			           
-			index++;
-			
-		}
-	}
-
 	private void addToQuantizer(BufferedImage image) {
 		int[] prgb = { 0, 0, 0 };
 		int[] rgbs = new int[image.getWidth()];
