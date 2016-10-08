@@ -4,7 +4,6 @@
 package org.ejs.gui.images;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -20,15 +19,19 @@ import java.util.Map;
 public class ColorMedianCut implements IColorQuantizer {
 
 	static class ColorLeaf implements ILeaf {
-		private int[] rgb;
+		private int r, g, b;
 		private int count;
 		
 		public ColorLeaf(int[] prgb) {
-			this.rgb = Arrays.copyOf(prgb, 3);
+			this.r = prgb[0];
+			this.g = prgb[1];
+			this.b = prgb[2];
 		}
 
-		public ColorLeaf(int[] prgb, int count) {
-			this.rgb = Arrays.copyOf(prgb, 3);
+		public ColorLeaf(int r, int g, int b, int count) {
+			this.r = r;
+			this.g = g;
+			this.b = b;
 			this.count = count;
 		}
 
@@ -36,7 +39,9 @@ public class ColorMedianCut implements IColorQuantizer {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + Arrays.hashCode(rgb);
+			result = prime * result + b;
+			result = prime * result + g;
+			result = prime * result + r;
 			return result;
 		}
 
@@ -49,22 +54,24 @@ public class ColorMedianCut implements IColorQuantizer {
 			if (getClass() != obj.getClass())
 				return false;
 			ColorLeaf other = (ColorLeaf) obj;
-			if (!Arrays.equals(rgb, other.rgb))
+			if (b != other.b)
+				return false;
+			if (g != other.g)
+				return false;
+			if (r != other.r)
 				return false;
 			return true;
 		}
 
-		
-
 		@Override
 		public String toString() {
-			return "ColorLeaf [rgb=" + Arrays.toString(rgb) + ", count="
+			return "ColorLeaf [rgb=" + r+","+g+","+b+ ", count="
 					+ count + "]";
 		}
 
 		@Override
 		public int[] reprRGB() {
-			return rgb;
+			return new int[] { r, g, b };
 		}
 
 		@Override
@@ -84,10 +91,8 @@ public class ColorMedianCut implements IColorQuantizer {
 	 * @see org.ejs.gui.images.IColorQuantizer#addColor(int[])
 	 */
 	@Override
-	public void addColor(int[] prgb) {
-		int pixel = ColorMapUtils.rgb8ToPixel(prgb);
-		
-		ColorLeaf leaf= map.get(pixel);
+	public void addColor(int pixel, int[] prgb) {
+		ColorLeaf leaf = map.get(pixel);
 		if (leaf != null) {
 			leaf.count++;
 		} else {
@@ -111,7 +116,7 @@ public class ColorMedianCut implements IColorQuantizer {
 	 */
 	@Override
 	public void reduceColors(int maxLeafCount) {
-		System.out.println("total colors: " + pixels.size());
+//		System.out.println("total colors: " + pixels.size());
 		if (pixels.size() > maxLeafCount) {
 			int depth = 1;
 			while ((1 << depth) < maxLeafCount)
@@ -138,22 +143,24 @@ public class ColorMedianCut implements IColorQuantizer {
 				}
 			});
 			
-			int[] rgb = { 0, 0, 0 };
+			int r = 0, g = 0, b = 0;
 			int count = 0;
 			
 			int n = mergers.size();
-			for (ColorLeaf leaf : mergers) {
-				rgb[0] += leaf.rgb[0]; 
-				rgb[1] += leaf.rgb[1]; 
-				rgb[2] += leaf.rgb[2];
+			for (int i = 0; i < n; i++) {
+				ColorLeaf leaf = mergers.get(i);
+				r += leaf.r; 
+				g += leaf.g; 
+				b += leaf.b;
 				count += leaf.count;
 			}
-			rgb[0] = (rgb[0] + n - 1) / n;
-			rgb[1] = (rgb[1] + n - 1) / n;
-			rgb[2] = (rgb[2] + n - 1) / n;
+			r = (r + n - 1) / n;
+			g = (g + n - 1) / n;
+			b = (b + n - 1) / n;
 			
-			mergers.set(0, new ColorLeaf(rgb, count));
+			mergers.set(0, new ColorLeaf(r, g, b, count));
 			
+			// remove excess
 			pixels.subList(maxLeafCount, pixels.size()).clear();
 		}
 	}
@@ -161,19 +168,19 @@ public class ColorMedianCut implements IColorQuantizer {
 	static final Comparator<ColorLeaf> redCompare = new Comparator<ColorLeaf>() {
 		@Override
 		public int compare(ColorLeaf o1, ColorLeaf o2) {
-			return o1.rgb[0] - o2.rgb[0];
+			return o1.r - o2.r;
 		}
 	};
 	static final Comparator<ColorLeaf> greenCompare = new Comparator<ColorLeaf>() {
 		@Override
 		public int compare(ColorLeaf o1, ColorLeaf o2) {
-			return o1.rgb[1] - o2.rgb[1];
+			return o1.g - o2.g;
 		}
 	};
 	static final Comparator<ColorLeaf> blueCompare = new Comparator<ColorLeaf>() {
 		@Override
 		public int compare(ColorLeaf o1, ColorLeaf o2) {
-			return o1.rgb[2] - o2.rgb[2];
+			return o1.b - o2.b;
 		}
 	};
 	
@@ -184,30 +191,28 @@ public class ColorMedianCut implements IColorQuantizer {
 	 * @param end
 	 */
 	private void reduceColorDepth(int depth, int start, int end) {
-		List<ColorLeaf> subList = pixels.subList(start, end);
 		
 		if (depth == 0) {
 			// no more entries desired; merge everything
-			int[] rgb = { 0, 0, 0};
+			int r = 0, g = 0, b = 0;
 			int count = 0;
 			int n = 0;
-			for (ColorLeaf leaf : subList) {
-				if (leaf != null) {
-					rgb[0] += leaf.rgb[0];
-					rgb[1] += leaf.rgb[1];
-					rgb[2] += leaf.rgb[2];
-					count += leaf.count;
-					n++;
-				}
+			for (int i = start; i < end; i++) {
+				ColorLeaf leaf = pixels.get(i);
+				r += leaf.r;
+				g += leaf.g;
+				b += leaf.b;
+				count += leaf.count;
+				n++;
 			}
 			for (int i = start; i < end; i++) {
 				pixels.set(i, null);
 			}
 			if (n > 0) {
-				rgb[0] = (rgb[0] + n - 1) / n;
-				rgb[1] = (rgb[1] + n - 1) / n;
-				rgb[2] = (rgb[2] + n - 1) / n;
-				pixels.set(start, new ColorLeaf(rgb, count));
+				r = (r + n - 1) / n;
+				g = (g + n - 1) / n;
+				b = (b + n - 1) / n;
+				pixels.set(start, new ColorLeaf(r, g, b, count));
 			}
 			return;
 		}
@@ -221,13 +226,14 @@ public class ColorMedianCut implements IColorQuantizer {
 		
 		int n = 0;
 		int count = 0;
-		for (ColorLeaf leaf : subList) {
-			minR = Math.min(minR, leaf.rgb[0]);
-			minG = Math.min(minG, leaf.rgb[1]);
-			minB = Math.min(minB, leaf.rgb[2]);
-			maxR = Math.max(maxR, leaf.rgb[0]);
-			maxG = Math.max(maxG, leaf.rgb[1]);
-			maxB = Math.max(maxB, leaf.rgb[2]);
+		for (int i = start; i < end; i++) {
+			ColorLeaf leaf = pixels.get(i);
+			minR = Math.min(minR, leaf.r);
+			minG = Math.min(minG, leaf.g);
+			minB = Math.min(minB, leaf.b);
+			maxR = Math.max(maxR, leaf.r);
+			maxG = Math.max(maxG, leaf.g);
+			maxB = Math.max(maxB, leaf.b);
 			count += leaf.count;
 			n++;
 		}
@@ -236,11 +242,12 @@ public class ColorMedianCut implements IColorQuantizer {
 			return;
 		
 		// sort by maximum axis then find the median
+		List<ColorLeaf> subList = pixels.subList(start, end);
 		int mid;
-		if (maxR - minR >= maxG - minG && maxR - minR >= maxB - minB) {
+		if (maxR - minR > maxG - minG && maxR - minR > maxB - minB) {
 			Collections.sort(subList, redCompare);
 		}
-		else if (maxG - minG >= maxR - minR && maxG - minG >= maxB - minB) {
+		else if (maxG - minG > maxR - minR && maxG - minG > maxB - minB) {
 			Collections.sort(subList, greenCompare);
 		}
 		else {
@@ -248,16 +255,16 @@ public class ColorMedianCut implements IColorQuantizer {
 		}
 		
 		int midCount = 0;
-		for (mid = 0; mid < subList.size(); mid++) {
-			ColorLeaf leaf = subList.get(mid); 
-			midCount += leaf.count;
-			if (midCount >= count / 2) {
+		for (mid = start; mid < end; mid++) {
+			ColorLeaf leaf = pixels.get(mid); 
+			midCount += leaf.count * 2;
+			if (midCount >= count) {
 				break;
 			}
 		}
 		
-		reduceColorDepth(depth - 1, start, mid + start);
-		reduceColorDepth(depth - 1, mid + start, end);
+		reduceColorDepth(depth - 1, start, mid);
+		reduceColorDepth(depth - 1, mid, end);
 	}
 
 	/* (non-Javadoc)

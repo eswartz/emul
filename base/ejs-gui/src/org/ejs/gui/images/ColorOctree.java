@@ -157,7 +157,7 @@ public class ColorOctree implements IColorQuantizer {
 		};
 	}
 
-	public void addColor(int[] prgb) {
+	public void addColor(int pixel, int[] prgb) {
 		Node traverse = root;
 		int depth = 0;
 		while (!(traverse instanceof LeafNode) && depth < maxDepth) {

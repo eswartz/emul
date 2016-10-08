@@ -568,7 +568,7 @@ public class ImageImport {
 				prgb[0] = (int) (hsv[0] * 256 / 360);
 				prgb[1] = (int) (hsv[1] * 255);
 				prgb[2] = (int) hsv[2];
-				quantizer.addColor(prgb);
+				quantizer.addColor(rgbs[x], prgb);
 			}
 		}
 		
@@ -602,14 +602,14 @@ public class ImageImport {
 		}
 	}
 
-	private void addToOctree(BufferedImage image) {
+	private void addToQuantizer(BufferedImage image) {
 		int[] prgb = { 0, 0, 0 };
 		int[] rgbs = new int[image.getWidth()];
 		for (int y = 0; y < image.getHeight(); y++) {
 			image.getRGB(0, y, rgbs.length, 1, rgbs, 0, rgbs.length);
 			for (int x = 0; x < rgbs.length; x++) {
 				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
-				quantizer.addColor(prgb);
+				quantizer.addColor(rgbs[x], prgb);
 			}
 		}
 	}
@@ -1674,7 +1674,7 @@ public class ImageImport {
 			return;
 		
 		if (paletteOption == PaletteOption.OPTIMIZED) {
-			addToOctree(image);
+			addToQuantizer(image);
 //			else if (format.getNumColors() > 4)
 //				// note: in this mode, there is no point trying to use colors to
 //				// map to greyscale (to find "more depth") -- any real colors

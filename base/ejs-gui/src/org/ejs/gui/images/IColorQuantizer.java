@@ -16,7 +16,7 @@ public interface IColorQuantizer {
 		int getPixelCount();
 	}
 	
-	public void addColor(int[] prgb);
+	public void addColor(int pixel, int[] prgb);
 	public int getLeafCount();
 	public void reduceColors(int maxLeafCount);
 	public List<ILeaf> gatherLeaves();
