@@ -349,9 +349,8 @@ public class ConvertImages {
 						colorMgr.setPalette(stockPalette14b);
 					} else if (ch == 'o') {
 						opts.setPaletteUsage(PaletteOption.OPTIMIZED);
-						if (oa.charAt(oa.length() - 1) == '+') {
-							canvas.getColorMgr().setClearFromPalette(true);
-						}
+						boolean useColor0 = (oa.charAt(oa.length() - 1) == '+');
+						canvas.getColorMgr().setClearFromPalette(useColor0);
 					} else {
 						good = false;
 					}
@@ -617,9 +616,9 @@ public class ConvertImages {
 				
 				BufferedImage palImg = new BufferedImage(palette.length, 1, BufferedImage.TYPE_3BYTE_BGR);
 				for (int i = 0; i < palImg.getWidth(); i++) {
-					int rgb = (palette[i][0] & 0xff) 
+					int rgb = (palette[i][2] & 0xff) 
 							| ((palette[i][1] << 8) & 0xff00)
-							| ((palette[i][2] << 16) & 0xff0000)
+							| ((palette[i][0] << 16) & 0xff0000)
 							;
 					palImg.setRGB(i, 0, rgb);
 				}
