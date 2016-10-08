@@ -92,6 +92,13 @@ public class ColorMedianCut implements IColorQuantizer {
 	 */
 	@Override
 	public void addColor(int pixel, int[] prgb) {
+		// time/space tradeoff: reduce precision here to avoid 
+		// wasting lots of time merging large lists of mostly similar pixels
+		pixel &= 0xfcfcfc;
+		prgb[0] = (prgb[0] & 0xfc) * 0xff / 0xfc;
+		prgb[1] = (prgb[1] & 0xfc) * 0xff / 0xfc;
+		prgb[2] = (prgb[2] & 0xfc) * 0xff / 0xfc;
+		
 		ColorLeaf leaf = map.get(pixel);
 		if (leaf != null) {
 			leaf.count++;
