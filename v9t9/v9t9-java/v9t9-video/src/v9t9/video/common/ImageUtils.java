@@ -1067,6 +1067,7 @@ public abstract class ImageUtils {
 				}
 				combineImages(datas[0], data);
 			}
+			data.palette = datas[i].palette;
 			frame = convertToBufferedImage(data);
 			frame.delayMs = datas[i].delayTime * 10;
 			frames[i] = frame;
