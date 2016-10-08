@@ -132,7 +132,7 @@ public class ColorMedianCut implements IColorQuantizer {
 		}
 		
 		if (pixels.size() > maxLeafCount) {
-			System.out.println("merging " + (pixels.size() - maxLeafCount + 1) + " leaves");
+//			System.out.println("merging " + (pixels.size() - maxLeafCount + 1) + " leaves");
 			
 			// sort by frequency and merge the last ones
 			List<ColorLeaf> mergers = pixels.subList(maxLeafCount - 1, pixels.size());
