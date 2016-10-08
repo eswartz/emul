@@ -221,6 +221,7 @@ public class ConvertImages {
 						+ "    4=256x192x16, 5=512x192x4,\n"
 						+ "    6=512x192x16, 7=256x192x256\n"
 						+ "    8=64x48x16, 9=256x192x2, 10=64x48x16\n"
+						+ "-s 0|1: smooth scaling off or on\n"
 						+ "-a 0|1: set preserve aspect ratio off or on\n"
 						+ "-A aspect: set expected aspect ratio\n"
 						+ "-d none|ordered|fs|fsr: select dithering method\n"
@@ -228,7 +229,7 @@ public class ConvertImages {
 						+ "   std|18 = TMS19918A, 38 = V9938, vic = 6560 (VIC), c64 = 6567 (VIC-II), \n"
 						+ "   zx = ZX Spectrum, a2 = Apple ][\n"
 						+ "   opt: optimize palette (+ = set color 0)\n"
-						+ "-s 0|1: smooth scaling off or on\n"
+						+ "-O: use octree to quantize colors instead of median cut\n"
 						+ "-g: convert to a greyscale image\n"
 						+ "-M: dither monochrome\n"
 						+ "-b val: modify brightness by the given value (-100 to 100)\n"
@@ -259,7 +260,7 @@ public class ConvertImages {
 		IMachine machine = ToolUtils.createMachine();
 
 		Getopt getopt;
-		getopt = new Getopt(PROGNAME, args, "?o:a:A:d:p:s:m:gMb:S:F:ctP");
+		getopt = new Getopt(PROGNAME, args, "?o:m:s:a:A:d:p:OgMb:S:F:ctP");
 
 		IVdpCanvas canvas = new ImageDataCanvas24Bit();
 		
@@ -290,6 +291,18 @@ public class ConvertImages {
 			case 'o':
 				outdir = new File(getopt.getOptarg());
 				break;
+			case 'm': {
+				Tuple t = readFormat(getopt.getOptarg());
+				opts.setFormat((VdpFormat) t.get(0));
+				width = (Integer) t.get(1);
+				height = (Integer) t.get(2);
+				stretch = ((Number) t.get(3)).floatValue();
+				colorMgr.setGreyscale((Boolean) t.get(4));
+				break;
+			}
+			case 's':
+				opts.setScaleSmooth(readFlag(getopt.getOptarg()));
+				break;
 			case 'a':
 				opts.setKeepAspect(readFlag(getopt.getOptarg()));
 				break;
@@ -299,23 +312,6 @@ public class ConvertImages {
 					opts.setAspect(Float.parseFloat(oa));
 				} catch (NumberFormatException e) {
 					System.err.println("Unexpected -A argument: " + oa);
-					System.exit(1);
-				}
-				break;
-			}
-			case 'd': {
-				String oa = getopt.getOptarg();
-				if (oa.length() > 0 && oa.charAt(0) == 'n') {
-					opts.setDitherType(Dither.NONE);
-				} else if (oa.length() > 0 && oa.charAt(0) == 'o') {
-					opts.setDitherType(Dither.ORDERED);
-				} else if (oa.length() > 0 && oa.charAt(0) == 'f') {
-					if (oa.charAt(oa.length() - 1) == 'r')
-						opts.setDitherType(Dither.FSR);
-					else
-						opts.setDitherType(Dither.FS);
-				} else {
-					System.err.println("Unexpected -d argument: " + oa);
 					System.exit(1);
 				}
 				break;
@@ -365,16 +361,24 @@ public class ConvertImages {
 				}
 				break;
 			}
-			case 's':
-				opts.setScaleSmooth(readFlag(getopt.getOptarg()));
+			case 'O':
+				opts.setUseOctree(true);
 				break;
-			case 'm': {
-				Tuple t = readFormat(getopt.getOptarg());
-				opts.setFormat((VdpFormat) t.get(0));
-				width = (Integer) t.get(1);
-				height = (Integer) t.get(2);
-				stretch = ((Number) t.get(3)).floatValue();
-				colorMgr.setGreyscale((Boolean) t.get(4));
+			case 'd': {
+				String oa = getopt.getOptarg();
+				if (oa.length() > 0 && oa.charAt(0) == 'n') {
+					opts.setDitherType(Dither.NONE);
+				} else if (oa.length() > 0 && oa.charAt(0) == 'o') {
+					opts.setDitherType(Dither.ORDERED);
+				} else if (oa.length() > 0 && oa.charAt(0) == 'f') {
+					if (oa.charAt(oa.length() - 1) == 'r')
+						opts.setDitherType(Dither.FSR);
+					else
+						opts.setDitherType(Dither.FS);
+				} else {
+					System.err.println("Unexpected -d argument: " + oa);
+					System.exit(1);
+				}
 				break;
 			}
 			case 'M':

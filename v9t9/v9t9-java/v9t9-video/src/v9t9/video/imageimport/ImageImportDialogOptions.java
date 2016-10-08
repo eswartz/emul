@@ -28,7 +28,6 @@ public class ImageImportDialogOptions extends ImageImportOptions {
 	protected boolean scaleSmooth = true;
 	protected boolean keepAspect = true;
 	protected float aspect = 1.333333333333f;		// 256x192
-	protected boolean useOctree = false;
 
 	public boolean isScaleSmooth() {
 		return scaleSmooth;
@@ -75,7 +74,6 @@ public class ImageImportDialogOptions extends ImageImportOptions {
 	private FieldProperty asGreyScaleProperty;
 	private FieldProperty imagesProperty;
 	private FieldProperty clipProperty;
-	private FieldProperty useOctreeProperty;
 	
 	/**
 	 * @param iVdpChip 
@@ -88,7 +86,6 @@ public class ImageImportDialogOptions extends ImageImportOptions {
 		keepAspectProperty = new FieldProperty(this, "keepAspect", "Keep Aspect Ratio");
 		asGreyScaleProperty = new FieldProperty(this, "asGreyScale", "Convert To Greyscale");
 		imagesProperty = new FieldProperty(this, "frames", "Last Image");
-		useOctreeProperty = new FieldProperty(this, "useOctree", "Use Octree?");
 		clipProperty = new FieldProperty(this, "clip", "Clip Region");
 		clipProperty.setHidden(true);
 	}
@@ -100,7 +97,6 @@ public class ImageImportDialogOptions extends ImageImportOptions {
 		ps.addProperty(keepAspectProperty);
 		ps.addProperty(asGreyScaleProperty);
 		super.addToPropertySource(ps);
-		ps.addProperty(useOctreeProperty);
 		ps.addProperty(imagesProperty);
 		ps.addProperty(clipProperty);
 	}
@@ -156,7 +152,6 @@ public class ImageImportDialogOptions extends ImageImportOptions {
 	 * Use this when the image has been dragged/dropped.
 	 */
 	public void updateFrom(ImageFrame[] images) {
-		octree = null;
 		setImages(images);
 	}
 	

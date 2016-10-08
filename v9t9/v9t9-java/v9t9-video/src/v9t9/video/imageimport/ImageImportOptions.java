@@ -10,9 +10,6 @@
  */
 package v9t9.video.imageimport;
 
-
-import org.ejs.gui.images.ColorOctree;
-
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.hardware.IVdpTMS9918A;
 import v9t9.common.video.IVdpCanvas;
@@ -73,8 +70,8 @@ public class ImageImportOptions {
 	@Range(minimum=-100, maximum=100f)
 	protected float gamma = 0f;
 
-	protected ColorOctree octree;
-	
+	protected boolean useOctree = false;
+
 	private FieldProperty paletteOptionProperty;
 	private FieldProperty ditheringProperty;
 	private FieldProperty ditherMonoProperty;
@@ -83,6 +80,7 @@ public class ImageImportOptions {
 	protected IVdpCanvas canvas;
 	protected IVdpChip vdp;
 	private boolean canSetPalette;
+	private FieldProperty useOctreeProperty;
 	
 	/**
 	 * @param iVdpChip 
@@ -98,11 +96,13 @@ public class ImageImportOptions {
 		ditheringProperty = new FieldProperty(this, "ditherType", "Dithering");
 		ditherMonoProperty = new FieldProperty(this, "ditherMono", "Dither Monochrome");
 		gammaProperty = new FieldProperty(this, "gamma", "Gamma % Delta");
+		useOctreeProperty = new FieldProperty(this, "useOctree", "Use Octree?");
 
 	}
 
 	public void addToPropertySource(PropertySource ps) {
 		ps.addProperty(paletteOptionProperty);
+		ps.addProperty(useOctreeProperty);
 		ps.addProperty(ditheringProperty);
 		ps.addProperty(ditherMonoProperty);
 		ps.addProperty(gammaProperty);
@@ -159,8 +159,6 @@ public class ImageImportOptions {
 		setDitherMono(isMonoMode);
 		setDitherType(format.getLayout() == VdpFormat.Layout.BITMAP_2_PER_8 ? Dither.ORDERED : Dither.FS);
 		
-		octree = null;
-		
 		gamma = 0f;
 	}
 	
@@ -178,28 +176,25 @@ public class ImageImportOptions {
 		return canSetPalette;
 	}
 	
-	/**
-	 * @return the octree
-	 */
-	public ColorOctree getOctree() {
-		if (octree == null)
-			octree = new ColorOctree(3, true);
-		return octree;
-	}
-	/**
-	 * @param octree the octree to set
-	 */
-	public void setOctree(ColorOctree octree) {
-		this.octree = octree;
-	}
-
-	
 	public float getGamma() {
 		return gamma;
 	}
 	public void setGamma(float gamma) {
 		this.gamma = gamma;
 	}
-	
+
+	/**
+	 * @return
+	 */
+	public boolean isUseOctree() {
+		return useOctree;
+	}
+
+	/**
+	 * @param useOctree the useOctree to set
+	 */
+	public void setUseOctree(boolean useOctree) {
+		this.useOctree = useOctree;
+	}
 	
 }

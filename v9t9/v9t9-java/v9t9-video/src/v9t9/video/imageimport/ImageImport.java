@@ -106,13 +106,6 @@ public class ImageImport {
 	private final int clamp(int i) {
 		return i < 0 ? 0 : i > 255 ? 255 : i;
 	}
-	
-	/**
-	 * @param useOctree the useOctree to set
-	 */
-	public void setUseOctree(boolean useOctree) {
-		this.useOctree = useOctree;
-	}
 
 	// https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering
 	private void ditherFSPixel(BufferedImage img, IPaletteColorMapper mapColor,
@@ -1553,6 +1546,7 @@ public class ImageImport {
 		paletteOption = options.getPaletteUsage();
 		ditherType = options.getDitherType();
 		ditherMono = options.isDitherMono() || format.getNumColors() == 2;
+		useOctree = options.isUseOctree();
 
 		this.useColorMappedGreyScale = colorMgr.isGreyscale();
 		
