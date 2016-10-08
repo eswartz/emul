@@ -188,6 +188,8 @@ public class ConvertImages {
 
 	private boolean clip;
 
+	private boolean showPalette;
+
 
 	/** test 8-color mode */
 	static VdpFormat COLOR8_1x1 = new VdpFormat(VdpFormat.Layout.BITMAP, 8, true);
@@ -234,6 +236,7 @@ public class ConvertImages {
 						+ "-o DIR: write output to the given directory\n" 
 						+ "-c: regardless of the mode, clip the output to actual side of the image\n"
 						+ "-t: test that reimporting the generated output is identical\n"
+						+ "-P: write and display the palette\n"
 						+ ""
 					);
 	}
@@ -256,7 +259,7 @@ public class ConvertImages {
 		IMachine machine = ToolUtils.createMachine();
 
 		Getopt getopt;
-		getopt = new Getopt(PROGNAME, args, "?o:a:A:d:p:s:m:gMb:S:F:ct");
+		getopt = new Getopt(PROGNAME, args, "?o:a:A:d:p:s:m:gMb:S:F:ctP");
 
 		IVdpCanvas canvas = new ImageDataCanvas24Bit();
 		
@@ -275,6 +278,8 @@ public class ConvertImages {
 		
 		test = false;
 		clip = false;
+		
+		showPalette = false;
 
 		int opt;
 		while ((opt = getopt.getopt()) != -1) {
@@ -399,6 +404,9 @@ public class ConvertImages {
 			case 'c':
 				clip = true;
 				break;
+			case 'P':
+				showPalette = true;
+				break;
 			}
 		}
 
@@ -414,22 +422,22 @@ public class ConvertImages {
 
 				File in = new File(name);
 
-				String outname = getOutputName(in.getName());
-				File out = outdir != null ? new File(outdir, outname)
-						: new File(in.getParentFile(), outname);
+				String outBaseName = getOutputBaseName(in.getName());
+				File outBase = outdir != null ? new File(outdir, outBaseName)
+						: new File(in.getParentFile(), outBaseName);
 
-				Pair<Integer, Integer> size = importImage(in, out);
+				Pair<Integer, Integer> size = importImage(in, outBase);
 				
 				if (test) {
-					File out2 = outdir != null ? new File(outdir, outname+"_test")
-						: new File(in.getParentFile(), outname + "_test");
+					File outBase2 = outdir != null ? new File(outdir, outBaseName+"_test")
+						: new File(in.getParentFile(), outBaseName + "_test");
 					
 					// force no resize on next import
 					clip = false;
 					opts.setScaleSmooth(false);
 					opts.setKeepAspect(false);
 					width = size.first; height = size.second; 
-					importImage(out, out2);
+					importImage(new File(outBase.getPath() +".png"), outBase2);
 					
 //					File out3 = outdir != null ? new File(outdir, outname+"_test2")
 //						: new File(in.getParentFile(), outname + "_test2");
@@ -549,7 +557,7 @@ public class ConvertImages {
 		return null;
 	}
 
-	private static String getOutputName(String name) {
+	private static String getOutputBaseName(String name) {
 		String out;
 		int idx = name.lastIndexOf('.');
 		if (idx > 0)
@@ -557,13 +565,14 @@ public class ConvertImages {
 		else
 			out = name + "_vdp";
 
-		if (name.toLowerCase().endsWith(".gif"))
-			return out + ".gif";
-		
-		return out + ".png";
+//		if (name.toLowerCase().endsWith(".gif"))
+//			return out + ".gif";
+//		
+//		return out + ".png";
+		return out;
 	}
 
-	private Pair<Integer, Integer> importImage(File in, File out) throws NotifyException, IOException {
+	private Pair<Integer, Integer> importImage(File in, File outBase) throws NotifyException, IOException {
 		ImageFrame[] frames = ImageUtils.loadImageFromFile(in.getPath());
 
 		opts.setImages(frames);
@@ -584,7 +593,7 @@ public class ConvertImages {
 
 		ImageImportData[] datas = importer.importImage(opts, width, height);
 
-		saveImage(datas, out);
+		saveImage(datas, outBase);
 		
 		return new Pair<Integer, Integer>(datas[0].getConvertedImage().getWidth(), datas[0].getConvertedImage().getHeight());
 	}
@@ -594,12 +603,34 @@ public class ConvertImages {
 	 * @param out
 	 * @throws IOException 
 	 */
-	private void saveImage(ImageImportData[] datas, File out) throws IOException {
+	private void saveImage(ImageImportData[] datas, File outBase) throws IOException {
 
-		if (test) {
+		if (showPalette) {
 			for (ImageImportData data : datas) {
-				System.out.println("Palette:\n" + dumpPalette(data.getThePalette()));
+				byte[][] palette = data.getThePalette();
+				System.out.println("Palette:\n" + dumpPalette(palette));
+				
+				BufferedImage palImg = new BufferedImage(palette.length, 1, BufferedImage.TYPE_3BYTE_BGR);
+				for (int i = 0; i < palImg.getWidth(); i++) {
+					int rgb = (palette[i][0] & 0xff) 
+							| ((palette[i][1] << 8) & 0xff00)
+							| ((palette[i][2] << 16) & 0xff0000)
+							;
+					palImg.setRGB(i, 0, rgb);
+				}
+				
+				String out = outBase.getPath() + "_pal.png";
+				ImageIO.write(palImg, "png", new File(out));
+				
+				String[] args = { "/usr/bin/display", 
+						"-sample", 
+						"1600%x1600%",
+						out  
+					}; 
+				
+				Runtime.getRuntime().exec(args);
 			}
+			
 		}
 		
 		if (datas.length == 1) {
@@ -607,12 +638,13 @@ public class ConvertImages {
 			
 			cvt = stretchImage(cvt);
 	
-			ImageIO.write(cvt, "png", out);
+			String out = outBase.getPath() + ".png";
+			ImageIO.write(cvt, "png", new File(out));
 	
 			String[] args = { "/usr/bin/display", 
 					"-sample", 
 					"200%x200%",
-					out.getPath() 
+					out
 				}; 
 			
 			if (width >= 512) {
@@ -628,7 +660,8 @@ public class ConvertImages {
 		}
 		
 		// animated GIF?
-		ImageOutputStream outs = new FileImageOutputStream(out);
+		String out = outBase.getPath() + ".gif";
+		ImageOutputStream outs = new FileImageOutputStream(new File(out));
 		GifSequenceWriter writer = new GifSequenceWriter(outs, 
 				datas[0].getConvertedImage().getType(), 
 				datas[0].delayMs,
@@ -643,7 +676,7 @@ public class ConvertImages {
 		outs.close();
 
 		String[] args = { "/usr/bin/eog", 
-				out.getPath() 
+				out
 			}; 
 		
 		Runtime.getRuntime().exec(args);

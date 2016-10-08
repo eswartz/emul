@@ -29,10 +29,12 @@ import javax.imageio.ImageIO;
 
 import org.ejs.gui.images.AwtImageUtils;
 import org.ejs.gui.images.ColorMapUtils;
+import org.ejs.gui.images.ColorMedianCut;
 import org.ejs.gui.images.ColorOctree;
-import org.ejs.gui.images.ColorOctree.LeafNode;
 import org.ejs.gui.images.FixedPaletteMapColor;
 import org.ejs.gui.images.Histogram;
+import org.ejs.gui.images.IColorQuantizer.ILeaf;
+import org.ejs.gui.images.IColorQuantizer;
 import org.ejs.gui.images.IDirectColorMapper;
 import org.ejs.gui.images.IPaletteColorMapper;
 import org.ejs.gui.images.IPaletteMapper;
@@ -73,7 +75,8 @@ public class ImageImport {
 	protected TreeMap<Integer, Integer> paletteToIndex;
 	private Pair<Integer,Integer>[][] bitmapColors;
 
-	private ColorOctree octree;
+	private IColorQuantizer quantizer;
+	private boolean useOctree = false;
 	
 	private boolean convertGreyScale;
 
@@ -103,6 +106,13 @@ public class ImageImport {
 	private final int clamp(int i) {
 		return i < 0 ? 0 : i > 255 ? 255 : i;
 	}
+	
+	/**
+	 * @param useOctree the useOctree to set
+	 */
+	public void setUseOctree(boolean useOctree) {
+		this.useOctree = useOctree;
+	}
 
 	// https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering
 	private void ditherFSPixel(BufferedImage img, IPaletteColorMapper mapColor,
@@ -126,18 +136,9 @@ public class ImageImport {
 		
 		if (ditherType == Dither.FSR) {
 			// reduce bleed by ignoring some error
-			if (r_error < 0)
-				r_error = (r_error + 1) / 4;
-			else
-				r_error >>>= 2;
-			if (g_error < 0)
-				g_error = (g_error + 1) / 4;
-			else
-				g_error >>>= 2;
-			if (b_error < 0)
-				b_error = (b_error + 1) / 4;
-			else
-				b_error >>>= 2;
+			r_error = reduceBleed(r_error);
+			g_error = reduceBleed(g_error);
+			b_error = reduceBleed(b_error);
 		}
 
 		if (useColorMappedGreyScale) {
@@ -164,6 +165,17 @@ public class ImageImport {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * @param b_error
+	 * @return
+	 */
+	private int reduceBleed(int v) {
+		if (v < 0)
+			return -(-v / 3);
+		else
+			return v / 3;
 	}
 	
 	private void ditherFSApplyError(BufferedImage img, int x, int y, int sixteenths, int r_error, int g_error, int b_error) {
@@ -355,46 +367,46 @@ public class ImageImport {
 		return format != null && format.getLayout() != VdpFormat.Layout.TEXT;
 	}
 	
-	protected void reduceNoise(BufferedImage img) {
-		int width = img.getWidth();
-		int[] rgbs = new int[width];
-		int[] prgb = { 0, 0, 0 };
-
-		ColorOctree octree = new ColorOctree(3, false);
-
-		int total = 0;
-		for (int y = 0; y < img.getHeight(); y++) {
-			img.getRGB(0, y, width, 1, rgbs, 0, width);
-			for (int x = 0; x < width; x++) {
-				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
-				octree.addColor(prgb);
-				total++;
-			}
-		}
-
-		List<LeafNode> leaves = octree.gatherLeaves();
-		int numColors = 0;
-		int numPixels = total / 2;
-		for (LeafNode leaf : leaves) {
-			numColors++;
-			numPixels -= leaf.getPixelCount();
-			if (numPixels <= 0)
-				break;
-		}
-		if (DEBUG) System.out.println("*** finding " + numColors + " apparent colors");
-		if (numColors > format.getNumColors()) //(format == VdpFormat.COLOR256_1x1 ? 256 : 16))
-			return;
-		
-		for (int y = 0; y < img.getHeight(); y++) {
-			img.getRGB(0, y, width, 1, rgbs, 0, width);
-			for (int x = 0; x < width; x++) {
-				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
-				V99ColorMapUtils.mapForRGB333(prgb);
-				rgbs[x] = ColorMapUtils.rgb8ToPixel(prgb);
-			}
-			img.setRGB(0, y, width, 1, rgbs, 0, width);
-		}
-	}
+//	protected void reduceNoise(BufferedImage img) {
+//		int width = img.getWidth();
+//		int[] rgbs = new int[width];
+//		int[] prgb = { 0, 0, 0 };
+//
+//		ColorOctree octree = new ColorOctree(3, false);
+//
+//		int total = 0;
+//		for (int y = 0; y < img.getHeight(); y++) {
+//			img.getRGB(0, y, width, 1, rgbs, 0, width);
+//			for (int x = 0; x < width; x++) {
+//				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
+//				octree.addColor(prgb);
+//				total++;
+//			}
+//		}
+//
+//		List<LeafNode> leaves = octree.gatherLeaves();
+//		int numColors = 0;
+//		int numPixels = total / 2;
+//		for (LeafNode leaf : leaves) {
+//			numColors++;
+//			numPixels -= leaf.getPixelCount();
+//			if (numPixels <= 0)
+//				break;
+//		}
+//		if (DEBUG) System.out.println("*** finding " + numColors + " apparent colors");
+//		if (numColors > format.getNumColors()) //(format == VdpFormat.COLOR256_1x1 ? 256 : 16))
+//			return;
+//		
+//		for (int y = 0; y < img.getHeight(); y++) {
+//			img.getRGB(0, y, width, 1, rgbs, 0, width);
+//			for (int x = 0; x < width; x++) {
+//				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
+//				V99ColorMapUtils.mapForRGB333(prgb);
+//				rgbs[x] = ColorMapUtils.rgb8ToPixel(prgb);
+//			}
+//			img.setRGB(0, y, width, 1, rgbs, 0, width);
+//		}
+//	}
 	
 
 	protected BufferedImage convertImageData(BufferedImage img, int targWidth, int targHeight) {
@@ -563,19 +575,19 @@ public class ImageImport {
 				prgb[0] = (int) (hsv[0] * 256 / 360);
 				prgb[1] = (int) (hsv[1] * 255);
 				prgb[2] = (int) hsv[2];
-				octree.addColor(prgb);
+				quantizer.addColor(prgb);
 			}
 		}
 		
-		octree.reduceTree(colorCount);
+		quantizer.reduceColors(colorCount);
 
 		int index = firstColor;
 		
-		List<LeafNode> leaves = octree.gatherLeaves();
+		List<ILeaf> leaves = quantizer.gatherLeaves();
 		if (leaves.size() > toAllocate)
 			throw new IllegalStateException();
 		
-		for (ColorOctree.LeafNode node : leaves) {
+		for (ILeaf node : leaves) {
 			int[] repr = node.reprRGB();
 			
 			hsv[0] = repr[0] * 360 / 256.f;
@@ -598,14 +610,13 @@ public class ImageImport {
 	}
 
 	private void addToOctree(BufferedImage image) {
-		//ColorOctree octree = new ColorOctree(4, toAllocate, true, false);
 		int[] prgb = { 0, 0, 0 };
 		int[] rgbs = new int[image.getWidth()];
 		for (int y = 0; y < image.getHeight(); y++) {
 			image.getRGB(0, y, rgbs.length, 1, rgbs, 0, rgbs.length);
 			for (int x = 0; x < rgbs.length; x++) {
 				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
-				octree.addColor(prgb);
+				quantizer.addColor(prgb);
 			}
 		}
 	}
@@ -613,16 +624,16 @@ public class ImageImport {
 	private void createOptimalPalette(int colorCount) {
 		int toAllocate = colorCount - firstColor;
 		
-		boolean perfect = octree.getLeafCount() <= toAllocate;
+		boolean perfect = quantizer.getLeafCount() <= toAllocate;
 		
 		if (!perfect)
-			octree.reduceTree(toAllocate);
+			quantizer.reduceColors(toAllocate);
 
 		int index = firstColor;
 		
-		List<LeafNode> leaves = octree.gatherLeaves();
+		List<ILeaf> leaves = quantizer.gatherLeaves();
 		
-		for (ColorOctree.LeafNode node : leaves) {
+		for (ILeaf node : leaves) {
 			int[] repr = node.reprRGB();
 			
 			if (useColorMappedGreyScale)
@@ -660,6 +671,9 @@ public class ImageImport {
 	}
 
 	private byte clampChannel(int i) {
+		if (true)
+			return (byte) i;
+		
 		if (useColorMappedGreyScale)
 			return (byte) i;
 		return (byte) (i & channelDepthMask);
@@ -1560,7 +1574,7 @@ public class ImageImport {
 //		paletteMappingDirty = true;
 		paletteToIndex = null;
 
-		octree = new ColorOctree(4, true);
+		quantizer = useOctree ?  new ColorOctree(4, true) : new ColorMedianCut();
 
 		convertGreyScale = options.isAsGreyScale();
 		

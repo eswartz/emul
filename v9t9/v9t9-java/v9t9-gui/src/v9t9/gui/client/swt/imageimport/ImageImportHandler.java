@@ -119,6 +119,8 @@ public abstract class ImageImportHandler implements IImageImportHandler {
 		
 //		importer.setFlattenGreyscale(true);
 
+		importer.setUseOctree(imageImportOptions.isUseOctree());
+		
 		return importer.importImage(imageImportOptions, targWidth, targHeight);
 
 	}

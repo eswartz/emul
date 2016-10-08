@@ -31,14 +31,14 @@ import java.util.TreeSet;
  * @author ejs
  * 
  */
-public class ColorOctree {
+public class ColorOctree implements IColorQuantizer {
 	static class Node {
 		final InnerNode parent;
 		public Node(InnerNode parent) {
 			this.parent = parent;
 		}
 	}
-	public static class LeafNode extends Node {
+	public static class LeafNode extends Node implements ILeaf {
 		int pixelCount;
 		int reds, greens, blues;
 		public LeafNode(InnerNode parent) {
@@ -56,10 +56,13 @@ public class ColorOctree {
 			};
 		}
 		public void add(int[] prgb, int componentMask) {
-			int offs = (~componentMask+1)>>1;
-			reds += (Math.max(0, Math.min(255, prgb[0] + offs))) & componentMask;
-			greens +=  (Math.max(0, Math.min(255, prgb[1] + offs)))& componentMask;
-			blues +=  (Math.max(0, Math.min(255, prgb[2] + offs))) & componentMask;
+//			int offs = (~componentMask+1)>>1;
+//			reds += (Math.max(0, Math.min(255, prgb[0] + offs))) & componentMask;
+//			greens +=  (Math.max(0, Math.min(255, prgb[1] + offs)))& componentMask;
+//			blues +=  (Math.max(0, Math.min(255, prgb[2] + offs))) & componentMask;
+			reds += prgb[0];
+			greens += prgb[1];
+			blues += prgb[2];
 			pixelCount++;
 			
 			Node n = parent;
@@ -83,7 +86,7 @@ public class ColorOctree {
 	}
 
 	static class InnerNode extends Node {
-		Node[] kids;
+		Node[] kids;  /* 8 */
 		int pixelCount;
 		public InnerNode(InnerNode parent) {
 			super(parent);
@@ -91,7 +94,7 @@ public class ColorOctree {
 		}
 		@Override
 		public String toString() {
-			return "Inner Node: #" + pixelCount;
+			return "Inner Node: #" + pixelCount + " @" + depth();
 		}
 		public int depth() {
 			Node n = this;
@@ -157,24 +160,28 @@ public class ColorOctree {
 	public void addColor(int[] prgb) {
 		Node traverse = root;
 		int depth = 0;
-		while (!(traverse instanceof LeafNode)) {
+		while (!(traverse instanceof LeafNode) && depth < maxDepth) {
 			traverse = addToTreeLevel((InnerNode) traverse, depth, prgb);
 			depth++;
 		}
 		
-		if (prgb[0] < minRed && prgb[1] < minGreen && prgb[2] < minBlue) {
-			minRed = prgb[0];
-			minGreen = prgb[1];
-			minBlue = prgb[2];
-		}
-		if (prgb[0] > maxRed && prgb[1] > maxGreen && prgb[2] > maxBlue) {
-			maxRed = prgb[0];
-			maxGreen = prgb[1];
-			maxBlue = prgb[2];
-		}
-		// don't reduce serially; loses detail at bottom of image
-		//if (leafCount > maxLeafCount * maxLeafCount)
-		//reduceTree();
+//		if (prgb[0] < minRed && prgb[1] < minGreen && prgb[2] < minBlue) {
+//			minRed = prgb[0];
+//			minGreen = prgb[1];
+//			minBlue = prgb[2];
+//		}
+//		if (prgb[0] > maxRed && prgb[1] > maxGreen && prgb[2] > maxBlue) {
+//			maxRed = prgb[0];
+//			maxGreen = prgb[1];
+//			maxBlue = prgb[2];
+//		}
+		
+		minRed = Math.min(prgb[0], minRed);
+		minGreen = Math.min(prgb[1], minGreen);
+		minBlue = Math.min(prgb[2], minBlue);
+		maxRed = Math.max(prgb[0], maxRed);
+		maxGreen = Math.max(prgb[1], maxGreen);
+		maxBlue = Math.max(prgb[2], maxBlue);
 	}
 	
 	/**
@@ -236,7 +243,7 @@ public class ColorOctree {
 	 * not desired, least-often-used colors are removed (to allow for
 	 * smoother color selection).
 	 */
-	public void reduceTree(int maxLeafCount) {
+	public void reduceColors(int maxLeafCount) {
 		while (leafCount > maxLeafCount) {
 			LinkedList<InnerNode> list = null;
 			int depth;
@@ -257,11 +264,11 @@ public class ColorOctree {
 				Iterator<InnerNode> iter = sorted.iterator();
 				InnerNode candidate = iter.next();
 				
+//				System.out.println("reducing node: " + candidate);
+				
 				mergeInnerNode(depth, candidate, maxLeafCount);
 				
 				iter.remove();
-				//if (leafCount != gatherLeaves().size())
-				//	throw new IllegalStateException();
 			}
 		}
 	}
@@ -322,7 +329,7 @@ public class ColorOctree {
 				}
 			}
 		}
-		if (minIndex == -1 || minCount > root.pixelCount / 16) {
+		if (minIndex == -1 /*|| minCount > root.pixelCount / 16*/) {
 			// ok, use minimum
 			for (int i = 0; i < 8; i++) {
 				if (root.kids[i] instanceof LeafNode) {
@@ -340,7 +347,8 @@ public class ColorOctree {
 	}
 
 	/**
-	 * Collapse an inner node into a leaf, by merging all the children together.
+	 * Collapse an inner node into a leaf, by merging all the 
+	 * 8 (octree) children together.
 	 * @param inner
 	 * @return 
 	 */
@@ -379,10 +387,16 @@ public class ColorOctree {
 				newLeaf.reds = (minRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
 				newLeaf.greens = (minGreen * newLeaf.pixelCount + newLeaf.greens) / 2; 
 				newLeaf.blues = (minBlue * newLeaf.pixelCount + newLeaf.blues) / 2; 
+//				newLeaf.reds = (minRed * newLeaf.pixelCount ) ; 
+//				newLeaf.greens = (minGreen * newLeaf.pixelCount ) ; 
+//				newLeaf.blues = (minBlue * newLeaf.pixelCount ) ; 
 			} else if (index == 7) {  
 				newLeaf.reds = (maxRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
 				newLeaf.greens = (maxGreen * newLeaf.pixelCount + newLeaf.greens) / 2; 
 				newLeaf.blues = (maxBlue * newLeaf.pixelCount + newLeaf.blues) / 2; 
+//				newLeaf.reds = (maxRed * newLeaf.pixelCount ); 
+//				newLeaf.greens = (maxGreen * newLeaf.pixelCount ) ; 
+//				newLeaf.blues = (maxBlue * newLeaf.pixelCount ); 
 			}
 		}
 		
@@ -396,20 +410,20 @@ public class ColorOctree {
 		return newLeaf;
 	}
 
-	public List<LeafNode> gatherLeaves() {
-		List<LeafNode> nodes = new ArrayList<ColorOctree.LeafNode>();
+	public List<ILeaf> gatherLeaves() {
+		List<ILeaf> nodes = new ArrayList<ILeaf>();
 		gatherLeaves(nodes, root, 0);
-		Collections.sort(nodes, new Comparator<LeafNode>() {
+		Collections.sort(nodes, new Comparator<ILeaf>() {
 
 			@Override
-			public int compare(LeafNode o1, LeafNode o2) {
+			public int compare(ILeaf o1, ILeaf o2) {
 				return o2.getPixelCount() - o1.getPixelCount();
 			}
 		});
 		return nodes;
 	}
 
-	private void gatherLeaves(List<LeafNode> nodes, InnerNode node, int depth) {
+	private void gatherLeaves(List<ILeaf> nodes, InnerNode node, int depth) {
 		InnerNode inner = (InnerNode) node;
 		for (Node k : inner.kids) {
 			if (k instanceof InnerNode)
