@@ -10,6 +10,8 @@
  */
 package v9t9.video.tms9918a;
 
+import java.util.Arrays;
+
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.RedrawBlock;
 import v9t9.video.BaseRedrawHandler;
@@ -57,6 +59,8 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 		int minY = info.canvas.getMinY();
 		int maxY = info.canvas.getMaxY();
 		
+		byte[] colors = new byte[8];
+		
 		for (int i = info.changes.screen.nextSetBit(0); 
 			i >= 0 && i < modeInfo.screen.size; 
 			i = info.changes.screen.nextSetBit(i+1)) 
@@ -75,8 +79,9 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 			
 			byte mem1 = (byte) info.vdp.readAbsoluteVdpMemory(pattOffs);
 			byte mem2 = (byte) info.vdp.readAbsoluteVdpMemory(pattOffs + 1);
-			
-			byte[] colors = { mem1, mem1, mem1, mem1, mem2, mem2, mem2, mem2 }; 
+		
+			Arrays.fill(colors, 0, 4, mem1);
+			Arrays.fill(colors, 4, 8, mem2);
 
 			info.canvas.draw8x8MultiColorBlock(block.r, block.c, 
 					multiBlockPattern,

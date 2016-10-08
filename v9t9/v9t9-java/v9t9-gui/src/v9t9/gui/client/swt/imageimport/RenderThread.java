@@ -50,12 +50,16 @@ public class RenderThread extends Thread {
 		if (datas.length == 0)
 			return;
 		while (!cancelled) {
+			long now = System.currentTimeMillis();
+			
 			vdpImporter.importImageToCanvas(datas[index]);
 			if (datas.length == 1)
 				break;
 			
 			try {
-				Thread.sleep(Math.max(25, datas[index].delayMs));
+				long ms = datas[index].delayMs - (System.currentTimeMillis() - now);
+				if (ms > 0)
+					Thread.sleep(ms);
 			} catch (InterruptedException e) {
 			}
 			
