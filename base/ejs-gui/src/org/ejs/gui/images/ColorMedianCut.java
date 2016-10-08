@@ -191,27 +191,34 @@ public class ColorMedianCut implements IColorQuantizer {
 	 * @param end
 	 */
 	private void reduceColorDepth(int depth, int start, int end) {
+		List<ColorLeaf> subList = pixels.subList(start, end);
 		
 		if (depth == 0) {
 			// no more entries desired; merge everything
+//			System.out.println("merging " + (end - start) + " colors");
 			int r = 0, g = 0, b = 0;
 			int count = 0;
 			int n = 0;
+			int scale = 0;
+			
+			// slightly favor more populous colors
 			for (int i = start; i < end; i++) {
 				ColorLeaf leaf = pixels.get(i);
-				r += leaf.r;
-				g += leaf.g;
-				b += leaf.b;
+				int sc = (int) Math.sqrt(leaf.count);
+				r += leaf.r * sc;
+				g += leaf.g * sc;
+				b += leaf.b * sc;
 				count += leaf.count;
+				scale += sc;
 				n++;
 			}
 			for (int i = start; i < end; i++) {
 				pixels.set(i, null);
 			}
 			if (n > 0) {
-				r = (r + n - 1) / n;
-				g = (g + n - 1) / n;
-				b = (b + n - 1) / n;
+				r = (r + scale - 1) / scale;
+				g = (g + scale - 1) / scale;
+				b = (b + scale - 1) / scale;
 				pixels.set(start, new ColorLeaf(r, g, b, count));
 			}
 			return;
@@ -242,7 +249,6 @@ public class ColorMedianCut implements IColorQuantizer {
 			return;
 		
 		// sort by maximum axis then find the median
-		List<ColorLeaf> subList = pixels.subList(start, end);
 		int mid;
 		if (maxR - minR > maxG - minG && maxR - minR > maxB - minB) {
 			Collections.sort(subList, redCompare);
