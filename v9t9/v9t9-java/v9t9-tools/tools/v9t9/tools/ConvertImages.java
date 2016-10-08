@@ -297,6 +297,7 @@ public class ConvertImages {
 				width = (Integer) t.get(1);
 				height = (Integer) t.get(2);
 				stretch = ((Number) t.get(3)).floatValue();
+				opts.setAspect((float) width / height);
 				colorMgr.setGreyscale((Boolean) t.get(4));
 				break;
 			}

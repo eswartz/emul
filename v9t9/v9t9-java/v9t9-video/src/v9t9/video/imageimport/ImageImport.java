@@ -94,6 +94,8 @@ public class ImageImport {
 
 	private boolean clip;
 
+	private IDither dither;
+
 	public ImageImport(IVdpCanvas canvas) {
 		synchronized (canvas) {
 			this.colorMgr = canvas.getColorMgr();
@@ -102,258 +104,6 @@ public class ImageImport {
 	public ImageImport(VdpColorManager colorMgr) {
 		this.colorMgr = colorMgr;
 	}
-	
-	private final int clamp(int i) {
-		return i < 0 ? 0 : i > 255 ? 255 : i;
-	}
-
-	// https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering
-	private void ditherFSPixel(BufferedImage img, IPaletteColorMapper mapColor,
-			Histogram hist, int x, int y) {
-		
-		int pixel = img.getRGB(x, y);
-
-		int newC = mapColor.getClosestPaletteEntry(x, y, pixel);
-		
-		int newPixel = mapColor.getPalettePixel(newC);
-		
-		img.setRGB(x, y, newPixel | 0xff000000);
-		
-		int r_error;
-		int g_error;
-		int b_error;
-		
-		r_error = ((pixel >> 16) & 0xff) - ((newPixel >> 16) & 0xff);
-		g_error = ((pixel >> 8) & 0xff) - ((newPixel >> 8) & 0xff);
-		b_error = ((pixel >> 0) & 0xff) - ((newPixel >> 0) & 0xff);
-		
-		if (ditherType == Dither.FSR) {
-			// reduce bleed by ignoring some error
-			r_error = reduceBleed(r_error);
-			g_error = reduceBleed(g_error);
-			b_error = reduceBleed(b_error);
-		}
-
-		if (useColorMappedGreyScale) {
-			int lum = (299 * r_error + 587 * g_error + 114 * b_error) / 1000;
-			r_error = g_error = b_error = lum;
-		}
-		
-		if ((r_error | g_error | b_error) != 0) {
-			if (x + 1 < img.getWidth()) {
-				// x+1, y
-				ditherFSApplyError(img, x + 1, y,  
-						7, r_error, g_error, b_error);
-			}
-			if (y + 1 < img.getHeight()) {
-				if (x > 0) {
-					ditherFSApplyError(img, x - 1, y + 1, 
-							3, r_error, g_error, b_error);
-				}
-				ditherFSApplyError(img, x, y + 1, 
-						5, r_error, g_error, b_error);
-				if (x + 1 < img.getWidth()) {
-					ditherFSApplyError(img, x + 1, y + 1, 
-							1, r_error, g_error, b_error);
-				}
-			}
-		}
-	}
-	
-	/**
-	 * @param b_error
-	 * @return
-	 */
-	private int reduceBleed(int v) {
-		if (v < 0)
-			return -(-v / 3);
-		else
-			return v / 3;
-	}
-	
-	private void ditherFSApplyError(BufferedImage img, int x, int y, int sixteenths, int r_error, int g_error, int b_error) {
-		int pixel = img.getRGB(x, y);
-		int r = clamp(((pixel >> 16) & 0xff) + (sixteenths * r_error / 16));
-		int g = clamp(((pixel >> 8) & 0xff) + (sixteenths * g_error / 16));
-		int b = clamp(((pixel >> 0) & 0xff) + (sixteenths * b_error / 16));
-		img.setRGB(x, y, (r << 16) | (g << 8) | b | 0xff000000);
-	
-	}
-
-	private void ditherFS(BufferedImage img, IPaletteColorMapper mapColor, Histogram hist) {
-		int h = img.getHeight();
-		int w = img.getWidth();
-
-		for (int y = 0; y < h; y++) {
-			for (int x = 0; x < w; x++) {
-				ditherFSPixel(img, mapColor, hist, x, y);
-			}
-		}
-		
-	}
-
-	private void ditherFSPixelMono(BufferedImage img, IPaletteColorMapper mapColor,
-			Histogram hist, int x, int y) {
-		
-		int pixel = img.getRGB(x, y);
-		int lum = ColorMapUtils.getPixelLum(pixel);
-
-		int newC = mapColor.getClosestPaletteEntry(x, y, pixel);
-		int newPixel = ColorMapUtils.rgb8ToPixel(thePalette[newC]); 
-		int newLum = ColorMapUtils.getPixelLum(newPixel);
-
-		img.setRGB(x, y, newPixel | 0xff000000);
-		
-		int error = lum - newLum;
-
-		if (ditherType == Dither.FSR) {
-			// reduce bleed by ignoring some error
-			error = reduceBleed(error);
-		}
-
-		if (error != 0) {
-			if (x + 1 < img.getWidth()) {
-				// x+1, y
-				ditherFSMonoApplyError(img, x + 1, y, 7, error);
-			}
-			if (y + 1 < img.getHeight()) {
-				if (x > 0) {
-					ditherFSMonoApplyError(img, x - 1, y + 1, 3, error);
-				}
-				ditherFSMonoApplyError(img, x, y + 1, 5, error);
-				if (x + 1 < img.getWidth()) {
-					ditherFSMonoApplyError(img, x + 1, y + 1, 1, error); 
-				}
-			}
-		}
-	}
-
-	private void ditherFSMonoApplyError(BufferedImage img, int x, int y, int sixteenths, int error) {
-		int offs = sixteenths * error / 16;
-		if (offs == 0)
-			return;
-
-		int pixel = img.getRGB(x, y);
-
-		int r = clamp(((pixel >> 16) & 0xff) + offs);
-		int g = clamp(((pixel >> 8) & 0xff) + offs);
-		int b = clamp(((pixel >> 0) & 0xff) + offs);
-		img.setRGB(x, y, (r << 16) | (g << 8) | b | 0xff000000);
-	
-	}
-
-	private void ditherFSMono(BufferedImage img, IPaletteColorMapper mapColor, Histogram hist) {
-		int h = img.getHeight();
-		int w = img.getWidth();
-		
-		for (int y = 0; y < h; y++) {
-			for (int x = 0; x < w; x++) {
-				ditherFSPixelMono(img, mapColor, hist, x, y);
-			}
-		}
-		
-	}
-	
-	// http://en.wikipedia.org/wiki/Ordered_dithering
-	// http://upload.wikimedia.org/wikipedia/en/math/5/3/1/531fd7f88bac5f6482c465d1de15e16f.png
-	
-	final static byte[][] thresholdMap8x8 = {
-		{  1, 49, 13, 61,  4, 52, 16, 61 },
-		{ 33, 17, 45, 29, 36, 20, 48, 32 },
-		{  9, 57,  5, 53, 12, 60,  8, 56 },
-		{ 41, 25, 37, 21, 44, 28, 40, 24 },
-		{  3, 51, 15, 63,  2, 50, 14, 62 },
-		{ 35, 19, 47, 31, 34, 18, 46, 30 },
-		{ 11, 59,  7, 55, 10, 58,  6, 54 },
-		{ 43, 27, 39, 23, 42, 26, 38, 22 }
-	};
-
-	private void ditherOrderedPixel(BufferedImage img, IPaletteColorMapper mapColor,
-			int x, int y, int[] prgb) {
-
-		int pixel = img.getRGB(x, y);
-		ColorMapUtils.pixelToRGB(pixel, prgb);
-
-		if (true) {
-			int threshold = ((byte) (thresholdMap8x8[x & 7][y & 7] << 2)) >> 2;
-			prgb[0] = (prgb[0] + threshold);
-			prgb[1] = (prgb[1] + threshold);
-			prgb[2] = (prgb[2] + threshold);
-		} else {
-			int threshold = thresholdMap8x8[x & 7][y & 7];
-			prgb[0] = (prgb[0] + threshold - 32);
-			prgb[1] = (prgb[1] + threshold - 32);
-			prgb[2] = (prgb[2] + threshold - 32);
-		}
-		
-		int newC = mapColor.getClosestPaletteEntry(x, y, ColorMapUtils.rgb8ToPixel(prgb));
-		
-		int newPixel = mapColor.getPalettePixel(newC);
-		
-		if (pixel != newPixel)
-			img.setRGB(x, y, newPixel | 0xff000000);
-	}
-	
-	private void ditherOrdered(BufferedImage img, IPaletteColorMapper mapColor) {
-		int h = img.getHeight();
-		int w = img.getWidth();
-
-		int[] prgb = { 0, 0, 0 };
-		for (int y = 0; y < h; y++) {
-			for (int x = 0; x < w; x++) {
-				ditherOrderedPixel(img, mapColor, x, y, prgb);
-			}
-		}
-		
-	}
-	
-
-//	private void ditherOrderedPixelBitmap(BufferedImage img, IPaletteColorMapper mapColor,
-//			int x, int y, int[] prgb) {
-//
-//		
-//		int pixel = img.getRGB(x, y);
-//		ColorMapUtils.pixelToRGB(pixel, prgb);
-//
-//		int threshold = thresholdMap8x8[x & 7][y & 7];
-//		int threshold2 = thresholdMap8x8[(x + 1) & 7][y & 7];
-//		int threshold3 = thresholdMap8x8[x & 7][(y + 1) & 7];
-//		prgb[0] = (prgb[0] + threshold - 32);
-//		prgb[1] = (prgb[1] + threshold2 - 32);
-//		prgb[2] = (prgb[2] + threshold3 - 32);
-//		
-//		int newC = mapColor.getClosestPaletteEntry(x, y, ColorMapUtils.rgb8ToPixel(prgb));
-//		
-//		int newPixel = mapColor.getPalettePixel(newC);
-//		
-//		img.setRGB(x, y, newPixel | 0xff000000);
-//	}
-//	
-//	private void ditherOrderedBitmap(BufferedImage img, IPaletteColorMapper mapColor) {
-//		int[] prgb = { 0, 0, 0 };
-//		for (int y = 0; y < img.getHeight(); y++) {
-//			for (int x = 0; x < img.getWidth(); x++) {
-//				ditherOrderedPixelBitmap(img, mapColor, x, y, prgb);
-//			}
-//		}
-//		
-//	}
-	
-	private void ditherNone(BufferedImage img, IPaletteColorMapper mapColor) {
-		int w = img.getWidth();
-		int h = img.getHeight();
-		for (int y = 0; y < h; y++) {
-			for (int x = 0; x < w; x++) {
-				int pixel = img.getRGB(x, y);
-				int newC = mapColor.getClosestPaletteEntry(x, y, pixel);
-				int newPixel;
-				newPixel = mapColor.getPalettePixel(newC);
-				img.setRGB(x, y, newPixel | 0xff000000);
-			}
-		}
-		
-	}
-
 	
 	/**
 	 * @param format2
@@ -539,22 +289,7 @@ public class ImageImport {
 		
 		updatePaletteMapping();
 
-		switch (ditherType) {
-		case FS:
-		case FSR:
-			if (ditherMono) {
-				ditherFSMono(img, mapColor, hist);
-			} else {
-				ditherFS(img, mapColor, hist);
-			}
-			break;
-		case ORDERED:
-			ditherOrdered(img, mapColor);
-			break;
-		default:
-			ditherNone(img, mapColor);
-			break;
-		}
+		dither.run(img, mapColor, hist);
 	}
 
 
@@ -1324,7 +1059,7 @@ public class ImageImport {
 						if (dither) {
 							ColorMapUtils.pixelToRGB(origPixel, prgb);
 							
-							int threshold = thresholdMap8x8[xd & 7][y & 7];
+							int threshold = DitherOrdered.thresholdMap8x8[xd & 7][y & 7];
 							prgb[0] = (prgb[0] + threshold - 32);
 							prgb[1] = (prgb[1] + threshold - 32);
 							prgb[2] = (prgb[2] + threshold - 32);
@@ -1478,7 +1213,7 @@ public class ImageImport {
 						if (dither) {
 							ColorMapUtils.pixelToRGB(origPixel, prgb);
 							
-							int threshold = thresholdMap8x8[xd & 7][y & 7];
+							int threshold = DitherOrdered.thresholdMap8x8[xd & 7][y & 7];
 							prgb[0] = (prgb[0] + threshold - 32);
 							prgb[1] = (prgb[1] + threshold - 32);
 							prgb[2] = (prgb[2] + threshold - 32);
@@ -1506,8 +1241,6 @@ public class ImageImport {
 	}
 
 	protected void updatePaletteMapping() {
-//		paletteMappingDirty = false;
-		
 		int ncols = format.getNumColors();
 		
 		paletteToIndex = new TreeMap<Integer, Integer>();
@@ -1571,7 +1304,6 @@ public class ImageImport {
 		
 		firstColor = (colorMgr.isClearFromPalette() ? 0 : 1);
 
-//		paletteMappingDirty = true;
 		paletteToIndex = null;
 
 		quantizer = useOctree ?  new ColorOctree(4, true) : new ColorMedianCut();
@@ -1662,6 +1394,25 @@ public class ImageImport {
 		
 		// get original mapping
 		updatePaletteMapping();
+		
+
+		switch (ditherType) {
+		case FS:
+		case FSR:
+			if (ditherMono) {
+				dither = new DitherFloydSteinbergMono(thePalette, ditherType);
+			} else {
+				dither = new DitherFloydSteinberg(useColorMappedGreyScale, ditherType);
+			}
+			break;
+		case ORDERED:
+			dither = new DitherOrdered();
+			break;
+		default:
+			dither = new DitherNone();
+			break;
+		}
+		
 	}
 
 	/**
@@ -1681,17 +1432,6 @@ public class ImageImport {
 		
 		if (paletteOption == PaletteOption.OPTIMIZED) {
 			addToQuantizer(image);
-//			else if (format.getNumColors() > 4)
-//				// note: in this mode, there is no point trying to use colors to
-//				// map to greyscale (to find "more depth") -- any real colors
-//				// discovered are essentially random, and when viewed in greyscale,
-//				// may all have similar luminance.  Just make a grey palette to
-//				// begin with.
-//				if (useColorMappedGreyScale)
-//					createOptimalGreyscalePalette(image, format.getNumColors());
-//				else
-//					createOptimalPalette(image, format.getNumColors());
-//			}
 		}
 	}
 	
