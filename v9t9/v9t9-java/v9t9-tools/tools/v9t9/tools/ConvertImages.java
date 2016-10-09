@@ -17,6 +17,8 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.imageio.stream.FileImageOutputStream;
@@ -53,11 +55,72 @@ import gnu.getopt.Getopt;
 @Category(Category.OTHER)
 public class ConvertImages {
 	private static final String PROGNAME = ConvertImages.class.getSimpleName();
+
+	static class CubePaletteMaker {
+		byte[][] pal;
+		
+		CubePaletteMaker(int num, int rs, int gs, int bs, boolean pure) {
+			pal = new byte[num][];
+			int idx = 0;
+			
+			if (pure) {
+				// span 0 to 255 in each channel
+				for (int r = 0; r < rs; r++) {
+					for (int g = 0; g < gs; g++) {
+						for (int b = 0; b < bs; b++) {
+							pal[idx] = new byte[] { 
+									(byte) (r*255/(rs-1)), 
+									(byte) (g*255/(gs-1)),
+									(byte) (b*255/(bs-1)) 
+							};
+							idx++;
+						}
+					}
+				}
+			} else {
+				// always have non-pure colors, by drawing a line
+				// through each color axis that starts 1/2 a step
+				// above 0 and ends 1/2 a step below 255,
+				// where a step is the distance between successive 
+				// increments
+				for (int r = 0; r < rs; r++) {
+					for (int g = 0; g < gs; g++) {
+						for (int b = 0; b < bs; b++) {
+							pal[idx] = new byte[] { 
+									(byte) ((r*255/rs)+128/rs), 
+									(byte) ((g*255/gs)+128/gs),
+									(byte) ((b*255/bs)+128/bs) 
+							};
+							idx++;
+						}
+					}
+				}
+			}
+
+			// when pure, black and white are generated
+			int greys = num - idx + (pure ? 1 : -1);
+			int g = pure ? 1 : 0;
+			while (idx < num) {
+				byte gr = (byte) (g*255/greys);
+				pal[idx] = new byte[] { gr, gr, gr };
+				g++;
+				idx++;
+			}
+		}
+		
+		byte[][] getPalette() {
+			return pal;
+		}
+	}
+
+	static Map<String,byte[][]> stockPalettes = new HashMap<String, byte[][]>();
 	
 	/* colors from http://fornaxvoid.com/colorpalettes/ */
-	
+
+	static {
+		
 	/** VIC-I (6561) colors */
-	private static final byte[][] stockPaletteVIC_I = new byte[][] { 
+	stockPalettes.put("vic", new byte[][] { 
 		/* 0: black */ fromRGB8("000000"), 
 		/* 1: white */ fromRGB8("ffffff"),
 		/* 2: red */ fromRGB8("782922"), 
@@ -75,10 +138,9 @@ public class ConvertImages {
 		/* 13: light green */ fromRGB8("94e089"),
 		/* 14: light blue */ fromRGB8("8071cc"), 
 		/* 15: light yellow */ fromRGB8("ffffb2"),
-		
-	};
-
-	private static final byte[][] stockPaletteVIC_II = new byte[][] { 
+	});
+	
+	stockPalettes.put("c64", new byte[][] { 
 		/* 0: black */ fromRGB8("000000"), 
 		/* 1: white */ fromRGB8("ffffff"),
 		/* 2: red */ fromRGB8("883932"), 
@@ -96,9 +158,9 @@ public class ConvertImages {
 		/* 13: light green */ fromRGB8("94e089"),
 		/* 14: light blue */ fromRGB8("7869c4"), 
 		/* 15: light grey */ fromRGB8("9f9f9f"),
-	};
+	});
 	
-	private static final byte[][] stockPaletteZX = new byte[][] { 
+	stockPalettes.put("zx", new byte[][] { 
 		/* 0: black */ fromRGB8("000000"), 
 		/* 1: blue */ fromRGB8("0000c0"),
 		/* 2: red */ fromRGB8("c00000"), 
@@ -116,9 +178,9 @@ public class ConvertImages {
 		/* 13: light cyan */ fromRGB8("00ffff"),
 		/* 14: light yellow */ fromRGB8("ffff00"), 
 		/* 15: white */ fromRGB8("ffffff"),
-	};
+	});
 	
-	private static final byte[][] stockPaletteAppleII = new byte[][] { 
+	stockPalettes.put("apple2", new byte[][] { 
 		/* 0: black */ fromRGB8("000000"), 
 		/* 1: magenta */ fromRGB8("6c2940"),
 		/* 2: dark blue */ fromRGB8("403578"), 
@@ -136,10 +198,10 @@ public class ConvertImages {
 		/* 13: yellow */ fromRGB8("bfca87"),
 		/* 14: aquamarine */ fromRGB8("93d6bf"), 
 		/* 15: white */ fromRGB8("ffffff"),
-	};
+	});
 
 	// from Graphics Gems, Frame Buffer Techniques (Mapping RGB Triples onto Four Bits)
-	static final byte[][] stockPalette14 = new byte[][] { 
+	stockPalettes.put("rgb14", new byte[][] { 
 		/* 0: black */  fromRGB8("000000"), 
 		/* 1: olive*/   fromRGB8("808000"),
 		/* 2: purple */ fromRGB8("800080"), 
@@ -156,9 +218,10 @@ public class ConvertImages {
 		/* 13: lime */  fromRGB8("80ff80"),
 		/* 14: sky*/    fromRGB8("8080ff"), 
 		/* 15: white */ fromRGB8("ffffff"),
-	};
+	});
+	
 	// more subdued version of the above
-	private static final byte[][] stockPalette14b = new byte[][] { 
+	stockPalettes.put("rgb14m", new byte[][] { 
 		/* 0: black */  fromRGB8("000000"), 
 		/* 1: olive*/   fromRGB8("808040"),
 		/* 2: purple */ fromRGB8("804080"), 
@@ -175,8 +238,29 @@ public class ConvertImages {
 		/* 13: lime */  fromRGB8("80bf80"),
 		/* 14: sky*/    fromRGB8("8080bf"), 
 		/* 15: white */ fromRGB8("ffffff"),
-	};
+	});
 
+	stockPalettes.put("cube666", new CubePaletteMaker(256, 6, 6, 6, false).getPalette());
+	stockPalettes.put("cube865", new CubePaletteMaker(256, 8, 6, 5, false).getPalette());
+	stockPalettes.put("cube766", new CubePaletteMaker(256, 7, 6, 6, false).getPalette());
+	stockPalettes.put("cube974", new CubePaletteMaker(256, 9, 7, 4, false).getPalette());
+	
+	stockPalettes.put("cube444", new CubePaletteMaker(64, 4, 4, 4, true).getPalette());
+	stockPalettes.put("ega", new CubePaletteMaker(64, 4, 4, 4, true).getPalette());
+	stockPalettes.put("cube444m", new CubePaletteMaker(64, 4, 4, 4, false).getPalette());
+	stockPalettes.put("cube543", new CubePaletteMaker(64, 5, 4, 3, true).getPalette());
+	stockPalettes.put("cube543m", new CubePaletteMaker(64, 5, 4, 3, false).getPalette());
+	stockPalettes.put("cube633", new CubePaletteMaker(64, 6, 3, 3, true).getPalette());
+	stockPalettes.put("cube633m", new CubePaletteMaker(64, 6, 3, 3, false).getPalette());
+	
+	stockPalettes.put("cube322", new CubePaletteMaker(16, 3, 2, 2, true).getPalette());
+	stockPalettes.put("cube422", new CubePaletteMaker(16, 4, 2, 2, true).getPalette());
+	stockPalettes.put("cube322m", new CubePaletteMaker(16, 3, 2, 2, false).getPalette());
+	stockPalettes.put("cube422m", new CubePaletteMaker(16, 4, 2, 2, false).getPalette());
+	
+	} // static
+	
+	
 	private ImageImportDialogOptions opts;
 	private int width;
 	private int height;
@@ -326,33 +410,18 @@ public class ConvertImages {
 					if (ch == 's' || "18".equals(oa)) {
 						opts.setPaletteUsage(PaletteOption.CURRENT);
 						colorMgr.setPalette(VdpColorManager.stockPalette);
-					} else if ("38".equals(oa)) {
-						opts.setPaletteUsage(PaletteOption.CURRENT);
-						colorMgr.setPalette(VdpColorManager.stockPaletteV9938);
-					} else if ("vic".equals(oa)) {
-						opts.setPaletteUsage(PaletteOption.CURRENT);
-						colorMgr.setPalette(stockPaletteVIC_I);
-					} else if ("c64".equals(oa)) {
-						opts.setPaletteUsage(PaletteOption.CURRENT);
-						colorMgr.setPalette(stockPaletteVIC_II);
-					} else if ("zx".equals(oa)) {
-						opts.setPaletteUsage(PaletteOption.CURRENT);
-						colorMgr.setPalette(stockPaletteZX);
-					} else if (ch == 'a') {
-						opts.setPaletteUsage(PaletteOption.CURRENT);
-						colorMgr.setPalette(stockPaletteAppleII);
-					} else if ("14".equals(oa)) {
-						opts.setPaletteUsage(PaletteOption.CURRENT);
-						colorMgr.setPalette(stockPalette14);
-					} else if ("14b".equals(oa)) {
-						opts.setPaletteUsage(PaletteOption.CURRENT);
-						colorMgr.setPalette(stockPalette14b);
-					} else if (ch == 'o') {
+					} else if ("opt".equals(oa.substring(0, 3))) {
 						opts.setPaletteUsage(PaletteOption.OPTIMIZED);
 						boolean useColor0 = (oa.charAt(oa.length() - 1) == '+');
 						canvas.getColorMgr().setClearFromPalette(useColor0);
 					} else {
-						good = false;
+						byte[][] pal = stockPalettes.get(oa);
+						if (pal != null) {
+							opts.setPaletteUsage(PaletteOption.CURRENT);
+							colorMgr.setPalette(pal);
+						} else {
+							good = false;
+						}
 					}
 				}
 				if (!good) {

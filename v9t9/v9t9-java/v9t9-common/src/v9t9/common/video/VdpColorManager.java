@@ -319,6 +319,8 @@ public class VdpColorManager {
 
 	/** Set the RGB triple for the palette entry. */
 	public void setRGB(int idx, byte[] rgb) {
+		if (idx >= colorPalette.length && idx * 2 > colorPalette.length)
+			colorPalette = Arrays.copyOf(colorPalette, colorPalette.length * 2);
 		if (colorPalette[idx] == null)
 			colorPalette[idx] = new byte[3];
 		colorPalette[idx][0] = rgb[0];
