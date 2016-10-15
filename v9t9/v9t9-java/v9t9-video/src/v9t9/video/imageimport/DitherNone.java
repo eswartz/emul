@@ -5,7 +5,6 @@ package v9t9.video.imageimport;
 
 import java.awt.image.BufferedImage;
 
-import org.ejs.gui.images.Histogram;
 import org.ejs.gui.images.IPaletteMapper;
 
 /**
@@ -18,7 +17,7 @@ public class DitherNone implements IDither {
 	 * @see v9t9.video.imageimport.IDither#run(java.awt.image.BufferedImage, org.ejs.gui.images.IPaletteMapper, org.ejs.gui.images.Histogram)
 	 */
 	@Override
-	public void run(BufferedImage img, IPaletteMapper mapColor, Histogram hist) {
+	public void run(BufferedImage img, IPaletteMapper mapColor) {
 		int w = img.getWidth();
 		int h = img.getHeight();
 		for (int y = 0; y < h; y++) {

@@ -5,7 +5,6 @@ package v9t9.video.imageimport;
 
 import java.awt.image.BufferedImage;
 
-import org.ejs.gui.images.Histogram;
 import org.ejs.gui.images.IPaletteMapper;
 
 /**
@@ -14,6 +13,6 @@ import org.ejs.gui.images.IPaletteMapper;
  */
 public interface IDither {
 
-	void run(BufferedImage img, IPaletteMapper mapColor, Histogram hist);
+	void run(BufferedImage img, IPaletteMapper mapColor);
 
 }

@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
 
 import javax.imageio.ImageIO;
@@ -236,11 +235,11 @@ public class ImageImport {
 
 	private void convertImageToColorMap(BufferedImage img) {
 		
-		Histogram hist = optimizeForNColors(img);
+		//Histogram hist = optimizeForNColors(img);
 		
 		updatePaletteMapping();
 
-		dither.run(img, mapColor, hist);
+		dither.run(img, mapColor);
 	}
 
 	private void addToQuantizer(BufferedImage image) {
@@ -345,74 +344,6 @@ public class ImageImport {
 				img.setRGB(x, y, ColorMapUtils.rgb8ToPixel(prgb) | (pixel & 0xff000000));
 			}
 		}
-	}
-
-
-	/**
-	 * Update the images for the optimal distribution of colors in a fixed
-	 * color palette, presumably bitmap mode or multicolor mode,
-	 * where dithering will not do a lot of good.
-	 * 
-	 * We cannot control the palette in this mode, but we can avoid unwanted
-	 * dithering, e.g. in a cartoon or line art, by replacing the most important
-	 * colors with their closest entries in the palette.
-	 * 
-	 * @param img
-	 * @return minimum color distance
-	 */
-	private Histogram optimizeForNColors(BufferedImage img) {
-		
-		int numColors = mapColor.getNumColors();
-		
-		int ourDist = mapColor.getMinimalPaletteDistance();
-		
-		if (DEBUG) System.out.println("Minimum color palette distance: " + ourDist);
-
-		Histogram hist = new Histogram(mapColor, img.getWidth(), img.getHeight(), ourDist);
-		int mappedColors = 0;
-		int interestingColors = 0;
-		
-		mappedColors = hist.generate(img);
-
-		if (mapColor instanceof MonoMapColor)
-			((MonoMapColor) mapColor).setMidLum(hist.getAverageLuminance());
-		
-		interestingColors = hist.size();
-		if (DEBUG) System.out.println("# interesting = " + interestingColors
-				+"; # mapped = " + mappedColors);
-		
-		if (format.canSetPalette()
-				&& mappedColors == img.getWidth() * img.getHeight() 
-				&& hist.pixelToColor().size() <= numColors - firstColor) {
-			// perfect mapping!
-			if (DEBUG) System.out.println("Perfect mapping!");
-			int c = firstColor;
-			byte[] rgb = { 0, 0, 0 };
-			for (Map.Entry<Integer, Integer> ent : hist.pixelToColor().entrySet()) {
-				ColorMapUtils.pixelToRGB(ent.getKey(), rgb);
-				thePalette[c][0] = rgb[0];
-				thePalette[c][1] = rgb[1];
-				thePalette[c][2] = rgb[2];
-				c++;
-			}
-			interestingColors = numColors - firstColor;
-		}
-		
-		int usedColors = Math.min(numColors, interestingColors);
-		
-		if (DEBUG) System.out.println("\nN-color: interestingColors="+interestingColors
-				+"; usedColors="+usedColors
-				+"; mapped="+mappedColors
-				);
-		
-		if (paletteOption == PaletteOption.OPTIMIZED && !ditherMono) {
-			for (int i = interestingColors + firstColor; i < thePalette.length; i++) {
-				thePalette[i][0] = 0;
-				thePalette[i][1] = 0;
-				thePalette[i][2] = 0;
-			}
-		}
-		return hist;
 	}
 
 	/**

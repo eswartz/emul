@@ -34,7 +34,7 @@ public class MonoMapColor implements IPaletteMapper {
 	
 	
 	private static byte[][] createMonoPalette(int fg, int bg) {
-		byte[][] palette = new byte[16][];
+		byte[][] palette = new byte[Math.max(16, bg+1)][];
 		palette[fg] = new byte[] { 0, 0, 0 };
 		palette[bg] = new byte[] { -1, -1, -1 };
 		for (int c = 0; c < 16; c++) {

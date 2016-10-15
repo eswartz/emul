@@ -5,7 +5,6 @@ package v9t9.video.imageimport;
 
 import java.awt.image.BufferedImage;
 
-import org.ejs.gui.images.Histogram;
 import org.ejs.gui.images.IPaletteColorMapper;
 import org.ejs.gui.images.IPaletteMapper;
 
@@ -36,7 +35,7 @@ public class DitherFloydSteinberg implements IDither {
 
 	// https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering
 	private void ditherFSPixel(BufferedImage img, IPaletteColorMapper mapColor,
-			Histogram hist, int x, int y) {
+			int x, int y) {
 		
 		int pixel = img.getRGB(x, y);
 
@@ -112,13 +111,13 @@ public class DitherFloydSteinberg implements IDither {
 	 * @see v9t9.video.imageimport.IDither#run(java.awt.image.BufferedImage, org.ejs.gui.images.IPaletteMapper, org.ejs.gui.images.Histogram)
 	 */
 	@Override
-	public void run(BufferedImage img, IPaletteMapper mapColor, Histogram hist) {
+	public void run(BufferedImage img, IPaletteMapper mapColor) {
 		int h = img.getHeight();
 		int w = img.getWidth();
 
 		for (int y = 0; y < h; y++) {
 			for (int x = 0; x < w; x++) {
-				ditherFSPixel(img, mapColor, hist, x, y);
+				ditherFSPixel(img, mapColor, x, y);
 			}
 		}
 		
