@@ -36,6 +36,14 @@ public class BitmapModeConverter extends BaseBitmapModeConverter {
 		this.firstColor = firstColor;
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.video.imageimport.IModeConverter#prepareImage(java.awt.image.BufferedImage)
+	 */
+	@Override
+	public BufferedImage prepareImage(BufferedImage img) {
+		return img;
+	}
 
 	/**
 	 * Only two colors can exist per 8x1 pixels, so find those colors.
@@ -196,15 +204,26 @@ public class BitmapModeConverter extends BaseBitmapModeConverter {
 	 * @see v9t9.video.imageimport.IModeConverter#convert(java.awt.image.BufferedImage, java.awt.image.BufferedImage, int, int)
 	 */
 	@Override
-	public void convert(BufferedImage convertedImage, BufferedImage img,
-			int xoffs, int yoffs) {
+	public BufferedImage convert(BufferedImage img,
+			int targWidth, int targHeight) {
+		int xoffs, yoffs;
+
+		xoffs = (targWidth - img.getWidth()) / 2;
+		yoffs = (targHeight - img.getHeight()) / 2;
+
 		// be sure we select the 8 pixel groups sensibly
 		if ((xoffs & 7) > 3)
 			xoffs = (xoffs + 7) & ~7;
 		else
 			xoffs = xoffs & ~7;
+		
+		BufferedImage convertedImage = new BufferedImage(targWidth, targHeight, 
+						BufferedImage.TYPE_3BYTE_BGR);
+
+		
 		reduceBitmapMode(convertedImage, img, xoffs, yoffs);
 		
+		return convertedImage;
 	}
 
 }

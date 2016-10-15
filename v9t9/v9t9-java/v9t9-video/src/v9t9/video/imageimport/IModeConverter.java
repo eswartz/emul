@@ -14,12 +14,20 @@ import java.awt.image.BufferedImage;
 public interface IModeConverter {
 
 	/**
-	 * @param convertedImage
 	 * @param img
-	 * @param xoffs
-	 * @param yoffs
+	 * @return
 	 */
-	void convert(BufferedImage convertedImage, BufferedImage img, int xoffs,
-			int yoffs);
+	BufferedImage prepareImage(BufferedImage img);
+
+	/**
+	 * /**
+	 * Take the image, which has been palette-mapped and/or dithered, and
+	 * create a version that follows the rules of the VdpFormat.
+	 * @param img
+	 * @param targWidth
+	 * @param targHeight
+	 */
+	BufferedImage convert(BufferedImage img, int targWidth, int targHeight);
+
 
 }

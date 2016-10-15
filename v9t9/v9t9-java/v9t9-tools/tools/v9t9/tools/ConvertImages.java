@@ -199,7 +199,25 @@ public class ConvertImages {
 		/* 14: aquamarine */ fromRGB8("93d6bf"), 
 		/* 15: white */ fromRGB8("ffffff"),
 	});
-
+	stockPalettes.put("apple2h", new byte[][] { 
+		/* 0: black */ fromRGB8("000000"), 
+		/* 1: magenta */ fromRGB8("000000"),
+		/* 2: dark blue */ fromRGB8("000000"), 
+		/* 3: purple */ fromRGB8("ff40ff"),
+		/* 4: dark green */ fromRGB8("000000"), 
+		/* 5: grey 1 */ fromRGB8("000000"),
+		/* 6: medium blue */ fromRGB8("4040ff"), 
+		/* 7: light blue */ fromRGB8("000000"),
+		
+		/*  8: brown */ fromRGB8("000000"), 
+		/*  9: orange */ fromRGB8("ff8040"),
+		/* 10: grey 2 */ fromRGB8("000000"),  
+		/* 11: pink */ fromRGB8("000000"),
+		/* 12: light green */ fromRGB8("40ff40"), 
+		/* 13: yellow */ fromRGB8("000000"),
+		/* 14: aquamarine */ fromRGB8("000000"), 
+		/* 15: white */ fromRGB8("ffffff"),
+	});
 	// from Graphics Gems, Frame Buffer Techniques (Mapping RGB Triples onto Four Bits)
 	stockPalettes.put("rgb14", new byte[][] { 
 		/* 0: black */  fromRGB8("000000"), 

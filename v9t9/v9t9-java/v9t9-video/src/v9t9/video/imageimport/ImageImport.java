@@ -108,6 +108,9 @@ public class ImageImport {
 	}
 	
 	protected BufferedImage convertImageData(BufferedImage img, int targWidth, int targHeight) {
+		
+		img = modeConverter.prepareImage(img);
+
 		flatten(img);
 		
 		if (!importDirectMappedImage(img)) {
@@ -131,7 +134,7 @@ public class ImageImport {
 		}
 		
 		// take care of special modes
-		BufferedImage converted = convertImageForMode(img, targWidth, targHeight);
+		BufferedImage converted = modeConverter.convert(img, targWidth, targHeight);
 		
 		if (false) {
 			File tempfile = new File(System.getProperty("java.io.tmpdir"), "dragged_cvt.png");
@@ -300,28 +303,6 @@ public class ImageImport {
 		}
 	}
 	
-	/**
-	 * Take the image, which has been palette-mapped and/or dithered, and
-	 * create a version that follows the rules of the VdpFormat.
-	 * @param img
-	 * @param targWidth
-	 * @param targHeight
-	 * @return
-	 */
-	private BufferedImage convertImageForMode(BufferedImage img, int targWidth, int targHeight) {
-		int xoffs, yoffs;
-
-		xoffs = (targWidth - img.getWidth()) / 2;
-		yoffs = (targHeight - img.getHeight()) / 2;
-		
-		BufferedImage convertedImage = new BufferedImage(targWidth, targHeight, 
-						BufferedImage.TYPE_3BYTE_BGR);
-		
-		modeConverter.convert(convertedImage, img, xoffs, yoffs);
-		
-		return convertedImage;
-	}
-
 	/**
 	 * Gamma correct an image 
 	 * @return middle luminance

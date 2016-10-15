@@ -3,9 +3,11 @@
  */
 package v9t9.video.imageimport;
 
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
+import org.ejs.gui.images.AwtImageUtils;
 import org.ejs.gui.images.ColorMapUtils;
 import org.ejs.gui.images.IPaletteMapper;
 
@@ -29,14 +31,16 @@ public class Apple2ModeConverter extends BaseBitmapModeConverter {
 
 	public Apple2ModeConverter(VdpColorManager colorMgr, boolean useColorMappedGreyScale, 
 			IPaletteMapper mapColor) {
-		super(7, colorMgr, useColorMappedGreyScale, mapColor);
 		
-		black = mapColor.getClosestPaletteEntry(0x000000); // 0
-		white = mapColor.getClosestPaletteEntry(0xffffff); // 15
-		violet = mapColor.getClosestPaletteEntry(0xd93cf0); // 3
-		red = mapColor.getClosestPaletteEntry(0xd9680f); // 9
-		blue = mapColor.getClosestPaletteEntry(0x2697f0); // 6
-		green = mapColor.getClosestPaletteEntry(0x26c30f); // 12
+		// we handle four pixels at a time
+		super(4, colorMgr, useColorMappedGreyScale, mapColor);
+		
+		black = 0;
+		white = 15;
+		violet = 3;
+		red = 9;
+		blue = 6;
+		green = 12;
 
 		blackPixel = mapColor.getPalettePixel(black);
 		whitePixel = mapColor.getPalettePixel(white);
@@ -45,6 +49,20 @@ public class Apple2ModeConverter extends BaseBitmapModeConverter {
 		bluePixel = mapColor.getPalettePixel(blue);
 		greenPixel = mapColor.getPalettePixel(green);
 
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.video.imageimport.IModeConverter#prepareImage(java.awt.image.BufferedImage)
+	 */
+	@Override
+	public BufferedImage prepareImage(BufferedImage img) {
+		// in the Apple ][ mode, which is effectively
+		// half the horizontal resolution due to color restrictions,
+		// no point analyzing colors dithering beyond that
+		return AwtImageUtils.getScaledInstance(
+					img, img.getWidth() / 2, img.getHeight(), 
+					RenderingHints.VALUE_INTERPOLATION_BILINEAR,
+					false);
 	}
 
 	/**
@@ -101,9 +119,12 @@ public class Apple2ModeConverter extends BaseBitmapModeConverter {
 							origPixel = mapColor.getPixelForGreyscaleMode(origPixel);
 					}
 					
-					int newPixel;
 					
-					// see if we want black or white
+					int nx = xd * 2;
+
+					int evenOdd = 0;
+
+					int newPixel;
 					int color = mapColor.getClosestPaletteEntry(origPixel);
 					if (color == black) {
 						newPixel = blackPixel;
@@ -112,10 +133,13 @@ public class Apple2ModeConverter extends BaseBitmapModeConverter {
 						newPixel = whitePixel;
 					}
 					else {
-						int colPixel = (xd&1)== 0 ? even : odd;
-						int colDist = useColorMappedGreyScale 
-								? ColorMapUtils.getPixelLumDistance(origPixel, colPixel) 
-								: ColorMapUtils.getPixelDistance(origPixel, colPixel);
+						// or, pick the best color
+						int evenDist = useColorMappedGreyScale 
+								? ColorMapUtils.getPixelLumDistance(origPixel, even) 
+								: ColorMapUtils.getPixelDistance(origPixel, even);
+						int oddDist = useColorMappedGreyScale 
+								? ColorMapUtils.getPixelLumDistance(origPixel, odd) 
+								: ColorMapUtils.getPixelDistance(origPixel, odd);
 						int blackDist = useColorMappedGreyScale 
 								? ColorMapUtils.getPixelLumDistance(origPixel, blackPixel)
 								: ColorMapUtils.getPixelDistance(origPixel, blackPixel);
@@ -123,47 +147,26 @@ public class Apple2ModeConverter extends BaseBitmapModeConverter {
 								? ColorMapUtils.getPixelLumDistance(origPixel, whitePixel)
 								: ColorMapUtils.getPixelDistance(origPixel, whitePixel);
 						
-						if (blackDist < colDist) {
+						if (blackDist < oddDist && blackDist < evenDist) {
 							newPixel = blackPixel;
 						}
-						else if (whiteDist < colDist) {
+						else if (whiteDist < oddDist && whiteDist < evenDist) {
 							newPixel = whitePixel;
 						}
 						else {
-							newPixel = colPixel;
-						}
-					}
-					
-					convertedImage.setRGB(xd + xoffs, y + yoffs, newPixel);
-					
-					// If we are setting a white pixel, then any non-black and non-white 
-					// pixel to the left will be rendered white as well.  Force that one to
-					// black or white.
-					if (newPixel != blackPixel && xd + xoffs > 0) {
-						int leftPixel = convertedImage.getRGB(xd + xoffs - 1, y + yoffs);
-						if (leftPixel != blackPixel) {
-							// oops, white or color will force the new pixel white,
-							// unless the old or new one become black
-							if (leftPixel == whitePixel) {
-								int blackDist = useColorMappedGreyScale 
-									? ColorMapUtils.getPixelLumDistance(newPixel, blackPixel)
-									: ColorMapUtils.getPixelDistance(newPixel, blackPixel);
-								int whiteDist = useColorMappedGreyScale 
-									? ColorMapUtils.getPixelLumDistance(newPixel, whitePixel)
-									: ColorMapUtils.getPixelDistance(newPixel, whitePixel);
-
-								if (whiteDist < blackDist) {
-									// ok, current pixel is more white too 
-									convertedImage.setRGB(xd + xoffs, y + yoffs, whitePixel);
-								} else {
-									// change the other to black to preserve color 
-									convertedImage.setRGB(xd + xoffs, y + yoffs, blackPixel);
-								}
-							} else if (newPixel != whitePixel) {
-								convertedImage.setRGB(xd + xoffs - 1, y + yoffs, blackPixel);
+							if (oddDist < evenDist) {
+								newPixel = odd;
+								evenOdd = 1;
+							} else {
+								newPixel = even;
 							}
 						}
 					}
+					
+					convertedImage.setRGB(nx ^ evenOdd, y + yoffs, newPixel);
+					
+					convertedImage.setRGB((nx + 1) ^ evenOdd, y + yoffs, 
+							newPixel == whitePixel ? newPixel : blackPixel);
 				}
 				
 			}
@@ -175,15 +178,26 @@ public class Apple2ModeConverter extends BaseBitmapModeConverter {
 	 * @see v9t9.video.imageimport.IModeConverter#convert(java.awt.image.BufferedImage, java.awt.image.BufferedImage, int, int)
 	 */
 	@Override
-	public void convert(BufferedImage convertedImage, BufferedImage img,
-			int xoffs, int yoffs) {
+	public BufferedImage convert(BufferedImage img,
+			int targWidth, int targHeight) {
+		
+		int xoffs, yoffs;
+
+		xoffs = (targWidth - img.getWidth()) / 2;
+		yoffs = (targHeight - img.getHeight()) / 2;
+		
 		// be sure we select the 8 pixel groups sensibly
 		if ((xoffs & 7) > 3)
 			xoffs = (xoffs + 7) & ~7;
 		else
 			xoffs = xoffs & ~7;
+		
+		BufferedImage convertedImage = new BufferedImage(targWidth, targHeight, 
+				BufferedImage.TYPE_3BYTE_BGR);
+
 		reduceBitmapMode(convertedImage, img, xoffs, yoffs);
 		
+		return convertedImage;
 	}
 
 }
