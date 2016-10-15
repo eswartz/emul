@@ -31,7 +31,7 @@ public class DitherFloydSteinbergMono implements IDither {
 		int pixel = img.getRGB(x, y);
 		int lum = ColorMapUtils.getPixelLum(pixel);
 
-		int newC = mapColor.getClosestPaletteEntry(x, y, pixel);
+		int newC = mapColor.getClosestPaletteEntry(pixel);
 		int newPixel = ColorMapUtils.rgb8ToPixel(thePalette[newC]); 
 		int newLum = ColorMapUtils.getPixelLum(newPixel);
 

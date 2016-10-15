@@ -568,6 +568,8 @@ public class ImageImport {
 	
 		if (format.getLayout() == Layout.BITMAP_2_PER_8) {
 			modeConverter = new BitmapModeConverter(colorMgr, useColorMappedGreyScale, ditherType, mapColor, curPalette, firstColor);
+		} else if (format.getLayout() == Layout.APPLE2_HIRES) {
+			modeConverter = new Apple2ModeConverter(colorMgr, useColorMappedGreyScale, mapColor);
 		} else {
 			modeConverter = new SimpleModeConverter();
 		}

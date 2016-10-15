@@ -59,7 +59,7 @@ public class MonoMapColor implements IPaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestColor(int[])
 	 */
 	@Override
-	public int getClosestPaletteEntry(int x, int y, int pixel) {
+	public int getClosestPaletteEntry(int pixel) {
 		int lum = ColorMapUtils.getPixelLum(pixel);
 		return lum <= midLum ? fg : bg;
 	}

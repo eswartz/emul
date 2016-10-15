@@ -39,7 +39,7 @@ public class DitherFloydSteinberg implements IDither {
 		
 		int pixel = img.getRGB(x, y);
 
-		int newC = mapColor.getClosestPaletteEntry(x, y, pixel);
+		int newC = mapColor.getClosestPaletteEntry(pixel);
 		
 		int newPixel = mapColor.getPalettePixel(newC);
 		

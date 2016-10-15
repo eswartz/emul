@@ -160,7 +160,7 @@ class TI16MapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestColor(int[])
 	 */
 	@Override
-	public int getClosestPaletteEntry(int x, int y, int pixel) {
+	public int getClosestPaletteEntry(int pixel) {
 		Pair<Integer, Integer> info = getCloseColor(pixel);
 		return info.first;
 	}

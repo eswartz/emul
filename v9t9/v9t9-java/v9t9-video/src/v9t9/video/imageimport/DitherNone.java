@@ -23,7 +23,7 @@ public class DitherNone implements IDither {
 		for (int y = 0; y < h; y++) {
 			for (int x = 0; x < w; x++) {
 				int pixel = img.getRGB(x, y);
-				int newC = mapColor.getClosestPaletteEntry(x, y, pixel);
+				int newC = mapColor.getClosestPaletteEntry(pixel);
 				int newPixel;
 				newPixel = mapColor.getPalettePixel(newC);
 				img.setRGB(x, y, newPixel | 0xff000000);

@@ -98,7 +98,7 @@ class RGB444MapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestPaletteColor(int[])
 	 */
 	@Override
-	public int getClosestPaletteEntry(int x, int y, int pixel) {
+	public int getClosestPaletteEntry(int pixel) {
 		// we don't need to trawl the palette here
 		if (isColorMappedGreyscale) {
 			pixel = getPixelForGreyscaleMode(pixel);

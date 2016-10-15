@@ -410,7 +410,7 @@ public class ConvertImages {
 					if (ch == 's' || "18".equals(oa)) {
 						opts.setPaletteUsage(PaletteOption.CURRENT);
 						colorMgr.setPalette(VdpColorManager.stockPalette);
-					} else if ("opt".equals(oa.substring(0, 3))) {
+					} else if (oa.length() >= 3 && "opt".equals(oa.substring(0, 3))) {
 						opts.setPaletteUsage(PaletteOption.OPTIMIZED);
 						boolean useColor0 = (oa.charAt(oa.length() - 1) == '+');
 						canvas.getColorMgr().setClearFromPalette(useColor0);
@@ -620,7 +620,7 @@ public class ConvertImages {
 			case 10:
 				return new Tuple(VdpFormat.COLOR16_4x4, 64, 48, 1, isGrey);
 			case 22:
-				return new Tuple(new VdpFormat(Layout.APPLE2_HIRES, 6, false), 280, 192, 1, isGrey);
+				return new Tuple(new VdpFormat(Layout.APPLE2_HIRES, 16, false), 280, 192, 1, isGrey);
 				
 			}
 		} catch (NumberFormatException e) {

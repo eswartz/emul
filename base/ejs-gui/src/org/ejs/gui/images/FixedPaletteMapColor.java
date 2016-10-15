@@ -35,7 +35,7 @@ public class FixedPaletteMapColor extends BasePaletteMapper {
 	}
 	
 	@Override
-	public int getClosestPaletteEntry(int x, int y, int pixel) {
+	public int getClosestPaletteEntry(int pixel) {
 		int closest = -1;
 		for (int c = firstColor; c < numColors; c++) {
 			int dist = ColorMapUtils.getRGBDistance(palette[c], pixel);

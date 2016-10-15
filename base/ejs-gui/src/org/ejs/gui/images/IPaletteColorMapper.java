@@ -13,12 +13,10 @@ package org.ejs.gui.images;
 public interface IPaletteColorMapper {
 	/**
 	 * Get the color in the new palette closest to this one.
-	 * @param x 
-	 * @param y 
 	 * @param pixel
 	 * @return color index or -1
 	 */
-	int getClosestPaletteEntry(int x, int y, int pixel);
+	int getClosestPaletteEntry(int pixel);
 
 
 	/**

@@ -27,7 +27,7 @@ abstract class RGBDirectMapColor extends BasePaletteMapper implements IDirectCol
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestPaletteColor(int[])
 	 */
 	@Override
-	public int getClosestPaletteEntry(int x, int y, int pixel) {
+	public int getClosestPaletteEntry(int pixel) {
 		int closest = -1;
 		int mindiff = Integer.MAX_VALUE;
 		if (isColorMappedGreyscale) {

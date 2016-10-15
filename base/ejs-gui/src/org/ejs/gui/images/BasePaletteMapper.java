@@ -88,7 +88,7 @@ abstract public class BasePaletteMapper implements IPaletteMapper {
 	 */
 	@Override
 	public int getClosestPalettePixel(int x, int y, int pixel) {
-		int v = getClosestPaletteEntry(x, y, pixel);
+		int v = getClosestPaletteEntry(pixel);
 		return v >= 0 ? getPalettePixel(v) : pixel;
 	}
 	

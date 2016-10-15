@@ -148,23 +148,23 @@ public class VdpColorManager {
 		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
 	};
 	public static final byte[][] stockPaletteV9938 = {
-		/* 0 */ fromRGB8("000000"), 
-		/* 1 */ fromRGB8("000000"),
-		/* 2 */ fromRGB8("3eb849"), 
-		/* 3 */ fromRGB8("74d07d"), 
-		/* 4 */ fromRGB8("db6559"),
-		/* 5 */ fromRGB8("ff897d"), 
-		/* 6 */ fromRGB8("ccc35e"),
-		/* 7 */ fromRGB8("ded087"), 
+		/* 0 */ fromRBG8("000000"), 
+		/* 1 */ fromRBG8("000000"),
+		/* 2 */ fromRBG8("3eb849"), 
+		/* 3 */ fromRBG8("74d07d"), 
+		/* 4 */ fromRBG8("db6559"),
+		/* 5 */ fromRBG8("ff897d"), 
+		/* 6 */ fromRBG8("ccc35e"),
+		/* 7 */ fromRBG8("ded087"), 
 		
-		/*  8 */ fromRGB8("5955e0"), 
-		/*  9 */ fromRGB8("8076f1"),
-		/* 10 */ fromRGB8("b95e51"), 
-		/* 11 */ fromRGB8("65dbef"),
-		/* 12 */ fromRGB8("3aa241"), 
-		/* 13 */ fromRGB8("b766b5"),
-		/* 14 */ fromRGB8("cccccc"), 
-		/* 15 */ fromRGB8("ffffff"),
+		/*  8 */ fromRBG8("5955e0"), 
+		/*  9 */ fromRBG8("8076f1"),
+		/* 10 */ fromRBG8("b95e51"), 
+		/* 11 */ fromRBG8("65dbef"),
+		/* 12 */ fromRBG8("3aa241"), 
+		/* 13 */ fromRBG8("b766b5"),
+		/* 14 */ fromRBG8("cccccc"), 
+		/* 15 */ fromRBG8("ffffff"),
 	};
 	public static final byte[][] stockPaletteV9938_ed = {
 		fromRBG("000"), // 0
@@ -210,6 +210,12 @@ public class VdpColorManager {
 		return V99ColorMapUtils.getGRB333(g, r, b);
 	}
 	public static byte[] fromRGB8(String hex) {
+		int r = Integer.parseInt(hex.substring(0, 2), 16);
+		int g = Integer.parseInt(hex.substring(2, 4), 16);
+		int b = Integer.parseInt(hex.substring(4, 6), 16);
+		return new byte[] { (byte) (r&0xff), (byte) (g&0xff), (byte) (b&0xff) };
+	}
+	public static byte[] fromRBG8(String hex) {
 		int r = Integer.parseInt(hex.substring(0, 2), 16);
 		int b = Integer.parseInt(hex.substring(2, 4), 16);
 		int g = Integer.parseInt(hex.substring(4, 6), 16);

@@ -54,7 +54,7 @@ public class DitherOrdered implements IDither {
 			prgb[2] = (prgb[2] + threshold - 32);
 		}
 		
-		int newC = mapColor.getClosestPaletteEntry(x, y, ColorMapUtils.rgb8ToPixel(prgb));
+		int newC = mapColor.getClosestPaletteEntry(ColorMapUtils.rgb8ToPixel(prgb));
 		
 		int newPixel = mapColor.getPalettePixel(newC);
 		
