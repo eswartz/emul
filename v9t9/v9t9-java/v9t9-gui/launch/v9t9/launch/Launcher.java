@@ -141,7 +141,7 @@ public class Launcher {
 			newJavaLibPath.append(path);
 		}
 		
-		System.err.println("Updating Java library path to: " + newJavaLibPath);
+		//System.err.println("Updating Java library path to: " + newJavaLibPath);
 		System.setProperty("java.library.path", newJavaLibPath.toString());
 
 		try {
@@ -151,6 +151,7 @@ public class Launcher {
 			fieldSysPath.set(null, null);
 		} catch (Throwable t) {
 			t.printStackTrace();
+			System.err.println("Updating Java library path to: " + newJavaLibPath);
 			System.err.println("\nCould not modify java.library.path: please invoke:\n\n\texport V9T9_VMARGS=\"-Djava.library.path=" + newJavaLibPath + "\"'\n\nand try again.");
 		}
 		
@@ -257,7 +258,7 @@ public class Launcher {
 			genericArch = "intel";
 		}
 		
-		//System.out.println("myOS="+myOS+"; myArch="+myArch);
+		//System.err.println("myOS="+myOS+"; myArch="+myArch);
 		
 		while (enm.hasMoreElements()) {
 			ZipEntry entry = enm.nextElement();
@@ -268,7 +269,7 @@ public class Launcher {
 				
 			File target = new File(targetDir, path);
 			
-			//System.out.println(entry.getName() + " => " + target);
+			//System.err.println(entry.getName() + " => " + target);
 			
 			if (entry.isDirectory()) {
 				target.mkdirs();
@@ -307,7 +308,7 @@ public class Launcher {
 				}
 			}
 
-			//System.out.println(name);
+			//System.err.println(name);
 			if (name.matches("(?i).*\\.(so|dylib|jnilib|dll)")) {
 				target.setExecutable(true, false);
 				javaLibPaths.add(target.getParent());
@@ -315,7 +316,7 @@ public class Launcher {
 			
 			if (doCopy) {
 				if (!any) {
-					System.out.println(label);
+					System.err.println(label);
 					any = true;
 				}
 					
