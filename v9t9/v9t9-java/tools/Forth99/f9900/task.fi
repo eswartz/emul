@@ -106,37 +106,6 @@ end-code
 1 $:
 end-code
 
-| Code regs-init
-	rRP *R		rTOS	,MOV	( save R-entry )
-
-	@>		rR2			,MOV	'me ,		
-	0 $+				,JEQ				( in a task? )
-	
-	rR2			 rSP	,MOV 	
-	rSP					,AI 	>tsp ,
-	
-	rR2			 rUP	,MOV
-	rUP					,AI 	>tup ,
-	
-	rR2			 rRP	,MOV
-	rRP					,AI 	>trp ,
-	
-	1 $+				,JMP
-	
-0 $:
-	rSP					,LI 	(SP0) ,
-	rUP					,LI 	(UP0) ,
-	rRP					,LI 	(RP0) ,
-    		 
-1 $:
-	rRP					,DECT
-	rTOS 		rRP *R	,MOV	( restore R-entry )
-
-	@>					,BL		' ((DOERS)) ,	
-
-end-code
-
-
 ( enter task )
 Code (enter) ( task -- )
 						,LIMI	0 ,

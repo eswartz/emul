@@ -9,11 +9,50 @@
 \ 
 
 
+has? TASKS [IF]
+
 [IFUNDEF] task
 | : regs-init
     (SP0) (UP0) (RP0)   (REGS) 
 ;
 [THEN]
+
+[THEN]
+
+| Code regs-init
+	rRP *R		rTOS	,MOV	( save R-entry )
+
+has? TASKS [IF]
+
+	@>		rR2			,MOV	'me ,		
+	0 $+				,JEQ				( in a task? )
+
+	rR2			 rSP	,MOV 	
+	rSP					,AI 	>tsp ,
+	
+	rR2			 rUP	,MOV
+	rUP					,AI 	>tup ,
+	
+	rR2			 rRP	,MOV
+	rRP					,AI 	>trp ,
+	
+	1 $+				,JMP
+	
+[THEN]
+	
+0 $:
+	rSP					,LI 	(SP0) ,
+	rUP					,LI 	(UP0) ,
+	rRP					,LI 	(RP0) ,
+    		 
+1 $:
+	rRP					,DECT
+	rTOS 		rRP *R	,MOV	( restore R-entry )
+
+	@>					,BL		' ((DOERS)) ,	
+
+end-code
+
 
 : cold-init
     @DP0 @       	DP  !

@@ -101,6 +101,12 @@ include ../ans/tools.fi
 
 include cold.fi
 
+
+[IFUNDEF] DP
+User DP
+[THEN]
+
+
 \ TEMP
 
 \   Set the VDP RAM bank.
@@ -165,6 +171,36 @@ test" defineConstPlus1000  N123 $1123 = "
 include asmtests.fi
 
 [THEN]
+
+	Code ((main))
+						,LWPI	StdWS ,
+	end-code
+	
+[IFDEF] task
+	#cell RamVar	term
+[THEN]
+	
+	: (main)
+		((main))
+	    decimal
+
+[ [IFDEF] task ]
+	[ has? TESTING? [IF] ]
+		['] runtests
+	[ [ELSE] ]
+		['] quit
+	[ [THEN] ]
+	
+		task  term !  robin
+[ [ELSE] ]
+	[ has? TESTING? [IF] ]
+		runtests		
+	[ [ELSE] ]
+		quit
+	[ [THEN] ]
+[ [THEN] ]
+		( NOTREACHED )
+	;  
 
 
 has? TESTING? [IF]	

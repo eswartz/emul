@@ -24,8 +24,6 @@
 ;
 ' unhosted-KEY? 	TO KEY?
 
-: unhosted-S"
+: S"
 	0 0
 ; immediate  target-only
-
-' unhosted-S"		TO S"
