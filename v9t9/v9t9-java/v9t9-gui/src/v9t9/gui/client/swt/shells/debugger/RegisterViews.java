@@ -10,10 +10,6 @@
  */
 package v9t9.gui.client.swt.shells.debugger;
 
-import org.eclipse.jface.layout.GridDataFactory;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 
 import v9t9.common.machine.IMachine;
@@ -24,24 +20,18 @@ import v9t9.gui.client.swt.shells.debugger.CpuViewer.ICpuTracker;
  * @author ejs
  *
  */
-public class RegisterViews extends SashForm implements ICpuTracker {
+public class RegisterViews implements ICpuTracker {
 
 	private RegisterViewer cpuRegisterViewer;
 	private RegisterViewer vdpRegisterViewer;
 	
 	public RegisterViews(Composite parent, int style, final IMachine machine) {
-		super(parent, style | SWT.VERTICAL);
-		
-		setLayout(new GridLayout());
-
 		IRegisterProvider cpuRegs = new CpuRegisterProvider(machine);
 		IRegisterProvider vdpRegs = new VdpRegisterProvider(machine);
 		
-		cpuRegisterViewer = new RegisterViewer(this, machine, cpuRegs, 4);
-		GridDataFactory.swtDefaults().grab(true, false).align(SWT.FILL, SWT.TOP).applyTo(cpuRegisterViewer);
-		vdpRegisterViewer = new RegisterViewer(this, machine, vdpRegs, 
+		cpuRegisterViewer = new RegisterViewer(parent, machine, cpuRegs, 4);
+		vdpRegisterViewer = new RegisterViewer(parent, machine, vdpRegs, 
 				vdpRegs.getRegisterCount() < 16 ? 4 : 12);
-		GridDataFactory.swtDefaults().grab(true, false).align(SWT.FILL, SWT.TOP).applyTo(vdpRegisterViewer);
 	}
 
 

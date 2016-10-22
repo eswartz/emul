@@ -62,24 +62,25 @@ public class DebuggerWindow extends Composite implements IMemoryWriteListener {
 		
 		parent.setText("V9t9 Debugger");
 		
+		final ISettingSection history = machine.getSettings().getUserSettings()
+				.getHistorySettings().findOrAddSection(DEBUGGER_TOOL_ID);
 		
 		horizSash = new SashForm(this, SWT.HORIZONTAL);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(horizSash);
 		
-		SashForm innerSash = new SashForm(horizSash, SWT.VERTICAL);
+		final SashForm innerSash = new SashForm(horizSash, SWT.VERTICAL);
 		
 		cpuViewer = new CpuViewer(innerSash, SWT.BORDER, machine, timer);
 		regViewer = new RegisterViews(innerSash, SWT.BORDER, machine);
 
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(cpuViewer);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(regViewer);
 
 		cpuViewer.addTracker(regViewer);
-		
+
+		restoreSashWeights(innerSash, history, "LeftSashDivisions");
+
 		vertSash = new SashForm(horizSash, SWT.VERTICAL);
 		
-		final ISettingSection history = machine.getSettings().getUserSettings()
-			.getHistorySettings().findOrAddSection(DEBUGGER_TOOL_ID);
 		
 		IMemoryDecoderProvider memoryDecoderProvider = createMemoryDecoderProvider();
 		
@@ -95,9 +96,43 @@ public class DebuggerWindow extends Composite implements IMemoryWriteListener {
 			domain.addWriteListener(this);
 		}
 		
+		restoreSashWeights(vertSash, history, "RightSashDivisions");
+		
+		for (int v = 0; v < memoryViewers.length; v++) {
+			memoryViewers[v].loadState(history.getSection("MemoryViewer." + v));
+		}
+		
+		addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				saveSashWeights(innerSash, history, "LeftSashDivisions");
 
-		String[] sweights = history.getArray("SashDivisions");
-		if (sweights != null && sweights.length == memoryViewers.length) {
+				for (IMemoryDomain domain : machine.getMemory().getDomains()) {
+					domain.removeWriteListener(DebuggerWindow.this);
+				}
+				for (int v = 0; v < memoryViewers.length; v++) {
+					memoryViewers[v].saveState(history.findOrAddSection("MemoryViewer." + v));
+				}
+				
+				saveSashWeights(vertSash, history, "RightSashDivisions");
+			}
+		});
+	}
+
+	protected void saveSashWeights(SashForm sash, ISettingSection history, String label) {
+		int[] weights = sash.getWeights();
+		String[] sweights = new String[weights.length];
+		for (int v = 0; v < sweights.length; v++) {
+			sweights[v] = "" + weights[v];
+		}
+		history.put(label, sweights);
+	}
+
+	private void restoreSashWeights(SashForm sash,
+			ISettingSection history, String label) {
+		String[] sweights = history.getArray(label);
+		if (sweights != null && sweights.length == sash.getWeights().length) {
 			int[] weights = new int[sweights.length];
 			boolean valid = true;
 			for (int v = 0; v < sweights.length; v++) {
@@ -109,35 +144,9 @@ public class DebuggerWindow extends Composite implements IMemoryWriteListener {
 				}
 			}
 			if (valid) {
-				vertSash.setWeights(weights);
+				sash.setWeights(weights);
 			}
 		}
-		
-		
-		for (int v = 0; v < memoryViewers.length; v++) {
-			memoryViewers[v].loadState(history.getSection("MemoryViewer." + v));
-		}
-		
-		addDisposeListener(new DisposeListener() {
-			
-			@Override
-			public void widgetDisposed(DisposeEvent e) {
-
-				for (IMemoryDomain domain : machine.getMemory().getDomains()) {
-					domain.removeWriteListener(DebuggerWindow.this);
-				}
-				for (int v = 0; v < memoryViewers.length; v++) {
-					memoryViewers[v].saveState(history.findOrAddSection("MemoryViewer." + v));
-				}
-				
-				int[] weights = vertSash.getWeights();
-				String[] sweights = new String[weights.length];
-				for (int v = 0; v < sweights.length; v++) {
-					sweights[v] = "" + weights[v];
-				}
-				history.put("SashDivisions", sweights);
-			}
-		});
 	}
 
 	/* (non-Javadoc)
