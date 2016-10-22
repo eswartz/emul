@@ -65,7 +65,7 @@ public class Disassembler {
 				os.print(sb);
 			} else {
 				if (addr != expNext)
-					os.println("L" + HexUtils.toHex4(addr));
+					os.println("  AORG >" + HexUtils.toHex4(addr));
 				os.print("  ");
 			}
 			os.println(instr.toString());
