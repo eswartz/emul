@@ -106,7 +106,9 @@ public class LLRegOffsOperand extends LLOperand implements IOperand {
 	
 	@Override
 	public int getSize() {
-		return offset != 0 ? 2 : 0;
+		// don't pre-optimize
+		//return offset != 0 ? 2 : 0;
+		return 2;
 	}
 	
 	@Override
