@@ -62,3 +62,11 @@ Code vfgbg! ( fg bg -- )
 	rTOS		VIDEO^	,XOP  	#v.fgbg! ,
 	POP
 end-code
+
+
+Code circle ( x y r op|c -- )
+	PUSH
+	rSP *R		VIDEO^	,XOP  	#v.circle ,
+	4 2 U*		rSP		,AI 	,
+	POP
+end-code

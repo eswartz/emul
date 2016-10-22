@@ -47,7 +47,7 @@
 ;==========================================================================
 
 xop_video_tbl
-	dw		xv_vinit, xv_mode, xv_reset, xv_blank, xv_setcolor
+	dw		xv_vinit, xv_mode, xv_reset, xv_blank, xv_setcolor, xv_circle
 xop_video_tbl_end equ	$
 
 xop_video_ent
@@ -933,6 +933,11 @@ lnout:
 ;   Draw a circle (XOP)
 ;   http://www.cs.unc.edu/~mcmillan/comp136/Lecture7/circle.html
 ;   caller R12 -> op|color r y x
+
+xv_circle
+	blwp	@circle
+	rt
+
  Vector circle, VidWS
     limi    0
     li      SP,vstack + vstacksize
