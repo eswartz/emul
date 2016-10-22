@@ -775,12 +775,15 @@ public class InstTable9900 {
 	 * @return
 	 */
 	public static String getInstName(int inst) {
-		return instToName.get(inst);
+		String name = instToName.get(inst);
+		if (name == null)
+			name = "DATA";
+		return name;
 	}
 	
    /**
      * Decode instruction with opcode 'op' at 'addr' into 'ins'.
- * @param domain
+     * @param domain
      *            provides read access to memory, to decode registers and
      *            instructions
      */
@@ -1136,6 +1139,7 @@ public class InstTable9900 {
             mop1.type = MachineOperand9900.OP_IMMED;
             mop1.val = mop1.immed = (short) op;
             inst.setSize(2);
+            inst.setName("DATA");
         } else {
             // Finish reading operand immediates
             pc += 2;
