@@ -40,10 +40,11 @@ $0004	Constant	#t.clear
 $0004	Constant	M_INT_VDP
 $0004	Constant	#dskFlgHold
 $0004	Constant	#u.noise
+$0005	Constant	#v.line
 $0005	Constant	M_text2
-$0005	Constant	#v.circle
 $0005	Constant	#t.rdkey
 $0006	Constant	#t.key?
+$0006	Constant	#v.circle
 $0007	Constant	#t.win@
 $0008	Constant	vhorizint
 $0008	Constant	M_INT_KBD

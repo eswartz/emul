@@ -47,7 +47,7 @@
 ;==========================================================================
 
 xop_video_tbl
-	dw		xv_vinit, xv_mode, xv_reset, xv_blank, xv_setcolor, xv_circle
+	dw		xv_vinit, xv_mode, xv_reset, xv_blank, xv_setcolor, xv_line, xv_circle
 xop_video_tbl_end equ	$
 
 xop_video_ent
@@ -890,6 +890,12 @@ frout:
 ;   Draw a line (XOP)
 ;   
 ;   caller R12 -> op|color y2 x2 y x
+
+xv_line
+	blwp	@line
+	rt
+
+
  Vector line, VidWS
     limi    0
     li      SP,vstack + vstacksize
