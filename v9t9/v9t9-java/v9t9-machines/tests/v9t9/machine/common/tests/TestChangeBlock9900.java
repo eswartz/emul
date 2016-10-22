@@ -854,13 +854,14 @@ public class TestChangeBlock9900
  		assertEquals((short) 0x1234, cpu.getState().getRegister(1)); 	
  		assertEquals((short) 0x201, cpu.getState().getRegister(4));
  		
- 		assertEquals((short) 0xd034, (int) cpu.getState().getST()); 	
+ 		assertEquals((short) 0xd034, (int) cpu.getState().getST());
+ 		assertEquals((short) 0x404, cpu.getState().getPC());
  		//
  		change.revert(cpu);
  		
  		assertEquals((short) 0x201, cpu.getState().getRegister(4)); 	
  		assertEquals((short) 0x0, cpu.getState().getRegister(1)); 	
-
+ 		assertEquals((short) 0x400, cpu.getState().getPC());
  	}
 
  	@Test
@@ -876,12 +877,13 @@ public class TestChangeBlock9900
  		change.apply(cpu);
  		
  		assertEquals((short) 0x9000, cpu.getState().getRegister(4)); 	
+ 		assertEquals((short) 0x404, cpu.getState().getPC()); 	
  		
  		//
  		change.revert(cpu);
  		
  		assertEquals((short) 0xc120, cpu.getState().getRegister(4)); 	
-
+ 		assertEquals((short) 0x400, cpu.getState().getPC());
  	}
 
  	@Test

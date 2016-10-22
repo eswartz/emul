@@ -38,6 +38,7 @@ import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.Instruction9900;
 import v9t9.machine.ti99.cpu.Status9900;
+import v9t9.machine.ti99.cpu.Changes.AdvancePC;
 import v9t9.machine.ti99.machine.TI99Machine;
 import ejs.base.utils.BinaryUtils;
 import ejs.base.utils.HexUtils;
@@ -496,6 +497,8 @@ public class Interpreter9900 implements IInterpreter {
 				protected void doApply(CpuState9900 cpuState, Status9900 status) {
 					ChangeBlock9900 newBlock = new ChangeBlock9900(changes.cpu, inst.pc, 
 							mos1.value);
+					if (newBlock.inst.getSize() > 2)
+						newBlock.push(new AdvancePC(changes, newBlock.inst.getSize() - 2));
 					newBlock.appendOperandFetch();
 					newBlock.appendInstructionExecute();
 					newBlock.appendFlush();
