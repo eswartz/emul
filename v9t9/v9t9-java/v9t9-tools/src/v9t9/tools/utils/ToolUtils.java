@@ -85,6 +85,10 @@ public class ToolUtils {
 			if (!((addr >= 0x2000 && addr < 0x4000) || (addr >= 0xA000 || addr <= 0xffff))) {
 				throw new IOException("malformed memory image header: content not targeting RAM");
 			}
+			if ((addr & IMemoryDomain.AREASIZE - 1) != 0) {
+				throw new IOException("cannot load this memory image; I require the address be "
+						+ "aligned to a >400 boundary, but got >" + Integer.toHexString(addr));
+			}
 			if (addr + size > 0x10000) {
 				throw new IOException("malformed memory image header: addr + size > 64k");
 			}
