@@ -13,7 +13,8 @@ package v9t9.machine.ti99.cpu;
 public class InstPattern9900 {
 	public final int op1;
 	public final int op2;
-	final int off1;
+	public final int off1;
+	
 	public final static int NONE = 0;
 	public final static int REG = 1;
 	public final static int CNT = 2;

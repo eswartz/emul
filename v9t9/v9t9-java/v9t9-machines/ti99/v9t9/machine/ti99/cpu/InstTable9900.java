@@ -31,7 +31,7 @@ import v9t9.common.memory.IMemoryDomain;
  */
 public class InstTable9900 {
 	final static InstPattern9900 NONE_NONE = new InstPattern9900(NONE, NONE);
-	final static InstPattern9900 IMM_NONE = new InstPattern9900(IMM, NONE);
+	final static InstPattern9900 IMM_NONE = new InstPattern9900(IMM, NONE, 0);
 	final static InstPattern9900 REG_IMM = new InstPattern9900(REG, IMM);
 	final static InstPattern9900 GEN_NONE = new InstPattern9900(GEN, NONE);
 	final static InstPattern9900 REG_CNT = new InstPattern9900(REG, CNT, 4);
