@@ -110,7 +110,9 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 		final IVdpChip vdp = machine.getVdp();
 		VdpMmio vdpMmio = ((TI994AStandardConsoleMemoryModel) machine.getMemory().getModel()).getVdpMmio();
 		
-		cpuBankedVideo = new WindowBankedMemoryEntry(machine.getMemory(),
+		cpuBankedVideo = new WindowBankedMemoryEntry(
+				machine.getSettings(),
+				machine.getMemory(),
 				"CPU VDP Bank", 
 				machine.getConsole(),
 				0xA000,

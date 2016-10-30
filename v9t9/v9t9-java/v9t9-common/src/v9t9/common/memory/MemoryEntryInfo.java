@@ -379,7 +379,10 @@ public class MemoryEntryInfo {
 	}
 
 	public MemoryEntryInfo asFirstBank() {
-		MemoryEntryInfo copy = asBank(0, 0, 0x2000);
+		int bankSize = getBankSize();
+		if (bankSize == 0)
+			bankSize = 0x2000;
+		MemoryEntryInfo copy = asBank(0, 0, bankSize);
 		Map<String, Object> props = copy.getProperties();
 		props.remove(FILENAME2);
 		props.remove(OFFSET2);
@@ -394,7 +397,10 @@ public class MemoryEntryInfo {
 	}
 	
 	public MemoryEntryInfo asSecondBank() {
-		MemoryEntryInfo copy = asBank(1, 0, 0x2000);
+		int bankSize = getBankSize();
+		if (bankSize == 0)
+			bankSize = 0x2000;
+		MemoryEntryInfo copy = asBank(1, 0, bankSize);
 		Map<String, Object> props = copy.getProperties();
 		move(props, FILENAME, getFilename2());
 		move(props, ADDRESS, getAddress2() != 0 ? getAddress2() : getAddress());

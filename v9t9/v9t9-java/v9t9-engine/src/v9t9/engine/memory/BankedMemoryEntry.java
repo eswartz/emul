@@ -11,8 +11,13 @@
 package v9t9.engine.memory;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
+import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
+import ejs.base.settings.Logging;
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
@@ -32,13 +37,16 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	
 	private int currentBankIndex;
 	protected int bankCount;
+	private IProperty dumpFullInstructions;
 
 	/**
 	 * Only use when reconstructing 
 	 */
 	public BankedMemoryEntry() {
 	}
-	public BankedMemoryEntry(IMemory memory,
+	public BankedMemoryEntry(
+			ISettingsHandler settings,
+			IMemory memory,
 			String name,
 			IMemoryDomain domain,
 			int addr,
@@ -46,6 +54,7 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 			int bankCount) {
 		super(name, domain, addr, size, null);
 
+		this.dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
 		this.memory = memory;
 		this.currentBankIndex = -1;
 		this.bankCount = bankCount;
@@ -57,7 +66,7 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	@Override
 	public void reset() {
 		super.reset();
-		this.currentBankIndex = -1;
+		selectBank(0);
 	}
 	
 	@Override
@@ -77,6 +86,10 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 		return false;
 	}
 	protected void doSelectBank(int bank) {
+		PrintWriter pw = Logging.getLog(dumpFullInstructions);
+		if (pw != null)
+			pw.println("Switching to bank " + bank);
+
 		doSwitchBank(bank);
 		currentBankIndex = bank;
 		getMemory().notifyListenersOfLogicalChange(this);

@@ -11,6 +11,7 @@
 package v9t9.engine.memory;
 
 import ejs.base.settings.ISettingSection;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
@@ -23,10 +24,11 @@ import v9t9.common.memory.IMemoryDomain;
  */
 public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 
-	public WindowBankedMemoryEntry(IMemory memory, String name,
+	public WindowBankedMemoryEntry(ISettingsHandler settings,
+			IMemory memory, String name,
 			IMemoryDomain domain, int addr, int size,
 			MemoryArea area) {
-		super(memory, name, domain, addr, size, area.getSize() / size);
+		super(settings, memory, name, domain, addr, size, area.getSize() / size);
 		selectBank(0);
 		setArea(area);
 	}

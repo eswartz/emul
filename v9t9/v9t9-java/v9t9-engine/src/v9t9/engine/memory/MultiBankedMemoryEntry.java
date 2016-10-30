@@ -59,7 +59,7 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	}
 	public MultiBankedMemoryEntry(ISettingsHandler settings, IMemory memory,
 			String name, IMemoryDomain domain, int addr, int size, int bankCount) {
-		super(memory, name, domain, addr, size, bankCount);
+		super(settings, memory, name, domain, addr, size, bankCount);
 		
 		this.banks = new MemoryEntry[bankCount];
 		System.arraycopy(banks, 0, this.banks, 0, banks.length);

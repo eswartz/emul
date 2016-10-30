@@ -12,6 +12,7 @@ package v9t9.machine.ti99.memory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
@@ -58,6 +59,11 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 		IMemoryEntry entry;
 		
 		URL dataURL = EmulatorMachinesData.getDataURL("../../../build/forth");
+		try {
+			dataURL = new URL("file:/home/ejs/devel/emul/v9t9/v9t9-c/tools/Forth");
+		} catch (MalformedURLException e1) {
+			e1.printStackTrace();
+		}
 		DataFiles.addSearchPath(settings, dataURL.getPath());
 		
 		loadEnhancedBankedConsoleRom(eventNotifier, "nforthA.rom", "nforthB.rom");
@@ -100,6 +106,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 				.wordMemoryEntry()
 				.withAddress(0)
 				.withSize(0x4000)
+				.withBankSize(0x4000)
 				.withFilename(filename1)
 				.withFilename2(filename2)
 				.withBankClass(MultiBankedMemoryEntry.class)

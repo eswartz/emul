@@ -36,12 +36,14 @@ public class Vdp9918AMmio extends VdpMmio {
 	protected final IMemoryDomain videoMemory;
 	private IProperty dumpFullInstructions;
 	private IProperty dumpVdpAccess;
+	protected ISettingsHandler settings;
 
 	/**
      * @param machine
      */
     public Vdp9918AMmio(ISettingsHandler settings, IMemory memory, IVdpChip vdp, int memorySize) {
     	super(new VdpRamArea(memorySize));
+		this.settings = settings;
     	
     	dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
     	dumpVdpAccess = settings.get(IVdpChip.settingDumpVdpAccess);

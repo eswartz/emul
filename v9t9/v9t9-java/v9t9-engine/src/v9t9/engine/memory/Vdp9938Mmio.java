@@ -44,6 +44,7 @@ public class Vdp9938Mmio extends Vdp9918AMmio {
 
 	protected void initMemory(IMemory memory, int memorySize) {
 		memoryBank = new WindowBankedMemoryEntry(
+				settings,
 				memory, "VDP RAM",
 				videoMemory,
 				0x0000, 0x4000,
