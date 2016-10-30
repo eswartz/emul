@@ -392,7 +392,6 @@ public class InterpreterF99b implements IInterpreter {
         case Iexiti:
         	cpu.setPC(cpu.rpop());
         	cpu.setST(cpu.rpop());
-        	cpu.noIntCount+=2;
         	return true;
         	
         case Idup:

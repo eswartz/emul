@@ -51,7 +51,9 @@ public class CpuState9900 implements ICpuState {
 	private Status9900 status;
 	private ListenerList<IRegisterWriteListener> listeners = new ListenerList<IRegisterAccess.IRegisterWriteListener>();
 	private CycleCounts cycleCounts = new CycleCounts();
-	 
+	private int noIntCount;
+
+	
 	public CpuState9900(IMemoryDomain console) {
 		this.console = console;
 		this.status = createStatus();
@@ -330,6 +332,13 @@ public class CpuState9900 implements ICpuState {
         getConsole().writeWord(newwp + 13 * 2, oldwp);
         getConsole().writeWord(newwp + 14 * 2, oldpc);
         getConsole().writeWord(newwp + 15 * 2, getST());
-		
+        noIntCount = 2;
+	}
+	
+	public boolean areIntsFrozen() {
+		if (noIntCount <= 0)
+			return false;
+		noIntCount--;
+		return true;
 	}
 }

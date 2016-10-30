@@ -117,7 +117,6 @@ public class Cpu9900 extends CpuBase {
      */
     public void contextSwitch(short newwp, short newpc) {
     	((CpuState9900) state).contextSwitch(newwp, newpc);
-        noIntCount = 2;
    }
 
     public void contextSwitch(int addr) {
@@ -130,8 +129,7 @@ public class Cpu9900 extends CpuBase {
      */
     public final boolean doCheckInterrupts() {
     	// do not allow interrupts after some instructions
-	    if (noIntCount > 0) {
-	    	noIntCount--;
+	    if (((CpuState9900) state).areIntsFrozen()) {
 	    	return false;
 	    }
 	    
@@ -197,9 +195,6 @@ public class Cpu9900 extends CpuBase {
             
             pins = 0;
             ic = 0;
-            
-            // ensure the startup code has enough time to clear memory
-            //noIntCount = 10000;
             
             machine.getExecutor().interpretOneInstruction();
             //throw new AbortedException();

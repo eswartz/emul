@@ -46,6 +46,8 @@ ${label}_entry:
 ]
  
  define BankedXopHandler [
+	limi	0
 	mov		*14+, 1
-	BankedIntHandler
+	soc		@F_BANK1, R15		; flag; mark that we're in bank1 on return (SZC in bank 0 code!)
+	seto	@BANK1				; switch to ROM bank 
 ] 

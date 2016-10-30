@@ -85,7 +85,6 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	}
 
 	private int ticks;
-	public int noIntCount;
 	protected int interrupts;
 
 	protected ICpuState state;
