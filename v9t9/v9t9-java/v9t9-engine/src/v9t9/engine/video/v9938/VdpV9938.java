@@ -1469,7 +1469,16 @@ public class VdpV9938 extends VdpTMS9918A implements IVdpV9938 {
 
 
     public void touchAbsoluteVdpMemory(int vdpaddr) {
-    	vdpMemory.touchMemory(vdpaddr);
+    	// FIXME: gross!!!  The bug is, MemoryDomain.touchMemory() uses
+    	// the memory entry at the given address, not the absolute one
+    	BankedMemoryEntry bank = vdpMmio.getMemoryBank();
+    	int oldBank = bank.getCurrentBank();
+    	try {
+	    	bank.selectBank(vdpaddr / 0x4000);
+	    	vdpMemory.touchMemory(vdpaddr);
+    	} finally {
+    		bank.selectBank(oldBank);
+    	}
     }
     
 	@Override
