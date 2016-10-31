@@ -63,6 +63,13 @@ Code vfgbg! ( fg bg -- )
 	POP
 end-code
 
+Code pixel ( x1 y1 op|c -- )
+	PUSH
+	rSP *R		VIDEO^	,XOP  	#v.pixel ,
+	3 2 U*		rSP		,AI 	,
+	POP
+end-code
+
 Code line ( x1 y1 x2 y2 op|c -- )
 	PUSH
 	rSP *R		VIDEO^	,XOP  	#v.line ,

@@ -292,8 +292,9 @@ v_setmode			equ		1	; FORTH: #v.mode		( mode-number )
 v_reset				equ		2	; FORTH: #v.reset		( )
 v_blank				equ		3	; FORTH: #v.blank		( t|f )
 v_setcolor			equ		4	; FORTH: #v.fgbg!		( fg|bg )
-v_line				equ		5	; FORTH: #v.line		( x y x2 y2 op|color )
-v_circle			equ		6	; FORTH: #v.circle		( x y r op|color )
+v_pixel				equ		5	; FORTH: #v.pixel		( x y op|color )
+v_line				equ		6	; FORTH: #v.line		( x y x2 y2 op|color )
+v_circle			equ		7	; FORTH: #v.circle		( x y r op|color )
 
 XOP_TERM	equ		1			; FORTH: TERM^
 t_init				equ		0	; FORTH: #t.init		( )

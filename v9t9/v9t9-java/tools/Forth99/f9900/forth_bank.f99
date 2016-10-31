@@ -669,17 +669,38 @@ create RptPit1		&8 c,  1 c,  &1 c,
 : spchatter
 	begin sprand2c sprand2b again
 ;
-  
+ 
+: rpixels
+	begin
+		random win-cx 3 lshift  mod 
+		random S>D win-cx 3 lshift @ UM/MOD drop 
+		random &255 and
+		pixel
+	again
+;
+ 
+: rlines
+	begin
+		random abs win-cx 3 lshift MOD   
+		random abs win-cy 3 lshift MOD  
+		random abs win-cx 3 lshift MOD  
+		random abs win-cy 3 lshift MOD  
+		random &15 and
+		line
+	again
+;
+
 : circles
 	95 0 do 
 		128 96 i  i 3 rshift  circle
-		8
+		dup
 	+loop
+	drop
 ;
 : rcircles
 	begin
-		random &255 and 
-		random S>D &192 UM/MOD drop 
+		random win-cx 3 lshift  mod 
+		random S>D win-cx 3 lshift @ UM/MOD drop 
 		random &63 AND 
 		random &15 and
 		circle 

@@ -80,3 +80,6 @@ end-code
 : win-cx	( -- cx )
 	win@ drop >r 2drop r>
 ;
+: win-cy	( -- cx )
+	win@ >r 2drop drop r>
+;

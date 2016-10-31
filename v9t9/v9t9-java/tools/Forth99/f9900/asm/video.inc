@@ -47,7 +47,7 @@
 ;==========================================================================
 
 xop_video_tbl
-	dw		xv_vinit, xv_mode, xv_reset, xv_blank, xv_setcolor, xv_line, xv_circle
+	dw		xv_vinit, xv_mode, xv_reset, xv_blank, xv_setcolor, xv_pixel, xv_line, xv_circle
 xop_video_tbl_end equ	$
 
 xop_video_ent
@@ -769,6 +769,11 @@ vcursisoff	rt
 ;   This routine will draw a pixel on the screen (XOP)
 ;
 ;   caller R12 -> args:     op|color  y  x
+
+xv_pixel
+	blwp	@pixel
+	rt
+
 
  Vector pixel, VidWS
     limi    0
