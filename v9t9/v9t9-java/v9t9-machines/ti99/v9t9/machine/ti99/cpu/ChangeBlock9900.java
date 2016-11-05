@@ -164,14 +164,14 @@ public class ChangeBlock9900 extends ChangeBlock {
 					mopState3 = nextMachineOperandState(mop3);
 					fetch(mop3, mopState3);
 				}
-				else if (inst.getInst() == InstTableCommon.Iticks) {
+			} else {
+				if (inst.getInst() == InstTableCommon.Iticks) {
 					mop2 = new MachineOperand9900(MachineOperand9900.OP_REG);
 					mop2.val = mop1.val + 1;
 					mop2.dest = MachineOperand9900.OP_DEST_KILLED;
 					mopState2 = nextMachineOperandState(mop2);
 					fetch(mop2, mopState2);
 				}
-
 			}
 		}
 	}

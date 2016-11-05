@@ -714,6 +714,15 @@ create RptPit1		&8 c,  1 c,  &1 c,
 	vintflags c@  vhorizint OR  vintflags c!
 ;
 
+Code ticks 
+	PUSH
+	rTOS					$D60 + ,
+	
+	rTOS 1+		rSP @>(R)	,MOV	#cell negate ,
+	rSP						,DECT
+	
+	end-code
+
 \ ................................
 
 Code (RESET)
