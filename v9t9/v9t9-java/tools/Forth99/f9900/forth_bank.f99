@@ -685,7 +685,7 @@ create RptPit1		&8 c,  1 c,  &1 c,
 		random abs win-cy 3 lshift MOD  
 		random abs win-cx 3 lshift MOD  
 		random abs win-cy 3 lshift MOD  
-		random &15 and
+		random $30f and
 		line
 	again
 ;
@@ -702,7 +702,7 @@ create RptPit1		&8 c,  1 c,  &1 c,
 		random win-cx 3 lshift  mod 
 		random S>D win-cx 3 lshift @ UM/MOD drop 
 		random &63 AND 
-		random &15 and
+		random $30f and
 		circle 
 	again
 ;
