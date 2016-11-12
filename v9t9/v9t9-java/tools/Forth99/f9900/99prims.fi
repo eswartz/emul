@@ -234,12 +234,8 @@ Code 1+
 end-code
 
 ( optimize )
-Code 2+
-	rTOS	,INCT
-end-code
-
-( optimize )
 Code CELL+
+Code 2+
 	rTOS	,INCT
 end-code
 
@@ -443,15 +439,12 @@ Code >R
 
 		
 Code (DO)
-0 $:
+Code 2>R
 	rRP						,AI		2 CELLS NEGATE ,
 	rSP *R+		rRP @>(R)	,MOV		#cell ,
 	rTOS		rRP *R		,MOV
 	POP
 	end-code
-	
-Code 2>R
-	0 $-					,JMP
 	
 Code R>
 	PUSH
@@ -471,21 +464,15 @@ Code RDROP
 	end-code
 			
 Code UNLOOP
-0 $:
+Code 2RDROP
 	rRP						,AI		2 CELLS ,		
 	end-code		
 
-Code 2RDROP
-	0 $-					,JMP
-
 Code I
-0 $:
+Code R@
 	PUSH
 	rRP *R		rTOS		,MOV		
 	end-code
-
-Code R@
-	0 $-					,JMP
 
 Code J
 	PUSH
