@@ -95,6 +95,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 		SWT.SHIFT, KEY_SHIFT,
 		SWT.CONTROL, KEY_CONTROL,
 		SWT.ALT, KEY_ALT,
+		SWT.COMMAND, KEY_ALT,
 		SWT.CAPS_LOCK, KEY_CAPS_LOCK,
 		SWT.NUM_LOCK, KEY_NUM_LOCK,
 		SWT.SCROLL_LOCK, KEY_SCROLL_LOCK,
@@ -159,7 +160,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 			shiftMask |= MASK_CONTROL;
 		if (((stateMask | keyCode) & SWT.SHIFT) != 0)
 			shiftMask |= MASK_SHIFT;
-		if (((stateMask | keyCode) & SWT.ALT) != 0)
+		if (((stateMask | keyCode) & (SWT.ALT + SWT.COMMAND)) != 0)
 			shiftMask |= MASK_ALT;
 		
 		if ((keyCode & SWT.KEYCODE_BIT) == 0) {

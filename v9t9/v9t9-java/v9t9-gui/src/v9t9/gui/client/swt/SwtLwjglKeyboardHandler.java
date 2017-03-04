@@ -7,20 +7,6 @@
   are made available under the terms of the Eclipse Public License v1.0
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
-  
-  
-  "Logitech Logitech Dual Action","Thumb",1=BUTTON
-"Logitech Logitech Dual Action","Thumb 2",2=BUTTON
-"Logitech Logitech Dual Action","Trigger",0=BUTTON
-"Logitech Logitech Dual Action","x",12=X_AXIS
-"Logitech Logitech Dual Action","y",13=Y_AXIS
-
-"Logitech Logitech Dual Action","Base 2",7=BUTTON
-"Logitech Logitech Dual Action","Top 2",4=BUTTON
-"Logitech Logitech Dual Action","rz",15=Y_AXIS
-"Logitech Logitech Dual Action","z",14=X_AXIS
-
-
  */
 package v9t9.gui.client.swt;
 
@@ -29,6 +15,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import net.java.games.input.Component;
 import net.java.games.input.Component.Identifier;
@@ -116,6 +103,9 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			@Override
 			public void propertyChanged(IProperty property) {
 				if (property.getBoolean()) {
+					joystick1Config.setString("");
+					joystick2Config.setString("");
+					controllerConfig.setString("");
 					updateControllers();
 					property.setBoolean(false);
 				}
@@ -188,11 +178,20 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			// nothing worked for joystick #2, use what's left over from the first controller
 			jsconfig2 = initializeConfig(2, js1Unused);
 		}
+		
+		if (jsconfig1 != null) {
+			// record all the remaining buttons to joy #1
+			for (Entry<ControllerIdentifier, Component> ent : js1Unused.entrySet()) {
+				if (ent.getValue() .getIdentifier() instanceof Identifier.Button) {
+					jsconfig1.map(ent.getKey(), JoystickRole.IGNORE);
+				}
+			}
+		}
 
 		// all that scanning is used only if the previously saved
 		// configurations no longer apply
-		String currentConfig = sb.toString();
-		String oldConfig = controllerConfig.getString(); 
+		String currentConfig = sb.toString().trim();
+		String oldConfig = controllerConfig.getString().trim(); 
 		
 		if (!currentConfig.equals(oldConfig) || !restoreHandlers(joystick1Handlers, joystick1Config.getString())) {
 			if (jsconfig1 != null) {
@@ -249,20 +248,20 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			Identifier cid = ent.getValue().getIdentifier();
 			
 			if (cid == Identifier.Axis.X || (joy > 1 && (cid == Identifier.Axis.RX || cid == Identifier.Axis.Z))) {
+				config.map(id, foundX ? JoystickRole.IGNORE : JoystickRole.X_AXIS);
 				foundX = true;
-				config.map(id, JoystickRole.X_AXIS);
 				it.remove();
 			}
 			if (cid == Identifier.Axis.Y || (joy > 1 && (cid == Identifier.Axis.RY || cid == Identifier.Axis.RZ))) {
+				config.map(id, foundY ? JoystickRole.IGNORE : JoystickRole.Y_AXIS);
 				foundY = true;
-				config.map(id, JoystickRole.Y_AXIS);
 				it.remove();
 			}
 			
 			if (ent.getValue().getIdentifier() instanceof Button) {
-				if (isButtonFor(ent.getValue(), joy)) {
+				if (isButtonFor(ent.getValue(), joy) || !foundButton) {
+					config.map(id, foundButton ? JoystickRole.IGNORE : JoystickRole.BUTTON);
 					foundButton = true;
-					config.map(id, JoystickRole.BUTTON);
 					it.remove();
 				}
 			}
