@@ -10,6 +10,9 @@
  */
 package v9t9.gui.client.swt;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.java.games.input.Component;
 import net.java.games.input.Component.Identifier;
 import net.java.games.input.Component.Identifier.Button;
@@ -47,23 +50,63 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 		private Component rightXAxis;
 		private Component leftYAxis;
 		private Component rightYAxis;
+		private List<Component> leftButtons = new ArrayList<Component>(1);
+		private List<Component> rightButtons = new ArrayList<Component>(1);
+
 		/**
 		 * 
 		 */
 		public StupidControllerHandler(Controller controller) {
 			this.controller = controller;
+			Component[] components = controller.getComponents();
 			if (DEBUG) {
-				for (Component c : controller.getComponents())
+				for (Component c : components)
 					System.out.println(c);
 			}
-			leftXAxis = controller.getComponent(Identifier.Axis.X);
-			rightXAxis = controller.getComponent(Identifier.Axis.RX);
-			leftYAxis = controller.getComponent(Identifier.Axis.Y);
-			rightYAxis = controller.getComponent(Identifier.Axis.RY);
+			leftXAxis = lastOf(components, Identifier.Axis.X);
+			rightXAxis = lastOf(components, Identifier.Axis.RX);
+			leftYAxis = lastOf(components, Identifier.Axis.Y);
+			rightYAxis = lastOf(components, Identifier.Axis.RY);
 			if (rightXAxis == null || rightYAxis == null) {
 				//rightXAxis = leftXAxis;
 				//rightYAxis = leftYAxis;
 			}
+
+			Component cand1 = null, cand2 = null;
+			for (Component button : controller.getComponents()) {
+				if (button.getIdentifier() instanceof Button) {
+					if (isButtonFor(button, 1)) {
+						leftButtons.add(button);
+					}
+					else if (isButtonFor(button, 2)) {
+						rightButtons.add(button);
+					}
+					else if (cand1 == null) {
+						cand1 = button;
+					} else if (cand2 == null) {
+						cand2 = button;
+					}
+
+				}
+			}
+			if (leftButtons.isEmpty() && cand1 != null)
+				leftButtons.add(cand1);
+			if (rightButtons.isEmpty() && cand2 != null)
+				rightButtons.add(cand2);
+		}
+
+		protected boolean isButtonFor(Component button, int joy) {
+			String name = button.getIdentifier().getName();
+			return name.toLowerCase().matches(".*(trigger|thumb|" + (joy == 1 ? "left" : "right") + ").*");
+		}
+		
+		private Component lastOf(Component[] cs, Identifier.Axis id) {
+			for (int i = cs.length - 1; i >= 0; i--) {
+				if (id.equals(cs[i].getIdentifier())) {
+					return cs[i];
+				}
+			}
+			return null;
 		}
 		
 		/* (non-Javadoc)
@@ -110,29 +153,18 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			boolean fire = false;
 			if ((joy == 1 ? leftXAxis : rightXAxis) == null)
 				return false;
-			for (Component button : controller.getComponents()) {
-				if (button.getIdentifier() instanceof Button) {
-					if (isButtonFor(button, joy)) {
-						fire = button.getPollData() != 0;
-						if (fire) {
-							if (DEBUG)
-								System.out.println(button.getIdentifier());
-							break;
-						}
-					}
+			
+			for (Component button : (joy == 1 ? leftButtons : rightButtons)) {
+				fire = button.getPollData() != 0;
+				if (fire) {
+					if (DEBUG)
+						System.out.println(button.getIdentifier());
+					break;
 				}
 			}
 			return fire;
 		}
 		
-		/**
-		 * @param button  
-		 * @param joy 
-		 */
-		protected boolean isButtonFor(Component button, int joy) {
-			String name = button.getIdentifier().getName();
-			return name.toLowerCase().matches(".*(trigger|thumb|" + (joy == 1 ? "left" : "right") + "|1|3|5|7).*");
-		}
 		/* (non-Javadoc)
 		 * @see v9t9.gui.client.swt.SwtLwjglKeyboardHandler.ControllerHandler#isFailedLast()
 		 */
