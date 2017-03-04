@@ -75,6 +75,7 @@ import v9t9.gui.client.swt.shells.IToolShellFactory;
 import v9t9.gui.client.swt.shells.ToolShell;
 import v9t9.gui.client.swt.svg.SVGImageProvider;
 import v9t9.gui.common.BaseEmulatorWindow;
+import v9t9.server.client.EmulatorServerBase;
 import v9t9.video.svg.ISVGLoader;
 import v9t9.video.svg.SVGSalamanderLoader;
 import ejs.base.properties.IProperty;
@@ -208,10 +209,10 @@ public class SwtWindow extends BaseEmulatorWindow {
 //	            String filename,
 //	            PointerByReference err);
 //	}
-	public SwtWindow(Display display, final IMachine machine, 
+	public SwtWindow(Display display, EmulatorServerBase server, final IMachine machine, 
 			final ISwtVideoRenderer videoRenderer, final ISettingsHandler settingsHandler,
 			final ISoundHandler soundHandler) {
-		super(machine);
+		super(server, machine);
 		
 		fullScreen = Settings.get(machine, settingFullScreen);
 		

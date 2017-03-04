@@ -10,7 +10,7 @@
  */
 package v9t9.gui.client.swt;
 
-import v9t9.common.machine.IMachine;
+import v9t9.server.client.EmulatorServerBase;
 
 /**
  * @author ejs
@@ -18,8 +18,8 @@ import v9t9.common.machine.IMachine;
 public class SwtLwjglJavaClient extends BaseSwtJavaClient {
 	public static String ID = "SWTLWJGL";
 	
-    public SwtLwjglJavaClient(IMachine machine) {
-    	super(machine);
+    public SwtLwjglJavaClient(EmulatorServerBase server) {
+    	super(server);
     }
 
     @Override

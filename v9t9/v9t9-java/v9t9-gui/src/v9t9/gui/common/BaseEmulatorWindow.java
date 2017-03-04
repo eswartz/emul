@@ -11,51 +11,29 @@
 package v9t9.gui.common;
 
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.MessageFormat;
 
-import org.apache.log4j.Logger;
-
-import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.NotifyEvent.Level;
+import v9t9.common.events.NotifyException;
 import v9t9.common.machine.IMachine;
-import v9t9.common.machine.TerminatedException;
 import v9t9.common.settings.IStoredSettings;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
-import v9t9.gui.Emulator;
-import v9t9.server.EmulatorLocalServer;
-import v9t9.server.settings.WorkspaceSettings;
+import v9t9.server.client.EmulatorServerBase;
 import ejs.base.properties.IProperty;
 import ejs.base.settings.ISettingSection;
-import ejs.base.settings.ISettingStorage;
-import ejs.base.settings.SettingsSection;
-import ejs.base.settings.XMLSettingStorage;
-import ejs.base.utils.TextUtils;
 
 public abstract class BaseEmulatorWindow {
-	private static final Logger log = Logger.getLogger(BaseEmulatorWindow.class);
-	
-	/**
-	 * 
-	 */
-	private static final String STATE = "state";
 	/**
 	 * 
 	 */
 	private static final String[] MACHINE_SAVE_FILE_EXTENSIONS = new String[] { "*.sav|V9t9 machine save file" };
 	protected IVideoRenderer videoRenderer;
 	protected final IMachine machine;
-
+	private final EmulatorServerBase server;
+	
 	private String lastLoadedState;
 	static public final SettingSchema settingMonitorDrawing = new SettingSchema(
 			ISettingsHandler.MACHINE,
@@ -85,7 +63,8 @@ public abstract class BaseEmulatorWindow {
 			ISettingsHandler.TRANSIENT,
 			"ScreenShotsBase", "");
 	
-	public BaseEmulatorWindow(IMachine machine) {
+	public BaseEmulatorWindow(EmulatorServerBase server, IMachine machine) {
+		this.server = server;
 		this.machine = machine;
 		//EmulatorSettings.INSTANCE.load();
 	}
@@ -179,128 +158,37 @@ public abstract class BaseEmulatorWindow {
 		
 		if (filename != null) {
 			lastLoadedState = filename;
-			InputStream fis = null;
 			try {
-				ISettingStorage storage = new XMLSettingStorage(STATE);
-				fis = new BufferedInputStream(new FileInputStream(filename));
-				ISettingSection settings = storage.load(fis);
-				
-				String modelId = settings.get("MachineModel");
-
-				boolean changedMachines = false;
-				EmulatorLocalServer server = null;
-				
-				if (modelId != null) {
-			        if (!machine.getModel().getIdentifier().equals(modelId)) {
-			        	String clientId = machine.getClient().getIdentifier();
-			        	try {
-			        		machine.getClient().close();
-			        	} catch (TerminatedException e) {
-			        	}
-			        	try {
-			        		dispose();
-			        	} catch (Throwable t) {
-			        		t.printStackTrace();
-			        	}
-			        	
-						server = new EmulatorLocalServer();
-						IClient client = Emulator.create(server, modelId, clientId);
-			        	
-			        	loadState(client, server.getMachine(), settings);
-			        	changedMachines = true;
-			        }
-				}
-		        
-				if (!changedMachines) {
-					loadState(machine.getClient(), machine, settings);
-				}
-				else {
-					Emulator.runServer(server);
-				}
-
-			} catch (Throwable e1) {
-				log.error("Failed to load machine state", e1);
-				machine.notifyEvent(Level.ERROR, 
-						"Failed to load machine state:\n\n" + 
-									(!TextUtils.isEmpty(e1.getMessage()) ? e1.getMessage() : e1.getClass()));
-			
-			} finally {
-				if (fis != null) {
-					try {
-						fis.close();
-					} catch (IOException e) {
-						// ignore
-					}
-				}
+				server.loadState(filename);
+			} catch (NotifyException e) {
+				showErrorMessage("Load Error", e.getMessage());
 			}
 		}
-	}
-
-	/**
-	 * @param client
-	 * @param settings2 
-	 * @param machine2 
-	 */
-	private static void loadState(IClient client, IMachine machine, ISettingSection settings) {
-		String origWorkspace = settings.get(WorkspaceSettings.currentWorkspace.getName());
-		if (origWorkspace != null) {
-			try {
-				WorkspaceSettings.loadFrom(
-						Settings.getSettings(machine).getMachineSettings(), 
-						origWorkspace);
-			} catch (IOException e) {
-				machine.notifyEvent(
-						Level.WARNING, 
-						MessageFormat.format(
-								"Could not find the workspace ''{0}'' referenced in the saved state",
-								origWorkspace));
-			}
-		}
-		
-		ISettingSection workspace = settings.getSection("Workspace");
-		if (workspace != null) {
-			Settings.getSettings(machine).getMachineSettings().load(workspace);
-		}
-		
-		machine.loadState(settings);
-		
-		client.getVideoRenderer().getCanvasHandler().forceRedraw();		
 	}
 
 	abstract protected void showErrorMessage(String title, String msg);
 
 	public void saveMachineState() {
-		
-		// get immediately
-		ISettingSection settings = new SettingsSection(null);
-		machine.saveState(settings);
+
+		boolean wasPaused = machine.isPaused();
+		machine.setPaused(true);
 		
 		String filename = selectFile(
 				"Select location to save machine state", 
 				Settings.get(machine, settingMachineStatePath), 
 				"saves", "save0.sav", true, false, MACHINE_SAVE_FILE_EXTENSIONS);
-		
+	
 		if (filename != null) {
-			OutputStream fos = null;
 			try {
-				ISettingStorage storage = new XMLSettingStorage(STATE);
-				fos = new BufferedOutputStream(new FileOutputStream(filename));
-				storage.save(fos, settings);
-			} catch (Throwable e1) {
-				showErrorMessage("Save error", 
-						"Failed to save machine state:\n\n" + e1.getMessage());
-			} finally {
-				if (fos != null) {
-					try {
-						fos.close();
-					} catch (IOException e) {
-						// ignore
-					}
-				}
+				server.saveState(filename);
+			} catch (NotifyException e) {
+				showErrorMessage("Save Error", e.getMessage());
 			}
 		}
+		
+		machine.setPaused(wasPaused);
 	}
-
+	
 	public void screenshot() {
 		boolean plain = machine.getSettings().get(BaseEmulatorWindow.settingScreenshotPlain).getBoolean();
 

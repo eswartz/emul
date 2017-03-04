@@ -53,6 +53,7 @@ import v9t9.gui.client.swt.handlers.ModuleContentHandler;
 import v9t9.gui.client.swt.shells.PrinterImageShell;
 import v9t9.gui.client.swt.wizards.SetupWizard;
 import v9t9.gui.sound.JavaSoundHandler;
+import v9t9.server.client.EmulatorServerBase;
 import ejs.base.timer.FastTimer;
 
 /**
@@ -84,16 +85,19 @@ public abstract class BaseSwtJavaClient implements IClient {
 
 	protected IKeyboardHandler keyboardHandler;
 	private VideoThread videoThread;
+	private EmulatorServerBase server;
 
 	/**
 	 * @param machine 
 	 * 
 	 */
-	public BaseSwtJavaClient(final IMachine machine) {
+	public BaseSwtJavaClient(EmulatorServerBase server) {
+		this.server = server;
+		this.machine = server.getMachine();
+		
 		this.settingsHandler = Settings.getSettings(machine);
 		this.display = Display.getDefault();
     	this.video = machine.getVdp();
-    	this.machine = machine;
     	machine.setClient(this);
     	
     	this.keyTimer = new FastTimer("Keyboard/Joystick Timer");
@@ -103,7 +107,7 @@ public abstract class BaseSwtJavaClient implements IClient {
     	        
         soundHandler = new JavaSoundHandler(machine);
         
-        window = new SwtWindow(display, machine, 
+        window = new SwtWindow(display, server, machine, 
         		(ISwtVideoRenderer) videoRenderer, settingsHandler,
         		soundHandler);
         eventNotifier = window.getEventNotifier();
@@ -201,6 +205,12 @@ public abstract class BaseSwtJavaClient implements IClient {
         }
 	}
 	
+	/**
+	 * @return the server
+	 */
+	public EmulatorServerBase getServer() {
+		return server;
+	}
 	/**
 	 * 
 	 */

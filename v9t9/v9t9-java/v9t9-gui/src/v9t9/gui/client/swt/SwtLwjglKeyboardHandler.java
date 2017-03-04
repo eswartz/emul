@@ -7,11 +7,28 @@
   are made available under the terms of the Eclipse Public License v1.0
   which accompanies this distribution, and is available at
   http://www.eclipse.org/legal/epl-v10.html
+  
+  
+  "Logitech Logitech Dual Action","Thumb",1=BUTTON
+"Logitech Logitech Dual Action","Thumb 2",2=BUTTON
+"Logitech Logitech Dual Action","Trigger",0=BUTTON
+"Logitech Logitech Dual Action","x",12=X_AXIS
+"Logitech Logitech Dual Action","y",13=Y_AXIS
+
+"Logitech Logitech Dual Action","Base 2",7=BUTTON
+"Logitech Logitech Dual Action","Top 2",4=BUTTON
+"Logitech Logitech Dual Action","rz",15=Y_AXIS
+"Logitech Logitech Dual Action","z",14=X_AXIS
+
+
  */
 package v9t9.gui.client.swt;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import net.java.games.input.Component;
 import net.java.games.input.Component.Identifier;
@@ -20,237 +37,326 @@ import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.ControllerEvent;
 import net.java.games.input.ControllerListener;
+
+import org.apache.log4j.Logger;
+
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.keyboard.ControllerConfig;
+import v9t9.common.keyboard.ControllerIdentifier;
 import v9t9.common.keyboard.IKeyboardState;
+import v9t9.common.keyboard.JoystickRole;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchema;
+import ejs.base.properties.IProperty;
+import ejs.base.properties.IPropertyListener;
 
 /**
  * @author ejs
  *
  */
 public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
+	private static final Logger logger = Logger.getLogger(SwtLwjglKeyboardHandler.class);
 
-	private static boolean DEBUG = false;
+	static public final SettingSchema settingControllerConfig = new SettingSchema(
+			ISettingsHandler.USER,
+			"LwjglControllerConfig", "");
 	
-	/**
-	 * Handle lwjgl input controllers
-	 * @author ejs
-	 *
-	 */
-	public interface ControllerHandler {
-		Controller getController();
-		void setJoystick(int joy, IKeyboardState state);
-		boolean isFailedLast();
-		void setFailedLast(boolean failedLast);
-	}
+	static public final SettingSchema settingJoystick1Config = new SettingSchema(
+			ISettingsHandler.USER,
+			"LwjglJoystick1Config", "");
 	
-	public static class StupidControllerHandler implements ControllerHandler {
-		protected final Controller controller;
-		private boolean failedLast;
-		private Component leftXAxis;
-		private Component rightXAxis;
-		private Component leftYAxis;
-		private Component rightYAxis;
-		private List<Component> leftButtons = new ArrayList<Component>(1);
-		private List<Component> rightButtons = new ArrayList<Component>(1);
-
-		/**
-		 * 
-		 */
-		public StupidControllerHandler(Controller controller) {
-			this.controller = controller;
-			Component[] components = controller.getComponents();
-			if (DEBUG) {
-				for (Component c : components)
-					System.out.println(c);
-			}
-			leftXAxis = lastOf(components, Identifier.Axis.X);
-			rightXAxis = lastOf(components, Identifier.Axis.RX);
-			leftYAxis = lastOf(components, Identifier.Axis.Y);
-			rightYAxis = lastOf(components, Identifier.Axis.RY);
-			if (rightXAxis == null || rightYAxis == null) {
-				//rightXAxis = leftXAxis;
-				//rightYAxis = leftYAxis;
-			}
-
-			Component cand1 = null, cand2 = null;
-			for (Component button : controller.getComponents()) {
-				if (button.getIdentifier() instanceof Button) {
-					if (isButtonFor(button, 1)) {
-						leftButtons.add(button);
-					}
-					else if (isButtonFor(button, 2)) {
-						rightButtons.add(button);
-					}
-					else if (cand1 == null) {
-						cand1 = button;
-					} else if (cand2 == null) {
-						cand2 = button;
-					}
-
-				}
-			}
-			if (leftButtons.isEmpty() && cand1 != null)
-				leftButtons.add(cand1);
-			if (rightButtons.isEmpty() && cand2 != null)
-				rightButtons.add(cand2);
-		}
-
-		protected boolean isButtonFor(Component button, int joy) {
-			String name = button.getIdentifier().getName();
-			return name.toLowerCase().matches(".*(trigger|thumb|" + (joy == 1 ? "left" : "right") + ").*");
-		}
-		
-		private Component lastOf(Component[] cs, Identifier.Axis id) {
-			for (int i = cs.length - 1; i >= 0; i--) {
-				if (id.equals(cs[i].getIdentifier())) {
-					return cs[i];
-				}
-			}
-			return null;
-		}
-		
-		/* (non-Javadoc)
-		 * @see v9t9.emulator.clients.builtin.swt.SwtLwjglKeyboardHandler.ControllerHandler#getController()
-		 */
-		@Override
-		public Controller getController() {
-			return controller;
-		}
-		
-		/* (non-Javadoc)
-		 * @see v9t9.emulator.clients.builtin.swt.SwtLwjglKeyboardHandler.ControllerHandler#setJoystick(int, v9t9.keyboard.KeyboardState)
-		 */
-		@Override
-		public void setJoystick(int joy, IKeyboardState state) {
-			int x = (int) Math.signum(getXAxis(joy));
-			int y = (int) Math.signum(getYAxis(joy));
-			boolean fire = getButton(joy);
-
-			state.setJoystick(joy, 
-					IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
-					x, y, fire);
-		}
-		
-		protected float getXAxis(int joy) {
-			Component axis = joy == 1 ? leftXAxis : rightXAxis;
-			if (axis == null)
-				return 0;
-			float xAxis = axis.getPollData();
-			if (axis.isAnalog() && Math.abs(xAxis) <= 0.5)
-				xAxis = 0;
-			return xAxis;
-		}
-		protected float getYAxis(int joy) {
-			Component axis = joy == 1 ? leftYAxis : rightYAxis;
-			if (axis == null)
-				return 0;
-			float yAxis = axis.getPollData();
-			if (axis.isAnalog() && Math.abs(yAxis) <= 0.5)
-				yAxis = 0;
-			return yAxis;
-		}
-		protected boolean getButton(int joy) {
-			boolean fire = false;
-			if ((joy == 1 ? leftXAxis : rightXAxis) == null)
-				return false;
-			
-			for (Component button : (joy == 1 ? leftButtons : rightButtons)) {
-				fire = button.getPollData() != 0;
-				if (fire) {
-					if (DEBUG)
-						System.out.println(button.getIdentifier());
-					break;
-				}
-			}
-			return fire;
-		}
-		
-		/* (non-Javadoc)
-		 * @see v9t9.gui.client.swt.SwtLwjglKeyboardHandler.ControllerHandler#isFailedLast()
-		 */
-		@Override
-		public boolean isFailedLast() {
-			return failedLast;
-		}
-		/* (non-Javadoc)
-		 * @see v9t9.gui.client.swt.SwtLwjglKeyboardHandler.ControllerHandler#setFailedLast(boolean)
-		 */
-		@Override
-		public void setFailedLast(boolean failedLast) {
-			this.failedLast = failedLast;
-		}
-	}
+	static public final SettingSchema settingJoystick2Config = new SettingSchema(
+			ISettingsHandler.USER,
+			"LwjglJoystick2Config", "");
 	
-	private ControllerHandler joystick1Handler, joystick2Handler;
+	static public final SettingSchema settingJoystickRescan = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"LwjglJoystickRescan", false);
+	
+	static boolean DEBUG = true;
+	
+	private Controller[] controllers; 
+	private Map<String, Controller> controllerMap = new HashMap<String, Controller>();
+	
+	private IProperty controllerConfig, joystick1Config, joystick2Config, joystickRescan;
+	
+	private List<IControllerHandler> joystick1Handlers = new ArrayList<IControllerHandler>();
+	private List<IControllerHandler> joystick2Handlers = new ArrayList<IControllerHandler>();
+	
 	private Runnable scanTask;
 	
 	public SwtLwjglKeyboardHandler(final IKeyboardState keyboardState, IMachine machine) {
 		super(keyboardState, machine);
 		
-		scanTask = new Runnable() {
+		controllerConfig = machine.getSettings().get(settingControllerConfig);
+		joystick1Config = machine.getSettings().get(settingJoystick1Config);
+		joystick2Config = machine.getSettings().get(settingJoystick2Config);
+		joystickRescan = machine.getSettings().get(settingJoystickRescan);
+		
+		updateControllers();
+		
+		joystick1Config.addListener(new IPropertyListener() {
 			
 			@Override
+			public void propertyChanged(IProperty property) {
+				restoreHandlers(joystick1Handlers, property.getString());
+			}
+		});
+		
+		joystick2Config.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				restoreHandlers(joystick2Handlers, property.getString());
+			}
+		});
+		
+		joystickRescan.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				if (property.getBoolean()) {
+					updateControllers();
+					property.setBoolean(false);
+				}
+			}
+		});
+		
+		scanTask = new Runnable() {
+			@Override
 			public void run() {
-				scanJoystick(keyboardState, joystick1Handler, 1);
-				scanJoystick(keyboardState, joystick2Handler, 2);
-				
-//				if ((joystick1Handler != null && joystick1Handler.isFailedLast())
-//						|| (joystick2Handler != null && joystick2Handler.isFailedLast())) {
-//					updateControllers();
-//				}
-				
+				scanJoystick(keyboardState, joystick1Handlers, 1);
+				scanJoystick(keyboardState, joystick2Handlers, 2);
 			}
 		};
 		machine.getFastMachineTimer().scheduleTask(scanTask, 10);
-		
-		updateControllers();
 		
 		ControllerEnvironment.getDefaultEnvironment().addControllerListener(new ControllerListener() {
 			
 			@Override
 			public void controllerRemoved(ControllerEvent arg0) {
-				updateControllers();
 			}
 			
 			@Override
 			public void controllerAdded(ControllerEvent arg0) {
-				updateControllers();				
 			}
 		});
 	}
-	
+
 	/**
-	 * 
+	 * Rescan the connected controllers, and reestablish mappings
+	 * from user selections or pick mappings from scratch.
 	 */
 	private synchronized void updateControllers() {
-		joystick1Handler = joystick2Handler = null;
+		controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
+		controllerMap.clear();
 		
-		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
-			String name = controller.getName();
-			System.out.println("... controller: " + name);
-
+		ControllerConfig jsconfig1 = null;
+		Map<ControllerIdentifier, Component> js1Unused = null;
+		ControllerConfig jsconfig2 = null;
+		
+		// find valid controllers
+		StringBuilder sb = new StringBuilder();
+		
+		for (Controller controller : controllers) {
 			if (controller.getComponent(Identifier.Axis.X) == null || 
 					controller.getComponent(Identifier.Axis.Y) == null ||
 					controller.getType() == Controller.Type.MOUSE)
 				continue;
-				
+			
+			String name = controller.getName();
 			System.out.println("Using controller: " + name);
-			if (joystick1Handler == null) {
-				joystick1Handler = new StupidControllerHandler(controller);
-			} else if (joystick2Handler == null) {
-				joystick2Handler = new StupidControllerHandler(controller);
-				break;
+			controllerMap.put(name, controller);
+			
+			if (jsconfig1 == null) {
+				// try to use what's available in the first controller for joystick #1
+				Map<ControllerIdentifier, Component> comps = fetchComponents(controller);
+
+				jsconfig1 = initializeConfig(1, comps);
+				
+				js1Unused = comps;
+				
+			} else if (jsconfig2 == null) {
+				// for the second joystick, try to use the new controller
+				jsconfig2 = initializeConfig(2, fetchComponents(controller));
+			}
+			
+			sb.append(name).append('\n');
+		}
+		
+		if (jsconfig1 != null && jsconfig2 == null) {
+			// nothing worked for joystick #2, use what's left over from the first controller
+			jsconfig2 = initializeConfig(2, js1Unused);
+		}
+
+		// all that scanning is used only if the previously saved
+		// configurations no longer apply
+		String currentConfig = sb.toString();
+		String oldConfig = controllerConfig.getString(); 
+		
+		if (!currentConfig.equals(oldConfig) || !restoreHandlers(joystick1Handlers, joystick1Config.getString())) {
+			if (jsconfig1 != null) {
+				joystick1Config.setString(jsconfig1.toString());
+				restoreHandlers(joystick1Handlers, joystick1Config.getString());
 			}
 		}
 		
+		if (!currentConfig.equals(oldConfig) || !restoreHandlers(joystick2Handlers, joystick2Config.getString())) {
+			if (jsconfig2 != null) {
+				joystick2Config.setString(jsconfig2.toString());
+				restoreHandlers(joystick2Handlers, joystick2Config.getString());
+			}
+		}
+		
+		controllerConfig.setString(currentConfig);
+	}
+
+	/**
+	 * Get a mapping of available components
+	 * @param controller
+	 */
+	private Map<ControllerIdentifier, Component> fetchComponents(Controller controller) {
+		Map<ControllerIdentifier, Component> map = new HashMap<ControllerIdentifier, Component>();
+		
+		String controllerName = controller.getName();
+		int index = 0;
+		for (Component c : controller.getComponents()) {
+			map.put(new ControllerIdentifier(controllerName, index, c.getName()),
+					c);
+			index++;
+		}
+		
+		return map;
+	}
+
+	/**
+	 * Initialize configurations for joysticks by picking and removing likely
+	 * candidates from the unusedComponents.
+	 */
+	private ControllerConfig initializeConfig(int joy,
+			Map<ControllerIdentifier, Component> unusedComponents) {
+
+		ControllerConfig config = new ControllerConfig();
+		
+		boolean foundX = false;
+		boolean foundY = false;
+		boolean foundButton = false;
+		
+		for (Iterator<Map.Entry<ControllerIdentifier, Component>> it = unusedComponents.entrySet().iterator();
+				it.hasNext(); ) {
+			Map.Entry<ControllerIdentifier, Component> ent = it.next();
+			ControllerIdentifier id = ent.getKey();
+			Identifier cid = ent.getValue().getIdentifier();
+			
+			if (cid == Identifier.Axis.X || (joy > 1 && (cid == Identifier.Axis.RX || cid == Identifier.Axis.Z))) {
+				foundX = true;
+				config.map(id, JoystickRole.X_AXIS);
+				it.remove();
+			}
+			if (cid == Identifier.Axis.Y || (joy > 1 && (cid == Identifier.Axis.RY || cid == Identifier.Axis.RZ))) {
+				foundY = true;
+				config.map(id, JoystickRole.Y_AXIS);
+				it.remove();
+			}
+			
+			if (ent.getValue().getIdentifier() instanceof Button) {
+				if (isButtonFor(ent.getValue(), joy)) {
+					foundButton = true;
+					config.map(id, JoystickRole.BUTTON);
+					it.remove();
+				}
+			}
+		}
+		
+		if (!foundX || !foundY || !foundButton) {
+			logger.warn("Failed to discover X, Y, and button for joystick #" + joy);
+			return null;
+		}
+		
+		return config;
+	
+	}
+
+	protected boolean isButtonFor(Component button, int joy) {
+		String name = button.getIdentifier().getName();
+		return name.toLowerCase().matches(".*(trigger|thumb|" + (joy == 1 ? "left" : "right|2") + ").*");
+	}
+	
+	/**
+	 * Try to restore controller handlers from a config 
+	 */
+	private boolean restoreHandlers(List<IControllerHandler> handlers, String text) {
+		
+		if (DEBUG)
+			System.out.println("Restoring handlers from:\n\n" + text);
+		
+		ControllerConfig config = new ControllerConfig();
+		try {
+			config.fromString(text);
+			
+			if (config.getMap().isEmpty()) {
+				// new config
+				return false;
+			}
+			
+			createHandlers(handlers, config);
+			
+			return !handlers.isEmpty();
+			
+		} catch (ControllerConfig.ParseException e) {
+			// ignore
+			logger.error(e.getMessage());
+			return false;
+		}
+	}
+	
+	/**
+	 * Create handlers from the configuration
+	 * @param handlers
+	 * @param config
+	 */
+	private void createHandlers(List<IControllerHandler> handlers, ControllerConfig config) {
+
+		handlers.clear();
+		
+		// map the configuration to the components desired
+		for (Map.Entry<ControllerIdentifier, JoystickRole> ent : config.getMap().entrySet()) {
+			ControllerIdentifier id = ent.getKey();
+			Controller controller = controllerMap.get(id.controllerName);
+			if (controller == null) {
+				logger.warn("did not find controller for incoming " + id.controllerName);
+				continue;
+			}
+			
+			Component[] components =  controller.getComponents();
+			
+			Component component = null;
+			if (components.length > id.index) {
+				component = components[id.index];
+			} else {
+				for (Component c : components) {
+					if (c.getName().equals(id.name)) { 
+						component = c;
+						break;
+					}
+				}
+			}
+			
+			if (component == null) {
+				logger.warn("did not find component for incoming " + id + " in " + id.controllerName);
+				continue;
+			}
+			
+			handlers.add(new SimpleControllerHandler(controller, component, ent.getValue()));
+		}
 	}
 	
 	/**
 	 * @param joystickHandler
 	 * @param i
 	 */
-	private void scanJoystick(IKeyboardState state, ControllerHandler joystickHandler, int joy) {
-		if (joystickHandler != null) {
+	private void scanJoystick(IKeyboardState state, List<IControllerHandler> joystickHandlers, int joy) {
+		for (IControllerHandler joystickHandler : joystickHandlers) {
 			
 			if (joystickHandler.getController().poll()) {
 				joystickHandler.setFailedLast(false);

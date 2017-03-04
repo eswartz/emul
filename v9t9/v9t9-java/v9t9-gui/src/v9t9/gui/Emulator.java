@@ -28,7 +28,6 @@ import org.apache.log4j.Logger;
 
 import v9t9.common.client.IClient;
 import v9t9.common.cpu.ICpu;
-import v9t9.common.machine.TerminatedException;
 import v9t9.gui.client.ClientFactory;
 import v9t9.gui.client.ConsoleOnlyClient;
 import v9t9.gui.client.swt.SwtAwtJavaClient;
@@ -82,6 +81,23 @@ public class Emulator {
 		}
 	}
 	
+	public static void showHelp() {
+		System.out.println("Run as: " + Emulator.class.getName() + " [options]"
+				+ "\n"
+				+ "where options are:\n"
+				+ "\n"
+				+ "-C | --clean:          delete the workspace and machine settings\n"
+				+ "-c | --configdir DIR:  use an alternate base configuration directory\n"
+				+ "-d | --debug:          enable TCF debugging (experimental)\n"
+				+ "-s | --set VAR=VALUE:  set a configuration property\n"
+				+ "-l | --load FILE:      load a save file\n"
+				+ "--list-machines:       list the available machines\n"
+				+ "--list-clients:        list the available clients\n"
+				+ "--machine ID:          run the given machine\n"
+				+ "--client ID:           place user interface in the given client\n"
+			);
+	}
+	
 	/**
 	 * @param args
 	 */
@@ -92,7 +108,7 @@ public class Emulator {
 		boolean tcf = false;
 		
 		Getopt getopt = new Getopt(Emulator.class.getName(), args, 
-				"r:Cc:tTs:d",
+				"r:Cc:tTs:dl:",
 				new LongOpt[] {
 					//new LongOpt("remote", LongOpt.REQUIRED_ARGUMENT, new StringBuffer(), 'r'),
 					new LongOpt("clean", LongOpt.NO_ARGUMENT, null, 'C'),
@@ -101,6 +117,7 @@ public class Emulator {
 					new LongOpt("tcf", LongOpt.NO_ARGUMENT, null, 'T'),
 					new LongOpt("test", LongOpt.NO_ARGUMENT, null, 't'),
 					new LongOpt("set", LongOpt.REQUIRED_ARGUMENT, null, 's'),
+					new LongOpt("load", LongOpt.REQUIRED_ARGUMENT, null, 'l'),
 					new LongOpt("list-machines", LongOpt.NO_ARGUMENT, null, 0x101),
 					new LongOpt("list-clients", LongOpt.NO_ARGUMENT, null, 0x102),
 					new LongOpt("machine", LongOpt.REQUIRED_ARGUMENT, null, 0x103),
@@ -120,27 +137,33 @@ public class Emulator {
 		int opt;
 		while ((opt = getopt.getopt()) != -1)
 		{
-			if (opt == 'C') {
+			switch (opt) {
+			default:
+				showHelp();
+				return;
+			
+			case 'C':
 				clean = true;
-			}
-			else if (opt == 'c') {
+				break;
+			case 'c':
 				configdir = getopt.getOptarg().trim();
-			}
-			else if (opt == 'd') {
+				break;
+			case 'd':
 				debug = true;
-			}
-			else if (opt == 'T') {
+				break;
+			case 'T':
 				tcf = true;
-			}
-			else if (opt == 't') {
+				break;
+				
+			case 't': 
 				settings.put(ICpu.settingTestSuccessSymbol.getName(), "~SUCCESS~");
 				settings.put(ICpu.settingTestFailureSymbol.getName(), "~FAILURE~");
 				//settings.put(ICpu.settingRunForCount.getName(), "30000000");
 				settings.put(ICpu.settingDetectCrash.getName(), "true");
 				debug = true;
-				
-			}
-			else if (opt == 's') {
+				break;
+			
+			case 's': {
 				String arg = getopt.getOptarg().trim();
 				int idx = arg.indexOf('=');
 				if (idx < 0)  {
@@ -150,34 +173,42 @@ public class Emulator {
 				String var = arg.substring(0, idx);
 				String val = arg.substring(idx+1);
 				settings.put(var, val);
+				break;
 			}
-			else if (opt == 0x101) {
+			case 'l':
+				server.setLoadFile(getopt.getOptarg().trim());
+				break;
+				
+			case 0x101:
 				for (String model : MachineModelFactory.INSTANCE.getRegisteredModels()) {
 					System.out.println(model);
 				}
 				return;
-			}
-			else if (opt == 0x102) {
+			
+			case 0x102:
 				for (String client : ClientFactory.INSTANCE.getRegisteredClients()) {
 					System.out.println(client);
 				}
 				return;
-			}
-			else if (opt == 0x103) {
+				
+			case 0x103:
 				modelId = getopt.getOptarg();
 				if (!MachineModelFactory.INSTANCE.getRegisteredModels().contains(modelId)) {
 					System.err.println("No such registered machine: " + modelId);
 					return;
 				}
-			}
-			else if (opt == 0x104) {
+				break;
+				
+			case 0x104:
 				clientId = getopt.getOptarg();
 				if (!ClientFactory.INSTANCE.getRegisteredClients().contains(clientId)) {
 					System.err.println("No such registered client: " + clientId);
 					return;
 				}
+				break;
 			}
 		}
+			
 		if (tcf)
 			server.enableTcf();
 		
@@ -193,7 +224,7 @@ public class Emulator {
 		
 		server.setSettings(settings);
 		
-		runServer(server);
+		server.runServer();
 		
 		// in some OSes, AWT does not want to die
 		System.exit(0);
@@ -225,8 +256,7 @@ public class Emulator {
 		}
 		
 		IClient client = null;
-		client = ClientFactory.INSTANCE.createClient(clientId, 
-				server.getMachine());
+		client = ClientFactory.INSTANCE.createClient(clientId, server);
 
 
 		for (@SuppressWarnings("unchecked")
@@ -252,17 +282,4 @@ public class Emulator {
 		
 	}
 	
-	public static void runServer(EmulatorServerBase server) {
-		try {
-			server.run();
-		} catch (TerminatedException e) {
-			// good
-		} finally {
-			try {
-				server.dispose();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
 }

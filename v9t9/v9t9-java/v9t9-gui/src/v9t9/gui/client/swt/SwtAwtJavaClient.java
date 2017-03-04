@@ -10,8 +10,8 @@
  */
 package v9t9.gui.client.swt;
 
-import v9t9.common.machine.IMachine;
 import v9t9.gui.client.awt.AwtKeyboardHandler;
+import v9t9.server.client.EmulatorServerBase;
 
 /**
  * This client does all its own dang work!
@@ -20,8 +20,8 @@ import v9t9.gui.client.awt.AwtKeyboardHandler;
 public class SwtAwtJavaClient extends BaseSwtJavaClient {
 	public static String ID = "SWTAWT";
 	
-    public SwtAwtJavaClient(IMachine machine) {
-    	super(machine);
+    public SwtAwtJavaClient(EmulatorServerBase server) {
+    	super(server);
     }
 
     @Override

@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.common.client.IClient;
-import v9t9.common.machine.IMachine;
+import v9t9.server.client.EmulatorServerBase;
 
 /**
  * @author ejs
@@ -40,13 +40,13 @@ public class ClientFactory {
 			defaultClient = id;
 	}
 	
-	public IClient createClient(String id, IMachine machine) {
+	public IClient createClient(String id, EmulatorServerBase server) {
 		Class<? extends IClient> klass = classMap.get(id);
 		if (klass == null)
 			return null;
 		try {
-			return klass.getConstructor(IMachine.class).
-					newInstance(machine);
+			return klass.getConstructor(EmulatorServerBase.class).
+					newInstance(server);
 		} catch (InvocationTargetException e) {
 			e.getCause().printStackTrace();
 		} catch (Exception e) {

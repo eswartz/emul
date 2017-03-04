@@ -10,7 +10,6 @@
  */
 package v9t9.gui.client.swt;
 
-import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -25,8 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-
-import javax.imageio.ImageIO;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -62,8 +59,6 @@ import v9t9.gui.client.swt.imageimport.IImageImportHandler;
 import v9t9.video.ImageDataCanvas;
 import v9t9.video.common.ImageUtils;
 import v9t9.video.imageimport.ImageFrame;
-import v9t9.video.svg.SVGException;
-import v9t9.video.svg.SVGSalamanderLoader;
 import ejs.base.properties.IPropertyListener;
 
 /**
