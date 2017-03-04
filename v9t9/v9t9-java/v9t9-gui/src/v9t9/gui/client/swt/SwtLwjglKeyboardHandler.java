@@ -183,7 +183,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			// record all the remaining buttons to joy #1
 			for (Entry<ControllerIdentifier, Component> ent : js1Unused.entrySet()) {
 				if (ent.getValue() .getIdentifier() instanceof Identifier.Button) {
-					jsconfig1.map(ent.getKey(), JoystickRole.IGNORE);
+					jsconfig1.map(ent.getKey(), JoystickRole.BUTTON);
 				}
 			}
 		}
@@ -248,19 +248,19 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			Identifier cid = ent.getValue().getIdentifier();
 			
 			if (cid == Identifier.Axis.X || (joy > 1 && (cid == Identifier.Axis.RX || cid == Identifier.Axis.Z))) {
-				config.map(id, foundX ? JoystickRole.IGNORE : JoystickRole.X_AXIS);
+				config.map(id, JoystickRole.X_AXIS);
 				foundX = true;
 				it.remove();
 			}
 			if (cid == Identifier.Axis.Y || (joy > 1 && (cid == Identifier.Axis.RY || cid == Identifier.Axis.RZ))) {
-				config.map(id, foundY ? JoystickRole.IGNORE : JoystickRole.Y_AXIS);
+				config.map(id, JoystickRole.Y_AXIS);
 				foundY = true;
 				it.remove();
 			}
 			
 			if (ent.getValue().getIdentifier() instanceof Button) {
 				if (isButtonFor(ent.getValue(), joy) || !foundButton) {
-					config.map(id, foundButton ? JoystickRole.IGNORE : JoystickRole.BUTTON);
+					config.map(id, JoystickRole.BUTTON);
 					foundButton = true;
 					it.remove();
 				}
@@ -355,21 +355,23 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 	 * @param i
 	 */
 	private void scanJoystick(IKeyboardState state, List<IControllerHandler> joystickHandlers, int joy) {
-		// keep track of all pressed buttons -- don't use the last one's state
+		int x = 0;
+		int y = 0;
 		boolean pressed = false;
 		
-		if (!joystickHandlers.isEmpty()) {
-			state.setJoystick(joy, IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
-					0, 0, false);
-		}
-
 		for (IControllerHandler joystickHandler : joystickHandlers) {
 			
 			if (joystickHandler.getController().poll()) {
 				joystickHandler.setFailedLast(false);
 				joystickHandler.setJoystick(joy, state);
 				
-				if (joystickHandler.getRole() == JoystickRole.BUTTON) {
+				if (joystickHandler.getRole() == JoystickRole.X_AXIS) {
+					x += state.getJoystick(joy, IKeyboardState.JOY_X);
+				}
+				else if (joystickHandler.getRole() == JoystickRole.Y_AXIS) {
+					y += state.getJoystick(joy, IKeyboardState.JOY_Y);
+				}
+				else if (joystickHandler.getRole() == JoystickRole.BUTTON) {
 					pressed |= state.getJoystick(joy, IKeyboardState.JOY_B) != 0;
 				}
 			} else {
@@ -382,7 +384,8 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			}
 		}
 		
-		state.setJoystick(joy, IKeyboardState.JOY_B, 0, 0, pressed);
+		state.setJoystick(joy, IKeyboardState.JOY_X + IKeyboardState.JOY_Y + IKeyboardState.JOY_B, 
+				x, y, pressed);
 	}
 
 }
