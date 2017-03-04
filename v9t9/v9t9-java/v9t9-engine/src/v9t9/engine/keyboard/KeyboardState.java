@@ -503,13 +503,13 @@ public class KeyboardState implements IKeyboardState {
 
 
 	//	j=1 or 2
-	final private void changeJoyMatrix(int j,int row, boolean v) {
+	final public void changeJoyMatrix(int joy,int row, boolean v) {
 		//changeKbdMatrix((byte) r, (byte)(JOY1_C+(j)-1), v);
 		
 		// do joystick immediately
 		//System.out.println("joy:"+j+","+row+"="+v);
 		byte mask = (byte) (0x80 >> row);
-		byte c = (byte) (JOY1_C+(j)-1);
+		byte c = (byte) (JOY1_C+(joy)-1);
 		if (v) {
 			crukeyboardmap[c] |= mask;
 			lastcrukeyboardmap[c] |= mask;
@@ -520,7 +520,13 @@ public class KeyboardState implements IKeyboardState {
 		}
 			
 	}
-	
+
+	public boolean testJoyMatrix(int joy,int row) {
+		byte mask = (byte) (0x80 >> row);
+		byte c = (byte) (JOY1_C+(joy)-1);
+		return (crukeyboardmap[c] & mask) != 0;
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.engine.keyboard.IKeyboardState#setJoystick(int, int, int, int, boolean, long)
 	 */
@@ -562,6 +568,20 @@ public class KeyboardState implements IKeyboardState {
 				}
 			});
 		}
+    }
+    
+    @Override
+    public synchronized int getJoystick(final int joy, int mask) {
+    	if ((mask & JOY_X) != 0) {
+    		return testJoyMatrix(joy, JOY_LEFT_R) ? -1 : testJoyMatrix(joy, JOY_RIGHT_R) ? 1 : 0;
+    	}
+    	if ((mask & JOY_Y) != 0) {
+    		return testJoyMatrix(joy, JOY_UP_R) ? -1 : testJoyMatrix(joy, JOY_DOWN_R) ? 1 : 0;
+    	}
+    	if ((mask & JOY_B) != 0) {
+    		return testJoyMatrix(joy, JOY_FIRE_R) ? 1 : 0;
+    	}
+    	return 0;
     }
     
 	/* (non-Javadoc)

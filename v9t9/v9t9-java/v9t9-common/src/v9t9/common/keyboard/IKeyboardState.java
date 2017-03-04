@@ -68,6 +68,7 @@ public interface IKeyboardState {
 	 * @param fire boolean
 	 */
 	void setJoystick(int joy, int mask, int x, int y, boolean fire);
+	int getJoystick(int joy, int mask);
 
 	/** Get the low-level hardware bits for the keyboard column (8) */
 	int getKeyboardRow(int column);
@@ -114,4 +115,5 @@ public interface IKeyboardState {
 	 * @return
 	 */
 	boolean isBufferEmpty();
+
 }

@@ -355,11 +355,23 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 	 * @param i
 	 */
 	private void scanJoystick(IKeyboardState state, List<IControllerHandler> joystickHandlers, int joy) {
+		// keep track of all pressed buttons -- don't use the last one's state
+		boolean pressed = false;
+		
+		if (!joystickHandlers.isEmpty()) {
+			state.setJoystick(joy, IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
+					0, 0, false);
+		}
+
 		for (IControllerHandler joystickHandler : joystickHandlers) {
 			
 			if (joystickHandler.getController().poll()) {
 				joystickHandler.setFailedLast(false);
 				joystickHandler.setJoystick(joy, state);
+				
+				if (joystickHandler.getRole() == JoystickRole.BUTTON) {
+					pressed |= state.getJoystick(joy, IKeyboardState.JOY_B) != 0;
+				}
 			} else {
 				if (!joystickHandler.isFailedLast()) {
 					// maybe unplugged?
@@ -369,6 +381,8 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 				}
 			}
 		}
+		
+		state.setJoystick(joy, IKeyboardState.JOY_B, 0, 0, pressed);
 	}
 
 }
