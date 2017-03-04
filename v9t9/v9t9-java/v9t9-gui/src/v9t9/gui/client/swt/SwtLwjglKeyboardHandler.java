@@ -13,6 +13,7 @@ package v9t9.gui.client.swt;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -215,12 +216,14 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 	 * @param controller
 	 */
 	private Map<ControllerIdentifier, Component> fetchComponents(Controller controller) {
-		Map<ControllerIdentifier, Component> map = new HashMap<ControllerIdentifier, Component>();
+		Map<ControllerIdentifier, Component> map = new LinkedHashMap<ControllerIdentifier, Component>();
 		
 		String controllerName = controller.getName();
 		int index = 0;
 		for (Component c : controller.getComponents()) {
-			map.put(new ControllerIdentifier(controllerName, index, c.getName()),
+			String name = c.getName();
+			
+			map.put(new ControllerIdentifier(controllerName, index, name),
 					c);
 			index++;
 		}
@@ -247,18 +250,25 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 			ControllerIdentifier id = ent.getKey();
 			Identifier cid = ent.getValue().getIdentifier();
 			
-			if (cid == Identifier.Axis.X || (joy > 1 && (cid == Identifier.Axis.RX || cid == Identifier.Axis.Z))) {
+			if (cid == Identifier.Axis.X
+					|| (joy > 1 && (cid == Identifier.Axis.RX || cid == Identifier.Axis.Z))) {
 				config.map(id, JoystickRole.X_AXIS);
 				foundX = true;
 				it.remove();
 			}
-			if (cid == Identifier.Axis.Y || (joy > 1 && (cid == Identifier.Axis.RY || cid == Identifier.Axis.RZ))) {
+			else if (cid == Identifier.Axis.Y 
+					|| (joy > 1 && (cid == Identifier.Axis.RY || cid == Identifier.Axis.RZ))) {
 				config.map(id, JoystickRole.Y_AXIS);
 				foundY = true;
 				it.remove();
 			}
-			
-			if (ent.getValue().getIdentifier() instanceof Button) {
+			else if (cid == Identifier.Axis.POV) {
+				config.map(id, JoystickRole.POV);
+				foundX = true;
+				foundY = true;
+				it.remove();
+			}
+			else if (ent.getValue().getIdentifier() instanceof Button) {
 				if (isButtonFor(ent.getValue(), joy) || !foundButton) {
 					config.map(id, JoystickRole.BUTTON);
 					foundButton = true;
@@ -369,6 +379,10 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 					x += state.getJoystick(joy, IKeyboardState.JOY_X);
 				}
 				else if (joystickHandler.getRole() == JoystickRole.Y_AXIS) {
+					y += state.getJoystick(joy, IKeyboardState.JOY_Y);
+				}
+				else if (joystickHandler.getRole() == JoystickRole.POV) {
+					x += state.getJoystick(joy, IKeyboardState.JOY_X);
 					y += state.getJoystick(joy, IKeyboardState.JOY_Y);
 				}
 				else if (joystickHandler.getRole() == JoystickRole.BUTTON) {

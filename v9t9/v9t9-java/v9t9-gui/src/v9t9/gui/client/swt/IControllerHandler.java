@@ -14,6 +14,7 @@ public interface IControllerHandler {
 	JoystickRole getRole();
 	
 	void setJoystick(int joy, IKeyboardState state);
+	
 	boolean isFailedLast();
 	void setFailedLast(boolean failedLast);
 }

@@ -4,10 +4,16 @@
 package v9t9.gui.client.swt;
 
 import net.java.games.input.Component;
+import net.java.games.input.Component.POV;
 import net.java.games.input.Controller;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.keyboard.JoystickRole;
 
+/**
+ * Handle controllers whose values map to 
+ * @author ejs
+ *
+ */
 public class SimpleControllerHandler implements IControllerHandler {
 	protected final Controller controller;
 	protected final Component component;
@@ -79,6 +85,38 @@ public class SimpleControllerHandler implements IControllerHandler {
 					IKeyboardState.JOY_B, 
 					0, 0, fire);
 			break;
+		}
+		
+		case POV: {
+			float value = getAxis();
+			int y = 0;
+			int x = 0;
+			if (value == POV.UP_LEFT) {
+				y = -1;
+				x = -1;
+			} else if (value == POV.UP) {
+				y = -1;
+				x = 0;
+			} else if (value == POV.UP_RIGHT) {
+				y = -1;
+				x = 1;
+			} else if (value == POV.RIGHT) {
+				y = 0;
+				x = 1;
+			} else if (value == POV.DOWN_RIGHT) {
+				y = 1;
+				x = 1;
+			} else if (value == POV.DOWN) {
+				y = 1;
+				x = 0;
+			} else if (value == POV.DOWN_LEFT) {
+				y = -1;
+				x = 1;
+			} else if (value == POV.LEFT) {
+				y = 0;
+				x = -1;
+			}
+			state.setJoystick(joy, IKeyboardState.JOY_X | IKeyboardState.JOY_Y, x, y, false);
 		}
 		}
 	}
