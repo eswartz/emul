@@ -366,6 +366,15 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 			
 			@Override
 			public void run() {
+				final boolean[] update = { false };
+				getDisplay().syncExec(new Runnable() {
+					public void run() {
+						update[0] = folder.getSelection() == guiItem;
+					}
+				});
+			
+				if (!update[0])
+					return;
 				
 				changed.clear();
 				
