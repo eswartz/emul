@@ -50,6 +50,7 @@ import v9t9.gui.client.swt.shells.DemoProgressBar;
 import v9t9.gui.client.swt.shells.DemoSelector;
 import v9t9.gui.client.swt.shells.EventLogDialog;
 import v9t9.gui.client.swt.shells.ROMSetupDialog;
+import v9t9.gui.client.swt.shells.JoystickMappingDialog;
 import v9t9.gui.client.swt.shells.disk.DeviceSettingsDialog;
 import v9t9.gui.client.swt.shells.modules.ModuleSelector;
 import ejs.base.properties.IProperty;
@@ -126,9 +127,17 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 					}
 				}
 			);
-			new BlankIcon(buttonBar, SWT.NONE);
 		}
-		
+
+		createButton(IconConsts.JOYSTICK_SETUP,
+				"Setup Joysticks", new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						toggleJoystickDialog();
+					}
+				}
+			);
+
 		createButton(IconConsts.DEVICE_SETUP,
 			"Setup devices", new SelectionAdapter() {
 				@Override
@@ -301,7 +310,6 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		reverseSetting.addListener(demoButtonStateListener);
 		pauseSetting.addListener(demoButtonStateListener);
 		
-		// the demo button controls pausing (when something active)
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
@@ -627,6 +635,11 @@ public class EmulatorStatusBar extends BaseEmulatorBar {
 		return menu;
 	}
 	
+	protected void toggleJoystickDialog() {
+		swtWindow.toggleToolShell(JoystickMappingDialog.CONTROLLER_MAPPING_TOOL_ID,
+				JoystickMappingDialog.getToolShellFactory(machine, buttonBar, swtWindow));
+		
+	}
 
 	private void createRateMenuItem(final Menu menu, final IProperty playbackRate, int index, final double factor, String label) {
 		MenuItem item = new MenuItem(menu, SWT.RADIO);
