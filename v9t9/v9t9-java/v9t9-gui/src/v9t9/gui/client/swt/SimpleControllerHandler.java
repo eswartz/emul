@@ -6,7 +6,6 @@ package v9t9.gui.client.swt;
 import net.java.games.input.Component;
 import net.java.games.input.Component.POV;
 import net.java.games.input.Controller;
-import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.keyboard.JoystickRole;
 
 /**
@@ -59,35 +58,29 @@ public class SimpleControllerHandler implements IControllerHandler {
 	 * @see v9t9.emulator.clients.builtin.swt.SwtLwjglKeyboardHandler.ControllerHandler#setJoystick(int, v9t9.keyboard.KeyboardState)
 	 */
 	@Override
-	public void setJoystick(int joy, IKeyboardState state) {
+	public void setJoystick(int joy, State state) {
 		switch (role) {
 		case IGNORE:
 			return;
 			
 		case X_AXIS: {
 			int x = (int) Math.signum(getAxis());
-			state.setJoystick(joy, 
-					IKeyboardState.JOY_X, 
-					x, 0, false);
+			state.x += x;
 			break;
 		}
 		case Y_AXIS: {
 			int y = (int) Math.signum(getAxis());
-			state.setJoystick(joy, 
-					IKeyboardState.JOY_Y, 
-					0, y, false);
+			state.y += y;
 			break;
 		}
 	
 		case BUTTON: {
 			boolean fire = getButton();
-			state.setJoystick(joy, 
-					IKeyboardState.JOY_B, 
-					0, 0, fire);
+			state.button |= fire;
 			break;
 		}
 		
-		case POV: {
+		case DIRECTIONAL: {
 			float value = getAxis();
 			int y = 0;
 			int x = 0;
@@ -116,7 +109,33 @@ public class SimpleControllerHandler implements IControllerHandler {
 				y = 0;
 				x = -1;
 			}
-			state.setJoystick(joy, IKeyboardState.JOY_X | IKeyboardState.JOY_Y, x, y, false);
+			state.x += x;
+			state.y += y;
+		}
+
+		case UP: {
+			if (getAxis() != 0) {
+				state.y--;
+			}
+			break;
+		}
+		case DOWN: {
+			if (getAxis() != 0) {
+				state.y++;
+			}
+			break;
+		}
+		case LEFT: {
+			if (getAxis() != 0) {
+				state.x--;
+			}
+			break;
+		}
+		case RIGHT: {
+			if (getAxis() != 0) {
+				state.x++;
+			}
+			break;
 		}
 		}
 	}
