@@ -673,11 +673,15 @@ public class DemoSelector extends Composite {
 				sortDemos = true;
 				sortDirection = 1;
 				sortColumn = column;
+				viewer.getTree().setSortColumn(viewer.getTree().getColumn(column));
+				viewer.getTree().setSortDirection(SWT.DOWN);
 			} else {
 				if (sortDirection == 1) {
 					sortDirection = -1;
+					viewer.getTree().setSortDirection(SWT.DOWN);
 				} else {
 					sortDemos = false;
+					viewer.getTree().setSortDirection(SWT.DOWN);
 				}
 			}
 			dialogSettings.put(SORT_ENABLED, sortDemos);
