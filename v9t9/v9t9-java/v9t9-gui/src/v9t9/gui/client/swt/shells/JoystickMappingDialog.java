@@ -28,7 +28,10 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.CellEditor;
+import org.eclipse.jface.viewers.ColumnViewerEditor;
+import org.eclipse.jface.viewers.ColumnViewerEditorActivationStrategy;
 import org.eclipse.jface.viewers.ComboBoxCellEditor;
+import org.eclipse.jface.viewers.FocusCellOwnerDrawHighlighter;
 import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -40,9 +43,12 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TableViewerEditor;
+import org.eclipse.jface.viewers.TableViewerFocusCellManager;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -52,6 +58,7 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -161,22 +168,6 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		joystick1ConfigProperty = Settings.get(machine, SwtLwjglKeyboardHandler.settingJoystick1Config);
 		joystick2ConfigProperty = Settings.get(machine, SwtLwjglKeyboardHandler.settingJoystick2Config);
 
-		// unified config
-		fullConfig = new ControllerConfig();
-		config1 = new ControllerConfig();
-		config2 = new ControllerConfig();
-		try {
-			config1.fromString(joystick1ConfigProperty.getString());
-			fullConfig.mergeFrom(config1);
-		} catch (ControllerConfig.ParseException e) {
-		}
-		try {
-			config2.fromString(joystick2ConfigProperty.getString());
-			fullConfig.mergeFrom(config2);
-		} catch (ControllerConfig.ParseException e) {
-			
-		}
-
 		shell.setText("Controller Mapper");
 		
 		GridLayoutFactory.fillDefaults().margins(6, 6).applyTo(this);
@@ -258,7 +249,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		});
 
 
-		Text text = new Text(tableComp, SWT.WRAP | SWT.MULTI | SWT.READ_ONLY);
+		Text text = new Text(tableComp, SWT.WRAP | SWT.MULTI | SWT.READ_ONLY | SWT.NO_FOCUS);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(text);
 		text.setBackground(getBackground());
 		text.setText("Use any connected controllers to see which components "
@@ -284,14 +275,14 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		label = new Label(editComp, SWT.NONE);
 		label.setText("Joystick #1 Configuration");
 		
-		editor1 = new Text(editComp, SWT.MULTI | SWT.V_SCROLL);
+		editor1 = new Text(editComp, SWT.MULTI | SWT.V_SCROLL | SWT.BORDER);
 		editor1.setEditable(true);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(editor1);
 		
 		label = new Label(editComp, SWT.NONE);
 		label.setText("Joystick #2 Configuration");
 		
-		editor2 = new Text(editComp, SWT.MULTI | SWT.V_SCROLL);
+		editor2 = new Text(editComp, SWT.MULTI | SWT.V_SCROLL | SWT.BORDER);
 		editor2.setEditable(true);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(editor2);
 		
@@ -333,19 +324,39 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		final Controller[] controllers = cmap.keySet().toArray(new Controller[cmap.size()]);
 		final Map<Component, ControllerIdentifier> ids = new IdentityHashMap<Component, ControllerIdentifier>();
 
+		// unified config
+		fullConfig = new ControllerConfig();
+		config1 = new ControllerConfig();
+		config2 = new ControllerConfig();
+		try {
+			config1.fromString(joystick1ConfigProperty.getString());
+			fullConfig.mergeFrom(config1);
+		} catch (ControllerConfig.ParseException e) {
+		}
+		try {
+			config2.fromString(joystick2ConfigProperty.getString());
+			fullConfig.mergeFrom(config2);
+		} catch (ControllerConfig.ParseException e) {
+			
+		}
+		
 		for (Controller controller : controllers) {
 			for (Entry<ControllerIdentifier, Component> ent : cmap.get(controller).entrySet()) {
 				ControllerIdentifier id = ent.getKey();
 				ids.put(ent.getValue(), id);
 				
-				if (config1.getMap().containsKey(id))
+				if (config1.getMap().containsKey(id)) {
 					joyFor.put(id, 1);
-				else if (config2.getMap().containsKey(id))
+				} else if (config2.getMap().containsKey(id)) {
 					joyFor.put(id, 2);
-				else
+				} else {
 					joyFor.put(id, 0);
+					fullConfig.map(id, JoystickRole.IGNORE);
+				}
 			}
 		}
+
+		// add any missing components to the full config
 		
 		scanTask = new Runnable() {
 
@@ -487,7 +498,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		viewer.setLabelProvider(new ControllerIdentifierLabelProvider());
 		
 		CellEditor[] editors = new CellEditor[NAME_PROPERTY_ARRAY.length];
-		editors[JOY_COLUMN] = new ComboBoxCellEditor(table,
+		editors[JOY_COLUMN] = new FriendlyComboBoxCellEditor(table,
 				new String[] { "<none>", "1", "2" }, 
 				SWT.READ_ONLY);
 		
@@ -495,87 +506,23 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		for (int i = 0; i < jsStrs.length; i++) {
 			jsStrs[i] = JoystickRole.values()[i].toString();
 		}
-		editors[ROLE_COLUMN] = new ComboBoxCellEditor(table,
-				jsStrs,
+		editors[ROLE_COLUMN] = new FriendlyComboBoxCellEditor(table, 
+				jsStrs, 
 				SWT.READ_ONLY);
 		
 		viewer.setCellEditors(editors);
-		viewer.setCellModifier(new ICellModifier() {
-			
-			protected ControllerIdentifier getId(Object element) {
-				if (element instanceof TableItem)
-					element = ((TableItem) element).getData();
-				if (element instanceof ControllerIdentifier)
-					return (ControllerIdentifier) element;
-				return null;
-			}
-			
-			@Override
-			public void modify(Object element, String property, Object value) {
-				ControllerIdentifier id = getId(element);
-				if (JOY_PROPERTY.equals(property)) {
-					Integer oldFor = joyFor.get(id);
-					Integer newFor = (Integer) value;
-					joyFor.put(id, newFor);
-					
-					if (oldFor != newFor) {
-						// unmap from old joystick
-						if (oldFor == 1) {
-							config1.remove(id);
-						}
-						else if (oldFor == 2) {
-							config2.remove(id);
-						}
-						
-						// place current value in new
-						if (newFor == 1) {
-							config1.map(id, fullConfig.find(id));
-						}
-						else if (newFor == 2) {
-							config2.map(id, fullConfig.find(id));
-						}
+		viewer.setCellModifier(new JoystickRoleCellModifier());
 
-						updateEditors();
-					}
-				}
-				else if (ROLE_PROPERTY.equals(property)) {
-					JoystickRole role = JoystickRole.values()[(Integer) value];
-					fullConfig.map(id, role);
-					
-					Integer curFor = joyFor.get(id);
-					
-					if (curFor != null) {
-						if (curFor == 1) {
-							config1.map(id, role);
-						}
-						else if (curFor == 2) {
-							config2.map(id, role);
-						}
-						updateEditors();
-					}
-				}
-			}
-			
-			@Override
-			public Object getValue(Object element, String property) {
-				ControllerIdentifier id = getId(element);
-				if (JOY_PROPERTY.equals(property)) {
-					Integer j = joyFor.get(id);
-					if (j == null)
-						j = 0;
-					return j;
-				}
-				else if (ROLE_PROPERTY.equals(property)) {
-					return fullConfig.find(id).ordinal();
-				}
-				return null;
-			}
-			
-			@Override
-			public boolean canModify(Object element, String property) {
-				return JOY_PROPERTY.equals(property) || ROLE_PROPERTY.equals(property);
-			}
-		});
+		FocusCellOwnerDrawHighlighter highlighter = new FocusCellOwnerDrawHighlighter(viewer);
+		TableViewerFocusCellManager focusCellManager = new TableViewerFocusCellManager(viewer, highlighter);
+		ColumnViewerEditorActivationStrategy actSupport = new ColumnViewerEditorActivationStrategy(viewer);
+	
+		TableViewerEditor.create(viewer, focusCellManager, actSupport, ColumnViewerEditor.TABBING_HORIZONTAL
+				| ColumnViewerEditor.TABBING_MOVE_TO_ROW_NEIGHBOR
+				| ColumnViewerEditor.TABBING_VERTICAL | ColumnViewerEditor.KEYBOARD_ACTIVATION);
+		
+		viewer.setUseHashlookup(true);
+		
 		
 		addControlListener(new ControlAdapter() {
 			/* (non-Javadoc)
@@ -608,6 +555,128 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		return viewer;
 	}
 	
+
+	/**
+	 * @author ejs
+	 *
+	 */
+	private final class FriendlyComboBoxCellEditor extends ComboBoxCellEditor {
+		/**
+		 * @param parent
+		 * @param items
+		 * @param style
+		 */
+		private FriendlyComboBoxCellEditor(Composite parent, String[] items,
+				int style) {
+			super(parent, items, style);
+		}
+
+		protected void setAndApply(CCombo combo, int index) {
+			// must set the selection before getting value
+			combo.select(index);
+			doSetValue(index);
+			
+			Object newValue = doGetValue();
+			markDirty();
+			boolean isValid = isCorrect(newValue);
+			setValueValid(isValid);
+
+		}
+
+		protected void keyReleaseOccured(KeyEvent keyEvent) {
+			CCombo combo = (CCombo) getControl();
+			
+			if (keyEvent.keyCode == SWT.PAGE_UP) {
+				setAndApply(combo, 0);
+			}
+			else if (keyEvent.keyCode == SWT.PAGE_DOWN) {
+				setAndApply(combo, combo.getItemCount() - 1);
+			}
+			super.keyReleaseOccured(keyEvent);
+		}
+	}
+
+	/**
+	 * @author ejs
+	 *
+	 */
+	private final class JoystickRoleCellModifier implements ICellModifier {
+		protected ControllerIdentifier getId(Object element) {
+			if (element instanceof TableItem)
+				element = ((TableItem) element).getData();
+			if (element instanceof ControllerIdentifier)
+				return (ControllerIdentifier) element;
+			return null;
+		}
+
+		@Override
+		public void modify(Object element, String property, Object value) {
+			ControllerIdentifier id = getId(element);
+			if (JOY_PROPERTY.equals(property)) {
+				Integer oldFor = joyFor.get(id);
+				Integer newFor = (Integer) value;
+				joyFor.put(id, newFor);
+				
+				if (oldFor != newFor) {
+					// unmap from old joystick
+					if (oldFor == 1) {
+						config1.remove(id);
+					}
+					else if (oldFor == 2) {
+						config2.remove(id);
+					}
+					
+					// place current value in new
+					if (newFor == 1) {
+						config1.map(id, fullConfig.find(id));
+					}
+					else if (newFor == 2) {
+						config2.map(id, fullConfig.find(id));
+					}
+
+					updateEditors();
+					viewer.update(id, null);
+				}
+			}
+			else if (ROLE_PROPERTY.equals(property)) {
+				JoystickRole role = JoystickRole.values()[(Integer) value];
+				fullConfig.map(id, role);
+				
+				Integer curFor = joyFor.get(id);
+
+				if (curFor != null) {
+					if (curFor == 1) {
+						config1.map(id, role);
+					}
+					else if (curFor == 2) {
+						config2.map(id, role);
+					}
+				}
+				updateEditors();
+				viewer.update(id, null);
+			}
+		}
+
+		@Override
+		public Object getValue(Object element, String property) {
+			ControllerIdentifier id = getId(element);
+			if (JOY_PROPERTY.equals(property)) {
+				Integer j = joyFor.get(id);
+				if (j == null)
+					j = 0;
+				return j;
+			}
+			else if (ROLE_PROPERTY.equals(property)) {
+				return fullConfig.find(id).ordinal();
+			}
+			return null;
+		}
+
+		@Override
+		public boolean canModify(Object element, String property) {
+			return JOY_PROPERTY.equals(property) || ROLE_PROPERTY.equals(property);
+		}
+	}
 
 	class SortHandler extends SelectionAdapter {
 		private final int column;
@@ -714,9 +783,20 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		try {
 			config.fromString(text);
 			
+			Map<ControllerIdentifier, JoystickRole> map = fullConfig.getMap();
 			fullConfig.clear();
 			fullConfig.mergeFrom(config1);
 			fullConfig.mergeFrom(config2);
+			
+			// restore unmapped entries
+			for (Entry<ControllerIdentifier, Integer> ent : joyFor.entrySet()) {
+				ControllerIdentifier id = ent.getKey();
+				if ((ent.getValue() == null || ent.getValue() == 0)
+						&& fullConfig.find(id) == JoystickRole.IGNORE) {
+					JoystickRole role = map.get(id);
+					fullConfig.map(id, role != null ? role : JoystickRole.IGNORE);
+				}
+			}
 		} catch (ParseException e) {
 			folder.setSelection(editItem);
 			statusLabel.setImage(getDisplay().getSystemImage(SWT.ICON_ERROR));
@@ -791,7 +871,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 			}
 			case JOY_COLUMN: {
 				Integer j = joyFor.get(id);
-				return String.valueOf(j != null ? j : "<none>");
+				return String.valueOf(j != null && j > 0 ? j : "<none>");
 			}
 			case ROLE_COLUMN:
 				return String.valueOf(fullConfig.getMap().get(id));
