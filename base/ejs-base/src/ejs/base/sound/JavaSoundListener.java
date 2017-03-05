@@ -186,6 +186,9 @@ public class JavaSoundListener implements ISoundEmitter {
 	 * 
 	 */
 	public void played(ISoundView view) {
+		if (soundQueue == null)
+			return;
+		
 		try {
 			if (soundWritingThread == null) {
 				if (!block && soundQueue.remainingCapacity() == 0)
