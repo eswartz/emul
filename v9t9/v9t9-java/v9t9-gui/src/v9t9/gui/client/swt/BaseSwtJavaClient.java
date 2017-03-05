@@ -336,13 +336,14 @@ public abstract class BaseSwtJavaClient implements IClient {
 	}
 
 	public void handleEvents() {
+		if (display.isDisposed())
+			return;
 		display.syncExec(new Runnable() {
 			public void run() {
 				try {
-					if (display.isDisposed())
-						return;
-					while (display.readAndDispatch()) ;
-					//display.sleep();
+					while (!display.isDisposed() && display.readAndDispatch()) {
+						// loop
+					}
 				} catch (SWTException e) {
 					e.printStackTrace();
 				} catch (SWTError e) {

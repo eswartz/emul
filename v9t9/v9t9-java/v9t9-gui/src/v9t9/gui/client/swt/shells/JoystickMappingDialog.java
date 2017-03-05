@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -37,6 +38,7 @@ import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableColorProvider;
 import org.eclipse.jface.viewers.ITableFontProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -135,6 +137,8 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 	private int sortColumn = CONTROLLER_COLUMN;
 	
 	private Button rescanButton;
+	private Button ignoreButton;
+	private Button revertButton;
 	private TableColumn ctrlColumn;
 	private TableColumn nameColumn;
 	private TableColumn indexColumn;
@@ -151,6 +155,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 	private Map<ControllerIdentifier, Integer> joyFor = new HashMap<ControllerIdentifier, Integer>();
 	private ControllerConfig fullConfig;
 	private ControllerConfig config1, config2;
+	private String origConfig1, origConfig2;
 	
 	private long lastUpdateTime;
 	private Map<ControllerIdentifier, Float> lastValues = Collections.synchronizedMap(new HashMap<ControllerIdentifier, Float>());
@@ -180,7 +185,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		GridDataFactory.fillDefaults().applyTo(labelAndSelector);
 
 		Label label = new Label(labelAndSelector, SWT.NONE);
-		label.setText("Joystick: ");
+		label.setText("Controller / Joystick Mapping");
 		label.setFont(JFaceResources.getBannerFont());
 		
 		////////
@@ -294,18 +299,44 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		//////////
 
 		buttonBar = new Composite(this, SWT.NONE);
-		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(3).equalWidth(false).applyTo(buttonBar);
+		GridLayoutFactory.fillDefaults().margins(4, 4).numColumns(3).equalWidth(true).applyTo(buttonBar);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(buttonBar);
+
+		ignoreButton = new Button(buttonBar, SWT.PUSH);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).applyTo(ignoreButton);
+
+		ignoreButton.setText("Mark All Ignored");
+		ignoreButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				boolean ret = MessageDialog.openQuestion(
+						getShell(), 
+						"Ignore All?", 
+						"This will set all inputs to IGNORE.\n\nContinue?");
+				if (ret) {
+					for (Entry<ControllerIdentifier, JoystickRole> ent : config1.getMap().entrySet()) {
+						config1.map(ent.getKey(), JoystickRole.IGNORE);
+					}
+					for (Entry<ControllerIdentifier, JoystickRole> ent : config2.getMap().entrySet()) {
+						config2.map(ent.getKey(), JoystickRole.IGNORE);
+					}
+					for (Entry<ControllerIdentifier, JoystickRole> ent : fullConfig.getMap().entrySet()) {
+						fullConfig.map(ent.getKey(), JoystickRole.IGNORE);
+					}
+				}
+				updateEditors();
+			}
+		});
+		ignoreButton.setEnabled(true);
 
 		rescanButton = new Button(buttonBar, SWT.PUSH);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).applyTo(rescanButton);
 
-//		rescanButton.setImage(EmulatorGuiData.loadImage(getDisplay(), "icons/refresh.png"));
-		rescanButton.setText("Revert to Default");
+		rescanButton.setText("Make Default");
 		rescanButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				boolean ret = MessageDialog.openConfirm(
+				boolean ret = MessageDialog.openQuestion(
 						getShell(), 
 						"Reset?", 
 						"This will throw away any customizations and reset mappings to default.\n\nContinue?");
@@ -315,7 +346,26 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 			}
 		});
 		rescanButton.setEnabled(true);
-		
+
+		revertButton = new Button(buttonBar, SWT.PUSH);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).applyTo(revertButton);
+
+		revertButton.setText("Revert Changes");
+		revertButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				boolean ret = MessageDialog.openQuestion(
+						getShell(), 
+						"Revert?", 
+						"This will throw away any customizations made in this dialog "
+						+ "and restore them.\n\nContinue?");
+				if (ret) {
+					joystick1ConfigProperty.setString(origConfig1);
+					joystick2ConfigProperty.setString(origConfig2);
+				}
+			}
+		});
+		revertButton.setEnabled(true);
 		
 		Label filler = new Label(buttonBar, SWT.NONE);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).applyTo(filler);
@@ -330,12 +380,14 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		config1 = new ControllerConfig();
 		config2 = new ControllerConfig();
 		try {
-			config1.fromString(joystick1ConfigProperty.getString());
+			origConfig1 = joystick1ConfigProperty.getString();
+			config1.fromString(origConfig1);
 			fullConfig.mergeFrom(config1);
 		} catch (ControllerConfig.ParseException e) {
 		}
 		try {
-			config2.fromString(joystick2ConfigProperty.getString());
+			origConfig2 = joystick2ConfigProperty.getString();
+			config2.fromString(origConfig2);
 			fullConfig.mergeFrom(config2);
 		} catch (ControllerConfig.ParseException e) {
 			
@@ -409,6 +461,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 										return;
 									
 									Set<ControllerIdentifier> toRedraw;
+									Set<ControllerIdentifier> toReveal;
 									synchronized (changedTimes) {
 										updater = null;
 										
@@ -417,11 +470,26 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 
 										toRedraw = new HashSet<ControllerIdentifier>(nowChanged.values());
 										toRedraw.addAll(stale.values());
+										
+										// only really show items the user isn't ignoring
+										toReveal = new HashSet<ControllerIdentifier>(toRedraw);
+										Map<ControllerIdentifier, JoystickRole> curMap = fullConfig.getMap();
+										for (Iterator<ControllerIdentifier> it = toReveal.iterator();
+												it.hasNext(); ) {
+											ControllerIdentifier id = it.next();
+											if (curMap.get(id) == JoystickRole.IGNORE) {
+												it.remove();
+											}
+										}
 				
 										stale.clear();
 									}
 //									System.out.println(toRedraw);
 									viewer.update(toRedraw.toArray(), null);
+									if (!toReveal.isEmpty()) {
+										Object[] arr = toReveal.toArray();
+										viewer.reveal(arr[arr.length - 1]);
+									}
 									
 									changed.clear();
 									lastUpdateTime = now;
@@ -455,6 +523,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		hookActions();
 		
 		folder.setSelection(guiItem);
+		viewer.getTable().setFocus();
 	
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
@@ -741,6 +810,8 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			
 			public void selectionChanged(SelectionChangedEvent event) {
+				IStructuredSelection sel = (IStructuredSelection) event.getSelection();
+				viewer.update(sel.toArray(), null);
 			}
 		});
 		viewer.addOpenListener(new IOpenListener() {

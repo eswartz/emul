@@ -147,12 +147,14 @@ public class CpuMetricsCanvas extends Canvas {
 		metricsListener = new IMetricsListener() {
 
 			public void metricsChanged() {
-				getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						if (!isDisposed())
-							redraw();
-					}
-				});
+				if (!isDisposed()) {
+					getDisplay().asyncExec(new Runnable() {
+						public void run() {
+							if (!isDisposed())
+								redraw();
+						}
+					});
+				}
 			}
 			
 		};

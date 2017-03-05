@@ -16,6 +16,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.Map.Entry;
 
 import net.java.games.input.Component;
@@ -37,6 +39,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import ejs.base.properties.IProperty;
 import ejs.base.properties.IPropertyListener;
+import ejs.base.utils.TextUtils;
 
 /**
  * @author ejs
@@ -207,7 +210,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 		Map<ControllerIdentifier, Component> js2Unused = null;
 		
 		// find valid controllers
-		StringBuilder sb = new StringBuilder();
+		Set<String> controllerNames = new TreeSet<String>();
 		
 		for (Controller controller : controllers) {
 			String name = controller.getName();
@@ -230,8 +233,8 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 				
 				js2Unused = comps;
 			}
-			
-			sb.append(name).append('\n');
+
+			controllerNames.add(name);
 		}
 		
 		if (jsconfig1 != null && jsconfig2 == null) {
@@ -258,7 +261,7 @@ public class SwtLwjglKeyboardHandler extends SwtKeyboardHandler {
 
 		// all that scanning is used only if the previously saved
 		// configurations no longer apply
-		String currentConfig = sb.toString().trim();
+		String currentConfig = TextUtils.catenateStrings(controllerNames, ";").trim();
 		String oldConfig = controllerConfig.getString().trim(); 
 		
 		if (!currentConfig.equals(oldConfig) || !restoreHandlers(joystick1Handlers, joystick1Config.getString())) {
