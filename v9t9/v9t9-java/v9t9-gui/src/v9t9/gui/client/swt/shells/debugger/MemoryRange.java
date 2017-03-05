@@ -1,7 +1,7 @@
 /*
   MemoryRange.java
 
-  (c) 2009-2012 Edward Swartz
+  (c) 2009-2013 Edward Swartz
 
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Public License v1.0

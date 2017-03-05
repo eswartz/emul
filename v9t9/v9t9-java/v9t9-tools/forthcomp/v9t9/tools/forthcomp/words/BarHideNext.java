@@ -1,7 +1,7 @@
 /*
   BarHideNext.java
 
-  (c) 2010-2011 Edward Swartz
+  (c) 2010-2014 Edward Swartz
 
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Public License v1.0

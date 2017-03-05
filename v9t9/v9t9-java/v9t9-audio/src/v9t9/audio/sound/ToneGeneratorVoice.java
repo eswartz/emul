@@ -1,7 +1,7 @@
 /*
   ToneGeneratorVoice.java
 
-  (c) 2009-2011 Edward Swartz
+  (c) 2009-2016 Edward Swartz
 
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Public License v1.0
