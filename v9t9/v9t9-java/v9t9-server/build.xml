@@ -28,6 +28,7 @@
         <pathelement location="${ejs-base.location}/libs/swt/org.eclipse.equinox.common.jar"/>
         <pathelement location="${ejs-base.location}/libs/google-gson-2.0/gson-2.0.jar"/>
         <pathelement location="${ejs-base.location}/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
+        <pathelement location="${ejs-base.location}/libs/orbit/plugins/org.apache.log4j_1.2.15.v201005080500.jar"/>
     </path>
     <path id="v9t9-common.classpath">
         <pathelement location="${v9t9-common.location}/bin"/>
