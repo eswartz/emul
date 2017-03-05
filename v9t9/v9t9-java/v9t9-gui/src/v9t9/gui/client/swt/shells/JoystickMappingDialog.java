@@ -471,7 +471,7 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 	}
 
 	protected TableViewer createTable(Composite parent) {
-		final TableViewer viewer = new TableViewer(parent, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI);
+		final TableViewer viewer = new TableViewer(parent, SWT.BORDER | SWT.FULL_SELECTION);
 		
 		Table table = viewer.getTable();
 		table.setHeaderVisible(true);
@@ -884,6 +884,10 @@ public class JoystickMappingDialog extends Composite implements IPropertyListene
 		 */
 		@Override
 		public Color getForeground(Object element, int columnIndex) {
+			Integer j = joyFor.get(element);
+			if (j == null || j == 0) {
+				return getDisplay().getSystemColor(SWT.COLOR_TITLE_INACTIVE_FOREGROUND);
+			}
 			return null;
 		}
 
