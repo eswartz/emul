@@ -111,6 +111,7 @@ public class SimpleControllerHandler implements IControllerHandler {
 			}
 			state.x += x;
 			state.y += y;
+			break;
 		}
 
 		case UP: {
